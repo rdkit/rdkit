@@ -1,4 +1,4 @@
-# $Id: ClusterMols.py 5083 2006-03-11 17:56:19Z NightlyBuild $
+# $Id$
 #
 #  Copyright (c) 2003-2006 Rational Discovery LLC
 #
@@ -23,7 +23,7 @@ import sys,cPickle
 from Chem.Fingerprints import FingerprintMols,MolSimilarity
 import DataStructs
 from Numeric import *
-_cvsVersion="$Id: ClusterMols.py 5083 2006-03-11 17:56:19Z NightlyBuild $"
+_cvsVersion="$Id$"
 idx1 = _cvsVersion.find(':')+1
 idx2 = _cvsVersion.rfind('$')
 __VERSION_STRING="%s"%(_cvsVersion[idx1:idx2])

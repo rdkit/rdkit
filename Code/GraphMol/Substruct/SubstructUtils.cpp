@@ -1,4 +1,4 @@
-// $Id: SubstructUtils.cpp 4976 2006-02-18 00:54:01Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
 //

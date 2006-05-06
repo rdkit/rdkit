@@ -1,4 +1,4 @@
-# $Id: MolDrawing.py 5110 2006-04-06 00:30:35Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2004-2006 Rational Discovery LLC
 #

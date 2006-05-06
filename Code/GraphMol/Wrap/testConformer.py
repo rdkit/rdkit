@@ -1,4 +1,4 @@
-# $Id: testConformer.py 4582 2005-04-05 21:41:27Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2004  Rational Discovery LLC
 #         All Rights Reserved

@@ -1,4 +1,4 @@
-# $Id: PharmacophoreMixin.py 5060 2006-03-07 23:04:43Z glandrum $
+# $Id$
 #
 # Copyright (C) 2005 Rational Discovery LLC
 #  All Rights Reserved

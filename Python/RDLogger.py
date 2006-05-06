@@ -1,4 +1,4 @@
-# $Id: RDLogger.py 5021 2006-03-02 00:52:39Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2005-2006  Greg Landrum and Rational Discovery LLC
 #

@@ -1,4 +1,4 @@
-# $Id: PointCanvas.py 5047 2006-03-03 02:30:59Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2003  Rational Discovery LLC
 #    All Rights Reserved

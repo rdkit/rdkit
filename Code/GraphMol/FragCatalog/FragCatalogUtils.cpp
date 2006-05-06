@@ -1,4 +1,4 @@
-// $Id: FragCatalogUtils.cpp 4998 2006-02-21 00:52:50Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

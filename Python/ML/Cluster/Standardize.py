@@ -1,4 +1,4 @@
-# $Id: Standardize.py 5015 2006-02-22 15:40:56Z glandrum $
+# $Id$
 #
 # Copyright (C) 2001-2006  greg Landrum
 #

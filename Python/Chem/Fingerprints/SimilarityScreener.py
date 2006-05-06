@@ -1,4 +1,4 @@
-# $Id: SimilarityScreener.py 5022 2006-03-02 01:34:20Z glandrum $
+# $Id$
 #
 # Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
 #

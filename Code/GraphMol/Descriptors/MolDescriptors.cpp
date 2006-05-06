@@ -1,4 +1,4 @@
-// $Id: MolDescriptors.cpp 4963 2006-02-18 00:17:37Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //

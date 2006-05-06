@@ -1,4 +1,4 @@
-# $Id: psmetrics.py 3194 2004-02-24 23:58:17Z glandrum $
+# $Id$
 # Christopher Lee  clee@users.sourceforge.net
 # based upon pdfmetrics.py by Andy Robinson
 

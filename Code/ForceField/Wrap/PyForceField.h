@@ -1,4 +1,4 @@
-// $Id: PyForceField.h 4954 2006-02-17 23:33:34Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //

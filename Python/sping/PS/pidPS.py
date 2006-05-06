@@ -8,7 +8,7 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 # some fixups by Chris Lee (cwlee@artsci.wustl.edu)
 # help from Paul S. and Bernhard Herzog and others
 
-# $Id: pidPS.py 3383 2004-06-02 22:49:39Z glandrum $
+# $Id$
 #
 # For each page, the coordinate system is intialized with "0 canvasHeight translate" so
 # that coordiante (0,0) is at the top left of the page

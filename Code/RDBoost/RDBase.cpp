@@ -1,4 +1,4 @@
-// $Id: RDBase.cpp 4958 2006-02-17 23:48:22Z glandrum $
+// $Id$
 //
 // Copyright (c) 2004-2006 greg Landrum and Rational Discovery LLC
 //
@@ -21,7 +21,7 @@ namespace python = boost::python;
 namespace logging = boost::logging;
 
 std::string _version(){
-  return "$Id: RDBase.cpp 4958 2006-02-17 23:48:22Z glandrum $";
+  return "$Id$";
 }
 
 void EnableLog(std::string spec){

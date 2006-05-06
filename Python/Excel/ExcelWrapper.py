@@ -1,4 +1,4 @@
-# $Id: ExcelWrapper.py 5027 2006-03-02 18:41:12Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2000-2006  greg Landrum and Rational Discovery LLC
 #

@@ -1,4 +1,4 @@
-// $Id: DiscreteValueVect.cpp 4946 2006-02-17 01:44:04Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //

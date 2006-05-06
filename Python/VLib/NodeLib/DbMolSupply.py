@@ -1,4 +1,4 @@
-#  $Id: DbMolSupply.py 4524 2005-03-09 22:02:16Z glandrum $
+#  $Id$
 #
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved

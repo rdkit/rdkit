@@ -1,4 +1,4 @@
-// $Id: FreeChemicalFeature.cpp 4944 2006-02-17 01:23:55Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

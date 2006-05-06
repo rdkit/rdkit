@@ -1,4 +1,4 @@
-# $Id: LocalConfig.py 5114 2006-04-06 15:28:45Z glandrum $
+# $Id$
 #
 # Copyright (C) 2005-2006 Rational Discovery LLC
 #  All Rights Reserved

@@ -1,4 +1,4 @@
-# $Id: Licensing.py 4920 2006-02-07 23:56:35Z glandrum $
+# $Id$
 #
 # Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
 #   All Rights Reserved

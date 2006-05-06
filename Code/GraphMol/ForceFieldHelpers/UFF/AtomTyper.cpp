@@ -1,4 +1,4 @@
-// $Id: AtomTyper.cpp 5124 2006-04-13 13:33:16Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

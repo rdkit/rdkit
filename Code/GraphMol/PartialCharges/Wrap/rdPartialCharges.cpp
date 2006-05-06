@@ -1,4 +1,4 @@
-// $Id: rdPartialCharges.cpp 4972 2006-02-18 00:40:57Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

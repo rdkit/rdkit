@@ -1,4 +1,4 @@
-// $Id: TDTMolSupplier.cpp 4964 2006-02-18 00:22:34Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //

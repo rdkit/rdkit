@@ -1,4 +1,4 @@
-// $Id: BitVect.cpp 5062 2006-03-08 01:43:55Z glandrum $
+// $Id$
 //
 // Copyright (c) 2003-2006 greg Landrum and Rational Discovery LLC
 //

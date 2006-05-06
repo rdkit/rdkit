@@ -1,4 +1,4 @@
-# $Id: UnitTestChemv2.py 5175 2006-05-06 17:58:57Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2003-2006  Rational Discovery LLC
 #

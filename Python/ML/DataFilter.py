@@ -1,4 +1,4 @@
-# $Id: DataFilter.py 5030 2006-03-02 18:46:51Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2001-2006  greg Landrum
 #

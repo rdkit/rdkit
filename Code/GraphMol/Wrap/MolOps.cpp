@@ -1,4 +1,4 @@
-// $Id: MolOps.cpp 5118 2006-04-06 20:59:45Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

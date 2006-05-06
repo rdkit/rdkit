@@ -1,4 +1,4 @@
-# $Id: FingerprintMols.py 5053 2006-03-06 17:26:39Z glandrum $
+# $Id$
 #
 #  Copyright (c) 2003-2006 Rational Discovery LLC
 #
@@ -27,7 +27,7 @@ import DataStructs
 import sys
 import cPickle
 
-_cvsVersion="$Id: FingerprintMols.py 5053 2006-03-06 17:26:39Z glandrum $"
+_cvsVersion="$Id$"
 idx1 = _cvsVersion.find(':')+1
 idx2 = _cvsVersion.rfind('$')
 __VERSION_STRING="%s"%(_cvsVersion[idx1:idx2])

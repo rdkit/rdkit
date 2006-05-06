@@ -1,4 +1,4 @@
-# $Id: PyMol.py 5114 2006-04-06 15:28:45Z glandrum $
+# $Id$
 #
 # Copyright (C) 2004-2006 Rational Discovery LLC
 #

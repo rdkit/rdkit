@@ -1,4 +1,4 @@
-//  $Id: molopstest.cpp 5121 2006-04-07 23:04:38Z glandrum $
+//  $Id$
 // 
 //   Copyright (C) 2002-2006 Rational Discovery LLC
 //

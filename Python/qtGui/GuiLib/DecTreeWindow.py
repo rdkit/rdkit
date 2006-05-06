@@ -1,4 +1,4 @@
-#  $Id: DecTreeWindow.py 4684 2005-05-25 21:50:46Z glandrum $
+#  $Id$
 #
 #  Copyright (C) 2003-2005  Rational Discovery LLC
 #    All Rights Reserved

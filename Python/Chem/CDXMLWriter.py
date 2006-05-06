@@ -1,4 +1,4 @@
-# $Id: CDXMLWriter.py 5007 2006-02-22 15:14:41Z glandrum $
+# $Id$
 #
 # Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
 #

@@ -1,4 +1,4 @@
-# $Id: Molecules.py 5011 2006-02-22 15:24:33Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002-2006  greg Landrum and Rational Discovery LLC
 #

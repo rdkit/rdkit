@@ -1,4 +1,4 @@
-#  $Id: TestRunner.py 5077 2006-03-10 23:07:53Z glandrum $
+#  $Id$
 #
 #  Copyright (c) 2003-2006 Rational Discovery LLC
 #

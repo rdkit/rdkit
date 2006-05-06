@@ -1,4 +1,4 @@
-# $Id: MolSurf.py 5083 2006-03-11 17:56:19Z NightlyBuild $
+# $Id$
 #
 # Copyright (C) 2001-2006 greg Landrum and Rational Discovery LLC
 #

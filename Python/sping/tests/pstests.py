@@ -1,4 +1,4 @@
-# $Id: pstests.py 3194 2004-02-24 23:58:17Z glandrum $
+# $Id$
 import pidtest
 
 def testLatin1Chars(can):

@@ -1,4 +1,4 @@
-# $Id: MolDescriptorWinImpl.py 4684 2005-05-25 21:50:46Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002-2005  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

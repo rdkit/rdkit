@@ -1,4 +1,4 @@
-# $Id: BuildSigTree.py 4635 2005-05-04 00:50:14Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2003-2005  Rational Discovery LLC
 #    All Rights Reserved

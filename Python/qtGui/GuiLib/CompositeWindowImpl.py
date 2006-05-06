@@ -1,4 +1,4 @@
-# $Id: CompositeWindowImpl.py 5175 2006-05-06 17:58:57Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2005-2006  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

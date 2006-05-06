@@ -1,4 +1,4 @@
-# $Id: Quantize.py 3423 2004-06-09 16:27:46Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2001,2002,2003  Greg Landrum and Rational Discovery LLC
 #   All Rights Reserved

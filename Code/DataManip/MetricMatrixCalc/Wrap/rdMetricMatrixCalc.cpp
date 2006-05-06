@@ -1,4 +1,4 @@
-// $Id: rdMetricMatrixCalc.cpp 4945 2006-02-17 01:28:12Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

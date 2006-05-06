@@ -1,4 +1,4 @@
-// $Id: MolFileStereochem.cpp 5111 2006-04-06 00:33:41Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

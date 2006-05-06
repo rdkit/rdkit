@@ -1,4 +1,4 @@
-// $Id: Chirality.cpp 5117 2006-04-06 20:43:13Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

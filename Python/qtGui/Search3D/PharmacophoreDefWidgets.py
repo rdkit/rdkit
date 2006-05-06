@@ -1,4 +1,4 @@
-# $Id: PharmacophoreDefWidgets.py 4901 2006-01-12 18:51:41Z glandrum $
+# $Id$
 #
 # Copyright (C) 2005 Rational Discovery LLC
 #  All Rights Reserved

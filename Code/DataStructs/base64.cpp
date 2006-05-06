@@ -1,4 +1,4 @@
-// $Id: base64.cpp 4946 2006-02-17 01:44:04Z glandrum $
+// $Id$
 //
 // Copyright (c) 2002-2006 greg landrum and rational discovery llc
 //

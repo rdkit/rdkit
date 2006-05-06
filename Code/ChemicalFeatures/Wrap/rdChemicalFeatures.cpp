@@ -1,4 +1,4 @@
-// $Id: rdChemicalFeatures.cpp 4944 2006-02-17 01:23:55Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //     All Rights Reserved

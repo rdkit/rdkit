@@ -1,4 +1,4 @@
-// $Id: RDDepictor.cpp 4962 2006-02-18 00:15:50Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

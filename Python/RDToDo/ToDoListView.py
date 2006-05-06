@@ -1,4 +1,4 @@
-# $Id: ToDoListView.py 4899 2006-01-12 16:20:06Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2003-2006  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

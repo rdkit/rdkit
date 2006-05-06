@@ -1,4 +1,4 @@
-# $Id: HierarchyVis.py 5023 2006-03-02 01:36:56Z glandrum $
+# $Id$
 # 
 #  Copyright (C)2003-2006  Rational Discovery LLC
 #

@@ -1,4 +1,4 @@
-# $Id: KNNModel.py 5035 2006-03-02 19:26:12Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2003 Rational Discovery LLC
 #      All Rights Reserved

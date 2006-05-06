@@ -1,4 +1,4 @@
-# $Id: BitVect.py 5009 2006-02-22 15:19:49Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2001-2006  greg Landrum and Rational Discovery LLC
 #

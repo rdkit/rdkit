@@ -1,4 +1,4 @@
-// $Id: rdFeatSelect.cpp 4916 2006-01-31 19:52:35Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //     All Rights Reserved

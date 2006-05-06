@@ -1,4 +1,4 @@
-// $Id: BitOps.cpp 5061 2006-03-08 00:36:29Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 //

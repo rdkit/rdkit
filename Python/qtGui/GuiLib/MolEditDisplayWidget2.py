@@ -1,4 +1,4 @@
-# $Id: MolEditDisplayWidget2.py 4894 2005-12-09 22:56:43Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2003-2005  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

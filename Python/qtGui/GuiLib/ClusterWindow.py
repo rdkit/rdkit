@@ -1,4 +1,4 @@
-#  $Id: ClusterWindow.py 4810 2005-09-28 16:12:57Z glandrum $
+#  $Id$
 #
 #  Copyright (C) 2002-2005  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

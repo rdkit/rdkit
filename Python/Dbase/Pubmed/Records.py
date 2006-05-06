@@ -1,4 +1,4 @@
-# $Id: Records.py 5024 2006-03-02 03:01:25Z glandrum $
+# $Id$
 #
 # Copyright (C) 2003-2006 Rational Discovery LLC
 #

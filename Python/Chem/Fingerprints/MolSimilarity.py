@@ -1,4 +1,4 @@
-# $Id: MolSimilarity.py 5007 2006-02-22 15:14:41Z glandrum $
+# $Id$
 #
 #  Copyright (c) 2003-2006 Rational Discovery LLC
 #
@@ -32,7 +32,7 @@ except ImportError:
 
 import DataStructs
 
-_cvsVersion="$Id: MolSimilarity.py 5007 2006-02-22 15:14:41Z glandrum $"
+_cvsVersion="$Id$"
 idx1 = _cvsVersion.find(':')+1
 idx2 = _cvsVersion.rfind('$')
 __VERSION_STRING="%s"%(_cvsVersion[idx1:idx2])

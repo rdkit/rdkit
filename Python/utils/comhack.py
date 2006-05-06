@@ -1,5 +1,5 @@
 """
-$Id: comhack.py 4920 2006-02-07 23:56:35Z glandrum $
+$Id$
 
 Original author:  Thorsten Henninger <henni@brainbot.com>
 Info about this file: http://mail.python.org/pipermail/python-win32/2003-December/001453.html

@@ -1,4 +1,4 @@
-# $Id: CompositeRun.py 5132 2006-04-14 16:59:22Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002-2006  greg Landrum and Rational Discovery LLC
 #

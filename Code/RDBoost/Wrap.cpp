@@ -1,4 +1,4 @@
-// $Id: Wrap.cpp 4958 2006-02-17 23:48:22Z glandrum $
+// $Id$
 //
 // Copyright (c) 2003-2006 greg Landrum and Rational Discovery LLC
 //

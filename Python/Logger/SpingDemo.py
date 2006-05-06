@@ -1,4 +1,4 @@
-# $Id: SpingDemo.py 5014 2006-02-22 15:28:05Z glandrum $
+# $Id$
 #
 #       Copyright (c) 2001-2006, Greg Landrum and Rational Discovery LLC,
 #

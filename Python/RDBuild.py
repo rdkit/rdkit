@@ -1,4 +1,4 @@
-# $Id: RDBuild.py 5077 2006-03-10 23:07:53Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2004-2006 Rational Discovery LLC
 #

@@ -1,4 +1,4 @@
-// $Id: Invariant.cpp 4941 2006-02-17 01:17:05Z glandrum $
+// $Id$
 //
 // Copyright (C) 2001-2006 Randal M. Henne and Rational Discovery LLC
 // 

@@ -1,4 +1,4 @@
-// $Id: SmilesMolSupplier.cpp 4987 2006-02-18 18:17:11Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2002-2006 Rational Discovery LLC
 //

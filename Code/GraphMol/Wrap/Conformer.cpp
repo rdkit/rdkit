@@ -1,4 +1,4 @@
-// $Id: Conformer.cpp 4978 2006-02-18 00:59:33Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

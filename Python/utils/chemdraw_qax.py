@@ -1,4 +1,4 @@
-# $Id: chemdraw_qax.py 4920 2006-02-07 23:56:35Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2003 Rational Discovery LLC
 #   All Rights Reserved

@@ -1,4 +1,4 @@
-// $Id: PeriodicTable.cpp 5000 2006-02-21 01:42:36Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2001-2006 Rational Discovery LLC
 //

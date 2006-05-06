@@ -1,4 +1,4 @@
-# $Id: MolTable.py 5092 2006-03-15 19:36:19Z NightlyBuild $
+# $Id$
 #
 #  Copyright (C) 2002-2005  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

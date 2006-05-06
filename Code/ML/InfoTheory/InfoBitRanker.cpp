@@ -1,4 +1,4 @@
-// $Id: InfoBitRanker.cpp 5063 2006-03-08 17:52:10Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2004 Rational Discovery LLC
 //   All Rights Reserved

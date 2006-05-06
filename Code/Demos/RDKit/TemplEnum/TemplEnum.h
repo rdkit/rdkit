@@ -1,4 +1,4 @@
-//  $Id: TemplEnum.h 4421 2005-02-09 16:55:05Z glandrum $
+//  $Id$
 //
 //  Copyright (C) 2003 Rational Discovery LLC
 //   All Rights Reserved

@@ -1,4 +1,4 @@
-# $Id: ExcludedVolumeMixin.py 4746 2005-07-26 20:41:52Z glandrum $
+# $Id$
 #
 # Copyright (C) 2005 Rational Discovery LLC
 #  All Rights Reserved

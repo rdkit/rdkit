@@ -1,4 +1,4 @@
-#  $Id: Output.py 3196 2004-02-25 01:16:55Z glandrum $
+#  $Id$
 #
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved

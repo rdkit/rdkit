@@ -1,4 +1,4 @@
-//  $Id: RDLib.cpp 5061 2006-03-08 00:36:29Z glandrum $
+//  $Id$
 //
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //
@@ -14,7 +14,7 @@ extern "C" {
 
 Datum rd_libversion(PG_FUNCTION_ARGS)
 {
-  std::string res="$Rev: 5061 $";
+  std::string res="$Rev$";
   text *textRes;
   int totalSz=res.size()+VARHDRSZ;
   textRes = (text *)palloc(totalSz);

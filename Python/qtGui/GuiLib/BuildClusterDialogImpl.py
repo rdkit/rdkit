@@ -1,4 +1,4 @@
-# $Id: BuildClusterDialogImpl.py 5175 2006-05-06 17:58:57Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002-2006  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

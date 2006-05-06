@@ -1,4 +1,4 @@
-#  $Id: SmilesSupply.py 4988 2006-02-18 18:18:32Z glandrum $
+#  $Id$
 #
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved

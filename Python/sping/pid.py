@@ -1,4 +1,4 @@
-# $Id: pid.py 4605 2005-04-14 18:21:57Z glandrum $
+# $Id$
 # based upon 
 # piddle.py -- Plug In Drawing, Does Little Else
 # Copyright (C) 1999  Joseph J. Strout

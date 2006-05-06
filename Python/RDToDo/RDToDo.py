@@ -5,8 +5,8 @@
 #
 #  SVN Info:
 #   $Author: glandrum $
-#   $Date: 2006-01-12 08:20:06 -0800 (Thu, 12 Jan 2006) $
-#   $LastChangedRevision: 4899 $
+#   $Date$
+#   $LastChangedRevision$
 #
 import os
 env = os.environ
@@ -21,7 +21,7 @@ from TextViewImpl import TextView
 from HelpData import helpData
 
 __version = '0.9.0'
-__date = '$Date: 2006-01-12 08:20:06 -0800 (Thu, 12 Jan 2006) $'
+__date = '$Date$'
 helpData = helpData%locals()
 
         

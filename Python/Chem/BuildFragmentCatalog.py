@@ -1,4 +1,4 @@
-# $Id: BuildFragmentCatalog.py 5022 2006-03-02 01:34:20Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2003-2006 Rational Discovery LLC
 #
@@ -68,7 +68,7 @@ from Numeric import *
 from ML import InfoTheory
 import types,sets
 
-_cvsVersion="$Revision: 1.10 $"
+_cvsVersion="$Revision$"
 idx1 = _cvsVersion.find(':')+1
 idx2 = _cvsVersion.rfind('$')
 __VERSION_STRING="%s"%(_cvsVersion[idx1:idx2])

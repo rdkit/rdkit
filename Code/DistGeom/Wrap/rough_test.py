@@ -1,4 +1,4 @@
-# $Id: rough_test.py 5002 2006-02-21 14:40:03Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2004  Rational Discovery LLC
 #         All Rights Reserved

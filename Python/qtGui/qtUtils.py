@@ -1,4 +1,4 @@
-# $Id: qtUtils.py 4878 2005-11-30 16:02:00Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002-2005  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

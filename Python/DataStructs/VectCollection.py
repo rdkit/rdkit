@@ -1,4 +1,4 @@
-# $Id: VectCollection.py 5009 2006-02-22 15:19:49Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2005-2006 greg landrum and Rational Discovery LLC
 #

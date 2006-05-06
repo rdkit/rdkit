@@ -1,4 +1,4 @@
-# $Id: PilTools.py 4920 2006-02-07 23:56:35Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2000,2001,2002,2003  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved

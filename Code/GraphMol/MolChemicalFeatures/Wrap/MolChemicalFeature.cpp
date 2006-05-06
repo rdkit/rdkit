@@ -1,4 +1,4 @@
-// $Id: MolChemicalFeature.cpp 4970 2006-02-18 00:37:09Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

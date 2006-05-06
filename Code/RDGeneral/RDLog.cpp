@@ -1,4 +1,4 @@
-// $Id: RDLog.cpp 4941 2006-02-17 01:17:05Z glandrum $
+// $Id$
 //
 // Copyright (C)  2005-2006 Greg Landrum and Rational Discovery LLC
 //

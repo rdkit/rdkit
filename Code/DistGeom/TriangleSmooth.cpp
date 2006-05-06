@@ -1,4 +1,4 @@
-// $Id: TriangleSmooth.cpp 4952 2006-02-17 22:27:08Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

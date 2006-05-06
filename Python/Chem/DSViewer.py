@@ -1,4 +1,4 @@
-# $Id: DSViewer.py 5083 2006-03-11 17:56:19Z NightlyBuild $
+# $Id$
 #
 # Copyright (C) 2005-2006 Rational Discovery LLC
 #

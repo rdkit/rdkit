@@ -1,4 +1,4 @@
-// $Id: Matrices.cpp 4961 2006-02-18 00:14:47Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

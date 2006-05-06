@@ -1,4 +1,4 @@
-# $Id: SimilarityPickers.py 5042 2006-03-02 19:36:20Z glandrum $
+# $Id$
 #
 # Copyright (C) 2003 Rational Discovery LLC
 #  All Rights Reserved

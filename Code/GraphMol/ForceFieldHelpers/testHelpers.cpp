@@ -1,4 +1,4 @@
-// $Id: testHelpers.cpp 5127 2006-04-14 15:27:01Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

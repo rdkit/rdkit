@@ -1,4 +1,4 @@
-# $Id: QuantTree.py 3596 2004-07-23 01:45:57Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2001, 2003  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved

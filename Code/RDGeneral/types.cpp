@@ -1,4 +1,4 @@
-// $Id: types.cpp 4941 2006-02-17 01:17:05Z glandrum $
+// $Id$
 //
 //                 Copyright 2001-2006
 //                   Rational Discovery LLC 

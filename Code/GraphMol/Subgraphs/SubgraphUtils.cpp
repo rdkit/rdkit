@@ -1,4 +1,4 @@
-// $Id: SubgraphUtils.cpp 4975 2006-02-18 00:52:04Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

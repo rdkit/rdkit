@@ -1,4 +1,4 @@
-# $Id: Logger.py 5029 2006-03-02 18:45:07Z glandrum $
+# $Id$
 #----------------------------------------------------------------------
 # Name:        Logger.py
 # Purpose:     Provides a Logger class which can be wrapped around another

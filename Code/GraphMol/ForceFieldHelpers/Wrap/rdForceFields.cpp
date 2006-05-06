@@ -1,4 +1,4 @@
-// $Id: rdForceFields.cpp 4967 2006-02-18 00:24:33Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

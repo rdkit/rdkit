@@ -1,4 +1,4 @@
-// $Id: testFeatures.cpp 4953 2006-02-17 22:27:19Z glandrum $
+// $Id$
 //
 // Copyright (C)  2004-2006 Rational Discovery LLC
 //

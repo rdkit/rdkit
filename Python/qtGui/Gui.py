@@ -1,4 +1,4 @@
-# $Id: Gui.py 5025 2006-03-02 15:21:49Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002-2006  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

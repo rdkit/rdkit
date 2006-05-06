@@ -1,4 +1,4 @@
-// $Id: CatalogParams.cpp 4942 2006-02-17 01:19:53Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

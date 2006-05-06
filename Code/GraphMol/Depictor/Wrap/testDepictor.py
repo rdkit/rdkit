@@ -1,5 +1,5 @@
 #
-#  $Id: testDepictor.py 5113 2006-04-06 13:47:05Z glandrum $
+#  $Id$
 #
 import Chem
 from Chem import rdDepictor

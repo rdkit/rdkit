@@ -1,4 +1,4 @@
-// $Id: DistGeom.cpp 4950 2006-02-17 22:25:07Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

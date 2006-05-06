@@ -1,4 +1,4 @@
-# $Id: Composite.py 5032 2006-03-02 18:52:13Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2000,2003  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved

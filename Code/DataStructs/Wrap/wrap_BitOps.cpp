@@ -1,4 +1,4 @@
-// $Id: wrap_BitOps.cpp 4946 2006-02-17 01:44:04Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 //

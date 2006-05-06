@@ -1,4 +1,4 @@
-// $Id: rdfragcatalog.cpp 4968 2006-02-18 00:27:15Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

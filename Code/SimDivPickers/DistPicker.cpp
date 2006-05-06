@@ -1,4 +1,4 @@
-// $Id: DistPicker.cpp 4959 2006-02-17 23:53:31Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2006 Rational Discovery LLC
 //

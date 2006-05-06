@@ -1,4 +1,4 @@
-# $Id: testFuncs.py 4709 2005-07-01 02:49:46Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2005  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
@@ -98,7 +98,7 @@ CREATE FUNCTION rd_molamw(bytea) RETURNS double precision AS '%(base)s/RDLib','r
 
     curs.execute("SELECT rd_libversion();")
     res = curs.fetchone()[0]
-    rev = '$Rev: 4709 $'
+    rev = '$Rev$'
     self.failUnless(res.split(' ')[0]==rev.split(' ')[0])
 
     curs.execute("SELECT rd_hassubstruct('cC','c1ccccc1C');")

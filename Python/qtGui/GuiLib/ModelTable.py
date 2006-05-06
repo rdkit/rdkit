@@ -1,4 +1,4 @@
-# $Id: ModelTable.py 5064 2006-03-09 02:03:00Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002-2005  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

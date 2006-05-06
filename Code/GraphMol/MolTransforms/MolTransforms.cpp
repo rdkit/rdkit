@@ -1,4 +1,4 @@
-//  $Id: MolTransforms.cpp 4971 2006-02-18 00:38:52Z glandrum $
+//  $Id$
 // 
 //   Copyright (C) 2003-2006 Rational Discovery LLC
 //

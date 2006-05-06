@@ -1,4 +1,4 @@
-// $Id: Nonbonded.cpp 5125 2006-04-13 13:33:47Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

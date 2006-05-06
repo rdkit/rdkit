@@ -1,4 +1,4 @@
-// $Id: Utils.cpp 5061 2006-03-08 00:36:29Z glandrum $
+// $Id$
 //
 // Copyright (c) 2002-2006  greg Landrum, Rational Discovery LLC
 //

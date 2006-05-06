@@ -1,4 +1,4 @@
-// $Id: AlignMolecules.cpp 4969 2006-02-18 00:34:27Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2001-2006 Rational Discovery LLC
 //

@@ -1,4 +1,4 @@
-# $Id: BuildQuantTree.py 3419 2004-06-09 00:18:54Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2001-2004  greg Landrum and Rational Discovery LLC
 #  All Rights Reserved

@@ -1,4 +1,4 @@
-# $Id: UnitTestEmbed.py 5128 2006-04-14 15:33:08Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2004-2006  greg Landrum and Rational Discovery LLC
 #

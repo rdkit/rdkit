@@ -1,4 +1,4 @@
-// $Id: Params.cpp 4998 2006-02-21 00:52:50Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

@@ -1,4 +1,4 @@
-// $Id: SDFileParser.cpp 4964 2006-02-18 00:22:34Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
 //

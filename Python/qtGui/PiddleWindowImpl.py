@@ -1,4 +1,4 @@
-# $Id: PiddleWindowImpl.py 5047 2006-03-03 02:30:59Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002-2006  Greg Landrum and Rational Discovery LLC
 #

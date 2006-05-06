@@ -1,4 +1,4 @@
-// $Id: test1.cpp 5113 2006-04-06 13:47:05Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2002-2005 Greg Landrum and Rational Discovery LLC
 //       All Rights Reserved

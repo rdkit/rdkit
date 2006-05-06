@@ -1,4 +1,4 @@
-# $Id: DbUtils.py 5010 2006-02-22 15:23:39Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2000-2006  greg Landrum and Rational Discovery LLC
 #

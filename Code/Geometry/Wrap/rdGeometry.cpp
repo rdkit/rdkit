@@ -1,4 +1,4 @@
-// $Id: rdGeometry.cpp 4955 2006-02-17 23:37:53Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //

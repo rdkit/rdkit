@@ -1,4 +1,4 @@
-# $Id: TreeVis.py 5033 2006-03-02 19:24:02Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2002,2003  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved

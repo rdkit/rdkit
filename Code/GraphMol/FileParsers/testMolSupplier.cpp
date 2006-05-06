@@ -1,4 +1,4 @@
-//  $Id: testMolSupplier.cpp 5100 2006-03-23 02:03:39Z glandrum $
+//  $Id$
 // 
 //   Copyright (C) 2002-2006 Rational Discovery LLC
 //

@@ -1,4 +1,4 @@
-// $Id: testDgeomHelpers.cpp 5126 2006-04-14 15:26:05Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2004-2006 Rational Discovery LLC
 //

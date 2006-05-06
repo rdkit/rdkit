@@ -5,8 +5,8 @@
 #
 #  SVN Info:
 #   $Author: glandrum $
-#   $Date: 2006-01-12 08:20:06 -0800 (Thu, 12 Jan 2006) $
-#   $LastChangedRevision: 4899 $
+#   $Date$
+#   $LastChangedRevision$
 #
 from qt import *
 from forms.mainform import mainForm as _Form

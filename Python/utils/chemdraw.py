@@ -1,4 +1,4 @@
-# $Id: chemdraw.py 5077 2006-03-10 23:07:53Z glandrum $
+# $Id$
 #
 # Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
 #

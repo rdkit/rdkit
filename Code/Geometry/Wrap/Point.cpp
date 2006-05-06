@@ -1,4 +1,4 @@
-// $Id: Point.cpp 5116 2006-04-06 18:18:37Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2005 Rational Discovery LLC
 //

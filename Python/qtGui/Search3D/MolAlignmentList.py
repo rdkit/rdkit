@@ -1,4 +1,4 @@
-# $Id: MolAlignmentList.py 5084 2006-03-15 15:01:25Z glandrum $
+# $Id$
 #
 # Copyright (C) 2005,2006 Rational Discovery LLC
 #  All Rights Reserved
