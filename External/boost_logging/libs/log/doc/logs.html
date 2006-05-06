@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1">
+<title>Boost Log Library Documentation</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<a href="../../../index.htm">
+<img align="left" src="../../../c++boost.gif" alt="C++ Boost">
+</a>  
+
+<h1>Boost Log Library Documentation</h1>
+<p>
+<h3 align="center">Version 1.4</h3>
+<hr>
+<p><b>Logs (Hierarchies/ Using/ Declaring/ Defining) </b></p>
+<p>Every log has one attribute:</p>
+<ul>
+  <li>a <i>C++ name</i>, by which you refer when you <i>write to it</i></li>
+  <li>a <i>string name</i>, by which you manipulate its <i>behavior</i></li>
+</ul>
+<a name=behavior><p>The log's <b>behavior</b> consists of the following:</p></a>
+<ul>
+  <li><i>the appender(s) of the log</i>: where will messages written to this log 
+    be outputted to. For instance, you can have a log that outputs messages to 
+    the console and to a certain file at the same time.</li>
+  <li><i>the modifier(s) of the message</i>: functions that modify the original 
+    message. Such functions can prefix the original message by the current time, 
+    and/or by the current thread's ID, append an enter to the message, etc.</li>
+  <li>the log's <i>level</i>. When you write a message to the log, you specify 
+    its level. If the message's level is higher or equal to the the log's level, 
+    the message get written (to this log's destinations). Otherwise, the message 
+    is ignored (in fact they won't even be processed)</li>
+</ul>
+<p>The log's <i>string name</i> brings extreme flexibility:</p>
+<ul>
+  <li>You can externally identify a log. This way, you can, for instance, have 
+    a configuration file in which you decide which logs are enabled and which 
+    not. At run-time, you load that configuration, and enable/disable the logs 
+    you wish. Of course, you could say that it's possible to externally identify 
+    the log by its unique ID - indeed, you could, but it's much easier to deal 
+    with strings than with IDs (integers); also, see below.</li>
+  <li>You can create hierarchies of logs (and thus manipulate multiple logs at 
+    once). </li>
+</ul>
+<a name="hierarchy"><p><b>Log Hierarchies</b></p></a>
+<p>The hierarchy of logs is a tree (much like the directory tree on an Operating 
+  System). Each log either has <i>one</i> parent or no parent at all. </p>
+<p>Log A is said to be a descendant of Log B if when B's name starts with A's 
+  name (example: &quot;app.charts.gui.dbg&quot; is a descendant of &quot;app.charts&quot;, 
+  but not a descendant of &quot;app.err&quot;) . If so, B is said to be the <i>anscestor 
+  </i>of A.</p>
+<p>The important things to remember are:</p>
+<ul>
+  <li> <i>a log inherits all anscestors' behaviors</i>.</li>
+  <li>when you're manipulating logs' behavior, <i>you're always manipulating hierarchies 
+    of logs</i> (multiple logs at once). To manipulate multiple logs at once, 
+    use the wildcard - &quot;*&quot;.</li>
+</ul>
+<p>Say you have the following logs (identified by name): &quot;app&quot;, &quot;app.dbg&quot;, 
+  &quot;app.err&quot;, &quot;info&quot;, &quot;charts.dbg.gui&quot;</p>
+<p>Manipulating the logs:</p>
+<ul>
+  <li><i>&quot;app*&quot;</i> matches &quot;app&quot;, &quot;app.dbg&quot; and 
+    &quot;app.err&quot;</li>
+  <li><i>&quot;app&quot;</i> matches &quot;app&quot;</li>
+  <li><i>&quot;dbg&quot;</i> matches nothing</li>
+  <li><i>&quot;app.*&quot;</i> matches &quot;app.dbg&quot; and &quot;app.err&quot; 
+    (but not &quot;app&quot;!)</li>
+  <li><i>&quot;*.dbg&quot;</i> matches &quot;app.dbg&quot;</li>
+  <li><i>&quot;*.dbg.*&quot;</i> matches &quot;charts.dbg.gui&quot; (but no &quot;app.dbg&quot;!)</li>
+  <li><i>&quot;*dbg*&quot;</i> matches &quot;app.dbg&quot; and &quot;charts.dbg.gui&quot;</li>
+  <li><i>&quot;*&quot;</i> matches all</li>
+  <li><i>&quot;in*&quot;</i> matches &quot;info&quot;</li>
+  <li>&quot;<i>info&quot;</i> matches &quot;info&quot;</li>
+</ul>
+<p>&nbsp;</p>
+
+<p><a name="declare"><b>Declaring/defining Logs</b></a></p>
+<p><font face="Courier New, Courier, mono"><b><font size="-1" color="#0000FF">Header 
+  to include: <br>
+  #include &lt;boost/log/log.hpp&gt;</font></b></font></p>
+<p></p>
+<p>In order to be used, logs need to first be declared (and defined somewhere). 
+  You'll declare logs in a header file:</p>
+<pre class="code">
+// in some header file
+#include &lt;boost/log/log.hpp&gt;
+
+BOOST_DECLARE_LOG(app)
+BOOST_DECLARE_LOG(gui)
+
+</pre>
+<p>... and define them in a source file:</p>
+<pre class="code">
+// in a source file
+BOOST_DEFINE_LOG(app, "app")
+BOOST_DEFINE_LOG(gui, "app.gui")
+</pre>
+<p>That's it! Now, you can use them.</p>
+<p>&nbsp;</p>
+<a name="use">
+<p><b>Using Logs</b></p></a>
+<p><font face="Courier New, Courier, mono"><b><font size="-1" color="#0000FF">Header 
+  to include: <br>
+  #include &lt;boost/log/log.hpp&gt;</font></b></font></p>
+<p></p>
+<p>Using logs in code is extreme simple. Surround the <i>C++ log name</i> with 
+  BOOST_LOG() or BOOST_LOGL():</p>
+<pre class="code">
+int i = 1, j = 2, k = 3;
+// writing with default level - same as BOOST_LOGL(app,default_)
+BOOST_LOG(app) << "testing" << i << '-' << j << '-' << k;
+BOOST_LOG(app) << "this is a debug message, i=" << i << std::endl;
+BOOST_LOG(app) << "I just wanted to tell you something....";
+BOOST_LOG(gui) << "this will be written" << std::endl;
+
+// writing with 'err' level
+BOOST_LOGL(gui,err) << "Too many users!";
+
+</pre>
+<p>The generated code is both <a href="thread_safe.html">thread-safe</a> and <a href="enable.html">efficient</a>.</p>
+<a name="level">
+<p><b>Levels</b></p>
+</a>
+<p>Levels are unsigned integers. Each log has a level. When you write a message, 
+  you can use these macros:</p>
+<ul>
+  <li>BOOST_LOG(<i>log_name</i>) - you write to the given log, the message will 
+    have the <i>default_ </i>level</li>
+  <li>BOOST_LOGL(<i>log_name</i>, <i>lvl</i>) - you write to the given log, and 
+    specify the message's level</li>
+</ul>
+
+<pre class="code">// writing with default level - same as BOOST_LOGL(gui,default_)
+BOOST_LOG(gui) << "some gui event" << std::endl;
+
+// writing with 'err' level
+BOOST_LOGL(gui,err) << "Too many users!";
+
+</pre>
+<p>Click <a href="manipulating_logs.html#level">here</a> to get more info about 
+  levels.</p>
+<p>&nbsp;</p>
+<hr>
+<small>
+Copyright <a href="mailto:john&#64;torjo.com">John Torjo</a> &copy; 2004
+</small>
+
+</body>
+</html>

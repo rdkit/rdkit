@@ -1,0 +1,256 @@
+// $Id: MolFileWriter.cpp 4964 2006-02-18 00:22:34Z glandrum $
+//
+//  Copyright (C) 2003-2006 Rational Discovery LLC
+//
+//   @@ All Rights Reserved  @@
+//
+#include "FileParsers.h"
+#include "MolFileStereochem.h"
+#include <RDGeneral/Invariant.h>
+#include <GraphMol/RDKitQueries.h>
+#include <fstream>
+
+namespace RDKit{
+  
+  //*************************************
+  //
+  // Every effort has been made to adhere to MDL's standard
+  // for mol files
+  //  
+  //*************************************
+
+  std::string AtomGetMolFileSymbol(const Atom *atom){
+    PRECONDITION(atom,"");
+    // FIX: should eventually recognized dummies and do the right thing
+    std::string res=atom->getSymbol();
+    // pad the end with spaces
+    while(res.size()<3) res += " ";
+    return res;
+    //return res.c_str();
+  }
+  std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf=0){
+    PRECONDITION(atom,"");
+    std::string res;
+    char tmpStr[256];
+    int massDiff,chg,stereoCare,hCount,totValence,rxnComponentType;
+    int rxnComponentNumber,atomMapNumber,inversionFlag,exactChangeFlag;
+    massDiff=0;
+    chg=0;
+    stereoCare=0;
+    hCount=0;
+    totValence=0;
+    rxnComponentType=0;
+    rxnComponentNumber=0;
+    atomMapNumber=0;
+    inversionFlag=0;
+    exactChangeFlag=0;
+
+    if(atom->getFormalCharge()!=0){
+      switch(atom->getFormalCharge()){
+      case 1: chg=3;break;
+      case 2: chg=2;break;
+      case 3: chg=1;break;
+      case -1: chg=5;break;
+      case -2: chg=6;break;
+      case -3: chg=7;break;
+      default: chg=0;
+      }
+    }
+    double x, y, z;
+    x = y = z = 0.0;
+    if (conf) {
+      const RDGeom::Point3D pos = conf->getAtomPos(atom->getIdx());
+      x = pos.x; y = pos.y; z = pos.z;
+    } 
+    std::string symbol = AtomGetMolFileSymbol(atom);
+    sprintf(tmpStr,"% 10.4f% 10.4f% 10.4f %3s% 2d% 3d  0% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d",
+	    x,y,z,
+	    symbol.c_str(),
+	    massDiff,chg,hCount,stereoCare,totValence,rxnComponentType,
+	    rxnComponentNumber,atomMapNumber,inversionFlag,exactChangeFlag
+	    );
+    res += tmpStr;
+    return res;
+  };
+  
+  std::string BondGetMolFileSymbol(const Bond *bond){
+    PRECONDITION(bond,"");
+    // FIX: should eventually recognize queries
+    std::string res;
+    if(bond->getIsAromatic()){
+      res = "  4";
+    } else {
+      switch(bond->getBondType()){
+      case Bond::SINGLE: res="  1";break;
+      case Bond::DOUBLE: res="  2";break;
+      case Bond::TRIPLE: res="  3";break;
+      case Bond::AROMATIC: res="  4";break;
+      }
+    }
+    return res;
+    //return res.c_str();
+  }
+
+  // only valid for single bonds
+  int BondGetDirCode(const Bond::BondDir dir){
+    int res=0;
+    switch(dir){
+    case Bond::NONE: res=0;break;
+    case Bond::BEGINWEDGE: res=1;break;
+    case Bond::BEGINDASH: res=6;break;
+    case Bond::UNKNOWN: res=4;break;
+    default:
+      break;
+    }
+    return res;
+  }
+
+  std::string GetMolFileBondLine(const Bond *bond, const INT_MAP_INT &wedgeBonds,
+                                 const Conformer *conf){
+    PRECONDITION(bond,"");
+    std::string res;
+    char tmpStr[256];
+    std::string symbol = BondGetMolFileSymbol(bond);
+    int dirCode=0;
+    
+    Bond::BondDir dir=Bond::NONE;
+    bool reverse = false;
+    if(bond->getBondType()==Bond::SINGLE){
+      // single bond stereo chemistry
+      dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
+      dirCode = BondGetDirCode(dir);
+      // if this bond needs to be wedged it is possible that this wedgin was determined
+      // by a chiral at the end of bond (instead of at the beginning. In this case we 
+      // to reverse the bond begin and end atoms for the bond when we write the
+      // mol file
+      if ((dirCode == 1) || (dirCode == 6)) {
+        INT_MAP_INT_CI wbi = wedgeBonds.find(bond->getIdx());
+        if (wbi->second != bond->getBeginAtomIdx()) {
+          reverse = true;
+        }
+      }
+    } else if (bond->getBondType()==Bond::DOUBLE) { // && (bond->hasProp("_CIPCode"))) {
+      // double bond stereo chemistry - 
+      // we will worry about it only if it is  "any"
+      Bond::BondStereo stType = bond->getStereo();
+      if (stType == Bond::STEREOANY) { //"A") {
+        dirCode = 3; // can be either cis/trans
+      }
+    }
+
+    if (reverse) {
+      // switch the begin and end atoms on the bond line
+      sprintf(tmpStr,"% 3d% 3d%s % 2d",bond->getEndAtomIdx()+1,
+              bond->getBeginAtomIdx()+1,
+              symbol.c_str(),dirCode);
+    } else {
+      sprintf(tmpStr,"% 3d% 3d%s % 2d",bond->getBeginAtomIdx()+1,
+              bond->getEndAtomIdx()+1,
+              symbol.c_str(),dirCode);
+    }
+    res = tmpStr;
+    return res;
+  }
+    
+  //------------------------------------------------
+  //
+  //  gets a mol block as a string
+  //
+  //------------------------------------------------
+  std::string MolToMolBlock(const ROMol &mol,bool includeStereo, int confId){
+    // NOTE: kekulize the molecule before writing it out
+    // because of the way mol files handle aroamticity
+    ROMol tromol(mol);
+    RWMol &trwmol = static_cast<RWMol &>(tromol);
+    MolOps::Kekulize(trwmol);
+
+    if(includeStereo){
+      // assign "any" status to any stereo bond that are not 
+      // marked with "E" or "Z" code - these bonds need to be explictly written
+      // out to the mol file
+      MolOps::findPotentialStereoBonds(trwmol);
+      // now assign stereo code if any have been specified by the directions on
+      // single bonds
+      MolOps::assignBondStereoCodes(trwmol);
+    }
+    const RWMol &tmol = const_cast<RWMol &>(trwmol);
+
+    std::string res;
+    char tmpStr[256];
+
+    int nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents;
+    int nReactants,nProducts,nIntermediates;
+    nAtoms = tmol.getNumAtoms();
+    nBonds = tmol.getNumBonds();
+    nLists = 0;
+    chiralFlag = 0;
+    nsText=0;
+    nRxnComponents=0;
+    nReactants=0;
+    nProducts=0;
+    nIntermediates=0;
+
+    if(tmol.hasProp("_Name")){
+      std::string name;
+      tmol.getProp("_Name",name);
+      res += name;
+    }
+    res += "\n";
+
+    // info
+    if(tmol.hasProp("MolFileInfo")){
+      std::string info;
+      tmol.getProp("MolFileInfo",info);
+      res += info;
+    }
+    res += "\n";
+    // comments
+    if(tmol.hasProp("MolFileComments")){
+      std::string info;
+      tmol.getProp("MolFileComments",info);
+      res += info;
+    }
+    res += "\n";
+
+    sprintf(tmpStr,"% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d% 3d999 V2000\n",
+	    nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents,
+	    nReactants,nProducts,nIntermediates);
+    res += tmpStr;
+    const Conformer *conf;
+    if(confId<0 && tmol.getNumConformers()==0){
+      conf=0;
+    } else {
+      conf = &(tmol.getConformer(confId));
+    }
+
+    ROMol::ConstAtomIterator atomIt;
+    for(atomIt=tmol.beginAtoms();atomIt!=tmol.endAtoms();atomIt++){
+      res += GetMolFileAtomLine(*atomIt, conf);
+      res += "\n";
+    }
+
+    INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
+    ROMol::ConstBondIterator bondIt;
+    for(bondIt=tmol.beginBonds();bondIt!=tmol.endBonds();bondIt++){
+      res += GetMolFileBondLine(*bondIt, wedgeBonds, conf);
+      res += "\n";
+    }
+
+    // FIX: aliases, atom lists, etc.
+    res += "M  END\n";
+    return res;
+  }
+  
+  //------------------------------------------------
+  //
+  //  Dump a molecule to a file
+  //
+  //------------------------------------------------
+  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo, int confId){
+    std::ofstream *outStream = new std::ofstream(fName.c_str());
+    CHECK_INVARIANT(outStream,"could not open output file");
+    std::string outString = MolToMolBlock(mol,includeStereo, confId);
+    *outStream  << outString;
+  }    
+}
+

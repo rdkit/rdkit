@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<!DOCTYPE eSummaryResult PUBLIC "-//NLM//DTD eSummaryResult, 11 May 2002//EN" "http://www.ncbi.nlm.nih.gov/entrez/query/DTD/eSummary_020511.dtd">
+<eSummaryResult>
+<DocSum>
+	<Id>11960484</Id>
+	<Item Name="PubDate" Type="Date">2002 Apr 25</Item>
+	<Item Name="EntrezDate" Type="Date">2002/04/19 10:00</Item>
+	<Item Name="PubMedId" Type="Integer">11960484</Item>
+	<Item Name="MedlineId" Type="Integer">21959096</Item>
+	<Item Name="Source" Type="String">J Med Chem</Item>
+	<Item Name="Authors" Type="String">Penzotti JE, Lamb ML, Evensen E, Grootenhuis PD</Item>
+	<Item Name="AuthorList" Type="List">
+		<Item Name="Author" Type="String">Penzotti JE</Item>
+		<Item Name="Author" Type="String">Lamb ML</Item>
+		<Item Name="Author" Type="String">Evensen E</Item>
+		<Item Name="Author" Type="String">Grootenhuis PD</Item>
+	</Item>
+	<Item Name="Title" Type="String">A computational ensemble pharmacophore model for identifying substrates of P-glycoprotein.</Item>
+	<Item Name="Volume" Type="String">45</Item>
+	<Item Name="Issue" Type="String">9</Item>
+	<Item Name="Pages" Type="String">1737-40</Item>
+	<Item Name="SO" Type="String">2002 Apr 25;45(9):1737-40</Item>
+	<Item Name="Lang" Type="String">English</Item>
+	<Item Name="LangList" Type="List">
+		<Item Name="Lang" Type="String">English</Item>
+	</Item>
+	<Item Name="JTA" Type="String">J0F</Item>
+	<Item Name="NlmUniqueID" Type="String">9716531</Item>
+	<Item Name="ISSN" Type="String">0022-2623</Item>
+	<Item Name="ESSN" Type="String"></Item>
+	<Item Name="PubType" Type="String"></Item>
+	<Item Name="PubTypeList" Type="List">
+		<Item Name="PubType" Type="String">Letter</Item>
+	</Item>
+	<Item Name="RecordStatus" Type="String">PubMed - indexed for MEDLINE</Item>
+	<Item Name="PubStatus" Type="String">ppublish</Item>
+	<Item Name="HasAbstract" Type="Integer">1</Item>
+	<Item Name="ArticleIds" Type="List">
+		<Item Name="pubmed" Type="String">11960484</Item>
+		<Item Name="pii" Type="String">jm0255062</Item>
+		<Item Name="medline" Type="String">21959096</Item>
+	</Item>
+	<Item Name="PubId" Type="String">jm0255062</Item>
+	<Item Name="History" Type="List">
+		<Item Name="pubmed" Type="Date">2002/04/19 10:00</Item>
+		<Item Name="medline" Type="Date">2002/05/11 10:01</Item>
+	</Item>
+	<Item Name="References" Type="List">
+	</Item>
+</DocSum>
+
+<DocSum>
+	<Id>10893315</Id>
+	<Item Name="PubDate" Type="Date">2000 Jul 13</Item>
+	<Item Name="EntrezDate" Type="Date">2000/07/14 11:00</Item>
+	<Item Name="PubMedId" Type="Integer">10893315</Item>
+	<Item Name="MedlineId" Type="Integer">20353492</Item>
+	<Item Name="Source" Type="String">J Med Chem</Item>
+	<Item Name="Authors" Type="String">Bradley EK, Beroza P, Penzotti JE, Grootenhuis PD, Spellmeyer DC, Miller JL</Item>
+	<Item Name="AuthorList" Type="List">
+		<Item Name="Author" Type="String">Bradley EK</Item>
+		<Item Name="Author" Type="String">Beroza P</Item>
+		<Item Name="Author" Type="String">Penzotti JE</Item>
+		<Item Name="Author" Type="String">Grootenhuis PD</Item>
+		<Item Name="Author" Type="String">Spellmeyer DC</Item>
+		<Item Name="Author" Type="String">Miller JL</Item>
+	</Item>
+	<Item Name="Title" Type="String">A rapid computational method for lead evolution: description and application to alpha(1)-adrenergic antagonists.</Item>
+	<Item Name="Volume" Type="String">43</Item>
+	<Item Name="Issue" Type="String">14</Item>
+	<Item Name="Pages" Type="String">2770-4</Item>
+	<Item Name="SO" Type="String">2000 Jul 13;43(14):2770-4</Item>
+	<Item Name="Lang" Type="String">English</Item>
+	<Item Name="LangList" Type="List">
+		<Item Name="Lang" Type="String">English</Item>
+	</Item>
+	<Item Name="JTA" Type="String">J0F</Item>
+	<Item Name="NlmUniqueID" Type="String">9716531</Item>
+	<Item Name="ISSN" Type="String">0022-2623</Item>
+	<Item Name="ESSN" Type="String"></Item>
+	<Item Name="PubType" Type="String"></Item>
+	<Item Name="PubTypeList" Type="List">
+		<Item Name="PubType" Type="String">Journal Article</Item>
+	</Item>
+	<Item Name="RecordStatus" Type="String">PubMed - indexed for MEDLINE</Item>
+	<Item Name="PubStatus" Type="String">ppublish</Item>
+	<Item Name="HasAbstract" Type="Integer">1</Item>
+	<Item Name="ArticleIds" Type="List">
+		<Item Name="pubmed" Type="String">10893315</Item>
+		<Item Name="medline" Type="String">20353492</Item>
+		<Item Name="pii" Type="String">jm990578n</Item>
+	</Item>
+	<Item Name="PubId" Type="String">jm990578n</Item>
+	<Item Name="History" Type="List">
+		<Item Name="pubmed" Type="Date">2000/07/14 11:00</Item>
+		<Item Name="medline" Type="Date">2000/08/06 11:00</Item>
+	</Item>
+	<Item Name="References" Type="List">
+	</Item>
+</DocSum>
+
+</eSummaryResult>

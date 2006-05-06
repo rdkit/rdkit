@@ -1,0 +1,85 @@
+
+null consturctor 
+A:
+maindiag: (0)  #ref: 1
+subdiag: (0)  #ref: 1
+
+
+
+(int, int) constructor 
+C(N):
+maindiag: (10)  #ref: 1
+subdiag: (9)  #ref: 1
+
+
+ &C(0,0): 0x20b08
+
+
+X(const &X) constructor 
+D(C):
+maindiag: (10)  #ref: 2
+subdiag: (9)  #ref: 2
+
+
+test A.ref(C)
+A:
+maindiag: (10)  #ref: 3
+subdiag: (9)  #ref: 3
+
+D(i,i) = 3.3
+
+D:
+3.3 0                 
+0 3.3 0               
+  0 3.3 0             
+    0 3.3 0           
+      0 3.3 0         
+        0 3.3 0       
+          0 3.3 0     
+            0 3.3 0   
+              0 3.3 0 
+                3.3 
+
+
+D(3,2) = 9.0
+
+test A.copy(D)
+A:
+maindiag: (10)  #ref: 1
+subdiag: (9)  #ref: 1
+
+A:
+3.3 0                 
+0 3.3 0               
+  0 3.3 0             
+    9 3.3 9           
+      0 3.3 0         
+        0 3.3 0       
+          0 3.3 0     
+            0 3.3 0   
+              0 3.3 0 
+                3.3 
+
+
+
+test E.ref(D.diag(0))
+E:
+3.3  
+3.3  
+3.3  
+3.3  
+3.3  
+3.3  
+3.3  
+3.3  
+3.3  
+3.3  
+
+
+D:
+maindiag: (10)  #ref: 3
+subdiag: (9)  #ref: 2
+
+test error message: E.ref(D.diag(2))
+
+Unrecognized integer representation of diagonal

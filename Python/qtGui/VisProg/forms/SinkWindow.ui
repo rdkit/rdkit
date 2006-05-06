@@ -1,0 +1,755 @@
+<!DOCTYPE UI><UI version="3.0" stdsetdef="1">
+<class>SinkWindow</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>SinkWindow</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>606</width>
+            <height>337</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Sink</string>
+    </property>
+    <property name="sizeGripEnabled">
+        <bool>false</bool>
+    </property>
+    <vbox>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <property name="margin">
+            <number>11</number>
+        </property>
+        <property name="spacing">
+            <number>6</number>
+        </property>
+        <widget class="QTabWidget">
+            <property name="name">
+                <cstring>sinkTab</cstring>
+            </property>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>infoPage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Info</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <property name="margin">
+                        <number>11</number>
+                    </property>
+                    <property name="spacing">
+                        <number>6</number>
+                    </property>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>Layout30</cstring>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <property name="margin">
+                                <number>0</number>
+                            </property>
+                            <property name="spacing">
+                                <number>6</number>
+                            </property>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>Layout4</cstring>
+                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <property name="margin">
+                                        <number>0</number>
+                                    </property>
+                                    <property name="spacing">
+                                        <number>6</number>
+                                    </property>
+                                    <widget class="QButtonGroup">
+                                        <property name="name">
+                                            <cstring>info_typeGroup</cstring>
+                                        </property>
+                                        <property name="title">
+                                            <string>Output Type</string>
+                                        </property>
+                                        <property name="exclusive">
+                                            <bool>true</bool>
+                                        </property>
+                                        <widget class="QRadioButton">
+                                            <property name="name">
+                                                <cstring>info_dbButton</cstring>
+                                            </property>
+                                            <property name="geometry">
+                                                <rect>
+                                                    <x>10</x>
+                                                    <y>60</y>
+                                                    <width>130</width>
+                                                    <height>24</height>
+                                                </rect>
+                                            </property>
+                                            <property name="text">
+                                                <string>Database</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QRadioButton">
+                                            <property name="name">
+                                                <cstring>info_fileButton</cstring>
+                                            </property>
+                                            <property name="geometry">
+                                                <rect>
+                                                    <x>10</x>
+                                                    <y>30</y>
+                                                    <width>130</width>
+                                                    <height>24</height>
+                                                </rect>
+                                            </property>
+                                            <property name="text">
+                                                <string>File</string>
+                                            </property>
+                                            <property name="checked">
+                                                <bool>true</bool>
+                                            </property>
+                                        </widget>
+                                    </widget>
+                                    <widget class="QButtonGroup">
+                                        <property name="name">
+                                            <cstring>appendGroup</cstring>
+                                        </property>
+                                        <property name="title">
+                                            <string>Disposition</string>
+                                        </property>
+                                        <widget class="QRadioButton">
+                                            <property name="name">
+                                                <cstring>info_appendButton</cstring>
+                                            </property>
+                                            <property name="geometry">
+                                                <rect>
+                                                    <x>10</x>
+                                                    <y>30</y>
+                                                    <width>121</width>
+                                                    <height>24</height>
+                                                </rect>
+                                            </property>
+                                            <property name="text">
+                                                <string>Append</string>
+                                            </property>
+                                            <property name="checked">
+                                                <bool>true</bool>
+                                            </property>
+                                        </widget>
+                                        <widget class="QRadioButton">
+                                            <property name="name">
+                                                <cstring>info_overwriteButton</cstring>
+                                            </property>
+                                            <property name="geometry">
+                                                <rect>
+                                                    <x>10</x>
+                                                    <y>60</y>
+                                                    <width>121</width>
+                                                    <height>24</height>
+                                                </rect>
+                                            </property>
+                                            <property name="text">
+                                                <string>Overwrite</string>
+                                            </property>
+                                        </widget>
+                                    </widget>
+                                    <spacer>
+                                        <property name="name" stdset="0">
+                                            <cstring>Spacer2</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </hbox>
+                            </widget>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>Layout29</cstring>
+                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <property name="margin">
+                                        <number>0</number>
+                                    </property>
+                                    <property name="spacing">
+                                        <number>6</number>
+                                    </property>
+                                    <widget class="QSpinBox">
+                                        <property name="name">
+                                            <cstring>info_countBox</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                        <property name="maxValue">
+                                            <number>9999</number>
+                                        </property>
+                                        <property name="toolTip" stdset="0">
+                                            <string>Maximum number of items to provide</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel">
+                                        <property name="name">
+                                            <cstring>TextLabel4</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>Max Output Count</string>
+                                        </property>
+                                        <property name="toolTip" stdset="0">
+                                            <string>Maximum number of items to provide</string>
+                                        </property>
+                                    </widget>
+                                    <spacer>
+                                        <property name="name" stdset="0">
+                                            <cstring>Spacer4</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </hbox>
+                            </widget>
+                        </vbox>
+                    </widget>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>filePage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>File</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <property name="margin">
+                        <number>11</number>
+                    </property>
+                    <property name="spacing">
+                        <number>6</number>
+                    </property>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>Layout6</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <property name="margin">
+                                <number>0</number>
+                            </property>
+                            <property name="spacing">
+                                <number>6</number>
+                            </property>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>file_nameLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>File Name</string>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit">
+                                <property name="name">
+                                    <cstring>file_nameBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QToolButton">
+                                <property name="name">
+                                    <cstring>file_nameButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>...</string>
+                                </property>
+                            </widget>
+                        </hbox>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>Layout27</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <property name="margin">
+                                <number>0</number>
+                            </property>
+                            <property name="spacing">
+                                <number>6</number>
+                            </property>
+                            <widget class="QButtonGroup">
+                                <property name="name">
+                                    <cstring>file_formatGroup</cstring>
+                                </property>
+                                <property name="title">
+                                    <string>File Format</string>
+                                </property>
+                                <property name="exclusive">
+                                    <bool>true</bool>
+                                </property>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>file_tdtButton</cstring>
+                                    </property>
+                                    <property name="geometry">
+                                        <rect>
+                                            <x>10</x>
+                                            <y>80</y>
+                                            <width>121</width>
+                                            <height>24</height>
+                                        </rect>
+                                    </property>
+                                    <property name="text">
+                                        <string>TDT File</string>
+                                    </property>
+                                </widget>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>file_txtButton</cstring>
+                                    </property>
+                                    <property name="geometry">
+                                        <rect>
+                                            <x>10</x>
+                                            <y>110</y>
+                                            <width>121</width>
+                                            <height>24</height>
+                                        </rect>
+                                    </property>
+                                    <property name="text">
+                                        <string>Raw Text</string>
+                                    </property>
+                                </widget>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>file_sdfButton</cstring>
+                                    </property>
+                                    <property name="geometry">
+                                        <rect>
+                                            <x>10</x>
+                                            <y>20</y>
+                                            <width>121</width>
+                                            <height>24</height>
+                                        </rect>
+                                    </property>
+                                    <property name="text">
+                                        <string>SD File</string>
+                                    </property>
+                                    <property name="checked">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                                <widget class="QRadioButton">
+                                    <property name="name">
+                                        <cstring>file_smiButton</cstring>
+                                    </property>
+                                    <property name="geometry">
+                                        <rect>
+                                            <x>10</x>
+                                            <y>50</y>
+                                            <width>121</width>
+                                            <height>24</height>
+                                        </rect>
+                                    </property>
+                                    <property name="text">
+                                        <string>Smiles Table</string>
+                                    </property>
+                                </widget>
+                            </widget>
+                            <spacer>
+                                <property name="name" stdset="0">
+                                    <cstring>Spacer3</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>20</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </hbox>
+                    </widget>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>queryPage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Database</string>
+                </attribute>
+                <grid>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <property name="margin">
+                        <number>11</number>
+                    </property>
+                    <property name="spacing">
+                        <number>6</number>
+                    </property>
+                    <widget class="QLabel" row="5" column="0">
+                        <property name="name">
+                            <cstring>db_sqlLabel_2</cstring>
+                        </property>
+                        <property name="text">
+                            <string>SQL Where</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit" row="5" column="1">
+                        <property name="name">
+                            <cstring>db_sqlWhereBox</cstring>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>where specification for the SQL query</string>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit" row="4" column="1">
+                        <property name="name">
+                            <cstring>db_sqlWhatBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>*</string>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>which fields are to be taken from the table </string>
+                        </property>
+                    </widget>
+                    <widget class="QComboBox" row="3" column="1">
+                        <property name="name">
+                            <cstring>db_tableCombo</cstring>
+                        </property>
+                        <property name="enabled">
+                            <bool>false</bool>
+                        </property>
+                        <property name="editable">
+                            <bool>true</bool>
+                        </property>
+                        <property name="autoCompletion">
+                            <bool>true</bool>
+                        </property>
+                        <property name="duplicatesEnabled">
+                            <bool>false</bool>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>name of the database table</string>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="3" column="0">
+                        <property name="name">
+                            <cstring>db_tabelLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Table</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="2" column="0">
+                        <property name="name">
+                            <cstring>db_sqlLabel_3_2</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Password</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>password for DB access</string>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="1" column="0">
+                        <property name="name">
+                            <cstring>db_sqlLabel_3</cstring>
+                        </property>
+                        <property name="text">
+                            <string>User</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>username for DB access</string>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit" row="2" column="1">
+                        <property name="name">
+                            <cstring>db_passwordField</cstring>
+                        </property>
+                        <property name="text">
+                            <string>masterkey</string>
+                        </property>
+                        <property name="echoMode">
+                            <enum>Password</enum>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>password for DB access</string>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit" row="1" column="1">
+                        <property name="name">
+                            <cstring>db_userField</cstring>
+                        </property>
+                        <property name="text">
+                            <string>sysdba</string>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>username for DB access</string>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="4" column="0">
+                        <property name="name">
+                            <cstring>db_sqlLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>SQL What</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="0" column="0">
+                        <property name="name">
+                            <cstring>db_tabelLabel_2</cstring>
+                        </property>
+                        <property name="text">
+                            <string>File</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLayoutWidget" row="0" column="1">
+                        <property name="name">
+                            <cstring>Layout13</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <property name="margin">
+                                <number>0</number>
+                            </property>
+                            <property name="spacing">
+                                <number>6</number>
+                            </property>
+                            <widget class="QLineEdit">
+                                <property name="name">
+                                    <cstring>db_nameBox</cstring>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>file containing the database</string>
+                                </property>
+                            </widget>
+                            <widget class="QToolButton">
+                                <property name="name">
+                                    <cstring>db_nameButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>...</string>
+                                </property>
+                            </widget>
+                        </hbox>
+                    </widget>
+                </grid>
+            </widget>
+        </widget>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>Layout3</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <property name="margin">
+                    <number>0</number>
+                </property>
+                <property name="spacing">
+                    <number>6</number>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>nodeTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Node Text</string>
+                    </property>
+                    <property name="toolTip" stdset="0">
+                        <string>Text displayed on the canvas</string>
+                    </property>
+                </widget>
+                <widget class="QLineEdit">
+                    <property name="name">
+                        <cstring>nodeTextBox</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Sink</string>
+                    </property>
+                    <property name="toolTip" stdset="0">
+                        <string>Text displayed on the canvas</string>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>Layout1</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <property name="margin">
+                    <number>0</number>
+                </property>
+                <property name="spacing">
+                    <number>6</number>
+                </property>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>buttonHelp</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Help</string>
+                    </property>
+                    <property name="accel">
+                        <number>4144</number>
+                    </property>
+                    <property name="autoDefault">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <spacer>
+                    <property name="name" stdset="0">
+                        <cstring>Horizontal Spacing2</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>20</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>buttonOk</cstring>
+                    </property>
+                    <property name="text">
+                        <string>OK</string>
+                    </property>
+                    <property name="accel">
+                        <number>0</number>
+                    </property>
+                    <property name="autoDefault">
+                        <bool>true</bool>
+                    </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>buttonCancel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <number>0</number>
+                    </property>
+                    <property name="autoDefault">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
+    </vbox>
+</widget>
+<connections>
+    <connection>
+        <sender>buttonOk</sender>
+        <signal>clicked()</signal>
+        <receiver>SinkWindow</receiver>
+        <slot>accept()</slot>
+    </connection>
+    <connection>
+        <sender>buttonCancel</sender>
+        <signal>clicked()</signal>
+        <receiver>SinkWindow</receiver>
+        <slot>reject()</slot>
+    </connection>
+    <connection>
+        <sender>db_nameButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SinkWindow</receiver>
+        <slot>dbFileClick()</slot>
+    </connection>
+    <connection>
+        <sender>file_nameButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SinkWindow</receiver>
+        <slot>fileClick()</slot>
+    </connection>
+</connections>
+<slots>
+    <slot>dbFileClick()</slot>
+    <slot>fileClick()</slot>
+    <slot>refreshContents()</slot>
+</slots>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

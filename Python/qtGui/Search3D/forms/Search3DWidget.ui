@@ -1,0 +1,937 @@
+<!DOCTYPE UI><UI version="3.2" stdsetdef="1">
+<class>Search3DWidget</class>
+<widget class="QWidget">
+    <property name="name">
+        <cstring>Search3DWidget</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>647</width>
+            <height>510</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Search3DWidget</string>
+    </property>
+    <vbox>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <widget class="QTabWidget">
+            <property name="name">
+                <cstring>tabWidget</cstring>
+            </property>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>loadPage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Load Reference Molecule</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout11</cstring>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLineEdit" row="1" column="1">
+                                <property name="name">
+                                    <cstring>proteinFilename</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>3</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                    <size>
+                                        <width>300</width>
+                                        <height>0</height>
+                                    </size>
+                                </property>
+                                <property name="frameShape">
+                                    <enum>LineEditPanel</enum>
+                                </property>
+                                <property name="frameShadow">
+                                    <enum>Sunken</enum>
+                                </property>
+                                <property name="inputMask">
+                                    <string></string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Enter the name of the mol file containing the reference PDB file. This is optional and is just used to display the protein.</string>
+                                </property>
+                            </widget>
+                            <widget class="QPushButton" row="0" column="2">
+                                <property name="name">
+                                    <cstring>molFileButton</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>0</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>20</width>
+                                        <height>32767</height>
+                                    </size>
+                                </property>
+                                <property name="text">
+                                    <string>...</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Browse for the reference molecule file.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_2</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>5</hsizetype>
+                                        <vsizetype>5</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                    <size>
+                                        <width>0</width>
+                                        <height>0</height>
+                                    </size>
+                                </property>
+                                <property name="text">
+                                    <string>Mol File:</string>
+                                </property>
+                                <property name="scaledContents">
+                                    <bool>false</bool>
+                                </property>
+                                <property name="alignment">
+                                    <set>AlignVCenter|AlignRight</set>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit" row="0" column="1">
+                                <property name="name">
+                                    <cstring>molFilename</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>3</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                    <size>
+                                        <width>300</width>
+                                        <height>0</height>
+                                    </size>
+                                </property>
+                                <property name="frameShape">
+                                    <enum>LineEditPanel</enum>
+                                </property>
+                                <property name="frameShadow">
+                                    <enum>Sunken</enum>
+                                </property>
+                                <property name="inputMask">
+                                    <string></string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Enter the name of the mol file containing the reference molecule.</string>
+                                </property>
+                            </widget>
+                            <widget class="QPushButton" row="1" column="2">
+                                <property name="name">
+                                    <cstring>proteinFileButton</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>0</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>20</width>
+                                        <height>32767</height>
+                                    </size>
+                                </property>
+                                <property name="text">
+                                    <string>...</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Enter the name of the mol file containing the reference PDB file. This is optional and is just used to display the protein.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_2_2</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>PDB File (optional):</string>
+                                </property>
+                                <property name="alignment">
+                                    <set>AlignVCenter|AlignRight</set>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer14</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>131</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>pcophorePage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Define Pharmacophore</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout13_2</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>fdefFileLabel</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>5</hsizetype>
+                                        <vsizetype>5</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                    <size>
+                                        <width>0</width>
+                                        <height>0</height>
+                                    </size>
+                                </property>
+                                <property name="text">
+                                    <string>FDef File:</string>
+                                </property>
+                                <property name="scaledContents">
+                                    <bool>false</bool>
+                                </property>
+                                <property name="alignment">
+                                    <set>AlignVCenter|AlignRight</set>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit">
+                                <property name="name">
+                                    <cstring>fdefFilename</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>3</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                    <size>
+                                        <width>300</width>
+                                        <height>0</height>
+                                    </size>
+                                </property>
+                                <property name="mouseTracking">
+                                    <bool>false</bool>
+                                </property>
+                                <property name="frameShape">
+                                    <enum>LineEditPanel</enum>
+                                </property>
+                                <property name="frameShadow">
+                                    <enum>Sunken</enum>
+                                </property>
+                                <property name="inputMask">
+                                    <string></string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Enter the name of the feature definition file.</string>
+                                </property>
+                            </widget>
+                            <widget class="QPushButton">
+                                <property name="name">
+                                    <cstring>fdefFileButton</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>0</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>20</width>
+                                        <height>32767</height>
+                                    </size>
+                                </property>
+                                <property name="text">
+                                    <string>...</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Browse for the feature definition file.</string>
+                                </property>
+                            </widget>
+                        </hbox>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout7</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QPushButton">
+                                <property name="name">
+                                    <cstring>grabAtomsButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Grab Atoms From PyMol</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Uses the current atom pick in PyMol to define a set of features.</string>
+                                </property>
+                            </widget>
+                            <widget class="QPushButton">
+                                <property name="name">
+                                    <cstring>addAtomsButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Add Atoms From PyMol</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Expands the feature set using the current selections in PyMol.</string>
+                                </property>
+                            </widget>
+                        </hbox>
+                    </widget>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>detailsPage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Search Details</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QButtonGroup">
+                        <property name="name">
+                            <cstring>inputTypeGroup</cstring>
+                        </property>
+                        <property name="title">
+                            <string></string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout9</cstring>
+                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QRadioButton">
+                                        <property name="name">
+                                            <cstring>sdFileRadio</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                        <property name="checked">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QGroupBox">
+                                        <property name="name">
+                                            <cstring>molFileBox</cstring>
+                                        </property>
+                                        <property name="title">
+                                            <string></string>
+                                        </property>
+                                        <hbox>
+                                            <property name="name">
+                                                <cstring>unnamed</cstring>
+                                            </property>
+                                            <widget class="QLabel">
+                                                <property name="name">
+                                                    <cstring>textLabel1_2_3</cstring>
+                                                </property>
+                                                <property name="sizePolicy">
+                                                    <sizepolicy>
+                                                        <hsizetype>5</hsizetype>
+                                                        <vsizetype>5</vsizetype>
+                                                        <horstretch>0</horstretch>
+                                                        <verstretch>0</verstretch>
+                                                    </sizepolicy>
+                                                </property>
+                                                <property name="minimumSize">
+                                                    <size>
+                                                        <width>0</width>
+                                                        <height>0</height>
+                                                    </size>
+                                                </property>
+                                                <property name="text">
+                                                    <string>SD File:</string>
+                                                </property>
+                                                <property name="scaledContents">
+                                                    <bool>false</bool>
+                                                </property>
+                                                <property name="alignment">
+                                                    <set>AlignVCenter|AlignRight</set>
+                                                </property>
+                                            </widget>
+                                            <widget class="QLineEdit">
+                                                <property name="name">
+                                                    <cstring>sdFilename</cstring>
+                                                </property>
+                                                <property name="sizePolicy">
+                                                    <sizepolicy>
+                                                        <hsizetype>3</hsizetype>
+                                                        <vsizetype>0</vsizetype>
+                                                        <horstretch>0</horstretch>
+                                                        <verstretch>0</verstretch>
+                                                    </sizepolicy>
+                                                </property>
+                                                <property name="minimumSize">
+                                                    <size>
+                                                        <width>300</width>
+                                                        <height>0</height>
+                                                    </size>
+                                                </property>
+                                                <property name="frameShape">
+                                                    <enum>LineEditPanel</enum>
+                                                </property>
+                                                <property name="frameShadow">
+                                                    <enum>Sunken</enum>
+                                                </property>
+                                                <property name="inputMask">
+                                                    <string></string>
+                                                </property>
+                                                <property name="toolTip" stdset="0">
+                                                    <string>Enter the name of the mol file containing the SD file to be searched.</string>
+                                                </property>
+                                            </widget>
+                                            <widget class="QPushButton">
+                                                <property name="name">
+                                                    <cstring>sdFileButton</cstring>
+                                                </property>
+                                                <property name="sizePolicy">
+                                                    <sizepolicy>
+                                                        <hsizetype>0</hsizetype>
+                                                        <vsizetype>0</vsizetype>
+                                                        <horstretch>0</horstretch>
+                                                        <verstretch>0</verstretch>
+                                                    </sizepolicy>
+                                                </property>
+                                                <property name="maximumSize">
+                                                    <size>
+                                                        <width>20</width>
+                                                        <height>32767</height>
+                                                    </size>
+                                                </property>
+                                                <property name="text">
+                                                    <string>...</string>
+                                                </property>
+                                                <property name="toolTip" stdset="0">
+                                                    <string>Browse for the SD file.</string>
+                                                </property>
+                                            </widget>
+                                        </hbox>
+                                    </widget>
+                                </hbox>
+                            </widget>
+                        </vbox>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout8</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QPushButton">
+                                <property name="name">
+                                    <cstring>loadMolsButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Load Molecules</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Load molecules from the SD file. Replaces the current search set.</string>
+                                </property>
+                            </widget>
+                            <widget class="QPushButton">
+                                <property name="name">
+                                    <cstring>addMolsButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Add Molecules</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Add molecules from the SD file to the current search set.</string>
+                                </property>
+                            </widget>
+                            <spacer>
+                                <property name="name">
+                                    <cstring>spacer4</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>380</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </hbox>
+                    </widget>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>numMolsLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Number of Molecules: 0</string>
+                        </property>
+                    </widget>
+                    <widget class="QPushButton">
+                        <property name="name">
+                            <cstring>searchButton</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Search</string>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>Search the target molecules to find those than can hit the active pharmacophore.</string>
+                        </property>
+                    </widget>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>numHitsLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Number of Hits:</string>
+                        </property>
+                    </widget>
+                    <widget class="QPushButton">
+                        <property name="name">
+                            <cstring>examineHitsButton</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Examine Hits</string>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>Generate alignments for the search hits to the active pharmacophore.</string>
+                        </property>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer7</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>40</height>
+                            </size>
+                        </property>
+                    </spacer>
+                    <widget class="QPushButton">
+                        <property name="name">
+                            <cstring>refineSearchButton</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Refine Search</string>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>Replaces the target molecules with the current search results (so that they can be searched again).</string>
+                        </property>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout7</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QPushButton">
+                                <property name="name">
+                                    <cstring>clusterHitsButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Pick Diverse Subset</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Cluster the hits and do a diversity pick.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>textLabel1</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>0</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="text">
+                                    <string>Number of picks:</string>
+                                </property>
+                            </widget>
+                            <widget class="QSpinBox">
+                                <property name="name">
+                                    <cstring>numPicksBox</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>0</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>Number of hits to include in the diverse subset.</string>
+                                </property>
+                            </widget>
+                        </hbox>
+                    </widget>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>resultsPage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Search Results</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout12</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>centerViewCheck</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Center View?</string>
+                                </property>
+                                <property name="checked">
+                                    <bool>false</bool>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>If this is checked, the view will be recentered after each molecule is displayed.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>replaceCheck</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Replace Current?</string>
+                                </property>
+                                <property name="checked">
+                                    <bool>true</bool>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>If this is checked, selecting a new alignment will replace the current alignment, otherwise both will be displayed.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>showProteinCheck</cstring>
+                                </property>
+                                <property name="enabled">
+                                    <bool>true</bool>
+                                </property>
+                                <property name="text">
+                                    <string>Show Protein?</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>If this is checked and a protein file has been loaded, the protein will be displayed along with the ligand and new structures.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>neighboringSurfaceCheck</cstring>
+                                </property>
+                                <property name="enabled">
+                                    <bool>true</bool>
+                                </property>
+                                <property name="text">
+                                    <string>Show Neighborhood?</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>If this is checked, the surface of the protein in the neighborhood of the refrence molecule will be displayed.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>showHBondsCheck</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Show H Bonds?</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>If this is checked, possible hydrogen bonds between the mapped molecule and the protein will be highlighted.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>showCollisionsCheck</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Show Collisions?</string>
+                                </property>
+                                <property name="toolTip" stdset="0">
+                                    <string>If this is checked, close contacts between the mapped molecule and the protein will be highlighted.</string>
+                                </property>
+                            </widget>
+                            <spacer>
+                                <property name="name">
+                                    <cstring>spacer9</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>30</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </hbox>
+                    </widget>
+                </vbox>
+            </widget>
+        </widget>
+    </vbox>
+</widget>
+<connections>
+    <connection>
+        <sender>sdFileButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>sdFileButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>sdFilename</sender>
+        <signal>returnPressed()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>sdFilenameChanged()</slot>
+    </connection>
+    <connection>
+        <sender>searchButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>searchButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>molFilename</sender>
+        <signal>returnPressed()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>molFilenameChanged()</slot>
+    </connection>
+    <connection>
+        <sender>molFileButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>molFileButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>proteinFilename</sender>
+        <signal>returnPressed()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>proteinFilenameChanged()</slot>
+    </connection>
+    <connection>
+        <sender>proteinFileButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>proteinFileButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>fdefFilename</sender>
+        <signal>returnPressed()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>fdefFilenameChanged()</slot>
+    </connection>
+    <connection>
+        <sender>fdefFileButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>fdefFileButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>grabAtomsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>grabAtomsButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>loadMolsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>loadMolsButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>examineHitsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>examineHitsClicked()</slot>
+    </connection>
+    <connection>
+        <sender>neighboringSurfaceCheck</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>neighborStateChanged()</slot>
+    </connection>
+    <connection>
+        <sender>refineSearchButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>refineSearchButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>clusterHitsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>clusterHitsButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>showProteinCheck</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>showProteinStateChanged()</slot>
+    </connection>
+    <connection>
+        <sender>showHBondsCheck</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>showHBondsStateChanged()</slot>
+    </connection>
+    <connection>
+        <sender>addAtomsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>addAtomsButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>addMolsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>addMolsButtonClicked()</slot>
+    </connection>
+    <connection>
+        <sender>showCollisionsCheck</sender>
+        <signal>stateChanged(int)</signal>
+        <receiver>Search3DWidget</receiver>
+        <slot>showCollisionsStateChanged()</slot>
+    </connection>
+</connections>
+<slots>
+    <slot>sdFileButtonClicked()</slot>
+    <slot>sdFilenameChanged()</slot>
+    <slot>searchButtonClicked()</slot>
+    <slot>molFilenameChanged()</slot>
+    <slot>molFileButtonClicked()</slot>
+    <slot>proteinFilenameChanged()</slot>
+    <slot>proteinFileButtonClicked()</slot>
+    <slot>fdefFilenameChanged()</slot>
+    <slot>fdefFileButtonClicked()</slot>
+    <slot>grabAtomsButtonClicked()</slot>
+    <slot>loadMolsButtonClicked()</slot>
+    <slot>examineHitsClicked()</slot>
+    <slot>neighborStateChanged()</slot>
+    <slot>refineSearchButtonClicked()</slot>
+    <slot>clusterHitsButtonClicked()</slot>
+    <slot>showProteinStateChanged()</slot>
+    <slot>showHBondsStateChanged()</slot>
+    <slot>addAtomsButtonClicked()</slot>
+    <slot>addMolsButtonClicked()</slot>
+    <slot>showCollisionsStateChanged()</slot>
+</slots>
+<layoutdefaults spacing="2" margin="4"/>
+</UI>

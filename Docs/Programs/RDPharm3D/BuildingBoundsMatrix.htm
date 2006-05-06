@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="RD.css">
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+   <title>Building the Bounds Matrix</title>
+</head>
+<body>
+
+<h2>
+<!--
+<Object type="application/x-oleobject" classid="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<param name="Keyword" value="distance">
+	<param name="Keyword" value="distance,bounds">
+	<param name="Keyword" value="bounds matrix">
+	<param name="Keyword" value="bounds matrix, building">
+	<param name="Keyword" value="distance bounds matrix">
+	<param name="Keyword" value="triangle smoothing">
+</OBJECT>
+-->	
+<a name="Building_the_Bounds_Matrix"></a>Building the Bounds Matrix</h2>
+The distance bounds matrix for each molecule contains lower bounds for
+each atom--atom distance in the lower triangle and the upper bounds for
+each distance in the upper triangle. These bounds are assigned using a
+rules-based approach [<a href="References.htm#Blaney1994">Blaney1994</a>]
+where 1--2, 1--3, and some 1--4 distances are set using the force
+field's bond length, bond angle, and torsion parameters respectively.
+Bounds for some higher order distances (typically associated with
+rings) are also set. Any remaining distance bounds are set to
+conservative defaults: with a minimum above the sum of van der Waals
+radii and a large maximum.<br>
+<br>
+Once the bounds matrix is constructed, it is refined using a triangle
+bounds smoothing algorithm that iteratively shrinks the individual
+bounds until they are as tight as possible.[<a
+ href="References.htm#Crippen1981">Crippen1981</a>]<br>
+
+</body>
+</html>

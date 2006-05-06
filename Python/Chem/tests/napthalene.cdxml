@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.camsoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 6.0.1"
+ Name="napthalene.cdxml"
+ BoundingBox="155 135 268 204"
+ WindowPosition="151 420"
+ WindowSize="590 545"
+ WindowIsZoomed="yes"
+ FractionalWidths="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000001760176000000000F7C0BEEFFB7FFC20FC90C2D0367052803FC0002000001760176000000000F7C0BEE000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="64"
+ BoundingBox="155 135 268 204"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="65"
+ BoundingBox="157 137 266 202"
+><n
+ id="43"
+ p="159 154"
+ Z="1"
+ AS="N"
+/><n
+ id="44"
+ p="159 184"
+ Z="2"
+ AS="N"
+/><n
+ id="45"
+ p="184.98 199"
+ Z="3"
+ AS="N"
+/><n
+ id="46"
+ p="210.96 184"
+ Z="4"
+/><n
+ id="47"
+ p="210.96 154"
+ Z="5"
+/><n
+ id="48"
+ p="184.98 139"
+ Z="6"
+ AS="N"
+/><n
+ id="55"
+ p="236.94 199"
+ Z="13"
+ AS="N"
+/><n
+ id="56"
+ p="262.92 184"
+ Z="14"
+ AS="N"
+/><n
+ id="57"
+ p="262.92 154"
+ Z="15"
+ AS="N"
+/><n
+ id="58"
+ p="236.94 139"
+ Z="16"
+ AS="N"
+/><b
+ id="49"
+ Z="7"
+ B="43"
+ E="44"
+ Order="2"
+ BondCircularOrdering="54 0 0 50"
+/><b
+ id="50"
+ Z="8"
+ B="44"
+ E="45"
+ BS="N"
+/><b
+ id="51"
+ Z="9"
+ B="45"
+ E="46"
+ Order="2"
+ BondCircularOrdering="50 0 59 52"
+/><b
+ id="52"
+ Z="10"
+ B="46"
+ E="47"
+ BS="N"
+/><b
+ id="53"
+ Z="11"
+ B="47"
+ E="48"
+ Order="2"
+ BondCircularOrdering="52 63 0 54"
+/><b
+ id="54"
+ Z="12"
+ B="48"
+ E="43"
+ BS="N"
+/><b
+ id="59"
+ Z="17"
+ B="46"
+ E="55"
+ BS="N"
+/><b
+ id="60"
+ Z="18"
+ B="55"
+ E="56"
+ Order="2"
+ BondCircularOrdering="59 0 0 61"
+/><b
+ id="61"
+ Z="19"
+ B="56"
+ E="57"
+ BS="N"
+/><b
+ id="62"
+ Z="20"
+ B="57"
+ E="58"
+ Order="2"
+ BondCircularOrdering="61 0 0 63"
+/><b
+ id="63"
+ Z="21"
+ B="58"
+ E="47"
+ BS="N"
+/></fragment></page></CDXML>

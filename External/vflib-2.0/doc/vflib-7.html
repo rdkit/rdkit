@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>The VFLib Graph Matching Library, version 2.0: Using VFLib: a quick tour : Choosing the matching algorithm</TITLE>
+ <LINK HREF="vflib-8.html" REL=next>
+ <LINK HREF="vflib-6.html" REL=previous>
+ <LINK HREF="vflib.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="vflib-8.html">Next</A>
+<A HREF="vflib-6.html">Previous</A>
+<A HREF="vflib.html#toc3">Contents</A>
+<HR>
+<H2>3.2 Choosing the matching algorithm</H2>
+
+<P>
+<P>In order to perform the matching, you have to choose which kind
+of relation you are interested in (e.g. isomorphism), and which
+algorithm you want to use. To make this choice, you need to create
+an instance of a class derived from the <CODE>State</CODE> class, which
+represents the starting point in the search space of the algorithm.
+Table 
+<A HREF="#Tab:algorithms">Matching algorithms</A>
+presents the available choices.
+<P>
+<CENTER><TABLE BORDER><TR><TD>
+<BR>
+</TD></TR><TR><TD>
+<B>Class</B> </TD><TD> <B>Header file</B> </TD><TD> <B>Relation</B> </TD><TD> <B>Algorithm</B> </TD></TR><TR><TD>
+<CODE>SDState</CODE> </TD><TD> <CODE>sd_state.h</CODE>  </TD><TD> isomorphism   </TD><TD> Schmidt-Druffel </TD></TR><TR><TD>
+<CODE>UllState</CODE> </TD><TD> <CODE>ull_state.h</CODE>        </TD><TD> isomorphism   </TD><TD> Ullmann </TD></TR><TR><TD>
+<CODE>VFState</CODE> </TD><TD> <CODE>vf_state.h</CODE>  </TD><TD> isomorphism   </TD><TD> VF </TD></TR><TR><TD>
+<CODE>VF2State</CODE> </TD><TD> <CODE>vf2_state.h</CODE>        </TD><TD> isomorphism   </TD><TD> VF2 </TD></TR><TR><TD>
+<CODE>UllSubState</CODE>        </TD><TD> <CODE>ull_sub_state.h</CODE>  </TD><TD> graph-subgr. isom. </TD><TD> Ullmann </TD></TR><TR><TD>
+<CODE>VFSubState</CODE> </TD><TD> <CODE>vf_sub_state.h</CODE>   </TD><TD> graph-subgr. isom.    </TD><TD> VF </TD></TR><TR><TD>
+<CODE>VF2SubState</CODE>        </TD><TD> <CODE>vf2_sub_state.h</CODE>  </TD><TD> graph-subgr. isom.    </TD><TD> VF2 </TD></TR><TR><TD>
+<CODE>VFMonoState</CODE>        </TD><TD> <CODE>vf_mono_state.h</CODE>  </TD><TD> monomorphism  </TD><TD> VF </TD></TR><TR><TD>
+<CODE>VF2MonoState</CODE>       </TD><TD> <CODE>vf2_mono_state.h</CODE> </TD><TD> monomorphism  </TD><TD> VF2 </TD></TR><TR><TD>
+
+<CAPTION>Matching algorithms
+<A NAME="Tab:algorithms"></A> </CAPTION>
+</TD></TR></TABLE></CENTER>
+<P>Once you have chosen the right class, you need to create an instance
+of it, passing to the constructor a pointer to the two graphs being
+matched. If the matching relation is graph-subgraph isomorphism or
+monomorphism, the role of the two graph is not symmetric. In this case,
+the first constructor parameter must be the smallest of the two graphs.
+<P>For example, suppose you need to perform a graph-subgraph isomorphism,
+and decide to use the VF2 algorithm. The code needed to initialize
+the search state is:
+<P>
+<BLOCKQUOTE><CODE>
+<HR>
+<PRE>
+#include "argraph.h"
+#include "argedit.h"
+#include "vf2_sub_state.h"
+
+int main()
+  { ARGEdit small_ed, large_ed;
+    //... some code here should construct the graphs ...
+        Graph small_graph(&amp;small_ed), large_graph(&amp;large_ed);
+
+    // Create the initial state of the search space
+        VF2SubState s0(&amp;small_graph, &amp;large_graph);
+
+    //... to be continued ...
+</PRE>
+<HR>
+</CODE></BLOCKQUOTE>
+<P>
+<P>
+<P>
+<P>
+<P>
+<HR>
+<A HREF="vflib-8.html">Next</A>
+<A HREF="vflib-6.html">Previous</A>
+<A HREF="vflib.html#toc3">Contents</A>
+</BODY>
+</HTML>

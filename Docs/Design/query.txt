@@ -1,0 +1,28 @@
+A query is a piece of topology, like a molecule, but nodes are
+QueryAtoms and edges are QueryBonds.
+
+QueryAtoms and QueryBonds are subclasses of QueryObjects
+
+QueryObjects:
+
+Different types exist:
+  equality
+  inequality (>,>=,<,<=)
+  range (within a min,max range)
+  set membership
+  and
+  or
+  xor
+all can be negated
+
+can have child queries (not part of topology) to support (and, or, xor)
+
+Include num_match and optional presence functionality (to allow "one
+ or more", "maybe present"  etc.) so we can do wildcard searches:
+  "does the molecule have two aldehydes separated by a chain of
+   conjugated carbons"  (something like C(=O)[C=C]*C(=O))
+  
+
+QueryAtoms and QueryBonds have specific member data
+(i.e. atomicNum, implicitValence, order, isAromatic, etc.).  
+

@@ -1,0 +1,10 @@
+# testing data for the crippen predictors
+# line format:  smiles,clogp,mr
+C,.6331,6.731
+C=C,.8022,11.254
+C#C,.2494,9.89
+CO,-.3915,8.1428
+C=O,-.1849,7.121
+C#[O+],.0059,5.6315
+C(C)(C)(C),1.6533,20.512
+C(C)(C)(C)O,0.7682,21.9718

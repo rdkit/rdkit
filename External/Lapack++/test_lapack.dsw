@@ -1,0 +1,314 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "blas_test"=".\blaspp\testing\blas_test.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "blaspp"=".\blaspp\src\blaspp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "lapack_eig"=".\testing\lapack_eig.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "lapack_gen"=".\testing\lapack_gen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "lapack_util"=".\testing\lapack_util.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "lapackpp"=".\src\lapackpp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "mat_tbd"=".\matrix\testing\mat_tbd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tcvd"=".\matrix\testing\mat_tcvd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tgd"=".\matrix\testing\mat_tgd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tld"=".\matrix\testing\mat_tld.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_trvd"=".\matrix\testing\mat_trvd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tstd"=".\matrix\testing\mat_tstd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_ttdd"=".\matrix\testing\mat_ttdd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tud"=".\matrix\testing\mat_tud.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tuld"=".\matrix\testing\mat_tuld.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tuud"=".\matrix\testing\mat_tuud.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tvd"=".\matrix\testing\mat_tvd.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "mat_tvi"=".\matrix\testing\mat_tvi.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "matrixpp"=".\matrix\src\matrixpp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

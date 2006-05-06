@@ -1,0 +1,35 @@
+
+    Lapack++ v. 1.1a
+
+
+WHAT'S NEW IN VERSION 1.1.a
+---------------------------
+
+Version 1.1a is a bug-fix release, reflecting changes
+C++ compiler support:
+
+
+o) removed generic.h dependencies (used in early C++ compilers)
+o) changed X::X(&X) constructor to X::X(const &X) in utgmd.h,
+		ltgmd.h, ultgmd.h, uutmgd.h, 
+o) reordered members in several matrix objects to coincide with
+	constructor argument ordering.
+o) removed unused variables (generated warnings on
+		some compilers)
+
+
+INSTALLATION INSTRUCTIONS:
+-------------------------
+
+1) Edit makefile.def to provide system-dependent information,
+	mainly the name of the C++ compiler and location of BLAS
+	and LAPACK libraires.
+	
+2) type "make libs" to create Lapack++ libraries:
+
+	o) blaspp.a					BLAS wrappers
+	o) liblamatrix++.a			Vector/Matrix classes
+	o) liblapack++.a			LAPACK wrappers
+	
+
+3) libraires are created in top-level directory of package.

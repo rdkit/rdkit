@@ -1,0 +1,307 @@
+<?xml version="1.0"?>
+<!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 14th January 2002//EN" "http://www.ncbi.nlm.nih.gov/entrez/query/DTD/pubmed_020114.dtd">
+<PubmedArticleSet>
+<PubmedArticle>
+<MedlineCitation Owner="NLM" Status="Completed">
+<MedlineID>21959096</MedlineID>
+<PMID>11960484</PMID>
+<DateCreated>
+<Year>2002</Year>
+<Month>04</Month>
+<Day>18</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2002</Year>
+<Month>05</Month>
+<Day>10</Day>
+</DateCompleted>
+<Article>
+<Journal>
+<ISSN>0022-2623</ISSN>
+<JournalIssue>
+<Volume>45</Volume>
+<Issue>9</Issue>
+<PubDate>
+<Year>2002</Year>
+<Month>Apr</Month>
+<Day>25</Day>
+</PubDate>
+</JournalIssue>
+</Journal>
+<ArticleTitle>A computational ensemble pharmacophore model for identifying substrates of P-glycoprotein.</ArticleTitle>
+<Pagination>
+<MedlinePgn>1737-40</MedlinePgn>
+</Pagination>
+<Abstract>
+<AbstractText>P-glycoprotein (P-gp) functions as a drug efflux pump, mediating multidrug resistance and limiting the efficacy of many drugs. Clearly, identification of potential P-gp substrate liability early in the drug discovery process would be advantageous. We describe a multiple-pharmacophore model that can discriminate between substrates and nonsubstrates of P-gp with an accuracy of 63%. The application of this filter allows large virtual libraries to be screened efficiently for compounds less likely to be transported by P-gp.</AbstractText>
+</Abstract>
+<AuthorList CompleteYN="Y">
+<Author>
+<LastName>Penzotti</LastName>
+<ForeName>Julie E</ForeName>
+<Initials>JE</Initials>
+</Author>
+<Author>
+<LastName>Lamb</LastName>
+<ForeName>Michelle L</ForeName>
+<Initials>ML</Initials>
+</Author>
+<Author>
+<LastName>Evensen</LastName>
+<ForeName>Erik</ForeName>
+<Initials>E</Initials>
+</Author>
+<Author>
+<LastName>Grootenhuis</LastName>
+<ForeName>Peter D J</ForeName>
+<Initials>PD</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Letter</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>J Med Chem</MedlineTA>
+<NlmUniqueID>9716531</NlmUniqueID>
+</MedlineJournalInfo>
+<ChemicalList>
+<Chemical>
+<RegistryNumber>0</RegistryNumber>
+<NameOfSubstance>P-Glycoprotein</NameOfSubstance>
+</Chemical>
+<Chemical>
+<RegistryNumber>150378-17-9</RegistryNumber>
+<NameOfSubstance>Indinavir</NameOfSubstance>
+</Chemical>
+<Chemical>
+<RegistryNumber>55985-32-5</RegistryNumber>
+<NameOfSubstance>Nicardipine</NameOfSubstance>
+</Chemical>
+</ChemicalList>
+<CitationSubset>IM</CitationSubset>
+<MeshHeadingList>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Combinatorial Chemistry Techniques</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="Y">Databases, Factual</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Hydrogen Bonding</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Indinavir</DescriptorName>
+<QualifierName MajorTopicYN="N">chemistry</QualifierName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="Y">Models, Molecular</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Molecular Conformation</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Nicardipine</DescriptorName>
+<QualifierName MajorTopicYN="N">chemistry</QualifierName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">P-Glycoprotein</DescriptorName>
+<QualifierName MajorTopicYN="Y">chemistry</QualifierName>
+</MeshHeading>
+</MeshHeadingList>
+</MedlineCitation>
+<PubmedData>
+	<History>
+		<PubMedPubDate PubStatus="pubmed">
+			<Year>2002</Year>
+			<Month>4</Month>
+			<Day>19</Day>
+			<Hour>10</Hour>
+			<Minute>0</Minute>
+		</PubMedPubDate>
+		<PubMedPubDate PubStatus="medline">
+			<Year>2002</Year>
+			<Month>5</Month>
+			<Day>11</Day>
+			<Hour>10</Hour>
+			<Minute>1</Minute>
+		</PubMedPubDate>
+	</History>
+	<PublicationStatus>ppublish</PublicationStatus>
+	<ArticleIdList>
+		<ArticleId IdType="pubmed">11960484</ArticleId>
+		<ArticleId IdType="pii">jm0255062</ArticleId>
+		<ArticleId IdType="medline">21959096</ArticleId>
+	</ArticleIdList>
+</PubmedData>
+</PubmedArticle>
+
+<PubmedArticle>
+<MedlineCitation Owner="NLM" Status="Completed">
+<MedlineID>20353492</MedlineID>
+<PMID>10893315</PMID>
+<DateCreated>
+<Year>2000</Year>
+<Month>08</Month>
+<Day>03</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2000</Year>
+<Month>08</Month>
+<Day>03</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2000</Year>
+<Month>12</Month>
+<Day>18</Day>
+</DateRevised>
+<Article>
+<Journal>
+<ISSN>0022-2623</ISSN>
+<JournalIssue>
+<Volume>43</Volume>
+<Issue>14</Issue>
+<PubDate>
+<Year>2000</Year>
+<Month>Jul</Month>
+<Day>13</Day>
+</PubDate>
+</JournalIssue>
+</Journal>
+<ArticleTitle>A rapid computational method for lead evolution: description and application to alpha(1)-adrenergic antagonists.</ArticleTitle>
+<Pagination>
+<MedlinePgn>2770-4</MedlinePgn>
+</Pagination>
+<Abstract>
+<AbstractText>The high failure rate of drugs in the development phase requires a strategy to reduce risks by generating lead candidates from different chemical classes. We describe a new three-dimensional computational approach for lead evolution, based on multiple pharmacophore hypotheses. Using full conformational models for both active and inactive compounds, a large number of pharmacophore hypotheses are analyzed to select the set or "ensemble" of hypotheses that, when combined, is most able to discriminate between active and inactive molecules. The ensemble hypothesis is then used to search virtual chemical libraries to identify compounds for synthesis. This method is very rapid, allowing very large virtual libraries on the order of a million compounds to be filtered efficiently. In applying this method to alpha(1)-adrenergic receptor ligands, we have demonstrated lead evolution from heterocyclic alpha(1)-adrenergic receptor ligands to highly dissimilar active N-substituted glycine compounds. Our results also show that the active N-substituted glycines are part of our smaller filtered library and thus could have been identified by synthesizing only a portion of the N-substituted glycine library.</AbstractText>
+</Abstract>
+<Affiliation>Molecular Design Group, CombiChem, Inc., 1804 Embarcadero Road, Suite 201, Palo Alto, California 94303, USA.</Affiliation>
+<AuthorList CompleteYN="Y">
+<Author>
+<LastName>Bradley</LastName>
+<ForeName>E K</ForeName>
+<Initials>EK</Initials>
+</Author>
+<Author>
+<LastName>Beroza</LastName>
+<ForeName>P</ForeName>
+<Initials>P</Initials>
+</Author>
+<Author>
+<LastName>Penzotti</LastName>
+<ForeName>J E</ForeName>
+<Initials>JE</Initials>
+</Author>
+<Author>
+<LastName>Grootenhuis</LastName>
+<ForeName>P D</ForeName>
+<Initials>PD</Initials>
+</Author>
+<Author>
+<LastName>Spellmeyer</LastName>
+<ForeName>D C</ForeName>
+<Initials>DC</Initials>
+</Author>
+<Author>
+<LastName>Miller</LastName>
+<ForeName>J L</ForeName>
+<Initials>JL</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>UNITED STATES</Country>
+<MedlineTA>J Med Chem</MedlineTA>
+<NlmUniqueID>9716531</NlmUniqueID>
+</MedlineJournalInfo>
+<ChemicalList>
+<Chemical>
+<RegistryNumber>0</RegistryNumber>
+<NameOfSubstance>Adrenergic alpha-Antagonists</NameOfSubstance>
+</Chemical>
+<Chemical>
+<RegistryNumber>0</RegistryNumber>
+<NameOfSubstance>Heterocyclic Compounds</NameOfSubstance>
+</Chemical>
+<Chemical>
+<RegistryNumber>0</RegistryNumber>
+<NameOfSubstance>Ligands</NameOfSubstance>
+</Chemical>
+<Chemical>
+<RegistryNumber>0</RegistryNumber>
+<NameOfSubstance>Receptors, Adrenergic, alpha-1</NameOfSubstance>
+</Chemical>
+<Chemical>
+<RegistryNumber>56-40-6</RegistryNumber>
+<NameOfSubstance>Glycine</NameOfSubstance>
+</Chemical>
+</ChemicalList>
+<CitationSubset>IM</CitationSubset>
+<MeshHeadingList>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Adrenergic alpha-Antagonists</DescriptorName>
+<QualifierName MajorTopicYN="Y">chemistry</QualifierName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="Y">Databases, Factual</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Drug Design</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Glycine</DescriptorName>
+<QualifierName MajorTopicYN="N">analogs &#38; derivatives</QualifierName>
+<QualifierName MajorTopicYN="N">chemistry</QualifierName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Heterocyclic Compounds</DescriptorName>
+<QualifierName MajorTopicYN="N">chemistry</QualifierName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="Y">Ligands</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="Y">Models, Molecular</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Molecular Conformation</DescriptorName>
+</MeshHeading>
+<MeshHeading>
+<DescriptorName MajorTopicYN="N">Receptors, Adrenergic, alpha-1</DescriptorName>
+<QualifierName MajorTopicYN="Y">chemistry</QualifierName>
+</MeshHeading>
+</MeshHeadingList>
+</MedlineCitation>
+<PubmedData>
+	<History>
+		<PubMedPubDate PubStatus="pubmed">
+			<Year>2000</Year>
+			<Month>7</Month>
+			<Day>14</Day>
+			<Hour>11</Hour>
+			<Minute>0</Minute>
+		</PubMedPubDate>
+		<PubMedPubDate PubStatus="medline">
+			<Year>2000</Year>
+			<Month>8</Month>
+			<Day>6</Day>
+			<Hour>11</Hour>
+			<Minute>0</Minute>
+		</PubMedPubDate>
+	</History>
+	<PublicationStatus>ppublish</PublicationStatus>
+	<ArticleIdList>
+		<ArticleId IdType="pubmed">0010893315</ArticleId>
+		<ArticleId IdType="medline">20353492</ArticleId>
+		<ArticleId IdType="pii">jm990578n</ArticleId>
+	</ArticleIdList>
+</PubmedData>
+</PubmedArticle>
+
+</PubmedArticleSet>

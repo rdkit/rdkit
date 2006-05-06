@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1">
+<title>Boost Log Library Documentation</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<a href="../../../index.htm">
+<img align="left" src="../../../c++boost.gif" alt="C++ Boost">
+</a>  
+
+<h1>Boost Log Library Documentation</h1>
+<p>
+<h3 align="center">Version 1.4</h3>
+<hr>
+<p><b>Modifier/ Appender functions</b></p>
+<p><font face="Courier New, Courier, mono"><b><font size="-1" color="#0000FF">Header 
+  to include: <br>
+  #include &lt;boost/log/functions.hpp&gt;<br>
+  </font><font face="Courier New, Courier, mono"><b><font size="-1" color="#0000FF">// 
+  for extra functions, which depend on at least one other Boost library</font></b></font><font size="-1" color="#0000FF"> 
+  <br>
+  #include 
+  &lt;boost/log/extra/some_other_header.hpp&gt; </font></b></font></p>
+<p></p>
+<p>When you want to modify some logs' <a href="logs.html#behavior">behavior</a>, 
+  you can add Modifiers and/or Appenders.</p>
+<p>The <b>modifier</b> is a function that modifies the original message that was 
+  written to the log, while the <b>Appender</b> is a function that is called to 
+  output the message to a destination. </p>
+<p>Examples of <i>modifier</i>s: </p>
+<ul>
+  <li>prepend the time (in a given format) to the original message</li>
+  <li>append an enter to the message, if not already found</li>
+  <li>prepend the log' name (example, if the log is named &quot;app.charts.dbg&quot;, 
+    prepend this to the message)</li>
+</ul>
+<p>Examples of <i>Appender</i>s:</p>
+<ul>
+  <li>write to console</li>
+  <li>write to a file</li>
+  <li>write to the Output Debug Window (on Windows OS only)</li>
+</ul>
+<p>The modifiers and Appenders are any function/ functor (a class with an overloaded 
+  operator()) that match these:</p>
+<pre class="code">
+void modifier_func(const std::string & log_name, std::string &msg);
+
+void appender_func(  const std::string & log_name, const std::string &msg);
+
+Examples:
+
+// Modifier
+void prepend_prefix(const string & log_name, string & msg) {
+    msg = '[' + log_name + "] " + msg;
+}
+
+// Appender
+void write_to_cout(const std::string &, const std::string &msg) { 
+    std::cout << msg; 
+}
+</pre>
+<p>When a message is written to this log, the following things happen:</p>
+<ul>
+  <li>the library inspects whether the message should be written or not (based 
+    on the log's level and the message's level). If message should be written, 
+    continue; otherwise, ignore the rest</li>
+  <li>all <b>Modifier </b>functions get called</li>
+  <li>all <b>Appender </b>functions get called</li>
+</ul>
+<p>To see how to manipulate existing logs/ <a href="logs.html#hierarchy">hierarchies</a> 
+  of logs, click <a href="manipulating_logs.html">here</a>.</p>
+<hr>
+<small>
+Copyright <a href="mailto:john&#64;torjo.com">John Torjo</a> &copy; 2004
+</small>
+
+</body>
+</html>

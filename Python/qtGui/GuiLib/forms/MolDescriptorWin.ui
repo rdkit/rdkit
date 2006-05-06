@@ -1,0 +1,432 @@
+<!DOCTYPE UI><UI version="3.0" stdsetdef="1">
+<class>MolDescriptorWin</class>
+<widget class="QMainWindow">
+    <property name="name">
+        <cstring>MolDescriptorWin</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>600</width>
+            <height>480</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Molecular Descriptor Calculation</string>
+    </property>
+    <property name="icon">
+        <pixmap>image0</pixmap>
+    </property>
+    <vbox>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <property name="margin">
+            <number>1</number>
+        </property>
+        <property name="spacing">
+            <number>1</number>
+        </property>
+        <widget class="QTabWidget">
+            <property name="name">
+                <cstring>mainTab</cstring>
+            </property>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>sourcePage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Source</string>
+                </attribute>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>simplePage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Simple Descriptors</string>
+                </attribute>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>dataPage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Data</string>
+                </attribute>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>descPage</cstring>
+                </property>
+                <attribute name="title">
+                    <string>Data+Descriptors</string>
+                </attribute>
+            </widget>
+        </widget>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>Layout8</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <property name="margin">
+                    <number>0</number>
+                </property>
+                <property name="spacing">
+                    <number>6</number>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>Spacer7</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>30</width>
+                            <height>0</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>buttonRead</cstring>
+                    </property>
+                    <property name="enabled">
+                        <bool>false</bool>
+                    </property>
+                    <property name="text">
+                        <string>Read Compounds</string>
+                    </property>
+                </widget>
+                <spacer>
+                    <property name="name">
+                        <cstring>Spacer6</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>30</width>
+                            <height>0</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>buttonCalculate</cstring>
+                    </property>
+                    <property name="enabled">
+                        <bool>false</bool>
+                    </property>
+                    <property name="text">
+                        <string>Calculate Descriptors</string>
+                    </property>
+                </widget>
+                <spacer>
+                    <property name="name">
+                        <cstring>Spacer8</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>30</width>
+                            <height>0</height>
+                        </size>
+                    </property>
+                </spacer>
+            </hbox>
+        </widget>
+    </vbox>
+</widget>
+<menubar>
+    <property name="name">
+        <cstring>menubar</cstring>
+    </property>
+    <item text="&amp;File" name="fileMenu">
+        <action name="fileOpenAction"/>
+        <action name="fileSaveAsAction"/>
+        <separator/>
+        <separator/>
+        <action name="fileCloseAction"/>
+    </item>
+    <item text="&amp;Edit" name="editMenu">
+        <separator/>
+        <action name="editCutAction"/>
+        <action name="editCopyAction"/>
+        <action name="editPasteAction"/>
+        <separator/>
+    </item>
+    <item text="&amp;Help" name="helpMenu">
+        <action name="helpContentsAction"/>
+        <action name="helpIndexAction"/>
+        <separator/>
+        <action name="helpAboutAction"/>
+    </item>
+</menubar>
+<toolbars>
+</toolbars>
+<actions>
+    <action>
+        <property name="name">
+            <cstring>fileOpenAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>image1</iconset>
+        </property>
+        <property name="text">
+            <string>Open</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Open...</string>
+        </property>
+        <property name="accel">
+            <number>4194383</number>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileSaveAsAction</cstring>
+        </property>
+        <property name="text">
+            <string>Save As</string>
+        </property>
+        <property name="menuText">
+            <string>Save &amp;As...</string>
+        </property>
+        <property name="accel">
+            <number>0</number>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileCloseAction</cstring>
+        </property>
+        <property name="text">
+            <string>Close</string>
+        </property>
+        <property name="menuText">
+            <string>C&amp;lose</string>
+        </property>
+        <property name="accel">
+            <number>0</number>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>editCutAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>image2</iconset>
+        </property>
+        <property name="text">
+            <string>Cut</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Cut</string>
+        </property>
+        <property name="accel">
+            <number>4194392</number>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>editCopyAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>image3</iconset>
+        </property>
+        <property name="text">
+            <string>Copy</string>
+        </property>
+        <property name="menuText">
+            <string>C&amp;opy</string>
+        </property>
+        <property name="accel">
+            <number>4194371</number>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>editPasteAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>image4</iconset>
+        </property>
+        <property name="text">
+            <string>Paste</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Paste</string>
+        </property>
+        <property name="accel">
+            <number>4194390</number>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpContentsAction</cstring>
+        </property>
+        <property name="text">
+            <string>Contents</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Contents...</string>
+        </property>
+        <property name="accel">
+            <number>0</number>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpIndexAction</cstring>
+        </property>
+        <property name="text">
+            <string>Index</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Index...</string>
+        </property>
+        <property name="accel">
+            <number>0</number>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpAboutAction</cstring>
+        </property>
+        <property name="text">
+            <string>About</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;About...</string>
+        </property>
+        <property name="accel">
+            <number>0</number>
+        </property>
+    </action>
+</actions>
+<images>
+    <image name="image0">
+        <data format="XPM.GZ" length="454">789cd3d7528808f055d0d2e72a2e492cc94c5648ce482c52d04a29cdcdad8c8eb5ade652323453002220a1a4c3a5a4a790ace0979f970a622b03d9ca862686266969206e22846b9c0ce12681b866266650d96410d722d9022a9b02e22699244165f5d0005c4c190c50c49413c14019494c3931090cc0821031981044102c06164a060288205c2c391922882a9692429c18a65e743bb0b905ab9bb1fa0d6b18a08455ad351700337f6cfa</data>
+    </image>
+    <image name="image1">
+        <data format="XPM.GZ" length="691">789cad914d0ac2301085f739c5d0d915b11a140ae211149782b898448b2e5a41eb42c4bb9b9fa6a67644045f0299978f37134896c27ab5803413979aeaa3067da033a4bb6b59de36dbf95d245282d953182703910c41c3f254ed6d8da6c69193b5dada7c924b6fc9dac2c85b156c51b83eacfe41d0c89defc4dfa2dd7c37fc44b025a179043c4152a4b055f4365414ad0e8901fd94c1ae5e19441da9211c68e7f44098d3074d86019e70a0210c089958df7ffb31134fa13797a8</data>
+    </image>
+    <image name="image2">
+        <data format="XPM.GZ" length="661">789cd3d7528808f055d0d2e72a2e492cc94c5648ce482c52d04a29cdcdad8c8eb5ade6523232520022630543251d2e253d856405bffcbc54105b19c856360003103711c6b53002abc40a90649491482ac92863955146d6822ca387474619c9301419a03842825819245bd064129513b1cb242602512216994430d44bc4904984c8c1a5e032897a3019a8144c26518f800c92715864d0ec81ab4dc4701b924fb0850e8a4cad351700fbd07ccb</data>
+    </image>
+    <image name="image3">
+        <data format="XPM.GZ" length="706">789c9d92cb0ac2301045f7f98aa1d915b1da8214c44f505c0ae26226b1e8a20a5a1722febb9924a5af58c19b40e77238a1842431ecb66b881371afb03a2b5027bc41ac1f65f9dc1f562f11a52998bd80793411d114146cae9723cfd2cc7266c395ea9aa75c15d74c65aad05c35d79c727215b91636f6d860c689f40910b4e92147d840b3be39d8416d877c860eb9af478d23919c4b8a7a0ed68eb628e4a04521c7fd46c07138e47448dbf1f32fc767e8d43735741af287d3ced83b782fc5075b18a5a5</data>
+    </image>
+    <image name="image4">
+        <data format="XPM.GZ" length="736">789c7d92d10a82301486eff714c3dd49649984103d42d165105dcce3465d58507611d1bbb773d674aed93f85fd7efb183ab394ef771b9e66ecdecaf60c1c4ef2c6d3fad134cfc371fd62499e7373957c9e4c5832e5c0b7d78bc2b9307331a36055ae960556c05a16656e69e5aaa5355658c202965825566d62176b57b5a64da3f188c084841e0a29a5e831910ef8885e4854501922e8a6b923586a176a8e40051ec1e63b7d0267387c6738424775091d653f98565a858e26c110447107d1886350d4a1c41c3dea7864e87c37f3ce47fc3aee7cd5207ffe90f78a7d0007c6c175</data>
+    </image>
+</images>
+<connections>
+    <connection>
+        <sender>fileOpenAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>fileOpen()</slot>
+    </connection>
+    <connection>
+        <sender>fileSaveAsAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>fileSaveAs()</slot>
+    </connection>
+    <connection>
+        <sender>fileCloseAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>fileClose()</slot>
+    </connection>
+    <connection>
+        <sender>editCutAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>editCut()</slot>
+    </connection>
+    <connection>
+        <sender>editCopyAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>editCopy()</slot>
+    </connection>
+    <connection>
+        <sender>editPasteAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>editPaste()</slot>
+    </connection>
+    <connection>
+        <sender>helpIndexAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>helpIndex()</slot>
+    </connection>
+    <connection>
+        <sender>helpContentsAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>helpContents()</slot>
+    </connection>
+    <connection>
+        <sender>helpAboutAction</sender>
+        <signal>activated()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>helpAbout()</slot>
+    </connection>
+    <connection>
+        <sender>buttonRead</sender>
+        <signal>clicked()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>readClick()</slot>
+    </connection>
+    <connection>
+        <sender>buttonCalculate</sender>
+        <signal>clicked()</signal>
+        <receiver>MolDescriptorWin</receiver>
+        <slot>calcClick()</slot>
+    </connection>
+</connections>
+<slots>
+    <slot>editCopy()</slot>
+    <slot>editCut()</slot>
+    <slot>editFind()</slot>
+    <slot>editPaste()</slot>
+    <slot>editRedo()</slot>
+    <slot>editUndo()</slot>
+    <slot>fileExit()</slot>
+    <slot>fileNew()</slot>
+    <slot>fileOpen()</slot>
+    <slot>filePrint()</slot>
+    <slot>fileSave()</slot>
+    <slot>fileSaveAs()</slot>
+    <slot>fileClose()</slot>
+    <slot>helpAbout()</slot>
+    <slot>helpContents()</slot>
+    <slot>helpIndex()</slot>
+    <slot>calcClick()</slot>
+    <slot>readClick()</slot>
+</slots>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

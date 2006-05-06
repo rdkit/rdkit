@@ -1,0 +1,79 @@
+//
+//  Copyright (C) 2004-2006 Rational Discovery LLC
+//
+//   @@ All Rights Reserved  @@
+//
+#ifndef _RD_DISTGEOMUTILS_H_
+#define _RD_DISTGEOMUTILS_H_
+
+#include "BoundsMatrix.h"
+#include <Numerics/SymmMatrix.h>
+#include <vector>
+#include <map>
+
+
+#define EIGVAL_TOL 0.001
+namespace RDGeom {
+  class Point3D;
+}
+
+namespace ForceFields {
+  class ForceField;
+}
+
+namespace DistGeom {
+  typedef std::vector<RDGeom::Point3D *> PointPtrVect;
+
+  //! Pick a distance matrix at random such that the
+  //!  distance satisfy the bounds in the BoundsMatrix
+  /*!
+    \param mmat     Bounds matrix
+    \param distmat  Storage for randomly chosen distances
+    \param seed     Optional value to seed the random number generator
+   */
+  void pickRandomDistMat(const BoundsMatrix &mmat, 
+                         RDNumeric::SymmMatrix<double> &distmat, int seed=-1);
+
+  //! Compute an initial embedded in 3D based on a distance matrix
+  /*! 
+    This function follows the embed algorithm mentioned in 
+    "Distance Geometry and Molecular Conformation" by G.M.Crippen and T.F.Havel
+    (pages 312-313) 
+
+    \param distmat     Distance matrix
+    \param positions     A vector of pointers to Points to write out the resulting coordinates
+    \param randNegEig  If set to true and if any of the eigen values are negative, we will
+                       pick the corresponding components of the coordinates at random
+    \param numZeroFail Fail embedding is more this many (or more) eigen values are zero
+
+    \return true if the embedding was successful
+  */
+  bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,  
+                            PointPtrVect &positions, bool randNegEig=false, 
+                            unsigned int numZeroFail=2);
+
+  //! Setup the error function for violation of distance bounds as a forcefield
+  /*! 
+    This is based on function E3 on page 311 of "Distance Geometry in Molecular
+    Modeling" Jeffrey M.Blaney and J.Scott Dixon, Review in Computational Chemistry,
+    Volume V
+
+    \param mmat       Distance bounds matrix
+    \param positions  A vector of pointers to Points to write out the resulting coordinates
+    \param extraWeights    an optional set of weights for distance bounds violations
+    \param basinSizeTol  Optional: any distance bound with a basin (distance between max and
+                         min bounds) larger than this value will not be included in the force
+			 field used to cleanup the structure.
+
+    \return a pointer to a ForceField suitable for cleaning up the violations.
+      <b>NOTE:</b> the caller is responsible for deleting this force field.
+
+  */
+  ForceFields::ForceField *constructForceField(const BoundsMatrix &mmat,
+					       PointPtrVect &positions,
+					       std::map< std::pair<int,int>,double> *extraWeights=0,
+					       double basinSizeTol=5.0);
+
+}
+    
+#endif

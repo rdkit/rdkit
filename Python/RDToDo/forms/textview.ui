@@ -1,0 +1,36 @@
+<!DOCTYPE UI><UI version="3.0" stdsetdef="1">
+<class>TextView</class>
+<widget class="QWidget">
+    <property name="name">
+        <cstring>TextView</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>600</width>
+            <height>480</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Text View</string>
+    </property>
+    <hbox>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <property name="margin">
+            <number>11</number>
+        </property>
+        <property name="spacing">
+            <number>6</number>
+        </property>
+        <widget class="QTextEdit">
+            <property name="name">
+                <cstring>textBrowser</cstring>
+            </property>
+        </widget>
+    </hbox>
+</widget>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

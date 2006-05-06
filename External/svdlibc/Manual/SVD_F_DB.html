@@ -1,0 +1,29 @@
+<html>
+<head><title>SVDLIBC: Dense Binary Matrix File Format</title></head>
+
+<body bgcolor="#aaaa9999fffff"> 
+
+<center>
+<h2>SVD_F_DB</h2>
+<h3>Dense Binary Matrix File Format</h3>
+</center>
+<hr>
+
+<h3>Format:</h3>
+<pre>
+<b>numRows numCols</b>
+<i>for each row:</i>
+  <i>for each column:</i>
+    <b>value</b></pre>
+<p>
+<b>numRows</b> and <b>numCols</b> are 4-byte integers.  <b>value</b> is a
+4-byte float.  All are in network byte order.
+
+<p>
+<hr>
+<address>
+Doug Rohde, <a href="mailto:dr+svd@tedlab.mit.edu">dr+svd@tedlab.mit.edu</a>,<br>
+Department of Brain and Cognitive Science,<br>
+<a href="http://web.mit.edu">Massachusetts Institute of Technology</a>
+</address>
+</body>

@@ -1,0 +1,57 @@
+<!--
+This is Rational Discovery's DTD for storing information about
+predictive models
+
+Revision History:
+  10 December 2003:
+    - Created by Greg Landrum
+
+        $Header: /home/cvs-base/repository/RD/Data/DTDs/RD_Model.dtd,v 1.1 2003/12/15 20:00:32 glandrum Exp $
+-->
+<!-- Pull in the Pubmed stuff: -->
+<!ENTITY % Pubmed PUBLIC "-//NLM//DTD Pubmed, 01 Nov 2003//EN"
+      "pubmed_031101.dtd">
+%Pubmed;
+
+
+<!ELEMENT ModelName (#PCDATA)>
+<!ELEMENT ModelSummary (#PCDATA)>
+<!ELEMENT RevisionNote (#PCDATA)>
+<!ELEMENT RevisionDate (%normal.date;)>
+<!ELEMENT Revision (RevisionDate,RevisionNote)>
+<!ELEMENT ModelHistory (Revision+)>
+
+<!-- <!ELEMENT DescriptorName (#PCDATA)> -->
+<!ELEMENT DescriptorDetail (#PCDATA)>
+<!ELEMENT VersionMajor (#PCDATA)>
+<!ELEMENT VersionMinor (#PCDATA)>
+<!ELEMENT VersionPatch (#PCDATA)>
+<!ELEMENT DescriptorVersion (VersionMajor,VersionMinor,VersionPatch)>
+<!ELEMENT Descriptor (DescriptorName,DescriptorDetail?,DescriptorVersion?)>
+<!ELEMENT ModelDescriptors (Descriptor+)>
+
+<!ELEMENT TrainingDataId (#PCDATA)>
+
+
+<!ELEMENT ScreenThreshold (#PCDATA)>
+<!ELEMENT NumScreened (#PCDATA)>
+<!ELEMENT NumSkipped (#PCDATA)>
+<!ELEMENT ScreenNote (#PCDATA)>
+<!ELEMENT Accuracy (#PCDATA)>
+<!ELEMENT AvgCorrectConf (#PCDATA)>
+<!ELEMENT AvgIncorrectConf (#PCDATA)>
+<!ELEMENT AvgSkipConf (#PCDATA)>
+<!ELEMENT ConfusionMatrix (#PCDATA)>
+<!ELEMENT RecommendedThreshold (#PCDATA)>
+<!ELEMENT PerformanceData (ScreenThreshold?,NumScreened,NumSkipped?,Accuracy,AvgCorrectConf,AvgIncorrectConf,AvgSkipConf?,ConfusionMatrix?,ScreenNote?)>
+<!ELEMENT ValidationData (ScreenNote,PerformanceData)>
+
+<!ELEMENT ClassVal (#PCDATA)>
+<!ELEMENT ClassText (#PCDATA)>
+<!ELEMENT ClassDescription  (ClassVal,ClassText)>
+<!ELEMENT ClassDescriptions (ClassDescription+)>
+
+<!ELEMENT ModelType (#PCDATA)>
+<!ELEMENT ModelOrganism (#PCDATA)>
+
+<!ELEMENT RDModelInfo (ModelName,ModelSummary,ModelDescriptors,TrainingDataId,ValidationData*,RecommendedThreshold?,ClassDescriptions?,ModelType?,ModelOrganism?,ModelHistory)>

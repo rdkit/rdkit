@@ -1,0 +1,539 @@
+<!DOCTYPE UI><UI version="3.0" stdsetdef="1">
+<class>NewReactionDialog</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>NewReactionDialog</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>516</width>
+            <height>259</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>New Reaction</string>
+    </property>
+    <property name="sizeGripEnabled">
+        <bool>false</bool>
+    </property>
+    <widget class="QLayoutWidget">
+        <property name="name">
+            <cstring>Layout1</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>10</x>
+                <y>220</y>
+                <width>500</width>
+                <height>38</height>
+            </rect>
+        </property>
+        <hbox>
+            <property name="name">
+                <cstring>unnamed</cstring>
+            </property>
+            <property name="margin">
+                <number>0</number>
+            </property>
+            <property name="spacing">
+                <number>6</number>
+            </property>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>buttonHelp</cstring>
+                </property>
+                <property name="text">
+                    <string>Help</string>
+                </property>
+                <property name="accel">
+                    <number>4144</number>
+                </property>
+                <property name="autoDefault">
+                    <bool>true</bool>
+                </property>
+            </widget>
+            <spacer>
+                <property name="name">
+                    <cstring>Horizontal Spacing2</cstring>
+                </property>
+                <property name="orientation">
+                    <enum>Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                    <enum>Expanding</enum>
+                </property>
+                <property name="sizeHint">
+                    <size>
+                        <width>20</width>
+                        <height>0</height>
+                    </size>
+                </property>
+            </spacer>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>buttonOk</cstring>
+                </property>
+                <property name="text">
+                    <string>OK</string>
+                </property>
+                <property name="accel">
+                    <number>0</number>
+                </property>
+                <property name="autoDefault">
+                    <bool>true</bool>
+                </property>
+                <property name="default">
+                    <bool>true</bool>
+                </property>
+            </widget>
+            <widget class="QPushButton">
+                <property name="name">
+                    <cstring>buttonCancel</cstring>
+                </property>
+                <property name="text">
+                    <string>Cancel</string>
+                </property>
+                <property name="accel">
+                    <number>0</number>
+                </property>
+                <property name="autoDefault">
+                    <bool>true</bool>
+                </property>
+            </widget>
+        </hbox>
+    </widget>
+    <widget class="QLayoutWidget">
+        <property name="name">
+            <cstring>Layout57</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>31</x>
+                <y>11</y>
+                <width>480</width>
+                <height>200</height>
+            </rect>
+        </property>
+        <vbox>
+            <property name="name">
+                <cstring>unnamed</cstring>
+            </property>
+            <property name="margin">
+                <number>0</number>
+            </property>
+            <property name="spacing">
+                <number>6</number>
+            </property>
+            <widget class="QLayoutWidget">
+                <property name="name">
+                    <cstring>Layout50</cstring>
+                </property>
+                <grid>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <property name="margin">
+                        <number>0</number>
+                    </property>
+                    <property name="spacing">
+                        <number>6</number>
+                    </property>
+                    <widget class="QToolButton" row="1" column="2">
+                        <property name="name">
+                            <cstring>imgFileBrowse</cstring>
+                        </property>
+                        <property name="text">
+                            <string>...</string>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>open file dialog</string>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="1" column="0">
+                        <property name="name">
+                            <cstring>imgLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Image File</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit" row="1" column="1">
+                        <property name="name">
+                            <cstring>imgField</cstring>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>name of the image file to be used</string>
+                        </property>
+                    </widget>
+                    <widget class="QToolButton" row="0" column="2">
+                        <property name="name">
+                            <cstring>rxnFileBrowse</cstring>
+                        </property>
+                        <property name="text">
+                            <string>...</string>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>open file dialog</string>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="0" column="0">
+                        <property name="name">
+                            <cstring>rxnLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Reaction File</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit" row="0" column="1">
+                        <property name="name">
+                            <cstring>rxnField</cstring>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>name of the reaction file to be used</string>
+                        </property>
+                    </widget>
+                </grid>
+            </widget>
+            <widget class="Line">
+                <property name="name">
+                    <cstring>Line2_2_2</cstring>
+                </property>
+                <property name="frameShape">
+                    <enum>HLine</enum>
+                </property>
+                <property name="frameShadow">
+                    <enum>Sunken</enum>
+                </property>
+                <property name="orientation">
+                    <enum>Horizontal</enum>
+                </property>
+            </widget>
+            <widget class="QLayoutWidget">
+                <property name="name">
+                    <cstring>Layout51</cstring>
+                </property>
+                <hbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <property name="margin">
+                        <number>0</number>
+                    </property>
+                    <property name="spacing">
+                        <number>6</number>
+                    </property>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>smirksLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>SMIRKS</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLineEdit">
+                        <property name="name">
+                            <cstring>smirksField</cstring>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>enter SMIRKS for the reaction here</string>
+                        </property>
+                    </widget>
+                </hbox>
+            </widget>
+            <widget class="Line">
+                <property name="name">
+                    <cstring>Line2_2</cstring>
+                </property>
+                <property name="frameShape">
+                    <enum>HLine</enum>
+                </property>
+                <property name="frameShadow">
+                    <enum>Sunken</enum>
+                </property>
+                <property name="orientation">
+                    <enum>Horizontal</enum>
+                </property>
+            </widget>
+            <widget class="QLayoutWidget">
+                <property name="name">
+                    <cstring>Layout56</cstring>
+                </property>
+                <grid>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <property name="margin">
+                        <number>0</number>
+                    </property>
+                    <property name="spacing">
+                        <number>6</number>
+                    </property>
+                    <widget class="QLabel" row="1" column="0">
+                        <property name="name">
+                            <cstring>prodLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Num Products</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="0" column="0">
+                        <property name="name">
+                            <cstring>reactLabel</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Num Reactants</string>
+                        </property>
+                        <property name="alignment">
+                            <set>AlignVCenter|AlignRight</set>
+                        </property>
+                    </widget>
+                    <spacer row="1" column="2">
+                        <property name="name">
+                            <cstring>Spacer17</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>0</height>
+                            </size>
+                        </property>
+                    </spacer>
+                    <widget class="QSpinBox" row="1" column="1">
+                        <property name="name">
+                            <cstring>nProdSpinner</cstring>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>number of reaction products</string>
+                        </property>
+                    </widget>
+                    <widget class="QSpinBox" row="0" column="1">
+                        <property name="name">
+                            <cstring>nReactSpinner</cstring>
+                        </property>
+                        <property name="toolTip" stdset="0">
+                            <string>number of reactants</string>
+                        </property>
+                    </widget>
+                    <spacer row="0" column="2">
+                        <property name="name">
+                            <cstring>Spacer17_2</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Horizontal</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>0</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </grid>
+            </widget>
+        </vbox>
+    </widget>
+    <widget class="QButtonGroup">
+        <property name="name">
+            <cstring>radio</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>30</width>
+                <height>220</height>
+            </rect>
+        </property>
+        <property name="lineWidth">
+            <number>0</number>
+        </property>
+        <property name="title">
+            <string></string>
+        </property>
+        <property name="exclusive">
+            <bool>true</bool>
+        </property>
+        <widget class="QRadioButton">
+            <property name="name">
+                <cstring>fileRadio</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>10</x>
+                    <y>41</y>
+                    <width>20</width>
+                    <height>16</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string></string>
+            </property>
+            <property name="checked">
+                <bool>true</bool>
+            </property>
+        </widget>
+        <spacer>
+            <property name="name">
+                <cstring>Spacer15</cstring>
+            </property>
+            <property name="orientation">
+                <enum>Vertical</enum>
+            </property>
+            <property name="sizeType">
+                <enum>Expanding</enum>
+            </property>
+            <property name="sizeHint">
+                <size>
+                    <width>0</width>
+                    <height>43</height>
+                </size>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>20</x>
+                    <y>60</y>
+                    <width>16</width>
+                    <height>43</height>
+                </rect>
+            </property>
+        </spacer>
+        <widget class="QRadioButton">
+            <property name="name">
+                <cstring>smirksRadio</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>10</x>
+                    <y>109</y>
+                    <width>20</width>
+                    <height>16</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string></string>
+            </property>
+        </widget>
+        <spacer>
+            <property name="name">
+                <cstring>Spacer16</cstring>
+            </property>
+            <property name="orientation">
+                <enum>Vertical</enum>
+            </property>
+            <property name="sizeType">
+                <enum>Expanding</enum>
+            </property>
+            <property name="sizeHint">
+                <size>
+                    <width>0</width>
+                    <height>42</height>
+                </size>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>20</x>
+                    <y>128</y>
+                    <width>16</width>
+                    <height>42</height>
+                </rect>
+            </property>
+        </spacer>
+        <widget class="QRadioButton">
+            <property name="name">
+                <cstring>numberRadio</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>10</x>
+                    <y>176</y>
+                    <width>20</width>
+                    <height>16</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string></string>
+            </property>
+        </widget>
+    </widget>
+</widget>
+<connections>
+    <connection>
+        <sender>buttonOk</sender>
+        <signal>clicked()</signal>
+        <receiver>NewReactionDialog</receiver>
+        <slot>accept()</slot>
+    </connection>
+    <connection>
+        <sender>buttonCancel</sender>
+        <signal>clicked()</signal>
+        <receiver>NewReactionDialog</receiver>
+        <slot>reject()</slot>
+    </connection>
+    <connection>
+        <sender>imgFileBrowse</sender>
+        <signal>clicked()</signal>
+        <receiver>NewReactionDialog</receiver>
+        <slot>imgFileClick()</slot>
+    </connection>
+    <connection>
+        <sender>nReactSpinner</sender>
+        <signal>valueChanged(int)</signal>
+        <receiver>NewReactionDialog</receiver>
+        <slot>spinClick()</slot>
+    </connection>
+    <connection>
+        <sender>nProdSpinner</sender>
+        <signal>valueChanged(int)</signal>
+        <receiver>NewReactionDialog</receiver>
+        <slot>spinClick()</slot>
+    </connection>
+    <connection>
+        <sender>rxnFileBrowse</sender>
+        <signal>clicked()</signal>
+        <receiver>NewReactionDialog</receiver>
+        <slot>rxnFileClick()</slot>
+    </connection>
+</connections>
+<tabstops>
+    <tabstop>rxnField</tabstop>
+    <tabstop>imgField</tabstop>
+    <tabstop>smirksField</tabstop>
+    <tabstop>nReactSpinner</tabstop>
+    <tabstop>nProdSpinner</tabstop>
+    <tabstop>buttonOk</tabstop>
+    <tabstop>buttonCancel</tabstop>
+    <tabstop>buttonHelp</tabstop>
+    <tabstop>numberRadio</tabstop>
+    <tabstop>smirksRadio</tabstop>
+    <tabstop>fileRadio</tabstop>
+</tabstops>
+<slots>
+    <slot>imgFileClick()</slot>
+    <slot>rxnFileClick()</slot>
+    <slot>spinClick()</slot>
+</slots>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

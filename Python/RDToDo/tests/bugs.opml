@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+<opml version="1.0">
+<head>
+<title>todo.xml</title>
+<ownerName>greg Landrum</ownerName>
+<dateModified>Wed May  1 00:14:13 2002 GMT</dateModified>
+<ownerEmail>landrum@RationalDiscovery.com</ownerEmail>
+<dateCreated>Wed, 10 April 2002 03:23:23 GMT</dateCreated>
+<colOrder>Pri,Item,Due</colOrder>
+<colWidths>22,456,97</colWidths>
+</head>
+<body>
+<outline percentDone="53" text="RDToDo">
+<outline percentDone="57" text="Bugs">
+<outline percentDone="100" priority="10" text="Reverses the order of OPML on import"/>
+<outline percentDone="0" text="filename/directory not set properly"/>
+<outline percentDone="100" text="adding notes not adding notes"/>
+<outline dateCreated="18 April 2002" percentDone="100" text="Paul's evil completion bug (~/snapshot2.png)"/>
+<outline dateCreated="18 April 2002" percentDone="0" text="removing child nodes doesn't affect done-ness of parents"/>
+<outline dateCreated="18 April 2002" lastDoneModification="30 April 2002" percentDone="100" text="you need to be able to set dates of branch nodes (ignore child dates when dirtied)"/>
+<outline dateCreated="29 April 2002" percentDone="0" text="adding child node does not update done-ness of parent"/>
+</outline>
+<outline percentDone="44" text="Missing Features">
+<outline dateCreated="30 April 2002" lastDoneModification="30 April 2002" percentDone="70" text="draw attention to things that are almost due"/>
+<outline lastDoneModification="22 April 2002" percentDone="100" priority="5" text="Done Markers"/>
+<outline lastDoneModification="22 April 2002" note="" percentDone="100" text="progressive done (i.e. 50% including child tasks)"/>
+<outline percentDone="0" priority="5" text="undo"/>
+<outline lastDoneModification="22 April 2002" percentDone="100" text="don't show me finished things"/>
+<outline note="This can tie into the general framework used for the &quot;no completed&quot; display" percentDone="0" text="filters"/>
+<outline percentDone="0" text="check for saved when closing docs"/>
+<outline dateCreated="22 April 2002" lastDoneModification="24 April 2002" percentDone="70" text="date created"/>
+<outline dateCreated="22 April 2002" lastDoneModification="24 April 2002" percentDone="50" text="last modified date (do not include auto updates)"/>
+<outline dateCreated="22 April 2002" percentDone="0" text="what columns should I show?"/>
+<outline dateCreated="22 April 2002" percentDone="0" text="Need code to merge changes (multiple-editors)"/>
+</outline>
+<outline percentDone="8" text="It'd be cool if...">
+<outline percentDone="80" text="Text based dates"/>
+<outline percentDone="0" text="Categories of items"/>
+<outline percentDone="0" text="Coloring by priority/proximity of due date"/>
+<outline percentDone="0" text="multiple outlines open at once"/>
+<outline dateCreated="18 April 2002" percentDone="0" text="configuration file">
+<outline dateCreated="18 April 2002" percentDone="0" text="default file"/>
+</outline>
+<outline dateCreated="22 April 2002" note="It's kind of a pain in the neck that the Note box is on a separate tab in the notebook.  It's maybe smarter to have a bigger dialog that's mostly one page. " percentDone="0" text="re-do dialog box?"/>
+<outline dateCreated="22 April 2002" note="maybe use the HTML widget for this.  Have to be careful about how it would be stored in the OPML.  Add child entities?  Maybe this breaks the DTD? " percentDone="0" text="extra data in items?  (i.e. things like URLs or pictures or whatever?)"/>
+<outline dateCreated="26 April 2002" note="" percentDone="0" text="there were some way to tell if a note was attached to an item"/>
+<outline dateCreated="26 April 2002" percentDone="0" text="The note stuff were more visible (i.e. no separate tab)"/>
+</outline>
+<outline percentDone="100" text="Code bits">
+<outline percentDone="100" text="decouple outline and todo functionality"/>
+<outline percentDone="100" text="add pure outliner"/>
+</outline>
+<outline percentDone="30" text="Annoyances">
+<outline percentDone="0" text="active + indentation"/>
+<outline percentDone="90" text="updates too slow"/>
+<outline percentDone="0" text="renaming interface is suboptimal"/>
+<outline dateCreated="18 April 2002" lastDoneModification="30 April 2002" percentDone="90" text="renaming sometimes switches on too quickly"/>
+<outline dateCreated="18 April 2002" percentDone="0" text="don't allow done-ness setting of branch nodes"/>
+<outline dateCreated="25 April 2002" percentDone="0" text="ensure that thing being edited is always onscreen"/>
+</outline>
+<outline percentDone="80" text="Outliner">
+<outline lastDoneModification="22 April 2002" note="Only a single line is displayed, but the text can now (I hope) be multi-line." percentDone="80" text="Fix mismatch between display and edit functionality"/>
+</outline>
+</outline>
+</body>
+</opml>

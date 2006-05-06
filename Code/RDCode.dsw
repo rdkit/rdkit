@@ -1,0 +1,743 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "Catalogs"=.\Catalogs\Catalogs.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Clustering"=.\ML\Cluster\Murtagh\Clustering.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "DictTest"=.\RDGeneral\DictTest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name RDGeneral
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "FileParsers"=.\GraphMol\FileParsers\FileParsers.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Fingerprints"=.\GraphMol\Fingerprints\Fingerprints.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "FingerprintsTest"=.\GraphMol\Fingerprints\FingerprintsTest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Fingerprints
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Query
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Subgraphs
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "FragCatTest"=.\GraphMol\FragCatalog\FragCatTest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name FragCatalog
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Subgraphs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Substruct
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Catalogs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name vflib
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "FragCatalog"=.\GraphMol\FragCatalog\FragCatalog.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Fragments"=.\Fragments\Fragments.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name bpl_static
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name OEWin
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "GraphMol"=.\GraphMol\GraphMol.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name Query
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "MolOpsTest"=.\GraphMol\MolOpsTest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "OEWin"=..\External\oelib\OEWin\OEWin.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Pharmacophore Utils"=.\BoostChem\Pharmacophores\PharmacophoreUtils.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name bpl_static
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "Query"=.\Query\Query.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "QueryTest"=.\Query\QueryTest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name Query
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "RDGeneral"=.\RDGeneral\RDGeneral.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "RD_UDF"=.\IBase\RD_UDF.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name OEWin
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "SmartsParseTest"=.\GraphMol\SmilesParse\SmartsParseTest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name vflib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Substruct
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Query
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "SmilesParse"=.\GraphMol\SmilesParse\SmilesParse.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "SmilesParseTest"=.\GraphMol\SmilesParse\SmilesParseTest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Query
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "SubStructTest"=.\GraphMol\SubStruct\SubStructTest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Substruct
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "Subgraphs"=.\GraphMol\Subgraphs\Subgraphs.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "Substruct"=.\GraphMol\SubStruct\Substruct.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "any_container_test"=.\Demos\boost\any_container\any_container.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "blaspp"="..\External\Lapack++\blaspp\src\blaspp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "cAlgorithms"=.\ML\Cluster\cAlgorithms.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "cEntropy"=.\ML\InfoTheory\cEntropy.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "cQuantize"=.\ML\Data\cQuantize.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "chem"=.\BoostChem\chem.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name OEWin
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "datastructs"=.\DataStructs\datastructs.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "datastructs test"=".\DataStructs\datastructs test.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "itertest"=.\GraphMol\itertest.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Query
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "lapackpp"="..\External\Lapack++\src\lapackpp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libDatastructs"=.\DATASTRUCTS\libDatastructs.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "matrixpp"="..\External\Lapack++\matrix\src\matrixpp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "testCanon"=.\GraphMol\testCanon.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Query
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Substruct
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name vflib
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "vflib"="..\External\vflib-2.0\vflib.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "wrapFragCatalog"=.\GraphMol\FragCatalog\Wrap\wrapFragCatalog.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name FragCatalog
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Catalogs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Subgraphs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Substruct
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name vflib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "wrapGraphMol"=.\GraphMol\Wrap\wrapGraphMol.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name GraphMol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libDatastructs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Query
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name SmilesParse
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Substruct
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name vflib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Subgraphs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name FileParsers
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name blaspp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lapackpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name matrixpp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Fingerprints
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name FragCatalog
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name Catalogs
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

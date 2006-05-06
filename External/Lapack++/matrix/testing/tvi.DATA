@@ -1,0 +1,112 @@
+Program Name: tvi
+
+null consturctor 
+A(): (0x1) Indeces: (0,-1) (0,0) #ref: 1 sa:0
+
+(int) constructor 
+C(N) : (10x1) Indeces: (0,9) (0,0) #ref: 1 sa:0
+
+(int, int) constructor 
+B(N) : (1x10) Indeces: (0,0) (0,9) #ref: 1 sa:0
+
+(int*, int) constructor 
+F(v,10): (10x1) Indeces: (0,9) (0,0) #ref: 1 sa:0
+
+test operator=(int) 
+C = 5.5: (10x1) Indeces: (0,9) (0,0) #ref: 1 sa:0
+5  
+5  
+5  
+5  
+5  
+5  
+5  
+5  
+5  
+5  
+
+
+test C(const Index&) constructor
+C(I)=7 : (3x1) Indeces: (2,4) (0,0) #ref: 1 sa:0
+C(I):
+7  
+7  
+7  
+
+5  
+5  
+7  
+7  
+7  
+5  
+5  
+5  
+5  
+5  
+
+
+test start(),inc(),end() 
+C.start(): 0
+C.inc(): 1
+C.end(): 9
+
+test ref(const LaGenMatInt &)
+A.ref(C): (10x1) Indeces: (0,9) (0,0) #ref: 2 sa:0
+5  
+5  
+7  
+7  
+7  
+5  
+5  
+5  
+5  
+5  
+
+
+C = 1.1
+test inject(const LaGenMatInt &)
+A.inject(C): (10x1) Indeces: (0,9) (0,0) #ref: 2 sa:0
+1  
+1  
+1  
+1  
+1  
+1  
+1  
+1  
+1  
+1  
+
+
+test copy(const LaGenMatInt &)
+A.copy(C): (10x1) Indeces: (0,9) (0,0) #ref: 1 sa:0
+       C : (10x1) Indeces: (0,9) (0,0) #ref: 1 sa:0
+1  
+1  
+1  
+1  
+1  
+1  
+1  
+1  
+1  
+1  
+
+
+test X(const &X) constructor 
+D(C) :(10x1) Indeces: (0,9) (0,0) #ref: 2 sa:0
+
+test call to madd()
+(10x1) Indeces: (0,9) (0,0) #ref: 1 sa:0
+2  
+2  
+2  
+2  
+2  
+2  
+2  
+2  
+2  
+2  
+

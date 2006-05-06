@@ -1,0 +1,12 @@
+AtomType a1 [N,O;!H0]
+AtomType a2 \
+ [N,O]
+DefineFeature HDonor1 [{a1}]
+    Family HBondDonor
+    Weights 1.0
+EndFeature
+DefineFeature HAcceptor1 [{a2}]
+    Family \ 
+    HBondAcceptor
+    Weights 1.0
+EndFeature

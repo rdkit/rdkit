@@ -1,0 +1,67 @@
+General information:
+
+ - the workspace RDCode.dsw should contain all projects
+
+ - the magic for copying files in the post-build step is something
+   like this:
+     copy Release\cAlgorithms.pyd $(RDBASE)\Python\ML\Cluster
+   i.e. you *can* reference environment variables
+
+Things to remember whilst writing extension modules:
+
+ - don't forget to update the include and link paths and turn off
+   precompiled headers (unless you are really using them)
+ 
+ - don't forget to initialize Numeric
+
+ - interaction with Numeric data is most easily done using this paradigm:
+   accum += ((double *)origMetricsContig->data)[(p2*(p2-1))/2+p1];
+   ((double *)newMetricMat->data)[tempIdx] = accum;
+
+ - when programming the windows, it's useful to use the XXX_API methods that
+   microsoft's wizard provides for DLLs.  These do, however, need to
+   have extern "C" added to them, so you get something like this in
+   your .h file:
+#ifdef WIN32
+#ifdef CALGORITHMS_EXPORTS
+#define CALGORITHMS_API extern "C" __declspec(dllexport)
+#else
+#define CALGORITHMS_API extern "C" __declspec(dllimport)
+#endif
+#include <windows.h>
+#else  // WIN32
+#define CALGORITHMS_API extern "C"
+#endif
+
+   you'll also need to include the magic DLLMain foo in your .cpp
+   file:
+#ifdef WIN32
+BOOL APIENTRY DllMain( HANDLE hModule, 
+                       DWORD  ul_reason_for_call, 
+                       LPVOID lpReserved
+					 )
+{
+    switch (ul_reason_for_call)
+	{
+		case DLL_PROCESS_ATTACH:
+		case DLL_THREAD_ATTACH:
+		case DLL_THREAD_DETACH:
+		case DLL_PROCESS_DETACH:
+			break;
+    }
+    return TRUE;
+}
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+

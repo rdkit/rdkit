@@ -1,0 +1,27 @@
+*** /usr/local/src/Python/Extensions/Imaging-1.1.1/PIL/Image.py	Mon Oct 23 05:47:25 2000
+--- Image.py	Mon Oct 23 13:46:07 2000
+***************
+*** 192,200 ****
+      import os, sys
+  
+      try:
+!         directories = __path__
+      except NameError:
+!         directories = sys.path
+  
+      # only check directories (including current, if present in the path)
+      for path in filter(os.path.isdir, directories):
+--- 192,204 ----
+      import os, sys
+  
+      try:
+!         directories = __path__[:]
+      except NameError:
+!         directories = sys.path[:]
+! 
+!     (thisdir, thisfile) = os.path.split(__file__)
+!     if not thisdir in directories:
+!         directories.append(thisdir)
+  
+      # only check directories (including current, if present in the path)
+      for path in filter(os.path.isdir, directories):

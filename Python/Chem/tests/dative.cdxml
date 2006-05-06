@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.camsoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 6.0.1"
+ Name="dative.cdxml"
+ BoundingBox="175 198 258 220"
+ WindowPosition="116 251"
+ WindowSize="792 567"
+ WindowIsZoomed="yes"
+ FractionalWidths="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000001220122000000000C150910FFD0FFB80C4609590367052803FC0002000001220122000000000C150910000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="10"
+ BoundingBox="175 198 258 220"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="11"
+ BoundingBox="177 200 256 218"
+><n
+ id="2"
+ p="179.91 205.35"
+ Z="2"
+ Element="26"
+ NumHydrogens="0"
+ AS="N"
+><t
+ id="1"
+ p="177 210"
+ BoundingBox="177 201 188 210"
+ Z="1"
+ LineHeight="yes"
+ LabelAlignment="Left"
+><s font="4" size="12">Fe</s></t></n><n
+ id="3"
+ p="213 205.35"
+ Z="3"
+ ImplicitHydrogens="yes"
+ AbnormalValence="yes"
+ AS="N"
+><t
+ id="6"
+ p="209.88 209.25"
+ BoundingBox="211 202 216 209"
+ Z="6"
+ LabelAlignment="Right"
+><s font="3" size="10" face="96">C</s></t></n><n
+ id="4"
+ p="243 205.35"
+ Z="4"
+ Element="8"
+ NumHydrogens="0"
+ ImplicitHydrogens="yes"
+ AbnormalValence="yes"
+ AS="N"
+><t
+ id="7"
+ p="239.56 209.25"
+ BoundingBox="241 202 247 209"
+ Z="7"
+ LabelAlignment="Left"
+><s font="3" size="10" face="96">O</s></t></n><b
+ id="5"
+ Z="5"
+ B="3"
+ E="4"
+ Order="3"
+ BS="N"
+/><b
+ id="9"
+ Z="8"
+ B="3"
+ E="2"
+ Order="dative"
+ BS="N"
+ EndAttach="1"
+/></fragment></page></CDXML>

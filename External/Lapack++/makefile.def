@@ -1,0 +1,91 @@
+#      LAPACK++ (V. 1.1)
+#      (C) 1992-1996 All Rights Reserved.
+#
+#       GNU g++ (2.7.0 and later) makefile for Lapack++ 1.1
+#
+#
+
+.SUFFIXES: .c .o .cpp 
+
+
+# 1) Describe your C++ compiler and platform  (tested only on SUN with
+#		g++ 2.7.0)  Some other choices for ARCH are "SGI" and "RIOS" (RS-6000)
+#
+
+ARCH = Linux
+CPP = $(CXX)
+CPPFLAGS =  -O3 -march=i686 -I$(LAPACKPP_INC) -D$(ARCH)   -Wall
+CPPLIBS = -lm
+CFLAGS = -O3 -march=i686 -I$(LAPACKPP_INC)
+#
+#
+
+
+
+# 2) Describe where Lapack and BLAS libraries exist
+#
+#
+#
+#	 2a) if linking with the f77 Lapack, then you'll need
+#	to link with the native Fortran libs
+#
+#BLAS_LIB = /usr/lib/libblas.a
+#LAPACK_LIB = /usr/local/lib/liblapack.a 
+#FLIBS = /usr/local/lang/SC1.0.1/libF77.a 
+#
+# Linux
+#
+BLAS_LIB = /usr/lib/libblas.a
+LAPACK_LIB = /usr/lib/liblapack.a
+FLIBS = -lm -lg2c
+#
+# Sun
+#
+#FLIBS =  -lsunperf -lF77  -lm
+
+#
+#	 2b) if linking with C-Lapack, then you'll need to link with the
+#	f2c support libs.  These should be in the same dir where C-Lapack
+#	is found.
+#
+#BLAS_LIB = /src/icl/CLAPACK_SUN4/blas.a
+#LAPACK_LIB = /src/icl/CLAPACK_SUN4/lapack.a
+#FLIBS = -lm /src/icl/CLAPACK_SUN4/libF77.a /src/icl/CLAPACK_SUN4/libI77.a  
+
+# 4) Specify where to put the Lapack++ libs (default is the root Lapack++ directory)
+
+LAPACKPP_LIB_DIR = $(LAPACKPP_DIR)
+LAPACKPP_INC = $(LAPACKPP_DIR)/include
+LAMATRIXPP_LIB = $(LAPACKPP_LIB_DIR)/liblamatrix++.a
+LAPACKPP_LIB = $(LAPACKPP_LIB_DIR)/liblapack++.a
+BLASPP_LIB = $(LAPACKPP_LIB_DIR)/libblas++.a 
+
+ALL_LAPACKPP_LIB =   				\
+		$(LAMATRIXPP_LIB) 			\
+		$(LAPACKPP_LIB)  			\
+		$(TMGLIB)  					\
+        $(BLASPP_LIB)   			\
+		$(LAPACK_LIB)  				\
+		$(BLAS_LIB) 				\
+		$(LAMATRIXPP_LIB) 			\
+		$(FLIBS) 
+
+
+# 5) optional Lapack++ testing module
+#
+# If you wish to test your installation (recommended), you'll need
+# the tmglib.a module of Lapack.  This can be found in the same place
+# where the C or f77 Lapack library is found.  
+#
+# If you wish *not* to run the test module, leave the TMGLIB definition
+# blank.
+#
+#
+TMGLIB =
+
+# 6) Is ranlib available on this system? 't' or 'f'
+#
+#
+HASRANLIB = t
+
+#---------------[ end of makefile.def ]-----------------------

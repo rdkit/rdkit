@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.camsoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 6.0.1"
+ Name="Cp-.cdxml"
+ BoundingBox="181 204 237 273"
+ WindowPosition="155 349"
+ WindowSize="792 567"
+ WindowIsZoomed="yes"
+ FractionalWidths="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000001220122000000000C150910FFD0FFB80C4609590367052803FC0002000001220122000000000C150910000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="24"
+ BoundingBox="181 204 237 273"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="27"
+ BoundingBox="183 206 235 271"
+><n
+ id="13"
+ p="185.35 229"
+ Z="1"
+ AS="N"
+/><n
+ id="14"
+ p="185.35 259"
+ Z="2"
+ AS="N"
+/><n
+ id="15"
+ p="213.89 268.27"
+ Z="3"
+ AS="N"
+/><n
+ id="16"
+ p="231.52 244"
+ Z="4"
+ AS="N"
+/><n
+ id="17"
+ p="213.89 219.73"
+ Z="5"
+ Charge="-1"
+ AS="N"
+/><b
+ id="18"
+ Z="6"
+ B="13"
+ E="14"
+ Order="2"
+ BondCircularOrdering="22 0 0 19"
+/><b
+ id="19"
+ Z="7"
+ B="14"
+ E="15"
+ BS="N"
+/><b
+ id="20"
+ Z="8"
+ B="15"
+ E="16"
+ Order="2"
+ BondCircularOrdering="19 0 0 21"
+/><b
+ id="21"
+ Z="9"
+ B="16"
+ E="17"
+ BS="N"
+/><b
+ id="22"
+ Z="10"
+ B="17"
+ E="13"
+ BS="N"
+/><graphic
+ id="23"
+ BoundingBox="212 212 212 222"
+ Z="11"
+ GraphicType="Symbol"
+ SymbolType="CircleMinus"
+><represent attribute="Charge" object="5"/></graphic></fragment></page></CDXML>

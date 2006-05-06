@@ -1,0 +1,9 @@
+SCC = This is a Source Code Control file
+
+[vc71.sln]
+SCC_Aux_Path = "D:\vss"
+SCC_Project_Name = "$/projects/lib/boost-root/libs/log/examples/compile_time_logs/vc71", NAWAAAAA
+
+[vc71.vcproj]
+SCC_Aux_Path = "D:\vss"
+SCC_Project_Name = "$/projects/lib/boost-root/libs/log/examples/compile_time_logs/vc71", NAWAAAAA

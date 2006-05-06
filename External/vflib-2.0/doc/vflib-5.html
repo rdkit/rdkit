@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>The VFLib Graph Matching Library, version 2.0: Using VFLib: a quick tour </TITLE>
+ <LINK HREF="vflib-6.html" REL=next>
+ <LINK HREF="vflib-4.html" REL=previous>
+ <LINK HREF="vflib.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="vflib-6.html">Next</A>
+<A HREF="vflib-4.html">Previous</A>
+<A HREF="vflib.html#toc3">Contents</A>
+<HR>
+<H2><A NAME="QuickTour"></A> <A NAME="s3">3. Using VFLib: a quick tour </A></H2>
+
+<P>VFLib deals with <EM>simple directed graphs</EM>, i.e. the
+graphs cannot contain self-loops, edge <EM>(i,j)</EM> is 
+considered different from edge <EM>(j,i)</EM>, and between
+two nodes there is at most one edge.
+<P>Nodes are identified through values of type <CODE>node_id</CODE>, defined
+in the header <CODE>argraph.h</CODE>, which corresponds to unsigned
+16-bit integers. The first node has an id equal to 0.
+The value <CODE>NULL_NODE</CODE> (corresponding to 2^16 - 1, i.e. 65535)
+is used as a null node id, so the valid ids are from 0 to 65534,
+and the graph can contain at most 65535 nodes.
+Edges are identified through a pair of node ids.
+<P>The library has been expressly designed to perform only one
+operation, i.e. graph matching, and all the classes and the data
+structures have been chosen in such a way to make this operation
+fast, especially on large graphs. 
+<P>Unfortunately, this means that the library interface can be
+a little bit cumbersome with respect to some tasks
+which are instead quite simple with other libraries.
+<P>In the following you will find a short description, together
+with code fragments, that illustrates the following steps
+needed to perorm the matching:
+<P>
+<UL>
+<LI> building a graph</LI>
+<LI> choosing the matching algorithm</LI>
+<LI> finding the first matching between two graphs</LI>
+<LI> finding all the matchings between two graphs</LI>
+<LI> adding and using node/edge attributes</LI>
+<LI> loading and saving graphs</LI>
+</UL>
+<P>
+<P>
+<P>
+<HR>
+<A HREF="vflib-6.html">Next</A>
+<A HREF="vflib-4.html">Previous</A>
+<A HREF="vflib.html#toc3">Contents</A>
+</BODY>
+</HTML>

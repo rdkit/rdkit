@@ -1,0 +1,39 @@
+<html>
+<head>
+</head>
+
+<body>
+<script>
+netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+var cls = Components.classes["@rationaldiscovery.com/RDKit/base"].createInstance();
+var iface = cls.QueryInterface(Components.interfaces.IRDKit);
+function get(arg)
+{
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+  return iface.strlen(arg);
+}
+function get2(arg)
+{
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+  var tmp = iface.MolFromSmiles(arg);
+  return tmp.GetSmiles();
+}
+</script>
+
+<form>
+<textarea name="fooEntry" rows=5 cols=80>
+</textarea>
+<input name="textBox" cols=80>
+<input type=button onclick="form.fooEntry.value=get(form.textBox.value)" value="yo">
+</form>
+
+<p>
+<form>
+<textarea name="fooEntry" rows=5 cols=80>
+</textarea>
+<input name="textBox" cols=80>
+<input type=button onclick="form.fooEntry.value=get2(form.textBox.value)" value="yo">
+</form>
+
+</body>
+</html>

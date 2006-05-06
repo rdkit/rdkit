@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML>
+<CDXML
+ CreationProgram="ChemDraw 6.0.2"
+ Name="bond-query.cdxml"
+ BoundingBox="127 129 240 156"
+ WindowPosition="108 125"
+ WindowSize="544 550"
+ FractionalWidths="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="000300000258025800000000190012C0FF9CFF6A196413560367052803FC000200000258025800000000190012C0000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="10"
+ BoundingBox="127 129 240 156"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="11"
+ BoundingBox="129 131 238 154"
+><n
+ id="1"
+ p="131.23 148.17"
+ Z="1"
+ AS="N"
+/><n
+ id="2"
+ p="157.21 133.17"
+ Z="2"
+ AS="N"
+/><n
+ id="4"
+ p="183.19 148.17"
+ Z="4"
+ AS="N"
+/><n
+ id="6"
+ p="209.17 133.17"
+ Z="6"
+ AS="N"
+/><n
+ id="8"
+ p="235.15 148.17"
+ Z="8"
+ AS="N"
+/><b
+ id="3"
+ Z="3"
+ B="1"
+ E="2"
+ BS="N"
+/><b
+ id="5"
+ Z="5"
+ B="2"
+ E="4"
+ Order="1 2"
+ BS="N"
+/><b
+ id="7"
+ Z="7"
+ B="4"
+ E="6"
+ BS="N"
+/><b
+ id="9"
+ Z="9"
+ B="6"
+ E="8"
+ Order="2"
+ BS="N"
+/></fragment></page></CDXML>

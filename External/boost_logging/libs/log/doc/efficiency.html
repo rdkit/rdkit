@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1">
+<title>Boost Log Library Documentation</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<a href="../../../index.htm">
+<img align="left" src="../../../c++boost.gif" alt="C++ Boost">
+</a>  
+
+<h1>Boost Log Library Documentation</h1>
+<p>
+<h3 align="center">Version 1.4</h3>
+<hr>
+
+
+
+<p><b>Efficiency</b></p>
+<p>By default, all logs are have the <font face="Courier New, Courier, mono">boost::logging::level::default_</font> 
+  <a href="manipulating_logs.html#level">level</a>. In time, in order to make 
+  your application faster or to simply disregard some module's logging - which 
+  you know is 100% correct (by the way, do you have such a module?), you'll want 
+  to disable writing of certain messages and/or logs.</p>
+<p>Whenever you log a message using BOOST_LOG[L], here's what happens under the 
+  scenes:</p>
+<pre class="code">
+BOOST_LOG(app) << whatever << you << want << to << write;
+// equivalent to (pseudo-code):
+// if ( can_write_msg(app,boost::logging::level::default_) ) app << whatever <<....;
+
+BOOST_LOG(app,my_level) << whatever << you << want << to << write;
+// equivalent to (pseudo-code):
+// if ( can_write_msg(app,my_level) ) app << whatever <<....;
+</pre>
+
+<p>This way, a message gets processed, only if the message's <a href="manipulating_logs.html#level">level</a> 
+  is bigger or equal than the log's <a href="manipulating_logs.html#level">level</a>. 
+  If it is, further processing takes place (<a href="modifier_logger.html">modifiers 
+  and appenders</a> functions are called). If not, the whole processing of the 
+  message is ignored. What this means is that any possibly time-costly functions 
+  that would compose the message will <i>not</i><b> </b>be called, making the 
+  library <b>very efficient</b>:</p>
+<pre class="code">
+std::string time_consuming_msg() {
+    ...
+}
+
+BOOST_LOGL(app,some_level) << time_consuming_msg() << ", i = " << i << std::endl;
+</pre>
+<p>If <i>some_level </i>is bigger or equal than<i> app's level</i>, the '&lt;&lt; 
+  time_consuming_msg() &lt;&lt; &quot;, i = &quot; &lt;&lt; i &lt;&lt; std::endl;' 
+  will be executed. <br>
+  Otherwise, <b>it will not be executed</b>. Thus, time_consuming_msg() functions 
+  will not be called.</p>
+<p>As an additional helper, you might sometimes need to know before computing 
+  a large message whether a message should be written to a log or not:</p>
+<pre class="code">
+// to avoid this:
+// (which could be very time-consuming - acquiring the log one million times)
+for (int idx = 0; idx < 1000000; ++idx)
+    BOOST_LOGL(app,some_level) << "message at idx " << idx << std::endl;
+
+// you will want to do this:
+// (very efficient)
+if (BOOST_IS_LOG_ENABLED(app,some_level) ) {
+    std::ostringstream out;
+    for (int idx = 0; idx < 1000000; ++idx)
+        out << "message at idx " << idx << std::endl;
+    BOOST_LOGL(app,some_level) << out.str();
+}
+</pre>
+<p>Thus, use <b>BOOST_IS_LOG_ENABLED</b>, as shown above. As a shortcut, you can 
+  also do this:</p>
+<pre class="code">
+// (equivalent to above)
+if ( app()(some_level) ) {
+    std::ostringstream out;
+    for (int idx = 0; idx < 1000000; ++idx)
+        out << "message at idx " << idx << std::endl;
+    BOOST_LOGL(app,some_level) << out.str();
+}
+</pre>
+<p>&nbsp;</p>
+<hr>
+<small>
+Copyright <a href="mailto:john&#64;torjo.com">John Torjo</a> &copy; 2004
+</small>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+AtomType NDonor [#7&!H0]
+AtomType ChalcDonor [O,S;!H0]
+DefineFeature SingleAtomDonor [$({NDonor}),$({ChalcDonor})]
+  Family Donor
+  Weights 1
+EndFeature
+
+
+AtomType NAcceptor [#7]
+Atomtype ChalcAcceptor [#8,#16]
+AtomType HalogenAcceptor [F]
+DefineFeature SingleAtomAcceptor [$({HalogenAcceptor}),$({ChalcAcceptor}),$({NAcceptor})]
+  Family Acceptor
+  Weights 1
+EndFeature
+
+# this one is delightfully easy:
+DefineFeature AcidicGroup [C,S](=[O,S,P])-[O;H1,H0&-1]
+  Family NegIonizable
+  Weights 1.0,1.0,1.0
+EndFeature
+
+AtomType CarbonOrArom_NonCarbonyl [$([C,a]);!$([C,a](=O))]
+AtomType BasicNH2 [N;H2&+0]{CarbonOrArom_NonCarbonyl}
+AtomType BasicNH1 [N;H1&+0]{CarbonOrArom_NonCarbonyl}{CarbonOrArom_NonCarbonyl}
+# NOTE: the original definition for BasicNH0 was this:
+# $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])
+# However, that doesn't fit with the other two above, so I've made it analogous:
+AtomType BasicNH0 [N;H0&+0]{CarbonOrArom_NonCarbonyl}{CarbonOrArom_NonCarbonyl}{CarbonOrArom_NonCarbonyl}
+# NOTE: again, this one doesn't quite seem to fit:
+# $([N,n;X2;+0])]
+# This time, I couldn't come up with a sensible solution, so we take it "as is":
+AtomType BasicNakedN [N,n;X2;+0]
+DefineFeature BasicGroup [$({BasicNH2}),$({BasicNH1}),$({BasicNH0}),$({BasicNakedN})]
+  Family PosIonizable
+  Weights 1.0
+EndFeature
+
+# aromatic rings of various sizes:
+#
+# Note that with the aromatics, it's important to include the ring-size queries (;rN) along with
+# the aromaticity query for two reasons:
+#   1) Much of the current feature-location code assumes that the feature point is 
+#      equidistant from the atoms defining it. Larger definitions like: a1aaaaaaaa1 will actually 
+#      match things like 'o1c2cccc2ccc1', which have an aromatic unit spread across multiple simple
+#      rings and so don't fit that requirement.
+#   2) It's *way* faster.
+#
+
+DefineFeature Arom5 [a;r5]1[a;r5][a;r5][a;r5][a;r5]1
+  Family Aromatic
+  Weights 1.0,1.0,1.0,1.0,1.0
+EndFeature
+DefineFeature Arom6 [a;r6]1[a;r6][a;r6][a;r6][a;r6][a;r6]1
+  Family Aromatic
+  Weights 1.0,1.0,1.0,1.0,1.0,1.0
+EndFeature
+
+

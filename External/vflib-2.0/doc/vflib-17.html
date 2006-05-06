@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>The VFLib Graph Matching Library, version 2.0: VFLib class reference : Class BinaryGraphLoader</TITLE>
+ <LINK HREF="vflib-18.html" REL=next>
+ <LINK HREF="vflib-16.html" REL=previous>
+ <LINK HREF="vflib.html#toc4" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="vflib-18.html">Next</A>
+<A HREF="vflib-16.html">Previous</A>
+<A HREF="vflib.html#toc4">Contents</A>
+<HR>
+<H2>4.5 Class <CODE>BinaryGraphLoader</CODE></H2>
+
+<P><B>Defined in:</B>  argloader.h
+<P><B>Extends:</B> ARGEdit
+<P><B>Overview:</B>
+This class allows to read a graph without attributes from a
+binary file. The file format is the same used for the
+<I>Graph Database</I>, a large collection of graphs for
+benchmarking graph matching algorithms.
+<P>A static method is also provided in the class to write a graph in the
+same binary format.
+<P><B>File format</B>
+<P>The file is composed by a sequence of 16-bit words; the words are
+encoded in little-endian format (e.g., LSB first).
+The first word represents the number of nodes in the graph.
+Then, for each node, there is a word encoding the number of
+edges coming out of that node, followed by a sequence of words
+encoding the endpoints of those edges.
+<P>An example, represented in hexadecimal, follows:
+<HR>
+<PRE>
+    03 00     Number of nodes (3)
+    00 00     Number of edges out of node 0 (0)
+    02 00     Number of edges out of node 1 (2)
+    00 00     Target of the first edge of node 1 (edge 1 -> 0)
+    02 00     Target of the second edge of node 1 (edge 1 -> 2)
+    01 00     Number of edges out of node 2 (1)
+    00 00     Target of the first (and only) edge of node 2 (edge 2 -> 0)
+</PRE>
+<HR>
+<P>
+<P>
+<P>
+<P>
+<P>
+<P>
+<HR>
+<A HREF="vflib-18.html">Next</A>
+<A HREF="vflib-16.html">Previous</A>
+<A HREF="vflib.html#toc4">Contents</A>
+</BODY>
+</HTML>

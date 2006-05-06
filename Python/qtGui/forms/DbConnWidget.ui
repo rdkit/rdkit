@@ -1,0 +1,156 @@
+<!DOCTYPE UI><UI version="3.2" stdsetdef="1">
+<class>DbConnWidget</class>
+<widget class="QWidget">
+    <property name="name">
+        <cstring>DbConnWidget</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>261</width>
+            <height>105</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>DbConnWidget</string>
+    </property>
+    <grid>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <property name="margin">
+            <number>2</number>
+        </property>
+        <property name="spacing">
+            <number>4</number>
+        </property>
+        <widget class="QLabel" row="3" column="0">
+            <property name="name">
+                <cstring>db_tabelLabel</cstring>
+            </property>
+            <property name="text">
+                <string>Table</string>
+            </property>
+            <property name="alignment">
+                <set>AlignVCenter|AlignRight</set>
+            </property>
+        </widget>
+        <widget class="QLineEdit" row="1" column="1" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>userField</cstring>
+            </property>
+            <property name="frameShape">
+                <enum>LineEditPanel</enum>
+            </property>
+            <property name="frameShadow">
+                <enum>Sunken</enum>
+            </property>
+            <property name="text">
+                <string>sysdba</string>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>username for DB access</string>
+            </property>
+        </widget>
+        <widget class="QLabel" row="1" column="0">
+            <property name="name">
+                <cstring>db_sqlLabel_3</cstring>
+            </property>
+            <property name="text">
+                <string>User</string>
+            </property>
+            <property name="alignment">
+                <set>AlignVCenter|AlignRight</set>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>username for DB access</string>
+            </property>
+        </widget>
+        <widget class="QLabel" row="0" column="0">
+            <property name="name">
+                <cstring>db_tabelLabel_2</cstring>
+            </property>
+            <property name="text">
+                <string>Database</string>
+            </property>
+            <property name="alignment">
+                <set>AlignVCenter|AlignRight</set>
+            </property>
+        </widget>
+        <widget class="QComboBox" row="3" column="1" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>tableCombo</cstring>
+            </property>
+            <property name="enabled">
+                <bool>false</bool>
+            </property>
+            <property name="autoCompletion">
+                <bool>true</bool>
+            </property>
+            <property name="duplicatesEnabled">
+                <bool>false</bool>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>name of the database table</string>
+            </property>
+        </widget>
+        <widget class="QLineEdit" row="2" column="1" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>passwordField</cstring>
+            </property>
+            <property name="text">
+                <string>masterkey</string>
+            </property>
+            <property name="echoMode">
+                <enum>Password</enum>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>password for DB access</string>
+            </property>
+        </widget>
+        <widget class="QLabel" row="2" column="0">
+            <property name="name">
+                <cstring>db_sqlLabel_3_2</cstring>
+            </property>
+            <property name="text">
+                <string>Password</string>
+            </property>
+            <property name="alignment">
+                <set>AlignVCenter|AlignRight</set>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>password for DB access</string>
+            </property>
+        </widget>
+        <widget class="QLineEdit" row="0" column="1">
+            <property name="name">
+                <cstring>nameBox</cstring>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>file containing the database</string>
+            </property>
+        </widget>
+        <widget class="QToolButton" row="0" column="2">
+            <property name="name">
+                <cstring>nameButton</cstring>
+            </property>
+            <property name="text">
+                <string>...</string>
+            </property>
+        </widget>
+    </grid>
+</widget>
+<connections>
+    <connection>
+        <sender>nameButton</sender>
+        <signal>clicked()</signal>
+        <receiver>DbConnWidget</receiver>
+        <slot>dbFileClick()</slot>
+    </connection>
+</connections>
+<slots>
+    <slot>dbFileClick()</slot>
+</slots>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

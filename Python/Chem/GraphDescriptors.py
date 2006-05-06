@@ -1,0 +1,634 @@
+# $Id: GraphDescriptors.py 5007 2006-02-22 15:14:41Z glandrum $
+#
+# Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
+#
+#   @@ All Rights Reserved  @@
+#
+""" Calculation of topological/topochemical descriptors.
+
+
+
+"""
+import Chem
+from Chem import Graphs
+from Chem import rdchem
+# FIX: remove this dependency here and below
+from Chem import pyPeriodicTable as PeriodicTable
+from Numeric import *
+import LinearAlgebra
+from ML.InfoTheory import entropy
+
+periodicTable = rdchem.GetPeriodicTable()
+
+_log2val = log(2)
+def _log2(x):
+  return log(x) / _log2val
+
+def _VertexDegrees(mat,onlyOnes=0):
+  """  *Internal Use Only*
+
+  this is just a row sum of the matrix... simple, neh?
+
+  """
+  if not onlyOnes:
+    res = sum(mat)
+  else:
+    res = sum(equal(mat,1))
+  return res
+
+def _NumAdjacencies(mol,dMat):
+  """  *Internal Use Only*
+
+  """
+  res = mol.GetNumBonds()
+  return res
+
+def _GetCountDict(arr):
+  """  *Internal Use Only*
+
+  """
+  res = {}
+  for v in arr:
+    res[v] = res.get(v,0)+1
+  return res    
+
+
+def HallKierAlpha(m):
+  """ calculate the Hall-Kier alpha value for a molecule
+
+   From equations (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+
+  """
+  alphaSum = 0.0
+  for atom in m.GetAtoms():
+    symb = atom.GetSymbol()
+    alphaV = PeriodicTable.hallKierAlphas.get(symb,None)
+    if alphaV is not None:
+      hyb = atom.GetHybridization()-2
+      try:
+        alpha = alphaV[hyb]
+      except IndexError:
+        alpha = None
+      if alpha is None:
+        alpha = alphaV[-1]
+    else:
+      rC = PeriodicTable.nameTable['C'][5]
+      rA = PeriodicTable.nameTable[symb][5]
+      alpha = rA/rC - 1
+    alphaSum += alpha  
+  return alphaSum    
+HallKierAlpha.version="1.0.1"  
+
+def Ipc(mol, avg = 0, dMat = None, forceDMat = 0):
+  """This returns the information content of the coefficients of the characteristic
+    polynomial of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
+
+    'avg = 1' returns the information content divided by the total population.
+
+    From D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
+
+  """
+  if forceDMat or dMat is None:
+    if forceDMat:
+      dMat = Chem.GetDistanceMatrix(mol,0)
+      mol._adjMat = dMat
+    else:
+      try:
+        dMat = mol._adjMat
+      except AttributeError:
+        dMat = Chem.GetDistanceMatrix(mol,0)
+        mol._adjMat = dMat
+
+  adjMat = equal(dMat,1)
+  cPoly = abs(Graphs.CharacteristicPolynomial(mol, adjMat))
+  if avg:
+    return entropy.InfoEntropy(cPoly)
+  else:
+    return sum(cPoly)*entropy.InfoEntropy(cPoly)
+Ipc.version="1.0.0"  
+
+
+
+def Kappa1(mol):
+  """ Hall-Kier Kappa1 value
+
+   From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  P1 = mol.GetNumBonds(1)
+  A = mol.GetNumAtoms(onlyHeavy=1)
+  alpha = HallKierAlpha(mol)
+  denom = P1 + alpha
+  if denom:
+    kappa = (A + alpha)*(A + alpha - 1)**2 / denom**2
+  else:
+    kappa = 0.0
+  return kappa
+Kappa1.version="1.0.0"  
+  
+
+def Kappa2(mol):
+  """  Hall-Kier Kappa2 value
+
+   From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  P2 = len(Chem.FindAllPathsOfLengthN(mol,2))
+  A = mol.GetNumAtoms(onlyHeavy=1)
+  alpha = HallKierAlpha(mol)
+  denom = (P2 + alpha)**2
+  if denom:
+    kappa = (A + alpha - 1)*(A + alpha - 2)**2 / denom
+  else:
+    kappa = 0
+  return kappa
+Kappa2.version="1.0.0"  
+
+def Kappa3(mol):
+  """  Hall-Kier Kappa3 value
+
+   From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  P3 = len(Chem.FindAllPathsOfLengthN(mol,3))
+  A = mol.GetNumAtoms(1)
+  alpha = HallKierAlpha(mol)
+  denom = (P3 + alpha)**2
+  if denom:
+    if A % 2 == 1:
+      kappa = (A + alpha - 1)*(A + alpha - 3)**2 / denom
+    else:
+      kappa = (A + alpha - 2)*(A + alpha - 3)**2 / denom
+  else:
+    kappa = 0
+  return kappa
+Kappa3.version="1.0.0"  
+
+def Chi0(mol):
+  """ From equations (1),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  deltas = [x.GetDegree() for x in mol.GetAtoms()]
+  while 0 in deltas:
+    deltas.remove(0)
+  deltas = array(deltas,Float)
+  res = sum(sqrt(1./deltas))
+  return res
+Chi0.version="1.0.0"
+
+
+def Chi1(mol):
+  """ From equations (1),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  c1s = [x.GetBeginAtom().GetDegree()*x.GetEndAtom().GetDegree() for x in mol.GetBonds()]
+  while 0 in c1s:
+    c1s.remove(0)
+  c1s = array(c1s,Float)
+  res = sum(sqrt(1./c1s))
+  return res
+Chi1.version="1.0.0"
+  
+def _nVal(atom):
+  return periodicTable.GetNOuterElecs(atom.GetAtomicNum())-atom.GetTotalNumHs()
+
+def _hkDeltas(mol,skipHs=1):
+  global periodicTable
+  res = []
+  for atom in mol.GetAtoms():
+    n = atom.GetAtomicNum()
+    if n>1:
+      nV = periodicTable.GetNOuterElecs(n)
+      nHs = atom.GetTotalNumHs()
+      if n <= 10:
+        # first row
+        res.append(float(nV-nHs))
+      else:
+        # second row and up
+        res.append(float(nV-nHs)/float(n-nV-1))
+    elif not skipHs:
+      res.append(0.0)
+  return res
+
+def Chi0v(mol):
+  """  From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  deltas = _hkDeltas(mol)
+  while 0 in deltas:
+    deltas.remove(0)
+  res = sum(sqrt(1./array(deltas)))
+  return res
+Chi0v.version="1.0.0"
+
+def Chi1v(mol):
+  """  From equations (5),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  deltas = array(_hkDeltas(mol,skipHs=0))
+  res = 0.0
+  for bond in mol.GetBonds():
+    v = deltas[bond.GetBeginAtomIdx()]*deltas[bond.GetEndAtomIdx()]
+    if v != 0.0:
+      res += sqrt(1./v)
+  return res
+Chi1v.version="1.0.0"
+  
+def ChiNv_(mol,order=2):
+  """  From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  **NOTE**: because the current path finding code does, by design,
+  detect rings as paths (e.g. in C1CC1 there is *1* atom path of
+  length 3), values of ChiNv with N >= 3 may give results that differ
+  from those provided by the old code in molecules that have rings of
+  size 3.
+  
+  """
+  deltas = array(_hkDeltas(mol,skipHs=0))
+  accum = 0.0
+  #print 'DELTAS',deltas
+  for path in Chem.FindAllPathsOfLengthN(mol,order+1,useBonds=0):
+    ats = []
+    cAccum = 1.0
+    #print 'PATH:',path
+    for idx in path:
+      cAccum *= deltas[idx]
+    if cAccum:  
+      accum += 1./sqrt(cAccum)
+  return accum
+
+def Chi2v(mol):
+  """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  return ChiNv_(mol,2)
+Chi2v.version="1.0.0"
+
+def Chi3v(mol):
+  """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  """
+  return ChiNv_(mol,3)
+Chi3v.version="1.0.0"
+
+def Chi4v(mol):
+  """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+   
+  **NOTE**: because the current path finding code does, by design,
+  detect rings as paths (e.g. in C1CC1 there is *1* atom path of
+  length 3), values of Chi4v may give results that differ from those
+  provided by the old code in molecules that have 3 rings.
+  
+  """
+  return ChiNv_(mol,4)
+Chi4v.version="1.0.0"
+
+def Chi0n(mol):
+  """  Similar to Hall Kier Chi0v, but uses nVal instead of valence
+  This makes a big difference after we get out of the first row.
+   
+  """
+  deltas = [_nVal(x) for x in mol.GetAtoms()]
+  while deltas.count(0):
+    deltas.remove(0)
+  deltas = array(deltas,Float)
+  res = sum(sqrt(1./deltas))
+  return res
+Chi0n.version="1.0.0"
+
+def Chi1n(mol):
+  """  Similar to Hall Kier Chi1v, but uses nVal instead of valence
+   
+  """
+  delts = array([_nVal(x) for x in mol.GetAtoms()],Float)
+  res = 0.0
+  for bond in mol.GetBonds():
+    v = delts[bond.GetBeginAtomIdx()]*delts[bond.GetEndAtomIdx()]
+    if v != 0.0:
+      res += sqrt(1./v)
+  return res
+Chi1n.version="1.0.0"
+def ChiNn_(mol,order=2):
+  """  Similar to Hall Kier ChiNv, but uses nVal instead of valence
+  This makes a big difference after we get out of the first row.
+   
+  **NOTE**: because the current path finding code does, by design,
+  detect rings as paths (e.g. in C1CC1 there is *1* atom path of
+  length 3), values of ChiNn with N >= 3 may give results that differ
+  from those provided by the old code in molecules that have rings of
+  size 3.
+  
+  """
+  deltas = array([_nVal(x) for x in mol.GetAtoms()],Float)
+  accum = 0.0
+  for path in Chem.FindAllPathsOfLengthN(mol,order+1,useBonds=0):
+    cAccum = 1.0
+    for idx in path:
+      cAccum *= deltas[idx]
+    if cAccum:
+      accum += 1./sqrt(cAccum)
+  return accum
+
+def Chi2n(mol):
+  """  Similar to Hall Kier Chi2v, but uses nVal instead of valence
+  This makes a big difference after we get out of the first row.
+   
+  """
+  return ChiNn_(mol,2)
+Chi2n.version="1.0.0"
+
+def Chi3n(mol):
+  """  Similar to Hall Kier Chi3v, but uses nVal instead of valence
+  This makes a big difference after we get out of the first row.
+   
+  """
+  return ChiNn_(mol,3)
+Chi3n.version="1.0.0"
+
+def Chi4n(mol):
+  """  Similar to Hall Kier Chi4v, but uses nVal instead of valence
+  This makes a big difference after we get out of the first row.
+   
+
+  **NOTE**: because the current path finding code does, by design,
+  detect rings as paths (e.g. in C1CC1 there is *1* atom path of
+  length 3), values of Chi4n may give results that differ from those
+  provided by the old code in molecules that have 3 rings.
+  
+  """
+  return ChiNn_(mol,4)
+Chi4n.version="1.0.0"
+
+
+def BalabanJ(mol,dMat=None,forceDMat=0):
+  """ Calculate Balaban's J value for a molecule
+
+  **Arguments**
+
+    - mol: a molecule
+
+    - dMat: (optional) a distance/adjacency matrix for the molecule, if this
+      is not provide, one will be calculated
+
+    - forceDMat: (optional) if this is set, the distance/adjacency matrix
+      will be recalculated regardless of whether or not _dMat_ is provided
+      or the molecule already has one
+
+  **Returns**
+
+    - a float containing the J value
+
+  We follow the notation of Balaban's paper:
+    Chem. Phys. Lett. vol 89, 399-404, (1982)
+
+  """
+  # if no dMat is passed in, calculate one ourselves
+  if forceDMat or dMat is None:
+    if forceDMat:
+      # FIX: should we be using atom weights here or not?
+      dMat = Chem.GetDistanceMatrix(mol,useBO=1,useAtomWts=0,force=1)
+      mol._balabanMat = dMat
+      adjMat = Chem.GetAdjacencyMatrix(mol,useBO=0,emptyVal=0,force=0,prefix="NoBO")
+      mol._adjMat = adjMat
+    else:
+      try:
+        # first check if the molecule already has one
+        dMat = mol._balabanMat
+      except AttributeError:
+        # nope, gotta calculate one
+        dMat = Chem.GetDistanceMatrix(mol,useBO=1,useAtomWts=0,force=0,prefix="Balaban")
+        # now store it
+        mol._balabanMat = dMat
+      try:
+        adjMat = mol._adjMat
+      except AttributeError:
+        adjMat = Chem.GetAdjacencyMatrix(mol,useBO=0,emptyVal=0,force=0,prefix="NoBO")
+        mol._adjMat = adjMat
+  else:
+    adjMat = Chem.GetAdjacencyMatrix(mol,useBO=0,emptyVal=0,force=0,prefix="NoBO")
+
+  s = _VertexDegrees(dMat)
+  q = _NumAdjacencies(mol,dMat)
+  n = mol.GetNumAtoms()
+  mu = q - n + 1
+
+  sum = 0.
+  nS = len(s)
+  for i in range(nS):
+    si = s[i]
+    for j in range(i,nS):
+      if adjMat[i,j] == 1:
+        sum += 1./sqrt(si*s[j])
+
+  if mu+1 != 0:
+    J = float(q) / float(mu + 1) * sum
+  else:
+    J = 0
+  
+  return J
+BalabanJ.version="1.0.0"
+
+
+#------------------------------------------------------------------------
+#
+# Start block of BertzCT stuff.
+#
+
+
+def _AssignSymmetryClasses(mol, vdList, bdMat, forceBDMat, numAtoms, cutoff):
+  """
+     Used by BertzCT
+
+     vdList: the number of neighbors each atom has
+     bdMat: "balaban" distance matrix
+     
+  """
+  if forceBDMat:
+    bdMat = Chem.GetDistanceMatrix(mol,useBO=1,useAtomWts=0,force=1,
+                                   prefix="Balaban")
+    mol._balabanMat = bdMat
+
+  atomIdx = 0
+  keysSeen = []
+  symList = [0]*numAtoms
+  for i in range(numAtoms):
+    tmpList = bdMat[i].tolist()
+    tmpList.sort()
+    theKey = tuple(['%.4f'%x for x in tmpList[:cutoff]])
+    try:
+      idx = keysSeen.index(theKey)
+    except ValueError:
+      idx = len(keysSeen)
+      keysSeen.append(theKey)
+    symList[i] = idx+1
+  return tuple(symList)
+
+def _LookUpBondOrder(atom1Id, atom2Id, bondDic):
+  """
+     Used by BertzCT
+  """
+  if atom1Id < atom2Id:
+    theKey = (atom1Id,atom2Id)
+  else:
+    theKey = (atom2Id,atom1Id)
+  tmp = bondDic[theKey]
+  if tmp == Chem.BondType.AROMATIC:
+    tmp = 1.5
+  else:
+    tmp = float(tmp)
+  #tmp = int(tmp)
+  return tmp
+
+
+def _CalculateEntropies(connectionDict, atomTypeDict, numAtoms):
+  """
+     Used by BertzCT
+  """
+  connectionList = connectionDict.values()
+  totConnections = sum(connectionList)
+  connectionIE = totConnections*(entropy.InfoEntropy(array(connectionList)) +
+                                 log(totConnections)/_log2val)
+  atomTypeList = atomTypeDict.values()
+  atomTypeIE = numAtoms*entropy.InfoEntropy(array(atomTypeList))
+  return atomTypeIE + connectionIE
+
+def _CreateBondDictEtc(mol, numAtoms):
+  """ _Internal Use Only_
+     Used by BertzCT
+
+  """
+  bondDict = {}
+  nList = [None]*numAtoms
+  vdList = [0]*numAtoms
+  for aBond in mol.GetBonds():
+    atom1=aBond.GetBeginAtomIdx()
+    atom2=aBond.GetEndAtomIdx()
+    if atom1>atom2: atom2,atom1=atom1,atom2
+    if not aBond.GetIsAromatic():
+      bondDict[(atom1,atom2)] = aBond.GetBondType()
+    else:
+      # mark Kekulized systems as aromatic
+      bondDict[(atom1,atom2)] = Chem.BondType.AROMATIC
+    if nList[atom1] is None:
+      nList[atom1] = [atom2]
+    elif atom2 not in nList[atom1]:
+      nList[atom1].append(atom2)
+    if nList[atom2] is None:
+      nList[atom2] = [atom1]
+    elif atom1 not in nList[atom2]:
+      nList[atom2].append(atom1)
+
+  for i,element in enumerate(nList):
+    try:
+      element.sort()
+      vdList[i] = len(element)
+    except:
+      vdList[i] = 0
+  return bondDict, nList, vdList
+
+def BertzCT(mol, cutoff = 100, dMat = None, forceDMat = 1):
+  """ A topological index meant to quantify "complexity" of molecules.
+
+     Consists of a sum of two terms, one representing the complexity
+     of the bonding, the other representing the complexity of the
+     distribution of heteroatoms.
+
+     From S. H. Bertz, J. Am. Chem. Soc., vol 103, 3599-3601 (1981)
+
+     "cutoff" is an integer value used to limit the computational
+     expense.  A cutoff value tells the program to consider vertices
+     topologically identical if their distance vectors (sets of
+     distances to all other vertices) are equal out to the "cutoff"th
+     nearest-neighbor.
+
+     **NOTE**  The original implementation had the following comment:
+         > this implementation treats aromatic rings as the
+         > corresponding Kekule structure with alternating bonds,
+         > for purposes of counting "connections".
+       Upon further thought, this is the WRONG thing to do.  It
+        results in the possibility of a molecule giving two different
+        CT values depending on the kekulization.  For example, in the
+        old implementation, these two SMILES:
+           CC2=CN=C1C3=C(C(C)=C(C=N3)C)C=CC1=C2C
+           CC3=CN=C2C1=NC=C(C)C(C)=C1C=CC2=C3C
+        which correspond to differentk kekule forms, yield different
+        values.
+       The new implementation uses consistent (aromatic) bond orders
+        for aromatic bonds.
+
+       THIS MEANS THAT THIS IMPLEMENTATION IS NOT BACKWARDS COMPATIBLE.
+
+       Any molecule containing aromatic rings will yield different
+       values with this implementation.  The new behavior is the correct
+       one, so we're going to live with the breakage.
+        
+     **NOTE** this barfs if the molecule contains a second (or
+       nth) fragment that is one atom.
+
+  """
+  atomTypeDict = {}
+  connectionDict = {}
+  numAtoms = mol.GetNumAtoms()
+  if forceDMat or dMat is None:
+    if forceDMat:
+      # nope, gotta calculate one
+      dMat = Chem.GetDistanceMatrix(mol,useBO=0,useAtomWts=0,force=1)
+      mol._adjMat = dMat
+    else:
+      try:
+        dMat = mol._adjMat
+      except AttributeError:
+        dMat = Chem.GetDistanceMatrix(mol,useBO=0,useAtomWts=0,force=1)
+        mol._adjMat = dMat
+
+  if numAtoms < 2:
+    return 0
+
+  bondDict, neighborList, vdList = _CreateBondDictEtc(mol, numAtoms)
+  symmetryClasses = _AssignSymmetryClasses(mol, vdList, dMat, forceDMat, numAtoms, cutoff)
+  #print 'Symmm Classes:',symmetryClasses
+  for atomIdx in range(numAtoms):
+    hingeAtomNumber = mol.GetAtomWithIdx(atomIdx).GetAtomicNum()
+    atomTypeDict[hingeAtomNumber] = atomTypeDict.get(hingeAtomNumber,0)+1
+
+    hingeAtomClass = symmetryClasses[atomIdx]
+    numNeighbors = vdList[atomIdx]
+    for i in range(numNeighbors):
+      neighbor_iIdx = neighborList[atomIdx][i]
+      NiClass = symmetryClasses[neighbor_iIdx]
+      bond_i_order = _LookUpBondOrder(atomIdx, neighbor_iIdx, bondDict)
+      #print '\t',atomIdx,i,hingeAtomClass,NiClass,bond_i_order
+      if (bond_i_order > 1) and (neighbor_iIdx > atomIdx):
+        numConnections = bond_i_order*(bond_i_order - 1)/2
+        connectionKey = (min(hingeAtomClass, NiClass), max(hingeAtomClass, NiClass))
+        connectionDict[connectionKey] = connectionDict.get(connectionKey,0)+numConnections
+
+      for j in range(i+1, numNeighbors):
+        neighbor_jIdx = neighborList[atomIdx][j]
+        NjClass = symmetryClasses[neighbor_jIdx]
+        bond_j_order = _LookUpBondOrder(atomIdx, neighbor_jIdx, bondDict)
+        numConnections = bond_i_order*bond_j_order
+        connectionKey = (min(NiClass, NjClass), hingeAtomClass, max(NiClass, NjClass))
+        connectionDict[connectionKey] = connectionDict.get(connectionKey,0)+numConnections
+
+  if not connectionDict:
+    connectionDict = {'a':1}
+
+  ks = connectionDict.keys()
+  ks.sort()
+  return _CalculateEntropies(connectionDict, atomTypeDict, numAtoms)
+BertzCT.version="2.0.0"
+# Recent Revisions:
+#  1.0.0 -> 2.0.0:
+#    - force distance matrix updates properly (Fixed as part of Issue 125)
+#    - handle single-atom fragments (Issue 136)
+
+
+#
+# End block of BertzCT stuff.
+#
+#------------------------------------------------------------------------
+
+
+
+

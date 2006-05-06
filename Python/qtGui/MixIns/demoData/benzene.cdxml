@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 7.0.3"
+ Name="benzene.cdxml"
+ BoundingBox="186.22 179.87 241.28 243.13"
+ WindowPosition="174 206"
+ WindowSize="596 427"
+ WindowIsZoomed="yes"
+ FractionalWidths="yes"
+ ShowAtomQuery="yes"
+ ShowBondQuery="yes"
+ LabelFont="3"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="4"
+ CaptionSize="12"
+ HashSpacing="2.7"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="000300000258025800000000190012C0FF9CFF6A196413560367052803FC000200000258025800000000190012C0000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="3" charset="iso-8859-1" name="Arial"/>
+<font id="4" charset="iso-8859-1" name="Times New Roman"/>
+</fonttable><page
+ id="20"
+ BoundingBox="0 0 540 720"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="5"
+ BoundingBox="186.22 179.87 241.28 243.13"
+><n
+ id="2"
+ p="187.77 196.5"
+ Z="1"
+ AS="N"
+/><n
+ id="4"
+ p="187.77 226.5"
+ Z="3"
+ AS="N"
+/><n
+ id="6"
+ p="213.75 241.5"
+ Z="5"
+ AS="N"
+/><n
+ id="8"
+ p="239.73 226.5"
+ Z="7"
+ AS="N"
+/><n
+ id="10"
+ p="239.73 196.5"
+ Z="9"
+ AS="N"
+/><n
+ id="12"
+ p="213.75 181.5"
+ Z="11"
+ AS="N"
+/><b
+ id="14"
+ Z="13"
+ B="2"
+ E="4"
+ Order="2"
+ BondCircularOrdering="19 0 0 15"
+/><b
+ id="15"
+ Z="14"
+ B="4"
+ E="6"
+ BS="N"
+/><b
+ id="16"
+ Z="15"
+ B="6"
+ E="8"
+ Order="2"
+ BondCircularOrdering="15 0 0 17"
+/><b
+ id="17"
+ Z="16"
+ B="8"
+ E="10"
+ BS="N"
+/><b
+ id="18"
+ Z="17"
+ B="10"
+ E="12"
+ Order="2"
+ BondCircularOrdering="17 0 0 19"
+/><b
+ id="19"
+ Z="18"
+ B="12"
+ E="2"
+ BS="N"
+/></fragment></page></CDXML>

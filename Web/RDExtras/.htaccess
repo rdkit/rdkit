@@ -1,0 +1,9 @@
+# Note: setting environment variables here does no good at all
+SetEnv RDBASE /home2/glandrum/RD/trunk
+SetEnv BOOSTBASE boost_1_31
+SetEnv LD_LIBRARY_PATH "/home2/glandrum/RD/trunk/bin:/usr/local/lib"
+SetEnv GDFONTPATH "/usr/local/share/fonts/truetype"
+PythonPath "sys.path+['/home2/glandrum/RD/trunk/Python']"
+AddHandler mod_python .py
+PythonHandler mod_python.publisher
+PythonDebug On

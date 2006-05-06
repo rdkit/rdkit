@@ -1,0 +1,28 @@
+H1 { text-align: center; color: lightcoral; }
+H2 { margin-top: 0; margin-bottom: 0; color: slateblue; }
+H3 { margin-top: 0; margin-bottom: 0; color: lightslateblue; }
+.bold { font-weight: bold; }
+.el { text-decoration: none; font-weight: bold; color: lightslateblue }
+.func { text-decoration: none; font-weight: bold; color: lightslateblue }
+
+.row_title {font-weight: bold; background-color: #6699CC; text-align: left;}
+.content {background-color: #B0E2FF; text-align: left;}
+.centered {text-align: center;}
+.nowrap {white-space: nowrap;}
+.code { width: 100%; border: none; background-color: #eeeeee; }
+
+A.qindex { color: seagreen }
+A.qindexRef {}
+A.el { text-decoration: none; font-weight: bold; color: lightslateblue }
+A.elRef { font-weight: bold; color: red}
+A.code { text-decoration: none; font-weight: normal; color: darkblue; }
+A.codeRef { font-weight: normal; }
+DL.el { margin-left: -1cm }
+DIV.ah { background-color: black; margin-bottom: 3; margin-top: 3 }
+
+/* md == member documentation */
+TD.md { background-color: lightblue; }
+DIV.groupHeader { margin-left: 16; margin-top: 12; margin-bottom: 6; font-weight: bold }
+DIV.groupText { margin-left: 16; font-style: italic; font-size: smaller }
+FONT.keyword       { color: green }
+FONT.comment       { color: slateblue }

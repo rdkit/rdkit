@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1">
+<title>Boost Log Library Documentation</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<a href="../../../index.htm">
+<img align="left" src="../../../c++boost.gif" alt="C++ Boost">
+</a>  
+
+<h1>Boost Log Library Documentation</h1>
+<p>
+<h3 align="center">Version 1.4</h3>
+<hr>
+
+
+
+<p><b>Basic Usage</b></p>
+<p>In case you're eager to use the Boost Log library, here's a small example to 
+  guide you. It shows you where you should declare/define the logs, where to initialize 
+  them, and how to use them. Of course, you might choose to do more operations 
+  in one file - I just separated actions like this for brevity.</p>
+<pre class="code">
+
+<b>// declare.h - declare the logs
+</b>#ifndef SAMPLE_DECLARE_H
+#define SAMPLE_DECLARE_H
+
+#include &lt;boost/log/log.hpp>
+
+BOOST_DECLARE_LOG(app)
+BOOST_DECLARE_LOG(gui)
+
+void init_logs();
+#endif
+
+<b>// define.cpp - define the logs
+</b>#include "declare.h"
+
+BOOST_DEFINE_LOG(app, "app")
+BOOST_DEFINE_LOG(gui, "GUI")
+
+<b>// init.cpp - initialize the logs
+//            (where do they output information, and how)
+</b>
+#include &lt;boost/log/functions.hpp&gt;
+
+#include &lt;iostream&gt;
+void write_to_cout(const std::string &, const std::string &msg) { std::cout << msg; }
+
+void init_logs() {
+    using namespace boost::log;
+    manipulate_logs(&quot;*&quot;)
+      // all logs prefix the message by time
+      .add_modifier("*", prepend_time("$hh:$mm:$ss "), DEFAULT_INDEX + 1 );
+      // all log' messages are prefixed by the log name ("app", or "DEBUG" or "Inf")
+      .add_modifier("*", &prepend_prefix);
+      // all messages are written to cout
+      .add_appender("*", write_to_cout);
+    
+    // app messages are also written to file 'out.txt'
+    manipulate_logs(&quot;app&quot;).add_appender( write_to_file("out.txt") );
+    // Gui messages are also written to Output Debug Window
+    manipulate_logs(&quot;GUI&quot;).add_appender( write_to_dbg_wnd );
+}
+
+<b>// use.cpp - write to the logs
+</b>#include "declare.h"
+
+int main() {
+    init_logs();
+
+    int i = 1, j = 2, k = 3;
+    BOOST_LOG(app) << "testing " << i << '-' << j << '-' << k  << std::endl;
+    BOOST_LOGL(gui,dbg) << "this is a debug message, i=" << i << std::endl;
+
+    BOOST_LOGL(app,info) << "I just wanted to tell you something...."  << std::endl;
+    BOOST_LOGL(app,warn) << "Logged-on Users approach max. limit"  << std::endl;
+    BOOST_LOGL(gui,dbg) << "Too many users!"  << std::endl;
+
+    BOOST_LOG(gui) << "a GUI message" << std::endl;
+    BOOST_LOGL(app,info) << "a simple info" << std::endl;
+}
+</pre>
+<p>&nbsp;</p>
+<p>Here is the output after running the program.</p>
+<p>Console:</p>
+<pre class="code">
+20:22:04 [app] testing 1-2-3
+20:22:04 [gui] this is a debug message, i=1
+20:22:04 [app] I just wanted to tell you something....
+20:22:04 [app] Logged-on Users approach max. limit
+20:22:04 [gui] Too many users!
+20:22:04 [gui] a GUI message
+20:22:05 [app] a simple info
+</pre>
+<p>out.txt file:</p>
+<pre class="code">
+20:22:04 [app] testing 1-2-3
+20:22:04 [app] I just wanted to tell you something....
+20:22:04 [app] Logged-on Users approach max. limit
+20:22:05 [app] a simple info
+</pre>
+<p>Output Debug Window:</p>
+<pre class="code">
+20:22:04 [gui] this is a debug message, i=1
+20:22:04 [gui] Too many users!
+20:22:04 [gui] a GUI message
+</pre>
+<p>&nbsp;</p>
+<hr>
+<small>
+Copyright <a href="mailto:john&#64;torjo.com">John Torjo</a> &copy; 2004
+</small>
+
+</body>
+</html>

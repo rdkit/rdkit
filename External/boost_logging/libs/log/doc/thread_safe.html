@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1">
+<title>Boost Log Library Documentation</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<a href="../../../index.htm">
+<img align="left" src="../../../c++boost.gif" alt="C++ Boost">
+</a>  
+
+<h1>Boost Log Library Documentation</h1>
+<p>
+<h3 align="center">Version 1.4</h3>
+<hr>
+<p><b>Thread-safety</b></p>
+<p>The Boost Log library is thread-safe, while being efficient.</p>
+<p>(As a side-note, <a href="predefined.html#log">ts_appender</a> is a very useful 
+  Appender function).</p>
+<p><a href="logs.html#behavior">Manipulating logs' behavior</a> (doing any of: 
+  adding a Appender, or a Modifier or enabling/disabling logs), is thread-safe. 
+</p>
+<p>Whenever writing to a log, the first thing I will do is &quot;ask if the message 
+  should be written to the log&quot; (based on the log's <a href="manipulating_logs.html#level">level</a> 
+  and message's <a href="manipulating_logs.html#level">level</a>). </p>
+<pre class="code">
+BOOST_LOG(app) << whatever << you << want << to << write;
+// OR
+BOOST_LOGL(app,lvl) << whatever << you << want << to << write;
+
+// equivalent to (pseudo-code):
+// if ( can_write_message(app,lvl) ) app << whatever <<....;
+</pre>
+<p>If <i>can_write_message </i>returns true, the writing will take place (that 
+  is, whatever follows BOOST_LOG[L](..) gets executed). Otherwise, processing 
+  stops, thus whatever follows BOOST_LOG[L](...) does not get executed.</p>
+<p>The <b>can_write_message(...)</b> test does not incur in a (mutex) lock (it 
+  would be too inefficient). Thus, once a thread enables/disables some log(s), 
+  it will take a short while for this to propagate to the other threads. This 
+  is not so bad, compared to the gains in efficiency.</p>
+<p>In order for the changes to propagate <i>instantly</i>, you're encouraged to 
+  enable/disable logs at the beginning of the program (when only one thread is 
+  running). </p>
+<p>Of course, you can - at any time -, enable/disable logs, as your application 
+  is running. It could prove very useful if you have a server application, a lot 
+  of active users, and - while running - you might want to enable additional logging.</p>
+<p>&nbsp;</p>
+<hr>
+<small>
+Copyright <a href="mailto:john&#64;torjo.com">John Torjo</a> &copy; 2004
+</small>
+
+</body>
+</html>

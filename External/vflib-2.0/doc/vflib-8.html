@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>The VFLib Graph Matching Library, version 2.0: Using VFLib: a quick tour : Finding the first matching between two graphs</TITLE>
+ <LINK HREF="vflib-9.html" REL=next>
+ <LINK HREF="vflib-7.html" REL=previous>
+ <LINK HREF="vflib.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="vflib-9.html">Next</A>
+<A HREF="vflib-7.html">Previous</A>
+<A HREF="vflib.html#toc3">Contents</A>
+<HR>
+<H2>3.3 Finding the first matching between two graphs</H2>
+
+<P>
+<P>In order to start the matching process, you need to
+call the <CODE>match</CODE> function declared in <CODE>match.h</CODE> .
+Actually there are two overloaded <CODE>match</CODE> functions;
+the first stops after a matching is found, while the
+other iterates over all the possible different matchings
+between the two graphs.
+<P>If you are interested only in the first matching found,
+you need to declare two arrays of <CODE>node_id</CODE> to
+store the pairs of corresponding nodes; the dimension of
+each array must be at least equal to the number of nodes
+in the smallest of the two graphs.
+<P>The function to be used has one input parameter, i.e.
+a pointer to the initial state, described in the
+previous subsection. The function returns a <CODE>bool</CODE>
+value which is <CODE>false</CODE> if no matching has been found,
+and has three output parameters: the number of matched nodes
+(which for the matching relations implemented up to now is
+always equal to the number of nodes of the first graph),
+and the two arrays of matched node ids. Corresponding
+elements of the two arrays contain the ids of nodes paired
+by the matching algorithm.
+<P>For example, the following code would invoke the matcher
+and print the result:
+<P>
+<BLOCKQUOTE><CODE>
+<HR>
+<PRE>
+#include &lt;argraph.h>
+#include &lt;match.h>
+
+#define MAXNODES 200
+
+int main()
+{
+//... here the two graphs and the inistial state 
+//    should be created ...
+
+  int n;
+  node_id ni1[MAXNODES], ni2[MAXNODES];
+
+  if (!match(&amp;s0, &amp;n, ni1, ni2))
+    { printf("No matching found!\n");
+      return 1;
+    }
+
+  printf("Found a matching with %d nodes:\n", n);
+  int i;
+  for(i=0; i&lt;n; i++)
+    printf("\tNode %hd of graph 1 is paired with node %hd of graph 2\n",
+               ni1[i], ni2[i]);
+  return 0;
+}
+</PRE>
+<HR>
+</CODE></BLOCKQUOTE>
+<P>
+<P>
+<P>
+<HR>
+<A HREF="vflib-9.html">Next</A>
+<A HREF="vflib-7.html">Previous</A>
+<A HREF="vflib.html#toc3">Contents</A>
+</BODY>
+</HTML>

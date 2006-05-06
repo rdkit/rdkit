@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1">
+<title>Boost Log Library Documentation</title>
+<link href="style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<a href="../../../index.htm">
+<img align="left" src="../../../c++boost.gif" alt="C++ Boost">
+</a>  
+
+<h1>Boost Log Library Documentation</h1>
+<p>
+<h3 align="center">Version 1.4</h3>
+<hr>
+<p><b>Motivation</b></p>
+<p>Applications today are becoming increasingly complex. Part of making them easier 
+  to develop/maintain is to do logging. <b>Logging </b>allows you to later see 
+  what happened in your application. It can be a great help when debugging and/or 
+  testing it. The great thing about logging is that it can (and usually does) 
+  also happen at the customer site - if an error occurs, by examining the log, 
+  you can get a picture of where the problem is.</p>
+<p>Used properly, logging is a very powerful tool. Besides aiding debugging/ testing, 
+  it can also show you how your application is used (which modules, etc.), how 
+  time-consuming certain parts of your program are, how much bandwidth you application 
+  consumes, etc. - it's up to you how much information you log, and where..</p>
+<p>For logging, most application use streams and/or existing libraries. Streams 
+  are very powerful and easy to use. However, they have several disadvantages: 
+  it's very hard to turn them off, they are not thread-safe and it's very complicated 
+  to create new stream classes. Other existing libraries either don't take generic 
+  programming into account, or try to model libraries from other languages (log4j) 
+  and/or try to offer too much, and end up being huge and hard to use/understand.</p>
+<p>The <b>Boost Log Library </b>is a small library, who: </p>
+<ul>
+  <li>makes it very easy to <a href="logs.html#declare">declare/define new logs</a></li>
+  <li>allows you very simple <a href="logs.html#use">access</a> to logs</li>
+  <li>allows for <a href="logs.html#hierarchy">log hierarchies</a>, and for modifying 
+    log hierarchies </li>
+  <li>allows for easy and <b>efficient </b><a href="manipulating_logs.html#level">setting 
+    the level of logs/ log hierarchies</a></li>
+  <li>allows for easy <a href="manipulating_logs.html">manipulation of log behaviors</a> 
+    (the log's destination(s) and/or adjusting the original message)</li>
+  <li>is <i><a href="thread_safe.html">thread-safe</a></i></li>
+</ul>
+<p>Just to give you a taste of how the logging library will be used:</p>
+
+<pre class="code">
+int i = 1, j = 2, k = 3;
+BOOST_LOG(app) << "testing " << i << '-' << j << '-' << k  << std::endl;
+BOOST_LOG(dbg) << "this is a debug message, i=" << i << std::endl;
+BOOST_LOG(app) << "I just wanted to tell you something....";
+
+BOOST_LOGL(app,err) &lt;&lt; &quot;this is an error!&quot;;
+</pre>
+
+<p>&nbsp;</p>
+<hr>
+<small>
+Copyright <a href="mailto:john&#64;torjo.com">John Torjo</a> &copy; 2004
+</small>
+
+</body>
+</html>

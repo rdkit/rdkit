@@ -1,0 +1,98 @@
+<html>
+        
+<head>
+<title>Working with Fragment Catalogs</title>
+<link rel="stylesheet" type="text/css" href="RD.css">
+</head>
+
+<body bgcolor="#ffffff">
+<h1>Working with Fragment Catalogs</h1>
+<center>Document Version: $Revision: 1.1 $</center>
+
+
+To start from scratch, the tool requires a CSV file with a SMILES
+column and an activity column.  It's perfectly ok to have other
+columns as well, you specify these two columns using the
+<tt>--smiCol</tt> and <tt>--actCol</tt> arguments.
+
+<p>There are four steps to the process:
+<ol>
+<li> Build the fragment catalog, command line argument <tt>-b</tt>
+<p> This loops through a set of molecules and builds a fragment
+catalog containing all unique fragments found in the molecules.
+
+<p> <b>Requirements:</b>
+<ul>
+<li> InData
+</ul>
+
+<p> <b>Important arguments:</b>
+<ul>
+<li> <tt>-n</tt>: specifies the maximum number of molecules to be considered
+<li> <tt>--catalog=[filename]</tt>: provides the name of the file to be used to store the pickled catalog.
+</ul>
+
+<li> Score molecules against the catalog, command line argument <tt>-s</tt>
+<p>
+<p> <b>Requirements:</b>
+<ul>
+<li> InData
+<li> A Catalog
+</ul>
+
+<p> <b>Important arguments:</b>
+<ul>
+<li> <tt>-n</tt>: specifies the maximum number of molecules to be considered
+<li> <tt>--catalog=[filename]</tt>: provides the name of the file containing a 
+pickled catalog.
+<li> <tt>--scores=[filename]</tt>: provides the name of the file to be used to store 
+the pickled compound scores
+<li> <tt>--onbits=[filename]</tt>: provides the name of the file to be used for
+pickled OnBit lists (lists with the bits set by each molecule screened).  Providing this 
+option can save a lot of time.
+</ul>
+
+
+<li> Calculate information gains for the molecules, command line argument <tt>-g</tt>
+<p>
+
+<p> <b>Requirements:</b>
+<ul>
+<li> Scores
+</ul>
+
+<p> <b>Important arguments:</b>
+<ul>
+<li> <tt>--scores=[filename]</tt>: provides the name of the file containing pickled compound scores
+<li> <tt>--gains=[filename]</tt>: provides the name of the file to be used to store 
+the gains (a csv file).
+</ul>
+
+<li> Display details about the fragments, command line argument <tt>-d</tt>
+<p>
+<p> <b>Requirements:</b>
+<ul>
+<li> Catalog
+<li> Gains
+</ul>
+
+<p> <b>Important arguments:</b>
+<ul>
+<li> <tt>--nBits=[value]</tt>: provide the maximum number of bits on which to report 
+(they are presented in order of decreasing Gain).
+<li> <tt>--catalog=[filename]</tt>: provides the name of the file containing pickled catalog
+<li> <tt>--gains=[filename]</tt>: provides the name of the file containing the
+  calculated gains (a CSV file)
+<li> <tt>--details=[filename]</tt>: provides the name of the file to be used to store 
+the details (a CSV file).
+</ul>
+
+</ol>
+
+
+
+
+
+</body>
+</html>
+        

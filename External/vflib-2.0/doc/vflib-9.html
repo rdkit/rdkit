@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE>The VFLib Graph Matching Library, version 2.0: Using VFLib: a quick tour : Finding all the matchings between two graphs</TITLE>
+ <LINK HREF="vflib-10.html" REL=next>
+ <LINK HREF="vflib-8.html" REL=previous>
+ <LINK HREF="vflib.html#toc3" REL=contents>
+</HEAD>
+<BODY>
+<A HREF="vflib-10.html">Next</A>
+<A HREF="vflib-8.html">Previous</A>
+<A HREF="vflib.html#toc3">Contents</A>
+<HR>
+<H2>3.4 Finding all the matchings between two graphs</H2>
+
+<P>
+<P>In case you need to examine all the matching between two
+graphs, you have to use a different version of the <CODE>match</CODE>
+function.
+<P>This version needs a <EM>match visitor</EM>, that is a callback
+function which is called everytime a matching is found.
+The match visitor has four parameters: the number of nodes
+in the matching, the two arrays of <CODE>node_id</CODE> that represent
+the nodes paired by the algorithm, and an user-provided void pointer
+which can be used to pass some other useful information to the
+visitor (for example, a file where the matchings should be stored).
+<P>The visitor, after processing the current matching, must return
+a <CODE>bool</CODE> value: if the value is <CODE>false</CODE>, the next matching is
+searched for; else, the search stops.
+<P>The <CODE>match</CODE> function takes as input parameters a pointer to
+the initial state, a function pointer to the match visitor, and
+an optional <CODE>void *</CODE> (which defaults to <CODE>NULL</CODE>) that will
+be passed to the visitor. The return value of the <CODE>match</CODE>
+function is the number of examined matchings.
+<P>As an example, suppose that you want to save all the matchings on
+a text file. The code needed to perform this task is:
+<P>
+<BLOCKQUOTE><CODE>
+<HR>
+<PRE>
+#include &lt;argraph.h>
+#include &lt;match.h>
+
+bool my_visitor(int n, node_id ni1[], node_id ni2[], void *usr_data)
+  { FILE *f = (FILE *)usr_data;
+
+    // Prints the matched pairs on the file
+        int i;
+        for(i=0; i&lt;n; i++)
+          fprintf(f, "(%hd, %hd) ", ni1[i], ni2[i]);
+        fprintf(f, "\n");
+
+        // Return false to search for the next matching
+        return false;
+  }
+
+int main()
+  { // ... here goes the code to build the graphs
+    // and to create the initial search state 's0'...
+
+    // Create the output file
+        f=fopen("output.txt", "w");
+
+        match(&amp;s0, my_visitor, f);
+
+        fclose(f);
+        return 0;
+  }
+</PRE>
+<HR>
+</CODE></BLOCKQUOTE>
+<P>
+<P>
+<P>
+<P>
+<HR>
+<A HREF="vflib-10.html">Next</A>
+<A HREF="vflib-8.html">Previous</A>
+<A HREF="vflib.html#toc3">Contents</A>
+</BODY>
+</HTML>

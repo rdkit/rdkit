@@ -1,0 +1,30 @@
+<html>
+<head><title>SVDLIBC: Sparse Binary Matrix File Format</title></head>
+
+<body bgcolor="#aaaa9999fffff"> 
+
+<center>
+<h2>SVD_F_SB</h2>
+<h3>Sparse Binary Matrix File Format</h3>
+</center>
+<hr>
+
+<h3>Format:</h3>
+<pre>
+<b>numRows numCols totalNonZeroValues</b>
+<i>for each column:</i>
+  <b>numNonZeroValues</b>
+  <i>for each non-zero value in the column:</i>
+    <b>rowIndex value</b></pre>
+<p>
+All values are 4-byte integers except <b>value</b>, which is a 4-byte float.
+All are in network byte order.
+
+<p>
+<hr>
+<address>
+Doug Rohde, <a href="mailto:dr+svd@tedlab.mit.edu">dr+svd@tedlab.mit.edu</a>,<br>
+Department of Brain and Cognitive Science,<br>
+<a href="http://web.mit.edu">Massachusetts Institute of Technology</a>
+</address>
+</body>
