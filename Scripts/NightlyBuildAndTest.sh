@@ -49,18 +49,17 @@ echo "****  PULL  ****" >> $LOGFILE 2>&1
 echo "****  PULL  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
-SVNROOT=svn://marten/RD/trunk
-svn checkout --username=NightlyBuild --password=rdnightly -N $SVNROOT RD &> /dev/null
+SVNROOT=https://svn.sourceforge.net/svnroot/rdkit/trunk
+svn checkout  -N $SVNROOT RD &> /dev/null
 cd RD
-svn checkout --username=NightlyBuild --password=rdnightly -N $SVNROOT/Data Data &> /dev/null
-svn checkout --username=NightlyBuild --password=rdnightly -N $SVNROOT/Data/Proprietary/SPECS Data/Proprietary/SPECS &> /dev/null
-svn checkout --username=NightlyBuild --password=rdnightly -N $SVNROOT/Data/NCI Data/NCI &> /dev/null
+svn checkout  -N $SVNROOT/Data Data &> /dev/null
+svn checkout  -N $SVNROOT/Data/NCI Data/NCI &> /dev/null
 for foo in Code bin Python; do
-  svn checkout --username=NightlyBuild --password=rdnightly $SVNROOT/$foo $foo &> /dev/null
+  svn checkout  $SVNROOT/$foo $foo &> /dev/null
 done
-svn checkout --username=NightlyBuild --password=rdnightly -N $SVNROOT/External External &> /dev/null
+svn checkout  -N $SVNROOT/External External &> /dev/null
 for foo in Lapack++ libsvm svdlibc svdpackc vflib-2.0 cmim-1.0 HappyDoc-r1_3; do
-  svn checkout --username=NightlyBuild --password=rdnightly $SVNROOT/External/$foo External/$foo &> /dev/null
+  svn checkout  $SVNROOT/External/$foo External/$foo &> /dev/null
 done
 
 # ------------------------- -------------------------

@@ -2,6 +2,10 @@
 import sys, smtplib, base64, cStringIO, time, os.path
 from email import Message, Utils
 
+SMTP_HOSTNAME=''
+FROM_ADDR=''
+TO_ADDR=''
+
 def sendLog(fileName,summaryName=""):
 
   msg = Message.Message()
@@ -39,9 +43,9 @@ def sendLog(fileName,summaryName=""):
 
   msg.attach(subMsg)
   
-  smtp = smtplib.SMTP('mail.sbcglobal.net')
-  smtp.sendmail('Build@RationalDiscovery.com',
-                ['Landrum@RationalDiscovery.com'],
+  smtp = smtplib.SMTP(SMTP_HOSTNAME)
+  smtp.sendmail(FROM_ADDR,
+                [TO_ADDR],
                 msg.as_string())
   smtp.quit()
 
