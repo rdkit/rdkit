@@ -60,7 +60,7 @@ regrs:
 
 docs:
 	/usr/bin/doxygen doxygen.config
-	cd $RDBASE
+	cd $(RDBASE)
 	$(RDBASE)/External/HappyDoc-r1_3/happydoc -d $(RDBASE)/Docs/Code -t RDPython --author='glandrum@users.sourceforge.net' Python
 
 clean:
