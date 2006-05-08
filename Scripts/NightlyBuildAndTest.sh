@@ -5,7 +5,7 @@ DIRNAME="Build_"$DATESTRING
 export BASE=/tmp/$DIRNAME
 #OLD_DIRS=/tmp/BUILD_*`date +"_%m_%y"`
 
-export RDBASE=$BASE/RD
+export RDBASE=$BASE/RDKit
 export RDOPTFLAGS="-O3"
 export RDF77LIB=""
 export PYTHON_ROOT="/usr"
@@ -50,15 +50,15 @@ echo "****  PULL  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 SVNROOT=https://svn.sourceforge.net/svnroot/rdkit/trunk
-svn checkout  -N $SVNROOT RD &> /dev/null
-cd RD
+svn checkout  -N $SVNROOT RDKit &> /dev/null
+cd $RDBASE
 svn checkout  -N $SVNROOT/Data Data &> /dev/null
 svn checkout  -N $SVNROOT/Data/NCI Data/NCI &> /dev/null
 for foo in Code bin Python; do
   svn checkout  $SVNROOT/$foo $foo &> /dev/null
 done
 svn checkout  -N $SVNROOT/External External &> /dev/null
-for foo in Lapack++ libsvm svdlibc svdpackc vflib-2.0 cmim-1.0 HappyDoc-r1_3; do
+for foo in Lapack++ svdlibc svdpackc vflib-2.0 cmim-1.0 HappyDoc-r1_3; do
   svn checkout  $SVNROOT/External/$foo External/$foo &> /dev/null
 done
 
@@ -73,10 +73,6 @@ echo "****  BUILD  ****" >> $LOGFILE 2>&1
 echo "****  BUILD  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
-cd $RDBASE/Code/RDGeneral
-make install >> $LOGFILE 2>&1
-cd $RDBASE/Code/RDBoost 
-make >> $LOGFILE 2>&1
 cd $RDBASE/External
 make >> $LOGFILE 2>&1
 cd $RDBASE/Code
@@ -117,11 +113,6 @@ echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 cd $RDBASE/Code
 make docs
-rm -rf /home/www/html/RDCodeDocs
-mv docs /home/www/html/RDCodeDocs
-rm -rf /home/www/html/RDPythonDocs
-mv $RDBASE/Docs/Code /home/www/html/RDPythonDocs
-cp $RDBASE/External/HappyDoc-r1_3/RD.css /home/www/html/RDPythonDocs
 
 # ------------------------- -------------------------
 #
