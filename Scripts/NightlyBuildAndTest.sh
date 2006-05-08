@@ -136,8 +136,8 @@ echo >> $LOGFILE 2>&1
 grep -n "Failed [0-9]" $LOGFILE >> $LOGFILE.summary
 grep -n "Failed [0-9]" $LOGFILE >> $LOGFILE
 gzip -9 $LOGFILE
-~glandrum/RD/trunk/Scripts/MailResults.py $LOGFILE.gz $LOGFILE.summary
-~glandrum/RD/trunk/Scripts/AddIssue.py $LOGFILE.summary "user=NightlyBuild" "tracker_home=/home/roundup/trackers/RDTrack" "title=Test Failures: $DATESTRING" "priority=bug"
+#$RDBASE/Scripts/MailResults.py $LOGFILE.gz $LOGFILE.summary
+#$RDBASE/Scripts/AddIssue.py $LOGFILE.summary "user=NightlyBuild" "tracker_home=/home/roundup/trackers/RDTrack" "title=Test Failures: $DATESTRING" "priority=bug"
 
 
 
