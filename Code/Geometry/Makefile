@@ -15,16 +15,16 @@ static: $(LIB)
 $(SLIB): $(OBJS)
 	$(MAKE) --directory $(RDBASE)/Code/DataStructs
 	$(MAKE) --directory $(RDBASE)/Code/RDGeneral static
-	g++ $(CXXFLAGS) $(SOFLAGS) -o $@ $^ $(RDBITVECS) $(RDGENERAL_S)
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $^ $(RDBITVECS) $(RDGENERAL_S)
 
 $(LIB): $(OBJS)
 	ar -rv $@ $^
 
 testExecs/testTransforms.exe: testTransforms.o $(SLIB)
-	g++ -o $@ $(CXXFLAGS) $^ $(RDBITVECS) $(RDGENERAL) 
+	$(CXX) -o $@ $(CXXFLAGS) $^ $(RDBITVECS) $(RDGENERAL) 
 
 testExecs/testGrid.exe : testGrid.o $(LIB)
-	g++ -o $@ $(CXXFLAGS) $^ $(RDBITVECS) $(RDGENERAL) 
+	$(CXX) -o $@ $(CXXFLAGS) $^ $(RDBITVECS) $(RDGENERAL) 
 
 clean:
 	rm -f testTransforms.o $(OBJS) $(SLIB) $(LIB) $(DEPENDS)

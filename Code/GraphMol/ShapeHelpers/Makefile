@@ -9,7 +9,7 @@ $(LIB): $(OBJS)
 	ar -r $@ $?
 
 testExecs/main.exe: testShapeHelpers.o $(LIB)
-	g++ $(CXXFLAGS) -o $@ $< -L. -lShapeHelpers $(RDMOLALIGN) $(RDMOLTRANSFORMS) $(RDFILEPARSE) $(RDSMILES) $(RDSUBSTRUCT) $(VFLIB) $(RDKIT) $(RDEIGENSOLVERS) $(RDALIGNMENT) $(RDGEOMETRY) $(RDBITVECS) $(RDGENERAL) 
+	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lShapeHelpers $(RDMOLALIGN) $(RDMOLTRANSFORMS) $(RDFILEPARSE) $(RDSMILES) $(RDSUBSTRUCT) $(VFLIB) $(RDKIT) $(RDEIGENSOLVERS) $(RDALIGNMENT) $(RDGEOMETRY) $(RDBITVECS) $(RDGENERAL) 
 
 clean:
 	rm -f $(OBJS) $(LIB) testShapeHelpers.o testExecs/main.exe $(DEPENDS)

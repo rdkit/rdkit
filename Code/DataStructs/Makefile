@@ -10,7 +10,7 @@ $(LIB): $(OBJS)
 	ar -rv $@ $^
 
 testExecs/test.exe: testDatastructs.o $(LIB) 
-	g++ $(CXXFLAGS) -o $@ $^ $(RDGENERAL)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(RDGENERAL)
 
 clean:
 	rm -f $(OBJS) $(LIB) testDatastructs.o testExecs/test.exe $(DEPENDS)
@@ -18,6 +18,6 @@ clean:
 regrs: testExecs/test.exe
 
 testExecs/bench.exe: bench.o $(LIB)
-	g++ $(CXXFLAGS) -o $@ $^ $(RDGENERAL)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(RDGENERAL)
 
 include $(DEPENDS)

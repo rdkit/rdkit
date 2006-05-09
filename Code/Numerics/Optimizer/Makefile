@@ -10,11 +10,11 @@ libOptimizer.a: $(OBJS)
 
 # NOTE: The -O1 here is associated with Issue 241:
 LinearSearch.o: LinearSearch.cpp $(HDRS)
-	g++ -c $(CXXFLAGS) -O1 LinearSearch.cpp
+	$(CXX) -c $(CXXFLAGS) -O1 LinearSearch.cpp
 
 
 testExecs/testOptimizer.exe: testOptimizer.o $(LIB)
-	g++ $(CXXFLAGS) -o $@ $^  $(RDGENERAL)
+	$(CXX) $(CXXFLAGS) -o $@ $^  $(RDGENERAL)
 
 clean:
 	rm -f $(OBJS) $(LIB) main.o testExecs/testOptimizer.exe $(DEPENDS)

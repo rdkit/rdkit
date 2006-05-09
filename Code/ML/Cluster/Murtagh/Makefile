@@ -1,4 +1,3 @@
-CXX=g++
 CC=gcc
 FC=g77
 CFLAGS=$(RDOPTFLAGS)

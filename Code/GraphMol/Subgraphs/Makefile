@@ -20,10 +20,10 @@ install: $(RDSUBGRAPHSLIB)
 	cp $(RDSUBGRAPHSLIB) $(RDBASE)/bin
 
 testExecs/test1.exe: test1.o $(RDSUBGRAPHSLIB)
-		g++ -o $@ $(CXXFLAGS) $< $(RDSMILES) $(LDFLAGS)
+		$(CXX) -o $@ $(CXXFLAGS) $< $(RDSMILES) $(LDFLAGS)
 
 testExecs/test2.exe: test2.o $(RDSUBGRAPHSLIB)
-		g++ -o $@ $(CXXFLAGS) $< $(RDSMILES) $(LDFLAGS) 
+		$(CXX) -o $@ $(CXXFLAGS) $< $(RDSMILES) $(LDFLAGS) 
 
 regrs: testExecs/test1.exe testExecs/test2.exe
 

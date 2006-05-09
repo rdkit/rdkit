@@ -9,7 +9,7 @@ $(LIB): $(OBJS)
 	ar -rv $@ $?
 
 testExecs/testMolAlign.exe: testMolAlign.o $(LIB)
-	g++ $(CXXFLAGS) -o $@ $< -L. -lMolAlign $(RDMOLTRANSFORMS) $(RDFILEPARSE) \
+	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lMolAlign $(RDMOLTRANSFORMS) $(RDFILEPARSE) \
             $(RDSMILES) $(RDSUBSTRUCT) $(VFLIB) $(RDDGEOMHELPERS) $(RDDISTGEOM) \
             $(RDFORCEFIELDHELPERS) $(RDFORCEFIELDS) $(RDOPTIMIZER) $(RDKIT) \
             $(RDALIGNMENT) $(RDEIGENSOLVERS) $(RDGENERAL) $(RDGEOMETRY) 

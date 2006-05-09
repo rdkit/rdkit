@@ -5,7 +5,7 @@ CXXFLAGS=$(RDOPTFLAGS) $(BOOSTINC) -I$(RDCODEDIR)
 regrs: testExecs/testMatCalc.exe
 
 testExecs/testMatCalc.exe: testMatCalc.o
-	g++ -o $@ $(CXXFLAGS) $^ $(RDGENERAL)
+	$(CXX) -o $@ $(CXXFLAGS) $^ $(RDGENERAL)
 
 clean:
 	rm -f  testMatCalc.o testExecs/testMatCalc.exe $(DEPENDS)

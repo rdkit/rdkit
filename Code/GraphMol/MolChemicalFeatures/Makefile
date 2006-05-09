@@ -9,7 +9,7 @@ $(LIB): $(OBJS)
 	ar -rv $@ $? 
 
 testExecs/testFeatures.exe: testFeatures.o $(LIB)
-	g++ $(CXXFLAGS) -o $@ $< -L. -lMolChemicalFeatures $(RDSMILES) $(RDSUBSTRUCT) $(VFLIB)\
+	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lMolChemicalFeatures $(RDSMILES) $(RDSUBSTRUCT) $(VFLIB)\
             $(RDKIT) $(RDGENERAL) $(RDGEOMETRY) 
 
 clean:
@@ -18,7 +18,7 @@ clean:
 regrs: testExecs/testFeatures.exe
 
 benchFeatures.exe: benchFeatures.o libMolChemicalFeatures.a 
-	g++ $(CXXFLAGS) -o $@ $< -L. -lMolChemicalFeatures $(RDSMILES) $(RDFILEPARSE) $(RDSUBSTRUCT) $(VFLIB) $(RDKIT) $(RDGENERAL) $(RDGEOMETRY) 
+	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lMolChemicalFeatures $(RDSMILES) $(RDFILEPARSE) $(RDSUBSTRUCT) $(VFLIB) $(RDKIT) $(RDGENERAL) $(RDGEOMETRY) 
 
 include $(DEPENDS)
 

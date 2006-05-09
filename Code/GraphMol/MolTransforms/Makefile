@@ -20,7 +20,7 @@ $(SLIB): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $^ $(RDEIGENSOLVERS)
 
 testExecs/testMolTransform.exe: test1.o $(LIB)
-	g++ -o $@ $(CXXFLAGS) $< -L. -lMolTransforms $(RDFILEPARSE) $(RDSMILES) $(RDKIT) $(RDEIGENSOLVERS) $(RDGEOMETRY) $(RDGENERAL) $(LDFLAGS)
+	$(CXX) -o $@ $(CXXFLAGS) $< -L. -lMolTransforms $(RDFILEPARSE) $(RDSMILES) $(RDKIT) $(RDEIGENSOLVERS) $(RDGEOMETRY) $(RDGENERAL) $(LDFLAGS)
 
 clean:
 	rm -f $(OBJS) test1.o testExecs/testMolTransform.exe $(SLIB) $(LIB) $(DEPENDS)

@@ -6,7 +6,7 @@ SOURCES=FragCatalogUtils.cpp FragCatGenerator.cpp FragCatalogEntry.cpp FragCatPa
         FragFPGenerator.cpp
 
 $(RDFRAGCATLIB): $(OBJS)
-	g++ $(CXXFLAGS) $(SOFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $^
 
 static: $(RDFRAGCATLIB_S)
 
@@ -17,7 +17,7 @@ install: $(RDFRAGCATLIB)
 	cp $(RDFRAGCATLIB) $(RDBASE)/bin
 
 testExecs/test1.exe: test1.o $(RDFRAGCATLIB)
-	g++ $(CXXFLAGS) -o $@ $< \
+	$(CXX) $(CXXFLAGS) -o $@ $< \
 	$(RDFRAGCAT) $(RDCATALOGS) $(RDSUBGRAPHS) $(RDSUBSTRUCT) \
 	$(RDSMILES) $(RDFILEPARSE)\
 	$(RDKIT) $(RDBITVECS) $(LAPACKLIB) $(LDFLAGS) $(VFLIB) $(RDGENERAL) $(RDGEOMETRY)

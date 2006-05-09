@@ -27,17 +27,17 @@ $(RDFILEPARSELIB_S): $(OBJS)
 	ar -rv $@ $?
 
 testExecs/test1.exe: test1.o $(RDFILEPARSELIB)
-		g++ -o $@ $(CXXFLAGS) $< $(LDFLAGS)
+		$(CXX) -o $@ $(CXXFLAGS) $< $(LDFLAGS)
 
 bench.exe: bench.o $(RDFILEPARSELIB_S)
-	g++ -o $@ $(CXXFLAGS) $< $(RDFILEPARSE_S) $(RDKIT_S) $(RDGENERAL_S)
+	$(CXX) -o $@ $(CXXFLAGS) $< $(RDFILEPARSE_S) $(RDKIT_S) $(RDGENERAL_S)
 
 testExecs/testMolSupplier.exe: testMolSupplier.o $(RDFILEPARSELIB_S)
-		g++ -o $@ $(CXXFLAGS) $< $(RDFILEPARSE_S) $(RDSMILES) $(RDKIT_S) \
+		$(CXX) -o $@ $(CXXFLAGS) $< $(RDFILEPARSE_S) $(RDSMILES) $(RDKIT_S) \
                           $(RDGENERAL) $(RDGEOMETRY) $(RDDEPICTOR)
 
 testExecs/testMolWriter.exe: testMolWriter.o $(RDFILEPARSELIB)
-		g++ -o $@ $(CXXFLAGS) $< $(LDFLAGS2)
+		$(CXX) -o $@ $(CXXFLAGS) $< $(LDFLAGS2)
 
 regrs: testExecs/test1.exe testExecs/testMolSupplier.exe testExecs/testMolWriter.exe
 

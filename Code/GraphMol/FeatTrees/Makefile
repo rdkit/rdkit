@@ -9,7 +9,7 @@ $(LIB): $(OBJS)
 	ar -r $@ $(OBJS)
 
 testExecs/testFeatTrees.exe: testFeatTrees.o $(LIB)
-	g++ $(CXXFLAGS) -o $@ $< -L. -lFeatTrees $(RDSMILES) $(VFLIB) $(RDKIT) $(RDEIGENSOLVERS) $(RDGENERAL) $(RDGEOMETRY) 
+	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lFeatTrees $(RDSMILES) $(VFLIB) $(RDKIT) $(RDEIGENSOLVERS) $(RDGENERAL) $(RDGEOMETRY) 
 
 clean:
 	rm -f $(OBJS) $(LIB) testFeatTrees.o testExecs/testFeatTrees.exe $(DEPENDS)

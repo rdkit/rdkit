@@ -14,7 +14,7 @@ static: $(RDFINGERPRINTSLIB_S)
 
 
 $(RDFINGERPRINTSLIB): $(OBJS)
-	g++ $(CXXFLAGS) $(SOFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $^
 $(RDFINGERPRINTSLIB_S): $(OBJS)
 	ar -rv $@ $?
 
@@ -25,10 +25,10 @@ $(INSTLIB): $(RDFINGERPRINTSLIB)
 
 
 testExecs/test1.exe: test1.o $(RDFINGERPRINTSLIB)
-		g++ -o $@ $(CXXFLAGS) $< $(RDFINGERPRINTSLIB) $(LDFLAGS) 
+		$(CXX) -o $@ $(CXXFLAGS) $< $(RDFINGERPRINTSLIB) $(LDFLAGS) 
 
 bench.exe: bench.o $(RDFINGERPRINTSLIB)
-		g++ -o $@ $(CXXFLAGS) $< $(RDFINGERPRINTSLIB) $(RDFILEPARSE) $(LDFLAGS)
+		$(CXX) -o $@ $(CXXFLAGS) $< $(RDFINGERPRINTSLIB) $(RDFILEPARSE) $(LDFLAGS)
 
 regrs: testExecs/test1.exe
 

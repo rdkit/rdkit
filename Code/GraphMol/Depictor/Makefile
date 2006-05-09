@@ -18,10 +18,10 @@ install: $(RDDEPICTORLIB)
 	cp $(RDDEPICTORLIB) $(RDBASE)/bin
 
 testExecs/testDepictor.exe: testDepictor.o $(RDDEPICTORLIB)
-	g++ -o $@ $(CXXFLAGS) $< $(LDFLAGS)
+	$(CXX) -o $@ $(CXXFLAGS) $< $(LDFLAGS)
 
 benchDepictor.exe: benchDepictor.o $(RDDEPICTORLIB_S)
-	g++ -o $@ $(CXXFLAGS) $< $(RDDEPICTOR_S) $(RDKIT_S) $(RDGENERAL_S)
+	$(CXX) -o $@ $(CXXFLAGS) $< $(RDDEPICTOR_S) $(RDKIT_S) $(RDGENERAL_S)
 
 
 regrs: testExecs/testDepictor.exe

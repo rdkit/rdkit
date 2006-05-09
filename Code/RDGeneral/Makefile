@@ -22,10 +22,10 @@ $(LIB): $(OBJS)
 # Dict.o needs to be produced without optimization, otherwise some important
 # definitions get compiled out. 
 Dict.o: Dict.cpp
-	g++ -g -c $(BOOSTINC) -I$(RDCODEDIR) Dict.cpp
+	$(CXX) -g -c $(BOOSTINC) -I$(RDCODEDIR) Dict.cpp
 
 testExecs/testDict.exe: testDict.o $(SLIB)
-	g++ -o $@ $(CXXFLAGS) testDict.o $(RDGENERAL)
+	$(CXX) -o $@ $(CXXFLAGS) testDict.o $(RDGENERAL)
 
 clean:
 	rm -f testExecs/testDict.exe testDict.o $(OBJS) $(SLIB) $(LIB) $(DEPENDS)
