@@ -1,7 +1,7 @@
 # Run this with:
 #  python setup.py install --install-lib=$RDBASE/Python
+from RDBuild import *
 from distutils.core import setup,Extension
-import RDConfig
 
 
 destDir = RDConfig.RDCodeDir
