@@ -1,6 +1,7 @@
 # Run this with:
 #  python setup.py install --install-lib=$RDBASE/Python
 from RDBuild import *
+import RDConfig
 from distutils.core import setup,Extension
 
 

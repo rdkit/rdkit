@@ -26,10 +26,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 #endif
 
 typedef double real;
-CALGORITHMS_API void distdriver_(int *n,int *len,
-			    real *dists,
-			    int *toggle,
-			    int *ia,int *ib,real *crit);
+
+
+
+extern "C"
+void distdriver_(int *n,int *len,
+		 real *dists,
+		 int *toggle,
+		 int *ia,int *ib,real *crit);
 
 //
 // Rather than deal with any nonsense like trying to get
