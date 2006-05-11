@@ -21,7 +21,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(RDBASE)/External/boost/include/$(BOOSTBASE),.,$(RDBASE)/Code,$(RDBASE)\external\lapack++\include"
+				AdditionalIncludeDirectories="$(BOOSTHOME)/include/$(BOOSTBASE),.,$(RDBASE)/Code,$(RDBASE)\external\lapack++\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -75,7 +75,7 @@
 				InlineFunctionExpansion="2"
 				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="3"
-				AdditionalIncludeDirectories="$(RDBASE)/External/boost/include/$(BOOSTBASE),.,$(RDBASE)/Code,$(RDBASE)\external\lapack++\include"
+				AdditionalIncludeDirectories="$(BOOSTHOME)/include/$(BOOSTBASE),.,$(RDBASE)/Code,$(RDBASE)\external\lapack++\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
