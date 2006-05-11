@@ -2,16 +2,14 @@
 import sys, smtplib, base64, cStringIO, time, os.path
 from email import Message, Utils
 
-SMTP_HOSTNAME=''
-FROM_ADDR=''
-TO_ADDR=''
+SMTP_HOSTNAME='mail.sbcglobal.net'
 
 def sendLog(fileName,summaryName=""):
 
   msg = Message.Message()
-  msg["To"]="Landrum@RationalDiscovery.com"
-  msg["From"]="Build@RationalDiscovery.com"
-  msg["Subject"]='RDBuild: Nightly Build Results for %s'%time.strftime("%d/%m/%Y")
+  msg["To"]="rdkit-devel@lists.sourceforge.net"
+  msg["From"]="glandrum@users.sourceforge.net"
+  msg["Subject"]='RDKitBuild: Nightly Build Results for %s'%time.strftime("%d/%m/%Y")
   msg["Date"] = Utils.formatdate(localtime=1)
   msg["Message-ID"] = Utils.make_msgid()
   msg["Mime-version"] = "1.0"
@@ -44,8 +42,8 @@ def sendLog(fileName,summaryName=""):
   msg.attach(subMsg)
   
   smtp = smtplib.SMTP(SMTP_HOSTNAME)
-  smtp.sendmail(FROM_ADDR,
-                [TO_ADDR],
+  smtp.sendmail(msg['From'],
+                [msg['To']],
                 msg.as_string())
   smtp.quit()
 
