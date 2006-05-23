@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'MolEditDisplayWidget2.ui'
+# Form implementation generated from reading ui file 'forms/MolEditDisplayWidget2.ui'
 #
-# Created: Tue Jan 24 14:43:33 2006
-#      by: The PyQt User Interface Compiler (pyuic) 3.11
+# Created: Tue May 16 14:50:57 2006
+#      by: The PyQt User Interface Compiler (pyuic) 3.14.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -36,7 +36,7 @@ class MolEditDisplayWidget(QWidget):
     MolEditDisplayWidgetLayout.addLayout(Layout1)
 
     self.formatGroup = QButtonGroup(self,"formatGroup")
-    self.formatGroup.setSizePolicy(QSizePolicy(5,0,0,0,self.formatGroup.sizePolicy().hasHeightForWidth()))
+    self.formatGroup.setSizePolicy(QSizePolicy(QSizePolicy.Preferred,QSizePolicy.Fixed,0,0,self.formatGroup.sizePolicy().hasHeightForWidth()))
     self.formatGroup.setColumnLayout(0,Qt.Vertical)
     self.formatGroup.layout().setSpacing(6)
     self.formatGroup.layout().setMargin(6)

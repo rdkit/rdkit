@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2003-2005  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2006  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
 """ implementation bits for MolEditDisplayWidgets
@@ -28,7 +28,7 @@ from qtGui.GuiLib import MolCanvas
 fileFormats={
   'mol':('Mol Files (*.mol)','chemical/x-mdl-molfile'),
   'sdf':('SD Files (*.sdf)','chemical/x-mdl-sdfile'),
-  'mol2':('Mol2 Files (*.mol2)','chemical/msi-mol2file'),
+#  'mol2':('Mol2 Files (*.mol2)','chemical/msi-mol2file'),
   }
 
 class MolEditDisplayWidget(_Form):
@@ -36,7 +36,7 @@ class MolEditDisplayWidget(_Form):
   
 
   """
-  def __init__(self,parent=None,initDir='',startCDX=1,allowArrows=0,logging=0):
+  def __init__(self,parent=None,initDir='',startCDX=True,allowArrows=False,logging=False):
     _Form.__init__(self,parent)
     self._dir = initDir
     self.activeMol = None
@@ -48,13 +48,16 @@ class MolEditDisplayWidget(_Form):
 
     self._molLoadFormats = []
     self._supportedDropFormats = []
-    for key,val in fileFormats.iteritems():
-      self._supportedDropFormats.append(key)
+    ks = fileFormats.keys()
+    ks.sort()
+    for k in ks:
+      val = fileFormats[k]
+      self._supportedDropFormats.append(k)
       self._molLoadFormats.append(val[0])
     self._molUpdateCallbacks = []
     self._nextMolCallbacks = []
     self._prevMolCallbacks = []
-    self._internalUpdate=0
+    self._internalUpdate=False
     self._smilesLogged=0
     self.setAcceptDrops(1)
     self._initChemdraw(startCDX)
@@ -63,11 +66,10 @@ class MolEditDisplayWidget(_Form):
     else:
       self.prevButton = None
       self.nextButton = None
-      self.molNumLable = None
+      self.molNumLabel = None
     self._logging = logging
     self.connect(self.smilesEdit,SIGNAL("returnPressed()"),self.smilesReturnPressed)
-    self.constantUpdates = 1
-    self._toSmilesConvertor = None
+    self.constantUpdates = True
 
     molCanv=MolCanvas.MolCanvasView(self)
     molCanv.initCanvas()
@@ -80,8 +82,7 @@ class MolEditDisplayWidget(_Form):
     self.prevButton.setEnabled(0)
 
     self.prevButton.setText(self.trUtf8("Previous"))
-    QToolTip.add(self.prevButton,self.trUtf8("Move backwards in the list of mol\
-ecules."))
+    QToolTip.add(self.prevButton,self.trUtf8("Move backwards in the list of molecules."))
     layout.addWidget(self.prevButton)
     spacer_2 = QSpacerItem(60,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
     layout.addItem(spacer_2)
@@ -89,8 +90,7 @@ ecules."))
     self.molNumLabel = QLabel(self.formatGroup,"molNumLabel")
     self.molNumLabel.setText(self.trUtf8(""))
     self.molNumLabel.setAlignment(QLabel.AlignCenter)
-    QToolTip.add(self.molNumLabel,self.trUtf8("Number of the current molecule i\
-n the molecule list."))
+    QToolTip.add(self.molNumLabel,self.trUtf8("Number of the current molecule in the molecule list."))
     layout.addWidget(self.molNumLabel)
     spacer_3 = QSpacerItem(60,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
     layout.addItem(spacer_3)
@@ -98,8 +98,7 @@ n the molecule list."))
     self.nextButton = QPushButton(self.formatGroup,"nextButton")
     self.nextButton.setEnabled(0)
     self.nextButton.setText(self.trUtf8("Next"))
-    QToolTip.add(self.nextButton,self.trUtf8("Move forwards in the list of mol\
-ecules."))
+    QToolTip.add(self.nextButton,self.trUtf8("Move forwards in the list of molecules."))
     layout.addWidget(self.nextButton)
     self.formatGroup.layout().addLayout(layout)
  
@@ -136,7 +135,7 @@ ecules."))
       try:
         mol = Chem.MolFromMolBlock(data)
       except:
-        qtUtils.warning('Could not convert smiles %s to a molecule'%repr(data),exc_info=True)
+        qtUtils.warning('Could not convert mol block to a molecule',exc_info=True)
         mol=None
     else:
       mol = None
@@ -147,9 +146,6 @@ ecules."))
 
   def getCanvas(self):
     return self.molCanvas
-
-  def setToSmilesConvertor(self,val):
-    self._toSmilesConvertor = val
 
   def setLogging(self,val):
     self._logging = val
@@ -214,10 +210,10 @@ ecules."))
     self.setMol(data)
     self.setFormat(fmt)
     if fmt=='chemical/daylight-smiles':
-      self._internalUpdate=1
+      self._internalUpdate=True
       self.smilesEdit.setText(data)
       self.smilesRadio.setChecked(1)
-      self._internalUpdate=0
+      self._internalUpdate=False
     else:
       self.smilesRadio.setChecked(0)
       
@@ -235,10 +231,10 @@ ecules."))
     self.setMol(data)
     self.setFormat(fmt)
     if fmt=='chemical/daylight-smiles':
-      self._internalUpdate=1
+      self._internalUpdate=True
       self.smilesEdit.setText(data)
       self.smilesRadio.setChecked(1)
-      self._internalUpdate=0
+      self._internalUpdate=False
     else:
       self.smilesRadio.setChecked(0)
       
@@ -293,13 +289,13 @@ ecules."))
 
      returns 0 on success, nonzero otherwise
     """
-    qtUtils.logger.debug('PROCESS: %s'%str(format))
+    #qtUtils.logger.debug('PROCESS: %s'%str(format))
     for cb in self._molUpdateCallbacks:
       try:
         r = cb(data,format)
       except:
         r = 1
-      qtUtils.logger.debug('  cb: %s %s'%(str(cb),str(r)))
+      #qtUtils.logger.debug('  cb: %s %s'%(str(cb),str(r)))
       if r:
         return r
     return 0  
@@ -402,7 +398,7 @@ ecules."))
     if self.smilesRadio.isChecked() and not self._smilesLogged:
       self.logMols([(self.getMol(),self.getFormat())])
       self._smilesLogged=1
-    self._internalUpdate=1
+    self._internalUpdate=True
     ok = self.grabMol(molFormat=self.grabFmt)
     # we go from chemdraw -> smiles
     if ok and self.grabFmt=="chemical/daylight-smiles":

@@ -194,8 +194,7 @@ class MolCanvasView(PiddleCanvasView):
         self.highlightAtoms((idx,),highlightColor=color,highlightRadius=rad,
                             append=True)
       else:
-        self.addHighlight(pos[0],pos[1],idx,highlightColor=color,highlightRadius=rad,
-                          append=True)
+        self.addHighlight(pos[0],pos[1],idx,highlightColor=color,highlightRadius=rad)
         
   def getAtomAtPos(self,x,y,tol=0,whichMol=-1):
     activeMol=self.mols[whichMol][0]
