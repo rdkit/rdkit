@@ -36,10 +36,11 @@ class MolEditDisplayWidget(_Form):
   
 
   """
-  def __init__(self,parent=None,initDir='',startCDX=True,allowArrows=False,logging=False):
+  def __init__(self,parent=None,initDir='',startCDX=True,
+               allowArrows=False):
     _Form.__init__(self,parent)
     self._dir = initDir
-    self.activeMol = None
+    self.activeMolData = None
     self.molLog = []
     self.activeIdx = -1
     self.molImage = None
@@ -48,16 +49,21 @@ class MolEditDisplayWidget(_Form):
 
     self._molLoadFormats = []
     self._supportedDropFormats = []
+
+    # get an alphabetical list of the file formats supported:
     ks = fileFormats.keys()
     ks.sort()
     for k in ks:
       val = fileFormats[k]
       self._supportedDropFormats.append(k)
       self._molLoadFormats.append(val[0])
-    self._molUpdateCallbacks = []
-    self._nextMolCallbacks = []
-    self._prevMolCallbacks = []
-    self._internalUpdate=False
+
+    # initialize our callbacks:
+
+    self._molUpdateCallbacks = [] # when a molecule is updated
+    self._nextMolCallbacks = []   # upon moving to the next molecule
+    self._prevMolCallbacks = []   # upon moving to the previous molecule
+    self._internalUpdate=False    
     self._smilesLogged=0
     self.setAcceptDrops(1)
     self._initChemdraw(startCDX)
@@ -67,7 +73,6 @@ class MolEditDisplayWidget(_Form):
       self.prevButton = None
       self.nextButton = None
       self.molNumLabel = None
-    self._logging = logging
     self.connect(self.smilesEdit,SIGNAL("returnPressed()"),self.smilesReturnPressed)
     self.constantUpdates = True
 
@@ -77,6 +82,10 @@ class MolEditDisplayWidget(_Form):
     self.molCanvas=molCanv
     
   def _initArrows(self):
+    """ arrows are used to move back and forth between molecules
+    that have been loaded into the widget. They are optional.
+
+    """
     layout = QHBoxLayout(None,2,4,"formatGroupLayout")
     self.prevButton = QPushButton(self.formatGroup,"prevMolButton")
     self.prevButton.setEnabled(0)
@@ -109,6 +118,7 @@ class MolEditDisplayWidget(_Form):
     self.updateGeometry()
     
   def _initChemdraw(self,startCDX):
+    """ sets up our connection to Chemdraw, when it's available """
     global chemdraw
     if chemdraw:
       if startCDX:
@@ -121,36 +131,35 @@ class MolEditDisplayWidget(_Form):
       self.GrabMol=chemdraw.CDXGrab
       self.PutMol=chemdraw.CDXDisplay
       self.fromCDXButton.setEnabled(1)
-    self.insertMolUpdateCallback(self.getMolPicture)
+    self.insertMolUpdateCallback(self.setMolPicture)
 
-  def getMolPicture(self,data,format):
+  def setMolPicture(self,data,format):
     import Chem
     if format=='chemical/daylight-smiles':
       try:
         mol = Chem.MolFromSmiles(data)
       except:
-        qtUtils.warning('Could not convert smiles %s to a molecule'%repr(data),exc_info=True)
+        qtUtils.warning('Could not convert smiles %s to a molecule'%repr(data),
+                        exc_info=True)
         mol=None
     elif format=='chemical/x-mdl-molfile':
       try:
         mol = Chem.MolFromMolBlock(data)
       except:
-        qtUtils.warning('Could not convert mol block to a molecule',exc_info=True)
+        qtUtils.warning('Could not convert mol block to a molecule',
+                        exc_info=True)
         mol=None
     else:
       mol = None
       
     if mol:
+      self.setMol(data)
+      self.setFormat(format)
       Chem.Kekulize(mol)
       self.molCanvas.setMol(mol)
 
   def getCanvas(self):
     return self.molCanvas
-
-  def setLogging(self,val):
-    self._logging = val
-  def getLogging(self):
-    return self._logging
 
   def setFormat(self,fmt):
     self.fmt = fmt
@@ -169,7 +178,7 @@ class MolEditDisplayWidget(_Form):
     self._molLoadFormats.insert(pos,fmt)
   
   def getMol(self):
-    return self.activeMol
+    return self.activeMolData
   def logMols(self,data):
     """ takes a sequence of (data,format) tuples """
     if type(data) not in (types.ListType,types.TupleType):
@@ -178,7 +187,7 @@ class MolEditDisplayWidget(_Form):
     self.molLog += list(data)
     self._updateButtonState()
   def setMol(self,data):
-    self.activeMol=data
+    self.activeMolData=data
     if data and chemdraw:
       self.toCDXButton.setEnabled(1)
   def getNumMols(self):
@@ -480,7 +489,6 @@ class MolEditDisplayWidget(_Form):
 if __name__ == '__main__':
   from qtGui import Gui
 
-  app,widg = Gui.Launcher(MolEditDisplayWidget,None,'MolEditDisplay',allowArrows=1,
-                          logging=1)
+  app,widg = Gui.Launcher(MolEditDisplayWidget,None,'MolEditDisplay',allowArrows=1)
   app.exec_loop()
 
