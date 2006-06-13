@@ -486,18 +486,19 @@ class MolItem(MolAlignmentListItem):
     res = []
     child = self.firstChild()
     while child:
-      label = child.label
-      keyVal = child.keyVal
-      mapping = child.mapping
-      bounds = child.bounds
-      mol = child.mol
-      if mol.HasProp('_Name'):
-        nm = mol.GetProp('_Name')
-      else:
-        nm = ''
-      childState = child.getChildState()
-      props = (nm,label,mapping,bounds,keyVal)
-      res.append((mol,props,childState))
+      if isinstance(child,MolAlignmentListItem):
+        label = child.label
+        keyVal = child.keyVal
+        mapping = child.mapping
+        bounds = child.bounds
+        mol = child.mol
+        if mol.HasProp( '_Name' ):
+          nm = mol.GetProp( '_Name' )
+        else:
+          nm = ''
+        childState = child.getChildState()
+        props = ( nm, label, mapping, bounds, keyVal )
+        res.append( ( mol, props, childState ) )
       child = child.nextSibling()
     return res
 

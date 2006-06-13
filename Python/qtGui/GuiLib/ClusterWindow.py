@@ -14,7 +14,7 @@ from qtGui.PiddleWindowImpl import PiddleWindow
 from qtGui import qtUtils
 from ML.Cluster import ClusterVis,Clusters
 
-import cPickle,os,copy,types,re
+import cPickle,os,copy,types
 
 class ClusterWindow(PiddleWindow):
   """ a window class for interacting with cluster trees
@@ -490,17 +490,7 @@ Copied blocks from Excel can also be used (e.g. copy a column of point names and
     self.highlightPoints(ptList)
 
   def highlightBatchPointsSlot(self):
-    clip = qApp.clipboard()
-    txt = clip.text()
-    if txt.isEmpty():
-      qtUtils.warning("no text found on the clipboard")
-    txt = str(txt)
-    ptList = []
-    for line in txt.split('\n'):
-      for entry in re.split(r'[\ \t,]+',line):
-        entry = entry.strip()
-        if entry:
-          ptList.append(entry)
+    ptList = qtUtils.getTokensFromClipboard()
     self.highlightPoints(ptList)
 
   def highlightClustersSlot(self):
