@@ -6,7 +6,7 @@ tests=[
   ("python","UnitTestTopNContainer.py",{}),
   ("python","BitUtils.py",{}),
   ("python","VectCollection.py",{}),
+  ("python","LazySignature.py",{}),
   ]
 longTests=[
   ]
-

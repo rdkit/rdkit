@@ -17,6 +17,6 @@ namespace SmilesWrite {
 
 namespace RDKit{
   std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles=false,
-			  bool doKekule=false);
+			  bool doKekule=false,int rootedAtAtom=-1);
 }
 #endif

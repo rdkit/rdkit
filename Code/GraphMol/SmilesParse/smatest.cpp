@@ -613,77 +613,6 @@ void testSmartsWrite() {
 }
 
 
-void testDeleteSubstruct() 
-{
-  int i = 0;
-  ROMol *mol1=0,*mol2=0,*matcher1=0,*matcher2=0,*matcher3=0;
-  std::string smi,sma;
-  
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing deleteSubstruct" << std::endl;
-
-  // a lot of the seemingly repetitive stuff is here for Issue96
-  smi = "CCC(=O).C=O";
-  mol1 = SmilesToMol(smi);
-  TEST_ASSERT(mol1);
-  sma = "C=O";
-  matcher1 = SmartsToMol(sma);
-  TEST_ASSERT(matcher1);
-  
-  mol2 = deleteSubstructs(*mol1,*matcher1,0);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms(4))
-  mol2 = deleteSubstructs(*mol2,*matcher1,0);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms(4))
-  
-  delete matcher1;
-  sma = "[Cl;H1&X1,-]";
-  matcher1 = SmartsToMol(sma);
-  sma = "[Na+]";
-  matcher2 = SmartsToMol(sma);
-  sma = "[O;H2,H1&-,X0&-2]";
-  matcher3 = SmartsToMol(sma);
-  delete mol1;
-  mol1 = SmilesToMol("CCO.Cl");
-  TEST_ASSERT(mol1);
-  TEST_ASSERT(mol1->getNumAtoms()==4);
-
-  delete mol2;
-  mol2 = deleteSubstructs(*mol1,*matcher1,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==3);
-  mol2 = deleteSubstructs(*mol2,*matcher2,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==3);
-  mol2 = deleteSubstructs(*mol2,*matcher3,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==3);
-
-  delete mol1;
-  mol1 = SmilesToMol("CC(=O)[O-].[Na+]");
-  TEST_ASSERT(mol1);
-  TEST_ASSERT(mol1->getNumAtoms()==5);
-
-  delete matcher1;
-  matcher1 = SmartsToMol("[Cl;H1&X1,-]");
-  delete matcher2;
-  matcher2 = SmartsToMol("[Na+]");
-
-  mol2 = deleteSubstructs(*mol1,*matcher1,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==5);
-
-  mol2 = deleteSubstructs(*mol2,*matcher2,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==4);
-
-  mol2 = deleteSubstructs(*mol2,*matcher1,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==4);
-
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
 
 void testIssue196() 
 {
@@ -876,7 +805,6 @@ main(int argc, char *argv[])
   testSmartsWrite();
   testFrags();
   testProblems();
-  testDeleteSubstruct();
   testIssue196();
   testIssue254();
   testIssue255();

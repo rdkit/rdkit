@@ -176,14 +176,18 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       the SMILES.  Defaults to false.\n\
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
+    - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
+      to start at a particular atom. Defaults to -1.\n\
 \n\
   RETURNS:\n\
 \n\
     a string\n\
 \n";  
   python::def("MolToSmiles",RDKit::MolToSmiles,
-	      (python::arg("mol"),python::arg("isomericSmiles")=false,
-	       python::arg("kekuleSmiles")=false),
+	      (python::arg("mol"),
+	       python::arg("isomericSmiles")=false,
+	       python::arg("kekuleSmiles")=false,
+	       python::arg("rootedAtAtom")=-1),
 	      docString.c_str());
 
   docString="Returns a SMARTS string for a molecule\n\

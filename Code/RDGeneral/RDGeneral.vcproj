@@ -22,7 +22,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(RDBASE)/Code,$(RDBASE)/Code/GraphMol,$(RDBASE)/External/vflib-2.0/include,$(RDBASE)\external\boost\include\$(BOOSTBASE)"
+				AdditionalIncludeDirectories="$(RDBASE)/Code,$(RDBASE)/Code/GraphMol,$(RDBASE)/External/vflib-2.0/include,$(BOOSTHOME)\include\$(BOOSTBASE)"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Debug\RDGeneral.lib"
-				AdditionalLibraryDirectories="$(RDBASE)\External\boost\lib"
+				AdditionalLibraryDirectories="$(BOOSTHOME)\lib"
 				SuppressStartupBanner="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -78,7 +78,7 @@
 				ImproveFloatingPointConsistency="FALSE"
 				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="3"
-				AdditionalIncludeDirectories="$(RDBASE)/Code,$(RDBASE)/Code/GraphMol,$(RDBASE)/External/vflib-2.0/include,$(RDBASE)\external\boost\include\$(BOOSTBASE)"
+				AdditionalIncludeDirectories="$(RDBASE)/Code,$(RDBASE)/Code/GraphMol,$(RDBASE)/External/vflib-2.0/include,$(BOOSTHOME)\include\$(BOOSTBASE)"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -96,7 +96,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Release\RDGeneral.lib"
-				AdditionalLibraryDirectories="$(RDBASE)\External\boost\lib"
+				AdditionalLibraryDirectories="$(BOOSTHOME)\lib"
 				SuppressStartupBanner="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"/>

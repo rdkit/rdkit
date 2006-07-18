@@ -17,6 +17,7 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 namespace python = boost::python;
 
@@ -33,8 +34,18 @@ namespace RDKit{
     return nr;
   }
 
-  ROMol *deleteSubstructures(const ROMol &orig, const ROMol &query, bool onlyFrags=false) {
-    return deleteSubstructs(orig, query, onlyFrags);
+  PyObject* replaceSubstructures(const ROMol &orig,
+				 const ROMol &query,
+				 const ROMol &replacement,
+				 bool replaceAll=false) {
+    std::vector<ROMOL_SPTR> v=replaceSubstructs(orig, query,
+						replacement, replaceAll);
+    PyObject *res=PyTuple_New(v.size());
+    for(unsigned int i=0;i<v.size();++i){
+      PyTuple_SetItem(res,i,
+		      python::converter::shared_ptr_to_python(v[i]));
+    }
+    return res;
   }
 
   void sanitizeMol(ROMol &mol) {
@@ -45,7 +56,6 @@ namespace RDKit{
   void kekulizeMol(ROMol &mol,bool clearAromaticFlags=false) {
     RWMol &wmol = static_cast<RWMol &>(mol);
     MolOps::Kekulize(wmol,clearAromaticFlags);
-    //MolOps::Kekulize(wmol);
   }
 
   VECT_INT_VECT getSymmSSSR(ROMol &mol) {
@@ -114,7 +124,7 @@ namespace RDKit{
       std::string docString;
 
       // ------------------------------------------------------------------------
-      docString="Kekulize, check valenciess, set aromaticity, conjugation and hybridization\n\
+      docString="Kekulize, check valencies, set aromaticity, conjugation and hybridization\n\
 \n\
     - The molecule is modified in place.\n\
 \n\
@@ -238,11 +248,17 @@ namespace RDKit{
 \n\
     - DeleteSubstructs('CCOCCl.Cl','Cl') -> 'CCOC'\n\
 \n";
-      python::def("DeleteSubstructs", deleteSubstructures,
+      python::def("DeleteSubstructs", deleteSubstructs,
                   (python::arg("mol"),python::arg("query"),
 		   python::arg("onlyFrags")=false),
 		  docString.c_str(),
 		  python::return_value_policy<python::manage_new_object>());
+
+      python::def("ReplaceSubstructs", replaceSubstructures,
+                  (python::arg("mol"),python::arg("query"),
+		   python::arg("replacement"),
+		   python::arg("replaceAll")=false),
+		  docString.c_str());
 
       // ------------------------------------------------------------------------
       docString="Returns the molecule's distance matrix.\n\

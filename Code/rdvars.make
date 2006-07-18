@@ -18,14 +18,15 @@ PYTHONINC=-I$(PYTHON_ROOT)/include/python$(PYTHON_VERSION)
 # -----------
 # Boost
 # -----------
-BOOSTINC=-I/usr/local/include/$(BOOSTBASE)
+BOOSTINC=-I$(BOOSTHOME)/include/$(BOOSTBASE)
 BOOSTLOGLIB=-lboost_log-gcc-s -lboost_thread-gcc-mt
 BOOSTLOGLIB_S=-lboost_log-gcc-s -lboost_thread-gcc-mt
 #BOOSTINC=-I/home2/glandrum/boost_gcc34/include/$(BOOSTBASE)
 #BOOSTLOGLIB=-L/home2/glandrum/boost_gcc34/lib -lboost_log-gcc-s -lboost_thread-gcc-mt-s
 #BOOSTLOGLIB_S=-L/home2/glandrum/boost_gcc34/lib -lboost_log-gcc-s -lboost_thread-gcc-mt-s
 #BOOSTINC=-I$(RDBASE)/External/boost/include/$(BOOSTBASE)
-#BOOSTLOGLIB_S=-L/c/boost/lib/ -lboost_log-mgw-s-$(BOOSTVERSION)
+BOOSTLOGLIB=-L/c/boost/lib/ -lboost_log-vc71-mt-$(BOOSTVERSION)
+BOOSTLOGLIB_S=-L/c/boost/lib/ -lboost_log-mgw-s-$(BOOSTVERSION)
 
 # -----------
 # Xerces

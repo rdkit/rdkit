@@ -3,7 +3,7 @@
 # Copyright (C) 2005,2006 Rational Discovery LLC
 #  All Rights Reserved
 #
-_version='0.9.45'
+_version='0.9.46'
 
 import os,sys
 from utils import comhack

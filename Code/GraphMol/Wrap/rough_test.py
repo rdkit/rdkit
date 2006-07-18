@@ -1362,6 +1362,15 @@ CAS<~>
     self.failUnless(txt.find('MolFileComments')==-1)
     
 
+  def test40SmilesRootedAtAtom(self):
+    """ test the rootAtAtom functionality
+
+    """
+    smi = 'CN(C)C'
+    m = Chem.MolFromSmiles(smi)
+
+    self.failUnless(Chem.MolToSmiles(m)=='CN(C)C')
+    self.failUnless(Chem.MolToSmiles(m,rootedAtAtom=1)=='N(C)(C)C')
     
 
 

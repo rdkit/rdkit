@@ -14,11 +14,7 @@
 #endif
 #include <windows.h>
 #else  // WIN32
-#ifndef _cplusplus
-#define CALGORITHMS_API extern
-#else
 #define CALGORITHMS_API extern "C"
-#endif
 #endif
 
 CALGORITHMS_API void initClustering(void);

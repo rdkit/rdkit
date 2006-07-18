@@ -22,7 +22,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".,$(RDBASE)/code,$(RDBASE)/External/boost/include/$(BOOSTBASE)"
+				AdditionalIncludeDirectories=".,$(RDBASE)/code,$(BOOSTHOME)/include/$(BOOSTBASE)"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -78,7 +78,7 @@
 				InlineFunctionExpansion="2"
 				ImproveFloatingPointConsistency="TRUE"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories=".,$(RDBASE)/code,$(RDBASE)/External/boost/include/$(BOOSTBASE)"
+				AdditionalIncludeDirectories=".,$(RDBASE)/code,$(BOOSTHOME)/include/$(BOOSTBASE)"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"

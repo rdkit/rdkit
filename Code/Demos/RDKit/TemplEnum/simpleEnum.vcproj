@@ -23,7 +23,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="$(RDBASE)/External/boost/include/$(BOOSTBASE),.,$(RDBASE)/code,$(RDBASE)/code/graphmol"
+				AdditionalIncludeDirectories="$(BOOSTHOME)/include/$(BOOSTBASE),.,$(RDBASE)/code,$(RDBASE)/code/graphmol"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -81,7 +81,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(RDBASE)/External/boost/include/$(BOOSTBASE),.,$(RDBASE)/code,$(RDBASE)/code/graphmol"
+				AdditionalIncludeDirectories="$(BOOSTHOME)/include/$(BOOSTBASE),.,$(RDBASE)/code,$(RDBASE)/code/graphmol"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"

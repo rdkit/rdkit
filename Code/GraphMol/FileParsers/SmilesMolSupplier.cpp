@@ -159,7 +159,7 @@ namespace RDKit {
       // -----------
       // get the name (if there's a name column)
       // -----------
-      if (d_name == -1) {
+      if (d_name <0 || static_cast<unsigned int>(d_name)>=recs.size()) {
 	// if no name defaults it to the line number we read it from string
 	std::ostringstream tstr;
 	tstr << d_line;

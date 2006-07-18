@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(RDBASE)/External/boost/include/$(BOOSTBASE),.,$(RDBASE)/Code,c:/gecko-sdk/include,$(RDBASE)/External/vflib-2.0/include"
+				AdditionalIncludeDirectories="$(BOOSTHOME)/include/$(BOOSTBASE),.,$(RDBASE)/Code,c:/gecko-sdk/include,$(RDBASE)/External/vflib-2.0/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DEMO-XPCOM_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -72,7 +72,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(RDBASE)/External/boost/include/$(BOOSTBASE),.,$(RDBASE)/Code,c:/gecko-sdk/include,$(RDBASE)/External/vflib-2.0/include"
+				AdditionalIncludeDirectories="$(BOOSTHOME)/include/$(BOOSTBASE),.,$(RDBASE)/Code,c:/gecko-sdk/include,$(RDBASE)/External/vflib-2.0/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DEMO-XPCOM_EXPORTS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"

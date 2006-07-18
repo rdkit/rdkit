@@ -175,4 +175,20 @@ def getSaveFilenameAndFilter(dir,filter,mode=QFileDialog.AnyFile):
   fName = str(dlg.selectedFile())
   filter = str(dlg.selectedFilter())
   return fName,filter
+
+def getTokensFromClipboard():
+  import re
+  clip = qApp.clipboard()
+  txt = clip.text()
+  ptList = []
+  if txt.isEmpty():
+    warning("no text found on the clipboard")
+  else:
+    txt = str(txt)
+    for line in txt.split('\n'):
+      for entry in re.split(r'[\ \t,]+',line):
+        entry = entry.strip()
+        if entry:
+          ptList.append(entry)
+  return ptList
   

@@ -314,7 +314,9 @@ class MolDrawing(object):
       self.drawingTrans = drawingTrans
     font = pid.Font(face=self.atomLabelFontFace,size=self.atomLabelFontSize)
 
-    Chem.WedgeMolBonds(mol,conf)
+    if not mol.HasProp('_drawingBondsWedged'):
+      Chem.WedgeMolBonds(mol,conf)
+      mol.SetProp('_drawingBondsWedged','set',True)
       
     self.atomPs[mol] = {}
     self.activeMol = mol
