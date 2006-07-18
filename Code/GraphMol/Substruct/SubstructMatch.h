@@ -67,21 +67,6 @@ namespace RDKit{
   unsigned int SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
 		     std::vector< MatchVectType > &matchVect,
 		     bool uniquify=true,bool recursionPossible=true);
-
-  //! \brief Returns a copy of an ROMol with the atoms and bonds that 
-  //!      match a pattern removed.
-  /*!
-      \param mol       the ROMol of interest
-      \param query     the query ROMol
-      \param onlyFrags if this is set, only matches that correspond to an
-                       entire fragment will be removed.  This is useful for
-		       salt removal
-
-      \return a copy of \c mol with the matching atoms and bonds (if any)
-              removed.		       
-  */
-  ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
-			  bool onlyFrags=0);
 }
 
 #endif
