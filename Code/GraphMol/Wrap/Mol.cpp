@@ -244,7 +244,7 @@ struct mol_wrapper {
   static void wrap(){
     python::register_exception_translator<ConformerException>(&rdExceptionTranslator);
 
-    python::class_<ROMol>("Mol",
+    python::class_<ROMol,ROMOL_SPTR>("Mol",
 			  molClassDoc.c_str(),
 			  python::init<>("Constructor, takes no arguments"))
       .def(python::init<const std::string &>())
