@@ -294,7 +294,7 @@ namespace RDKit{
         ... atomPtr is a const Atom * ...
         ROMol::OEDGE_ITER beg,end;
         ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = molPtr->getBondPMap();
-	boost::tie(beg,end) = molPtr->getAtomNeighbors(atomPtr);
+	boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
 	while(beg!=end){
 	  const Bond *bond=pMap[*beg];
 	  ... do something with the Bond ...
@@ -307,7 +307,7 @@ namespace RDKit{
         ... atomPtr is a const Atom * ...
         ROMol::OEDGE_ITER beg,end;
         ROMol::GRAPH_MOL_BOND_PMAP::type pMap = molPtr->getBondPMap();
-	boost::tie(beg,end) = molPtr->getAtomNeighbors(atomPtr);
+	boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
 	while(beg!=end){
 	  Bond *bond=pMap[*beg];
 	  ... do something with the Bond ...
