@@ -1231,6 +1231,28 @@ void testIssue266(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testRootedAt(){
+  RWMol *mol;
+  std::string smi;
+  int numE=0;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing rootedAtAtom functionality" << std::endl;
+
+  smi ="CN(C)C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="CN(C)C");
+  smi = MolToSmiles(*mol,false,false,1);
+  TEST_ASSERT(smi=="N(C)(C)C");
+  smi = MolToSmiles(*mol,false,false,2);
+  TEST_ASSERT(smi=="CN(C)C");
+
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -1257,6 +1279,7 @@ main(int argc, char *argv[])
   testIssue184();
   testIssue191();
   testIssue256();
-#endif
   testIssue266();
+#endif
+  testRootedAt();
 }
