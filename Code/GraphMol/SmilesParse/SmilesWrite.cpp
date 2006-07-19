@@ -300,9 +300,7 @@ namespace RDKit{
   // decisions and I'm gonna want to smack myself for doing this,
   // but we'll try anyway.
   std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles,
-			  bool doKekule,int rootedAtAtom){
-    PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
-		 "rootedAtomAtom must be less than the number of atoms");
+			  bool doKekule){
     if(doIsomericSmiles){
       mol.setProp("_doIsoSmiles",1);
     } else if(mol.hasProp("_doIsoSmiles")){
@@ -317,17 +315,18 @@ namespace RDKit{
 #endif  
     std::string res;
 
-    for(ROMol::AtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
+    int nAtoms=mol.getNumAtoms();
+    for(ROMol::AtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++)
       (*atIt)->updatePropertyCache();
-    }
 
-    unsigned int nAtoms=mol.getNumAtoms();
-    INT_VECT ranks(nAtoms,-1);
+    INT_VECT ranks;
+    ranks.resize(nAtoms);
 
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
       MolOps::assignAtomChiralCodes(mol,true);
+      //MolOps::assignBondStereoCodes(mol,true);
       MolOps::rankAtoms(mol,ranks,ComprehensiveInvariants,
 			true,0,true);
     } else {
@@ -344,20 +343,14 @@ namespace RDKit{
     colorIt = colors.begin();
     // loop to deal with the possibility that there might be disconnected fragments
     while(colorIt != colors.end()){
-      int nextAtomIdx;
+      int i,nextAtomIdx,nextRank;
       std::string subSmi;
-
       // find the next atom for a traverse
-      if(rootedAtAtom>=0){
-	nextAtomIdx=rootedAtAtom;
-	rootedAtAtom=-1;
-      } else {
-	int nextRank = nAtoms+1;
-	for(unsigned int i=0;i<nAtoms;i++){
-	  if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
-	    nextRank = ranks[i];
-	    nextAtomIdx = i;
-	  }
+      nextRank = nAtoms+1;
+      for(i=0;i<nAtoms;i++){
+	if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
+	  nextRank = ranks[i];
+	  nextAtomIdx = i;
 	}
       }
 

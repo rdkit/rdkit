@@ -150,7 +150,7 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath=".\Clustering.c">
+				RelativePath=".\Clustering.cpp">
 			</File>
 		</Filter>
 		<Filter

@@ -1,6 +1,6 @@
 
 include $(RDBASE)/Code/rdvars.make
-BOOSTINC=-I$(BOOSTHOME)/include/$(BOOSTBASE)
+BOOSTINC=-I$(RDBASE)/External/boost/include/$(BOOSTBASE)
 CXXFLAGS = -fno-operator-names -DWIN32_CLIENT_ONLY $(BASECXXFLAGS) $(RDKITINCFLAGS) -I/c/postgresql-8.0.1/src/include
 DLSUFFIX=.dll
 
