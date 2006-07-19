@@ -366,6 +366,25 @@ void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,
 
 bool Atom::Match(Atom const *what) const {
   bool res = getAtomicNum() == what->getAtomicNum();
+  // special dummy--dummy match case:
+  //   X matches X, Xa, Xb, etc
+  //   Xa only matches X and Xa
+  if(res && !getAtomicNum()){
+    std::string l1;
+    if(this->hasProp("dummyLabel")){
+      this->getProp("dummyLabel",l1);
+    } else{
+      l1="X";
+    }
+    if(l1!="X"){
+      std::string l2;
+      if(what->hasProp("dummyLabel")) what->getProp("dummyLabel",l2);
+      else l2="X";
+      if(l2!="X" && l1!=l2){
+	res = false;
+      }
+    }
+  }
   return res;
 }
 bool Atom::Match(const Atom::ATOM_SPTR what) const {
