@@ -231,8 +231,8 @@ namespace RDDepict {
     RDGeom::Point2D res = other - center;
     res.normalize();
     double tmp = res.x;
-    res.x = res.y;
-    res.y = -tmp;
+    res.x = -res.y;
+    res.y = tmp;
     return res;
   }
 

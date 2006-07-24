@@ -8,6 +8,7 @@ import RDConfig
 import unittest
 import os,sys
 import cPickle as pickle
+from Chem.ChemUtils import AlignDepict
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
@@ -84,6 +85,27 @@ class TestCase(unittest.TestCase) :
             ok=1
         self.failUnless(ok)
 
+    def test3IssueSF1526844(self):
+      t = Chem.MolFromSmiles('c1nc(N)ccc1')
+      rdDepictor.Compute2DCoords(t)
+      
+      m2 = Chem.MolFromSmiles('c1nc(NC=O)ccc1')
+      AlignDepict.AlignDepict(m2,t)
+      expected = [Geometry.Point3D(1.5, 0.0, 0.0),
+                  Geometry.Point3D(0.75, -1.299, 0.0),
+                  Geometry.Point3D(-0.75, -1.299, 0.0),
+                  Geometry.Point3D(-1.5, -2.5981, 0.0),
+                  Geometry.Point3D(-3.0, -2.5981, 0.0),
+                  Geometry.Point3D(-3.75, -3.8971, 0.0),
+                  Geometry.Point3D(-1.5, 0.0, 0.0),
+                  Geometry.Point3D(-0.75, 1.2990, 0.0),
+                  Geometry.Point3D(0.75, 1.2990, 0.0)]
+
+      nat = m2.GetNumAtoms()
+      conf = m2.GetConformer()
+      for i in range(nat) :
+        pos = conf.GetAtomPosition(i)
+        self.failUnless(ptEq(pos, expected[i], 0.001))
         
 if __name__ == '__main__':
   unittest.main()
