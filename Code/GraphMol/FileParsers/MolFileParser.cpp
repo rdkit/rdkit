@@ -197,7 +197,8 @@ namespace RDKit{
     //double pX,pY,pZ;
     std::string symb;
     int massDiff,chg,hCount;
-    //int rxnComponentType,rxnComponentNumber,atomMapNumber,inversionFlag,exactChangeFlag;
+    int stereoCare,totValence;
+    int atomMapNumber,inversionFlag,exactChangeFlag;
     
     try {
       pos.x = stripSpacesAndCast<double>(text.substr(0,10));
@@ -250,6 +251,18 @@ namespace RDKit{
     if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
        || (symb>="R0" && symb<="R9") ){
       res->setAtomicNum(0);
+      if(symb=="*") res->setProp("dummyLabel",std::string("X"));
+      else if(symb=="R0") res->setProp("dummyLabel",std::string("Xa"));
+      else if(symb=="R1") res->setProp("dummyLabel",std::string("Xb"));
+      else if(symb=="R2") res->setProp("dummyLabel",std::string("Xc"));
+      else if(symb=="R3") res->setProp("dummyLabel",std::string("Xd"));
+      else if(symb=="R4") res->setProp("dummyLabel",std::string("Xe"));
+      else if(symb=="R5") res->setProp("dummyLabel",std::string("Xf"));
+      else if(symb=="R6") res->setProp("dummyLabel",std::string("Xg"));
+      else if(symb=="R7") res->setProp("dummyLabel",std::string("Xh"));
+      else if(symb=="R8") res->setProp("dummyLabel",std::string("Xi"));
+      else if(symb=="R9") res->setProp("dummyLabel",std::string("Xj"));
+      else res->setProp("dummyLabel",symb);
     } else {
       res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
       res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
@@ -264,7 +277,7 @@ namespace RDKit{
       res->setMass(res->getMass()+massDiff);
     }
     
-#if 0
+#if 1
     stereoCare=0;
     if(text.size()>=48){
       try {
@@ -284,28 +297,6 @@ namespace RDKit{
       catch (boost::bad_lexical_cast &) {
 	std::ostringstream errout;
 	errout << "Cannot convert " << text.substr(48,3) << " to int";
-	throw FileParseException(errout.str()) ;
-      }
-    }
-    rxnComponentType=0;
-    if(text.size()>=57){
-      try {
-	rxnComponentType= stripSpacesAndCast<int>(text.substr(54,3));
-      }
-      catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(54,3) << " to int";
-	throw FileParseException(errout.str()) ;
-      }
-    }
-    rxnComponentNumber=0;
-    if(text.size()>=60){
-      try {
-	rxnComponentNumber= stripSpacesAndCast<int>(text.substr(57,3));
-      }
-      catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(57,3) << " to int";
 	throw FileParseException(errout.str()) ;
       }
     }
@@ -345,13 +336,11 @@ namespace RDKit{
     
 
     // save it for later
-    res->setProp("stereoCare",stereoCare);
-    res->setProp("totValence",totValence);
-    res->setProp("rxnComponentType",rxnComponentType);
-    res->setProp("rxnComponentNumber",rxnComponentNumber);
-    res->setProp("atomMapNumber",atomMapNumber);
-    res->setProp("inversionFlag",inversionFlag);
-    res->setProp("exactChangeFlag",exactChangeFlag);
+    res->setProp("molStereoCare",stereoCare);
+    res->setProp("molTotValence",totValence);
+    res->setProp("molAtomMapNumber",atomMapNumber);
+    res->setProp("molInversionFlag",inversionFlag);
+    res->setProp("molExactChangeFlag",exactChangeFlag);
 #endif    
     return res;
   };
@@ -442,19 +431,19 @@ namespace RDKit{
       } catch (boost::bad_lexical_cast) {
 	;
       }
-#if 0
+#if 1
     if( text.size() >= 18 )
       try {
-	topology = stripSpacesAndCast<int>(text.substr(15,3));
-	res->setProp("topology",topology);
+	int topology = stripSpacesAndCast<int>(text.substr(15,3));
+	res->setProp("molTopology",topology);
       } catch (boost::bad_lexical_cast) {
 	;
       }
     
     if( text.size() >= 21 )
       try {
-	reactStatus = stripSpacesAndCast<int>(text.substr(18,3));
-	res->setProp("reactStatus",reactStatus);
+	int reactStatus = stripSpacesAndCast<int>(text.substr(18,3));
+	res->setProp("molReactStatus",reactStatus);
       } catch (boost::bad_lexical_cast) {
 	;
       }
