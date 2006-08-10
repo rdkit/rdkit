@@ -61,7 +61,7 @@ static RWMol * curMol_gps = 0;
 %left SEMI_TOKEN
 %left OR_TOKEN
 %left AND_TOKEN
-%nonassoc NOT_TOKEN
+%right NOT_TOKEN
 
 %%
 
@@ -190,7 +190,7 @@ mol: atomd {
 | mol branch {
   RWMol *m1_p = molList_g[$$],*m2_p=molList_g[$2];
   // FIX: handle generic bonds here
-  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false);
+  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false,true);
   delete m2_p;
   int sz = molList_g.size();
   if ( sz==$2+1) {

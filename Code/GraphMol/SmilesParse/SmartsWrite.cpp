@@ -150,7 +150,10 @@ namespace RDKit {
 	needParen = true;
       }
       else if (descrip == "AtomInNRings") {
-	res << "R" << query->getVal();
+	res << "R";
+ 	if(query->getVal()>=0){
+	  res << query->getVal();
+	}
 	needParen = true;
       }
       else if (descrip == "AtomFormalCharge") {

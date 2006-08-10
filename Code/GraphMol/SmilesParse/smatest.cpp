@@ -133,6 +133,8 @@ std::vector< MatchVectType > _checkMatches(std::string smarts, std::string smile
 
   matcher = SmartsToMol(smarts);
   CHECK_INVARIANT(matcher,smarts);
+
+  //std::cerr << "\tSMA: " << smarts << " -> " << MolToSmarts(*matcher) << std::endl;;
   
   mol = SmilesToMol(smiles);
   CHECK_INVARIANT(mol,smiles);
@@ -240,17 +242,45 @@ void testMatches3(){
 
   _checkMatches("[CH3][CH]", "C(C)(C)CC(=O)[O-]", 2, 2);
 
-  _checkMatches("[!C;R]", "c1ccccc1", 6, 1);
-
-  _checkMatches("[!C;R]", "C1COC1", 1, 1);
-
   _checkMatches("[c;H]", "c1ccccc1", 6, 1);
   _checkNoMatches("[c;H]", "C1CCCCC1");
+
+  _checkMatches("[#6]([#7])[#6]", "c1ncccc1", 2, 3);
 
   _checkMatches("[c;H]", "c1c[c-]ccc1", 5, 1);
 
   _checkMatches("C~O", "C(=O)[O-]", 2, 2);
 
+
+  // -----
+  // This block is connected to SF-Issue 1538280
+  //   http://sourceforge.net/tracker/index.php?func=detail&aid=1538280&group_id=160139&atid=814650
+  _checkMatches("[R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[r]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[R;!O]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[c]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[R;c]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[c;#6]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[R;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[#6;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[c;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[!O;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[!C;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[!C;R]", "C1COC1", 1, 1);
+
+
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -793,7 +823,7 @@ int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
-#if LOCAL_TEST_ALL
+#if 1
   testPass();
   testFail();
   testMatches();
@@ -809,7 +839,8 @@ main(int argc, char *argv[])
   testIssue254();
   testIssue255();
   testIssue330();
-#endif
   testIssue351();
+#endif
+
   return 0;
 }

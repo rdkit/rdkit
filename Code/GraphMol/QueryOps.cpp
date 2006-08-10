@@ -509,7 +509,8 @@ ATOM_EQUALS_QUERY *makeAtomInRingQuery(){
 }
 
 ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what){
-  ATOM_EQUALS_QUERY *res= makeAtomSimpleQuery(what,queryIsAtomInNRings);
+  ATOM_EQUALS_QUERY *res;
+  res = makeAtomSimpleQuery(what,queryIsAtomInNRings);
   res->setDescription("AtomInNRings");
   return res;
 }
