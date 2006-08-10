@@ -53,11 +53,13 @@ def _exploder(mol,depth,sidechains,outF,core,chainIndices):
       if depth<len(sidechains)-1:
         _exploder(r,depth+1,sidechains,outF,core,tchain)
       else:
-        Chem.Kekulize(r)
+        Chem.SanitizeMol(r)
         if r.HasSubstructMatch(core):
           AlignDepict(r,core)
         else:
+          print >>sys.stderr,'>>> no match'
           AllChem.Compute2DCoords(r)
+        Chem.Kekulize(r)
         r.SetProp("_Name","TemplateEnum: Mol_%d"%(nDumped+1))
         mb = Chem.MolToMolBlock(r)
         outF.write(mb)
