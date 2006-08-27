@@ -1,4 +1,4 @@
-# $Id: FeatDirUtils.py 2 2006-05-06 22:54:39Z glandrum $
+# $Id$
 #
 # Copyright (C) 2004-2006 Rational Discovery LLC
 #
