@@ -383,8 +383,8 @@ def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5) :
         hvNbr = nbr
         break
       
-    pt1 = conf.GetAtomicPosition(hvNbr.GetIdx())
-    v1 = conf.GetAtomicPosition(heavyAt.getIdx())
+    pt1 = conf.GetAtomPosition(hvNbr.GetIdx())
+    v1 = conf.GetAtomPosition(heavyAt.GetIdx())
     pt1 -= v1
     v1 -= cpt
     rotAxis = v1.CrossProduct(pt1)
