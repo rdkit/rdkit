@@ -41,9 +41,10 @@ EndPoints
     fm = p.Parse()
     self.failUnless(fm.scoreMode==FeatMaps.FeatMapScoreMode.Best)
     self.failUnless(fm.dirScoreMode==FeatMaps.FeatDirScoreMode.DotFullRange)
-    self.failUnless(len(fm.getFeatures())==3)
+    self.failUnless(fm.GetNumFeatures()==3)
 
-    feats = fm.getFeatures()
+
+    feats = fm.GetFeatures()
     self.failUnless(feq(feats[0].weight,1.25))
     self.failUnless(feq(feats[1].weight,2.0))
     self.failUnless(feq(feats[2].weight,1.25))

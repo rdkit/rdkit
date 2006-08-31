@@ -73,7 +73,7 @@ class FeatMapParser(object):
         if keyword=='beginpoints':
           pts=self.ParseFeatPointBlock()
           for pt in pts:
-            featMap.addFeatPoint(pt)
+            featMap.AddFeatPoint(pt)
         elif keyword=='beginparams':
           featMap.params=self.ParseParamBlock()
         else:

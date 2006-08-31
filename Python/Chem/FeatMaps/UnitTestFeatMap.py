@@ -30,22 +30,25 @@ class TestCase(unittest.TestCase):
     fmps = {'Aromatic':aFmp,'Acceptor':bFmp}
 
     fmap = FeatMaps.FeatMap(params=fmps)
-    fmap.addFeature(fs[0],1.0)
-    fmap.addFeature(fs[1],1.0)
-    fmap.addFeature(fs[2],2.0)
-    fmap.addFeature(fs[2],2.0)
+    fmap.AddFeature(fs[0],1.0)
+    fmap.AddFeature(fs[1],1.0)
+    fmap.AddFeature(fs[2],2.0)
+    fmap.AddFeature(fs[2],2.0)
 
-    self.failUnless(len(fmap.getFeatures())==4)
-    fmap.dropFeature(3)
-    self.failUnless(len(fmap.getFeatures())==3)
+    self.failUnless(fmap.GetNumFeatures()==4)
+    self.failUnless(len(fmap.GetFeatures())==4)
+    fmap.DropFeature(3)
+    self.failUnless(fmap.GetNumFeatures()==3)
+    self.failUnless(len(fmap.GetFeatures())==3)
 
-    f = fmap.getFeature(0)
+
+    f = fmap.GetFeature(0)
     self.failUnless(f.GetFamily()=='Aromatic')
     self.failUnless(feq(f.weight,1.0))
-    f = fmap.getFeature(1)
+    f = fmap.GetFeature(1)
     self.failUnless(f.GetFamily()=='Acceptor')
     self.failUnless(feq(f.weight,1.0))
-    f = fmap.getFeature(2)
+    f = fmap.GetFeature(2)
     self.failUnless(f.GetFamily()=='Acceptor')
     self.failUnless(feq(f.weight,2.0))
     
@@ -56,25 +59,25 @@ class TestCase(unittest.TestCase):
     fmap = FeatMaps.FeatMap(params=fmps)
 
     fs = [FreeChemicalFeature('Aromatic','Foo',Point3D(0,0,0))]
-    fmap.addFeature(fs[0],1.0)
-    self.failUnless(len(fmap.getFeatures())==1)
+    fmap.AddFeature(fs[0],1.0)
+    self.failUnless(len(fmap.GetFeatures())==1)
 
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(1,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(1,0,0)))
     self.failUnless(feq(sc,math.exp(-1)))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(1.5,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(1.5,0,0)))
     self.failUnless(feq(sc,math.exp(-2.25)))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(0,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(0,0,0)))
     self.failUnless(feq(sc,1.0))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(2.1,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(2.1,0,0)))
     self.failUnless(feq(sc,0))
     
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Acceptor','',Point3D(1,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Acceptor','',Point3D(1,0,0)))
     self.failUnless(feq(sc,0))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Acceptor','',Point3D(1,0,0)),
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Acceptor','',Point3D(1,0,0)),
                                typeMatch=False)
     self.failUnless(feq(sc,math.exp(-1)))
 
-    self.failUnlessRaises(IndexError,lambda: fmap.getFeatFeatScore(1,FreeChemicalFeature('Aromatic','',Point3D(0,0,0))))
+    self.failUnlessRaises(IndexError,lambda: fmap.GetFeatFeatScore(fmap.GetFeature(1),FreeChemicalFeature('Aromatic','',Point3D(0,0,0))))
 
   def test3FeatFeatScoreTriangle(self):
     aFmp = FeatMaps.FeatMapParams()
@@ -85,17 +88,17 @@ class TestCase(unittest.TestCase):
     fmap = FeatMaps.FeatMap(params=fmps)
 
     fs = [FreeChemicalFeature('Aromatic','Foo',Point3D(0,0,0))]
-    fmap.addFeature(fs[0],1.0)
-    self.failUnless(len(fmap.getFeatures())==1)
+    fmap.AddFeature(fs[0],1.0)
+    self.failUnless(len(fmap.GetFeatures())==1)
 
 
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(1,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(1,0,0)))
     self.failUnless(feq(sc,0.5))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(1.5,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(1.5,0,0)))
     self.failUnless(feq(sc,0.25))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(0,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(0,0,0)))
     self.failUnless(feq(sc,1.0))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(2.1,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(2.1,0,0)))
     self.failUnless(feq(sc,0))
 
   def test4FeatFeatScoreBox(self):
@@ -106,16 +109,16 @@ class TestCase(unittest.TestCase):
     fmap = FeatMaps.FeatMap(params=fmps)
 
     fs = [FreeChemicalFeature('Aromatic','Foo',Point3D(0,0,0))]
-    fmap.addFeature(fs[0],1.1)
-    self.failUnless(len(fmap.getFeatures())==1)
+    fmap.AddFeature(fs[0],1.1)
+    self.failUnless(len(fmap.GetFeatures())==1)
 
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(1,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(1,0,0)))
     self.failUnless(feq(sc,1.1))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(1.5,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(1.5,0,0)))
     self.failUnless(feq(sc,1.1))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(0,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(0,0,0)))
     self.failUnless(feq(sc,1.1))
-    sc = fmap.getFeatFeatScore(0,FreeChemicalFeature('Aromatic','',Point3D(2.1,0,0)))
+    sc = fmap.GetFeatFeatScore(fmap.GetFeature(0),FreeChemicalFeature('Aromatic','',Point3D(2.1,0,0)))
     self.failUnless(feq(sc,0))
 
   def test5ScoreFeats(self):
@@ -127,9 +130,9 @@ class TestCase(unittest.TestCase):
     fs = [FreeChemicalFeature('Aromatic','Foo',Point3D(0,0,0)),
           FreeChemicalFeature('Acceptor','Foo',Point3D(2,0,0)),
           FreeChemicalFeature('Acceptor','Foo',Point3D(2.1,0,0))]
-    fmap.addFeature(fs[0],1.1)
-    fmap.addFeature(fs[1],1.1)
-    fmap.addFeature(fs[2],2.1)
+    fmap.AddFeature(fs[0],1.1)
+    fmap.AddFeature(fs[1],1.1)
+    fmap.AddFeature(fs[2],2.1)
 
     l1 = fmap._loopOverMatchingFeats(FreeChemicalFeature('Aromatic','',Point3D(0,0,0)))
     l1 = list(l1)
@@ -163,22 +166,22 @@ class TestCase(unittest.TestCase):
     fs = [FreeChemicalFeature('Aromatic','Foo',Point3D(0,0,0)),
           FreeChemicalFeature('Acceptor','Foo',Point3D(2,0,0)),
           FreeChemicalFeature('Acceptor','Foo',Point3D(2.1,0,0))]
-    fmap.addFeature(fs[0],1.1)
-    fmap.addFeature(fs[1],1.1)
-    fmap.addFeature(fs[2],2.1)
+    fmap.AddFeature(fs[0],1.1)
+    fmap.AddFeature(fs[1],1.1)
+    fmap.AddFeature(fs[2],2.1)
 
 
     fs = [FreeChemicalFeature('Aromatic','',Point3D(0,1,0)),
           FreeChemicalFeature('Acceptor','',Point3D(1.5,0,0)),
           ]
 
-    sc = fmap.scoreFeats(fs)
+    sc = fmap.ScoreFeats(fs)
     self.failUnless(feq(sc,4.3))
 
     msv = [-1]*3
     fsv = [-1]*2
     fsfmi = [None]*2
-    sc = fmap.scoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
+    sc = fmap.ScoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
                          featsToFeatMapIdx=fsfmi)
     self.failUnless(feq(sc,4.3))
     self.failUnless(feq(sum(msv),sc))
@@ -187,7 +190,7 @@ class TestCase(unittest.TestCase):
 
 
     # make sure we reset the vectors internally:
-    sc = fmap.scoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
+    sc = fmap.ScoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
                          featsToFeatMapIdx=fsfmi)
     self.failUnless(feq(sc,4.3))
     self.failUnless(feq(sum(msv),sc))
@@ -195,15 +198,15 @@ class TestCase(unittest.TestCase):
     self.failUnless(fsfmi==[[0],[1,2]])
 
     fmap.scoreMode=FeatMaps.FeatMapScoreMode.Closest
-    sc = fmap.scoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
+    sc = fmap.ScoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
                          featsToFeatMapIdx=fsfmi)
-    self.failUnless(feq(sc,2.2))
+    self.failUnless(feq(sc,2.1))
     self.failUnless(feq(sum(msv),sc))
     self.failUnless(feq(sum(fsv),sc))
     self.failUnless(fsfmi==[[0],[1]])
 
     fmap.scoreMode=FeatMaps.FeatMapScoreMode.Best
-    sc = fmap.scoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
+    sc = fmap.ScoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
                          featsToFeatMapIdx=fsfmi)
     self.failUnless(feq(sc,3.2))
     self.failUnless(feq(sum(msv),sc))
@@ -224,18 +227,18 @@ class TestCase(unittest.TestCase):
 
     fs = [FreeChemicalFeature('Aromatic','Foo',Point3D(0,0,0)),
           ]
-    fmap.addFeature(fs[0],1.1)
+    fmap.AddFeature(fs[0],1.1)
 
 
     fs = [FreeChemicalFeature('Aromatic','',Point3D(0,1,0)),
           FreeChemicalFeature('Acceptor','',Point3D(1.5,0,0)),
           ]
 
-    sc = fmap.scoreFeats(fs)
+    sc = fmap.ScoreFeats(fs)
     msv = [-1]*1
     fsv = [-1]*2
     fsfmi = [-1]*2
-    sc = fmap.scoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
+    sc = fmap.ScoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
                          featsToFeatMapIdx=fsfmi)
     self.failUnless(feq(sc,1.1))
     self.failUnless(feq(sum(msv),sc))
@@ -243,7 +246,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(fsfmi==[[0],[]])
 
     fmap.scoreMode=FeatMaps.FeatMapScoreMode.Closest
-    sc = fmap.scoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
+    sc = fmap.ScoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
                          featsToFeatMapIdx=fsfmi)
     self.failUnless(feq(sc,1.1))
     self.failUnless(feq(sum(msv),sc))
@@ -251,7 +254,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(fsfmi==[[0],[]])
 
     fmap.scoreMode=FeatMaps.FeatMapScoreMode.Best
-    sc = fmap.scoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
+    sc = fmap.ScoreFeats(fs,mapScoreVect=msv,featsScoreVect=fsv,
                          featsToFeatMapIdx=fsfmi)
     self.failUnless(feq(sc,1.1))
     self.failUnless(feq(sum(msv),sc))
@@ -270,30 +273,30 @@ class TestCase(unittest.TestCase):
     fs = [FreeChemicalFeature('Acceptor','Foo',Point3D(0,0,0)),
           ]
     fs[0].featDirs=[Point3D(0,1,0)]
-    fmap.addFeature(fs[0],1.1)
+    fmap.AddFeature(fs[0],1.1)
 
     fs = [FreeChemicalFeature('Acceptor','',Point3D(1.0,0,0)),
           ]
     fs[0].featDirs=[Point3D(0,1,0)]
 
-    sc = fmap.scoreFeats(fs)
+    sc = fmap.ScoreFeats(fs)
     self.failUnless(feq(sc,1.1))
 
     fs[0].featDirs=[Point3D(0,-1,0)]
-    sc = fmap.scoreFeats(fs)
+    sc = fmap.ScoreFeats(fs)
     self.failUnless(feq(sc,-1.1))
 
     fs[0].featDirs=[Point3D(0,0,1)]
-    sc = fmap.scoreFeats(fs)
+    sc = fmap.ScoreFeats(fs)
     self.failUnless(feq(sc,0.0))
 
     fmap.dirScoreMode = FeatMaps.FeatDirScoreMode.DotPosRange
     fs[0].featDirs=[Point3D(0,-1,0)]
-    sc = fmap.scoreFeats(fs)
+    sc = fmap.ScoreFeats(fs)
     self.failUnless(feq(sc,0))
 
     fs[0].featDirs=[Point3D(0,1,0)]
-    sc = fmap.scoreFeats(fs)
+    sc = fmap.ScoreFeats(fs)
     self.failUnless(feq(sc,1.1))
 
 

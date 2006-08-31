@@ -3,6 +3,7 @@ tests=[
   ("python","FeatMapPoint.py",{}),
   ("python","UnitTestFeatMap.py",{}),
   ("python","UnitTestFeatMapParser.py",{}),
+  ("python","UnitTestFeatMapUtils.py",{}),
   ]
 
 

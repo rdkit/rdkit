@@ -77,9 +77,9 @@ class FeatMap(object):
       if len(feats)!=len(weights):
         raise ValueError,'feats and weights lists must be the same length'
       for feat,weight in zip(feats,weights):
-        self.addFeature(feat,weight)
+        self.AddFeature(feat,weight)
 
-  def addFeature(self,feat,weight=None):
+  def AddFeature(self,feat,weight=None):
     if self.params and not self.params.has_key(feat.GetFamily()):
       raise ValueError,'feature family %s not found in params'%feat.GetFamily()
 
@@ -87,9 +87,9 @@ class FeatMap(object):
     newFeat.initFromFeat(feat)
     newFeat.weight = weight
 
-    self.addFeatPoint(newFeat)
+    self.AddFeatPoint(newFeat)
     
-  def addFeatPoint(self,featPt):
+  def AddFeatPoint(self,featPt):
     if not isinstance(featPt,FeatMapPoint):
       raise ValueError,'addFeatPoint() must be called with a FeatMapPoint instance'
     if self.params and not self.params.has_key(featPt.GetFamily()):
@@ -97,13 +97,16 @@ class FeatMap(object):
     self._feats.append(featPt)
 
     
-  def getFeatures(self):
+  def GetFeatures(self):
     return self._feats
 
-  def getFeature(self, i):
+  def GetNumFeatures(self):
+    return len(self._feats)
+
+  def GetFeature(self, i):
     return self._feats[i]
 
-  def dropFeature(self,i):
+  def DropFeature(self,i):
     del self._feats[i]
 
   def _loopOverMatchingFeats(self,oFeat):
@@ -111,13 +114,12 @@ class FeatMap(object):
       if sFeat.GetFamily()==oFeat.GetFamily():
         yield sIdx,sFeat
 
-  def getFeatFeatScore(self,feat1Idx,feat2,typeMatch=True):
-    """ feat1 is an index into our feats
+  def GetFeatFeatScore(self,feat1,feat2,typeMatch=True):
+    """ feat1 is one of our feats
         feat2 is any Feature
 
 
     """
-    feat1 = self._feats[feat1Idx]
     if typeMatch and feat1.GetFamily()!=feat2.GetFamily():
       return 0.0
     d2 = feat1.GetDist2(feat2)
@@ -148,7 +150,7 @@ class FeatMap(object):
       
     return score
     
-  def scoreFeats(self,featsToScore,mapScoreVect=[],featsScoreVect=[],
+  def ScoreFeats(self,featsToScore,mapScoreVect=[],featsScoreVect=[],
                  featsToFeatMapIdx=[]):
     nFeats = len(self._feats)
     if mapScoreVect and len(mapScoreVect)!=nFeats:
@@ -190,7 +192,7 @@ class FeatMap(object):
             featsScoreVect[oIdx]=d
             featsToFeatMapIdx[oIdx][0]=sIdx
         else:
-          lScore = self.getFeatFeatScore(sIdx,oFeat,typeMatch=False)
+          lScore = self.GetFeatFeatScore(sFeat,oFeat,typeMatch=False)
           if self.scoreMode == FeatMapScoreMode.Best:
             if lScore>featsScoreVect[oIdx]:
               featsScoreVect[oIdx]=lScore
@@ -207,7 +209,7 @@ class FeatMap(object):
       for oIdx,oFeat in enumerate(featsToScore):
         sIdx = featsToFeatMapIdx[oIdx][0]
         if sIdx>-1:
-          lScore = self.getFeatFeatScore(sIdx,oFeat,typeMatch=False)
+          lScore = self.GetFeatFeatScore(sFeat,oFeat,typeMatch=False)
           featsScoreVect[oIdx] = lScore
           mapScoreVect[sIdx] = lScore
           totScore += lScore
