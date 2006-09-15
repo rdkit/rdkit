@@ -133,6 +133,8 @@ std::vector< MatchVectType > _checkMatches(std::string smarts, std::string smile
 
   matcher = SmartsToMol(smarts);
   CHECK_INVARIANT(matcher,smarts);
+
+  //std::cerr << "\tSMA: " << smarts << " -> " << MolToSmarts(*matcher) << std::endl;;
   
   mol = SmilesToMol(smiles);
   CHECK_INVARIANT(mol,smiles);
@@ -240,17 +242,45 @@ void testMatches3(){
 
   _checkMatches("[CH3][CH]", "C(C)(C)CC(=O)[O-]", 2, 2);
 
-  _checkMatches("[!C;R]", "c1ccccc1", 6, 1);
-
-  _checkMatches("[!C;R]", "C1COC1", 1, 1);
-
   _checkMatches("[c;H]", "c1ccccc1", 6, 1);
   _checkNoMatches("[c;H]", "C1CCCCC1");
+
+  _checkMatches("[#6]([#7])[#6]", "c1ncccc1", 2, 3);
 
   _checkMatches("[c;H]", "c1c[c-]ccc1", 5, 1);
 
   _checkMatches("C~O", "C(=O)[O-]", 2, 2);
 
+
+  // -----
+  // This block is connected to SF-Issue 1538280
+  //   http://sourceforge.net/tracker/index.php?func=detail&aid=1538280&group_id=160139&atid=814650
+  _checkMatches("[R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[r]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[R;!O]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[c]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[R;c]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[c;#6]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[R;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[#6;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[c;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[!O;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[!C;R]", "c1ccccc1", 6, 1);
+
+  _checkMatches("[!C;R]", "C1COC1", 1, 1);
+
+
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -613,77 +643,6 @@ void testSmartsWrite() {
 }
 
 
-void testDeleteSubstruct() 
-{
-  int i = 0;
-  ROMol *mol1=0,*mol2=0,*matcher1=0,*matcher2=0,*matcher3=0;
-  std::string smi,sma;
-  
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing deleteSubstruct" << std::endl;
-
-  // a lot of the seemingly repetitive stuff is here for Issue96
-  smi = "CCC(=O).C=O";
-  mol1 = SmilesToMol(smi);
-  TEST_ASSERT(mol1);
-  sma = "C=O";
-  matcher1 = SmartsToMol(sma);
-  TEST_ASSERT(matcher1);
-  
-  mol2 = deleteSubstructs(*mol1,*matcher1,0);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms(4))
-  mol2 = deleteSubstructs(*mol2,*matcher1,0);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms(4))
-  
-  delete matcher1;
-  sma = "[Cl;H1&X1,-]";
-  matcher1 = SmartsToMol(sma);
-  sma = "[Na+]";
-  matcher2 = SmartsToMol(sma);
-  sma = "[O;H2,H1&-,X0&-2]";
-  matcher3 = SmartsToMol(sma);
-  delete mol1;
-  mol1 = SmilesToMol("CCO.Cl");
-  TEST_ASSERT(mol1);
-  TEST_ASSERT(mol1->getNumAtoms()==4);
-
-  delete mol2;
-  mol2 = deleteSubstructs(*mol1,*matcher1,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==3);
-  mol2 = deleteSubstructs(*mol2,*matcher2,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==3);
-  mol2 = deleteSubstructs(*mol2,*matcher3,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==3);
-
-  delete mol1;
-  mol1 = SmilesToMol("CC(=O)[O-].[Na+]");
-  TEST_ASSERT(mol1);
-  TEST_ASSERT(mol1->getNumAtoms()==5);
-
-  delete matcher1;
-  matcher1 = SmartsToMol("[Cl;H1&X1,-]");
-  delete matcher2;
-  matcher2 = SmartsToMol("[Na+]");
-
-  mol2 = deleteSubstructs(*mol1,*matcher1,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==5);
-
-  mol2 = deleteSubstructs(*mol2,*matcher2,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==4);
-
-  mol2 = deleteSubstructs(*mol2,*matcher1,true);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==4);
-
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
 
 void testIssue196() 
 {
@@ -864,7 +823,7 @@ int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
-#if LOCAL_TEST_ALL
+#if 1
   testPass();
   testFail();
   testMatches();
@@ -876,12 +835,12 @@ main(int argc, char *argv[])
   testSmartsWrite();
   testFrags();
   testProblems();
-  testDeleteSubstruct();
   testIssue196();
   testIssue254();
   testIssue255();
   testIssue330();
-#endif
   testIssue351();
+#endif
+
   return 0;
 }

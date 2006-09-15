@@ -79,7 +79,53 @@ namespace RDKit{
   //! returns a Query for matching any atom
   ATOM_NULL_QUERY *makeAtomNullQuery();
 
+  static int queryAtomRingMembership(Atom const *at) {
+    return static_cast<int>(at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx()));
+  }
 
+  // I'm pretty sure that this typedef shouldn't be necessary,
+  // but VC++ generates a warning about const Atom const * in
+  // the definition of Match, then complains about an override
+  // that differs only by const/volatile (c4301), then generates
+  // incorrect code if we don't do this... so let's do it.
+  typedef Atom const *ConstAtomPtr;
+  class InRingQuery : public Queries::EqualityQuery<int, ConstAtomPtr,true> {
+  public:
+    InRingQuery() : Queries::EqualityQuery<int,ConstAtomPtr,true>(-1) {
+      this->setDescription("AtomInNRings");
+      this->setDataFunc(queryAtomRingMembership);
+    };
+    explicit InRingQuery(int v) : Queries::EqualityQuery<int,ConstAtomPtr,true>(v) {
+      this->setDescription("AtomInNRings");
+      this->setDataFunc(queryAtomRingMembership);
+    };
+
+    virtual bool Match(const ConstAtomPtr what) const {
+      int v = this->TypeConvert(what,Queries::Int2Type<true>());
+      bool res;
+      if(this->d_val<0){
+	res = v!=0;
+      } else {
+	res=!Queries::queryCmp(v,this->d_val,this->d_tol);
+      }
+      if(this->getNegation()){
+	res=!res;
+      }
+      return res;
+    }
+
+    //! returns a copy of this query
+    Queries::Query<int,ConstAtomPtr,true> *
+    copy() const {
+      InRingQuery *res =
+	new InRingQuery(this->d_val);
+      res->setNegation(getNegation());
+      res->setTol(this->getTol());
+      res->d_description = this->d_description;
+      return res;
+    }
+  };
+  
   //! allows use of recursive structure queries (e.g. recursive SMARTS)
   class RecursiveStructureQuery : public Queries::SetQuery<int,Atom const *,true> {
   public:

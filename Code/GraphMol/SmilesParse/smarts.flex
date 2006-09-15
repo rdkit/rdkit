@@ -160,14 +160,12 @@ using namespace RDKit;
 }
 <IN_ATOM_STATE>R {
 	yysmarts_lval.atom = new QueryAtom();
-	// FIX: this doesn't default properly
-	yysmarts_lval.atom->setQuery(makeAtomInNRingsQuery(1));
+	yysmarts_lval.atom->setQuery(new InRingQuery(-1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 <IN_ATOM_STATE>r {
 	yysmarts_lval.atom = new QueryAtom();
-	// FIX: this doesn't default properly
-	yysmarts_lval.atom->setQuery(makeAtomInRingOfSizeQuery(3));
+	yysmarts_lval.atom->setQuery(makeAtomInRingQuery());
 	return RINGSIZE_ATOM_QUERY_TOKEN;
 }
 

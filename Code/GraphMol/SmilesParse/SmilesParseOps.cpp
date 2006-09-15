@@ -5,6 +5,7 @@
 //   @@ All Rights Reserved  @@
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/RDKitQueries.h>
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <list>
@@ -28,7 +29,7 @@ namespace SmilesParseOps{
   //  between the fragment and the molecule
   //
   void AddFragToMol(RWMol *mol,RWMol *frag,Bond::BondType bondOrder,
-		    Bond::BondDir bondDir,bool closeRings ){
+		    Bond::BondDir bondDir,bool closeRings,bool doingQuery ){
     RWMol::GRAPH_NODE_TYPE lastAt = mol->getActiveAtom();
     int nOrigAtoms = mol->getNumAtoms();
     int nOrigBonds = mol->getNumBonds();
@@ -84,28 +85,56 @@ namespace SmilesParseOps{
 	leadingBond->setEndAtomIdx(atomIdx1);
 	mol->addBond(leadingBond,true);
       } else {
-	if(bondOrder == Bond::UNSPECIFIED){
-	  // no bond order provided, figure it out ourselves
-	  if(lastAt->getIsAromatic() && firstAt->getIsAromatic() ){
-	    bo = Bond::AROMATIC;
+	if(!doingQuery){
+	  if(bondOrder == Bond::UNSPECIFIED){
+	    // no bond order provided, figure it out ourselves
+	    if(lastAt->getIsAromatic() && firstAt->getIsAromatic() ){
+	      bo = Bond::AROMATIC;
+	    }
+	    else{
+	      bo = Bond::SINGLE;
+	    }
 	  }
 	  else{
-	    bo = Bond::SINGLE;
+	    bo = bondOrder;
+	  }
+	  if(bo==Bond::DATIVEL){
+	    int tmp=atomIdx2;
+	    atomIdx2 = atomIdx1;
+	    atomIdx1 = tmp;
+	    bo = Bond::DATIVE;
+	  } else if(bo == Bond::DATIVER){
+	    bo = Bond::DATIVE;
+	  }
+	  int idx = mol->addBond(atomIdx2,atomIdx1,bo)-1;
+	  mol->getBondWithIdx(idx)->setBondDir(bondDir);
+	} else {
+	  // semantics are different in SMARTS, unspecified bonds can be single or aromatic:
+	  if(bondOrder == Bond::UNSPECIFIED){
+	    QueryBond *newB=new QueryBond(Bond::SINGLE);
+	    newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
+			      Queries::COMPOSITE_OR,
+			      true);
+	    newB->setOwningMol(mol);
+	    newB->setBeginAtomIdx(atomIdx1);
+	    newB->setEndAtomIdx(atomIdx2);
+	    mol->addBond(newB);
+	    delete newB;
+	  }
+	  else{
+	    bo=bondOrder;
+	    if(bo==Bond::DATIVEL){
+	      int tmp=atomIdx2;
+	      atomIdx2 = atomIdx1;
+	      atomIdx1 = tmp;
+	      bo = Bond::DATIVE;
+	    } else if(bo == Bond::DATIVER){
+	      bo = Bond::DATIVE;
+	    }
+	    int idx = mol->addBond(atomIdx2,atomIdx1,bo)-1;
+	    mol->getBondWithIdx(idx)->setBondDir(bondDir);
 	  }
 	}
-	else{
-	  bo = bondOrder;
-	}
-	if(bo==Bond::DATIVEL){
-	  int tmp=atomIdx2;
-	  atomIdx2 = atomIdx1;
-	  atomIdx1 = tmp;
-	  bo = Bond::DATIVE;
-	} else if(bo == Bond::DATIVER){
-	  bo = Bond::DATIVE;
-	}
-	int idx = mol->addBond(atomIdx2,atomIdx1,bo)-1;
-	mol->getBondWithIdx(idx)->setBondDir(bondDir);
       }
     }
 

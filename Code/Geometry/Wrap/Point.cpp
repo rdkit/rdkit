@@ -82,6 +82,8 @@ namespace RDGeom {
         .def(python::self -= python::self)
         .def(python::self + python::self)
         .def(python::self += python::self)
+        .def(python::self * double())
+        .def(python::self / double())
         .def("__imul__", &Point3D::operator*=,
              python::return_value_policy<python::copy_non_const_reference>(),
              "Scalar multiplication")
@@ -120,6 +122,8 @@ namespace RDGeom {
         .def(python::self -= python::self)
         .def(python::self + python::self)
         .def(python::self += python::self)
+        .def(python::self * double())
+        .def(python::self / double())
         .def("__imul__", &Point2D::operator*=,
              python::return_value_policy<python::copy_non_const_reference>(),
              "Scalar multiplication")

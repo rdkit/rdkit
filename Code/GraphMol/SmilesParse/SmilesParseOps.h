@@ -16,7 +16,7 @@ namespace SmilesParseOps {
   void AddFragToMol(RDKit::RWMol *mol,RDKit::RWMol *frag,
 		    RDKit::Bond::BondType bondOrder=RDKit::Bond::UNSPECIFIED,
 		    RDKit::Bond::BondDir bondDir=RDKit::Bond::NONE,
-		    bool closeRings=false);
+		    bool closeRings=false,bool doingQuery=false);
   RDKit::Bond::BondType GetUnspecifiedBondType(const RDKit::RWMol *mol,
 					       const RDKit::Atom *atom1,
 					       const RDKit::Atom *atom2);
