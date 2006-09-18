@@ -150,6 +150,7 @@ namespace RDKit {
     std::string tempStr = getLine(dp_inStream);
     // FIX: report files missing the $$$$ marker
     while(!(dp_inStream->eof()) && tempStr.find("$$$$") != 0){
+      tempStr = strip(tempStr);
       if(tempStr!=""){
         if (tempStr[0] == '>') { // data header line: start of a data item
             // ignore all other crap and seek for for a data label enclosed
@@ -242,10 +243,6 @@ namespace RDKit {
         d_line++;
         tempStr = getLine(dp_inStream);
       }
-      // be sure to check to see if we hit EOF so that future
-      // calls into this supplier don't die.
-      this->checkForEnd();
-      throw fe;
     }
     catch (MolSanitizeException &se) {
       // We couldn't sanitize a molecule we got - write out an error message and move to
@@ -258,7 +255,7 @@ namespace RDKit {
       }
     } catch (...) {
       BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line << std::endl;
-      BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next moelcule\n";
+      BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
     }
     d_last++;
     unsigned int posHold=dp_inStream->tellg();

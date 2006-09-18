@@ -16,8 +16,12 @@ namespace RDKit {
 
   Conformer::Conformer(unsigned int numAtoms) {
     dp_mol = 0;
-    d_positions.resize(numAtoms, RDGeom::Point3D(0.0, 0.0, 0.0));
-    
+    if(numAtoms){
+      d_positions.resize(numAtoms, RDGeom::Point3D(0.0, 0.0, 0.0));
+    } else {
+      d_positions.resize(0);
+      d_positions.clear();
+    }
   }
 
   Conformer::Conformer(const Conformer &conf) {

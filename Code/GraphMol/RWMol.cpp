@@ -199,6 +199,7 @@ namespace RDKit{
 
   unsigned int RWMol::addBond(Atom *atom1,Atom *atom2,
 			      Bond::BondType bondType){
+    PRECONDITION(atom1&&atom2,"NULL atom passed in");
     return addBond(atom1->getIdx(),atom2->getIdx(),bondType);
   }
 

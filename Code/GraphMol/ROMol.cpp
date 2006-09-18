@@ -353,6 +353,7 @@ ROMol::BOND_ITER_PAIR ROMol::getEdges() const {return boost::edges(d_graph);}
 
 
 unsigned int ROMol::addAtom(Atom *atom_pin,bool updateLabel,bool takeOwnership){
+  PRECONDITION(atom_pin,"null atom passed in");
   Atom *atom_p;
   if(!takeOwnership) atom_p = atom_pin->copy();
   else atom_p = atom_pin;
@@ -377,6 +378,7 @@ unsigned int ROMol::addAtom(Atom::ATOM_SPTR atom_sp,bool updateLabel)
   return addAtom(atom_sp.get(),updateLabel,false);
 }
 unsigned int ROMol::addBond(Bond *bond_pin,bool takeOwnership){
+  PRECONDITION(bond_pin,"null bond passed in");
   RANGE_CHECK(0,bond_pin->getBeginAtomIdx(),getNumAtoms()-1);
   RANGE_CHECK(0,bond_pin->getEndAtomIdx(),getNumAtoms()-1);
   Bond *bond_p;

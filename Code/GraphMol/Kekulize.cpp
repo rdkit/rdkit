@@ -409,7 +409,7 @@ namespace RDKit {
     
       for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
 	// by now the bondtype should have already changed from aromatic
-	if ((*bi)->getBondType() == Bond::AROMATIC) {
+	if (markAtomsBonds && (*bi)->getBondType() == Bond::AROMATIC) {
 	  std::ostringstream errout;
 	  errout << "Kekulization somehow did not convert bond " << (*bi)->getIdx();
 	  std::string msg = errout.str();

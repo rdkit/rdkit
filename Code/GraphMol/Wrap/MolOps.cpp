@@ -229,7 +229,7 @@ namespace RDKit{
       See below for examples.\n\
       Default value is 0 (remove the atoms whether or not the entire fragment matches)\n\
 \n\
-  RETURNS: a new molecule with the Hs removed\n\
+  RETURNS: a new molecule with the substructure removed\n\
 \n\
   NOTES:\n\
 \n\
@@ -254,6 +254,39 @@ namespace RDKit{
 		  docString.c_str(),
 		  python::return_value_policy<python::manage_new_object>());
 
+      // ------------------------------------------------------------------------
+      docString="Replaces atoms matching a substructure query in a molecule\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to be modified\n\
+\n\
+    - query: the molecule to be used as a substructure query\n\
+\n\
+    - replacement: the molecule to be used as the replacement\n\
+\n\
+    - replaceAll: (optional) if this toggle is set, all substructures matching\n\
+      the query will be replaced in a single result, otherwise each result will\n\
+      contain a separate replacement.\n\
+      Default value is False (return multiple replacements)\n\
+\n\
+  RETURNS: a tuple of new molecules with the substructures replaced removed\n\
+\n\
+  NOTES:\n\
+\n\
+    - The original molecule is *not* modified.\n\
+\n\
+  EXAMPLES:\n\
+\n\
+   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
+   to actually use molecules:\n\
+\n\
+    - ReplaceSubstructs('CCOC','OC','NC') -> ('CCNC',)\n\
+\n\
+    - ReplaceSubstructs('COCCOC','OC','NC') -> ('COCCNC','CNCCOC')\n\
+\n\
+    - ReplaceSubstructs('COCCOC','OC','NC',True) -> ('CNCCNC',)\n\
+\n";
       python::def("ReplaceSubstructs", replaceSubstructures,
                   (python::arg("mol"),python::arg("query"),
 		   python::arg("replacement"),

@@ -785,7 +785,7 @@ void test11()
   TEST_ASSERT(!(m->getAtomWithIdx(1)->hasProp("_CIPCode")));
 
   delete m;
-  smi = "F[C@]1C(Cl)CC1";
+  smi = "F[C@H]1C(Cl)CC1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   MolOps::assignAtomChiralCodes(*m,true);
