@@ -145,6 +145,8 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
 }
 
 unsigned int Atom::getNumImplicitHs() const {
+  if(df_noImplicit) return 0;
+  
   PRECONDITION(d_implicitValence>-1,
 	       "getNumImplicitHs() called without preceding call to calcImplicitValence()");
   return getImplicitValence();
@@ -222,6 +224,7 @@ int Atom::calcExplicitValence(bool strict) {
 
 int Atom::getImplicitValence(bool forceCalc) const {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
+  if(df_noImplicit) return 0;
   return d_implicitValence;
 }
 
@@ -229,6 +232,7 @@ int Atom::getImplicitValence(bool forceCalc) const {
 // before calling this... updatePropertyCache() takes care of that.
 int Atom::calcImplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
+  if(df_noImplicit) return 0;
   if(d_explicitValence==-1) this->calcExplicitValence();
   // this is basically the difference between the allowed valence of
   // the atom and the explicit valence already specified - tells how
@@ -381,7 +385,7 @@ bool Atom::Match(Atom const *what) const {
       if(what->hasProp("dummyLabel")) what->getProp("dummyLabel",l2);
       else l2="X";
       if(l2!="X" && l1!=l2){
-	res = false;
+        res = false;
       }
     }
   }

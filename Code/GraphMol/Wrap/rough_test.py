@@ -953,7 +953,7 @@ mol-4,CCOC
     assert m1.GetAtomWithIdx(0).GetNumExplicitHs()==0
     m1 = Chem.MolFromSmiles('[H][CH2]Cl')
     assert m1.GetNumAtoms()==2
-    assert m1.GetAtomWithIdx(0).GetNumExplicitHs()==2
+    assert m1.GetAtomWithIdx(0).GetNumExplicitHs()==3
     m2 = Chem.AddHs(m1)
     assert m2.GetNumAtoms()==5
     m2 = Chem.RemoveHs(m2)

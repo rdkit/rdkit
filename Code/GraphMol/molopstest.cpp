@@ -1795,6 +1795,34 @@ void testIssue276() {
   BOOST_LOG(rdInfoLog) << "Finished \n ";
 }
 
+void testHsAndAromaticity() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Additional Aromaticity Cases" << std::endl;
+  std::string smi;
+  ROMol *mol;
+
+  smi = "[CH]1-[CH]-[CH]-[CH]-[CH]-[CH]-1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  //std::cerr << mol->getAtomWithIdx(0)->getHybridization() << std::endl;
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization()==Atom::SP2);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getImplicitValence()==0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
+  TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!mol->getBondBetweenAtoms(0,1)->getIsAromatic());
+
+  smi = "C1=CC(=C)C(=C)C=C1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization()==Atom::SP2);
+  TEST_ASSERT(mol->getAtomWithIdx(2)->getHybridization()==Atom::SP2);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(mol->getBondBetweenAtoms(0,1)->getIsAromatic());
+
+  delete mol;
+
+  BOOST_LOG(rdInfoLog) << "Finished \n ";
+}
+
 int main(){
   RDLog::InitLogs();
 #if 1
@@ -1824,6 +1852,7 @@ int main(){
   testIssue252();
   testIssue276();
 #endif
+  testHsAndAromaticity();
   
   return 0;
 }

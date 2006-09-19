@@ -29,7 +29,7 @@ namespace RingUtils {
   using namespace RDKit;
 
   void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
-		      boost::dynamic_bitset<> &done) {
+                      boost::dynamic_bitset<> &done) {
     INT_INT_VECT_MAP::const_iterator pos= neighMap.find(curr);
     PRECONDITION(pos!=neighMap.end(),"bad argument");
     const INT_VECT &neighs = pos->second;
@@ -38,7 +38,7 @@ namespace RingUtils {
     res.push_back(curr);
     for (ni = neighs.begin(); ni != neighs.end(); ni++) {
       if (!done[*ni]) {
-	pickFusedRings((*ni), neighMap, res, done);
+        pickFusedRings((*ni), neighMap, res, done);
       }
     }
   }
@@ -54,7 +54,7 @@ namespace RingUtils {
     for (nci = ringNeighs.begin(); nci != ringNeighs.end(); nci++) {
       rid = (*nci).first;
       if (std::find(rids.begin(), rids.end(), rid) == rids.end()) {
-	done[rid]=1;
+        done[rid]=1;
       }
     }
 
@@ -80,12 +80,12 @@ namespace RingUtils {
     for (i = 0; i < nrings; i++) {
       ring1 = brings[i];
       for (j = i + 1; j < nrings; j++) {
-	INT_VECT inter;
-	Intersect(ring1, brings[j], inter);
-	if (inter.size() > 0) {
-	  neighMap[i].push_back(j);
-	  neighMap[j].push_back(i);
-	}
+        INT_VECT inter;
+        Intersect(ring1, brings[j], inter);
+        if (inter.size() > 0) {
+          neighMap[i].push_back(j);
+          neighMap[j].push_back(i);
+        }
       }
     }
   }
@@ -130,16 +130,16 @@ namespace {
 
 
   static void applyHuckelToFused(ROMol &mol, // molecule of interets
-				 const VECT_INT_VECT &srings, // list of all ring as atom IDS
-				 const VECT_INT_VECT &brings, // list of all rings as bond ids
-				 const INT_VECT &fused, // list of ring ids in the current fused system
-				 const VECT_EDON_TYPE &edon, // eletron donar state for each atom
-				 INT_INT_VECT_MAP &ringNeighs,
-				 int &narom // number of aromatic ring so far 
-				 );
+                                 const VECT_INT_VECT &srings, // list of all ring as atom IDS
+                                 const VECT_INT_VECT &brings, // list of all rings as bond ids
+                                 const INT_VECT &fused, // list of ring ids in the current fused system
+                                 const VECT_EDON_TYPE &edon, // eletron donar state for each atom
+                                 INT_INT_VECT_MAP &ringNeighs,
+                                 int &narom // number of aromatic ring so far 
+                                 );
 
   void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings, 
-			  const VECT_INT_VECT &brings, const INT_VECT &ringIds,
+                          const VECT_INT_VECT &brings, const INT_VECT &ringIds,
                           std::set<unsigned int> &doneAtms) {
     INT_VECT aring, bring;
     INT_VECT_CI ri, ai, bi;
@@ -151,7 +151,7 @@ namespace {
       
       // first mark the atoms in the ring
       for (ai = aring.begin(); ai != aring.end(); ai++) {
-	mol.getAtomWithIdx(*ai)->setIsAromatic(true);
+        mol.getAtomWithIdx(*ai)->setIsAromatic(true);
         doneAtms.insert(*ai);
       }
     }
@@ -168,12 +168,12 @@ namespace {
     for (ri = ringIds.begin(); ri != ringIds.end(); ri++) {
       bring = brings[*ri];
       for (bi = bring.begin(); bi != bring.end(); bi++) {
-	if (bndCntr.find(*bi) == bndCntr.end()) {
-	  bndCntr[*bi] = 1;
-	}
-	else {
-	  bndCntr[*bi] += 1;
-	}
+        if (bndCntr.find(*bi) == bndCntr.end()) {
+          bndCntr[*bi] = 1;
+        }
+        else {
+          bndCntr[*bi] += 1;
+        }
       }
     }
     int bid;
@@ -181,9 +181,9 @@ namespace {
     // now mark bonds that have a count of 1 to be aromatic;
     for (bci = bndCntr.begin(); bci != bndCntr.end(); bci++) {
       if ((*bci).second == 1) {
-	bid = (*bci).first;
-	mol.getBondWithIdx(bid)->setIsAromatic(true);
-	mol.getBondWithIdx(bid)->setBondType(Bond::AROMATIC);
+        bid = (*bci).first;
+        mol.getBondWithIdx(bid)->setIsAromatic(true);
+        mol.getBondWithIdx(bid)->setBondType(Bond::AROMATIC);
       }
     }
   }
@@ -233,13 +233,17 @@ namespace {
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
     while(beg!=end){
       if(at->getOwningMol().getRingInfo()->numBondRings(pMap[*beg]->getIdx())){
-	if (pMap[*beg]->getValenceContrib(at) >= 2.0) {
-	  return true;
-	 }
+        if (pMap[*beg]->getValenceContrib(at) >= 2.0) {
+          return true;
+         }
        }
        beg++;
     }
     return false;
+  }
+
+  bool incidentMultipleBond(Atom *at) {
+    return at->getExplicitValence()!=(at->getDegree()+at->getNumExplicitHs());
   }
 
   bool applyHuckel(ROMol &mol, const INT_VECT &ring, const VECT_EDON_TYPE &edon) {
@@ -257,10 +261,10 @@ namespace {
 
     if (rup >= 6) {
       for (rie = rlw; rie <=rup; rie++) {
-	if ( (rie - 2)%4 == 0) {
-	  aromatic = true;
-	  break;
-	}
+        if ( (rie - 2)%4 == 0) {
+          aromatic = true;
+          break;
+        }
       }
     }
     return aromatic;
@@ -269,13 +273,13 @@ namespace {
 
   
   void applyHuckelToFused(ROMol &mol, // molecule of interets
-			  const VECT_INT_VECT &srings, // list of all ring as atom IDS
-			  const VECT_INT_VECT &brings, // list of all rings as bond ids
-			  const INT_VECT &fused, // list of ring ids in the current fused system
-			  const VECT_EDON_TYPE &edon, // eletron donar state for each atom
-			  INT_INT_VECT_MAP &ringNeighs, // list of neighbors for eac candidate ring
-			  int &narom // number of aromatic ring so far 
-			  ) {
+                          const VECT_INT_VECT &srings, // list of all ring as atom IDS
+                          const VECT_INT_VECT &brings, // list of all rings as bond ids
+                          const INT_VECT &fused, // list of ring ids in the current fused system
+                          const VECT_EDON_TYPE &edon, // eletron donar state for each atom
+                          INT_INT_VECT_MAP &ringNeighs, // list of neighbors for eac candidate ring
+                          int &narom // number of aromatic ring so far 
+                          ) {
 
     // this function check huckel rule on a fused system it starts
     // with the individual rings in the system and then proceeds to
@@ -300,7 +304,7 @@ namespace {
     while (1) {
       if (pos == -1 ) {
         
-	curSize += 1;
+        curSize += 1;
         // check is we are done with all the atoms in the fused
         // system, if so quit. This is a fix for Issue252 REVIEW: is
         // this check sufficient or should we add an additional
@@ -308,55 +312,55 @@ namespace {
         // fused system that we will try. The number of combinations
         // can obviously be quite large when the number of rings in
         // the fused system is large
-	if ((doneAtoms.size() == nAtms) || (curSize > nrings)) {
-	  break;
-	}
-	comb.resize(curSize);
-	pos = 0;
-	for (i =0; i < curSize; i++) {
-	  comb[i]=i;
-	}
+        if ((doneAtoms.size() == nAtms) || (curSize > nrings)) {
+          break;
+        }
+        comb.resize(curSize);
+        pos = 0;
+        for (i =0; i < curSize; i++) {
+          comb[i]=i;
+        }
       }
       else {
-	pos = nextCombination(comb, nrings);
+        pos = nextCombination(comb, nrings);
       }
 
       if (pos == -1) {
-	continue;
+        continue;
       }
 
       curRs.resize(0);
       for (i = 0; i < comb.size(); i++) {
-	curRs.push_back(fused[comb[i]]);
+        curRs.push_back(fused[comb[i]]);
       }
 
       // check if the picked subsystem is fused
       if (!RingUtils::checkFused(curRs, ringNeighs)) {
-	continue;
+        continue;
       }
 
       // check aromaticity on the current fused system
       INT_VECT exclude;
       for (i = 0; i < srings.size(); i++) {
-	if (std::find(curRs.begin(), curRs.end(), i) == curRs.end() ) {
-	  exclude.push_back(i);
-	}
+        if (std::find(curRs.begin(), curRs.end(), i) == curRs.end() ) {
+          exclude.push_back(i);
+        }
       }
       INT_VECT unon;
       Union(srings, unon, &exclude);
       
       if (applyHuckel(mol, unon, edon)) {
-	
-	// mark the atoms and bonds in these rings to be aromatic
-	markAtomsBondsArom(mol, srings, brings, curRs, doneAtoms);
+        
+        // mark the atoms and bonds in these rings to be aromatic
+        markAtomsBondsArom(mol, srings, brings, curRs, doneAtoms);
 
-	// add the ring IDs to the aromatic rings found so far
-	// avoid duplicates
-	for (mri = curRs.begin(); mri != curRs.end(); mri++) {
-	  if (std::find(aromRings.begin(), aromRings.end(), (*mri) ) == aromRings.end()) {
-	    aromRings.push_back(*mri);
-	  }
-	}
+        // add the ring IDs to the aromatic rings found so far
+        // avoid duplicates
+        for (mri = curRs.begin(); mri != curRs.end(); mri++) {
+          if (std::find(aromRings.begin(), aromRings.end(), (*mri) ) == aromRings.end()) {
+            aromRings.push_back(*mri);
+          }
+        }
       }// end check huckel rule
       
     } // end while(1)
@@ -396,60 +400,63 @@ namespace {
     }
     else if (nelec == 0) {
       if (incidentNonCyclicMultipleBond(at, who)) {
-	// This is border-line no electron to spare but may have an empty p-orbital 
-	// Not sure if this should return vacantElectronDonorType 
-	// FIX: explicitly doing this as a note for potential problems
-	// 
-	//res = NoElectronDonorType;
+        // This is border-line no electron to spare but may have an empty p-orbital 
+        // Not sure if this should return vacantElectronDonorType 
+        // FIX: explicitly doing this as a note for potential problems
+        // 
+        //res = NoElectronDonorType;
         
-	res = VacantElectronDonorType;
+        res = VacantElectronDonorType;
       }
       else if (incidentCyclicMultipleBond(at)) {
-	// no electron but has one in a in cycle multiple bond
-	// FIX: why can't this be two electrons if there is a triple bond
-	res = OneElectronDonorType; 
+        // no electron but has one in a in cycle multiple bond
+        // FIX: why can't this be two electrons if there is a triple bond
+        res = OneElectronDonorType; 
       }
       else {
-	// no mulitple bonds no electrons
-	res = NoElectronDonorType;
+        // no mulitple bonds no electrons
+        res = NoElectronDonorType;
       }
     }
     else if (nelec == 1) {
       
       if (incidentNonCyclicMultipleBond(at, who)) {
         // the only available electron is going to be from the external multiple bond
-	// this electron will not be available for aromaticity if this
+        // this electron will not be available for aromaticity if this
         // atom is bonded to a more electro negative atom 
-	const Atom *at2 = mol.getAtomWithIdx(who);
-	if (PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
-							   at->getAtomicNum())) {
-	  res = VacantElectronDonorType;
-	}
-	else {
-	  res = OneElectronDonorType; 
-	}
+        const Atom *at2 = mol.getAtomWithIdx(who);
+        if (PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
+                                                           at->getAtomicNum())) {
+          res = VacantElectronDonorType;
+        }
+        else {
+          res = OneElectronDonorType; 
+        }
       }
       else {
-	res = OneElectronDonorType; 
+        // require that the atom have at least one multiple bond
+        if(incidentMultipleBond(at)){
+          res = OneElectronDonorType;
+        }
       }
     }
     else {
       
       if (incidentNonCyclicMultipleBond(at, who)) {
-	// for cases with more than one electron
-	// - if there is an incident multiple bond with an element that is more 
-	// electro negative than the this atom, count one less electron
-	const Atom *at2 = mol.getAtomWithIdx(who);
-	if (PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
-							   at->getAtomicNum())) {
-	  nelec--;
-	}
+        // for cases with more than one electron
+        // - if there is an incident multiple bond with an element that is more 
+        // electro negative than the this atom, count one less electron
+        const Atom *at2 = mol.getAtomWithIdx(who);
+        if (PeriodicTable::getTable()->moreElectroNegative(at2->getAtomicNum(),
+                                                           at->getAtomicNum())) {
+          nelec--;
+        }
       }
       if (nelec%2 == 1) {
-	res = OneElectronDonorType;
+        res = OneElectronDonorType;
       }
       else {
-	res = TwoElectronDonorType;
+        res = TwoElectronDonorType;
       }
     }
     return(res);
@@ -471,8 +478,8 @@ namespace RDKit {
       chg = at->getFormalCharge();
       dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum()); 
       if (dv <=1) {
-	// univalent elents can't be either aromatic or conjugated
-	return -1;
+        // univalent elents can't be either aromatic or conjugated
+        return -1;
       }
 
       // ok we are pulling this assumption out here is an example
@@ -490,7 +497,7 @@ namespace RDKit {
 
       // if we are more than 3 coordinated we should not be aroamtic
       if (sbo > 3) {
-	return -1;
+        return -1;
       }
 
       // num electron available for donation 
@@ -507,10 +514,10 @@ namespace RDKit {
       // and start from scratch if necessary
       ROMol::AtomIterator ai; 
       for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
-	if ((*ai)->getIsAromatic()) {
-	  // found aromatic info 
-	  return -1;
-	}
+        if ((*ai)->getIsAromatic()) {
+          // found aromatic info 
+          return -1;
+        }
       }
     
       // first find the all the simple rings in the molecule
@@ -528,21 +535,21 @@ namespace RDKit {
 
       int ncands = 0;
       for (VECT_INT_VECT_I vivi = srings.begin(); vivi != srings.end(); vivi++) {
-	for (INT_VECT_I ivi = (*vivi).begin(); ivi != (*vivi).end(); ivi++) {
-	  Atom *at = mol.getAtomWithIdx(*ivi);
-	
-	  // now that the atom is part of ring check if it can donate 
-	  // electron or has empty orbitals. Record the donor type information in
-	  // 'edon' - we will need it when we get to the Huckel rule later
-	  edon[*ivi] = getAtomDonorTypeArom(at);
-	  if (isAtomCandForArom(at, edon)) { 
-	    ncands++;
-	    acands[*ivi]=1;
-	  }
-	  else {
-	    acands[*ivi]=0;
-	  }
-	}
+        for (INT_VECT_I ivi = (*vivi).begin(); ivi != (*vivi).end(); ivi++) {
+          Atom *at = mol.getAtomWithIdx(*ivi);
+        
+          // now that the atom is part of ring check if it can donate 
+          // electron or has empty orbitals. Record the donor type information in
+          // 'edon' - we will need it when we get to the Huckel rule later
+          edon[*ivi] = getAtomDonorTypeArom(at);
+          if (isAtomCandForArom(at, edon)) { 
+            ncands++;
+            acands[*ivi]=1;
+          }
+          else {
+            acands[*ivi]=0;
+          }
+        }
       }
 
       // mark rings in the  SSSR list that cannot be candidates for aromaticity
@@ -554,17 +561,17 @@ namespace RDKit {
       INT_VECT cring;
       int ri = 0;
       for (VECT_INT_VECT_CI vivi = srings.begin(); vivi != srings.end(); vivi++) {
-	bool rcand = true;
-	for (INT_VECT_CI ivi = vivi->begin(); ivi != vivi->end(); ivi++) {
-	  if (!acands[*ivi]) { // if an atom in the ring is not a candidate
-	    rcand = false; // mark teh entire ring not a candidate
-	    break;
-	  }
-	}
-	if (rcand) {
-	  cring = (*vivi);
-	  cRings.push_back(cring);
-	}
+        bool rcand = true;
+        for (INT_VECT_CI ivi = vivi->begin(); ivi != vivi->end(); ivi++) {
+          if (!acands[*ivi]) { // if an atom in the ring is not a candidate
+            rcand = false; // mark teh entire ring not a candidate
+            break;
+          }
+        }
+        if (rcand) {
+          cring = (*vivi);
+          cRings.push_back(cring);
+        }
       }
       // first convert all rings to bonds ids
       VECT_INT_VECT brings;
@@ -585,20 +592,20 @@ namespace RDKit {
       boost::dynamic_bitset<> fusDone(cnrs);
       INT_VECT fused;
       while (curr < cnrs) {
-	fused.resize(0);
-	RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-	applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom);
+        fused.resize(0);
+        RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
+        applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom);
 
-	int rix;
-	for (rix = 0; rix < cnrs; rix++) {
-	  if (!fusDone[rix]) {
-	    curr = rix;
-	    break;
-	  }
-	}
-	if (rix == cnrs) {
-	  break;
-	}
+        int rix;
+        for (rix = 0; rix < cnrs; rix++) {
+          if (!fusDone[rix]) {
+            curr = rix;
+            break;
+          }
+        }
+        if (rix == cnrs) {
+          break;
+        }
       }
     
       mol.setProp("numArom", narom, true);
