@@ -939,21 +939,14 @@ void testSDErrorHandling() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors1.sdf";
   SDMolSupplier *sdsup;
-
   ROMol *nmol=0;  
-  bool ok=false;  
 
   // entry 1: bad properties
   sdsup = new SDMolSupplier(fname);
   TEST_ASSERT(!sdsup->atEnd());
-  try {
-    nmol = sdsup->next();
-    ok=false;
-  } catch (FileParseException){
-    ok=true;
-  }
-  TEST_ASSERT(ok);
-  TEST_ASSERT(!nmol);
+  nmol = sdsup->next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(!nmol->hasProp("ID"));
   delete sdsup;
    
   // case 2: can't be sanitized
@@ -969,13 +962,8 @@ void testSDErrorHandling() {
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors3.sdf";
   sdsup = new SDMolSupplier(fname);
   TEST_ASSERT(!sdsup->atEnd());
-  try {
-    nmol = sdsup->next();
-    ok=false;
-  } catch (FileParseException){
-    ok=true;
-  }
-  TEST_ASSERT(ok);
+  nmol = sdsup->next();
+  TEST_ASSERT(!nmol);
   TEST_ASSERT(sdsup->atEnd());
   delete sdsup;
   
@@ -983,13 +971,8 @@ void testSDErrorHandling() {
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/sdErrors4.sdf";
   sdsup = new SDMolSupplier(fname);
   TEST_ASSERT(!sdsup->atEnd());
-  try {
-    nmol = sdsup->next();
-    ok=false;
-  } catch (FileParseException){
-    ok=true;
-  }
-  TEST_ASSERT(ok);
+  nmol = sdsup->next();
+  TEST_ASSERT(!nmol);
   TEST_ASSERT(sdsup->atEnd());
   delete sdsup;
 }
