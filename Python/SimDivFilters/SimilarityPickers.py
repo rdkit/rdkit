@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2003 Rational Discovery LLC
+# Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
 import RDConfig
@@ -8,7 +8,20 @@ import DataStructs
 from DataStructs.TopNContainer import TopNContainer
 import bisect
 
-class TopNOverallPicker(object):
+class GenericPicker(object):
+  _picks = None
+  def MakePicks(self,force=0):
+    raise NotImplementedError,"GenericPicker is a virtual base class"
+  def __len__(self):
+    if self._picks is None:
+      self.MakePicks()
+    return len(self._picks)
+  def __getitem__(self,which):
+    if self._picks is None:
+      self.MakePicks()
+    return self._picks[which]
+  
+class TopNOverallPicker(GenericPicker):
   """  A class for picking the top N overall best matches across a library
 
   Connect to a database:
@@ -102,18 +115,8 @@ class TopNOverallPicker(object):
     for score,pt in picks:
       self._picks.append((pt,score))
     self._picks.reverse()  
-  def __len__(self):
-    if self._picks is None:
-      self.MakePicks()
-    return len(self._picks)
-  def __getitem__(self,which):
-    if self._picks is None:
-      self.MakePicks()
-    return self._picks[which]
-          
 
-
-class SpreadPicker(object):
+class SpreadPicker(GenericPicker):
   """  A class for picking the best matches across a library
 
   Connect to a database:
@@ -247,18 +250,6 @@ class SpreadPicker(object):
         taken[idx]=1
         nPicked += 1
 
-  def __len__(self):
-    if self._picks is None:
-      self.MakePicks()
-    return len(self._picks)
-  def __getitem__(self,which):
-    if self._picks is None:
-      self.MakePicks()
-    return self._picks[which]
-
-
-
-  
 #------------------------------------
 #
 #  doctest boilerplate
