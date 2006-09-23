@@ -86,6 +86,7 @@ allclean:
 	$(MAKE) --directory=MolAlign clean
 	$(MAKE) --directory=MolTransforms clean
 	$(MAKE) --directory=ShapeHelpers clean
+	$(MAKE) --directory=ChemTransforms clean
 
 all: $(RDGRAPHLIB) $(RDGRAPHLIB_S)
 	$(MAKE) --directory=SmilesParse install
@@ -103,6 +104,7 @@ all: $(RDGRAPHLIB) $(RDGRAPHLIB_S)
 	$(MAKE) --directory=MolChemicalFeatures
 	$(MAKE) --directory=MolAlign
 	$(MAKE) --directory=ShapeHelpers
+	$(MAKE) --directory=ChemTransforms install
 
 allstatic: $(RDGRAPHLIB_S)
 	$(MAKE) --directory=SmilesParse static
@@ -157,6 +159,7 @@ allregrs:
 	$(MAKE) --directory=MolChemicalFeatures regrs
 	$(MAKE) --directory=MolAlign regrs
 	$(MAKE) --directory=ShapeHelpers regrs
+	$(MAKE) --directory=ChemTransforms regrs
 
 runallregrs: 
 	$(MAKE) allregrs

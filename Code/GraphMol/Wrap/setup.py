@@ -4,7 +4,7 @@ from RDBuild import *
 from distutils.core import setup,Extension
 
 libDirs += [rdLibDir,rdBitDir,rdCatalogDir,rdGeometryDir]
-libraries.extend(["SmilesParse","Substruct","FileParsers", "Subgraphs",
+libraries.extend(["SmilesParse","ChemTransforms","Substruct","FileParsers", "Subgraphs",
            "FragCat", "GraphMol", "Catalogs", "DataStructs","Fingerprints",
            "RDBoost","RDGeneral", "RDGeometry",
            ])
