@@ -13,10 +13,11 @@ libDirs += [
          os.path.join(RDConfig.RDBaseDir,'Code','Numerics', 'Optimizer'),
          os.path.join(RDConfig.RDBaseDir,'Code','DistGeom'),
          os.path.join(RDConfig.RDBaseDir,'Code','Geometry'),
+         os.path.join(RDConfig.RDBaseDir,'Code','Numerics', 'Alignment'),
          ]
 
 libraries += ["DistGeomHelpers", "GraphMol","ForceFieldHelpers", "DistGeom", "ForceFields",
-              "Optimizer", "EigenSolvers", "RDGeometry", "RDGeneral"]
+              "Optimizer", "EigenSolvers", "RDGeometry", "Alignment", "RDGeneral"]
 
 setup(name="Chem.rdDistGeom", version="2.0",
       ext_modules=[Extension("Chem.rdDistGeom",

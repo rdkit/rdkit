@@ -174,6 +174,25 @@ class TestCase(unittest.TestCase) :
             for j in range(i+1,len(cs)):
                 cj = cs[j]
                 self.failUnless(Chem.MolToMolBlock(m,confId=ci)!=Chem.MolToMolBlock(m,confId=cj))
+
+    def test6RmsPruning(self):
+        smiles = ['CC(C)CC(NC(C1[N+]CCC1)=O)C([O-])=O',
+                  'CC(NC(CO)C(O)c1ccc([N+]([O-])=O)cc1)=O',
+                  'CC([N+])C(NC(C)C(N1C(C=O)CCC1)=O)=O',
+                  'CC(NC1C(O)C=C(C([O-])=O)OC1C(O)C(O)CO)=O',
+                  'CCCC=C(NC(C1CC1(C)C)=O)C([O-])=O',
+                  'OCC(O)C(O)C(Cn1c2c(cc(C)c(C)c2)nc-2c(=O)[nH]c(=O)nc12)O']
+
+
+        nconfs = []
+        expected = [5, 8, 8, 5, 5, 4]
+        for smi in smiles:
+            mol = Chem.MolFromSmiles(smi)
+            cids = rdDistGeom.EmbedMultipleConfs(mol, 50, 30,
+                                                 100, pruneRmsThresh=1.5)
+            nconfs.append(len(cids))
+        self.failUnless(nconfs == expected)
+        
         
 if __name__ == '__main__':
   unittest.main()

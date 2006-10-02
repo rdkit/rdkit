@@ -16,6 +16,9 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
 
+#include <Geometry/Transform3D.h>
+#include <Numerics/Alignment/AlignPoints.h>
+
 #define ERROR_TOL 0.00001
 
 namespace RDKit {
@@ -107,11 +110,48 @@ namespace RDKit {
       return confId;
     }
 
+    
+    void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf) {
+      unsigned int na = conf.getNumAtoms();
+      pts.clear();
+      unsigned int ai;
+      pts.reserve(na);
+      for (ai = 0; ai < na; ++ai) {
+	pts.push_back(&conf.getAtomPos(ai));
+      }
+    }
+        
+    bool _isConfFarFromRest(const ROMol &mol, const Conformer &conf, double threshold) {
+      // NOTE: it is tempting to use some tringle inequality to prune conformations here 
+      // but some basic testing has shown very little advantage and given that the time for 
+      // pruning fades in comparison to embedding - we will use a simple for loop below over all
+      // conformation untill we find a match
+      ROMol::ConstConformerIterator confi;
+
+      RDGeom::Point3DConstPtrVect refPoints, prbPoints;
+      _fillAtomPositions(refPoints, conf);
+
+      bool res = true;
+      unsigned int na = conf.getNumAtoms();
+      double ssrThres = na*threshold*threshold;
+
+      RDGeom::Transform3D trans;
+      double ssr;
+      for (confi = mol.beginConformers(); confi != mol.endConformers(); confi++) {
+	_fillAtomPositions(prbPoints, *(*confi));
+	ssr = RDNumeric::Alignments::AlignPoints(refPoints, prbPoints, trans);
+	if (ssr < ssrThres) {
+	  res = false;
+	  break;
+	}
+      }
+      return res;
+    }
 
     INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs, unsigned int maxIterations, 
                                 int seed, bool clearConfs, 
                                 bool randNegEig, unsigned int numZeroFail,
-				double optimizerForceTol,double basinThresh) {
+				double optimizerForceTol,double basinThresh, double pruneRmsThresh) {
 
       unsigned int nat = mol.getNumAtoms();
       DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nat);
@@ -179,8 +219,17 @@ namespace RDKit {
           }
         }
         if (gotCoords) {
-          int confId = (int)mol.addConformer(conf, true);
-          res.push_back(confId);
+	  bool addConf = true; // add the conformation to the molecule by default
+	  if (pruneRmsThresh > 0.0) { // check if we are pruning away conformations
+	    if (!_isConfFarFromRest(mol, *conf, pruneRmsThresh)) { // check if a closeby conformation has already been chosen
+	      addConf = false;
+	      delete conf;
+	    }
+	  }
+	  if (addConf) {
+	    int confId = (int)mol.addConformer(conf, true);
+	    res.push_back(confId);
+	  }
         } else {
           delete conf;
         }

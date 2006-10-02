@@ -28,10 +28,10 @@ namespace RDKit {
 
   INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10, unsigned int maxAttempts=30, 
                               int seed=-1, bool clearConfs=true, 
-                              bool randNegEig=true, unsigned int numZeroFail=1) {
+                              bool randNegEig=true, unsigned int numZeroFail=1, double pruneRmsThresh=-1.0) {
     INT_VECT res = DGeomHelpers::EmbedMultipleConfs(mol, numConfs, maxAttempts,
                                                     seed, clearConfs,
-                                                    randNegEig, numZeroFail);
+                                                    randNegEig, numZeroFail, 1e-3, 5.0, pruneRmsThresh);
     return res;
   } 
 
@@ -97,6 +97,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - randNegEig : If the embedding yields a negative eigen value, pick coordinates that correspond \n\
                    to this component at random \n\
     - numZeroFail : fail embedding is we have this more zero eigen values \n\
+    - pruneRmsThresh : Retain only the conformations out of 'numConfs' after embedding that are atleast 
+                       this far apart from each other. RMSD is computed on the heavy atoms.
+                       Prunining is greedy; i.e. the first embedded conformation is retained and fro
+		       then on only those that are atleast pruneRmsThresh away from already 
+		       retained conformations are kept. The pruning is done after embedding and 
+		       bounds violation minimization. No pruning by default.
                   \n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
@@ -105,7 +111,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
               (python::arg("mol"), python::arg("numConfs")=10, 
                python::arg("maxAttempts")=10,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
-               python::arg("randNegEig")=true, python::arg("numZeroFail")=1),
+               python::arg("randNegEig")=true, python::arg("numZeroFail")=1, python::arg("pruneRmsThresh")=-1.0),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\
