@@ -3,7 +3,7 @@ import unittest
 from ML.InfoTheory import rdInfoTheory, BitClusterer
 from ML.Data import DataUtils
 import DataStructs
-import RandomArray
+import RDRandom
 
 def getValLTM(i, j, mat):
     if (i > j) :
@@ -38,7 +38,9 @@ class TestCase(unittest.TestCase):
             fp = DataStructs.ExplicitBitVect(self.nbits)
             #obits = range(self.nbits/2)
             #random.shuffle(obits)
-            obits = RandomArray.permutation(self.nbits/2)
+	    
+            obits = range(self.nbits/2)
+	    RDRandom.shuffle(obits)
             obits = obits[0:self.d]
             for bit in obits :
                 fp.SetBit(bit)
@@ -60,8 +62,8 @@ class TestCase(unittest.TestCase):
             avr += getValLTM(i, i + self.nbits/2, corrMat)
             navr += getValLTM(i,i+1, corrMat)
 
-        assert 2*avr/self.nbits == 400.0
-        assert 2*navr/self.nbits == 157.56,2*navr/self.nbits
+        self.failUnless(2*avr/self.nbits == 400.0)
+        self.failUnless(2*navr/self.nbits == 157.55,2*navr/self.nbits)
 
     def test1Cluster(self) :
         cmg = rdInfoTheory.BitCorrMatGenerator()
@@ -75,27 +77,27 @@ class TestCase(unittest.TestCase):
         bcl.ClusterBits(corrMat)
         cls = bcl.GetClusters()
         for cl in cls :
-            assert len(cl) == 2
-            assert (cl[0] + self.nbits/2) == cl[1]
+            self.failUnless(len(cl) == 2)
+            self.failUnless((cl[0] + self.nbits/2) == cl[1])
 
         tfp = DataStructs.ExplicitBitVect(self.nbits)
         obits = range(0,self.nbits/4) + range(self.nbits/2, 3*self.nbits/4)
         tfp.SetBitsFromList(obits)
         rvc = bcl.MapToClusterScores(tfp)
-        assert len(rvc) == self.nbits/2
+        self.failUnless(len(rvc) == self.nbits/2)
         for i in range(self.nbits/2) :
             if i < self.nbits/4:
-                assert rvc[i] == 2
+                self.failUnless(rvc[i] == 2)
             else :
-                assert rvc[i] == 0
+                self.failUnless(rvc[i] == 0)
 
         nfp = bcl.MapToClusterFP(tfp)
-        assert len(nfp) == self.nbits/2
+        self.failUnless(len(nfp) == self.nbits/2)
         for i in range(self.nbits/2) :
            if i < self.nbits/4:
-                assert nfp[i]
+                self.failUnless(nfp[i])
            else :
-               assert not nfp[i]
+               self.failUnless(not nfp[i])
                
 if __name__ == '__main__':
     unittest.main()
