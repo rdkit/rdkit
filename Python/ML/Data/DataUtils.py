@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 #
 #  Copyright (C) 2000-2004  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
@@ -58,7 +60,7 @@ from DataStructs import BitUtils
 import string
 import re,csv
 import cPickle
-import RandomArray
+import numpy.oldnumeric.random_array as RandomArray
 
 def WriteData(outFile,varNames,qBounds,examples):
   """ writes out a .qdat file
@@ -607,7 +609,7 @@ def InitRandomNumbers(seed):
       Python _random_ module
 
   """
-  import RandomArray
+  import numpy.oldnumeric.random_array as RandomArray
   apply(RandomArray.seed,seed)
   import RDRandom
   RDRandom.seed(seed[0])
@@ -770,7 +772,7 @@ def RandomizeActivities(dataSet,shuffle=0,runDetails=None):
       - this uses Numeric's _RandomArray_ to do the randomization
       
   """
-  import RandomArray
+  import numpy.oldnumeric.random_array as RandomArray
   nPossible = dataSet.GetNPossibleVals()[-1]
   nPts = dataSet.GetNPts()
   if shuffle:

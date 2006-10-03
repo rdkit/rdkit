@@ -4,7 +4,6 @@
 #
 import RDConfig,RDRandom
 from Numeric import *
-import RandomArray
 import types,os.path,sys
 SeqTypes=(types.ListType,types.TupleType)
 
@@ -50,14 +49,14 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> test,train = SplitIndices(10,.5)
   >>> test
-  [9, 4, 3, 8, 2]
+  [5, 3, 8, 7, 4]
   >>> train
-  [7, 6, 1, 5, 0]
+  [6, 0, 2, 9, 1]
   >>> test,train = SplitIndices(10,.5)
   >>> test
-  [4, 6, 8, 2, 7]
+  [3, 9, 2, 8, 1]
   >>> train
-  [5, 9, 0, 3, 1]
+  [5, 4, 6, 7, 0]
 
   The legacy approach can return varying numbers, but still has no
   duplicates.  Note the indices come back ordered:
@@ -113,7 +112,8 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
       else:
         resTest.append(i)
   else:
-    perm = RandomArray.permutation(nPts)
+    perm = range(nPts)
+    RDRandom.shuffle(perm)
     nTrain = int(nPts*frac)
     
     resData = list(perm[:nTrain])
@@ -204,13 +204,13 @@ def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,1./3.,'basic_2class')
   >>> train
-  ['id-10', 'id-5', 'id-4', 'id-9']
+  ['id-5', 'id-8', 'id-9', 'id-6']
 
   ...take 50% of actives and 50% of inactives:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,.5,'basic_2class',useActs=1)
   >>> train
-  ['id-9', 'id-7', 'id-5', 'id-8', 'id-6', 'id-4']
+  ['id-7', 'id-5', 'id-9', 'id-8', 'id-2', 'id-10']
 
   Notice how the results came out sorted by activity
 
@@ -218,14 +218,14 @@ def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,[.5,1./3.],'basic_2class',useActs=1)
   >>> train
-  ['id-9', 'id-7', 'id-5', 'id-8', 'id-6']
+  ['id-7', 'id-5', 'id-9', 'id-8', 'id-2']
 
   And we can pull from tables with non-quantized activities by providing
   activity quantization bounds:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,.5,'float_2class',useActs=1,actBounds=[1.0])
   >>> train
-  ['id-9', 'id-7', 'id-5', 'id-8', 'id-6', 'id-4']
+  ['id-7', 'id-5', 'id-9', 'id-8', 'id-2', 'id-10']
   
   """
   if not table:

@@ -1,5 +1,6 @@
 #
-#  Copyright (C) 2001  greg Landrum
+#  Copyright (C) 2001-2006  greg Landrum
+#  All Rights Reserved
 #
 
 """ unit testing code for the Stats module
@@ -8,14 +9,16 @@
 import unittest,sys
 import RDConfig
 from ML.Data import Stats
-from Numeric import *
+import numpy
+
+
 FLOAT_TOL = 1e-4
 def feq(x,y,tol=FLOAT_TOL):
   return abs(x-y)<tol
 class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
-    self.d = array([[7,4,3],
+    self.d = numpy.array([[7,4,3],
                     [4,1,8],
                     [6,3,5],
                     [8,6,1],
@@ -24,47 +27,47 @@ class TestCase(unittest.TestCase):
                     [5,3,3],
                     [9,5,8],
                     [7,4,5],
-                    [8,2,2]],Float)
+                    [8,2,2]],numpy.float)
 
   def testCorrelation(self):
     " test the correlation matrix calculation "
     m = Stats.FormCorrelationMatrix(self.d)
-    target = array([[ 1.,0.66865732,-0.10131374],
+    target = numpy.array([[ 1.,0.66865732,-0.10131374],
                     [ 0.66865732,1.,-0.28792771],
                     [-0.10131374,-0.28792771, 1.]])
     diff = abs(m - target)
-    assert max(diff.flat)<FLOAT_TOL,'correlation matrix incorrect'
+    self.failUnless(max(diff.ravel())<FLOAT_TOL)
 
   def testPCA(self):
     " test the PCA calculation "
     eVals,eVects = Stats.PrincipalComponents(self.d)
-    tVals = array([ 1.76877414, 0.92707592,  0.30414995])
-    tVect = array([[-0.64200458, -0.68636164,  0.34166917],
+    tVals = numpy.array([ 1.76877414, 0.92707592,  0.30414995])
+    tVect = numpy.array([[-0.64200458, -0.68636164,  0.34166917],
                    [ 0.38467229,  0.09713033,  0.91792861],
                    [ 0.66321742, -0.72074503, -0.20166619]])
-    assert max((abs(eVals-tVals)).flat) < FLOAT_TOL,'bad variances from PCA'
+    self.failUnless(max((abs(eVals-tVals)).ravel()) < FLOAT_TOL,'bad variances from PCA')
     for i in range(eVects.shape[0]):
-      assert max((abs(eVects[i]-tVect[i])).flat) < FLOAT_TOL or\
-             max((abs(eVects[i]+tVect[i])).flat) < FLOAT_TOL, \
-             'bad vectors from PCA'
+      self.failUnless(max((abs(eVects[i]-tVect[i])).ravel()) < FLOAT_TOL or\
+		      max((abs(eVects[i]+tVect[i])).ravel()) < FLOAT_TOL, \
+		      'bad vectors from PCA')
 
   def testTransform(self):
     " test transformation to PCA frame "
     eVals,eVects = Stats.PrincipalComponents(self.d)
     pts = Stats.TransformPoints(eVects,self.d)
-    p0 = array([-1.12488653,-1.84061768, -0.1294482])
-    p3 = array([-3.82295273,-3.09754194,0.24549203])
-    p5 = array([ 2.29785176, 3.4726933, -0.36094115])
-    assert max(abs(pts[0]-p0)) < FLOAT_TOL,'p0 comparison failed %s!=%s'%(str(pts[0]),str(p0))
-    assert max(abs(pts[3]-p3)) < FLOAT_TOL,'p3 comparison failed %s!=%s'%(str(pts[3]),str(p3))
-    assert max(abs(pts[5]-p5)) < FLOAT_TOL,'p5 comparison failed %s!=%s'%(str(pts[5]),str(p5))
+    p0 = numpy.array([-1.12488653,-1.84061768, -0.1294482])
+    p3 = numpy.array([-3.82295273,-3.09754194,0.24549203])
+    p5 = numpy.array([ 2.29785176, 3.4726933, -0.36094115])
+    self.failUnless(max(abs(pts[0]-p0)) < FLOAT_TOL,'p0 comparison failed %s!=%s'%(str(pts[0]),str(p0)))
+    self.failUnless(max(abs(pts[3]-p3)) < FLOAT_TOL,'p3 comparison failed %s!=%s'%(str(pts[3]),str(p3)))
+    self.failUnless(max(abs(pts[5]-p5)) < FLOAT_TOL,'p5 comparison failed %s!=%s'%(str(pts[5]),str(p5)))
     
   def testTransform2(self):
     """ testing that rotation of points into PCA frame
     doesn't change dot products
 
     """
-    self.d = array([
+    self.d = numpy.array([
       [1,2.068703704,2.040555556,2.068703704,2.141782407,7.46],
       [2,1.48537037,-0.186756425,1.48537037,1.803819444,8.16],
       [3,1.917469136,0.785465797,1.917469136,2.046875,8.68],
@@ -86,7 +89,7 @@ class TestCase(unittest.TestCase):
       [19,2.058865741,1.088706538,1.095561224,2.131944444,9.35],
       [20,2.105740741,1.172039872,1.283061224,2.215277778,9.22],
       [21,2.189074074,1.359539872,1.366394558,2.262152778,9.3],
-      [22,2.142199074,1.276206538,1.178894558,2.178819444,9.52]],Float)
+      [22,2.142199074,1.276206538,1.178894558,2.178819444,9.52]],numpy.float)
     self.d = self.d[:,1:-2]
     eVals,eVects = Stats.PrincipalComponents(self.d)
     pts = Stats.TransformPoints(eVects,self.d)
@@ -97,14 +100,14 @@ class TestCase(unittest.TestCase):
     for i in range(len(pts)):
       for j in range(len(pts)):
         vi = self.d[i]
-        vi /= sqrt(dot(vi,vi))
+        vi /= numpy.sqrt(numpy.dot(vi,vi))
         vj = self.d[j]
-        vj /= sqrt(dot(vj,vj))
+        vj /= numpy.sqrt(numpy.dot(vj,vj))
         pvi = pts[i]
-        pvi /= sqrt(dot(pvi,pvi))
+        pvi /= numpy.sqrt(numpy.dot(pvi,pvi))
         pvj = pts[j]
-        pvj /= sqrt(dot(pvj,pvj))
-        assert feq(dot(vi,vj),dot(pvi,pvj)),'bad dot: %4.4f %4.4f'%(dot(vi,vj),dot(pvi,pvj))
+        pvj /= numpy.sqrt(numpy.dot(pvj,pvj))
+        self.failUnless(feq(numpy.dot(vi,vj),numpy.dot(pvi,pvj)))
 
 if __name__ == '__main__':
   unittest.main()
