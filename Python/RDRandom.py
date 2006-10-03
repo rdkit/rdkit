@@ -27,4 +27,5 @@ else:
   random = _random.random
   randrange = _random.randrange
   seed = _random.whseed
-  shuffle=lambda x:raise NotImplementedError,'shuffle not implemented for older python versions'
+  def shuffle(val):
+    raise NotImplementedError,'shuffle not implemented for older python versions'
