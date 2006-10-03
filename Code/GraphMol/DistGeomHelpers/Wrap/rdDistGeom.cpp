@@ -97,12 +97,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     - randNegEig : If the embedding yields a negative eigen value, pick coordinates that correspond \n\
                    to this component at random \n\
     - numZeroFail : fail embedding is we have this more zero eigen values \n\
-    - pruneRmsThresh : Retain only the conformations out of 'numConfs' after embedding that are atleast 
-                       this far apart from each other. RMSD is computed on the heavy atoms.
-                       Prunining is greedy; i.e. the first embedded conformation is retained and fro
-		       then on only those that are atleast pruneRmsThresh away from already 
-		       retained conformations are kept. The pruning is done after embedding and 
-		       bounds violation minimization. No pruning by default.
+    - pruneRmsThresh : Retain only the conformations out of 'numConfs' after embedding that are atleast \
+                       this far apart from each other. RMSD is computed on the heavy atoms. \
+                       Prunining is greedy; i.e. the first embedded conformation is retained and from \
+		       then on only those that are atleast pruneRmsThresh away from already  \
+		       retained conformations are kept. The pruning is done after embedding and  \
+		       bounds violation minimization. No pruning by default. \
                   \n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
