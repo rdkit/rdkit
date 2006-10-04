@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 # Copyright (C)2003-2006 greg Landrum and Rational Discovery LLC
@@ -7,7 +9,7 @@
 """ Hybrid EState-VSA descriptors (like the MOE VSA descriptors)
 
 """
-import Numeric
+import numpy.oldnumeric as Numeric
 from Chem.EState.EState import EStateIndices as EStateIndices_
 from Chem.MolSurf import _LabuteHelper as VSAContribs_
 import bisect

@@ -1,9 +1,11 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 import RDConfig
 RDConfig.usePgSQL=1
 from Dbase import DbUtils
 from cStringIO import StringIO
 
-ferro_quant="""COMPOUND,MAX_DED,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,ISFERROMAGNETIC
+ferro_quant="""COMPOUND,numpy.oldnumeric.ma as MAX_DED,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,ISFERROMAGNETIC
 AlFe3,2,1,1,1,0,0,1
 Co2Nb,1,0,2,1,1,0,0
 Co2Y,1,0,2,1,1,0,0

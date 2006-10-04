@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 #  Copyright (c) 2003-2006 Rational Discovery LLC
@@ -18,7 +20,7 @@ Sample Usage:
 
 """
 import Chem
-from Chem import MACCSkeys
+from Chem import numpy.oldnumeric.ma as MACCSkeys
 from Dbase.DbConnection import DbConnect
 from Dbase import DbInfo,DbUtils,DbModule
 from ML.Data import DataUtils

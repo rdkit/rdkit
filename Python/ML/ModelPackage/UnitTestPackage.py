@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 #
 #  Copyright (C) 2002  greg Landrum and Rational Discovery LLC
 #
@@ -7,7 +9,7 @@ import RDConfig
 from ML.Data import DataUtils
 import unittest,os,cPickle,sys
 from ML.ModelPackage import Packager
-import RandomArray
+import numpy.oldnumeric.random_array as RandomArray
 import Chem
 
 def feq(a,b,tol=1e-4):

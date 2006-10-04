@@ -1,6 +1,8 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 import cPickle,time
 from Numeric import *
-import RandomArray
+import numpy.oldnumeric.random_array as RandomArray
 from DataStructs import BitRank
 nBits = 100
 weights = RandomArray.random(nBits)

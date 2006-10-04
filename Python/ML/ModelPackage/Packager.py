@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 #
 # Copyright (C) 2002 Greg Landrum and Rational Discovery LLC
 # All rights are reserved.
@@ -108,7 +110,7 @@ if __name__=='__main__':
       raise ValueError,'Bad Prediction: %s'%(repr((smi,pred,conf,p,c)))
   cPickle.dump(pkg,open('test_data/Jan9_build3_pkg.pkl','wb+'))
   from Numeric import *
-  import RandomArray
+  import numpy.oldnumeric.random_array as RandomArray
   
   names = calc.GetDescriptorNames()
   perm = [names[x] for x in RandomArray.permutation(len(names))]

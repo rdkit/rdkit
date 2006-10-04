@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 #
 #  Copyright (C) 2000  greg Landrum
 #
@@ -101,7 +103,7 @@ def BuildVoteImage(nModels,data,values,trueValues=[],
   data = take(data,order)
   maxVal = max(ravel(data))
   data = data * 255 / maxVal
-  img = Image.fromstring('L',(nModels,nData),data.astype('b').tostring())
+  img = Image.fromstring('L',(nModels,nData),data.astype('B').tostring())
 
   if addLine:
     img = img.convert('RGB')

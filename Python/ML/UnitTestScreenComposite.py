@@ -35,19 +35,20 @@ class TestCase(unittest.TestCase):
     self.details.tableName = 'ferro_quant'
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),
                               'rb'))
-    tgt = 7
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    tgt = 6
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
 
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==93
-    assert misCount==2
-    assert nSkipped==0
-    assert feq(avgGood,.9753)
-    assert feq(avgBad,.8000)
-    assert tbl[0,0] == 54
-    assert tbl[1,1] == 39
-    assert tbl[0,1] == 2
-    assert tbl[1,0] == 0
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood==90)
+    self.failUnless(misCount==5)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.9878))
+    self.failUnless(feq(avgBad,.7400))
+    self.failUnless(tbl[0,0] == 56)
+    self.failUnless(tbl[1,1] == 34)
+    self.failUnless(tbl[0,1] == 0)
+    self.failUnless(tbl[1,0] == 5)
     
   def test2(self):
     """ include holdout data only """
@@ -57,19 +58,20 @@ class TestCase(unittest.TestCase):
     
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),
                               'rb'))
-    tgt = 7
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    tgt = 6
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
 
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==28
-    assert misCount==1
-    assert nSkipped==0
-    assert feq(avgGood,.9607)
-    assert feq(avgBad,.9000)
-    assert tbl[0,0] == 16
-    assert tbl[1,1] == 12
-    assert tbl[0,1] == 1
-    assert tbl[1,0] == 0
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood==25)
+    self.failUnless(misCount==4)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.9880))
+    self.failUnless(feq(avgBad,.7500))
+    self.failUnless(tbl[0,0] == 16)
+    self.failUnless(tbl[1,1] == 9)
+    self.failUnless(tbl[0,1] == 0)
+    self.failUnless(tbl[1,0] == 4)
     
   def test3(self):
     """ include training data only """
@@ -79,19 +81,20 @@ class TestCase(unittest.TestCase):
 
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),
                               'rb'))
-    tgt = 7
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    tgt = 6
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
 
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==65
-    assert misCount==1
-    assert nSkipped==0
-    assert feq(avgGood,.9815)
-    assert feq(avgBad,.7000)
-    assert tbl[0,0] == 38
-    assert tbl[1,1] == 27
-    assert tbl[0,1] == 1
-    assert tbl[1,0] == 0
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood==65)
+    self.failUnless(misCount==1)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.9877))
+    self.failUnless(feq(avgBad,.7000))
+    self.failUnless(tbl[0,0] == 40)
+    self.failUnless(tbl[1,1] == 25)
+    self.failUnless(tbl[0,1] == 0)
+    self.failUnless(tbl[1,0] == 1)
     
   def test4(self):
     """ include thresholding """
@@ -102,20 +105,21 @@ class TestCase(unittest.TestCase):
 
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_quant_10.pkl'),
                               'rb'))
-    tgt = 7
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    tgt = 6
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
 
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==86,str(nGood)
-    assert misCount==1
-    assert nSkipped==8
-    assert feq(avgGood,.9930)
-    assert feq(avgBad,.9000)
-    assert feq(avgSkip,.7500)
-    assert tbl[0,0] == 50
-    assert tbl[1,1] == 36
-    assert tbl[0,1] == 1
-    assert tbl[1,0] == 0
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood==88,str(nGood))
+    self.failUnless(misCount==0)
+    self.failUnless(nSkipped==7)
+    self.failUnless(feq(avgGood,.9932))
+    self.failUnless(feq(avgBad,.000))
+    self.failUnless(feq(avgSkip,.7428))
+    self.failUnless(tbl[0,0] == 54)
+    self.failUnless(tbl[1,1] == 34)
+    self.failUnless(tbl[0,1] == 0)
+    self.failUnless(tbl[1,0] == 0)
     
   def test5(self):
     """ basics """
@@ -123,18 +127,19 @@ class TestCase(unittest.TestCase):
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),
                               'rb'))
     tgt = 10
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
 
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==93
-    assert misCount==10
-    assert nSkipped==0
-    assert feq(avgGood,.9505)
-    assert feq(avgBad,.7600)
-    assert tbl[0,0] == 55
-    assert tbl[1,1] == 38
-    assert tbl[0,1] == 0
-    assert tbl[1,0] == 10
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood==94)
+    self.failUnless(misCount==9)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.9298))
+    self.failUnless(feq(avgBad,.6333))
+    self.failUnless(tbl[0,0] == 55)
+    self.failUnless(tbl[1,1] == 39)
+    self.failUnless(tbl[0,1] == 0)
+    self.failUnless(tbl[1,0] == 9)
     
   def test6(self):
     """ multiple models """
@@ -142,24 +147,24 @@ class TestCase(unittest.TestCase):
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_auto_10_3.pkl'),
                               'rb'))
     tgt = 10
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
     composites = [compos,compos]
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = \
-                                                       ScreenComposite.ScreenFromDetails(composites,self.details)
-    assert feq(nGood[0],93)
-    assert feq(misCount[0],10)
-    assert feq(nSkipped[0],0)
-    assert feq(avgGood[0],.9505)
-    assert feq(avgBad[0],.7600)
-    assert feq(nGood[1],0)
-    assert feq(misCount[1],0)
-    assert feq(nSkipped[1],0)
-    assert feq(avgGood[1],0)
-    assert feq(avgBad[1],0)
-    assert feq(tbl[0,0],55)
-    assert feq(tbl[1,1],38)
-    assert feq(tbl[0,1],0)
-    assert feq(tbl[1,0],10)
+    tpl=ScreenComposite.ScreenFromDetails(composites,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(feq(nGood[0],94))
+    self.failUnless(feq(misCount[0],9))
+    self.failUnless(feq(nSkipped[0],0))
+    self.failUnless(feq(avgGood[0],.9298))
+    self.failUnless(feq(avgBad[0],.6333))
+    self.failUnless(feq(nGood[1],0))
+    self.failUnless(feq(misCount[1],0))
+    self.failUnless(feq(nSkipped[1],0))
+    self.failUnless(feq(avgGood[1],0))
+    self.failUnless(feq(avgBad[1],0))
+    self.failUnless(feq(tbl[0,0],55))
+    self.failUnless(feq(tbl[1,1],39))
+    self.failUnless(feq(tbl[0,1],0))
+    self.failUnless(feq(tbl[1,0],9))
     
   def test7(self):
     """ shuffle """
@@ -167,18 +172,19 @@ class TestCase(unittest.TestCase):
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
                               'rb'))
     tgt = 10
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
     self.details.shuffleActivities=1
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==62
-    assert misCount==41
-    assert nSkipped==0
-    assert feq(avgGood,.7839)
-    assert feq(avgBad,.7049)
-    assert tbl[0,0] == 36
-    assert tbl[1,1] == 26
-    assert tbl[0,1] == 19
-    assert tbl[1,0] == 22
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood==46)
+    self.failUnless(misCount==57)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.7565))
+    self.failUnless(feq(avgBad,.7491))
+    self.failUnless(tbl[0,0] == 28)
+    self.failUnless(tbl[1,1] == 18)
+    self.failUnless(tbl[0,1] == 27)
+    self.failUnless(tbl[1,0] == 30)
     
   def test8(self):
     """ shuffle with segmentation """
@@ -186,19 +192,20 @@ class TestCase(unittest.TestCase):
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
                               'rb'))
     tgt = 10
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
     self.details.shuffleActivities=1
     self.details.doHoldout=1
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==15
-    assert misCount==16
-    assert nSkipped==0
-    assert feq(avgGood,.6867)
-    assert feq(avgBad,.7750)
-    assert tbl[0,0] == 13
-    assert tbl[1,1] == 2
-    assert tbl[0,1] == 6
-    assert tbl[1,0] == 10
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood==13)
+    self.failUnless(misCount==18)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.7923))
+    self.failUnless(feq(avgBad,.6889))
+    self.failUnless(tbl[0,0] == 7)
+    self.failUnless(tbl[1,1] == 6)
+    self.failUnless(tbl[0,1] == 8)
+    self.failUnless(tbl[1,0] == 10)
     
   def test9(self):
     """ shuffle with segmentation2 """
@@ -206,19 +213,20 @@ class TestCase(unittest.TestCase):
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_shuffle_10_3.pkl'),
                               'rb'))
     tgt = 10
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
     self.details.shuffleActivities=1
     self.details.doTraining=1
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==47
-    assert misCount==25
-    assert nSkipped==0
-    assert feq(avgGood,.8149)
-    assert feq(avgBad,.6600)
-    assert tbl[0,0] == 23
-    assert tbl[1,1] == 24
-    assert tbl[0,1] == 13
-    assert tbl[1,0] == 12
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood==33)
+    self.failUnless(misCount==39)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.7424))
+    self.failUnless(feq(avgBad,.7769))
+    self.failUnless(tbl[0,0] == 21)
+    self.failUnless(tbl[1,1] == 12)
+    self.failUnless(tbl[0,1] == 19)
+    self.failUnless(tbl[1,0] == 20)
     
   def test10(self):
     """ filtering """
@@ -226,20 +234,20 @@ class TestCase(unittest.TestCase):
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
                               'rb'))
     tgt = 10
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
     self.details.filterVal=1
     self.details.filterFrac=.33
 
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==90
-    assert misCount==13
-    assert nSkipped==0
-    assert feq(avgGood,.9578)
-    assert feq(avgBad,.8538)
-    assert tbl[0,0] == 54
-    assert tbl[1,1] == 36
-    assert tbl[0,1] == 1
-    assert tbl[1,0] == 12
+    self.failUnless(nGood==90)
+    self.failUnless(misCount==13)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.9578))
+    self.failUnless(feq(avgBad,.8538))
+    self.failUnless(tbl[0,0] == 54)
+    self.failUnless(tbl[1,1] == 36)
+    self.failUnless(tbl[0,1] == 1)
+    self.failUnless(tbl[1,0] == 12)
     
   def _test11(self):
     """ filtering with segmentation """
@@ -247,22 +255,22 @@ class TestCase(unittest.TestCase):
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
                               'rb'))
     tgt = 10
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
     self.details.doHoldout=1
     self.details.filterVal=1
     self.details.filterFrac=.33
 
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
     print nGood,misCount,nSkipped,avgGood,avgBad,avgSkip
-    assert nGood==46,nGood
-    assert misCount==6
-    assert nSkipped==0
-    assert feq(avgGood,.9500)
-    assert feq(avgBad,.8333)
-    assert tbl[0,0] == 37
-    assert tbl[1,1] == 9
-    assert tbl[0,1] == 1
-    assert tbl[1,0] == 5
+    self.failUnless(nGood==46,nGood)
+    self.failUnless(misCount==6)
+    self.failUnless(nSkipped==0)
+    self.failUnless(feq(avgGood,.9500))
+    self.failUnless(feq(avgBad,.8333))
+    self.failUnless(tbl[0,0] == 37)
+    self.failUnless(tbl[1,1] == 9)
+    self.failUnless(tbl[0,1] == 1)
+    self.failUnless(tbl[1,0] == 5)
 
   def test12(self):
     """ test the naive bayes composite"""
@@ -270,18 +278,19 @@ class TestCase(unittest.TestCase):
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_NaiveBayes.pkl'),
                               'rb'))
     tgt = 10
-    assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
+    self.failUnless(len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt))
     self.details.doHoldout=1
-    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood == 26
-    assert misCount == 5
-    assert nSkipped == 0
-    assert feq(avgGood, 0.9538)
-    assert feq(avgBad, 0.86)
-    assert tbl[0,0] == 9
-    assert tbl[0,1] == 4
-    assert tbl[1,0] == 1
-    assert tbl[1,1] == 17
+    tpl=ScreenComposite.ScreenFromDetails(compos,self.details)
+    nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = tpl
+    self.failUnless(nGood == 25)
+    self.failUnless(misCount == 6)
+    self.failUnless(nSkipped == 0)
+    self.failUnless(feq(avgGood, 0.9800))
+    self.failUnless(feq(avgBad, 0.9500))
+    self.failUnless(tbl[0,0] == 13)
+    self.failUnless(tbl[0,1] == 6)
+    self.failUnless(tbl[1,0] == 0)
+    self.failUnless(tbl[1,1] == 12)
     
 
 if __name__ == '__main__':

@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 #  Copyright (C) 2001-2006  greg Landrum and Rational Discovery LLC
@@ -12,7 +14,7 @@ import unittest
 from ML.Cluster import Standardize,ClusterUtils
 from ML.Cluster import Clusters,Murtagh
 from Numeric import *
-import RandomArray
+import numpy.oldnumeric.random_array as RandomArray
 import cPickle
 
 

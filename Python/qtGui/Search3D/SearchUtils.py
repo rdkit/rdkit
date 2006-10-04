@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 #  Copyright (C) 2005,2006 Rational Discovery LLC
@@ -11,7 +13,7 @@ from Chem import ChemicalForceFields,rdDistGeom,rdShapeHelpers
 from Chem.Pharm3D import EmbedLib
 EmbedLib.logger = logger
 import DistanceGeometry as DG
-import Numerics.rdAlignment as Aligner
+import numpy.oldnumeric as Numerics.rdAlignment as Aligner
 import DataStructs
 import cPickle
 from qtGui.Search3D import LocalConfig

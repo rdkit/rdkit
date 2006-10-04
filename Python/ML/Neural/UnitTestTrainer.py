@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 #
 #  Copyright (C) 2000  greg Landrum
 #
@@ -9,7 +11,7 @@
 import unittest
 from ML.Neural import Network,Trainers
 from Numeric import *
-import RandomArray
+import numpy.oldnumeric.random_array as RandomArray
 RandomArray.seed(23,42)
 
 class TrainerTestCase(unittest.TestCase):

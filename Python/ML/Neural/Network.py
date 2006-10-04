@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 #
 #  Copyright (C) 2000  greg Landrum
 #
@@ -20,7 +22,7 @@
 
 """
 from Numeric import *
-import RandomArray
+import numpy.oldnumeric.random_array as RandomArray
 from ML.Neural import NetNode, ActFuncs
 
 # FIX: this class has not been updated to new-style classes

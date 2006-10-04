@@ -1,5 +1,6 @@
 #
-#  Copyright (C) 2000,2003  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2006  greg Landrum and Rational Discovery LLC
+#  All Rights Reserved
 #
 """ ID3 Decision Trees
 
@@ -11,7 +12,7 @@
 
 """
 
-from Numeric import *
+import numpy
 from ML.DecTree import DecTree
 from ML.InfoTheory import entropy
 
@@ -31,7 +32,7 @@ def CalcTotalEntropy(examples,nPossibleVals):
     
   """
   nRes = nPossibleVals[-1]
-  resList = zeros(nRes,Int)
+  resList = numpy.zeros(nRes,numpy.int)
   for example in examples:
     res = example[-1]
     resList[res] = resList[res] + 1
@@ -64,7 +65,7 @@ def GenVarTable(examples,nPossibleVals,vars):
   nFuncVals = nPossibleVals[-1]
 
   for i in xrange(nVars):
-    res[i] = zeros((nPossibleVals[vars[i]],nFuncVals),Int)
+    res[i] = numpy.zeros((nPossibleVals[vars[i]],nFuncVals),numpy.int)
   for example in examples:
     val = int(example[-1])
     for i in xrange(nVars):

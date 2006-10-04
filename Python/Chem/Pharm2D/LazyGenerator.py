@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
@@ -100,7 +102,7 @@ if __name__ == '__main__':
   import time
   import RDConfig,Chem
   from Chem.Pharm2D import Gobbi_Pharm2D,Generate
-  import RandomArray
+  import numpy.oldnumeric.random_array as RandomArray
 
   factory = Gobbi_Pharm2D.factory
   nToDo=100

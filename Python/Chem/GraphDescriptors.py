@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
@@ -15,7 +17,7 @@ from Chem import rdchem
 # FIX: remove this dependency here and below
 from Chem import pyPeriodicTable as PeriodicTable
 from Numeric import *
-import LinearAlgebra
+import numpy.oldnumeric.linear_algebra as LinearAlgebra
 from ML.InfoTheory import entropy
 
 periodicTable = rdchem.GetPeriodicTable()

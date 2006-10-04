@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 #  Copyright (C) 2002-2006  greg Landrum and Rational Discovery LLC
@@ -7,7 +9,7 @@
 """  EState fingerprinting
 
 """
-import Numeric
+import numpy.oldnumeric as Numeric
 from Chem.EState import EStateIndices
 from Chem.EState import AtomTypes
 
@@ -27,7 +29,7 @@ def FingerprintMol(mol):
   esIndices = EStateIndices(mol)
 
   nPatts = len(AtomTypes.esPatterns)
-  counts = Numeric.zeros(nPatts,Numeric.Int)
+  counts = Numeric.zeros(nPatts,numpy.oldnumeric as Numeric.Int)
   sums = Numeric.zeros(nPatts,Numeric.Float)
 
   for i,(name,pattern) in enumerate(AtomTypes.esPatterns):

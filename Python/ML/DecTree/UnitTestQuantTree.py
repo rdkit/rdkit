@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 #
 #  Copyright (C) 2001,2003  greg Landrum and Rational Discovery LLC
 #
@@ -179,8 +181,8 @@ class TestCase(unittest.TestCase):
     
   def testRandomForest(self):
     """ try random forests descriptors """
-    import RandomArray
-    import Numeric
+    import numpy.oldnumeric.random_array as RandomArray
+    import numpy.oldnumeric as Numeric
     RandomArray.seed(23,42)
     nAttrs = 100
     nPts = 10

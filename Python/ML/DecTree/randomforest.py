@@ -1,5 +1,7 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 from Numeric import *
-import RandomArray
+import numpy.oldnumeric.random_array as RandomArray
 from ML.DecTree import ID3,CrossValidate,Forest
 from ML.DecTree import randomtest
     

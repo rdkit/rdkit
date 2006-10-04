@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 #  Copyright (C) 2003-2005  Rational Discovery LLC
@@ -8,7 +10,7 @@
 """
 
 from Numeric import *
-import RandomArray
+import numpy.oldnumeric.random_array as RandomArray
 from ML.DecTree import SigTree
 from ML import InfoTheory
 from ML.FeatureSelect import CMIM

@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Sep 23, 2006 by alter_code1.py
+
 # $Id$
 #
 # Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
@@ -9,7 +11,7 @@
 """
 import unittest
 from Numeric import *
-import LinearAlgebra
+import numpy.oldnumeric.linear_algebra as LinearAlgebra
 import Chem
 
 from cFragments import *

@@ -1,5 +1,6 @@
 #
-#  Copyright (C) 2000  greg Landrum
+#  Copyright (C) 2000-2006  greg Landrum
+#  All Rights Reserved
 #
 
 """ unit testing code for cross validation """
