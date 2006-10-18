@@ -122,7 +122,7 @@ allstatic: $(RDGRAPHLIB_S)
 	$(MAKE) --directory=MolChemicalFeatures
 	$(MAKE) --directory=MolAlign
 	$(MAKE) --directory=ShapeHelpers
-
+	$(MAKE) --directory=ChemTransforms static
 
 wrappers: $(RDGRAPHLIB)
 	for d in . FragCatalog PartialCharges Depictor DistGeomHelpers ForceFieldHelpers \

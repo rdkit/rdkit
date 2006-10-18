@@ -11,11 +11,14 @@
 namespace RDKit{
 
   // common general queries
-int queryIsAtomInRing(Atom const * at) {
-  return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx())!=0;
-};
-int queryIsBondInRing(Bond const * at) {
-  return at->getOwningMol().getRingInfo()->numBondRings(at->getIdx())!=0;
+
+
+//! returns a Query for matching atoms with a particular number of ring bonds
+ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what) {
+  ATOM_EQUALS_QUERY *res=new AtomRingQuery(what);
+  res->setDescription("AtomRingBondCount");
+  res->setDataFunc(queryAtomRingBondCount);
+  return res;
 };
 
 #ifndef OLDWIN32
@@ -395,37 +398,6 @@ BOND_EQUALS_QUERY *makeBondInRingOfSizeQuery(int tgt){
 }
 
 #endif
-
-
-
-int queryIsAtomInNRings(Atom const * at) {
-  return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx());
-};
-int queryIsBondInNRings(Bond const * at) {
-  return at->getOwningMol().getRingInfo()->numBondRings(at->getIdx());
-};
-
-  // common atom queries
-int queryAtomAromatic(Atom const * at) { return at->getIsAromatic(); };
-int queryAtomAliphatic(Atom const * at) { return !(at->getIsAromatic()); };
-int queryAtomExplicitDegree(Atom const * at) { return at->getDegree(); };
-int queryAtomTotalDegree(Atom const * at) { return at->getDegree()+at->getImplicitValence(); };
-int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
-int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
-int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
-int queryAtomNum(Atom const * at) { return at->getAtomicNum(); };
-int queryAtomMass(Atom const * at) {
-  // FIX: this really shouldn't be using integers
-	return static_cast<int>(round(at->getMass()));
-};
-int queryAtomFormalCharge(Atom const * at) { return static_cast<int>(at->getFormalCharge()); };
-int queryAtomHybridization(Atom const * at) { return at->getHybridization(); };
-
-
-  // common bond queries
-int queryBondOrder(Bond const * bond) { return static_cast<int>(bond->getBondType()); };
-int queryBondDir(Bond const * bond) { return static_cast<int>(bond->getBondDir()); };
-
 
 ATOM_EQUALS_QUERY *makeAtomSimpleQuery(int what,int func(Atom const *)){
   ATOM_EQUALS_QUERY *res = new ATOM_EQUALS_QUERY;

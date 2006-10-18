@@ -30,8 +30,91 @@ namespace RDKit{
   typedef Queries::EqualityQuery<int,Atom const *,true> ATOM_EQUALS_QUERY;
   typedef Queries::EqualityQuery<int,Bond const *,true> BOND_EQUALS_QUERY;
 
+  typedef Queries::GreaterQuery<int,Atom const *,true> ATOM_GREATER_QUERY;
+  typedef Queries::GreaterQuery<int,Bond const *,true> BOND_GREATER_QUERY;
+
+  typedef Queries::GreaterEqualQuery<int,Atom const *,true> ATOM_GREATEREQUAL_QUERY;
+  typedef Queries::GreaterEqualQuery<int,Bond const *,true> BOND_GREATEREQUAL_QUERY;
+
+  typedef Queries::LessQuery<int,Atom const *,true> ATOM_LESS_QUERY;
+  typedef Queries::LessQuery<int,Bond const *,true> BOND_LESS_QUERY;
+
+  typedef Queries::LessEqualQuery<int,Atom const *,true> ATOM_LESSEQUAL_QUERY;
+  typedef Queries::LessEqualQuery<int,Bond const *,true> BOND_LESSEQUAL_QUERY;
+
+  typedef Queries::RangeQuery<int,Atom const *,true> ATOM_RANGE_QUERY;
+  typedef Queries::RangeQuery<int,Bond const *,true> BOND_RANGE_QUERY;
+
+  typedef Queries::SetQuery<int,Atom const *,true> ATOM_SET_QUERY;
+  typedef Queries::SetQuery<int,Bond const *,true> BOND_SET_QUERY;
+
+  typedef Queries::SetQuery<int,Atom const *,true> ATOM_SET_QUERY;
+  typedef Queries::SetQuery<int,Bond const *,true> BOND_SET_QUERY;
+
   typedef Queries::Query<int,Bond const *,true> BOND_NULL_QUERY;
   typedef Queries::Query<int,Atom const *,true> ATOM_NULL_QUERY;
+
+
+
+  
+  // -------------------------------------------------
+  // common atom queries
+
+  static int queryAtomAromatic(Atom const * at) { return at->getIsAromatic(); };
+  static int queryAtomAliphatic(Atom const * at) { return !(at->getIsAromatic()); };
+  static int queryAtomExplicitDegree(Atom const * at) { return at->getDegree(); };
+  static int queryAtomTotalDegree(Atom const * at) { return at->getDegree()+at->getImplicitValence(); };
+  static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getDegree(); };
+  static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
+  static int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
+  static int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
+  static int queryAtomNum(Atom const * at) { return at->getAtomicNum(); };
+  static int queryAtomMass(Atom const * at) {
+    // FIX: this really shouldn't be using integers
+    return static_cast<int>(round(at->getMass()));
+  };
+  static int queryAtomFormalCharge(Atom const * at) { 
+      return static_cast<int>(at->getFormalCharge()); 
+  };
+  static int queryAtomHybridization(Atom const * at) { return at->getHybridization(); };
+    
+    
+  // -------------------------------------------------
+  // common bond queries
+
+  static int queryBondOrder(Bond const * bond) { return static_cast<int>(bond->getBondType()); };
+  static int queryBondDir(Bond const * bond) { return static_cast<int>(bond->getBondDir()); };
+  static int queryIsBondInNRings(Bond const * at) {
+    return at->getOwningMol().getRingInfo()->numBondRings(at->getIdx());
+  };
+
+  // -------------------------------------------------
+  // ring queries 
+
+  static int queryIsAtomInNRings(Atom const * at) {
+    return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx());
+  };
+  static int queryIsAtomInRing(Atom const * at) {
+    return at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx())!=0;
+  };
+  static int queryIsBondInRing(Bond const * bond) {
+    return bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())!=0;
+  };
+
+  static int queryAtomRingBondCount(Atom const *at) {
+    // EFF: cache this result
+    int res=0;
+    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
+    ROMol::OBOND_ITER_PAIR atomBonds=at->getOwningMol().getAtomBonds(at);
+    while(atomBonds.first != atomBonds.second){
+      unsigned int bondIdx=pMap[*atomBonds.first]->getIdx();
+      if(at->getOwningMol().getRingInfo()->numBondRings(bondIdx)) {
+        res++;
+      }
+      ++atomBonds.first;  
+    }
+    return res;
+  }
 
   //! returns a Query for matching atomic number
   ATOM_EQUALS_QUERY *makeAtomNumEqualsQuery(int what);
@@ -62,6 +145,8 @@ namespace RDKit{
   ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what);
   //! returns a Query for matching atoms in rings of a particular size
   ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt);
+  //! returns a Query for matching atoms with a particular number of ring bonds
+  ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 
   //! returns a Query for matching bond orders
   BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what);
@@ -82,20 +167,22 @@ namespace RDKit{
   static int queryAtomRingMembership(Atom const *at) {
     return static_cast<int>(at->getOwningMol().getRingInfo()->numAtomRings(at->getIdx()));
   }
-
   // I'm pretty sure that this typedef shouldn't be necessary,
   // but VC++ generates a warning about const Atom const * in
   // the definition of Match, then complains about an override
   // that differs only by const/volatile (c4301), then generates
   // incorrect code if we don't do this... so let's do it.
   typedef Atom const *ConstAtomPtr;
-  class InRingQuery : public Queries::EqualityQuery<int, ConstAtomPtr,true> {
+  
+  class AtomRingQuery : public Queries::EqualityQuery<int, ConstAtomPtr,true> {
   public:
-    InRingQuery() : Queries::EqualityQuery<int,ConstAtomPtr,true>(-1) {
+    AtomRingQuery() : Queries::EqualityQuery<int,ConstAtomPtr,true>(-1) {
+      // default is to just do a number of rings query:
       this->setDescription("AtomInNRings");
       this->setDataFunc(queryAtomRingMembership);
     };
-    explicit InRingQuery(int v) : Queries::EqualityQuery<int,ConstAtomPtr,true>(v) {
+    explicit AtomRingQuery(int v) : Queries::EqualityQuery<int,ConstAtomPtr,true>(v) {
+      // default is to just do a number of rings query:
       this->setDescription("AtomInNRings");
       this->setDataFunc(queryAtomRingMembership);
     };
@@ -104,12 +191,12 @@ namespace RDKit{
       int v = this->TypeConvert(what,Queries::Int2Type<true>());
       bool res;
       if(this->d_val<0){
-	res = v!=0;
+        res = v!=0;
       } else {
-	res=!Queries::queryCmp(v,this->d_val,this->d_tol);
+        res=!Queries::queryCmp(v,this->d_val,this->d_tol);
       }
       if(this->getNegation()){
-	res=!res;
+        res=!res;
       }
       return res;
     }
@@ -117,11 +204,11 @@ namespace RDKit{
     //! returns a copy of this query
     Queries::Query<int,ConstAtomPtr,true> *
     copy() const {
-      InRingQuery *res =
-	new InRingQuery(this->d_val);
+      AtomRingQuery *res = new AtomRingQuery(this->d_val);
       res->setNegation(getNegation());
       res->setTol(this->getTol());
       res->d_description = this->d_description;
+      res->d_dataFunc = this->d_dataFunc;
       return res;
     }
   };
