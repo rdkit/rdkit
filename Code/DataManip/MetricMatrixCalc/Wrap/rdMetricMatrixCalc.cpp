@@ -235,7 +235,7 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc)
 {
   python::scope().attr("__doc__") =
     "Module containing the calculator for metric matrix calculation, \n"
-    "e.g. simialrity and distance matrices"
+    "e.g. similarity and distance matrices"
     ;
 
   import_array();
@@ -246,7 +246,7 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc)
   docString = "Compute the distance matrix from a descriptor matrix using Euclidean distance metric\n\n\
   ARGUMENTS: \n\
 \n\
-    descripMat - A python object of any one of the folliwng type \n\
+    descripMat - A python object of any one of the following types \n\
                    1. A numeric array of dimensions n by m where n is the number of items in the data set \n\
                        and m is the number of descriptors \n\
                    2. A list of Numeric Vectors (or 1D arrays), each entry in the list corresponds \n\
@@ -254,7 +254,7 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc)
                    3. A list (or tuple) of list (or tuple) of values, where the values can be extracted to \n\
                        double. \n\n\
   RETURNS: \n\
-    A numeric 1 dimensional array containing the lower triangle elements of the symmetric distance matrix\n\n";
+    A numeric one-dimensional array containing the lower triangle elements of the symmetric distance matrix\n\n";
   
   python::def("GetEuclideanDistMat", RDDataManip::getEuclideanDistMat, 
               docString.c_str());
@@ -263,7 +263,7 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc)
   ARGUMENTS: \n\
 \n\
     bitVectList - a list of bit vectors. Currently this works only for a list of explicit bit vectors, \n\
-                  needs to be expanded to support a lsit of SparseBitVects\n\n\
+                  needs to be expanded to support a list of SparseBitVects\n\n\
   RETURNS: \n\
     A numeric 1 dimensional array containing the lower triangle elements of the\n\
     symmetric distance matrix\n\n";
@@ -274,7 +274,7 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc)
   ARGUMENTS: \n\
 \n\
     bitVectList - a list of bit vectors. Currently this works only for a list of explicit bit vectors, \n\
-                  needs to be expanded to support a lsit of SparseBitVects\n\n\
+                  needs to be expanded to support a list of SparseBitVects\n\n\
   RETURNS: \n\
     A numeric 1 dimensional array containing the lower triangle elements of the symmetric similarity matrix\n\n";
   python::def("GetTanimotoSimMat", RDDataManip::getTanimotoSimMat,
