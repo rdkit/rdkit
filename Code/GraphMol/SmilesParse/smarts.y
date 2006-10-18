@@ -27,8 +27,6 @@ yysmarts_error( const char * msg )
 using namespace RDKit;
 
 extern std::vector<RWMol *> molList_g;
-static RWMol * curMol_gps = 0;
-
 
 %}
  
@@ -103,8 +101,7 @@ mol: atomd {
   int sz     = molList_g.size();
   molList_g.resize( sz + 1);
   molList_g[ sz ] = new RWMol();
-  curMol_gps = molList_g[ sz ];
-  curMol_gps->addAtom($1,true,true);
+  molList_g[ sz ]->addAtom($1,true,true);
   //delete $1;
   $$ = sz;
 }
@@ -205,10 +202,9 @@ branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
   // FIX: this needs to handle arbitrary bond_exprs
   $$ = $3;
   int sz     = molList_g.size();
-  curMol_gps = molList_g[ sz-1 ];
-  $2->setOwningMol(curMol_gps);
+  $2->setOwningMol(molList_g[ sz-1 ]);
   $2->setBeginAtomIdx(0);
-  curMol_gps->setBondBookmark($2,ci_LEADING_BOND);
+  molList_g[ sz-1 ]->setBondBookmark($2,ci_LEADING_BOND);
 }
 ;
 
