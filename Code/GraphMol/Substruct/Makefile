@@ -26,8 +26,6 @@ install: $(LIB)
 clean:
 	rm -f $(LIB) $(LIB_S) $(OBJS) test1.o test2.o testExecs/test1.exe testExecs/test2 $(DEPENDS)
 
-CXXFLAGS=$(BASECXXFLAGS) $(VFLIBINC)
-
 testExecs/test1.exe: test1.o $(LIB) $(LIBHEADERS)
 	$(CXX) -o $@ $< $(LDFLAGS)
 

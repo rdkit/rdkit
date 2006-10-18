@@ -16,48 +16,15 @@
 #include <vf2_mono_state.h>
 #include <match.h>
 
-
-#ifdef CACHE_ARMOLGRAPHS
-#include <RDGeneral/Dict.h>
-#endif
-
 namespace RDKit{
   typedef ARGraph<const Atom, const Bond> AR_MOLGRAPH;
 
-#ifdef CACHE_ARMOLGRAPHS
-  // FIX: this stuff does not work
-  void force_SubStructtypes(){
-    boost::shared_ptr<AR_MOLGRAPH> molG_sptr;
-    Dict tD;
-    tD.fromany< boost::shared_ptr<AR_MOLGRAPH> >(boost::any(1));
-    tD.toany< boost::shared_ptr<AR_MOLGRAPH> >(molG_sptr);
-  }
-#endif  
 
   AR_MOLGRAPH *getMolGraph(const ROMol &mol){
     AR_MOLGRAPH *molG;
-#ifdef CACHE_ARMOLGRAPHS
-    // FIX: this stuff does not work
-    if(!mol.hasProp("SubstructGraphPtr")){
-      ARGEdit mEd;
-      MolToVFGraph(mol,&mEd);
-      molG = new AR_MOLGRAPH(&mEd);
-      boost::shared_ptr<AR_MOLGRAPH> molG_sptr(molG);
-      boost::shared_ptr<void> void_sptr;
-      void_sptr = reinterpret_cast< boost::shared_ptr<void> >(molG_sptr);
-      mol.setProp("SubstructGraphPtr",void_sptr,true);
-    } else {
-      boost::shared_ptr<void> void_sptr;
-      mol.getProp("SubstructGraphPtr",void_sptr);
-      boost::shared_ptr<AR_MOLGRAPH> molG_sptr;
-      molG_sptr = reinterpret_cast< boost::shared_ptr<AR_MOLGRAPH> >(void_sptr);
-      molG = molG_sptr.get(); 
-    }
-#else
     ARGEdit mEd;
     MolToVFGraph(mol,&mEd);
     molG = new AR_MOLGRAPH(&mEd);
-#endif
     return molG;
   }
 
@@ -111,9 +78,7 @@ namespace RDKit{
     }
     delete [] ni1;
     delete [] ni2;
-#ifndef CACHE_ARMOLGRAPHS
     delete queryG;
-#endif
 
     return res;
   }
@@ -169,9 +134,7 @@ namespace RDKit{
       matches.resize(0);
     }
 
-#ifndef CACHE_ARMOLGRAPHS
     delete queryG;
-#endif
 
     return res;
   }
@@ -211,9 +174,7 @@ namespace RDKit{
       matches.resize(0);
     }
     //std::cout << " <<< RecursiveMatcher: " << int(query) << std::endl;
-#ifndef CACHE_ARMOLGRAPHS
     delete queryG;
-#endif
   
     return res;
   }
