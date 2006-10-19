@@ -167,8 +167,8 @@ namespace MolTransforms {
   }
   
   void transformConformer(Conformer &conf, const RDGeom::Transform3D &trans) {
-    POINT3D_VECT &positions = conf.getPositions();
-    POINT3D_VECT_I pi;
+    RDGeom::POINT3D_VECT &positions = conf.getPositions();
+    RDGeom::POINT3D_VECT_I pi;
     for (pi = positions.begin(); pi != positions.end(); ++pi) {
       trans.TransformPoint(*pi);  
     }

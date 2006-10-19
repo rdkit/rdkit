@@ -324,8 +324,8 @@ namespace RDKit{
     streamWrite(ss,tmpInt);
     T tmpT = static_cast<T>(conf->getNumAtoms());
     streamWrite(ss,tmpT);
-    const POINT3D_VECT &pts = conf->getPositions();
-    for (POINT3D_VECT_CI pti = pts.begin(); pti != pts.end(); pti++) {
+    const RDGeom::POINT3D_VECT &pts = conf->getPositions();
+    for (RDGeom::POINT3D_VECT_CI pti = pts.begin(); pti != pts.end(); pti++) {
       tmpFloat = static_cast<float>(pti->x);
       streamWrite(ss,tmpFloat);
       tmpFloat = static_cast<float>(pti->y);

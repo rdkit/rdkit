@@ -136,8 +136,8 @@ namespace RDKit{
     // do the same with the coordinates in the conformations
     CONF_SPTR_LIST_I ci;
     for (ci = d_confs.begin(); ci != d_confs.end(); ci++) {
-      POINT3D_VECT &positions = (*ci)->getPositions();
-      POINT3D_VECT_I pi = positions.begin();
+      RDGeom::POINT3D_VECT &positions = (*ci)->getPositions();
+      RDGeom::POINT3D_VECT_I pi = positions.begin();
       for (unsigned int i = 0; i < getNumAtoms()-1;i++) {
         pi++;
         if (i >= idx) {

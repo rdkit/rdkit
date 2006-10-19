@@ -42,14 +42,14 @@ namespace RDKit {
 
   void Conformer::setOwningMol(ROMol &mol) {setOwningMol(&mol);}
 
-  const POINT3D_VECT &Conformer::getPositions() const {
+  const RDGeom::POINT3D_VECT &Conformer::getPositions() const {
     if (dp_mol) {
       PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
     }
     return d_positions;
   }
 
-  POINT3D_VECT &Conformer::getPositions() {
+  RDGeom::POINT3D_VECT &Conformer::getPositions() {
     if (dp_mol) {
       PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
     }
