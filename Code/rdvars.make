@@ -18,9 +18,9 @@ PYTHONINC=-I$(PYTHON_ROOT)/include/python$(PYTHON_VERSION)
 # -----------
 # Boost
 # -----------
-BOOSTINC=-I/usr/local/include/$(BOOSTBASE)
-BOOSTLOGLIB=-lboost_log-gcc-s -lboost_thread-gcc-mt
-BOOSTLOGLIB_S=-lboost_log-gcc-s -lboost_thread-gcc-mt
+BOOSTINC=-I$(BOOSTHOME)/include/$(BOOSTBASE)
+BOOSTLOGLIB=-L$(BOOSTHOME)/lib -lboost_log-gcc-s -lboost_thread-gcc-mt
+BOOSTLOGLIB_S=-L$(BOOSTHOME)/lib -lboost_log-gcc-s -lboost_thread-gcc-mt
 #BOOSTINC=-I/home2/glandrum/boost_gcc34/include/$(BOOSTBASE)
 #BOOSTLOGLIB=-L/home2/glandrum/boost_gcc34/lib -lboost_log-gcc-s -lboost_thread-gcc-mt-s
 #BOOSTLOGLIB_S=-L/home2/glandrum/boost_gcc34/lib -lboost_log-gcc-s -lboost_thread-gcc-mt-s
@@ -135,10 +135,6 @@ DEPICTORBASE=Depictor
 RDDEPICTORLIB=$(RDLIBDIR)/lib$(DEPICTORBASE).so
 RDDEPICTOR=-L$(RDLIBDIR) -l$(DEPICTORBASE)
 
-CHEMTRANSFORMSBASE=ChemTransforms
-RDCHEMTRANSFORMSLIB=$(RDLIBDIR)/lib$(CHEMTRANSFORMSBASE).so
-RDCHEMTRANSFORMS=-L$(RDLIBDIR) -l$(CHEMTRANSFORMSBASE)
-
 
 PYTHONWRAP=$(RDBASE)/Python/Chem/rdmol.so
 
@@ -176,3 +172,7 @@ RDMOLALIGN=-L$(RDBASE)/Code/GraphMol/MolAlign -l$(MOLALIGNBASE)
 MOLDESCRIPTORSBASE=Descriptors
 RDMOLDESCRIPTORS=-L$(RDBASE)/Code/GraphMol/Descriptors -l$(MOLDESCRIPTORSBASE)
 
+
+CHEMTRANSFORMSLIBBASE=ChemTransforms
+RDCHEMTRANSFORMSLIB=$(RDLIBDIR)/lib$(CHEMTRANSFORMSLIBBASE).so
+RDCHEMTRANSFORMSLIB_S=$(RDLIBDIR)/lib$(CHEMTRANSFORMSLIBBASE)_s.a
