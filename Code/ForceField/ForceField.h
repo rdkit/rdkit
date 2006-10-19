@@ -16,8 +16,7 @@ namespace ForceFields {
   typedef boost::shared_ptr<ForceFieldContrib> ContribPtr;
   //typedef ForceFieldContrib *ContribPtr;
   typedef std::vector<ContribPtr> ContribPtrVect;
-  typedef std::vector<RDGeom::Point3D *> PointPtrVect;
-
+  
   //-------------------------------------------------------
   //! A class to store forcefields and handle minimization
   /*!
@@ -52,7 +51,8 @@ namespace ForceFields {
   */
   class ForceField {
   public:
-    ForceField() : df_init(false), d_numPoints(-1), dp_distMat(0) {};
+    ForceField(unsigned int dimension=3) : d_dimension(dimension), df_init(false), d_numPoints(-1), dp_distMat(0) {};
+
     ~ForceField();
 
     //! does initialization
@@ -128,8 +128,8 @@ namespace ForceFields {
     // setters and getters
 
     //! returns a reference to our points (a PointPtrVect)
-    PointPtrVect &positions() { return d_positions; };
-    const PointPtrVect &positions() const { return d_positions; };
+    RDGeom::PointPtrVect &positions() { return d_positions; };
+    const RDGeom::PointPtrVect &positions() const { return d_positions; };
 
     //! returns a reference to our contribs (a ContribPtrVect)
     ContribPtrVect &contribs() { return d_contribs; };
@@ -152,6 +152,11 @@ namespace ForceFields {
 
     */
     double distance(int i,int j,double *pos=0);
+
+    //! returns the dimension of the forcefield
+    unsigned int dimension() const {
+      return d_dimension;
+    }
 
     //! returns the distance between two points
     /*!
@@ -179,16 +184,17 @@ namespace ForceFields {
     
     
     //! OBSOLETE, DO NOT USE
-    PointPtrVect &forces() { return d_forces; };
-    const PointPtrVect &forces() const { return d_forces; };
+    RDGeom::PointPtrVect &forces() { return d_forces; };
+    const RDGeom::PointPtrVect &forces() const { return d_forces; };
 
     
   protected:
+    unsigned int d_dimension;
     bool df_init;              //!< whether or not we've been initialized
     int d_numPoints;           //!< the number of active points
     double *dp_distMat;        //!< our internal distance matrix
-    PointPtrVect d_positions;  //!< pointers to the points we're using
-    PointPtrVect d_forces;     //!< OBSOLETE
+    RDGeom::PointPtrVect d_positions;  //!< pointers to the points we're using
+    RDGeom::PointPtrVect d_forces;     //!< OBSOLETE
     ContribPtrVect d_contribs; //!< contributions to the energy
     INT_VECT d_fixedPoints;
     unsigned int d_matSize;

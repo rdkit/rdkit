@@ -10,6 +10,12 @@
 
 // we need this so that we get the hybridizations:
 #include <GraphMol/Atom.h>
+//#include <Geometry/point.h>
+
+namespace RDGeom {
+  class Point3D;
+}
+
 namespace ForceFields {
   namespace UFF {
     class AtomicParams;

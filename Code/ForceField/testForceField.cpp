@@ -28,8 +28,10 @@ void test1(){
   std::cerr << "Unit tests for force field basics." << std::endl;
   
   ForceFields::ForceField ff;
+  TEST_ASSERT(ff.dimension() ==3 );
+
   Point3D p1(0,0,0),p2(1,0,0),p3(2,0,0),p4(0,1,0);
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
   ps.push_back(&p3);
@@ -37,7 +39,7 @@ void test1(){
 
 #if 0
   Point3D f1,f2,f3,f4;
-  ForceFields::PointPtrVect &fs=ff.forces();
+  RDGeom::PointPtrVect &fs=ff.forces();
   fs.push_back(&f1);
   fs.push_back(&f2);
   fs.push_back(&f3);
@@ -47,6 +49,7 @@ void test1(){
   //TEST_ASSERT(ff.forces().size()==4);
 
   ff.initialize();
+
   TEST_ASSERT(RDKit::feq(ff.distance(0,1),1.0));
   TEST_ASSERT(RDKit::feq(ff.distance(1,0),1.0));
   TEST_ASSERT(RDKit::feq(ff.distance(0,0),0.0));
@@ -58,9 +61,9 @@ void test1(){
   TEST_ASSERT(RDKit::feq(ff.distance(1,2),1.0));
   TEST_ASSERT(RDKit::feq(ff.distance(2,1),1.0));
   
-
   std::cerr << "  done" << std::endl;
 }
+
 
 void testUFF1(){
   std::cerr << "-------------------------------------" << std::endl;
@@ -126,13 +129,14 @@ void testUFF1(){
   std::cerr << "  done" << std::endl;
 }
 
+
 void testUFF2(){
   std::cerr << "-------------------------------------" << std::endl;
   std::cerr << "Unit tests for UFF bond-stretch terms." << std::endl;
 
   ForceFields::ForceField ff;
   Point3D p1(0,0,0),p2(1.514,0,0);
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
 
@@ -167,7 +171,7 @@ void testUFF2(){
   }
 
   ff.initialize();
-  ff.positions()[1]->x = 1.814;
+  (*ff.positions()[1])[0] = 1.814;
   p[3] = 1.814;
   E=bs->getEnergy(p);
   TEST_ASSERT(RDKit::feq(E,31.4816));
@@ -185,8 +189,8 @@ void testUFF2(){
     p[i] = 0.0;
   }
   ff.initialize();
-  ff.positions()[1]->x = 0.0;
-  ff.positions()[1]->z = 1.814;
+  (*ff.positions()[1])[0] = 0.0;
+  (*ff.positions()[1])[2] = 1.814;
   p[5] = 1.814;
   E=bs->getEnergy(p);
   TEST_ASSERT(RDKit::feq(E,31.4816));
@@ -201,19 +205,19 @@ void testUFF2(){
   // try a bit of minimization
   RDGeom::Point3D d;
   ff.initialize();
-  ff.positions()[1]->z = 0.0;
-  ff.positions()[1]->x = 1.814;
+  (*ff.positions()[1])[2] = 0.0;
+  (*ff.positions()[1])[0] = 1.814;
   ff.minimize(10,1e-8);
-  d=*ff.positions()[0]-*ff.positions()[1];
+  d=*(RDGeom::Point3D*)ff.positions()[0] - *(RDGeom::Point3D*)ff.positions()[1];
   TEST_ASSERT(RDKit::feq(d.length(),1.514,1e-3));
   
   // minimize in "3D"
   ff.initialize();
-  ff.positions()[1]->z = 1.1;
-  ff.positions()[1]->y = 0.9;
-  ff.positions()[1]->x = 1.00;
+  (*ff.positions()[1])[2] = 1.1;
+  (*ff.positions()[1])[1] = 0.9;
+  (*ff.positions()[1])[0] = 1.00;
   ff.minimize(10,1e-8);
-  d=*ff.positions()[0]-*ff.positions()[1];
+  d=*(RDGeom::Point3D*)ff.positions()[0] - *(RDGeom::Point3D*)ff.positions()[1];
   TEST_ASSERT(RDKit::feq(d.length(),1.514,1e-3));
   
   
@@ -222,6 +226,7 @@ void testUFF2(){
   delete [] g;
   std::cerr << "  done" << std::endl;
 }
+
 
 void testUFF3(){
   std::cerr << "-------------------------------------" << std::endl;
@@ -268,8 +273,6 @@ void testUFF3(){
   std::cerr << "  done" << std::endl;
 }
 
-
-
 void testUFF4(){
   std::cerr << "-------------------------------------" << std::endl;
   std::cerr << "Unit tests for UFF angle-bend terms." << std::endl;
@@ -277,7 +280,7 @@ void testUFF4(){
 
   ForceFields::ForceField ff;
   Point3D p1(1.514,0,0),p2(0,0,0),p3(0.1,1.5,0);
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
   ps.push_back(&p3);
@@ -308,8 +311,8 @@ void testUFF4(){
   ff.initialize();
   ff.minimize(10,1e-8,1e-8);
 
-  v1=*ff.positions()[0]-*ff.positions()[1];
-  v2=*ff.positions()[1]-*ff.positions()[2];
+  v1=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
+  v2=*(RDGeom::Point3D*)ff.positions()[1]-*(RDGeom::Point3D*)ff.positions()[2];
   theta = v1.angleTo(v2);
 
   TEST_ASSERT(RDKit::feq(v1.length(),1.514,1e-3));
@@ -330,8 +333,8 @@ void testUFF4(){
   ff.initialize();
   ff.minimize(10,1e-8,1e-8);
 
-  v1=*ff.positions()[0]-*ff.positions()[1];
-  v2=*ff.positions()[1]-*ff.positions()[2];
+  v1=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
+  v2=*(RDGeom::Point3D*)ff.positions()[1]-*(RDGeom::Point3D*)ff.positions()[2];
   theta = v1.angleTo(v2);
 
   TEST_ASSERT(RDKit::feq(v1.length(),1.514,1e-3));
@@ -357,8 +360,8 @@ void testUFF4(){
 
   ff.initialize();
   ff.minimize(100,1e-8,1e-8);
-  v1=*ff.positions()[0]-*ff.positions()[1];
-  v2=*ff.positions()[2]-*ff.positions()[1];
+  v1=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
+  v2=*(RDGeom::Point3D*)ff.positions()[2]-*(RDGeom::Point3D*)ff.positions()[1];
   theta = v1.angleTo(v2);
   TEST_ASSERT(RDKit::feq(v1.length(),1.514,1e-3));
   TEST_ASSERT(RDKit::feq(v2.length(),1.514,1e-3));
@@ -394,8 +397,8 @@ void testUFF4(){
   ff.initialize();
   ff.minimize(100,1e-8,1e-8);
 
-  v1=*ff.positions()[0]-*ff.positions()[1];
-  v2=*ff.positions()[2]-*ff.positions()[1];
+  v1=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
+  v2=*(RDGeom::Point3D*)ff.positions()[2]-*(RDGeom::Point3D*)ff.positions()[1];
   theta = v1.angleTo(v2);
 
   TEST_ASSERT(RDKit::feq(v1.length(),1.514,1e-3));
@@ -425,8 +428,8 @@ void testUFF4(){
   ff.initialize();
   ff.minimize(100,1e-8,1e-8);
 
-  v1=*ff.positions()[0]-*ff.positions()[1];
-  v2=*ff.positions()[2]-*ff.positions()[1];
+  v1=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
+  v2=*(RDGeom::Point3D*)ff.positions()[2]-*(RDGeom::Point3D*)ff.positions()[1];
   theta = v1.angleTo(v2);
 
   TEST_ASSERT(RDKit::feq(v1.length(),1.514,1e-3));
@@ -456,8 +459,8 @@ void testUFF4(){
   ff.initialize();
   ff.minimize(100,1e-8,1e-8);
 
-  v1=*ff.positions()[0]-*ff.positions()[1];
-  v2=*ff.positions()[2]-*ff.positions()[1];
+  v1=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
+  v2=*(RDGeom::Point3D*)ff.positions()[2]-*(RDGeom::Point3D*)ff.positions()[1];
   theta = v1.angleTo(v2);
 
   TEST_ASSERT(RDKit::feq(v1.length(),1.514,1e-3));
@@ -486,7 +489,7 @@ void testUFF5(){
 
   ForceFields::ForceField ff;
   Point3D p1,p2,p3,p4,p5,p6;
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
   ps.push_back(&p3);
@@ -570,24 +573,23 @@ void testUFF5(){
   double CCDblBondLen=ForceFields::UFF::Utils::calcBondRestLength(2,&param1,&param1);
   double CHBondLen=ForceFields::UFF::Utils::calcBondRestLength(1,&param1,&param2);
 
-  v1=*ff.positions()[0]-*ff.positions()[1];
-  v2=*ff.positions()[0]-*ff.positions()[2];
+  v1=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
+  v2=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[2];
   theta = v1.angleTo(v2);
   TEST_ASSERT(RDKit::feq(v1.length(),CCDblBondLen,1e-3));
   TEST_ASSERT(RDKit::feq(v2.length(),CHBondLen,1e-3));
   TEST_ASSERT(RDKit::feq(theta,param1.theta0,1e-4));
-  v2=*ff.positions()[0]-*ff.positions()[3];
+  v2=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[3];
   theta = v1.angleTo(v2);
   TEST_ASSERT(RDKit::feq(v2.length(),CHBondLen,1e-3));
   TEST_ASSERT(RDKit::feq(theta,param1.theta0,1e-4));
 
-  v1=*ff.positions()[0]-*ff.positions()[2];
+  v1=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[2];
   theta = v1.angleTo(v2);
   TEST_ASSERT(RDKit::feq(theta,param1.theta0,1e-4));
     
   std::cerr << "  done" << std::endl;
 }
-
 
 void testUFF6(){
   std::cerr << "-------------------------------------" << std::endl;
@@ -595,7 +597,7 @@ void testUFF6(){
 
   ForceFields::ForceField ff;
   Point3D p1(0,0,0),p2(0.0,0,0);
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
 
@@ -615,29 +617,26 @@ void testUFF6(){
   // try a bit of minimization
   RDGeom::Point3D d;
   ff.initialize();
-  ff.positions()[0]->x = 0.0;
-  ff.positions()[1]->x = 4.0;
+  (*ff.positions()[0])[0] = 0.0;
+  (*ff.positions()[1])[0] = 4.0;
   ff.minimize(10,1e-8,1e-8);
-  d=*ff.positions()[0]-*ff.positions()[1];
+  d=*(RDGeom::Point3D*)ff.positions()[0] - *(RDGeom::Point3D*)ff.positions()[1];
   TEST_ASSERT(RDKit::feq(d.length(),3.851,1e-3));
   
   // minimize in "3D"
   ff.initialize();
-  ff.positions()[0]->x = 0.0;
-  ff.positions()[0]->y = 0.0;
-  ff.positions()[0]->z = 0.0;
-  ff.positions()[1]->z = 3.1;
-  ff.positions()[1]->y = 0.9;
-  ff.positions()[1]->x = 1.00;
+  (*ff.positions()[0])[0] = 0.0;
+  (*ff.positions()[0])[1] = 0.0;
+  (*ff.positions()[0])[2] = 0.0;
+  (*ff.positions()[1])[2] = 3.1;
+  (*ff.positions()[1])[1] = 0.9;
+  (*ff.positions()[1])[0] = 1.00;
   ff.minimize(10,1e-8,1e-8);
-  d=*ff.positions()[0]-*ff.positions()[1];
+  d=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
   TEST_ASSERT(RDKit::feq(d.length(),3.851,1e-3));
   
   std::cerr << "  done" << std::endl;
 }
-
-
-
 
 void testUFF7(){
   std::cerr << "-------------------------------------" << std::endl;
@@ -645,7 +644,7 @@ void testUFF7(){
 
   ForceFields::ForceField ff;
   Point3D p1,p2,p3,p4;
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
   ps.push_back(&p3);
@@ -697,8 +696,10 @@ void testUFF7(){
 
   ff.initialize();
   ff.minimize(10,1e-8,1e-8);
-  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*ff.positions()[0],*ff.positions()[1],
-				      *ff.positions()[2],*ff.positions()[3]);
+  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*(RDGeom::Point3D*)ff.positions()[0],
+							*(RDGeom::Point3D*)ff.positions()[1],
+							*(RDGeom::Point3D*)ff.positions()[2],
+							*(RDGeom::Point3D*)ff.positions()[3]);
   TEST_ASSERT(RDKit::feq(cosPhi,0.5,1e-4));
 
   // ------- ------- ------- ------- ------- ------- -------
@@ -728,8 +729,10 @@ void testUFF7(){
 
   ff.initialize();
   ff.minimize(10,1e-8,1e-8);
-  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*ff.positions()[0],*ff.positions()[1],
-				      *ff.positions()[2],*ff.positions()[3]);
+  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*(RDGeom::Point3D*)ff.positions()[0],
+							*(RDGeom::Point3D*)ff.positions()[1],
+							*(RDGeom::Point3D*)ff.positions()[2],
+							*(RDGeom::Point3D*)ff.positions()[3]);
   TEST_ASSERT(RDKit::feq(cosPhi,1.0,1e-4));
   
   // ------- ------- ------- ------- ------- ------- -------
@@ -759,8 +762,10 @@ void testUFF7(){
 
   ff.initialize();
   ff.minimize(100,1e-8,1e-8);
-  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*ff.positions()[0],*ff.positions()[1],
-				      *ff.positions()[2],*ff.positions()[3]);
+  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*(RDGeom::Point3D*)ff.positions()[0],
+							*(RDGeom::Point3D*)ff.positions()[1],
+							*(RDGeom::Point3D*)ff.positions()[2],
+							*(RDGeom::Point3D*)ff.positions()[3]);
   TEST_ASSERT(RDKit::feq(cosPhi,0.5,1e-4));
 
   // ------- ------- ------- ------- ------- ------- -------
@@ -790,8 +795,10 @@ void testUFF7(){
 
   ff.initialize();
   ff.minimize(100,1e-8,1e-8);
-  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*ff.positions()[0],*ff.positions()[1],
-					   *ff.positions()[2],*ff.positions()[3]);
+  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*(RDGeom::Point3D*)ff.positions()[0],
+							*(RDGeom::Point3D*)ff.positions()[1],
+							*(RDGeom::Point3D*)ff.positions()[2],
+							*(RDGeom::Point3D*)ff.positions()[3]);
   TEST_ASSERT(RDKit::feq(cosPhi,0.0,1e-4));
 
   // ------- ------- ------- ------- ------- ------- -------
@@ -821,8 +828,10 @@ void testUFF7(){
 
   ff.initialize();
   ff.minimize(100,1e-8,1e-8);
-  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*ff.positions()[0],*ff.positions()[1],
-					   *ff.positions()[2],*ff.positions()[3]);
+  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*(RDGeom::Point3D*)ff.positions()[0],
+							*(RDGeom::Point3D*)ff.positions()[1],
+							*(RDGeom::Point3D*)ff.positions()[2],
+							*(RDGeom::Point3D*)ff.positions()[3]);
   TEST_ASSERT(RDKit::feq(cosPhi,0.0,1e-4));
 
 #endif
@@ -854,8 +863,10 @@ void testUFF7(){
 
   ff.initialize();
   ff.minimize(100,1e-8,1e-8);
-  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*ff.positions()[0],*ff.positions()[1],
-					   *ff.positions()[2],*ff.positions()[3]);
+  cosPhi = ForceFields::UFF::Utils::calculateCosTorsion(*(RDGeom::Point3D*)ff.positions()[0],
+							*(RDGeom::Point3D*)ff.positions()[1],
+							*(RDGeom::Point3D*)ff.positions()[2],
+							*(RDGeom::Point3D*)ff.positions()[3]);
   TEST_ASSERT(RDKit::feq(cosPhi,0.5,1e-4));
   
   std::cerr << "  done" << std::endl;
@@ -891,14 +902,13 @@ void testUFFParams(){
 }
 
 
-
 void testUFF8(){
   std::cerr << "-------------------------------------" << std::endl;
   std::cerr << " Test Simple UFF molecule optimization, part 2." << std::endl;
 
   ForceFields::ForceField ff;
   Point3D p1,p2,p3,p4,p5,p6;
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
   ps.push_back(&p3);
@@ -1001,24 +1011,23 @@ void testUFF8(){
   double CCDblBondLen=ForceFields::UFF::Utils::calcBondRestLength(2,param1,param1);
   double CHBondLen=ForceFields::UFF::Utils::calcBondRestLength(1,param1,param2);
 
-  v1=*ff.positions()[0]-*ff.positions()[1];
-  v2=*ff.positions()[0]-*ff.positions()[2];
+  v1=*(RDGeom::Point3D*)ff.positions()[0] - *(RDGeom::Point3D*)ff.positions()[1];
+  v2=*(RDGeom::Point3D*)ff.positions()[0] - *(RDGeom::Point3D*)ff.positions()[2];
   theta = v1.angleTo(v2);
   TEST_ASSERT(RDKit::feq(v1.length(),CCDblBondLen,1e-3));
   TEST_ASSERT(RDKit::feq(v2.length(),CHBondLen,1e-3));
   TEST_ASSERT(RDKit::feq(theta,param1->theta0,1e-4));
-  v2=*ff.positions()[0]-*ff.positions()[3];
+  v2=*(RDGeom::Point3D*)ff.positions()[0] - *(RDGeom::Point3D*)ff.positions()[3];
   theta = v1.angleTo(v2);
   TEST_ASSERT(RDKit::feq(v2.length(),CHBondLen,1e-3));
   TEST_ASSERT(RDKit::feq(theta,param1->theta0,1e-4));
 
-  v1=*ff.positions()[0]-*ff.positions()[2];
+  v1=*(RDGeom::Point3D*)ff.positions()[0] - *(RDGeom::Point3D*)ff.positions()[2];
   theta = v1.angleTo(v2);
   TEST_ASSERT(RDKit::feq(theta,param1->theta0,1e-4));
     
   std::cerr << "  done" << std::endl;
 }
-
 
 void testUFFTorsionConflict(){
   std::cerr << "-------------------------------------" << std::endl;
@@ -1026,7 +1035,7 @@ void testUFFTorsionConflict(){
 
   ForceFields::ForceField ff;
   Point3D p1,p2,p3,p4,p5,p6,p7;
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
   ps.push_back(&p3);
@@ -1164,14 +1173,13 @@ void testUFFTorsionConflict(){
   std::cerr << "  done" << std::endl;
 }
 
-
 void testUFFDistanceConstraints(){
   std::cerr << "-------------------------------------" << std::endl;
   std::cerr << "Unit tests for UFF distance constraint terms." << std::endl;
 
   ForceFields::ForceField ff;
   Point3D p1(0,0,0),p2(1.514,0,0);
-  ForceFields::PointPtrVect &ps=ff.positions();
+  RDGeom::PointPtrVect &ps=ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
 
@@ -1200,7 +1208,7 @@ void testUFFDistanceConstraints(){
   }
 
   ff.initialize();
-  ff.positions()[1]->x = 1.20;
+  (*ff.positions()[1])[0] = 1.20;
   p[3] = 1.20;
   E=bs->getEnergy(p);
   TEST_ASSERT(RDKit::feq(E,11.25));
@@ -1215,18 +1223,18 @@ void testUFFDistanceConstraints(){
   // try a bit of minimization
   RDGeom::Point3D d;
   ff.initialize();
-  ff.positions()[1]->z = 0.0;
-  ff.positions()[1]->x = 1.20;
+  (*ff.positions()[1])[2] = 0.0;
+  (*ff.positions()[1])[0] = 1.20;
   ff.minimize(10,1e-8);
-  d=*ff.positions()[0]-*ff.positions()[1];
+  d=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
   TEST_ASSERT(d.length()>=1.35)
   TEST_ASSERT(d.length()<=1.55)
   
   ff.initialize();
-  ff.positions()[1]->z = 0.0;
-  ff.positions()[1]->x = 1.70;
+  (*ff.positions()[1])[2] = 0.0;
+  (*ff.positions()[1])[0] = 1.70;
   ff.minimize(10,1e-8);
-  d=*ff.positions()[0]-*ff.positions()[1];
+  d=*(RDGeom::Point3D*)ff.positions()[0]-*(RDGeom::Point3D*)ff.positions()[1];
   TEST_ASSERT(d.length()>=1.35)
   TEST_ASSERT(d.length()<=1.55)
   
@@ -1234,7 +1242,6 @@ void testUFFDistanceConstraints(){
   delete [] g;
   std::cerr << "  done" << std::endl;
 }
-
 
 int main(){
 #if 1
@@ -1249,6 +1256,7 @@ int main(){
   testUFFParams();
   testUFF8();
   testUFFTorsionConflict();
+  
 #endif
   testUFFDistanceConstraints();
 }
