@@ -59,10 +59,12 @@ namespace ChemicalFeatures {
     }
 
     void setPos(const RDGeom::Point3D &loc) {
+      //std::cout << loc.x << " " << loc.y << " " << loc.z << "\n";
       d_position = loc;
+      //std::cout << d_position.x << " " << d_position.y << " " << d_position.z << "\n";
     }
 
-    std::string toString() const;
+    std::string toString() const; 
     void initFromString(const std::string &pickle);
     
   private:
