@@ -79,7 +79,7 @@ namespace RDKit {
       } else {
 	(*dp_ostream) << "3D<";
       }
-      const POINT3D_VECT &coords=conf.getPositions();
+      const RDGeom::POINT3D_VECT &coords=conf.getPositions();
       int nAts=conf.getNumAtoms();
       for(int i=0;i<nAts;i++){
 	(*dp_ostream) << std::setprecision(d_numDigits) << coords[i].x << ",";
