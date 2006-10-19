@@ -88,6 +88,16 @@ namespace RDNumeric {
       d_data[i] = val;
     }
 
+    inline TYPE operator[](unsigned int i) const {
+      RANGE_CHECK(0, i, d_size-1);
+      return d_data[i];
+    }
+
+    inline TYPE& operator[](unsigned int i) {
+      RANGE_CHECK(0, i, d_size-1);
+      return d_data[i];
+    }
+
     //! returns a pointer to our data array
     inline TYPE *getData() {
       return d_data.get();
