@@ -72,10 +72,10 @@ namespace RDKit {
     //void setOwningMol(ROMol &mol);
 
     //! Get a const reference to the vector of atom positions
-    const POINT3D_VECT &getPositions() const;
+    const RDGeom::POINT3D_VECT &getPositions() const;
       
     //! Get a reference to the atom positions
-    POINT3D_VECT &getPositions(); 
+    RDGeom::POINT3D_VECT &getPositions(); 
 
     //! Get the position of the specified atom
     const RDGeom::Point3D &getAtomPos(unsigned int atomId) const; 
@@ -115,7 +115,7 @@ namespace RDKit {
   private:
     unsigned int d_id; // id is the conformation
     ROMol *dp_mol; // owning molecule
-    POINT3D_VECT d_positions; // positions of the atoms
+    RDGeom::POINT3D_VECT d_positions; // positions of the atoms
   };
 
   typedef boost::shared_ptr<Conformer>    CONFORMER_SPTR;
