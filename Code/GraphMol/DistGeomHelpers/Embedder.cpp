@@ -51,7 +51,7 @@ namespace RDKit {
 
       // get pointers to atom position into an array so that they can be passed around
       Conformer *conf = new Conformer(nat);
-      DistGeom::PointPtrVect positions;
+      RDGeom::Point3DPtrVect positions;
       unsigned int i;
       for (i = 0; i < nat; i++) {
 	positions.push_back(&conf->getAtomPos(i));
@@ -182,7 +182,7 @@ namespace RDKit {
       unsigned int numDPicks = 0;
       for (ci = 0; ci < numConfs; ci++) {
         Conformer *conf = new Conformer(nat);
-        DistGeom::PointPtrVect positions;
+        RDGeom::Point3DPtrVect positions;
         unsigned int i;
         for (i = 0; i < nat; i++) {
           positions.push_back(&conf->getAtomPos(i));
