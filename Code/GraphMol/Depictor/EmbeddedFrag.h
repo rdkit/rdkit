@@ -150,7 +150,7 @@ namespace RDDepict {
          depends on  atoms properly so that new 
          neighbors can be added to them
     */
-    EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::INT_POINT2D_MAP &coordMap);
+    EmbeddedFrag(const RDKit::ROMol *mol, const RDGeom::INT_POINT2D_MAP &coordMap);
 
     //! Initializer from a set of fused rings
     /*!
@@ -358,7 +358,7 @@ namespace RDDepict {
     
 
     RDGeom::Transform2D computeTwoAtomTrans(unsigned int aid1, unsigned int aid2, 
-					    const RDKit::INT_POINT2D_MAP &nringCor);
+					    const RDGeom::INT_POINT2D_MAP &nringCor);
         
     //! Merge a ring with already embedded atoms
     /*!
@@ -420,7 +420,7 @@ namespace RDDepict {
       /param nringMap a map of atomId to coordinate map for the atoms in the ring
     */
     void initFromRingCoords(const RDKit::INT_VECT &ring, 
-                            const RDKit::INT_POINT2D_MAP &nringMap);
+                            const RDGeom::INT_POINT2D_MAP &nringMap);
 
     //! Helper function to addNonRingAtom to a specified atoms in the fragment
     /*

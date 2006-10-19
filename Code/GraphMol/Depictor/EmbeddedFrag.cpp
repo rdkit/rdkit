@@ -48,7 +48,7 @@ namespace RDDepict {
   }
 
   
-  EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::INT_POINT2D_MAP &coordMap) {
+  EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol, const RDGeom::INT_POINT2D_MAP &coordMap) {
     // constructor of a case where the user specifies the coordinates for a portion of the 
     // atoms in the molecule - we will use these coordinates blindly without testing for any 
     // kind of correctness - user is GOD :)
@@ -60,7 +60,7 @@ namespace RDDepict {
     //   neighbors can be added to them
     PRECONDITION(mol,"");
 
-    RDKit::INT_POINT2D_MAP_CI cri; 
+    RDGeom::INT_POINT2D_MAP_CI cri; 
     unsigned int na = mol->getNumAtoms();
     for (cri = coordMap.begin(); cri != coordMap.end(); cri++) {
       unsigned int aid = cri->first;
@@ -343,7 +343,7 @@ namespace RDDepict {
     RDKit::Union(fusedRings, funion);
 
     // embed each of the rings independenty and find the largest ring
-    std::vector<RDKit::INT_POINT2D_MAP> coords;
+    std::vector<RDGeom::INT_POINT2D_MAP> coords;
     coords.reserve(fusedRings.size());
     RDKit::VECT_INT_VECT_CI ri;
     // FIX for issue 197
@@ -436,14 +436,14 @@ namespace RDDepict {
   }
 
   RDGeom::Transform2D EmbeddedFrag::computeTwoAtomTrans(unsigned int aid1, unsigned int aid2, 
-							const RDKit::INT_POINT2D_MAP &nringCor) {
+							const RDGeom::INT_POINT2D_MAP &nringCor) {
     // this is an easier thing to do than computeOneAtomTrans
     // we know that there are atleast two atoms in common between the new ring and the
     // rings that have already been embedded.
     // 
     // we are going to simply use the first two atoms on the commIds list and
     // use those to compute a transforms
-    RDKit::INT_POINT2D_MAP_CI posi;
+    RDGeom::INT_POINT2D_MAP_CI posi;
     posi = nringCor.find(aid1);
     RDGeom::Point2D loc1 = posi->second;
     posi = nringCor.find(aid2);
@@ -571,12 +571,12 @@ namespace RDDepict {
   }
 
   void EmbeddedFrag::initFromRingCoords(const RDKit::INT_VECT &ring, 
-                                        const RDKit::INT_POINT2D_MAP &nringMap) {
+                                        const RDGeom::INT_POINT2D_MAP &nringMap) {
     double largestAngle =  M_PI*( 1 - (2.0/ring.size()));
     RDKit::INT_VECT_CI ai;
     int prev = ring.back();
     int cnt = 0;
-    RDKit::INT_POINT2D_MAP_CI coord;
+    RDGeom::INT_POINT2D_MAP_CI coord;
     for (ai = ring.begin(); ai != ring.end(); ai++) {
       EmbeddedAtom eatm;
       // this sucks - the following find is because of the constness of nringMap
@@ -1604,7 +1604,7 @@ namespace RDDepict {
         // - we will find the vector that bisects angle(r1, r0, r2) 
         // - we will move r0 along this vector
         RDKit::INT_VECT_CI rpi;
-        RDKit::INT_POINT2D_MAP moveMap;
+        RDGeom::INT_POINT2D_MAP moveMap;
         for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
           RDGeom::Point2D move;
           move = d_eatoms[nbrMap[*rpi][0]].loc;

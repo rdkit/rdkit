@@ -18,7 +18,7 @@ namespace RDDepict {
   
   unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
 			       bool clearConfs, python::dict &coordMap){
-    RDKit::INT_POINT2D_MAP cMap;
+    RDGeom::INT_POINT2D_MAP cMap;
     cMap.clear();
     python::list ks = coordMap.keys();
     for(unsigned int i=0;

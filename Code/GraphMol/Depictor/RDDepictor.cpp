@@ -172,7 +172,7 @@ namespace RDDepict {
   //      
   //
   unsigned int compute2DCoords(RDKit::ROMol &mol,
-                               const RDKit::INT_POINT2D_MAP *coordMap,
+                               const RDGeom::INT_POINT2D_MAP *coordMap,
                                bool canonOrient, bool clearConfs) {
     // a vector of embedded fragments that will be merged together as we go along
     // or will be left as they are if we have a multiple fragments in the molecule

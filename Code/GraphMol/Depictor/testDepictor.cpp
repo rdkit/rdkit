@@ -230,7 +230,7 @@ void _compareCoords(const ROMol *mol1, unsigned int cid1,
 
 void test4() {
   // test prespecified coordinates for various smiles
-  RDKit::INT_POINT2D_MAP crdMap;
+  RDGeom::INT_POINT2D_MAP crdMap;
   crdMap[0] = RDGeom::Point2D(3.52, 1.30); crdMap[1] = RDGeom::Point2D(2.77, 0.0);
   crdMap[2] = RDGeom::Point2D(1.27, 0.0); crdMap[3] = RDGeom::Point2D(0.39, 1.21);
   crdMap[4] = RDGeom::Point2D(-1.03, 0.75); crdMap[5] = RDGeom::Point2D(-1.03, -0.75);

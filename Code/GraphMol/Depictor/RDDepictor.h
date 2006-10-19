@@ -33,7 +33,7 @@ namespace RDDepict {
                           
     \return ID of the conformation added to the molecule cotaining the 2D coordinates
   */
-  unsigned int compute2DCoords(RDKit::ROMol &mol, const RDKit::INT_POINT2D_MAP *coordMap=0,
+  unsigned int compute2DCoords(RDKit::ROMol &mol, const RDGeom::INT_POINT2D_MAP *coordMap=0,
                                bool canonOrient=false, bool clearConfs=true);
 
   namespace DepictorLocal {

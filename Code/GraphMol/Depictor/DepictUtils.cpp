@@ -15,7 +15,7 @@
 
 namespace RDDepict {
     
-  RDKit::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
+  RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
     // The process here is very straight forward
     // we take the center of the ring to lies at the origin put the first 
     // point at the orgin anf then sweep
@@ -36,7 +36,7 @@ namespace RDDepict {
     // compute the arm length
     double al = BOND_LEN/(sqrt(2*(1 - cos(ang))));
 
-    RDKit::INT_POINT2D_MAP res;
+    RDGeom::INT_POINT2D_MAP res;
 
     unsigned int i, aid;
     double iAng = 0.0;
@@ -52,8 +52,8 @@ namespace RDDepict {
     return res;
   }
 
-  void transformPoints(RDKit::INT_POINT2D_MAP &nringCor, const RDGeom::Transform2D &trans) {
-    RDKit::INT_POINT2D_MAP_I nrci;
+  void transformPoints(RDGeom::INT_POINT2D_MAP &nringCor, const RDGeom::Transform2D &trans) {
+    RDGeom::INT_POINT2D_MAP_I nrci;
     for (nrci = nringCor.begin(); nrci != nringCor.end(); nrci++) {
       RDGeom::Point2D loc = nrci->second;
       trans.TransformPoint(loc);
@@ -92,7 +92,7 @@ namespace RDDepict {
     RDGeom::Transform2D itrans;
     itrans.SetTransform(cent, loc1, org, xaxis);
 
-    RDKit::INT_POINT2D_MAP_I nci;
+    RDGeom::INT_POINT2D_MAP_I nci;
     RDGeom::Point2D res;
     res = point;
     trans.TransformPoint(res);
@@ -101,9 +101,9 @@ namespace RDDepict {
     return res;
   }
     
-  void reflectPoints(RDKit::INT_POINT2D_MAP &coordMap, const RDGeom::Point2D &loc1,
+  void reflectPoints(RDGeom::INT_POINT2D_MAP &coordMap, const RDGeom::Point2D &loc1,
 		   const RDGeom::Point2D &loc2) {
-    RDKit::INT_POINT2D_MAP_I nci;
+    RDGeom::INT_POINT2D_MAP_I nci;
     for (nci = coordMap.begin(); nci != coordMap.end(); nci++) {
       nci->second = reflectPoint(nci->second, loc1, loc2);
     }

@@ -60,9 +60,9 @@ namespace RDDepict {
 
     where A is the angle between a and b
    */
-  RDKit::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring);
+  RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring);
 
-  void transformPoints(RDKit::INT_POINT2D_MAP &nringCor, const RDGeom::Transform2D &trans);
+  void transformPoints(RDGeom::INT_POINT2D_MAP &nringCor, const RDGeom::Transform2D &trans);
 
   //! Find a point that bisects the angle at rcr
   /*!
@@ -82,7 +82,7 @@ namespace RDDepict {
     \param loc1           the first point of the line that is to be used as a mirror
     \param loc2           the second point of the line to be used as a mirror
    */
-  void reflectPoints(RDKit::INT_POINT2D_MAP &coordMap, const RDGeom::Point2D &loc1,
+  void reflectPoints(RDGeom::INT_POINT2D_MAP &coordMap, const RDGeom::Point2D &loc1,
 		   const RDGeom::Point2D &loc2);
 
   RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point, const RDGeom::Point2D &loc1,
