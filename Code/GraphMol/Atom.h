@@ -451,7 +451,7 @@ namespace RDKit{
     ChiralType d_chiralTag;
     HybridizationType d_hybrid;
     double d_mass;
-    RDGeom::Point3D d_pos;
+    //RDGeom::Point3D d_pos;
     ROMol *dp_mol;
     Dict *dp_props;
     void initAtom();

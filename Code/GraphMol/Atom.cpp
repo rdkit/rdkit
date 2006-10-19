@@ -42,7 +42,7 @@ Atom::Atom( const Atom & other){
   d_dativeFlag = other.d_dativeFlag;
   d_numExplicitHs = other.d_numExplicitHs;
   d_mass = other.d_mass;
-  d_pos = other.d_pos;
+  //d_pos = other.d_pos;
   d_chiralTag=other.d_chiralTag;
   d_hybrid = other.d_hybrid;
   d_implicitValence=other.d_implicitValence;
