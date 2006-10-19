@@ -37,6 +37,54 @@ double randNum(double x=5) {
 }
 
 
+void testPointND(){
+  PointND pt(5);
+  TEST_ASSERT(pt.dimension() == 5);
+  unsigned int i;
+  for (i =0; i < 5; ++i) {
+    pt[i] = i+1.0;
+  }
+  pt.normalize();
+  double ep[5];
+  ep[0] = 0.13484; ep[1] = 0.26968;
+  ep[2] = 0.40452; ep[3] = 0.53936; ep[4] = 0.6742;
+
+  for (i = 0; i < 5; ++i) {
+    TEST_ASSERT(abs(pt[i] - ep[i]) < 1.e-4);
+  }
+  
+  PointND pt2(pt);
+  for (i = 0; i < 5; ++i) {
+    TEST_ASSERT(abs(pt2[i] - ep[i]) < 1.e-4);
+  }
+
+  pt2 += pt;
+  for (i = 0; i < 5; ++i) {
+    TEST_ASSERT(abs(pt2[i] - 2*ep[i]) < 1.e-4);
+  }
+  
+  pt2 /= 2.0;
+  for (i = 0; i < 5; ++i) {
+    TEST_ASSERT(abs(pt2[i] - ep[i]) < 1.e-4);
+  }
+
+  pt2 -= pt;
+  for (i = 0; i < 5; ++i) {
+    TEST_ASSERT(abs(pt2[i] - 0.0) < 1.e-4);
+  }
+  pt2 = pt;
+  pt2 *= 2.;
+  for (i = 0; i < 5; ++i) {
+    TEST_ASSERT(abs(pt2[i] - 2*ep[i]) < 1.e-4);
+  }
+
+  double dp = pt.dotProduct(pt2);
+  TEST_ASSERT(abs(dp - 2.0) < 1.e-4);
+  
+  double angle = pt.angleTo(pt2);
+  TEST_ASSERT(abs(angle - 0.0) < 1.e-4);
+}
+ 
 void testPointOps3D() {
   Point3D pt0(1,0,0);
   Point3D pt1(0,1,0);
@@ -169,13 +217,13 @@ void test23D() {
   trans.TransformPoint(pt);
   CHECK_INVARIANT(ptEq(tpt, pt), "");
   
-  Point pt2(0.0, 1.0, 0.0);
-  Point tpt2(0.0, 0.0, 1.0);
+  Point3D pt2(0.0, 1.0, 0.0);
+  Point3D tpt2(0.0, 0.0, 1.0);
   trans.TransformPoint(pt2);
   CHECK_INVARIANT(ptEq(tpt2, pt2), "");
 
-  Point pt3(0.0, 0.0, 1.0);
-  Point tpt3(0.0, -1.0, 0.0); 
+  Point3D pt3(0.0, 0.0, 1.0);
+  Point3D tpt3(0.0, -1.0, 0.0); 
   trans.TransformPoint(pt3);
   CHECK_INVARIANT(ptEq(tpt3, pt3), "");
 
@@ -183,34 +231,34 @@ void test23D() {
   Transform3D transy;
   transy.SetRotation(PI/2., Y_Axis);
   transy.TransformPoint(pt);
-  Point tpt4(0.0, 0.0, -1.0);
+  Point3D tpt4(0.0, 0.0, -1.0);
   CHECK_INVARIANT(ptEq(tpt4, pt), "");
 
-  Point pt5(0.0, 1.0, 0.0);
-  Point tpt5(0.0, 1.0, 0.0);
+  Point3D pt5(0.0, 1.0, 0.0);
+  Point3D tpt5(0.0, 1.0, 0.0);
   transy.TransformPoint(pt5);
   CHECK_INVARIANT(ptEq(tpt5, pt5), "");
 
-  Point pt6(0.0, 0.0, 1.0);
-  Point tpt6(1.0, 0.0, 0.0);
+  Point3D pt6(0.0, 0.0, 1.0);
+  Point3D tpt6(1.0, 0.0, 0.0);
   transy.TransformPoint(pt6);
   CHECK_INVARIANT(ptEq(tpt6, pt6), "");
 
   // z-axis
   Transform3D transz;
   transz.SetRotation(PI/2., Z_Axis);
-  Point pt7(1.0, 0.0, 0.0);
-  Point tpt7(0.0, 1.0, 0.0);
+  Point3D pt7(1.0, 0.0, 0.0);
+  Point3D tpt7(0.0, 1.0, 0.0);
   transz.TransformPoint(pt7);
   CHECK_INVARIANT(ptEq(tpt7, pt7), "");
 
-  Point pt8(0.0, 1.0, 0.0);
-  Point tpt8(-1.0, 0.0, 0.0);
+  Point3D pt8(0.0, 1.0, 0.0);
+  Point3D tpt8(-1.0, 0.0, 0.0);
   transz.TransformPoint(pt8);
   CHECK_INVARIANT(ptEq(tpt8, pt8), "");
 
-  Point pt9(0.0, 0.0, 1.0);
-  Point tpt9(0.0, 0.0, 1.0);
+  Point3D pt9(0.0, 0.0, 1.0);
+  Point3D tpt9(0.0, 0.0, 1.0);
   transz.TransformPoint(pt9);
   CHECK_INVARIANT(ptEq(tpt9, pt9), "");
 
@@ -220,8 +268,8 @@ void test3MatMultiply() {
   double PI = 3.1415926535897931;
   // start with line on the axis starting at 1.0, 
   // transform it into a line on z-axis starting at 3.0
-  Point pt1(1.0, 0.0, 0.0);
-  Point pt2(2.0, 0.0, 0.0);
+  Point3D pt1(1.0, 0.0, 0.0);
+  Point3D pt2(2.0, 0.0, 0.0);
   
   std::cout << "Pt1: " << pt1 << " Pt2: " << pt2 << "\n";
   std::cout << "-Pt1: " << (-pt1) << "\n";
@@ -229,8 +277,8 @@ void test3MatMultiply() {
   Transform3D t1;
   t1.SetTranslation(-pt1);
 
-  Point tp1 = pt1;
-  Point tp2 = pt1;
+  Point3D tp1 = pt1;
+  Point3D tp2 = pt1;
   t1.TransformPoint(tp1);
   t1.TransformPoint(tp2);
   std::cout << "tp1: " << tp1 << " tp2: " << tp2 << "\n";
@@ -245,9 +293,9 @@ void test3MatMultiply() {
 
   // move on z-axis
   Transform3D t3;
-  Point npt1(0.0, 0.0, 3.0);
+  Point3D npt1(0.0, 0.0, 3.0);
   t3.SetTranslation(npt1);
-  Point npt2(0.0, 0.0, 4.0);
+  Point3D npt2(0.0, 0.0, 4.0);
 
   t3.TransformPoint(tp1);
   t3.TransformPoint(tp2);
@@ -261,8 +309,8 @@ void test3MatMultiply() {
   t2 *= t1;
   t3 *= t2;
 
-  Point opt1 = pt1;
-  Point opt2 = pt2;
+  Point3D opt1 = pt1;
+  Point3D opt2 = pt2;
 
   t3.TransformPoint(pt1);
   t3.TransformPoint(pt2);
@@ -302,6 +350,10 @@ void testFromQuaternion() {
 int main() {
   srand(time(NULL));
 
+  std::cout << "****************************************\n";
+  std::cout << "testPointND\n";
+  testPointND();
+  
   std::cout << "****************************************\n";
   std::cout << "testPointOps3D\n";
   testPointOps3D();
