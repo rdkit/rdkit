@@ -8,7 +8,6 @@
 #define __RD_TYPES_H__
 
 #include <RDGeneral/Invariant.h>
-#include <Geometry/point.h>
 #include "Dict.h"
 
 #include <vector>
@@ -52,23 +51,6 @@ namespace RDKit {
   typedef unsigned int                       UINT;
   typedef unsigned short                     USHORT;
   typedef unsigned char                      UCHAR;
-
-  typedef std::vector<RDGeom::Point>                 POINT_VECT;
-  typedef std::vector<RDGeom::Point>::const_iterator POINT_VECT_CI;
-  
-  typedef std::vector<RDGeom::Point2D>                 POINT2D_VECT;
-  typedef std::vector<RDGeom::Point2D>::const_iterator        POINT2D_VECT_CI;
-
-  typedef std::vector<RDGeom::Point3D>                 POINT3D_VECT;
-  typedef std::vector<RDGeom::Point3D>::iterator       POINT3D_VECT_I;
-  typedef std::vector<RDGeom::Point3D>::const_iterator        POINT3D_VECT_CI;
-
-  typedef std::vector<POINT2D_VECT>        VECT_POINT2D_VECT;
-  typedef std::vector<POINT2D_VECT>::const_iterator        VECT_POINT2D_VECT_CI;
-
-  typedef std::map<int, RDGeom::Point2D> INT_POINT2D_MAP;
-  typedef INT_POINT2D_MAP::iterator INT_POINT2D_MAP_I;
-  typedef INT_POINT2D_MAP::const_iterator INT_POINT2D_MAP_CI;
 
   typedef std::vector<int>                   INT_VECT;
   typedef INT_VECT::iterator                 INT_VECT_I;
