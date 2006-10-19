@@ -10,6 +10,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <map>
 #ifdef WIN32
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -17,13 +18,18 @@
 #endif
 
 #include <RDGeneral/Invariant.h>
+#include <Numerics/Vector.h>
+#include <boost/smart_ptr.hpp>
 
 namespace RDGeom {
-class Point3D;
-class Point2D;
+  class Point3D;
+  class Point2D;
+  class Point;
+  class PointND;
 }
-std::ostream & operator<<(std::ostream& target, const RDGeom::Point3D &pt);
-std::ostream & operator<<(std::ostream& target, const RDGeom::Point2D &pt);
+
+
+std::ostream & operator<<(std::ostream& target, const RDGeom::Point &pt);
 
 RDGeom::Point3D operator+ (const RDGeom::Point3D& p1, const RDGeom::Point3D& p2);
 RDGeom::Point3D operator- (const RDGeom::Point3D& p1, const RDGeom::Point3D& p2);
@@ -37,8 +43,23 @@ RDGeom::Point2D operator/ (const RDGeom::Point2D& p1, const double v);
 
 
 namespace RDGeom {
-  typedef class Point3D Point;
-  class Point3D {
+
+  class Point {
+    // this is the virtual base class, mandating certain functions
+  public:
+    virtual ~Point() {};
+    
+    virtual double operator[](unsigned int i) const = 0;
+    virtual double& operator[](unsigned int i) = 0;
+
+    virtual void normalize() = 0;
+    virtual double length() const = 0;
+    virtual double lengthSq() const = 0;
+    virtual unsigned int dimension() const = 0;
+  };
+   
+  //typedef class Point3D Point;
+  class Point3D : public Point {
 
   public:
     double x,
@@ -48,8 +69,34 @@ namespace RDGeom {
     Point3D() : x(0.0), y(0.0), z(0.0) {};
     Point3D(double xv,double yv,double zv): x(xv),y(yv),z(zv) {};
 
+    ~Point3D() {};
+
     Point3D(const Point3D &other) :
       x(other.x), y(other.y), z(other.z) {
+    }
+
+    inline unsigned int dimension() const {return 3;}
+
+    inline double operator[](unsigned int i) const {
+      PRECONDITION(i < 3, "Invalid index on Point3D");
+      if (i == 0) {
+	return x;
+      } else if (i == 1) {
+	return y;
+      } else {
+	return z;
+      }
+    }
+	
+    inline double& operator[](unsigned int i) {
+      PRECONDITION(i < 3, "Invalid index on Point3D");
+      if (i == 0) {
+	return x;
+      } else if (i == 1) {
+	return y;
+      } else {
+	return z;
+      }
     }
 
     Point3D&
@@ -214,7 +261,7 @@ namespace RDGeom {
   // the computed angle is between 0 and PI
   double computeDihedralAngle(Point3D pt1, Point3D pt2, Point3D pt3, Point3D pt4);
 
-  class Point2D {
+  class Point2D : public Point {
   public:
     double x,
       y;
@@ -222,7 +269,29 @@ namespace RDGeom {
     Point2D() : x(0.0), y(0.0) {};
     Point2D(double xv,double yv): x(xv),y(yv) {};
     
+    ~Point2D() {}; 
+
     Point2D(const Point2D &other) : x(other.x), y(other.y) {
+    }
+
+    inline unsigned int dimension() const {return 2;}
+
+    inline double operator[](unsigned int i) const {
+      PRECONDITION(i < 2, "Invalid index on Point3D");
+      if (i == 0) {
+	return x;
+      } else { 
+	return y;
+      } 
+    }
+
+    inline double& operator[](unsigned int i) {
+      PRECONDITION(i < 2, "Invalid index on Point3D");
+      if (i == 0) {
+	return x;
+      } else { 
+	return y;
+      } 
     }
 
     Point2D&
@@ -319,6 +388,108 @@ namespace RDGeom {
     }
     
   };
+  
+  class PointND : public Point {
+  public:
+
+    typedef boost::shared_ptr<RDNumeric::Vector<double> > VECT_SH_PTR;
+
+    PointND(unsigned int dim){
+      RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(dim, 0.0);
+      dp_storage.reset(nvec);
+    };
+
+    PointND(const PointND &other) {
+      RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(*other.getStorage());
+      dp_storage.reset(nvec);
+    }
+
+    ~PointND() {}
+
+    inline double operator[](unsigned int i) const {
+      return dp_storage.get()->getVal(i);
+    }
+
+    inline double& operator[](unsigned int i) {
+      return (*dp_storage.get())[i];
+    }
+
+    inline void normalize() {
+      dp_storage.get()->normalize();
+    }
+
+    inline double length() const {
+      return dp_storage.get()->normL2();
+    }
+
+    inline double lengthSq() const {
+      return dp_storage.get()->normL2Sq();
+    }
+    
+    unsigned int dimension() const {
+      return dp_storage.get()->size();
+    }
+    
+    PointND& operator=(const PointND &other) {
+      RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(*other.getStorage());
+      dp_storage.reset(nvec);
+      return *this;
+    }
+
+    PointND& operator+=(const PointND &other) {
+      (*dp_storage.get()) += (*other.getStorage());
+      return *this;
+    }
+    
+    PointND& operator-=(const PointND &other) {
+      (*dp_storage.get()) -= (*other.getStorage());
+      return *this;
+    }
+
+    PointND& operator*=(double scale) {
+      (*dp_storage.get()) *= scale;
+      return *this;
+    }
+
+    PointND& operator/=(double scale) {
+      (*dp_storage.get()) /= scale;
+      return *this;
+    }
+    
+    PointND directionVector(const PointND &other) {
+      PRECONDITION(this->dimension() == other.dimension(), "Point dimensions do not match");
+      PointND np(other);
+      np -= (*this);
+      np.normalize();
+      return np;
+    }
+
+    double dotProduct(const PointND &other) const {
+      return dp_storage.get()->dotProduct(*other.getStorage());
+    }
+    
+    double angleTo(const PointND &other) const {
+      double dp = this->dotProduct(other);
+      double n1 = this->length();
+      double n2 = other.length();
+      if ((n1 > 1.e-8) && (n2 > 1.e-8)) {
+	dp /= (n1*n2);
+      }
+      if (dp < -1.0) dp = -1.0;
+      else if (dp > 1.0) dp = 1.0;
+      return acos(dp);
+    }
+
+  private:
+    VECT_SH_PTR dp_storage;
+    inline const RDNumeric::Vector<double> * getStorage() const {
+      return dp_storage.get();
+    }
+  };
+
+  typedef std::vector<RDGeom::Point *> PointPtrVect;
+  typedef PointPtrVect::iterator PointPtrVect_I;
+  typedef PointPtrVect::const_iterator PointPtrVect_CI;
 
   typedef std::vector<RDGeom::Point3D *> Point3DPtrVect;
   typedef std::vector<RDGeom::Point2D *> Point2DPtrVect;
@@ -330,6 +501,14 @@ namespace RDGeom {
   typedef std::vector<const RDGeom::Point3D *> Point3DConstPtrVect;
   typedef Point3DConstPtrVect::iterator Point3DConstPtrVect_I;
   typedef Point3DConstPtrVect::const_iterator Point3DConstPtrVect_CI;
+
+  typedef std::vector<Point3D>                 POINT3D_VECT;
+  typedef std::vector<Point3D>::iterator       POINT3D_VECT_I;
+  typedef std::vector<Point3D>::const_iterator POINT3D_VECT_CI;
+
+  typedef std::map<int, Point2D> INT_POINT2D_MAP;
+  typedef INT_POINT2D_MAP::iterator INT_POINT2D_MAP_I;
+  typedef INT_POINT2D_MAP::const_iterator INT_POINT2D_MAP_CI;
 }
 
 

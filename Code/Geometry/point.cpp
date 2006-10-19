@@ -5,14 +5,13 @@
 //   @@ All Rights Reserved  @@
 //
 #include "point.h"
+//#include <Numerics/Vector.h>
 
-std::ostream & operator<<(std::ostream& target, const RDGeom::Point3D &pt){
-  target << pt.x << " " << pt.y << " " << pt.z;
-  return target;
-}
-
-std::ostream & operator<<(std::ostream& target, const RDGeom::Point2D &pt){
-  target << pt.x << " " << pt.y;
+std::ostream & operator<<(std::ostream& target, const RDGeom::Point &pt){
+  for (unsigned int di = 0; di < pt.dimension(); ++di) {
+    target << pt[di] << " ";
+  }
+  
   return target;
 }
 
