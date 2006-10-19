@@ -77,7 +77,7 @@ void testIssue216() {
   dmat.setVal(3,3, 0.0);
   
   std::cout << dmat;
-  DistGeom::PointPtrVect pos;
+  RDGeom::Point3DPtrVect pos;
   for (int i = 0; i < 4; i++) {
     RDGeom::Point3D *pt = new RDGeom::Point3D();
     pos.push_back(pt);

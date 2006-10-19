@@ -10,19 +10,19 @@
 #include <Numerics/SymmMatrix.h>
 #include <vector>
 #include <map>
-
+#include <Geometry/point.h>
 
 #define EIGVAL_TOL 0.001
-namespace RDGeom {
-  class Point3D;
-}
+//namespace RDGeom {
+//  class Point3D;
+//}
 
 namespace ForceFields {
   class ForceField;
 }
 
 namespace DistGeom {
-  typedef std::vector<RDGeom::Point3D *> PointPtrVect;
+  //typedef std::vector<RDGeom::Point3D *> Point3DPtrVect;
 
   //! Pick a distance matrix at random such that the
   //!  distance satisfy the bounds in the BoundsMatrix
@@ -49,7 +49,7 @@ namespace DistGeom {
     \return true if the embedding was successful
   */
   bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,  
-                            PointPtrVect &positions, bool randNegEig=false, 
+                            RDGeom::Point3DPtrVect &positions, bool randNegEig=false, 
                             unsigned int numZeroFail=2);
 
   //! Setup the error function for violation of distance bounds as a forcefield
@@ -70,7 +70,7 @@ namespace DistGeom {
 
   */
   ForceFields::ForceField *constructForceField(const BoundsMatrix &mmat,
-					       PointPtrVect &positions,
+					       RDGeom::Point3DPtrVect &positions,
 					       std::map< std::pair<int,int>,double> *extraWeights=0,
 					       double basinSizeTol=5.0);
 

@@ -71,7 +71,7 @@ namespace DistGeom {
     }*/
 
   bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distMat,  
-                            PointPtrVect &positions, bool randNegEig, 
+                            RDGeom::Point3DPtrVect &positions, bool randNegEig, 
                             unsigned int numZeroFail) {
     unsigned int N = distMat.numRows();
     unsigned int nPt = positions.size();
@@ -159,7 +159,7 @@ namespace DistGeom {
     }
 
     for (i = 0; i < N; i++) {
-      RDGeom::Point *pt = positions[i];
+      RDGeom::Point3D *pt = positions[i];
       if (eigData[0] >= 0.0) {
         pt->x = eigData[0]*eigVecs.getVal(0,i);
       } else {
@@ -180,7 +180,7 @@ namespace DistGeom {
   }
 
   ForceFields::ForceField *constructForceField(const BoundsMatrix &mmat,
-					       PointPtrVect &positions,
+					       RDGeom::Point3DPtrVect &positions,
 					       std::map< std::pair<int,int>,double> *extraWeights,
 					       double basinSizeTol) {
     unsigned int N = mmat.numRows();
