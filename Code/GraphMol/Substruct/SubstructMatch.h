@@ -29,6 +29,14 @@ namespace RDKit{
   //! Internal Use Only
   AR_MOLGRAPH *getMolGraph(const ROMol &mol);
 
+
+#ifdef CACHE_ARMOLGRAPHS
+namespace SubstructLocal {
+  void clearMolGraphCache();
+}
+#endif  
+
+
   //! Find a substructure match for a query in a molecule
   /*!
       \param mol       The ROMol to be searched

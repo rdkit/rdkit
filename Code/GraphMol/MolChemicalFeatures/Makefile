@@ -1,7 +1,7 @@
 include $(RDBASE)/Code/rdvars.make
 include $(RDBASE)/Code/rdrules.make
 
-CXXFLAGS=$(RDOPTFLAGS) $(BOOSTINC) -I$(RDBASE)/Code $(VFLIBINC) -Wall
+CXXFLAGS=$(RDOPTFLAGS) $(BOOSTINC) -I$(RDBASE)/Code $(VFLIBINC) -Wall 
 SOURCES=MolChemicalFeature.cpp MolChemicalFeatureDef.cpp MolChemicalFeatureFactory.cpp FeatureParser.cpp
 LIB=libMolChemicalFeatures.a
 
@@ -18,7 +18,7 @@ clean:
 regrs: testExecs/testFeatures.exe
 
 benchFeatures.exe: benchFeatures.o libMolChemicalFeatures.a 
-	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lMolChemicalFeatures $(RDSMILES) $(RDFILEPARSE) $(RDSUBSTRUCT) $(VFLIB) $(RDKIT) $(RDGENERAL) $(RDGEOMETRY) 
+	$(CXX) $(CXXFLAGS) -o $@ $< -L. -lMolChemicalFeatures $(RDSMILES_S) $(RDFILEPARSE_S) $(RDSUBSTRUCT_S) $(VFLIB) $(RDKIT_S) $(RDGENERAL) $(RDGEOMETRY) 
 
 include $(DEPENDS)
 

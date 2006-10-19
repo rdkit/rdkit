@@ -333,17 +333,20 @@ void test5(){
   TEST_ASSERT(testMol);
   featDef=*factory->beginFeatureDefs();
   TEST_ASSERT(SubstructMatch(*testMol,*featDef->getPattern(),mv));
+  BOOST_LOG(rdErrorLog) << "1" << std::endl;
   TEST_ASSERT(mv.size()==1);
   TEST_ASSERT(mv[0].first==0);
   TEST_ASSERT(mv[0].second==3);
   featDef=*(++factory->beginFeatureDefs());
   TEST_ASSERT(SubstructMatch(*testMol,*featDef->getPattern(),mv));
+BOOST_LOG(rdErrorLog) << "2" << std::endl;
   TEST_ASSERT(mv.size()==1);
   TEST_ASSERT(mv[0].first==0);
   TEST_ASSERT(mv[0].second==1||mv[0].second==3);
 
   // Test using the factory to find features:
   featSPtrs = factory->getFeaturesForMol(*testMol);
+BOOST_LOG(rdErrorLog) << "3" << std::endl;
   TEST_ASSERT(featSPtrs.size()==3);
   featSPtr=*featSPtrs.begin();
   TEST_ASSERT(featSPtr->getFamily()=="HBondDonor");
@@ -357,6 +360,7 @@ void test5(){
 
   // Test limiting stuff with includeOnly
   featSPtrs = factory->getFeaturesForMol(*testMol,"HBondAcceptor");
+BOOST_LOG(rdErrorLog) << "4" << std::endl;
   TEST_ASSERT(featSPtrs.size()==2);
   featSPtr=*featSPtrs.begin();
   TEST_ASSERT(featSPtr->getFamily()=="HBondAcceptor");
@@ -365,14 +369,15 @@ void test5(){
   TEST_ASSERT(featSPtr->getFamily()=="HBondAcceptor");
   TEST_ASSERT(featSPtr->getType()=="HAcceptor1");
 
-
   featSPtrs = factory->getFeaturesForMol(*testMol,"HBondDonor");
+BOOST_LOG(rdErrorLog) << "5" << std::endl;
   TEST_ASSERT(featSPtrs.size()==1);
   featSPtr=*featSPtrs.begin();
   TEST_ASSERT(featSPtr->getFamily()=="HBondDonor");
   TEST_ASSERT(featSPtr->getType()=="HDonor1");
 
   featSPtrs = factory->getFeaturesForMol(*testMol,"NotPresent");
+BOOST_LOG(rdErrorLog) << "6" << std::endl;
   TEST_ASSERT(featSPtrs.size()==0);
 
   delete testMol;

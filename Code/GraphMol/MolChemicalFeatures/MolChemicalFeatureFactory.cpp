@@ -21,7 +21,7 @@
 namespace RDKit {
 
   FeatSPtrList MolChemicalFeatureFactory::getFeaturesForMol(const ROMol &mol,
-							    const char* includeOnly) const {
+                                                            const char* includeOnly) const {
     PRECONDITION(includeOnly,"bad limits");
     std::string limits(includeOnly);
     
@@ -30,56 +30,58 @@ namespace RDKit {
     typedef std::vector< std::pair< std::string,std::set<int> > > MatchSetCollection;
     MatchSetCollection matchSets;
     for(MolChemicalFeatureDef::CollectionType::const_iterator featDefIt=beginFeatureDefs();
-	featDefIt!=endFeatureDefs();featDefIt++){
+        featDefIt!=endFeatureDefs();featDefIt++){
       MolChemicalFeatureDef::CollectionType::value_type featDef=*featDefIt;
       if(limits=="" || limits==featDef->getFamily()){
-    	std::vector< MatchVectType > matches;
-    	unsigned int numMatches=SubstructMatch(molG,*featDef->getPattern(),matches);
-    	for(unsigned int i=0;i<numMatches;i++){
-    	  const MatchVectType &match=matches[i];
-    	  std::set<int> matchSet;
-    	  for(MatchVectType::const_iterator mIt=match.begin();
-    	      mIt!=match.end();
-    	      ++mIt){
-    	    matchSet.insert(mIt->second);
-    	  }
-    	  
-    	  // loop over the matches we've already found and see if this one
-    	  // is unique:
-    	  bool unique=true;
-    	  for(MatchSetCollection::const_iterator vsiCI=matchSets.begin();
-    	      vsiCI!=matchSets.end();
-    	      ++vsiCI){
-    	    if(vsiCI->first==featDef->getFamily() &&
-    	       std::includes(vsiCI->second.begin(),vsiCI->second.end(),
-    			     matchSet.begin(),matchSet.end())){
-    	      unique=false;
-    	      break;
-    	    }
-    	  }
-    	  if(unique){
-    	    matchSets.push_back(std::make_pair(featDef->getFamily(),matchSet));
+        std::vector< MatchVectType > matches;
+        unsigned int numMatches=SubstructMatch(molG,*featDef->getPattern(),matches);
+        for(unsigned int i=0;i<numMatches;i++){
+          const MatchVectType &match=matches[i];
+          std::set<int> matchSet;
+          for(MatchVectType::const_iterator mIt=match.begin();
+              mIt!=match.end();
+              ++mIt){
+            matchSet.insert(mIt->second);
+          }
+          
+          // loop over the matches we've already found and see if this one
+          // is unique:
+          bool unique=true;
+          for(MatchSetCollection::const_iterator vsiCI=matchSets.begin();
+              vsiCI!=matchSets.end();
+              ++vsiCI){
+            if(vsiCI->first==featDef->getFamily() &&
+               std::includes(vsiCI->second.begin(),vsiCI->second.end(),
+                             matchSet.begin(),matchSet.end())){
+              unique=false;
+              break;
+            }
+          }
+          if(unique){
+            matchSets.push_back(std::make_pair(featDef->getFamily(),matchSet));
     
-    	    // Set up the feature:
-    	    MolChemicalFeature *newFeat=new MolChemicalFeature(&mol,this,featDef.get());
-    	    MolChemicalFeature::AtomPtrContainer &atoms=newFeat->d_atoms;
-    	    atoms.resize(match.size());
+            // Set up the feature:
+            MolChemicalFeature *newFeat=new MolChemicalFeature(&mol,this,featDef.get());
+            MolChemicalFeature::AtomPtrContainer &atoms=newFeat->d_atoms;
+            atoms.resize(match.size());
     
-    	    // set up the atoms:
-    	    for(MatchVectType::const_iterator matchIt=match.begin();
-        		matchIt!=match.end();matchIt++){
-    	      int atomIdx=matchIt->second;
-    	      int queryIdx=matchIt->first;
-    	      atoms[queryIdx]=mol.getAtomWithIdx(atomIdx);
-    	    }
+            // set up the atoms:
+            for(MatchVectType::const_iterator matchIt=match.begin();
+                        matchIt!=match.end();matchIt++){
+              int atomIdx=matchIt->second;
+              int queryIdx=matchIt->first;
+              atoms[queryIdx]=mol.getAtomWithIdx(atomIdx);
+            }
     
-    	    // finally, add this to our result:
-    	    res.push_back(FeatSPtrList::value_type(newFeat));
-    	  }
-    	}
+            // finally, add this to our result:
+            res.push_back(FeatSPtrList::value_type(newFeat));
+          }
+        }
       }
     }
+#ifndef CACHE_ARMOLGRAPHS
     delete molG;
+#endif
     return res;
   }
   
@@ -97,8 +99,8 @@ namespace RDKit {
       res = new MolChemicalFeatureFactory();
       //std::copy(featDefs.begin(),featDefs.end(),res->beginFeatureDefs());
       for(MolChemicalFeatureDef::CollectionType::const_iterator ci=featDefs.begin();
-	  ci!=featDefs.end();ci++){
-    	res->addFeatureDef(*ci);
+          ci!=featDefs.end();ci++){
+        res->addFeatureDef(*ci);
       }
     }
 

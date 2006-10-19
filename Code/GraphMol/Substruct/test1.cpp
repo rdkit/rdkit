@@ -321,13 +321,6 @@ void test7(){
   q1->addBond(1,2,Bond::UNSPECIFIED);
 
 
-#if 0
-  for(int i=0;i<10000000;i++){
-    AR_MOLGRAPH *molG = getMolGraph(*m);
-    delete molG;
-    if(! (i%500) ) std::cout << i << std::endl;
-  }
-#else  
   bool found = SubstructMatch(*m,*q1,matchV);
   CHECK_INVARIANT(found,"");
   CHECK_INVARIANT(matchV.size()==3,"");
@@ -338,9 +331,47 @@ void test7(){
     CHECK_INVARIANT(matches[0].size()==3,"");
     if(! (i%500) ) std::cout << i << std::endl;
   }
-#endif
   std::cout << "Done\n" << std::endl;
 }
+
+#ifdef CACHE_ARMOLGRAPHS
+void test8(){
+  std::cout << " ----------------- Test 8 (molgraph cache)" << std::endl;
+  MatchVectType matchV;
+  int n;
+
+  RWMol *m,*q1;
+  Atom *a6 = new Atom(6);
+
+  m = new RWMol();
+  m->addAtom(a6);
+  m->addAtom(a6);
+  m->addAtom(a6);
+  m->addBond(0,1,Bond::SINGLE);
+  m->addBond(1,2,Bond::SINGLE);
+  m->addBond(0,2,Bond::SINGLE);
+
+  q1 = new RWMol();
+  q1->addAtom(new QueryAtom(6),true);
+  q1->addAtom(new QueryAtom(6),true);
+  q1->addAtom(new QueryAtom(6),true);
+  q1->addBond(0,1,Bond::UNSPECIFIED);
+  q1->addBond(1,2,Bond::UNSPECIFIED);
+
+
+  bool found = SubstructMatch(*m,*q1,matchV);
+  CHECK_INVARIANT(found,"");
+  CHECK_INVARIANT(matchV.size()==3,"");
+  std::vector< MatchVectType > matches;
+  for(int i=0;i<30000;i++){
+    n = SubstructMatch(*m,*q1,matches,true,true);
+    CHECK_INVARIANT(n==1,"");
+    CHECK_INVARIANT(matches[0].size()==3,"");
+    if(! (i%500) ) std::cout << i << std::endl;
+  }
+  std::cout << "Done\n" << std::endl;
+}
+#endif
 
 int main(int argc,char *argv[])
 {
@@ -352,6 +383,9 @@ int main(int argc,char *argv[])
   test6();  
   if(argc>1 && !strcmp(argv[1],"-l"))
     test7();  
+#ifdef CACHE_ARMOLGRAPHS
+  test8();
+#endif
   return 0;
 }
 

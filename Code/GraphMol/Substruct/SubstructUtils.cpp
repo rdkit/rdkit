@@ -15,18 +15,23 @@
 namespace RDKit{
 
 bool atomCompat(Atom const *a1,Atom const *a2){
+  PRECONDITION(a1,"bad atom");
+  PRECONDITION(a2,"bad atom");
+  //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
   bool res = a1->Match(a2);
-  //std::cout << "\t\tatomCompat: "<< a1->getIdx() << "-" << a2->getIdx() << ": " << res << std::endl;
   return res;
 }
 
 bool bondCompat(Bond const *b1,Bond const *b2){
+  PRECONDITION(b1,"bad bond");
+  PRECONDITION(b2,"bad bond");
   bool res = b1->Match(b2);
   //std::cout << "\t\tbondCompat: "<< b1->getIdx() << "-" << b2->getIdx() << ": " << res << std::endl;
   return res;
 }
 
 void MolToVFGraph(const ROMol &mol,ARGEdit *vgEd){
+  PRECONDITION(vgEd,"bad argument");
   ROMol::ConstAtomIterator atomIt;
   for(atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();atomIt++){
     vgEd->InsertNode((void *)*atomIt);
