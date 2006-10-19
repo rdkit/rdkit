@@ -57,7 +57,7 @@ testCanon.o: testCanon.cpp
 
 testExecs/testCanon.exe: testCanon.o $(RDGRAPHLIB)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(RDSMILES) \
-	$(RDSUBSTRUCT) $(RDKIT) $(VFLIB) $(RDGENERAL) $(RDGEOMETRY)
+	$(RDSUBSTRUCT) $(RDSMILES) $(RDKIT) $(VFLIB) $(RDGENERAL) $(RDGEOMETRY)
 
 testExecs/testPickler.exe: testPickler.o $(RDGRAPHLIB)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(RDSMILES) \
