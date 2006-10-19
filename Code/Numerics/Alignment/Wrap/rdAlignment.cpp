@@ -11,6 +11,7 @@
 
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
+#include <Geometry/point.h>
 
 #include <Numerics/Alignment/AlignPoints.h>
 
