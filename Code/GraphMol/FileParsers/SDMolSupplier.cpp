@@ -336,7 +336,13 @@ namespace RDKit {
     return df_end;
   }
 
-  
+  void SDMolSupplier::setStreamIndices(const std::vector<std::streampos> &locs){
+    d_molpos.clear();
+    d_molpos.resize(locs.size());
+    std::copy(locs.begin(),locs.end(),d_molpos.begin());
+    this->reset();
+    d_len = d_molpos.size();
+  }
 }
  
 

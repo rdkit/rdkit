@@ -1002,6 +1002,36 @@ void testIssue381() {
   delete sdsup;
 }
 
+void testSetStreamIndices() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+  int tmpIndices[16]={0, 2136, 6198, 8520, 11070, 12292, 14025, 15313, 17313, 20125, 22231,
+				     23729, 26147, 28331, 32541, 33991};
+  std::vector<std::streampos> indices(tmpIndices,tmpIndices+16);
+  SDMolSupplier *sdsup;
+
+  ROMol *nmol=0;  
+  int count;
+  
+  sdsup = new SDMolSupplier(fname);
+  sdsup->setStreamIndices(indices);
+  TEST_ASSERT(!sdsup->atEnd());
+  TEST_ASSERT(sdsup->length()==16);
+  
+  count = 0;
+  while(!sdsup->atEnd()){
+    nmol = sdsup->next();
+    if(nmol) delete nmol;
+    count++;
+  }
+  TEST_ASSERT(sdsup->atEnd());
+  TEST_ASSERT(count==16);
+  
+  TEST_ASSERT(sdsup->length()==16);
+
+  delete sdsup;
+}
+
 
 int main() {
   RDLog::InitLogs();
@@ -1105,11 +1135,15 @@ int main() {
   BOOST_LOG(rdErrorLog) <<"Finished: testSDErrorHandling()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-#endif
-
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testIssue381();
   BOOST_LOG(rdErrorLog) <<"Finished: testIssue381()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+#endif
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSetStreamIndices();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSetStreamIndices()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   

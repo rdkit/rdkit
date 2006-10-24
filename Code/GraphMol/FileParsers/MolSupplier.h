@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2006 Rational Discovery LLC
+//  Copyright (C) 2002-2006 greg landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -69,6 +69,11 @@ namespace RDKit {
 
   public:
     SDMolSupplier() { init(); };
+
+    /*! 
+     *   \param fileName - the name of the SD file
+     *   \param sanitize - if true sanitize the molecule before returning it
+     */
     explicit SDMolSupplier(const std::string &fileName, bool sanitize=true);
     
     ~SDMolSupplier();
@@ -80,7 +85,19 @@ namespace RDKit {
     ROMol * operator[](unsigned int idx);
     unsigned int length();
     void setData(const std::string &text,bool sanitize=true);
-    
+
+    /*! Resets our internal state and sets the indices of molecules in the stream.
+     *  The client should be *very* careful about calling this method, as it's trivial
+     *  to end up with a completely useless supplier.
+     *
+     *   \param args - the vector of stream positions.
+     *
+     *  Note that this can be used not only to make reading selected molecules from a
+     *  large SD file much faster, but it can also allow subsetting an SD file or
+     *  rearranging the order of the molecules.
+     */
+    void setStreamIndices(const std::vector<std::streampos> &locs);
+
   private :
     void readMolProps(ROMol *);
     void checkForEnd();
