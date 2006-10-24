@@ -27,7 +27,7 @@ tests=[
   ("python","test_list.py",{'dir':'Descriptors'}),
   ("python","test_list.py",{'dir':'MolChemicalFeatures'}),
   ("python","test_list.py",{'dir':'MolAlign'}),
-  ("python","test_list.py",{'dir':'ShapeHelpers'})
+  ("python","test_list.py",{'dir':'ShapeHelpers'}),
   ("python","test_list.py",{'dir':'ChemTransforms'})
   ]
 
