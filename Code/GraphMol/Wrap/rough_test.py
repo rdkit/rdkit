@@ -1373,6 +1373,42 @@ CAS<~>
     self.failUnless(Chem.MolToSmiles(m,rootedAtAtom=1)=='N(C)(C)C')
     
 
+  def test41SetStreamIndices(self) :
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+            "192", "203", "210", "211", "213", "220", "229", "256"]
+    indices=[0, 2136, 6198, 8520, 11070, 12292, 14025, 15313, 17313, 20125, 22231,
+	     23729, 26147, 28331, 32541, 33991]
+    sdSup._SetStreamIndices(indices)
+    assert len(sdSup) == 16
+    mol = sdSup[5]
+    assert mol.GetProp("_Name") == "170"
+    
+    i = 0
+    for mol in sdSup :
+      assert mol
+      assert mol.GetProp("_Name") == molNames[i]
+      i += 1
+          
+    ns = [mol.GetProp("_Name") for mol in sdSup]
+    assert ns == molNames
+
+    # this can also be used to skip molecules in the file:
+    indices=[0, 6198, 12292]
+    sdSup._SetStreamIndices(indices)
+    assert len(sdSup) == 3
+    mol = sdSup[2]
+    assert mol.GetProp("_Name") == "170"
+
+    # or to reorder them:
+    indices=[0, 12292, 6198]
+    sdSup._SetStreamIndices(indices)
+    assert len(sdSup) == 3
+    mol = sdSup[1]
+    assert mol.GetProp("_Name") == "170"
+
 
 if __name__ == '__main__':
   unittest.main()

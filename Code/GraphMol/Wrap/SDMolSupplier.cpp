@@ -12,12 +12,24 @@
 //ours
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/PySequenceHolder.h>
 
 #include "MolSupplier.h"
 
 namespace python = boost::python;
 
 namespace RDKit {
+  void setStreamIndices(SDMolSupplier &self,python::object arg){
+    std::vector<std::streampos> loc;
+    PySequenceHolder<int> seq(arg);
+    loc.reserve(seq.size());
+    for(unsigned int i=0;i<seq.size();++i){
+      loc.push_back(static_cast<std::streampos>(seq[i]));
+    }
+    self.setStreamIndices(loc);
+  }
+
+
   std::string sdMolSupplierClassDoc="A class which supplies molecules from an SD file.\n \
 \n \
   Usage examples:\n \
@@ -65,6 +77,9 @@ namespace RDKit {
 	.def("SetData", &SDMolSupplier::setData,
 	     "Sets the text to be parsed",
 	     (python::arg("self"),python::arg("data"),python::arg("sanitize")=true))
+	.def("_SetStreamIndices", setStreamIndices,
+	     "Sets the locations of mol beginnings in the input stream. Be *very* careful with this method.",
+	     (python::arg("self"),python::arg("locs")))
 	;
     };
   };
