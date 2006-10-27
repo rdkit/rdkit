@@ -8,9 +8,9 @@
 
 #ifdef WIN32
 #ifdef CALGORITHMS_EXPORTS
-#define CALGORITHMS_API extern  __declspec(dllexport)
+#define CALGORITHMS_API extern "C" __declspec(dllexport)
 #else
-#define CALGORITHMS_API extern  __declspec(dllimport)
+#define CALGORITHMS_API extern "C" __declspec(dllimport)
 #endif
 #include <windows.h>
 #else  // WIN32
@@ -32,9 +32,4 @@ CALGORITHMS_API void initClustering(void);
 #ifndef PYTH_FILE_WITH_INIT
   #define NO_IMPORT_ARRAY
 #endif
-
-
-
-#include <stdio.h>
-#include <malloc.h>
 

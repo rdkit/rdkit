@@ -1,9 +1,12 @@
+// $Id$
 //
-//  Copyright (C) 2002,2003 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
 //     All Rights Reserved
 //
 #define PYTH_FILE_WITH_INIT
 #include "Clustering.h"
+#include <stdio.h>
+#include <malloc.h>
 #include <Numeric/arrayobject.h>
 
 
