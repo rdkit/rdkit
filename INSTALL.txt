@@ -1,0 +1,18 @@
+Unfortunately there's not a lot of install documentation. Take a look
+in:
+ - $RDBASE/Docs/SoftwareRequirements.sh
+ - $RDBASE/Scripts/NightlyBuildAndTest.sh
+to see some info about additional requirements and how to get things
+built.
+
+In brief, once you have all the requirements installed, and the
+environment variables set, you should be able to do:
+1) cd $RDBASE/External
+2) make
+3) cd $RDBASE/Code
+4) make all
+5) make regrs
+
+If you encounter problems, please ask on the mailing list
+(http://sourceforge.net/mailarchive/forum.php?forum_id=48674) so that
+we can try and get this documentation in better shape.
