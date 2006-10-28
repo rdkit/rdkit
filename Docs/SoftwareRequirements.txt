@@ -1,11 +1,13 @@
-Required pieces for the Rational Discovery software
-Last update: $Date: 2002/08/20 23:43:25 $
-By: greg Landrum
+Required pieces for RDKit
+Last update: $Date$
+By: $Author$
 
 
 A. Required Python and the like:
    1) Python 2.3 or later 
    2) Numeric Python (numpy.sourceforge.net)
+
+   Not absolutely required, but very useful:
    3) pyPgSQL (http://pypgsql.sourceforge.net/)
    4) PIL: the python imaging library
       (http://www.pythonware.com/products/pil/index.htm)
@@ -30,11 +32,12 @@ C. Optional, but useful things to have on windows:
 
 D. Required environment variables:
    - RDBASE pointing to the root of the distribution
+   - BOOSTHOME (for example /usr/local)
    - BOOSTBASE (for example boost-1_33)
    - On Linux:
      - PYTHON_ROOT (for example /usr or /usr/local)
      - PYTHON_VERSION (for example 2.4)
-     - RDOPTFLAGS (for example -O3) 
-     - 
+     - RDF77LIBS if you need to link an additional library to use the system LAPACK
+
 
 
