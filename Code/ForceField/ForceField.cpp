@@ -190,16 +190,6 @@ namespace ForceFields {
 
     this->initDistanceMatrix();
 
-#if 0
-    std::cout << "************ Es" << std::endl;
-    for(unsigned int i=0;i<d_positions.size();++i){
-      std::cout << "\t" << i;
-      for (unsigned int j=0;j < d_dimension; ++j) {
-	std::cout << " " << pos[d_dimension*i+j];
-      }
-      std::cout << std::endl;
-    }
-#endif
     // now loop over the contribs
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
 	contrib != d_contribs.end();contrib++){
@@ -242,30 +232,9 @@ namespace ForceFields {
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
 	contrib != d_contribs.end();contrib++){
       (*contrib)->getGrad(pos,grad);
-#if 0
-      for(unsigned int i=0;i<d_positions.size();++i){
-	if(grad[3*i]!=grad[3*i]){
-	  std::cout << "NaN found" << std::endl;
-	  ContribPtr contribP=*contrib;
-	  std::cout << "\t\t" << typeid(*(contribP.get())).name() << std::endl;
-	}
-      }
-#endif
-
     }
 
 
-#if 0
-    std::cout << "GRAD:" << std::endl;
-    unsigned int dim = this->dimension();
-    for(unsigned int i=0;i<d_positions.size();++i){
-      std::cout << "\t" << i;
-      for (unsigned int di = 0; di < dim; ++di) {
-	std::cout << " " << grad[i*dim + di];
-      }
-      std::cout << " NAN? " << (grad[3*i]!=grad[3*i]) << std::endl;
-    }
-#endif
     for(INT_VECT::const_iterator it=d_fixedPoints.begin();
 	it!=d_fixedPoints.end();it++){
       CHECK_INVARIANT(*it<d_numPoints,"bad fixed point index");
@@ -288,10 +257,6 @@ namespace ForceFields {
     for(unsigned int i=0;i<d_positions.size();i++){
       for (unsigned int di=0; di < this->dimension(); ++di){
 	pos[tab+di] = (*d_positions[i])[di]; //->x;
-#if 0
-	grad[tab+di] = (*d_forces[i])[di]; //->x;
-	
-#endif
       }
       tab+=this->dimension();
     }
@@ -306,11 +271,6 @@ namespace ForceFields {
     for(unsigned int i=0;i<d_positions.size();i++){
       for (unsigned int di=0; di < this->dimension(); ++di){
 	(*d_positions[i])[di] = pos[tab+di];
-	
-#if 0
-	(*d_forces[i])[di] = grad[tab+di]; //->x = grad[tab];
-	      
-#endif
       }
       tab+=this->dimension();
     }
