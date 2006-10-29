@@ -23,10 +23,14 @@ namespace RDKit{
   // boost 1.30, on linux calls to lexical_cast<int>(std::string)
   // crash if the string starts with spaces.
   template <typename T>
-  T stripSpacesAndCast(const std::string &input){
-    std::string trimmed=boost::trim_copy(input);
+  T stripSpacesAndCast(const std::string &input,bool acceptSpaces=false){
     T res;
-    return boost::lexical_cast<T>(trimmed);
+    std::string trimmed=boost::trim_copy(input);
+    if(acceptSpaces && trimmed==""){
+      return 0;
+    } else {
+      return boost::lexical_cast<T>(trimmed);
+    }
     try {
       res = boost::lexical_cast<T>(trimmed);
     }
@@ -217,35 +221,35 @@ namespace RDKit{
     massDiff=0;
     if(text.size()>=36){
       try {
-	massDiff = stripSpacesAndCast<int>(text.substr(34,2));
+        massDiff = stripSpacesAndCast<int>(text.substr(34,2),true);
       }
       catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(34,2) << " to int";
-	throw FileParseException(errout.str()) ;
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(34,2) << " to int";
+        throw FileParseException(errout.str()) ;
       }
     }    
     chg=0;
     if(text.size()>=39){
       try {
-	chg = stripSpacesAndCast<int>(text.substr(36,3));
+        chg = stripSpacesAndCast<int>(text.substr(36,3),true);
       }
       catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(36,3) << " to int";
-	throw FileParseException(errout.str()) ;
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(36,3) << " to int";
+        throw FileParseException(errout.str()) ;
       }
     }
     hCount = 0;
     if(text.size()>=45){
       try {
-	// FIX: go ahead and at least parse the parity field
-	hCount = stripSpacesAndCast<int>(text.substr(42,3));
+        // FIX: go ahead and at least parse the parity field
+        hCount = stripSpacesAndCast<int>(text.substr(42,3),true);
       }
       catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(42,3) << " to int";
-	throw FileParseException(errout.str()) ;
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(42,3) << " to int";
+        throw FileParseException(errout.str()) ;
       }
     }
     if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
@@ -281,56 +285,56 @@ namespace RDKit{
     stereoCare=0;
     if(text.size()>=48){
       try {
-	stereoCare = stripSpacesAndCast<int>(text.substr(45,3));
+        stereoCare = stripSpacesAndCast<int>(text.substr(45,3),true);
       }
       catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(45,3) << " to int";
-	throw FileParseException(errout.str()) ;
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(45,3) << " to int";
+        throw FileParseException(errout.str()) ;
       }
     }
     totValence=0;
     if(text.size()>=51){
       try {
-	totValence= stripSpacesAndCast<int>(text.substr(48,3));
+        totValence= stripSpacesAndCast<int>(text.substr(48,3),true);
       }
       catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(48,3) << " to int";
-	throw FileParseException(errout.str()) ;
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(48,3) << " to int";
+        throw FileParseException(errout.str()) ;
       }
     }
     atomMapNumber=0;
     if(text.size()>=63){
       try {
-	atomMapNumber = stripSpacesAndCast<int>(text.substr(60,3));
+        atomMapNumber = stripSpacesAndCast<int>(text.substr(60,3),true);
       }
       catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(60,3) << " to int";
-	throw FileParseException(errout.str()) ;
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(60,3) << " to int";
+        throw FileParseException(errout.str()) ;
       }
     }
     inversionFlag=0;
     if(text.size()>=66){
       try {
-	inversionFlag= stripSpacesAndCast<int>(text.substr(63,3));
+        inversionFlag= stripSpacesAndCast<int>(text.substr(63,3),true);
       }
       catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(63,3) << " to int";
-	throw FileParseException(errout.str()) ;
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(63,3) << " to int";
+        throw FileParseException(errout.str()) ;
       }
     }
     exactChangeFlag=0;
     if(text.size()>=69){
       try {
-	exactChangeFlag = stripSpacesAndCast<int>(text.substr(66,3));
+        exactChangeFlag = stripSpacesAndCast<int>(text.substr(66,3),true);
       }
       catch (boost::bad_lexical_cast &) {
-	std::ostringstream errout;
-	errout << "Cannot convert " << text.substr(66,3) << " to int";
-	throw FileParseException(errout.str()) ;
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(66,3) << " to int";
+        throw FileParseException(errout.str()) ;
       }
     }
     
@@ -377,26 +381,26 @@ namespace RDKit{
       // it's a query bond of some type
       res = new QueryBond;
       if(bType == 8){
-	BOND_NULL_QUERY *q;
-	q = makeBondNullQuery();
-	res->setQuery(q);
+        BOND_NULL_QUERY *q;
+        q = makeBondNullQuery();
+        res->setQuery(q);
       } else {
-	BOND_OR_QUERY *q;
-	q = new BOND_OR_QUERY;
-	if(bType == 5){
-	  // single or double
-	  q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::SINGLE)));
-	  q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::DOUBLE)));
-	} else if(bType == 6){
-	  // single or aromatic
-	  q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::SINGLE)));
-	  q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::AROMATIC)));      
-	} else if(bType == 7){
-	  // double or aromatic
-	  q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::DOUBLE)));
-	  q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::AROMATIC)));
-	}
-	res->setQuery(q);
+        BOND_OR_QUERY *q;
+        q = new BOND_OR_QUERY;
+        if(bType == 5){
+          // single or double
+          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::SINGLE)));
+          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::DOUBLE)));
+        } else if(bType == 6){
+          // single or aromatic
+          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::SINGLE)));
+          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::AROMATIC)));      
+        } else if(bType == 7){
+          // double or aromatic
+          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::DOUBLE)));
+          q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::AROMATIC)));
+        }
+        res->setQuery(q);
       } 
       break;
       
@@ -407,45 +411,45 @@ namespace RDKit{
 
     if( text.size() >= 12)
       try {
-	stereo = stripSpacesAndCast<int>(text.substr(9,3));
-	//res->setProp("stereo",stereo);
-	switch(stereo){
-	case 0:
-	  res->setBondDir(Bond::NONE);
-	  break;
-	case 1:
-	  res->setBondDir(Bond::BEGINWEDGE);
-	  break;
-	case 6:
-	  res->setBondDir(Bond::BEGINDASH);
-	  break;
-	case 3: // "either" double bond
+        stereo = stripSpacesAndCast<int>(text.substr(9,3));
+        //res->setProp("stereo",stereo);
+        switch(stereo){
+        case 0:
+          res->setBondDir(Bond::NONE);
+          break;
+        case 1:
+          res->setBondDir(Bond::BEGINWEDGE);
+          break;
+        case 6:
+          res->setBondDir(Bond::BEGINDASH);
+          break;
+        case 3: // "either" double bond
           res->setBondDir(Bond::EITHERDOUBLE);
           break;
-	case 4: // "either" single bond
-	  res->setBondDir(Bond::UNKNOWN);
-	  break;
+        case 4: // "either" single bond
+          res->setBondDir(Bond::UNKNOWN);
+          break;
 
-	    
-	}
+            
+        }
       } catch (boost::bad_lexical_cast) {
-	;
+        ;
       }
 #if 1
     if( text.size() >= 18 )
       try {
-	int topology = stripSpacesAndCast<int>(text.substr(15,3));
-	res->setProp("molTopology",topology);
+        int topology = stripSpacesAndCast<int>(text.substr(15,3));
+        res->setProp("molTopology",topology);
       } catch (boost::bad_lexical_cast) {
-	;
+        ;
       }
     
     if( text.size() >= 21 )
       try {
-	int reactStatus = stripSpacesAndCast<int>(text.substr(18,3));
-	res->setProp("molReactStatus",reactStatus);
+        int reactStatus = stripSpacesAndCast<int>(text.substr(18,3));
+        res->setProp("molReactStatus",reactStatus);
       } catch (boost::bad_lexical_cast) {
-	;
+        ;
       }
 #endif    
     return res;
@@ -512,31 +516,31 @@ namespace RDKit{
     try {
       spos = 6;
       if(tempStr.size()>=9)
-	nLists = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nLists = stripSpacesAndCast<int>(tempStr.substr(spos,3));
 
       spos = 12;
       if(tempStr.size()>=spos+3)
-	chiralFlag = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        chiralFlag = stripSpacesAndCast<int>(tempStr.substr(spos,3));
 
       spos = 15;
       if(tempStr.size()>=spos+3)
-	nsText = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nsText = stripSpacesAndCast<int>(tempStr.substr(spos,3));
 
       spos = 18;
       if(tempStr.size()>=spos+3)
-	nRxnComponents = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nRxnComponents = stripSpacesAndCast<int>(tempStr.substr(spos,3));
 
       spos = 21;
       if(tempStr.size()>=spos+3)
-	nReactants   = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nReactants   = stripSpacesAndCast<int>(tempStr.substr(spos,3));
 
       spos = 24;
       if(tempStr.size()>=spos+3)
-	nProducts   = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nProducts   = stripSpacesAndCast<int>(tempStr.substr(spos,3));
 
       spos = 27;
       if(tempStr.size()>=spos+3)
-	nIntermediates = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nIntermediates = stripSpacesAndCast<int>(tempStr.substr(spos,3));
 
     } catch (boost::bad_lexical_cast &) {
       // some SD files (such as some from NCI) lack all the extra information
@@ -544,14 +548,17 @@ namespace RDKit{
     }
 
     try {
+      if(nAtoms<=0){
+        throw FileParseException("molecule has no atoms");
+      }
       int i;
       Conformer *conf = new Conformer(nAtoms);
       for(i=0;i<nAtoms;i++){
         line++;
-	tempStr = getLine(inStream);
-	CHECK_INVARIANT(!inStream->eof(),"premature EOF");
+        tempStr = getLine(inStream);
+        CHECK_INVARIANT(!inStream->eof(),"premature EOF");
         RDGeom::Point3D pos;
-	Atom *atom = ParseMolFileAtomLine(tempStr, pos);
+        Atom *atom = ParseMolFileAtomLine(tempStr, pos);
         unsigned int aid = res->addAtom(atom,false,true);
         conf->setAtomPos(aid, pos);
       }
@@ -559,19 +566,19 @@ namespace RDKit{
 
       for(i=0;i<nBonds;i++){
         line++;
-	tempStr = getLine(inStream);
-	CHECK_INVARIANT(!inStream->eof(),"premature EOF");
-	Bond *bond = ParseMolFileBondLine(tempStr);
-	// if we got an aromatic bond set the flag on the bond and the connected atoms
-	if (bond->getBondType() == Bond::AROMATIC) {
-	  bond->setIsAromatic(true);
-	  res->getAtomWithIdx(bond->getBeginAtomIdx())->setIsAromatic(true);
-	  res->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
-	}
-	// if the bond might have chirality info associated with it, set a flag:
-	if(bond->getBondDir() != Bond::NONE && bond->getBondDir() != Bond::UNKNOWN){
-	  chiralityPossible=true;
-	}
+        tempStr = getLine(inStream);
+        CHECK_INVARIANT(!inStream->eof(),"premature EOF");
+        Bond *bond = ParseMolFileBondLine(tempStr);
+        // if we got an aromatic bond set the flag on the bond and the connected atoms
+        if (bond->getBondType() == Bond::AROMATIC) {
+          bond->setIsAromatic(true);
+          res->getAtomWithIdx(bond->getBeginAtomIdx())->setIsAromatic(true);
+          res->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
+        }
+        // if the bond might have chirality info associated with it, set a flag:
+        if(bond->getBondDir() != Bond::NONE && bond->getBondDir() != Bond::UNKNOWN){
+          chiralityPossible=true;
+        }
         res->addBond(bond,true);
       }
       
@@ -586,13 +593,13 @@ namespace RDKit{
       while(!inStream->eof() && tempStr[0] != 'M'){
         if(tempStr.find("A") == 0){
           line++;
-	  std::string nextLine = getLine(inStream);
-	  if(tempStr.find("M  END") != 0){
+          std::string nextLine = getLine(inStream);
+          if(tempStr.find("M  END") != 0){
             ParseAtomAlias(res,tempStr,nextLine);
           }
         }
         line++;
-	tempStr = getLine(inStream);
+        tempStr = getLine(inStream);
       }
       //tempStr = inLine;
       while(!inStream->eof() && tempStr.find("M  END") != 0 && tempStr.find("$$$$") != 0){
@@ -621,8 +628,8 @@ namespace RDKit{
 
     // calculate explicit valence on each atom:
     for(RWMol::AtomIterator atomIt=res->beginAtoms();
-	atomIt!=res->endAtoms();
-	atomIt++) {
+        atomIt!=res->endAtoms();
+        atomIt++) {
       (*atomIt)->calcExplicitValence();
     }
 
@@ -652,14 +659,14 @@ namespace RDKit{
 
     if (res && sanitize) {
       try {
-	ROMol *tmp=MolOps::removeHs(*res,false,false);
+        ROMol *tmp=MolOps::removeHs(*res,false,false);
         // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry here after
         // sanitization because the rings should have been perceived by now, in order to
         // correctly recognize double bonds that may be cis/trans type
         const Conformer &conf = tmp->getConformer();
         DetectBondStereoChemistry(*tmp, &conf);
-	delete res;
-	res = static_cast<RWMol *>(tmp);
+        delete res;
+        res = static_cast<RWMol *>(tmp);
       }
       catch (MolSanitizeException &se){
         delete res;
@@ -673,7 +680,7 @@ namespace RDKit{
   
 
   RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-			    bool sanitize){
+                            bool sanitize){
     return MolDataStreamToMol(&inStream,line,sanitize);
   };
   //------------------------------------------------
