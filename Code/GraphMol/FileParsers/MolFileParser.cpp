@@ -260,12 +260,12 @@ namespace RDKit{
       else if(symb=="R1") res->setProp("dummyLabel",std::string("Xb"));
       else if(symb=="R2") res->setProp("dummyLabel",std::string("Xc"));
       else if(symb=="R3") res->setProp("dummyLabel",std::string("Xd"));
-      else if(symb=="R4") res->setProp("dummyLabel",std::string("Xe"));
-      else if(symb=="R5") res->setProp("dummyLabel",std::string("Xf"));
-      else if(symb=="R6") res->setProp("dummyLabel",std::string("Xg"));
-      else if(symb=="R7") res->setProp("dummyLabel",std::string("Xh"));
-      else if(symb=="R8") res->setProp("dummyLabel",std::string("Xi"));
-      else if(symb=="R9") res->setProp("dummyLabel",std::string("Xj"));
+      else if(symb=="R4") res->setProp("dummyLabel",std::string("Xf"));
+      else if(symb=="R5") res->setProp("dummyLabel",std::string("Xg"));
+      else if(symb=="R6") res->setProp("dummyLabel",std::string("Xh"));
+      else if(symb=="R7") res->setProp("dummyLabel",std::string("Xi"));
+      else if(symb=="R8") res->setProp("dummyLabel",std::string("Xj"));
+      else if(symb=="R9") res->setProp("dummyLabel",std::string("Xk"));
       else res->setProp("dummyLabel",symb);
     } else {
       res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
