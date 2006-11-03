@@ -22,6 +22,27 @@ bool atomCompat(Atom const *a1,Atom const *a2){
   return res;
 }
 
+bool chiralAtomCompat(Atom const *a1,Atom const *a2){
+  PRECONDITION(a1,"bad atom");
+  PRECONDITION(a2,"bad atom");
+  //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
+  bool res = a1->Match(a2);
+  if(res){
+    if(a1->hasProp("_CIPCode") || a2->hasProp("_CIPCode")){
+      // if either atom has a CIPCode, they need to both have it and match:
+      if(a1->hasProp("_CIPCode") && a2->hasProp("_CIPCode")){
+	std::string s1,s2;
+	a1->getProp("_CIPCode",s1);
+	a2->getProp("_CIPCode",s2);
+	if(s1!=s2) res=false;
+      } else {
+	res=false;
+      }
+    }
+  }
+  return res;
+}
+
 bool bondCompat(Bond const *b1,Bond const *b2){
   PRECONDITION(b1,"bad bond");
   PRECONDITION(b2,"bad bond");

@@ -373,6 +373,74 @@ void test8(){
 }
 #endif
 
+void test9(){
+  std::cout << " ----------------- Test 9 (chiral searches)" << std::endl;
+  MatchVectType matchV;
+  std::vector< MatchVectType > matches;
+  int n;
+
+  RWMol *m,*q1;
+  Atom *a6 = new Atom(6);
+
+  m = new RWMol();
+  m->addAtom(a6);
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(7));
+  m->addAtom(new Atom(8));
+  m->addAtom(new Atom(9));
+  m->addBond(0,1,Bond::SINGLE);
+  m->addBond(0,2,Bond::SINGLE);
+  m->addBond(0,3,Bond::SINGLE);
+  m->addBond(0,4,Bond::SINGLE);
+  m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  
+  q1 = new RWMol();
+  q1->addAtom(a6);
+  q1->addAtom(new Atom(6));
+  q1->addAtom(new Atom(7));
+  q1->addAtom(new Atom(8));
+  q1->addAtom(new Atom(9));
+  q1->addBond(0,1,Bond::SINGLE);
+  q1->addBond(0,2,Bond::SINGLE);
+  q1->addBond(0,3,Bond::SINGLE);
+  q1->addBond(0,4,Bond::SINGLE);
+  q1->getAtomWithIdx(0)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+
+  MolOps::sanitizeMol(*m);
+  MolOps::assignAtomChiralCodes(*m);
+  MolOps::sanitizeMol(*q1);
+  MolOps::assignAtomChiralCodes(*q1);
+
+  bool found;
+  // test with default options (no chirality):
+  found = SubstructMatch(*m,*q1,matchV);
+  TEST_ASSERT(found);
+  n = SubstructMatch(*m,*q1,matches,true);
+  TEST_ASSERT(n==1);
+
+  // test with chirality
+  found = SubstructMatch(*m,*q1,matchV,true,true);
+  TEST_ASSERT(!found);
+  n = SubstructMatch(*m,*q1,matches,true,true,true);
+  TEST_ASSERT(n==0);
+
+  // self matches:
+  found = SubstructMatch(*m,*m,matchV,true,true);
+  TEST_ASSERT(found);
+  n = SubstructMatch(*m,*m,matches,true,true,true);
+  TEST_ASSERT(n==1);
+  found = SubstructMatch(*q1,*q1,matchV,true,true);
+  TEST_ASSERT(found);
+  n = SubstructMatch(*q1,*q1,matches,true,true,true);
+  TEST_ASSERT(n==1);
+
+
+
+  
+  std::cout << "Done\n" << std::endl;
+}
+
+
 int main(int argc,char *argv[])
 {
   test1();  
@@ -386,6 +454,7 @@ int main(int argc,char *argv[])
 #ifdef CACHE_ARMOLGRAPHS
   test8();
 #endif
+  test9();  
   return 0;
 }
 

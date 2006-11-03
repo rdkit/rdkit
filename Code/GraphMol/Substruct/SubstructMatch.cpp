@@ -33,7 +33,6 @@ namespace SubstructLocal {
   AR_MOLGRAPH *getMolGraph(const ROMol &mol){
     AR_MOLGRAPH *molG=0;
 #ifdef CACHE_ARMOLGRAPHS
-    // FIX: this stuff does not work
     if(mol.hasProp("_SubstructGraphPtr")){
       unsigned int idx;
       mol.getProp("_SubstructGraphPtr",idx);
@@ -59,17 +58,17 @@ namespace SubstructLocal {
     return molG;
   }
 
-  void MatchSubqueries(AR_MOLGRAPH *molG,QueryAtom::QUERYATOM_QUERY *q);
+  void MatchSubqueries(AR_MOLGRAPH *molG,QueryAtom::QUERYATOM_QUERY *q,bool useChirality);
 
   // ----------------------------------------------
   //
   // find one match
   //
   bool SubstructMatch(const ROMol &mol,const ROMol &query,MatchVectType &matchVect,
-                      bool recursionPossible)
+                      bool recursionPossible,bool useChirality)
   {
     AR_MOLGRAPH *molG = getMolGraph(mol);
-    bool res = SubstructMatch(molG,query,matchVect,recursionPossible);
+    bool res = SubstructMatch(molG,query,matchVect,recursionPossible,useChirality);
 #ifndef CACHE_ARMOLGRAPHS
     delete molG;
 #endif
@@ -77,19 +76,23 @@ namespace SubstructLocal {
   }
 
   bool SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,MatchVectType &matchVect,
-                      bool recursionPossible){
+                      bool recursionPossible,bool useChirality){
     PRECONDITION(molG,"bad molecule");
 
     if(recursionPossible){
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
-          MatchSubqueries(molG,(*atIt)->getQuery());
+          MatchSubqueries(molG,(*atIt)->getQuery(),useChirality);
         }
       }
     }
     AR_MOLGRAPH *queryG = getMolGraph(query);
-    queryG->SetNodeCompat(atomCompat);
+    if(!useChirality){
+      queryG->SetNodeCompat(atomCompat);
+    } else {
+      queryG->SetNodeCompat(chiralAtomCompat);
+    }
     queryG->SetEdgeCompat(bondCompat);
 
     int nQueryAtoms;
@@ -126,18 +129,20 @@ namespace SubstructLocal {
   //  NOTE: this blows out the contents of matches
   //
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
-                     std::vector< MatchVectType > &matches,
-                     bool uniquify,bool recursionPossible) {
+			      std::vector< MatchVectType > &matches,
+			      bool uniquify,bool recursionPossible,
+			      bool useChirality) {
     AR_MOLGRAPH *molG = getMolGraph(mol);
-    unsigned int res = SubstructMatch(molG,query,matches,uniquify,recursionPossible);
+    unsigned int res = SubstructMatch(molG,query,matches,uniquify,recursionPossible,useChirality);
 #ifndef CACHE_ARMOLGRAPHS
     delete molG;
 #endif
     return res;
   }
   unsigned int SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
-                     std::vector< MatchVectType > &matches,
-                     bool uniquify,bool recursionPossible)
+			      std::vector< MatchVectType > &matches,
+			      bool uniquify,bool recursionPossible,
+			      bool useChirality)
   {
     PRECONDITION(molG,"bad molecule pointer");
 
@@ -145,13 +150,17 @@ namespace SubstructLocal {
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
-          MatchSubqueries(molG,(*atIt)->getQuery());
+          MatchSubqueries(molG,(*atIt)->getQuery(),useChirality);
         }
       }
     }
 
     AR_MOLGRAPH *queryG = getMolGraph(query);
-    queryG->SetNodeCompat(atomCompat);
+    if(!useChirality){
+      queryG->SetNodeCompat(atomCompat);
+    } else {
+      queryG->SetNodeCompat(chiralAtomCompat);
+    }
     queryG->SetEdgeCompat(bondCompat);
 
     MatcherState s0(queryG,molG);
@@ -184,7 +193,7 @@ namespace SubstructLocal {
   // Intended for internal use 
   //
   unsigned int RecursiveMatcher(AR_MOLGRAPH *molG,const ROMol &query,
-                       std::vector< int > &matches)
+				std::vector< int > &matches,bool useChirality)
   {
     PRECONDITION(molG,"bad molecule");
     //std::cout << " >>> RecursiveMatcher: " << int(query) << std::endl;
@@ -193,12 +202,16 @@ namespace SubstructLocal {
     ROMol::ConstAtomIterator atIt;
     for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
       if((*atIt)->getQuery()){
-        MatchSubqueries(molG,(*atIt)->getQuery());
+        MatchSubqueries(molG,(*atIt)->getQuery(),useChirality);
       }
     }
  
     AR_MOLGRAPH *queryG = getMolGraph(query);
-    queryG->SetNodeCompat(atomCompat);
+    if(!useChirality){
+      queryG->SetNodeCompat(atomCompat);
+    } else {
+      queryG->SetNodeCompat(chiralAtomCompat);
+    }
     queryG->SetEdgeCompat(bondCompat);
 
     MatcherState s0(queryG,molG);
@@ -221,7 +234,7 @@ namespace SubstructLocal {
   }
 
 
-  void MatchSubqueries(AR_MOLGRAPH  *molG,QueryAtom::QUERYATOM_QUERY *query){
+  void MatchSubqueries(AR_MOLGRAPH  *molG,QueryAtom::QUERYATOM_QUERY *query,bool useChirality){
     PRECONDITION(molG,"bad molecule");
     PRECONDITION(query,"bad query");
     //std::cout << "*-*-* MS: " << (int)query << std::endl;
@@ -233,7 +246,7 @@ namespace SubstructLocal {
       rsq->clear();
       if(queryMol){
         std::vector< int > matchStarts;
-        unsigned int res = RecursiveMatcher(molG,*queryMol,matchStarts);
+        unsigned int res = RecursiveMatcher(molG,*queryMol,matchStarts,useChirality);
         if(res){
           for(std::vector<int>::iterator i=matchStarts.begin();
               i!=matchStarts.end();
@@ -250,7 +263,7 @@ namespace SubstructLocal {
     Queries::Query<int,Atom const*,true>::CHILD_VECT_CI childIt;
     //std::cout << query << " " << query->endChildren()-query->beginChildren() <<  std::endl;
     for(childIt=query->beginChildren();childIt!=query->endChildren();childIt++){
-      MatchSubqueries(molG,childIt->get());
+      MatchSubqueries(molG,childIt->get(),useChirality);
     }
     //std::cout << "<<- back " << (int)query << std::endl;
   }

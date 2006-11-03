@@ -44,17 +44,20 @@ namespace SubstructLocal {
       \param matchVect Used to return the match
                        (pre-existing contents will be deleted)
       \param recursionPossible  flags whether or not recursive matches are allowed
+      \param useChirality  use atomic CIP codes as part of the comparison
 
       \return whether or not a match was found
     
   */
   bool SubstructMatch(const ROMol &mol,const ROMol &query,
 		      MatchVectType &matchVect,
-		      bool recursionPossible=true);
+		      bool recursionPossible=true,
+		      bool useChirality=false);
   //! \overload
   bool SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
 		      MatchVectType &matchVect,
-		      bool recursionPossible=true);
+		      bool recursionPossible=true,
+		      bool useChirality=false);
 
   //! Find all substructure matches for a query in a molecule
   /*!
@@ -64,17 +67,20 @@ namespace SubstructLocal {
                        (pre-existing contents will be deleted)
       \param uniquify  Toggles uniquification (by atom index) of the results
       \param recursionPossible  flags whether or not recursive matches are allowed
+      \param useChirality  use atomic CIP codes as part of the comparison
 
       \return the number of matches found
     
   */
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
-		     std::vector< MatchVectType > &matchVect,
-		     bool uniquify=true,bool recursionPossible=true);
+			      std::vector< MatchVectType > &matchVect,
+			      bool uniquify=true,bool recursionPossible=true,
+			      bool useChirality=false);
   //! \overload
   unsigned int SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
-		     std::vector< MatchVectType > &matchVect,
-		     bool uniquify=true,bool recursionPossible=true);
+			      std::vector< MatchVectType > &matchVect,
+			      bool uniquify=true,bool recursionPossible=true,
+			      bool useChirality=false);
 }
 
 #endif

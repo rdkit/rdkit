@@ -976,6 +976,23 @@ mol-4,CCOC
     assert Chem.MolToSmiles(m1,1)=='CC1C[C@@]1(F)Cl',Chem.MolToSmiles(m1,1)
 
 
+  def test31aChiralitySubstructs(self) :
+    m1 = Chem.MolFromSmiles('CC1C[C@@]1(Cl)F')
+    assert m1 is not None
+    assert m1.GetNumAtoms()==6
+    assert Chem.MolToSmiles(m1,1)=='CC1C[C@]1(F)Cl',Chem.MolToSmiles(m1,1)
+
+    m2 = Chem.MolFromSmiles('CC1C[C@]1(Cl)F')
+    assert m2 is not None
+    assert m2.GetNumAtoms()==6
+    assert Chem.MolToSmiles(m2,1)=='CC1C[C@@]1(F)Cl',Chem.MolToSmiles(m2,1)
+
+    self.failUnless(m1.HasSubstructMatch(m1))
+    self.failUnless(m1.HasSubstructMatch(m2))
+    self.failUnless(m1.HasSubstructMatch(m1,useChirality=True))
+    self.failUnless(not m1.HasSubstructMatch(m2,useChirality=True))
+
+    
     
 
   def _test32MolFilesWithChirality(self) :

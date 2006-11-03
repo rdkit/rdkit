@@ -43,7 +43,7 @@ namespace RDKit {
   };
 
   bool HasSubstructMatchStr(std::string pkl, const ROMol &query,
-			    bool recursionPossible=true) {
+			    bool recursionPossible=true,bool useChirality=false) {
     ROMol *mol;
     try {
       mol = new ROMol(pkl);
@@ -54,15 +54,15 @@ namespace RDKit {
       throw ValueErrorException("Null Molecule");
     }
     MatchVectType res;
-    bool hasM=SubstructMatch(*mol,query,res,recursionPossible);
+    bool hasM=SubstructMatch(*mol,query,res,recursionPossible,useChirality);
     delete mol;
     return hasM;
   }
 
   bool HasSubstructMatch(const ROMol &mol, const ROMol &query,
-			 int recursionPossible=1) {
+			 bool recursionPossible=true,bool useChirality=false) {
     MatchVectType res;
-    return SubstructMatch(mol,query,res,recursionPossible);
+    return SubstructMatch(mol,query,res,recursionPossible,useChirality);
   }
 
   PyObject *convertMatches(MatchVectType &matches){
@@ -73,15 +73,15 @@ namespace RDKit {
     }
     return res;
   }
-  PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query) {
+  PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,bool useChirality=false) {
     MatchVectType matches;
-    SubstructMatch(mol,query,matches,1);
+    SubstructMatch(mol,query,matches,true,useChirality);
     return convertMatches(matches);
   }
 
-  PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,bool uniquify=true) {
+  PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,bool uniquify=true,bool useChirality=false) {
     std::vector< MatchVectType >  matches;
-    int matched = SubstructMatch(mol,query,matches,uniquify,1);
+    int matched = SubstructMatch(mol,query,matches,uniquify,true,useChirality);
     PyObject *res = PyTuple_New(matched);
     for(int idx=0;idx<matched;idx++){
       PyTuple_SetItem(res,idx,convertMatches(matches[idx]));
@@ -312,16 +312,21 @@ struct mol_wrapper {
       // substructures
       .def("HasSubstructMatch",HasSubstructMatch,
 	   (python::arg("self"),python::arg("query"),
-	    python::arg("recursionPossible")=true),
+	    python::arg("recursionPossible")=true,
+	    python::arg("useChirality")=false),
 	   "Queries whether or not the molecule contains a particular substructure.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - query: a Molecule\n\n"
 	   "    - recursionPossible: (optional)\n\n"
+	   "    - useChirality: (optional)\n\n"
 	   "  RETURNS: 1 or 0\n")
       .def("GetSubstructMatch",GetSubstructMatch,
+	   (python::arg("self"),python::arg("query"),
+	    python::arg("useChirality")=false),
 	   "Returns the indices of the molecule's atoms that match a substructure query.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - query: a Molecule\n\n"
+	   "    - useChirality: (optional)\n\n"
 	   "  RETURNS: a tuple of integers\n\n"
 	   "  NOTES:\n"
 	   "     - only a single match is returned\n"
@@ -333,12 +338,14 @@ struct mol_wrapper {
       .def("GetSubstructMatches",
 	   GetSubstructMatches,
 	   (python::arg("self"),python::arg("query"),
-	    python::arg("uniquify")=true),
+	    python::arg("uniquify")=true,
+	    python::arg("useChirality")=false),
 	   "Returns tuples of the indices of the molecule's atoms that match a substructure query.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - query: a Molecule.\n"
 	   "    - uniquify: (optional) determines whether or not the matches are uniquified.\n"
 	   "                Defaults to 1.\n\n"
+	   "    - useChirality: (optional)\n\n"
 	   "  RETURNS: a tuple of tuples of integers\n\n"
 	   "  NOTE:\n"
 	   "     - the ordering of the indices corresponds to the atom ordering\n"
@@ -378,6 +385,10 @@ struct mol_wrapper {
 
       .def("ClearComputedProps", MolClearComputedProps,
 	   "Removes all computed properties from the molecule.\n\n")
+
+      .def("UpdatePropertyCache", &ROMol::updatePropertyCache,
+	   (python::arg("self"),python::arg("strict")=true),
+	    "Regenerates computed properties like implicit valence and ring information.\n\n")
 
 
       .def("GetPropNames",MolGetPropNames,
@@ -483,7 +494,8 @@ struct mol_wrapper {
     python::def("_HasSubstructMatchStr",
                 HasSubstructMatchStr,
                 (python::arg("pkl"),python::arg("query"),
-		 python::arg("recursionPossible")=true),
+		 python::arg("recursionPossible")=true,
+		 python::arg("useChirality")=false),
 		"This function is included to speed substructure queries from databases, \n"
 		"it's probably not of\n"
 		"general interest.\n\n"
@@ -491,6 +503,7 @@ struct mol_wrapper {
 		"    - pkl: a Molecule pickle\n\n"
 		"    - query: a Molecule\n\n"
 		"    - recursionPossible: (optional)\n\n"
+		"    - useChirality: (optional)\n\n"
 		"  RETURNS: 1 or 0\n");
 
     
