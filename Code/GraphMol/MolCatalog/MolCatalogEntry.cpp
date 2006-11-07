@@ -22,6 +22,15 @@ namespace RDKit {
     d_order=0;
     dp_mol = omol;
   }
+
+  MolCatalogEntry::MolCatalogEntry(const MolCatalogEntry &other){
+    setBitId(other.getBitId()); 
+    d_descrip=other.d_descrip;
+    d_order=other.d_order;
+    dp_props = new Dict(*other.dp_props);
+    dp_mol = new ROMol(*other.dp_mol);
+  }
+
   MolCatalogEntry::~MolCatalogEntry() { 
     if(dp_mol){
       delete dp_mol;

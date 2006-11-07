@@ -21,6 +21,7 @@ namespace RDKit {
       setBitId(-1); 
     }
 
+    MolCatalogEntry(const MolCatalogEntry &other);
     MolCatalogEntry(const ROMol *omol);
     MolCatalogEntry::MolCatalogEntry(const std::string &pickle){
       dp_props = new Dict();
