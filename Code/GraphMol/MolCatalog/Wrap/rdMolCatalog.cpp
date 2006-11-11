@@ -56,16 +56,6 @@ namespace {
       throw_index_error(idx);
     return self->getEntryWithBitId(idx)->getDescription();
   }
-  unsigned int GetEntryOrder(const MolCatalog *self,unsigned int idx){
-    if(idx > self->getNumEntries())
-      throw_index_error(idx);
-    return self->getEntryWithIdx(idx)->getOrder();
-  }
-  unsigned int GetBitOrder(const MolCatalog *self,unsigned int idx){
-    if(idx > self->getFPLength())
-      throw_index_error(idx);
-    return self->getEntryWithBitId(idx)->getOrder();
-  }
   INT_VECT GetEntryDownIds(const MolCatalog *self,unsigned int idx){
     if(idx > self->getNumEntries())
       throw_index_error(idx);
@@ -86,23 +76,23 @@ namespace {
   const ROMol &catalogEntryGetMol(MolCatalogEntry &self){
     return *self.getMol();
   }
-  
+
+  MolCatalog *createMolCatalog(){
+    return new MolCatalog(new MolCatalogParams());
+  }
   struct MolCatalog_wrapper {
     static void wrap() {
 
-      python::class_<MolCatalog>("MolCatalog", python::init<>())
-	.def(python::init<const std::string &>())
+      python::class_<MolCatalog>("MolCatalog",python::init<const std::string &>())
 	.def("GetNumEntries", &MolCatalog::getNumEntries)
 	.def("GetFPLength", &MolCatalog::getFPLength)
 	.def("Serialize", &MolCatalog::Serialize)
 
 	.def("GetBitDescription", GetBitDescription)
-	.def("GetBitOrder", GetBitOrder)
 	.def("GetBitEntryId", GetBitEntryId)
 
 	.def("GetEntryBitId", GetEntryBitId)
 	.def("GetEntryDescription", GetEntryDescription)
-	.def("GetEntryOrder", GetEntryOrder)
 	.def("GetEntryDownIds", GetEntryDownIds)
 
 	.def("AddEntry",AddEntry)
@@ -110,8 +100,9 @@ namespace {
       
 	// enable pickle support
 	.def_pickle(molcatalog_pickle_suite())
-
 	;
+      python::def("CreateMolCatalog",createMolCatalog,
+		  python::return_value_policy<python::manage_new_object>());
     };
   };
   struct MolCatalogEntry_wrapper {
@@ -121,11 +112,8 @@ namespace {
 	.def(python::init<const std::string &>())
 	.def("GetDescription", &MolCatalogEntry::getDescription)
 	.def("SetDescription", &MolCatalogEntry::setDescription)
-	.def("GetOrder", &MolCatalogEntry::getOrder)
 	.def("GetMol", catalogEntryGetMol,
 	     python::return_internal_reference<1>())
-	//.def("GetMol", &MolCatalogEntry::getMol,
-	//     python::return_value_policy<python::reference_existing_object>())
 	.def("SetMol", catalogEntrySetMol)
 
 	// enable pickle support

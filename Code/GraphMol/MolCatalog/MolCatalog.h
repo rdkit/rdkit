@@ -11,7 +11,6 @@
 
 namespace RDKit {
   typedef RDCatalog::HierarchCatalog<MolCatalogEntry, MolCatalogParams, int> MolCatalog;
-
 }
 
 #endif    

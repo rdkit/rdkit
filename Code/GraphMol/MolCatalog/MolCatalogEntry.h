@@ -35,6 +35,7 @@ namespace RDKit {
     void setDescription(std::string val) {d_descrip = val;}
 
     unsigned int getOrder() const { return d_order; };
+    void setOrder(unsigned int order) { d_order=order; };
     
     const ROMol *getMol() const { return dp_mol; };
     void setMol(const ROMol *molPtr);

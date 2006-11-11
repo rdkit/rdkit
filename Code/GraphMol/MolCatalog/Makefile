@@ -4,22 +4,22 @@ CXXFLAGS=$(BASECXXFLAGS) $(VFLIBINC)
 LDFLAGS=$(RDCATALOGS) $(RDSMILES) $(RDFILEPARSE) $(RDKIT) $(RDBITVECS) $(VFLIB) $(RDGENERAL) $(RDGEOMETRY)
 SOURCES=MolCatalogEntry.cpp MolCatalogParams.cpp
 
-$(RDMOLCATALOGLIB): $(OBJS)
+$(RDMOLCATALOG): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(SOFLAGS) -o $@ $^
 
-static: $(RDMOLCATALOGLIB_S)
+static: $(RDMOLCATALOG_S)
 
-$(RDMOLCATALOGLIB_S): $(OBJS)
+$(RDMOLCATALOG_S): $(OBJS)
 	ar -rv $@ $?
 
-install: $(RDMOLCATALOGLIB)
-	cp $(RDMOLCATALOGLIB) $(RDBASE)/bin
+install: $(RDMOLCATALOG)
+	cp $(RDMOLCATALOG) $(RDBASE)/bin
 
-testExecs/test1.exe: test1.o $(RDMOLCATALOGLIB)
+testExecs/test1.exe: test1.o $(RDMOLCATALOG)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(RDMOLCATALOG) $(LDFLAGS)
 
 clean:
-	rm -f $(OBJS) test1.o $(RDMOLCATALOGLIB) $(RDMOLCATALOGLIB_S) testExecs/test1.exe $(DEPENDS)
+	rm -f $(OBJS) test1.o $(RDMOLCATALOG) $(RDMOLCATALOG_S) testExecs/test1.exe $(DEPENDS)
 
 regrs: testExecs/test1.exe
 

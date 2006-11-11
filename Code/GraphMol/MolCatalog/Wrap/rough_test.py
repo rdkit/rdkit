@@ -11,7 +11,7 @@ from Chem import MolCatalog
 
 class TestCase(unittest.TestCase):
   def test1(self):
-    cat = MolCatalog.MolCatalog()
+    cat = MolCatalog.CreateMolCatalog()
     es = []
     for smi in ('C1CCC1OC','C1CCC1','C'):
       m = Chem.MolFromSmiles(smi)

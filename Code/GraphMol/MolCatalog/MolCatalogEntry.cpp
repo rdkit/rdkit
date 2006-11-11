@@ -19,14 +19,12 @@ namespace RDKit {
     setBitId(-1); 
     dp_props = new Dict();
     d_descrip="";
-    d_order=0;
     dp_mol = omol;
   }
 
   MolCatalogEntry::MolCatalogEntry(const MolCatalogEntry &other){
     setBitId(other.getBitId()); 
     d_descrip=other.d_descrip;
-    d_order=other.d_order;
     dp_props = new Dict(*other.dp_props);
     dp_mol = new ROMol(*other.dp_mol);
   }
@@ -59,7 +57,6 @@ namespace RDKit {
     streamWrite(ss,tmpInt);
     ss.write(d_descrip.c_str(),tmpInt*sizeof(char));
 
-    streamWrite(ss,d_order);
   }    
 
   std::string MolCatalogEntry::Serialize() const {
@@ -93,7 +90,6 @@ namespace RDKit {
     d_descrip = tmpText;
     delete [] tmpText;
 
-    streamRead(ss,d_order);
   }
 
   void MolCatalogEntry::initFromString(const std::string &text){
