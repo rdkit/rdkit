@@ -169,6 +169,8 @@ namespace RDCatalog {
     //------------------------------------
     //! serializes this object to a stream
     void toStream(std::ostream &ss) const {
+      PRECONDITION(this->getCatalogParams(),"NULL parameter object");
+      
       // the i/o header:
       RDKit::streamWrite(ss,endianId);
       RDKit::streamWrite(ss,versionMajor);
