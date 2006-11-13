@@ -25,11 +25,18 @@ namespace RDKit {
   MolCatalogEntry::MolCatalogEntry(const MolCatalogEntry &other){
     setBitId(other.getBitId()); 
     d_descrip=other.d_descrip;
-    dp_props = new Dict(*other.dp_props);
-    dp_mol = new ROMol(*other.dp_mol);
+    dp_props=0;
+    dp_mol=0;
+    if(other.dp_props){
+      dp_props = new Dict(*other.dp_props);
+    }
+    if(other.dp_mol){
+      dp_mol = new ROMol(*other.dp_mol);
+    }
   }
 
   MolCatalogEntry::~MolCatalogEntry() { 
+    std::cerr << "mce: " << dp_mol <<" " <<dp_props << std::endl;
     if(dp_mol){
       delete dp_mol;
       dp_mol=0;
@@ -38,6 +45,7 @@ namespace RDKit {
       delete dp_props;
       dp_props=0;
     }
+    std::cerr << "<< done" << std::endl;
   }
 
   void MolCatalogEntry::setMol(const ROMol *omol){
@@ -68,15 +76,19 @@ namespace RDKit {
   void MolCatalogEntry::initFromStream(std::istream &ss){
     if(dp_mol){
       delete dp_mol;
+      dp_mol=0;
     }
     if(dp_props){
       delete dp_props;
+      dp_props=0;
     }
 
     // the molecule:
     dp_mol = new ROMol();
     MolPickler::molFromPickle(ss,*const_cast<ROMol *>(dp_mol));
 
+    dp_props = new Dict();
+    
     int tmpInt;
     // the bitId:
     streamRead(ss,tmpInt);

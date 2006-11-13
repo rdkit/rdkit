@@ -2,7 +2,7 @@
 #
 #  Copyright (C) 2006  Greg Landrum
 #
-import unittest,os
+import unittest,os,sys
 import RDConfig
 import Chem
 import DataStructs
@@ -36,8 +36,21 @@ class TestCase(unittest.TestCase):
     self.failUnless(v==2)
     self.failUnless(cat.GetNumEntries()==3)
 
-    m = es[0].GetMol()
+    cat.AddEdge(0,1)
+    cat.AddEdge(0,2)
+    cat.AddEdge(1,2)
+
+    d = cPickle.dumps(cat)
+    print >>sys.stderr,'es gone'
     es = None
+    entry = None
+    print >>sys.stderr,'cat gone'
+    cat=None
+
+    print >>sys.stderr,'reload'
+    cat = cPickle.loads(d)
+    self.failUnless(cat.GetNumEntries()==3)
+    print >>sys.stderr,'cat gone'
     cat=None
 
     

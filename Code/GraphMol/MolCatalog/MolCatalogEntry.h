@@ -24,7 +24,6 @@ namespace RDKit {
     MolCatalogEntry(const MolCatalogEntry &other);
     MolCatalogEntry(const ROMol *omol);
     MolCatalogEntry::MolCatalogEntry(const std::string &pickle){
-      dp_props = new Dict();
       this->initFromString(pickle);
     }
     
