@@ -20,6 +20,9 @@ namespace RDKit {
   public:
     virtual ~MolWriter() {}
     virtual void write(ROMol &mol,int confId=defaultConfId) = 0;
+    virtual void flush() = 0;
+    virtual void setProps(const STR_VECT &propNames)=0;
+    virtual unsigned int numMols() const =0;
   };
 
   class SmilesWriter : public MolWriter {
@@ -35,6 +38,11 @@ namespace RDKit {
 		 std::string delimiter=" ",
 		 std::string nameHeader="Name",
 		 bool includeHeader=true);
+    SmilesWriter(std::ostream *outStream, 
+		 std::string delimiter=" ",
+		 std::string nameHeader="Name",
+		 bool includeHeader=true,
+		 bool takeOwnership=false);
 		 
     ~SmilesWriter();
 
@@ -52,12 +60,20 @@ namespace RDKit {
     void write(ROMol &mol,int confId=defaultConfId);
 
     // flush the ostream
-    void flush() { dp_ostream->flush(); };
+    void flush() {
+      PRECONDITION(dp_ostream,"no output stream");
+      dp_ostream->flush();
+    };
 
     // get the number of molecules written so far
     unsigned int numMols() const { return d_molid;} ;
 
   private:
+    // local initialization
+    void init(std::string delimiter,std::string nameHeader,
+	       bool includeHeader);
+
+
     // dumps a header line to the output stream
     void dumpHeader() const;
 
@@ -81,6 +97,7 @@ namespace RDKit {
      **********************************************************************************************/
   public:
     SDWriter(std::string fileName);
+    SDWriter(std::ostream *outStream,bool takeOwnership=false);
 
     ~SDWriter();
 
@@ -98,7 +115,10 @@ namespace RDKit {
     void write(ROMol &mol, int confId=defaultConfId);
 
     // flush the ostream
-    void flush() { dp_ostream->flush();} ;
+    void flush() { 
+      PRECONDITION(dp_ostream,"no output stream");
+      dp_ostream->flush();
+    } ;
 
     // get the number of molecules written so far
     unsigned int numMols() const { return d_molid; };
@@ -121,6 +141,7 @@ namespace RDKit {
      **********************************************************************************************/
   public:
     TDTWriter(std::string fileName);
+    TDTWriter(std::ostream *outStream,bool takeOwnership=false);
 
     ~TDTWriter();
 
@@ -138,7 +159,10 @@ namespace RDKit {
     void write(ROMol &mol, int confId=defaultConfId);
 
     // flush the ostream
-    void flush() { dp_ostream->flush();};
+    void flush() { 
+      PRECONDITION(dp_ostream,"no output stream");
+      dp_ostream->flush();
+    };
 
     // get the number of molecules written so far
     unsigned int numMols() const { return d_molid; };

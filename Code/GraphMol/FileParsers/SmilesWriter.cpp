@@ -28,16 +28,37 @@ namespace RDKit {
       errout << "Bad output file " << fileName;
       throw FileParseException(errout.str());
     }
-
+    
     dp_ostream = static_cast<std::ostream *>(tmpStream);
     d_owner = true;
+
+    this->init(delimiter,nameHeader,includeHeader);
+  }
+
+  SmilesWriter::SmilesWriter(std::ostream *outStream, 
+			     std::string delimiter,
+			     std::string nameHeader,
+			     bool includeHeader,
+			     bool takeOwnership) {
+    PRECONDITION(outStream,"null stream");
+    if (outStream->bad()){
+      throw FileParseException("Bad output stream.");
+    }
+
+    dp_ostream = outStream;
+    d_owner = takeOwnership;
+    this->init(delimiter,nameHeader,includeHeader);
+  }
+  void SmilesWriter::init(std::string delimiter,
+			  std::string nameHeader,
+			  bool includeHeader){
+
     d_molid = 0;
     d_delim = delimiter;
     d_nameHeader=nameHeader;
     d_includeHeader=includeHeader;
-    //these are set by the setProps function is required
+    //these are set by the setProps function as required
     d_props.clear();
-
   }
 
   void SmilesWriter::setProps(const STR_VECT &propNames) {
@@ -50,6 +71,7 @@ namespace RDKit {
   }
 
   void SmilesWriter::dumpHeader() const {
+    CHECK_INVARIANT(dp_ostream,"no output stream");
     if(d_includeHeader){
       (*dp_ostream) << "SMILES" << d_delim << d_nameHeader << d_delim;
 
@@ -78,6 +100,7 @@ namespace RDKit {
   }
 
   void SmilesWriter::write(ROMol &mol,int confId) {
+    CHECK_INVARIANT(dp_ostream,"no output stream");
     if(d_molid<=0 && d_includeHeader){
       dumpHeader();
     }
