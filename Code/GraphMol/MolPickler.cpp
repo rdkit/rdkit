@@ -83,15 +83,15 @@ namespace RDKit{
       _depickleV1(ss,mol);
     } else {
       // check to see how many atoms there are:
-      int pos=ss.tellg();
+      //int pos=ss.tellg();
       int numAtoms;
       streamRead(ss,numAtoms);
       // move back in the stream:
-      ss.seekg(pos);
+      //ss.seekg(pos);
       if(numAtoms>255){
-	_depickle<int>(ss,mol,majorVersion);
+	_depickle<int>(ss,mol,majorVersion,numAtoms);
       } else {
-	_depickle<unsigned char>(ss,mol,majorVersion);
+	_depickle<unsigned char>(ss,mol,majorVersion,numAtoms);
       }
     }
     mol->clearAllAtomBookmarks();
@@ -182,15 +182,14 @@ namespace RDKit{
   }
 
   template <typename T>
-  void MolPickler::_depickle(std::istream &ss,ROMol *mol, int version){
+  void MolPickler::_depickle(std::istream &ss,ROMol *mol, int version,int numAtoms){
     PRECONDITION(mol,"empty molecule");
     bool directMap= mol->getNumAtoms()==0;
     Tags tag;
     int tmpInt;
-    int numAtoms,numBonds;
+    //int numAtoms,numBonds;
+    int numBonds;
     
-    streamRead(ss,tmpInt);
-    numAtoms = tmpInt;
     streamRead(ss,tmpInt);
     numBonds = tmpInt;
 
