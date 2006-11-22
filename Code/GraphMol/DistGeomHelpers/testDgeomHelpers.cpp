@@ -79,16 +79,16 @@ void test1() {
   }
 }
 
-void computeDistMat(const RDGeom::Point3DPtrVect &origCoords, RDNumeric::DoubleSymmMatrix &distMat) {
+void computeDistMat(const RDGeom::PointPtrVect &origCoords, RDNumeric::DoubleSymmMatrix &distMat) {
   unsigned int N = origCoords.size();
   CHECK_INVARIANT(N == distMat.numRows(), "");
   unsigned int i, j;
   RDGeom::Point3D pti, ptj;
   double d;
   for (i = 1; i < N; i++) {
-    pti = *origCoords[i];
+    pti = *(RDGeom::Point3D*)origCoords[i];
     for (j = 0; j < i; j++) {
-      ptj = *origCoords[j];
+      ptj = *(RDGeom::Point3D*)origCoords[j];
       ptj -= pti;
       d = ptj.length();
       distMat.setVal(i,j, d);
@@ -97,7 +97,7 @@ void computeDistMat(const RDGeom::Point3DPtrVect &origCoords, RDNumeric::DoubleS
 }
 
 void computeMolDmat(ROMol &mol, RDNumeric::DoubleSymmMatrix &distMat) {
-  RDGeom::Point3DPtrVect origCoords;
+  RDGeom::PointPtrVect origCoords;
   unsigned int i, nat = mol.getNumAtoms();
   Conformer &conf = mol.getConformer(0);
   for (i = 0; i < nat; i++) {
@@ -316,7 +316,7 @@ void test3() {
     ROMol *mol = sdsup.next();
     std::string mname;
     mol->getProp("_Name", mname);
-    RDGeom::Point3DPtrVect origCoords, newCoords;
+    RDGeom::PointPtrVect origCoords, newCoords;
     nat = mol->getNumAtoms();
     Conformer &conf = mol->getConformer(0);
     for (i = 0; i < nat; i++) {
