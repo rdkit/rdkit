@@ -207,7 +207,7 @@ namespace DistGeom {
     // finally the contribution from the fourth dimension if we are in that dimension
     if ((field->dimension() == 4) && (weightFourthDim > 1.e-8)) {
       for (i = 1; i < N; i++) {
-	FourthDimContrib *contrib = new FourthDimContrib(i, weightFourthDim);
+	FourthDimContrib *contrib = new FourthDimContrib(field,i,weightFourthDim);
 	field->contribs().push_back(ForceFields::ContribPtr(contrib));
       }
     }
