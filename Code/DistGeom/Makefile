@@ -2,7 +2,7 @@ include $(RDBASE)/Code/rdvars.make
 include $(RDBASE)/Code/rdrules.make
 
 CXXFLAGS=$(RDOPTFLAGS) $(BOOSTINC) -I$(RDBASE)/Code -Wall
-SOURCES=DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp
+SOURCES=DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp ChiralViolationContrib.cpp
 LIB=libDistGeom.a
 
 $(LIB): $(OBJS)

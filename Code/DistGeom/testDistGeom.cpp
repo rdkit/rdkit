@@ -77,7 +77,7 @@ void testIssue216() {
   dmat.setVal(3,3, 0.0);
   
   std::cout << dmat;
-  RDGeom::Point3DPtrVect pos;
+  RDGeom::PointPtrVect pos;
   for (int i = 0; i < 4; i++) {
     RDGeom::Point3D *pt = new RDGeom::Point3D();
     pos.push_back(pt);
@@ -87,9 +87,9 @@ void testIssue216() {
   CHECK_INVARIANT(gotCoords, "");
 
   for (int i = 1; i < 4; i++) {
-    RDGeom::Point3D pti = *pos[i];
+    RDGeom::Point3D pti = *(RDGeom::Point3D *)pos[i];
     for (int j = 0; j < i; j++) {
-      RDGeom::Point3D ptj = *pos[j];
+      RDGeom::Point3D ptj = *(RDGeom::Point3D *)pos[j];
       ptj -= pti;
       CHECK_INVARIANT(RDKit::feq(ptj.length(), 1.0, 0.02), "");
     }
