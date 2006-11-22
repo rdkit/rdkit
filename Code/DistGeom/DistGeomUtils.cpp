@@ -7,6 +7,8 @@
 #include "BoundsMatrix.h"
 #include "DistGeomUtils.h"
 #include "DistViolationContrib.h"
+#include "ChiralViolationContrib.h"
+#include "FourthDimContrib.h"
 #include <Numerics/Matrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <Numerics/Vector.h>
@@ -71,16 +73,18 @@ namespace DistGeom {
     }*/
 
   bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distMat,  
-                            RDGeom::Point3DPtrVect &positions, bool randNegEig, 
+                            RDGeom::PointPtrVect &positions, bool randNegEig, 
                             unsigned int numZeroFail) {
     unsigned int N = distMat.numRows();
     unsigned int nPt = positions.size();
     CHECK_INVARIANT(nPt == N, "Size mismatch");
     
+    unsigned int dim = positions.front()->dimension();
+    
     const double *data = distMat.getData();
     RDNumeric::SymmMatrix<double> sqMat(N), T(N, 0.0); 
-    RDNumeric::DoubleMatrix eigVecs(3,N);
-    RDNumeric::DoubleVector eigVals(3);
+    RDNumeric::DoubleMatrix eigVecs(dim,N);
+    RDNumeric::DoubleVector eigVals(dim);
     
     unsigned int i, j;
     double *sqDat = sqMat.getData();
@@ -115,13 +119,13 @@ namespace DistGeom {
         T.setVal(i,j, val);
       }
     }
-    int nEigs = (3 < N) ? 3 : N;
+    int nEigs = (dim < N) ? dim : N;
     RDNumeric::EigenSolvers::powerEigenSolver(nEigs, T, eigVecs, eigVals, (int)(sumSqD2*N));
     
     double *eigData = eigVals.getData();
     bool foundNeg = false;
     unsigned int zeroEigs = 0;
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < dim; i++) {
       if (eigData[i] > EIGVAL_TOL) {
         eigData[i] = sqrt(eigData[i]);
       } else if (fabs(eigData[i]) < EIGVAL_TOL) {
@@ -136,51 +140,27 @@ namespace DistGeom {
     }
 
     if ((zeroEigs >= numZeroFail) && (N > 3)) {
-      // this probably happened because we have degenerate eigen values 
-      // and the powereigen solver doesn't do good job as a result
-      // Use lapack in this case
-      /*
-      _eigenFromLapack(T, eigVals, eigVecs);
-      zeroEigs = 0;
-      for (i = 0; i < 3; i++) {
-        if (eigData[i] > EIGVAL_TOL) {
-          eigData[i] = sqrt(eigData[i]);
-        } else if (fabs(eigData[i]) < EIGVAL_TOL) {
-          eigData[i] = 0.0;
-          zeroEigs++;
-        } else {
-          foundNeg = true;
-        }
-      }
-      if (zeroEigs > 1) {
-        return false;
-        }*/
       return false;
     }
 
     for (i = 0; i < N; i++) {
-      RDGeom::Point3D *pt = positions[i];
-      if (eigData[0] >= 0.0) {
-        pt->x = eigData[0]*eigVecs.getVal(0,i);
-      } else {
-        pt->x = 1.0 - 2.0*RDKit::getRandomVal();
-      }
-      if (eigData[1] >= 0.0) {
-        pt->y = eigData[1]*eigVecs.getVal(1,i);
-      } else {
-        pt->y = 1.0 - 2.0*RDKit::getRandomVal();
-      }
-      if (eigData[2] >= 0.0) {
-        pt->z = eigData[2]*eigVecs.getVal(2,i);
-      } else {
-        pt->z = 1.0 - 2.0*RDKit::getRandomVal();
+      RDGeom::Point *pt = positions[i];
+      for (unsigned int j = 0; j < dim; ++j) {
+	if (eigData[j] >= 0.0) {
+	  (*pt)[j] = eigData[j]*eigVecs.getVal(j,i);
+	} else {
+	  (*pt)[j] = 1.0 - 2.0*RDKit::getRandomVal();
+	}
       }
     }
     return true;
+   
   }
 
   ForceFields::ForceField *constructForceField(const BoundsMatrix &mmat,
-					       RDGeom::Point3DPtrVect &positions,
+					       RDGeom::PointPtrVect &positions, const VECT_CHIRALSET & csets,
+					       double weightChiral,
+					       double weightFourthDim,
 					       std::map< std::pair<int,int>,double> *extraWeights,
 					       double basinSizeTol) {
     unsigned int N = mmat.numRows();
@@ -214,6 +194,24 @@ namespace DistGeom {
 	}
       }
     }
+
+    // now add chiral constraints
+    if (weightChiral > 1.e-8) {
+      VECT_CHIRALSET::const_iterator csi;
+      for (csi = csets.begin(); csi != csets.end(); csi++) {
+	ChiralViolationContrib *contrib = new ChiralViolationContrib(field, csi->get(), weightChiral);
+	field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      }
+    }
+
+    // finally the contribution from the fourth dimension if we are in that dimension
+    if ((field->dimension() == 4) && (weightFourthDim > 1.e-8)) {
+      for (i = 1; i < N; i++) {
+	FourthDimContrib *contrib = new FourthDimContrib(i, weightFourthDim);
+	field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      }
+    }
+
     return field;
   }
     
