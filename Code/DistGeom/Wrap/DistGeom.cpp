@@ -18,6 +18,7 @@
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
 #include <DistGeom/DistGeomUtils.h>
+#include <DistGeom/EmbedObject.h>
 
 #include <ForceField/ForceField.h>
 
@@ -91,7 +92,7 @@ namespace RDKit {
     DistGeom::BoundsMatrix bm(nrows,sdata);
 
     RDGeom::Point3D *positions=new RDGeom::Point3D[nrows];
-    std::vector<RDGeom::Point3D *> posPtrs;
+    std::vector<RDGeom::Point *> posPtrs;
     for (unsigned int i = 0; i < nrows; i++) {
       posPtrs.push_back(&positions[i]);
     }
@@ -128,7 +129,8 @@ namespace RDKit {
 	double w=PyFloat_AsDouble(PySequence_GetItem(entry,2));
 	weightMap[std::make_pair<int,int>(idx1,idx2)]=w;
       }
-      ForceFields::ForceField *field = DistGeom::constructForceField(bm,posPtrs,
+      DistGeom::VECT_CHIRALSET csets;
+      ForceFields::ForceField *field = DistGeom::constructForceField(bm,posPtrs,csets,0.0, 0.0,
 								     &weightMap);
       CHECK_INVARIANT(field,"could not build dgeom force field");
       field->initialize();
@@ -152,9 +154,11 @@ namespace RDKit {
     double *resData=reinterpret_cast<double *>(res->data);
     for(unsigned int i=0;i<nrows;i++){
       unsigned int iTab=i*3;
-      resData[iTab]=positions[i].x;
-      resData[iTab+1]=positions[i].y;
-      resData[iTab+2]=positions[i].z;
+      for (unsigned int j = 0; j < 3; ++j) {
+	resData[iTab + j]=positions[i][j]; //.x;
+	//resData[iTab+1]=positions[i].y;
+	//resData[iTab+2]=positions[i].z;
+      }
     }
     delete [] positions;
 
