@@ -37,7 +37,7 @@ void test1(){
   BOOST_LOG(rdInfoLog) << "testing basic reading from compressed streams" << std::endl;
 
   std::string rdbase = getenv("RDBASE");
-  std::string fname2 = rdbase + "/Code/GraphMol/FileParsers/test_data/triazine.mol.gz";
+  std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/triazine.mol.gz";
   RWMol *m;
   
   io::filtering_istream inStrm;
@@ -97,7 +97,7 @@ void test3(){
 #ifdef SUPPORT_COMPRESSED_IO
   BOOST_LOG(rdInfoLog) << "testing writing pickles to a file then reading them back" << std::endl;
   std::string rdbase = getenv("RDBASE");
-  std::string fname2 = rdbase + "/Code/GraphMol/FileParsers/test_data/mols.rdb";
+  std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/mols.rdb";
 
   std::string smiles,buff;
   RWMol *m;
@@ -199,7 +199,7 @@ void test4(){
 #ifdef SUPPORT_COMPRESSED_IO
   BOOST_LOG(rdInfoLog) << "testing writing pickles to a single compressed file then reading them back" << std::endl;
   std::string rdbase = getenv("RDBASE");
-  std::string fname2 = rdbase + "/Code/GraphMol/FileParsers/test_data/mols.rdz";
+  std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/mols.rdz";
 
   std::string smiles;
   RWMol *m;
@@ -300,7 +300,7 @@ void test5(){
 #ifdef SUPPORT_COMPRESSED_IO
   BOOST_LOG(rdInfoLog) << "testing writing compressed pickles to a single file then reading them back" << std::endl;
   std::string rdbase = getenv("RDBASE");
-  std::string fname2 = rdbase + "/Code/GraphMol/FileParsers/test_data/tmp.rdz";
+  std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/tmp.rdz";
 
   std::string smiles,buff;
   RWMol *m;
