@@ -99,14 +99,17 @@ namespace RDKit{
     mol->replaceAtom(idx,&a); 
   };
   
-  void ParseChargeLine(RWMol *mol, std::string text) {
+  void ParseChargeLine(RWMol *mol, std::string text,bool firstCall) {
     PRECONDITION(text.substr(0,6)==std::string("M  CHG"),"bad atom list line");
     
+
     // if this line is specified all the atom other than those specified
-    // here should carry a charge of 0
-    ROMol::AtomIterator ai; 
-    for (ai = mol->beginAtoms(); ai != mol->endAtoms(); ai++) {
-      (*ai)->setFormalCharge(0);
+    // here should carry a charge of 0; but we should only do this once:
+    if(firstCall){
+      for (ROMol::AtomIterator ai = mol->beginAtoms();
+	   ai != mol->endAtoms(); ++ai) {
+	(*ai)->setFormalCharge(0);
+      }
     }
 
     int ie, nent;
@@ -475,6 +478,7 @@ namespace RDKit{
     
     RWMol *res = new RWMol();
     std::string mname = tempStr;
+    bool firstChargeLine=true;
     res->setProp("_Name", mname);
     
     // info
@@ -604,7 +608,10 @@ namespace RDKit{
       //tempStr = inLine;
       while(!inStream->eof() && tempStr.find("M  END") != 0 && tempStr.find("$$$$") != 0){
         if(tempStr.find("M  ALS") == 0) ParseNewAtomList(res,tempStr);
-        if(tempStr.find("M  CHG") == 0) ParseChargeLine(res, tempStr);
+        if(tempStr.find("M  CHG") == 0){
+	  ParseChargeLine(res, tempStr,firstChargeLine);
+	  firstChargeLine=false;
+	}
         line++;
         tempStr = getLine(inStream);
       }
