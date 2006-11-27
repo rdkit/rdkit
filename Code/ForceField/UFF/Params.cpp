@@ -11,6 +11,8 @@
 #include <RDGeneral/StreamOps.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
+#include <Geometry/point.h>
+
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 
