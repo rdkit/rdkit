@@ -41,16 +41,12 @@ class TestCase(unittest.TestCase):
     cat.AddEdge(1,2)
 
     d = cPickle.dumps(cat)
-    print >>sys.stderr,'es gone'
     es = None
     entry = None
-    print >>sys.stderr,'cat gone'
     cat=None
 
-    print >>sys.stderr,'reload'
     cat = cPickle.loads(d)
     self.failUnless(cat.GetNumEntries()==3)
-    print >>sys.stderr,'cat gone'
     cat=None
 
     

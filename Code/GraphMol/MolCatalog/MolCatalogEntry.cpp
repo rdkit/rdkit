@@ -36,7 +36,7 @@ namespace RDKit {
   }
 
   MolCatalogEntry::~MolCatalogEntry() { 
-    std::cerr << "mce: " << dp_mol <<" " <<dp_props << std::endl;
+    //std::cerr << "mce: " << dp_mol <<" " <<dp_props << std::endl;
     if(dp_mol){
       delete dp_mol;
       dp_mol=0;
@@ -45,7 +45,7 @@ namespace RDKit {
       delete dp_props;
       dp_props=0;
     }
-    std::cerr << "<< done" << std::endl;
+    //std::cerr << "<< done" << std::endl;
   }
 
   void MolCatalogEntry::setMol(const ROMol *omol){
@@ -59,6 +59,9 @@ namespace RDKit {
 
     int tmpInt;
     tmpInt = getBitId();
+    streamWrite(ss,tmpInt);
+      
+    tmpInt = getOrder();
     streamWrite(ss,tmpInt);
       
     tmpInt = d_descrip.size();
@@ -93,6 +96,10 @@ namespace RDKit {
     // the bitId:
     streamRead(ss,tmpInt);
     setBitId(tmpInt);
+
+    // the order:
+    streamRead(ss,tmpInt);
+    setOrder(tmpInt);
 
     // the description:
     streamRead(ss,tmpInt);

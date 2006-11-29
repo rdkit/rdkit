@@ -115,6 +115,9 @@ namespace {
 	.def("GetMol", catalogEntryGetMol,
 	     python::return_internal_reference<1>())
 	.def("SetMol", catalogEntrySetMol)
+	.def("GetOrder", &MolCatalogEntry::getOrder)
+	.def("SetOrder", &MolCatalogEntry::setOrder)
+
 
 	// enable pickle support
 	.def_pickle(molcatalogentry_pickle_suite())
