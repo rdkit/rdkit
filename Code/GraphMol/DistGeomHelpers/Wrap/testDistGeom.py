@@ -92,7 +92,7 @@ class TestCase(unittest.TestCase) :
                                             'test_data','embedDistOpti.sdf')
         self.failUnless(compareWithOld(fileN, ofile))
 
-    def ctest1Small(self):
+    def test1Small(self):
         #writer = Chem.SDWriter("test.sdf")
         # single double and tripple atoms cases should not fail
         mol = Chem.MolFromSmiles('O')
@@ -163,7 +163,7 @@ class TestCase(unittest.TestCase) :
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
             ee = ff.CalcEnergy()
             nenergies.append(ee)
-	#print ','.join(['%.2f'%x for x in nenergies])
+        
         #print ','.join(['%.2f'%x for x in energies])
         self.failUnless(lstEq(energies, nenergies,tol=1e-2))
             
@@ -334,6 +334,25 @@ class TestCase(unittest.TestCase) :
         #print ','.join(['%6.2f'%(item) for item in v2s])
         self.failUnless(lstEq(expectedV1, v1s,tol=1e-2))
         self.failUnless(lstEq(expectedV2, v2s,tol=1e-2))
-                        
+
+        smiles = "Cl[C@H](F)Br"
+        m = Chem.MolFromSmiles(smiles)
+        mol = Chem.AddHs(m)
+        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, 30, 100)
+        self.failUnless(len(cids)==10)
+        vols = []
+        expected = [11.81, 11.63, 11.95, 11.86, 11.98, 11.99, 11.73, 11.74, 11.86, 12.07]
+        for cid in cids:
+            conf = mol.GetConformer(cid)
+            vol = computeChiralVol(conf.GetAtomPosition(0),
+                                   conf.GetAtomPosition(2),
+                                   conf.GetAtomPosition(3),
+                                   conf.GetAtomPosition(4))
+
+            vols.append(vol)
+        
+        #print ','.join(['%6.2f'%(item) for item in vols])
+        self.failUnless(lstEq(expected, vols,tol=1e-2))
+            
 if __name__ == '__main__':
   unittest.main()

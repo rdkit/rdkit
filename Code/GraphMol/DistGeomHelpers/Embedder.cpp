@@ -108,12 +108,12 @@ namespace RDKit {
 	    boost::tie(beg,end) = mol.getAtomBonds(*ati);
 	    while (beg != end) {
 	      oatom = pMap[*beg]->getOtherAtom(*ati);
-	      if (oatom->getAtomicNum() != 1) { // skip hydrogens
-		int rank;
-		oatom->getProp("_CIPRank", rank);
-		INT_PAIR rAid(rank, oatom->getIdx());
-		nbrs.push_back(rAid);
-	      }
+	      //if (oatom->getAtomicNum() != 1) { // skip hydrogens
+	      int rank;
+	      oatom->getProp("_CIPRank", rank);
+	      INT_PAIR rAid(rank, oatom->getIdx());
+	      nbrs.push_back(rAid);
+	      //}
 	      beg++;
 	    }
 	    // if we have less than 4 heavy atoms as neighbors, we need to include the chiral center into the mix
