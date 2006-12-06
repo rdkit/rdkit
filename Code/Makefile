@@ -41,7 +41,7 @@ wrappers:
 all:
 	$(MAKE) libs;
 	$(MAKE) wrappers;
-	$(MAKE) cartridge;
+#	$(MAKE) cartridge;
 
 
 regrs:
