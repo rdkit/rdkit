@@ -12,7 +12,7 @@ tests=[
   ("python","test_list.py",{'dir':'DistGeom'}),
   ("python","test_list.py",{'dir':'ChemicalFeatures'}),
   ("python","test_list.py",{'dir':'ChemicalFeatures/Wrap'}),
-  ("python","test_list.py",{'dir':'PgSQL/RDLib'}),
+  #("python","test_list.py",{'dir':'PgSQL/RDLib'}),
   ]
 
 longTests = [
