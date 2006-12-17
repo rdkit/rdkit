@@ -12,6 +12,7 @@
 #include "MolSupplier.h"
 #include "MolWriters.h"
 #include <RDGeneral/FileParseException.h>
+#include <RDGeneral/RDLog.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 using namespace RDKit;
@@ -311,8 +312,53 @@ void testTDTWriterStrm() {
 }
 
 
-int main() {
+void testSDMemoryCorruption() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Data/NCI/first_200.props.sdf";
+  SDMolSupplier sdsup(fname);
+  
+  std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf";
+  SDWriter *writer = new SDWriter(ofile);
 
+  STR_VECT names;
+  //names.push_back("monkey");
+  //writer->setProps(names);
+  names.clear();
+  ROMol *m1=sdsup.next();
+  sdsup.reset();
+  while (!sdsup.atEnd()) {
+    ROMol *mol = sdsup.next();
+    TEST_ASSERT(mol);
+    std::string mname;
+    mol->getProp("_Name", mname);
+    names.push_back(mname);
+    writer->write(*mol);
+    delete mol;
+  }
+  writer->flush();
+  CHECK_INVARIANT(writer->numMols() == 200, "");
+
+  delete writer;
+#if 1
+  // now read in the file we just finished writing
+  SDMolSupplier reader(ofile);
+  int i = 0;
+  while (!reader.atEnd()) {
+    ROMol *mol = reader.next();
+    std::string mname;
+    mol->getProp("_Name", mname);
+    CHECK_INVARIANT(mname == names[i], "");
+    
+    delete mol;
+    i++;
+  }
+#endif
+}
+
+
+int main() {
+  RDLog::InitLogs();
+#if 1
   std::cout <<  "-----------------------------------------\n";
   std::cout << "Running testSmilesWriter()\n";
   testSmilesWriter();
@@ -346,6 +392,12 @@ int main() {
   std::cout <<  "-----------------------------------------\n";
   std::cout << "Running testTDTWriterStrm()\n";
   testTDTWriterStrm();
+  std::cout << "Finished\n";
+  std::cout <<  "-----------------------------------------\n\n";
+#endif
+  std::cout <<  "-----------------------------------------\n";
+  std::cout << "Running testSDMemoryCorruption()\n";
+  testSDMemoryCorruption();
   std::cout << "Finished\n";
   std::cout <<  "-----------------------------------------\n\n";
 }
