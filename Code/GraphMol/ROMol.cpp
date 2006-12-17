@@ -61,7 +61,6 @@ ROMol::ROMol(const std::string &pickle) {
 }
   
 ROMol::ROMol(const ROMol &other,bool quickCopy){
-  initMol();
   // copy over the atoms
   ROMol::ATOM_ITER_PAIR atItP = other.getVertices();
   ROMol::GRAPH_MOL_ATOM_PMAP::const_type atMap = other.getAtomPMap();
@@ -78,7 +77,6 @@ ROMol::ROMol(const ROMol &other,bool quickCopy){
   }
 
   // ring information
-  if(dp_ringInfo) delete dp_ringInfo;
   if(other.dp_ringInfo){
     dp_ringInfo = new RingInfo(*(other.dp_ringInfo));
   } else {
@@ -86,47 +84,50 @@ ROMol::ROMol(const ROMol &other,bool quickCopy){
   }
   
   if(!quickCopy){
-
     // copy conformations
-    ConstConformerIterator ci;
-    
-    for (ci = other.beginConformers(); ci != other.endConformers(); ci++) {
+    for (ConstConformerIterator ci = other.beginConformers();
+         ci != other.endConformers(); ++ci) {
       Conformer *conf = new Conformer(*(*ci));
       this->addConformer(conf);
     }
 
     if (other.dp_props) {
-      if (dp_props) {
-	delete dp_props;
-      }
       dp_props = new Dict(*other.dp_props);
+    } else {
+      dp_props = new Dict();
+      STR_VECT computed;
+      dp_props->setVal("computedProps", computed);
     }
   
     // Bookmarks should be copied as well:
-    ATOM_BOOKMARK_MAP::const_iterator abmI;
-    for(abmI=other.d_atomBookmarks.begin();abmI!=other.d_atomBookmarks.end();abmI++){
-      ATOM_PTR_LIST::const_iterator aplI;
-      for(aplI=abmI->second.begin();aplI!=abmI->second.end();aplI++){
-	int idx=(*aplI)->getIdx();
-	int first=abmI->first;
-	Atom *at=getAtomWithIdx(idx);
-	setAtomBookmark(at,first);
+    for(ATOM_BOOKMARK_MAP::const_iterator abmI=other.d_atomBookmarks.begin();
+        abmI!=other.d_atomBookmarks.end();++abmI){
+      for(ATOM_PTR_LIST::const_iterator aplI=abmI->second.begin();
+          aplI!=abmI->second.end();++aplI){
+        int idx=(*aplI)->getIdx();
+        int first=abmI->first;
+        Atom *at=getAtomWithIdx(idx);
+        setAtomBookmark(at,first);
       }
     }
-    BOND_BOOKMARK_MAP::const_iterator bbmI;
-    for(bbmI=other.d_bondBookmarks.begin();bbmI!=other.d_bondBookmarks.end();bbmI++){
-      BOND_PTR_LIST::const_iterator bplI;
-      for(bplI=bbmI->second.begin();bplI!=bbmI->second.end();bplI++){
-	setBondBookmark(getBondWithIdx((*bplI)->getIdx()),bbmI->first);
+    for(BOND_BOOKMARK_MAP::const_iterator bbmI=other.d_bondBookmarks.begin();
+        bbmI!=other.d_bondBookmarks.end();++bbmI){
+      for(BOND_PTR_LIST::const_iterator bplI=bbmI->second.begin();
+          bplI!=bbmI->second.end();++bplI){
+        setBondBookmark(getBondWithIdx((*bplI)->getIdx()),bbmI->first);
       }
     }
+  } else {
+    dp_props = new Dict();
+    STR_VECT computed;
+    dp_props->setVal("computedProps", computed);
   }
 }
 
 void ROMol::initMol() {
   dp_props = new Dict();
   dp_ringInfo = new RingInfo();
-  // ok every bond contains a property entry called "computedProps" which provides
+  // ok every molecule contains a property entry called "computedProps" which provides
   //  list of property keys that correspond to value that have been computed
   // this can used to blow out all computed properties while leaving the rest along
   // initialize this list to an empty vector of strings
@@ -214,8 +215,8 @@ void ROMol::clearAtomBookmark(const int mark,const Atom *atom){
     int tgtIdx=atom->getIdx();
     for(i=entry->begin();i!=entry->end();i++){
       if((*i)->getIdx()==tgtIdx){
-	entry->erase(i);
-	break;
+        entry->erase(i);
+        break;
       }
     }
     if(entry->begin() == entry->end()){
@@ -235,8 +236,8 @@ void ROMol::clearBondBookmark(const int mark,const Bond *bond){
     int tgtIdx=bond->getIdx();
     for(i=entry->begin();i!=entry->end();i++){
       if((*i)->getIdx()==tgtIdx){
-	entry->erase(i);
-	break;
+        entry->erase(i);
+        break;
       }
     }
     if(entry->begin() == entry->end()){
@@ -291,8 +292,8 @@ ROMol::GRAPH_EDGE_TYPE ROMol::getBondBetweenAtoms(unsigned int idx1,unsigned int
   GRAPH_MOL_TRAITS::edge_descriptor edge;
   bool found;
   boost::tie(edge,found) = boost::edge(boost::vertex(idx1,d_graph),
-				       boost::vertex(idx2,d_graph),
-				       d_graph);
+                                       boost::vertex(idx2,d_graph),
+                                       d_graph);
   if(!found){
     res = static_cast<GRAPH_EDGE_TYPE>(0);
   } else {
@@ -309,8 +310,8 @@ ROMol::GRAPH_EDGE_CONST_TYPE ROMol::getBondBetweenAtoms(unsigned int idx1,unsign
   GRAPH_MOL_TRAITS::edge_descriptor edge;
   bool found;
   boost::tie(edge,found) = boost::edge(boost::vertex(idx1,d_graph),
-				       boost::vertex(idx2,d_graph),
-				       d_graph);
+                                       boost::vertex(idx2,d_graph),
+                                       d_graph);
   if(!found){
     res = static_cast<GRAPH_EDGE_TYPE>(0);
   } else {
@@ -387,7 +388,7 @@ unsigned int ROMol::addBond(Bond *bond_pin,bool takeOwnership){
 
   bond_p->setOwningMol(this);
   boost::add_edge(bond_p->getBeginAtomIdx(),bond_p->getEndAtomIdx(),
-		  BondProperty(bond_p,BondWeight(1.0)),d_graph);
+                  BondProperty(bond_p,BondWeight(1.0)),d_graph);
   int res = boost::num_edges(d_graph);
   bond_p->setIdx(res-1);
   return res;
@@ -522,13 +523,13 @@ ROMol::ConstBondIterator ROMol::endBonds() const{
 
   void ROMol::updatePropertyCache(bool strict) {
     for(AtomIterator atomIt=this->beginAtoms();
-	atomIt!=this->endAtoms();
-	atomIt++){
+        atomIt!=this->endAtoms();
+        atomIt++){
       (*atomIt)->updatePropertyCache(strict);
     }
     for(BondIterator bondIt=this->beginBonds();
-	bondIt!=this->endBonds();
-	bondIt++){
+        bondIt!=this->endBonds();
+        bondIt++){
       (*bondIt)->updatePropertyCache(strict);
     }
   }
