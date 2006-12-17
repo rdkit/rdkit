@@ -464,7 +464,7 @@ namespace RDKit{
   //
   //------------------------------------------------
   RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line, bool sanitize){
-    //char inLine[MOLFILE_MAXLINE];
+    PRECONDITION(inStream,"no stream");
     std::string tempStr;
     bool fileComplete=false;
     bool chiralityPossible = false;
@@ -475,12 +475,11 @@ namespace RDKit{
     if(inStream->eof()){
       return NULL;
     }
-    
+    //std::cerr <<"\tnew" <<std::endl;
     RWMol *res = new RWMol();
-    std::string mname = tempStr;
+    res->setProp("_Name", tempStr);
     bool firstChargeLine=true;
-    res->setProp("_Name", mname);
-    
+
     // info
     line++;
     tempStr = getLine(inStream);
@@ -501,6 +500,7 @@ namespace RDKit{
     // this needs to go into a try block because if the lexical_cast throws an
     // exception we want to catch and delete mol before leaving this function
     
+    //std::cerr <<"\tcounts" <<std::endl;
     unsigned int spos = 0;
     try {
       // it *sucks* that the lexical_cast stuff above doesn't work on linux        
@@ -551,12 +551,14 @@ namespace RDKit{
       // on the header line, so ignore problems parsing there.
     }
 
+    //std::cerr <<"\tnAtoms: " << nAtoms << " " << nBonds << std::endl;
     try {
       if(nAtoms<=0){
         throw FileParseException("molecule has no atoms");
       }
       int i;
       Conformer *conf = new Conformer(nAtoms);
+      //std::cerr <<"\trAts" << std::endl;
       for(i=0;i<nAtoms;i++){
         line++;
         tempStr = getLine(inStream);
@@ -566,8 +568,10 @@ namespace RDKit{
         unsigned int aid = res->addAtom(atom,false,true);
         conf->setAtomPos(aid, pos);
       }
+      //std::cerr <<"\taddConf" << std::endl;
       res->addConformer(conf, true);
 
+      //std::cerr <<"\tbonds" << std::endl;
       for(i=0;i<nBonds;i++){
         line++;
         tempStr = getLine(inStream);
@@ -585,6 +589,7 @@ namespace RDKit{
         }
         res->addBond(bond,true);
       }
+      //std::cerr <<"\tok" << std::endl;
       
       // older mol files can have an atom list block here
       line++;
