@@ -7,6 +7,12 @@
 #ifndef __RD_TYPES_H__
 #define __RD_TYPES_H__
 
+#ifdef WIN32
+#define _USE_MATH_DEFINES
+#endif
+
+#include <cmath>
+
 #include <RDGeneral/Invariant.h>
 #include "Dict.h"
 
@@ -21,7 +27,6 @@
 #include<limits>
 
 #include <stdlib.h>
-#include <math.h>
 
 #include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
