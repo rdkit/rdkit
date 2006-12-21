@@ -644,32 +644,33 @@ namespace RDKit{
         atomIt++) {
       (*atomIt)->calcExplicitValence();
     }
-
-    // update the chirality and stereo-chemistry and stuff:
-    //
-    // NOTE: we detect the stereochemistry before sanitizing/removing
-    // hydrogens because the removal of H atoms may actually remove
-    // the wedged bond from the molecule.  This wipes out the only
-    // sign that chirality ever existed and makes us sad... so first
-    // perceive chirality, then remove the Hs and sanitize.
-    //
-    // One exception to this (of course, there's always an exception):
-    // DetectAtomStereoChemistry() needs to check the number of
-    // implicit hydrogens on atoms to detect if things can be
-    // chiral. However, if we ask for the number of implicit Hs before
-    // we've called MolOps::cleanUp() on the molecule, we'll get
-    // exceptions for common "weird" cases like a nitro group
-    // mis-represented as -N(=O)=O.  *SO*... we need to call
-    // cleanUp(), then detect the stereochemistry.
-    // (this was Issue 148)
-    //
-    if(res && chiralityPossible){
-      MolOps::cleanUp(*res);
-      const Conformer &conf = res->getConformer();
-      DetectAtomStereoChemistry(*res, &conf);
-    }
+    //std::cerr << "bloop "<<line << std::endl;
 
     if (res && sanitize) {
+      // update the chirality and stereo-chemistry and stuff:
+      //
+      // NOTE: we detect the stereochemistry before sanitizing/removing
+      // hydrogens because the removal of H atoms may actually remove
+      // the wedged bond from the molecule.  This wipes out the only
+      // sign that chirality ever existed and makes us sad... so first
+      // perceive chirality, then remove the Hs and sanitize.
+      //
+      // One exception to this (of course, there's always an exception):
+      // DetectAtomStereoChemistry() needs to check the number of
+      // implicit hydrogens on atoms to detect if things can be
+      // chiral. However, if we ask for the number of implicit Hs before
+      // we've called MolOps::cleanUp() on the molecule, we'll get
+      // exceptions for common "weird" cases like a nitro group
+      // mis-represented as -N(=O)=O.  *SO*... we need to call
+      // cleanUp(), then detect the stereochemistry.
+      // (this was Issue 148)
+      //
+      if(chiralityPossible){
+        MolOps::cleanUp(*res);
+        const Conformer &conf = res->getConformer();
+        DetectAtomStereoChemistry(*res, &conf);
+      }
+
       try {
         ROMol *tmp=MolOps::removeHs(*res,false,false);
         // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry here after

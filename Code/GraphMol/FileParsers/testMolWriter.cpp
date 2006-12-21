@@ -11,9 +11,12 @@
 
 #include "MolSupplier.h"
 #include "MolWriters.h"
+#include "FileParsers.h"
 #include <RDGeneral/FileParseException.h>
+#include <RDGeneral/StreamOps.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 using namespace RDKit;
 
@@ -311,30 +314,42 @@ void testTDTWriterStrm() {
   TEST_ASSERT(i==16);
 }
 
-
 void testSDMemoryCorruption() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Data/NCI/first_200.props.sdf";
-  SDMolSupplier sdsup(fname);
-  
+  SDMolSupplier sdsup(fname,true);
   std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf";
-  SDWriter *writer = new SDWriter(ofile);
+  std::ostream *os=new std::ofstream(ofile.c_str());
+  //std::ostream *os=new std::stringstream();
+  SDWriter *writer = new SDWriter(os,false);
 
   STR_VECT names;
-  //names.push_back("monkey");
-  //writer->setProps(names);
-  names.clear();
+#if 1
   ROMol *m1=sdsup.next();
+  MolOps::sanitizeMol(*(RWMol *)m1);
+#else
+  ROMol *m1=SmilesToMol("C1CC1");
+  TEST_ASSERT(m1);
+#endif
   sdsup.reset();
+  int nDone=0;
   while (!sdsup.atEnd()) {
+    //std::cerr<<nDone<<std::endl;
     ROMol *mol = sdsup.next();
+    //std::cerr<<"m:"<<mol<<std::endl;
     TEST_ASSERT(mol);
     std::string mname;
     mol->getProp("_Name", mname);
     names.push_back(mname);
+    //std::cerr<<"  w"<<std::endl;
     writer->write(*mol);
+
+    //std::cerr<<"  ok"<<std::endl;
+    
     delete mol;
+    nDone++;
   }
+  CHECK_INVARIANT(nDone == 200, "");
   writer->flush();
   CHECK_INVARIANT(writer->numMols() == 200, "");
 
@@ -348,6 +363,7 @@ void testSDMemoryCorruption() {
     std::string mname;
     mol->getProp("_Name", mname);
     CHECK_INVARIANT(mname == names[i], "");
+
     
     delete mol;
     i++;
