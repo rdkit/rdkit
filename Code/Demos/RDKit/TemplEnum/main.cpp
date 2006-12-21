@@ -13,9 +13,6 @@ using namespace TemplateEnum;
 
 #include <math.h>
 
-bool feq(double v1,double v2,double tol=1e-4){
-  return fabs(v1-v2)<=tol;
-}
 bool feq(RDGeom::Point3D p1,RDGeom::Point3D p2,double tol=1e-4){
   return feq(p1.x,p2.x,tol)&&feq(p1.y,p2.y,tol)&&feq(p1.z,p2.z,tol);
 }
@@ -176,8 +173,8 @@ void test7(){
   mol = library[0];
   at1=mol->getAtomWithIdx(0);
   at2=mol->getAtomWithIdx(4);
-  CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-  CHECK_INVARIANT(at1->getPos().y-at2->getPos().y==-1.0,"");
+  CHECK_INVARIANT(feq(mol->getConformer().getAtomPos(at1->getIdx()).x,mol->getConformer().getAtomPos(at2->getIdx()).x),"");
+  CHECK_INVARIANT(mol->getConformer().getAtomPos(at1->getIdx()).y-mol->getConformer().getAtomPos(at2->getIdx()).y==-1.0,"");
   library.clear();
 
   // try another orientation of the sidechain molecule:
@@ -187,12 +184,12 @@ void test7(){
   CHECK_INVARIANT(library.size()==1,"");
   CHECK_INVARIANT(library[0]->getNumAtoms()==8,"");
   mol = library[0];
-  std::cout << MolToMolBlock(mol.get());
+  std::cout << MolToMolBlock(*mol);
   std::cout << std::endl;
 
   at1=mol->getAtomWithIdx(0);
   at2=mol->getAtomWithIdx(7);
-  TEST_ASSERT(feq(mol->getAtomWithIdx(7)->getPos(),RDGeom::Point3D(-.5,2.5,0.0)));
+  TEST_ASSERT(feq(mol->getConformer().getAtomPos(7),RDGeom::Point3D(-.5,2.5,0.0)));
   library.clear();
 
   
@@ -211,23 +208,19 @@ void test7(){
   for(i=0;i<library.size();i++){
     std::cout << "------ Mol: " << i << "------" << std::endl;
     mol = library[i];
-    std::cout << MolToMolBlock(mol.get());
+    std::cout << MolToMolBlock(*mol);
     std::cout << std::endl;
   }
   for(i=0;i<library[0]->getNumAtoms();i++){
-    at1 = library[0]->getAtomWithIdx(i);
-    at2 = library[1]->getAtomWithIdx(i);
-    CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-    CHECK_INVARIANT(feq(at1->getPos().y,at2->getPos().y),"");
-    CHECK_INVARIANT(feq(at1->getPos().z,at2->getPos().z),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).x,library[1]->getConformer().getAtomPos(i).x),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).y,library[1]->getConformer().getAtomPos(i).y),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).z,library[1]->getConformer().getAtomPos(i).z),"");
 
-    at2 = library[2]->getAtomWithIdx(i);
-    CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-    CHECK_INVARIANT(feq(at1->getPos().y,at2->getPos().y),"");
-    CHECK_INVARIANT(feq(at1->getPos().z,at2->getPos().z),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).x,library[2]->getConformer().getAtomPos(i).x),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).y,library[2]->getConformer().getAtomPos(i).y),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).z,library[2]->getConformer().getAtomPos(i).z),"");
 
-    at2 = library[3]->getAtomWithIdx(i);
-    CHECK_INVARIANT(feq(at1->getPos(),at2->getPos()),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i),library[3]->getConformer().getAtomPos(i)),"");
   }
   library.clear();
 
@@ -242,24 +235,19 @@ void test7(){
   CHECK_INVARIANT(library[3]->getNumAtoms()==8,"");
 
   for(i=0;i<library[0]->getNumAtoms();i++){
-    at1 = library[0]->getAtomWithIdx(i);
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).x,library[1]->getConformer().getAtomPos(i).x),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).y,library[1]->getConformer().getAtomPos(i).y),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).z,library[1]->getConformer().getAtomPos(i).z),"");
 
-    at2 = library[1]->getAtomWithIdx(i);
-    CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-    CHECK_INVARIANT(feq(at1->getPos().y,at2->getPos().y),"");
-    CHECK_INVARIANT(feq(at1->getPos().z,at2->getPos().z),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).x,library[2]->getConformer().getAtomPos(i).x),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).y,library[2]->getConformer().getAtomPos(i).y),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).z,library[2]->getConformer().getAtomPos(i).z),"");
 
-    at2 = library[2]->getAtomWithIdx(i);
-    CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-    CHECK_INVARIANT(feq(at1->getPos().y,at2->getPos().y),"");
-    CHECK_INVARIANT(feq(at1->getPos().z,at2->getPos().z),"");
-
-    at2 = library[3]->getAtomWithIdx(i);
-    //std::cout << i << "\t" << at1->getPos() << std::endl;
-    //std::cout << "\t" << at2->getPos() << std::endl;
-    CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-    CHECK_INVARIANT(feq(at1->getPos().y,at2->getPos().y),"");
-    CHECK_INVARIANT(feq(at1->getPos().z,at2->getPos().z),"");
+    //std::cout << i << "\t" << library[0]->getConformer().getAtomPos(i) << std::endl;
+    //std::cout << "\t" << library[3]->getConformer().getAtomPos(i) << std::endl;
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).x,library[3]->getConformer().getAtomPos(i).x),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).y,library[3]->getConformer().getAtomPos(i).y),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).z,library[3]->getConformer().getAtomPos(i).z),"");
   }
   library.clear();
 
@@ -276,20 +264,17 @@ void test7(){
   for(i=0;i<library[0]->getNumAtoms();i++){
     at1 = library[0]->getAtomWithIdx(i);
 
-    at2 = library[1]->getAtomWithIdx(i);
-    CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-    CHECK_INVARIANT(feq(at1->getPos().y,at2->getPos().y),"");
-    CHECK_INVARIANT(feq(at1->getPos().z,at2->getPos().z),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).x,library[1]->getConformer().getAtomPos(i).x),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).y,library[1]->getConformer().getAtomPos(i).y),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).z,library[1]->getConformer().getAtomPos(i).z),"");
 
-    at2 = library[2]->getAtomWithIdx(i);
-    CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-    CHECK_INVARIANT(feq(at1->getPos().y,at2->getPos().y),"");
-    CHECK_INVARIANT(feq(at1->getPos().z,at2->getPos().z),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).x,library[2]->getConformer().getAtomPos(i).x),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).y,library[2]->getConformer().getAtomPos(i).y),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).z,library[2]->getConformer().getAtomPos(i).z),"");
 
-    at2 = library[3]->getAtomWithIdx(i);
-    CHECK_INVARIANT(feq(at1->getPos().x,at2->getPos().x),"");
-    CHECK_INVARIANT(feq(at1->getPos().y,at2->getPos().y),"");
-    CHECK_INVARIANT(feq(at1->getPos().z,at2->getPos().z),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).x,library[3]->getConformer().getAtomPos(i).x),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).y,library[3]->getConformer().getAtomPos(i).y),"");
+    CHECK_INVARIANT(feq(library[0]->getConformer().getAtomPos(i).z,library[3]->getConformer().getAtomPos(i).z),"");
   }
   library.clear();
 
@@ -298,12 +283,12 @@ void test7(){
   std::cout << " <---------- Done " << std::endl;
 }
 
-
+#if 0
 void testCoords(){
   std::cout << " ----------> Test Coords " << std::endl;
   RWMol *m1 = SmilesToMol("[Xa]C",0,0);
   CHECK_INVARIANT(m1,"");
-  m1->getAtomWithIdx(1)->setPos(0,0,0);
+  m1->getConformer().setAtomPos(1,Point3D(0,0,0));
   m1->getAtomWithIdx(0)->setPos(0.0,1.5,0.0);
 
   RWMol *m2 = SmilesToMol("[X]C(C)(C)C",0,0);
@@ -428,7 +413,7 @@ void testCoords(){
   std::cout << " <---------- Done " << std::endl;
 }
 
-
+#endif
 int main(){
 #if 1
   test1();
@@ -439,5 +424,5 @@ int main(){
   test6();
 #endif
   test7();
-  testCoords();
+  //testCoords();
 }

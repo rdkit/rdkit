@@ -34,6 +34,8 @@ namespace TemplateEnum {
     // ---------
     // start by getting our 4 atoms
     // ---------
+    Conformer &molConf=mol->getConformer();
+    Conformer &sidechainConf=sidechain->getConformer();
     Atom *molConnAtom,*molAttachAtom;
     Atom *chainConnAtom,*chainAttachAtom;
     molAttachAtom = mol->getAtomWithIdx(molAttachIdx);
@@ -62,11 +64,11 @@ namespace TemplateEnum {
 
     RDGeom::Point3D Vm,Um,Pmc,Pma;
     RDGeom::Point3D Vs,Us,Psc,Psa;
-    Pmc = molConnAtom->getPos();
-    Pma = molAttachAtom->getPos();
+    Pmc = molConf.getAtomPos(molConnAtom->getIdx());
+    Pma = molConf.getAtomPos(molAttachAtom->getIdx());
     std::cerr << "p=array(["<<Pma.x<<","<<Pma.y<<","<<Pma.z<<"])" << std::endl;
-    Psc = chainConnAtom->getPos();
-    Psa = chainAttachAtom->getPos();
+    Psc = sidechainConf.getAtomPos(chainConnAtom->getIdx());
+    Psa = sidechainConf.getAtomPos(chainAttachAtom->getIdx());
 
     templateTform.setToIdentity();
     Vm = Pmc - Pma;
@@ -85,7 +87,7 @@ namespace TemplateEnum {
 
     tmpTform.setToIdentity();
     tmpTform.SetTranslation(Pma);
-    templateTform = templateTform*tmpTform;
+    templateTform *= tmpTform;
 
     double sinT,cosT;
     cosT = Us.dotProduct(Um);
@@ -97,7 +99,7 @@ namespace TemplateEnum {
       rotnAxis.normalize();
       std::cerr << "ax=array(["<<rotnAxis.x<<","<<rotnAxis.y<<","<<rotnAxis.z<<"])" << std::endl;
       tmpTform.SetRotation(cosT,sinT,rotnAxis);
-      templateTform = templateTform*tmpTform;
+      templateTform *= tmpTform;
     } else if(cosT==1.0){
       RDGeom::Point3D normal(1,0,0);
       if(fabs(Us.dotProduct(normal))==1.0){
@@ -109,7 +111,7 @@ namespace TemplateEnum {
     
     tmpTform.setToIdentity();
     tmpTform.SetTranslation(Psc*-1.0);
-    templateTform = templateTform*tmpTform;
+    templateTform *= tmpTform;
 
     // ---------
     // transform the atomic positions in the sidechain:
@@ -142,7 +144,7 @@ namespace TemplateEnum {
     PRECONDITION(mol,"bad molecule provided");
     PRECONDITION(sidechain,"bad sidechain provided");
     int origNumAtoms=mol->getNumAtoms();
-    mol->insertMol(sidechain);
+    mol->insertMol(*sidechain);
 
     // get pointers to the two connectors (these are the atoms
     // we'll end up removing)
