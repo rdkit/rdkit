@@ -336,8 +336,10 @@ namespace RDKit{
 
       INT_VECT pred, doneAtms;
   
-      pred.reserve(nats);
-      doneAtms.reserve(nats);
+      //pred.reserve(nats);
+      //doneAtms.reserve(nats);
+      pred.resize(nats);
+      doneAtms.resize(nats);
       int ai;
       for (ai = 0; ai < nats; ++ai) {
 	doneAtms[ai] = 0;
