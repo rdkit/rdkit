@@ -160,7 +160,7 @@ namespace RDKit{
   inline std::string getLine(std::istream *inStream) {
     std::string res;
     std::getline(*inStream,res);
-    if (res[res.length()-1]=='\r'){
+    if ((res.length() > 0) && (res[res.length()-1]=='\r')){
       res.erase(res.length()-1);
     }
     return res;
