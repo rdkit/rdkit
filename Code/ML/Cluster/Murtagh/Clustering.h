@@ -8,9 +8,9 @@
 
 #ifdef WIN32
 #ifdef CALGORITHMS_EXPORTS
-#define CALGORITHMS_API extern  __declspec(dllexport)
+#define CALGORITHMS_API extern "C" __declspec(dllexport)
 #else
-#define CALGORITHMS_API extern  __declspec(dllimport)
+#define CALGORITHMS_API extern "C" __declspec(dllimport)
 #endif
 #include <windows.h>
 #else  // WIN32
