@@ -1,0 +1,28 @@
+******  Release_Jan2007_1 *******
+(Changes relative to Release_Oct2006_1)
+
+Bug Fixes
+  - zero-atom molecules now trigger an exception
+  - dummy atoms are no longer labelled 'Xe'
+  - core leak in the mol file writer fixed
+  - mol files with multiple charge lines are now correctly parsed
+  - a workaround was installed to prevent crashes in the regression
+    tests on Windows when using the newest VC++ v7 series compiler.
+    (http://sourceforge.net/tracker/index.php?func=detail&aid=1607290&group_id=160139&atid=814650)
+  - chirality perception (which requires partial sanitization) is no
+    longer done by the MolFileParser when sanitization is switched
+    off.
+  - Two potential memory corruption problems were fixed (rev's 150 and
+    151).
+
+New Features
+  - optional use of chirality in substructure searches
+  - MolWriters can now all take a stream as an argument
+  - Chiral terms can now be included in the DistanceGeometry
+    embedding.
+
+Other
+  - $RDBASE/Code/Demos/RDKit/BinaryIO is a demonstration of using
+    boost IOStreams and the ROMol pickling mechanism to generate
+    highly compressed, random-access files of molecules.
+  - the Point code has been refactored
