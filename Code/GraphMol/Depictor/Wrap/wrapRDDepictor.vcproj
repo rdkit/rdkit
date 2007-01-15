@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdPartialCharges_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdDepictor_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdDepictor_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdDepictor.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy Debug\rdDepictor.dll &quot;$(RDBASE)&quot;\Python\Chem\rdDepictor.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdDepictor.dll      &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy        Release\rdDepictor.dll      &quot;$(RDBASE)&quot;\Python\Chem\rdDepictor.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdBase.dll &quot;$(RDBASE)&quot;\Python\"/>
+				CommandLine="copy Debug\rdBase.dll &quot;$(RDBASE)&quot;\Python\rdBase.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -132,7 +132,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\cRDBase_d.dll &quot;$(RDBASE)&quot;\Python\RDBase"/>
+				CommandLine="copy DebugPython\rdBase_d.dll &quot;$(RDBASE)&quot;\Python\RDBase\rdBase_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -202,7 +202,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Release\rdBase.dll &quot;$(RDBASE)&quot;\Python\"/>
+				CommandLine="copy Release\rdBase.dll &quot;$(RDBASE)&quot;\Python\rdBase.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

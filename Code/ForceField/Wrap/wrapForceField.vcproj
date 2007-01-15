@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdForceField_d.dll &quot;$(RDBASE)&quot;\Python\ForceField"/>
+				CommandLine="copy DebugPython\rdForceField_d.dll &quot;$(RDBASE)&quot;\Python\ForceField\rdForceField_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdForceField.dll &quot;$(RDBASE)&quot;\Python\ForceField"/>
+				CommandLine="copy Debug\rdForceField.dll &quot;$(RDBASE)&quot;\Python\ForceField\rdForceField.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdForceField.dll      &quot;$(RDBASE)&quot;\Python\ForceField"/>
+				CommandLine="copy        Release\rdForceField.dll      &quot;$(RDBASE)&quot;\Python\ForceField\rdForceField.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdChemicalFeatures_new_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdChemicalFeatures_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdChemicalFeatures_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdChemicalFeatures.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy Debug\rdChemicalFeatures.dll &quot;$(RDBASE)&quot;\Python\Chem\rdChemicalFeatures.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdChemicalFeatures.dll      &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy        Release\rdChemicalFeatures.dll      &quot;$(RDBASE)&quot;\Python\Chem\rdChemicalFeatures.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

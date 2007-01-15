@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdDistGeom_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdDistGeom_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdDistGeom_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdDistGeom.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy Debug\rdDistGeom.dll &quot;$(RDBASE)&quot;\Python\Chem\rdDistGeom.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdDistGeom.dll      &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy        Release\rdDistGeom.dll      &quot;$(RDBASE)&quot;\Python\Chem\rdDistGeom.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

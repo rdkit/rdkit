@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdShapeHelpers_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdShapeHelpers_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdShapeHelpers_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdShapeHelpers.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy Debug\rdShapeHelpers.dll &quot;$(RDBASE)&quot;\Python\Chem\rdShapeHelpers.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdShapeHelpers.dll      &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy        Release\rdShapeHelpers.dll      &quot;$(RDBASE)&quot;\Python\Chem\rdShapeHelpers.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

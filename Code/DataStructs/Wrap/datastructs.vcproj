@@ -61,7 +61,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\cDataStructs.dll &quot;$(RDBASE)&quot;\Python\Datastructs"/>
+				CommandLine="copy Debug\cDataStructs.dll &quot;$(RDBASE)&quot;\Python\Datastructs\cDataStructs.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -131,7 +131,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\cDataStructs_d.dll &quot;$(RDBASE)&quot;\Python\Datastructs"/>
+				CommandLine="copy DebugPython\cDataStructs_d.dll &quot;$(RDBASE)&quot;\Python\Datastructs\cDataStructs_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -201,7 +201,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Release\cDataStructs.dll &quot;$(RDBASE)&quot;\Python\Datastructs"/>
+				CommandLine="copy Release\cDataStructs.dll &quot;$(RDBASE)&quot;\Python\Datastructs\cDataStructs.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

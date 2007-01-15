@@ -63,7 +63,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdMetricMatrixCalc_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdMetricMatrixCalc_d.dll &quot;$(RDBASE)&quot;\Python\DataManip\Metric\rdMetricMatrixCalc.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -134,7 +134,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdMetricMatrixCalc.dll &quot;$(RDBASE)&quot;\Python\DataManip\Metric"/>
+				CommandLine="copy Debug\rdMetricMatrixCalc.dll &quot;$(RDBASE)&quot;\Python\DataManip\Metric\rdMetricMatrixCalc.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -205,7 +205,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdMetricMatrixCalc.dll      &quot;$(RDBASE)&quot;\Python\DataManip\Metric"/>
+				CommandLine="copy        Release\rdMetricMatrixCalc.dll      &quot;$(RDBASE)&quot;\Python\DataManip\Metric\rdMetricMatrixCalc.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

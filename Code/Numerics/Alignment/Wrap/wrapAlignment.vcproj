@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdAlignment_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdAlignment_d.dll &quot;$(RDBASE)&quot;\Python\Numerics\rdAlignment_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdAlignment.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy Debug\rdAlignment.dll &quot;$(RDBASE)&quot;\Python\Numerics\rdAlignment.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdAlignment.dll      &quot;$(RDBASE)&quot;\Python\Numerics"/>
+				CommandLine="copy        Release\rdAlignment.dll      &quot;$(RDBASE)&quot;\Python\Numerics\rdAlignment.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

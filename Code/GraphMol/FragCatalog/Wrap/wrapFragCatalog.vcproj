@@ -63,7 +63,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdfragcatalog_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdfragcatalog_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdfragcatalog_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -134,7 +134,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdfragcatalog.dll      &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy  Release\rdfragcatalog.dll      &quot;$(RDBASE)&quot;\Python\Chem\rdfragcatalog.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -205,7 +205,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdfragcatalog.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy Debug\rdfragcatalog.dll &quot;$(RDBASE)&quot;\Python\Chem\rdfragcatalog.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
