@@ -3,6 +3,7 @@ import os,sys
 import unittest
 import DataStructs
 from Geometry import rdGeometry as geom
+import cPickle
 import math
 
 def feq(v1, v2, tol=1.0e-4):
@@ -202,6 +203,18 @@ class TestCase(unittest.TestCase):
                  bPt2.x = 4.0
             bPt1.y = -2.0
             bPt2.y = -2.0
+
+    def testPointPickles(self):
+        pt = geom.Point3D(2.0,-3.0,1.0)
+        pt2 = cPickle.loads(cPickle.dumps(pt))
+        self.failUnless(feq(pt.x,pt2.x,1e-6))
+        self.failUnless(feq(pt.y,pt2.y,1e-6))
+        self.failUnless(feq(pt.z,pt2.z,1e-6))
+
+        pt = geom.Point2D(2.0,-4.0)
+        pt2 = cPickle.loads(cPickle.dumps(pt))
+        self.failUnless(feq(pt.x,pt2.x,1e-6))
+        self.failUnless(feq(pt.y,pt2.y,1e-6))
 
 if __name__=='__main__':
     print "Testing Geometry wrapper"

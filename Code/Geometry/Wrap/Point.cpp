@@ -9,6 +9,22 @@
 #include <RDBoost/Wrap.h>
 namespace python = boost::python;
 
+namespace{
+  struct Point3D_pickle_suite : python::pickle_suite
+  {
+    static python::tuple getinitargs(RDGeom::Point3D const &pt){
+      return python::make_tuple(pt.x,pt.y,pt.z);
+    }
+  };
+  struct Point2D_pickle_suite : python::pickle_suite
+  {
+    static python::tuple getinitargs(RDGeom::Point2D const &pt){
+      return python::make_tuple(pt.x,pt.y);
+    }
+  };
+
+}
+
 
 namespace RDGeom {
   
@@ -108,6 +124,8 @@ namespace RDGeom {
              "return a normalized direction vector from this point to another")
         .def("CrossProduct", &Point3D::crossProduct,
              "Get the cross product between two points")
+
+        .def_pickle(Point3D_pickle_suite())
         ;
 
       
@@ -144,6 +162,8 @@ namespace RDGeom {
              "determines the signed angle between a vector to this point (between 0 and 2*PI)")
         .def("DirectionVector", &Point2D::directionVector,
              "return a normalized direction vector from this point to another")
+
+        .def_pickle(Point2D_pickle_suite())
         ;
     }
   };
