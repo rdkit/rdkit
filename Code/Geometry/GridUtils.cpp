@@ -10,6 +10,7 @@
 #include <RDBoost/Exceptions.h>
 #include <DataStructs/DiscreteValueVect.h>
 
+using namespace RDKit;
 namespace RDGeom {
   template<class GRIDTYPE> double tanimotoDistance(const GRIDTYPE &grid1, 
                                                    const GRIDTYPE &grid2) {

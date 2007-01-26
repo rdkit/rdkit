@@ -14,6 +14,7 @@
 #include "GridUtils.h"
 
 using namespace RDGeom;
+using namespace RDKit;
 
 void testUniformGrid1() {
   UniformGrid3D grd(6.0, 5.0, 4.0);
@@ -62,6 +63,19 @@ void testUniformGrid2() {
   grd5.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25, 3);
 }
 
+void testUniformGridPickling() {
+  // test tanimoto distance 
+  UniformGrid3D grd(10.0, 10.0, 10.0);
+  grd.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.5, 0.25);
+  grd.setSphereOccupancy(Point3D(-2.0, 2.0, 0.0), 1.5, 0.25);
+  grd.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.5, 0.25);
+  grd.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25);
+  UniformGrid3D grd2(grd.toString());
+  double dist = tanimotoDistance(grd, grd2);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.0), "");
+
+}
+
 int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing Grid\n";
@@ -73,5 +87,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testUniformGrid2 \n\n";
   testUniformGrid2();
+
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testUniformGridPickling \n\n";
+  testUniformGridPickling();
   return 0;
 }

@@ -7,14 +7,16 @@
 #define __RD_DISCRETE_VALUE_VECT_20050124__
 
 #include <boost/smart_ptr.hpp>
+#include <string>
 
-// we are making an assumption here that and unsigned int is 32 bits long
-const unsigned int BITS_PER_INT=32;
+namespace RDKit{
+  // we are making an assumption here that and unsigned int is 32 bits long
+  const unsigned int BITS_PER_INT=32;
 
-class DiscreteValueVect {
+  class DiscreteValueVect {
   public:
     typedef boost::shared_array<unsigned int> DATA_SPTR;
-
+  
     typedef enum {
       ONEBITVALUE=0,
       TWOBITVALUE,
@@ -23,7 +25,7 @@ class DiscreteValueVect {
       SIXTEENBITVALUE,
     } DiscreteValueType;
 
-    DiscreteValueVect(DiscreteValueType valType, unsigned length) : d_type(valType), d_length(length) {
+    DiscreteValueVect(DiscreteValueType valType, unsigned int length) : d_type(valType), d_length(length) {
       d_bitsPerVal = (1 << static_cast<unsigned int>(valType));
       d_valsPerInt = BITS_PER_INT/d_bitsPerVal;
       d_numInts = (length + d_valsPerInt -1)/d_valsPerInt;
@@ -35,6 +37,14 @@ class DiscreteValueVect {
 
     //! Copy constructor
     DiscreteValueVect(const DiscreteValueVect& other);
+
+    //! constructors from pickles
+    DiscreteValueVect(const std::string pkl){
+      initFromText(pkl.c_str(),pkl.size());
+    };
+    DiscreteValueVect(const char *pkl,const unsigned int len){
+      initFromText(pkl,len);
+    };
 
     ~DiscreteValueVect() {}
 
@@ -57,6 +67,7 @@ class DiscreteValueVect {
       return d_numInts;
     }
 
+    std::string toString() const;
   private:
     DiscreteValueType d_type;
     unsigned int d_bitsPerVal;
@@ -65,8 +76,10 @@ class DiscreteValueVect {
     unsigned int d_length;
     unsigned int d_mask;
     DATA_SPTR d_data;
-};
 
-unsigned int computeL1Norm(const DiscreteValueVect &v1, const DiscreteValueVect &v2);
+    void initFromText(const char *pkl,const unsigned int len);
+  };
 
+  unsigned int computeL1Norm(const DiscreteValueVect &v1, const DiscreteValueVect &v2);
+}
 #endif

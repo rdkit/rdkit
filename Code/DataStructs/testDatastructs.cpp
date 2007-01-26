@@ -19,6 +19,7 @@
 
 
 using namespace std;
+using namespace RDKit;
 template< typename T >
 inline void TXTMSG(const char *__a__,T __b__){  BOOST_LOG(rdInfoLog) << (__a__) << " " << (__b__) << std::endl; }
 
@@ -325,6 +326,46 @@ void test2DiscreteVectDists() {
 
 }
 
+void test3DiscreteVectPickles() {
+  DiscreteValueVect v1(DiscreteValueVect::ONEBITVALUE, 30);
+  unsigned int i;
+  for (i = 0; i < 15; ++i) {
+    v1.setVal(2*i, 1);
+  }
+  DiscreteValueVect v2(v1.toString());
+  CHECK_INVARIANT(computeL1Norm(v1, v2) == 0, " ");
+
+  DiscreteValueVect v21(DiscreteValueVect::TWOBITVALUE, 30);
+  for (i = 0; i < 30; ++i) {
+    v21.setVal(i, i%4);
+  }
+  DiscreteValueVect v22(v21.toString());
+  CHECK_INVARIANT(computeL1Norm(v21, v22) == 0, " ");
+
+  DiscreteValueVect v41(DiscreteValueVect::FOURBITVALUE, 16);
+  for (i = 0; i < 16; ++i) {
+    v41.setVal(i, i%16);
+  }
+  DiscreteValueVect v42(v41.toString());
+  CHECK_INVARIANT(computeL1Norm(v41, v42) == 0, " ");
+
+  DiscreteValueVect v81(DiscreteValueVect::EIGHTBITVALUE, 5);
+  v81.setVal(0, 34); 
+  v81.setVal(1, 167);
+  v81.setVal(2, 3); 
+  v81.setVal(3, 56);
+  v81.setVal(4, 128);
+  DiscreteValueVect v82(v81.toString());
+  CHECK_INVARIANT(computeL1Norm(v81, v82) == 0, " ");
+
+  DiscreteValueVect v161(DiscreteValueVect::SIXTEENBITVALUE, 3);
+  v161.setVal(0, 2345);
+  v161.setVal(1, 64578);
+  v161.setVal(2, 34);
+  DiscreteValueVect v162(v161.toString());
+  CHECK_INVARIANT(computeL1Norm(v161, v162) == 0, " ");
+}
+
 int main(){
   try{
     throw IndexErrorException(3);
@@ -365,6 +406,8 @@ int main(){
   test1DiscreteVect();
   std::cout << " Test DiscreteValue Vectors 2 ------------------------------------" << endl;
   test2DiscreteVectDists();
+  std::cout << " Test DiscreteValue Vectors 3 ------------------------------------" << endl;
+  test3DiscreteVectPickles();
 
   return 0;
   

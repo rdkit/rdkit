@@ -8,7 +8,9 @@
 #include <exception>
 #include <string>
 
-class DiscreteValueVect;
+namespace RDKit {
+  class DiscreteValueVect;
+}
 namespace RDGeom {
   class Point3D;
   
@@ -43,7 +45,7 @@ namespace RDGeom {
 
     virtual unsigned int getSize() const = 0;
 
-    virtual const DiscreteValueVect *getOccupancyVect() const = 0;
+    virtual const RDKit::DiscreteValueVect *getOccupancyVect() const = 0;
   };
 }
 

@@ -216,6 +216,25 @@ class TestCase(unittest.TestCase):
         self.failUnless(feq(pt.x,pt2.x,1e-6))
         self.failUnless(feq(pt.y,pt2.y,1e-6))
 
+    def test4GridPickles(self):
+        grd = geom.UniformGrid3D(10.0, 9.0, 8.0, 0.5)
+        self.failUnless(grd.GetNumX() == 20)
+        self.failUnless(grd.GetNumY() == 18)
+        self.failUnless(grd.GetNumZ() == 16)
+        grd.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.5, 0.25)
+        grd.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.5, 0.25)
+        grd.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.5, 0.25)
+        grd.SetSphereOccupancy(geom.Point3D(2.0, 2.0, 0.0), 1.5, 0.25)
+
+        self.failUnless(geom.TanimotoDistance(grd,grd)==0.0)
+
+        grd2 = cPickle.loads(cPickle.dumps(grd))
+        self.failUnless(grd2.GetNumX() == 20)
+        self.failUnless(grd2.GetNumY() == 18)
+        self.failUnless(grd2.GetNumZ() == 16)
+        self.failUnless(geom.TanimotoDistance(grd,grd2)==0.0)
+        
+
 if __name__=='__main__':
     print "Testing Geometry wrapper"
     unittest.main()
