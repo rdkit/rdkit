@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase):
         dist = geom.ProtrudeDistance(grd, grd2)
         self.failUnless(dist == 0.25)
         dist = geom.ProtrudeDistance(grd2, grd)
-        self.failUnless(feq(dist,0.3333))
+        self.failUnless(dist==0.0)
 
         grd2 = geom.UniformGrid3D(10.0, 10.0, 10.0, 0.5, DataStructs.DiscreteValueType.FOURBITVALUE)
         grd2.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.5, 0.25, 3)

@@ -37,10 +37,11 @@ namespace RDGeom {
     }
     const DiscreteValueVect *v1 = grid1.getOccupancyVect();
     const DiscreteValueVect *v2 = grid2.getOccupancyVect();
-    unsigned int dist = computeL1Norm(*v1, *v2);
     unsigned int totv1 = v1->getTotalVal();
     unsigned int totv2 = v2->getTotalVal();
-    double res = 1.0-(1.0*totv1-dist)/(1.0*totv1);
+    unsigned int totProtrude = computeL1Norm(*v1, *v2);
+    unsigned int intersectVolume = (totv1+totv2-totProtrude)/2;
+    double res = (1.0*totv1-intersectVolume)/(1.0*totv1);
     return res;
   }
 

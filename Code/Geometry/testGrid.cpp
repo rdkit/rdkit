@@ -49,7 +49,7 @@ void testUniformGrid2() {
   dist = protrudeDistance(grd, grd2);
   CHECK_INVARIANT(RDKit::feq(dist, 0.25), "");
   dist = protrudeDistance(grd2, grd);
-  CHECK_INVARIANT(RDKit::feq(dist, 0.3333), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.0), "");
 
   UniformGrid3D grd3(10.0, 10.0, 10.0);
   grd3.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.5, 0.25);
@@ -59,7 +59,7 @@ void testUniformGrid2() {
   dist = protrudeDistance(grd, grd3);
   CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
   dist = protrudeDistance(grd3, grd);
-  CHECK_INVARIANT(RDKit::feq(dist, 1.00), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.0), "");
   
   UniformGrid3D grd4(10.0, 10.0, 10.0);
   grd4.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25);
@@ -75,7 +75,7 @@ void testUniformGrid2() {
   dist = protrudeDistance(grd, grd5);
   CHECK_INVARIANT(RDKit::feq(dist, 0.75), "");
   dist = protrudeDistance(grd5, grd);
-  CHECK_INVARIANT(RDKit::feq(dist, 3.00), "");
+  CHECK_INVARIANT(RDKit::feq(dist, 0.00), "");
   
  
 }
