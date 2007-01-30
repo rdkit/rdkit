@@ -46,21 +46,26 @@ void testUniformGrid2() {
   grd2.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.5, 0.25);
   dist = tanimotoDistance(grd, grd2);
   CHECK_INVARIANT(RDKit::feq(dist, 0.25), "");
+  dist = protrudeDistance(grd, grd2);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.25), "");
+  dist = protrudeDistance(grd2, grd);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.3333), "");
 
   UniformGrid3D grd3(10.0, 10.0, 10.0);
   grd3.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.5, 0.25);
   grd3.setSphereOccupancy(Point3D(-2.0, 2.0, 0.0), 1.5, 0.25);
   dist = tanimotoDistance(grd, grd3);
   CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
+  dist = protrudeDistance(grd, grd3);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
+  dist = protrudeDistance(grd3, grd);
+  CHECK_INVARIANT(RDKit::feq(dist, 1.00), "");
   
   UniformGrid3D grd4(10.0, 10.0, 10.0);
   grd4.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25);
   grd4.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.5, 0.25);
   dist = tanimotoDistance(grd3, grd4);
   CHECK_INVARIANT(RDKit::feq(dist, 1.0), "");
-
-  UniformGrid3D grd5(10.0, 10.0, 10.0, 0.5, DiscreteValueVect::FOURBITVALUE);
-  grd5.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25, 3);
 }
 
 void testUniformGridPickling() {

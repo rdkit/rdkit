@@ -117,6 +117,8 @@ namespace RDGeom {
       
       python::def("TanimotoDistance", tanimotoDistance<UniformGrid3D>,
                   "Compute the tanimoto distance between two grid objects");
+      python::def("ProtrudeDistance", protrudeDistance<UniformGrid3D>,
+                  "Compute the protrude distance between two grid objects");
     }
   };
 }

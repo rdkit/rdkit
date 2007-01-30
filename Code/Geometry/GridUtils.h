@@ -9,6 +9,8 @@
 namespace RDGeom {
   template<class GRIDTYPE> double tanimotoDistance(const GRIDTYPE &grid1, 
                                                    const GRIDTYPE &grid2);
+  template<class GRIDTYPE> double protrudeDistance(const GRIDTYPE &grid1, 
+                                                   const GRIDTYPE &grid2);
     
 }
 
