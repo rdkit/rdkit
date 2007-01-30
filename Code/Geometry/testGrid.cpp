@@ -66,6 +66,18 @@ void testUniformGrid2() {
   grd4.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.5, 0.25);
   dist = tanimotoDistance(grd3, grd4);
   CHECK_INVARIANT(RDKit::feq(dist, 1.0), "");
+
+
+  UniformGrid3D grd5(10.0, 10.0, 10.0);
+  grd5.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.5, 0.25);
+  dist = tanimotoDistance(grd, grd5);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.75), "");
+  dist = protrudeDistance(grd, grd5);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.75), "");
+  dist = protrudeDistance(grd5, grd);
+  CHECK_INVARIANT(RDKit::feq(dist, 3.00), "");
+  
+ 
 }
 
 void testUniformGridPickling() {

@@ -40,7 +40,7 @@ namespace RDGeom {
     unsigned int dist = computeL1Norm(*v1, *v2);
     unsigned int totv1 = v1->getTotalVal();
     unsigned int totv2 = v2->getTotalVal();
-    double res = 1.0-1.0*(totv1-dist)/totv1;
+    double res = 1.0-(1.0*totv1-dist)/(1.0*totv1);
     return res;
   }
 
