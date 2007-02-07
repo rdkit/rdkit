@@ -607,7 +607,45 @@ void testIssue242(){
 #endif
 }
 
+void testSFIssue1653802(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing SFIssue1653802." << std::endl;
 
+  RWMol *mol;
+  int needMore;
+  ForceFields::ForceField *field;
+  double e1,e2;
+
+  mol = MolFileToMol("test_data/cyclobutadiene.mol",false);
+  TEST_ASSERT(mol);
+  MolOps::sanitizeMol(*mol);
+
+
+  UFF::AtomicParamVect types;
+  int *nbrMat;
+  types=UFF::getAtomTypes(*mol);
+  TEST_ASSERT(types.size()==mol->getNumAtoms());
+  field=new ForceFields::ForceField();
+  UFF::Tools::addBonds(*mol,types,field);
+  TEST_ASSERT(field->contribs().size()==8);
+
+  nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
+  UFF::Tools::addAngles(*mol,types,field,nbrMat);
+  TEST_ASSERT(field->contribs().size()==18);
+  UFF::Tools::addTorsions(*mol,types,field);
+  //std::cout << field->contribs().size() << std::endl;
+  TEST_ASSERT(field->contribs().size()==34);
+  UFF::Tools::addNonbonded(*mol,0,types,field,nbrMat);
+  delete field;
+
+  field = UFF::constructForceField(*mol);
+  field->initialize();
+  needMore = field->minimize(200,1e-6,1e-3);
+  TEST_ASSERT(!needMore);
+  
+  delete mol;
+  delete field;
+}
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -622,6 +660,7 @@ int main(){
   testUFFBatch();
   testUFFBuilderSpecialCases();
   testIssue239();
-#endif
   testIssue242();
+#endif
+  testSFIssue1653802();
 }

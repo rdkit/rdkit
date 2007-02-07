@@ -358,9 +358,9 @@ namespace RDKit {
         // and tends to yield poor-quality geometries, so filter those out:
         if(rings->isBondInRingOfSize(bond->getIdx(),3)){
           res = false;
-        } else if(rings->isBondInRingOfSize(bond->getIdx(),4)){
-          res = false;
-        }
+        }// else if(rings->isBondInRingOfSize(bond->getIdx(),4)){
+         // res = false;
+        //}
         return res;
       }
       // ------------------------------------------------------------------------
@@ -422,6 +422,7 @@ namespace RDKit {
                       }
                       //std::cout << "Torsion: " << bIdx << "-" << idx1 << "-" << idx2 << "-" << eIdx << std::endl;
                       if(okToIncludeTorsion(mol,bond,bIdx,idx1,idx2,eIdx)){
+                        //std::cout << "  INCLUDED" << std::endl;
                         contrib = new TorsionAngleContrib(field,bIdx,idx1,idx2,eIdx,
                                                           bond->getBondTypeAsDouble(),
                                                           atom1->getAtomicNum(),
