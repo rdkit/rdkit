@@ -87,6 +87,7 @@ allclean:
 	$(MAKE) --directory=MolTransforms clean
 	$(MAKE) --directory=ShapeHelpers clean
 	$(MAKE) --directory=ChemTransforms clean
+	$(MAKE) --directory=MolCatalog clean
 
 all: $(RDGRAPHLIB) $(RDGRAPHLIB_S)
 	$(MAKE) --directory=SmilesParse install
@@ -105,6 +106,7 @@ all: $(RDGRAPHLIB) $(RDGRAPHLIB_S)
 	$(MAKE) --directory=MolAlign
 	$(MAKE) --directory=ShapeHelpers
 	$(MAKE) --directory=ChemTransforms install
+	$(MAKE) --directory=MolCatalog install
 
 allstatic: $(RDGRAPHLIB_S)
 	$(MAKE) --directory=SmilesParse static
@@ -123,10 +125,11 @@ allstatic: $(RDGRAPHLIB_S)
 	$(MAKE) --directory=MolAlign
 	$(MAKE) --directory=ShapeHelpers
 	$(MAKE) --directory=ChemTransforms static
+	$(MAKE) --directory=MolCatalog static
 
 wrappers: $(RDGRAPHLIB)
 	for d in . FragCatalog PartialCharges Depictor DistGeomHelpers ForceFieldHelpers \
-		MolChemicalFeatures MolAlign MolTransforms ShapeHelpers;\
+		MolChemicalFeatures MolAlign MolTransforms ShapeHelpers MolCatalog;\
 	do								\
 		cd $(RDBASE)/Code/GraphMol/$$d/Wrap;						\
 		python setup.py build --force && python setup.py install --install-lib=$(RDBASE)/Python; \
@@ -160,6 +163,7 @@ allregrs:
 	$(MAKE) --directory=MolAlign regrs
 	$(MAKE) --directory=ShapeHelpers regrs
 	$(MAKE) --directory=ChemTransforms regrs
+	$(MAKE) --directory=MolCatalog regrs
 
 runallregrs: 
 	$(MAKE) allregrs
