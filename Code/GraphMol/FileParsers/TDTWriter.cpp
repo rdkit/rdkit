@@ -37,9 +37,23 @@ namespace RDKit {
     df_writeNames=true;
   }
 
+  TDTWriter::TDTWriter(std::ostream *outStream, bool takeOwnership) {
+    PRECONDITION(outStream,"null stream");
+    if (outStream->bad()) {
+      throw FileParseException("Bad output stream");
+    }
+    dp_ostream = outStream;
+    d_owner = takeOwnership;
+    d_molid = 0;
+    d_numDigits=4;
+    df_write2D=false;
+    df_writeNames=true;
+  }
+
   TDTWriter::~TDTWriter() {
     // if we've written any mols, finish with a "|" line
     if (d_molid > 0) {
+      CHECK_INVARIANT(dp_ostream,"null outstream even though molecules were written");
       (*dp_ostream) << "|\n";
     }
 
@@ -57,6 +71,7 @@ namespace RDKit {
   }
 
   void TDTWriter::write(ROMol &mol, int confId) {
+    CHECK_INVARIANT(dp_ostream,"no output stream");
     //start by writing a "|" line unless this is the first line
     if (d_molid > 0) {
       (*dp_ostream) << "|\n";
@@ -132,6 +147,7 @@ namespace RDKit {
   }
 
   void TDTWriter::writeProperty(const ROMol &mol, std::string name) {
+    PRECONDITION(dp_ostream,"no output stream");
     (*dp_ostream) << name << "<";
     
     // write the property value

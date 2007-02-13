@@ -3,6 +3,7 @@ import os,sys
 import unittest
 import DataStructs
 from Geometry import rdGeometry as geom
+import cPickle
 import math
 
 def feq(v1, v2, tol=1.0e-4):
@@ -167,6 +168,10 @@ class TestCase(unittest.TestCase):
 
         dist = geom.TanimotoDistance(grd, grd2)
         self.failUnless(dist == 0.25)
+        dist = geom.ProtrudeDistance(grd, grd2)
+        self.failUnless(dist == 0.25)
+        dist = geom.ProtrudeDistance(grd2, grd)
+        self.failUnless(dist==0.0)
 
         grd2 = geom.UniformGrid3D(10.0, 10.0, 10.0, 0.5, DataStructs.DiscreteValueType.FOURBITVALUE)
         grd2.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.5, 0.25, 3)
@@ -202,6 +207,37 @@ class TestCase(unittest.TestCase):
                  bPt2.x = 4.0
             bPt1.y = -2.0
             bPt2.y = -2.0
+
+    def testPointPickles(self):
+        pt = geom.Point3D(2.0,-3.0,1.0)
+        pt2 = cPickle.loads(cPickle.dumps(pt))
+        self.failUnless(feq(pt.x,pt2.x,1e-6))
+        self.failUnless(feq(pt.y,pt2.y,1e-6))
+        self.failUnless(feq(pt.z,pt2.z,1e-6))
+
+        pt = geom.Point2D(2.0,-4.0)
+        pt2 = cPickle.loads(cPickle.dumps(pt))
+        self.failUnless(feq(pt.x,pt2.x,1e-6))
+        self.failUnless(feq(pt.y,pt2.y,1e-6))
+
+    def test4GridPickles(self):
+        grd = geom.UniformGrid3D(10.0, 9.0, 8.0, 0.5)
+        self.failUnless(grd.GetNumX() == 20)
+        self.failUnless(grd.GetNumY() == 18)
+        self.failUnless(grd.GetNumZ() == 16)
+        grd.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.5, 0.25)
+        grd.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.5, 0.25)
+        grd.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.5, 0.25)
+        grd.SetSphereOccupancy(geom.Point3D(2.0, 2.0, 0.0), 1.5, 0.25)
+
+        self.failUnless(geom.TanimotoDistance(grd,grd)==0.0)
+
+        grd2 = cPickle.loads(cPickle.dumps(grd))
+        self.failUnless(grd2.GetNumX() == 20)
+        self.failUnless(grd2.GetNumY() == 18)
+        self.failUnless(grd2.GetNumZ() == 16)
+        self.failUnless(geom.TanimotoDistance(grd,grd2)==0.0)
+        
 
 if __name__=='__main__':
     print "Testing Geometry wrapper"

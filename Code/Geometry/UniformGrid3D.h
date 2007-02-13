@@ -31,7 +31,7 @@ namespace RDGeom {
 	
     */
     UniformGrid3D(double dimX, double dimY, double dimZ, double spacing=0.5,
-                  DiscreteValueVect::DiscreteValueType valType=DiscreteValueVect::TWOBITVALUE,
+                  RDKit::DiscreteValueVect::DiscreteValueType valType=RDKit::DiscreteValueVect::TWOBITVALUE,
                   const RDGeom::Point3D *offset=0) {
       if (offset == 0) {
         initGrid(dimX, dimY, dimZ, spacing, valType,
@@ -40,6 +40,11 @@ namespace RDGeom {
         initGrid(dimX, dimY, dimZ, spacing, valType, *offset);
       }
     }
+    //! construct from a string pickle
+    UniformGrid3D(const std::string pkl);
+    //! construct from a text pickle
+    UniformGrid3D(const char *pkl,unsigned int);
+
     ~UniformGrid3D();
 
     //! \brief Get the index of the grid point closest to point
@@ -87,7 +92,7 @@ namespace RDGeom {
                             double stepSize, int maxNumLayers=-1, 
                             bool ignoreOutOfBound=true);
 
-    const DiscreteValueVect *getStorage() const;
+    const RDKit::DiscreteValueVect *getStorage() const;
 
     //! \brief get the index of the grid point given the x, y, z indices
     //!
@@ -110,11 +115,14 @@ namespace RDGeom {
     double getSpacing() const;
 
     //! \brief return a \b const pointer to our occupancy vector
-    const DiscreteValueVect *getOccupancyVect() const;
+    const RDKit::DiscreteValueVect *getOccupancyVect() const;
 
     //! \brief returns true if the grid \c other has parameters
     //!        compatible with ours.
     virtual bool compareParams(const UniformGrid3D &other) const;
+
+    //! \brief create and return a pickle
+    std::string toString() const;
 
   private:
     //! \brief internal initialization code
@@ -128,14 +136,16 @@ namespace RDGeom {
 	\param offset:  the offset of the grid from (0,0,0), in Angstroms.
       
     */
-    
     void initGrid(double dimX, double dimY, double dimZ, double spacing,
-                  DiscreteValueVect::DiscreteValueType valType,
+                  RDKit::DiscreteValueVect::DiscreteValueType valType,
                   const RDGeom::Point3D &offSet);
     unsigned int d_numX, d_numY, d_numZ; //! number of grid points along x, y, z axes
     double d_spacing; //! grid spacing
     Point3D d_offSet; //! the grid offset (from the origin)
-    DiscreteValueVect *dp_storage; //! storage for values at each grid point
+    RDKit::DiscreteValueVect *dp_storage; //! storage for values at each grid point
+
+    //! \brief construct from a pickle
+    void initFromText(const char *pkl,const unsigned int length);
 
   };
 

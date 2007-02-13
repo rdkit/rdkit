@@ -11,6 +11,7 @@
 #include <vector>
 #include <map>
 #include <Geometry/point.h>
+#include "EmbedObject.h"
 
 #define EIGVAL_TOL 0.001
 //namespace RDGeom {
@@ -49,7 +50,7 @@ namespace DistGeom {
     \return true if the embedding was successful
   */
   bool computeInitialCoords(const RDNumeric::SymmMatrix<double> &distmat,  
-                            RDGeom::Point3DPtrVect &positions, bool randNegEig=false, 
+                            RDGeom::PointPtrVect &positions, bool randNegEig=false, 
                             unsigned int numZeroFail=2);
 
   //! Setup the error function for violation of distance bounds as a forcefield
@@ -70,7 +71,9 @@ namespace DistGeom {
 
   */
   ForceFields::ForceField *constructForceField(const BoundsMatrix &mmat,
-					       RDGeom::Point3DPtrVect &positions,
+					       RDGeom::PointPtrVect &positions, const VECT_CHIRALSET &csets,
+					       double weightChiral=1.0,
+					       double weightFourthDim=0.1,
 					       std::map< std::pair<int,int>,double> *extraWeights=0,
 					       double basinSizeTol=5.0);
 

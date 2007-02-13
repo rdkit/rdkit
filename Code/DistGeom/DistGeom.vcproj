@@ -123,6 +123,9 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
+				RelativePath=".\ChiralViolationContrib.cpp">
+			</File>
+			<File
 				RelativePath=".\DistGeomUtils.cpp">
 			</File>
 			<File
@@ -139,6 +142,9 @@
 				RelativePath=".\BoundsMatrix.h">
 			</File>
 			<File
+				RelativePath=".\ChiralViolationContrib.h">
+			</File>
+			<File
 				RelativePath=".\DistGeomUtils.h">
 			</File>
 			<File
@@ -146,6 +152,9 @@
 			</File>
 			<File
 				RelativePath=".\EmbedObject.h">
+			</File>
+			<File
+				RelativePath=".\FourthDimContrib.h">
 			</File>
 			<File
 				RelativePath=".\TriangleSmooth.h">

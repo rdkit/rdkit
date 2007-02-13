@@ -568,6 +568,27 @@ void testIssue399(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileChgLines(){
+  BOOST_LOG(rdInfoLog) << "testing SF.Net Issue1603923: problems with multiple chg lines" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  RWMol *m1;
+  std::string fName;
+
+  fName = rdbase+"MolFileChgBug.mol";
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getAtomWithIdx(24)->getFormalCharge()==-1);
+  TEST_ASSERT(m1->getAtomWithIdx(25)->getFormalCharge()==-1);
+  
+
+  delete m1;
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -583,8 +604,9 @@ int main(int argc,char *argv[]){
   test8();
   testIssue180();
   testIssue264();
-#endif
   testIssue399();
+#endif
+  testMolFileChgLines();
   //testCrash();
   return 0;
 }

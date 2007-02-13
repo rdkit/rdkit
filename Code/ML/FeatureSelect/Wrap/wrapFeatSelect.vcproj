@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdFeatSelect_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdFeatSelect_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdFeatSelect_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdFeatSelect.dll &quot;$(RDBASE)&quot;\Python\ML\FeatSelect"/>
+				CommandLine="copy Debug\rdFeatSelect.dll &quot;$(RDBASE)&quot;\Python\ML\FeatureSelect\rdFeatSelect.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -205,7 +205,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdFeatSelect.dll      &quot;$(RDBASE)&quot;\Python\ML\FeatureSelect"/>
+				CommandLine="copy        Release\rdFeatSelect.dll      &quot;$(RDBASE)&quot;\Python\ML\FeatureSelect\rdFeatSelect.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdInfoTheory_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdInfoTheory_d.dll &quot;$(RDBASE)&quot;\Python\ML\InfoTheory\rdInfoTheory_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdInfoTheory.dll &quot;$(RDBASE)&quot;\Python\ML\InfoTheory"/>
+				CommandLine="copy Debug\rdInfoTheory.dll &quot;$(RDBASE)&quot;\Python\ML\InfoTheory\rdInfoTheory.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -205,7 +205,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdInfoTheory.dll      &quot;$(RDBASE)&quot;\Python\ML\InfoTheory"/>
+				CommandLine="copy        Release\rdInfoTheory.dll      &quot;$(RDBASE)&quot;\Python\ML\InfoTheory\rdInfoTheory.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

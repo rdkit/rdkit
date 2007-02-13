@@ -57,7 +57,13 @@ void test1() {
     
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
-      //BOOST_LOG(rdDebugLog) << MolToMolBlock(m) << std::endl;
+#if 0
+      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
+      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
+      BOOST_LOG(rdInfoLog) << "---" << std::endl;
+      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m) << std::endl;
+      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
+#endif
       for (unsigned int i = 0; i < nat; i++) {
 	RDGeom::Point3D pt1i = conf1.getAtomPos(i);
 	RDGeom::Point3D pt2i = conf2.getAtomPos(i);
@@ -79,16 +85,16 @@ void test1() {
   }
 }
 
-void computeDistMat(const RDGeom::Point3DPtrVect &origCoords, RDNumeric::DoubleSymmMatrix &distMat) {
+void computeDistMat(const RDGeom::PointPtrVect &origCoords, RDNumeric::DoubleSymmMatrix &distMat) {
   unsigned int N = origCoords.size();
   CHECK_INVARIANT(N == distMat.numRows(), "");
   unsigned int i, j;
   RDGeom::Point3D pti, ptj;
   double d;
   for (i = 1; i < N; i++) {
-    pti = *origCoords[i];
+    pti = *(RDGeom::Point3D*)origCoords[i];
     for (j = 0; j < i; j++) {
-      ptj = *origCoords[j];
+      ptj = *(RDGeom::Point3D*)origCoords[j];
       ptj -= pti;
       d = ptj.length();
       distMat.setVal(i,j, d);
@@ -97,7 +103,7 @@ void computeDistMat(const RDGeom::Point3DPtrVect &origCoords, RDNumeric::DoubleS
 }
 
 void computeMolDmat(ROMol &mol, RDNumeric::DoubleSymmMatrix &distMat) {
-  RDGeom::Point3DPtrVect origCoords;
+  RDGeom::PointPtrVect origCoords;
   unsigned int i, nat = mol.getNumAtoms();
   Conformer &conf = mol.getConformer(0);
   for (i = 0; i < nat; i++) {
@@ -316,7 +322,7 @@ void test3() {
     ROMol *mol = sdsup.next();
     std::string mname;
     mol->getProp("_Name", mname);
-    RDGeom::Point3DPtrVect origCoords, newCoords;
+    RDGeom::PointPtrVect origCoords, newCoords;
     nat = mol->getNumAtoms();
     Conformer &conf = mol->getConformer(0);
     for (i = 0; i < nat; i++) {

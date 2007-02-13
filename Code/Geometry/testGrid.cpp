@@ -14,6 +14,7 @@
 #include "GridUtils.h"
 
 using namespace RDGeom;
+using namespace RDKit;
 
 void testUniformGrid1() {
   UniformGrid3D grd(6.0, 5.0, 4.0);
@@ -45,12 +46,20 @@ void testUniformGrid2() {
   grd2.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.5, 0.25);
   dist = tanimotoDistance(grd, grd2);
   CHECK_INVARIANT(RDKit::feq(dist, 0.25), "");
+  dist = protrudeDistance(grd, grd2);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.25), "");
+  dist = protrudeDistance(grd2, grd);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.0), "");
 
   UniformGrid3D grd3(10.0, 10.0, 10.0);
   grd3.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.5, 0.25);
   grd3.setSphereOccupancy(Point3D(-2.0, 2.0, 0.0), 1.5, 0.25);
   dist = tanimotoDistance(grd, grd3);
   CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
+  dist = protrudeDistance(grd, grd3);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
+  dist = protrudeDistance(grd3, grd);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.0), "");
   
   UniformGrid3D grd4(10.0, 10.0, 10.0);
   grd4.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25);
@@ -58,8 +67,30 @@ void testUniformGrid2() {
   dist = tanimotoDistance(grd3, grd4);
   CHECK_INVARIANT(RDKit::feq(dist, 1.0), "");
 
-  UniformGrid3D grd5(10.0, 10.0, 10.0, 0.5, DiscreteValueVect::FOURBITVALUE);
-  grd5.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25, 3);
+
+  UniformGrid3D grd5(10.0, 10.0, 10.0);
+  grd5.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.5, 0.25);
+  dist = tanimotoDistance(grd, grd5);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.75), "");
+  dist = protrudeDistance(grd, grd5);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.75), "");
+  dist = protrudeDistance(grd5, grd);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.00), "");
+  
+ 
+}
+
+void testUniformGridPickling() {
+  // test tanimoto distance 
+  UniformGrid3D grd(10.0, 10.0, 10.0);
+  grd.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.5, 0.25);
+  grd.setSphereOccupancy(Point3D(-2.0, 2.0, 0.0), 1.5, 0.25);
+  grd.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.5, 0.25);
+  grd.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25);
+  UniformGrid3D grd2(grd.toString());
+  double dist = tanimotoDistance(grd, grd2);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.0), "");
+
 }
 
 int main() {
@@ -73,5 +104,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testUniformGrid2 \n\n";
   testUniformGrid2();
+
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testUniformGridPickling \n\n";
+  testUniformGridPickling();
   return 0;
 }

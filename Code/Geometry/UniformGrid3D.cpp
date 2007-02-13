@@ -6,15 +6,19 @@
 //
 #include "UniformGrid3D.h"
 #include <DataStructs/DiscreteValueVect.h>
+#include <RDGeneral/StreamOps.h>
 #include "point.h"
 #include <fstream>
 
 #define OFFSET_TOL 1.e-8
 #define SPACING_TOL 1.e-8
+using namespace RDKit;
 
 namespace RDGeom {
+  unsigned int ci_GRIDPICKLE_VERSION=0x1;
+
   void UniformGrid3D::initGrid(double dimX, double dimY, double dimZ, double spacing,
-                          DiscreteValueVect::DiscreteValueType valType,
+                          RDKit::DiscreteValueVect::DiscreteValueType valType,
                           const RDGeom::Point3D &offSet ) {
     PRECONDITION(dimX > 0.0, "Invalid x-dimension for grid");
     PRECONDITION(dimY > 0.0, "Invalid y-dimension for grid");
@@ -26,8 +30,19 @@ namespace RDGeom {
     
     d_spacing = spacing;
     d_offSet = offSet;
-    dp_storage = new DiscreteValueVect(valType, d_numX*d_numY*d_numZ);
+    dp_storage = new RDKit::DiscreteValueVect(valType, d_numX*d_numY*d_numZ);
   }
+
+  UniformGrid3D::UniformGrid3D(const std::string pkl) {
+    dp_storage=0;
+    this->initFromText(pkl.c_str(),pkl.size());
+  }
+  UniformGrid3D::UniformGrid3D(const char *pkl,
+                               const unsigned int len){
+    dp_storage=0;
+    this->initFromText(pkl,len);
+  }
+
 
   UniformGrid3D::~UniformGrid3D() {
     if (dp_storage) {
@@ -113,7 +128,7 @@ namespace RDGeom {
     return d_offSet;
   }
     
-  const DiscreteValueVect *UniformGrid3D::getOccupancyVect() const {
+  const RDKit::DiscreteValueVect *UniformGrid3D::getOccupancyVect() const {
     return dp_storage;
   }
 
@@ -234,6 +249,56 @@ namespace RDGeom {
     return d_spacing;
   }
 
+  std::string UniformGrid3D::toString() const {
+    std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
+    int tVers = ci_GRIDPICKLE_VERSION*-1;
+    streamWrite(ss,tVers);
+    streamWrite(ss,d_numX);
+    streamWrite(ss,d_numY);
+    streamWrite(ss,d_numZ);
+    streamWrite(ss,d_spacing);
+    streamWrite(ss,d_offSet.x);
+    streamWrite(ss,d_offSet.y);
+    streamWrite(ss,d_offSet.z);
+
+    std::string storePkl=dp_storage->toString();
+    unsigned int pklSz=storePkl.size();
+    streamWrite(ss,pklSz);
+    ss.write(storePkl.c_str(),pklSz*sizeof(char));
+
+    std::string res(ss.str());
+    return(res);
+  }
+  void UniformGrid3D::initFromText(const char *pkl,const unsigned int length){
+    std::stringstream ss(std::ios_base::binary|std::ios_base::in|std::ios_base::out);
+    ss.write(pkl,length);
+    int tVers;
+    streamRead(ss,tVers);
+    tVers *= -1;
+    if(tVers==0x1){
+      
+    } else {
+      throw ValueErrorException("bad version in UniformGrid3D pickle");
+    }
+    streamRead(ss,d_numX);
+    streamRead(ss,d_numY);
+    streamRead(ss,d_numZ);
+    streamRead(ss,d_spacing);
+    double oX,oY,oZ;
+    streamRead(ss,oX);
+    streamRead(ss,oY);
+    streamRead(ss,oZ);
+    d_offSet = Point3D(oX,oY,oZ);
+
+    unsigned int pklSz;
+    streamRead(ss,pklSz);
+    char *buff = new char[pklSz];
+    ss.read(buff,pklSz*sizeof(char));
+    if(dp_storage) delete dp_storage;
+    dp_storage = new RDKit::DiscreteValueVect(buff,pklSz);
+    delete [] buff;
+  }
+  
   void writeGridToStream(const UniformGrid3D &grid, std::ostream &outStrm) {
     int dimX = (int)grid.getNumX();//+2;
     int dimY = (int)grid.getNumY();//+2;

@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdForceFieldHelpers_d.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy DebugPython\rdForceFieldHelpers_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdForceFieldHelpers_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\rdForceFieldHelpers.dll &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy Debug\rdForceFieldHelpers.dll &quot;$(RDBASE)&quot;\Python\Chem\rdForceFieldHelpers.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -204,7 +204,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        Release\rdForceFieldHelpers.dll      &quot;$(RDBASE)&quot;\Python\Chem"/>
+				CommandLine="copy        Release\rdForceFieldHelpers.dll      &quot;$(RDBASE)&quot;\Python\Chem\rdForceFieldHelpers.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

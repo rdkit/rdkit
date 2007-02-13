@@ -81,6 +81,7 @@ class TestCase(unittest.TestCase):
       writer = Chem.SDWriter('mol_899.sdf')
     
       for cid in cids:
+        print 'cid:',repr(cid)
         ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, confId=cid)
         ff.Initialize()
         more = 1

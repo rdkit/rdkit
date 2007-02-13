@@ -31,9 +31,20 @@ namespace RDKit {
     d_molid = 0;
   }
 
+  SDWriter::SDWriter(std::ostream *outStream,bool takeOwnership) {
+    PRECONDITION(outStream,"null stream");
+    if (outStream->bad()){
+      throw FileParseException("Bad output stream");
+    }
+    dp_ostream = outStream;
+    d_owner = takeOwnership;
+    d_molid = 0;
+  }
+
   SDWriter::~SDWriter() {
     // if we've written any mols, finish with a "$$$$" line
     if (d_molid > 0) {
+      CHECK_INVARIANT(dp_ostream,"null outstream even though molecules were written");
       (*dp_ostream) << "$$$$\n";
     }
 
@@ -51,6 +62,7 @@ namespace RDKit {
   }
 
   void SDWriter::write(ROMol &mol, int confId) {
+    PRECONDITION(dp_ostream,"no output stream");
     //start by writing a "$$$$" line unless this is the first line
     if (d_molid > 0) {
       (*dp_ostream) << "$$$$\n";
@@ -100,6 +112,7 @@ namespace RDKit {
   }
 
   void SDWriter::writeProperty(const ROMol &mol, std::string name) {
+    PRECONDITION(dp_ostream,"no output stream");
     // write the property header line
     (*dp_ostream) << ">  <" << name << ">  " << "(" << d_molid+1 << ") " << "\n";
     

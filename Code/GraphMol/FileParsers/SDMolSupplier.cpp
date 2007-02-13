@@ -225,11 +225,14 @@ namespace RDKit {
     }
 
     std::string tempp;
+    unsigned int line=d_line;
     try {
-      unsigned int line=d_line;
+      //std::cerr << "mdstm" <<std::endl;
       res = MolDataStreamToMol(dp_inStream, line, df_sanitize);
       d_line= line+1;
+      //std::cerr << "rmp" <<std::endl;
       this->readMolProps(res);  
+      //std::cerr << "d" <<std::endl;
     }
     catch (FileParseException &fe) {
       // we couldn't read a mol block or the data for the molecule. In this case
@@ -254,13 +257,14 @@ namespace RDKit {
         tempStr = getLine(dp_inStream);
       }
     } catch (...) {
-      BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line << std::endl;
+      BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << line << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
     }
     d_last++;
     unsigned int posHold=dp_inStream->tellg();
     this->checkForEnd();
     if (!this->df_end && d_last >= static_cast<int>(d_molpos.size())) {
+      //std::cerr << "\tpos> " << posHold << std::endl;
       d_molpos.push_back(posHold);
     }
 

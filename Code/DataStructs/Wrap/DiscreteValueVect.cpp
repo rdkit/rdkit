@@ -11,6 +11,17 @@
 #include <RDBoost/PySequenceHolder.h>
 #include <DataStructs/DiscreteValueVect.h>
 
+using namespace RDKit;
+
+struct dvv_pickle_suite : python::pickle_suite
+{
+  static python::tuple
+  getinitargs(const DiscreteValueVect& self)
+  {
+    return python::make_tuple(self.toString());
+  };
+};
+
 std::string disValVectDoc = "A container class for storing discrete integer values\n";
 
 struct discreteValVec_wrapper {
@@ -26,6 +37,7 @@ struct discreteValVec_wrapper {
     python::class_<DiscreteValueVect>("DiscreteValueVect", 
                                       disValVectDoc.c_str(),
                                       python::init<DiscreteValueVect::DiscreteValueType, unsigned int>("Constructor"))
+      .def(python::init<std::string>())
       .def("__len__", &DiscreteValueVect::getLength,
            "Get the number of entries in the vector")
       .def("__setitem__", &DiscreteValueVect::setVal,
@@ -36,6 +48,9 @@ struct discreteValVec_wrapper {
            "Get the type of value stored in the vector")
       .def("GetTotalVal", &DiscreteValueVect::getTotalVal,
            "Get the sum of the values in the vector, basically L1 norm")
+
+
+      .def_pickle(dvv_pickle_suite())
       ;
 
     python::def("ComputeL1Norm", computeL1Norm,

@@ -1,5 +1,5 @@
 import RDConfig
-import os,sys
+import os,sys,cPickle
 import unittest
 import DataStructs as ds
 
@@ -115,6 +115,42 @@ class TestCase(unittest.TestCase):
         v2[1] = 54578
         v2[2] = 10034
         self.failUnless(ds.ComputeL1Norm(v1, v2) == 21000)
+
+    def test3Pickles(self):
+        v1 = ds.DiscreteValueVect(ds.DiscreteValueType.ONEBITVALUE, 30)
+        for i in range(15):
+            v1[2*i] = 1
+        v2 = cPickle.loads(cPickle.dumps(v1))
+        self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+
+        v1 = ds.DiscreteValueVect(ds.DiscreteValueType.TWOBITVALUE, 30)
+        for i in range(30):
+            v1[i] = i%4
+        v2 = cPickle.loads(cPickle.dumps(v1))
+        self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+
+        v1 = ds.DiscreteValueVect(ds.DiscreteValueType.FOURBITVALUE, 16)
+        for i in range(16):
+            v1[i] = i%16
+        v2 = cPickle.loads(cPickle.dumps(v1))
+        self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+
+        v1 = ds.DiscreteValueVect(ds.DiscreteValueType.EIGHTBITVALUE, 5)
+        v1[0] = 34
+        v1[1] = 167
+        v1[2] = 3
+        v1[3] = 56
+        v1[4] = 128
+        v2 = cPickle.loads(cPickle.dumps(v1))
+        self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+
+
+        v1 = ds.DiscreteValueVect(ds.DiscreteValueType.SIXTEENBITVALUE, 3)
+        v1[0] = 2345
+        v1[1] = 64578
+        v1[2] = 34
+        v2 = cPickle.loads(cPickle.dumps(v1))
+        self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
         
 if __name__ == '__main__':
     unittest.main()

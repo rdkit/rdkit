@@ -35,6 +35,6 @@ D. Required environment variables:
      - PYTHON_ROOT (for example /usr or /usr/local)
      - PYTHON_VERSION (for example 2.4)
      - RDOPTFLAGS (for example -O3) 
-     - 
+
 
 

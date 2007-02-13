@@ -10,6 +10,7 @@
 #include <RDBoost/Exceptions.h>
 #include <DataStructs/DiscreteValueVect.h>
 
+using namespace RDKit;
 namespace RDGeom {
   template<class GRIDTYPE> double tanimotoDistance(const GRIDTYPE &grid1, 
                                                    const GRIDTYPE &grid2) {
@@ -28,5 +29,25 @@ namespace RDGeom {
 
   template double tanimotoDistance(const UniformGrid3D &grid1, 
                                    const UniformGrid3D &grid2);
+
+  template<class GRIDTYPE> double protrudeDistance(const GRIDTYPE &grid1, 
+                                                   const GRIDTYPE &grid2) {
+    if (!grid1.compareParams(grid2)) {
+      throw ValueErrorException("Grid parameters do not match");
+    }
+    const DiscreteValueVect *v1 = grid1.getOccupancyVect();
+    const DiscreteValueVect *v2 = grid2.getOccupancyVect();
+    unsigned int totv1 = v1->getTotalVal();
+    unsigned int totv2 = v2->getTotalVal();
+    unsigned int totProtrude = computeL1Norm(*v1, *v2);
+    unsigned int intersectVolume = (totv1+totv2-totProtrude)/2;
+    double res = (1.0*totv1-intersectVolume)/(1.0*totv1);
+    return res;
+  }
+
+  template double protrudeDistance(const UniformGrid3D &grid1, 
+                                   const UniformGrid3D &grid2);
+
+
 
 }

@@ -251,6 +251,7 @@ namespace RDKit{
     CHECK_INVARIANT(outStream,"could not open output file");
     std::string outString = MolToMolBlock(mol,includeStereo, confId);
     *outStream  << outString;
+    delete outStream;
   }    
 }
 

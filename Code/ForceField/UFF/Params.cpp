@@ -4,13 +4,19 @@
 //
 //   @@ All Rights Reserved  @@
 //
+#ifdef WIN32
+#define _USE_MATH_DEFINES
+#endif
+#include <cmath>
 #include "Params.h"
-#include <math.h>
+
 #include <iostream>
 #include <sstream>
 #include <RDGeneral/StreamOps.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
+#include <Geometry/point.h>
+
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 

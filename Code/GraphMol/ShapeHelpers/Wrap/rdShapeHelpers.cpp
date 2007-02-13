@@ -161,7 +161,7 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
               (python::arg("mol1"), python::arg("mol2"), 
                python::arg("confId1")=-1, python::arg("confId2")=-1,
                python::arg("gridSpacing")=0.5, 
-               python::arg("bitsPerPoint")=DiscreteValueVect::TWOBITVALUE,
+               python::arg("bitsPerPoint")=RDKit::DiscreteValueVect::TWOBITVALUE,
                python::arg("vdwScale")=0.8, python::arg("stepSize")=0.25,
                python::arg("maxLayers")=-1, python::arg("ignoreHs")=true),
               docString.c_str());

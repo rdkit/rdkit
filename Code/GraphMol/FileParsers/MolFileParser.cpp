@@ -99,14 +99,17 @@ namespace RDKit{
     mol->replaceAtom(idx,&a); 
   };
   
-  void ParseChargeLine(RWMol *mol, std::string text) {
+  void ParseChargeLine(RWMol *mol, std::string text,bool firstCall) {
     PRECONDITION(text.substr(0,6)==std::string("M  CHG"),"bad atom list line");
     
+
     // if this line is specified all the atom other than those specified
-    // here should carry a charge of 0
-    ROMol::AtomIterator ai; 
-    for (ai = mol->beginAtoms(); ai != mol->endAtoms(); ai++) {
-      (*ai)->setFormalCharge(0);
+    // here should carry a charge of 0; but we should only do this once:
+    if(firstCall){
+      for (ROMol::AtomIterator ai = mol->beginAtoms();
+	   ai != mol->endAtoms(); ++ai) {
+	(*ai)->setFormalCharge(0);
+      }
     }
 
     int ie, nent;
@@ -461,7 +464,7 @@ namespace RDKit{
   //
   //------------------------------------------------
   RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line, bool sanitize){
-    //char inLine[MOLFILE_MAXLINE];
+    PRECONDITION(inStream,"no stream");
     std::string tempStr;
     bool fileComplete=false;
     bool chiralityPossible = false;
@@ -472,11 +475,11 @@ namespace RDKit{
     if(inStream->eof()){
       return NULL;
     }
-    
+    //std::cerr <<"\tnew" <<std::endl;
     RWMol *res = new RWMol();
-    std::string mname = tempStr;
-    res->setProp("_Name", mname);
-    
+    res->setProp("_Name", tempStr);
+    bool firstChargeLine=true;
+
     // info
     line++;
     tempStr = getLine(inStream);
@@ -497,6 +500,7 @@ namespace RDKit{
     // this needs to go into a try block because if the lexical_cast throws an
     // exception we want to catch and delete mol before leaving this function
     
+    //std::cerr <<"\tcounts" <<std::endl;
     unsigned int spos = 0;
     try {
       // it *sucks* that the lexical_cast stuff above doesn't work on linux        
@@ -547,12 +551,14 @@ namespace RDKit{
       // on the header line, so ignore problems parsing there.
     }
 
+    //std::cerr <<"\tnAtoms: " << nAtoms << " " << nBonds << std::endl;
     try {
       if(nAtoms<=0){
         throw FileParseException("molecule has no atoms");
       }
       int i;
       Conformer *conf = new Conformer(nAtoms);
+      //std::cerr <<"\trAts" << std::endl;
       for(i=0;i<nAtoms;i++){
         line++;
         tempStr = getLine(inStream);
@@ -562,8 +568,10 @@ namespace RDKit{
         unsigned int aid = res->addAtom(atom,false,true);
         conf->setAtomPos(aid, pos);
       }
+      //std::cerr <<"\taddConf" << std::endl;
       res->addConformer(conf, true);
 
+      //std::cerr <<"\tbonds" << std::endl;
       for(i=0;i<nBonds;i++){
         line++;
         tempStr = getLine(inStream);
@@ -581,6 +589,7 @@ namespace RDKit{
         }
         res->addBond(bond,true);
       }
+      //std::cerr <<"\tok" << std::endl;
       
       // older mol files can have an atom list block here
       line++;
@@ -604,7 +613,10 @@ namespace RDKit{
       //tempStr = inLine;
       while(!inStream->eof() && tempStr.find("M  END") != 0 && tempStr.find("$$$$") != 0){
         if(tempStr.find("M  ALS") == 0) ParseNewAtomList(res,tempStr);
-        if(tempStr.find("M  CHG") == 0) ParseChargeLine(res, tempStr);
+        if(tempStr.find("M  CHG") == 0){
+	  ParseChargeLine(res, tempStr,firstChargeLine);
+	  firstChargeLine=false;
+	}
         line++;
         tempStr = getLine(inStream);
       }
@@ -632,32 +644,33 @@ namespace RDKit{
         atomIt++) {
       (*atomIt)->calcExplicitValence();
     }
-
-    // update the chirality and stereo-chemistry and stuff:
-    //
-    // NOTE: we detect the stereochemistry before sanitizing/removing
-    // hydrogens because the removal of H atoms may actually remove
-    // the wedged bond from the molecule.  This wipes out the only
-    // sign that chirality ever existed and makes us sad... so first
-    // perceive chirality, then remove the Hs and sanitize.
-    //
-    // One exception to this (of course, there's always an exception):
-    // DetectAtomStereoChemistry() needs to check the number of
-    // implicit hydrogens on atoms to detect if things can be
-    // chiral. However, if we ask for the number of implicit Hs before
-    // we've called MolOps::cleanUp() on the molecule, we'll get
-    // exceptions for common "weird" cases like a nitro group
-    // mis-represented as -N(=O)=O.  *SO*... we need to call
-    // cleanUp(), then detect the stereochemistry.
-    // (this was Issue 148)
-    //
-    if(res && chiralityPossible){
-      MolOps::cleanUp(*res);
-      const Conformer &conf = res->getConformer();
-      DetectAtomStereoChemistry(*res, &conf);
-    }
+    //std::cerr << "bloop "<<line << std::endl;
 
     if (res && sanitize) {
+      // update the chirality and stereo-chemistry and stuff:
+      //
+      // NOTE: we detect the stereochemistry before sanitizing/removing
+      // hydrogens because the removal of H atoms may actually remove
+      // the wedged bond from the molecule.  This wipes out the only
+      // sign that chirality ever existed and makes us sad... so first
+      // perceive chirality, then remove the Hs and sanitize.
+      //
+      // One exception to this (of course, there's always an exception):
+      // DetectAtomStereoChemistry() needs to check the number of
+      // implicit hydrogens on atoms to detect if things can be
+      // chiral. However, if we ask for the number of implicit Hs before
+      // we've called MolOps::cleanUp() on the molecule, we'll get
+      // exceptions for common "weird" cases like a nitro group
+      // mis-represented as -N(=O)=O.  *SO*... we need to call
+      // cleanUp(), then detect the stereochemistry.
+      // (this was Issue 148)
+      //
+      if(chiralityPossible){
+        MolOps::cleanUp(*res);
+        const Conformer &conf = res->getConformer();
+        DetectAtomStereoChemistry(*res, &conf);
+      }
+
       try {
         ROMol *tmp=MolOps::removeHs(*res,false,false);
         // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry here after

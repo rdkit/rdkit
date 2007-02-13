@@ -8,7 +8,6 @@
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/types.h>
-#include "MetricMatrix.h"
 #include <boost/smart_ptr.hpp>
 
 namespace DistGeom {
@@ -18,36 +17,34 @@ namespace DistGeom {
    */
   class ChiralSet {
   public:
-    ChiralSet(int pid1, int pid2, int pid3, int pid4, 
-                 double lowerVolBound, double upperVolBound) {
-      CHECK_INVARIANT((pid1 >= 0) && (pid1 >= 0) && (pid1 >= 0) && (pid1 >= 0), "");
-      CHECK_INVARIANT(lowerVolBound <= upperVolBound, "Inconsistent bounds\n");
 
-      d_pointIds.reserve(4);
-      d_pointIds.push_back(pid1);
-      d_pointIds.push_back(pid2);
-      d_pointIds.push_back(pid3);
-      d_pointIds.push_back(pid4);
-      d_lowerVolumeBound = lowerVolBound;
-      d_upperVolumeBound = upperVolBound;
+    unsigned int d_idx1;
+    unsigned int d_idx2;
+    unsigned int d_idx3;
+    unsigned int d_idx4;
+    double d_volumeLowerBound;
+    double d_volumeUpperBound;
+
+    ChiralSet(unsigned int pid1, unsigned int pid2, unsigned int pid3, unsigned int pid4, 
+                 double lowerVolBound, double upperVolBound) {
+      CHECK_INVARIANT(lowerVolBound <= upperVolBound, "Inconsistent bounds\n");
+      d_idx1 = pid1;
+      d_idx2 = pid2;
+      d_idx3 = pid3;
+      d_idx4 = pid4;
+      d_volumeLowerBound = lowerVolBound;
+      d_volumeUpperBound = upperVolBound;
     }
     
     inline double getUpperVolumeBound() const {
-      return d_upperVolumeBound;
+      return d_volumeUpperBound;
     }
     
     inline double getLowerVolumeBound() const {
-      return d_lowerVolumeBound;
+      return d_volumeLowerBound;
     }
     
-    const RDKit::INT_VECT &getPointIds() const {
-      return d_pointIds;
-    }
     
-  private:
-    RDKit::INT_VECT d_pointIds;
-    double d_volumeLowerBound;
-    double d_volumeUpperBound;
   };
  
   typedef boost::shared_ptr<ChiralSet> ChiralSetPtr;
@@ -59,6 +56,7 @@ namespace DistGeom {
    *  lower bounds on the distances, and a list of quartets of points to which chirality 
    *  constraints need to be applied.
    */
+  /*
   class EmbedObject {
   public:
     EmbedObject() {};
@@ -96,7 +94,7 @@ namespace DistGeom {
   private:
     MetricMatPtr d_metricMat;
     VECT_CHIRALSET d_chiralSets;
-  };
+    };*/
 
 }  
 

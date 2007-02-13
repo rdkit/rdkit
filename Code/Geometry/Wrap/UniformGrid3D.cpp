@@ -15,7 +15,19 @@
 #include <RDBoost/Wrap.h>
 namespace python = boost::python;
 
+using namespace RDKit;
+
 namespace RDGeom {
+  struct ug3d_pickle_suite : python::pickle_suite
+  {
+    static python::tuple
+    getinitargs(const UniformGrid3D& self)
+    {
+      return python::make_tuple(self.toString());
+    };
+  };
+
+
   
   UniformGrid3D *makeUnformGrid3D(double dimX, double dimY, double dimZ, double spacing=0.5,
                                  DiscreteValueVect::DiscreteValueType valType=DiscreteValueVect::TWOBITVALUE,
@@ -47,8 +59,8 @@ namespace RDGeom {
   struct uGrid3D_wrapper {
     static void wrap() {
       
-      python::class_<UniformGrid3D>("UniformGrid3D", uGridClassDoc.c_str(),
-                                    python::no_init)
+      python::class_<UniformGrid3D>("UniformGrid3D_", uGridClassDoc.c_str(),
+                                    python::init<std::string>("pickle constructor"))
         .def("GetGridPointIndex", &UniformGrid3D::getGridPointIndex, 
              "Get the index to the grid point closest to the specified point")
         .def("GetValPoint", getValPoint,
@@ -87,6 +99,9 @@ namespace RDGeom {
              "Set the occupancy on the grid for a sphere or specified radius\n"
              " and multiple layers around this sphere, with decreasing values of \n"
              "occupancy\n")
+
+        .def_pickle(RDGeom::ug3d_pickle_suite())
+
         ;
       
       python::def("UniformGrid3D", makeUnformGrid3D,
@@ -102,6 +117,8 @@ namespace RDGeom {
       
       python::def("TanimotoDistance", tanimotoDistance<UniformGrid3D>,
                   "Compute the tanimoto distance between two grid objects");
+      python::def("ProtrudeDistance", protrudeDistance<UniformGrid3D>,
+                  "Compute the protrude distance between two grid objects");
     }
   };
 }
