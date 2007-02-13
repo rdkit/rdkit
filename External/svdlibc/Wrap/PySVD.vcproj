@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Debug\cSVD.dll &quot;$(RDBASE)&quot;\Python\PySVD"/>
+				CommandLine="copy Debug\cSVD.dll &quot;$(RDBASE)&quot;\Python\PySVD\cSVD.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -132,7 +132,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\cSVD_d.dll &quot;$(RDBASE)&quot;\Python\PySVD"/>
+				CommandLine="copy DebugPython\cSVD_d.dll &quot;$(RDBASE)&quot;\Python\PySVD\cSVD_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -202,7 +202,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy Release\cSVD.dll &quot;$(RDBASE)&quot;\Python\PySVD"/>
+				CommandLine="copy Release\cSVD.dll &quot;$(RDBASE)&quot;\Python\PySVD\cSVD.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
