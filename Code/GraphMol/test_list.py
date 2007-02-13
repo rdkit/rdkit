@@ -16,7 +16,6 @@ tests=[
   ("python","test_list.py",{'dir':'Fingerprints'}),
   ("python","test_list.py",{'dir':'MolTransforms'}),
 
-
   ("python","test_list.py",{'dir':'Wrap'}),
   ("python","test_list.py",{'dir':'Depictor/Wrap'}),
   ("python","test_list.py",{'dir':'FragCatalog/Wrap'}),
@@ -28,7 +27,11 @@ tests=[
   ("python","test_list.py",{'dir':'MolChemicalFeatures'}),
   ("python","test_list.py",{'dir':'MolAlign'}),
   ("python","test_list.py",{'dir':'ShapeHelpers'}),
-  ("python","test_list.py",{'dir':'ChemTransforms'})
+  ("python","test_list.py",{'dir':'ChemTransforms'}),
+
+  ("python","test_list.py",{'dir':'MolCatalog'}),
+  ("python","test_list.py",{'dir':'MolCatalog/Wrap'}),
+
   ]
 
 if sys.platform != 'win32':
