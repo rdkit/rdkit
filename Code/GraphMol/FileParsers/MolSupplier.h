@@ -90,7 +90,7 @@ namespace RDKit {
      *  The client should be *very* careful about calling this method, as it's trivial
      *  to end up with a completely useless supplier.
      *
-     *   \param args - the vector of stream positions.
+     *   \param locs - the vector of stream positions.
      *
      *  Note that this can be used not only to make reading selected molecules from a
      *  large SD file much faster, but it can also allow subsetting an SD file or

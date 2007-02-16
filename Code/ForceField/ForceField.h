@@ -153,11 +153,6 @@ namespace ForceFields {
     */
     double distance(int i,int j,double *pos=0);
 
-    //! returns the dimension of the forcefield
-    unsigned int dimension() const {
-      return d_dimension;
-    }
-
     //! returns the distance between two points
     /*!
 
@@ -175,18 +170,16 @@ namespace ForceFields {
     */
     double distance(int i,int j,double *pos=0) const;
 
+    //! returns the dimension of the forcefield
+    unsigned int dimension() const {
+      return d_dimension;
+    }
+
     //! returns the number of points the ForceField is handling
     int numPoints() const { return d_numPoints; };
 
-
     INT_VECT &fixedPoints() { return d_fixedPoints; };
     const INT_VECT &fixedPoints() const { return d_fixedPoints; };
-    
-    
-    //! OBSOLETE, DO NOT USE
-    RDGeom::PointPtrVect &forces() { return d_forces; };
-    const RDGeom::PointPtrVect &forces() const { return d_forces; };
-
     
   protected:
     unsigned int d_dimension;

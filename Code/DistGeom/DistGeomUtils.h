@@ -59,8 +59,11 @@ namespace DistGeom {
     Modeling" Jeffrey M.Blaney and J.Scott Dixon, Review in Computational Chemistry,
     Volume V
 
-    \param mmat       Distance bounds matrix
-    \param positions  A vector of pointers to Points to write out the resulting coordinates
+    \param mmat            Distance bounds matrix
+    \param positions       A vector of pointers to Points to write out the resulting coordinates
+    \param csets           The vector of chiral points (type: ChiralSet)
+    \param weightChiral    weight to be used to enforce chirality
+    \param weightFourthDim another chiral weight
     \param extraWeights    an optional set of weights for distance bounds violations
     \param basinSizeTol  Optional: any distance bound with a basin (distance between max and
                          min bounds) larger than this value will not be included in the force

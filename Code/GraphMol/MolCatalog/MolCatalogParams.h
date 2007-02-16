@@ -28,9 +28,13 @@ namespace RDKit {
     //! construct from a pickle string (serialized representation)
     MolCatalogParams(const std::string &pickle);
 
+    //! serializes to the stream
     void toStream(std::ostream &) const;
+    //! returns a serialized (pickled) form
     std::string Serialize() const;
+    //! initialize from a stream containing a pickle
     void initFromStream(std::istream &ss);
+    //! initialize from a string containing a pickle
     void initFromString(const std::string &text);
   };
 }

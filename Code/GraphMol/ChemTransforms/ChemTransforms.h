@@ -18,9 +18,8 @@ namespace RDKit{
   /*!
       \param mol       the ROMol of interest
       \param query     the query ROMol
-      \param onlyFrags if this is set, only matches that correspond to an
-                       entire fragment will be removed.  This is useful for
-		       salt removal
+      \param replaceAll  if this is set all matches of the query to the substructure will
+                         be removed. Default is to only remove the first.
 
       \return a copy of \c mol with the matching atoms and bonds (if any)
               removed.		       

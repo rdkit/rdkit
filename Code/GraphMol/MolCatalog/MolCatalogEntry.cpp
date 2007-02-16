@@ -50,6 +50,7 @@ namespace RDKit {
 
   void MolCatalogEntry::setMol(const ROMol *omol){
     PRECONDITION(omol,"bad mol");
+    if(dp_mol) delete dp_mol;
     dp_mol = omol;
   }
 
