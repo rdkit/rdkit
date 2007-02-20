@@ -11,6 +11,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include "SmilesParse.h"  
 #include "SmilesParseOps.h"  
 #include <RDGeneral/RDLog.h>
 
@@ -27,6 +28,8 @@ yysmarts_error( const char * msg )
 using namespace RDKit;
 
 extern std::vector<RWMol *> molList_g;
+static RWMol * curMol_gps = 0;
+
 
 %}
  
@@ -47,7 +50,7 @@ extern std::vector<RWMol *> molList_g;
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN 
 %token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN DOLLAR_TOKEN
-%token HYB_TOKEN
+%token HYB_TOKEN COLON_TOKEN
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol branch
 %type <atom> atomd element simple_atom
@@ -102,7 +105,6 @@ mol: atomd {
   molList_g.resize( sz + 1);
   molList_g[ sz ] = new RWMol();
   molList_g[ sz ]->addAtom($1,true,true);
-  //delete $1;
   $$ = sz;
 }
 | mol atomd       {
@@ -241,16 +243,27 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   $2->getQuery()->setNegation(!($2->getQuery()->getNegation()));
   $$ = $2;
 }
-| element NOT_TOKEN atom_expr_piece {
+| atom_expr COLON_TOKEN number {
+  if($1->hasProp("molAtomMapNumber")){
+	throw SmilesParseException("Atom-map index (:%d) specified multiple times for one atom");
+  } else {
+	$1->setProp("molAtomMapNumber",$3);
+  }
+}
+| atom_expr NOT_TOKEN atom_expr_piece {
+  // FIX: this stuff (formerly element NOT_TOKEN atom_expr_piece) is making us shift-reduce-a-riffic
   $3->getQuery()->setNegation(!($3->getQuery()->getNegation()));
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $3;
 }
-| element atom_expr_piece {
+| atom_expr atom_expr_piece {
+  // FIX: this stuff (formerly element atom_expr_piece) is making us shift-reduce-a-riffic
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $2;
 }
 | atom_expr_piece
+| element AT_TOKEN AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); $$=$1;}
+| element AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); $$=$1;}
 | element
 ;
 
@@ -258,11 +271,7 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
 atom_expr_piece: atom_expr_piece point_query {
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $2;
-}/*
-| NOT_TOKEN point_query {
-  $2->getQuery()->setNegation(!($2->getQuery()->getNegation()));
-  $$ = $2;
-  }*/
+}
 | point_query
 ;
 
@@ -405,6 +414,12 @@ bondd: BOND_TOKEN
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::TRIPLE);
   newB->setQuery(makeBondOrderEqualsQuery(Bond::TRIPLE));
+  $$ = newB;
+}
+| COLON_TOKEN {
+  QueryBond *newB= new QueryBond();
+  newB->setBondType(Bond::AROMATIC);
+  newB->setQuery(makeBondOrderEqualsQuery(Bond::AROMATIC));
   $$ = newB;
 }
 | AT_TOKEN {

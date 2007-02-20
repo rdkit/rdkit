@@ -41,7 +41,7 @@ using namespace RDKit;
 @[' ']*BP |
 @[' ']*OH 	{ return CHI_CLASS_TOKEN; }
 
-@+		{ return AT_TOKEN; }
+@		{ return AT_TOKEN; }
 
 
 <IN_ATOM_STATE>He |
@@ -227,6 +227,7 @@ A			{
 }
 
 
+\: 			{ return COLON_TOKEN; }
 
 \-			{ return MINUS_TOKEN; }
 
@@ -234,15 +235,11 @@ A			{
 
 \#			{ return HASH_TOKEN; }
 
-[\=\:\~]    { yysmarts_lval.bond = new QueryBond();
+[\=\~]    { yysmarts_lval.bond = new QueryBond();
               switch(yytext[0]){
 	      case '=':
 		yysmarts_lval.bond->setBondType(Bond::DOUBLE);
                 yysmarts_lval.bond->setQuery(makeBondOrderEqualsQuery(Bond::DOUBLE));
-		break;
-	      case ':':
-		yysmarts_lval.bond->setBondType(Bond::AROMATIC);
-                yysmarts_lval.bond->setQuery(makeBondOrderEqualsQuery(Bond::AROMATIC));
 		break;
 	      case '~':
 		yysmarts_lval.bond->setQuery(makeBondNullQuery());
