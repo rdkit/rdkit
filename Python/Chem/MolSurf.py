@@ -161,7 +161,15 @@ def PEOE_VSA_(mol,bins=None,force=1):
   #print '\t\t:',len(mol.GetAtoms())
   rdPartialCharges.ComputeGasteigerCharges(mol)
   
-  propContribs = [float(x.GetProp('_GasteigerCharge'))  for x in mol.GetAtoms()]
+  #propContribs = [float(x.GetProp('_GasteigerCharge'))  for x in mol.GetAtoms()]
+  propContribs=[]
+  for at in mol.GetAtoms():
+    p = at.GetProp('_GasteigerCharge')
+    try:
+      v = float(p)
+    except ValueError:
+      v = 0.0
+    propContribs.append(v)
   #print '\tp',propContribs
   volContribs = _LabuteHelper(mol)
   #print '\tv',volContribs
