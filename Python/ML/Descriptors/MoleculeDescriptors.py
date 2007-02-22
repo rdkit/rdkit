@@ -66,7 +66,12 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       nm = self.simpleList[i]
       fn = AvailDescriptors.descDict.get(nm,lambda x:777)
       #print '>',nm
-      res[i] = fn(mol)
+      try:
+        res[i] = fn(mol)
+      except:
+        import traceback
+        traceback.print_exc()
+        res[i]=-666
     return tuple(res)
 
   def GetDescriptorNames(self):

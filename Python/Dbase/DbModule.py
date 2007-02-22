@@ -33,6 +33,27 @@ if hasattr(RDConfig,"usePgSQL") and RDConfig.usePgSQL:
   placeHolder='%s'
   binaryTypeName="bytea"
   binaryHolder = PgBytea
+elif hasattr(RDConfig,"useSqlLite") and RDConfig.useSqlLite:
+  useGvib=0
+  try:
+    import sqlite3 as sqlite
+    #from sqlite3 import *
+  except ImportError:
+    from pysqlite2 import dbapi2 as sqlite
+    #from pysqlite2 import *
+  sqlTextTypes = []
+  sqlIntTypes = []
+  sqlFloatTypes = []
+  sqlBinTypes = []
+  getTablesSql = """select name from SQLite_Master where type='table'"""
+  getTablesAndViewsSql = """select name from SQLite_Master where type in ('table','view')"""
+  getDbSql = None
+  dbFileWildcard='*.sqlt'
+  placeHolder='?'
+  binaryTypeName="blob"
+  binaryHolder = buffer
+
+  connect = lambda x,*args:sqlite.connect(x)
 else:
   useGvib=1
   from gvib import *

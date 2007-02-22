@@ -18,7 +18,7 @@ class TestCase(unittest.TestCase):
     #sys.stderr.flush()
     self.baseDir = os.path.join(RDConfig.RDCodeDir,'Dbase','testData')
     if not RDConfig.usePgSQL:
-      self.dbName = os.path.join(self.baseDir,'TEST.GDB')
+      self.dbName = os.path.join(self.baseDir,'test.sqlt')
     else:
       self.dbName = "::RDTests"
     self.colHeads=('int_col','floatCol','strCol')

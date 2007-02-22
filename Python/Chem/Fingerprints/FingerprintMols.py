@@ -88,6 +88,35 @@ def FingerprintsFromSmiles(dataSource,idCol,smiCol,
       error('Problems parsing SMILES: %s\n'%smi)
   return res
 
+def FingerprintsFromPickles(dataSource,idCol,pklCol,
+                            fingerprinter=Chem.DaylightFingerprint,
+                            reportFreq=10,maxMols=-1,
+                            **fpArgs):
+  """ fpArgs are passed as keyword arguments to the fingerprinter
+
+  Returns a list of 2-tuples: (id,fp)
+  
+  """
+  res = []
+  nDone = 0
+  for entry in dataSource:
+    id,pkl = str(entry[idCol]),str(entry[pklCol])
+    try:
+      mol = Chem.Mol(pkl)
+    except:
+      mol = None
+    if mol:
+      fp = FingerprintMol(mol,fingerprinter,**fpArgs)
+      res.append((id,fp))
+      nDone += 1
+      if reportFreq>0 and not nDone % reportFreq:
+        message('Done %d molecules\n'%(nDone))
+      if maxMols > 0 and nDone >= maxMols:
+        break
+    else:
+      error('Problems parsing pickle for id: %s\n'%id)
+  return res
+
 def FingerprintsFromDetails(details):
   data = None
   if details.dbName and details.tableName:
@@ -100,8 +129,13 @@ def FingerprintsFromDetails(details):
       traceback.print_exc()
     if not details.idName:
       details.idName=DbInfo.GetColumnNames(details.dbName,details.tableName)[0]
+    dataName = details.smilesName
+    if details.molPklName:
+      dataName = details.molPklName
+    else:
+      dataName = details.smilesName
     dataSet = DataUtils.DBToData(details.dbName,details.tableName,
-                                 what='%s,%s'%(details.idName,details.smilesName))
+                                 what='%s,%s'%(details.idName,dataName))
     idCol = 0
     smiCol = 1
   elif details.inFileName:
@@ -124,8 +158,12 @@ def FingerprintsFromDetails(details):
   fps = None
   if dataSet:
     data = dataSet.GetNamedData()
-    fps = apply(FingerprintsFromSmiles,(data,idCol,smiCol),
-                details.__dict__)
+    if not details.molPklName:
+      fps = apply(FingerprintsFromSmiles,(data,idCol,smiCol),
+                  details.__dict__)
+    else:
+      fps = apply(FingerprintsFromPickles,(data,idCol,smiCol),
+                  details.__dict__)
   if fps:
     if details.outFileName:
       outF = open(details.outFileName,'wb+')
@@ -196,6 +234,7 @@ class FingerprinterDetails(object):
     self.useValence=0
     self.bitsPerHash=4
     self.smilesName='SMILES'
+    self.molPklName=''
     self.maxMols=-1
     self.outFileName=''
     self.outTableName=''
@@ -346,6 +385,7 @@ def ParseArgs(details=None):
                                  'minPath=','maxPath=',
                                  'bitsPerHash=',
                                  'smilesName=',
+                                 'molPkl=',
                                  'idName=',
                                  'discrim',
                                  'outTable=',
@@ -413,6 +453,8 @@ def ParseArgs(details=None):
       details.discrimHash=1
     elif arg=='--smilesName':
       details.smilesName = val
+    elif arg=='--molPkl':
+      details.molPklName=val
     elif arg=='--idName':
       details.idName = val
     elif arg=='--maxMols':

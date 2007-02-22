@@ -83,13 +83,25 @@ else:
 # ---------------------
 # the following block contains stuff controlling database access:
 #usePgSQL=1
+usePgSQL=0
+useSqlLite=0
 if not (os.environ.has_key('RD_USEGVIB') and os.environ['RD_USEGVIB']):
   try:
     from pyPgSQL import PgSQL
+    usePgSQL=1
   except ImportError:
     usePgSQL=0
-  else:
-    usePgSQL=1
+    try:
+      # python2.5 has this:
+      import sqlite3
+      useSqlLite=True
+    except ImportError:
+      try:
+        # earlier versions of python:
+        from pysqlite2 import dbapi2
+        useSqlLite=True
+      except:
+        pass
 else:
   usePgSQL=0
   
