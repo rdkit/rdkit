@@ -88,6 +88,16 @@ BOOST_PYTHON_MODULE(rdChemReactions) {
     
   std::string docString = "A class for storing and applying chemical reactions.\n\
 \n\
+Sample Usage:\n\
+>>> rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')\n\
+>>> reacts = (Chem.MolFromSmiles('C(=O)O'),Chem.MolFromSmiles('CNC'))\n\
+>>> products = rxn.RunReactants(reacts)\n\
+>>> len(products)\n\
+1\n\
+>>> len(products[0])\n\
+1\n\
+>>> Chem.MolToSmiles(products[0])\n\
+'CN(C)C=O'\n\
 \n\
 ";
   python::class_<RDKit::ChemicalReaction>("ChemicalReaction",docString.c_str())
@@ -96,13 +106,13 @@ BOOST_PYTHON_MODULE(rdChemReactions) {
     .def("GetNumProductTemplates",&RDKit::ChemicalReaction::getNumProductTemplates,
          "returns the number of products this reaction generates")
     .def("AddReactantTemplate",&RDKit::ChemicalReaction::addReactantTemplate,
-         "adds a reactant to the reaction")
+         "adds a reactant (a Molecule) to the reaction")
     .def("AddProductTemplate",&RDKit::ChemicalReaction::addProductTemplate,
-         "adds a product")
+         "adds a product (a Molecule)")
     .def("RunReactants",(PyObject *(*)(const RDKit::ChemicalReaction *,python::tuple))RDKit::RunReactants,
-         "apply the reaction to a set of reactants and return the products as a tuple of tuples")
+         "apply the reaction to a sequence of reactant molecules and return the products as a tuple of tuples")
     .def("RunReactants",(PyObject *(*)(const RDKit::ChemicalReaction *,python::list))RDKit::RunReactants,
-         "apply the reaction to a set of reactants and return the products as a tuple of tuples")
+         "apply the reaction to a sequence of reactant molecules and return the products as a tuple of tuples")
     .def("Validate",&RDKit::ValidateReaction,
          (python::arg("self"),python::arg("silent")=false),
          "checks the reaction for potential problems, returns (numWarnings,numErrors)")
