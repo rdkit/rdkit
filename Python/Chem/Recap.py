@@ -30,10 +30,36 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 """ Implementation of the RECAP algorithm from Lewell et al. JCICS *38* 511-522 (1998)
+
+The published algorithm is implemented more or less without
+modification. The results are returned as a hierarchy of nodes instead
+of just as a set of fragments. The hope is that this will allow a bit
+more flexibility in working with the results.
+
+For example:
+>>> m = Chem.MolFromSmiles('C1CC1Oc1ccccc1-c1ncc(OC)cc1')
+>>> res = Recap.RecapDecompose(m)
+>>> res
+<Chem.Recap.RecapHierarchyNode object at 0x00CDB5D0>
+>>> res.children.keys()
+['[Du]C1CC1', '[Du]c1ccccc1-c1ncc(OC)cc1']
+>>> res.GetAllChildren().keys()
+['[Du]c1ccccc1[Du]', '[Du]c1ccc(OC)cn1', '[Du]C1CC1', '[Du]c1ccccc1-c1ncc(OC)cc1']
+
+To get the standard set of RECAP results, use GetLeaves():
+>>> leaves=res.GetLeaves()
+>>> leaves.keys()
+['[Du]c1ccccc1[Du]', '[Du]c1ccc(OC)cn1', '[Du]C1CC1']
+>>> leaf = leaves['[Du]C1CC1']
+>>> leaf.mol
+<Chem.rdchem.Mol object at 0x00CBE0F0>
+
+
 """
 import Chem
 from Chem import rdChemReactions as Reactions
 
+# These are the definitions that will be applied to fragment molecules:
 reactionDefs = (
   "[C:1](=!@[O:2])!@[N:3]>>[X][C:1]=[O:2].[X][N:3]", # amide
 
@@ -63,6 +89,8 @@ reactions = tuple([Reactions.ReactionFromSmarts(x) for x in reactionDefs])
 
 
 class RecapHierarchyNode(object):
+  """ This class is used to hold the Recap hiearchy
+  """
   mol=None
   children=None
   parents=None
@@ -72,28 +100,28 @@ class RecapHierarchyNode(object):
     self.children = {}
     self.parents = {}
 
-  def _gacRecurse(self,res):
-    for smi,child in self.children.iteritems():
-      res[smi] = child
-      child._gacRecurse(res)
-    
   def GetAllChildren(self):
+    " returns a dictionary, keyed by SMILES, of children "
     res = {}
     for smi,child in self.children.iteritems():
       res[smi] = child
-      child._gacRecurse(res)
+      child._gacRecurse(res,terminalOnly=False)
     return res
 
-  def remove(self):
-    for parent in self.parents.values():
-      #parent = parent()
-      if parent:
-	ks = parent.children.keys()[:]
-	for k in ks:
-	  if parent.children[k] is self:
-	    del parent.children[k]
+  def GetLeaves(self):
+    " returns a dictionary, keyed by SMILES, of leaf (terminal) nodes "
+    res = {}
+    for smi,child in self.children.iteritems():
+      if not len(child.children):
+        res[smi] = child
+      else:
+        child._gacRecurse(res,terminalOnly=True)
+    return res
 
   def getUltimateParents(self):
+    """ returns all the nodes in the hierarchy tree that contain this
+        node as a child
+    """
     if not self.parents:
       res = [self]
     else:
@@ -104,14 +132,31 @@ class RecapHierarchyNode(object):
             res.append(uP)
     return res
   
+  def _gacRecurse(self,res,terminalOnly=False):
+    for smi,child in self.children.iteritems():
+      if not terminalOnly or not len(child.children):
+        res[smi] = child
+      child._gacRecurse(res,terminalOnly=terminalOnly)
+
+  def _remove(self):
+    " removes this entry from the hierarchy (breaks reference loops) "
+    for parent in self.parents.values():
+      #parent = parent()
+      if parent:
+	ks = parent.children.keys()[:]
+	for k in ks:
+	  if parent.children[k] is self:
+	    del parent.children[k]
+
   def __del__(self):
-    self.remove()
+    self._remove()
     self.children={}
     self.parent={}
     self.mol=None
 
 
 def RecapDecompose(mol,allNodes=None):
+  """ returns the recap decomposition for a molecule """
   mSmi = Chem.MolToSmiles(mol,1)
 
   if allNodes is None:
