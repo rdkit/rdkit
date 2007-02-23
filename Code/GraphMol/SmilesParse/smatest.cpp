@@ -819,6 +819,48 @@ void testIssue351(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testAtomMap(){
+  ROMol *matcher1;
+  std::string sma;
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing atom map assignment:" << std::endl;
+
+  int mapNum;
+  
+  sma = "[C:10]CC";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(mapNum==10);
+  delete matcher1;
+
+  sma = "[CH3:10]CC";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(mapNum==10);
+  delete matcher1;
+
+  sma = "[C:10H3]CC";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(mapNum==10);
+  delete matcher1;
+
+  sma = "[C:10:3]CC";
+  try {
+    matcher1 = SmartsToMol(sma);
+  } catch (SmilesParseException &){
+    
+  }
+    
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -841,6 +883,7 @@ main(int argc, char *argv[])
   testIssue330();
   testIssue351();
 #endif
-
+  testAtomMap();
+  
   return 0;
 }
