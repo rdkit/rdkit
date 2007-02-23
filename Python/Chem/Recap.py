@@ -210,4 +210,45 @@ def RecapDecompose(mol,allNodes=None):
   return res
 
       
+# ------- ------- ------- ------- ------- ------- ------- -------
+# Begin testing code
+if __name__=='__main__':
+  import unittest
+  class TestCase(unittest.TestCase):
+    def test1(self):
+      m = Chem.MolFromSmiles('C1CC1Oc1ccccc1-c1ncc(OC)cc1')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.children.keys())==2)
+      self.failUnless(len(res.GetAllChildren().keys())==4)
+      self.failUnless(len(res.GetLeaves().keys())==3)
+    def test2(self):
+      m = Chem.MolFromSmiles('CCCOCCC')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(res.children=={})
+    def test3(self):
+      allNodes={}
+      m = Chem.MolFromSmiles('c1ccccc1-c1ncccc1')
+      res = RecapDecompose(m,allNodes=allNodes)
+      self.failUnless(res)
+      self.failUnless(len(res.children.keys())==2)
+      self.failUnless(len(allNodes.keys())==3)
+
+      m = Chem.MolFromSmiles('COc1ccccc1-c1ncccc1')
+      res = RecapDecompose(m,allNodes=allNodes)
+      self.failUnless(res)
+      self.failUnless(len(res.children.keys())==2)
+      # we get two more nodes from that:
+      self.failUnless(len(allNodes.keys())==5)
+      self.failUnless(allNodes.has_key('[Du]c1ccccc1OC'))
+      self.failUnless(allNodes.has_key('[Du]c1ccccc1'))
       
+      m = Chem.MolFromSmiles('C1CC1Oc1ccccc1-c1ncccc1')
+      res = RecapDecompose(m,allNodes=allNodes)
+      self.failUnless(res)
+      self.failUnless(len(res.children.keys())==2)
+      self.failUnless(len(allNodes.keys())==9)
+      
+  unittest.main()
+
