@@ -130,7 +130,6 @@ class SubshapeAligner(object):
       else:
         alignments[i].dirMatch=dot
         i+=1
-    
 
   def _addCoarseAndMediumGrids(self,mol,tgt,confId,builder):
     oSpace=builder.gridSpacing
@@ -141,11 +140,6 @@ class SubshapeAligner(object):
     builder.gridSpacing = oSpace
 
   def _getShapeShapeDistance(self,s1,s2):
-    #print s1.grid.GetNumX(),s1.grid.GetNumY(),s1.grid.GetNumZ()
-    #print s2.grid.GetNumX(),s2.grid.GetNumY(),s2.grid.GetNumZ()
-    #print tuple(s1.grid.GetOffset()),s1.grid.GetSpacing()
-    #print tuple(s2.grid.GetOffset()),s2.grid.GetSpacing()
-    #print
     if self.distMetric==SubshapeDistanceMetric.PROTRUDE:
       if s1.grid.GetOccupancyVect().GetTotalVal()<s2.grid.GetOccupancyVect().GetTotalVal():
         d = Geometry.ProtrudeDistance(s1.grid,s2.grid)
@@ -172,21 +166,18 @@ class SubshapeAligner(object):
       coarseGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
       d = self._getShapeShapeDistance(coarseGrid,target.coarseGrid)
       if d>self.shapeDistTol:
-        print 'coarsePrune'
         removeIt=True
       else:
         builder.gridSpacing=oSpace*1.5
         medGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
         d = self._getShapeShapeDistance(medGrid,target.medGrid)
         if d>self.shapeDistTol:
-          print 'medPrune'
           removeIt=True
         else:
           builder.gridSpacing=oSpace
           fineGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
           d = self._getShapeShapeDistance(fineGrid,target)
           if d>self.shapeDistTol:
-            print 'finePrune'
             removeIt=True
       builder.gridSpacing=oSpace
       if removeIt:
