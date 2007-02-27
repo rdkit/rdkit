@@ -1253,7 +1253,31 @@ void testRootedAt(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testBug1670149(){
+  RWMol *mol;
+  std::string smi;
+  int numE=0;
 
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1670149" << std::endl;
+
+  smi ="C1[NH2+]CCC1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="C1CC[NH2+]C1");
+
+  mol->getAtomWithIdx(1)->setNumExplicitHs(0);
+  mol->getAtomWithIdx(1)->setNoImplicit(false);
+  mol->getAtomWithIdx(1)->updatePropertyCache();
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getNumImplicitHs()==2);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="C1CC[NH2+]C1");
+
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+ 
 int
 main(int argc, char *argv[])
 {
@@ -1282,4 +1306,5 @@ main(int argc, char *argv[])
   testIssue266();
 #endif
   testRootedAt();
+  testBug1670149();
 }
