@@ -85,8 +85,9 @@ namespace SmilesWrite{
     }
 
     if(needsBracket){
-      if(numExplicit > 0) res << "H";
-      if(numExplicit > 1) res << numExplicit;
+      unsigned int totNumHs=atom->getTotalNumHs();
+      if(totNumHs > 0) res << "H";
+      if(totNumHs > 1) res << totNumHs;
       if(fc > 0){
 	res << "+";
 	if(fc > 1) res << fc;
