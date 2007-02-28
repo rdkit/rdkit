@@ -1253,6 +1253,26 @@ void testRootedAt(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testIsotopes(){
+  RWMol *mol;
+  std::string smi;
+  int numE=0;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing isotope handling" << std::endl;
+
+  smi ="C[13C](C)(C)C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getMass()==13.0);
+  smi = MolToSmiles(*mol,false);
+  TEST_ASSERT(smi=="CC(C)(C)C");
+  smi = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi=="C[13C](C)(C)C");
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 void testBug1670149(){
   RWMol *mol;
   std::string smi;
@@ -1306,5 +1326,6 @@ main(int argc, char *argv[])
   testIssue266();
 #endif
   testRootedAt();
+  testIsotopes();
   testBug1670149();
 }
