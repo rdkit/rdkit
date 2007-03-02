@@ -39,8 +39,10 @@ namespace RDKit{
 
   // TPL handling:
   RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
-			    bool sanitize=true);
-  RWMol *TPLFileToMol(std::string fName,bool sanitize=true);
+			    bool sanitize=true,
+                            bool skipFirstConf=false);
+  RWMol *TPLFileToMol(std::string fName,bool sanitize=true,
+                      bool skipFirstConf=false);
 
 
 }

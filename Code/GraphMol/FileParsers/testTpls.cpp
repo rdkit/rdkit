@@ -23,7 +23,15 @@ void test1(){
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==12);
   TEST_ASSERT(m->getNumBonds()==12);
+  TEST_ASSERT(m->getNumConformers()==2);
   
+  delete m;
+  m = TPLFileToMol(fName,true,true);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==12);
+  TEST_ASSERT(m->getNumBonds()==12);
+  TEST_ASSERT(m->getNumConformers()==1);
+
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }

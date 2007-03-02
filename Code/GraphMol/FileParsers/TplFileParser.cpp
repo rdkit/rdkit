@@ -120,8 +120,8 @@ namespace RDKit{
     mol->getBondWithIdx(bondIdx)->setProp("TPLBondDir2",stereoFlag2);
   }
 
-  void ParseConfData(std::istream *inStream,unsigned int &line,RWMol *mol,
-                     unsigned int confId){
+  Conformer *ParseConfData(std::istream *inStream,unsigned int &line,RWMol *mol,
+                           unsigned int confId){
     PRECONDITION(inStream,"no stream");
     PRECONDITION(mol,"no mol");
 
@@ -141,7 +141,6 @@ namespace RDKit{
     mol->setProp(propName.str(),boost::trim_copy(splitLine[1]));
     
     Conformer *conf=new Conformer(mol->getNumAtoms());
-    conf->setId(confId);
     for(unsigned int i=0;i<mol->getNumAtoms();++i){
       line++;
       tempStr = getLine(inStream);
@@ -166,8 +165,7 @@ namespace RDKit{
       zp/=100.;
       conf->setAtomPos(i,RDGeom::Point3D(xp,yp,zp));
     }
-    mol->addConformer(conf, true);
-
+    return conf;
   }
   
   
@@ -177,7 +175,7 @@ namespace RDKit{
   //  
   //*************************************
   RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
-                            bool sanitize){
+                            bool sanitize,bool skipFirstConf){
     PRECONDITION(inStream,"no stream");
     std::string tempStr;
     std::vector<std::string> splitText;
@@ -255,8 +253,13 @@ namespace RDKit{
       nConfs = stripSpacesAndCast<unsigned int>(splitText[1]);
     }
     for(unsigned int i=0;i<nConfs;++i){
-      ParseConfData(inStream,line,res,i+1);
-      
+      Conformer *conf=ParseConfData(inStream,line,res,i+1);
+      if(i>0 || !skipFirstConf){
+        conf->setId(i+1);
+        res->addConformer(conf, true);
+      } else {
+        delete conf;
+      }
       // there should be a blank line:
       line++;
       tempStr = getLine(inStream);
@@ -276,7 +279,7 @@ namespace RDKit{
   //  Read a molecule from a file
   //
   //------------------------------------------------
-  RWMol *TPLFileToMol(std::string fName, bool sanitize){
+  RWMol *TPLFileToMol(std::string fName, bool sanitize,bool skipFirstConf){
     std::ifstream inStream(fName.c_str());
     if(!inStream){
       return NULL;
@@ -284,7 +287,7 @@ namespace RDKit{
     RWMol *res=NULL;
     if(!inStream.eof()){
       unsigned int line = 0;
-      res=TPLDataStreamToMol(&inStream, line, sanitize);
+      res=TPLDataStreamToMol(&inStream, line, sanitize,skipFirstConf);
     }
     return res;
   }    
