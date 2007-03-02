@@ -271,6 +271,9 @@
 			<File
 				RelativePath=".\TDTWriter.cpp">
 			</File>
+			<File
+				RelativePath=".\TplFileParser.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

@@ -28,12 +28,21 @@ namespace RDKit{
 			    bool sanitize=true);
   RWMol *MolBlockToMol(const std::string &inStream, bool sanitize=true);
   RWMol *MolFileToMol(std::string fName, bool sanitize=true);
+  // mol writing:
+  std::string MolToMolBlock(const ROMol &mol,bool includeStereo=true, int confId=-1);
+  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo=true, int confId=-1);
+
+  // sd reading:
   RWMOL_SPTR_VECT SDDataStreamToMols(std::istream *inStream,bool sanitize=true);
   RWMOL_SPTR_VECT SDDataStreamToMols(std::istream &inStream,bool sanitize=true);
   RWMOL_SPTR_VECT SDFileToMols(std::string fName,bool sanitize=true);
 
-  std::string MolToMolBlock(const ROMol &mol,bool includeStereo=true, int confId=-1);
-  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo=true, int confId=-1);
+  // TPL handling:
+  RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
+			    bool sanitize=true);
+  RWMol *TPLFileToMol(std::string fName,bool sanitize=true);
+
+
 }
 
 #endif

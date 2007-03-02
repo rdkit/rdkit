@@ -274,8 +274,7 @@ namespace RDKit{
       res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
       res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
     }
-    
-    //res->setPos(pX,pY,pZ);
+
     if(chg!=0) res->setFormalCharge(4-chg);
     // FIX: this does not appear to be correct
     if(hCount==1) res->setNoImplicit(true);
