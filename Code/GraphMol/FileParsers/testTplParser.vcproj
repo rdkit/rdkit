@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="boost_log-vc71-mt-gd-$(BOOSTVERSION).lib "
-				OutputFile="./testExecs/test1.exe"
+				OutputFile="./testExecs/testTplParser.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="$(BOOSTHOME)\lib"
@@ -102,7 +102,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="boost_log-vc71-mt-$(BOOSTVERSION).lib "
-				OutputFile=".\testExecs\test1.exe"
+				OutputFile=".\testExecs\testTplParser.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="$(BOOSTHOME)\lib"

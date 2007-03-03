@@ -1426,6 +1426,24 @@ CAS<~>
     mol = sdSup[1]
     assert mol.GetProp("_Name") == "170"
 
+  def test42LifeTheUniverseAndEverything(self) :
+    self.failUnless(True)
+    
+  def test43TplFileParsing(self) :
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','cmpd2.tpl')
+    m1 = Chem.MolFromTPLFile(fileN)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==12)
+    self.failUnless(m1.GetNumConformers()==2)
+    
+    m1 = Chem.MolFromTPLFile(fileN,skipFirstConf=True)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==12)
+    self.failUnless(m1.GetNumConformers()==1)
+    
+
+
 
 if __name__ == '__main__':
   unittest.main()

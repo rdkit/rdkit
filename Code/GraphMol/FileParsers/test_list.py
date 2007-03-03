@@ -3,6 +3,7 @@ tests=[
   ("testExecs/test1.exe","",{}),
   ("testExecs/testMolSupplier.exe","",{}),
   ("testExecs/testMolWriter.exe","",{}),
+  ("testExecs/testTplParser.exe","",{}),
   ]
 
 

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2007 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -138,7 +138,7 @@ namespace RDKit{
     }
     std::ostringstream propName;
     propName << "Conf_" <<confId<<"_Name";
-    mol->setProp(propName.str(),boost::trim_copy(splitLine[1]));
+    mol->setProp(propName.str(),boost::trim_copy(tempStr.substr(4,tempStr.size()-4)));
     
     Conformer *conf=new Conformer(mol->getNumAtoms());
     for(unsigned int i=0;i<mol->getNumAtoms();++i){
@@ -149,7 +149,8 @@ namespace RDKit{
         errout << "EOF hit while reading conformer  " << confId << std::endl;
         throw FileParseException(errout.str()) ;
       }
-      boost::split(splitLine,boost::trim_copy(tempStr),
+      boost::trim(tempStr);
+      boost::split(splitLine,tempStr,
                    boost::is_any_of(" \t"),boost::token_compress_on);
       if(splitLine.size()<3){
         std::ostringstream errout;
@@ -200,7 +201,8 @@ namespace RDKit{
     }
     RWMol *res = new RWMol();
     if(tempStr.size()>=4 && tempStr.substr(0,4)=="NAME"){
-      res->setProp("_Name",tempStr.substr(4,tempStr.size()-5));
+      tempStr = boost::trim_copy(tempStr.substr(4,tempStr.size()-4));
+      res->setProp("_Name",tempStr);
       line++;
       tempStr = getLine(inStream);
       if(inStream->eof()){
@@ -263,7 +265,8 @@ namespace RDKit{
       // there should be a blank line:
       line++;
       tempStr = getLine(inStream);
-      if(!inStream->eof()&&  boost::trim_copy(tempStr) != ""){
+      boost::trim(tempStr);
+      if(!inStream->eof() && tempStr != ""){
         throw FileParseException("Found a non-blank line between conformers.") ;
       }
     }

@@ -8,7 +8,8 @@ LDFLAGS2= $(RDFILEPARSE) $(RDSMILES) $(RDKIT) $(RDGENERAL) $(RDGEOMETRY)
 
 SOURCES=MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp \
   SDFileParser.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp \
-  SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp TDTMolSupplier.cpp
+  SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp TDTMolSupplier.cpp \
+  TplFileParser.cpp
 
 INSTLIB=$(RDBASE)/bin/libFileParsers.so
 
@@ -29,6 +30,9 @@ $(RDFILEPARSELIB_S): $(OBJS)
 testExecs/test1.exe: test1.o $(RDFILEPARSELIB)
 		$(CXX) -o $@ $(CXXFLAGS) $< $(LDFLAGS)
 
+testExecs/testTplParser.exe: testTpls.o $(RDFILEPARSELIB)
+		$(CXX) -o $@ $(CXXFLAGS) $< $(LDFLAGS)
+
 bench.exe: bench.o $(RDFILEPARSELIB_S)
 	$(CXX) -o $@ $(CXXFLAGS) $< $(RDFILEPARSE_S) $(RDKIT_S) $(RDGENERAL_S)
 
@@ -39,7 +43,7 @@ testExecs/testMolSupplier.exe: testMolSupplier.o $(RDFILEPARSELIB_S)
 testExecs/testMolWriter.exe: testMolWriter.o $(RDFILEPARSELIB)
 		$(CXX) -o $@ $(CXXFLAGS) $< $(LDFLAGS2)
 
-regrs: testExecs/test1.exe testExecs/testMolSupplier.exe testExecs/testMolWriter.exe
+regrs: testExecs/test1.exe testExecs/testMolSupplier.exe testExecs/testMolWriter.exe testExecs/testTplParser.exe
 
 runregrs: testExecs/test1.exe testExecs/testMolSupplier.exe  testExecs/testMolWriter.exe
 	./testExecs/test1.exe
@@ -47,6 +51,6 @@ runregrs: testExecs/test1.exe testExecs/testMolSupplier.exe  testExecs/testMolWr
 	./testExecs/testMolWriter.exe
 
 clean:
-	rm -f $(OBJS) main.o testMolSupplier.o testExecs/testMolSupplier.exe testMolWriter.o testExecs/testMolWriter.exe $(RDFILEPARSELIB) $(RDFILEPARSELIB_S) $(DEPENDS)
+	rm -f $(OBJS) main.o testMolSupplier.o testExecs/testMolSupplier.exe testMolWriter.o testExecs/testMolWriter.exe testExecs/testTplParser.exe $(RDFILEPARSELIB) $(RDFILEPARSELIB_S) $(DEPENDS)
 
 include $(DEPENDS)

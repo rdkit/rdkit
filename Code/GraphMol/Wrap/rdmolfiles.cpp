@@ -39,6 +39,12 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
    
+  ROMol *MolFromTPLFile(const char *filename, bool sanitize=true,
+			bool skipFirstConf=false ) {
+    RWMol *newM = TPLFileToMol(filename,sanitize,skipFirstConf);
+    return static_cast<ROMol *>(newM);
+  }
+
   ROMol *MolFromMolFile(const char *molFilename, bool sanitize=1) {
     RWMol *newM = MolFileToMol(molFilename, sanitize);
     return static_cast<ROMol *>(newM);
@@ -75,6 +81,30 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);
 
+
+  docString="Construct a molecule from a TPL file.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - fileName: name of the file to read\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to True.\n\
+\n\
+    - skipFirstConf: (optional) skips reading the first conformer.\n\
+      Defaults to False.\n\
+      This should be set to True when reading TPLs written by \n\
+      the CombiCode.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromTPLFile", RDKit::MolFromTPLFile,
+	      (python::arg("fileName"),
+	       python::arg("sanitize")=true,
+	       python::arg("skipFirstConf")=false),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
 
   docString="Construct a molecule from a Mol file.\n\n\
   ARGUMENTS:\n\
