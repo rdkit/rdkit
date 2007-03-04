@@ -80,6 +80,14 @@ namespace RDKit{
   RWMol *TPLFileToMol(std::string fName,bool sanitize=true,
                       bool skipFirstConf=false);
 
+  std::string MolToTPLText(const ROMol &mol,
+			   std::string partialChargeProp="_GasteigerCharge",
+			   bool writeFirstConfTwice=false);
+  void MolToTPLFile(const ROMol &mol,std::string fName,
+		    std::string partialChargeProp="_GasteigerCharge",
+		    bool writeFirstConfTwice=false);
+
+
 
 }
 

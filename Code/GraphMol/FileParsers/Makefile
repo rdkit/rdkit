@@ -9,7 +9,7 @@ LDFLAGS2= $(RDFILEPARSE) $(RDSMILES) $(RDKIT) $(RDGENERAL) $(RDGEOMETRY)
 SOURCES=MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp \
   SDFileParser.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp \
   SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp TDTMolSupplier.cpp \
-  TplFileParser.cpp
+  TplFileParser.cpp TplFileWriter.cpp
 
 INSTLIB=$(RDBASE)/bin/libFileParsers.so
 

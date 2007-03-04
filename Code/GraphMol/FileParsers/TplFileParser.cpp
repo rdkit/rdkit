@@ -137,7 +137,7 @@ namespace RDKit{
       throw FileParseException(errout.str()) ;
     }
     std::ostringstream propName;
-    propName << "Conf_" <<confId<<"_Name";
+    propName << "Conf_" <<mol->getNumConformers()<<"_Name";
     mol->setProp(propName.str(),boost::trim_copy(tempStr.substr(4,tempStr.size()-4)));
     
     Conformer *conf=new Conformer(mol->getNumAtoms());

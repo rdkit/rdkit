@@ -61,9 +61,69 @@ void test1(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void test2(){
+  BOOST_LOG(rdInfoLog) << "testing tpl writing" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/cmpd1.tpl";
+  RWMol *m,*m2;
+  Conformer conf;
+  std::string propVal;
+
+  m = TPLFileToMol(fName,true,true);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==18);
+  TEST_ASSERT(m->getNumBonds()==18);
+  TEST_ASSERT(m->getNumConformers()==9);
+  TEST_ASSERT(m->hasProp("_Name"));
+  m->getProp("_Name",propVal);
+  TEST_ASSERT(propVal=="compound 1");
+  TEST_ASSERT(m->hasProp("Conf_1_Name"));
+  m->getProp("Conf_1_Name",propVal);
+  TEST_ASSERT(propVal=="conf9");
+
+  std::stringstream strm;
+  strm << MolToTPLText(*m,"TPLCharge");
+
+  unsigned int line;
+  m2 = TPLDataStreamToMol(&strm,line);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m2->getNumAtoms()==18);
+  TEST_ASSERT(m2->getNumBonds()==18);
+  TEST_ASSERT(m2->getNumConformers()==9);
+  TEST_ASSERT(m2->hasProp("_Name"));
+  m2->getProp("_Name",propVal);
+  TEST_ASSERT(propVal=="compound 1");
+  TEST_ASSERT(m2->hasProp("Conf_1_Name"));
+  m2->getProp("Conf_1_Name",propVal);
+  TEST_ASSERT(propVal=="conformer_1");
+
+  
+  std::stringstream strm2;
+  strm2 << MolToTPLText(*m,"TPLCharge",true);
+
+  delete m2;
+  m2 = TPLDataStreamToMol(&strm2,line,true,true);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m2->getNumAtoms()==18);
+  TEST_ASSERT(m2->getNumBonds()==18);
+  TEST_ASSERT(m2->getNumConformers()==8);
+  TEST_ASSERT(m2->hasProp("_Name"));
+  m2->getProp("_Name",propVal);
+  TEST_ASSERT(propVal=="compound 1");
+  TEST_ASSERT(m2->hasProp("Conf_1_Name"));
+  m2->getProp("Conf_1_Name",propVal);
+  TEST_ASSERT(propVal=="conformer_1");
+  
+  delete m;
+  delete m2;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
   test1();
+  test2();
   return 0;
 }

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -42,6 +42,14 @@ namespace RDKit{
   ROMol *MolFromTPLFile(const char *filename, bool sanitize=true,
 			bool skipFirstConf=false ) {
     RWMol *newM = TPLFileToMol(filename,sanitize,skipFirstConf);
+    return static_cast<ROMol *>(newM);
+  }
+
+  ROMol *MolFromTPLBlock(std::string tplBlock, bool sanitize=true,
+			bool skipFirstConf=false ) {
+    std::istringstream inStream(tplBlock);
+    unsigned int line = 0;
+    RWMol *newM = TPLDataStreamToMol(&inStream,line,sanitize,skipFirstConf);
     return static_cast<ROMol *>(newM);
   }
 
@@ -101,6 +109,30 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 \n";  
   python::def("MolFromTPLFile", RDKit::MolFromTPLFile,
 	      (python::arg("fileName"),
+	       python::arg("sanitize")=true,
+	       python::arg("skipFirstConf")=false),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+
+  docString="Construct a molecule from a TPL block.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - fileName: name of the file to read\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to True.\n\
+\n\
+    - skipFirstConf: (optional) skips reading the first conformer.\n\
+      Defaults to False.\n\
+      This should be set to True when reading TPLs written by \n\
+      the CombiCode.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromTPLBlock", RDKit::MolFromTPLBlock,
+	      (python::arg("tplBlock"),
 	       python::arg("sanitize")=true,
 	       python::arg("skipFirstConf")=false),
 	      docString.c_str(),
@@ -235,6 +267,46 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	      (python::arg("mol"),python::arg("isomericSmiles")=false),
 	      docString.c_str());
 
+  docString="Writes a molecule to a TPL file.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - fileName: name of the file to write\n\
+    - partialChargeProp: name of the property to use for partial charges\n\
+      Defaults to '_GasteigerCharge'.\n\
+    - writeFirstConfTwice: Defaults to False.\n\
+      This should be set to True when writing TPLs to be read by \n\
+      the CombiCode.\n\
+\n";  
+  python::def("MolToTPLFile", RDKit::MolToTPLFile,
+	      (python::arg("mol"),
+	       python::arg("fileName"),
+	       python::arg("partialChargeProp")="_GasteigerCharge",
+	       python::arg("writeFirstConfTwice")=false),
+	      docString.c_str());
+
+  docString="Returns the Tpl block for a molecule.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - partialChargeProp: name of the property to use for partial charges\n\
+      Defaults to '_GasteigerCharge'.\n\
+    - writeFirstConfTwice: Defaults to False.\n\
+      This should be set to True when writing TPLs to be read by \n\
+      the CombiCode.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToTPLBlock", RDKit::MolToTPLText,
+	      (python::arg("mol"),
+	       python::arg("partialChargeProp")="_GasteigerCharge",
+	       python::arg("writeFirstConfTwice")=false),
+	      docString.c_str());
+
+
+  
 
   
   /********************************************************

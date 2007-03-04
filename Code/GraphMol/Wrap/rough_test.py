@@ -1441,7 +1441,29 @@ CAS<~>
     self.failUnless(m1 is not None)
     self.failUnless(m1.GetNumAtoms()==12)
     self.failUnless(m1.GetNumConformers()==1)
+
+    block = file(fileN,'r').read()
+    m1 = Chem.MolFromTPLBlock(block)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==12)
+    self.failUnless(m1.GetNumConformers()==2)
     
+
+    
+  def test44TplFileWriting(self) :
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','cmpd2.tpl')
+    m1 = Chem.MolFromTPLFile(fileN)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==12)
+    self.failUnless(m1.GetNumConformers()==2)
+
+    block = Chem.MolToTPLBlock(m1)
+    m1 = Chem.MolFromTPLBlock(block)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==12)
+    self.failUnless(m1.GetNumConformers()==2)
+
 
 
 
