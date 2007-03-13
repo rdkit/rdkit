@@ -9,9 +9,78 @@ import math
 import Numeric
 import LinearAlgebra
 
+
 #-----------------------------------------------------------------------------
-def FindTerminalPtsFromShape(shape,winRad,nbrCount):
+def ComputeGridIndices(shapeGrid,winRad):
+  if getattr(shapeGrid,'_indicesInSphere',None):
+    return shapeGrid._indicesInSphere
+  gridSpacing = shapeGrid.GetSpacing()
+  dX = shapeGrid.GetNumX()
+  dY = shapeGrid.GetNumY()
+  dZ = shapeGrid.GetNumZ()
+  radInGrid = int(winRad/gridSpacing)
+  indicesInSphere=[]
+  for i in range(-radInGrid,radInGrid+1):
+    for j in range(-radInGrid,radInGrid+1):
+      for k in range(-radInGrid,radInGrid+1):
+        d=int(math.sqrt(i*i + j*j + k*k ))
+        if d<=radInGrid:
+          idx = (i*dY+j)*dX+k
+          indicesInSphere.append(idx)
+  shapeGrid._indicesInSphere = indicesInSphere
+  return indicesInSphere
+
+#-----------------------------------------------------------------------------
+def ComputeShapeGridCentroid(pt,shapeGrid,winRad):
+  count=0
+  centroid = Geometry.Point3D(0,0,0)
+  idxI = shapeGrid.GetGridPointIndex(pt)
+  shapeGridVect = shapeGrid.GetOccupancyVect()
+  indicesInSphere = ComputeGridIndices(shapeGrid,winRad)
+  for idxJ in indicesInSphere:
+    idx = idxI+idxJ;
+    if idx>=0 and idx<len(shapeGridVect):
+      wt = shapeGridVect[idx]
+      tPt = shapeGrid.GetGridPointLoc(idx)
+      centroid += tPt*wt
+      count+=wt
+  if not count:
+    raise ValueError,'found no weight in sphere'
+  centroid /= count
+  #print 'csgc:','(%2f,%2f,%2f)'%tuple(pt),'(%2f,%2f,%2f)'%tuple(centroid),count
+  return count,centroid
+      
+
+
+#-----------------------------------------------------------------------------
+def FindTerminalPtsFromShape(shape,winRad,fraction,maxGridVal=3):
   termPts = []
+  shapeGrid=shape.grid
+  shapeVect = shapeGrid.GetOccupancyVect()
+  nGridPts = len(shapeVect)
+  indicesInSphere = ComputeGridIndices(shapeGrid,winRad)
+
+  for i in range(nGridPts):
+    if shapeVect[i]<maxGridVal:
+      continue
+    # compute the volume inside the sphere:
+    volInSphere=0
+    nPtsHere=0
+    for idx in indicesInSphere:
+      idx += i
+      if idx>=0 and idx<nGridPts:
+        volInSphere += shapeVect[idx]
+        nPtsHere +=1
+    # the shape may be cut off by the edge of the grid, so
+    # the actual max volume in the sphere may well be less
+    # than the theoretical max:
+    maxVolInSphere=maxGridVal*nPtsHere
+    fracVol = float(volInSphere)/maxVolInSphere
+    if fracVol<fraction:
+      # the sphere is towards the edge of the shape, add a skel pt:
+      posI = shapeGrid.GetGridPointLoc(i)
+      count,centroid = ComputeShapeGridCentroid(posI,shapeGrid,winRad)
+      termPts.append(SubshapeObjects.SkeletonPoint(location=centroid))
   return termPts
 
 
@@ -70,47 +139,7 @@ def ClusterTerminalPts(pts,winRad,scale):
     res.append(SubshapeObjects.SkeletonPoint(location=pt))
   return res
 
-#-----------------------------------------------------------------------------
-def ComputeGridIndices(shapeGrid,winRad):
-  if getattr(shapeGrid,'_indicesInSphere',None):
-    return shapeGrid._indicesInSphere
-  gridSpacing = shapeGrid.GetSpacing()
-  dX = shapeGrid.GetNumX()
-  dY = shapeGrid.GetNumY()
-  dZ = shapeGrid.GetNumZ()
-  radInGrid = int(winRad/gridSpacing)
-  indicesInSphere=[]
-  for i in range(-radInGrid,radInGrid+1):
-    for j in range(-radInGrid,radInGrid+1):
-      for k in range(-radInGrid,radInGrid+1):
-        d=int(math.sqrt(i*i + j*j + k*k ))
-        if d<=radInGrid:
-          idx = (i*dY+j)*dX+k
-          indicesInSphere.append(idx)
-  shapeGrid._indicesInSphere = indicesInSphere
-  return indicesInSphere
-
-#-----------------------------------------------------------------------------
-def ComputeShapeGridCentroid(pt,shapeGrid,winRad):
-  count=0
-  centroid = Geometry.Point3D(0,0,0)
-  idxI = shapeGrid.GetGridPointIndex(pt)
-  shapeGridVect = shapeGrid.GetOccupancyVect()
-  indicesInSphere = ComputeGridIndices(shapeGrid,winRad)
-  for idxJ in indicesInSphere:
-    idx = idxI+idxJ;
-    if idx>=0 and idx<len(shapeGridVect):
-      wt = shapeGridVect[idx]
-      tPt = shapeGrid.GetGridPointLoc(idx)
-      centroid += tPt*wt
-      count+=wt
-  if not count:
-    raise ValueError,'found no weight in sphere'
-  centroid /= count
-  #print 'csgc:','(%2f,%2f,%2f)'%tuple(pt),'(%2f,%2f,%2f)'%tuple(centroid),count
-  return count,centroid
-      
-    
+   
 #-----------------------------------------------------------------------------
 def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
                          maxDistC=15.0,distTol=1.5,symFactor=1.5):
@@ -223,8 +252,23 @@ def CalculateDirectionsAtPoint(pt,shapeGrid,winRad):
   covMat[2][1] = covMat[1][2]
 
   eVals,eVects = LinearAlgebra.eigenvectors(covMat)
+  sv = [(x,y) for x,y in zip(eVals,eVects)]
+  sv.sort(reverse=True)
+  eVals = [x for x,y in sv]
+  eVects = [y for x,y in sv]
   pt.shapeMoments=tuple(eVals)
   pt.shapeDirs = tuple([Geometry.Point3D(p[0],p[1],p[2]) for p in eVects])
+
+  print '-------------'
+  print pt.location.x,pt.location.y,pt.location.z
+  for v in covMat:
+    print '  ',v
+  print '---'
+  print eVals
+  for v in eVects:
+    print '  ',v
+  print '-------------'
+  
 
 #-----------------------------------------------------------------------------
 def AssignMolFeatsToPoints(pts,mol,featFactory,winRad):

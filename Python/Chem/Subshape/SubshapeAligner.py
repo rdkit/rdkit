@@ -50,7 +50,7 @@ def TransformMol(mol,tform,confId=-1,newConfId=100):
     pos.append(1.0)
     newPos = Numeric.matrixmultiply(tform,Numeric.array(pos))
     newConf.SetAtomPosition(i,list(newPos)[:3])
-    newConf.SetId(newConfId)
+  newConf.SetId(newConfId)
   mol.RemoveConformer(newConfId)
   mol.AddConformer(newConf,assignId=False)
   
@@ -80,7 +80,7 @@ class SubshapeAligner(object):
           res.append(alg)
     return res
 
-  def PruneMatchesUsingFeatures(self,target,query,alignments):
+  def PruneMatchesUsingFeatures(self,target,query,alignments,pruneStats=None):
     i = 0
     tgtPts = target.skelPts
     queryPts = query.skelPts
@@ -95,16 +95,17 @@ class SubshapeAligner(object):
             nMatched+=1
             break
       if nMatched<self.numFeatThresh:
+        if pruneStats is not None:
+          pruneStats['features']=pruneStats.get('features',0)+1
         del alignments[i]
       else:
         i+=1
 
-  def PruneMatchesUsingDirection(self,target,query,alignments):
+  def PruneMatchesUsingDirection(self,target,query,alignments,pruneStats=None):
     i = 0
     tgtPts = target.skelPts
     queryPts = query.skelPts
     while i<len(alignments):
-      removeIt=False
       nMatched=0
       alg = alignments[i]
       prunedTf = alg.transform[:3,:3]
@@ -121,11 +122,13 @@ class SubshapeAligner(object):
         tv = Numeric.array(tgtPt.shapeDirs[0])
         rotV = Numeric.matrixmultiply(prunedTf,qv)
         dot += abs(Numeric.sum(rotV*tv))
-        if dot>self.dirThresh:
-          removeIt=True
+        if dot>=self.dirThresh:
+          # already above the threshold, no need to continue
           break
-      print dot
-      if removeIt:
+        
+      if dot<self.dirThresh:
+        if pruneStats is not None:
+          pruneStats['direction']=pruneStats.get('direction',0)+1
         del alignments[i]
       else:
         alignments[i].dirMatch=dot
@@ -150,7 +153,8 @@ class SubshapeAligner(object):
     return d
 
   def PruneMatchesUsingShape(self,targetMol,target,queryMol,query,builder,
-                             alignments,tgtConf=-1,queryConf=-1):
+                             alignments,tgtConf=-1,queryConf=-1,
+                             pruneStats=None):
     if not hasattr(target,'medGrid'):
       self._addCoarseAndMediumGrids(targetMol,target,tgtConf,builder)
       self._addCoarseAndMediumGrids(targetMol,target,tgtConf,builder)
@@ -167,30 +171,41 @@ class SubshapeAligner(object):
       d = self._getShapeShapeDistance(coarseGrid,target.coarseGrid)
       if d>self.shapeDistTol:
         removeIt=True
+        if pruneStats is not None:
+          pruneStats['coarseGrid']=pruneStats.get('coarseGrid',0)+1
       else:
         builder.gridSpacing=oSpace*1.5
         medGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
         d = self._getShapeShapeDistance(medGrid,target.medGrid)
         if d>self.shapeDistTol:
           removeIt=True
+          if pruneStats is not None:
+            pruneStats['medGrid']=pruneStats.get('medGrid',0)+1
         else:
           builder.gridSpacing=oSpace
           fineGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
           d = self._getShapeShapeDistance(fineGrid,target)
           if d>self.shapeDistTol:
             removeIt=True
+            if pruneStats is not None:
+              pruneStats['fineGrid']=pruneStats.get('fineGrid',0)+1
       builder.gridSpacing=oSpace
       if removeIt:
         del alignments[i]
       else:
         i+=1
 
-  def GetSubshapeAlignments(self,targetMol,target,queryMol,query,builder,tgtConf=-1,queryConf=-1):
+  def GetSubshapeAlignments(self,targetMol,target,queryMol,query,builder,
+                            tgtConf=-1,queryConf=-1,pruneStats=None):
+    if pruneStats is None:
+      pruneStats={}
     res = self.GetTriangleMatches(target,query)
-    self.PruneMatchesUsingFeatures(target,query,res)
-    self.PruneMatchesUsingDirection(target,query,res)
+    if builder.featFactory:
+      self.PruneMatchesUsingFeatures(target,query,res,pruneStats=pruneStats)
+    self.PruneMatchesUsingDirection(target,query,res,pruneStats=pruneStats)
     self.PruneMatchesUsingShape(targetMol,target,queryMol,query,builder,res,
-                                tgtConf=tgtConf,queryConf=queryConf)
+                                tgtConf=tgtConf,queryConf=queryConf,
+                                pruneStats=pruneStats)
     return res
 
 

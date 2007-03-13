@@ -15,6 +15,7 @@ class SubshapeBuilder(object):
   winRad=3.0
   nbrCount=7
   terminalPtRadScale=0.75
+  fraction=0.25
   stepSize=1.0
   featFactory=None
 
@@ -26,21 +27,21 @@ class SubshapeBuilder(object):
     AllChem.EncodeShape(cmpd,shape.grid,ignoreHs=False,confId=confId)
     conf = cmpd.GetConformer(confId)
     if addSkeleton:
-      self.GenerateSubshapeSkeleton(conf,shape,kwargs)
+      self.GenerateSubshapeSkeleton(shape,conf,kwargs)
     return shape
   
-  def GenerateSubshapeSkeleton(self,conf,shape,terminalPtsOnly=False,skelFromConf=True):
-    if skelFromConf:
+  def GenerateSubshapeSkeleton(self,shape,conf=None,terminalPtsOnly=False,skelFromConf=True):
+    if conf and skelFromConf:
       pts = BuilderUtils.FindTerminalPtsFromConformer(conf,self.winRad,self.nbrCount)
     else:
-      pts = BuilderUtils.FindTerminalPtsFromShape(shape,self.winRad,self.nbrCount)b
+      pts = BuilderUtils.FindTerminalPtsFromShape(shape,self.winRad,self.fraction)
       
     pts = BuilderUtils.ClusterTerminalPts(pts,self.winRad,self.terminalPtRadScale)
     if not terminalPtsOnly:
       pts = BuilderUtils.AppendSkeletonPoints(shape.grid,pts,self.winRad,self.stepSize)
     for i,pt in enumerate(pts):
       BuilderUtils.CalculateDirectionsAtPoint(pt,shape.grid,self.winRad)
-    if self.featFactory:
+    if conf and self.featFactory:
       BuilderUtils.AssignMolFeatsToPoints(pts,conf.GetOwningMol(),self.featFactory,self.winRad)
     shape.skelPts=pts
 
@@ -64,11 +65,13 @@ if __name__=='__main__':
     shape=builder.GenerateSubshapeShape(cmpd)
   v = MolViewer()
   if 1:
+    import tempfile
+    tmpFile = tempfile.mktemp('.grd')
     v.server.deleteAll()
-    Geometry.WriteGridToFile(shape.grid,'c:/temp/foo.grd')
+    Geometry.WriteGridToFile(shape.grid,tmpFile)
     time.sleep(1)
     v.ShowMol(cmpd,name='testMol',showOnly=True)
-    v.server.loadSurface('c:/temp/foo.grd','testGrid','',2.5)
+    v.server.loadSurface(tmpFile,'testGrid','',2.5)
   v.server.resetCGO('*')
 
   cPickle.dump(shape,file('subshape.pkl','w+'))

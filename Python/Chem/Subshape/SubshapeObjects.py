@@ -48,17 +48,28 @@ class SubshapeShape(object):
 
 def DisplaySubshape(viewer,shape,name,showSkelPts=True,color=(1,0,1)):
   import Geometry
-  Geometry.WriteGridToFile(shape.grid,'c:/temp/foo.grd')
-  viewer.server.loadSurface('c:/temp/foo.grd',name,'',2.5)
-  if not showSkelPts:
-    return
-  cgoNm='%s-skeleton'%name
-  viewer.server.resetCGO(cgoNm)
-  for i,pt in enumerate(shape.skelPts):
-    viewer.server.sphere(tuple(pt.location),.5,color,cgoNm)
-    if not hasattr(pt,'shapeDirs'): continue
-    momBeg = pt.location-pt.shapeDirs[0]
-    momEnd = pt.location+pt.shapeDirs[0]
-    viewer.server.cylinder(tuple(momBeg),tuple(momEnd),.1,color,cgoNm)
-
+  import os,tempfile
+  fName = tempfile.mktemp('.grd')
+  Geometry.WriteGridToFile(shape.grid,fName)
+  viewer.server.loadSurface(fName,name,'',2.5)
+  if showSkelPts:
+    cgoNm='%s-skeleton'%name
+    viewer.server.resetCGO(cgoNm)
+    for i,pt in enumerate(shape.skelPts):
+      viewer.server.sphere(tuple(pt.location),.5,color,cgoNm)
+      if not hasattr(pt,'shapeDirs'): continue
+      momBeg = pt.location-pt.shapeDirs[0]
+      momEnd = pt.location+pt.shapeDirs[0]
+      viewer.server.cylinder(tuple(momBeg),tuple(momEnd),.1,color,cgoNm)
+  try:
+    os.unlink(fName)
+  except:
+    import time
+    time.sleep(.5)
+    try:
+      os.unlink(fName)
+    except:
+      pass
     
+
+  
