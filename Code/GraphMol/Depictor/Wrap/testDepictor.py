@@ -9,6 +9,7 @@ import unittest
 import os,sys
 import cPickle as pickle
 from Chem.ChemUtils import AlignDepict
+import Numeric
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
@@ -16,31 +17,62 @@ def feq(v1,v2,tol2=1e-4):
 def ptEq(pt1, pt2, tol=1e-4):
   return feq(pt1.x,pt2.x,tol) and feq(pt1.y,pt2.y,tol) and feq(pt1.z,pt2.z,tol)
 
+def getDistMat(mol):
+    conf = mol.GetConformer()
+    nat = mol.GetNumAtoms()
+    nl = nat*(nat-1)/2
+    res = Numeric.zeros(nl, Numeric.Float)
+
+    for i in range(1,nat):
+        pi = conf.GetAtomPosition(i)
+        id = i*(i-1)/2
+        for j in range(i):
+            pj = conf.GetAtomPosition(j)
+            pj -= pi
+            res[id + j] = pj.Length()
+                
+    return res
+  
+def compareCoords(m, molFile):
+  mo = Chem.MolFromMolFile(molFile)
+  co = mo.GetConformer()
+
+  ci = m.GetConformer()
+  nat = m.GetNumAtoms()
+  if (nat != mo.GetNumAtoms()):
+    return 0
+
+  for i in range(nat) :
+      pos = ci.GetAtomPosition(i)
+      opos = co.GetAtomPosition(i)
+      if not ptEq(pos, opos):
+        return 0
+  return 1
 
 def compareWithOld(smilesFile, sdFile) :
-    smiSup = Chem.SmilesMolSupplier(smilesFile, ",", 0, -1)
-    sdsup = Chem.SDMolSupplier(sdFile)
-    im = 0
-    for mol in smiSup :
-        omol = sdsup[im]
-        rdDepictor.Compute2DCoords(mol)
-        conf = mol.GetConformer()
-        oconf = omol.GetConformer()
-        nat = mol.GetNumAtoms()
-        for i in range(nat) :
-            pos = conf.GetAtomPosition(i)
-            opos = oconf.GetAtomPosition(i)
-            if not ptEq(pos, opos):
-              print >>sys.stderr,Chem.MolToMolBlock(omol)
-              print >>sys.stderr,'> <Failed>\n%d\n'%i
-              print >>sys.stderr,"$$$$"
-              print >>sys.stderr,Chem.MolToMolBlock(mol)
-              print >>sys.stderr,'> <Failed>\n%d\n'%i
-              print >>sys.stderr,"$$$$"
-              return 0
-                        
-        im += 1
-    return 1
+  smiSup = Chem.SmilesMolSupplier(smilesFile, ",", 0, -1)
+  sdsup = Chem.SDMolSupplier(sdFile)
+  im = 0
+  for mol in smiSup :
+    omol = sdsup[im]
+    rdDepictor.Compute2DCoords(mol)
+    conf = mol.GetConformer()
+    oconf = omol.GetConformer()
+    nat = mol.GetNumAtoms()
+    for i in range(nat) :
+      pos = conf.GetAtomPosition(i)
+      opos = oconf.GetAtomPosition(i)
+      if not ptEq(pos, opos):
+        print >>sys.stderr,Chem.MolToMolBlock(omol)
+        print >>sys.stderr,'> <Failed>\n%d\n'%i
+        print >>sys.stderr,"$$$$"
+        print >>sys.stderr,Chem.MolToMolBlock(mol)
+        print >>sys.stderr,'> <Failed>\n%d\n'%i
+        print >>sys.stderr,"$$$$"
+        return 0
+      
+    im += 1
+  return 1
         
 class TestCase(unittest.TestCase) :
     def setUp(self):
@@ -106,6 +138,35 @@ class TestCase(unittest.TestCase) :
       for i in range(nat) :
         pos = conf.GetAtomPosition(i)
         self.failUnless(ptEq(pos, expected[i], 0.001))
-        
+
+    def test4SamplingSpread(self):
+      mol= Chem.MolFromMolFile('../test_data/7UPJ_xtal.mol')
+
+      # default mode
+      rdDepictor.Compute2DCoords(mol)
+      self.failUnless(compareCoords(mol, '../test_data/7UPJ_default.mol'))
+
+      # spread the structure as much as possible by sampling
+      rdDepictor.Compute2DCoords(mol, nFlipsPerSample=3, nSample=100,
+                                 sampleSeed=100, permuteDeg4Nodes=1)
+      self.failUnless(compareCoords(mol, '../test_data/7UPJ_spread.mol'))
+      
+    def test5SamplingMimic3D(self):
+      mol = Chem.MolFromMolFile('../test_data/7UPJ_xtal.mol')
+      dmat3D = getDistMat(mol)
+
+      # now mimic the coordinate with a very small weight
+      rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.001)
+      self.failUnless(compareCoords(mol, '../test_data/7UPJ_mimic3D_1.mol'))
+      
+      # now mimic the coordinate with a very small weight
+      rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.003)
+      self.failUnless(compareCoords(mol, '../test_data/7UPJ_mimic3D_2.mol'))
+
+      #mb = Chem.MolToMolBlock(mol)
+      #ofile = open('../test_data/7UPJ_mimic3D_2.mol', 'w')
+      #ofile.write(mb)
+      #ofile.close()
+      
 if __name__ == '__main__':
   unittest.main()

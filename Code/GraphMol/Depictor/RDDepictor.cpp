@@ -45,7 +45,7 @@ namespace RDDepict {
           frings.push_back(arings[*rid]);
         }
         EmbeddedFrag efrag(&mol, frings);
-        efrag.setupNewNeighs(&mol);
+        efrag.setupNewNeighs(); 
         efrags.push_back(efrag);
         int rix;
         for (rix = 0; rix < cnrs; ++rix) {
@@ -71,7 +71,7 @@ namespace RDDepict {
             && ((*cbi)->getStereo() > RDKit::Bond::STEREOANY) // and has stereo chemistry specified
             && (!(*cbi)->getOwningMol().getRingInfo()->numBondRings((*cbi)->getIdx())) ){ // not in a ring
           EmbeddedFrag efrag(*cbi);
-          efrag.setupNewNeighs(&mol);
+          efrag.setupNewNeighs(); 
           efrags.push_back(efrag);
         }
       }
@@ -158,31 +158,17 @@ namespace RDDepict {
       }
     }
   }
-  //
-  //
-  // 50,000 foot algorithm:
-  //   1) Find rings
-  //   2) Find fused systems
-  //   3) embed largest fused system
-  //   4) foreeach unfinished atom:
-  //      1) find neighbors
-  //      2) if neighbor is non-ring atom, embed it; otherwise merge the
-  //         ring system
-  //      3) add all atoms just merged/embedded to unfinished atom list
-  //      
-  //
-  unsigned int compute2DCoords(RDKit::ROMol &mol,
-                               const RDGeom::INT_POINT2D_MAP *coordMap,
-                               bool canonOrient, bool clearConfs) {
-    // a vector of embedded fragments that will be merged together as we go along
-    // or will be left as they are if we have a multiple fragments in the molecule
-    std::list<EmbeddedFrag> efrags;
 
+  void computeInitialCoords(RDKit::ROMol &mol,
+                            const RDGeom::INT_POINT2D_MAP *coordMap, 
+                            std::list<EmbeddedFrag> &efrags) {
+    
     // so that cis/trans bonds will be marked
     RDKit::MolOps::assignBondStereoCodes(mol, false);
 
     efrags.clear();
     RDKit::VECT_INT_VECT arings;
+
     // first find all the rings
     int nrings = RDKit::MolOps::symmetrizeSSSR(mol, arings);
 
@@ -239,31 +225,18 @@ namespace RDDepict {
         mri--;
       }
       mri->markDone();
-      mri->expandEfrag(nratms, efrags, &mol);
+      mri->expandEfrag(nratms, efrags); 
       mri = DepictorLocal::_findLargestFrag(efrags);
     }
     // at this point any remaining efrags should belong individual fragments in the molecule
 
-    std::list<EmbeddedFrag>::iterator eri;
-    
-    for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-      eri->removeCollisions(&mol);
-    }
+  }
 
-    if (!preSpec) {
-      if (canonOrient || efrags.size() >= 2) {
-      // if we do not have any prespecified coordinates - canonicalize the 
-      // oreintation of the fragment so that the longest axes fall along the x-axis etc.
-        for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-          eri->canonicalizeOrientation();
-        }
-      }
-    }
-    
-    DepictorLocal::_shiftCoords(efrags);
-   
+  unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags, bool clearConfs) {
     // create a conformation to store the coordinates and add it to the molecule 
     RDKit::Conformer *conf = new RDKit::Conformer(mol.getNumAtoms());
+
+    std::list<EmbeddedFrag>::iterator eri;
     for (eri = efrags.begin(); eri != efrags.end(); eri++) {
       const INT_EATOM_MAP &eatoms = eri->GetEmbeddedAtoms();
       INT_EATOM_MAP_CI eai;
@@ -289,6 +262,113 @@ namespace RDDepict {
     }
     return confId;
   }
+  //
+  //
+  // 50,000 foot algorithm:
+  //   1) Find rings
+  //   2) Find fused systems
+  //   3) embed largest fused system
+  //   4) foreeach unfinished atom:
+  //      1) find neighbors
+  //      2) if neighbor is non-ring atom, embed it; otherwise merge the
+  //         ring system
+  //      3) add all atoms just merged/embedded to unfinished atom list
+  //      
+  //
+  unsigned int compute2DCoords(RDKit::ROMol &mol,
+                               const RDGeom::INT_POINT2D_MAP *coordMap,
+                               bool canonOrient, bool clearConfs,
+                               unsigned int nFlipsPerSample, unsigned int nSamples,
+                               int sampleSeed, bool permuteDeg4Nodes) {
+    
+    // storage for pieces of a molecule/s that are embedded in 2D
+    std::list<EmbeddedFrag> efrags;
+    computeInitialCoords(mol, coordMap, efrags);
+    
+    // perform random sampling here to improve the density
+    std::list<EmbeddedFrag>::iterator eri;
+    for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+      // either sample the 2D space by randomly flipping rotatable bonds
+      // in the structure or flip onyl bonds along the shortest path between
+      // colliding atoms - don't do both
+      if ((nSamples > 0) && (nFlipsPerSample > 0)) {
+        eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed, 
+                                              0, 0.0, permuteDeg4Nodes);
+      } else
+        eri->removeCollisionsBondFlip();
+    }
+    for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+      // if there are any remaining collisions
+      eri->removeCollisionsOpenAngles();
+      eri->removeCollisionsShortenBonds();
+    }
+    if (!coordMap) {
+      if (canonOrient || efrags.size() >= 2) {
+      // if we do not have any prespecified coordinates - canonicalize the 
+      // oreintation of the fragment so that the longest axes fall along the x-axis etc.
+        for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+          eri->canonicalizeOrientation();
+        }
+      }
+    }
+    DepictorLocal::_shiftCoords(efrags);
+    // create a confomation on the moelcule and copy the coodinates
+    unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
+    return cid;
+  }
+
+  //! \brief Compute the 2D coordinates such the interatom distances mimic those in ditance matrix
+  /*!
+    This function generates 2D coordinates such that the inter atom distance mimic those specified via
+    dmat. This is done by randomly sampling(flipping) the rotatable bonds in the molecule and evaluating 
+    a cost function which contains two components. The first component is the sum of inverse of the squared 
+    inter-atom distances, this helps in spreading the atoms far from each other. The second component is
+    the sum of squares of the difference in distance between those in dmat and the generated structure. 
+    The user can adjust the relative importance of the two components via a adjustable paramter (see below)
+
+    ARGUMENTS:
+    \param mol - molecule involved in the frgament
+    \param dmat - the distance matrix we want to mimic, this is symmteric N by N matrix when N is the number
+                  of atoms in mol. All ngative entries in dmat are ignored.
+    \param canonOrient - canonicalze the orientation after the 2D embedding is done
+    \param clearConfs - clear any previously existing conformations on mol before adding a conformation 
+    \param weightDistMat - A value between 0.0 and 1.0, this determines the importance of mimicing the 
+                           the inter atoms distances in dmat. (1.0 - weightDistMat) is the weight associated
+                           to spreading out the structure (density) in the cost function
+    \param nFlipsPerSample - the number of rotatable bonds that are flips at random for each sample
+    \param nSample - the number of samples
+    \param sampleSeed - seed for the random sampling process
+  */
+  unsigned int compute2DCoordsMimicDistMat(RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat,
+                                           bool canonOrient, bool clearConfs, double weightDistMat,
+                                           unsigned int nFlipsPerSample, unsigned int nSamples,
+                                           int sampleSeed, bool permuteDeg4Nodes){
+    // storage for pieces of a molecule/s that are embedded in 2D
+    std::list<EmbeddedFrag> efrags;
+    computeInitialCoords(mol, 0, efrags);
+    
+    // now perform random flips of rotatable bonds so taht we can sample the space
+    // and try to mimic the distances in dmat
+    std::list<EmbeddedFrag>::iterator eri;
+    for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+      eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed, dmat, 
+                                            weightDistMat, permuteDeg4Nodes);
+    }
+    if (canonOrient || efrags.size() >= 2) {
+      // if we do not have any prespecified coordinates - canonicalize the 
+      // oreintation of the fragment so that the longest axes fall along the x-axis etc.
+      for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+        eri->canonicalizeOrientation();
+      }
+    }
+
+    DepictorLocal::_shiftCoords(efrags);
+    // create a confomation on the moelcule and copy the coodinates
+    unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
+    return cid;
+  }
+    
+    
     
 }
           

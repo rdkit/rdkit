@@ -283,6 +283,20 @@ namespace RDDepict {
     return res;
   }
 
+  RDKit::INT_VECT getAllRotatbleBonds(const RDKit::ROMol &mol) {
+    RDKit::INT_VECT res;
+    RDKit::ROMol::ConstBondIterator bondIt;
+    for(bondIt=mol.beginBonds();bondIt!=mol.endBonds();bondIt++){
+      int bid = (*bondIt)->getIdx();
+      if ( ((*bondIt)->getStereo() <= RDKit::Bond::STEREOANY) &&
+	   (!(mol.getRingInfo()->numBondRings(bid))))  {
+          res.push_back(bid);
+      }
+    }
+    return res;
+  }
+
+  
   RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol, unsigned int aid1, unsigned int aid2) {
     PRECONDITION(aid1<mol.getNumAtoms(), "");
     PRECONDITION(aid2<mol.getNumAtoms(), "");
@@ -308,6 +322,92 @@ namespace RDDepict {
       }
     }
     return res;
+  }
+
+  void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
+                            RDKit::INT_VECT &aids, RDKit::INT_VECT &bids) {
+    CHECK_INVARIANT(mol, "");
+    unsigned int na = mol->getNumAtoms();
+    RANGE_CHECK(0, aid, na-1);
+    
+    RDKit::ROMol::ADJ_ITER nbrIdx,endNbrs;
+    boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
+
+    unsigned int ai, bi;
+    while (nbrIdx != endNbrs) {
+      ai = (*nbrIdx);
+      bi = mol->getBondBetweenAtoms(aid, ai)->getIdx();
+      aids.push_back(ai);
+      bids.push_back(bi);
+      nbrIdx++;
+    }
+    
+  }
+
+  // find pairs of bonds that can be permuted at a non-ring degree 4 
+  // node. This function will return only those pairs that cannot be 
+  // permuted by flipping a rotatble bond
+  // 
+  //       D
+  //       |
+  //       b3
+  //       |
+  //  A-b1-B-b2-C
+  //       |
+  //       b4
+  //       |
+  //       E
+  // For example in teh above situation on the pairs (b1, b3) and (b1, b4) will be returned
+  // All other permutations can be achieved via a rotatable bond flip.
+  INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center, const RDKit::INT_VECT &nbrBids, 
+                                            const VECT_C_POINT &nbrLocs) {
+
+    INT_PAIR_VECT res;
+    
+    // make sure there are four of them
+    CHECK_INVARIANT(nbrBids.size() == 4, "");
+    CHECK_INVARIANT(nbrLocs.size() == 4, "");
+    
+    VECT_C_POINT::const_iterator npi;
+    
+    std::vector<RDGeom::Point2D> nbrPts;
+    RDKit::INT_VECT_CI aci;
+    
+    for (npi = nbrLocs.begin(); npi != nbrLocs.end(); npi++) {
+      RDGeom::Point2D v = (*(*npi)) - center;
+      nbrPts.push_back(v);
+    }
+
+    // now find the lay out of the bonds and return the bonds that are 90deg to the 
+    // the bond to the first neighbor; i.e. we want to find b3 and b4 in the above picture
+    double dp1 = nbrPts[0].dotProduct(nbrPts[1]);
+    if (fabs(dp1) < 1.e-3) {
+      // the first two vectors are perpendicular to each other. We now have b1 and b3 we need to
+      // find b4
+      INT_PAIR p1(nbrBids[0], nbrBids[1]);
+      res.push_back(p1);
+
+      double dp2 = nbrPts[0].dotProduct(nbrPts[2]);
+      if (fabs(dp2) < 1.e-3) {
+        // now we found b4 as well return the results
+        INT_PAIR p2(nbrBids[0], nbrBids[2]);
+        res.push_back(p2);
+      } else {
+        // bids[0] and bids[2] are opposite to each other and we know bids[1] is
+        // perpendicular to bids[0]. So bids[3] is also perpendicular to bids[0]
+        INT_PAIR p2(nbrBids[0], nbrBids[3]);
+        res.push_back(p2);
+      }
+      return res;
+    } else {
+      // bids[0] and bids[1] are oppostie to each other, so bids[2] and bids[3] must
+      // be perpendicular to bids[0]
+      INT_PAIR p1(nbrBids[0], nbrBids[2]);
+      res.push_back(p1);
+      INT_PAIR p2(nbrBids[0], nbrBids[3]);
+      res.push_back(p2);
+      return res;
+    }
   }
 
   // compare the first elements of two pairs of integers/

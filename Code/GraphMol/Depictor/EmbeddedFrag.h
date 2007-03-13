@@ -10,15 +10,19 @@
 #include <Geometry/Transform2D.h>
 #include <Geometry/point.h>
 #include "DepictUtils.h" 
-
+#include <boost/smart_ptr.hpp>
 
 
 namespace RDKit {
   class ROMol;
   class Bond;
 }
+
 namespace RDDepict {
+  typedef boost::shared_array<double> DOUBLE_SMART_PTR;
+  
   //! Class that contains the data for an atoms that has alredy been embedded
+  
   class EmbeddedAtom {
   public:
     typedef enum {
@@ -130,7 +134,7 @@ namespace RDDepict {
 
   public:
     //! Default constructor
-    EmbeddedFrag() : d_done(false){};
+    EmbeddedFrag() : d_done(false), dp_mol(0){};
 
     //! Intializer from a single atom id 
     /*!
@@ -174,16 +178,15 @@ namespace RDDepict {
       as we start merging them with the current fragment
 
     */
-    void expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> &efrags,
-		     const RDKit::ROMol *mol);
-
+    void expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> &efrags);
+		     
     //! Add a new non-ring atom to this object
     /*
       ARGUMENTS:
       \param aid     ID of the atom to be added
       \param toAid   ID of the atom that is already in this object to which this atom is added
     */
-    void addNonRingAtom(unsigned int aid, unsigned int toAid, const RDKit::ROMol *mol);
+    void addNonRingAtom(unsigned int aid, unsigned int toAid);
 
     //! Merge this embedded object with another embedded fragment
     /*!
@@ -201,7 +204,7 @@ namespace RDDepict {
       \param  mol     the molecule of interest
     */
     void mergeNoCommon(EmbeddedFrag &embObj, unsigned int toAid, 
-                       unsigned int nbrAid, const RDKit::ROMol *mol);
+                       unsigned int nbrAid); //, const RDKit::ROMol *mol);
 
     //! Merge this embedded object with another embedded fragment
     /*!
@@ -218,10 +221,10 @@ namespace RDDepict {
       \param mol       the molecule of interest
 
     */
-    void mergeWithCommon(EmbeddedFrag &embObj, RDKit::INT_VECT &commAtms,
-			 const RDKit::ROMol *mol);
+    void mergeWithCommon(EmbeddedFrag &embObj, RDKit::INT_VECT &commAtms);
+    //const RDKit::ROMol *mol);
 
-    void mergeFragsWithComm(std::list<EmbeddedFrag> &efrags, const RDKit::ROMol *mol);
+    void mergeFragsWithComm(std::list<EmbeddedFrag> &efrags); //, const RDKit::ROMol *mol);
 
     //! Mark this fragment to be done for final embedding
     void markDone() {
@@ -232,6 +235,9 @@ namespace RDDepict {
     bool isDone() {
       return d_done;
     }
+
+    //! Get the molecule that this embedded fragmetn blongs to
+    const RDKit::ROMol *getMol() const { return dp_mol;}
 
     //! Find the common atom ids between this fragment and a second one
     RDKit::INT_VECT findCommonAtoms(const EmbeddedFrag &efrag2);
@@ -248,7 +254,7 @@ namespace RDDepict {
                    
       NOTE: by definition we can have only one neighbor in the embdded system. 
     */
-    int findNeighbor(unsigned int aid, const RDKit::ROMol *mol);
+    int findNeighbor(unsigned int aid); //, const RDKit::ROMol *mol);
 
     //! Tranform this object to a new coordinates system
     /*!
@@ -293,22 +299,44 @@ namespace RDDepict {
       \param mol - molecule involved in the frgament
       \param bondId - the bond used as the mirror to flip
     */
-    void flipAboutBond(const RDKit::ROMol *mol, unsigned int bondId);
+    void flipAboutBond(unsigned int bondId); //const RDKit::ROMol *mol, unsigned int bondId);
 
-    void openAngles(const RDKit::ROMol *mol, const double *dmat,
-                    unsigned int aid1, unsigned int aid2);
+    void openAngles(const double *dmat, unsigned int aid1, unsigned int aid2);
 
-    std::vector<PAIR_I_I> findCollisions(const RDKit::ROMol &mol, 
-                                         const double *dmat, bool includeBonds=1);
+    std::vector<PAIR_I_I> findCollisions(const double *dmat, bool includeBonds=1);
 
-    void removeCollisions(const RDKit::ROMol *mol);
+    void computeDistMat(DOUBLE_SMART_PTR &dmat);
+
+    double mimicDistMatAndDensityCostFunc(const DOUBLE_SMART_PTR *dmat, 
+                                          double mimicDmatWt);
+
+    void permuteBonds(unsigned int aid, unsigned int aid1, unsigned int aid2);
+
+    void randomSampleFlipsAndPermutations(unsigned int nBondsPerSample=3,
+                                          unsigned int nSamples=100, int seed=100,
+                                          const DOUBLE_SMART_PTR *dmat=0, 
+                                          double mimicDmatWt=0.0,
+                                          bool permuteDeg4Nodes=false);
+
+    //! Remove collisions in a structure by flipping rotable bonds 
+    //! along the shortest path between two colliding atoms
+    void removeCollisionsBondFlip();
+
+    //! Remove collision by opening angles at the offending atoms
+    void removeCollisionsOpenAngles();
+
+    //! Remove collisions by shortening bonds along the shortest path between the atoms
+    void removeCollisionsShortenBonds();
+
+    //! helpers funtions to 
+    
 
     //! \brief make list of neighbors for each atom in the embedded system that
     //!  still need to be embedded
-    void setupNewNeighs(const RDKit::ROMol *mol);
+    void setupNewNeighs(); //const RDKit::ROMol *mol);
 
     //! update the  unembedded neighbor atom list for a specified atom
-    void updateNewNeighs(unsigned int aid, const RDKit::ROMol *mol);
+    void updateNewNeighs(unsigned int aid); //, const RDKit::ROMol *mol);
 
     //! \brief Find all atoms in this embedded system that are
     //!  within a specified distant of a point
@@ -322,11 +350,12 @@ namespace RDDepict {
 
     void canonicalizeOrientation();
 
+    
   private:
 
     double totalDensity();
 
-    void embedFusedRings(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings);
+    void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings);
 
     //! \brief Find a transform to join a ring to the current embedded frag when we
     //! have only on common atom
@@ -450,7 +479,7 @@ namespace RDDepict {
       \param  mol     the molecule we are dealing with
     */
     void addAtomToAtomWithNoAng(unsigned int aid, 
-                                unsigned int toAid, const RDKit::ROMol *mol);
+                                unsigned int toAid); //, const RDKit::ROMol *mol);
 
     //! Helper funtion to contructor that takes predefined coordinates
     /*! 
@@ -476,8 +505,8 @@ namespace RDDepict {
       \param aid        the atom id where we are centered right now
       \param doneNbrs   list of neighbors that are already embedded around aid
     */
-    void computeNbrsAndAng(unsigned int aid, const RDKit::INT_VECT &doneNbrs, 
-                           const RDKit::ROMol *mol);
+    void computeNbrsAndAng(unsigned int aid, const RDKit::INT_VECT &doneNbrs);
+    //const RDKit::ROMol *mol);
 
     //! are we embedded with the final (molecule) coordinates
     bool d_done;
@@ -488,7 +517,9 @@ namespace RDDepict {
 
     //RDKit::INT_DEQUE d_attachPts;
     RDKit::INT_LIST d_attachPts;
-    
+
+    // pointer to the owning molecule
+    const RDKit::ROMol *dp_mol;
 
   };
 

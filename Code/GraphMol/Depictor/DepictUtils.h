@@ -24,6 +24,8 @@ namespace RDDepict {
   const double HETEROATOM_COLL_SCALE=1.3;
   const int NUM_BONDS_FLIPS=3;
 
+  typedef std::vector<const RDGeom::Point2D *> VECT_C_POINT;
+  
   typedef std::pair<int, int> PAIR_I_I;
   typedef std::vector<PAIR_I_I> VECT_PII;
   struct gtIIPair {
@@ -36,6 +38,7 @@ namespace RDDepict {
 
   typedef std::pair<double, PAIR_I_I> PAIR_D_I_I;
   typedef std::list<PAIR_D_I_I> LIST_PAIR_DII;
+
 
   //! Some utility functions used in generating 2D coordinates
   
@@ -276,6 +279,48 @@ namespace RDDepict {
   */
   RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol, unsigned int aid1,
 				    unsigned int aid2);
+
+  //! \brief find all the rotatable bonds in a molecule
+  //!   we will ignore ring atoms, and double bonds which are marked cis/trans
+  /*!
+    <b>Note</b> that rotatable in this context doesn't connect to the
+      standard chemical definition of a rotatable bond; we're just talking
+      about bonds than can be flipped in order to clean up the depiction.
+  
+    \param mol   the molecule of interest
+    
+    \return a set of the indices of the rotatable bonds
+  */
+  RDKit::INT_VECT getAllRotatbleBonds(const RDKit::ROMol &mol);
+
+  //! Get the ids of the atoms and bonds that are connected to aid
+  void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
+                            RDKit::INT_VECT &aids, RDKit::INT_VECT &bids);
+
+  //! Find pairs of bonds that can be permuted at a non-ring degree 4 atom
+  /*!
+    This function will return only those pairs that cannot be 
+    permuted by flipping a rotatble bond
+    
+           D
+           |
+           b3
+           |
+      A-b1-B-b2-C
+           |
+           b4
+           |
+           E
+     For example in teh above situation on the pairs (b1, b3) and (b1, b4) will be returned
+     All other permutations can be achieved via a rotatable bond flip.
+
+     ARGUMENTS:
+     \param center - location of the central atom
+     \param nbrBids - a vector (of length 4) containing the ids of the bonds to the neighbors
+     \param nbrLocs - locations of the neighbors
+  */
+  INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center, const RDKit::INT_VECT &nbrBids, 
+                                            const VECT_C_POINT &nbrLocs);
 }
 
 #endif
