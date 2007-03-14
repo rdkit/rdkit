@@ -43,8 +43,8 @@ public:
          be base64 encoded.
     \param allowOldFormat (optional) allows a very old form of the BitVect
          representation to be recognized. This argument disables a large
-	 amount of error checking and it is strongly suggested that it not
-	 be used in client code.
+         amount of error checking and it is strongly suggested that it not
+         be used in client code.
    */
   void InitFromText(const char *data,const unsigned int dataLen,
                     bool isBase64=false,bool allowOldFormat=false);

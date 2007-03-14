@@ -51,11 +51,11 @@ void FromDaylightString(T &sbv,std::string s)
     for(int j=0;j<3 && nBitsDone < nBits;j++){
       unsigned char query=0x80;
       for(int k=0;k<8;k++) {
-	if(bytes[j]&query){
-	  sbv.SetBit(nBitsDone);
-	}
-	query >>= 1;
-	nBitsDone++;
+        if(bytes[j]&query){
+          sbv.SetBit(nBitsDone);
+        }
+        query >>= 1;
+        nBitsDone++;
       }
     }
     i += 4;

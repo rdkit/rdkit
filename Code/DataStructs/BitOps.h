@@ -53,7 +53,7 @@ TanimotoSimilarity(const T1& bv1,const T2& bv2);
 template <typename T1, typename T2>
 const double
 CosineSimilarity(const T1& bv1,
-		 const T2& bv2);
+                 const T2& bv2);
 
 //! returns the Kulczynski similarity between two bit vects
 /*!
@@ -62,7 +62,7 @@ CosineSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 KulczynskiSimilarity(const T1& bv1,
-		     const T2& bv2);
+                     const T2& bv2);
 
 //! returns the Dice similarity between two bit vects
 /*!
@@ -71,7 +71,7 @@ KulczynskiSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 DiceSimilarity(const T1& bv1,
-	       const T2& bv2);
+               const T2& bv2);
 
 //! returns the Sokal similarity between two bit vects
 /*!
@@ -80,7 +80,7 @@ DiceSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 SokalSimilarity(const T1& bv1,
-		const T2& bv2);
+                const T2& bv2);
 
 //! returns the McConnaughey similarity between two bit vects
 /*!
@@ -89,7 +89,7 @@ SokalSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 McConnaugheySimilarity(const T1& bv1,
-		       const T2& bv2);
+                       const T2& bv2);
 
 //! returns the Asymmetric similarity between two bit vects
 /*!
@@ -98,7 +98,7 @@ McConnaugheySimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 AsymmetricSimilarity(const T1& bv1,
-		     const T2& bv2);
+                     const T2& bv2);
 
 //! returns the Braun-Blanquet similarity between two bit vects
 /*!
@@ -107,7 +107,7 @@ AsymmetricSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 BraunBlanquetSimilarity(const T1& bv1,
-			const T2& bv2);
+                        const T2& bv2);
 
 //! returns the Russel similarity between two bit vects
 /*!
@@ -120,7 +120,7 @@ BraunBlanquetSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 RusselSimilarity(const T1& bv1,
-		 const T2& bv2);
+                 const T2& bv2);
 
 
 //! returns the on bit similarity between two bit vects

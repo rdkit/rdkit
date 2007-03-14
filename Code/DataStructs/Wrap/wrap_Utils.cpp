@@ -19,16 +19,16 @@ struct Utils_wrapper {
   static void wrap(){
     python::def("ConvertToExplicit", convertToExplicit, 
                 python::return_value_policy<python::manage_new_object>(),
-		"Converts a SparseBitVector to an ExplicitBitVector and returns the ExplicitBitVector");  
+                "Converts a SparseBitVector to an ExplicitBitVector and returns the ExplicitBitVector");  
     python::def("CreateFromBitString",createFromBitString,
                 python::return_value_policy<python::manage_new_object>(),
-		"Creates an ExplicitBitVect from a bit string (string of 0s and 1s).");  
+                "Creates an ExplicitBitVect from a bit string (string of 0s and 1s).");  
 
     python::def("InitFromDaylightString",
-		(void (*)(SparseBitVect &,std::string))FromDaylightString);
+                (void (*)(SparseBitVect &,std::string))FromDaylightString);
     python::def("InitFromDaylightString",
-		(void (*)(ExplicitBitVect &,std::string))FromDaylightString,
-		"Fill a BitVect using an ASCII (Daylight) encoding of a fingerprint.\n\
+                (void (*)(ExplicitBitVect &,std::string))FromDaylightString,
+                "Fill a BitVect using an ASCII (Daylight) encoding of a fingerprint.\n\
 \n\
    **Arguments**\n\
      - bv: either a _SparseBitVect_ or an _ExplicitBitVect_\n\

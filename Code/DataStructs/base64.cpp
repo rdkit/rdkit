@@ -41,13 +41,13 @@ char *Base64Encode(const unsigned char *inText,const unsigned int inLen){
   //   - whoever calls us is responsible for free'ing the result we return
   //   - we cheat and don't worry about breaking lines
   static unsigned char transTable[64]={'A','B','C','D','E','F','G','H',
-				       'I','J','K','L','M','N','O','P',
-				       'Q','R','S','T','U','V','W','X',
-				       'Y','Z','a','b','c','d','e','f',
-				       'g','h','i','j','k','l','m','n',
-				       'o','p','q','r','s','t','u','v',
-				       'w','x','y','z','0','1','2','3',
-				       '4','5','6','7','8','9','+','/'};
+                                       'I','J','K','L','M','N','O','P',
+                                       'Q','R','S','T','U','V','W','X',
+                                       'Y','Z','a','b','c','d','e','f',
+                                       'g','h','i','j','k','l','m','n',
+                                       'o','p','q','r','s','t','u','v',
+                                       'w','x','y','z','0','1','2','3',
+                                       '4','5','6','7','8','9','+','/'};
   
   char *res;
   int resSize;
@@ -61,12 +61,12 @@ char *Base64Encode(const unsigned char *inText,const unsigned int inLen){
     if( i+1 < inLen){
       res[pos++]= transTable[((inText[i]&3)<<4)|(inText[i+1]>>4)];
       if(i+2 < inLen){
-	res[pos++] = transTable[((inText[i+1]&0xF)<<2)|(inText[i+2]>>6)];
-	res[pos++] = transTable[inText[i+2]&0x3F];
+        res[pos++] = transTable[((inText[i+1]&0xF)<<2)|(inText[i+2]>>6)];
+        res[pos++] = transTable[inText[i+2]&0x3F];
       } else {
-	// single padding
-	res[pos++] = transTable[((inText[i+1]&0xF)<<2)];
-	res[pos++] = '=';
+        // single padding
+        res[pos++] = transTable[((inText[i+1]&0xF)<<2)];
+        res[pos++] = '=';
       }
     } else {
       // double padding
@@ -112,11 +112,11 @@ char *Base64Decode(const char *inText,unsigned int *size){
     if ( !(transTable[c]&0x80) ){
       block[nInBlock++] = transTable[c];
       if( nInBlock == 4 ) {
-	// finished a block
-	res[pos++] = (block[0]<<2)|(block[1]>>4);
-	res[pos++] = (block[1]<<4)|(block[2]>>2);
-	res[pos++] = (block[2]<<6)|block[3];
-	nInBlock = 0;
+        // finished a block
+        res[pos++] = (block[0]<<2)|(block[1]>>4);
+        res[pos++] = (block[1]<<4)|(block[2]>>2);
+        res[pos++] = (block[2]<<6)|block[3];
+        nInBlock = 0;
       }
     }
     i++;

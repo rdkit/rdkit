@@ -143,9 +143,9 @@ bool AllProbeBitsMatch(const T1 &probe,const std::string &pkl){
   //  if(probe.GetBit(i)){
   for(std::vector<int>::const_iterator i=obl.begin();i!=obl.end();i++){
     while(currBit<*i && nOn>0){
-	if(format==2) currBit++;
-	currBit=getBitId(text,format,size,currBit);
-	nOn--;
+        if(format==2) currBit++;
+        currBit=getBitId(text,format,size,currBit);
+        nOn--;
       }
       if(currBit!=*i) return false;
       //}
@@ -164,14 +164,14 @@ template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,const std::string &pk
 template <typename T1, typename T2>
 int
 NumOnBitsInCommon(const T1& bv1,
-		const T2& bv2)
+                const T2& bv2)
 {
   return OnBitsInCommon(bv1,bv2).size();
 }
 
 int
 NumOnBitsInCommon(const ExplicitBitVect& bv1,
-		  const ExplicitBitVect& bv2)
+                  const ExplicitBitVect& bv2)
 {
   //std::cout << "nobic" << std::endl;
   int res = 0;
@@ -201,7 +201,7 @@ NumOnBitsInCommon(const ExplicitBitVect& bv1,
 template <typename T1, typename T2>
 const double
 TanimotoSimilarity(const T1& bv1,
-		   const T2& bv2)
+                   const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -216,7 +216,7 @@ TanimotoSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 CosineSimilarity(const T1& bv1,
-		   const T2& bv2)
+                   const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -234,7 +234,7 @@ CosineSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 KulczynskiSimilarity(const T1& bv1,
-		   const T2& bv2)
+                   const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -253,7 +253,7 @@ KulczynskiSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 DiceSimilarity(const T1& bv1,
-	      const T2& bv2)
+              const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -271,7 +271,7 @@ DiceSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 SokalSimilarity(const T1& bv1,
-	      const T2& bv2)
+              const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -285,7 +285,7 @@ SokalSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 McConnaugheySimilarity(const T1& bv1,
-		       const T2& bv2)
+                       const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -315,7 +315,7 @@ inline T tmax(T v1,T v2) {
 template <typename T1, typename T2>
 const double
 AsymmetricSimilarity(const T1& bv1,
-		     const T2& bv2)
+                     const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -333,7 +333,7 @@ AsymmetricSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 BraunBlanquetSimilarity(const T1& bv1,
-		     const T2& bv2)
+                     const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -351,7 +351,7 @@ BraunBlanquetSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 RusselSimilarity(const T1& bv1,
-		     const T2& bv2)
+                     const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -377,7 +377,7 @@ RusselSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const double
 OnBitSimilarity(const T1& bv1,
-		const T2& bv2)
+                const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -408,7 +408,7 @@ OnBitSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 const int
 NumBitsInCommon(const T1& bv1,
-		const T2& bv2)
+                const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -434,7 +434,7 @@ NumBitsInCommon(const T1& bv1,
 template <typename T1, typename T2>
 const double
 AllBitSimilarity(const T1& bv1,
-		const T2& bv2)
+                const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -462,7 +462,7 @@ AllBitSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 IntVect
 OnBitsInCommon(const T1& bv1,
-		const T2& bv2)
+                const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -488,7 +488,7 @@ OnBitsInCommon(const T1& bv1,
 template <typename T1, typename T2>
 IntVect
 OffBitsInCommon(const T1& bv1,
-		const T2& bv2)
+                const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -525,7 +525,7 @@ OffBitsInCommon(const T1& bv1,
 template <typename T1, typename T2>
 DoubleVect
 OnBitProjSimilarity(const T1& bv1,
-		     const T2& bv2)
+                     const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
@@ -566,7 +566,7 @@ OnBitProjSimilarity(const T1& bv1,
 template <typename T1, typename T2>
 DoubleVect
 OffBitProjSimilarity(const T1& bv1,
-		     const T2& bv2)
+                     const T2& bv2)
 {
   if(bv1.GetNumBits()!=bv2.GetNumBits())
     throw ValueErrorException("BitVects must be same length");
