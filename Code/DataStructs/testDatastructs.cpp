@@ -168,10 +168,10 @@ void test1DiscreteVect() {
     vect1.setVal(2*i, 1);
   }
 
-  CHECK_INVARIANT(vect1.getLength() == 30, "");
-  CHECK_INVARIANT(vect1.getTotalVal() == 15, "");
+  TEST_ASSERT(vect1.getLength() == 30);
+  TEST_ASSERT(vect1.getTotalVal() == 15);
   for (i = 0; i < vect1.getLength(); ++i) {
-    CHECK_INVARIANT(vect1.getVal(i) ==  (i+1)%2, "");
+    TEST_ASSERT(vect1.getVal(i) ==  (i+1)%2);
   }
   try {
     vect1.setVal(28,2);
@@ -187,9 +187,9 @@ void test1DiscreteVect() {
   }
 
   for (i = 0; i < vect2.getLength(); ++i) {
-    CHECK_INVARIANT(vect2.getVal(i) ==  i%4, "");
+    TEST_ASSERT(vect2.getVal(i) ==  i%4);
   }
-  CHECK_INVARIANT(vect2.getTotalVal() == 43, "");
+  TEST_ASSERT(vect2.getTotalVal() == 43);
   try {
     vect2.setVal(28,10);
   } catch (ValueErrorException &dexp) {
@@ -202,9 +202,9 @@ void test1DiscreteVect() {
   }
 
   for (i = 0; i < vect4.getLength(); ++i) {
-    CHECK_INVARIANT(vect4.getVal(i) ==  i%16, "");
+    TEST_ASSERT(vect4.getVal(i) ==  i%16);
   }
-  CHECK_INVARIANT(vect4.getTotalVal() == 211, "");
+  TEST_ASSERT(vect4.getTotalVal() == 211);
   try {
     vect4.setVal(28,16);
   } catch (ValueErrorException &dexp) {
@@ -217,9 +217,9 @@ void test1DiscreteVect() {
   }
 
   for (i = 0; i < vect8.getLength(); ++i) {
-    CHECK_INVARIANT(vect8.getVal(i) ==  i%256, "");
+    TEST_ASSERT(vect8.getVal(i) ==  i%256);
   }
-  CHECK_INVARIANT(vect8.getTotalVal() == 496, "");
+  TEST_ASSERT(vect8.getTotalVal() == 496);
   try {
     vect8.setVal(28,257);
   } catch (ValueErrorException &dexp) {
@@ -232,10 +232,10 @@ void test1DiscreteVect() {
   }
 
   for (i = 0; i < vect16.getLength(); ++i) {
-    CHECK_INVARIANT(vect16.getVal(i) ==  i%300, "");
+    TEST_ASSERT(vect16.getVal(i) ==  i%300);
   }
  
-  CHECK_INVARIANT(vect16.getTotalVal() == 44850, "");
+  TEST_ASSERT(vect16.getTotalVal() == 44850);
   vect16.setVal(28,65535);
   try {
     vect16.setVal(28,65536);
@@ -253,12 +253,12 @@ void test2DiscreteVectDists() {
     v1.setVal(2*i, 1);
     v2.setVal(2*i, 1);
   }
-  CHECK_INVARIANT(computeL1Norm(v1, v2) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v1, v2) == 0);
   for (i = 0; i < 30; ++i) {
     v2.setVal(i, i%2);
   }
   
-  CHECK_INVARIANT(computeL1Norm(v1, v2) == 30, " ");
+  TEST_ASSERT(computeL1Norm(v1, v2) == 30);
   
   for (i = 0; i < 30; ++i) {
     if (i%3 == 0) {
@@ -268,7 +268,7 @@ void test2DiscreteVectDists() {
     }
   }
   
-  CHECK_INVARIANT(computeL1Norm(v1, v2) == 15, " ");
+  TEST_ASSERT(computeL1Norm(v1, v2) == 15);
 
   DiscreteValueVect v21(DiscreteValueVect::TWOBITVALUE, 30);
   DiscreteValueVect v22(DiscreteValueVect::TWOBITVALUE, 30);
@@ -276,11 +276,11 @@ void test2DiscreteVectDists() {
     v21.setVal(i, i%4);
     v22.setVal(i, i%4);
   }
-  CHECK_INVARIANT(computeL1Norm(v21, v22) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v21, v22) == 0);
   for (i = 0; i < 30; ++i) {
     v22.setVal(i, (i+1)%4);
   }
-  CHECK_INVARIANT(computeL1Norm(v21, v22) == 44, " ");
+  TEST_ASSERT(computeL1Norm(v21, v22) == 44);
 
   DiscreteValueVect v41(DiscreteValueVect::FOURBITVALUE, 16);
   DiscreteValueVect v42(DiscreteValueVect::FOURBITVALUE, 16);
@@ -288,15 +288,15 @@ void test2DiscreteVectDists() {
     v41.setVal(i, i%16);
     v42.setVal(i, i%16);
   }
-  CHECK_INVARIANT(computeL1Norm(v41, v42) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v41, v42) == 0);
 
   for (i = 0; i < 16; ++i) {
     v42.setVal(i, i%5);
   }
-  CHECK_INVARIANT(computeL1Norm(v41, v42) ==90, " ");
+  TEST_ASSERT(computeL1Norm(v41, v42) ==90);
 
   DiscreteValueVect v43(v42);
-  CHECK_INVARIANT(computeL1Norm(v42, v43) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v42, v43) == 0);
 
   DiscreteValueVect v81(DiscreteValueVect::EIGHTBITVALUE, 5);
   DiscreteValueVect v82(DiscreteValueVect::EIGHTBITVALUE, 5);
@@ -305,24 +305,24 @@ void test2DiscreteVectDists() {
   v81.setVal(2, 3); v82.setVal(2, 3);
   v81.setVal(3, 56); v82.setVal(3, 56);
   v81.setVal(4, 128); v82.setVal(4, 128);
-  CHECK_INVARIANT(computeL1Norm(v81, v82) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v81, v82) == 0);
 
   v82.setVal(0, 14); v82.setVal(1, 67);
   v82.setVal(2, 103); v82.setVal(3, 6);
   v82.setVal(4, 228); 
-  CHECK_INVARIANT(computeL1Norm(v81, v82) == 370, "");
+  TEST_ASSERT(computeL1Norm(v81, v82) == 370);
 
   DiscreteValueVect v161(DiscreteValueVect::SIXTEENBITVALUE, 3);
   DiscreteValueVect v162(DiscreteValueVect::SIXTEENBITVALUE, 3);
   v161.setVal(0, 2345); v162.setVal(0, 2345);
   v161.setVal(1, 64578); v162.setVal(1, 64578);
   v161.setVal(2, 34); v162.setVal(2, 34);
-  CHECK_INVARIANT(computeL1Norm(v161, v162) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v161, v162) == 0);
 
   v162.setVal(0, 1345);
   v162.setVal(1, 54578);
   v162.setVal(2, 10034);
-  CHECK_INVARIANT(computeL1Norm(v161, v162) == 21000, " ");
+  TEST_ASSERT(computeL1Norm(v161, v162) == 21000);
 
 }
 
@@ -333,21 +333,21 @@ void test3DiscreteVectPickles() {
     v1.setVal(2*i, 1);
   }
   DiscreteValueVect v2(v1.toString());
-  CHECK_INVARIANT(computeL1Norm(v1, v2) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v1, v2) == 0);
 
   DiscreteValueVect v21(DiscreteValueVect::TWOBITVALUE, 30);
   for (i = 0; i < 30; ++i) {
     v21.setVal(i, i%4);
   }
   DiscreteValueVect v22(v21.toString());
-  CHECK_INVARIANT(computeL1Norm(v21, v22) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v21, v22) == 0);
 
   DiscreteValueVect v41(DiscreteValueVect::FOURBITVALUE, 16);
   for (i = 0; i < 16; ++i) {
     v41.setVal(i, i%16);
   }
   DiscreteValueVect v42(v41.toString());
-  CHECK_INVARIANT(computeL1Norm(v41, v42) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v41, v42) == 0);
 
   DiscreteValueVect v81(DiscreteValueVect::EIGHTBITVALUE, 5);
   v81.setVal(0, 34); 
@@ -356,17 +356,82 @@ void test3DiscreteVectPickles() {
   v81.setVal(3, 56);
   v81.setVal(4, 128);
   DiscreteValueVect v82(v81.toString());
-  CHECK_INVARIANT(computeL1Norm(v81, v82) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v81, v82) == 0);
 
   DiscreteValueVect v161(DiscreteValueVect::SIXTEENBITVALUE, 3);
   v161.setVal(0, 2345);
   v161.setVal(1, 64578);
   v161.setVal(2, 34);
   DiscreteValueVect v162(v161.toString());
-  CHECK_INVARIANT(computeL1Norm(v161, v162) == 0, " ");
+  TEST_ASSERT(computeL1Norm(v161, v162) == 0);
+}
+
+
+void test4DiscreteVectOps1() {
+  DiscreteValueVect vect1(DiscreteValueVect::ONEBITVALUE, 8);
+  for (unsigned int i = 0; i < 4; ++i) {
+    vect1.setVal(2*i, 1);
+  }
+  TEST_ASSERT(vect1.getLength() == 8);
+  TEST_ASSERT(vect1.getTotalVal() == 4);
+
+  DiscreteValueVect vect2(DiscreteValueVect::ONEBITVALUE, 8);
+  for (unsigned int i = 0; i < 4; ++i) {
+    vect2.setVal(2*i+1, 1);
+  }
+  TEST_ASSERT(vect2.getTotalVal() == 4);
+
+  DiscreteValueVect vect3=vect1&vect2;
+  TEST_ASSERT(vect3.getLength() == 8);
+  TEST_ASSERT(vect3.getTotalVal() == 0);
+  
+  DiscreteValueVect vect4=vect1|vect2;
+  TEST_ASSERT(vect4.getLength() == 8);
+  TEST_ASSERT(vect4.getTotalVal() == 8);
+#if 0
+  DiscreteValueVect vect5=~vect1;
+  TEST_ASSERT(vect5.getLength() == 8);
+  TEST_ASSERT(vect5.getTotalVal() == 4);
+
+  TEST_ASSERT((vect5&vect1).getTotalVal()==0);
+  TEST_ASSERT((vect5&vect2).getTotalVal()==4);
+#endif
+}
+
+void test5DiscreteVectOps2() {
+  DiscreteValueVect vect1(DiscreteValueVect::TWOBITVALUE, 8);
+  for (unsigned int i = 0; i < 4; ++i) {
+    vect1.setVal(2*i, 2);
+  }
+  TEST_ASSERT(vect1.getLength() == 8);
+  TEST_ASSERT(vect1.getTotalVal() == 8);
+
+  DiscreteValueVect vect2(DiscreteValueVect::TWOBITVALUE, 8);
+  for (unsigned int i = 0; i < 4; ++i) {
+    vect2.setVal(2*i+1, 2);
+    vect2.setVal(2*i, 1);
+  }
+  TEST_ASSERT(vect2.getTotalVal() == 12);
+
+  DiscreteValueVect vect3=vect1&vect2;
+  TEST_ASSERT(vect3.getLength() == 8);
+  TEST_ASSERT(vect3.getTotalVal() == 4);
+  
+  DiscreteValueVect vect4=vect1|vect2;
+  TEST_ASSERT(vect4.getLength() == 8);
+  TEST_ASSERT(vect4.getTotalVal() == 16);
+#if 0
+  DiscreteValueVect vect5=~vect1;
+  TEST_ASSERT(vect5.getLength() == 8);
+  TEST_ASSERT(vect5.getTotalVal() == 16);
+
+  TEST_ASSERT((vect5&vect1).getTotalVal()==4);
+  TEST_ASSERT((vect5&vect2).getTotalVal()==12);
+#endif
 }
 
 int main(){
+  RDLog::InitLogs();
   try{
     throw IndexErrorException(3);
   } catch (IndexErrorException) {
@@ -408,6 +473,12 @@ int main(){
   test2DiscreteVectDists();
   std::cout << " Test DiscreteValue Vectors 3 ------------------------------------" << endl;
   test3DiscreteVectPickles();
+
+  std::cout << " Test DiscreteValue Operations ------------------------------------" << endl;
+  test4DiscreteVectOps1();
+
+  std::cout << " Test DiscreteValue Operations 2 ------------------------------------" << endl;
+  test5DiscreteVectOps2();
 
   return 0;
   

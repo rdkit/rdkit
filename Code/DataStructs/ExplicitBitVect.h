@@ -11,7 +11,7 @@
 
 //! a class for bit vectors that are densely occupied
 /*!
-    ExplicitBitVect objects store all of their bits, using
+    ExplicitBitVect objects store all of their bits using
     a boost::dynamic_bitset
 
     These are very fast, but can require large amounts of memory for large,

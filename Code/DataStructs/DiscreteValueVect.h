@@ -10,13 +10,15 @@
 #include <string>
 
 namespace RDKit{
-  // we are making an assumption here that and unsigned int is 32 bits long
+  // we are making an assumption here that an unsigned int is 32 bits long
   const unsigned int BITS_PER_INT=32;
 
+  //! a class for efficiently storing vectors of discrete values
   class DiscreteValueVect {
   public:
     typedef boost::shared_array<unsigned int> DATA_SPTR;
   
+    //! used to define the possible range of the values
     typedef enum {
       ONEBITVALUE=0,
       TWOBITVALUE,
@@ -25,6 +27,7 @@ namespace RDKit{
       SIXTEENBITVALUE,
     } DiscreteValueType;
 
+    //! initialize with a particular type and size
     DiscreteValueVect(DiscreteValueType valType, unsigned int length) : d_type(valType), d_length(length) {
       d_bitsPerVal = (1 << static_cast<unsigned int>(valType));
       d_valsPerInt = BITS_PER_INT/d_bitsPerVal;
@@ -38,35 +41,73 @@ namespace RDKit{
     //! Copy constructor
     DiscreteValueVect(const DiscreteValueVect& other);
 
-    //! constructors from pickles
+    //! constructor from a pickle
     DiscreteValueVect(const std::string pkl){
       initFromText(pkl.c_str(),pkl.size());
     };
+    //! constructor from a pickle
     DiscreteValueVect(const char *pkl,const unsigned int len){
       initFromText(pkl,len);
     };
 
     ~DiscreteValueVect() {}
 
+    //! return the value at an index
     unsigned int getVal(unsigned int i) const;
+    //! set the value at an index
+    /*!
+      NOTE: it is an error to have val > the max value this
+      DiscreteValueVect can accomodate 
+    */
     void setVal(unsigned int i, unsigned int val);
+
+    //! returns the sum of all the elements in the vect
     unsigned int getTotalVal() const;
 
+    //! returns the length
     unsigned int getLength() const;
 
+    //! return a pointer to our raw data storage
     const unsigned int *getData() const;
+
+    //! return the number of bits used to store each value
     unsigned int getNumBitsPerVal() const {
       return d_bitsPerVal;
     }
 
+    //! return the type of value being stored
     DiscreteValueType getValueType() const {
       return d_type;
     }
 
+    //! returns the size of our storage
     unsigned int getNumInts() const {
       return d_numInts;
     }
 
+    //! support dvv3 = dvv1&dvv2
+    /*!
+
+       operator& returns the minimum value for each element.
+       e.g.:
+         [0,1,2,0] & [0,1,1,1] -> [0,1,1,0]
+
+    */
+    DiscreteValueVect operator& (const DiscreteValueVect &other) const;
+    //! support dvv3 = dvv1|dvv2
+    /*!
+
+       operator& returns the maximum value for each element.
+       e.g.:
+         [0,1,2,0] | [0,1,1,1] -> [0,1,2,1]
+
+    */
+    DiscreteValueVect operator| (const DiscreteValueVect &other) const;
+    //DiscreteValueVect operator^ (const DiscreteValueVect &other) const;
+    //DiscreteValueVect operator~ () const;
+
+
+    //! returns a binary string representation (pickle)
     std::string toString() const;
   private:
     DiscreteValueType d_type;

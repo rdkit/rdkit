@@ -1,5 +1,6 @@
+// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -18,7 +19,8 @@ namespace RDKit {
     d_bitsPerVal = other.getNumBitsPerVal();
     d_numInts = other.getNumInts();
     d_length = other.getLength();
-    d_valsPerInt = BITS_PER_INT/d_bitsPerVal;
+    d_valsPerInt = other.d_valsPerInt;
+    d_mask = other.d_mask;
     const unsigned int *odata = other.getData();
     unsigned int *data = new unsigned int[d_numInts];
     memcpy(static_cast<void *>(data), static_cast<const void *>(odata),
@@ -155,5 +157,58 @@ namespace RDKit {
     ss.read((char *)data,d_numInts*sizeof(unsigned int));
     d_data.reset(data);
   };
+
+
+  DiscreteValueVect DiscreteValueVect::operator& (const DiscreteValueVect &other) const {
+    PRECONDITION(other.d_length==d_length,"length mismatch");
+    DiscreteValueType typ=d_type;
+    if(other.d_type<typ){
+      typ=other.d_type;
+    }
+    DiscreteValueVect ans(typ,d_length);
+    for(unsigned int i=0;i<d_length;++i){
+      unsigned int v1=getVal(i);
+      unsigned int v2=other.getVal(i);
+      if(v1<v2){
+	ans.setVal(i,v1);
+      }else{
+	ans.setVal(i,v2);
+      }
+    }
+    return(ans);
+  };
+
+  DiscreteValueVect DiscreteValueVect::operator|(const DiscreteValueVect &other) const {
+    PRECONDITION(other.d_length==d_length,"length mismatch");
+    DiscreteValueType typ=d_type;
+    if(other.d_type>typ){
+      typ=other.d_type;
+    }
+    DiscreteValueVect ans(typ,d_length);
+    for(unsigned int i=0;i<d_length;++i){
+      unsigned int v1=getVal(i);
+      unsigned int v2=other.getVal(i);
+      if(v1>v2){
+	ans.setVal(i,v1);
+      }else{
+	ans.setVal(i,v2);
+      }
+    }
+    return(ans);
+  };
+
+#if 0
+  DiscreteValueVect DiscreteValueVect::operator~() const {
+    DiscreteValueVect ans(d_type,d_length);
+    unsigned int maxVal = (1<<d_bitsPerVal) - 1;
+    for(unsigned int i=0;i<d_length;++i){
+      unsigned int v1=getVal(i);
+      ans.setVal(i,maxVal-v1);
+    }
+    return(ans);
+  };
+#endif
+
+
 
 }   // end of namespace RDKit

@@ -44,6 +44,8 @@ struct discreteValVec_wrapper {
            "Set the value at a specified location")
       .def("__getitem__", &DiscreteValueVect::getVal,
            "Get the value at a specified location")
+      .def(python::self & python::self)
+      .def(python::self | python::self)
       .def("GetValueType", &DiscreteValueVect::getValueType,
            "Get the type of value stored in the vector")
       .def("GetTotalVal", &DiscreteValueVect::getTotalVal,
