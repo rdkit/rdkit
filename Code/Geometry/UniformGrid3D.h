@@ -22,20 +22,20 @@ namespace RDGeom {
         \param dimZ:    the z dimension of the grid, in Angstroms
         \param spacing: the grid spacing, in Angstroms
         \param valType: the data type of the grid (determines the number of bits
-	                per point)
-	\param offset:  the offset of the grid from (0,0,0), in Angstroms.
+                        per point)
+        \param offset:  the offset of the grid from (0,0,0), in Angstroms.
 
-	\b Note: the values of arguments such as \c dimX and \c spacing
-	don't actually need to be in Angstroms, but they should be internally
-	consistent.
-	
+        \b Note: the values of arguments such as \c dimX and \c spacing
+        don't actually need to be in Angstroms, but they should be internally
+        consistent.
+        
     */
     UniformGrid3D(double dimX, double dimY, double dimZ, double spacing=0.5,
                   RDKit::DiscreteValueVect::DiscreteValueType valType=RDKit::DiscreteValueVect::TWOBITVALUE,
                   const RDGeom::Point3D *offset=0) {
       if (offset == 0) {
         initGrid(dimX, dimY, dimZ, spacing, valType,
-		 Point3D(-0.5*dimX, -0.5*dimY, -0.5*dimZ));
+                 Point3D(-0.5*dimX, -0.5*dimY, -0.5*dimZ));
       } else {
         initGrid(dimX, dimY, dimZ, spacing, valType, *offset);
       }
@@ -132,8 +132,8 @@ namespace RDGeom {
         \param dimZ:    the z dimension of the grid, in Angstroms
         \param spacing: the grid spacing, in Angstroms
         \param valType: the data type of the grid (determines the number of bits
-	                per point)
-	\param offset:  the offset of the grid from (0,0,0), in Angstroms.
+                        per point)
+        \param offset:  the offset of the grid from (0,0,0), in Angstroms.
       
     */
     void initGrid(double dimX, double dimY, double dimZ, double spacing,

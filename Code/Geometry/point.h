@@ -80,22 +80,22 @@ namespace RDGeom {
     inline double operator[](unsigned int i) const {
       PRECONDITION(i < 3, "Invalid index on Point3D");
       if (i == 0) {
-	return x;
+        return x;
       } else if (i == 1) {
-	return y;
+        return y;
       } else {
-	return z;
+        return z;
       }
     }
-	
+        
     inline double& operator[](unsigned int i) {
       PRECONDITION(i < 3, "Invalid index on Point3D");
       if (i == 0) {
-	return x;
+        return x;
       } else if (i == 1) {
-	return y;
+        return y;
       } else {
-	return z;
+        return z;
       }
     }
 
@@ -206,7 +206,7 @@ namespace RDGeom {
       res.z = other.z - z;
       res.normalize();
       return res;
-	
+        
     }
 
     
@@ -229,24 +229,24 @@ namespace RDGeom {
     Point3D getPerpendicular() const {
       Point3D res(0.0,0.0,0.0);
       if(x){
-	if(y){
-	  res.y = -1*x;
-	  res.x = y;
-	} else if(z) {
-	  res.z = -1*x;
-	  res.x = z;
-	} else {
-	  res.y = 1;
-	}
+        if(y){
+          res.y = -1*x;
+          res.x = y;
+        } else if(z) {
+          res.z = -1*x;
+          res.x = z;
+        } else {
+          res.y = 1;
+        }
       } else if(y){
-	if(z){
-	  res.z = -1*y;
-	  res.y = z;
-	} else {
-	  res.x = 1;
-	}
+        if(z){
+          res.z = -1*y;
+          res.y = z;
+        } else {
+          res.x = 1;
+        }
       } else if(z){
-	res.x = 1;
+        res.x = 1;
       }
       double l=res.length();
       POSTCONDITION(l>0.0,"zero perpendicular");
@@ -279,18 +279,18 @@ namespace RDGeom {
     inline double operator[](unsigned int i) const {
       PRECONDITION(i < 2, "Invalid index on Point3D");
       if (i == 0) {
-	return x;
+        return x;
       } else { 
-	return y;
+        return y;
       } 
     }
 
     inline double& operator[](unsigned int i) {
       PRECONDITION(i < 2, "Invalid index on Point3D");
       if (i == 0) {
-	return x;
+        return x;
       } else { 
-	return y;
+        return y;
       } 
     }
 
@@ -384,7 +384,7 @@ namespace RDGeom {
       res.y = other.y - y;
       res.normalize();
       return res;
-	
+        
     }
     
   };
@@ -473,7 +473,7 @@ namespace RDGeom {
       double n1 = this->length();
       double n2 = other.length();
       if ((n1 > 1.e-8) && (n2 > 1.e-8)) {
-	dp /= (n1*n2);
+        dp /= (n1*n2);
       }
       if (dp < -1.0) dp = -1.0;
       else if (dp > 1.0) dp = 1.0;
