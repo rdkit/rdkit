@@ -161,17 +161,29 @@ class TestCase(unittest.TestCase):
       v2[2*i+1] = 2
       v2[2*i] = 1
     self.failUnless(v2.GetTotalVal()==12)
-    for i in range(len(v2)): print v2[i]
-    print '----'
+
     v3 = v1|v2
     self.failUnless(len(v3)==len(v2))
-    for i in range(len(v3)): print v3[i]
     self.failUnless(v3.GetTotalVal()==16)
 
     v3 = v1&v2
     self.failUnless(len(v3)==len(v2))
-    print v3.GetTotalVal()
     self.failUnless(v3.GetTotalVal()==4)
+
+    v4 = v1+v2
+    self.failUnless(len(v4)==len(v2))
+    self.failUnless(v4.GetTotalVal()==20)
+
+    v4 = v1-v2
+    self.failUnless(v4.GetTotalVal()==4)
+    v4 = v2-v1
+    self.failUnless(v4.GetTotalVal()==8)
+
+    v4 = v2
+    v4 -= v1
+    self.failUnless(v4.GetTotalVal()==8)
+    v4 -= v4
+    self.failUnless(v4.GetTotalVal()==0)
     
 
 if __name__ == '__main__':
