@@ -107,6 +107,11 @@ namespace RDKit{
     //DiscreteValueVect operator~ () const;
 
 
+    DiscreteValueVect& operator+=(const DiscreteValueVect &other);
+    DiscreteValueVect& operator-=(const DiscreteValueVect &other);
+
+
+
     //! returns a binary string representation (pickle)
     std::string toString() const;
   private:
@@ -122,5 +127,14 @@ namespace RDKit{
   };
 
   unsigned int computeL1Norm(const DiscreteValueVect &v1, const DiscreteValueVect &v2);
-}
+
+  DiscreteValueVect operator+ (const DiscreteValueVect& p1,
+			       const DiscreteValueVect& p2);
+  DiscreteValueVect operator- (const DiscreteValueVect& p1,
+			       const DiscreteValueVect& p2);
+
+} 
+
+
+
 #endif

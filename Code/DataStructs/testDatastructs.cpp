@@ -420,6 +420,17 @@ void test5DiscreteVectOps2() {
   DiscreteValueVect vect4=vect1|vect2;
   TEST_ASSERT(vect4.getLength() == 8);
   TEST_ASSERT(vect4.getTotalVal() == 16);
+
+  DiscreteValueVect vect5=vect1+vect2;
+  TEST_ASSERT(vect5.getLength() == 8);
+  TEST_ASSERT(vect5.getTotalVal() == 20);
+
+  vect5=vect1-vect2;
+  TEST_ASSERT(vect5.getTotalVal()==4);
+  vect5=vect2-vect1;
+  TEST_ASSERT(vect5.getTotalVal()==8);
+
+
 #if 0
   DiscreteValueVect vect5=~vect1;
   TEST_ASSERT(vect5.getLength() == 8);

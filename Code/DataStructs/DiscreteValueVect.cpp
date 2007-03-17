@@ -197,6 +197,34 @@ namespace RDKit {
     return(ans);
   };
 
+  DiscreteValueVect& DiscreteValueVect::operator+=(const DiscreteValueVect &other) {
+    PRECONDITION(other.d_length==d_length,"length mismatch");
+    unsigned int maxVal = (1<<d_bitsPerVal) - 1;
+
+    for(unsigned int i=0;i<d_length;i++){
+      unsigned int v=getVal(i)+other.getVal(i);
+      if(v>maxVal){
+	v=maxVal;
+      }
+      setVal(i,v);
+    }
+    return *this;
+  }
+  DiscreteValueVect& DiscreteValueVect::operator-=(const DiscreteValueVect &other) {
+    PRECONDITION(other.d_length==d_length,"length mismatch");
+
+    for(unsigned int i=0;i<d_length;i++){
+      unsigned int v1=getVal(i);
+      unsigned int v2=other.getVal(i);
+      if(v1>v2){
+	setVal(i,v1-v2);
+      }else{
+	setVal(i,0);
+      }
+    }
+    return *this;
+  }
+
 #if 0
   DiscreteValueVect DiscreteValueVect::operator~() const {
     DiscreteValueVect ans(d_type,d_length);
@@ -209,6 +237,19 @@ namespace RDKit {
   };
 #endif
 
+  DiscreteValueVect operator+ (const DiscreteValueVect& p1,
+			       const DiscreteValueVect& p2){
+    DiscreteValueVect res(p1);
+    res+=p2;
+    return res;
+  };
+  DiscreteValueVect operator- (const DiscreteValueVect& p1,
+			       const DiscreteValueVect& p2){
+    DiscreteValueVect res(p1);
+    res-=p2;
+    return res;
+  };
 
 
 }   // end of namespace RDKit
+
