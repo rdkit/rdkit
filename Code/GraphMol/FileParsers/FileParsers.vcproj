@@ -274,6 +274,9 @@
 			<File
 				RelativePath=".\TplFileParser.cpp">
 			</File>
+			<File
+				RelativePath=".\TplFileWriter.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
