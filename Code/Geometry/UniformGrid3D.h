@@ -92,8 +92,6 @@ namespace RDGeom {
                             double stepSize, int maxNumLayers=-1, 
                             bool ignoreOutOfBound=true);
 
-    const RDKit::DiscreteValueVect *getStorage() const;
-
     //! \brief get the index of the grid point given the x, y, z indices
     //!
     //! \return the integer value, -1 if the indices are outside the grid
@@ -121,6 +119,7 @@ namespace RDGeom {
     //!        compatible with ours.
     virtual bool compareParams(const UniformGrid3D &other) const;
 
+    
     //! \brief create and return a pickle
     std::string toString() const;
 
