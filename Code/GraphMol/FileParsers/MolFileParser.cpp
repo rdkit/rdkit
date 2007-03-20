@@ -31,16 +31,6 @@ namespace RDKit{
     } else {
       return boost::lexical_cast<T>(trimmed);
     }
-    try {
-      res = boost::lexical_cast<T>(trimmed);
-    }
-    catch (boost::bad_lexical_cast &) {
-      std::ostringstream errout;
-      errout << "Cannot convert " << input << " to " << typeid(T).name();
-      
-      throw FileParseException(errout.str()) ;
-    }
-    return res;
   }
 
   //*************************************
@@ -100,15 +90,15 @@ namespace RDKit{
   };
   
   void ParseChargeLine(RWMol *mol, std::string text,bool firstCall) {
-    PRECONDITION(text.substr(0,6)==std::string("M  CHG"),"bad atom list line");
+    PRECONDITION(text.substr(0,6)==std::string("M  CHG"),"bad charge line");
     
 
     // if this line is specified all the atom other than those specified
     // here should carry a charge of 0; but we should only do this once:
     if(firstCall){
       for (ROMol::AtomIterator ai = mol->beginAtoms();
-	   ai != mol->endAtoms(); ++ai) {
-	(*ai)->setFormalCharge(0);
+           ai != mol->endAtoms(); ++ai) {
+        (*ai)->setFormalCharge(0);
       }
     }
 
@@ -137,6 +127,42 @@ namespace RDKit{
         throw FileParseException(errout.str()) ;
       }
     }
+  }
+
+  void ParseIsotopeLine(RWMol *mol, std::string text){
+    PRECONDITION(text.substr(0,6)==std::string("M  ISO"),"bad isotope line");
+    
+    int ie, nent;
+    try {
+      nent = stripSpacesAndCast<int>(text.substr(6,3));
+    }
+    catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert " << text.substr(6,3) << " to int";
+      throw FileParseException(errout.str()) ;
+    }
+    int spos = 9;
+    for (ie = 0; ie < nent; ie++) {
+      int aid, mass;
+      try {
+        aid = stripSpacesAndCast<int>(text.substr(spos,4));
+        spos += 4;
+        Atom *atom=mol->getAtomWithIdx(aid-1); 
+        if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+          mass = stripSpacesAndCast<int>(text.substr(spos,4));
+          atom->setMass(static_cast<double>(mass));
+          spos += 4;
+        } else {
+          atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
+        }
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(spos,4) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+    }
+    
   }
 
   void ParseNewAtomList(RWMol *mol,std::string text){
@@ -179,9 +205,8 @@ namespace RDKit{
     mol->replaceAtom(idx,&a); 
   };
   
-  
   void ParseAtomAlias(RWMol *mol,std::string text,std::string &nextLine){
-    PRECONDITION(text.substr(0,2)==std::string("A "),"bad atom list line");
+    PRECONDITION(text.substr(0,2)==std::string("A "),"bad atom alias line");
       
     unsigned int idx;
     try {
@@ -196,8 +221,6 @@ namespace RDKit{
     Atom *at = mol->getAtomWithIdx(idx);
     at->setProp("molFileAlias",nextLine);
   };
-  
-  
   
   Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos) {
     Atom *res = new Atom;
@@ -222,7 +245,7 @@ namespace RDKit{
     
     // REVIEW: should we handle missing fields at the end of the line?
     massDiff=0;
-    if(text.size()>=36){
+    if(text.size()>=36 && text.substr(34,2)!=" 0"){
       try {
         massDiff = stripSpacesAndCast<int>(text.substr(34,2),true);
       }
@@ -233,7 +256,7 @@ namespace RDKit{
       }
     }    
     chg=0;
-    if(text.size()>=39){
+    if(text.size()>=39 && text.substr(36,3)!="  0"){
       try {
         chg = stripSpacesAndCast<int>(text.substr(36,3),true);
       }
@@ -244,9 +267,8 @@ namespace RDKit{
       }
     }
     hCount = 0;
-    if(text.size()>=45){
+    if(text.size()>=45 && text.substr(42,3)!="  0"){
       try {
-        // FIX: go ahead and at least parse the parity field
         hCount = stripSpacesAndCast<int>(text.substr(42,3),true);
       }
       catch (boost::bad_lexical_cast &) {
@@ -270,22 +292,30 @@ namespace RDKit{
       else if(symb=="R8") res->setProp("dummyLabel",std::string("Xj"));
       else if(symb=="R9") res->setProp("dummyLabel",std::string("Xk"));
       else res->setProp("dummyLabel",symb);
+    } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
+      res->setAtomicNum(1); 
+      res->setMass(2.014);
+    } else if( symb=="T" ){  // mol blocks support "D" and "T" as shorthand... handle that.
+      res->setAtomicNum(1);
+      res->setMass(3.016);
     } else {
       res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
       res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
     }
-
+    
+    //res->setPos(pX,pY,pZ);
     if(chg!=0) res->setFormalCharge(4-chg);
     // FIX: this does not appear to be correct
     if(hCount==1) res->setNoImplicit(true);
     
     if(massDiff!=0) {
+      // FIX: this isn't precisely correct because we should be doing the difference w.r.t. most abundant species.
       res->setMass(res->getMass()+massDiff);
     }
     
 #if 1
     stereoCare=0;
-    if(text.size()>=48){
+    if(text.size()>=48 && text.substr(45,3)!="  0"){
       try {
         stereoCare = stripSpacesAndCast<int>(text.substr(45,3),true);
       }
@@ -294,9 +324,10 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(45,3) << " to int";
         throw FileParseException(errout.str()) ;
       }
+      res->setProp("molStereoCare",stereoCare);
     }
     totValence=0;
-    if(text.size()>=51){
+    if(text.size()>=51 && text.substr(48,3)!="  0"){
       try {
         totValence= stripSpacesAndCast<int>(text.substr(48,3),true);
       }
@@ -305,9 +336,10 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(48,3) << " to int";
         throw FileParseException(errout.str()) ;
       }
+      res->setProp("molTotValence",totValence);
     }
     atomMapNumber=0;
-    if(text.size()>=63){
+    if(text.size()>=63 && text.substr(60,3)!="  0"){
       try {
         atomMapNumber = stripSpacesAndCast<int>(text.substr(60,3),true);
       }
@@ -316,9 +348,10 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(60,3) << " to int";
         throw FileParseException(errout.str()) ;
       }
+      res->setProp("molAtomMapNumber",atomMapNumber);
     }
     inversionFlag=0;
-    if(text.size()>=66){
+    if(text.size()>=66 && text.substr(63,3)!="  0"){
       try {
         inversionFlag= stripSpacesAndCast<int>(text.substr(63,3),true);
       }
@@ -327,9 +360,10 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(63,3) << " to int";
         throw FileParseException(errout.str()) ;
       }
+      res->setProp("molInversionFlag",inversionFlag);
     }
     exactChangeFlag=0;
-    if(text.size()>=69){
+    if(text.size()>=69 && text.substr(66,3)!="  0"){
       try {
         exactChangeFlag = stripSpacesAndCast<int>(text.substr(66,3),true);
       }
@@ -338,15 +372,8 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(66,3) << " to int";
         throw FileParseException(errout.str()) ;
       }
+      res->setProp("molExactChangeFlag",exactChangeFlag);
     }
-    
-
-    // save it for later
-    res->setProp("molStereoCare",stereoCare);
-    res->setProp("molTotValence",totValence);
-    res->setProp("molAtomMapNumber",atomMapNumber);
-    res->setProp("molInversionFlag",inversionFlag);
-    res->setProp("molExactChangeFlag",exactChangeFlag);
 #endif    
     return res;
   };
@@ -411,7 +438,7 @@ namespace RDKit{
     res->setEndAtomIdx(idx2);
     res->setBondType(type);
 
-    if( text.size() >= 12)
+    if( text.size() >= 12 && text.substr(9,3)!="  0")
       try {
         stereo = stripSpacesAndCast<int>(text.substr(9,3));
         //res->setProp("stereo",stereo);
@@ -431,14 +458,12 @@ namespace RDKit{
         case 4: // "either" single bond
           res->setBondDir(Bond::UNKNOWN);
           break;
-
-            
         }
       } catch (boost::bad_lexical_cast) {
         ;
       }
 #if 1
-    if( text.size() >= 18 )
+    if( text.size() >= 18 && text.substr(15,3)!="  0")
       try {
         int topology = stripSpacesAndCast<int>(text.substr(15,3));
         res->setProp("molTopology",topology);
@@ -446,7 +471,7 @@ namespace RDKit{
         ;
       }
     
-    if( text.size() >= 21 )
+    if( text.size() >= 21 && text.substr(18,3)!="  0")
       try {
         int reactStatus = stripSpacesAndCast<int>(text.substr(18,3));
         res->setProp("molReactStatus",reactStatus);
@@ -609,13 +634,15 @@ namespace RDKit{
         line++;
         tempStr = getLine(inStream);
       }
+
       //tempStr = inLine;
       while(!inStream->eof() && tempStr.find("M  END") != 0 && tempStr.find("$$$$") != 0){
         if(tempStr.find("M  ALS") == 0) ParseNewAtomList(res,tempStr);
+        if(tempStr.find("M  ISO") == 0) ParseIsotopeLine(res,tempStr);
         if(tempStr.find("M  CHG") == 0){
-	  ParseChargeLine(res, tempStr,firstChargeLine);
-	  firstChargeLine=false;
-	}
+          ParseChargeLine(res, tempStr,firstChargeLine);
+          firstChargeLine=false;
+        }
         line++;
         tempStr = getLine(inStream);
       }

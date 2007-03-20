@@ -630,23 +630,24 @@ namespace RDKit{
     // Find bond than can be cis/trans in a molecule and mark them as "any"
     // - this function finds any double bonds that can potentially be part 
     //   of a cis/trans system. No attempt is made here to mark them cis or trans
+    // 
     // This function is usefuly in two situations
-    //  - when parsing a mol file; for the bonds marked here, coordinate informations 
-    //    on the neighbors can be used to indentify cis or trans states
-    //  - when writing a mol file; bonds that can be cis/trans but not marked as either 
-    //    need to be specially marked in the mol file
+    //  1) when parsing a mol file; for the bonds marked here, coordinate informations 
+    //     on the neighbors can be used to indentify cis or trans states
+    //  2) when writing a mol file; bonds that can be cis/trans but not marked as either 
+    //     need to be specially marked in the mol file
     //
     //  The CIPranks on the neighboring atoms are check in this function. The _CIPCode property
-    // if set to any on the double bond.
+    //  if set to any on the double bond.
     // 
     // ARGUMENTS:
     //   mol - the molecule of interest
     //   cleanIt - if this option is set to true, any previous marking of _CIPCode 
     //               on the bond is cleared - otherwise it is left untouched
-    void findPotentialStereoBonds(ROMol &mol,bool cleanIt) { //, bool ignoreRingBonds) {
+    void findPotentialStereoBonds(ROMol &mol,bool cleanIt) {
       // FIX: The earlier thought was to provide an optional argument to ignore or consider
       //  double bonds in a ring. But I am removing this optional argument and ignoring ring bonds 
-      //  completely for now. This is because, find a potential stereo bond in a ring involves
+      //  completely for now. This is because finding a potential stereo bond in a ring involves
       //  more than just checking the CIPranks for the neighbors - SP 05/04/04
 
       // make this function callable multiple times

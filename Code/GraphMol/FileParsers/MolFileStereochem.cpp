@@ -303,7 +303,7 @@ namespace RDKit {
         
       
   void ComputeBondStereoChemistry(ROMol &mol, Bond *dblBond, const Conformer *conf) {
-    // ok this function gor a lot easier than before 
+    // ok this function got a lot easier than before 
     // - now we do not have to set the directions on the signle bonds surrounding 
     //   a double bond
     // - we simply have to figure the if the high ranking neighbor of the double bond
@@ -311,18 +311,17 @@ namespace RDKit {
     // we want to deal onyl with double bond
     PRECONDITION(dblBond, "");
     PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "");
+    PRECONDITION(conf,"no conformer");
     
     const INT_VECT &ctNbrs = dblBond->getStereoAtoms();
     if (ctNbrs.size() >= 2) {
       int cnbr1 = ctNbrs[0];
       int cnbr2 = ctNbrs[1];
       RDGeom::Point3D begNbrLoc, begAtmLoc, endAtmLoc, endNbrLoc;
-      if (conf) {
-        begNbrLoc = conf->getAtomPos(cnbr1);
-        begAtmLoc = conf->getAtomPos(dblBond->getBeginAtomIdx());
-        endAtmLoc = conf->getAtomPos(dblBond->getEndAtomIdx());
-        endNbrLoc = conf->getAtomPos(cnbr2);
-      }
+      begNbrLoc = conf->getAtomPos(cnbr1);
+      begAtmLoc = conf->getAtomPos(dblBond->getBeginAtomIdx());
+      endAtmLoc = conf->getAtomPos(dblBond->getEndAtomIdx());
+      endNbrLoc = conf->getAtomPos(cnbr2);
       double ang = RDGeom::computeDihedralAngle(begNbrLoc, begAtmLoc, endAtmLoc, endNbrLoc);
       if (ang < RDKit::PI/2) {
         dblBond->setStereo(Bond::STEREOZ);
@@ -546,11 +545,13 @@ namespace RDKit {
   // handles stereochem markers set by the Mol file parser and
   // converts them to the RD standard:
   void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf){
+    PRECONDITION(conf,"no conformer");      
+
     // make sure we've calculated the implicit valence on each atom:
     for(RWMol::AtomIterator atomIt=mol.beginAtoms();
         atomIt!=mol.endAtoms();
         atomIt++) {
-      (*atomIt)->calcImplicitValence();
+      (*atomIt)->calcImplicitValence(false);
     }
 
     for(RWMol::BondIterator bondIt=mol.beginBonds();
@@ -582,12 +583,12 @@ namespace RDKit {
     
     // now cleanup any bad specification we might have seen:
     MolOps::assignAtomChiralCodes(mol,true);
-    
   }
   
   void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
-    // now do the same for the bond
-    // mark all the non-ring double bonds that can be cis/trans
+    PRECONDITION(conf,"no conformer");      
+
+    // mark all the non-ring double bonds that can be cis/trans:
     MolOps::findPotentialStereoBonds(mol);
     RWMol::BondIterator bondIt;
     for (bondIt = mol.beginBonds(); bondIt != mol.endBonds(); bondIt++) {

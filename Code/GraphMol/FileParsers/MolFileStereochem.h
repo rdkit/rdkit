@@ -10,8 +10,8 @@
 #include <GraphMol/RDKitBase.h>
 
 namespace RDKit {
-  void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf=0);
-  void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf=0);
+  void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf);
+  void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf);
   void AssignStereochemistry(RWMol &mol);
   void WedgeMolBonds(ROMol &mol, const Conformer *conf=0);
   INT_MAP_INT pickBondsToWedge(const ROMol &mol);

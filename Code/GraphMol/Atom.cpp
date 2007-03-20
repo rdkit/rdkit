@@ -148,22 +148,22 @@ unsigned int Atom::getNumImplicitHs() const {
   if(df_noImplicit) return 0;
   
   PRECONDITION(d_implicitValence>-1,
-	       "getNumImplicitHs() called without preceding call to calcImplicitValence()");
+               "getNumImplicitHs() called without preceding call to calcImplicitValence()");
   return getImplicitValence();
 }
 
 int Atom::getExplicitValence(bool forceCalc) const {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   PRECONDITION(d_explicitValence>-1,
-	       "getExplicitValence() called without call to calcExplicitValence()");
+               "getExplicitValence() called without call to calcExplicitValence()");
   return d_explicitValence;
 }
+
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   unsigned int res;
   // FIX: contributions of bonds to valence are being done at best
   // approximately
-  // EFF: this code is embarrassingly bad
   double accum=0;
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = getOwningMol().getAtomBonds(this);
@@ -177,30 +177,24 @@ int Atom::calcExplicitValence(bool strict) {
   // check accum is greater than the default valence
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
-  if (accum > (dv + chr)) {
-    // check if this is because of aromaticity
-    // set the accum back to the default valence
-    if (this->getIsAromatic()) {
-      // this needs some explanation if the atom is aromatic and
-      // accum > (dv + chr) we assume that no hydrogen can be added
-      // to this atom.  We set x = (v + chr) such that x is the
-      // clossest possible integer to "accum" but less than
-      // "accum". "v" here is one of the allowed valences e.g. if
-      // sulfur in the following smiles : O=c1ccs(=O)cc1
-      const UINT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
-      UINT_VECT_CI vi;
-      int val, pval = dv + chr;
-      for (vi = valens.begin(); vi != valens.end(); vi++) {
-	val = (*vi) + chr;
-	if (val > accum) {
-	  break;
-	}
-	else {
-	  pval = val;
-	}
+  if (accum > (dv + chr) && this->getIsAromatic()) {
+    // this needs some explanation if the atom is aromatic and
+    // accum > (dv + chr) we assume that no hydrogen can be added
+    // to this atom.  We set x = (v + chr) such that x is the
+    // closest possible integer to "accum" but less than
+    // "accum". "v" here is one of the allowed valences e.g. if
+    // sulfur in the following smiles : O=c1ccs(=O)cc1
+    const UINT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
+    int pval = dv + chr;
+    for (UINT_VECT_CI vi = valens.begin(); vi != valens.end(); ++vi) {
+      int val = (*vi) + chr;
+      if (val > accum) {
+        break;
+      } else {
+        pval = val;
       }
-      accum = pval;
     }
+    accum = pval;
   }
   // despite promising to not to blame it on him - this a trick Greg
   // came up with if we have a bond order sum of x.5 (i.e. 1.5, 2.5
@@ -305,18 +299,18 @@ int Atom::calcImplicitValence(bool strict) {
       // formal charge here vs the explicit valence function.
       bool satis = false;
       for (vi = valens.begin(); vi != valens.end(); vi++) {
-	if (explicitV == ((*vi) + chg)) {
-	  satis = true;
-	  break;
-	}
+        if (explicitV == ((*vi) + chg)) {
+          satis = true;
+          break;
+        }
       }
       if (strict && !satis) {
-	std::ostringstream errout;
-	errout << "Explicit valence for aromatic atom # " << getIdx() 
-	       << " not equal to any accepted valence\n";
-	std::string msg = errout.str();
-	BOOST_LOG(rdErrorLog) << msg << std::endl;
-	throw MolSanitizeException(msg);
+        std::ostringstream errout;
+        errout << "Explicit valence for aromatic atom # " << getIdx() 
+               << " not equal to any accepted valence\n";
+        std::string msg = errout.str();
+        BOOST_LOG(rdErrorLog) << msg << std::endl;
+        throw MolSanitizeException(msg);
       }
       res = 0;
     }
@@ -329,23 +323,23 @@ int Atom::calcImplicitValence(bool strict) {
     for (vi = valens.begin(); vi != valens.end(); vi++) {
       tot = (*vi) + chg;
       if (explicitV <= tot) {
-	res = tot - explicitV;
-	break;
+        res = tot - explicitV;
+        break;
       }
     }
     if (res < 0) {
       if(strict){
-	// this means that the explicit valen is greater than any
-	// allowed valence for the atoms - raise an error
-	std::ostringstream errout;
-	errout << "Explicit valence for atom # " << getIdx() 
-	       << " " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
-	       << " greater than permitted";
-	std::string msg = errout.str();
-	BOOST_LOG(rdErrorLog) << msg << std::endl;
-	throw MolSanitizeException(msg);
+        // this means that the explicit valen is greater than any
+        // allowed valence for the atoms - raise an error
+        std::ostringstream errout;
+        errout << "Explicit valence for atom # " << getIdx() 
+               << " " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
+               << " greater than permitted";
+        std::string msg = errout.str();
+        BOOST_LOG(rdErrorLog) << msg << std::endl;
+        throw MolSanitizeException(msg);
       } else {
-	res = 0;
+        res = 0;
       }
     }
   }
@@ -363,12 +357,13 @@ Atom::QUERYATOM_QUERY *Atom::getQuery() const {
   return NULL;
 };
 void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,
-		       Queries::CompositeQueryType how,
-		       bool maintainOrder) {
+                       Queries::CompositeQueryType how,
+                       bool maintainOrder) {
   PRECONDITION(0,"plain atoms have no Query");
 }
 
 bool Atom::Match(Atom const *what) const {
+  PRECONDITION(what,"bad query atom");
   bool res = getAtomicNum() == what->getAtomicNum();
   // special dummy--dummy match case:
   //   X matches X, Xa, Xb, etc
@@ -426,10 +421,10 @@ int Atom::getPerturbationOrder(INT_LIST probe) const{
       bool foundIt=false;
       probeIt2=probeIt;
       while((*probeIt2)!=(*refIt) && probeIt2!=probe.end()){
-	probeIt2++;
+        probeIt2++;
       }
       if(probeIt2 != probe.end()){
-	foundIt=true;
+        foundIt=true;
       }
       CHECK_INVARIANT(foundIt,"could not find probe element");
 
