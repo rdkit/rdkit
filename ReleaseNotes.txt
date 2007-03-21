@@ -1,3 +1,34 @@
+******  Release_April2007_1 *******
+(Changes relative to Release_Jan2007_1)
+
+Bug Fixes
+ - handing of isotope information in SMILES has been fixed
+ - "implicit" hydrogens are now added to charged atoms explicitly when
+   writing SMILES
+ - the non-GUI code now supports python2.5; the GUI code may work with
+   python2.5, but that has not been tested
+ - the 2D->3D code no longer generates non-planar conjugated 4-rings
+   (e.g. C1=CC=C1) 
+
+
+New Features
+ - chemical reactions are now supported
+ - there is a new entry point into the 2D depictor code,
+   compute2DCoordsMimicDistMat(), that attempts to generate 2D
+   depictions that are similar to the structure described by the
+   distance matrix.
+ - DiscreteValueVect now supports the binary operators |, &, +, and -.
+ - a reader/writer for TPL files has been added.
+ - support has been added for MolCatalogs: hierarchical catalogs that
+   can store complete molecules.
+ - the protrude distance metric for shapes has been added
+ - pickle support added to classes: UniformGrid, DiscreteValueVect,
+   Point 
+
+Other
+ - the Mol and SD file parsers have been sped up quite a bit.
+
+
 ******  Release_Jan2007_1 *******
 (Changes relative to Release_Oct2006_1)
 
