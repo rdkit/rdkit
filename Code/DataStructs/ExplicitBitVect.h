@@ -20,9 +20,9 @@
  */
 class ExplicitBitVect : public BitVect {
 public:
-  ExplicitBitVect() : dp_bits(0), d_size(0) {};
+  ExplicitBitVect() : dp_bits(0), d_size(0), d_numOnBits(0) {};
   //! initialize with a particular size;
-  explicit ExplicitBitVect(unsigned int size) : dp_bits(0), d_size(0) {_InitForSize(size);};
+  explicit ExplicitBitVect(unsigned int size) : dp_bits(0), d_size(0), d_numOnBits(0) {_InitForSize(size);};
   ExplicitBitVect(const ExplicitBitVect& other);
   //! construct from a string pickle
   ExplicitBitVect(const std::string);
@@ -48,12 +48,13 @@ public:
   void GetOnBits (IntVect& v) const;
 
   // FIX: complete these
-  void ClearBits() { ; };
+  void ClearBits() { dp_bits->reset(); };
   std::string ToString() const;
   
   boost::dynamic_bitset<> *dp_bits; //!< our raw storage
 private:
   unsigned int d_size;
+  unsigned int d_numOnBits;
   void _InitForSize(const unsigned int size);
 };
 

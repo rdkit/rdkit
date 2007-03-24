@@ -18,23 +18,25 @@
 
 ExplicitBitVect::ExplicitBitVect(const std::string s)
 {
-  d_size=0;dp_bits = 0;
+  d_size=0;dp_bits = 0;d_numOnBits=0;
   InitFromText(s.c_str(),s.length());
 }
 ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
 {
-  d_size=0;dp_bits = 0;
+  d_size=0;dp_bits = 0;d_numOnBits=0;
   InitFromText(data,dataLen);
 }
 
   ExplicitBitVect::ExplicitBitVect(const ExplicitBitVect& other){
     d_size = other.d_size;
     dp_bits = new boost::dynamic_bitset<>(*(other.dp_bits));
+    d_numOnBits=other.d_numOnBits;
   };
 
   ExplicitBitVect& ExplicitBitVect::operator=(const ExplicitBitVect& other){
     d_size = other.d_size;
     dp_bits = new boost::dynamic_bitset<>(*(other.dp_bits));
+    d_numOnBits=other.d_numOnBits;
     return *this;
   };
   bool ExplicitBitVect::operator[] (const unsigned int which) const {
@@ -51,6 +53,7 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
       return true;
     } else {
       (*dp_bits)[which] = 1;
+      ++d_numOnBits;
       return false;
     }
   };
@@ -60,6 +63,7 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     }
     if((bool)(*dp_bits)[which]){
       (*dp_bits)[which] = 0;
+      --d_numOnBits;
       return true;
     } else {
       return false;
@@ -75,24 +79,28 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
   ExplicitBitVect ExplicitBitVect::operator^ (const ExplicitBitVect &other) const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = (*dp_bits) ^ *(other.dp_bits);
+    ans.d_numOnBits=dp_bits->count();
     return(ans);
   };
 
   ExplicitBitVect ExplicitBitVect::operator& (const ExplicitBitVect &other) const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = (*dp_bits) & *(other.dp_bits);
+    ans.d_numOnBits=dp_bits->count();
     return(ans);
   };
 
   ExplicitBitVect ExplicitBitVect::operator| (const ExplicitBitVect &other) const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = (*dp_bits) | *(other.dp_bits);
+    ans.d_numOnBits=dp_bits->count();
     return(ans);
   };
   
   ExplicitBitVect ExplicitBitVect::operator~ () const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = ~(*dp_bits);
+    ans.d_numOnBits=dp_bits->count();
     return(ans);
   };
 
@@ -100,10 +108,10 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     return d_size;
   };
   const unsigned int ExplicitBitVect::GetNumOnBits() const {
-    return dp_bits->count();
+    return d_numOnBits;
   };
   const unsigned int ExplicitBitVect::GetNumOffBits() const {
-    return d_size - dp_bits->count();
+    return d_size - d_numOnBits;
   };
 
   // the contents of v are blown out
@@ -120,8 +128,8 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     d_size = size;
     if(dp_bits) delete dp_bits;
     dp_bits = new boost::dynamic_bitset<>(size);
+    d_numOnBits=0;
   };
-
 
   ExplicitBitVect::~ExplicitBitVect() {
     if(dp_bits) delete dp_bits;
