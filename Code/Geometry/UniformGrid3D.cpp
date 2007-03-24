@@ -17,20 +17,39 @@ using namespace RDKit;
 namespace RDGeom {
   unsigned int ci_GRIDPICKLE_VERSION=0x1;
 
+  UniformGrid3D::UniformGrid3D(const UniformGrid3D &other){
+    PRECONDITION(other.dp_storage,"cannot copy an unintialized grid");
+    RDKit::DiscreteValueVect *data=new RDKit::DiscreteValueVect(*other.dp_storage);
+    initGrid(other.d_numX*other.d_spacing,
+             other.d_numY*other.d_spacing,
+             other.d_numZ*other.d_spacing,
+             other.d_spacing,
+             other.dp_storage->getValueType(),
+             other.d_offSet,
+             data);
+  }
+  
   void UniformGrid3D::initGrid(double dimX, double dimY, double dimZ, double spacing,
-                          RDKit::DiscreteValueVect::DiscreteValueType valType,
-                          const RDGeom::Point3D &offSet ) {
+                               RDKit::DiscreteValueVect::DiscreteValueType valType,
+                               const RDGeom::Point3D &offSet,
+                               RDKit::DiscreteValueVect *data) {
     PRECONDITION(dimX > 0.0, "Invalid x-dimension for grid");
     PRECONDITION(dimY > 0.0, "Invalid y-dimension for grid");
     PRECONDITION(dimZ > 0.0, "Invalid z-dimension for grid");
-    PRECONDITION(spacing > 0.0, "Invalid z-dimension for grid");
+    PRECONDITION(spacing > 0.0, "Invalid spacing for grid");
     d_numX = static_cast<unsigned int>(floor(dimX/spacing + 0.5));
     d_numY = static_cast<unsigned int>(floor(dimY/spacing + 0.5));
     d_numZ = static_cast<unsigned int>(floor(dimZ/spacing + 0.5));
+    PRECONDITION((!data)||data->getValueType()==valType,"grid data type mismatch");
+    PRECONDITION((!data)||data->getLength()==d_numX*d_numY*d_numZ,"grid data size mismatch");
     
     d_spacing = spacing;
     d_offSet = offSet;
-    dp_storage = new RDKit::DiscreteValueVect(valType, d_numX*d_numY*d_numZ);
+    if(!data){
+      dp_storage = new RDKit::DiscreteValueVect(valType, d_numX*d_numY*d_numZ);
+    } else {
+      dp_storage = data;
+    }
   }
 
   UniformGrid3D::UniformGrid3D(const std::string pkl) {
@@ -118,18 +137,6 @@ namespace RDGeom {
 
   void UniformGrid3D::setVal(unsigned int pointId, unsigned int val) {
     dp_storage->setVal(pointId, val);
-  }
-
-  unsigned int UniformGrid3D::getSize() const {
-    return d_numX*d_numY*d_numZ;
-  }
-
-  const Point3D &UniformGrid3D::getOffset() const {
-    return d_offSet;
-  }
-    
-  const RDKit::DiscreteValueVect *UniformGrid3D::getOccupancyVect() const {
-    return dp_storage;
   }
 
   bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
@@ -230,25 +237,55 @@ namespace RDGeom {
           } // we are inside the grid in the y-direction
         } // loop over points in y-direction
       } // inside grid in z-direction
-    } // loop ver point in z-direction
+    } // loop over points in z-direction
   }    
+
+  UniformGrid3D &UniformGrid3D::operator|=(const UniformGrid3D &other) {
+    PRECONDITION(dp_storage,"unintialized grid");
+    PRECONDITION(other.dp_storage,"unintialized grid");
+    PRECONDITION(compareParams(other),"incompatible grids");
+
+    // EFF: we're probably doing too much copying here:
+    RDKit::DiscreteValueVect *newData=new RDKit::DiscreteValueVect((*dp_storage) | (*other.dp_storage));
+    delete dp_storage;
+    dp_storage = newData;
+    return *this;
+  }
+
+  UniformGrid3D &UniformGrid3D::operator&=(const UniformGrid3D &other) {
+    PRECONDITION(dp_storage,"unintialized grid");
+    PRECONDITION(other.dp_storage,"unintialized grid");
+    PRECONDITION(compareParams(other),"incompatible grids");
+
+    // EFF: we're probably doing too much copying here:
+    RDKit::DiscreteValueVect *newData=new RDKit::DiscreteValueVect((*dp_storage) & (*other.dp_storage));
+    delete dp_storage;
+    dp_storage = newData;
+    return *this;
+  }
+
+  UniformGrid3D &UniformGrid3D::operator+=(const UniformGrid3D &other) {
+    PRECONDITION(dp_storage,"unintialized grid");
+    PRECONDITION(other.dp_storage,"unintialized grid");
+    PRECONDITION(compareParams(other),"incompatible grids");
+
+    // EFF: we're probably doing too much copying here:
+    *dp_storage += *other.dp_storage;
+    return *this;
+  }
+
+  UniformGrid3D &UniformGrid3D::operator-=(const UniformGrid3D &other) {
+    PRECONDITION(dp_storage,"unintialized grid");
+    PRECONDITION(other.dp_storage,"unintialized grid");
+    PRECONDITION(compareParams(other),"incompatible grids");
+
+    // EFF: we're probably doing too much copying here:
+    *dp_storage -= *other.dp_storage;
+    return *this;
+  }
+
+
   
-  unsigned int UniformGrid3D::getNumX() const {
-    return d_numX;
-  }
-
-  unsigned int UniformGrid3D::getNumY() const {
-    return d_numY;
-  }
-  
-  unsigned int UniformGrid3D::getNumZ() const {
-    return d_numZ;
-  }
-
-  double UniformGrid3D::getSpacing() const {
-    return d_spacing;
-  }
-
   std::string UniformGrid3D::toString() const {
     std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
     int tVers = ci_GRIDPICKLE_VERSION*-1;
@@ -341,8 +378,7 @@ namespace RDGeom {
     std::ostream *oStrm =  static_cast<std::ostream *>(ofStrm);
     writeGridToStream(grid, *oStrm);
     delete ofStrm;
-  }
-  
+  }  
 }
 
   

@@ -3,7 +3,7 @@ import os,sys
 import unittest
 import DataStructs
 from Geometry import rdGeometry as geom
-import cPickle
+import cPickle,copy
 import math
 
 def feq(v1, v2, tol=1.0e-4):
@@ -238,7 +238,46 @@ class TestCase(unittest.TestCase):
         self.failUnless(grd2.GetNumZ() == 16)
         self.failUnless(geom.TanimotoDistance(grd,grd2)==0.0)
         
+    def test5GridOps(self):
+        grd = geom.UniformGrid3D(10, 10, 10)
+        grd.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.0, 0.25)
+        grd.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.0, 0.25)
 
+        grd2 = geom.UniformGrid3D(10, 10, 10)
+        grd2.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.0, 0.25)
+        grd2.SetSphereOccupancy(geom.Point3D(2.0, 2.0, 0.0), 1.0, 0.25)
+
+        self.failUnless(geom.TanimotoDistance(grd,grd)==0.0)
+        self.failUnless(geom.TanimotoDistance(grd,grd2)==1.0)
+
+        grd3 = copy.deepcopy(grd)
+        grd3 |= grd2
+        self.failUnless(geom.TanimotoDistance(grd3,grd)==.5)
+        self.failUnless(geom.TanimotoDistance(grd3,grd2)==.5)
+
+        grd3 = copy.deepcopy(grd)
+        grd3 += grd2
+        self.failUnless(geom.TanimotoDistance(grd3,grd)==.5)
+        self.failUnless(geom.TanimotoDistance(grd3,grd2)==.5)
+
+        grd3 -= grd
+        self.failUnless(geom.TanimotoDistance(grd3,grd)==1.0)
+        self.failUnless(geom.TanimotoDistance(grd3,grd2)==0)
+
+        grd4 = geom.UniformGrid3D(10, 10, 10)
+        grd4.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.0, 0.25)
+        grd4.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.0, 0.25)
+        grd4.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.0, 0.25)
+        self.failUnless(feq(geom.TanimotoDistance(grd4,grd),.3333))
+        self.failUnless(feq(geom.TanimotoDistance(grd4,grd2),.75))
+
+        grd4&=grd2
+        self.failUnless(feq(geom.TanimotoDistance(grd4,grd),1.0))
+        self.failUnless(feq(geom.TanimotoDistance(grd4,grd2),.5))
+        
+
+        
+        
 if __name__=='__main__':
     print "Testing Geometry wrapper"
     unittest.main()

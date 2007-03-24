@@ -4,8 +4,6 @@
 //
 //   @@ All Rights Reserved  @@
 //
-
-
 #include "UniformGrid3D.h"
 #include <DataStructs/DiscreteValueVect.h>
 #include "point.h"
@@ -27,10 +25,24 @@ void testUniformGrid1() {
   grd.setSphereOccupancy(Point3D(0.0, 0.0, 0.0), 1.5, 0.25);
   CHECK_INVARIANT(grd.getOccupancyVect()->getTotalVal() == 523, "" ); 
   //writeGridToFile(grd, "junk.grd");
+
+  UniformGrid3D grd2(grd);
+  CHECK_INVARIANT(grd2.getSize() == 960, "");
+  CHECK_INVARIANT(RDKit::feq(grd2.getSpacing(), .5), "");
+  CHECK_INVARIANT(grd2.getNumX()==12, "");
+  CHECK_INVARIANT(grd2.getNumY()==10, "");
+  CHECK_INVARIANT(grd2.getNumZ()==8, "");
+  CHECK_INVARIANT(grd2.getOccupancyVect()->getTotalVal() == 523, "" ); 
+
+  // make sure the data are actually decoupled:
+  grd.setSphereOccupancy(Point3D(1.0, 1.0, 0.0), 1.5, 0.25);
+  CHECK_INVARIANT(grd.getOccupancyVect()->getTotalVal()>523, "" ); 
+  CHECK_INVARIANT(grd2.getOccupancyVect()->getTotalVal() == 523, "" ); 
+  
 }
 
 void testUniformGrid2() {
-  // test tanimoto distance 
+  // test distance metrics:
   UniformGrid3D grd(10.0, 10.0, 10.0);
   grd.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.5, 0.25);
   grd.setSphereOccupancy(Point3D(-2.0, 2.0, 0.0), 1.5, 0.25);
@@ -90,8 +102,42 @@ void testUniformGridPickling() {
   UniformGrid3D grd2(grd.toString());
   double dist = tanimotoDistance(grd, grd2);
   CHECK_INVARIANT(RDKit::feq(dist, 0.0), "");
-
 }
+
+void testUniformGridOps() {
+  UniformGrid3D grd(10.0, 10.0, 10.0);
+  grd.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.0, 0.25);
+  grd.setSphereOccupancy(Point3D(-2.0, 2.0, 0.0), 1.0, 0.25);
+
+  UniformGrid3D grd2(10.0, 10.0, 10.0);
+  grd2.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.0, 0.25);
+  grd2.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.0, 0.25);
+
+  double dist = tanimotoDistance(grd, grd2);
+  CHECK_INVARIANT(RDKit::feq(dist, 1.0), "");
+
+  UniformGrid3D grd3(grd);
+  grd3 |= grd2;
+
+  dist = tanimotoDistance(grd3, grd);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
+  dist = tanimotoDistance(grd3, grd2);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
+
+  UniformGrid3D grd4(10.0, 10.0, 10.0);
+  grd4.setSphereOccupancy(Point3D(-2.0, -2.0, 0.0), 1.0, 0.25);
+  grd4.setSphereOccupancy(Point3D(-2.0, 2.0, 0.0), 1.0, 0.25);
+  grd4.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.0, 0.25);
+
+  UniformGrid3D grd5(grd4);
+  grd5 &= grd2;
+  
+  dist = tanimotoDistance(grd5, grd);
+  CHECK_INVARIANT(RDKit::feq(dist, 1.0), "");
+  dist = tanimotoDistance(grd5, grd2);
+  CHECK_INVARIANT(RDKit::feq(dist, 0.5), "");
+}
+
 
 int main() {
   std::cout << "***********************************************************\n";
@@ -105,9 +151,14 @@ int main() {
   std::cout << "\t testUniformGrid2 \n\n";
   testUniformGrid2();
 
-
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testUniformGridPickling \n\n";
   testUniformGridPickling();
+
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGridOps \n\n";
+  testUniformGridOps();
+
+
   return 0;
 }

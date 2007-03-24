@@ -100,6 +100,11 @@ namespace RDGeom {
              " and multiple layers around this sphere, with decreasing values of \n"
              "occupancy\n")
 
+        .def(python::self &= python::self)
+        .def(python::self |= python::self)
+        .def(python::self += python::self)
+        .def(python::self -= python::self)
+        
         .def_pickle(RDGeom::ug3d_pickle_suite())
 
         ;

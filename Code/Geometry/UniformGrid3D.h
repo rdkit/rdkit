@@ -23,7 +23,7 @@ namespace RDGeom {
         \param spacing: the grid spacing, in Angstroms
         \param valType: the data type of the grid (determines the number of bits
                         per point)
-        \param offset:  the offset of the grid from (0,0,0), in Angstroms.
+        \param offset:  OPTIONAL: the offset of the grid from (0,0,0), in Angstroms.
 
         \b Note: the values of arguments such as \c dimX and \c spacing
         don't actually need to be in Angstroms, but they should be internally
@@ -32,7 +32,7 @@ namespace RDGeom {
     */
     UniformGrid3D(double dimX, double dimY, double dimZ, double spacing=0.5,
                   RDKit::DiscreteValueVect::DiscreteValueType valType=RDKit::DiscreteValueVect::TWOBITVALUE,
-                  const RDGeom::Point3D *offset=0) {
+                  const RDGeom::Point3D *offset=0){
       if (offset == 0) {
         initGrid(dimX, dimY, dimZ, spacing, valType,
                  Point3D(-0.5*dimX, -0.5*dimY, -0.5*dimZ));
@@ -40,6 +40,8 @@ namespace RDGeom {
         initGrid(dimX, dimY, dimZ, spacing, valType, *offset);
       }
     }
+    //! copy ctor
+    UniformGrid3D(const UniformGrid3D &other);
     //! construct from a string pickle
     UniformGrid3D(const std::string pkl);
     //! construct from a text pickle
@@ -74,7 +76,7 @@ namespace RDGeom {
     void setVal(unsigned int pointId, unsigned int val);
 
     //! \brief get the size of the grid (number of grid points)
-    unsigned int getSize() const;
+    unsigned int getSize() const { return d_numX*d_numY*d_numZ; };
 
     //! \brief set the occupancy for a multi-layered sphere
     /*!
@@ -98,28 +100,48 @@ namespace RDGeom {
     int getGridIndex(unsigned int xi, unsigned int yi, unsigned int zi) const;
 
     //! \brief get the number of grid points along x-axis
-    unsigned int getNumX() const;
+    unsigned int getNumX() const { return d_numX; };
 
     //! \brief get the number of grid points along y-axis
-    unsigned int getNumY() const;
+    unsigned int getNumY() const { return d_numY; };
 
     //! \brief get the number of grid points along z-axis
-    unsigned int getNumZ() const;
+    unsigned int getNumZ() const { return d_numZ; };
 
     //! \brief get the grid's offset
-    const Point3D &getOffset() const;
+    const Point3D &getOffset() const { return d_offSet; };
 
     //! \brief get the grid's spacing
-    double getSpacing() const;
+    double getSpacing() const { return d_spacing; };
 
     //! \brief return a \b const pointer to our occupancy vector
-    const RDKit::DiscreteValueVect *getOccupancyVect() const;
+    const RDKit::DiscreteValueVect *getOccupancyVect() const { return dp_storage;} ;
 
     //! \brief returns true if the grid \c other has parameters
     //!        compatible with ours.
     virtual bool compareParams(const UniformGrid3D &other) const;
 
-    
+    //! \brief calculates the union between the data on this grid and
+    //!  that on \c other.
+    //!  This grid is modified.
+    //!  NOTE that the grids must have the same parameters.   
+    UniformGrid3D &operator|=(const UniformGrid3D &other);
+    //! \brief calculates the intersection between the data on this grid and
+    //!  that on \c other.
+    //!  This grid is modified.
+    //!  NOTE that the grids must have the same parameters.   
+    UniformGrid3D &operator&=(const UniformGrid3D &other);
+    //! \brief calculates the sum of the data on this grid and
+    //!  that on \c other.
+    //!  This grid is modified.
+    //!  NOTE that the grids must have the same parameters.   
+    UniformGrid3D &operator+=(const UniformGrid3D &other);
+    //! \brief calculates the difference between the data on this grid and
+    //!  that on \c other.
+    //!  This grid is modified.
+    //!  NOTE that the grids must have the same parameters.   
+    UniformGrid3D &operator-=(const UniformGrid3D &other);
+
     //! \brief create and return a pickle
     std::string toString() const;
 
@@ -133,11 +155,12 @@ namespace RDGeom {
         \param valType: the data type of the grid (determines the number of bits
                         per point)
         \param offset:  the offset of the grid from (0,0,0), in Angstroms.
-      
+        \param data:    (optional) a pointer to a DiscreteValueVect to use, we take 
+                        ownership of the pointer.
     */
     void initGrid(double dimX, double dimY, double dimZ, double spacing,
                   RDKit::DiscreteValueVect::DiscreteValueType valType,
-                  const RDGeom::Point3D &offSet);
+                  const RDGeom::Point3D &offSet,RDKit::DiscreteValueVect *data=0);
     unsigned int d_numX, d_numY, d_numZ; //! number of grid points along x, y, z axes
     double d_spacing; //! grid spacing
     Point3D d_offSet; //! the grid offset (from the origin)
