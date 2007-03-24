@@ -54,7 +54,7 @@ namespace RankAtoms {
   template <typename T>  
   void rankVect(const std::vector<T> &vect,INT_VECT &res){
     PRECONDITION(res.size()>=vect.size(),"vector size mismatch");
-    int nEntries = vect.size();
+    unsigned int nEntries = vect.size();
 
 #if 0
     std::priority_queue< std::pair<T,int>,
