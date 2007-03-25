@@ -79,28 +79,28 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
   ExplicitBitVect ExplicitBitVect::operator^ (const ExplicitBitVect &other) const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = (*dp_bits) ^ *(other.dp_bits);
-    ans.d_numOnBits=dp_bits->count();
+    ans.d_numOnBits=ans.dp_bits->count();
     return(ans);
   };
 
   ExplicitBitVect ExplicitBitVect::operator& (const ExplicitBitVect &other) const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = (*dp_bits) & *(other.dp_bits);
-    ans.d_numOnBits=dp_bits->count();
+    ans.d_numOnBits=ans.dp_bits->count();
     return(ans);
   };
 
   ExplicitBitVect ExplicitBitVect::operator| (const ExplicitBitVect &other) const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = (*dp_bits) | *(other.dp_bits);
-    ans.d_numOnBits=dp_bits->count();
+    ans.d_numOnBits=ans.dp_bits->count();
     return(ans);
   };
   
   ExplicitBitVect ExplicitBitVect::operator~ () const {
     ExplicitBitVect ans(d_size);
     *(ans.dp_bits) = ~(*dp_bits);
-    ans.d_numOnBits=dp_bits->count();
+    ans.d_numOnBits=ans.dp_bits->count();
     return(ans);
   };
 
