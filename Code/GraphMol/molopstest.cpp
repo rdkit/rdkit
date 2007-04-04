@@ -636,7 +636,32 @@ void test8()
   CHECK_INVARIANT(m->getNumAtoms()==5,"");
 
 
+  // labelling:
+  delete m;
+  smi = "c1cn([H])cc1";
+  m = SmilesToMol(smi);
+  CHECK_INVARIANT(m,"");
+  CHECK_INVARIANT(m->getNumAtoms()==5,"");
+  delete m2;
+  //BOOST_LOG(rdInfoLog) << "19" << std::endl;
+  m2 = MolOps::removeHs(*m);
+  CHECK_INVARIANT(m,"");
+  CHECK_INVARIANT(m->getNumAtoms()==5,"");
+
+  delete m;
+  smi = "c1cn([2H])cc1";
+  m = SmilesToMol(smi);
+  CHECK_INVARIANT(m,"");
+  CHECK_INVARIANT(m->getNumAtoms()==6,"");
+  delete m2;
+  //BOOST_LOG(rdInfoLog) << "19" << std::endl;
+  m2 = MolOps::removeHs(*m);
+  CHECK_INVARIANT(m,"");
+  CHECK_INVARIANT(m->getNumAtoms()==6,"");
   
+  
+  delete m;
+  delete m2;
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -1823,6 +1848,97 @@ void testHsAndAromaticity() {
   BOOST_LOG(rdInfoLog) << "Finished \n ";
 }
 
+
+void testSFIssue1694023()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 1694023 (bad chiral smiles after removing Hs) " << std::endl;
+  ROMol *m,*m2;
+
+  std::string smi,smi2;
+
+  smi = "[C@@]([H])(F)(Cl)Br";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+
+  smi = "[C@@](F)([H])(Cl)Br";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+
+  smi = "[C@@](F)(Cl)([H])Br";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+
+  smi = "[C@@](F)(Cl)(Br)[H]";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  
+  smi = "[H][C@@](F)(Cl)Br";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  
+  smi = "F[C@@]([H])(Cl)Br";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  
+  smi = "F[C@@](Cl)([H])Br";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  
+  smi = "F[C@@](Cl)(Br)[H]";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  
+  smi = "C1CO[C@@H]1Cl";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==5);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+
+  smi = "C1CO[C@]1([H])Cl";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==5);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  
+  smi = "C1CO[C@@]1(Cl)[H]";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==5);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  
+  
+  delete m;
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(){
   RDLog::InitLogs();
 #if 1
@@ -1851,9 +1967,10 @@ int main(){
   testSanitOps();
   testIssue252();
   testIssue276();
-#endif
   testHsAndAromaticity();
-  
+#endif
+  testSFIssue1694023();
+
   return 0;
 }
 

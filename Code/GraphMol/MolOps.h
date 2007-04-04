@@ -78,9 +78,11 @@ namespace RDKit{
     /*!
         \param mol          the molecule to remove Hs from
         \param implicitOnly (optional) if this \c true, only implicit Hs will be removed
-        \param updateExplicitCount  (optional) If this is true, when explicit Hs are removed
+        \param updateExplicitCount  (optional) If this is \c true, when explicit Hs are removed
 	     from the graph, the heavy atom to which they are bound will have its counter of
 	     explicit Hs increased.
+        \param sanitize:  (optional) If this is \c true, the final molecule will be 
+       sanitized
      
         \return the new molecule 
 
@@ -88,10 +90,13 @@ namespace RDKit{
            - Hydrogens which aren't connected to a heavy atom will not be
              removed.  This prevents molecules like <tt>"[H][H]"</tt> from having
              all atoms removed.
+           - Labelled hydrogen (e.g. atoms with atomic number=1, but mass > 1),
+             will not be removed.
+
 	   - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
     */
     ROMol *removeHs(const ROMol &mol,bool implicitOnly=false,
-			   bool updateExplicitCount=false);
+			   bool updateExplicitCount=false,bool sanitize=true);
 
     //! returns a copy of a molecule with hydrogens removed and added as queries
     //!  to the heavy atoms to which they are bound.
@@ -104,14 +109,14 @@ namespace RDKit{
 
       <b>Notes:</b>
         - Atoms that do not already have hydrogen count queries will have one
-	  added, other H-related queries will not be touched. Examples:
+	        added, other H-related queries will not be touched. Examples:
 	      - C[H] -> [C;!H0]
 	      - [C;H1][H] -> [C;H1]
 	      - [C;H2][H] -> [C;H2]
         - Hydrogens which aren't connected to a heavy atom will not be
           removed.  This prevents molecules like <tt>"[H][H]"</tt> from having
           all atoms removed.
-	- the caller is responsible for <tt>delete</tt>ing the pointer this returns.
+	      - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
 	
     */
     ROMol *mergeQueryHs(const ROMol &mol);
@@ -472,12 +477,12 @@ namespace RDKit{
 
       <b>Notes:</b>
         - Tie breaking should be done when it's important to have a full ordering
-	  of the atoms (e.g. when generating canonical traversal trees). If it's
-	  acceptable to have ties between symmetry-equivalent atoms (e.g. when
-	  generating CIP codes), tie breaking can/should be skipped.
-	- if the \c rankHistory argument is provided, the evolution of the ranks of
-	  individual atoms will be tracked.  The \c rankHistory pointer should be
-	  to a VECT_INT_VECT that has at least \c mol.getNumAtoms() elements.
+          of the atoms (e.g. when generating canonical traversal trees). If it's
+	        acceptable to have ties between symmetry-equivalent atoms (e.g. when
+	        generating CIP codes), tie breaking can/should be skipped.
+	      - if the \c rankHistory argument is provided, the evolution of the ranks of
+	        individual atoms will be tracked.  The \c rankHistory pointer should be
+	        to a VECT_INT_VECT that has at least \c mol.getNumAtoms() elements.
         - the \c includeChirality argument only makes sense when generating full
           invariants (i.e. ComprehensiveInvariant)
     */
@@ -485,19 +490,20 @@ namespace RDKit{
 			  AtomInvariantType invariantType=ComprehensiveInvariants,
 			  bool breakTies=true,VECT_INT_VECT *rankHistory=0,
 			  bool includeChirality=false);
+
     //! calculates a set of atom invariants
     /*!
       These invariants include terms for:
         -# degree
-	-# explicit valence
-	-# atomic number
-	-# isotope
-	-# number of hs
-	-# size of rings an atom is involved in
-	-# formal charge
-	-# chiral code (optional)
-	-# whether of not the atom determines the stereochemistry of a
-	   double bond. (optional)
+        -# explicit valence
+        -# atomic number
+        -# isotope
+        -# number of hs
+        -# size of rings an atom is involved in
+        -# formal charge
+        -# chiral code (optional)
+        -# whether of not the atom determines the stereochemistry of a
+        	   double bond. (optional)
       
       \param mol               the molecule of interest
       \param res               used to return the results
@@ -513,10 +519,10 @@ namespace RDKit{
       RS Chirality" <i>Journal of the CCG</i> (1996)
       and include terms for:
         -# atomic number
-	-# isotope
-	-# number of multiple bonds from/to this atom
-	-# degree
-	-# number of hydrogens
+        -# isotope
+        -# number of multiple bonds from/to this atom
+        -# degree
+        -# number of hydrogens
 
       \param mol               the molecule of interest
       \param res               used to return the results

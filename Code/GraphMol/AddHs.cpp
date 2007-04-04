@@ -304,12 +304,14 @@ namespace RDKit{
     //  This routine removes hydrogens (and bonds to them) from the molecular graph.
     //  Other Atom and bond indices may be affected by the removal.
     //
-    //  NOTE:
+    //  NOTES:
     //   - Hydrogens which aren't connected to a heavy atom will not be
     //     removed.  This prevents molecules like "[H][H]" from having
     //     all atoms removed.
+    //   - Labelled hydrogen (e.g. atoms with atomic number=1, but mass > 1),
+    //     will not be removed.
     //
-    ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount){
+    ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
       Atom *atom;
       unsigned int currIdx=0;
       RWMol *res = static_cast<RWMol*>(new ROMol(mol,false));
@@ -320,17 +322,18 @@ namespace RDKit{
 
           if(atom->hasProp("isImplicit")){
             removeIt=true;
-          } else if(!implicitOnly){
+          } else if(!implicitOnly && atom->getMass()<1.1){
             ROMol::ADJ_ITER begin,end;
             boost::tie(begin,end) = res->getAtomNeighbors(atom);
             while(begin!=end){
-              if(res->getAtomWithIdx(*begin)->getAtomicNum() > 1){
+              if(res->getAtomWithIdx(*begin)->getAtomicNum() != 1){
                 removeIt=true;
                 break;
               }
               begin++;
             }
           }
+
           if(removeIt){
             ROMol::OEDGE_ITER beg,end;
             boost::tie(beg,end) = res->getAtomBonds(atom);
@@ -367,20 +370,28 @@ namespace RDKit{
             // atom.  We deal with that by explicitly checking here:
             if(heavyAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED){
               INT_LIST neighborIndices;
-              neighborIndices.push_back(bond->getIdx());
+              unsigned int atomsBeforeHeavy=0;
 
               boost::tie(beg,end) = res->getAtomBonds(heavyAtom);
               while(beg!=end){
                 if(pMap[*beg]->getIdx()!=bond->getIdx()){
                   neighborIndices.push_back(pMap[*beg]->getIdx());
+                  if(pMap[*beg]->getOtherAtom(heavyAtom)->getIdx()<heavyAtom->getIdx()){
+                    ++atomsBeforeHeavy;
+                  }
                 }
-                beg++;
+                ++beg;
               }
+              if(atomsBeforeHeavy){
+                neighborIndices.insert(++neighborIndices.begin(),bond->getIdx());
+              } else {
+                neighborIndices.push_front(bond->getIdx());
+              }
+              
               int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
-              // we're adding 1 to this because the H was moved to the
-              // beginning and it really belongs in the second
-              // position... so swap away:
-              nSwaps += 1;
+              // if there are one or more atoms with lower indices than the central
+              // atom, we may need to introduce an extra swap:
+              std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
               if(nSwaps%2){
                 if(heavyAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
                   heavyAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
@@ -415,7 +426,7 @@ namespace RDKit{
       //  This can screw up derived properties (such as ring members), so
       //  we'll resanitize to ensure we stay in a consistent state.
       //
-      if(!implicitOnly){
+      if(!implicitOnly && sanitize){
         sanitizeMol(*res);
       }
       return static_cast<ROMol *>(res);
