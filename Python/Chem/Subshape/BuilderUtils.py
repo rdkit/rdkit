@@ -259,15 +259,15 @@ def CalculateDirectionsAtPoint(pt,shapeGrid,winRad):
   pt.shapeMoments=tuple(eVals)
   pt.shapeDirs = tuple([Geometry.Point3D(p[0],p[1],p[2]) for p in eVects])
 
-  print '-------------'
-  print pt.location.x,pt.location.y,pt.location.z
-  for v in covMat:
-    print '  ',v
-  print '---'
-  print eVals
-  for v in eVects:
-    print '  ',v
-  print '-------------'
+  #print '-------------'
+  #print pt.location.x,pt.location.y,pt.location.z
+  #for v in covMat:
+  # print '  ',v
+  #print '---'
+  #print eVals
+  #for v in eVects:
+  #  print '  ',v
+  #print '-------------'
   
 
 #-----------------------------------------------------------------------------

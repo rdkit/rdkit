@@ -4,9 +4,16 @@
 #  All rights reserved
 #
 import Chem,Geometry
+from Chem import AllChem
 from Chem.Subshape import SubshapeObjects
 from Chem.Subshape import BuilderUtils
 import time,cPickle
+
+#-----------------------------------------------------------------------------
+class SubshapeCombineOperations(object):
+  UNION=0
+  SUM=1
+  INTERSECT=2
 
 #-----------------------------------------------------------------------------
 class SubshapeBuilder(object):
@@ -19,14 +26,26 @@ class SubshapeBuilder(object):
   stepSize=1.0
   featFactory=None
 
+  def SampleSubshape(self,subshape1,newSpacing):
+    ogrid=subshape1.grid
+    rgrid = Geometry.UniformGrid3D(self.gridDims[0],self.gridDims[1],self.gridDims[2],
+                                      newSpacing)
+    for idx in range(rgrid.GetSize()):
+      l = rgrid.GetGridPointLoc(idx)
+      v = ogrid.GetValPoint(l)
+      rgrid.SetVal(idx,v)
+      
+    res = SubshapeObjects.ShapeWithSkeleton()
+    res.grid = rgrid
+    return res;
+
   def GenerateSubshapeShape(self,cmpd,confId=-1,addSkeleton=True,**kwargs):
-    from Chem import AllChem
     shape = SubshapeObjects.ShapeWithSkeleton()
     shape.grid=Geometry.UniformGrid3D(self.gridDims[0],self.gridDims[1],self.gridDims[2],
                                       self.gridSpacing)
     AllChem.EncodeShape(cmpd,shape.grid,ignoreHs=False,confId=confId)
-    conf = cmpd.GetConformer(confId)
     if addSkeleton:
+      conf = cmpd.GetConformer(confId)
       self.GenerateSubshapeSkeleton(shape,conf,kwargs)
     return shape
   
@@ -45,7 +64,20 @@ class SubshapeBuilder(object):
       BuilderUtils.AssignMolFeatsToPoints(pts,conf.GetOwningMol(),self.featFactory,self.winRad)
     shape.skelPts=pts
 
-      
+  def CombineSubshapes(self,subshape1,subshape2,operation=SubshapeCombineOperations.UNION):
+    import copy
+    cs = copy.deepcopy(subshape1)
+    if operation==SubshapeCombineOperations.UNION:
+      cs.grid |= subshape2.grid
+    elif operation==SubshapeCombineOperations.SUM:
+      cs.grid +=  subshape2.grid
+    elif operation==SubshapeCombineOperations.INTERSECT:
+      cs.grid &=  subshape2.grid
+    else:
+      raise ValueError,'bad combination operation'
+    return cs
+
+    
 if __name__=='__main__':
   from Chem import AllChem,ChemicalFeatures
   from Chem.PyMol import MolViewer

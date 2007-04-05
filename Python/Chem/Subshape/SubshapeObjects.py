@@ -46,6 +46,16 @@ class SubshapeShape(object):
   def _initMemberData(self):
     self.shapes=[]
 
+def DisplaySubshapeSkeleton(viewer,shape,name,color=(1,0,1)):
+  cgoNm='%s-skeleton'%name
+  viewer.server.resetCGO(cgoNm)
+  for i,pt in enumerate(shape.skelPts):
+    viewer.server.sphere(tuple(pt.location),.5,color,cgoNm)
+    if not hasattr(pt,'shapeDirs'): continue
+    momBeg = pt.location-pt.shapeDirs[0]
+    momEnd = pt.location+pt.shapeDirs[0]
+    viewer.server.cylinder(tuple(momBeg),tuple(momEnd),.1,color,cgoNm)
+  
 def DisplaySubshape(viewer,shape,name,showSkelPts=True,color=(1,0,1)):
   import Geometry
   import os,tempfile
@@ -53,14 +63,7 @@ def DisplaySubshape(viewer,shape,name,showSkelPts=True,color=(1,0,1)):
   Geometry.WriteGridToFile(shape.grid,fName)
   viewer.server.loadSurface(fName,name,'',2.5)
   if showSkelPts:
-    cgoNm='%s-skeleton'%name
-    viewer.server.resetCGO(cgoNm)
-    for i,pt in enumerate(shape.skelPts):
-      viewer.server.sphere(tuple(pt.location),.5,color,cgoNm)
-      if not hasattr(pt,'shapeDirs'): continue
-      momBeg = pt.location-pt.shapeDirs[0]
-      momEnd = pt.location+pt.shapeDirs[0]
-      viewer.server.cylinder(tuple(momBeg),tuple(momEnd),.1,color,cgoNm)
+    DisplaySubshapeSkeleton(viewer,shape,name,color)
   try:
     os.unlink(fName)
   except:
