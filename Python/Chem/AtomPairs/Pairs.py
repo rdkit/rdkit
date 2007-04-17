@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2004-2006 Rational Discovery LLC
+#  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -12,12 +12,14 @@ R.E. Carhart, D.H. Smith, R. Venkataraghavan;
 Definition and Applications" JCICS 25, 64-73 (1985).
 
 """
+from DataStructs.SparseIntVect import SparseIntVect
 import Chem
-import Utils
+from Chem.AtomPairs import Utils
+import DataStructs
 
 _maxPathLen=31
 numPathBits=5
-
+fpLen=1<<(_maxPathLen+2*Utils.codeSize)
 def ScorePair(at1,at2,dist):
   """ Returns a score for an individual atom pair.
 
@@ -25,10 +27,10 @@ def ScorePair(at1,at2,dist):
   >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0))
   >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1))
   >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2))
-  >>> t = 1 | min(c1,c2)<<Utils.codeSize | max(c1,c2)<<(2*Utils.codeSize)
+  >>> t = 1 | min(c1,c2)<<numPathBits | max(c1,c2)<<(Utils.codeSize+numPathBits)
   >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)==t
   1
-  >>> t = 2 | min(c1,c3)<<Utils.codeSize | max(c1,c3)<<(2*Utils.codeSize)
+  >>> t = 2 | min(c1,c3)<<numPathBits | max(c1,c3)<<(Utils.codeSize+numPathBits)
   >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2)==t
   1
 
@@ -36,11 +38,11 @@ def ScorePair(at1,at2,dist):
   code1 = Utils.GetAtomCode(at1)
   code2 = Utils.GetAtomCode(at2)
   accum = dist % _maxPathLen
-  accum |= min(code1,code2) << Utils.codeSize
-  accum |= max(code1,code2) << 2*Utils.codeSize
+  accum |= min(code1,code2) << numPathBits
+  accum |= max(code1,code2) << (Utils.codeSize+numPathBits)
   return accum
 
-def GetAtomPairFingerprint(mol):
+def GetAtomPairFingerprintAsCounts(mol):
   """ Returns the Atom-pair fingerprint for a molecule as
   a tuple of on-bit IDs.
 
@@ -48,7 +50,7 @@ def GetAtomPairFingerprint(mol):
 
     - mol: a molecule
 
-  **Returns**: a sorted tuple of integers and long integers
+  **Returns**: a tuple of ints
 
   >>> m = Chem.MolFromSmiles('CCC')
   >>> v = [ ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1),
@@ -57,7 +59,7 @@ def GetAtomPairFingerprint(mol):
   ...     ]
   >>> v.sort()
   >>> v = tuple(v)
-  >>> GetAtomPairFingerprint(m)==v
+  >>> GetAtomPairFingerprintAsCounts(m)==v
   1
   
   """
@@ -73,6 +75,61 @@ def GetAtomPairFingerprint(mol):
       res.append(ScorePair(at1,at2,int(dist)))
   res.sort()
   return tuple(res)
+
+def GetAtomPairFingerprintAsIntVect(mol):
+  """ Returns the Atom-pair fingerprint for a molecule as
+  a tuple of on-bit IDs.
+
+  **Arguments**:
+
+    - mol: a molecule
+
+  **Returns**: a SparseIntVect
+
+
+  >>> m = Chem.MolFromSmiles('CCC')
+  >>> v = [ ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1),
+  ...       ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2),
+  ...       ScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(2),1),
+  ...     ]
+  >>> val = SparseIntVect(fpLen)
+  >>> val.InitFromSequence(v)
+  >>> fp = GetAtomPairFingerprintAsIntVect(m)
+  >>> val==fp
+  True
+  
+  """
+  res = SparseIntVect(fpLen)
+  counts = GetAtomPairFingerprintAsCounts(mol)
+  for v in counts:
+    res[v]+=1
+  return res
+
+def GetAtomPairFingerprintAsBitVect(mol):
+  """ Returns the Atom-pair fingerprint for a molecule as
+  a SparseBitVect
+
+  **Arguments**:
+
+    - mol: a molecule
+
+  **Returns**: a SparseBitVect
+
+  >>> m = Chem.MolFromSmiles('CCC')
+  >>> v = [ ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1),
+  ...       ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2),
+  ...     ]
+  >>> v.sort()
+  >>> fp = GetAtomPairFingerprintAsBitVect(m)
+  >>> list(fp.GetOnBits())==v
+  True
+  
+  """
+  res = DataStructs.SparseBitVect(fpLen)
+  counts = GetAtomPairFingerprintAsCounts(mol)
+  for idx in counts:
+    res.SetBit(idx)
+  return res
 
 #------------------------------------
 #
