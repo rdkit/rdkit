@@ -36,6 +36,11 @@ def FingerprintSimilarity(fp1,fp2,metric=TanimotoSimilarity):
     fp1 = FoldFingerprint(fp1,sz1/sz2)
   return metric(fp1,fp2)
 
+def BoundedTanimoto(fp1,fp2,bound):
+  " doesn't calculate the actual value unless it can exceed the bound "
+  
+  
+
 ExplicitBitVect.ToBitString = BitVectToText
 SparseBitVect.ToBitString = BitVectToText
 
