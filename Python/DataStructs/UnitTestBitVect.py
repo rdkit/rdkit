@@ -10,6 +10,9 @@
 import unittest
 from DataStructs import BitVect
 
+def feq(v1,v2,tol=1e-4):
+  return abs(v1-v2)<tol
+
 class TestCase(unittest.TestCase):
   def testVectIdx(self):
     """ test indexing into BitVects
@@ -264,5 +267,47 @@ class TestCase(unittest.TestCase):
     assert v2.EuclideanDistance(v2)==0.0, 'EuclideanDistance failed'
 
 
+  def test90BulkDistances(self):
+    """
+      verify that the base similarity (tanimoto) works using an 18 fp regression
+      panel of pubchem compounds (chosen to have different lengths: 5x2048,
+      5x1024, 5x512, 3x256)
+    """  
+    import DataStructs
+    import cPickle,os
+    import RDConfig
+    fps = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
+                                         'pubchem_fps.pkl'),'rb'))
+    dm = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
+                                         'pubchem_fps.dm.pkl'),'rb'))
+    dmIdx=0
+    for i in range(len(fps)):
+      nmi,fpi = fps[i]
+      for j in range(i+1,len(fps)):
+        nmj,fpj = fps[j]
+        sim = DataStructs.FingerprintSimilarity(fpi,fpj)
+        self.failUnless(feq(sim,dm[dmIdx]))
+        dmIdx+=1
+        
+  def test91BoundDistances(self):
+    """
+      verify that the bounded similarity (tanimoto) works
+    """  
+    import DataStructs
+    import cPickle,os
+    import RDConfig
+    fps = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
+                                         'pubchem_fps.pkl'),'rb'))
+    dm = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
+                                         'pubchem_fps.dm.pkl'),'rb'))
+    dmIdx=0
+    for i in range(len(fps)):
+      nmi,fpi = fps[i]
+      for j in range(i+1,len(fps)):
+        nmj,fpj = fps[j]
+        sim = DataStructs.FingerprintSimilarity(fpi,fpj)
+        self.failUnless(feq(sim,dm[dmIdx]))
+        dmIdx+=1
+        
 if __name__ == '__main__':
   unittest.main()

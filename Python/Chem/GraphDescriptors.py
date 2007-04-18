@@ -60,19 +60,19 @@ def HallKierAlpha(m):
 
   """
   alphaSum = 0.0
+  rC = PeriodicTable.nameTable['C'][5]
   for atom in m.GetAtoms():
     symb = atom.GetSymbol()
     alphaV = PeriodicTable.hallKierAlphas.get(symb,None)
     if alphaV is not None:
       hyb = atom.GetHybridization()-2
-      try:
+      if(hyb<len(alphaV)):
         alpha = alphaV[hyb]
-      except IndexError:
-        alpha = None
-      if alpha is None:
+        if alpha is None:
+          alpha = alphaV[-1]
+      else:
         alpha = alphaV[-1]
     else:
-      rC = PeriodicTable.nameTable['C'][5]
       rA = PeriodicTable.nameTable[symb][5]
       alpha = rA/rC - 1
     alphaSum += alpha  

@@ -7,6 +7,7 @@ tests=[
   ("python","BitUtils.py",{}),
   ("python","VectCollection.py",{}),
   ("python","LazySignature.py",{}),
+  ("python","SparseIntVect.py",{}),
   ]
 longTests=[
   ]

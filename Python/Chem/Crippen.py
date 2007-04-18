@@ -83,17 +83,23 @@ def _GetAtomContribs(mol,patts=None,order=None,verbose=0,force=0):
 
   nAtoms = mol.GetNumAtoms()
   atomContribs = [None]*nAtoms
+  nAtomsFound=0
+  done = False
   for cha in order:
     pattVect = patts[cha]
     for sma,patt,logp,mr in pattVect:
       #print 'try:',entry[0]
-      for match in mol.GetSubstructMatches(patt,0):
+      for match in mol.GetSubstructMatches(patt,False,False):
         firstIdx = match[0]
         if atomContribs[firstIdx] is None:
           atomContribs[firstIdx] = (logp,mr)
           if verbose:
             print '\tAtom %d: %s %4.4f %4.4f'%(match[0],sma,logp,mp)
-  
+          nAtomsFound+=1
+          if nAtomsFound>=nAtoms:
+            done=True
+            break
+    if done: break
   mol._crippenContribs = atomContribs
   return atomContribs
 
@@ -197,7 +203,6 @@ def MolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
     order = _patternOrder
 
   atomContribs = _GetAtomContribs(mol,patts,order,verbose=verbose)
-
   return sum(atomContribs)[1]
 MolMR.version="1.0.0"
 

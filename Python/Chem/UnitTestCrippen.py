@@ -119,7 +119,7 @@ class TestCase(unittest.TestCase):
                 break;
         else:
           print 'Problems with SMILES:',smi
-  def _testDetails(self):
+  def testDetails(self):
     Crippen._Init()
     inF = open(self.detailName,'rb+')
     self._doDetailFile(inF)
