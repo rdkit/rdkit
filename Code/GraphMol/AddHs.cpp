@@ -391,7 +391,6 @@ namespace RDKit{
               int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
               // if there are one or more atoms with lower indices than the central
               // atom, we may need to introduce an extra swap:
-              std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
               if(nSwaps%2){
                 if(heavyAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
                   heavyAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
