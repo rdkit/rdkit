@@ -26,18 +26,18 @@ namespace RDKit {
 
 
   SmilesMolSupplier::SmilesMolSupplier(const std::string &fileName, 
-				       const std::string &delimiter,
-				       int smilesColumn,
-				       int nameColumn, 
-				       bool titleLine,
-				       bool sanitize) {
+                                       const std::string &delimiter,
+                                       int smilesColumn,
+                                       int nameColumn, 
+                                       bool titleLine,
+                                       bool sanitize) {
     init();
 
     // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
     // the function "tellg" does not work correctly if we do not open it this way
     // Need to check if this has been fixed in VC++ 7.0
     std::ifstream *tmpStream = new std::ifstream(fileName.c_str(),
-						 std::ios_base::binary);
+                                                 std::ios_base::binary);
     
     if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad()) ) {
       std::ostringstream errout;
@@ -79,11 +79,11 @@ namespace RDKit {
   }
 
   void SmilesMolSupplier::setData(const std::string &text,
-				  const std::string &delimiter,
-				  int smilesColumn,
-				  int nameColumn, 
-				  bool titleLine,
-				  bool sanitize) {
+                                  const std::string &delimiter,
+                                  int smilesColumn,
+                                  int nameColumn, 
+                                  bool titleLine,
+                                  bool sanitize) {
     if(dp_inStream && df_owner) delete dp_inStream;
     init();
 
@@ -141,9 +141,9 @@ namespace RDKit {
       tokenizer tokens(inLine,sep);
       STR_VECT recs;
       for(tokenizer::iterator tokIter=tokens.begin();
-	  tokIter!=tokens.end();++tokIter){
-	std::string rec = strip(*tokIter);
-	recs.push_back(rec);
+          tokIter!=tokens.end();++tokIter){
+        std::string rec = strip(*tokIter);
+        recs.push_back(rec);
       }
       
       // -----------
@@ -151,23 +151,23 @@ namespace RDKit {
       // -----------
       res = SmilesToMol(recs[d_smi], 0, df_sanitize);
       if (!res) {
-	std::stringstream errout;
-	errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
-	throw SmilesParseException(errout.str());
+        std::stringstream errout;
+        errout << "Cannot create molecule from : '" << recs[d_smi] << "'";
+        throw SmilesParseException(errout.str());
       }
 
       // -----------
       // get the name (if there's a name column)
       // -----------
       if (d_name == -1) {
-	// if no name defaults it to the line number we read it from string
-	std::ostringstream tstr;
-	tstr << d_line;
-	std::string mname = tstr.str();
-	res->setProp("_Name", mname);
+        // if no name defaults it to the line number we read it from string
+        std::ostringstream tstr;
+        tstr << d_line;
+        std::string mname = tstr.str();
+        res->setProp("_Name", mname);
       }
       else {
-	res->setProp("_Name", recs[d_name]);
+        res->setProp("_Name", recs[d_name]);
       }
 
       // -----------
@@ -177,22 +177,22 @@ namespace RDKit {
       unsigned iprop = 0;
       int nprops = d_props.size();
       for (col = 0; col < recs.size(); col++) {
-	std::string pname, pval;
-	if (d_props.size() > iprop) {
-	  pname = d_props[iprop];
-	}
-	else {
-	  pname = "Column_";
-	  std::stringstream ss;
-	  ss << col;
-	  pname += ss.str();
-	}
+        std::string pname, pval;
+        if (d_props.size() > iprop) {
+          pname = d_props[iprop];
+        }
+        else {
+          pname = "Column_";
+          std::stringstream ss;
+          ss << col;
+          pname += ss.str();
+        }
 
-	pval = recs[col];
-	res->setProp(pname, pval);
-	iprop++;
+        pval = recs[col];
+        res->setProp(pname, pval);
+        iprop++;
       }
-	    
+            
     }
     catch(SmilesParseException &pe) {
       // Couldn't parse the passed in smiles
@@ -231,8 +231,8 @@ namespace RDKit {
     if( tempStr == "" ) {
       // got an empty string, check to see if we hit EOF:
       if(dp_inStream->eof()) {
-	// yes, set our flag:
-	df_end = true;
+        // yes, set our flag:
+        df_end = true;
       }
     } else if(dp_inStream->eof()) {
       // we got some data before hitting EOF. So clear the
@@ -265,15 +265,15 @@ namespace RDKit {
     if(!df_end){
       // if we didn't immediately hit EOF, loop until we get a valid line:
       while((tempStr[0] == '#') || (strip(tempStr).size() == 0)) {
-	prev = dp_inStream->tellg();
-	tempStr = this->nextLine();
-	if(this->atEnd()) break;
+        prev = dp_inStream->tellg();
+        tempStr = this->nextLine();
+        if(this->atEnd()) break;
       }
     }
     // if we hit EOF without getting a proper line, return -1:
     if( tempStr.empty() ||
-	(tempStr[0] == '#') ||
-	(strip(tempStr).size() == 0) ) {
+        (tempStr[0] == '#') ||
+        (strip(tempStr).size() == 0) ) {
       prev = -1;
     }
     return prev;
@@ -293,9 +293,9 @@ namespace RDKit {
       boost::char_separator<char> sep(d_delim.c_str(),"",boost::keep_empty_tokens);
       tokenizer tokens(tempStr,sep);
       for(tokenizer::iterator tokIter=tokens.begin();
-	  tokIter!=tokens.end();++tokIter){
-	std::string pname = strip(*tokIter);
-	d_props.push_back(pname);
+          tokIter!=tokens.end();++tokIter){
+        std::string pname = strip(*tokIter);
+        d_props.push_back(pname);
       }
     }
   }
@@ -311,7 +311,6 @@ namespace RDKit {
   //
   void SmilesMolSupplier::moveTo(unsigned int idx) {
     PRECONDITION(dp_inStream,"bad instream");
-    PRECONDITION(idx >= 0, "");
 
     // get the easy situations (boundary conditions) out of the
     // way first:
@@ -335,14 +334,27 @@ namespace RDKit {
     // Case 2: we haven't read the entry, so move forward until
     //   we've gone far enough.
     // -----------
+    if(d_next < 0){
+      // if we are just starting out, process the title line:
+      dp_inStream->seekg(0);
+      if(df_title) this->processTitleLine();
+      d_next=0;
+    }
     while(d_next<static_cast<int>(idx)){
-      try {
-	this->next();
-      }
-      catch (FileParseException &) {
-	std::ostringstream errout;
-	errout << "ERROR: Index error (idx = " << idx  << "): " << "ran out of lines\n";
-	throw FileParseException(errout.str());
+      int nextP = this->skipComments();
+      if(nextP>=0){
+        d_molpos.push_back(nextP);
+        d_lineNums.push_back(d_line);
+
+        dp_inStream->seekg(nextP);
+
+        // grab the line:
+        std::string inLine=getLine(dp_inStream);
+        d_next++;
+      } else {
+        std::ostringstream errout;
+        errout << "ERROR: Index error (idx = " << idx  << "): " << "ran out of lines\n";
+        throw FileParseException(errout.str());
       }
       
     }
@@ -387,7 +399,7 @@ namespace RDKit {
       // increment our position:
       d_next++;
       if(d_next < static_cast<int>(d_lineNums.size()) ){
-	d_line = d_lineNums[d_next];
+        d_line = d_lineNums[d_next];
       }
 
       // if we just hit the last one, simulate EOF:
@@ -424,13 +436,13 @@ namespace RDKit {
       int currPos=dp_inStream->tellg();
       int tempPos=this->skipComments();
       if(tempPos<0){
-	// nope, there is nothing else present:
-	d_len = d_molpos.size();
+        // nope, there is nothing else present:
+        d_len = d_molpos.size();
       } else {
-	// we actually can read something new:
-	d_line--;
-	// move back to where we were:
-	dp_inStream->seekg(currPos);
+        // we actually can read something new:
+        d_line--;
+        // move back to where we were:
+        dp_inStream->seekg(currPos);
       }
     } else {
       throw FileParseException("End of input reached.");
@@ -475,20 +487,20 @@ namespace RDKit {
     else {
       int oPos = dp_inStream->tellg();
       if(d_molpos.size()){
-	// we've already read some molecules, go to the last
-	// one and read it in to initialize our location:
-	dp_inStream->seekg(d_molpos.back());
-	// skip that line and then continue:
-	this->skipComments();
+        // we've already read some molecules, go to the last
+        // one and read it in to initialize our location:
+        dp_inStream->seekg(d_molpos.back());
+        // skip that line and then continue:
+        this->skipComments();
       } else {
-	// process the title line if need be:
-	if(df_title) this->processTitleLine();
+        // process the title line if need be:
+        if(df_title) this->processTitleLine();
       }
       int pos = this->skipComments();
       while(pos>=0){
-	d_molpos.push_back(pos);
-	d_lineNums.push_back(d_line);
-	pos = this->skipComments();	
+        d_molpos.push_back(pos);
+        d_lineNums.push_back(d_line);
+        pos = this->skipComments();     
       }
       // now remember to set the stream to its original position:
       dp_inStream->seekg(oPos);
@@ -503,4 +515,4 @@ namespace RDKit {
   }
 }
 
-	  
+          

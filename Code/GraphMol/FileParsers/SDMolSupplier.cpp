@@ -90,7 +90,7 @@ namespace RDKit {
   }
 
   void SDMolSupplier::setData(const std::string &text,
-			      bool sanitize){
+                              bool sanitize){
     if(dp_inStream && df_owner) delete dp_inStream;
     init();
     std::istream *tmpStream=0;
@@ -227,18 +227,15 @@ namespace RDKit {
     std::string tempp;
     unsigned int line=d_line;
     try {
-      //std::cerr << "mdstm" <<std::endl;
       res = MolDataStreamToMol(dp_inStream, line, df_sanitize);
       d_line= line+1;
-      //std::cerr << "rmp" <<std::endl;
       this->readMolProps(res);  
-      //std::cerr << "d" <<std::endl;
     }
     catch (FileParseException &fe) {
       // we couldn't read a mol block or the data for the molecule. In this case
       // advance forward in the stream until we hit the next record and then rethrow
       // the exception. This should allow us to read the next molecule.
-      BOOST_LOG(rdErrorLog) << "ERROR: on line " << d_line << " " << fe.message() << std::endl;
+      BOOST_LOG(rdErrorLog) << "ERROR: on line " << line << " " << fe.message() << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
 
       // FIX: report files missing the $$$$ marker
@@ -264,7 +261,6 @@ namespace RDKit {
     unsigned int posHold=dp_inStream->tellg();
     this->checkForEnd();
     if (!this->df_end && d_last >= static_cast<int>(d_molpos.size())) {
-      //std::cerr << "\tpos> " << posHold << std::endl;
       d_molpos.push_back(posHold);
     }
 
@@ -279,26 +275,29 @@ namespace RDKit {
     if (idx < d_molpos.size() ) {
       dp_inStream->seekg(d_molpos[idx]);
       d_last = idx;
-    }
-    else {
+    } else {
       std::string tempStr;
       d_last = d_molpos.size() - 1;
       dp_inStream->seekg(d_molpos.back());
       while ((d_last < static_cast<int>(idx)) && (!dp_inStream->eof()) ) {
-	   d_line++;
-	   tempStr = getLine(dp_inStream);
-	
-	   if (tempStr.find("$$$$") == 0) {
-	       d_molpos.push_back(dp_inStream->tellg());
-	       d_last++;
-	   }
+        d_line++;
+        tempStr = getLine(dp_inStream);
+        
+        if (tempStr.find("$$$$") == 0) {
+          unsigned int posHold=dp_inStream->tellg();
+          this->checkForEnd();
+          if (!this->df_end){
+            d_molpos.push_back(posHold);
+            d_last++;
+          }
+        }
       }
       // if we reached end of file without reaching "idx" we have an index error
       if (dp_inStream->eof()) {
-    	d_len = d_molpos.size();
-    	std::ostringstream errout;
-    	errout << "ERROR: Index error (idx = " << idx  << ") : " << " we do no have enough mol blocks";
-    	throw FileParseException(errout.str());
+        d_len = d_molpos.size();
+        std::ostringstream errout;
+        errout << "ERROR: Index error (idx = " << idx  << ") : " << " we do no have enough mol blocks";
+        throw FileParseException(errout.str());
       }
     }
   }
@@ -322,11 +321,19 @@ namespace RDKit {
       d_len = d_molpos.size();
       dp_inStream->seekg(d_molpos.back());
       while (!dp_inStream->eof()) {
-	tempStr = getLine(dp_inStream);
-	
-	if (tempStr.find("$$$$") == 0) {
-	  d_len++;
-	}
+        tempStr = getLine(dp_inStream);
+        
+        if (tempStr.find("$$$$") == 0) {
+          unsigned int posHold=dp_inStream->tellg();
+          // don't worry about the last molecule:
+          this->checkForEnd();
+          if (!this->df_end){
+            d_molpos.push_back(posHold);
+            d_len++;
+            dp_inStream->seekg(posHold);
+
+          }
+        }
       }
       // now remember to set the stream to the last postion we want to read
       dp_inStream->clear();

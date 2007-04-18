@@ -1032,6 +1032,117 @@ void testSetStreamIndices() {
   delete sdsup;
 }
 
+int testMixIterAndRandom() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/esters.sdf";
+  bool ok;
+
+  SDMolSupplier *sdsup;
+  ROMol *mol;
+  std::string name;
+  
+  sdsup = new SDMolSupplier(fname);
+  TEST_ASSERT(sdsup);
+  unsigned int i = 0;
+  while (!sdsup->atEnd()) {
+    mol = sdsup->next();
+    if (mol) {
+      TEST_ASSERT(mol->hasProp("ID"));
+      delete mol;
+    }
+    i++;
+  }
+  TEST_ASSERT(i==6);
+  TEST_ASSERT(sdsup->length()==6);
+
+  delete sdsup;
+  sdsup = new SDMolSupplier(fname);
+  TEST_ASSERT(sdsup);
+  TEST_ASSERT(sdsup->length()==6);
+
+  mol = sdsup->next();
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->hasProp("ID"));
+  mol->getProp("ID",name);
+  TEST_ASSERT(name=="Lig1");    
+  delete mol;
+  
+  mol = (*sdsup)[0];
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->hasProp("ID"));
+  mol->getProp("ID",name);
+  TEST_ASSERT(name=="Lig1");    
+  delete mol;
+  
+  sdsup->reset();
+  mol = sdsup->next();
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->hasProp("ID"));
+  mol->getProp("ID",name);
+  TEST_ASSERT(name=="Lig1");    
+  delete mol;
+  mol = sdsup->next();
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->hasProp("ID"));
+  mol->getProp("ID",name);
+  TEST_ASSERT(name=="Lig2");    
+  delete mol;
+  delete sdsup;
+  
+  fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+  SmilesMolSupplier *nSup;
+  nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
+  TEST_ASSERT(nSup);
+  TEST_ASSERT(nSup->length()==10);
+  mol=(*nSup)[0];
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  delete mol;
+  delete nSup;
+
+  nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
+  TEST_ASSERT(nSup);
+  mol=(*nSup)[0];
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  TEST_ASSERT(nSup->length()==10);
+  delete mol;
+  delete nSup;
+
+  nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
+  TEST_ASSERT(nSup);
+  mol=nSup->next();
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  TEST_ASSERT(nSup->length()==10);
+  delete mol;
+  mol=(*nSup)[0];
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  TEST_ASSERT(nSup->length()==10);
+  delete mol;
+  mol=nSup->next();
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==20);
+  delete nSup;
+  delete mol;
+
+  nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
+  TEST_ASSERT(nSup);
+  mol=0;
+  try {
+    mol=(*nSup)[20];
+    ok = false;
+  } catch (FileParseException &) {
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+  delete nSup;
+    
+  return 1;
+}
+
+
 
 int main() {
   RDLog::InitLogs();
@@ -1139,11 +1250,17 @@ int main() {
   testIssue381();
   BOOST_LOG(rdErrorLog) <<"Finished: testIssue381()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-#endif
 
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testSetStreamIndices();
   BOOST_LOG(rdErrorLog) <<"Finished: testSetStreamIndices()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+#endif
+
+  
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testMixIterAndRandom();
+  BOOST_LOG(rdErrorLog) <<"Finished: testMixIterAndRandom()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   
