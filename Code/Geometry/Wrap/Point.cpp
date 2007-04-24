@@ -28,7 +28,9 @@ namespace{
 
 namespace RDGeom {
   
-  std::string Point3Ddoc = "A class to represent a three-dimensional point";
+  std::string Point3Ddoc = "A class to represent a three-dimensional point\n\
+The x, y, and z coordinates can be read and written using either attributes\n\
+(i.e. pt.x = 4) or indexing (i.e. pt[0] = 4).\n";
   std::string Point2Ddoc = "A class to represent a two-dimensional point";
   
   double point3Ddist(const Point3D &pt1, const Point3D &pt2) {

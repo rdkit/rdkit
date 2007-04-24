@@ -22,7 +22,23 @@ struct dvv_pickle_suite : python::pickle_suite
   };
 };
 
-std::string disValVectDoc = "A container class for storing discrete integer values\n";
+std::string disValVectDoc="A container class for storing unsigned integer\n\
+values within a particular range.\n\
+\n\
+The length of the vector and type of its elements (determines the maxium value\n
+that can be stored) are both set at construction time.\n\
+\n\
+As you would expect, _ExplicitBitVects_ support a set of binary operations\n\
+so you can do things like:\n\
+  dvv3 = dvv1 & dvv2  the result contains the smallest value in each entry\n\
+  dvv3 = dvv1 | dvv2  the result contains the largest value in each entry\n\
+  dvv1 += dvv2     values are truncated when necessary\n\
+  dvv3 = dvv1 + dvv2    values are truncated when necessary\n\
+  dvv1 -= dvv3    would-be negative values are set to zero\n\
+  dvv3 = dvv1 - dvv2    would-be negative values are set to zero\n\
+\n\
+Elements can be set and read using indexing (i.e. bv[i] = 4 or val=bv[i])\n\
+\n";
 
 struct discreteValVec_wrapper {
   static void wrap() {

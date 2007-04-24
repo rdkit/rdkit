@@ -57,25 +57,29 @@ namespace RDKit {
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
   python::scope().attr("__doc__") =
-    "Module containing functions to compute starting atomic coordinates in 3D using distance geometry"
+    "Module containing functions to compute atomic coordinates in 3D using distance geometry"
     ;
 
   import_array();
 
   //RegisterListConverter<RDKit::Atom*>();
 
-  std::string docString = "Use distance geometry to obtain intial coordinates for a molecule\n\n\
+  std::string docString = "Use distance geometry to obtain intial \n\
+ coordinates for a molecule\n\n\
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interest\n\
     - maxAttempts : the maximum number of attempts to try embedding \n\
-    - randomSeed : provide a seed for the random number generator so that the same coordinates can be obtained \n\
-                   for a molecule on multiple runs. The default (-1) produces a random embedding\n\
+    - randomSeed : provide a seed for the random number generator \n\
+                   so that the same coordinates can be obtained \n\
+                   for a molecule on multiple runs. The default \n\
+                   (-1) uses a random seed \n\
     - clearConfs : clear all existing conformations on the molecule\n\
-    - randNegEig : If the embedding yields a negative eigen value, pick coordinates that correspond \n\
+    - randNegEig : If the embedding yields a negative eigenvalue, \n\
+                   pick coordinates that correspond \n\
                    to this component at random \n\
-    - numZeroFail : fail embedding is we have this more zero eigen values \n\
-                  \n\
+    - numZeroFail : fail embedding is we have this more zero eigenvalues \n\
+\n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule \n\
 \n";
@@ -85,25 +89,31 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1),
               docString.c_str());
 
-  docString = "Use distance geometry to obtain intial coordinates for a molecule\n\n\
+  docString = "Use distance geometry to obtain multiple sets of \n\
+ coordinates for a molecule\n\
  \n\
  ARGUMENTS:\n\n\
-    - mol : the molecule of interest\n\
-    - numConfs : the number of conformers to generate \n\
-    - maxAttempts : the maximum number of attempts to try embedding \n\
-    - randomSeed : provide a seed for the random number generator so that the same coordinates can be obtained \n\
-                   for a molecule on multiple runs. The default (-1) produces a random embedding\n\
-    - clearConfs : clear all existing conformations on the molecule\n\
-    - randNegEig : If the embedding yields a negative eigen value, pick coordinates that correspond \n\
-                   to this component at random \n\
-    - numZeroFail : fail embedding is we have this more zero eigen values \n\
-    - pruneRmsThresh : Retain only the conformations out of 'numConfs' after embedding that are atleast \
-                       this far apart from each other. RMSD is computed on the heavy atoms. \
-                       Prunining is greedy; i.e. the first embedded conformation is retained and from \
-		       then on only those that are atleast pruneRmsThresh away from already  \
-		       retained conformations are kept. The pruning is done after embedding and  \
-		       bounds violation minimization. No pruning by default. \
-                  \n\
+  - mol : the molecule of interest\n\
+  - numConfs : the number of conformers to generate \n\
+  - maxAttempts : the maximum number of attempts to try embedding \n\
+  - randomSeed : provide a seed for the random number generator \n\
+                 so that the same coordinates can be obtained \n\
+                 for a molecule on multiple runs. The default \n\
+                 (-1) uses a random seed \n\
+  - clearConfs : clear all existing conformations on the molecule\n\
+  - randNegEig : If the embedding yields a negative eigenvalue, \n\
+                 pick coordinates that correspond \n\
+                 to this component at random \n\
+  - numZeroFail : fail embedding is we have this more zero eigenvalues \n\
+  - pruneRmsThresh : Retain only the conformations out of 'numConfs' \n\
+                    after embedding that are at least \n\
+                    this far apart from each other. \n\
+          RMSD is computed on the heavy atoms. \n\
+          Pruning is greedy; i.e. the first embedded conformation\n\
+          is retained and from then on only those that are at\n\
+          least pruneRmsThresh away from all retained conformations\n\
+          are kept. The pruning is done after embedding and \n\
+          bounds violation minimization. No pruning by default.\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";
@@ -111,19 +121,21 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
               (python::arg("mol"), python::arg("numConfs")=10, 
                python::arg("maxAttempts")=10,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
-               python::arg("randNegEig")=true, python::arg("numZeroFail")=1, python::arg("pruneRmsThresh")=-1.0),
+               python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
+	       python::arg("pruneRmsThresh")=-1.0),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interest\n\
-    - set15bounds : set bounds 15 atom distance bounds based on topology (otherwise stop at 14s)\n\
-    - scaleVDW : scale down the sum of VDW radii when setting the lower bounds for \n\
-                 atoms less 5 bonds aparts \n\
+    - set15bounds : set bounds for 1-5 atom distances based on \n\
+                    topology (otherwise stop at 1-4s)\n\
+    - scaleVDW : scale down the sum of VDW radii when setting the \n\
+                 lower bounds for atoms less than 5 bonds apart \n\
  RETURNS:\n\n\
-    the bounds matrix as a Numeric array with lower bounds in the lower triangle\n\
-    and upper bounds in the upper triangle\n\
+    the bounds matrix as a Numeric array with lower bounds in \n\
+    the lower triangle and upper bounds in the upper triangle\n\
 \n";
   python::def("GetMoleculeBoundsMatrix", RDKit::getMolBoundsMatrix,
               (python::arg("mol"), python::arg("set15bounds")=true,

@@ -15,15 +15,16 @@
 
 using namespace RDDepict;
 
-
 namespace python = boost::python;
  
 namespace RDDepict {
   
   unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
 			       bool clearConfs, python::dict &coordMap,
-                               unsigned int nFlipsPerSample=3, unsigned int nSamples=100,
-                               int sampleSeed=100, bool permuteDeg4Nodes=false){
+                               unsigned int nFlipsPerSample=3,
+			       unsigned int nSamples=100,
+                               int sampleSeed=100,
+			       bool permuteDeg4Nodes=false){
     RDGeom::INT_POINT2D_MAP cMap;
     cMap.clear();
     python::list ks = coordMap.keys();
@@ -36,14 +37,20 @@ namespace RDDepict {
       }
       cMap[id] = python::extract<RDGeom::Point2D>(coordMap[id]);
     }
-    return RDDepict::compute2DCoords(mol,&cMap,canonOrient, clearConfs, nFlipsPerSample, 
-                                     nSamples, sampleSeed, permuteDeg4Nodes);
+    return RDDepict::compute2DCoords(mol,&cMap,canonOrient, clearConfs,
+				     nFlipsPerSample,nSamples,
+				     sampleSeed, permuteDeg4Nodes);
   }
   
-  unsigned int Compute2DCoordsMimicDistmat(RDKit::ROMol &mol, python::object distMat, 
-                                           bool canonOrient, bool clearConfs, double weightDistMat,
-                                           unsigned int nFlipsPerSample, unsigned int nSamples,
-                                           int sampleSeed, bool permuteDeg4Nodes) {
+  unsigned int Compute2DCoordsMimicDistmat(RDKit::ROMol &mol,
+					   python::object distMat, 
+                                           bool canonOrient,
+					   bool clearConfs,
+					   double weightDistMat,
+                                           unsigned int nFlipsPerSample,
+					   unsigned int nSamples,
+                                           int sampleSeed,
+					   bool permuteDeg4Nodes) {
     PyObject *distMatPtr = distMat.ptr();
     if(!PyArray_Check(distMatPtr)){
       throw_value_error("Argument isn't an array");
@@ -64,8 +71,11 @@ namespace RDDepict {
            nitems*sizeof(double));
     
     DOUBLE_SMART_PTR dmat(cData);
-    return RDDepict::compute2DCoordsMimicDistMat(mol, &dmat, canonOrient, clearConfs, weightDistMat,
-                                                 nFlipsPerSample, nSamples, sampleSeed, permuteDeg4Nodes);
+    return RDDepict::compute2DCoordsMimicDistMat(mol, &dmat,
+						 canonOrient, clearConfs,
+						 weightDistMat,
+                                                 nFlipsPerSample, nSamples,
+						 sampleSeed, permuteDeg4Nodes);
   }
     
 }
@@ -87,13 +97,17 @@ BOOST_PYTHON_MODULE(rdDepictor)
   ARGUMENTS: \n\n\
      mol - the molecule of interest\n\
      canonOrient - orient the molecule in a canonical way\n\
-     clearConf - if true, all existing conformations on the molecule will be cleared\n\
-     coordMap - a dictionary mapping atom Ids -> Point2D objects with starting coordinates\n\
-                for atoms that should have forced positions.\n\
-     nFlipsPerSample - number of rotatable bonds that are flipped at random at a time.\n\
-     nSample - Number of random samplings of rotatable bond.\n\
-     sampleSeed - see for the random sampling process.\n\
-     permuteDeg4Nodes - allow permutation of bonds at a degree node node during the sampling process \n\n\
+     clearConfs - if true, all existing conformations on the molecule\n\
+             will be cleared\n\
+     coordMap - a dictionary mapping atom Ids -> Point2D objects \n\
+                with starting coordinates for atoms that should\n\
+                have their positions locked.\n\
+     nFlipsPerSample - number of rotatable bonds that are\n\
+                flipped at random at a time.\n\
+     nSample - Number of random samplings of rotatable bonds.\n\
+     sampleSeed - seed for the random sampling process.\n\
+     permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
+                 node during the sampling process \n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def("Compute2DCoords", RDDepict::Compute2DCoords,
@@ -107,21 +121,30 @@ BOOST_PYTHON_MODULE(rdDepictor)
                python::arg("permuteDeg4Nodes")=false),
 	      docString.c_str());
 
-  docString = "Compute 2D coordinates such that inter-atom distance mimic those in a distance matrix. \n\
+  docString = "Compute 2D coordinates for a molecule such \n\
+  that the inter-atom distances mimic those in a user-provided\n\
+  distance matrix. \n\
   The resulting coordinates are stored on each atom of the molecule \n\n\
   ARGUMENTS: \n\n\
      mol - the molecule of interest\n\
      distMat - distance matrix that we want the 2D structure to mimic\n\
      canonOrient - orient the molecule in a canonical way\n\
-     clearConf - if true, all existing conformations on the molecule will be cleared\n\
-     weightDistMat - weight assigned in the cost function to mimicing the distance matrix.\n\
-                     This is must be between (0.0,1.0). (1.0-weightDistMat) is then the\n\
-                     weght assined to improving the density of the 2D structure \n\
-                     i.e. try to make it spread out\n\
-     nFlipsPerSample - number of rotatable bonds that are flipped at random at a time.\n\
-     nSample - Number of random samplings of rotatable bond.\n\
-     sampleSeed - see for the random sampling process.\n\
-     permuteDeg4Nodes - allow permutation of bonds at a degree node node during the sampling process \n\n\
+     clearConfs - if true, all existing conformations on the molecule\n\
+             will be cleared\n\
+      
+     weightDistMat - weight assigned in the cost function to mimicing\n\
+                     the distance matrix.\n\
+                     This must be between (0.0,1.0). (1.0-weightDistMat)\n\
+                     is then the weight assigned to improving \n\
+                     the density of the 2D structure i.e. try to\n\
+                     make it spread out\n\
+     nFlipsPerSample - number of rotatable bonds that are\n\
+                flipped at random at a time.\n\
+     nSample - Number of random samplings of rotatable bonds.\n\
+     sampleSeed - seed for the random sampling process.\n\
+     permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
+                 node during the sampling process \n\n\
+
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def("Compute2DCoordsMimicDistmat", RDDepict::Compute2DCoordsMimicDistmat,

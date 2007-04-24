@@ -27,38 +27,51 @@ namespace RDKit {
     typedef AtomPtrContainer::const_iterator AtomPtrContainer_CI;
 
     //! Constructor
-    MolChemicalFeature(const ROMol *mol,const MolChemicalFeatureFactory *factory,
+    MolChemicalFeature(const ROMol *mol,
+		       const MolChemicalFeatureFactory *factory,
                        const MolChemicalFeatureDef *fdef) :
       dp_mol(mol), dp_factory(factory), dp_def(fdef), d_activeConf(-1) {};
 
     ~MolChemicalFeature() {}
 
-    //! Functions we definitely need to implement from the base class
+    //! \brief return the name of the feature's family
     const std::string &getFamily() const;
+    //! \brief return the name of the feature's type
     const std::string &getType() const;
+    //! \brief return the position of the feature (obtained from
+    //! from the associated conformation
     RDGeom::Point3D getPos() const;
 
-    //! Functions that are more specific to the MolChemicalFeature
+    //! \brief return the position of the feature (obtained from
+    //! from the requested conformation from the associated molecule)
     RDGeom::Point3D getPos(int confId) const;
+    //! \brief return a pointer to our feature factory
     const MolChemicalFeatureFactory *getFactory() const { return dp_factory; };
+    //! \brief return a pointer to our associated molecule
     const ROMol *getMol() const { return dp_mol; };
+    //! \brief return a pointer to our feature definition
     const MolChemicalFeatureDef *getFeatDef() const { return dp_def; };
     
+    //! \brief returns the number of atoms defining the feature
     inline unsigned int getNumAtoms() const {
       return d_atoms.size();
     }
-    AtomPtrContainer::const_iterator beginAtoms() const { return d_atoms.begin(); };
-    AtomPtrContainer::const_iterator endAtoms() const { return d_atoms.end(); };
 
+    //! \brief sets the active conformer (in the associated molecule)
     void setActiveConformer(int confId);
 
+    //! \brief returns the active conformer (in the associated molecule)
     int getActiveConformer() const { return d_activeConf;};
 
+    //! \brief clears out the internal position cache
     void clearCache() { d_locs.clear(); };
     
+    //! \brief returns our atom container of
     const AtomPtrContainer &getAtoms() const {
       return d_atoms;
     }
+    AtomPtrContainer::const_iterator beginAtoms() const { return d_atoms.begin(); };
+    AtomPtrContainer::const_iterator endAtoms() const { return d_atoms.end(); };
 
   private:
     typedef std::map<int,RDGeom::Point3D> PointCacheType;

@@ -53,6 +53,8 @@ namespace RDKit {
         .def("GetFactory", &MolChemicalFeature::getFactory,
              "Get the factory used to generate this feature",
              python::return_value_policy<python::reference_existing_object>())
+	.def("ClearCache",&MolChemicalFeature::clearCache,
+	     "Clears the cache used to store position information.")
         ;
     };
   };

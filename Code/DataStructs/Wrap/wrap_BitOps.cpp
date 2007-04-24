@@ -17,7 +17,7 @@ namespace python = boost::python;
 //   arguments.  If you leave out the "=2" bit, you don't
 //   get the default arg values.
 //SBV *(*ff1)(const SBV&,int=2) = FoldFingerprint;
-// this is fi xfor VC++ which doesn't seem to like the "=2" passed in above
+// this is a fix for VC++, which doesn't seem to like the "=2" passed in above
 SBV *ff1(const SBV &bv1, int factor=2) {
   return FoldFingerprint(bv1,factor);
 }
@@ -181,8 +181,10 @@ struct BitOps_wrapper {
                                    "Returns a folded version of the bit vector\n"
                                    )[python::return_value_policy<python::manage_new_object>()]);
 
-    python::def("AllProbeBitsMatch",(bool (*)(const SBV &,const std::string &))AllProbeBitsMatch);
-    python::def("AllProbeBitsMatch",(bool (*)(const EBV &,const std::string &))AllProbeBitsMatch);
+    python::def("AllProbeBitsMatch",(bool (*)(const SBV &,const std::string &))AllProbeBitsMatch,);
+    python::def("AllProbeBitsMatch",(bool (*)(const EBV &,const std::string &))AllProbeBitsMatch,
+		"Returns True if all bits in the first argument match all bits in the \n\
+  vector defined by the pickle in the second argument.\n");
 
     python::def("BitVectToText",
                 (std::string (*)(const SBV&))BitVectToText);
