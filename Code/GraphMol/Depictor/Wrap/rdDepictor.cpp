@@ -131,7 +131,6 @@ BOOST_PYTHON_MODULE(rdDepictor)
      canonOrient - orient the molecule in a canonical way\n\
      clearConfs - if true, all existing conformations on the molecule\n\
              will be cleared\n\
-      
      weightDistMat - weight assigned in the cost function to mimicing\n\
                      the distance matrix.\n\
                      This must be between (0.0,1.0). (1.0-weightDistMat)\n\
@@ -144,7 +143,6 @@ BOOST_PYTHON_MODULE(rdDepictor)
      sampleSeed - seed for the random sampling process.\n\
      permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
                  node during the sampling process \n\n\
-
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def("Compute2DCoordsMimicDistmat", RDDepict::Compute2DCoordsMimicDistmat,

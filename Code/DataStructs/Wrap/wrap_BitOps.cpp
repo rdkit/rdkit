@@ -181,7 +181,8 @@ struct BitOps_wrapper {
                                    "Returns a folded version of the bit vector\n"
                                    )[python::return_value_policy<python::manage_new_object>()]);
 
-    python::def("AllProbeBitsMatch",(bool (*)(const SBV &,const std::string &))AllProbeBitsMatch,);
+    python::def("AllProbeBitsMatch",
+		(bool (*)(const SBV &,const std::string &))AllProbeBitsMatch);
     python::def("AllProbeBitsMatch",(bool (*)(const EBV &,const std::string &))AllProbeBitsMatch,
 		"Returns True if all bits in the first argument match all bits in the \n\
   vector defined by the pickle in the second argument.\n");

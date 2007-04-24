@@ -25,7 +25,7 @@ struct dvv_pickle_suite : python::pickle_suite
 std::string disValVectDoc="A container class for storing unsigned integer\n\
 values within a particular range.\n\
 \n\
-The length of the vector and type of its elements (determines the maxium value\n
+The length of the vector and type of its elements (determines the maxium value\n\
 that can be stored) are both set at construction time.\n\
 \n\
 As you would expect, _ExplicitBitVects_ support a set of binary operations\n\
