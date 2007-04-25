@@ -4,30 +4,45 @@
 Bug Fixes
  - handing of isotope information in SMILES has been fixed
  - "implicit" hydrogens are now added to charged atoms explicitly when
-   writing SMILES
- - the non-GUI code now supports python2.5; the GUI code may work with
-   python2.5, but that has not been tested
+   writing SMILES. (issue 1670149)
  - the 2D->3D code no longer generates non-planar conjugated 4-rings
-   (e.g. C1=CC=C1) 
-
+   (e.g. C1=CC=C1). (issue 1653802) 
+ - removing explicit hydrogens no longer produces incorrect smiles 
+   (issue 1694023)
+ - bit indices and signature lengths in the AtomPairs code no longer
+   being calculated incorrectly. *NOTE* this changes the bits that are
+   set, so if you have existing signatures, they will need to be
+   regenerated.
+ - Fixed a bug causing MolSuppliers to generate incorrect length
+   information when a combination of random access and iterator
+   interfaces are used. (issue 1702647)
 
 New Features
  - chemical reactions are now supported
  - there is a new entry point into the 2D depictor code,
    compute2DCoordsMimicDistMat(), that attempts to generate 2D
    depictions that are similar to the structure described by the
-   distance matrix.
- - DiscreteValueVect now supports the binary operators |, &, +, and -.
+   distance matrix. There's also a shorthand approach for calling this
+   to mimic a 3D structure available as:
+   AllChem.GenerateDepictionMatching3DStructure()
+ - DiscreteValueVect and UniformGrid3D now support the binary 
+   operators |, &, +, and -.
  - a reader/writer for TPL files has been added.
  - support has been added for MolCatalogs: hierarchical catalogs that
    can store complete molecules.
  - the protrude distance metric for shapes has been added
  - pickle support added to classes: UniformGrid, DiscreteValueVect,
    Point 
+ - added the class DataStructs/SparseIntVect to improve performance
+   and clarity of the AtomPairs code
 
 Other
+ - the non-GUI code now supports python2.5; the GUI code may work with
+   python2.5, but that has not been tested
  - the Mol and SD file parsers have been sped up quite a bit.
-
+ - the "Crippen" descriptors are now calculated somewhat faster.
+ - in-code documentation updates
+ - new documentation for beginners in $RDBASE/Docs/Book
 
 ******  Release_Jan2007_1 *******
 (Changes relative to Release_Oct2006_1)
