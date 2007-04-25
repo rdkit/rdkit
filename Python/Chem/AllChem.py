@@ -21,6 +21,7 @@ from rdDistGeom import *
 from rdMolAlign import *
 from rdMolTransforms import *
 from rdShapeHelpers import *
+from rdChemReactions import *
 import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
@@ -42,3 +43,19 @@ def TransformMol(mol,tform):
     newConf.SetAtomPosition(i,list(newPos)[:3])
   mol.RemoveAllConformers()
   mol.AddConformer(newConf)
+
+def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
+                                         **kwargs):
+  stripRef = RemoveHs(reference)
+  nAts = mol.GetNumAtoms()
+  dm = []
+  conf = stripRef.GetConformer(confId)
+  for i in range(nAts):
+    pi = conf.GetAtomPosition(i)
+    for j in range(i+1,nAts):
+      pj = conf.GetAtomPosition(j)
+      dm.append((pi-pj).Length())
+  dm = Numeric.array(dm)
+  apply(Compute2DCoordsMimicDistmat,(mol,dm),kwargs)
+      
+  

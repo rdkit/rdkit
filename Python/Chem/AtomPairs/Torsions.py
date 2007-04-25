@@ -114,9 +114,6 @@ def GetTopologicalTorsionFingerprint(mol,targetSize=4):
   >>> print '%.3f'%Utils.DiceSimilarity(fp3,fp1)
   0.375
 
-  
-
-
   """
   paths = Chem.FindAllPathsOfLengthN(mol,targetSize,useBonds=0)
   nPaths = len(paths)
@@ -127,6 +124,38 @@ def GetTopologicalTorsionFingerprint(mol,targetSize=4):
   res.sort()  
   return tuple(res)
   
+def GetTopologicalTorsionFingerprintAsIntVect(mol,targetSize=4):
+  """
+
+  Real molecules:
+  >>> m1 = Chem.MolFromSmiles('CCN(CCO)CC')
+  >>> m2 = Chem.MolFromSmiles('CCN(CCO)CCO')
+  >>> m3 = Chem.MolFromSmiles('OCCN(CCO)CCO')
+  >>> fp1 = GetTopologicalTorsionFingerprintAsIntVect(m1)
+  >>> fp2 = GetTopologicalTorsionFingerprintAsIntVect(m2)
+  >>> fp3 = GetTopologicalTorsionFingerprintAsIntVect(m3)
+  
+  >>> from DataStructs import SparseIntVect
+  >>> SparseIntVect.DiceSimilarity(fp1,fp1)
+  1.0
+  >>> print '%.3f'%SparseIntVect.DiceSimilarity(fp1,fp2)
+  0.667
+  >>> print '%.3f'%SparseIntVect.DiceSimilarity(fp1,fp3)
+  0.375
+  >>> print '%.3f'%SparseIntVect.DiceSimilarity(fp2,fp3)
+  0.706
+  >>> print '%.3f'%SparseIntVect.DiceSimilarity(fp3,fp1)
+  0.375
+
+  """
+  from DataStructs.SparseIntVect import SparseIntVect
+  nBits = Utils.codeSize*targetSize
+  sz = (1L<<nBits)-1
+  res = SparseIntVect(sz)
+  ttv = GetTopologicalTorsionFingerprint(mol,targetSize=targetSize)
+  for bit in ttv:
+    res[bit]+=1
+  return res
 
   
   

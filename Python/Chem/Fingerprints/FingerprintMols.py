@@ -42,6 +42,10 @@ def message(msg):
 def FingerprintMol(mol,
                    fingerprinter=Chem.DaylightFingerprint,
                    **fpArgs):
+  if not fpArgs:
+    details = FingerprinterDetails()
+    fpArgs = details.__dict__
+    
   if fingerprinter != Chem.DaylightFingerprint:
     fp = fingerprinter(mol,**fpArgs)
   else:

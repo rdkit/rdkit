@@ -19,7 +19,9 @@ import DataStructs
 
 _maxPathLen=31
 numPathBits=5
-fpLen=1<<(_maxPathLen+2*Utils.codeSize)
+numFpBits=numPathBits+2*Utils.codeSize
+fpLen=1L<<numFpBits
+
 def ScorePair(at1,at2,dist):
   """ Returns a score for an individual atom pair.
 
@@ -78,7 +80,7 @@ def GetAtomPairFingerprintAsCounts(mol):
 
 def GetAtomPairFingerprintAsIntVect(mol):
   """ Returns the Atom-pair fingerprint for a molecule as
-  a tuple of on-bit IDs.
+  a SparseIntVect
 
   **Arguments**:
 
@@ -107,7 +109,9 @@ def GetAtomPairFingerprintAsIntVect(mol):
 
 def GetAtomPairFingerprintAsBitVect(mol):
   """ Returns the Atom-pair fingerprint for a molecule as
-  a SparseBitVect
+  a SparseBitVect. Note that this doesn't match the standard
+  definition of atom pairs, which uses counts of the
+  pairs, not just their presence.
 
   **Arguments**:
 
@@ -125,6 +129,8 @@ def GetAtomPairFingerprintAsBitVect(mol):
   True
   
   """
+  if numFpBits>31:
+    raise ValueError,"fingerprint is too long to be encoded as a BitVect."
   res = DataStructs.SparseBitVect(fpLen)
   counts = GetAtomPairFingerprintAsCounts(mol)
   for idx in counts:

@@ -1,3 +1,4 @@
+# $Id$
 #
 #  Copyright (C) 2006 Greg Landrum
 #  This file is part of RDKit and covered by $RDBASE/license.txt
@@ -10,13 +11,13 @@ def AlignDepict(mol,core,corePattern=None):
   """
 
   Arguments:
-    - mol:          the molecule to be aligned, this will come back with a single
-                    conformer.
+    - mol:          the molecule to be aligned, this will come back
+                    with a single conformer.
     - core:         a molecule with the core atoms to align to;
                     this should have a depiction.
-    - corePattern:  (optional) an optional molecule to be used to generate the
-                    atom mapping between the molecule and the core.
-                    
+    - corePattern:  (optional) an optional molecule to be used to 
+                    generate the atom mapping between the molecule
+                    and the core.
   """
   if core and corePattern:
     if not core.GetNumAtoms(onlyHeavy=True)==corePattern.GetNumAtoms(onlyHeavy=True):
