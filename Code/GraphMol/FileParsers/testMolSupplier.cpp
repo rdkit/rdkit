@@ -1138,6 +1138,63 @@ int testMixIterAndRandom() {
   }
   TEST_ASSERT(ok);
   delete nSup;
+
+
+  fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
+  TDTMolSupplier *tSup;
+  tSup = new TDTMolSupplier(fname);
+  TEST_ASSERT(tSup);
+  TEST_ASSERT(tSup->length()==10);
+  mol=(*tSup)[0];
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  delete mol;
+  delete tSup;
+
+  tSup = new TDTMolSupplier(fname);
+  TEST_ASSERT(tSup);
+  mol=(*tSup)[0];
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  TEST_ASSERT(tSup->length()==10);
+  delete mol;
+  delete tSup;
+
+  tSup = new TDTMolSupplier(fname);
+  TEST_ASSERT(tSup);
+  mol=tSup->next();
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  TEST_ASSERT(tSup->length()==10);
+  delete mol;
+  mol=(*tSup)[0];
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  TEST_ASSERT(tSup->length()==10);
+  delete mol;
+  mol=tSup->next();
+  TEST_ASSERT(mol);
+  mol=tSup->next();
+  TEST_ASSERT(mol);
+  mol=tSup->next();
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==10);
+  delete tSup;
+  delete mol;
+
+  tSup = new TDTMolSupplier(fname);
+  TEST_ASSERT(tSup);
+  mol=0;
+  try {
+    mol=(*tSup)[20];
+    ok = false;
+  } catch (FileParseException &) {
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+  delete tSup;
+
+
     
   return 1;
 }
