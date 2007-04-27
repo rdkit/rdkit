@@ -16,6 +16,8 @@ Bug Fixes
  - Fixed a bug causing MolSuppliers to generate incorrect length
    information when a combination of random access and iterator
    interfaces are used. (issue 1702647)
+ - Fixed a bug leading to incorrect line numbers in error messages
+   from the SDMolSuppler. (issue 1695221)
 
 New Features
  - chemical reactions are now supported
