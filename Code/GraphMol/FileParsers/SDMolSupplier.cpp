@@ -14,10 +14,6 @@
 #include "MolSupplier.h"
 #include "FileParsers.h"
 
-#ifdef USEZIPSTREAM
-// NOTE: As of this writing (1 Dec, 2004), this DOES NOT work)
-#include <ZipStream/zipstream.hpp>
-#endif
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -41,21 +37,7 @@ namespace RDKit {
     // the function "tellg" does not work correctly if we do not open it this way
     // Need to check if this has been fixed in VC++ 7.0
     std::istream *tmpStream=0;
-#ifdef USEZIPSTREAM
-    if(fileName.find(".gz")==std::string::npos){
-      tmpStream = static_cast<std::istream *>(new std::ifstream(fileName.c_str(), std::ios_base::binary));
-      dp_streamHolder=0;
-    } else {
-      std::ifstream *ifStream_=new std::ifstream();
-      ifStream_->open(fileName.c_str(),std::ios::in|std::ios_base::binary);
-      tmpStream = static_cast<std::istream *>(new zlib_stream::zip_istream(*ifStream_));
-      // we need to save this for later, otherwise the zipstream gets all
-      // screwed up
-      dp_streamHolder=ifStream_;
-    }
-#else
     tmpStream = static_cast<std::istream *>(new std::ifstream(fileName.c_str(), std::ios_base::binary));
-#endif
     if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad()) ) {
       std::ostringstream errout;
       errout << "Bad input file " << fileName;
@@ -83,9 +65,6 @@ namespace RDKit {
   SDMolSupplier::~SDMolSupplier() {
     if (df_owner) {
       delete dp_inStream;
-#ifdef USEZIPSTREAM
-      if(dp_streamHolder) delete dp_streamHolder;
-#endif
     }
   }
 
@@ -137,7 +116,6 @@ namespace RDKit {
   void SDMolSupplier::reset() {
     PRECONDITION(dp_inStream,"no stream");
     dp_inStream->clear();
-    
     dp_inStream->seekg(0, std::ios::beg);
     df_end = false;
     d_last = 0;
@@ -147,6 +125,7 @@ namespace RDKit {
   void SDMolSupplier::readMolProps(ROMol *mol){
     PRECONDITION(dp_inStream,"no stream");
     PRECONDITION(mol,"no molecule");
+    d_line++;
     std::string tempStr = getLine(dp_inStream);
     // FIX: report files missing the $$$$ marker
     while(!(dp_inStream->eof()) && tempStr.find("$$$$") != 0){
@@ -224,20 +203,20 @@ namespace RDKit {
       return res;
     }
 
-    std::string tempp;
     unsigned int line=d_line;
     try {
       res = MolDataStreamToMol(dp_inStream, line, df_sanitize);
-      d_line= line+1;
+      d_line=line;
       this->readMolProps(res);  
     }
     catch (FileParseException &fe) {
+      if(d_line<line) d_line=line;
       // we couldn't read a mol block or the data for the molecule. In this case
       // advance forward in the stream until we hit the next record and then rethrow
       // the exception. This should allow us to read the next molecule.
-      BOOST_LOG(rdErrorLog) << "ERROR: on line " << line << " " << fe.message() << std::endl;
+      BOOST_LOG(rdErrorLog) << "ERROR: on line " << d_line << " " << fe.message() << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
-
+      
       // FIX: report files missing the $$$$ marker
       while(!(dp_inStream->eof()) && tempStr.find("$$$$") != 0){
         d_line++;
@@ -245,16 +224,20 @@ namespace RDKit {
       }
     }
     catch (MolSanitizeException &se) {
+      if(d_line<line) d_line=line;
       // We couldn't sanitize a molecule we got - write out an error message and move to
       // the beginning of the next molecule
       BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule ending on line " << d_line << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
+      
       while(!(dp_inStream->eof()) && tempStr.find("$$$$") != 0){
         d_line++;
         tempStr = getLine(dp_inStream);
       }
     } catch (...) {
-      BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << line << std::endl;
+      if(d_line<line) d_line=line;
+      
+      BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
     }
     d_last++;
