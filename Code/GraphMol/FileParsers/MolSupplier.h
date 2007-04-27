@@ -246,7 +246,7 @@ namespace RDKit {
     unsigned int length();
 
   private:
-    void advanceToNextRecord();
+    bool advanceToNextRecord();
     void checkForEnd();
     ROMol *parseMol(std::string inLine);
     
