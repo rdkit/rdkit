@@ -59,13 +59,16 @@ def TransformMol(mol,tform,confId=-1,newConfId=100):
   mol.AddConformer(newConf,assignId=False)
   
 class SubshapeAligner(object):
-  triangleRMSTol=0.5
+  triangleRMSTol=1.0
   distMetric=SubshapeDistanceMetric.PROTRUDE
   shapeDistTol=0.2
   numFeatThresh=3
   #dirThresh=2.6
   dirThresh=1.6
-  edgeTol=1.0
+  edgeTol=6.0
+  coarseGridToleranceMult=1.5
+  medGridToleranceMult=1.25
+
   
   def GetTriangleMatches(self,target,query):
     ssdTol = (self.triangleRMSTol**2)*9
@@ -86,16 +89,21 @@ class SubshapeAligner(object):
     tol2 = self.edgeTol*self.edgeTol
     for tk,tv in tgtLs.iteritems():
       for qk,qv in queryLs.iteritems():
+        #print tk,qk,'  -  ',tv,qv,
         if abs(tv-qv)<tol2:
           compatEdges[(tk,qk)]=1
+          #print 1
+        #else:
+        #  print 0
     for tgtTri in _getAllTriangles(tgtPts,orderedTraversal=True):
       tgtLocs=[tgtPts[x].location for x in tgtTri]
-      for queryTri in _getAllTriangles(queryPts):
+      for queryTri in _getAllTriangles(queryPts,orderedTraversal=False):
         if compatEdges.has_key(((tgtTri[0],tgtTri[1]),(queryTri[0],queryTri[1]))) and \
            compatEdges.has_key(((tgtTri[0],tgtTri[2]),(queryTri[0],queryTri[2]))) and \
            compatEdges.has_key(((tgtTri[1],tgtTri[2]),(queryTri[1],queryTri[2]))):
           queryLocs=[queryPts[x].location for x in queryTri]
           ssd,tf = Alignment.GetAlignmentTransform(tgtLocs,queryLocs)
+          #print ssd,ssdTol
           if ssd<=ssdTol:
             alg = SubshapeAlignment()
             alg.transform=tf
@@ -176,8 +184,10 @@ class SubshapeAligner(object):
       
   def _getShapeShapeDistance(self,s1,s2):
     if self.distMetric==SubshapeDistanceMetric.PROTRUDE:
+      #print s1.grid.GetOccupancyVect().GetTotalVal(),s2.grid.GetOccupancyVect().GetTotalVal()
       if s1.grid.GetOccupancyVect().GetTotalVal()<s2.grid.GetOccupancyVect().GetTotalVal():
         d = Geometry.ProtrudeDistance(s1.grid,s2.grid)
+        #print d
       else:
         d = Geometry.ProtrudeDistance(s2.grid,s1.grid)
     else:
@@ -204,7 +214,7 @@ class SubshapeAligner(object):
       builder.gridSpacing=oSpace*2
       coarseGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
       d = self._getShapeShapeDistance(coarseGrid,target.coarseGrid)
-      if d>self.shapeDistTol:
+      if d>self.shapeDistTol*self.coarseGridToleranceMult:
         removeIt=True
         if pruneStats is not None:
           pruneStats['coarseGrid']=pruneStats.get('coarseGrid',0)+1
@@ -212,7 +222,7 @@ class SubshapeAligner(object):
         builder.gridSpacing=oSpace*1.5
         medGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
         d = self._getShapeShapeDistance(medGrid,target.medGrid)
-        if d>self.shapeDistTol:
+        if d>self.shapeDistTol*self.medGridToleranceMult:
           removeIt=True
           if pruneStats is not None:
             pruneStats['medGrid']=pruneStats.get('medGrid',0)+1
