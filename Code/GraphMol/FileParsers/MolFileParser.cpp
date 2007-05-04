@@ -24,7 +24,6 @@ namespace RDKit{
   // crash if the string starts with spaces.
   template <typename T>
   T stripSpacesAndCast(const std::string &input,bool acceptSpaces=false){
-    T res;
     std::string trimmed=boost::trim_copy(input);
     if(acceptSpaces && trimmed==""){
       return 0;
@@ -132,20 +131,21 @@ namespace RDKit{
   void ParseIsotopeLine(RWMol *mol, std::string text){
     PRECONDITION(text.substr(0,6)==std::string("M  ISO"),"bad isotope line");
     
-    int ie, nent;
+    unsigned int nent;
     try {
-      nent = stripSpacesAndCast<int>(text.substr(6,3));
+      nent = stripSpacesAndCast<unsigned int>(text.substr(6,3));
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
       errout << "Cannot convert " << text.substr(6,3) << " to int";
       throw FileParseException(errout.str()) ;
     }
-    int spos = 9;
-    for (ie = 0; ie < nent; ie++) {
-      int aid, mass;
+    unsigned int spos = 9;
+    for (unsigned int ie = 0; ie < nent; ie++) {
+      unsigned int aid;
+      int mass;
       try {
-        aid = stripSpacesAndCast<int>(text.substr(spos,4));
+        aid = stripSpacesAndCast<unsigned int>(text.substr(spos,4));
         spos += 4;
         Atom *atom=mol->getAtomWithIdx(aid-1); 
         if(text.size()>=spos+4 && text.substr(spos,4)!="    "){

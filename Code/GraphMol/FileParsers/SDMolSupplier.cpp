@@ -210,7 +210,7 @@ namespace RDKit {
       this->readMolProps(res);  
     }
     catch (FileParseException &fe) {
-      if(d_line<line) d_line=line;
+      if(d_line<static_cast<int>(line)) d_line=line;
       // we couldn't read a mol block or the data for the molecule. In this case
       // advance forward in the stream until we hit the next record and then rethrow
       // the exception. This should allow us to read the next molecule.
@@ -224,7 +224,7 @@ namespace RDKit {
       }
     }
     catch (MolSanitizeException &se) {
-      if(d_line<line) d_line=line;
+      if(d_line<static_cast<int>(line)) d_line=line;
       // We couldn't sanitize a molecule we got - write out an error message and move to
       // the beginning of the next molecule
       BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule ending on line " << d_line << std::endl;
@@ -235,7 +235,7 @@ namespace RDKit {
         tempStr = getLine(dp_inStream);
       }
     } catch (...) {
-      if(d_line<line) d_line=line;
+      if(d_line<static_cast<int>(line)) d_line=line;
       
       BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
