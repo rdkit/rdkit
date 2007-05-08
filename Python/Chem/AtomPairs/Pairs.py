@@ -32,6 +32,8 @@ def ScorePair(at1,at2,dist):
   >>> t = 1 | min(c1,c2)<<numPathBits | max(c1,c2)<<(Utils.codeSize+numPathBits)
   >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)==t
   1
+  >>> ScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(0),1)==t
+  1
   >>> t = 2 | min(c1,c3)<<numPathBits | max(c1,c3)<<(Utils.codeSize+numPathBits)
   >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2)==t
   1
@@ -43,6 +45,35 @@ def ScorePair(at1,at2,dist):
   accum |= min(code1,code2) << numPathBits
   accum |= max(code1,code2) << (Utils.codeSize+numPathBits)
   return accum
+
+def ExplainPairScore(score):
+  """ 
+  >>> m = Chem.MolFromSmiles('C=CC')
+  >>> score = ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)
+  >>> ExplainPairScore(score)
+  (('C', 1, 1), 1, ('C', 2, 1))
+  >>> score = ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2)
+  >>> ExplainPairScore(score)
+  (('C', 1, 0), 2, ('C', 1, 1))
+  >>> score = ScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(2),1)
+  >>> ExplainPairScore(score)
+  (('C', 1, 0), 1, ('C', 2, 1))
+  >>> score = ScorePair(m.GetAtomWithIdx(2),m.GetAtomWithIdx(1),1)
+  >>> ExplainPairScore(score)
+  (('C', 1, 0), 1, ('C', 2, 1))
+
+  """
+  codeMask = (1<<Utils.codeSize)-1
+  pathMask = (1<<numPathBits)-1
+  dist = score&pathMask
+
+  score = score>>numPathBits
+  code1 = score&codeMask
+  score = score>>Utils.codeSize
+  code2 = score&codeMask
+
+  res = Utils.ExplainAtomCode(code1),dist,Utils.ExplainAtomCode(code2)
+  return res
 
 def GetAtomPairFingerprintAsCounts(mol):
   """ Returns the Atom-pair fingerprint for a molecule as

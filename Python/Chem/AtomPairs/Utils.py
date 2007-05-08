@@ -32,6 +32,54 @@ _maxNumBranches = 7
 numBranchBits = 3
 codeSize=numTypeBits+numPiBits+numBranchBits
 
+def ExplainAtomCode(code,branchSubtract=0):
+  """
+
+  **Arguments**:
+
+    - the code to be considered
+
+    - branchSubtract: (optional) the constant that was subtracted off
+      the number of neighbors before integrating it into the code.  
+      This is used by the topological torsions code.
+      
+
+  >>> m = Chem.MolFromSmiles('C=CC(=O)O')
+  >>> code = GetAtomCode(m.GetAtomWithIdx(0))
+  >>> ExplainAtomCode(code)
+  ('C', 1, 1)
+  >>> code = GetAtomCode(m.GetAtomWithIdx(1))
+  >>> ExplainAtomCode(code)
+  ('C', 2, 1)
+  >>> code = GetAtomCode(m.GetAtomWithIdx(2))
+  >>> ExplainAtomCode(code)
+  ('C', 3, 1)
+  >>> code = GetAtomCode(m.GetAtomWithIdx(3))
+  >>> ExplainAtomCode(code)
+  ('O', 1, 1)
+  >>> code = GetAtomCode(m.GetAtomWithIdx(4))
+  >>> ExplainAtomCode(code)
+  ('O', 1, 0)
+  
+  """
+  typeMask = (1<<numTypeBits)-1
+  branchMask = (1<<numBranchBits)-1
+  piMask = (1<<numPiBits)-1
+
+  nBranch = int(code&branchMask)
+
+  code = code>>numBranchBits
+  nPi = int(code&piMask)
+  
+  code = code>>numPiBits
+  typeIdx=int(code&typeMask)
+  atomNum = _atomNumberTypes[typeIdx]
+  if atomNum==-1:
+    atomSymbol='X'
+  else:
+    atomSymbol=Chem.GetPeriodicTable().GetElementSymbol(atomNum)
+  return (atomSymbol,nBranch,nPi)
+
 def GetAtomCode(atom,branchSubtract=0):
   """
 

@@ -60,6 +60,43 @@ def ScorePath(mol,path,size):
     accum |= codes[i] << Utils.codeSize*i
   return accum
 
+def ExplainPathScore(score,size=4):
+  """ 
+
+  >>> m = Chem.MolFromSmiles('C=CC')
+  >>> score=ScorePath(m,(0,1,2),3)
+  >>> ExplainPathScore(score,3)
+  (('C', 1, 0), ('C', 2, 1), ('C', 1, 1))
+
+  Again, it's order independent:
+  >>> score=ScorePath(m,(2,1,0),3)
+  >>> ExplainPathScore(score,3)
+  (('C', 1, 0), ('C', 2, 1), ('C', 1, 1))
+
+  >>> m = Chem.MolFromSmiles('C=CC(=O)O')
+  >>> score=ScorePath(m,(0,1,2,3),4)
+  >>> ExplainPathScore(score,4)
+  (('C', 1, 1), ('C', 2, 1), ('C', 3, 1), ('O', 1, 1))
+  >>> score=ScorePath(m,(0,1,2,4),4)
+  >>> ExplainPathScore(score,4)
+  (('C', 1, 1), ('C', 2, 1), ('C', 3, 1), ('O', 1, 0))
+
+
+  """
+  codeMask=(1<<Utils.codeSize)-1
+  res=[None]*size
+  for i in range(size):
+    if i==0 or i==(size-1):
+      sub = 1
+    else:
+      sub = 2
+    code = score&codeMask
+    score = score>>Utils.codeSize
+    symb,nBranch,nPi = Utils.ExplainAtomCode(code)
+    expl = symb,nBranch+sub,nPi
+    res[i] = expl
+  return tuple(res)
+
 def GetTopologicalTorsionFingerprint(mol,targetSize=4):
   """ Returns the topological torsion fingerprint for a molecule as
   a tuple of on-bit IDs.
