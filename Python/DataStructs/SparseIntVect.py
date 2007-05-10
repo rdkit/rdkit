@@ -3,6 +3,7 @@
 #  Copyright (C) 2007 Greg Landrum
 #   All Rights Reserved
 #
+import copy
 
 class SparseIntVect(object):
   size=0
@@ -237,7 +238,7 @@ class SparseIntVect(object):
 
     """
     res = SparseIntVect(self.size)
-    res.container = self.container
+    res.container = copy.deepcopy(self.container)
     res += other
     return res
   def __sub__(self,other):
@@ -251,12 +252,14 @@ class SparseIntVect(object):
     >>> c2[2] = 2
     >>> c2[5] = 6
     >>> c3 = c1-c2
-    >>> [x for x in c1]
+    >>> [x for x in c3]
     [(0, 1), (4, 5), (5, -6)]
+    >>> [x for x in c1]
+    [(0, 3), (2, 2), (4, 5)]
 
     """
     res = SparseIntVect(self.size)
-    res.container = self.container
+    res.container = copy.deepcopy(self.container)
     res -= other
     return res
   def __mul__(self,other):
@@ -270,10 +273,12 @@ class SparseIntVect(object):
     >>> c3 = c1*c2
     >>> [x for x in c3]
     [(0, 6)]
+    >>> [x for x in c1]
+    [(0, 3), (4, 5)]
 
     """
     res = SparseIntVect(self.size)
-    res.container = self.container
+    res.container = copy.deepcopy(self.container)
     res *= other
     return res
   def __and__(self,other):
@@ -289,10 +294,12 @@ class SparseIntVect(object):
     >>> c3 = c1 & c2
     >>> [x for x in c3]
     [(0, 2), (2, -2)]
+    >>> [x for x in c1]
+    [(0, 3), (2, 2), (4, 5)]
 
     """
     res = SparseIntVect(self.size)
-    res.container = self.container
+    res.container = copy.deepcopy(self.container)
     res &= other
     return res
   def __or__(self,other):
@@ -308,13 +315,14 @@ class SparseIntVect(object):
     >>> c3 = c1 | c2
     >>> [x for x in c3]
     [(0, 3), (2, 2), (4, 5), (5, 6)]
+    >>> [x for x in c1]
+    [(0, 3), (2, 2), (4, 5)]
 
     """
     res = SparseIntVect(self.size)
-    res.container = self.container
+    res.container = copy.deepcopy(self.container)
     res |= other
     return res
-
   
   def __len__(self):
     return self.size
