@@ -100,6 +100,8 @@ def GetColumnInfoFromCursor(cursor):
       typeStr='float'
     elif cType in sqlBinTypes:
       typeStr='binary'
+    elif RDConfig.useSqlLite:
+      typeStr='string'
     else:
       sys.stderr.write('odd type in col %s: %s\n'%(cName,str(cType)))
     results.append((cName,typeStr))

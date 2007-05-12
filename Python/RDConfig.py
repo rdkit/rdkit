@@ -86,22 +86,25 @@ else:
 usePgSQL=0
 useSqlLite=0
 if not (os.environ.has_key('RD_USEGVIB') and os.environ['RD_USEGVIB']):
-  try:
-    from pyPgSQL import PgSQL
-    usePgSQL=1
-  except ImportError:
-    usePgSQL=0
+  if not os.environ.get('RD_USESQLLITE',''):
     try:
-      # python2.5 has this:
-      import sqlite3
-      useSqlLite=True
+      from pyPgSQL import PgSQL
+      usePgSQL=1
     except ImportError:
+      usePgSQL=0
       try:
-        # earlier versions of python:
-        from pysqlite2 import dbapi2
+        # python2.5 has this:
+        import sqlite3
         useSqlLite=True
-      except:
-        pass
+      except ImportError:
+        try:
+          # earlier versions of python:
+          from pysqlite2 import dbapi2
+          useSqlLite=True
+        except:
+          pass
+  else:
+    useSqlLite=True
 else:
   usePgSQL=0
   
