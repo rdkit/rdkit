@@ -618,7 +618,6 @@ void testSymmetricDblBondStereochem(){
   TEST_ASSERT(m1);
 
   smi = MolToSmiles(*m1,true);
-  std::cerr << "smiles: " << smi <<std::endl;
   TEST_ASSERT(smi=="C/C=C/C");
 
   fName = rdbase+"cistrans.2.mol";
@@ -627,8 +626,15 @@ void testSymmetricDblBondStereochem(){
   TEST_ASSERT(m1);
 
   smi = MolToSmiles(*m1,true);
-  std::cerr << "smiles: " << smi <<std::endl;
   TEST_ASSERT(smi=="C/C=C\\C");
+
+  fName = rdbase+"cistrans.3.mol";
+  delete m1;
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+
+  smi = MolToSmiles(*m1,true);
+  TEST_ASSERT(smi=="CC=CC");
 
 
   delete m1;

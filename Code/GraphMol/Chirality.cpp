@@ -561,7 +561,6 @@ namespace RDKit{
         if( (*bondIt)->getBondType()==Bond::DOUBLE ){
           Bond *dblBond=*bondIt;
           if(cleanIt) dblBond->setStereo(Bond::STEREONONE);
-
           // at the moment we are ignoring stereochem on ring bonds.
           if(!mol.getRingInfo()->numBondRings(dblBond->getIdx())){
             bool haveBeginMarker=false,haveEndMarker=false;
@@ -666,8 +665,13 @@ namespace RDKit{
           if( (*bondIt)->getBondType()==Bond::DOUBLE  && 
               !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx())) ) {
             // we are ignoring ring bonds here - read the FIX above
-          
+         
+
             Bond *dblBond=*bondIt;
+            // if the bond is flagged as EITHERDOUBLE, we ignore it:
+            if(dblBond->getBondDir()==Bond::EITHERDOUBLE){
+              break;
+            }
             // proceed only if we either want to clean the stereocode on this bond
             // or if none is set on it yet
             if ( cleanIt || dblBond->getStereo()==Bond::STEREONONE ) {
