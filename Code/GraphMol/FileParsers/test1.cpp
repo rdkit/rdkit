@@ -527,8 +527,6 @@ void testIssue264(){
   BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi1!=smi2);
   
-
-  
   delete m1;
   delete m2;
 
@@ -540,7 +538,7 @@ void testIssue399(){
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
-  RWMol *m1,*m2;
+  RWMol *m1;
   std::string smi1,smi2;
   std::string fName;
 
@@ -589,6 +587,55 @@ void testMolFileChgLines(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testSymmetricDblBondStereochem(){
+  // this was sf.net issue 1718794:
+  // http://sourceforge.net/tracker/index.php?func=detail&aid=1718794&group_id=160139&atid=814650)
+  BOOST_LOG(rdInfoLog) << "testing double bonds with symmetric substituents" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  RWMol *m1;
+  std::string fName,smi;
+
+  fName = rdbase+"cistrans.1a.mol";
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+
+  smi = MolToSmiles(*m1,true);
+  TEST_ASSERT(smi=="C/C=C/Cl");
+
+  fName = rdbase+"cistrans.2a.mol";
+  delete m1;
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+
+  smi = MolToSmiles(*m1,true);
+  TEST_ASSERT(smi=="C/C=C\\Cl");
+
+  fName = rdbase+"cistrans.1.mol";
+  delete m1;
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+
+  smi = MolToSmiles(*m1,true);
+  std::cerr << "smiles: " << smi <<std::endl;
+  TEST_ASSERT(smi=="C/C=C/C");
+
+  fName = rdbase+"cistrans.2.mol";
+  delete m1;
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+
+  smi = MolToSmiles(*m1,true);
+  std::cerr << "smiles: " << smi <<std::endl;
+  TEST_ASSERT(smi=="C/C=C\\C");
+
+
+  delete m1;
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -605,8 +652,9 @@ int main(int argc,char *argv[]){
   testIssue180();
   testIssue264();
   testIssue399();
-#endif
   testMolFileChgLines();
+#endif
+  testSymmetricDblBondStereochem();
   //testCrash();
   return 0;
 }

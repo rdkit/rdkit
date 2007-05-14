@@ -247,11 +247,11 @@ namespace RDKit {
     // if the direction on any of the single bonds
     // at one end of a double bond are set set the other single bonds at that end as well
     // to be consistent with that setting
-    // let say we haev Cl\C(Br)=C/F
+    // let say we have Cl\C(Br)=C/F
     // here the direction is specified so far on Cl to C bond (bid = 0), but not 
     // specified on C to Br (bid = 1). This function will specify the direction on 
     // C to Br bond so that is is consistent with Cl to C. Also note that
-    // we have to pay attention to weather C is the beg atom (or end atom) on both these
+    // we have to pay attention to whether C is the beg atom (or end atom) on both these
     // bonds or on just one of them
     // return true if we set the direction or it is already set
     bool res = false;
@@ -308,7 +308,7 @@ namespace RDKit {
     //   a double bond
     // - we simply have to figure the if the high ranking neighbor of the double bond
     //   are in cis or trans position and set the BondStereo on the Bond
-    // we want to deal onyl with double bond
+    // we want to deal only with double bond
     PRECONDITION(dblBond, "");
     PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "");
     PRECONDITION(conf,"no conformer");

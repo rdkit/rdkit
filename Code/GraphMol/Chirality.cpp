@@ -715,6 +715,7 @@ namespace RDKit{
                 } else if (endAtomNeighbors.size() == 2) {
                   // if the endAtom has two neighbors and ...
                   if (ranks[endAtomNeighbors[0]] != ranks[endAtomNeighbors[1]]) {
+                    // their ranks are different
                     dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
                     if(ranks[endAtomNeighbors[0]] > ranks[endAtomNeighbors[1]]){
                       dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
@@ -723,12 +724,9 @@ namespace RDKit{
                     }
                   }
                 } else {
-                  // end and beg atoms has only one neighbors each and ...
-                  if (ranks[begAtomNeighbors[0]] != ranks[endAtomNeighbors[0]]) {
-                    // and their ranks are different
-                    dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
-                    dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
-                  }
+                  // end and beg atoms has only one neighbor each, it doesn't matter what the ranks are:
+                  dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
+                  dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
                 } // end of different number of neighbors on beg and end atoms
               } // end of 2 and 3 coordinated atoms only
             } // end of we want it or CIP code is not set
