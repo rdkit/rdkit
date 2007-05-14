@@ -36,7 +36,7 @@ class SparseIntVect(object):
     self.container={}
     self.UpdateFromSequence(seq)
       
-  def Sum(self):
+  def Sum(self,useAbs=False):
     """
     >>> c1=SparseIntVect(10)
     >>> c1[0] = 3
@@ -44,10 +44,19 @@ class SparseIntVect(object):
     >>> c1[4] = 5
     >>> c1.Sum()
     10
+
+    >>> c1[2] = -2
+    >>> c1.Sum()
+    6
+    >>> c1.Sum(useAbs=True)
+    10
     """
     res=0
     for v in self.container.values():
-      res+=v
+      if not useAbs:
+        res+=v
+      else:
+        res+=abs(v)
     return res
   
 
@@ -366,7 +375,7 @@ class SparseIntVect(object):
 
     
     
-def DiceSimilarity(v1,v2,bounds=None):
+def DiceSimilarity(v1,v2,bounds=None,useAbs=False):
   """ Implements the DICE similarity metric.
 
   >>> v1 = SparseIntVect(10)
@@ -391,7 +400,7 @@ def DiceSimilarity(v1,v2,bounds=None):
   0.5
 
   """
-  denom = 1.0*(v1.Sum()+v2.Sum())
+  denom = 1.0*(v1.Sum(useAbs=useAbs)+v2.Sum(useAbs=useAbs))
   if not denom:
     res = 0.0
   else:
@@ -399,7 +408,7 @@ def DiceSimilarity(v1,v2,bounds=None):
       numer = 0.0
     else:
       tv = v1&v2
-      numer = 2.0*tv.Sum()
+      numer = 2.0*tv.Sum(useAbs=useAbs)
     res = numer/denom
 
   return res
