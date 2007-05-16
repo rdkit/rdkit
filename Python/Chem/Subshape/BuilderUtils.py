@@ -19,7 +19,6 @@ def ComputeGridIndices(shapeGrid,winRad):
   dY = shapeGrid.GetNumY()
   dZ = shapeGrid.GetNumZ()
   radInGrid = int(winRad/gridSpacing)
-  print winRad,gridSpacing,radInGrid
   indicesInSphere=[]
   for i in range(-radInGrid,radInGrid+1):
     for j in range(-radInGrid,radInGrid+1):
@@ -58,35 +57,9 @@ def ComputeShapeGridCentroid(pt,shapeGrid,winRad):
 
 #-----------------------------------------------------------------------------
 def FindTerminalPtsFromShape(shape,winRad,fraction,maxGridVal=3):
-  termPts = []
-  shapeGrid=shape.grid
-  shapeVect = shapeGrid.GetOccupancyVect()
-  nGridPts = len(shapeVect)
-  indicesInSphere = ComputeGridIndices(shapeGrid,winRad)
-  for i in range(nGridPts):
-    if shapeVect[i]<maxGridVal:
-      continue
-    # compute the volume inside the sphere:
-    volInSphere=0
-    nPtsHere=0
-    for idx in indicesInSphere:
-      idx += i
-      if idx>=0 and idx<nGridPts:
-        volInSphere += shapeVect[idx]
-        nPtsHere +=1
-    # the shape may be cut off by the edge of the grid, so
-    # the actual max volume in the sphere may well be less
-    # than the theoretical max:
-    maxVolInSphere=maxGridVal*nPtsHere
-    fracVol = float(volInSphere)/maxVolInSphere
-    if fracVol<fraction:
-      # the sphere is towards the edge of the shape, add a skel pt:
-      posI = shapeGrid.GetGridPointLoc(i)
-      count,centroid = Geometry.ComputeGridCentroid(shapeGrid,posI,winRad)
-      termPts.append(SubshapeObjects.SkeletonPoint(location=centroid))
+  pts = Geometry.FindGridTerminalPoints(shape.grid,winRad,fraction)
+  termPts = [SubshapeObjects.SkeletonPoint(location=x) for x in pts]
   return termPts
-
-
 
 #-----------------------------------------------------------------------------
 def FindTerminalPtsFromConformer(conf,winRad,nbrCount):
@@ -173,8 +146,6 @@ def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
     pt = skelPts[i]
     count,centroid=Geometry.ComputeGridCentroid(shapeGrid,pt.location,winRad)
     #count,centroid=ComputeShapeGridCentroid(pt.location,shapeGrid,winRad)
-    if i<10:
-      print i,count,list(centroid)
     centroidPtDist=centroid.Distance(pt.location)
     if centroidPtDist>maxDistC:
       del skelPts[i]
@@ -217,6 +188,7 @@ def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
 #-----------------------------------------------------------------------------
 def CalculateDirectionsAtPoint(pt,shapeGrid,winRad):
   shapeGridVect = shapeGrid.GetOccupancyVect()
+  nGridPts = len(shapeGridVect)
   tmp = winRad/shapeGrid.GetSpacing()
   radInGrid=int(tmp)
   radInGrid2=int(tmp*tmp)
@@ -241,7 +213,7 @@ def CalculateDirectionsAtPoint(pt,shapeGrid,winRad):
         if d2>radInGrid2 and int(math.sqrt(d2))>radInGrid:
           continue
         gridIdx = (xk*dY+xj)*dX+xi
-        if gridIdx>=0 and gridIdx<len(shapeGridVect):
+        if gridIdx>=0 and gridIdx<nGridPts:
           wtHere = shapeGridVect[gridIdx]
           totWt += wtHere
           ptInSphere = shapeGrid.GetGridPointLoc(gridIdx)
