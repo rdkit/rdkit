@@ -52,6 +52,12 @@ namespace RDGeom {
     grid.setVal(pt, val);
   }
 
+  python::tuple computeGridCentroidWrap(const UniformGrid3D &grid, const Point3D &pt,double windowRadius){
+    double weightSum;
+    Point3D centroid=computeGridCentroid(grid,pt,windowRadius,weightSum);
+    return python::make_tuple(weightSum,centroid);
+  }
+
   std::string uGridClassDoc = "Class to represent a uniform three-dimensional\n\
     cubic grid. Each grid point can store a poisitive integer value. For the sake\n\
     of efficiency these value can either be binary, fit in 2, 4, 8 or 16 bits\n";
@@ -124,6 +130,8 @@ namespace RDGeom {
                   "Compute the tanimoto distance between two grid objects");
       python::def("ProtrudeDistance", protrudeDistance<UniformGrid3D>,
                   "Compute the protrude distance between two grid objects");
+      python::def("ComputeGridCentroid", computeGridCentroidWrap,
+                  "Compute the grid point at the center of sphere around a Point3D");
     }
   };
 }

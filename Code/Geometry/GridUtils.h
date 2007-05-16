@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2003-2006 Rational Discovery LLC
+//   Copyright (C) 2003-2007 Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -7,6 +7,9 @@
 #define _GRIDUTILS_H_20050126
 
 namespace RDGeom {
+  class UniformGrid3D;
+  class Point3D;
+
   //! calculate the tanimoto distance between the shapes encoded on two grids
   /*!
 
@@ -23,7 +26,14 @@ namespace RDGeom {
   */
   template<class GRIDTYPE> double protrudeDistance(const GRIDTYPE &grid1, 
                                                    const GRIDTYPE &grid2);
-    
+
+
+  //! calculate the grid centroid within a window of a point
+  Point3D computeGridCentroid(const UniformGrid3D &grid,
+                              const Point3D &pt,
+                              double windowRadius,
+                              double &weightSum);
+  
 }
 
 #endif

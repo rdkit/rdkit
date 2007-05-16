@@ -1,14 +1,16 @@
 // $Id$
 // 
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2007 Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #include "GridUtils.h"
 #include "Grid3D.h"
 #include "UniformGrid3D.h"
+#include "point.h"
 #include <RDBoost/Exceptions.h>
 #include <DataStructs/DiscreteValueVect.h>
+#include <cmath>
 
 using namespace RDKit;
 namespace RDGeom {
@@ -48,6 +50,52 @@ namespace RDGeom {
   template double protrudeDistance(const UniformGrid3D &grid1, 
                                    const UniformGrid3D &grid2);
 
+  std::map< int, std::vector<int> > gridIdxCache;
+  std::vector<int> computeGridIndices(const UniformGrid3D &grid,double windowRadius){
+    double gridSpacing=grid.getSpacing();
+    int radInGrid=static_cast<int>(ceil(windowRadius/gridSpacing));
+    //if(gridIdxCache.count(radInGrid)>0){
+    //  return gridIdxCache[radInGrid];
+    //}
+    unsigned int dX,dY,dZ;
+    dX = grid.getNumX();
+    dY = grid.getNumY();
+    dZ = grid.getNumZ();
+    std::vector<int> res;
+    for(int i=-radInGrid;i<=radInGrid;++i){
+      for(int j=-radInGrid;j<=radInGrid;++j){
+        for(int k=-radInGrid;k<=radInGrid;++k){
+          double r2=i*i+j*j+k*k;
+          int d=static_cast<int>(sqrt(r2));
+          if(d<=radInGrid){
+            res.push_back((i*dY+j)*dX+k);
+          }
+        }
+      }
+    }
+    gridIdxCache[radInGrid]=res;
+    return res;
+  }
 
-
+  Point3D computeGridCentroid(const UniformGrid3D &grid,
+                              const Point3D &pt,
+                              double windowRadius,
+                              double &weightSum){
+    weightSum = 0.0;
+    const DiscreteValueVect *v1 = grid.getOccupancyVect();
+    Point3D centroid(0.0,0.0,0.0);
+    
+    unsigned int idxI = grid.getGridPointIndex(pt);
+    std::vector<int> indicesInSphere=computeGridIndices(grid,windowRadius);
+    for(std::vector<int>::const_iterator it=indicesInSphere.begin();
+        it!=indicesInSphere.end();++it){
+      int idx=idxI+*it;
+      if(idx>=0 && static_cast<unsigned int>(idx)<v1->getLength()){
+        unsigned int wt=v1->getVal(idx);
+        centroid += grid.getGridPointLoc(static_cast<unsigned int>(idx))*wt;
+        weightSum += wt;
+      }
+    }
+    return centroid/weightSum;
+  }
 }
