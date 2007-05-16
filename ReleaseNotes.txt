@@ -1,3 +1,27 @@
+******  Release_XXX2007_1 *******
+(Changes relative to Release_April2007_1)
+
+Bug Fixes
+ - Fixed a bug with operators and SparseIntVects. (issue 1716736)
+ - Fixed a bug causing the Mol file parser to not calculate cis/trans
+   labels for double bonds where the two ends had the same
+   substituents. (issue 1718794)
+
+New Features
+ - The Atom Pairs and Topological Torsions code can now provide
+   "explanations" of the codes. See $RDBASE/Python/Chem/AtomPairs for
+   details.
+ 
+Other
+ - Similarity scores can now be calculated from Python in bulk
+   (i.e. calculating the similarity between one vector and a list of
+   others). This can be substantially faster than calling the
+   individual routines multiple times. The relevant functions are
+   BulkTanimotoSimilarity, BulkDiceSimilarity, etc.
+ - 
+ 
+
+ 
 ******  Release_April2007_1 *******
 (Changes relative to Release_Jan2007_1)
 
