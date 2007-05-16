@@ -4,6 +4,9 @@ import unittest
 import cPickle as pickle
 import random
 
+def feq(a,b,tol=1e-4):
+  return abs(a-b)<tol
+
 class TestCase(unittest.TestCase):
    def setUp(self) :
       pass
@@ -90,5 +93,38 @@ class TestCase(unittest.TestCase):
       bv = DataStructs.CreateFromBitString(s1)
       self.failUnless(len(bv)==4)
       self.failUnless(list(bv.GetOnBits())==[0,2])
+
+   def test6BulkOps(self):
+      nbits = 10000
+      bvs = []
+      for bvi in range(10):
+        bv = DataStructs.ExplicitBitVect(nbits)
+        for j in range(nbits) :
+           x = random.randrange(0,nbits)
+           bv.SetBit(x)
+        bvs.append(bv)
+      sims = DataStructs.BulkTanimotoSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkDiceSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkAllBitSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.AllBitSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+      sims = DataStructs.BulkOnBitSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.OnBitSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
+
+
+
 if __name__ == '__main__':
    unittest.main()

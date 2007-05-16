@@ -50,9 +50,38 @@ double SimilarityWrapper(const T &bv1,const std::string &pkl,
 }
 
 template <typename T>
+python::list BulkWrapper(const T &bv1,python::list bvs,
+                         const double (*metric)(const T &,const T &)){
+  python::list res;
+  unsigned int nbvs=python::extract<unsigned int>(bvs.attr("__len__")());
+  for(unsigned int i=0;i<nbvs;++i){
+    double simVal;
+    T bv2=python::extract<T>(bvs[i])();
+    if(bv1.GetNumBits()>bv2.GetNumBits()){
+      T *bv1tmp = FoldFingerprint(bv1,bv1.GetNumBits()/bv2.GetNumBits());
+      simVal = metric(*bv1tmp,bv2);
+      delete bv1tmp;
+    } else if(bv2.GetNumBits()>bv1.GetNumBits()){
+      T *bv2tmp = FoldFingerprint(bv2,bv2.GetNumBits()/bv1.GetNumBits());
+      simVal = metric(bv1,*bv2tmp);
+      delete bv2tmp;
+    } else {
+      simVal = metric(bv1,bv2);
+    }
+    res.append(simVal);
+  }
+  return res;
+}
+
+template <typename T>
 double TanimotoSimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))TanimotoSimilarity);
+}
+template <typename T>
+python::list BulkTanimotoSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))TanimotoSimilarity);
 }
 
 template <typename T>
@@ -60,87 +89,150 @@ double CosineSimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))CosineSimilarity);
 }
+template <typename T>
+python::list BulkCosineSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))CosineSimilarity);
+}
 
 template <typename T>
 double KulczynskiSimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))KulczynskiSimilarity);
 }
+template <typename T>
+python::list BulkKulczynskiSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))KulczynskiSimilarity);
+}
+
 
 template <typename T>
 double DiceSimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))DiceSimilarity);
 }
+template <typename T>
+python::list BulkDiceSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))DiceSimilarity);
+}
+
 
 template <typename T>
 double SokalSimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))SokalSimilarity);
 }
+template <typename T>
+python::list BulkSokalSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))SokalSimilarity);
+}
+
 
 template <typename T>
 double McConnaugheySimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))McConnaugheySimilarity);
 }
+template <typename T>
+python::list BulkMcConnaugheySimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))McConnaugheySimilarity);
+}
+
 
 template <typename T>
 double AsymmetricSimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))AsymmetricSimilarity);
 }
+template <typename T>
+python::list BulkAsymmetricSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))AsymmetricSimilarity);
+}
+
 
 template <typename T>
 double BraunBlanquetSimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))BraunBlanquetSimilarity);
 }
+template <typename T>
+python::list BulkBraunBlanquetSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))BraunBlanquetSimilarity);
+}
+
 
 template <typename T>
 double RusselSimilarity_w(const T &bv1,const std::string &pkl){
   return SimilarityWrapper(bv1,pkl,
                            (const double (*)(const T&,const T&))RusselSimilarity);
 }
+template <typename T>
+python::list BulkRusselSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))RusselSimilarity);
+}
+
+template <typename T>
+python::list BulkOnBitSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))OnBitSimilarity);
+}
+template <typename T>
+python::list BulkAllBitSimilarity(const T &bv1,python::list bvs){
+  return BulkWrapper(bv1,bvs,
+                     (const double (*)(const T&,const T&))AllBitSimilarity);
+}
+
 
 BOOST_PYTHON_FUNCTION_OVERLOADS(sbv_fold_overloads, ff1, 1, 2);
 BOOST_PYTHON_FUNCTION_OVERLOADS(ebv_fold_overloads, ff2, 1, 2);
 
-#define DBL_DEF(_name_,_fn_,_help_) \
-  python::def(_name_,(const double (*)(const SBV &,const SBV &))_fn_); \
-  python::def(_name_,(const double (*)(const EBV &,const EBV &))_fn_,_help_);\
+#define DBL_DEF(_funcname_,_bulkname_,_help_) \
+  python::def( # _funcname_,(const double (*)(const SBV &,const SBV &))_funcname_); \
+  python::def( # _funcname_,(const double (*)(const EBV &,const EBV &))_funcname_,_help_);\
+  python::def( # _bulkname_,(python::list (*)(const EBV &,python::list))_bulkname_);\
+  python::def( # _bulkname_,(python::list (*)(const EBV &,python::list))_bulkname_,_help_);
+  
 
-#define BIG_DEF(_name_,_fn_,_fn_w_,_help_) \
-  python::def(_name_,(const double (*)(const SBV &,const SBV &))_fn_); \
-  python::def(_name_,(const double (*)(const EBV &,const EBV &))_fn_,_help_);\
-  python::def(_name_,(double (*)(const SBV &,const std::string &))_fn_w_,_help_);\
-  python::def(_name_,(double (*)(const EBV &,const std::string &))_fn_w_,_help_);\
+#define BIG_DEF(_funcname_,_name_w_,_bulkname_,_help_) \
+  python::def( # _funcname_,(const double (*)(const SBV &,const SBV &))_funcname_); \
+  python::def( # _funcname_,(const double (*)(const EBV &,const EBV &))_funcname_,_help_);\
+  python::def( # _funcname_,(double (*)(const SBV &,const std::string &))_name_w_);\
+  python::def( # _funcname_,(double (*)(const EBV &,const std::string &))_name_w_,_help_);\
+  python::def( # _bulkname_,(python::list (*)(const SBV &,python::list))_bulkname_);\
+  python::def( # _bulkname_,(python::list (*)(const EBV &,python::list))_bulkname_,_help_);
 
 struct BitOps_wrapper {
   static void wrap(){
-    BIG_DEF("TanimotoSimilarity",TanimotoSimilarity,TanimotoSimilarity_w,
+    BIG_DEF(TanimotoSimilarity,TanimotoSimilarity_w,BulkTanimotoSimilarity,
             "B(bv1&bv2) / (B(bv1) + B(bv2) - B(bv1&bv2))")
-    BIG_DEF("CosineSimilarity",CosineSimilarity,CosineSimilarity_w,
+    BIG_DEF(CosineSimilarity,CosineSimilarity_w,BulkCosineSimilarity,
             "B(bv1&bv2) / sqrt(B(bv1) * B(bv2))")
-    BIG_DEF("KulczynskiSimilarity",KulczynskiSimilarity,KulczynskiSimilarity_w,
+    BIG_DEF(KulczynskiSimilarity,KulczynskiSimilarity_w,BulkKulczynskiSimilarity,
             "B(bv1&bv2)*(B(bv1) + B(bv2)) / (2 * B(bv1) * B(bv2))")
-    BIG_DEF("DiceSimilarity",DiceSimilarity,DiceSimilarity_w,
+    BIG_DEF(DiceSimilarity,DiceSimilarity_w,BulkDiceSimilarity,
             "2*B(bv1&bv2) / (B(bv1) + B(bv2))")
-    BIG_DEF("SokalSimilarity",SokalSimilarity,SokalSimilarity_w,
+    BIG_DEF(SokalSimilarity,SokalSimilarity_w,BulkSokalSimilarity,
             "B(bv1&bv2) / (2*B(bv1) + 2*B(bv2) - 3*B(bv1&bv2))")
 
-    BIG_DEF("McConnaugheySimilarity",McConnaugheySimilarity,McConnaugheySimilarity_w,
+    BIG_DEF(McConnaugheySimilarity,McConnaugheySimilarity_w,BulkMcConnaugheySimilarity,
             "(B(bv1&bv2) * (B(bv1)+B(bv2)) - B(bv1)*B(bv2)) / (B(bv1) * B(bv2))")
-    BIG_DEF("AsymmetricSimilarity",AsymmetricSimilarity,AsymmetricSimilarity_w,
+    BIG_DEF(AsymmetricSimilarity,AsymmetricSimilarity_w,BulkAsymmetricSimilarity,
             "B(bv1&bv2) / min(B(bv1),B(bv2))")
-    BIG_DEF("BraunBlanquetSimilarity",BraunBlanquetSimilarity,BraunBlanquetSimilarity_w,
+    BIG_DEF(BraunBlanquetSimilarity,BraunBlanquetSimilarity_w,BulkBraunBlanquetSimilarity,
             "B(bv1&bv2) / max(B(bv1),B(bv2))")
-    BIG_DEF("RusselSimilarity",RusselSimilarity,RusselSimilarity_w,
+    BIG_DEF(RusselSimilarity,RusselSimilarity_w,BulkRusselSimilarity,
             "B(bv1&bv2) / B(bv1)")
 
-    DBL_DEF("OnBitSimilarity",OnBitSimilarity,
+    DBL_DEF(OnBitSimilarity,BulkOnBitSimilarity,
             "B(bv1&bv2) / B(bv1|bv2)")
-    DBL_DEF("AllBitSimilarity",AllBitSimilarity,
+    DBL_DEF(AllBitSimilarity,BulkAllBitSimilarity,
             "(B(bv1) - B(bv1^bv2)) / B(bv1)")
     python::def("OnBitProjSimilarity",
                 (DoubleVect (*)(const SBV&,const SBV&))OnBitProjSimilarity);
@@ -194,7 +286,9 @@ struct BitOps_wrapper {
                 "Returns a string of zeros and ones representing the bit vector."
                 );
 
-
+    python::def("BulkTanimotoSimilarity",(python::list (*)(const SBV &,python::list))BulkTanimotoSimilarity);
+    python::def("BulkTanimotoSimilarity",(python::list (*)(const EBV &,python::list))BulkTanimotoSimilarity,
+            "returns a list of similarity values");
   }
 };
 
