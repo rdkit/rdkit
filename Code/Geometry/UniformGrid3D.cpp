@@ -7,6 +7,7 @@
 #include "UniformGrid3D.h"
 #include <DataStructs/DiscreteValueVect.h>
 #include <RDGeneral/StreamOps.h>
+#include <RDBoost/Exceptions.h>
 #include "point.h"
 #include <fstream>
 
@@ -126,7 +127,9 @@ namespace RDGeom {
   }
 
   Point3D UniformGrid3D::getGridPointLoc(unsigned int pointId) const {
-    RANGE_CHECK(0, pointId, d_numX*d_numY*d_numZ-1);
+    if(pointId >= d_numX*d_numY*d_numZ){
+      throw IndexErrorException(pointId);
+    }
     Point3D res;
     res.x = (pointId%d_numX)*d_spacing;
     res.y = ((pointId%(d_numX*d_numY))/d_numX)*d_spacing;

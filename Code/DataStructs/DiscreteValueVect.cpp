@@ -29,14 +29,18 @@ namespace RDKit {
   }
 
   unsigned int DiscreteValueVect::getVal(unsigned int i) const {
-    RANGE_CHECK(0, i, d_length-1);
+    if(i >= d_length){
+      throw IndexErrorException(i);
+    }
     unsigned int shift = d_bitsPerVal*(i%d_valsPerInt);
     unsigned int intId = i/d_valsPerInt;
     return ( (d_data[intId] >> shift) & d_mask);
   }
 
   void DiscreteValueVect::setVal(unsigned int i, unsigned int val) {
-    RANGE_CHECK(0, i, d_length-1);
+    if(i >= d_length){
+      throw IndexErrorException(i);
+    }
     if ((val & d_mask) != val) {
       throw ValueErrorException("Value out of range");
     }

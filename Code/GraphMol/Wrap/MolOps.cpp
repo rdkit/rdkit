@@ -178,6 +178,9 @@ namespace RDKit{
     - explicitOnly: (optional) if this toggle is set, only explicit Hs will\n\
       be added to the molecule.  Default value is 0 (add implicit and explicit Hs).\n\
 \n\
+    - addCoords: (optional) if this toggle is set, The Hs will have 3D coordinates\n\
+      set.  Default value is 0 (no 3D coords).\n\
+\n\
   RETURNS: a new molecule with added Hs\n\
 \n\
   NOTES:\n\

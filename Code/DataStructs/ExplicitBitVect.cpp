@@ -40,13 +40,13 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     return *this;
   };
   bool ExplicitBitVect::operator[] (const unsigned int which) const {
-    if(which < 0 || which >= d_size){
+    if(which >= d_size){
       throw IndexErrorException(which);
     }
     return (bool)(*dp_bits)[which];
   };
   bool ExplicitBitVect::SetBit(const unsigned int which){
-    if(which < 0 || which >= d_size){
+    if(which >= d_size){
       throw IndexErrorException(which);
     }
     if((bool)(*dp_bits)[which]){
@@ -58,7 +58,7 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     }
   };
   bool ExplicitBitVect::UnSetBit(const unsigned int which){
-    if(which < 0 || which >= d_size){
+    if(which >= d_size){
       throw IndexErrorException(which);
     }
     if((bool)(*dp_bits)[which]){
@@ -70,7 +70,7 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     }
   };
   bool ExplicitBitVect::GetBit(const unsigned int which) const {
-    if(which < 0 || which >= d_size){
+    if(which >= d_size){
       throw IndexErrorException(which);
     }
     return((bool)(*dp_bits)[which]);

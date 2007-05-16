@@ -185,6 +185,19 @@ class TestCase(unittest.TestCase):
     v4 -= v4
     self.failUnless(v4.GetTotalVal()==0)
     
+  def testIterator(self):
+    """
+    connected to sf.net issue 1719831:
+    http://sourceforge.net/tracker/index.php?func=detail&aid=1719831&group_id=160139&atid=814650
+    """
+    v1 = ds.DiscreteValueVect(ds.DiscreteValueType.ONEBITVALUE, 30)
+    for i  in range(15):
+      v1[2*i] = 1;
+    l1 = list(v1)
+    self.failUnless(len(l1)==len(v1))
+    for i,v in enumerate(v1):
+      self.failUnless(l1[i]==v)
+    self.failUnlessRaises(IndexError,lambda :v1[40])
 
 if __name__ == '__main__':
     unittest.main()

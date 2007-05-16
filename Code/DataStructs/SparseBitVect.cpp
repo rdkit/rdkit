@@ -58,7 +58,7 @@ SparseBitVect::SparseBitVect(const char *data,const unsigned int dataLen)
 bool
 SparseBitVect::operator[](const unsigned int which) const
 {
-  if(which < 0 || which >= d_size){
+  if(which >= d_size){
     throw IndexErrorException(which);
   }
   if(dp_bits->count(which)) return true;
@@ -158,7 +158,7 @@ SparseBitVect::operator~ () const
 bool
 SparseBitVect::GetBit(const unsigned int which) const
 {
-  if(which < 0 || which >= d_size){
+  if(which >= d_size){
     throw IndexErrorException(which);
   }
   if(dp_bits->count(which)) return true;
@@ -214,7 +214,7 @@ SparseBitVect::SetBit(const unsigned int which)
     throw ValueErrorException("BitVect not properly initialized.");
   }
   std::pair<IntSetIter,bool> res;
-  if(which < 0 || which >= d_size){
+  if(which >= d_size){
     throw IndexErrorException(which);
   }
   res = dp_bits->insert(which);
@@ -256,7 +256,7 @@ SparseBitVect::UnSetBit(const unsigned int which)
   if(!dp_bits){
     throw ValueErrorException("BitVect not properly initialized.");
   }
-  if(which < 0 || which >= d_size){
+  if(which >= d_size){
     throw IndexErrorException(which);
   }
 
