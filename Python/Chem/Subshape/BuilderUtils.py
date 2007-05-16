@@ -19,6 +19,7 @@ def ComputeGridIndices(shapeGrid,winRad):
   dY = shapeGrid.GetNumY()
   dZ = shapeGrid.GetNumZ()
   radInGrid = int(winRad/gridSpacing)
+  print winRad,gridSpacing,radInGrid
   indicesInSphere=[]
   for i in range(-radInGrid,radInGrid+1):
     for j in range(-radInGrid,radInGrid+1):
@@ -36,10 +37,13 @@ def ComputeShapeGridCentroid(pt,shapeGrid,winRad):
   centroid = Geometry.Point3D(0,0,0)
   idxI = shapeGrid.GetGridPointIndex(pt)
   shapeGridVect = shapeGrid.GetOccupancyVect()
+  
   indicesInSphere = ComputeGridIndices(shapeGrid,winRad)
+  
+  nGridPts = len(shapeGridVect)
   for idxJ in indicesInSphere:
     idx = idxI+idxJ;
-    if idx>=0 and idx<len(shapeGridVect):
+    if idx>=0 and idx<nGridPts:
       wt = shapeGridVect[idx]
       tPt = shapeGrid.GetGridPointLoc(idx)
       centroid += tPt*wt
@@ -59,7 +63,6 @@ def FindTerminalPtsFromShape(shape,winRad,fraction,maxGridVal=3):
   shapeVect = shapeGrid.GetOccupancyVect()
   nGridPts = len(shapeVect)
   indicesInSphere = ComputeGridIndices(shapeGrid,winRad)
-
   for i in range(nGridPts):
     if shapeVect[i]<maxGridVal:
       continue
@@ -79,7 +82,7 @@ def FindTerminalPtsFromShape(shape,winRad,fraction,maxGridVal=3):
     if fracVol<fraction:
       # the sphere is towards the edge of the shape, add a skel pt:
       posI = shapeGrid.GetGridPointLoc(i)
-      count,centroid = ComputeShapeGridCentroid(posI,shapeGrid,winRad)
+      count,centroid = Geometry.ComputeGridCentroid(shapeGrid,posI,winRad)
       termPts.append(SubshapeObjects.SkeletonPoint(location=centroid))
   return termPts
 
@@ -168,7 +171,10 @@ def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
   i=0
   while i<len(skelPts):
     pt = skelPts[i]
-    count,centroid=ComputeShapeGridCentroid(pt.location,shapeGrid,winRad)
+    count,centroid=Geometry.ComputeGridCentroid(shapeGrid,pt.location,winRad)
+    #count,centroid=ComputeShapeGridCentroid(pt.location,shapeGrid,winRad)
+    if i<10:
+      print i,count,list(centroid)
     centroidPtDist=centroid.Distance(pt.location)
     if centroidPtDist>maxDistC:
       del skelPts[i]
