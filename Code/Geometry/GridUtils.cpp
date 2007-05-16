@@ -98,4 +98,45 @@ namespace RDGeom {
     }
     return centroid/weightSum;
   }
+
+  std::vector<Point3D> findGridTerminalPoints(const UniformGrid3D &grid,
+                                          double windowRadius,
+                                          double inclusionFraction){
+    std::vector<Point3D> res;
+    std::vector<int> indicesInSphere=computeGridIndices(grid,windowRadius);
+    const DiscreteValueVect *storage=grid.getOccupancyVect();
+    unsigned int maxGridVal = (0x1<<storage->getNumBitsPerVal())-1;
+    for(unsigned int i=0;i<storage->getLength();++i){
+      if(storage->getVal(i)<maxGridVal){
+        continue;
+      }
+
+      // -----------
+      // compute the weighted volume of the shape inside the sphere:
+      double volInSphere=0.0;
+      unsigned int nPtsHere=0;
+      for(std::vector<int>::const_iterator it=indicesInSphere.begin();
+          it!=indicesInSphere.end();++it){
+        int idx=i+*it;
+        if(idx>=0 && static_cast<unsigned int>(idx)<storage->getLength()){
+          volInSphere += storage->getVal(static_cast<unsigned int>(idx));
+          ++nPtsHere;
+        }
+      }
+      // ----- 
+      // the shape may be cut off by the edge of the grid, so
+      // the actual max volume in the sphere may well be less
+      // than the theoretical max:
+      double maxPossValInSphere=nPtsHere*maxGridVal;
+      if(volInSphere/maxPossValInSphere <= inclusionFraction){
+        Point3D ptI=grid.getGridPointLoc(i);
+        double weightSum;
+        Point3D centroid=computeGridCentroid(grid,ptI,windowRadius,weightSum);
+        res.push_back(centroid);
+      }
+    }
+    return res;
+  }
+
+
 }

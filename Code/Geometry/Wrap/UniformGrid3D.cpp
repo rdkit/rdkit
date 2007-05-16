@@ -57,6 +57,16 @@ namespace RDGeom {
     Point3D centroid=computeGridCentroid(grid,pt,windowRadius,weightSum);
     return python::make_tuple(weightSum,centroid);
   }
+  python::tuple findGridTerminalPointsWrap(const UniformGrid3D &grid, double windowRadius,
+                                              double inclusionFraction){
+    std::vector<Point3D> res=findGridTerminalPoints(grid,windowRadius,inclusionFraction);
+    python::list pyRes;
+    for(std::vector<Point3D>::iterator it=res.begin();
+        it!=res.end();++it){
+      pyRes.append(*it);
+    }
+    return python::tuple(pyRes);
+  }
 
   std::string uGridClassDoc = "Class to represent a uniform three-dimensional\n\
     cubic grid. Each grid point can store a poisitive integer value. For the sake\n\
@@ -132,6 +142,8 @@ namespace RDGeom {
                   "Compute the protrude distance between two grid objects");
       python::def("ComputeGridCentroid", computeGridCentroidWrap,
                   "Compute the grid point at the center of sphere around a Point3D");
+      python::def("FindGridTerminalPoints", findGridTerminalPointsWrap,
+                  "Find a grid's terminal points (defined in the subshape algorithm).");
     }
   };
 }

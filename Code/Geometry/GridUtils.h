@@ -6,10 +6,12 @@
 #ifndef _GRIDUTILS_H_20050126
 #define _GRIDUTILS_H_20050126
 
+#include <vector>
+
 namespace RDGeom {
   class UniformGrid3D;
   class Point3D;
-
+  
   //! calculate the tanimoto distance between the shapes encoded on two grids
   /*!
 
@@ -33,6 +35,13 @@ namespace RDGeom {
                               const Point3D &pt,
                               double windowRadius,
                               double &weightSum);
+  
+  //! find terminal points of a shape encoded on a grid
+  //!  this is part of the subshape implementation
+  std::vector<Point3D> findGridTerminalPoints(const UniformGrid3D &grid,
+                                          double windowRadius,
+                                          double inclusionFraction);
+
   
 }
 
