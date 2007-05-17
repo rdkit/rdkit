@@ -63,12 +63,10 @@ class SubshapeAligner(object):
   distMetric=SubshapeDistanceMetric.PROTRUDE
   shapeDistTol=0.2
   numFeatThresh=3
-  #dirThresh=2.6
-  dirThresh=1.6
+  dirThresh=2.6
   edgeTol=6.0
   coarseGridToleranceMult=1.5
   medGridToleranceMult=1.25
-
   
   def GetTriangleMatches(self,target,query):
     ssdTol = (self.triangleRMSTol**2)*9
@@ -145,10 +143,10 @@ class SubshapeAligner(object):
       for j in range(3):
         tgtPt = tgtPts[j]
         queryPt = queryPts[j]
-        m1,m2,m3=tgtPt.shapeMoments
-        tgtR = m1/(m2+m3)
-        m1,m2,m3=queryPt.shapeMoments
-        queryR = m1/(m2+m3)
+        #m1,m2,m3=tgtPt.shapeMoments
+        #tgtR = m1/(m2+m3)
+        #m1,m2,m3=queryPt.shapeMoments
+        #queryR = m1/(m2+m3)
 
         qv = queryPt.shapeDirs[0]
         tv = tgtPt.shapeDirs[0]
