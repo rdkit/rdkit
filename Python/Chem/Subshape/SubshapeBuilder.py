@@ -54,8 +54,9 @@ class SubshapeBuilder(object):
       pts = BuilderUtils.FindTerminalPtsFromConformer(conf,self.winRad,self.nbrCount)
     else:
       pts = BuilderUtils.FindTerminalPtsFromShape(shape,self.winRad,self.fraction)
-      
     pts = BuilderUtils.ClusterTerminalPts(pts,self.winRad,self.terminalPtRadScale)
+    BuilderUtils.ExpandTerminalPts(shape,pts,self.winRad)
+    
     if not terminalPtsOnly:
       pts = BuilderUtils.AppendSkeletonPoints(shape.grid,pts,self.winRad,self.stepSize)
     for i,pt in enumerate(pts):

@@ -78,20 +78,43 @@ def FindTerminalPtsFromConformer(conf,winRad,nbrCount):
         nbrLists[i].append((j,pj))
         nbrLists[j].append((i,pi))
   termPts=[]
-  for i in range(nAts):
-    if not nbrLists[i]: continue
-    pos = Geometry.Point3D(0,0,0)
-    totWt=0.0
-    if len(nbrLists[i])<nbrCount:
-      nbrList = nbrLists[i]
-      for j in range(0,len(nbrList)):
-        nbrJ,posJ=nbrList[j]
-        weight = 1.*len(nbrLists[i])/len(nbrLists[nbrJ])
-        pos += posJ*weight
-        totWt+=weight
-      pos /= totWt
-      termPts.append(SubshapeObjects.SkeletonPoint(location=pos))
+  #for i in range(nAts):
+  #  if not len(nbrLists[i]): continue
+  #  if len(nbrLists[i])>10:
+  #    print i+1,len(nbrLists[i])
+  #  else:
+  #    print i+1,len(nbrLists[i]),[x[0]+1 for x in nbrLists[i]]
+        
+  while 1:
+    for i in range(nAts):
+      if not nbrLists[i]: continue
+      pos = Geometry.Point3D(0,0,0)
+      totWt=0.0
+      if len(nbrLists[i])<nbrCount:
+        nbrList = nbrLists[i]
+        for j in range(0,len(nbrList)):
+          nbrJ,posJ=nbrList[j]
+          weight = 1.*len(nbrLists[i])/len(nbrLists[nbrJ])
+          pos += posJ*weight
+          totWt+=weight
+        pos /= totWt
+        termPts.append(SubshapeObjects.SkeletonPoint(location=pos))
+    if not len(termPts):
+      nbrCount += 1
+    else:
+      break
   return termPts
+
+#-----------------------------------------------------------------------------
+def FindGridPointBetweenPoints(pt1,pt2,shapeGrid,winRad):
+  center = pt1+pt2
+  center /= 2.0
+  d=1e8
+  while d>shapeGrid.GetSpacing():
+    count,centroid=Geometry.ComputeGridCentroid(shapeGrid,center,winRad)
+    d = center.Distance(centroid)
+    center = centroid
+  return center
 
 #-----------------------------------------------------------------------------
 def ClusterTerminalPts(pts,winRad,scale):
@@ -113,7 +136,19 @@ def ClusterTerminalPts(pts,winRad,scale):
       pt += o.location
     pt /= len(currSet)
     res.append(SubshapeObjects.SkeletonPoint(location=pt))
+  if len(res)<2:
+    raise ValueError,'only found %d terminals, need at least 2'%len(res)
   return res
+
+def ExpandTerminalPts(shape,pts,winRad):
+  if len(pts)==2:
+    # add a point roughly in the middle:
+    shapeGrid=shape.grid
+    pt1 = pts[0].location
+    pt2 = pts[1].location
+    center = FindGridPointBetweenPoints(pt1,pt2,shapeGrid,winRad)
+    pts.append(SubshapeObjects.SkeletonPoint(location=center))
+
 
    
 #-----------------------------------------------------------------------------
@@ -154,7 +189,7 @@ def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
       pt.location.x = centroid.x
       pt.location.y = centroid.y
       pt.location.z = centroid.z
-    i+=1
+      i+=1
 
   print 'remove points:',len(skelPts)
   res = termPts+skelPts
@@ -174,14 +209,17 @@ def AppendSkeletonPoints(shapeGrid,termPts,winRad,stepDist,maxGridVal=3,
           mFrac=ptJ.fracVol
     #print i,len(res),p,mFrac
     if p>-1:
+      ptP = res.pop(p)
       j = startJ
       while j < len(res):
         ptJ=res[j]
         distC = ptI.location.Distance(ptJ.location)
-        if distC<symFactor*stepDist and j!=p:
+        if distC<symFactor*stepDist:
           del res[j]
         else:
           j+=1
+      res.append(ptP)
+      #print '% 3d'%i,'% 5.2f % 5.2f % 5.2f'%tuple(list(ptI.location)),' - ','% 5.2f % 5.2f % 5.2f'%tuple(list(ptJ.location))
     i+=1
   return res
 
