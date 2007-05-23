@@ -1852,9 +1852,9 @@ void testHsAndAromaticity() {
 void testSFIssue1694023()
 {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 1694023 (bad chiral smiles after removing Hs) " << std::endl;
-  ROMol *m,*m2;
+  ROMol *m;
 
-  std::string smi,smi2;
+  std::string smi;
 
   smi = "[C@@]([H])(F)(Cl)Br";
   m = SmilesToMol(smi);
@@ -1937,6 +1937,72 @@ void testSFIssue1694023()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFIssue1719053()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 1719053 (Ring stereochemistry incorrectly removed) " << std::endl;
+  ROMol *m;
+
+  std::string smi;
+
+  smi = "C[C@@H]1CCCCC1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+
+  delete m;
+  smi = "C[C@@H]1CC[C@@H](C)CC1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+  delete m;
+  smi = "C[C@@H]1C(C)CCCC1C";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+
+  delete m;
+  smi = "C[C@@H]1[C@H](C)CCC[C@H]1C";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(m->getAtomWithIdx(7)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+  delete m;
+  smi = "C[C@@H]1C=C[C@@H](C)C=C1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+  delete m;
+  smi = "C[N@@]1C=C[C@@H](C)C=C1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+
+  delete m;
+  smi = "C[N@@]1CC[C@@H](C)CC1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+  
+  delete m;
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 
 int main(){
@@ -1968,8 +2034,9 @@ int main(){
   testIssue252();
   testIssue276();
   testHsAndAromaticity();
-#endif
   testSFIssue1694023();
+#endif
+  testSFIssue1719053();
 
   return 0;
 }

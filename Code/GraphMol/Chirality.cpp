@@ -229,6 +229,9 @@ namespace Chirality {
                                  const Bond *refBond,
                                  const INT_VECT &ranks,
                                  INT_PAIR_VECT &neighbors){
+    PRECONDITION(atom,"bad atom");
+    PRECONDITION(refBond,"bad bond");
+
     bool seenDir=false;
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol.getAtomBonds(atom);
@@ -285,6 +288,8 @@ namespace Chirality {
   // if checkDir is true only neighbor atoms with bonds marked with a direction will be returned
   void findAtomNeighborsHelper(const ROMol &mol,const Atom *atom,const Bond *refBond,
                                INT_VECT &neighbors, bool checkDir=false) {
+    PRECONDITION(atom,"bad atom");
+    PRECONDITION(refBond,"bad bond");
     ROMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(atom);
     ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
@@ -396,6 +401,41 @@ namespace Chirality {
     }
   }
 
+
+  // returns true if the atom is allowed to have stereochemistry specified
+  bool checkChiralAtomSpecialCases(ROMol &mol,const Atom *atom){
+    PRECONDITION(atom,"bad atom");
+    
+
+    if(!mol.getRingInfo()->isInitialized()){
+      VECT_INT_VECT sssrs;
+      MolOps::symmetrizeSSSR(mol, sssrs);
+    }
+
+    const RingInfo *ringInfo=mol.getRingInfo();
+    if(ringInfo->numAtomRings(atom->getIdx())){
+      // the atom is in a ring, so the "chirality" specification may actually
+      // be handling ring stereochemistry, check for another chiral tagged
+      // atom in this atom's rings:
+      const VECT_INT_VECT atomRings=ringInfo->atomRings();
+      for(VECT_INT_VECT::const_iterator ringIt=atomRings.begin();
+          ringIt!=atomRings.end();++ringIt){
+        if(std::find(ringIt->begin(),ringIt->end(),atom->getIdx())!=ringIt->end()){
+          for(INT_VECT::const_iterator idxIt=ringIt->begin();
+              idxIt!=ringIt->end();++idxIt){
+            if(*idxIt!=atom->getIdx() &&
+               mol.getAtomWithIdx(*idxIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED){
+              // we get to keep the stereochem specification on this atom:
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  
 } // end of chirality namespace
 
 namespace RDKit{
@@ -406,7 +446,7 @@ namespace RDKit{
     // Figure out the CIP chiral codes for the atoms of a molecule
     //
     // ARGUMENTS:
-    //    mol: the molecule to be altered
+    //       mol: the molecule to be altered
     //   cleanIt: (OPTIONAL) if this bool is set, atoms marked chiral
     //            that do not meet the minimum requirements for chirality 
     //            will have their chiral flags cleared.
@@ -473,8 +513,8 @@ namespace RDKit{
           // figure out if this is a legal chiral center or not:
           bool legalCenter;
           if(hasDupes){
-            // if we have dupes, there's no way it's legal:
-            legalCenter=false;
+            // if we have dupes, we need to check for special cases:
+            legalCenter=Chirality::checkChiralAtomSpecialCases(mol,atom);
           } else if(nbrs.size()<3 ||
                     (nbrs.size()==3 && atom->getTotalNumHs()!=1 )){
             // we only handle 3-coordinate atoms that have an implicit H
@@ -501,7 +541,10 @@ namespace RDKit{
               atom->calcExplicitValence(false);
               atom->calcImplicitValence(false);
             }
-          } else if( legalCenter ) {
+          } else if( legalCenter && !hasDupes ) {
+            // stereochem is possible and we have no duplicate neighbors, assign
+            // a CIP code:
+
             // sort the list of neighbors by their CIP ranks:
             std::sort(nbrs.begin(),nbrs.end(),Chirality::_pairComp);
 
@@ -528,6 +571,8 @@ namespace RDKit{
             if(tag==Atom::CHI_TETRAHEDRAL_CCW) cipCode="S";
             else cipCode="R";
             atom->setProp("_CIPCode",cipCode,true);
+          } else {
+            // FIX: this is where we should be handling meso cases
           }
         }
       }
