@@ -642,9 +642,49 @@ void testSymmetricDblBondStereochem(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testRingDblBondStereochem(){
+  // this was sf.net issue 1725068:
+  // http://sourceforge.net/tracker/index.php?func=detail&aid=1725068&group_id=160139&atid=814650
+  BOOST_LOG(rdInfoLog) << "testing double bonds in rings with stereochem specifications" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  RWMol *m1;
+  std::string fName,smi;
+
+  fName = rdbase+"badringstereochem3.mol";
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+
+  smi = MolToSmiles(*m1,true);
+  TEST_ASSERT(smi.find("/",0)==std::string::npos);
+  TEST_ASSERT(smi.find("\\",0)==std::string::npos);
+  delete m1;
+
+  fName = rdbase+"badringstereochem2.mol";
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+
+  smi = MolToSmiles(*m1,true);
+  TEST_ASSERT(smi.find("/",0)==std::string::npos);
+  TEST_ASSERT(smi.find("\\",0)==std::string::npos);
+  delete m1;
+
+  fName = rdbase+"badringstereochem.mol";
+  m1 = MolFileToMol(fName);
+  TEST_ASSERT(m1);
+
+  smi = MolToSmiles(*m1,true);
+  TEST_ASSERT(smi.find("/",0)==std::string::npos);
+  TEST_ASSERT(smi.find("\\",0)==std::string::npos);
+  delete m1;
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -659,8 +699,9 @@ int main(int argc,char *argv[]){
   testIssue264();
   testIssue399();
   testMolFileChgLines();
-#endif
   testSymmetricDblBondStereochem();
+#endif
+  testRingDblBondStereochem();
   //testCrash();
   return 0;
 }

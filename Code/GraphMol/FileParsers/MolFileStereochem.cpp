@@ -243,76 +243,79 @@ namespace RDKit {
     return res;
   }
 
-  bool _setDirOtherBond(ROMol &mol, const Atom *atom, const Bond *dblBond) {
-    // if the direction on any of the single bonds
-    // at one end of a double bond are set set the other single bonds at that end as well
-    // to be consistent with that setting
-    // let say we have Cl\C(Br)=C/F
-    // here the direction is specified so far on Cl to C bond (bid = 0), but not 
-    // specified on C to Br (bid = 1). This function will specify the direction on 
-    // C to Br bond so that is is consistent with Cl to C. Also note that
-    // we have to pay attention to whether C is the beg atom (or end atom) on both these
-    // bonds or on just one of them
-    // return true if we set the direction or it is already set
-    bool res = false;
-    ROMol::OBOND_ITER_PAIR atomBonds;
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
-    atomBonds = mol.getAtomBonds(atom);
-    int aid = atom->getIdx();
-    int specBid = -1;
-    int otherBid = -1;
-    while (atomBonds.first != atomBonds.second) {
-      Bond *tBond = pMap[*atomBonds.first];
-      if (tBond->getIdx() != dblBond->getIdx()) {
-        Bond::BondDir dir = tBond->getBondDir();
-        if ((dir == Bond::ENDUPRIGHT) || (dir == Bond::ENDDOWNRIGHT)) {
-          specBid = tBond->getIdx();
-        } else {
-          otherBid = tBond->getIdx();
-        }
-      }
-      atomBonds.first++;
-    }
-    
-    if ((specBid >= 0) && (otherBid >= 0)) {
-      // one of the bond has direction specified and we need to set in on the other
-      Bond *specBond = mol.getBondWithIdx(specBid);
-      int specBegAid = specBond->getBeginAtomIdx();
-      int specEndAid = specBond->getEndAtomIdx();
-      bool flip = false;
-      Bond *othBond = mol.getBondWithIdx(otherBid);
-      int othBegAid = othBond->getBeginAtomIdx();
-      int othEndAid = othBond->getEndAtomIdx();
-      if ((othBegAid != specBegAid) && (othEndAid != specEndAid)) {
-        flip = true;
-      }
-      Bond::BondDir dir;
-      if (flip) {
-        dir = specBond->getBondDir();
-      } else {
-        dir = specBond->getBondDir() == Bond::ENDDOWNRIGHT ? Bond::ENDUPRIGHT : Bond::ENDDOWNRIGHT;
-      }
-      othBond->setBondDir(dir);
-      res = true;
-    } else if ((specBid >= 0) && (otherBid == -1)) {
-      // both ends are already set nothing to do
-      res = true;
-    }
-    return res;
-  }
-        
+
+  // FIX: this is dead code, this function is no longer used anywhere
+  // bool _setDirOtherBond(ROMol &mol, const Atom *atom, const Bond *dblBond) {
+  //   // if the direction on any of the single bonds
+  //   // at one end of a double bond are set, set the other single bonds at that end as well
+  //   // to be consistent with that setting
+  //   // let say we have Cl\C(Br)=C/F
+  //   // here the direction is specified so far on Cl to C bond (bid = 0), but not 
+  //   // specified on C to Br (bid = 1). This function will specify the direction on 
+  //   // C to Br bond so that is is consistent with Cl to C. Also note that
+  //   // we have to pay attention to whether C is the beg atom (or end atom) on both these
+  //   // bonds or on just one of them
+  //   // return true if we set the direction or it is already set
+  //   bool res = false;
+  //   ROMol::OBOND_ITER_PAIR atomBonds;
+  //   ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
+  //   atomBonds = mol.getAtomBonds(atom);
+  //   int aid = atom->getIdx();
+  //   int specBid = -1;
+  //   int otherBid = -1;
+  //   while (atomBonds.first != atomBonds.second) {
+  //     Bond *tBond = pMap[*atomBonds.first];
+  //     if (tBond->getIdx() != dblBond->getIdx()) {
+  //       Bond::BondDir dir = tBond->getBondDir();
+  //       if ((dir == Bond::ENDUPRIGHT) || (dir == Bond::ENDDOWNRIGHT)) {
+  //         specBid = tBond->getIdx();
+  //       } else {
+  //         otherBid = tBond->getIdx();
+  //       }
+  //     }
+  //     atomBonds.first++;
+  //   }
+  //   
+  //   if ((specBid >= 0) && (otherBid >= 0)) {
+  //     // one of the bond has direction specified and we need to set in on the other
+  //     Bond *specBond = mol.getBondWithIdx(specBid);
+  //     int specBegAid = specBond->getBeginAtomIdx();
+  //     int specEndAid = specBond->getEndAtomIdx();
+  //     bool flip = false;
+  //     Bond *othBond = mol.getBondWithIdx(otherBid);
+  //     int othBegAid = othBond->getBeginAtomIdx();
+  //     int othEndAid = othBond->getEndAtomIdx();
+  //     if ((othBegAid != specBegAid) && (othEndAid != specEndAid)) {
+  //       flip = true;
+  //     }
+  //     Bond::BondDir dir;
+  //     if (flip) {
+  //       dir = specBond->getBondDir();
+  //     } else {
+  //       dir = specBond->getBondDir() == Bond::ENDDOWNRIGHT ? Bond::ENDUPRIGHT : Bond::ENDDOWNRIGHT;
+  //     }
+  //     othBond->setBondDir(dir);
+  //     res = true;
+  //   } else if ((specBid >= 0) && (otherBid == -1)) {
+  //     // both ends are already set nothing to do
+  //     res = true;
+  //   }
+  //   return res;
+  // }
+
       
   void ComputeBondStereoChemistry(ROMol &mol, Bond *dblBond, const Conformer *conf) {
     // ok this function got a lot easier than before 
-    // - now we do not have to set the directions on the signle bonds surrounding 
+    // - now we do not have to set the directions on the single bonds surrounding 
     //   a double bond
     // - we simply have to figure the if the high ranking neighbor of the double bond
     //   are in cis or trans position and set the BondStereo on the Bond
-    // we want to deal only with double bond
+
+    // we want to deal only with double bonds:
     PRECONDITION(dblBond, "");
     PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "");
     PRECONDITION(conf,"no conformer");
-    
+
     const INT_VECT &ctNbrs = dblBond->getStereoAtoms();
     if (ctNbrs.size() >= 2) {
       int cnbr1 = ctNbrs[0];

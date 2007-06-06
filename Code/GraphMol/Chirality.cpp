@@ -284,7 +284,7 @@ namespace Chirality {
     }
   }
 
-  // find the neighbors for an atoms that are not connected by refBond
+  // find the neighbors for an atoms that are not connected by single bond that is not refBond
   // if checkDir is true only neighbor atoms with bonds marked with a direction will be returned
   void findAtomNeighborsHelper(const ROMol &mol,const Atom *atom,const Bond *refBond,
                                INT_VECT &neighbors, bool checkDir=false) {
@@ -295,7 +295,7 @@ namespace Chirality {
     ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
     while (beg != end) {
       Bond::BondDir dir = pMap[*beg]->getBondDir();
-      if (pMap[*beg]->getIdx() != refBond->getIdx()) {
+      if (pMap[*beg]->getBondType()==Bond::SINGLE && pMap[*beg]->getIdx() != refBond->getIdx()) {
         if (checkDir) {
           if ((dir != Bond::ENDDOWNRIGHT) && (dir != Bond::ENDUPRIGHT)) {
             beg++;
@@ -405,7 +405,6 @@ namespace Chirality {
   // returns true if the atom is allowed to have stereochemistry specified
   bool checkChiralAtomSpecialCases(ROMol &mol,const Atom *atom){
     PRECONDITION(atom,"bad atom");
-    
 
     if(!mol.getRingInfo()->isInitialized()){
       VECT_INT_VECT sssrs;
@@ -729,55 +728,54 @@ namespace RDKit{
                 INT_VECT begAtomNeighbors,endAtomNeighbors;
                 Chirality::findAtomNeighborsHelper(mol,begAtom,dblBond,begAtomNeighbors);
                 Chirality::findAtomNeighborsHelper(mol,endAtom,dblBond,endAtomNeighbors);
-                //std::sort(begAtomNeighbors.begin(), begAtomNeighbors.end());
-                //std::sort(endAtomNeighbors.begin(), endAtomNeighbors.end());
-
-                if ((begAtomNeighbors.size() == 2) && (endAtomNeighbors.size() == 2) ) {
-                  // if both of the atoms have 2 neighbors (other than the one connected
-                  // by the double bond) and ....
-                  if ( (ranks[begAtomNeighbors[0]] != ranks[begAtomNeighbors[1]]) &&
-                       (ranks[endAtomNeighbors[0]] != ranks[endAtomNeighbors[1]]) ) {
-                    // the neighbors ranks are different at both the ends,
-                    // this bond can be part of a cis/trans system
-                    if(ranks[begAtomNeighbors[0]] > ranks[begAtomNeighbors[1]]){
-                      dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
-                    } else {
-                      dblBond->getStereoAtoms().push_back(begAtomNeighbors[1]);
+                if(begAtomNeighbors.size()>0 && endAtomNeighbors.size()>0){
+                  if ((begAtomNeighbors.size() == 2) && (endAtomNeighbors.size() == 2) ) {
+                    // if both of the atoms have 2 neighbors (other than the one connected
+                    // by the double bond) and ....
+                    if ( (ranks[begAtomNeighbors[0]] != ranks[begAtomNeighbors[1]]) &&
+                         (ranks[endAtomNeighbors[0]] != ranks[endAtomNeighbors[1]]) ) {
+                      // the neighbors ranks are different at both the ends,
+                      // this bond can be part of a cis/trans system
+                      if(ranks[begAtomNeighbors[0]] > ranks[begAtomNeighbors[1]]){
+                        dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
+                      } else {
+                        dblBond->getStereoAtoms().push_back(begAtomNeighbors[1]);
+                      }
+                      if(ranks[endAtomNeighbors[0]] > ranks[endAtomNeighbors[1]]){
+                        dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
+                      } else {
+                        dblBond->getStereoAtoms().push_back(endAtomNeighbors[1]);
+                      }
                     }
-                    if(ranks[endAtomNeighbors[0]] > ranks[endAtomNeighbors[1]]){
+                  } else if (begAtomNeighbors.size() == 2) {
+                    // if the begAtom has two neighbors and ....
+                    if (ranks[begAtomNeighbors[0]] != ranks[begAtomNeighbors[1]]) {
+                      // their ranks are different
+                      if(ranks[begAtomNeighbors[0]] > ranks[begAtomNeighbors[1]]){
+                        dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
+                      } else {
+                        dblBond->getStereoAtoms().push_back(begAtomNeighbors[1]);
+                      }
                       dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
-                    } else {
-                      dblBond->getStereoAtoms().push_back(endAtomNeighbors[1]);
                     }
-                  }
-                } else if (begAtomNeighbors.size() == 2) {
-                  // if the begAtom has two neighbors and ....
-                  if (ranks[begAtomNeighbors[0]] != ranks[begAtomNeighbors[1]]) {
-                    // their ranks are different
-                    if(ranks[begAtomNeighbors[0]] > ranks[begAtomNeighbors[1]]){
+                  } else if (endAtomNeighbors.size() == 2) {
+                    // if the endAtom has two neighbors and ...
+                    if (ranks[endAtomNeighbors[0]] != ranks[endAtomNeighbors[1]]) {
+                      // their ranks are different
                       dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
-                    } else {
-                      dblBond->getStereoAtoms().push_back(begAtomNeighbors[1]);
+                      if(ranks[endAtomNeighbors[0]] > ranks[endAtomNeighbors[1]]){
+                        dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
+                      } else {
+                        dblBond->getStereoAtoms().push_back(endAtomNeighbors[1]);
+                      }
                     }
-                    dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
-                  }
-                } else if (endAtomNeighbors.size() == 2) {
-                  // if the endAtom has two neighbors and ...
-                  if (ranks[endAtomNeighbors[0]] != ranks[endAtomNeighbors[1]]) {
-                    // their ranks are different
+                  } else {
+                    // end and beg atoms has only one neighbor each, it doesn't matter what the ranks are:
                     dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
-                    if(ranks[endAtomNeighbors[0]] > ranks[endAtomNeighbors[1]]){
-                      dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
-                    } else {
-                      dblBond->getStereoAtoms().push_back(endAtomNeighbors[1]);
-                    }
-                  }
-                } else {
-                  // end and beg atoms has only one neighbor each, it doesn't matter what the ranks are:
-                  dblBond->getStereoAtoms().push_back(begAtomNeighbors[0]);
-                  dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
-                } // end of different number of neighbors on beg and end atoms
-              } // end of 2 and 3 coordinated atoms only
+                    dblBond->getStereoAtoms().push_back(endAtomNeighbors[0]);
+                  } // end of different number of neighbors on beg and end atoms
+                } // end of check that beg and end atoms have at least 1 neighbor:
+              }// end of 2 and 3 coordinated atoms only
             } // end of we want it or CIP code is not set
           } // end of double bond
         } // end of for loop over all bonds
