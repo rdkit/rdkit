@@ -1,6 +1,6 @@
 import os,sys
 
-bindir = 'c:\\cygwin\\bin\\';
+bindir = 'c:/cygwin/bin/';
 
 if len(sys.argv) > 2:
     runDir = sys.argv[2]
