@@ -4,7 +4,7 @@
 //
 //   @@ All Rights Reserved  @@
 //
-#include <RDKitBase.h>
+#include "RDKitBase.h"
 #include <GraphMol/Rings.h>
 #include <RDGeneral/RDLog.h>
 
