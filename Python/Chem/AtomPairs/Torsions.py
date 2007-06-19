@@ -13,7 +13,7 @@ Comparison with Other Descriptors" JCICS 27, 82-85 (1987).
 
 """
 import warnings
-warnings.filterwarnings("ignore",'',FutureWarning)
+#warnings.filterwarnings("ignore",'',FutureWarning)
 import Chem
 import Utils
 
@@ -21,10 +21,10 @@ def ScorePath(mol,path,size):
   """ Returns a score for an individual path.
 
   >>> m = Chem.MolFromSmiles('CCCCC')
-  >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0),1)
-  >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1),2)
-  >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2),2)
-  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(3),1)
+  >>> c1 = long(Utils.GetAtomCode(m.GetAtomWithIdx(0),1))
+  >>> c2 = long(Utils.GetAtomCode(m.GetAtomWithIdx(1),2))
+  >>> c3 = long(Utils.GetAtomCode(m.GetAtomWithIdx(2),2))
+  >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(3),1))
   >>> t = c1 | (c2 << Utils.codeSize) | (c3 << (Utils.codeSize*2)) | (c4 << (Utils.codeSize*3))
   >>> ScorePath(m,(0,1,2,3),4)==t
   1
@@ -33,6 +33,15 @@ def ScorePath(mol,path,size):
   >>> ScorePath(m,(3,2,1,0),4)==t
   1
 
+
+  >>> m = Chem.MolFromSmiles('C=CC(=O)O')
+  >>> c1 = long(Utils.GetAtomCode(m.GetAtomWithIdx(0),1))
+  >>> c2 = long(Utils.GetAtomCode(m.GetAtomWithIdx(1),2))
+  >>> c3 = long(Utils.GetAtomCode(m.GetAtomWithIdx(2),2))
+  >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(4),1))
+  >>> t = c1 | (c2 << Utils.codeSize) | (c3 << (Utils.codeSize*2)) | (c4 << (Utils.codeSize*3))
+  >>> ScorePath(m,(0,1,2,4),4)==t
+  1
 
   """
   codes = [None]*size
@@ -55,9 +64,9 @@ def ScorePath(mol,path,size):
       end -= 1
     else:
       break
-  accum = 0
+  accum = 0L
   for i in range(size):
-    accum |= codes[i] << Utils.codeSize*i
+    accum |= long(codes[i]) << (Utils.codeSize*i)
   return accum
 
 def ExplainPathScore(score,size=4):
@@ -73,6 +82,23 @@ def ExplainPathScore(score,size=4):
   >>> ExplainPathScore(score,3)
   (('C', 1, 0), ('C', 2, 1), ('C', 1, 1))
 
+
+  >>> m = Chem.MolFromSmiles('C=CO')
+  >>> score=ScorePath(m,(0,1,2),3)
+  >>> ExplainPathScore(score,3)
+  (('C', 1, 1), ('C', 2, 1), ('O', 1, 0))
+
+  >>> m = Chem.MolFromSmiles('OC=CO')
+  >>> score=ScorePath(m,(0,1,2,3),4)
+  >>> ExplainPathScore(score,4)
+  (('O', 1, 0), ('C', 2, 1), ('C', 2, 1), ('O', 1, 0))
+
+  >>> m = Chem.MolFromSmiles('CC=CO')
+  >>> score=ScorePath(m,(0,1,2,3),4)
+  >>> ExplainPathScore(score,4)
+  (('C', 1, 0), ('C', 2, 1), ('C', 2, 1), ('O', 1, 0))
+
+
   >>> m = Chem.MolFromSmiles('C=CC(=O)O')
   >>> score=ScorePath(m,(0,1,2,3),4)
   >>> ExplainPathScore(score,4)
@@ -82,15 +108,29 @@ def ExplainPathScore(score,size=4):
   (('C', 1, 1), ('C', 2, 1), ('C', 3, 1), ('O', 1, 0))
 
 
+  >>> m = Chem.MolFromSmiles('OOOO')
+  >>> score=ScorePath(m,(0,1,2),3)
+  >>> ExplainPathScore(score,3)
+  (('O', 1, 0), ('O', 2, 0), ('O', 2, 0))
+  >>> score=ScorePath(m,(0,1,2,3),4)
+  >>> ExplainPathScore(score,4)
+  (('O', 1, 0), ('O', 2, 0), ('O', 2, 0), ('O', 1, 0))
+
+
+
+
+
   """
   codeMask=(1<<Utils.codeSize)-1
   res=[None]*size
+  #print '>>>>>>>>>>>',score,size,codeMask
   for i in range(size):
     if i==0 or i==(size-1):
       sub = 1
     else:
       sub = 2
     code = score&codeMask
+    #print i,code,score
     score = score>>Utils.codeSize
     symb,nBranch,nPi = Utils.ExplainAtomCode(code)
     expl = symb,nBranch+sub,nPi
@@ -118,17 +158,17 @@ def GetTopologicalTorsionFingerprint(mol,targetSize=4):
 
   A single path:
   >>> m = Chem.MolFromSmiles('CCCC')
-  >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0),1)
-  >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1),2)
-  >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2),2)
-  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(3),1)
+  >>> c1 = long(Utils.GetAtomCode(m.GetAtomWithIdx(0),1))
+  >>> c2 = long(Utils.GetAtomCode(m.GetAtomWithIdx(1),2))
+  >>> c3 = long(Utils.GetAtomCode(m.GetAtomWithIdx(2),2))
+  >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(3),1))
   >>> t = c1 | (c2 << Utils.codeSize) | (c3 << (Utils.codeSize*2)) | (c4 << (Utils.codeSize*3))
   >>> GetTopologicalTorsionFingerprint(m)==(t,)
   1
 
   Two paths, both the same:
   >>> m = Chem.MolFromSmiles('CCCCC')
-  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(3),1)
+  >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(3),1))
   >>> t = c1 | (c2 << Utils.codeSize) | (c3 << (Utils.codeSize*2)) | (c4 << (Utils.codeSize*3))
   >>> GetTopologicalTorsionFingerprint(m)==(t,t)
   1

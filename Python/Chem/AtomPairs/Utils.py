@@ -67,13 +67,15 @@ def ExplainAtomCode(code,branchSubtract=0):
   piMask = (1<<numPiBits)-1
 
   nBranch = int(code&branchMask)
-
+  #print code,
   code = code>>numBranchBits
   nPi = int(code&piMask)
-  
+  #print code,
   code = code>>numPiBits
+  #print code,
   typeIdx=int(code&typeMask)
   atomNum = _atomNumberTypes[typeIdx]
+  #print code,atomNum
   if atomNum==-1:
     atomSymbol='X'
   else:
@@ -95,20 +97,24 @@ def GetAtomCode(atom,branchSubtract=0):
   >>> m = Chem.MolFromSmiles('C=C')
   >>> shift1 = numBranchBits
   >>> shift2 = numBranchBits + numPiBits
-  >>> GetAtomCode(m.GetAtomWithIdx(0),1) == (1 << shift1) + (1 << shift2)
+  >>> GetAtomCode(m.GetAtomWithIdx(0),1) == (1 << shift1) | (1 << shift2)
   1
   >>> m = Chem.MolFromSmiles('C#CO')
-  >>> GetAtomCode(m.GetAtomWithIdx(0),1) == (2 << shift1) + (1 << shift2)
+  >>> GetAtomCode(m.GetAtomWithIdx(0),1) == (2 << shift1) | (1 << shift2)
   1
-  >>> GetAtomCode(m.GetAtomWithIdx(1),2) == (2 << shift1) + (1 << shift2)
+  >>> GetAtomCode(m.GetAtomWithIdx(1),2) == (2 << shift1) | (1 << shift2)
   1
-  >>> GetAtomCode(m.GetAtomWithIdx(2),1) == 0 + (3 << shift2)
+  >>> GetAtomCode(m.GetAtomWithIdx(2),1) == 0 | (3 << shift2)
   1
   
   >>> m = Chem.MolFromSmiles('CC(O)C(O)(O)C')
-  >>> GetAtomCode(m.GetAtomWithIdx(1),2) == 1 + (0 << shift1) + (1 << shift2)
+  >>> GetAtomCode(m.GetAtomWithIdx(1),2) == 1 | (0 << shift1) | (1 << shift2)
   1
-  >>> GetAtomCode(m.GetAtomWithIdx(3),2) == 2 + (0 << shift1) + (1 << shift2)
+  >>> GetAtomCode(m.GetAtomWithIdx(3),2) == 2 | (0 << shift1) | (1 << shift2)
+  1
+
+  >>> m = Chem.MolFromSmiles('C=CC(=O)O')
+  >>> GetAtomCode(m.GetAtomWithIdx(4),1) == 0 | (0 << shift1) | (3 << shift2)
   1
 
 
@@ -116,16 +122,14 @@ def GetAtomCode(atom,branchSubtract=0):
   nBranches = atom.GetDegree() - branchSubtract
   if nBranches<0: nBranches=0
   code = nBranches % _maxNumBranches
-
+  
   nPi = NumPiElectrons(atom) % _maxNumPi
   code |= (nPi<<numBranchBits)
-
   try:
     typeIdx = _atomNumberTypes.index(atom.GetAtomicNum())
   except ValueError:
     typeIdx = len(_atomNumberTypes)-1
   code |= typeIdx << (numBranchBits+numPiBits)
-
   return code
 
 def NumPiElectrons(atom):
