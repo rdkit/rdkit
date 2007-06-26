@@ -46,13 +46,15 @@ def ClusterData(data,nPts,distThresh,isDistData=False):
   nbrLists = [None]*nPts
   for i in range(nPts): nbrLists[i] = []
 
+  dmIdx=0
   for i in range(nPts):
-    for j in range(i+1,nPts):
+    for j in range(i):
       if not isDistData:
         dv = data[i]-data[j]
         dij = sqrt(dv*dv)
       else:
-        dij = data[(j*(j-1))/2+i]
+        dij = data[dmIdx]
+        dmIdx+=1
         #print i,j,dij
       if dij<=distThresh:
         nbrLists[i].append(j)

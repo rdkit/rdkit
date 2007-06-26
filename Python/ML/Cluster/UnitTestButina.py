@@ -83,6 +83,20 @@ class TestCase(unittest.TestCase):
     self.failUnless(cs[1]==(4,))
     self.failUnless(cs[2]==(0,))
 
+  def test6(self):
+    " edge case: zero distances: "
+    dists = [1,
+             2,0,
+             2,0,0,
+             4,2,2,2,
+             ]
+    nPts = 5
+    cs = Butina.ClusterData(dists,nPts,0.9,isDistData=1)
+    self.failUnless(len(cs)==3)
+    self.failUnless(cs[0]==(3,1,2))
+    self.failUnless(cs[1]==(4,))
+    self.failUnless(cs[2]==(0,))
+
 
 
     
