@@ -22,7 +22,7 @@ numPathBits=5
 numFpBits=numPathBits+2*Utils.codeSize
 fpLen=1L<<numFpBits
 
-def ScorePair(at1,at2,dist):
+def ScorePair(at1,at2,dist,atomCodes=None):
   """ Returns a score for an individual atom pair.
 
   >>> m = Chem.MolFromSmiles('CCCCC')
@@ -37,10 +37,16 @@ def ScorePair(at1,at2,dist):
   >>> t = 2 | min(c1,c3)<<numPathBits | max(c1,c3)<<(Utils.codeSize+numPathBits)
   >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2)==t
   1
+  >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2,
+  ...  atomCodes=(Utils.GetAtomCode(m.GetAtomWithIdx(0)),Utils.GetAtomCode(m.GetAtomWithIdx(2))))==t
+  1
 
   """
-  code1 = Utils.GetAtomCode(at1)
-  code2 = Utils.GetAtomCode(at2)
+  if not atomCodes:
+    code1 = Utils.GetAtomCode(at1)
+    code2 = Utils.GetAtomCode(at2)
+  else:
+    code1,code2=atomCodes
   accum = dist % _maxPathLen
   accum |= min(code1,code2) << numPathBits
   accum |= max(code1,code2) << (Utils.codeSize+numPathBits)
@@ -99,13 +105,16 @@ def GetAtomPairFingerprintAsCounts(mol):
   res = []
   dists = Chem.GetDistanceMatrix(mol)
   nAtoms = mol.GetNumAtoms()
+  atomScores=[]
+  for i in range(nAtoms):
+    atomScores.append(Utils.GetAtomCode(mol.GetAtomWithIdx(i)))
   for i in range(nAtoms):
     at1 = mol.GetAtomWithIdx(i)
     for j in range(i+1,nAtoms):
       dist = dists[i,j]
       if dist<_maxPathLen:
         at2 = mol.GetAtomWithIdx(j)
-      res.append(ScorePair(at1,at2,int(dist)))
+        res.append(ScorePair(at1,at2,int(dist),atomCodes=(atomScores[i],atomScores[j])))
   res.sort()
   return tuple(res)
 

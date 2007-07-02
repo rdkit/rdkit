@@ -17,7 +17,7 @@ import warnings
 import Chem
 import Utils
 
-def ScorePath(mol,path,size):
+def ScorePath(mol,path,size,atomCodes=None):
   """ Returns a score for an individual path.
 
   >>> m = Chem.MolFromSmiles('CCCCC')
@@ -50,7 +50,11 @@ def ScorePath(mol,path,size):
       sub = 1
     else:
       sub = 2
-    codes[i] = Utils.GetAtomCode(mol.GetAtomWithIdx(path[i]),sub) 
+    if not atomCodes:
+      codes[i] = Utils.GetAtomCode(mol.GetAtomWithIdx(path[i]),sub)
+    else:
+      base = atomCodes[path[i]]
+      codes[i]=base-sub
 
   # "canonicalize" the code vector:
   beg=0
@@ -192,9 +196,13 @@ def GetTopologicalTorsionFingerprint(mol,targetSize=4):
   0.375
 
   """
+  atomScores=[]
+  for i in range(mol.GetNumAtoms()):
+    atomScores.append(Utils.GetAtomCode(mol.GetAtomWithIdx(i)))
+
   paths = Chem.FindAllPathsOfLengthN(mol,targetSize,useBonds=0)
   nPaths = len(paths)
-  res = [ScorePath(mol,x,targetSize) for x in paths]
+  res = [ScorePath(mol,x,targetSize,atomCodes=atomScores) for x in paths]
   #for x in paths:
   #  print [int(y) for y in x],ScorePath(mol,x,targetSize)
 
