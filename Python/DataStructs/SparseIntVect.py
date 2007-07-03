@@ -407,9 +407,18 @@ def DiceSimilarity(v1,v2,bounds=None,useAbs=False):
     if bounds and (min(len(v1),len(v2))/denom) < bounds:
       numer = 0.0
     else:
-      tv = v1&v2
-      numer = 2.0*tv.Sum(useAbs=useAbs)
-    res = numer/denom
+      #tv = v1&v2
+      #numer = 2.0*tv.Sum(useAbs=useAbs)
+      numer=0.0
+      v1C=v1.container
+      v2C=v2.container
+      for k in v1C.keys():
+        if v2C.has_key(k):
+          if useAbs:
+            numer+=min(abs(v1C[k]),abs(v2C[k]))
+          else:
+            numer+=min(v1C[k],v2C[k])
+    res = 2.*numer/denom
 
   return res
 
