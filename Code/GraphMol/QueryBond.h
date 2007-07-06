@@ -52,6 +52,9 @@ namespace RDKit{
     bool Match(Bond const *what) const;
 
 
+    // This method can be used to distinguish query bonds from standard bonds
+    bool hasQuery() const { return dp_query!=0; };
+    
     //! returns our current query
     QUERYBOND_QUERY *getQuery() const { return dp_query; };
     //! replaces our current query with the value passed in

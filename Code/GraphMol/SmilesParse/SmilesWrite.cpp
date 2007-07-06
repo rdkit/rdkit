@@ -35,20 +35,32 @@ namespace SmilesWrite{
     double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(num)-atom->getMass());
   
     std::string symb = atom->getSymbol();
-    bool needsBracket;
+    bool needsBracket=false;
     if(std::find(atomicSmilesVect.begin(),atomicSmilesVect.end(),num) !=
        atomicSmilesVect.end()){
-      // it's a "normal" atom:
+      // it's a member of the organic subset 
       if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -= ('A'-'a');
-      needsBracket = (fc != 0) || (numExplicit != 0);
-      if(atom->getOwningMol().hasProp("_doIsoSmiles") &&
-        atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
-        needsBracket = true;
+
+      // -----
+      // figure out if we need to put a bracket around the atom,
+      // the conditions for this are:
+      //   - formal charge specified
+      //   - the atom has explicit Hs
+      //   - chirality present and writing isomeric smiles
+      //   - non-default isotope and writing isomeric smiles
+      if(fc || numExplicit){
+        needsBracket=true;
+      }
+      if(atom->getOwningMol().hasProp("_doIsoSmiles")){
+        if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
+          needsBracket = true;
+        } else if(massDiff>0.01){
+          needsBracket=true;
+        }
       }
     } else {
       needsBracket = true;
     }
-    if(massDiff>0.01 && atom->getOwningMol().hasProp("_doIsoSmiles") ) needsBracket=true; 
     if( needsBracket ) res << "[";
 
     if(massDiff>0.01 && atom->getOwningMol().hasProp("_doIsoSmiles")){
@@ -56,7 +68,7 @@ namespace SmilesWrite{
       res <<iMass;
     }
     res << symb;
-
+    bool chiralityIncluded=false;
     if(atom->getOwningMol().hasProp("_doIsoSmiles") &&
        atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
       INT_LIST trueOrder;
@@ -70,7 +82,7 @@ namespace SmilesWrite{
 
     
       //std::cout << "\t\tnSwaps: " << nSwaps << std::endl;
-      std::string atStr;
+      std::string atStr="";
       switch(atom->getChiralTag()){
       case Atom::CHI_TETRAHEDRAL_CW:
         //std::cout << "\tcw" << std::endl;
@@ -78,6 +90,7 @@ namespace SmilesWrite{
           atStr = "@@";
         else
           atStr = "@";
+        chiralityIncluded=true;
         break;
       case Atom::CHI_TETRAHEDRAL_CCW:
         //std::cout << "\tccw" << std::endl;
@@ -85,6 +98,7 @@ namespace SmilesWrite{
           atStr = "@";
         else
           atStr = "@@";
+        chiralityIncluded=true;
         break;
       }
       //std::cout << "\tats: " << atStr << std::endl;
@@ -93,8 +107,10 @@ namespace SmilesWrite{
 
     if(needsBracket){
       unsigned int totNumHs=atom->getTotalNumHs();
-      if(totNumHs > 0) res << "H";
-      if(totNumHs > 1) res << totNumHs;
+      if(totNumHs > 0){
+        res << "H";
+        if(totNumHs > 1) res << totNumHs;
+      }
       if(fc > 0){
         res << "+";
         if(fc > 1) res << fc;

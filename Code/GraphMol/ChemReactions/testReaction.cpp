@@ -1060,6 +1060,76 @@ void test12DoubleBondStereochem(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test13Issue1748846(){
+  ROMol *mol=0;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  std::vector<MOL_SPTR_VECT> prods;
+  std::string smi,stereo;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 1748846: bad bond orders in reaction products" << std::endl;
+
+  smi = "c1ccccc1[C:1].[*:2][At]>>c1ccccc1[C:1][*:2]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+  reacts.clear();
+  smi = "c1ccccc1C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+
+  smi = "[At]OC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+    
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()>0);
+  BOOST_LOG(rdInfoLog)<<prods[0].size()<<std::endl;
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==9);
+  BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
+  TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0,1)->getBondType()==Bond::AROMATIC);
+  TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(1,2)->getBondType()==Bond::AROMATIC);
+  smi=MolToSmiles(*prods[0][0],true);
+  TEST_ASSERT(smi=="COCc1ccccc1");
+  
+  delete rxn;
+  smi = "[c:3][C:1].[*:2][At]>>[c:3][C:1][*:2]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+  reacts.clear();
+  smi = "c1ccccc1C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+
+  smi = "[At]OC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+    
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()>0);
+  BOOST_LOG(rdInfoLog)<<prods[0].size()<<std::endl;
+  TEST_ASSERT(prods[0].size()==1);
+  BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==9);
+  smi=MolToSmiles(*prods[0][0],true);
+  TEST_ASSERT(smi=="COCc1ccccc1");
+  
+    
+  delete rxn;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 
@@ -1081,8 +1151,9 @@ int main() {
   test9ProductQueries();
   test10ChiralityDaylight();
   test11ChiralityRxn();
-#endif
   test12DoubleBondStereochem();
+#endif
+  test13Issue1748846();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

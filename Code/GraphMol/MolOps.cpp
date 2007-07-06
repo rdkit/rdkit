@@ -112,16 +112,20 @@ namespace RDKit{
       //  Go through and adjust the number of implicit and explicit Hs
       //  on each atom in the molecule.
       //
+      //  Atoms that do not *need* explicit Hs
+      //
       //  Assumptions: this is called after the molecule has been
       //  sanitized, aromaticity has been perceived, and the implicit
       //  valence of everything has been calculated.
       //
       ROMol::AtomIterator ai; 
-      int origImplicitV,newImplicitV,origExplicitV;
       for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
-	origImplicitV = (*ai)->getImplicitValence();
+	int origImplicitV = (*ai)->getImplicitValence();
 	(*ai)->calcExplicitValence();
-	newImplicitV = (*ai)->calcImplicitValence();
+        int origExplicitV = (*ai)->getNumExplicitHs();
+        //(*ai)->setNumExplicitHs(0);
+        
+	int newImplicitV = (*ai)->calcImplicitValence();
 	//
 	//  Case 1: The disappearing Hydrogen
 	//    Smiles:  O=C1NC=CC2=C1C=CC=C2
@@ -139,11 +143,9 @@ namespace RDKit{
 	//    <phew> that takes way longer to comment than it does to
 	//    write:
 	if(newImplicitV < origImplicitV){
-	  origExplicitV = (*ai)->getNumExplicitHs();
 	  (*ai)->setNumExplicitHs(origExplicitV+(origImplicitV-newImplicitV));
 	  (*ai)->calcExplicitValence();
 	}
-      
       }
     }
 		

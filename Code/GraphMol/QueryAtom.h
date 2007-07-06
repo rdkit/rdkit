@@ -33,6 +33,9 @@ namespace RDKit{
     //! returns a copy of this query, owned by the caller
     Atom *copy() const;
 
+    // This method can be used to distinguish query atoms from standard atoms:
+    bool hasQuery() const { return dp_query!=0; };
+    
     //! replaces our current query with the value passed in
     void setQuery(QUERYATOM_QUERY *what) { dp_query = what; }
     //! returns our current query

@@ -142,12 +142,29 @@ namespace RDKit {
         // make sure we don't lose the bond dir information:
         Bond *newB=res->getBondWithIdx(bondIdx);
         newB->setBondDir(oldB->getBondDir());
+        // Special case/hack:
+        //  The product has been processed by the SMARTS parser.
+        //  The SMARTS parser tags unspecified bonds as single, but then adds
+        //  a query so that they match single or double
+        //  This caused Issue 1748846
+        //   http://sourceforge.net/tracker/index.php?func=detail&aid=1748846&group_id=160139&atid=814650
+        //  We need to fix that little problem now:
+        if( oldB->hasQuery() &&
+            oldB->getQuery()->getDescription()=="BondOr" &&
+            oldB->getBondType()==Bond::SINGLE){
+          if(newB->getBeginAtom()->getIsAromatic() && newB->getEndAtom()->getIsAromatic()){
+            newB->setBondType(Bond::AROMATIC);
+          } else {
+            newB->setBondType(Bond::SINGLE);
+          }
+        }
       }
       
       return RWMOL_SPTR(res);  
     } // end of initProduct()
     
-    void addReactantAtomsAndBonds(RWMOL_SPTR product,const ROMOL_SPTR reactantSptr,const MatchVectType &match,
+    void addReactantAtomsAndBonds(RWMOL_SPTR product,const ROMOL_SPTR reactantSptr,
+                                  const MatchVectType &match,
                                   const ROMOL_SPTR reactantTemplate){
 
       // start by looping over all matches and marking the reactant atoms that
@@ -156,7 +173,8 @@ namespace RDKit {
       // particular product (or, perhaps, not in any product)
       // At the same time we'll set up a map between the indices of those
       // atoms and their index in the product.
-      boost::dynamic_bitset<> mappedAtoms(reactantSptr->getNumAtoms()),skippedAtoms(reactantSptr->getNumAtoms());
+      boost::dynamic_bitset<> mappedAtoms(reactantSptr->getNumAtoms());
+      boost::dynamic_bitset<> skippedAtoms(reactantSptr->getNumAtoms());
       std::map<unsigned int,unsigned int> reactProdAtomMap; // this maps atom indices from reactant->product
       for(unsigned int i=0;i<match.size();i++){
         const Atom *templateAtom=reactantTemplate->getAtomWithIdx(match[i].first);
@@ -169,8 +187,8 @@ namespace RDKit {
             mappedAtoms[match[i].second]=1;
             //BOOST_LOG(rdInfoLog) << "  map: " << match[i].second << " " << reactProdAtomMap[match[i].second] << std::endl;
           } else {
-            // this skippedAtom has an atomMapNumber, but it's not in this product (it's either in another
-            // product or it's not mapped at all).
+            // this skippedAtom has an atomMapNumber, but it's not in this product 
+            // (it's either in another product or it's not mapped at all).
             skippedAtoms[match[i].second]=1;  
           }
         } else {
@@ -300,9 +318,8 @@ namespace RDKit {
                   reactProdAtomMap[*nbrIdx]=productIdx;
                   //BOOST_LOG(rdInfoLog) << "  atom: " << *nbrIdx << " " << productIdx << std::endl;
                   addBond=true;
-                  // set the bond:
                   //BOOST_LOG(rdInfoLog) << "  bond3: " << reactantAtomProductIndex << " " << reactProdAtomMap[*nbrIdx] << std::endl;                
-                  // and update the stack:
+                  // update the stack:
                   atomStack.push_back(reactant->getAtomWithIdx(*nbrIdx));
                 }
                 if(addBond){

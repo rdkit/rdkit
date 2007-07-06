@@ -1298,6 +1298,67 @@ void testBug1670149(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
  
+void testBug1719046(){
+  RWMol *mol;
+  std::string smi;
+  int numE=0;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1719046: explicit Hs in canonical smiles" << std::endl;
+
+  smi ="Cl[CH]1CCCCC1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="ClC1CCCCC1");
+
+  delete mol;
+  smi ="Cl[C@H]1CCCCC1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="ClC1CCCCC1");
+
+  delete mol;
+  smi ="Cl[C@H]1C(Br)CCCC1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="ClC1C(Br)CCCC1");
+
+
+  delete mol;
+  smi ="[CH]1=[CH][CH]=[CH][CH]=[CH]1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="c1ccccc1");
+
+  delete mol;
+  smi ="c1ccccn1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="c1ccncc1");
+
+  delete mol;
+  smi ="C1=CNC=C1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="c1cc[nH]c1");
+
+  delete mol;
+  smi ="[CH]1=[CH][NH][CH]=[CH]1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="c1cc[nH]c1");
+
+  delete mol;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+ 
 int
 main(int argc, char *argv[])
 {
@@ -1324,8 +1385,9 @@ main(int argc, char *argv[])
   testIssue191();
   testIssue256();
   testIssue266();
-#endif
   testRootedAt();
   testIsotopes();
   testBug1670149();
+#endif
+  //testBug1719046();
 }

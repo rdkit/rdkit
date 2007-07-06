@@ -241,6 +241,9 @@ namespace RDKit{
     //  Atoms.
     // ------------------------------------
 
+    // This method can be used to distinguish query atoms from standard atoms:
+    virtual bool hasQuery() const { return false; };
+   
     //! NOT CALLABLE
     virtual void setQuery(QUERYATOM_QUERY *what);
 
