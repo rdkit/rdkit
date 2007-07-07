@@ -62,6 +62,8 @@ def HallKierAlpha(m):
   alphaSum = 0.0
   rC = PeriodicTable.nameTable['C'][5]
   for atom in m.GetAtoms():
+    atNum=atom.GetAtomicNum()
+    if not atNum: continue
     symb = atom.GetSymbol()
     alphaV = PeriodicTable.hallKierAlphas.get(symb,None)
     if alphaV is not None:
@@ -77,7 +79,7 @@ def HallKierAlpha(m):
       alpha = rA/rC - 1
     alphaSum += alpha  
   return alphaSum    
-HallKierAlpha.version="1.0.1"  
+HallKierAlpha.version="1.0.2"  
 
 def Ipc(mol, avg = 0, dMat = None, forceDMat = 0):
   """This returns the information content of the coefficients of the characteristic

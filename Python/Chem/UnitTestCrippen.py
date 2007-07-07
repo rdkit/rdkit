@@ -47,11 +47,11 @@ class TestCase(unittest.TestCase):
 
       clog = self.clogs[i]
       tmp = Crippen.MolLogP(mol)
-      assert feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp)
+      self.failUnless(feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp))
 
       mr = self.mrs[i]
       tmp = Crippen.MolMR(mol)
-      assert feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp)
+      self.failUnless(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
       
   def testRepeat(self):
     self._readData()
@@ -63,12 +63,12 @@ class TestCase(unittest.TestCase):
       clog = self.clogs[i]
       tmp = Crippen.MolLogP(mol)
       tmp = Crippen.MolLogP(mol)
-      assert feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp)
+      self.failUnless(feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp))
 
       mr = self.mrs[i]
       tmp = Crippen.MolMR(mol)
       tmp = Crippen.MolMR(mol)
-      assert feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp)
+      self.failUnless(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
       
   def _doDetailFile(self,inF,nFailsAllowed=1):
     done = 0
@@ -113,10 +113,8 @@ class TestCase(unittest.TestCase):
               Crippen._GetAtomContribs(mol,verbose=1,force=1)
               print '-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*'
               nFails +=1
-              if nFails>=nFailsAllowed:
-                assert 0
-              else:
-                break;
+              break;
+          self.failUnless(nFails<nFailsAllowed)
         else:
           print 'Problems with SMILES:',smi
   def testDetails(self):
@@ -135,7 +133,12 @@ class TestCase(unittest.TestCase):
     ref = Crippen.MolLogP(m)
     Lipinski.NHOHCount(m)
     probe = Crippen.MolLogP(m)
-    assert probe==ref
+    self.failUnless(probe==ref)
+    
+  def testIssue1749494(self):
+    m1 = Chem.MolFromSmiles('[Xa]CC')
+    v = Crippen.MolLogP(m1)
+    self.failUnless(feq(v,0.9709))
     
           
       

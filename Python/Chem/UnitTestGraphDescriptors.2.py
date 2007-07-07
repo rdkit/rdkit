@@ -718,46 +718,46 @@ class TestCase(unittest.TestCase):
       chi = GraphDescriptors.Chi4n(m)
       assert feq(chi,res,1e-3),'mol %s (Chi4n=%f) should have Chi4N=%f'%(smi,chi,res)
 
-    def testIssue125(self):
-      """ test an issue with calculating BalabanJ
-      """
-      smi = 'O=C(OC)C1=C(C)NC(C)=C(C(OC)=O)C1C2=CC=CC=C2[N+]([O-])=O'
-      m1 = Chem.MolFromSmiles(smi)
-      m2 = Chem.MolFromSmiles(smi)
-      Chem.MolToSmiles(m1)
-      j1=GraphDescriptors.BalabanJ(m1)
-      j2=GraphDescriptors.BalabanJ(m2)
-      assert feq(j1,j2)
+  def testIssue125(self):
+    """ test an issue with calculating BalabanJ
+    """
+    smi = 'O=C(OC)C1=C(C)NC(C)=C(C(OC)=O)C1C2=CC=CC=C2[N+]([O-])=O'
+    m1 = Chem.MolFromSmiles(smi)
+    m2 = Chem.MolFromSmiles(smi)
+    Chem.MolToSmiles(m1)
+    j1=GraphDescriptors.BalabanJ(m1)
+    j2=GraphDescriptors.BalabanJ(m2)
+    assert feq(j1,j2)
 
   def testOrderDepend(self):
-   """ test order dependence of some descriptors:
-   """
-   data = [('C=CC=C',21.01955,2.73205),
-           ('O=CC=O',25.01955,2.73205),
-           ('FCC(=O)CF',46.7548875,2.98816),
-           ('O=C1C=CC(=O)C=C1',148.705216,2.8265),
-           ('C12C(F)=C(O)C(F)C1C(F)=C(O)C(F)2',315.250442,2.4509),
-           ('C12CC=CCC1C(=O)C3CC=CCC3C(=O)2',321.539522,1.95986)]
+    """ test order dependence of some descriptors:
+    """
+    data = [('C=CC=C',21.01955,2.73205),
+            ('O=CC=O',25.01955,2.73205),
+            ('FCC(=O)CF',46.7548875,2.98816),
+            ('O=C1C=CC(=O)C=C1',148.705216,2.8265),
+            ('C12C(F)=C(O)C(F)C1C(F)=C(O)C(F)2',315.250442,2.4509),
+            ('C12CC=CCC1C(=O)C3CC=CCC3C(=O)2',321.539522,1.95986)]
 
-   for smi,CT,bal in data:
-     m = Chem.MolFromSmiles(smi)
-     newBal = GraphDescriptors.BalabanJ(m, forceDMat = 1)
-     assert feq(newBal,bal,1e-4),'mol %s %f!=%f'%(smi,newBal,bal)
-     m = Chem.MolFromSmiles(smi)
-     newCT = GraphDescriptors.BertzCT(m, forceDMat = 1)
-     assert feq(newCT,CT,1e-4),'mol %s (CT calc = %f) should have CT = %f'%(smi,newCT,CT)
-     m = Chem.MolFromSmiles(smi)
-     newCT = GraphDescriptors.BertzCT(m, forceDMat = 1)
-     assert feq(newCT,CT,1e-4),'mol %s (CT calc = %f) should have CT = %f'%(smi,newCT,CT)
-     newBal = GraphDescriptors.BalabanJ(m, forceDMat = 1)
-     assert feq(newBal,bal,1e-4),'mol %s %f!=%f'%(smi,newBal,bal)
+    for smi,CT,bal in data:
+      m = Chem.MolFromSmiles(smi)
+      newBal = GraphDescriptors.BalabanJ(m, forceDMat = 1)
+      assert feq(newBal,bal,1e-4),'mol %s %f!=%f'%(smi,newBal,bal)
+      m = Chem.MolFromSmiles(smi)
+      newCT = GraphDescriptors.BertzCT(m, forceDMat = 1)
+      assert feq(newCT,CT,1e-4),'mol %s (CT calc = %f) should have CT = %f'%(smi,newCT,CT)
+      m = Chem.MolFromSmiles(smi)
+      newCT = GraphDescriptors.BertzCT(m, forceDMat = 1)
+      assert feq(newCT,CT,1e-4),'mol %s (CT calc = %f) should have CT = %f'%(smi,newCT,CT)
+      newBal = GraphDescriptors.BalabanJ(m, forceDMat = 1)
+      assert feq(newBal,bal,1e-4),'mol %s %f!=%f'%(smi,newBal,bal)
 
-     m = Chem.MolFromSmiles(smi)
-     newBal = GraphDescriptors.BalabanJ(m, forceDMat = 1)
-     assert feq(newBal,bal,1e-4),'mol %s %f!=%f'%(smi,newBal,bal)
-     newCT = GraphDescriptors.BertzCT(m, forceDMat = 1)
-     assert feq(newCT,CT,1e-4),'mol %s (CT calc = %f) should have CT = %f'%(smi,newCT,CT)
-            
+      m = Chem.MolFromSmiles(smi)
+      newBal = GraphDescriptors.BalabanJ(m, forceDMat = 1)
+      assert feq(newBal,bal,1e-4),'mol %s %f!=%f'%(smi,newBal,bal)
+      newCT = GraphDescriptors.BertzCT(m, forceDMat = 1)
+      assert feq(newCT,CT,1e-4),'mol %s (CT calc = %f) should have CT = %f'%(smi,newCT,CT)
+
 if __name__ == '__main__':
   import sys,getopt,re
   doLong=0

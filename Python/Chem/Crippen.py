@@ -82,7 +82,8 @@ def _GetAtomContribs(mol,patts=None,order=None,verbose=0,force=0):
     order = _patternOrder
 
   nAtoms = mol.GetNumAtoms()
-  atomContribs = [None]*nAtoms
+  atomContribs = [(0.,0.)]*nAtoms
+  doneAtoms=[0]*nAtoms
   nAtomsFound=0
   done = False
   for cha in order:
@@ -91,10 +92,11 @@ def _GetAtomContribs(mol,patts=None,order=None,verbose=0,force=0):
       #print 'try:',entry[0]
       for match in mol.GetSubstructMatches(patt,False,False):
         firstIdx = match[0]
-        if atomContribs[firstIdx] is None:
+        if not doneAtoms[firstIdx]:
+          doneAtoms[firstIdx]=1
           atomContribs[firstIdx] = (logp,mr)
           if verbose:
-            print '\tAtom %d: %s %4.4f %4.4f'%(match[0],sma,logp,mp)
+            print '\tAtom %d: %s %4.4f %4.4f'%(match[0],sma,logp,mr)
           nAtomsFound+=1
           if nAtomsFound>=nAtoms:
             done=True

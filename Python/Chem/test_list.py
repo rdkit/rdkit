@@ -19,6 +19,7 @@ tests=[
   ("python","UnitTestCatalog.py",{}),
   ("python","TemplateAlign.py",{}),
   ("python","Recap.py",{}),
+  ("python","UnitTestDescriptors.py",{}),
   ]
 
 

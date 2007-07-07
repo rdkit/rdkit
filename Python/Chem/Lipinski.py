@@ -29,6 +29,10 @@ import Chem
 HDonorSmarts = Chem.MolFromSmarts('[$([N;!H0;v3]),$([N;!H0;+1;v4]),$([O,S;H1;+0]),$([n;H1;+0])]')
 HAcceptorSmarts = Chem.MolFromSmarts('[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N&v3;H1,H2]-[!$(*=[O,N,P,S])]),$([N;v3;H0]),$([n,o,s;+0]),F]')
 HeteroatomSmarts = Chem.MolFromSmarts('[!#6;!#1]')
+#  NOTE: the Rotatable bond smarts here doesn't treat deuteriums (which are left in the graph
+#  and therefore contribute to the degree of a carbon) the same as hydrogens (which are removed
+#  from the graph). So the bond in [2H]C([2H])([2H])C([2H])([2H])[2H] *is* considered
+#  rotatable.
 RotatableBondSmarts = Chem.MolFromSmarts('[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]')
 NHOHSmarts = Chem.MolFromSmarts('[#8H1,#7H1,#7H2,#7H3]')
 NOCountSmarts = Chem.MolFromSmarts('[#7,#8]')

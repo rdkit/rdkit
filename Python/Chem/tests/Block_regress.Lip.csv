@@ -2603,7 +2603,7 @@ N1C=C(CCCCCC(=O)O)C2=C1C=CC=C2,2,2,3,6
 C1(C2C(N)=CC=CC=2)C(SC)=CC=CC=1,2,1,2,2
 [N+](C1C(C2C(O)=CC=CC=2)=CC=CC=1)([O-])=O,3,1,4,2
 # NumHeteroatoms adjusted
-C(OC1C(C2C(N)=CC=CC=2)=CC=CC=1)([2H])([2H])[2H],2,1,2,2
+C(OC1C(C2C(N)=CC=CC=2)=CC=CC=1)([2H])([2H])[2H],2,1,2,3
 [N+](C1C=C(NN)C(=CC=1)Cl)([O-])=O,4,2,6,2
 C1(NC2C=CC=CC(C=1)=2)C(=O)OC,3,1,3,2
 C1(=NCCN1)SCC2C=CC=CC=2,3,1,3,3
