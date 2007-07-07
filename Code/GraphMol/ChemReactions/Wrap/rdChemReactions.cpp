@@ -46,6 +46,11 @@ void rdChemicalReactionParserExceptionTranslator(RDKit::ChemicalReactionParserEx
   ss << "ChemicalReactionParserException: " << x.message();
   PyErr_SetString(PyExc_ValueError,ss.str().c_str());
 }
+void rdChemicalReactionExceptionTranslator(RDKit::ChemicalReactionException const& x){
+  std::ostringstream ss;
+  ss << "ChemicalParserException: " << x.message();
+  PyErr_SetString(PyExc_ValueError,ss.str().c_str());
+}
 
 namespace RDKit {
   template <typename T>
@@ -85,6 +90,7 @@ BOOST_PYTHON_MODULE(rdChemReactions) {
     ;
 
   python::register_exception_translator<RDKit::ChemicalReactionParserException>(&rdChemicalReactionParserExceptionTranslator);
+  python::register_exception_translator<RDKit::ChemicalReactionException>(&rdChemicalReactionExceptionTranslator);
     
   std::string docString = "A class for storing and applying chemical reactions.\n\
 \n\

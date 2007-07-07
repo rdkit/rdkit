@@ -254,6 +254,15 @@ M  END
     self.failUnless(rxn)
     self.failUnless(rxn.Validate()==(0,1))
 
+  def test6Exceptions(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]Cl>>[C:1]')
+    self.failUnless(rxn)
+    self.failUnlessRaises(ValueError,lambda x=rxn:x.RunReactants(()))
+    self.failUnlessRaises(ValueError,lambda x=rxn:x.RunReactants((Chem.MolFromSmiles('CC'),Chem.MolFromSmiles('C'))))
+    ps=rxn.RunReactants((Chem.MolFromSmiles('CCCl'),))
+    self.failUnless(len(ps)==1)
+    self.failUnless(len(ps[0])==1)
+
         
 if __name__ == '__main__':
   unittest.main()
