@@ -41,6 +41,11 @@ RDGeom::Point2D operator- (const RDGeom::Point2D& p1, const RDGeom::Point2D& p2)
 RDGeom::Point2D operator* (const RDGeom::Point2D& p1, const double v);
 RDGeom::Point2D operator/ (const RDGeom::Point2D& p1, const double v);
 
+RDGeom::PointND operator+ (const RDGeom::PointND& p1, const RDGeom::PointND& p2);
+RDGeom::PointND operator- (const RDGeom::PointND& p1, const RDGeom::PointND& p2);
+RDGeom::PointND operator* (const RDGeom::PointND& p1, const double v);
+RDGeom::PointND operator/ (const RDGeom::PointND& p1, const double v);
+
 
 namespace RDGeom {
 
@@ -277,7 +282,7 @@ namespace RDGeom {
     inline unsigned int dimension() const {return 2;}
 
     inline double operator[](unsigned int i) const {
-      PRECONDITION(i < 2, "Invalid index on Point3D");
+      PRECONDITION(i < 2, "Invalid index on Point2D");
       if (i == 0) {
         return x;
       } else { 
@@ -286,7 +291,7 @@ namespace RDGeom {
     }
 
     inline double& operator[](unsigned int i) {
-      PRECONDITION(i < 2, "Invalid index on Point3D");
+      PRECONDITION(i < 2, "Invalid index on Point2D");
       if (i == 0) {
         return x;
       } else { 
@@ -403,6 +408,22 @@ namespace RDGeom {
       RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(*other.getStorage());
       dp_storage.reset(nvec);
     }
+
+#if 0
+    template <typename T>
+    PointND(const T &vals){
+      RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(vals.size(), 0.0);
+      dp_storage.reset(nvec);
+      unsigned int idx=0;
+      typename T::const_iterator it;
+      for(it=vals.begin();
+          it!=vals.end();
+          ++it){
+        nvec->setVal(idx,*it);
+        ++idx;
+      };
+    };
+#endif
 
     ~PointND() {}
 

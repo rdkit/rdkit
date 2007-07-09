@@ -196,7 +196,6 @@ namespace RDKit {
 	  positions.push_back(pt);
 	}
       }
-      
       bool gotCoords = _embedPoints(positions, mmat, randNegEig, numZeroFail, optimizerForceTol,
 				    basinThresh, seed, maxIterations, chiralCenters);
       
@@ -296,7 +295,7 @@ namespace RDKit {
       findChiralSets(mol, chiralCenters);
 
       // if we have any chiral centers we will first embed the molecule in four dimensions
-      // other we will use 3D 
+      // otherwise we will use 3D 
       RDGeom::PointPtrVect positions;
       bool fourD = false;
       unsigned int i;

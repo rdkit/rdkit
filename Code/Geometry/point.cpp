@@ -75,6 +75,50 @@ RDGeom::Point2D operator/ (const RDGeom::Point2D& p1, const double v) {
   return res;
 }
 
+
+RDGeom::PointND operator+ (const RDGeom::PointND& p1, const RDGeom::PointND& p2) {
+  unsigned int dim;
+  if(p1.dimension()<p2.dimension()) {
+    dim=p1.dimension();
+  } else {
+    dim=p1.dimension();
+  }
+  RDGeom::PointND res(dim);
+  for(unsigned int i=0;i<dim;++i){
+    res[i] = p1[i]+p2[i];
+  }
+  return res;
+}
+RDGeom::PointND operator- (const RDGeom::PointND& p1, const RDGeom::PointND& p2) {
+  unsigned int dim;
+  if(p1.dimension()<p2.dimension()) {
+    dim=p1.dimension();
+  } else {
+    dim=p1.dimension();
+  }
+  RDGeom::PointND res(dim);
+  for(unsigned int i=0;i<dim;++i){
+    res[i] = p1[i]-p2[i];
+  }
+  return res;
+}
+
+RDGeom::PointND operator* (const RDGeom::PointND& p1, const double v) {
+  RDGeom::PointND res(p1.dimension());
+  for(unsigned int i=0;i<p1.dimension();++i){
+    res[i] = p1[i]*v;
+  }
+  return res;
+}
+
+RDGeom::PointND operator/ (const RDGeom::PointND& p1, const double v) {
+  RDGeom::PointND res(p1.dimension());
+  for(unsigned int i=0;i<p1.dimension();++i){
+    res[i] = p1[i]/v;
+  }
+  return res;
+}
+
 namespace RDGeom {
   double computeDihedralAngle(Point3D pt1, Point3D pt2, Point3D pt3, Point3D pt4) {
     Point3D begEndVec = pt3 - pt2;

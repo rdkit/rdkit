@@ -13,7 +13,7 @@ class TestCase(unittest.TestCase):
     def setUp(self) :
         pass
 
-    def test1Point3D(self):
+    def test1aPoint3D(self):
         pt = geom.Point3D();
         self.failUnless(feq(pt.x, 0.0))
         self.failUnless(feq(pt.y, 0.0))
@@ -86,7 +86,7 @@ class TestCase(unittest.TestCase):
 
 
 
-    def test1Point2D(self):
+    def test1bPoint2D(self):
         pt = geom.Point2D();
         self.failUnless(feq(pt.x, 0.0))
         self.failUnless(feq(pt.y, 0.0))
@@ -143,6 +143,65 @@ class TestCase(unittest.TestCase):
 
         prod = pt1.DotProduct(pt2)
         self.failUnless(feq(prod, 2.0*math.cos(math.pi/6)))
+
+    def test1cPointND(self):
+        dim=4
+        pt = geom.PointND(4);
+        for i in range(dim):
+            self.failUnless(feq(pt[i], 0.0))
+        
+        pt[0]=3
+        pt[3]=4
+        self.failUnless(feq(pt[0], 3.0))
+        self.failUnless(feq(pt[3], 4.0))
+        self.failUnless(feq(pt[-4], 3.0))
+        self.failUnless(feq(pt[-1], 4.0))
+        lst = list(pt)
+        self.failUnless(feq(lst[0], 3.0))
+        self.failUnless(feq(lst[3], 4.0))
+
+
+        pt2 = geom.PointND(4)
+        pt2[0]=1.
+        pt2[2]=1.
+
+        pt3 = pt+pt2
+        self.failUnless(feq(pt3[0], 4.0))
+        self.failUnless(feq(pt3[2], 1.0))
+        self.failUnless(feq(pt3[3], 4.0))
+        
+        pt += pt2
+        self.failUnless(feq(pt[0], 4.0))
+        self.failUnless(feq(pt[2], 1.0))
+        self.failUnless(feq(pt[3], 4.0))
+
+        pt3 = pt-pt2
+        self.failUnless(feq(pt3[0], 3.0))
+        self.failUnless(feq(pt3[2], 0.0))
+        self.failUnless(feq(pt3[3], 4.0))
+        
+        pt -= pt2
+        self.failUnless(feq(pt[0], 3.0))
+        self.failUnless(feq(pt[2], 0.0))
+        self.failUnless(feq(pt[3], 4.0))
+
+        pt *= 2.0
+        self.failUnless(feq(pt[0], 6.0))
+        self.failUnless(feq(pt[1], 0.0))
+        self.failUnless(feq(pt[2], 0.0))
+        self.failUnless(feq(pt[3], 8.0))
+
+        
+        pt /= 2
+        self.failUnless(feq(pt[0], 3.0))
+        self.failUnless(feq(pt[1], 0.0))
+        self.failUnless(feq(pt[2], 0.0))
+        self.failUnless(feq(pt[3], 4.0))
+
+        self.failUnless(feq(pt.Length(), 5.0))
+        self.failUnless(feq(pt.LengthSq(), 25.0))
+        pt.Normalize()
+        self.failUnless(feq(pt.Length(), 1.0))
 
     def test3UniformGrid(self):
         ugrid = geom.UniformGrid3D(20, 18, 15)

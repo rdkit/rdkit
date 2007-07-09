@@ -8,7 +8,7 @@
 #include <boost/python.hpp>
 
 namespace python = boost::python;
-void wrap_point3D();
+void wrap_point();
 void wrap_uniformGrid();
 
 BOOST_PYTHON_MODULE(rdGeometry)
@@ -18,6 +18,6 @@ BOOST_PYTHON_MODULE(rdGeometry)
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
 
-  wrap_point3D();
+  wrap_point();
   wrap_uniformGrid();
 }
