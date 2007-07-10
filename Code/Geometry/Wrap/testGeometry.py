@@ -203,6 +203,12 @@ class TestCase(unittest.TestCase):
         pt.Normalize()
         self.failUnless(feq(pt.Length(), 1.0))
 
+        pkl = cPickle.dumps(pt)
+        pt2 = cPickle.loads(pkl)
+        self.failUnless(len(pt)==len(pt2))
+        for i in range(len(pt)):
+            self.failUnless(feq(pt2[i],pt[i]))
+
     def test3UniformGrid(self):
         ugrid = geom.UniformGrid3D(20, 18, 15)
         self.failUnless(ugrid.GetNumX() == 40)

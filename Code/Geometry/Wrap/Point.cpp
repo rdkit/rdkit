@@ -22,6 +22,25 @@ namespace{
       return python::make_tuple(pt.x,pt.y);
     }
   };
+  struct PointND_pickle_suite : python::pickle_suite
+  {
+    static python::tuple getinitargs(RDGeom::PointND const &pt){
+      return python::make_tuple(pt.dimension());
+    }
+    static python::tuple getstate(RDGeom::PointND const &pt){
+      python::list res;
+      for(unsigned int i=0;i<pt.dimension();++i){
+	res.append(pt[i]);
+      }
+      return python::tuple(res);
+    }
+    static void setstate(RDGeom::PointND &pt,python::tuple state){
+      unsigned int sz=python::extract<unsigned int>(state.attr("__len__")());
+      for(unsigned int i=0;i<sz;++i){
+	pt[i]=python::extract<double>(state[i]);
+      }
+    }
+  };
 
 }
 
@@ -219,6 +238,7 @@ The x, y, and z coordinates can be read and written using either attributes\n\
         //     "determines the signed angle between a vector to this point (between 0 and 2*PI)")
         //.def("CrossProduct", &PointND::crossProduct,
         //     "Get the cross product between two points")
+        .def_pickle(PointND_pickle_suite())
         ;
 
 
