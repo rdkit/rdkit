@@ -409,7 +409,8 @@ namespace RDGeom {
       dp_storage.reset(nvec);
     }
 
-    template <typename T>
+#if 0
+	template <typename T>
     PointND(const T &vals){
       RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(vals.size(), 0.0);
       dp_storage.reset(nvec);
@@ -422,7 +423,7 @@ namespace RDGeom {
         ++idx;
       };
     };
-
+#endif
 
     ~PointND() {}
 
