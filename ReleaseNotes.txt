@@ -1,26 +1,47 @@
-******  Release_XXX2007_1 *******
+******  Release_July2007_1 *******
 (Changes relative to Release_April2007_1)
 
 Bug Fixes
- - Fixed a bug with operators and SparseIntVects. (issue 1716736)
- - Fixed a bug causing the Mol file parser to not calculate cis/trans
-   labels for double bonds where the two ends had the same
-   substituents. (issue 1718794)
+ - operators and SparseIntVects. (issue 1716736)
+ - the Mol file parser now calculates cis/trans labels for double
+   bonds where the two ends had the same substituents. (issue 1718794)
+ - iterator interface to DiscreteValueVects and UniformGrid3D. (issue
+   1719831)
+ - improper removal of stereochemistry from ring atoms (issue
+   1719053)
+ - stereochemistry specifications and ring bonds.  (issue 1725068)
+ - handling of aromatic bonds in template molecules for chemical
+   reactions. (issue 1748846)
+ - handling of unrecognized atom types in the descriptor calculation
+   code. (issue 1749494)
+ - ChemicalReactionException now exposed to Python. (issue 1749513)
+ - some small problems in topological torsions and atom pairs
 
 New Features
  - The Atom Pairs and Topological Torsions code can now provide
    "explanations" of the codes. See $RDBASE/Python/Chem/AtomPairs for
    details.
- 
+ - The PointND class has been exposed to Python
+ - The "Butina" clustering algorithm [JCICS 39:747-50 (1999)] is now
+   available in $RDBase/Python/Ml/Cluster/Butina.py 
+ - A preliminary implementation of the subshape alignment algorithm is
+   available. 
+ - The free version of MS Visual C++ is now supported.   
+ - Optimization of the Dice metric implementation for SparseIntVects
+
 Other
  - Similarity scores can now be calculated from Python in bulk
    (i.e. calculating the similarity between one vector and a list of
    others). This can be substantially faster than calling the
    individual routines multiple times. The relevant functions are
    BulkTanimotoSimilarity, BulkDiceSimilarity, etc.
- - 
- 
-
+ - The calculation of AtomPairs and TopologicalTorsions fingerprints
+   is now a lot more efficient.
+ - The Visual Studio build files have been moved to the directories
+   $RDBASE/Code/Build.VC71 and $RDBASE/Code/Build.VC80. This allows
+   simultaneous support of both versions of the system and cleans up
+   the source trees a bit.
+ - Updates to the "Getting Started" documentation.
  
 ******  Release_April2007_1 *******
 (Changes relative to Release_Jan2007_1)
