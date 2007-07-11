@@ -136,11 +136,63 @@ def ClusterTerminalPts(pts,winRad,scale):
       pt += o.location
     pt /= len(currSet)
     res.append(SubshapeObjects.SkeletonPoint(location=pt))
-  if len(res)<2:
-    raise ValueError,'only found %d terminals, need at least 2'%len(res)
   return res
 
-def ExpandTerminalPts(shape,pts,winRad):
+def GetMoreTerminalPoints(shape,pts,winRad,maxGridVal,targetNumber=5):
+  """ adds a set of new terminal points using a max-min algorithm
+  """
+  shapeGrid=shape.grid
+  shapeVect = shapeGrid.GetOccupancyVect()
+  nGridPts = len(shapeVect)
+  # loop, taking the grid point with the maximum minimum distance, until
+  # we have enough points
+  while len(pts)<targetNumber:
+    maxMin=-1
+    for i in range(nGridPts):
+      if shapeVect[i]<maxGridVal:
+        continue
+      minVal=1e8
+      posI = shapeGrid.GetGridPointLoc(i)
+      for currPt in pts:
+        dst = posI.Distance(currPt.location)
+        if dst<minVal:
+          minVal=dst
+      if minVal>maxMin:
+        maxMin=minVal
+        bestPt=posI
+    count,centroid=Geometry.ComputeGridCentroid(shapeGrid,bestPt,winRad)
+    pts.append(SubshapeObjects.SkeletonPoint(location=centroid))
+
+
+def FindFarthestGridPoint(shape,loc,winRad,maxGridVal):
+  """ find the grid point with max occupancy that is furthest from a 
+    given location
+  """
+  shapeGrid=shape.grid
+  shapeVect = shapeGrid.GetOccupancyVect()
+  nGridPts = len(shapeVect)
+  dMax=-1;
+  for i in range(nGridPts):
+    if shapeVect[i]<maxGridVal:
+      continue
+    posI = shapeGrid.GetGridPointLoc(i)
+    dst = posI.Distance(loc)
+    if dst>dMax:
+      dMax=dst
+      res=posI
+
+  count,centroid=Geometry.ComputeGridCentroid(shapeGrid,res,winRad)
+  res=centroid
+  return res
+
+def ExpandTerminalPts(shape,pts,winRad,maxGridVal=3.0,targetNumPts=5):
+  """ find additional terminal points until a target number is reached
+  """
+  if len(pts)==1:
+    # if there's only one point, find the grid point with max value that is
+    # *farthest* from this one and use it:
+    pt2=FindFarthestGridPoint(shape,pts[0].location,winRad,maxGridVal)
+    pts.append(SubshapeObjects.SkeletonPoint(location=pt2))
   if len(pts)==2:
     # add a point roughly in the middle:
     shapeGrid=shape.grid
@@ -148,7 +200,8 @@ def ExpandTerminalPts(shape,pts,winRad):
     pt2 = pts[1].location
     center = FindGridPointBetweenPoints(pt1,pt2,shapeGrid,winRad)
     pts.append(SubshapeObjects.SkeletonPoint(location=center))
-
+  if len(pts)<targetNumPts:
+    GetMoreTerminalPoints(shape,pts,winRad,maxGridVal,targetNumPts)
 
    
 #-----------------------------------------------------------------------------
