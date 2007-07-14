@@ -71,7 +71,7 @@ namespace RDNumeric {
       }
     }
 
-    PyObject* AlignPointPairs(python::object refPoints, python::object probePoints, 
+    PyObject *AlignPointPairs(python::object refPoints, python::object probePoints, 
 			      python::object weights=python::list(), bool reflect=false, 
 			      unsigned int maxIterations=50) {
       // The reference and probe points can be specifed in two formats
@@ -150,6 +150,7 @@ namespace RDNumeric {
       PyObject *ssdItem = PyFloat_FromDouble(ssd);
       PyTuple_SetItem(resTup,0,ssdItem);
       PyTuple_SetItem(resTup,1,reinterpret_cast<PyObject *>(res));
+      Py_INCREF(resTup);
       return resTup;
     }
   }
@@ -172,7 +173,7 @@ BOOST_PYTHON_MODULE(rdAlignment) {
     - probePoints : probe points to align to reference points - same format \n\
                   restrictions as reference points apply here \n\
     - weights : optional numeric vector or list of weights to associate to each pair of points\n\
-    - reflect : reflect the probe points befor attempting alignment\n\
+    - reflect : reflect the probe points before attempting alignment\n\
     - maxIteration : maximum number of iterations to try to minimize RMSD \n\
                   \n\
  RETURNS:\n\n\
