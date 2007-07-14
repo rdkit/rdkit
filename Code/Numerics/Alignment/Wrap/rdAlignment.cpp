@@ -150,7 +150,6 @@ namespace RDNumeric {
       PyObject *ssdItem = PyFloat_FromDouble(ssd);
       PyTuple_SetItem(resTup,0,ssdItem);
       PyTuple_SetItem(resTup,1,reinterpret_cast<PyObject *>(res));
-      Py_INCREF(resTup);
       return resTup;
     }
   }
