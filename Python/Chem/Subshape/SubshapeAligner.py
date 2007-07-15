@@ -41,6 +41,40 @@ class SubshapeDistanceMetric(object):
   TANIMOTO=0
   PROTRUDE=1
 
+# returns the distance between two shapea according to the provided metric
+def GetShapeShapeDistance(s1,s2,distMetric):
+  if distMetric==SubshapeDistanceMetric.PROTRUDE:
+    #print s1.grid.GetOccupancyVect().GetTotalVal(),s2.grid.GetOccupancyVect().GetTotalVal()
+    if s1.grid.GetOccupancyVect().GetTotalVal()<s2.grid.GetOccupancyVect().GetTotalVal():
+      d = Geometry.ProtrudeDistance(s1.grid,s2.grid)
+      #print d
+    else:
+      d = Geometry.ProtrudeDistance(s2.grid,s1.grid)
+  else:
+    d = Geometry.TanimotoDistance(s1.grid,s2.grid)
+  return d
+
+# clusters a set of alignments and returns the cluster centroid
+def ClusterAlignments(mol,alignments,builder,
+                      neighborTol=0.1,
+                      distMetric=SubshapeAligner.SubshapeDistanceMetric.PROTRUDE,
+                      tempConfId=1001):
+  from ML.Cluster import Butina
+  dists = []
+  for i in range(len(alignments)):
+    SubshapeAligner.TransformMol(mol,alignments[i].transform,newConfId=tempConfId)
+    shapeI=builder.GenerateSubshapeShape(mol,tempConfId,addSkeleton=False)
+    for j in range(i):
+      SubshapeAligner.TransformMol(mol,alignments[j].transform,newConfId=tempConfId+1)
+      shapeJ=builder.GenerateSubshapeShape(mol,tempConfId+1,addSkeleton=False)
+      d = SubshapeAligner.GetShapeShapeDistance(shapeI,shapeJ,distMetric)
+      dists.append(d)
+      mol.RemoveConformer(tempConfId+1)
+    mol.RemoveConformer(tempConfId)
+  clusts=Butina.ClusterData(dists,len(alignments),neighborTol,isDistData=True)
+  res = [alignments[x[0]] for x in clusts]
+  return res
+
 def TransformMol(mol,tform,confId=-1,newConfId=100):
   """  Applies the transformation to a molecule and sets it up with
   a single conformer
@@ -182,18 +216,6 @@ class SubshapeAligner(object):
     else:
       tgt.medGrid = builder.SampleSubshape(tgt,oSpace*1.5)
       tgt.coarseGrid = builder.SampleSubshape(tgt,oSpace*2.0)
-      
-  def _getShapeShapeDistance(self,s1,s2):
-    if self.distMetric==SubshapeDistanceMetric.PROTRUDE:
-      #print s1.grid.GetOccupancyVect().GetTotalVal(),s2.grid.GetOccupancyVect().GetTotalVal()
-      if s1.grid.GetOccupancyVect().GetTotalVal()<s2.grid.GetOccupancyVect().GetTotalVal():
-        d = Geometry.ProtrudeDistance(s1.grid,s2.grid)
-        #print d
-      else:
-        d = Geometry.ProtrudeDistance(s2.grid,s1.grid)
-    else:
-      d = Geometry.TanimotoDistance(s1.grid,s2.grid)
-    return d
 
   def PruneMatchesUsingShape(self,targetMol,target,queryMol,query,builder,
                              alignments,tgtConf=-1,queryConf=-1,
@@ -214,7 +236,7 @@ class SubshapeAligner(object):
       oSpace=builder.gridSpacing
       builder.gridSpacing=oSpace*2
       coarseGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
-      d = self._getShapeShapeDistance(coarseGrid,target.coarseGrid)
+      d = GetShapeShapeDistance(coarseGrid,target.coarseGrid,self.distMetric)
       if d>self.shapeDistTol*self.coarseGridToleranceMult:
         removeIt=True
         if pruneStats is not None:
@@ -222,7 +244,7 @@ class SubshapeAligner(object):
       else:
         builder.gridSpacing=oSpace*1.5
         medGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
-        d = self._getShapeShapeDistance(medGrid,target.medGrid)
+        d = GetShapeShapeDistance(medGrid,target.medGrid,self.distMetric)
         #print '     ',d
         if d>self.shapeDistTol*self.medGridToleranceMult:
           removeIt=True
@@ -231,7 +253,7 @@ class SubshapeAligner(object):
         else:
           builder.gridSpacing=oSpace
           fineGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
-          d = self._getShapeShapeDistance(fineGrid,target)
+          d = GetShapeShapeDistance(fineGrid,target,self.distMetric)
           #print '        ',d
           if d>self.shapeDistTol:
             removeIt=True
