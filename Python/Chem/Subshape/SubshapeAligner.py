@@ -65,8 +65,10 @@ class SubshapeAligner(object):
   numFeatThresh=3
   dirThresh=2.6
   edgeTol=6.0
-  coarseGridToleranceMult=1.5
-  medGridToleranceMult=1.25
+  #coarseGridToleranceMult=1.5
+  #medGridToleranceMult=1.25
+  coarseGridToleranceMult=1.0
+  medGridToleranceMult=1.0
   
   def GetTriangleMatches(self,target,query):
     ssdTol = (self.triangleRMSTol**2)*9
@@ -109,6 +111,8 @@ class SubshapeAligner(object):
             alg.targetTri=tgtTri
             alg.queryTri=queryTri
             res.append(alg)
+            alg._seqNo=len(res)
+              
     return res
 
   def PruneMatchesUsingFeatures(self,target,query,alignments,pruneStats=None):
@@ -140,9 +144,10 @@ class SubshapeAligner(object):
       nMatched=0
       alg = alignments[i]
       dot = 0.0
+      sumV=0.0
       for j in range(3):
-        tgtPt = tgtPts[j]
-        queryPt = queryPts[j]
+        tgtPt = tgtPts[alg.targetTri[j]]
+        queryPt = queryPts[alg.queryTri[j]]
         #m1,m2,m3=tgtPt.shapeMoments
         #tgtR = m1/(m2+m3)
         #m1,m2,m3=queryPt.shapeMoments
@@ -158,9 +163,7 @@ class SubshapeAligner(object):
         if dot>=self.dirThresh:
           # already above the threshold, no need to continue
           break
-        
       if dot<self.dirThresh:
-        #print dot,self.dirThresh
         if pruneStats is not None:
           pruneStats['direction']=pruneStats.get('direction',0)+1
         del alignments[i]
@@ -197,7 +200,7 @@ class SubshapeAligner(object):
                              pruneStats=None):
     if not hasattr(target,'medGrid'):
       self._addCoarseAndMediumGrids(targetMol,target,tgtConf,builder)
-      self._addCoarseAndMediumGrids(targetMol,target,tgtConf,builder)
+
     logger.info("Shape-based Pruning")
     i=0
     nOrig = len(alignments)
@@ -220,6 +223,7 @@ class SubshapeAligner(object):
         builder.gridSpacing=oSpace*1.5
         medGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
         d = self._getShapeShapeDistance(medGrid,target.medGrid)
+        #print '     ',d
         if d>self.shapeDistTol*self.medGridToleranceMult:
           removeIt=True
           if pruneStats is not None:
@@ -228,6 +232,7 @@ class SubshapeAligner(object):
           builder.gridSpacing=oSpace
           fineGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
           d = self._getShapeShapeDistance(fineGrid,target)
+          #print '        ',d
           if d>self.shapeDistTol:
             removeIt=True
             if pruneStats is not None:
