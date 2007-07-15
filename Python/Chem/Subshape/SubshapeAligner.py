@@ -105,6 +105,9 @@ class SubshapeAligner(object):
   medGridToleranceMult=1.0
   
   def GetTriangleMatches(self,target,query):
+    """ this is a generator function returning the possible triangle
+        matches between the two shapes
+    """    
     ssdTol = (self.triangleRMSTol**2)*9
     res = []
     tgtPts = target.skelPts
@@ -123,12 +126,9 @@ class SubshapeAligner(object):
     tol2 = self.edgeTol*self.edgeTol
     for tk,tv in tgtLs.iteritems():
       for qk,qv in queryLs.iteritems():
-        #print tk,qk,'  -  ',tv,qv,
         if abs(tv-qv)<tol2:
           compatEdges[(tk,qk)]=1
-          #print 1
-        #else:
-        #  print 0
+    seqNo=0
     for tgtTri in _getAllTriangles(tgtPts,orderedTraversal=True):
       tgtLocs=[tgtPts[x].location for x in tgtTri]
       for queryTri in _getAllTriangles(queryPts,orderedTraversal=False):
@@ -137,72 +137,70 @@ class SubshapeAligner(object):
            compatEdges.has_key(((tgtTri[1],tgtTri[2]),(queryTri[1],queryTri[2]))):
           queryLocs=[queryPts[x].location for x in queryTri]
           ssd,tf = Alignment.GetAlignmentTransform(tgtLocs,queryLocs)
-          #print ssd,ssdTol
           if ssd<=ssdTol:
             alg = SubshapeAlignment()
             alg.transform=tf
             alg.triangleSSD=ssd
             alg.targetTri=tgtTri
             alg.queryTri=queryTri
-            res.append(alg)
-            alg._seqNo=len(res)
-              
-    return res
+            alg._seqNo=seqNo
+            seqNo+=1
+            yield alg    
+  
+  def _checkMatchFeatures(self,targetPts,queryPts,alignment):
+    nMatched=0
+    for i in range(3):
+      tgtFeats = targetPts[alignment.targetTri[i]].molFeatures
+      qFeats = queryPts[alignment.queryTri[i]].molFeatures
+      for j,jFeat in enumerate(tgtFeats):
+        if jFeat in qFeats:
+          nMatched+=1
+          break
+      if nMatched>=self.numFeatThresh:
+        break
+    return nMatched>=self.numFeatThresh
 
   def PruneMatchesUsingFeatures(self,target,query,alignments,pruneStats=None):
     i = 0
     tgtPts = target.skelPts
     queryPts = query.skelPts
     while i<len(alignments):
-      nMatched=0
       alg = alignments[i]
-      for j in range(3):
-        tgtFeats = tgtPts[alg.targetTri[j]].molFeatures
-        qFeats = queryPts[alg.queryTri[j]].molFeatures
-        for k,kFeat in enumerate(tgtFeats):
-          if kFeat in qFeats:
-            nMatched+=1
-            break
-      if nMatched<self.numFeatThresh:
+      if not self._checkMatchFeatures(targetPts,queryPts,alg):
         if pruneStats is not None:
           pruneStats['features']=pruneStats.get('features',0)+1
         del alignments[i]
       else:
         i+=1
 
+  def _checkMatchDirections(self,targetPts,queryPts,alignment):
+    dot = 0.0
+    for i in range(3):
+      tgtPt = targetPts[alignment.targetTri[i]]
+      queryPt = queryPts[alignment.queryTri[i]]
+      qv = queryPt.shapeDirs[0]
+      tv = tgtPt.shapeDirs[0]
+      rotV =[0.0]*3
+      rotV[0] = alignment.transform[0,0]*qv[0]+alignment.transform[0,1]*qv[1]+alignment.transform[0,2]*qv[2]
+      rotV[1] = alignment.transform[1,0]*qv[0]+alignment.transform[1,1]*qv[1]+alignment.transform[1,2]*qv[2]
+      rotV[2] = alignment.transform[2,0]*qv[0]+alignment.transform[2,1]*qv[1]+alignment.transform[2,2]*qv[2]
+      dot += abs(rotV[0]*tv[0]+rotV[1]*tv[1]+rotV[2]*tv[2])
+      if dot>=self.dirThresh: 
+        # already above the threshold, no need to continue
+        break
+    alignment.dirMatch=dot
+    return dot>=self.dirThresh
+    
   def PruneMatchesUsingDirection(self,target,query,alignments,pruneStats=None):
     i = 0
     tgtPts = target.skelPts
     queryPts = query.skelPts
     while i<len(alignments):
-      nMatched=0
-      alg = alignments[i]
-      dot = 0.0
-      sumV=0.0
-      for j in range(3):
-        tgtPt = tgtPts[alg.targetTri[j]]
-        queryPt = queryPts[alg.queryTri[j]]
-        #m1,m2,m3=tgtPt.shapeMoments
-        #tgtR = m1/(m2+m3)
-        #m1,m2,m3=queryPt.shapeMoments
-        #queryR = m1/(m2+m3)
-
-        qv = queryPt.shapeDirs[0]
-        tv = tgtPt.shapeDirs[0]
-        rotV =[0.0]*3
-        rotV[0] = alg.transform[0,0]*qv[0]+alg.transform[0,1]*qv[1]+alg.transform[0,2]*qv[2]
-        rotV[1] = alg.transform[1,0]*qv[0]+alg.transform[1,1]*qv[1]+alg.transform[1,2]*qv[2]
-        rotV[2] = alg.transform[2,0]*qv[0]+alg.transform[2,1]*qv[1]+alg.transform[2,2]*qv[2]
-        dot += abs(rotV[0]*tv[0]+rotV[1]*tv[1]+rotV[2]*tv[2])
-        if dot>=self.dirThresh:
-          # already above the threshold, no need to continue
-          break
-      if dot<self.dirThresh:
+      if not self._checkMatchDirections(tgtPts,queryPts,alignments[i]):
         if pruneStats is not None:
           pruneStats['direction']=pruneStats.get('direction',0)+1
         del alignments[i]
       else:
-        alignments[i].dirMatch=dot
         i+=1
 
   def _addCoarseAndMediumGrids(self,mol,tgt,confId,builder):
@@ -217,6 +215,40 @@ class SubshapeAligner(object):
       tgt.medGrid = builder.SampleSubshape(tgt,oSpace*1.5)
       tgt.coarseGrid = builder.SampleSubshape(tgt,oSpace*2.0)
 
+  def _checkMatchShape(self,targetMol,target,queryMol,query,alignment,builder,
+                       targetConf,queryConf,pruneStats=None,tConfId=1001):
+    matchOk=True
+    TransformMol(queryMol,alignment.transform,confId=queryConf,newConfId=tConfId)
+    oSpace=builder.gridSpacing
+    builder.gridSpacing=oSpace*2
+    coarseGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
+    d = GetShapeShapeDistance(coarseGrid,target.coarseGrid,self.distMetric)
+    if d>self.shapeDistTol*self.coarseGridToleranceMult:
+      matchOk=False
+      if pruneStats is not None:
+        pruneStats['coarseGrid']=pruneStats.get('coarseGrid',0)+1
+    else:
+      builder.gridSpacing=oSpace*1.5
+      medGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
+      d = GetShapeShapeDistance(medGrid,target.medGrid,self.distMetric)
+      if d>self.shapeDistTol*self.medGridToleranceMult:
+        matchOk=False
+        if pruneStats is not None:
+          pruneStats['medGrid']=pruneStats.get('medGrid',0)+1
+      else:
+        builder.gridSpacing=oSpace
+        fineGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
+        d = GetShapeShapeDistance(fineGrid,target,self.distMetric)
+        #print '        ',d
+        if d>self.shapeDistTol:
+          matchOk=False
+          if pruneStats is not None:
+            pruneStats['fineGrid']=pruneStats.get('fineGrid',0)+1
+        alignment.shapeDist=d
+    queryMol.RemoveConformer(tConfId)
+    builder.gridSpacing=oSpace
+    return matchOk
+
   def PruneMatchesUsingShape(self,targetMol,target,queryMol,query,builder,
                              alignments,tgtConf=-1,queryConf=-1,
                              pruneStats=None):
@@ -229,48 +261,18 @@ class SubshapeAligner(object):
     nDone=0
     while i < len(alignments):
       removeIt=False
-      tConfId=100+i
       alg = alignments[i]
-      TransformMol(queryMol,alg.transform,confId=queryConf,newConfId=tConfId)
-      alg.alignedConfId=tConfId
-      oSpace=builder.gridSpacing
-      builder.gridSpacing=oSpace*2
-      coarseGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
-      d = GetShapeShapeDistance(coarseGrid,target.coarseGrid,self.distMetric)
-      if d>self.shapeDistTol*self.coarseGridToleranceMult:
-        removeIt=True
-        if pruneStats is not None:
-          pruneStats['coarseGrid']=pruneStats.get('coarseGrid',0)+1
-      else:
-        builder.gridSpacing=oSpace*1.5
-        medGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
-        d = GetShapeShapeDistance(medGrid,target.medGrid,self.distMetric)
-        #print '     ',d
-        if d>self.shapeDistTol*self.medGridToleranceMult:
-          removeIt=True
-          if pruneStats is not None:
-            pruneStats['medGrid']=pruneStats.get('medGrid',0)+1
-        else:
-          builder.gridSpacing=oSpace
-          fineGrid=builder.GenerateSubshapeShape(queryMol,tConfId,addSkeleton=False)
-          d = GetShapeShapeDistance(fineGrid,target,self.distMetric)
-          #print '        ',d
-          if d>self.shapeDistTol:
-            removeIt=True
-            if pruneStats is not None:
-              pruneStats['fineGrid']=pruneStats.get('fineGrid',0)+1
-          shapeDist=d
       nDone+=1
       if not nDone%100:
         nLeft = len(alignments)
         logger.info('  processed %d of %d. %d alignments remain'%((nDone,
                                                                    nOrig,
                                                                    nLeft)))
-      builder.gridSpacing=oSpace
-      if removeIt:
+      if not self._checkMatchShape(targetMol,target,queryMol,query,alg,builder,
+                                   targetConf=tgtConf,queryConf=queryConf,
+                                   pruneStats=pruneStats):
         del alignments[i]
       else:
-        alignments[i].shapeDist=shapeDist
         i+=1
 
   def GetSubshapeAlignments(self,targetMol,target,queryMol,query,builder,
@@ -280,7 +282,7 @@ class SubshapeAligner(object):
       pruneStats={}
     logger.info("Generating triangle matches")
     t1=time.time()
-    res = self.GetTriangleMatches(target,query)
+    res = [x for x in self.GetTriangleMatches(target,query)]
     t2=time.time()
     logger.info("Got %d possible alignments in %.1f seconds"%(len(res),t2-t1))
     pruneStats['gtm_time']=t2-t1
@@ -303,6 +305,29 @@ class SubshapeAligner(object):
     pruneStats['shape_time']=t2-t1
     return res
 
+  def __call__(self,targetMol,target,queryMol,query,builder,
+                             tgtConf=-1,queryConf=-1,pruneStats=None):
+    for alignment in self.GetTriangleMatches(target,query):
+      if builder.featFactory and \
+         not self._checkMatchFeatures(target.skelPts,query.skelPts,alignment):
+        if pruneStats is not None:
+          pruneStats['features']=pruneStats.get('features',0)+1
+        continue
+      if not self._checkMatchDirections(target.skelPts,query.skelPts,alignment):
+        if pruneStats is not None:
+          pruneStats['direction']=pruneStats.get('direction',0)+1
+        continue
+
+      if not hasattr(target,'medGrid'):
+        self._addCoarseAndMediumGrids(targetMol,target,tgtConf,builder)
+
+      if not self._checkMatchShape(targetMol,target,queryMol,query,alignment,builder,
+                                   targetConf=tgtConf,queryConf=queryConf,
+                                   pruneStats=pruneStats):
+        continue
+      # if we made it this far, it's a good alignment
+      yield alignment
+
 
 if __name__=='__main__':
   import cPickle
@@ -319,7 +344,4 @@ if __name__=='__main__':
   v.ShowMol(queryMol,name='Query',showOnly=False)
   SubshapeObjects.DisplaySubshape(v,tgtShape,'target_shape',color=(.8,.2,.2))
   SubshapeObjects.DisplaySubshape(v,queryShape,'query_shape',color=(.2,.2,.8))
-  for i,alg in enumerate(algs):
-    confId = alg.alignedConfId
-    v.ShowMol(queryMol,confId=confId,name='align-%d'%i,showOnly=False)
       

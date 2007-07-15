@@ -48,6 +48,8 @@ class SubshapeBuilder(object):
       conf = cmpd.GetConformer(confId)
       self.GenerateSubshapeSkeleton(shape,conf,kwargs)
     return shape
+  def __call__(self,cmpd,**kwargs):
+    return self.GenerateSubshapeShape(cmpd,**kwargs)
   
   def GenerateSubshapeSkeleton(self,shape,conf=None,terminalPtsOnly=False,skelFromConf=True):
     if conf and skelFromConf:

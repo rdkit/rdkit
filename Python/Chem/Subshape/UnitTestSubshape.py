@@ -28,7 +28,7 @@ class TestCase(unittest.TestCase):
       m = Chem.AddHs(m,addCoords=True)
       AllChem.CanonicalizeConformer(m.GetConformer())
       ms.append(m)
-      shape = builder.GenerateSubshapeShape(m,terminalPtsOnly=True)
+      shape = builder(m,terminalPtsOnly=True)
       shapes.append(shape)
     
     self.failUnless(len(ms)==4)
@@ -40,6 +40,7 @@ class TestCase(unittest.TestCase):
 
     aligner = SubshapeAligner.SubshapeAligner()
     aligner.shapeDistTol=.30
+
     algStore = []
     for i,s1 in enumerate(shapes):
       if not i or not s1: 
@@ -50,12 +51,26 @@ class TestCase(unittest.TestCase):
       algStore.append(alignments)
     self.failUnless([len(x) for x in algStore] == [0,2,39,0])
 
+    algStore = []
+    for i,s1 in enumerate(shapes):
+      if not i or not s1: 
+        algStore.append([])
+        continue
+      m1 = ms[i]
+      alignments = list(aligner(ms[0],refShape,m1,s1,builder))
+      algStore.append(alignments)
+    self.failUnless([len(x) for x in algStore] == [0,2,39,0])
+
+
+    
     pruned=[]
     for i,mi in enumerate(ms):
       alignments=algStore[i]
       pruned.append(SubshapeAligner.ClusterAlignments(mi,alignments,builder,
                                                       neighborTol=0.15))
     self.failUnless([len(x) for x in pruned] == [0,2,29,0])
+
+
     
 
 
