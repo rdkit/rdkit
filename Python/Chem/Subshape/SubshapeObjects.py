@@ -53,10 +53,13 @@ def _displaySubshapeSkelPt(viewer,skelPt,cgoNm,color):
     momEnd = skelPt.location+skelPt.shapeDirs[0]
     viewer.server.cylinder(tuple(momBeg),tuple(momEnd),.1,color,cgoNm)
   
-def DisplaySubshapeSkeleton(viewer,shape,name,color=(1,0,1)):
+def DisplaySubshapeSkeleton(viewer,shape,name,color=(1,0,1),colorByOrder=False):
+  orderColors=((1,0,0),(0,1,0),(0,0,1),(1,1,0),(1,0,1),(0,1,1))
   cgoNm='%s-skeleton'%name
   viewer.server.resetCGO(cgoNm)
   for i,pt in enumerate(shape.skelPts):
+    if colorByOrder:
+      color = orderColors[i%len(orderColors)]
     _displaySubshapeSkelPt(viewer,pt,cgoNm,color)
   
 def DisplaySubshape(viewer,shape,name,showSkelPts=True,color=(1,0,1)):

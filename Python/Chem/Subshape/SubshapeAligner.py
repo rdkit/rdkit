@@ -152,17 +152,20 @@ class SubshapeAligner(object):
     for i in range(3):
       tgtFeats = targetPts[alignment.targetTri[i]].molFeatures
       qFeats = queryPts[alignment.queryTri[i]].molFeatures
-      for j,jFeat in enumerate(tgtFeats):
-        if jFeat in qFeats:
-          nMatched+=1
-          break
+      if not tgtFeats and not qFeats:
+        nMatched+=1
+      else:
+        for j,jFeat in enumerate(tgtFeats):
+          if jFeat in qFeats:
+            nMatched+=1
+            break
       if nMatched>=self.numFeatThresh:
         break
     return nMatched>=self.numFeatThresh
 
   def PruneMatchesUsingFeatures(self,target,query,alignments,pruneStats=None):
     i = 0
-    tgtPts = target.skelPts
+    targetPts = target.skelPts
     queryPts = query.skelPts
     while i<len(alignments):
       alg = alignments[i]
@@ -287,10 +290,12 @@ class SubshapeAligner(object):
     logger.info("Got %d possible alignments in %.1f seconds"%(len(res),t2-t1))
     pruneStats['gtm_time']=t2-t1
     if builder.featFactory:
+      logger.info("Doing feature pruning")
       t1 = time.time()
       self.PruneMatchesUsingFeatures(target,query,res,pruneStats=pruneStats)
       t2 = time.time()
       pruneStats['feats_time']=t2-t1
+      logger.info("%d possible alignments remain. (%.1f seconds required)"%(len(res),t2-t1))
     logger.info("Doing direction pruning")
     t1 = time.time()
     self.PruneMatchesUsingDirection(target,query,res,pruneStats=pruneStats)
