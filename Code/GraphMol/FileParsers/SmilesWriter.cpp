@@ -21,17 +21,19 @@ namespace RDKit {
 			     std::string delimiter,
 			     std::string nameHeader,
 			     bool includeHeader) {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
-    
-    if ((!(*tmpStream)) || (tmpStream->bad()) ) {
-      std::ostringstream errout;
-      errout << "Bad output file " << fileName;
-      throw FileParseException(errout.str());
+    if(fileName!= "-"){
+      std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
+      if ((!(*tmpStream)) || (tmpStream->bad()) ) {
+        std::ostringstream errout;
+        errout << "Bad output file " << fileName;
+        throw FileParseException(errout.str());
+      }
+      dp_ostream = static_cast<std::ostream *>(tmpStream);
+      d_owner = true;
+    } else {
+      dp_ostream = static_cast<std::ostream *>(&std::cout);
+      d_owner=false;
     }
-    
-    dp_ostream = static_cast<std::ostream *>(tmpStream);
-    d_owner = true;
-
     this->init(delimiter,nameHeader,includeHeader);
   }
 

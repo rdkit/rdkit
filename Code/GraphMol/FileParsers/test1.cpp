@@ -56,6 +56,55 @@ void test1(){
   delete m2;
   
   delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/not-list-query.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CC(=C)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  
+  smi = "CC(=O)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  
+  smi = "CC(=N)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  
+  smi = "CC(=O)C(=C)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  
+  smi = "C(=C)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
+  // make sure new-style atom lists override old-style atom lists:
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/conflicting-list-query.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CC(=C)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  
+  smi = "CC(=O)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  
+  delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -92,7 +141,38 @@ void test2(){
   TEST_ASSERT(SubstructMatch(*m2,*m,mv));
   TEST_ASSERT(mv.size()==5);
   
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/RingBondQuery.mol";
   delete m;
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m->getNumAtoms()==5);
+  delete m2;
+  smi = "C1CCC1C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1CC2C1C2";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ChainBondQuery.mol";
+  delete m;
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m->getNumAtoms()==5);
+  delete m2;
+  smi = "C1CCC1C";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  smi = "C1CC2C1C2";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+
+  delete m;
+
+
+
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -682,6 +762,92 @@ void testRingDblBondStereochem(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+
+void testMolFileRGroups(){
+  BOOST_LOG(rdInfoLog) << "testing mol file R-group parsing" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/rgroups1.mol";
+  RWMol *m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  unsigned int idx;
+  
+  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+  m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(idx==2);
+  
+  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+  m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(idx==1);
+  
+  RWMol *m2;
+  MatchVectType mv;
+
+  std::string smi;
+  smi = "C1C(O)C1C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  
+  smi = "C1CC(O)C1C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  
+  smi = "C1C(CO)C1CC";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  
+  smi = "CC(=O)CC";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/rgroups2.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+  m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(idx==1);
+  
+  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+  m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(idx==1);
+
+  smi = "C1C(O)C1C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  
+  smi = "C1CC(O)C1C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  
+  smi = "C1C(CO)C1CC";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==5);
+  delete m2;
+  
+  smi = "CC(=O)CC";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
+  
+  delete m;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -700,8 +866,9 @@ int main(int argc,char *argv[]){
   testIssue399();
   testMolFileChgLines();
   testSymmetricDblBondStereochem();
-#endif
   testRingDblBondStereochem();
+#endif
+  testMolFileRGroups();
   //testCrash();
   return 0;
 }

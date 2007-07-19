@@ -17,17 +17,19 @@
 
 namespace RDKit {
   SDWriter::SDWriter(std::string fileName) {
-    std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
-    
-    if ((!(*tmpStream)) || (tmpStream->bad()) ) {
-      std::ostringstream errout;
-      errout << "Bad output file " << fileName;
-      throw FileParseException(errout.str());
+    if(fileName!= "-"){
+      std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
+      d_owner=true;
+      if ((!(*tmpStream)) || (tmpStream->bad()) ) {
+        std::ostringstream errout;
+        errout << "Bad output file " << fileName;
+        throw FileParseException(errout.str());
+      }
+      dp_ostream = static_cast<std::ostream *>(tmpStream);
+    } else {
+      dp_ostream = static_cast<std::ostream *>(&std::cout);
+      d_owner=false;
     }
-
-    dp_ostream = static_cast<std::ostream *>(tmpStream);
-
-    d_owner = true;
     d_molid = 0;
   }
 

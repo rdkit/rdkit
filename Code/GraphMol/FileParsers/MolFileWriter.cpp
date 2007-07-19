@@ -21,12 +21,33 @@ namespace RDKit{
 
   std::string AtomGetMolFileSymbol(const Atom *atom){
     PRECONDITION(atom,"");
-    // FIX: should eventually recognized dummies and do the right thing
-    std::string res=atom->getSymbol();
+
+    std::string res;
+    if(atom->getAtomicNum()){
+      res=atom->getSymbol();
+    } else {
+      if(!atom->hasProp("dummyLabel")){
+      	res = "*";
+      } else {
+	      std::string symb;
+        atom->getProp("dummyLabel",symb);
+        if(symb=="*") res="*";
+        else if(symb=="X") res="R";
+        else if(symb=="Xa") res="R1";
+        else if(symb=="Xb") res="R2";
+      	else if(symb=="Xc") res="R3";
+      	else if(symb=="Xd") res="R4";
+      	else if(symb=="Xf") res="R5";
+      	else if(symb=="Xg") res="R6";
+      	else if(symb=="Xh") res="R7";
+      	else if(symb=="Xi") res="R8";
+      	else if(symb=="Xj") res="R9";
+      	else res=symb;
+      }
+    }
     // pad the end with spaces
     while(res.size()<3) res += " ";
     return res;
-    //return res.c_str();
   }
   std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf=0){
     PRECONDITION(atom,"");
@@ -45,6 +66,9 @@ namespace RDKit{
     inversionFlag=0;
     exactChangeFlag=0;
 
+    double atomMassDiff=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
+    massDiff = static_cast<int>(atomMassDiff+.1);
+    
     if(atom->getFormalCharge()!=0){
       switch(atom->getFormalCharge()){
       case 1: chg=3;break;
@@ -248,7 +272,7 @@ namespace RDKit{
   //------------------------------------------------
   void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo, int confId){
     std::ofstream *outStream = new std::ofstream(fName.c_str());
-    CHECK_INVARIANT(outStream,"could not open output file");
+    CHECK_INVARIANT(outStream&&!outStream->bad(),"could not open output file");
     std::string outString = MolToMolBlock(mol,includeStereo, confId);
     *outStream  << outString;
     delete outStream;

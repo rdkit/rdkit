@@ -55,7 +55,20 @@ namespace RDKit{
     ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
     
     // FIX: couldn't we support NOT lists using the setNegation on the query?
-    CHECK_INVARIANT(text[4] != 'T',"[NOT] lists not currently supported");
+    switch(text[4]){
+    case 'T':
+      q->setNegation(true);
+      break;
+    case 'F':
+      q->setNegation(false);
+      break;
+    default:
+      std::ostringstream errout;
+      errout << "Unrecognized atom-list query modifier: " << text[14];
+      throw FileParseException(errout.str()) ;
+    }          
+    
+
     
     
     int nQueries;
@@ -181,8 +194,18 @@ namespace RDKit{
     QueryAtom a;
     ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
     
-    CHECK_INVARIANT(text[14] != 'T',"[NOT] lists not currently supported");
-    
+    switch(text[14]){
+    case 'T':
+      q->setNegation(true);
+      break;
+    case 'F':
+      q->setNegation(false);
+      break;
+    default:
+      std::ostringstream errout;
+      errout << "Unrecognized atom-list query modifier: " << text[14];
+      throw FileParseException(errout.str()) ;
+    }          
     
     int nQueries;
     try {
@@ -203,6 +226,53 @@ namespace RDKit{
     }
     a.setQuery(q);
     mol->replaceAtom(idx,&a); 
+  };
+  
+  void ParseRGroupLabels(RWMol *mol,std::string text){
+    PRECONDITION(text.substr(0,6)==std::string("M  RGP"),"bad R group label line");
+    
+    int nLabels;
+    try {
+      nLabels = stripSpacesAndCast<int>(text.substr(6,3));
+    }
+    catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert " << text.substr(6,3) << " to int";
+      throw FileParseException(errout.str()) ;
+    }
+
+    for(int i=0;i<nLabels;i++){
+      int pos = 10+i*8;
+      unsigned int atIdx;
+      try {
+        atIdx = stripSpacesAndCast<unsigned int>(text.substr(pos,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(pos,3) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+      unsigned int rLabel;
+      try {
+        rLabel = stripSpacesAndCast<unsigned int>(text.substr(pos+4,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(pos+4,3) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+      atIdx-=1;
+      if(atIdx>mol->getNumAtoms()){
+        std::ostringstream errout;
+        errout << "Attempt to set R group label on nonexistent atom " << atIdx;
+        throw FileParseException(errout.str()) ;
+      }
+      QueryAtom atom;
+      atom.setProp("_MolFileRLabel",rLabel);
+      atom.setProp("dummyLabel","X");
+      atom.setQuery(makeAtomNullQuery());
+      mol->replaceAtom(atIdx,&atom); 
+    }
   };
   
   void ParseAtomAlias(RWMol *mol,std::string text,std::string &nextLine){
@@ -278,7 +348,7 @@ namespace RDKit{
       }
     }
     if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
-       || (symb>="R0" && symb<="R9") ){
+       || symb=="R#" || (symb>="R0" && symb<="R9") ){
       res->setAtomicNum(0);
       if(symb=="*") res->setProp("dummyLabel",std::string("X"));
       else if(symb=="R0") res->setProp("dummyLabel",std::string("Xa"));
@@ -291,6 +361,7 @@ namespace RDKit{
       else if(symb=="R7") res->setProp("dummyLabel",std::string("Xi"));
       else if(symb=="R8") res->setProp("dummyLabel",std::string("Xj"));
       else if(symb=="R9") res->setProp("dummyLabel",std::string("Xk"));
+      else if(symb=="R#") res->setProp("dummyLabel",std::string("X"));
       else res->setProp("dummyLabel",symb);
     } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
       res->setAtomicNum(1); 
@@ -306,7 +377,9 @@ namespace RDKit{
     //res->setPos(pX,pY,pZ);
     if(chg!=0) res->setFormalCharge(4-chg);
     // FIX: this does not appear to be correct
-    if(hCount==1) res->setNoImplicit(true);
+    if(hCount==1){
+      res->setNoImplicit(true);
+    }
     
     if(massDiff!=0) {
       // FIX: this isn't precisely correct because we should be doing the difference w.r.t. most abundant species.
@@ -397,7 +470,7 @@ namespace RDKit{
     
     // adjust the numbering
     idx1--;idx2--;
-    
+
     Bond::BondType type;
     Bond *res;  
     switch(bType){
@@ -432,7 +505,6 @@ namespace RDKit{
         res->setQuery(q);
       } 
       break;
-      
     }
     res->setBeginAtomIdx(idx1);
     res->setEndAtomIdx(idx2);
@@ -466,7 +538,22 @@ namespace RDKit{
     if( text.size() >= 18 && text.substr(15,3)!="  0")
       try {
         int topology = stripSpacesAndCast<int>(text.substr(15,3));
-        res->setProp("molTopology",topology);
+        QueryBond *qBond=new QueryBond(*res);
+        BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
+        switch(topology){
+        case 1:
+          break;
+        case 2:
+          q->setNegation(true);
+          break;
+        default:
+          std::ostringstream errout;
+          errout << "Unrecognized bond topology specifier: " << topology;
+          throw FileParseException(errout.str()) ;
+        }
+        qBond->expandQuery(q);          
+        delete res;
+        res = qBond;
       } catch (boost::bad_lexical_cast) {
         ;
       }
@@ -639,6 +726,7 @@ namespace RDKit{
       while(!inStream->eof() && tempStr.find("M  END") != 0 && tempStr.find("$$$$") != 0){
         if(tempStr.find("M  ALS") == 0) ParseNewAtomList(res,tempStr);
         if(tempStr.find("M  ISO") == 0) ParseIsotopeLine(res,tempStr);
+        if(tempStr.find("M  RGP") == 0) ParseRGroupLabels(res,tempStr);
         if(tempStr.find("M  CHG") == 0){
           ParseChargeLine(res, tempStr,firstChargeLine);
           firstChargeLine=false;
