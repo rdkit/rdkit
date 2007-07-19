@@ -36,21 +36,22 @@ sysconfig.get_config_vars()['OPT']=cflags
 destDir = RDConfig.RDCodeDir
 extDir=RDConfig.RDBaseDir+"/External"
 boostBase = os.environ['BOOSTBASE']
-boostInc = '-I/usr/local/include/%s'%boostBase
-#boostInc = '-I/home2/glandrum/boost_gcc34/include/%s'%boostBase
+boostHome = os.environ['BOOSTHOME']
+boostInc = '-I%(boostHome)s/include/%(boostBase)s'%locals()
+
 
 pyName="python"+os.environ['PYTHON_VERSION']
-boostLib="boost_python-gcc"
-boostLogLib="boost_log-gcc-s"
+gccVers=os.environ.get('GCCVERSION','gcc')
+boostLib="boost_python-gcc%s"%(gccVers)
+boostLogLib="boost_log-gcc%s"%(gccVers)
 
 libDirs=["/usr/local/lib"]
-#libDirs=['/home2/glandrum/boost_gcc34/lib']
 libDirs.extend([         
 	 os.path.join(os.environ['PYTHON_ROOT'],'lib',pyName,'config'),
 	 os.path.join(RDConfig.RDBaseDir,'Code','RDBoost'),
 	 os.path.join(RDConfig.RDBaseDir,'Code','RDGeneral'),
 	 ])
-libraries=["RDBoost","RDGeneral",boostLib,pyName,boostLogLib,'boost_thread-gcc-mt']
+libraries=["RDBoost","RDGeneral",boostLib,pyName,boostLogLib,'boost_thread-gcc%s-mt'%gccVers]
 
 compileArgs=["-ftemplate-depth-100",
 	     '-DBOOST_PYTHON_DYNAMIC_LIB',
