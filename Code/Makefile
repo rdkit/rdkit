@@ -81,4 +81,5 @@ clean:
 	$(MAKE) --directory=Numerics/Alignment clean;
 	$(MAKE) --directory=ForceField clean;
 	$(MAKE) --directory=DistGeom clean;
+	$(MAKE) --directory=ChemicalFeatures clean;
 	$(MAKE) --directory=PgSQL/RDLib -f Makefile.linux clean; 

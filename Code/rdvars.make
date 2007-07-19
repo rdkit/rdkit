@@ -7,8 +7,6 @@ DEBUGCXXFLAGS=$(CXXDEBUGFLAGS) $(BOOSTINC) $(RDKITINCFLAGS) $(VFLIBINC)
 SOFLAGS=-fPIC -shared -rdynamic
 SOFLAGS=-fPIC -shared
 
-
-
 # -----------
 # Python
 # -----------
@@ -19,21 +17,8 @@ PYTHONINC=-I$(PYTHON_ROOT)/include/python$(PYTHON_VERSION)
 # Boost
 # -----------
 BOOSTINC=-I$(BOOSTHOME)/include/$(BOOSTBASE)
-BOOSTLOGLIB=-L$(BOOSTHOME)/lib -lboost_log-gcc-s -lboost_thread-gcc-mt
-BOOSTLOGLIB_S=-L$(BOOSTHOME)/lib -lboost_log-gcc-s -lboost_thread-gcc-mt
-#BOOSTINC=-I/home2/glandrum/boost_gcc34/include/$(BOOSTBASE)
-#BOOSTLOGLIB=-L/home2/glandrum/boost_gcc34/lib -lboost_log-gcc-s -lboost_thread-gcc-mt-s
-#BOOSTLOGLIB_S=-L/home2/glandrum/boost_gcc34/lib -lboost_log-gcc-s -lboost_thread-gcc-mt-s
-#BOOSTINC=-I$(RDBASE)/External/boost/include/$(BOOSTBASE)
-#BOOSTLOGLIB_S=-L/c/boost/lib/ -lboost_log-mgw-s-$(BOOSTVERSION)
-
-# -----------
-# Xerces
-# -----------
-XERCESLOC=$(RDBASE)/External/xerces-c
-XERCESINC=-I$(XERCESLOC)/include
-#XERCESLIB=-L$(XERCESLOC)/lib -lxerces-c1_5_2 -lpthread
-XERCESLIB=-L$(XERCESLOC)/lib -lxerces-c1_5_2
+BOOSTLOGLIB=-L$(BOOSTHOME)/lib -lboost_log-gcc$(GCCVERSION) -lboost_thread-gcc$(GCCVERSION)-mt
+BOOSTLOGLIB_S=-L$(BOOSTHOME)/lib -lboost_log-gcc$(GCCVERSION) -lboost_thread-gcc$(GCCVERSION)-mt
 
 # -----------
 # vflib
@@ -63,7 +48,6 @@ RDLIBDIR=$(RDCODEDIR)/GraphMol/libs
 RDGENERAL=-L$(RDCODEDIR)/RDGeneral -lRDGeneral $(BOOSTLOGLIB_S)
 RDGENERAL_S=-L$(RDCODEDIR)/RDGeneral -lRDGeneral_s $(BOOSTLOGLIB_S)
 
-
 RDGEOMETRY=-L$(RDCODEDIR)/Geometry -lRDGeometry
 RDGEOMETRY_S=-L$(RDCODEDIR)/Geometry -lRDGeometry_s
 
@@ -82,10 +66,6 @@ RDSMILESLIB=$(RDLIBDIR)/lib$(SMILESLIBBASE).so
 RDSMILESLIB_S=$(RDLIBDIR)/lib$(SMILESLIBBASE)_s.a
 RDSMILES=-L$(RDLIBDIR) -l$(SMILESLIBBASE)
 RDSMILES_S=-L$(RDLIBDIR) -l$(SMILESLIBBASE)_s
-
-CDXMLLIBBASE=CDXMLParse
-RDCDXMLLIB=$(RDLIBDIR)/lib$(CDXMLLIBBASE).so
-RDCDXML=-L$(RDLIBDIR) -l$(CDXMLLIBBASE)
 
 SUBSTRUCTLIBBASE=Substruct
 RDSUBSTRUCTLIB=$(RDLIBDIR)/lib$(SUBSTRUCTLIBBASE).so
