@@ -3,7 +3,7 @@
 #    All Rights Reserved
 #
 import RDConfig,RDRandom
-from Numeric import *
+import Numeric
 import RandomArray
 import types,os.path,sys
 SeqTypes=(types.ListType,types.TupleType)
@@ -194,11 +194,7 @@ def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
   ids and inactives with odd ids:
   >>> from ML.Data import DataUtils
   >>> from Dbase.DbConnection import DbConnect
-  >>> if not RDConfig.usePgSQL:
-  ...   fName = os.path.join(RDConfig.RDCodeDir,'ML','Data','test_data','data.gdb')
-  ... else:
-  ...   fName = '::RDTests'
-  >>> conn = DbConnect(fName)
+  >>> conn = DbConnect(RDConfig.RDTestDatabase)
   
   Pull a set of points from a simple table... take 33% of all points:
   >>> DataUtils.InitRandomNumbers((23,42))

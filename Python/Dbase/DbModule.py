@@ -33,6 +33,7 @@ if hasattr(RDConfig,"usePgSQL") and RDConfig.usePgSQL:
   placeHolder='%s'
   binaryTypeName="bytea"
   binaryHolder = PgBytea
+  RDTestDatabase="::RDTests"
 elif hasattr(RDConfig,"useSqlLite") and RDConfig.useSqlLite:
   useGvib=0
   try:

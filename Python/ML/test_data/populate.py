@@ -1,5 +1,4 @@
 import RDConfig
-RDConfig.usePgSQL=1
 from Dbase import DbUtils
 from cStringIO import StringIO
 
@@ -312,8 +311,8 @@ Fe9Rh,0.664715105171,12.1856716313,1,1,0,3.53454303741,1.1
 """
 
 io = StringIO(ferro_quant)
-DbUtils.TextFileToDatabase('::RDTests','ferro_quant',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'ferro_quant',io)
 io = StringIO(ferro_noquant)
-DbUtils.TextFileToDatabase('::RDTests','ferro_noquant',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'ferro_noquant',io)
 io = StringIO(ferro_noquant_realact)
-DbUtils.TextFileToDatabase('::RDTests','ferro_noquant_realact',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'ferro_noquant_realact',io)

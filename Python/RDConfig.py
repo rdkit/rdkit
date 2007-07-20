@@ -107,6 +107,14 @@ if not (os.environ.has_key('RD_USEGVIB') and os.environ['RD_USEGVIB']):
     useSqlLite=True
 else:
   usePgSQL=0
+
+if usePgSQL:
+  RDTestDatabase='::RDTests'
+elif useSqlLite:
+  RDTestDatabase=os.path.join(RDDataDir,"RDTests.sqlt")
+else:  
+  RDTestDatabase=os.path.join(RDDataDir,"RDTests.gdb")
+
   
 # ---------------------
 # the following block contains stuff controlling the program used for

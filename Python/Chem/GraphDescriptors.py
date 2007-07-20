@@ -15,7 +15,6 @@ from Chem import rdchem
 # FIX: remove this dependency here and below
 from Chem import pyPeriodicTable as PeriodicTable
 from Numeric import *
-import LinearAlgebra
 from ML.InfoTheory import entropy
 
 periodicTable = rdchem.GetPeriodicTable()

@@ -1,5 +1,4 @@
 import RDConfig
-RDConfig.usePgSQL=1
 from Dbase import DbUtils
 from cStringIO import StringIO
 
@@ -32,7 +31,7 @@ id-11,55.0,0.9
 id-12,12.0,3.0
 """
 io = StringIO(basic_2class)
-DbUtils.TextFileToDatabase('::RDTests','basic_2class',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'basic_2class',io)
 io = StringIO(float_2class)
-DbUtils.TextFileToDatabase('::RDTests','float_2class',io)
+DbUtils.TextFileToDatabase(RDConfig.RDTestDatabase,'float_2class',io)
 

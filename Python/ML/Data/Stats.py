@@ -1,12 +1,12 @@
+# $Id$
 #
-#  Copyright (C) 2001-2004  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2001-2007  greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
 """ various statistical operations on data
 
 """
 from Numeric import *
-from LinearAlgebra import *
 
 def StandardizeMatrix(mat):
   """
@@ -77,9 +77,10 @@ def PrincipalComponents(mat,reverseOrder=1):
   """ do a principal components analysis
 
   """
+  import LinearAlgebra
   covMat = FormCorrelationMatrix(mat)
 
-  eigenVals,eigenVects = eigenvectors(covMat)
+  eigenVals,eigenVects = LinearAlgebra.eigenvectors(covMat)
   try:
     eigenVals = eigenVals.real
   except:
