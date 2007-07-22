@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -54,7 +54,6 @@ namespace RDKit{
     QueryAtom a;
     ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
     
-    // FIX: couldn't we support NOT lists using the setNegation on the query?
     switch(text[4]){
     case 'T':
       q->setNegation(true);
@@ -67,9 +66,6 @@ namespace RDKit{
       errout << "Unrecognized atom-list query modifier: " << text[14];
       throw FileParseException(errout.str()) ;
     }          
-    
-
-    
     
     int nQueries;
     try {
@@ -294,7 +290,6 @@ namespace RDKit{
   
   Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos) {
     Atom *res = new Atom;
-    //double pX,pY,pZ;
     std::string symb;
     int massDiff,chg,hCount;
     int stereoCare,totValence;
@@ -374,7 +369,6 @@ namespace RDKit{
       res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
     }
     
-    //res->setPos(pX,pY,pZ);
     if(chg!=0) res->setFormalCharge(4-chg);
     // FIX: this does not appear to be correct
     if(hCount==1){
@@ -467,7 +461,6 @@ namespace RDKit{
       throw FileParseException(errout.str()) ;
     }
     
-    
     // adjust the numbering
     idx1--;idx2--;
 
@@ -513,7 +506,6 @@ namespace RDKit{
     if( text.size() >= 12 && text.substr(9,3)!="  0")
       try {
         stereo = stripSpacesAndCast<int>(text.substr(9,3));
-        //res->setProp("stereo",stereo);
         switch(stereo){
         case 0:
           res->setBondDir(Bond::NONE);

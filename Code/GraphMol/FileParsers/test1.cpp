@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2005 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2007 Greg Landrum and Rational Discovery LLC
 //       All Rights Reserved
 //
 
