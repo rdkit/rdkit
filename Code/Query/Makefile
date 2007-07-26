@@ -2,7 +2,7 @@ include $(RDBASE)/Code/rdvars.make
 include $(RDBASE)/Code/rdrules.make
 
 CXXFLAGS=$(BASECXXFLAGS)
-LDFLAGS= -L. $(RDGENERAL)
+LDFLAGS= -L. $(RDGENERAL) -lboost_serialization-gcc$(GCCVERSION)
 
 SOURCES=Query.cpp
 LIB=libQuery.a

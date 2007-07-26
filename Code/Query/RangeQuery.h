@@ -73,7 +73,7 @@ namespace Queries {
     Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
       RangeQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
-	new RangeQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
+        new RangeQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
       res->setUpper(this->d_upper);
       res->setLower(this->d_lower);
       res->setTol(this->d_tol);
@@ -88,6 +88,19 @@ namespace Queries {
     DataFuncArgType d_upper,d_lower;
     DataFuncArgType d_tol;
     bool df_upperOpen,df_lowerOpen;
+
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & boost::serialization::base_object< Query<MatchFuncArgType, DataFuncArgType,needsConversion> >(*this);
+      ar & d_upper;
+      ar & d_lower;
+      ar & d_tol;
+      ar & df_upperOpen;
+      ar & df_lowerOpen;
+    }
   };
 
 }

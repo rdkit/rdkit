@@ -35,17 +35,17 @@ namespace Queries {
     bool Match(const DataFuncArgType what) const {
       MatchFuncArgType mfArg = TypeConvert(what,Int2Type<needsConversion>());
       if( queryCmp(this->d_val,mfArg,this->d_tol) >= 0 ){
-	if( this->getNegation() ) return false;
-	else return true;
+        if( this->getNegation() ) return false;
+        else return true;
       } else {
-	if( this->getNegation() ) return true;
-	else return false;
+        if( this->getNegation() ) return true;
+        else return false;
       }
     };
     Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
       GreaterEqualQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
-	new GreaterEqualQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
+        new GreaterEqualQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
       res->setVal(this->d_val);
       res->setTol(this->d_tol);
       res->setNegation(this->getNegation());
@@ -53,7 +53,16 @@ namespace Queries {
       res->d_description = this->d_description;
       return res;
     };
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & boost::serialization::base_object< EqualityQuery<MatchFuncArgType, DataFuncArgType,needsConversion> >(*this);
+    }
+  
+  
   };
-
 }
+
 #endif

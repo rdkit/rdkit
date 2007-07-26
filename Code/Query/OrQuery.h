@@ -24,13 +24,13 @@ namespace Queries {
       bool res = false;
       typename BASE::CHILD_VECT_CI it1;
       for(it1=this->beginChildren();
-	  it1!=this->endChildren();
-	  ++it1){
-	bool tmp = (*it1)->Match(what);
-	if( tmp ){
-	  res = true;
-	  break;
-	}
+          it1!=this->endChildren();
+          ++it1){
+        bool tmp = (*it1)->Match(what);
+        if( tmp ){
+          res = true;
+          break;
+        }
       }
       if( this->getNegation() ) res = !res;
       return res;
@@ -39,18 +39,25 @@ namespace Queries {
     Query<MatchFuncArgType,DataFuncArgType,needsConversion> *  
     copy( ) const {
       OrQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
-	new OrQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
+        new OrQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
 
       typename BASE::CHILD_VECT_CI i;
       for(i=this->beginChildren();
-	  i!=this->endChildren();
-	  ++i){
-	res->addChild(*i);
+          i!=this->endChildren();
+          ++i){
+        res->addChild(*i);
       }
       res->setNegation(this->getNegation());
       res->d_description = this->d_description;
       return res;
     };
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & boost::serialization::base_object< Query<MatchFuncArgType, DataFuncArgType,needsConversion> >(*this);
+    }
   };
 
 }

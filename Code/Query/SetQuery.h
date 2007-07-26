@@ -7,6 +7,7 @@
 #define __RD_SETQUERY_H__
 #include <set>
 #include "Query.h"
+#include <boost/serialization/set.hpp>
 
 namespace Queries{
   //! \brief a Query implementing a set: arguments must 
@@ -42,13 +43,13 @@ namespace Queries{
     Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
       SetQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
-	new SetQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
+        new SetQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
       res->setDataFunc(this->d_dataFunc);
       typename std::set<MatchFuncArgType>::const_iterator i;
       for(i=this->d_set.begin();
-	  i!=this->d_set.end();
-	  ++i){
-	res->insert(*i);
+          i!=this->d_set.end();
+          ++i){
+        res->insert(*i);
       }
       res->setNegation(this->getNegation());
       res->d_description = this->d_description;
@@ -59,6 +60,14 @@ namespace Queries{
   
   protected:
     std::set<MatchFuncArgType> d_set;
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & boost::serialization::base_object< Query<MatchFuncArgType, DataFuncArgType,needsConversion> >(*this);
+      ar & d_set;
+    }
   };
 
 }

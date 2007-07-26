@@ -46,26 +46,26 @@ namespace Queries {
     virtual bool Match(const DataFuncArgType what) const {
       MatchFuncArgType mfArg = TypeConvert(what,Int2Type<needsConversion>());
       if( queryCmp(this->d_val,mfArg,this->d_tol) == 0 ){
-	if( this->getNegation() ){
-	  return false;
-	}
-	else{
-	  return true;
-	}
+        if( this->getNegation() ){
+          return false;
+        }
+        else{
+          return true;
+        }
       } else {
-	if( this->getNegation() ){
-	  return true;
-	}
-	else{
-	  return false;
-	}
+        if( this->getNegation() ){
+          return true;
+        }
+        else{
+          return false;
+        }
       }
     };
 
     virtual Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
       EqualityQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
-	new EqualityQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
+        new EqualityQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
       res->setNegation(this->getNegation());
       res->setVal(this->d_val);
       res->setTol(this->d_tol);
@@ -75,10 +75,22 @@ namespace Queries {
     };
 
   protected:
-
-  
     MatchFuncArgType d_val;
     MatchFuncArgType d_tol;
+
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      //std::cout << "equalityquery::serialize" << std::endl;
+      typedef Query<MatchFuncArgType,DataFuncArgType> BaseKlassType;
+      ar &  boost::serialization::base_object< BaseKlassType >(*this);
+      ar & d_val;
+      ar & d_tol;
+    }
+  
+
   };
 
 }

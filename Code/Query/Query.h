@@ -15,6 +15,12 @@
 #include <boost/smart_ptr.hpp>
 #include <RDGeneral/Invariant.h>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 namespace Queries {
 
   //! class to allow integer values to pick templates
@@ -27,18 +33,18 @@ namespace Queries {
   //! Base class for all queries
   /*!
     Query objects have one or two functions associated with them:
-      - <tt>bool matchFunc(MatchFuncArgType other)</tt> returns true or false
-        to indicate whether this query matches \c other.
-	This is mandatory.
+    - <tt>bool matchFunc(MatchFuncArgType other)</tt> returns true or false
+    to indicate whether this query matches \c other.
+    This is mandatory.
 
-      - <tt>MatchFuncArgType dataFunc(DataFuncArgType other)</tt> converts
-        the argument \c other from \c DataFuncArgType to \c MatchFuncArgType.
-	This is optional if \c DataFuncArgType is the same as (or implicitly
-	convertible to) \c MatchFuncArgType.
-	
+    - <tt>MatchFuncArgType dataFunc(DataFuncArgType other)</tt> converts
+    the argument \c other from \c DataFuncArgType to \c MatchFuncArgType.
+    This is optional if \c DataFuncArgType is the same as (or implicitly
+    convertible to) \c MatchFuncArgType.
+        
   */
   template <class MatchFuncArgType, class DataFuncArgType=MatchFuncArgType,
-    bool needsConversion=false>
+            bool needsConversion=false>
   class Query {
   public:
     typedef boost::shared_ptr< Query<MatchFuncArgType, DataFuncArgType, needsConversion> > CHILD_TYPE;
@@ -46,7 +52,9 @@ namespace Queries {
     typedef typename CHILD_VECT::iterator CHILD_VECT_I;
     typedef typename CHILD_VECT::const_iterator CHILD_VECT_CI;
   
-    Query() : d_description(""),df_negate(false),d_matchFunc(NULL),d_dataFunc(NULL){};
+    Query() : d_description(""),df_negate(false),d_matchFunc(NULL),d_dataFunc(NULL) {
+      this->d_children.resize(0);
+    };
     virtual ~Query() { this->d_children.clear(); };
 
   
@@ -87,20 +95,20 @@ namespace Queries {
 
     //! returns a copy of this Query
     /*!
-       <b>Notes:</b>
-         - the caller is responsible for <tt>delete</tt>ing the result
-     */
+      <b>Notes:</b>
+      - the caller is responsible for <tt>delete</tt>ing the result
+    */
     virtual Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
       Query<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
-	new Query<MatchFuncArgType,DataFuncArgType,needsConversion>();
+        new Query<MatchFuncArgType,DataFuncArgType,needsConversion>();
       typename Query<MatchFuncArgType,DataFuncArgType,needsConversion>::CHILD_VECT_CI i;
 
       // FIX: I'm not sure this is right
       for(i=this->beginChildren();
-	  i!=this->endChildren();
-	  ++i){
-	res->addChild(*i);
+          i!=this->endChildren();
+          ++i){
+        res->addChild(*i);
       }
       res->df_negate = this->df_negate;
       res->d_matchFunc = this->d_matchFunc;
@@ -122,9 +130,9 @@ namespace Queries {
     MatchFuncArgType TypeConvert(MatchFuncArgType what,Int2Type<false> d) const{
       MatchFuncArgType mfArg;
       if( this->d_dataFunc != NULL ){
-	mfArg = this->d_dataFunc(what);
+        mfArg = this->d_dataFunc(what);
       } else {
-	mfArg = what;
+        mfArg = what;
       }
       return mfArg;
     }
@@ -136,9 +144,19 @@ namespace Queries {
       return mfArg;
     }
     
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      //std::cout << "query::serialize" << std::endl;
+      ar & d_description;
+      ar & d_children;
+      ar & df_negate;
+      //std::cout << "   >>>" << d_description << " " << df_negate << std::endl;
+    }
 
   };
-
 
   //----------------------------
   //
@@ -150,15 +168,13 @@ namespace Queries {
     T1 diff = v1 - v2;
     if( diff <= tol ){
       if( diff >= -tol ){
-	return 0;
+        return 0;
       } else {
-	return -1;
+        return -1;
       }
     } else {
       return 1;
     }
   };
-
-
 }
 #endif

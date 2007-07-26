@@ -25,17 +25,17 @@ namespace Queries{
       bool res = false;
       typename BASE::CHILD_VECT_CI it1;
       for(it1=this->beginChildren();
-	  it1!=this->endChildren();
-	  ++it1){
-	bool tmp = (*it1)->Match(what);
-	if( tmp ){
-	  if( res ){
-	    res = false;
-	    break;
-	  } else{
-	    res = true;
-	  }
-	}
+          it1!=this->endChildren();
+          ++it1){
+        bool tmp = (*it1)->Match(what);
+        if( tmp ){
+          if( res ){
+            res = false;
+            break;
+          } else{
+            res = true;
+          }
+        }
       }
       if( this->getNegation() ) res = !res;
       return res;
@@ -44,18 +44,25 @@ namespace Queries{
     Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
       XOrQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
-	new XOrQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
+        new XOrQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
 
       typename BASE::CHILD_VECT_CI i;
       for(i=this->beginChildren();
-	  i!=this->endChildren();
-	  ++i){
-	res->addChild(*i);
+          i!=this->endChildren();
+          ++i){
+        res->addChild(*i);
       }
       res->setNegation(this->getNegation());
       res->d_description = this->d_description;
       return res;
     };
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & boost::serialization::base_object< Query<MatchFuncArgType, DataFuncArgType,needsConversion> >(*this);
+    }
   };
 
 }
