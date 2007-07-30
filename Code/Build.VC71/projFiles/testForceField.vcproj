@@ -68,7 +68,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-gd-$(BOOSTVERSION).lib"
+				AdditionalDependencies="libboost_log-vc71-mt-gd-$(BOOSTVERSION).lib"
 				OutputFile="..\..\ForceField\testExecs/testForceField.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -159,7 +159,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-$(BOOSTVERSION).lib"
+				AdditionalDependencies="libboost_log-vc71-mt-$(BOOSTVERSION).lib"
 				OutputFile="..\..\ForceField\testExecs/testForceField.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

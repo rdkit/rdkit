@@ -68,7 +68,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-gd-$(BOOSTVERSION).lib BLAS.lib LAPACK.lib"
+				AdditionalDependencies="libboost_log-vc71-mt-gd-$(BOOSTVERSION).lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\GraphMol\FragCatalog\testExecs/FragCatTest.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -162,7 +162,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-$(BOOSTVERSION).lib BLAS.lib LAPACK.lib"
+				AdditionalDependencies="libboost_log-vc71-mt-$(BOOSTVERSION).lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\GraphMol\FragCatalog\testExecs/test1.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
