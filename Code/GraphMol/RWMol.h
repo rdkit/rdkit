@@ -23,6 +23,18 @@ namespace RDKit{
     using ROMol::addAtom;
     using ROMol::addBond;
 
+    RWMol() { initMol(); }
+
+    //! copy constructor with a twist
+    /*!
+      \param other     the molecule to be copied
+      \param quickCopy (optional) if this is true, the resulting ROMol will not
+           copy any of the properties or bookmarks and conformers from \c other.  This can
+           make the copy substantially faster (thus the name).
+    */
+    RWMol(const ROMol &other,bool quickCopy=false) {initFromOther(other,quickCopy);};
+
+
     //! insert the atoms and bonds from \c other into this molecule
     void insertMol( const ROMol &other);
   

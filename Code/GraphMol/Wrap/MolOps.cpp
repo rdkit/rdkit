@@ -35,15 +35,15 @@ namespace RDKit{
   }
 
   PyObject* replaceSubstructures(const ROMol &orig,
-				 const ROMol &query,
-				 const ROMol &replacement,
-				 bool replaceAll=false) {
+                                 const ROMol &query,
+                                 const ROMol &replacement,
+                                 bool replaceAll=false) {
     std::vector<ROMOL_SPTR> v=replaceSubstructs(orig, query,
-						replacement, replaceAll);
+                                                replacement, replaceAll);
     PyObject *res=PyTuple_New(v.size());
     for(unsigned int i=0;i<v.size();++i){
       PyTuple_SetItem(res,i,
-		      python::converter::shared_ptr_to_python(v[i]));
+                      python::converter::shared_ptr_to_python(v[i]));
     }
     return res;
   }
@@ -51,6 +51,16 @@ namespace RDKit{
   void sanitizeMol(ROMol &mol) {
     RWMol &wmol = static_cast<RWMol &>(mol);
     MolOps::sanitizeMol(wmol);
+  }
+
+  RWMol *getEditable(const ROMol &mol) {
+    RWMol *res = static_cast<RWMol *>(new ROMol(mol,false));
+    return res;
+  }
+
+  ROMol *getNormal(const RWMol &mol) {
+    ROMol *res = static_cast<ROMol *>(new RWMol(mol));
+    return res;
   }
 
   void kekulizeMol(ROMol &mol,bool clearAromaticFlags=false) {
@@ -65,8 +75,8 @@ namespace RDKit{
   }
   
   PyObject *getDistanceMatrix(ROMol &mol, bool useBO=false,
-			      bool useAtomWts=false,bool force=false,
-			      const char *prefix=0) {
+                              bool useAtomWts=false,bool force=false,
+                              const char *prefix=0) {
     int dims[2];
     int nats = mol.getNumAtoms();
     dims[0] = nats;
@@ -78,14 +88,14 @@ namespace RDKit{
     PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(2,dims,PyArray_DOUBLE);
     
     memcpy(static_cast<void *>(res->data),
-	 static_cast<void *>(distMat),nats*nats*sizeof(double));
+         static_cast<void *>(distMat),nats*nats*sizeof(double));
     
     return (PyObject *) res;
   }
 
   PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO=false,
-			       int emptyVal=0,bool force=false,
-			       const char *prefix=0) {
+                               int emptyVal=0,bool force=false,
+                               const char *prefix=0) {
     int dims[2];
     int nats = mol.getNumAtoms();
     dims[0] = nats;
@@ -97,17 +107,17 @@ namespace RDKit{
     if(useBO){
       // if we're using valence, the results matrix is made up of doubles
       res = (PyArrayObject *)PyArray_FromDims(2,dims,
-					      PyArray_DOUBLE);
+                                              PyArray_DOUBLE);
       memcpy(static_cast<void *>(res->data),
-	     static_cast<void *>(tmpMat),nats*nats*sizeof(double));
+             static_cast<void *>(tmpMat),nats*nats*sizeof(double));
     } else {
       res = (PyArrayObject *)PyArray_FromDims(2,dims,
-					      PyArray_INT);
+                                              PyArray_INT);
       int *data = (int *)res->data;
       for(int i=0;i<nats;i++){
-	for(int j=0;j<nats;j++){
-	  data[i*nats+j] = (int)round(tmpMat[i*nats+j]);
-	}
+        for(int j=0;j<nats;j++){
+          data[i*nats+j] = (int)round(tmpMat[i*nats+j]);
+        }
       }
     }
     return (PyObject *) res;
@@ -137,7 +147,7 @@ namespace RDKit{
   NOTES:\n\
 \n";
       python::def("SanitizeMol", sanitizeMol,
-		  docString.c_str());
+                  docString.c_str());
 
       // ------------------------------------------------------------------------
       docString="Get the smallest set of simple rings for a molecule.\n\
@@ -150,7 +160,7 @@ namespace RDKit{
          This will be equal to NumBonds-NumAtoms+1 for single-fragment molecules.\n\
 \n";
       python::def("GetSSSR", getSSSR, 
-		  docString.c_str());
+                  docString.c_str());
       
       // ------------------------------------------------------------------------
       docString="Get a symmetrized SSSR for a molecule.\n\
@@ -166,7 +176,7 @@ namespace RDKit{
   RETURNS: the number of rings found\n\
 \n";
       python::def("GetSymmSSSR", getSymmSSSR,
-		  docString.c_str());
+                  docString.c_str());
 
       // ------------------------------------------------------------------------
       docString="Adds hydrogens to the graph of a molecule.\n\
@@ -192,10 +202,10 @@ namespace RDKit{
       this function.\n\
 \n";
       python::def("AddHs", addHs,
-		  (python::arg("mol"),python::arg("explicitOnly")=false,
-		   python::arg("addCoords")=false),
-		  docString.c_str(),
-		  python::return_value_policy<python::manage_new_object>());
+                  (python::arg("mol"),python::arg("explicitOnly")=false,
+                   python::arg("addCoords")=false),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
 
       // ------------------------------------------------------------------------
       docString="Removes any hydrogens from the graph of a molecule.\n\
@@ -214,9 +224,9 @@ namespace RDKit{
     - The original molecule is *not* modified.\n\
 \n";
       python::def("RemoveHs", removeHs,
-		  (python::arg("mol"),python::arg("implicitOnly")=false),
-		  docString.c_str(),
-		  python::return_value_policy<python::manage_new_object>());
+                  (python::arg("mol"),python::arg("implicitOnly")=false),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
 
       // ------------------------------------------------------------------------
       docString="Removes atoms matching a substructure query from a molecule\n\
@@ -253,9 +263,9 @@ namespace RDKit{
 \n";
       python::def("DeleteSubstructs", deleteSubstructs,
                   (python::arg("mol"),python::arg("query"),
-		   python::arg("onlyFrags")=false),
-		  docString.c_str(),
-		  python::return_value_policy<python::manage_new_object>());
+                   python::arg("onlyFrags")=false),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
 
       // ------------------------------------------------------------------------
       docString="Replaces atoms matching a substructure query in a molecule\n\
@@ -292,9 +302,9 @@ namespace RDKit{
 \n";
       python::def("ReplaceSubstructs", replaceSubstructures,
                   (python::arg("mol"),python::arg("query"),
-		   python::arg("replacement"),
-		   python::arg("replaceAll")=false),
-		  docString.c_str());
+                   python::arg("replacement"),
+                   python::arg("replaceAll")=false),
+                  docString.c_str());
 
       // ------------------------------------------------------------------------
       docString="Returns the molecule's distance matrix.\n\
@@ -319,11 +329,11 @@ namespace RDKit{
   RETURNS: a Numeric array of floats with the distance matrix\n\
 \n";
       python::def("GetDistanceMatrix", getDistanceMatrix,
-		  (python::arg("mol"),python::arg("useBO")=false,
-		   python::arg("useAtomWts")=false,
-		   python::arg("force")=false,
-		   python::arg("prefix")=""),
-		  docString.c_str());
+                  (python::arg("mol"),python::arg("useBO")=false,
+                   python::arg("useAtomWts")=false,
+                   python::arg("force")=false,
+                   python::arg("prefix")=""),
+                  docString.c_str());
       // ------------------------------------------------------------------------
       docString="Returns the molecule's adjacency matrix.\n\
 \n\
@@ -346,11 +356,11 @@ namespace RDKit{
   RETURNS: a Numeric array of floats containing the adjacency matrix\n\
 \n";
       python::def("GetAdjacencyMatrix", getAdjacencyMatrix, 
-		  (python::arg("mol"), python::arg("useBO")=false,
-		   python::arg("emptyVal")=0,
-		   python::arg("force")=false,
-		   python::arg("prefix")=""),
-		  docString.c_str());
+                  (python::arg("mol"), python::arg("useBO")=false,
+                   python::arg("emptyVal")=0,
+                   python::arg("force")=false,
+                   python::arg("prefix")=""),
+                  docString.c_str());
 
       
       // ------------------------------------------------------------------------
@@ -369,8 +379,8 @@ namespace RDKit{
     - The molecule is modified in place.\n\
 \n";
       python::def("Kekulize", kekulizeMol,
-		  (python::arg("mol"),python::arg("clearAromaticFlags")=false),
-		  docString.c_str());
+                  (python::arg("mol"),python::arg("clearAromaticFlags")=false),
+                  docString.c_str());
       
       // ------------------------------------------------------------------------
       docString="Finds all subgraphs of a particular length in a molecule\n\
@@ -406,9 +416,9 @@ namespace RDKit{
   but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
       python::def("FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN,
-		  (python::arg("mol"),python::arg("length"),
-		   python::arg("useHs")=false,python::arg("verbose")=false),
-		  docString.c_str());
+                  (python::arg("mol"),python::arg("length"),
+                   python::arg("useHs")=false,python::arg("verbose")=false),
+                  docString.c_str());
       // ------------------------------------------------------------------------
       docString="Finds unique subgraphs of a particular length in a molecule\n\
 \n\
@@ -430,10 +440,10 @@ namespace RDKit{
 \n\
 \n";
       python::def("FindUniqueSubgraphsOfLengthN", &findUniqueSubgraphsOfLengthN, 
-		  (python::arg("mol"),python::arg("length"),
-		   python::arg("useHs")=false,python::arg("useBO")=true),
-		  docString.c_str());
-		  
+                  (python::arg("mol"),python::arg("length"),
+                   python::arg("useHs")=false,python::arg("useBO")=true),
+                  docString.c_str());
+                  
       // ------------------------------------------------------------------------
       docString="Finds all paths of a particular length in a molecule\n\
 \n\
@@ -470,9 +480,9 @@ namespace RDKit{
        but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
       python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN, 
-		  (python::arg("mol"),python::arg("length"),
-		   python::arg("useBonds")=true,python::arg("useHs")=false),
-		  docString.c_str());
+                  (python::arg("mol"),python::arg("length"),
+                   python::arg("useBonds")=true,python::arg("useHs")=false),
+                  docString.c_str());
 
       
       // ------------------------------------------------------------------------
@@ -516,8 +526,8 @@ namespace RDKit{
       been done\n\
 \n";
       python::def("AssignAtomChiralCodes", MolOps::assignAtomChiralCodes,
-		  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
-		  docString.c_str());
+                  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
+                  docString.c_str());
 
 
       // ------------------------------------------------------------------------
@@ -534,8 +544,8 @@ namespace RDKit{
       been done\n\
 \n";
       python::def("AssignBondStereoCodes", MolOps::assignBondStereoCodes,
-		  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
-		  docString.c_str());
+                  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
+                  docString.c_str());
 
 
       // ------------------------------------------------------------------------
@@ -579,10 +589,10 @@ namespace RDKit{
 \n\
 \n";
       python::def("DaylightFingerprint", DaylightFingerprintMol,
-		  (python::arg("mol"),python::arg("minPath")=1,
-		   python::arg("maxPath")=7,python::arg("fpSize")=2048,
-		   python::arg("nBitsPerHash")=4,python::arg("useHs")=true),
-		  docString.c_str(),python::return_value_policy<python::manage_new_object>());
+                  (python::arg("mol"),python::arg("minPath")=1,
+                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
+                   python::arg("nBitsPerHash")=4,python::arg("useHs")=true),
+                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
 
 
 
@@ -595,7 +605,38 @@ namespace RDKit{
 \n\
 \n";
       python::def("WedgeMolBonds", WedgeMolBonds,
-		  docString.c_str());
+                  docString.c_str());
+
+
+#if 0
+      docString="Converts a normal molecule into an editable molecule (RWMol)\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to be converted\n\
+\n\
+  RETURNS: a new editable molecule (RWMol)\n\
+\n\
+\n";
+      python::def("GetEditableMolecule", getEditable,
+                  (python::arg("mol")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
+
+      docString="Converts an editable molecule into a normal one\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the editable molecule (RWMol) to be converted\n\
+\n\
+  RETURNS: a new normal molecule\n\
+\n\
+\n";
+      python::def("GetNormalMolecule", getNormal,
+                  (python::arg("mol")),
+      docString.c_str(),
+      python::return_value_policy<python::manage_new_object>());
+#endif
 
     };
   };

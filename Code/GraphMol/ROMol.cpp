@@ -60,7 +60,7 @@ ROMol::ROMol(const std::string &pickle) {
   MolPickler::molFromPickle(pickle,*this);
 }
   
-ROMol::ROMol(const ROMol &other,bool quickCopy){
+void ROMol::initFromOther(const ROMol &other,bool quickCopy){
   // copy over the atoms
   ROMol::ATOM_ITER_PAIR atItP = other.getVertices();
   ROMol::GRAPH_MOL_ATOM_PMAP::const_type atMap = other.getAtomPMap();
@@ -82,52 +82,53 @@ ROMol::ROMol(const ROMol &other,bool quickCopy){
   } else {
     dp_ringInfo = 0;
   }
-  
+
+  dp_props = 0;
   if(!quickCopy){
+
     // copy conformations
-    for (ConstConformerIterator ci = other.beginConformers();
-         ci != other.endConformers(); ++ci) {
+    ConstConformerIterator ci;
+    
+    for (ci = other.beginConformers(); ci != other.endConformers(); ci++) {
       Conformer *conf = new Conformer(*(*ci));
       this->addConformer(conf);
     }
 
     if (other.dp_props) {
+      if (dp_props) {
+        delete dp_props;
+      }
       dp_props = new Dict(*other.dp_props);
-    } else {
-      dp_props = new Dict();
-      STR_VECT computed;
-      dp_props->setVal("computedProps", computed);
     }
   
     // Bookmarks should be copied as well:
-    for(ATOM_BOOKMARK_MAP::const_iterator abmI=other.d_atomBookmarks.begin();
-        abmI!=other.d_atomBookmarks.end();++abmI){
-      for(ATOM_PTR_LIST::const_iterator aplI=abmI->second.begin();
-          aplI!=abmI->second.end();++aplI){
+    ATOM_BOOKMARK_MAP::const_iterator abmI;
+    for(abmI=other.d_atomBookmarks.begin();abmI!=other.d_atomBookmarks.end();abmI++){
+      ATOM_PTR_LIST::const_iterator aplI;
+      for(aplI=abmI->second.begin();aplI!=abmI->second.end();aplI++){
         int idx=(*aplI)->getIdx();
         int first=abmI->first;
         Atom *at=getAtomWithIdx(idx);
         setAtomBookmark(at,first);
       }
     }
-    for(BOND_BOOKMARK_MAP::const_iterator bbmI=other.d_bondBookmarks.begin();
-        bbmI!=other.d_bondBookmarks.end();++bbmI){
-      for(BOND_PTR_LIST::const_iterator bplI=bbmI->second.begin();
-          bplI!=bbmI->second.end();++bplI){
+    BOND_BOOKMARK_MAP::const_iterator bbmI;
+    for(bbmI=other.d_bondBookmarks.begin();bbmI!=other.d_bondBookmarks.end();bbmI++){
+      BOND_PTR_LIST::const_iterator bplI;
+      for(bplI=bbmI->second.begin();bplI!=bbmI->second.end();bplI++){
         setBondBookmark(getBondWithIdx((*bplI)->getIdx()),bbmI->first);
       }
     }
-  } else {
+  }
+  if(!dp_props){
     dp_props = new Dict();
-    STR_VECT computed;
-    dp_props->setVal("computedProps", computed);
   }
 }
 
 void ROMol::initMol() {
   dp_props = new Dict();
   dp_ringInfo = new RingInfo();
-  // ok every molecule contains a property entry called "computedProps" which provides
+  // ok every bond contains a property entry called "computedProps" which provides
   //  list of property keys that correspond to value that have been computed
   // this can used to blow out all computed properties while leaving the rest along
   // initialize this list to an empty vector of strings
@@ -163,6 +164,7 @@ ROMol::GRAPH_NODE_TYPE ROMol::getAtomWithIdx(unsigned int idx)
   GRAPH_MOL_ATOM_PMAP::type pMap = boost::get(vertex_atom_t(),d_graph);
 
   ROMol::GRAPH_NODE_TYPE res = pMap[vd];
+  POSTCONDITION(res,"")
   return res;
 }
 
@@ -173,7 +175,9 @@ ROMol::GRAPH_NODE_CONST_TYPE ROMol::getAtomWithIdx(unsigned int idx) const
   int vd = boost::vertex(idx,d_graph);
   GRAPH_MOL_ATOM_PMAP::const_type pMap = boost::get(vertex_atom_t(),d_graph);
 
-  return pMap[vd];
+  ROMol::GRAPH_NODE_TYPE res = pMap[vd];
+  POSTCONDITION(res,"")
+  return res;
 }
 
 // returns the first inserted atom with the given bookmark

@@ -21,8 +21,6 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-
-
   std::string MolToBinary(const ROMol &self){
     std::string res;
     MolPickler::pickleMol(self,res);
@@ -43,7 +41,7 @@ namespace RDKit {
   };
 
   bool HasSubstructMatchStr(std::string pkl, const ROMol &query,
-			    bool recursionPossible=true,bool useChirality=false) {
+			    bool recursionPossible=true,bool useChirality=false){
     ROMol *mol;
     try {
       mol = new ROMol(pkl);
@@ -60,7 +58,7 @@ namespace RDKit {
   }
 
   bool HasSubstructMatch(const ROMol &mol, const ROMol &query,
-			 bool recursionPossible=true,bool useChirality=false) {
+			 bool recursionPossible=true,bool useChirality=false){
     MatchVectType res;
     return SubstructMatch(mol,query,res,recursionPossible,useChirality);
   }
@@ -73,13 +71,13 @@ namespace RDKit {
     }
     return res;
   }
-  PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,bool useChirality=false) {
+  PyObject *GetSubstructMatch(const ROMol &mol, const ROMol &query,bool useChirality=false){
     MatchVectType matches;
     SubstructMatch(mol,query,matches,true,useChirality);
     return convertMatches(matches);
   }
 
-  PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,bool uniquify=true,bool useChirality=false) {
+  PyObject *GetSubstructMatches(const ROMol &mol, const ROMol &query,bool uniquify=true,bool useChirality=false){
     std::vector< MatchVectType >  matches;
     int matched = SubstructMatch(mol,query,matches,uniquify,true,useChirality);
     PyObject *res = PyTuple_New(matched);
@@ -244,11 +242,10 @@ struct mol_wrapper {
   static void wrap(){
     python::register_exception_translator<ConformerException>(&rdExceptionTranslator);
 
-    python::class_<ROMol,ROMOL_SPTR>("Mol",
+    python::class_<ROMol,ROMOL_SPTR,boost::noncopyable>("Mol",
 			  molClassDoc.c_str(),
 			  python::init<>("Constructor, takes no arguments"))
       .def(python::init<const std::string &>())
-
       .def("GetNumAtoms",&ROMol::getNumAtoms,
 	   (python::arg("onlyHeavy")=true),
 	   "Returns the number of Atoms in the molecule.\n\n"
@@ -488,9 +485,13 @@ struct mol_wrapper {
 
       .def("ToBinary",MolToBinary,
 	   "Returns a binary string representation of the molecule.\n")
-      ;
 
+      .def("GetRingInfo",&ROMol::getRingInfo,
+      python::return_value_policy<python::reference_existing_object>(),
+       "Returns the number of molecule's RingInfo object.\n\n")
+      ;
         
+    // ---------------------------------------------------------------------------------------------
     python::def("_HasSubstructMatchStr",
                 HasSubstructMatchStr,
                 (python::arg("pkl"),python::arg("query"),

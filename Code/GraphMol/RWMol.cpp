@@ -115,7 +115,7 @@ namespace RDKit{
       ATOM_BOOKMARK_MAP::iterator tmpI=markI;
       markI++;
       if(std::find(atoms.begin(),atoms.end(),oatom)!=atoms.end()){
-	clearAtomBookmark(tmpI->first,oatom);
+        clearAtomBookmark(tmpI->first,oatom);
       }
     }
 
@@ -172,7 +172,7 @@ namespace RDKit{
   }
 
   unsigned int RWMol::addBond(unsigned int atomIdx1,unsigned int atomIdx2,
-			      Bond::BondType bondType){
+                              Bond::BondType bondType){
     RANGE_CHECK(0,atomIdx1,getNumAtoms()-1);
     RANGE_CHECK(0,atomIdx2,getNumAtoms()-1);
     Bond *b = new Bond(bondType);
@@ -198,13 +198,13 @@ namespace RDKit{
   }
 
   unsigned int RWMol::addBond(Atom *atom1,Atom *atom2,
-			      Bond::BondType bondType){
+                              Bond::BondType bondType){
     PRECONDITION(atom1&&atom2,"NULL atom passed in");
     return addBond(atom1->getIdx(),atom2->getIdx(),bondType);
   }
 
   unsigned int RWMol::addBond(Atom::ATOM_SPTR atom1,Atom::ATOM_SPTR atom2,
-			      Bond::BondType bondType){
+                              Bond::BondType bondType){
     return addBond(atom1->getIdx(),atom2->getIdx(),bondType);
   }
 
@@ -223,7 +223,7 @@ namespace RDKit{
       BOND_BOOKMARK_MAP::iterator tmpI=markI;
       markI++;
       if(std::find(bonds.begin(),bonds.end(),bnd)!=bonds.end()){
-	clearBondBookmark(tmpI->first,bnd);
+        clearBondBookmark(tmpI->first,bnd);
       }
     }
     boost::remove_edge(aid1, aid2, d_graph);
@@ -240,7 +240,7 @@ namespace RDKit{
   }
 
   unsigned int RWMol::finishPartialBond(unsigned int atomIdx2,int bondBookmark,
-					Bond::BondType bondType){
+                                        Bond::BondType bondType){
     PRECONDITION(hasBondBookmark(bondBookmark),"no such partial bond");
     RANGE_CHECK(0,atomIdx2,getNumAtoms()-1);
 

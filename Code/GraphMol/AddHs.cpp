@@ -237,7 +237,8 @@ namespace RDKit{
     // doesn't affect the chirality.  (Of course there can only be one H
     // on the atom... otherwise it wouldn't be chiral!)
     ROMol *addHs(const ROMol &mol,bool explicitOnly,bool addCoords){
-      RWMol *res = static_cast<RWMol*>(new ROMol(mol,false));
+      RWMol *res = new RWMol(mol);
+
       // when we hit each atom, clear its computed properties
       // NOTE: it is essential that we not clear the ring info in the
       // molecule's computed properties.  We don't want to have to
@@ -313,10 +314,12 @@ namespace RDKit{
     //
     ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
       Atom *atom;
-      unsigned int currIdx=0;
-      RWMol *res = static_cast<RWMol*>(new ROMol(mol,false));
+      unsigned int currIdx=0,origIdx=0;
+      RWMol *res = new RWMol(mol);
       while(currIdx < res->getNumAtoms()){
         atom = res->getAtomWithIdx(currIdx);
+        atom->setProp("_origAtomIdx",origIdx);
+        origIdx++;
         if(atom->getAtomicNum()==1){
           bool removeIt=false;
 
@@ -389,8 +392,7 @@ namespace RDKit{
               }
               
               int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
-              // if there are one or more atoms with lower indices than the central
-              // atom, we may need to introduce an extra swap:
+              //std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
               if(nSwaps%2){
                 if(heavyAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
                   heavyAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
@@ -444,7 +446,7 @@ namespace RDKit{
     //
     ROMol *mergeQueryHs(const ROMol &mol){
       unsigned int currIdx=0;
-      RWMol *res = static_cast<RWMol*>(new ROMol(mol,false));
+      RWMol *res = new RWMol(mol);
       while(currIdx < res->getNumAtoms()){
         Atom *atom = res->getAtomWithIdx(currIdx);
         if(atom->getAtomicNum()==1){

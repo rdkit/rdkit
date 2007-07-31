@@ -1448,8 +1448,6 @@ CAS<~>
     self.failUnless(m1.GetNumAtoms()==12)
     self.failUnless(m1.GetNumConformers()==2)
     
-
-    
   def test44TplFileWriting(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','cmpd2.tpl')
@@ -1464,9 +1462,34 @@ CAS<~>
     self.failUnless(m1.GetNumAtoms()==12)
     self.failUnless(m1.GetNumConformers()==2)
 
+  def test47RWMols(self):
+    """ test the RWMol class
 
+    """
+    mol = Chem.MolFromSmiles('C1CCC1')
+    self.failUnless(type(mol)==Chem.Mol)
+    
+    rwmol = Chem.EditableMol(mol)
+    self.failUnless(type(rwmol)==Chem.EditableMol)
+    newAt = Chem.Atom(8)
+    rwmol.ReplaceAtom(0,newAt)
+    self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='C1COC1')
 
-
+    rwmol.RemoveBond(0,1)
+    self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='CCCO')
+    a = Chem.Atom(7)
+    rwmol.AddAtom(a)
+    self.failUnless(rwmol.GetMol().GetNumAtoms()==5)
+    rwmol.AddBond(0,4,order=Chem.BondType.SINGLE)
+    self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='CCCON')
+    rwmol.AddBond(4,1,order=Chem.BondType.SINGLE)
+    self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='C1CNOC1')
+    
+    rwmol.RemoveAtom(3)
+    self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='CCNO')
+    
+                    
+                    
 if __name__ == '__main__':
   unittest.main()
 

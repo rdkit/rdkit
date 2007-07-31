@@ -134,6 +134,7 @@ void Bond::setEndAtom(Atom::ATOM_SPTR at) {
 double Bond::getBondTypeAsDouble() const {
   switch(getBondType()){
   case UNSPECIFIED: return 0; break;
+  case IONIC: return 0; break;
   case SINGLE: return 1; break;
   case DOUBLE: return 2; break;
   case TRIPLE: return 3; break;
@@ -160,6 +161,7 @@ double Bond::getValenceContrib(Atom::ATOM_SPTR at) const {
 double Bond::getValenceContrib(const Atom *atom) const {
   switch(getBondType()){
   case UNSPECIFIED: return 0; break;
+  case IONIC: return 0; break;
   case SINGLE: return 1; break;
   case DOUBLE: return 2; break;
   case TRIPLE: return 3; break;

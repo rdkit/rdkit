@@ -23,10 +23,10 @@
 namespace RDKit{
   //! This is the BGL type used to store the topology:
   typedef boost::adjacency_list< boost::vecS,
-				 boost::vecS,
-				 boost::undirectedS,
-				 AtomProperty,
-				 BondProperty> MolGraph; 
+                                 boost::vecS,
+                                 boost::undirectedS,
+                                 AtomProperty,
+                                 BondProperty> MolGraph; 
   class MolPickler;
   class RWMol;
   class Atom;
@@ -64,21 +64,21 @@ namespace RDKit{
     <b>Notes:</b>
       - each ROMol maintains a Dict of \c properties:  
           - Each \c property is keyed by name and can store an
-	    arbitrary type.
-	  - \c Properties can be marked as \c calculated, in which case
-	    they will be cleared when the \c clearComputedProps() method
-	    is called.
+            arbitrary type.
+          - \c Properties can be marked as \c calculated, in which case
+            they will be cleared when the \c clearComputedProps() method
+            is called.
           - Because they have no impact upon chemistry, all \c property
-	    operations are \c const, this allows extra flexibility for
-	    clients who need to store extra data on ROMol objects.
+            operations are \c const, this allows extra flexibility for
+            clients who need to store extra data on ROMol objects.
 
       - each ROMol has collections of \c bookmarks for Atoms and Bonds:
           - the Atom bookmarks and Bond bookmarks are stored separately
-	    from each other
+            from each other
           - each \c bookmark, an integer, can map to more than one
-	    Atom or Bond
-	  - these are currently used in molecule construction, but
-	    could also be useful for reaction mapping and the like
+            Atom or Bond
+          - these are currently used in molecule construction, but
+            could also be useful for reaction mapping and the like
 
       - information about rings (SSSR and the like) is stored in the
         molecule's RingInfo pointer.
@@ -159,9 +159,9 @@ namespace RDKit{
       \param other     the molecule to be copied
       \param quickCopy (optional) if this is true, the resulting ROMol will not
            copy any of the properties or bookmarks and conformers from \c other.  This can
-	   make the copy substantially faster (thus the name).
+           make the copy substantially faster (thus the name).
     */
-    ROMol(const ROMol &other,bool quickCopy=false);
+    ROMol(const ROMol &other,bool quickCopy=false) {initFromOther(other,quickCopy);};
     //! construct a molecule from a pickle string
     ROMol(const std::string &binStr);
 
@@ -267,18 +267,18 @@ namespace RDKit{
         ... molPtr is a const ROMol * ...
         ... atomPtr is a const Atom * ...
         ROMol::ADJ_ITER nbrIdx,endNbrs;
-	boost::tie(nbrIdx,endNbrs) = molPtr->getAtomNeighbors(atomPtr);
-	while(nbrIdx!=endNbrs){
-	  const Atom *at=molPtr->getAtomWithIdx(*nbrIdx);
-	  ... do something with the Atom ...
-	  nbrIdx++;
-	}
+        boost::tie(nbrIdx,endNbrs) = molPtr->getAtomNeighbors(atomPtr);
+        while(nbrIdx!=endNbrs){
+          const Atom *at=molPtr->getAtomWithIdx(*nbrIdx);
+          ... do something with the Atom ...
+          nbrIdx++;
+        }
       \endverbatim
 
       <b>Notes:</b>
         - technically, we're probably suppposed to be using the atom pmap here
-	  (accessible using ROMol::getAtomPMap()), but that's not actually required.
-	  
+          (accessible using ROMol::getAtomPMap()), but that's not actually required.
+          
     */
     ADJ_ITER_PAIR getAtomNeighbors(Atom const *at) const;
     //! \overload
@@ -294,12 +294,12 @@ namespace RDKit{
         ... atomPtr is a const Atom * ...
         ROMol::OEDGE_ITER beg,end;
         ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = molPtr->getBondPMap();
-	boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
-	while(beg!=end){
-	  const Bond *bond=pMap[*beg];
-	  ... do something with the Bond ...
-	  beg++;
-	}
+        boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
+        while(beg!=end){
+          const Bond *bond=pMap[*beg];
+          ... do something with the Bond ...
+          beg++;
+        }
       \endverbatim
       or, if you need a non-const Bond *:
       \verbatim
@@ -307,12 +307,12 @@ namespace RDKit{
         ... atomPtr is a const Atom * ...
         ROMol::OEDGE_ITER beg,end;
         ROMol::GRAPH_MOL_BOND_PMAP::type pMap = molPtr->getBondPMap();
-	boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
-	while(beg!=end){
-	  Bond *bond=pMap[*beg];
-	  ... do something with the Bond ...
-	  beg++;
-	}
+        boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
+        while(beg!=end){
+          Bond *bond=pMap[*beg];
+          ... do something with the Bond ...
+          beg++;
+        }
       \endverbatim
       
       
@@ -333,11 +333,12 @@ namespace RDKit{
       <b>Usage</b>
       \verbatim
         ... molPtr is an ROMol * ...
-	ROMol::GRAPH_MOL_ATOM_PMAP::type atomMap = molPtr->getAtomPMap();
-	ROMol::VERTEX_ITER atBegin,atEnd;
-	while(atBegin!=atEnd){
-   	  Atom *at2=atomMap[*atBegin];
-	  ... do something with the Atom ...
+        ROMol::GRAPH_MOL_ATOM_PMAP::type atomMap = molPtr->getAtomPMap();
+        ROMol::VERTEX_ITER atBegin,atEnd;
+        boost::tie(atBegin,atEnd) = mol.getVertices();  
+        while(atBegin!=atEnd){
+          Atom *at2=atomMap[*atBegin];
+          ... do something with the Atom ...
           atBegin++;
         }
       \endverbatim
@@ -350,13 +351,13 @@ namespace RDKit{
       \verbatim
         ... molPtr is a ROMol * ...
         ROMol::EDGE_ITER firstB,lastB;
-	boost::tie(firstB,lastB) = mol.getEdges();
-	ROMol::GRAPH_MOL_BOND_PMAP::type bondMap = mol.getBondPMap();
-	while(firstB!=lastB){
-   	  Bond *bond = bondMap[*firstB];
-	  ... do something with the Bond ...
-	  firstB++;
-	}
+        boost::tie(firstB,lastB) = mol.getEdges();
+        ROMol::GRAPH_MOL_BOND_PMAP::type bondMap = mol.getBondPMap();
+        while(firstB!=lastB){
+          Bond *bond = bondMap[*firstB];
+          ... do something with the Bond ...
+          firstB++;
+        }
       \endverbatim
     */
     BOND_ITER_PAIR getEdges();
@@ -369,14 +370,14 @@ namespace RDKit{
     /*!
         This can be useful if you need to call other BGL algorithms:
 
-	Here's an example:
-	\verbatim
-	   ... mol is a const ROMol ...
-	   ... mapping is an INT_VECT ...
-	   mapping.resize(mol.getNumAtoms());
+        Here's an example:
+        \verbatim
+           ... mol is a const ROMol ...
+           ... mapping is an INT_VECT ...
+           mapping.resize(mol.getNumAtoms());
            const MolGraph *G_p = mol.getTopology();
            int res = boost::connected_components(*G_p,&mapping[0]);
-	\endverbatim
+        \endverbatim
      */
     MolGraph const *getTopology() const { return &d_graph; };
 
@@ -449,7 +450,7 @@ namespace RDKit{
     /*!
        \param key the name under which the \c property should be stored.
            If a \c property is already stored under this name, it will be
-	   replaced.
+           replaced.
        \param val the value to be stored
        \param computed (optional) allows the \c property to be flagged
            \c computed.
@@ -463,12 +464,12 @@ namespace RDKit{
     template <typename T>
     void setProp(const std::string key, T val, bool computed=false) const {
       if (computed) {
-	STR_VECT compLst;
-	getProp("computedProps", compLst);
-	if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
-	  compLst.push_back(key);
-	  dp_props->setVal("computedProps", compLst);
-	}
+        STR_VECT compLst;
+        getProp("computedProps", compLst);
+        if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
+          compLst.push_back(key);
+          dp_props->setVal("computedProps", compLst);
+        }
       }
       dp_props->setVal(key, val);
     }
@@ -478,13 +479,13 @@ namespace RDKit{
 
        \param key the name under which the \c property should be stored.
            If a \c property is already stored under this name, it will be
-	   replaced.
+           replaced.
        \param res a reference to the storage location for the value.
 
        <b>Notes:</b>
          - if no \c property with name \c key exists, a KeyErrorException will be thrown.
-	 - the \c boost::lexical_cast machinery is used to attempt type conversions.
-	   If this fails, a \c boost::bad_lexical_cast exception will be thrown.
+         - the \c boost::lexical_cast machinery is used to attempt type conversions.
+           If this fails, a \c boost::bad_lexical_cast exception will be thrown.
 
     */
     template <typename T> 
@@ -514,9 +515,9 @@ namespace RDKit{
     /*!
        <b>Notes:</b>
          - if no \c property with name \c key exists, a KeyErrorException
-	   will be thrown.
-	 - if the \c property is marked as \c computed, it will also be removed
-	   from our list of \c computedProperties
+           will be thrown.
+         - if the \c property is marked as \c computed, it will also be removed
+           from our list of \c computedProperties
     */
     void clearProp(const char *key) const {
       std::string what(key);
@@ -528,8 +529,8 @@ namespace RDKit{
       getProp("computedProps", compLst);
       STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
       if (svi != compLst.end()) {
-	compLst.erase(svi);
-	dp_props->setVal("computedProps", compLst);
+        compLst.erase(svi);
+        dp_props->setVal("computedProps", compLst);
       }
     
       dp_props->clearVal(key);
@@ -563,7 +564,8 @@ namespace RDKit{
 
     //! Add a new conformation to the molecule
     /*!
-      \param conf - conformation to be added to the molecule
+      \param conf - conformation to be added to the molecule, this molecule takes ownership 
+                    of the conformer
       \param assignId - a unique ID will be assigned to the the conformation if true
                         otherwise it is assumed that the conformation already has an (unique) ID set
     */
@@ -657,6 +659,16 @@ namespace RDKit{
       issues of ownership.
     */
     unsigned int addBond(BOND_SPTR bsp);
+
+
+    //! initializes from the contents of another molecule
+    /*!
+      \param other     the molecule to be copied
+      \param quickCopy (optional) if this is true, we will not 
+           copy any of the properties or bookmarks and conformers from \c other.  This can
+           make the copy substantially faster (thus the name).
+    */
+    void initFromOther(const ROMol &other,bool quickCopy);
 
   };
 

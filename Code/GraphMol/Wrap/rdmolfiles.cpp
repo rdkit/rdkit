@@ -31,18 +31,27 @@ void rdSanitExceptionTranslator(RDKit::MolSanitizeException const& x){
 namespace RDKit{
   ROMol *MolFromSmiles(std::string smiles,bool sanitize=1){
     RWMol *newM = SmilesToMol(smiles,0,sanitize);
-    return static_cast<ROMol *>(newM);
+    if(!newM) return 0;
+    ROMol *res =new ROMol(*newM);
+    delete newM; 
+    return res;
   }
 
   ROMol *MolFromSmarts(const char *smarts,bool mergeHs=false){
     RWMol *newM = SmartsToMol(smarts,0,mergeHs);
-    return static_cast<ROMol *>(newM);
+    if(!newM) return 0;
+    ROMol *res =new ROMol(*newM);
+    delete newM; 
+    return res;
   }
    
   ROMol *MolFromTPLFile(const char *filename, bool sanitize=true,
 			bool skipFirstConf=false ) {
     RWMol *newM = TPLFileToMol(filename,sanitize,skipFirstConf);
-    return static_cast<ROMol *>(newM);
+    if(!newM) return 0;
+    ROMol *res =new ROMol(*newM);
+    delete newM; 
+    return res;
   }
 
   ROMol *MolFromTPLBlock(std::string tplBlock, bool sanitize=true,
@@ -50,19 +59,28 @@ namespace RDKit{
     std::istringstream inStream(tplBlock);
     unsigned int line = 0;
     RWMol *newM = TPLDataStreamToMol(&inStream,line,sanitize,skipFirstConf);
-    return static_cast<ROMol *>(newM);
+    if(!newM) return 0;
+    ROMol *res =new ROMol(*newM);
+    delete newM; 
+    return res;
   }
 
   ROMol *MolFromMolFile(const char *molFilename, bool sanitize=1) {
     RWMol *newM = MolFileToMol(molFilename, sanitize);
-    return static_cast<ROMol *>(newM);
+    if(!newM) return 0;
+    ROMol *res =new ROMol(*newM);
+    delete newM; 
+    return res;
   }
 
   ROMol *MolFromMolBlock(std::string molBlock, bool sanitize=1) {
     std::istringstream inStream(molBlock);
     unsigned int line = 0;
     RWMol *newM = MolDataStreamToMol(inStream, line, sanitize);
-    return static_cast<ROMol *>(newM);
+    if(!newM) return 0;
+    ROMol *res =new ROMol(*newM);
+    delete newM; 
+    return res;
   }
 
 }

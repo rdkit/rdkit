@@ -39,6 +39,7 @@ void wrap_atom();
 void wrap_conformer();
 void wrap_bond();
 void wrap_mol();
+void wrap_EditableMol();
 
 BOOST_PYTHON_MODULE(rdchem)
 {
@@ -110,6 +111,7 @@ BOOST_PYTHON_MODULE(rdchem)
   wrap_conformer();
   wrap_bond();
   wrap_mol();
+  wrap_EditableMol();
 
   //*********************************************
   //
