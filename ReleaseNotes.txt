@@ -28,6 +28,8 @@ New Features
    available. 
  - The free version of MS Visual C++ is now supported.   
  - Optimization of the Dice metric implementation for SparseIntVects
+ - An EditableMol class is now exposed to Python to allow molecules to
+   be easily edited. (issue 1764162)
 
 Other
  - Similarity scores can now be calculated from Python in bulk
