@@ -292,6 +292,9 @@
 				RelativePath="..\..\GraphMol\Wrap\Conformer.cpp">
 			</File>
 			<File
+				RelativePath="..\..\GraphMol\Wrap\EditableMol.cpp">
+			</File>
+			<File
 				RelativePath="..\..\GraphMol\Wrap\Mol.cpp">
 				<FileConfiguration
 					Name="DebugPython|Win32">
