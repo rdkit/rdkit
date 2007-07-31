@@ -70,7 +70,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-gd-$(BOOSTVERSION).lib"
+				AdditionalDependencies="libboost_log-vc71-mt-gd-$(BOOSTVERSION).lib"
 				ShowProgress="0"
 				OutputFile="..\..\DataManip\MetricMatrixCalc\testExecs/testMatCalc.exe"
 				LinkIncremental="1"
@@ -163,7 +163,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-$(BOOSTVERSION).lib"
+				AdditionalDependencies="libboost_log-vc71-mt-$(BOOSTVERSION).lib"
 				OutputFile="..\..\DataManip\MetricMatrixCalc\testExecs\testMatCalc.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

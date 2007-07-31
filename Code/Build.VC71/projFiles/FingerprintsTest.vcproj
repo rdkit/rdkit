@@ -68,7 +68,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib BLAS.lib LAPACK.lib boost_log-vc71-mt-gd-$(BOOSTVERSION).lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib BLAS.lib LAPACK.lib libboost_log-vc71-mt-gd-$(BOOSTVERSION).lib"
 				OutputFile="..\..\GraphMol\Fingerprints\testExecs/test1.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -161,7 +161,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-$(BOOSTVERSION).lib odbc32.lib odbccp32.lib BLAS.lib LAPACK.lib"
+				AdditionalDependencies="libboost_log-vc71-mt-$(BOOSTVERSION).lib odbc32.lib odbccp32.lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\GraphMol\Fingerprints\testExecs/test1.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

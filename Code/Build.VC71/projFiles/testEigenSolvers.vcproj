@@ -68,7 +68,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-gd-$(BOOSTVERSION).lib BLAS.lib LAPACK.lib"
+				AdditionalDependencies="libboost_log-vc71-mt-gd-$(BOOSTVERSION).lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\Numerics\EigenSolvers\test.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -159,7 +159,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="boost_log-vc71-mt-$(BOOSTVERSION).lib BLAS.lib LAPACK.lib"
+				AdditionalDependencies="libboost_log-vc71-mt-$(BOOSTVERSION).lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\Numerics\EigenSolvers\testExecs/main.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
