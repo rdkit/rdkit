@@ -62,6 +62,40 @@ namespace RDKit{
   std::vector<ROMOL_SPTR> replaceSubstructs(const ROMol &mol, const ROMol &query,
 					    const ROMol &replacement,
 					    bool replaceAll=false);
+
+  //! \brief Returns a copy of an ROMol with the atoms and bonds that 
+  //!      don't fall within a substructure match removed.
+  //!
+  //!   dummy atoms are left to indicate attachment points.
+  //!
+  /*!
+      \param mol       the ROMol of interest
+      \param coreQuery a query ROMol to be used to match the core
+
+      \return a copy of \c mol with the non-matching atoms and bonds (if any)
+              removed and dummies at the connection points.		       
+  */
+  ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery);
+			  
+  //! \brief Returns a copy of an ROMol with the atoms and bonds that 
+  //!      do fall within a substructure match removed.
+  //!
+  //!   dummy atoms are left to indicate attachment points.
+  //!
+  /*!
+      Note that this is essentially identical to the replaceSidechains function, except we
+      invert the query and replace the atoms that *do* match the query.
+
+      \param mol       the ROMol of interest
+      \param coreQuery a query ROMol to be used to match the core
+
+      \return a copy of \c mol with the non-matching atoms and bonds (if any)
+              removed and dummies at the connection points.          
+  */
+  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery);
+        
+
+
 }
 
 #endif

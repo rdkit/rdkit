@@ -6,9 +6,10 @@
 //
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-
+#include <boost/dynamic_bitset.hpp>
 #include <vector>
 #include <algorithm>
 
@@ -104,6 +105,7 @@ namespace RDKit{
     // simply return a list with a copy of the starting molecule
     if (fgpMatches.size() == 0) {
       res.push_back(ROMOL_SPTR(new ROMol(mol,false)));
+      res[0]->clearComputedProps(false);
       return res;
     }
 
@@ -112,11 +114,13 @@ namespace RDKit{
     // now loop over the list of matches and replace them:
     for (std::vector<MatchVectType>::const_iterator mati = fgpMatches.begin();
          mati != fgpMatches.end(); mati++) {
+
       INT_VECT match; // each match onto the molecule - list of atoms ids
       for (MatchVectType::const_iterator mi = mati->begin();
            mi != mati->end(); mi++) {
         match.push_back(mi->second);
       }
+
       INT_VECT sortMatch = match;
       std::sort(sortMatch.begin(),sortMatch.end());
 
@@ -180,4 +184,193 @@ namespace RDKit{
     return res;
   }
 
-}
+  ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery){
+    MatchVectType matchV;
+
+    // do the substructure matching and get the atoms that match the query
+    bool matchFound=SubstructMatch(mol, coreQuery, matchV);
+
+    // if we didn't find any matches, there's nothing to be done here
+    // simply return null to indicate the problem
+    if (!matchFound || matchV.size()==0){
+      return 0;
+    }
+
+    boost::dynamic_bitset<> matchingIndices(mol.getNumAtoms());
+    for(MatchVectType::const_iterator mvit=matchV.begin();
+        mvit!=matchV.end();mvit++){
+      matchingIndices[mvit->second] = 1;
+    }
+    std::vector<Atom *> keepList;
+
+    RWMol *newMol = static_cast<RWMol *>(new ROMol(mol));
+    unsigned int nDummies=0;
+    for(MatchVectType::const_iterator mvit=matchV.begin();
+        mvit!=matchV.end();mvit++){
+      keepList.push_back(newMol->getAtomWithIdx(mvit->second));
+      // if the atom in the molecule has higher degree than the atom in the
+      // core, we have an attachment point:
+      if( newMol->getAtomWithIdx(mvit->second)->getDegree() > 
+          coreQuery.getAtomWithIdx(mvit->first)->getDegree()){ 
+        ROMol::ADJ_ITER nbrIdx,endNbrs;
+        boost::tie(nbrIdx,endNbrs) = newMol->getAtomNeighbors(newMol->getAtomWithIdx(mvit->second));
+        while(nbrIdx!=endNbrs){
+          if(!matchingIndices[*nbrIdx]){
+            // this neighbor isn't in the match, convert it to a dummy atom and save it
+            Atom *at=newMol->getAtomWithIdx(*nbrIdx);
+            at->setAtomicNum(0);
+            std::string label="X";
+            label+=static_cast<char>(static_cast<short>('a')+nDummies);
+            at->setProp("dummyLabel",label);
+            keepList.push_back(at);
+            ++nDummies;
+          }
+          nbrIdx++;
+        }  
+      }
+    }
+    std::vector<Atom *> delList;
+    for(RWMol::AtomIterator atIt=newMol->beginAtoms();atIt!=newMol->endAtoms();atIt++){
+      Atom *tmp=*atIt;
+      if(std::find(keepList.begin(),keepList.end(),tmp)==keepList.end()){
+        delList.push_back(tmp);
+      } 
+    }    
+    for(std::vector<Atom *>::const_iterator delIt=delList.begin();delIt!=delList.end();delIt++){
+      newMol->removeAtom(*delIt);
+    }
+
+    // clear computed props and do basic updates on the
+    // the resulting molecule, but allow unhappiness:
+    newMol->clearComputedProps(true);
+    newMol->updatePropertyCache(false);
+    return static_cast<ROMol *>(newMol);
+  }
+
+  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery){
+    MatchVectType matchV;
+
+    // do the substructure matching and get the atoms that match the query
+    bool matchFound=SubstructMatch(mol, coreQuery, matchV);
+
+    // if we didn't find any matches, there's nothing to be done here
+    // simply return null to indicate the problem
+    if (!matchFound || matchV.size()==0){
+      return 0;
+    }
+
+    unsigned int origNumAtoms=mol.getNumAtoms();
+    boost::dynamic_bitset<> matchingIndices(origNumAtoms);
+    for(MatchVectType::const_iterator mvit=matchV.begin();
+        mvit!=matchV.end();mvit++){
+      matchingIndices[mvit->second] = 1;
+    }
+
+    RWMol *newMol = static_cast<RWMol *>(new ROMol(mol));
+    std::vector<Atom *> keepList;
+    unsigned int nDummies=0;
+    for(unsigned int i=0;i<origNumAtoms;++i){
+      //std::cerr <<"  "<<i<<": " << matchingIndices[i]<<std::endl;
+      if(!matchingIndices[i]){
+        Atom *sidechainAtom=newMol->getAtomWithIdx(i);
+        // we're keeping the sidechain atoms:
+        keepList.push_back(sidechainAtom);
+
+        // loop over our neighbors and see if any are in the match:
+        ROMol::ADJ_ITER nbrIdx,endNbrs;
+        boost::tie(nbrIdx,endNbrs) = newMol->getAtomNeighbors(sidechainAtom);
+        unsigned int whichNbr=0;
+        unsigned int nNbrs=newMol->getAtomDegree(sidechainAtom);
+        std::list<Bond *> newBonds;
+        while(nbrIdx!=endNbrs && (*nbrIdx) < origNumAtoms){
+          Bond *connectingBond=newMol->getBondBetweenAtoms(i,*nbrIdx);
+          if(matchingIndices[*nbrIdx]){
+            // add a dummy to stand in for this core atom:
+            Atom *newAt=new Atom(0);
+            std::string label="X";
+            label+=static_cast<char>(static_cast<short>('a')+nDummies);
+            newAt->setProp("dummyLabel",label);
+            Bond *bnd=connectingBond->copy();
+
+            newMol->addAtom(newAt,false,true);
+            keepList.push_back(newAt);
+            if(bnd->getBeginAtomIdx()==i){
+              bnd->setEndAtomIdx(newAt->getIdx());
+            } else {
+              bnd->setBeginAtomIdx(newAt->getIdx());
+            }
+            // we can't add the bond yet because that will screw up the loop
+            // over neighbors, so save it for later:
+            newBonds.push_back(bnd);
+            ++nDummies;
+            // we may be changing the bond ordering at the atom.
+            // e.g. replacing the N in C[C@](Cl)(N)F gives an atom ordering of C[C?](Cl)(F)[X]
+            // so we need the SMILES C[C@@](Cl)(F)[X] to maintain the appropriate chirality 
+            // check for these cases and adjust our chirality flags as appropriate.
+            //
+            if(sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW || sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ){
+              //std::cerr << "   " << sidechainAtom->getIdx() << " " << sidechainAtom->getChiralTag() << " " << whichNbr << std::endl; 
+              bool switchIt=false;
+              switch(newMol->getAtomDegree(sidechainAtom)){
+              case 4:
+                //     start:         ordering:        swap?
+                //   N[C@](F)(Cl)C -> F[C@@](Cl)(C)X    yes 
+                //   F[C@](N)(Cl)C -> F[C@](Cl)(C)X     no
+                //   F[C@](Cl)(N)C -> F[C@@](Cl)(C)X    yes
+                //   F[C@](Cl)(C)N -> F[C@](Cl)(C)X     no
+                
+
+                if(!(whichNbr%2)) switchIt=true;
+                break;  
+              case 3:
+                // things are switched in the degree three case:
+                //     start:         ordering:     swap?
+                //   N[C@H](F)C -> [C@H](F)(C)N     no
+                //   F[C@H](N)C -> F[C@@H](C)X      yes        
+                //   F[C@H](C)N -> F[C@H](C)X       no
+                if((whichNbr%2)) switchIt=true;
+                break;  
+              }
+                
+              
+              if(switchIt){
+                if(sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
+                  sidechainAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+                } else if (sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ){
+                  sidechainAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+                }                  
+              }
+            }
+          }
+          ++whichNbr;
+          ++nbrIdx;
+        }
+        // add the bonds now, after we've finished the loop over neighbors:
+        for(std::list<Bond *>::iterator bi=newBonds.begin();bi!=newBonds.end();++bi){
+          newMol->addBond(*bi,true);
+        }
+      }
+    }
+    std::vector<Atom *> delList;
+    for(RWMol::AtomIterator atIt=newMol->beginAtoms();atIt!=newMol->endAtoms();atIt++){
+      Atom *tmp=*atIt;
+      if(std::find(keepList.begin(),keepList.end(),tmp)==keepList.end()){
+        delList.push_back(tmp);
+      } 
+    }    
+    for(std::vector<Atom *>::const_iterator delIt=delList.begin();delIt!=delList.end();delIt++){
+      newMol->removeAtom(*delIt);
+    }
+
+    // clear computed props and do basic updates on
+    // the resulting molecule, but allow unhappiness:
+    newMol->clearComputedProps(true);
+    newMol->updatePropertyCache(false);
+
+    return static_cast<ROMol *>(newMol);
+
+    
+  }
+
+
+}  // end of namespace RDKit
