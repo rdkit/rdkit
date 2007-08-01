@@ -22,7 +22,7 @@ install: $(RDGRAPHLIB)
 	cp $(RDGRAPHLIB) $(RDBASE)/bin
 
 clean:
-	rm -f $(RDGRAPHLIB) $(OBJS) test1.o querytest.o test1.exe querytest.exe molopstest.o \
+	rm -f $(RDGRAPHLIB) $(OBJS) test1.o querytest.o test1.exe querytest.exe molopstest.o cptest.o testPickler.o testCanon.o \
 	testExecs/MolOpsTest.exe bulktest.o bulktest.exe testExecs/itertest.exe \
 	itertest.o sanitTest.exe testExecs/testCanon.exe \
 	sanitTest.o $(DEPENDS)
