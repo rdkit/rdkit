@@ -493,7 +493,7 @@ void testReplaceCore()
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
-#if 0
+
 void testReplaceCoreCrash() 
 {
   int i = 0;
@@ -518,7 +518,7 @@ void testReplaceCoreCrash()
   TEST_ASSERT(smi=="[Xa]CC.[Xb]CC"||smi=="[Xb]CC.[Xa]CC");
 
 }
-#endif
+
 int main() { 
   RDLog::InitLogs();
     
@@ -531,7 +531,7 @@ int main() {
   testReplaceSidechains();
 #endif
   testReplaceCore();
-  //testReplaceCoreCrash();
+  testReplaceCoreCrash();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
