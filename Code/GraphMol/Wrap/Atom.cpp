@@ -10,8 +10,11 @@
 #include <string>
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryAtom.h>
 #include <RDGeneral/types.h>
 #include <Geometry/point.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 
 #include "seqs.hpp"
 #include <algorithm>
@@ -20,8 +23,13 @@
 namespace python = boost::python;
 namespace RDKit{
 
+  void AtomSetProp(const Atom *atom, const char *key,std::string val) {
+    //std::cerr<<"asp: "<<atom<<" " << key<<" - " << val << std::endl;
+    atom->setProp(key, val);
+  }
   
   int AtomHasProp(const Atom *atom, const char *key) {
+    //std::cerr<<"ahp: "<<atom<<" " << key<< std::endl;
     int res = atom->hasProp(key);
     return res;
   }
@@ -35,18 +43,6 @@ namespace RDKit{
     atom->getProp(key, res);
     return res;
   }
-  /* We should start using the conformer stuff for this - so commenting this out
-  std::vector<double> AtomGetPosition(Atom *atom) {
-    RDGeom::Point3D pt = atom->getPos();
-    std::vector<double> res;
-    res.reserve(3);
-    res.push_back(pt.x);
-    res.push_back(pt.y);
-    res.push_back(pt.z);
-    return res;
-  }
-  */
-
   python::tuple AtomGetNeighbors(Atom *atom){
     python::list res;
     const ROMol *parent = &atom->getOwningMol();
@@ -85,6 +81,19 @@ namespace RDKit{
     }
     return atom->getOwningMol().getRingInfo()->isAtomInRingOfSize(atom->getIdx(),size);
   }
+
+  std::string AtomGetSmarts(const Atom *atom){
+    std::string res;      
+    if(atom->hasQuery()){
+      res=SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
+    } else {
+      res = SmilesWrite::GetAtomSmiles(atom);
+    }
+    return res;
+  }
+
+
+
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getTotalNumHs_ol, getTotalNumHs, 0, 1)
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getImplicitValence_ol, getImplicitValence, 0, 1)
@@ -179,16 +188,12 @@ struct atom_wrapper {
 	   "Returns the Mol that owns this atom.\n",
 	   python::return_value_policy<python::reference_existing_object>())
 
-      //.def("GetPosition", AtomGetPosition,
-      //     "Get the position of the atom\n")
-
       .def("GetNeighbors",AtomGetNeighbors,
 	   "Returns a read-only sequence of the atom's neighbors\n")
 
       .def("GetBonds",AtomGetBonds,
 	   "Returns a read-only sequence of the atom's bonds\n")
 
-      // FIX: Query stuff
       .def("Match",(bool (Atom::*)(const Atom *) const)&Atom::Match,
 	   "Returns whether or not this atom matches another Atom.\n\n"
 	   "  Each Atom (or query Atom) has a query function which is\n"
@@ -204,6 +209,21 @@ struct atom_wrapper {
       .def("IsInRing",AtomIsInRing,
 	   "Returns whether or not the atom is in a ring\n\n")
 
+      .def("HasQuery",&Atom::hasQuery,
+     "Returns whether or not the atom has an associated query\n\n")
+
+      .def("GetSmarts",AtomGetSmarts,
+              "returns the SMARTS (or SMILES) string for an Atom\n\n")
+
+      // properties
+      .def("SetProp",AtomSetProp,
+	   (python::arg("self"), python::arg("key"),
+	    python::arg("val")),
+	   "Sets an atomic property\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to be set (a string).\n"
+	   "    - value: the property value (a string).\n\n"
+           )
 
       .def("GetProp", AtomGetProp,
            "Returns the value of the property.\n\n"
@@ -218,6 +238,9 @@ struct atom_wrapper {
 	   "  ARGUMENTS:\n"
 	   "    - key: the name of the property to check for (a string).\n")
       ;
+
+    
+    
     python::enum_<Atom::HybridizationType>("HybridizationType")
       .value("UNSPECIFIED",Atom::UNSPECIFIED)
       .value("SP",Atom::SP)

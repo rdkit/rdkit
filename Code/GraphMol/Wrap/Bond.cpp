@@ -10,6 +10,9 @@
 #include <string>
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryBond.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <RDGeneral/types.h>
 
 namespace python = boost::python;
@@ -48,6 +51,16 @@ namespace RDKit{
 
   INT_VECT getBondStereoAtoms(const Bond *bond){
     return bond->getStereoAtoms();
+  }
+
+  std::string BondGetSmarts(const Bond *bond){
+    std::string res;
+    if(bond->hasQuery()){      
+      res=SmartsWrite::GetBondSmarts(static_cast<const QueryBond *>(bond));
+    } else {
+      res=SmilesWrite::GetBondSmiles(bond);
+    }
+    return res;
   }
 
   
@@ -122,6 +135,13 @@ struct bond_wrapper {
 	   "    - size: the ring size to look for\n")
       .def("IsInRing",BondIsInRing,
 	   "Returns whether or not the bond is in a ring of any size.\n\n")
+
+      .def("HasQuery",&Bond::hasQuery,
+     "Returns whether or not the bond has an associated query\n\n")
+
+      .def("GetSmarts",BondGetSmarts,
+              (python::arg("bond")),
+              "returns the SMARTS (or SMILES) string for a Bond")
 
       .def("GetProp", BondGetProp,
            "Returns the value of the property.\n\n"

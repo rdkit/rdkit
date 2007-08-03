@@ -1570,7 +1570,29 @@ CAS<~>
     em=Chem.EditableMol(m)
     self.failUnlessRaises(RuntimeError,lambda:em.RemoveAtom(12))
 
+  def test47SmartsPieces(self):
+    """ test the GetAtomSmarts and GetBondSmarts functions
+
+    """
+    m =Chem.MolFromSmarts("[C,N]C")
+    self.failUnless(m.GetAtomWithIdx(0).GetSmarts()=='[C,N]')
+    self.failUnless(m.GetAtomWithIdx(1).GetSmarts()=='C')
+    self.failUnless(m.GetBondBetweenAtoms(0,1).GetSmarts()=='-,:')
     
+    m =Chem.MolFromSmarts("[$(C=O)]-O")
+    self.failUnless(m.GetAtomWithIdx(0).GetSmarts()=='[$(C=O)]')
+    self.failUnless(m.GetAtomWithIdx(1).GetSmarts()=='O')
+    self.failUnless(m.GetBondBetweenAtoms(0,1).GetSmarts()=='-')
+
+    m =Chem.MolFromSmiles("CO")
+    self.failUnless(m.GetAtomWithIdx(0).GetSmarts()=='C')
+    self.failUnless(m.GetAtomWithIdx(1).GetSmarts()=='O')
+    self.failUnless(m.GetBondBetweenAtoms(0,1).GetSmarts()=='')
+
+    m =Chem.MolFromSmiles("C=O")
+    self.failUnless(m.GetAtomWithIdx(0).GetSmarts()=='C')
+    self.failUnless(m.GetAtomWithIdx(1).GetSmarts()=='O')
+    self.failUnless(m.GetBondBetweenAtoms(0,1).GetSmarts()=='=')
 
 if __name__ == '__main__':
   unittest.main()
