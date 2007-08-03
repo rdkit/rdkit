@@ -1462,6 +1462,61 @@ CAS<~>
     self.failUnless(m1.GetNumAtoms()==12)
     self.failUnless(m1.GetNumConformers()==2)
 
+  def test45RingInfo(self):
+    """ test the RingInfo class
+
+    """
+    smi = 'CNC'
+    m = Chem.MolFromSmiles(smi)
+    ri = m.GetRingInfo()
+    self.failUnless(ri)
+    self.failUnless(ri.NumRings()==0)
+    self.failIf(ri.IsAtomInRingOfSize(0,3))
+    self.failIf(ri.IsAtomInRingOfSize(1,3))
+    self.failIf(ri.IsAtomInRingOfSize(2,3))
+    self.failIf(ri.IsBondInRingOfSize(1,3))
+    self.failIf(ri.IsBondInRingOfSize(2,3))
+
+    smi = 'C1CC2C1C2'
+    m = Chem.MolFromSmiles(smi)
+    ri = m.GetRingInfo()
+    self.failUnless(ri)
+    self.failUnless(ri.NumRings()==2)
+    self.failIf(ri.IsAtomInRingOfSize(0,3))
+    self.failUnless(ri.IsAtomInRingOfSize(0,4))
+    self.failIf(ri.IsBondInRingOfSize(0,3))
+    self.failUnless(ri.IsBondInRingOfSize(0,4))
+    self.failUnless(ri.IsAtomInRingOfSize(2,4))
+    self.failUnless(ri.IsAtomInRingOfSize(2,3))
+    self.failUnless(ri.IsBondInRingOfSize(2,3))
+    self.failUnless(ri.IsBondInRingOfSize(2,4))
+
+  def test46ReplaceCore(self):
+    """ test the ReplaceCore functionality
+
+    """
+
+    core = Chem.MolFromSmiles('C=O')
+
+    smi = 'CCC=O'
+    m = Chem.MolFromSmiles(smi)
+    r = Chem.ReplaceCore(m,core)
+    self.failUnless(r)
+    print '>>>>',Chem.MolToSmiles(r)
+    self.failUnless(Chem.MolToSmiles(r)=='[Xa]CC')
+
+    smi = 'C1CC(=O)CC1'
+    m = Chem.MolFromSmiles(smi)
+    r = Chem.ReplaceCore(m,core)
+    self.failUnless(r)
+    print '>>>>',Chem.MolToSmiles(r)
+    self.failUnless(Chem.MolToSmiles(r) in ('[Xa]CCCC[Xb]','[Xb]CCCC[Xa]'))
+
+    smi = 'C1CC(=N)CC1'
+    m = Chem.MolFromSmiles(smi)
+    r = Chem.ReplaceCore(m,core)
+    self.failIf(r)
+
   def test47RWMols(self):
     """ test the RWMol class
 
@@ -1488,8 +1543,35 @@ CAS<~>
     rwmol.RemoveAtom(3)
     self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='CCNO')
     
+    # practice shooting ourselves in the foot:
+    m = Chem.MolFromSmiles('c1ccccc1')
+    em=Chem.EditableMol(m)
+    em.RemoveAtom(0)
+    m2 = em.GetMol()
+    self.failUnlessRaises(ValueError,lambda : Chem.SanitizeMol(m2))
+    m = Chem.MolFromSmiles('c1ccccc1')
+    em=Chem.EditableMol(m)
+    em.RemoveBond(0,1)
+    m2 = em.GetMol()
+    self.failUnlessRaises(ValueError,lambda : Chem.SanitizeMol(m2))
                     
-                    
+    # boundary cases: 
+    
+    # removing non-existent bonds:
+    m = Chem.MolFromSmiles('c1ccccc1')
+    em=Chem.EditableMol(m)
+    em.RemoveBond(0,2)
+    m2 = em.GetMol()
+    Chem.SanitizeMol(m2)
+    self.failUnless(Chem.MolToSmiles(m2)=='c1ccccc1')
+    
+    # removing non-existent atoms:
+    m = Chem.MolFromSmiles('c1ccccc1')
+    em=Chem.EditableMol(m)
+    self.failUnlessRaises(RuntimeError,lambda:em.RemoveAtom(12))
+
+    
+
 if __name__ == '__main__':
   unittest.main()
 
