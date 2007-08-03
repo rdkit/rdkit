@@ -413,11 +413,11 @@ namespace RDDepict {
   // compare the first elements of two pairs of integers/
   
   int _pairCompDescending(const INT_PAIR &arg1,const INT_PAIR &arg2){
-    return (arg1.first > arg2.first);
+    return (arg1.first!=arg2.first ? arg1.first>arg2.first : arg1.second>arg2.second);
   }
 
   int _pairCompAscending(const INT_PAIR &arg1,const INT_PAIR &arg2){
-    return (arg1.first < arg2.first);
+    return (arg1.first!=arg2.first ? arg1.first<arg2.first : arg1.second<arg2.second);
   }
 
   template<class T> T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms,
@@ -431,7 +431,12 @@ namespace RDDepict {
     typename T::const_iterator ci;
     int rank;
     for (ci = commAtms.begin(); ci != commAtms.end(); ci++) {
-      mol.getAtomWithIdx(*ci)->getProp("_CIPRank", rank);
+      const RDKit::Atom *at=mol.getAtomWithIdx(*ci);
+      if(at->hasProp("_CIPRank")){
+        at->getProp("_CIPRank", rank);
+      } else {
+        rank = 2*mol.getNumAtoms()+(*ci);
+      }
       rankAid.push_back(std::make_pair(rank, (*ci)));
     }
     if (ascending) {

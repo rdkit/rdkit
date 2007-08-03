@@ -212,7 +212,12 @@ namespace RDDepict {
 	RDKit::INT_LIST_I nri, mnri;
 	for (nri = nratms.begin(); nri != nratms.end(); nri++) {
           int aid = (*nri);
-	  mol.getAtomWithIdx(*nri)->getProp("_CIPRank", rank);
+          const RDKit::Atom *at=mol.getAtomWithIdx(*nri);
+          if(at->hasProp("_CIPRank")){
+            at->getProp("_CIPRank", rank);
+          } else {
+            rank = 2*mol.getNumAtoms()+(*nri);
+          }
 	  if (rank < mrank) {
 	    mrank = rank;
 	    mnri = nri;

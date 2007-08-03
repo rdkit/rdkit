@@ -375,6 +375,40 @@ void testIssue248() {
     delete m;
   }
 }
+
+void testQueries() {
+  std::string smaString = "C[C,N] c1cc[c,n]cc1C";
+
+  boost::char_separator<char> spaceSep(" ");
+  tokenizer tokens(smaString,spaceSep);
+  for(tokenizer::iterator token=tokens.begin();
+      token!=tokens.end();
+      ++token){
+    std::string sma=*token;
+    BOOST_LOG(rdInfoLog)<< "Smarts: " << sma << "\n";
+    RWMol *m = SmartsToMol(sma);
+    unsigned int confId = RDDepict::compute2DCoords(*m);
+    // check that there are no collisions in the molecules
+    int natms = m->getNumAtoms();
+    int i, j;
+    for (i = 0; i < natms; i++) {
+      const Conformer &conf = m->getConformer(confId);
+      RDGeom::Point3D loci = conf.getAtomPos(i);
+      for (j = i+1; j < natms; j++) {
+        RDGeom::Point3D locj = conf.getAtomPos(j);
+        locj -= loci;
+        double d = locj.length();
+        if(locj.length()<=0.30){
+          std::cout << "mismatch: " << i << " " << j << " " << locj.length() << std::endl;
+          std::cout << "\t" << sma << std::endl;
+          std::cout << MolToMolBlock(*m,true,confId)<<std::endl;
+        }
+        CHECK_INVARIANT(locj.length() > 0.30, "");
+      }
+    }
+    delete m;
+  }
+}
     
 int main() { 
   RDLog::InitLogs();
@@ -426,6 +460,11 @@ int main() {
 
 #endif
   
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Queries \n";
+  testQueries();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
   return(0);
 }
 
