@@ -600,21 +600,21 @@ void test8()
   MolOps::sanitizeMol(*((RWMol *)m));
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==2);
-  sma = GetAtomSmarts(static_cast<const QueryAtom *>(m->getAtomWithIdx(0)));
+  sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(m->getAtomWithIdx(0)));
   TEST_ASSERT(sma=="C");
 
   delete m2;
   //BOOST_LOG(rdInfoLog) << "16" << std::endl;
   m2 = MolOps::addHs(*m);
   TEST_ASSERT(m2->getNumAtoms()==8);
-  sma = GetAtomSmarts(static_cast<const QueryAtom *>(m2->getAtomWithIdx(0)));
+  sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(m2->getAtomWithIdx(0)));
   TEST_ASSERT(sma=="C");
 
   delete m;
   //BOOST_LOG(rdInfoLog) << "17" << std::endl;
   m = MolOps::mergeQueryHs(*m2);
   TEST_ASSERT(m->getNumAtoms()==2);
-  sma = GetAtomSmarts(static_cast<const QueryAtom *>(m->getAtomWithIdx(0)));
+  sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(m->getAtomWithIdx(0)));
   TEST_ASSERT(sma=="[C&!H0]");
   
 
