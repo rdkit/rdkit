@@ -11,11 +11,13 @@
 #include <string>
 #include <vector>
 
-namespace SmilesWrite {
-  std::string GetAtomSmiles(const RDKit::Atom *atom,bool doKekule=false);
-}
 
 namespace RDKit{
+  namespace SmilesWrite {
+    std::string GetAtomSmiles(const Atom *atom,bool doKekule=false);
+    std::string GetBondSmiles(const Bond *bond,int atomToLeftIdx=-1,bool doKekule=false);
+  } 
+  
   std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles=false,
 			  bool doKekule=false,int rootedAtAtom=-1);
 }

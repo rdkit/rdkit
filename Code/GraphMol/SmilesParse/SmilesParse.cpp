@@ -32,25 +32,35 @@ int yysmarts_parse (void);
 extern int yysmarts_debug; 
 
 
-std::vector<RDKit::RWMol *> molList_g;
 namespace RDKit{
+  namespace SmilesParse{
+    std::vector<RDKit::RWMol *> molList_g;
+  }
 
   RWMol *toMol(std::string inp,int func(void)){
     RWMol *res; 
+    if(SmilesParse::molList_g.size()){
+      for(std::vector<RDKit::RWMol *>::iterator iter=SmilesParse::molList_g.begin();
+          iter!=SmilesParse::molList_g.end();++iter){
+        delete *iter;
+      }
+      SmilesParse::molList_g.clear();
+      SmilesParse::molList_g.resize(0);
+    }
     setInputCharPtr( (char *)inp.c_str());
     try {
       func();
-      if(molList_g.size()<=0){
-	res = 0;
+      if(SmilesParse::molList_g.size()<=0){
+        res = 0;
       } else {
-	res = molList_g[0];
-	molList_g.resize(0);
-	SmilesParseOps::CloseMolRings(res);
-	SmilesParseOps::AdjustAtomChiralityFlags(res);
-	// No sense leaving this bookmark intact:
-	if(res->hasAtomBookmark(ci_RIGHTMOST_ATOM)){
-	  res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
-	}
+        res = SmilesParse::molList_g[0];
+        SmilesParse::molList_g.resize(0);
+        SmilesParseOps::CloseMolRings(res);
+        SmilesParseOps::AdjustAtomChiralityFlags(res);
+        // No sense leaving this bookmark intact:
+        if(res->hasAtomBookmark(ci_RIGHTMOST_ATOM)){
+          res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
+        }
       }
     } catch (SmilesParseException &e) {
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;

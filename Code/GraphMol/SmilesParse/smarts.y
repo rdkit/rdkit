@@ -27,9 +27,22 @@ yysmarts_error( const char * msg )
 
 using namespace RDKit;
 
-extern std::vector<RWMol *> molList_g;
-static RWMol * curMol_gps = 0;
+namespace RDKit {
+  namespace SmilesParse {  
+    extern std::vector<RWMol *> molList_g;
+  }
+}
 
+ void yyErrorCleanup(){
+  for(std::vector<RDKit::RWMol *>::iterator iter=SmilesParse::molList_g.begin();
+	         iter != SmilesParse::molList_g.end(); ++iter){
+     delete *iter;
+  }
+  
+  SmilesParse::molList_g.clear();
+  SmilesParse::molList_g.resize(0);
+
+ }
 
 %}
  
@@ -69,20 +82,19 @@ static RWMol * curMol_gps = 0;
 /* --------------------------------------------------------------- */
 cmpd: mol
 | cmpd SEPARATOR_TOKEN mol {
-  RWMol *m1_p = molList_g[$1],*m2_p=molList_g[$3];
+  RWMol *m1_p = SmilesParse::molList_g[$1],*m2_p=SmilesParse::molList_g[$3];
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::IONIC,Bond::NONE,true);
   delete m2_p;
-  int sz = molList_g.size();
+  int sz = SmilesParse::molList_g.size();
   if ( sz==$3+1) {
-    molList_g.resize( sz-1 );
+    SmilesParse::molList_g.resize( sz-1 );
   }
 }
 | cmpd error EOS_TOKEN{
   yyclearin;
   yyerrok;
   BOOST_LOG(rdErrorLog) << "SMARTS Parse Error" << std::endl;
-  molList_g.clear();
-  molList_g.resize(0);
+  yyErrorCleanup();
   YYABORT;
 }
 | cmpd EOS_TOKEN {
@@ -92,8 +104,8 @@ cmpd: mol
   yyclearin;
   yyerrok;
   BOOST_LOG(rdErrorLog) << "SMARTS Parse Error" << std::endl;
-  molList_g.clear();
-  molList_g.resize(0);
+  
+  yyErrorCleanup();
   YYABORT;
 }
 ;
@@ -101,22 +113,33 @@ cmpd: mol
 /* --------------------------------------------------------------- */
 // FIX: mol MINUS DIGIT
 mol: atomd {
-  int sz     = molList_g.size();
-  molList_g.resize( sz + 1);
-  molList_g[ sz ] = new RWMol();
-  molList_g[ sz ]->addAtom($1,true,true);
+  int sz     = SmilesParse::molList_g.size();
+  SmilesParse::molList_g.resize( sz + 1);
+  SmilesParse::molList_g[ sz ] = new RWMol();
+  SmilesParse::molList_g[ sz ]->addAtom($1,true,true);
+  //delete $1;
   $$ = sz;
 }
 | mol atomd       {
-  RWMol *mp = molList_g[$$];
+  RWMol *mp = SmilesParse::molList_g[$$];
   RWMol::GRAPH_NODE_TYPE a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom($2,true,true);
 
-  QueryBond *newB= new QueryBond(Bond::SINGLE);
-  newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
-		    Queries::COMPOSITE_OR,
-		    true);
+  QueryBond *newB;
+  // this is a bit of a hack to try and get nicer "SMILES" from 
+  // a SMARTS molecule:
+  if(!(a1->getIsAromatic() && $2->getIsAromatic())){
+    newB = new QueryBond(Bond::SINGLE);
+    newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
+  			    Queries::COMPOSITE_OR,
+  			    true);
+  } else {
+    newB = new QueryBond(Bond::AROMATIC);
+    newB->expandQuery(makeBondOrderEqualsQuery(Bond::SINGLE),
+  			    Queries::COMPOSITE_OR,
+  			    true);
+  }
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
@@ -126,7 +149,7 @@ mol: atomd {
 }
 
 | mol bond_expr atomd  {
-  RWMol *mp = molList_g[$$];
+  RWMol *mp = SmilesParse::molList_g[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($3,true,true);
   if( $2->getBondType() == Bond::DATIVER ){
@@ -147,13 +170,23 @@ mol: atomd {
 }
 
 | mol ring_number {
-  RWMol * mp = molList_g[$$];
+  RWMol * mp = SmilesParse::molList_g[$$];
   Atom *atom=mp->getActiveAtom();
 
-  QueryBond *newB= new QueryBond(Bond::SINGLE);
-  newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
-		    Queries::COMPOSITE_OR,
-		    true);
+  // this is a bit of a hack to try and get nicer "SMILES" from 
+  // a SMARTS molecule:
+  QueryBond * newB;
+  if(!atom->getIsAromatic()){
+    newB = new QueryBond(Bond::SINGLE);
+    newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
+  			    Queries::COMPOSITE_OR,
+  			    true);
+  } else {
+    newB = new QueryBond(Bond::AROMATIC);
+    newB->expandQuery(makeBondOrderEqualsQuery(Bond::SINGLE),
+  			    Queries::COMPOSITE_OR,
+  			    true);
+  }
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,$2);
@@ -169,7 +202,7 @@ mol: atomd {
 }
 
 | mol bond_expr ring_number {
-  RWMol * mp = molList_g[$$];
+  RWMol * mp = SmilesParse::molList_g[$$];
   Atom *atom=mp->getActiveAtom();
 
   mp->setBondBookmark($2,$3);
@@ -187,13 +220,13 @@ mol: atomd {
 }
 
 | mol branch {
-  RWMol *m1_p = molList_g[$$],*m2_p=molList_g[$2];
+  RWMol *m1_p = SmilesParse::molList_g[$$],*m2_p=SmilesParse::molList_g[$2];
   // FIX: handle generic bonds here
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false,true);
   delete m2_p;
-  int sz = molList_g.size();
+  int sz = SmilesParse::molList_g.size();
   if ( sz==$2+1) {
-    molList_g.resize( sz-1 );
+    SmilesParse::molList_g.resize( sz-1 );
   }
 }
 ; 
@@ -203,10 +236,10 @@ branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
 | GROUP_OPEN_TOKEN bond_expr mol GROUP_CLOSE_TOKEN {
   // FIX: this needs to handle arbitrary bond_exprs
   $$ = $3;
-  int sz     = molList_g.size();
-  $2->setOwningMol(molList_g[ sz-1 ]);
+  int sz     = SmilesParse::molList_g.size();
+  $2->setOwningMol(SmilesParse::molList_g[ sz-1 ]);
   $2->setBeginAtomIdx(0);
-  molList_g[ sz-1 ]->setBondBookmark($2,ci_LEADING_BOND);
+  SmilesParse::molList_g[ sz-1 ]->setBondBookmark($2,ci_LEADING_BOND);
 }
 ;
 
@@ -245,9 +278,9 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
 }
 | atom_expr COLON_TOKEN number {
   if($1->hasProp("molAtomMapNumber")){
-	throw SmilesParseException("Atom-map index (:%d) specified multiple times for one atom");
+    BOOST_LOG(rdWarningLog) << "Warning: Atom-map index (:%d) specified multiple times for one atom, additional specifications ignored" << std::endl;
   } else {
-	$1->setProp("molAtomMapNumber",$3);
+    $1->setProp("molAtomMapNumber",$3);
   }
 }
 | atom_expr NOT_TOKEN atom_expr_piece {
@@ -255,7 +288,7 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   $3->getQuery()->setNegation(!($3->getQuery()->getNegation()));
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $3;
-}
+  }
 | atom_expr atom_expr_piece {
   // FIX: this stuff (formerly element atom_expr_piece) is making us shift-reduce-a-riffic
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
@@ -268,11 +301,11 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
 ;
 
 /* --------------------------------------------------------------- */
-atom_expr_piece: atom_expr_piece point_query {
+atom_expr_piece: point_query
+| atom_expr_piece point_query {
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $2;
 }
-| point_query
 ;
 
 /* --------------------------------------------------------------- */
@@ -285,16 +318,16 @@ recursive_query: DOLLAR_TOKEN GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN {
   // this is a recursive SMARTS expression
   QueryAtom *qA = new QueryAtom();
   //  FIX: there's maybe a leak here
-  RWMol *molP = molList_g[$3];
+  RWMol *molP = SmilesParse::molList_g[$3];
   // close any rings in the molecule:
   SmilesParseOps::CloseMolRings(molP,0);
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP));
   //std::cout << "qA: " << qA << " " << qA->getQuery() << std::endl;
-  int sz = molList_g.size();
+  int sz = SmilesParse::molList_g.size();
   if ( sz==$3+1) {
-    molList_g.resize( sz-1 );
+    SmilesParse::molList_g.resize( sz-1 );
   }
 
   $$ = qA;

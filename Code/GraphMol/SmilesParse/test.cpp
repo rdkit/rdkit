@@ -1358,7 +1358,7 @@ void testBug1719046(){
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
- 
+
 int
 main(int argc, char *argv[])
 {

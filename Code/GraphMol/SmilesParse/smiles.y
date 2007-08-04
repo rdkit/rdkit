@@ -26,7 +26,11 @@ yysmiles_error( const char * msg )
 
 using namespace RDKit;
 
-extern std::vector<RWMol *> molList_g;
+namespace RDKit {
+ namespace SmilesParse{
+  extern std::vector<RDKit::RWMol *> molList_g;
+ }
+}
 static RWMol * curMol_gps = 0;
 
 
@@ -57,20 +61,20 @@ static RWMol * curMol_gps = 0;
 /* --------------------------------------------------------------- */
 cmpd: mol
 | cmpd SEPARATOR_TOKEN mol {
-  RWMol *m1_p = molList_g[$1],*m2_p=molList_g[$3];
+  RWMol *m1_p = SmilesParse::molList_g[$1],*m2_p=SmilesParse::molList_g[$3];
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::IONIC,Bond::NONE,true);
   delete m2_p;
-  int sz = molList_g.size();
+  int sz = SmilesParse::molList_g.size();
   if ( sz==$3+1) {
-    molList_g.resize( sz-1 );
+    SmilesParse::molList_g.resize( sz-1 );
   }
 }
 | cmpd error EOS_TOKEN{
   yyclearin;
   yyerrok;
   BOOST_LOG(rdErrorLog) << "SMILES Parse Error" << std::endl;
-  molList_g.clear();
-  molList_g.resize(0);
+  SmilesParse::molList_g.clear();
+  SmilesParse::molList_g.resize(0);
   YYABORT;
 }
 | cmpd EOS_TOKEN {
@@ -80,8 +84,8 @@ cmpd: mol
   yyclearin;
   yyerrok;
   BOOST_LOG(rdErrorLog) << "SMILES Parse Error" << std::endl;
-  molList_g.clear();
-  molList_g.resize(0);
+  SmilesParse::molList_g.clear();
+  SmilesParse::molList_g.resize(0);
   YYABORT;
 }
 ;
@@ -89,17 +93,17 @@ cmpd: mol
 /* --------------------------------------------------------------- */
 // FIX: mol MINUS DIGIT
 mol: atomd {
-  int sz     = molList_g.size();
-  molList_g.resize( sz + 1);
-  molList_g[ sz ] = new RWMol();
-  curMol_gps = molList_g[ sz ];
+  int sz     = SmilesParse::molList_g.size();
+  SmilesParse::molList_g.resize( sz + 1);
+  SmilesParse::molList_g[ sz ] = new RWMol();
+  curMol_gps = SmilesParse::molList_g[ sz ];
   curMol_gps->addAtom($1);
   delete $1;
   $$ = sz;
 }
 
 | mol atomd       {
-  RWMol *mp = molList_g[$$];
+  RWMol *mp = SmilesParse::molList_g[$$];
   RWMol::GRAPH_NODE_TYPE a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom($2);
@@ -109,7 +113,7 @@ mol: atomd {
 }
 
 | mol BOND_TOKEN atomd  {
-  RWMol *mp = molList_g[$$];
+  RWMol *mp = SmilesParse::molList_g[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($3);
   if( $2->getBondType() == Bond::DATIVER ){
@@ -129,7 +133,7 @@ mol: atomd {
 }
 
 | mol MINUS_TOKEN atomd {
-  RWMol *mp = molList_g[$$];
+  RWMol *mp = SmilesParse::molList_g[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($3);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
@@ -137,7 +141,7 @@ mol: atomd {
 }
 
 | mol ring_number {
-  RWMol * mp = molList_g[$$];
+  RWMol * mp = SmilesParse::molList_g[$$];
   Atom *atom=mp->getActiveAtom();
   mp->setAtomBookmark(atom,$2);
 
@@ -153,7 +157,7 @@ mol: atomd {
 }
 
 | mol BOND_TOKEN ring_number {
-  RWMol * mp = molList_g[$$];
+  RWMol * mp = SmilesParse::molList_g[$$];
   Atom *atom=mp->getActiveAtom();
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     $2->getBondType());
@@ -170,7 +174,7 @@ mol: atomd {
 }
 
 | mol MINUS_TOKEN ring_number {
-  RWMol * mp = molList_g[$$];
+  RWMol * mp = SmilesParse::molList_g[$$];
   Atom *atom=mp->getActiveAtom();
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     Bond::SINGLE);
@@ -185,12 +189,12 @@ mol: atomd {
 }
 
 | mol branch {
-  RWMol *m1_p = molList_g[$$],*m2_p=molList_g[$2];
+  RWMol *m1_p = SmilesParse::molList_g[$$],*m2_p=SmilesParse::molList_g[$2];
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false);
   delete m2_p;
-  int sz = molList_g.size();
+  int sz = SmilesParse::molList_g.size();
   if ( sz==$2+1) {
-    molList_g.resize( sz-1 );
+    SmilesParse::molList_g.resize( sz-1 );
   }
 }
 ;
@@ -198,8 +202,8 @@ mol: atomd {
 branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
 | GROUP_OPEN_TOKEN BOND_TOKEN mol GROUP_CLOSE_TOKEN {
   $$ = $3;
-  int sz     = molList_g.size();
-  curMol_gps = molList_g[ sz-1 ];
+  int sz     = SmilesParse::molList_g.size();
+  curMol_gps = SmilesParse::molList_g[ sz-1 ];
 
   Bond *partialBond = curMol_gps->createPartialBond(0,$2->getBondType());
   partialBond->setBondDir($2->getBondDir());
@@ -209,8 +213,8 @@ branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
 }
 | GROUP_OPEN_TOKEN MINUS_TOKEN mol GROUP_CLOSE_TOKEN {
   $$ = $3;
-  int sz     = molList_g.size();
-  curMol_gps = molList_g[ sz-1 ];
+  int sz     = SmilesParse::molList_g.size();
+  curMol_gps = SmilesParse::molList_g[ sz-1 ];
 
   Bond *partialBond = curMol_gps->createPartialBond(0,Bond::SINGLE);
   curMol_gps->setBondBookmark(partialBond,

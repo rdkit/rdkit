@@ -851,15 +851,49 @@ void testAtomMap(){
   TEST_ASSERT(mapNum==10);
   delete matcher1;
 
-  sma = "[C:10:3]CC";
-  try {
-    matcher1 = SmartsToMol(sma);
-  } catch (SmilesParseException &){
-    
-  }
+  sma = "[C:10:3]ON";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
+  TEST_ASSERT(mapNum==10);
+
+  sma ="C-C";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  sma = MolToSmiles(*matcher1);
+  TEST_ASSERT(sma=="CC");
+
     
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
+
+void testSmartsSmiles(){
+  int i = 0;
+  RWMol *mol;
+  std::string sma,smi;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing cleaner SMILES from SMARTS" << std::endl;
+
+  smi ="c1ccccc1";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol);
+  TEST_ASSERT(smi=="c1ccccc1");
+
+  delete mol;
+  smi ="C1CCCCC1";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol);
+  TEST_ASSERT(smi=="C1CCCCC1");
+
+  
+  delete mol;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -884,6 +918,6 @@ main(int argc, char *argv[])
   testIssue351();
 #endif
   testAtomMap();
-  
+  testSmartsSmiles();
   return 0;
 }

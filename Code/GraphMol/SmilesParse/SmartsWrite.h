@@ -9,13 +9,15 @@
 #include <string>
 
 namespace RDKit {
-  class ROMol;
   class QueryAtom;
   class QueryBond;
+  namespace SmartsWrite {
+    std::string GetAtomSmarts(const QueryAtom *qatom);
+    std::string GetBondSmarts(const QueryBond *qbond);
+  }
 
+  class ROMol;
   std::string MolToSmarts(ROMol &mol,bool doIsomericSmarts=false);
-  std::string GetAtomSmarts(const QueryAtom *qatom);
-  std::string GetBondSmarts(const QueryBond *qbond);
 };
 
 #endif
