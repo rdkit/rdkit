@@ -216,8 +216,14 @@ namespace RDDepict {
           if(at->hasProp("_CIPRank")){
             at->getProp("_CIPRank", rank);
           } else {
-            rank = 2*mol.getNumAtoms()+(*nri);
+	    // if the thing has no CIP rank, just set it high:
+            rank = 2*mol.getNumAtoms();
           }
+	  rank *= 1000;
+	  // use the atom index as well so that we at least
+	  // get reproduceable depictions in cases where things
+	  // have identical ranks.
+	  rank += *nri;
 	  if (rank < mrank) {
 	    mrank = rank;
 	    mnri = nri;
@@ -273,7 +279,7 @@ namespace RDDepict {
   //   1) Find rings
   //   2) Find fused systems
   //   3) embed largest fused system
-  //   4) foreeach unfinished atom:
+  //   4) foreach unfinished atom:
   //      1) find neighbors
   //      2) if neighbor is non-ring atom, embed it; otherwise merge the
   //         ring system
@@ -283,7 +289,8 @@ namespace RDDepict {
   unsigned int compute2DCoords(RDKit::ROMol &mol,
                                const RDGeom::INT_POINT2D_MAP *coordMap,
                                bool canonOrient, bool clearConfs,
-                               unsigned int nFlipsPerSample, unsigned int nSamples,
+                               unsigned int nFlipsPerSample,
+			       unsigned int nSamples,
                                int sampleSeed, bool permuteDeg4Nodes) {
     
     // storage for pieces of a molecule/s that are embedded in 2D
@@ -293,14 +300,16 @@ namespace RDDepict {
     // perform random sampling here to improve the density
     std::list<EmbeddedFrag>::iterator eri;
     for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-      // either sample the 2D space by randomly flipping rotatable bonds
-      // in the structure or flip onyl bonds along the shortest path between
-      // colliding atoms - don't do both
+      // either sample the 2D space by randomly flipping rotatable
+      // bonds in the structure or flip onyl bonds along the shortest
+      // path between colliding atoms - don't do both
       if ((nSamples > 0) && (nFlipsPerSample > 0)) {
-        eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed, 
-                                              0, 0.0, permuteDeg4Nodes);
-      } else
+        eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
+					      sampleSeed, 0, 0.0,
+					      permuteDeg4Nodes);
+      } else {
         eri->removeCollisionsBondFlip();
+      }
     }
     for (eri = efrags.begin(); eri != efrags.end(); eri++) {
       // if there are any remaining collisions
@@ -309,8 +318,9 @@ namespace RDDepict {
     }
     if (!coordMap) {
       if (canonOrient || efrags.size() >= 2) {
-      // if we do not have any prespecified coordinates - canonicalize the 
-      // oreintation of the fragment so that the longest axes fall along the x-axis etc.
+      // if we do not have any prespecified coordinates - canonicalize
+      // the orientation of the fragment so that the longest axes fall
+      // along the x-axis etc.
         for (eri = efrags.begin(); eri != efrags.end(); eri++) {
           eri->canonicalizeOrientation();
         }
@@ -322,32 +332,56 @@ namespace RDDepict {
     return cid;
   }
 
-  //! \brief Compute the 2D coordinates such the interatom distances mimic those in ditance matrix
-  /*!
-    This function generates 2D coordinates such that the inter atom distance mimic those specified via
-    dmat. This is done by randomly sampling(flipping) the rotatable bonds in the molecule and evaluating 
-    a cost function which contains two components. The first component is the sum of inverse of the squared 
-    inter-atom distances, this helps in spreading the atoms far from each other. The second component is
-    the sum of squares of the difference in distance between those in dmat and the generated structure. 
-    The user can adjust the relative importance of the two components via a adjustable paramter (see below)
+  //! \brief Compute the 2D coordinates such the interatom distances
+  //!        mimic those in a distance matrix
+  /*!  
+    This function generates 2D coordinates such that the inter atom
+    distance mimic those specified via dmat. This is done by randomly
+    sampling(flipping) the rotatable bonds in the molecule and
+    evaluating a cost function which contains two components. The
+    first component is the sum of inverse of the squared inter-atom
+    distances, this helps in spreading the atoms far from each
+    other. The second component is the sum of squares of the
+    difference in distance between those in dmat and the generated
+    structure.  The user can adjust the relative importance of the two
+    components via a adjustable paramter (see below)
 
     ARGUMENTS:
     \param mol - molecule involved in the frgament
-    \param dmat - the distance matrix we want to mimic, this is symmteric N by N matrix when N is the number
-                  of atoms in mol. All ngative entries in dmat are ignored.
-    \param canonOrient - canonicalze the orientation after the 2D embedding is done
-    \param clearConfs - clear any previously existing conformations on mol before adding a conformation 
-    \param weightDistMat - A value between 0.0 and 1.0, this determines the importance of mimicing the 
-                           the inter atoms distances in dmat. (1.0 - weightDistMat) is the weight associated
-                           to spreading out the structure (density) in the cost function
-    \param nFlipsPerSample - the number of rotatable bonds that are flips at random for each sample
+
+    \param dmat - the distance matrix we want to mimic, this is
+                  symmteric N by N matrix when N is the number of
+                  atoms in mol. All ngative entries in dmat are
+                  ignored.
+
+    \param canonOrient - canonicalze the orientation after the 2D
+                         embedding is done
+
+    \param clearConfs - clear any previously existing conformations on
+                        mol before adding a conformation
+
+    \param weightDistMat - A value between 0.0 and 1.0, this
+                           determines the importance of mimicing the
+                           the inter atoms distances in dmat. (1.0 -
+                           weightDistMat) is the weight associated to
+                           spreading out the structure (density) in
+                           the cost function
+
+    \param nFlipsPerSample - the number of rotatable bonds that are
+                             randomly flipped for each sample
+
     \param nSample - the number of samples
+
     \param sampleSeed - seed for the random sampling process
   */
-  unsigned int compute2DCoordsMimicDistMat(RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat,
-                                           bool canonOrient, bool clearConfs, double weightDistMat,
-                                           unsigned int nFlipsPerSample, unsigned int nSamples,
-                                           int sampleSeed, bool permuteDeg4Nodes){
+  unsigned int compute2DCoordsMimicDistMat(RDKit::ROMol &mol,
+					   const DOUBLE_SMART_PTR *dmat,
+                                           bool canonOrient,
+					   bool clearConfs, double weightDistMat,
+                                           unsigned int nFlipsPerSample,
+					   unsigned int nSamples,
+                                           int sampleSeed,
+					   bool permuteDeg4Nodes){
     // storage for pieces of a molecule/s that are embedded in 2D
     std::list<EmbeddedFrag> efrags;
     computeInitialCoords(mol, 0, efrags);
