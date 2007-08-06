@@ -27,12 +27,18 @@ New Features
  - A preliminary implementation of the subshape alignment algorithm is
    available. 
  - The free version of MS Visual C++ is now supported.   
+ - There is better support for queries in MDL mol files. (issue 1756962)
+   Specifically: ring and chain bond queries; the not modifier for
+   atom lists; R group labels. 
  - An EditableMol class is now exposed to Python to allow molecules to
    be easily edited. (issue 1764162)
  - The RingInfo class is now exposed to Python.
  - The replaceSidechains and and replaceCore functions have been added
    in the ChemTransforms library and are exposed to Python as
    Chem.ReplaceSidechains and Chem.ReplaceCore.
+ - pickle support added to classes: PointND
+ - atoms and bonds now support the HasQuery() and GetSmarts() methods
+   from Python.   
    
 Other
  - Similarity scores can now be calculated from Python in bulk
@@ -47,6 +53,7 @@ Other
    $RDBASE/Code/Build.VC71 and $RDBASE/Code/Build.VC80. This allows
    simultaneous support of both versions of the system and cleans up
    the source trees a bit.
+ - Boost version 1.34 is now supported (testing has been done on 1.34 and 1.34.1).
  - Updates to the "Getting Started" documentation.
  
 ******  Release_April2007_1 *******

@@ -382,6 +382,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\GraphMol\Wrap\RingInfo.cpp">
+			</File>
+			<File
 				RelativePath="..\..\GraphMol\Wrap\Table.cpp">
 				<FileConfiguration
 					Name="DebugPython|Win32">
