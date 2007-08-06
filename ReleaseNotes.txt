@@ -27,10 +27,13 @@ New Features
  - A preliminary implementation of the subshape alignment algorithm is
    available. 
  - The free version of MS Visual C++ is now supported.   
- - Optimization of the Dice metric implementation for SparseIntVects
  - An EditableMol class is now exposed to Python to allow molecules to
    be easily edited. (issue 1764162)
-
+ - The RingInfo class is now exposed to Python.
+ - The replaceSidechains and and replaceCore functions have been added
+   in the ChemTransforms library and are exposed to Python as
+   Chem.ReplaceSidechains and Chem.ReplaceCore.
+   
 Other
  - Similarity scores can now be calculated from Python in bulk
    (i.e. calculating the similarity between one vector and a list of
@@ -39,6 +42,7 @@ Other
    BulkTanimotoSimilarity, BulkDiceSimilarity, etc.
  - The calculation of AtomPairs and TopologicalTorsions fingerprints
    is now a lot more efficient.
+ - Optimization of the Dice metric implementation for SparseIntVects
  - The Visual Studio build files have been moved to the directories
    $RDBASE/Code/Build.VC71 and $RDBASE/Code/Build.VC80. This allows
    simultaneous support of both versions of the system and cleans up
