@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -9,6 +9,7 @@
 #include "MolFileStereochem.h"
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/StreamOps.h>
+#include <RDGeneral/RDLog.h>
 
 #include <fstream>
 #include <boost/lexical_cast.hpp>
@@ -53,6 +54,7 @@ namespace RDKit{
     RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
     QueryAtom a;
     ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
+    q->setDescription("AtomOr");
     
     switch(text[4]){
     case 'T':
@@ -174,6 +176,66 @@ namespace RDKit{
     
   }
 
+  void ParseSubstitutionCountLine(RWMol *mol, std::string text){
+    PRECONDITION(text.substr(0,6)==std::string("M  SUB"),"bad SUB line");
+    
+    unsigned int nent;
+    try {
+      nent = stripSpacesAndCast<unsigned int>(text.substr(6,3));
+    }
+    catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert " << text.substr(6,3) << " to int";
+      throw FileParseException(errout.str()) ;
+    }
+    unsigned int spos = 9;
+    for (unsigned int ie = 0; ie < nent; ie++) {
+      unsigned int aid;
+      int count;
+      try {
+        aid = stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+        spos += 4;
+        Atom *atom=mol->getAtomWithIdx(aid-1); 
+        if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+          count = stripSpacesAndCast<int>(text.substr(spos,4));
+          if(count==0) continue;
+          ATOM_EQUALS_QUERY *q=makeAtomExplicitDegreeQuery(0);
+          switch(count){
+            case -1:
+              q->setVal(0);break;
+            case -2:
+              q->setVal(atom->getDegree());break;
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+              q->setVal(count);break;
+            case 6:
+              BOOST_LOG(rdWarningLog) << " atom degree query with value 6 found. This will not match degree >6. The MDL spec says it should.";
+              q->setVal(6);break;
+            default:
+              std::ostringstream errout;
+              errout << "Value " << count << " is not supported as a degree query.";
+              throw FileParseException(errout.str()) ;
+          }
+          if(!atom->hasQuery()){
+            QueryAtom a(atom->getAtomicNum());
+            mol->replaceAtom(aid-1,&a);           
+            atom = mol->getAtomWithIdx(aid-1);
+          }
+          atom->expandQuery(q,Queries::COMPOSITE_AND);
+          spos += 4;
+        }
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(spos,4) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+    }
+  }
+
   void ParseNewAtomList(RWMol *mol,std::string text){
     PRECONDITION(text.substr(0,6)==std::string("M  ALS"),"bad atom list line");
     
@@ -189,6 +251,7 @@ namespace RDKit{
     RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
     QueryAtom a;
     ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
+    q->setDescription("AtomOr");
     
     switch(text[14]){
     case 'T':
@@ -265,7 +328,39 @@ namespace RDKit{
       }
       QueryAtom atom;
       atom.setProp("_MolFileRLabel",rLabel);
-      atom.setProp("dummyLabel","X");
+      std::string tmpLabel="X";
+      if(rLabel>0 && rLabel<10){
+        switch(rLabel){
+        case 1:
+          tmpLabel="Xa";
+          break;
+        case 2:
+          tmpLabel="Xb";
+          break;
+        case 3:
+          tmpLabel="Xc";
+          break;
+        case 4:
+          tmpLabel="Xd";
+          break;
+        case 5:
+          tmpLabel="Xf";
+          break;
+        case 6:
+          tmpLabel="Xg";
+          break;
+        case 7:
+          tmpLabel="Xh";
+          break;
+        case 8:
+          tmpLabel="Xi";
+          break;
+        case 9:
+          tmpLabel="Xj";
+          break;
+        }
+      }
+      atom.setProp("dummyLabel",tmpLabel.c_str());
       atom.setQuery(makeAtomNullQuery());
       mol->replaceAtom(atIdx,&atom); 
     }
@@ -290,6 +385,7 @@ namespace RDKit{
   
   Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos) {
     Atom *res = new Atom;
+    //double pX,pY,pZ;
     std::string symb;
     int massDiff,chg,hCount;
     int stereoCare,totValence;
@@ -343,8 +439,17 @@ namespace RDKit{
       }
     }
     if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
-       || symb=="R#" || (symb>="R0" && symb<="R9") ){
-      res->setAtomicNum(0);
+       || symb=="R" || symb=="R#" || (symb>="R0" && symb<="R9") ){
+
+      if(symb=="A"||symb=="Q"||symb=="*"){
+        // according to the MDL spec, these match anything 
+        QueryAtom *query=new QueryAtom(0);
+        query->setQuery(makeAtomNullQuery());
+        delete res;
+        res=query;  
+      } else {
+        res->setAtomicNum(0);
+      }
       if(symb=="*") res->setProp("dummyLabel",std::string("X"));
       else if(symb=="R0") res->setProp("dummyLabel",std::string("Xa"));
       else if(symb=="R1") res->setProp("dummyLabel",std::string("Xb"));
@@ -358,6 +463,8 @@ namespace RDKit{
       else if(symb=="R9") res->setProp("dummyLabel",std::string("Xk"));
       else if(symb=="R#") res->setProp("dummyLabel",std::string("X"));
       else res->setProp("dummyLabel",symb);
+      
+      
     } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
       res->setAtomicNum(1); 
       res->setMass(2.014);
@@ -369,6 +476,7 @@ namespace RDKit{
       res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
     }
     
+    //res->setPos(pX,pY,pZ);
     if(chg!=0) res->setFormalCharge(4-chg);
     // FIX: this does not appear to be correct
     if(hCount==1){
@@ -461,6 +569,7 @@ namespace RDKit{
       throw FileParseException(errout.str()) ;
     }
     
+    
     // adjust the numbering
     idx1--;idx2--;
 
@@ -486,14 +595,17 @@ namespace RDKit{
           // single or double
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::SINGLE)));
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::DOUBLE)));
+          q->setDescription("BondOr");
         } else if(bType == 6){
           // single or aromatic
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::SINGLE)));
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::AROMATIC)));      
+          q->setDescription("BondOr");
         } else if(bType == 7){
           // double or aromatic
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::DOUBLE)));
           q->addChild(QueryBond::QUERYBOND_QUERY::CHILD_TYPE(makeBondOrderEqualsQuery(Bond::AROMATIC)));
+          q->setDescription("BondOr");
         }
         res->setQuery(q);
       } 
@@ -506,6 +618,7 @@ namespace RDKit{
     if( text.size() >= 12 && text.substr(9,3)!="  0")
       try {
         stereo = stripSpacesAndCast<int>(text.substr(9,3));
+        //res->setProp("stereo",stereo);
         switch(stereo){
         case 0:
           res->setBondDir(Bond::NONE);
@@ -719,6 +832,7 @@ namespace RDKit{
         if(tempStr.find("M  ALS") == 0) ParseNewAtomList(res,tempStr);
         if(tempStr.find("M  ISO") == 0) ParseIsotopeLine(res,tempStr);
         if(tempStr.find("M  RGP") == 0) ParseRGroupLabels(res,tempStr);
+        if(tempStr.find("M  SUB") == 0) ParseSubstitutionCountLine(res,tempStr);
         if(tempStr.find("M  CHG") == 0){
           ParseChargeLine(res, tempStr,firstChargeLine);
           firstChargeLine=false;

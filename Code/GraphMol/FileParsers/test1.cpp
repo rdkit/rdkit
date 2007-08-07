@@ -1,15 +1,16 @@
 // $Id$
 //
-//  Copyright (C) 2002-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2005 Greg Landrum and Rational Discovery LLC
 //       All Rights Reserved
 //
 
 #include <RDGeneral/RDLog.h>
-#include <GraphMol/RDKitBase.h>
+#include <GraphMol/RDKitBase.h> 
 #include "FileParsers.h"
 #include "MolFileStereochem.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <string>
@@ -28,6 +29,8 @@ void test1(){
   TEST_ASSERT(m->getNumAtoms()==6);
   std::string smi = MolToSmiles(*m);
   TEST_ASSERT(smi=="[Du]1=CC=CC=C1");
+  
+  //TEST_ASSERT(smi=="[Du]1=CC=CC=C1");  
   smi = "C1=CC=CC=C1";
   RWMol *m2 = SmilesToMol(smi,false,false);
   MatchVectType mv;
@@ -846,6 +849,118 @@ void testMolFileRGroups(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileDegreeQueries(){
+  BOOST_LOG(rdInfoLog) << "testing mol file degree queries" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/subst1.mol";
+  RWMol *m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+    
+  RWMol *m2;
+  MatchVectType mv;
+  std::string smi;
+
+  smi = "CC(=O)O";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  
+  smi = "CC(=O)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  
+  smi = "CC(=O)";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+  
+  
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/subst2.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  
+  smi = "CC(=O)O";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  
+  smi = "CC(=O)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  
+  smi = "CC(O)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  
+  smi = "CC(O)";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
+  smi = "CC(O)(C)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
+  
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/subst3.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  std::cerr << " QUERY SMARTS " << MolToSmarts(*m) << std::endl; 
+  
+  smi = "CC(=O)O";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==3);
+  delete m2;
+  
+  smi = "CC(=O)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==3);
+  delete m2;
+  
+  smi = "CC(O)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  
+  smi = "CC(O)";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
+  smi = "CC(O)(C)C";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/subst4.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  std::cerr << " QUERY SMARTS " << MolToSmarts(*m) << std::endl; 
+  
+  smi = "CC(=O)O";
+  m2 = SmilesToMol(smi,false,false);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
+  delete m;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 
 
 int main(int argc,char *argv[]){
@@ -867,8 +982,9 @@ int main(int argc,char *argv[]){
   testMolFileChgLines();
   testSymmetricDblBondStereochem();
   testRingDblBondStereochem();
-#endif
   testMolFileRGroups();
+#endif
+  testMolFileDegreeQueries();
   //testCrash();
   return 0;
 }
