@@ -277,7 +277,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="odbc32.lib odbccp32.lib $(PYTHONVERS).lib boost_python-$(VCVERS)-mt-$(BOOSTVERSION).lib boost_log-vc80-mt-$(BOOSTVERSION).lib"
+				AdditionalDependencies="$(PYTHONVERS).lib boost_python-$(VCVERS)-mt-$(BOOSTVERSION).lib boost_log-vc80-mt-$(BOOSTVERSION).lib"
 				OutputFile="..\..\RDBoost\Release/rdBase.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

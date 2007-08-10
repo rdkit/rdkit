@@ -278,7 +278,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="boost_log-$(VCVERS)-mt-$(BOOSTVERSION).lib boost_python-vc80-mt-$(BOOSTVERSION).lib odbc32.lib odbccp32.lib $(PYTHONVERS).lib BLAS.lib LAPACK.lib"
+				AdditionalDependencies="libboost_log-$(VCVERS)-mt-$(BOOSTVERSION).lib boost_python-vc80-mt-$(BOOSTVERSION).lib $(PYTHONVERS).lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\GraphMol\Wrap\Release/rdchem.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -401,6 +401,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\GraphMol\Wrap\EditableMol.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\GraphMol\Wrap\Mol.cpp"
 				>
 				<FileConfiguration
@@ -507,6 +511,10 @@
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;$(NoInherit)"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\GraphMol\Wrap\RingInfo.cpp"
+				>
 			</File>
 			<File
 				RelativePath="..\..\GraphMol\Wrap\Table.cpp"

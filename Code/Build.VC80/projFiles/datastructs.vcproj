@@ -76,7 +76,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="odbc32.lib odbccp32.lib $(PYTHONVERS).lib boost_python-$(VCVERS)-mt-gd-$(BOOSTVERSION).lib boost_log-vc80-mt-gd-$(BOOSTVERSION).lib"
+				AdditionalDependencies="$(PYTHONVERS).lib boost_python-$(VCVERS)-mt-gd-$(BOOSTVERSION).lib boost_log-vc80-mt-gd-$(BOOSTVERSION).lib"
 				OutputFile="..\..\DataStructs\Wrap\Debug/cDataStructs.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -277,7 +277,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				AdditionalDependencies="odbc32.lib odbccp32.lib $(PYTHONVERS).lib boost_python-$(VCVERS)-mt-$(BOOSTVERSION).lib boost_log-vc80-mt-$(BOOSTVERSION).lib"
+				AdditionalDependencies="$(PYTHONVERS).lib libboost_log-vc80-mt-$(BOOSTVERSION).lib"
 				OutputFile="..\..\DataStructs\Wrap\Release/cDataStructs.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
