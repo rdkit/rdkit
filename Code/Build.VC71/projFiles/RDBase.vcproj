@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="odbc32.lib odbccp32.lib $(PYTHONVERS).lib boost_python-vc71-mt-gd-$(BOOSTVERSION).lib libboost_log-vc71-mt-gd-$(BOOSTVERSION).lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib $(PYTHONVERS).lib "
 				OutputFile="..\..\RDBoost\Debug/rdBase.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -182,7 +182,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="odbc32.lib odbccp32.lib $(PYTHONVERS).lib boost_python-vc71-mt-$(BOOSTVERSION).lib libboost_log-vc71-mt-$(BOOSTVERSION).lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib $(PYTHONVERS).lib  libboost_log-vc71-mt-$(BOOSTVERSION).lib"
 				OutputFile="..\..\RDBoost\Release/rdBase.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
