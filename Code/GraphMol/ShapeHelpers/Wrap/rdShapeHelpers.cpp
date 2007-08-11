@@ -110,6 +110,14 @@ namespace RDKit {
     return MolShapes::tanimotoDistance(mol1, mol2, confId1, confId2, gridSpacing, bitsPerPoint,
                                        vdwScale, stepSize, maxLayers, ignoreHs);
   }
+  double protrudeMolShapes(const ROMol &mol1, const ROMol &mol2, int confId1=-1, int confId2=-1,
+                           double gridSpacing=0.5, 
+                           DiscreteValueVect::DiscreteValueType bitsPerPoint=DiscreteValueVect::TWOBITVALUE, 
+                           double vdwScale=0.8, double stepSize=0.25, int maxLayers=-1, bool ignoreHs=true,
+                           bool allowReordering=true) {
+    return MolShapes::protrudeDistance(mol1, mol2, confId1, confId2, gridSpacing, bitsPerPoint,
+                                       vdwScale, stepSize, maxLayers, ignoreHs, allowReordering);
+  }
 }
 
 BOOST_PYTHON_MODULE(rdShapeHelpers) {
@@ -133,7 +141,8 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
     - setpSize : thickness of the layers outside the base radius, the occupancy value is decreased \n\
                  from layer to layer from the maximum value \n\
     - maxLayers : the maximum number of layers - defaults to the number allowed the number of bits \n\
-                  use per grid point - e.g. two bits per grid point will allow 3 layers\n";
+                  use per grid point - e.g. two bits per grid point will allow 3 layers\n\
+    - ignoreHs : when set, the contribution of Hs to the shape will be ignored\n";
   python::def("EncodeShape", RDKit::EncodeMolShape,
               (python::arg("mol"), python::arg("grid"),
                python::arg("confId")=-1, python::arg("trans")=python::object(),
@@ -156,7 +165,9 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
     - stepSize : thickness of the each layer outside the base radius, the occupancy value is decreased \n\
                  from layer to layer from the maximum value \n\
     - maxLayers : the maximum number of layers - defaults to the number allowed the number of bits \n\
-                  use per grid point - e.g. two bits per grid point will allow 3 layers \n";
+                  use per grid point - e.g. two bits per grid point will allow 3 layers \n\
+    - ignoreHs : when set, the contribution of Hs to the shape will be ignored\n";
+                  
   python::def("ShapeTanimotoDist", RDKit::tanimotoMolShapes,
               (python::arg("mol1"), python::arg("mol2"), 
                python::arg("confId1")=-1, python::arg("confId2")=-1,
@@ -164,6 +175,35 @@ BOOST_PYTHON_MODULE(rdShapeHelpers) {
                python::arg("bitsPerPoint")=RDKit::DiscreteValueVect::TWOBITVALUE,
                python::arg("vdwScale")=0.8, python::arg("stepSize")=0.25,
                python::arg("maxLayers")=-1, python::arg("ignoreHs")=true),
+              docString.c_str());
+
+  docString = "Compute the shape protrude distance between two molecule based on a predefined alignment\n\
+  \n\
+  ARGUMENTS:\n\
+    - mol1 : The first molecule of interest \n\
+    - mol2 : The second molecule of interest \n\
+    - confId1 : Conformer in the first molecule (defaults to first conformer) \n\
+    - confId2 : Conformer in the second molecule (defaults to first conformer) \n\
+    - gridSpacing : resolution of the grid used to encode the molecular shapes \n\
+    - bitsPerPoint : number of bit used to encode the occupancy at each grid point \n\
+                          defaults to two bits per grid point \n\
+    - vdwScale : Scaling factor for the radius of the atoms to determine the base radius \n\
+                used in the encoding - grid points inside this sphere carry the maximum occupan \n\
+    - stepSize : thickness of the each layer outside the base radius, the occupancy value is decreased \n\
+                 from layer to layer from the maximum value \n\
+    - maxLayers : the maximum number of layers - defaults to the number allowed the number of bits \n\
+                  use per grid point - e.g. two bits per grid point will allow 3 layers \n\
+    - ignoreHs : when set, the contribution of Hs to the shape will be ignored\n\
+    - allowReordering : when set, the order will be automatically updated so that the value calculated\n\
+                        is the protrusion of the smaller shape from the larger one.\n";
+  python::def("ShapeProtrudeDist", RDKit::protrudeMolShapes,
+              (python::arg("mol1"), python::arg("mol2"), 
+               python::arg("confId1")=-1, python::arg("confId2")=-1,
+               python::arg("gridSpacing")=0.5, 
+               python::arg("bitsPerPoint")=RDKit::DiscreteValueVect::TWOBITVALUE,
+               python::arg("vdwScale")=0.8, python::arg("stepSize")=0.25,
+               python::arg("maxLayers")=-1, python::arg("ignoreHs")=true,
+               python::arg("allowReordering")=true),
               docString.c_str());
 
   

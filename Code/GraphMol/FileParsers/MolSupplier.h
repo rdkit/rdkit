@@ -73,8 +73,11 @@ namespace RDKit {
     /*! 
      *   \param fileName - the name of the SD file
      *   \param sanitize - if true sanitize the molecule before returning it
+     *   \param removeHs - if true remove Hs from the molecule before returning it
+     *                     (triggers sanitization)
      */
-    explicit SDMolSupplier(const std::string &fileName, bool sanitize=true);
+    explicit SDMolSupplier(const std::string &fileName, bool sanitize=true,
+                           bool removeHs=true);
     
     ~SDMolSupplier();
     void init();
@@ -84,7 +87,7 @@ namespace RDKit {
     void moveTo(unsigned int idx);
     ROMol * operator[](unsigned int idx);
     unsigned int length();
-    void setData(const std::string &text,bool sanitize=true);
+    void setData(const std::string &text,bool sanitize=true, bool removeHs=true);
 
     /*! Resets our internal state and sets the indices of molecules in the stream.
      *  The client should be *very* careful about calling this method, as it's trivial
@@ -111,7 +114,7 @@ namespace RDKit {
     std::istream *dp_streamHolder;
 #endif    
     std::vector<std::streampos> d_molpos;
-    bool df_sanitize;
+    bool df_sanitize,df_removeHs;
   };
 
   //! lazy file parser for Smiles tables

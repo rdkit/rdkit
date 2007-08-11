@@ -184,17 +184,20 @@ void test2(){
 void test3(){
   // basic SD Parsing
   BOOST_LOG(rdInfoLog) << " ----------> Test3 "<< std::endl;
+#if 0
+  // The SDFilesToMols stuff has been removed
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/";
   std::string fName = rdbase + "test_data/esters.sdf";
 
 
-  RWMOL_SPTR_VECT mols = SDFileToMols(fName);
-  CHECK_INVARIANT(mols.size()==6,"");
+  //RWMOL_SPTR_VECT mols = SDFileToMols(fName);
+  //CHECK_INVARIANT(mols.size()==6,"");
 
-  fName = rdbase+"test_data/earlyEOF.sdf";
-  mols = SDFileToMols(fName);
-  CHECK_INVARIANT(mols.size()==6,"");
+  //fName = rdbase+"test_data/earlyEOF.sdf";
+  //mols = SDFileToMols(fName);
+  //CHECK_INVARIANT(mols.size()==6,"");
+#endif
 
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
@@ -231,6 +234,13 @@ void test5(){
   RWMol *m = MolFileToMol(fName);
   CHECK_INVARIANT(m,"");
   TEST_ASSERT(m->getNumAtoms()==23);
+
+  delete m;
+  // now try without removing the Hs:
+  m = MolFileToMol(fName,true,false);
+  CHECK_INVARIANT(m,"");
+  TEST_ASSERT(m->getNumAtoms()==39);
+
 }  
 
 

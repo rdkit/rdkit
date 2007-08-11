@@ -24,23 +24,53 @@ namespace RDKit{
   // mol files
   //-----
   typedef std::vector< RWMOL_SPTR > RWMOL_SPTR_VECT;
+  // \brief construct a molecule from MDL mol data in a stream
+  /*! 
+   *   \param inStream - stream containing the data
+   *   \param line     - current line number (used for error reporting)
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   */
   RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
-			    bool sanitize=true);
+			    bool sanitize=true,bool removeHs=true);
+  // \overload
   RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-			    bool sanitize=true);
-  RWMol *MolBlockToMol(const std::string &inStream, bool sanitize=true);
-  RWMol *MolFileToMol(std::string fName, bool sanitize=true);
+			    bool sanitize=true,bool removeHs=true);
+  // \brief construct a molecule from an MDL mol block
+  /*! 
+   *   \param molBlock - string containing the mol block
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   */
+  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize=true,bool removeHs=true);
+  
+  // \brief construct a molecule from an MDL mol file
+  /*! 
+   *   \param fName    - string containing the file name
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   */
+  RWMol *MolFileToMol(std::string fName, bool sanitize=true,bool removeHs=true);
 
+  // \brief generates an MDL mol block for a molecule
+  /*! 
+   *   \param mol           - the molecule in question
+   *   \param includeStereo - toggles inclusion of stereochemistry information
+   *   \param confId        - selects the conformer to be used
+   */
   std::string MolToMolBlock(const ROMol &mol,bool includeStereo=true, int confId=-1);
+  // \brief construct a molecule from an MDL mol file
+  /*! 
+   *   \param mol           - the molecule in question
+   *   \param fName         - the name of the file to use
+   *   \param includeStereo - toggles inclusion of stereochemistry information
+   *   \param confId        - selects the conformer to be used
+   */
   void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo=true, int confId=-1);
 
-
-  //-----
-  // SDF reading:
-  //-----
-  RWMOL_SPTR_VECT SDDataStreamToMols(std::istream *inStream,bool sanitize=true);
-  RWMOL_SPTR_VECT SDDataStreamToMols(std::istream &inStream,bool sanitize=true);
-  RWMOL_SPTR_VECT SDFileToMols(std::string fName,bool sanitize=true);
 
   //-----
   //  TPL handling:

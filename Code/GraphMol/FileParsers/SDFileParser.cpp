@@ -19,7 +19,7 @@ namespace RDKit{
   //  
   //*************************************
   
-  RWMOL_SPTR_VECT SDDataStreamToMols(std::istream *inStream,bool sanitize){
+  RWMOL_SPTR_VECT SDDataStreamToMols(std::istream *inStream,bool sanitize,bool removeHs){
     unsigned int line = 0;
     std::string tempStr;
 
@@ -28,7 +28,7 @@ namespace RDKit{
 
     while(1){
       // read a molecule
-      RWMOL_SPTR nextMol = RWMOL_SPTR(MolDataStreamToMol(inStream, line, sanitize));
+      RWMOL_SPTR nextMol = RWMOL_SPTR(MolDataStreamToMol(inStream, line, sanitize, removeHs));
       if(!nextMol) break;
 
       // now read the data
@@ -46,12 +46,12 @@ namespace RDKit{
     return res;
   };
 
-  RWMOL_SPTR_VECT SDDataStreamToMols(std::istream &inStream,bool sanitize){
-    return SDDataStreamToMols(&inStream,sanitize);
+  RWMOL_SPTR_VECT SDDataStreamToMols(std::istream &inStream,bool sanitize,bool removeHs){
+    return SDDataStreamToMols(&inStream,sanitize,removeHs);
   };
 
   
-  RWMOL_SPTR_VECT SDFileToMols(std::string fName,bool sanitize){
+  RWMOL_SPTR_VECT SDFileToMols(std::string fName,bool sanitize,bool removeHs){
     std::ifstream inStream(fName.c_str());
     
     // FIX: we find a better way of reporting errors than this.  The
@@ -60,7 +60,7 @@ namespace RDKit{
     RWMOL_SPTR_VECT res;
     res.clear();
     if(inStream){
-      res = SDDataStreamToMols(inStream,sanitize);
+      res = SDDataStreamToMols(inStream,sanitize,removeHs);
     }
 
     return res;

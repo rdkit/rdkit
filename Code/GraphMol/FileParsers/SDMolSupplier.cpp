@@ -31,9 +31,9 @@ namespace RDKit {
   }
     
     
-  SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize){
+  SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize, bool removeHs){
     init();
-    // FIX: this binary moe of opening file is here because of a bug in VC++ 6.0
+    // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
     // the function "tellg" does not work correctly if we do not open it this way
     // Need to check if this has been fixed in VC++ 7.0
     std::istream *tmpStream=0;
@@ -49,6 +49,7 @@ namespace RDKit {
     df_owner=true;
     d_molpos.push_back(dp_inStream->tellg());
     df_sanitize = sanitize;
+    df_removeHs = removeHs;
     this->checkForEnd();
     POSTCONDITION(dp_inStream,"bad instream");
   }
@@ -69,7 +70,7 @@ namespace RDKit {
   }
 
   void SDMolSupplier::setData(const std::string &text,
-                              bool sanitize){
+                              bool sanitize, bool removeHs){
     if(dp_inStream && df_owner) delete dp_inStream;
     init();
     std::istream *tmpStream=0;
@@ -78,6 +79,7 @@ namespace RDKit {
     df_owner=true;
     d_molpos.push_back(dp_inStream->tellg());
     df_sanitize = sanitize;
+    df_removeHs=removeHs;
     this->checkForEnd();
     POSTCONDITION(dp_inStream,"bad instream");
   }
@@ -205,7 +207,7 @@ namespace RDKit {
 
     unsigned int line=d_line;
     try {
-      res = MolDataStreamToMol(dp_inStream, line, df_sanitize);
+      res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs);
       d_line=line;
       this->readMolProps(res);  
     }

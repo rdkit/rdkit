@@ -65,18 +65,18 @@ namespace RDKit{
     return res;
   }
 
-  ROMol *MolFromMolFile(const char *molFilename, bool sanitize=1) {
-    RWMol *newM = MolFileToMol(molFilename, sanitize);
+  ROMol *MolFromMolFile(const char *molFilename, bool sanitize=true, bool removeHs=true) {
+    RWMol *newM = MolFileToMol(molFilename, sanitize,removeHs);
     if(!newM) return 0;
     ROMol *res =new ROMol(*newM);
     delete newM; 
     return res;
   }
 
-  ROMol *MolFromMolBlock(std::string molBlock, bool sanitize=1) {
+  ROMol *MolFromMolBlock(std::string molBlock, bool sanitize=true, bool removeHs=true) {
     std::istringstream inStream(molBlock);
     unsigned int line = 0;
-    RWMol *newM = MolDataStreamToMol(inStream, line, sanitize);
+    RWMol *newM = MolDataStreamToMol(inStream, line, sanitize, removeHs);
     if(!newM) return 0;
     ROMol *res =new ROMol(*newM);
     delete newM; 
@@ -162,7 +162,11 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - fileName: name of the file to read\n\
 \n\
     - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to 1.\n\
+      Defaults to true.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\ 
+      Defaults to true.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -170,7 +174,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 \n";  
   python::def("MolFromMolFile", RDKit::MolFromMolFile,
 	      (python::arg("molFileName"),
-	       python::arg("sanitize")=true),
+	       python::arg("sanitize")=true,
+               python::arg("removeHs")=true),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -182,13 +187,19 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - sanitize: (optional) toggles sanitization of the molecule.\n\
       Defaults to 1.\n\
 \n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\ 
+      Defaults to true.\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";  
   python::def("MolFromMolBlock", RDKit::MolFromMolBlock,
 	      (python::arg("molBlock"),
-	       python::arg("sanitize")=true),
+	       python::arg("sanitize")=true,
+	       python::arg("removeHs")=true,
+               ),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 

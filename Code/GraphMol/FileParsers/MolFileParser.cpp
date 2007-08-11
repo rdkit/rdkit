@@ -679,7 +679,8 @@ namespace RDKit{
   //  Read a molecule from a stream
   //
   //------------------------------------------------
-  RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line, bool sanitize){
+  RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line, bool sanitize,
+                            bool removeHs){
     PRECONDITION(inStream,"no stream");
     std::string tempStr;
     bool fileComplete=false;
@@ -866,7 +867,7 @@ namespace RDKit{
     }
     //std::cerr << "bloop "<<line << std::endl;
 
-    if (res && sanitize) {
+    if (res && sanitize ) {
       // update the chirality and stereo-chemistry and stuff:
       //
       // NOTE: we detect the stereochemistry before sanitizing/removing
@@ -892,14 +893,18 @@ namespace RDKit{
       }
 
       try {
-        ROMol *tmp=MolOps::removeHs(*res,false,false);
+        if(removeHs){
+          ROMol *tmp=MolOps::removeHs(*res,false,false);
+          delete res;
+          res = static_cast<RWMol *>(tmp);
+        } else {
+          MolOps::sanitizeMol(*res);
+        }
         // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry here after
         // sanitization because the rings should have been perceived by now, in order to
         // correctly recognize double bonds that may be cis/trans type
-        const Conformer &conf = tmp->getConformer();
-        DetectBondStereoChemistry(*tmp, &conf);
-        delete res;
-        res = static_cast<RWMol *>(tmp);
+        const Conformer &conf = res->getConformer();
+        DetectBondStereoChemistry(*res, &conf);
       }
       catch (MolSanitizeException &se){
         delete res;
@@ -913,19 +918,19 @@ namespace RDKit{
   
 
   RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-                            bool sanitize){
-    return MolDataStreamToMol(&inStream,line,sanitize);
+                            bool sanitize, bool removeHs){
+    return MolDataStreamToMol(&inStream,line,sanitize,removeHs);
   };
   //------------------------------------------------
   //
   //  Read a molecule from a string
   //
   //------------------------------------------------
-  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize){
+  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize, bool removeHs){
     std::istringstream inStream(molBlock);
     RWMol *res=NULL;
     unsigned int line = 0;
-    return MolDataStreamToMol(inStream, line, sanitize);
+    return MolDataStreamToMol(inStream, line, sanitize, removeHs);
   }    
 
 
@@ -934,7 +939,7 @@ namespace RDKit{
   //  Read a molecule from a file
   //
   //------------------------------------------------
-  RWMol *MolFileToMol(std::string fName, bool sanitize){
+  RWMol *MolFileToMol(std::string fName, bool sanitize, bool removeHs){
     std::ifstream inStream(fName.c_str());
     if(!inStream){
       return NULL;
@@ -942,7 +947,7 @@ namespace RDKit{
     RWMol *res=NULL;
     if(!inStream.eof()){
       unsigned int line = 0;
-      res=MolDataStreamToMol(inStream, line, sanitize);
+      res=MolDataStreamToMol(inStream, line, sanitize, removeHs);
     }
     return res;
   }    

@@ -95,7 +95,59 @@ namespace RDKit {
     double tanimotoDistance(const Conformer &conf1, const Conformer &conf2, double gridSpacing=0.5, 
                             DiscreteValueVect::DiscreteValueType bitsPerPoint=DiscreteValueVect::TWOBITVALUE,
                             double vdwScale=0.8, double stepSize=0.25, int maxLayers=-1, bool ignoreHs=true);
+
+
+    //! Compute the shape protrusion distance between two molecule based on a predefined alignment
+    /*!
+      \param mol1         The first molecule of interest
+      \param mol2         The second molecule of interest
+      \param confId1      Conformer in the first molecule (defaults to first conformer)
+      \param confId2      Conformer in the second molecule (defaults to first conformer)
+      \param gridSpacing  resolution of the grid used to encode the molecular shapes
+      \param bitsPerPoint number of bit used to encode the occupancy at each grid point
+                          defaults to two bits per grid point
+      \param vdwScale     Scaling factor for the radius of the atoms to determine the base radius 
+                          used in the encoding - grid points inside this sphere carry the maximum occupany
+      \param stepSize     thickness of the each layer outside the base radius, the occupancy value is decreased 
+                          from layer to layer from the maximum value
+      \param maxLayers    the maximum number of layers - defaults to the number allowed the number of bits 
+                          use per grid point - e.g. two bits per grid point will allow 3 layers
+      \param ignoreHs     if true, ignore the hydrogen atoms in the shape encoding process
+      \param allowReordering  if set the order will be automatically updated so that the value calculated
+                              is the protrusion of the smaller shape from the larger one.
+     */
+
+    double protrudeDistance(const ROMol &mol1, const ROMol &mol2, int confId1=-1, int confId2=-1,
+                            double gridSpacing=0.5, 
+                            DiscreteValueVect::DiscreteValueType bitsPerPoint=DiscreteValueVect::TWOBITVALUE, 
+                            double vdwScale=0.8, double stepSize=0.25, int maxLayers=-1,
+                            bool ignoreHs=true, bool allowReordering=true);
+
+
+    //! Compute the shape protrusion distance between two conformers based on a predefined alignment
+    /*!
+      \param conf1        The first conformer of interest
+      \param conf2        The second conformer of interest
+      \param gridSpacing  resolution of the grid used to encode the molecular shapes
+      \param bitsPerPoint number of bit used to encode the occupancy at each grid point
+      \param vdwScale     Scaling factor for the radius of the atoms to determine the base radius 
+                          used in the encoding - grid points inside this sphere carry the maximum occupany
+      \param stepSize     thickness of the each layer outside the base radius, the occupancy value is decreased 
+                          from layer to layer from the maximum value
+      \param maxLayers    the maximum number of layers - defaults to the number allowed the number of bits 
+                          use per grid point - e.g. two bits per grid point will allow 3 layers
+      \param ignoreHs     if true, ignore the hydrogen atoms in the shape encoding process
+      \param allowReordering  if set the order will be automatically updated so that the value calculated
+                              is the protrusion of the smaller shape from the larger one.
+     */
+
+    double protrudeDistance(const Conformer &conf1, const Conformer &conf2, double gridSpacing=0.5, 
+                            DiscreteValueVect::DiscreteValueType bitsPerPoint=DiscreteValueVect::TWOBITVALUE,
+                            double vdwScale=0.8, double stepSize=0.25, int maxLayers=-1, bool ignoreHs=true,
+                            bool allowReordering=true);
+    
   }
+
 }
 
 #endif
