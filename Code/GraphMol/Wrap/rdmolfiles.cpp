@@ -165,7 +165,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       Defaults to true.\n\
 \n\
     - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
-      This only make sense when sanitization is done.\n\ 
+      This only make sense when sanitization is done.\n\
       Defaults to true.\n\
 \n\
   RETURNS:\n\
@@ -188,7 +188,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       Defaults to 1.\n\
 \n\
     - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
-      This only make sense when sanitization is done.\n\ 
+      This only make sense when sanitization is done.\n\
       Defaults to true.\n\
 \n\
   RETURNS:\n\
@@ -198,8 +198,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::def("MolFromMolBlock", RDKit::MolFromMolBlock,
 	      (python::arg("molBlock"),
 	       python::arg("sanitize")=true,
-	       python::arg("removeHs")=true,
-               ),
+	       python::arg("removeHs")=true),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
