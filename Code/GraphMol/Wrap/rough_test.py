@@ -35,34 +35,34 @@ class TestCase(unittest.TestCase):
   def test1Table(self):
 
     tbl = Chem.GetPeriodicTable()
-    assert tbl
+    self.failUnless(tbl)
 
-    assert feq(tbl.GetAtomicWeight(6),12.011)
-    assert feq(tbl.GetAtomicWeight("C"),12.011)
-    assert tbl.GetAtomicNumber('C')==6
-    assert feq(tbl.GetRvdw(6),1.950)
-    assert feq(tbl.GetRvdw("C"),1.950)
-    assert feq(tbl.GetRcovalent(6),0.680)
-    assert feq(tbl.GetRcovalent("C"),0.680)
-    assert tbl.GetDefaultValence(6)==4
-    assert tbl.GetDefaultValence("C")==4
-    assert tuple(tbl.GetValenceList(6))==(4,)
-    assert tuple(tbl.GetValenceList("C"))==(4,)
-    assert tuple(tbl.GetValenceList(16))==(2,4,6)
-    assert tuple(tbl.GetValenceList("S"))==(2,4,6)
-    assert tbl.GetNOuterElecs(6)==4
-    assert tbl.GetNOuterElecs("C")==4
+    self.failUnless(feq(tbl.GetAtomicWeight(6),12.011))
+    self.failUnless(feq(tbl.GetAtomicWeight("C"),12.011))
+    self.failUnless(tbl.GetAtomicNumber('C')==6)
+    self.failUnless(feq(tbl.GetRvdw(6),1.950))
+    self.failUnless(feq(tbl.GetRvdw("C"),1.950))
+    self.failUnless(feq(tbl.GetRcovalent(6),0.680))
+    self.failUnless(feq(tbl.GetRcovalent("C"),0.680))
+    self.failUnless(tbl.GetDefaultValence(6)==4)
+    self.failUnless(tbl.GetDefaultValence("C")==4)
+    self.failUnless(tuple(tbl.GetValenceList(6))==(4,))
+    self.failUnless(tuple(tbl.GetValenceList("C"))==(4,))
+    self.failUnless(tuple(tbl.GetValenceList(16))==(2,4,6))
+    self.failUnless(tuple(tbl.GetValenceList("S"))==(2,4,6))
+    self.failUnless(tbl.GetNOuterElecs(6)==4)
+    self.failUnless(tbl.GetNOuterElecs("C")==4)
 
   def test2Atom(self):
     atom = Chem.Atom(6)
-    assert atom
-    assert atom.GetAtomicNum()==6
+    self.failUnless(atom)
+    self.failUnless(atom.GetAtomicNum()==6)
     atom.SetAtomicNum(8)
-    assert atom.GetAtomicNum()==8
+    self.failUnless(atom.GetAtomicNum()==8)
 
     atom = Chem.Atom("C")
-    assert atom
-    assert atom.GetAtomicNum()==6
+    self.failUnless(atom)
+    self.failUnless(atom.GetAtomicNum()==6)
 
 
   def test3Bond(self):
@@ -71,101 +71,101 @@ class TestCase(unittest.TestCase):
 
   def test4Mol(self):
     mol = Chem.Mol()
-    assert mol
+    self.failUnless(mol)
 
   def test5Smiles(self):
     mol = Chem.MolFromSmiles('n1ccccc1')
-    assert mol
-    assert mol.GetNumAtoms()==6
-    assert mol.GetNumAtoms(1)==6
-    assert mol.GetNumAtoms(0)==11
+    self.failUnless(mol)
+    self.failUnless(mol.GetNumAtoms()==6)
+    self.failUnless(mol.GetNumAtoms(1)==6)
+    self.failUnless(mol.GetNumAtoms(0)==11)
     at = mol.GetAtomWithIdx(2)
-    assert at.GetAtomicNum()==6
+    self.failUnless(at.GetAtomicNum()==6)
     at = mol.GetAtomWithIdx(0)
-    assert at.GetAtomicNum()==7
+    self.failUnless(at.GetAtomicNum()==7)
     
   def _test6Bookmarks(self):
     mol = Chem.MolFromSmiles('n1ccccc1')
-    assert mol
+    self.failUnless(mol)
 
-    assert not mol.HasAtomBookmark(0)
+    self.failUnless(not mol.HasAtomBookmark(0))
     mol.SetAtomBookmark(mol.GetAtomWithIdx(0),0)
     mol.SetAtomBookmark(mol.GetAtomWithIdx(1),1)
-    assert mol.HasAtomBookmark(0)
-    assert mol.HasAtomBookmark(1)
+    self.failUnless(mol.HasAtomBookmark(0))
+    self.failUnless(mol.HasAtomBookmark(1))
 
     if 1:
-      assert not mol.HasBondBookmark(0)
-      assert not mol.HasBondBookmark(1)
+      self.failUnless(not mol.HasBondBookmark(0))
+      self.failUnless(not mol.HasBondBookmark(1))
       mol.SetBondBookmark(mol.GetBondWithIdx(0),0)
       mol.SetBondBookmark(mol.GetBondWithIdx(1),1)
-      assert mol.HasBondBookmark(0)
-      assert mol.HasBondBookmark(1)
+      self.failUnless(mol.HasBondBookmark(0))
+      self.failUnless(mol.HasBondBookmark(1))
 
 
     at = mol.GetAtomWithBookmark(0)
-    assert at
-    assert at.GetAtomicNum()==7
+    self.failUnless(at)
+    self.failUnless(at.GetAtomicNum()==7)
     mol.ClearAtomBookmark(0)
-    assert not mol.HasAtomBookmark(0)
-    assert mol.HasAtomBookmark(1)
+    self.failUnless(not mol.HasAtomBookmark(0))
+    self.failUnless(mol.HasAtomBookmark(1))
     mol.ClearAllAtomBookmarks()
-    assert not mol.HasAtomBookmark(0)
-    assert not mol.HasAtomBookmark(1)
+    self.failUnless(not mol.HasAtomBookmark(0))
+    self.failUnless(not mol.HasAtomBookmark(1))
     
     mol.SetAtomBookmark(mol.GetAtomWithIdx(1),1)
 
     if 1:
-      assert mol.HasBondBookmark(0)
-      assert mol.HasBondBookmark(1)
+      self.failUnless(mol.HasBondBookmark(0))
+      self.failUnless(mol.HasBondBookmark(1))
       bond = mol.GetBondWithBookmark(0)
-      assert bond
+      self.failUnless(bond)
       mol.ClearBondBookmark(0)
-      assert not mol.HasBondBookmark(0)
-      assert mol.HasBondBookmark(1)
+      self.failUnless(not mol.HasBondBookmark(0))
+      self.failUnless(mol.HasBondBookmark(1))
       mol.ClearAllBondBookmarks()
-      assert not mol.HasBondBookmark(0)
-      assert not mol.HasBondBookmark(1)
+      self.failUnless(not mol.HasBondBookmark(0))
+      self.failUnless(not mol.HasBondBookmark(1))
 
-      assert mol.HasAtomBookmark(1)
+      self.failUnless(mol.HasAtomBookmark(1))
     
   def test7Atom(self):
     mol = Chem.MolFromSmiles('n1ccccc1C[CH2-]')
-    assert mol
+    self.failUnless(mol)
     Chem.SanitizeMol(mol)
     a0 = mol.GetAtomWithIdx(0)
     a1 = mol.GetAtomWithIdx(1)
     a6 = mol.GetAtomWithIdx(6)
     a7 = mol.GetAtomWithIdx(7)
     
-    assert a0.GetAtomicNum()==7
-    assert a0.GetSymbol()=='N'
-    assert a0.GetIdx()==0
+    self.failUnless(a0.GetAtomicNum()==7)
+    self.failUnless(a0.GetSymbol()=='N')
+    self.failUnless(a0.GetIdx()==0)
 
     aList = [a0,a1,a6,a7]
-    assert a0.GetDegree()==2
-    assert a1.GetDegree()==2
-    assert a6.GetDegree()==2
-    assert a7.GetDegree()==1
-    assert [x.GetDegree() for x in aList]==[2,2,2,1]
+    self.failUnless(a0.GetDegree()==2)
+    self.failUnless(a1.GetDegree()==2)
+    self.failUnless(a6.GetDegree()==2)
+    self.failUnless(a7.GetDegree()==1)
+    self.failUnless([x.GetDegree() for x in aList]==[2,2,2,1])
 
-    assert [x.GetTotalNumHs() for x in aList]==[0,1,2,2]
-    assert [x.GetNumImplicitHs() for x in aList]==[0,1,2,0]
-    assert [x.GetExplicitValence() for x in aList]==[3,3,2,3]
-    assert [x.GetImplicitValence() for x in aList]==[0,1,2,0]
-    assert [x.GetFormalCharge() for x in aList]==[0,0,0,-1]
-    assert [x.GetNoImplicit() for x in aList]==[0,0,0,1]
-    assert [x.GetNumExplicitHs() for x in aList]==[0,0,0,2]
-    assert [x.GetIsAromatic() for x in aList]==[1,1,0,0]
-    assert [x.GetHybridization() for x in aList]==[Chem.HybridizationType.SP2,Chem.HybridizationType.SP2,
+    self.failUnless([x.GetTotalNumHs() for x in aList]==[0,1,2,2])
+    self.failUnless([x.GetNumImplicitHs() for x in aList]==[0,1,2,0])
+    self.failUnless([x.GetExplicitValence() for x in aList]==[3,3,2,3])
+    self.failUnless([x.GetImplicitValence() for x in aList]==[0,1,2,0])
+    self.failUnless([x.GetFormalCharge() for x in aList]==[0,0,0,-1])
+    self.failUnless([x.GetNoImplicit() for x in aList]==[0,0,0,1])
+    self.failUnless([x.GetNumExplicitHs() for x in aList]==[0,0,0,2])
+    self.failUnless([x.GetIsAromatic() for x in aList]==[1,1,0,0])
+    self.failUnless([x.GetHybridization() for x in aList]==[Chem.HybridizationType.SP2,Chem.HybridizationType.SP2,
                                                    Chem.HybridizationType.SP3,Chem.HybridizationType.SP3],\
-                                                   [x.GetHybridization() for x in aList]
+                                                   [x.GetHybridization() for x in aList])
     
 
 
   def test8Bond(self):
     mol = Chem.MolFromSmiles('n1ccccc1CC(=O)O')
-    assert mol
+    self.failUnless(mol)
     Chem.SanitizeMol(mol)
     # note bond numbering is funny because of ring closure
     b0 = mol.GetBondWithIdx(0)
@@ -174,53 +174,53 @@ class TestCase(unittest.TestCase):
     b8 = mol.GetBondWithIdx(8)
 
     bList = [b0,b6,b7,b8]
-    assert [x.GetBondType() for x in bList] == \
+    self.failUnless([x.GetBondType() for x in bList] ==
            [Chem.BondType.AROMATIC,Chem.BondType.SINGLE,
-            Chem.BondType.DOUBLE,Chem.BondType.SINGLE]
-    assert [x.GetIsAromatic() for x in bList] == \
-           [1,0,0,0]
+            Chem.BondType.DOUBLE,Chem.BondType.SINGLE])
+    self.failUnless([x.GetIsAromatic() for x in bList] == 
+           [1,0,0,0])
     
-    assert [x.GetIsConjugated()!=0 for x in bList] == \
-           [1,0,1,1],[x.GetIsConjugated()!=0 for x in bList]
-    assert [x.GetBeginAtomIdx() for x in bList] == \
-           [0,6,7,7],[x.GetBeginAtomIdx() for x in bList]
-    assert [x.GetBeginAtom().GetIdx() for x in bList] == \
-           [0,6,7,7]
-    assert [x.GetEndAtomIdx() for x in bList] == \
-           [1,7,8,9]
-    assert [x.GetEndAtom().GetIdx() for x in bList] == \
-           [1,7,8,9]
+    self.failUnless([x.GetIsConjugated()!=0 for x in bList] ==
+           [1,0,1,1],[x.GetIsConjugated()!=0 for x in bList])
+    self.failUnless([x.GetBeginAtomIdx() for x in bList] ==
+           [0,6,7,7],[x.GetBeginAtomIdx() for x in bList])
+    self.failUnless([x.GetBeginAtom().GetIdx() for x in bList] ==
+           [0,6,7,7])
+    self.failUnless([x.GetEndAtomIdx() for x in bList] ==
+           [1,7,8,9])
+    self.failUnless([x.GetEndAtom().GetIdx() for x in bList] ==
+           [1,7,8,9])
 
 
   def test9Smarts(self):
     query1 = Chem.MolFromSmarts('C(=O)O')
-    assert query1
+    self.failUnless(query1)
     query2 = Chem.MolFromSmarts('C(=O)[O,N]')
-    assert query2
+    self.failUnless(query2)
     query3 = Chem.MolFromSmarts('[$(C(=O)O)]')
-    assert query3
+    self.failUnless(query3)
 
 
     mol = Chem.MolFromSmiles('CCC(=O)O')
-    assert mol
+    self.failUnless(mol)
 
-    assert mol.HasSubstructMatch(query1)
-    assert mol.HasSubstructMatch(query2)
-    assert mol.HasSubstructMatch(query3)
+    self.failUnless(mol.HasSubstructMatch(query1))
+    self.failUnless(mol.HasSubstructMatch(query2))
+    self.failUnless(mol.HasSubstructMatch(query3))
 
     mol = Chem.MolFromSmiles('CCC(=O)N')
-    assert mol
+    self.failUnless(mol)
 
-    assert not mol.HasSubstructMatch(query1)
-    assert mol.HasSubstructMatch(query2)
-    assert not mol.HasSubstructMatch(query3)
+    self.failUnless(not mol.HasSubstructMatch(query1))
+    self.failUnless(mol.HasSubstructMatch(query2))
+    self.failUnless(not mol.HasSubstructMatch(query3))
 
   def test10Iterators(self):
     mol = Chem.MolFromSmiles('CCOC')
-    assert mol
+    self.failUnless(mol)
 
     for atom in mol.GetAtoms():
-      assert atom
+      self.failUnless(atom)
     ats = mol.GetAtoms()
     try:
       ats[1]
@@ -228,18 +228,18 @@ class TestCase(unittest.TestCase):
       ok = 0
     else:
       ok = 1
-    assert ok
+    self.failUnless(ok)
     try:
       ats[12]
     except IndexError:
       ok = 1
     else:
       ok = 0
-    assert ok
+    self.failUnless(ok)
 
     if 0:
       for atom in mol.GetHeteros():
-        assert atom
+        self.failUnless(atom)
       ats = mol.GetHeteros()
       try:
         ats[0]
@@ -247,19 +247,19 @@ class TestCase(unittest.TestCase):
         ok = 0
       else:
         ok = 1
-      assert ok
-      assert ats[0].GetIdx()==2
+      self.failUnless(ok)
+      self.failUnless(ats[0].GetIdx()==2)
       try:
         ats[12]
       except IndexError:
         ok = 1
       else:
         ok = 0
-      assert ok
+      self.failUnless(ok)
 
 
     for bond in mol.GetBonds():
-      assert bond
+      self.failUnless(bond)
     bonds = mol.GetBonds()
     try:
       bonds[1]
@@ -267,19 +267,19 @@ class TestCase(unittest.TestCase):
       ok = 0
     else:
       ok = 1
-    assert ok
+    self.failUnless(ok)
     try:
       bonds[12]
     except IndexError:
       ok = 1
     else:
       ok = 0
-    assert ok
+    self.failUnless(ok)
       
     if 0:
       mol = Chem.MolFromSmiles('c1ccccc1C')
       for atom in mol.GetAromaticAtoms():
-        assert atom
+        self.failUnless(atom)
       ats = mol.GetAromaticAtoms()
       try:
         ats[0]
@@ -287,129 +287,129 @@ class TestCase(unittest.TestCase):
         ok = 0
       else:
         ok = 1
-      assert ok
-      assert ats[0].GetIdx()==0
-      assert ats[1].GetIdx()==1
-      assert ats[2].GetIdx()==2
+      self.failUnless(ok)
+      self.failUnless(ats[0].GetIdx()==0)
+      self.failUnless(ats[1].GetIdx()==1)
+      self.failUnless(ats[2].GetIdx()==2)
       try:
         ats[12]
       except IndexError:
         ok = 1
       else:
         ok = 0
-      assert ok
+      self.failUnless(ok)
 
 
 
 
   def test11MolOps(self) :
     mol = Chem.MolFromSmiles('C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3')
-    assert mol
+    self.failUnless(mol)
     smi = Chem.MolToSmiles(mol)
     Chem.SanitizeMol(mol)
     nr = Chem.GetSymmSSSR(mol)
 
-    assert (len(nr) == 3)
+    self.failUnless((len(nr) == 3))
     
   def test12Smarts(self):
     query1 = Chem.MolFromSmarts('C(=O)O')
-    assert query1
+    self.failUnless(query1)
     query2 = Chem.MolFromSmarts('C(=O)[O,N]')
-    assert query2
+    self.failUnless(query2)
     query3 = Chem.MolFromSmarts('[$(C(=O)O)]')
-    assert query3
+    self.failUnless(query3)
 
 
     mol = Chem.MolFromSmiles('CCC(=O)O')
-    assert mol
+    self.failUnless(mol)
 
-    assert mol.HasSubstructMatch(query1)
-    assert mol.GetSubstructMatch(query1)==(2,3,4)
-    assert mol.HasSubstructMatch(query2)
-    assert mol.GetSubstructMatch(query2)==(2,3,4)
-    assert mol.HasSubstructMatch(query3)
-    assert mol.GetSubstructMatch(query3)==(2,)
+    self.failUnless(mol.HasSubstructMatch(query1))
+    self.failUnless(mol.GetSubstructMatch(query1)==(2,3,4))
+    self.failUnless(mol.HasSubstructMatch(query2))
+    self.failUnless(mol.GetSubstructMatch(query2)==(2,3,4))
+    self.failUnless(mol.HasSubstructMatch(query3))
+    self.failUnless(mol.GetSubstructMatch(query3)==(2,))
 
     mol = Chem.MolFromSmiles('CCC(=O)N')
-    assert mol
+    self.failUnless(mol)
 
-    assert not mol.HasSubstructMatch(query1)
-    assert not mol.GetSubstructMatch(query1)
-    assert mol.HasSubstructMatch(query2)
-    assert mol.GetSubstructMatch(query2)==(2,3,4)
-    assert not mol.HasSubstructMatch(query3)
+    self.failUnless(not mol.HasSubstructMatch(query1))
+    self.failUnless(not mol.GetSubstructMatch(query1))
+    self.failUnless(mol.HasSubstructMatch(query2))
+    self.failUnless(mol.GetSubstructMatch(query2)==(2,3,4))
+    self.failUnless(not mol.HasSubstructMatch(query3))
 
     mol = Chem.MolFromSmiles('OC(=O)CC(=O)O')
-    assert mol
-    assert mol.HasSubstructMatch(query1)
-    assert mol.GetSubstructMatch(query1)==(1,2,0)
-    assert mol.GetSubstructMatches(query1)==((1,2,0),(4,5,6))
-    assert mol.HasSubstructMatch(query2)
-    assert mol.GetSubstructMatch(query2)==(1,2,0)
-    assert mol.GetSubstructMatches(query2)==((1,2,0),(4,5,6))
-    assert mol.HasSubstructMatch(query3)
-    assert mol.GetSubstructMatches(query3)==((1,),(4,))
+    self.failUnless(mol)
+    self.failUnless(mol.HasSubstructMatch(query1))
+    self.failUnless(mol.GetSubstructMatch(query1)==(1,2,0))
+    self.failUnless(mol.GetSubstructMatches(query1)==((1,2,0),(4,5,6)))
+    self.failUnless(mol.HasSubstructMatch(query2))
+    self.failUnless(mol.GetSubstructMatch(query2)==(1,2,0))
+    self.failUnless(mol.GetSubstructMatches(query2)==((1,2,0),(4,5,6)))
+    self.failUnless(mol.HasSubstructMatch(query3))
+    self.failUnless(mol.GetSubstructMatches(query3)==((1,),(4,)))
     
   def test13Smarts(self):
     # previous smarts problems:
     query = Chem.MolFromSmarts('N(=,-C)')
-    assert query
+    self.failUnless(query)
     mol = Chem.MolFromSmiles('N#C')
-    assert not mol.HasSubstructMatch(query)
+    self.failUnless(not mol.HasSubstructMatch(query))
     mol = Chem.MolFromSmiles('N=C')
-    assert mol.HasSubstructMatch(query)
+    self.failUnless(mol.HasSubstructMatch(query))
     mol = Chem.MolFromSmiles('NC')
-    assert mol.HasSubstructMatch(query)
+    self.failUnless(mol.HasSubstructMatch(query))
 
     query = Chem.MolFromSmarts('[Cl,$(O)]')
     mol = Chem.MolFromSmiles('C(=O)O')
-    assert len(mol.GetSubstructMatches(query))==2
+    self.failUnless(len(mol.GetSubstructMatches(query))==2)
     mol = Chem.MolFromSmiles('C(=N)N')
-    assert len(mol.GetSubstructMatches(query))==0
+    self.failUnless(len(mol.GetSubstructMatches(query))==0)
     
     query = Chem.MolFromSmarts('[$([O,S]-[!$(*=O)])]')
     mol = Chem.MolFromSmiles('CC(S)C(=O)O')
-    assert len(mol.GetSubstructMatches(query))==1
+    self.failUnless(len(mol.GetSubstructMatches(query))==1)
     mol = Chem.MolFromSmiles('C(=O)O')
-    assert len(mol.GetSubstructMatches(query))==0
+    self.failUnless(len(mol.GetSubstructMatches(query))==0)
     
     
   def test14Hs(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
-    assert m.GetNumAtoms()==4
+    self.failUnless(m.GetNumAtoms()==4)
 
     m2 = Chem.AddHs(m,1)
-    assert m2.GetNumAtoms()==5
+    self.failUnless(m2.GetNumAtoms()==5)
     m2 = Chem.RemoveHs(m2,1)
-    assert m2.GetNumAtoms()==5
+    self.failUnless(m2.GetNumAtoms()==5)
     m2 = Chem.RemoveHs(m2,0)
-    assert m2.GetNumAtoms()==4
+    self.failUnless(m2.GetNumAtoms()==4)
     
     m2 = Chem.AddHs(m,0)
-    assert m2.GetNumAtoms()==8
+    self.failUnless(m2.GetNumAtoms()==8)
     m2 = Chem.RemoveHs(m2,1)
-    assert m2.GetNumAtoms()==5
+    self.failUnless(m2.GetNumAtoms()==5)
     m2 = Chem.RemoveHs(m2)
-    assert m2.GetNumAtoms()==4
+    self.failUnless(m2.GetNumAtoms()==4)
     
   def test15Neighbors(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
-    assert m.GetNumAtoms()==4
+    self.failUnless(m.GetNumAtoms()==4)
     
     a = m.GetAtomWithIdx(1)
     ns = a.GetNeighbors()
-    assert len(ns)==3
+    self.failUnless(len(ns)==3)
 
     bs = a.GetBonds()
-    assert len(bs)==3
+    self.failUnless(len(bs)==3)
 
     for b in bs:
       try:
         a2 = b.GetOtherAtom(a)
       except:
         a2=None
-      assert a2
-    assert len(bs)==3
+      self.failUnless(a2)
+    self.failUnless(len(bs)==3)
 
   def test16Pickle(self):
     import cPickle
@@ -418,199 +418,199 @@ class TestCase(unittest.TestCase):
     m2 = cPickle.loads(pkl)
     smi1 = Chem.MolToSmiles(m)
     smi2 = Chem.MolToSmiles(m2)
-    assert smi1==smi2
+    self.failUnless(smi1==smi2)
     
   def test16Props(self):
     m = Chem.MolFromSmiles('C1=CN=CC=C1')
-    assert not m.HasProp('prop1')
-    assert not m.HasProp('prop2')
-    assert not m.HasProp('prop2')
+    self.failUnless(not m.HasProp('prop1'))
+    self.failUnless(not m.HasProp('prop2'))
+    self.failUnless(not m.HasProp('prop2'))
     m.SetProp('prop1','foob')
-    assert not m.HasProp('prop2')
-    assert m.HasProp('prop1')
-    assert m.GetProp('prop1')=='foob'
-    assert not m.HasProp('propo')
+    self.failUnless(not m.HasProp('prop2'))
+    self.failUnless(m.HasProp('prop1'))
+    self.failUnless(m.GetProp('prop1')=='foob')
+    self.failUnless(not m.HasProp('propo'))
     try:
       m.GetProp('prop2')
     except KeyError:
       ok=1
     else:
       ok=0
-    assert ok
+    self.failUnless(ok)
 
     # test computed properties
     m.SetProp('cprop1', 'foo', 1)
     m.SetProp('cprop2', 'foo2', 1)
 
     m.ClearComputedProps()
-    assert not m.HasProp('cprop1')
-    assert not m.HasProp('cprop2')
+    self.failUnless(not m.HasProp('cprop1'))
+    self.failUnless(not m.HasProp('cprop2'))
 
   def test17Kekulize(self):
     m = Chem.MolFromSmiles('c1ccccc1')
     smi = Chem.MolToSmiles(m)
-    assert smi=='c1ccccc1'
+    self.failUnless(smi=='c1ccccc1')
 
     Chem.Kekulize(m)
     smi = Chem.MolToSmiles(m)
-    assert smi=='c1ccccc1'
+    self.failUnless(smi=='c1ccccc1')
 
     m = Chem.MolFromSmiles('c1ccccc1')
     smi = Chem.MolToSmiles(m)
-    assert smi=='c1ccccc1'
+    self.failUnless(smi=='c1ccccc1')
 
     Chem.Kekulize(m,1)
     smi = Chem.MolToSmiles(m)
-    assert smi=='C1=CC=CC=C1', smi
+    self.failUnless(smi=='C1=CC=CC=C1', smi)
 
   def test18Paths(self):
 
 
     m = Chem.MolFromSmiles("C1CC2C1CC2")
-    #assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7
+    #self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
     #print Chem.FindAllPathsOfLengthN(m,3,useBonds=0)
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==10,\
-           Chem.FindAllPathsOfLengthN(m,2,useBonds=1)
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==14
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==10,
+           Chem.FindAllPathsOfLengthN(m,2,useBonds=1))
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==14)
     
 
     m = Chem.MolFromSmiles('C1CC1C')
-    assert m
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==4
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3,Chem.FindAllPathsOfLengthN(m,3,useBonds=1)
-    assert len(Chem.FindAllPathsOfLengthN(m,4,useBonds=1))==1,Chem.FindAllPathsOfLengthN(m,4,useBonds=1)
-    assert len(Chem.FindAllPathsOfLengthN(m,5,useBonds=1))==0,Chem.FindAllPathsOfLengthN(m,5,useBonds=1)
+    self.failUnless(m)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==4)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3,Chem.FindAllPathsOfLengthN(m,3,useBonds=1))
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,4,useBonds=1))==1,Chem.FindAllPathsOfLengthN(m,4,useBonds=1))
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,5,useBonds=1))==0,Chem.FindAllPathsOfLengthN(m,5,useBonds=1))
 
     #
     #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
     #  Rev. Comp. Chem. vol 2, 367-422, (1991)
     #
     m = Chem.MolFromSmiles("CCCCCC")
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==4
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==4)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3)
     
     m = Chem.MolFromSmiles("CCC(C)CC")
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==4,Chem.FindAllPathsOfLengthN(m,3,useBonds=1)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==4,Chem.FindAllPathsOfLengthN(m,3,useBonds=1))
     
     m = Chem.MolFromSmiles("CCCC(C)C")
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3)
     
     m = Chem.MolFromSmiles("CC(C)C(C)C")
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==6
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==4
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==6)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==4)
     
     m = Chem.MolFromSmiles("CC(C)(C)CC")
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==7
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3,Chem.FindAllPathsOfLengthN(m,3,useBonds=1)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==7)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3,Chem.FindAllPathsOfLengthN(m,3,useBonds=1))
     
     m = Chem.MolFromSmiles("C1CCCCC1")
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==6
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==6
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==6
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==6)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==6)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==6)
     
     m = Chem.MolFromSmiles("C1CC2C1CC2")
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==10,\
-           Chem.FindAllPathsOfLengthN(m,2,useBonds=1)
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==14
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==10,
+           Chem.FindAllPathsOfLengthN(m,2,useBonds=1))
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==14)
     
     
     m = Chem.MolFromSmiles("CC2C1CCC12")
-    assert len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7
-    assert len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==11
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==11)
     # FIX: this result disagrees with the paper (which says 13),
     #   but it seems right
-    assert len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==15,\
-           Chem.FindAllPathsOfLengthN(m,3,useBonds=1)
+    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==15,
+           Chem.FindAllPathsOfLengthN(m,3,useBonds=1))
     
     
     
   def test19Subgraphs(self):
     m = Chem.MolFromSmiles('C1CC1C')
-    assert m
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1,0))==4
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==5
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==4
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,4))==1
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,5))==0
+    self.failUnless(m)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1,0))==4)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==5)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==4)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,4))==1)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,5))==0)
 
     #
     #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
     #  Rev. Comp. Chem. vol 2, 367-422, (1991)
     #
     m = Chem.MolFromSmiles("CCCCCC")
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1))==5
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==4
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==3
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==4)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==3)
     
     m = Chem.MolFromSmiles("CCC(C)CC")
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1))==5
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==5
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==5
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==5)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==5)
     
     m = Chem.MolFromSmiles("CCCC(C)C")
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1))==5
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==5
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==4
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==5)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==4)
     
     m = Chem.MolFromSmiles("CC(C)C(C)C")
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1))==5
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==6
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==6
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==6)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==6)
     
     m = Chem.MolFromSmiles("CC(C)(C)CC")
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1))==5
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==7
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==7,Chem.FindAllSubgraphsOfLengthN(m,3)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==7)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==7,Chem.FindAllSubgraphsOfLengthN(m,3))
     
     m = Chem.MolFromSmiles("C1CCCCC1")
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1))==6
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==6
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==6
-    #assert len(Chem.FindUniqueSubgraphsOfLengthN(m,1))==1
-    assert len(Chem.FindUniqueSubgraphsOfLengthN(m,2))==1
-    assert len(Chem.FindUniqueSubgraphsOfLengthN(m,3))==1
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==6)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==6)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==6)
+    #self.failUnless(len(Chem.FindUniqueSubgraphsOfLengthN(m,1))==1)
+    self.failUnless(len(Chem.FindUniqueSubgraphsOfLengthN(m,2))==1)
+    self.failUnless(len(Chem.FindUniqueSubgraphsOfLengthN(m,3))==1)
     
     m = Chem.MolFromSmiles("C1CC2C1CC2")
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1))==7
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==10
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==16
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==7)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==10)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==16)
     
 
     m = Chem.MolFromSmiles("CC2C1CCC12")
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,1))==7
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,2))==11
-    assert len(Chem.FindAllSubgraphsOfLengthN(m,3))==18,\
-           len(Chem.FindAllSubgraphsOfLengthN(m,3))
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==7)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==11)
+    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==18,
+           len(Chem.FindAllSubgraphsOfLengthN(m,3)))
     
     
   def test20IsInRing(self):
     m = Chem.MolFromSmiles('C1CCC1C')
-    assert m
-    assert m.GetAtomWithIdx(0).IsInRingSize(4)
-    assert m.GetAtomWithIdx(1).IsInRingSize(4)
-    assert m.GetAtomWithIdx(2).IsInRingSize(4)
-    assert m.GetAtomWithIdx(3).IsInRingSize(4)
-    assert not m.GetAtomWithIdx(4).IsInRingSize(4)
+    self.failUnless(m)
+    self.failUnless(m.GetAtomWithIdx(0).IsInRingSize(4))
+    self.failUnless(m.GetAtomWithIdx(1).IsInRingSize(4))
+    self.failUnless(m.GetAtomWithIdx(2).IsInRingSize(4))
+    self.failUnless(m.GetAtomWithIdx(3).IsInRingSize(4))
+    self.failUnless(not m.GetAtomWithIdx(4).IsInRingSize(4))
     
-    assert not m.GetAtomWithIdx(0).IsInRingSize(3)
-    assert not m.GetAtomWithIdx(1).IsInRingSize(3)
-    assert not m.GetAtomWithIdx(2).IsInRingSize(3)
-    assert not m.GetAtomWithIdx(3).IsInRingSize(3)
-    assert not m.GetAtomWithIdx(4).IsInRingSize(3)
+    self.failUnless(not m.GetAtomWithIdx(0).IsInRingSize(3))
+    self.failUnless(not m.GetAtomWithIdx(1).IsInRingSize(3))
+    self.failUnless(not m.GetAtomWithIdx(2).IsInRingSize(3))
+    self.failUnless(not m.GetAtomWithIdx(3).IsInRingSize(3))
+    self.failUnless(not m.GetAtomWithIdx(4).IsInRingSize(3))
     
-    assert m.GetBondWithIdx(0).IsInRingSize(4)
-    assert not m.GetBondWithIdx(3).IsInRingSize(4)
-    assert not m.GetBondWithIdx(0).IsInRingSize(3)
-    assert not m.GetBondWithIdx(3).IsInRingSize(3)
+    self.failUnless(m.GetBondWithIdx(0).IsInRingSize(4))
+    self.failUnless(not m.GetBondWithIdx(3).IsInRingSize(4))
+    self.failUnless(not m.GetBondWithIdx(0).IsInRingSize(3))
+    self.failUnless(not m.GetBondWithIdx(3).IsInRingSize(3))
     
   def test21Robustification(self):
     ok = False
@@ -623,36 +623,36 @@ class TestCase(unittest.TestCase):
     #  ok=True
     except:
       ok=True
-    assert ok  
+    self.failUnless(ok  )
 
   def test22DeleteSubstruct(self) :
     query = Chem.MolFromSmarts('C(=O)O')
     mol = Chem.MolFromSmiles('CCC(=O)O')
     nmol = Chem.DeleteSubstructs(mol, query)
     
-    assert Chem.MolToSmiles(nmol) == 'CC'
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CC')
 
     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
     # now delete only fragments
     nmol = Chem.DeleteSubstructs(mol, query, 1)
-    assert Chem.MolToSmiles(nmol) == 'CCC(O)=O',Chem.MolToSmiles(nmol)
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(O)=O',Chem.MolToSmiles(nmol))
     
     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
     nmol = Chem.DeleteSubstructs(mol, query, 0)
-    assert Chem.MolToSmiles(nmol) == 'CC'
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CC')
     
     mol = Chem.MolFromSmiles('CCCO')
     nmol = Chem.DeleteSubstructs(mol, query, 0)
-    assert Chem.MolToSmiles(nmol) == 'CCCO'
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CCCO')
 
     # Issue 96 prevented this from working:
     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
     nmol = Chem.DeleteSubstructs(mol, query, 1)
-    assert Chem.MolToSmiles(nmol) == 'CCC(O)=O'
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(O)=O')
     nmol = Chem.DeleteSubstructs(nmol, query, 1)
-    assert Chem.MolToSmiles(nmol) == 'CCC(O)=O'
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(O)=O')
     nmol = Chem.DeleteSubstructs(nmol, query, 0)
-    assert Chem.MolToSmiles(nmol) == 'CC'
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CC')
 
     
   def test23MolFileParsing(self) :
@@ -661,36 +661,46 @@ class TestCase(unittest.TestCase):
     #fileN = "../FileParsers/test_data/triazine.mol"
     inD = open(fileN,'r').read()
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==9
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==9)
 
     m1 = Chem.MolFromMolFile(fileN)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==9
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==9)
 
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','triazine.mof')
     m1 = Chem.MolFromMolFile(fileN)
-    assert m1 is None
+    self.failUnless(m1 is None)
 
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','list-query.mol')
     #fileN = "../FileParsers/test_data/list-query.mol"
     query = Chem.MolFromMolFile(fileN)
     smi = Chem.MolToSmiles(query)
-    assert smi=='[Du]1=CC=CC=C1'
+    self.failUnless(smi=='[Du]1=CC=CC=C1')
     smi = "C1=CC=CC=C1"
     mol = Chem.MolFromSmiles(smi,0)
-    assert mol.HasSubstructMatch(query)
+    self.failUnless(mol.HasSubstructMatch(query))
     Chem.SanitizeMol(mol)
-    assert not mol.HasSubstructMatch(query)
+    self.failUnless(not mol.HasSubstructMatch(query))
 
     mol = Chem.MolFromSmiles('N1=CC=CC=C1',0)
-    assert mol.HasSubstructMatch(query)
+    self.failUnless(mol.HasSubstructMatch(query))
     mol = Chem.MolFromSmiles('S1=CC=CC=C1',0)
-    assert not mol.HasSubstructMatch(query)
+    self.failUnless(not mol.HasSubstructMatch(query))
     mol = Chem.MolFromSmiles('P1=CC=CC=C1',0)
-    assert mol.HasSubstructMatch(query)
+    self.failUnless(mol.HasSubstructMatch(query))
+
+
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','issue123.mol')
+    mol = Chem.MolFromMolFile(fileN)
+    self.failUnless(mol)
+    self.failUnless(mol.GetNumAtoms()==23)
+    mol = Chem.MolFromMolFile(fileN,removeHs=False)
+    self.failUnless(mol)
+    self.failUnless(mol.GetNumAtoms()==39)
 
   def test24DaylightFingerprint(self):
     import DataStructs
@@ -700,13 +710,13 @@ class TestCase(unittest.TestCase):
     fp2 = Chem.DaylightFingerprint(m2)
 
     tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
-    assert tmp==1.0,tmp
+    self.failUnless(tmp==1.0,tmp)
 
     m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
     fp2 = Chem.DaylightFingerprint(m2)
     tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
-    assert tmp<1.0,tmp
-    assert tmp>0.0,tmp
+    self.failUnless(tmp<1.0,tmp)
+    self.failUnless(tmp>0.0,tmp)
 
   def test25SDMolSupplier(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
@@ -719,40 +729,80 @@ class TestCase(unittest.TestCase):
     chgs192 = {8:1, 11:1, 15:-1, 18:-1, 20:1, 21:1, 23:-1, 25:-1} 
     i = 0
     for mol in sdSup :
-      assert mol
-      assert mol.GetProp("_Name") == molNames[i]
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
       i += 1
       if (mol.GetProp("_Name") == "192") :
         # test parsed charges on one of the molecules
         for id in chgs192.keys() :
-          assert mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id]
+          self.failUnless(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
           
     sdSup.reset()
     
     ns = [mol.GetProp("_Name") for mol in sdSup]
-    assert ns == molNames
+    self.failUnless(ns == molNames)
 
     sdSup = Chem.SDMolSupplier(fileN, 0)
     for mol in sdSup :
-      assert not mol.HasProp("numArom")
+      self.failUnless(not mol.HasProp("numArom"))
 
     sdSup = Chem.SDMolSupplier(fileN)
-    assert len(sdSup) == 16
+    self.failUnless(len(sdSup) == 16)
     mol = sdSup[5]
-    assert mol.GetProp("_Name") == "170"
+    self.failUnless(mol.GetProp("_Name") == "170")
 
+
+    # test handling of H removal:
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','withHs.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    m = sdSup.next()
+    self.failUnless(m)
+    self.failUnless(m.GetNumAtoms()==23)
+    m = sdSup.next()
+    self.failUnless(m)
+    print m.GetNumAtoms()
+    self.failUnless(m.GetNumAtoms()==28)
+
+    sdSup = Chem.SDMolSupplier(fileN,removeHs=False)
+    m = sdSup.next()
+    self.failUnless(m)
+    self.failUnless(m.GetNumAtoms()==39)
+    m = sdSup.next()
+    self.failUnless(m)
+    self.failUnless(m.GetNumAtoms()==30)
+
+    d = file(fileN,'r').read()
+    sdSup.SetData(d)
+    m = sdSup.next()
+    self.failUnless(m)
+    self.failUnless(m.GetNumAtoms()==23)
+    m = sdSup.next()
+    self.failUnless(m)
+    print m.GetNumAtoms()
+    self.failUnless(m.GetNumAtoms()==28)
+
+    sdSup.SetData(d,removeHs=False)
+    m = sdSup.next()
+    self.failUnless(m)
+    self.failUnless(m.GetNumAtoms()==39)
+    m = sdSup.next()
+    self.failUnless(m)
+    self.failUnless(m.GetNumAtoms()==30)
+
+    
   def test26SmiMolSupplier(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','first_200.tpsa.csv')
     #fileN = "../FileParsers/test_data/first_200.tpsa.csv"
     smiSup = Chem.SmilesMolSupplier(fileN, ",", 0, -1)
     mol = smiSup[16];
-    assert mol.GetProp("TPSA") == "46.25"
+    self.failUnless(mol.GetProp("TPSA") == "46.25")
 
     mol = smiSup[8];
-    assert mol.GetProp("TPSA") == "65.18"
+    self.failUnless(mol.GetProp("TPSA") == "65.18")
 
-    assert len(smiSup) == 200
+    self.failUnless(len(smiSup) == 200)
 
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','fewSmi.csv')
@@ -763,13 +813,13 @@ class TestCase(unittest.TestCase):
     names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
     i = 0
     for mol in smiSup:
-      assert mol.GetProp("_Name") == names[i]
+      self.failUnless(mol.GetProp("_Name") == names[i])
       i += 1
       
     mol = smiSup[3]
     
-    assert mol.GetProp("_Name") == "4"
-    assert mol.GetProp("Column_2") == "82.78"
+    self.failUnless(mol.GetProp("_Name") == "4")
+    self.failUnless(mol.GetProp("Column_2") == "82.78")
 
     # and test doing a supplier from text:
     inD = open(fileN,'r').read()
@@ -780,20 +830,20 @@ class TestCase(unittest.TestCase):
     i = 0
     # iteration interface:
     for mol in smiSup:
-      assert mol.GetProp("_Name") == names[i]
+      self.failUnless(mol.GetProp("_Name") == names[i])
       i += 1
-    assert i==10
+    self.failUnless(i==10)
     # random access:
     mol = smiSup[3]
-    assert len(smiSup)==10
-    assert mol.GetProp("_Name") == "4"
-    assert mol.GetProp("Column_2") == "82.78"
+    self.failUnless(len(smiSup)==10)
+    self.failUnless(mol.GetProp("_Name") == "4")
+    self.failUnless(mol.GetProp("Column_2") == "82.78")
 
     # issue 113:
     smiSup.SetData(inD, delimiter=",",
                    smilesColumn=1, nameColumn=0,
                    titleLine=0)
-    assert len(smiSup)==10
+    self.failUnless(len(smiSup)==10)
 
     # and test failure handling:
     inD = """mol-1,CCC
@@ -805,20 +855,20 @@ mol-4,CCOC
                    smilesColumn=1, nameColumn=0,
                    titleLine=0)
     # there are 4 entries in the supplier:
-    assert len(smiSup)==4
+    self.failUnless(len(smiSup)==4)
     # but the 3rd is a None:
-    assert smiSup[2] is None
+    self.failUnless(smiSup[2] is None)
 
 
     text="Id SMILES Column_2\n"+"mol-1 C 1.0\n"+"mol-2 CC 4.0\n"+"mol-4 CCCC 16.0"
     smiSup.SetData(text, delimiter=" ",
                    smilesColumn=1, nameColumn=0,
                    titleLine=1)
-    assert len(smiSup)==3
+    self.failUnless(len(smiSup)==3)
     m = [x for x in smiSup]
-    assert smiSup[2]
-    assert len(m)==3
-    assert m[0].GetProp("Column_2")=="1.0"
+    self.failUnless(smiSup[2])
+    self.failUnless(len(m)==3)
+    self.failUnless(m[0].GetProp("Column_2")=="1.0")
     
     # test simple parsing and Issue 114:
     smis = ['CC','CCC','CCOC','CCCOCC','CCCOCCC']
@@ -826,17 +876,17 @@ mol-4,CCOC
     smiSup.SetData(inD, delimiter=",",
                    smilesColumn=0, nameColumn=-1,
                    titleLine=0)
-    assert len(smiSup)==5
+    self.failUnless(len(smiSup)==5)
     m = [x for x in smiSup]
-    assert smiSup[4]
-    assert len(m)==5
+    self.failUnless(smiSup[4])
+    self.failUnless(len(m)==5)
     
     # order dependance:
     smiSup.SetData(inD, delimiter=",",
                    smilesColumn=0, nameColumn=-1,
                    titleLine=0)
-    assert smiSup[4]
-    assert len(smiSup)==5
+    self.failUnless(smiSup[4])
+    self.failUnless(len(smiSup)==5)
 
     # this was a nasty BC:
     # asking for a particular entry with a higher index than what we've
@@ -848,7 +898,7 @@ mol-4,CCOC
                    titleLine=0)
     m = smiSup.next()
     m = smiSup[3]
-    assert len(smiSup)==4
+    self.failUnless(len(smiSup)==4)
 
     try:
       smiSup[4]
@@ -856,7 +906,7 @@ mol-4,CCOC
       ok=1
     else:
       ok=0
-    assert ok
+    self.failUnless(ok)
 
     smiSup.SetData(inD, delimiter=",",
                    smilesColumn=0, nameColumn=-1,
@@ -867,9 +917,9 @@ mol-4,CCOC
       ok=1
     else:
       ok=0
-    assert ok  
+    self.failUnless(ok)
     sys.stderr.write('>>> This may result in an infinite loop.  It should finish almost instantly\n')
-    assert len(smiSup)==4
+    self.failUnless(len(smiSup)==4)
     sys.stderr.write('<<< OK, it finished.\n')
 
 
@@ -899,8 +949,8 @@ mol-4,CCOC
     i = 0
     for mol in smiSup:
       #print [repr(x) for x in mol.GetPropNames()]
-      assert mol.GetProp("_Name") == names[i]
-      assert mol.GetProp("Column_2") == props[i]
+      self.failUnless(mol.GetProp("_Name") == names[i])
+      self.failUnless(mol.GetProp("Column_2") == props[i])
       i += 1
       
   def writerSDFile(self) :
@@ -927,12 +977,12 @@ mol-4,CCOC
     for mol in sdSup :
       #print 'mol:',mol
       #print '\t',molNames[i]
-      assert mol.GetProp("_Name") == molNames[i]
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
       i += 1
       if (mol.GetProp("_Name") == "192") :
         # test parsed charges on one of the molecules
         for id in chgs192.keys() :
-          assert mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id]
+          self.failUnless(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
 
   def test30Issues109and110(self) :
     """ issues 110 and 109 were both related to handling of explicit Hs in
@@ -940,52 +990,52 @@ mol-4,CCOC
        
     """ 
     m1 = Chem.MolFromSmiles('N12[C@H](SC(C)(C)[C@@H]1C(O)=O)[C@@H](C2=O)NC(=O)[C@H](N)c3ccccc3')
-    assert m1.GetNumAtoms()==24
+    self.failUnless(m1.GetNumAtoms()==24)
     m2 = Chem.MolFromSmiles('C1C=C([C@H](N)C(=O)N[C@@]2([H])[C@]3([H])SC(C)(C)[C@@H](C(=O)O)N3C(=O)2)C=CC=1')
-    assert m2.GetNumAtoms()==24
+    self.failUnless(m2.GetNumAtoms()==24)
 
     smi1 = Chem.MolToSmiles(m1)
     smi2 = Chem.MolToSmiles(m2)
-    assert smi1==smi2
+    self.failUnless(smi1==smi2)
 
     m1 = Chem.MolFromSmiles('[H]CCl')
-    assert m1.GetNumAtoms()==2
-    assert m1.GetAtomWithIdx(0).GetNumExplicitHs()==0
+    self.failUnless(m1.GetNumAtoms()==2)
+    self.failUnless(m1.GetAtomWithIdx(0).GetNumExplicitHs()==0)
     m1 = Chem.MolFromSmiles('[H][CH2]Cl')
-    assert m1.GetNumAtoms()==2
-    assert m1.GetAtomWithIdx(0).GetNumExplicitHs()==3
+    self.failUnless(m1.GetNumAtoms()==2)
+    self.failUnless(m1.GetAtomWithIdx(0).GetNumExplicitHs()==3)
     m2 = Chem.AddHs(m1)
-    assert m2.GetNumAtoms()==5
+    self.failUnless(m2.GetNumAtoms()==5)
     m2 = Chem.RemoveHs(m2)
-    assert m2.GetNumAtoms()==2
+    self.failUnless(m2.GetNumAtoms()==2)
     
   def test31ChiralitySmiles(self) :
     m1 = Chem.MolFromSmiles('F[C@](Br)(I)Cl')
-    assert m1 is not None
-    assert m1.GetNumAtoms()==5
-    assert Chem.MolToSmiles(m1,1)=='F[C@](Cl)(Br)I',Chem.MolToSmiles(m1,1)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==5)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='F[C@](Cl)(Br)I',Chem.MolToSmiles(m1,1))
 
     m1 = Chem.MolFromSmiles('CC1C[C@@]1(Cl)F')
-    assert m1 is not None
-    assert m1.GetNumAtoms()==6
-    assert Chem.MolToSmiles(m1,1)=='CC1C[C@]1(F)Cl',Chem.MolToSmiles(m1,1)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==6)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='CC1C[C@]1(F)Cl',Chem.MolToSmiles(m1,1))
 
     m1 = Chem.MolFromSmiles('CC1C[C@]1(Cl)F')
-    assert m1 is not None
-    assert m1.GetNumAtoms()==6
-    assert Chem.MolToSmiles(m1,1)=='CC1C[C@@]1(F)Cl',Chem.MolToSmiles(m1,1)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==6)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='CC1C[C@@]1(F)Cl',Chem.MolToSmiles(m1,1))
 
 
   def test31aChiralitySubstructs(self) :
     m1 = Chem.MolFromSmiles('CC1C[C@@]1(Cl)F')
-    assert m1 is not None
-    assert m1.GetNumAtoms()==6
-    assert Chem.MolToSmiles(m1,1)=='CC1C[C@]1(F)Cl',Chem.MolToSmiles(m1,1)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==6)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='CC1C[C@]1(F)Cl',Chem.MolToSmiles(m1,1))
 
     m2 = Chem.MolFromSmiles('CC1C[C@]1(Cl)F')
-    assert m2 is not None
-    assert m2.GetNumAtoms()==6
-    assert Chem.MolToSmiles(m2,1)=='CC1C[C@@]1(F)Cl',Chem.MolToSmiles(m2,1)
+    self.failUnless(m2 is not None)
+    self.failUnless(m2.GetNumAtoms()==6)
+    self.failUnless(Chem.MolToSmiles(m2,1)=='CC1C[C@@]1(F)Cl',Chem.MolToSmiles(m2,1))
 
     self.failUnless(m1.HasSubstructMatch(m1))
     self.failUnless(m1.HasSubstructMatch(m2))
@@ -1012,9 +1062,9 @@ mol-4,CCOC
 M  END
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==5
-    assert smi=='F[C@](Cl)(Br)I',smi
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==5)
+    self.failUnless(smi=='F[C@](Cl)(Br)I',smi)
 
     inD = """chiral2.cdxml
   ChemDraw10160314052D
@@ -1032,9 +1082,9 @@ M  END
 M  END
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==5
-    assert Chem.MolToSmiles(m1,1)=='F[C@@](Cl)(Br)I'
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==5)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='F[C@@](Cl)(Br)I')
 
     inD = """chiral1.mol
   ChemDraw10160313232D
@@ -1052,9 +1102,9 @@ M  END
 M  END
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==5
-    assert Chem.MolToSmiles(m1,1)=='F[C@](Cl)(Br)I'
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==5)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='F[C@](Cl)(Br)I')
 
     inD = """chiral1.mol
   ChemDraw10160313232D
@@ -1072,9 +1122,9 @@ M  END
 M  END
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==5
-    assert Chem.MolToSmiles(m1,1)=='F[C@](Cl)(Br)I'
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==5)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='F[C@](Cl)(Br)I')
 
     inD = """chiral3.mol
   ChemDraw10160314362D
@@ -1091,9 +1141,9 @@ M  END
 
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==4
-    assert Chem.MolToSmiles(m1,1)=='F[C@H](Cl)Br'
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==4)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='F[C@H](Cl)Br')
 
     inD = """chiral4.mol
   ChemDraw10160314362D
@@ -1110,9 +1160,9 @@ M  END
 
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==4
-    assert Chem.MolToSmiles(m1,1)=='FN(Cl)Br'
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==4)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='FN(Cl)Br')
 
     inD = """chiral5.mol
   ChemDraw10160314362D
@@ -1130,9 +1180,9 @@ M  END
 
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==4
-    assert Chem.MolToSmiles(m1,1)=='F[N@H+](Cl)Br'
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==4)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='F[N@H+](Cl)Br')
 
     inD="""Case 10-14-3
   ChemDraw10140308512D
@@ -1148,9 +1198,9 @@ M  END
 M  END
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==4
-    assert Chem.MolToSmiles(m1,1)=='F[C@H](Cl)Br'
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==4)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='F[C@H](Cl)Br')
 
     inD="""Case 10-14-4
   ChemDraw10140308512D
@@ -1167,9 +1217,9 @@ M  END
 
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==4
-    assert Chem.MolToSmiles(m1,1)=='F[C@H](Cl)Br'
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==4)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='F[C@H](Cl)Br')
 
     inD="""chiral4.mol
   ChemDraw10160315172D
@@ -1190,9 +1240,9 @@ M  END
 M  END
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==6
-    assert Chem.MolToSmiles(m1,1)=='CC1C[C@@]1(F)Cl',Chem.MolToSmiles(m1,1)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==6)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='CC1C[C@@]1(F)Cl',Chem.MolToSmiles(m1,1))
 
     inD="""chiral4.mol
   ChemDraw10160315172D
@@ -1213,9 +1263,9 @@ M  END
 M  END
 """
     m1 = Chem.MolFromMolBlock(inD)
-    assert m1 is not None
-    assert m1.GetNumAtoms()==6
-    assert Chem.MolToSmiles(m1,1)=='CC1C[C@]1(F)Cl',Chem.MolToSmiles(m1,1)
+    self.failUnless(m1 is not None)
+    self.failUnless(m1.GetNumAtoms()==6)
+    self.failUnless(Chem.MolToSmiles(m1,1)=='CC1C[C@]1(F)Cl',Chem.MolToSmiles(m1,1))
 
   def test33Issue65(self) :
     """ issue 65 relates to handling of [H] in SMARTS
@@ -1228,17 +1278,17 @@ M  END
     q2 = Chem.MolFromSmarts('O[C;H1]',1)
     q3 = Chem.MolFromSmarts('O[C;H1][H]',1)
 
-    assert not m1.HasSubstructMatch(q1)
-    assert not m1.HasSubstructMatch(q2)
-    assert not m1.HasSubstructMatch(q3)
+    self.failUnless(not m1.HasSubstructMatch(q1))
+    self.failUnless(not m1.HasSubstructMatch(q2))
+    self.failUnless(not m1.HasSubstructMatch(q3))
 
-    assert m2.HasSubstructMatch(q1)
-    assert m2.HasSubstructMatch(q2)
-    assert m2.HasSubstructMatch(q3)
+    self.failUnless(m2.HasSubstructMatch(q1))
+    self.failUnless(m2.HasSubstructMatch(q2))
+    self.failUnless(m2.HasSubstructMatch(q3))
 
-    assert m3.HasSubstructMatch(q1)
-    assert not m3.HasSubstructMatch(q2)
-    assert not m3.HasSubstructMatch(q3)
+    self.failUnless(m3.HasSubstructMatch(q1))
+    self.failUnless(not m3.HasSubstructMatch(q2))
+    self.failUnless(not m3.HasSubstructMatch(q3))
 
     m1H = Chem.AddHs(m1)
     m2H = Chem.AddHs(m2)
@@ -1247,18 +1297,18 @@ M  END
     q2 = Chem.MolFromSmarts('O[C;H1]')
     q3 = Chem.MolFromSmarts('O[C;H1][H]')
 
-    assert not m1H.HasSubstructMatch(q1)
-    assert not m1H.HasSubstructMatch(q2)
-    assert not m1H.HasSubstructMatch(q3)
+    self.failUnless(not m1H.HasSubstructMatch(q1))
+    self.failUnless(not m1H.HasSubstructMatch(q2))
+    self.failUnless(not m1H.HasSubstructMatch(q3))
 
     #m2H.Debug()
-    assert m2H.HasSubstructMatch(q1)
-    assert m2H.HasSubstructMatch(q2)
-    assert m2H.HasSubstructMatch(q3)
+    self.failUnless(m2H.HasSubstructMatch(q1))
+    self.failUnless(m2H.HasSubstructMatch(q2))
+    self.failUnless(m2H.HasSubstructMatch(q3))
 
-    assert m3H.HasSubstructMatch(q1)
-    assert not m3H.HasSubstructMatch(q2)
-    assert not m3H.HasSubstructMatch(q3)
+    self.failUnless(m3H.HasSubstructMatch(q1))
+    self.failUnless(not m3H.HasSubstructMatch(q2))
+    self.failUnless(not m3H.HasSubstructMatch(q3))
 
 
 
@@ -1268,12 +1318,12 @@ M  END
     """ 
     m = Chem.MolFromSmiles('CC=C')
     d = Chem.GetDistanceMatrix(m,0)
-    assert feq(d[0,1],1.0)
-    assert feq(d[0,2],2.0)
+    self.failUnless(feq(d[0,1],1.0))
+    self.failUnless(feq(d[0,2],2.0))
     # force an update:
     d = Chem.GetDistanceMatrix(m,1,0,1)
-    assert feq(d[0,1],1.0)
-    assert feq(d[0,2],1.5)
+    self.failUnless(feq(d[0,1],1.0))
+    self.failUnless(feq(d[0,2],1.5))
 
   def test35ChiralityPerception(self) :
     """ Test perception of chirality and CIP encoding       
@@ -1302,21 +1352,21 @@ M  END
   def test36SubstructMatchStr(self):
     """ test the _SubstructMatchStr function """
     query = Chem.MolFromSmarts('[n,p]1ccccc1')
-    assert query
+    self.failUnless(query)
     mol = Chem.MolFromSmiles('N1=CC=CC=C1')
-    assert mol.HasSubstructMatch(query)
-    assert Chem._HasSubstructMatchStr(mol.ToBinary(),query)
+    self.failUnless(mol.HasSubstructMatch(query))
+    self.failUnless(Chem._HasSubstructMatchStr(mol.ToBinary(),query))
     mol = Chem.MolFromSmiles('S1=CC=CC=C1')
-    assert not Chem._HasSubstructMatchStr(mol.ToBinary(),query)
-    assert not mol.HasSubstructMatch(query)
+    self.failUnless(not Chem._HasSubstructMatchStr(mol.ToBinary(),query))
+    self.failUnless(not mol.HasSubstructMatch(query))
     mol = Chem.MolFromSmiles('P1=CC=CC=C1')
-    assert mol.HasSubstructMatch(query)
-    assert Chem._HasSubstructMatchStr(mol.ToBinary(),query)
+    self.failUnless(mol.HasSubstructMatch(query))
+    self.failUnless(Chem._HasSubstructMatchStr(mol.ToBinary(),query))
 
     
   def test37SanitException(self):
     mol = Chem.MolFromSmiles('CC(C)(C)(C)C',0)
-    assert mol
+    self.failUnless(mol)
     self.failUnlessRaises(ValueError,lambda:Chem.SanitizeMol(mol))
 
   def test38TDTSuppliers(self):
@@ -1399,32 +1449,32 @@ CAS<~>
     indices=[0, 2136, 6198, 8520, 11070, 12292, 14025, 15313, 17313, 20125, 22231,
 	     23729, 26147, 28331, 32541, 33991]
     sdSup._SetStreamIndices(indices)
-    assert len(sdSup) == 16
+    self.failUnless(len(sdSup) == 16)
     mol = sdSup[5]
-    assert mol.GetProp("_Name") == "170"
+    self.failUnless(mol.GetProp("_Name") == "170")
     
     i = 0
     for mol in sdSup :
-      assert mol
-      assert mol.GetProp("_Name") == molNames[i]
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
       i += 1
           
     ns = [mol.GetProp("_Name") for mol in sdSup]
-    assert ns == molNames
+    self.failUnless(ns == molNames)
 
     # this can also be used to skip molecules in the file:
     indices=[0, 6198, 12292]
     sdSup._SetStreamIndices(indices)
-    assert len(sdSup) == 3
+    self.failUnless(len(sdSup) == 3)
     mol = sdSup[2]
-    assert mol.GetProp("_Name") == "170"
+    self.failUnless(mol.GetProp("_Name") == "170")
 
     # or to reorder them:
     indices=[0, 12292, 6198]
     sdSup._SetStreamIndices(indices)
-    assert len(sdSup) == 3
+    self.failUnless(len(sdSup) == 3)
     mol = sdSup[1]
-    assert mol.GetProp("_Name") == "170"
+    self.failUnless(mol.GetProp("_Name") == "170")
 
   def test42LifeTheUniverseAndEverything(self) :
     self.failUnless(True)

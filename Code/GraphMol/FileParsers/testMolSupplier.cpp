@@ -1200,6 +1200,39 @@ int testMixIterAndRandom() {
 }
 
 
+int testRemoveHs() {
+  
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/withHs.sdf";
+  
+  SDMolSupplier sdsup(fname);
+  ROMol *nmol;
+
+  nmol = sdsup.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==23);
+  delete nmol;
+  nmol = sdsup.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==28);
+  delete nmol;
+
+  SDMolSupplier sdsup2(fname,true,false);
+  nmol = sdsup2.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==39);
+  delete nmol;
+  nmol = sdsup2.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==30);
+  delete nmol;
+
+
+  return 1;
+}
+
+
+
 
 int main() {
   RDLog::InitLogs();
@@ -1318,6 +1351,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testMixIterAndRandom();
   BOOST_LOG(rdErrorLog) <<"Finished: testMixIterAndRandom()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testRemoveHs();
+  BOOST_LOG(rdErrorLog) <<"Finished: testRemoveHs()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   
