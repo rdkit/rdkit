@@ -63,8 +63,9 @@ namespace RDKit {
       python::class_<SDMolSupplier,boost::noncopyable>("SDMolSupplier",
 						       sdMolSupplierClassDoc.c_str(),
 						       python::init<>())
-	.def(python::init<std::string,bool,bool>((python::arg("fileName"), python::arg("sanitize")=true,
-                                             python::arg("removeHs")=true)))
+	.def(python::init<std::string,bool,bool>((python::arg("fileName"),
+						  python::arg("sanitize")=true,
+						  python::arg("removeHs")=true)))
 	.def("__iter__", (SDMolSupplier *(*)(SDMolSupplier *))&MolSupplIter,
 	     python::return_value_policy<python::reference_existing_object>())
 	.def("next", (ROMol *(*)(SDMolSupplier *))&MolSupplNext,
@@ -78,7 +79,7 @@ namespace RDKit {
 	.def("SetData", &SDMolSupplier::setData,
 	     "Sets the text to be parsed",
 	     (python::arg("self"),python::arg("data"),python::arg("sanitize")=true,
-              python::arg("sanitize")=true))
+              python::arg("removeHs")=true))
 	.def("_SetStreamIndices", setStreamIndices,
 	     "Sets the locations of mol beginnings in the input stream. Be *very* careful with this method.",
 	     (python::arg("self"),python::arg("locs")))
