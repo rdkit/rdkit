@@ -26,9 +26,9 @@ if hasattr(sys,'frozen') and sys.frozen==1:
 
 from qtGui.Search3D import LocalConfig
 if hasattr(sys,'frozen') and sys.frozen==1:
-  LocalConfig.applicationName='CCQuickAlign'
+  LocalConfig.applicationName='RDPharm3D'
   LocalConfig.neighborhoodRadius=7.5
-  LocalConfig.logFilename='CCQuickAlign_log.txt'
+  LocalConfig.logFilename='RDPharm3D_log.txt'
 from qt import *
 # we put this up here so that the splash can display while everything imports
 
@@ -36,12 +36,12 @@ _splashMessage="""
 -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
   %s version %s
 
-  Copyright (C) 2005,2006 Rational Discovery LLC
+  Copyright (C) 2005-2007 Greg Landrum
 
-  This software is copyrighted.  The software may not be copied,
-  reproduced, translated or reduced to any electronic medium or
-  machine-readable form without the prior written consent of
-  Rational Discovery LLC.
+  This open-source software is part of RDKit (www.rdkit.org).
+  Please see the file license.txt for information about the
+  license.
+
 -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 """%(LocalConfig.applicationName,_version)
 
