@@ -17,10 +17,7 @@ class TestCase(unittest.TestCase):
     #sys.stderr.write('\n%s: \n'%self.shortDescription())
     #sys.stderr.flush()
     self.baseDir = os.path.join(RDConfig.RDCodeDir,'Dbase','testData')
-    if not RDConfig.usePgSQL:
-      self.dbName = os.path.join(self.baseDir,'test.sqlt')
-    else:
-      self.dbName = "::RDTests"
+    self.dbName = RDConfig.RDTestDatabase
     self.colHeads=('int_col','floatCol','strCol')
     self.colTypes=('integer','float','string')
 

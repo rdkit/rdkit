@@ -303,9 +303,11 @@ class DbConnect(object):
     try:
       c.execute('drop table %s cascade'%tableName)
     except:
-      pass
-    else:
-      self.Commit()
+      try:
+        c.execute('drop table %s'%tableName)
+      except:
+        pass
+    self.Commit()
 
     addStr = 'create table %s (%s)'%(tableName,colString)
     try:

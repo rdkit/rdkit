@@ -16,10 +16,7 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
     self.baseDir = os.path.join(RDConfig.RDCodeDir,'Dbase','testData')
-    if not RDConfig.usePgSQL:
-      self.dbName = os.path.join(self.baseDir,'TEST.GDB')
-    else:
-      self.dbName = "::RDTests"
+    self.dbName =  RDConfig.RDTestDatabase
     self.colHeads=('int_col','floatCol','strCol')
     self.colTypes=('integer','float','string')
 
@@ -30,6 +27,9 @@ class TestCase(unittest.TestCase):
     names = [x[0] for x in res]
     for i in range(len(names)):
       assert names[i].upper()==self.colHeads[i].upper(),'bad column head'
+    if RDConfig.useSqlLite:
+      # doesn't seem to be any column type info available
+      return
     types = [x[1] for x in res]
     for i in range(len(types)):
       assert types[i]==self.colTypes[i],'bad column type'

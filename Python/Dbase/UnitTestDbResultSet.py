@@ -14,10 +14,7 @@ from Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    if not RDConfig.usePgSQL:
-      self.dbName = os.path.join(RDConfig.RDCodeDir,'Dbase','testData','TEST.GDB')
-    else:
-      self.dbName = "::RDTests"
+    self.dbName =  RDConfig.RDTestDatabase
     self.conn = DbConnect(self.dbName)
     self.curs = self.conn.GetCursor()
 

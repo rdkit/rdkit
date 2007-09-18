@@ -85,17 +85,17 @@ def IndexToRDId(idx,leadText='RDCmpd'):
     leadText-xxx-xxx-xxx-y
   The number blocks are zero padded and the the final digit (y)
   is a checksum:
-  >>> IndexToRDId(9)
+  >>> str(IndexToRDId(9))
   'RDCmpd-000-009-9'
-  >>> IndexToRDId(9009)
+  >>> str(IndexToRDId(9009))
   'RDCmpd-009-009-8'
 
   A millions block is included if it's nonzero:
-  >>> IndexToRDId(9000009)
+  >>> str(IndexToRDId(9000009))
   'RDCmpd-009-000-009-8'
 
   The text at the beginning can be altered:
-  >>> IndexToRDId(9,leadText='RDAlt')
+  >>> str(IndexToRDId(9,leadText='RDAlt'))
   'RDAlt-000-009-9'
 
   Negative indices are errors:
@@ -163,29 +163,25 @@ def RegisterItem(conn,table,value,columnName,data=None,
                  id='',idColName='Id',leadText='RDCmpd'):
   """
 
-  >>> if not RDConfig.usePgSQL:
-  ...   import os
-  ...   dbName = os.path.join(RDConfig.RDCodeDir,'Dbase','testData','TEST.GDB')
-  ... else:
-  ...   dbName = "::RDTests"
+  >>> dbName =  RDConfig.RDTestDatabase
   >>> conn = DbConnect(dbName)
   >>> tblName = 'StorageTest'
   >>> conn.AddTable(tblName,'id varchar(32) not null primary key,label varchar(40),val int')
-  >>> RegisterItem(conn,tblName,'label1','label',['label1',1])
-  (1, 'RDCmpd-000-001-1')
-  >>> RegisterItem(conn,tblName,'label2','label',['label2',1])
-  (1, 'RDCmpd-000-002-2')
-  >>> RegisterItem(conn,tblName,'label1','label',['label1',1])
-  (0, 'RDCmpd-000-001-1')
-  >>> GetNextRDId(conn,tblName)
+  >>> RegisterItem(conn,tblName,'label1','label',['label1',1])==(1, 'RDCmpd-000-001-1')
+  True
+  >>> RegisterItem(conn,tblName,'label2','label',['label2',1])==(1, 'RDCmpd-000-002-2')
+  True
+  >>> RegisterItem(conn,tblName,'label1','label',['label1',1])==(0, 'RDCmpd-000-001-1')
+  True
+  >>> str(GetNextRDId(conn,tblName))
   'RDCmpd-000-003-3'
-  >>> tuple(conn.GetData(table=tblName)[0])
-  ('RDCmpd-000-001-1', 'label1', 1)
+  >>> tuple(conn.GetData(table=tblName)[0])==('RDCmpd-000-001-1', 'label1', 1)
+  True
 
   It's also possible to provide ids by hand:
-  >>> RegisterItem(conn,tblName,'label10','label',['label10',1],id='RDCmpd-000-010-1')
-  (1, 'RDCmpd-000-010-1')
-  >>> GetNextRDId(conn,tblName)
+  >>> RegisterItem(conn,tblName,'label10','label',['label10',1],id='RDCmpd-000-010-1')==(1, 'RDCmpd-000-010-1')
+  True
+  >>> str(GetNextRDId(conn,tblName))
   'RDCmpd-000-011-2'
 
   """

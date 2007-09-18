@@ -38,6 +38,8 @@ SET default_with_oids = true;
 -- Name: basic_2class; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
 
+drop table basic_2class cascade;
+
 CREATE TABLE basic_2class (
     id character varying(5),
     val double precision,
@@ -50,6 +52,7 @@ ALTER TABLE public.basic_2class OWNER TO sysdba;
 --
 -- Name: bit_ensemble_test; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+DROP TABLE bit_ensemble_test cascade;
 
 CREATE TABLE bit_ensemble_test (
     id character varying(10),
@@ -65,6 +68,7 @@ ALTER TABLE public.bit_ensemble_test OWNER TO sysdba;
 --
 -- Name: ferro_noquant; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE ferro_noquant cascade;
 
 CREATE TABLE ferro_noquant (
     compound character varying(7),
@@ -83,6 +87,7 @@ ALTER TABLE public.ferro_noquant OWNER TO sysdba;
 --
 -- Name: ferro_noquant_realact; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE ferro_noquant_realact cascade;
 
 CREATE TABLE ferro_noquant_realact (
     compound character varying(7),
@@ -101,6 +106,7 @@ ALTER TABLE public.ferro_noquant_realact OWNER TO sysdba;
 --
 -- Name: ferro_quant; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE ferro_quant cascade;
 
 CREATE TABLE ferro_quant (
     compound character varying(7),
@@ -119,6 +125,7 @@ ALTER TABLE public.ferro_quant OWNER TO sysdba;
 --
 -- Name: float_2class; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE float_2class cascade;
 
 CREATE TABLE float_2class (
     id character varying(5),
@@ -132,6 +139,7 @@ ALTER TABLE public.float_2class OWNER TO sysdba;
 --
 -- Name: fromtext; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE fromtext cascade;
 
 CREATE TABLE fromtext (
     int_col integer,
@@ -145,6 +153,7 @@ ALTER TABLE public.fromtext OWNER TO sysdba;
 --
 -- Name: fromtext2; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE fromtext2 cascade;
 
 CREATE TABLE fromtext2 (
     int_col integer,
@@ -158,6 +167,7 @@ ALTER TABLE public.fromtext2 OWNER TO sysdba;
 --
 -- Name: new_table; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE new_table cascade;
 
 CREATE TABLE new_table (
     id integer,
@@ -171,6 +181,7 @@ ALTER TABLE public.new_table OWNER TO sysdba;
 --
 -- Name: simple_mols; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE simple_mols cascade;
 
 CREATE TABLE simple_mols (
     smiles character varying(15),
@@ -183,6 +194,7 @@ ALTER TABLE public.simple_mols OWNER TO sysdba;
 --
 -- Name: simple_mols_fps; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE simple_mols_fps cascade;
 
 CREATE TABLE simple_mols_fps (
     id character varying(7) NOT NULL,
@@ -205,6 +217,7 @@ ALTER TABLE public.simple_combined OWNER TO sysdba;
 --
 -- Name: simple_mols1; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE simple_mols1 cascade;
 
 CREATE TABLE simple_mols1 (
     smiles character varying(15),
@@ -217,6 +230,7 @@ ALTER TABLE public.simple_mols1 OWNER TO sysdba;
 --
 -- Name: simple_mols1_fp; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE simple_mols1_fp cascade;
 
 CREATE TABLE simple_mols1_fp (
     id character varying(10),
@@ -229,6 +243,7 @@ ALTER TABLE public.simple_mols1_fp OWNER TO sysdba;
 --
 -- Name: storagetest; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE storagetest cascade;
 
 CREATE TABLE storagetest (
     id character varying(32) NOT NULL,
@@ -242,6 +257,7 @@ ALTER TABLE public.storagetest OWNER TO sysdba;
 --
 -- Name: ten_elements; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE ten_elements cascade;
 
 CREATE TABLE ten_elements (
     id integer,
@@ -254,6 +270,7 @@ ALTER TABLE public.ten_elements OWNER TO sysdba;
 --
 -- Name: ten_elements_dups; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE ten_elements_dups cascade;
 
 CREATE TABLE ten_elements_dups (
     id integer,

@@ -37,6 +37,7 @@ SET default_with_oids = true;
 --
 -- Name: atomic_data; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop TABLE atomic_data cascade;
 
 CREATE TABLE atomic_data (
     num integer,
@@ -86,6 +87,8 @@ ALTER TABLE public.atomic_data OWNER TO sysdba;
 -- Name: lsd_data; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
 
+drop table lsd_data cascade;
+
 CREATE TABLE lsd_data (
     num integer,
     name character varying(2),
@@ -110,6 +113,7 @@ ALTER TABLE public.lsd_data OWNER TO sysdba;
 --
 -- Name: source_notes; Type: TABLE; Schema: public; Owner: sysdba; Tablespace: 
 --
+drop table source_notes cascade;
 
 CREATE TABLE source_notes (
     property character varying(18),
