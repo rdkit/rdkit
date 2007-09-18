@@ -56,10 +56,7 @@ class TestCase(unittest.TestCase):
 
   def _setupDb(self):
     from Dbase.DbConnection import DbConnect
-    if not RDConfig.usePgSQL:
-      fName = os.path.join(RDConfig.RDCodeDir,'Dbase','testData','TEST.GDB')
-    else:
-      fName = os.path.join('::RDTests')
+    fName = RDConfig.RDTestDatabase
     self.conn  = DbConnect(fName)
     self.dbTblName = 'bit_ensemble_test'
     return self.conn

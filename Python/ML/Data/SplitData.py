@@ -199,13 +199,13 @@ def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
   Pull a set of points from a simple table... take 33% of all points:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,1./3.,'basic_2class')
-  >>> train
+  >>> [str(x) for x in train]
   ['id-10', 'id-5', 'id-4', 'id-9']
 
   ...take 50% of actives and 50% of inactives:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,.5,'basic_2class',useActs=1)
-  >>> train
+  >>> [str(x) for x in train]
   ['id-9', 'id-7', 'id-5', 'id-8', 'id-6', 'id-4']
 
   Notice how the results came out sorted by activity
@@ -213,14 +213,14 @@ def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
   We can be asymmetrical: take 33% of actives and 50% of inactives:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,[.5,1./3.],'basic_2class',useActs=1)
-  >>> train
+  >>> [str(x) for x in train]
   ['id-9', 'id-7', 'id-5', 'id-8', 'id-6']
 
   And we can pull from tables with non-quantized activities by providing
   activity quantization bounds:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,.5,'float_2class',useActs=1,actBounds=[1.0])
-  >>> train
+  >>> [str(x) for x in train]
   ['id-9', 'id-7', 'id-5', 'id-8', 'id-6', 'id-4']
   
   """

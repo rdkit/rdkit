@@ -445,11 +445,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
 
     if dbName is None:
-      if not RDConfig.usePgSQL:
-	dbName = os.path.join(RDConfig.RDDataDir,'atomdb.gdb')
-      else:
-	dbName = "::RDData"
-
+      dbName = RDConfig.RDDataDatabase
 
     Descriptors.DescriptorCalculator.__init__(self)
     self.simpleList = map(lambda x:(string.upper(x[0]),map(string.upper,x[1])),

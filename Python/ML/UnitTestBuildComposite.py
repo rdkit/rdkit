@@ -22,10 +22,7 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
     self.baseDir = os.path.join(RDConfig.RDCodeDir,'ML','test_data')
-    if not RDConfig.usePgSQL:
-      self.dbName = os.path.join(self.baseDir,'test.gdb')
-    else:
-      self.dbName = "::RDTests"
+    self.dbName = RDConfig.RDTestDatabase
       
     self.details = BuildComposite.SetDefaults()
     self.details.dbName = self.dbName
