@@ -110,12 +110,14 @@ else:
 
 if usePgSQL:
   RDTestDatabase='::RDTests'
+  RDDataDatabase='::RDData'
 elif useSqlLite:
   RDTestDatabase=os.path.join(RDDataDir,"RDTests.sqlt")
+  RDDataDatabase=os.path.join(RDDataDir,"RDData.sqlt")
 else:  
   RDTestDatabase=os.path.join(RDDataDir,"RDTests.gdb")
+  RDDataDatabase=os.path.join(RDDataDir,"RDData.gdb")
 
-  
 # ---------------------
 # the following block contains stuff controlling the program used for
 #  3D molecular visualization:
