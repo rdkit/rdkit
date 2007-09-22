@@ -28,7 +28,7 @@ values within a particular range.\n\
 The length of the vector and type of its elements (determines the maxium value\n\
 that can be stored) are both set at construction time.\n\
 \n\
-As you would expect, _ExplicitBitVects_ support a set of binary operations\n\
+As you would expect, _DiscreteValueVects_ support a set of binary operations\n\
 so you can do things like:\n\
   dvv3 = dvv1 & dvv2  the result contains the smallest value in each entry\n\
   dvv3 = dvv1 | dvv2  the result contains the largest value in each entry\n\

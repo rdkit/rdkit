@@ -16,6 +16,7 @@ void wrap_EBV();
 void wrap_BitOps();
 void wrap_Utils();
 void wrap_discreteValVect();
+void wrap_sparseIntVect();
 
 
 BOOST_PYTHON_MODULE(cDataStructs)
@@ -29,6 +30,7 @@ BOOST_PYTHON_MODULE(cDataStructs)
     "                       dense bit vectors.\n"
     "    - SparseBitVect:   class for large, sparse bit vectors\n"
     "  DiscreteValueVect:   class for storing vectors of integers\n"
+    "  SparseIntVect:       class for storing sparse vectors of integers\n"
     ;
   
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
@@ -38,4 +40,5 @@ BOOST_PYTHON_MODULE(cDataStructs)
   wrap_EBV();
   wrap_BitOps();
   wrap_discreteValVect();
+  wrap_sparseIntVect();
 }

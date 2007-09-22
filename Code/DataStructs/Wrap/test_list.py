@@ -2,6 +2,7 @@
 tests=[
   ("python","testBV.py",{}),
   ("python","testDiscreteValueVect.py",{}),
+  ("python","testSparseIntVect.py",{}),
   ]
 
 

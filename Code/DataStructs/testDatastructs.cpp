@@ -16,6 +16,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDBoost/Exceptions.h>
+#include <DataStructs/SparseIntVect.h>
 
 
 using namespace std;
@@ -441,6 +442,449 @@ void test5DiscreteVectOps2() {
 #endif
 }
 
+void test6SparseIntVect() {
+  SparseIntVect<int> iVect(255);
+
+  TEST_ASSERT(iVect.getLength() == 255);
+  TEST_ASSERT(iVect.getVal(23) ==0);
+  iVect.setVal(23,14);
+  TEST_ASSERT(iVect.getVal(23) ==14);
+  
+  SparseIntVect<int> oVect(iVect);
+  TEST_ASSERT(oVect.getLength() == 255);
+  TEST_ASSERT(oVect.getVal(23) ==14);
+
+  std::vector<int> tmpV(3);
+  tmpV[0]=1;
+  tmpV[1]=5;
+  tmpV[2]=1;
+  TEST_ASSERT(iVect.getVal(1) ==0);
+  TEST_ASSERT(iVect[1] ==0);
+  TEST_ASSERT(iVect.getVal(5) ==0);
+  TEST_ASSERT(iVect[5] ==0);
+  updateFromSequence(iVect,tmpV);
+  TEST_ASSERT(iVect.getVal(1) ==2);
+  TEST_ASSERT(iVect[1] ==2);
+  TEST_ASSERT(iVect.getVal(5) ==1);
+  TEST_ASSERT(iVect[5] ==1);
+
+  iVect.setVal(3,-4);
+  TEST_ASSERT(iVect.getTotalVal()==13);
+  TEST_ASSERT(iVect.getTotalVal(true)==21);
+  
+  try {
+    iVect.setVal(-1,13);
+    TEST_ASSERT(0);
+  } catch (IndexErrorException &dexp) {
+    ;
+  }
+  try {
+    iVect.setVal(255,42);
+    TEST_ASSERT(0);
+  } catch (IndexErrorException &dexp) {
+    ;
+  }
+  try {
+    iVect.getVal(-1);
+    TEST_ASSERT(0);
+  } catch (IndexErrorException &dexp) {
+    ;
+  }
+  try {
+    iVect.getVal(255);
+    TEST_ASSERT(0);
+  } catch (IndexErrorException &dexp) {
+    ;
+  }
+  try {
+    iVect[-1];
+    TEST_ASSERT(0);
+  } catch (IndexErrorException &dexp) {
+    ;
+  }
+
+  { // iV1 &= iV2
+    SparseIntVect<int> iV1(5),iV2(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+
+    iV1 &= iV2;
+    TEST_ASSERT(iV1[0]==0);
+    TEST_ASSERT(iV1[1]==0);
+    TEST_ASSERT(iV1[2]==1);
+    TEST_ASSERT(iV1[3]==4);
+    TEST_ASSERT(iV1[4]==4);
+
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[3]==4);
+    TEST_ASSERT(iV2[4]==6);
+  
+    try {
+      iV1 &= iVect;
+      TEST_ASSERT(0);
+    } catch (ValueErrorException &dexp) {
+      ;
+    }
+  }
+  
+  { // iV3 = iv1&iV2
+    SparseIntVect<int> iV1(5),iV2(5),iV3(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+
+    iV3 = iV1 & iV2;
+    TEST_ASSERT(iV3[0]==0);
+    TEST_ASSERT(iV3[1]==0);
+    TEST_ASSERT(iV3[2]==1);
+    TEST_ASSERT(iV3[3]==4);
+    TEST_ASSERT(iV3[4]==4);
+
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==0);
+    TEST_ASSERT(iV1[2]==1);
+    TEST_ASSERT(iV1[3]==4);
+    TEST_ASSERT(iV1[4]==4);
+  
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[3]==4);
+    TEST_ASSERT(iV2[4]==6);
+  
+  }
+  
+  { // iV2 &= iV1
+    SparseIntVect<int> iV1(5),iV2(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+
+    iV2 &= iV1;
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[1]==0);
+    TEST_ASSERT(iV2[2]==1);
+    TEST_ASSERT(iV2[3]==4);
+    TEST_ASSERT(iV2[4]==4);
+
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==0);
+    TEST_ASSERT(iV1[2]==1);
+    TEST_ASSERT(iV1[3]==4);
+    TEST_ASSERT(iV1[4]==4);
+
+  
+    try {
+      iV2 &= iVect;
+      TEST_ASSERT(0);
+    } catch (ValueErrorException &dexp) {
+      ;
+    }
+  }
+  
+  {  // iV1 |= iV2
+    SparseIntVect<int> iV1(5),iV2(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+
+    iV1 |= iV2;
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==2);
+    TEST_ASSERT(iV1[2]==3);
+    TEST_ASSERT(iV1[3]==4);
+    TEST_ASSERT(iV1[4]==6);
+
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[3]==4);
+    TEST_ASSERT(iV2[4]==6);
+  
+    try {
+      iV1 |= iVect;
+      TEST_ASSERT(0);
+    } catch (ValueErrorException &dexp) {
+      ;
+    }
+  }
+  
+  { // iV3 = iv1 |iV2
+    SparseIntVect<int> iV1(5),iV2(5),iV3(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+
+    iV3 = iV1 | iV2;
+    TEST_ASSERT(iV3[0]==2);
+    TEST_ASSERT(iV3[1]==2);
+    TEST_ASSERT(iV3[2]==3);
+    TEST_ASSERT(iV3[3]==4);
+    TEST_ASSERT(iV3[4]==6);
+
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==0);
+    TEST_ASSERT(iV1[2]==1);
+    TEST_ASSERT(iV1[3]==4);
+    TEST_ASSERT(iV1[4]==4);
+  
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[3]==4);
+    TEST_ASSERT(iV2[4]==6);
+  
+  }
+  
+  {  // iV2 |= iV1
+    SparseIntVect<int> iV1(5),iV2(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+
+    iV2 |= iV1;
+    TEST_ASSERT(iV2[0]==2);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[3]==4);
+    TEST_ASSERT(iV2[4]==6);
+
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==0);
+    TEST_ASSERT(iV1[2]==1);
+    TEST_ASSERT(iV1[3]==4);
+    TEST_ASSERT(iV1[4]==4);
+  }
+  
+  {  // iV1 += iV2
+    SparseIntVect<int> iV1(5),iV2(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,-4);
+    iV2.setVal(4,6);
+
+    iV1 += iV2;
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==2);
+    TEST_ASSERT(iV1[2]==4);
+    TEST_ASSERT(iV1[3]==0);
+    TEST_ASSERT(iV1[4]==10);
+
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[3]==-4);
+    TEST_ASSERT(iV2[4]==6);
+  }
+  {  // iV3 = IV1 + iV2
+    SparseIntVect<int> iV1(5),iV2(5),iV3(5);
+    iV1.setVal(2,1);
+    iV1.setVal(0,2);
+    iV1.setVal(4,4);
+    iV1.setVal(3,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,-4);
+    iV2.setVal(4,6);
+
+    iV3=iV1+iV2;
+    TEST_ASSERT(iV3[0]==2);
+    TEST_ASSERT(iV3[1]==2);
+    TEST_ASSERT(iV3[2]==4);
+    TEST_ASSERT(iV3[3]==0);
+    TEST_ASSERT(iV3[4]==10);
+
+
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==0);
+    TEST_ASSERT(iV1[2]==1);
+    TEST_ASSERT(iV1[3]==4);
+    TEST_ASSERT(iV1[4]==4);
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[3]==-4);
+    TEST_ASSERT(iV2[4]==6);
+  }
+
+  {  // iV1 -= iV2
+    SparseIntVect<int> iV1(5),iV2(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+
+    iV1 -= iV2;
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==-2);
+    TEST_ASSERT(iV1[2]==-2);
+    TEST_ASSERT(iV1[3]==0);
+    TEST_ASSERT(iV1[4]==-2);
+
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[4]==6);
+    TEST_ASSERT(iV2[3]==4);
+  }
+  {  // iV3 = IV1 - iV2
+    SparseIntVect<int> iV1(5),iV2(5),iV3(5);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+
+    iV3=iV1-iV2;
+    TEST_ASSERT(iV3[0]==2);
+    TEST_ASSERT(iV3[1]==-2);
+    TEST_ASSERT(iV3[2]==-2);
+    TEST_ASSERT(iV3[3]==0);
+    TEST_ASSERT(iV3[4]==-2);
+
+    TEST_ASSERT(iV1[0]==2);
+    TEST_ASSERT(iV1[1]==0);
+    TEST_ASSERT(iV1[2]==1);
+    TEST_ASSERT(iV1[3]==4);
+    TEST_ASSERT(iV1[4]==4);
+    TEST_ASSERT(iV2[0]==0);
+    TEST_ASSERT(iV2[1]==2);
+    TEST_ASSERT(iV2[2]==3);
+    TEST_ASSERT(iV2[3]==4);
+    TEST_ASSERT(iV2[4]==6);
+  }
+  
+  {  // operator== and operator!=
+    SparseIntVect<int> iV1(5),iV2(5),iV3(3);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,4);
+    iV2.setVal(4,6);
+
+    TEST_ASSERT(iV1==iV1);
+    TEST_ASSERT(iV2==iV2);
+    TEST_ASSERT(iV3==iV3);
+    TEST_ASSERT(iV1!=iV2);
+    TEST_ASSERT(iV1!=iV3);
+    TEST_ASSERT(iV2!=iV1);
+    TEST_ASSERT(iV3!=iV1);
+    TEST_ASSERT(iV1!=iV3);
+  }
+}
+
+void test7SparseIntVectPickles() {
+  {
+    SparseIntVect<int> iV1(5),iV2(3);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(2,3);
+    TEST_ASSERT(iV1!=iV2);
+    std::string pkl;
+    pkl = iV1.toString();
+    iV2.fromString(pkl);
+    TEST_ASSERT(iV1==iV2);
+  }
+  
+  {
+    SparseIntVect<char> iV1(5);
+    SparseIntVect<int>iV2(3);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+
+    iV2.setVal(1,1);
+    std::string pkl;
+    pkl = iV1.toString();
+    iV2.fromString(pkl);
+    TEST_ASSERT(iV2.getLength()==iV1.getLength());
+    TEST_ASSERT(iV2[0]==2)
+    TEST_ASSERT(iV2[1]==0)
+    TEST_ASSERT(iV2[2]==1)
+    TEST_ASSERT(iV2[3]==4)
+    
+  }
+  
+  {
+    SparseIntVect<int> iV1(5);
+    SparseIntVect<char>iV2(3);
+    iV1.setVal(0,2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,4);
+
+    std::string pkl;
+    pkl = iV1.toString();
+    try{
+      iV2.fromString(pkl);
+      TEST_ASSERT(0);
+    } catch (ValueErrorException &dexp) {
+      ;
+    }
+  }
+  
+}
+
 int main(){
   RDLog::InitLogs();
   try{
@@ -467,16 +911,16 @@ int main(){
   TXTMSG("v3",v3);
   TXTMSG("v4",v4);
   
-  cerr << " SPARSE -----------------------------------------" << endl;
+  std::cerr << " SPARSE -----------------------------------------" << std::endl;
   SparseBitVect sparseFoo(10);
   Test(sparseFoo);
   TaniTest(sparseFoo);
   ProbeTest(sparseFoo);
-  cerr << " Explicit -----------------------------------------" << endl;
+  std::cerr << " Explicit -----------------------------------------" << std::endl;
   ExplicitBitVect explicitFoo(10);
   Test(explicitFoo);
   TaniTest(explicitFoo);
-  cerr << " Done" << endl;
+  std::cerr << " Done" << std::endl;
   
   std::cout << " Test DiscreteValue Vectors 1 ------------------------------------" << endl;
   test1DiscreteVect();
@@ -490,6 +934,11 @@ int main(){
 
   std::cout << " Test DiscreteValue Operations 2 ------------------------------------" << endl;
   test5DiscreteVectOps2();
+
+  std::cout << " Test SparseIntVect  ------------------------------------" << std::endl;
+  test6SparseIntVect();
+  std::cout << " Test SparseIntVect Serialization  ------------------------------------" << std::endl;
+  test7SparseIntVectPickles();
 
   return 0;
   
