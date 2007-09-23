@@ -51,6 +51,6 @@ runregrs: testExecs/test1.exe testExecs/testMolSupplier.exe  testExecs/testMolWr
 	./testExecs/testMolWriter.exe
 
 clean:
-	rm -f $(OBJS) main.o testMolSupplier.o testExecs/testMolSupplier.exe testMolWriter.o testExecs/testMolWriter.exe testExecs/testTplParser.exe $(RDFILEPARSELIB) $(RDFILEPARSELIB_S) $(DEPENDS)
+	rm -f $(OBJS) main.o test1.o testMolWriter.o testMolSupplier.o testExecs/testMolSupplier.exe testMolWriter.o testExecs/testMolWriter.exe testExecs/testTplParser.exe $(RDFILEPARSELIB) $(RDFILEPARSELIB_S) $(DEPENDS)
 
 include $(DEPENDS)

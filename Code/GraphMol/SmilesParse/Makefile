@@ -41,7 +41,8 @@ testExecs/smatest.exe: smatest.o $(INSTLIB) $(RDGRAPHLIB)
 	$(CXX) -o $@ $(CXXFLAGS) $< $(RDSUBSTRUCT)  $(LDFLAGS)  $(VFLIB)
 
 clean:
-	rm -f $(OBJS) $(RDSMILESLIB) $(RDSMILELIB_S) lex.yysmiles.cpp smiles.tab.cpp smiles.tab.h main.exe main.o test2.exe test2.o \
+	rm -f $(OBJS) $(RDSMILESLIB) $(RDSMILELIB_S) lex.yysmiles.cpp smiles.tab.cpp smiles.tab.h main.exe \
+        main.o smatest.o test2.exe test2.o \
 	testExecs/smatest.exe testExecs/test.exe $(DEPENDS)
 
 lex.yysmiles.cpp: smiles.flex smiles.tab.hpp

@@ -193,7 +193,7 @@ namespace RDKit{
     streamRead(ss,tmpInt);
     numBonds = tmpInt;
 
-    // did we include coodrinates
+    // did we include coordinates
     bool includeCoords=false;
     if (version >= 3) {
       char flag;
@@ -223,8 +223,9 @@ namespace RDKit{
         // this is a older pickle so we go the pos
         conf->setAtomPos(i, pos);
       }
-      if(!directMap)
+      if(!directMap){
 	mol->setAtomBookmark(atom,i);
+      }
     }
 
     // -------------------
@@ -238,8 +239,9 @@ namespace RDKit{
     }
     for(int i=0;i<numBonds;i++){
       Bond *bond=_addBondFromPickle<T>(ss,mol,version,directMap);
-      if(!directMap)
+      if(!directMap){
 	mol->setBondBookmark(bond,i);
+      }
     }
 
     // -------------------
