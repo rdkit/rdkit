@@ -261,6 +261,9 @@
 				RelativePath="..\..\DataStructs\Wrap\DiscreteValueVect.cpp">
 			</File>
 			<File
+				RelativePath="..\..\DataStructs\Wrap\SparseIntVect.cpp">
+			</File>
+			<File
 				RelativePath="..\..\DataStructs\Wrap\wrap_BitOps.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
