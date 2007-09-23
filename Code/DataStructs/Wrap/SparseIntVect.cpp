@@ -23,6 +23,18 @@ struct siv_pickle_suite : python::pickle_suite
   };
 };
 
+namespace {
+  template <typename IndexType>
+  void pyUpdateFromSequence(SparseIntVect<IndexType> &vect,
+			    python::object &seq){
+    PySequenceHolder<IndexType> seqL(seq);
+    for(unsigned int i=0;i<seqL.size();++i){
+      IndexType idx=seqL[i];
+      vect.setVal(idx,vect[idx]+1);
+    }
+  }
+}
+
 std::string sparseIntVectDoc="A container class for storing integer\n\
 values within a particular range.\n\
 \n\
@@ -64,9 +76,13 @@ struct sparseIntVec_wrapper {
       .def(python::self == python::self)
       .def(python::self != python::self)
       .def("GetTotalVal", &SparseIntVect<IndexType>::getTotalVal,
+	   (python::args("useAbs")=false),
 	   "Get the sum of the values in the vector, basically L1 norm")
       .def("ToBinary", &SparseIntVect<IndexType>::toString,
 	   "returns a binary (pickle) representation of the vector")
+      .def("UpdateFromSequence",
+	   &pyUpdateFromSequence<IndexType>,
+	   "update the vector based on the values in the list or tuple")
       .def_pickle(siv_pickle_suite<IndexType>())
       ;
 

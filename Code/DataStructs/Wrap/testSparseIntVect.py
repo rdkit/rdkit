@@ -65,6 +65,21 @@ class TestCase(unittest.TestCase):
     self.failUnless(v2==v3)
     self.failUnless(v1==v3)
     
+  def test4Update(self):
+    """
+
+    """
+    v1 = ds.IntSparseIntVect(5)
+    self.failUnlessRaises(IndexError,lambda:v1[6])
+    v1[0]=1
+    v1[2]=2
+    v1[3]=3
+    self.failUnless(v1==v1)
+
+    v2 = ds.IntSparseIntVect(5)
+    v2.UpdateFromSequence((0,2,3,3,2,3))
+    self.failUnless(v1==v2)
+    
 
     
     

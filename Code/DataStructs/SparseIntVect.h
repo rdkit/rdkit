@@ -271,7 +271,6 @@ namespace RDKit{
       initFromText(txt.c_str(),txt.length());
     }
 
-    
   private:
     IndexType d_length;
     StorageType d_data;
