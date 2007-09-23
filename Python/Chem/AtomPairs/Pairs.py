@@ -12,7 +12,7 @@ R.E. Carhart, D.H. Smith, R. Venkataraghavan;
 Definition and Applications" JCICS 25, 64-73 (1985).
 
 """
-from DataStructs.SparseIntVect import SparseIntVect
+from DataStructs import IntSparseIntVect
 import Chem
 from Chem.AtomPairs import Utils
 import DataStructs
@@ -120,13 +120,13 @@ def GetAtomPairFingerprintAsCounts(mol):
 
 def GetAtomPairFingerprintAsIntVect(mol):
   """ Returns the Atom-pair fingerprint for a molecule as
-  a SparseIntVect
+  a IntSparseIntVect
 
   **Arguments**:
 
     - mol: a molecule
 
-  **Returns**: a SparseIntVect
+  **Returns**: an IntSparseIntVect
 
 
   >>> m = Chem.MolFromSmiles('CCC')
@@ -134,17 +134,16 @@ def GetAtomPairFingerprintAsIntVect(mol):
   ...       ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2),
   ...       ScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(2),1),
   ...     ]
-  >>> val = SparseIntVect(fpLen)
-  >>> val.InitFromSequence(v)
+  >>> val = IntSparseIntVect(fpLen)
+  >>> val.UpdateFromSequence(v)
   >>> fp = GetAtomPairFingerprintAsIntVect(m)
   >>> val==fp
   True
   
   """
-  res = SparseIntVect(fpLen)
+  res = IntSparseIntVect(fpLen)
   counts = GetAtomPairFingerprintAsCounts(mol)
-  for v in counts:
-    res[v]+=1
+  res.UpdateFromSequence(counts)
   return res
 
 def GetAtomPairFingerprintAsBitVect(mol):

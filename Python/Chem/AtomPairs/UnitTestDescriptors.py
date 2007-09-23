@@ -20,14 +20,14 @@ class TestCase(unittest.TestCase):
     atomPairs = cPickle.load(inF)
     for i,m in enumerate(self.mols):
       ap = Pairs.GetAtomPairFingerprintAsIntVect(m)
-      self.failUnless(ap==atomPairs[i][1])
+      self.failUnless(ap==atomPairs[i])
 
   def testTorsionsRegression(self):
     inF = gzip.open(os.path.join(self.testDataPath,'mols1000.tts.pkl.gz'),'rb')
     torsions = cPickle.load(inF)
     for i,m in enumerate(self.mols):
       tt = Torsions.GetTopologicalTorsionFingerprintAsIntVect(m)
-      self.failUnless(tt==torsions[i][1])
+      self.failUnless(tt==torsions[i])
 
 if __name__ == '__main__':
   unittest.main()

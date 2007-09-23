@@ -233,13 +233,12 @@ def GetTopologicalTorsionFingerprintAsIntVect(mol,targetSize=4):
   0.375
 
   """
-  from DataStructs.SparseIntVect import SparseIntVect
+  from DataStructs import LongSparseIntVect as ResultType
   nBits = Utils.codeSize*targetSize
   sz = (1L<<nBits)-1
-  res = SparseIntVect(sz)
+  res = ResultType(sz)
   ttv = GetTopologicalTorsionFingerprint(mol,targetSize=targetSize)
-  for bit in ttv:
-    res[bit]+=1
+  res.UpdateFromSequence(ttv)
   return res
 
   

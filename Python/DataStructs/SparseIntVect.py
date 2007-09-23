@@ -5,7 +5,8 @@
 #
 import copy
 
-class SparseIntVect(object):
+class pySparseIntVect(object):
+  """ this class is pretty much obsolete (it's in C++ now) """
   size=0
   container={}
   def __init__(self,size):
@@ -14,7 +15,7 @@ class SparseIntVect(object):
 
   def UpdateFromSequence(self,seq):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1.UpdateFromSequence((0,1,1,5))
     >>> [x for x in c1]
     [(0, 1), (1, 2), (5, 1)]
@@ -27,7 +28,7 @@ class SparseIntVect(object):
       self[v] += 1
   def InitFromSequence(self,seq):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1.InitFromSequence((0,1,1,5))
     >>> [x for x in c1]
     [(0, 1), (1, 2), (5, 1)]
@@ -38,7 +39,7 @@ class SparseIntVect(object):
       
   def Sum(self,useAbs=False):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
@@ -62,11 +63,11 @@ class SparseIntVect(object):
 
   def __eq__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 3
     >>> c2[2] = 2
     >>> c1 == c2
@@ -74,7 +75,7 @@ class SparseIntVect(object):
     >>> c1 == c1
     True
     """
-    if not isinstance(other,SparseIntVect):
+    if not isinstance(other,pySparseIntVect):
       raise TypeError
     if self.size != other.size:
       return 0
@@ -83,11 +84,11 @@ class SparseIntVect(object):
 
   def __iand__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[2] = -2
     >>> c2[5] = 6
@@ -96,7 +97,7 @@ class SparseIntVect(object):
     [(0, 2), (2, -2)]
 
     """
-    if not isinstance(other,SparseIntVect):
+    if not isinstance(other,pySparseIntVect):
       raise TypeError
     if self.size != other.size:
       raise ValueError
@@ -113,11 +114,11 @@ class SparseIntVect(object):
     return self
   def __ior__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[2] = -2
     >>> c2[5] = 6
@@ -126,7 +127,7 @@ class SparseIntVect(object):
     [(0, 3), (2, 2), (4, 5), (5, 6)]
 
     """
-    if not isinstance(other,SparseIntVect):
+    if not isinstance(other,pySparseIntVect):
       raise TypeError
     if self.size != other.size:
       raise ValueError
@@ -146,11 +147,11 @@ class SparseIntVect(object):
   
   def __iadd__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[2] = -2
     >>> c2[5] = 6
@@ -159,7 +160,7 @@ class SparseIntVect(object):
     [(0, 5), (4, 5), (5, 6)]
 
     """
-    if not isinstance(other,SparseIntVect):
+    if not isinstance(other,pySparseIntVect):
       raise TypeError
     if self.size != other.size:
       raise ValueError
@@ -178,11 +179,11 @@ class SparseIntVect(object):
   
   def __isub__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[2] = 2
     >>> c2[5] = 6
@@ -191,7 +192,7 @@ class SparseIntVect(object):
     [(0, 1), (4, 5), (5, -6)]
 
     """
-    if not isinstance(other,SparseIntVect):
+    if not isinstance(other,pySparseIntVect):
       raise TypeError
     if self.size != other.size:
       raise ValueError
@@ -210,10 +211,10 @@ class SparseIntVect(object):
 
   def __imul__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[5] = 6
     >>> c1 *= c2
@@ -221,7 +222,7 @@ class SparseIntVect(object):
     [(0, 6)]
 
     """
-    if not isinstance(other,SparseIntVect):
+    if not isinstance(other,pySparseIntVect):
       raise TypeError
     if self.size != other.size:
       raise ValueError
@@ -235,10 +236,10 @@ class SparseIntVect(object):
   
   def __add__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[5] = 6
     >>> c3 = c2+c1
@@ -246,17 +247,17 @@ class SparseIntVect(object):
     [(0, 5), (4, 5), (5, 6)]
 
     """
-    res = SparseIntVect(self.size)
+    res = pySparseIntVect(self.size)
     res.container = copy.deepcopy(self.container)
     res += other
     return res
   def __sub__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[2] = 2
     >>> c2[5] = 6
@@ -267,16 +268,16 @@ class SparseIntVect(object):
     [(0, 3), (2, 2), (4, 5)]
 
     """
-    res = SparseIntVect(self.size)
+    res = pySparseIntVect(self.size)
     res.container = copy.deepcopy(self.container)
     res -= other
     return res
   def __mul__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[5] = 6
     >>> c3 = c1*c2
@@ -286,17 +287,17 @@ class SparseIntVect(object):
     [(0, 3), (4, 5)]
 
     """
-    res = SparseIntVect(self.size)
+    res = pySparseIntVect(self.size)
     res.container = copy.deepcopy(self.container)
     res *= other
     return res
   def __and__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[2] = -2
     >>> c2[5] = 6
@@ -307,17 +308,17 @@ class SparseIntVect(object):
     [(0, 3), (2, 2), (4, 5)]
 
     """
-    res = SparseIntVect(self.size)
+    res = pySparseIntVect(self.size)
     res.container = copy.deepcopy(self.container)
     res &= other
     return res
   def __or__(self,other):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[2] = 2
     >>> c1[4] = 5
-    >>> c2=SparseIntVect(10)
+    >>> c2=pySparseIntVect(10)
     >>> c2[0] = 2
     >>> c2[2] = -2
     >>> c2[5] = 6
@@ -328,7 +329,7 @@ class SparseIntVect(object):
     [(0, 3), (2, 2), (4, 5)]
 
     """
-    res = SparseIntVect(self.size)
+    res = pySparseIntVect(self.size)
     res.container = copy.deepcopy(self.container)
     res |= other
     return res
@@ -337,7 +338,7 @@ class SparseIntVect(object):
     return self.size
   def __getitem__(self,which):
     """
-    >>> c1=SparseIntVect(10)
+    >>> c1=pySparseIntVect(10)
     >>> c1[0] = 3
     >>> c1[4] = 5
     >>> c1[0]
@@ -360,7 +361,7 @@ class SparseIntVect(object):
     self.container[which]=val
   def __iter__(self):
     """
-    >>> c=SparseIntVect(10)
+    >>> c=pySparseIntVect(10)
     >>> c[0] = 3
     >>> c[4] = 5
     >>> c[7] = -1
@@ -374,50 +375,47 @@ class SparseIntVect(object):
     return self.container.iteritems()
 
     
-    
+import DataStructs    
 def DiceSimilarity(v1,v2,bounds=None,useAbs=False):
   """ Implements the DICE similarity metric.
 
-  >>> v1 = SparseIntVect(10)
-  >>> v2 = SparseIntVect(10)
-  >>> v1.InitFromSequence((1,2,3))
-  >>> v2.InitFromSequence((1,2,3))
+  >>> v1 = DataStructs.IntSparseIntVect(10)
+  >>> v2 = DataStructs.IntSparseIntVect(10)
+  >>> v1.UpdateFromSequence((1,2,3))
+  >>> v2.UpdateFromSequence((1,2,3))
   >>> DiceSimilarity(v1,v2)
   1.0
 
-  >>> v2.InitFromSequence((5,6))
+  >>> v2 = DataStructs.IntSparseIntVect(10)
+  >>> v2.UpdateFromSequence((5,6))
   >>> DiceSimilarity(v1,v2)
   0.0
 
-  >>> v1.InitFromSequence((1,2,3,4))
-  >>> v2.InitFromSequence((1,3,5,7))
+  >>> v1 = DataStructs.IntSparseIntVect(10)
+  >>> v2 = DataStructs.IntSparseIntVect(10)
+  >>> v1.UpdateFromSequence((1,2,3,4))
+  >>> v2.UpdateFromSequence((1,3,5,7))
   >>> DiceSimilarity(v1,v2)
   0.5
 
-  >>> v1.InitFromSequence((1,2,3,4,5,6))
-  >>> v2.InitFromSequence((1,3))
+  >>> v1 = DataStructs.IntSparseIntVect(10)
+  >>> v2 = DataStructs.IntSparseIntVect(10)
+  >>> v1.UpdateFromSequence((1,2,3,4,5,6))
+  >>> v2.UpdateFromSequence((1,3))
   >>> DiceSimilarity(v1,v2)
   0.5
 
   """
-  denom = 1.0*(v1.Sum(useAbs=useAbs)+v2.Sum(useAbs=useAbs))
+  denom = 1.0*(v1.GetTotalVal(useAbs=useAbs)+v2.GetTotalVal(useAbs=useAbs))
   if not denom:
     res = 0.0
   else:
     if bounds and (min(len(v1),len(v2))/denom) < bounds:
       numer = 0.0
     else:
-      #tv = v1&v2
-      #numer = 2.0*tv.Sum(useAbs=useAbs)
       numer=0.0
-      v1C=v1.container
-      v2C=v2.container
-      for k in v1C.keys():
-        if v2C.has_key(k):
-          if useAbs:
-            numer+=min(abs(v1C[k]),abs(v2C[k]))
-          else:
-            numer+=min(v1C[k],v2C[k])
+      v3=v1&v2
+      numer=v3.GetTotalVal(useAbs=useAbs)
     res = 2.*numer/denom
 
   return res
