@@ -25,12 +25,16 @@ namespace RDKit{
 namespace SubstructLocal {
   std::vector<AR_MOLGRAPH *> molGraphCache;
   void clearMolGraphCache(){
+    for(std::vector<AR_MOLGRAPH *>::iterator it=molGraphCache.begin();
+        it!=molGraphCache.end();++it){
+      delete *it;
+    }
     molGraphCache.clear(); 
   }
 }
 #endif  
 
-  AR_MOLGRAPH *getMolGraph(const ROMol &mol){
+  AR_MOLGRAPH *getMolGraph(const ROMol &mol,bool registerIt){
     AR_MOLGRAPH *molG=0;
 #ifdef CACHE_ARMOLGRAPHS
     if(mol.hasProp("_SubstructGraphPtr")){
@@ -38,17 +42,17 @@ namespace SubstructLocal {
       mol.getProp("_SubstructGraphPtr",idx);
       if(idx<SubstructLocal::molGraphCache.size()){
         molG = SubstructLocal::molGraphCache[idx];
-        //std::cerr << " << " << &mol << " " << idx << " = " << molG << "("<<SubstructLocal::molGraphCache.size()<<")"<< std::endl;
       }
     } 
     if(!molG){
       ARGEdit mEd;
       MolToVFGraph(mol,&mEd);
       molG = new AR_MOLGRAPH(&mEd);
-      unsigned int idx = SubstructLocal::molGraphCache.size();
-      mol.setProp("_SubstructGraphPtr",idx,true);
-      SubstructLocal::molGraphCache.push_back(molG);
-      //std::cerr << " >> " << &mol << " " << idx << " = " << molG << std::endl; 
+      if(registerIt){
+        unsigned int idx = SubstructLocal::molGraphCache.size();
+        mol.setProp("_SubstructGraphPtr",idx,true);
+        SubstructLocal::molGraphCache.push_back(molG);
+      }
     }
 #else
     ARGEdit mEd;
@@ -58,36 +62,41 @@ namespace SubstructLocal {
     return molG;
   }
 
-  void MatchSubqueries(AR_MOLGRAPH *molG,QueryAtom::QUERYATOM_QUERY *q,bool useChirality);
+  void MatchSubqueries(AR_MOLGRAPH *molG,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,bool registerQuery);
 
   // ----------------------------------------------
   //
   // find one match
   //
   bool SubstructMatch(const ROMol &mol,const ROMol &query,MatchVectType &matchVect,
-                      bool recursionPossible,bool useChirality)
+                      bool recursionPossible,bool useChirality,bool registerQuery)
   {
     AR_MOLGRAPH *molG = getMolGraph(mol);
-    bool res = SubstructMatch(molG,query,matchVect,recursionPossible,useChirality);
+    bool res = SubstructMatch(molG,query,matchVect,recursionPossible,useChirality,registerQuery);
 #ifndef CACHE_ARMOLGRAPHS
     delete molG;
+#else
+    if(std::find(SubstructLocal::molGraphCache.begin(),
+                 SubstructLocal::molGraphCache.end(),molG)==
+       SubstructLocal::molGraphCache.end())
+      delete molG;
 #endif
     return res;
   }
 
   bool SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,MatchVectType &matchVect,
-                      bool recursionPossible,bool useChirality){
+                      bool recursionPossible,bool useChirality,bool registerQuery){
     PRECONDITION(molG,"bad molecule");
 
     if(recursionPossible){
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
-          MatchSubqueries(molG,(*atIt)->getQuery(),useChirality);
+          MatchSubqueries(molG,(*atIt)->getQuery(),useChirality,registerQuery);
         }
       }
     }
-    AR_MOLGRAPH *queryG = getMolGraph(query);
+    AR_MOLGRAPH *queryG = getMolGraph(query,registerQuery);
     if(!useChirality){
       queryG->SetNodeCompat(atomCompat);
     } else {
@@ -116,6 +125,11 @@ namespace SubstructLocal {
     delete [] ni2;
 #ifndef CACHE_ARMOLGRAPHS
     delete queryG;
+#else
+    if(std::find(SubstructLocal::molGraphCache.begin(),
+                 SubstructLocal::molGraphCache.end(),queryG)==
+       SubstructLocal::molGraphCache.end())
+      delete queryG;
 #endif
 
     return res;
@@ -131,18 +145,24 @@ namespace SubstructLocal {
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
 			      std::vector< MatchVectType > &matches,
 			      bool uniquify,bool recursionPossible,
-			      bool useChirality) {
+			      bool useChirality,bool registerQuery) {
     AR_MOLGRAPH *molG = getMolGraph(mol);
-    unsigned int res = SubstructMatch(molG,query,matches,uniquify,recursionPossible,useChirality);
+    unsigned int res = SubstructMatch(molG,query,matches,uniquify,recursionPossible,
+                                      useChirality,registerQuery);
 #ifndef CACHE_ARMOLGRAPHS
     delete molG;
+#else
+    if(std::find(SubstructLocal::molGraphCache.begin(),
+                 SubstructLocal::molGraphCache.end(),molG)==
+       SubstructLocal::molGraphCache.end())
+      delete molG;
 #endif
     return res;
   }
   unsigned int SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
 			      std::vector< MatchVectType > &matches,
 			      bool uniquify,bool recursionPossible,
-			      bool useChirality)
+			      bool useChirality,bool registerQuery)
   {
     PRECONDITION(molG,"bad molecule pointer");
 
@@ -150,12 +170,12 @@ namespace SubstructLocal {
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
-          MatchSubqueries(molG,(*atIt)->getQuery(),useChirality);
+          MatchSubqueries(molG,(*atIt)->getQuery(),useChirality,registerQuery);
         }
       }
     }
 
-    AR_MOLGRAPH *queryG = getMolGraph(query);
+    AR_MOLGRAPH *queryG = getMolGraph(query,registerQuery);
     if(!useChirality){
       queryG->SetNodeCompat(atomCompat);
     } else {
@@ -182,6 +202,11 @@ namespace SubstructLocal {
 
 #ifndef CACHE_ARMOLGRAPHS
     delete queryG;
+#else
+    if(std::find(SubstructLocal::molGraphCache.begin(),
+                 SubstructLocal::molGraphCache.end(),queryG)==
+       SubstructLocal::molGraphCache.end())
+      delete queryG;
 #endif
 
     return res;
@@ -193,7 +218,8 @@ namespace SubstructLocal {
   // Intended for internal use 
   //
   unsigned int RecursiveMatcher(AR_MOLGRAPH *molG,const ROMol &query,
-				std::vector< int > &matches,bool useChirality)
+				std::vector< int > &matches,bool useChirality,
+                                bool registerQuery)
   {
     PRECONDITION(molG,"bad molecule");
     //std::cout << " >>> RecursiveMatcher: " << int(query) << std::endl;
@@ -202,11 +228,11 @@ namespace SubstructLocal {
     ROMol::ConstAtomIterator atIt;
     for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
       if((*atIt)->getQuery()){
-        MatchSubqueries(molG,(*atIt)->getQuery(),useChirality);
+        MatchSubqueries(molG,(*atIt)->getQuery(),useChirality,registerQuery);
       }
     }
  
-    AR_MOLGRAPH *queryG = getMolGraph(query);
+    AR_MOLGRAPH *queryG = getMolGraph(query,registerQuery);
     if(!useChirality){
       queryG->SetNodeCompat(atomCompat);
     } else {
@@ -228,13 +254,19 @@ namespace SubstructLocal {
     //std::cout << " <<< RecursiveMatcher: " << int(query) << std::endl;
 #ifndef CACHE_ARMOLGRAPHS
     delete queryG;
+#else
+    if(std::find(SubstructLocal::molGraphCache.begin(),
+                 SubstructLocal::molGraphCache.end(),queryG)==
+       SubstructLocal::molGraphCache.end())
+      delete queryG;
 #endif
   
     return res;
   }
 
 
-  void MatchSubqueries(AR_MOLGRAPH  *molG,QueryAtom::QUERYATOM_QUERY *query,bool useChirality){
+  void MatchSubqueries(AR_MOLGRAPH  *molG,QueryAtom::QUERYATOM_QUERY *query,bool useChirality,
+                       bool registerQuery){
     PRECONDITION(molG,"bad molecule");
     PRECONDITION(query,"bad query");
     //std::cout << "*-*-* MS: " << (int)query << std::endl;
@@ -246,7 +278,7 @@ namespace SubstructLocal {
       rsq->clear();
       if(queryMol){
         std::vector< int > matchStarts;
-        unsigned int res = RecursiveMatcher(molG,*queryMol,matchStarts,useChirality);
+        unsigned int res = RecursiveMatcher(molG,*queryMol,matchStarts,useChirality,registerQuery);
         if(res){
           for(std::vector<int>::iterator i=matchStarts.begin();
               i!=matchStarts.end();
@@ -263,7 +295,7 @@ namespace SubstructLocal {
     Queries::Query<int,Atom const*,true>::CHILD_VECT_CI childIt;
     //std::cout << query << " " << query->endChildren()-query->beginChildren() <<  std::endl;
     for(childIt=query->beginChildren();childIt!=query->endChildren();childIt++){
-      MatchSubqueries(molG,childIt->get(),useChirality);
+      MatchSubqueries(molG,childIt->get(),useChirality,registerQuery);
     }
     //std::cout << "<<- back " << (int)query << std::endl;
   }

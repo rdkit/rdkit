@@ -27,7 +27,7 @@ namespace RDKit{
 
   typedef ARGraph<const Atom, const Bond> AR_MOLGRAPH;
   //! Internal Use Only
-  AR_MOLGRAPH *getMolGraph(const ROMol &mol);
+  AR_MOLGRAPH *getMolGraph(const ROMol &mol,bool registerIt=false);
 
 
 #ifdef CACHE_ARMOLGRAPHS
@@ -45,6 +45,7 @@ namespace SubstructLocal {
                        (pre-existing contents will be deleted)
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
+      \param registerQuery cache the query (uses more memory but speeds up searches) 
 
       \return whether or not a match was found
     
@@ -52,12 +53,14 @@ namespace SubstructLocal {
   bool SubstructMatch(const ROMol &mol,const ROMol &query,
 		      MatchVectType &matchVect,
 		      bool recursionPossible=true,
-		      bool useChirality=false);
+		      bool useChirality=false,
+                      bool registeryQuery=false);
   //! \overload
   bool SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
 		      MatchVectType &matchVect,
 		      bool recursionPossible=true,
-		      bool useChirality=false);
+		      bool useChirality=false,
+                      bool registerQuery=false);
 
   //! Find all substructure matches for a query in a molecule
   /*!
@@ -68,6 +71,7 @@ namespace SubstructLocal {
       \param uniquify  Toggles uniquification (by atom index) of the results
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
+      \param registerQuery cache the query (uses more memory but speeds up searches) 
 
       \return the number of matches found
     
@@ -75,12 +79,14 @@ namespace SubstructLocal {
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
 			      std::vector< MatchVectType > &matchVect,
 			      bool uniquify=true,bool recursionPossible=true,
-			      bool useChirality=false);
+			      bool useChirality=false,
+                              bool registerQuery=false);
   //! \overload
   unsigned int SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
 			      std::vector< MatchVectType > &matchVect,
 			      bool uniquify=true,bool recursionPossible=true,
-			      bool useChirality=false);
+			      bool useChirality=false,
+                              bool registerQuery=false);
 }
 
 #endif
