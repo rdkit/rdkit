@@ -73,10 +73,7 @@ class ForwardDbFpSupplier(DbFpSupplier):
 
   >>> import os.path
   >>> from Dbase.DbConnection import DbConnect
-  >>> if not RDConfig.usePgSQL:
-  ...    fName = os.path.join(RDConfig.RDCodeDir,'Chem','Fingerprints','test_data','data.gdb')
-  ... else:
-  ...    fName = "::RDTests"
+  >>> fName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(fName,'simple_combined')
   >>> suppl = ForwardDbFpSupplier(conn.GetData())
 
@@ -116,10 +113,7 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting random access:
   >>> import os.path
   >>> from Dbase.DbConnection import DbConnect
-  >>> if not RDConfig.usePgSQL:
-  ...    fName = os.path.join(RDConfig.RDCodeDir,'Chem','Fingerprints','test_data','data.gdb')
-  ... else:
-  ...    fName = "::RDTests"
+  >>> fName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(fName,'simple_combined')
   >>> suppl = RandomAccessDbFpSupplier(conn.GetData())
   >>> len(suppl)
@@ -130,7 +124,7 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
   >>> fp.GetNumBits()
   128
   >>> fp.GetNumOnBits()
-  57
+  54
   
   a standard loop over the fingerprints:
   >>> fps = []

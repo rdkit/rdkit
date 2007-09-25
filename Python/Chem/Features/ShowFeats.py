@@ -1,25 +1,44 @@
-# $Id$
+# $Id: ShowFeats.py 491 2007-07-27 08:13:04Z landrgr1 $
 #
 # Created by Greg Landrum Aug 2006
 #
 #
-_version = "0.1.0"
+_version = "0.3.1"
+
 
 _usage="""
    ShowFeats [optional args] <filenames>
 
+  if "-" is provided as a filename, data will be read from stdin (the console)
+
 Optional arguments:
-   -x "list":     specify a comma-separated list of feature types to not be excluded from
+   -x "list":     specify a comma-separated list of feature types to be excluded from
                   the visualization
 
    -f "fdef":
+     or
    --fdef="fdef": specify the name of the fdef file.
 
    --sd:
-   --sdf:         expect the input to be one or more SD files (otherwise mol files are expected)
+     or
+   --sdf:         expect the input to be one or more SD files (otherwise mol files
+                  are expected)
 
-   --dirs:        do not calculate and display feature directions
-   --heads:       do not put heads on the feature-direction arrows (only cylinders will be drawn)
+   --nodirs:      do not calculate and display feature directions
+
+   --noheads:     do not put heads on the feature-direction arrows (only cylinders 
+                  will be drawn)
+
+   --noclear:     do not clear PyMol before starting
+
+   --write:       print out the feature locations in a form suitable for reading by
+                  FeatureScorePoses.sh
+
+   --noMols:      only show features, not molecules
+                  
+   --verbose:     print the names of the molecules to the console as they are processed. This can make
+                  the output from the --write option more readable when processing SD files.
+                  
    
 """
 
@@ -27,9 +46,14 @@ _welcomeMessage="This is ShowFeats version %s"%(_version)
 
 
 import math
+#set up the logger:
+import RDLogger as logging
+logger = logging.logger()
+logger.setLevel(logging.INFO)
 
 import Geometry
 from Chem.Features import FeatDirUtilsRD as FeatDirUtils
+
 _featColors = {
   'Donor':(0,1,1),
   'Acceptor':(1,0,1),
@@ -143,7 +167,8 @@ def ShowArrow(viewer,tail,head,radius,color,label,transparency=0,includeArrowhea
 
 def ShowMolFeats(mol,factory,viewer,radius=0.5,confId=-1,showOnly=True,
                  name='',transparency=0.0,colors=None,excludeTypes=[],
-                 useFeatDirs=True,featLabel=None,dirLabel=None,includeArrowheads=True):
+                 useFeatDirs=True,featLabel=None,dirLabel=None,includeArrowheads=True,
+                 writeFeats=False,showMol=True,featMapFile=False):
   global _globalSphereCGO
   if not name:
     if mol.HasProp('_Name'):
@@ -153,7 +178,8 @@ def ShowMolFeats(mol,factory,viewer,radius=0.5,confId=-1,showOnly=True,
   if not colors:
     colors = _featColors
 
-  viewer.ShowMol(mol,name=name,showOnly=showOnly,confId=confId)
+  if showMol:
+    viewer.ShowMol(mol,name=name,showOnly=showOnly,confId=confId)
 
   molFeats=factory.GetFeaturesForMol(mol)
   if not featLabel:
@@ -162,7 +188,7 @@ def ShowMolFeats(mol,factory,viewer,radius=0.5,confId=-1,showOnly=True,
   if not dirLabel:
     dirLabel=featLabel+"-dirs"
     viewer.server.resetCGO(dirLabel)
-  queueIt=hasattr(viewer,'AddSpheres')
+
   for i,feat in enumerate(molFeats):
     family=feat.GetFamily()
     if family in excludeTypes:
@@ -170,10 +196,6 @@ def ShowMolFeats(mol,factory,viewer,radius=0.5,confId=-1,showOnly=True,
     pos = feat.GetPos(confId)
     color = colors.get(family,(.5,.5,.5))
     nm = '%s(%d)'%(family,i+1)
-    #if transparency:
-    #  viewer.server.sphere((pos.x,pos.y,pos.z),radius,color,featLabel,1,1,transparency)
-    #else:
-    #  viewer.server.sphere((pos.x,pos.y,pos.z),radius,color,featLabel,1,0)
 
     if transparency:
       _globalSphereCGO.extend([ALPHA,1-transparency])
@@ -182,6 +204,12 @@ def ShowMolFeats(mol,factory,viewer,radius=0.5,confId=-1,showOnly=True,
     _globalSphereCGO.extend([COLOR,color[0],color[1],color[2],
                              SPHERE,pos.x,pos.y,pos.z,
                              radius])
+    if writeFeats:
+      aidText = ' '.join([str(x+1) for x in feat.GetAtomIds()])
+      print '%s\t%.3f\t%.3f\t%.3f\t1.0\t# %s'%(family,pos.x,pos.y,pos.z,aidText)
+
+    if featMapFile:
+      print >>featMapFile,"  family=%s pos=(%.3f,%.3f,%.3f) weight=1.0"%(family,pos.x,pos.y,pos.z),
 
     if useFeatDirs:
       ps = []
@@ -214,103 +242,140 @@ def ShowMolFeats(mol,factory,viewer,radius=0.5,confId=-1,showOnly=True,
             ps,fType = FeatDirUtils.GetAcceptor3FeatVects(mol.GetConformer(confId),
                                                        aids,scale=1.0)
 
-            
-
       for tail,head in ps:
         ShowArrow(viewer,tail,head,radius,color,dirLabel,
                   transparency=transparency,includeArrowhead=includeArrowheads)
+        if featMapFile:
+          vect = head-tail
+          print >>featMapFile,'dir=(%.3f,%.3f,%.3f)'%(vect.x,vect.y,vect.z),
 
+    if featMapFile:
+      aidText = ' '.join([str(x+1) for x in feat.GetAtomIds()])
+      print >>featMapFile,'# %s'%(aidText)
+
+
+
+
+# --- ----  --- ----  --- ----  --- ----  --- ----  --- ---- 
+import sys,os,getopt
+import RDConfig
+from optparse import OptionParser
+parser=OptionParser(_usage,version='%prog '+_version)
+
+parser.add_option('-x','--exclude',default='',
+                  help='provide a list of feature names that should be excluded')
+parser.add_option('-f','--fdef',default=os.path.join(RDConfig.RDDataDir,'Novartis1.fdef'),
+                  help='provide the name of the feature definition (fdef) file.')
+parser.add_option('--noDirs','--nodirs',dest='useDirs',default=True,action='store_false',
+                  help='do not draw feature direction indicators')
+parser.add_option('--noHeads',dest='includeArrowheads',default=True,action='store_false',
+                  help='do not draw arrowheads on the feature direction indicators')
+parser.add_option('--noClear','--noClear',dest='clearAll',default=False,action='store_true',
+                  help='do not clear PyMol on startup')
+parser.add_option('--noMols','--nomols',default=False,action='store_true',
+                  help='do not draw the molecules')
+parser.add_option('--writeFeats','--write',default=False,action='store_true',
+                  help='print the feature information to the console')
+parser.add_option('--featMapFile','--mapFile',default='',
+                  help='save a feature map definition to the specified file')
+parser.add_option('--verbose',default=False,action='store_true',
+                  help='be verbose')
 
 if __name__=='__main__':
-  def Usage():
-    print >>sys.stderr,_usage
-
-  import sys,os,getopt
-  import RDConfig
   import Chem
   from Chem import AllChem
   from Chem.PyMol import MolViewer
 
-  try:
-    args,extras = getopt.getopt(sys.argv[1:],'x:f:',
-                                ('sdf','sd','fdef=','heads','dirs'))
-  except:
-    Usage()
-    sys.exit(1)
-    
-  exclude=[]
-  fdef='BaseFeatures.fdef'
-  molFormat='mol'
-  includeArrowheads=True
-  useDirs=True
-  for arg,val in args:
-    if arg=='-x':
-      val = val.replace('[','').replace('(','').replace(']','').replace(')','')
-      for ex in val.split(','):
-        exclude.append(ex)
-    elif arg in ('-f','--fdef'):
-      fdef = val
-    elif arg in ('--sd','--sdf'):
-      molFormat='sdf'
-    elif arg in ('--heads',):
-      includeArrowheads=False
-    elif arg in ('--dirs',):
-      useDirs=False
-      
-  print >>sys.stderr,_welcomeMessage
+  options,args = parser.parse_args()
+  if len(args)<1:
+    parser.error('please provide either at least one sd or mol file')
 
   try:
     v = MolViewer()
   except:
-    print >>sys.stderr,'ERROR: Unable to connect to PyMol server.\nPlease run ~landrgr1/extern/PyMol/launch.sh to start it.'
+    logger.error('Unable to connect to PyMol server.\nPlease run ~landrgr1/extern/PyMol/launch.sh to start it.')
     sys.exit(1)
-  v.DeleteAll()
+  if options.clearAll:
+    v.DeleteAll()
     
 
-  
   try:
-    fdef = file(fdef,'r').read()
+    fdef = file(options.fdef,'r').read()
   except IOError:
-    print >>sys.stderr,'ERROR: Could not open fdef file %s'%fdef
+    logger.error('ERROR: Could not open fdef file %s'%options.fdef)
     sys.exit(1)
     
   factory = AllChem.BuildFeatureFactoryFromString(fdef)
 
+  if options.writeFeats:
+     print '# Family   \tX    \tY   \tZ   \tRadius\t # Atom_ids'
+
+  if options.featMapFile:
+    if options.featMapFile=='-':
+      options.featMapFile=sys.stdout
+    else:
+      options.featMapFile=file(options.featMapFile,'w+')
+    print >>options.featMapFile,'# Feature map generated by ShowFeats v%s'%_version
+    print >>options.featMapFile,"ScoreMode=All"
+    print >>options.featMapFile,"DirScoreMode=Ignore"
+    print >>options.featMapFile,"BeginParams"
+    for family in factory.GetFeatureFamilies():
+      print >>options.featMapFile,"   family=%s width=1.0 radius=3.0"%family
+    print >>options.featMapFile,"EndParams"
+    print >>options.featMapFile,"BeginPoints"
+    
   i = 1
-  for molN in extras:
-    featLabel='%s_Feats'%molN
+  for midx,molN in enumerate(args):
+    if molN!='-':
+      featLabel='%s_Feats'%molN
+    else:
+      featLabel='Mol%d_Feats'%(midx+1)
+      
     v.server.resetCGO(featLabel)
-    # this is a big of kludgery to work around what seem to be pymol cgo bug:
+    # this is a big of kludgery to work around what seems to be a pymol cgo bug:
     v.server.sphere((0,0,0),.01,(1,0,1),featLabel)
     dirLabel=featLabel+"-dirs"
-    if useDirs:
-      v.server.resetCGO(dirLabel)
-      # this is a big of kludgery to work around what seem to be pymol cgo bug:
-      v.server.cylinder((0,0,0),(.01,.01,.01),.01,(1,0,1),dirLabel)
 
-    if molFormat=='mol':
-      m = Chem.MolFromMolFile(molN)
-      if not m:
-        print >>sys.stderr,'Could not parse molecule: %s'%molN
+    v.server.resetCGO(dirLabel)
+    # this is a big of kludgery to work around what seems to be a pymol cgo bug:
+    v.server.cylinder((0,0,0),(.01,.01,.01),.01,(1,0,1),dirLabel)
+
+    if molN != '-':
+      try:
+        ms = Chem.SDMolSupplier(molN)
+      except:
+        logger.error('Problems reading input file: %s'%molN)
         ms = []
-      else:
-        ms = [m]
-    elif molFormat=='sdf':
-      ms = Chem.SDMolSupplier(molN)
     else:
-      ms = []
+      ms = Chem.SDMolSupplier()
+      ms.SetData(sys.stdin.read())
 
     for m in ms:
       nm = 'Mol_%d'%(i)
       if m.HasProp('_Name'):
         nm += '_'+m.GetProp('_Name')
-      ShowMolFeats(m,factory,v,transparency=0.25,excludeTypes=exclude,name=nm,showOnly=False,
-                   useFeatDirs=useDirs,
+      if options.verbose:
+        if m.HasProp('_Name'):
+          print "#Molecule: %s"%m.GetProp('_Name')
+        else:
+          print "#Molecule: %s"%nm
+      ShowMolFeats(m,factory,v,transparency=0.25,excludeTypes=options.exclude,name=nm,
+                   showOnly=False,
+                   useFeatDirs=options.useDirs,
                    featLabel=featLabel,dirLabel=dirLabel,
-                   includeArrowheads=includeArrowheads)
+                   includeArrowheads=options.includeArrowheads,
+                   writeFeats=options.writeFeats,showMol=not options.noMols,
+                   featMapFile=options.featMapFile)
       i += 1
+      if not i%100:
+        logger.info("Done %d poses"%i)
     if ms:
       v.server.renderCGO(_globalSphereCGO,featLabel,1)
-      if useDirs:
+      if options.useDirs:
         v.server.renderCGO(_globalArrowCGO,dirLabel,1)
+
+  if options.featMapFile:
+    print >>options.featMapFile,"EndPoints"
+    
+
   sys.exit(0)

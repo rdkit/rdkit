@@ -27,10 +27,7 @@ class TopNOverallPicker(GenericPicker):
   Connect to a database:
   >>> import os.path
   >>> from Dbase.DbConnection import DbConnect
-  >>> if RDConfig.usePgSQL:
-  ...   dbName = "::RDTests"
-  ... else:
-  ...   dbName = os.path.join(RDConfig.RDCodeDir,'SimDivFilters','test_data','data.gdb')
+  >>> dbName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(dbName,'simple_mols1_fp')
   >>> [x.upper() for x in conn.GetColumnNames()]
   ['ID', 'AUTOFRAGMENTFP']
@@ -51,7 +48,7 @@ class TopNOverallPicker(GenericPicker):
   2
   >>> fp,score = picker[0]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'ether-1'
   >>> score
   1.0
@@ -59,7 +56,7 @@ class TopNOverallPicker(GenericPicker):
   The results come back in order:
   >>> fp,score = picker[1]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'ether-2'
 
   Now find the top matches for 2 probes.  We'll get one ether and one acid:
@@ -71,17 +68,17 @@ class TopNOverallPicker(GenericPicker):
   3
   >>> fp,score = picker[0]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'acid-1'
   >>> fp,score = picker[1]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'ether-1'
   >>> score
   1.0
   >>> fp,score = picker[2]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'acid-2'
   
   
@@ -122,10 +119,7 @@ class SpreadPicker(GenericPicker):
   Connect to a database:
   >>> import os.path
   >>> from Dbase.DbConnection import DbConnect
-  >>> if RDConfig.usePgSQL:
-  ...   dbName = "::RDTests"
-  ... else:
-  ...   dbName = os.path.join(RDConfig.RDCodeDir,'SimDivFilters','test_data','data.gdb')
+  >>> dbName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(dbName,'simple_mols1_fp')
   >>> [x.upper() for x in conn.GetColumnNames()]
   ['ID', 'AUTOFRAGMENTFP']
@@ -146,7 +140,7 @@ class SpreadPicker(GenericPicker):
   2
   >>> fp,score = picker[0]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'ether-1'
   >>> score
   1.0
@@ -154,7 +148,7 @@ class SpreadPicker(GenericPicker):
   The results come back in order:
   >>> fp,score = picker[1]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'ether-2'
 
   Now find the top matches for 2 probes.  We'll get one ether and one acid:
@@ -166,19 +160,19 @@ class SpreadPicker(GenericPicker):
   3
   >>> fp,score = picker[0]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'ether-1'
   >>> score
   1.0
   >>> fp,score = picker[1]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'acid-1'
   >>> score
   1.0
   >>> fp,score = picker[2]
   >>> id = fp._fieldsFromDb[0]
-  >>> id
+  >>> str(id)
   'ether-2'
 
   
