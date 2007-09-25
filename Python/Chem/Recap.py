@@ -13,7 +13,7 @@
 #       copyright notice, this list of conditions and the following 
 #       disclaimer in the documentation and/or other materials provided 
 #       with the distribution.
-#     * Neither the name of Novartis Institutues for BioMedical Research Inc. 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
 #       nor the names of its contributors may be used to endorse or promote 
 #       products derived from this software without specific prior written permission.
 #
@@ -190,7 +190,9 @@ def RecapDecompose(mol,allNodes=None):
 	  prodSeq.sort()
 	  for nats,prod in prodSeq:
 	    pSmi = Chem.MolToSmiles(prod,1)
-	    if pSmi.replace('[Du]','') in ('','C','CC','CCC'):
+            # don't forget after replacing dummy atoms to remove any empty
+            # branches:
+	    if pSmi.replace('[Du]','').replace('()','') in ('','C','CC','CCC'):
 	      seqOk=False
 	      break
 	    prod.pSmi = pSmi
@@ -250,5 +252,17 @@ if __name__=='__main__':
       self.failUnless(len(res.children.keys())==2)
       self.failUnless(len(allNodes.keys())==9)
       
+    def testSFNetIssue1801871(self):
+      m = Chem.MolFromSmiles('c1ccccc1OC(Oc1ccccc1)Oc1ccccc1')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==2)
+      ks = res.GetLeaves().keys()
+      self.failIf('[Du]C([Du])[Du]' in ks)
+      self.failUnless('[Du]c1ccccc1' in ks)
+      self.failUnless('[Du]C([Du])Oc1ccccc1' in ks)
+      
+
+
   unittest.main()
 
