@@ -2,13 +2,14 @@
 import sys, smtplib, base64, cStringIO, time, os.path
 from email import Message, Utils
 
-SMTP_HOSTNAME='mail.sbcglobal.net'
-
+SMTP_HOSTNAME=''
+SMTP_USER=''
+SMTP_DEST="rdkit-devel@lists.sourceforge.net"
 def sendLog(fileName,summaryName=""):
 
   msg = Message.Message()
-  msg["To"]="rdkit-devel@lists.sourceforge.net"
-  msg["From"]="glandrum@users.sourceforge.net"
+  msg["To"]=SMTP_DEST
+  msg["From"]=SMTP_USER
   msg["Subject"]='RDKitBuild: Nightly Build Results for %s'%time.strftime("%d/%m/%Y")
   msg["Date"] = Utils.formatdate(localtime=1)
   msg["Message-ID"] = Utils.make_msgid()
