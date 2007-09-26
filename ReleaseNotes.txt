@@ -1,3 +1,19 @@
+******  Release_XXX2007_1 *******
+(Changes relative to Release_Aug2007_1)
+
+Bug Fixes
+ - the Recap code no longer generates illegal fragments for
+   highly-branched atoms. (issue 1801871)
+ 
+New Features
+ - The SparseIntVect class (used by the atom pairs and topological
+   torsions) is now implemented in C++.
+   
+Other
+ - The full set of tests is now easier to setup and run on new
+   machines. (issue 1757265) 
+
+
 ******  Release_Aug2007_1 *******
 (Changes relative to Release_April2007_1)
 
