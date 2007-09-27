@@ -1,11 +1,12 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <DataStructs/ExplicitBitVect.h>
+#include <DataStructs/BitOps.h>
 #include "Fingerprints.h"
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
@@ -16,11 +17,15 @@
 
 namespace RDKit{
   // caller owns the result, it must be deleted
-  ExplicitBitVect *DaylightFingerprintMol(const ROMol &mol,int minPath,int maxPath,
-					  int fpSize,int nBitsPerHash,bool useHs){
+  ExplicitBitVect *DaylightFingerprintMol(const ROMol &mol,unsigned int minPath,
+					  unsigned int maxPath,
+					  unsigned int fpSize,unsigned int nBitsPerHash,
+					  bool useHs,
+					  double tgtDensity,unsigned int minSize){
+    PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
-    PRECONDITION(fpSize>0,"bad fingerprint length");
-    PRECONDITION(nBitsPerHash>0,"bad nBitsPerHash");
+    PRECONDITION(fpSize!=0,"fpSize==0");
+    PRECONDITION(nBitsPerHash!=0,"nBitsPerHash==0");
 
     typedef boost::minstd_rand rng_type;
     typedef boost::uniform_int<> distrib_type;
@@ -47,23 +52,27 @@ namespace RDKit{
 	float balabanJ = static_cast<float>(MolOps::computeBalabanJ(mol,true,true,
 								    &path,false));
 	
-	//std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cout," "));
-	//std::cout << std::endl;
-	//std::cout << " " << balabanJ << std::endl;
 	unsigned long seed = *(unsigned long *)(&balabanJ);
-	//std::cout << MolToSmiles(*subMol) << " " << seed << std::endl;
-	//std::cout << "\t" << seed << std::endl;
 	generator.seed(seed);
 
-	//std::cout << "\t\t";
 	for(int i=0;i<nBitsPerHash;i++){
 	  unsigned int bit = randomSource();
 	  bit %= fpSize;
-	  //std::cout << bit << " ";
 	  res->SetBit(bit);
 	}
       }
     }
+
+    // EFF: this could be faster by folding by more than a factor
+    // of 2 each time, but we're not going to be spending much
+    // time here anyway
+    while( res->GetNumOnBits()/res->GetNumBits() < tgtDensity &&
+	   res->GetNumBits() > 2*minSize ){
+      ExplicitBitVect *tmpV=FoldFingerprint(*res,2);
+      delete res;
+      res = tmpV;
+    }
+    
     return res;
   }
 

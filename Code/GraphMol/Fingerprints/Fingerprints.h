@@ -19,6 +19,9 @@ namespace RDKit{
     \param nBitsPerHash: the number of bits to be set by each path
     \param useHs:        toggles inclusion of Hs in distinguishing paths from
                          each other.
+    \param tgtDensity:   
+    \param minSize:    
+                         
 
     \return the molecular fingerprint, as an ExplicitBitVect
 
@@ -26,9 +29,11 @@ namespace RDKit{
       - the caller is responsible for <tt>delete</tt>ing the result
     
   */
-  ExplicitBitVect *DaylightFingerprintMol(const ROMol &mol,int minPath=1,int maxPath=7,
-					  int fpSize=2048,int nBitsPerHash=4,
-					  bool useHs=true);
+  ExplicitBitVect *DaylightFingerprintMol(const ROMol &mol,
+					  unsigned int minPath=1,unsigned int maxPath=7,
+					  unsigned int fpSize=2048,unsigned int nBitsPerHash=4,
+					  bool useHs=true,
+					  double tgtDensity=0.0,unsigned int minSize=128);
 
 }
 

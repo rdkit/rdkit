@@ -5,7 +5,7 @@ from distutils.core import setup,Extension
 
 libDirs += [rdLibDir,rdBitDir,rdCatalogDir,rdGeometryDir]
 libraries.extend(["SmilesParse","ChemTransforms","Substruct","FileParsers", "Subgraphs",
-           "FragCat", "GraphMol", "Catalogs", "DataStructs","Fingerprints",
+           "FragCat", "GraphMol", "Catalogs", "Fingerprints","DataStructs",
            "RDBoost","RDGeneral", "RDGeometry",
            ])
 

@@ -51,16 +51,8 @@ def FingerprintMol(mol,
   else:
     fp = fingerprinter(mol,fpArgs['minPath'],fpArgs['maxPath'],
                        fpArgs['fpSize'],fpArgs['bitsPerHash'],
-                       fpArgs['useHs'])
-  nOn = fp.GetNumOnBits()
-  nTot = fp.GetNumBits()
-  while( float(nOn)/nTot < fpArgs['tgtDensity'] ):
-    if nTot / 2 > fpArgs['minSize']:
-      fp = DataStructs.FoldFingerprint(fp,2)
-      nOn = fp.GetNumOnBits()
-      nTot = fp.GetNumBits()
-    else:
-      break
+                       fpArgs['useHs'],fpArgs['tgtDensity'],
+                       fpArgs['minSize'])
   return fp
 
 def FingerprintsFromSmiles(dataSource,idCol,smiCol,
