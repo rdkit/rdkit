@@ -33,6 +33,16 @@ namespace {
       vect.setVal(idx,vect[idx]+1);
     }
   }
+  template <typename IndexType>
+  python::dict pyGetNonzeroElements(SparseIntVect<IndexType> &vect){
+    python::dict res;
+    typename SparseIntVect<IndexType>::StorageType::const_iterator iter=vect.getNonzeroElements().begin();
+    while(iter!=vect.getNonzeroElements().end()){
+      res[iter->first]=iter->second;
+      ++iter;
+    }
+    return res;
+  }
 }
 
 std::string sparseIntVectDoc="A container class for storing integer\n\
@@ -61,8 +71,8 @@ struct sparseIntVec_wrapper {
 					      sparseIntVectDoc.c_str(),
 					      python::init<IndexType>("Constructor"))
       .def(python::init<std::string>())
-      .def("__len__", &SparseIntVect<IndexType>::getLength,
-	   "Get the number of entries in the vector")
+      // Note: we cannot support __len__ because, at least at the moment
+      // (BPL v1.34.1), it must return an int.
       .def("__setitem__", &SparseIntVect<IndexType>::setVal,
 	   "Set the value at a specified location")
       .def("__getitem__", &SparseIntVect<IndexType>::getVal,
@@ -78,11 +88,17 @@ struct sparseIntVec_wrapper {
       .def("GetTotalVal", &SparseIntVect<IndexType>::getTotalVal,
 	   (python::args("useAbs")=false),
 	   "Get the sum of the values in the vector, basically L1 norm")
+      .def("GetLength", &SparseIntVect<IndexType>::getLength,
+	   (python::args("useAbs")=false),
+	   "Returns the length of the vector")
       .def("ToBinary", &SparseIntVect<IndexType>::toString,
 	   "returns a binary (pickle) representation of the vector")
       .def("UpdateFromSequence",
 	   &pyUpdateFromSequence<IndexType>,
 	   "update the vector based on the values in the list or tuple")
+      .def("GetNonzeroElements",
+	   &pyGetNonzeroElements<IndexType>,
+	   "returns a dictionary of the nonzero elements")
       .def_pickle(siv_pickle_suite<IndexType>())
       ;
 

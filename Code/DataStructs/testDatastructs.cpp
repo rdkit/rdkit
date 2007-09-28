@@ -503,6 +503,26 @@ void test6SparseIntVect() {
     ;
   }
 
+  { // iV3 = iv1 |iV2
+    SparseIntVect<int> iV1(5);
+    iV1.setVal(4,4);
+    iV1.setVal(0,2);
+    iV1.setVal(3,1);
+    SparseIntVect<int>::StorageType::const_iterator iter=iV1.getNonzeroElements().begin();
+    TEST_ASSERT(iter->first==0);
+    TEST_ASSERT(iter->second==2);
+    ++iter;
+    TEST_ASSERT(iter->first==3);
+    TEST_ASSERT(iter->second==1);
+    ++iter;
+    TEST_ASSERT(iter->first==4);
+    TEST_ASSERT(iter->second==4);
+    ++iter;
+    TEST_ASSERT(iter==iV1.getNonzeroElements().end());
+
+  }
+
+  
   { // iV1 &= iV2
     SparseIntVect<int> iV1(5),iV2(5);
     iV1.setVal(0,2);
@@ -829,6 +849,7 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV3!=iV1);
     TEST_ASSERT(iV1!=iV3);
   }
+
 }
 
 void test7SparseIntVectPickles() {

@@ -12,11 +12,12 @@ class TestCase(unittest.TestCase):
 
     """
     v1 = ds.IntSparseIntVect(5)
-    self.failUnlessRaises(IndexError,lambda:v1[6])
+    self.failUnlessRaises(IndexError,lambda:v1[5])
     v1[0]=1
     v1[2]=2
     v1[3]=3
     self.failUnless(v1==v1)
+    self.failUnless(v1.GetLength()==5)
 
     v2= ds.IntSparseIntVect(5)
     self.failUnless(v1!=v2)
@@ -26,17 +27,22 @@ class TestCase(unittest.TestCase):
     v3=v2|v1
     self.failUnless(v3==v1)
 
+    onVs = v1.GetNonzeroElements()
+    self.failUnless(onVs=={0:1,2:2,3:3})
+
+
   def test2Long(self):
     """
 
     """
     l=1L<<42
     v1 = ds.LongSparseIntVect(l)
-    self.failUnlessRaises(IndexError,lambda:v1[l+1])
+    self.failUnlessRaises(IndexError,lambda:v1[l])
     v1[0]=1
     v1[2]=2
     v1[1L<<35]=3
     self.failUnless(v1==v1)
+    self.failUnless(v1.GetLength()==l)
 
     v2= ds.LongSparseIntVect(l)
     self.failUnless(v1!=v2)
@@ -45,6 +51,9 @@ class TestCase(unittest.TestCase):
 
     v3=v2|v1
     self.failUnless(v3==v1)
+
+    onVs = v1.GetNonzeroElements()
+    self.failUnless(onVs=={0L:1,2L:2,1L<<35:3})
 
   def test3Pickle(self):
     """

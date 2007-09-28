@@ -18,8 +18,8 @@ namespace RDKit{
   //! a class for efficiently storing sparse vectors of ints
   template <typename IndexType>
   class SparseIntVect {
-    typedef std::map<IndexType,int> StorageType;
   public:
+    typedef std::map<IndexType,int> StorageType;
   
     SparseIntVect() : d_length(0) {};
 
@@ -85,6 +85,13 @@ namespace RDKit{
       }
       return res;
     };
+
+
+    //! returns our nonzero elements as a map(IndexType->int)
+    const StorageType &getNonzeroElements() const {
+      return d_data;
+    }
+
 
     //! this is a "fuzzy" intesection, the final value
     //! of each element is equal to the minimum from
