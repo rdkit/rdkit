@@ -67,7 +67,7 @@ reactionDefs = (
 
   "[N:1;D2,D3]!@C(!@=O)!@[N:2,D2,D3]>>[X][N:1].[N:2][X]", # urea
 
-  "[N;!D1](-[*:1])-!@[*:2]>>[X][*:1].[*:2][X]", # amines
+  "[N;!D1](-!@[*:1])-!@[*:2]>>[X][*:1].[*:2][X]", # amines
   #"[N;!D1](!@[*:1])!@[*:2]>>[X][*:1].[*:2][X]", # amines
 
   "[N:1;R;D3]-!@[*:2]>>[X][N:1].[*:2][X]", # cyclic amines
@@ -265,12 +265,12 @@ if __name__=='__main__':
       self.failUnless('[Du]C([Du])Oc1ccccc1' in ks)
       
     def testSFNetIssue1804418(self):
-      m = Chem.MolFromSmiles('C1CCN1CCCC')
+      m = Chem.MolFromSmiles('C1CCCCN1CCCC')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]N1CCC1' in ks)
+      self.failUnless('[Du]N1CCCCC1' in ks)
       self.failUnless('[Du]CCCC' in ks)
       
 
