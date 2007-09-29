@@ -70,6 +70,8 @@ reactionDefs = (
   "[N;!D1](-[*:1])-!@[*:2]>>[X][*:1].[*:2][X]", # amines
   #"[N;!D1](!@[*:1])!@[*:2]>>[X][*:1].[*:2][X]", # amines
 
+  "[N:1;R;D3]-!@[*:2]>>[X][N:1].[*:2][X]", # cyclic amines
+
   "[#6:1]-!@O-!@[#6:2]>>[#6:1][X].[X][#6:2]", # ether
 
   "[C:1]=!@[C:2]>>[C:1][X].[X][C:2]", # olefin
@@ -261,6 +263,15 @@ if __name__=='__main__':
       self.failIf('[Du]C([Du])[Du]' in ks)
       self.failUnless('[Du]c1ccccc1' in ks)
       self.failUnless('[Du]C([Du])Oc1ccccc1' in ks)
+      
+    def testSFNetIssue1804418(self):
+      m = Chem.MolFromSmiles('C1CCN1CCCC')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==2)
+      ks = res.GetLeaves().keys()
+      self.failUnless('[Du]N1CCC1' in ks)
+      self.failUnless('[Du]CCCC' in ks)
       
 
 
