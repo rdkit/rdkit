@@ -13,7 +13,7 @@
 //       copyright notice, this list of conditions and the following 
 //       disclaimer in the documentation and/or other materials provided 
 //       with the distribution.
-//     * Neither the name of Novartis Institutues for BioMedical Research Inc. 
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
 //       nor the names of its contributors may be used to endorse or promote 
 //       products derived from this software without specific prior written permission.
 //
@@ -109,12 +109,9 @@ void test1Basics(){
 
   prods = rxn.runReactants(reacts);
   TEST_ASSERT(prods.size()==4);
-  
-      
 
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-  
 }
 
 void test2SimpleReactions(){
@@ -1118,14 +1115,52 @@ void test13Issue1748846(){
     
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()>0);
-  BOOST_LOG(rdInfoLog)<<prods[0].size()<<std::endl;
   TEST_ASSERT(prods[0].size()==1);
-  BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
   TEST_ASSERT(prods[0][0]->getNumAtoms()==9);
   smi=MolToSmiles(*prods[0][0],true);
   TEST_ASSERT(smi=="COCc1ccccc1");
-  
     
+  delete rxn;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test14Issue1804420(){
+  ROMol *mol=0;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  std::vector<MOL_SPTR_VECT> prods;
+  std::string smi,stereo;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 1804420: bad handling of query atoms in products." << std::endl;
+
+  // NOTE that this bug was actually in the smarts parser, so this is really
+  // just another reaction test... still, more tests are better
+  
+  smi = "[N:1;D3;R]-!@[*:2]>>[At][N:1].[*:2][At]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==2);
+
+  TEST_ASSERT((*rxn->beginReactantTemplates())->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  
+  reacts.clear();
+  smi = "C1CCN1CCC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==2);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==5);
+  smi=MolToSmiles(*prods[0][0],true);
+  TEST_ASSERT(smi=="[At]N1CCC1");
+  TEST_ASSERT(prods[0][1]->getNumAtoms()==4);
+  smi=MolToSmiles(*prods[0][1],true);
+  TEST_ASSERT(smi=="CCC[At]");
+
   delete rxn;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1152,8 +1187,11 @@ int main() {
   test10ChiralityDaylight();
   test11ChiralityRxn();
   test12DoubleBondStereochem();
-#endif
   test13Issue1748846();
+#endif
+  test14Issue1804420();
+  
+  
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
