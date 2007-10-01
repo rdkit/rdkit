@@ -63,7 +63,7 @@ from Chem import rdChemReactions as Reactions
 reactionDefs = (
   "[#7:1;D2,D3]!@C(!@=O)!@[#7:2;D2,D3]>>[X][#7:1].[#7:2][X]", # urea
 
-  "[C:1](=!@[O:2])!@[#7:3]>>[X][C:1]=[O:2].[X][#7:3]", # amide
+  "[C:1](=!@[O:2])!@[#7:3!D1]>>[X][C:1]=[O:2].[X][#7:3]", # amide
 
   "[C:1](=!@[O:2])!@[O:3]>>[X][C:1]=[O:2].[O:3][X]", # ester
 
@@ -308,7 +308,24 @@ if __name__=='__main__':
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==0)
-      
+
+      m = Chem.MolFromSmiles('CC(=O)NC')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==2)
+      ks = res.GetLeaves().keys()
+
+      m = Chem.MolFromSmiles('CC(=O)N')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==0)
+
+      m = Chem.MolFromSmiles('C(=O)NCCNC(=O)CC')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.children)==4)
+      self.failUnless(len(res.GetLeaves())==3)
+
     def testEsterRxn(self):
       m = Chem.MolFromSmiles('C1CC1C(=O)OC1OC1')
       res = RecapDecompose(m)
