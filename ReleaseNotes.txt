@@ -4,11 +4,24 @@
 Bug Fixes
  - the Recap code no longer generates illegal fragments for
    highly-branched atoms. (issue 1801871)
+ - the Recap code no longer breaks cyclic bonds to N
+   (issue 1804418)
  
 New Features
  - The SparseIntVect class (used by the atom pairs and topological
    torsions) is now implemented in C++.
-   
+ - The package $RDKit/Python/Chem/MolDb has been added to help deal
+   with molecular databases (this was intended for the August release
+   and overlooked)
+ - The module $RDKit/Python/Chem/FastSDMolSupplier has been added to
+   provide a fast (at the expense of memory consumption) class for
+   working with SD files.
+ - A new directory $RDKit/Projects has been created to hold things
+   that don't really fit in the existing directory structure.
+ - The new project $RDKit/Projects/DbCLI has been added. This contains
+   command-line scripts for populating molecular database and
+   searching them using substructure or similarity.
+
 Other
  - The full set of tests is now easier to setup and run on new
    machines. (issue 1757265) 
