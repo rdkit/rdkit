@@ -24,6 +24,10 @@ using namespace RDKit;
 template< typename T >
 inline void TXTMSG(const char *__a__,T __b__){  BOOST_LOG(rdInfoLog) << (__a__) << " " << (__b__) << std::endl; }
 
+bool feq(double v1,double v2,double tol=1e-4){
+  return fabs(v1-v2)<1e-4;
+}
+
 template<typename T> void Test(T arg){
   T t1(20);
   TXTMSG("Set 10:",t1.SetBit(10));
@@ -131,7 +135,7 @@ template<typename T> void TaniTest(T &arg){
       T v2(256);
       FromDaylightString(v2,fps[j]);
       double tani=TanimotoSimilarity(v1,v2);
-      TEST_ASSERT(abs(tani-dists[idx])<1e-4);
+      TEST_ASSERT(feq(tani,dists[idx]));
       idx++;
     }
   }
@@ -503,7 +507,7 @@ void test6SparseIntVect() {
     ;
   }
 
-  { // iV3 = iv1 |iV2
+  { 
     SparseIntVect<int> iV1(5);
     iV1.setVal(4,4);
     iV1.setVal(0,2);
@@ -519,9 +523,8 @@ void test6SparseIntVect() {
     TEST_ASSERT(iter->second==4);
     ++iter;
     TEST_ASSERT(iter==iV1.getNonzeroElements().end());
-
+    TEST_ASSERT(feq(DiceSimilarity(iV1,iV1),1.));
   }
-
   
   { // iV1 &= iV2
     SparseIntVect<int> iV1(5),iV2(5);
@@ -535,6 +538,8 @@ void test6SparseIntVect() {
     iV2.setVal(3,4);
     iV2.setVal(4,6);
 
+    TEST_ASSERT(feq(DiceSimilarity(iV1,iV2),18./26.));
+
     iV1 &= iV2;
     TEST_ASSERT(iV1[0]==0);
     TEST_ASSERT(iV1[1]==0);
@@ -547,7 +552,9 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV2[2]==3);
     TEST_ASSERT(iV2[3]==4);
     TEST_ASSERT(iV2[4]==6);
-  
+
+    TEST_ASSERT(feq(DiceSimilarity(iV1,iV2),18./24.));
+
     try {
       iV1 &= iVect;
       TEST_ASSERT(0);
@@ -586,7 +593,6 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV2[2]==3);
     TEST_ASSERT(iV2[3]==4);
     TEST_ASSERT(iV2[4]==6);
-  
   }
   
   { // iV2 &= iV1
@@ -613,7 +619,6 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV1[2]==1);
     TEST_ASSERT(iV1[3]==4);
     TEST_ASSERT(iV1[4]==4);
-
   
     try {
       iV2 &= iVect;
@@ -686,7 +691,6 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV2[2]==3);
     TEST_ASSERT(iV2[3]==4);
     TEST_ASSERT(iV2[4]==6);
-  
   }
   
   {  // iV2 |= iV1
@@ -758,7 +762,6 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV3[2]==4);
     TEST_ASSERT(iV3[3]==0);
     TEST_ASSERT(iV3[4]==10);
-
 
     TEST_ASSERT(iV1[0]==2);
     TEST_ASSERT(iV1[1]==0);
@@ -884,7 +887,6 @@ void test7SparseIntVectPickles() {
     TEST_ASSERT(iV2[1]==0)
     TEST_ASSERT(iV2[2]==1)
     TEST_ASSERT(iV2[3]==4)
-    
   }
   
   {

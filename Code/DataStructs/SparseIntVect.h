@@ -281,6 +281,7 @@ namespace RDKit{
   private:
     IndexType d_length;
     StorageType d_data;
+    
     void initFromText(const char *pkl,const unsigned int len) {
       d_data.clear();
       std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
@@ -334,6 +335,19 @@ namespace RDKit{
       IndexType idx=*seqIt;
       vect.setVal(idx,vect.getVal(idx)+1);
     }
+  }
+
+  template <typename IndexType>
+  double DiceSimilarity(const SparseIntVect<IndexType> &v1,
+			const SparseIntVect<IndexType> &v2,
+                        bool useAbs=false){
+    double denom=1.*(v1.getTotalVal(useAbs)+v2.getTotalVal(useAbs));
+    if(fabs(denom)<1e-6){
+      return 0.0;
+    }
+    double numer=(v1&v2).getTotalVal(useAbs);
+    
+    return 2.*numer/denom;
   }
 } 
 

@@ -102,6 +102,9 @@ struct sparseIntVec_wrapper {
       .def_pickle(siv_pickle_suite<IndexType>())
       ;
 
+    python::def("DiceSimilarity",&DiceSimilarity<IndexType>,
+        (python::args("v1"),python::args("v2"),python::args("useAbs")=false),
+                "return the Dice similarity between two vectors");
   }
 
   static void wrap() {
