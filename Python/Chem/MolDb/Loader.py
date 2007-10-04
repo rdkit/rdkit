@@ -14,7 +14,8 @@ logger = logging.logger()
 logger.setLevel(logging.INFO)
 
 def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
-           redraw=False,errorsTo=None,keepHs=False,defaultVal='N/A'):
+           redraw=False,errorsTo=None,keepHs=False,defaultVal='N/A',
+           regName='molecules'):
   nMols = len(suppl)
   if not silent:
     logger.info("Generating molecular database in file %s"%dbName)
@@ -95,12 +96,12 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   conn = DbConnect(dbName)
   curs = conn.GetCursor()
   try:
-    curs.execute('drop table molecules')
+    curs.execute('drop table %s'%regName)
   except:
     pass
-  curs.execute('create table molecules (%s)'%(','.join(typs)))
+  curs.execute('create table %s (%s)'%(regName,','.join(typs)))
   qs = ','.join([DbModule.placeHolder for x in typs])
-  curs.executemany('insert into molecules values (%s)'%qs,rows)
+  curs.executemany('insert into %s values (%s)'%(regName,qs),rows)
   
   conn.Commit()
 
