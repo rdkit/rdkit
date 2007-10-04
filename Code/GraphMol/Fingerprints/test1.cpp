@@ -85,15 +85,46 @@ void test2(){
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
   TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
 
+
   delete m1;
   delete m2;
   delete fp1;
   delete fp2;
+
   std::cout << "done" << std::endl;
+}
+
+void test3(){
+  std::cout << "testing auto folding" << std::endl;
+
+  RWMol *m = SmilesToMol("CCCOC");
+
+  ExplicitBitVect *fp1,*fp2;
+  fp1=DaylightFingerprintMol(*m,1,4,2048,4,false,
+			     0.3,256);
+  TEST_ASSERT(fp1->GetNumBits()==256);
+  TEST_ASSERT(fp1->GetNumOnBits()==29);
+
+  delete m;
+  delete fp1;
+  m=SmilesToMol("CN(C)Cc1n-2c(nn1)CN=C(c1ccccc1)c1cc(Cl)ccc12");
+  fp1=DaylightFingerprintMol(*m,1,4,2048,4,false);
+  TEST_ASSERT(fp1->GetNumBits()==2048);
+  TEST_ASSERT(fp1->GetNumOnBits()==334);
+  fp2=DaylightFingerprintMol(*m,1,4,2048,4,false,0.3,256);  
+  TEST_ASSERT(fp2->GetNumBits()==1024);
+  TEST_ASSERT(fp2->GetNumOnBits()==309);
+  
+  delete m;
+  delete fp1;
+  delete fp2;
+  std::cout << "done" << std::endl;
+
 }
 
 int main(int argc,char *argv[]){
   test1();
   test2();
+  test3();
   return 0;
 }

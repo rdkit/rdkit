@@ -66,8 +66,8 @@ namespace RDKit{
     // EFF: this could be faster by folding by more than a factor
     // of 2 each time, but we're not going to be spending much
     // time here anyway
-    while( res->GetNumOnBits()/res->GetNumBits() < tgtDensity &&
-	   res->GetNumBits() > 2*minSize ){
+    while( static_cast<double>(res->GetNumOnBits())/res->GetNumBits() < tgtDensity &&
+	   res->GetNumBits() >= 2*minSize ){
       ExplicitBitVect *tmpV=FoldFingerprint(*res,2);
       delete res;
       res = tmpV;
