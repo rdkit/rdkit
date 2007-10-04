@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and  Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -37,12 +37,12 @@ namespace RDKit{
       atomNeeded.set();
       CrippenParamCollection *params=CrippenParamCollection::getParams();
       for(CrippenParamCollection::ParamsVect::const_iterator it=params->begin();
-	  it!=params->end(); it++){
+	  it!=params->end(); ++it){
 	std::vector<MatchVectType> matches;
 	SubstructMatch(*workMol,*(it->dp_pattern.get()),matches,
 		       false,true);
 	for(std::vector<MatchVectType>::const_iterator matchIt=matches.begin();
-	    matchIt!=matches.end();matchIt++){
+	    matchIt!=matches.end();++matchIt){
 	  int idx=(*matchIt)[0].second;
 	  if(atomNeeded[idx]){
 	    atomNeeded[idx]=0;
