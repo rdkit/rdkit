@@ -375,8 +375,9 @@ class pySparseIntVect(object):
     return self.container.iteritems()
 
     
-import DataStructs    
-def DiceSimilarity(v1,v2,bounds=None,useAbs=False):
+import DataStructs
+DiceSimilarity=DataStructs.DiceSimilarity
+def pyDiceSimilarity(v1,v2,bounds=None,useAbs=False):
   """ Implements the DICE similarity metric.
 
   >>> v1 = DataStructs.IntSparseIntVect(10)
