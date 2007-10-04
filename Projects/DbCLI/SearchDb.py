@@ -72,8 +72,8 @@ def DepickleRDKitFP(pkl):
   fp = DataStructs.ExplicitBitVect(str(pkl))
   return fp
 def BuildRDKitFP(mol):
-  from Chem.Fingerprints.FingerprintMols import GetDaylightFingerprint
-  fp=GetDaylightFingerprint(mol)
+  from Chem.Fingerprints.FingerprintMols import FingerprintMol
+  fp=FingerprintMol(mol)
   return fp
 
 def GetNeighborLists(probeFps,topN,cursor,
@@ -165,14 +165,16 @@ if __name__=='__main__':
   if options.similarityType=='AtomPairs':
     fpBuilder=BuildAtomPairFP
     fpDepickler=DepickleIntVectFP
-    simMetric=SparseIntVect.DiceSimilarity
+    #simMetric=SparseIntVect.DiceSimilarity
+    simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.pairDbName)
     fpTableName = options.pairTableName
     fpColName = options.pairColName
   elif options.similarityType=='TopologicalTorsions':
     fpBuilder=BuildTorsionsFP
     fpDepickler=DepickleIntVectFP
-    simMetric=SparseIntVect.DiceSimilarity
+    #simMetric=SparseIntVect.DiceSimilarity
+    simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.torsionsDbName)
     fpTableName = options.torsionsTableName
     fpColName = options.torsionsColName

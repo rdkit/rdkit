@@ -47,7 +47,8 @@ from RDLogger import logger
 logger = logger()
 import cPickle,sys,os
 
-def GetMolsFromSmilesFile(dataFile,errFile,nameProp):
+def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
+  dataFile=file(dataFilename,'r')
   for line in dataFile:
     try:
       smi,nm = line.strip().split(' ')
@@ -62,11 +63,8 @@ def GetMolsFromSmilesFile(dataFile,errFile,nameProp):
       continue
     yield (nm,smi,m)
 
-def GetMolsFromSDFile(dataFile,errFile,nameProp):
-  from Chem.FastSDMolSupplier import FastSDMolSupplier
-  d = dataFile.read()
-  suppl = FastSDMolSupplier(data=d)
-  #suppl.SetData(d)
+def GetMolsFromSDFile(dataFilename,errFile,nameProp):
+  suppl = Chem.SDMolSupplier(dataFilename)
 
   for m in suppl:
     if not m:
@@ -83,7 +81,7 @@ def GetMolsFromSDFile(dataFile,errFile,nameProp):
       nm = 'Mol_%d'%(suppl._idx-1)
     yield nm,smi,m
 
-def PopulateMolDb(dataFile,errFile,conn,regName,idName,silent=False,
+def PopulateMolDb(dataFilename,errFile,conn,regName,idName,silent=False,
                   molReader=GetMolsFromSmilesFile,nameProp='_Name'):
   curs = conn.GetCursor()
   try:
@@ -95,7 +93,7 @@ def PopulateMolDb(dataFile,errFile,conn,regName,idName,silent=False,
   
   rows = []
   nDone=0
-  for nm,smi,m in molReader(dataFile,errFile,nameProp):
+  for nm,smi,m in molReader(dataFilename,errFile,nameProp):
     if not m: 
       continue
     pkl = m.ToBinary()
@@ -171,7 +169,9 @@ if __name__=='__main__':
       logger.error('could not create output directory %s'%options.outDir)
       sys.exit(1)
   molConn = DbConnect(os.path.join(options.outDir,options.molDbName))
-  dataFile = file(args[0],'r')
+  dataFilename = args[0]
+  dataFile = file(dataFilename,'r')
+  dataFile=None
   errFile=file(os.path.join(options.outDir,options.errFilename),'w+')
   
   if options.molFormat=='smiles':
@@ -180,7 +180,7 @@ if __name__=='__main__':
     reader = GetMolsFromSDFile
 
   if not options.silent: logger.info('Reading molecules and constructing molecular database.')
-  PopulateMolDb(dataFile,errFile,molConn,options.regName,options.molIdName,
+  PopulateMolDb(dataFilename,errFile,molConn,options.regName,options.molIdName,
                 silent=options.silent,molReader=reader,nameProp=options.nameProp)
 
   if options.doPairs:
@@ -197,13 +197,13 @@ if __name__=='__main__':
   if options.doFingerprints:
     fpConn = DbConnect(os.path.join(options.outDir,options.fpDbName))
     fpCurs=fpConn.GetCursor()
-    from Chem.Fingerprints import FingerprintMols
     try:
       fpCurs.execute('drop table %s'%(options.fpTableName))
     except:
       pass
     fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob)'%(options.fpTableName,
                                                                                             options.molIdName))
+    from Chem.Fingerprints import FingerprintMols
     details = FingerprintMols.FingerprinterDetails()
     fpArgs = details.__dict__
   
