@@ -103,7 +103,8 @@ struct sparseIntVec_wrapper {
       ;
 
     python::def("DiceSimilarity",&DiceSimilarity<IndexType>,
-        (python::args("v1"),python::args("v2"),python::args("useAbs")=false),
+		(python::args("v1"),python::args("v2"),
+		 python::args("bounds")=0.0),
                 "return the Dice similarity between two vectors");
   }
 

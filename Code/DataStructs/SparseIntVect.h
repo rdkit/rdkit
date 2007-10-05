@@ -73,15 +73,11 @@ namespace RDKit{
     IndexType getLength() const { return d_length; };
 
     //! returns the sum of all the elements in the vect
-    int getTotalVal(bool useAbs=false) const {
+    int getTotalVal() const {
       int res=0;
       typename StorageType::const_iterator iter;
       for(iter=d_data.begin();iter!=d_data.end();++iter){
-	if(useAbs){
-	  res+=abs(iter->second);
-	} else {
-	  res+=iter->second;
-	}
+	res+=iter->second;
       }
       return res;
     };
@@ -340,13 +336,20 @@ namespace RDKit{
   template <typename IndexType>
   double DiceSimilarity(const SparseIntVect<IndexType> &v1,
 			const SparseIntVect<IndexType> &v2,
-                        bool useAbs=false){
-    double denom=1.*(v1.getTotalVal(useAbs)+v2.getTotalVal(useAbs));
+			double bounds=0.0){
+    double v1Sum=v1.getTotalVal();
+    double v2Sum=v2.getTotalVal();
+    double denom=v1Sum+v2Sum;
     if(fabs(denom)<1e-6){
       return 0.0;
     }
-    double numer=(v1&v2).getTotalVal(useAbs);
-    
+    if(bounds>0.0){
+      double minV=v1Sum<v2Sum?v1Sum:v2Sum;
+      if(2.*minV/denom<bounds){
+	return 0.0;
+      }
+    }
+    double numer=(v1&v2).getTotalVal();
     return 2.*numer/denom;
   }
 } 

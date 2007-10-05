@@ -474,7 +474,6 @@ void test6SparseIntVect() {
 
   iVect.setVal(3,-4);
   TEST_ASSERT(iVect.getTotalVal()==13);
-  TEST_ASSERT(iVect.getTotalVal(true)==21);
   
   try {
     iVect.setVal(-1,13);
