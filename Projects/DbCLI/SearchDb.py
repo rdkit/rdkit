@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.1.3"
+_version = "0.1.4"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -150,6 +150,10 @@ parser.add_option('--outF',default='-',
 parser.add_option('--transpose',default=False,action="store_true",
                   help='print the results out in a transposed form: e.g. neighbors in rows and probe compounds in columns')
 
+parser.add_option('--molFormat',default='smiles',choices=('smiles','sdf'),
+                  help='specify the format of the input file')
+parser.add_option('--nameProp',default='_Name',
+                  help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
 
 parser.add_option('--silent',default=False,action='store_true',
                   help='Do not generate status messages.')
@@ -157,6 +161,8 @@ parser.add_option('--silent',default=False,action='store_true',
 if __name__=='__main__':
   import sys,getopt,time
   import Chem
+  import CreateDb
+  
   
   options,args = parser.parse_args()
   if len(args)!=1:
@@ -165,7 +171,6 @@ if __name__=='__main__':
   if options.similarityType=='AtomPairs':
     fpBuilder=BuildAtomPairFP
     fpDepickler=DepickleIntVectFP
-    #simMetric=SparseIntVect.DiceSimilarity
     simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.pairDbName)
     fpTableName = options.pairTableName
@@ -173,7 +178,6 @@ if __name__=='__main__':
   elif options.similarityType=='TopologicalTorsions':
     fpBuilder=BuildTorsionsFP
     fpDepickler=DepickleIntVectFP
-    #simMetric=SparseIntVect.DiceSimilarity
     simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.torsionsDbName)
     fpTableName = options.torsionsTableName
@@ -200,14 +204,15 @@ if __name__=='__main__':
     sys.exit(1)
       
   if not options.silent: logger.info('Reading query molecules')
-  suppl = Chem.SDMolSupplier(queryFilename)
-  queryMols = [x for x in suppl]
-  suppl=None
+  if options.molFormat=='smiles':
+    func=CreateDb.GetMolsFromSmilesFile
+  elif options.molFormat=='sdf':
+    func=CreateDb.GetMolsFromSDFile
+  queryMols = [x for x in func(queryFilename,None,options.nameProp)]
 
   if not options.silent: logger.info('Generating fingerprints')
   probeFps=[]
-  for i in range(len(queryMols)):
-    mol = queryMols[i]
+  for i,(nm,smi,mol) in enumerate(queryMols):
     if not mol:
       logger.error('query molecule %d could not be built'%(i+1))
       probeFps.append(None)
@@ -225,13 +230,8 @@ if __name__=='__main__':
                                fpDepickler=fpDepickler)
 
   nbrLists = {}
-  for i in range(len(queryMols)):
-    mol = queryMols[i]
+  for i,(nm,smi,mol) in enumerate(queryMols):
     if not mol: continue
-    if mol.HasProp('_Name'):
-      nm =mol.GetProp('_Name').strip()
-    else:
-      nm = 'Query_%d'%(i+1)
     scores=topNLists[i].GetPts()
     nbrNames = topNLists[i].GetExtras()
     nbrs = zip(nbrNames,scores)

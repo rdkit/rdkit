@@ -31,7 +31,7 @@
 #
 # Created by Greg Landrum, July 2007
 
-_version = "0.2.4"
+_version = "0.2.5"
 _usage="""
  CreateDb [optional arguments] <filename>
 
@@ -49,7 +49,7 @@ import cPickle,sys,os
 
 def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
   dataFile=file(dataFilename,'r')
-  for line in dataFile:
+  for idx,line in enumerate(dataFile):
     try:
       smi,nm = line.strip().split(' ')
     except:
@@ -58,19 +58,20 @@ def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
       m = Chem.MolFromSmiles(smi)
     except:
       m=None
-    if not m:
-      print >>errFile,nm,smi
+    if not m and errFile:
+      print >>errFile,idx,nm,smi
       continue
     yield (nm,smi,m)
 
 def GetMolsFromSDFile(dataFilename,errFile,nameProp):
   suppl = Chem.SDMolSupplier(dataFilename)
 
-  for m in suppl:
-    if not m:
-      idx = suppl._idx-1
-      d = suppl.getItemText(idx)
-      errFile.write(d)
+  for idx,m in enumerate(suppl):
+    if not m and errFile:
+      logger.warning('full error file support not complete')
+      #d = suppl.getItemText(idx)
+      #errFile.write(d)
+      errFile.write('entry %d'%(idx))
       continue
     smi = Chem.MolToSmiles(m,True)
     if m.HasProp(nameProp):
@@ -78,7 +79,7 @@ def GetMolsFromSDFile(dataFilename,errFile,nameProp):
       if not nm:
         logger.warning('molecule found with empty name property')
     else:
-      nm = 'Mol_%d'%(suppl._idx-1)
+      nm = 'Mol_%d'%(idx+1)
     yield nm,smi,m
 
 def PopulateMolDb(dataFilename,errFile,conn,regName,idName,silent=False,
