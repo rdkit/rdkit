@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.1.4"
+_version = "0.1.5"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -150,7 +150,7 @@ parser.add_option('--outF',default='-',
 parser.add_option('--transpose',default=False,action="store_true",
                   help='print the results out in a transposed form: e.g. neighbors in rows and probe compounds in columns')
 
-parser.add_option('--molFormat',default='smiles',choices=('smiles','sdf'),
+parser.add_option('--molFormat',default='sdf',choices=('smiles','sdf'),
                   help='specify the format of the input file')
 parser.add_option('--nameProp',default='_Name',
                   help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
@@ -203,22 +203,26 @@ if __name__=='__main__':
     logger.error('could not open query file %s'%queryFilename)
     sys.exit(1)
       
-  if not options.silent: logger.info('Reading query molecules')
   if options.molFormat=='smiles':
     func=CreateDb.GetMolsFromSmilesFile
   elif options.molFormat=='sdf':
     func=CreateDb.GetMolsFromSDFile
-  queryMols = [x for x in func(queryFilename,None,options.nameProp)]
+  #queryMols = [x for x in func(queryFilename,None,options.nameProp)]
 
-  if not options.silent: logger.info('Generating fingerprints')
+  if not options.silent: logger.info('Reading query molecules and generating fingerprints')
   probeFps=[]
-  for i,(nm,smi,mol) in enumerate(queryMols):
+  i=0
+  nms=[]
+  for nm,smi,mol in func(queryFilename,None,options.nameProp):
+    i+=1
+    nms.append(nm)
     if not mol:
-      logger.error('query molecule %d could not be built'%(i+1))
+      logger.error('query molecule %d could not be built'%(i))
       probeFps.append(None)
       continue
     probeFps.append(fpBuilder(mol))
-
+    if not options.silent and not i%1000:
+      logger.info("  done %d"%i)
     
   if not options.silent: logger.info('Finding Neighbors')
   t1=time.time()
@@ -230,8 +234,7 @@ if __name__=='__main__':
                                fpDepickler=fpDepickler)
 
   nbrLists = {}
-  for i,(nm,smi,mol) in enumerate(queryMols):
-    if not mol: continue
+  for i,nm in enumerate(nms):
     scores=topNLists[i].GetPts()
     nbrNames = topNLists[i].GetExtras()
     nbrs = zip(nbrNames,scores)
