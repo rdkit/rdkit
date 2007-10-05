@@ -77,7 +77,7 @@ def BuildRDKitFP(mol):
   return fp
 
 def GetNeighborLists(probeFps,topN,cursor,
-                     simMetric=SparseIntVect.DiceSimilarity,
+                     simMetric=DataStructs.DiceSimilarity,
                      fpDepickler=DepickleIntVectFP,
                      silent=False):
 
@@ -94,7 +94,14 @@ def GetNeighborLists(probeFps,topN,cursor,
     for i in range(len(probeFps)):
       pfp = probeFps[i]
       if pfp is not None:
-        score = simMetric(probeFps[i],fp)
+        score=0.5
+        continue
+        if simMetric==DataStructs.DiceSimilarity:
+          score = simMetric(probeFps[i],fp,
+                            bounds=nbrLists[i].best[0])
+        else:
+          score = simMetric(probeFps[i],fp)
+          
         nbrLists[i].Insert(score,nm)
     row = curs.fetchone()
   return nbrLists
@@ -126,7 +133,7 @@ parser.add_option('--torsionsColName',default='torsionfp',
                   help='name of the atom pair column')
 parser.add_option('--fpDbName',default='Fingerprints.sqlt',
                   help='name of the 2D fingerprints database')
-parser.add_option('--fpTableName',default='fingerprints',
+parser.add_option('--fpTableName',default='rdkitfps',
                   help='name of the 2D fingerprints table')
 parser.add_option('--fpColName',default='autofragmentfp',
                   help='name of the 2D fingerprint column')
