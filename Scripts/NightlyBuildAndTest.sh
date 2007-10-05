@@ -60,7 +60,7 @@ svn checkout  -N $SVNROOT RDKit &> /dev/null
 cd $RDBASE
 svn checkout  -N $SVNROOT/Data Data &> /dev/null
 svn checkout  -N $SVNROOT/Data/NCI Data/NCI &> /dev/null
-for foo in Code bin Python; do
+for foo in Code bin Python Projects; do
   svn checkout  $SVNROOT/$foo $foo &> /dev/null
 done
 svn checkout  -N $SVNROOT/External External &> /dev/null
@@ -70,9 +70,14 @@ done
 svn checkout  -N $SVNROOT/Scripts Scripts &> /dev/null
 
 
-rm $RDBASE/Data/RDTests.sqlt
+
+if test -f $RDBASE/Data/RDTests.sqlt; then 
+  rm $RDBASE/Data/RDTests.sqlt
+fi
 $DBLOADER $RDBASE/Data/RDTests.sqlt < $RDBASE/Python/Dbase/testData/RDTests.sqlite
-rm $RDBASE/Data/RDData.sqlt
+if test -f $RDBASE/Data/RDData.sqlt; then 
+  rm $RDBASE/Data/RDData.sqlt
+fi
 $DBLOADER $RDBASE/Data/RDData.sqlt < $RDBASE/Python/Dbase/testData/RDData.sqlite 
 
 
@@ -112,6 +117,9 @@ cd GraphMol
 python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
 cd $RDBASE/Python
 find . -name 'test_list.py' -exec python $RDBASE/Python/TestRunner.py \{\} >> $LOGFILE 2>&1 \; 
+cd $RDBASE/Projects
+python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
+
 
 
 
