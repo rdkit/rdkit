@@ -94,8 +94,6 @@ def GetNeighborLists(probeFps,topN,cursor,
     for i in range(len(probeFps)):
       pfp = probeFps[i]
       if pfp is not None:
-        score=0.5
-        continue
         if simMetric==DataStructs.DiceSimilarity:
           score = simMetric(probeFps[i],fp,
                             bounds=nbrLists[i].best[0])
