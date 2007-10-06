@@ -32,7 +32,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(d[0][0]==10)
     
     conn = DbConnect('testData/bzr/Fingerprints.sqlt')
-    d = conn.GetData('fingerprints',fields='count(*)')
+    d = conn.GetData('rdkitfps',fields='count(*)')
     self.failUnless(d[0][0]==10)
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=sdf','testData/bzr.sdf'))
@@ -57,7 +57,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(d[0][0]==163)
     
     conn = DbConnect('testData/bzr/Fingerprints.sqlt')
-    d = conn.GetData('fingerprints',fields='count(*)')
+    d = conn.GetData('rdkitfps',fields='count(*)')
     self.failUnless(d[0][0]==163)
 
   def test2_1SearchFPs(self):
