@@ -19,15 +19,31 @@ class TestCase(unittest.TestCase):
     inF = gzip.open(os.path.join(self.testDataPath,'mols1000.aps.pkl.gz'),'rb')
     atomPairs = cPickle.load(inF)
     for i,m in enumerate(self.mols):
-      ap = Pairs.GetAtomPairFingerprintAsIntVect(m)
+      ap = Pairs.GetAtomPairFingerprint(m)
+      #if ap!=atomPairs[i]:
+      #  print Chem.MolToSmiles(m)
+      #  pd=ap.GetNonzeroElements()
+      #  rd=atomPairs[i].GetNonzeroElements()
+      #  for k,v in pd.iteritems():
+      #    if rd.has_key(k):
+      #      if rd[k]!=v: print '>>>1',k,v,rd[k]
+      #    else:
+      #      print '>>>2',k,v
+      #  for k,v in rd.iteritems():
+      #    if pd.has_key(k):
+      #      if pd[k]!=v: print '>>>3',k,v,pd[k]
+      #    else:
+      #      print '>>>4',k,v
       self.failUnless(ap==atomPairs[i])
+      self.failUnless(ap!=atomPairs[i-1])
 
-  def testTorsionsRegression(self):
+  def _testTorsionsRegression(self):
     inF = gzip.open(os.path.join(self.testDataPath,'mols1000.tts.pkl.gz'),'rb')
     torsions = cPickle.load(inF)
     for i,m in enumerate(self.mols):
       tt = Torsions.GetTopologicalTorsionFingerprintAsIntVect(m)
       self.failUnless(tt==torsions[i])
+      self.failUnless(tt!=torsions[i-1])
 
 if __name__ == '__main__':
   unittest.main()

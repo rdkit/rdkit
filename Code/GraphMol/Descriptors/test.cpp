@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -17,6 +17,7 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
+#include <GraphMol/Descriptors/AtomPairs.h>
 
 using namespace RDKit;
 using namespace RDKit::Descriptors;
@@ -146,7 +147,6 @@ void testIssue262(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-
 void test3(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test AMW calculation." << std::endl;
@@ -170,6 +170,101 @@ void test3(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+
+void testAtomCodes(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Atom Codes." << std::endl;
+
+  ROMol *mol;
+  unsigned int tgt;
+  mol = SmilesToMol("C=C");
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0))==AtomPairs::getAtomCode(mol->getAtomWithIdx(1)));
+  tgt = 1 | (1 | 1<<AtomPairs::numPiBits)<<AtomPairs::numBranchBits;
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0))==tgt);
+  tgt = 1<<AtomPairs::numBranchBits | 1<<(AtomPairs::numBranchBits+AtomPairs::numPiBits);
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0),1)==tgt);
+
+  delete mol;
+  mol = SmilesToMol("C#CO");
+  tgt = 1 | 2<<AtomPairs::numBranchBits | 1<<(AtomPairs::numBranchBits+AtomPairs::numPiBits);
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0))==tgt);
+  tgt = 2 | 2<<AtomPairs::numBranchBits | 1<<(AtomPairs::numBranchBits+AtomPairs::numPiBits);
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(1))==tgt);
+  tgt = 1 | 0<<AtomPairs::numBranchBits | 3<<(AtomPairs::numBranchBits+AtomPairs::numPiBits);
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(2))==tgt);
+
+  delete mol;
+  mol = SmilesToMol("CC(O)C(O)(O)C");
+  tgt = 1 | 0<<AtomPairs::numBranchBits | 1<<(AtomPairs::numBranchBits+AtomPairs::numPiBits);
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(1),2)==tgt);
+  tgt = 2 | 0<<AtomPairs::numBranchBits | 1<<(AtomPairs::numBranchBits+AtomPairs::numPiBits);
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(3),2)==tgt);
+  
+  delete mol;
+  mol = SmilesToMol("C=CC(=O)O");
+  tgt = 0 | 0<<AtomPairs::numBranchBits | 3<<(AtomPairs::numBranchBits+AtomPairs::numPiBits);
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(4),1)==tgt);
+  tgt = 3 | 1<<AtomPairs::numBranchBits | 1<<(AtomPairs::numBranchBits+AtomPairs::numPiBits);
+  TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(2))==tgt);
+
+
+  delete mol;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testAtomPairs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Atom Pairs." << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<int> *fp;
+  unsigned int tgt;
+  unsigned int c1,c2,c3;
+
+  mol = SmilesToMol("CCCCC");
+  c1=AtomPairs::getAtomCode(mol->getAtomWithIdx(0));
+  c2=AtomPairs::getAtomCode(mol->getAtomWithIdx(1));
+  c3=AtomPairs::getAtomCode(mol->getAtomWithIdx(2));
+  tgt = 1 | (std::min(c1,c2) | std::max(c1,c2)<<AtomPairs::codeSize)<< AtomPairs::numPathBits;
+  TEST_ASSERT(AtomPairs::getAtomPairCode(c1,c2,1)==tgt);
+  TEST_ASSERT(AtomPairs::getAtomPairCode(c2,c1,1)==tgt);
+  tgt = 2 | (std::min(c1,c3) | std::max(c1,c3)<<AtomPairs::codeSize)<< AtomPairs::numPathBits;
+  TEST_ASSERT(AtomPairs::getAtomPairCode(c1,c3,2)==tgt);
+  TEST_ASSERT(AtomPairs::getAtomPairCode(c3,c1,2)==tgt);
+
+  delete mol;
+  mol = SmilesToMol("CCC");
+  fp=AtomPairs::getAtomPairFingerprint(*mol);
+  TEST_ASSERT(fp->getTotalVal()==3);
+  TEST_ASSERT(fp->getNonzeroElements().size()==2);
+
+  c1=AtomPairs::getAtomCode(mol->getAtomWithIdx(0));
+  c2=AtomPairs::getAtomCode(mol->getAtomWithIdx(1));
+  c3=AtomPairs::getAtomCode(mol->getAtomWithIdx(2));
+  TEST_ASSERT(fp->getVal(AtomPairs::getAtomPairCode(c1,c2,1))==2);
+  TEST_ASSERT(fp->getVal(AtomPairs::getAtomPairCode(c1,c3,2))==1);
+  
+  delete mol;
+  delete fp;
+  mol = SmilesToMol("CC=O.Cl");
+  fp=AtomPairs::getAtomPairFingerprint(*mol);
+  TEST_ASSERT(fp->getTotalVal()==3);
+  TEST_ASSERT(fp->getNonzeroElements().size()==3);
+
+  c1=AtomPairs::getAtomCode(mol->getAtomWithIdx(0));
+  c2=AtomPairs::getAtomCode(mol->getAtomWithIdx(1));
+  c3=AtomPairs::getAtomCode(mol->getAtomWithIdx(2));
+  TEST_ASSERT(fp->getVal(AtomPairs::getAtomPairCode(c1,c2,1))==1);
+  TEST_ASSERT(fp->getVal(AtomPairs::getAtomPairCode(c1,c2,1))==1);
+  TEST_ASSERT(fp->getVal(AtomPairs::getAtomPairCode(c2,c3,1))==1);
+  
+  delete mol;
+  delete fp;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -178,7 +273,9 @@ int main(){
 #if 1
   test1();
   test2();
-#endif
   testIssue262();
   test3();
+#endif
+  testAtomCodes();
+  testAtomPairs();
 }

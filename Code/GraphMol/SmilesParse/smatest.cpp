@@ -863,6 +863,39 @@ void testAtomMap(){
   sma = MolToSmiles(*matcher1);
   TEST_ASSERT(sma=="CC");
 
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testIssue1804420(){
+  ROMol *matcher1;
+  std::string sma;
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing issue 1804420, missing assignment of atoms maps" << std::endl;
+
+  sma = "[N;D3:1]";
+  matcher1 = SmartsToMol(sma,true);
+  TEST_ASSERT(matcher1);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  delete matcher1;
+
+  sma = "[N,O;D3:1]";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  delete matcher1;
+
+  sma = "[N&R;X3:1]";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  delete matcher1;
+
+  sma = "[NH0&R;D3,X3:1]";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  delete matcher1;
+
     
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -916,8 +949,9 @@ main(int argc, char *argv[])
   testIssue255();
   testIssue330();
   testIssue351();
-#endif
   testAtomMap();
   testSmartsSmiles();
+#endif
+  testIssue1804420();
   return 0;
 }

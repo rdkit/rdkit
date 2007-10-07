@@ -5,32 +5,8 @@
 #   @@ All Rights Reserved  @@
 #
 import Chem
+from Chem import rdMolDescriptors
 import math
-
-_atomNumberTypes = [
-  5,  # B
-  6,  # C
-  7,  # N
-  8,  # O
-  9,  # F
-  14, # Si
-  15, # P
-  16, # S
-  17, # Cl
-  33, # As
-  34, # Se
-  35, # Br
-  51, # Sb
-  52, # Te
-  53, # I
-  -1, # Everything else
-]
-numTypeBits=int(math.ceil(math.log(len(_atomNumberTypes))/math.log(2)))
-_maxNumPi = 3 
-numPiBits = 2
-_maxNumBranches = 7
-numBranchBits = 3
-codeSize=numTypeBits+numPiBits+numBranchBits
 
 def ExplainAtomCode(code,branchSubtract=0):
   """
@@ -62,75 +38,26 @@ def ExplainAtomCode(code,branchSubtract=0):
   ('O', 1, 0)
   
   """
-  typeMask = (1<<numTypeBits)-1
-  branchMask = (1<<numBranchBits)-1
-  piMask = (1<<numPiBits)-1
+  typeMask = (1<<rdMolDescriptors.AtomPairsParameters.numTypeBits)-1
+  branchMask = (1<<rdMolDescriptors.AtomPairsParameters.numBranchBits)-1
+  piMask = (1<<rdMolDescriptors.AtomPairsParameters.numPiBits)-1
 
   nBranch = int(code&branchMask)
   #print code,
-  code = code>>numBranchBits
+  code = code>>rdMolDescriptors.AtomPairsParameters.numBranchBits
   nPi = int(code&piMask)
   #print code,
-  code = code>>numPiBits
+  code = code>>rdMolDescriptors.AtomPairsParameters.numPiBits
   #print code,
   typeIdx=int(code&typeMask)
-  atomNum = _atomNumberTypes[typeIdx]
-  #print code,atomNum
-  if atomNum==-1:
-    atomSymbol='X'
-  else:
+  if typeIdx<len(rdMolDescriptors.AtomPairsParameters.atomTypes):
+    atomNum = rdMolDescriptors.AtomPairsParameters.atomTypes[typeIdx]
     atomSymbol=Chem.GetPeriodicTable().GetElementSymbol(atomNum)
+  else:
+    atomSymbol='X'
   return (atomSymbol,nBranch,nPi)
 
-def GetAtomCode(atom,branchSubtract=0):
-  """
-
-  **Arguments**:
-
-    - atom: the atom to be considered
-
-    - branchSubtract: (optional) a constant to be subtracted off the
-      number of neighbors before it's integrated into the code.  This
-      is used by the topological torsions code.
-      
-
-  >>> m = Chem.MolFromSmiles('C=C')
-  >>> shift1 = numBranchBits
-  >>> shift2 = numBranchBits + numPiBits
-  >>> GetAtomCode(m.GetAtomWithIdx(0),1) == (1 << shift1) | (1 << shift2)
-  1
-  >>> m = Chem.MolFromSmiles('C#CO')
-  >>> GetAtomCode(m.GetAtomWithIdx(0),1) == (2 << shift1) | (1 << shift2)
-  1
-  >>> GetAtomCode(m.GetAtomWithIdx(1),2) == (2 << shift1) | (1 << shift2)
-  1
-  >>> GetAtomCode(m.GetAtomWithIdx(2),1) == 0 | (3 << shift2)
-  1
-  
-  >>> m = Chem.MolFromSmiles('CC(O)C(O)(O)C')
-  >>> GetAtomCode(m.GetAtomWithIdx(1),2) == 1 | (0 << shift1) | (1 << shift2)
-  1
-  >>> GetAtomCode(m.GetAtomWithIdx(3),2) == 2 | (0 << shift1) | (1 << shift2)
-  1
-
-  >>> m = Chem.MolFromSmiles('C=CC(=O)O')
-  >>> GetAtomCode(m.GetAtomWithIdx(4),1) == 0 | (0 << shift1) | (3 << shift2)
-  1
-
-
-  """
-  nBranches = atom.GetDegree() - branchSubtract
-  if nBranches<0: nBranches=0
-  code = nBranches % _maxNumBranches
-  
-  nPi = NumPiElectrons(atom) % _maxNumPi
-  code |= (nPi<<numBranchBits)
-  try:
-    typeIdx = _atomNumberTypes.index(atom.GetAtomicNum())
-  except ValueError:
-    typeIdx = len(_atomNumberTypes)-1
-  code |= typeIdx << (numBranchBits+numPiBits)
-  return code
+GetAtomCode=rdMolDescriptors.GetAtomPairAtomCode
 
 def NumPiElectrons(atom):
   """ Returns the number of electrons an atom is using for pi bonding

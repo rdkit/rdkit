@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -36,6 +36,8 @@ namespace RDKit{
       \return the AMW
     */
     double CalcAMW(const ROMol &mol,bool onlyHeavy=false);
+
+
   }
 }
 

@@ -23,7 +23,6 @@ namespace RDKit{
   namespace Descriptors {
     extern const std::string defaultParamData;
 
-    static std::string _crippenVersion="1.0.0";
     void CalcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,bool includeHs){
       // this isn't as bad as it looks, we aren't actually going
       // to harm the molecule in any way!

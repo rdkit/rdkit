@@ -12,9 +12,8 @@ R. Nilakantan, N. Bauman, J. S. Dixon, R. Venkataraghavan;
 Comparison with Other Descriptors" JCICS 27, 82-85 (1987).
 
 """
-import warnings
-#warnings.filterwarnings("ignore",'',FutureWarning)
 import Chem
+from Chem import rdMolDescriptors
 import Utils
 
 def ScorePath(mol,path,size,atomCodes=None):
@@ -25,7 +24,7 @@ def ScorePath(mol,path,size,atomCodes=None):
   >>> c2 = long(Utils.GetAtomCode(m.GetAtomWithIdx(1),2))
   >>> c3 = long(Utils.GetAtomCode(m.GetAtomWithIdx(2),2))
   >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(3),1))
-  >>> t = c1 | (c2 << Utils.codeSize) | (c3 << (Utils.codeSize*2)) | (c4 << (Utils.codeSize*3))
+  >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize*2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize*3))
   >>> ScorePath(m,(0,1,2,3),4)==t
   1
 
@@ -39,7 +38,7 @@ def ScorePath(mol,path,size,atomCodes=None):
   >>> c2 = long(Utils.GetAtomCode(m.GetAtomWithIdx(1),2))
   >>> c3 = long(Utils.GetAtomCode(m.GetAtomWithIdx(2),2))
   >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(4),1))
-  >>> t = c1 | (c2 << Utils.codeSize) | (c3 << (Utils.codeSize*2)) | (c4 << (Utils.codeSize*3))
+  >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize*2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize*3))
   >>> ScorePath(m,(0,1,2,4),4)==t
   1
 
@@ -70,7 +69,7 @@ def ScorePath(mol,path,size,atomCodes=None):
       break
   accum = 0L
   for i in range(size):
-    accum |= long(codes[i]) << (Utils.codeSize*i)
+    accum |= long(codes[i]) << (rdMolDescriptors.AtomPairsParameters.codeSize*i)
   return accum
 
 def ExplainPathScore(score,size=4):
@@ -125,7 +124,7 @@ def ExplainPathScore(score,size=4):
 
 
   """
-  codeMask=(1<<Utils.codeSize)-1
+  codeMask=(1<<rdMolDescriptors.AtomPairsParameters.codeSize)-1
   res=[None]*size
   #print '>>>>>>>>>>>',score,size,codeMask
   for i in range(size):
@@ -135,7 +134,7 @@ def ExplainPathScore(score,size=4):
       sub = 2
     code = score&codeMask
     #print i,code,score
-    score = score>>Utils.codeSize
+    score = score>>rdMolDescriptors.AtomPairsParameters.codeSize
     symb,nBranch,nPi = Utils.ExplainAtomCode(code)
     expl = symb,nBranch+sub,nPi
     res[i] = expl
@@ -166,14 +165,14 @@ def GetTopologicalTorsionFingerprint(mol,targetSize=4):
   >>> c2 = long(Utils.GetAtomCode(m.GetAtomWithIdx(1),2))
   >>> c3 = long(Utils.GetAtomCode(m.GetAtomWithIdx(2),2))
   >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(3),1))
-  >>> t = c1 | (c2 << Utils.codeSize) | (c3 << (Utils.codeSize*2)) | (c4 << (Utils.codeSize*3))
+  >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize*2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize*3))
   >>> GetTopologicalTorsionFingerprint(m)==(t,)
   1
 
   Two paths, both the same:
   >>> m = Chem.MolFromSmiles('CCCCC')
   >>> c4 = long(Utils.GetAtomCode(m.GetAtomWithIdx(3),1))
-  >>> t = c1 | (c2 << Utils.codeSize) | (c3 << (Utils.codeSize*2)) | (c4 << (Utils.codeSize*3))
+  >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize*2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize*3))
   >>> GetTopologicalTorsionFingerprint(m)==(t,t)
   1
 
@@ -234,7 +233,7 @@ def GetTopologicalTorsionFingerprintAsIntVect(mol,targetSize=4):
 
   """
   from DataStructs import LongSparseIntVect as ResultType
-  nBits = Utils.codeSize*targetSize
+  nBits = rdMolDescriptors.AtomPairsParameters.codeSize*targetSize
   sz = (1L<<nBits)-1
   res = ResultType(sz)
   ttv = GetTopologicalTorsionFingerprint(mol,targetSize=targetSize)

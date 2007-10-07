@@ -14,30 +14,33 @@ Definition and Applications" JCICS 25, 64-73 (1985).
 """
 from DataStructs import IntSparseIntVect
 import Chem
+from Chem import rdMolDescriptors
 from Chem.AtomPairs import Utils
 import DataStructs
 
-_maxPathLen=31
-numPathBits=5
-numFpBits=numPathBits+2*Utils.codeSize
+GetAtomPairFingerprint=rdMolDescriptors.GetAtomPairFingerprint
+
+numPathBits=rdMolDescriptors.AtomPairsParameters.numPathBits
+_maxPathLen=(1<<numPathBits)-1
+numFpBits=numPathBits+2*rdMolDescriptors.AtomPairsParameters.codeSize
 fpLen=1L<<numFpBits
 
-def ScorePair(at1,at2,dist,atomCodes=None):
+def pyScorePair(at1,at2,dist,atomCodes=None):
   """ Returns a score for an individual atom pair.
 
   >>> m = Chem.MolFromSmiles('CCCCC')
   >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0))
   >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1))
   >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2))
-  >>> t = 1 | min(c1,c2)<<numPathBits | max(c1,c2)<<(Utils.codeSize+numPathBits)
-  >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)==t
+  >>> t = 1 | min(c1,c2)<<numPathBits | max(c1,c2)<<(rdMolDescriptors.AtomPairsParameters.codeSize+numPathBits)
+  >>> pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)==t
   1
-  >>> ScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(0),1)==t
+  >>> pyScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(0),1)==t
   1
-  >>> t = 2 | min(c1,c3)<<numPathBits | max(c1,c3)<<(Utils.codeSize+numPathBits)
-  >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2)==t
+  >>> t = 2 | min(c1,c3)<<numPathBits | max(c1,c3)<<(rdMolDescriptors.AtomPairsParameters.codeSize+numPathBits)
+  >>> pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2)==t
   1
-  >>> ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2,
+  >>> pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2,
   ...  atomCodes=(Utils.GetAtomCode(m.GetAtomWithIdx(0)),Utils.GetAtomCode(m.GetAtomWithIdx(2))))==t
   1
 
@@ -49,101 +52,36 @@ def ScorePair(at1,at2,dist,atomCodes=None):
     code1,code2=atomCodes
   accum = dist % _maxPathLen
   accum |= min(code1,code2) << numPathBits
-  accum |= max(code1,code2) << (Utils.codeSize+numPathBits)
+  accum |= max(code1,code2) << (rdMolDescriptors.AtomPairsParameters.codeSize+numPathBits)
   return accum
 
 def ExplainPairScore(score):
   """ 
   >>> m = Chem.MolFromSmiles('C=CC')
-  >>> score = ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)
+  >>> score = pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1)
   >>> ExplainPairScore(score)
   (('C', 1, 1), 1, ('C', 2, 1))
-  >>> score = ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2)
+  >>> score = pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2)
   >>> ExplainPairScore(score)
   (('C', 1, 0), 2, ('C', 1, 1))
-  >>> score = ScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(2),1)
+  >>> score = pyScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(2),1)
   >>> ExplainPairScore(score)
   (('C', 1, 0), 1, ('C', 2, 1))
-  >>> score = ScorePair(m.GetAtomWithIdx(2),m.GetAtomWithIdx(1),1)
+  >>> score = pyScorePair(m.GetAtomWithIdx(2),m.GetAtomWithIdx(1),1)
   >>> ExplainPairScore(score)
   (('C', 1, 0), 1, ('C', 2, 1))
 
   """
-  codeMask = (1<<Utils.codeSize)-1
+  codeMask = (1<<rdMolDescriptors.AtomPairsParameters.codeSize)-1
   pathMask = (1<<numPathBits)-1
   dist = score&pathMask
 
   score = score>>numPathBits
   code1 = score&codeMask
-  score = score>>Utils.codeSize
+  score = score>>rdMolDescriptors.AtomPairsParameters.codeSize
   code2 = score&codeMask
 
   res = Utils.ExplainAtomCode(code1),dist,Utils.ExplainAtomCode(code2)
-  return res
-
-def GetAtomPairFingerprintAsCounts(mol):
-  """ Returns the Atom-pair fingerprint for a molecule as
-  a tuple of on-bit IDs.
-
-  **Arguments**:
-
-    - mol: a molecule
-
-  **Returns**: a tuple of ints
-
-  >>> m = Chem.MolFromSmiles('CCC')
-  >>> v = [ ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1),
-  ...       ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2),
-  ...       ScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(2),1),
-  ...     ]
-  >>> v.sort()
-  >>> v = tuple(v)
-  >>> GetAtomPairFingerprintAsCounts(m)==v
-  1
-  
-  """
-  res = []
-  dists = Chem.GetDistanceMatrix(mol)
-  nAtoms = mol.GetNumAtoms()
-  atomScores=[]
-  for i in range(nAtoms):
-    atomScores.append(Utils.GetAtomCode(mol.GetAtomWithIdx(i)))
-  for i in range(nAtoms):
-    at1 = mol.GetAtomWithIdx(i)
-    for j in range(i+1,nAtoms):
-      dist = dists[i,j]
-      if dist<_maxPathLen:
-        at2 = mol.GetAtomWithIdx(j)
-        res.append(ScorePair(at1,at2,int(dist),atomCodes=(atomScores[i],atomScores[j])))
-  res.sort()
-  return tuple(res)
-
-def GetAtomPairFingerprintAsIntVect(mol):
-  """ Returns the Atom-pair fingerprint for a molecule as
-  a IntSparseIntVect
-
-  **Arguments**:
-
-    - mol: a molecule
-
-  **Returns**: an IntSparseIntVect
-
-
-  >>> m = Chem.MolFromSmiles('CCC')
-  >>> v = [ ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1),
-  ...       ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2),
-  ...       ScorePair(m.GetAtomWithIdx(1),m.GetAtomWithIdx(2),1),
-  ...     ]
-  >>> val = IntSparseIntVect(fpLen)
-  >>> val.UpdateFromSequence(v)
-  >>> fp = GetAtomPairFingerprintAsIntVect(m)
-  >>> val==fp
-  True
-  
-  """
-  res = IntSparseIntVect(fpLen)
-  counts = GetAtomPairFingerprintAsCounts(mol)
-  res.UpdateFromSequence(counts)
   return res
 
 def GetAtomPairFingerprintAsBitVect(mol):
@@ -159,8 +97,8 @@ def GetAtomPairFingerprintAsBitVect(mol):
   **Returns**: a SparseBitVect
 
   >>> m = Chem.MolFromSmiles('CCC')
-  >>> v = [ ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1),
-  ...       ScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2),
+  >>> v = [ pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(1),1),
+  ...       pyScorePair(m.GetAtomWithIdx(0),m.GetAtomWithIdx(2),2),
   ...     ]
   >>> v.sort()
   >>> fp = GetAtomPairFingerprintAsBitVect(m)
@@ -168,12 +106,10 @@ def GetAtomPairFingerprintAsBitVect(mol):
   True
   
   """
-  if numFpBits>31:
-    raise ValueError,"fingerprint is too long to be encoded as a BitVect."
   res = DataStructs.SparseBitVect(fpLen)
-  counts = GetAtomPairFingerprintAsCounts(mol)
-  for idx in counts:
-    res.SetBit(idx)
+  fp = rdMolDescriptors.GetAtomPairFingerprint(mol)
+  for val in fp.GetNonzeroElements().keys():
+    res.SetBit(val)
   return res
 
 #------------------------------------

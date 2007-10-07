@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -19,6 +19,8 @@
 namespace RDKit {
   class ROMol;
   namespace Descriptors {
+    const std::string crippenVersion="1.0.0";
+
     //! a class used to store Crippen parameters
     class CrippenParams {
     public:

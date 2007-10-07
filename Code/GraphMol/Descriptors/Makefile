@@ -2,7 +2,7 @@ include $(RDBASE)/Code/rdvars.make
 include $(RDBASE)/Code/rdrules.make
 
 CXXFLAGS=$(BASECXXFLAGS) -Wall
-SOURCES=Crippen.cpp MolDescriptors.cpp
+SOURCES=Crippen.cpp MolDescriptors.cpp AtomPairs.cpp
 LIB=libDescriptors.a
 
 $(LIB): $(OBJS)

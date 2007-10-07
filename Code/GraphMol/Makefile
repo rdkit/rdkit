@@ -89,6 +89,7 @@ allclean:
 	$(MAKE) --directory=ChemTransforms clean
 	$(MAKE) --directory=MolCatalog clean
 	$(MAKE) --directory=ChemReactions clean
+	$(MAKE) --directory=Descriptors clean
 
 all: $(RDGRAPHLIB) $(RDGRAPHLIB_S)
 	$(MAKE) --directory=SmilesParse install
@@ -133,7 +134,7 @@ allstatic: $(RDGRAPHLIB_S)
 wrappers: $(RDGRAPHLIB)
 	for d in . FragCatalog PartialCharges Depictor DistGeomHelpers ForceFieldHelpers \
 		MolChemicalFeatures MolAlign MolTransforms ShapeHelpers \
-                MolCatalog ChemReactions;\
+                MolCatalog ChemReactions Descriptors;\
 	do								\
 		cd $(RDBASE)/Code/GraphMol/$$d/Wrap;						\
 		python setup.py build --force && python setup.py install --install-lib=$(RDBASE)/Python; \
