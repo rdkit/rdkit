@@ -269,8 +269,8 @@ void testTorsions(){
 
   ROMol *mol;
   SparseIntVect<long long int> *fp;
-  unsigned int tgt;
-  unsigned int c1,c2,c3,c4;
+  unsigned long long int tgt;
+  unsigned long long int c1,c2,c3,c4;
   std::vector<unsigned int> codes;
 
   mol = SmilesToMol("CCCC");

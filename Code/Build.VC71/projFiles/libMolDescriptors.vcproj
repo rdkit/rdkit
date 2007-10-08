@@ -3,117 +3,73 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="libMolDescriptors"
-	ProjectGUID="{EBC0CEF2-9720-439F-ABE8-B0C094F5A1BB}"
-	>
+	ProjectGUID="{EBC0CEF2-9720-439F-ABE8-B0C094F5A1BB}">
 	<Platforms>
 		<Platform
-			Name="Win32"
-		/>
+			Name="Win32"/>
 	</Platforms>
-	<ToolFiles>
-	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Release"
 			IntermediateDirectory="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Release"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
+			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories=".,$(RDBASE)/code,$(BOOSTHOME)/include/$(BOOSTBASE);$(RDBASE)/External/vflib-2.0/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
-				StringPooling="true"
+				StringPooling="TRUE"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
-				RuntimeTypeInfo="true"
+				EnableFunctionLevelLinking="TRUE"
+				RuntimeTypeInfo="TRUE"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Release/libMolDescriptors.pch"
 				AssemblerListingLocation="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Release/"
 				ObjectFile="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Release/"
 				ProgramDataBaseFileName="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Release/"
 				WarningLevel="3"
-				SuppressStartupBanner="true"
-				CompileAs="0"
-			/>
+				SuppressStartupBanner="TRUE"
+				CompileAs="0"/>
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Release\libMolDescriptors.lib"
-				SuppressStartupBanner="true"
-			/>
+				SuppressStartupBanner="TRUE"/>
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"/>
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCBscMakeTool"
-			/>
+				Name="VCPreBuildEventTool"/>
 			<Tool
-				Name="VCFxCopTool"
-			/>
+				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Debug0"
 			IntermediateDirectory="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Debug0"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
+			ATLMinimizesCRunTimeLibraryUsage="FALSE"
+			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
@@ -121,47 +77,41 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				RuntimeTypeInfo="true"
+				RuntimeTypeInfo="TRUE"
 				PrecompiledHeaderFile="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Debug0/libMolDescriptors.pch"
 				AssemblerListingLocation="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Debug0/"
 				ObjectFile="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Debug0/"
 				ProgramDataBaseFileName="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Debug0/"
 				WarningLevel="3"
-				SuppressStartupBanner="true"
+				SuppressStartupBanner="TRUE"
 				DebugInformationFormat="4"
-				CompileAs="0"
-			/>
+				CompileAs="0"/>
 			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
+				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="..\..\GraphMol\Descriptors\libMolDescriptors___Win32_Debug0\libMolDescriptors.lib"
-				SuppressStartupBanner="true"
-			/>
+				SuppressStartupBanner="TRUE"/>
 			<Tool
-				Name="VCALinkTool"
-			/>
+				Name="VCMIDLTool"/>
 			<Tool
-				Name="VCXDCMakeTool"
-			/>
+				Name="VCPostBuildEventTool"/>
 			<Tool
-				Name="VCBscMakeTool"
-			/>
+				Name="VCPreBuildEventTool"/>
 			<Tool
-				Name="VCFxCopTool"
-			/>
+				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCPostBuildEventTool"
-			/>
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -169,28 +119,28 @@
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-			>
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\GraphMol\Descriptors\Crippen.cpp"
-				>
+				RelativePath="..\..\GraphMol\Descriptors\AtomPairs.cpp">
 			</File>
 			<File
-				RelativePath="..\..\GraphMol\Descriptors\MolDescriptors.cpp"
-				>
+				RelativePath="..\..\GraphMol\Descriptors\Crippen.cpp">
+			</File>
+			<File
+				RelativePath="..\..\GraphMol\Descriptors\MolDescriptors.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl"
-			>
+			Filter="h;hpp;hxx;hm;inl">
 			<File
-				RelativePath="..\..\GraphMol\Descriptors\Crippen.h"
-				>
+				RelativePath="..\..\GraphMol\Descriptors\AtomPairs.h">
 			</File>
 			<File
-				RelativePath="..\..\GraphMol\Descriptors\MolDescriptors.h"
-				>
+				RelativePath="..\..\GraphMol\Descriptors\Crippen.h">
+			</File>
+			<File
+				RelativePath="..\..\GraphMol\Descriptors\MolDescriptors.h">
 			</File>
 		</Filter>
 	</Files>

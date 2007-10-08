@@ -866,6 +866,7 @@ void testAtomMap(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+#if 0
 void testIssue1804420(){
   ROMol *matcher1;
   std::string sma;
@@ -899,7 +900,7 @@ void testIssue1804420(){
     
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
-
+#endif
 
 void testSmartsSmiles(){
   int i = 0;
@@ -952,6 +953,6 @@ main(int argc, char *argv[])
   testAtomMap();
   testSmartsSmiles();
 #endif
-  testIssue1804420();
+  //testIssue1804420();
   return 0;
 }
