@@ -137,6 +137,7 @@ def ExplainPathScore(score,size=4):
   return tuple(res)
 
 GetTopologicalTorsionFingerprintAsIntVect=rdMolDescriptors.GetTopologicalTorsionFingerprint
+GetTopologicalTorsionFingerprint=rdMolDescriptors.GetTopologicalTorsionFingerprint
 def GetTopologicalTorsionFingerprintAsIds(mol,targetSize=4):
   iv = rdMolDescriptors.GetTopologicalTorsionFingerprint(mol,targetSize)
   res=[]

@@ -19,6 +19,7 @@ from Chem.AtomPairs import Utils
 import DataStructs
 
 GetAtomPairFingerprint=rdMolDescriptors.GetAtomPairFingerprint
+GetAtomPairFingerprintAsIntVect=rdMolDescriptors.GetAtomPairFingerprint
 
 numPathBits=rdMolDescriptors.AtomPairsParameters.numPathBits
 _maxPathLen=(1<<numPathBits)-1
