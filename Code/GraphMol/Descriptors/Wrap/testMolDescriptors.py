@@ -31,6 +31,25 @@ class TestCase(unittest.TestCase) :
     self.failUnless(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==\
                     0 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
 
+
+  def testTopologicalTorsions(self):
+    mol = Chem.MolFromSmiles("CC");
+    fp = rdMD.GetTopologicalTorsionFingerprint(mol)
+    self.failUnless(fp.GetTotalVal()==0)
+    
+    mol = Chem.MolFromSmiles("CCCC");
+    fp = rdMD.GetTopologicalTorsionFingerprint(mol)
+    self.failUnless(fp.GetTotalVal()==1)
+    fp = rdMD.GetTopologicalTorsionFingerprint(mol,3)
+    self.failUnless(fp.GetTotalVal()==2)
+    
+    mol = Chem.MolFromSmiles("CCCO");
+    fp = rdMD.GetTopologicalTorsionFingerprint(mol)
+    self.failUnless(fp.GetTotalVal()==1)
+    fp = rdMD.GetTopologicalTorsionFingerprint(mol,3)
+    self.failUnless(fp.GetTotalVal()==2)
+    
+
     
 if __name__ == '__main__':
   unittest.main()

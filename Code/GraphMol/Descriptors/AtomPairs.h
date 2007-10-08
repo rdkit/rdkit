@@ -35,6 +35,10 @@ namespace RDKit {
       unsigned int getAtomPairCode(unsigned int codeI,unsigned int codeJ,
 				   unsigned int dist);
       SparseIntVect<int> *getAtomPairFingerprint(const ROMol &mol);
+
+      unsigned long long int getTopologicalTorsionCode(const std::vector<unsigned int> &atomCodes);
+      SparseIntVect<long long int> *getTopologicalTorsionFingerprint(const ROMol &mol,
+								     unsigned int targetSize=4);
     }    
   } // end of namespace Descriptors
 }

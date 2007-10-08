@@ -9,7 +9,8 @@ $(LIB): $(OBJS)
 	ar -r $@ $?
 
 testExecs/testDescriptors.exe: test.o $(LIB)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(RDSMILES) $(RDKIT) $(RDGENERAL) $(RDGEOMETRY) $(RDSUBSTRUCT) $(VFLIB)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(RDSMILES) $(RDSUBGRAPHS) $(RDKIT)\
+               $(RDGENERAL) $(RDGEOMETRY) $(RDSUBSTRUCT) $(VFLIB)
 
 clean:
 	rm -f $(OBJS) $(LIB) test.o testExecs/testDescriptors.exe $(DEPENDS)

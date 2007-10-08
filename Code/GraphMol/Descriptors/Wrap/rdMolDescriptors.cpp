@@ -52,5 +52,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      python::arg("mol"),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+  python::def("GetTopologicalTorsionFingerprint",
+	      RDKit::Descriptors::AtomPairs::getTopologicalTorsionFingerprint,
+	      (python::arg("mol"),python::arg("targetSize")=4),
+              docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
 
 }

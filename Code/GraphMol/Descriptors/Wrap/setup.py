@@ -9,7 +9,7 @@ libDirs += [
          os.path.join(RDConfig.RDBaseDir,'Code','GraphMol', 'Descriptors'),
          ]
 
-libraries += ["Descriptors","GraphMol","RDGeneral"]
+libraries += ["Descriptors","Subgraphs","GraphMol","RDGeneral"]
 
 setup(name="Chem.rdMolDescriptors", version="1.0",
       ext_modules=[Extension("Chem.rdMolDescriptors",

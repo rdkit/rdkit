@@ -263,6 +263,51 @@ void testAtomPairs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testTorsions(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Topological Torsions." << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<long long int> *fp;
+  unsigned int tgt;
+  unsigned int c1,c2,c3,c4;
+  std::vector<unsigned int> codes;
+
+  mol = SmilesToMol("CCCC");
+  c1=AtomPairs::getAtomCode(mol->getAtomWithIdx(0))-1;
+  c2=AtomPairs::getAtomCode(mol->getAtomWithIdx(1))-2;
+  c3=AtomPairs::getAtomCode(mol->getAtomWithIdx(2))-2;
+  c4=AtomPairs::getAtomCode(mol->getAtomWithIdx(3))-1;
+  tgt = c1 | (c2 | (c3 | c4<<AtomPairs::codeSize)<<AtomPairs::codeSize)<<AtomPairs::codeSize;
+  codes.clear();
+  codes.push_back(c1);
+  codes.push_back(c2);
+  codes.push_back(c3);
+  codes.push_back(c4);
+  TEST_ASSERT(AtomPairs::getTopologicalTorsionCode(codes)==tgt);
+
+  fp = AtomPairs::getTopologicalTorsionFingerprint(*mol);
+  TEST_ASSERT(fp->getTotalVal()==1);
+  TEST_ASSERT(fp->getNonzeroElements().size()==1);
+
+
+  delete mol;
+  delete fp;
+  mol = SmilesToMol("CCCCO.Cl");
+  fp=AtomPairs::getTopologicalTorsionFingerprint(*mol);
+  TEST_ASSERT(fp->getTotalVal()==2);
+  TEST_ASSERT(fp->getNonzeroElements().size()==2);
+
+  delete fp;
+  fp = AtomPairs::getTopologicalTorsionFingerprint(*mol,3);
+  TEST_ASSERT(fp->getTotalVal()==3);
+  TEST_ASSERT(fp->getNonzeroElements().size()==3);
+
+  delete mol;
+  delete fp;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -278,4 +323,5 @@ int main(){
 #endif
   testAtomCodes();
   testAtomPairs();
+  testTorsions();
 }
