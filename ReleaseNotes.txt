@@ -21,6 +21,10 @@ New Features
  - The new project $RDKit/Projects/DbCLI has been added. This contains
    command-line scripts for populating molecular database and
    searching them using substructure or similarity.
+ - The code for calculating atom pair and topological torsion
+   fingerprints has been moved into C++ in the new module
+   Chem.rdMolDescriptors. The C++ implementation is considerably faster
+   than the Python one and should be 100% backwards compatible.
 
 Other
  - The full set of tests is now easier to setup and run on new
