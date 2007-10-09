@@ -28,10 +28,12 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   for m in suppl:
     nDone +=1
     if not m:
-      if errorsTo and isinstance(suppl,FastSDMolSupplier):
-        idx = suppl._idx-1
-        d = suppl.getItemText(idx)
-        errorsTo.write(d)
+      if errorsTo:
+        if hasattr(suppl,'GetItemText'):
+          d = suppl.GetItemText(nDone-1)
+          errorsTo.write(d)
+        else:
+          logger.warning('full error file support not complete')
       continue
     if keepHs:
       Chem.SanitizeMol(m)
