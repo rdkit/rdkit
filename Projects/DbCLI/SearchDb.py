@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.1.5"
+_version = "0.2.0"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -212,7 +212,6 @@ if __name__=='__main__':
     func=CreateDb.GetMolsFromSmilesFile
   elif options.molFormat=='sdf':
     func=CreateDb.GetMolsFromSDFile
-  #queryMols = [x for x in func(queryFilename,None,options.nameProp)]
 
   if not options.silent: logger.info('Reading query molecules and generating fingerprints')
   probeFps=[]

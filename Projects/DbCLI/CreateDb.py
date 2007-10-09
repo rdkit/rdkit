@@ -31,7 +31,7 @@
 #
 # Created by Greg Landrum, July 2007
 
-_version = "0.2.5"
+_version = "0.3.0"
 _usage="""
  CreateDb [optional arguments] <filename>
 
@@ -68,10 +68,11 @@ def GetMolsFromSDFile(dataFilename,errFile,nameProp):
 
   for idx,m in enumerate(suppl):
     if not m and errFile:
-      logger.warning('full error file support not complete')
-      #d = suppl.getItemText(idx)
-      #errFile.write(d)
-      errFile.write('entry %d'%(idx))
+      if hasattr(suppl,'GetItemText'):
+        d = suppl.GetItemText(idx)
+        errFile.write(d)
+      else:
+        logger.warning('full error file support not complete')
       continue
     smi = Chem.MolToSmiles(m,True)
     if m.HasProp(nameProp):

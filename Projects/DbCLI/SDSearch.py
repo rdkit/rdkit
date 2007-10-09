@@ -59,7 +59,6 @@ import Chem
 from Chem import AllChem
 from Dbase.DbConnection import DbConnect
 from Dbase import DbModule
-from Chem.FastSDMolSupplier import FastSDMolSupplier
 from Chem.MolDb import Loader
 import sys,os,time
 import RDConfig
@@ -129,7 +128,7 @@ if __name__=='__main__':
   if options.forceLoad or not os.path.exists(options.dbName):
     if options.errorFile: 
       options.errorFile=open(options.errorFile,'w+')
-    suppl = FastSDMolSupplier(sdName,sanitize=not options.keepHs)
+    suppl = Chem.SDMolSupplier(sdName,sanitize=not options.keepHs)
     Loader.LoadDb(suppl,options.dbName,nameProp=options.nameCol,redraw=options.redraw,
                   errorsTo=options.errorFile,keepHs=options.keepHs)
     options.redraw=False
