@@ -109,6 +109,9 @@ namespace RDKit {
 	     (python::arg("self"),python::arg("data"),python::arg("delimiter")=" ",
 	      python::arg("smilesColumn")=0,python::arg("nameColumn")=1,python::arg("titleLine")=true,
 	      python::arg("sanitize")=true))
+	.def("GetItemText", &SmilesMolSupplier::getItemText,
+	     "returns the text for an item",
+	     (python::arg("self"),python::arg("index")))
 	;
 
       python::def("SmilesMolSupplierFromText",SmilesSupplierFromText,

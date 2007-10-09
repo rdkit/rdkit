@@ -301,6 +301,28 @@ namespace RDKit {
   }
   
   
+  std::string SmilesMolSupplier::getItemText(unsigned int idx){
+    PRECONDITION(dp_inStream,"no stream");
+    unsigned int holder=d_next;
+    moveTo(idx);
+    unsigned int begP=d_molpos[idx];
+    unsigned int endP;
+    try {
+      moveTo(idx+1);
+      endP=d_molpos[idx+1];
+    } catch (FileParseException &) {
+      dp_inStream->seekg(0,std::ios_base::end);
+      endP=dp_inStream->tellg();
+    }
+    d_next=holder;
+    char *buff=new char[endP-begP];
+    dp_inStream->seekg(begP);
+    dp_inStream->read(buff,endP-begP);
+    std::string res(buff,endP-begP);
+    delete [] buff;
+    return res;
+  }
+
   // --------------------------------------------------
   //
   //  Moves to the position of a particular entry in the

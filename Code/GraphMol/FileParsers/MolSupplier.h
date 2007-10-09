@@ -86,6 +86,11 @@ namespace RDKit {
     bool atEnd(); 
     void moveTo(unsigned int idx);
     ROMol * operator[](unsigned int idx);
+    /*! \brief returns the text block for a particular item
+     *  
+     *  \param idx - which item to return
+     */
+    std::string getItemText(unsigned int idx);
     unsigned int length();
     void setData(const std::string &text,bool sanitize=true, bool removeHs=true);
 
@@ -172,6 +177,11 @@ namespace RDKit {
     bool atEnd();
     void moveTo(unsigned int idx);
     ROMol * operator[](unsigned int idx);
+    /*! \brief returns the text block for a particular item
+     *  
+     *  \param idx - which item to return
+     */
+    std::string getItemText(unsigned int idx);
     unsigned int length();
 
   private:
@@ -246,6 +256,11 @@ namespace RDKit {
     bool atEnd();
     void moveTo(unsigned int idx);
     ROMol * operator[](unsigned int idx);
+    /*! \brief returns the text block for a particular item
+     *  
+     *  \param idx - which item to return
+     */
+    std::string getItemText(unsigned int idx);
     unsigned int length();
 
   private:

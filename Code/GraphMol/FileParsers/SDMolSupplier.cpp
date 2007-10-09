@@ -252,9 +252,30 @@ namespace RDKit {
     return res;
   }
 
+  std::string SDMolSupplier::getItemText(unsigned int idx){
+    PRECONDITION(dp_inStream,"no stream");
+    unsigned int holder=d_last;
+    moveTo(idx);
+    unsigned int begP=d_molpos[idx];
+    unsigned int endP;
+    try {
+      moveTo(idx+1);
+      endP=d_molpos[idx+1];
+    } catch (FileParseException &) {
+      dp_inStream->seekg(0,std::ios_base::end);
+      endP=dp_inStream->tellg();
+    }
+    d_last=holder;
+    char *buff=new char[endP-begP];
+    dp_inStream->seekg(begP);
+    dp_inStream->read(buff,endP-begP);
+    std::string res(buff,endP-begP);
+    delete [] buff;
+    return res;
+  }
+
   void SDMolSupplier::moveTo(unsigned int idx) {
     PRECONDITION(dp_inStream,"no stream");
-    CHECK_INVARIANT(idx >= 0, "");
 
     // move until we hit the desired idx
     if (idx < d_molpos.size() ) {

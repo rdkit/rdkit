@@ -73,7 +73,10 @@ namespace RDKit {
 	      python::arg("confId2D")=-1,
 	      python::arg("confId3D")=-1,
 	      python::arg("sanitize")=true))
-	     ;
+	.def("GetItemText", &TDTMolSupplier::getItemText,
+	     "returns the text for an item",
+	     (python::arg("self"),python::arg("index")))
+        ;
     };
   };
 }

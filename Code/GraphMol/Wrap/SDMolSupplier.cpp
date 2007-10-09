@@ -83,6 +83,9 @@ namespace RDKit {
 	.def("_SetStreamIndices", setStreamIndices,
 	     "Sets the locations of mol beginnings in the input stream. Be *very* careful with this method.",
 	     (python::arg("self"),python::arg("locs")))
+	.def("GetItemText", &SDMolSupplier::getItemText,
+	     "returns the text for an item",
+	     (python::arg("self"),python::arg("index")))
 	;
     };
   };

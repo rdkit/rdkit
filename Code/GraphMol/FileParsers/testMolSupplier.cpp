@@ -1231,6 +1231,91 @@ int testRemoveHs() {
   return 1;
 }
 
+void testGetItemText() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname;
+
+  ROMol *mol1,*mol2;
+  std::string molB,smiles;
+  bool ok;
+
+  fname=rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+  SDMolSupplier sdsup(fname);
+  TEST_ASSERT(sdsup.length()==16);
+  
+  molB = sdsup.getItemText(0);
+  mol1 = sdsup[0];
+  TEST_ASSERT(mol1);
+  mol2 = MolBlockToMol(molB);
+  TEST_ASSERT(mol2);
+  TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
+  delete mol1;
+  delete mol2;
+
+  // make sure getItemText() doesn't screw up the current position:
+  molB = sdsup.getItemText(10);
+  mol1 = sdsup.next();
+  molB = sdsup.getItemText(1);
+  TEST_ASSERT(mol1);
+  mol2 = MolBlockToMol(molB);
+  TEST_ASSERT(mol2);
+  TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
+  delete mol1;
+  delete mol2;
+  
+  try {
+    molB=sdsup.getItemText(16);
+    ok = false;
+  } catch (FileParseException &) {
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+  try {
+    molB=sdsup.getItemText(20);
+    ok = false;
+  } catch (FileParseException &) {
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+  fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+  SmilesMolSupplier smisup(fname,",",1,0,false);
+  TEST_ASSERT(smisup.length()==10);
+  
+  molB = smisup.getItemText(0);
+  TEST_ASSERT(molB=="1, CC1=CC(=O)C=CC1=O, 34.14\n");
+  mol1 = smisup[0];
+  TEST_ASSERT(mol1);
+  delete mol1;
+
+  molB = smisup.getItemText(5);
+  TEST_ASSERT(molB=="6, OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br, 87.74\n");
+  mol1 = smisup.next();
+  TEST_ASSERT(mol1);
+  TEST_ASSERT(mol1->getNumAtoms()==20);
+  delete mol1;
+  
+  fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
+  TDTMolSupplier tdtsup(fname);
+  TEST_ASSERT(tdtsup.length()==10);
+  
+  molB = tdtsup.getItemText(0);
+  mol1 = smisup[0];
+  TEST_ASSERT(mol1);
+  smiles = MolToSmiles(*mol1, 1);
+  TEST_ASSERT(smiles=="CC1=CC(=O)C=CC1=O");
+  TEST_ASSERT(mol1->getNumAtoms()==9);
+  delete mol1;
+
+  molB = tdtsup.getItemText(5);
+  mol1 = tdtsup.next();
+  TEST_ASSERT(mol1);
+  smiles = MolToSmiles(*mol1, 1);
+  TEST_ASSERT(smiles=="Cc1nnc(N)nc1C");
+  TEST_ASSERT(mol1->getNumAtoms()==9);
+  delete mol1;
+}
 
 
 
@@ -1345,7 +1430,6 @@ int main() {
   testSetStreamIndices();
   BOOST_LOG(rdErrorLog) <<"Finished: testSetStreamIndices()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-#endif
 
   
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
@@ -1356,6 +1440,13 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testRemoveHs();
   BOOST_LOG(rdErrorLog) <<"Finished: testRemoveHs()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+#endif
+  
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGetItemText();
+  BOOST_LOG(rdErrorLog) <<"Finished: testGetItemText()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   
