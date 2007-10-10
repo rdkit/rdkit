@@ -82,6 +82,8 @@ parser.add_option('--noFingerprints',default=True,dest='doFingerprints',action='
                   help='skip calculating 2D fingerprints')
 parser.add_option('--noDescriptors',default=True,dest='doDescriptors',action='store_false',
                   help='skip calculating descriptors')
+parser.add_option('--noProps',default=False,dest='skipProps',action='store_true',
+                  help="don't include molecular properties in the database")
 
 parser.add_option('--silent',default=False,action='store_true',
                   help='do not provide status messages')
@@ -118,6 +120,7 @@ if __name__=='__main__':
   if not options.silent: logger.info('Reading molecules and constructing molecular database.')
   Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
                 errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
+                skipProps=options.skipProps,
                 silent=options.silent,nameProp=options.nameProp)
   if options.doPairs:
     from Chem.AtomPairs import Pairs,Torsions
