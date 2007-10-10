@@ -14,7 +14,7 @@ logger = logging.logger()
 logger.setLevel(logging.INFO)
 
 def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
-           redraw=False,errorsTo=None,keepHs=False,defaultVal='N/A',
+           redraw=False,errorsTo=None,keepHs=False,defaultVal='N/A',skipProps=False,
            regName='molecules'):
   nMols = len(suppl)
   if not silent:
@@ -37,7 +37,6 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
       continue
     if keepHs:
       Chem.SanitizeMol(m)
-    pns = list(m.GetPropNames())
     try:
       nm = m.GetProp(nameProp)
     except KeyError:
@@ -45,24 +44,28 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
     if not nm:
       nm = 'Mol_%d'%nDone
     row = [nm]
-    pD={}
-    for pi,pn in enumerate(pns):
-      if pn==nameCol: continue
-      pv = m.GetProp(pn).strip()
-      
-      if pv.find('>')<0 and pv.find('<')<0:
-        colTyp = globalProps.get(pn,2)
-        while colTyp>0:
-          try:
-            tpi = typeConversions[colTyp][1](pv)
-          except:
-            colTyp-=1
-          else:
-            break
-        globalProps[pn]=colTyp
-        pD[pn]=typeConversions[colTyp][1](pv)
-      else:
-        pD[pn]=pv
+    if not skipProps:
+      pns = list(m.GetPropNames())
+      pD={}
+      for pi,pn in enumerate(pns):
+        if pn==nameCol: continue
+        pv = m.GetProp(pn).strip()
+
+        if pv.find('>')<0 and pv.find('<')<0:
+          colTyp = globalProps.get(pn,2)
+          while colTyp>0:
+            try:
+              tpi = typeConversions[colTyp][1](pv)
+            except:
+              colTyp-=1
+            else:
+              break
+          globalProps[pn]=colTyp
+          pD[pn]=typeConversions[colTyp][1](pv)
+        else:
+          pD[pn]=pv
+    else:
+      pD={}
     if redraw:
       AllChem.Compute2DCoords(m)
     row.append(Chem.MolToSmiles(m,True))
