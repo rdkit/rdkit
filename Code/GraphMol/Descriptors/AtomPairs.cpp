@@ -93,15 +93,15 @@ namespace RDKit{
       }
 
       unsigned long long int
-      getTopologicalTorsionCode(const std::vector<unsigned int> &atomCodes){
+      getTopologicalTorsionCode(const std::vector<unsigned int> &pathCodes){
         bool reverseIt=false;
         unsigned int i=0;
-        unsigned int j=atomCodes.size()-1;
-        while(i!=j){
-          if(atomCodes[i]>atomCodes[j]){
+        unsigned int j=pathCodes.size()-1;
+        while(i<j){
+          if(pathCodes[i]>pathCodes[j]){
             reverseIt=true;
             break;
-          } else if( atomCodes[i]<atomCodes[j]){
+          } else if( pathCodes[i]<pathCodes[j]){
             break;
           }
           ++i;
@@ -111,16 +111,16 @@ namespace RDKit{
         unsigned long long int res=0;
         if(reverseIt){
           //std::cerr<<"r";
-          for(unsigned int i=0;i<atomCodes.size();++i){
-            res |= static_cast<unsigned long long int>(atomCodes[atomCodes.size()-i-1])<<(codeSize*i);
+          for(unsigned int i=0;i<pathCodes.size();++i){
+            res |= static_cast<unsigned long long int>(pathCodes[pathCodes.size()-i-1])<<(codeSize*i);
           }
         }else{
           //std::cerr<<" ";
-          for(unsigned int i=0;i<atomCodes.size();++i){
-            res |= static_cast<unsigned long long int>(atomCodes[i])<<(codeSize*i);
+          for(unsigned int i=0;i<pathCodes.size();++i){
+            res |= static_cast<unsigned long long int>(pathCodes[i])<<(codeSize*i);
           }
         }
-        //for(unsigned int i=0;i<atomCodes.size();++i){
+        //for(unsigned int i=0;i<pathCodes.size();++i){
         //  std::cerr<<atomCodes[i]<<" ";
         //}
         //std::cerr<<res<<std::endl;
