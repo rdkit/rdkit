@@ -43,76 +43,10 @@ import Chem
 from Dbase.DbConnection import DbConnect
 from Dbase import DbModule
 from RDLogger import logger
+from  Chem.MolDb import Loader
 
 logger = logger()
 import cPickle,sys,os
-
-def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
-  dataFile=file(dataFilename,'r')
-  for idx,line in enumerate(dataFile):
-    try:
-      smi,nm = line.strip().split(' ')
-    except:
-      continue
-    try:
-      m = Chem.MolFromSmiles(smi)
-    except:
-      m=None
-    if not m and errFile:
-      print >>errFile,idx,nm,smi
-      continue
-    yield (nm,smi,m)
-
-def GetMolsFromSDFile(dataFilename,errFile,nameProp):
-  suppl = Chem.SDMolSupplier(dataFilename)
-
-  for idx,m in enumerate(suppl):
-    if not m and errFile:
-      if hasattr(suppl,'GetItemText'):
-        d = suppl.GetItemText(idx)
-        errFile.write(d)
-      else:
-        logger.warning('full error file support not complete')
-      continue
-    smi = Chem.MolToSmiles(m,True)
-    if m.HasProp(nameProp):
-      nm = m.GetProp(nameProp)
-      if not nm:
-        logger.warning('molecule found with empty name property')
-    else:
-      nm = 'Mol_%d'%(idx+1)
-    yield nm,smi,m
-
-def PopulateMolDb(dataFilename,errFile,conn,regName,idName,silent=False,
-                  molReader=GetMolsFromSmilesFile,nameProp='_Name'):
-  curs = conn.GetCursor()
-  try:
-    curs.execute('drop table %s'%(regName))
-  except:
-    pass
-  curs.execute('create table %s (%s varchar not null primary key,smiles varchar,molpkl blob)'%(regName,idName))
-  conn.Commit()
-  
-  rows = []
-  nDone=0
-  for nm,smi,m in molReader(dataFilename,errFile,nameProp):
-    if not m: 
-      continue
-    pkl = m.ToBinary()
-    rows.append((nm,smi,DbModule.binaryHolder(pkl)))
-    if len(rows)==1000:
-      curs.executemany('insert into %s values (?,?,?)'%regName,rows)
-      conn.Commit()
-      errFile.flush()
-      rows = []
-    nDone+=1
-    if not silent and not nDone%1000:
-      logger.info('  done: %d'%nDone)
-
-  if len(rows):
-    curs.executemany('insert into %s values (?,?,?)'%regName,rows)
-    conn.Commit()
-
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ---- 
 from optparse import OptionParser
@@ -177,14 +111,14 @@ if __name__=='__main__':
   errFile=file(os.path.join(options.outDir,options.errFilename),'w+')
   
   if options.molFormat=='smiles':
-    reader = GetMolsFromSmilesFile
+    supplier=Chem.SmilesMolSupplier(dataFilename,titleLine=False)
   else:
-    reader = GetMolsFromSDFile
+    supplier = Chem.SDMolSupplier(dataFilename)
 
   if not options.silent: logger.info('Reading molecules and constructing molecular database.')
-  PopulateMolDb(dataFilename,errFile,molConn,options.regName,options.molIdName,
-                silent=options.silent,molReader=reader,nameProp=options.nameProp)
-
+  Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
+                errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
+                silent=options.silent,nameProp=options.nameProp)
   if options.doPairs:
     from Chem.AtomPairs import Pairs,Torsions
     pairConn = DbConnect(os.path.join(options.outDir,options.pairDbName))
@@ -241,9 +175,10 @@ if __name__=='__main__':
 
     if options.doPairs:
       pairs = Pairs.GetAtomPairFingerprintAsIntVect(mol)
-      pkl1 = DbModule.binaryHolder(cPickle.dumps(pairs,2))
       torsions = Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol)
+      pkl1 = DbModule.binaryHolder(cPickle.dumps(pairs,2))
       pkl2 = DbModule.binaryHolder(cPickle.dumps(torsions,2))
+      #pkl2 = pkl1
       row = [id,pkl1,pkl2]
       pairRows.append(row)
       if len(pairRows)>=500:

@@ -104,6 +104,42 @@ def GetNeighborLists(probeFps,topN,cursor,
     row = curs.fetchone()
   return nbrLists
 
+def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
+  dataFile=file(dataFilename,'r')
+  for idx,line in enumerate(dataFile):
+    try:
+      smi,nm = line.strip().split(' ')
+    except:
+      continue
+    try:
+      m = Chem.MolFromSmiles(smi)
+    except:
+      m=None
+    if not m and errFile:
+      print >>errFile,idx,nm,smi
+      continue
+    yield (nm,smi,m)
+
+def GetMolsFromSDFile(dataFilename,errFile,nameProp):
+  suppl = Chem.SDMolSupplier(dataFilename)
+
+  for idx,m in enumerate(suppl):
+    if not m and errFile:
+      if hasattr(suppl,'GetItemText'):
+        d = suppl.GetItemText(idx)
+        errFile.write(d)
+      else:
+        logger.warning('full error file support not complete')
+      continue
+    smi = Chem.MolToSmiles(m,True)
+    if m.HasProp(nameProp):
+      nm = m.GetProp(nameProp)
+      if not nm:
+        logger.warning('molecule found with empty name property')
+    else:
+      nm = 'Mol_%d'%(idx+1)
+    yield nm,smi,m
+
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ---- 
 import os
@@ -166,7 +202,6 @@ parser.add_option('--silent',default=False,action='store_true',
 if __name__=='__main__':
   import sys,getopt,time
   import Chem
-  import CreateDb
   
   
   options,args = parser.parse_args()
@@ -209,9 +244,9 @@ if __name__=='__main__':
     sys.exit(1)
       
   if options.molFormat=='smiles':
-    func=CreateDb.GetMolsFromSmilesFile
+    func=GetMolsFromSmilesFile
   elif options.molFormat=='sdf':
-    func=CreateDb.GetMolsFromSDFile
+    func=GetMolsFromSDFile
 
   if not options.silent: logger.info('Reading query molecules and generating fingerprints')
   probeFps=[]
