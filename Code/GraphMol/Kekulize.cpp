@@ -108,7 +108,8 @@ namespace RDKit {
         chrg = at->getFormalCharge();
         dv += chrg;
         tbo = at->getExplicitValence() + at->getImplicitValence();
-        const UINT_VECT &valList = PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
+        const UINT_VECT &valList =
+          PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
         unsigned int vi = 1;
       
         while ((tbo > dv) && (vi < valList.size())) {
@@ -149,7 +150,7 @@ namespace RDKit {
 
     void kekulizeFused(RWMol &mol,
                        const VECT_INT_VECT &arings, unsigned int maxBackTracks) { 
-                     
+      
       // get all teh atoms in the ring system
       INT_VECT allAtms;
       Union(arings, allAtms);
@@ -166,6 +167,10 @@ namespace RDKit {
 
       markDbondCands(mol, allAtms, dBndCands, done);
 
+      //std::cerr << "candidates: ";
+      //for(unsigned int i=0;i<nats;++i) std::cerr << dBndCands[i];
+      //std::cerr << std::endl;
+
       INT_DEQUE astack;
       INT_INT_DEQ_MAP options;
       int lastOpt=-1;
@@ -175,23 +180,22 @@ namespace RDKit {
       // - check if it can have a double bond
       // - add its neighbors to the stack
       // - check if one of its neighbors can also have a double bond
-      // - if yes add a dbouble bond.
-      // - if multiple neighbors can have double bonds - add them to a optiosn stack
-      //     we may have to retrace out path if we chose the wrong 
-      ///    neighbor to add the double bond
+      // - if yes add a double bond.
+      // - if multiple neighbors can have double bonds - add them to a
+      //   options stack we may have to retrace out path if we chose the
+      //   wrong neighbor to add the double bond
       // - if double bond added update the candidates for double bond
       // - move to the next atom on the stack and repeat the process
-      // - if an atom that can have multiple a double bond has no neighbors that can take 
-      //   double bond - we  amde a mistake ealier to picking a wrong candidate for double 
-      //   bond
-      // - in this case back track to where we did the mistake 
+      // - if an atom that can have multiple a double bond has no
+      //   neighbors that can take double bond - we made a mistake
+      //   earlier by picking a wrong candidate for double bond
+      // - in this case back track to where we made the mistake 
     
       int curr;
       INT_VECT_CI ai;
       INT_DEQUE btmoves;
       unsigned int numBT = 0; // number of back tracks so far
       while ( (done.size() < allAtms.size()) || (astack.size() > 0) ) {
-
         // pick a curr atom to work with
         if (astack.size() > 0) {
           curr = astack.front();
@@ -205,11 +209,10 @@ namespace RDKit {
             }
           }
         }
-      
-      
         done.push_back(curr);
 
-        // loop over the neighbors if we can add double bonds or simply push them onto the stack
+        // loop over the neighbors if we can add double bonds or
+        // simply push them onto the stack
         RWMol::ADJ_ITER nbrIdx,endNbrs;
         boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(curr));
         INT_DEQUE opts;
@@ -218,22 +221,21 @@ namespace RDKit {
           cCand = true;
         }
         int ncnd;
-        // if we are heare because of backtracking
+        // if we are here because of backtracking
         if (options.find(curr) != options.end()) {
           opts = options[curr];
           CHECK_INVARIANT(opts.size() > 0, "");
-        
         }
         else {
           while (nbrIdx != endNbrs) {
             // ignore if the neighbor has already been dealt with before
             if (std::find(done.begin(), done.end(), (*nbrIdx)) != done.end()) {
-              nbrIdx++;
+              ++nbrIdx;
               continue;
             }
             // ignore if the neighbor is not part of the fused system
-            if (std::find(allAtms.begin(), allAtms.end(), (*nbrIdx)) == allAtms.end()) {
-              nbrIdx++;
+            if (std::find(allAtms.begin(),allAtms.end(),(*nbrIdx)) == allAtms.end()) {
+              ++nbrIdx;
               continue;
             }
           
@@ -242,18 +244,14 @@ namespace RDKit {
               astack.push_back(*nbrIdx);
             }
           
-          
-            // now ckeck if curr and the 
-            if (cCand) {            
-              // check if the neighbor is also a candidate for a double bond
-              if (dBndCands[*nbrIdx] )  {
-                opts.push_back(*nbrIdx);
-              }
+            // check if the neighbor is also a candidate for a double bond
+            if (cCand && dBndCands[*nbrIdx] ){
+              opts.push_back(*nbrIdx);
             } // end of curr atoms can have a double bond
-            nbrIdx++;
+            ++nbrIdx;
           } // end of looping over neighbors
         }
-        // now add a double bond from current to one of the neibhors if we can
+        // now add a double bond from current to one of the neighbors if we can
         if (cCand) {
           if (opts.size() > 0) {
             ncnd = opts.front();
@@ -287,10 +285,10 @@ namespace RDKit {
               }
             }
             else {
-              // this is new atoms we are trying and 
-              // have other neighbors as options to add double bond
-              // store this to the options stack, we may have made a mistake in which one we
-              // chose and have to return here
+              // this is new atoms we are trying and have other
+              // neighbors as options to add double bond store this to
+              // the options stack, we may have made a mistake in
+              // which one we chose and have to return here
               if (opts.size() > 0) {
                 lastOpt = curr;
                 btmoves.push_back(lastOpt);
@@ -300,16 +298,20 @@ namespace RDKit {
                       
           } // end of adding a double bond
           else {
-            // we have an atom that should be getting a double bond but none 
-            // of the  negihbors can take one. Most likely because of a wrong choice earlier
-            // so back track
+            // we have an atom that should be getting a double bond
+            // but none of the negihbors can take one. Most likely
+            // because of a wrong choice earlier so back track
             if ((lastOpt >= 0) && (numBT < maxBackTracks)) {
+              //std::cerr << "PRE BACKTRACK" << std::endl;
+              //mol.debugMol(std::cerr);
               backTrack(mol, options, lastOpt, done, astack, dBndCands, dBndAdds);
+              //std::cerr << "POST BACKTRACK" << std::endl;
+              //mol.debugMol(std::cerr);
               numBT++;
             }
             else {
-              // we exhausted all option (or crossed the allowed number of backTracks)
-              // and we still need to backtrack
+              // we exhausted all option (or crossed the allowed
+              // number of backTracks) and we still need to backtrack
               // can't kekulize this thing
               std::ostringstream errout;
               errout << "Can't kekulize mol " << std::endl; 
@@ -345,7 +347,8 @@ namespace RDKit {
       //  FIX: what does this mean?
       // - no assumption of implicit hydrogen calculation is made.
 
-      // - for all aromatic bonds it is assumed that that both the following is true
+      // - for all aromatic bonds it is assumed that that both the following
+      //   are true:
       //       - getIsAromatic returns true
       //       - getBondType return aromatic
       // - all aromatic atoms return true for "getIsAromatic"
@@ -359,9 +362,9 @@ namespace RDKit {
       VECT_INT_VECT brings;
       RingUtils::convertToBonds(arings, brings, mol);
 
-      // make a the neighbor map for the rings 
-      // i.e. a ring is a neighbor a another candidate ring if shares atleast one bond
-      // useful to figure out fused systems 
+      // make a the neighbor map for the rings i.e. a ring is a
+      // neighbor a another candidate ring if shares atleast one bond
+      // useful to figure out fused systems
       INT_INT_VECT_MAP neighMap;
       RingUtils::makeRingNeighborMap(brings, neighMap);
 
@@ -398,7 +401,8 @@ namespace RDKit {
 
       RWMol::BondIterator bi;
       if (markAtomsBonds) {
-        // if we want the atoms and bonds to be marked non-aromatic do that here.
+        // if we want the atoms and bonds to be marked non-aromatic do
+        // that here.
         for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
           (*ai)->setIsAromatic(false);
         }
@@ -418,9 +422,9 @@ namespace RDKit {
         }
       }
 
-      // ok some error checking here
-      // force a implicit valence calculation that should do some error 
-      // checking by itself. In addition compare them to what it was before kekulizing
+      // ok some error checking here force a implicit valence
+      // calculation that should do some error checking by itself. In
+      // addition compare them to what it was before kekulizing
       int i = 0;
       for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
         int val = (*ai)->getImplicitValence(true);

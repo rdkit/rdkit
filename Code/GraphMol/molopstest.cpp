@@ -2003,6 +2003,48 @@ void testSFIssue1719053()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFIssue1811276()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 1811276 (kekulization failing) " << std::endl;
+  ROMol *m;
+
+  std::string smi;
+
+  smi = "[O-]N1C=C[N+](=O)C=C1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  smi = MolToSmiles(*m);
+  TEST_ASSERT(smi=="[O-]n1cc[n+](=O)cc1");
+  delete m;
+
+  smi="o1ccc(=O)cc1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  smi = MolToSmiles(*m);
+  TEST_ASSERT(smi=="O=c1ccocc1");
+    
+  smi="O=[n+]1ccocc1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  smi = MolToSmiles(*m);
+  TEST_ASSERT(smi=="O=[n+]1ccocc1");
+
+  smi="O=[n+]1ccn([O-])cc1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  smi = MolToSmiles(*m);
+  TEST_ASSERT(smi=="[O-]n1cc[n+](=O)cc1");
+
+  smi="O=n1ccccc1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  smi = MolToSmiles(*m);
+  TEST_ASSERT(smi=="[O-][n+]1ccccc1");
+
+  delete m;
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 
 int main(){
@@ -2035,8 +2077,9 @@ int main(){
   testIssue276();
   testHsAndAromaticity();
   testSFIssue1694023();
-#endif
   testSFIssue1719053();
+#endif
+  testSFIssue1811276();
 
   return 0;
 }

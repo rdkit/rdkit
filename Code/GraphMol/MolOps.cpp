@@ -33,11 +33,19 @@ namespace RDKit{
       for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
         switch( (*ai)->getAtomicNum() ){
         case 7:
-          // convert 5 coordinate Ns with double bonds to Os to the
+          // convert neutral 5 coordinate Ns with double bonds to Os to the
           // zwitterionic form.  e.g.:
           //  CN(=O)=O -> C[N+](=O)[O-]
           // and:
           //  C1=CC=CN(=O)=C1 -> C1=CC=C[N+](O)=C1
+
+          // we only want to do neutrals so that things like this don't get
+          // munged: 
+          //  O=[n+]1occcc1
+          // this was sf.net issue 1811276
+          if((*ai)->getFormalCharge()){
+            continue;
+          }
 
           // we need to play this little aromaticity game because the
           // explicit valence code modifies its results for aromatic
