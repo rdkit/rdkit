@@ -280,10 +280,10 @@ void testTorsions(){
   c4=AtomPairs::getAtomCode(mol->getAtomWithIdx(3))-1;
   tgt = c1 | (c2 | (c3 | c4<<AtomPairs::codeSize)<<AtomPairs::codeSize)<<AtomPairs::codeSize;
   codes.clear();
-  codes.push_back(c1);
-  codes.push_back(c2);
-  codes.push_back(c3);
-  codes.push_back(c4);
+  codes.push_back(static_cast<unsigned int>(c1));
+  codes.push_back(static_cast<unsigned int>(c2));
+  codes.push_back(static_cast<unsigned int>(c3));
+  codes.push_back(static_cast<unsigned int>(c4));
   TEST_ASSERT(AtomPairs::getTopologicalTorsionCode(codes)==tgt);
 
   fp = AtomPairs::getTopologicalTorsionFingerprint(*mol);
