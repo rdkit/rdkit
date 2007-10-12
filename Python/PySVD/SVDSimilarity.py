@@ -414,9 +414,10 @@ sensible results, but the matrix is only of rank 2 (despite being
 >>> m1 = Chem.MolFromSmiles('CCN(CCO)CC')
 >>> m2 = Chem.MolFromSmiles('CCN(CCO)CCO')
 >>> m3 = Chem.MolFromSmiles('OCCN(CCO)CCO')
->>> fp1 = Torsions.GetTopologicalTorsionFingerprint(m1)
->>> fp2 = Torsions.GetTopologicalTorsionFingerprint(m2)
->>> fp3 = Torsions.GetTopologicalTorsionFingerprint(m3)
+>>> fp1 = Torsions.GetTopologicalTorsionFingerprintAsIds(m1)
+>>> print fp1
+>>> fp2 = Torsions.GetTopologicalTorsionFingerprintAsIds(m2)
+>>> fp3 = Torsions.GetTopologicalTorsionFingerprintAsIds(m3)
 >>> calc = SimilarityCalculator()
 >>> calc.SetVects((fp1,fp2,fp3))
 >>> calc.UpdateSingularValues()
