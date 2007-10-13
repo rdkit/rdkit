@@ -80,12 +80,11 @@ void ROMol::initFromOther(const ROMol &other,bool quickCopy){
   if(other.dp_ringInfo){
     dp_ringInfo = new RingInfo(*(other.dp_ringInfo));
   } else {
-    dp_ringInfo = 0;
+    dp_ringInfo = new RingInfo();
   }
 
-  dp_props = 0;
+  dp_props=0;
   if(!quickCopy){
-
     // copy conformations
     ConstConformerIterator ci;
     
@@ -95,9 +94,6 @@ void ROMol::initFromOther(const ROMol &other,bool quickCopy){
     }
 
     if (other.dp_props) {
-      if (dp_props) {
-        delete dp_props;
-      }
       dp_props = new Dict(*other.dp_props);
     }
   
@@ -122,6 +118,8 @@ void ROMol::initFromOther(const ROMol &other,bool quickCopy){
   }
   if(!dp_props){
     dp_props = new Dict();
+    STR_VECT computed;
+    dp_props->setVal("computedProps", computed);
   }
 }
 
