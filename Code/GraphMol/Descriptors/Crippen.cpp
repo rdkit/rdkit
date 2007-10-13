@@ -23,36 +23,82 @@ namespace RDKit{
   namespace Descriptors {
     extern const std::string defaultParamData;
 
-    void CalcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,bool includeHs){
-      // this isn't as bad as it looks, we aren't actually going
-      // to harm the molecule in any way!
-      ROMol *workMol=const_cast<ROMol *>(&mol);
-      if(includeHs){
-	workMol = MolOps::addHs(mol,false,false);
+    void getCrippenAtomContribs(const ROMol &mol,
+				std::vector< double > &logpContribs,
+				std::vector< double > &mrContribs,
+				bool force){
+      PRECONDITION(logpContribs.size()==mol.getNumAtoms() &&
+		   mrContribs.size()==mol.getNumAtoms(),
+		   "bad result vector size");
+      if(!force && mol.hasProp("_crippenLogPContribs")){
+	std::vector<double> tmpVect1,tmpVect2;
+	mol.getProp("_crippenLogPContribs",tmpVect1);
+	mol.getProp("_crippenMRContribs",tmpVect2);
+	if(tmpVect1.size()==mol.getNumAtoms() &&
+	   tmpVect2.size()==mol.getNumAtoms() ){
+	  logpContribs=tmpVect1;
+	  mrContribs=tmpVect2;
+	  return;
+	}
       }
-      logp=0.0;
-      mr=0.0;
-      boost::dynamic_bitset<> atomNeeded(workMol->getNumAtoms());
+      
+      boost::dynamic_bitset<> atomNeeded(mol.getNumAtoms());
       atomNeeded.set();
       CrippenParamCollection *params=CrippenParamCollection::getParams();
       for(CrippenParamCollection::ParamsVect::const_iterator it=params->begin();
 	  it!=params->end(); ++it){
 	std::vector<MatchVectType> matches;
-	SubstructMatch(*workMol,*(it->dp_pattern.get()),matches,
+	SubstructMatch(mol,*(it->dp_pattern.get()),matches,
 		       false,true);
 	for(std::vector<MatchVectType>::const_iterator matchIt=matches.begin();
 	    matchIt!=matches.end();++matchIt){
 	  int idx=(*matchIt)[0].second;
 	  if(atomNeeded[idx]){
 	    atomNeeded[idx]=0;
-	    logp += it->logp;
-	    mr += it->mr;
+	    logpContribs[idx] = it->logp;
+	    mrContribs[idx] = it->mr;
 	  }
 	}
 	// no need to keep matching stuff if we already found all the atoms:
 	if(atomNeeded.none()) break;
       }
-      if(includeHs) delete workMol;
+      mol.setProp("_crippenLogPContribs",logpContribs,true);
+      mol.setProp("_crippenMRContribs",mrContribs,true);
+    }
+    void CalcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,bool includeHs,
+				bool force){
+      if(!force && mol.hasProp("_crippenLogP")){
+	mol.getProp("_crippenLogP",logp);
+	mol.getProp("_crippenMR",mr);
+	return;
+      }
+
+      // this isn't as bad as it looks, we aren't actually going
+      // to harm the molecule in any way!
+      ROMol *workMol=const_cast<ROMol *>(&mol);
+      if(includeHs){
+	workMol = MolOps::addHs(mol,false,false);
+      }
+      std::vector<double> logpContribs(workMol->getNumAtoms());
+      std::vector<double> mrContribs(workMol->getNumAtoms());
+      getCrippenAtomContribs(*workMol,logpContribs,mrContribs,force);
+      logp=0.0;
+      for(std::vector<double>::const_iterator iter=logpContribs.begin();
+	  iter!=logpContribs.end();++iter){
+	logp+= *iter;
+      }
+      mr=0.0;
+      for(std::vector<double>::const_iterator iter=mrContribs.begin();
+	  iter!=mrContribs.end();++iter){
+	mr+= *iter;
+      }
+
+      if(includeHs){
+	delete workMol;
+      }
+
+      mol.setProp("_crippenLogP",logp,true);
+      mol.setProp("_crippenMR",mr,true);
     };
 
     class CrippenParamCollection * CrippenParamCollection::ds_instance = 0;

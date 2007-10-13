@@ -2,14 +2,14 @@ include $(RDBASE)/Code/rdvars.make
 include $(RDBASE)/Code/rdrules.make
 
 CXXFLAGS=$(BASECXXFLAGS) -Wall
-SOURCES=Crippen.cpp MolDescriptors.cpp AtomPairs.cpp
+SOURCES=Crippen.cpp MolDescriptors.cpp AtomPairs.cpp MolSurf.cpp
 LIB=libDescriptors.a
 
 $(LIB): $(OBJS)
 	ar -r $@ $?
 
 testExecs/testDescriptors.exe: test.o $(LIB)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(RDSMILES) $(RDSUBGRAPHS) $(RDKIT)\
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(RDSMILES) $(RDSUBGRAPHS) $(RDFILEPARSE) $(RDKIT)\
                $(RDGENERAL) $(RDGEOMETRY) $(RDSUBSTRUCT) $(VFLIB)
 
 clean:

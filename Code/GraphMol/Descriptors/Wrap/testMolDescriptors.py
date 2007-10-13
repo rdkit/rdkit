@@ -50,6 +50,9 @@ class TestCase(unittest.TestCase) :
     self.failUnless(fp.GetTotalVal()==2)
     
 
-    
+  def testCrippen(self):
+    mol = Chem.MolFromSmiles("NCO");
+    contribs = rdMD._CalcCrippenContribs(mol)
+    print contribs
 if __name__ == '__main__':
   unittest.main()

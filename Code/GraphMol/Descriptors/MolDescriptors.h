@@ -7,25 +7,13 @@
 #ifndef _RD_MOLDESCRIPTORS_H_
 #define _RD_MOLDESCRIPTORS_H_
 
+#include <GraphMol/Descriptors/Crippen.h>
+#include <GraphMol/Descriptors/AtomPairs.h>
+#include <GraphMol/Descriptors/MolSurf.h>
+
 namespace RDKit{
   class ROMol;
   namespace Descriptors {
-    //! generate Wildman-Crippen LogP and MR estimates for a molecule
-    /*!
-      Uses an atom-based scheme based on the values in the paper:
-        S. A. Wildman and G. M. Crippen JCICS 39 868-873 (1999)
-
-      \param mol        the molecule of interest
-      \param logp       used to return the logp estimate
-      \param mr         used to return the MR estimate
-      \param includeHs  (optional) if this is true (the default), a
-          copy of \c mol is made and Hs are added to it.  If false,
-	  Hs that are not explicitly present in the graph will not
-	  be included.
-	  
-    */
-    void CalcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,
-				bool includeHs=true);
     /*!
       Calculates a molecule's molecular weight
 
@@ -38,7 +26,8 @@ namespace RDKit{
     double CalcAMW(const ROMol &mol,bool onlyHeavy=false);
 
 
-  }
-}
+
+  } // end of namespace Descriptors
+} //end of namespace RDKit
 
 #endif

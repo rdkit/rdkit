@@ -49,6 +49,14 @@ void test2(){
   CalcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,0.6331));
   TEST_ASSERT(feq(mr,6.7310));
+  // check that caching works:
+  CalcCrippenDescriptors(*mol,logp,mr);
+  TEST_ASSERT(feq(logp,0.6331));
+  TEST_ASSERT(feq(mr,6.7310));
+  CalcCrippenDescriptors(*mol,logp,mr,true,true);
+  TEST_ASSERT(feq(logp,0.6331));
+  TEST_ASSERT(feq(mr,6.7310));
+
   // check that things work when we don't add Hs:
   CalcCrippenDescriptors(*mol,logp,mr,false);
   TEST_ASSERT(feq(logp,0.1411));
@@ -309,6 +317,52 @@ void testTorsions(){
 }
 
 
+void testBulkTorsions(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Bulk Topological Torsions." << std::endl;
+
+  std::string fName= getenv("RDBASE");
+  fName += "/Projects/DbCLI/testData/pubchem.200.sdf";
+  SDMolSupplier suppl(fName);
+  while(!suppl.atEnd()){
+    ROMol *mol=suppl.next();
+    SparseIntVect<long long int> *fp;
+    fp = AtomPairs::getTopologicalTorsionFingerprint(*mol);
+    TEST_ASSERT(fp->getTotalVal()>1);
+    delete mol;
+    delete fp;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+void testLabute(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Labute ASA descriptors." << std::endl;
+  ROMol *mol;
+  double asa;
+
+  mol = SmilesToMol("CO");
+  asa=calcLabuteASA(*mol);
+  TEST_ASSERT(feq(asa,13.5335,.0001));
+  asa=calcLabuteASA(*mol);
+  TEST_ASSERT(feq(asa,13.5335,.0001));
+  asa=calcLabuteASA(*mol,true,true);
+  TEST_ASSERT(feq(asa,13.5335,.0001));
+
+  delete mol;
+  mol = SmilesToMol("OC(=O)c1ccncc1C(=O)O");
+  asa=calcLabuteASA(*mol);
+  TEST_ASSERT(feq(asa,67.2924,.0001));
+  
+  delete mol;
+  mol = SmilesToMol("C1CCC(c2cccnc2)NC1");
+  asa=calcLabuteASA(*mol);
+  TEST_ASSERT(feq(asa,73.0198,.0001));
+  
+  delete mol;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -320,8 +374,10 @@ int main(){
   test2();
   testIssue262();
   test3();
-#endif
   testAtomCodes();
   testAtomPairs();
   testTorsions();
+  testBulkTorsions();
+#endif
+  testLabute();
 }

@@ -9,7 +9,10 @@ libDirs += [
          os.path.join(RDConfig.RDBaseDir,'Code','GraphMol', 'Descriptors'),
          ]
 
-libraries += ["Descriptors","Subgraphs","GraphMol","RDGeneral"]
+
+libraries += ["Descriptors","SmilesParse","Subgraphs","Substruct","GraphMol","RDGeneral"]
+libDirs.append(vfLibDir)
+libraries.extend(vfLibs)
 
 setup(name="Chem.rdMolDescriptors", version="1.0",
       ext_modules=[Extension("Chem.rdMolDescriptors",
