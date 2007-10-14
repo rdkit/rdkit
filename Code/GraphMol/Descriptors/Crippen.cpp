@@ -130,15 +130,21 @@ namespace RDKit{
 	  ++token;
 	  paramObj.smarts=*token;
 	  ++token;
-	  if(*token!="")
+	  if(*token!=""){
 	    paramObj.logp=boost::lexical_cast<double>(*token);
+	  } else {
+	    paramObj.logp=0.0;
+	  }
 	  ++token;
-	  if(*token!="")
+	  if(*token!=""){
 	    try{
 	      paramObj.mr=boost::lexical_cast<double>(*token);
 	    } catch (boost::bad_lexical_cast){
-	      ;
+	      paramObj.mr=0.0;
 	    }
+	  } else {
+	      paramObj.mr=0.0;
+	  }
 	  paramObj.dp_pattern=boost::shared_ptr<const ROMol>(SmartsToMol(paramObj.smarts));
 	  d_params.push_back(paramObj);
 	}
