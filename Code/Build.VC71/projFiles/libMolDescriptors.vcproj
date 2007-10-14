@@ -129,6 +129,9 @@
 			<File
 				RelativePath="..\..\GraphMol\Descriptors\MolDescriptors.cpp">
 			</File>
+			<File
+				RelativePath="..\..\GraphMol\Descriptors\MolSurf.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -141,6 +144,9 @@
 			</File>
 			<File
 				RelativePath="..\..\GraphMol\Descriptors\MolDescriptors.h">
+			</File>
+			<File
+				RelativePath="..\..\GraphMol\Descriptors\MolSurf.h">
 			</File>
 		</Filter>
 	</Files>
