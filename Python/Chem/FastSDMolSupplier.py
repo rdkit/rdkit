@@ -10,6 +10,9 @@ class FastSDMolSupplier(object):
   """ A wrapper around an SDMolSupplier that precomputes and stores 
       molecular indices (via text processing) to allow quick length 
       calculations and random access.
+
+      NOTE that this class needs to have the entire SD data in memory,
+      so it's probably not particularly useful with large files.
   """
   suppl=None
   data=None
@@ -46,7 +49,7 @@ class FastSDMolSupplier(object):
     self.suppl._SetStreamIndices(self._pos)
     self._idx=0
     
-  def getItemText(self,idx):
+  def GetItemText(self,idx):
     startOfItem = self._pos[idx]
     if idx+1<len(self._pos):
       endOfItem = self._pos[idx+1]

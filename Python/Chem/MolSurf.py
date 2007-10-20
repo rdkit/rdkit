@@ -13,7 +13,7 @@ descriptors.
 import Chem
 from Chem.PeriodicTable import numTable
 from Chem import Crippen
-from Chem import rdPartialCharges
+from Chem import rdPartialCharges,rdMolDescriptors
 from Numeric import *
 import bisect
 radCol = 5
@@ -35,7 +35,28 @@ def _LabuteHelper(mol,includeHs=1,force=0):
     else:
       if res:
         return res
+  tpl = rdMolDescriptors._CalcLabuteASAContribs(mol,includeHs)
+  ats,hs=tpl
+  Vi=[hs]+list(ats)
+  mol._labuteContribs=Vi
+  return Vi
+def _pyLabuteHelper(mol,includeHs=1,force=0):
+  """ *Internal Use Only*
+    helper function for LabuteASA calculation
+    returns an array of atomic contributions to the ASA
 
+  **Note:** Changes here affect the version numbers of all ASA descriptors
+
+  """
+  if not force:
+    try:
+      res = mol._labuteContribs
+    except AttributeError:
+      pass
+    else:
+      if res:
+        return res
+    
   nAts = mol.GetNumAtoms()
   Vi = zeros(nAts+1,Float)
   rads = zeros(nAts+1,Float)
@@ -241,7 +262,7 @@ fn = None
 # Change log for the MOE-type descriptors:
 #  version 1.0.1: optimizations, values unaffected
 
-def LabuteASA(mol,includeHs=1):
+def pyLabuteASA(mol,includeHs=1):
   """ calculates Labute's Approximate Surface Area (ASA from MOE)
 
     Definition from P. Labute's article in the Journal of the Chemical Computing Group
@@ -250,9 +271,10 @@ def LabuteASA(mol,includeHs=1):
   """
   Vi = _LabuteHelper(mol,includeHs=includeHs)
   return sum(Vi)
-LabuteASA.version="1.0.1"
+pyLabuteASA.version="1.0.1"
 # Change log for LabuteASA:
 #  version 1.0.1: optimizations, values unaffected
+LabuteASA=rdMolDescriptors.CalcLabuteASA
 
 
 def _TPSAContribs(mol,verbose=False):

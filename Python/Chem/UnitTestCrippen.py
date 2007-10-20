@@ -92,7 +92,7 @@ class TestCase(unittest.TestCase):
         if mol:
           mol=Chem.AddHs(mol,1)
           smi2 = Chem.MolToSmiles(mol)
-          contribs = Crippen._GetAtomContribs(mol,verbose=verbose)
+          contribs = Crippen._GetAtomContribs(mol)
           contribs = [x[0] for x in contribs]
           #
           #  we're comparing to the old results using the oelib code.
@@ -110,7 +110,7 @@ class TestCase(unittest.TestCase):
             l = contribs[order[i]]
             if not feq(refL,l):
               print '%s (%s): %d %6.5f != %6.5f'%(smi,smi2,order[i],refL,l)
-              Crippen._GetAtomContribs(mol,verbose=1,force=1)
+              Crippen._GetAtomContribs(mol,force=1)
               print '-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*'
               nFails +=1
               break;

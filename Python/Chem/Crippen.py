@@ -15,6 +15,7 @@
 import os
 import RDConfig
 import Chem
+from Chem import rdMolDescriptors
 from Numeric import *
 
 _smartsPatterns = {}
@@ -61,8 +62,8 @@ def _ReadPatts(fileName):
               print 'Problems parsing smarts: %s'%(sma)
   return order,patts
 
-
-def _GetAtomContribs(mol,patts=None,order=None,verbose=0,force=0):
+_GetAtomContribs=rdMolDescriptors._CalcCrippenContribs
+def _pyGetAtomContribs(mol,patts=None,order=None,verbose=0,force=0):
   """ *Internal Use Only*
 
     calculates atomic contributions to the LogP and MR values
@@ -109,8 +110,8 @@ def _Init():
   global _smartsPatterns,_patternOrder
   if _smartsPatterns == {}:
     _patternOrder,_smartsPatterns = _ReadPatts(defaultPatternFileName)
-        
-def MolLogP(inMol,patts=None,order=None,verbose=0,addHs=1):
+
+def pyMolLogP(inMol,patts=None,order=None,verbose=0,addHs=1):
   """ Crippen LogP value
 
   Definition From JCICS _39_ 868-873 (1999)
@@ -154,12 +155,12 @@ def MolLogP(inMol,patts=None,order=None,verbose=0,addHs=1):
       _patternOrder,_smartsPatterns = _ReadPatts(defaultPatternFileName)
     patts = _smartsPatterns
     order = _patternOrder
-  atomContribs = _GetAtomContribs(mol,patts,order,verbose=verbose)
+  atomContribs = _pyGetAtomContribs(mol,patts,order,verbose=verbose)
   #print 'AC:',atomContribs
   return sum(atomContribs)[0]
-MolLogP.version="1.0.0"
+pyMolLogP.version="1.0.0"
 
-def MolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
+def pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
   """ Crippen MR value
 
   Definition From JCICS _39_ 868-873 (1999)
@@ -204,11 +205,14 @@ def MolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
     patts = _smartsPatterns
     order = _patternOrder
 
-  atomContribs = _GetAtomContribs(mol,patts,order,verbose=verbose)
+  atomContribs = _pyGetAtomContribs(mol,patts,order,verbose=verbose)
   return sum(atomContribs)[1]
-MolMR.version="1.0.0"
+pyMolMR.version="1.0.0"
 
-
+MolLogP=lambda *x,**y:rdMolDescriptors.CalcCrippenDescriptors(*x,**y)[0]
+MolLogP.version=rdMolDescriptors.__CalcCrippenDescriptors_version__
+MolMR=lambda *x,**y:rdMolDescriptors.CalcCrippenDescriptors(*x,**y)[1]
+MolMR.version=rdMolDescriptors.__CalcCrippenDescriptors_version__
 
 if __name__=='__main__':
   import sys
