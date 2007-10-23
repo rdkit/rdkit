@@ -1281,7 +1281,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     
     PRECONDITION(dp_mol, "");
     unsigned int na = dp_mol->getNumAtoms();
-    
+
     RDKit::rng_type &generator = RDKit::getRandomGenerator();
     if (seed > 0) {
       generator.seed(seed);
@@ -1344,6 +1344,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
         if (ri < nb) {
           bi = rotBonds[ri];
           this->flipAboutBond(bi);
+
         } else { // ri is >= nb we permute the bonds at a deg 4 node
           unsigned int d4i = ri - nb; // so we will permute at the 'di'th degree 4 node
           ai = deg4nodes[d4i];
@@ -1369,7 +1370,8 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
       
       // compute the density of the stucture and check if it improved
       double density = this->mimicDistMatAndDensityCostFunc(dmat, mimicDmatWt);
-      if (density < bestDens) {
+      //if (density < bestDens) {
+      if (bestDens-density>1e-4){
         bestDens = density;
         for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
           bestCrdMap[efi->first] = efi->second.loc;
@@ -1579,7 +1581,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
       fii = std::find(endSideAids.begin(), endSideAids.end(), efi->first);
       if (endSideFlip ^ (fii == endSideAids.end()) ) {
         efi->second.Reflect(begLoc, endLoc);
-      } 
+      }
     }
   }  
 
