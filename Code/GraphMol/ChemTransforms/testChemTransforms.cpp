@@ -486,7 +486,26 @@ void testReplaceCore()
   TEST_ASSERT(mol2->getNumAtoms()==6);
   smi = MolToSmiles(*mol2,true);
   TEST_ASSERT(smi=="[Xa][C@@H]1OCCC1");
-  
+
+  delete mol1;
+  smi = "ClC1CC(F)C1";
+  mol1 = SmilesToMol(smi);
+  TEST_ASSERT(mol1);
+
+  delete matcher1;
+  sma = "[*]C1CC([*])C1";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+
+  mol2 = replaceCore(*mol1,*matcher1,false);
+  TEST_ASSERT(mol2);
+  smi = MolToSmiles(*mol2);
+  BOOST_LOG(rdInfoLog)<<"smiles: "<<smi <<std::endl;
+  TEST_ASSERT(mol2->getNumAtoms()==4);
+  smi = MolToSmiles(*mol2);
+  // there's no way to guarantee the order here:
+  TEST_ASSERT(smi=="[Xa]F.Cl[Xb]"||smi=="[Xb]F.Cl[Xa]");
+
   delete mol1;
   delete mol2;
   delete matcher1;

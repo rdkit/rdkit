@@ -648,6 +648,8 @@ namespace RDKit{
 \n\
     - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
 \n\
+    - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
+\n\
   RETURNS: a new molecule with the core removed\n\
 \n\
   NOTES:\n\
@@ -666,9 +668,12 @@ namespace RDKit{
     - ReplaceCore('C1CC2C1CCC2','C1CCC1') -> '[Xa]C1CCC1[Xb]'\n\
 \n\
     - ReplaceCore('C1CNCC1','N') -> '[Xa]CCCC[Xb]'\n\
+\n\
+    - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[Xa]CN'\n\
 \n";
       python::def("ReplaceCore", replaceCore,
-                  (python::arg("mol"),python::arg("coreQuery")),
+                  (python::arg("mol"),python::arg("coreQuery"),
+                   python::arg("replaceDummies")=true),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
 

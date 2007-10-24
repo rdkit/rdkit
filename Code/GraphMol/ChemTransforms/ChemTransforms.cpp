@@ -247,7 +247,7 @@ namespace RDKit{
     return static_cast<ROMol *>(newMol);
   }
 
-  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery){
+  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery, bool replaceDummies){
     MatchVectType matchV;
 
     // do the substructure matching and get the atoms that match the query
@@ -263,7 +263,9 @@ namespace RDKit{
     boost::dynamic_bitset<> matchingIndices(origNumAtoms);
     for(MatchVectType::const_iterator mvit=matchV.begin();
         mvit!=matchV.end();mvit++){
-      matchingIndices[mvit->second] = 1;
+      if(replaceDummies || coreQuery.getAtomWithIdx(mvit->first)->getAtomicNum()>0){
+        matchingIndices[mvit->second] = 1;
+      }
     }
 
     RWMol *newMol = static_cast<RWMol *>(new ROMol(mol));

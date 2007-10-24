@@ -86,13 +86,15 @@ namespace RDKit{
       Note that this is essentially identical to the replaceSidechains function, except we
       invert the query and replace the atoms that *do* match the query.
 
-      \param mol       the ROMol of interest
-      \param coreQuery a query ROMol to be used to match the core
+      \param mol            - the ROMol of interest
+      \param coreQuery      - a query ROMol to be used to match the core
+      \param replaceDummies - if set, atoms matching dummies in the core will also be replaced
 
       \return a copy of \c mol with the non-matching atoms and bonds (if any)
-              removed and dummies at the connection points.          
+              removed and dummies at the connection points. The client is responsible
+              for deleting this molecule
   */
-  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery);
+  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery, bool replaceDummies=true);
         
 
 
