@@ -54,7 +54,7 @@ namespace SubstructLocal {
 		      MatchVectType &matchVect,
 		      bool recursionPossible=true,
 		      bool useChirality=false,
-                      bool registeryQuery=false);
+                      bool registerQuery=false);
   //! \overload
   bool SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
 		      MatchVectType &matchVect,

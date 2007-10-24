@@ -21,12 +21,12 @@
 #include "Conformer.h"
 
 namespace RDKit{
-  //! This is the BGL type used to store the topology:
+  
   typedef boost::adjacency_list< boost::vecS,
                                  boost::vecS,
                                  boost::undirectedS,
                                  AtomProperty,
-                                 BondProperty> MolGraph; 
+                                 BondProperty> MolGraph; //! the BGL type used to store the topology
   class MolPickler;
   class RWMol;
   class Atom;

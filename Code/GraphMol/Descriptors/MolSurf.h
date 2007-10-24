@@ -27,6 +27,8 @@ namespace RDKit{
       \param hContrib   used to return the H contributions (if calculated)
       \param includeHs  (optional) if this is true (the default),
           the contribution of H atoms to the ASA will be included.
+      \param force      (optional) calculate the values even if they are cached.
+
     */
     double getLabuteAtomContribs(const ROMol &mol,
 				 std::vector<double> &Vi,
@@ -43,6 +45,7 @@ namespace RDKit{
       \param mol        the molecule of interest
       \param includeHs  (optional) if this is true (the default),
           the contribution of H atoms to the ASA will be included.
+      \param force      (optional) calculate the value even if it's cached.
 	  
     */
     double calcLabuteASA(const ROMol &mol,bool includeHs=true,

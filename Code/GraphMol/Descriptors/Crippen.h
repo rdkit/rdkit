@@ -21,9 +21,24 @@ namespace RDKit {
   namespace Descriptors {
     const std::string crippenVersion="1.0.0";
 
+    //! generate atomic contributions to the Wildman-Crippen LogP and MR
+    //! estimates for a molecule
+    /*!
+      Uses an atom-based scheme based on the values in the paper:
+        S. A. Wildman and G. M. Crippen JCICS 39 868-873 (1999)
+
+      \param mol           the molecule of interest
+      \param logpContribs  used to return the logp contributions, must
+                           be equal in length to the number of atoms
+      \param mrContribs    used to return the MR contributions, must
+                           be equal in length to the number of atoms
+      \param force         forces the value to be recalculated instead
+                           of pulled from the cache
+	  
+    */
     void getCrippenAtomContribs(const ROMol &mol,
-				std::vector<double> &logpcontribs,
-				std::vector<double> &mrcontribs,
+				std::vector<double> &logpContribs,
+				std::vector<double> &mrContribs,
 				bool force=false);
     
 

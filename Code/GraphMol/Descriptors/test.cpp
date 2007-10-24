@@ -58,7 +58,7 @@ void test2(){
   TEST_ASSERT(feq(mr,6.7310));
 
   // check that things work when we don't add Hs:
-  CalcCrippenDescriptors(*mol,logp,mr,false);
+  CalcCrippenDescriptors(*mol,logp,mr,false,true);
   TEST_ASSERT(feq(logp,0.1411));
   TEST_ASSERT(feq(mr,2.503));
   delete mol;

@@ -171,8 +171,6 @@ namespace RDKit{
     MOL_SPTR_VECT generateOneProductSet(const MOL_SPTR_VECT &reactants,const std::vector<MatchVectType> &reactantsMatch) const;
   };
 
-  
-
-}; // end of RDKit namespace
+} // end of RDKit namespace
 
 #endif
