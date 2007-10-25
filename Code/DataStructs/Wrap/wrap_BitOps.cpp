@@ -35,18 +35,7 @@ double SimilarityWrapper(const T &bv1,const std::string &pkl,
                          const double (*metric)(const T &,const T &)){
   double res=0.0;
   T bv2(pkl);
-  if(bv1.GetNumBits()>bv2.GetNumBits()){
-    T *bv1tmp = FoldFingerprint(bv1,bv1.GetNumBits()/bv2.GetNumBits());
-    res = metric(*bv1tmp,bv2);
-    delete bv1tmp;
-  } else if(bv2.GetNumBits()>bv1.GetNumBits()){
-    T *bv2tmp = FoldFingerprint(bv2,bv2.GetNumBits()/bv1.GetNumBits());
-    res = metric(bv1,*bv2tmp);
-    delete bv2tmp;
-  } else {
-    res = metric(bv1,bv2);
-  }
-  return res;
+  return SimilarityWrapper(bv1,bv2,metric);
 }
 
 template <typename T>

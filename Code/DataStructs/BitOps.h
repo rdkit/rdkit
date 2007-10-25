@@ -17,7 +17,29 @@
  */
 
 #include "BitVects.h"
-#include <sstream>
+#include <string>
+
+
+//! general purpose wrapper for calculating the similarity between two bvs
+//! that may be of unequal size (will automatically fold as appropriate)
+template <typename T>
+double SimilarityWrapper(const T &bv1,const T &bv2,
+                         const double (*metric)(const T &,const T &)){
+  double res=0.0;
+  if(bv1.GetNumBits()>bv2.GetNumBits()){
+    T *bv1tmp = FoldFingerprint(bv1,bv1.GetNumBits()/bv2.GetNumBits());
+    res = metric(*bv1tmp,bv2);
+    delete bv1tmp;
+  } else if(bv2.GetNumBits()>bv1.GetNumBits()){
+    T *bv2tmp = FoldFingerprint(bv2,bv2.GetNumBits()/bv1.GetNumBits());
+    res = metric(bv1,*bv2tmp);
+    delete bv2tmp;
+  } else {
+    res = metric(bv1,bv2);
+  }
+  return res;
+}
+
 
 bool AllProbeBitsMatch(const char *probe,const char *ref);
 bool AllProbeBitsMatch(const std::string &probe,const std::string &ref);
