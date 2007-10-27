@@ -31,20 +31,30 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.2.0"
+_version = "0.3.0"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
      The sd filename argument can be either an SD file or an MDL mol 
      file.
      
+
+  NOTES:
+
+    - The property names may have been altered on loading the
+      database.  Any non-alphanumeric character in a property name
+      will be replaced with '_'. e.g."Gold.Goldscore.Constraint.Score" becomes
+      "Gold_Goldscore_Constraint_Score".
+
+    - Property names are not case sensitive in the database.
+
  """
 import RDConfig
 from Dbase.DbConnection import DbConnect
 
 from RDLogger import logger
 logger=logger()
-import cPickle
+import cPickle,sets
 
 
 # ----------------------------------------
@@ -76,11 +86,11 @@ def BuildRDKitFP(mol):
   fp=FingerprintMol(mol)
   return fp
 
-def GetNeighborLists(probeFps,topN,cursor,
+def GetNeighborLists(probes,topN,cursor,
                      simMetric=DataStructs.DiceSimilarity,
                      fpDepickler=DepickleIntVectFP,
                      silent=False):
-
+  probeFps = [x[1] for x in probes]
   from DataStructs.TopNContainer import TopNContainer
   nbrLists = [TopNContainer(topN) for x in range(len(probeFps))]
 
@@ -179,7 +189,7 @@ parser.add_option('--descriptorCalcFilename',default=os.path.join(RDConfig.RDBas
                                                                   'QuickMolDB','moe_like.dsc'),
                   help='name of the file containing the descriptor calculator')
 parser.add_option('--similarityType',default='2D',choices=['2D','AtomPairs','TopologicalTorsions'],
-                  help='Choose the type of similarity to use, possible values: 2D, AtomPairs, and TopologicalTorsions. The default is %default')
+                  help='Choose the type of similarity to use, possible values: 2D, AtomPairs, TopologicalTorsions. The default is %default')
 parser.add_option('--outputDelim',default=',',
                   help='the delimiter for the output file. The default is %default')
 parser.add_option('--topN',default=20,type='int',
@@ -196,6 +206,16 @@ parser.add_option('--molFormat',default='sdf',choices=('smiles','sdf'),
 parser.add_option('--nameProp',default='_Name',
                   help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
 
+parser.add_option('--smartsQuery','--smarts','--sma',default='',
+                  help='provide a SMARTS to be used as a substructure query')
+parser.add_option('--negateQuery','--negate',default=False,action='store_true',
+                  help='negate the results of the smarts query.')
+parser.add_option('--propQuery','--query','-q',default='',
+                  help='provide a property query (see the NOTE about property names)')
+
+parser.add_option('--sdfOut','--sdOut',default='',
+                  help='export an SD file with the matching molecules')
+
 parser.add_option('--silent',default=False,action='store_true',
                   help='Do not generate status messages.')
 
@@ -203,10 +223,9 @@ if __name__=='__main__':
   import sys,getopt,time
   import Chem
   
-  
   options,args = parser.parse_args()
-  if len(args)!=1:
-    parser.error('please provide a query filename argument')
+  if len(args)!=1 and not (options.smartsQuery or options.propQuery):
+    parser.error('please either provide a query filename argument or do a data or smarts query')
 
   if options.similarityType=='AtomPairs':
     fpBuilder=BuildAtomPairFP
@@ -229,76 +248,175 @@ if __name__=='__main__':
     dbName = os.path.join(options.dbDir,options.fpDbName)
     fpTableName = options.fpTableName
     fpColName = options.fpColName
-    
+
+  if options.smartsQuery:
+    try:
+      options.smartsQueryMol = Chem.MolFromSmarts(options.smartsQuery)
+    except:
+      logger.error('could not build query molecule from smarts "%s"'%options.smartsQuery)
+      sys.exit(-1)
+
   if options.outF=='-':
     outF=sys.stdout
   else:
     outF = file(options.outF,'w+')
       
-  queryFilename=args[0]
-
-  try:
-    tmpF = file(queryFilename,'r')
-  except IOError:
-    logger.error('could not open query file %s'%queryFilename)
-    sys.exit(1)
-      
-  if options.molFormat=='smiles':
-    func=GetMolsFromSmilesFile
-  elif options.molFormat=='sdf':
-    func=GetMolsFromSDFile
-
-  if not options.silent: logger.info('Reading query molecules and generating fingerprints')
-  probeFps=[]
-  i=0
-  nms=[]
-  for nm,smi,mol in func(queryFilename,None,options.nameProp):
-    i+=1
-    nms.append(nm)
-    if not mol:
-      logger.error('query molecule %d could not be built'%(i))
-      probeFps.append(None)
-      continue
-    probeFps.append(fpBuilder(mol))
-    if not options.silent and not i%1000:
-      logger.info("  done %d"%i)
-    
-  if not options.silent: logger.info('Finding Neighbors')
-  t1=time.time()
-  conn = DbConnect(dbName)
-  curs = conn.GetCursor()
-  idName = options.molIdName
-  curs.execute('select %(idName)s,%(fpColName)s from %(fpTableName)s'%locals())
-  topNLists = GetNeighborLists(probeFps,options.topN,curs,simMetric=simMetric,
-                               fpDepickler=fpDepickler)
-
-  nbrLists = {}
-  for i,nm in enumerate(nms):
-    scores=topNLists[i].GetPts()
-    nbrNames = topNLists[i].GetExtras()
-    nbrs = zip(nbrNames,scores)
-    nbrs.reverse()
-    nbrLists[(i,nm)] = nbrs
-  t2=time.time()
-  if not options.silent: logger.info('The search took %.1f seconds'%(t2-t1))
-    
-  if not options.silent: logger.info('Creating output')
-  ks = nbrLists.keys()
-  ks.sort()
-  if not options.transpose:
-    for i,nm in ks:
-      nbrs= nbrLists[(i,nm)]
-      nbrTxt=options.outputDelim.join([nm]+['%s%s%.3f'%(x,options.outputDelim,y) for x,y in nbrs])
-      print >>outF,nbrTxt
+  if options.sdfOut:
+    if options.sdfOut=='-':
+      sdfOut=sys.stdout
+    else:
+      sdfOut = file(options.sdfOut,'w+')
   else:
-    labels = ['%s%sSimilarity'%(x[1],options.outputDelim) for x in ks]
-    print >>outF,options.outputDelim.join(labels)
-    for i in range(options.topN):
-      outL = []
-      for idx,nm in ks:
-        nbr = nbrLists[(idx,nm)][i]
-        outL.append(nbr[0])
-        outL.append('%.3f'%nbr[1])
-      print >>outF,options.outputDelim.join(outL)
+    sdfOut=None
       
+  if len(args):
+    queryFilename=args[0]
+    try:
+      tmpF = file(queryFilename,'r')
+    except IOError:
+      logger.error('could not open query file %s'%queryFilename)
+      sys.exit(1)
+
+    if options.molFormat=='smiles':
+      func=GetMolsFromSmilesFile
+    elif options.molFormat=='sdf':
+      func=GetMolsFromSDFile
+
+    if not options.silent:
+      msg='Reading query molecules'
+      if fpBuilder: msg+=' and generating fingerprints'
+      logger.info(msg)
+    probes=[]
+    i=0
+    nms=[]
+    for nm,smi,mol in func(queryFilename,None,options.nameProp):
+      i+=1
+      nms.append(nm)
+      if not mol:
+        logger.error('query molecule %d could not be built'%(i))
+        probes.append((None,None))
+        continue
+      if fpBuilder:
+        probes.append((mol,fpBuilder(mol)))
+      else:
+        probes.append((mol,None))
+      if not options.silent and not i%1000:
+        logger.info("  done %d"%i)
+  else:
+    queryFilename=None
+    probes=None
+    
+  conn=None
+  idName = options.molIdName
+  ids=None
+  if options.propQuery or options.smartsQuery:
+    molDbName = os.path.join(options.dbDir,options.molDbName)
+    conn = DbConnect(molDbName)
+    curs = conn.GetCursor()
+    if options.smartsQuery:
+      if not options.silent: logger.info('Doing substructure query')
+      if options.propQuery:
+        where='where %s'%options.propQuery
+      else:
+        where=''
+      curs.execute('select count(*) from molecules %(where)s'%locals())
+      nToDo = curs.fetchone()[0]
+      curs.execute('select %(idName)s,molpkl from molecules %(where)s'%locals())
+      row=curs.fetchone()
+      nDone=0
+      ids=[]
+      while row:
+        id,molpkl = row
+        m = Chem.Mol(str(molpkl))
+        matched=m.HasSubstructMatch(options.smartsQueryMol)
+        if options.negateQuery:
+          matched = not matched
+        if matched:
+          ids.append(id)
+        nDone+=1
+        if not options.silent and not nDone%500:
+          logger.info('  searched %d (of %d) molecules; %d hits so far'%(nDone,nToDo,len(ids)))
+        row=curs.fetchone()
+    elif options.propQuery:
+      if not options.silent: logger.info('Doing property query')
+      propQuery=options.propQuery.split(';')[0]
+      curs.execute('select %(idName)s from molecules where %(propQuery)s'%locals())
+      ids = [str(x[0]) for x in curs.fetchall()]
+    if not options.silent: logger.info('Found %d molecules matching the query'%(len(ids)))
+
+  t1=time.time()
+  if probes:
+    if not options.silent: logger.info('Finding Neighbors')
+    conn = DbConnect(dbName)
+    curs = conn.GetCursor()
+    if ids:
+      ids = [(x,) for x in ids]
+      curs.execute('create temporary table _tmpTbl (%(idName)s varchar)'%locals())
+      curs.executemany('insert into _tmpTbl values (?)',ids)
+      join='join  _tmpTbl using (%(idName)s)'%locals()
+    else:
+      join=''
+
+    curs.execute('select %(idName)s,%(fpColName)s from %(fpTableName)s %(join)s'%locals())
+    topNLists = GetNeighborLists(probes,options.topN,curs,simMetric=simMetric,
+                                 fpDepickler=fpDepickler)
+
+    uniqIds=sets.Set()
+    nbrLists = {}
+    for i,nm in enumerate(nms):
+      topNLists[i].reverse()
+      scores=topNLists[i].GetPts()
+      nbrNames = topNLists[i].GetExtras()
+      nbrs = []
+      for j,nbrNm in enumerate(nbrNames):
+        if nbrNm is None:
+          break
+        else:
+          uniqIds.add(nbrNm)
+          nbrs.append((nbrNm,scores[j]))
+      nbrLists[(i,nm)] = nbrs
+    t2=time.time()
+    if not options.silent: logger.info('The search took %.1f seconds'%(t2-t1))
+    
+    if not options.silent: logger.info('Creating output')
+    ks = nbrLists.keys()
+    ks.sort()
+    if not options.transpose:
+      for i,nm in ks:
+        nbrs= nbrLists[(i,nm)]
+        nbrTxt=options.outputDelim.join([nm]+['%s%s%.3f'%(x,options.outputDelim,y) for x,y in nbrs])
+        print >>outF,nbrTxt
+    else:
+      labels = ['%s%sSimilarity'%(x[1],options.outputDelim) for x in ks]
+      print >>outF,options.outputDelim.join(labels)
+      for i in range(options.topN):
+        outL = []
+        for idx,nm in ks:
+          nbr = nbrLists[(idx,nm)][i]
+          outL.append(nbr[0])
+          outL.append('%.3f'%nbr[1])
+        print >>outF,options.outputDelim.join(outL)
+    ids = list(uniqIds)
+  else:
+    if not options.silent: logger.info('Creating output')
+    print >>outF,'\n'.join(ids)
+  if sdfOut and ids:
+    conn = DbConnect(molDbName)
+    cns = conn.GetColumnNames('molecules')
+    curs = conn.GetCursor()
+    ids = [(x,) for x in ids]
+    curs.execute('create temporary table _tmpTbl (%(idName)s varchar)'%locals())
+    curs.executemany('insert into _tmpTbl values (?)',ids)
+    curs.execute('select * from molecules join _tmpTbl using (%(idName)s)'%locals())
+    row=curs.fetchone()
+    while row:
+      m = Chem.Mol(str(row[-1]))
+      m.SetProp('_Name',str(row[0]))
+      print >>sdfOut,Chem.MolToMolBlock(m)
+      for i in range(1,len(cns)-2):
+        pn = cns[i]
+        pv = str(row[i])
+        print >>sdfOut,'> <%s>\n%s\n'%(pn,pv)
+      print >>sdfOut,'$$$$'  
+      row=curs.fetchone()
   if not options.silent: logger.info('Done!')

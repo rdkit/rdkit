@@ -31,11 +31,27 @@
 #
 # Created by Greg Landrum, July 2007
 
-_version = "0.3.0"
+_version = "0.4.0"
 _usage="""
  CreateDb [optional arguments] <filename>
 
   NOTES:
+
+    - the property names for the database are the union of those for
+      all molecules.
+
+    - missing property values will be set to 'N/A', though this can be
+      changed with the --missingPropertyVal argument.
+    
+    - The property names may be altered on loading the database.  Any
+      non-alphanumeric character in a property name will be replaced
+      with '_'. e.g. "Gold.Goldscore.Constraint.Score" becomes
+      "Gold_Goldscore_Constraint_Score".  This is important to know
+      when querying.
+
+    - Property names are not case sensitive in the database; this may
+      cause some problems if they are case sensitive in the sd file.
+
       
 """
 import RDConfig
@@ -93,6 +109,8 @@ parser.add_option('--molFormat',default='smiles',choices=('smiles','sdf'),
 parser.add_option('--nameProp',default='_Name',
                   help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
 
+parser.add_option('--missingPropertyVal',default='N/A',
+                  help='value to insert in the database if a property value is missing. Default is %default.')
 
 if __name__=='__main__':
   options,args = parser.parse_args()
@@ -120,7 +138,7 @@ if __name__=='__main__':
   if not options.silent: logger.info('Reading molecules and constructing molecular database.')
   Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
                 errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
-                skipProps=options.skipProps,
+                skipProps=options.skipProps,defaultVal=options.missingPropertyVal,
                 silent=options.silent,nameProp=options.nameProp)
   if options.doPairs:
     from Chem.AtomPairs import Pairs,Torsions

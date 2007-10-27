@@ -39,11 +39,10 @@ _usage="""
 
   NOTES:
 
-    - the property names for the database are taken from the first
-      molecule
+    - the property names for the database are the union of those for
+      all molecules
 
-    - missing property values in subsequent molecules will be set to
-      'N/A'
+    - missing property values will be set to 'N/A'
     
     - The property names may be altered on loading the database.  Any
       non-alphanumeric character in a property name will be replaced
