@@ -289,7 +289,7 @@ namespace RDKit {
         d_line++;
         tempStr = getLine(dp_inStream);
         
-        if (tempStr.find("$$$$") == 0) {
+        if (tempStr.substr(0,4)=="$$$$") {
           unsigned int posHold=dp_inStream->tellg();
           this->checkForEnd();
           if (!this->df_end){

@@ -6,6 +6,9 @@
 //
 
 #include <iostream>
+#include <RDGeneral/RDLog.h>
+#include <boost/log/functions.hpp>
+
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 
@@ -15,6 +18,9 @@ typedef ROMol Mol;
 int
 main(int argc, char *argv[])
 {
+  RDLog::InitLogs();
+  boost::logging::enable_logs("rdApp.debug");
+
   int i=0;
   Mol *mol;
 	
@@ -92,10 +98,9 @@ main(int argc, char *argv[])
 	  } else {
 	    std::cout << "In SMILES: " << smi << std::endl;
 	    mol = SmilesToMol(smi,debugParse);
-	  }
-	  if(mol){
-	    mol->debugMol(cout);
-	    cout << endl;
+	    std::cout << "Out SMILES: " << std::endl;
+	    smi = MolToSmiles(*mol,true);
+	    std::cout << "  " << smi << std::endl;
 	  }
 	}
   }	
