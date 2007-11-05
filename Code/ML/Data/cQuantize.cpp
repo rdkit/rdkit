@@ -1,6 +1,11 @@
+// $Id$
+//
+// Copyright 2003-2007 Rational Discovery LLC and Greg Landrum
+//  All Rights Reserved
+//
 #include "cQuantize.h"
 #include <Numeric/arrayobject.h>
-#include <ML/InfoTheory/cEntropy.h>
+#include <ML/InfoTheory/InfoGainFuncs.h>
 #ifdef WIN32
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  ul_reason_for_call, 
@@ -136,7 +141,7 @@ RecurseHelper(double *vals,int nVals,int *cuts,int nCuts,int which,
   tCuts = (int *)calloc(nCuts,sizeof(int));
   GenVarTable(vals,nVals,cuts,nCuts,starts,results,nPossibleRes,varTable);
   while(cuts[which] <= highestCutHere){
-    gainHere = InfoGain(varTable,nCuts+1,nPossibleRes);
+    gainHere = RDInfoTheory::InfoEntropyGain(varTable,nCuts+1,nPossibleRes);
     if(gainHere > maxGain){
       maxGain = gainHere;
       memcpy(bestCuts,cuts,nCuts*sizeof(int));
