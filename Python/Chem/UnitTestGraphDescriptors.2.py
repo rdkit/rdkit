@@ -375,7 +375,7 @@ class TestCase(unittest.TestCase):
    """
    fName = 'PP_descrs_regress.csv'
    col = 33
-   self.__testDesc(fName,col,lambda x:Crippen.MolLogP(x,addHs=1))
+   self.__testDesc(fName,col,lambda x:Crippen.MolLogP(x,includeHs=1))
             
   def _testLogPLong2(self):
    """ test calculation of Lipinski params
@@ -383,7 +383,7 @@ class TestCase(unittest.TestCase):
    """
    fName = 'PP_descrs_regress.2.csv'
    col = 33
-   self.__testDesc(fName,col,lambda x:Crippen.MolLogP(x,addHs=1))
+   self.__testDesc(fName,col,lambda x:Crippen.MolLogP(x,includeHs=1))
 
   def _testMOELong(self):
    """ test calculation of MOE-type descriptors
