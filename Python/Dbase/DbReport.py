@@ -231,7 +231,7 @@ else:
     doc.build(elements,onFirstPage=reportTemplate.onPage,
               onLaterPages=reportTemplate.onPage)
     
-DbConnect.GetReportlabTable = GetReportlabTable
+  DbConnect.GetReportlabTable = GetReportlabTable
 
 if __name__=='__main__':
   import sys

@@ -1,3 +1,4 @@
+# -*- coding: latin-1 -*-
 #pdfdoc.py
 """ 
 PDFgen is a library to generate PDF files containing text and graphics.  It is the 
