@@ -97,6 +97,7 @@ namespace RDKit{
   void force_types(){
     Dict tD;
     bool fooBool = tD.fromany<bool>(boost::any(1));
+    fooBool = !fooBool;
     tD.toany<bool>(false);
 
     int fooInt = tD.fromany<int>(boost::any(1));
@@ -108,9 +109,11 @@ namespace RDKit{
     tD.toany<unsigned int>(1);
 
     double fooDouble = tD.fromany<double>(boost::any(1));
+    fooDouble += 1;
     tD.toany<double>(1.0);
 
     std::string fooString = tD.fromany<std::string>(boost::any(std::string("1")));
+    fooString = fooString+"a";
     tD.toany<std::string>(std::string("1"));
 
 
