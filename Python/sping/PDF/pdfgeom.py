@@ -1,3 +1,4 @@
+# -*- coding: latin-1 -*-
 # pdfgeom.py
 """
 This module includes any mathematical methods needed for PIDDLE.
