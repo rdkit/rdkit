@@ -33,7 +33,7 @@ namespace RDCatalog {
     //------------------------------------
     virtual ~Catalog(){
       if (dp_cParams) {
-	delete dp_cParams;
+        delete dp_cParams;
       }
     }
     
@@ -45,9 +45,9 @@ namespace RDCatalog {
     //! adds an entry to the catalog
     /*!
 
-       \param entry          the entry to be added
-       \param updateFPLength (optional) if this is true, our internal
-          fingerprint length will also be updated.
+      \param entry          the entry to be added
+      \param updateFPLength (optional) if this is true, our internal
+      fingerprint length will also be updated.
       
     */
     virtual unsigned int addEntry(entryType *entry, bool updateFPLength = true) = 0;
@@ -75,11 +75,11 @@ namespace RDCatalog {
       //if we already have a paramter object throw an exception
       PRECONDITION(!dp_cParams,"A parameter object already exists on the catalog" );
       /*
-	if (dp_cParams) {
-	// we already have parameter object on the catalog
-	// can't overwrite it
-	PRECONDITION(0, "A parameter object already exist on the catalog");
-	}*/
+        if (dp_cParams) {
+        // we already have parameter object on the catalog
+        // can't overwrite it
+        PRECONDITION(0, "A parameter object already exist on the catalog");
+        }*/
       dp_cParams = new paramType(*params);
     }
     
@@ -113,14 +113,14 @@ namespace RDCatalog {
     orders 5 through 8 may well contain information about orders 1-5,
     in order to facilitate some search optimizations.
 
-      - <i>Bit Ids</i> refer to the "interesting" bits.  
-        So, in the above example, Bit Id \c 0 will be the first entry
-	with order 5.
-      - <i>Indices</i> refer to the underlying structure of the catalog.
-        So, in the above example, the entry with index \c 0 will be
-	the first entry	with order 1.
+    - <i>Bit Ids</i> refer to the "interesting" bits.  
+    So, in the above example, Bit Id \c 0 will be the first entry
+    with order 5.
+    - <i>Indices</i> refer to the underlying structure of the catalog.
+    So, in the above example, the entry with index \c 0 will be
+    the first entry with order 1.
 
-   */
+  */
   template <class entryType, class paramType, class orderType> 
   class HierarchCatalog : public Catalog <entryType, paramType> {
     // the entries in the catalog can be traversed using the edges
@@ -135,10 +135,10 @@ namespace RDCatalog {
     
     //! the type of the graph itself:
     typedef boost::adjacency_list<boost::vecS,
-				  boost::vecS, // FIX: should be using setS for edges so that parallel edges are never added (page 225 BGL book)
-				  // but that seems result in compile errors
-				  boost::bidirectionalS,
-				  EntryProperty> CatalogGraph;
+					 boost::vecS, // FIX: should be using setS for edges so that parallel edges are never added (page 225 BGL book)
+      // but that seems result in compile errors
+      boost::bidirectionalS,
+	     EntryProperty> CatalogGraph;
     
     typedef boost::graph_traits<CatalogGraph> CAT_GRAPH_TRAITS;
     typedef typename CAT_GRAPH_TRAITS::vertex_iterator VER_ITER;
@@ -196,19 +196,19 @@ namespace RDCatalog {
       
       // write the entries in order:
       for(unsigned int i=0;i<getNumEntries();i++){
-    	this->getEntryWithIdx(i)->toStream(ss);
+        this->getEntryWithIdx(i)->toStream(ss);
       }
 
       // finally the adjacency list:
       for(unsigned int i=0;i<getNumEntries();i++){
-    	RDKit::INT_VECT children=this->getDownEntryList(i);
-    	tmpUInt = children.size();
-    	RDKit::streamWrite(ss,tmpUInt);
+        RDKit::INT_VECT children=this->getDownEntryList(i);
+        tmpUInt = children.size();
+        RDKit::streamWrite(ss,tmpUInt);
         for(RDKit::INT_VECT::const_iterator ivci=children.begin();
             ivci!=children.end();
             ivci++){
-    	   RDKit::streamWrite(ss,*ivci);
-	    }
+	  RDKit::streamWrite(ss,*ivci);
+	}
       }
     }
 
@@ -252,19 +252,19 @@ namespace RDCatalog {
 
       // now all of the entries:
       for(unsigned int i=0;i<numEntries;i++){
-    	entryType *entry = new entryType();
-    	entry->initFromStream(ss);
-    	this->addEntry(entry,false);
+        entryType *entry = new entryType();
+        entry->initFromStream(ss);
+        this->addEntry(entry,false);
       }
 
       // and, finally, the adjacency list:
       for(unsigned int i=0;i<numEntries;i++){
-    	unsigned int nNeighbors;
-    	RDKit::streamRead(ss,nNeighbors);
-    	for(unsigned int j=0;j<nNeighbors;j++){
-    	  RDKit::streamRead(ss,tmpInt);
-    	  this->addEdge(i,tmpInt);
-	    }
+        unsigned int nNeighbors;
+        RDKit::streamRead(ss,nNeighbors);
+        for(unsigned int j=0;j<nNeighbors;j++){
+          RDKit::streamRead(ss,tmpInt);
+          this->addEdge(i,tmpInt);
+	}
       }
     }
     
@@ -287,18 +287,18 @@ namespace RDCatalog {
     //! add a new entry to the catalog
     /*!
 
-       \param entry          the entry to be added
-       \param updateFPLength (optional) if this is true, our internal
-          fingerprint length will also be updated.
+      \param entry          the entry to be added
+      \param updateFPLength (optional) if this is true, our internal
+      fingerprint length will also be updated.
 
     */
     unsigned int addEntry(entryType *entry, bool updateFPLength = true){ 
       PRECONDITION(entry,"bad arguments");
       if (updateFPLength) {
-    	unsigned int fpl = this->getFPLength();
-    	entry->setBitId(fpl);
-    	fpl++;
-    	this->setFPLength(fpl);
+        unsigned int fpl = this->getFPLength();
+        entry->setBitId(fpl);
+        fpl++;
+        this->setFPLength(fpl);
       }
       unsigned int eid = boost::add_vertex(EntryProperty(entry), d_graph);
       orderType etype = entry->getOrder();
@@ -306,8 +306,8 @@ namespace RDCatalog {
       // theory, will create a new object when operator[] is called
       // for a new item
       if (d_orderMap.find(etype) == d_orderMap.end()) {
-    	RDKit::INT_VECT nets;
-    	d_orderMap[etype] = nets;
+        RDKit::INT_VECT nets;
+        d_orderMap[etype] = nets;
       }
       d_orderMap[etype].push_back(eid);
       return eid;
@@ -334,10 +334,10 @@ namespace RDCatalog {
       typename CAT_GRAPH_TRAITS::edge_descriptor edge;
       bool found;
       boost::tie(edge,found) = boost::edge(boost::vertex(id1,d_graph),
-					   boost::vertex(id2,d_graph),
-					   d_graph);
+                                           boost::vertex(id2,d_graph),
+                                           d_graph);
       if (!found) {
-    	boost::add_edge(id1, id2, d_graph);
+        boost::add_edge(id1, id2, d_graph);
       }
     }
 
@@ -359,11 +359,11 @@ namespace RDCatalog {
         pMap = boost::get(vertex_entry_t(), d_graph);
       const entryType *res=NULL;
       for(unsigned int i=idx;i<this->getNumEntries();i++){
-    	const entryType *e=pMap[i];
-    	if(e->getBitId()==idx){
-	     res=e;
-    	  break;
-    	}
+        const entryType *e=pMap[i];
+        if(e->getBitId()==idx){
+	  res=e;
+          break;
+        }
       }
       return res;
     }
@@ -376,11 +376,11 @@ namespace RDCatalog {
         pMap = boost::get(vertex_entry_t(), d_graph);
       int res=-1;
       for(unsigned int i=idx;i<this->getNumEntries();i++){
-    	const entryType *e=pMap[i];
-    	if(e->getBitId()==idx){
-    	  res=i;
-	     break;
-    	}
+        const entryType *e=pMap[i];
+        if(e->getBitId()==idx){
+          res=i;
+	  break;
+        }
       }
       return res;
     }
@@ -392,8 +392,8 @@ namespace RDCatalog {
       DOWN_ENT_ITER nbrIdx, endIdx;
       boost::tie(nbrIdx, endIdx) = boost::adjacent_vertices(idx, d_graph);
       while (nbrIdx != endIdx) {
-	res.push_back(*nbrIdx);
-	nbrIdx++;
+        res.push_back(*nbrIdx);
+        nbrIdx++;
       }
       //std::cout << res.size() << "\n";
       return res;
@@ -409,7 +409,7 @@ namespace RDCatalog {
     //! returns a list of the indices that have a particular order
     /*!
       \overload
-     */
+    */
     const RDKit::INT_VECT &getEntriesOfOrder(orderType ord) const {
       typename std::map<orderType, RDKit::INT_VECT>::const_iterator elem;
       elem = d_orderMap.find(ord);
@@ -447,11 +447,11 @@ namespace RDCatalog {
   //-----------------------------------------------------------------------------
   //! a linear Catalog (analogous to an std::vector)
   /*!
-     Here there is no particular hierarchy, simply a
-     collection of entries.
-   */
+    Here there is no particular hierarchy, simply a
+    collection of entries.
+  */
   template <class entryType, class orderType> 
-    class LinearCatalog : public Catalog <entryType, orderType> {
+  class LinearCatalog : public Catalog <entryType, orderType> {
     // here there is no particular hierarchy of entries
     // we simply model it as a vector of entries
     // FIX: for retrieval purposes a better model map be std::map

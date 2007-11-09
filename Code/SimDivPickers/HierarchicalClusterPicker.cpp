@@ -18,7 +18,7 @@ extern "C" void distdriver_(int *n,int *len,
 namespace RDPickers {
 
   RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(const double *distMat,
-                                                     unsigned int poolSize,
+							  unsigned int poolSize,
 							  unsigned int pickSize) {
     PRECONDITION(distMat, "Invalid Distance Matrix");
     PRECONDITION((poolSize >= pickSize),

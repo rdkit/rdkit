@@ -15,7 +15,7 @@
 
 namespace ChemicalFeatures {
 
-  // allows BitVects to be pickled
+  // support pickling:
   struct chemfeat_pickle_suite : python::pickle_suite
   {
     static python::tuple
@@ -26,13 +26,13 @@ namespace ChemicalFeatures {
   };
 
   
-  std::string featClassDoc="Class to represent a free chemical  feature.\n\
-    These chemical features are not derived from a molecule, though they can be matched \n\
-    to features from a molecule\n";
+  std::string featClassDoc="Class to represent a free chemical features.\n\
+    These chemical features are not associated with a molecule, though they can be matched \n\
+    to molecular featufres\n";
   struct freefeat_wrapper {
     static void wrap() {
       python::class_<FreeChemicalFeature>("FreeChemicalFeature", featClassDoc.c_str(),
-					  python::init<const std::string &>()) //<>("Default Constructor"))
+					  python::init<const std::string &>())
         .def(python::init<>("Default Constructor"))
         .def(python::init<std::string, std::string, const RDGeom::Point3D &>
              (python::args("family", "type", "loc"),
@@ -53,15 +53,9 @@ namespace ChemicalFeatures {
         .def("SetPos", &FreeChemicalFeature::setPos,
              "Set the feature position")
         .def("GetPos", &FreeChemicalFeature::getPos,
-             "Get the psotion for the feature")
+             "Get the position of the feature")
 	.def_pickle(chemfeat_pickle_suite())
         ;
-      //python::def("FreeChemicalFeature", ChemicalFeatures::makeFreeChemFeat,
-      //            (python::arg("family")="", python::arg("type")="",
-      //             python::arg("pos")=python::list()),
-      //            "This a kind of faking a constructor for FreeChemicalFeature");
-
-
     };
   }; 
 }

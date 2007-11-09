@@ -12,15 +12,15 @@
 
 namespace RDDataManip {
   
-  /*! \brief A generic metric matrix calculator (e.g simialrity matrix or
-   *         ditance matrix) 
+  /*! \brief A generic metric matrix calculator (e.g similarity matrix or
+   *         distance matrix) 
    *
-   *  This templated class needs some explanation\n
-   *    vectType is a container that can support [] operator \n
-   *    entryType is the type of entry that is returned by the [] operator\n
+   *  This templated class needs some explanation
+   *    vectType is a container that can support [] operator 
+   *    entryType is the type of entry that is returned by the [] operator
    *  Examples of the container include PySequenceHolder which is wrapper around 
-   *  a python sequence objects like lists and tuples. \n
-   *  Examples of the entryType include a sequence of double, floats, and Explicit Bit Vectors 
+   *  a python sequence objects like lists and tuples.
+   *  Examples of the entryType include a sequence of double, floats, and ExplicitBitVects 
    *
    */
   template <class vectType, class entryType> class MetricMatrixCalc {
@@ -38,7 +38,7 @@ namespace RDDataManip {
      *
      *  mFunc - pointer to the metric funtion
      */
-    void setMetricFunc(double (*mFunc)(const entryType &, const entryType &, int)) {
+    void setMetricFunc(double (*mFunc)(const entryType &, const entryType &, unsigned int)) {
       dp_metricFunc = mFunc;
     }
 
@@ -46,12 +46,12 @@ namespace RDDataManip {
      *
      * ARGUMENTS:
      *
-     *  descrips - vectType container with a entryType for each item\n
+     *  descrips - vectType container with a entryType for each item
      *  nItems - the number of item in the descripts.
      *           In several cases this argument is irrelvant since vectType probably supports
      *           a size() member function, But we would like this interface to take for example 
-     *           a double** as the and correctly parse the row and columns. \n
-     *  dim - the dimension of the 
+     *           a double** and correctly parse the row and columns.
+     *  dim - the dimension of the sequences
      *  distMat - pointer to an array to write the distance matrix to
      *            it is assumed that the right sized array has already be allocated.
      *
@@ -64,17 +64,14 @@ namespace RDDataManip {
      *  pointer to a 1D array of doubles. Only the lower triangle elements are
      *  included in the array
      */
-    void calcMetricMatrix(const vectType &descripts, int nItems, int dim,
+    void calcMetricMatrix(const vectType &descripts, unsigned int nItems, unsigned int dim,
                           double *distMat) {
-      int i, j, itab, id;
       CHECK_INVARIANT(distMat, "invalid pointer to a distance matix");
       
-      for (i = 1; i < nItems; i++) {
-        //itab = nItems*i - (i+1)*(i+2)/2;
-        itab = i*(i-1)/2;
-        for (j = 0; j < i; j++) {
-          id = itab + j;
-          distMat[id] = dp_metricFunc(descripts[i], descripts[j], dim);
+      for (unsigned int i = 1; i < nItems; i++) {
+        unsigned int itab = i*(i-1)/2;
+        for (unsigned int j = 0; j < i; j++) {
+          distMat[itab+j] = dp_metricFunc(descripts[i], descripts[j], dim);
         }
       }
     };
@@ -89,7 +86,7 @@ namespace RDDataManip {
      * we woul like this interface to support other containers lines double* 
      * in which case the 'dim' value is useful in cumputing the metric.
      */  
-    double (*dp_metricFunc)(const entryType &, const entryType &, int);
+    double (*dp_metricFunc)(const entryType &, const entryType &, unsigned int);
     
   };
 };

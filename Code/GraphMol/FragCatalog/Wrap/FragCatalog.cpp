@@ -112,7 +112,6 @@ namespace RDKit{
 	.def(python::init<const std::string &>())
 	.def("GetNumEntries", &FragCatalog::getNumEntries)
 	.def("GetFPLength", &FragCatalog::getFPLength)
-	//.def("GetBitDescription", &FragCatalog::getBitDescription)
 	.def("GetCatalogParams", (FragCatParams* (FragCatalog::*)())&FragCatalog::getCatalogParams,
 	     python::return_value_policy<python::reference_existing_object>())
 	.def("Serialize", &FragCatalog::Serialize)

@@ -32,10 +32,10 @@ int main() {
     }
   }
 
-  //double x = EuclideanDistance(desc2D[0], desc2D[1], m);
+  //double x = EuclideanDistanceMetric(desc2D[0], desc2D[1], m);
   double *dmat = new double[dlen];
   MetricMatrixCalc<double**, double*> mmCalc;
-  mmCalc.setMetricFunc(&EuclideanDistance<double *, double *>);
+  mmCalc.setMetricFunc(&EuclideanDistanceMetric<double *, double *>);
   mmCalc.calcMetricMatrix(desc2D, n, m, dmat);
 
   for (i = 0; i < dlen; i++) {

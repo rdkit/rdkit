@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2004 Rational Discovery LLC
+//  Copyright (C) 2003-2007 Greg Landrum and  Rational Discovery LLC
 //   All Rights Reserved
 //
 
@@ -11,11 +11,12 @@
 #include <iomanip>
 #include <fstream>
 #include <RDGeneral/FileParseException.h>
+#include <RDBoost/Exceptions.h>
 #include <algorithm>
 
 namespace RDInfoTheory {
   
-  void InfoBitRanker::setBiasList(RDKit::INT_VECT classList) {
+  void InfoBitRanker::setBiasList(RDKit::INT_VECT &classList) {
     RANGE_CHECK(0, classList.size(), d_classes);
     d_biasList = classList;
     //make sure we don't have any duplicates
@@ -29,33 +30,29 @@ namespace RDInfoTheory {
     }
   }
 
-  void InfoBitRanker::setMaskBits(RDKit::INT_VECT maskBits) {
+  void InfoBitRanker::setMaskBits(RDKit::INT_VECT &maskBits) {
     if (dp_maskBits) {
       delete dp_maskBits;
     }
     dp_maskBits = new ExplicitBitVect(d_dims);
-    // inally make sure all the bits are within range
-    RDKit::INT_VECT_CI bi;
-    for (bi = maskBits.begin(); bi != maskBits.end(); bi++) {
+    for (RDKit::INT_VECT_CI bi = maskBits.begin();
+	 bi != maskBits.end(); ++bi) {
       dp_maskBits->SetBit(*bi);
     }
   }
 
-  bool InfoBitRanker::BiasCheckBit(RDKit::USHORT *resMat) {
+  bool InfoBitRanker::BiasCheckBit(RDKit::USHORT *resMat) const {
+    PRECONDITION(resMat,"bad results pointer");
     if ((d_biasList.size() == 0) || (d_biasList.size() == d_classes)) {
-      //std::cerr << "WARNING: The class bias list is empty, but you are using the bias\n"
-      //        << "WARNING: entropy measure. The result will be the same as the \n"
-      //        << "WARNING: non bias case\n";
-
       //we will accept the bit 
       return true;
     }
     RDKit::DOUBLE_VECT fracs;
     fracs.reserve(d_classes);
 
-    // compute the fractions of items in each calss that hit the bit
+    // compute the fractions of items in each class that hit the bit
     // and record the maximum for the those classes not in the bias list
-    double MaxCor = 0.0;
+    double maxCor = 0.0;
     for (unsigned int i = 0; i < d_classes; i++) {
       if (d_clsCount[i] > 0) {
         fracs[i] = ((double)resMat[i])/d_clsCount[i];
@@ -64,17 +61,17 @@ namespace RDInfoTheory {
       }
       if (std::find(d_biasList.begin(), d_biasList.end(), i) == d_biasList.end()) {
         // if not in the biasList
-        if (fracs[i] > MaxCor) {
-          // if this is fraction is greater than the previously know maximum
-          MaxCor = fracs[i];
+        if (fracs[i] > maxCor) {
+          // if this is fraction is greater than the previously known maximum
+          maxCor = fracs[i];
         }
       }
     }
 
-    RDKit::INT_VECT_CI bci;
     bool bitOk = false;
-    for (bci = d_biasList.begin(); bci != d_biasList.end(); bci++) {
-      if (fracs[*bci] >= MaxCor) {
+    for (RDKit::INT_VECT_CI bci = d_biasList.begin(); bci !=
+	   d_biasList.end(); ++bci) {
+      if (fracs[*bci] >= maxCor) {
         bitOk = true;
         break;
       }
@@ -83,24 +80,22 @@ namespace RDInfoTheory {
   }
 
       
-  double InfoBitRanker::BiasChiSquareGain(RDKit::USHORT *resMat) {
+  double InfoBitRanker::BiasChiSquareGain(RDKit::USHORT *resMat) const {
+    PRECONDITION(resMat,"bad result pointer");
     bool bitOk = this->BiasCheckBit(resMat);
-    double info;
+    double info=0.0;
     if (bitOk) {
       info = ChiSquare(resMat, 2, d_classes);
-    } else {
-      info = 0.0;
     }
     return info;
   }
 
-  double InfoBitRanker::BiasInfoEntropyGain(RDKit::USHORT *resMat) {
+  double InfoBitRanker::BiasInfoEntropyGain(RDKit::USHORT *resMat) const {
+    PRECONDITION(resMat,"bad result pointer");
     bool bitOk = this->BiasCheckBit(resMat);
-    double info;
+    double info=0.0;
     if (bitOk) {
       info = InfoEntropyGain(resMat, 2, d_classes);
-    } else {
-      info = 0.0;
     }
     return info;
   }
@@ -113,7 +108,7 @@ namespace RDInfoTheory {
     d_clsCount[label] += 1;
     for (unsigned int i=0;i<bv.GetNumBits();i++){
       if( (*bv.dp_bits)[i] && (!dp_maskBits || dp_maskBits->GetBit(i)) ){
-        d_counts[label][(i)] += 1;
+        d_counts[label][i] += 1;
       }
     }
   }
@@ -126,14 +121,14 @@ namespace RDInfoTheory {
     d_clsCount[label] += 1;
     for (IntSet::const_iterator obi = bv.dp_bits->begin();
 	 obi != bv.dp_bits->end();
-	 obi++)  {
+	++obi)  {
       if(!dp_maskBits || dp_maskBits->GetBit(*obi)){
         d_counts[label][(*obi)] += 1;
       }
     }
   }
   
-  double *InfoBitRanker::getTopN(unsigned int num) {//, int ignoreNoClass) {
+  double *InfoBitRanker::getTopN(unsigned int num) {
     // this is a place holder to pass along to infogain function
     // the size of this container should nVals*d_classes, where nVals
     // is the number of values a variable can take.
@@ -141,7 +136,7 @@ namespace RDInfoTheory {
     // in addition the infogain function pretends that this is a 2D matrix
     // with the number of rows equal to nVals and num of columns equal to 
     // d_classes
-    CHECK_INVARIANT(num <= d_dims, "Can't rank more bits than the bit vector length"); 
+    if(num>d_dims) throw ValueErrorException("attempt to rank more bits than present in the bit vectors");
     if(dp_maskBits)
       CHECK_INVARIANT(num <= dp_maskBits->GetNumOnBits(), "Can't rank more bits than the ensemble size"); 
     RDKit::USHORT *resMat = new RDKit::USHORT[2*d_classes];
@@ -248,7 +243,7 @@ namespace RDInfoTheory {
     return dp_topBits;
   }
 
-  void InfoBitRanker::writeTopBitsToStream(std::ostream *outStream) {
+  void InfoBitRanker::writeTopBitsToStream(std::ostream *outStream) const {
     (*outStream) << std::setw(12) << "Bit" << std::setw(12) << "InfoContent";
     for (unsigned int ic = 0; ic < d_classes; ic++) {
       (*outStream) << std::setw(10) << "class" << ic;
@@ -268,7 +263,7 @@ namespace RDInfoTheory {
     }
   }
   
-  void InfoBitRanker::writeTopBitsToFile(std::string fileName) {
+  void InfoBitRanker::writeTopBitsToFile(std::string fileName) const {
     std::ofstream tmpStream(fileName.c_str());
     if ((!tmpStream) || (tmpStream.bad()) ) {
       std::ostringstream errout;

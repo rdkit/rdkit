@@ -1,15 +1,9 @@
-// $Header: /windows/Marten/cvs-base/repository/RD/Code/ML/InfoTheory/Wrap/BitCorrMatGenerator.cpp,v 1.1 2003/09/12 17:29:55 sputta Exp $
+// $Id$
 //
-//  Copyright (C) 2003  Rational Discovery LLC
+//  Copyright (C) 2003-2007 Greg Landrum and  Rational Discovery LLC
 //   All Rights Reserved
 //
 
-#ifdef WIN32
-#pragma warning (disable: 4786) // warning: long & complicated stl warning
-#pragma warning (disable: 4305) // warning: truncation from 'const double' to 'const float'
-#pragma warning (disable: 4275) // warning: non dll-interface class used as...
-//#pragma warning (disable: 4541) // warning: dynamic cast used on polymorphic type
-#endif
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
@@ -27,8 +21,8 @@ namespace RDInfoTheory {
   
   PyObject *getCorrMatrix(BitCorrMatGenerator *cmGen) {
     double *dres = cmGen->getCorrMat();
-    int nb = cmGen->getCorrBitList().size();
-    int dim = nb*(nb-1)/2;
+    unsigned int nb = cmGen->getCorrBitList().size();
+    unsigned int dim = nb*(nb-1)/2;
     PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(1,&dim,PyArray_DOUBLE);
     memcpy(static_cast<void *>(res->data),
            static_cast<void *>(dres), dim*sizeof(double));
@@ -37,10 +31,10 @@ namespace RDInfoTheory {
 
   void setBitList(BitCorrMatGenerator *cmGen, python::object bitList) {
     PySequenceHolder<int> blist(bitList);
-    int i, nb = blist.size();
+    unsigned int nb = blist.size();
     RDKit::INT_VECT res;
     res.reserve(nb);
-    for (i = 0; i < nb; i++) {
+    for (unsigned int i = 0; i < nb; i++) {
       res.push_back(blist[i]);
     }
     cmGen->setBitIdList(res);
@@ -58,7 +52,7 @@ namespace RDInfoTheory {
       cmGen->collectVotes(sv);
     }
     else {
-      throw_value_error("CollectVote can only take a explicitBitVects or SparseBitvects");
+      throw_value_error("CollectVote can only take ExplicitBitVects or SparseBitVects");
     }
   }
 

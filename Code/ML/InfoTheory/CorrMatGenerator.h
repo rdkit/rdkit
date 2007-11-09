@@ -3,15 +3,15 @@
 //
 //  @@ All Rights Reserved  @@
 //
-#ifndef CORRMATGENERATOR_H
-#define CORRMATGENERATOR_H
+#ifndef _RD_CORRMATGENERATOR_H_
+#define _RD_CORRMATGENERATOR_H_
 
 #include <RDGeneral/types.h>
 #include <DataStructs/BitVects.h>
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDInfoTheory {
-  //FIX: won't worry about it now, but this class can be templates by the type of 
+  //FIX: won't worry about it now, but this class can be templated by the type of 
   // container for the bit list and type of descriptors (fingerprint vs. real valued)
   class BitCorrMatGenerator {
     /*! \brief A class to generate a correlation matrix for a bunch of fingerprints
@@ -48,10 +48,10 @@ namespace RDInfoTheory {
 
     /*! \brief Set the list bits that we are interested in correlating
      *
-     *  bitIdList is a list of bit ids that need to be correlated e.g. a list top ranked ensemble 
+     *  \param bitIdList is a list of bit ids that need to be correlated e.g. a list top ranked ensemble 
      *  of bits 
      */
-    void setBitIdList(RDKit::INT_VECT bitIdList) {
+    void setBitIdList(const RDKit::INT_VECT &bitIdList) {
       d_descs = bitIdList;
       int i, nd = d_descs.size();
       int nelem = nd*(nd-1)/2;
@@ -64,42 +64,23 @@ namespace RDInfoTheory {
       }
     };
 
-    /*! \brief get the number of examples we used so far to compute the correlation matrix
-     */
-    int getNumExamples() {
+    //! \brief get the number of examples we used so far to compute the correlation matrix
+    int getNumExamples() const {
       return d_nExamples;
     };
 
-    /*! \brief Get the list of bits ID that are used to generate the correlation matrix*/ 
-    RDKit::INT_VECT getCorrBitList() {
+    //! \brief Get the list of bits ID that are used to generate the correlation matrix
+    RDKit::INT_VECT getCorrBitList() const {
       return d_descs;
     };
 
-    /*! \brief Get the correllation matrix
-     */
+    //! \brief Gets a pointer to the correlation matrix
     double *getCorrMat() {
       return dp_corrMat;
     };
     
-    /*! \brief For each pair of on bits (bi, bj) in fp increase the correlation count for the pair by 1
-     */
-    /*
-    void collectVotes(const BitVect &fp) {
-      int i, j, itab, nd = d_descs.size();
-      int bi, bj;
-      for (i = 1; i < nd; i++) {
-        itab = i*(i-1)/2;
-        bi = d_descs[i];
-        for (j = 0; j < i; j++) {
-          bj = d_descs[j];
-          if (fp[bi] && fp[bj]) { //both the bits bj and bi are on in fp
-            dp_corrMat[itab + j] += 1;
-          }
-        }
-      }
-      d_nExamples++;
-    }; */
-
+    //! \brief For each pair of on bits (bi, bj) in fp increase the correlation count
+    //    for the pair by 1
     void collectVotes(const BitVect &fp) {
       unsigned int nd = d_descs.size();
       // use a temporary bit vector to first mask the fingerprint
@@ -111,7 +92,6 @@ namespace RDInfoTheory {
           ebv.SetBit(i);
         }
       }
-
       for (unsigned i = 1; i < nd; i++) {
         unsigned int itab = i*(i-1)/2;
         if (ebv[i]) {

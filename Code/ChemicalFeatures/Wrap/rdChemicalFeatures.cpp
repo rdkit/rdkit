@@ -18,8 +18,8 @@ BOOST_PYTHON_MODULE(rdChemicalFeatures)
 {
   python::scope().attr("__doc__") =
     "Module containing free chemical feature functionality\n\
-     These are feature that ar not derived from molecules. They are \n\
-     are typically derived from pharmacophores and site-map.\n";
+     These are feature that are not associated with molecules. They are \n\
+     are typically derived from pharmacophores and site-maps.\n";
 
   wrap_freefeat();
 }

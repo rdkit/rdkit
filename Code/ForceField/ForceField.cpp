@@ -49,7 +49,6 @@ namespace ForceFields {
     //std::cerr << " *** destroy force field " << std::endl;
     d_numPoints=0;
     d_positions.clear();
-    d_forces.clear();
     d_contribs.clear();
     if(dp_distMat) delete [] dp_distMat;
     dp_distMat=0;
@@ -127,8 +126,6 @@ namespace ForceFields {
   }
 
   void ForceField::initialize(){
-    //PRECONDITION(d_positions.size()==d_forces.size(),"bad position or force vector");
-
     // clean up if we have used this already:
     df_init=false;
     if(dp_distMat) delete [] dp_distMat;

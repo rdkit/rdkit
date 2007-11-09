@@ -23,7 +23,10 @@ namespace RDPickers {
                                    python::numeric::array &distMat,
                                    int poolSize, 
                                    int pickSize) {
-    // REVIEW: check pickSize < poolSize, otherwise throw_value_error()
+    if(pickSize>=poolSize){
+      throw ValueErrorException("pickSize must be less than poolSize");
+    }
+
     PyArrayObject *copy;
     // it's painful to have to copy the input matrix, but the
     // picker itself will step on the distance matrix, so use

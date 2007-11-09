@@ -10,10 +10,10 @@
 
 namespace RDPickers {
 
-  /*! \brief function to lookup distance from 1D lower traingle distance matrix
+  /*! \brief function to lookup distance from 1D lower triangular distance matrix
    *
    *
-   *    \param distMat - a pointer to a 1D lower traingle distance matrix \n
+   *    \param distMat - a pointer to a 1D lower triangular distance matrix \n
    *    \param i - row index \n
    *    \param j - column index \n
    *
@@ -23,7 +23,16 @@ namespace RDPickers {
    *    if (i > j) : distMat[i*(i-1)/2 + j]
    *    if (j < i) : distMat[j*(j-1)/2 + i]
    */
-  double getDistFromLTM(const double *distMat, unsigned int i, unsigned int j);
+  double getDistFromLTM(const double *distMat, unsigned int i, unsigned int j){
+    CHECK_INVARIANT(distMat, "");
+    if (i == j) {
+      return 0.0;
+    } else if (i > j) {
+      return distMat[i*(i-1)/2 + j];
+    } else {
+      return distMat[j*(j-1)/2 + i];
+    }
+  }
       
   /*! \brief Abstract base class to do perform item picking (typically molecules) using a 
    *         distance matrix

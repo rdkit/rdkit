@@ -87,7 +87,7 @@ namespace RDDataManip {
           desc += ncols;
         }
         MetricMatrixCalc<double**, double*> mmCalc;
-        mmCalc.setMetricFunc(&EuclideanDistance<double *, double *>);
+        mmCalc.setMetricFunc(&EuclideanDistanceMetric<double *, double *>);
         mmCalc.calcMetricMatrix(desc2D, nrows, ncols, dMat);
         
         delete [] desc2D;
@@ -104,7 +104,7 @@ namespace RDDataManip {
           desc += ncols;
         }
         MetricMatrixCalc<float**, float*> mmCalc;
-        mmCalc.setMetricFunc(&EuclideanDistance<float *, float*>);
+        mmCalc.setMetricFunc(&EuclideanDistanceMetric<float *, float*>);
         mmCalc.calcMetricMatrix(desc2D, nrows, ncols, dMat);
         delete [] desc2D;
         return PyArray_Return(distRes);
@@ -119,7 +119,7 @@ namespace RDDataManip {
           desc += ncols;
         }
         MetricMatrixCalc<int**, int*> mmCalc;
-        mmCalc.setMetricFunc(&EuclideanDistance<int *, int*>);
+        mmCalc.setMetricFunc(&EuclideanDistanceMetric<int *, int*>);
         mmCalc.calcMetricMatrix(desc2D, nrows, ncols, dMat);
         delete [] desc2D;
         return PyArray_Return(distRes);
@@ -158,7 +158,7 @@ namespace RDDataManip {
       }
       
       MetricMatrixCalc< std::vector<PySequenceHolder<double> >, PySequenceHolder<double> > mmCalc;
-      mmCalc.setMetricFunc(&EuclideanDistance< PySequenceHolder<double>, PySequenceHolder<double> >);
+      mmCalc.setMetricFunc(&EuclideanDistanceMetric< PySequenceHolder<double>, PySequenceHolder<double> >);
       mmCalc.calcMetricMatrix(dData, nrows, ncols, dMat);
     }
     return PyArray_Return(distRes);
@@ -185,13 +185,13 @@ namespace RDDataManip {
     if (ebvWorks.check()) {
       PySequenceHolder<ExplicitBitVect> dData(bitVectList);
       MetricMatrixCalc<PySequenceHolder<ExplicitBitVect>, ExplicitBitVect> mmCalc;
-      mmCalc.setMetricFunc(&TanimotoDistance<ExplicitBitVect, ExplicitBitVect>);
+      mmCalc.setMetricFunc(&TanimotoDistanceMetric<ExplicitBitVect, ExplicitBitVect>);
       mmCalc.calcMetricMatrix(dData, nrows, 0, sMat);
     }
     else if (sbvWorks.check()) {
       PySequenceHolder<SparseBitVect> dData(bitVectList);
       MetricMatrixCalc<PySequenceHolder<SparseBitVect>, SparseBitVect> mmCalc;
-      mmCalc.setMetricFunc(&TanimotoDistance<SparseBitVect, SparseBitVect>);
+      mmCalc.setMetricFunc(&TanimotoDistanceMetric<SparseBitVect, SparseBitVect>);
       mmCalc.calcMetricMatrix(dData, nrows, 0, sMat);
     }
     return PyArray_Return(simRes);
@@ -218,13 +218,13 @@ namespace RDDataManip {
     if (ebvWorks.check()) {
       PySequenceHolder<ExplicitBitVect> dData(bitVectList);
       MetricMatrixCalc<PySequenceHolder<ExplicitBitVect>, ExplicitBitVect> mmCalc;
-      mmCalc.setMetricFunc(&TanimotoSimilarity<ExplicitBitVect, ExplicitBitVect>);
+      mmCalc.setMetricFunc(&TanimotoSimilarityMetric<ExplicitBitVect, ExplicitBitVect>);
       mmCalc.calcMetricMatrix(dData, nrows, 0, sMat);
     }
     else if (sbvWorks.check()) {
       PySequenceHolder<SparseBitVect> dData(bitVectList);
       MetricMatrixCalc<PySequenceHolder<SparseBitVect>, SparseBitVect> mmCalc;
-      mmCalc.setMetricFunc(&TanimotoSimilarity<SparseBitVect, SparseBitVect>);
+      mmCalc.setMetricFunc(&TanimotoSimilarityMetric<SparseBitVect, SparseBitVect>);
       mmCalc.calcMetricMatrix(dData, nrows, 0, sMat);
     }
     return PyArray_Return(simRes);
@@ -243,7 +243,7 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc)
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   
   std::string docString;
-  docString = "Compute the distance matrix from a descriptor matrix using Euclidean distance metric\n\n\
+  docString = "Compute the distance matrix from a descriptor matrix using the Euclidean distance metric\n\n\
   ARGUMENTS: \n\
 \n\
     descripMat - A python object of any one of the following types \n\
@@ -251,15 +251,14 @@ BOOST_PYTHON_MODULE(rdMetricMatrixCalc)
                        and m is the number of descriptors \n\
                    2. A list of Numeric Vectors (or 1D arrays), each entry in the list corresponds \n\
                        to descriptor vector for one item \n\
-                   3. A list (or tuple) of list (or tuple) of values, where the values can be extracted to \n\
+                   3. A list (or tuple) of lists (or tuples) of values, where the values can be extracted to \n\
                        double. \n\n\
   RETURNS: \n\
     A numeric one-dimensional array containing the lower triangle elements of the symmetric distance matrix\n\n";
-  
   python::def("GetEuclideanDistMat", RDDataManip::getEuclideanDistMat, 
               docString.c_str());
 
-  docString = "Compute the distance matrix from a list of BitVects \n\n\
+  docString = "Compute the distance matrix from a list of BitVects using the Tanimoto distance metric\n\n\
   ARGUMENTS: \n\
 \n\
     bitVectList - a list of bit vectors. Currently this works only for a list of explicit bit vectors, \n\

@@ -182,7 +182,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="libboost_log-vc71-mt-$(BOOSTVERSION).lib  odbc32.lib odbccp32.lib $(PYTHONVERS).lib BLAS.lib LAPACK.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\GraphMol\Wrap\Release/rdchem.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"

@@ -1,5 +1,6 @@
+// $Id$
 //
-//  Copyright (C) 2003  Rational Discovery LLC
+//  Copyright (C) 2003-2007 Greg Landrum and  Rational Discovery LLC
 //   All Rights Reserved
 //
 
@@ -28,7 +29,6 @@ namespace RDInfoTheory {
            static_cast<void *>(dres), dims[0]*dims[1]*sizeof(double));
     return (PyObject *) res;
   }
-  //BOOST_PYTHON_FUNCTION_OVERLOADS(getTopNbits_ol, getTopNbits, 2, 3)
 
   void AccumulateVotes(InfoBitRanker *ranker, python::object bitVect, int label) {
     python::extract<ExplicitBitVect> ebvWorks(bitVect);

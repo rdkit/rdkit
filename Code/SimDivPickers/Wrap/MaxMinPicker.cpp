@@ -25,7 +25,9 @@ namespace RDPickers {
                               python::numeric::array &distMat,
                               int poolSize, 
                               int pickSize) {
-    // REVIEW: check pickSize < poolSize, otherwise throw_value_error()
+    if(pickSize>=poolSize){
+      throw ValueErrorException("pickSize must be less than poolSize");
+    }
     PyArrayObject *copy;
     copy = (PyArrayObject *)PyArray_ContiguousFromObject(distMat.ptr(), 
 							 PyArray_DOUBLE, 1,1);

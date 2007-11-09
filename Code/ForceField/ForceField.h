@@ -14,7 +14,6 @@ namespace ForceFields {
   class ForceFieldContrib;
   typedef std::vector<int> INT_VECT;
   typedef boost::shared_ptr<ForceFieldContrib> ContribPtr;
-  //typedef ForceFieldContrib *ContribPtr;
   typedef std::vector<ContribPtr> ContribPtrVect;
   
   //-------------------------------------------------------
@@ -65,17 +64,16 @@ namespace ForceFields {
     \return the current energy
 
       <b>Note:</b>
-        This function is less efficient calcEnergy with postions passed in as double * ; 
+        This function is less efficient than calcEnergy with postions passed in as double *
         the positions need to be converted to double * here
     */
     double calcEnergy() const;
 
     // these next two aren't const because they may update our
-    // distance matrix and/or forces.
+    // distance matrix
 
     //! calculates and returns the energy of the position passed in
     /*!
-
       \param pos an array of doubles.  Should be \c 3*this->numPoints() long.
 
       \return the current energy
@@ -83,7 +81,6 @@ namespace ForceFields {
       <b>Side effects:</b>
         - Calling this resets the current distance matrix
 	- The individual contributions may further update the distance matrix
-
     */
     double calcEnergy(double *pos);
 
@@ -111,7 +108,6 @@ namespace ForceFields {
     
     //! minimizes the energy of the system by adjusting positions
     /*!
-
       \param maxIts    the maximum number of iterations to try
       \param forceTol  the convergence criterion for forces
       \param energyTol the convergence criterion for energies
@@ -120,7 +116,6 @@ namespace ForceFields {
               criteria were achieved:
         - 0: indicates success
 	- 1: the minimization did not converge in \c maxIts iterations.
-      
     */
     int minimize(int maxIts=200,double forceTol=1e-4,double energyTol=1e-6);
 
@@ -137,7 +132,6 @@ namespace ForceFields {
 
     //! returns the distance between two points
     /*!
-
       \param i point index
       \param j point index
       \param pos (optional) If this argument is provided, it will be used
@@ -149,13 +143,11 @@ namespace ForceFields {
       <b>Side effects:</b>
 	- if the distance between i and j has not previously been calculated,
 	  our internal distance matrix will be updated.
-
     */
     double distance(int i,int j,double *pos=0);
 
     //! returns the distance between two points
     /*!
-
       \param i point index
       \param j point index
       \param pos (optional) If this argument is provided, it will be used
@@ -166,7 +158,6 @@ namespace ForceFields {
 
       <b>Note:</b>
 	The internal distance matrix is not updated in this case
-
     */
     double distance(int i,int j,double *pos=0) const;
 
@@ -187,7 +178,6 @@ namespace ForceFields {
     int d_numPoints;           //!< the number of active points
     double *dp_distMat;        //!< our internal distance matrix
     RDGeom::PointPtrVect d_positions;  //!< pointers to the points we're using
-    RDGeom::PointPtrVect d_forces;     //!< OBSOLETE
     ContribPtrVect d_contribs; //!< contributions to the energy
     INT_VECT d_fixedPoints;
     unsigned int d_matSize;

@@ -31,10 +31,10 @@ typedef std::vector<USHORT_VECT> VECT_USHORT_VECT;
 
 /*! \brief Class used to rank bits based on a specified measure of infomation
  *
- * Basically a premitive mimic of combichem signal
- * The mode of operation 
- *  - create an instance of this calss
- *  - loop over the finger print in the dataset by calling AccumulateVotes function
+ * Basically a primitive mimic of the CombiChem "signal" functionality
+ * To use:
+ *  - create an instance of this class 
+ *  - loop over the fingerprints in the dataset by calling accumulateVotes method
  *  - call getTopN to get the top n ranked bits
  */
 namespace RDInfoTheory {
@@ -43,28 +43,26 @@ namespace RDInfoTheory {
     
     /*! \brief the type of measure for information
      * 
-     * Currently using only entropy 
-   */
+     */
     typedef enum {
       ENTROPY=1,
       BIASENTROPY=2,
       CHISQUARE=3,
-      BIASCHISQUARE=4} InfoType;
+      BIASCHISQUARE=4
+    } InfoType;
     
     /*! \brief Constructor 
      *
      * ARGUMENTS:
      *
      *   - nBits: the dimension of the bit vectors or the fingerprint length
-     *   - nClasses: the number of classes used int eh classification problem (e.g. active,
+     *   - nClasses: the number of classes used in the classification problem (e.g. active,
      *              moderately active, inactive etc.). It is assumed that the classes are 
      *              numbered from 0 to (nClasses - 1) 
      *   - infoType: the type of information metric
      */
-    InfoBitRanker(unsigned int nBits, unsigned int nClasses, InfoType infoType=InfoBitRanker::ENTROPY) {
-      d_dims = nBits;
-      d_classes = nClasses;
-      d_type = infoType;
+    InfoBitRanker(unsigned int nBits, unsigned int nClasses, InfoType infoType=InfoBitRanker::ENTROPY) :
+    d_dims(nBits), d_classes(nClasses), d_type(infoType) {
       d_counts.resize(0);
       for (unsigned int i = 0; i < nClasses; i++) {
         USHORT_VECT cCount;
@@ -80,8 +78,10 @@ namespace RDInfoTheory {
     }
     
     ~InfoBitRanker() {
-      delete [] dp_topBits;
-      if(dp_maskBits) delete dp_maskBits;
+      if(dp_topBits)
+	delete [] dp_topBits;
+      if(dp_maskBits)
+	delete dp_maskBits;
     }
 
     /*! \brief Accumulate the votes for all the bits turned on in a bit vector
@@ -98,23 +98,24 @@ namespace RDInfoTheory {
      *
      * This is actually the function where most of the work of ranking is happening
      * 
-     * ARGUMENTS:
-     *  
-     *  - num : the number of top ranked bits that are required
+     *  \param num the number of top ranked bits that are required
+     *
+     *  \return a pointer to an information array. The client should *not*
+     *          delete this
      */
-    double *getTopN(unsigned int num);//, int ignoreNoClass=-1);
+    double *getTopN(unsigned int num);
     
     /*! \brief return the number of labelled instances(examples) or fingerprints seen so far
      *
      */
-    unsigned int getNumInstances() {
+    unsigned int getNumInstances() const {
       return d_nInst;
     }
     
     /*! \brief return the number of classes 
      *
      */
-    unsigned int getNumClasses() {
+    unsigned int getNumClasses() const {
       return d_classes;
     }
 
@@ -128,7 +129,7 @@ namespace RDInfoTheory {
      * ARGUMENTS:
      *   classList - list of class ids that we want a bias towards
      */
-    void setBiasList(RDKit::INT_VECT classList);
+    void setBiasList(RDKit::INT_VECT &classList);
 
 
     /*! \brief Set the bits to be used as a mask
@@ -139,17 +140,17 @@ namespace RDInfoTheory {
      * ARGUMENTS:
      *   maskBits - the bits to be considered
      */
-    void setMaskBits(RDKit::INT_VECT maskBits);
+    void setMaskBits(RDKit::INT_VECT &maskBits);
 
     /*! \brief Write the top N bits to a stream
      *
      */
-    void writeTopBitsToStream(std::ostream *outStream);
+    void writeTopBitsToStream(std::ostream *outStream) const;
     
     /*! \brief Write the top bits to a file
      *
      */
-    void writeTopBitsToFile(std::string fileName);
+    void writeTopBitsToFile(std::string fileName) const;
 
   private:
     /*! \brief check if we want to compute the info content for a bit based on the bias list
@@ -164,7 +165,7 @@ namespace RDInfoTheory {
      *              a 2D structure is assumed with the first row containing number of items of each class 
      *              with the bit set and the second row to entires of each class with the bit turned off
      */
-    bool BiasCheckBit(RDKit::USHORT *resMat);
+    bool BiasCheckBit(RDKit::USHORT *resMat) const;
 
     /*! \brief Compute the biased info entropy gain based on the bias list
      *
@@ -177,7 +178,7 @@ namespace RDInfoTheory {
      *              a 2D structure is assumed with the first row containing number of items of each class 
      *              with the bit set and the second row to entires of each class with the bit turned off
      */
-    double BiasInfoEntropyGain(RDKit::USHORT *resMat);
+    double BiasInfoEntropyGain(RDKit::USHORT *resMat) const;
 
     /*! \brief Compute the biased chi qsure value based on the bias list
      *
@@ -190,7 +191,7 @@ namespace RDInfoTheory {
      *              a 2D structure is assumed with the first row containing number of items of each class 
      *              with the bit set and the second row to entires of each class with the bit turned off
      */
-    double BiasChiSquareGain(RDKit::USHORT *resMat);
+    double BiasChiSquareGain(RDKit::USHORT *resMat) const;
 
     unsigned int d_dims; // the number of bits in the fingerprints
     unsigned int d_classes; // the number of classes (active, inactive, moderately active etc.)
