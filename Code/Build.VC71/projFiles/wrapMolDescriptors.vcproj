@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="wrapMolDescriptors"
+	ProjectGUID="{C1528AB6-0541-4B33-A51C-DE775243E842}"
 	SccProjectName="wrapMolDescriptors"
 	SccLocalPath=".">
 	<Platforms>
@@ -26,7 +27,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				RuntimeTypeInfo="TRUE"
-				PrecompiledHeaderFile="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/wrapMolDescriptors.pch"
+				PrecompiledHeaderFile="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/wrapRDMolDescriptors.pch"
 				AssemblerListingLocation="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/"
 				ObjectFile="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/"
 				ProgramDataBaseFileName="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/"
@@ -40,15 +41,15 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
 				AdditionalDependencies="boost_python.lib; vflib.lib;libDatastructs.lib odbc32.lib odbccp32.lib $(PYTHONVERS).lib BLAS.lib LAPACK.lib boost_python.lib"
-				OutputFile="..\..\GraphMol\Descriptors\Wrap\DebugPython/rdMolDescriptors_d.dll"
+				OutputFile="..\..\GraphMol\Descriptors\Wrap\DebugPython/rdPartialCharges_d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="$(PYTHONHOME)\libs,$(RDBASE)\External\Lapack\win32,$(BOOSTHOME)/lib"
 				IgnoreDefaultLibraryNames="msvcprtdlib.lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/rdMolDescriptors_new_d.pdb"
+				ProgramDatabaseFile="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/rdPartialCharges_d.pdb"
 				SubSystem="2"
-				ImportLibrary="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/rdMolDescriptors_new_d.lib"
+				ImportLibrary="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/rdMolDescriptors_d.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -56,12 +57,12 @@
 				MkTypLibCompatible="TRUE"
 				SuppressStartupBanner="TRUE"
 				TargetEnvironment="1"
-				TypeLibraryName="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/wrapMolDescriptors.tlb"
+				TypeLibraryName="..\..\GraphMol\Descriptors\Wrap\wrapMolDescriptors_Win32_DebugPython/wrapRDMolDescriptors.tlb"
 				HeaderFileName=""/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy DebugPython\rdMolDescriptors_new_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdMolDescriptors_d.pyd"/>
+				CommandLine="copy DebugPython\rdMolDescriptors_d.dll &quot;$(RDBASE)&quot;\Python\Chem\rdMolDescriptors_d.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -97,7 +98,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				RuntimeTypeInfo="TRUE"
-				PrecompiledHeaderFile="..\..\GraphMol\Descriptors\Wrap\Debug/wrapMolDescriptors.pch"
+				PrecompiledHeaderFile="..\..\GraphMol\Descriptors\Wrap\Debug/wrapRDMolDescriptors.pch"
 				AssemblerListingLocation="..\..\GraphMol\Descriptors\Wrap\Debug/"
 				ObjectFile="..\..\GraphMol\Descriptors\Wrap\Debug/"
 				ProgramDataBaseFileName="..\..\GraphMol\Descriptors\Wrap\Debug/"
@@ -110,14 +111,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="libboost_log-vc71-mt-gd-$(BOOSTVERSION).lib "
+				AdditionalDependencies="libboost_log-vc71-mt-gd-$(BOOSTVERSION).lib  odbc32.lib odbccp32.lib $(PYTHONVERS).lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\GraphMol\Descriptors\Wrap\Debug/rdMolDescriptors.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="$(PYTHONHOME)\libs,$(RDBASE)\External\Lapack\win32,$(BOOSTHOME)/lib"
 				IgnoreDefaultLibraryNames="msvcprtdlib.lib"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="..\..\GraphMol\Descriptors\Wrap\Debug/rdMolDescriptors.pdb"
+				ProgramDatabaseFile="..\..\GraphMol\Descriptors\Wrap\Debug/rdPartialCharges.pdb"
 				SubSystem="2"
 				ImportLibrary="..\..\GraphMol\Descriptors\Wrap\Debug/rdMolDescriptors.lib"
 				TargetMachine="1"/>
@@ -127,12 +128,12 @@
 				MkTypLibCompatible="TRUE"
 				SuppressStartupBanner="TRUE"
 				TargetEnvironment="1"
-				TypeLibraryName="..\..\GraphMol\Descriptors\Wrap\Debug/wrapMolDescriptors.tlb"
+				TypeLibraryName="..\..\GraphMol\Descriptors\Wrap\Debug/wrapRDMolDescriptors.tlb"
 				HeaderFileName=""/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy ..\..\GraphMol\Descriptors\Wrap\Debug\rdMolDescriptors.dll &quot;$(RDBASE)&quot;\Python\Chem\rdMolDescriptors.pyd"/>
+				CommandLine="copy ..\..\GraphMol\Descriptors\Wrap\Debug\rdMolDescriptors.dll&quot;$(RDBASE)&quot;\Python\Chem\rdMolDescriptors.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -170,7 +171,7 @@
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
 				RuntimeTypeInfo="TRUE"
-				PrecompiledHeaderFile="..\..\GraphMol\Descriptors\Wrap\Release/wrapMolDescriptors.pch"
+				PrecompiledHeaderFile="..\..\GraphMol\Descriptors\Wrap\Release/wrapRDMolDescriptors.pch"
 				AssemblerListingLocation="..\..\GraphMol\Descriptors\Wrap\Release/"
 				ObjectFile="..\..\GraphMol\Descriptors\Wrap\Release/"
 				ProgramDataBaseFileName="..\..\GraphMol\Descriptors\Wrap\Release/"
@@ -182,13 +183,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="libboost_log-vc71-mt-$(BOOSTVERSION).lib "
+				AdditionalDependencies="libboost_log-vc71-mt-$(BOOSTVERSION).lib  odbc32.lib odbccp32.lib $(PYTHONVERS).lib BLAS.lib LAPACK.lib"
 				OutputFile="..\..\GraphMol\Descriptors\Wrap\Release/rdMolDescriptors.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="$(PYTHONHOME)\libs,$(RDBASE)\External\Lapack\win32,$(BOOSTHOME)/lib"
 				IgnoreDefaultLibraryNames="msvcprtdlib.lib"
-				ProgramDatabaseFile="..\..\GraphMol\Descriptors\Wrap\Release/rdMolDescriptors.pdb"
+				ProgramDatabaseFile="..\..\GraphMol\Descriptors\Wrap\Release/rdPartialCharges.pdb"
 				SubSystem="2"
 				ImportLibrary="..\..\GraphMol\Descriptors\Wrap\Release/rdMolDescriptors.lib"
 				TargetMachine="1"/>
@@ -198,12 +199,12 @@
 				MkTypLibCompatible="TRUE"
 				SuppressStartupBanner="TRUE"
 				TargetEnvironment="1"
-				TypeLibraryName="..\..\GraphMol\Descriptors\Wrap\Release/wrapMolDescriptors.tlb"
+				TypeLibraryName="..\..\GraphMol\Descriptors\Wrap\Release/wrapRDMolDescriptors.tlb"
 				HeaderFileName=""/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="copy dll"
-				CommandLine="copy        ..\..\GraphMol\Descriptors\Wrap\Release\rdMolDescriptors.dll      &quot;$(RDBASE)&quot;\Python\Chem\rdMolDescriptors.pyd"/>
+				CommandLine="copy        ..\..\GraphMol\Descriptors\Wrap\Release\rdMolDescriptors.dll     &quot;$(RDBASE)&quot;\Python\Chem\rdMolDescriptors.pyd"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -230,6 +231,9 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			<File
+				RelativePath="..\..\GraphMol\Descriptors\Wrap\rdMolDescriptors.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
