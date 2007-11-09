@@ -41,8 +41,6 @@ class TestCase(unittest.TestCase):
       clbl = labels[cl[0]]
       for id in cl:
         assert clbl == labels[id]
-
-
     hierarch = pkr.Pick(self.dMat, i, 2)
     assert tuple(hierarch) == (1,30)
 

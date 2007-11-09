@@ -22,7 +22,7 @@ namespace RDInfoTheory {
   PyObject *getCorrMatrix(BitCorrMatGenerator *cmGen) {
     double *dres = cmGen->getCorrMat();
     unsigned int nb = cmGen->getCorrBitList().size();
-    unsigned int dim = nb*(nb-1)/2;
+    int dim = nb*(nb-1)/2;
     PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(1,&dim,PyArray_DOUBLE);
     memcpy(static_cast<void *>(res->data),
            static_cast<void *>(dres), dim*sizeof(double));

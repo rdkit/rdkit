@@ -23,16 +23,7 @@ namespace RDPickers {
    *    if (i > j) : distMat[i*(i-1)/2 + j]
    *    if (j < i) : distMat[j*(j-1)/2 + i]
    */
-  double getDistFromLTM(const double *distMat, unsigned int i, unsigned int j){
-    CHECK_INVARIANT(distMat, "");
-    if (i == j) {
-      return 0.0;
-    } else if (i > j) {
-      return distMat[i*(i-1)/2 + j];
-    } else {
-      return distMat[j*(j-1)/2 + i];
-    }
-  }
+  double getDistFromLTM(const double *distMat, unsigned int i, unsigned int j);
       
   /*! \brief Abstract base class to do perform item picking (typically molecules) using a 
    *         distance matrix
@@ -48,6 +39,7 @@ namespace RDPickers {
      *
      */
     DistPicker(){};
+    virtual ~DistPicker() {};
     
     /*! \brief this is a virtual function specific to the type of algorihtm used
      *
