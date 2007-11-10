@@ -1,7 +1,6 @@
-Required pieces for the Rational Discovery software
+Required pieces for the RDKit software
 Last update: $Date$
-By: greg Landrum
-
+By: Greg Landrum
 
 A. Required Python and the like:
    1) Python 2.3 or later 
@@ -11,11 +10,14 @@ A. Required Python and the like:
       - pysqlite2 (http://www.initd.org/tracker/pysqlite/wiki/pysqlite)
    4) PIL: the python imaging library
       (http://www.pythonware.com/products/pil/index.htm)
-   5) ElementTree (http://www.effbot.org/zone/element-index.htm)
-   6) the egenix mx base package:
-      (http://www.egenix.com/files/python/eGenix-mx-Extensions.html)
-   7) [only required to use the GUI tools] PyQt3: 
-      (http://www.riverbankcomputing.co.uk/pyqt/)
+
+B. Optional Python:
+   1) PyQt: (http://www.riverbankcomputing.co.uk/pyqt/)
+      This is required to use the GUI tools.
+      Note that you need qt v3.x, not v4.x.
+   2) The egenix mx base package:
+      http://www.egenix.com/files/python/eGenix-mx-Extensions.html
+      also required for the GUI tools
    
 B. Other required stuff
    1) The boost libraries v1.33 or later (tested with 1.33 and 1.34)
@@ -30,14 +32,15 @@ C. Optional, but useful things to have on windows:
    2) MS-Excel 
    3) cygwin
 
-
 D. Required environment variables:
    - RDBASE pointing to the root of the distribution
    - BOOSTBASE (for example boost-1_33)
+   - PYTHONPATH: should include $RDBASE/Python
    - On Linux:
      - PYTHON_ROOT (for example /usr or /usr/local)
      - PYTHON_VERSION (for example 2.5)
      - RDOPTFLAGS (for example -O3) 
+     - RDF77LIB (for example "-g2c") 
 
 
 
