@@ -23,7 +23,7 @@ namespace RDInfoTheory {
     copy = (PyArrayObject *)PyArray_ContiguousFromObject(matObj, 
                                                          ((PyArrayObject *)matObj)->descr->type_num,
                                                          1,1);
-    double res;
+    double res=0.0;
     // we are expecting a 1 dimensional array
     long int ncols = (long int)((PyArrayObject *)matObj)->dimensions[0];
     CHECK_INVARIANT(ncols > 0, "");
@@ -54,7 +54,7 @@ namespace RDInfoTheory {
                                                          2,2);
     long int rows = (long int)((PyArrayObject *)matObj)->dimensions[0];
     long int cols = (long int)((PyArrayObject *)matObj)->dimensions[1];
-    double res;
+    double res=0.0;
     if (((PyArrayObject *)matObj)->descr->type_num == PyArray_DOUBLE) {
       double *data = (double *)copy->data;
       res = InfoEntropyGain(data, rows, cols);
@@ -84,7 +84,7 @@ namespace RDInfoTheory {
                                                          2,2);
     long int rows = (long int)((PyArrayObject *)matObj)->dimensions[0];
     long int cols = (long int)((PyArrayObject *)matObj)->dimensions[1];
-    double res;
+    double res=0.0;
     if (((PyArrayObject *)matObj)->descr->type_num == PyArray_DOUBLE) {
       double *data = (double *)copy->data;
       res = ChiSquare(data, rows, cols);

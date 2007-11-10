@@ -1,7 +1,7 @@
 // $Id$
 //
 //  Copyright (C) 2003-2007 Greg Landrum and  Rational Discovery LLC
-//   All Rights Reserved
+//   @All Rights Reserved@
 //
 
 #include "InfoBitRanker.h"
@@ -13,8 +13,21 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDBoost/Exceptions.h>
 #include <algorithm>
+#include <queue>
 
 namespace RDInfoTheory {
+  typedef std::pair<double, int> PAIR_D_I;
+  typedef std::vector<PAIR_D_I> VECT_PDI;
+
+  struct gtDIPair {
+    bool operator() ( const PAIR_D_I &pd1, const PAIR_D_I &pd2) const {
+      return pd1.first > pd2.first;
+    }
+  };
+
+  typedef std::priority_queue<PAIR_D_I, VECT_PDI, gtDIPair> PR_QUEUE;
+
+
   
   void InfoBitRanker::setBiasList(RDKit::INT_VECT &classList) {
     RANGE_CHECK(0, classList.size(), d_classes);

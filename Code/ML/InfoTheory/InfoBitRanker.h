@@ -1,32 +1,15 @@
 // $Id$
 //
-//  Copyright (C) 2003 Rational Discovery LLC
+//  Copyright (C) 2003-2007 Greg Landrum and Rational Discovery LLC
+//   @All Rights Reserved@
 //
 
-#ifndef INFORANKER_H
-#define INFORANKER_H
+#ifndef _RD_INFORANKER_H_
+#define _RD_INFORANKER_H_
 
 #include <RDGeneral/types.h>
-#include <queue>
 #include <DataStructs/BitVects.h>
 #include <iostream>
-
-/*! \brief Evaluate the info-content for 
- */
-
-typedef std::pair<double, int> PAIR_D_I;
-//typedef std::pair<float, int> PAIR_D_I;
-typedef std::vector<PAIR_D_I> VECT_PDI;
-
-struct gtDIPair {
-  bool operator() ( const PAIR_D_I &pd1, const PAIR_D_I &pd2) const {
-    return pd1.first > pd2.first;
-  }
-};
-
-typedef std::priority_queue<PAIR_D_I, VECT_PDI, gtDIPair> PR_QUEUE;
-typedef std::vector<RDKit::USHORT> USHORT_VECT;
-typedef std::vector<USHORT_VECT> VECT_USHORT_VECT;
 
 
 /*! \brief Class used to rank bits based on a specified measure of infomation
@@ -36,8 +19,62 @@ typedef std::vector<USHORT_VECT> VECT_USHORT_VECT;
  *  - create an instance of this class 
  *  - loop over the fingerprints in the dataset by calling accumulateVotes method
  *  - call getTopN to get the top n ranked bits
+ *
+ * Sample usage and results from the python wrapper:
+ * Here's a small set of vectors:
+ * >>> for i,bv in enumerate(bvs): print bv.ToBitString(),acts[i]
+ * ... 
+ * 0001 0
+ * 0101 0
+ * 0010 1
+ * 1110 1
+ * 
+ * Default ranker, using infogain:
+ * >>> ranker = InfoBitRanker(4,2)  
+ * >>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])
+ * ... 
+ * >>> for bit,gain,n0,n1 in ranker.GetTopN(3): print int(bit),'%.3f'%gain,int(n0),int(n1)
+ * ... 
+ * 3 1.000 2 0
+ * 2 1.000 0 2
+ * 0 0.311 0 1
+ * 
+ * Using the biased infogain:
+ * >>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.BIASENTROPY)
+ * >>> ranker.SetBiasList((1,))
+ * >>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])
+ * ... 
+ * >>> for bit,gain,n0,n1 in ranker.GetTopN(3): print int(bit),'%.3f'%gain,int(n0),int(n1)
+ * ... 
+ * 2 1.000 0 2
+ * 0 0.311 0 1
+ * 1 0.000 1 1
+ * 
+ * A chi squared ranker is also available:
+ * >>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.CHISQUARE)
+ * >>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])
+ * ... 
+ * >>> for bit,gain,n0,n1 in ranker.GetTopN(3): print int(bit),'%.3f'%gain,int(n0),int(n1)
+ * ... 
+ * 3 4.000 2 0
+ * 2 4.000 0 2
+ * 0 1.333 0 1
+ * 
+ * As is a biased chi squared:
+ * >>> ranker = InfoBitRanker(4,2,InfoTheory.InfoType.BIASCHISQUARE)
+ * >>> ranker.SetBiasList((1,))
+ * >>> for i,bv in enumerate(bvs): ranker.AccumulateVotes(bv,acts[i])
+ * ... 
+ * >>> for bit,gain,n0,n1 in ranker.GetTopN(3): print int(bit),'%.3f'%gain,int(n0),int(n1)
+ * ... 
+ * 2 4.000 0 2
+ * 0 1.333 0 1
+ * 1 0.000 1 1
  */
 namespace RDInfoTheory {
+  typedef std::vector<RDKit::USHORT> USHORT_VECT;
+  typedef std::vector<USHORT_VECT> VECT_USHORT_VECT;
+
   class InfoBitRanker {
   public:
     
@@ -205,6 +242,5 @@ namespace RDInfoTheory {
     ExplicitBitVect *dp_maskBits; // allows only certain bits to be considered
     
   };
-  
 }
 #endif
