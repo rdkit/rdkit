@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="$(PYTHONHOME)\Include,$(RDBASE)\Code"
+				AdditionalIncludeDirectories="$(PYTHONHOME)\include,$(RDBASE)\Code,$(BOOSTHOME)/include/$(BOOSTBASE)"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CQUANTIZE_EXPORTS"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
