@@ -1,0 +1,13 @@
+project rdBase : requirements <library>/boost/python//boost_python <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdBase : RDBase.cpp /RDKit//RDBoost /RDKit//RDGeneral ;
+install pymod : rdBase : <location>$(RDBASE)/Python ;
+
+
+
+
+

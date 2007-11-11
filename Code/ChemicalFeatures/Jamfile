@@ -1,0 +1,11 @@
+project ChemicalFeatures : : ;
+
+
+lib ChemicalFeatures : FreeChemicalFeature.cpp : <link>static ;
+
+exe main : testChemicalFeatures.cpp ChemicalFeatures /RDKit//RDGeneral ;
+
+install regrs : main : <location>testExecs ;
+
+
+

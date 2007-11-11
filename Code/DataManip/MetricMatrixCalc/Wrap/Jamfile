@@ -1,0 +1,15 @@
+project wrapMetricMatrixCalc : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdMetricMatrixCalc : rdMetricMatrixCalc.cpp
+  /RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost ;
+
+install pymod : rdMetricMatrixCalc : <location>$(RDBASE)/Python/DataManip/Metric ;
+
+
+
+
+

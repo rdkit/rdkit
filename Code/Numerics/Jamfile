@@ -1,0 +1,9 @@
+project Numerics : : ;
+
+
+exe main : testMatrices.cpp /RDKit//RDGeneral ;
+
+install regrs : main : <location>testExecs ;
+
+
+

@@ -1,0 +1,8 @@
+project RDBoost : requirements <library>/boost/python//boost_python <library>/boost/thread//boost_thread : ;
+
+lib RDBoost : Wrap.cpp : <link>static ;
+
+
+
+
+

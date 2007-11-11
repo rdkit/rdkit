@@ -1,0 +1,16 @@
+project wrapDataStructs : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension cDataStructs : DataStructs.cpp DiscreteValueVect.cpp SparseIntVect.cpp 
+  wrap_SparseBV.cpp wrap_ExplicitBV.cpp wrap_BitOps.cpp wrap_Utils.cpp 
+  /RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost ;
+
+install pymod : cDataStructs : <location>$(RDBASE)/Python/DataStructs ;
+
+
+
+
+

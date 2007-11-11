@@ -1,0 +1,15 @@
+project wrapDataStructs : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdGeometry : Point.cpp UniformGrid3D.cpp rdGeometry.cpp
+  /RDKit//Geometry /RDKit//DataStructs /RDKit//RDBoost /RDKit//RDGeneral ;
+
+install pymod : rdGeometry : <location>$(RDBASE)/Python/Geometry ;
+
+
+
+
+

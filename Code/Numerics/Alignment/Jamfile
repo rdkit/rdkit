@@ -1,0 +1,10 @@
+project Numerics/Alignment : : ;
+
+lib Alignment : AlignPoints.cpp : <link>static ;
+
+exe main : testAlignment.cpp Alignment /RDKit//Geometry /RDKit//RDGeneral ;
+
+install regrs : main : <location>testExecs ;
+
+
+

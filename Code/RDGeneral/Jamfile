@@ -1,0 +1,14 @@
+project RDGeneral : : ;
+
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+lib RDGeneral : Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict ;
+exe testDict : testDict.cpp RDGeneral ;
+obj Dict : Dict.cpp : <optimization>off <cflags>-g ;
+
+install testExecs : testDict ;
+install lib : RDGeneral :  <location>$(RDBASE)/bin ;
+
+
+
