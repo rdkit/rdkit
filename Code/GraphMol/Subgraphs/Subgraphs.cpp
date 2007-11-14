@@ -14,8 +14,8 @@
 #include <iostream>
 #include <algorithm>
 
+namespace RDKit {
 namespace Subgraphs {
-  using namespace RDKit;
   INT_INT_VECT_MAP getNbrsList(const ROMol &mol, bool useHs) {
     int nAtoms = mol.getNumAtoms();
 
@@ -32,53 +32,49 @@ namespace Subgraphs {
       // if are at a hydrogen and we are not interested in bonds connecting to them
       // move on
       if( atom->getAtomicNum()!=1 || useHs ){
-	ROMol::OEDGE_ITER bIt1,end;
-	ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
-	boost::tie(bIt1,end) = mol.getAtomBonds(atom);
-	while(bIt1!=end){
-	  Bond *bond1 = pMap[*bIt1];
-	  // if this bond connect to a hydrogen and we are not interested
-	  // in it ignore 
-	  if( bond1->getOtherAtom(atom)->getAtomicNum() != 1 || useHs ){
-	    int bid1 = bond1->getIdx();
-	    if (nbrs.find(bid1) == nbrs.end()) {
-	      INT_VECT nlst;
-	      nbrs[bid1] = nlst;
-	    }
-	    ROMol::OEDGE_ITER bIt2;
-	    bIt2 = mol.getAtomBonds(atom).first;
-	    while(bIt2 != end){
-	      Bond *bond2 = pMap[*bIt2];
-	      int bid2 = bond2->getIdx();
-	      if (bid1 != bid2 &&
-		  (bond2->getOtherAtom(atom)->getAtomicNum() != 1 || useHs ) ){
-		//if (nbrs.find(bid1) == nbrs.end()) {
-		//INT_VECT nlst;
-		//nbrs[bid1] = nlst;
-		//}
-		nbrs[bid1].push_back(bid2); //FIX: pathListType should probably be container of pointers ??
-	      }
-	      bIt2++;
-	    }
-	  }
-	  bIt1++;
-	}
+        ROMol::OEDGE_ITER bIt1,end;
+        ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
+        boost::tie(bIt1,end) = mol.getAtomBonds(atom);
+        while(bIt1!=end){
+          Bond *bond1 = pMap[*bIt1];
+          // if this bond connect to a hydrogen and we are not interested
+          // in it ignore 
+          if( bond1->getOtherAtom(atom)->getAtomicNum() != 1 || useHs ){
+            int bid1 = bond1->getIdx();
+            if (nbrs.find(bid1) == nbrs.end()) {
+              INT_VECT nlst;
+              nbrs[bid1] = nlst;
+            }
+            ROMol::OEDGE_ITER bIt2;
+            bIt2 = mol.getAtomBonds(atom).first;
+            while(bIt2 != end){
+              Bond *bond2 = pMap[*bIt2];
+              int bid2 = bond2->getIdx();
+              if (bid1 != bid2 &&
+                  (bond2->getOtherAtom(atom)->getAtomicNum() != 1 || useHs ) ){
+                nbrs[bid1].push_back(bid2); //FIX: pathListType should probably be container of pointers ??
+              }
+              ++bIt2;
+            }
+          }
+          ++bIt1;
+        }
       }
     }
     return nbrs;
   }
 
-  // Everything passed here by reference			       
+  // Everything passed here by reference                               
   void recurseWalk(INT_INT_VECT_MAP &nbrs, // neighbors for each bond
-		   PATH_TYPE &spath, // the current path to be build upon
-		   INT_VECT &cands, // neighbors of current path
-		   unsigned int targetLen, // the maximum subgraph len we are interested in
-		   INT_VECT forbidden, // bonds that have been covered already
-		   // we don't want reference passing for forbidden, 
-		   // it gets altered through the processand we want  
-		   // fresh start everytime we buble back up to "FindAllSubGraphs"
-		   PATH_LIST &res // the final list of subgraphs 
-		   ) 
+                   PATH_TYPE &spath, // the current path to be build upon
+                   INT_VECT &cands, // neighbors of current path
+                   unsigned int targetLen, // the maximum subgraph len we are interested in
+                   INT_VECT forbidden, // bonds that have been covered already
+                   // we don't want reference passing for forbidden, 
+                   // it gets altered through the processand we want  
+                   // fresh start everytime we buble back up to "FindAllSubGraphs"
+                   PATH_LIST &res // the final list of subgraphs 
+                   ) 
   {
     // end case for recursion
     if (spath.size() == targetLen) {
@@ -98,44 +94,44 @@ namespace Subgraphs {
       cands.pop_back();
       //cands.erase(remove(cands.begin(), cands.end(), next), cands.end());
       if (std::find(forbidden.begin(), forbidden.end(), next) == forbidden.end()) {
-	// this bond should not appear in the later subgraphs
-	forbidden.push_back(next);
+        // this bond should not appear in the later subgraphs
+        forbidden.push_back(next);
       
-	// update a local stack before the next recursive call
-	INT_VECT tstack = cands;
-	for (INT_VECT::iterator bid=nbrs[next].begin(); bid != nbrs[next].end(); bid++) {
-	  if (std::find(forbidden.begin(), forbidden.end(), *bid) == forbidden.end()) {
-	    tstack.push_back(*bid);
-	  }
-	}
+        // update a local stack before the next recursive call
+        INT_VECT tstack = cands;
+        for (INT_VECT::iterator bid=nbrs[next].begin(); bid != nbrs[next].end(); bid++) {
+          if (std::find(forbidden.begin(), forbidden.end(), *bid) == forbidden.end()) {
+            tstack.push_back(*bid);
+          }
+        }
       
-	PATH_TYPE tpath = spath;
-	tpath.push_back(next);
+        PATH_TYPE tpath = spath;
+        tpath.push_back(next);
 
-	recurseWalk(nbrs,tpath, tstack, targetLen, forbidden, res);
+        recurseWalk(nbrs,tpath, tstack, targetLen, forbidden, res);
       }
     }
   } 
 
 
-  // Everything passed here by reference			       
+  // Everything passed here by reference                               
   void recurseWalkRange(INT_INT_VECT_MAP &nbrs, // neighbors for each bond
-			PATH_TYPE &spath, // the current path to be build upon
-			INT_VECT &cands, // neighbors of current path
-			unsigned int lowerLen, // lower limit of the subgraph lengths we are interested in
-			unsigned int upperLen, // the maximum subgraph len we are interested in
-			INT_VECT forbidden, // bonds that have been covered already
-			// we don't want reference passing for forbidden, 
-			// it gets altered through the processand we want  
-			// fresh start everytime we buble back up to "FindAllSubGraphs"
-			INT_PATH_LIST_MAP &res // the final list of subgraphs 
-			) 
+                        PATH_TYPE &spath, // the current path to be build upon
+                        INT_VECT &cands, // neighbors of current path
+                        unsigned int lowerLen, // lower limit of the subgraph lengths we are interested in
+                        unsigned int upperLen, // the maximum subgraph len we are interested in
+                        INT_VECT forbidden, // bonds that have been covered already
+                        // we don't want reference passing for forbidden, 
+                        // it gets altered through the processand we want  
+                        // fresh start everytime we buble back up to "FindAllSubGraphs"
+                        INT_PATH_LIST_MAP &res // the final list of subgraphs 
+                        ) 
   {
     unsigned int nsize = spath.size();
     if ((nsize >= lowerLen) && (nsize <= upperLen)) {
       if (res.find(nsize) == res.end()) {
-	PATH_LIST ordern;
-	res[nsize] = ordern;
+        PATH_LIST ordern;
+        res[nsize] = ordern;
       }
       res[nsize].push_back(spath);
     }
@@ -157,21 +153,21 @@ namespace Subgraphs {
       cands.pop_back();
       //cands.erase(remove(cands.begin(), cands.end(), next), cands.end());
       if (std::find(forbidden.begin(), forbidden.end(), next) == forbidden.end()) {
-	// this bond should not appear in the later subgraphs
-	forbidden.push_back(next);
+        // this bond should not appear in the later subgraphs
+        forbidden.push_back(next);
       
-	// update a local stack before the next recursive call
-	INT_VECT tstack = cands;
-	for (INT_VECT::iterator bid=nbrs[next].begin(); bid != nbrs[next].end(); bid++) {
-	  if (std::find(forbidden.begin(), forbidden.end(), *bid) == forbidden.end()) {
-	    tstack.push_back(*bid);
-	  }
-	}
+        // update a local stack before the next recursive call
+        INT_VECT tstack = cands;
+        for (INT_VECT::iterator bid=nbrs[next].begin(); bid != nbrs[next].end(); bid++) {
+          if (std::find(forbidden.begin(), forbidden.end(), *bid) == forbidden.end()) {
+            tstack.push_back(*bid);
+          }
+        }
       
-	PATH_TYPE tpath = spath;
-	tpath.push_back(next);
+        PATH_TYPE tpath = spath;
+        tpath.push_back(next);
 
-	recurseWalkRange(nbrs,tpath, tstack, lowerLen, upperLen, forbidden, res);
+        recurseWalkRange(nbrs,tpath, tstack, lowerLen, upperLen, forbidden, res);
       }
     }
   }
@@ -181,7 +177,7 @@ namespace Subgraphs {
     INT_VECT::iterator j;
     for(i=v.begin();i!=v.end();i++){
       for(j=i->begin();j!=i->end();j++){
-	std::cout << *j << " ";
+        std::cout << *j << " ";
       }
       std::cout << std::endl;
     }
@@ -201,34 +197,34 @@ namespace Subgraphs {
       unsigned int endIdx = (*path)[path->size()-1];
       unsigned int iTab = endIdx*dim;
       for(unsigned int otherIdx = 0; otherIdx < dim; otherIdx++){
-	if( adjMat[iTab+otherIdx] == 1){
-	  // test 1: make sure the new atom is not already
-	  //   in the path
-	  PATH_TYPE::const_iterator loc;
-	  loc = std::find(path->begin(),path->end(),otherIdx);
-	  // The two conditions for adding the atom are:
-	  //   1) it's not there already
-	  //   2) it's there, but ring closures are allowed and this
-	  //      will be the last addition to the path.
-	  if ( loc == path->end() ){
-	    // the easy case
-	    PATH_TYPE newPath=*path;
-	    newPath.push_back(otherIdx);
-	    res.push_back(newPath);
-	  } else if (allowRingClosures>2 &&
-		     path->size()==allowRingClosures-1) {
-	    // We *might* be adding the atom, but we need to make sure
-	    // that we're not just duplicating the second to last
-	    // element of the path:
-	    PATH_TYPE::const_reverse_iterator rIt=path->rbegin();
-	    rIt++;
-	    if( *rIt != otherIdx ){
-	      INT_VECT newPath=*path;
-	      newPath.push_back(otherIdx);
-	      res.push_back(newPath);
-	    }
-	  }
-	}
+        if( adjMat[iTab+otherIdx] == 1){
+          // test 1: make sure the new atom is not already
+          //   in the path
+          PATH_TYPE::const_iterator loc;
+          loc = std::find(path->begin(),path->end(),otherIdx);
+          // The two conditions for adding the atom are:
+          //   1) it's not there already
+          //   2) it's there, but ring closures are allowed and this
+          //      will be the last addition to the path.
+          if ( loc == path->end() ){
+            // the easy case
+            PATH_TYPE newPath=*path;
+            newPath.push_back(otherIdx);
+            res.push_back(newPath);
+          } else if (allowRingClosures>2 &&
+                     path->size()==allowRingClosures-1) {
+            // We *might* be adding the atom, but we need to make sure
+            // that we're not just duplicating the second to last
+            // element of the path:
+            PATH_TYPE::const_reverse_iterator rIt=path->rbegin();
+            rIt++;
+            if( *rIt != otherIdx ){
+              INT_VECT newPath=*path;
+              newPath.push_back(otherIdx);
+              res.push_back(newPath);
+            }
+          }
+        }
       }
     }
     return res;
@@ -255,8 +251,6 @@ namespace Subgraphs {
     for(unsigned int length=startLength;length<targetLen;length++){
       // extend each path:
       paths = extendPaths(adjMat,dim,paths,targetLen);
-      //std::cout << ">>>>>>> len: " << length+1 << std::endl;; 
-      //dumpVIV(paths);
     }
 
     PATH_LIST newPaths;
@@ -264,25 +258,21 @@ namespace Subgraphs {
     //  have any that are reverse duplicates:
     for(PATH_LIST::iterator path=paths.begin(); path != paths.end(); path++ ){
       if( std::find(newPaths.begin(),newPaths.end(),*path) == newPaths.end() ){
-	PATH_TYPE revPath(*path);
-	std::reverse(revPath.begin(),revPath.end());
-	if( std::find(newPaths.begin(),newPaths.end(),revPath) == newPaths.end() ){
-	  // this one is a keeper;
-	  newPaths.push_back(*path);
-	}
+        PATH_TYPE revPath(*path);
+        std::reverse(revPath.begin(),revPath.end());
+        if( std::find(newPaths.begin(),newPaths.end(),revPath) == newPaths.end() ){
+          // this one is a keeper;
+          newPaths.push_back(*path);
+        }
       }
     }
 
     return newPaths;
   }
-
-
 } // end of Subgraphs namespace
 
-namespace RDKit{
   PATH_LIST findAllSubgraphsOfLengthN (const ROMol &mol, unsigned int targetLen,
-				       bool useHs, bool verbose) 
-  {
+                                       bool useHs){
     /*********************************************
       FIX: Lots of issues here:
       - pathListType is defined as a container of "pathType", should it be a container
@@ -310,7 +300,7 @@ namespace RDKit{
       // don't come back to this bond in the later subgraphs
       int i = (*nbi).first;
       if (! (std::find(forbidden.begin(), forbidden.end(), i) == forbidden.end())) {
-	continue;
+        continue;
       }
       forbidden.push_back(i);
       
@@ -328,13 +318,12 @@ namespace RDKit{
       Subgraphs::recurseWalk(nbrs, spath, cands, targetLen, forbidden, res);
     }
     nbrs.clear();
-    return res; //FIX : need some verbose testing code here
+    return res;
   }
 
 
   INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
-						  unsigned int upperLen, bool useHs,
-						  bool verbose) {
+                                                  unsigned int upperLen, bool useHs){
     CHECK_INVARIANT(lowerLen <= upperLen, "");
 
     INT_VECT forbidden;
@@ -356,7 +345,7 @@ namespace RDKit{
       // don't come back to this bond in the later subgraphs
       int i = (*nbi).first;
       if (! (std::find(forbidden.begin(), forbidden.end(), i) == forbidden.end())) {
-	continue;
+        continue;
       }
       forbidden.push_back(i);
       
@@ -378,7 +367,7 @@ namespace RDKit{
   }
   
   PATH_LIST findUniqueSubgraphsOfLengthN (const ROMol &mol, unsigned int targetLen,
-					  bool useHs,bool useBO) 
+                                          bool useHs,bool useBO) 
   {
     // start by finding all subgraphs, then uniquify
     PATH_LIST allSubgraphs=findAllSubgraphsOfLengthN(mol,targetLen,useHs);
@@ -417,7 +406,7 @@ namespace RDKit{
   //
   PATH_LIST
   findAllPathsOfLengthN(const ROMol &mol,unsigned int targetLen,bool useBonds,
-			bool useHs) {
+                        bool useHs) {
     //
     //  We can't be clever here and just use the bond adjacency matrix
     //  to solve this problem when useBonds is true.  This is because
@@ -442,8 +431,8 @@ namespace RDKit{
       Atom *end=(*bondIt)->getEndAtom();
       // check for H, which we might be skipping
       if(useHs || (beg->getAtomicNum()!=1 && end->getAtomicNum()!=1)){
-	adjMat[beg->getIdx()*dim+end->getIdx()] = 1;
-	adjMat[end->getIdx()*dim+beg->getIdx()] = 1;
+        adjMat[beg->getIdx()*dim+end->getIdx()] = 1;
+        adjMat[end->getIdx()*dim+beg->getIdx()] = 1;
       }
     }
 
@@ -470,14 +459,14 @@ namespace RDKit{
     if(useBonds || targetLen>1){
       //bondPaths.reserve(atomPaths.size());
       for(vivI=atomPaths.begin();vivI!=atomPaths.end();vivI++){
-	const PATH_TYPE &resi=*vivI;
-	PATH_TYPE locV;
-	locV.reserve(targetLen);
-	for(unsigned int j=0;j<targetLen-1;j++){
-	  const Bond *bond=mol.getBondBetweenAtoms(resi[j],resi[j+1]);
-	  locV.push_back(bond->getIdx());
-	}
-	bondPaths.push_back(locV);
+        const PATH_TYPE &resi=*vivI;
+        PATH_TYPE locV;
+        locV.reserve(targetLen);
+        for(unsigned int j=0;j<targetLen-1;j++){
+          const Bond *bond=mol.getBondBetweenAtoms(resi[j],resi[j+1]);
+          locV.push_back(bond->getIdx());
+        }
+        bondPaths.push_back(locV);
       }
     }
 
@@ -499,22 +488,22 @@ namespace RDKit{
     if(useBonds || targetLen>1){
       PATH_LIST::const_iterator bondPath,atomPath;
       for(bondPath=bondPaths.begin(),atomPath=atomPaths.begin();
-	  bondPath!=bondPaths.end();
-	  bondPath++,atomPath++){
-	double invar=1.0;
-	for(ivI=bondPath->begin();ivI!=bondPath->end();ivI++){
-	  invar *= firstThousandPrimes[*ivI];
-	}
-	if(std::find(invars.begin(),invars.end(),invar)==invars.end()){
-	  invars.push_back(invar);
-	  // this is a new one:
-	  if(useBonds){
-	    res.push_back(*bondPath);
-	  }
-	  else{
-	    res.push_back(*atomPath);
-	  }
-	}
+          bondPath!=bondPaths.end();
+          bondPath++,atomPath++){
+        double invar=1.0;
+        for(ivI=bondPath->begin();ivI!=bondPath->end();ivI++){
+          invar *= firstThousandPrimes[*ivI];
+        }
+        if(std::find(invars.begin(),invars.end(),invar)==invars.end()){
+          invars.push_back(invar);
+          // this is a new one:
+          if(useBonds){
+            res.push_back(*bondPath);
+          }
+          else{
+            res.push_back(*atomPath);
+          }
+        }
       }
     } else {
       res = atomPaths;
@@ -522,4 +511,4 @@ namespace RDKit{
   
     return res;
   }
-} // end of namespace
+} // end of RDKit namespace

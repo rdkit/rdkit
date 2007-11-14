@@ -1,7 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006  Rational Discovery LLC
-//
+//  Copyright (C) 2003-2007  Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved  @@
 //
 #define NO_IMPORT_ARRAY
@@ -11,11 +10,9 @@
 #include <RDBoost/Wrap.h>
 #include "Numeric/arrayobject.h"
 
-
 #include <SimDivPickers/DistPicker.h>
 #include <SimDivPickers/MaxMinPicker.h>
 #include <iostream>
-
 
 namespace python = boost::python;
 namespace RDPickers {
@@ -44,8 +41,8 @@ namespace RDPickers {
                                    "A class for diversity picking of items using the MaxMin Algorithm\n")
         .def("Pick", MaxMinPicks,
              "Pick a subset of items from a pool of items using the MaxMin Algorithm\n"
-             "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), 598-604 \n"
-             "ARGUMENTS:\n\n"
+             "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), 598-604 \n\n"
+             "ARGUMENTS:\n"
              "  - distMat: 1D distance matrix (only the lower triangle elements)\n"
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n")

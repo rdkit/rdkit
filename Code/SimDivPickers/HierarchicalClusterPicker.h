@@ -62,7 +62,7 @@ namespace RDPickers {
      *              poolSize*(poolSize-1) \n
      *    \param pickSize - the number items to pick from pool (<= poolSize)
      */
-    RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize, unsigned int pickSize);
+    RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize, unsigned int pickSize) const ;
 
     /*! \brief This is the function that does the clustering of the items - used by the picker
      *
@@ -76,7 +76,7 @@ namespace RDPickers {
      *              poolSize*(poolSize-1) \n
      *   \param pickSize - the number clusters to divide the pool into (<= poolSize)
      */
-    RDKit::VECT_INT_VECT cluster(const double *distMat, unsigned int poolSize, unsigned int pickSize);
+    RDKit::VECT_INT_VECT cluster(const double *distMat, unsigned int poolSize, unsigned int pickSize) const;
 
   private:
     ClusterMethod d_method;

@@ -1,11 +1,11 @@
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2007 Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 
-#ifndef RDDEPICTOR_H
-#define RDDEPICTOR_H
+#ifndef _RDDEPICTOR_H_
+#define _RDDEPICTOR_H_
 
 #include <RDGeneral/types.h>
 #include <list>
@@ -17,18 +17,17 @@ namespace RDKit {
 }
 
 namespace RDDepict {
-  //class EmbeddedFrag;
 
   //! \brief This the function the user gets to compute coodinates
   /*! 
     \param mol          the molecule were are interested in
     \param coordMap     a map of int to Point2D, between atom IDs and their locations. 
-    This is the container the user need to fill if he/she wants to 
-    specify coordinates for a portion of the molecule, defualts to 0
+      This is the container the user need to fill if he/she wants to 
+      specify coordinates for a portion of the molecule, defualts to 0
     \param canonOrient  canonicalize the orientation so that the the long axes 
-    align with the x-axis etc.
+      align with the x-axis etc.
     \param clearConfs   clear all existing conformations on the molecule them adding the
-    2D coordinates or simple add to the list
+      2D coordinates or simple add to the list
     
                           
     \return ID of the conformation added to the molecule cotaining the 2D coordinates

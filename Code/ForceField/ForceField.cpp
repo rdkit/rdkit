@@ -15,6 +15,7 @@ namespace ForceFieldsHelper {
   double calcEnergy(double *pos){
     return _ffHolder->calcEnergy(pos);
   };
+
   void calcGrad(double *pos,double *grad){
     // the contribs to the gradient function use +=, so we need
     // to zero the grad out before moving on:
@@ -46,13 +47,11 @@ namespace ForceFieldsHelper {
 
 namespace ForceFields {
   ForceField::~ForceField(){
-    //std::cerr << " *** destroy force field " << std::endl;
     d_numPoints=0;
     d_positions.clear();
     d_contribs.clear();
     if(dp_distMat) delete [] dp_distMat;
     dp_distMat=0;
-    //std::cerr << " *** destroy force field DONE" << std::endl;
   }
 
   double ForceField::distance(int i,int j,double *pos) {
@@ -67,19 +66,15 @@ namespace ForceFields {
     unsigned int idx=i+j*(j+1)/2;
     CHECK_INVARIANT(idx<d_matSize,"Bad index");
     double &res=dp_distMat[idx];
-    //std::cerr << "        d: " << i << "," << j <<"=" << res << std::endl;
     if(res<0.0){
       // we need to calculate this distance:
       if(!pos){
 	res = 0.0;
-	// FIX: i don't think we need the overhead of checking the point dimensions with 
-	// the forcefield dimensions here
 	for (unsigned int idx = 0; idx < d_dimension; ++idx) {
 	  double tmp = (*(this->positions()[i]))[idx] - (*(this->positions()[j]))[idx];
 	  res += tmp*tmp;
 	}
 	res = sqrt(res);
-	
       } else {
 	res = 0.0;
 	for(unsigned int idx=0;idx<d_dimension;idx++){
@@ -88,8 +83,8 @@ namespace ForceFields {
 	}
 	res = sqrt(res);
       }
+      dp_distMat[idx]=res;
     }
-    //std::cerr << "        d: " << i << "," << j <<"=" << res << std::endl;
     return res;
   }
 
@@ -102,12 +97,9 @@ namespace ForceFields {
       j = i;
       i = tmp;
     }
-    double res; //=dp_distMat[i+j*(j+1)/2];
-    //if(res<0.0){
+    double res;
     if(!pos){
       res = 0.0;
-      // FIX: i don't think we need the overhead of checking the point dimensions with 
-      // the forcefield dimensions here
       for (unsigned int idx = 0; idx < d_dimension; ++idx) {
 	double tmp = (*(this->positions()[i]))[idx] - (*(this->positions()[j]))[idx];
 	res += tmp*tmp;
@@ -121,7 +113,6 @@ namespace ForceFields {
       }
       res = sqrt(res);
     }
-    //}
     return res;
   }
 
@@ -145,20 +136,15 @@ namespace ForceFields {
     int dim=this->d_numPoints*d_dimension;
     double finalForce;
     double *points=new double[dim];
-    // FIX: nothing is ever being done with these forces, and they cannot
-    // currently be updated.
-    double *forces=0;
-    //forces = new double[dim];
 
-    this->scatter(points,forces);
+    this->scatter(points);
     ForceFieldsHelper::_ffHolder=this;
     int res = BFGSOpt::minimize(dim,points,forceTol,numIters,finalForce,
 			    ForceFieldsHelper::calcEnergy,
 			    ForceFieldsHelper::calcGrad,energyTol,maxIts);
-    this->gather(points,forces);
+    this->gather(points);
 
     delete [] points;
-    //delete [] forces;
     return res;
   }
 
@@ -166,10 +152,9 @@ namespace ForceFields {
     PRECONDITION(df_init,"not initialized");
     double res = 0.0;
 
-    //this->initDistanceMatrix();
     int N = d_positions.size();
     double *pos = new double[d_dimension*N];
-    this->scatter(pos,0);
+    this->scatter(pos);
     // now loop over the contribs
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
 	contrib != d_contribs.end();contrib++){
@@ -184,27 +169,24 @@ namespace ForceFields {
     PRECONDITION(pos,"bad position vector");
     double res = 0.0;
 
-
     this->initDistanceMatrix();
 
     // now loop over the contribs
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
 	contrib != d_contribs.end();contrib++){
       double E=(*contrib)->getEnergy(pos);
-      //std::cout << "\t" << count++ << " " << E << std::endl;
       res += E;
     }
-    //std::cout << "  E: " << res << std::endl;
     return res;
   }
 
   void ForceField::calcGrad(double *grad) const {
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(grad,"bad gradient vector");
-    //this->initDistanceMatrix();
+
     int N = d_positions.size();
     double *pos = new double[d_dimension*N];
-    this->scatter(pos,0);
+    this->scatter(pos);
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
 	contrib != d_contribs.end();contrib++){
       (*contrib)->getGrad(pos,grad);
@@ -215,7 +197,6 @@ namespace ForceFields {
       CHECK_INVARIANT(*it<d_numPoints,"bad fixed point index");
       unsigned int idx=d_dimension*(*it);
       for (unsigned int di = 0; di < this->dimension(); ++di) {
-	//std::cerr << "&&&& set: " << *it << " -> " << idx << std::endl;
 	grad[idx+di] = 0.0;
       }
     }
@@ -231,24 +212,19 @@ namespace ForceFields {
       (*contrib)->getGrad(pos,grad);
     }
 
-
     for(INT_VECT::const_iterator it=d_fixedPoints.begin();
 	it!=d_fixedPoints.end();it++){
       CHECK_INVARIANT(*it<d_numPoints,"bad fixed point index");
       unsigned int idx=d_dimension*(*it);
-      //std::cerr << "&&&& set: " << *it << " -> " << idx << std::endl;
       for (unsigned int di = 0; di < this->dimension(); ++di) {
-	//std::cerr << "&&&& set: " << *it << " -> " << idx << std::endl;
 	grad[idx+di] = 0.0;
       }
     }
-
   }
 
-  void ForceField::scatter(double *pos,double *grad) const {
+  void ForceField::scatter(double *pos) const {
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(pos,"bad position vector");
-    //PRECONDITION(grad,"bad gradient vector");
 
     unsigned int tab=0;
     for(unsigned int i=0;i<d_positions.size();i++){
@@ -260,7 +236,7 @@ namespace ForceFields {
     POSTCONDITION(tab==3*d_positions.size(),"bad index");
   }
 
-  void ForceField::gather(double *pos,double *grad) {
+  void ForceField::gather(double *pos) {
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(pos,"bad position vector");
     

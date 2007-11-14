@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2006 Greg Landrum
+//  Copyright (C) 2006-22007 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //

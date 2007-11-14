@@ -50,6 +50,7 @@ namespace ForceFields {
   */
   class ForceField {
   public:
+    //! construct with a dimension
     ForceField(unsigned int dimension=3) : d_dimension(dimension), df_init(false), d_numPoints(-1), dp_distMat(0) {};
 
     ~ForceField();
@@ -84,29 +85,29 @@ namespace ForceFields {
     */
     double calcEnergy(double *pos);
 
-    //! calculates the gradient of the energy 
+    //! calculates the gradient of the energy at the current position
     /*!
 
       \param forces an array of doubles.  Should be \c 3*this->numPoints() long.
 
       <b>Note:</b>
-	This function is less efficient calcEnergy with postions passed in as double * ; 
+	This function is less efficient than calcGrad with positions passed in
         the positions need to be converted to double * here
      */
     void calcGrad(double *forces) const;
 
-    //! calculates the gradient of the energy at the current position
+    //! calculates the gradient of the energy at the provided position
     /*!
 
-      \param pos an array of doubles.  Should be \c 3*this->numPoints() long.
-      \param forces an array of doubles.  Should be \c 3*this->numPoints() long.
+      \param pos      an array of doubles.  Should be \c 3*this->numPoints() long.
+      \param forces   an array of doubles.  Should be \c 3*this->numPoints() long.
 
       <b>Side effects:</b>
 	- The individual contributions may modify the distance matrix
      */
     void calcGrad(double *pos,double *forces);
     
-    //! minimizes the energy of the system by adjusting positions
+    //! minimizes the energy of the system by following gradients
     /*!
       \param maxIts    the maximum number of iterations to try
       \param forceTol  the convergence criterion for forces
@@ -184,16 +185,14 @@ namespace ForceFields {
     //! scatter our positions into an array
     /*!
         \param pos     should be \c 3*this->numPoints() long;
-	\param forces  OBSOLETE
     */
-    void scatter(double *pos,double *forces) const;
+    void scatter(double *pos) const;
 
     //! update our positions from an array
     /*!
         \param pos     should be \c 3*this->numPoints() long;
-	\param forces  OBSOLETE
     */
-    void gather(double *pos,double *forces);
+    void gather(double *pos);
 
     //! initializes our internal distance matrix
     void initDistanceMatrix();

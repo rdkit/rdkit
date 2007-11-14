@@ -94,13 +94,11 @@ namespace Queries {
     copy( ) const {
       Query<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
 	new Query<MatchFuncArgType,DataFuncArgType,needsConversion>();
-      typename Query<MatchFuncArgType,DataFuncArgType,needsConversion>::CHILD_VECT_CI i;
-
-      // FIX: I'm not sure this is right
-      for(i=this->beginChildren();
-	  i!=this->endChildren();
-	  ++i){
-	res->addChild(*i);
+      typename Query<MatchFuncArgType,DataFuncArgType,needsConversion>::CHILD_VECT_CI iter;
+      for(iter=this->beginChildren();
+	  iter!=this->endChildren();
+	  ++iter){
+	res->addChild(*iter);
       }
       res->df_negate = this->df_negate;
       res->d_matchFunc = this->d_matchFunc;
@@ -108,7 +106,6 @@ namespace Queries {
       res->d_description = this->d_description;
       return res;
     };
-
 
   protected :
     std::string d_description;

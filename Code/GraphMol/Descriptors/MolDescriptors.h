@@ -25,8 +25,6 @@ namespace RDKit{
     */
     double CalcAMW(const ROMol &mol,bool onlyHeavy=false);
 
-
-
   } // end of namespace Descriptors
 } //end of namespace RDKit
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -22,7 +22,6 @@ namespace RDDepict {
   typedef boost::shared_array<double> DOUBLE_SMART_PTR;
   
   //! Class that contains the data for an atoms that has alredy been embedded
-  
   class EmbeddedAtom {
   public:
     typedef enum {
@@ -31,7 +30,7 @@ namespace RDDepict {
       RING} EAtomType;
 
     EmbeddedAtom() : aid(0), angle(-1.0), nbr1(-1), nbr2(-1), 
-		     CisTransNbr(-1), ccw(true), rotDir(0), d_density(-1.0){
+                     CisTransNbr(-1), ccw(true), rotDir(0), d_density(-1.0){
       neighs.clear();
     }
 
@@ -179,7 +178,7 @@ namespace RDDepict {
 
     */
     void expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> &efrags);
-		     
+                     
     //! Add a new non-ring atom to this object
     /*
       ARGUMENTS:
@@ -280,7 +279,7 @@ namespace RDDepict {
     EmbeddedAtom GetEmbeddedAtom(unsigned int aid) const {
       INT_EATOM_MAP_CI posi = d_eatoms.find(aid);
       if (posi == d_eatoms.end()) {
-	PRECONDITION(0, "Embedded atom does not contain embedded atom specified");
+        PRECONDITION(0, "Embedded atom does not contain embedded atom specified");
       }
       return posi->second;
     }
@@ -387,7 +386,7 @@ namespace RDDepict {
     
 
     RDGeom::Transform2D computeTwoAtomTrans(unsigned int aid1, unsigned int aid2, 
-					    const RDGeom::INT_POINT2D_MAP &nringCor);
+                                            const RDGeom::INT_POINT2D_MAP &nringCor);
         
     //! Merge a ring with already embedded atoms
     /*!
@@ -422,7 +421,7 @@ namespace RDDepict {
       \param embFrag   the fragment that will be reflected if necessary
       \param ctCase    which fragment if the cis/trans dbl bond
                         - 1 means embFrag is the cis/trans fragment
-			- 2 mean "this" is the cis/trans fragment
+                        - 2 mean "this" is the cis/trans fragment
       \param aid1      first atom that forms the plane (line) of reflection 
       \param aid2      seconf atom that forms the plane of reflection
     */

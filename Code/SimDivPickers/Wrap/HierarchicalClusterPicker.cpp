@@ -1,7 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006  Rational Discovery LLC
-//
+//  Copyright (C) 2003-2007  Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved  @@
 //
 #define NO_IMPORT_ARRAY
@@ -66,16 +65,16 @@ namespace RDPickers {
                                                 python::init<HierarchicalClusterPicker::ClusterMethod>
                                                 (python::args("clusterMethod")))
         .def("Pick", HierarchicalPicks,
-             "Pick a diverse subset of items from a pool of items using a Hierarchical Clustering\n"
+             "Pick a diverse subset of items from a pool of items using hierarchical clustering\n"
              "\n"
-             "ARGUMENTS: \n\n"
+             "ARGUMENTS: \n"
              "  - distMat: 1D distance matrix (only the lower triangle elements)\n"
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n")
         .def("Cluster", HierarchicalClusters,
              "Return a list of clusters of item from the pool using hierachical clustering\n"
              "\n"
-             "ARGUMENTS: \n\n"
+             "ARGUMENTS: \n"
              "  - distMat: 1D distance matrix (only the lower triangle elements)\n"
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n")

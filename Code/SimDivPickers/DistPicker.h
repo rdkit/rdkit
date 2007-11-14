@@ -53,9 +53,11 @@ namespace RDPickers {
      *              distance matrix above contains the right number of elements; i.e.
      *              poolSize*(poolSize-1)
      *    \param pickSize - the number items to pick from pool (<= poolSize)
+     * 
+     *    \return a vector with indices of the picked items.
      */
     virtual RDKit::INT_VECT pick(const double *distMat, unsigned int poolSize,
-				 unsigned int pickSize) = 0;
+                                 unsigned int pickSize) const = 0;
   };
 };
 

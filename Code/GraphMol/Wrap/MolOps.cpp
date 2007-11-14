@@ -417,7 +417,7 @@ namespace RDKit{
 \n";
       python::def("FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN,
                   (python::arg("mol"),python::arg("length"),
-                   python::arg("useHs")=false,python::arg("verbose")=false),
+                   python::arg("useHs")=false),
                   docString.c_str());
       // ------------------------------------------------------------------------
       docString="Finds unique subgraphs of a particular length in a molecule\n\
@@ -457,9 +457,6 @@ namespace RDKit{
       Otherwise atom indices are used.  *Note* this behavior is different\n\
       from that for subgraphs.\n\
       Defaults to 1.\n\
-\n\
-    - useHs: (optional) toggles verbosity in the search algorithm.\n\
-      Defaults to 0.\n\
 \n\
   RETURNS: a tuple of tuples with IDs for the bonds.\n\
 \n\
@@ -592,7 +589,7 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
-		   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
 
 

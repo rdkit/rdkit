@@ -26,7 +26,6 @@ namespace RDKit{
 	if(!onlyHeavy){
 	  res += (*atomIt)->getImplicitValence()*table->getAtomicWeight(1);
 	}
-
       }
       return res;
     }

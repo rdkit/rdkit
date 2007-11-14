@@ -28,7 +28,7 @@ namespace RDKit {
     d_aToFmap.clear();
     setBitId(-1); 
     INT_MAP_INT aIdxMap; // a map from atom id in omol to the new atoms id in mol
-    dp_mol = PathToSubmol(*omol, path, false, aIdxMap); // Using Subgraphs functionality
+    dp_mol = Subgraphs::PathToSubmol(*omol, path, false, aIdxMap); // Using Subgraphs functionality
     d_order = path.size();
     
     // using aIdxMap initialize the location (and their IDs) of the 
@@ -119,7 +119,7 @@ namespace RDKit {
 
     // FIX: if might be better if we just do the balaban first and then 
     // move onto eigen values
-    PathDiscrimTuple tdiscs, odiscs;// = MolOps::computeDiscriminators(*mol, true)
+    Subgraphs::PathDiscrimTuple tdiscs, odiscs;// = MolOps::computeDiscriminators(*mol, true)
     odiscs = other->getDiscrims();
     
     

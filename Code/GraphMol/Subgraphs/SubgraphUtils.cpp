@@ -31,16 +31,16 @@
 #endif
 
 namespace RDKit {
-
+  namespace Subgraphs {
 ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
-		    bool useQuery) {
+                    bool useQuery) {
   INT_MAP_INT aIdxMap;
   return PathToSubmol(mol, path, useQuery, aIdxMap);
 }
  
 ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path, 
-		    bool useQuery,
-		    INT_MAP_INT &atomIdxMap) {
+                    bool useQuery,
+                    INT_MAP_INT &atomIdxMap) {
   RWMol *subMol=new RWMol();
   PATH_TYPE::const_iterator pathIter;
   //std::map<int,int> atomIdxMap;
@@ -58,15 +58,15 @@ ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
       endIdx=bond->getEndAtomIdx();
       
       if(atomIdxMap.find(begIdx)==atomIdxMap.end()){
-	atom = new QueryAtom(*(mol.getAtomWithIdx(begIdx)));
-	newAtomIdx=subMol->addAtom(atom,false,true);
-	atomIdxMap[begIdx] = newAtomIdx;
+        atom = new QueryAtom(*(mol.getAtomWithIdx(begIdx)));
+        newAtomIdx=subMol->addAtom(atom,false,true);
+        atomIdxMap[begIdx] = newAtomIdx;
       }
       begIdx = atomIdxMap.find(begIdx)->second;
       if(atomIdxMap.find(endIdx)==atomIdxMap.end()){
-	atom = new QueryAtom(*(mol.getAtomWithIdx(endIdx)));
-	newAtomIdx=subMol->addAtom(atom,false,true);
-	atomIdxMap[endIdx] = newAtomIdx;
+        atom = new QueryAtom(*(mol.getAtomWithIdx(endIdx)));
+        newAtomIdx=subMol->addAtom(atom,false,true);
+        atomIdxMap[endIdx] = newAtomIdx;
       }
       endIdx = atomIdxMap.find(endIdx)->second;
       
@@ -87,15 +87,15 @@ ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
       endIdx=bond->getEndAtomIdx();
       
       if(atomIdxMap.find(begIdx)==atomIdxMap.end()){
-	atom = mol.getAtomWithIdx(begIdx)->copy();
-	newAtomIdx=subMol->addAtom(atom,false,true);
-	atomIdxMap[begIdx] = newAtomIdx;
+        atom = mol.getAtomWithIdx(begIdx)->copy();
+        newAtomIdx=subMol->addAtom(atom,false,true);
+        atomIdxMap[begIdx] = newAtomIdx;
       }
       begIdx = atomIdxMap.find(begIdx)->second;
       if(atomIdxMap.find(endIdx)==atomIdxMap.end()){
-	atom = mol.getAtomWithIdx(endIdx)->copy();
-	newAtomIdx=subMol->addAtom(atom,false,true);
-	atomIdxMap[endIdx] = newAtomIdx;
+        atom = mol.getAtomWithIdx(endIdx)->copy();
+        newAtomIdx=subMol->addAtom(atom,false,true);
+        atomIdxMap[endIdx] = newAtomIdx;
       }
       endIdx = atomIdxMap.find(endIdx)->second;
       
@@ -119,11 +119,11 @@ ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
     int i, j, bid;
     for (i = 0; i < natms; i++) {
       for (j = i+1; j < natms; j++) {
-	bnd = mol.getBondBetweenAtoms(atomIds[i], atomIds[j]);
-	if (bnd) {
-	  bid = bnd->getIdx();
-	  bids.push_back(bid);
-	}
+        bnd = mol.getBondBetweenAtoms(atomIds[i], atomIds[j]);
+        if (bnd) {
+          bid = bnd->getIdx();
+          bids.push_back(bid);
+        }
       }
     }
     return bids;
@@ -176,7 +176,7 @@ CalcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path, bool useBO) {
   //  atoms)
   //
   PATH_LIST uniquifyPaths (const ROMol &mol, const PATH_LIST &allPaths,
-			   bool useBO,double tol) {
+                           bool useBO,double tol) {
     PATH_LIST res;
     PATH_LIST::const_iterator path;
     std::vector<PathDiscrimTuple> discrimsSeen;
@@ -187,21 +187,21 @@ CalcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path, bool useBO) {
       found=0;
       
       for(discrimIt=discrimsSeen.begin();
-	  discrimIt!=discrimsSeen.end();
-	  discrimIt++){
-	if( feq(boost::tuples::get<0>(discrims),boost::tuples::get<0>(*discrimIt),tol) &&
-	    feq(boost::tuples::get<1>(discrims),boost::tuples::get<1>(*discrimIt),tol) &&
-	    feq(boost::tuples::get<2>(discrims),boost::tuples::get<2>(*discrimIt),tol)){
-	  found=1;
-	  break;
-	}
+          discrimIt!=discrimsSeen.end();
+          discrimIt++){
+        if( feq(boost::tuples::get<0>(discrims),boost::tuples::get<0>(*discrimIt),tol) &&
+            feq(boost::tuples::get<1>(discrims),boost::tuples::get<1>(*discrimIt),tol) &&
+            feq(boost::tuples::get<2>(discrims),boost::tuples::get<2>(*discrimIt),tol)){
+          found=1;
+          break;
+        }
       }
       if(!found){
-	discrimsSeen.push_back(discrims);
-	res.push_back(*path);
+        discrimsSeen.push_back(discrims);
+        res.push_back(*path);
       }
     }
     return res;
   }
-
-} // end of namespace
+  } // end of namespace Subgraphs
+} // end of namespace RDKit

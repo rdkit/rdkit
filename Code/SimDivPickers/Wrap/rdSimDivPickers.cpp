@@ -7,12 +7,9 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdpicker_array_API
 #include <RDBoost/Wrap.h>
 #include "Numeric/arrayobject.h"
-#include <RDGeneral/types.h>
-#include <SimDivPickers/DistPicker.h>
-#include <SimDivPickers/MaxMinPicker.h>
-#include <vector>
+
+
 namespace python = boost::python;
-using namespace RDPickers;
 
 void wrap_maxminpick();
 void wrap_HierarchCP();
@@ -26,7 +23,6 @@ BOOST_PYTHON_MODULE(rdSimDivPickers)
   import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
-
 
   wrap_maxminpick();
   wrap_HierarchCP();

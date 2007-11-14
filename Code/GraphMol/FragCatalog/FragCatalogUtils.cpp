@@ -139,7 +139,7 @@ namespace RDKit {
 	// create a list of bond IDs from these atom ID 
 	// these are the bond in mol that are part of portion that matches the 
 	// functional group
-	bondIds = bondListFromAtomList(mol, maids);
+	bondIds = Subgraphs::bondListFromAtomList(mol, maids);
 	
 	// now check if all these bonds have been covered as part of larger 
 	// functional group that was dealt with earlier
@@ -189,7 +189,7 @@ namespace RDKit {
 
     INT_MAP_INT aIdxMap; // a map from atom id in mol to the new atoms id in coreMol
     
-    ROMol *coreMol = PathToSubmol(mol, cBonds, false, aIdxMap);
+    ROMol *coreMol = Subgraphs::PathToSubmol(mol, cBonds, false, aIdxMap);
     
     // now map the functional groups on mol to coreMol using aIdxMap
     MatchVectType::iterator mati;
