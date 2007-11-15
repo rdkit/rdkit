@@ -15,7 +15,7 @@ exe querytest : querytest.cpp GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit
 #exe MolOpsTest : molopstest.cpp GraphMol /RDKit//GraphMol/FileParsers /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
 #exe itertest : itertest.cpp GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
 
-install regrs : test1 cptest querytest MolOpsTest itertest
+install regrs : test1 cptest querytest # MolOpsTest itertest
   : <location>testExecs ;
 install lib-install : GraphMol : <location>$(RDBASE)/bin ;
 
