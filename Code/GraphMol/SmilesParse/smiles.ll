@@ -11,7 +11,7 @@
 
 #undef YY_INPUT
 
-#include "InputFiller.h"
+#include <GraphMol/SmilesParse/InputFiller.h>
 
 extern INPUT_FUNC_TYPE gp_myInput;
 

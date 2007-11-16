@@ -1,0 +1,19 @@
+project GraphMol/Depictor : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib Depictor : RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp
+  : ;
+
+exe testDepictor : testDepictor.cpp Depictor ../SmilesParse//SmilesParse
+  ../FileParsers//FileParsers
+../Substruct//Substruct ..//GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : testDepictor
+  : <location>testExecs ;
+
+install lib-install : Depictor : <location>$(RDBASE)/bin ;
+
+
+

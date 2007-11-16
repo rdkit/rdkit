@@ -1,0 +1,21 @@
+project GraphMol/MolChemicalFeatures : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib MolChemicalFeatures : MolChemicalFeature.cpp MolChemicalFeatureDef.cpp 
+  MolChemicalFeatureFactory.cpp FeatureParser.cpp
+  : <link>static ;
+
+exe testFeatures : testFeatures.cpp MolChemicalFeatures
+  /RDKit//Catalogs ../SmilesParse//SmilesParse
+  ../Substruct//Substruct
+  ..//GraphMol /RDKit//DataStructs /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib
+ ;
+
+install regrs : testFeatures
+  : <location>testExecs ;
+
+
+
+

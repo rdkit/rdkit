@@ -1,0 +1,14 @@
+project DistGeom : : ;
+
+
+lib DistGeom : DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp 
+  ChiralViolationContrib.cpp
+	: <link>static ;
+
+exe main : testDistGeom.cpp DistGeom /RDKit//ForceField /RDKit//Numerics/Optimizer 
+   /RDKit//Numerics/EigenSolvers /RDKit//Geometry /RDKit//RDGeneral ;
+
+install regrs : main : <location>testExecs ;
+
+
+

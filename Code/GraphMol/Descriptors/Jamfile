@@ -1,0 +1,19 @@
+project GraphMol/Descriptors : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib Descriptors : Crippen.cpp MolDescriptors.cpp AtomPairs.cpp MolSurf.cpp
+  : ;
+
+exe testDescriptors : test.cpp Descriptors
+  ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs
+../Substruct//Substruct ..//GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : testDescriptors
+  : <location>testExecs ;
+
+install lib-install : Descriptors : <location>$(RDBASE)/bin ;
+
+
+

@@ -1,0 +1,20 @@
+project GraphMol/MolCatalog : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib MolCatalog : MolCatalogEntry.cpp MolCatalogParams.cpp
+  : ;
+
+exe test1 : test1.cpp MolCatalog
+  /RDKit//Catalogs ../SmilesParse//SmilesParse
+  ../FileParsers//FileParsers
+  ..//GraphMol /RDKit//DataStructs /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+
+install regrs : test1
+  : <location>testExecs ;
+
+install lib-install : MolCatalog : <location>$(RDBASE)/bin ;
+
+
+

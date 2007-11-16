@@ -1,0 +1,22 @@
+project GraphMol/MolAlign : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib MolAlign : AlignMolecules.cpp
+  : ;
+
+exe testMolAlign : testMolAlign.cpp MolAlign ../MolTransforms//MolTransforms
+  ../FileParsers//FileParsers ../SmilesParse//SmilesParse 
+  ../DistGeomHelpers//DistGeomHelpers /RDKit//DistGeom
+  ../ForceFieldHelpers//ForceFieldHelpers /RDKit//ForceField
+  /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
+../Substruct//Substruct ..//GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : testMolAlign
+  : <location>testExecs ;
+
+install lib-install : MolAlign : <location>$(RDBASE)/bin ;
+
+
+

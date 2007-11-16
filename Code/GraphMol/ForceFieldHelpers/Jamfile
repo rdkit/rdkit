@@ -1,0 +1,22 @@
+project GraphMol/ForceFieldHelpers : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib ForceFieldHelpers : UFF/AtomTyper.cpp UFF/Builder.cpp
+  : ;
+
+exe testHelpers : testHelpers.cpp ForceFieldHelpers  /RDKit//ForceField
+  ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct
+  ../DistGeomHelpers//DistGeomHelpers /RDKit//DistGeom
+  ..//GraphMol 
+   /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
+   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : testHelpers
+  : <location>testExecs ;
+
+install lib-install : ForceFieldHelpers : <location>$(RDBASE)/bin ;
+
+
+

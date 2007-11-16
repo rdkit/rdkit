@@ -1,0 +1,21 @@
+project GraphMol/FragCatalog : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib FragCatalog : FragCatalogUtils.cpp FragCatGenerator.cpp FragCatalogEntry.cpp 
+  FragCatParams.cpp FragFPGenerator.cpp
+  : ;
+
+exe test1 : test1.cpp FragCatalog
+  /RDKit//Catalogs ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs
+  ../Substruct//Substruct ../FileParsers//FileParsers
+  ..//GraphMol /RDKit//DataStructs /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : test1
+  : <location>testExecs ;
+
+install lib-install : FragCatalog : <location>$(RDBASE)/bin ;
+
+
+

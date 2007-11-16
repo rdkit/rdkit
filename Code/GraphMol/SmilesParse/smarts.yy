@@ -11,8 +11,8 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
-#include "SmilesParse.h"  
-#include "SmilesParseOps.h"  
+#include <GraphMol/SmilesParse/SmilesParse.h>  
+#include <GraphMol/SmilesParse/SmilesParseOps.h>  
 #include <RDGeneral/RDLog.h>
 
 extern int yysmarts_lex();

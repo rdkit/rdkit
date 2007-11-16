@@ -21,6 +21,7 @@ project RDKit
 	: requirements <include>.  <threading>multi
           <library>/boost/log//boost_log
           <include>$(RDBASE)/External/Lapack++/include
+          <include>$(RDBASE)/External/vflib-2.0/include
         : default-build release ;
 
 lib lapack++
@@ -49,3 +50,8 @@ lib blas
   :
   ;
 alias lapacklibs : lapack++ lamatrix++ blas++ lapack blas ;
+lib vflib
+  :
+  : <name>vf <search>$(RDBASE)/External/vflib-2.0/lib
+  : <include>$(RDBASE)/External/vflib-2.0/include
+  ;

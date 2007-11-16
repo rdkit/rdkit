@@ -1,0 +1,20 @@
+project GraphMol/DistGeomHelpers : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib DistGeomHelpers : BoundsMatrixBuilder.cpp Embedder.cpp
+  : <link>static ;
+
+exe main.exe : testDgeomHelpers.cpp DistGeomHelpers /RDKit//DistGeom
+  ../ForceFieldHelpers//ForceFieldHelpers /RDKit//ForceField
+  ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct
+  ..//GraphMol 
+  /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : main.exe
+  : <location>testExecs ;
+
+
+

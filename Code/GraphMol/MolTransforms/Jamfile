@@ -1,0 +1,19 @@
+project GraphMol/MolTransforms : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib MolTransforms : MolTransforms.cpp
+  : ;
+
+exe testMolTransform : test1.cpp MolTransforms
+  ../FileParsers//FileParsers ../SmilesParse//SmilesParse 
+..//GraphMol /RDKit//Numerics/EigenSolvers /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+
+install regrs : testMolTransform
+  : <location>testExecs ;
+
+install lib-install : MolTransforms : <location>$(RDBASE)/bin ;
+
+
+

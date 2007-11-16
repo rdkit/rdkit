@@ -1,0 +1,15 @@
+project ForceField : : ;
+
+
+lib ForceField : ForceField.cpp UFF/AngleBend.cpp UFF/BondStretch.cpp 
+    UFF/Nonbonded.cpp UFF/TorsionAngle.cpp UFF/DistanceConstraint.cpp 
+    UFF/Params.cpp 
+	: <link>static ;
+
+exe testForceField : testForceField.cpp ForceField /RDKit//Numerics/Optimizer 
+   /RDKit//Geometry /RDKit//RDGeneral ;
+
+install regrs : testForceField : <location>testExecs ;
+
+
+

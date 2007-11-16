@@ -1,0 +1,19 @@
+project GraphMol/ChemReactions : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib ChemReactions : Reaction.cpp MDLParser.cpp DaylightParser.cpp
+  : ;
+
+exe testReaction : testReaction.cpp ChemReactions 
+  ../FileParsers//FileParsers ../SmilesParse//SmilesParse
+../Substruct//Substruct ..//GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : testReaction
+  : <location>testExecs ;
+
+install lib-install : ChemReactions : <location>$(RDBASE)/bin ;
+
+
+

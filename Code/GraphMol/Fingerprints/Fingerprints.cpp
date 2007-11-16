@@ -55,7 +55,7 @@ namespace RDKit{
 	unsigned long seed = *(unsigned long *)(&balabanJ);
 	generator.seed(seed);
 
-	for(int i=0;i<nBitsPerHash;i++){
+	for(unsigned int i=0;i<nBitsPerHash;i++){
 	  unsigned int bit = randomSource();
 	  bit %= fpSize;
 	  res->SetBit(bit);
