@@ -4,7 +4,7 @@
 #  This file is part of RDKit and covered by $RDBASE/license.txt
 #
 import Chem
-from Chem import AllChem
+from Chem import rdDepictor
 import Geometry
 
 def AlignDepict(mol,core,corePattern=None):
@@ -37,7 +37,7 @@ def AlignDepict(mol,core,corePattern=None):
     pt3 = conf.GetAtomPosition(i)
     pt2 = Geometry.Point2D(pt3.x,pt3.y)
     coordMap[idx] = pt2
-  AllChem.Compute2DCoords(mol,clearConfs=True,coordMap=coordMap)
+  rdDepictor.Compute2DCoords(mol,clearConfs=True,coordMap=coordMap)
 
 if __name__=='__main__':
   import sys,getopt
@@ -68,7 +68,7 @@ if __name__=='__main__':
     core = Chem.MolFromMolFile(extras[0])
   else:
     core = Chem.MolFromSmiles(extras[0])
-    AllChem.Compute2DCoords(core)
+    rdDepictor.Compute2DCoords(core)
 
   if not useSmiles:
     mol = Chem.MolFromMolFile(extras[1])
