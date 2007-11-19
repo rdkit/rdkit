@@ -1,0 +1,42 @@
+project wrapGraphMol : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdchem : rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
+  Conformer.cpp RingInfo.cpp EditableMol.cpp
+  ../SmilesParse//SmilesParse ../ChemTransforms//ChemTransforms ../Substruct//Substruct	
+  ..//GraphMol
+  ../../Geometry//RDGeometry
+  ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+python-extension rdmolops : rdmolops.cpp MolOps.cpp
+  ../SmilesParse//SmilesParse ../ChemTransforms//ChemTransforms ../Substruct//Substruct	
+  ../Subgraphs//Subgraphs ../Fingerprints//Fingerprints
+  ../FileParsers//FileParsers
+  ..//GraphMol 
+  ../../Catalogs//Catalogs ../../Geometry//RDGeometry
+  ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
+  SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp
+  ../SmilesParse//SmilesParse
+  ../FileParsers//FileParsers
+  ..//GraphMol
+ ../../Geometry//RDGeometry
+  ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+install pymod : rdchem rdmolops rdmolfiles 
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

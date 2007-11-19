@@ -21,7 +21,7 @@ exe smatest : smatest.cpp SmilesParse
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//vflib /RDKit//lapacklibs ;
 
 
-install regrs : test # smatest
+install regrs : test  smatest
   : <location>testExecs ;
 
 

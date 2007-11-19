@@ -1,0 +1,24 @@
+project wrapMolChemicalFeatures : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdMolChemicalFeatures : rdMolChemicalFeatures.cpp
+  MolChemicalFeature.cpp MolChemicalFeatureFactory.cpp
+  ChemicalFeatureUtils.cpp 
+  ..//MolChemicalFeatures
+  ../../SmilesParse//SmilesParse ../../Substruct//Substruct  
+  ../..//GraphMol
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+install pymod : rdMolChemicalFeatures
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

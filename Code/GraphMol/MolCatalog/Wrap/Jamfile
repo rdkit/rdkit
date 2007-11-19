@@ -1,0 +1,22 @@
+project wrapMolCatalog : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdMolCatalog : rdMolCatalog.cpp
+  ..//MolCatalog
+  ../..//GraphMol
+  ../../../Catalogs//Catalogs
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+  /RDKit//lapacklibs 
+  ;
+
+install pymod : rdMolCatalog 
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

@@ -1,0 +1,21 @@
+project wrapDescriptors : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdPartialCharges : rdPartialCharges.cpp
+  ..//PartialCharges
+  ../..//GraphMol
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//lapacklibs 
+  ;
+
+install pymod : rdPartialCharges 
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+
