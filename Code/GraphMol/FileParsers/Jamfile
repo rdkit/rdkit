@@ -8,6 +8,7 @@ lib FileParsers : MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp
   SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp TDTMolSupplier.cpp 
   TplFileParser.cpp TplFileWriter.cpp
   : ;
+install lib-install : FileParsers : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct ..//GraphMol 
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
@@ -28,7 +29,6 @@ exe testTplParser : testTpls.cpp FileParsers
 install regrs : test1 testMolSupplier testMolWriter testTplParser
   : <location>testExecs ;
 
-install lib-install : FileParsers : <location>$(RDBASE)/bin ;
 
 
 

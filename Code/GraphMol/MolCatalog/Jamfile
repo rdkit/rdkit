@@ -5,6 +5,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib MolCatalog : MolCatalogEntry.cpp MolCatalogParams.cpp
   : ;
+install lib-install : MolCatalog : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp MolCatalog
   /RDKit//Catalogs ../SmilesParse//SmilesParse
@@ -14,7 +15,6 @@ exe test1 : test1.cpp MolCatalog
 install regrs : test1
   : <location>testExecs ;
 
-install lib-install : MolCatalog : <location>$(RDBASE)/bin ;
 
 
 

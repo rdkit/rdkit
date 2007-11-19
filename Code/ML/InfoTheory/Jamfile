@@ -1,0 +1,10 @@
+project ML/InfoTheory : : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread ;
+
+
+lib InfoTheory : InfoBitRanker.cpp
+  : <link>static ;
+
+python-extension cEntropy : cEntropy.cpp InfoTheory
+;
+
+install pymod : cEntropy : <location>$(RDBASE)/Python/ML/InfoTheory ;

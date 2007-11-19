@@ -1,0 +1,17 @@
+project wrapForceField : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdForceField : ForceField.cpp
+  /RDKit//ForceField
+  /RDKit//Numerics/Optimizer
+  /RDKit//RDGeneral /RDKit//RDBoost ;
+
+install pymod : rdForceField : <location>$(RDBASE)/Python/ForceField ;
+
+
+
+
+

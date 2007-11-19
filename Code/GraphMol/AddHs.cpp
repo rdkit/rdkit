@@ -36,7 +36,7 @@ namespace RDKit{
       return res;
     }
 
-    void setHydrogenCoords(ROMol *mol,int hydIdx,int heavyIdx){
+    void setHydrogenCoords(ROMol *mol,unsigned int hydIdx,unsigned int heavyIdx){
       // we will loop over all the coordinates 
       PRECONDITION(mol,"bad molecule");
       PRECONDITION(heavyIdx!=hydIdx,"degenerate atoms");

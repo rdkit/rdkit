@@ -38,7 +38,6 @@ void ROMol::destroy(){
   // and the bonds:
   ROMol::BOND_ITER_PAIR bondItP = getEdges();
   ROMol::GRAPH_MOL_BOND_PMAP::type bondMap = getBondPMap();
-  int nSoFar = 0;
   while(bondItP.first != bondItP.second ){
     delete bondMap[*(bondItP.first++)];
   }
@@ -71,7 +70,6 @@ void ROMol::initFromOther(const ROMol &other,bool quickCopy){
   // and the bonds:
   ROMol::BOND_ITER_PAIR bondItP = other.getEdges();
   ROMol::GRAPH_MOL_BOND_PMAP::const_type bondMap = other.getBondPMap();
-  int nSoFar = 0;
   while(bondItP.first != bondItP.second ){
     addBond(bondMap[*(bondItP.first++)]->copy(),true);
   }
@@ -214,7 +212,7 @@ void ROMol::clearAtomBookmark(const int mark,const Atom *atom){
   if(d_atomBookmarks.count(mark) != 0){
     ATOM_PTR_LIST *entry=&d_atomBookmarks[mark];
     ATOM_PTR_LIST::iterator i;
-    int tgtIdx=atom->getIdx();
+    unsigned int tgtIdx=atom->getIdx();
     for(i=entry->begin();i!=entry->end();i++){
       if((*i)->getIdx()==tgtIdx){
         entry->erase(i);
@@ -235,7 +233,7 @@ void ROMol::clearBondBookmark(const int mark,const Bond *bond){
   if(d_bondBookmarks.count(mark) != 0){
     BOND_PTR_LIST *entry=&d_bondBookmarks[mark];
     BOND_PTR_LIST::iterator i;    
-    int tgtIdx=bond->getIdx();
+    unsigned int tgtIdx=bond->getIdx();
     for(i=entry->begin();i!=entry->end();i++){
       if((*i)->getIdx()==tgtIdx){
         entry->erase(i);

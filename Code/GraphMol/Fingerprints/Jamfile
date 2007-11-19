@@ -4,7 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Fingerprints : Fingerprints.cpp
-  : ;
+  : <link>static ;
+#install lib-install : Fingerprints : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp Fingerprints
   ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs
@@ -13,7 +14,6 @@ exe test1 : test1.cpp Fingerprints
 install regrs : test1
   : <location>testExecs ;
 
-install lib-install : Fingerprints : <location>$(RDBASE)/bin ;
 
 
 

@@ -11,6 +11,7 @@
 // Defines a class to hold sequences passed in from Python
 //
 #include "Wrap.h"
+#include <RDGeneral/Invariant.h>
 
 namespace python = boost::python;
 
@@ -60,13 +61,15 @@ public:
       throw_index_error(which);
     }
 
-    T res;
     try{
-      res = python::extract<T>(d_seq[which]);
+      T res = python::extract<T>(d_seq[which]);
+      return res;
     } catch (...) {
       throw_value_error("cannot extract desired type from sequence");
     }
-    return res;
+
+    POSTCONDITION(0,"cannot reach this point");
+    return static_cast<T>(0);
   };
 private:
   python::object d_seq;

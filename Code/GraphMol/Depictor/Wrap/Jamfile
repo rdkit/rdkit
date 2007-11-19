@@ -1,0 +1,21 @@
+project wrapDepictor : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdDepictor : rdDepictor.cpp
+  ..//Depictor
+  ../..//GraphMol
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//lapacklibs 
+  ;
+
+install pymod : rdDepictor
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

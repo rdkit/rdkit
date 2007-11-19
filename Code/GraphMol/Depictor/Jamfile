@@ -4,7 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Depictor : RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp
-  : ;
+  : <link>static ;
+#install lib-install : Depictor : <location>$(RDBASE)/bin ;
 
 exe testDepictor : testDepictor.cpp Depictor ../SmilesParse//SmilesParse
   ../FileParsers//FileParsers
@@ -13,7 +14,6 @@ exe testDepictor : testDepictor.cpp Depictor ../SmilesParse//SmilesParse
 install regrs : testDepictor
   : <location>testExecs ;
 
-install lib-install : Depictor : <location>$(RDBASE)/bin ;
 
 
 

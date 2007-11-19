@@ -4,7 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib MolAlign : AlignMolecules.cpp
-  : ;
+  : <link>static ;
+#install lib-install : MolAlign : <location>$(RDBASE)/bin ;
 
 exe testMolAlign : testMolAlign.cpp MolAlign ../MolTransforms//MolTransforms
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse 
@@ -16,7 +17,6 @@ exe testMolAlign : testMolAlign.cpp MolAlign ../MolTransforms//MolTransforms
 install regrs : testMolAlign
   : <location>testExecs ;
 
-install lib-install : MolAlign : <location>$(RDBASE)/bin ;
 
 
 

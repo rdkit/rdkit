@@ -1,0 +1,23 @@
+project wrapDescriptors : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdMolDescriptors : rdMolDescriptors.cpp
+  ..//Descriptors
+  ../../SmilesParse//SmilesParse ../../Substruct//Substruct
+  ../../Subgraphs//Subgraphs
+  ../..//GraphMol
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+install pymod : rdMolDescriptors 
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

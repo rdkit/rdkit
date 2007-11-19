@@ -5,6 +5,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib ChemTransforms : ChemTransforms.cpp
   : ;
+install lib-install : ChemTransforms : <location>$(RDBASE)/bin ;
 
 exe main : testChemTransforms.cpp ChemTransforms
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse
@@ -13,7 +14,6 @@ exe main : testChemTransforms.cpp ChemTransforms
 install regrs : main
   : <location>testExecs ;
 
-install lib-install : ChemTransforms : <location>$(RDBASE)/bin ;
 
 
 

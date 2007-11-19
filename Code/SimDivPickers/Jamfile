@@ -1,0 +1,8 @@
+project SimDivPickers : : ;
+
+
+lib SimDivPickers : DistPicker.cpp MaxMinPicker.cpp HierarchicalClusterPicker.cpp
+  : <link>static ;
+
+
+

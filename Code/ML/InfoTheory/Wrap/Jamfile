@@ -1,0 +1,7 @@
+project ML/InfoTheory/Wrap : : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread ;
+
+
+python-extension rdInfoTheory : InfoBitRanker.cpp BitCorrMatGenerator.cpp rdInfoTheory.cpp
+;
+
+install pymod : rdInfoTheory : <location>$(RDBASE)/Python/ML/InfoTheory ;

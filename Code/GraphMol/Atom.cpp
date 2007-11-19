@@ -245,8 +245,8 @@ int Atom::calcImplicitValence(bool strict) {
   // only default valences
   const UINT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
   UINT_VECT_CI vi;
-  int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
-  int explicitV = getExplicitValence();
+  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
+  unsigned int explicitV = getExplicitValence();
   int chg = getFormalCharge();
 
   // NOTE: this is here to take care of the difference in element on
@@ -322,14 +322,14 @@ int Atom::calcImplicitValence(bool strict) {
     res = -1;
     for (vi = valens.begin(); vi != valens.end(); vi++) {
       tot = (*vi) + chg;
-      if (explicitV <= tot) {
+      if (static_cast<int>(explicitV) <= tot) {
         res = tot - explicitV;
         break;
       }
     }
     if (res < 0) {
       if(strict){
-        // this means that the explicit valen is greater than any
+        // this means that the explicit valence is greater than any
         // allowed valence for the atoms - raise an error
         std::ostringstream errout;
         errout << "Explicit valence for atom # " << getIdx() 

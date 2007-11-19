@@ -24,6 +24,22 @@ project RDKit
           <include>$(RDBASE)/External/vflib-2.0/include
         : default-build release ;
 
+
+alias all-libraries : Catalogs DataManip/MetricMatrixCalc DataStructs DistGeom ForceField Geometry GraphMol Numerics Query RDBoost RDGeneral SimDivPickers ;
+
+alias all-wrappers : RDBoost/Wrap 
+  DataStructs/Wrap
+  Geometry/Wrap
+  ML/Cluster/Murtagh ML/InfoTheory/Wrap ML/Data ML/FeatureSelect/Wrap
+  DataManip/MetricMatrixCalc/Wrap
+  SimDivPickers/Wrap
+  ForceField/Wrap 
+  DistGeom/Wrap
+  Numerics/Alignment/Wrap 
+  ChemicalFeatures/Wrap
+  GraphMol/Wrap
+ ;
+
 lib lapack++
   :
   : <name>lapack++ <search>$(RDBASE)/External/Lapack++
