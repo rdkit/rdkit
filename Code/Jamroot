@@ -25,7 +25,7 @@ project RDKit
         : default-build release ;
 
 
-alias all-libraries : Catalogs DataManip/MetricMatrixCalc DataStructs DistGeom ForceField Geometry GraphMol Numerics Query RDBoost RDGeneral SimDivPickers ;
+alias all-libraries : Catalogs DataManip/MetricMatrixCalc DataStructs DistGeom ForceField Geometry GraphMol Numerics Query RDBoost RDGeneral SimDivPickers ChemicalFeatures ;
 
 alias all-wrappers : RDBoost/Wrap 
   DataStructs/Wrap
