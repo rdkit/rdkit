@@ -37,7 +37,7 @@ alias all-wrappers : RDBoost/Wrap
   DistGeom/Wrap
   Numerics/Alignment/Wrap 
   ChemicalFeatures/Wrap
-  GraphMol/Wrap
+  GraphMol//all-wrappers
  ;
 
 lib lapack++
