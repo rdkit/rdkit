@@ -42,21 +42,6 @@ alias all-wrappers : RDBoost/Wrap
   GraphMol//all-wrappers
  ;
 
-lib lapack++
-  :
-  : <name>lapack++ <search>$(RDBASE)/External/Lapack++
-  : <include>$(RDBASE)/External/Lapack++/include
-  ;
-lib lamatrix++
-  :
-  : <name>lamatrix++ <search>$(RDBASE)/External/Lapack++
-  : <include>$(RDBASE)/External/Lapack++/include
-  ;
-lib blas++
-  :
-  : <name>blas++ <search>$(RDBASE)/External/Lapack++
-  : <include>$(RDBASE)/External/Lapack++/include
-  ;
 lib lapack
   :
   : <name>lapack 
@@ -67,6 +52,6 @@ lib blas
   : <name>blas
   :
   ;
-alias lapacklibs : lapack++ lamatrix++ blas++ lapack blas ;
+alias lapacklibs : /RDKit_Externals//Lapack++ lapack blas ;
 alias vflib : /RDKit_Externals//vflib ;
 
