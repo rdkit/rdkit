@@ -2,13 +2,8 @@ project ML/FeatureSelect/Wrap : : requirements <library>/boost/python//boost_pyt
 
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;
-lib fastentropy
-  :
-  : <name>fastentropy <search>$(RDBASE)/External/cmim-1.0
-  : <include>$(RDBASE)/External/cmim-1.0
-  ;
 
-python-extension rdFeatSelect : rdFeatSelect.cpp fastentropy /RDKit//DataStructs
+python-extension rdFeatSelect : rdFeatSelect.cpp /RDKit_Externals//cmim /RDKit//DataStructs
 : <include>$(RDBASE)/External/cmim-1.0
 : 
 ;
