@@ -15,6 +15,8 @@ type.change-generated-target-suffix EXE : : exe ;
 # Specify the path to the Boost project.
 use-project boost 
   : /usr/local/src/boost_1_34_1 ;
+use-project RDKit_Externals 
+  : $(RDBASE)/External  ;
 
 
 project RDKit
@@ -66,8 +68,5 @@ lib blas
   :
   ;
 alias lapacklibs : lapack++ lamatrix++ blas++ lapack blas ;
-lib vflib
-  :
-  : <name>vf <search>$(RDBASE)/External/vflib-2.0/lib
-  : <include>$(RDBASE)/External/vflib-2.0/include
-  ;
+alias vflib : /RDKit_Externals//vflib ;
+
