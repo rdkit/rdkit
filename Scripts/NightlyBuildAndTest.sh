@@ -136,6 +136,9 @@ echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 cd $RDBASE/Code
 make docs
+cd $RDBASE/Python
+epydoc --config  epydoc.config
+
 
 # ------------------------- -------------------------
 #
