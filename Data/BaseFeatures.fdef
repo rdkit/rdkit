@@ -144,8 +144,8 @@ EndFeature
 # any carbon that is not bonded to a polar atom is considered a hydrophobe
 # 
 # generic non-polar carbon atom
-AtomType Carbon_Polar [$([#6][#7,#8,#9])]
-AtomType Carbon_NonPolar [#6;!{Carbon_Polar}]
+AtomType Carbon_Polar [#6;$([#6]~[#7,#8,#9])]
+AtomType Carbon_NonPolar [#6;+0;!{Carbon_Polar}]
 
 DefineFeature ThreeWayAttach [D3,D4;{Carbon_NonPolar}]
   Family Hydrophobe
