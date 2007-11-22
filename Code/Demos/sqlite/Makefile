@@ -1,0 +1,14 @@
+include $(RDBASE)/Code/rdvars.make
+
+CXXFLAGS = $(BASECXXFLAGS) $(RDKITINCFLAGS) -fPIC
+DLSUFFIX=.so
+
+DLOBJS= rdk_funcs$(DLSUFFIX)
+
+all: $(DLOBJS)
+
+$(DLOBJS): rdk_funcs.o
+	g++ -shared -o $(DLOBJS) rdk_funcs.o  $(RDMOLDESCRIPTORS) $(RDFINGERPRINTS) $(RDSUBGRAPHS) $(RDSUBSTRUCT) $(RDSMILES) $(RDKIT) $(RDGENERAL) $(RDGEOMETRY) $(VFLIB) $(LAPACKLIB) $(BOOSTLOGLIB)
+
+clean:
+	rm -f $(DLOBJS)

@@ -1,0 +1,20 @@
+project SQLite_funcs : : ;
+
+
+lib rdk_funcs : rdk_funcs.cpp 
+  ../../GraphMol/Descriptors//Descriptors 
+  ../../GraphMol/Fingerprints//Fingerprints
+  ../../GraphMol/Subgraphs//Subgraphs
+  ../../GraphMol/Substruct//Substruct
+  ../../GraphMol/SmilesParse//SmilesParse
+  ../../GraphMol//GraphMol
+  /RDKit//DataStructs	
+  /RDKit//RDGeneral /RDKit//Geometry
+  /RDKit//vflib /RDKit//lapacklibs
+ ;
+
+install lib-install : rdk_funcs : <location>. ;
+
+
+
+
