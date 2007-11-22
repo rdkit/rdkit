@@ -1,7 +1,12 @@
 project ML/InfoTheory/Wrap : : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
 
+import python ;
 
-python-extension rdInfoTheory : InfoBitRanker.cpp BitCorrMatGenerator.cpp rdInfoTheory.cpp
-;
+python-extension rdInfoTheory : InfoBitRanker.cpp BitCorrMatGenerator.cpp rdInfoTheory.cpp 
+  ..//InfoTheory	
+/RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost ;
+
 
 install pymod : rdInfoTheory : <location>$(RDBASE)/Python/ML/InfoTheory ;

@@ -3,9 +3,9 @@ project ML/FeatureSelect/Wrap : : requirements <library>/boost/python//boost_pyt
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
-python-extension rdFeatSelect : rdFeatSelect.cpp /RDKit_Externals//cmim /RDKit//DataStructs
+python-extension rdFeatSelect : rdFeatSelect.cpp /RDKit_Externals//cmim
+  /RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost
 : <include>$(RDBASE)/External/cmim-1.0
-: 
 ;
 
-install pymod : rdFeatSelect : <location>$(RDBASE)/Python/ML/FeaturesSelect ;
+install pymod : rdFeatSelect : <location>$(RDBASE)/Python/ML/FeatureSelect ;
