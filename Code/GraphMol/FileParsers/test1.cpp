@@ -971,11 +971,28 @@ void testMolFileDegreeQueries(){
 }
 
 
+void testIssue1836615(){
+  BOOST_LOG(rdInfoLog) << "testing Issue 1836615" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue1836615.mol";
+  RWMol *m = MolFileToMol(fName,true,false);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==269);
+  std::string molBlock = MolToMolBlock(*m);
+
+  delete m;
+  m = MolBlockToMol(molBlock,true,false);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==269);
+  
+  delete m;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 1
   test1();
   test2();
   test3();
@@ -993,8 +1010,9 @@ int main(int argc,char *argv[]){
   testSymmetricDblBondStereochem();
   testRingDblBondStereochem();
   testMolFileRGroups();
-#endif
+
   testMolFileDegreeQueries();
+  testIssue1836615();
   //testCrash();
   return 0;
 }

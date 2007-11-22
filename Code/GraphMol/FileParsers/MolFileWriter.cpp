@@ -87,12 +87,12 @@ namespace RDKit{
       x = pos.x; y = pos.y; z = pos.z;
     } 
     std::string symbol = AtomGetMolFileSymbol(atom);
-    sprintf(tmpStr,"% 10.4f% 10.4f% 10.4f %3s% 2d% 3d  0% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d",
-	    x,y,z,
-	    symbol.c_str(),
-	    massDiff,chg,hCount,stereoCare,totValence,rxnComponentType,
-	    rxnComponentNumber,atomMapNumber,inversionFlag,exactChangeFlag
-	    );
+    sprintf(tmpStr,"% 10.4f% 10.4f% 10.4f %3s%2d%3d  0%3d%3d%3d  0%3d%3d%3d%3d%3d",
+	        x,y,z,
+	        symbol.c_str(),
+	        massDiff,chg,hCount,stereoCare,totValence,rxnComponentType,
+	        rxnComponentNumber,atomMapNumber,inversionFlag,exactChangeFlag
+	        );
     res += tmpStr;
     return res;
   };
@@ -118,7 +118,7 @@ namespace RDKit{
   // only valid for single bonds
   int BondGetDirCode(const Bond::BondDir dir){
     int res=0;
-    switch(dir){
+   switch(dir){
     case Bond::NONE: res=0;break;
     case Bond::BEGINWEDGE: res=1;break;
     case Bond::BEGINDASH: res=6;break;
@@ -164,18 +164,18 @@ namespace RDKit{
 
     if (reverse) {
       // switch the begin and end atoms on the bond line
-      sprintf(tmpStr,"% 3d% 3d%s % 2d",bond->getEndAtomIdx()+1,
+      sprintf(tmpStr,"%3d%3d%s %2d",bond->getEndAtomIdx()+1,
               bond->getBeginAtomIdx()+1,
               symbol.c_str(),dirCode);
     } else {
-      sprintf(tmpStr,"% 3d% 3d%s % 2d",bond->getBeginAtomIdx()+1,
+      sprintf(tmpStr,"%3d%3d%s %2d",bond->getBeginAtomIdx()+1,
               bond->getEndAtomIdx()+1,
               symbol.c_str(),dirCode);
     }
     res = tmpStr;
     return res;
   }
-    
+
   //------------------------------------------------
   //
   //  gets a mol block as a string
@@ -236,7 +236,7 @@ namespace RDKit{
     }
     res += "\n";
 
-    sprintf(tmpStr,"% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d% 3d999 V2000\n",
+    sprintf(tmpStr,"%3d%3d%3d  0%3d%3d%3d%3d%3d%3d999 V2000\n",
 	    nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents,
 	    nReactants,nProducts,nIntermediates);
     res += tmpStr;

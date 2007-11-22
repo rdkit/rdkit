@@ -374,7 +374,7 @@ void testSDMemoryCorruption() {
 
 int main() {
   RDLog::InitLogs();
-#if 1
+
   std::cout <<  "-----------------------------------------\n";
   std::cout << "Running testSmilesWriter()\n";
   testSmilesWriter();
@@ -410,7 +410,7 @@ int main() {
   testTDTWriterStrm();
   std::cout << "Finished\n";
   std::cout <<  "-----------------------------------------\n\n";
-#endif
+
   std::cout <<  "-----------------------------------------\n";
   std::cout << "Running testSDMemoryCorruption()\n";
   testSDMemoryCorruption();
