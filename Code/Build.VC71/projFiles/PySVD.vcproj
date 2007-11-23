@@ -182,7 +182,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="TRUE"
-				AdditionalDependencies="odbc32.lib odbccp32.lib ws2_32.lib $(PYTHONVERS).lib "
+				AdditionalDependencies="odbc32.lib odbccp32.lib ws2_32.lib $(PYTHONVERS).lib libboost_log-vc71-mt-$(BOOSTVERSION).lib"
 				OutputFile="..\..\..\External\svdlibc\Wrap\Release/cSVD.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
