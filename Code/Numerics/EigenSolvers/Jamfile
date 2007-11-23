@@ -1,0 +1,11 @@
+project Numerics/EigenSolvers : : ;
+
+lib EigenSolvers : PowerEigenSolver.cpp : <link>static ;
+
+exe main : testEigenSolvers.cpp EigenSolvers /RDKit//RDGeneral /RDKit//lapacklibs : 
+	;
+
+install regrs : main : <location>testExecs ;
+
+
+

@@ -1,0 +1,13 @@
+project Geometry : : ;
+
+
+lib RDGeometry : point.cpp Transform2D.cpp Transform3D.cpp UniformGrid3D.cpp GridUtils.cpp : <link>static ;
+
+exe testTransforms : testTransforms.cpp RDGeometry /RDKit//RDGeneral /RDKit//DataStructs ;
+
+exe testGrid : testGrid.cpp RDGeometry /RDKit//RDGeneral /RDKit//DataStructs ;
+
+install regrs : testTransforms testGrid : <location>testExecs ;
+
+
+

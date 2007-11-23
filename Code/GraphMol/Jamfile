@@ -1,0 +1,45 @@
+project GraphMol : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib GraphMol : Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp MolOps.cpp
+  FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp atomic_data.cpp
+  QueryOps.cpp MolPickler.cpp Canon.cpp AtomIterators.cpp BondIterators.cpp
+  Aromaticity.cpp Kekulize.cpp MolDiscriminators.cpp ConjugHybrid.cpp
+  AddHs.cpp RankAtoms.cpp Matrices.cpp Chirality.cpp RingInfo.cpp
+  Conformer.cpp
+  ;
+install lib-install : GraphMol : <location>$(RDBASE)/bin ;
+
+exe test1 : test1.cpp GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+exe cptest : cptest.cpp GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+exe querytest : querytest.cpp GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+exe MolOpsTest : molopstest.cpp GraphMol 
+  ./FileParsers//FileParsers ./SmilesParse//SmilesParse
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+exe testCanon : testCanon.cpp GraphMol 
+  ./SmilesParse//SmilesParse ./Substruct//Substruct 
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+exe testPickler : testPickler.cpp GraphMol 
+  ./SmilesParse//SmilesParse ./FileParsers//FileParsers
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+exe itertest : itertest.cpp GraphMol 
+  ./SmilesParse//SmilesParse 
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+
+
+install regrs : test1 cptest querytest MolOpsTest testCanon testPickler itertest
+  : <location>testExecs ;
+
+
+alias all-libraries : lib-install SmilesParse Substruct FileParsers Subgraphs Fingerprints FragCatalog 
+  Depictor PartialCharges MolTransforms ForceFieldHelpers DistGeomHelpers Descriptors
+  MolChemicalFeatures MolAlign ShapeHelpers ChemTransforms MolCatalog ChemReactions
+;
+
+alias all-wrappers : Wrap FragCatalog/Wrap PartialCharges/Wrap Depictor/Wrap 
+  DistGeomHelpers/Wrap ForceFieldHelpers/Wrap MolChemicalFeatures/Wrap
+  MolAlign/Wrap MolTransforms/Wrap ShapeHelpers/Wrap MolCatalog/Wrap
+  ChemReactions/Wrap Descriptors/Wrap
+ ;

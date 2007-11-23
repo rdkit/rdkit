@@ -1,0 +1,8 @@
+project Catalogs : : ;
+
+
+lib Catalogs : Catalog.cpp CatalogParams.cpp CatalogEntry.cpp : <link>static ;
+
+
+
+

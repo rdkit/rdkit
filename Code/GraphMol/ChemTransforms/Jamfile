@@ -1,0 +1,19 @@
+project GraphMol/ChemTransforms : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib ChemTransforms : ChemTransforms.cpp
+  : ;
+install lib-install : ChemTransforms : <location>$(RDBASE)/bin ;
+
+exe main : testChemTransforms.cpp ChemTransforms
+  ../FileParsers//FileParsers ../SmilesParse//SmilesParse
+../Substruct//Substruct ..//GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : main
+  : <location>testExecs ;
+
+
+
+

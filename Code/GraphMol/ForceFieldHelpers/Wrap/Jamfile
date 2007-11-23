@@ -1,0 +1,24 @@
+project wrapForceFieldHelpers : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdForceFieldHelpers : rdForceFields.cpp
+  ..//ForceFieldHelpers 
+  ../../SmilesParse//SmilesParse ../../Substruct//Substruct  
+  ../..//GraphMol
+  ../../../ForceField//ForceField
+  ../../../Numerics/Optimizer//Optimizer
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+install pymod : rdForceFieldHelpers
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

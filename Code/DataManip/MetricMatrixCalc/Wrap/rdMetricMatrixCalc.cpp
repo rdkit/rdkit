@@ -134,9 +134,8 @@ namespace RDDataManip {
 
       // we have probably have a list or a tuple
       
-      int nrows, ncols, i;
-      ncols = 0;
-      nrows = python::extract<int>(descripMat.attr("__len__")());
+      unsigned int ncols = 0;
+      unsigned int nrows = python::extract<unsigned int>(descripMat.attr("__len__")());
       CHECK_INVARIANT(nrows > 0, "Empty list passed in");
 
       int dMatLen = nrows*(nrows-1)/2;
@@ -146,7 +145,7 @@ namespace RDDataManip {
       // assume that we a have a list of list of values (that can be extracted to double)
       std::vector<PySequenceHolder<double> > dData;
       dData.reserve(nrows);
-      for (i = 0; i < nrows; i++) {
+      for (unsigned int i = 0; i < nrows; i++) {
 	//PySequenceHolder<double> row(seq[i]);
         PySequenceHolder<double> row(descripMat[i]);
         if(i==0){

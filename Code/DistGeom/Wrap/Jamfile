@@ -1,0 +1,17 @@
+project wrapDistGeom : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension DistGeom : DistGeom.cpp
+  /RDKit//ForceField /RDKit//DistGeom	
+  /RDKit//Numerics/Optimizer   /RDKit//Numerics/EigenSolvers
+  /RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost ;
+
+install pymod : DistGeom : <location>$(RDBASE)/Python/DistanceGeometry ;
+
+
+
+
+

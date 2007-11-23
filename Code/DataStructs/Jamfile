@@ -1,0 +1,12 @@
+project DataStructs : : ;
+
+
+lib DataStructs : BitVect.cpp SparseBitVect.cpp ExplicitBitVect.cpp Utils.cpp 
+	base64.cpp BitOps.cpp DiscreteDistMat.cpp DiscreteValueVect.cpp : <link>static ;
+
+exe test : testDatastructs.cpp DataStructs /RDKit//RDGeneral ;
+
+install regrs : test : <location>testExecs ;
+
+
+

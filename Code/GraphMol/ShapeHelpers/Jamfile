@@ -1,0 +1,19 @@
+project GraphMol/ShapeHelpers : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib ShapeHelpers : ShapeEncoder.cpp ShapeUtils.cpp
+  : <link>static ;
+#install lib-install : ShapeHelpers : <location>$(RDBASE)/Code/lib ;
+
+exe main : testShapeHelpers.cpp ShapeHelpers
+  ../SmilesParse//SmilesParse ../FileParsers//FileParsers
+  ../MolTransforms//MolTransforms ../Substruct//Substruct ../MolAlign//MolAlign
+  /RDKit//Numerics/EigenSolvers /RDKit//Numerics/Alignment
+  ..//GraphMol /RDKit//DataStructs /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib
+ ;
+
+install regrs : main
+  : <location>testExecs ;
+

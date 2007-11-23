@@ -1,0 +1,23 @@
+project wrapShapeHelpers : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdShapeHelpers : rdShapeHelpers.cpp
+  ..//ShapeHelpers
+  ../../MolTransforms//MolTransforms
+  ../..//GraphMol
+  ../../../Numerics/EigenSolvers//EigenSolvers
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+install pymod : rdShapeHelpers
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

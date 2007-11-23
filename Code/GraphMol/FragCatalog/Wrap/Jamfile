@@ -1,0 +1,25 @@
+project wrapFragCatalog : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdfragcatalog : rdfragcatalog.cpp 
+  FragCatalog.cpp FragCatParams.cpp FragCatGenerator.cpp FragFPGenerator.cpp
+  ..//FragCatalog
+  ../../SmilesParse//SmilesParse ../../FileParsers//FileParsers
+  ../../Substruct//Substruct ../../Subgraphs//Subgraphs
+  ../..//GraphMol
+  ../../../Catalogs//Catalogs
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+install pymod : rdfragcatalog 
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

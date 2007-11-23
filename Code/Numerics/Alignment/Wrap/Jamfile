@@ -1,0 +1,15 @@
+project wrapAlignment : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdAlignment : rdAlignment.cpp
+  /RDKit//Numerics/Alignment /RDKit//Geometry /RDKit//RDBoost /RDKit//RDGeneral ;
+
+install pymod : rdAlignment : <location>$(RDBASE)/Python/Numerics ;
+
+
+
+
+

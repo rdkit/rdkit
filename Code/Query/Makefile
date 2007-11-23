@@ -4,19 +4,14 @@ include $(RDBASE)/Code/rdrules.make
 CXXFLAGS=$(BASECXXFLAGS)
 LDFLAGS= -L. $(RDGENERAL)
 
-SOURCES=Query.cpp
-LIB=libQuery.a
+SOURCES=test.cpp
 
-$(LIB): $(OBJS)
-	ar -rv $@ $?
-
-testExecs/test.exe: test.o $(LIB)
+testExecs/test.exe: test.o 
 	$(CXX) -o $@ $(CXXFLAGS) $^ $(LDFLAGS) 
 
 regrs: testExecs/test.exe
 
-
 clean:
-	rm -f $(OBJS) test.o $(LIB) $(DEPENDS)
+	rm -f $(OBJS) test.o $(DEPENDS)
 
 include $(DEPENDS)

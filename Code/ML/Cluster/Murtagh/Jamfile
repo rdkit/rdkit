@@ -1,0 +1,13 @@
+project ML/Cluster/Murtagh : : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+lib hc : hc.c hcdriver.c : <link>static ;
+
+python-extension Clustering : Clustering.cpp hc 
+;
+
+install pymod : Clustering : <location>$(RDBASE)/Python/ML/Cluster ;
+
+
+

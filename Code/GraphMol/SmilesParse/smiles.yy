@@ -11,7 +11,7 @@
 #include <vector>
 
 #include <GraphMol/RDKitBase.h>
-#include "SmilesParseOps.h"  
+#include <GraphMol/SmilesParse/SmilesParseOps.h>  
 #include <RDGeneral/RDLog.h>
 
 extern int yysmiles_lex();

@@ -1,0 +1,15 @@
+project wrapChemicalFeatures : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdChemicalFeatures : rdChemicalFeatures.cpp FreeChemicalFeature.cpp
+  /RDKit//ChemicalFeatures /RDKit//RDGeneral /RDKit//RDBoost ;
+
+install pymod : rdChemicalFeatures : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

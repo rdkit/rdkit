@@ -300,7 +300,7 @@
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
 		<File
-			RelativePath="..\..\GraphMol\SmilesParse\smarts.flex">
+			RelativePath="..\..\GraphMol\SmilesParse\smarts.ll">
 			<FileConfiguration
 				Name="Release|Win32">
 				<Tool
@@ -319,7 +319,7 @@
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath="..\..\GraphMol\SmilesParse\smarts.y">
+			RelativePath="..\..\GraphMol\SmilesParse\smarts.yy">
 			<FileConfiguration
 				Name="Release|Win32">
 				<Tool
@@ -338,7 +338,7 @@
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath="..\..\GraphMol\SmilesParse\smiles.flex">
+			RelativePath="..\..\GraphMol\SmilesParse\smiles.ll">
 			<FileConfiguration
 				Name="Release|Win32">
 				<Tool
@@ -357,7 +357,7 @@
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath="..\..\GraphMol\SmilesParse\smiles.y">
+			RelativePath="..\..\GraphMol\SmilesParse\smiles.yy">
 			<FileConfiguration
 				Name="Release|Win32">
 				<Tool

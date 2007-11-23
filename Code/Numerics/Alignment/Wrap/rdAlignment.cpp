@@ -83,8 +83,6 @@ namespace RDNumeric {
       // 2. A list of doubles of size N
       
       // first deal with situation where we have Numerics arrays
-      PyObject *refPtsObj = refPoints.ptr();
-      PyObject *prbPtsObj = probePoints.ptr();
       RDGeom::Point3DConstPtrVect refPts, probePts;
 
       GetPointsFromPythonSequence(refPoints,refPts);

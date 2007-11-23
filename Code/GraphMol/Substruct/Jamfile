@@ -1,0 +1,19 @@
+project GraphMol/Substruct : : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+
+lib Substruct : SubstructMatch.cpp SubstructUtils.cpp
+  : <link>static ;
+#install lib-install : Substruct : <location>$(RDBASE)/Code/lib ;
+
+exe test1 : test1.cpp Substruct ..//GraphMol 
+  /RDKit//RDGeneral /RDKit//Geometry 
+  /RDKit//lapacklibs  /RDKit//vflib
+ ; 
+
+install regrs : test1
+  : <location>testExecs ;
+
+
+

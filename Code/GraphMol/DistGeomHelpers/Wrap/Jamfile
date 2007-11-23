@@ -1,0 +1,27 @@
+project wrapDistGeomHelpers : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdDistGeom : rdDistGeom.cpp
+  ..//DistGeomHelpers
+  ../../ForceFieldHelpers//ForceFieldHelpers
+  ../..//GraphMol
+  ../../../DistGeom//DistGeom
+  ../../../ForceField//ForceField
+  ../../../Numerics/Optimizer//Optimizer
+  ../../../Numerics/Alignment//Alignment
+  ../../../Numerics/EigenSolvers//EigenSolvers
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//lapacklibs 
+  ;
+
+install pymod : rdDistGeom
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

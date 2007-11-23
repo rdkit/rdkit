@@ -230,7 +230,7 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\..\RDBoost\RDBase.cpp">
+				RelativePath="..\..\RDBoost\Wrap\RDBase.cpp">
 			</File>
 		</Filter>
 		<Filter

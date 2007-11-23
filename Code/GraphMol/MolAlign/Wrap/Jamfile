@@ -1,0 +1,25 @@
+project wrapMolAlign : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdMolAlign : rdMolAlign.cpp
+  ..//MolAlign
+  ../..//Substruct//Substruct ../../MolTransforms//MolTransforms
+  ../..//GraphMol
+  ../../../Numerics/Optimizer//Optimizer
+  ../../../Numerics/Alignment//Alignment
+  ../../../Numerics/EigenSolvers//EigenSolvers
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+install pymod : rdMolAlign
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

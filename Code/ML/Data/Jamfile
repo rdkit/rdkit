@@ -1,0 +1,6 @@
+project ML/Data : : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread ;
+
+python-extension cQuantize : cQuantize.cpp ../InfoTheory//InfoTheory
+;
+
+install pymod : cQuantize : <location>$(RDBASE)/Python/ML/Data ;

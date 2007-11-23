@@ -1,0 +1,10 @@
+project Numerics/Optimizer : : ;
+
+lib Optimizer : BFGSOpt.cpp LinearSearch.cpp : <link>static ;
+
+exe testOptimizer : testOptimizer.cpp Optimizer /RDKit//RDGeneral ;
+
+install regrs : testOptimizer : <location>testExecs ;
+
+
+

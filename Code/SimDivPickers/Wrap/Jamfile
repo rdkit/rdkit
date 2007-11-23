@@ -1,0 +1,16 @@
+project wrapSimDivPickers : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdSimDivPickers : MaxMinPicker.cpp HierarchicalClusterPicker.cpp 
+  rdSimDivPickers.cpp /RDKit//SimDivPickers ../../ML/Cluster/Murtagh//hc
+  /RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost ;
+
+install pymod : rdSimDivPickers : <location>$(RDBASE)/Python/SimDivFilters ;
+
+
+
+
+
