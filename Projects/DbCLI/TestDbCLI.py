@@ -205,6 +205,21 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out')
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
+                          '--outF=/dev/null',
+                          '--smilesOut=testData/bzr/search.out',
+                          '--smarts=cncncc',))
+
+    res=p.wait()
+    self.failIf(res)
+
+    self.failUnless(os.path.exists('testData/bzr/search.out'))
+    inF = file('testData/bzr/search.out','r')
+    lines=inF.readlines()
+    inF=None
+    self.failUnless(len(lines)==49)
+    os.unlink('testData/bzr/search.out')
+    
+    p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
                           '--outF=testData/bzr/search.out','--negate','--smarts=cncncc',))
 
     res=p.wait()

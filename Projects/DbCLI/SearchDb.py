@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.3.0"
+_version = "0.5.0"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -195,7 +195,7 @@ parser.add_option('--outputDelim',default=',',
 parser.add_option('--topN',default=20,type='int',
                   help='the number of neighbors to keep for each query compound. The default is %default')
 
-parser.add_option('--outF',default='-',
+parser.add_option('--outF','--outFile',default='-',
                   help='The name of the output file. The default is the console (stdout).')
 
 parser.add_option('--transpose',default=False,action="store_true",
@@ -215,7 +215,10 @@ parser.add_option('--propQuery','--query','-q',default='',
 
 parser.add_option('--sdfOut','--sdOut',default='',
                   help='export an SD file with the matching molecules')
-
+parser.add_option('--smilesOut','--smiOut',default='',
+                  help='export a smiles file with the matching molecules')
+parser.add_option('--nonchiralSmiles',dest='chiralSmiles',default=True,action='store_false',
+                  help='do not use chiral SMILES in the output')
 parser.add_option('--silent',default=False,action='store_true',
                   help='Do not generate status messages.')
 
@@ -261,13 +264,23 @@ if __name__=='__main__':
   else:
     outF = file(options.outF,'w+')
       
+  molsOut=False
   if options.sdfOut:
+    molsOut=True
     if options.sdfOut=='-':
       sdfOut=sys.stdout
     else:
       sdfOut = file(options.sdfOut,'w+')
   else:
     sdfOut=None
+  if options.smilesOut:
+    molsOut=True
+    if options.smilesOut=='-':
+      smilesOut=sys.stdout
+    else:
+      smilesOut = file(options.smilesOut,'w+')
+  else:
+    smilesOut=None
       
   if len(args):
     queryFilename=args[0]
@@ -400,7 +413,7 @@ if __name__=='__main__':
   else:
     if not options.silent: logger.info('Creating output')
     print >>outF,'\n'.join(ids)
-  if sdfOut and ids:
+  if molsOut and ids:
     conn = DbConnect(molDbName)
     cns = conn.GetColumnNames('molecules')
     curs = conn.GetCursor()
@@ -411,12 +424,15 @@ if __name__=='__main__':
     row=curs.fetchone()
     while row:
       m = Chem.Mol(str(row[-1]))
-      m.SetProp('_Name',str(row[0]))
-      print >>sdfOut,Chem.MolToMolBlock(m)
-      for i in range(1,len(cns)-2):
-        pn = cns[i]
-        pv = str(row[i])
-        print >>sdfOut,'> <%s>\n%s\n'%(pn,pv)
-      print >>sdfOut,'$$$$'  
+      if sdfOut:
+        m.SetProp('_Name',str(row[0]))
+        print >>sdfOut,Chem.MolToMolBlock(m)
+        for i in range(1,len(cns)-2):
+          pn = cns[i]
+          pv = str(row[i])
+          print >>sdfOut,'> <%s>\n%s\n'%(pn,pv)
+        print >>sdfOut,'$$$$'
+      if smilesOut:
+        print >>smilesOut,'%s %s'%(Chem.MolToSmiles(m,options.chiralSmiles),str(row[0]))
       row=curs.fetchone()
   if not options.silent: logger.info('Done!')
