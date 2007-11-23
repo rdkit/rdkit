@@ -2045,6 +2045,30 @@ void testSFIssue1811276()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFIssue1836576()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 1836576 (sanitization crash) " << std::endl;
+  RWMol *m;
+
+  std::string smi;
+
+  smi = "[BH]123[BH]45[BH]167[BH]289[BH]312[BH]838[BH]966[Co]74479%10%11%12[CH]633[BH]811[CH]345[BH]21[BH]1234[BH]75[BH]911[BH]226[BH]%1011[BH]227[BH]633[BH]44[BH]322[CH]%1145[CH]%12271";
+  m = SmilesToMol(smi,false,false);
+  TEST_ASSERT(m);
+  
+  bool ok=false;
+  try {
+    MolOps::sanitizeMol(*m);
+  } catch (ValueErrorException &vee){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+  delete m;
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 
 int main(){
@@ -2078,8 +2102,9 @@ int main(){
   testHsAndAromaticity();
   testSFIssue1694023();
   testSFIssue1719053();
-#endif
   testSFIssue1811276();
+#endif
+  testSFIssue1836576();
 
   return 0;
 }

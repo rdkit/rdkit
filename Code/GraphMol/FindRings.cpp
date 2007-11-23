@@ -7,7 +7,7 @@
 #include "RDKitBase.h"
 #include <GraphMol/Rings.h>
 #include <RDGeneral/RDLog.h>
-
+#include <RDBoost/Exceptions.h>
 
 #include <RDGeneral/utils.h>
 #include <vector>
@@ -919,9 +919,9 @@ namespace RDKit {
 	
 	    // if we did not find a degree 3 node we are done
 	    // REVIEW:
-	    //if (cand == -1) {
-	    //  break;
-	    //}
+	    if (cand == -1) {
+	      break;
+	    }
 	    FindRings::findRingsD3Node(tMol, res, invars, cand);
 	    doneAts.push_back(cand);
 	    FindRings::trimBonds(cand, tMol, changed); 
@@ -933,7 +933,9 @@ namespace RDKit {
       int nexpt = (nbnds - nats + nfrags);
       int ssiz = res.size();
       // first check that we got more than or equal to the number of expected rings
-      CHECK_INVARIANT(ssiz>=nexpt,"");
+      if(ssiz<nexpt){
+	throw ValueErrorException("could not find number of expected rings.");
+      }
   
       // if we have more than expected we need to do some cleanup
       // otherwise do som celan up work
