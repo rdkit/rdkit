@@ -1,6 +1,6 @@
 import RDConfig
 import unittest
-from SimDivFilters import rdSimDivPickers as rdsimdiv
+from SimDivFilters import rdSimDivPickers
 from DataManip.Metric import rdMetricMatrixCalc as rdmmc
 from Numeric import *
 import random
@@ -17,8 +17,27 @@ class TestCase(unittest.TestCase):
       self.dMat = rdmmc.GetEuclideanDistMat(self.dataPts)
        
   def test0MaxMin(self):
-    pkr = rdsimdiv.MaxMinPicker()
+    pkr = rdSimDivPickers.MaxMinPicker()
+    maxmin = pkr.Pick(self.dMat, self.n, self.m,(886,112))
+    self.failUnless(maxmin[0]==886)
+    self.failUnless(maxmin[1]==112)
+
+    def func(i,j):
+      if i==j:
+        return 0.0
+      if i<j:
+        j,i=i,j
+      return self.dMat[i*(i-1)/2+j]
+    lmaxmin = pkr.LazyPick(func, self.n, self.m,(886,112))
+    self.failUnless(list(lmaxmin)==list(maxmin))
+
+    self.failUnlessRaises(ValueError,lambda:pkr.Pick(self.dMat, self.n, self.m,(1012,)))
+    self.failUnlessRaises(ValueError,lambda:pkr.Pick(self.dMat, self.n, self.m,(-1,)))
+
     maxmin = pkr.Pick(self.dMat, self.n, self.m)
+    self.failUnless(maxmin)
+    lmaxmin = pkr.LazyPick(func, self.n, self.m)
+    self.failUnless(lmaxmin)
 
   def test1HierarchPick(self) :
     infil = open("test_data/points.csv", 'r')
@@ -34,7 +53,7 @@ class TestCase(unittest.TestCase):
       labels.append(int(tlst[3]))
       i += 1
     self.dMat = rdmmc.GetEuclideanDistMat(self.dataPts)
-    pkr = rdsimdiv.HierarchicalClusterPicker(rdsimdiv.ClusterMethod.WARD)
+    pkr = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
     clusters = pkr.Cluster(self.dMat, i, 2)
     # check that each of the clusters have the same label
     for cl in clusters :
@@ -53,7 +72,7 @@ class TestCase(unittest.TestCase):
       for j in range(i+1,sz):
         m.append(random.random())
     m = array(m)
-    picker = rdsimdiv.HierarchicalClusterPicker(rdsimdiv.ClusterMethod.WARD)
+    picker = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
     p1 = list(picker.Pick(m,sz,N))
     p1.sort()
     p2 = list(picker.Pick(m,sz,N))
@@ -69,12 +88,51 @@ class TestCase(unittest.TestCase):
       for j in range(i+1,sz):
         m.append(int(100*random.random()))
     m = array(m)
-    picker = rdsimdiv.HierarchicalClusterPicker(rdsimdiv.ClusterMethod.WARD)
+    picker = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
     p1 = list(picker.Pick(m,sz,N))
     p1.sort()
     p2 = list(picker.Pick(m,sz,N))
     p2.sort()
     self.failUnless(p1==p2)
+
+            
+  def testNonUniqueCrash(self) :
+    import DataStructs
+    sz = 10
+    nbits=20
+    nBitsToSet=int(nbits*.3)
+    N=12
+    vs = []
+    for i in range(sz):
+      bv = DataStructs.ExplicitBitVect(nbits)
+      for j in range(nBitsToSet):
+        val= int(nbits*random.random())
+        bv.SetBit(val)
+      vs.append(bv)
+      vs.append(bv)
+    def taniFunc(i,j,bvs = vs):
+      d = 1-DataStructs.FingerprintSimilarity(bvs[i],bvs[j])
+      return d
+    picker = rdSimDivPickers.MaxMinPicker()
+    try:
+      mm = picker.LazyPick(taniFunc,len(vs),N)
+    except:
+      ok=False
+    else:
+      ok=True
+    self.failUnless(ok)
+    self.failUnless(len(mm)==N)
+    picker = None
+
+    ds = []
+    nvs = len(vs)
+    for i in range(nvs):
+      for j in range(i+1,nvs):
+        d = taniFunc(i,j)
+        ds.append(d)
+    m = array(ds)
+    picker = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
+    p1 = list(picker.Pick(m,nvs,N))
 
             
 if __name__ == '__main__':
