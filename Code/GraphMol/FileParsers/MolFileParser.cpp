@@ -817,10 +817,10 @@ namespace RDKit{
       }
       
       while(!inStream->eof() && tempStr[0] != 'M'){
-        if(tempStr.find("A") == 0){
+        if(tempStr[0]=='A'){
           line++;
           std::string nextLine = getLine(inStream);
-          if(tempStr.find("M  END") != 0){
+          if(tempStr.substr(0,6)!="M  END"){
             ParseAtomAlias(res,tempStr,nextLine);
           }
         }
@@ -829,19 +829,21 @@ namespace RDKit{
       }
 
       //tempStr = inLine;
-      while(!inStream->eof() && tempStr.find("M  END") != 0 && tempStr.find("$$$$") != 0){
-        if(tempStr.find("M  ALS") == 0) ParseNewAtomList(res,tempStr);
-        if(tempStr.find("M  ISO") == 0) ParseIsotopeLine(res,tempStr);
-        if(tempStr.find("M  RGP") == 0) ParseRGroupLabels(res,tempStr);
-        if(tempStr.find("M  SUB") == 0) ParseSubstitutionCountLine(res,tempStr);
-        if(tempStr.find("M  CHG") == 0){
+      std::string lineBeg=tempStr.substr(0,6);
+      while(!inStream->eof() && lineBeg!="M  END" && tempStr.substr(0,4)!="$$$$"){
+        if(lineBeg=="M  ALS") ParseNewAtomList(res,tempStr);
+        else if(lineBeg=="M  ISO") ParseIsotopeLine(res,tempStr);
+        else if(lineBeg=="M  RGP") ParseRGroupLabels(res,tempStr);
+        else if(lineBeg=="M  SUB") ParseSubstitutionCountLine(res,tempStr);
+        else if(lineBeg=="M  CHG") {
           ParseChargeLine(res, tempStr,firstChargeLine);
           firstChargeLine=false;
         }
         line++;
         tempStr = getLine(inStream);
+        lineBeg=tempStr.substr(0,6);
       }
-      if(tempStr.find("M  END")==0){
+      if(tempStr[0]=='M'&&tempStr.substr(0,6)=="M  END"){
         fileComplete=true;
       }
     }

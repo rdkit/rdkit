@@ -130,7 +130,7 @@ namespace RDKit {
     d_line++;
     std::string tempStr = getLine(dp_inStream);
     // FIX: report files missing the $$$$ marker
-    while(!(dp_inStream->eof()) && tempStr.find("$$$$") != 0){
+    while(!(dp_inStream->eof()) && (tempStr[0]!='$'||tempStr.substr(0,4)!="$$$$") ){
       tempStr = strip(tempStr);
       if(tempStr!=""){
         if (tempStr[0] == '>') { // data header line: start of a data item
@@ -140,7 +140,7 @@ namespace RDKit {
             // have to contain a data label (instead can have something line field 
             // id into a MACCS db). But we do not currently know what to do in this 
             // situation - so ignore such data items for now
-            tempStr.erase(0,1); // remover the first ">" sign
+            tempStr.erase(0,1); // remove the first ">" sign
             int sl = tempStr.find("<"); // begin datalabel
             int se = tempStr.find(">"); // end datalabel
             if ((sl == -1) || (se == -1) || (se == (sl+1)) ) {
@@ -220,7 +220,7 @@ namespace RDKit {
       BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
       
       // FIX: report files missing the $$$$ marker
-      while(!(dp_inStream->eof()) && tempStr.find("$$$$") != 0){
+      while(!(dp_inStream->eof()) && (tempStr[0]!='$'||tempStr.substr(0,4)!="$$$$") ){
         d_line++;
         tempStr = getLine(dp_inStream);
       }
@@ -232,7 +232,7 @@ namespace RDKit {
       BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule ending on line " << d_line << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
       
-      while(!(dp_inStream->eof()) && tempStr.find("$$$$") != 0){
+      while(!(dp_inStream->eof()) && (tempStr[0]!='$'||tempStr.substr(0,4)!="$$$$") ){
         d_line++;
         tempStr = getLine(dp_inStream);
       }
@@ -289,7 +289,7 @@ namespace RDKit {
         d_line++;
         tempStr = getLine(dp_inStream);
         
-        if (tempStr.find("$$$$") == 0) {
+        if (tempStr[0]=='$' && tempStr.substr(0,4)=="$$$$") {
           unsigned int posHold=dp_inStream->tellg();
           this->checkForEnd();
           if (!this->df_end){
@@ -329,7 +329,7 @@ namespace RDKit {
       while (!dp_inStream->eof()) {
         tempStr = getLine(dp_inStream);
         
-        if (tempStr.find("$$$$") == 0) {
+        if (tempStr[0]=='$' && tempStr[1]=='$' && tempStr[2]=='$' && tempStr[3]=='$'){
           unsigned int posHold=dp_inStream->tellg();
           // don't worry about the last molecule:
           this->checkForEnd();
