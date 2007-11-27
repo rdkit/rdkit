@@ -7,13 +7,9 @@ export BASE=$TMPDIR/$DIRNAME
 
 #MAILIT=/home/glandrum/RDKit/Scripts/MailResults.py
 export RDBASE=$BASE/RDKit
-export RDOPTFLAGS="-O3"
-export RDF77LIB="gfortran"
-export PYTHON_ROOT="/usr"
-export PYTHON_VERSION="2.5"
-export GCCVERSION="41"
-export BOOSTBASE="boost-1_34_1"
-export BOOSTHOME="/usr/local"
+export BOOSTBASE="boost_1_34_1"
+export BOOST_BUILD_PATH="/usr/local/src/$BOOSTBASE"
+export BJAM="/usr/local/bin/bjam"
 export PYTHONPATH="$RDBASE/Python"
 export PATH="$RDBASE/bin:$PATH"
 export LD_LIBRARY_PATH="$RDBASE/bin:/usr/local/lib"
@@ -64,7 +60,7 @@ for foo in Code bin Python Projects; do
   svn checkout  $SVNROOT/$foo $foo &> /dev/null
 done
 svn checkout  -N $SVNROOT/External External &> /dev/null
-for foo in Lapack++ svdlibc svdpackc vflib-2.0 cmim-1.0 HappyDoc-r1_3; do
+for foo in Lapack++ svdlibc svdpackc vflib-2.0 cmim-1.0 ; do
   svn checkout  $SVNROOT/External/$foo External/$foo &> /dev/null
 done
 svn checkout  -N $SVNROOT/Scripts Scripts &> /dev/null
@@ -93,11 +89,8 @@ echo "****  BUILD  ****" >> $LOGFILE 2>&1
 echo "****  BUILD  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
-cd $RDBASE/External
-make >> $LOGFILE 2>&1
 cd $RDBASE/Code
-make all >> $LOGFILE 2>&1
-make regrs >> $LOGFILE 2>&1
+$BJAM >>$LOGFILE 2>&1
 
 
 # ------------------------- -------------------------
@@ -135,10 +128,9 @@ echo "****  DOCS  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 cd $RDBASE/Code
-make docs
+/usr/bin/doxygen doxygen.config
 cd $RDBASE/Python
 epydoc --config  epydoc.config
-
 
 # ------------------------- -------------------------
 #
