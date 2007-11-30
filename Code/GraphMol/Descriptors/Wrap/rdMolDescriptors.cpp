@@ -74,14 +74,17 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
     .def_readonly("numAtomPairFingerprintBits",
 		  RDKit::Descriptors::AtomPairs::numAtomPairFingerprintBits)
     ;
+  docString="Returns the atom code (hash) for an atom";
   python::def("GetAtomPairAtomCode", RDKit::Descriptors::AtomPairs::getAtomCode,
               (python::arg("atom"), python::arg("branchSubtract")=0),
               docString.c_str());
+  docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint",
 	      RDKit::Descriptors::AtomPairs::getAtomPairFingerprint,
 	      python::arg("mol"),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the topological-torsion fingerprint for a molecule as a LongIntSparseIntVect";
   python::def("GetTopologicalTorsionFingerprint",
 	      RDKit::Descriptors::AtomPairs::getTopologicalTorsionFingerprint,
 	      (python::arg("mol"),python::arg("targetSize")=4),
@@ -89,11 +92,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      python::return_value_policy<python::manage_new_object>());
 
 
+  docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
+    "the Wildman-Cripppen logp and mr value";
   python::def("_CalcCrippenContribs",
 	      computeCrippenContribs,
 	      (python::arg("mol"),
 	       python::arg("force")=false),
               docString.c_str());
+  docString="returns a 2-tuple with the Wildman-Crippen logp,mr values";
   python::def("CalcCrippenDescriptors",
 	      calcCrippenDescriptors,
 	      (python::arg("mol"),python::arg("includeHs")=true,
@@ -102,6 +108,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("__CalcCrippenDescriptors_version__")=
     RDKit::Descriptors::crippenVersion;
   
+  docString="returns the Labute ASA value for a molecule";
   python::def("CalcLabuteASA",
 	      RDKit::Descriptors::calcLabuteASA,
 	      (python::arg("mol"),python::arg("includeHs")=true,
@@ -109,6 +116,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("__CalcLabuteASA_version__")=RDKit::Descriptors::labuteASAVersion;
 
+  docString="returns a list of atomic contributions to the Labute ASA";
   python::def("_CalcLabuteASAContribs",
 	      computeASAContribs,
 	      (python::arg("mol"),python::arg("includeHs")=true,
