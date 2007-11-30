@@ -116,6 +116,8 @@ namespace RDKit{
 
 
     ANY_FORCE(std::vector<int>);
+    ANY_FORCE(std::vector<unsigned int>);
+    ANY_FORCE(std::vector<unsigned long long>);
     ANY_FORCE(std::vector<double>);
     ANY_FORCE(std::vector<std::string>);
 
