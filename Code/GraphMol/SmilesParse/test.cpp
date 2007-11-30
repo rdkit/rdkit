@@ -719,6 +719,7 @@ void testIssue153(){
   mol2 = SmilesToMol(refSmi);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2,true);
+  std::cerr<<smi<<" " <<refSmi<<std::endl;
   TEST_ASSERT(refSmi==smi);
   delete mol;
   delete mol2;

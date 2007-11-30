@@ -293,6 +293,7 @@ namespace Canon {
     possibles.reserve(bondsPair.second-bondsPair.first);
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
 
+    //std::cerr<<" TRAVERSE: (" << atomIdx<<") ";
     while(bondsPair.first != bondsPair.second){
       Bond *theBond = pMap[*(bondsPair.first)];
       if(theBond->getIdx() != inBondIdx){
@@ -330,9 +331,11 @@ namespace Canon {
 	    MAX_NATOMS*MAX_NATOMS;
 	}
 	possibles.push_back(makePossible(rank,otherIdx,theBond));
+	//std::cerr << otherIdx << "_" << ranks[otherIdx]<<"_"<<rank<<" ";
       }
       bondsPair.first++;
     }
+    //std::cerr<<std::endl;
 
     // ---------------------
     //

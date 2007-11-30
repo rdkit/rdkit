@@ -2014,6 +2014,7 @@ void testSFIssue1811276()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   smi = MolToSmiles(*m);
+  BOOST_LOG(rdInfoLog)<<smi<<std::endl;
   TEST_ASSERT(smi=="[O-]n1cc[n+](=O)cc1");
   delete m;
 
