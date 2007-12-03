@@ -155,7 +155,7 @@ def GetMolsFromSDFile(dataFilename,errFile,nameProp):
 import os
 from optparse import OptionParser
 parser=OptionParser(_usage,version='%prog '+_version)
-parser.add_option('--dbDir',default='/db/CADD/NOV_Q2_2007/rdk_db',
+parser.add_option('--dbDir',default='.',
                   help='name of the directory containing the database information. The default is %default')
 parser.add_option('--molDbName',default='Compounds.sqlt',
                   help='name of the molecule database')

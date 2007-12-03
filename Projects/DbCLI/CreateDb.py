@@ -31,7 +31,7 @@
 #
 # Created by Greg Landrum, July 2007
 
-_version = "0.4.0"
+_version = "0.4.1"
 _usage="""
  CreateDb [optional arguments] <filename>
 
@@ -100,6 +100,10 @@ parser.add_option('--noDescriptors',default=True,dest='doDescriptors',action='st
                   help='skip calculating descriptors')
 parser.add_option('--noProps',default=False,dest='skipProps',action='store_true',
                   help="don't include molecular properties in the database")
+parser.add_option('--noSmiles',default=False,dest='skipSmiles',action='store_true',
+                  help="don't include SMILES in the database (can make loading somewhat faster)")
+parser.add_option('--maxRowsCached',default=-1,
+                  help="maximum number of rows to cache before doing a database commit")
 
 parser.add_option('--silent',default=False,action='store_true',
                   help='do not provide status messages')
@@ -139,7 +143,8 @@ if __name__=='__main__':
   Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
                 errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
                 skipProps=options.skipProps,defaultVal=options.missingPropertyVal,
-                silent=options.silent,nameProp=options.nameProp)
+                silent=options.silent,nameProp=options.nameProp,
+                skipSmiles=options.skipSmiles,maxRowsCached=int(options.maxRowsCached))
   if options.doPairs:
     from Chem.AtomPairs import Pairs,Torsions
     pairConn = DbConnect(os.path.join(options.outDir,options.pairDbName))
