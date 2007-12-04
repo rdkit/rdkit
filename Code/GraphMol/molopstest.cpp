@@ -1207,6 +1207,7 @@ void test12()
   TEST_ASSERT(m);
   //MolOps::assignBondStereoCodes(*m);
   smi = MolToSmiles(*m,1);
+  BOOST_LOG(rdInfoLog)<<refSmi<<" "<<smi<<std::endl;
   TEST_ASSERT(refSmi==smi);
 
   delete m;
@@ -1751,7 +1752,7 @@ void testAddConformers() {
 
   std::string smi = "CC";
   ROMol *m = SmilesToMol(smi);
-  int i;
+  unsigned int i;
   for (i = 0; i < 5; i++) {
     Conformer *conf = new Conformer(2);
     conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
@@ -1787,10 +1788,6 @@ void testIssue252() {
       it!=mol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
   }
-
-  
-  unsigned int na = mol->getNumAtoms();
-  unsigned int nb = mol->getNumBonds();
   std::string asmi = MolToSmiles(*mol);
   // check if we can do it in the aromatic form
   ROMol *nmol = SmilesToMol(asmi);
@@ -2014,8 +2011,7 @@ void testSFIssue1811276()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   smi = MolToSmiles(*m);
-  BOOST_LOG(rdInfoLog)<<smi<<std::endl;
-  TEST_ASSERT(smi=="[O-]n1cc[n+](=O)cc1");
+  TEST_ASSERT(smi=="O=[n+]1ccn([O-])cc1");
   delete m;
 
   smi="o1ccc(=O)cc1";
@@ -2034,7 +2030,8 @@ void testSFIssue1811276()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   smi = MolToSmiles(*m);
-  TEST_ASSERT(smi=="[O-]n1cc[n+](=O)cc1");
+  BOOST_LOG(rdInfoLog)<<smi<<std::endl;
+  TEST_ASSERT(smi=="O=[n+]1ccn([O-])cc1");
 
   smi="O=n1ccccc1";
   m = SmilesToMol(smi);

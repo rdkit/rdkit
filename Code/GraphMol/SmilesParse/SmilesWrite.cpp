@@ -9,6 +9,7 @@
 
 #include <sstream>
 #include <map>
+#include <list>
 
 
 
@@ -151,12 +152,6 @@ namespace RDKit{
       }
 
       Bond::BondDir dir= bond->getBondDir();
-      //if(bond->getBeginAtomIdx() != atomToLeftIdx) {
-      //  if(dir==Bond::ENDDOWNRIGHT) dir = Bond::ENDUPRIGHT;
-      //  else if(dir==Bond::ENDUPRIGHT) dir = Bond::ENDDOWNRIGHT;
-      //}
-      Bond::BondType btype = bond->getBondType();
-      int oaid = bond->getOtherAtomIdx(atomToLeftIdx);
       switch(bond->getBondType()){
       case Bond::SINGLE:
         if( dir != Bond::NONE && dir != Bond::UNKNOWN ){
@@ -201,7 +196,8 @@ namespace RDKit{
         if(!aromatic) res << ":"; 
         break;
       case Bond::DATIVE:
-        if(bond->getBeginAtomIdx() == atomToLeftIdx) res << ">";
+        if(atomToLeftIdx>=0 &&
+           bond->getBeginAtomIdx()==static_cast<unsigned int>(atomToLeftIdx) ) res << ">";
         else res << "<";
         break;
       default:
@@ -233,44 +229,7 @@ namespace RDKit{
           break;
         case Canon::MOL_STACK_BOND:
           bond = msCI->obj.bond;
-
-          // FIX:  This is kind of a hacky fix to a problem.
-          //   What's going on here is that the traversal code currently
-          //   (June 2004) puts ring-closure bonds with the final atom in
-          //   the ring (choices are first and last atom).  The bond
-          //   directions calculated in the canonicalization code are
-          //   configured to be correct if the bond dir goes from the
-          //   first to the last atom.  So if we have a bond closing a
-          //   ring that has direction indicated, that direction will end
-          //   up being wrong.  The "correct" solution would be to go and 
-          //   change the traversal code to insert the bond into the stack
-          //   after the initial atom, but that will break loads of
-          //   existing canonical smiles and, potentially, open another
-          //   can of bugs... so what we'll do instead here is look ahead
-          //   in the stack and reverse the direction on ring-closure
-          //   bonds at the time of writing.  It's a hack, but a simple
-          //   and functional hack.
-          //   This fixes Issue 184.
-#if 0
-          tmpIt = msCI+1;
-          if(tmpIt!=molStack.end()&&tmpIt->type==MOL_STACK_RING){
-            tmpDir = bond->getBondDir();
-            switch(tmpDir){
-            case Bond::ENDUPRIGHT:
-              bond->setBondDir(Bond::ENDDOWNRIGHT);
-              break;
-            case Bond::ENDDOWNRIGHT:
-              bond->setBondDir(Bond::ENDUPRIGHT);
-              break;
-            }
-            res << GetBondSmiles(bond,msCI->number);
-            bond->setBondDir(tmpDir);
-          } else {
-            res << GetBondSmiles(bond,msCI->number);
-          }       
-#else
           res << GetBondSmiles(bond,msCI->number,doKekule);
-#endif
           break;
         case Canon::MOL_STACK_RING:
           ringIdx = msCI->number;
@@ -373,7 +332,7 @@ namespace RDKit{
     colorIt = colors.begin();
     // loop to deal with the possibility that there might be disconnected fragments
     while(colorIt != colors.end()){
-      int nextAtomIdx;
+      int nextAtomIdx=-1;
       std::string subSmi;
 
       // find the next atom for a traverse
@@ -389,6 +348,7 @@ namespace RDKit{
           }
         }
       }
+      CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(mol, nextAtomIdx, colors,
                                                     ranks,doKekule);

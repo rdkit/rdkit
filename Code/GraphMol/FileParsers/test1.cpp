@@ -121,7 +121,7 @@ void test2(){
 
   TEST_ASSERT(m->getNumAtoms()==5);
   std::string smi = MolToSmiles(*m);
-  TEST_ASSERT(smi=="CC?CC=C");
+  TEST_ASSERT(smi=="C=CC?CC");
   smi = "C1=CC=CC=C1";
   RWMol *m2 = SmilesToMol(smi,false,false);
   MatchVectType mv;

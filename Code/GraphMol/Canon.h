@@ -64,7 +64,7 @@ namespace Canon {
       number = idx;
     };
     //! construct for a branch opening or closing
-    explicit MolStackElem(const char *chr) {
+    explicit MolStackElem(const char *chr,int idx) {
       switch(chr[0]){
       case '(':
 	type = MOL_STACK_BRANCH_OPEN;
@@ -75,6 +75,7 @@ namespace Canon {
       default:
 	break;
       }
+      number=idx;
     }
     MolStackTypes type; //!< stores the type of node
     MolStackUnion obj;  //!< holds our pointer (if appropriate)
@@ -88,7 +89,7 @@ namespace Canon {
   //! returns a PossibleType
   PossibleType makePossible(int rank,int atomIdx,RDKit::Bond *bond);
   //! compare two PossibleTypes
-  int _possibleComp(const PossibleType arg1,const PossibleType arg2);
+  int _possibleComp(const PossibleType &arg1,const PossibleType &arg2);
 
   //! constructs the canonical traversal order for a molecular fragment
   /*!

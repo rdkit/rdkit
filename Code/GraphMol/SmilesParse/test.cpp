@@ -73,7 +73,7 @@ void testPass(){
     mol = SmilesToMol(smi);
     CHECK_INVARIANT(mol,smi);
     if (mol) {
-      int nAts = mol->getNumAtoms();
+      unsigned int nAts = mol->getNumAtoms();
       CHECK_INVARIANT(nAts!=0,smi.c_str());
       mol2 = SmilesToMol(MolToSmiles(*mol));
       CHECK_INVARIANT(mol2->getNumAtoms()==nAts,smi.c_str())
@@ -130,7 +130,6 @@ void testFail(){
 }
 
 void testDetails(){
-  int i = 0;
   Mol *mol;
   Mol::GRAPH_NODE_TYPE a;
   std::string smi;
@@ -164,7 +163,6 @@ void testDetails(){
 }
 
 void testProblems(){
-  int i = 0;
   Mol *mol;
   std::string smi;
 
@@ -209,7 +207,6 @@ void testProblems(){
 }
 
 void testBasicCanon(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
@@ -311,7 +308,6 @@ void testLeak(){
 
 
 void testStereochem(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
@@ -536,7 +532,6 @@ void testStereochem(){
 
 
 void testIssue127(){
-  int i = 0;
   Mol *mol,*mol2;
   std::string smi,refSmi,tempStr;
 
@@ -575,7 +570,6 @@ void testIssue127(){
 
 
 void testIssue143(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi,tempStr;
 
@@ -600,7 +594,6 @@ void testIssue143(){
 }
 
 void testIssue151(){
-  int i = 0;
   Mol *mol,*mol2;
   std::string smi,refSmi,tempStr;
 
@@ -693,7 +686,6 @@ void testIssue151(){
 }
 
 void testIssue153(){
-  int i = 0;
   std::string code;
   Mol *mol,*mol2;
   std::string smi,refSmi,tempStr;
@@ -751,7 +743,6 @@ void testIssue153(){
 
 
 void testIssue157(){
-  int i = 0;
   std::string code;
   Mol *mol,*mol2;
   std::string smi,refSmi,tempStr;
@@ -810,7 +801,6 @@ void testIssue157(){
 
 
 void testIssue159(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi,tempStr;
 
@@ -971,7 +961,6 @@ void testIssue159(){
 
 
 void testIssue175(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi,tempStr;
 
@@ -993,7 +982,6 @@ void testIssue175(){
 }
 
 void testIssue176(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi,tempStr;
 
@@ -1029,7 +1017,6 @@ void testIssue176(){
 }
 
 void testIssue180(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
@@ -1056,7 +1043,6 @@ void testIssue180(){
 }
 
 void testIssue184(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
@@ -1090,13 +1076,30 @@ void testIssue184(){
 }
 
 void testIssue185(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 185: Cis/Trans incorrect on writing branches" << std::endl;
 
+  // start with a simple E/Z handling case with branches:
+  smi ="C(/C)=N/O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  refSmi = MolToSmiles(*mol,1,0,0);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
+  TEST_ASSERT(refSmi=="C(\\C)=N\\O");
+  delete mol;
+  // make sure we can round-trip:
+  mol = SmilesToMol(refSmi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  delete mol;
+  
+  // now make it more complex
   smi ="CC(=N\\O)/C=P/N";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -1105,6 +1108,7 @@ void testIssue185(){
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
   refSmi = MolToSmiles(*mol,1);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
   delete mol;
   mol = SmilesToMol(refSmi);
   TEST_ASSERT(mol);
@@ -1119,12 +1123,32 @@ void testIssue185(){
   smi = MolToSmiles(*mol,1);
   //std::cout << "ref: " << refSmi << " -> " << smi << std::endl;
   TEST_ASSERT(refSmi==smi);
+
+  // now repeat that experiment, but this time root the SMILES so that
+  // we go in a "sensible" order:
+  delete mol;
+  smi ="CC(=N\\O)/C=P/N";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  refSmi = MolToSmiles(*mol,true,false,6);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
+  TEST_ASSERT(refSmi=="N/P=C/C(C)=N/O");
+  delete mol;
+  mol = SmilesToMol(refSmi);
+  TEST_ASSERT(mol);
+  for(RWMol::BondIterator bondIt=mol->beginBonds();
+      bondIt!=mol->endBonds();
+      bondIt++){
+    if((*bondIt)->getBondType()==Bond::DOUBLE){
+      TEST_ASSERT((*bondIt)->getStereo()==Bond::STEREOE);
+    }
+  }
+
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue191(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
   int numE=0;
@@ -1163,11 +1187,9 @@ void testIssue191(){
 }
 
 void testIssue256(){
-  int i = 0;
   Mol *mol;
   Bond *bond;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 256: SMILES yields incorrect structure" << std::endl;
@@ -1199,10 +1221,8 @@ void testIssue256(){
 
 
 void testIssue266(){
-  int i = 0;
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 266: kekulized SMILES output" << std::endl;
@@ -1235,7 +1255,6 @@ void testIssue266(){
 void testRootedAt(){
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing rootedAtAtom functionality" << std::endl;
@@ -1257,7 +1276,6 @@ void testRootedAt(){
 void testIsotopes(){
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing isotope handling" << std::endl;
@@ -1277,7 +1295,6 @@ void testIsotopes(){
 void testBug1670149(){
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1670149" << std::endl;
@@ -1302,7 +1319,6 @@ void testBug1670149(){
 void testBug1719046(){
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1719046: explicit Hs in canonical smiles" << std::endl;
@@ -1360,6 +1376,74 @@ void testBug1719046(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testBug1842174(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1842174: bad bond dirs in branches" << std::endl;
+  RWMol *mol;
+  std::string smi;
+#if 1
+  smi ="F/C=N/Cl";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="F/C=N/Cl");
+
+  smi = MolToSmiles(*mol,true,false,1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="C(\\F)=N/Cl");
+
+  delete mol;
+  smi ="C(\\C=C\\F)=C(/Cl)Br";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="F/C=C/C=C(/Cl)Br");
+
+  smi = MolToSmiles(*mol,true,false,0);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="C(=C(/Cl)Br)\\C=C\\F");
+  delete mol;
+#endif
+  smi ="O=NC1=NOC(=N\\O)/C1=N\\O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="O=NC1=NOC(=N\\O)/C1=N\\O");
+
+
+  // ----------------------
+  //  the next two examples are a pair:
+  // vvvvvvvvvvvvvvvvvvvvvv
+  delete mol;
+  smi ="O/N=C/1COCC1=N\\O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="O/N=C1\\C(=N\\O)COC1");
+
+  // this time the algorithm is forced to set 
+  // the directionality on the ring closure bond:
+  delete mol;
+  smi ="O/N=C/1COC[N+]1=N\\O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="O/N=C/1COC[N+]1=N\\O");
+  // ^^^^^^^^^^^^^^^^^^^^^^
+  // end of the pair
+  // ----------------------
+
+
+
+  delete mol;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1381,7 +1465,6 @@ main(int argc, char *argv[])
   testIssue176();
   testIssue180();
   testIssue159();
-  testIssue185();
   testIssue184();
   testIssue191();
   testIssue256();
@@ -1390,5 +1473,7 @@ main(int argc, char *argv[])
   testIsotopes();
   testBug1670149();
 #endif
+  testIssue185();
+  testBug1842174();
   //testBug1719046();
 }
