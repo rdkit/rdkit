@@ -181,11 +181,7 @@ namespace SmilesParseOps{
     // ring closure bond 
     Atom::ChiralType ctype = atom->getChiralTag();
     if (atom->getNumExplicitHs() == 1) {
-      if (ctype == Atom::CHI_TETRAHEDRAL_CW) {
-	atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-      } else if (ctype == Atom::CHI_TETRAHEDRAL_CCW) {
-	atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-      }
+      atom->invertChirality();
     }
   }
   typedef std::pair<int,int> INT_PAIR;
@@ -265,9 +261,7 @@ namespace SmilesParseOps{
 	// permutation order:
 	int nSwaps=(*atomIt)->getPerturbationOrder(bondOrdering);
 	if(nSwaps%2){
-	  (*atomIt)->setChiralTag(chiralType==Atom::CHI_TETRAHEDRAL_CW ?
-				  Atom::CHI_TETRAHEDRAL_CCW :
-				  Atom::CHI_TETRAHEDRAL_CW);
+          (*atomIt)->invertChirality();
 	}
       }
     }

@@ -73,8 +73,8 @@ namespace RDKit{
     //! store type of chirality
     typedef enum {
       CHI_UNSPECIFIED=0,  //!< chirality that hasn't been specified
-      CHI_TETRAHEDRAL_CW, //!< tetrahedral: clockwise rotation
-      CHI_TETRAHEDRAL_CCW,//!< tetrahedral: counter-clockwise rotation
+      CHI_TETRAHEDRAL_CW, //!< tetrahedral: clockwise rotation (SMILES @@)
+      CHI_TETRAHEDRAL_CCW,//!< tetrahedral: counter-clockwise rotation (SMILES @)
       CHI_OTHER           //!< some unrecognized type of chirality
     } ChiralType;
 
@@ -220,6 +220,8 @@ namespace RDKit{
 
     //! sets our \c chiralTag
     void setChiralTag(ChiralType what) { d_chiralTag = what; };
+    //! inverts our \c chiralTag
+    void invertChirality();
     //! returns our \c chiralTag
     ChiralType getChiralTag() const { return d_chiralTag; };
 

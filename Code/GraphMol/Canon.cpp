@@ -28,6 +28,8 @@ namespace Canon {
     case Bond::ENDDOWNRIGHT:
       bond->setBondDir(Bond::ENDUPRIGHT);
       break;
+    default:
+      break;
     }
   }
   
@@ -288,10 +290,7 @@ namespace Canon {
     Atom *atom = mol.getAtomWithIdx(atomIdx);
     // the atom will keep track of the order in which it sees bonds
     // using its _TraversalBondIndexOrder list:
-    INT_LIST travList,directTravList;
-    if(inBondIdx >= 0){
-      travList.push_back(inBondIdx);
-    }
+    INT_LIST directTravList;
     INT_VECT ringClosures(0);
     atom->setProp("_CanonRingClosureBondIndices",ringClosures,true);
 
@@ -377,7 +376,7 @@ namespace Canon {
       int lowestRingIdx;
       Bond *bond = possiblesIt->second.second;
       Atom *otherAtom;
-      INT_LIST otherTravList;
+      INT_LIST travList,otherTravList;
 
       switch(colors[possibleIdx]){
       case WHITE_NODE:
@@ -393,7 +392,7 @@ namespace Canon {
         canonicalDFSTraversal(mol,possibleIdx,bond->getIdx(),colors,
                               cycles,ranks,cyclesAvailable,subStack,
                               atomOrders,bondVisitOrders);
-        atom->getProp("_TraversalBondIndexOrder",travList);
+        //atom->getProp("_TraversalBondIndexOrder",travList);
         subStacks.push_back(subStack);
         nAttached += 1;
         break;
@@ -408,7 +407,7 @@ namespace Canon {
         lowestRingIdx += 1;
         // we're not going to push the bond on here, but save it until later
         molStack.push_back(MolStackElem(lowestRingIdx));
-        travList.push_back(bond->getIdx());
+        directTravList.push_back(bond->getIdx());
 
         // we need to add this bond to the traversal list for the
         // other atom as well:
@@ -491,7 +490,18 @@ namespace Canon {
       }
     }
 
-    for(INT_LIST_CI ilci=directTravList.begin();ilci!=directTravList.end();ilci++){
+    INT_LIST travList;
+    if(inBondIdx >= 0){
+      travList.push_back(inBondIdx);
+    }
+    if(atom->hasProp("_TraversalBondIndexOrder")){
+      INT_LIST indirectTravList;
+      atom->getProp("_TraversalBondIndexOrder",indirectTravList);
+      for(INT_LIST_CI ilci=indirectTravList.begin();ilci!=indirectTravList.end();++ilci){
+        travList.push_back(*ilci);
+      }
+    }
+    for(INT_LIST_CI ilci=directTravList.begin();ilci!=directTravList.end();++ilci){
       travList.push_back(*ilci);
     }
     atom->setProp("_TraversalBondIndexOrder",travList);

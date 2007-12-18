@@ -269,8 +269,6 @@ namespace RDKit{
 	int chg = abs(atom->getFormalCharge()) % 8;
 	int chgSign = atom->getFormalCharge() > 0;
 	int num =    atom->getAtomicNum() % 128;
-	//int explicitVal = atom->getExplicitValence() % 16;
-	int totalVal = (atom->getExplicitValence()+atom->getImplicitValence())% 16;
 	int nConns = atom->getDegree() % 8;
 	int deltaMass = static_cast<int>(atom->getMass() -
 					 PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));

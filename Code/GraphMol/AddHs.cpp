@@ -392,7 +392,7 @@ namespace RDKit{
               }
               
               int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
-              //std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
+              std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
               if(nSwaps%2){
                 if(heavyAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
                   heavyAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);

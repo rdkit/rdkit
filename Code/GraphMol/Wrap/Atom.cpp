@@ -176,6 +176,7 @@ struct atom_wrapper {
       //.def("ClearDativeFlag",&Atom::clearDativeFlag)
 
       .def("SetChiralTag",&Atom::setChiralTag)
+      .def("InvertChirality",&Atom::invertChirality)
       .def("GetChiralTag",&Atom::getChiralTag)
 
       .def("SetHybridization",&Atom::setHybridization,

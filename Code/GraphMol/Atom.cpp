@@ -403,14 +403,18 @@ void Atom::updatePropertyCache(bool strict) {
 //   getPerturbationOrder([1,2,3,0]) = 3
 //   getPerturbationOrder([1,2,0,3]) = 2
 int Atom::getPerturbationOrder(INT_LIST probe) const{
+  PRECONDITION(dp_mol,"perturbation order not defined for atoms not associated with molecules")
   INT_LIST ref;
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = getOwningMol().getAtomBonds(this);
   ROMol::GRAPH_MOL_BOND_PMAP::type pMap = getOwningMol().getBondPMap();
+  std::cerr<<"  gPO("<<getIdx()<<"):";
   while(beg!=end){
+    std::cerr << " "<<pMap[*beg]->getIdx();
     ref.push_back(pMap[*beg]->getIdx());
     beg++;
   }
+  std::cerr <<"\n";
   PRECONDITION(ref.size()==probe.size(),"size mismatch");
   INT_LIST::const_iterator refIt=ref.begin();
   INT_LIST::iterator probeIt=probe.begin(),probeIt2;
@@ -438,7 +442,22 @@ int Atom::getPerturbationOrder(INT_LIST probe) const{
   }
   return nSwaps;
 }
-  
+
+void Atom::invertChirality(){
+  switch(getChiralTag()){
+  case CHI_TETRAHEDRAL_CW:
+    setChiralTag(CHI_TETRAHEDRAL_CCW);
+    break;
+  case CHI_TETRAHEDRAL_CCW:
+    setChiralTag(CHI_TETRAHEDRAL_CW);
+    break;
+  case CHI_OTHER:
+  case CHI_UNSPECIFIED:
+    break;
+  }
+}
+
+
 } // end o' namespace
 
 std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){

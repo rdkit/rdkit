@@ -77,14 +77,24 @@ namespace RDKit{
         INT_LIST trueOrder;
         atom->getProp("_TraversalBondIndexOrder",trueOrder);
 #ifdef VERBOSE_CANON
+        std::cout << "\tatom: " << atom->getIdx() << " | ";
         std::copy(trueOrder.begin(),trueOrder.end(),
-                  std::ostream_iterator<int>(std::cout," "));
+                  std::ostream_iterator<int>(std::cout,", "));
+        std::cout << std::endl;
+        std::cout << "\t ---- | " ;
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = atom->getOwningMol().getAtomBonds(atom);
+        ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
+        while(beg!=end){
+          std::cout <<pMap[*beg]->getIdx()<<", ";
+          beg++;
+        }
         std::cout << std::endl;
 #endif    
         int nSwaps =  atom->getPerturbationOrder(trueOrder);
 
     
-        //std::cout << "\t\tnSwaps: " << nSwaps << std::endl;
+        std::cout << "\t\tnSwaps: " << nSwaps << std::endl;
         std::string atStr="";
         switch(atom->getChiralTag()){
         case Atom::CHI_TETRAHEDRAL_CW:
@@ -225,14 +235,17 @@ namespace RDKit{
       for(msCI=molStack.begin();msCI!=molStack.end();msCI++){
         switch(msCI->type){
         case Canon::MOL_STACK_ATOM:
+          std::cout<<"\t\tAtom: "<<msCI->obj.atom->getIdx()<<std::endl;
           res << GetAtomSmiles(msCI->obj.atom,doKekule);
           break;
         case Canon::MOL_STACK_BOND:
           bond = msCI->obj.bond;
+          std::cout<<"\t\tBond: "<<bond->getIdx()<<std::endl;
           res << GetBondSmiles(bond,msCI->number,doKekule);
           break;
         case Canon::MOL_STACK_RING:
           ringIdx = msCI->number;
+          std::cout<<"\t\tRing: "<<ringIdx;
           if(ringClosureMap.count(ringIdx)){
             // the index is already in the map ->
             //   we're closing a ring, so grab
@@ -262,6 +275,7 @@ namespace RDKit{
           if(closureVal >= 10){
             res << "%";
           }
+          std::cout << " > " << closureVal <<std::endl;
           res << closureVal;
           break;
         case Canon::MOL_STACK_BRANCH_OPEN:

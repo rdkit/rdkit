@@ -198,7 +198,7 @@ namespace RDKit{
     unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
       frags.clear();
       INT_VECT mapping;
-      unsigned int nc = getMolFrags(mol, mapping);
+      getMolFrags(mol, mapping);
   
       INT_INT_VECT_MAP comMap;
       for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {

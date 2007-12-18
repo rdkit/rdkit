@@ -248,9 +248,9 @@ namespace RDKit{
 	  bi!=bonds.end();bi++){
 	const Bond *bond=*bi;
 	i=std::find(activeAtoms.begin(),activeAtoms.end(),
-		    bond->getBeginAtomIdx()) - activeAtoms.begin();
+		    static_cast<int>(bond->getBeginAtomIdx())) - activeAtoms.begin();
 	j=std::find(activeAtoms.begin(),activeAtoms.end(),
-		    bond->getEndAtomIdx()) - activeAtoms.begin();
+		    static_cast<int>(bond->getEndAtomIdx())) - activeAtoms.begin();
 	double contrib;
 	if(useBO){
 	  if(!bond->getIsAromatic()){
@@ -356,7 +356,7 @@ namespace RDKit{
 	while (nbrIdx != endNbrs) {
 	  if (doneAtms[*nbrIdx] == 0) {
 	    pred[*nbrIdx] = curAid;
-	    if ((*nbrIdx) == aid2) {
+	    if (static_cast<int>(*nbrIdx) == aid2) {
 	      done = true;
 	      break;
 	    }

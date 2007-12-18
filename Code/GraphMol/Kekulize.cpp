@@ -229,18 +229,18 @@ namespace RDKit {
         else {
           while (nbrIdx != endNbrs) {
             // ignore if the neighbor has already been dealt with before
-            if (std::find(done.begin(), done.end(), (*nbrIdx)) != done.end()) {
+            if (std::find(done.begin(), done.end(), static_cast<int>(*nbrIdx)) != done.end()) {
               ++nbrIdx;
               continue;
             }
             // ignore if the neighbor is not part of the fused system
-            if (std::find(allAtms.begin(),allAtms.end(),(*nbrIdx)) == allAtms.end()) {
+            if (std::find(allAtms.begin(),allAtms.end(),static_cast<int>(*nbrIdx)) == allAtms.end()) {
               ++nbrIdx;
               continue;
             }
           
             // if the neighbor is not on the stack add it
-            if (std::find(astack.begin(), astack.end(), (*nbrIdx)) == astack.end()) {
+            if (std::find(astack.begin(), astack.end(), static_cast<int>(*nbrIdx)) == astack.end()) {
               astack.push_back(*nbrIdx);
             }
           
@@ -356,7 +356,7 @@ namespace RDKit {
       // first find the all the simple rings in the molecule
       VECT_INT_VECT arings;
     
-      int nrings = MolOps::symmetrizeSSSR(mol, arings);
+      MolOps::symmetrizeSSSR(mol, arings);
 
       // convert the rings to bonds ids
       VECT_INT_VECT brings;
@@ -370,7 +370,6 @@ namespace RDKit {
 
       INT_VECT doneRs;
       int curr = 0;
-      bool allDone=false;
       int rix;
       int cnrs = arings.size();
       boost::dynamic_bitset<> fusDone(cnrs);

@@ -310,7 +310,8 @@ namespace RDKit{
             // so we need the SMILES C[C@@](Cl)(F)[X] to maintain the appropriate chirality 
             // check for these cases and adjust our chirality flags as appropriate.
             //
-            if(sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW || sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ){
+            if(sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW
+               || sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ){
               //std::cerr << "   " << sidechainAtom->getIdx() << " " << sidechainAtom->getChiralTag() << " " << whichNbr << std::endl; 
               bool switchIt=false;
               switch(newMol->getAtomDegree(sidechainAtom)){
@@ -333,14 +334,8 @@ namespace RDKit{
                 if((whichNbr%2)) switchIt=true;
                 break;  
               }
-                
-              
               if(switchIt){
-                if(sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
-                  sidechainAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-                } else if (sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ){
-                  sidechainAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-                }                  
+                sidechainAtom->invertChirality();
               }
             }
           }
