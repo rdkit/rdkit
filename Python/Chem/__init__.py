@@ -21,9 +21,6 @@ from rdchem import *
 from rdmolops import *
 from rdmolfiles import *
 
-def MolFromSmi(smi):
-  return rdmolfiles.MolFromSmiles(smi)
-
 def GetSmartsMatchCDXML(mol,patt,maps,which=0,showAllAtoms=0):
   try:
     from Chem import CDXMLWriter
@@ -71,7 +68,7 @@ def DisplaySmartsMatch(mol,patt,maps,which=0,showAllAtoms=0):
   return cdxml
   
 def QuickSmartsMatch(smi,sma,unique=1,display=0):
-  m = MolFromSmi(smi)
+  m = MolFromSmiles(smi)
   p = MolFromSmarts(sma)
   res = m.GetSubstructMatches(p,unique)
   if display:

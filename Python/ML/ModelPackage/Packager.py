@@ -102,7 +102,7 @@ if __name__=='__main__':
     ]
     
   for smi,pred,conf in testD:
-    m = MolFromSmi(smi)
+    m = MolFromSmiles(smi)
     p,c = pkg.Classify(m)
     if pred!=p or conf!=c:
       raise ValueError,'Bad Prediction: %s'%(repr((smi,pred,conf,p,c)))
@@ -116,7 +116,7 @@ if __name__=='__main__':
   calc.descriptorNames = perm
   pkg.Init()
   for smi,pred,conf in testD:
-    m = MolFromSmi(smi)
+    m = MolFromSmiles(smi)
     p,c = pkg.Classify(m)
     if pred!=p or conf!=c:
       raise ValueError,'Bad Prediction: %s'%(repr((smi,pred,conf,p,c)))

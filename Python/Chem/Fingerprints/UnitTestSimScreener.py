@@ -53,7 +53,7 @@ class TestCase(unittest.TestCase):
 
     metric = DataStructs.TanimotoSimilarity
     fingerprinter = lambda x:Chem.DaylightFingerprint(x,minPath=2,maxPath=7,fpSize=2048)
-    probe = fingerprinter(Chem.MolFromSmi('C1OCCCC1'))
+    probe = fingerprinter(Chem.MolFromSmiles('C1OCCCC1'))
 
     screener = SimilarityScreener.ThresholdScreener(0.09,probe=probe,metric=metric,
                                                     fingerprinter=fingerprinter,
@@ -77,7 +77,7 @@ class TestCase(unittest.TestCase):
 
     metric = DataStructs.TanimotoSimilarity
     fingerprinter = lambda x:Chem.DaylightFingerprint(x,minPath=2,maxPath=7,fpSize=2048)
-    probe = Chem.DaylightFingerprint(Chem.MolFromSmi('C1OCCCC1'),
+    probe = Chem.DaylightFingerprint(Chem.MolFromSmiles('C1OCCCC1'),
                                      minPath=2,maxPath=7,fpSize=4096)
 
     screener = SimilarityScreener.ThresholdScreener(0.09,probe=probe,metric=metric,

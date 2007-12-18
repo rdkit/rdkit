@@ -30,7 +30,7 @@ class TestCase(unittest.TestCase):
              ]
 
     for smi,res in data:
-      m = MolFromSmi(smi)
+      m = MolFromSmiles(smi)
       satis = SATIS.SATISTypes(m)
       assert satis==res,"Bad SATIS for mol %s: %s should have been %s"%(smi,str(satis),
                                                                         str(res))

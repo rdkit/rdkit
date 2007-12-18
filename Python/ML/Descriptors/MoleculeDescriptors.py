@@ -115,6 +115,6 @@ if __name__ == '__main__':
   print calc.GetDescriptorNames()
 
   for smi in smis:
-    mol = MolFromSmi(smi)
+    mol = MolFromSmiles(smi)
     print smi,calc.CalcDescriptors(mol)
   

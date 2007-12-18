@@ -224,7 +224,7 @@ if __name__=='__main__':
       verbose=1
       sys.argv.remove('-v')
     for smi in sys.argv[1:]:
-      ms.append((smi,Chem.MolFromSmi(smi)))
+      ms.append((smi,Chem.MolFromSmiles(smi)))
 
     for smi,m in ms:
       print 'Mol: %s'%(smi)

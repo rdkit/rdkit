@@ -42,7 +42,7 @@ if __name__ == '__main__':
   import Chem
   smis = ['CC','CCC','c1[nH]cnc1CC(N)C(O)=O','NCCc1ccc(O)c(O)c1']
   for smi in smis:
-    m = Chem.MolFromSmi(smi)
+    m = Chem.MolFromSmiles(smi)
     print smi,Chem.MolToSmiles(m)
     types = AtomTypes.TypeAtoms(m)
     for i in range(m.GetNumAtoms()):

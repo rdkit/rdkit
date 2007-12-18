@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
     
   def _testVals(self,calc,testD):
     for smi,vals in testD:
-      mol = MolFromSmi(smi)
+      mol = MolFromSmiles(smi)
       ans = array(vals)
       res = array(calc.CalcDescriptors(mol))
       assert max(abs(res-ans))<1e-4,'bad descriptor values for SMILES %s (%s)'%(smi,str(res))

@@ -107,7 +107,7 @@ if __name__ == '__main__':
   import Chem
   for smi in ['c1cnccc1','C1=CN=CC=C1']:
     print '---------------------------------'
-    m = Chem.MolFromSmi(smi)
+    m = Chem.MolFromSmiles(smi)
     io = cStringIO.StringIO()
     MolToCDXML(m,io,highlightBonds=[1,2,3],highlightAtoms=[3])
     txt = io.getvalue()

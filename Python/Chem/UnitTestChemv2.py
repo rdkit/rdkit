@@ -135,7 +135,7 @@ class TestCase(unittest.TestCase):
 
   def test5Data(self):
     """ testing Get/Set/HasData """
-    m = Chem.MolFromSmi('CCOC')
+    m = Chem.MolFromSmiles('CCOC')
     try:
       m.SetProp('foo','3')
     except:

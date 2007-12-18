@@ -38,7 +38,7 @@ class TestCase(unittest.TestCase):
               ('CCC','OCC','OCC=O','OCCO','CCCC','OC=O','CC(O)C')),
              ]
     for smi,matches in tgts:
-      m = Chem.MolFromSmi(smi)
+      m = Chem.MolFromSmiles(smi)
       fp1 = Chem.DaylightFingerprint(m,2,7,9192,4,0)
       obs = fp1.GetOnBits()
       for match in matches:

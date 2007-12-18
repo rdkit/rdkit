@@ -527,7 +527,7 @@ if __name__=='__main__':
     #patts,dist = (0,0),[4]
     #idx = sig.GetBitIdx(patts,dist)
     #print patts,dist,idx
-    mol = Chem.MolFromSmi('OCCC1COCCO1')
+    mol = Chem.MolFromSmiles('OCCC1COCCO1')
     try:
       Generate.Gen2DFingerprint(mol,sig)
     except TypeError:

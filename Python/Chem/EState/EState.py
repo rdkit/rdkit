@@ -60,7 +60,7 @@ EStateIndices.version='1.0.0'
 if __name__ =='__main__':
   smis = ['CCCC','CCCCC','CCCCCC','CC(N)C(=O)O','CC(N)C(=O)[O-].[Na+]']
   for smi in smis:
-    m = Chem.MolFromSmi(smi)
+    m = Chem.MolFromSmiles(smi)
     print smi
     inds = EStateIndices(m)
     print '\t',inds

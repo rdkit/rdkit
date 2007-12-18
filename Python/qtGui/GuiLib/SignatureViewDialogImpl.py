@@ -106,7 +106,7 @@ class SignatureViewDialog(_Form):
         QApplication.restoreOverrideCursor()
         qtUtils.error("Could not depickle the signature.")
         break
-      mol = Chem.MolFromSmi(smi)
+      mol = Chem.MolFromSmiles(smi)
       itm = SignatureTable.SignatureTableItem(tbl,QTableItem.Never,smi)
       itm.setMol(mol)
       try:
