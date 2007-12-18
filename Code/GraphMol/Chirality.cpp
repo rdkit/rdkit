@@ -71,6 +71,15 @@ namespace Chirality {
       if(mass < 0) mass = 0;
       else mass = mass % 16;
 
+      // NOTE: the inclusion of hybridization in the invariant (as
+      // suggested in the original paper), leads to the situation
+      // that 
+      //   C[C@@](O)(C=C)C(C)CC 
+      // and
+      //   C[C@@](O)(C=C)C(C)CO 
+      // are assigned S chirality even though the rest of the world
+      // seems to agree that they ought to be R (atom 3, sp2, is ranked
+      // higher than atom 5, sp3, no matter what their environments)
       int hyb=0;
       switch(atom->getHybridization()) {
       case Atom::SP: hyb=6;break;
@@ -81,10 +90,10 @@ namespace Chirality {
       default: break;
       }
 
-      // of the possibility of hydrogens:
       invariant = num; // 7 bits here
       invariant = (invariant << 4) | mass;
-      invariant = (invariant << 3) | hyb;
+      // See above for why this is commented out.
+      //invariant = (invariant << 3) | hyb;
       res[atsSoFar++] = invariant;
     }
   }

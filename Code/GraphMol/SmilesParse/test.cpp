@@ -750,7 +750,7 @@ void testIssue157(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 157 (Symmetric molecules with multiple chiral centers badly canonicalized)" << std::endl;
 
-#if 0
+#if 1
   smi = "O[C@](C)(Cl)[C@@](O)(Cl)C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -784,7 +784,7 @@ void testIssue157(){
   TEST_ASSERT(refSmi==smi);
   delete mol;
   delete mol2;
-#endif
+
   BOOST_LOG(rdInfoLog)<<"-**-**---------------------------------------"<<std::endl;
   smi = "[H][C@@]12CC(CO1)CN2";
   mol = SmilesToMol(smi);
@@ -802,11 +802,16 @@ void testIssue157(){
   TEST_ASSERT(refSmi==smi);
   delete mol;
   delete mol2;
-
+#endif
   smi = "[H][C@@]12C[C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
   //smi="C1=C[C@@H]2C[C@H]1C1C(=O)NC(=O)C21";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->getAtomWithIdx(0)->getProp("_CIPCode",smi);
+  TEST_ASSERT(smi=="R");
+  mol->getAtomWithIdx(2)->getProp("_CIPCode",smi);
+  TEST_ASSERT(smi=="S");
   refSmi = MolToSmiles(*mol,true);
   mol2 = SmilesToMol(refSmi);
   TEST_ASSERT(mol2);
@@ -1709,7 +1714,7 @@ main(int argc, char *argv[])
 {
   RDLog::InitLogs();
   boost::logging::enable_logs("rdApp.debug");
-#if 0
+#if 1
   testPass();
   testFail();
   testDetails();

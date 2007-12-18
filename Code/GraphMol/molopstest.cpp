@@ -7,6 +7,7 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
+#include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -774,7 +775,6 @@ void test11()
   std::string cip;
   std::string smi = "F[C@]([C@])(Cl)Br";
 
-#if 1
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   MolOps::assignAtomChiralCodes(*m,true);
@@ -1039,12 +1039,12 @@ void test11()
   TEST_ASSERT(cip=="S");
 
   // this is Issue 152:
-  delete m;
   smi = "C1[C@H](N)C[C@H](C)C=1";
 #ifdef VERBOSE_CANON
   BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
   BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
+  delete m;
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   MolOps::assignAtomChiralCodes(*m,true);
@@ -1055,8 +1055,6 @@ void test11()
   m->getAtomWithIdx(4)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
 
-  delete m;
-#endif
   
   // -----------------------------------------------
   // these are related to Issue 397:
@@ -1065,6 +1063,7 @@ void test11()
   BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
   BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
+  delete m;
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   MolOps::assignAtomChiralCodes(*m,true);
@@ -1077,6 +1076,7 @@ void test11()
   BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
   BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
+  delete m;
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   MolOps::assignAtomChiralCodes(*m,true);
@@ -1089,6 +1089,7 @@ void test11()
   BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
   BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
 #endif
+  delete m;
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   MolOps::assignAtomChiralCodes(*m,true);
@@ -1096,6 +1097,105 @@ void test11()
   m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
   // -----------------------------------------------
+
+
+  // NOTE: This test gives correct results according to the current
+  // CIP ranking procedure, but the results are actually incorrect.
+  // This arises because of the inclusion of hybridization in the
+  // chiral atom invariants
+  // (see the note in Chirality.cpp:buildCIPInvariants())
+  smi = "[H][C@@](O)(C=C)C(C)CC";
+#ifdef VERBOSE_CANON
+  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
+  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+#endif
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+
+  smi = "[H][C@@](O)(C=C)C(C)CO";
+#ifdef VERBOSE_CANON
+  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
+  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+#endif
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+
+
+
+  
+  smi = "[H][C@@]12C[C@@](NC1)(OC2)[H]";
+#ifdef VERBOSE_CANON
+  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
+  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+#endif
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+
+  smi = "[H][C@@]12C[C@@](C=C1)(CC2)[H]";
+#ifdef VERBOSE_CANON
+  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
+  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+#endif
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+
+  smi = "[H][C@@]12O[C@@](CC1)(C3C2C(NC3=O)=O)[H]";
+  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
+  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+
+  smi = "[H][C@@]12O[C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
+  BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
+  BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+
+
+  // -----------------------------------------------
+
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -2265,6 +2365,8 @@ void testChiralityAndRemoveHs()
 
 int main(){
   RDLog::InitLogs();
+  //boost::logging::enable_logs("rdApp.debug");
+
 #if 1
   test1();
   test2();
@@ -2296,9 +2398,10 @@ int main(){
   testSFIssue1719053();
   testSFIssue1811276();
   testSFIssue1836576();
-#endif
-
   testChiralityAndRemoveHs();
+#endif
+  test11();
+
   
   return 0;
 }
