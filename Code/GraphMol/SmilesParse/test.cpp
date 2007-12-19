@@ -750,7 +750,7 @@ void testIssue157(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 157 (Symmetric molecules with multiple chiral centers badly canonicalized)" << std::endl;
 
-#if 1
+#if 0
   smi = "O[C@](C)(Cl)[C@@](O)(Cl)C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -803,7 +803,7 @@ void testIssue157(){
   delete mol;
   delete mol2;
 #endif
-  smi = "[H][C@@]12C[C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
+  smi = "[H][C@@]12C[14C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
   //smi="C1=C[C@@H]2C[C@H]1C1C(=O)NC(=O)C21";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -812,6 +812,7 @@ void testIssue157(){
   TEST_ASSERT(smi=="R");
   mol->getAtomWithIdx(2)->getProp("_CIPCode",smi);
   TEST_ASSERT(smi=="S");
+  mol->debugMol(std::cout);
   refSmi = MolToSmiles(*mol,true);
   mol2 = SmilesToMol(refSmi);
   TEST_ASSERT(mol2);
@@ -1528,6 +1529,7 @@ void testBug1844617(){
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
 void testBug1844959(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1844959: bad handling of Hs in chiral smiles" << std::endl;
@@ -1713,8 +1715,8 @@ int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
-  boost::logging::enable_logs("rdApp.debug");
-#if 1
+  //boost::logging::enable_logs("rdApp.debug");
+#if 0
   testPass();
   testFail();
   testDetails();

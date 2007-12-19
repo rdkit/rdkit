@@ -98,7 +98,7 @@ namespace RDKit{
         std::string atStr="";
         switch(atom->getChiralTag()){
         case Atom::CHI_TETRAHEDRAL_CW:
-          //std::cout << "\tcw" << std::endl;
+          std::cout << "\tcw" << std::endl;
           if(!(nSwaps%2))
             atStr = "@@";
           else
@@ -106,7 +106,7 @@ namespace RDKit{
           chiralityIncluded=true;
           break;
         case Atom::CHI_TETRAHEDRAL_CCW:
-          //std::cout << "\tccw" << std::endl;
+          std::cout << "\tccw" << std::endl;
           if(!(nSwaps%2))
             atStr = "@";
           else
