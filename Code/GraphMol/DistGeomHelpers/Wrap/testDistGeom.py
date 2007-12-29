@@ -7,6 +7,8 @@ import cPickle as pickle
 from Numeric import *
 import math
 from Geometry import rdGeometry as geom
+from RDLogger import logger
+logger=logger()
 
 def feq(v1, v2, tol=1.e-4) :
     return abs(v1-v2) < tol
@@ -155,7 +157,7 @@ class TestCase(unittest.TestCase) :
 
     def test3MultiConf(self):
         mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
-        cids = rdDistGeom.EmbedMultipleConfs(mol,10,30,100)
+        cids = rdDistGeom.EmbedMultipleConfs(mol,10,maxAttempts=30,randomSeed=100)
         energies = [90.05,77.35,91.45,81.82,81.60,75.65,86.50,80.35,80.55,73.73]
         #[90.05,77.35,91.45,81.82,81.60,75.65,86.50,80.55,73.73,70.57]
         nenergies = []
@@ -163,11 +165,9 @@ class TestCase(unittest.TestCase) :
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
             ee = ff.CalcEnergy()
             nenergies.append(ee)
-        
-        #print ','.join(['%.2f'%x for x in energies])
         self.failUnless(lstEq(energies, nenergies,tol=1e-2))
             
-    def test4OrderDepndence(self) :
+    def test4OrderDependence(self) :
         self.failUnless(compareOrder("CC(C)(C)C(=O)NC(C1)CC(N2C)CCC12",
                                      "CN1C2CCC1CC(NC(=O)C(C)(C)C)C2"))
         #issue 230
@@ -198,8 +198,8 @@ class TestCase(unittest.TestCase) :
         expected = [5, 8, 7, 5, 4, 4] #[5, 8, 8, 5, 5, 4]
         for smi in smiles:
             mol = Chem.MolFromSmiles(smi)
-            cids = rdDistGeom.EmbedMultipleConfs(mol, 50, 30,
-                                                 100, pruneRmsThresh=1.5)
+            cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30,
+                                                 randomSeed=100, pruneRmsThresh=1.5)
             nconfs.append(len(cids))
         
         self.failUnless(nconfs == expected)
@@ -207,12 +207,13 @@ class TestCase(unittest.TestCase) :
     def test6Chirality(self):
         vols = []
         expected = [14.70, 14.63, 14.64, 14.54, 14.64, 14.50, 14.61, 14.38, 14.66, 14.54]
-        # turn on chiralizty and we should get chiral volume that is pretty consistent and
+        # turn on chirality and we should get chiral volume that is pretty consistent and
         # positive
         
         smiles = "Cl[C@](C)(F)Br"
         mol = Chem.MolFromSmiles(smiles)
-        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, 30, 100)
+        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
+                                             randomSeed=100)
         self.failUnless(len(cids)==10)
         for cid in cids:
             conf = mol.GetConformer(cid)
@@ -231,7 +232,8 @@ class TestCase(unittest.TestCase) :
         vols = []
         smiles = "ClC(C)(F)Br"
         mol = Chem.MolFromSmiles(smiles)
-        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, 30, 120)
+        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
+                                             randomSeed=120)
         self.failUnless(len(cids)==10)
         for cid in cids:
             conf = mol.GetConformer(cid)
@@ -287,7 +289,7 @@ class TestCase(unittest.TestCase) :
         for i in range(5):
             smi = "C1=CC=C(C=C1)[C@H](OC1=C[NH]N=C1)C(=O)[NH]C[C@H](Cl)C1=CC=NC=C1"
             mol = Chem.MolFromSmiles(smi)
-            ci = rdDistGeom.EmbedMolecule(mol, 30, (i+1)*15)
+            ci = rdDistGeom.EmbedMolecule(mol, 30, randomSeed=(i+1)*15)
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, ci)
             ff.Minimize()
             
@@ -305,7 +307,8 @@ class TestCase(unittest.TestCase) :
         self.failUnless(lstEq(expectedV1, v1s,tol=1e-2))
         self.failUnless(lstEq(expectedV2, v2s,tol=4e-2),str(v2s))
 
-        # remove the chiral specification and we should see other chiral forms of the compound
+        # remove the chiral specification and we should see other chiral
+        # forms of the compound
         expectedV1 = [-2.30, -2.31, -2.30,  2.30, -1.77]
         expectedV2 = [2.90,  2.89,  2.69, -2.90, -2.93]
         v1s = []
@@ -338,7 +341,8 @@ class TestCase(unittest.TestCase) :
         smiles = "Cl[C@H](F)Br"
         m = Chem.MolFromSmiles(smiles)
         mol = Chem.AddHs(m)
-        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, 30, 100)
+        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
+                                             randomSeed=100)
         self.failUnless(len(cids)==10)
         vols = []
         expected = [11.81, 11.63, 11.95, 11.86, 11.98, 11.99, 11.73, 11.74, 11.86, 12.07]

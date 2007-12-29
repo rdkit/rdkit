@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,22 +8,15 @@
 
 #include "BoundsMatrix.h"
 #include <Numerics/SymmMatrix.h>
-#include <vector>
 #include <map>
 #include <Geometry/point.h>
 #include "EmbedObject.h"
-
-#define EIGVAL_TOL 0.001
-//namespace RDGeom {
-//  class Point3D;
-//}
 
 namespace ForceFields {
   class ForceField;
 }
 
 namespace DistGeom {
-  //typedef std::vector<RDGeom::Point3D *> Point3DPtrVect;
 
   //! Pick a distance matrix at random such that the
   //!  distance satisfy the bounds in the BoundsMatrix
@@ -31,9 +24,11 @@ namespace DistGeom {
     \param mmat     Bounds matrix
     \param distmat  Storage for randomly chosen distances
     \param seed     Optional value to seed the random number generator
+
+    \return the largest element of the distance matrix
    */
-  void pickRandomDistMat(const BoundsMatrix &mmat, 
-                         RDNumeric::SymmMatrix<double> &distmat, int seed=-1);
+  double pickRandomDistMat(const BoundsMatrix &mmat, 
+			   RDNumeric::SymmMatrix<double> &distmat, int seed=-1);
 
   //! Compute an initial embedded in 3D based on a distance matrix
   /*! 
@@ -53,6 +48,16 @@ namespace DistGeom {
                             RDGeom::PointPtrVect &positions, bool randNegEig=false, 
                             unsigned int numZeroFail=2);
 
+  //! places atoms randomly in a box
+  /*! 
+    \param positions     A vector of pointers to Points to write out the resulting coordinates
+    \param boxSize     If set to true and if any of the eigen values are negative, we will
+                       pick the corresponding components of the coordinates at random
+
+    \return true if the embedding was successful
+  */
+  bool computeRandomCoords(RDGeom::PointPtrVect &positions, double boxSize);
+
   //! Setup the error function for violation of distance bounds as a forcefield
   /*! 
     This is based on function E3 on page 311 of "Distance Geometry in Molecular
@@ -67,18 +72,18 @@ namespace DistGeom {
     \param extraWeights    an optional set of weights for distance bounds violations
     \param basinSizeTol  Optional: any distance bound with a basin (distance between max and
                          min bounds) larger than this value will not be included in the force
-			 field used to cleanup the structure.
+                         field used to cleanup the structure.
 
     \return a pointer to a ForceField suitable for cleaning up the violations.
       <b>NOTE:</b> the caller is responsible for deleting this force field.
 
   */
   ForceFields::ForceField *constructForceField(const BoundsMatrix &mmat,
-					       RDGeom::PointPtrVect &positions, const VECT_CHIRALSET &csets,
-					       double weightChiral=1.0,
-					       double weightFourthDim=0.1,
-					       std::map< std::pair<int,int>,double> *extraWeights=0,
-					       double basinSizeTol=5.0);
+                                               RDGeom::PointPtrVect &positions, const VECT_CHIRALSET &csets,
+                                               double weightChiral=1.0,
+                                               double weightFourthDim=0.1,
+                                               std::map< std::pair<int,int>,double> *extraWeights=0,
+                                               double basinSizeTol=5.0);
 
 }
     

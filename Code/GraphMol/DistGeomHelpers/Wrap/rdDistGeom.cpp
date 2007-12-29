@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -18,20 +18,27 @@ namespace python = boost::python;
 namespace RDKit {
   int EmbedMolecule(ROMol &mol, unsigned int maxAttempts=30,
                     int seed=-1, bool clearConfs=true,
+		    bool useRandomCoords=false,double boxSizeMult=2.0,
                     bool randNegEig=true, unsigned int numZeroFail=1){
-   
     int res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
-                                          seed, clearConfs, randNegEig,
+                                          seed, clearConfs,
+					  useRandomCoords,boxSizeMult,
+					  randNegEig,
                                           numZeroFail);
     return res;
   }
 
-  INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10, unsigned int maxAttempts=30, 
+  INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10,
+			      unsigned int maxAttempts=30, 
                               int seed=-1, bool clearConfs=true, 
-                              bool randNegEig=true, unsigned int numZeroFail=1, double pruneRmsThresh=-1.0) {
+			      bool useRandomCoords=false,double boxSizeMult=2.0,
+                              bool randNegEig=true, unsigned int numZeroFail=1,
+			      double pruneRmsThresh=-1.0) {
     INT_VECT res = DGeomHelpers::EmbedMultipleConfs(mol, numConfs, maxAttempts,
                                                     seed, clearConfs,
-                                                    randNegEig, numZeroFail, 1e-3, 5.0, pruneRmsThresh);
+						    useRandomCoords,boxSizeMult,
+                                                    randNegEig, numZeroFail, 1e-3,
+						    5.0, pruneRmsThresh);
     return res;
   } 
 
@@ -52,7 +59,6 @@ namespace RDKit {
 	   
     return (PyObject *) res;
   }
-
 }
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -75,6 +81,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                    for a molecule on multiple runs. The default \n\
                    (-1) uses a random seed \n\
     - clearConfs : clear all existing conformations on the molecule\n\
+    - useRandomCoords : Start the embedding from random coordinates instead of\n\
+                        using eigenvalues of the distance matrix.\n\
+    - boxSizeMult    Determines the size of the box that is used for\n\
+                     random coordinates. If this is a positive number, the \n\
+                     side length will equal the largest element of the distance\n\
+                     matrix times boxSizeMult. If this is a negative number,\n\
+                     the side length will equal -boxSizeMult (i.e. independent\n\
+                     of the elements of the distance matrix).\n\
     - randNegEig : If the embedding yields a negative eigenvalue, \n\
                    pick coordinates that correspond \n\
                    to this component at random \n\
@@ -86,6 +100,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("EmbedMolecule", RDKit::EmbedMolecule,
               (python::arg("mol"), python::arg("maxAttempts")=30,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
+               python::arg("useRandomCoords")=false,
+	       python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1),
               docString.c_str());
 
@@ -101,6 +117,14 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                  for a molecule on multiple runs. The default \n\
                  (-1) uses a random seed \n\
   - clearConfs : clear all existing conformations on the molecule\n\
+  - useRandomCoords : Start the embedding from random coordinates instead of\n\
+                      using eigenvalues of the distance matrix.\n\
+  - boxSizeMult    Determines the size of the box that is used for\n\
+                   random coordinates. If this is a positive number, the \n\
+                   side length will equal the largest element of the distance\n\
+                   matrix times boxSizeMult. If this is a negative number,\n\
+                   the side length will equal -boxSizeMult (i.e. independent\n\
+                   of the elements of the distance matrix).\n\
   - randNegEig : If the embedding yields a negative eigenvalue, \n\
                  pick coordinates that correspond \n\
                  to this component at random \n\
@@ -121,6 +145,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
               (python::arg("mol"), python::arg("numConfs")=10, 
                python::arg("maxAttempts")=10,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
+               python::arg("useRandomCoords")=false,
+	       python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
 	       python::arg("pruneRmsThresh")=-1.0),
               docString.c_str());

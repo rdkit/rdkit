@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -46,7 +46,7 @@ void test1() {
       token!=tokens.end();++token){
     std::string smi= *token;
     RWMol *m = SmilesToMol(smi, 0, 1); 
-    int cid = DGeomHelpers::EmbedMolecule(*m, 10, true);
+    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1);
     CHECK_INVARIANT(cid >= 0, "");
 
     ROMol *m2 = sdsup.next();
@@ -348,7 +348,7 @@ void test3() {
 void test4() {
   std::string smi = "c1cc(C(F)(F)F)ccc1/C=N/NC(=O)c(n2)c[n]3cc(C(F)(F)F)cc(c23)Cl";
   ROMol *m = SmilesToMol(smi, 0, 1);
-  DGeomHelpers::EmbedMolecule(*m, 10, true);//etCoords(*m, iter);
+  DGeomHelpers::EmbedMolecule(*m, 10, 1);//etCoords(*m, iter);
   std::string fname = "test.mol";
   MolToMolFile(*m, fname);
   delete m;
@@ -370,7 +370,7 @@ void test5() {
       i++;
       mol = smiSup.next();
       std::string mname, mname2;
-      cid = DGeomHelpers::EmbedMolecule(*mol, 10, true); //getCoords(*mol, iter);
+      cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1); //getCoords(*mol, iter);
       TEST_ASSERT(cid>-1);
       mol->getProp("_Name", mname);
       writer.write(*mol);
@@ -461,7 +461,7 @@ void testTemp() {
     std::vector<double> energies;
     double energy; 
     for (i = 0; i < 20; i++) {
-      int cid = DGeomHelpers::EmbedMolecule(*m, 10, true, false);
+      int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, false);
       if (cid >=0) {
         ForceFields::ForceField *ff=UFF::constructForceField(*m, 10, cid);
         ff->initialize();
@@ -526,7 +526,8 @@ void testMultipleConfs() {
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true,
-                                      true, 1, 1e-3, 5.0);
+						   false,-1,
+						   true, 1, 1e-3, 5.0);
   INT_VECT_CI ci;
   SDWriter writer("junk.sdf");
   double energy;
@@ -822,10 +823,67 @@ void testIssue355() {
   TEST_ASSERT(bm->getLowerBound(5,1)>3.2);
 
   delete m;
-  
 }
 
 
+void testRandomCoords() {
+  std::string smiString = "CC1=C(C(C)=CC=C2)C2=CC=C1 c1ccccc1C C/C=C/CC \
+                           C/12=C(\\CSC2)Nc3cc(n[n]3C1=O)c4ccccc4 C1CCCCS1(=O)(=O) c1ccccc1 \
+                           C1CCCC1 C1CCCCC1 \
+                           C1CC1(C)C C12(C)CC1CC2";
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.random.sdf";
+  //SDMolSupplier sdsup(fname);
+  SDWriter writer(fname);
+
+  boost::char_separator<char> spaceSep(" ");
+  tokenizer tokens(smiString,spaceSep);
+  for(tokenizer::iterator token=tokens.begin();
+      token!=tokens.end();++token){
+    std::string smi= *token;
+    RWMol *m = SmilesToMol(smi, 0, 1);
+    RWMol *m2 = (RWMol *)MolOps::addHs(*m);
+    delete m;
+    m=m2;
+    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true);
+    CHECK_INVARIANT(cid >= 0, "");
+    writer.write(*m);
+#if 0
+    m2 = sdsup.next();
+    //ROMol *m2 = NULL;
+    if(m2){
+      unsigned int nat = m->getNumAtoms();
+    
+      const Conformer &conf1 = m->getConformer(0);
+      const Conformer &conf2 = m2->getConformer(0);
+#if 0
+      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
+      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
+      BOOST_LOG(rdInfoLog) << "---" << std::endl;
+      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m) << std::endl;
+      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
+#endif
+      for (unsigned int i = 0; i < nat; i++) {
+	RDGeom::Point3D pt1i = conf1.getAtomPos(i);
+	RDGeom::Point3D pt2i = conf2.getAtomPos(i);
+	for(unsigned int j=i+1;j<nat;j++){
+	  RDGeom::Point3D pt1j = conf1.getAtomPos(j);
+	  RDGeom::Point3D pt2j = conf2.getAtomPos(j);
+	  double d1=(pt1j-pt1i).length();
+	  double d2=(pt2j-pt2i).length();
+	  if(m->getBondBetweenAtoms(i,j)){
+	    TEST_ASSERT(fabs(d1-d2)/d1<0.05);
+	  }else{
+	    TEST_ASSERT(fabs(d1-d2)/d1<0.1);
+	  }
+	}
+      }
+    }
+#endif
+    delete m;
+    //delete m2;
+  }
+}
 
 int main() { 
   RDLog::InitLogs();
@@ -834,10 +892,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing DistGeomHelpers\n";
 
 #if 1
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
-  test1();
-
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
   test2();
@@ -901,10 +955,18 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue285 \n\n";
   testIssue285();
-#endif
+
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue355 \n\n";
   testIssue355();
+#endif
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
+  test1();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t testRandomCoords \n\n";
+  testRandomCoords();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
