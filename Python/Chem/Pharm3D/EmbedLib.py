@@ -351,7 +351,7 @@ def EmbedPharmacophore(mol,atomMatch,pcophore,randomSeed=-1,count=10,smoothFirst
   """
   global _times
   if not hasattr(mol,'_chiralCenters'): 
-    mol._chiralCenters = FindMolChiralCenters(mol)
+    mol._chiralCenters = Chem.FindMolChiralCenters(mol)
 
   if bounds is None:
     bounds = MolDG.GetMoleculeBoundsMatrix(mol)
@@ -1127,31 +1127,6 @@ def GetAllPharmacophoreMatches(matches,bounds,pcophore,useDownsampling=0,
         progressCallback(nDone)
   return res
 
-def FindMolChiralCenters(mol):
-  """
-  
-    >>> import os.path
-    >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
-    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-r.mol'))
-    >>> FindMolChiralCenters(mol)
-    [(1, 'R')]
-    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s.mol'))
-    >>> FindMolChiralCenters(mol)
-    [(1, 'S')]
-  
-    >>> FindMolChiralCenters(Chem.MolFromSmiles('CCC'))
-    []
-  
-  
-  
-  """
-  Chem.AssignAtomChiralCodes(mol)
-  centers = []
-  for atom in mol.GetAtoms():
-    if atom.HasProp('_CIPCode'):
-      code = atom.GetProp('_CIPCode')
-      centers.append((atom.GetIdx(),code))
-  return centers
     
 def ComputeChiralVolume(mol,centerIdx,confId=-1):
   """ Computes the chiral volume of an atom
