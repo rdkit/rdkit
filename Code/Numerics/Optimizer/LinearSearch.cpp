@@ -19,12 +19,11 @@ namespace BFGSOpt {
   //     0: converged
   //     1: step got too small, probably converged
   // ------------------------------------------------------------
-  void linearSearch(const int dim,double *oldPt,double oldVal,
+  void linearSearch(unsigned int dim,double *oldPt,double oldVal,
 		    double *grad,double *dir,double *newPt,
 		    double &newVal,
 		    double (*func)(double *),
 		    double maxStep,int &resCode){
-    PRECONDITION(dim>0,"bad dimension");
     PRECONDITION(oldPt,"bad input array");
     PRECONDITION(grad,"bad input array");
     PRECONDITION(dir,"bad input array");
@@ -38,28 +37,29 @@ namespace BFGSOpt {
 
     // get the length of the direction vector:
     sum=0.0;
-    for(int i=0;i<dim;i++)
+    for(unsigned int i=0;i<dim;i++)
       sum +=dir[i]*dir[i];
     sum=sqrt(sum);
 
     // rescale if we're trying to move too far:
     if(sum>maxStep){
-      for(int i=0;i<dim;i++)
+      for(unsigned int i=0;i<dim;i++)
 	dir[i] *= maxStep/sum;
     }
       
     // make sure our direction has at least some component along
     // -grad
     slope=0.0;
-    for(int i=0;i<dim;i++)
+    for(unsigned int i=0;i<dim;i++){
       slope += dir[i]*grad[i];
+    }
     if(slope>=0.0){
       resCode=-1;
       return;
     }
 
     test=0.0;
-    for(int i=0;i<dim;i++){
+    for(unsigned int i=0;i<dim;i++){
       double temp=fabs(dir[i])/maxVal(fabs(oldPt[i]),1.0);
       if(temp>test) test=temp;
     }
@@ -67,14 +67,16 @@ namespace BFGSOpt {
     lambdaMin = MOVETOL/test;
     lambda = 1.0;
     while(1){
-      for(int i=0;i<dim;i++)
+      for(unsigned int i=0;i<dim;i++){
 	newPt[i]=oldPt[i]+lambda*dir[i];
+      }
       newVal = func(newPt);
       //std::cout << "\t" << lambda << " " << lambdaMin << std::endl;
       if(lambda<lambdaMin){
 	// the position change is too small... set the resCode and return
-	for(int i=0;i<dim;i++)
+	for(unsigned int i=0;i<dim;i++){
 	  newPt[i]=oldPt[i];
+        }
 	resCode=1;
 	return;
       } else if( newVal-oldVal <= FUNCTOL*lambda*slope ){

@@ -1,5 +1,5 @@
 //
-// Copyright (C)  2004-2006 Rational Discovery LLC
+// Copyright (C)  2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -17,7 +17,6 @@ namespace BFGSOpt {
     if(v1>v2) return v1;
     else return v2;
   };
-
 
   //! Do a Quasi-Newton minimization along a line.  
   /*!
@@ -39,11 +38,11 @@ namespace BFGSOpt {
       -  1: the stepsize got too small.  This probably indicates success.
       - -1: the direction is bad (orthogonal to the gradient)
   */
-  void linearSearch(const int dim,double *oldPt,double oldVal,
-		    double *grad,double *dir,double *newPt,
-		    double &newVal,
-		    double (*func)(double *),
-		    double maxStep,int &resCode);
+  void linearSearch(unsigned int dim,double *oldPt,double oldVal,
+                    double *grad,double *dir,double *newPt,
+                    double &newVal,
+                    double (*func)(double *),
+                    double maxStep,int &resCode);
 
   //! Do a BFGS minimization of a function.
   /*!
@@ -63,12 +62,12 @@ namespace BFGSOpt {
       -  0: success
       -  1: too many iterations were required
   */
-  int minimize(const int dim,double *pos,
-		double gradTol,
-		int &numIters,
-		double &funcVal,
-		double (*func)(double *),
-		void (*gradFunc)(double *,double*),
-		double funcTol=TOLX,
-	       int maxIts=MAXITS);
+  int minimize(unsigned int dim,double *pos,
+               double gradTol,
+               unsigned int &numIters,
+               double &funcVal,
+               double (*func)(double *),
+               void (*gradFunc)(double *,double*),
+               double funcTol=TOLX,
+               unsigned int maxIts=MAXITS);
 }

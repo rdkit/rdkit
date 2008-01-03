@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C)  2004-2006 Rational Discovery LLC
+// Copyright (C)  2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -11,9 +11,6 @@
 
 namespace BFGSOpt {
 
-
-
-
 #define CLEANUP() { delete [] grad; delete [] dGrad; delete [] hessDGrad;\
  delete [] newPos; delete [] xi; delete [] invHessian; }
 
@@ -23,13 +20,12 @@ namespace BFGSOpt {
   //
   // NOTE: the funcTol argument is *not* used.
   // ------------------------------------------------------------
-  int minimize(const int dim,double *pos,
-		double gradTol,int &numIters,
-		double &funcVal,
-		double (*func)(double *),
-		void (*gradFunc)(double *,double*),
-		double funcTol,int maxIts){
-    PRECONDITION(dim>0,"bad dimension");
+  int minimize(unsigned int dim,double *pos,
+                double gradTol,unsigned int &numIters,
+                double &funcVal,
+                double (*func)(double *),
+                void (*gradFunc)(double *,double*),
+                double funcTol,unsigned int maxIts){
     PRECONDITION(pos,"bad input array");
     PRECONDITION(gradTol>0,"bad tolerance");
     PRECONDITION(func,"bad function");
@@ -53,10 +49,10 @@ namespace BFGSOpt {
     gradFunc(pos,grad);
 
     sum = 0.0;
-    for(int i=0;i<dim;i++){
-      int itab=i*dim;
+    for(unsigned int i=0;i<dim;i++){
+      unsigned int itab=i*dim;
       // initialize the inverse hessian to be identity:
-      for(int j=0;j<dim;j++) invHessian[itab+j]=0.0;
+      for(unsigned int j=0;j<dim;j++) invHessian[itab+j]=0.0;
       invHessian[itab+i]=1.0;
       // the first line dir is -grad:
       xi[i] = -grad[i];
@@ -66,7 +62,7 @@ namespace BFGSOpt {
     maxStep = MAXSTEP * maxVal(sqrt(sum),static_cast<double>(dim));
 
 
-    for(int iter=1;iter<=maxIts;iter++){
+    for(unsigned int iter=1;iter<=maxIts;iter++){
       numIters=iter;
       int status;
 
@@ -79,78 +75,78 @@ namespace BFGSOpt {
 
       // set the direction of this line and save the gradient:
       double test=0.0;
-      for(int i=0;i<dim;i++){
-	xi[i] = newPos[i]-pos[i];
-	pos[i] = newPos[i];
-	double temp=fabs(xi[i])/maxVal(fabs(pos[i]),1.0);
-	if(temp>test) test=temp;
-	dGrad[i] = grad[i];
+      for(unsigned int i=0;i<dim;i++){
+        xi[i] = newPos[i]-pos[i];
+        pos[i] = newPos[i];
+        double temp=fabs(xi[i])/maxVal(fabs(pos[i]),1.0);
+        if(temp>test) test=temp;
+        dGrad[i] = grad[i];
       }
       if(test<TOLX) {
-	CLEANUP();
-	return 0;
+        CLEANUP();
+        return 0;
       }
 
       // update the gradient:
       gradFunc(pos,grad);
-	
+        
       // is the gradient converged?
       test=0.0;
       double term=maxVal(funcVal,1.0);
-      for(int i=0;i<dim;i++){
-	double temp=fabs(grad[i])*maxVal(fabs(pos[i]),1.0)/term;
-	if(temp>test) test=temp;
+      for(unsigned int i=0;i<dim;i++){
+        double temp=fabs(grad[i])*maxVal(fabs(pos[i]),1.0)/term;
+        if(temp>test) test=temp;
       }
 
       //std::cout << "------->>>>>>> Iter: " << iter << " test: " << test << std::endl;
       //if(test<gradTol && deltaFunc<funcTol){
       if(test<gradTol){
-	CLEANUP();
-	return 0;
+        CLEANUP();
+        return 0;
       }
 
       // figure out how much the gradient changed:
-      for(int i=0;i<dim;i++){
-	dGrad[i] = grad[i]-dGrad[i];
+      for(unsigned int i=0;i<dim;i++){
+        dGrad[i] = grad[i]-dGrad[i];
       }
     
       // compute hessian*dGrad:
       double fac=0,fae=0,sumDGrad=0,sumXi=0;
-      for(int i=0;i<dim;i++){
-	int itab=i*dim;
-	hessDGrad[i] = 0.0;
-	for(int j=0;j<dim;j++){
-	  hessDGrad[i] += invHessian[itab+j]*dGrad[j];
-	}
+      for(unsigned int i=0;i<dim;i++){
+        unsigned int itab=i*dim;
+        hessDGrad[i] = 0.0;
+        for(unsigned int j=0;j<dim;j++){
+          hessDGrad[i] += invHessian[itab+j]*dGrad[j];
+        }
 
-	fac += dGrad[i]*xi[i];
-	fae += dGrad[i]*hessDGrad[i];
-	sumDGrad += dGrad[i]*dGrad[i];
-	sumXi += xi[i]*xi[i];
+        fac += dGrad[i]*xi[i];
+        fae += dGrad[i]*hessDGrad[i];
+        sumDGrad += dGrad[i]*dGrad[i];
+        sumXi += xi[i]*xi[i];
       }
       if(fac > sqrt(EPS*sumDGrad*sumXi)){
-	fac = 1.0/fac;
-	double fad = 1.0/fae;
-	for(int i=0;i<dim;i++){
-	  dGrad[i] = fac*xi[i] - fad*hessDGrad[i];
-	}
-	for(int i=0;i<dim;i++){
-	  int itab=i*dim;
-	  for(int j=i;j<dim;j++){
-	    invHessian[itab+j] += fac*xi[i]*xi[j] -
-	      fad*hessDGrad[i]*hessDGrad[j] +
-	      fae*dGrad[i]*dGrad[j];
-	    invHessian[j*dim+i] = invHessian[itab+j];
-	  }
-	}
+        fac = 1.0/fac;
+        double fad = 1.0/fae;
+        for(unsigned int i=0;i<dim;i++){
+          dGrad[i] = fac*xi[i] - fad*hessDGrad[i];
+        }
+        for(unsigned int i=0;i<dim;i++){
+          unsigned int itab=i*dim;
+          for(unsigned int j=i;j<dim;j++){
+            invHessian[itab+j] += fac*xi[i]*xi[j] -
+              fad*hessDGrad[i]*hessDGrad[j] +
+              fae*dGrad[i]*dGrad[j];
+            invHessian[j*dim+i] = invHessian[itab+j];
+          }
+        }
       }
       // generate the next direction to move:
-      for(int i=0;i<dim;i++){
-	int itab=i*dim;
-	xi[i] = 0.0;
-	for(int j=0;j<dim;j++){
-	  xi[i] -= invHessian[itab+j]*grad[j];
-	}
+      for(unsigned int i=0;i<dim;i++){
+        unsigned int itab=i*dim;
+        xi[i] = 0.0;
+        for(unsigned int j=0;j<dim;j++){
+          xi[i] -= invHessian[itab+j]*grad[j];
+        }
       }
     }
     CLEANUP();

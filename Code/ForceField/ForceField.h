@@ -27,7 +27,7 @@ namespace ForceFields {
        // add contributions:
        for contrib in contribs:
          ff.contribs().push_back(contrib);
-	 
+         
        // set up the points:
        for positionPtr in positions:
          ff.positions().push_back(point);
@@ -45,13 +45,14 @@ namespace ForceFields {
          pointers.
        - Distance calculations are currently lazy; the full distance matrix is
          never generated.  In systems where the distance matrix is not sparse,
-	 this is almost certainly inefficient.
+         this is almost certainly inefficient.
 
   */
   class ForceField {
   public:
     //! construct with a dimension
-    ForceField(unsigned int dimension=3) : d_dimension(dimension), df_init(false), d_numPoints(-1), dp_distMat(0) {};
+    ForceField(unsigned int dimension=3) : d_dimension(dimension), df_init(false),
+                                           d_numPoints(0), dp_distMat(0) {};
 
     ~ForceField();
 
@@ -81,7 +82,7 @@ namespace ForceFields {
 
       <b>Side effects:</b>
         - Calling this resets the current distance matrix
-	- The individual contributions may further update the distance matrix
+        - The individual contributions may further update the distance matrix
     */
     double calcEnergy(double *pos);
 
@@ -91,7 +92,7 @@ namespace ForceFields {
       \param forces an array of doubles.  Should be \c 3*this->numPoints() long.
 
       <b>Note:</b>
-	This function is less efficient than calcGrad with positions passed in
+        This function is less efficient than calcGrad with positions passed in
         the positions need to be converted to double * here
      */
     void calcGrad(double *forces) const;
@@ -103,7 +104,7 @@ namespace ForceFields {
       \param forces   an array of doubles.  Should be \c 3*this->numPoints() long.
 
       <b>Side effects:</b>
-	- The individual contributions may modify the distance matrix
+        - The individual contributions may modify the distance matrix
      */
     void calcGrad(double *pos,double *forces);
     
@@ -116,9 +117,9 @@ namespace ForceFields {
       \return an integer value indicating whether or not the convergence
               criteria were achieved:
         - 0: indicates success
-	- 1: the minimization did not converge in \c maxIts iterations.
+        - 1: the minimization did not converge in \c maxIts iterations.
     */
-    int minimize(int maxIts=200,double forceTol=1e-4,double energyTol=1e-6);
+    int minimize(unsigned int maxIts=200,double forceTol=1e-4,double energyTol=1e-6);
 
     // ---------------------------
     // setters and getters
@@ -137,15 +138,15 @@ namespace ForceFields {
       \param j point index
       \param pos (optional) If this argument is provided, it will be used
           to provide the positions of points. \c pos should be
-	  \c 3*this->numPoints() long.
+          \c 3*this->numPoints() long.
 
       \return the distance
 
       <b>Side effects:</b>
-	- if the distance between i and j has not previously been calculated,
-	  our internal distance matrix will be updated.
+        - if the distance between i and j has not previously been calculated,
+          our internal distance matrix will be updated.
     */
-    double distance(int i,int j,double *pos=0);
+    double distance(unsigned int i,unsigned int j,double *pos=0);
 
     //! returns the distance between two points
     /*!
@@ -153,14 +154,14 @@ namespace ForceFields {
       \param j point index
       \param pos (optional) If this argument is provided, it will be used
           to provide the positions of points. \c pos should be
-	  \c 3*this->numPoints() long.
+          \c 3*this->numPoints() long.
 
       \return the distance
 
       <b>Note:</b>
-	The internal distance matrix is not updated in this case
+        The internal distance matrix is not updated in this case
     */
-    double distance(int i,int j,double *pos=0) const;
+    double distance(unsigned int i,unsigned int j,double *pos=0) const;
 
     //! returns the dimension of the forcefield
     unsigned int dimension() const {
@@ -168,7 +169,7 @@ namespace ForceFields {
     }
 
     //! returns the number of points the ForceField is handling
-    int numPoints() const { return d_numPoints; };
+    unsigned int numPoints() const { return d_numPoints; };
 
     INT_VECT &fixedPoints() { return d_fixedPoints; };
     const INT_VECT &fixedPoints() const { return d_fixedPoints; };
@@ -176,7 +177,7 @@ namespace ForceFields {
   protected:
     unsigned int d_dimension;
     bool df_init;              //!< whether or not we've been initialized
-    int d_numPoints;           //!< the number of active points
+    unsigned int d_numPoints;  //!< the number of active points
     double *dp_distMat;        //!< our internal distance matrix
     RDGeom::PointPtrVect d_positions;  //!< pointers to the points we're using
     ContribPtrVect d_contribs; //!< contributions to the energy

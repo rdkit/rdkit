@@ -120,10 +120,10 @@ void test2(){
   std::cerr << "-------------------------------------" << std::endl;
   std::cerr << "Testing BFGS optimization." << std::endl;
 
-  int dim=2;
+  unsigned int dim=2;
   double oLoc[2],oVal;
   double nVal;
-  int nIters;
+  unsigned int nIters;
   double (*func)(double *);
   void (*gradFunc)(double *,double *);
 
