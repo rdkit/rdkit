@@ -109,6 +109,7 @@ namespace RDKit{
       case Bond::DOUBLE: res="  2";break;
       case Bond::TRIPLE: res="  3";break;
       case Bond::AROMATIC: res="  4";break;
+      default: res="  0";break;
       }
     }
     return res;
