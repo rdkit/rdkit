@@ -82,7 +82,7 @@ namespace RDKit {
         // now redo the minimization if we have a chiral center, this
         // time removing the chiral constraints and
         // increasing the weight on the fourth dimension
-        if (chiralCenters.size() > 0) {
+        if (chiralCenters.size()>0 || useRandomCoords) {
           ForceFields::ForceField *field = DistGeom::constructForceField(*mmat, positions,
                                                                          chiralCenters,
                                                                          0.0, 1.0, 0,
