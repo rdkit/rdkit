@@ -31,21 +31,26 @@ namespace DistGeom {
     PRECONDITION(pos,"bad vector");
     
     double d = this->dp_forceField->distance(this->d_end1Idx,this->d_end2Idx,pos);
-    double val, res = 0.0;
+    double val=0.0;
     if (d > d_ub) {
       val = ((d*d)/(d_ub*d_ub)) - 1.0;
-      res = (val*val);
     } else if (d < d_lb) {
       val = ((2*d_lb*d_lb)/(d_lb*d_lb + d*d)) - 1.0;
-      res = val*val;
     }
-    return d_weight*res;
+    double res;
+    if(val>0.0){
+      res=d_weight*val*val;
+    }else{
+      res=0;
+    }
+    return res;
   }
 
   void DistViolationContrib::getGrad(double *pos, double *grad) const {
     PRECONDITION(dp_forceField,"no owner");
     PRECONDITION(pos,"bad vector");
     PRECONDITION(grad,"bad vector");
+    unsigned int dim=this->dp_forceField->dimension();
     double d = this->dp_forceField->distance(this->d_end1Idx,this->d_end2Idx,pos);
     double preFactor = 0.0;
     if (d > d_ub) {
@@ -59,10 +64,10 @@ namespace DistGeom {
       return;
     }
 
-    double *end1Coords = &(pos[3*this->d_end1Idx]);
-    double *end2Coords = &(pos[3*this->d_end2Idx]);
+    double *end1Coords = &(pos[dim*this->d_end1Idx]);
+    double *end2Coords = &(pos[dim*this->d_end2Idx]);
 
-    for(unsigned int i=0;i<3;i++){
+    for(unsigned int i=0;i<dim;i++){
       double dGrad;
       if(d>0.0){
         dGrad= d_weight*preFactor * (end1Coords[i]-end2Coords[i])/d;
@@ -70,8 +75,8 @@ namespace DistGeom {
         // FIX: this likely isn't right
         dGrad= d_weight*preFactor * (end1Coords[i]-end2Coords[i]);
       }
-      grad[3*this->d_end1Idx+i] += dGrad;
-      grad[3*this->d_end2Idx+i] -= dGrad;
+      grad[dim*this->d_end1Idx+i] += dGrad;
+      grad[dim*this->d_end2Idx+i] -= dGrad;
     }
   }
 }

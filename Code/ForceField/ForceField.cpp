@@ -74,15 +74,14 @@ namespace ForceFields {
           double tmp = (*(this->positions()[i]))[idx] - (*(this->positions()[j]))[idx];
           res += tmp*tmp;
         }
-        res = sqrt(res);
       } else {
         res = 0.0;
         for(unsigned int idx=0;idx<d_dimension;idx++){
           double tmp=pos[d_dimension*i+idx]-pos[d_dimension*j+idx];
           res += tmp*tmp;
         }
-        res = sqrt(res);
       }
+      res = sqrt(res);
       dp_distMat[idx]=res;
     }
     return res;
@@ -104,15 +103,14 @@ namespace ForceFields {
         double tmp = (*(this->positions()[i]))[idx] - (*(this->positions()[j]))[idx];
         res += tmp*tmp;
       }
-      res = sqrt(res);
     } else {
       res = 0.0;
       for(unsigned int idx=0;idx<d_dimension;idx++){
         double tmp=pos[d_dimension*i+idx]-pos[d_dimension*j+idx];
         res += tmp*tmp;
       }
-      res = sqrt(res);
     }
+    res = sqrt(res);
     return res;
   }
 
@@ -140,8 +138,8 @@ namespace ForceFields {
     this->scatter(points);
     ForceFieldsHelper::_ffHolder=this;
     int res = BFGSOpt::minimize(dim,points,forceTol,numIters,finalForce,
-                            ForceFieldsHelper::calcEnergy,
-                            ForceFieldsHelper::calcGrad,energyTol,maxIts);
+                                ForceFieldsHelper::calcEnergy,
+                                ForceFieldsHelper::calcGrad,energyTol,maxIts);
     this->gather(points);
 
     delete [] points;
@@ -233,7 +231,7 @@ namespace ForceFields {
       }
       tab+=this->dimension();
     }
-    POSTCONDITION(tab==3*d_positions.size(),"bad index");
+    POSTCONDITION(tab==this->dimension()*d_positions.size(),"bad index");
   }
 
   void ForceField::gather(double *pos) {

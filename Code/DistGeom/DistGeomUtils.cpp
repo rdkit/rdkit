@@ -22,8 +22,8 @@ namespace DistGeom {
 
 
   double pickRandomDistMat(const BoundsMatrix &mmat, 
-			   RDNumeric::SymmMatrix<double> &distMat,
-			   int seed) {
+                           RDNumeric::SymmMatrix<double> &distMat,
+                           int seed) {
     // make sure the sizes match up
     unsigned int npt = mmat.numRows();
     CHECK_INVARIANT(npt == distMat.numRows(), "Size mismatch");
@@ -98,7 +98,7 @@ namespace DistGeom {
     }
     unsigned int nEigs = (dim < N) ? dim : N;
     RDNumeric::EigenSolvers::powerEigenSolver(nEigs, T, eigVecs, eigVals,
-					      (int)(sumSqD2*N));
+                                              (int)(sumSqD2*N));
     
     double *eigData = eigVals.getData();
     bool foundNeg = false;
@@ -141,7 +141,7 @@ namespace DistGeom {
         ptIt!=positions.end();++ptIt){
       RDGeom::Point *pt = *ptIt;
       for (unsigned int i = 0; i<pt->dimension(); ++i) {
-        (*pt)[i]=boxSize*RDKit::getRandomVal();
+        (*pt)[i]=boxSize*(RDKit::getRandomVal()-0.5);
       }
     }
     return true;
@@ -157,7 +157,7 @@ namespace DistGeom {
                                                double basinSizeTol) {
     unsigned int N = mmat.numRows();
     CHECK_INVARIANT(N == positions.size(), "");
-    ForceFields::ForceField *field=new ForceFields::ForceField();
+    ForceFields::ForceField *field=new ForceFields::ForceField(positions[0]->dimension());
     for(unsigned int i=0; i < N; i++){
       field->positions().push_back(positions[i]);
     }
@@ -189,9 +189,9 @@ namespace DistGeom {
     // now add chiral constraints
     if (weightChiral > 1.e-8) {
       for (VECT_CHIRALSET::const_iterator csi = csets.begin();
-	   csi != csets.end(); csi++) {
+           csi != csets.end(); csi++) {
         ChiralViolationContrib *contrib = new ChiralViolationContrib(field, csi->get(),
-								     weightChiral);
+                                                                     weightChiral);
         field->contribs().push_back(ForceFields::ContribPtr(contrib));
       }
     }
