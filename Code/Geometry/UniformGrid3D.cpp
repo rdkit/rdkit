@@ -158,7 +158,7 @@ namespace RDGeom {
   void UniformGrid3D::setSphereOccupancy(const Point3D & center, double radius, 
                                          double stepSize, int maxNumLayers,
                                          bool ignoreOutOfBound) {
-    unsigned int ptIndex = this->getGridPointIndex(center);
+    int ptIndex = this->getGridPointIndex(center);
     if (ptIndex == -1) {
       if (ignoreOutOfBound) { 
         return;
@@ -171,9 +171,9 @@ namespace RDGeom {
 
     gPt /= d_spacing;
 
-    unsigned int z = ptIndex/(d_numX*d_numY);
-    unsigned int y = (ptIndex%(d_numX*d_numY))/d_numX;
-    unsigned int x = ptIndex%d_numX;
+    //unsigned int z = ptIndex/(d_numX*d_numY);
+    //unsigned int y = (ptIndex%(d_numX*d_numY))/d_numX;
+    //unsigned int x = ptIndex%d_numX;
 
     unsigned int bPerVal = dp_storage->getNumBitsPerVal();
     unsigned int maxVal = (1 << bPerVal) - 1;
