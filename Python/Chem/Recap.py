@@ -158,7 +158,7 @@ class RecapHierarchyNode(object):
     self.mol=None
 
 
-def RecapDecompose(mol,allNodes=None):
+def RecapDecompose(mol,allNodes=None,minFragmentSize=0):
   """ returns the recap decomposition for a molecule """
   mSmi = Chem.MolToSmiles(mol,1)
 
@@ -193,9 +193,14 @@ def RecapDecompose(mol,allNodes=None):
 	  prodSeq.sort()
 	  for nats,prod in prodSeq:
 	    pSmi = Chem.MolToSmiles(prod,1)
+            if minFragmentSize>0:
+              nDummies = pSmi.count('Du')
+              if nats-nDummies<minFragmentSize:
+                seqOk=False
+                break
             # don't forget after replacing dummy atoms to remove any empty
             # branches:
-	    if pSmi.replace('[Du]','').replace('()','') in ('','C','CC','CCC'):
+	    elif pSmi.replace('[Du]','').replace('()','') in ('','C','CC','CCC'):
 	      seqOk=False
 	      break
 	    prod.pSmi = pSmi
@@ -273,6 +278,31 @@ if __name__=='__main__':
       ks = res.GetLeaves().keys()
       self.failUnless('[Du]N1CCCCC1' in ks)
       self.failUnless('[Du]CCCC' in ks)
+
+    def testMinFragmentSize(self):
+      m = Chem.MolFromSmiles('CCCOCCC')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(res.children=={})
+      res = RecapDecompose(m,minFragmentSize=3)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==1)
+      ks = res.GetLeaves().keys()
+      self.failUnless('[Du]CCC' in ks)
+
+      m = Chem.MolFromSmiles('CCCOCC')
+      res = RecapDecompose(m,minFragmentSize=3)
+      self.failUnless(res)
+      self.failUnless(res.children=={})
+
+      m = Chem.MolFromSmiles('CCCOCCOC')
+      res = RecapDecompose(m,minFragmentSize=2)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==2)
+      ks = res.GetLeaves().keys()
+      self.failUnless('[Du]CCC' in ks)
+      ks = res.GetLeaves().keys()
+      self.failUnless('[Du]CCOC' in ks)
       
     def testAmideRxn(self):
       m = Chem.MolFromSmiles('C1CC1C(=O)NC1OC1')
