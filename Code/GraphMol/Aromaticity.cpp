@@ -102,6 +102,7 @@ namespace {
     OneElectronDonorType,
     TwoElectronDonorType,
     OneOrTwoElectronDonorType,
+    AnyElectronDonorType,
     NoElectronDonorType
   } ElectronDonorType; // used in setting aromaticity
   typedef std::vector<ElectronDonorType> VECT_EDON_TYPE;
@@ -190,6 +191,10 @@ namespace {
 
   void getMinMaxAtomElecs(ElectronDonorType dtype, int &atlw, int &atup) {
     switch(dtype) {
+    case AnyElectronDonorType :
+      atlw = 0;
+      atup = 2;
+      break;
     case OneOrTwoElectronDonorType :
       atlw = 1;
       atup = 2;
@@ -208,7 +213,8 @@ namespace {
     }
   }
 
-  bool incidentNonCyclicMultipleBond(Atom *at, int &who ) {
+  bool incidentNonCyclicMultipleBond(const Atom *at, int &who ) {
+    PRECONDITION(at,"bad atom");
     // check if "at" has an non-cyclic multiple bond on it
     // if yes check which atom this bond goes to  
     // and record the atomID in who
@@ -227,7 +233,8 @@ namespace {
     return false;
   }
    
-  bool incidentCyclicMultipleBond(Atom *at) {
+  bool incidentCyclicMultipleBond(const Atom *at) {
+    PRECONDITION(at,"bad atom");
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
@@ -242,7 +249,8 @@ namespace {
     return false;
   }
 
-  bool incidentMultipleBond(Atom *at) {
+  bool incidentMultipleBond(const Atom *at) {
+    PRECONDITION(at,"bad atom");
     return at->getExplicitValence()!=(at->getDegree()+at->getNumExplicitHs());
   }
 
@@ -367,7 +375,8 @@ namespace {
     narom += aromRings.size();
   }
 
-  bool isAtomCandForArom(Atom *at, VECT_EDON_TYPE &edon) {
+  bool isAtomCandForArom(const Atom *at, VECT_EDON_TYPE &edon) {
+    PRECONDITION(at,"bad atom");
     // limit aromaticity to the first two rows of the periodic table
     // as a result if the atomic number if greater than 18 - it cannot
     // be a candidate for aromaticity
@@ -380,6 +389,7 @@ namespace {
     case OneElectronDonorType:
     case TwoElectronDonorType:
     case OneOrTwoElectronDonorType:
+    case AnyElectronDonorType:
       return(true);
     default:
       break;
@@ -387,11 +397,15 @@ namespace {
     return(false);
   }
 
-  ElectronDonorType getAtomDonorTypeArom(Atom *at) {
-    int nelec;
+  ElectronDonorType getAtomDonorTypeArom(const Atom *at) {
+    PRECONDITION(at,"bad atom");
+    if(at->getAtomicNum()==0){
+      // dummies can be anything:
+      return AnyElectronDonorType;
+    }
+
     ElectronDonorType res = NoElectronDonorType;
-    
-    nelec = MolOps::countAtomElec(at);
+    int nelec = MolOps::countAtomElec(at);
     int who = -1;
     const ROMol &mol = at->getOwningMol();
 
@@ -466,6 +480,7 @@ namespace {
 namespace RDKit {
   namespace MolOps {
     int countAtomElec(const Atom *at) {
+      PRECONDITION(at,"bad atom");
       int res;
       int dv; // default valence 
       int nle; // number of lone pair electrons

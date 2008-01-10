@@ -177,6 +177,11 @@ s		    {	yysmiles_lval.atom = new Atom( 16 );
 				return AROMATIC_ATOM_TOKEN; 
 			}
 
+<IN_ATOM_STATE>\* 	{   yysmiles_lval.atom = new Atom( 0 );
+		            yysmiles_lval.atom->setProp("dummyLabel",
+                                                        std::string("*"));
+				return ATOM_TOKEN; 
+			}
 <IN_ATOM_STATE>X 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
                                                         std::string("X"));

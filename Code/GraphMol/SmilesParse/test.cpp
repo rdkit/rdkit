@@ -56,7 +56,6 @@ void testPass(){
     "[H][H]",
     "[H+]",
     "C[N+](=O)[O-]",
-#endif
     "N1C(=N)SC=C1",
     "[O-][N+](=O)C1=CNC(=N)S1",
     "CN(=O)=O",
@@ -67,6 +66,16 @@ void testPass(){
     "C1=CC=CN(=O)=C1  ",
     "  C1=CC=CN(=O)=C1  ",
     "\tC1=CC=CN(=O)=C1\r\n",
+#endif
+     // test dummy atoms:
+    "c1ccccc1[*]",
+    "c1ccccc1[1*]",
+    "S1cccc1",
+    "[*]1ccccc1",
+    "C1=CC=CC=C1",
+    "[*]1=CC=CC=C1",
+    "[*]1[*]cccc1",
+    "[*]1[*][*]ccc1",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
@@ -1359,6 +1368,10 @@ void testBug1719046(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+
+
+
+ 
 int
 main(int argc, char *argv[])
 {

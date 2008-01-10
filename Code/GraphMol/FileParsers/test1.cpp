@@ -22,15 +22,15 @@ void test1(){
 
   std::string rdbase = getenv("RDBASE");
   std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/list-query.mol";
-  RWMol *m = MolFileToMol(fName);
+  RWMol *m = MolFileToMol(fName,false);
   //MolOps::sanitizeMol(*m);
   TEST_ASSERT(m);
 
   TEST_ASSERT(m->getNumAtoms()==6);
   std::string smi = MolToSmiles(*m);
-  TEST_ASSERT(smi=="[Du]1=CC=CC=C1");
-  
-  //TEST_ASSERT(smi=="[Du]1=CC=CC=C1");  
+  //TEST_ASSERT(smi=="[Du]1ccccc1");
+  TEST_ASSERT(smi=="[Du]1=CC=CC=C1");  
+
   smi = "C1=CC=CC=C1";
   RWMol *m2 = SmilesToMol(smi,false,false);
   MatchVectType mv;

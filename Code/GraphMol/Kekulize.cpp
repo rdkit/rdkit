@@ -73,17 +73,27 @@ namespace RDKit {
       // - marks all aromatic bonds to single bonds
       // - marks atoms that can take a double bond 
       boost::dynamic_bitset<> makeSingle(mol.getNumBonds());
-      RWMol::BondIterator bi;
 
-      Atom *at;
-      int tbo, sbo, dv, chrg;
-      INT_VECT_CI adx;
+      bool hasAromaticAtom=false;
+      for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end();
+           adx++) {
+        if(mol.getAtomWithIdx(*adx)->getIsAromatic()){
+          hasAromaticAtom=true;
+          break;
+        }
+      }
+      // if there's not at least one atom in the ring that's
+      // marked as being aromatic, there's no point in continuing:
+      if(!hasAromaticAtom) return;
+
       RWMol::OEDGE_ITER beg,end;
       RWMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
-      for (adx = allAtms.begin(); adx != allAtms.end(); adx++) {
-        // if this atom is not aromatic, don't have to kekulize it
-        at = mol.getAtomWithIdx(*adx);
-        if (!at->getIsAromatic()) {
+      for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end();
+           adx++) {
+        // if this atom is not either aromatic or a dummy, don't
+        // have to kekulize it
+        Atom *at = mol.getAtomWithIdx(*adx);
+        if (!at->getIsAromatic() && at->getAtomicNum() ) {
           done.push_back(*adx);
           // make sure all the bonds on this atom are also non aromatic
           // i.e. can't have aromatic bond onto a non-aromatic atom
@@ -103,11 +113,11 @@ namespace RDKit {
           continue;
         }
       
-        sbo = 0;
-        dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
-        chrg = at->getFormalCharge();
+        int sbo = 0;
+        int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
+        int chrg = at->getFormalCharge();
         dv += chrg;
-        tbo = at->getExplicitValence() + at->getImplicitValence();
+        int tbo = at->getExplicitValence() + at->getImplicitValence();
         const UINT_VECT &valList =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
         unsigned int vi = 1;
@@ -123,7 +133,7 @@ namespace RDKit {
           if (bond->getIsAromatic()) {
             sbo++;
             // mark this bond to be marked single later 
-            // we don't want to do right now because it can srew-up the 
+            // we don't want to do right now because it can screw-up the 
             // valence calculation to determine the number of hydrogens below
             makeSingle[bond->getIdx()]=1;
           }
@@ -134,13 +144,14 @@ namespace RDKit {
         }
         sbo +=  at->getTotalNumHs();
       
-        if (dv == (sbo + 1)) {
+        if (dv==(sbo + 1) || !at->getAtomicNum() ) {
           dBndCands[*adx]=1;
         } 
       }// loop over all atoms in the fused system
 
       // now turn all the aromatic bond in this fused system to single
-      for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
+      for (RWMol::BondIterator bi = mol.beginBonds();
+           bi != mol.endBonds(); bi++) {
         if (makeSingle[(*bi)->getIdx()] ) {
           (*bi)->setBondType(Bond::SINGLE);
         }
@@ -149,14 +160,15 @@ namespace RDKit {
 
 
     void kekulizeFused(RWMol &mol,
-                       const VECT_INT_VECT &arings, unsigned int maxBackTracks) { 
+                       const VECT_INT_VECT &arings,
+                       unsigned int maxBackTracks) { 
       
-      // get all teh atoms in the ring system
+      // get all the atoms in the ring system
       INT_VECT allAtms;
       Union(arings, allAtms);
 
-      // get all the atoms that are candidates to recieve a double bond
-      // also mark atoms in teh fused system that are not aromatic to begin with
+      // get all the atoms that are candidates to receive a double bond
+      // also mark atoms in the fused system that are not aromatic to begin with
       // as done. Mark all the bonds that are part of the aromatic system
       // to be single bonds
       INT_VECT done;
@@ -167,9 +179,11 @@ namespace RDKit {
 
       markDbondCands(mol, allAtms, dBndCands, done);
 
-      //std::cerr << "candidates: ";
-      //for(unsigned int i=0;i<nats;++i) std::cerr << dBndCands[i];
-      //std::cerr << std::endl;
+#if 0
+      std::cerr << "candidates: ";
+      for(unsigned int i=0;i<nats;++i) std::cerr << dBndCands[i];
+      std::cerr << std::endl;
+#endif
 
       INT_DEQUE astack;
       INT_INT_DEQ_MAP options;
@@ -203,7 +217,8 @@ namespace RDKit {
         }
         else {
           for (ai = allAtms.begin(); ai != allAtms.end(); ai++) {
-            if (std::find(done.begin(), done.end(), (*ai)) == done.end()) {
+            if (std::find(done.begin(), done.end(),
+                          (*ai)) == done.end()) {
               curr = (*ai);
               break;
             }
@@ -213,8 +228,6 @@ namespace RDKit {
 
         // loop over the neighbors if we can add double bonds or
         // simply push them onto the stack
-        RWMol::ADJ_ITER nbrIdx,endNbrs;
-        boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(curr));
         INT_DEQUE opts;
         bool cCand = false;
         if (dBndCands[curr]) {
@@ -227,20 +240,25 @@ namespace RDKit {
           CHECK_INVARIANT(opts.size() > 0, "");
         }
         else {
+          RWMol::ADJ_ITER nbrIdx,endNbrs;
+          boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(curr));
           while (nbrIdx != endNbrs) {
             // ignore if the neighbor has already been dealt with before
-            if (std::find(done.begin(), done.end(), (*nbrIdx)) != done.end()) {
+            if (std::find(done.begin(), done.end(),
+                          (*nbrIdx)) != done.end()) {
               ++nbrIdx;
               continue;
             }
             // ignore if the neighbor is not part of the fused system
-            if (std::find(allAtms.begin(),allAtms.end(),(*nbrIdx)) == allAtms.end()) {
+            if (std::find(allAtms.begin(),allAtms.end(),
+                          (*nbrIdx)) == allAtms.end()) {
               ++nbrIdx;
               continue;
             }
           
             // if the neighbor is not on the stack add it
-            if (std::find(astack.begin(), astack.end(), (*nbrIdx)) == astack.end()) {
+            if (std::find(astack.begin(), astack.end(),
+                          (*nbrIdx)) == astack.end()) {
               astack.push_back(*nbrIdx);
             }
           
@@ -299,7 +317,7 @@ namespace RDKit {
           } // end of adding a double bond
           else {
             // we have an atom that should be getting a double bond
-            // but none of the negihbors can take one. Most likely
+            // but none of the neighbors can take one. Most likely
             // because of a wrong choice earlier so back track
             if ((lastOpt >= 0) && (numBT < maxBackTracks)) {
               //std::cerr << "PRE BACKTRACK" << std::endl;
@@ -338,7 +356,7 @@ namespace RDKit {
       }
 
       // before everything do implicit valence calculation and store them
-      // we will repeat after kekulizaition and compare for the sake of error
+      // we will repeat after kekulization and compare for the sake of error
       // checking
     
       // A bit on the state of the molecule at this point

@@ -675,8 +675,11 @@ class TestCase(unittest.TestCase):
 
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','list-query.mol')
-    #fileN = "../FileParsers/test_data/list-query.mol"
     query = Chem.MolFromMolFile(fileN)
+    smi = Chem.MolToSmiles(query)
+    self.failUnless(smi=='[Du]1ccccc1')
+
+    query = Chem.MolFromMolFile(fileN,sanitize=False)
     smi = Chem.MolToSmiles(query)
     self.failUnless(smi=='[Du]1=CC=CC=C1')
     smi = "C1=CC=CC=C1"

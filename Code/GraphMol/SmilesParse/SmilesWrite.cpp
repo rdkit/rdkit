@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -34,7 +34,8 @@ namespace RDKit{
       int fc = atom->getFormalCharge();
       int num = atom->getAtomicNum();
       int numExplicit = atom->getNumExplicitHs();
-      double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(num)-atom->getMass());
+      double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(num) -
+                           atom->getMass());
   
       std::string symb = atom->getSymbol();
       bool needsBracket=false;
