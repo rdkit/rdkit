@@ -716,14 +716,13 @@ namespace FindRings {
 	    INT_VECT npath = atPaths[nbrIdx];
 	    // make sure that the intersections of cpath and npath give exactl one 
 	    // element and that should be the root element for correct ring closure
-	    int id, com = 0;
-
-	    INT_VECT_CI ci;
-	    for (ci = cpath.begin(); ci != cpath.end(); ci++) {
+	    int id=-1;
+            unsigned int com = 0;
+	    for (INT_VECT_CI ci = cpath.begin(); ci != cpath.end(); ++ci) {
 	      if (std::find(npath.begin(), npath.end(), (*ci)) != npath.end()) {
 		com++;
 		id = (*ci);
-		if((*ci)!=root) break;
+		if(id!=root) break;
 	      }
 	    } // end of found stuff in common with neighbor
 
@@ -756,7 +755,7 @@ namespace FindRings {
 	    } // end of found a ring
 	  } // end of we have seen this neighbor before
 	} // end of nbrIdx not part of current path and not a done atom
-	nbr++;
+	++nbr;
       } // end of loop over neighbors of current atom 
     } // moving to the next node
     return rings.size(); // if we are here we should have founf everything around the node

@@ -113,6 +113,8 @@ namespace RDKit{
             atStr = "@@";
           chiralityIncluded=true;
           break;
+        default:
+          break;
         }
         //std::cout << "\tats: " << atStr << std::endl;
         res << atStr;
@@ -336,7 +338,7 @@ namespace RDKit{
       MolOps::rankAtoms(mol,ranks);
     }
 #ifdef VERBOSE_CANON
-    for(int tmpI=0;tmpI<ranks.size();tmpI++){
+    for(unsigned int tmpI=0;tmpI<ranks.size();tmpI++){
       std::cout << tmpI << " " << ranks[tmpI] << " " << *(mol.getAtomWithIdx(tmpI)) << std::endl;
     }
 #endif

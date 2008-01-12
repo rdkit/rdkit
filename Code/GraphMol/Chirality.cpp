@@ -590,7 +590,8 @@ namespace RDKit{
             if(codes.size()==3 && atom->getTotalNumHs()==1){
               // we recognize the second case above ([C@H](Cl)(F)Br) using the
               // hasTruePrecedingAtom flag:
-              if(hasTruePrecedingAtom) nSwaps+=1;
+              if(hasTruePrecedingAtom) ++nSwaps;
+              //++nSwaps;
             }
           
             // if that number is odd, we'll change our chirality:
@@ -602,6 +603,7 @@ namespace RDKit{
             std::string cipCode;
             if(tag==Atom::CHI_TETRAHEDRAL_CCW) cipCode="S";
             else cipCode="R";
+            BOOST_LOG(rdInfoLog) << "\t\t>>>("<<atom->getIdx()<<") : " << cipCode << std::endl;
             atom->setProp("_CIPCode",cipCode,true);
           } else {
             // FIX: this is where we should be handling meso cases

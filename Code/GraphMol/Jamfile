@@ -22,6 +22,9 @@ exe MolOpsTest : molopstest.cpp GraphMol
 exe testCanon : testCanon.cpp GraphMol 
   ./SmilesParse//SmilesParse ./Substruct//Substruct 
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+exe testChirality : testChirality.cpp GraphMol 
+  ./SmilesParse//SmilesParse ./FileParsers//FileParsers
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
 exe testPickler : testPickler.cpp GraphMol 
   ./SmilesParse//SmilesParse ./FileParsers//FileParsers
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
@@ -30,7 +33,7 @@ exe itertest : itertest.cpp GraphMol
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
 
 
-install regrs : test1 cptest querytest MolOpsTest testCanon testPickler itertest
+install regrs : test1 cptest querytest MolOpsTest testCanon testChirality testPickler itertest
   : <location>testExecs ;
 
 

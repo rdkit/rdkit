@@ -10,6 +10,8 @@ it's intended to be shallow, but broad
 """
 import unittest,os
 import RDConfig
+from RDLogger import logger
+logger=logger()
 import Chem
 from Chem import FragmentCatalog
 import DataStructs
