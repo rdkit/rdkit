@@ -224,7 +224,7 @@ static void molSubstructCount(
     return;
   }
   std::vector<RDKit::MatchVectType> matches;
-  int res=RDKit::SubstructMatch(*m,*patt,matches,true,false);
+  int res=RDKit::SubstructMatch(*m,*patt,matches,true,true,false);
   delete m;
   sqlite3_result_int(context, res);
 }
