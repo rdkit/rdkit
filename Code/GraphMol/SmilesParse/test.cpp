@@ -71,14 +71,15 @@ void testPass(){
     "c1ccccc1[*]",
     "c1ccccc1[1*]",
     "S1cccc1",
-    "[*]1ccccc1",
+    "*1ccccc1",
     "C1=CC=CC=C1",
-    "[*]1=CC=CC=C1",
-    "[*]1[*]cccc1",
-    "[*]1[*][*]ccc1",
+    "*1=CC=CC=C1",
+    "*1*cccc1",
+    "*1**ccc1",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
+    //std::cerr << "\n\n**************************: " << smi << std::endl;
     mol = SmilesToMol(smi);
     CHECK_INVARIANT(mol,smi);
     if (mol) {
