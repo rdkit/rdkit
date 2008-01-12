@@ -1,6 +1,11 @@
 ******  Release_XXX2007_1 *******
 (Changes relative to Release_Aug2007_1)
 
+!!!!!! IMPORTANT !!!!!!
+ - Bug fixes in the canonicalization algorithm have made it so that
+   the canonical SMILES from this version are not compatible with
+   those from older versions of the RDKit.
+
 Acknowledgements:
  - Adrian Schreyer uncovered and reported a number of the bugs fixed
    in this release.
@@ -23,7 +28,7 @@ Bug Fixes
  - Problems with the sping PIL and PDF canvases have been cleared
    up. The PIL canvas still generates a lot of warnings, but the
    output is correct.
- 
+
 New Features
  - The SparseIntVect class (used by the atom pairs and topological
    torsions) is now implemented in C++.
@@ -57,6 +62,18 @@ New Features
    initial coordinates for atoms instead of using the eigenvalues of
    the distance matrix. The default behavior is still to use the
    eigenvalues of the distance matrix.
+ - The function Recap.RecapDecompose now takes an optional argument
+   where the user can specify the minimum size (in number of atoms)
+   of a legal fragment. (feature request 180196)
+ - Dummy atoms can be expressed using asterixes, per the Daylight spec.
+   Dummy atoms are also now legal members of aromatic systems (e.g.
+   c1cccc*1 is a legal molecule). Support for supplying dummy atoms
+   as "[Du]", "[X]", "[Xa]", etc. is now considered deprecated. In
+   the next release a warning will be generated for these forms and
+   in the release after that the old form will generate errors. Note
+   that the output of dummy atoms will also change: in the next release
+   the default output format will be "*".
+   (feature request 186217)
 
 Other
  - The full set of tests is now easier to setup and run on new
