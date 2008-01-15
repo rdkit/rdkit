@@ -205,11 +205,10 @@ class TestCase(unittest.TestCase) :
         self.failUnless(nconfs == expected)
 
     def test6Chirality(self):
-        vols = []
-        expected = [14.70, 14.63, 14.64, 14.54, 14.64, 14.50, 14.61, 14.38, 14.66, 14.54]
+
         # turn on chirality and we should get chiral volume that is pretty consistent and
         # positive
-        
+        tgtVol=14.0
         smiles = "Cl[C@](C)(F)Br"
         mol = Chem.MolFromSmiles(smiles)
         cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
@@ -221,33 +220,29 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-
-            vols.append(vol)
-        
-        #print ','.join(['%6.2f'%(item) for item in vols])               
-        self.failUnless(lstEq(expected, vols,tol=1e-2))
+            self.failUnless(fabs(vol-tgtVol)<1)
 
         # turn of chirality and now we should see both chiral forms
-        expected = [-14.77,-14.77,-14.77, 14.67,-14.57,-14.77,-14.71, 14.67,-14.63,-14.57]
-        vols = []
         smiles = "ClC(C)(F)Br"
         mol = Chem.MolFromSmiles(smiles)
         cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
                                              randomSeed=120)
         self.failUnless(len(cids)==10)
+        nPos=0
+        nNeg=0
         for cid in cids:
             conf = mol.GetConformer(cid)
             vol = computeChiralVol(conf.GetAtomPosition(0),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-            vols.append(vol)
-        #print ','.join(['%6.2f'%(item) for item in vols])  
-        self.failUnless(lstEq(expected, vols,tol=1e-2))
+            self.failUnless(fabs(vol-tgtVol)<1 or fabs(vol+tgtVol)<1)
+            if vol<0: nNeg+=1
+            else: nPos+=1
+        self.failUnless(nPos>0)
+        self.failUnless(nNeg>0)
 
-        expected = [3.51,  3.56,  3.62,  3.91,  3.95,  3.98,  3.90,  3.94,  3.98,  3.91]
-        vols = []
-        
+        tgtVol=3.5
         for i in range(10):
             smiles = "Cl[C@H](F)Br"
             mol = Chem.MolFromSmiles(smiles)
@@ -257,14 +252,11 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(1),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3))
-
-            vols.append(vol)
-            
-        #print ','.join(['%6.2f'%(item) for item in vols])
-        self.failUnless(lstEq(expected, vols,tol=1e-2))
+            self.failUnless(fabs(vol-tgtVol)<1)
 
         expected = [-3.62, -3.67, -3.72,  3.91,  3.95,  3.98,  3.90,  3.94,  3.98,  3.91]
-        vols = []
+        nPos=0
+        nNeg=0
         for i in range(10):
             smiles = "ClC(F)Br"
             mol = Chem.MolFromSmiles(smiles)
@@ -274,17 +266,34 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(1),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3))
+            self.failUnless(fabs(vol-tgtVol)<1 or fabs(vol+tgtVol)<1)
+            if vol<0: nNeg+=1
+            else: nPos+=1
 
-            vols.append(vol)
-                        
-        #print ','.join(['%6.2f'%(item) for item in vols])
-        self.failUnless(lstEq(expected, vols,tol=1e-2))
+        self.failUnless(nPos>0)
+        self.failUnless(nNeg>0)
 
-        # lets try a little more complicated system
-        expectedV1 = [-1.57, -2.33, -2.32, -2.33, -1.62]
-        expectedV2 = [-2.95, -2.89, -2.88, -2.89, -2.93]
-        v1s = []
-        v2s = []
+
+
+        smiles = "Cl[C@H](F)Br"
+        m = Chem.MolFromSmiles(smiles)
+        mol = Chem.AddHs(m)
+        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
+                                             randomSeed=100)
+        self.failUnless(len(cids)==10)
+        tgtVol=11
+        # FIX: there's something wrong with the second result here
+        for cid in cids:
+            conf = mol.GetConformer(cid)
+            vol = computeChiralVol(conf.GetAtomPosition(0),
+                                   conf.GetAtomPosition(2),
+                                   conf.GetAtomPosition(3),
+                                   conf.GetAtomPosition(4))
+            self.failUnless(fabs(vol-tgtVol)<1.2)
+        
+        # let's try a little more complicated system
+        expectedV1 = -2.0
+        expectedV2 = -2.5
         
         for i in range(5):
             smi = "C1=CC=C(C=C1)[C@H](OC1=C[NH]N=C1)C(=O)[NH]C[C@H](Cl)C1=CC=NC=C1"
@@ -298,22 +307,24 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(7),
                                    conf.GetAtomPosition(13))
-            v1s.append(vol1)
+            self.failUnless(fabs(vol-tgtVol)<1 or fabs(vol+tgtVol)<1)
+            if vol<0: nNeg+=1
+            else: nPos+=1
+
+
             vol2 = computeChiralVol(conf.GetAtomPosition(17),
                                     conf.GetAtomPosition(16),
                                     conf.GetAtomPosition(18),
                                     conf.GetAtomPosition(19))
-            v2s.append(vol2)
-        self.failUnless(lstEq(expectedV1, v1s,tol=1e-2))
-        self.failUnless(lstEq(expectedV2, v2s,tol=4e-2),str(v2s))
+            self.failUnless(fabs(vol2-expectedV2)<1)
 
         # remove the chiral specification and we should see other chiral
         # forms of the compound
-        expectedV1 = [-2.30, -2.31, -2.30,  2.30, -1.77]
-        expectedV2 = [2.90,  2.89,  2.69, -2.90, -2.93]
-        v1s = []
-        v2s = []
+        expectedV1 = 2.0 #[-2.30, -2.31, -2.30,  2.30, -1.77]
+        expectedV2 = 2.8 #[2.90,  2.89,  2.69, -2.90, -2.93]
         
+        self.failUnless(nPos>0)
+        self.failUnless(nNeg>0)
         for i in range(5):
             smi = "C1=CC=C(C=C1)C(OC1=C[NH]N=C1)C(=O)[NH]CC(Cl)C1=CC=NC=C1"
             mol = Chem.MolFromSmiles(smi)
@@ -326,37 +337,13 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(7),
                                    conf.GetAtomPosition(13))
-            v1s.append(vol1)
             vol2 = computeChiralVol(conf.GetAtomPosition(17),
                                     conf.GetAtomPosition(16),
                                     conf.GetAtomPosition(18),
                                     conf.GetAtomPosition(19))
-            v2s.append(vol2)
+            self.failUnless(fabs(fabs(vol1)-expectedV1)<1.0)
+            self.failUnless(fabs(fabs(vol2)-expectedV2)<1.0)
 
-        #print ','.join(['%6.2f'%(item) for item in v1s])
-        #print ','.join(['%6.2f'%(item) for item in v2s])
-        self.failUnless(lstEq(expectedV1, v1s,tol=1e-2))
-        self.failUnless(lstEq(expectedV2, v2s,tol=1e-2))
-
-        smiles = "Cl[C@H](F)Br"
-        m = Chem.MolFromSmiles(smiles)
-        mol = Chem.AddHs(m)
-        cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
-                                             randomSeed=100)
-        self.failUnless(len(cids)==10)
-        vols = []
-        expected = [11.81, 11.63, 11.95, 11.86, 11.98, 11.99, 11.73, 11.74, 11.86, 12.07]
-        for cid in cids:
-            conf = mol.GetConformer(cid)
-            vol = computeChiralVol(conf.GetAtomPosition(0),
-                                   conf.GetAtomPosition(2),
-                                   conf.GetAtomPosition(3),
-                                   conf.GetAtomPosition(4))
-
-            vols.append(vol)
-        
-        #print ','.join(['%6.2f'%(item) for item in vols])
-        self.failUnless(lstEq(expected, vols,tol=1e-2))
             
 if __name__ == '__main__':
   unittest.main()

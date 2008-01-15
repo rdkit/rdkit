@@ -38,7 +38,7 @@ void test1() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.sdf";
   SDMolSupplier sdsup(fname);
-  //SDWriter writer(fname);
+  //SDWriter writer("foo.sdf");
 
   boost::char_separator<char> spaceSep(" ");
   tokenizer tokens(smiString,spaceSep);
@@ -50,7 +50,9 @@ void test1() {
     CHECK_INVARIANT(cid >= 0, "");
 
     ROMol *m2 = sdsup.next();
-    //writer.write(m);
+    //BOOST_LOG(rdInfoLog) << ">>> " << smi << std::endl;
+    //writer.write(*m);
+    //writer.flush();
     //ROMol *m2 = NULL;
     if(m2){
       unsigned int nat = m->getNumAtoms();
@@ -73,9 +75,10 @@ void test1() {
 	  double d1=(pt1j-pt1i).length();
 	  double d2=(pt2j-pt2i).length();
 	  if(m->getBondBetweenAtoms(i,j)){
-	    TEST_ASSERT(fabs(d1-d2)/d1<0.05);
-	  }else{
-	    TEST_ASSERT(fabs(d1-d2)/d1<0.1);
+            //BOOST_LOG(rdInfoLog) << ">>> " << d1 << " " << d2 << std::endl;
+	    TEST_ASSERT(fabs(d1-d2)/d1<0.06);
+          }else{
+	    TEST_ASSERT(fabs(d1-d2)/d1<0.12);
 	  }
 	}
       }
