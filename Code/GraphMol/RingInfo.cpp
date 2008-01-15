@@ -13,9 +13,18 @@ namespace RDKit{
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_atomMembers.size() ){
-      return this->memberSearch(d_atomMembers[idx],size);
+      return std::find(d_atomMembers[idx].begin(),d_atomMembers[idx].end(),size)!=d_atomMembers[idx].end();
     } else {
       return false;
+    }
+  }
+  unsigned int RingInfo::minAtomRingSize(unsigned int idx) const {
+    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(idx>=0,"bad index");
+    if( idx < d_atomMembers.size() ){
+      return *std::min_element(d_atomMembers[idx].begin(),d_atomMembers[idx].end());
+    } else {
+      return 0;
     }
   }
   unsigned int RingInfo::numAtomRings(unsigned int idx) const {
@@ -31,9 +40,19 @@ namespace RDKit{
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_bondMembers.size() ){
-      return this->memberSearch(d_bondMembers[idx],size);
+      return std::find(d_bondMembers[idx].begin(),d_bondMembers[idx].end(),size)!=d_bondMembers[idx].end();
     } else {
       return false;
+    }
+
+  }
+  unsigned int RingInfo::minBondRingSize(unsigned int idx) const {
+    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(idx>=0,"bad index");
+    if( idx < d_bondMembers.size() ){
+      return *std::min_element(d_bondMembers[idx].begin(),d_bondMembers[idx].end());
+    } else {
+      return 0;
     }
 
   }
@@ -88,7 +107,4 @@ namespace RDKit{
     d_atomMembers.resize(numAtoms);
     d_bondMembers.resize(numBonds);
   }
-  bool RingInfo::memberSearch(const MemberType &member,int val) const {
-    return std::find(member.begin(),member.end(),val)!=member.end();
-  };
 }

@@ -342,7 +342,7 @@ atom_query: COMPLEX_ATOM_QUERY_TOKEN
 | RINGSIZE_ATOM_QUERY_TOKEN
 | RINGSIZE_ATOM_QUERY_TOKEN number {
   delete $1->getQuery();
-  $1->setQuery(makeAtomInRingOfSizeQuery($2));
+  $1->setQuery(makeAtomMinRingSizeQuery($2));
 }
 | charge_spec {
   QueryAtom *newQ = new QueryAtom();

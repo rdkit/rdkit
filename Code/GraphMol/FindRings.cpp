@@ -272,7 +272,7 @@ namespace FindRings {
 	  // now find the smallest ring/s around (*dupi)
 	  VECT_INT_VECT srings;
 	  VECT_INT_VECT_CI sri;
-	  int nsmall = smallestRingsBfs(tMol, (*dupi), srings);
+	  smallestRingsBfs(tMol, (*dupi), srings);
 	  for (sri = srings.begin(); sri != srings.end(); sri++) {
 	    if (sri->size() < minSiz) {
 	      minSiz = sri->size();
@@ -522,7 +522,7 @@ namespace FindRings {
 	VECT_INT_VECT trings;
 	INT_VECT forb;
 	forb.push_back(f);
-	int nrngs = smallestRingsBfs(tMol, cand, trings, &forb);
+	smallestRingsBfs(tMol, cand, trings, &forb);
 	for (sri = trings.begin(); sri != trings.end(); sri++) {
 	  INT_VECT nring = (*sri);
 	  invr = computeIntVectPrimesProduct(nring); 
@@ -667,7 +667,6 @@ namespace FindRings {
 
     // FIX: this should be number of atoms in the fragment (if it's required at all, see below)
     const int WHITE=0,GRAY=1,BLACK=2;
-    unsigned nats = mol.getNumAtoms();
     INT_VECT done(mol.getNumAtoms(),WHITE);
 
     if (forbidden) {
@@ -717,7 +716,7 @@ namespace FindRings {
 	    INT_VECT npath = atPaths[nbrIdx];
 	    // make sure that the intersections of cpath and npath give exactl one 
 	    // element and that should be the root element for correct ring closure
-	    int id, com = 0;
+	    int id=-1, com = 0;
 
 	    INT_VECT_CI ci;
 	    for (ci = cpath.begin(); ci != cpath.end(); ci++) {

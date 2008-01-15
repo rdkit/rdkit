@@ -21,58 +21,51 @@ ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what) {
   return res;
 };
 
-#ifndef OLDWIN32
-template <int sz>  
-int queryIsAtomInRingOfSize(Atom const * at) {
-  return at->getOwningMol().getRingInfo()->isAtomInRingOfSize(at->getIdx(),sz);
+template <class T,int sz>  
+int queryIsInRingOfSize(T const *obj) {
+  return obj->getOwningMol().getRingInfo()->isAtomInRingOfSize(obj->getIdx(),sz);
 };
-
-template <int sz>  
-int queryIsBondInRingOfSize(Bond const * at) {
-  return at->getOwningMol().getRingInfo()->isBondInRingOfSize(at->getIdx(),sz);
-};
-
 ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt){
   RANGE_CHECK(3,tgt,20);
   ATOM_EQUALS_QUERY *res = new ATOM_EQUALS_QUERY;
   res->setVal(true);
   switch(tgt){
   case 3:
-    res->setDataFunc(queryIsAtomInRingOfSize<3>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,3>);break;
   case 4:
-    res->setDataFunc(queryIsAtomInRingOfSize<4>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,4>);break;
   case 5:
-    res->setDataFunc(queryIsAtomInRingOfSize<5>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,5>);break;
   case 6:
-    res->setDataFunc(queryIsAtomInRingOfSize<6>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,6>);break;
   case 7:
-    res->setDataFunc(queryIsAtomInRingOfSize<7>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,7>);break;
   case 8:
-    res->setDataFunc(queryIsAtomInRingOfSize<8>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,8>);break;
   case 9:
-    res->setDataFunc(queryIsAtomInRingOfSize<9>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,9>);break;
   case 10:
-    res->setDataFunc(queryIsAtomInRingOfSize<10>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,10>);break;
   case 11:
-    res->setDataFunc(queryIsAtomInRingOfSize<11>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,11>);break;
   case 12:
-    res->setDataFunc(queryIsAtomInRingOfSize<12>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,12>);break;
   case 13:
-    res->setDataFunc(queryIsAtomInRingOfSize<13>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,13>);break;
   case 14:
-    res->setDataFunc(queryIsAtomInRingOfSize<14>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,14>);break;
   case 15:
-    res->setDataFunc(queryIsAtomInRingOfSize<15>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,15>);break;
   case 16:
-    res->setDataFunc(queryIsAtomInRingOfSize<16>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,16>);break;
   case 17:
-    res->setDataFunc(queryIsAtomInRingOfSize<17>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,17>);break;
   case 18:
-    res->setDataFunc(queryIsAtomInRingOfSize<18>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,18>);break;
   case 19:
-    res->setDataFunc(queryIsAtomInRingOfSize<19>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,19>);break;
   case 20:
-    res->setDataFunc(queryIsAtomInRingOfSize<20>);break;
+    res->setDataFunc(queryIsInRingOfSize<Atom,20>);break;
   }
   res->setDescription("AtomRingSize");
   return res;
@@ -83,321 +76,69 @@ BOND_EQUALS_QUERY *makeBondInRingOfSizeQuery(int tgt){
   res->setVal(true);
   switch(tgt){
   case 3:
-    res->setDataFunc(queryIsBondInRingOfSize<3>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,3>);break;
   case 4:
-    res->setDataFunc(queryIsBondInRingOfSize<4>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,4>);break;
   case 5:
-    res->setDataFunc(queryIsBondInRingOfSize<5>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,5>);break;
   case 6:
-    res->setDataFunc(queryIsBondInRingOfSize<6>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,6>);break;
   case 7:
-    res->setDataFunc(queryIsBondInRingOfSize<7>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,7>);break;
   case 8:
-    res->setDataFunc(queryIsBondInRingOfSize<8>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,8>);break;
   case 9:
-    res->setDataFunc(queryIsBondInRingOfSize<9>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,9>);break;
   case 10:
-    res->setDataFunc(queryIsBondInRingOfSize<10>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,10>);break;
   case 11:
-    res->setDataFunc(queryIsBondInRingOfSize<11>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,11>);break;
   case 12:
-    res->setDataFunc(queryIsBondInRingOfSize<12>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,12>);break;
   case 13:
-    res->setDataFunc(queryIsBondInRingOfSize<13>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,13>);break;
   case 14:
-    res->setDataFunc(queryIsBondInRingOfSize<14>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,14>);break;
   case 15:
-    res->setDataFunc(queryIsBondInRingOfSize<15>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,15>);break;
   case 16:
-    res->setDataFunc(queryIsBondInRingOfSize<16>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,16>);break;
   case 17:
-    res->setDataFunc(queryIsBondInRingOfSize<17>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,17>);break;
   case 18:
-    res->setDataFunc(queryIsBondInRingOfSize<18>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,18>);break;
   case 19:
-    res->setDataFunc(queryIsBondInRingOfSize<19>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,19>);break;
   case 20:
-    res->setDataFunc(queryIsBondInRingOfSize<20>);break;
+    res->setDataFunc(queryIsInRingOfSize<Bond,20>);break;
   }
   res->setDescription("BondRingSize");
   return res;
 }
-#else
-  // YA MSVC++ bug
-template <typename T>
-int queryIsInRingOfSize3(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),3)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize4(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),4)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize5(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),5)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize6(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),6)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize7(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),7)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize8(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),8)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize9(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),9)!=tmp.end();
-  }
-};
 
-template <typename T>
-int queryIsInRingOfSize10(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),10)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize11(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),11)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize12(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),12)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize13(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),13)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize14(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),14)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize15(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),15)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize16(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),16)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize17(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),17)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize18(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),18)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize19(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),19)!=tmp.end();
-  }
-};
-template <typename T>
-int queryIsInRingOfSize20(T const * at) {
-  if(!(at->hasProp("ringMembership")))
-    return 0;
-  else{
-    INT_VECT tmp;
-    at->getProp("ringMembership",tmp);
-    return std::find(tmp.begin(),tmp.end(),20)!=tmp.end();
-  }
-};
 
-ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt){
+template <class T>  
+int queryMinRingSize(T const *obj) {
+  return obj->getOwningMol().getRingInfo()->minAtomRingSize(obj->getIdx());
+};
+ATOM_EQUALS_QUERY *makeAtomMinRingSizeQuery(int tgt){
   RANGE_CHECK(3,tgt,20);
   ATOM_EQUALS_QUERY *res = new ATOM_EQUALS_QUERY;
-  res->setVal(true);
-  switch(tgt){
-  case 3:
-    res->setDataFunc(queryIsInRingOfSize3<Atom>);break;
-  case 4:
-    res->setDataFunc(queryIsInRingOfSize4<Atom>);break;
-  case 5:
-    res->setDataFunc(queryIsInRingOfSize5<Atom>);break;
-  case 6:
-    res->setDataFunc(queryIsInRingOfSize6<Atom>);break;
-  case 7:
-    res->setDataFunc(queryIsInRingOfSize7<Atom>);break;
-  case 8:
-    res->setDataFunc(queryIsInRingOfSize8<Atom>);break;
-  case 9:
-    res->setDataFunc(queryIsInRingOfSize9<Atom>);break;
-  case 10:
-    res->setDataFunc(queryIsInRingOfSize10<Atom>);break;
-  case 11:
-    res->setDataFunc(queryIsInRingOfSize11<Atom>);break;
-  case 12:
-    res->setDataFunc(queryIsInRingOfSize12<Atom>);break;
-  case 13:
-    res->setDataFunc(queryIsInRingOfSize13<Atom>);break;
-  case 14:
-    res->setDataFunc(queryIsInRingOfSize14<Atom>);break;
-  case 15:
-    res->setDataFunc(queryIsInRingOfSize15<Atom>);break;
-  case 16:
-    res->setDataFunc(queryIsInRingOfSize16<Atom>);break;
-  case 17:
-    res->setDataFunc(queryIsInRingOfSize17<Atom>);break;
-  case 18:
-    res->setDataFunc(queryIsInRingOfSize18<Atom>);break;
-  case 19:
-    res->setDataFunc(queryIsInRingOfSize19<Atom>);break;
-  case 20:
-    res->setDataFunc(queryIsInRingOfSize20<Atom>);break;
-  }
-  res->setDescription("AtomRingSize");
+  res->setVal(tgt);
+  res->setDataFunc(queryMinRingSize<Atom>);
+  res->setDescription("AtomMinRingSize");
   return res;
 }
-BOND_EQUALS_QUERY *makeBondInRingOfSizeQuery(int tgt){
+BOND_EQUALS_QUERY *makeBondMinRingSizeQuery(int tgt){
   RANGE_CHECK(3,tgt,20);
   BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;
-  res->setVal(true);
-  switch(tgt){
-  case 3:
-    res->setDataFunc(queryIsInRingOfSize3<Bond>);break;
-  case 4:
-    res->setDataFunc(queryIsInRingOfSize4<Bond>);break;
-  case 5:
-    res->setDataFunc(queryIsInRingOfSize5<Bond>);break;
-  case 6:
-    res->setDataFunc(queryIsInRingOfSize6<Bond>);break;
-  case 7:
-    res->setDataFunc(queryIsInRingOfSize7<Bond>);break;
-  case 8:
-    res->setDataFunc(queryIsInRingOfSize8<Bond>);break;
-  case 9:
-    res->setDataFunc(queryIsInRingOfSize9<Bond>);break;
-  case 10:
-    res->setDataFunc(queryIsInRingOfSize10<Bond>);break;
-  case 11:
-    res->setDataFunc(queryIsInRingOfSize11<Bond>);break;
-  case 12:
-    res->setDataFunc(queryIsInRingOfSize12<Bond>);break;
-  case 13:
-    res->setDataFunc(queryIsInRingOfSize13<Bond>);break;
-  case 14:
-    res->setDataFunc(queryIsInRingOfSize14<Bond>);break;
-  case 15:
-    res->setDataFunc(queryIsInRingOfSize15<Bond>);break;
-  case 16:
-    res->setDataFunc(queryIsInRingOfSize16<Bond>);break;
-  case 17:
-    res->setDataFunc(queryIsInRingOfSize17<Bond>);break;
-  case 18:
-    res->setDataFunc(queryIsInRingOfSize18<Bond>);break;
-  case 19:
-    res->setDataFunc(queryIsInRingOfSize19<Bond>);break;
-  case 20:
-    res->setDataFunc(queryIsInRingOfSize20<Bond>);break;
-  }
-  res->setDescription("BondRingSize");
+  res->setVal(tgt);
+  res->setDataFunc(queryMinRingSize<Bond>);
+  res->setDescription("BondMinRingSize");
   return res;
 }
 
-#endif
+
 
 ATOM_EQUALS_QUERY *makeAtomSimpleQuery(int what,int func(Atom const *)){
   ATOM_EQUALS_QUERY *res = new ATOM_EQUALS_QUERY;

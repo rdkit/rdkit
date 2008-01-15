@@ -145,6 +145,8 @@ namespace RDKit{
   ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what);
   //! returns a Query for matching atoms in rings of a particular size
   ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt);
+  //! returns a Query for matching an atom's minimum ring size
+  ATOM_EQUALS_QUERY *makeAtomMinRingSizeQuery(int tgt);
   //! returns a Query for matching atoms with a particular number of ring bonds
   ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what);
 
@@ -156,6 +158,8 @@ namespace RDKit{
   BOND_EQUALS_QUERY *makeBondIsInRingQuery();
   //! returns a Query for matching bonds in rings of a particular size
   BOND_EQUALS_QUERY *makeBondInRingOfSizeQuery(int what);
+  //! returns a Query for matching a bond's minimum ring size
+  BOND_EQUALS_QUERY *makeBondMinRingSizeQuery(int what);
   //! returns a Query for matching bonds in a particular number of rings
   BOND_EQUALS_QUERY *makeBondInNRingsQuery(int tgt);
 

@@ -116,7 +116,7 @@ void testFail(){
 }
 
 std::vector< MatchVectType > _checkMatches(std::string smarts, std::string smiles, 
-                   int nMatches, int lenFirst, bool addHs=false) {
+                   unsigned int nMatches, unsigned int lenFirst, bool addHs=false) {
   // utility function that will find the matches between a smarts and smiles 
   // if they match the expected values
   //  smarts : smarts string
@@ -127,7 +127,7 @@ std::vector< MatchVectType > _checkMatches(std::string smarts, std::string smile
   // Return the list of all matches just in case want to do aditional testing
   ROMol *mol, *mol2, *matcher;
   bool matches;
-  int matchCount;
+  unsigned int matchCount;
   MatchVectType mV;
   std::vector< MatchVectType > mVV;
 
@@ -186,7 +186,6 @@ void testMatches(){
 }
     
 void testMatches2(){
-  int i = 0;
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing matching2" << std::endl;
 
@@ -204,9 +203,9 @@ void testMatches2(){
 
   _checkMatches("[R2]","C1CC2C1CC2", 2, 1);
 
-  _checkMatches("[r4]", "C1CC2C1C2", 4, 1);
+  _checkMatches("[r4]", "C1CC2CCCC12", 4, 1);
 
-  _checkMatches("[!r4]", "C1CC2C1C2", 1, 1);
+  _checkMatches("[!r4]", "C1CC2CCCC12", 3, 1);
 
   _checkMatches("C@C", "C1CC1CC", 3, 2);
   _checkNoMatches("C@C", "CCCCC");
@@ -220,7 +219,6 @@ void testMatches2(){
 
 
 void testMatches3(){
-  int i = 0;
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing matching3" << std::endl;
 
@@ -280,12 +278,21 @@ void testMatches3(){
   _checkMatches("[!C;R]", "C1COC1", 1, 1);
 
 
+  // -----
+  // This block is connected to SF-Issue 1836223
+  //   http://sourceforge.net/tracker/index.php?func=detail&aid=1836223&group_id=160139&atid=814650
+  _checkMatches("[r6]", "C1CCCCC1", 6, 1);
+  _checkNoMatches("[CR2r6]", "C1CCCC2C1CC2");
+  _checkMatches("[CR2r4]", "C1CCCC2C1CC2",2,1);
+
+
+
+  
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testMatches4(){
-  int i = 0;
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing matching4" << std::endl;
 
@@ -646,7 +653,6 @@ void testSmartsWrite() {
 
 void testIssue196() 
 {
-  int i = 0;
   ROMol *mol1=0,*matcher1=0;
   std::string smi,sma;
   
@@ -903,7 +909,6 @@ void testIssue1804420(){
 #endif
 
 void testSmartsSmiles(){
-  int i = 0;
   RWMol *mol;
   std::string sma,smi;
   

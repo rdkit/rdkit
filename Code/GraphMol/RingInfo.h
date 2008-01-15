@@ -35,13 +35,19 @@ namespace RDKit {
         - the object must be initialized before calling this
     */
     bool isAtomInRingOfSize(unsigned int idx,unsigned int size) const;
-
     //! returns the number of rings atom \c idx is involved in
     /*!
       <b>Notes:</b>
         - the object must be initialized before calling this
     */
     unsigned int numAtomRings(unsigned int idx) const;
+    //! returns the size of the smallest ring atom \c idx is involved in
+    /*!
+      <b>Notes:</b>
+        - the object must be initialized before calling this
+    */
+    unsigned int minAtomRingSize(unsigned int idx) const;
+
 
     //! returns whether or not the bond with index \c idx is in a \c size - ring.
     /*!
@@ -55,6 +61,12 @@ namespace RDKit {
         - the object must be initialized before calling this
     */
     unsigned int numBondRings(unsigned int idx) const;
+    //! returns the size of the smallest ring bond \c idx is involved in
+    /*!
+      <b>Notes:</b>
+        - the object must be initialized before calling this
+    */
+    unsigned int minBondRingSize(unsigned int idx) const;
 
     //! returns the total number of rings
     /*!
@@ -105,7 +117,6 @@ namespace RDKit {
     bool df_init;
     DataType d_atomMembers,d_bondMembers;
     VECT_INT_VECT d_atomRings,d_bondRings;
-    bool memberSearch(const MemberType &member,int val) const;
   };
 }
 
