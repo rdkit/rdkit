@@ -1,11 +1,14 @@
-******  Release_XXX2007_1 *******
+******  Release_Jan2008_1beta1 *******
 (Changes relative to Release_Aug2007_1)
 
 !!!!!! IMPORTANT !!!!!!
  - Bug fixes in the canonicalization algorithm have made it so that
    the canonical SMILES from this version are not compatible with
    those from older versions of the RDKit.
-
+ - Please read the point about dummy atoms in the "New Features"
+   section. It explains a forthcoming change that will affect
+   backwards compatibility when dealing with dummy atoms.
+   
 Acknowledgements:
  - Adrian Schreyer uncovered and reported a number of the bugs fixed
    in this release.
@@ -28,7 +31,10 @@ Bug Fixes
  - Problems with the sping PIL and PDF canvases have been cleared
    up. The PIL canvas still generates a lot of warnings, but the
    output is correct.
-
+ - The query "rN" is now properly interpreted to be "atom whose
+   smallest ring is of size N" in SMARTS queries. It was previously
+   interpreted as "atom is in a ring of size N". (issue 1811276)
+   
 New Features
  - The SparseIntVect class (used by the atom pairs and topological
    torsions) is now implemented in C++.
