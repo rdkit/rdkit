@@ -292,7 +292,10 @@
 				RelativePath="..\..\GraphMol\SmilesParse\SmartsWrite.h">
 			</File>
 			<File
-				RelativePath="..\..\GraphMol\SmilesParse\smiles.tab.h">
+				RelativePath="..\..\GraphMol\SmilesParse\SmilesParseOps.h">
+			</File>
+			<File
+				RelativePath="..\..\GraphMol\SmilesParse\SmilesWrite.h">
 			</File>
 		</Filter>
 		<Filter
@@ -305,16 +308,14 @@
 				Name="Release|Win32">
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(PYTHONHOME)/python ..\..\GraphMol\SmilesParse\genlex.py smarts ../../GraphMol/SmilesParse/
-"
+					CommandLine="c:\cygwin\bin\flex -Pyysmarts_ -o../../GraphMol/SmilesParse/lex.yysmarts.cpp ../../GraphMol/SmilesParse/smarts.ll"
 					Outputs="lex.yysmarts.cpp"/>
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Debug|Win32">
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(PYTHONHOME)/python ..\..\GraphMol\SmilesParse\genlex.py smarts ../../GraphMol/SmilesParse/
-"
+					CommandLine="c:\cygwin\bin\flex -Pyysmarts_ -o../../GraphMol/SmilesParse/lex.yysmarts.cpp ../../GraphMol/SmilesParse/smarts.ll"
 					Outputs="lex.yysmarts.cpp"/>
 			</FileConfiguration>
 		</File>
@@ -324,16 +325,14 @@
 				Name="Release|Win32">
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(PYTHONHOME)/python ..\..\GraphMol\SmilesParse\genparse.py smarts ../../GraphMol/SmilesParse/
-"
+					CommandLine="c:\cygwin\bin\bison -p yysmarts_ -t -d -o../../GraphMol/SmilesParse/smarts.tab.cpp ../../GraphMol/SmilesParse/smarts.yy"
 					Outputs="smarts.tab.cpp"/>
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Debug|Win32">
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(PYTHONHOME)/python ..\..\GraphMol\SmilesParse\genparse.py smarts ../../GraphMol/SmilesParse/
-"
+					CommandLine="c:\cygwin\bin\bison -p yysmarts_ -t -d -o../../GraphMol/SmilesParse/smarts.tab.cpp ../../GraphMol/SmilesParse/smarts.yy"
 					Outputs="smarts.tab.cpp"/>
 			</FileConfiguration>
 		</File>
@@ -343,16 +342,14 @@
 				Name="Release|Win32">
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(PYTHONHOME)/python ..\..\GraphMol\SmilesParse\genparse.py smiles ../../GraphMol/SmilesParse/
-"
+					CommandLine="c:\cygwin\bin\flex -Pyysmiles_ -o../../GraphMol/SmilesParse/lex.yysmiles.cpp ../../GraphMol/SmilesParse/smiles.ll"
 					Outputs="lex.yysmiles.cpp"/>
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Debug|Win32">
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(PYTHONHOME)/python ..\..\GraphMol\SmilesParse\genparse.py smarts ../../GraphMol/SmilesParse/
-"
+					CommandLine="c:\cygwin\bin\flex -Pyysmiles_ -o../../GraphMol/SmilesParse/lex.yysmiles.cpp ../../GraphMol/SmilesParse/smiles.ll"
 					Outputs="lex.yysmiles.cpp"/>
 			</FileConfiguration>
 		</File>
@@ -362,16 +359,14 @@
 				Name="Release|Win32">
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(PYTHONHOME)/python ..\..\GraphMol\SmilesParse\genlex.py smiles ../../GraphMol/SmilesParse/
-"
+					CommandLine="c:\cygwin\bin\bison -p yysmiles_ -t -d -o../../GraphMol/SmilesParse/smiles.tab.cpp ../../GraphMol/SmilesParse/smiles.yy"
 					Outputs="smiles.tab.cpp"/>
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Debug|Win32">
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(PYTHONHOME)/python ..\..\GraphMol\SmilesParse\genparse.py smiles ../../GraphMol/SmilesParse/
-"
+					CommandLine="c:\cygwin\bin\bison -p yysmiles_ -t -d -o../../GraphMol/SmilesParse/smiles.tab.cpp ../../GraphMol/SmilesParse/smiles.yy"
 					Outputs="smiles.tab.cpp"/>
 			</FileConfiguration>
 		</File>
