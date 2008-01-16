@@ -1,3 +1,16 @@
+******  Release_Jan2008_1beta2 *******
+(Changes relative to Release_1beta1)
+
+!!!!!! IMPORTANT !!!!!!
+ Please read the release notes for Release_Jan2008_1beta1
+
+Bug Fixes
+ - the handling of flex and bison in the Windows build system was
+   updated.
+
+
+
+
 ******  Release_Jan2008_1beta1 *******
 (Changes relative to Release_Aug2007_1)
 
