@@ -175,7 +175,6 @@ namespace RDKit {
       // -----------
       unsigned col;
       unsigned iprop = 0;
-      int nprops = d_props.size();
       for (col = 0; col < recs.size(); col++) {
         std::string pname, pval;
         if (d_props.size() > iprop) {
@@ -311,6 +310,7 @@ namespace RDKit {
       moveTo(idx+1);
       endP=d_molpos[idx+1];
     } catch (FileParseException &) {
+      dp_inStream->clear();
       dp_inStream->seekg(0,std::ios_base::end);
       endP=dp_inStream->tellg();
     }
@@ -393,7 +393,6 @@ namespace RDKit {
   ROMol *SmilesMolSupplier::next() {
     PRECONDITION(dp_inStream,"no stream");
     ROMol *res=NULL;
-    bool readIt=false;
 
     // ---------
     // Case 1: we've earlier encountered EOF and this takes us beyond it:
@@ -425,7 +424,7 @@ namespace RDKit {
       }
 
       // if we just hit the last one, simulate EOF:
-      if(d_next==d_molpos.size()) df_end=1;
+      if(d_next==static_cast<int>(d_molpos.size()-1)) df_end=1;
       
       return res;
     }
@@ -459,7 +458,10 @@ namespace RDKit {
       int tempPos=this->skipComments();
       if(tempPos<0){
         // nope, there is nothing else present:
-        d_len = d_molpos.size();
+        dp_inStream->clear();
+        dp_inStream->seekg(0,std::ios_base::end);
+        d_molpos.push_back(dp_inStream->tellg());
+        d_len = d_molpos.size()-1;
       } else {
         // we actually can read something new:
         d_line--;
@@ -522,12 +524,17 @@ namespace RDKit {
       while(pos>=0){
         d_molpos.push_back(pos);
         d_lineNums.push_back(d_line);
-        pos = this->skipComments();     
+        pos = this->skipComments();
       }
+      // we ran off the end, set the last element:
+      dp_inStream->clear();
+      dp_inStream->seekg(0,std::ios_base::end);
+      d_molpos.push_back(dp_inStream->tellg());
+
       // now remember to set the stream to its original position:
       dp_inStream->seekg(oPos);
 
-      d_len = d_molpos.size();
+      d_len = d_molpos.size()-1;
       return d_len;
     }
   }

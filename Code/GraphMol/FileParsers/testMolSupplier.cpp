@@ -52,9 +52,9 @@ void testRandMolSup() {
   SDMolSupplier sdsup(fname);
   
   ROMol *tmol = sdsup[7];
+  delete tmol;
 
   CHECK_INVARIANT(sdsup.length() == 16, "");
-  delete tmol;
 
   STR_VECT names;
   names.push_back(std::string("48"));
@@ -77,10 +77,17 @@ void testRandMolSup() {
   
   // get a random molecule
   ROMol *mol = sdsup[5];
+  TEST_ASSERT(mol);
   std::string mname;
   mol->getProp("_Name", mname);
   delete mol;
   CHECK_INVARIANT(mname == "170", "");
+
+  // get the last molecule:
+  mol = sdsup[15];
+  TEST_ASSERT(mol);
+  // and make sure we're at the end:
+  TEST_ASSERT(sdsup.atEnd());
 
   // Issue 113: calling length before grabbing a molecule results in crashes:
   SDMolSupplier sdsup2(fname);
@@ -145,19 +152,32 @@ void testSmilesSup() {
 #endif
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
   //fname = "../test_data/fewSmi.csv";
-  SmilesMolSupplier nSup(fname, ",", 1, 0, false);
+  SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
 
   // check the length before we read anything out...
   //  this was a problem at one point (Issue 113)
-  CHECK_INVARIANT(nSup.length() == 10, "");
-  mol = nSup[3];
+  CHECK_INVARIANT(nSup->length() == 10, "");
+  mol = (*nSup)[3];
   
 
   mol->getProp("_Name", mname);
   CHECK_INVARIANT(mname == "4", "");
   mol->getProp("Column_2", mname);
   CHECK_INVARIANT(mname == "82.78", "");
- 
+
+  delete nSup;
+  nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
+  unsigned int nRead=0;
+  while(!nSup->atEnd()){
+    mol=nSup->next();
+    TEST_ASSERT(mol);
+    delete mol;
+    nRead++;
+  }
+  TEST_ASSERT(nSup->length() == 10);
+  TEST_ASSERT(nRead == 10);
+
+  delete nSup;
 
 }
 
@@ -265,6 +285,7 @@ void testSmilesSupFromText() {
   TEST_ASSERT(mname=="mol-4");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="16.0");
+  TEST_ASSERT(nSup2.atEnd());
 
   text="Id SMILES Column_2\n"
     "mol-1 C 1.0\n"
@@ -280,6 +301,14 @@ void testSmilesSupFromText() {
   TEST_ASSERT(mname=="mol-4");
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="16.0");
+  TEST_ASSERT(nSup2.atEnd());
+
+  try {
+    mol = nSup2[3];
+  } catch (FileParseException &) {
+    failed=true;
+  }
+  TEST_ASSERT(failed);
 
   text="mol-1 C 1.0\n"
     "mol-2 CC 4.0\n"
@@ -347,7 +376,16 @@ void testSmilesSupFromText() {
   TEST_ASSERT(nSup2.length()==4);
   BOOST_LOG(rdErrorLog) << "<<< done." << std::endl;
 
+  nSup2.reset();
+  unsigned int nDone=0;
+  while(!nSup2.atEnd()){
+    mol = nSup2.next();
+    nDone++;
+    delete mol;
+  }
+  TEST_ASSERT(nDone==nSup2.length());
 
+  
   // ensure that we can call setData a second time:
   text="Id SMILES Column_2\n"
     "# comment, ignore\n"
@@ -368,6 +406,24 @@ void testSmilesSupFromText() {
   mol->getProp("Column_2",mname);
   TEST_ASSERT(mname=="4.0");
 
+  // this was a delightful boundary condition:
+  text="CC\n"
+    "CCC\n"
+    "CCOC\n"
+    "CCCCOC\n"
+    "\n"
+    "\n"
+    ;
+  nSup2.setData(text," ",0,-1,false,true);
+  TEST_ASSERT(nSup2.length()==4);
+  nSup2.reset();
+  nDone=0;
+  while(!nSup2.atEnd()){
+    mol = nSup2.next();
+    nDone++;
+    delete mol;
+  }
+  TEST_ASSERT(nDone==nSup2.length());
 
 };
 
@@ -1263,6 +1319,16 @@ void testGetItemText() {
   delete mol1;
   delete mol2;
   
+  // make sure getItemText() works on the last molecule
+  // (this was sf.net issue 1874882
+  molB = sdsup.getItemText(15);
+  mol1 = sdsup[15];
+  mol2 = MolBlockToMol(molB);
+  TEST_ASSERT(mol2);
+  TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
+  delete mol1;
+  delete mol2;
+  
   try {
     molB=sdsup.getItemText(16);
     ok = false;
@@ -1295,6 +1361,13 @@ void testGetItemText() {
   TEST_ASSERT(mol1);
   TEST_ASSERT(mol1->getNumAtoms()==20);
   delete mol1;
+
+  // make sure getItemText() works on the last molecule
+  // (this was sf.net issue 1874882
+  molB = smisup.getItemText(8);
+  TEST_ASSERT(molB=="9, CC(=NO)C(C)=NO, 65.18\n");
+  molB = smisup.getItemText(9);
+  TEST_ASSERT(molB=="10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00\n");
   
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
   TDTMolSupplier tdtsup(fname);
@@ -1315,6 +1388,15 @@ void testGetItemText() {
   TEST_ASSERT(smiles=="Cc1nnc(N)nc1C");
   TEST_ASSERT(mol1->getNumAtoms()==9);
   delete mol1;
+
+
+  // make sure getItemText() works on the last molecule
+  // (this was sf.net issue 1874882
+  molB = tdtsup.getItemText(9);
+  TEST_ASSERT(molB!="");
+  TEST_ASSERT(molB.substr(0,12)=="$SMI<Cc1n[nH");
+  
+
 }
 
 
@@ -1449,6 +1531,5 @@ int main() {
   BOOST_LOG(rdErrorLog) <<"Finished: testGetItemText()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-  
   return 0;
 }

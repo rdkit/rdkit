@@ -90,13 +90,16 @@ void test1(){
   SmilesMolSupplier suppl(fname," ",0,1,false);
 
   FragCatParams *fparams = new FragCatParams(1, 6, fgrpFile, 1.0e-8);
+  TEST_ASSERT(fparams->getNumFuncGroups()==15);
   FragCatalog fcat(fparams);
   FragCatGenerator catGen;
   
   std::vector<ROMol *> mols;
+  unsigned int nDone=0;
   ROMol *m = suppl.next();
   while (m) {
     mols.push_back(m);
+    nDone+=1;
     catGen.addFragsFromMol(*m, &fcat);
     try{
       m = suppl.next();
@@ -104,6 +107,8 @@ void test1(){
       m = NULL;
     }
   }
+  TEST_ASSERT(mols.size()==16);
+  TEST_ASSERT(nDone==16);
   int nents = fcat.getNumEntries();
   TEST_ASSERT(nents==21);
   FragFPGenerator fpGen;
@@ -160,13 +165,18 @@ void test1(){
   BOOST_LOG(rdInfoLog) << "----- Test Issue 115" << std::endl;
   delete fparams;
   fparams = new FragCatParams(3, 3, fgrpFile, 1.0e-8);
+  TEST_ASSERT(fparams->getNumFuncGroups()==15);
   delete fcat3;
   fcat3 = new FragCatalog(fparams);
   suppl.reset();
+  nDone=0;
   while (!suppl.atEnd()){
+    nDone++;
     ROMol *m = suppl.next();
     catGen.addFragsFromMol(*m, fcat3);
+    delete m;
   }
+  TEST_ASSERT(nDone==suppl.length());
   TEST_ASSERT(fcat3->getNumEntries()==21);
   TEST_ASSERT(fcat3->getFPLength()==10);
   for(unsigned int i=0;i<fcat3->getFPLength();i++){

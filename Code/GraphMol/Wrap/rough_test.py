@@ -869,11 +869,17 @@ mol-4,CCOC
     self.failUnless(smiSup[2] is None)
 
 
-    text="Id SMILES Column_2\n"+"mol-1 C 1.0\n"+"mol-2 CC 4.0\n"+"mol-4 CCCC 16.0"
+    text="Id SMILES Column_2\n"+\
+    "mol-1 C 1.0\n"+\
+    "mol-2 CC 4.0\n"+\
+    "mol-4 CCCC 16.0"
     smiSup.SetData(text, delimiter=" ",
                    smilesColumn=1, nameColumn=0,
                    titleLine=1)
     self.failUnless(len(smiSup)==3)
+    self.failUnless(smiSup[0])
+    self.failUnless(smiSup[1])
+    self.failUnless(smiSup[2])
     m = [x for x in smiSup]
     self.failUnless(smiSup[2])
     self.failUnless(len(m)==3)

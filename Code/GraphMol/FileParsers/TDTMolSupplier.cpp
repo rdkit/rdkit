@@ -312,6 +312,7 @@ namespace RDKit {
       moveTo(idx+1);
       endP=d_molpos[idx+1];
     } catch (FileParseException &) {
+      dp_inStream->clear();
       dp_inStream->seekg(0,std::ios_base::end);
       endP=dp_inStream->tellg();
     }
