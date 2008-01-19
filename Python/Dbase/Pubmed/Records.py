@@ -4,7 +4,7 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from elementtree import ElementTree
+from xml.etree import ElementTree
 # check the version of ElementTree.  We need at least version 1.2
 # in order for the XPath-style parsing stuff to work
 import re

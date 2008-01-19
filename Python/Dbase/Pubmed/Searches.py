@@ -15,7 +15,7 @@ the _conn_ argument.
 import RDConfig
 import QueryParams,Records
 import urllib,urllib2
-from elementtree import ElementTree
+from xml.etree import ElementTree
 
 def GetNumHits(query,url=QueryParams.searchBase):
   """ returns a tuple of pubmed ids (strings) for the query provided
