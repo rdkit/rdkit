@@ -109,7 +109,7 @@ EndFeature
 
 # aromatic rings of various sizes:
 #
-# Note that with the aromatics, it's important to include the ring-size queries (;rN) along with
+# Note that with the aromatics, it's important to include the ring-size queries along with
 # the aromaticity query for two reasons:
 #   1) Much of the current feature-location code assumes that the feature point is 
 #      equidistant from the atoms defining it. Larger definitions like: a1aaaaaaaa1 will actually 
@@ -118,27 +118,38 @@ EndFeature
 #   2) It's *way* faster.
 #
 
-DefineFeature Arom4 [a;r4]1[a;r4][a;r4][a;r4]1
-  Family Aromatic
-  Weights 1.0,1.0,1.0,1.0
+#
+# 21.1.2008 (GL): update ring membership tests to reflect corrected meaning of
+# "r" in SMARTS parser
+#
+AtomType AromR4 [a;r4,!R1&r3]
+DefineFeature Arom4 [{AromR4}]1:[{AromR4}]:[{AromR4}]:[{AromR4}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0
 EndFeature
-DefineFeature Arom5 [a;r5]1[a;r5][a;r5][a;r5][a;r5]1
-  Family Aromatic
-  Weights 1.0,1.0,1.0,1.0,1.0
+AtomType AromR5 [a;r5,!R1&r4,!R1&r3]
+DefineFeature Arom5 [{AromR5}]1:[{AromR5}]:[{AromR5}]:[{AromR5}]:[{AromR5}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0,1.0
 EndFeature
-DefineFeature Arom6 [a;r6]1[a;r6][a;r6][a;r6][a;r6][a;r6]1
-  Family Aromatic
-  Weights 1.0,1.0,1.0,1.0,1.0,1.0
+AtomType AromR6 [a;r6,!R1&r5,!R1&r4,!R1&r3]
+DefineFeature Arom6
+[{AromR6}]1:[{AromR6}]:[{AromR6}]:[{AromR6}]:[{AromR6}]:[{AromR6}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0,1.0,1.0
 EndFeature
-DefineFeature Arom7 [a;r7]1[a;r7][a;r7][a;r7][a;r7][a;r7][a;r7]1
-  Family Aromatic
-  Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0
+AtomType AromR7 [a;r7,!R1&r6,!R1&r5,!R1&r4,!R1&r3]
+DefineFeature Arom7
+[{AromR7}]1:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0
 EndFeature
-DefineFeature Arom8 [a;r8]1[a;r8][a;r8][a;r8][a;r8][a;r8][a;r8][a;r8]1
-  Family Aromatic
-  Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+AtomType AromR8 [a;r8,!R1&r7,!R1&r6,!R1&r5,!R1&r4,!R1&r3]
+DefineFeature Arom8
+[{AromR8}]1:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:1
+ Family Aromatic
+ Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
 EndFeature
-
 
 # hydrophobic features
 # any carbon that is not bonded to a polar atom is considered a hydrophobe
@@ -167,22 +178,34 @@ DefineFeature Nitro2 [N;D3;+](=O)[O-]
   Weights 1.0,1.0,1.0
 EndFeature
 
-DefineFeature RH6_6 [r6;{RingHphobe}]1[r6;{RingHphobe}][r6;{RingHphobe}][r6;{RingHphobe}][r6;{RingHphobe}][r6;{RingHphobe}]1
+#
+# 21.1.2008 (GL): update ring membership tests to reflect corrected meaning of
+# "r" in SMARTS parser
+#
+AtomType Ring6 [r6,!R1&r5,!R1&r4,!R1&r3]
+DefineFeature RH6_6
+[{Ring6};{RingHphobe}]1[{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}]1
   Family LumpedHydrophobe
   Weights 1.0,1.0,1.0,1.0,1.0,1.0
 EndFeature
 
-DefineFeature RH5_5 [r5;{RingHphobe}]1[r5;{RingHphobe}][r5;{RingHphobe}][r5;{RingHphobe}][r5;{RingHphobe}]1
+AtomType Ring5 [r5,!R1&r4,!R1&r3]
+DefineFeature RH5_5
+[{Ring5};{RingHphobe}]1[{Ring5};{RingHphobe}][{Ring5};{RingHphobe}][{Ring5};{RingHphobe}][{Ring5};{RingHphobe}]1
   Family LumpedHydrophobe
   Weights 1.0,1.0,1.0,1.0,1.0
 EndFeature
 
-DefineFeature RH4_4 [r4;{RingHphobe}]1[r4;{RingHphobe}][r4;{RingHphobe}][r4;{RingHphobe}]1
+AtomType Ring4 [r4,!R1&r3]
+DefineFeature RH4_4
+[{Ring4};{RingHphobe}]1[{Ring4};{RingHphobe}][{Ring4};{RingHphobe}][{Ring4};{RingHphobe}]1
   Family LumpedHydrophobe
   Weights 1.0,1.0,1.0,1.0
 EndFeature
 
-DefineFeature RH3_3 [r3;{RingHphobe}]1[r3;{RingHphobe}][r3;{RingHphobe}]1
+AtomType Ring3 [r3]
+DefineFeature RH3_3
+[{Ring3};{RingHphobe}]1[{Ring3};{RingHphobe}][{Ring3};{RingHphobe}]1
   Family LumpedHydrophobe
   Weights 1.0,1.0,1.0
 EndFeature
