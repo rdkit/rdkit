@@ -22,6 +22,9 @@ public class main {
       System.out.println("bond: " + mol.getBondWithIdx(0).getBondType());
       System.out.println("hss: " + RDKFuncs.HasSubstructMatch(mol,RDKFuncs.MolFromSmarts("c")));
       System.out.println("hss: " + RDKFuncs.HasSubstructMatch(mol,RDKFuncs.MolFromSmarts("C")));
+      System.out.println("hss: " + RDKFuncs.HasSubstructMatch(mol,RDKFuncs.MolFromSmarts("C")));
+      RingInfo rI= mol.getRingInfo();
+      System.out.println("ri: " + rI.isAtomInRingOfSize(0,6) + " " + rI.isAtomInRingOfSize(0,5) );
     
   }
 }

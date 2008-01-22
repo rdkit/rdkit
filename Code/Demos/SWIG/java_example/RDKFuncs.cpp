@@ -28,7 +28,13 @@ bool HasSubstructMatch(ROMol &mol,ROMol &query,bool useChirality,
   MatchVectType mv;
   return SubstructMatch(mol,query,mv,true,useChirality,registerQuery);
 };
-
+#if 0
+MatchVectType GetSubstructMatches(ROMol &mol,ROMol &query,bool useChirality,
+                                  bool registerQuery){
+  MatchVectType mv;
+  return SubstructMatch(mol,query,mv,true,useChirality,registerQuery);
+};
+#endif
 
 
 

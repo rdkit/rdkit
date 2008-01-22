@@ -1,3 +1,8 @@
+// $Id$
+//
+// Copyright (C) 2008 Greg Landrum
+// All Rights Reserved
+//
 %module RDKFuncs
 %include "std_string.i"
 
@@ -37,15 +42,18 @@
 %ignore beginBonds;
 %ignore endBonds;
 %ignore getPropList;
-
-%ignore getRingInfo;
-
 %ignore getConformer;
 %ignore addConformer;
 %ignore beginConformers;
 %ignore endConformers;
 %include <GraphMol/ROMol.h>
-
+%extend ROMol {
+  bool HasSubstructMatch(RDKit::ROMol &query,bool useChirality,
+                         bool registerQuery){
+    MatchVectType mv;
+    return SubstructMatch(*($self),query,mv,true,useChirality,registerQuery);
+  };
+};
 
 %ignore copy;
 %ignore getOwningMol;
@@ -75,6 +83,13 @@
 %ignore setStereo;
 %ignore getStereoAtoms;
 %include <GraphMol/Bond.h>
+
+%ignore initialize;
+%ignore isInitialized;
+%ignore addRing;
+%ignore reset;
+%ignore preallocate;
+%include <GraphMol/RingInfo.h>
 
 
 %include "RDKFuncs.h"

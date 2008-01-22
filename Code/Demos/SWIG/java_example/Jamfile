@@ -13,3 +13,10 @@ lib RDKFuncs : RDKFuncs_wrap.cpp RDKFuncs.cpp
 cpp RDKFuncs_wrap.cpp : RDKFuncs.i : <main-target-type>JAVA_WRAPPER <location>. ;
 
 install lib-install : RDKFuncs : <location>. ;
+
+actions javacompile
+{
+  javac *.java swig_java/*.java
+}
+
+make main.class : main.java RDKFuncs_wrap.cpp : @javacompile ;

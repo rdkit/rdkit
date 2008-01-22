@@ -1,3 +1,7 @@
+//
+// Copyright (C) 2008 Greg Landrum
+// All Rights Reserved
+//
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
 
