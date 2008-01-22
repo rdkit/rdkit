@@ -133,20 +133,17 @@ DefineFeature Arom5 [{AromR5}]1:[{AromR5}]:[{AromR5}]:[{AromR5}]:[{AromR5}]:1
  Weights 1.0,1.0,1.0,1.0,1.0
 EndFeature
 AtomType AromR6 [a;r6,!R1&r5,!R1&r4,!R1&r3]
-DefineFeature Arom6
-[{AromR6}]1:[{AromR6}]:[{AromR6}]:[{AromR6}]:[{AromR6}]:[{AromR6}]:1
+DefineFeature Arom6 [{AromR6}]1:[{AromR6}]:[{AromR6}]:[{AromR6}]:[{AromR6}]:[{AromR6}]:1
  Family Aromatic
  Weights 1.0,1.0,1.0,1.0,1.0,1.0
 EndFeature
 AtomType AromR7 [a;r7,!R1&r6,!R1&r5,!R1&r4,!R1&r3]
-DefineFeature Arom7
-[{AromR7}]1:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:1
+DefineFeature Arom7 [{AromR7}]1:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:[{AromR7}]:1
  Family Aromatic
  Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0
 EndFeature
 AtomType AromR8 [a;r8,!R1&r7,!R1&r6,!R1&r5,!R1&r4,!R1&r3]
-DefineFeature Arom8
-[{AromR8}]1:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:1
+DefineFeature Arom8 [{AromR8}]1:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:[{AromR8}]:1
  Family Aromatic
  Weights 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
 EndFeature
@@ -183,29 +180,25 @@ EndFeature
 # "r" in SMARTS parser
 #
 AtomType Ring6 [r6,!R1&r5,!R1&r4,!R1&r3]
-DefineFeature RH6_6
-[{Ring6};{RingHphobe}]1[{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}]1
+DefineFeature RH6_6 [{Ring6};{RingHphobe}]1[{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}][{Ring6};{RingHphobe}]1
   Family LumpedHydrophobe
   Weights 1.0,1.0,1.0,1.0,1.0,1.0
 EndFeature
 
 AtomType Ring5 [r5,!R1&r4,!R1&r3]
-DefineFeature RH5_5
-[{Ring5};{RingHphobe}]1[{Ring5};{RingHphobe}][{Ring5};{RingHphobe}][{Ring5};{RingHphobe}][{Ring5};{RingHphobe}]1
+DefineFeature RH5_5 [{Ring5};{RingHphobe}]1[{Ring5};{RingHphobe}][{Ring5};{RingHphobe}][{Ring5};{RingHphobe}][{Ring5};{RingHphobe}]1
   Family LumpedHydrophobe
   Weights 1.0,1.0,1.0,1.0,1.0
 EndFeature
 
 AtomType Ring4 [r4,!R1&r3]
-DefineFeature RH4_4
-[{Ring4};{RingHphobe}]1[{Ring4};{RingHphobe}][{Ring4};{RingHphobe}][{Ring4};{RingHphobe}]1
+DefineFeature RH4_4 [{Ring4};{RingHphobe}]1[{Ring4};{RingHphobe}][{Ring4};{RingHphobe}][{Ring4};{RingHphobe}]1
   Family LumpedHydrophobe
   Weights 1.0,1.0,1.0,1.0
 EndFeature
 
 AtomType Ring3 [r3]
-DefineFeature RH3_3
-[{Ring3};{RingHphobe}]1[{Ring3};{RingHphobe}][{Ring3};{RingHphobe}]1
+DefineFeature RH3_3 [{Ring3};{RingHphobe}]1[{Ring3};{RingHphobe}][{Ring3};{RingHphobe}]1
   Family LumpedHydrophobe
   Weights 1.0,1.0,1.0
 EndFeature
