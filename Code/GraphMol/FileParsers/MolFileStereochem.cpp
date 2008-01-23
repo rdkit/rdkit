@@ -231,7 +231,7 @@ namespace RDKit {
       // 
       // ----------------
       int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
-      if(hasTruePrecedingAtom)++nSwaps;
+      if(nNbrs==3 && !hasTruePrecedingAtom)++nSwaps;
       if(nSwaps%2) isCCW = !isCCW;
       if(isCCW) res = Atom::CHI_TETRAHEDRAL_CCW;
       else res = Atom::CHI_TETRAHEDRAL_CW;
@@ -370,7 +370,7 @@ namespace RDKit {
       return res;
     }
 
-    int waid = wbi->second;
+    unsigned int waid = wbi->second;
     
     Atom *atom, *bondAtom; // = bond->getBeginAtom();
     if (bond->getBeginAtom()->getIdx() == waid) {
@@ -381,7 +381,6 @@ namespace RDKit {
       bondAtom = bond->getBeginAtom();
     }
       
-    int atomIdx=atom->getIdx(),bondAtomIdx=bondAtom->getIdx();
     Atom::ChiralType chiralType=atom->getChiralTag();
     CHECK_INVARIANT( chiralType==Atom::CHI_TETRAHEDRAL_CW ||
                      chiralType==Atom::CHI_TETRAHEDRAL_CCW, "");
@@ -402,7 +401,6 @@ namespace RDKit {
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol->getAtomBonds(atom);
     ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol->getBondPMap();
-    int firstBond = pMap[*beg]->getIdx();
     while(beg!=end){
       Bond *nbrBond=pMap[*beg];
       if(nbrBond != bond){

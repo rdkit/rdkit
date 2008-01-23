@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2007 Greg Landrum
+//   Copyright (C) 2007, 2008 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,6 +13,7 @@
 #include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
 #include <iostream>
@@ -92,6 +93,153 @@ void testMol1(){
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
+
+
+void testRoundTrip(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "CIP codes from a mol->smiles conversion (1)" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  RWMol *m;
+  std::string fName,smi,smi2;
+  std::string cip;
+
+  // start with SMILES:
+  smi="O[C@@H](N)I";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi=MolToSmiles(*m,true);
+  delete m;
+  m=SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi2=MolToSmiles(*m,true);
+  TEST_ASSERT(smi==smi2);
+
+  
+  smi="[C@H](O)(N)I";
+  delete m;
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi=MolToSmiles(*m,true);
+  BOOST_LOG(rdInfoLog)<<"smiout: "<<smi<<std::endl;
+  delete m;
+  m=SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi2=MolToSmiles(*m,true);
+  TEST_ASSERT(smi==smi2);
+
+
+  BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< " << std::endl;
+  delete m;
+  fName = rdbase+"/Code/GraphMol/FileParsers/test_data/ChiralityAndBondDir1a.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi=MolToSmiles(*m,true);
+  delete m;
+  m=SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi2=MolToSmiles(*m,true);
+  TEST_ASSERT(smi==smi2);
+
+
+  delete m;
+  fName = rdbase+"/Code/GraphMol/FileParsers/test_data/ChiralityAndBondDir1b.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi=MolToSmiles(*m,true);
+  delete m;
+  m=SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi2=MolToSmiles(*m,true);
+  TEST_ASSERT(smi==smi2);
+
+
+  delete m;
+  fName = rdbase+"/Code/GraphMol/FileParsers/test_data/ChiralityAndBondDir2a.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi=MolToSmiles(*m,true);
+  delete m;
+  m=SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi2=MolToSmiles(*m,true);
+  TEST_ASSERT(smi==smi2);
+
+
+  delete m;
+  fName = rdbase+"/Code/GraphMol/FileParsers/test_data/ChiralityAndBondDir2b.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi=MolToSmiles(*m,true);
+  delete m;
+  m=SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi2=MolToSmiles(*m,true);
+  TEST_ASSERT(smi==smi2);
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+};
+
 
 void testMol2(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -401,6 +549,7 @@ int main(){
   testSmiles1();
   testMol1();
   testMol2();
+  testRoundTrip();
   
   return 0;
 }

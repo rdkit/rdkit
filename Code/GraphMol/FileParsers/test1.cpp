@@ -252,7 +252,7 @@ void test6(){
   std::string fName = rdbase + "test_data/chiral1.mol";
 
   RWMol *m;
-  std::string smi;
+  std::string smi,cip;
 
 #if 1
   m = MolFileToMol(fName);
@@ -290,7 +290,12 @@ void test6(){
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");  
   smi = MolToSmiles(*m,true);
+  BOOST_LOG(rdInfoLog) << " smi: " << smi << std::endl;
   TEST_ASSERT(smi=="C[C@H](F)Cl");
   delete m;
 
@@ -298,6 +303,10 @@ void test6(){
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==4);
+  MolOps::assignAtomChiralCodes(*m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");  
   smi = MolToSmiles(*m,true);
   TEST_ASSERT(smi=="C[C@H](F)Cl");
   delete m;
