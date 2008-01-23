@@ -24,6 +24,8 @@ project RDKit
           <library>/boost/log//boost_log
           <include>$(RDBASE)/External/Lapack++/include
           <include>$(RDBASE)/External/vflib-2.0/include
+	#<profiling>on <debug-symbols>on <optimization>speed
+         <cflags>-Wno-unused-function
         : default-build release ;
 
 
