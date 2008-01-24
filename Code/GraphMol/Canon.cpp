@@ -618,7 +618,7 @@ namespace Canon {
     if ( !mol.getRingInfo()->isInitialized() ) {
       MolOps::findSSSR(mol);
     }
-    mol.getAtomWithIdx(atomIdx)->setProp("_TraversalStartPoint",True);
+    mol.getAtomWithIdx(atomIdx)->setProp("_TraversalStartPoint",true);
     Canon::canonicalDFSTraversal(mol,atomIdx,-1,colors,cycles,
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
                                  bondVisitOrders);
