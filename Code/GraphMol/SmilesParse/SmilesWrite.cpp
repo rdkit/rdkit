@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -18,7 +18,7 @@ namespace RDKit{
   namespace SmilesWrite{
     const int atomicSmiles[] = {5,6,7,8,15,16,9,17,35,53,-1};
 
-    std::string GetAtomSmiles(const Atom *atom,bool doKekule){
+    std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
       PRECONDITION(atom,"bad atom");
       int i;
       static bool firstCall=true;
@@ -87,14 +87,36 @@ namespace RDKit{
         ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
         while(beg!=end){
           std::cout <<pMap[*beg]->getIdx()<<", ";
-          beg++;
+          ++beg;
         }
         std::cout << std::endl;
 #endif    
         int nSwaps =  atom->getPerturbationOrder(trueOrder);
 
-    
         std::cout << "\t\tnSwaps: " << nSwaps << std::endl;
+        if(atom->getDegree()==3){
+          // Does the atom have a preceder in the original ordering?
+          bool hasTruePrecedingAtom=false;
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = atom->getOwningMol().getAtomBonds(atom);
+          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
+          while(beg!=end){
+            Bond *nbrBond=pMap[*beg];
+            unsigned int oIdx=nbrBond->getOtherAtomIdx(atom->getIdx());
+            if(oIdx<atom->getIdx() && nbrBond->getBeginAtomIdx()==oIdx){
+              hasTruePrecedingAtom=true;
+              break;
+            }
+            ++beg;
+          }
+
+          if(hasTruePrecedingAtom^static_cast<bool>(bondIn)){
+            // if we had a preceder and don't now, or vice versa,
+            // we need another swap to reflect the H position
+            ++nSwaps;
+            std::cout << "\t\tincr!: " << nSwaps << std::endl;
+          }
+        }
         std::string atStr="";
         switch(atom->getChiralTag()){
         case Atom::CHI_TETRAHEDRAL_CW:
@@ -233,12 +255,12 @@ namespace RDKit{
       Canon::canonicalizeFragment(mol,atomIdx,colors,ranks,
                                   molStack);
       Canon::MolStack::const_iterator msCI,tmpIt;
-      Bond *bond;
+      Bond *bond=0;
       for(msCI=molStack.begin();msCI!=molStack.end();msCI++){
         switch(msCI->type){
         case Canon::MOL_STACK_ATOM:
           std::cout<<"\t\tAtom: "<<msCI->obj.atom->getIdx()<<std::endl;
-          res << GetAtomSmiles(msCI->obj.atom,doKekule);
+          res << GetAtomSmiles(msCI->obj.atom,doKekule,bond);
           break;
         case Canon::MOL_STACK_BOND:
           bond = msCI->obj.bond;

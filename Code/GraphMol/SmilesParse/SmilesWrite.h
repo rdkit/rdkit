@@ -14,7 +14,7 @@
 
 namespace RDKit{
   namespace SmilesWrite {
-    std::string GetAtomSmiles(const Atom *atom,bool doKekule=false);
+    std::string GetAtomSmiles(const Atom *atom,bool doKekule=false,const Bond *bondIn=0);
     std::string GetBondSmiles(const Bond *bond,int atomToLeftIdx=-1,bool doKekule=false);
   } 
   

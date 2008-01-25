@@ -134,7 +134,7 @@ void testRoundTrip(){
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
   m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
-#if 0
+#if 1
   smi=MolToSmiles(*m,true);
   BOOST_LOG(rdInfoLog)<<"smiout: "<<smi<<std::endl;
   delete m;
@@ -159,7 +159,7 @@ void testRoundTrip(){
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
-#if 0
+#if 1
   smi=MolToSmiles(*m,true);
   delete m;
   m=SmilesToMol(smi);
@@ -182,7 +182,7 @@ void testRoundTrip(){
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
-#if 0
+#if 1
   smi=MolToSmiles(*m,true);
   delete m;
   m=SmilesToMol(smi);
@@ -205,7 +205,7 @@ void testRoundTrip(){
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
-#if 0
+#if 1
   smi=MolToSmiles(*m,true);
   delete m;
   m=SmilesToMol(smi);
@@ -228,7 +228,7 @@ void testRoundTrip(){
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
-#if 0
+#if 1
   smi=MolToSmiles(*m,true);
   delete m;
   m=SmilesToMol(smi);

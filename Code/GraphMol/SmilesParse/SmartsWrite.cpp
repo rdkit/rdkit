@@ -486,7 +486,7 @@ namespace RDKit {
 
 
     
-    std::string FragmentSmartsConstruct(ROMol &mol,int atomIdx,
+    std::string FragmentSmartsConstruct(ROMol &mol,unsigned int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
                                         INT_VECT &ranks){
       Canon::MolStack molStack;
@@ -624,7 +624,7 @@ namespace RDKit {
   
   std::string MolToSmarts(ROMol &mol, bool doIsomericSmiles) {
     std::string res;
-    int nAtoms = mol.getNumAtoms();
+    unsigned int nAtoms = mol.getNumAtoms();
     
     INT_VECT ranks;
     ranks.resize(nAtoms);
@@ -642,10 +642,11 @@ namespace RDKit {
     
     colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
     while (colorIt != colors.end()) {
-      int i, nextAtomIdx, nextRank;
+      unsigned int nextAtomIdx=0;
+      int nextRank;
       std::string subSmi;
       nextRank = nAtoms + 1;
-      for (i = 0; i < nAtoms; i++) {
+      for (unsigned int i = 0; i < nAtoms; i++) {
         if (colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank) {
           nextRank = ranks[i];
           nextAtomIdx = i;

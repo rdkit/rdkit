@@ -537,7 +537,7 @@ void testStereochem(){
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
-#if 0
+#if 1
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 #endif
@@ -550,7 +550,7 @@ void testStereochem(){
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
-#if 0
+#if 1
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 #endif
@@ -1667,13 +1667,13 @@ void testBug1844617(){
   TEST_ASSERT(mol->getAtomWithIdx(18)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(18)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");
-#if 0  
+#if 1  
   smi = MolToSmiles(*mol,true);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   smi2 = MolToSmiles(*mol,true);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
   BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi==smi2);
 #endif  
@@ -1867,7 +1867,7 @@ main(int argc, char *argv[])
 {
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
-#if 1
+#if 0
   testPass();
   testFail();
   testDetails();
@@ -1892,9 +1892,9 @@ main(int argc, char *argv[])
   testBug1670149();
   testBug1842174();
   testBug1844959();
-  testBug1844617();
   testIssue157();
-#endif
   testStereochem();
+#endif
+  testBug1844617();
   //testBug1719046();
 }
