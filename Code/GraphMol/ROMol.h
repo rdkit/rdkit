@@ -21,12 +21,12 @@
 #include "Conformer.h"
 
 namespace RDKit{
-  
+  //! This is the BGL type used to store the topology:
   typedef boost::adjacency_list< boost::vecS,
                                  boost::vecS,
                                  boost::undirectedS,
                                  AtomProperty,
-                                 BondProperty> MolGraph; //! the BGL type used to store the topology
+                                 BondProperty> MolGraph; 
   class MolPickler;
   class RWMol;
   class Atom;
@@ -161,7 +161,7 @@ namespace RDKit{
            copy any of the properties or bookmarks and conformers from \c other.  This can
            make the copy substantially faster (thus the name).
     */
-    ROMol(const ROMol &other,bool quickCopy=false) {initFromOther(other,quickCopy);};
+    ROMol(const ROMol &other,bool quickCopy=false) {dp_props=0;dp_ringInfo=0;initFromOther(other,quickCopy);};
     //! construct a molecule from a pickle string
     ROMol(const std::string &binStr);
 

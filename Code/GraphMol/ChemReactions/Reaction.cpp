@@ -123,7 +123,7 @@ namespace RDKit {
       ROMol::GRAPH_MOL_ATOM_PMAP::const_type atMap = prodTemplate->getAtomPMap();
       while(atItP.first != atItP.second ){
         Atom *newAtom=new Atom(*(atMap[*(atItP.first++)]));
-        int idx=res->addAtom(newAtom,false,true);
+        res->addAtom(newAtom,false,true);
         if(newAtom->hasProp("molAtomMapNumber")){
           // set bookmarks for the mapped atoms:
           int mapNum;

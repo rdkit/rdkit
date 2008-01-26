@@ -13,7 +13,7 @@
 #       copyright notice, this list of conditions and the following 
 #       disclaimer in the documentation and/or other materials provided 
 #       with the distribution.
-#     * Neither the name of Novartis Institutues for BioMedical Research Inc. 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
 #       nor the names of its contributors may be used to endorse or promote 
 #       products derived from this software without specific prior written permission.
 #
@@ -262,6 +262,16 @@ M  END
     ps=rxn.RunReactants((Chem.MolFromSmiles('CCCl'),))
     self.failUnless(len(ps)==1)
     self.failUnless(len(ps[0])==1)
+
+  def _test7Leak(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]Cl>>[C:1]')
+    self.failUnless(rxn)
+    print 'running: '
+    for i in range(1e5):
+      ps=rxn.RunReactants((Chem.MolFromSmiles('CCCl'),))
+      self.failUnless(len(ps)==1)
+      self.failUnless(len(ps[0])==1)
+      if not i%1000: print i
 
         
 if __name__ == '__main__':

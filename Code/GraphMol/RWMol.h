@@ -23,7 +23,7 @@ namespace RDKit{
     using ROMol::addAtom;
     using ROMol::addBond;
 
-    RWMol() { initMol(); }
+    RWMol() { d_partialBonds.clear(); }
 
     //! copy constructor with a twist
     /*!
@@ -32,7 +32,7 @@ namespace RDKit{
            copy any of the properties or bookmarks and conformers from \c other.  This can
            make the copy substantially faster (thus the name).
     */
-    RWMol(const ROMol &other,bool quickCopy=false) {initFromOther(other,quickCopy);};
+    RWMol(const ROMol &other,bool quickCopy=false) {d_partialBonds.clear(); initFromOther(other,quickCopy);};
 
 
     //! insert the atoms and bonds from \c other into this molecule

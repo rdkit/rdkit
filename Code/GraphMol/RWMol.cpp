@@ -212,6 +212,8 @@ namespace RDKit{
     RANGE_CHECK(0,aid1,getNumAtoms()-1);
     RANGE_CHECK(0,aid2,getNumAtoms()-1);
     Bond *bnd = getBondBetweenAtoms(aid1, aid2);
+    if(!bnd) return;
+    
     // remove any bookmarks which point to this bond:
     BOND_BOOKMARK_MAP *marks = getBondBookmarks();
     BOND_BOOKMARK_MAP::iterator markI=marks->begin();

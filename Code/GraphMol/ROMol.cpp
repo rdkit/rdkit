@@ -44,6 +44,7 @@ void ROMol::destroy(){
   d_atomBookmarks.clear();
   d_bondBookmarks.clear();
   d_graph.clear();
+
   if (dp_props) {
     delete dp_props;
     dp_props=0;
@@ -75,12 +76,14 @@ void ROMol::initFromOther(const ROMol &other,bool quickCopy){
   }
 
   // ring information
+  if(dp_ringInfo) delete dp_ringInfo;
   if(other.dp_ringInfo){
     dp_ringInfo = new RingInfo(*(other.dp_ringInfo));
   } else {
     dp_ringInfo = new RingInfo();
   }
 
+  if(dp_props) delete dp_props;
   dp_props=0;
   if(!quickCopy){
     // copy conformations
@@ -124,7 +127,7 @@ void ROMol::initFromOther(const ROMol &other,bool quickCopy){
 void ROMol::initMol() {
   dp_props = new Dict();
   dp_ringInfo = new RingInfo();
-  // ok every bond contains a property entry called "computedProps" which provides
+  // ok every molecule contains a property entry called "computedProps" which provides
   //  list of property keys that correspond to value that have been computed
   // this can used to blow out all computed properties while leaving the rest along
   // initialize this list to an empty vector of strings
