@@ -5,9 +5,11 @@
  Please read the release notes for Release_Jan2008_1beta1
 
 Bug Fixes
- - The MolSuppliers (SDMolSupplier, TDTMolSupplier, SmilesMolSupplier) no longer
-   fail when reading the last element. (issue 1874882)
-
+ - The MolSuppliers (SDMolSupplier, TDTMolSupplier, SmilesMolSupplier) 
+   no longer fail when reading the last element. (issue 1874882)
+ - A memory leak in the constructor of RWMols was fixed.
+ - A problem causing rapid memory growth with Recap analysis was fixed. 
+   (issue 1880161)
 
 
 ******  Release_Jan2008_1beta2 *******
