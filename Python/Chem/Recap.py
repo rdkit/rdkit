@@ -56,6 +56,7 @@ To get the standard set of RECAP results, use GetLeaves():
 
 
 """
+import weakref
 import Chem
 from Chem import rdChemReactions as Reactions
 
@@ -141,18 +142,7 @@ class RecapHierarchyNode(object):
         res[smi] = child
       child._gacRecurse(res,terminalOnly=terminalOnly)
 
-  def _remove(self):
-    " removes this entry from the hierarchy (breaks reference loops) "
-    for parent in self.parents.values():
-      #parent = parent()
-      if parent:
-	ks = parent.children.keys()[:]
-	for k in ks:
-	  if parent.children[k] is self:
-	    del parent.children[k]
-
   def __del__(self):
-    self._remove()
     self.children={}
     self.parent={}
     self.mol=None
@@ -210,7 +200,7 @@ def RecapDecompose(mol,allNodes=None,minFragmentSize=0):
 	      pSmi = prod.pSmi
 	      pNode = allNodes.get(pSmi,RecapHierarchyNode(prod))
               pNode.smiles=pSmi
-              pNode.parents[nSmi]=node
+              pNode.parents[nSmi]=weakref.proxy(node)
 	      node.children[pSmi]=pNode
 	      activePool[pSmi] = pNode
 	      allNodes[pSmi]=pNode
