@@ -1628,6 +1628,7 @@ void testBug1844617(){
   std::string smi,smi2;
   std::string label;
   
+#if 0
   smi ="O=C1C2OCC[C@@]22C(CC1)CNCC2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -1646,6 +1647,84 @@ void testBug1844617(){
   BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi==smi2);
   
+  delete mol;
+#endif
+  smi ="O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
+  std::cerr << "1-----------------------------------------------" << std::endl;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  mol->debugMol(std::cout);
+  std::cerr << "2-----------------------------------------------" << std::endl;
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->debugMol(std::cout);
+  TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(6)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(11)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(11)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(12)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(12)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(15)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+#if 1  
+  std::cerr << "3-----------------------------------------------" << std::endl;
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  std::cerr << "4-----------------------------------------------" << std::endl;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  mol->debugMol(std::cout);
+  smi2 = MolToSmiles(*mol,true);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  TEST_ASSERT(smi==smi2);
+#endif  
+
+  delete mol;
+  smi ="O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
+  std::cerr << "12-----------------------------------------------" << std::endl;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  mol->debugMol(std::cout);
+  std::cerr << "22-----------------------------------------------" << std::endl;
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->debugMol(std::cout);
+  TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(6)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(11)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(11)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(12)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(12)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(15)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+#if 1  
+  std::cerr << "32-----------------------------------------------" << std::endl;
+  smi = MolToSmiles(*mol,true,false,0);
+  delete mol;
+  std::cerr << "42-----------------------------------------------" << std::endl;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  mol->debugMol(std::cout);
+  smi2 = MolToSmiles(*mol,true,false,0);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  TEST_ASSERT(smi==smi2);
+#endif  
+
+
   delete mol;
   smi ="O=C1CC[C@@]2(O)[C@@H]3N(CC4CC4)CC[C@]22[C@H]1OC[C@H]2CC3";
   mol = SmilesToMol(smi);
@@ -1679,6 +1758,7 @@ void testBug1844617(){
 #endif  
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+
 }
 
 void testBug1844959(){
@@ -1867,7 +1947,7 @@ main(int argc, char *argv[])
 {
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
-#if 0
+#if 1
   testPass();
   testFail();
   testDetails();

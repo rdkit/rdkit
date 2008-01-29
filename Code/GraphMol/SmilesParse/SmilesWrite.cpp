@@ -114,13 +114,13 @@ namespace RDKit{
             // if we had a preceder and don't now, or vice versa,
             // we need another swap to reflect the H position
             ++nSwaps;
-            std::cout << "\t\tincr!: " << nSwaps << std::endl;
+            //std::cout << "\t\tincr!: " << nSwaps << std::endl;
           }
         }
         std::string atStr="";
         switch(atom->getChiralTag()){
         case Atom::CHI_TETRAHEDRAL_CW:
-          std::cout << "\tcw" << std::endl;
+          //std::cout << "\tcw" << std::endl;
           if(!(nSwaps%2))
             atStr = "@@";
           else
@@ -128,7 +128,7 @@ namespace RDKit{
           chiralityIncluded=true;
           break;
         case Atom::CHI_TETRAHEDRAL_CCW:
-          std::cout << "\tccw" << std::endl;
+          //std::cout << "\tccw" << std::endl;
           if(!(nSwaps%2))
             atStr = "@";
           else
@@ -254,22 +254,21 @@ namespace RDKit{
       int ringIdx,closureVal;
       Canon::canonicalizeFragment(mol,atomIdx,colors,ranks,
                                   molStack);
-      Canon::MolStack::const_iterator msCI,tmpIt;
       Bond *bond=0;
-      for(msCI=molStack.begin();msCI!=molStack.end();msCI++){
+      for(Canon::MolStack::const_iterator msCI=molStack.begin();msCI!=molStack.end();msCI++){
         switch(msCI->type){
         case Canon::MOL_STACK_ATOM:
-          std::cout<<"\t\tAtom: "<<msCI->obj.atom->getIdx()<<std::endl;
+          //std::cout<<"\t\tAtom: "<<msCI->obj.atom->getIdx()<<std::endl;
           res << GetAtomSmiles(msCI->obj.atom,doKekule,bond);
           break;
         case Canon::MOL_STACK_BOND:
           bond = msCI->obj.bond;
-          std::cout<<"\t\tBond: "<<bond->getIdx()<<std::endl;
+          //std::cout<<"\t\tBond: "<<bond->getIdx()<<std::endl;
           res << GetBondSmiles(bond,msCI->number,doKekule);
           break;
         case Canon::MOL_STACK_RING:
           ringIdx = msCI->number;
-          std::cout<<"\t\tRing: "<<ringIdx;
+          //std::cout<<"\t\tRing: "<<ringIdx;
           if(ringClosureMap.count(ringIdx)){
             // the index is already in the map ->
             //   we're closing a ring, so grab
@@ -299,7 +298,7 @@ namespace RDKit{
           if(closureVal >= 10){
             res << "%";
           }
-          std::cout << " > " << closureVal <<std::endl;
+          //std::cout << " > " << closureVal <<std::endl;
           res << closureVal;
           break;
         case Canon::MOL_STACK_BRANCH_OPEN:

@@ -137,6 +137,7 @@ void testRoundTrip(){
 #if 1
   smi=MolToSmiles(*m,true);
   BOOST_LOG(rdInfoLog)<<"smiout: "<<smi<<std::endl;
+  TEST_ASSERT(smi=="N[C@H](O)I");
   delete m;
   m=SmilesToMol(smi);
   TEST_ASSERT(m);

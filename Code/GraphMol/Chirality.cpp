@@ -603,7 +603,7 @@ namespace RDKit{
             std::string cipCode;
             if(tag==Atom::CHI_TETRAHEDRAL_CCW) cipCode="S";
             else cipCode="R";
-            BOOST_LOG(rdInfoLog) << "\t\t>>>("<<atom->getIdx()<<") : " << cipCode << std::endl;
+            //BOOST_LOG(rdInfoLog) << "\t\t>>>("<<atom->getIdx()<<") : " << cipCode << std::endl;
             atom->setProp("_CIPCode",cipCode,true);
           } else {
             // FIX: this is where we should be handling meso cases

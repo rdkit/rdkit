@@ -408,13 +408,13 @@ int Atom::getPerturbationOrder(INT_LIST probe) const{
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = getOwningMol().getAtomBonds(this);
   ROMol::GRAPH_MOL_BOND_PMAP::type pMap = getOwningMol().getBondPMap();
-  std::cerr<<"  gPO("<<getIdx()<<"):";
+  //std::cerr<<"  gPO("<<getIdx()<<"):";
   while(beg!=end){
-    std::cerr << " "<<pMap[*beg]->getIdx();
+    //std::cerr << " "<<pMap[*beg]->getIdx();
     ref.push_back(pMap[*beg]->getIdx());
     beg++;
   }
-  std::cerr <<"\n";
+  //std::cerr <<"\n";
   PRECONDITION(ref.size()==probe.size(),"size mismatch");
   INT_LIST::const_iterator refIt=ref.begin();
   INT_LIST::iterator probeIt=probe.begin(),probeIt2;

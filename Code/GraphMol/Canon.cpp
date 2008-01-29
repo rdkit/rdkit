@@ -290,7 +290,7 @@ namespace Canon {
     Atom *atom = mol.getAtomWithIdx(atomIdx);
     // the atom will keep track of the order in which it sees bonds
     // using its _TraversalBondIndexOrder list:
-    INT_LIST directTravList;
+    INT_LIST directTravList,cycleEndList;
     INT_VECT ringClosures(0);
     atom->setProp("_CanonRingClosureBondIndices",ringClosures,true);
 
@@ -339,7 +339,7 @@ namespace Canon {
         //  
         // ---------------------
         if( colors[otherIdx] == GREY_NODE ) {
-          rank += static_cast<int>(Bond::OTHER+1) *
+          rank -= static_cast<int>(Bond::OTHER+1) *
             MAX_NATOMS*MAX_NATOMS;
         }
         // FIX: this will not work
@@ -373,26 +373,26 @@ namespace Canon {
         possiblesIt++){
       MolStack subStack;
       int possibleIdx = possiblesIt->second.first;
-      int lowestRingIdx;
       Bond *bond = possiblesIt->second.second;
-      Atom *otherAtom;
-      INT_LIST travList,otherTravList;
-
+      Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
+      INT_LIST otherTravList;
+      unsigned int lowestRingIdx;
       switch(colors[possibleIdx]){
       case WHITE_NODE:
         // -----
         // we haven't seen this node at all before
         // -----
-        subStack.push_back(MolStackElem(bond,atomIdx));
-        // we may need to update this atom's traversal order whilst
-        // dealing with the rest of the molecule, so set travList
-        // now and grab it back after the recursion:
+
+        // it might have some residual data from earlier calls:
+        if(otherAtom->hasProp("_TraversalBondIndexOrder")){
+          otherAtom->clearProp("_TraversalBondIndexOrder");
+        }
+
         directTravList.push_back(bond->getIdx());
-        atom->setProp("_TraversalBondIndexOrder",travList);
+        subStack.push_back(MolStackElem(bond,atomIdx));
         canonicalDFSTraversal(mol,possibleIdx,bond->getIdx(),colors,
                               cycles,ranks,cyclesAvailable,subStack,
                               atomOrders,bondVisitOrders);
-        //atom->getProp("_TraversalBondIndexOrder",travList);
         subStacks.push_back(subStack);
         nAttached += 1;
         break;
@@ -400,26 +400,30 @@ namespace Canon {
         // -----
         // we've seen this, but haven't finished it (we're finishing a ring)
         // -----
-        lowestRingIdx = std::find(cyclesAvailable.begin(),cyclesAvailable.end(),1) -
+        cycleEndList.push_back(bond->getIdx());
+        lowestRingIdx = std::find(cyclesAvailable.begin(),
+                                  cyclesAvailable.end(),1) -
           cyclesAvailable.begin();
         cyclesAvailable[lowestRingIdx] = 0;
         cycles[possibleIdx].push_back(lowestRingIdx);
-        lowestRingIdx += 1;
-        // we're not going to push the bond on here, but save it until later
-        molStack.push_back(MolStackElem(lowestRingIdx));
-        directTravList.push_back(bond->getIdx());
+        ++lowestRingIdx;
 
-        // we need to add this bond to the traversal list for the
+        molStack.push_back(MolStackElem(lowestRingIdx));
+
+        // we need to add this bond (which closes the ring) to the traversal list for the
         // other atom as well:
-        otherAtom=mol.getAtomWithIdx(possibleIdx);
-        otherAtom->getProp("_TraversalBondIndexOrder",otherTravList);
+        if(otherAtom->hasProp("_TraversalBondIndexOrder")){
+          otherAtom->getProp("_TraversalBondIndexOrder",otherTravList);
+        } else {
+          otherTravList.clear();
+        }
         otherTravList.push_back(bond->getIdx());
-        otherAtom->setProp("_TraversalBondIndexOrder",otherTravList);
+        otherAtom->setProp("_TraversalBondIndexOrder",otherTravList,true);
 
         otherAtom->getProp("_CanonRingClosureBondIndices",ringClosures);
         ringClosures.push_back(bond->getIdx());
         otherAtom->setProp("_CanonRingClosureBondIndices",ringClosures,true);
-        
+
         break;
       default:
         // -----
@@ -429,11 +433,8 @@ namespace Canon {
       }
     }
     
-    if(atom->hasProp("_CanonRingClosureBondIndices")){
-      atom->getProp("_CanonRingClosureBondIndices",ringClosures);
-    } else {
-      ringClosures.resize(0);
-    }
+
+    atom->getProp("_CanonRingClosureBondIndices",ringClosures);
     
     CHECK_INVARIANT(ringClosures.size()==cycles[atomIdx].size(),
                     "ring closure mismatch");
@@ -490,20 +491,36 @@ namespace Canon {
       }
     }
 
+    //std::cerr<<"*****>>>>>> Traversal results for atom: "<<atom->getIdx()<<"> ";
     INT_LIST travList;
+    // first push on the incoming bond:
     if(inBondIdx >= 0){
+      //std::cerr<<" "<<inBondIdx;
       travList.push_back(inBondIdx);
     }
+
+    // ... ring closures that end here:
+    for(INT_LIST_CI ilci=cycleEndList.begin();ilci!=cycleEndList.end();++ilci){
+      //std::cerr<<" ["<<*ilci<<"]";
+      travList.push_back(*ilci);
+    }
+
+
+    // ... ring closures that start here:
     if(atom->hasProp("_TraversalBondIndexOrder")){
       INT_LIST indirectTravList;
       atom->getProp("_TraversalBondIndexOrder",indirectTravList);
       for(INT_LIST_CI ilci=indirectTravList.begin();ilci!=indirectTravList.end();++ilci){
+        //std::cerr<<" ("<<*ilci<<")";
         travList.push_back(*ilci);
       }
     }
+    // and finally the bonds we directly traverse:
     for(INT_LIST_CI ilci=directTravList.begin();ilci!=directTravList.end();++ilci){
+      //std::cerr<<" "<<*ilci;
       travList.push_back(*ilci);
     }
+    //std::cerr<<"\n";
     atom->setProp("_TraversalBondIndexOrder",travList);
     colors[atomIdx] = BLACK_NODE;
   }
@@ -619,6 +636,9 @@ namespace Canon {
       MolOps::findSSSR(mol);
     }
     mol.getAtomWithIdx(atomIdx)->setProp("_TraversalStartPoint",true);
+    if(mol.getAtomWithIdx(atomIdx)->hasProp("_TraversalBondIndexOrder")){
+      mol.getAtomWithIdx(atomIdx)->clearProp("_TraversalBondIndexOrder");
+    }
     Canon::canonicalDFSTraversal(mol,atomIdx,-1,colors,cycles,
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
                                  bondVisitOrders);

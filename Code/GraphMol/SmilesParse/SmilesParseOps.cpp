@@ -274,6 +274,7 @@ namespace SmilesParseOps{
         //         and index 3 as built.
         //
 	int nSwaps=(*atomIt)->getPerturbationOrder(bondOrdering);
+        //std::cerr << "aacf: " << (*atomIt)->getIdx() << " " << (*atomIt)->getChiralTag() << " swaps: " << nSwaps<< std::endl;
 	if(nSwaps%2){
           (*atomIt)->invertChirality();
 	}

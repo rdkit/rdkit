@@ -7,7 +7,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib SmilesParse : lex.yysmiles.cpp   smiles.tab.cpp lex.yysmarts.cpp smarts.tab.cpp InputFiller.cpp SmilesParse.cpp SmilesParseOps.cpp SmilesWrite.cpp SmartsWrite.cpp
-  : <include>. <define>VERBOSE_CANON ;
+  : <include>. ;
 install lib-install : SmilesParse : <location>$(RDBASE)/bin ;
 
 cpp lex.yysmiles.cpp : smiles.ll : <flex.prefix>yysmiles_ ;

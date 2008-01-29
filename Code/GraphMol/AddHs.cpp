@@ -393,7 +393,7 @@ namespace RDKit{
               }
               
               int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
-              std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
+              //std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
               if(nSwaps%2){
                 heavyAtom->invertChirality();
               }
