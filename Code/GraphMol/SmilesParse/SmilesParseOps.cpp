@@ -30,6 +30,8 @@ namespace SmilesParseOps{
   //
   void AddFragToMol(RWMol *mol,RWMol *frag,Bond::BondType bondOrder,
 		    Bond::BondDir bondDir,bool closeRings,bool doingQuery ){
+    PRECONDITION(mol,"no molecule");
+    PRECONDITION(frag,"no fragment");
     RWMol::GRAPH_NODE_TYPE lastAt = mol->getActiveAtom();
     int nOrigAtoms = mol->getNumAtoms();
     int nOrigBonds = mol->getNumBonds();
@@ -177,15 +179,12 @@ namespace SmilesParseOps{
 
 
   void _invChiralRingAtomWithHs(Atom *atom) {
-    // we will assume that this function is called ona ring atom with a 
+    PRECONDITION(atom,"bad atom");
+    // we will assume that this function is called on a ring atom with a 
     // ring closure bond 
     Atom::ChiralType ctype = atom->getChiralTag();
     if (atom->getNumExplicitHs() == 1) {
-      if (ctype == Atom::CHI_TETRAHEDRAL_CW) {
-	atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-      } else if (ctype == Atom::CHI_TETRAHEDRAL_CCW) {
-	atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-      }
+      atom->invertChirality();
     }
   }
   typedef std::pair<int,int> INT_PAIR;
@@ -194,6 +193,7 @@ namespace SmilesParseOps{
   }
 
   void AdjustAtomChiralityFlags(RWMol *mol){
+    PRECONDITION(mol,"no molecule");
     for(RWMol::AtomIterator atomIt=mol->beginAtoms();
 	atomIt != mol->endAtoms();
 	atomIt++){
@@ -262,18 +262,30 @@ namespace SmilesParseOps{
 	}
 
 	// ok, we now have the SMILES ordering of the bonds, figure out the
-	// permutation order:
+	// permutation order.
+        //
+        //  This whole thing is necessary because the ring-closure bonds
+        //  in the SMILES come before the bonds to the other neighbors, but
+        //  they come after the neighbors in the molecule we build.
+        //  A crude example:
+        //   in F[C@](Cl)(Br)I the C-Cl bond is index 1 in both SMILES
+        //         and as built
+        //   in F[C@]1(Br)I.Cl1 the C-Cl bond is index 1 in the SMILES
+        //         and index 3 as built.
+        //
 	int nSwaps=(*atomIt)->getPerturbationOrder(bondOrdering);
+        //std::cerr << "aacf: " << (*atomIt)->getIdx() << " " << (*atomIt)->getChiralTag() << " swaps: " << nSwaps<< std::endl;
 	if(nSwaps%2){
-	  (*atomIt)->setChiralTag(chiralType==Atom::CHI_TETRAHEDRAL_CW ?
-				  Atom::CHI_TETRAHEDRAL_CCW :
-				  Atom::CHI_TETRAHEDRAL_CW);
+          (*atomIt)->invertChirality();
 	}
       }
     }
   }
   
   Bond::BondType GetUnspecifiedBondType(const RWMol *mol,const Atom *atom1,const Atom *atom2){
+    PRECONDITION(mol,"no molecule");
+    PRECONDITION(atom1,"no atom1");
+    PRECONDITION(atom2,"no atom2");
     Bond::BondType res;
     if(atom1->getIsAromatic() && atom2->getIsAromatic()) {
       res = Bond::AROMATIC;
@@ -292,6 +304,7 @@ namespace SmilesParseOps{
     //       whilst doing this, we have to be cognizant of the fact that
     //          there may well be partial bonds in the molecule which need
     //          to be tied in as well.  WOO HOO! IT'S A BIG MESS!
+    PRECONDITION(mol,"no molecule");
     RWMol::ATOM_BOOKMARK_MAP::iterator bookmarkIt;
     bookmarkIt=mol->getAtomBookmarks()->begin();
     while(bookmarkIt!=mol->getAtomBookmarks()->end()){

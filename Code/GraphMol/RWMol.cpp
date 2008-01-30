@@ -25,7 +25,6 @@ namespace RDKit{
   void RWMol::insertMol(const ROMol &other)
   {
     GRAPH_MOL_ATOM_PMAP::const_type atom_pMap = other.getAtomPMap();
-    int activeAtomIdx = getActiveAtom()->getIdx();
 
     VERTEX_ITER firstA,lastA;
     boost::tie(firstA,lastA) = boost::vertices(other.d_graph);

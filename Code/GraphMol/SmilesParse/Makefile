@@ -25,7 +25,7 @@ $(INSTLIB): $(RDSMILESLIB)
 
 install: $(INSTLIB)
 
-main.exe: main.o $(INSTLIB) $(RDGRAPHLIB)
+main.exe: main.o $(RDSMILESLIB_S) $(RDGRAPHLIB)
 	$(CXX) -o $@ $(CXXFLAGS) $< $(LDFLAGS)
 
 smamain.exe: smamain.o $(INSTLIB) $(RDGRAPHLIB)

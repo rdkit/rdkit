@@ -353,9 +353,9 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==9);
   smi = MolToSmiles(*mol2,true);
-  //std::cerr <<"MOL: " << smi << std::endl;
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xa]C/C=C/C.O/C=C/[Xb]"||smi=="[Xb]C/C=C/C.O/C=C/[Xa]");
+  TEST_ASSERT(smi=="[Xa]C/C=C/C.O/C=C/[Xb]"||smi=="[Xb]C/C=C/C.O/C=C/[Xa]"||
+              smi=="[Xa]/C=C/O.C/C=C/C[Xb]"||smi=="[Xb]/C=C/O.C/C=C/C[Xa]");
 
   delete mol1;
   smi = "C[C@](F)(Cl)N";
@@ -464,6 +464,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==4);
   smi = MolToSmiles(*mol2,true);
+  BOOST_LOG(rdInfoLog)<<"smiles: "<<smi <<std::endl;
   TEST_ASSERT(smi=="[Xa][C@H](C)F");
   delete mol1;
   smi = "F[C@H](C)N";

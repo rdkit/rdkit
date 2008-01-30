@@ -10,6 +10,8 @@ it's intended to be shallow, but broad
 """
 import unittest,os
 import RDConfig
+from RDLogger import logger
+logger=logger()
 import Chem
 from Chem import FragmentCatalog
 import DataStructs
@@ -154,7 +156,7 @@ class TestCase(unittest.TestCase):
         for mol in suppl:
             nent = fgen.AddFragsFromMol(mol, cat)
         assert cat.GetFPLength()==2
-        assert cat.GetBitDescription(0)=='Ccc'
+        assert cat.GetBitDescription(0)=='ccC'
         fpgen = FragmentCatalog.FragFPGenerator()
         mol = Chem.MolFromSmiles('Cc1ccccc1')
         fp = fpgen.GetFPForMol(mol,cat)

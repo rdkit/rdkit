@@ -269,7 +269,6 @@ namespace RDKit{
 	int chg = abs(atom->getFormalCharge()) % 8;
 	int chgSign = atom->getFormalCharge() > 0;
 	int num =    atom->getAtomicNum() % 128;
-	int explicitVal = atom->getExplicitValence() % 16;
 	int nConns = atom->getDegree() % 8;
 	int deltaMass = static_cast<int>(atom->getMass() -
 					 PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
@@ -295,7 +294,11 @@ namespace RDKit{
 
 	invariant = 0;
 	invariant = (invariant << 3) | nConns;
-	invariant = (invariant << 4) | explicitVal; 
+	// we used to include the number of explicitHs, but that
+	// didn't make much sense. TotalValence is another possible
+	// discriminator here, but the information is essentially
+	// redundant with nCons, num, and nHs.
+	// invariant = (invariant << 4) | totalVal; 
 	invariant = (invariant << 7) | num;  
 	invariant = (invariant << 4) | deltaMass;
 	invariant = (invariant << 3) | nHs;
@@ -304,15 +307,16 @@ namespace RDKit{
 	invariant = (invariant << 1) | chgSign;
 	if(includeChirality ){
 	  int isR=0;
-	  // FIX this doesn't distinguish between S atoms and those w/o stereochem
 	  if( atom->hasProp("_CIPCode")){
 	    std::string cipCode;
 	    atom->getProp("_CIPCode",cipCode);
 	    if(cipCode=="R"){
 	      isR=1;
+	    } else {
+	      isR=2;
 	    }
 	  }
-	  invariant = (invariant << 1) | isR;
+	  invariant = (invariant << 2) | isR;
 	}
 
 	// now deal with cis/trans - this is meant to address issue 174
@@ -328,12 +332,14 @@ namespace RDKit{
 		(tBond->getStereo()>Bond::STEREOANY )) {
 	      if (tBond->getStereo()==Bond::STEREOE) {
 		isT = 1;
+	      } else if(tBond->getStereo()==Bond::STEREOZ) {
+		isT=2;
 	      }
 	      break;
 	    }
 	    atomBonds.first++;
 	  }
-	  invariant = (invariant << 1) | isT;
+	  invariant = (invariant << 2) | isT;
 	}
 	res[atsSoFar++] = invariant;
       }

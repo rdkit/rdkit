@@ -635,7 +635,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
     # now delete only fragments
     nmol = Chem.DeleteSubstructs(mol, query, 1)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(O)=O',Chem.MolToSmiles(nmol))
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(=O)O',Chem.MolToSmiles(nmol))
     
     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
     nmol = Chem.DeleteSubstructs(mol, query, 0)
@@ -648,9 +648,9 @@ class TestCase(unittest.TestCase):
     # Issue 96 prevented this from working:
     mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
     nmol = Chem.DeleteSubstructs(mol, query, 1)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(O)=O')
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(=O)O')
     nmol = Chem.DeleteSubstructs(nmol, query, 1)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(O)=O')
+    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(=O)O')
     nmol = Chem.DeleteSubstructs(nmol, query, 0)
     self.failUnless(Chem.MolToSmiles(nmol) == 'CC')
 

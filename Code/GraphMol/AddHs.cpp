@@ -379,7 +379,8 @@ namespace RDKit{
               while(beg!=end){
                 if(pMap[*beg]->getIdx()!=bond->getIdx()){
                   neighborIndices.push_back(pMap[*beg]->getIdx());
-                  if(pMap[*beg]->getOtherAtom(heavyAtom)->getIdx()<heavyAtom->getIdx()){
+                  if(pMap[*beg]->getBeginAtomIdx()!=heavyAtom->getIdx() &&
+                     pMap[*beg]->getOtherAtom(heavyAtom)->getIdx()<heavyAtom->getIdx() ){
                     ++atomsBeforeHeavy;
                   }
                 }
@@ -394,14 +395,9 @@ namespace RDKit{
               int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
               //std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
               if(nSwaps%2){
-                if(heavyAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
-                  heavyAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-                } else if(heavyAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW){
-                  heavyAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-                }
+                heavyAtom->invertChirality();
               }
             }     
-          
             res->removeAtom(atom);
           } else {
             // only increment the atom idx if we don't remove the atom

@@ -246,15 +246,11 @@ namespace RDKit {
               break;
             case 1:
               // inversion
-              switch(reactantAtom->getChiralTag()){
-              case Atom::CHI_TETRAHEDRAL_CCW:
-                productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-                break;
-              case Atom::CHI_TETRAHEDRAL_CW:
-                productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-                break;
-              default:
+              if(reactantAtom->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CW &&
+                 reactantAtom->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CCW){
                 BOOST_LOG(rdWarningLog) << "unsupported chiral type on reactant atom ignored\n";
+              } else {
+                productAtom->invertChirality();
               }
               break;
             case 2:

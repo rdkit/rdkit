@@ -38,6 +38,14 @@ namespace Chirality {
     return (arg1.first < arg2.first);
   }
 
+  // --------------------------------------------------
+  //
+  // Calculates chiral invariants for the atoms of a molecule
+  //  These are based on Labute's proposal in:
+  //  "An Efficient Algorithm for the Determination of Topological
+  //   RS Chirality" Journal of the CCG (1996)
+  //
+  // --------------------------------------------------
   void buildCIPInvariants(const ROMol &mol,DOUBLE_VECT &res){
     PRECONDITION(res.size()>=mol.getNumAtoms(),"res vect too small");
     int atsSoFar=0;
@@ -63,6 +71,15 @@ namespace Chirality {
       if(mass < 0) mass = 0;
       else mass = mass % 16;
 
+      // NOTE: the inclusion of hybridization in the invariant (as
+      // suggested in the original paper), leads to the situation
+      // that 
+      //   C[C@@](O)(C=C)C(C)CC 
+      // and
+      //   C[C@@](O)(C=C)C(C)CO 
+      // are assigned S chirality even though the rest of the world
+      // seems to agree that they ought to be R (atom 3, sp2, is ranked
+      // higher than atom 5, sp3, no matter what their environments)
       int hyb=0;
       switch(atom->getHybridization()) {
       case Atom::SP: hyb=6;break;
@@ -70,12 +87,13 @@ namespace Chirality {
       case Atom::SP3: hyb=1;break;
       case Atom::SP3D: hyb=3;break;
       case Atom::SP3D2: hyb=2;break;
+      default: break;
       }
 
-      // of the possibility of hydrogens:
       invariant = num; // 7 bits here
       invariant = (invariant << 4) | mass;
-      invariant = (invariant << 3) | hyb;
+      // See above for why this is commented out.
+      //invariant = (invariant << 3) | hyb;
       res[atsSoFar++] = invariant;
     }
   }
@@ -319,7 +337,7 @@ namespace Chirality {
     for(ROMol::BondIterator bondIt=mol.beginBonds();
         bondIt!=mol.endBonds();
         bondIt++){
-      int bid = (*bondIt)->getIdx();
+      unsigned int bid = (*bondIt)->getIdx();
       if (!(mol.getRingInfo()->numBondRings(bid)) &&
           ((*bondIt)->getBondType() == Bond::DOUBLE)) {
         Atom *begAtom = (*bondIt)->getBeginAtom();
@@ -419,10 +437,10 @@ namespace Chirality {
       const VECT_INT_VECT atomRings=ringInfo->atomRings();
       for(VECT_INT_VECT::const_iterator ringIt=atomRings.begin();
           ringIt!=atomRings.end();++ringIt){
-        if(std::find(ringIt->begin(),ringIt->end(),atom->getIdx())!=ringIt->end()){
+        if(std::find(ringIt->begin(),ringIt->end(),static_cast<int>(atom->getIdx()))!=ringIt->end()){
           for(INT_VECT::const_iterator idxIt=ringIt->begin();
               idxIt!=ringIt->end();++idxIt){
-            if(*idxIt!=atom->getIdx() &&
+            if(*idxIt!=static_cast<int>(atom->getIdx()) &&
                mol.getAtomWithIdx(*idxIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED){
               // we get to keep the stereochem specification on this atom:
               return true;
@@ -478,7 +496,6 @@ namespace RDKit{
           atIt!=mol.endAtoms();atIt++){
         Atom *atom=*atIt;
         Atom::ChiralType tag=atom->getChiralTag();
-        bool hasDupes=false;
 
         // only worry about this atom if it has a marked chirality
         // we understand:
@@ -486,13 +503,15 @@ namespace RDKit{
            tag != Atom::CHI_OTHER){
           // loop over all neighbors and form a decorated list of their
           // ranks:
+          bool hasDupes=false;
           Chirality::INT_PAIR_VECT nbrs;
           Chirality::INT_LIST codes;
           ROMol::OEDGE_ITER beg,end;
-          boost::tie(beg,end) = mol.getAtomBonds(*atIt);
+          bool hasTruePrecedingAtom=false;
+          boost::tie(beg,end) = mol.getAtomBonds(atom);
           ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
           while(beg!=end){
-            int otherIdx=pMap[*beg]->getOtherAtom(*atIt)->getIdx();
+            unsigned int otherIdx=pMap[*beg]->getOtherAtom(atom)->getIdx();
             // watch for neighbors with duplicate ranks, which would mean
             // that we cannot be chiral:
             if(std::find(codes.begin(),
@@ -506,6 +525,14 @@ namespace RDKit{
             }
             codes.push_back(ranks[otherIdx]);
             nbrs.push_back(std::make_pair(ranks[otherIdx],pMap[*beg]->getIdx()));
+
+            // check to see if the neighbor is a "true preceder" (i.e. it occurs
+            // before the atom both in the atom ordering and the bond starts at
+            // the neighbor:
+            if(otherIdx<atom->getIdx() && pMap[*beg]->getBeginAtomIdx()==otherIdx){
+              hasTruePrecedingAtom=true;
+            }
+               
             beg++;
           }
 
@@ -549,15 +576,21 @@ namespace RDKit{
 
             // collect the list of neighbor indices:
             codes.clear();
-            for(Chirality::INT_PAIR_VECT_CI nbrIt=nbrs.begin();nbrIt!=nbrs.end();nbrIt++){
+            for(Chirality::INT_PAIR_VECT_CI nbrIt=nbrs.begin();
+                nbrIt!=nbrs.end(); ++nbrIt){
               codes.push_back((*nbrIt).second);
             }
             // ask the atom how many swaps we have to make:
             int nSwaps = atom->getPerturbationOrder(codes);
 
             // if the atom has 3 neighbors and a hydrogen, add a swap:
+            // This is reasonable for: F[C@H](Cl)Br, where the H is "between"
+            // the heavy atoms, but it screws up for the same molecule if it's
+            // numbered like this: [C@H](Cl)(F)Br, here no swap is required.
             if(codes.size()==3 && atom->getTotalNumHs()==1){
-              nSwaps+=1;
+              // we recognize the second case above ([C@H](Cl)(F)Br) using the
+              // hasTruePrecedingAtom flag:
+              if(hasTruePrecedingAtom) ++nSwaps;
             }
           
             // if that number is odd, we'll change our chirality:
@@ -607,7 +640,6 @@ namespace RDKit{
           if(cleanIt) dblBond->setStereo(Bond::STEREONONE);
           // at the moment we are ignoring stereochem on ring bonds.
           if(!mol.getRingInfo()->numBondRings(dblBond->getIdx())){
-            bool haveBeginMarker=false,haveEndMarker=false;
             Atom *begAtom=dblBond->getBeginAtom();
             Atom *endAtom=dblBond->getEndAtom();
         

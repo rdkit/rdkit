@@ -74,7 +74,7 @@ namespace FindRings {
     // push the start atom's neighbors onto the queue, but do not include
     // the final atom.
     while(nbrIdx!=endNbrs){
-      if(*nbrIdx!=endIdx){
+      if(static_cast<int>(*nbrIdx)!=endIdx){
 	//BOOST_LOG(rdDebugLog)<< "\tpush: " << *nbrIdx << "\t" << begIdx << std::endl;
 	bfsQ.push_back(*nbrIdx);
 	localParents[*nbrIdx] = begIdx;
@@ -87,7 +87,7 @@ namespace FindRings {
       ROMol::GRAPH_NODE_CONST_TYPE atom = mol.getAtomWithIdx(activeIdx);
       boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atom);
       while(nbrIdx != endNbrs){
-	if(*nbrIdx != endIdx){
+	if(static_cast<int>(*nbrIdx) != endIdx){
 	  if(localParents[*nbrIdx] == -1){
 #ifdef VERBOSE_SSSR
 	    BOOST_LOG(rdDebugLog)<< "push: " << *nbrIdx << std::endl;
@@ -186,7 +186,7 @@ namespace FindRings {
     boost::tie(nbrIdx,endNbrs) = tMol.getAtomNeighbors(tMol.getAtomWithIdx(root));
     Atom *at;
     while(nbrIdx != endNbrs) {
-      if (std::find(forb.begin(), forb.end(), (*nbrIdx)) == forb.end()) {
+      if (std::find(forb.begin(), forb.end(), static_cast<int>(*nbrIdx)) == forb.end()) {
 	at = tMol.getAtomWithIdx(*nbrIdx);
 	if (at->getDegree() == 2) {
 	  forb.push_back(*nbrIdx);
@@ -349,7 +349,7 @@ namespace FindRings {
 	// FIX: use the types.h union
 	for (j = 0; j < bring.size(); j++) {
 	  bid = bring[j];
-	  if (std::find(cunion.begin(), cunion.end(), bid) == cunion.end()){
+	  if (std::find(cunion.begin(), cunion.end(), static_cast<int>(bid)) == cunion.end()){
 	    cunion.push_back(bid);
 	  }
 	}
@@ -367,7 +367,7 @@ namespace FindRings {
     VECT_INT_VECT temp = res;
     res.resize(0);
     for (i = 0; i < temp.size(); i++) {
-      if (std::find(comb.begin(), comb.end(), i) != comb.end()) {
+      if (std::find(comb.begin(), comb.end(), static_cast<int>(i)) != comb.end()) {
 	res.push_back(temp[i]);
       }
       else {
@@ -716,14 +716,13 @@ namespace FindRings {
 	    INT_VECT npath = atPaths[nbrIdx];
 	    // make sure that the intersections of cpath and npath give exactl one 
 	    // element and that should be the root element for correct ring closure
-	    int id=-1, com = 0;
-
-	    INT_VECT_CI ci;
-	    for (ci = cpath.begin(); ci != cpath.end(); ci++) {
+	    int id=-1;
+        unsigned int com = 0;
+	    for (INT_VECT_CI ci = cpath.begin(); ci != cpath.end(); ++ci) {
 	      if (std::find(npath.begin(), npath.end(), (*ci)) != npath.end()) {
-		com++;
-		id = (*ci);
-		if((*ci)!=root) break;
+            com++;
+		    id = (*ci);
+		    if(id!=root) break;
 	      }
 	    } // end of found stuff in common with neighbor
 
@@ -756,64 +755,11 @@ namespace FindRings {
 	    } // end of found a ring
 	  } // end of we have seen this neighbor before
 	} // end of nbrIdx not part of current path and not a done atom
-	nbr++;
+	++nbr;
       } // end of loop over neighbors of current atom 
     } // moving to the next node
     return rings.size(); // if we are here we should have founf everything around the node
   }
-
-  
-
-
-  void _ringFindDFS(const ROMol &mol,INT_VECT &traversePath,INT_VECT &atomsSeen,
-		    INT_VECT &bondsSeen,int atomIdx,int depth,
-		    INT_SET &ringAtoms,INT_SET &ringBonds){
-    PRECONDITION(!atomsSeen[atomIdx]||depth>0,"");
-    if(atomsSeen[atomIdx]){
-      //-----
-      // we've been here before -> it's a ring atom
-      //-----
-
-      // reconstruct the path and mark atoms and bonds as being in rings
-      depth -= 1;
-      ringBonds.insert(traversePath[depth]);
-      while(--depth >= 0 ){
-	int bIdx = traversePath[depth];
-	// mark the bond itself as being in a ring
-	ringBonds.insert(bIdx);
-	// and now do the atoms to which it's attached
-	const Bond *b=mol.getBondWithIdx(bIdx);
-	ringAtoms.insert(b->getBeginAtomIdx());
-	ringAtoms.insert(b->getEndAtomIdx());
-	if(b->getBeginAtomIdx() == atomIdx || b->getEndAtomIdx() == atomIdx){
-	  // back where we started, terminate this branch
-	  break;
-	}
-      }
-    } else {
-      //-----
-      // continue the DFS traverse
-      //-----
-      atomsSeen[atomIdx] = 1;
-      const Atom *atom = mol.getAtomWithIdx(atomIdx);
-      ROMol::OEDGE_ITER beg,end;
-      boost::tie(beg,end) = mol.getAtomBonds(atom);
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
-      while(beg!=end){
-	int bondIdx = pMap[*beg]->getIdx();
-	if(!bondsSeen[bondIdx]){
-	  traversePath[depth] = bondIdx;
-	  bondsSeen[bondIdx] = 1;
-	  _ringFindDFS(mol,traversePath,atomsSeen,bondsSeen,
-		       pMap[*beg]->getOtherAtomIdx(atomIdx),
-		       depth+1,ringAtoms,ringBonds);
-	}
-	beg++;
-      }
-
-    } 
-  }
-
 
 } // end of FindRings namespace
 
@@ -953,7 +899,7 @@ namespace RDKit {
   
     int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
       res.clear();res.resize(0);
-      int nsssr;
+      unsigned int nsssr;
       VECT_INT_VECT sssrs;
 
       // FIX: need to set flag here the symmetrization has been done in order to avoid
@@ -990,8 +936,8 @@ namespace RDKit {
       Union(bsrs, munion);
       INT_VECT sr, exr;
       INT_VECT_CI eri;
-      int eid, srid, ssiz;
-      int next = bextra.size();
+      unsigned int eid, srid, ssiz;
+      unsigned int next = bextra.size();
       // now the trick is the following
       // we will replace each ring of size ssiz from the SSSR with 
       // one of the same size rings in the extras. Compute the union of of the new set
@@ -1006,7 +952,7 @@ namespace RDKit {
 	  // if we already added this ring continue
 	  // FIX: if the ring has already been added,it probably shouldn't be
 	  // in the list at all?  Is this perhaps the most efficient way?
-	  if (std::find(symids.begin(), symids.end(), eid) != symids.end()){
+	  if (std::find(symids.begin(), symids.end(), static_cast<int>(eid)) != symids.end()){
 	    continue;
 	  }
 	  exr = bextra[eid];

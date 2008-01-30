@@ -251,7 +251,7 @@ namespace {
 
   bool incidentMultipleBond(const Atom *at) {
     PRECONDITION(at,"bad atom");
-    return at->getExplicitValence()!=(at->getDegree()+at->getNumExplicitHs());
+    return at->getExplicitValence()!=static_cast<int>(at->getDegree()+at->getNumExplicitHs());
   }
 
   bool applyHuckel(ROMol &mol, const INT_VECT &ring, const VECT_EDON_TYPE &edon) {
@@ -350,7 +350,7 @@ namespace {
       // check aromaticity on the current fused system
       INT_VECT exclude;
       for (i = 0; i < srings.size(); i++) {
-        if (std::find(curRs.begin(), curRs.end(), i) == curRs.end() ) {
+        if (std::find(curRs.begin(), curRs.end(), static_cast<int>(i)) == curRs.end() ) {
           exclude.push_back(i);
         }
       }
@@ -538,7 +538,7 @@ namespace RDKit {
       // first find the all the simple rings in the molecule
       VECT_INT_VECT srings;
     
-      unsigned int nrings = symmetrizeSSSR(mol, srings);
+      symmetrizeSSSR(mol, srings);
       int narom = 0;
       // loop over all the atoms in the rings that can be candidates for aromaticity
       // Atoms are candidates if 
@@ -574,7 +574,6 @@ namespace RDKit {
       // rings
       VECT_INT_VECT cRings; // holder for the candidate rings
       INT_VECT cring;
-      int ri = 0;
       for (VECT_INT_VECT_CI vivi = srings.begin(); vivi != srings.end(); vivi++) {
         bool rcand = true;
         for (INT_VECT_CI ivi = vivi->begin(); ivi != vivi->end(); ivi++) {
@@ -602,7 +601,6 @@ namespace RDKit {
       // attention to fused systems.
       INT_VECT doneRs;
       int curr = 0;
-      bool allDone=false;
       int cnrs = cRings.size();
       boost::dynamic_bitset<> fusDone(cnrs);
       INT_VECT fused;

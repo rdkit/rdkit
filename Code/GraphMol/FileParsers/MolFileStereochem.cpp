@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -39,6 +39,7 @@ namespace RDKit {
   Atom::ChiralType FindAtomStereochemistry(const RWMol &mol,const Bond *bond, 
                                            const Conformer *conf){
     PRECONDITION(bond,"no bond");
+    PRECONDITION(conf,"no conformer");
     Bond::BondDir bondDir=bond->getBondDir();
     PRECONDITION(bondDir==Bond::BEGINWEDGE || bondDir==Bond::BEGINDASH,
                  "bad bond direction");
@@ -53,10 +54,8 @@ namespace RDKit {
 
     INT_LIST neighborBondIndices;
     RDGeom::Point3D centerLoc, tmpPt;
-    if (conf) {
-      centerLoc=conf->getAtomPos(atom->getIdx());
-      tmpPt=conf->getAtomPos(bondAtom->getIdx());
-    }
+    centerLoc=conf->getAtomPos(atom->getIdx());
+    tmpPt=conf->getAtomPos(bondAtom->getIdx());
     centerLoc.z=0.0;
     tmpPt.z = 0.0;
 
@@ -74,6 +73,7 @@ namespace RDKit {
     if(bondAtom->getAtomicNum()==1) hSeen=true;
 
     bool allSingle=true;
+    bool hasTruePrecedingAtom=false;
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol.getAtomBonds(atom);
     ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
@@ -86,6 +86,11 @@ namespace RDKit {
       if(nbrBond != bond){
         if(nbrBond->getOtherAtom(atom)->getAtomicNum()==1) hSeen=true;
         neighborBondIndices.push_back(nbrBond->getIdx());
+      }
+
+      unsigned int oIdx=nbrBond->getOtherAtomIdx(atom->getIdx());
+      if(oIdx<atom->getIdx() && nbrBond->getBeginAtomIdx()==oIdx){
+        hasTruePrecedingAtom=true;
       }
       beg++;
     }
@@ -120,20 +125,14 @@ namespace RDKit {
       INT_LIST::const_iterator bondIter=neighborBondIndices.begin();
       bondIter++;
       int oaid = mol.getBondWithIdx(*bondIter)->getOtherAtom(atom)->getIdx();
-      tmpPt.x = 0.0; tmpPt.y = 0.0; tmpPt.z = 0.0;
-      if (conf) {
-        tmpPt = conf->getAtomPos(oaid);
-      }
+      tmpPt = conf->getAtomPos(oaid);
       atomVect = centerLoc.directionVector(tmpPt);
       angle0 = refVect.signedAngleTo(atomVect);
       if(angle0<0) angle0 += 2.*M_PI;
 
       bondIter++;
       oaid = mol.getBondWithIdx(*bondIter)->getOtherAtom(atom)->getIdx();
-      tmpPt.x = 0.0; tmpPt.y = 0.0; tmpPt.z = 0.0;
-      if (conf) {
-        tmpPt = conf->getAtomPos(oaid);
-      }
+      tmpPt = conf->getAtomPos(oaid);
       atomVect = centerLoc.directionVector(tmpPt);
       angle1 = refVect.signedAngleTo(atomVect);
       if(angle1<0) angle1 += 2.*M_PI;
@@ -145,10 +144,7 @@ namespace RDKit {
         // grab the angle to the last neighbor:
         bondIter++;
         oaid = mol.getBondWithIdx(*bondIter)->getOtherAtom(atom)->getIdx();
-        tmpPt.x = 0.0; tmpPt.y = 0.0; tmpPt.z = 0.0;
-        if (conf) {
-          tmpPt = conf->getAtomPos(oaid);
-        }
+        tmpPt = conf->getAtomPos(oaid);
         atomVect = centerLoc.directionVector(tmpPt);
         angle2 = refVect.signedAngleTo(atomVect);
         if(angle2<0) angle2 += 2.*M_PI;
@@ -235,6 +231,7 @@ namespace RDKit {
       // 
       // ----------------
       int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
+      if(nNbrs==3 && !hasTruePrecedingAtom)++nSwaps;
       if(nSwaps%2) isCCW = !isCCW;
       if(isCCW) res = Atom::CHI_TETRAHEDRAL_CCW;
       else res = Atom::CHI_TETRAHEDRAL_CW;
@@ -242,75 +239,15 @@ namespace RDKit {
 
     return res;
   }
-
-
-  // FIX: this is dead code, this function is no longer used anywhere
-  // bool _setDirOtherBond(ROMol &mol, const Atom *atom, const Bond *dblBond) {
-  //   // if the direction on any of the single bonds
-  //   // at one end of a double bond are set, set the other single bonds at that end as well
-  //   // to be consistent with that setting
-  //   // let say we have Cl\C(Br)=C/F
-  //   // here the direction is specified so far on Cl to C bond (bid = 0), but not 
-  //   // specified on C to Br (bid = 1). This function will specify the direction on 
-  //   // C to Br bond so that is is consistent with Cl to C. Also note that
-  //   // we have to pay attention to whether C is the beg atom (or end atom) on both these
-  //   // bonds or on just one of them
-  //   // return true if we set the direction or it is already set
-  //   bool res = false;
-  //   ROMol::OBOND_ITER_PAIR atomBonds;
-  //   ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
-  //   atomBonds = mol.getAtomBonds(atom);
-  //   int aid = atom->getIdx();
-  //   int specBid = -1;
-  //   int otherBid = -1;
-  //   while (atomBonds.first != atomBonds.second) {
-  //     Bond *tBond = pMap[*atomBonds.first];
-  //     if (tBond->getIdx() != dblBond->getIdx()) {
-  //       Bond::BondDir dir = tBond->getBondDir();
-  //       if ((dir == Bond::ENDUPRIGHT) || (dir == Bond::ENDDOWNRIGHT)) {
-  //         specBid = tBond->getIdx();
-  //       } else {
-  //         otherBid = tBond->getIdx();
-  //       }
-  //     }
-  //     atomBonds.first++;
-  //   }
-  //   
-  //   if ((specBid >= 0) && (otherBid >= 0)) {
-  //     // one of the bond has direction specified and we need to set in on the other
-  //     Bond *specBond = mol.getBondWithIdx(specBid);
-  //     int specBegAid = specBond->getBeginAtomIdx();
-  //     int specEndAid = specBond->getEndAtomIdx();
-  //     bool flip = false;
-  //     Bond *othBond = mol.getBondWithIdx(otherBid);
-  //     int othBegAid = othBond->getBeginAtomIdx();
-  //     int othEndAid = othBond->getEndAtomIdx();
-  //     if ((othBegAid != specBegAid) && (othEndAid != specEndAid)) {
-  //       flip = true;
-  //     }
-  //     Bond::BondDir dir;
-  //     if (flip) {
-  //       dir = specBond->getBondDir();
-  //     } else {
-  //       dir = specBond->getBondDir() == Bond::ENDDOWNRIGHT ? Bond::ENDUPRIGHT : Bond::ENDDOWNRIGHT;
-  //     }
-  //     othBond->setBondDir(dir);
-  //     res = true;
-  //   } else if ((specBid >= 0) && (otherBid == -1)) {
-  //     // both ends are already set nothing to do
-  //     res = true;
-  //   }
-  //   return res;
-  // }
-
       
-  void ComputeBondStereoChemistry(ROMol &mol, Bond *dblBond, const Conformer *conf) {
+  void ComputeBondStereoChemistry(ROMol &mol, Bond *dblBond,
+                                  const Conformer *conf) {
     // ok this function got a lot easier than before 
-    // - now we do not have to set the directions on the single bonds surrounding 
-    //   a double bond
-    // - we simply have to figure the if the high ranking neighbor of the double bond
-    //   are in cis or trans position and set the BondStereo on the Bond
-
+    //   - now we do not have to set the directions on the single
+    //     bonds surrounding a double bond
+    //   - we simply have to figure the if the high ranking neighbor
+    //     of the double bond are in cis or trans position and set 
+    //     the BondStereo on the Bond
     // we want to deal only with double bonds:
     PRECONDITION(dblBond, "");
     PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "");
@@ -325,7 +262,8 @@ namespace RDKit {
       begAtmLoc = conf->getAtomPos(dblBond->getBeginAtomIdx());
       endAtmLoc = conf->getAtomPos(dblBond->getEndAtomIdx());
       endNbrLoc = conf->getAtomPos(cnbr2);
-      double ang = RDGeom::computeDihedralAngle(begNbrLoc, begAtmLoc, endAtmLoc, endNbrLoc);
+      double ang = RDGeom::computeDihedralAngle(begNbrLoc, begAtmLoc,
+                                                endAtmLoc, endNbrLoc);
       if (ang < RDKit::PI/2) {
         dblBond->setStereo(Bond::STEREOZ);
       } else {
@@ -336,6 +274,7 @@ namespace RDKit {
 
 
   void WedgeMolBonds(ROMol &mol, const Conformer *conf){
+    PRECONDITION(conf,"no conformer");
     INT_MAP_INT wedgeBonds=pickBondsToWedge(mol);
     for(ROMol::BondIterator bondIt=mol.beginBonds();
         bondIt!=mol.endBonds();
@@ -413,9 +352,11 @@ namespace RDKit {
   //
   // Determine bond wedge state
   ///
-  Bond::BondDir DetermineBondWedgeState(const Bond *bond, const INT_MAP_INT &wedgeBonds, 
+  Bond::BondDir DetermineBondWedgeState(const Bond *bond,
+                                        const INT_MAP_INT &wedgeBonds, 
                                         const Conformer *conf){
     PRECONDITION(bond,"no bond");
+    PRECONDITION(conf,"no conformer");
     PRECONDITION(bond->getBondType()==Bond::SINGLE,
                  "bad bond order for wedging");
     const ROMol *mol=&(bond->getOwningMol());
@@ -429,7 +370,7 @@ namespace RDKit {
       return res;
     }
 
-    int waid = wbi->second;
+    unsigned int waid = wbi->second;
     
     Atom *atom, *bondAtom; // = bond->getBeginAtom();
     if (bond->getBeginAtom()->getIdx() == waid) {
@@ -440,18 +381,16 @@ namespace RDKit {
       bondAtom = bond->getBeginAtom();
     }
       
-    int atomIdx=atom->getIdx(),bondAtomIdx=bondAtom->getIdx();
     Atom::ChiralType chiralType=atom->getChiralTag();
-    CHECK_INVARIANT((chiralType == Atom::CHI_TETRAHEDRAL_CW) || (chiralType==Atom::CHI_TETRAHEDRAL_CCW), "");
+    CHECK_INVARIANT( chiralType==Atom::CHI_TETRAHEDRAL_CW ||
+                     chiralType==Atom::CHI_TETRAHEDRAL_CCW, "");
  
     // if we got this far, we really need to think about it:
     INT_LIST neighborBondIndices;
     DOUBLE_LIST neighborBondAngles;
     RDGeom::Point3D centerLoc, tmpPt;
-    if (conf) {
-      centerLoc=conf->getAtomPos(atom->getIdx());
-      tmpPt=conf->getAtomPos(bondAtom->getIdx());
-    }
+    centerLoc=conf->getAtomPos(atom->getIdx());
+    tmpPt=conf->getAtomPos(bondAtom->getIdx());
     centerLoc.z=0.0;
     tmpPt.z = 0.0;
     RDGeom::Point3D refVect=centerLoc.directionVector(tmpPt);
@@ -459,18 +398,15 @@ namespace RDKit {
     neighborBondIndices.push_back(bond->getIdx());
     neighborBondAngles.push_back(0.0);
 
+    bool hasTruePrecedingAtom=false;
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol->getAtomBonds(atom);
     ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol->getBondPMap();
-    int firstBond = pMap[*beg]->getIdx();
     while(beg!=end){
       Bond *nbrBond=pMap[*beg];
+      Atom *otherAtom = nbrBond->getOtherAtom(atom);
       if(nbrBond != bond){
-        Atom *otherAtom = nbrBond->getOtherAtom(atom);
-        tmpPt.x = 0.0; tmpPt.y = 0.0; tmpPt.z = 0.0;
-        if (conf) {
-          tmpPt = conf->getAtomPos(otherAtom->getIdx());
-        }
+        tmpPt = conf->getAtomPos(otherAtom->getIdx());
         tmpPt.z = 0.0;
         RDGeom::Point3D tmpVect=centerLoc.directionVector(tmpPt);
         double angle=refVect.signedAngleTo(tmpVect);
@@ -485,6 +421,10 @@ namespace RDKit {
         }
         neighborBondAngles.insert(angleIt,angle);
         neighborBondIndices.insert(nbrIt,nbrBond->getIdx());
+      }
+      unsigned int oIdx=otherAtom->getIdx();
+      if(oIdx<atom->getIdx() && nbrBond->getBeginAtomIdx()==oIdx){
+        hasTruePrecedingAtom=true;
       }
       beg++;
     }
@@ -526,6 +466,7 @@ namespace RDKit {
               std::ostream_iterator<double>(BOOST_LOG(rdDebugLog)," "));
     BOOST_LOG(rdDebugLog) << std::endl;
 #endif
+    if(neighborBondIndices.size()==3 && !hasTruePrecedingAtom) ++nSwaps;
     if(chiralType==Atom::CHI_TETRAHEDRAL_CCW){
       if(nSwaps%2==1) {// ^ reverse) {
         res=Bond::BEGINDASH;
@@ -553,13 +494,13 @@ namespace RDKit {
     // make sure we've calculated the implicit valence on each atom:
     for(RWMol::AtomIterator atomIt=mol.beginAtoms();
         atomIt!=mol.endAtoms();
-        atomIt++) {
+        ++atomIt) {
       (*atomIt)->calcImplicitValence(false);
     }
 
     for(RWMol::BondIterator bondIt=mol.beginBonds();
         bondIt != mol.endBonds();
-        bondIt++){
+        ++bondIt){
       Bond *bond=*bondIt;
       if(bond->getBondDir() != Bond::UNKNOWN){
         Bond::BondDir dir=bond->getBondDir();
@@ -593,18 +534,12 @@ namespace RDKit {
 
     // mark all the non-ring double bonds that can be cis/trans:
     MolOps::findPotentialStereoBonds(mol);
-    RWMol::BondIterator bondIt;
-    for (bondIt = mol.beginBonds(); bondIt != mol.endBonds(); bondIt++) {
+    for (RWMol::BondIterator bondIt = mol.beginBonds();
+         bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::DOUBLE) {
-        ComputeBondStereoChemistry(mol, (*bondIt), conf);
+        ComputeBondStereoChemistry(mol, *bondIt, conf);
       }
     }
     MolOps::assignBondStereoCodes(mol);
-  }
-
-  // examines RD stereochemistry markers and labels
-  // things appropriately for a Mol file.
-  void AssignStereochemistry(RWMol &mol){
-
   }
 }

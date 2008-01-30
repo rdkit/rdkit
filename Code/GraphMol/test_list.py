@@ -6,6 +6,7 @@ tests=[
   ("testExecs/testCanon.exe","C1OCCC1 C1CCOC1",{}),
   ("testExecs/testPickler.exe","",{}),
   ("testExecs/test1.exe","",{}),
+  ("testExecs/testChirality.exe","",{}),
 
   ("python","test_list.py",{'dir':'Depictor'}),
   ("python","test_list.py",{'dir':'FileParsers'}),

@@ -83,7 +83,7 @@ void testPass(){
     mol = SmilesToMol(smi);
     CHECK_INVARIANT(mol,smi);
     if (mol) {
-      int nAts = mol->getNumAtoms();
+      unsigned int nAts = mol->getNumAtoms();
       CHECK_INVARIANT(nAts!=0,smi.c_str());
       mol2 = SmilesToMol(MolToSmiles(*mol));
       CHECK_INVARIANT(mol2->getNumAtoms()==nAts,smi.c_str())
@@ -140,7 +140,6 @@ void testFail(){
 }
 
 void testDetails(){
-  int i = 0;
   Mol *mol;
   Mol::GRAPH_NODE_TYPE a;
   std::string smi;
@@ -174,7 +173,6 @@ void testDetails(){
 }
 
 void testProblems(){
-  int i = 0;
   Mol *mol;
   std::string smi;
 
@@ -219,7 +217,6 @@ void testProblems(){
 }
 
 void testBasicCanon(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
@@ -321,9 +318,8 @@ void testLeak(){
 
 
 void testStereochem(){
-  int i = 0;
   Mol *mol;
-  std::string smi,refSmi;
+  std::string smi,refSmi,cip;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing handling of stereochemical smiles" << std::endl;
@@ -332,6 +328,10 @@ void testStereochem(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   refSmi = MolToSmiles(*mol,1);
 
   delete mol;
@@ -339,86 +339,233 @@ void testStereochem(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "F[C@](I)(Cl)Br";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "Cl[C@](Br)(F)I";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "Cl[C@](F)(I)Br";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "I[C@](F)(Br)Cl";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "I[C@](Br)(Cl)F";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "F[C@@](Br)(Cl)I";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "F[C@@](Cl)(I)Br";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "Cl[C@@](Br)(I)F";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "Cl[C@@](F)(Br)I";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+  smi = MolToSmiles(*mol,1);
+  TEST_ASSERT(smi==refSmi);
+
+  delete mol;
+  smi = "[C@@](Cl)(F)(Br)I";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "F[C@H](Cl)Br";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
   refSmi = MolToSmiles(*mol,1);
 
   delete mol;
   smi = "Br[C@H](F)Cl";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   smi = MolToSmiles(*mol,1);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "Br[C@]([H])(F)Cl";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
   delete mol;
   smi = "Br[C@](F)(Cl)[H]";
   mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(smi==refSmi);
 
+  delete mol;
+  smi = "Br[C@]1(F)(Cl).[H]1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi = MolToSmiles(*mol,1);
+  TEST_ASSERT(smi==refSmi);
+
+  delete mol;
+  smi = "Br[C@H]1Cl.F1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi = MolToSmiles(*mol,1);
+  TEST_ASSERT(smi==refSmi);
+
+  delete mol;
+  smi = "Br[C@]12Cl.F2.[H]1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi = MolToSmiles(*mol,1);
+  TEST_ASSERT(smi==refSmi);
+
+  delete mol;
+  smi = "Br[C@]21Cl.F1.[H]2";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  smi = MolToSmiles(*mol,1);
+  TEST_ASSERT(smi==refSmi);
+
+  delete mol;
+  smi = "[C@@H](Br)(F)Cl";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+#if 1
+  smi = MolToSmiles(*mol,1);
+  TEST_ASSERT(smi==refSmi);
+#endif
+
+  delete mol;
+  smi = "[H][C@@](Br)(F)Cl";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+#if 1
+  smi = MolToSmiles(*mol,1);
+  TEST_ASSERT(smi==refSmi);
+#endif
+
+  
   // -----------------------------------
   // test some double-bond containing molecules:
 
@@ -546,7 +693,6 @@ void testStereochem(){
 
 
 void testIssue127(){
-  int i = 0;
   Mol *mol,*mol2;
   std::string smi,refSmi,tempStr;
 
@@ -585,7 +731,6 @@ void testIssue127(){
 
 
 void testIssue143(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi,tempStr;
 
@@ -610,7 +755,6 @@ void testIssue143(){
 }
 
 void testIssue151(){
-  int i = 0;
   Mol *mol,*mol2;
   std::string smi,refSmi,tempStr;
 
@@ -703,7 +847,6 @@ void testIssue151(){
 }
 
 void testIssue153(){
-  int i = 0;
   std::string code;
   Mol *mol,*mol2;
   std::string smi,refSmi,tempStr;
@@ -729,6 +872,7 @@ void testIssue153(){
   mol2 = SmilesToMol(refSmi);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2,true);
+  std::cerr<<smi<<" " <<refSmi<<std::endl;
   TEST_ASSERT(refSmi==smi);
   delete mol;
   delete mol2;
@@ -760,7 +904,6 @@ void testIssue153(){
 
 
 void testIssue157(){
-  int i = 0;
   std::string code;
   Mol *mol,*mol2;
   std::string smi,refSmi,tempStr;
@@ -768,6 +911,7 @@ void testIssue157(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 157 (Symmetric molecules with multiple chiral centers badly canonicalized)" << std::endl;
 
+#if 1
   smi = "O[C@](C)(Cl)[C@@](O)(Cl)C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -802,13 +946,40 @@ void testIssue157(){
   delete mol;
   delete mol2;
 
-  smi = "[H][C@@]12C[C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
+  BOOST_LOG(rdInfoLog)<<"-**-**---------------------------------------"<<std::endl;
+  smi = "[H][C@@]12CC(CO1)CN2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->getAtomWithIdx(0)->getProp("_CIPCode",smi);
+  TEST_ASSERT(smi=="S");
+  refSmi = MolToSmiles(*mol,true);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
+  mol2 = SmilesToMol(refSmi);
+  TEST_ASSERT(mol2);
+  smi = MolToSmiles(*mol2,true);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
+  BOOST_LOG(rdInfoLog)<<smi<<std::endl;
+  TEST_ASSERT(refSmi==smi);
+  delete mol;
+  delete mol2;
+#endif
+  smi = "[H][C@@]12C[14C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
+  //smi="C1=C[C@@H]2C[C@H]1C1C(=O)NC(=O)C21";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->getAtomWithIdx(0)->getProp("_CIPCode",smi);
+  TEST_ASSERT(smi=="R");
+  mol->getAtomWithIdx(2)->getProp("_CIPCode",smi);
+  TEST_ASSERT(smi=="S");
+  mol->debugMol(std::cout);
   refSmi = MolToSmiles(*mol,true);
   mol2 = SmilesToMol(refSmi);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2,true);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
+  BOOST_LOG(rdInfoLog)<<smi<<std::endl;
   TEST_ASSERT(refSmi==smi);
   delete mol;
   delete mol2;
@@ -819,7 +990,6 @@ void testIssue157(){
 
 
 void testIssue159(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi,tempStr;
 
@@ -980,7 +1150,6 @@ void testIssue159(){
 
 
 void testIssue175(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi,tempStr;
 
@@ -1002,7 +1171,6 @@ void testIssue175(){
 }
 
 void testIssue176(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi,tempStr;
 
@@ -1038,7 +1206,6 @@ void testIssue176(){
 }
 
 void testIssue180(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
@@ -1065,7 +1232,6 @@ void testIssue180(){
 }
 
 void testIssue184(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
@@ -1099,13 +1265,30 @@ void testIssue184(){
 }
 
 void testIssue185(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 185: Cis/Trans incorrect on writing branches" << std::endl;
 
+  // start with a simple E/Z handling case with branches:
+  smi ="C(/C)=N/O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  refSmi = MolToSmiles(*mol,1,0,0);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
+  TEST_ASSERT(refSmi=="C(\\C)=N\\O");
+  delete mol;
+  // make sure we can round-trip:
+  mol = SmilesToMol(refSmi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  delete mol;
+  
+  // now make it more complex
   smi ="CC(=N\\O)/C=P/N";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -1114,6 +1297,7 @@ void testIssue185(){
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
   refSmi = MolToSmiles(*mol,1);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
   delete mol;
   mol = SmilesToMol(refSmi);
   TEST_ASSERT(mol);
@@ -1128,12 +1312,32 @@ void testIssue185(){
   smi = MolToSmiles(*mol,1);
   //std::cout << "ref: " << refSmi << " -> " << smi << std::endl;
   TEST_ASSERT(refSmi==smi);
+
+  // now repeat that experiment, but this time root the SMILES so that
+  // we go in a "sensible" order:
+  delete mol;
+  smi ="CC(=N\\O)/C=P/N";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  refSmi = MolToSmiles(*mol,true,false,6);
+  BOOST_LOG(rdInfoLog)<<refSmi<<std::endl;
+  TEST_ASSERT(refSmi=="N/P=C/C(C)=N/O");
+  delete mol;
+  mol = SmilesToMol(refSmi);
+  TEST_ASSERT(mol);
+  for(RWMol::BondIterator bondIt=mol->beginBonds();
+      bondIt!=mol->endBonds();
+      bondIt++){
+    if((*bondIt)->getBondType()==Bond::DOUBLE){
+      TEST_ASSERT((*bondIt)->getStereo()==Bond::STEREOE);
+    }
+  }
+
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void testIssue191(){
-  int i = 0;
   Mol *mol;
   std::string smi,refSmi;
   int numE=0;
@@ -1172,11 +1376,9 @@ void testIssue191(){
 }
 
 void testIssue256(){
-  int i = 0;
   Mol *mol;
   Bond *bond;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 256: SMILES yields incorrect structure" << std::endl;
@@ -1208,10 +1410,8 @@ void testIssue256(){
 
 
 void testIssue266(){
-  int i = 0;
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 266: kekulized SMILES output" << std::endl;
@@ -1244,7 +1444,6 @@ void testIssue266(){
 void testRootedAt(){
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing rootedAtAtom functionality" << std::endl;
@@ -1266,7 +1465,6 @@ void testRootedAt(){
 void testIsotopes(){
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing isotope handling" << std::endl;
@@ -1286,7 +1484,6 @@ void testIsotopes(){
 void testBug1670149(){
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1670149" << std::endl;
@@ -1311,7 +1508,6 @@ void testBug1670149(){
 void testBug1719046(){
   RWMol *mol;
   std::string smi;
-  int numE=0;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1719046: explicit Hs in canonical smiles" << std::endl;
@@ -1369,14 +1565,398 @@ void testBug1719046(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testBug1842174(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1842174: bad bond dirs in branches" << std::endl;
+  RWMol *mol;
+  std::string smi;
+
+  smi ="F/C=N/Cl";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="F/C=N/Cl");
+
+  smi = MolToSmiles(*mol,true,false,1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="C(\\F)=N/Cl");
+
+  delete mol;
+  smi ="C(\\C=C\\F)=C(/Cl)Br";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="F/C=C/C=C(/Cl)Br");
+
+  smi = MolToSmiles(*mol,true,false,0);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="C(=C(/Cl)Br)\\C=C\\F");
+  delete mol;
+
+  smi ="O=NC1=NOC(=N\\O)/C1=N\\O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="O=NC1=NOC(=N\\O)/C1=N\\O");
 
 
+  // ----------------------
+  //  the next two examples are a pair:
+  // vvvvvvvvvvvvvvvvvvvvvv
+  delete mol;
+  smi ="O/N=C/1COCC1=N\\O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="O/N=C1\\C(=N\\O)COC1");
 
- 
+  // this time the algorithm is forced to set 
+  // the directionality on the ring closure bond:
+  delete mol;
+  smi ="O/N=C/1COC[N+]1=N\\O";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,true,false,-1);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  TEST_ASSERT(smi=="O/N=C/1COC[N+]1=N\\O");
+  // ^^^^^^^^^^^^^^^^^^^^^^
+  // end of the pair
+  // ----------------------
+
+  delete mol;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testBug1844617(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1844617: oscillating chirality in canonical smiles" << std::endl;
+  RWMol *mol;
+  std::string smi,smi2;
+  std::string label;
+  
+#if 0
+  smi ="O=C1C2OCC[C@@]22C(CC1)CNCC2";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->debugMol(std::cout);
+  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(6)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  
+  smi = MolToSmiles(*mol,true);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi2 = MolToSmiles(*mol,true);
+  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  TEST_ASSERT(smi==smi2);
+  
+  delete mol;
+#endif
+  smi ="O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
+  std::cerr << "1-----------------------------------------------" << std::endl;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  mol->debugMol(std::cout);
+  std::cerr << "2-----------------------------------------------" << std::endl;
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->debugMol(std::cout);
+  TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(6)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(11)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(11)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(12)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(12)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(15)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+#if 1  
+  std::cerr << "3-----------------------------------------------" << std::endl;
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  std::cerr << "4-----------------------------------------------" << std::endl;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  mol->debugMol(std::cout);
+  smi2 = MolToSmiles(*mol,true);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  TEST_ASSERT(smi==smi2);
+#endif  
+
+  delete mol;
+  smi ="O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
+  std::cerr << "12-----------------------------------------------" << std::endl;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  mol->debugMol(std::cout);
+  std::cerr << "22-----------------------------------------------" << std::endl;
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->debugMol(std::cout);
+  TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(6)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(11)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(11)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(12)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(12)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(15)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+#if 1  
+  std::cerr << "32-----------------------------------------------" << std::endl;
+  smi = MolToSmiles(*mol,true,false,0);
+  delete mol;
+  std::cerr << "42-----------------------------------------------" << std::endl;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  mol->debugMol(std::cout);
+  smi2 = MolToSmiles(*mol,true,false,0);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  TEST_ASSERT(smi==smi2);
+#endif  
+
+
+  delete mol;
+  smi ="O=C1CC[C@@]2(O)[C@@H]3N(CC4CC4)CC[C@]22[C@H]1OC[C@H]2CC3";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->debugMol(std::cout);
+  TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(6)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(14)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(15)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(18)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(18)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+#if 1  
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi2 = MolToSmiles(*mol,true);
+  BOOST_LOG(rdInfoLog) << smi << std::endl;
+  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  TEST_ASSERT(smi==smi2);
+#endif  
+  delete mol;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+
+}
+
+void testBug1844959(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing SF.net bug 1844959: bad handling of Hs in chiral smiles" << std::endl;
+  RWMol *mol;
+  std::string smi,smi2;
+  std::string label;
+  
+  // ----------------------
+  //  the next examples are a set:
+  //  (this is the part that was originally working):
+  // vvvvvvvvvvvvvvvvvvvvvv
+  smi ="C[C@]12CNOC2.F1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  smi2 = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi==smi2);
+  
+  // swap the order and make sure the chirality swaps with it:
+  delete mol;
+  smi ="C[C@]12CNOC1.F2";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  smi2 = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi==smi2);
+
+  // now make sure it works with a reversed chiral tag:
+  smi ="C[C@@]12CNOC2.F1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  smi2 = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi==smi2);
+  delete mol;
+  smi ="C[C@@]12CNOC1.F2";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  smi2 = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi==smi2);
+  // ^^^^^^^^^^^^^^^^^^^^^^
+  // end of the set
+  // ----------------------
+  
+  // ----------------------
+  //  the next examples are a set:
+  //  (this is the part that was originally failing):
+  // vvvvvvvvvvvvvvvvvvvvvv
+  BOOST_LOG(rdInfoLog)<<"--------------------------------------------"<<std::endl;
+  smi ="C[C@]12CNOC2.[H]1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->debugMol(std::cerr);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  smi = MolToSmiles(*mol,true);
+  BOOST_LOG(rdInfoLog)<<smi<<std::endl;
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  mol->debugMol(std::cerr);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  smi2 = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi==smi2);
+  
+  // swap the order and make sure the chirality swaps with it:
+  delete mol;
+  smi ="C[C@]12CNOC1.[H]2";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  smi2 = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi==smi2);
+
+  // now make sure it works with a reversed chiral tag:
+  smi ="C[C@@]12CNOC2.[H]1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="R");
+  smi2 = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi==smi2);
+  delete mol;
+  smi ="C[C@@]12CNOC1.[H]2";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  smi = MolToSmiles(*mol,true);
+  delete mol;
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
+  TEST_ASSERT(label=="S");
+  smi2 = MolToSmiles(*mol,true);
+  TEST_ASSERT(smi==smi2);
+  // ^^^^^^^^^^^^^^^^^^^^^^
+  // end of the set
+  // ----------------------
+  
+
+  
+  delete mol;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
+  //boost::logging::enable_logs("rdApp.debug");
 #if 1
   testPass();
   testFail();
@@ -1384,24 +1964,27 @@ main(int argc, char *argv[])
   testProblems();
   //testLeak();
   testBasicCanon();
-  testStereochem();
   testIssue127();
   testIssue143();
   testIssue151();
   testIssue153();
-  testIssue157();
   testIssue175();
   testIssue176();
   testIssue180();
   testIssue159();
-  testIssue185();
   testIssue184();
+  testIssue185();
   testIssue191();
   testIssue256();
   testIssue266();
   testRootedAt();
   testIsotopes();
   testBug1670149();
+  testBug1842174();
+  testBug1844959();
+  testIssue157();
+  testStereochem();
 #endif
+  testBug1844617();
   //testBug1719046();
 }
