@@ -21,7 +21,7 @@ namespace RDKit{
     std::vector<MatchVectType> fgpMatches;
     std::vector<MatchVectType>::const_iterator mati;
     std::pair<int, int> amat;
-    VECT_INT_VECT matches; // all matches onto the molecule - list of list of atom ids
+    VECT_INT_VECT matches; // all matches on the molecule - list of list of atom ids
     MatchVectType::const_iterator mi;
     // do the substructure matching and get the atoms that match the query
     SubstructMatch(*res, query, fgpMatches);
@@ -47,7 +47,7 @@ namespace RDKit{
     if (onlyFrags) {
       VECT_INT_VECT frags;
       
-      unsigned int nfrags = MolOps::getMolFrags(*res, frags);
+      MolOps::getMolFrags(*res, frags);
       for (fi = frags.begin(); fi != frags.end(); fi++) {
         std::sort(fi->begin(), fi->end());
         for (mxi = matches.begin(); mxi != matches.end(); mxi++) {
@@ -272,21 +272,21 @@ namespace RDKit{
     std::vector<Atom *> keepList;
     unsigned int nDummies=0;
     for(unsigned int i=0;i<origNumAtoms;++i){
-      //std::cerr <<"  "<<i<<": " << matchingIndices[i]<<std::endl;
       if(!matchingIndices[i]){
         Atom *sidechainAtom=newMol->getAtomWithIdx(i);
         // we're keeping the sidechain atoms:
         keepList.push_back(sidechainAtom);
 
         // loop over our neighbors and see if any are in the match:
-        ROMol::ADJ_ITER nbrIdx,endNbrs;
-        boost::tie(nbrIdx,endNbrs) = newMol->getAtomNeighbors(sidechainAtom);
+        ROMol::ADJ_ITER nbrIter,endNbrs;
+        boost::tie(nbrIter,endNbrs) = newMol->getAtomNeighbors(sidechainAtom);
         unsigned int whichNbr=0;
-        unsigned int nNbrs=newMol->getAtomDegree(sidechainAtom);
         std::list<Bond *> newBonds;
-        while(nbrIdx!=endNbrs && (*nbrIdx) < origNumAtoms){
-          Bond *connectingBond=newMol->getBondBetweenAtoms(i,*nbrIdx);
-          if(matchingIndices[*nbrIdx]){
+        while(nbrIter!=endNbrs && (*nbrIter) < origNumAtoms){
+          unsigned int nbrIdx=*nbrIter;
+          Bond *connectingBond=newMol->getBondBetweenAtoms(i,nbrIdx);
+          if(matchingIndices[nbrIdx]){
+            bool removedPrecedingAtom=false;
             // add a dummy to stand in for this core atom:
             Atom *newAt=new Atom(0);
             std::string label="X";
@@ -298,8 +298,10 @@ namespace RDKit{
             keepList.push_back(newAt);
             if(bnd->getBeginAtomIdx()==i){
               bnd->setEndAtomIdx(newAt->getIdx());
+              removedPrecedingAtom=false;
             } else {
               bnd->setBeginAtomIdx(newAt->getIdx());
+              if(nbrIdx<i) removedPrecedingAtom=true;
             }
             // we can't add the bond yet because that will screw up the loop
             // over neighbors, so save it for later:
@@ -312,7 +314,6 @@ namespace RDKit{
             //
             if(sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW
                || sidechainAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ){
-              //std::cerr << "   " << sidechainAtom->getIdx() << " " << sidechainAtom->getChiralTag() << " " << whichNbr << std::endl; 
               bool switchIt=false;
               switch(newMol->getAtomDegree(sidechainAtom)){
               case 4:
@@ -326,12 +327,13 @@ namespace RDKit{
                 if(!(whichNbr%2)) switchIt=true;
                 break;  
               case 3:
-                // things are switched in the degree three case:
+                // things are different in the degree three case because of the implicit H:
                 //     start:         ordering:     swap?
-                //   N[C@H](F)C -> [C@H](F)(C)N     no
+                //   N[C@H](F)C -> [C@H](F)(C)X     yes
+                //   [C@H](N)(F)C -> [C@H](F)(C)X   no
                 //   F[C@H](N)C -> F[C@@H](C)X      yes        
                 //   F[C@H](C)N -> F[C@H](C)X       no
-                if((whichNbr%2)) switchIt=true;
+                if(whichNbr==1 || (whichNbr==0&&removedPrecedingAtom) ) switchIt=true;
                 break;  
               }
               if(switchIt){
@@ -340,7 +342,7 @@ namespace RDKit{
             }
           }
           ++whichNbr;
-          ++nbrIdx;
+          ++nbrIter;
         }
         // add the bonds now, after we've finished the loop over neighbors:
         for(std::list<Bond *>::iterator bi=newBonds.begin();bi!=newBonds.end();++bi){
