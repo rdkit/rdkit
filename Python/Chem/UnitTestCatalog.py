@@ -105,18 +105,18 @@ class TestCase(unittest.TestCase):
               (2,'CCC<-O>',2,(34,)),
               (3,'CCC',2,()),
               (4,'C=C',1,()),
-              (5,'CC=C',2,()),
+              (5,'C=CC',2,()),
               (6,'C=C<-O>',1,(34,)),
-              (7,'CC=C<-O>',2,(34,)),
+              (7,'C<-O>=CC',2,(34,)),
               (8,'CC<-O>C',2,(34,)),
-              (9,'CC<-O>=C',2,(34,)),
+              (9,'C=C<-O>C',2,(34,)),
               (10,'CCCC<-O>',3,(34,)),
               (11,'CCC<-O>C',3,(34,)),
-              (12,'CCC=C',3,()),
+              (12,'C=CCC',3,()),
               (13,'CC=CC',3,()),
-              (14,'CCC=C<-O>',3,(34,)),
+              (14,'C<-O>=CCC',3,(34,)),
               (15,'CC<-O>=CC',3,(34,)),
-              (16,'C<-O>C=C',2,(34,)),
+              (16,'C=CC<-O>',2,(34,)),
              ]
     for i in range(len(descrs)):
       id,d,order,ids=descrs[i]
@@ -198,7 +198,7 @@ class TestCase(unittest.TestCase):
 
     entry = bitInfo[6]
     assert int(entry[0])==16
-    assert cat.GetBitDescription(int(entry[0]))=='C<-O>C=C'
+    assert cat.GetBitDescription(int(entry[0]))=='C=CC<-O>'
     assert feq(entry[1],0.0560)
 
     # standard InfoGain ranking:
@@ -211,7 +211,7 @@ class TestCase(unittest.TestCase):
 
     entry = bitInfo[1]
     assert int(entry[0])==5
-    assert cat.GetBitDescription(int(entry[0]))=='CC=C'
+    assert cat.GetBitDescription(int(entry[0]))=='C=CC'
     assert feq(entry[1],0.2057)
 
   def test9Issue116(self):
@@ -220,7 +220,7 @@ class TestCase(unittest.TestCase):
                                            ',',0,-1,0)
     cat = BuildFragmentCatalog.BuildCatalog(suppl,minPath=2,maxPath=2)
     assert cat.GetFPLength()==2
-    assert cat.GetBitDescription(0)=='Ccc'
+    assert cat.GetBitDescription(0)=='ccC'
     fpgen = FragmentCatalog.FragFPGenerator()
     mol = Chem.MolFromSmiles('Cc1ccccc1')
     fp = fpgen.GetFPForMol(mol,cat)
