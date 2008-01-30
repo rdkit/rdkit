@@ -62,31 +62,31 @@ from Chem import rdChemReactions as Reactions
 
 # These are the definitions that will be applied to fragment molecules:
 reactionDefs = (
-  "[#7:1;D2,D3]!@C(!@=O)!@[#7:2;D2,D3]>>[X][#7:1].[#7:2][X]", # urea
+  "[#7:1;+0;D2,D3]!@C(!@=O)!@[#7:2;+0;D2,D3]>>[X][#7:1].[#7:2][X]", # urea
 
-  "[C:1](=!@[O:2])!@[#7:3!D1]>>[X][C:1]=[O:2].[X][#7:3]", # amide
+  "[C:1](=!@[O:2])!@[#7:3;+0;!D1]>>[X][C:1]=[O:2].[X][#7:3]", # amide
 
-  "[C:1](=!@[O:2])!@[O:3]>>[X][C:1]=[O:2].[O:3][X]", # ester
+  "[C:1](=!@[O:2])!@[O:3;+0]>>[X][C:1]=[O:2].[O:3][X]", # ester
 
-  "[N;!D1](-!@[*:1])-!@[*:2]>>[X][*:1].[*:2][X]", # amines
+  "[N;!D1;+0](-!@[*:1])-!@[*:2]>>[X][*:1].[*:2][X]", # amines
   #"[N;!D1](!@[*:1])!@[*:2]>>[X][*:1].[*:2][X]", # amines
 
   # again: what about aromatics?
-  "[#7:1;R;D3]-!@[*:2]>>[X][#7:1].[*:2][X]", # cyclic amines
+  "[#7:1;R;D3;+0]-!@[*:2]>>[X][#7:1].[*:2][X]", # cyclic amines
 
-  "[#6:1]-!@O-!@[#6:2]>>[#6:1][X].[X][#6:2]", # ether
+  "[#6:1]-!@[O;+0]-!@[#6:2]>>[#6:1][X].[X][#6:2]", # ether
 
   "[C:1]=!@[C:2]>>[C:1][X].[X][C:2]", # olefin
 
-  "[n:1]-!@[C:2]>>[n:1][X].[C:2][X]", # aromatic nitrogen - aliphatic carbon
+  "[n:1;+0]-!@[C:2]>>[n:1][X].[C:2][X]", # aromatic nitrogen - aliphatic carbon
 
-  "O=C-@[N:1]-!@[C:2]>>[N:1][X].[C:2][X]", # lactam nitrogen - aliphatic carbon
+  "O=C-@[N:1;+0]-!@[C:2]>>[N:1][X].[C:2][X]", # lactam nitrogen - aliphatic carbon
 
   "[c:1]-!@[c:2]>>[c:1][X].[X][c:2]", # aromatic carbon - aromatic carbon
 
-  "[n:1]-!@[c:2]>>[n:1][X].[X][c:2]", # aromatic nitrogen - aromatic carbon *NOTE* this is not part of the standard recap set.
+  "[n:1;+0]-!@[c:2]>>[n:1][X].[X][c:2]", # aromatic nitrogen - aromatic carbon *NOTE* this is not part of the standard recap set.
 
-  "[#7:1;D2,D3]-!@[S:2](=[O:3])=[O:4]>>[#7:1][X].[X][S:2](=[O:3])=[O:4]", # sulphonamide
+  "[#7:1;+0;D2,D3]-!@[S:2](=[O:3])=[O:4]>>[#7:1][X].[X][S:2](=[O:3])=[O:4]", # sulphonamide
   )
 
 reactions = tuple([Reactions.ReactionFromSmarts(x) for x in reactionDefs])
@@ -516,7 +516,7 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]N1CCC1=O' in ks)
+      self.failUnless('[Du]N1C(=O)CC1' in ks)
       self.failUnless('[Du]CCCC' in ks)
       
       m = Chem.MolFromSmiles('O=C1CC2N1CCCC2')
@@ -565,6 +565,34 @@ if __name__=='__main__':
       self.failUnless('[Du]S(=O)(=O)CC' in ks)
 
       m = Chem.MolFromSmiles('C1CNS(=O)(=O)CC1')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==0)
+
+    def testSFNetIssue1881803(self):
+      m = Chem.MolFromSmiles('c1ccccc1n1cccc1')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==2)
+      m = Chem.MolFromSmiles('c1ccccc1[n+]1ccccc1')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==0)
+
+      m = Chem.MolFromSmiles('C1CC1NC(=O)CC')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==2)
+      m = Chem.MolFromSmiles('C1CC1[NH+]C(=O)CC')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==0)
+
+      m = Chem.MolFromSmiles('C1CC1NC(=O)NC1CCC1')
+      res = RecapDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res.GetLeaves())==2)
+      m = Chem.MolFromSmiles('C1CC1[NH+]C(=O)[NH+]C1CCC1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==0)
