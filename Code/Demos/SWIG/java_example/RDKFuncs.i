@@ -91,7 +91,6 @@
 %ignore preallocate;
 %include <GraphMol/RingInfo.h>
 
-
 %include "RDKFuncs.h"
 
 

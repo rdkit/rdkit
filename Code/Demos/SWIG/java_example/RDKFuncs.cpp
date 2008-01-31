@@ -35,6 +35,15 @@ MatchVectType GetSubstructMatches(ROMol &mol,ROMol &query,bool useChirality,
   return SubstructMatch(mol,query,mv,true,useChirality,registerQuery);
 };
 #endif
+std::string PickleMol(RDKit::ROMol *mol){
+  std::string res="";
+  RDKit::MolPickler::pickleMol(mol,res);
+  return res;
+}
+RDKit::ROMol *MolFromPickle(std::string pkl){
+  RDKit::ROMol *res=new RDKit::ROMol(pkl);
+  return res;
+}
 
 
 
