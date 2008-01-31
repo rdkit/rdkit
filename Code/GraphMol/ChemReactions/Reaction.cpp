@@ -32,6 +32,7 @@
 
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/QueryOps.h>
 #include <boost/dynamic_bitset.hpp>
 #include <map>
 #include <algorithm>
@@ -122,15 +123,31 @@ namespace RDKit {
       ROMol::ATOM_ITER_PAIR atItP = prodTemplate->getVertices();
       ROMol::GRAPH_MOL_ATOM_PMAP::const_type atMap = prodTemplate->getAtomPMap();
       while(atItP.first != atItP.second ){
-        Atom *newAtom=new Atom(*(atMap[*(atItP.first++)]));
+        Atom *oAtom=atMap[*(atItP.first++)];
+        Atom *newAtom=new Atom(*oAtom);
         res->addAtom(newAtom,false,true);
         if(newAtom->hasProp("molAtomMapNumber")){
           // set bookmarks for the mapped atoms:
           int mapNum;
           newAtom->getProp("molAtomMapNumber",mapNum);
           res->setAtomBookmark(newAtom,mapNum);
+          // check for properties we need to set:
+          if(newAtom->hasProp("_QueryFormalCharge")){
+            int val;
+            newAtom->getProp("_QueryFormalCharge",val);
+            newAtom->setFormalCharge(val);
+          }
+          if(newAtom->hasProp("_QueryHCount")){
+            int val;
+            newAtom->getProp("_QueryHCount",val);
+            newAtom->setNumExplicitHs(val);
+          }
+          if(newAtom->hasProp("_QueryMass")){
+            int val;
+            newAtom->getProp("_QueryMass",val);
+            newAtom->setMass(val);
+          }
         }
-        
       }
       // and the bonds:
       ROMol::BOND_ITER_PAIR bondItP = prodTemplate->getEdges();
@@ -216,9 +233,10 @@ namespace RDKit {
           // and this is the corresponding atom in the reactant.
           const Atom *reactantAtom=reactant->getAtomWithIdx(reactantAtomIdx);
 
-          // --------- --------- --------- --------- --------- --------- 
-          // If the product atom has no atomic number, set it from the reactant:
+          // --------- --------- --------- --------- --------- ---------
+          // which properties need to be set from the reactant?
           if(productAtom->getAtomicNum()<=0){
+            // If the product atom is a dummy, set everything
              productAtom->setAtomicNum(reactantAtom->getAtomicNum());
              productAtom->setFormalCharge(reactantAtom->getFormalCharge());
              productAtom->setNoImplicit(reactantAtom->getNoImplicit());
@@ -239,6 +257,7 @@ namespace RDKit {
              productAtom->hasProp("molInversionFlag")){
             int flagVal;
             productAtom->getProp("molInversionFlag",flagVal);
+            productAtom->setChiralTag(reactantAtom->getChiralTag());
             switch(flagVal){
             case 0:
               // FIX: should we clear the chirality or leave it alone? for now we leave it alone 
@@ -254,8 +273,7 @@ namespace RDKit {
               }
               break;
             case 2:
-              // retention:
-              productAtom->setChiralTag(reactantAtom->getChiralTag());
+              // retention: do nothing
               break;
             default:
               BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag on product atom ignored\n";
@@ -407,7 +425,9 @@ namespace RDKit {
     df_needsInit=false;  
   }
 
-  bool ChemicalReaction::validate(int &numWarnings,int &numErrors,bool silent) const {
+  bool ChemicalReaction::validate(unsigned int &numWarnings,
+                                  unsigned int &numErrors,
+                                  bool silent) const {
     bool res=true;
     numWarnings=0;
     numErrors=0;
@@ -462,18 +482,65 @@ namespace RDKit {
           thisMolMapped=true;
           int mapNum;
           (*atomIt)->getProp("molAtomMapNumber",mapNum);
-          if(std::find(productNumbersSeen.begin(),productNumbersSeen.end(),mapNum)!=productNumbersSeen.end()){
-            if(!silent) BOOST_LOG(rdErrorLog)<<"product atom-mapping number "<<mapNum<<" found multiple times.\n";
+          if(std::find(productNumbersSeen.begin(),
+                       productNumbersSeen.end(),mapNum)!=productNumbersSeen.end()){
+            if(!silent)
+              BOOST_LOG(rdErrorLog)<<"product atom-mapping number "<<mapNum<<" found multiple times.\n";
             numErrors++;
             res=false;
           }
-          std::vector<int>::iterator ivIt=std::find(mapNumbersSeen.begin(),mapNumbersSeen.end(),mapNum);
+          std::vector<int>::iterator ivIt=std::find(mapNumbersSeen.begin(),
+                                                    mapNumbersSeen.end(),mapNum);
           if(ivIt==mapNumbersSeen.end()){
-            if(!silent) BOOST_LOG(rdErrorLog)<<"product atom-mapping number "<<mapNum<<" not found in reactants.\n";
+            if(!silent)
+              BOOST_LOG(rdErrorLog)<<"product atom-mapping number "<<mapNum<<" not found in reactants.\n";
             numErrors++;
             res=false;
           } else {
             mapNumbersSeen.erase(ivIt); 
+          }
+        }
+        if((*atomIt)->hasQuery()){
+          std::list<const Atom::QUERYATOM_QUERY *>queries;
+          queries.push_back((*atomIt)->getQuery());
+          while(!queries.empty()){
+            const Atom::QUERYATOM_QUERY *query=queries.front();
+            queries.pop_front();
+            for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI qIter=query->beginChildren();
+                qIter!=query->endChildren();++qIter){
+              queries.push_back((*qIter).get());
+            }
+            if(query->getDescription()=="AtomFormalCharge"){
+              if((*atomIt)->hasProp("_QueryFormalCharge")){
+                if(!silent)
+                  BOOST_LOG(rdWarningLog)<<"atom "<<(*atomIt)->getIdx()<<" in product " 
+                                         << molIdx << " has multiple charge specifications.\n";
+                numWarnings++;
+              } else {
+                (*atomIt)->setProp("_QueryFormalCharge",
+                                   ((const ATOM_EQUALS_QUERY *)query)->getVal());
+              }
+            } else if(query->getDescription()=="AtomHCount"){
+              if((*atomIt)->hasProp("_QueryHCount")){
+                if(!silent)
+                  BOOST_LOG(rdWarningLog)<<"atom "<<(*atomIt)->getIdx()<<" in product " 
+                                         << molIdx << " has multiple H count specifications.\n";
+                numWarnings++;
+              } else {
+                (*atomIt)->setProp("_QueryHCount",
+                                   ((const ATOM_EQUALS_QUERY *)query)->getVal());
+              }
+            } else if(query->getDescription()=="AtomMass"){
+              if((*atomIt)->hasProp("_QueryMass")){
+                if(!silent)
+                  BOOST_LOG(rdWarningLog)<<"atom "<<(*atomIt)->getIdx()<<" in product " 
+                                         << molIdx << " has multiple isotope specifications.\n";
+                numWarnings++;
+              } else {
+                (*atomIt)->setProp("_QueryMass",
+                                   ((const ATOM_EQUALS_QUERY *)query)->getVal());
+              }
+            }
           }
         }
       }

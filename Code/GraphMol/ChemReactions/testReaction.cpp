@@ -41,7 +41,6 @@
 using namespace RDKit;
 
 void test1Basics(){
-  int i = 0;
   ROMol *mol=0;
   ChemicalReaction rxn;
   MOL_SPTR_VECT reacts;
@@ -115,7 +114,6 @@ void test1Basics(){
 }
 
 void test2SimpleReactions(){
-  int i = 0;
   ROMol *mol=0;
   ChemicalReaction rxn;
   MOL_SPTR_VECT reacts;
@@ -415,7 +413,6 @@ void test4MultipleProducts(){
 
 
 void test5Salts(){
-  int i = 0;
   ROMol *mol=0;
   ChemicalReaction rxn;
   MOL_SPTR_VECT reacts;
@@ -463,7 +460,6 @@ void test5Salts(){
 }
 
 void test6DaylightParser(){
-  int i = 0;
   ROMol *mol=0;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
@@ -549,7 +545,6 @@ void test6DaylightParser(){
 
 
 void test7MDLParser(){
-  int i = 0;
   ROMol *mol=0;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
@@ -709,10 +704,8 @@ void test7MDLParser(){
 }
 
 void test8Validation(){
-  int i = 0;
-  ROMol *mol=0;
   ChemicalReaction *rxn;
-  int nWarn,nError;
+  unsigned int nWarn,nError;
 
   std::string smi;
     
@@ -760,7 +753,6 @@ void test8Validation(){
 
 
 void test9ProductQueries(){
-  int i = 0;
   ROMol *mol=0;
   ChemicalReaction *rxn;
   MOL_SPTR_VECT reacts;
@@ -1165,6 +1157,100 @@ void test14Issue1804420(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test15Issue1882749(){
+  ROMol *mol=0;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  unsigned int nWarn,nError;
+  std::vector<MOL_SPTR_VECT> prods;
+  std::string smi;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 1882749: property handling in products." << std::endl;
+
+  smi = "[N:1]-!@[*]>>[N:1;+1,+0][#0]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==1);
+  TEST_ASSERT(nError==0);
+
+  delete rxn;
+  smi = "[N:1]-!@[*]>>[N:1;-1]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+
+  reacts.clear();
+  smi = "C1CCN1CCC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge()==-1);
+
+  delete rxn;
+  smi = "[N:1;D3]-!@[*]>>[N:1;H1]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNumExplicitHs()==1);
+
+  delete rxn;
+  smi = "[N:1;D3]-!@[*]>>[15N:1]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getMass()==15);
+
+  delete rxn;
+  smi = "[N:1;D3]-!@[*]>>[15N:1;-1]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getMass()==15);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge()==-1);
+
+
+  
+  delete rxn;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 
@@ -1188,8 +1274,9 @@ int main() {
   test11ChiralityRxn();
   test12DoubleBondStereochem();
   test13Issue1748846();
-#endif
   test14Issue1804420();
+#endif
+  test15Issue1882749();
   
   
 

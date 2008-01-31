@@ -77,7 +77,7 @@ namespace RDKit {
   }
 
   python::tuple ValidateReaction(const ChemicalReaction *self,bool silent=false){
-    int numWarn,numError;
+    unsigned int numWarn,numError;
     self->validate(numWarn,numError,silent);
     return python::make_tuple(numWarn,numError);
   }

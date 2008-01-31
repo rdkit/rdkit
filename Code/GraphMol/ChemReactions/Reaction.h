@@ -162,7 +162,7 @@ namespace RDKit{
                        logs depending on their severity.
                        
     */
-    bool validate(int &numWarnings,int &numErrors,bool silent=false) const;
+    bool validate(unsigned int &numWarnings,unsigned int &numErrors,bool silent=false) const;
         
   private:
     bool df_needsInit;

@@ -33,6 +33,8 @@ tests=[
   ("python","test_list.py",{'dir':'MolCatalog'}),
   ("python","test_list.py",{'dir':'MolCatalog/Wrap'}),
 
+  ("python","test_list.py",{'dir':'ChemReactions'}),
+  
   ]
 
 if sys.platform != 'win32':
