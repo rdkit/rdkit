@@ -2,6 +2,7 @@
 (Changes relative to Release_1beta2)
 
 !!!!!! IMPORTANT !!!!!!
+ The chirality and canonicalization changes have now been checked in.
  Please read the release notes for Release_Jan2008_1beta1
 
 Bug Fixes
@@ -10,6 +11,10 @@ Bug Fixes
  - A memory leak in the constructor of RWMols was fixed.
  - A problem causing rapid memory growth with Recap analysis was fixed. 
    (issue 1880161)
+ - The Recap reactions are no longer applied to charged Ns or Os
+   (issue 1881803)
+ - Charges, H counts, and isotope information can now be set in
+   reactions. (issue 1882749)
 
 
 ******  Release_Jan2008_1beta2 *******
