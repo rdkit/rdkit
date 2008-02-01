@@ -1,11 +1,8 @@
 import os ;
 local BOOSTHOME = [ os.environ BOOSTHOME ] ;
-local BOOSTBASE = [ os.environ BOOSTBASE ] ;
-local GCCVERSION = [ os.environ GCCVERSION ] ;
 local PYTHON_ROOT = [ os.environ PYTHON_ROOT ] ;
 local PYTHON_VERSION = [ os.environ PYTHON_VERSION ] ;
 local RDBASE = [ os.environ RDBASE ] ;
-
 
 # make sure all executables end in .exe:
 import type : change-generated-target-suffix ;
@@ -14,7 +11,7 @@ type.change-generated-target-suffix EXE : : exe ;
 
 # Specify the path to the Boost project.
 use-project boost 
-  : /usr/local/src/boost_1_34_1 ;
+  : $(BOOSTHOME) ;
 use-project RDKit_Externals 
   : $(RDBASE)/External  ;
 
