@@ -11,11 +11,11 @@
 #include <cmath>
 #include <vector>
 #include <map>
-#ifdef WIN32
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-#endif
+
 
 #include <RDGeneral/Invariant.h>
 #include <Numerics/Vector.h>

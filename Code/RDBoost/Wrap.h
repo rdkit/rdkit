@@ -1,11 +1,35 @@
 //
-// Copyright (c) 2003-2006 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #ifndef _RD_WRAP_H_
 #define _RD_WRAP_H_
 
+
+// code for windows DLL handling taken from 
+// http://www.boost.org/more/separate_compilation.html
+#include <boost/config.hpp>
+
+#ifdef BOOST_HAS_DECLSPEC // defined in config system
+// we need to import/export our code only if the user has specifically
+// asked for it by defining either BOOST_ALL_DYN_LINK if they want all boost
+// libraries to be dynamically linked, or RDKIT_WRAP_DYN_LINK
+// if they want just this one to be dynamically liked:
+#if defined(BOOST_ALL_DYN_LINK) || defined(RDKIT_WRAP_DYN_LINK)
+// export if this is our own source, otherwise import:
+#ifdef RDKIT_WRAP_SOURCE
+# define RDKIT_WRAP_DECL __declspec(dllexport)
+#else
+# define RDKIT_WRAP_DECL __declspec(dllimport)
+#endif  // RDKIT_WRAP_SOURCE
+#endif  // DYN_LINK
+#endif  // BOOST_HAS_DECLSPEC
+//
+// if RDKIT_WRAP_DECL isn't defined yet define it now:
+#ifndef RDKIT_WRAP_DECL
+#define RDKIT_WRAP_DECL
+#endif
 //
 // Generic Wrapper utility functionality
 //
@@ -19,17 +43,21 @@
 
 namespace python = boost::python;
 
-void throw_index_error(int key);  //!< construct and throw an \c IndexError
-void throw_value_error(const std::string err); //!< construct and throw a \c ValueError
-void translate_index_error(IndexErrorException const&e);
-void translate_value_error(ValueErrorException const&e);
+RDKIT_WRAP_DECL void 
+throw_index_error(int key);  //!< construct and throw an \c IndexError
+RDKIT_WRAP_DECL void 
+throw_value_error(const std::string err); //!< construct and throw a \c ValueError
+RDKIT_WRAP_DECL void
+translate_index_error(IndexErrorException const&e);
+RDKIT_WRAP_DECL void
+translate_value_error(ValueErrorException const&e);
 
 //! \brief Registers a templated converter for returning \c vectors of a 
 //!        particular type.
 //! This should be used instead of calling \c vector_to_python<T>()
 //!    directly because this will catch the appropriate exception if
 //!    the specified converter has already been registered.
-template <typename T>
+template <typename T> 
 void RegisterVectorConverter(bool noproxy=false){
   std::string name = "_vect";
   name += typeid(T).name();
