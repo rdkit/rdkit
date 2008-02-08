@@ -5,15 +5,15 @@ lib lamatrix++ :
  matrix/src/bmd.cpp matrix/src/gmd.cpp matrix/src/gmf.cpp matrix/src/gmi.cpp matrix/src/gmli.cpp matrix/src/lavd.cpp matrix/src/lavi.cpp matrix/src/lavli.cpp
  matrix/src/ltgmd.cpp matrix/src/spdbmd.cpp matrix/src/spdmd.cpp matrix/src/spdtrmd.cpp matrix/src/sybmd.cpp matrix/src/symd.cpp matrix/src/sytrmd.cpp
  matrix/src/trmd.cpp matrix/src/ultgmd.cpp matrix/src/utgmd.cpp matrix/src/uutgmd.cpp matrix/src/vd.cpp matrix/src/vf.cpp matrix/src/vi.cpp matrix/src/vli.cpp
-: <link>static <include>./include <define>ARCH=Linux ;
+: <link>static <include>./include  <toolset>gcc:<define>ARCH=Linux ;
 
 lib blas++ : 
  blaspp/src/blas1++.cpp  blaspp/src/blas2++.cpp  blaspp/src/blas3++.cpp 
-: <link>static <include>./include <define>ARCH=Linux ;
+: <link>static <include>./include  <toolset>gcc:<define>ARCH=Linux ;
 
 lib lapack++ : 
- src/linslv.cpp src/eigslv.cpp src/systime.c src/dopla.c src/dtimmg.c src/lautil.cpp
-: <link>static <include>./include <define>ARCH=Linux ;
+ src/linslv.cpp src/eigslv.cpp src/dopla.c src/dtimmg.c src/lautil.cpp
+: <link>static <include>./include <toolset>gcc:<define>ARCH=Linux ;
 
 
 

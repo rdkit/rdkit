@@ -1,7 +1,5 @@
 import os ;
 local BOOSTHOME = [ os.environ BOOSTHOME ] ;
-local PYTHON_ROOT = [ os.environ PYTHON_ROOT ] ;
-local PYTHON_VERSION = [ os.environ PYTHON_VERSION ] ;
 local RDBASE = [ os.environ RDBASE ] ;
 
 # Specify the path to the Boost project.
@@ -16,6 +14,7 @@ project RDKit_Externals
 	: requirements <include>.  <threading>multi
           <library>/boost/log//boost_log
           <include>$(RDBASE)/Code
+	  <toolset>msvc:<define>WIN32
         : default-build release ;
 
 alias vflib : vflib-2.0 ;

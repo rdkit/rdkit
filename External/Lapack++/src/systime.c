@@ -7,13 +7,9 @@
 *
 */
 
-#ifdef WIN32
-#include<time.h>
-//#include<resource.h>
-#else 
+#ifndef WIN32
 #include<sys/time.h>
 #include<sys/resource.h>
-#endif
 
 #define tim(tv) ((double) (tv.tv_sec + 1.e-6 * tv.tv_usec))
 
@@ -66,3 +62,4 @@ for (;;)
 
 
 
+#endif
