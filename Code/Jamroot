@@ -60,14 +60,14 @@ alias nonmol-wrappers : RDBoost/Wrap
 
 lib lapack
   :
-  #: <name>lapack
-  : <file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
+  : <name>lapack
+  <toolset>msvc:<file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
   :
   ;
 lib blas
   :
-  #: <name>blas
-  : <file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
+  : <name>blas
+  <toolset>msvc:<file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
   :
   ;
 alias lapacklibs : /RDKit_Externals//Lapack++ lapack blas ;
