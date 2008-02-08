@@ -1,8 +1,11 @@
 // $Id$
 //
-// Copyright 2003-2007 Rational Discovery LLC and Greg Landrum
+// Copyright 2003-2008 Rational Discovery LLC and Greg Landrum
 //  All Rights Reserved
 //
+#ifdef WIN32
+#define CQUANTIZE_EXPORTS
+#endif
 #include "cQuantize.h"
 #include <Numeric/arrayobject.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
