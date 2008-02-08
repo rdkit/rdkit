@@ -1,10 +1,14 @@
-project ML/InfoTheory : : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread ;
+project ML/InfoTheory : : ;
+
 
 
 lib InfoTheory : InfoBitRanker.cpp
   : <link>static ;
 
-python-extension cEntropy : cEntropy.cpp InfoTheory
+import python ;
+python-extension cEntropy : cEntropy.cpp InfoTheory : <library>/boost/python//boost_python  <library>/boost/thread//boost_thread 
 ;
 
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
 install pymod : cEntropy : <location>$(RDBASE)/Python/ML/InfoTheory ;

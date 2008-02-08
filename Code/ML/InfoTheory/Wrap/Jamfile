@@ -6,7 +6,9 @@ import python ;
 
 python-extension rdInfoTheory : InfoBitRanker.cpp BitCorrMatGenerator.cpp rdInfoTheory.cpp 
   ..//InfoTheory	
-/RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost ;
+../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs 
+../../../RDBoost//RDBoost 
+;
 
 
 install pymod : rdInfoTheory : <location>$(RDBASE)/Python/ML/InfoTheory ;

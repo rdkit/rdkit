@@ -1,6 +1,11 @@
+// $Id$
 //
-//  Copyright (C) 2001-2004 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 greg Landrum and Rational Discovery LLC
+//   All Rights Reserved
 //
+#ifdef WIN32
+#define CENTROPY_EXPORTS
+#endif
 #include "cEntropy.h"
 #include <Numeric/arrayobject.h>
 #include <math.h>

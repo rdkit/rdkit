@@ -1,9 +1,8 @@
-// $Header: /windows/Marten/cvs-base/repository/RD/Code/ML/InfoTheory/Wrap/rdInfoTheory.cpp,v 1.5 2004/02/18 22:24:13 glandrum Exp $
+// $Id$
 //
-//  Copyright (C) 2003 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //     All Rights Reserved
 //
-//#define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
 #include <RDBoost/Wrap.h>
 #include "Numeric/arrayobject.h"

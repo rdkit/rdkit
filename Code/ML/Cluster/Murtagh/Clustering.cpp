@@ -2,6 +2,9 @@
 //  Copyright (C) 2002,2003 Greg Landrum and Rational Discovery LLC
 //     All Rights Reserved
 //
+#ifdef WIN32
+#define CALGORITHMS_EXPORTS
+#endif
 #define PYTH_FILE_WITH_INIT
 #include "Clustering.h"
 #include <Numeric/arrayobject.h>
