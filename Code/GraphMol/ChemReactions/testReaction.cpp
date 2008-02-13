@@ -1252,6 +1252,58 @@ void test15Issue1882749(){
 }
 
 
+void test16Exceptions(){
+  ChemicalReaction *rxn;
+  std::string rxnB;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing parser exception handling" << std::endl;
+
+  
+  rxnB="$RXN\n"
+    "\n"
+    "      ISIS     082120061354\n"
+    "\n"
+    "  2  1\n"
+    "$MOL\n"
+    "\n"
+    "  -ISIS-  08210613542D\n"
+    "\n"
+    "  4  2  0  0  0  0  0  0  0  0999 V2000\n"
+    "   -1.4340   -0.6042    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+    "   -0.8639   -0.9333    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n"
+    "   -1.4340    0.0542    0.0000 O   0  0  0  0  0  0  0  0  0  1  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  1  3  2  0  0  0  0\n"
+    "M  END\n"
+    "$MOL\n"
+    "\n"
+    "  -ISIS-  08210613542D\n"
+    "\n"
+    "  1  0  0  0  0  0  0  0  0  0999 V2000\n"
+    "    2.2125   -0.7833    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n"
+    "M  END\n"
+    "$MOL\n"
+    "\n"
+    "  -ISIS-  08210613542D\n"
+    "\n"
+    "  3  2  0  0  0  0  0  0  0  0999 V2000\n"
+    "    9.5282   -0.8083    0.0000 N   0  0  0  0  0  0  0  0  0  3  0  0\n"
+    "    8.9579   -0.4792    0.0000 C   0  0  0  0  0  0  0  0  0  2  0  0\n"
+    "    8.9579    0.1792    0.0000 O   0  0  0  0  0  0  0  0  0  1  0  0\n"
+    "  1  2  1  0  0  0  0\n"
+    "  2  3  2  0  0  0  0\n"
+    "M  END\n";
+
+  rxn=(ChemicalReaction *)0x1;
+  try {
+    rxn = RxnBlockToChemicalReaction(rxnB);
+  } catch (ChemicalReactionParserException &){
+    rxn=(ChemicalReaction *)0x0;
+  }
+  TEST_ASSERT(!rxn);
+}
+
 
 
 int main() { 
@@ -1277,7 +1329,7 @@ int main() {
   test14Issue1804420();
 #endif
   test15Issue1882749();
-  
+  test16Exceptions();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
