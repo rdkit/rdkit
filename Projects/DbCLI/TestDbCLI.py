@@ -14,6 +14,7 @@ class TestCase(unittest.TestCase):
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
     self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
@@ -40,6 +41,7 @@ class TestCase(unittest.TestCase):
                           'testData/bzr.sdf'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
     self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
@@ -72,6 +74,7 @@ class TestCase(unittest.TestCase):
                           '--topN=5','--outF=testData/bzr/search.out','testData/bzr.sdf'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -104,6 +107,7 @@ class TestCase(unittest.TestCase):
                           'testData/bzr.sdf'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -136,6 +140,7 @@ class TestCase(unittest.TestCase):
                           'testData/bzr.sdf'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -169,6 +174,7 @@ class TestCase(unittest.TestCase):
 
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -182,6 +188,7 @@ class TestCase(unittest.TestCase):
 
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -196,6 +203,7 @@ class TestCase(unittest.TestCase):
 
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -204,13 +212,19 @@ class TestCase(unittest.TestCase):
     self.failUnless(len(lines)==49)
     os.unlink('testData/bzr/search.out')
     
-    p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
-                          '--outF=/dev/null',
-                          '--smilesOut=testData/bzr/search.out',
-                          '--smarts=cncncc',))
-
+    if os.path.exists('/dev/null'):
+      p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
+                            '--outF=/dev/null',
+                            '--smilesOut=testData/bzr/search.out',
+                            '--smarts=cncncc',))
+    else:
+      p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
+                            '--outF=testData/crud.out',
+                            '--smilesOut=testData/bzr/search.out',
+                            '--smarts=cncncc',))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -218,12 +232,15 @@ class TestCase(unittest.TestCase):
     inF=None
     self.failUnless(len(lines)==49)
     os.unlink('testData/bzr/search.out')
+    if os.path.exists('testData/crud.out'):
+      os.unlink('testData/crud.out')
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',
                           '--outF=testData/bzr/search.out','--negate','--smarts=cncncc',))
 
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -238,6 +255,7 @@ class TestCase(unittest.TestCase):
 
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -252,6 +270,7 @@ class TestCase(unittest.TestCase):
 
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -267,6 +286,7 @@ class TestCase(unittest.TestCase):
                           '--nameOut=testData/bzr/search.out'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -282,6 +302,7 @@ class TestCase(unittest.TestCase):
                           '--nameOut=testData/bzr/search.out', '-q activity<6.0'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -299,6 +320,7 @@ class TestCase(unittest.TestCase):
                           '--sdOut=testData/bzr/search.out.sdf'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -308,10 +330,10 @@ class TestCase(unittest.TestCase):
 
     suppl=Chem.SDMolSupplier('testData/bzr/search.out.sdf')
     ms = [x for x in suppl]
+    suppl=None
     self.failUnless(len(ms)==49)
     for i,m in enumerate(ms):
       self.failUnless(m.GetProp('_Name')==lines[i].strip())
-
     os.unlink('testData/bzr/search.out')
     os.unlink('testData/bzr/search.out.sdf')
     
@@ -325,6 +347,7 @@ class TestCase(unittest.TestCase):
                           '--sdOut=testData/bzr/search.out.sdf'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/search.out'))
     inF = file('testData/bzr/search.out','r')
@@ -334,6 +357,7 @@ class TestCase(unittest.TestCase):
 
     suppl=Chem.SDMolSupplier('testData/bzr/search.out.sdf')
     ms = [x for x in suppl]
+    suppl=None
     self.failUnless(len(ms)==5)
     for i,m in enumerate(ms):
       self.failUnless(m.GetProp('_Name')==lines[i].strip())
@@ -357,6 +381,7 @@ class TestCase(unittest.TestCase):
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
     self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
@@ -369,7 +394,9 @@ class TestCase(unittest.TestCase):
     d = conn.GetData('molecules',fields='*')
     self.failUnless(len(d)==10)
     self.failUnless(len(d[0])==2)
-
+    conn=None
+    d=None
+    
     if os.path.exists('testData/bzr/Compounds.sqlt'):
       os.unlink('testData/bzr/Compounds.sqlt')
     if os.path.exists('testData/bzr/AtomPairs.sqlt'):
@@ -384,6 +411,7 @@ class TestCase(unittest.TestCase):
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
     self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
@@ -403,6 +431,7 @@ class TestCase(unittest.TestCase):
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
     self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
@@ -422,6 +451,7 @@ class TestCase(unittest.TestCase):
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
+    p=None
 
     self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
     self.failIf(os.path.exists('testData/bzr/AtomPairs.sqlt'))
