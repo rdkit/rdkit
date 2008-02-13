@@ -4,7 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib ChemTransforms : ChemTransforms.cpp
-  : <link>static ;
+  : <toolset>msvc:<link>static ;
 install lib-install : ChemTransforms : <location>$(RDBASE)/bin ;
 
 exe main : testChemTransforms.cpp ChemTransforms

@@ -1,9 +1,9 @@
 project RDGeneral : : ;
 
-lib RDGeneral : Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict : <link>static ;
+lib RDGeneral : Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict : <toolset>msvc:<link>static ;
 exe testDict : testDict.cpp RDGeneral ;
 
-obj Dict : Dict.cpp : <optimization>off <cflags>-g ;
+obj Dict : Dict.cpp : <optimization>off <toolset>gcc:<cflags>-g ;
 
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;

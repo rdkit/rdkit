@@ -1,10 +1,10 @@
 project GraphMol/PartialCharges : : ;
-import os ;
-local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib PartialCharges : GasteigerCharges.cpp GasteigerParams.cpp
   : <link>static ;
+#import os ;
+#local RDBASE = [ os.environ RDBASE ] ;
 #install lib-install : PartialCharges : <location>$(RDBASE)/Code/lib ;
 
 
