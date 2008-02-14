@@ -148,8 +148,7 @@ namespace RankAtoms {
 #endif
 
     INT_VECT idxVect;
-    idxVect.reserve(indicesInPlay.size());
-    std::copy(indicesInPlay.begin(),indicesInPlay.end(),idxVect.begin());
+    idxVect.assign(indicesInPlay.begin(),indicesInPlay.end());
 
     // -------------
     //

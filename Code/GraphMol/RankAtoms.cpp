@@ -82,7 +82,8 @@ namespace RankAtoms{
 	  if(elem<2.-tol){
 	    accum *= valVect[j];
 	  } else {
-	    accum *= pow(valVect[j],static_cast<int>(elem));
+	    accum *= pow(static_cast<double>(valVect[j]),
+                         static_cast<int>(elem));
 	  }
 	}
       }

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,8 +13,6 @@
 #include <iomanip>
 #include <cstdlib>
 #include <boost/random.hpp>
-#include <memory.h>
-#include <time.h>
 #include <boost/smart_ptr.hpp>
 
 namespace RDNumeric {

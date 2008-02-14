@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -119,11 +119,15 @@ namespace RDKit{
     }
 
     // remove bonds attached to the atom
+    std::vector<std::pair<unsigned int,unsigned int> > nbrs;
     ADJ_ITER b1,b2;
     boost::tie(b1,b2)=getAtomNeighbors(oatom);
     while(b1!=b2){
-      removeBond(oatom->getIdx(),*b1);
-      b1++;
+      nbrs.push_back(std::make_pair(oatom->getIdx(),*b1));
+      ++b1;
+    }
+    for(unsigned int i=0;i<nbrs.size();++i){
+      removeBond(nbrs[i].first,nbrs[i].second);
     }
 
     // loop over all atoms with higher indices and update their indices

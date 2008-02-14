@@ -1,5 +1,5 @@
 //
-// Copyright (C)  2001-2006 Randal M. Henne and Rational Discovery LLC
+// Copyright (C)  2001-2008 Greg Landrum, Randal M. Henne and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <string>
 #include <iostream>
-#include <stdio.h>
 #include <stdexcept>
 
 #include <RDGeneral/RDLog.h>
@@ -129,8 +128,9 @@ namespace Invar {
      BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n"; throw inv;
 
 #define RANGE_CHECK( lo, x, hi ) if ( (lo)>(hi) || (x)<(lo) || (x)>(hi) ) {\
-     char expr[80]; sprintf( expr, "%lf <= %lf <= %lf", double(lo), double(x), double( hi ) );\
-     Invar::Invariant inv( "Range Error", #x, expr, __FILE__, __LINE__ );\
+     std::stringstream errstr;\
+     errstr << lo << " <= " << x <<" <= "<<hi;\
+     Invar::Invariant inv( "Range Error", #x, errstr.str().c_str(), __FILE__, __LINE__ );\
      BOOST_LOG(rdErrorLog) << "\n\n****\n" << inv << "****\n\n"; throw inv; }
 
 #define TEST_ASSERT( expr ) if ( !(expr) ) {\

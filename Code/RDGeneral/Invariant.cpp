@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C) 2001-2006 Randal M. Henne and Rational Discovery LLC
+// Copyright (C) 2001-2008 Greg Landrum, Randal M. Henne, and Rational Discovery LLC
 // 
 //  @@ All Rights Reserved @@
 //
@@ -8,8 +8,8 @@
 #include "Invariant.h"
 
 #include <string>
-#include <stdio.h>
 #include <iostream>
+#include <boost/lexical_cast.hpp>
 
 namespace Invar {
 
@@ -22,10 +22,7 @@ namespace Invar {
   std::string& Invariant::
   toString()
   {
-    char 
-      line[10];
-
-    sprintf( line, "%d", this->getLine() );
+    std::string line=boost::lexical_cast<std::string>(this->getLine());
     
     stringRep_d += "\n" + this->getMessage() + "\nViolation occurred on line " 
       + line + " in file " + this->getFile() + "\nFailed Expression: "
