@@ -1,4 +1,4 @@
-# $Id$
+# $Id: AlignDepict.py 736 2008-02-14 14:09:36Z landrgr1 $
 #
 #  Copyright (C) 2006 Greg Landrum
 #  This file is part of RDKit and covered by $RDBASE/license.txt
@@ -7,7 +7,7 @@ import Chem
 from Chem import rdDepictor
 import Geometry
 
-def AlignDepict(mol,core,corePattern=None):
+def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
   """
 
   Arguments:
@@ -22,21 +22,28 @@ def AlignDepict(mol,core,corePattern=None):
   if core and corePattern:
     if not core.GetNumAtoms(onlyHeavy=True)==corePattern.GetNumAtoms(onlyHeavy=True):
       raise ValueError,'When a pattern is provided, it must have the same number of atoms as the core'
-
+    coreMatch = core.GetSubstructMatch(corePattern)
+    if not coreMatch:
+      raise ValueError,"Core does not map to itself"
+  else:
+    coreMatch = range(core.GetNumAtoms(onlyHeavy=True))
   if corePattern:
     match = mol.GetSubstructMatch(corePattern)
   else:
     match = mol.GetSubstructMatch(core)
 
   if not match:
-    raise ValueError,'Substructure match with core not found.'
-
-  conf = core.GetConformer()
-  coordMap={}
-  for i,idx in enumerate(match):
-    pt3 = conf.GetAtomPosition(i)
-    pt2 = Geometry.Point2D(pt3.x,pt3.y)
-    coordMap[idx] = pt2
+    if not acceptFailure:
+      raise ValueError,'Substructure match with core not found.'
+    else:
+      coordMap={}
+  else:
+    conf = core.GetConformer()
+    coordMap={}
+    for i,idx in enumerate(match):
+      pt3 = conf.GetAtomPosition(coreMatch[i])
+      pt2 = Geometry.Point2D(pt3.x,pt3.y)
+      coordMap[idx] = pt2
   rdDepictor.Compute2DCoords(mol,clearConfs=True,coordMap=coordMap)
 
 if __name__=='__main__':
