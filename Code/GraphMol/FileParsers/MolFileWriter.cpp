@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -9,6 +9,9 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <fstream>
+#include <iostream>
+#include <iomanip>
+
 
 namespace RDKit{
   
@@ -52,7 +55,6 @@ namespace RDKit{
   std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf=0){
     PRECONDITION(atom,"");
     std::string res;
-    char tmpStr[256];
     int massDiff,chg,stereoCare,hCount,totValence,rxnComponentType;
     int rxnComponentNumber,atomMapNumber,inversionFlag,exactChangeFlag;
     massDiff=0;
@@ -87,13 +89,24 @@ namespace RDKit{
       x = pos.x; y = pos.y; z = pos.z;
     } 
     std::string symbol = AtomGetMolFileSymbol(atom);
-    sprintf(tmpStr,"% 10.4f% 10.4f% 10.4f %3s% 2d% 3d  0% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d",
-	    x,y,z,
-	    symbol.c_str(),
-	    massDiff,chg,hCount,stereoCare,totValence,rxnComponentType,
-	    rxnComponentNumber,atomMapNumber,inversionFlag,exactChangeFlag
-	    );
-    res += tmpStr;
+    std::stringstream ss;
+    ss << std::setprecision(4) << std::setw(10) << x;
+    ss << std::setprecision(4) << std::setw(10) << y;
+    ss << std::setprecision(4) << std::setw(10) << z;
+    ss << " " << std::setw(3) << symbol;
+    ss << std::setw(2) << massDiff;
+    ss << std::setw(3) << chg;
+    ss << "  0";
+    ss << std::setw(3) << hCount;
+    ss << std::setw(3) << stereoCare;
+    ss << std::setw(3) << totValence;
+    ss << "  0";
+    ss << std::setw(3) << rxnComponentType;
+    ss << std::setw(3) << rxnComponentNumber;
+    ss << std::setw(3) << atomMapNumber;
+    ss << std::setw(3) << inversionFlag;
+    ss << std::setw(3) << exactChangeFlag;
+    res += ss.str();
     return res;
   };
   
@@ -133,8 +146,6 @@ namespace RDKit{
   std::string GetMolFileBondLine(const Bond *bond, const INT_MAP_INT &wedgeBonds,
                                  const Conformer *conf){
     PRECONDITION(bond,"");
-    std::string res;
-    char tmpStr[256];
     std::string symbol = BondGetMolFileSymbol(bond);
     int dirCode=0;
     
@@ -150,7 +161,7 @@ namespace RDKit{
       // mol file
       if ((dirCode == 1) || (dirCode == 6)) {
         INT_MAP_INT_CI wbi = wedgeBonds.find(bond->getIdx());
-        if (wbi->second != bond->getBeginAtomIdx()) {
+        if (static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
           reverse = true;
         }
       }
@@ -163,18 +174,18 @@ namespace RDKit{
       }
     }
 
+    std::stringstream ss;
     if (reverse) {
       // switch the begin and end atoms on the bond line
-      sprintf(tmpStr,"% 3d% 3d%s % 2d",bond->getEndAtomIdx()+1,
-              bond->getBeginAtomIdx()+1,
-              symbol.c_str(),dirCode);
+      ss << std::setw(3) << bond->getEndAtomIdx()+1;
+      ss << std::setw(3) << bond->getBeginAtomIdx()+1;
     } else {
-      sprintf(tmpStr,"% 3d% 3d%s % 2d",bond->getBeginAtomIdx()+1,
-              bond->getEndAtomIdx()+1,
-              symbol.c_str(),dirCode);
+      ss << std::setw(3) << bond->getBeginAtomIdx()+1;
+      ss << std::setw(3) << bond->getEndAtomIdx()+1;
     }
-    res = tmpStr;
-    return res;
+    ss << symbol;
+    ss << " " << std::setw(2) << dirCode;
+    return ss.str();
   }
     
   //------------------------------------------------
@@ -201,7 +212,6 @@ namespace RDKit{
     const RWMol &tmol = const_cast<RWMol &>(trwmol);
 
     std::string res;
-    char tmpStr[256];
 
     int nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents;
     int nReactants,nProducts,nIntermediates;
@@ -237,10 +247,19 @@ namespace RDKit{
     }
     res += "\n";
 
-    sprintf(tmpStr,"% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d% 3d999 V2000\n",
-	    nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents,
-	    nReactants,nProducts,nIntermediates);
-    res += tmpStr;
+    std::stringstream ss;
+    ss<<std::setw(3)<<nAtoms;
+    ss<<std::setw(3)<<nBonds;
+    ss<<std::setw(3)<<nLists;
+    ss<<std::setw(3)<<0;
+    ss<<std::setw(3)<<chiralFlag;
+    ss<<std::setw(3)<<nsText;
+    ss<<std::setw(3)<<nRxnComponents;
+    ss<<std::setw(3)<<nReactants;
+    ss<<std::setw(3)<<nProducts;
+    ss<<std::setw(3)<<nIntermediates;
+    ss<<"999 V2000\n";
+    res += ss.str();
     const Conformer *conf;
     if(confId<0 && tmol.getNumConformers()==0){
       conf=0;

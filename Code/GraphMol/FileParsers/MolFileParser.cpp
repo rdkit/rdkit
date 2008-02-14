@@ -930,7 +930,6 @@ namespace RDKit{
   //------------------------------------------------
   RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize, bool removeHs){
     std::istringstream inStream(molBlock);
-    RWMol *res=NULL;
     unsigned int line = 0;
     return MolDataStreamToMol(inStream, line, sanitize, removeHs);
   }    
