@@ -450,6 +450,9 @@ class MolTable(GuiTable.GuiTable):
   def loadFromVLib(self,mols,drawTarget=None,
                    includeCheckboxes=0,adjustCols=1,
                    processFunc=None):
+    if drawTarget is None:
+      drawTarget=self.molCanvas
+
     # clear the current contents:
     self.setNumRows(0)
     self.setNumCols(0)
