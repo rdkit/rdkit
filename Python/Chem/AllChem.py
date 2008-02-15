@@ -44,6 +44,31 @@ def TransformMol(mol,tform):
   mol.RemoveAllConformers()
   mol.AddConformer(newConf)
 
+def ComputeMolShape(mol,confId=-1,boxDim=(20,20,20),spacing=0.5,**kwargs):
+  res = rdGeometry.UniformGrid3D(boxDim[0],boxDim[1],boxDim[2],spacing=spacing)
+  apply(EncodeShape,(mol,res,confId),kwargs)
+  return res
+  
+def ComputeMolVolume(mol,confId=-1,gridSpacing=0.1,boxMargin=2.0):
+  import copy
+  mol = copy.deepcopy(mol)
+  conf = mol.GetConformer(confId)
+  CanonicalizeConformer(conf)
+  box = ComputeConfBox(conf)
+  sideLen = ( box[1].x-box[0].x + 2*boxMargin, \
+              box[1].y-box[0].y + 2*boxMargin, \
+              box[1].z-box[0].z + 2*boxMargin )
+  shape = rdGeometry.UniformGrid3D(sideLen[0],sideLen[1],sideLen[2],
+                                   spacing=gridSpacing)
+  EncodeShape(mol,shape,confId,ignoreHs=False,vdwScale=1.0)
+  voxelVol = gridSpacing**3
+  vol = 0.0
+  occVect = shape.GetOccupancyVect()
+  for i in range(len(occVect)):
+    if occVect[i]==3: 
+      vol+= voxelVol
+  return vol
+
 def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
                                          **kwargs):
   stripRef = RemoveHs(reference)
