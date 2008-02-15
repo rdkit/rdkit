@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2002-2005  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2006  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
 """ defines classes required for using molecules in QTables
@@ -8,11 +8,13 @@
 """    
 import RDConfig
 import Chem
+from Chem import AllChem
 from Chem import rdDepictor
 from qt import *
 from qttable import *
 from utils.PilTools import PilImgToQPixmap
 from qtGui import GuiTable,qtUtils
+import copy
 tryChemdraw=False
 hasCDX=0
 
@@ -65,7 +67,8 @@ class MolTableItem(QTableItem):
     self._img = None
     self._flagged = 0
     self._flagColor = Qt.yellow
-
+    self._kekMol=None
+    
   def smiles(self):
     """  Returns the molecule's SMILES
 
@@ -151,8 +154,11 @@ class MolTableItem(QTableItem):
       if where is None:
         where = self.drawTarget()
       if where and self.mol():
-        mol = self.mol()
-        where.setMol(mol)
+        if not self._kekMol:
+          self._kekMol=Chem.Mol(self.mol().ToBinary())
+          Chem.Kekulize(self._kekMol)
+        mol = self._kekMol
+        where.setMol(mol,confId=mol.GetConformers()[-1].GetId())
         if mol.HasProp('_Name'):
           where.setCaption(mol.GetProp('_Name'))
         if not where.isVisible(): where.show()
@@ -185,6 +191,13 @@ class MolTable(GuiTable.GuiTable):
   """ a table class which can include a row of molecules
 
   """
+  _includeCheckboxes=False
+  _checkboxCol=0
+  _molCol=0
+  _allowInserts=False
+  _allowSaves=False
+  _dir = "."
+  _alwaysDraw=False
   def __init__(self,*args,**kwargs):
     if kwargs.has_key('molCanvas'):
       self.molCanvas = kwargs['molCanvas']
@@ -194,12 +207,6 @@ class MolTable(GuiTable.GuiTable):
     GuiTable.GuiTable.__init__(self,*args,**kwargs)
 
     self.setSelectionMode(QTable.Single)
-    self._includeCheckboxes=0
-    self._checkboxCol=0
-    self._molCol=0
-    self._allowInserts=0
-    self._allowSaves=0
-    self._dir = "."
     self._displayableTypes = (types.IntType,types.FloatType,
                               types.StringType,types.UnicodeType,
                               types.LongType,types.ComplexType)
@@ -213,6 +220,10 @@ class MolTable(GuiTable.GuiTable):
     return self._allowSaves
   def setAllowSaves(self,val):
     self._allowSaves = val
+  def alwaysDraw(self):
+    return self._alwaysDraw
+  def setAlwaysDraw(self,val):
+    self._alwaysDraw=val
 
   def addChangedCallback(self,cb):
     """ adds a callback for when the active cell is changed
@@ -390,6 +401,8 @@ class MolTable(GuiTable.GuiTable):
       if mol:
         if processFunc:
           processFunc(mol)
+        if not mol.GetNumConformers():
+          AllChem.Compute2DCoords(mol)
         
         self.insertRows(row,1)
         if self._includeCheckboxes:
@@ -402,7 +415,7 @@ class MolTable(GuiTable.GuiTable):
 
         if kekulize:
           Chem.Kekulize(mol)
-        smi = Chem.MolToSmiles(mol).strip()
+        smi = Chem.MolToSmiles(mol,True).strip()
         itm = MolTableItem(self,QTableItem.Never,smi)
         itm.setMol(mol)
         itm.setDrawTarget(drawTarget)
@@ -441,9 +454,23 @@ class MolTable(GuiTable.GuiTable):
     self.setNumRows(0)
     self.setNumCols(0)
 
-    mols.reset()
+    if drawTarget is None:
+      drawTarget=self.molCanvas
+
+
+    if hasattr(mols,'reset'):
+      mols.reset()
     self._includeCheckboxes = includeCheckboxes
-    colNames=mols.next().GetPropNames()
+    if hasattr(mols,'next'):
+      colNames=mols.next().GetPropNames()
+    else:
+      colNames=mols[0].GetPropNames()
+    colNames = list(colNames)
+    if 'Name' not in colNames:
+      nmTitle = 'Name'
+    else:
+      nmTitle = 'MolName'
+    colNames=[nmTitle]+colNames
     nCols = len(colNames)
     if not self._includeCheckboxes:
       self._molCol=0
@@ -461,27 +488,26 @@ class MolTable(GuiTable.GuiTable):
       self.adjustColumn(self._checkboxCol)
     for i in range(nCols):
       hdr.setLabel(i+nExtraCols,colNames[i])
-
     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
     if hasattr(mols,'__len__'):
-      dlg = QProgressDialog('loading','',len(mols))
-      dlg.setLabelText('Loading Compounds')
+      dlg = qtUtils.ProgressDialogHolder('Loading Compounds',len(mols))
     else:
       dlg = None
-
+    colNames[0] = '_Name'
     nFailed = 0
     row = 0
     for mol in mols:
       if mol:
         if processFunc:
-          processFunc(mol)
-
+          tmp=processFunc(mol)
+          if tmp:
+            mol=tmp
         self.insertRows(row,1)
         if self._includeCheckboxes:
           itm = QCheckTableItem(self,'')
           itm.setChecked(1)
           self.setItem(row,self._checkboxCol,itm)
-        smi = Chem.MolToSmiles(mol).strip()
+        smi = Chem.MolToSmiles(mol,True).strip()
         itm = MolTableItem(self,QTableItem.Never,smi)
         itm.setMol(mol)
         itm.setDrawTarget(drawTarget)
@@ -494,20 +520,26 @@ class MolTable(GuiTable.GuiTable):
           mol.SetProp('_Name',d[0])
         for col in range(nCols):
           colN = colNames[col]
-          d = mol.GetProp(colN)
+          if mol.HasProp(colN):
+            d = mol.GetProp(colN)
+          else:
+            d = ''
           if type(d) in self._displayableTypes:
             self.setText(row,col+nExtraCols,str(d))
           else:
             self.setText(row,col+nExtraCols,"<Undisplayable>")
         row += 1
         if dlg:
-          dlg.setProgress(row+nFailed)
+          try:
+            dlg(row+nFailed)
+          except qtUtils.ProgressStop:
+            break
       else:
         nFailed += 1
-    if nFailed>0:
-      rowsToRemove = range(row,nRows)
-      for entry in rowsToRemove:
-        self.removeRow(self.numRows()-1)
+    #if nFailed>0:
+    #  rowsToRemove = range(row,nRows)
+    #  for entry in rowsToRemove:
+    #    self.removeRow(self.numRows()-1)
 
     QApplication.restoreOverrideCursor()
     if adjustCols:
@@ -597,8 +629,8 @@ class MolTable(GuiTable.GuiTable):
     self.updateContents()
     self._includeCheckboxes = not self._includeCheckboxes
 
-  def exportToMolWriter(self,writer,idCol=-1):
-    if idCol < 0:
+  def exportToMolWriter(self,writer,idCol=None):
+    if idCol is None:
       idCol = self._molCol+1
 
     # each column will be used as a property
@@ -609,6 +641,7 @@ class MolTable(GuiTable.GuiTable):
       if col not in (self._molCol,self._checkboxCol,idCol):
         props.append(str(header.label(col)))
         cols.append(col)
+    print props,self._checkboxCol
     writer.SetProps(props)
 
     for row in range(self.numRows()):
@@ -616,7 +649,8 @@ class MolTable(GuiTable.GuiTable):
       for i in range(len(props)):
         col = cols[i]
         mol.SetProp(props[i],str(self.text(row,col)))
-      mol.SetProp('_Name',str(self.text(row,idCol)))
+      if idCol>=0:
+        mol.SetProp('_Name',str(self.text(row,idCol)))
       writer.write(mol)
     writer.flush()  
         
@@ -645,8 +679,8 @@ class MolTable(GuiTable.GuiTable):
   def currentChanged(self,row,col):
     for cb in self._changedCallbacks:
       cb(self,row,col)
-    if col == self._molCol:
-      itm = self.item(row,col)
+    if self._alwaysDraw or col == self._molCol:
+      itm = self.item(row,self._molCol)
       if itm:
         if isinstance(itm,MolTableItem):
           itm.draw()
