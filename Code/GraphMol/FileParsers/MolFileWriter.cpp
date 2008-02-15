@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <boost/format.hpp>
 
 
 namespace RDKit{
@@ -90,22 +91,9 @@ namespace RDKit{
     } 
     std::string symbol = AtomGetMolFileSymbol(atom);
     std::stringstream ss;
-    ss << std::setprecision(4) << std::setw(10) << x;
-    ss << std::setprecision(4) << std::setw(10) << y;
-    ss << std::setprecision(4) << std::setw(10) << z;
-    ss << " " << std::setw(3) << symbol;
-    ss << std::setw(2) << massDiff;
-    ss << std::setw(3) << chg;
-    ss << "  0";
-    ss << std::setw(3) << hCount;
-    ss << std::setw(3) << stereoCare;
-    ss << std::setw(3) << totValence;
-    ss << "  0";
-    ss << std::setw(3) << rxnComponentType;
-    ss << std::setw(3) << rxnComponentNumber;
-    ss << std::setw(3) << atomMapNumber;
-    ss << std::setw(3) << inversionFlag;
-    ss << std::setw(3) << exactChangeFlag;
+    ss << boost::format("% 10.4f% 10.4f% 10.4f %3s% 2d% 3d  0% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d") % x % y % z % symbol.c_str() %
+      massDiff%chg%hCount%stereoCare%totValence%rxnComponentType%
+      rxnComponentNumber%atomMapNumber%inversionFlag%exactChangeFlag;
     res += ss.str();
     return res;
   };

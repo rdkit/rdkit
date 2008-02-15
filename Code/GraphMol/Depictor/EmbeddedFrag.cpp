@@ -88,7 +88,7 @@ namespace RDDepict {
       RDKit::INT_VECT doneNbrs;
       const RDKit::INT_VECT &enbrs = d_eatoms[*dai].neighs;
       while (nbrIdx != endNbrs) {
-        if (std::find(enbrs.begin(), enbrs.end(), (*nbrIdx)) == enbrs.end()) {
+        if (std::find(enbrs.begin(), enbrs.end(), static_cast<int>(*nbrIdx)) == enbrs.end()) {
           // we found a neighbor that is part of this embedded system
           doneNbrs.push_back(*nbrIdx);
         }
@@ -173,7 +173,7 @@ namespace RDDepict {
     
     // now find the smallest angle that contains one of these nbrs
     std::list<DOUBLE_INT_PAIR>::const_iterator apci;
-    int nb2, nb1;
+    int nb2=0, nb1=0;
     for (apci = anglePairs.begin(); apci != anglePairs.end(); apci++) {
       INT_PAIR nbrPair = apci->second;
       if (wnb1 == nbrPair.first) {
@@ -296,7 +296,7 @@ namespace RDDepict {
     }
 
     if (d_eatoms[aid].neighs.size() > 0) {
-      if (std::find(d_attachPts.begin(), d_attachPts.end(), aid) == d_attachPts.end()) {
+      if (std::find(d_attachPts.begin(), d_attachPts.end(), static_cast<int>(aid)) == d_attachPts.end()) {
 	d_attachPts.push_back(aid);
       }
     }
@@ -413,7 +413,7 @@ namespace RDDepict {
     
     // find the coordinate for the same atom in the other system
     INT_EATOM_MAP_CI eati = other.d_eatoms.find(commAid);
-    const EmbeddedAtom oeatm = other.GetEmbeddedAtom(commAid);
+    const EmbeddedAtom &oeatm = other.GetEmbeddedAtom(commAid);
     RDGeom::Point2D ccr = oeatm.loc;
     int onb1 = oeatm.nbr1;
     int onb2 = oeatm.nbr2; 
@@ -647,7 +647,7 @@ namespace RDDepict {
     // remove aid from the neighbor list of toAid
     d_eatoms[toAid].neighs.erase(std::remove(d_eatoms[toAid].neighs.begin(),
 					     d_eatoms[toAid].neighs.end(),
-					     aid));
+					     static_cast<int>(aid)));
   this->updateNewNeighs(aid); //, mol);
 }
 
@@ -728,7 +728,7 @@ namespace RDDepict {
     RDGeom::Point2D currLoc = refAtom.normal;
     if (refAtom.CisTransNbr >= 0) {
       // ok this atom is part of a cis/trans dbl bond 
-      if (refAtom.CisTransNbr != aid) {
+      if (static_cast<unsigned int>(refAtom.CisTransNbr) != aid) {
         // but we are note adding the single bond atom to which the cis/trans specification was
         // made, inthis case reverse the normal and the ccw
         refAtom.ccw = !(refAtom.ccw);
@@ -824,7 +824,6 @@ namespace RDDepict {
   }
   
   void EmbeddedFrag::mergeNoCommon(EmbeddedFrag &embObj, unsigned int toAid, unsigned int nbrAid){
-    //const RDKit::ROMol *mol) {
     // merge embObj to this fragment when there are no common atoms between the two fragments
     PRECONDITION(dp_mol, "");
     // check that both this fragment and the one we are merging with belong to the same molecule
@@ -838,7 +837,6 @@ namespace RDDepict {
   }
 
   void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj, RDKit::INT_VECT &commAtms) {
-    //const RDKit::ROMol *mol) {
     PRECONDITION(dp_mol, "");
     PRECONDITION(dp_mol == embObj.getMol(), "Molecule mismatch");
     PRECONDITION(commAtms.size() >= 1, "");
@@ -920,7 +918,6 @@ namespace RDDepict {
         reflectIfNecessaryThirdPt(embObj, commAtms[0], commAtms[1], commAtms[2]);
       }
     }
-
     // finally merge the fragment by copying the non common atoms
     const INT_EATOM_MAP &oatoms = embObj.GetEmbeddedAtoms();
     INT_EATOM_MAP_CI ori;
@@ -950,6 +947,7 @@ namespace RDDepict {
       }
     }
 
+
     // remember to update the not yet done neighbor of nbrAid
     RDKit::INT_VECT_CI cai;
     for (cai = commAtms.begin(); cai != commAtms.end(); cai++) {
@@ -976,7 +974,9 @@ namespace RDDepict {
       if (commAtms.size() == 0) {
         break;
       }
+
       this->mergeWithCommon((*nfri), commAtms); //, mol);
+
       RDKit::INT_VECT_CI cai;
       for (cai = commAtms.begin(); cai != commAtms.end(); cai++) {
         if ((d_eatoms[*cai].neighs.size() == 0) &&
@@ -997,7 +997,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     std::list<EmbeddedFrag>::iterator efri, nfri;
     
     this->mergeFragsWithComm(efrags); //, dp_mol);
-
+    
     while (d_attachPts.size() > 0) {
       int aid = d_attachPts.front();
       RDKit::INT_VECT nbrs = d_eatoms[aid].neighs;
@@ -1006,7 +1006,6 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
       RDKit::INT_LIST_I nratmi;
       for (nbri = nbrs.begin(); nbri != nbrs.end(); nbri++) {
         nratmi = std::find(nratms.begin(), nratms.end(), (*nbri));
-        int nbrdID = (*nbri);
 	if (nratmi != nratms.end()) {
 	  // the neighbor we have to add is a non ring atoms
 	  this->addNonRingAtom((*nbri), aid); //, mol);
@@ -1132,7 +1131,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(endAid));
     while (nbrIdx != endNbrs) {
       if (((*nbrIdx) != begAid) && 
-          (std::find(flipAids.begin(), flipAids.end(), (*nbrIdx)) == flipAids.end()) ) {
+          (std::find(flipAids.begin(), flipAids.end(), static_cast<int>(*nbrIdx)) == flipAids.end()) ) {
         _recurseAtomOneSide(*nbrIdx, begAid, mol, flipAids);
       }
       nbrIdx++;
@@ -1167,8 +1166,6 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
   }
   
   void EmbeddedFrag::computeDistMat(DOUBLE_SMART_PTR &dmat) {
-    unsigned int na = dp_mol->getNumAtoms();
-    
     unsigned ai, aj;
     INT_EATOM_MAP_I efi, efj;
     RDGeom::Point2D pti, ptj;
@@ -1278,9 +1275,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
                                                       unsigned int nSamples, int seed, 
                                                       const DOUBLE_SMART_PTR *dmat, 
                                                       double mimicDmatWt, bool permuteDeg4Nodes) {
-    
     PRECONDITION(dp_mol, "");
-    unsigned int na = dp_mol->getNumAtoms();
 
     RDKit::rng_type &generator = RDKit::getRandomGenerator();
     if (seed > 0) {
@@ -1331,7 +1326,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     unsigned int si, fi, bi, ai;
     RDGeom::INT_POINT2D_MAP bestCrdMap;
     double bestDens = this->mimicDistMatAndDensityCostFunc(dmat, mimicDmatWt); 
-    double idens = bestDens;
+
     INT_EATOM_MAP_I efi;
     for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
       bestCrdMap[efi->first] = efi->second.loc;
@@ -1391,12 +1386,12 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     RDGeom::Point2D pti, ptj;
     double d2;
     std::vector<PAIR_I_I> res;
-    for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
+    for (efi = d_eatoms.begin(); efi != d_eatoms.end(); ++efi) {
       efi->second.d_density = 0.0;
     }
 
     tempi = d_eatoms.begin();
-    tempi++;
+    ++tempi;
     double colThres2 = COLLISION_THRES*COLLISION_THRES;
     // if we a re dealing with non carbon atoms we will increase the collision threshold.
     // This is because only hetero atoms are typically drawn in a depiction.
@@ -1411,8 +1406,6 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
         if (efj == efi) {
           continue;
         }
-        unsigned int aid1 = efi->first;
-        unsigned int aid2 = efj->first;
         atomTypeFactor2 = 1.0;
         if (dp_mol->getAtomWithIdx(efj->first)->getAtomicNum() != 6) {
           atomTypeFactor2 = HETEROATOM_COLL_SCALE;
@@ -1575,10 +1568,9 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
       endSideFlip = false;
     }
 
-    RDKit::INT_VECT_CI fii;
-    INT_EATOM_MAP_I efi;
-    for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
-      fii = std::find(endSideAids.begin(), endSideAids.end(), efi->first);
+    for (INT_EATOM_MAP_I efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
+      RDKit::INT_VECT_CI fii = std::find(endSideAids.begin(), endSideAids.end(),
+                                         static_cast<int>(efi->first));
       if (endSideFlip ^ (fii == endSideAids.end()) ) {
         efi->second.Reflect(begLoc, endLoc);
       }
@@ -1589,12 +1581,15 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     PRECONDITION(mol, "");
     unsigned int deg = mol->getAtomWithIdx(aid)->getDegree();
     CHECK_INVARIANT(deg == 1, "");
-    unsigned int res;
+    unsigned int res=0;
     RDKit::ROMol::ADJ_ITER nbrIdx,endNbrs;
     boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
     while (nbrIdx != endNbrs) {
-      res = (*nbrIdx);
-      break;
+      if(mol->getAtomWithIdx(*nbrIdx)->getDegree()==1){
+        res = (*nbrIdx);
+        break;
+      }
+      ++nbrIdx;
     }
     return res;
   }
@@ -1604,7 +1599,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     PRECONDITION(mol, "");
     RDKit::ROMol::ADJ_ITER nbrIdx,endNbrs;
     boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid2));
-    unsigned int res;
+    unsigned int res=0;
     double d, mdist = 1.e8;
     unsigned int naid = aid1*(mol->getNumAtoms());
     while (nbrIdx != endNbrs) {
@@ -1697,7 +1692,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
   void EmbeddedFrag::removeCollisionsBondFlip() {
     // try to remove collisions in a structure by flipping rotatable bonds
     // along the shortest path between the colliding atoms.
-    int iter = 0;
+    unsigned int iter = 0;
     // we will limit the number of times we are going to do this since
     // we may fall into spiral where removing a collision may
     // create a new one
@@ -1706,7 +1701,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     colls = this->findCollisions(dmat);
     unsigned int ncols;
     
-    RDKit::INT_MAP_INT doneBonds;
+    std::map<int,unsigned int> doneBonds;
     while (iter < MAX_COLL_ITERS && colls.size()) {
       ncols = colls.size();
       if (ncols > 0) {
@@ -1750,7 +1745,6 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     double *dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
     std::vector<PAIR_I_I> colls = this->findCollisions(dmat, 0);
     // try opening up angles
-    unsigned int ncols = colls.size();
     std::vector<PAIR_I_I>::const_iterator cpi;
     for (cpi = colls.begin(); cpi != colls.end(); cpi++) {
       // find out which of the two offending atoms we want to move
@@ -1774,8 +1768,9 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     //    them by a little bit.
     std::vector<PAIR_I_I> colls = this->findCollisions(dmat, 0);
     unsigned int ncols = colls.size();
+    if(!ncols) return;
     unsigned int iter = 0;
-    while ((ncols > 0) && (iter < MAX_COLL_ITERS) ) {
+    while ( iter < MAX_COLL_ITERS ) {
       PAIR_I_I cAids = colls.front();
       // find out which of the two offending atoms we want to move
       // we will use the one with the smallest degree

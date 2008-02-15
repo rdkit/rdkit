@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -119,15 +119,14 @@ void testCollisions() {
     TEST_ASSERT(m);
     unsigned int confId = RDDepict::compute2DCoords(*m);
     // check that there are no collisions in the molecules
+    const Conformer &conf = m->getConformer(confId);
     int natms = m->getNumAtoms();
-    int i, j;
-    for (i = 0; i < natms; i++) {
-      const Conformer &conf = m->getConformer(confId);
+    std::cerr<<MolToMolBlock(*m,true,confId)<<"----"<<std::endl;;
+    for (int i = 0; i < natms; i++) {
       RDGeom::Point3D loci = conf.getAtomPos(i);
-      for (j = i+1; j < natms; j++) {
+      for (int j = i+1; j < natms; j++) {
         RDGeom::Point3D locj = conf.getAtomPos(j);
         locj -= loci;
-        double d = locj.length();
         CHECK_INVARIANT(locj.length() > 0.35, "");
       }
     }
@@ -174,7 +173,7 @@ void test2() {
       mol = smiSup.next();
       std::string mname;
       //wmol = static_cast<RWMol *>(mol);
-      unsigned int confId = RDDepict::compute2DCoords(*mol);
+      RDDepict::compute2DCoords(*mol);
       writer.write(*mol);
     } catch (FileParseException &) {
       break;
@@ -196,7 +195,7 @@ void test3() {
       mol = smiSup.next();
       std::string mname;
       //wmol = static_cast<RWMol *>(mol);
-      unsigned int confId = RDDepict::compute2DCoords(*mol);
+      RDDepict::compute2DCoords(*mol);
       BOOST_LOG(rdInfoLog)<< i++ << "\n";
       writer.write(*mol);
     } catch (FileParseException &) {
@@ -208,14 +207,13 @@ void test3() {
 void _compareCoords(const ROMol *mol1, unsigned int cid1, 
                     const ROMol *mol2, unsigned int cid2,
                     double tol = 0.01) {
-  int nat = mol1->getNumAtoms();
+  unsigned int nat = mol1->getNumAtoms();
   CHECK_INVARIANT(nat == mol2->getNumAtoms(), "");
  
-  int i;
   const RDKit::Conformer &conf1 = mol1->getConformer(cid1);
   const RDKit::Conformer &conf2 = mol1->getConformer(cid2);
 
-  for (i = 0; i < nat; i++) {
+  for (unsigned int i = 0; i < nat; i++) {
     RDGeom::Point3D pt1 = conf1.getAtomPos(i);
     RDGeom::Point3D pt2 = conf2.getAtomPos(i);
     pt2 -= pt1;
@@ -363,12 +361,11 @@ void testIssue248() {
       for (j = i+1; j < natms; j++) {
         RDGeom::Point3D locj = conf.getAtomPos(j);
         locj -= loci;
-        double d = locj.length();
         if(locj.length()<=0.30){
-	  std::cout << "mismatch: " << i << " " << j << " " << locj.length() << std::endl;
-	  std::cout << "\t" << smi << std::endl;
-	  std::cout << MolToMolBlock(*m,true,confId)<<std::endl;
-	}
+          std::cout << "mismatch: " << i << " " << j << " " << locj.length() << std::endl;
+          std::cout << "\t" << smi << std::endl;
+          std::cout << MolToMolBlock(*m,true,confId)<<std::endl;
+        }
         CHECK_INVARIANT(locj.length() > 0.30, "");
       }
     }
@@ -397,7 +394,6 @@ void testQueries() {
       for (j = i+1; j < natms; j++) {
         RDGeom::Point3D locj = conf.getAtomPos(j);
         locj -= loci;
-        double d = locj.length();
         if(locj.length()<=0.30){
           std::cout << "mismatch: " << i << " " << j << " " << locj.length() << std::endl;
           std::cout << "\t" << sma << std::endl;
@@ -409,7 +405,21 @@ void testQueries() {
     delete m;
   }
 }
+
+void testRemoveHsCrash() {
+  std::string rdbase = getenv("RDBASE");
+  std::string molfile = rdbase + "/Code/GraphMol/Depictor/test_data/hs_crash.mol";
+  RWMol *m=MolFileToMol(molfile,true,false);
+  TEST_ASSERT(m);
+  ROMol *newM=MolOps::removeHs(*static_cast<ROMol *>(m));
+  delete m;
+  unsigned int confId = RDDepict::compute2DCoords(*newM);
+  TEST_ASSERT(confId>=0);
+  delete newM;
+}
     
+
+
 int main() { 
   RDLog::InitLogs();
 #if 1
@@ -458,11 +468,16 @@ int main() {
   testIssue248();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
-#endif
-  
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Queries \n";
   testQueries();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
+#endif
+  
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test crashes associated with RemoveHs \n";
+  testRemoveHsCrash();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);

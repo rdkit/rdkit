@@ -421,11 +421,19 @@ namespace RDKit{
       //  If we didn't only remove implicit Hs, which are guaranteed to
       //  be the highest numbered atoms, we may have altered atom indices.
       //  This can screw up derived properties (such as ring members), so
-      //  we'll resanitize to ensure we stay in a consistent state.
+      //  do some checks:
       //
-      if(!implicitOnly && sanitize){
-        sanitizeMol(*res);
+      if(!implicitOnly){
+        if(sanitize){
+          sanitizeMol(*res);
+        }
+        if(mol.hasProp("_BondStereoSet")){
+          // double bond stereochem had been perceived in the original molecule,
+          // redo that with the new indices:
+          MolOps::assignBondStereoCodes(*res,true,true);
+        }
       }
+
       return static_cast<ROMol *>(res);
     };
 

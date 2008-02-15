@@ -20,9 +20,9 @@ namespace RDDepict {
   const double COLLISION_THRES=0.35;
   const double BOND_THRES = 0.50;
   const double ANGLE_OPEN=0.1222; // that is about 7 deg
-  const int MAX_COLL_ITERS=15;
+  const unsigned int MAX_COLL_ITERS=15;
   const double HETEROATOM_COLL_SCALE=1.3;
-  const int NUM_BONDS_FLIPS=3;
+  const unsigned int NUM_BONDS_FLIPS=3;
 
   typedef std::vector<const RDGeom::Point2D *> VECT_C_POINT;
   

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -39,7 +39,6 @@ namespace RDDepict {
     RDGeom::INT_POINT2D_MAP res;
 
     unsigned int i, aid;
-    double iAng = 0.0;
     double x,y;
 
     for (i = 0; i < na; i++) {
@@ -64,7 +63,7 @@ namespace RDDepict {
 
   RDGeom::Point2D computeBisectPoint(const RDGeom::Point2D &rcr, 
                                      double ang, const RDGeom::Point2D &nb1,
-				     const RDGeom::Point2D &nb2) {
+                                     const RDGeom::Point2D &nb2) {
     
     RDGeom::Point2D cloc = nb1;
     cloc += nb2;
@@ -79,7 +78,7 @@ namespace RDDepict {
   }
   
   RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point, const RDGeom::Point2D &loc1,
-		   const RDGeom::Point2D &loc2) {
+                   const RDGeom::Point2D &loc2) {
     RDGeom::Point2D org(0.0, 0.0);
     RDGeom::Point2D xaxis(1.0, 0.0);
     RDGeom::Point2D cent = (loc1 + loc2);
@@ -102,7 +101,7 @@ namespace RDDepict {
   }
     
   void reflectPoints(RDGeom::INT_POINT2D_MAP &coordMap, const RDGeom::Point2D &loc1,
-		   const RDGeom::Point2D &loc2) {
+                   const RDGeom::Point2D &loc2) {
     RDGeom::INT_POINT2D_MAP_I nci;
     for (nci = coordMap.begin(); nci != coordMap.end(); nci++) {
       nci->second = reflectPoint(nci->second, loc1, loc2);
@@ -110,7 +109,7 @@ namespace RDDepict {
   }
 
   RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
-			      const RDKit::ROMol &mol) {
+                              const RDKit::ROMol &mol) {
     PRECONDITION(aid<mol.getNumAtoms(), "");
     PR_QUEUE subsAid;
     int ref=-1;
@@ -120,8 +119,8 @@ namespace RDDepict {
     // and the store the pair <degree, aid> in the order of increasing degree
     while (nbrIdx != endNbrs) {
       // We used to use degree here instead we will start using the CIP rank here
-      if (std::find(nbrs.begin(), nbrs.end(), (*nbrIdx)) == nbrs.end()) {
-	ref = (*nbrIdx);
+      if (std::find(nbrs.begin(), nbrs.end(), static_cast<int>(*nbrIdx)) == nbrs.end()) {
+        ref = (*nbrIdx);
       }
       nbrIdx++;
     }
@@ -164,7 +163,7 @@ namespace RDDepict {
     int subs, minsubs = static_cast<int>(1e8);
     int cnt = 0;
     for (RDKit::VECT_INT_VECT_CI ri = fusedRings.begin();
-	 ri != fusedRings.end(); ri++) {
+         ri != fusedRings.end(); ri++) {
       subs = 0;
       for (RDKit::INT_VECT_CI rii = ri->begin(); rii != ri->end(); rii++) {
         int deg = mol.getAtomWithIdx(*rii)->getDegree();
@@ -207,7 +206,7 @@ namespace RDDepict {
     RDKit::INT_VECT commonAtoms, res, doneAtoms, notDone;
     RDKit::INT_VECT_CI dri;
     for (unsigned int i = 0; i < fusedRings.size(); i++) {
-      if (std::find(doneRings.begin(), doneRings.end(), i) == doneRings.end()) {
+      if (std::find(doneRings.begin(), doneRings.end(), static_cast<int>(i)) == doneRings.end()) {
         notDone.push_back(i);
       }
     }
@@ -218,7 +217,7 @@ namespace RDDepict {
     
     int currRingId = 0;
     for (RDKit::VECT_INT_VECT_CI ri = fusedRings.begin();
-	 ri != fusedRings.end(); ri++) {
+         ri != fusedRings.end(); ri++) {
       if (std::find(doneRings.begin(), doneRings.end(), currRingId) != doneRings.end()) {
         currRingId++;
         continue;
@@ -227,7 +226,7 @@ namespace RDDepict {
       int numCommonAtoms = 0;
       for (RDKit::INT_VECT_CI rii = ri->begin(); rii != ri->end(); rii++) {
         if (std::find(doneAtoms.begin(), doneAtoms.end(), (*rii)) != doneAtoms.end()) {
-	  commonAtoms.push_back(*rii);
+          commonAtoms.push_back(*rii);
           numCommonAtoms++;
         }
       }
@@ -289,7 +288,7 @@ namespace RDDepict {
     for(bondIt=mol.beginBonds();bondIt!=mol.endBonds();bondIt++){
       int bid = (*bondIt)->getIdx();
       if ( ((*bondIt)->getStereo() <= RDKit::Bond::STEREOANY) &&
-	   (!(mol.getRingInfo()->numBondRings(bid))))  {
+           (!(mol.getRingInfo()->numBondRings(bid))))  {
           res.push_back(bid);
       }
     }
@@ -455,11 +454,11 @@ namespace RDDepict {
 
   template RDKit::INT_VECT rankAtomsByRank(const RDKit::ROMol &mol, 
                                            const RDKit::INT_VECT &commAtms,
-					   bool ascending);
+                                           bool ascending);
   template RDKit::INT_DEQUE rankAtomsByRank(const RDKit::ROMol &mol, 
                                             const RDKit::INT_DEQUE &commAtms,
-					    bool ascending);
+                                            bool ascending);
   template RDKit::INT_LIST rankAtomsByRank(const RDKit::ROMol &mol, 
                                            const RDKit::INT_LIST &commAtms,
-					   bool ascending);
+                                           bool ascending);
 }

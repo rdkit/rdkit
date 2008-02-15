@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -170,7 +170,7 @@ namespace RDDepict {
     RDKit::VECT_INT_VECT arings;
 
     // first find all the rings
-    int nrings = RDKit::MolOps::symmetrizeSSSR(mol, arings);
+    RDKit::MolOps::symmetrizeSSSR(mol, arings);
 
     // user specfied coordinates exist
     bool preSpec = false;
@@ -188,11 +188,9 @@ namespace RDDepict {
     }
     // deal with any cis/trans systems
     DepictorLocal::embedCisTransSystems(mol, efrags);
-    
     // now get the atoms that are not yet embedded in either a cis/trans system
     // or a ring system (or simply the first atom)
     RDKit::INT_LIST nratms = DepictorLocal::getNonEmbeddedAtoms(mol, efrags);
-    
     std::list<EmbeddedFrag>::iterator mri; 
     if (preSpec) {
       // if the user specified coordinates on some of the atoms use that as 
@@ -207,28 +205,27 @@ namespace RDDepict {
       if (mri == efrags.end()) {
         // we are out of embedded fragments, if there are any 
         // non embedded atoms use them to start a fragment
-	int mrank, rank;
-	mrank = static_cast<int>(RDKit::MAX_INT);
-	RDKit::INT_LIST_I nri, mnri;
-	for (nri = nratms.begin(); nri != nratms.end(); nri++) {
-          int aid = (*nri);
+        int mrank, rank;
+        mrank = static_cast<int>(RDKit::MAX_INT);
+        RDKit::INT_LIST_I nri, mnri;
+        for (nri = nratms.begin(); nri != nratms.end(); nri++) {
           const RDKit::Atom *at=mol.getAtomWithIdx(*nri);
           if(at->hasProp("_CIPRank")){
             at->getProp("_CIPRank", rank);
           } else {
-	    // if the thing has no CIP rank, just set it high:
+            // if the thing has no CIP rank, just set it high:
             rank = 2*mol.getNumAtoms();
           }
-	  rank *= 1000;
-	  // use the atom index as well so that we at least
-	  // get reproduceable depictions in cases where things
-	  // have identical ranks.
-	  rank += *nri;
-	  if (rank < mrank) {
-	    mrank = rank;
-	    mnri = nri;
-	  }
-	}
+          rank *= 1000;
+          // use the atom index as well so that we at least
+          // get reproduceable depictions in cases where things
+          // have identical ranks.
+          rank += *nri;
+          if (rank < mrank) {
+            mrank = rank;
+            mnri = nri;
+          }
+        }
         EmbeddedFrag efrag((*mnri), &mol);
         nratms.erase(mnri);
         efrags.push_back(efrag);
@@ -238,9 +235,9 @@ namespace RDDepict {
       mri->markDone();
       mri->expandEfrag(nratms, efrags); 
       mri = DepictorLocal::_findLargestFrag(efrags);
+
     }
     // at this point any remaining efrags should belong individual fragments in the molecule
-
   }
 
   unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags, bool clearConfs) {
@@ -290,7 +287,7 @@ namespace RDDepict {
                                const RDGeom::INT_POINT2D_MAP *coordMap,
                                bool canonOrient, bool clearConfs,
                                unsigned int nFlipsPerSample,
-			       unsigned int nSamples,
+                               unsigned int nSamples,
                                int sampleSeed, bool permuteDeg4Nodes) {
     
     // storage for pieces of a molecule/s that are embedded in 2D
@@ -305,8 +302,8 @@ namespace RDDepict {
       // path between colliding atoms - don't do both
       if ((nSamples > 0) && (nFlipsPerSample > 0)) {
         eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
-					      sampleSeed, 0, 0.0,
-					      permuteDeg4Nodes);
+                                              sampleSeed, 0, 0.0,
+                                              permuteDeg4Nodes);
       } else {
         eri->removeCollisionsBondFlip();
       }
@@ -375,13 +372,13 @@ namespace RDDepict {
     \param sampleSeed - seed for the random sampling process
   */
   unsigned int compute2DCoordsMimicDistMat(RDKit::ROMol &mol,
-					   const DOUBLE_SMART_PTR *dmat,
+                                           const DOUBLE_SMART_PTR *dmat,
                                            bool canonOrient,
-					   bool clearConfs, double weightDistMat,
+                                           bool clearConfs, double weightDistMat,
                                            unsigned int nFlipsPerSample,
-					   unsigned int nSamples,
+                                           unsigned int nSamples,
                                            int sampleSeed,
-					   bool permuteDeg4Nodes){
+                                           bool permuteDeg4Nodes){
     // storage for pieces of a molecule/s that are embedded in 2D
     std::list<EmbeddedFrag> efrags;
     computeInitialCoords(mol, 0, efrags);

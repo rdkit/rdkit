@@ -621,6 +621,7 @@ namespace RDKit{
       // FIX: it would be nice to call findPotentialStereoBonds here
       // and loop only over the bonds marked with CIPcodes in that function 
       // but that will be nice to once we take care of cis/trans bond in rings 
+
       INT_VECT ranks;
       ranks.resize(mol.getNumAtoms());
     
@@ -637,7 +638,10 @@ namespace RDKit{
           bondIt++){
         if( (*bondIt)->getBondType()==Bond::DOUBLE ){
           Bond *dblBond=*bondIt;
-          if(cleanIt) dblBond->setStereo(Bond::STEREONONE);
+          if(cleanIt){
+            dblBond->setStereo(Bond::STEREONONE);
+            dblBond->getStereoAtoms().clear();
+          }
           // at the moment we are ignoring stereochem on ring bonds.
           if(!mol.getRingInfo()->numBondRings(dblBond->getIdx())){
             Atom *begAtom=dblBond->getBeginAtom();

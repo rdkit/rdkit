@@ -2354,12 +2354,51 @@ void testChiralityAndRemoveHs()
   TEST_ASSERT(code=="R");
   delete m;
 
-
-  
-  
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+
+void testSFIssue1894348()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing SFIssue1894348 (impact of removeHs on bond stereo atoms" << std::endl;
+  RWMol *m,*m2;
+
+  std::string smi;
+
+  smi = "Cl/C([H])=C/Cl";
+  m = SmilesToMol(smi,false,false);
+  TEST_ASSERT(m);
+  MolOps::sanitizeMol(*m);
+  MolOps::assignBondStereoCodes(*m);
+  TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==2);
+  TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0]==0);
+  TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1]==4);
+  m2=static_cast<RWMol *>(MolOps::removeHs(*m));
+  TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==2);
+  TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0]==0);
+  TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1]==4);
+  TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms().size()==2);
+  TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0]==0);
+  TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1]==3);
+
+  delete m;
+  delete m2;
+
+  smi = "Cl/C([H])=C/Cl";
+  m = SmilesToMol(smi,false,false);
+  TEST_ASSERT(m);
+  MolOps::sanitizeMol(*m);
+  TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms().size()==0);
+  m2=static_cast<RWMol *>(MolOps::removeHs(*m));
+  // if we don't assign stereocodes in the original we shouldn't have them here:
+  TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms().size()==0);
+  delete m;
+  delete m2;
+
+
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -2396,8 +2435,9 @@ int main(){
   testSFIssue1811276();
   testSFIssue1836576();
   testChiralityAndRemoveHs();
-#endif
   test11();
+#endif
+  testSFIssue1894348();
 
   
   return 0;
