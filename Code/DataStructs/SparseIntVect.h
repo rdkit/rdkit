@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2008 Greg Landrum
 //
 //  @@ All Rights Reserved @@
 //
@@ -105,7 +105,7 @@ namespace RDKit{
         while(oIter!=other.d_data.end() && oIter->first < iter->first){
           ++oIter;
         }
-        if(oIter!=d_data.end() && oIter->first==iter->first){
+        if(oIter!=other.d_data.end() && oIter->first==iter->first){
           // found it:
           if(oIter->second<iter->second){
             iter->second=oIter->second;

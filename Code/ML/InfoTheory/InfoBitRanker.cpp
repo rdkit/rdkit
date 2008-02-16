@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2007 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and  Rational Discovery LLC
 //   @All Rights Reserved@
 //
 
@@ -49,7 +49,7 @@ namespace RDInfoTheory {
     }
     dp_maskBits = new ExplicitBitVect(d_dims);
     for (RDKit::INT_VECT_CI bi = maskBits.begin();
-	 bi != maskBits.end(); ++bi) {
+         bi != maskBits.end(); ++bi) {
       dp_maskBits->SetBit(*bi);
     }
   }
@@ -61,7 +61,7 @@ namespace RDInfoTheory {
       return true;
     }
     RDKit::DOUBLE_VECT fracs;
-    fracs.reserve(d_classes);
+    fracs.resize(d_classes);
 
     // compute the fractions of items in each class that hit the bit
     // and record the maximum for the those classes not in the bias list
@@ -83,7 +83,7 @@ namespace RDInfoTheory {
 
     bool bitOk = false;
     for (RDKit::INT_VECT_CI bci = d_biasList.begin(); bci !=
-	   d_biasList.end(); ++bci) {
+           d_biasList.end(); ++bci) {
       if (fracs[*bci] >= maxCor) {
         bitOk = true;
         break;
@@ -133,8 +133,8 @@ namespace RDInfoTheory {
     d_nInst += 1;
     d_clsCount[label] += 1;
     for (IntSet::const_iterator obi = bv.dp_bits->begin();
-	 obi != bv.dp_bits->end();
-	++obi)  {
+         obi != bv.dp_bits->end();
+        ++obi)  {
       if(!dp_maskBits || dp_maskBits->GetBit(*obi)){
         d_counts[label][(*obi)] += 1;
       }
@@ -168,7 +168,7 @@ namespace RDInfoTheory {
       
       
       if (dp_maskBits && !dp_maskBits->GetBit(i)) {
-	   continue;
+           continue;
       }
 
       // fill up dmat
@@ -237,10 +237,10 @@ namespace RDInfoTheory {
       offset = i*ncols;
       if (topN.size() == 0 ) {
         if (dp_maskBits) {
-	      bid = maskBits[i];
-    	} else {
-	      bid = i;
-    	}
+              bid = maskBits[i];
+        } else {
+              bid = i;
+        }
         dp_topBits[offset + 1] = 0.0;
       } else {
         bid = topN.top().second; // bit id
