@@ -1,3 +1,32 @@
+******  Release_Jan2008_1RC1 *******
+(Changes relative to Release_1beta3)
+
+!!!!!! IMPORTANT !!!!!!
+ The chirality and canonicalization changes have now been checked in.
+ Please read the release notes for Release_Jan2008_1beta1
+
+Bug Fixes
+ - The stereo codes from double bonds (used for tracking cis/trans)
+   are now corrected when MolOps::removeHs is called. (issue 1894348)
+ - Various small code cleanups and edge case fixes were done as a
+   result of things discovered while getting the VC8 build working.
+
+New Features
+ - A proof of concept for doing a SWIG wrapper of RDKit functionality
+   has been added in: $RDBASE/Code/Demos/SWIG/java_example. This isn't
+   even remotely production-quality; it's intended to demonstrate that
+   the wrapping works and isn't overly difficult.
+  
+Other
+ - Local installation dependencies in the new build system have been
+   removed. (issue 1883857)
+ - The new build system now works under windows using either visual
+   studio 2003 or visual studio express 2005.
+ - There's now an epydoc config file for building the python
+   documentation ($RDBASE/Python/epydoc.config).
+
+
+
 ******  Release_Jan2008_1beta3 *******
 (Changes relative to Release_1beta2)
 
