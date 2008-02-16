@@ -63,7 +63,7 @@ namespace RDKit {
     class ComputedData {
     public: 
       ComputedData(unsigned int nAtoms, unsigned int nBonds) {
-        bondLengths.reserve(nBonds);
+        bondLengths.resize(nBonds);
         RDNumeric::IntSymmMatrix *bAdj = new RDNumeric::IntSymmMatrix(nBonds, -1);
         bondAdj.reset(bAdj);
         RDNumeric::DoubleSymmMatrix *bAngles = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
@@ -199,7 +199,9 @@ namespace RDKit {
     void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat, ComputedData &accumData) {
       unsigned int npt = mmat->numRows();
       CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
+      CHECK_INVARIANT(accumData.bondLengths.size() >= mol.getNumBonds(), "Wrong size accumData");
       UFF::AtomicParamVect atomParams = UFF::getAtomTypes(mol);
+      CHECK_INVARIANT(atomParams.size()==mol.getNumAtoms(),"could not find all parameters");
       
       ROMol::ConstBondIterator bi;
       unsigned int begId, endId;

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -380,7 +380,7 @@ void testUFFBatch(){
 
   int count=0;
   mol = suppl.next();
-  while(mol){
+  while(mol && !suppl.atEnd() ){
     count++;
     MolOps::sanitizeMol(*(RWMol *)mol);
     std::string origMolBlock = MolToMolBlock(*mol);
@@ -395,9 +395,9 @@ void testUFFBatch(){
       field->initialize();
       int failed=field->minimize(500);
       if(failed){
-	BOOST_LOG(rdErrorLog) << " not converged (code="<<failed<<")" << std::endl;
-	std::cout << origMolBlock << "$$$$" << std::endl;
-	std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
+        BOOST_LOG(rdErrorLog) << " not converged (code="<<failed<<")" << std::endl;
+        std::cout << origMolBlock << "$$$$" << std::endl;
+        std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
       }
       delete field;
     }

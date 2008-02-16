@@ -1768,9 +1768,8 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms, std::list<EmbeddedFrag> 
     //    them by a little bit.
     std::vector<PAIR_I_I> colls = this->findCollisions(dmat, 0);
     unsigned int ncols = colls.size();
-    if(!ncols) return;
     unsigned int iter = 0;
-    while ( iter < MAX_COLL_ITERS ) {
+    while ( ncols && iter < MAX_COLL_ITERS ) {
       PAIR_I_I cAids = colls.front();
       // find out which of the two offending atoms we want to move
       // we will use the one with the smallest degree

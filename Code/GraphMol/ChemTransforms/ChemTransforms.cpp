@@ -278,24 +278,32 @@ namespace RDKit{
         keepList.push_back(sidechainAtom);
 
         // loop over our neighbors and see if any are in the match:
+        std::list<unsigned int> nbrList;
         ROMol::ADJ_ITER nbrIter,endNbrs;
         boost::tie(nbrIter,endNbrs) = newMol->getAtomNeighbors(sidechainAtom);
+        while(nbrIter!=endNbrs && (*nbrIter) < origNumAtoms){
+          // we need to add bonds and atoms to the molecule while looping
+          // over neighbors. This invalidates iterators, so collect a list
+          // of our neighbors now:
+          nbrList.push_back(*nbrIter);
+          ++nbrIter;
+        }
         unsigned int whichNbr=0;
         std::list<Bond *> newBonds;
-        while(nbrIter!=endNbrs && (*nbrIter) < origNumAtoms){
-          unsigned int nbrIdx=*nbrIter;
+        for(std::list<unsigned int>::const_iterator lIter=nbrList.begin();
+            lIter!=nbrList.end();++lIter){
+          unsigned int nbrIdx=*lIter;
           Bond *connectingBond=newMol->getBondBetweenAtoms(i,nbrIdx);
           if(matchingIndices[nbrIdx]){
             bool removedPrecedingAtom=false;
-            // add a dummy to stand in for this core atom:
             Atom *newAt=new Atom(0);
             std::string label="X";
             label+=static_cast<char>(static_cast<short>('a')+nDummies);
+            ++nDummies;
             newAt->setProp("dummyLabel",label);
-            Bond *bnd=connectingBond->copy();
-
             newMol->addAtom(newAt,false,true);
             keepList.push_back(newAt);
+            Bond *bnd=connectingBond->copy();
             if(bnd->getBeginAtomIdx()==i){
               bnd->setEndAtomIdx(newAt->getIdx());
               removedPrecedingAtom=false;
@@ -303,10 +311,8 @@ namespace RDKit{
               bnd->setBeginAtomIdx(newAt->getIdx());
               if(nbrIdx<i) removedPrecedingAtom=true;
             }
-            // we can't add the bond yet because that will screw up the loop
-            // over neighbors, so save it for later:
             newBonds.push_back(bnd);
-            ++nDummies;
+
             // we may be changing the bond ordering at the atom.
             // e.g. replacing the N in C[C@](Cl)(N)F gives an atom ordering of C[C?](Cl)(F)[X]
             // so we need the SMILES C[C@@](Cl)(F)[X] to maintain the appropriate chirality 
@@ -322,8 +328,6 @@ namespace RDKit{
                 //   F[C@](N)(Cl)C -> F[C@](Cl)(C)X     no
                 //   F[C@](Cl)(N)C -> F[C@@](Cl)(C)X    yes
                 //   F[C@](Cl)(C)N -> F[C@](Cl)(C)X     no
-                
-
                 if(!(whichNbr%2)) switchIt=true;
                 break;  
               case 3:
@@ -342,7 +346,6 @@ namespace RDKit{
             }
           }
           ++whichNbr;
-          ++nbrIter;
         }
         // add the bonds now, after we've finished the loop over neighbors:
         for(std::list<Bond *>::iterator bi=newBonds.begin();bi!=newBonds.end();++bi){

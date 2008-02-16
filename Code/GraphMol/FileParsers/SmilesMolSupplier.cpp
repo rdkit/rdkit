@@ -333,9 +333,14 @@ namespace RDKit {
   //
   void SmilesMolSupplier::moveTo(unsigned int idx) {
     PRECONDITION(dp_inStream,"bad instream");
-
     // get the easy situations (boundary conditions) out of the
     // way first:
+
+    if( d_len>-1 && idx>=d_len) {
+      std::ostringstream errout;
+      errout << "ERROR: Index error (idx = " << idx  << "): " << "ran out of lines\n";
+      throw FileParseException(errout.str());
+    }
 
     // -----------
     // Case 1: we have already read the particular entry:

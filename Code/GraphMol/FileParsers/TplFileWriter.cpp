@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2008 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,18 +13,18 @@
 namespace RDKit{
   namespace TPLWriter {
     void writeAtom(const ROMol &mol,unsigned int atomId,
-		   ROMol::ConstConformerIterator confIt,
-		   std::ostringstream &dest,
-		   std::string partialChargeProp){
+                   ROMol::ConstConformerIterator confIt,
+                   std::ostringstream &dest,
+                   std::string partialChargeProp){
       const Atom *atom=mol.getAtomWithIdx(atomId);
       dest << atomId+1;
       dest << " " << atom->getSymbol();
       dest << " " << atom->getFormalCharge();
       std::string propVal;
       if(atom->hasProp(partialChargeProp)){
-	atom->getProp(partialChargeProp,propVal);
+        atom->getProp(partialChargeProp,propVal);
       } else {
-	propVal = "0.0";
+        propVal = "0.0";
       }
       dest << " " << propVal;
       
@@ -32,10 +32,11 @@ namespace RDKit{
       dest  << " " << 100.*pos.x << " " << 100.*pos.y << " " << 100.*pos.z;
 
       ROMol::ADJ_ITER nbrIdx,endNbrs;
+      boost::tie(nbrIdx,endNbrs)=mol.getAtomNeighbors(atom);
       dest << " " << (endNbrs-nbrIdx);
       while(nbrIdx!=endNbrs){
-	dest << " " << (*nbrIdx+1);
-	++nbrIdx;
+        dest << " " << (*nbrIdx+1);
+        ++nbrIdx;
       }
 
       // FIX: get this right:
@@ -45,35 +46,35 @@ namespace RDKit{
     }
 
     void writeBond(const ROMol &mol,unsigned int bondId,
-		   ROMol::ConstConformerIterator confIt,
-		   std::ostringstream &dest){
+                   ROMol::ConstConformerIterator confIt,
+                   std::ostringstream &dest){
       const Bond *bond=mol.getBondWithIdx(bondId);
       dest << bondId+1;
       std::string bondLabel;
 
       switch(bond->getBondType()){
       case Bond::SINGLE:
-	if(bond->getIsAromatic()){
-	  bondLabel="1.5";
-	} else {
-	  bondLabel="1.0";
-	}
-	break;
+        if(bond->getIsAromatic()){
+          bondLabel="1.5";
+        } else {
+          bondLabel="1.0";
+        }
+        break;
       case Bond::DOUBLE:
-	if(bond->getIsAromatic()){
-	  bondLabel="1.5";
-	} else {
-	  bondLabel="2.0";
-	}
-	break;
+        if(bond->getIsAromatic()){
+          bondLabel="1.5";
+        } else {
+          bondLabel="2.0";
+        }
+        break;
       case Bond::AROMATIC:
-	bondLabel="1.5";break;
+        bondLabel="1.5";break;
       case Bond::TRIPLE:
-	bondLabel="3.0";break;
+        bondLabel="3.0";break;
       default:
-	BOOST_LOG(rdWarningLog)<<"TPL files only support single, double, aromatic, and triple bonds." << std::endl;
-	BOOST_LOG(rdWarningLog)<<"Bond of with type " << bond->getBondType() << " written as single in output." << std::endl;
-	bondLabel="1.0";
+        BOOST_LOG(rdWarningLog)<<"TPL files only support single, double, aromatic, and triple bonds." << std::endl;
+        BOOST_LOG(rdWarningLog)<<"Bond of with type " << bond->getBondType() << " written as single in output." << std::endl;
+        bondLabel="1.0";
       }
       dest << " " << bondLabel;
 
@@ -131,12 +132,12 @@ namespace RDKit{
       res << "NAME " << confName << std::endl;
       
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
-	const RDGeom::Point3D &pos=(*confIt)->getAtomPos(i);
-	res << " " << 100.*pos.x << " " << 100.*pos.y << " " << 100.*pos.z << std::endl;
+        const RDGeom::Point3D &pos=(*confIt)->getAtomPos(i);
+        res << " " << 100.*pos.x << " " << 100.*pos.y << " " << 100.*pos.z << std::endl;
       }
       ++confIt;
       if(confIt!=mol.endConformers()){
-	res << std::endl;
+        res << std::endl;
       }
     }
 
@@ -145,12 +146,12 @@ namespace RDKit{
 
 
   void MolToTPLFile(const ROMol &mol,std::string fName,
-		    std::string partialChargeProp,
-		    bool writeFirstConfTwice){
+                    std::string partialChargeProp,
+                    bool writeFirstConfTwice){
     std::ofstream *outStream = new std::ofstream(fName.c_str());
     CHECK_INVARIANT(outStream,"could not open output file");
     std::string outString = MolToTPLText(mol,partialChargeProp,
-					 writeFirstConfTwice);
+                                         writeFirstConfTwice);
     *outStream  << outString;
     delete outStream;
   }    

@@ -381,6 +381,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
   smi = MolToSmiles(*mol2,true);
+  BOOST_LOG(rdInfoLog)<<"smiles: "<<smi <<std::endl;
   TEST_ASSERT(smi=="[Xa][C@](C)(F)Cl");
   delete mol1;
   smi = "N[C@](C)(F)Cl";
@@ -391,6 +392,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
   smi = MolToSmiles(*mol2,true);
+  BOOST_LOG(rdInfoLog)<<"smiles: "<<smi <<std::endl;
   TEST_ASSERT(smi=="[Xa][C@](C)(F)Cl");
 
   delete mol1;
