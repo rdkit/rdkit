@@ -194,11 +194,16 @@ if __name__=='__main__':
 
   if not options.silent: logger.info('Generating fingerprints and descriptors:')
   molCurs = molConn.GetCursor()
-  molCurs.execute('select %s,molpkl from %s'%(options.molIdName,options.regName))
+  if not options.skipSmiles:
+    molCurs.execute('select %s,smiles,molpkl from %s'%(options.molIdName,options.regName))
+  else:
+    molCurs.execute('select %s,molpkl from %s'%(options.molIdName,options.regName))
   i=0
   while 1:
     try:
-      id,pkl = molCurs.fetchone()
+      tpl = molCurs.fetchone()
+      id = tpl[0]
+      pkl = tpl[-1]
       i+=1
     except:
       break
