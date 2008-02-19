@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -74,19 +74,19 @@ namespace RDDepict {
   */
   RDGeom::Point2D computeBisectPoint(const RDGeom::Point2D &rcr, 
                                      double ang, const RDGeom::Point2D &nb1,
-				     const RDGeom::Point2D &nb2);
+                                     const RDGeom::Point2D &nb2);
 
   //! Reflect a set of point through a the line joining two point
   /*!
     ARGUMENTS:
     \param coordMap       a map of <int, point2D> going from atom id to current
                           coordinates of the points that need to be reflected:
-			  The coordinates are overwritten
+                          The coordinates are overwritten
     \param loc1           the first point of the line that is to be used as a mirror
     \param loc2           the second point of the line to be used as a mirror
    */
   void reflectPoints(RDGeom::INT_POINT2D_MAP &coordMap, const RDGeom::Point2D &loc1,
-		   const RDGeom::Point2D &loc2);
+                   const RDGeom::Point2D &loc2);
 
   RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point, const RDGeom::Point2D &loc1,
                                const RDGeom::Point2D &loc2);
@@ -230,7 +230,7 @@ namespace RDDepict {
     \return the normal
   */
   inline RDGeom::Point2D computeNormal(const RDGeom::Point2D &center, 
-				       const RDGeom::Point2D &other) {
+                                       const RDGeom::Point2D &other) {
     RDGeom::Point2D res = other - center;
     res.normalize();
     double tmp = res.x;
@@ -248,8 +248,8 @@ namespace RDDepict {
     \return the angle (in radians)
   */
   inline double computeAngle(const RDGeom::Point2D &center, 
-			     const RDGeom::Point2D &loc1, 
-			     const RDGeom::Point2D &loc2) {
+                             const RDGeom::Point2D &loc1, 
+                             const RDGeom::Point2D &loc2) {
     RDGeom::Point2D v1 = loc1 - center;
     RDGeom::Point2D v2 = loc2 - center;
     return v1.angleTo(v2);
@@ -278,7 +278,7 @@ namespace RDDepict {
     \return a set of the indices of the rotatable bonds
   */
   RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol, unsigned int aid1,
-				    unsigned int aid2);
+                                    unsigned int aid2);
 
   //! \brief find all the rotatable bonds in a molecule
   //!   we will ignore ring atoms, and double bonds which are marked cis/trans
