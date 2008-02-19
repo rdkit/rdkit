@@ -30,8 +30,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, July 2007
-
-_version = "0.4.1"
+_version = "0.7.0"
 _usage="""
  CreateDb [optional arguments] <filename>
 
@@ -112,15 +111,17 @@ parser.add_option('--molFormat',default='smiles',choices=('smiles','sdf'),
                   help='specify the format of the input file')
 parser.add_option('--nameProp',default='_Name',
                   help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
-
 parser.add_option('--missingPropertyVal',default='N/A',
                   help='value to insert in the database if a property value is missing. Default is %default.')
+parser.add_option('--addProps',default=False,action='store_true',
+                  help='add computed properties to the output')
+parser.add_option('--noExtras',default=False,action='store_true',
+                  help='skip all non-molecule databases')
 
 if __name__=='__main__':
   options,args = parser.parse_args()
   if len(args)!=1:
     parser.error('please provide a filename argument')
-
 
   if not os.path.exists(options.outDir):
     try:
@@ -139,12 +140,18 @@ if __name__=='__main__':
   else:
     supplier = Chem.SDMolSupplier(dataFilename)
 
+  if options.noExtras:
+    options.doPairs=False
+    options.doDescriptors=False
+    options.doFingerprints=False
+ 
   if not options.silent: logger.info('Reading molecules and constructing molecular database.')
   Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
                 errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
                 skipProps=options.skipProps,defaultVal=options.missingPropertyVal,
-                silent=options.silent,nameProp=options.nameProp,
-                skipSmiles=options.skipSmiles,maxRowsCached=int(options.maxRowsCached))
+                addComputedProps=options.addProps,uniqNames=True,
+                skipSmiles=options.skipSmiles,maxRowsCached=int(options.maxRowsCached),
+                silent=options.silent,nameProp=options.nameProp,lazySupplier=False)
   if options.doPairs:
     from Chem.AtomPairs import Pairs,Torsions
     pairConn = DbConnect(os.path.join(options.outDir,options.pairDbName))
@@ -164,11 +171,10 @@ if __name__=='__main__':
     except:
       pass
     fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob)'%(options.fpTableName,
-                                                                                            options.molIdName))
+                                                                                              options.molIdName))
     from Chem.Fingerprints import FingerprintMols
     details = FingerprintMols.FingerprinterDetails()
     fpArgs = details.__dict__
-  
   if options.doDescriptors:
     descrConn=DbConnect(os.path.join(options.outDir,options.descrDbName))
     calc = cPickle.load(file(options.descriptorCalcFilename,'rb'))
@@ -198,13 +204,12 @@ if __name__=='__main__':
       break
     mol = Chem.Mol(str(pkl))
     if not mol: continue
-
+     
     if options.doPairs:
       pairs = Pairs.GetAtomPairFingerprintAsIntVect(mol)
       torsions = Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol)
       pkl1 = DbModule.binaryHolder(cPickle.dumps(pairs,2))
       pkl2 = DbModule.binaryHolder(cPickle.dumps(torsions,2))
-      #pkl2 = pkl1
       row = [id,pkl1,pkl2]
       pairRows.append(row)
       if len(pairRows)>=500:
@@ -238,7 +243,6 @@ if __name__=='__main__':
     if not options.silent and not i%500: 
       logger.info('  Done: %d'%(i))
 
-
   if len(pairRows):
     pairCurs.executemany('insert into %s values (?,?,?)'%options.pairTableName,
                          pairRows)
@@ -254,7 +258,6 @@ if __name__=='__main__':
                           descrRows)
     descrRows = []
     descrConn.Commit()
-
 
     
     

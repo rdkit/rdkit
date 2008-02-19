@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.5.0"
+_version = "0.7.0"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -414,6 +414,7 @@ if __name__=='__main__':
     if not options.silent: logger.info('Creating output')
     print >>outF,'\n'.join(ids)
   if molsOut and ids:
+    molDbName = os.path.join(options.dbDir,options.molDbName)
     conn = DbConnect(molDbName)
     cns = conn.GetColumnNames('molecules')
     curs = conn.GetCursor()
