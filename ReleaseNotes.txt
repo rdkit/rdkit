@@ -1,65 +1,6 @@
-******  Release_Jan2008_1RC1 *******
-(Changes relative to Release_1beta3)
-
-!!!!!! IMPORTANT !!!!!!
- The chirality and canonicalization changes have now been checked in.
- Please read the release notes for Release_Jan2008_1beta1
-
-Bug Fixes
- - The stereo codes from double bonds (used for tracking cis/trans)
-   are now corrected when MolOps::removeHs is called. (issue 1894348)
- - Various small code cleanups and edge case fixes were done as a
-   result of things discovered while getting the VC8 build working.
-
-New Features
- - A proof of concept for doing a SWIG wrapper of RDKit functionality
-   has been added in: $RDBASE/Code/Demos/SWIG/java_example. This isn't
-   even remotely production-quality; it's intended to demonstrate that
-   the wrapping works and isn't overly difficult.
-  
-Other
- - Local installation dependencies in the new build system have been
-   removed. (issue 1883857)
- - The new build system now works under windows using either visual
-   studio 2003 or visual studio express 2005.
- - There's now an epydoc config file for building the python
-   documentation ($RDBASE/Python/epydoc.config).
-
-
-
-******  Release_Jan2008_1beta3 *******
-(Changes relative to Release_1beta2)
-
-!!!!!! IMPORTANT !!!!!!
- The chirality and canonicalization changes have now been checked in.
- Please read the release notes for Release_Jan2008_1beta1
-
-Bug Fixes
- - The MolSuppliers (SDMolSupplier, TDTMolSupplier, SmilesMolSupplier) 
-   no longer fail when reading the last element. (issue 1874882)
- - A memory leak in the constructor of RWMols was fixed.
- - A problem causing rapid memory growth with Recap analysis was fixed. 
-   (issue 1880161)
- - The Recap reactions are no longer applied to charged Ns or Os
-   (issue 1881803)
- - Charges, H counts, and isotope information can now be set in
-   reactions. (issue 1882749)
-
-
-******  Release_Jan2008_1beta2 *******
-(Changes relative to Release_1beta1)
-
-!!!!!! IMPORTANT !!!!!!
- Please read the release notes for Release_Jan2008_1beta1
-
-Bug Fixes
- - the handling of flex and bison in the Windows build system was
-   updated.
-
-
-******  Release_Jan2008_1beta1 *******
+******  Release_Jan2008_1 *******
 (Changes relative to Release_Aug2007_1)
-
+ 
 !!!!!! IMPORTANT !!!!!!
  - Bug fixes in the canonicalization algorithm have made it so that
    the canonical SMILES from this version are not compatible with
@@ -67,6 +8,9 @@ Bug Fixes
  - Please read the point about dummy atoms in the "New Features"
    section. It explains a forthcoming change that will affect
    backwards compatibility when dealing with dummy atoms.
+ - The build system has been completely changed. Makefiles and Visual
+   Studio project files have been removed. See the "Other" section for
+   more info.
    
 Acknowledgements:
  - Adrian Schreyer uncovered and reported a number of the bugs fixed
@@ -95,6 +39,19 @@ Bug Fixes
    interpreted as "atom is in a ring of size N". (issue 1811276)
    This change required that the default feature definitions for
    aromaticity and lumped hydrophobes be updated.
+ - The MolSuppliers (SDMolSupplier, TDTMolSupplier, SmilesMolSupplier) 
+   no longer fail when reading the last element. (issue 1874882)
+ - A memory leak in the constructor of RWMols was fixed.
+ - A problem causing rapid memory growth with Recap analysis was fixed. 
+   (issue 1880161)
+ - The Recap reactions are no longer applied to charged Ns or Os
+   (issue 1881803)
+ - Charges, H counts, and isotope information can now be set in
+   reactions. (issue 1882749)
+ - The stereo codes from double bonds (used for tracking cis/trans)
+   are now corrected when MolOps::removeHs is called. (issue 1894348)
+ - Various small code cleanups and edge case fixes were done as a
+   result of things discovered while getting the VC8 build working.
    
 New Features
  - The SparseIntVect class (used by the atom pairs and topological
@@ -141,15 +98,22 @@ New Features
    that the output of dummy atoms will also change: in the next release
    the default output format will be "*".
    (feature request 186217)
+ - A proof of concept for doing a SWIG wrapper of RDKit functionality
+   has been added in: $RDBASE/Code/Demos/SWIG/java_example. This isn't
+   even remotely production-quality; it's intended to demonstrate that
+   the wrapping works and isn't overly difficult.
 
 Other
  - The full set of tests is now easier to setup and run on new
    machines. (issue 1757265) 
  - A new build system, using Boost.Build, has been put into place on
-   the linux side. The new system does much better dependency checking
-   and handles machine-specific stuff a lot better.
+   both the windows and linux sides. The new system does much better
+   dependency checking and handles machine-specific stuff a lot
+   better. The new system has been tested using Visual Studio 2003,
+   Visual Studio Express 2005, Ubuntu 7.10, and RHEL5.
  - The "Getting Started in Python" document has been expanded.
-
+ - There's now an epydoc config file for building the python
+   documentation ($RDBASE/Python/epydoc.config).
 
 ******  Release_Aug2007_1 *******
 (Changes relative to Release_April2007_1)
