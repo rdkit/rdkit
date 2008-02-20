@@ -8,7 +8,8 @@ export BASE=$TMPDIR/$DIRNAME
 #MAILIT=/home/glandrum/RDKit/Scripts/MailResults.py
 export RDBASE=$BASE/RDKit
 export BOOSTBASE="boost_1_34_1"
-export BOOST_BUILD_PATH="/usr/local/src/$BOOSTBASE"
+export BOOSTHOME="/usr/local/src/$BOOSTBASE"
+export BOOST_BUILD_PATH=$BOOSTHOME
 export BJAM="/usr/local/bin/bjam"
 export PYTHONPATH="$RDBASE/Python"
 export PATH="$RDBASE/bin:$PATH"
@@ -52,20 +53,7 @@ echo "****  PULL  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 SVNROOT=https://rdkit.svn.sourceforge.net/svnroot/rdkit/trunk
-svn checkout  -N $SVNROOT RDKit &> /dev/null
-cd $RDBASE
-svn checkout  -N $SVNROOT/Data Data &> /dev/null
-svn checkout  -N $SVNROOT/Data/NCI Data/NCI &> /dev/null
-for foo in Code bin Python Projects; do
-  svn checkout  $SVNROOT/$foo $foo &> /dev/null
-done
-svn checkout  -N $SVNROOT/External External &> /dev/null
-for foo in Lapack++ svdlibc svdpackc vflib-2.0 cmim-1.0 ; do
-  svn checkout  $SVNROOT/External/$foo External/$foo &> /dev/null
-done
-svn checkout  -N $SVNROOT/Scripts Scripts &> /dev/null
-
-
+svn checkout  $SVNROOT RDKit &> /dev/null
 
 if test -f $RDBASE/Data/RDTests.sqlt; then 
   rm $RDBASE/Data/RDTests.sqlt
@@ -74,10 +62,7 @@ $DBLOADER $RDBASE/Data/RDTests.sqlt < $RDBASE/Python/Dbase/testData/RDTests.sqli
 if test -f $RDBASE/Data/RDData.sqlt; then 
   rm $RDBASE/Data/RDData.sqlt
 fi
-$DBLOADER $RDBASE/Data/RDData.sqlt < $RDBASE/Python/Dbase/testData/RDData.sqlite 
-
-
-
+$DBLOADER $RDBASE/Data/RDData.sqlt < $RDBASE/Python/Dbase/testData/RDData.sqlite
 # ------------------------- -------------------------
 #
 #               Build
@@ -90,8 +75,7 @@ echo "****  BUILD  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 cd $RDBASE/Code
-$BJAM >>$LOGFILE 2>&1
-
+$BJAM -j2 >>$LOGFILE 2>&1
 
 # ------------------------- -------------------------
 #
@@ -114,8 +98,6 @@ cd $RDBASE/Projects
 python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
 
 
-
-
 # ------------------------- -------------------------
 #
 #               Generate documentation
@@ -128,9 +110,9 @@ echo "****  DOCS  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 cd $RDBASE/Code
-/usr/bin/doxygen doxygen.config
+/usr/bin/doxygen doxygen.config > /dev/null 2>&1
 cd $RDBASE/Python
-epydoc --config  epydoc.config
+epydoc --config  epydoc.config > /dev/null 2>&1
 
 # ------------------------- -------------------------
 #
