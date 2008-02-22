@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -274,13 +274,16 @@ namespace RDNumeric {
       trans.setToIdentity();
       const DoubleVector *wts;
       double wtsSum;
+      bool ownWts;
       if (weights) {
         PRECONDITION(npt == weights->size(), "Mismatch in number of points");
         wts = weights;
         wtsSum = _sumOfWeights(*wts);
+        ownWts=false;
       } else {
         wts = new DoubleVector(npt, 1.0);
         wtsSum = static_cast<double>(npt);
+        ownWts=true;
       }
       
       RDGeom::Point3D rptSum = _weightedSumOfPoints(refPoints, *wts);
@@ -293,7 +296,10 @@ namespace RDNumeric {
       
       // compute the co-variance matrix
       _computeCovarianceMat(refPoints, probePoints, *wts, covMat);
-
+      if(ownWts) {
+        delete wts;
+        wts=0;
+      }
       if (reflect) {
         rptSum *= -1.0;
         reflectCovMat(covMat);
