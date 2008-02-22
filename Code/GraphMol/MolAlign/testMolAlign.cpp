@@ -46,6 +46,7 @@ void test1MolAlign() {
   // specify conformations
   rmsd = MolAlign::alignMol(*m1, *m2, 0, 0);
   CHECK_INVARIANT(RDKit::feq(rmsd, 0.6578), "");
+
   // provide an atom mapping
   delete m1;
   delete m2;
