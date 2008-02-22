@@ -8,6 +8,7 @@ from Chem import AllChem
 from Chem import Lipinski,Descriptors,Crippen
 from Dbase.DbConnection import DbConnect
 from Dbase import DbModule
+import re
 
 #set up the logger:
 import RDLogger as logging
@@ -134,11 +135,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   typs = [nameDef]
   pns = []
   for pn,v in globalProps.iteritems():
-    addNm = pn
-    addNm = addNm.replace('.','_')
-    addNm = addNm.replace('-','_')
-    addNm = addNm.replace(' ','_')
-    addNm = addNm.replace(':','_')
+    addNm = re.sub(r'[\W]','_',pn)
     typs.append('%s %s'%(addNm,typeConversions[v][0]))
     pns.append(pn.lower())
 
