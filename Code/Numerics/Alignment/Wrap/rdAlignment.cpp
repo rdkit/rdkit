@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -20,7 +20,7 @@ namespace python = boost::python;
 namespace RDNumeric {
   namespace Alignments {
     void GetPointsFromPythonSequence(python::object &points,
-				     RDGeom::Point3DConstPtrVect &pts){
+                                     RDGeom::Point3DConstPtrVect &pts){
       PyObject *pyObj=points.ptr();
       unsigned int nrows, ncols;
       double *data;
@@ -37,43 +37,43 @@ namespace RDNumeric {
 
         for (unsigned int i = 0; i < nrows; i++) {
           RDGeom::Point3D *rpt = new RDGeom::Point3D(data[i*3],
-						     data[i*3+1],
-						     data[i*3+2]);
+                                                     data[i*3+1],
+                                                     data[i*3+2]);
           pts.push_back(rpt);
         }
       } else if(PySequence_Check(pyObj)) {
-	nrows = PySequence_Size(pyObj);
+        nrows = PySequence_Size(pyObj);
         if (nrows <= 0) 
           throw_value_error("Empty sequence passed in");
-	python::extract<RDGeom::Point3D> ptOk(points[0]);
-	if(!ptOk.check()){
-	  for (unsigned int i = 0; i < nrows; i++) {
-	    PySequenceHolder<double> row(points[i]);
-	    if (row.size() != 3) 
-	      throw_value_error("Wrong number of entries in the list of lists");
-	    RDGeom::Point3D *rpt = new RDGeom::Point3D(row[0],row[1],row[2]);
-	    pts.push_back(rpt);
-	  }
-	}else{
-	    for (unsigned int i = 0; i < nrows; i++) {
-	      python::extract<RDGeom::Point3D> pt(points[i]);
-	      if(pt.check()){
-		RDGeom::Point3D *rpt = new RDGeom::Point3D(pt);
-		pts.push_back(rpt);
-	      } else {
-		throw_value_error("non-Point3D found in sequence of points");
-	      }
-	    }
+        python::extract<RDGeom::Point3D> ptOk(points[0]);
+        if(!ptOk.check()){
+          for (unsigned int i = 0; i < nrows; i++) {
+            PySequenceHolder<double> row(points[i]);
+            if (row.size() != 3) 
+              throw_value_error("Wrong number of entries in the list of lists");
+            RDGeom::Point3D *rpt = new RDGeom::Point3D(row[0],row[1],row[2]);
+            pts.push_back(rpt);
+          }
+        }else{
+            for (unsigned int i = 0; i < nrows; i++) {
+              python::extract<RDGeom::Point3D> pt(points[i]);
+              if(pt.check()){
+                RDGeom::Point3D *rpt = new RDGeom::Point3D(pt);
+                pts.push_back(rpt);
+              } else {
+                throw_value_error("non-Point3D found in sequence of points");
+              }
+            }
 
-	}
+        }
       } else {
-	throw_value_error("non-sequence argument provided");
+        throw_value_error("non-sequence argument provided");
       }
     }
 
     PyObject *AlignPointPairs(python::object refPoints, python::object probePoints, 
-			      python::object weights=python::list(), bool reflect=false, 
-			      unsigned int maxIterations=50) {
+                              python::object weights=python::list(), bool reflect=false, 
+                              unsigned int maxIterations=50) {
       // The reference and probe points can be specifed in two formats
       // 1. A Numeric array of dimensions (N,3) where N is the number of points
       // 2. A list (or tuple) or lists (or tuples)
@@ -183,6 +183,5 @@ BOOST_PYTHON_MODULE(rdAlignment) {
                python::arg("weights")=python::list(),
                python::arg("reflect")=false, python::arg("maxIterations")=50),
               docString.c_str());
-  //python::return_value_policy<python::manage_new_object>());
 }
 
