@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -75,10 +75,21 @@ namespace Queries {
     };
 
   protected:
-
-  
     MatchFuncArgType d_val;
     MatchFuncArgType d_tol;
+
+  private:    
+    friend class boost::serialization::access;
+    //! required by boost::serialization, handles both serialization and
+    //! deserialization
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & boost::serialization::base_object<Query<MatchFuncArgType,DataFuncArgType,needsConversion> >(*this);
+      ar & d_val;
+      ar & d_tol;
+    }
+
   };
 
 }

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -10,10 +10,14 @@
 #pragma warning (disable: 4800) // warning: converting things to bool
 #endif
 
-#include <vector>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/utility.hpp>
+
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 #include <string>
-#include <boost/smart_ptr.hpp>
 #include <RDGeneral/Invariant.h>
+
 
 namespace Queries {
 
@@ -132,8 +136,18 @@ namespace Queries {
       mfArg = this->d_dataFunc(what);
       return mfArg;
     }
-    
-
+  private:    
+    friend class boost::serialization::access;
+    //! required by boost::serialization, handles both serialization and
+    //! deserialization
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & d_description;
+      ar & d_children;
+      ar & df_negate;
+      // FIX: at this point we can't serialize the conversion or match functions
+    }
   };
 
 

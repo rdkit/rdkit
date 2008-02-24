@@ -1,4 +1,4 @@
-project Query : : ;
+project Query : requirements <library>/boost/serialization//boost_serialization ;
 
 alias Query 
   :

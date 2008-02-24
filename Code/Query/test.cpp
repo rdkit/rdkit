@@ -1,21 +1,25 @@
 // $Id$
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 
 #include "QueryObjects.h"
-#include <iostream>
-#include <math.h>
+#include <cmath>
+#include <istream>
+#include <sstream>
 #include <boost/lexical_cast.hpp>
 
-using namespace std;
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
+
 using namespace Queries;
 
 
 void test1(){
-  cout << "Float" << endl;
+  std::cout << "Float" << std::endl;
   EqualityQuery<double> q(1.0);
 
   CHECK_INVARIANT(!q.Match(0.0),"");
@@ -25,7 +29,7 @@ void test1(){
   CHECK_INVARIANT(!q.Match(-2),"");
 
 
-  cout << "With Tolerance" << endl;
+  std::cout << "With Tolerance" << std::endl;
   q.setTol(0.002);
   CHECK_INVARIANT(!q.Match(0.0),"");
   CHECK_INVARIANT(q.Match(1.0),"");
@@ -43,7 +47,7 @@ void test1(){
 }
 
 void test2(){
-  cout << "Set" << endl;
+  std::cout << "Set" << std::endl;
   SetQuery<int> q;
   q.insert(1);
   q.insert(3);
@@ -64,7 +68,7 @@ void test2(){
 }
 
 void test3(){
-  cout << "And" << endl;
+  std::cout << "And" << std::endl;
   AndQuery<int> *q = new AndQuery<int>;
   LessQuery<int> *l = new LessQuery<int>;
   l->setVal(0);
@@ -89,7 +93,7 @@ void test3(){
 }
 
 void test4(){
-  cout << "Or" << endl;
+  std::cout << "Or" << std::endl;
   OrQuery<int> *q = new OrQuery<int>;
   LessQuery<int> *l = new LessQuery<int>;
   l->setVal(0);
@@ -114,7 +118,7 @@ void test4(){
 }
 
 void test5(){
-  cout << "XOr" << endl;
+  std::cout << "XOr" << std::endl;
   XOrQuery<int> *q = new XOrQuery<int>;
   LessQuery<int> *l = new LessQuery<int>;
   l->setVal(0);
@@ -142,7 +146,7 @@ void test5(){
 int foofun(double bar) { return int(floor(bar)); };
 
 void test6(){
-  cout << "pointer and copy foo" << endl;
+  std::cout << "pointer and copy foo" << std::endl;
   EqualityQuery<int,double,true> q;
   q.setDataFunc(foofun);
   q.setVal(6);
@@ -183,7 +187,7 @@ bool cmp(int v){
 }
 
 void basics1(){
-  cout << "Query" << endl;
+  std::cout << "Query" << std::endl;
   Query<int,float,true> q;
   q.setMatchFunc(matchF);
   q.setDataFunc(dataF);
@@ -193,7 +197,7 @@ void basics1(){
   CHECK_INVARIANT(q.Match(1.1),"");
   CHECK_INVARIANT(!q.Match(-2.0),"");
   
-  cout << "Query2" << endl;
+  std::cout << "Query2" << std::endl;
   Query<bool,int,true> q2;
   q2.setDataFunc(cmp);
   CHECK_INVARIANT(q2.Match(0),"");
@@ -204,7 +208,7 @@ void basics1(){
 }
 
 void basics2(){
-  cout << "Equality" << endl;
+  std::cout << "Equality" << std::endl;
   EqualityQuery<int> q2;
   q2.setVal(3);
   CHECK_INVARIANT(!q2.Match(0),"");
@@ -212,7 +216,7 @@ void basics2(){
   CHECK_INVARIANT(q2.Match(3),"");
   CHECK_INVARIANT(!q2.Match(-3),"");
   
-  cout << "Greater" << endl;
+  std::cout << "Greater" << std::endl;
   GreaterQuery<int> q3;
   q3.setVal(3);
   CHECK_INVARIANT(q3.Match(0),"");
@@ -221,14 +225,14 @@ void basics2(){
   CHECK_INVARIANT(!q3.Match(5),"");
   
 
-  cout << "GreaterEqual" << endl;
+  std::cout << "GreaterEqual" << std::endl;
   GreaterEqualQuery<int> q4(3);
   CHECK_INVARIANT(q4.Match(0),"");
   CHECK_INVARIANT(q4.Match(1),"");
   CHECK_INVARIANT(q4.Match(3),"");
   CHECK_INVARIANT(!q4.Match(5),"");
 
-  cout << "Less" << endl;
+  std::cout << "Less" << std::endl;
   LessQuery<int> q5;
   q5.setVal(3);
   CHECK_INVARIANT(!q5.Match(0),"");
@@ -236,7 +240,7 @@ void basics2(){
   CHECK_INVARIANT(!q5.Match(3),"");
   CHECK_INVARIANT(q5.Match(5),"");
 
-  cout << "LessEqual" << endl;
+  std::cout << "LessEqual" << std::endl;
   LessEqualQuery<int> q6(3);
 
   CHECK_INVARIANT(!q6.Match(0),"");
@@ -245,7 +249,7 @@ void basics2(){
   CHECK_INVARIANT(q6.Match(5),"");
 
 
-  cout << "Open Range" << endl;
+  std::cout << "Open Range" << std::endl;
   RangeQuery<int> q7(0,3);
   CHECK_INVARIANT(!q7.Match(0),"");
   CHECK_INVARIANT(q7.Match(1),"");
@@ -253,7 +257,7 @@ void basics2(){
   CHECK_INVARIANT(!q7.Match(5),"");
 
 
-  cout << "Closed Range" << endl;
+  std::cout << "Closed Range" << std::endl;
   q7.setEndsOpen(false,false);
   CHECK_INVARIANT(q7.Match(0),"");
   CHECK_INVARIANT(q7.Match(1),"");
@@ -266,7 +270,7 @@ void basics2(){
 int convFunc(const char*arg) {return boost::lexical_cast<int>(arg);};
 
 void test7(){
-  cout << "Set2" << endl;
+  std::cout << "Set2" << std::endl;
   SetQuery<int,const char*,true> q;
   q.setDataFunc(convFunc);
   q.insert(1);
@@ -287,11 +291,127 @@ void test7(){
 
 }
 
+void test8(){
+  std::cout << "test serialization" << std::endl;
+  {
+    Query<int> q;
+    q.setMatchFunc(matchF);
+  
+    CHECK_INVARIANT(!q.Match(0),"");
+    CHECK_INVARIANT(q.Match(3),"");
+
+    std::stringstream ss;
+    boost::archive::text_oarchive oa(ss);
+    oa << (const Query<int>)(q);
+
+    boost::archive::text_iarchive ia(ss);
+    Query<int> q2;
+    ia >> q2;
+
+    q2.setMatchFunc(matchF);
+    CHECK_INVARIANT(!q2.Match(0),"");
+    CHECK_INVARIANT(q2.Match(3),"");
+  }
+  {
+    typedef EqualityQuery<int> TestQuery;
+    TestQuery q;
+    q.setVal(3);
+    CHECK_INVARIANT(!q.Match(0),"");
+    CHECK_INVARIANT(!q.Match(1),"");
+    CHECK_INVARIANT(q.Match(3),"");
+    CHECK_INVARIANT(!q.Match(-3),"");
+
+    std::stringstream ss;
+    boost::archive::text_oarchive oa(ss);
+    oa << (const TestQuery)(q);
+
+    boost::archive::text_iarchive ia(ss);
+    TestQuery q2;
+    ia >> q2;
+
+    CHECK_INVARIANT(!q2.Match(0),"");
+    CHECK_INVARIANT(!q2.Match(1),"");
+    CHECK_INVARIANT(q2.Match(3),"");
+    CHECK_INVARIANT(!q2.Match(-3),"");
+  }
+  
+  {
+    typedef EqualityQuery<double> TestQuery;
+    TestQuery q(1.0);
+    q.setTol(0.002);
+    CHECK_INVARIANT(!q.Match(0.0),"");
+    CHECK_INVARIANT(q.Match(1.0),"");
+    CHECK_INVARIANT(q.Match(1.001),"");
+    CHECK_INVARIANT(!q.Match(1.1),"");
+    CHECK_INVARIANT(!q.Match(-2),"");
+
+    std::stringstream ss;
+    boost::archive::text_oarchive oa(ss);
+    oa << (const TestQuery)(q);
+
+    boost::archive::text_iarchive ia(ss);
+    TestQuery q2;
+    ia >> q2;
+    CHECK_INVARIANT(!q2.Match(0.0),"");
+    CHECK_INVARIANT(q2.Match(1.0),"");
+    CHECK_INVARIANT(q2.Match(1.001),"");
+    CHECK_INVARIANT(!q2.Match(1.1),"");
+    CHECK_INVARIANT(!q2.Match(-2),"");
+  }
+
+  {
+    typedef SetQuery<int,const char*,true> TestQuery;
+    TestQuery q;
+    q.setDataFunc(convFunc);
+    q.insert(1);
+    q.insert(3);
+    q.insert(5);
+  
+    CHECK_INVARIANT(!q.Match("0"),"");
+    CHECK_INVARIANT(q.Match("1"),"");
+    CHECK_INVARIANT(q.Match("3"),"");
+    CHECK_INVARIANT(!q.Match("-3"),"");
+    std::stringstream ss;
+    boost::archive::text_oarchive oa(ss);
+    oa << (const TestQuery)(q);
+
+    boost::archive::text_iarchive ia(ss);
+    TestQuery q2;
+    ia >> q2;
+
+    q2.setDataFunc(convFunc);
+    CHECK_INVARIANT(!q2.Match("0"),"");
+    CHECK_INVARIANT(q2.Match("1"),"");
+    CHECK_INVARIANT(q2.Match("3"),"");
+    CHECK_INVARIANT(!q2.Match("-3"),"");
+  }
+
+  {
+    typedef RangeQuery<int> TestQuery;
+    TestQuery q(0,3);
+    q.setEndsOpen(false,false);
+    CHECK_INVARIANT(q.Match(0),"");
+    CHECK_INVARIANT(q.Match(1),"");
+    CHECK_INVARIANT(q.Match(3),"");
+    CHECK_INVARIANT(!q.Match(5),"");
+    std::stringstream ss;
+    boost::archive::text_oarchive oa(ss);
+    oa << (const TestQuery)(q);
+
+    boost::archive::text_iarchive ia(ss);
+    TestQuery q2;
+    ia >> q2;
+    CHECK_INVARIANT(q2.Match(0),"");
+    CHECK_INVARIANT(q2.Match(1),"");
+    CHECK_INVARIANT(q2.Match(3),"");
+    CHECK_INVARIANT(!q2.Match(5),"");
+  }
+}
+
 int main()
 {
   basics1();
   basics2();
-
 
   test1();
   test2();
@@ -300,5 +420,6 @@ int main()
   test5();
   test6();
   test7();
+  test8();
   return 0;
 }

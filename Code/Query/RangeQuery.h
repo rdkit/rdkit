@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -88,6 +88,21 @@ namespace Queries {
     DataFuncArgType d_upper,d_lower;
     DataFuncArgType d_tol;
     bool df_upperOpen,df_lowerOpen;
+  private:    
+    friend class boost::serialization::access;
+    //! required by boost::serialization, handles both serialization and
+    //! deserialization
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & boost::serialization::base_object<Query<MatchFuncArgType,DataFuncArgType,needsConversion> >(*this);
+      ar & d_upper;
+      ar & d_lower;
+      ar & d_tol;
+      ar & df_upperOpen;
+      ar & df_lowerOpen;
+    }
+
   };
 
 }

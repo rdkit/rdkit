@@ -1,11 +1,12 @@
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #ifndef __RD_SETQUERY_H__
 #define __RD_SETQUERY_H__
-#include <set>
+#include <boost/serialization/set.hpp>
+
 #include "Query.h"
 
 namespace Queries{
@@ -54,11 +55,19 @@ namespace Queries{
       res->d_description = this->d_description;
       return res;
     };
-
-  
-  
   protected:
     std::set<MatchFuncArgType> d_set;
+  private:    
+    friend class boost::serialization::access;
+    //! required by boost::serialization, handles both serialization and
+    //! deserialization
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+      ar & boost::serialization::base_object<Query<MatchFuncArgType,DataFuncArgType,needsConversion> >(*this);
+      ar & d_set;
+    }
+
   };
 
 }
