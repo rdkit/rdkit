@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
+#include <RDGeneral/RDLog.h>
 
 namespace RDKit {
   using namespace Canon;
@@ -188,9 +189,8 @@ namespace RDKit {
         needParen = true;
       }
       else {
-        std::stringstream msg;
-        msg << "Cannot write smarts for query type : " << descrip; 
-        throw msg.str().c_str();
+        BOOST_LOG(rdWarningLog)<<"Cannot write SMARTS for query type : " << descrip << ". Ignoring it." <<std::endl;
+        res<<"*";
       }
       return res.str();
     }
