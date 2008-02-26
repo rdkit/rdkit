@@ -18,7 +18,28 @@
 #include <typeinfo>
 
 namespace RDKit{
-  
+  void completeQueryAndChildren(ATOM_EQUALS_QUERY *query,Atom *tgt,int magicVal){
+    PRECONDITION(query,"no query");
+    PRECONDITION(tgt,"no atom");
+    if(query->getVal()==magicVal){
+      int tgtVal=query->getDataFunc()(tgt);
+      query->setVal(tgtVal);
+    }
+    QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI childIt;
+    for(childIt=query->beginChildren();childIt!=query->endChildren();++childIt){
+      completeQueryAndChildren((ATOM_EQUALS_QUERY *)(childIt->get()),tgt,magicVal);
+    }
+  }
+  void CompleteMolQueries(RWMol *mol,int magicVal=-0xDEADBEEF){
+    for (ROMol::AtomIterator ai=mol->beginAtoms();
+         ai != mol->endAtoms(); ++ai){
+      if((*ai)->hasQuery()){
+        ATOM_EQUALS_QUERY *query=static_cast<ATOM_EQUALS_QUERY *>((*ai)->getQuery());
+        completeQueryAndChildren(query,*ai,magicVal);
+      }
+    }
+    
+  }
   
   // it's kind of stinky that we have to do this, but as of g++3.2 and
   // boost 1.30, on linux calls to lexical_cast<int>(std::string)
@@ -217,6 +238,117 @@ namespace RDKit{
             default:
               std::ostringstream errout;
               errout << "Value " << count << " is not supported as a degree query.";
+              throw FileParseException(errout.str()) ;
+          }
+          if(!atom->hasQuery()){
+            QueryAtom a(atom->getAtomicNum());
+            mol->replaceAtom(aid-1,&a);           
+            atom = mol->getAtomWithIdx(aid-1);
+          }
+          atom->expandQuery(q,Queries::COMPOSITE_AND);
+          spos += 4;
+        }
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(spos,4) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+    }
+  }
+
+  void ParseUnsaturationLine(RWMol *mol, std::string text){
+    PRECONDITION(text.substr(0,6)==std::string("M  UNS"),"bad UNS line");
+    
+    unsigned int nent;
+    try {
+      nent = stripSpacesAndCast<unsigned int>(text.substr(6,3));
+    }
+    catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert " << text.substr(6,3) << " to int";
+      throw FileParseException(errout.str()) ;
+    }
+    unsigned int spos = 9;
+    for (unsigned int ie = 0; ie < nent; ie++) {
+      unsigned int aid;
+      int count;
+      try {
+        aid = stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+        spos += 4;
+        Atom *atom=mol->getAtomWithIdx(aid-1); 
+        if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+          count = stripSpacesAndCast<int>(text.substr(spos,4));
+          if(count==0){
+            continue;
+          } else if(count==1){
+            ATOM_EQUALS_QUERY *q=makeAtomUnsaturatedQuery();
+            if(!atom->hasQuery()){
+              QueryAtom a(atom->getAtomicNum());
+              mol->replaceAtom(aid-1,&a);           
+              atom = mol->getAtomWithIdx(aid-1);
+            }
+            atom->expandQuery(q,Queries::COMPOSITE_AND);
+          } else {
+            std::ostringstream errout;
+            errout << "Value " << count << " is not supported as an unsaturation query (only 0 and 1 are allowed).";
+            throw FileParseException(errout.str()) ;
+          }
+        }
+      }catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(spos,4) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+
+    }
+  }
+
+  void ParseRingBondCountLine(RWMol *mol, std::string text){
+    PRECONDITION(text.substr(0,6)==std::string("M  RBC"),"bad RBC line");
+    
+    unsigned int nent;
+    try {
+      nent = stripSpacesAndCast<unsigned int>(text.substr(6,3));
+    }
+    catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert " << text.substr(6,3) << " to int";
+      throw FileParseException(errout.str()) ;
+    }
+    unsigned int spos = 9;
+    for (unsigned int ie = 0; ie < nent; ie++) {
+      unsigned int aid;
+      int count;
+      try {
+        aid = stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+        spos += 4;
+        Atom *atom=mol->getAtomWithIdx(aid-1); 
+        if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
+          count = stripSpacesAndCast<int>(text.substr(spos,4));
+          if(count==0) continue;
+          ATOM_EQUALS_QUERY *q=makeAtomRingBondCountQuery(0);
+          switch(count){
+            case -1:
+              q->setVal(0);break;
+            case -2:
+              q->setVal(-0xDEADBEEF);
+              mol->setProp("_NeedsQueryScan",1);
+              break;
+            case 1:
+            case 2:
+            case 3:
+              q->setVal(count);break;
+            case 4:
+              delete q;
+              q = static_cast<ATOM_EQUALS_QUERY *>(new ATOM_LESSEQUAL_QUERY);
+              q->setVal(4);
+              q->setDescription("AtomRingBondCount");
+              q->setDataFunc(queryAtomRingBondCount);
+              break;
+            default:
+              std::ostringstream errout;
+              errout << "Value " << count << " is not supported as a ring-bond count query.";
               throw FileParseException(errout.str()) ;
           }
           if(!atom->hasQuery()){
@@ -827,14 +959,16 @@ namespace RDKit{
         line++;
         tempStr = getLine(inStream);
       }
-
+      
       //tempStr = inLine;
       std::string lineBeg=tempStr.substr(0,6);
       while(!inStream->eof() && lineBeg!="M  END" && tempStr.substr(0,4)!="$$$$"){
         if(lineBeg=="M  ALS") ParseNewAtomList(res,tempStr);
         else if(lineBeg=="M  ISO") ParseIsotopeLine(res,tempStr);
         else if(lineBeg=="M  RGP") ParseRGroupLabels(res,tempStr);
+        else if(lineBeg=="M  RBC") ParseRingBondCountLine(res,tempStr);
         else if(lineBeg=="M  SUB") ParseSubstitutionCountLine(res,tempStr);
+        else if(lineBeg=="M  UNS") ParseUnsaturationLine(res,tempStr);
         else if(lineBeg=="M  CHG") {
           ParseChargeLine(res, tempStr,firstChargeLine);
           firstChargeLine=false;
@@ -914,7 +1048,10 @@ namespace RDKit{
       }
     }
 
-    
+    if(res->hasProp("_NeedsQueryScan")){
+      res->clearProp("_NeedsQueryScan");
+      CompleteMolQueries(res);
+    }
     return res;
   };
   

@@ -148,6 +148,37 @@ ATOM_EQUALS_QUERY *makeAtomSimpleQuery(int what,int func(Atom const *)){
   return res;
 }
 
+
+unsigned int queryAtomBondProduct(Atom const * at) {
+  ROMol::OEDGE_ITER beg,end;
+  ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
+  boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
+  unsigned int prod=1;
+  while(beg!=end){
+    const Bond *bond=pMap[*beg];
+    prod *= static_cast<unsigned int>(firstThousandPrimes[bond->getBondType()]);
+    beg++;
+  }
+  return prod;
+}
+unsigned int queryAtomAllBondProduct(Atom const * at) {
+  ROMol::OEDGE_ITER beg,end;
+  ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
+  boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
+  unsigned int prod=1;
+  while(beg!=end){
+    const Bond *bond=pMap[*beg];
+    prod *= static_cast<unsigned int>(firstThousandPrimes[bond->getBondType()]);
+    beg++;
+  }
+  for(unsigned int i=0;i<at->getTotalNumHs();i++){
+    prod *= static_cast<unsigned int>(firstThousandPrimes[Bond::SINGLE]);
+  }
+  return prod;
+}
+
+
+
 ATOM_EQUALS_QUERY *makeAtomImplicitValenceQuery(int what){
   ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery(what,queryAtomImplicitValence);
   res->setDescription("AtomImplicitValence");
@@ -196,6 +227,12 @@ ATOM_EQUALS_QUERY *makeAtomAliphaticQuery(){
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomUnsaturatedQuery(){
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(true,queryAtomUnsaturated);
+  res->setDescription("AtomUnsaturated");
+  return res;
+}
+
 ATOM_EQUALS_QUERY *makeAtomMassQuery(int what){
   ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomMass);
   res->setDescription("AtomMass");
@@ -213,7 +250,6 @@ ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what){
   res->setDescription("AtomHybridization");
   return res;
 }
-
   
 ATOM_EQUALS_QUERY *makeAtomInRingQuery(){
   ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(true,queryIsAtomInRing);
@@ -227,8 +263,6 @@ ATOM_EQUALS_QUERY *makeAtomInNRingsQuery(int what){
   res->setDescription("AtomInNRings");
   return res;
 }
-
-
 
 BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what){
   BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;

@@ -68,6 +68,7 @@ namespace RDKit{
   static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
   static int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
   static int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
+  static int queryAtomUnsaturated(Atom const * at) { return static_cast<int>(at->getDegree())<at->getExplicitValence(); };
   static int queryAtomNum(Atom const * at) { return at->getAtomicNum(); };
   static int queryAtomMass(Atom const * at) {
     // FIX: this really shouldn't be using integers
@@ -77,6 +78,8 @@ namespace RDKit{
       return static_cast<int>(at->getFormalCharge()); 
   };
   static int queryAtomHybridization(Atom const * at) { return at->getHybridization(); };
+  unsigned int queryAtomBondProduct(Atom const * at);
+  unsigned int queryAtomAllBondProduct(Atom const * at);
     
     
   // -------------------------------------------------
@@ -138,6 +141,8 @@ namespace RDKit{
   ATOM_EQUALS_QUERY *makeAtomFormalChargeQuery(int what);
   //! returns a Query for matching hybridization
   ATOM_EQUALS_QUERY *makeAtomHybridizationQuery(int what);
+  //! returns a Query for matching atoms with unsaturation:
+  ATOM_EQUALS_QUERY *makeAtomUnsaturatedQuery();
 
   //! returns a Query for matching ring atoms
   ATOM_EQUALS_QUERY *makeAtomInRingQuery();

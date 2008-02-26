@@ -1036,6 +1036,220 @@ void testMolFileDegreeQueries(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileRBCQueries(){
+  BOOST_LOG(rdInfoLog) << "testing mol file ring-bond count queries" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  RWMol *m;
+  RWMol *m2;
+  MatchVectType mv;
+  std::string smi;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_2.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CC";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  smi = "C1CCC1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+  delete m2;
+  smi = "C12C3C4C1C5C2C3C45";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_3.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CC";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  smi = "C1CCC1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  smi = "C12C3C4C1C5C2C3C45";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+  delete m2;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_0.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CC";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+  delete m2;
+  smi = "C1CCC1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_4.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  smi = "CC";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  smi = "C1CCC1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  smi = "C12C3C4C1C5C2C3C45";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+
+  smi = "C1CS234C5CC2CC13CC4C5";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+  delete m2;
+  smi = "C1C2CC3CC4CC1S234";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CC";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+  delete m2;
+  smi = "C1CCC1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star2.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CC";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  smi = "C1CCC1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  smi = "C1CC2C1CC2";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  smi = "C12C3C4C1C5C2C3C45";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star3.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CC";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  smi = "C1CCC1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==4);
+  delete m2;
+  smi = "C1CC2C1CC2";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+  smi = "C12C3C4C1C5C2C3C45";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+
+  delete m;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+void testMolFileUnsaturationQueries(){
+  BOOST_LOG(rdInfoLog) << "testing mol file unsaturation queries" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  RWMol *m;
+  RWMol *m2;
+  MatchVectType mv;
+  std::string smi;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/unsaturation.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  smi = "CO";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+
+  smi = "C=O";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+  delete m2;
+
+  smi = "CCO";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==0);
+  delete m2;
+
+  smi = "C=CO";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+  delete m2;
+  
+  smi = "C#CO";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  TEST_ASSERT(mv.size()==2);
+  delete m2;
+  
+  delete m;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 
@@ -1061,6 +1275,8 @@ int main(int argc,char *argv[]){
   testMolFileRGroups();
 #endif
   testMolFileDegreeQueries();
+  testMolFileRBCQueries();
+  testMolFileUnsaturationQueries();
   //testCrash();
   return 0;
 }
