@@ -64,8 +64,12 @@ namespace Queries {
 
     //! sets our match function
     void setMatchFunc(bool (*what)(MatchFuncArgType)) { this->d_matchFunc = what; };
+    //! returns our match function:
+    bool (*getMatchFunc() const)(MatchFuncArgType) { return this->d_matchFunc; };
     //! sets our data function
     void setDataFunc(MatchFuncArgType (*what)(DataFuncArgType)) { this->d_dataFunc = what; };
+    //! returns our data function:
+    MatchFuncArgType (*getDataFunc() const)(DataFuncArgType) { return this->d_dataFunc; };
 
     //! adds a child to our list of children
     void addChild(CHILD_TYPE child) { this->d_children.push_back(child); };

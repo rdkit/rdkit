@@ -193,6 +193,11 @@ void basics1(){
   CHECK_INVARIANT(q.Match(1.1),"");
   CHECK_INVARIANT(!q.Match(-2.0),"");
   
+  TEST_ASSERT(!q.getMatchFunc()(0));
+  TEST_ASSERT(q.getMatchFunc()(3));
+  TEST_ASSERT(q.getDataFunc()(1.0)==dataF(1.0));
+  
+
   cout << "Query2" << endl;
   Query<bool,int,true> q2;
   q2.setDataFunc(cmp);
