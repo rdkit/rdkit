@@ -336,7 +336,7 @@ namespace RDKit {
     // get the easy situations (boundary conditions) out of the
     // way first:
 
-    if( d_len>-1 && idx>=d_len) {
+    if( d_len>-1 && idx>=static_cast<unsigned int>(d_len)) {
       std::ostringstream errout;
       errout << "ERROR: Index error (idx = " << idx  << "): " << "ran out of lines\n";
       throw FileParseException(errout.str());

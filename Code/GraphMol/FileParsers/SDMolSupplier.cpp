@@ -280,6 +280,7 @@ namespace RDKit {
 
     // move until we hit the desired idx
     if (idx < d_molpos.size() ) {
+      dp_inStream->clear();
       dp_inStream->seekg(d_molpos[idx]);
       d_last = idx;
     } else {

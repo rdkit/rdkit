@@ -86,8 +86,15 @@ void testRandMolSup() {
   // get the last molecule:
   mol = sdsup[15];
   TEST_ASSERT(mol);
+  delete mol;
+
   // and make sure we're at the end:
   TEST_ASSERT(sdsup.atEnd());
+  // now make sure we can grab earlier mols (was sf.net issue 1904170):
+  mol = sdsup[0];
+  TEST_ASSERT(mol);
+  delete mol;
+
 
   // Issue 113: calling length before grabbing a molecule results in crashes:
   SDMolSupplier sdsup2(fname);
@@ -114,6 +121,15 @@ void testSmilesSup() {
   mol->getProp("TPSA", mname);
   CHECK_INVARIANT(mname == "82.78", "");
   delete mol;
+
+  mol = nSup2[9];
+  TEST_ASSERT(mol);
+  delete mol;
+  // now make sure we can grab earlier mols (was sf.net issue 1904170):
+  mol = nSup2[0];
+  TEST_ASSERT(mol);
+  delete mol;
+
 
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
   //fname = "../test_data/first_200.tpsa.csv";
@@ -876,6 +892,11 @@ int testTDTSupplier3() {
   }
   TEST_ASSERT(i==4);
   TEST_ASSERT(suppl.length()==4);
+
+  // now make sure we can grab earlier mols (was sf.net issue 1904170):
+  ROMol *mol = suppl[0];
+  TEST_ASSERT(mol);
+  delete mol;
 
   // make sure we can reset the supplier and still process it properly;
   suppl.setData(data,"CAS");
