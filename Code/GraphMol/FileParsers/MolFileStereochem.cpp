@@ -356,13 +356,15 @@ namespace RDKit {
                                         const INT_MAP_INT &wedgeBonds, 
                                         const Conformer *conf){
     PRECONDITION(bond,"no bond");
-    PRECONDITION(conf,"no conformer");
     PRECONDITION(bond->getBondType()==Bond::SINGLE,
                  "bad bond order for wedging");
     const ROMol *mol=&(bond->getOwningMol());
     PRECONDITION(mol,"no mol");
 
     Bond::BondDir res=Bond::NONE;
+    if(!conf){
+      return res;
+    }
     
     int bid = bond->getIdx();
     INT_MAP_INT_CI wbi = wedgeBonds.find(bid);
