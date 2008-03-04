@@ -214,6 +214,7 @@ namespace RDKit {
           TDTParseUtils::ParseNumberList(rest,coords,dp_inStream);
           Conformer *conf=new Conformer(res->getNumAtoms());
           conf->setId(d_confId2D);
+          conf->set3D(false);
           for(unsigned int atIdx=0;atIdx<res->getNumAtoms();atIdx++){
             if(2*atIdx+1 < coords.size()){
               conf->setAtomPos(atIdx,RDGeom::Point3D(coords[2*atIdx],coords[2*atIdx+1],0.0));
@@ -228,6 +229,7 @@ namespace RDKit {
           TDTParseUtils::ParseNumberList(rest,coords,dp_inStream);
           Conformer *conf=new Conformer(res->getNumAtoms());
           conf->setId(d_confId3D);
+          conf->set3D(true);
           for(unsigned int atIdx=0;atIdx<res->getNumAtoms();atIdx++){
             if(3*atIdx+2 < coords.size()){
               conf->setAtomPos(atIdx,RDGeom::Point3D(coords[3*atIdx],
