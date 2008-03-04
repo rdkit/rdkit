@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2005 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //       All Rights Reserved
 //
 
@@ -174,33 +174,9 @@ void test2(){
 
   delete m;
 
-
-
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-
-void test3(){
-  // basic SD Parsing
-  BOOST_LOG(rdInfoLog) << " ----------> Test3 "<< std::endl;
-#if 0
-  // The SDFilesToMols stuff has been removed
-  std::string rdbase = getenv("RDBASE");
-  rdbase += "/Code/GraphMol/FileParsers/";
-  std::string fName = rdbase + "test_data/esters.sdf";
-
-
-  //RWMOL_SPTR_VECT mols = SDFileToMols(fName);
-  //CHECK_INVARIANT(mols.size()==6,"");
-
-  //fName = rdbase+"test_data/earlyEOF.sdf";
-  //mols = SDFileToMols(fName);
-  //CHECK_INVARIANT(mols.size()==6,"");
-#endif
-
-  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
-}
 
 void test4(){
   // basic writing test
@@ -993,7 +969,6 @@ void testMolFileDegreeQueries(){
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/subst3.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
-  std::cerr << " QUERY SMARTS " << MolToSmarts(*m) << std::endl; 
   
   smi = "CC(=O)O";
   m2 = SmilesToMol(smi,false,false);
@@ -1025,7 +1000,6 @@ void testMolFileDegreeQueries(){
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/subst4.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
-  std::cerr << " QUERY SMARTS " << MolToSmarts(*m) << std::endl; 
   
   smi = "CC(=O)O";
   m2 = SmilesToMol(smi,false,false);
@@ -1049,7 +1023,7 @@ void testMolFileRBCQueries(){
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_2.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
-
+  
   smi = "CC";
   m2 = SmilesToMol(smi);
   TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
@@ -1066,6 +1040,7 @@ void testMolFileRBCQueries(){
   TEST_ASSERT(mv.size()==0);
   delete m2;
 
+  delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_3.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
@@ -1086,6 +1061,7 @@ void testMolFileRBCQueries(){
   TEST_ASSERT(mv.size()==2);
   delete m2;
 
+  delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_0.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
@@ -1102,6 +1078,7 @@ void testMolFileRBCQueries(){
   delete m2;
   
 
+  delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_4.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
@@ -1132,6 +1109,7 @@ void testMolFileRBCQueries(){
   TEST_ASSERT(mv.size()==2);
 
 
+  delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
@@ -1147,6 +1125,7 @@ void testMolFileRBCQueries(){
   TEST_ASSERT(mv.size()==0);
   delete m2;
   
+  delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star2.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
@@ -1172,6 +1151,7 @@ void testMolFileRBCQueries(){
   TEST_ASSERT(mv.size()==0);
   delete m2;
 
+  delete m;
   fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star3.mol";
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
@@ -1250,6 +1230,66 @@ void testMolFileUnsaturationQueries(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileQueryToSmarts(){
+  BOOST_LOG(rdInfoLog) << "testing mol file queries -> SMARTS " << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  RWMol *m;
+  std::string sma;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_2.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  sma = MolToSmarts(*m,true);
+  TEST_ASSERT(sma=="[#6&$(*(@*)@*)&!$(*(@*)(@*)@*)]-[#6]")
+  
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_3.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  sma = MolToSmarts(*m,true);
+  TEST_ASSERT(sma=="[#6&$(*(@*)(@*)@*)&!$(*(@*)(@*)(@*)@*)]-[#6]")
+
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_0.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  sma = MolToSmarts(*m,true);
+  TEST_ASSERT(sma=="[#6&!$(*@*)]-[#6]")
+
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_4.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  sma = MolToSmarts(*m,true);
+  TEST_ASSERT(sma=="[#16&$(*(@*)(@*)(@*)@*)&!$(*(@*)(@*)(@*)(@*)@*)]-[#6]")
+
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  sma = MolToSmarts(*m,true);
+  TEST_ASSERT(sma=="[#6&!$(*@*)]-[#6]")
+  
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/ringcount_star2.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  sma = MolToSmarts(*m,true);
+  TEST_ASSERT(sma.find("[#6&$(*(@*)@*)&!$(*(@*)(@*)@*)]")!=std::string::npos);
+
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/unsaturation.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  sma = MolToSmarts(*m,true);
+  TEST_ASSERT(sma=="[#6;$(*=,:,#*)]~[#8]")
+
+  delete m;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 
@@ -1258,7 +1298,6 @@ int main(int argc,char *argv[]){
 #if 1
   test1();
   test2();
-  test3();
   test4();
   test5();
   test6();
@@ -1277,6 +1316,7 @@ int main(int argc,char *argv[]){
   testMolFileDegreeQueries();
   testMolFileRBCQueries();
   testMolFileUnsaturationQueries();
+  testMolFileQueryToSmarts();
   //testCrash();
   return 0;
 }

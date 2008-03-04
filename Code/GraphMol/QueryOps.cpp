@@ -138,8 +138,6 @@ BOND_EQUALS_QUERY *makeBondMinRingSizeQuery(int tgt){
   return res;
 }
 
-
-
 ATOM_EQUALS_QUERY *makeAtomSimpleQuery(int what,int func(Atom const *)){
   ATOM_EQUALS_QUERY *res = new ATOM_EQUALS_QUERY;
   res->setVal(what);

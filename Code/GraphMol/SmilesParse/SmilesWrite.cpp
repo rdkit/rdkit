@@ -5,8 +5,10 @@
 //   @@ All Rights Reserved  @@
 //
 #include "SmilesWrite.h"
+#include <GraphMol/RDKitBase.h>
+#include <RDGeneral/types.h>
 #include <GraphMol/Canon.h>
-
+#include <boost/lexical_cast.hpp>
 #include <sstream>
 #include <map>
 #include <list>
@@ -16,7 +18,19 @@
 namespace RDKit{
 
   namespace SmilesWrite{
-    const int atomicSmiles[] = {5,6,7,8,15,16,9,17,35,53,-1};
+    const int atomicSmiles[] = {5,6,7,8,9,15,16,17,35,53,-1};
+    bool inOrganicSubset(int atomicNumber){
+      unsigned int idx=0;
+      while( atomicSmiles[idx]<atomicNumber &&
+             atomicSmiles[idx]!=-1){
+        ++idx;
+      }
+      if(atomicSmiles[idx]==atomicNumber){
+        return true;
+      }
+      return false;
+    }
+
 
     std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
       PRECONDITION(atom,"bad atom");
@@ -38,10 +52,10 @@ namespace RDKit{
       double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(num) -
                            atom->getMass());
   
-      std::string symb = atom->getSymbol();
       bool needsBracket=false;
-      if(std::find(atomicSmilesVect.begin(),atomicSmilesVect.end(),num) !=
-         atomicSmilesVect.end()){
+      std::string symb;
+      symb = atom->getSymbol();
+      if(inOrganicSubset(num)){
         // it's a member of the organic subset 
         if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -= ('A'-'a');
 
@@ -72,6 +86,7 @@ namespace RDKit{
         res <<iMass;
       }
       res << symb;
+
       bool chiralityIncluded=false;
       if(atom->getOwningMol().hasProp("_doIsoSmiles") &&
          atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){

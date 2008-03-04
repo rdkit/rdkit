@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2006 Rational Discovery LLC
+//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -93,8 +93,9 @@ namespace RDKit {
       int val = torig->getVal();
       std::string res = PeriodicTable::getTable()->getElementSymbol(val);
       if (odsc == "AtomIsAromatic") {
-        // if aroamtic convert the symbol to a small metter
-        // we will assume we can have only organic element with single letter symbols as aromatic
+        // if aromatic convert the symbol to a small letter
+        // we will assume we can have only organic element
+        // with single letter symbols as aromatic
         CHECK_INVARIANT(res.length() == 1, "Two lettered element cannot be aromatic");
         res[0] += ('a' - 'A');
       }
@@ -112,55 +113,43 @@ namespace RDKit {
       if (descrip == "AtomImplicitValence") { // FIX: is this correct
         res << "h" << query->getVal();
         needParen = true;
-      }
-      else if (descrip == "AtomTotalValence") {
+      } else if (descrip == "AtomTotalValence") {
         res << "v" << query->getVal();
         needParen = true;
-      }
-      else if (descrip == "AtomAtomicNum") {
+      } else if (descrip == "AtomAtomicNum") {
         res << "#" << query->getVal();
         needParen = true;
-      }
-      else if (descrip == "AtomExplicitDegree") {
+      } else if (descrip == "AtomExplicitDegree") {
         res << "D" << query->getVal();
         needParen = true;
-      }
-      else if (descrip == "AtomTotalDegree") {
+      } else if (descrip == "AtomTotalDegree") {
         res << "X" << query->getVal();
         needParen = true;
-      }
-      else if (descrip == "AtomHCount") {
+      } else if (descrip == "AtomHCount") {
         res << "H" << query->getVal();
         needParen = true;
-      }
-      else if (descrip == "AtomIsAliphatic") {
+      } else if (descrip == "AtomIsAliphatic") {
         res << "A";
         needParen = false;
-      }
-      else if (descrip == "AtomIsAromatic") {
+      } else if (descrip == "AtomIsAromatic") {
         res << "a";
         needParen = false;
-      }
-      else if (descrip == "AtomNull") {
+      } else if (descrip == "AtomNull") {
         res << "*";
         needParen = false;
-      }
-      else if (descrip == "AtomInRing") {
+      } else if (descrip == "AtomInRing") {
         res << "R";
         needParen = true;
-      }
-      else if (descrip == "AtomInRingSize") {
+      } else if (descrip == "AtomInRingSize") {
         res << "r" << query->getVal();
         needParen = true;
-      }
-      else if (descrip == "AtomInNRings") {
+      } else if (descrip == "AtomInNRings") {
         res << "R";
         if(query->getVal()>=0){
           res << query->getVal();
         }
         needParen = true;
-      }
-      else if (descrip == "AtomFormalCharge") {
+      } else if (descrip == "AtomFormalCharge") {
         int val = query->getVal();
         if (val < 0) {
           res << "-";
@@ -171,7 +160,6 @@ namespace RDKit {
         if (abs(val) != 1) {
           res << abs(val);
         }
-
         needParen = true;
       }
       else if (descrip == "AtomHybridization") {
@@ -182,13 +170,36 @@ namespace RDKit {
         case Atom::SP2: res << "2"; break;
         case Atom::SP3: res << "3"; break;
         }
-
-      }
-      else if (descrip == "AtomMass") {
+      } else if (descrip == "AtomMass") {
         res << query->getVal();
         needParen = true;
-      }
-      else {
+      } else if (descrip == "AtomRingBondCount") {
+        int count=query->getVal();
+        if(count==0){
+          res<<"!";
+        }
+        res<<"$(*";
+        while(count>1){
+          res<<"(@*)";
+          --count;
+        }
+        res<<"@*)";
+        count=query->getVal()+1;
+        if(count>1){
+          // put in a counter query for the next highest number of ring
+          // bonds:
+          res<<"&!$(*";
+          while(count>1){
+            res<<"(@*)";
+            --count;
+          }
+          res<<"@*)";
+        }
+        needParen = true;
+      } else if (descrip == "AtomUnsaturated") {
+        res<<"$(*=,:,#*)";
+        needParen = true;
+      } else {
         BOOST_LOG(rdWarningLog)<<"Cannot write SMARTS for query type : " << descrip << ". Ignoring it." <<std::endl;
         res<<"*";
       }
@@ -483,8 +494,6 @@ namespace RDKit {
       res += _combineChildSmarts(csmarts1, csmarts2, descrip);
       return res;
     }
-
-
     
     std::string FragmentSmartsConstruct(ROMol &mol,unsigned int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
@@ -500,7 +509,6 @@ namespace RDKit {
       VECT_INT_VECT rings;
       mol.getRingInfo()->reset();
       mol.getRingInfo()->initialize();
-    
       Canon::canonicalizeFragment(mol,atomIdx,colors,ranks,
                                   molStack);
 
@@ -546,6 +554,71 @@ namespace RDKit {
       return res.str();
     }
 
+    // this is the used when converting a SMILES or
+    // non-query atom from a mol file into SMARTS.
+    std::string getNonQueryAtomSmarts(const QueryAtom *qatom){
+      PRECONDITION(qatom,"bad atom");
+      PRECONDITION(!qatom->hasQuery(),"atom should not have query");
+      std::stringstream res;
+      res<<"[";
+      if(SmilesWrite::inOrganicSubset(qatom->getAtomicNum())){
+        res<<"#"<<qatom->getAtomicNum();
+      } else {
+        res<<qatom->getSymbol();
+      }
+      int hs=qatom->getNumExplicitHs();
+      // FIX: probably should be smarter about Hs:
+      if(hs){
+        res<<"H";
+        if(hs>1) res<<hs;
+      }
+      int chg=qatom->getFormalCharge();
+      if(chg){
+        if(chg==-1){
+          res<<"-";
+        } else if(chg==1){
+          res<<"+";
+        } else if(chg<0){
+          res<<qatom->getFormalCharge();
+        } else {
+          res<<"+"<<qatom->getFormalCharge();
+        }
+      }
+      res<<"]";
+      return res.str();
+    }
+    
+    // this is the used when converting a SMILES or
+    // non-query bond from a mol file into SMARTS.
+    std::string getNonQueryBondSmarts(const QueryBond *qbond){
+      PRECONDITION(qbond,"bad bond");
+      PRECONDITION(!qbond->hasQuery(),"bond should not have query");
+      std::string res;
+
+      if(qbond->getIsAromatic()){
+        res=":";
+      } else {
+        switch(qbond->getBondType()){
+        case Bond::SINGLE:
+          res="-";
+          break;
+        case Bond::DOUBLE:
+          res="=";
+          break;
+        case Bond::TRIPLE:
+          res="#";
+          break;
+        case Bond::AROMATIC: 
+          res=":"; 
+          break;
+        default:
+          // do nothing (i.e. match anything)
+          res="";
+          break;
+        }
+      }
+      return res;
+    }
 
   } // end of local utility namespace
 
@@ -556,7 +629,8 @@ namespace RDKit {
       bool needParen=false;
     
       if(!qatom->hasQuery()){
-        return SmilesWrite::GetAtomSmiles(qatom);
+        res =getNonQueryAtomSmarts(qatom);
+        return res;
       }  
       QueryAtom::QUERYATOM_QUERY *query = qatom->getQuery();
       PRECONDITION(query,"atom has no query");
@@ -595,12 +669,12 @@ namespace RDKit {
       std::string res = "";
     
       // it is possible that we are regular single bond and we don't need to write anything
+      if(!bond->hasQuery()){
+        return getNonQueryBondSmarts(bond);
+      }
       if ((typeid(*bond) == typeid(Bond)) && 
           ( (bond->getBondType() == Bond::SINGLE) || (bond->getBondType() == Bond::AROMATIC)) ) {
         return res;
-      }
-      if(!bond->hasQuery()){
-        return SmilesWrite::GetBondSmiles(bond);
       }
       const QueryBond::QUERYBOND_QUERY *query = bond->getQuery();
       PRECONDITION(query,"bond has no query");

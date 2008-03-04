@@ -913,7 +913,7 @@ void testSmartsSmiles(){
   std::string sma,smi;
   
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing cleaner SMILES from SMARTS" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing cleaner SMARTS -> SMILES " << std::endl;
 
   smi ="c1ccccc1";
   mol = SmartsToMol(smi);
@@ -930,6 +930,66 @@ void testSmartsSmiles(){
 
   
   delete mol;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testSmilesSmarts(){
+  RWMol *mol;
+  std::string sma,smi;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing SMILES -> SMARTS" << std::endl;
+
+  smi ="CC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="[#6]-[#6]");
+  delete mol;
+
+  smi ="C[Si]";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="[#6]-[Si]");
+  delete mol;
+
+  smi ="[CH2-]C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="[#6H2-]-[#6]");
+  delete mol;
+
+  smi ="[CH-2]C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="[#6H-2]-[#6]");
+  delete mol;
+
+  smi ="[CH4+]C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="[#6H4+]-[#6]");
+  delete mol;
+
+  smi ="[CH5+2]C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="[#6H5+2]-[#6]");
+  delete mol;
+
+  smi ="c1ccccc1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="[#6]:1:[#6]:[#6]:[#6]:[#6]:[#6]1");
+  delete mol;
+
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -958,6 +1018,7 @@ main(int argc, char *argv[])
   testAtomMap();
   testSmartsSmiles();
 #endif
+  testSmilesSmarts();
   //testIssue1804420();
   return 0;
 }
