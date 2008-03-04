@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -40,10 +40,19 @@ namespace RDKit {
     friend class ROMol;
 
     //! Constructor
-    Conformer();
+    Conformer() : df_is3D(true), d_id(0), dp_mol(NULL) {
+      d_positions.clear();
+    };
 
     //! Constructor with number of atoms specified ID specification
-    Conformer(unsigned int numAtoms);
+    Conformer(unsigned int numAtoms) : df_is3D(true), d_id(0), dp_mol(NULL) {
+      if(numAtoms){
+        d_positions.resize(numAtoms, RDGeom::Point3D(0.0, 0.0, 0.0));
+      } else {
+        d_positions.resize(0);
+        d_positions.clear();
+      }
+    };
 
     //! Copy COnstructor: initialize from a second conformation.
     Conformer(const Conformer &other);
@@ -64,12 +73,6 @@ namespace RDKit {
 
     //! Get the molecule that oqns this conformation
     ROMol &getOwningMol() const {return *dp_mol;}
-
-    //! Set owning moelcule
-    //void setOwningMol(ROMol *mol);
-
-    //! Set owning moelcule
-    //void setOwningMol(ROMol &mol);
 
     //! Get a const reference to the vector of atom positions
     const RDGeom::POINT3D_VECT &getPositions() const;
@@ -105,6 +108,12 @@ namespace RDKit {
       return d_positions.size();
     }
 
+    inline bool is3D() const {
+      return df_is3D;
+    }
+    inline void set3D(bool v) {
+      df_is3D=v;
+    }
   protected:
     //! Set owning moelcule
     void setOwningMol(ROMol *mol);
@@ -113,6 +122,7 @@ namespace RDKit {
     void setOwningMol(ROMol &mol);
 
   private:
+    bool df_is3D; // is this a 3D conformation?
     unsigned int d_id; // id is the conformation
     ROMol *dp_mol; // owning molecule
     RDGeom::POINT3D_VECT d_positions; // positions of the atoms

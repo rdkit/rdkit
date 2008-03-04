@@ -190,12 +190,15 @@ void test4(){
   std::string smi=MolToSmiles(*m);
   CHECK_INVARIANT(smi=="c1cc[cH-]c1",smi);
 
+  TEST_ASSERT(m->getConformer().is3D()==false);
+
   std::string molBlock = MolToMolBlock(*m);
   delete m;
   m = MolBlockToMol(molBlock);
   TEST_ASSERT(m);
   smi = MolToSmiles(*m);
   CHECK_INVARIANT(smi=="c1cc[cH-]c1",smi);
+  TEST_ASSERT(m->getConformer().is3D()==false);
 
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
@@ -210,6 +213,13 @@ void test5(){
   RWMol *m = MolFileToMol(fName);
   CHECK_INVARIANT(m,"");
   TEST_ASSERT(m->getNumAtoms()==23);
+  TEST_ASSERT(m->getConformer().is3D()==true);
+  std::string molBlock = MolToMolBlock(*m);
+  delete m;
+  m = MolBlockToMol(molBlock);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==23);
+  TEST_ASSERT(m->getConformer().is3D()==true);
 
   delete m;
   // now try without removing the Hs:

@@ -183,7 +183,7 @@ namespace RDKit{
   //------------------------------------------------
   std::string MolToMolBlock(const ROMol &mol,bool includeStereo, int confId){
     // NOTE: kekulize the molecule before writing it out
-    // because of the way mol files handle aroamticity
+    // because of the way mol files handle aromaticity
     ROMol tromol(mol);
     RWMol &trwmol = static_cast<RWMol &>(tromol);
     MolOps::Kekulize(trwmol);
@@ -213,6 +213,13 @@ namespace RDKit{
     nProducts=0;
     nIntermediates=0;
 
+    const Conformer *conf;
+    if(confId<0 && tmol.getNumConformers()==0){
+      conf=0;
+    } else {
+      conf = &(tmol.getConformer(confId));
+    }
+
     if(tmol.hasProp("_Name")){
       std::string name;
       tmol.getProp("_Name",name);
@@ -225,6 +232,18 @@ namespace RDKit{
       std::string info;
       tmol.getProp("MolFileInfo",info);
       res += info;
+    } else {
+      std::stringstream ss;
+      ss<<"  "<<std::setw(8)<<"RDKit";
+      ss<<std::setw(10)<<"";
+      if(conf){
+        if(conf->is3D()){
+          ss<<"3D";
+        } else {
+          ss<<"2D";
+        }
+      }
+      res += ss.str();
     }
     res += "\n";
     // comments
@@ -248,13 +267,6 @@ namespace RDKit{
     ss<<std::setw(3)<<nIntermediates;
     ss<<"999 V2000\n";
     res += ss.str();
-    const Conformer *conf;
-    if(confId<0 && tmol.getNumConformers()==0){
-      conf=0;
-    } else {
-      conf = &(tmol.getConformer(confId));
-    }
-
     ROMol::ConstAtomIterator atomIt;
     for(atomIt=tmol.beginAtoms();atomIt!=tmol.endAtoms();atomIt++){
       res += GetMolFileAtomLine(*atomIt, conf);

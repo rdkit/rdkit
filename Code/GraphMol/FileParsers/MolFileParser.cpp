@@ -833,6 +833,14 @@ namespace RDKit{
     line++;
     tempStr = getLine(inStream);
     res->setProp("_MolFileInfo", tempStr);
+    if(tempStr.length()>=22){
+      std::string dimLabel=tempStr.substr(20,2);
+      if(dimLabel=="2d"||dimLabel=="2D"){
+        res->setProp("_2DConf",1);
+      } else if(dimLabel=="3d"||dimLabel=="3D"){
+        res->setProp("_3DConf",1);
+      }
+    }
     // comments
     line++;
     tempStr = getLine(inStream);
@@ -916,6 +924,13 @@ namespace RDKit{
         Atom *atom = ParseMolFileAtomLine(tempStr, pos);
         unsigned int aid = res->addAtom(atom,false,true);
         conf->setAtomPos(aid, pos);
+      }
+      if(res->hasProp("_2DConf")){
+        conf->set3D(false);
+        res->clearProp("_2DConf");
+      } else if(res->hasProp("_3DConf")){
+        conf->set3D(true);
+        res->clearProp("_3DConf");
       }
       //std::cerr <<"\taddConf" << std::endl;
       res->addConformer(conf, true);

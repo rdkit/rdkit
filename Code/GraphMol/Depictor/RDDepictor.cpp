@@ -243,7 +243,7 @@ namespace RDDepict {
   unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags, bool clearConfs) {
     // create a conformation to store the coordinates and add it to the molecule 
     RDKit::Conformer *conf = new RDKit::Conformer(mol.getNumAtoms());
-
+    conf->set3D(false);
     std::list<EmbeddedFrag>::iterator eri;
     for (eri = efrags.begin(); eri != efrags.end(); eri++) {
       const INT_EATOM_MAP &eatoms = eri->GetEmbeddedAtoms();

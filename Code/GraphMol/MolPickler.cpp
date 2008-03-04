@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -14,8 +14,7 @@
 namespace RDKit{
 
 #ifndef OLD_PICKLE
-  //const int MolPickler::versionMajor=2;
-  const int MolPickler::versionMajor=4;
+  const int MolPickler::versionMajor=5;
 #else
   const int MolPickler::versionMajor=1;
 #endif
@@ -320,13 +319,15 @@ namespace RDKit{
   template <typename T>
   void MolPickler::_pickleConformer(std::ostream &ss,const Conformer *conf) {
     PRECONDITION(conf,"empty conformer");
-    float tmpFloat;
+    char tmpChr = static_cast<int>(conf->is3D());
+    streamWrite(ss,tmpChr);
     int tmpInt = static_cast<int>(conf->getId());
     streamWrite(ss,tmpInt);
     T tmpT = static_cast<T>(conf->getNumAtoms());
     streamWrite(ss,tmpT);
     const RDGeom::POINT3D_VECT &pts = conf->getPositions();
     for (RDGeom::POINT3D_VECT_CI pti = pts.begin(); pti != pts.end(); pti++) {
+      float tmpFloat;
       tmpFloat = static_cast<float>(pti->x);
       streamWrite(ss,tmpFloat);
       tmpFloat = static_cast<float>(pti->y);
@@ -339,6 +340,12 @@ namespace RDKit{
   template <typename T> 
   Conformer *MolPickler::_conformerFromPickle(std::istream &ss,int version) {
     float tmpFloat;
+    bool is3D=true;
+    if(version>4){
+      char tmpChr;
+      streamRead(ss, tmpChr);
+      is3D=static_cast<bool>(tmpChr);
+    }
     int tmpInt;
     streamRead(ss, tmpInt);
     unsigned int cid = static_cast<unsigned int>(tmpInt);
@@ -347,6 +354,7 @@ namespace RDKit{
     unsigned int numAtoms = static_cast<unsigned int>(tmpT);
     Conformer *conf = new Conformer(numAtoms);
     conf->setId(cid);
+    conf->set3D(is3D);
     for (unsigned int i = 0; i < numAtoms; i++) {
       streamRead(ss, tmpFloat);
       conf->getAtomPos(i).x = static_cast<double>(tmpFloat);

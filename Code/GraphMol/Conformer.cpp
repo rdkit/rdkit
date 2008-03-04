@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,21 +8,6 @@
 #include "ROMol.h"
 
 namespace RDKit {
-  Conformer::Conformer() {
-    dp_mol = 0;
-    d_positions.clear();
-    d_id = 0;
-  }
-
-  Conformer::Conformer(unsigned int numAtoms) {
-    dp_mol = 0;
-    if(numAtoms){
-      d_positions.resize(numAtoms, RDGeom::Point3D(0.0, 0.0, 0.0));
-    } else {
-      d_positions.resize(0);
-      d_positions.clear();
-    }
-  }
 
   Conformer::Conformer(const Conformer &conf) {
     dp_mol = 0;
@@ -33,6 +18,7 @@ namespace RDKit {
       d_positions.push_back(conf.getAtomPos(i));
     }
     d_id = conf.getId();
+    df_is3D = conf.is3D();
   }
 
   void Conformer::setOwningMol(ROMol *mol) {

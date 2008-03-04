@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -50,7 +50,6 @@ namespace RDKit{
         
         .def("GetId", &Conformer::getId,
              "Get the ID of the conformer")
-
         .def("SetId", &Conformer::setId,
              "Set the ID of the conformer\n")
         
@@ -61,6 +60,11 @@ namespace RDKit{
              "Set the position of the specified atom\n")
         .def("SetAtomPosition", &Conformer::setAtomPos,
              "Set the position of the specified atom\n")
+
+        .def("Set3D", &Conformer::set3D,
+             "Set the 3D flag of the conformer\n")
+        .def("Is3D", &Conformer::is3D,
+             "returns the 3D flag of the conformer\n")
         ;
 
     };
