@@ -66,23 +66,24 @@ namespace RDKit{
      MOL_SPTR_VECT prods;
      for(MOL_SPTR_VECT::const_iterator r1It=reactantSet1.begin();
          r1It!=reactantSet1.end();++r1It;){
-	     for(MOL_SPTR_VECT::const_iterator r2It=reactantSet2.begin();
-	         r2It!=reactantSet2.end();++r2It;){
-	       MOL_SPTR_VECT rVect(2);
+       for(MOL_SPTR_VECT::const_iterator r2It=reactantSet2.begin();
+	   r2It!=reactantSet2.end();++r2It;){
+	 MOL_SPTR_VECT rVect(2);
          rVect[0] = *r1It;
          rVect[1] = *r2It;
              
          std::vector<MOL_SPTR_VECT> lprods;
          lprods = rxn.runReactants(rVect);
          for(std::vector<MOL_SPTR_VECT>::const_iterator lpIt=lprods.begin();
-             lpIt!=lprods.end();++lpIt){
+            lpIt!=lprods.end();++lpIt){
             // we know this is a single-product reaction:
             prods.push_back((*lpIt)[0]);
          }
-	     }     
-     }     
+       }     
+     }
+     \endverbatim     
 
-   */
+  */
   class ChemicalReaction {
   public:
     ChemicalReaction() : df_needsInit(true) {};
