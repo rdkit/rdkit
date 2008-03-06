@@ -46,7 +46,7 @@ namespace Queries {
       this->df_upperOpen = upper;
     };
     //! returns the state of our ends (open or not)
-    std::pair<bool,bool> getEndsOpen() {
+    std::pair<bool,bool> getEndsOpen() const {
       return std::make_pair(this->df_lowerOpen,this->df_upperOpen);
     };
   

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -12,13 +12,14 @@ namespace Queries{
   //! \brief a Query implementing a set: arguments must 
   //!  one of a set of values
   //!
-  //!  There is also an optional tolerance to be used in comparisons
   template <class MatchFuncArgType, class DataFuncArgType=MatchFuncArgType,
     bool needsConversion=false>
   class SetQuery :
     public Query<MatchFuncArgType, DataFuncArgType,needsConversion> {
 
   public:
+    typedef std::set<MatchFuncArgType> CONTAINER_TYPE;
+
     SetQuery() : Query<MatchFuncArgType,DataFuncArgType,needsConversion>() {};
 
     //! insert an entry into our \c set
@@ -55,10 +56,18 @@ namespace Queries{
       return res;
     };
 
-  
+    typename CONTAINER_TYPE::const_iterator beginSet() const {
+      return d_set.begin();
+    };
+    typename CONTAINER_TYPE::const_iterator endSet() const {
+      return d_set.end();
+    };
+    unsigned int size() const {
+      return d_set.size();
+    };
   
   protected:
-    std::set<MatchFuncArgType> d_set;
+    CONTAINER_TYPE d_set;
   };
 
 }
