@@ -1,13 +1,15 @@
 // $Id$
 //
-//  Copyright (C) 2006 Greg Landrum
+//  Copyright (C) 2006-2008 Greg Landrum
 //
+//   @@ All Rights Reserved  @@
 //
 #include "MolCatalogEntry.h"
 
 #include <RDGeneral/types.h>
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <iostream>
 #include <sstream>
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -185,22 +185,6 @@ namespace RDKit{
     //! returns the location of this Atom
     //RDGeom::Point3D getPos() const { return d_pos; };
 
-#if 0  
-    // intended to be used only in construction.
-    // FIX: should these be somewhere else?
-    void setDativeFlag(int what) {
-      if(!hasDativeFlag(what)) d_dativeFlag.push_back(what);
-    };
-    INT_VECT getDativeFlag() const {
-      return d_dativeFlag;
-    };
-    bool hasDativeFlag(int what) const {
-      return std::find(d_dativeFlag.begin(),
-		       d_dativeFlag.end(),
-		       what) != d_dativeFlag.end();
-    };
-    void clearDativeFlag(){ d_dativeFlag.clear(); };
-#else
     //! sets our \c dativeFlag
     // intended to be used only in construction.
     // FIX: should these be somewhere else?
@@ -216,7 +200,6 @@ namespace RDKit{
     };
     //! clears our \c dativeFlag
     void clearDativeFlag(){ d_dativeFlag = 0; };
-#endif
 
     //! sets our \c chiralTag
     void setChiralTag(ChiralType what) { d_chiralTag = what; };
@@ -456,7 +439,6 @@ namespace RDKit{
     ChiralType d_chiralTag;
     HybridizationType d_hybrid;
     double d_mass;
-    //RDGeom::Point3D d_pos;
     ROMol *dp_mol;
     Dict *dp_props;
     void initAtom();

@@ -48,15 +48,9 @@ namespace RDKit{
   typedef Queries::SetQuery<int,Atom const *,true> ATOM_SET_QUERY;
   typedef Queries::SetQuery<int,Bond const *,true> BOND_SET_QUERY;
 
-  typedef Queries::SetQuery<int,Atom const *,true> ATOM_SET_QUERY;
-  typedef Queries::SetQuery<int,Bond const *,true> BOND_SET_QUERY;
-
   typedef Queries::Query<int,Bond const *,true> BOND_NULL_QUERY;
   typedef Queries::Query<int,Atom const *,true> ATOM_NULL_QUERY;
 
-
-
-  
   // -------------------------------------------------
   // common atom queries
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2006 Rational Discovery LLC
+//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -24,21 +24,6 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
-#include <GraphMol/MolPickler.h>
 #include <GraphMol/SanitException.h>
-
-#if 0
-namespace RDKit{
-  template class AtomIterator_<Atom,ROMol,ROMol::GRAPH_MOL_ATOM_PMAP::type>;
-  template class AtomIterator_<const Atom,const ROMol,ROMol::GRAPH_MOL_ATOM_PMAP::const_type>;
-  template class AromaticAtomIterator_<Atom,ROMol,ROMol::GRAPH_MOL_ATOM_PMAP::type>;
-  template class AromaticAtomIterator_<const Atom,const ROMol,ROMol::GRAPH_MOL_ATOM_PMAP::const_type>;
-  template class HeteroatomIterator_<Atom,ROMol,ROMol::GRAPH_MOL_ATOM_PMAP::type>;
-  template class HeteroatomIterator_<const Atom,const ROMol,ROMol::GRAPH_MOL_ATOM_PMAP::const_type>;
-  template class QueryAtomIterator_<Atom,ROMol,ROMol::GRAPH_MOL_ATOM_PMAP::type>;
-  template class QueryAtomIterator_<const Atom,const ROMol,ROMol::GRAPH_MOL_ATOM_PMAP::const_type>;
-};
-#endif
-
 
 #endif
