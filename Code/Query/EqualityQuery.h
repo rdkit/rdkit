@@ -75,8 +75,6 @@ namespace Queries {
     };
 
   protected:
-
-  
     MatchFuncArgType d_val;
     MatchFuncArgType d_tol;
   };

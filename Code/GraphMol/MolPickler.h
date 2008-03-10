@@ -55,6 +55,7 @@ namespace RDKit{
       ATOM_CHIRALTAG,
       ATOM_MASS,
       ATOM_ISAROMATIC,
+      ATOM_MAPNUMBER,
       ENDATOM,
       BEGINBOND,
       BOND_INDEX,
@@ -73,7 +74,6 @@ namespace RDKit{
       QUERY_VALUE,
       QUERY_ISNEGATED,
       QUERY_NUMCHILDREN,
-      QUERY_DESCRIPTION,
       QUERY_BOOL,
       QUERY_AND,
       QUERY_OR,
@@ -116,12 +116,6 @@ namespace RDKit{
     template <typename T>
     static void _pickleBond(std::ostream &ss,const Bond *bond,
 			    std::map<int,int> &atomIdxMap);
-
-    //! do the actual work of pickling an Atom's query
-    static void _pickleAtomQuery(std::ostream &ss,const QueryAtom::QUERYATOM_QUERY *query);
-
-    //! do the actual work of pickling an Bond's query
-    static void _pickleBondQuery(std::ostream &ss,const QueryBond::QUERYBOND_QUERY *query);
 
     //! do the actual work of pickling an SSSR structure
     template <typename T>

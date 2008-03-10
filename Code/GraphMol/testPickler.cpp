@@ -310,6 +310,43 @@ void testIssue220(){
   
 }
 
+void testQueries(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing query serialization." << std::endl;
+  std::string smi,pickle;
+  int tmpInt;
+  ROMol *m1;
+
+  // start simple : atom map numbers
+  smi="C";
+  m1= SmilesToMol(smi);
+  TEST_ASSERT(m1);
+  m1->getAtomWithIdx(0)->setProp("molAtomMapNumber",1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==1);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+  m1->getAtomWithIdx(0)->getProp("molAtomMapNumber",tmpInt);
+  TEST_ASSERT(tmpInt==1);
+  delete m1;
+
+  // now a basic query:
+  smi="C";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==1);
+  delete m1;
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  
+}
+
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
@@ -321,17 +358,18 @@ int main(int argc, char *argv[]) {
   }
 
   //_createPickleFile();
-#if 1
+#if 0
   test1(doLong);
   //test2(doLong);
   test3(doLong);
   test4();
   testIssue164();
-#endif
-  //timeTest(doLong);
   testIssue219();
   testIssue220();
-
+#endif
+  //timeTest(doLong);
+  testQueries();
+  
   return 0;
 
 }

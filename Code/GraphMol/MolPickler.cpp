@@ -11,6 +11,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
+#include <Query/QueryObjects.h>
 #include <map>
 
 namespace RDKit{
@@ -38,6 +39,207 @@ namespace RDKit{
     what=buff;
     delete [] buff;
   };  
+
+  namespace {
+    using namespace Queries;
+    template <class T>
+    void pickleQuery(std::ostream &ss,const Query<int,T const *,true> *query) {
+      PRECONDITION(query,"no query");
+      streamWrite(ss,query->getDescription());
+      if(query->getNegation()) streamWrite(ss,MolPickler::QUERY_ISNEGATED);
+      //if (typeid(*query)==typeid(ATOM_BOOL_QUERY)){
+      //  streamWrite(ss,QUERY_BOOL);
+      if (typeid(*query)==typeid(AndQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_AND);
+      } else if (typeid(*query)==typeid(OrQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_OR);
+      } else if (typeid(*query)==typeid(XOrQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_XOR);
+      } else if (typeid(*query)==typeid(EqualityQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_EQUALS);
+        streamWrite(ss,MolPickler::QUERY_VALUE,static_cast<const EqualityQuery<int,T const *,true>*>(query)->getVal());
+        streamWrite(ss,static_cast<const EqualityQuery<int,T const *,true>*>(query)->getTol());
+      } else if (typeid(*query)==typeid(GreaterQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_GREATER);
+        streamWrite(ss,MolPickler::QUERY_VALUE,static_cast<const GreaterQuery<int,T const *,true>*>(query)->getVal());
+        streamWrite(ss,static_cast<const GreaterQuery<int,T const *,true>*>(query)->getTol());
+      } else if (typeid(*query)==typeid(GreaterEqualQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_GREATEREQUAL);
+        streamWrite(ss,MolPickler::QUERY_VALUE,static_cast<const GreaterEqualQuery<int,T const *,true>*>(query)->getVal());
+        streamWrite(ss,static_cast<const GreaterEqualQuery<int,T const *,true>*>(query)->getTol());
+      } else if (typeid(*query)==typeid(LessQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_LESS);
+        streamWrite(ss,MolPickler::QUERY_VALUE,static_cast<const LessQuery<int,T const *,true>*>(query)->getVal());
+        streamWrite(ss,static_cast<const LessQuery<int,T const *,true>*>(query)->getTol());
+      } else if (typeid(*query)==typeid(LessEqualQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_LESSEQUAL);
+        streamWrite(ss,MolPickler::QUERY_VALUE,static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getVal());
+        streamWrite(ss,static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getTol());
+      } else if (typeid(*query)==typeid(RangeQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_RANGE);
+        streamWrite(ss,MolPickler::QUERY_VALUE,static_cast<const RangeQuery<int,T const *,true>*>(query)->getLower());
+        streamWrite(ss,static_cast<const RangeQuery<int,T const *,true>*>(query)->getUpper());
+        streamWrite(ss,static_cast<const RangeQuery<int,T const *,true>*>(query)->getTol());
+        char ends;
+        bool lowerOpen,upperOpen;
+        boost::tie(lowerOpen,upperOpen)=static_cast<const RangeQuery<int,T const *,true>*>(query)->getEndsOpen();
+        ends=0|(lowerOpen<<1)|upperOpen;
+        streamWrite(ss,ends);
+      } else if (typeid(*query)==typeid(SetQuery<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_SET);
+        streamWrite(ss,MolPickler::QUERY_VALUE,static_cast<const SetQuery<int,T const *,true>*>(query)->size());
+        typename SetQuery<int,T const *,true>::CONTAINER_TYPE::const_iterator cit;
+        for(cit=static_cast<const SetQuery<int,T const *,true>*>(query)->beginSet();
+            cit!=static_cast<const SetQuery<int,T const *,true>*>(query)->endSet();
+            ++cit){
+          streamWrite(ss,*cit);
+        }
+      } else if (typeid(*query)==typeid(Query<int,T const *,true>)){
+        streamWrite(ss,MolPickler::QUERY_NULL);
+      } else {
+        throw MolPicklerException("do not know how to pickle part of the query.");
+      }
+
+      // now the children:
+      streamWrite(ss,MolPickler::QUERY_NUMCHILDREN,static_cast<unsigned char>(query->endChildren()-query->beginChildren()));
+      typename Query<int,T const *,true>::CHILD_VECT_CI cit;
+      for(cit=query->beginChildren();cit!=query->endChildren();++cit){
+        pickleQuery(ss,cit->get());
+      }
+    }
+
+    template <class T>
+    Query<int,T const *,true> *unpickleQuery(std::istream &ss,T const *owner) {
+      PRECONDITION(owner,"no query");
+      std::string descr;
+      bool isNegated=false;
+      Query<int,T const *,true> *res;      
+      streamRead(ss,descr);
+      MolPickler::Tags tag;
+      streamRead(ss,tag);
+      if(tag==MolPickler::QUERY_ISNEGATED){
+        isNegated=true;
+        streamRead(ss,tag);
+      }
+      int val;
+      int nMembers;
+      switch(tag){
+      case MolPickler::QUERY_AND:
+        res = new AndQuery<int,T const *,true>();
+        break;
+      case MolPickler::QUERY_OR:
+        res = new OrQuery<int,T const *,true>();
+        break;
+      case MolPickler::QUERY_XOR:
+        res = new XOrQuery<int,T const *,true>();
+        break;
+      case MolPickler::QUERY_EQUALS:
+        res = new EqualityQuery<int,T const *,true>();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,val);
+        static_cast<EqualityQuery<int,T const *,true> *>(res)->setVal(val);
+        streamRead(ss,val);
+        static_cast<EqualityQuery<int,T const *,true> *>(res)->setTol(val);
+        break;
+      case MolPickler::QUERY_GREATER:
+        res = new GreaterQuery<int,T const *,true>();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,val);
+        static_cast<GreaterQuery<int,T const *,true> *>(res)->setVal(val);
+        streamRead(ss,val);
+        static_cast<GreaterQuery<int,T const *,true> *>(res)->setTol(val);
+        break;
+      case MolPickler::QUERY_GREATEREQUAL:
+        res = new GreaterEqualQuery<int,T const *,true>();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,val);
+        static_cast<GreaterEqualQuery<int,T const *,true> *>(res)->setVal(val);
+        streamRead(ss,val);
+        static_cast<GreaterEqualQuery<int,T const *,true> *>(res)->setTol(val);
+        break;
+      case MolPickler::QUERY_LESS:
+        res = new LessQuery<int,T const *,true>();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,val);
+        static_cast<LessQuery<int,T const *,true> *>(res)->setVal(val);
+        streamRead(ss,val);
+        static_cast<LessQuery<int,T const *,true> *>(res)->setTol(val);
+        break;
+      case MolPickler::QUERY_LESSEQUAL:
+        res = new LessEqualQuery<int,T const *,true>();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,val);
+        static_cast<LessEqualQuery<int,T const *,true> *>(res)->setVal(val);
+        streamRead(ss,val);
+        static_cast<LessEqualQuery<int,T const *,true> *>(res)->setTol(val);
+        break;
+      case MolPickler::QUERY_RANGE:
+        res = new RangeQuery<int,T const *,true>();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,val);
+        static_cast<RangeQuery<int,T const *,true> *>(res)->setLower(val);
+        streamRead(ss,val);
+        static_cast<RangeQuery<int,T const *,true> *>(res)->setUpper(val);
+        streamRead(ss,val);
+        static_cast<RangeQuery<int,T const *,true> *>(res)->setTol(val);
+        break;
+      case MolPickler::QUERY_SET:
+        res = new SetQuery<int,T const *,true>();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,nMembers);
+        while(nMembers>0){
+          streamRead(ss,val);
+          static_cast<SetQuery<int,T const *,true> *>(res)->insert(val);
+          --nMembers;
+        }
+        break;
+      case MolPickler::QUERY_NULL:
+        res = new Query<int,T const *,true>();
+        break;
+      default:
+        throw MolPicklerException("unknown query-type tag encountered");
+      }
+
+      res->setNegation(isNegated);
+      res->setDescription(descr);
+
+      // read in the children:
+      streamRead(ss,tag);
+      if(tag != MolPickler::QUERY_NUMCHILDREN){
+        throw MolPicklerException("Bad pickle format: QUERY_NUMCHILDREN tag not found.");
+      }
+      unsigned char numChildren;
+      streamRead(ss,numChildren);
+      while(numChildren>0){
+        Query<int,T const*,true> *child=unpickleQuery(ss,owner);
+        res->addChild(typename Query<int,T const *,true>::CHILD_TYPE(child));
+        --numChildren;
+      }
+      return res;
+    }
+
+  }
 
   void MolPickler::pickleMol(const ROMol *mol,std::ostream &ss){
     PRECONDITION(mol,"empty molecule");
@@ -247,9 +449,10 @@ namespace RDKit{
     for(int i=0;i<numBonds;i++){
       Bond *bond=_addBondFromPickle<T>(ss,mol,version,directMap);
       if(!directMap){
-	mol->setBondBookmark(bond,i);
+        mol->setBondBookmark(bond,i);
       }
     }
+
 
     // -------------------
     //
@@ -280,7 +483,6 @@ namespace RDKit{
   }
 
 
-
   //--------------------------------------
   //
   //            Atoms
@@ -301,30 +503,36 @@ namespace RDKit{
     flags = 0;
     if(atom->getIsAromatic()) flags |= 0x1<<6;
     if(atom->getNoImplicit()) flags |= 0x1<<5;
+    if(atom->hasQuery()) flags |= 0x1<<4;
     streamWrite(ss,flags);
     
-    tmpSchar=static_cast<signed char>(atom->getMass() -
-				      PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-    streamWrite(ss,tmpSchar);
-    tmpSchar=static_cast<signed char>(atom->getFormalCharge());
-    streamWrite(ss,tmpSchar);
-    tmpChar = static_cast<char>(atom->getChiralTag());
-    streamWrite(ss,tmpChar);
-    tmpChar = static_cast<char>(atom->getHybridization());
-    streamWrite(ss,tmpChar);
-    tmpChar = static_cast<char>(atom->getNumExplicitHs());
-    streamWrite(ss,tmpChar);
-    tmpChar = static_cast<char>(atom->getExplicitValence());
-    streamWrite(ss,tmpChar);
-    tmpChar = static_cast<char>(atom->getImplicitValence());
-    streamWrite(ss,tmpChar);
-    // handle query info, if it's there:
-    tmpChar = static_cast<char>(atom->hasQuery());
-    streamWrite(ss,tmpChar);
-    if(atom->hasQuery()){
+    if(!atom->hasQuery()){
+      tmpSchar=static_cast<signed char>(atom->getMass() -
+                                        PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
+
+      streamWrite(ss,tmpSchar);
+      tmpSchar=static_cast<signed char>(atom->getFormalCharge());
+      streamWrite(ss,tmpSchar);
+      tmpChar = static_cast<char>(atom->getChiralTag());
+      streamWrite(ss,tmpChar);
+      tmpChar = static_cast<char>(atom->getHybridization());
+      streamWrite(ss,tmpChar);
+      tmpChar = static_cast<char>(atom->getNumExplicitHs());
+      streamWrite(ss,tmpChar);
+      tmpChar = static_cast<char>(atom->getExplicitValence());
+      streamWrite(ss,tmpChar);
+      tmpChar = static_cast<char>(atom->getImplicitValence());
+      streamWrite(ss,tmpChar);
+    } else {
       streamWrite(ss,BEGINQUERY);
-      _pickleAtomQuery(ss,static_cast<const QueryAtom*>(atom)->getQuery());
+      pickleQuery(ss,static_cast<const QueryAtom*>(atom)->getQuery());
       streamWrite(ss,ENDQUERY);
+    }
+    if(atom->hasProp("molAtomMapNumber")){
+      int tmpInt;
+      atom->getProp("molAtomMapNumber",tmpInt);
+      tmpChar=static_cast<char>(tmpInt%256);
+      streamWrite(ss,ATOM_MAPNUMBER,tmpChar);
     }
   }
 
@@ -387,7 +595,7 @@ namespace RDKit{
     char tmpChar;
     signed char tmpSchar;
     char flags;
-
+    bool hasQuery=false;
 
     Atom *atom = new Atom();
 
@@ -397,7 +605,9 @@ namespace RDKit{
     streamRead(ss,flags);
     atom->setIsAromatic(flags & 0x1<<6);
     atom->setNoImplicit(flags & 0x1<<5);
-    
+    if(version>5){
+      hasQuery=flags&0x1<<4;
+    }
     // are coordinates present?
     if(flags & 0x1<<7){
       streamRead(ss,x);
@@ -408,24 +618,44 @@ namespace RDKit{
       pos.z = static_cast<double>(z);
     }
     
-    streamRead(ss,tmpSchar);
-    atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
-		  static_cast<int>(tmpSchar));
+    if(version<=5 || !hasQuery){
+      streamRead(ss,tmpSchar);
+      atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
+                    static_cast<int>(tmpSchar));
 
-    streamRead(ss,tmpSchar);
-    atom->setFormalCharge(static_cast<int>(tmpSchar));
+      streamRead(ss,tmpSchar);
+      atom->setFormalCharge(static_cast<int>(tmpSchar));
 
-    streamRead(ss,tmpChar);
-    atom->setChiralTag(static_cast<Atom::ChiralType>(tmpChar));
-    streamRead(ss,tmpChar);
-    atom->setHybridization(static_cast<Atom::HybridizationType>(tmpChar));
-    streamRead(ss,tmpChar);
-    atom->setNumExplicitHs(static_cast<int>(tmpChar));
-    streamRead(ss,tmpChar);
-    atom->d_explicitValence  = tmpChar;
-    streamRead(ss,tmpChar);
-    atom->d_implicitValence  = tmpChar;
-    
+      streamRead(ss,tmpChar);
+      atom->setChiralTag(static_cast<Atom::ChiralType>(tmpChar));
+      streamRead(ss,tmpChar);
+      atom->setHybridization(static_cast<Atom::HybridizationType>(tmpChar));
+      streamRead(ss,tmpChar);
+      atom->setNumExplicitHs(static_cast<int>(tmpChar));
+      streamRead(ss,tmpChar);
+      atom->d_explicitValence  = tmpChar;
+      streamRead(ss,tmpChar);
+      atom->d_implicitValence  = tmpChar;
+    } else if(version>5){
+      // we have a query:
+      static_cast<QueryAtom *>(atom)->setQuery(unpickleQuery(ss,atom));
+    }
+
+    if(version>5){
+      unsigned int sPos=ss.tellg();
+      Tags tag;
+      streamRead(ss,tag);
+      if(tag==ATOM_MAPNUMBER){
+        int tmpInt;
+        streamRead(ss,tmpChar);
+        tmpInt=tmpChar;
+        atom->setProp("molAtomMapNumber",tmpInt);
+      } else {
+        ss.seekg(sPos);
+      }
+
+    }
+
     mol->addAtom(atom,false,true);
     return atom;
   }
@@ -470,9 +700,11 @@ namespace RDKit{
 	streamWrite(ss,tmpT);
       }
     }    
+    tmpChar = static_cast<char>(bond->hasQuery());
+    streamWrite(ss,tmpChar);
     if(bond->hasQuery()){
       streamWrite(ss,BEGINQUERY);
-      _pickleBondQuery(ss,static_cast<const QueryBond*>(bond)->getQuery());
+      pickleQuery(ss,static_cast<const QueryBond*>(bond)->getQuery());
       streamWrite(ss,ENDQUERY);
     }
   }
@@ -592,142 +824,6 @@ namespace RDKit{
 	}
       }
       ringInfo->addRing(atoms,bonds);
-    }
-  }
-
-  //--------------------------------------
-  //
-  //            Queries
-  //
-  //--------------------------------------
-
-  void MolPickler::_pickleAtomQuery(std::ostream &ss,const QueryAtom::QUERYATOM_QUERY *query) {
-    PRECONDITION(query,"no query");
-    streamWrite(ss,query->getDescription());
-    if(query->getNegation()) streamWrite(ss,QUERY_ISNEGATED);
-    if (typeid(*query)==typeid(ATOM_BOOL_QUERY)){
-      streamWrite(ss,QUERY_BOOL);
-    } else if (typeid(*query)==typeid(ATOM_AND_QUERY)){
-      streamWrite(ss,QUERY_AND);
-    } else if (typeid(*query)==typeid(ATOM_OR_QUERY)){
-      streamWrite(ss,QUERY_OR);
-    } else if (typeid(*query)==typeid(ATOM_XOR_QUERY)){
-      streamWrite(ss,QUERY_XOR);
-    } else if (typeid(*query)==typeid(ATOM_EQUALS_QUERY)){
-      streamWrite(ss,QUERY_EQUALS);
-      streamWrite(ss,QUERY_VALUE,static_cast<const ATOM_EQUALS_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const ATOM_EQUALS_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(ATOM_GREATER_QUERY)){
-      streamWrite(ss,QUERY_GREATER);
-      streamWrite(ss,QUERY_VALUE,static_cast<const ATOM_GREATER_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const ATOM_GREATER_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(ATOM_GREATEREQUAL_QUERY)){
-      streamWrite(ss,QUERY_GREATEREQUAL);
-      streamWrite(ss,QUERY_VALUE,static_cast<const ATOM_GREATEREQUAL_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const ATOM_GREATEREQUAL_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(ATOM_LESS_QUERY)){
-      streamWrite(ss,QUERY_LESS);
-      streamWrite(ss,QUERY_VALUE,static_cast<const ATOM_LESS_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const ATOM_LESS_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(ATOM_LESSEQUAL_QUERY)){
-      streamWrite(ss,QUERY_LESSEQUAL);
-      streamWrite(ss,QUERY_VALUE,static_cast<const ATOM_LESSEQUAL_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const ATOM_LESSEQUAL_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(ATOM_RANGE_QUERY)){
-      streamWrite(ss,QUERY_RANGE);
-      streamWrite(ss,QUERY_VALUE,static_cast<const ATOM_RANGE_QUERY*>(query)->getLower());
-      streamWrite(ss,static_cast<const ATOM_RANGE_QUERY*>(query)->getUpper());
-      streamWrite(ss,static_cast<const ATOM_RANGE_QUERY*>(query)->getTol());
-      char ends;
-      bool lowerOpen,upperOpen;
-      boost::tie(lowerOpen,upperOpen)=static_cast<const ATOM_RANGE_QUERY*>(query)->getEndsOpen();
-      ends=0|(lowerOpen<<1)|upperOpen;
-      streamWrite(ss,ends);
-    } else if (typeid(*query)==typeid(ATOM_SET_QUERY)){
-      streamWrite(ss,QUERY_SET);
-      streamWrite(ss,QUERY_VALUE,static_cast<const ATOM_SET_QUERY*>(query)->size());
-      ATOM_SET_QUERY::CONTAINER_TYPE::const_iterator cit;
-      for(cit=static_cast<const ATOM_SET_QUERY*>(query)->beginSet();
-          cit!=static_cast<const ATOM_SET_QUERY*>(query)->endSet();
-          ++cit){
-        streamWrite(ss,*cit);
-      }
-    } else if (typeid(*query)==typeid(ATOM_NULL_QUERY)){
-      streamWrite(ss,QUERY_NULL);
-    } else {
-      throw MolPicklerException("do not know how to pickle part of the query.");
-    }
-
-    // now the children:
-    streamWrite(ss,QUERY_NUMCHILDREN,query->endChildren()-query->beginChildren());
-    for(QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI cit=query->beginChildren();
-        cit!=query->endChildren();++cit){
-      _pickleAtomQuery(ss,cit->get());
-    }
-  }
-
-  void MolPickler::_pickleBondQuery(std::ostream &ss,const QueryBond::QUERYBOND_QUERY *query) {
-    PRECONDITION(query,"no query");
-    streamWrite(ss,query->getDescription());
-    if(query->getNegation()) streamWrite(ss,QUERY_ISNEGATED);
-    if (typeid(*query)==typeid(BOND_BOOL_QUERY)){
-      streamWrite(ss,QUERY_BOOL);
-    } else if (typeid(*query)==typeid(BOND_AND_QUERY)){
-      streamWrite(ss,QUERY_AND);
-    } else if (typeid(*query)==typeid(BOND_OR_QUERY)){
-      streamWrite(ss,QUERY_OR);
-    } else if (typeid(*query)==typeid(BOND_XOR_QUERY)){
-      streamWrite(ss,QUERY_XOR);
-    } else if (typeid(*query)==typeid(BOND_EQUALS_QUERY)){
-      streamWrite(ss,QUERY_EQUALS);
-      streamWrite(ss,QUERY_VALUE,static_cast<const BOND_EQUALS_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const BOND_EQUALS_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(BOND_GREATER_QUERY)){
-      streamWrite(ss,QUERY_GREATER);
-      streamWrite(ss,QUERY_VALUE,static_cast<const BOND_GREATER_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const BOND_GREATER_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(BOND_GREATEREQUAL_QUERY)){
-      streamWrite(ss,QUERY_GREATEREQUAL);
-      streamWrite(ss,QUERY_VALUE,static_cast<const BOND_GREATEREQUAL_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const BOND_GREATEREQUAL_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(BOND_LESS_QUERY)){
-      streamWrite(ss,QUERY_LESS);
-      streamWrite(ss,QUERY_VALUE,static_cast<const BOND_LESS_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const BOND_LESS_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(BOND_LESSEQUAL_QUERY)){
-      streamWrite(ss,QUERY_LESSEQUAL);
-      streamWrite(ss,QUERY_VALUE,static_cast<const BOND_LESSEQUAL_QUERY*>(query)->getVal());
-      streamWrite(ss,static_cast<const BOND_LESSEQUAL_QUERY*>(query)->getTol());
-    } else if (typeid(*query)==typeid(BOND_RANGE_QUERY)){
-      streamWrite(ss,QUERY_RANGE);
-      streamWrite(ss,QUERY_VALUE,static_cast<const BOND_RANGE_QUERY*>(query)->getLower());
-      streamWrite(ss,static_cast<const BOND_RANGE_QUERY*>(query)->getUpper());
-      streamWrite(ss,static_cast<const BOND_RANGE_QUERY*>(query)->getTol());
-      char ends;
-      bool lowerOpen,upperOpen;
-      boost::tie(lowerOpen,upperOpen)=static_cast<const BOND_RANGE_QUERY*>(query)->getEndsOpen();
-      ends=0|(lowerOpen<<1)|upperOpen;
-      streamWrite(ss,ends);
-    } else if (typeid(*query)==typeid(BOND_SET_QUERY)){
-      streamWrite(ss,QUERY_SET);
-      streamWrite(ss,QUERY_VALUE,static_cast<const BOND_SET_QUERY*>(query)->size());
-      BOND_SET_QUERY::CONTAINER_TYPE::const_iterator cit;
-      for(cit=static_cast<const BOND_SET_QUERY*>(query)->beginSet();
-          cit!=static_cast<const BOND_SET_QUERY*>(query)->endSet();
-          ++cit){
-        streamWrite(ss,*cit);
-      }
-    } else if (typeid(*query)==typeid(BOND_NULL_QUERY)){
-      streamWrite(ss,QUERY_NULL);
-    } else {
-      throw MolPicklerException("do not know how to pickle part of the query.");
-    }
-
-    // now the children:
-    streamWrite(ss,QUERY_NUMCHILDREN,query->endChildren()-query->beginChildren());
-    for(QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI cit=query->beginChildren();
-        cit!=query->endChildren();++cit){
-      _pickleBondQuery(ss,cit->get());
     }
   }
 
