@@ -103,7 +103,9 @@ namespace RDKit{
       } else if (typeid(*query)==typeid(RecursiveStructureQuery)){
         streamWrite(ss,MolPickler::QUERY_RECURSIVE);
         streamWrite(ss,MolPickler::QUERY_VALUE);
+        BOOST_LOG(rdErrorLog)<<"  pickle recursive "<<std::endl;
         MolPickler::pickleMol(((const RecursiveStructureQuery *)query)->getQueryMol(),ss);
+        BOOST_LOG(rdErrorLog)<<"  done "<<std::endl;
       } else if (typeid(*query)==typeid(Query<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_NULL);
       } else {
@@ -206,21 +208,11 @@ namespace RDKit{
     }
     
     template <class T>
-    Query<int,T const *,true> *unpickleQuery(std::istream &ss,T const *owner) {
+    Query<int,T const *,true> *buildBaseQuery(std::istream &ss,T const *owner,MolPickler::Tags tag) {
       PRECONDITION(owner,"no query");
       std::string descr;
-      bool isNegated=false;
-      Query<int,T const *,true> *res;      
-      streamRead(ss,descr);
-      MolPickler::Tags tag;
-      streamRead(ss,tag);
-      if(tag==MolPickler::QUERY_ISNEGATED){
-        isNegated=true;
-        streamRead(ss,tag);
-      }
-      int val;
-      int nMembers;
-      ROMol *tmpMol;
+      Query<int,T const *,true> *res=0;
+      int val,nMembers;
       switch(tag){
       case MolPickler::QUERY_AND:
         res = new AndQuery<int,T const *,true>();
@@ -312,26 +304,6 @@ namespace RDKit{
           --nMembers;
         }
         break;
-      case MolPickler::QUERY_ATOMRING:
-        res=new AtomRingQuery();
-        streamRead(ss,tag);
-        if(tag != MolPickler::QUERY_VALUE){
-          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
-        }
-        streamRead(ss,val);
-        static_cast<EqualityQuery<int,T const *,true> *>(res)->setVal(val);
-        streamRead(ss,val);
-        static_cast<EqualityQuery<int,T const *,true> *>(res)->setTol(val);
-        break;
-      case MolPickler::QUERY_RECURSIVE:
-        res=new RecursiveStructureQuery();
-        streamRead(ss,tag);
-        if(tag != MolPickler::QUERY_VALUE){
-          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
-        }
-        tmpMol=new ROMol();
-        MolPickler::molFromPickle(ss,tmpMol);
-        ((RecursiveStructureQuery *)res)->setQueryMol(tmpMol);
       case MolPickler::QUERY_NULL:
         res = new Query<int,T const *,true>();
         break;
@@ -339,6 +311,53 @@ namespace RDKit{
         throw MolPicklerException("unknown query-type tag encountered");
       }
 
+      POSTCONDITION(res,"no match found");
+      return res;
+    }
+    
+    Query<int,Atom const *,true> *unpickleQuery(std::istream &ss,Atom const *owner) {
+      PRECONDITION(owner,"no query");
+      std::string descr;
+      bool isNegated=false;
+      Query<int,Atom const *,true> *res;      
+      streamRead(ss,descr);
+      MolPickler::Tags tag;
+      streamRead(ss,tag);
+      if(tag==MolPickler::QUERY_ISNEGATED){
+        isNegated=true;
+        streamRead(ss,tag);
+      }
+      int val;
+      ROMol *tmpMol;
+      switch(tag){
+      case MolPickler::QUERY_ATOMRING:
+        res=new AtomRingQuery();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,val);
+        static_cast<EqualityQuery<int,Atom const *,true> *>(res)->setVal(val);
+        streamRead(ss,val);
+        static_cast<EqualityQuery<int,Atom const *,true> *>(res)->setTol(val);
+        break;
+      case MolPickler::QUERY_RECURSIVE:
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        tmpMol=new ROMol();
+        BOOST_LOG(rdErrorLog)<<"  Build Recursive "<<std::endl;
+        MolPickler::molFromPickle(ss,tmpMol);
+        res=new RecursiveStructureQuery(tmpMol);
+        BOOST_LOG(rdErrorLog)<<"  done "<<std::endl;
+        break;
+      default:
+        res = buildBaseQuery(ss,owner,tag);
+        break;
+      }
+      CHECK_INVARIANT(res,"no query!");
+      
       res->setNegation(isNegated);
       res->setDescription(descr);
       
@@ -352,13 +371,47 @@ namespace RDKit{
       unsigned char numChildren;
       streamRead(ss,numChildren);
       while(numChildren>0){
-        Query<int,T const*,true> *child=unpickleQuery(ss,owner);
-        res->addChild(typename Query<int,T const *,true>::CHILD_TYPE(child));
+        Query<int,Atom const*,true> *child=unpickleQuery(ss,owner);
+        res->addChild(Query<int,Atom const *,true>::CHILD_TYPE(child));
         --numChildren;
       }
       return res;
     }
-  }
+    Query<int,Bond const *,true> *unpickleQuery(std::istream &ss,Bond const *owner) {
+      PRECONDITION(owner,"no query");
+      std::string descr;
+      bool isNegated=false;
+      Query<int,Bond const *,true> *res;      
+      streamRead(ss,descr);
+      MolPickler::Tags tag;
+      streamRead(ss,tag);
+      if(tag==MolPickler::QUERY_ISNEGATED){
+        isNegated=true;
+        streamRead(ss,tag);
+      }
+      res = buildBaseQuery(ss,owner,tag);
+      CHECK_INVARIANT(res,"no query!");
+      
+      res->setNegation(isNegated);
+      res->setDescription(descr);
+      
+      finalizeQueryFromDescription(res,owner);
+
+      // read in the children:
+      streamRead(ss,tag);
+      if(tag != MolPickler::QUERY_NUMCHILDREN){
+        throw MolPicklerException("Bad pickle format: QUERY_NUMCHILDREN tag not found.");
+      }
+      unsigned char numChildren;
+      streamRead(ss,numChildren);
+      while(numChildren>0){
+        Query<int,Bond const*,true> *child=unpickleQuery(ss,owner);
+        res->addChild(Query<int,Bond const *,true>::CHILD_TYPE(child));
+        --numChildren;
+      }
+      return res;
+    }
+  } // end of anonymous namespace
 
 
   void MolPickler::pickleMol(const ROMol *mol,std::ostream &ss){
@@ -821,27 +874,28 @@ namespace RDKit{
     flags = 0;
     if(bond->getIsAromatic())	flags |= 0x1<<6;
     if(bond->getIsConjugated()) flags |= 0x1<<5;
+    if(bond->hasQuery()) flags |= 0x1<<4;
     streamWrite(ss,flags);
-    tmpChar = static_cast<char>(bond->getBondType());
-    streamWrite(ss,tmpChar);
-    tmpChar = static_cast<char>(bond->getBondDir());
-    streamWrite(ss,tmpChar);
-
-    // write info about the stereochemistry:
-    tmpChar = static_cast<char>(bond->getStereo());
-    streamWrite(ss,tmpChar);
-    if(bond->getStereo()!=Bond::STEREONONE){
-      const INT_VECT &stereoAts=bond->getStereoAtoms();
-      tmpChar = stereoAts.size();
+    
+    if(!bond->hasQuery()){
+      tmpChar = static_cast<char>(bond->getBondType());
       streamWrite(ss,tmpChar);
-      for(INT_VECT_CI idxIt=stereoAts.begin();idxIt!=stereoAts.end();++idxIt){
-	tmpT = static_cast<T>(*idxIt);
-	streamWrite(ss,tmpT);
+      tmpChar = static_cast<char>(bond->getBondDir());
+      streamWrite(ss,tmpChar);
+
+      // write info about the stereochemistry:
+      tmpChar = static_cast<char>(bond->getStereo());
+      streamWrite(ss,tmpChar);
+      if(bond->getStereo()!=Bond::STEREONONE){
+        const INT_VECT &stereoAts=bond->getStereoAtoms();
+        tmpChar = stereoAts.size();
+        streamWrite(ss,tmpChar);
+        for(INT_VECT_CI idxIt=stereoAts.begin();idxIt!=stereoAts.end();++idxIt){
+          tmpT = static_cast<T>(*idxIt);
+          streamWrite(ss,tmpT);
+        }
       }
-    }    
-    tmpChar = static_cast<char>(bond->hasQuery());
-    streamWrite(ss,tmpChar);
-    if(bond->hasQuery()){
+    } else {
       streamWrite(ss,BEGINQUERY);
       pickleQuery(ss,static_cast<const QueryBond*>(bond)->getQuery());
       streamWrite(ss,ENDQUERY);
@@ -854,43 +908,63 @@ namespace RDKit{
     PRECONDITION(mol,"empty molecule");
     char tmpChar;
     char flags;
+    int begIdx,endIdx;
     T tmpT;
 
-    Bond *bond = new Bond();
+    Bond *bond;
     streamRead(ss,tmpT);
     if(directMap){
-      bond->setBeginAtomIdx(static_cast<int>(tmpT));
+      begIdx=tmpT;
     } else {
-      bond->setBeginAtomIdx(mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx());
+      begIdx=mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx();
     }
     streamRead(ss,tmpT);
     if(directMap){
-      bond->setEndAtomIdx(static_cast<int>(tmpT));
-    } else {
-      bond->setEndAtomIdx(mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx());
+      endIdx=tmpT;
 
+    } else {
+      endIdx=mol->getAtomWithBookmark(static_cast<int>(tmpT))->getIdx();
     }
     streamRead(ss,flags);
-    bond->setIsAromatic(flags & 0x1<<6);
-    bond->setIsConjugated(flags & 0x1<<5);
+    bool hasQuery=flags&0x1<<4;
 
-    streamRead(ss,tmpChar);
-    bond->setBondType(static_cast<Bond::BondType>(tmpChar));
-    streamRead(ss,tmpChar);
-    bond->setBondDir(static_cast<Bond::BondDir>(tmpChar));
-
-    if(version>3){
+    if(version<=5 || !hasQuery){
+      bond = new Bond();
+      bond->setIsAromatic(flags & 0x1<<6);
+      bond->setIsConjugated(flags & 0x1<<5);
       streamRead(ss,tmpChar);
-      Bond::BondStereo stereo=static_cast<Bond::BondStereo>(tmpChar);
-      bond->setStereo(stereo);
-      if(stereo!=Bond::STEREONONE){
-	streamRead(ss,tmpChar);
-	for(char i=0;i<tmpChar;++i){
-	  streamRead(ss,tmpT);
-	  bond->getStereoAtoms().push_back(static_cast<int>(tmpT));
-	}
+      bond->setBondType(static_cast<Bond::BondType>(tmpChar));
+      streamRead(ss,tmpChar);
+      bond->setBondDir(static_cast<Bond::BondDir>(tmpChar));
+
+      if(version>3){
+        streamRead(ss,tmpChar);
+        Bond::BondStereo stereo=static_cast<Bond::BondStereo>(tmpChar);
+        bond->setStereo(stereo);
+        if(stereo!=Bond::STEREONONE){
+          streamRead(ss,tmpChar);
+          for(char i=0;i<tmpChar;++i){
+            streamRead(ss,tmpT);
+            bond->getStereoAtoms().push_back(static_cast<int>(tmpT));
+          }
+        }
+      }
+    } else if(version>5) {
+      Tags tag;
+      bond = new QueryBond();
+      // we have a query:
+      streamRead(ss,tag);
+      if(tag != BEGINQUERY){
+        throw MolPicklerException("Bad pickle format: BEGINQUERY tag not found.");
+      }
+      static_cast<QueryBond *>(bond)->setQuery(unpickleQuery(ss,bond));
+      streamRead(ss,tag);
+      if(tag != ENDQUERY){
+        throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
       }
     }
+    bond->setBeginAtomIdx(begIdx);
+    bond->setEndAtomIdx(endIdx);
     mol->addBond(bond,true);
     return bond;
   }

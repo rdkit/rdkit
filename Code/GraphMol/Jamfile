@@ -26,8 +26,8 @@ exe testChirality : testChirality.cpp GraphMol
   ./SmilesParse//SmilesParse ./FileParsers//FileParsers
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
 exe testPickler : testPickler.cpp GraphMol 
-  ./SmilesParse//SmilesParse ./FileParsers//FileParsers
-  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+  ./SmilesParse//SmilesParse ./FileParsers//FileParsers ./Substruct//Substruct 
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs  /RDKit//vflib ;
 exe itertest : itertest.cpp GraphMol 
   ./SmilesParse//SmilesParse 
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;

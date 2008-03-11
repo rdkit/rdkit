@@ -10,6 +10,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <RDGeneral/RDLog.h>
 
@@ -316,6 +317,7 @@ void testQueries(){
   std::string smi,pickle;
   int tmpInt;
   ROMol *m1,*m2;
+  MatchVectType matchV;
 
   // start simple : atom map numbers
   smi="C";
@@ -464,23 +466,89 @@ void testQueries(){
   smi="C";
   m2= SmilesToMol(smi);
   TEST_ASSERT(m2);
-  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  TEST_ASSERT(SubstructMatch(*m2,*m1,matchV));
   delete m2;
   smi="N";
   m2= SmilesToMol(smi);
   TEST_ASSERT(m2);
-  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
   delete m2;
   smi="c1ccccc1";
   m2= SmilesToMol(smi);
   TEST_ASSERT(m2);
-  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  TEST_ASSERT(SubstructMatch(*m2,*m1,matchV));
   delete m1;
 
+  // basic bond queries:
+  smi="[#6][#6]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(m1->getAtomWithIdx(1)->hasQuery());
+  TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
+  BOOST_LOG(rdErrorLog)<<m1->getBondWithIdx(0)->getQuery()->getDescription()<<std::endl;
+  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription()=="BondOr");
+  smi="CC";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="C=C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="CN";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="c1ccccc1";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(SubstructMatch(*m2,*m1,matchV));
+  delete m2;
 
+  smi="[#6]-[#6]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(m1->getAtomWithIdx(1)->hasQuery());
+  TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
+  BOOST_LOG(rdErrorLog)<<m1->getBondWithIdx(0)->getQuery()->getDescription()<<std::endl;
+  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription()=="BondOrder");
+  smi="CC";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="C=C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="CN";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="c1ccccc1";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
+  delete m2;
 
-
-  
+  delete m1;
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
   
 }
