@@ -44,6 +44,8 @@ namespace RDKit{
     static const int endianId;  //! mark the endian-ness of the pickle
 
     //! the pickle format is tagged using these tags:
+    //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM, otherwise
+    //! you will break old pickles.
     typedef enum {
       VERSION=0,
       BEGINATOM,
@@ -55,7 +57,6 @@ namespace RDKit{
       ATOM_CHIRALTAG,
       ATOM_MASS,
       ATOM_ISAROMATIC,
-      ATOM_MAPNUMBER,
       ENDATOM,
       BEGINBOND,
       BOND_INDEX,
@@ -70,6 +71,7 @@ namespace RDKit{
       ENDSSSR,
       ENDMOL,
       BEGINCONFS,
+      ATOM_MAPNUMBER,
       BEGINQUERY,
       QUERY_VALUE,
       QUERY_ISNEGATED,

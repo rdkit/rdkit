@@ -564,7 +564,7 @@ int main(int argc, char *argv[]) {
   }
 
   //_createPickleFile();
-#if 0
+#if 1
   test1(doLong);
   //test2(doLong);
   test3(doLong);
@@ -575,6 +575,7 @@ int main(int argc, char *argv[]) {
 #endif
   //timeTest(doLong);
   testQueries();
+  //testBulkQueries();
   
   return 0;
 

@@ -47,7 +47,6 @@ namespace RDKit{
     void pickleQuery(std::ostream &ss,const Query<int,T const *,true> *query) {
       PRECONDITION(query,"no query");
       streamWrite(ss,query->getDescription());
-      BOOST_LOG(rdErrorLog)<<"Write: "<<query->getDescription()<<std::endl;
       if(query->getNegation()) streamWrite(ss,MolPickler::QUERY_ISNEGATED);
       //if (typeid(*query)==typeid(ATOM_BOOL_QUERY)){
       //  streamWrite(ss,QUERY_BOOL);
@@ -103,9 +102,7 @@ namespace RDKit{
       } else if (typeid(*query)==typeid(RecursiveStructureQuery)){
         streamWrite(ss,MolPickler::QUERY_RECURSIVE);
         streamWrite(ss,MolPickler::QUERY_VALUE);
-        BOOST_LOG(rdErrorLog)<<"  pickle recursive "<<std::endl;
         MolPickler::pickleMol(((const RecursiveStructureQuery *)query)->getQueryMol(),ss);
-        BOOST_LOG(rdErrorLog)<<"  done "<<std::endl;
       } else if (typeid(*query)==typeid(Query<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_NULL);
       } else {
@@ -123,7 +120,6 @@ namespace RDKit{
 
     void finalizeQueryFromDescription(Query<int,Atom const *,true> *query,Atom const *owner){
       std::string descr=query->getDescription();
-      BOOST_LOG(rdErrorLog)<<"read: "<<descr<<std::endl;
       Query<int,Atom const *,true> *tmpQuery;
       if(descr=="AtomRingBondCount"){
         query->setDataFunc(queryAtomRingBondCount);
@@ -179,7 +175,6 @@ namespace RDKit{
 
     void finalizeQueryFromDescription(Query<int,Bond const *,true> *query,Bond const *owner){
       std::string descr=query->getDescription();
-      BOOST_LOG(rdErrorLog)<<"read: "<<descr<<std::endl;
       Query<int,Bond const *,true> *tmpQuery;
       if(descr=="BondRingSize"){
         tmpQuery=makeBondInRingOfSizeQuery(static_cast<BOND_EQUALS_QUERY *>(query)->getVal());
@@ -347,10 +342,8 @@ namespace RDKit{
           throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
         }
         tmpMol=new ROMol();
-        BOOST_LOG(rdErrorLog)<<"  Build Recursive "<<std::endl;
         MolPickler::molFromPickle(ss,tmpMol);
         res=new RecursiveStructureQuery(tmpMol);
-        BOOST_LOG(rdErrorLog)<<"  done "<<std::endl;
         break;
       default:
         res = buildBaseQuery(ss,owner,tag);
