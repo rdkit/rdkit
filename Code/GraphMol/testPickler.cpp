@@ -315,7 +315,7 @@ void testQueries(){
   BOOST_LOG(rdErrorLog) << "Testing query serialization." << std::endl;
   std::string smi,pickle;
   int tmpInt;
-  ROMol *m1;
+  ROMol *m1,*m2;
 
   // start simple : atom map numbers
   smi="C";
@@ -341,8 +341,146 @@ void testQueries(){
   m1 = new ROMol();
   MolPickler::molFromPickle(pickle,*m1);
   TEST_ASSERT(m1->getNumAtoms()==1);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  BOOST_LOG(rdErrorLog)<<m1->getAtomWithIdx(0)->getQuery()->getDescription()<<std::endl;
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
+  // query should be for aliphatic C:
+  smi="C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="O";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="c1ccccc1";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
   delete m1;
 
+  // atom lists:
+  smi="[C,N,O]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==1);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  BOOST_LOG(rdErrorLog)<<m1->getAtomWithIdx(0)->getQuery()->getDescription()<<std::endl;
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomOr");
+  smi="C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="O";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="N";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="F";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="c1nocc1";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(1)));
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(2)));
+  delete m1;
+
+  // more complex atom queries:
+  smi="[C&D2,N&D1]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==1);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  BOOST_LOG(rdErrorLog)<<m1->getAtomWithIdx(0)->getQuery()->getDescription()<<std::endl;
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomOr");
+  smi="C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="CC";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="C(C)C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="C(C)(C)C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="N";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="NC";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="N(C)C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+
+  // basic recursive queries:
+  smi="[$([#6])]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==1);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  BOOST_LOG(rdErrorLog)<<m1->getAtomWithIdx(0)->getQuery()->getDescription()<<std::endl;
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="RecursiveStructure");
+  smi="C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="N";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="c1ccccc1";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m1;
+
+
+
+
+  
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
   
 }

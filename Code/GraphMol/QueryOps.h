@@ -97,6 +97,12 @@ namespace RDKit{
   static int queryIsBondInRing(Bond const * bond) {
     return bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())!=0;
   };
+  static int queryAtomMinRingSize(Atom const *at){
+    return at->getOwningMol().getRingInfo()->minAtomRingSize(at->getIdx());
+  };
+  static int queryBondMinRingSize(Bond const *bond){
+    return bond->getOwningMol().getRingInfo()->minBondRingSize(bond->getIdx());
+  };
 
   static int queryAtomRingBondCount(Atom const *at) {
     // EFF: cache this result
@@ -113,6 +119,24 @@ namespace RDKit{
     return res;
   }
 
+  template <int tgt>
+  int queryAtomIsInRingOfSize(Atom const *at) {
+    if(at->getOwningMol().getRingInfo()->isAtomInRingOfSize(at->getIdx(),tgt)){
+      return tgt;
+    } else {
+      return 0;
+    }
+  };
+  template <int tgt>
+  int queryBondIsInRingOfSize(Bond const *bond) {
+    if(bond->getOwningMol().getRingInfo()->isBondInRingOfSize(bond->getIdx(),tgt)){
+      return tgt;
+    } else {
+      return 0;
+    }
+  };
+
+  
   //! returns a Query for matching atomic number
   ATOM_EQUALS_QUERY *makeAtomNumEqualsQuery(int what);
   //! returns a Query for matching implicit valence
@@ -268,7 +292,10 @@ namespace RDKit{
   
   };
 
-
+  template <typename T>
+  int nullDataFun(T arg) { return 1; }
+  template <typename T>
+  bool nullQueryFun(T arg) { return true; } 
   
 };
 

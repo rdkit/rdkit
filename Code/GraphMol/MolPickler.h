@@ -86,6 +86,8 @@ namespace RDKit{
       QUERY_RANGE,
       QUERY_SET,
       QUERY_NULL,
+      QUERY_ATOMRING,
+      QUERY_RECURSIVE,
       ENDQUERY,
     } Tags;
 

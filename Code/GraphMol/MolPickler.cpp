@@ -34,8 +34,9 @@ namespace RDKit{
   void streamRead(std::istream &ss,std::string &what){
     unsigned int l;
     ss.read((char *)&l,sizeof(l));
-    char *buff=new char[l];
+    char *buff=new char[l+1];
     ss.read(buff,sizeof(char)*l);
+    buff[l]=0;
     what=buff;
     delete [] buff;
   };  
@@ -46,6 +47,7 @@ namespace RDKit{
     void pickleQuery(std::ostream &ss,const Query<int,T const *,true> *query) {
       PRECONDITION(query,"no query");
       streamWrite(ss,query->getDescription());
+      BOOST_LOG(rdErrorLog)<<"Write: "<<query->getDescription()<<std::endl;
       if(query->getNegation()) streamWrite(ss,MolPickler::QUERY_ISNEGATED);
       //if (typeid(*query)==typeid(ATOM_BOOL_QUERY)){
       //  streamWrite(ss,QUERY_BOOL);
@@ -94,6 +96,14 @@ namespace RDKit{
             ++cit){
           streamWrite(ss,*cit);
         }
+      } else if (typeid(*query)==typeid(AtomRingQuery)){
+        streamWrite(ss,MolPickler::QUERY_ATOMRING);
+        streamWrite(ss,MolPickler::QUERY_VALUE,static_cast<const EqualityQuery<int,T const *,true>*>(query)->getVal());
+        streamWrite(ss,static_cast<const EqualityQuery<int,T const *,true>*>(query)->getTol());
+      } else if (typeid(*query)==typeid(RecursiveStructureQuery)){
+        streamWrite(ss,MolPickler::QUERY_RECURSIVE);
+        streamWrite(ss,MolPickler::QUERY_VALUE);
+        MolPickler::pickleMol(((const RecursiveStructureQuery *)query)->getQueryMol(),ss);
       } else if (typeid(*query)==typeid(Query<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_NULL);
       } else {
@@ -101,13 +111,100 @@ namespace RDKit{
       }
 
       // now the children:
-      streamWrite(ss,MolPickler::QUERY_NUMCHILDREN,static_cast<unsigned char>(query->endChildren()-query->beginChildren()));
+      streamWrite(ss,MolPickler::QUERY_NUMCHILDREN,
+                  static_cast<unsigned char>(query->endChildren()-query->beginChildren()));
       typename Query<int,T const *,true>::CHILD_VECT_CI cit;
       for(cit=query->beginChildren();cit!=query->endChildren();++cit){
         pickleQuery(ss,cit->get());
       }
     }
 
+    void finalizeQueryFromDescription(Query<int,Atom const *,true> *query,Atom const *owner){
+      std::string descr=query->getDescription();
+      BOOST_LOG(rdErrorLog)<<"read: "<<descr<<std::endl;
+      Query<int,Atom const *,true> *tmpQuery;
+      if(descr=="AtomRingBondCount"){
+        query->setDataFunc(queryAtomRingBondCount);
+      } else if(descr=="AtomRingSize"){
+        tmpQuery=makeAtomInRingOfSizeQuery(static_cast<ATOM_EQUALS_QUERY *>(query)->getVal());
+        query->setDataFunc(tmpQuery->getDataFunc());
+        delete tmpQuery;
+      } else if(descr=="AtomMinRingSize"){
+        query->setDataFunc(queryAtomMinRingSize);
+      } else if(descr=="AtomRingBondCount"){
+        query->setDataFunc(queryAtomRingBondCount);
+      } else if(descr=="AtomImplicitValence"){
+        query->setDataFunc(queryAtomImplicitValence);
+      } else if(descr=="AtomTotalValence"){
+        query->setDataFunc(queryAtomTotalValence);
+      } else if(descr=="AtomAtomicNum"){
+        query->setDataFunc(queryAtomNum);
+      } else if(descr=="AtomExplicitDegree"){
+        query->setDataFunc(queryAtomExplicitDegree);
+      } else if(descr=="AtomTotalDegree"){
+        query->setDataFunc(queryAtomTotalDegree);
+      } else if(descr=="AtomHCount"){
+        query->setDataFunc(queryAtomHCount);
+      } else if(descr=="AtomIsAromatic"){
+        query->setDataFunc(queryAtomAromatic);
+      } else if(descr=="AtomIsAliphatic"){
+        query->setDataFunc(queryAtomAliphatic);
+      } else if(descr=="AtomUnsaturated"){
+        query->setDataFunc(queryAtomUnsaturated);
+      } else if(descr=="AtomMass"){
+        query->setDataFunc(queryAtomMass);
+      } else if(descr=="AtomFormalCharge"){
+        query->setDataFunc(queryAtomFormalCharge);
+      } else if(descr=="AtomHybridization"){
+        query->setDataFunc(queryAtomHybridization);
+      } else if(descr=="AtomInRing"){
+        query->setDataFunc(queryIsAtomInRing);
+      } else if(descr=="AtomInNRings"){
+        query->setDataFunc(queryIsAtomInNRings);
+      } else if(descr=="AtomNull"){
+        query->setDataFunc(nullDataFun);
+        query->setMatchFunc(nullQueryFun);
+      } else if(descr=="AtomInNRings"||descr=="RecursiveStructure"){
+        // don't need to do anything here because the classes
+        // automatically have everything set
+      } else if(descr=="AtomAnd"||descr=="AtomOr"||descr=="AtomXor"){
+        // don't need to do anything here because the classes
+        // automatically have everything set
+      } else {
+        throw MolPicklerException("Do not know how to finalize query: '"+descr+"'");
+      }
+    }
+
+    void finalizeQueryFromDescription(Query<int,Bond const *,true> *query,Bond const *owner){
+      std::string descr=query->getDescription();
+      BOOST_LOG(rdErrorLog)<<"read: "<<descr<<std::endl;
+      Query<int,Bond const *,true> *tmpQuery;
+      if(descr=="BondRingSize"){
+        tmpQuery=makeBondInRingOfSizeQuery(static_cast<BOND_EQUALS_QUERY *>(query)->getVal());
+        query->setDataFunc(tmpQuery->getDataFunc());
+        delete tmpQuery;
+      } else if(descr=="BondMinRingSize"){
+        query->setDataFunc(queryBondMinRingSize);
+      } else if(descr=="BondOrder"){
+        query->setDataFunc(queryBondOrder);
+      } else if(descr=="BondDir"){
+        query->setDataFunc(queryBondDir);
+      } else if(descr=="BondInRing"){
+        query->setDataFunc(queryIsBondInRing);
+      } else if(descr=="BondInNRings"){
+        query->setDataFunc(queryIsBondInNRings);
+      } else if(descr=="BondNull"){
+        query->setDataFunc(nullDataFun);
+        query->setMatchFunc(nullQueryFun);
+      } else if(descr=="BondAnd"||descr=="BondOr"||descr=="BondXor"){
+        // don't need to do anything here because the classes
+        // automatically have everything set
+      } else {
+        throw MolPicklerException("Do not know how to finalize query: '"+descr+"'");
+      }
+      
+    }
+    
     template <class T>
     Query<int,T const *,true> *unpickleQuery(std::istream &ss,T const *owner) {
       PRECONDITION(owner,"no query");
@@ -123,6 +220,7 @@ namespace RDKit{
       }
       int val;
       int nMembers;
+      ROMol *tmpMol;
       switch(tag){
       case MolPickler::QUERY_AND:
         res = new AndQuery<int,T const *,true>();
@@ -214,6 +312,26 @@ namespace RDKit{
           --nMembers;
         }
         break;
+      case MolPickler::QUERY_ATOMRING:
+        res=new AtomRingQuery();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        streamRead(ss,val);
+        static_cast<EqualityQuery<int,T const *,true> *>(res)->setVal(val);
+        streamRead(ss,val);
+        static_cast<EqualityQuery<int,T const *,true> *>(res)->setTol(val);
+        break;
+      case MolPickler::QUERY_RECURSIVE:
+        res=new RecursiveStructureQuery();
+        streamRead(ss,tag);
+        if(tag != MolPickler::QUERY_VALUE){
+          throw MolPicklerException("Bad pickle format: QUERY_VALUE tag not found.");
+        }
+        tmpMol=new ROMol();
+        MolPickler::molFromPickle(ss,tmpMol);
+        ((RecursiveStructureQuery *)res)->setQueryMol(tmpMol);
       case MolPickler::QUERY_NULL:
         res = new Query<int,T const *,true>();
         break;
@@ -223,6 +341,8 @@ namespace RDKit{
 
       res->setNegation(isNegated);
       res->setDescription(descr);
+      
+      finalizeQueryFromDescription(res,owner);
 
       // read in the children:
       streamRead(ss,tag);
@@ -238,8 +358,8 @@ namespace RDKit{
       }
       return res;
     }
-
   }
+
 
   void MolPickler::pickleMol(const ROMol *mol,std::ostream &ss){
     PRECONDITION(mol,"empty molecule");
@@ -595,19 +715,31 @@ namespace RDKit{
     char tmpChar;
     signed char tmpSchar;
     char flags;
-    bool hasQuery=false;
-
-    Atom *atom = new Atom();
+    Tags tag;
+    Atom *atom=0;
+    int atomicNum=0;
 
     streamRead(ss,tmpChar);
-    atom->setAtomicNum(static_cast<int>(tmpChar));
+    atomicNum=tmpChar;
 
+    bool hasQuery=false;
     streamRead(ss,flags);
-    atom->setIsAromatic(flags & 0x1<<6);
-    atom->setNoImplicit(flags & 0x1<<5);
     if(version>5){
       hasQuery=flags&0x1<<4;
     }
+    if(!hasQuery){
+      atom = new Atom(atomicNum);
+    } else {
+      atom = new QueryAtom();
+      if(atomicNum){
+        // can't set this in the constructor because that builds a
+        // query and we're going to take care of that later:
+        atom->setAtomicNum(atomicNum);
+      }
+    }
+    atom->setIsAromatic(flags & 0x1<<6);
+    atom->setNoImplicit(flags & 0x1<<5);
+
     // are coordinates present?
     if(flags & 0x1<<7){
       streamRead(ss,x);
@@ -638,7 +770,15 @@ namespace RDKit{
       atom->d_implicitValence  = tmpChar;
     } else if(version>5){
       // we have a query:
+      streamRead(ss,tag);
+      if(tag != BEGINQUERY){
+        throw MolPicklerException("Bad pickle format: BEGINQUERY tag not found.");
+      }
       static_cast<QueryAtom *>(atom)->setQuery(unpickleQuery(ss,atom));
+      streamRead(ss,tag);
+      if(tag != ENDQUERY){
+        throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
+      }
     }
 
     if(version>5){
@@ -653,7 +793,6 @@ namespace RDKit{
       } else {
         ss.seekg(sPos);
       }
-
     }
 
     mol->addAtom(atom,false,true);
