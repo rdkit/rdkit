@@ -344,7 +344,6 @@ void testQueries(){
   MolPickler::molFromPickle(pickle,*m1);
   TEST_ASSERT(m1->getNumAtoms()==1);
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
-  BOOST_LOG(rdErrorLog)<<m1->getAtomWithIdx(0)->getQuery()->getDescription()<<std::endl;
   TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
   // query should be for aliphatic C:
   smi="C";
@@ -373,7 +372,6 @@ void testQueries(){
   MolPickler::molFromPickle(pickle,*m1);
   TEST_ASSERT(m1->getNumAtoms()==1);
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
-  BOOST_LOG(rdErrorLog)<<m1->getAtomWithIdx(0)->getQuery()->getDescription()<<std::endl;
   TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomOr");
   smi="C";
   m2= SmilesToMol(smi);
@@ -413,7 +411,6 @@ void testQueries(){
   MolPickler::molFromPickle(pickle,*m1);
   TEST_ASSERT(m1->getNumAtoms()==1);
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
-  BOOST_LOG(rdErrorLog)<<m1->getAtomWithIdx(0)->getQuery()->getDescription()<<std::endl;
   TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomOr");
   smi="C";
   m2= SmilesToMol(smi);
@@ -461,7 +458,6 @@ void testQueries(){
   MolPickler::molFromPickle(pickle,*m1);
   TEST_ASSERT(m1->getNumAtoms()==1);
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
-  BOOST_LOG(rdErrorLog)<<m1->getAtomWithIdx(0)->getQuery()->getDescription()<<std::endl;
   TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="RecursiveStructure");
   smi="C";
   m2= SmilesToMol(smi);
@@ -479,6 +475,28 @@ void testQueries(){
   TEST_ASSERT(SubstructMatch(*m2,*m1,matchV));
   delete m1;
 
+  smi="[R2]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==1);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomInNRings");
+  smi="C1CCC1";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  delete m2;
+  smi="C12(CCC2)CCC1";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(0)));
+  TEST_ASSERT(!m1->getAtomWithIdx(0)->Match(m2->getAtomWithIdx(1)));
+  delete m2;
+
   // basic bond queries:
   smi="[#6][#6]";
   m1= SmartsToMol(smi);
@@ -491,7 +509,6 @@ void testQueries(){
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
   TEST_ASSERT(m1->getAtomWithIdx(1)->hasQuery());
   TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
-  BOOST_LOG(rdErrorLog)<<m1->getBondWithIdx(0)->getQuery()->getDescription()<<std::endl;
   TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription()=="BondOr");
   smi="CC";
   m2= SmilesToMol(smi);
@@ -525,7 +542,6 @@ void testQueries(){
   TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
   TEST_ASSERT(m1->getAtomWithIdx(1)->hasQuery());
   TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
-  BOOST_LOG(rdErrorLog)<<m1->getBondWithIdx(0)->getQuery()->getDescription()<<std::endl;
   TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription()=="BondOrder");
   smi="CC";
   m2= SmilesToMol(smi);
@@ -550,7 +566,6 @@ void testQueries(){
 
   delete m1;
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-  
 }
 
 
@@ -575,7 +590,6 @@ int main(int argc, char *argv[]) {
 #endif
   //timeTest(doLong);
   testQueries();
-  //testBulkQueries();
   
   return 0;
 
