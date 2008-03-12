@@ -12,6 +12,7 @@
 #include "SmartsWrite.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <RDGeneral/RDLog.h>
 #include <boost/log/functions.hpp>
 using namespace RDKit;
@@ -125,14 +126,20 @@ std::vector< MatchVectType > _checkMatches(std::string smarts, std::string smile
   //  lenFirst : length of the first match
   //
   // Return the list of all matches just in case want to do aditional testing
-  ROMol *mol, *mol2, *matcher;
+  ROMol *mol, *mol2, *matcher, *matcher2;
   bool matches;
   unsigned int matchCount;
+  std::string pickle;
   MatchVectType mV;
   std::vector< MatchVectType > mVV;
 
   matcher = SmartsToMol(smarts);
   CHECK_INVARIANT(matcher,smarts);
+  // we will at the same time test the serialization:
+  MolPickler::pickleMol(matcher,pickle);
+  matcher2 = new ROMol();
+  MolPickler::molFromPickle(pickle,matcher2);
+  CHECK_INVARIANT(matcher2,smarts);
 
   //std::cerr << "\tSMA: " << smarts << " -> " << MolToSmarts(*matcher) << std::endl;;
   
@@ -152,18 +159,35 @@ std::vector< MatchVectType > _checkMatches(std::string smarts, std::string smile
   CHECK_INVARIANT(matchCount==nMatches, smarts + " " + smiles);
   CHECK_INVARIANT(mVV[0].size()==lenFirst, smarts + " " + smiles);
   delete matcher;
+  matcher=0;
+
+  matches = SubstructMatch(*mol,*matcher2,mV);
+  CHECK_INVARIANT(matches, smarts + " " + smiles);
+  CHECK_INVARIANT(mV.size()==lenFirst, smarts + " " + smiles);
+  matchCount = SubstructMatch(*mol,*matcher2,mVV,true);
+  CHECK_INVARIANT(matchCount==nMatches, smarts + " " + smiles);
+  CHECK_INVARIANT(mVV[0].size()==lenFirst, smarts + " " + smiles);
+  delete matcher2;
+  matcher2=0;
+
   delete mol;
   
   return mVV;
 }
 
 void _checkNoMatches(std::string smarts, std::string smiles) {
-  ROMol *mol,*matcher;
+  ROMol *mol,*matcher,*matcher2;
+  std::string pickle;
   bool matches;
   MatchVectType mV;
 
   matcher = SmartsToMol(smarts);
   CHECK_INVARIANT(matcher,smarts);
+  // we will at the same time test the serialization:
+  MolPickler::pickleMol(matcher,pickle);
+  matcher2 = new ROMol();
+  MolPickler::molFromPickle(pickle,matcher2);
+  CHECK_INVARIANT(matcher2,smarts);
 
   mol = SmilesToMol(smiles);
   CHECK_INVARIANT(mol,smiles);
@@ -171,8 +195,11 @@ void _checkNoMatches(std::string smarts, std::string smiles) {
 
   matches = SubstructMatch(*mol,*matcher,mV);
   CHECK_INVARIANT(!matches,"");
+  matches = SubstructMatch(*mol,*matcher2,mV);
+  CHECK_INVARIANT(!matches,"");
   delete mol;
   delete matcher;
+  delete matcher2;
 }
 
 void testMatches(){

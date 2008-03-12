@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -21,111 +21,104 @@ ATOM_EQUALS_QUERY *makeAtomRingBondCountQuery(int what) {
   return res;
 };
 
-template <class T,int sz>  
-int queryIsInRingOfSize(T const *obj) {
-  return obj->getOwningMol().getRingInfo()->isAtomInRingOfSize(obj->getIdx(),sz);
-};
 ATOM_EQUALS_QUERY *makeAtomInRingOfSizeQuery(int tgt){
   RANGE_CHECK(3,tgt,20);
   ATOM_EQUALS_QUERY *res = new ATOM_EQUALS_QUERY;
-  res->setVal(true);
+  res->setVal(tgt);
   switch(tgt){
   case 3:
-    res->setDataFunc(queryIsInRingOfSize<Atom,3>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<3>);break;
   case 4:
-    res->setDataFunc(queryIsInRingOfSize<Atom,4>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<4>);break;
   case 5:
-    res->setDataFunc(queryIsInRingOfSize<Atom,5>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<5>);break;
   case 6:
-    res->setDataFunc(queryIsInRingOfSize<Atom,6>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<6>);break;
   case 7:
-    res->setDataFunc(queryIsInRingOfSize<Atom,7>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<7>);break;
   case 8:
-    res->setDataFunc(queryIsInRingOfSize<Atom,8>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<8>);break;
   case 9:
-    res->setDataFunc(queryIsInRingOfSize<Atom,9>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<9>);break;
   case 10:
-    res->setDataFunc(queryIsInRingOfSize<Atom,10>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<10>);break;
   case 11:
-    res->setDataFunc(queryIsInRingOfSize<Atom,11>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<11>);break;
   case 12:
-    res->setDataFunc(queryIsInRingOfSize<Atom,12>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<12>);break;
   case 13:
-    res->setDataFunc(queryIsInRingOfSize<Atom,13>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<13>);break;
   case 14:
-    res->setDataFunc(queryIsInRingOfSize<Atom,14>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<14>);break;
   case 15:
-    res->setDataFunc(queryIsInRingOfSize<Atom,15>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<15>);break;
   case 16:
-    res->setDataFunc(queryIsInRingOfSize<Atom,16>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<16>);break;
   case 17:
-    res->setDataFunc(queryIsInRingOfSize<Atom,17>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<17>);break;
   case 18:
-    res->setDataFunc(queryIsInRingOfSize<Atom,18>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<18>);break;
   case 19:
-    res->setDataFunc(queryIsInRingOfSize<Atom,19>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<19>);break;
   case 20:
-    res->setDataFunc(queryIsInRingOfSize<Atom,20>);break;
+    res->setDataFunc(queryAtomIsInRingOfSize<20>);break;
   }
+
   res->setDescription("AtomRingSize");
   return res;
 }
 BOND_EQUALS_QUERY *makeBondInRingOfSizeQuery(int tgt){
-  RANGE_CHECK(3,tgt,15);
+  RANGE_CHECK(3,tgt,20);
   BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;
-  res->setVal(true);
+  res->setVal(tgt);
   switch(tgt){
   case 3:
-    res->setDataFunc(queryIsInRingOfSize<Bond,3>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<3>);break;
   case 4:
-    res->setDataFunc(queryIsInRingOfSize<Bond,4>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<4>);break;
   case 5:
-    res->setDataFunc(queryIsInRingOfSize<Bond,5>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<5>);break;
   case 6:
-    res->setDataFunc(queryIsInRingOfSize<Bond,6>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<6>);break;
   case 7:
-    res->setDataFunc(queryIsInRingOfSize<Bond,7>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<7>);break;
   case 8:
-    res->setDataFunc(queryIsInRingOfSize<Bond,8>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<8>);break;
   case 9:
-    res->setDataFunc(queryIsInRingOfSize<Bond,9>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<9>);break;
   case 10:
-    res->setDataFunc(queryIsInRingOfSize<Bond,10>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<10>);break;
   case 11:
-    res->setDataFunc(queryIsInRingOfSize<Bond,11>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<11>);break;
   case 12:
-    res->setDataFunc(queryIsInRingOfSize<Bond,12>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<12>);break;
   case 13:
-    res->setDataFunc(queryIsInRingOfSize<Bond,13>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<13>);break;
   case 14:
-    res->setDataFunc(queryIsInRingOfSize<Bond,14>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<14>);break;
   case 15:
-    res->setDataFunc(queryIsInRingOfSize<Bond,15>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<15>);break;
   case 16:
-    res->setDataFunc(queryIsInRingOfSize<Bond,16>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<16>);break;
   case 17:
-    res->setDataFunc(queryIsInRingOfSize<Bond,17>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<17>);break;
   case 18:
-    res->setDataFunc(queryIsInRingOfSize<Bond,18>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<18>);break;
   case 19:
-    res->setDataFunc(queryIsInRingOfSize<Bond,19>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<19>);break;
   case 20:
-    res->setDataFunc(queryIsInRingOfSize<Bond,20>);break;
+    res->setDataFunc(queryBondIsInRingOfSize<20>);break;
   }
   res->setDescription("BondRingSize");
   return res;
 }
 
 
-template <class T>  
-int queryMinRingSize(T const *obj) {
-  return obj->getOwningMol().getRingInfo()->minAtomRingSize(obj->getIdx());
-};
 ATOM_EQUALS_QUERY *makeAtomMinRingSizeQuery(int tgt){
   RANGE_CHECK(3,tgt,20);
   ATOM_EQUALS_QUERY *res = new ATOM_EQUALS_QUERY;
   res->setVal(tgt);
-  res->setDataFunc(queryMinRingSize<Atom>);
+  res->setDataFunc(queryAtomMinRingSize);
   res->setDescription("AtomMinRingSize");
   return res;
 }
@@ -133,7 +126,7 @@ BOND_EQUALS_QUERY *makeBondMinRingSizeQuery(int tgt){
   RANGE_CHECK(3,tgt,20);
   BOND_EQUALS_QUERY *res = new BOND_EQUALS_QUERY;
   res->setVal(tgt);
-  res->setDataFunc(queryMinRingSize<Bond>);
+  res->setDataFunc(queryBondMinRingSize);
   res->setDescription("BondMinRingSize");
   return res;
 }
@@ -294,10 +287,6 @@ BOND_EQUALS_QUERY *makeBondInNRingsQuery(int what){
   return res;
 }
 
-
-template <typename T>
-int nullDataFun(T arg) { return 1; } 
-bool nullQueryFun(int arg) { return true; } 
 
 BOND_NULL_QUERY *makeBondNullQuery(){
   BOND_NULL_QUERY *res = new BOND_NULL_QUERY;

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -11,6 +11,7 @@
 #include <RDGeneral/utils.h>
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>

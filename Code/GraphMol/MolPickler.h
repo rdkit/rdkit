@@ -1,10 +1,16 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #ifndef _RD_MOLPICKLE_H
 #define _RD_MOLPICKLE_H
+
+#include <Geometry/point.h>
+#include <GraphMol/Atom.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/Bond.h>
+#include <GraphMol/QueryBond.h>
 
 // Std stuff
 #include <iostream>
@@ -17,6 +23,7 @@
 
 namespace RDKit{
   class ROMol;
+  class RingInfo;
 
   //! used to indicate exceptions whilst pickling (serializing) molecules
   class MolPicklerException : public std::exception {
@@ -37,6 +44,8 @@ namespace RDKit{
     static const int endianId;  //! mark the endian-ness of the pickle
 
     //! the pickle format is tagged using these tags:
+    //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM, otherwise
+    //! you will break old pickles.
     typedef enum {
       VERSION=0,
       BEGINATOM,
@@ -62,6 +71,26 @@ namespace RDKit{
       ENDSSSR,
       ENDMOL,
       BEGINCONFS,
+      ATOM_MAPNUMBER,
+      BEGINQUERY,
+      QUERY_VALUE,
+      QUERY_ISNEGATED,
+      QUERY_NUMCHILDREN,
+      QUERY_BOOL,
+      QUERY_AND,
+      QUERY_OR,
+      QUERY_XOR,
+      QUERY_EQUALS,
+      QUERY_GREATER,
+      QUERY_GREATEREQUAL,
+      QUERY_LESS,
+      QUERY_LESSEQUAL,
+      QUERY_RANGE,
+      QUERY_SET,
+      QUERY_NULL,
+      QUERY_ATOMRING,
+      QUERY_RECURSIVE,
+      ENDQUERY,
     } Tags;
 
     //! pickles a molecule and sends the results to stream \c ss
@@ -85,8 +114,7 @@ namespace RDKit{
 
     //! do the actual work of pickling an Atom
     template <typename T>
-      static void _pickleAtom(std::ostream &ss,const Atom *atom);
-    //bool includeAtomCoords);
+    static void _pickleAtom(std::ostream &ss,const Atom *atom);
 
     //! do the actual work of pickling a Bond
     template <typename T>
@@ -109,9 +137,9 @@ namespace RDKit{
 
     //! extract atomic data from a pickle and add the resulting Atom to the molecule
     template <typename T>
-      static Atom *_addAtomFromPickle(std::istream &ss,ROMol *mol, RDGeom::Point3D &pos,
-				      int version,
-                                      bool directMap=false);
+    static Atom *_addAtomFromPickle(std::istream &ss,ROMol *mol, RDGeom::Point3D &pos,
+                                    int version,
+                                    bool directMap=false);
 
     //! extract bond data from a pickle and add the resulting Bond to the molecule
     template <typename T>

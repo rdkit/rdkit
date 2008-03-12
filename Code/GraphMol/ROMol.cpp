@@ -159,6 +159,7 @@ namespace RDKit{
 
   ROMol::GRAPH_NODE_TYPE ROMol::getAtomWithIdx(unsigned int idx)
   {
+    PRECONDITION(getNumAtoms()>0,"no atoms");
     RANGE_CHECK(0,idx,getNumAtoms()-1);
   
     int vd = boost::vertex(idx,d_graph);
@@ -267,6 +268,7 @@ namespace RDKit{
 
 
   ROMol::GRAPH_EDGE_TYPE ROMol::getBondWithIdx(unsigned int idx){
+    PRECONDITION(getNumBonds()>0,"no bonds");
     RANGE_CHECK(0,idx,getNumBonds()-1);
 
     GRAPH_MOL_BOND_PMAP::type bondMap = getBondPMap();

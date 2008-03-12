@@ -27,18 +27,18 @@ namespace Queries {
       this->df_negate = false;
     };
     //! construct and set the lower and upper bounds
-    RangeQuery(DataFuncArgType lower,DataFuncArgType upper) : d_upper(upper), d_lower(lower), d_tol(0), df_upperOpen(true), df_lowerOpen(true){
+    RangeQuery(MatchFuncArgType lower,MatchFuncArgType upper) : d_upper(upper), d_lower(lower), d_tol(0), df_upperOpen(true), df_lowerOpen(true){
       this->df_negate = false;
     };
 
     //! sets our upper bound
-    void setUpper (DataFuncArgType what) { this->d_upper = what; };
+    void setUpper (MatchFuncArgType what) { this->d_upper = what; };
     //! returns our upper bound
-    const DataFuncArgType getUpper() const { return this->d_upper; };
+    const MatchFuncArgType getUpper() const { return this->d_upper; };
     //! sets our lower bound
-    void setLower (DataFuncArgType what) { this->d_lower = what; };
+    void setLower (MatchFuncArgType what) { this->d_lower = what; };
     //! returns our lower bound
-    const DataFuncArgType getLower() const { return this->d_lower; };
+    const MatchFuncArgType getLower() const { return this->d_lower; };
 
     //! sets whether or not the ends of the range are open
     void setEndsOpen(bool lower, bool upper) {
@@ -51,9 +51,9 @@ namespace Queries {
     };
   
     //! sets our tolerance
-    void setTol(DataFuncArgType what) { this->d_tol = what; };
+    void setTol(MatchFuncArgType what) { this->d_tol = what; };
     //! returns our tolerance
-    const DataFuncArgType getTol() const { return this->d_tol; };
+    const MatchFuncArgType getTol() const { return this->d_tol; };
   
     bool Match(const DataFuncArgType what) const {
       MatchFuncArgType mfArg = TypeConvert(what,Int2Type<needsConversion>());
@@ -85,8 +85,8 @@ namespace Queries {
     };
 
   protected:
-    DataFuncArgType d_upper,d_lower;
-    DataFuncArgType d_tol;
+    MatchFuncArgType d_upper,d_lower;
+    MatchFuncArgType d_tol;
     bool df_upperOpen,df_lowerOpen;
   };
 

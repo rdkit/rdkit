@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -12,6 +12,7 @@
 #include "seqs.hpp"
 // ours
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/python/iterator.hpp>
 #include <boost/python/copy_non_const_reference.hpp>
