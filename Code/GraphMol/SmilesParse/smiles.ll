@@ -1,6 +1,6 @@
 %{
 
-// $Id: smiles.flex 4974 2006-02-18 00:49:21Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2001-2006 Randal Henne, Greg Landrum and Rational Discovery LLC
 //

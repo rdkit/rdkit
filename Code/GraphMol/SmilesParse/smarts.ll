@@ -1,8 +1,8 @@
 %{
 
-// $Id: smarts.flex 4974 2006-02-18 00:49:21Z glandrum $
+// $Id$
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -33,6 +33,8 @@ using namespace RDKit;
 %}
 %option stack
 %s IN_ATOM_STATE
+%s IN_BRANCH_STATE
+%s IN_RECURSION_STATE
 %%
 
 @[' ']*TH |
@@ -257,8 +259,12 @@ A			{
         yysmarts_lval.bond->setQuery(makeBondDirEqualsQuery(Bond::ENDUPRIGHT));
 	return BOND_TOKEN;  }
 
-\(       	{ return GROUP_OPEN_TOKEN; }
-\)       	{ return GROUP_CLOSE_TOKEN; }
+
+<IN_ATOM_STATE>\$\(              { yy_push_state(IN_RECURSION_STATE); return BEGIN_RECURSE; }
+
+\(       	{ yy_push_state(IN_BRANCH_STATE); return GROUP_OPEN_TOKEN; }
+<IN_BRANCH_STATE>\)       	{ yy_pop_state(); return GROUP_CLOSE_TOKEN; }
+<IN_RECURSION_STATE>\)       	{ yy_pop_state(); return END_RECURSE; }
 
 
 \[			{ yy_push_state(IN_ATOM_STATE); return ATOM_OPEN_TOKEN; }
@@ -275,8 +281,6 @@ A			{
 \.       	{ return SEPARATOR_TOKEN; }
 
 \%              { return PERCENT_TOKEN; }
-
-\$              { return DOLLAR_TOKEN; }
 
 [0-9]		{ yysmarts_lval.ival = atoi( yytext ); return DIGIT_TOKEN; }
 

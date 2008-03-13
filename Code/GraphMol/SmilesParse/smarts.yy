@@ -1,8 +1,8 @@
 %{
 
-  // $Id: smarts.y 4974 2006-02-18 00:49:21Z glandrum $
+  // $Id$
   //
-  //  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+  //  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
   //
   //   @@ All Rights Reserved  @@
   //
@@ -62,7 +62,7 @@ namespace RDKit {
 %token CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN 
-%token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN DOLLAR_TOKEN
+%token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN BEGIN_RECURSE END_RECURSE
 %token HYB_TOKEN COLON_TOKEN
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol branch
@@ -314,11 +314,11 @@ point_query: atom_query
 ;
 
 /* --------------------------------------------------------------- */
-recursive_query: DOLLAR_TOKEN GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN {
+recursive_query: BEGIN_RECURSE mol END_RECURSE {
   // this is a recursive SMARTS expression
   QueryAtom *qA = new QueryAtom();
   //  FIX: there's maybe a leak here
-  RWMol *molP = SmilesParse::molList_g[$3];
+  RWMol *molP = SmilesParse::molList_g[$2];
   // close any rings in the molecule:
   SmilesParseOps::CloseMolRings(molP,0);
 
@@ -326,10 +326,9 @@ recursive_query: DOLLAR_TOKEN GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN {
   qA->setQuery(new RecursiveStructureQuery(molP));
   //std::cout << "qA: " << qA << " " << qA->getQuery() << std::endl;
   int sz = SmilesParse::molList_g.size();
-  if ( sz==$3+1) {
+  if ( sz==$2+1) {
     SmilesParse::molList_g.resize( sz-1 );
   }
-
   $$ = qA;
 }
 ;

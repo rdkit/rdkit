@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -312,9 +312,15 @@ void testMatches3(){
   _checkNoMatches("[CR2r6]", "C1CCCC2C1CC2");
   _checkMatches("[CR2r4]", "C1CCCC2C1CC2",2,1);
 
-
-
-  
+  // -----
+  // This block is connected to SF-Issue 1912895
+  //   http://sourceforge.net/tracker/index.php?func=detail&aid=1912895&group_id=160139&atid=814650
+  _checkMatches("[$(Sc)]", "Sc1ccccc1", 1, 1);
+  _checkMatches("[Sc]", "[Sc]C", 1, 1);
+  _checkMatches("[Sc]", "[Sc]C", 1, 1);
+  _checkMatches("[$([Sc])]", "[Sc]C",1,1);
+  _checkNoMatches("[$(Sc)]", "[Sc]C");
+  _checkNoMatches("[$([Sc])]", "Sc1ccccc1");
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
