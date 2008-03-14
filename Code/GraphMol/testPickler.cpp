@@ -315,7 +315,7 @@ void testIssue220(){
 void testQueries(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing query serialization." << std::endl;
-  std::string smi,pickle;
+  std::string smi,pickle,smi2;
   int tmpInt;
   ROMol *m1,*m2;
   MatchVectType matchV;
@@ -577,6 +577,32 @@ void testQueries(){
   smi=MolToSmarts(*m1);
   TEST_ASSERT(smi=="C=C");
 
+  smi="C=[$(C=O)]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==2);
+  smi=MolToSmarts(*m1);
+  BOOST_LOG(rdErrorLog)<<smi<<std::endl;
+  TEST_ASSERT(smi=="C=[$(C=O)]");
+
+  smi="S(=O)(=O)-[C;H2]([F,Br,I,Cl])";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  smi=MolToSmarts(*m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  smi2=MolToSmarts(*m1);
+  BOOST_LOG(rdErrorLog)<<smi<<" "<<smi2<<std::endl;
+  TEST_ASSERT(smi==smi2);
+
+  
+  
   delete m1;
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
