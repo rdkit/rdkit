@@ -575,6 +575,7 @@ namespace RDKit{
     int tmpInt;
     //int numAtoms,numBonds;
     int numBonds;
+    bool haveQuery=false;
     
     streamRead(ss,tmpInt);
     numBonds = tmpInt;
@@ -612,6 +613,9 @@ namespace RDKit{
       if(!directMap){
 	mol->setAtomBookmark(atom,i);
       }
+      if(atom->hasQuery()){
+        haveQuery=true;
+      }
     }
 
     // -------------------
@@ -627,6 +631,9 @@ namespace RDKit{
       Bond *bond=_addBondFromPickle<T>(ss,mol,version,directMap);
       if(!directMap){
         mol->setBondBookmark(bond,i);
+      }
+      if(bond->hasQuery()){
+        haveQuery=true;
       }
     }
 
@@ -657,6 +664,10 @@ namespace RDKit{
       throw MolPicklerException("Bad pickle format: ENDMOL tag not found.");
     }
 
+    if(haveQuery){
+      // FIX: this is a hack to prevent a crash in canonicalization
+      mol->setProp("_BondStereoSet",1);
+    }
   }
 
 

@@ -10,6 +10,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <RDGeneral/RDLog.h>
@@ -563,6 +564,18 @@ void testQueries(){
   TEST_ASSERT(m2);
   TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
   delete m2;
+
+
+  smi="C=C";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==2);
+  smi=MolToSmarts(*m1);
+  TEST_ASSERT(smi=="C=C");
 
   delete m1;
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
