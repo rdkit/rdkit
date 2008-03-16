@@ -125,7 +125,6 @@ class QtCanvas( pid.Canvas ):
       return
     else:
       color = self.defaultLineColor
-      
     qColor = _ColorToQt(color)
 
     if width:
@@ -133,7 +132,7 @@ class QtCanvas( pid.Canvas ):
     else:
       w = self.defaultLineWidth
     self._pen.setColor(qColor)
-    self._pen.setWidth(w)
+    self._pen.setWidth(int(w))
     if dash is not None:
       self._pen.setStyle(Qt.DashLine)
     else:
