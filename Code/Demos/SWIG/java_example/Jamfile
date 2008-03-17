@@ -20,3 +20,6 @@ actions javacompile
 }
 
 make main.class : main.java RDKFuncs_wrap.cpp : @javacompile ;
+
+#make WrapperTests.class : WrapperTests.java RDKFuncs_wrap.cpp : @javacompile ;
+
