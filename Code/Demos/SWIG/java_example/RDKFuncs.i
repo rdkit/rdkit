@@ -5,20 +5,25 @@
 //
 %module RDKFuncs
 %include "std_string.i"
+%include "std_vector.i"
+%include "boost_shared_ptr.i"
 
 %{
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-  using namespace RDKit;
+#include <vector>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Atom.h>
 #include "RDKFuncs.h"
 
 %}
 
-//%ignore RDKitMol::dp_mol;
-//%include "RDKFuncs.h"
+SWIG_SHARED_PTR(ROMol, RDKit::ROMol)
+SWIG_SHARED_PTR(Atom, RDKit::Atom)
+SWIG_SHARED_PTR(Bond, RDKit::Bond)
+%template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
+%template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
+%template(Int_Vect) std::vector<int>;
+%template(Int_Vect_Vect) std::vector<std::vector<int> >;
+
 %ignore getAllAtomsWithBookmark;
 %ignore getAtomBookmarks;
 %ignore getAllBondsWithBookmark;
@@ -46,17 +51,21 @@
 %ignore addConformer;
 %ignore beginConformers;
 %ignore endConformers;
+%ignore RDKit::ROMol::getAtomDegree(const Atom *) const;
+%ignore RDKit::ROMol::setAtomBookmark(Atom *,int);
+%ignore RDKit::ROMol::clearAtomBookmark(const int, const Atom *);
+%ignore RDKit::ROMol::setBondBookmark(Bond *,int);
+%ignore RDKit::ROMol::clearBondBookmark(int, const Bond *);
+%ignore RDKit::ROMol::hasProp(std::string const) const ;
+%ignore RDKit::ROMol::clearProp(std::string const) const ;
+%ignore RDKit::ROMol::getAtomWithIdx(unsigned int) const ;
+%ignore RDKit::ROMol::getBondWithIdx(unsigned int) const ;
+%ignore RDKit::ROMol::getBondBetweenAtoms(unsigned int,unsigned int) const ;
+
 %include <GraphMol/ROMol.h>
-%extend ROMol {
-  bool HasSubstructMatch(RDKit::ROMol &query,bool useChirality,
-                         bool registerQuery){
-    MatchVectType mv;
-    return SubstructMatch(*($self),query,mv,true,useChirality,registerQuery);
-  };
-};
 
 %ignore copy;
-%ignore getOwningMol;
+%ignore setOwningMol;
 %ignore setIdx;
 %ignore setFormalCharge;
 %ignore setNoImplicit;
@@ -77,11 +86,13 @@
 %include <GraphMol/Atom.h>
 
 %ignore setIsConjugated;
+%ignore setOwningMol;
 %ignore setBeginAtom;
 %ignore setEndAtom;
 %ignore setBondDir;
 %ignore setStereo;
 %ignore getStereoAtoms;
+%ignore RDKit::Bond::getValenceContrib(const Atom *) const;
 %include <GraphMol/Bond.h>
 
 %ignore initialize;
@@ -91,6 +102,32 @@
 %ignore preallocate;
 %include <GraphMol/RingInfo.h>
 
+%include <GraphMol/ChemReactions/Reaction.h>
+/*
+%extend RDKit::ChemicalReaction {
+  std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > > runReactants(ROMol *r1){
+    RDKit::ROMOL_SPTR arg1(new RDKit::ROMol(*r1,true));
+    std::vector<RDKit::ROMOL_SPTR> v;
+    v.push_back(arg1);
+    std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > > res;
+    res=$self->runReactants(v);
+    return res;
+  }
+  std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > > runReactants(RDKit::ROMol *r1,
+                                                                             RDKit::ROMol *r2){
+    RDKit::ROMOL_SPTR arg1(new RDKit::ROMol(*r1,true));
+    RDKit::ROMOL_SPTR arg2(new RDKit::ROMol(*r2,true));
+
+    std::vector<RDKit::ROMOL_SPTR> v;
+    v.push_back(arg1);
+    v.push_back(arg2);
+    std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > > res;
+    res=$self->runReactants(v);
+    return res;
+  }
+
+}
+*/
 %include "RDKFuncs.h"
 
 

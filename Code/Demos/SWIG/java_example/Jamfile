@@ -6,6 +6,7 @@ import swig ;
 lib RDKFuncs : RDKFuncs_wrap.cpp RDKFuncs.cpp 
   ../../../GraphMol//GraphMol ../../../GraphMol/SmilesParse//SmilesParse 
   ../../../GraphMol/Substruct//Substruct
+  ../../../GraphMol/ChemReactions//ChemReactions
   ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry /RDKit//lapacklibs
   /RDKit//vflib 
   : <cflags>-fno-strict-aliasing <include>/usr/include/java <include>/usr/include/java/linux ;

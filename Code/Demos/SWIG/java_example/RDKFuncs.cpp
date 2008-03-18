@@ -10,41 +10,31 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
 
 #include "RDKFuncs.h"
 
 using namespace RDKit;
-ROMol *MolFromSmiles(std::string smi) {
-  return SmilesToMol(smi);
+//ROMol *MolFromSmiles(std::string smi) {
+ROMOL_SPTR MolFromSmiles(std::string smi) {
+  return ROMOL_SPTR(SmilesToMol(smi));;
 };
-ROMol *MolFromSmarts(std::string sma) {
-  return SmartsToMol(sma);
+ROMOL_SPTR MolFromSmarts(std::string sma) {
+  return ROMOL_SPTR(SmartsToMol(sma));
 };
-std::string MolToSmiles(ROMol *mol,bool doIsomericSmiles,
+std::string MolToSmiles(ROMOL_SPTR mol,bool doIsomericSmiles,
                         bool doKekule, int rootedAtAtom) {
   return MolToSmiles(*mol,doIsomericSmiles,doKekule,rootedAtAtom);
 };
-bool HasSubstructMatch(ROMol &mol,ROMol &query,bool useChirality,
+bool hasSubstructMatch(ROMol &mol,ROMol &query,bool useChirality,
                        bool registerQuery){
   MatchVectType mv;
   return SubstructMatch(mol,query,mv,true,useChirality,registerQuery);
 };
-#if 0
-MatchVectType GetSubstructMatches(ROMol &mol,ROMol &query,bool useChirality,
-                                  bool registerQuery){
-  MatchVectType mv;
-  return SubstructMatch(mol,query,mv,true,useChirality,registerQuery);
+
+ChemicalReaction *ReactionFromSmarts(std::string sma) {
+  return RxnSmartsToChemicalReaction(sma);
 };
-#endif
-std::string PickleMol(RDKit::ROMol *mol){
-  std::string res="";
-  RDKit::MolPickler::pickleMol(mol,res);
-  return res;
-}
-RDKit::ROMol *MolFromPickle(std::string pkl){
-  RDKit::ROMol *res=new RDKit::ROMol(pkl);
-  return res;
-}
 
 
 
