@@ -27,9 +27,9 @@ public class main {
       System.out.println("atom: " + mol.getAtomWithIdx(0).getAtomicNum());
       System.out.println("bond: " + mol.getBondWithIdx(0).getIdx());
       System.out.println("bond: " + mol.getBondWithIdx(0).getBondType());
-      System.out.println("hss: " + RDKFuncs.hasSubstructMatch(mol,RDKFuncs.MolFromSmarts("c")));
-      System.out.println("hss: " + RDKFuncs.hasSubstructMatch(mol,RDKFuncs.MolFromSmarts("C")));
-      System.out.println("hss: " + RDKFuncs.hasSubstructMatch(mol,RDKFuncs.MolFromSmarts("C")));
+      System.out.println("hss: " + mol.hasSubstructMatch(RDKFuncs.MolFromSmarts("c")));
+      System.out.println("hss: " + mol.hasSubstructMatch(RDKFuncs.MolFromSmarts("C")));
+      System.out.println("hss: " + mol.hasSubstructMatch(RDKFuncs.MolFromSmarts("C")));
       RingInfo rI= mol.getRingInfo();
       System.out.println("ri: " + rI.isAtomInRingOfSize(0,6) + " " + rI.isAtomInRingOfSize(0,5) );
   }

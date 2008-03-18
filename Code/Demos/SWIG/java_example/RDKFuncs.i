@@ -6,11 +6,13 @@
 %module RDKFuncs
 %include "std_string.i"
 %include "std_vector.i"
+%include "std_pair.i"
 %include "boost_shared_ptr.i"
 
 %{
 #include <vector>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Atom.h>
 #include "RDKFuncs.h"
 
@@ -23,6 +25,12 @@ SWIG_SHARED_PTR(Bond, RDKit::Bond)
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Int_Vect) std::vector<int>;
 %template(Int_Vect_Vect) std::vector<std::vector<int> >;
+
+%template(Int_Pair) std::pair<int, int >;
+%template(Match_Vect) std::vector<std::pair<int,int> >;
+%template(Match_Vect_Vect) std::vector<std::vector<std::pair<int,int> > >;
+
+
 
 %ignore getAllAtomsWithBookmark;
 %ignore getAtomBookmarks;
@@ -63,6 +71,28 @@ SWIG_SHARED_PTR(Bond, RDKit::Bond)
 %ignore RDKit::ROMol::getBondBetweenAtoms(unsigned int,unsigned int) const ;
 
 %include <GraphMol/ROMol.h>
+%extend RDKit::ROMol {
+  bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
+    RDKit::MatchVectType mv;
+    return SubstructMatch(*($self),query,mv,true,useChirality,false);
+  };
+
+  std::vector<std::pair<int, int> >
+  getSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
+    RDKit::MatchVectType mv;
+    SubstructMatch(*($self),query,mv,true,useChirality,false);
+    return mv;
+  };
+
+  std::vector< std::vector<std::pair<int, int> > >
+  getSubstructMatches(RDKit::ROMol &query,bool uniquify=true,
+                      bool useChirality=false){
+    std::vector<RDKit::MatchVectType> mv;
+    SubstructMatch(*($self),query,mv,uniquify,true,useChirality,false);
+    return mv;
+  };
+
+}
 
 %ignore copy;
 %ignore setOwningMol;
@@ -80,9 +110,11 @@ SWIG_SHARED_PTR(Bond, RDKit::Bond)
 %ignore setQuery;
 %ignore getQuery;
 %ignore expandQuery;
-%ignore Match;
 %ignore getPropList;
 %ignore getPerturbationOrder;
+%ignore RDKit::Atom::Match(const Atom *) const;
+%ignore clearProp(std::string const) const;
+%ignore hasProp(std::string const) const;
 %include <GraphMol/Atom.h>
 
 %ignore setIsConjugated;
@@ -93,6 +125,7 @@ SWIG_SHARED_PTR(Bond, RDKit::Bond)
 %ignore setStereo;
 %ignore getStereoAtoms;
 %ignore RDKit::Bond::getValenceContrib(const Atom *) const;
+%ignore RDKit::Bond::Match(const Bond *) const;
 %include <GraphMol/Bond.h>
 
 %ignore initialize;
@@ -102,32 +135,9 @@ SWIG_SHARED_PTR(Bond, RDKit::Bond)
 %ignore preallocate;
 %include <GraphMol/RingInfo.h>
 
+%ignore RDKit::ChemicalReactionException::ChemicalReactionException(std::string const);
 %include <GraphMol/ChemReactions/Reaction.h>
-/*
-%extend RDKit::ChemicalReaction {
-  std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > > runReactants(ROMol *r1){
-    RDKit::ROMOL_SPTR arg1(new RDKit::ROMol(*r1,true));
-    std::vector<RDKit::ROMOL_SPTR> v;
-    v.push_back(arg1);
-    std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > > res;
-    res=$self->runReactants(v);
-    return res;
-  }
-  std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > > runReactants(RDKit::ROMol *r1,
-                                                                             RDKit::ROMol *r2){
-    RDKit::ROMOL_SPTR arg1(new RDKit::ROMol(*r1,true));
-    RDKit::ROMOL_SPTR arg2(new RDKit::ROMol(*r2,true));
 
-    std::vector<RDKit::ROMOL_SPTR> v;
-    v.push_back(arg1);
-    v.push_back(arg2);
-    std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > > res;
-    res=$self->runReactants(v);
-    return res;
-  }
-
-}
-*/
 %include "RDKFuncs.h"
 
 

@@ -13,5 +13,4 @@ RDKit::ROMOL_SPTR MolFromSmarts(std::string sma);
 std::string MolToSmiles(RDKit::ROMOL_SPTR mol,bool doIsomericSmiles=false,
                         bool doKekule=false, int rootedAtAtom=-1);
 RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma);
-bool hasSubstructMatch(RDKit::ROMol &mol,RDKit::ROMol &query,bool useChirality=false,
-                       bool registerQuery=false);
+

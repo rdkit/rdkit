@@ -55,12 +55,76 @@ public class WrapperTests {
 
 	assertTrue(ps.get(0).get(0).getNumAtoms()==6);
     }
+    @Test public void testSubstruct1() {
+	ROMol p;
+	Match_Vect mv;
+	p = RDKFuncs.MolFromSmarts("c");
+        assertTrue(mol1.hasSubstructMatch(p));
+	mv=mol1.getSubstructMatch(p);
+	assertTrue(mv.size()==1);
+	assertTrue(mv.get(0).getFirst()==0);
+	assertTrue(mv.get(0).getSecond()==0);
+    }
+    @Test public void testSubstruct2() {
+	ROMol p;
+	Match_Vect mv;
+	p = RDKFuncs.MolFromSmarts("C");
+        assertFalse(mol1.hasSubstructMatch(p));
+	mv=mol1.getSubstructMatch(p);
+	assertTrue(mv.size()==0);
+    }
+    @Test public void testSubstruct3() {
+	ROMol p;
+	Match_Vect mv;
+	ROMol m2;
+	m2 = RDKFuncs.MolFromSmiles("NC(=O)CC");
+	p = RDKFuncs.MolFromSmarts("CN");
+	mv=m2.getSubstructMatch(p);
+	assertTrue(mv.size()==2);
+	assertTrue(mv.get(0).getFirst()==0);
+	assertTrue(mv.get(0).getSecond()==1);
+	assertTrue(mv.get(1).getFirst()==1);
+	assertTrue(mv.get(1).getSecond()==0);
+    }	
+    @Test public void testSubstruct4() {
+	ROMol p;
+	Match_Vect_Vect mvv;
+	ROMol m2;
+	m2 = RDKFuncs.MolFromSmiles("NC(=O)CC");
+	p = RDKFuncs.MolFromSmarts("CN");
+	mvv=m2.getSubstructMatches(p);
+	assertTrue(mvv.size()==1);
+	assertTrue(mvv.get(0).size()==2);
+	assertTrue(mvv.get(0).get(0).getFirst()==0);
+	assertTrue(mvv.get(0).get(0).getSecond()==1);
+	assertTrue(mvv.get(0).get(1).getFirst()==1);
+	assertTrue(mvv.get(0).get(1).getSecond()==0);
+    }
+    @Test public void testSubstruct5() {
+	ROMol p;
+	Match_Vect_Vect mvv;
+	ROMol m2;
+	m2 = RDKFuncs.MolFromSmiles("NC(=O)NCC");
+	p = RDKFuncs.MolFromSmarts("[$(C=O)]N");
+	mvv=m2.getSubstructMatches(p);
+	assertTrue(mvv.size()==2);
+	assertTrue(mvv.get(0).size()==2);
+	assertTrue(mvv.get(0).get(0).getFirst()==0);
+	assertTrue(mvv.get(0).get(0).getSecond()==1);
+	assertTrue(mvv.get(0).get(1).getFirst()==1);
+	assertTrue(mvv.get(0).get(1).getSecond()==0);
+	assertTrue(mvv.get(1).size()==2);
+	assertTrue(mvv.get(1).get(0).getFirst()==0);
+	assertTrue(mvv.get(1).get(0).getSecond()==1);
+	assertTrue(mvv.get(1).get(1).getFirst()==1);
+	assertTrue(mvv.get(1).get(1).getSecond()==3);
+    }
 
     static {
         try {
             System.loadLibrary("RDKFuncs");
         } catch (UnsatisfiedLinkError e) {
-            System.err.println("Native code library failed to load. See the chapter on Dynamic Linking Problems in the SWIG Java documentation for help.\n" + e);
+            System.err.println("Native code library failed to load. Make sure that libRDKFuncs.so is somewhere in your LD_LIBRARY_PATH.\n" + e);
             System.exit(1);
         }
     }

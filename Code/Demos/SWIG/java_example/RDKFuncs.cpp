@@ -9,7 +9,6 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 
 #include "RDKFuncs.h"
@@ -25,11 +24,6 @@ ROMOL_SPTR MolFromSmarts(std::string sma) {
 std::string MolToSmiles(ROMOL_SPTR mol,bool doIsomericSmiles,
                         bool doKekule, int rootedAtAtom) {
   return MolToSmiles(*mol,doIsomericSmiles,doKekule,rootedAtAtom);
-};
-bool hasSubstructMatch(ROMol &mol,ROMol &query,bool useChirality,
-                       bool registerQuery){
-  MatchVectType mv;
-  return SubstructMatch(mol,query,mv,true,useChirality,registerQuery);
 };
 
 ChemicalReaction *ReactionFromSmarts(std::string sma) {
