@@ -13,6 +13,7 @@
 #include <vector>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/Atom.h>
 #include "RDKFuncs.h"
 
@@ -25,11 +26,9 @@ SWIG_SHARED_PTR(Bond, RDKit::Bond)
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Int_Vect) std::vector<int>;
 %template(Int_Vect_Vect) std::vector<std::vector<int> >;
-
 %template(Int_Pair) std::pair<int, int >;
 %template(Match_Vect) std::vector<std::pair<int,int> >;
 %template(Match_Vect_Vect) std::vector<std::vector<std::pair<int,int> > >;
-
 
 
 %ignore getAllAtomsWithBookmark;
