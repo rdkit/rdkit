@@ -170,12 +170,10 @@ class MolDrawing(object):
                                       lenFrac=1.0)
         addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
     elif bond.GetBondType() == Chem.BondType.AROMATIC:
-      canvas.add_line(Line2D((pos[0],nbrPos[0]),(pos[1],nbrPos[1]),
-                             linewidth=width,color=color))
+      addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
-      canvas.add_line(Line2D((fp1[0],fp2[0]),(fp1[1],fp2[1]),
-                             linewidth=width,color=color,
-                             dashes=self.dash))
+      addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2,
+                    dash=self.dash)
       #DASH
     elif bond.GetBondType() == Chem.BondType.TRIPLE:
       addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
@@ -261,7 +259,7 @@ class MolDrawing(object):
       canvas = self.canvas
     else:
       self.canvas = canvas
-      self.canvasSize=canvas.size
+    self.canvasSize=canvas.size
       
     conf = mol.GetConformer(confId)
 
@@ -380,7 +378,7 @@ if __name__=='__main__':
   from Chem import rdDepictor
   rdDepictor.Compute2DCoords(mol)
 
-  if 0:
+  if 1:
     from aggdraw import Draw
     registerCanvas('agg')
     from PIL import Image
