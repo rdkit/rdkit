@@ -1,21 +1,25 @@
 //
-// Copyright (C) 2003-2006 Rational Discovery LLC
+// Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
+/*! \file Dict.h
+
+  \brief Defines the Dict class
+
+*/  
 #ifndef __RD_DICT_H__
 #define __RD_DICT_H__
-
 
 #include <map>
 #include <string>
 #include <vector>
 #include <boost/any.hpp>
 #include <RDBoost/Exceptions.h>
+#include <boost/lexical_cast.hpp>
 
 namespace RDKit{
-
-  typedef std::vector<std::string>                  STR_VECT;
+  typedef std::vector<std::string> STR_VECT;
 
   //! \brief The \c Dict class can be used to store objects of arbitrary
   //!        type keyed by \c strings.
@@ -29,22 +33,43 @@ namespace RDKit{
     friend void force_types();
   public:
     typedef std::map<const std::string, boost::any> DataType;
-    Dict();
-    Dict(const Dict &other);
-    Dict &operator=(const Dict &other);
+    Dict(){
+      _data.clear();
+    };
+
+    Dict(const Dict &other) {
+      _data = other._data;
+    };
+
+    Dict &operator=(const Dict &other) {
+      _data = other._data;
+      return *this;
+    };
 
     //----------------------------------------------------------
     //! \brief Returns whether or not the dictionary contains a particular
     //!        key.
-    bool hasVal(const char *what) const;
-    bool hasVal(const std::string &what) const;
+    bool hasVal(const char *what) const{
+      std::string key(what);
+      return hasVal(key);
+    };
+    bool hasVal(const std::string &what) const {
+      return _data.find(what)!=_data.end();
+    };
 
     //----------------------------------------------------------
     //! Returns the set of keys in the dictionary
     /*!
        \return  a \c STR_VECT
     */
-    STR_VECT keys() const;
+    STR_VECT keys() const {
+      STR_VECT res;
+      DataType::const_iterator item;
+      for (item = _data.begin(); item != _data.end(); item++) {
+        res.push_back(item->first);
+      }
+      return res;
+    }
 
     //----------------------------------------------------------
     //! \brief Gets the value associated with a particular key
@@ -67,17 +92,30 @@ namespace RDKit{
       const boost::any &val = pos->second;
       res = fromany<T>(val);
     };
+    //! \overload
+    template <typename T>
+    T getVal(const std::string &what) const {
+      T res;
+      getVal(what,res);
+      return res;
+    }
 
     //! \overload
     template <typename T>
-    void getVal(const char *what,T &res) const {
+    T getVal(const char *what,T &res) const {
       std::string key(what);
       getVal(key, res);
+      return res;
+    };
+    //! \overload
+    template <typename T>
+    T getVal(const char *what) const {
+      std::string key(what);
+      return getVal<T>(key);
     };
 
     //! \overload
     void getVal(const std::string &what, std::string &res) const;
-
 
     //----------------------------------------------------------
     //! \brief Sets the value associated with a key
@@ -122,7 +160,10 @@ namespace RDKit{
         - If the dictionary does not contain the key \c what,
           a KeyErrorException will be thrown.
     */
-    void clearVal(const std::string &what);
+    void clearVal(const std::string &what) {
+      if(! this->hasVal(what) ) throw KeyErrorException(what);
+      _data.erase(what);
+    };
 
     //! \overload
     void clearVal(const char *what) {
@@ -133,7 +174,9 @@ namespace RDKit{
     //----------------------------------------------------------
     //! \brief Clears all keys (and values) from the dictionary.
     //!
-    void reset();
+    void reset(){
+      _data.clear();
+    };
 
     //----------------------------------------------------------
     //! Converts a \c boost::any to type \c T
@@ -143,8 +186,8 @@ namespace RDKit{
        \returns the converted object of type \c T
     */
     template <typename T>
-    T fromany(const boost::any &arg) const;
-
+      T fromany(const boost::any &arg) const;
+    
 
     //----------------------------------------------------------
     //! Converts an instance of type \c T to \c boost::any
@@ -154,7 +197,7 @@ namespace RDKit{
        \returns a \c boost::any instance
     */
     template <typename T>
-    boost::any toany(T arg) const;
+      boost::any toany(T arg) const;
 
   private:
     DataType _data; //!< the actual dictionary
