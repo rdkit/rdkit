@@ -1,8 +1,13 @@
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
+/*! \file ROMol.h
+
+  \brief Defines the primary molecule class ROMol as well as associated typedefs
+
+*/  
 
 #ifndef __RD_ROMOL_H__
 #define __RD_ROMOL_H__
@@ -56,10 +61,10 @@ namespace RDKit{
 
   //! ROMol is a molecule class that is intended to have a fixed topology
   /*!
+    This is the primary class for most molecule operations.
 
     If you need to be manipulating the molecule (e.g. adding or deleting
     atoms or bonds, use an RWMol instead.
-
 
     <b>Notes:</b>
       - each ROMol maintains a Dict of \c properties:  
@@ -263,7 +268,7 @@ namespace RDKit{
       \param at the atom whose neighbors we are looking for
 
       <b>Usage</b>
-      \verbatim
+      \code
         ... molPtr is a const ROMol * ...
         ... atomPtr is a const Atom * ...
         ROMol::ADJ_ITER nbrIdx,endNbrs;
@@ -273,7 +278,7 @@ namespace RDKit{
           ... do something with the Atom ...
           nbrIdx++;
         }
-      \endverbatim
+      \endcode
 
       <b>Notes:</b>
         - technically, we're probably suppposed to be using the atom pmap here
@@ -289,7 +294,7 @@ namespace RDKit{
       \param at the atom whose neighbors we are looking for
 
       <b>Usage</b>
-      \verbatim
+      \code
         ... molPtr is a const ROMol * ...
         ... atomPtr is a const Atom * ...
         ROMol::OEDGE_ITER beg,end;
@@ -300,9 +305,9 @@ namespace RDKit{
           ... do something with the Bond ...
           beg++;
         }
-      \endverbatim
+      \endcode
       or, if you need a non-const Bond *:
-      \verbatim
+      \code
         ... molPtr is a ROMol * ...
         ... atomPtr is a const Atom * ...
         ROMol::OEDGE_ITER beg,end;
@@ -313,7 +318,7 @@ namespace RDKit{
           ... do something with the Bond ...
           beg++;
         }
-      \endverbatim
+      \endcode
       
       
     */
@@ -331,7 +336,7 @@ namespace RDKit{
     /*!
 
       <b>Usage</b>
-      \verbatim
+      \code
         ... molPtr is an ROMol * ...
         ROMol::GRAPH_MOL_ATOM_PMAP::type atomMap = molPtr->getAtomPMap();
         ROMol::VERTEX_ITER atBegin,atEnd;
@@ -341,14 +346,14 @@ namespace RDKit{
           ... do something with the Atom ...
           atBegin++;
         }
-      \endverbatim
+      \endcode
     */
     ATOM_ITER_PAIR getVertices();
     //! returns an iterator pair for looping over all Bonds
     /*!
 
       <b>Usage</b>
-      \verbatim
+      \code
         ... molPtr is a ROMol * ...
         ROMol::EDGE_ITER firstB,lastB;
         boost::tie(firstB,lastB) = mol.getEdges();
@@ -358,7 +363,7 @@ namespace RDKit{
           ... do something with the Bond ...
           firstB++;
         }
-      \endverbatim
+      \endcode
     */
     BOND_ITER_PAIR getEdges();
     //! \overload
@@ -371,13 +376,13 @@ namespace RDKit{
         This can be useful if you need to call other BGL algorithms:
 
         Here's an example:
-        \verbatim
+        \code
            ... mol is a const ROMol ...
            ... mapping is an INT_VECT ...
            mapping.resize(mol.getNumAtoms());
            const MolGraph *G_p = mol.getTopology();
            int res = boost::connected_components(*G_p,&mapping[0]);
-        \endverbatim
+        \endcode
      */
     MolGraph const *getTopology() const { return &d_graph; };
 

@@ -3,6 +3,11 @@
 //
 //   @@ All Rights Reserved  @@
 //
+/*! \file Atom.h
+
+  \brief Defines the Atom class and associated typedefs
+
+*/  
 #ifndef _RD_ATOM_H
 #define _RD_ATOM_H
 
@@ -44,7 +49,8 @@ namespace RDKit{
 
     For tetrahedral coordination, the \c chiralTag tells you what
     direction you have to rotate to get from bond 2 to bond 3 while looking
-    down bond 1.
+    down bond 1. This is pretty much identical to the SMILES represenation of
+    chirality
       
   */
   class Atom {
@@ -103,11 +109,6 @@ namespace RDKit{
     //! returns a reference to the ROMol that owns this Atom
     ROMol &getOwningMol() const { return *dp_mol; };
   
-    //! sets our owning molecule
-    //void setOwningMol(ROMol *other);
-    //! sets our owning molecule
-    //void setOwningMol(ROMol &other) {setOwningMol(&other);};
-
     //! returns our index within the ROMol
     const unsigned int getIdx() const {return d_index;};
     //! sets our index within the ROMol
@@ -176,22 +177,14 @@ namespace RDKit{
     //! returns our mass
     double getMass() const {return d_mass; };
 
-    //! sets the location of this Atom
-    //void setPos( double x,double y,double z ){ d_pos = RDGeom::Point3D(x,y,z); };
-    //! sets the location of this Atom
-    //void setPos( const RDGeom::Point3D p3d ){ d_pos = p3d; };
-    //! returns the location of this Atom
-    //RDGeom::Point3D &getPos() { return d_pos; };
-    //! returns the location of this Atom
-    //RDGeom::Point3D getPos() const { return d_pos; };
-
     //! sets our \c dativeFlag
     // intended to be used only in construction.
-    // FIX: should these be somewhere else?
+    // NOTE: the dative flag is not currently used anywhere
     void setDativeFlag(int what) {
       d_dativeFlag = what;
     };
     //! returns our \c dativeFlag
+    // NOTE: the dative flag is not currently used anywhere
     int getDativeFlag() const {
       return d_dativeFlag;
     };
@@ -199,6 +192,7 @@ namespace RDKit{
       return d_dativeFlag==what;
     };
     //! clears our \c dativeFlag
+    // NOTE: the dative flag is not currently used anywhere
     void clearDativeFlag(){ d_dativeFlag = 0; };
 
     //! sets our \c chiralTag
@@ -213,7 +207,6 @@ namespace RDKit{
     //! returns our hybridization
     HybridizationType getHybridization() const { return d_hybrid; };
 
-  
     // ------------------------------------
     // Some words of explanation before getting down into
     // the query stuff.
@@ -251,12 +244,9 @@ namespace RDKit{
 
     // ------------------------------------
     //  Local Property Dict functionality
-    //  FIX: at some point this stuff should go in a mixin class
-    //  FIX: declaring the all setProp functions const is debatable
-    //       since they are not meant to change the atom chemically 
-    //       they are currently consted
+    //  all setProp functions are const because they
+    //     are not meant to change the atom chemically 
     // ------------------------------------
-
     //! returns a list with the names of our \c properties
     STR_VECT getPropList() const {
       return dp_props->keys();
