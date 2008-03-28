@@ -616,7 +616,7 @@ void testSmartsWrite() {
     delete mol;
   }
 
-  // for the smarts that come out different from the writer verrify if they are 
+  // for the smarts that come out different from the writer verify if they are 
   // functionally the same
   
   std::string smiles[] = {
@@ -663,10 +663,13 @@ void testSmartsWrite() {
   bool mts1, mts2;
   while (smiles[i] != "EOS") {
     ROMol *nmol = SmilesToMol(smiles[i]);
+    TEST_ASSERT(nmol);
     for (dsmi = diffSmi.begin(); dsmi != diffSmi.end(); dsmi++) {
       ROMol *m1 = SmartsToMol(*dsmi);
+      TEST_ASSERT(m1)
       std::string wsma = MolToSmarts(*m1);
       ROMol *m2 = SmartsToMol(wsma);
+      TEST_ASSERT(m2)
 
       mts1 = SubstructMatch(*nmol,*m1,mV1);
       mts2 = SubstructMatch(*nmol,*m2,mV2);
