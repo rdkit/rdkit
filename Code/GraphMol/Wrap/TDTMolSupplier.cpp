@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2005-2006  Rational Discovery LLC
+//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -56,9 +56,9 @@ namespace RDKit {
 								 python::arg("confId3D")=-1,
 								 python::arg("sanitize")=true)))
 	.def("__iter__", (TDTMolSupplier *(*)(TDTMolSupplier *))&MolSupplIter,
-	     python::return_value_policy<python::reference_existing_object>())
-	     .def("next", (ROMol *(*)(TDTMolSupplier *))&MolSupplNext,
-		  "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
+	     python::return_internal_reference<1>() )
+        .def("next", (ROMol *(*)(TDTMolSupplier *))&MolSupplNext,
+             "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
 	.def("__getitem__", (ROMol *(*)(TDTMolSupplier *,int))&MolSupplGetItem,
 	     python::return_value_policy<python::manage_new_object>())

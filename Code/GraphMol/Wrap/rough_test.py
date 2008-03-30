@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2003-2005  Rational Discovery LLC
+#  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -1567,14 +1567,12 @@ CAS<~>
     m = Chem.MolFromSmiles(smi)
     r = Chem.ReplaceCore(m,core)
     self.failUnless(r)
-    print '>>>>',Chem.MolToSmiles(r)
     self.failUnless(Chem.MolToSmiles(r)=='[Xa]CC')
 
     smi = 'C1CC(=O)CC1'
     m = Chem.MolFromSmiles(smi)
     r = Chem.ReplaceCore(m,core)
     self.failUnless(r)
-    print '>>>>',Chem.MolToSmiles(r)
     self.failUnless(Chem.MolToSmiles(r) in ('[Xa]CCCC[Xb]','[Xb]CCCC[Xa]'))
 
     smi = 'C1CC(=N)CC1'
@@ -1658,6 +1656,29 @@ CAS<~>
     self.failUnless(m.GetAtomWithIdx(0).GetSmarts()=='C')
     self.failUnless(m.GetAtomWithIdx(1).GetSmarts()=='O')
     self.failUnless(m.GetBondBetweenAtoms(0,1).GetSmarts()=='=')
+
+  def test48Issue1928819(self):
+    """ test a crash involving looping directly over mol suppliers
+    """
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf')
+    ms = [x for x in Chem.SDMolSupplier(fileN)]
+    self.failUnless(len(ms)==16)
+    count=0
+    for m in Chem.SDMolSupplier(fileN): count+=1
+    self.failUnless(count==16)
+
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','fewSmi.csv')
+    count=0
+    for m in Chem.SmilesMolSupplier(fileN,titleLine=False,smilesColumn=1): count+=1
+    self.failUnless(count==10)
+    
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','acd_few.tdt')
+    count=0
+    for m in Chem.TDTMolSupplier(fileN): count+=1
+    self.failUnless(count==10)
 
 if __name__ == '__main__':
   unittest.main()

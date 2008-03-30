@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006  Rational Discovery LLC
+//  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -95,7 +95,7 @@ namespace RDKit {
 					    python::arg("sanitize")=true),smsDocStr.c_str()))
 	.def(python::init<>())
 	.def("__iter__", (SmilesMolSupplier *(*)(SmilesMolSupplier *))&MolSupplIter,
-	     python::return_value_policy<python::reference_existing_object>())
+	     python::return_internal_reference<1>() )
 	.def("next", (ROMol *(*)(SmilesMolSupplier *))&MolSupplNext,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())

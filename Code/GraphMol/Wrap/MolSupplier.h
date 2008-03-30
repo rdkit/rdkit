@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2005-2006  Rational Discovery LLC
+//  Copyright (C) 2005-2008 Greg Landrumm and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -11,6 +11,8 @@
 #include <GraphMol/RDKitBase.h>
 
 namespace RDKit {
+  // Note that this returns a pointer to the supplier itself, so be careful
+  // that it doesn't get deleted by python!
   template<typename T>
   T *MolSupplIter(T *suppl){
     suppl->reset();
