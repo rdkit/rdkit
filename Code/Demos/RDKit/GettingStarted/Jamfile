@@ -1,0 +1,23 @@
+project RDKit/DemoGettingStarted : : ;
+
+
+exe sample : sample.cpp 
+  ../../../GraphMol/Substruct//Substruct
+  ../../../GraphMol/SmilesParse//SmilesParse
+  ../../../GraphMol/FileParsers//FileParsers
+  ../../../GraphMol/Depictor//Depictor
+  /RDKit/GraphMol//GraphMol 
+  /RDKit/DataStructs//DataStructs	
+  /RDKit/RDGeneral//RDGeneral /RDKit/Geometry//RDGeometry
+  /RDKit//vflib /RDKit//lapacklibs
+;
+
+
+install sample.exe : sample
+  : <location>. ;
+
+
+
+
+
+
