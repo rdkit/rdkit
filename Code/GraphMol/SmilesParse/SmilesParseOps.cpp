@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -22,6 +22,22 @@ namespace SmilesParseOps{
     if(!throwIt) BOOST_LOG(rdErrorLog) << msg << std::endl;
 
     else throw SmilesParseException(msg);
+  }
+
+  void CleanupAfterParseError(RWMol *mol){
+    PRECONDITION(mol,"no molecule");
+    // blow out any partial bonds:
+    RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
+    RWMol::BOND_BOOKMARK_MAP::iterator markI=marks->begin();
+    while(markI != marks->end()){
+      RWMol::BOND_PTR_LIST &bonds=markI->second;
+      for(RWMol::BOND_PTR_LIST::iterator bondIt=bonds.begin();
+          bondIt!=bonds.end();++bondIt){
+        delete *bondIt;
+      }
+      ++markI;
+    }
+    
   }
 
   //
@@ -182,7 +198,6 @@ namespace SmilesParseOps{
     PRECONDITION(atom,"bad atom");
     // we will assume that this function is called on a ring atom with a 
     // ring closure bond 
-    Atom::ChiralType ctype = atom->getChiralTag();
     if (atom->getNumExplicitHs() == 1) {
       atom->invertChirality();
     }
@@ -227,7 +242,7 @@ namespace SmilesParseOps{
 	  Bond *nbrBond=mol->getBondBetweenAtoms((*atomIt)->getIdx(),*nbrIdx);
 	  if(std::find(ringClosures.begin(),
 		       ringClosures.end(),
-		       nbrBond->getIdx())== ringClosures.end()){
+		       static_cast<int>(nbrBond->getIdx()))== ringClosures.end()){
 	    neighbors.push_back(std::make_pair(*nbrIdx,nbrBond->getIdx()));
 	  }
 	  nbrIdx++;
@@ -240,10 +255,10 @@ namespace SmilesParseOps{
 	// first in the list, e.g for smiles like [C@](F)(Cl)(Br)I, or
 	// second (everything else).
 	std::list<INT_PAIR>::iterator selfPos=neighbors.begin();
-	if(selfPos->first != (*atomIt)->getIdx()){
+	if(selfPos->first != static_cast<int>((*atomIt)->getIdx())){
 	  selfPos++;
 	}
-	CHECK_INVARIANT(selfPos->first==(*atomIt)->getIdx(),"weird atom ordering");
+	CHECK_INVARIANT(selfPos->first==static_cast<int>((*atomIt)->getIdx()),"weird atom ordering");
 	
 	// copy over the bond ids:
 	INT_LIST bondOrdering;

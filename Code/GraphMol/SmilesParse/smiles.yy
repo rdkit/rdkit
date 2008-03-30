@@ -73,6 +73,11 @@ cmpd: mol
   yyclearin;
   yyerrok;
   BOOST_LOG(rdErrorLog) << "SMILES Parse Error" << std::endl;
+  for(std::vector<RDKit::RWMol *>::iterator iter=SmilesParse::molList_g.begin();
+      iter!=SmilesParse::molList_g.end();++iter){
+    SmilesParseOps::CleanupAfterParseError(*iter);
+    delete *iter;
+  }
   SmilesParse::molList_g.clear();
   SmilesParse::molList_g.resize(0);
   YYABORT;
@@ -84,6 +89,11 @@ cmpd: mol
   yyclearin;
   yyerrok;
   BOOST_LOG(rdErrorLog) << "SMILES Parse Error" << std::endl;
+  for(std::vector<RDKit::RWMol *>::iterator iter=SmilesParse::molList_g.begin();
+      iter!=SmilesParse::molList_g.end();++iter){
+    SmilesParseOps::CleanupAfterParseError(*iter);
+    delete *iter;
+  }
   SmilesParse::molList_g.clear();
   SmilesParse::molList_g.resize(0);
   YYABORT;

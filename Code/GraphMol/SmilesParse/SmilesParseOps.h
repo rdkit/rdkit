@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,6 +13,7 @@ namespace RDKit{
 }
 namespace SmilesParseOps {
   void ReportParseError(const char *message,bool throwIt=true);
+  void CleanupAfterParseError(RDKit::RWMol *mol);
   void AddFragToMol(RDKit::RWMol *mol,RDKit::RWMol *frag,
 		    RDKit::Bond::BondType bondOrder=RDKit::Bond::UNSPECIFIED,
 		    RDKit::Bond::BondDir bondDir=RDKit::Bond::NONE,
