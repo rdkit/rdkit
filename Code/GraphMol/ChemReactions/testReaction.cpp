@@ -1322,6 +1322,7 @@ void test17Issue1920627(){
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
   TEST_ASSERT(rxn->getNumProductTemplates()==1);
 
+#if 1
   reacts.clear();
   smi = "C[C@](Cl)(CO)CC(=O)NC";
   mol = SmilesToMol(smi);
@@ -1450,6 +1451,30 @@ void test17Issue1920627(){
   TEST_ASSERT(prod->getNumAtoms()==9);
   TEST_ASSERT(prod->getAtomWithIdx(4)->hasProp("_CIPCode"));
   prod->getAtomWithIdx(4)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+#endif
+
+  reacts.clear();
+  smi = "C(=O)N[C@@H](CC)C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  mol->debugMol(std::cerr);
+  
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
+  prod->debugMol(std::cerr);
+  MolOps::assignAtomChiralCodes(*prod);
+  TEST_ASSERT(prod->getNumAtoms()==7);
+  TEST_ASSERT(prod->getAtomWithIdx(3)->hasProp("_CIPCode"));
+  prod->getAtomWithIdx(3)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
 
 

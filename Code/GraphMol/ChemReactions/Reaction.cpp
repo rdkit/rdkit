@@ -402,7 +402,7 @@ namespace RDKit {
             ++beg;
           }
           int nSwaps=productAtom->getPerturbationOrder(newOrder);
-          if(newOrder.size()==3){
+          if(nSwaps && newOrder.size()==3){
             // <sigh>, our old friend the implicit H
             if(hasPreceder) ++nSwaps;            
           }
