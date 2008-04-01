@@ -1,3 +1,37 @@
+******  Release_April2008_1 *******
+(Changes relative to Release_Jan2008_1)
+ 
+!!!!!! IMPORTANT !!!!!!
+ - Bug fixes in the canonicalization algorithm have made it so that
+   the canonical SMILES from this version are not compatible with
+   those from older versions of the RDKit.
+ - Please read the point about dummy atoms in the "New Features"
+   section. It explains a forthcoming change that will affect
+   backwards compatibility when dealing with dummy atoms.
+ - The build system has been completely changed. Makefiles and Visual
+   Studio project files have been removed. See the "Other" section for
+   more info.
+   
+Acknowledgements:
+ - Some of the bugs fixed in this release were found and reported by
+   Noel O'Boyle and Markus Kossner.
+
+Bug Fixes
+ - A core leak in MolAlign::getAlignmentTransform was fixed (issue 1899787)
+ - Mol suppliers now reset the EOF flag on their stream after they run off the end (issue 1904170)
+ - A problem causing the string "Sc" to not parse correctly in recursive SMARTS was fixed (issue 1912895)
+ - A bug in the handling of chirality in reactions was fixed (issue 1920627)
+ - Looping directly over a supplier no longer causes a crash (issue 1928819)
+ - a core leak in the smiles parser was fixed (issue 1929199)
+
+New Features
+ - Conformations now support a dimensionality flag. Dimensionality
+   information is now read from mol blocks and TDT files. (issue
+   1906758)
+
+Other
+   
+
 ******  Release_Jan2008_1 *******
 (Changes relative to Release_Aug2007_1)
  
