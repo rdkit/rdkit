@@ -6,8 +6,9 @@
 #
 from aggdraw import Brush, Pen
 from aggdraw import Font
+import RDConfig,os
 
-faceMap={'sans':'./FreeSans.ttf'}
+faceMap={'sans':os.path.join(RDConfig.RDCodeDir,'Chem','Draw','FreeSans.ttf')}
 
 def convertColor(color):
   color = (int(color[0]*255),int(color[1]*255),int(color[2]*255))

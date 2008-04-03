@@ -33,7 +33,7 @@ class MolDrawing(object):
 
   atomLabelFontFace = "sans"
   atomLabelFontSize = 12
-  atomLabelMinFontSize = 8
+  atomLabelMinFontSize = 10
 
   bondLineWidth = 1.2
   dblBondOffset = .2
