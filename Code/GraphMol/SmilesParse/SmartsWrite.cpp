@@ -69,6 +69,16 @@ namespace RDKit {
       return res;
     }
 
+    template <typename T>
+    void describeQuery(const T *query,std::string leader="\t"){
+      //BOOST_LOG(rdInfoLog) << leader << query->getDescription() << std::endl;
+      typename T::CHILD_VECT_CI iter;
+      for(iter=query->beginChildren();iter!=query->endChildren();++iter){
+        describeQuery(iter->get(),leader+"\t");
+      }
+    }
+    
+    // called with the children of AND queries:
     std::string smartsOrganicAtom(const QueryAtom::QUERYATOM_QUERY *child1, 
                                   const QueryAtom::QUERYATOM_QUERY *child2) {
       PRECONDITION(child1&&child2,"bad query");
@@ -93,11 +103,11 @@ namespace RDKit {
       int val = torig->getVal();
       std::string res = PeriodicTable::getTable()->getElementSymbol(val);
       if (odsc == "AtomIsAromatic") {
-        // if aromatic convert the symbol to a small letter
-        // we will assume we can have only organic element
-        // with single letter symbols as aromatic
-        CHECK_INVARIANT(res.length() == 1, "Two lettered element cannot be aromatic");
+        // if aromatic convert the first leter to a small letter
         res[0] += ('a' - 'A');
+        if(res.length()>1){
+          res = "["+res+"]";
+        }
       }
       if (torig->getNegation()) {
         res = "!" + res;
@@ -219,38 +229,6 @@ namespace RDKit {
       return res;
     }
     
-    std::string smartsRecursiveStruct(const QueryAtom::QUERYATOM_QUERY *child1, 
-                                      const QueryAtom::QUERYATOM_QUERY *child2) {
-      PRECONDITION(child1&&child2,"bad child query");
-      const QueryAtom::QUERYATOM_QUERY *recQ, *otherQ;
-      if (child1->getDescription() == "RecursiveStructure") {
-        recQ = child1;
-        otherQ = child2;
-      }
-      else {
-        recQ = child2;
-        otherQ = child1;
-      }
-
-      std::string res, reqStr;
-      bool needParen;
-      // get the smarts for the regular atom
-      if ((otherQ->getDescription() == "AtomAnd") || (otherQ->getDescription() == "AtomAnd") ) {
-        res = _recurseGetSmarts(otherQ, otherQ->getNegation());
-      }
-      else {
-        const ATOM_EQUALS_QUERY *tother = static_cast<const ATOM_EQUALS_QUERY *>(otherQ);
-        res = getAtomSmartsSimple(tother, needParen);
-        if (tother->getNegation()) {
-          res = "!" + res;
-        }
-      }
-      reqStr = getRecursiveStructureQuerySmarts(recQ);
-    
-      res += reqStr;
-      return res;
-    }
-      
     std::string getBondSmartsSimple(const BOND_EQUALS_QUERY *bquery) {
       PRECONDITION(bquery,"bad query");
       std::string descrip = bquery->getDescription();
@@ -325,7 +303,7 @@ namespace RDKit {
       child2 = chi->get();
       chi++;
       // OK we should be at the end of vector by now - since we can have only two children, 
-      // well - atleat in this case 
+      // well - at least in this case 
       CHECK_INVARIANT(chi == node->endChildren(), "Too many children on the query");
     
       std::string dsc1, dsc2;
@@ -336,9 +314,8 @@ namespace RDKit {
       bool needParen;
 
       // deal with any special AND cases
-      //  1. This "node" is an AtomAnd, between a AliphaticAtom (or AromaticAtom) and 
+      //  1. This "node" is an AtomAnd between a AliphaticAtom (or AromaticAtom) and 
       //      an organic atom e.g. "C"
-      //  2. This "node" is an AtomAnd between an atom and a recursiveStructureQuery
       if (descrip == "AtomAnd") {
         bool specialCase = false;
         //case 1
@@ -349,16 +326,11 @@ namespace RDKit {
              ((dsc2 == "AtomAtomicNum") &&
               ((dsc1 == "AtomIsAliphatic") ||
                (dsc1 == "AtomIsAromatic"))) ) {
+          // we trap this one because it's nicer to see
+          //   "CC" in the output than "[#6&A][#6&A]"
           res = smartsOrganicAtom(child1, child2);
           specialCase = true;
         }
-
-        // case 2
-        else if ( (dsc1 == "RecursiveStructure") || (dsc2 == "RecursiveStructure")) {
-          res = smartsRecursiveStruct(child1, child2);
-          specialCase = true;
-        }
-
         if (specialCase) {
           if (negate) {
             res = "!" + res;
@@ -368,7 +340,9 @@ namespace RDKit {
       }
       
       // deal with the first child
-      if ((dsc1 != "AtomOr") && (dsc1 != "AtomAnd")) {
+      if (dsc1=="RecursiveStructure") {
+        csmarts1 = getRecursiveStructureQuerySmarts(child1);
+      } else if ((dsc1 != "AtomOr") && (dsc1 != "AtomAnd")) {
         // child 1 is a simple node
         const ATOM_EQUALS_QUERY *tchild = static_cast<const ATOM_EQUALS_QUERY *>(child1);
         csmarts1 = getAtomSmartsSimple(tchild, needParen);
@@ -376,15 +350,16 @@ namespace RDKit {
         if (nneg) {
           csmarts1 = "!" + csmarts1;
         }
-      }
-      else {
-        // child 1 is comoposite node - recurse
+      } else {
+        // child 1 is composite node - recurse
         bool nneg=(negate)^(child1->getNegation());
         csmarts1 = _recurseGetSmarts(child1, nneg);
       }
     
       // deal with the second child
-      if ((dsc2 != "AtomOr") && (dsc2 != "AtomAnd")) {
+      if (dsc2=="RecursiveStructure") {
+        csmarts2 = getRecursiveStructureQuerySmarts(child2);
+      } else if ((dsc2 != "AtomOr") && (dsc2 != "AtomAnd")) {
         // child 2 is a simple node
         const ATOM_EQUALS_QUERY *tchild = static_cast<const ATOM_EQUALS_QUERY *>(child2);
         csmarts2 = getAtomSmartsSimple(tchild, needParen);
@@ -398,8 +373,9 @@ namespace RDKit {
         csmarts2 = _recurseGetSmarts(child2, nneg);
       }
     
-      // ok if we have a negation and we have an OR , we have to change to an AND since we propogated 
-      // the negeation i.e NOT (A OR B) = (NOT (A)) AND (NOT(B))
+      // ok if we have a negation and we have an OR , we have to change to
+      // an AND since we propogated the negation
+      // i.e NOT (A OR B) = (NOT (A)) AND (NOT(B))
       if (negate) {
         if (descrip == "AtomOr") {
           descrip = "AtomAnd";
@@ -628,11 +604,15 @@ namespace RDKit {
       std::string res;
       bool needParen=false;
     
+      //BOOST_LOG(rdInfoLog)<<"Atom: " <<qatom->getIdx()<<std::endl;
       if(!qatom->hasQuery()){
         res =getNonQueryAtomSmarts(qatom);
+        //BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
         return res;
       }  
       QueryAtom::QUERYATOM_QUERY *query = qatom->getQuery();
+      describeQuery(query);
+
       PRECONDITION(query,"atom has no query");
       std::string descrip = qatom->getQuery()->getDescription();
       if (descrip == ""){
@@ -668,10 +648,14 @@ namespace RDKit {
       PRECONDITION(bond,"bad bond");
       std::string res = "";
     
+      //BOOST_LOG(rdInfoLog)<<"bond: " <<bond->getIdx()<<std::endl;;
       // it is possible that we are regular single bond and we don't need to write anything
       if(!bond->hasQuery()){
-        return getNonQueryBondSmarts(bond);
+        res=getNonQueryBondSmarts(bond);
+        //BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
+        return res;
       }
+      describeQuery(bond->getQuery());
       if ((typeid(*bond) == typeid(Bond)) && 
           ( (bond->getBondType() == Bond::SINGLE) || (bond->getBondType() == Bond::AROMATIC)) ) {
         return res;

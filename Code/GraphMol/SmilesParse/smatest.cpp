@@ -1029,6 +1029,73 @@ void testSmilesSmarts(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testIssue1914154(){
+  RWMol *mol;
+  std::string sma;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 1914154: problems with generating smarts for recursive queries" << std::endl;
+
+  sma ="[$(C);$(O)]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  BOOST_LOG(rdInfoLog)<<sma<<std::endl;
+  TEST_ASSERT(sma=="[$(C)&$(O)]");
+  delete mol;
+
+  sma ="[$(C),$(O)]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  BOOST_LOG(rdInfoLog)<<sma<<std::endl;
+  TEST_ASSERT(sma=="[$(C),$(O)]");
+  delete mol;
+
+  sma ="[!$(C);$(O)]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  BOOST_LOG(rdInfoLog)<<sma<<std::endl;
+  TEST_ASSERT(sma=="[!$(C)&$(O)]");
+  delete mol;
+
+  sma ="[C;$(C-O);$(C=O)]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  BOOST_LOG(rdInfoLog)<<sma<<std::endl;
+  TEST_ASSERT(sma=="[C&$(C-O)&$(C=O)]");
+  delete mol;
+
+  sma ="[$(C=O),$(C-O);$(C-N)]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  BOOST_LOG(rdInfoLog)<<sma<<std::endl;
+  TEST_ASSERT(sma=="[$(C=O),$(C-O);$(C-N)]");
+  delete mol;
+
+  sma ="[$(C-N);$(C=O),$(C-O)]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  BOOST_LOG(rdInfoLog)<<sma<<std::endl;
+  TEST_ASSERT(sma=="[$(C-N);$(C=O),$(C-O)]");
+  delete mol;
+
+  sma ="[$(C-N)&$(C=O),$(C-O)]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  BOOST_LOG(rdInfoLog)<<sma<<std::endl;
+  TEST_ASSERT(sma=="[$(C-N)&$(C=O),$(C-O)]");
+  delete mol;
+
+
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 int
 main(int argc, char *argv[])
@@ -1053,8 +1120,9 @@ main(int argc, char *argv[])
   testIssue351();
   testAtomMap();
   testSmartsSmiles();
-#endif
   testSmilesSmarts();
+#endif
+  testIssue1914154();
   //testIssue1804420();
   return 0;
 }
