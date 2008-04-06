@@ -42,15 +42,15 @@ For example:
 >>> res
 <Chem.Recap.RecapHierarchyNode object at 0x00CDB5D0>
 >>> res.children.keys()
-['[Du]C1CC1', '[Du]c1ccccc1-c1ncc(OC)cc1']
+['[*]C1CC1', '[*]c1ccccc1-c1ncc(OC)cc1']
 >>> res.GetAllChildren().keys()
-['[Du]c1ccccc1[Du]', '[Du]c1ccc(OC)cn1', '[Du]C1CC1', '[Du]c1ccccc1-c1ncc(OC)cc1']
+['[*]c1ccccc1[*]', '[*]c1ccc(OC)cn1', '[*]C1CC1', '[*]c1ccccc1-c1ncc(OC)cc1']
 
 To get the standard set of RECAP results, use GetLeaves():
 >>> leaves=res.GetLeaves()
 >>> leaves.keys()
-['[Du]c1ccccc1[Du]', '[Du]c1ccc(OC)cn1', '[Du]C1CC1']
->>> leaf = leaves['[Du]C1CC1']
+['[*]c1ccccc1[*]', '[*]c1ccc(OC)cn1', '[*]C1CC1']
+>>> leaf = leaves['[*]C1CC1']
 >>> leaf.mol
 <Chem.rdchem.Mol object at 0x00CBE0F0>
 
@@ -62,31 +62,31 @@ from Chem import rdChemReactions as Reactions
 
 # These are the definitions that will be applied to fragment molecules:
 reactionDefs = (
-  "[#7:1;+0;D2,D3]!@C(!@=O)!@[#7:2;+0;D2,D3]>>[X][#7:1].[#7:2][X]", # urea
+  "[#7:1;+0;D2,D3]!@C(!@=O)!@[#7:2;+0;D2,D3]>>[*][#7:1].[#7:2][*]", # urea
 
-  "[C:1](=!@[O:2])!@[#7:3;+0;!D1]>>[X][C:1]=[O:2].[X][#7:3]", # amide
+  "[C:1](=!@[O:2])!@[#7:3;+0;!D1]>>[*][C:1]=[O:2].[*][#7:3]", # amide
 
-  "[C:1](=!@[O:2])!@[O:3;+0]>>[X][C:1]=[O:2].[O:3][X]", # ester
+  "[C:1](=!@[O:2])!@[O:3;+0]>>[*][C:1]=[O:2].[O:3][*]", # ester
 
-  "[N;!D1;+0](-!@[*:1])-!@[*:2]>>[X][*:1].[*:2][X]", # amines
-  #"[N;!D1](!@[*:1])!@[*:2]>>[X][*:1].[*:2][X]", # amines
+  "[N;!D1;+0](-!@[*:1])-!@[*:2]>>[*][*:1].[*:2][*]", # amines
+  #"[N;!D1](!@[*:1])!@[*:2]>>[*][*:1].[*:2][*]", # amines
 
   # again: what about aromatics?
-  "[#7:1;R;D3;+0]-!@[*:2]>>[X][#7:1].[*:2][X]", # cyclic amines
+  "[#7:1;R;D3;+0]-!@[*:2]>>[*][#7:1].[*:2][*]", # cyclic amines
 
-  "[#6:1]-!@[O;+0]-!@[#6:2]>>[#6:1][X].[X][#6:2]", # ether
+  "[#6:1]-!@[O;+0]-!@[#6:2]>>[#6:1][*].[*][#6:2]", # ether
 
-  "[C:1]=!@[C:2]>>[C:1][X].[X][C:2]", # olefin
+  "[C:1]=!@[C:2]>>[C:1][*].[*][C:2]", # olefin
 
-  "[n:1;+0]-!@[C:2]>>[n:1][X].[C:2][X]", # aromatic nitrogen - aliphatic carbon
+  "[n:1;+0]-!@[C:2]>>[n:1][*].[C:2][*]", # aromatic nitrogen - aliphatic carbon
 
-  "O=C-@[N:1;+0]-!@[C:2]>>[N:1][X].[C:2][X]", # lactam nitrogen - aliphatic carbon
+  "O=C-@[N:1;+0]-!@[C:2]>>[N:1][*].[C:2][*]", # lactam nitrogen - aliphatic carbon
 
-  "[c:1]-!@[c:2]>>[c:1][X].[X][c:2]", # aromatic carbon - aromatic carbon
+  "[c:1]-!@[c:2]>>[c:1][*].[*][c:2]", # aromatic carbon - aromatic carbon
 
-  "[n:1;+0]-!@[c:2]>>[n:1][X].[X][c:2]", # aromatic nitrogen - aromatic carbon *NOTE* this is not part of the standard recap set.
+  "[n:1;+0]-!@[c:2]>>[n:1][*].[*][c:2]", # aromatic nitrogen - aromatic carbon *NOTE* this is not part of the standard recap set.
 
-  "[#7:1;+0;D2,D3]-!@[S:2](=[O:3])=[O:4]>>[#7:1][X].[X][S:2](=[O:3])=[O:4]", # sulphonamide
+  "[#7:1;+0;D2,D3]-!@[S:2](=[O:3])=[O:4]>>[#7:1][*].[*][S:2](=[O:3])=[O:4]", # sulphonamide
   )
 
 reactions = tuple([Reactions.ReactionFromSmarts(x) for x in reactionDefs])
@@ -184,13 +184,13 @@ def RecapDecompose(mol,allNodes=None,minFragmentSize=0):
 	  for nats,prod in prodSeq:
 	    pSmi = Chem.MolToSmiles(prod,1)
             if minFragmentSize>0:
-              nDummies = pSmi.count('Du')
+              nDummies = pSmi.count('*')
               if nats-nDummies<minFragmentSize:
                 seqOk=False
                 break
             # don't forget after replacing dummy atoms to remove any empty
             # branches:
-	    elif pSmi.replace('[Du]','').replace('()','') in ('','C','CC','CCC'):
+	    elif pSmi.replace('[*]','').replace('()','') in ('','C','CC','CCC'):
 	      seqOk=False
 	      break
 	    prod.pSmi = pSmi
@@ -241,8 +241,8 @@ if __name__=='__main__':
       self.failUnless(len(res.children.keys())==2)
       # we get two more nodes from that:
       self.failUnless(len(allNodes.keys())==5)
-      self.failUnless(allNodes.has_key('[Du]c1ccccc1OC'))
-      self.failUnless(allNodes.has_key('[Du]c1ccccc1'))
+      self.failUnless(allNodes.has_key('[*]c1ccccc1OC'))
+      self.failUnless(allNodes.has_key('[*]c1ccccc1'))
       
       m = Chem.MolFromSmiles('C1CC1Oc1ccccc1-c1ncccc1')
       res = RecapDecompose(m,allNodes=allNodes)
@@ -256,9 +256,9 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failIf('[Du]C([Du])[Du]' in ks)
-      self.failUnless('[Du]c1ccccc1' in ks)
-      self.failUnless('[Du]C([Du])Oc1ccccc1' in ks)
+      self.failIf('[*]C([*])[*]' in ks)
+      self.failUnless('[*]c1ccccc1' in ks)
+      self.failUnless('[*]C([*])Oc1ccccc1' in ks)
       
     def testSFNetIssue1804418(self):
       m = Chem.MolFromSmiles('C1CCCCN1CCCC')
@@ -266,8 +266,8 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]N1CCCCC1' in ks)
-      self.failUnless('[Du]CCCC' in ks)
+      self.failUnless('[*]N1CCCCC1' in ks)
+      self.failUnless('[*]CCCC' in ks)
 
     def testMinFragmentSize(self):
       m = Chem.MolFromSmiles('CCCOCCC')
@@ -278,7 +278,7 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==1)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]CCC' in ks)
+      self.failUnless('[*]CCC' in ks)
 
       m = Chem.MolFromSmiles('CCCOCC')
       res = RecapDecompose(m,minFragmentSize=3)
@@ -290,9 +290,9 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]CCC' in ks)
+      self.failUnless('[*]CCC' in ks)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]CCOC' in ks)
+      self.failUnless('[*]CCOC' in ks)
       
     def testAmideRxn(self):
       m = Chem.MolFromSmiles('C1CC1C(=O)NC1OC1')
@@ -300,24 +300,24 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]C(=O)C1CC1' in ks)
-      self.failUnless('[Du]NC1CO1' in ks)
+      self.failUnless('[*]C(=O)C1CC1' in ks)
+      self.failUnless('[*]NC1CO1' in ks)
       
       m = Chem.MolFromSmiles('C1CC1C(=O)N(C)C1OC1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]C(=O)C1CC1' in ks)
-      self.failUnless('[Du]N(C)C1CO1' in ks)
+      self.failUnless('[*]C(=O)C1CC1' in ks)
+      self.failUnless('[*]N(C)C1CO1' in ks)
 
       m = Chem.MolFromSmiles('C1CC1C(=O)n1cccc1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]C(=O)C1CC1' in ks)
-      self.failUnless('[Du]n1cccc1' in ks)
+      self.failUnless('[*]C(=O)C1CC1' in ks)
+      self.failUnless('[*]n1cccc1' in ks)
 
       m = Chem.MolFromSmiles('C1CC1C(=O)CC1OC1')
       res = RecapDecompose(m)
@@ -352,8 +352,8 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]C(=O)C1CC1' in ks)
-      self.failUnless('[Du]OC1CO1' in ks)
+      self.failUnless('[*]C(=O)C1CC1' in ks)
+      self.failUnless('[*]OC1CO1' in ks)
       
       m = Chem.MolFromSmiles('C1CC1C(=O)CC1OC1')
       res = RecapDecompose(m)
@@ -371,16 +371,16 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]NC1CC1' in ks)
-      self.failUnless('[Du]NC1CO1' in ks)
+      self.failUnless('[*]NC1CC1' in ks)
+      self.failUnless('[*]NC1CO1' in ks)
       
       m = Chem.MolFromSmiles('C1CC1NC(=O)N(C)C1OC1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]NC1CC1' in ks)
-      self.failUnless('[Du]N(C)C1CO1' in ks)
+      self.failUnless('[*]NC1CC1' in ks)
+      self.failUnless('[*]N(C)C1CO1' in ks)
 
       m = Chem.MolFromSmiles('C1CCNC(=O)NC1C')
       res = RecapDecompose(m)
@@ -392,15 +392,15 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]n1cccc1' in ks)
-      self.failUnless('[Du]NC1CO1' in ks)
+      self.failUnless('[*]n1cccc1' in ks)
+      self.failUnless('[*]NC1CO1' in ks)
 
       m = Chem.MolFromSmiles('c1cccn1C(=O)n1c(C)ccc1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]n1c(C)ccc1' in ks)
+      self.failUnless('[*]n1c(C)ccc1' in ks)
 
     def testAmineRxn(self):
       m = Chem.MolFromSmiles('C1CC1N(C1NC1)C1OC1')
@@ -408,44 +408,44 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==3)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]C1CC1' in ks)
-      self.failUnless('[Du]C1CO1' in ks)
-      self.failUnless('[Du]C1CN1' in ks)
+      self.failUnless('[*]C1CC1' in ks)
+      self.failUnless('[*]C1CO1' in ks)
+      self.failUnless('[*]C1CN1' in ks)
       
       m = Chem.MolFromSmiles('c1ccccc1N(C1NC1)C1OC1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==3)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]c1ccccc1' in ks)
-      self.failUnless('[Du]C1CO1' in ks)
-      self.failUnless('[Du]C1CN1' in ks)
+      self.failUnless('[*]c1ccccc1' in ks)
+      self.failUnless('[*]C1CO1' in ks)
+      self.failUnless('[*]C1CN1' in ks)
       
       m = Chem.MolFromSmiles('c1ccccc1N(c1ncccc1)C1OC1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==3)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]c1ccccc1' in ks)
-      self.failUnless('[Du]c1ncccc1' in ks)
-      self.failUnless('[Du]C1CO1' in ks)
+      self.failUnless('[*]c1ccccc1' in ks)
+      self.failUnless('[*]c1ncccc1' in ks)
+      self.failUnless('[*]C1CO1' in ks)
       
       m = Chem.MolFromSmiles('c1ccccc1N(c1ncccc1)c1ccco1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==3)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]c1ccccc1' in ks)
-      self.failUnless('[Du]c1ncccc1' in ks)
-      self.failUnless('[Du]c1occc1' in ks)
+      self.failUnless('[*]c1ccccc1' in ks)
+      self.failUnless('[*]c1ncccc1' in ks)
+      self.failUnless('[*]c1occc1' in ks)
 
       m = Chem.MolFromSmiles('C1CCCCN1C1CC1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]N1CCCCC1' in ks)
-      self.failUnless('[Du]C1CC1' in ks)
+      self.failUnless('[*]N1CCCCC1' in ks)
+      self.failUnless('[*]C1CC1' in ks)
 
       m = Chem.MolFromSmiles('C1CCC2N1CC2')
       res = RecapDecompose(m)
@@ -458,8 +458,8 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]C1CC1' in ks)
-      self.failUnless('[Du]C1CO1' in ks)
+      self.failUnless('[*]C1CC1' in ks)
+      self.failUnless('[*]C1CO1' in ks)
       
       m = Chem.MolFromSmiles('C1CCCCO1')
       res = RecapDecompose(m)
@@ -471,16 +471,16 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]c1ccccc1' in ks)
-      self.failUnless('[Du]C1CO1' in ks)
+      self.failUnless('[*]c1ccccc1' in ks)
+      self.failUnless('[*]C1CO1' in ks)
       
       m = Chem.MolFromSmiles('c1ccccc1Oc1ncccc1')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]c1ccccc1' in ks)
-      self.failUnless('[Du]c1ncccc1' in ks)
+      self.failUnless('[*]c1ccccc1' in ks)
+      self.failUnless('[*]c1ncccc1' in ks)
       
     def testOlefinRxn(self):
       m = Chem.MolFromSmiles('ClC=CBr')
@@ -488,8 +488,8 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]CCl' in ks)
-      self.failUnless('[Du]CBr' in ks)
+      self.failUnless('[*]CCl' in ks)
+      self.failUnless('[*]CBr' in ks)
       
       m = Chem.MolFromSmiles('C1CC=CC1')
       res = RecapDecompose(m)
@@ -502,8 +502,8 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]n1cccc1' in ks)
-      self.failUnless('[Du]CCCC' in ks)
+      self.failUnless('[*]n1cccc1' in ks)
+      self.failUnless('[*]CCCC' in ks)
       
       m = Chem.MolFromSmiles('c1ccc2n1CCCC2')
       res = RecapDecompose(m)
@@ -516,8 +516,8 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]N1C(=O)CC1' in ks)
-      self.failUnless('[Du]CCCC' in ks)
+      self.failUnless('[*]N1C(=O)CC1' in ks)
+      self.failUnless('[*]CCCC' in ks)
       
       m = Chem.MolFromSmiles('O=C1CC2N1CCCC2')
       res = RecapDecompose(m)
@@ -530,8 +530,8 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]c1ccccc1' in ks)
-      self.failUnless('[Du]c1ncccc1' in ks)
+      self.failUnless('[*]c1ccccc1' in ks)
+      self.failUnless('[*]c1ncccc1' in ks)
       
       m = Chem.MolFromSmiles('c1ccccc1C1CC1')
       res = RecapDecompose(m)
@@ -544,8 +544,8 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]n1cccc1' in ks)
-      self.failUnless('[Du]c1ccccc1' in ks)
+      self.failUnless('[*]n1cccc1' in ks)
+      self.failUnless('[*]c1ccccc1' in ks)
       
     def testSulfonamideRxn(self):
       m = Chem.MolFromSmiles('CCCNS(=O)(=O)CC')
@@ -553,16 +553,16 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]NCCC' in ks)
-      self.failUnless('[Du]S(=O)(=O)CC' in ks)
+      self.failUnless('[*]NCCC' in ks)
+      self.failUnless('[*]S(=O)(=O)CC' in ks)
       
       m = Chem.MolFromSmiles('c1cccn1S(=O)(=O)CC')
       res = RecapDecompose(m)
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[Du]n1cccc1' in ks)
-      self.failUnless('[Du]S(=O)(=O)CC' in ks)
+      self.failUnless('[*]n1cccc1' in ks)
+      self.failUnless('[*]S(=O)(=O)CC' in ks)
 
       m = Chem.MolFromSmiles('C1CNS(=O)(=O)CC1')
       res = RecapDecompose(m)

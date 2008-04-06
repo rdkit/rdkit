@@ -14,7 +14,7 @@
    
 Acknowledgements:
  - Some of the bugs fixed in this release were found and reported by
-   Noel O'Boyle and Markus Kossner.
+   Adrian Schreyer, Noel O'Boyle, and Markus Kossner.
 
 Bug Fixes
  - A core leak in MolAlign::getAlignmentTransform was fixed (issue 1899787)
@@ -25,9 +25,20 @@ Bug Fixes
  - a core leak in the smiles parser was fixed (issue 1929199)
 
 New Features
+ - Atom and bond query information is now serializable; i.e. query
+   molecules can now be pickled and not lose the query
+   information. (feature request 1756596)
+ - Query features from mol files are now fully supported. (feature
+   request 1756962) 
  - Conformations now support a dimensionality flag. Dimensionality
-   information is now read from mol blocks and TDT files. (issue
+   information is now read from mol blocks and TDT files. (feature request
    1906758)
+ - Support for supplying dummy atoms as "[Du]", "[X]", "[Xa]", etc. is
+   now considered deprecated. In this release a warning will be
+   generated for these forms and in the next release the old form will
+   generate errors. Note that the output of dummy atoms has also
+   changed: the default output format is now "*".  (feature request
+   186217)
 
 Other
    

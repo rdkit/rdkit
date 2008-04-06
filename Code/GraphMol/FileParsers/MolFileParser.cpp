@@ -582,8 +582,9 @@ namespace RDKit{
       } else {
         res->setAtomicNum(0);
       }
-      if(symb=="*") res->setProp("dummyLabel",std::string("X"));
-      else if(symb=="R0") res->setProp("dummyLabel",std::string("Xa"));
+#if 0
+      if(symb=="*") res->setProp("dummyLabel",std::string("*"));
+      else if(symb=="R0") res->setProp("dummyLabel",std::string("*"));
       else if(symb=="R1") res->setProp("dummyLabel",std::string("Xb"));
       else if(symb=="R2") res->setProp("dummyLabel",std::string("Xc"));
       else if(symb=="R3") res->setProp("dummyLabel",std::string("Xd"));
@@ -595,7 +596,7 @@ namespace RDKit{
       else if(symb=="R9") res->setProp("dummyLabel",std::string("Xk"));
       else if(symb=="R#") res->setProp("dummyLabel",std::string("X"));
       else res->setProp("dummyLabel",symb);
-      
+#endif      
       
     } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
       res->setAtomicNum(1); 

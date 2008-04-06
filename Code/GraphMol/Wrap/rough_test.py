@@ -677,11 +677,11 @@ class TestCase(unittest.TestCase):
                                             'test_data','list-query.mol')
     query = Chem.MolFromMolFile(fileN)
     smi = Chem.MolToSmiles(query)
-    self.failUnless(smi=='[Du]1ccccc1')
+    self.failUnless(smi=='[*]1ccccc1')
 
     query = Chem.MolFromMolFile(fileN,sanitize=False)
     smi = Chem.MolToSmiles(query)
-    self.failUnless(smi=='[Du]1=CC=CC=C1')
+    self.failUnless(smi=='[*]1=CC=CC=C1')
     smi = "C1=CC=CC=C1"
     mol = Chem.MolFromSmiles(smi,0)
     self.failUnless(mol.HasSubstructMatch(query))

@@ -196,46 +196,55 @@ s		    {	yysmiles_lval.atom = new Atom( 16 );
 <IN_ATOM_STATE>X 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
                                                         std::string("X"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 <IN_ATOM_STATE>Xa 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
 std::string("Xa"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 <IN_ATOM_STATE>Xb 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
 std::string("Xb"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 <IN_ATOM_STATE>Xc 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
 std::string("Xc"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 <IN_ATOM_STATE>Xd 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
 std::string("Xd"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 <IN_ATOM_STATE>Xf 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
 std::string("Xf"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 <IN_ATOM_STATE>Xg 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
 std::string("Xg"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 <IN_ATOM_STATE>Xh 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp("dummyLabel",
 std::string("Xh"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 <IN_ATOM_STATE>Xi 	{   yysmiles_lval.atom = new Atom( 0 );
 		            yysmiles_lval.atom->setProp((const char *)"dummyLabel",
 std::string("Xi"));
+  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
 

@@ -17,7 +17,7 @@ def feq(n1,n2,tol=1e-4):
 
 class TestCase(unittest.TestCase):
   def testBadAtomHandling(self):
-    smis = ('CC[Pu]','CC[Xa]')
+    smis = ('CC[Pu]','CC[*]')
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.failUnless(m)

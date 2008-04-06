@@ -6,7 +6,7 @@ from Chem import Crippen
 from Chem import AllChem
 from Chem.ChemUtils.AlignDepict import AlignDepict
 
-_version="0.2.1"
+_version="0.2.2"
 _greet="This is TemplateExpand version %s"%_version
 
 _usage="""
@@ -42,8 +42,8 @@ nDumped=0
 def _exploder(mol,depth,sidechains,outF,core,chainIndices):
   global nDumped
   ourChains = sidechains[depth]
-  patt = '[X%s]'%(chr(ord('a')+depth))
-  patt = Chem.MolFromSmiles(patt)
+  patt = '[%d*]'%(depth+1)
+  patt = Chem.MolFromSmarts(patt)
   for i,chain in enumerate(ourChains):
     tchain = chainIndices[:]
     tchain.append(i+1)
@@ -72,7 +72,7 @@ def _exploder(mol,depth,sidechains,outF,core,chainIndices):
           
 def Explode(template,sidechains,outF):
   chainIndices=[]
-  core = Chem.DeleteSubstructs(template,Chem.MolFromSmiles('[X]'))
+  core = Chem.DeleteSubstructs(template,Chem.MolFromSmiles('[*]'))
   _exploder(template,0,sidechains,outF,core,chainIndices)
                               
 
@@ -88,7 +88,7 @@ def ConstructSidechains(suppl,sma=None,replace=True):
     patt = None
 
   if replace:
-    replacement = Chem.MolFromSmiles('[X]')
+    replacement = Chem.MolFromSmiles('[*]')
 
   res = []
   for mol in suppl:
@@ -103,8 +103,8 @@ def ConstructSidechains(suppl,sma=None,replace=True):
             idx = match[0]
             smi = Chem.MolToSmiles(entry,rootedAtAtom=idx)
             entry = Chem.MolFromSmiles(smi)
-            # entry now has [X] as atom 0 and the neighbor
-            # as atom 1. Cleave the [X]:
+            # entry now has [*] as atom 0 and the neighbor
+            # as atom 1. Cleave the [*]:
             entry = Chem.DeleteSubstructs(entry,replacement)
             # now we have a molecule with the atom to be joined
             # in position zero; Keep that:

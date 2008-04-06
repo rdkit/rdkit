@@ -136,7 +136,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(probe==ref)
     
   def testIssue1749494(self):
-    m1 = Chem.MolFromSmiles('[Xa]CC')
+    m1 = Chem.MolFromSmiles('[*]CC')
     v = Crippen.MolLogP(m1)
     self.failUnless(feq(v,0.9709))
     

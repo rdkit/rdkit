@@ -28,8 +28,8 @@ void test1(){
 
   TEST_ASSERT(m->getNumAtoms()==6);
   std::string smi = MolToSmiles(*m);
-  //TEST_ASSERT(smi=="[Du]1ccccc1");
-  TEST_ASSERT(smi=="[Du]1=CC=CC=C1");  
+  //TEST_ASSERT(smi=="[*]1ccccc1");
+  TEST_ASSERT(smi=="[*]1=CC=CC=C1");  
 
   smi = "C1=CC=CC=C1";
   RWMol *m2 = SmilesToMol(smi,false,false);
