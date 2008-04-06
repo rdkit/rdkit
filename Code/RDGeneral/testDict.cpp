@@ -23,11 +23,11 @@ private:
 };
 
 int main(){
-
+  RDLog::InitLogs();
   Dict d;
   INT_VECT fooV;
   fooV.resize(3);
-
+  BOOST_LOG(rdInfoLog) << "dict test" << std::endl;
   CHECK_INVARIANT(!d.hasVal("foo"),"bad init");
   int x = 1;
   d.setVal("foo", x);

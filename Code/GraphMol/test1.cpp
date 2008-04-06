@@ -9,7 +9,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
-#include <boost/log/functions.hpp>
+//#include <boost/log/functions.hpp>
 
 #include <iostream>
 using namespace std;

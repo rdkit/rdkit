@@ -1,10 +1,50 @@
 // $Id$
 //
-// Copyright (C)  2005-2006 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2005-2008 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
 #include "RDLog.h"
+
+#if 1
+#include <iomanip>
+#include <time.h>
+
+std::ostream *rdAppLog=0;
+std::ostream *rdDebugLog=0;
+std::ostream *rdInfoLog=0;
+std::ostream *rdErrorLog=0;
+std::ostream *rdWarningLog=0;
+std::ostream *rdStatusLog=0;
+namespace boost {
+  namespace logging {
+    void enable_logs(const char *arg) {};
+    void enable_logs(const std::string &arg) {};
+    void disable_logs(const char *arg) {};
+    void disable_logs(const std::string &arg) {};
+  }
+}
+
+
+namespace RDLog {
+  void InitLogs(){
+    rdAppLog=&std::cout;
+    rdDebugLog=&std::cerr;
+    rdInfoLog=&std::cout;
+    rdErrorLog=&std::cerr;
+    rdWarningLog=&std::cerr;
+    rdStatusLog=&std::cout;
+  }
+  std::ostream &toStream(std::ostream &strm) {
+    time_t t = time(0); 
+    tm details = *localtime( &t);
+    strm << "["<<std::setw(2)<<std::setfill('0')<<details.tm_hour<<":"<<std::setw(2)<<std::setfill('0')<<details.tm_min<<":"<<std::setw(2)<<std::setfill('0')<<int(details.tm_sec)<<"] ";
+    return strm;
+  }
+
+}
+
+#else
 #include <boost/log/functions.hpp>
 #if defined(BOOST_HAS_THREADS2)
 #include <boost/log/extra/functions_ts.hpp>
@@ -71,3 +111,4 @@ namespace RDLog {
     logging::disable_logs("rdApp.debug");
   };
 }
+#endif

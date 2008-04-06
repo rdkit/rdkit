@@ -9,7 +9,7 @@
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include <RDGeneral/RDLog.h>
-#include <boost/log/functions.hpp>
+//#include <boost/log/functions.hpp>
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;

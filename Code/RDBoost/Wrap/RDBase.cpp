@@ -10,11 +10,12 @@
 #include "Numeric/arrayobject.h"
 
 #include <RDGeneral/RDLog.h>
+#if 0
 #include <boost/log/functions.hpp>
 #if defined(BOOST_HAS_THREADS)
 #include <boost/log/extra/functions_ts.hpp>
 #endif
-
+#endif
 
 
 namespace python = boost::python;
@@ -31,6 +32,7 @@ void DisableLog(std::string spec){
   logging::disable_logs(spec);
 }
 void AttachFileToLog(std::string spec,std::string filename,int delay=100){
+#if 0
 #if defined(BOOST_HAS_THREADS)
   logging::manipulate_logs(spec)
     .add_appender(logging::ts_appender(logging::write_to_file(filename),
@@ -40,12 +42,34 @@ void AttachFileToLog(std::string spec,std::string filename,int delay=100){
     .add_appender(logging::write_to_file(filename));
 
 #endif
+  // FIX: we should be able to enable/disable things
+#endif
 }
 void LogMessage(std::string spec,std::string msg){
+#if 0
   logging::logger theLog(spec);
   if(theLog.is_enabled(logging::level::default_)){
     *(theLog.stream().stream()) << msg;
   }
+#else
+  //  FIX: get this more general
+  std::ostream *dest;
+  if(spec=="rdApp.error"){
+    dest=rdErrorLog;
+  } else if(spec=="rdApp.warning"){
+    dest=rdWarningLog;
+  } else if(spec=="rdApp.info"){
+    dest=rdInfoLog;
+  } else if(spec=="rdApp.debug"){
+    dest=rdDebugLog;
+  } else {
+    dest=0;
+  }
+
+  if(dest){
+    BOOST_LOG(dest)<<msg;
+  }
+#endif
 }
 
 

@@ -14,7 +14,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <RDGeneral/RDLog.h>
-#include <boost/log/functions.hpp>
+//#include <boost/log/functions.hpp>
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;
