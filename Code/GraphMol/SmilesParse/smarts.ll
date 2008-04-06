@@ -209,6 +209,16 @@ s		    {	yysmarts_lval.atom = new QueryAtom( 16 );
 			yysmarts_lval.atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 
 			}
+<IN_ATOM_STATE>se   {	yysmarts_lval.atom = new QueryAtom( 34 );
+			yysmarts_lval.atom->setIsAromatic(true);
+				return AROMATIC_ATOM_TOKEN; 
+			}
+<IN_ATOM_STATE>te   {	yysmarts_lval.atom = new QueryAtom( 52 );
+			yysmarts_lval.atom->setIsAromatic(true);
+				return AROMATIC_ATOM_TOKEN; 
+			}
+
+
 
 \*			{
 	yysmarts_lval.atom = new QueryAtom();

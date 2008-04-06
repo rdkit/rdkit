@@ -377,10 +377,8 @@ namespace {
 
   bool isAtomCandForArom(const Atom *at, VECT_EDON_TYPE &edon) {
     PRECONDITION(at,"bad atom");
-    // limit aromaticity to the first two rows of the periodic table
-    // as a result if the atomic number if greater than 18 - it cannot
-    // be a candidate for aromaticity
-    if (at->getAtomicNum() > 18) {
+    // limit aromaticity to the first two rows of the periodic table, Se and Te
+    if (at->getAtomicNum() > 18 && at->getAtomicNum()!=34 && at->getAtomicNum()!=52 ) {
       return false;
     }
     int adx = at->getIdx();

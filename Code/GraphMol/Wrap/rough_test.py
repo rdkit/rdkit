@@ -1680,6 +1680,34 @@ CAS<~>
     for m in Chem.TDTMolSupplier(fileN): count+=1
     self.failUnless(count==10)
 
+  def test49Issue1932365(self):
+    """ test aromatic Se and Te from smiles/smarts
+    """
+    m = Chem.MolFromSmiles('c1ccc[se]1')
+    self.failUnless(m)
+    self.failUnless(m.GetAtomWithIdx(0).GetIsAromatic())
+    self.failUnless(m.GetAtomWithIdx(4).GetIsAromatic())
+    m = Chem.MolFromSmiles('c1ccc[te]1')
+    self.failUnless(m)
+    self.failUnless(m.GetAtomWithIdx(0).GetIsAromatic())
+    self.failUnless(m.GetAtomWithIdx(4).GetIsAromatic())
+    m = Chem.MolFromSmiles('C1=C[Se]C=C1')
+    self.failUnless(m)
+    self.failUnless(m.GetAtomWithIdx(0).GetIsAromatic())
+    self.failUnless(m.GetAtomWithIdx(2).GetIsAromatic())
+    m = Chem.MolFromSmiles('C1=C[Te]C=C1')
+    self.failUnless(m)
+    self.failUnless(m.GetAtomWithIdx(0).GetIsAromatic())
+    self.failUnless(m.GetAtomWithIdx(2).GetIsAromatic())
+
+    p = Chem.MolFromSmarts('[se]')
+    self.failUnless(Chem.MolFromSmiles('c1ccc[se]1').HasSubstructMatch(p))
+    self.failIf(Chem.MolFromSmiles('C1=CCC[Se]1').HasSubstructMatch(p))
+    
+    p = Chem.MolFromSmarts('[te]')
+    self.failUnless(Chem.MolFromSmiles('c1ccc[te]1').HasSubstructMatch(p))
+    self.failIf(Chem.MolFromSmiles('C1=CCC[Te]1').HasSubstructMatch(p))
+    
 if __name__ == '__main__':
   unittest.main()
 

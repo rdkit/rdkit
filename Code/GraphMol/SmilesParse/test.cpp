@@ -76,6 +76,9 @@ void testPass(){
     "*1=CC=CC=C1",
     "*1*cccc1",
     "*1**ccc1",
+    // test aromatic se and te:
+    "c1ccc[se]1",
+    "c1ccc[te]1",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];

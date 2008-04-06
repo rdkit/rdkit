@@ -66,6 +66,8 @@ void testPass(){
     "[C;!$(C-[OH])]=O",
     "[#6]-!:[#6]",
     "[C^3]",
+    "[se]",
+    "[te]",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
