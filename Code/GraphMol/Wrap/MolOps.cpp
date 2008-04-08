@@ -570,6 +570,14 @@ namespace RDKit{
       atom when calculating path hashes.\n\
       Defaults to 1.\n\
 \n\
+    - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
+      been reached\n\
+      Defaults to 0.\n\
+\n\
+    - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
+      trying to reach tgtDensity\n\
+      Defaults to 128.\n\
+\n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\
   ALGORITHM:\n\
@@ -586,6 +594,62 @@ namespace RDKit{
 \n\
 \n";
       python::def("DaylightFingerprint", DaylightFingerprintMol,
+                  (python::arg("mol"),python::arg("minPath")=1,
+                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
+                   python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
+                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
+
+
+      // ------------------------------------------------------------------------
+      docString="Returns an RDKit topological fingerprint for a molecule\n\
+\n\
+  Explanation of the algorithm below.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - minPath: (optional) minimum number of bonds to include in the subgraphs\n\
+      Defaults to 1.\n\
+\n\
+    - maxPath: (optional) maximum number of bonds to include in the subgraphs\n\
+      Defaults to 7.\n\
+\n\
+    - fpSize: (optional) number of bits in the fingerprint\n\
+      Defaults to 2048.\n\
+\n\
+    - nBitsPerPath: (optional) number of bits to set per path\n\
+      Defaults to 4.\n\
+\n\
+    - useHs: (optional) include information about number of Hs on each\n\
+      atom when calculating path hashes.\n\
+      Defaults to 1.\n\
+\n\
+    - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
+      been reached\n\
+      Defaults to 0.\n\
+\n\
+    - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
+      trying to reach tgtDensity\n\
+      Defaults to 128.\n\
+\n\
+  RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
+\n\
+  ALGORITHM:\n\
+\n\
+   This algorithm functions by find all paths between minPath and maxPath in\n \
+   length.  For each path:\n\
+\n\
+     1) A hash is calculated.\n\
+\n\
+     2) The hash is used to seed a random-number generator\n\
+\n\
+     3) _nBitsPerPath_ random numbers are generated and used to set the corresponding\n\
+        bits in the fingerprint\n\
+\n\
+\n";
+      python::def("RDKFingerprint2", RDKFingerprintMol2,
                   (python::arg("mol"),python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("nBitsPerHash")=4,python::arg("useHs")=true,

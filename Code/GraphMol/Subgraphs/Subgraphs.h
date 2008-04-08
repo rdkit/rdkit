@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -11,12 +11,13 @@
    Difference between _subgraphs_ and _paths_ :
       Subgraphs are potentially branched, whereas paths (in our 
       terminology at least) cannot be.  So, the following graph:
- 
+\verbatim 
             C--0--C--1--C--3--C
                   |
                   2
                   |
                   C
+\endverbatim
       has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)
       but only 2 _paths_ of length 3: (0,1,3),(2,1,3)
 */

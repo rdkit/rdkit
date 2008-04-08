@@ -725,6 +725,27 @@ class TestCase(unittest.TestCase):
     fp3 = Chem.DaylightFingerprint(m1,tgtDensity=0.3)
     self.failUnless(len(fp3)<2048)
     
+  def test24RDKFingerprint(self):
+    import DataStructs
+    m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
+    fp1 = Chem.RDKFingerprint2(m1)
+    self.failUnless(len(fp1)==2048)
+    m2 = Chem.MolFromSmiles('C1=CC=CC=C1')
+    fp2 = Chem.RDKFingerprint2(m2)
+
+    tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
+    self.failUnless(tmp==1.0,tmp)
+
+    m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
+    fp2 = Chem.RDKFingerprint2(m2)
+    self.failUnless(len(fp2)==2048)
+    tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
+    self.failUnless(tmp<1.0,tmp)
+    self.failUnless(tmp>0.0,tmp)
+
+    fp3 = Chem.RDKFingerprint2(m1,tgtDensity=0.3)
+    self.failUnless(len(fp3)<2048)
+    
 
   def test25SDMolSupplier(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
