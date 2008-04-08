@@ -670,8 +670,7 @@ class TestCase(unittest.TestCase):
 
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','triazine.mof')
-    m1 = Chem.MolFromMolFile(fileN)
-    self.failUnless(m1 is None)
+    self.failUnlessRaises(IOError,lambda :Chem.MolFromMolFile(fileN))
 
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','list-query.mol')

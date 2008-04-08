@@ -16,6 +16,7 @@
 
 #include <RDBoost/Wrap.h>
 #include <RDBoost/Exceptions.h>
+#include <RDGeneral/BadFileException.h>
 #include <GraphMol/SanitException.h>
 
 namespace python = boost::python;
@@ -66,7 +67,13 @@ namespace RDKit{
   }
 
   ROMol *MolFromMolFile(const char *molFilename, bool sanitize=true, bool removeHs=true) {
-    RWMol *newM = MolFileToMol(molFilename, sanitize,removeHs);
+    RWMol *newM;
+    try {
+      newM = MolFileToMol(molFilename, sanitize,removeHs);
+    } catch (RDKit::BadFileException &e) {
+      PyErr_SetString(PyExc_IOError,e.message());
+      throw python::error_already_set();
+    }
     if(!newM) return 0;
     ROMol *res =new ROMol(*newM);
     delete newM; 

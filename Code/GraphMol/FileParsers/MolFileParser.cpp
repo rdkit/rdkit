@@ -15,6 +15,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <RDGeneral/FileParseException.h>
+#include <RDGeneral/BadFileException.h>
 #include <typeinfo>
 
 namespace RDKit{
@@ -1096,7 +1097,9 @@ namespace RDKit{
   RWMol *MolFileToMol(std::string fName, bool sanitize, bool removeHs){
     std::ifstream inStream(fName.c_str());
     if(!inStream){
-      return NULL;
+      std::ostringstream errout;
+      errout << "Problems opening file: " << fName;
+      throw BadFileException(errout.str()) ;
     }
     RWMol *res=NULL;
     if(!inStream.eof()){
