@@ -4,8 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib ShapeHelpers : ShapeEncoder.cpp ShapeUtils.cpp
-  : <link>static ;
-#install lib-install : ShapeHelpers : <location>$(RDBASE)/Code/lib ;
+  : ; #<link>static ;
+install lib-install : ShapeHelpers : <location>$(RDBASE)/bin ;
 
 exe main : testShapeHelpers.cpp ShapeHelpers
   ../SmilesParse//SmilesParse ../FileParsers//FileParsers

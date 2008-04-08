@@ -1,8 +1,11 @@
 project DataStructs : : ;
 
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
 
 lib DataStructs : BitVect.cpp SparseBitVect.cpp ExplicitBitVect.cpp Utils.cpp 
-	base64.cpp BitOps.cpp DiscreteDistMat.cpp DiscreteValueVect.cpp : <link>static ;
+	base64.cpp BitOps.cpp DiscreteDistMat.cpp DiscreteValueVect.cpp : ; #<link>static ;
+install lib-install : DataStructs : <location>$(RDBASE)/bin ;
 
 exe test : testDatastructs.cpp DataStructs /RDKit//RDGeneral ;
 

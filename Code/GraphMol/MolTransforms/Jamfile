@@ -4,8 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib MolTransforms : MolTransforms.cpp
-  : <link>static ;
-#install lib-install : MolTransforms : <location>$(RDBASE)/Code/lib ;
+  : ; #<link>static ;
+install lib-install : MolTransforms : <location>$(RDBASE)/bin ;
 
 exe testMolTransform : test1.cpp MolTransforms
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse 

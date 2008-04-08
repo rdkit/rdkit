@@ -1,9 +1,13 @@
 project DistGeom : : ;
 
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
 
 lib DistGeom : DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp 
   ChiralViolationContrib.cpp
-	: <link>static ;
+	: ; #<link>static ;
+install lib-install : DistGeom : <location>$(RDBASE)/bin ;
 
 exe main : testDistGeom.cpp DistGeom /RDKit//ForceField /RDKit//Numerics/Optimizer 
    /RDKit//Numerics/EigenSolvers /RDKit//Geometry /RDKit//RDGeneral ;

@@ -4,8 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib DistGeomHelpers : BoundsMatrixBuilder.cpp Embedder.cpp
-  : <link>static ;
-#install lib-install : DistGeomHelpers : <location>$(RDBASE)/bin ;
+  : ; #<link>static ;
+install lib-install : DistGeomHelpers : <location>$(RDBASE)/bin ;
 
 exe main.exe : testDgeomHelpers.cpp DistGeomHelpers /RDKit//DistGeom
   ../ForceFieldHelpers//ForceFieldHelpers /RDKit//ForceField

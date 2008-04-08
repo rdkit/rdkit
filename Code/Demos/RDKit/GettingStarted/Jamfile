@@ -6,10 +6,10 @@ exe sample : sample.cpp
   ../../../GraphMol/SmilesParse//SmilesParse
   ../../../GraphMol/FileParsers//FileParsers
   ../../../GraphMol/Depictor//Depictor
-  /RDKit/GraphMol//GraphMol 
-  /RDKit/DataStructs//DataStructs	
-  /RDKit/RDGeneral//RDGeneral /RDKit/Geometry//RDGeometry
-  /RDKit//vflib /RDKit//lapacklibs
+  ../../../GraphMol//GraphMol 
+  ../../../DataStructs//DataStructs	
+  ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
+  ../../..//vflib ../../..//lapacklibs
 ;
 
 

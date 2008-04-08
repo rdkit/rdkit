@@ -1,8 +1,11 @@
 project SimDivPickers : : ;
 
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
 
 lib SimDivPickers : DistPicker.cpp MaxMinPicker.cpp HierarchicalClusterPicker.cpp
-  : <link>static ;
-
+  : ; #<link>static ;
+install lib-install : SimDivPickers : <location>$(RDBASE)/bin ;
 
 

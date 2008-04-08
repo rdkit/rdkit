@@ -4,8 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Substruct : SubstructMatch.cpp SubstructUtils.cpp
-  : <link>static ;
-#install lib-install : Substruct : <location>$(RDBASE)/Code/lib ;
+  : ; #<link>static ;
+install lib-install : Substruct : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp Substruct ..//GraphMol 
   /RDKit//RDGeneral /RDKit//Geometry 

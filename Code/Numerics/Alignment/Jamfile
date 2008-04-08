@@ -1,7 +1,10 @@
 project Numerics/Alignment : : ;
 
-lib Alignment : AlignPoints.cpp : <link>static ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
 
+lib Alignment : AlignPoints.cpp : ; #<link>static ;
+install lib-install : Alignment : <location>$(RDBASE)/bin ;
 exe main : testAlignment.cpp Alignment /RDKit//Geometry /RDKit//RDGeneral ;
 
 install regrs : main : <location>testExecs ;

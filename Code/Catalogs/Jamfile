@@ -1,7 +1,11 @@
 project Catalogs : : ;
 
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
 
-lib Catalogs : Catalog.cpp CatalogParams.cpp CatalogEntry.cpp : <link>static ;
+
+lib Catalogs : Catalog.cpp CatalogParams.cpp CatalogEntry.cpp : ; #<link>static ;
+install lib-install : Catalogs : <location>$(RDBASE)/bin ;
 
 
 
