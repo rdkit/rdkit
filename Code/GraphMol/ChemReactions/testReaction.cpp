@@ -1477,7 +1477,28 @@ void test17Issue1920627(){
   prod->getAtomWithIdx(3)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
 
-
+  reacts.clear();
+  smi = "C(=O)N[C@@H](CC)C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+  TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
+  MolOps::assignAtomChiralCodes(*prod);
+  prod->debugMol(std::cerr);
+  TEST_ASSERT(prod->getNumAtoms()==7);
+  TEST_ASSERT(prod->getAtomWithIdx(3)->hasProp("_CIPCode"));
+  prod->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  
   delete rxn;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
