@@ -6,7 +6,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib DistGeom : DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp 
   ChiralViolationContrib.cpp
-	: ; #<link>static ;
+	:  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : DistGeom : <location>$(RDBASE)/bin ;
 
 exe main : testDistGeom.cpp DistGeom /RDKit//ForceField /RDKit//Numerics/Optimizer 

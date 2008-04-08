@@ -3,7 +3,7 @@ project Numerics/Alignment : : ;
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
-lib Alignment : AlignPoints.cpp : ; #<link>static ;
+lib Alignment : AlignPoints.cpp :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : Alignment : <location>$(RDBASE)/bin ;
 exe main : testAlignment.cpp Alignment /RDKit//Geometry /RDKit//RDGeneral ;
 

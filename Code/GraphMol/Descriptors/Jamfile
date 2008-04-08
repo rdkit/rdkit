@@ -4,7 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Descriptors : Crippen.cpp MolDescriptors.cpp AtomPairs.cpp MolSurf.cpp
-  : ; #<link>static ;
+  :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : Descriptors : <location>$(RDBASE)/bin ;
 
 exe testDescriptors : test.cpp Descriptors

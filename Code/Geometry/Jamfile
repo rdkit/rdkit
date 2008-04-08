@@ -4,7 +4,7 @@ import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
 
-lib RDGeometry : point.cpp Transform2D.cpp Transform3D.cpp UniformGrid3D.cpp GridUtils.cpp : ; #<link>static ;
+lib RDGeometry : point.cpp Transform2D.cpp Transform3D.cpp UniformGrid3D.cpp GridUtils.cpp :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : RDGeometry  ../DataStructs//DataStructs : <location>$(RDBASE)/bin ;
 
 exe testTransforms : testTransforms.cpp RDGeometry /RDKit//RDGeneral /RDKit//DataStructs ;

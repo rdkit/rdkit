@@ -4,7 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Subgraphs : Subgraphs.cpp SubgraphUtils.cpp
-  : ; #<link>static ;
+  :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : Subgraphs : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp Subgraphs
