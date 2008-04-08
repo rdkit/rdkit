@@ -18,8 +18,8 @@ import PeriodicTable as pyPeriodicTable
 import rdchem
 _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
 from rdchem import *
-from rdmolops import *
 from rdmolfiles import *
+from rdmolops import *
 
 def GetSmartsMatchCDXML(mol,patt,maps,which=0,showAllAtoms=0):
   try:
