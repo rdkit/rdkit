@@ -111,11 +111,17 @@ namespace RDKit{
 	   pathIt!=paths->second.end();
 	   pathIt++ ){
 	const PATH_TYPE &path=*pathIt;
-
+#ifdef VERBOSE_FINGERPRINTING        
+        std::cerr<<"Path: ";
+        std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
+        std::cerr<<std::endl;
+#endif
         // initialize the bond hashes to the number of neighbors the bond has in the path:
-        std::vector<unsigned int> bondHashes(path.size());
-        std::fill(bondHashes.begin(),bondHashes.end(),0);
+        std::vector<unsigned int> bondNbrs(path.size());
+        std::fill(bondNbrs.begin(),bondNbrs.end(),0);
         std::set<unsigned int> atomsInPath;
+        std::vector<unsigned int> bondHashes;
+        bondHashes.reserve(path.size()+1);
         for(unsigned int i=0;i<path.size();++i){
           const Bond *bi = mol.getBondWithIdx(path[i]);
           atomsInPath.insert(bi->getBeginAtomIdx());
@@ -126,10 +132,13 @@ namespace RDKit{
                bi->getBeginAtomIdx()==bj->getEndAtomIdx() ||
                bi->getEndAtomIdx()==bj->getBeginAtomIdx() ||
                bi->getEndAtomIdx()==bj->getEndAtomIdx() ){
-              ++bondHashes[i];
-              ++bondHashes[j];
+              ++bondNbrs[i];
+              ++bondNbrs[j];
             }
           }
+#ifdef VERBOSE_FINGERPRINTING        
+          std::cerr<<"   bond("<<i<<"):"<<bondNbrs[i]<<std::endl;
+#endif
           // we have the count of neighbors for bond bi, compute its hash:
           unsigned int a1Hash,a2Hash;
           a1Hash = (bi->getBeginAtom()->getAtomicNum()%128)<<1 | bi->getBeginAtom()->getIsAromatic();
@@ -143,21 +152,23 @@ namespace RDKit{
             bondHash = bi->getBondType();
           }
           unsigned int nBitsInHash=0;
-          bondHashes[i] = bondHashes[i]%8; // 3 bits here
+          unsigned int ourHash=bondNbrs[i]%8; // 3 bits here
           nBitsInHash+=3;
-          bondHashes[i] |= (bondHash%16)<<nBitsInHash; // 4 bits here
+          ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
           nBitsInHash+=4;
-          bondHashes[i] |= a1Hash<<nBitsInHash; // 8 bits
+          ourHash |= a1Hash<<nBitsInHash; // 8 bits
           nBitsInHash+=8;
-          bondHashes[i] |= a2Hash<<nBitsInHash; // 8 bits
+          ourHash |= a2Hash<<nBitsInHash; // 8 bits
+          bondHashes.insert(std::lower_bound(bondHashes.begin(),bondHashes.end(),ourHash),ourHash);
         }
 
         // ok, we have a hash for each bond, now order that list:
+#if 0
         bool reverseIt=false;
         for(unsigned int i=0;i<path.size();++i){
           for(unsigned int j=path.size()-1;j>i;--j){
-            if(bondHashes[i]!=bondHashes[j]){
-              if(bondHashes[i]<bondHashes[j]){
+            if(bondNbrs[i]!=bondNbrs[j]){
+              if(bondNbrs[i]<bondNbrs[j]){
                 reverseIt=true;
               }
               i=path.size()+1;
@@ -166,8 +177,9 @@ namespace RDKit{
           }
         }
         if(reverseIt){
-          std::reverse(bondHashes.begin(),bondHashes.end());
+          std::reverse(bondNbrs.begin(),bondNbrs.end());
         }
+#endif
         // finally, we will add the number of distinct atoms in the path at the end
         // of the vect. This allows us to distinguish C1CC1 from CC(C)C
         bondHashes.push_back(atomsInPath.size());
@@ -176,6 +188,9 @@ namespace RDKit{
         boost::hash<std::vector<unsigned int> > vectHasher;
 	unsigned long seed = vectHasher(bondHashes);
 
+#ifdef VERBOSE_FINGERPRINTING        
+        std::cerr<<" hash: "<<seed<<std::endl;
+#endif
         // if we've seen the seed already, don't bother resetting bits we've
         // already done:
         if(hashesSeen.find(seed)==hashesSeen.end()){
