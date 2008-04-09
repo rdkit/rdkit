@@ -9,6 +9,8 @@
 #include <RDGeneral/RDLog.h>
 #include <sstream>
 #include <fstream>
+#include <RDGeneral/FileParseException.h>
+#include <RDGeneral/BadFileException.h>
 
 namespace RDKit{
   namespace TPLWriter {
@@ -149,7 +151,12 @@ namespace RDKit{
                     std::string partialChargeProp,
                     bool writeFirstConfTwice){
     std::ofstream *outStream = new std::ofstream(fName.c_str());
-    CHECK_INVARIANT(outStream,"could not open output file");
+    if(!outStream||!(*outStream)||outStream->bad()){
+      std::ostringstream errout;
+      errout << "Bad output file " << fName;
+      throw BadFileException(errout.str());
+    }
+
     std::string outString = MolToTPLText(mol,partialChargeProp,
                                          writeFirstConfTwice);
     *outStream  << outString;

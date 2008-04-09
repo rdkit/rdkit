@@ -1,9 +1,10 @@
 // $Id$
 //
-//  Copyright (C) 2005-2006 Rational Discovery LLC
+//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
+#include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
 #include "MolSupplier.h"
@@ -88,7 +89,7 @@ namespace RDKit {
     if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad()) ) {
       std::ostringstream errout;
       errout << "Bad input file " << fileName;
-      throw FileParseException(errout.str());
+      throw BadFileException(errout.str());
     }
 
     dp_inStream = tmpStream;

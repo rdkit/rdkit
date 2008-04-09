@@ -1096,10 +1096,10 @@ namespace RDKit{
   //------------------------------------------------
   RWMol *MolFileToMol(std::string fName, bool sanitize, bool removeHs){
     std::ifstream inStream(fName.c_str());
-    if(!inStream){
+    if (!inStream || (inStream.bad()) ) {
       std::ostringstream errout;
-      errout << "Problems opening file: " << fName;
-      throw BadFileException(errout.str()) ;
+      errout << "Bad input file " << fName;
+      throw BadFileException(errout.str());
     }
     RWMol *res=NULL;
     if(!inStream.eof()){

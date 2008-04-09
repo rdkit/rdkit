@@ -1727,7 +1727,7 @@ CAS<~>
     p = Chem.MolFromSmarts('[te]')
     self.failUnless(Chem.MolFromSmiles('c1ccc[te]1').HasSubstructMatch(p))
     self.failIf(Chem.MolFromSmiles('C1=CCC[Te]1').HasSubstructMatch(p))
-    
+
 if __name__ == '__main__':
   unittest.main()
 

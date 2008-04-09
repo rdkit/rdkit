@@ -12,6 +12,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDGeneral/FileParseException.h>
+#include <RDGeneral/BadFileException.h>
 
 #include <string>
 
@@ -228,7 +230,6 @@ void test5(){
   TEST_ASSERT(m->getNumAtoms()==39);
 
 }  
-
 
 void test6(){
   BOOST_LOG(rdInfoLog) << "testing chirality parsing" << std::endl;
@@ -1300,7 +1301,32 @@ void testMolFileQueryToSmarts(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMissingFiles(){
+  BOOST_LOG(rdInfoLog) << "testing handling of missing files" << std::endl;
 
+  std::string fName;
+  bool ok;
+  RWMol *m;
+
+  fName = "bogus_file.mol";
+  ok=false;
+  try{
+    m = MolFileToMol(fName);
+  } catch (BadFileException &e){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+  ok=false;
+  try{
+    m = TPLFileToMol(fName);
+  } catch (BadFileException &e){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 
 int main(int argc,char *argv[]){
@@ -1327,6 +1353,7 @@ int main(int argc,char *argv[]){
   testMolFileRBCQueries();
   testMolFileUnsaturationQueries();
   testMolFileQueryToSmarts();
+  testMissingFiles();
   //testCrash();
   return 0;
 }

@@ -205,7 +205,7 @@ int main(int argc,char *argv[]){
   RDLog::InitLogs();
   test1();
   test2();
-  test3();
+  //test3();
   test1alg2();
   test2alg2();
   return 0;

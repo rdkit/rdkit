@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2008 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -14,6 +14,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <RDGeneral/FileParseException.h>
+#include <RDGeneral/BadFileException.h>
 #include <typeinfo>
 
 namespace RDKit{
@@ -284,8 +285,10 @@ namespace RDKit{
   //------------------------------------------------
   RWMol *TPLFileToMol(std::string fName, bool sanitize,bool skipFirstConf){
     std::ifstream inStream(fName.c_str());
-    if(!inStream){
-      return NULL;
+    if (!inStream || (inStream.bad()) ) {
+      std::ostringstream errout;
+      errout << "Bad input file " << fName;
+      throw BadFileException(errout.str());
     }
     RWMol *res=NULL;
     if(!inStream.eof()){

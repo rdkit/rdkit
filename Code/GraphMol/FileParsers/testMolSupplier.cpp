@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2002-2006 Rational Discovery LLC
+//   Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,6 +13,7 @@
 #include "MolWriters.h"
 #include "FileParsers.h"
 #include <RDGeneral/FileParseException.h>
+#include <RDGeneral/BadFileException.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -990,7 +991,7 @@ void testIssue265() {
   try {
     SDMolSupplier reader(fname);
     ok=false;
-  } catch (FileParseException &) {
+  } catch (BadFileException &) {
     ok=true;
   }
   TEST_ASSERT(ok);
@@ -998,7 +999,7 @@ void testIssue265() {
   try {
     SmilesMolSupplier reader(fname);
     ok = false;
-  } catch (FileParseException &) {
+  } catch (BadFileException &) {
     ok=true;
   }
   TEST_ASSERT(ok);
@@ -1006,7 +1007,7 @@ void testIssue265() {
   try {
     TDTMolSupplier reader(fname);
     ok = false;
-  } catch (FileParseException &) {
+  } catch (BadFileException &) {
     ok=true;
   }
   TEST_ASSERT(ok);
@@ -1416,10 +1417,7 @@ void testGetItemText() {
   molB = tdtsup.getItemText(9);
   TEST_ASSERT(molB!="");
   TEST_ASSERT(molB.substr(0,12)=="$SMI<Cc1n[nH");
-  
-
 }
-
 
 
 int main() {

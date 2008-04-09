@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,6 +13,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <RDGeneral/BadFileException.h>
 
 #include <RDBoost/Wrap.h>
 #include <RDBoost/Exceptions.h>
@@ -27,11 +28,21 @@ void rdSanitExceptionTranslator(RDKit::MolSanitizeException const& x){
   ss << "Sanitization error: " << x.message();
   PyErr_SetString(PyExc_ValueError,ss.str().c_str());
 }
+void rdBadFileExceptionTranslator(RDKit::BadFileException const& x){
+  std::ostringstream ss;
+  ss << "File error: " << x.message();
+  PyErr_SetString(PyExc_IOError,ss.str().c_str());
+}
 
 
 namespace RDKit{
   ROMol *MolFromSmiles(std::string smiles,bool sanitize=1){
-    RWMol *newM = SmilesToMol(smiles,0,sanitize);
+    RWMol *newM;
+    try {
+      newM = SmilesToMol(smiles,0,sanitize);
+    } catch (...) {
+      newM=0;
+    }
     if(!newM) return 0;
     ROMol *res =new ROMol(*newM);
     delete newM; 
@@ -39,7 +50,12 @@ namespace RDKit{
   }
 
   ROMol *MolFromSmarts(const char *smarts,bool mergeHs=false){
-    RWMol *newM = SmartsToMol(smarts,0,mergeHs);
+    RWMol *newM; 
+    try {
+      newM = SmartsToMol(smarts,0,mergeHs);
+    } catch (...) {
+      newM=0;
+    }
     if(!newM) return 0;
     ROMol *res =new ROMol(*newM);
     delete newM; 
@@ -48,7 +64,12 @@ namespace RDKit{
    
   ROMol *MolFromTPLFile(const char *filename, bool sanitize=true,
 			bool skipFirstConf=false ) {
-    RWMol *newM = TPLFileToMol(filename,sanitize,skipFirstConf);
+    RWMol *newM;
+    try {
+      newM = TPLFileToMol(filename,sanitize,skipFirstConf);
+    } catch (...) {
+      newM=0;
+    }
     if(!newM) return 0;
     ROMol *res =new ROMol(*newM);
     delete newM; 
@@ -59,7 +80,12 @@ namespace RDKit{
 			bool skipFirstConf=false ) {
     std::istringstream inStream(tplBlock);
     unsigned int line = 0;
-    RWMol *newM = TPLDataStreamToMol(&inStream,line,sanitize,skipFirstConf);
+    RWMol *newM;
+    try {
+      newM = TPLDataStreamToMol(&inStream,line,sanitize,skipFirstConf);
+    } catch (...) {
+      newM=0;
+    }
     if(!newM) return 0;
     ROMol *res =new ROMol(*newM);
     delete newM; 
@@ -83,7 +109,12 @@ namespace RDKit{
   ROMol *MolFromMolBlock(std::string molBlock, bool sanitize=true, bool removeHs=true) {
     std::istringstream inStream(molBlock);
     unsigned int line = 0;
-    RWMol *newM = MolDataStreamToMol(inStream, line, sanitize, removeHs);
+    RWMol *newM;
+    try {
+      newM = MolDataStreamToMol(inStream, line, sanitize, removeHs);
+    } catch (...) {
+      newM=0;
+    }
     if(!newM) return 0;
     ROMol *res =new ROMol(*newM);
     delete newM; 
@@ -113,6 +144,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);
+  python::register_exception_translator<RDKit::BadFileException>(&rdBadFileExceptionTranslator);
 
 
   docString="Construct a molecule from a TPL file.\n\n\

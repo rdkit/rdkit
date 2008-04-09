@@ -12,6 +12,8 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/format.hpp>
+#include <RDGeneral/FileParseException.h>
+#include <RDGeneral/BadFileException.h>
 
 
 namespace RDKit{
@@ -292,7 +294,11 @@ namespace RDKit{
   //------------------------------------------------
   void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo, int confId){
     std::ofstream *outStream = new std::ofstream(fName.c_str());
-    CHECK_INVARIANT(outStream&&!outStream->bad(),"could not open output file");
+    if (!outStream || !(*outStream) || outStream->bad() ) {
+      std::ostringstream errout;
+      errout << "Bad output file " << fName;
+      throw BadFileException(errout.str());
+    }
     std::string outString = MolToMolBlock(mol,includeStereo, confId);
     *outStream  << outString;
     delete outStream;

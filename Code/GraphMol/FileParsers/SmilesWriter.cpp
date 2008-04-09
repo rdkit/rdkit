@@ -1,9 +1,10 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006  Rational Discovery LLC
+//  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
+#include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -23,10 +24,10 @@ namespace RDKit {
 			     bool includeHeader) {
     if(fileName!= "-"){
       std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
-      if ((!(*tmpStream)) || (tmpStream->bad()) ) {
+      if (!tmpStream || !(*tmpStream) || (tmpStream->bad()) ) {
         std::ostringstream errout;
         errout << "Bad output file " << fileName;
-        throw FileParseException(errout.str());
+        throw BadFileException(errout.str());
       }
       dp_ostream = static_cast<std::ostream *>(tmpStream);
       d_owner = true;
