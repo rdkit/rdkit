@@ -106,7 +106,6 @@ namespace RDKit{
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
 							       useHs);
-    std::set<unsigned long> hashesSeen;
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
       for( PATH_LIST_CI pathIt=paths->second.begin();
 	   pathIt!=paths->second.end();
@@ -174,16 +173,15 @@ namespace RDKit{
 #ifdef VERBOSE_FINGERPRINTING        
         std::cerr<<" hash: "<<seed<<std::endl;
 #endif
-        // if we've seen the seed already, don't bother resetting bits we've
-        // already done:
-        if(hashesSeen.find(seed)==hashesSeen.end()){
-          hashesSeen.insert(seed);
-          generator.seed(seed);
-          for(unsigned int i=0;i<nBitsPerHash;i++){
-            unsigned int bit = randomSource();
-            bit %= fpSize;
-            res->SetBit(bit);
-          }
+        // originally it seemed like a good idea to track hashes we've already
+        // seen in order to avoid resetting them. In some benchmarking I did, that
+        // seemed to actually result in a longer runtime (at least when using
+        // an std::set to store the hashes)
+        generator.seed(seed);
+        for(unsigned int i=0;i<nBitsPerHash;i++){
+          unsigned int bit = randomSource();
+          bit %= fpSize;
+          res->SetBit(bit);
         }
       }
     }
