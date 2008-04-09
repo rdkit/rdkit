@@ -14,6 +14,7 @@
 #include <boost/random.hpp>
 #include <limits.h>
 #include <boost/functional/hash.hpp>
+#include <algorithm>
 
 namespace RDKit{
   // caller owns the result, it must be deleted
@@ -162,24 +163,6 @@ namespace RDKit{
           bondHashes.insert(std::lower_bound(bondHashes.begin(),bondHashes.end(),ourHash),ourHash);
         }
 
-        // ok, we have a hash for each bond, now order that list:
-#if 0
-        bool reverseIt=false;
-        for(unsigned int i=0;i<path.size();++i){
-          for(unsigned int j=path.size()-1;j>i;--j){
-            if(bondNbrs[i]!=bondNbrs[j]){
-              if(bondNbrs[i]<bondNbrs[j]){
-                reverseIt=true;
-              }
-              i=path.size()+1;
-              break;
-            }
-          }
-        }
-        if(reverseIt){
-          std::reverse(bondNbrs.begin(),bondNbrs.end());
-        }
-#endif
         // finally, we will add the number of distinct atoms in the path at the end
         // of the vect. This allows us to distinguish C1CC1 from CC(C)C
         bondHashes.push_back(atomsInPath.size());

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
 namespace Subgraphs {
@@ -69,7 +70,7 @@ namespace Subgraphs {
                    PATH_TYPE &spath, // the current path to be build upon
                    INT_VECT &cands, // neighbors of current path
                    unsigned int targetLen, // the maximum subgraph len we are interested in
-                   INT_VECT forbidden, // bonds that have been covered already
+                   boost::dynamic_bitset<> forbidden, // bonds that have been covered already
                    // we don't want reference passing for forbidden, 
                    // it gets altered through the processand we want  
                    // fresh start everytime we buble back up to "FindAllSubGraphs"
@@ -93,14 +94,14 @@ namespace Subgraphs {
       int next = cands.back(); // start with the last one in the candidate list
       cands.pop_back();
       //cands.erase(remove(cands.begin(), cands.end(), next), cands.end());
-      if (std::find(forbidden.begin(), forbidden.end(), next) == forbidden.end()) {
+      if (!forbidden[next]){
         // this bond should not appear in the later subgraphs
-        forbidden.push_back(next);
+        forbidden[next]=1;
       
         // update a local stack before the next recursive call
         INT_VECT tstack = cands;
         for (INT_VECT::iterator bid=nbrs[next].begin(); bid != nbrs[next].end(); bid++) {
-          if (std::find(forbidden.begin(), forbidden.end(), *bid) == forbidden.end()) {
+          if (!forbidden[*bid]){
             tstack.push_back(*bid);
           }
         }
@@ -120,7 +121,7 @@ namespace Subgraphs {
                         INT_VECT &cands, // neighbors of current path
                         unsigned int lowerLen, // lower limit of the subgraph lengths we are interested in
                         unsigned int upperLen, // the maximum subgraph len we are interested in
-                        INT_VECT forbidden, // bonds that have been covered already
+                        boost::dynamic_bitset<> forbidden, // bonds that have been covered already
                         // we don't want reference passing for forbidden, 
                         // it gets altered through the processand we want  
                         // fresh start everytime we buble back up to "FindAllSubGraphs"
@@ -152,14 +153,14 @@ namespace Subgraphs {
       int next = cands.back(); // start with the last one in the candidate list
       cands.pop_back();
       //cands.erase(remove(cands.begin(), cands.end(), next), cands.end());
-      if (std::find(forbidden.begin(), forbidden.end(), next) == forbidden.end()) {
+      if (!forbidden[next]){
         // this bond should not appear in the later subgraphs
-        forbidden.push_back(next);
+        forbidden[next]=1;
       
         // update a local stack before the next recursive call
         INT_VECT tstack = cands;
         for (INT_VECT::iterator bid=nbrs[next].begin(); bid != nbrs[next].end(); bid++) {
-          if (std::find(forbidden.begin(), forbidden.end(), *bid) == forbidden.end()) {
+          if (!forbidden[*bid]){
             tstack.push_back(*bid);
           }
         }
@@ -201,27 +202,31 @@ namespace Subgraphs {
           // test 1: make sure the new atom is not already
           //   in the path
           PATH_TYPE::const_iterator loc;
-          loc = std::find(path->begin(),path->end(),otherIdx);
+          loc = std::find(path->begin(),path->end(),static_cast<int>(otherIdx));
           // The two conditions for adding the atom are:
           //   1) it's not there already
           //   2) it's there, but ring closures are allowed and this
           //      will be the last addition to the path.
           if ( loc == path->end() ){
             // the easy case
-            PATH_TYPE newPath=*path;
-            newPath.push_back(otherIdx);
-            res.push_back(newPath);
+            //PATH_TYPE newPath=*path;
+            //newPath.push_back(otherIdx);
+            //res.push_back(newPath);
+            res.push_back(*path);
+            res.rbegin()->push_back(otherIdx);
           } else if (allowRingClosures>2 &&
-                     path->size()==allowRingClosures-1) {
+                     static_cast<int>(path->size())==allowRingClosures-1) {
             // We *might* be adding the atom, but we need to make sure
             // that we're not just duplicating the second to last
             // element of the path:
             PATH_TYPE::const_reverse_iterator rIt=path->rbegin();
             rIt++;
-            if( *rIt != otherIdx ){
-              INT_VECT newPath=*path;
-              newPath.push_back(otherIdx);
-              res.push_back(newPath);
+            if( *rIt != static_cast<int>(otherIdx) ){
+              //PATH_TYPE newPath=*path;
+              //newPath.push_back(otherIdx);
+              //res.push_back(newPath);
+              res.push_back(*path);
+              res.rbegin()->push_back(otherIdx);
             }
           }
         }
@@ -258,8 +263,10 @@ namespace Subgraphs {
     //  have any that are reverse duplicates:
     for(PATH_LIST::iterator path=paths.begin(); path != paths.end(); path++ ){
       if( std::find(newPaths.begin(),newPaths.end(),*path) == newPaths.end() ){
-        PATH_TYPE revPath(*path);
-        std::reverse(revPath.begin(),revPath.end());
+        //PATH_TYPE revPath(*path);
+        //std::reverse(revPath.begin(),revPath.end());
+        PATH_TYPE revPath(path->size());
+        std::reverse_copy(path->begin(),path->end(),revPath.begin());
         if( std::find(newPaths.begin(),newPaths.end(),revPath) == newPaths.end() ){
           // this one is a keeper;
           newPaths.push_back(*path);
@@ -284,7 +291,7 @@ namespace Subgraphs {
       it return a "list of paths" instead of a "list of list of paths" (see 
       "GetPathsUpTolength" in "molgraphs.cpp")
     ****************************************************************************/
-    INT_VECT forbidden;
+    boost::dynamic_bitset<> forbidden(mol.getNumBonds());
   
     // this should be the only dependence on mol object:
     INT_INT_VECT_MAP nbrs = Subgraphs::getNbrsList(mol, useHs); 
@@ -299,10 +306,10 @@ namespace Subgraphs {
     for (nbi = nbrs.begin(); nbi != nbrs.end(); nbi++) {
       // don't come back to this bond in the later subgraphs
       int i = (*nbi).first;
-      if (! (std::find(forbidden.begin(), forbidden.end(), i) == forbidden.end())) {
+      if (forbidden[i]){
         continue;
       }
-      forbidden.push_back(i);
+      forbidden[i]=1;
       
       // start the recursive path building with the current bond
       spath.clear();
@@ -325,8 +332,9 @@ namespace Subgraphs {
   INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
                                                   unsigned int upperLen, bool useHs){
     CHECK_INVARIANT(lowerLen <= upperLen, "");
+    boost::dynamic_bitset<> forbidden(mol.getNumBonds());
 
-    INT_VECT forbidden;
+
     INT_INT_VECT_MAP nbrs = Subgraphs::getNbrsList(mol, useHs);
   
     // Start path at each bond
@@ -344,10 +352,10 @@ namespace Subgraphs {
     for (nbi = nbrs.begin(); nbi != nbrs.end(); nbi++) {
       // don't come back to this bond in the later subgraphs
       int i = (*nbi).first;
-      if (! (std::find(forbidden.begin(), forbidden.end(), i) == forbidden.end())) {
+      if (forbidden[i]){
         continue;
       }
-      forbidden.push_back(i);
+      forbidden[i]=1;
       
       // start the recursive path building with the current bond
       spath.clear();

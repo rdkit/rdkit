@@ -200,6 +200,76 @@ void test2alg2(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void test4Trends(){
+  BOOST_LOG(rdInfoLog) <<"testing similarity trends" << std::endl;
+
+  double sim1,sim2;
+  RWMol *m;
+  ExplicitBitVect *fp1,*fp2;
+  
+  m = SmilesToMol("CCC");
+  fp1=RDKFingerprintMol2(*m);
+  delete m;
+  m = SmilesToMol("C1CC1");
+  fp2=RDKFingerprintMol2(*m);
+  sim1=TanimotoSimilarity(*fp1,*fp2);
+
+  delete m;
+  m = SmilesToMol("CCCC");
+  delete fp1;
+  fp1=RDKFingerprintMol2(*m);
+  delete m;
+  m = SmilesToMol("C1CCC1");
+  delete fp2;
+  fp2=RDKFingerprintMol2(*m);
+  sim2=TanimotoSimilarity(*fp1,*fp2);
+  TEST_ASSERT(sim2>sim1);
+  sim2=sim1;
+
+  delete m;
+  m = SmilesToMol("CCCCC");
+  delete fp1;
+  fp1=RDKFingerprintMol2(*m);
+  delete m;
+  m = SmilesToMol("C1CCCC1");
+  delete fp2;
+  fp2=RDKFingerprintMol2(*m);
+  sim2=TanimotoSimilarity(*fp1,*fp2);
+  TEST_ASSERT(sim2>sim1);
+  sim2=sim1;
+
+  delete m;
+  m = SmilesToMol("CCCCCC");
+  delete fp1;
+  fp1=RDKFingerprintMol2(*m);
+  delete m;
+  m = SmilesToMol("C1CCCCC1");
+  delete fp2;
+  fp2=RDKFingerprintMol2(*m);
+  sim2=TanimotoSimilarity(*fp1,*fp2);
+  TEST_ASSERT(sim2>sim1);
+  sim2=sim1;
+
+  delete m;
+  m = SmilesToMol("CCCCCCC");
+  delete fp1;
+  fp1=RDKFingerprintMol2(*m);
+  delete m;
+  m = SmilesToMol("C1CCCCCC1");
+  delete fp2;
+  fp2=RDKFingerprintMol2(*m);
+  sim2=TanimotoSimilarity(*fp1,*fp2);
+  TEST_ASSERT(sim2>sim1);
+  sim2=sim1;
+
+
+  delete m;
+  delete fp1;
+  delete fp2;
+
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -208,5 +278,6 @@ int main(int argc,char *argv[]){
   //test3();
   test1alg2();
   test2alg2();
+  test4Trends();
   return 0;
 }
