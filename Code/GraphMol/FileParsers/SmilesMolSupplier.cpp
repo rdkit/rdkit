@@ -338,6 +338,7 @@ namespace RDKit {
     // way first:
 
     if( d_len>-1 && idx>=static_cast<unsigned int>(d_len)) {
+      df_end=true;
       std::ostringstream errout;
       errout << "ERROR: Index error (idx = " << idx  << "): " << "ran out of lines\n";
       throw FileParseException(errout.str());
