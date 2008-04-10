@@ -382,22 +382,7 @@ namespace RDKit{
       throw FileParseException(errout.str()) ;
     }
     RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
-    QueryAtom a;
-    ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
-    q->setDescription("AtomOr");
-    
-    switch(text[14]){
-    case 'T':
-      q->setNegation(true);
-      break;
-    case 'F':
-      q->setNegation(false);
-      break;
-    default:
-      std::ostringstream errout;
-      errout << "Unrecognized atom-list query modifier: " << text[14];
-      throw FileParseException(errout.str()) ;
-    }          
+    QueryAtom *a=0;
     
     int nQueries;
     try {
@@ -409,15 +394,35 @@ namespace RDKit{
       throw FileParseException(errout.str()) ;
     }
 
+    ASSERT_INVARIANT(nQueries>0,"no queries provided");
+    
     for(int i=0;i<nQueries;i++){
       int pos = 16+i*4;
       std::string atSymb = text.substr(pos,4);
       atSymb.erase(atSymb.find(" "),atSymb.size());
       int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
-      q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(atNum)));
+      if(!i){
+        a = new QueryAtom(atNum);
+      } else {
+        a->expandQuery(makeAtomNumEqualsQuery(atNum),Queries::COMPOSITE_OR,true);
+      }
     }
-    a.setQuery(q);
-    mol->replaceAtom(idx,&a); 
+    ASSERT_INVARIANT(a,"no atom built");
+      
+    switch(text[14]){
+    case 'T':
+      a->getQuery()->setNegation(true);
+      break;
+    case 'F':
+      a->getQuery()->setNegation(false);
+      break;
+    default:
+      std::ostringstream errout;
+      errout << "Unrecognized atom-list query modifier: " << text[14];
+      throw FileParseException(errout.str()) ;
+    }          
+
+    mol->replaceAtom(idx,a); 
   };
   
   void ParseRGroupLabels(RWMol *mol,std::string text){
