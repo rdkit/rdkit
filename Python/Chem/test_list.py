@@ -20,6 +20,11 @@ tests=[
   ("python","TemplateAlign.py",{}),
   ("python","Recap.py",{}),
   ("python","UnitTestDescriptors.py",{}),
+  ("python","test_list.py",{'dir':'AtomPairs'}),
+  ("python","test_list.py",{'dir':'EState'}),
+  ("python","test_list.py",{'dir':'FeatMaps'}),
+  ("python","test_list.py",{'dir':'Pharm2D'}),
+  ("python","test_list.py",{'dir':'Pharm3D'}),
   ]
 
 
