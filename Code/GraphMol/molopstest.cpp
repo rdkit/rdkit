@@ -2395,10 +2395,36 @@ void testSFIssue1894348()
   delete m;
   delete m2;
 
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testSFIssue1934360()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 1934360: bad handling of C1=C=NC=N1 " << std::endl;
+  RWMol *m;
+
+  std::string smi;
+
+  smi = "C1=C=NC=N1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
+
+  smi = "C1=CNC=N1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
 
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -2436,8 +2462,9 @@ int main(){
   testSFIssue1836576();
   testChiralityAndRemoveHs();
   test11();
-#endif
   testSFIssue1894348();
+#endif
+  testSFIssue1934360();
 
   
   return 0;
