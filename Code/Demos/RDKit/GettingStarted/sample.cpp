@@ -116,7 +116,7 @@ void WorkWithSmarts(){
 }
 
 void DepictDemo(){
-  // demonstrate the use of substructure searching
+  // demonstrate the use of the depiction-generation code2D coordinates:
   ROMol *mol=SmilesToMol("ClCC=CCC");
 
   // generate the 2D coordinates:
