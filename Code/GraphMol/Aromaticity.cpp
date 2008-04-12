@@ -181,14 +181,19 @@ namespace {
         }
       }
     }
-    int bid;
-    
     // now mark bonds that have a count of 1 to be aromatic;
     for (bci = bndCntr.begin(); bci != bndCntr.end(); bci++) {
       if ((*bci).second == 1) {
-        bid = (*bci).first;
-        mol.getBondWithIdx(bid)->setIsAromatic(true);
-        mol.getBondWithIdx(bid)->setBondType(Bond::AROMATIC);
+        Bond *bond=mol.getBondWithIdx(bci->first);
+        bond->setIsAromatic(true);
+        switch(bond->getBondType()){
+        case Bond::SINGLE:
+        case Bond::DOUBLE:
+          bond->setBondType(Bond::AROMATIC);
+          break;
+        default:
+          break;
+        }
       }
     }
   }
@@ -402,7 +407,8 @@ namespace {
     }
 
     // We are going to explicitly disallow atoms that have more
-    // than one multiple bond. This is to handle the situation:
+    // than one double or triple bond. This is to handle 
+    // the situation:
     //   C1=C=NC=N1 (sf.net bug 1934360) 
     int nUnsaturations=at->getExplicitValence()-at->getDegree();
     if(nUnsaturations>1){
@@ -462,7 +468,6 @@ namespace {
       }
       else if (incidentCyclicMultipleBond(at)) {
         // no electron but has one in a in cycle multiple bond
-        // FIX: why can't this be two electrons if there is a triple bond
         res = OneElectronDonorType; 
       }
       else {
@@ -519,35 +524,43 @@ namespace RDKit {
   namespace MolOps {
     int countAtomElec(const Atom *at) {
       PRECONDITION(at,"bad atom");
-      int res;
-      int dv; // default valence 
-      int nle; // number of lone pair electrons
-      int chg; // formal charge
-      int tbo; // total bond order count
-      int sbo; // number of bond == degree of the atom
-  
-      tbo = at->getExplicitValence() + at->getImplicitValence();
-    
-      chg = at->getFormalCharge();
-      dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum()); 
+
+      // default valence :
+      int dv=PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum()); 
       if (dv <=1) {
         // univalent elements can't be either aromatic or conjugated
         return -1;
       }
 
-
-      // number of lone pair electrons = (outer shell elecs) - (default valence)
-      // FIX: this formula is probably wrong for higher order stuff
-      nle = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum()) - dv; 
-
-      sbo = at->getDegree() + at->getTotalNumHs();
+      // total atom degree:
+      int degree=at->getDegree() + at->getTotalNumHs(); 
       // if we are more than 3 coordinated we should not be aromatic
-      if (sbo > 3) {
+      if (degree > 3) {
         return -1;
       }
 
-      // num electrons available for donation 
-      res = (dv + nle) - sbo - chg;
+      // number of lone pair electrons = (outer shell elecs) - (default valence)
+      int nlp; 
+      nlp = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum()) - dv; 
+
+      // subtract the charge to get the true number of lone pair electrons:
+      nlp -= at->getFormalCharge(); 
+
+      // num electrons available for donation into the pi system:
+      int res = (dv-degree) + nlp;
+
+      if(res>1){
+        // if we have an incident bond with order higher than 2,
+        // (e.g. triple or higher), we only want to return 1 electron
+        // we detect this using the total unsaturation, because we
+        // know that there aren't multiple unsaturations (detected
+        // above in isAtomCandForArom())
+        int nUnsaturations=at->getExplicitValence()-at->getDegree();
+        if(nUnsaturations>1){
+          res=1;
+        }
+      }
+
       return res;
     }
 

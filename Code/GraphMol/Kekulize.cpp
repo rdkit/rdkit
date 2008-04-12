@@ -127,7 +127,10 @@ namespace RDKit {
         boost::tie(beg,end) = mol.getAtomBonds(at);
         while (beg != end) {
           Bond *bond=pMap[*beg];
-          if (bond->getIsAromatic()) {
+          if (bond->getIsAromatic() &&
+              (bond->getBondType()==Bond::SINGLE ||
+               bond->getBondType()==Bond::DOUBLE ||
+               bond->getBondType()==Bond::AROMATIC) ) {
             ++sbo;
             // mark this bond to be marked single later 
             // we don't want to do right now because it can screw-up the 

@@ -2398,13 +2398,15 @@ void testSFIssue1894348()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-void testSFIssue1934360()
+void testAromaticityEdges()
 {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 1934360: bad handling of C1=C=NC=N1 " << std::endl;
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing some aromaticity edge cases " << std::endl;
   RWMol *m;
 
   std::string smi;
 
+  // ------
+  // this was sf.net bug 1934360
   smi = "C1=C=NC=N1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -2419,7 +2421,30 @@ void testSFIssue1934360()
   TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
   delete m;
 
+  smi = "C=[C+]1=CNC=N1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(!m->getAtomWithIdx(1)->getIsAromatic());
+  TEST_ASSERT(!m->getBondWithIdx(1)->getIsAromatic());
+  delete m;
 
+  // ------
+  // this was sf.net bug 1940646
+  smi = "C1#CC=C1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(!m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
+  smi = "C1#CC=CC=C1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
+  
+
+  
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -2464,7 +2489,7 @@ int main(){
   test11();
   testSFIssue1894348();
 #endif
-  testSFIssue1934360();
+  testAromaticityEdges();
 
   
   return 0;
