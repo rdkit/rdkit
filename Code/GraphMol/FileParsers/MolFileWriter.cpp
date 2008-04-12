@@ -104,16 +104,24 @@ namespace RDKit{
     PRECONDITION(bond,"");
     // FIX: should eventually recognize queries
     std::string res;
-    if(bond->getIsAromatic()){
-      res = "  4";
-    } else {
-      switch(bond->getBondType()){
-      case Bond::SINGLE: res="  1";break;
-      case Bond::DOUBLE: res="  2";break;
-      case Bond::TRIPLE: res="  3";break;
-      case Bond::AROMATIC: res="  4";break;
-      default: res="  0";break;
+    switch(bond->getBondType()){
+    case Bond::SINGLE:
+      if(bond->getIsAromatic()){
+        res="  4";
+      } else {
+        res="  1";
       }
+      break;
+    case Bond::DOUBLE: 
+      if(bond->getIsAromatic()){
+        res="  4";
+      } else {
+        res="  2";
+      }
+      break;
+    case Bond::TRIPLE: res="  3";break;
+    case Bond::AROMATIC: res="  4";break;
+    default: res="  0";break;
     }
     return res;
     //return res.c_str();
@@ -145,17 +153,18 @@ namespace RDKit{
       // single bond stereo chemistry
       dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
       dirCode = BondGetDirCode(dir);
-      // if this bond needs to be wedged it is possible that this wedgin was determined
-      // by a chiral at the end of bond (instead of at the beginning. In this case we 
-      // to reverse the bond begin and end atoms for the bond when we write the
-      // mol file
+      // if this bond needs to be wedged it is possible that this
+      // wedging was determined by a chiral atom at the end of the
+      // bond (instead of at the beginning). In this case we need to
+      // reverse the begin and end atoms for the bond when we write
+      // the mol file
       if ((dirCode == 1) || (dirCode == 6)) {
         INT_MAP_INT_CI wbi = wedgeBonds.find(bond->getIdx());
         if (static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
           reverse = true;
         }
       }
-    } else if (bond->getBondType()==Bond::DOUBLE) { // && (bond->hasProp("_CIPCode"))) {
+    } else if (bond->getBondType()==Bond::DOUBLE) {
       // double bond stereo chemistry - 
       // we will worry about it only if it is  "any"
       Bond::BondStereo stType = bond->getStereo();
