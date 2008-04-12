@@ -1,25 +1,23 @@
+// $Id$
+// 
+// Copyright (C) 2007,2008 Greg Landrum
+//
+// @@ All Rights Reserved @@
+//
+
 #include <sqlite3ext.h>
 SQLITE_EXTENSION_INIT1
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
+#include <DataStructs/SparseIntVect.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <string>
 #include <map>
-
-/*
-** The half() SQL function returns half of its input value.
-*/
-static void halfFunc(
-  sqlite3_context *context,
-  int argc,
-  sqlite3_value **argv
-){
-  sqlite3_result_double(context, 0.5*sqlite3_value_double(argv[0]));
-}
 
 std::string stringFromTextArg(sqlite3_value *arg){
   const unsigned char *text=sqlite3_value_text(arg);
@@ -56,6 +54,18 @@ ExplicitBitVect *ebvFromBlobArg(sqlite3_value *arg){
     ebv=0;
   }
   return ebv;
+}
+
+template <typename T>
+RDKit::SparseIntVect<T> *sivFromBlobArg(sqlite3_value *arg){
+  std::string pkl=stringFromBlobArg(arg);
+  RDKit::SparseIntVect<T> *siv;
+  try{
+    siv = new RDKit::SparseIntVect<T>(pkl);
+  } catch (ValueErrorException &){
+    siv=0;
+  }
+  return siv;
 }
 
 
@@ -247,6 +257,24 @@ static void blobToRDKitFingerprint(
   sqlite3_result_text(context, text.c_str(), text.length(), SQLITE_TRANSIENT );
 }
 
+static void blobToAtomPairFingerprint(
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  RDKit::ROMol *m=molFromBlobArg(argv[0]);
+  if(!m){
+    std::string errorMsg="BLOB (argument 1) could not be converted into a molecule";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+  RDKit::SparseIntVect<int> *fp=RDKit::Descriptors::AtomPairs::getAtomPairFingerprint(*m);
+  std::string text=fp->toString();
+  delete fp;
+  delete m;
+  sqlite3_result_text(context, text.c_str(), text.length(), SQLITE_TRANSIENT );
+}
+
 static void bvTanimotoSim(
   sqlite3_context *context,
   int argc,
@@ -271,6 +299,30 @@ static void bvTanimotoSim(
   sqlite3_result_double(context, res);
 }
 
+static void sivDiceSim(
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  RDKit::SparseIntVect<int> *v1=sivFromBlobArg<int>(argv[0]);
+  if(!v1){
+    std::string errorMsg="BLOB (argument 1) could not be converted into an int vector";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+  RDKit::SparseIntVect<int> *v2=sivFromBlobArg<int>(argv[1]);
+  if(!v2){
+    delete v1;
+    std::string errorMsg="BLOB (argument 2) could not be converted into a bit vector";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+  double res= RDKit::DiceSimilarity(*v1,*v2);
+  delete v1;
+  delete v2;
+  sqlite3_result_double(context, res);
+}
+
 /* SQLite invokes this routine once when it loads the extension.
 ** Create new functions, collating sequences, and virtual table
 ** modules here.  This is usually the only exported symbol in
@@ -282,7 +334,6 @@ extern "C" int sqlite3_extension_init(
   const sqlite3_api_routines *pApi
 ){
   SQLITE_EXTENSION_INIT2(pApi);
-  sqlite3_create_function(db, "half", 1, SQLITE_ANY, 0, halfFunc, 0, 0);
   std::map<std::string,boost::any> *molMap=new std::map<std::string,boost::any>();
   sqlite3_create_function(db, "rdk_molNumAtoms", 1, SQLITE_ANY, 0, numAtomsFunc, 0, 0);
   sqlite3_create_function(db, "rdk_molAMW", 1, SQLITE_ANY, 0, molWtFunc, 0, 0);
@@ -291,6 +342,10 @@ extern "C" int sqlite3_extension_init(
 			  blobToRDKitFingerprint, 0, 0);
   sqlite3_create_function(db, "rdk_bvTanimotoSim", 2, SQLITE_ANY, 0,
 			  bvTanimotoSim, 0, 0);
+  sqlite3_create_function(db, "rdk_molToAtomPairFP", 1, SQLITE_ANY, 0,
+			  blobToAtomPairFingerprint, 0, 0);
+  sqlite3_create_function(db, "rdk_sivDiceSim", 2, SQLITE_ANY, 0,
+			  sivDiceSim, 0, 0);
   sqlite3_create_function(db, "rdk_molHasSubstruct", 2, SQLITE_ANY,
 			  static_cast<void *>(molMap),
                           molHasSubstruct, 0, 0);
