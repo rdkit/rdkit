@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2008 Greg Landrum
 //
 //  @@ All Rights Reserved @@
 //
@@ -43,6 +43,20 @@ namespace {
     }
     return res;
   }
+
+
+  template <typename T>
+  python::list BulkWrapper(const T &siv1,python::list sivs){
+    python::list res;
+    unsigned int nsivs=python::extract<unsigned int>(sivs.attr("__len__")());
+    for(unsigned int i=0;i<nsivs;++i){
+      double simVal;
+      const T &siv2=python::extract<T>(sivs[i])();
+      simVal = DiceSimilarity(siv1,siv2);
+      res.append(simVal);
+    }
+    return res;
+  }
 }
 
 std::string sparseIntVectDoc="A container class for storing integer\n\
@@ -61,7 +75,7 @@ so you can do things like:\n\
   siv3 = siv1 & siv2  the result contains the smallest value in each entry\n\
   siv3 = siv1 | siv2  the result contains the largest value in each entry\n\
 \n\
-Elements can be set and read using indexing (i.e. bv[i] = 4 or val=bv[i])\n\
+Elements can be set and read using indexing (i.e. siv[i] = 4 or val=siv[i])\n\
 \n";
 
 struct sparseIntVec_wrapper {
@@ -103,9 +117,12 @@ struct sparseIntVec_wrapper {
       ;
 
     python::def("DiceSimilarity",&DiceSimilarity<IndexType>,
-		(python::args("v1"),python::args("v2"),
+		(python::args("siv1"),python::args("siv2"),
 		 python::args("bounds")=0.0),
                 "return the Dice similarity between two vectors");
+    python::def("BulkDiceSimilarity",&BulkWrapper<SparseIntVect<IndexType> >,
+		(python::args("v1"),python::args("v2")),
+                "return the Dice similarities between one vector and a sequence of others");
   }
 
   static void wrap() {
@@ -113,7 +130,7 @@ struct sparseIntVec_wrapper {
     wrapOne<long long>("LongSparseIntVect");
   }
 };
-
+  
 void wrap_sparseIntVect() {
   sparseIntVec_wrapper::wrap();
 }
