@@ -1,8 +1,16 @@
+# $Id$
+#
+# Copyright (C) 2007,2008 Greg Landrum
+#
+#  @@ All Rights Reserved @@
+#
 import RDConfig
 import os,sys,cPickle
 import unittest
 import DataStructs as ds
 
+def feq(v1,v2,tol=1e-4):
+  return abs(v1-v2)<tol
 class TestCase(unittest.TestCase):
   def setUp(self) :
     pass
@@ -89,8 +97,48 @@ class TestCase(unittest.TestCase):
     v2.UpdateFromSequence((0,2,3,3,2,3))
     self.failUnless(v1==v2)
     
+  def test5Dice(self):
+    """
 
-    
+    """
+    v1 = ds.IntSparseIntVect(5)
+    v1[4]=4;
+    v1[0]=2;
+    v1[3]=1;
+    self.failUnless(feq(ds.DiceSimilarity(v1,v1),1.0))
+
+    v1 = ds.IntSparseIntVect(5)
+    v1[0]=2;
+    v1[2]=1;
+    v1[3]=4;
+    v1[4]=6;
+    v2 = ds.IntSparseIntVect(5)
+    v2[1]=2;
+    v2[2]=3;
+    v2[3]=4;
+    v2[4]=4;
+    self.failUnless(feq(ds.DiceSimilarity(v1,v2),18.0/26.))
+    self.failUnless(feq(ds.DiceSimilarity(v2,v1),18.0/26.))
+
+  def test6BulkDice(self):
+    """
+
+    """
+    sz=10
+    nToSet=5
+    nVs=6
+    import random
+    vs = []
+    for i in range(nVs):
+      v = ds.IntSparseIntVect(sz)
+      for j in range(nToSet):
+        v[random.randint(0,sz-1)]=random.randint(1,10)
+      vs.append(v)
+
+    baseDs = [ds.DiceSimilarity(vs[0],vs[x]) for x in range(1,nVs)]
+    bulkDs = ds.BulkDiceSimilarity(vs[0],vs[1:])
+    for i in range(len(baseDs)):
+      self.failUnless(feq(baseDs[i],bulkDs[i]))
     
     
 if __name__ == '__main__':

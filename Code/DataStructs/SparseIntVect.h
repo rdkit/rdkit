@@ -337,6 +337,9 @@ namespace RDKit{
   double DiceSimilarity(const SparseIntVect<IndexType> &v1,
                         const SparseIntVect<IndexType> &v2,
                         double bounds=0.0){
+    if(v1.getLength()!=v2.getLength()){
+      throw ValueErrorException("SparseIntVect size mismatch");
+    }
     double v1Sum=v1.getTotalVal();
     double v2Sum=v2.getTotalVal();
     double denom=v1Sum+v2Sum;
@@ -349,7 +352,31 @@ namespace RDKit{
         return 0.0;
       }
     }
-    double numer=(v1&v2).getTotalVal();
+
+    double numer=0.0;
+    // we're doing : (v1&v2).getTotalVal(), but w/o generating
+    // the other vector:
+    typename SparseIntVect<IndexType>::StorageType::const_iterator iter1,iter2;
+    iter1=v1.getNonzeroElements().begin();
+    iter2=v2.getNonzeroElements().begin();
+    while(iter1 != v1.getNonzeroElements().end()){
+      while(iter2!=v2.getNonzeroElements().end() && iter2->first < iter1->first){
+        ++iter2;
+      }
+      if(iter2!=v2.getNonzeroElements().end()){
+        if(iter2->first == iter1->first){
+          if(iter2->second<iter1->second){
+            numer += iter2->second;
+          } else {
+            numer += iter1->second;
+          }
+          ++iter2;
+        }
+        ++iter1;
+      } else {
+        break;
+      }
+    }
     return 2.*numer/denom;
   }
 } 

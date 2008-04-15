@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -45,7 +45,7 @@ python::list BulkWrapper(const T &bv1,python::list bvs,
   unsigned int nbvs=python::extract<unsigned int>(bvs.attr("__len__")());
   for(unsigned int i=0;i<nbvs;++i){
     double simVal;
-    T bv2=python::extract<T>(bvs[i])();
+    const T &bv2=python::extract<T>(bvs[i])();
     if(bv1.GetNumBits()>bv2.GetNumBits()){
       T *bv1tmp = FoldFingerprint(bv1,bv1.GetNumBits()/bv2.GetNumBits());
       simVal = metric(*bv1tmp,bv2);

@@ -1,3 +1,9 @@
+# $Id$
+#
+# Copyright (C) 2007,2008 Greg Landrum
+#
+#  @@ All Rights Reserved @@
+#
 import RDConfig
 import os,sys,cPickle
 import unittest
