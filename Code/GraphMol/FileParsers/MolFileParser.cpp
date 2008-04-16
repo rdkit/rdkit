@@ -588,22 +588,17 @@ namespace RDKit{
       } else {
         res->setAtomicNum(0);
       }
-#if 0
-      if(symb=="*") res->setProp("dummyLabel",std::string("*"));
-      else if(symb=="R0") res->setProp("dummyLabel",std::string("*"));
-      else if(symb=="R1") res->setProp("dummyLabel",std::string("Xb"));
-      else if(symb=="R2") res->setProp("dummyLabel",std::string("Xc"));
-      else if(symb=="R3") res->setProp("dummyLabel",std::string("Xd"));
-      else if(symb=="R4") res->setProp("dummyLabel",std::string("Xf"));
-      else if(symb=="R5") res->setProp("dummyLabel",std::string("Xg"));
-      else if(symb=="R6") res->setProp("dummyLabel",std::string("Xh"));
-      else if(symb=="R7") res->setProp("dummyLabel",std::string("Xi"));
-      else if(symb=="R8") res->setProp("dummyLabel",std::string("Xj"));
-      else if(symb=="R9") res->setProp("dummyLabel",std::string("Xk"));
-      else if(symb=="R#") res->setProp("dummyLabel",std::string("X"));
-      else res->setProp("dummyLabel",symb);
-#endif      
-      
+      if(massDiff==0.0&&symb[0]=='R'){
+        if(symb=="R1") res->setMass(1);
+        else if(symb=="R2") res->setMass(2);
+        else if(symb=="R3") res->setMass(3);
+        else if(symb=="R4") res->setMass(4);
+        else if(symb=="R5") res->setMass(5);
+        else if(symb=="R6") res->setMass(6);
+        else if(symb=="R7") res->setMass(7);
+        else if(symb=="R8") res->setMass(8);
+        else if(symb=="R9") res->setMass(9);
+      }
     } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
       res->setAtomicNum(1); 
       res->setMass(2.014);
