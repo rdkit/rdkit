@@ -366,9 +366,11 @@ bool Atom::Match(Atom const *what) const {
   PRECONDITION(what,"bad query atom");
   bool res = getAtomicNum() == what->getAtomicNum();
   // special dummy--dummy match case:
-  //   X matches X, Xa, Xb, etc
-  //   Xa only matches X and Xa
+  //   [*] matches [*],[1*],[2*],etc.
+  //   [1*] only matches [*] and [1*]
   if(res && !getAtomicNum()){
+    // this is the deprecated old behavior, based on the dummy labels:
+    // this will go away in the Q3 2008 release
     std::string l1;
     if(this->hasProp("dummyLabel")){
       this->getProp("dummyLabel",l1);
@@ -380,6 +382,14 @@ bool Atom::Match(Atom const *what) const {
       if(what->hasProp("dummyLabel")) what->getProp("dummyLabel",l2);
       else l2="X";
       if(l2!="X" && l1!=l2){
+        res = false;
+      }
+    }
+    if( res ){
+      // this is the new behavior, based on the isotopes:
+      int tgt=static_cast<int>(floor(this->getMass()));
+      int test=static_cast<int>(floor(what->getMass()));
+      if(tgt && test && tgt!=test ){
         res = false;
       }
     }
