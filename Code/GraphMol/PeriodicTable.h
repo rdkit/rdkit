@@ -73,7 +73,7 @@ namespace RDKit {
     }
     //! overload
     int getAtomicNumber( const std::string &elementSymbol ) const {
-      PRECONDITION(byname.count(elementSymbol),"Element not found");
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       int anum = byname.find(elementSymbol)->second;
       return anum;
     }
@@ -91,7 +91,7 @@ namespace RDKit {
     }
     //! \overload
     double getRvdw(const std::string &elementSymbol ) const {
-      PRECONDITION(byname.count(elementSymbol),"Element not found");
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       return getRvdw(byname.find(elementSymbol)->second);
     }
     //! \overload
@@ -106,7 +106,7 @@ namespace RDKit {
     }
     //! \overload
     double getRcovalent(const std::string &elementSymbol) const {
-      PRECONDITION(byname.count(elementSymbol),"Element not found");
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       return getRcovalent(byname.find(elementSymbol)->second);
     }
     //! \overload
@@ -121,7 +121,7 @@ namespace RDKit {
     }
     //! \overload
     double getRb0(const std::string &elementSymbol) const {
-      PRECONDITION(byname.count(elementSymbol),"Element not found");
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       return getRb0(byname.find(elementSymbol)->second);
     }
     //! \overload
@@ -136,7 +136,7 @@ namespace RDKit {
     }
     //! \overload
     UINT getDefaultValence(const std::string &elementSymbol) const {
-      PRECONDITION(byname.count(elementSymbol),"Element not found");
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       return getDefaultValence(byname.find(elementSymbol)->second);
     }
     //! \overload
@@ -151,7 +151,7 @@ namespace RDKit {
     }
     //! \overload
     const UINT_VECT &getValenceList( const std::string &elementSymbol) const {
-      PRECONDITION(byname.count(elementSymbol),"Element not found");
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       return getValenceList(byname.find(elementSymbol)->second);
     }
     //! \overload
@@ -166,7 +166,7 @@ namespace RDKit {
     }
     //! \overload
     int getNouterElecs( const std::string &elementSymbol) const {
-      PRECONDITION(byname.count(elementSymbol),"Element not found");
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       return getNouterElecs(byname.find(elementSymbol)->second);
     }
     //! \overload
