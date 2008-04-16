@@ -1,3 +1,8 @@
+# $Id: TemplateExpand.py 837 2008-04-16 15:37:18Z landrgr1 $
+#
+#  Created by Greg Landrum August, 2006
+#
+#
 import RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)
@@ -6,7 +11,7 @@ from Chem import Crippen
 from Chem import AllChem
 from Chem.ChemUtils.AlignDepict import AlignDepict
 
-_version="0.2.2"
+_version="0.7.0"
 _greet="This is TemplateExpand version %s"%_version
 
 _usage="""
@@ -26,57 +31,123 @@ Usage: TemplateExpand [options] template <sidechains>
    The filename provides the list of potential sidechains.
 
  options:
-   -o filename.sdf: provides the name of the output file, otherwise
-                    stdout is used
-   --sdf : sidechains should be in SD files
-   --molTemplate: the template is a Mol file, a new depiction
-                  will not be generated
+   -o filename.sdf:      provides the name of the output file, otherwise
+                         stdout is used
 
+   --sdf :               expect the sidechains to be in SD files
+
+   --moltemplate:        the template(s) are in a mol/SD file, new depiction(s)
+                         will not be generated unless the --redraw argument is also
+                         provided
+
+   --smilesFileTemplate: extract the template(s) from a SMILES file instead of 
+                         expecting SMILES on the command line.
+
+   --redraw:             generate a new depiction for the molecular template(s)
+
+   --useall:
+     or
+   --useallmatches:      generate a product for each possible match of the attachment
+                         pattern to each sidechain. If this is not provided, the first
+                         match (not canonically defined) will be used.
+
+   --force:              by default, the program prompts the user if the library is 
+                         going to contain more than 1000 compounds. This argument 
+                         disables the prompt.
+   
+   --templateSmarts="smarts":  provides a space-delimited list containing the SMARTS 
+                               patterns to be used to recognize attachment points in
+			                         the template
+             
+   --autoNames:          when set this toggle causes the resulting compounds to be named
+                         based on there sequence id in the file, e.g. 
+                         "TemplateEnum: Mol_1", "TemplateEnum: Mol_2", etc.
+                         otherwise the names of the template and building blocks (from
+                         the input files) will be combined to form a name for each
+                         product molecule.
+                             
 """
 def Usage():
   import sys
-  print _usage
+  print >>sys.stderr,_usage
   sys.exit(-1)
 
 nDumped=0 
-def _exploder(mol,depth,sidechains,outF,core,chainIndices):
+def _exploder(mol,depth,sidechains,outF,core,chainIndices,autoNames=True,templateName=''):
   global nDumped
   ourChains = sidechains[depth]
   patt = '[%d*]'%(depth+1)
-  patt = Chem.MolFromSmarts(patt)
-  for i,chain in enumerate(ourChains):
+  patt = Chem.MolFromSmiles(patt)
+  for i,(chainIdx,chain) in enumerate(ourChains):
     tchain = chainIndices[:]
-    tchain.append(i+1)
+    tchain.append((i,chainIdx))
     rs = Chem.ReplaceSubstructs(mol,patt,chain,replaceAll=True)
     if rs:
       r = rs[0]
       if depth<len(sidechains)-1:
-        _exploder(r,depth+1,sidechains,outF,core,tchain)
+        _exploder(r,depth+1,sidechains,outF,core,tchain,
+                  autoNames=autoNames,templateName=templateName)
       else:
-        Chem.SanitizeMol(r)
+        try:
+          Chem.SanitizeMol(r)
+        except ValueError:
+          import traceback
+          traceback.print_exc()
+          continue
         if r.HasSubstructMatch(core):
-          AlignDepict(r,core)
+          try:
+            AlignDepict(r,core)
+          except:
+            import traceback
+            traceback.print_exc()
+            print Chem.MolToSmiles(r)
         else:
           print >>sys.stderr,'>>> no match'
           AllChem.Compute2DCoords(r)
         Chem.Kekulize(r)
-        r.SetProp("_Name","TemplateEnum: Mol_%d"%(nDumped+1))
+        if autoNames:
+          tName = "TemplateEnum: Mol_%d"%(nDumped+1)
+        else:
+          tName = templateName
+          for bbI,bb in enumerate(tchain):
+            bbMol = sidechains[bbI][bb[0]][1]
+            if bbMol.HasProp('_Name'):
+              bbNm = bbMol.GetProp('_Name')
+            else:
+              bbNm = str(bb[1])
+            tName += '_' + bbNm
+          
+        r.SetProp("_Name",tName)
         mb = Chem.MolToMolBlock(r)
         outF.write(mb)
         print >>outF,">  <seq_num>\n%d\n"%(nDumped+1)
-        print >>outF,">  <reagent_indices>\n%s\n"%('_'.join([str(x) for x in tchain]))
+        print >>outF,">  <reagent_indices>\n%s\n"%('_'.join([str(x[1]) for x in tchain]))
+        for bbI,bb in enumerate(tchain):
+          
+          bbMol = sidechains[bbI][bb[0]][1]
+          if bbMol.HasProp('_Name'):
+            bbNm = bbMol.GetProp('_Name')
+          else:
+            bbNm = str(bb[1])
+          print >>outF,">  <building_block_%d>\n%s\n"%(bbI+1,bbNm)
+          for propN in bbMol.GetPropNames():
+            print >>outF,">  <building_block_%d_%s>\n%s\n"%(bbI+1,propN,bbMol.GetProp(propN))            
         print >>outF,'$$$$'
         nDumped += 1
         if not nDumped%100:
           logger.info('Done %d molecules'%nDumped)
           
-def Explode(template,sidechains,outF):
+def Explode(template,sidechains,outF,autoNames=True):
   chainIndices=[]
   core = Chem.DeleteSubstructs(template,Chem.MolFromSmiles('[*]'))
-  _exploder(template,0,sidechains,outF,core,chainIndices)
+  try:
+    templateName = template.GetProp('_Name')
+  except KeyError:
+    templateName="template"
+  _exploder(template,0,sidechains,outF,core,chainIndices,autoNames=autoNames,templateName=templateName)
                               
 
-def ConstructSidechains(suppl,sma=None,replace=True):
+def ConstructSidechains(suppl,sma=None,replace=True,useAll=False):
   if sma:
     try:
       patt = Chem.MolFromSmarts(sma)
@@ -91,38 +162,50 @@ def ConstructSidechains(suppl,sma=None,replace=True):
     replacement = Chem.MolFromSmiles('[*]')
 
   res = []
-  for mol in suppl:
+  for idx,mol in enumerate(suppl):
     if not mol:
       continue
     if patt:
+      if not mol.HasSubstructMatch(patt):
+        logger.warning('The substructure pattern did not match sidechain %d. This may result in errors.'%(idx+1))
       if replace:
         tmp = list(Chem.ReplaceSubstructs(mol,patt,replacement))
+        if not useAll: tmp = [tmp[0]]
         for i,entry in enumerate(tmp):
           match = entry.GetSubstructMatch(replacement)
           if match:
-            idx = match[0]
-            smi = Chem.MolToSmiles(entry,rootedAtAtom=idx)
+            matchIdx = match[0]
+            smi = Chem.MolToSmiles(entry,True,rootedAtAtom=matchIdx)
             entry = Chem.MolFromSmiles(smi)
-            # entry now has [*] as atom 0 and the neighbor
-            # as atom 1. Cleave the [*]:
+            # entry now has [X] as atom 0 and the neighbor
+            # as atom 1. Cleave the [X]:
             entry = Chem.DeleteSubstructs(entry,replacement)
+
+            for propN in mol.GetPropNames():
+              entry.SetProp(propN,mol.GetProp(propN));
+            
             # now we have a molecule with the atom to be joined
             # in position zero; Keep that:
-            tmp[i] = entry
+            tmp[i] = (idx+1,entry)
       else:
         # no replacement, use the pattern to reorder
         # atoms only:
-        match = mol.GetSubstructMatch(patt)
-        if match:
-          smi = Chem.MolToSmiles(mol,rootedAtAtom=match[0])
-          entry = Chem.MolFromSmiles(smi)
-          # now we have a molecule with the atom to be joined
-          # in position zero; Keep that:
-          tmp = [entry]
+        matches = mol.GetSubstructMatches(patt)
+        if matches:
+          tmp = []
+          for match in matches:
+            smi = Chem.MolToSmiles(mol,True,rootedAtAtom=match[0])
+            entry = Chem.MolFromSmiles(smi)
+            for propN in mol.GetPropNames():
+              entry.SetProp(propN,mol.GetProp(propN));
+
+            # now we have a molecule with the atom to be joined
+            # in position zero; Keep that:
+            tmp.append((idx+1,entry))
         else:
           tmp = None
     else:
-      tmp = [mol]
+      tmp = [(idx+1,mol)]
     if tmp:
       res.extend(tmp)
   return res
@@ -134,8 +217,14 @@ if __name__=='__main__':
   try:
     args,extras = getopt.getopt(sys.argv[1:],'o:h',[
       'sdf',
-      'molTemplate',
-      'force'
+      'moltemplate',
+      'smilesFileTemplate',
+      'templateSmarts=',
+      'redraw',
+      'force',
+      'useall',
+      'useallmatches',
+      'autoNames',
       ])
   except:
     import traceback
@@ -148,39 +237,92 @@ if __name__=='__main__':
   tooLong=1000
   sdLigands=False
   molTemplate=False
-  redrawTemplate=True
+  redrawTemplate=False
   outF=None
   forceIt=False
+  useAll=False
+  templateSmarts=[]
+  smilesFileTemplate=False
+  autoNames=False
   for arg,val in args:
     if arg=='-o':
       outF=val
     elif arg=='--sdf':
       sdLigands=True
-    elif arg=='--molTemplate':
+    elif arg=='--moltemplate':
       molTemplate=True
+    elif arg=='--smilesFileTemplate':
+      smilesFileTemplate=True
+    elif arg=='--templateSmarts':
+      templateSmarts = val
+    elif arg=='--redraw':
+      redrawTemplate=True
     elif arg=='--force':
       forceIt=True
+    elif arg=='--autoNames':
+      autoNames=True
+    elif arg in ('--useall','--useallmatches'):
+      useAll=True
     elif arg=='-h':
       Usage()
       sys.exit(0)
 
+
+  if templateSmarts:
+    splitL = templateSmarts.split(' ')
+    templateSmarts = []
+    for i,sma in enumerate(splitL):
+      patt = Chem.MolFromSmarts(sma)
+      if not patt:
+        raise ValueError,'could not convert smarts "%s" to a query'%sma
+      if i>=4:
+        i+=1
+      replace = Chem.MolFromSmiles('[%dX]'%(i+1))
+      templateSmarts.append((patt,replace))
+      
   if molTemplate:
     try:
-      template = Chem.MolFromMolFile(extras[0])
+      s = Chem.SDMolSupplier(extras[0])
+      templates = [x for x in s]
     except:
-      logger.error('Could not construct template from mol file: %s'%extras[0],
+      logger.error('Could not construct templates from input file: %s'%extras[0],
                    exc_info=True)
       sys.exit(1)
     if redrawTemplate:
-      AllChem.Compute2DCoords(template)
+      for template in templates:
+        AllChem.Compute2DCoords(template)
   else:
-    try:
-      template = Chem.MolFromSmiles(extras[0])
+    if not smilesFileTemplate:
+      try:
+        templates = [Chem.MolFromSmiles(extras[0])]
+      except:
+        logger.error('Could not construct template from smiles: %s'%extras[0],
+                     exc_info=True)
+        sys.exit(1)
+    else:
+      try:
+        s = Chem.SmilesMolSupplier(extras[0],titleLine=False)
+        templates = [x for x in s]
+      except:
+        logger.error('Could not construct templates from input file: %s'%extras[0],
+                     exc_info=True)
+        sys.exit(1)
+    for template in templates:
       AllChem.Compute2DCoords(template)
-    except:
-      logger.error('Could not construct template from smiles: %s'%extras[0],
-                   exc_info=True)
-      sys.exit(1)
+     
+  if templateSmarts:
+    finalTs = []
+    for i,template in enumerate(templates):
+      for j,(patt,replace) in enumerate(templateSmarts):
+        if not template.HasSubstructMatch(patt):
+          logger.error('template %d did not match sidechain pattern %d, skipping it'%(i+1,j+1))
+          template =None
+          break
+        template = Chem.ReplaceSubstructs(template,patt,replace)[0]
+      if template:
+        Chem.SanitizeMol(template)
+        finalTs.append(template)
+    templates = finalTs
 
   sidechains = []
   pos = 1
@@ -209,33 +351,40 @@ if __name__=='__main__':
                      exc_info=True)
         suppl = []
     else:
+      tmpF = file(dat,'r')
+      inL = tmpF.readline()
+      if len(inL.split(' '))<2:
+        nmCol=-1
+      else:
+        nmCol=1
       try:
-        suppl = Chem.SmilesMolSupplier(dat)
+        suppl = Chem.SmilesMolSupplier(dat,nameColumn=nmCol)
       except:
         logger.error('could not construct supplier from smiles file: %s'%dat,
                      exc_info=True)
         suppl = []
       suppl = [x for x in suppl]
-    chains = ConstructSidechains(suppl,sma=sma,replace=replaceIt)
+    chains = ConstructSidechains(suppl,sma=sma,replace=replaceIt,useAll=useAll)
     if chains:
       sidechains.append(chains)
 
   count = 1
   for chain in sidechains:
     count *= len(chain)
+  count *= len(templates)
   if not sidechains or not count:
     print >>sys.stderr,"No molecules to be generated."
     sys.exit(0)
 
-                                 
-
   if not forceIt and count>tooLong:
     print >>sys.stderr,"This will generate %d molecules."%count
-    ans = raw_input("Continue anyway? [no]")
+    print >>sys.stderr,"Continue anyway? [no] ",
+    sys.stderr.flush()
+    ans = sys.stdin.readline()
     if ans not in ('y','yes','Y','YES'):
       sys.exit(0)
 
-  if outF:
+  if outF and outF!="-":
     try:
       outF = file(outF,'w+')
     except IOError:
@@ -244,8 +393,8 @@ if __name__=='__main__':
   else:
     outF = sys.stdout
 
-
-  Explode(template,sidechains,outF)
+  for template in templates:
+    Explode(template,sidechains,outF,autoNames=autoNames)
   
 
 
