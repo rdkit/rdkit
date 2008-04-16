@@ -48,7 +48,6 @@ namespace RDKit{
       std::stringstream res;
       int fc = atom->getFormalCharge();
       int num = atom->getAtomicNum();
-      int numExplicit = atom->getNumExplicitHs();
       double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(num) -
                            atom->getMass());
   
@@ -63,10 +62,21 @@ namespace RDKit{
         // figure out if we need to put a bracket around the atom,
         // the conditions for this are:
         //   - formal charge specified
-        //   - the atom has explicit Hs
+        //   - the atom has a nonstandard valence
         //   - chirality present and writing isomeric smiles
         //   - non-default isotope and writing isomeric smiles
-        if(fc || numExplicit){
+        const UINT_VECT &defaultVs=PeriodicTable::getTable()->getValenceList(num);
+        int totalValence= atom->getExplicitValence()+atom->getImplicitValence();
+        bool nonStandard;
+        nonStandard = std::find(defaultVs.begin(),defaultVs.end(),
+                                static_cast<UINT>(totalValence))==defaultVs.end();
+        // another type of "nonstandard" valence is an aromatic N with
+        // explicit Hs indicated:
+        if(num==7 && atom->getIsAromatic() && atom->getNumExplicitHs()){
+          nonStandard=true;
+        }
+        
+        if(fc || nonStandard){
           needsBracket=true;
         }
         if(atom->getOwningMol().hasProp("_doIsoSmiles")){
