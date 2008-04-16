@@ -58,6 +58,7 @@ bool QueryAtom::Match(const Atom::ATOM_SPTR what) const {
 }
   
 bool QueryAtom::Match(Atom const *what) const {
+  PRECONDITION(what,"bad query atom");
   PRECONDITION(dp_query,"no query set");
   return dp_query->Match(what);
 }
