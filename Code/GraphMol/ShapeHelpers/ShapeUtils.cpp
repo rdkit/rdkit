@@ -164,7 +164,7 @@ namespace RDKit {
       EncodeShape(conf2, grd2, trans, vdwScale, stepSize, maxLayers, ignoreHs);
       double res;
       if(allowReordering &&
-         ( grd2.getOccupancyVect()->getTotalVal() > grd1.getOccupancyVect()->getTotalVal() ) ){
+         ( grd2.getOccupancyVect()->getTotalVal() < grd1.getOccupancyVect()->getTotalVal() ) ){
         res=RDGeom::protrudeDistance(grd2, grd1);
       } else {
         res=RDGeom::protrudeDistance(grd1, grd2);
