@@ -11,6 +11,7 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
+#include <boost/dynamic_bitset.hpp>
 
 namespace Chirality {
   using namespace RDKit;
@@ -156,7 +157,7 @@ namespace Chirality {
       // numAtoms times:
       int numIts=0;
       while( numIts<numAtoms && !activeIndices.empty()){
-        int longestEntry=-1;
+        unsigned int longestEntry=0;
         // ----------------------------------------------------
         //
         // for each atom, get a sorted list of its neighbors' ranks:
@@ -185,7 +186,7 @@ namespace Chirality {
           cipEntries[*it].insert(cipEntries[*it].end(),
                                  localEntry.rbegin(),
                                  localEntry.rend());
-          if(static_cast<int>(cipEntries[*it].size()) > longestEntry){
+          if(cipEntries[*it].size() > longestEntry){
             longestEntry = cipEntries[*it].size();
           }
         }
@@ -195,10 +196,10 @@ namespace Chirality {
         // 
         for(INT_LIST_I it=allIndices.begin();it!=allIndices.end();
             it++){
-          int sz=cipEntries[*it].size();
+          unsigned int sz=cipEntries[*it].size();
           if(sz<longestEntry){
             cipEntries[*it].insert(cipEntries[*it].end(),
-                                   static_cast<unsigned int>(longestEntry-sz),
+                                   longestEntry-sz,
                                    -1);
           }
         }
@@ -479,134 +480,140 @@ namespace RDKit{
     void assignAtomChiralCodes(ROMol &mol,bool cleanIt,bool force){
       if(!force && mol.hasProp("_AtomChiralitySet")) return;
       
-    INT_VECT ranks;
-    ranks.resize(mol.getNumAtoms());
+      INT_VECT ranks;
+      ranks.resize(mol.getNumAtoms());
 
-    // ------------------
-    // get the "CIP" ranking of each atom:
+      // ------------------
+      // get the "CIP" ranking of each atom:
       Chirality::getAtomCIPRanks(mol,ranks);
 
-    // ------------------
-    // now loop over each atom and, if it's marked as chiral,
-    //  figure out the appropriate CIP label:
-    for(ROMol::AtomIterator atIt=mol.beginAtoms();
-        atIt!=mol.endAtoms();atIt++){
-      Atom *atom=*atIt;
-      Atom::ChiralType tag=atom->getChiralTag();
+      // ------------------
+      // now loop over each atom and, if it's marked as chiral,
+      //  figure out the appropriate CIP label:
+      for(ROMol::AtomIterator atIt=mol.beginAtoms();
+          atIt!=mol.endAtoms();atIt++){
+        Atom *atom=*atIt;
+        Atom::ChiralType tag=atom->getChiralTag();
 
-      // only worry about this atom if it has a marked chirality
-      // we understand:
-      if(tag != Atom::CHI_UNSPECIFIED &&
-         tag != Atom::CHI_OTHER){
-        // loop over all neighbors and form a decorated list of their
-        // ranks:
-        bool hasDupes=false;
+        // only worry about this atom if it has a marked chirality
+        // we understand:
+        if(tag != Atom::CHI_UNSPECIFIED &&
+           tag != Atom::CHI_OTHER){
+          // loop over all neighbors and form a decorated list of their
+          // ranks:
+          bool legalCenter;
+          bool hasDupes=false;
+          bool hasTruePrecedingAtom=false;
           Chirality::INT_PAIR_VECT nbrs;
-          Chirality::INT_LIST codes;
-        ROMol::OEDGE_ITER beg,end;
-        bool hasTruePrecedingAtom=false;
-        boost::tie(beg,end) = mol.getAtomBonds(atom);
-        ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
-        while(beg!=end){
-          unsigned int otherIdx=pMap[*beg]->getOtherAtom(atom)->getIdx();
-          // watch for neighbors with duplicate ranks, which would mean
-          // that we cannot be chiral:
-          if(std::find(codes.begin(),
-                       codes.end(),
-                       ranks[otherIdx]) != codes.end()){
-            // we've already seen this code, it's a dupe
-            hasDupes = true;
-            if( cleanIt ){
-              break;
+          if(atom->getDegree()+atom->getTotalNumHs()>4){
+            // we only know tetrahedral chirality
+            legalCenter=false;
+          } else {
+            //Chirality::INT_LIST codes;
+            boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
+            ROMol::OEDGE_ITER beg,end;
+            boost::tie(beg,end) = mol.getAtomBonds(atom);
+            ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
+            while(beg!=end){
+              unsigned int otherIdx=pMap[*beg]->getOtherAtom(atom)->getIdx();
+              CHECK_INVARIANT(ranks[otherIdx]<mol.getNumAtoms(),
+                              "CIP rank higher than the number of atoms.");
+              // watch for neighbors with duplicate ranks, which would mean
+              // that we cannot be chiral:
+              if(codesSeen[ranks[otherIdx]]){
+                // we've already seen this code, it's a dupe
+                hasDupes = true;
+                if( cleanIt ){
+                  break;
+                }
+              }
+              codesSeen[ranks[otherIdx]]=1;
+              nbrs.push_back(std::make_pair(ranks[otherIdx],
+                                            pMap[*beg]->getIdx()));
+
+              // check to see if the neighbor is a "true preceder"
+              // (i.e. it occurs before the atom both in the atom
+              // ordering and the bond starts at the neighbor):
+              if(otherIdx<atom->getIdx() &&
+                 pMap[*beg]->getBeginAtomIdx()==otherIdx){
+                hasTruePrecedingAtom=true;
+              }
+              ++beg;
             }
-          }
-          codes.push_back(ranks[otherIdx]);
-          nbrs.push_back(std::make_pair(ranks[otherIdx],pMap[*beg]->getIdx()));
 
-          // check to see if the neighbor is a "true preceder" (i.e. it occurs
-          // before the atom both in the atom ordering and the bond starts at
-          // the neighbor:
-          if(otherIdx<atom->getIdx() && pMap[*beg]->getBeginAtomIdx()==otherIdx){
-            hasTruePrecedingAtom=true;
-          }
-               
-          beg++;
-        }
+            // figure out if this is a legal chiral center or not:
+            if(hasDupes){
+              // if we have dupes, we need to check for special cases:
+              legalCenter=Chirality::checkChiralAtomSpecialCases(mol,atom);
+            } else if(nbrs.size()<3 ||
+                      (nbrs.size()==3 && atom->getTotalNumHs()!=1 )){
+              // we only handle 3-coordinate atoms that have an implicit H
+              legalCenter=false;
+            } else {
+              // if we haven't disqualified the center, it must be ok.
+              legalCenter=true;
+            }
+          }        
+          if(cleanIt && !legalCenter){
+            // we can remove the chiral tag from this atom:
+            atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+            if(atom->hasProp("_CIPCode"))
+              atom->clearProp("_CIPCode");
 
-        // figure out if this is a legal chiral center or not:
-        bool legalCenter;
-        if(hasDupes){
-          // if we have dupes, we need to check for special cases:
-            legalCenter=Chirality::checkChiralAtomSpecialCases(mol,atom);
-        } else if(nbrs.size()<3 ||
-                  (nbrs.size()==3 && atom->getTotalNumHs()!=1 )){
-          // we only handle 3-coordinate atoms that have an implicit H
-          legalCenter=false;
-        } else {
-          // if we haven't disqualified the center, it must be ok.
-          legalCenter=true;
-        }
-        
-        if(cleanIt && !legalCenter){
-          // we can remove the chiral tag from this atom:
-          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
-          if(atom->hasProp("_CIPCode"))
-            atom->clearProp("_CIPCode");
+            // If the atom has an explicit hydrogen and no charge, that H
+            // was probably put there solely because of the chirality.
+            // So we'll go ahead and remove it.
+            // This was Issue 194
+            if(atom->getNumExplicitHs()==1 &&
+               atom->getFormalCharge()==0 &&
+               !atom->getIsAromatic() ){
+              atom->setNumExplicitHs(0);
+              atom->calcExplicitValence(false);
+              atom->calcImplicitValence(false);
+            }
+          } else if( legalCenter && !hasDupes ) {
+            // stereochem is possible and we have no duplicate neighbors, assign
+            // a CIP code:
 
-          // If the atom has an explicit hydrogen and no charge, that H
-          // was probably put there solely because of the chirality.
-          // So we'll go ahead and remove it.
-          // This was Issue 194
-          if(atom->getNumExplicitHs()==1 &&
-             atom->getFormalCharge()==0 &&
-             !atom->getIsAromatic() ){
-            atom->setNumExplicitHs(0);
-            atom->calcExplicitValence(false);
-            atom->calcImplicitValence(false);
-          }
-        } else if( legalCenter && !hasDupes ) {
-          // stereochem is possible and we have no duplicate neighbors, assign
-          // a CIP code:
-
-          // sort the list of neighbors by their CIP ranks:
+            // sort the list of neighbors by their CIP ranks:
             std::sort(nbrs.begin(),nbrs.end(),Chirality::_pairComp);
 
-          // collect the list of neighbor indices:
-          codes.clear();
+            // collect the list of neighbor indices:
+            std::list<int> nbrIndices;
             for(Chirality::INT_PAIR_VECT_CI nbrIt=nbrs.begin();
-              nbrIt!=nbrs.end(); ++nbrIt){
-            codes.push_back((*nbrIt).second);
-          }
-          // ask the atom how many swaps we have to make:
-          int nSwaps = atom->getPerturbationOrder(codes);
+                nbrIt!=nbrs.end(); ++nbrIt){
+              nbrIndices.push_back((*nbrIt).second);
+            }
+            // ask the atom how many swaps we have to make:
+            int nSwaps = atom->getPerturbationOrder(nbrIndices);
 
-          // if the atom has 3 neighbors and a hydrogen, add a swap:
-          // This is reasonable for: F[C@H](Cl)Br, where the H is "between"
-          // the heavy atoms, but it screws up for the same molecule if it's
-          // numbered like this: [C@H](Cl)(F)Br, here no swap is required.
-          if(codes.size()==3 && atom->getTotalNumHs()==1){
-            // we recognize the second case above ([C@H](Cl)(F)Br) using the
-            // hasTruePrecedingAtom flag:
-            if(hasTruePrecedingAtom) ++nSwaps;
-          }
+            // if the atom has 3 neighbors and a hydrogen, add a swap:
+            // This is reasonable for: F[C@H](Cl)Br, where the H is "between"
+            // the heavy atoms, but it screws up for the same molecule if it's
+            // numbered like this: [C@H](Cl)(F)Br, here no swap is required.
+            if(nbrIndices.size()==3 && atom->getTotalNumHs()==1){
+              // we recognize the second case above ([C@H](Cl)(F)Br) using the
+              // hasTruePrecedingAtom flag:
+              if(hasTruePrecedingAtom) ++nSwaps;
+            }
           
-          // if that number is odd, we'll change our chirality:
-          if(nSwaps%2){
-            if(tag == Atom::CHI_TETRAHEDRAL_CCW) tag=Atom::CHI_TETRAHEDRAL_CW;
-            else tag=Atom::CHI_TETRAHEDRAL_CCW;
+            // if that number is odd, we'll change our chirality:
+            if(nSwaps%2){
+              if(tag == Atom::CHI_TETRAHEDRAL_CCW) tag=Atom::CHI_TETRAHEDRAL_CW;
+              else tag=Atom::CHI_TETRAHEDRAL_CCW;
+            }
+            // now assign the CIP code:
+            std::string cipCode;
+            if(tag==Atom::CHI_TETRAHEDRAL_CCW) cipCode="S";
+            else cipCode="R";
+            atom->setProp("_CIPCode",cipCode,true);
+          } else {
+            // FIX: this is where we should be handling meso cases
           }
-          // now assign the CIP code:
-          std::string cipCode;
-          if(tag==Atom::CHI_TETRAHEDRAL_CCW) cipCode="S";
-          else cipCode="R";
-          atom->setProp("_CIPCode",cipCode,true);
-        } else {
-          // FIX: this is where we should be handling meso cases
         }
       }
+      mol.setProp("_AtomChiralitySet", 1, true);
     }
-    mol.setProp("_AtomChiralitySet", 1, true);
-  }
 
     // ************************************************************
     //
