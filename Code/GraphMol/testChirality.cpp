@@ -548,6 +548,33 @@ void testSmiles1(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testChiralityCleanup(){
+  ROMol *mol;
+  std::string smi,cip;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "chirality cleanup" << std::endl;
+
+  smi = "F[C@H+](Cl)(Br)I";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol,true);
+  TEST_ASSERT(!mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+  delete mol;
+
+  smi = "F[C@+](C)(Cl)(Br)I";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  MolOps::assignAtomChiralCodes(*mol,true);
+  TEST_ASSERT(!mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+  delete mol;
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -556,6 +583,7 @@ int main(){
   testMol1();
   testMol2();
   testRoundTrip();
+  testChiralityCleanup();
   
   return 0;
 }
