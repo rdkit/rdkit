@@ -96,8 +96,6 @@ namespace RDKit {
 
     fgBonds.clear();
     
-    // also assume 
-    int fid, nfgs = params->getNumFuncGroups();
     std::pair<int, int> amat;
     MatchVectType aidFgrps;
     std::vector<MatchVectType> fgpMatches;
@@ -109,7 +107,7 @@ namespace RDKit {
     INT_VECT_CI bi;
     aidFgrps.clear();
     
-    fid = 0;
+    int fid = 0;
     const MOL_SPTR_VECT &fgrps = params->getFuncGroups();
     MOL_SPTR_VECT::const_iterator fgci;
     
