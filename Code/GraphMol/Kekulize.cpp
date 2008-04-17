@@ -114,11 +114,11 @@ namespace RDKit {
         int chrg = at->getFormalCharge();
         dv += chrg;
         int tbo = at->getExplicitValence() + at->getImplicitValence();
-        const UINT_VECT &valList =
+        const INT_VECT &valList =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
         unsigned int vi = 1;
       
-        while ((tbo > dv) && (vi < valList.size())) {
+        while ( tbo>dv && vi<valList.size() && valList[vi]>0 ) {
           dv = valList[vi] + chrg;
           ++vi;
         }
@@ -384,7 +384,6 @@ namespace RDKit {
       RingUtils::makeRingNeighborMap(brings, neighMap);
 
       int curr = 0;
-      int rix;
       int cnrs = arings.size();
       boost::dynamic_bitset<> fusDone(cnrs);
       while (curr < cnrs) {

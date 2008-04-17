@@ -65,11 +65,11 @@ namespace RDKit{
         //   - the atom has a nonstandard valence
         //   - chirality present and writing isomeric smiles
         //   - non-default isotope and writing isomeric smiles
-        const UINT_VECT &defaultVs=PeriodicTable::getTable()->getValenceList(num);
+        const INT_VECT &defaultVs=PeriodicTable::getTable()->getValenceList(num);
         int totalValence= atom->getExplicitValence()+atom->getImplicitValence();
         bool nonStandard;
         nonStandard = std::find(defaultVs.begin(),defaultVs.end(),
-                                static_cast<UINT>(totalValence))==defaultVs.end();
+                                totalValence)==defaultVs.end();
         // another type of "nonstandard" valence is an aromatic N with
         // explicit Hs indicated:
         if(num==7 && atom->getIsAromatic() && atom->getNumExplicitHs()){

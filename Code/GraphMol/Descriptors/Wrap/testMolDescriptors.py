@@ -53,6 +53,6 @@ class TestCase(unittest.TestCase) :
   def testCrippen(self):
     mol = Chem.MolFromSmiles("NCO");
     contribs = rdMD._CalcCrippenContribs(mol)
-    print contribs
+
 if __name__ == '__main__':
   unittest.main()

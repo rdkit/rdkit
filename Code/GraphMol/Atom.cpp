@@ -178,15 +178,15 @@ int Atom::calcExplicitValence(bool strict) {
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
   if (accum > (dv + chr) && this->getIsAromatic()) {
-    // this needs some explanation if the atom is aromatic and
+    // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
     // to this atom.  We set x = (v + chr) such that x is the
     // closest possible integer to "accum" but less than
     // "accum". "v" here is one of the allowed valences e.g. if
     // sulfur in the following smiles : O=c1ccs(=O)cc1
-    const UINT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
+    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
     int pval = dv + chr;
-    for (UINT_VECT_CI vi = valens.begin(); vi != valens.end(); ++vi) {
+    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi!=-1; ++vi) {
       int val = (*vi) + chr;
       if (val > accum) {
         break;
@@ -197,9 +197,9 @@ int Atom::calcExplicitValence(bool strict) {
     accum = pval;
   }
   // despite promising to not to blame it on him - this a trick Greg
-  // came up with if we have a bond order sum of x.5 (i.e. 1.5, 2.5
-  // etc) we would like it to round to the higher integer value so
-  // 2.5 to 3 instead of 2, so we will add 0.1 to accum to assure
+  // came up with: if we have a bond order sum of x.5 (i.e. 1.5, 2.5
+  // etc) we would like it to round to the higher integer value -- 
+  // 2.5 to 3 instead of 2 -- so we will add 0.1 to accum.
   // this plays a role in the number of hydrogen that are implicitly
   // added. This will only happen when the accum is a non-integer
   // value and less than the default valence (otherwise the above if
@@ -211,6 +211,26 @@ int Atom::calcExplicitValence(bool strict) {
   accum += 0.1;
 
   res = static_cast<int>(round(accum));
+
+  if(strict){
+    int effectiveValence=res-getFormalCharge();
+    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
+    int maxValence=*(valens.rbegin());
+    // maxValence == -1 signifies that we'll take anything at the high end
+    if(maxValence>0 && effectiveValence>maxValence){
+      //BOOST_LOG(rdErrorLog) << ">>> val:" << res<<" chg:" << getFormalCharge()<<" max:"<<maxValence << std::endl;
+
+      // the explicit valence is greater than any
+      // allowed valence for the atoms - raise an error
+      std::ostringstream errout;
+      errout << "Explicit valence for atom # " << getIdx() 
+             << " " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
+             << " greater than permitted";
+      std::string msg = errout.str();
+      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      throw MolSanitizeException(msg);
+    }
+  }
   d_explicitValence = res;
 
   return res;
@@ -227,7 +247,7 @@ int Atom::getImplicitValence(bool forceCalc) const {
 int Atom::calcImplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   if(df_noImplicit) return 0;
-  if(d_explicitValence==-1) this->calcExplicitValence();
+  if(d_explicitValence==-1) this->calcExplicitValence(strict);
   // this is basically the difference between the allowed valence of
   // the atom and the explicit valence already specified - tells how
   // many Hs to add
@@ -243,10 +263,10 @@ int Atom::calcImplicitValence(bool strict) {
   // if "ev" is greater than all allowed valences for the atom raise an exception
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
-  const UINT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
-  UINT_VECT_CI vi;
+  const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
+  INT_VECT_CI vi;
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
-  unsigned int explicitV = getExplicitValence();
+  int explicitV = getExplicitValence();
   int chg = getFormalCharge();
 
   // NOTE: this is here to take care of the difference in element on
@@ -298,7 +318,7 @@ int Atom::calcImplicitValence(bool strict) {
       // atom. The only diff I can think of is in the way we handle
       // formal charge here vs the explicit valence function.
       bool satis = false;
-      for (vi = valens.begin(); vi != valens.end(); vi++) {
+      for (vi = valens.begin(); vi!=valens.end() && *vi>0; vi++) {
         if (explicitV == ((*vi) + chg)) {
           satis = true;
           break;
@@ -318,11 +338,10 @@ int Atom::calcImplicitValence(bool strict) {
   else {
     // non-aromatic case we are allowed to have non default valences
     // and be able to add hydrogens
-    int tot;
     res = -1;
-    for (vi = valens.begin(); vi != valens.end(); vi++) {
-      tot = (*vi) + chg;
-      if (static_cast<int>(explicitV) <= tot) {
+    for (vi = valens.begin(); vi != valens.end() && *vi>=0; ++vi) {
+      int tot = (*vi) + chg;
+      if (explicitV <= tot) {
         res = tot - explicitV;
         break;
       }
@@ -337,6 +356,7 @@ int Atom::calcImplicitValence(bool strict) {
                << " greater than permitted";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
+        BOOST_LOG(rdErrorLog)<< "  Atomic Num: "<<d_atomicNum << " symbol: " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum) << std::endl;
         throw MolSanitizeException(msg);
       } else {
         res = 0;

@@ -59,11 +59,11 @@ struct table_wrapper {
       .def("GetRvdw",(double (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getRvdw)
       .def("GetRcovalent",(double (PeriodicTable::*)(UINT) const)&PeriodicTable::getRcovalent)
       .def("GetRcovalent",(double (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getRcovalent)
-      .def("GetDefaultValence",(UINT (PeriodicTable::*)(UINT) const)&PeriodicTable::getDefaultValence)
-      .def("GetDefaultValence",(UINT (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getDefaultValence)
-      .def("GetValenceList",(const UINT_VECT &(PeriodicTable::*)(UINT) const)&PeriodicTable::getValenceList,
+      .def("GetDefaultValence",(int (PeriodicTable::*)(UINT) const)&PeriodicTable::getDefaultValence)
+      .def("GetDefaultValence",(int (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getDefaultValence)
+      .def("GetValenceList",(const INT_VECT &(PeriodicTable::*)(UINT) const)&PeriodicTable::getValenceList,
 	   python::return_value_policy<python::copy_const_reference>())
-      .def("GetValenceList",(const UINT_VECT &(PeriodicTable::*)(const std::string &) const)&PeriodicTable::getValenceList,
+      .def("GetValenceList",(const INT_VECT &(PeriodicTable::*)(const std::string &) const)&PeriodicTable::getValenceList,
 	   python::return_value_policy<python::copy_const_reference>())
       .def("GetNOuterElecs",(int (PeriodicTable::*)(UINT) const)&PeriodicTable::getNouterElecs)
       .def("GetNOuterElecs",(int (PeriodicTable::*)(const std::string &) const)&PeriodicTable::getNouterElecs)

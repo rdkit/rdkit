@@ -56,7 +56,7 @@ namespace RDKit{
           // this because we cannot be sure that it has already been
           // called on the atom (cleanUp() gets called pretty early in
           // the sanitization process):
-          if((*ai)->calcExplicitValence()==5 ) {
+          if((*ai)->calcExplicitValence(false)==5 ) {
             aid = (*ai)->getIdx();
             RWMol::ADJ_ITER nid1,end1;
             boost::tie(nid1, end1) = mol.getAtomNeighbors(*ai);
@@ -82,7 +82,7 @@ namespace RDKit{
           //    Cl(=O)(=O)(=O)[O-]
           // to:
           //    [Cl+3]([O-])([O-])([O-])[O-]
-          if((*ai)->calcExplicitValence()==7 && (*ai)->getFormalCharge()==0){
+          if((*ai)->calcExplicitValence(false)==7 && (*ai)->getFormalCharge()==0){
             aid = (*ai)->getIdx();
             bool neighborsAllO=true;
             RWMol::ADJ_ITER nid1,end1;
@@ -103,11 +103,11 @@ namespace RDKit{
                   b->setBondType(Bond::SINGLE);
                   Atom *otherAtom=mol.getAtomWithIdx(*nid1);
                   otherAtom->setFormalCharge(-1);
-                  otherAtom->calcExplicitValence();
+                  otherAtom->calcExplicitValence(false);
                 }
                 nid1++;
               }
-              (*ai)->calcExplicitValence();
+              (*ai)->calcExplicitValence(false);
             }
           }
           break;

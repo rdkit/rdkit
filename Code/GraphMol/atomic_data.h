@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -26,11 +26,11 @@ namespace RDKit {
     
     int AtomicNum() const { return anum;};
     
-    UINT DefaultValence() const { return valence.front();};
+    int DefaultValence() const { return valence.front();};
     
     int NumValence() const { return static_cast<int>(valence.size());};
     
-    const UINT_VECT &ValenceList() const {
+    const INT_VECT &ValenceList() const {
       return valence;
     };
     
@@ -52,7 +52,7 @@ namespace RDKit {
     int anum; //atomic number
     std::string symb; // atomic symbol
     double rCov, rB0, rVdw; //radii
-    UINT_VECT valence; //list of all valences, the first one is the default valence
+    INT_VECT valence; //list of all valences, the first one is the default valence, -1 at the end signifies that any upper valence is tolerated
     double mass;  // atomic mass
     int nVal; // number of outer shell electrons
   };

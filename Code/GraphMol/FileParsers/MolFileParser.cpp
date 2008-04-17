@@ -1016,7 +1016,7 @@ namespace RDKit{
     for(RWMol::AtomIterator atomIt=res->beginAtoms();
         atomIt!=res->endAtoms();
         atomIt++) {
-      (*atomIt)->calcExplicitValence();
+      (*atomIt)->calcExplicitValence(false);
     }
     //std::cerr << "bloop "<<line << std::endl;
 

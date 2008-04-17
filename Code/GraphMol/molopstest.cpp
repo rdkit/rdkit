@@ -2162,12 +2162,28 @@ void testSFIssue1836576()
   RWMol *m;
 
   std::string smi;
-
+  bool ok;
+  
+  // the original form of the test runs foul of the rules for explicit
+  // valence on B:
   smi = "[BH]123[BH]45[BH]167[BH]289[BH]312[BH]838[BH]966[Co]74479%10%11%12[CH]633[BH]811[CH]345[BH]21[BH]1234[BH]75[BH]911[BH]226[BH]%1011[BH]227[BH]633[BH]44[BH]322[CH]%1145[CH]%12271";
   m = SmilesToMol(smi,false,false);
   TEST_ASSERT(m);
   
-  bool ok=false;
+  ok=false;
+  try {
+    MolOps::sanitizeMol(*m);
+  } catch (MolSanitizeException &vee){
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+  // this version throws the original error:
+  smi = "C123C45C11C44C55C22C33C14C523";
+  m = SmilesToMol(smi,false,false);
+  TEST_ASSERT(m);
+  
+  ok=false;
   try {
     MolOps::sanitizeMol(*m);
   } catch (ValueErrorException &vee){
@@ -2448,6 +2464,50 @@ void testAromaticityEdges()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFIssue1942657()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 1942657 " << std::endl;
+  RWMol *m;
+
+  std::string smi;
+
+  smi = "C[C](C)(C)(C)C";
+  try{
+    m = SmilesToMol(smi);
+  } catch (MolSanitizeException &e){
+    m=0;
+  }
+  TEST_ASSERT(!m);
+
+  smi = "C[CH](C)(C)C";
+  try{
+    m = SmilesToMol(smi);
+  } catch (MolSanitizeException &e){
+    m=0;
+  }
+  TEST_ASSERT(!m);
+
+  smi = "C[C](=C)(C)C";
+  try{
+    m = SmilesToMol(smi);
+  } catch (MolSanitizeException &e){
+    m=0;
+  }
+  TEST_ASSERT(!m);
+
+  smi = "C[Si](=C)(=C)=C";
+  try{
+    m = SmilesToMol(smi);
+  } catch (MolSanitizeException &e){
+    m=0;
+  }
+  TEST_ASSERT(!m);
+
+
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 
 int main(){
@@ -2490,6 +2550,7 @@ int main(){
   testSFIssue1894348();
 #endif
   testAromaticityEdges();
+  testSFIssue1942657();
 
   
   return 0;

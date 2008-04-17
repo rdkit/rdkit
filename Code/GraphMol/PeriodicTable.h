@@ -130,32 +130,34 @@ namespace RDKit {
     }
 
     //! returns the atom's default valence 
-    UINT getDefaultValence(UINT atomicNumber) const {
+    int getDefaultValence(UINT atomicNumber) const {
       PRECONDITION(atomicNumber<byanum.size(),"Atomic number not found");
       return byanum[atomicNumber].DefaultValence();
     }
     //! \overload
-    UINT getDefaultValence(const std::string &elementSymbol) const {
+    int getDefaultValence(const std::string &elementSymbol) const {
       PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       return getDefaultValence(byname.find(elementSymbol)->second);
     }
     //! \overload
-    UINT getDefaultValence(char *elementSymbol ) const {
+    int getDefaultValence(char *elementSymbol ) const {
       return getDefaultValence(std::string(elementSymbol));
     }
 
-    //! returns a list of all stable valences 
-    const UINT_VECT &getValenceList( UINT atomicNumber ) const {
+    //! returns a vector of all stable valences. For atoms where
+    //! we really don't have any idea what a reasonable maximum
+    //! valence is (like transition metals), the vector ends with -1
+    const INT_VECT &getValenceList( UINT atomicNumber ) const {
       PRECONDITION(atomicNumber<byanum.size(),"Atomic number not found");
       return byanum[atomicNumber].ValenceList();
     }
     //! \overload
-    const UINT_VECT &getValenceList( const std::string &elementSymbol) const {
+    const INT_VECT &getValenceList( const std::string &elementSymbol) const {
       PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
       return getValenceList(byname.find(elementSymbol)->second);
     }
     //! \overload
-    const UINT_VECT &getValenceList(char *elementSymbol ) const {
+    const INT_VECT &getValenceList(char *elementSymbol ) const {
       return getValenceList(std::string(elementSymbol));
     }
 
