@@ -194,20 +194,26 @@ namespace RDKit {
       }
             
     }
-    catch(SmilesParseException &pe) {
+    catch(const SmilesParseException &pe) {
       // Couldn't parse the passed in smiles
       // Simply print out a message
       BOOST_LOG(rdErrorLog) << "ERROR: Smiles parse error on line " << d_line << "\n";
       BOOST_LOG(rdErrorLog) << "ERROR: " << pe.message() << "\n";
       res = NULL;
     }
-    catch(MolSanitizeException &se) {
+    catch(const MolSanitizeException &se) {
       // We couldn't sanitize the molecule
       //  write out an error message
       BOOST_LOG(rdErrorLog) << "ERROR: Could not sanitize molecule on line " << d_line << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: " << se.message() << "\n";
       res = NULL;
     }
+    catch(...) {
+      //  write out an error message
+      BOOST_LOG(rdErrorLog) << "ERROR: Could not process molecule on line " << d_line << std::endl;
+      res = NULL;
+    }
+    
     return res;
   }
   
