@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.7.0"
+_version = "0.7.1"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -91,6 +91,8 @@ def GetNeighborLists(probes,topN,cursor,
                      fpDepickler=DepickleIntVectFP,
                      silent=False):
   probeFps = [x[1] for x in probes]
+  validProbes = [x for x in range(len(probeFps)) if probeFps[x] is not None]
+  validFps=[probeFps[x] for x in validProbes]
   from DataStructs.TopNContainer import TopNContainer
   nbrLists = [TopNContainer(topN) for x in range(len(probeFps))]
 
@@ -101,16 +103,21 @@ def GetNeighborLists(probes,topN,cursor,
     if not silent and not nDone%1000: logger.info('  searched %d rows'%nDone)
     nm,pkl = row
     fp=fpDepickler(pkl)
-    for i in range(len(probeFps)):
-      pfp = probeFps[i]
-      if pfp is not None:
-        if simMetric==DataStructs.DiceSimilarity:
-          score = simMetric(probeFps[i],fp,
-                            bounds=nbrLists[i].best[0])
-        else:
-          score = simMetric(probeFps[i],fp)
-          
-        nbrLists[i].Insert(score,nm)
+    if(simMetric==DataStructs.DiceSimilarity):
+      scores = DataStructs.BulkDiceSimilarity(fp,validFps)
+      for i,score in enumerate(scores):
+        nbrLists[validProbes[i]].Insert(score,nm)
+    else:
+      for i in range(len(probeFps)):
+        pfp = probeFps[i]
+        if pfp is not None:
+          if simMetric==DataStructs.DiceSimilarity:
+            score = simMetric(probeFps[i],fp,
+                              bounds=nbrLists[i].best[0])
+          else:
+            score = simMetric(probeFps[i],fp)
+
+          nbrLists[i].Insert(score,nm)
     row = curs.fetchone()
   return nbrLists
 
@@ -263,7 +270,7 @@ if __name__=='__main__':
     outF=sys.stdout
   else:
     outF = file(options.outF,'w+')
-      
+  
   molsOut=False
   if options.sdfOut:
     molsOut=True

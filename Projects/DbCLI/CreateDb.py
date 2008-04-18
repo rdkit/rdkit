@@ -30,7 +30,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, July 2007
-_version = "0.7.0"
+_version = "0.7.1"
 _usage="""
  CreateDb [optional arguments] <filename>
 
@@ -118,6 +118,11 @@ parser.add_option('--addProps',default=False,action='store_true',
 parser.add_option('--noExtras',default=False,action='store_true',
                   help='skip all non-molecule databases')
 
+parser.add_option('--delimiter','--delim',default=' ',
+                  help='the delimiter in the input file')
+parser.add_option('--titleLine',default=False,action='store_true',
+                  help='the input file contains a title line')
+
 if __name__=='__main__':
   options,args = parser.parse_args()
   if len(args)!=1:
@@ -136,7 +141,9 @@ if __name__=='__main__':
   errFile=file(os.path.join(options.outDir,options.errFilename),'w+')
   
   if options.molFormat=='smiles':
-    supplier=Chem.SmilesMolSupplier(dataFilename,titleLine=False)
+    supplier=Chem.SmilesMolSupplier(dataFilename,
+                                    titleLine=options.titleLine,
+                                    delimiter=options.delimiter)
   else:
     supplier = Chem.SDMolSupplier(dataFilename)
 
@@ -144,7 +151,7 @@ if __name__=='__main__':
     options.doPairs=False
     options.doDescriptors=False
     options.doFingerprints=False
- 
+
   if not options.silent: logger.info('Reading molecules and constructing molecular database.')
   Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
                 errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
@@ -170,11 +177,12 @@ if __name__=='__main__':
       fpCurs.execute('drop table %s'%(options.fpTableName))
     except:
       pass
-    fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob)'%(options.fpTableName,
+    if options.doFingerprints:
+      fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob)'%(options.fpTableName,
                                                                                               options.molIdName))
-    from Chem.Fingerprints import FingerprintMols
-    details = FingerprintMols.FingerprinterDetails()
-    fpArgs = details.__dict__
+      from Chem.Fingerprints import FingerprintMols
+      details = FingerprintMols.FingerprinterDetails()
+      fpArgs = details.__dict__
   if options.doDescriptors:
     descrConn=DbConnect(os.path.join(options.outDir,options.descrDbName))
     calc = cPickle.load(file(options.descriptorCalcFilename,'rb'))
@@ -263,8 +271,6 @@ if __name__=='__main__':
                           descrRows)
     descrRows = []
     descrConn.Commit()
-
-    
     
                 
 

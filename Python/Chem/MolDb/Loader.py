@@ -15,7 +15,7 @@ import RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 
-def ProcessMol(mol,typeConversions,globalProps,nameProp='_Name',nameCol='compound_id',
+def ProcessMol(mol,typeConversions,globalProps,nDone,nameProp='_Name',nameCol='compound_id',
                redraw=False,keepHs=False,
                skipProps=False,addComputedProps=False,
                skipSmiles=False,
@@ -37,16 +37,16 @@ def ProcessMol(mol,typeConversions,globalProps,nameProp='_Name',nameCol='compoun
   row = [nm]
   if not skipProps:
     if addComputedProps:
-      nHD=Lipinski.NumHDonors(m)
-      m.SetProp('DonorCount',str(nHD))
-      nHA=Lipinski.NumHAcceptors(m)
-      m.SetProp('AcceptorCount',str(nHA))
-      nRot=Lipinski.NumRotatableBonds(m)
-      m.SetProp('RotatableBondCount',str(nRot))
-      MW=Descriptors.MolWt(m)
-      m.SetProp('AMW',str(MW))
-      logp=Crippen.MolLogP(m)
-      m.SetProp('MolLogP',str(logp))
+      nHD=Lipinski.NumHDonors(mol)
+      mol.SetProp('DonorCount',str(nHD))
+      nHA=Lipinski.NumHAcceptors(mol)
+      mol.SetProp('AcceptorCount',str(nHA))
+      nRot=Lipinski.NumRotatableBonds(mol)
+      mol.SetProp('RotatableBondCount',str(nRot))
+      MW=Descriptors.MolWt(mol)
+      mol.SetProp('AMW',str(MW))
+      logp=Crippen.MolLogP(mol)
+      mol.SetProp('MolLogP',str(logp))
 
     pns = list(mol.GetPropNames())
     pD={}
@@ -117,7 +117,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
           logger.warning('full error file support not complete')
       continue
 
-    row=ProcessMol(m,typeConversions,globalProps,nameProp=nameProp,
+    row=ProcessMol(m,typeConversions,globalProps,nDone,nameProp=nameProp,
                    nameCol=nameCol,redraw=redraw,
                    keepHs=keepHs,skipProps=skipProps,
                    addComputedProps=addComputedProps,skipSmiles=skipSmiles,
@@ -175,7 +175,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
           logger.warning('full error file support not complete')
       continue
     tmpProps={}
-    row=ProcessMol(m,typeConversions,globalProps,nameProp=nameProp,
+    row=ProcessMol(m,typeConversions,globalProps,nDone,nameProp=nameProp,
                    nameCol=nameCol,redraw=redraw,
                    keepHs=keepHs,skipProps=skipProps,
                    addComputedProps=addComputedProps,skipSmiles=skipSmiles,
