@@ -7,7 +7,9 @@ import RDConfig
 from qt import *
 from qtcanvas import *
 from qtGui.PiddleWindowImpl import PiddleCanvasView
-from Chem.Draw.MolDrawing import MolDrawing
+from Chem.Draw import MolDrawing
+MolDrawing.registerCanvas('sping')
+
 import cPickle,os,copy,types
 import Chem
 from Chem import rdDepictor
@@ -29,7 +31,7 @@ class MolCanvasView(PiddleCanvasView):
   """
   def __init__(self,*args,**kwargs):
     PiddleCanvasView.__init__(self,*args,**kwargs)
-    self.drawing = MolDrawing()
+    self.drawing = MolDrawing.MolDrawing()
     self.rescaleOnResize=False
     self.mols = []
     self.fontSize=10
@@ -67,7 +69,7 @@ class MolCanvasView(PiddleCanvasView):
   def initDrawing(self):
     #print 'initDrawing',self
     self.clearHighlights()
-    self.drawing = MolDrawing()
+    self.drawing = MolDrawing.MolDrawing()
     self.drawing.atomLabelFontSize=self.fontSize
     self.drawing.dotsPerAngstrom=self.dotsPerAngstrom
     self.drawing.additionalLabelPadding=(3,0)
