@@ -1094,6 +1094,29 @@ void testIssue1914154(){
   TEST_ASSERT(sma=="[$(C-N)&$(C=O),$(C-O)]");
   delete mol;
 
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testMiscSmartsWriting(){
+  RWMol *mol;
+  std::string sma;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing miscellaenous bits of SMARTS writing" << std::endl;
+
+  sma ="[13C]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="[C&13*]");
+  delete mol;
+
+  sma ="[C]";
+  mol = SmartsToMol(sma);
+  TEST_ASSERT(mol);
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="C");
+  delete mol;
 
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1125,6 +1148,7 @@ main(int argc, char *argv[])
   testSmilesSmarts();
 #endif
   testIssue1914154();
+  testMiscSmartsWriting();
   //testIssue1804420();
   return 0;
 }
