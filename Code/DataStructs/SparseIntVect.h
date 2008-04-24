@@ -336,8 +336,8 @@ namespace RDKit{
   template <typename IndexType>
   double DiceSimilarity(const SparseIntVect<IndexType> &v1,
                         const SparseIntVect<IndexType> &v2,
-                        double bounds=0.0,
-                        bool returnDistance=false ){
+                        bool returnDistance=false,
+                        double bounds=0.0){
     if(v1.getLength()!=v2.getLength()){
       throw ValueErrorException("SparseIntVect size mismatch");
     }

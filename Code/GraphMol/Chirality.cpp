@@ -516,7 +516,7 @@ namespace RDKit{
             ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
             while(beg!=end){
               unsigned int otherIdx=pMap[*beg]->getOtherAtom(atom)->getIdx();
-              CHECK_INVARIANT(ranks[otherIdx]<mol.getNumAtoms(),
+              CHECK_INVARIANT(ranks[otherIdx]<static_cast<int>(mol.getNumAtoms()),
                               "CIP rank higher than the number of atoms.");
               // watch for neighbors with duplicate ranks, which would mean
               // that we cannot be chiral:

@@ -377,7 +377,7 @@ namespace RDCatalog {
       int res=-1;
       for(unsigned int i=idx;i<this->getNumEntries();i++){
         const entryType *e=pMap[i];
-        if(e->getBitId()==idx){
+        if(static_cast<unsigned int>(e->getBitId())==idx){
           res=i;
 	  break;
         }

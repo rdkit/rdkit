@@ -304,7 +304,7 @@ int Atom::calcImplicitValence(bool strict) {
 
   // if we have an aromatic case treat it differently
   if (getIsAromatic()) {
-    if (explicitV <= (dv + chg)) {
+    if (explicitV <= (static_cast<int>(dv) + chg)) {
       res = dv + chg - explicitV;
     }
     else {
