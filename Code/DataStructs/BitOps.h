@@ -24,7 +24,8 @@
 //! that may be of unequal size (will automatically fold as appropriate)
 template <typename T>
 double SimilarityWrapper(const T &bv1,const T &bv2,
-                         const double (*metric)(const T &,const T &)){
+                         const double (*metric)(const T &,const T &),
+                         bool returnDistance=false){
   double res=0.0;
   if(bv1.GetNumBits()>bv2.GetNumBits()){
     T *bv1tmp = FoldFingerprint(bv1,bv1.GetNumBits()/bv2.GetNumBits());
@@ -37,6 +38,7 @@ double SimilarityWrapper(const T &bv1,const T &bv2,
   } else {
     res = metric(bv1,bv2);
   }
+  if(returnDistance) res = 1.0-res;
   return res;
 }
 
