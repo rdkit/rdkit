@@ -43,7 +43,6 @@ namespace RDKit {
 
     const FragCatParams *fparams = fcat.getCatalogParams();
 
-    int lLen = fparams->getLowerFragLength();
     int uLen = fparams->getUpperFragLength();
     double tol = fparams->getTolerance();
 

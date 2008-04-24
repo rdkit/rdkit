@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -12,23 +12,6 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
-
-//lapack ++ includes
-#include <lafnames.h>
-#include <lapack.h>
-#include <symd.h>
-#include <lavd.h>
-#include <laslv.h>
-//#include <lapack++.h>
-
-//
-//  This is required because whoever wrote lapack++ must have decided
-//  that no one would ever want to actually use the standard C++
-//  throw.  Duh.
-//
-#ifdef throw
-#undef throw
-#endif
 
 namespace RDKit {
   namespace Subgraphs {
@@ -48,24 +31,22 @@ ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
 
   if (useQuery) {
     // have to do this in two different blocks because of issues with variable scopes.
-    for(pathIter=path.begin(); pathIter!=path.end(); pathIter++){
-      QueryAtom *atom;
+    for(pathIter=path.begin(); pathIter!=path.end(); ++pathIter){
       QueryBond *bond;
       bond = new QueryBond(*(mol.getBondWithIdx(*pathIter)));
     
-      int begIdx,endIdx,newAtomIdx;
-      begIdx=bond->getBeginAtomIdx();
-      endIdx=bond->getEndAtomIdx();
+      int begIdx=bond->getBeginAtomIdx();
+      int endIdx=bond->getEndAtomIdx();
       
       if(atomIdxMap.find(begIdx)==atomIdxMap.end()){
-        atom = new QueryAtom(*(mol.getAtomWithIdx(begIdx)));
-        newAtomIdx=subMol->addAtom(atom,false,true);
+        QueryAtom *atom = new QueryAtom(*(mol.getAtomWithIdx(begIdx)));
+        int newAtomIdx=subMol->addAtom(atom,false,true);
         atomIdxMap[begIdx] = newAtomIdx;
       }
       begIdx = atomIdxMap.find(begIdx)->second;
       if(atomIdxMap.find(endIdx)==atomIdxMap.end()){
-        atom = new QueryAtom(*(mol.getAtomWithIdx(endIdx)));
-        newAtomIdx=subMol->addAtom(atom,false,true);
+        QueryAtom *atom = new QueryAtom(*(mol.getAtomWithIdx(endIdx)));
+        int newAtomIdx=subMol->addAtom(atom,false,true);
         atomIdxMap[endIdx] = newAtomIdx;
       }
       endIdx = atomIdxMap.find(endIdx)->second;
@@ -77,24 +58,22 @@ ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
     }
   }
   else {
-    for(pathIter=path.begin(); pathIter!=path.end(); pathIter++){
-      Atom *atom;
+    for(pathIter=path.begin(); pathIter!=path.end(); ++pathIter){
       Bond *bond;
       bond=mol.getBondWithIdx(*pathIter)->copy();
       
-      int begIdx,endIdx,newAtomIdx;
-      begIdx=bond->getBeginAtomIdx();
-      endIdx=bond->getEndAtomIdx();
+      int begIdx=bond->getBeginAtomIdx();
+      int endIdx=bond->getEndAtomIdx();
       
       if(atomIdxMap.find(begIdx)==atomIdxMap.end()){
-        atom = mol.getAtomWithIdx(begIdx)->copy();
-        newAtomIdx=subMol->addAtom(atom,false,true);
+        Atom *atom = mol.getAtomWithIdx(begIdx)->copy();
+        int newAtomIdx=subMol->addAtom(atom,false,true);
         atomIdxMap[begIdx] = newAtomIdx;
       }
       begIdx = atomIdxMap.find(begIdx)->second;
       if(atomIdxMap.find(endIdx)==atomIdxMap.end()){
-        atom = mol.getAtomWithIdx(endIdx)->copy();
-        newAtomIdx=subMol->addAtom(atom,false,true);
+        Atom *atom = mol.getAtomWithIdx(endIdx)->copy();
+        int newAtomIdx=subMol->addAtom(atom,false,true);
         atomIdxMap[endIdx] = newAtomIdx;
       }
       endIdx = atomIdxMap.find(endIdx)->second;
@@ -108,20 +87,17 @@ ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
   return subMol;
 }
 
-  PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE atomIds) {
+  PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE &atomIds) {
     PATH_TYPE bids;
-    int natms = atomIds.size();
-    const Bond *bnd;
+    unsigned int natms = atomIds.size();
     if (natms <= 1) {
       return bids; //FIX: should probably throw an exception
     }
-    
-    int i, j, bid;
-    for (i = 0; i < natms; i++) {
-      for (j = i+1; j < natms; j++) {
-        bnd = mol.getBondBetweenAtoms(atomIds[i], atomIds[j]);
+    for (unsigned int i = 0; i < natms; i++) {
+      for (unsigned int j = i+1; j < natms; j++) {
+        const Bond *bnd = mol.getBondBetweenAtoms(atomIds[i], atomIds[j]);
         if (bnd) {
-          bid = bnd->getIdx();
+          int bid = bnd->getIdx();
           bids.push_back(bid);
         }
       }
@@ -141,8 +117,6 @@ CalcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path, bool useBO) {
   PathDiscrimTuple res = MolOps::computeDiscriminators(*subMol, useBO);
   
   delete subMol;
-  //delete [] dMat;
-  //return boost::make_tuple(J,ev1,ev2); 
   return res;
 }
 
@@ -178,21 +152,18 @@ CalcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path, bool useBO) {
   PATH_LIST uniquifyPaths (const ROMol &mol, const PATH_LIST &allPaths,
                            bool useBO,double tol) {
     PATH_LIST res;
-    PATH_LIST::const_iterator path;
     std::vector<PathDiscrimTuple> discrimsSeen;
-    bool found;
-    for(path=allPaths.begin();path!=allPaths.end();path++){
+    for(PATH_LIST::const_iterator path=allPaths.begin();
+        path!=allPaths.end();++path){
       PathDiscrimTuple discrims = CalcPathDiscriminators(mol,*path,useBO);
-      std::vector<PathDiscrimTuple>::iterator discrimIt;
-      found=0;
-      
-      for(discrimIt=discrimsSeen.begin();
+      bool found=false;
+      for(std::vector<PathDiscrimTuple>::iterator discrimIt=discrimsSeen.begin();
           discrimIt!=discrimsSeen.end();
-          discrimIt++){
+          ++discrimIt){
         if( feq(boost::tuples::get<0>(discrims),boost::tuples::get<0>(*discrimIt),tol) &&
             feq(boost::tuples::get<1>(discrims),boost::tuples::get<1>(*discrimIt),tol) &&
             feq(boost::tuples::get<2>(discrims),boost::tuples::get<2>(*discrimIt),tol)){
-          found=1;
+          found=true;
           break;
         }
       }

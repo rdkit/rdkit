@@ -1,5 +1,5 @@
 // $Id$
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -10,12 +10,6 @@
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 
-//lapack ++ includes
-//#include <lafnames.h>
-//#include <lapack.h>
-//#include <symd.h>
-//#include <lavd.h>
-//#include <laslv.h>
 #include <math.h>
 
 using namespace RDNumeric;
