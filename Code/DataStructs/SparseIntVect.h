@@ -336,7 +336,8 @@ namespace RDKit{
   template <typename IndexType>
   double DiceSimilarity(const SparseIntVect<IndexType> &v1,
                         const SparseIntVect<IndexType> &v2,
-                        double bounds=0.0){
+                        double bounds=0.0,
+                        bool returnDistance=false ){
     if(v1.getLength()!=v2.getLength()){
       throw ValueErrorException("SparseIntVect size mismatch");
     }
@@ -344,9 +345,13 @@ namespace RDKit{
     double v2Sum=v2.getTotalVal();
     double denom=v1Sum+v2Sum;
     if(fabs(denom)<1e-6){
-      return 0.0;
+      if(returnDistance){
+        return 1.0;
+      } else {
+        return 0.0;
+      }
     }
-    if(bounds>0.0){
+    if(!returnDistance && bounds>0.0){
       double minV=v1Sum<v2Sum?v1Sum:v2Sum;
       if(2.*minV/denom<bounds){
         return 0.0;
@@ -377,7 +382,9 @@ namespace RDKit{
         break;
       }
     }
-    return 2.*numer/denom;
+    double sim=2.*numer/denom;
+    if(returnDistance) sim = 1.-sim;
+    return sim;
   }
 } 
 
