@@ -30,6 +30,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include <RDGeneral/RDLog.h>
+#include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <iostream>
@@ -1503,6 +1504,182 @@ void test17Issue1920627(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test18PropertyTransfer(){
+  ROMol *mol=0;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  std::vector<MOL_SPTR_VECT> prods;
+  ROMOL_SPTR prod;
+  std::string smi,cip;
+  unsigned int nWarn,nError;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing property transfer in reactions." << std::endl;
+
+
+  // ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ -----
+  // start with sf.net Issue 1934052: propagation of isotope information 
+  smi = "[C:1]>>[C:1]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+
+  reacts.clear();
+  smi = "C";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==1);
+  BOOST_LOG(rdErrorLog)<<">>>"<<prod->getAtomWithIdx(0)->getMass()<<std::endl;
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
+
+  reacts.clear();
+  smi = "[13CH4]";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==1);
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),13,.1));
+  
+  delete rxn;
+  smi = "[12C:1]>>[13C:1]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+
+  reacts.clear();
+  smi = "C";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==1);
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),13,.1));
+
+  reacts.clear();
+  smi = "[13CH4]";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==0);
+
+  delete rxn;
+  smi = "[13C:1]>>[12C:1]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+
+  reacts.clear();
+  smi = "[13CH4]";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==1);
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
+
+  reacts.clear();
+  smi = "C";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==0);
+
+  delete rxn;
+  smi = "[C:1]>>[12C:1]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+
+  reacts.clear();
+  smi = "C";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==1);
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
+
+  reacts.clear();
+  smi = "[13CH4]";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==1);
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
+
+
+  // ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ -----
+  // now look at some other properties
+  delete rxn;
+  smi = "[c:1;H1][n:2]>>[c:1](O)[n:2]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+
+  reacts.clear();
+  smi = "c1ccccn1";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==2);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==7);
+  smi=MolToSmiles(*prod);
+  TEST_ASSERT(smi=="Oc1ncccc1");
+
+  reacts.clear();
+  smi = "c1ccc[nH]1";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==2);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==6);
+  smi=MolToSmiles(*prod);
+  TEST_ASSERT(smi=="Oc1[nH]ccc1");
+  
+  delete rxn;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -1527,8 +1704,9 @@ int main() {
   test14Issue1804420();
   test15Issue1882749();
   test16Exceptions();
-#endif
   test17Issue1920627();
+#endif
+  test18PropertyTransfer();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

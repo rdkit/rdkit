@@ -130,6 +130,9 @@ namespace RDKit {
     //std::cerr << " ---------------------------------------------------------" << std::endl;    
     DaylightParserUtils::updateProductsStereochem(rxn);
     
+    // "SMARTS"-based reactions have implicit properties
+    rxn->setImplicitPropertiesFlag(true);
+    
     return rxn;    
   }
 

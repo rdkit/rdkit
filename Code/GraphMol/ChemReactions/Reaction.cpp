@@ -100,7 +100,23 @@ namespace RDKit {
         }
       }
     } //end of recurseOverReactantCombinations
-    
+
+    void updateImplicitAtomProperties(Atom *prodAtom,const Atom *reactAtom){
+      PRECONDITION(prodAtom,"no product atom");
+      PRECONDITION(reactAtom,"no reactant atom");
+      
+      if(!prodAtom->hasProp("_QueryFormalCharge")){
+        prodAtom->setFormalCharge(reactAtom->getFormalCharge());
+      }
+      if(!prodAtom->hasProp("_QueryHCount")){
+        prodAtom->setNumExplicitHs(reactAtom->getNumExplicitHs());
+      }
+      if(!prodAtom->hasProp("_QueryMass")){
+        prodAtom->setMass(reactAtom->getMass());
+      }
+      prodAtom->setNoImplicit(reactAtom->getNoImplicit());
+    }    
+
     void generateReactantCombinations(const VectVectMatchVectType &matchesByReactant,
                                       VectVectMatchVectType &matchesPerProduct){
       matchesPerProduct.clear();
@@ -180,10 +196,11 @@ namespace RDKit {
       return RWMOL_SPTR(res);  
     } // end of initProduct()
     
-    void addReactantAtomsAndBonds(RWMOL_SPTR product,const ROMOL_SPTR reactantSptr,
+    void addReactantAtomsAndBonds(const ChemicalReaction *rxn,
+                                  RWMOL_SPTR product,const ROMOL_SPTR reactantSptr,
                                   const MatchVectType &match,
                                   const ROMOL_SPTR reactantTemplate){
-
+      PRECONDITION(rxn,"bad reaction");
       // start by looping over all matches and marking the reactant atoms that
       // have already been "added" by virtue of being in the product. We'll also
       // mark "skipped" atoms: those that are in the match, but not in this
@@ -233,19 +250,23 @@ namespace RDKit {
           // and this is the corresponding atom in the reactant.
           const Atom *reactantAtom=reactant->getAtomWithIdx(reactantAtomIdx);
 
-          // --------- --------- --------- --------- --------- ---------
-          // which properties need to be set from the reactant?
-          if(productAtom->getAtomicNum()<=0){
-            // If the product atom is a dummy, set everything
-             productAtom->setAtomicNum(reactantAtom->getAtomicNum());
-             productAtom->setFormalCharge(reactantAtom->getFormalCharge());
-             productAtom->setNoImplicit(reactantAtom->getNoImplicit());
-             productAtom->setNumExplicitHs(reactantAtom->getNumExplicitHs());
-             productAtom->setMass(reactantAtom->getMass());
+          if(rxn->getImplicitPropertiesFlag()){
+            // --------- --------- --------- --------- --------- ---------
+            // which properties need to be set from the reactant?
+            if(productAtom->getAtomicNum()<=0){
+              // If the product atom is a dummy, set everything
+              productAtom->setAtomicNum(reactantAtom->getAtomicNum());
+              productAtom->setFormalCharge(reactantAtom->getFormalCharge());
+              productAtom->setNoImplicit(reactantAtom->getNoImplicit());
+              productAtom->setNumExplicitHs(reactantAtom->getNumExplicitHs());
+              productAtom->setMass(reactantAtom->getMass());
+            } else {
+              updateImplicitAtomProperties(productAtom,reactantAtom);
+            }
           }
           // One might be tempted to copy over the reactant atom's chirality into the
           // product atom if chirality is not specified on the product. This would be a
-          // very bad idea because the bond order will almost certainly change on the
+          // very bad idea because the order of bonds will almost certainly change on the
           // atom and the chirality is referenced to bond order.
 
 
@@ -429,7 +450,9 @@ namespace RDKit {
       RWMOL_SPTR product=ReactionUtils::initProduct(*pTemplIt);
 
       for(unsigned int reactantId=0;reactantId<reactants.size();++reactantId){
-        ReactionUtils::addReactantAtomsAndBonds(product,reactants[reactantId],reactantsMatch[reactantId],
+        ReactionUtils::addReactantAtomsAndBonds(this,
+                                                product,reactants[reactantId],
+                                                reactantsMatch[reactantId],
                                                 this->m_reactantTemplates[reactantId]);  
       }                    
       

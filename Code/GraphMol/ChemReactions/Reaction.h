@@ -86,9 +86,10 @@ namespace RDKit{
   */
   class ChemicalReaction {
   public:
-    ChemicalReaction() : df_needsInit(true) {};
+    ChemicalReaction() : df_needsInit(true), df_implicitProperties(false) {};
     ChemicalReaction(const ChemicalReaction &other){
         df_needsInit=true;
+        df_implicitProperties=other.df_implicitProperties;
         m_reactantTemplates=other.m_reactantTemplates;
         m_productTemplates=other.m_productTemplates;
     }
@@ -165,8 +166,35 @@ namespace RDKit{
     */
     bool validate(unsigned int &numWarnings,unsigned int &numErrors,bool silent=false) const;
         
+
+    //! returns whether or not the reaction uses implicit
+    //! properties on the product atoms
+    /*!
+
+      This toggles whether or not unspecified atomic properties in the
+      products are considered to be implicit and should be copied from
+      the actual reactants. This is necessary due to a semantic difference
+      between the "reaction SMARTS" approach and the MDL RXN
+      approach:
+        In "reaction SMARTS", this reaction:
+          [C:1]-[Br:2].[O-:3]>>[C:1]-[O:3].[Br-:2]
+        applied to [CH4+]Br should yield [CH4+]O
+        Something similar drawn in an rxn file, and applied to
+        [CH4+]Br should yield [CH3]O. 
+        In rxn there is no charge on the product C because nothing is
+        specified in the rxn file; in "SMARTS" the charge from the
+        actual reactants is not *removed* because no charge is
+        specified in the reaction.
+
+    */
+    bool getImplicitPropertiesFlag() const { return df_implicitProperties; };
+    //! sets the implicit properties flag. See the documentation for
+    //! getImplicitProertiesFlag() for a discussion of what this means.
+    void setImplicitPropertiesFlag(bool val) { df_implicitProperties=val; };
+
   private:
     bool df_needsInit;
+    bool df_implicitProperties;
     MOL_SPTR_VECT m_reactantTemplates,m_productTemplates;
     ChemicalReaction &operator=(const ChemicalReaction &); // disable assignment
     MOL_SPTR_VECT generateOneProductSet(const MOL_SPTR_VECT &reactants,const std::vector<MatchVectType> &reactantsMatch) const;

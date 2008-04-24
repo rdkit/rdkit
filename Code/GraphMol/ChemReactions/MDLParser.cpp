@@ -152,8 +152,11 @@ namespace RDKit {
       if(!prod){
         throw ChemicalReactionParserException("Null product in reaction file.");
       }
+
       res->addProductTemplate(ROMOL_SPTR(prod));
     }
+    // RXN-based reactions do not have implicit properties
+    res->setImplicitPropertiesFlag(false);
     return res;  
   };
 
