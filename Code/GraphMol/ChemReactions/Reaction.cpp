@@ -104,7 +104,11 @@ namespace RDKit {
     void updateImplicitAtomProperties(Atom *prodAtom,const Atom *reactAtom){
       PRECONDITION(prodAtom,"no product atom");
       PRECONDITION(reactAtom,"no reactant atom");
-      
+      if(prodAtom->getAtomicNum()!=reactAtom->getAtomicNum()){
+        // if we changed atom identity all bets are off, just
+        // return
+        return;
+      }
       if(!prodAtom->hasProp("_QueryFormalCharge")){
         prodAtom->setFormalCharge(reactAtom->getFormalCharge());
       }

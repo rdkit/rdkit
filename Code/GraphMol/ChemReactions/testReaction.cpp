@@ -1537,7 +1537,6 @@ void test18PropertyTransfer(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   TEST_ASSERT(prod->getNumAtoms()==1);
-  BOOST_LOG(rdErrorLog)<<">>>"<<prod->getAtomWithIdx(0)->getMass()<<std::endl;
   TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
 
   reacts.clear();
@@ -1639,7 +1638,28 @@ void test18PropertyTransfer(){
   TEST_ASSERT(prod->getNumAtoms()==1);
   TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
 
+  delete rxn;
+  smi = "[C:1](=[O:2])>>[C:1](=[S:2])";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
 
+  reacts.clear();
+  smi = "C=O";
+  mol = SmilesToMol(smi);
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==2);
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
+  TEST_ASSERT(feq(prod->getAtomWithIdx(1)->getMass(),32,.1));
+  
   // ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ -----
   // now look at some other properties
   delete rxn;
