@@ -136,9 +136,9 @@ template<typename T> void TaniTest(T &arg){
       FromDaylightString(v2,fps[j]);
       double tani=TanimotoSimilarity(v1,v2);
       TEST_ASSERT(feq(tani,dists[idx]));
-      tani = SimilarityWrapper(v1,v2,TanimotoSimilarity);
+      tani = SimilarityWrapper(v1,v2,TanimotoSimilarity<T,T>);
       TEST_ASSERT(feq(tani,dists[idx]));
-      tani = SimilarityWrapper(v1,v2,TanimotoSimilarity,true);
+      tani = SimilarityWrapper(v1,v2,TanimotoSimilarity<T,T>,true);
       TEST_ASSERT(feq(tani,1.-dists[idx]));
       idx++;
     }
