@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2007 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and  Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -158,9 +158,9 @@ namespace RDKit{
 
 const std::string defaultParamData=
 "#ID	SMARTS	logP	MR	Notes/Questions\n"
-"C1	[CH4]	0.1411	2.503	\n"
-"C1	[CH3]C	0.1411	2.503	\n"
-"C1	[CH2](C)C	0.1411	2.503	\n"
+"C1	[CH4]	0.1441	2.503	\n"
+"C1	[CH3]C	0.1441	2.503	\n"
+"C1	[CH2](C)C	0.1441	2.503	\n"
 "C2	[CH](C)(C)C	0	2.433	\n"
 "C2	[C](C)(C)(C)C	0	2.433	\n"
 "C2	[CH3][N,O,S,F,Cl,Br,I]	-0.2035	2.753	\n"
@@ -212,8 +212,8 @@ const std::string defaultParamData=
 "N7	[N+0]([A;!#1])([A;!#1])[A;!#1]	-0.3187	1.839	\n"
 "N8	[N+0](a)([!#1;A,a])[A;!#1]	-0.4458	2.819	\n"
 "N8	[N+0](a)(a)a	-0.4458	2.819	\n"
-"N9	[N+0]#[A;!#1]	0.01058	1.725	\n"
-"N10	[NH3,NH2,NH;+,+2,+3]	-0.195		\n"
+"N9	[N+0]#[A;!#1]	0.01508	1.725	\n"
+"N10	[NH3,NH2,NH;+,+2,+3]	-1.95		\n"
 "N11	[n+0]	-0.3239	2.202	\n"
 "N12	[n;+,+2,+3]	-1.119		\n"
 "N13	[NH0;+,+2,+3]([A;!#1])([A;!#1])([A;!#1])[A;!#1]	-0.3396	0.2604	\n"

@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2002,2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -26,7 +26,7 @@ class TestCase(unittest.TestCase):
     smis=[]
     clogs=[]
     mrs=[]
-    for line in open(self.fName,'r').xreadlines():
+    for line in file(self.fName,'r').xreadlines():
       if len(line) and line[0] != '#':
         splitL = line.split(',')
         if len(splitL)==3:
@@ -41,18 +41,23 @@ class TestCase(unittest.TestCase):
   def testLogP(self):
     self._readData()
     nMols = len(self.smis)
+    #outF = file(self.fName,'w')
     for i in range(nMols):
       smi = self.smis[i]
       mol = Chem.MolFromSmiles(smi)
 
-      clog = self.clogs[i]
-      tmp = Crippen.MolLogP(mol)
-      self.failUnless(feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp))
+      if 1:
+        clog = self.clogs[i]
+        tmp = Crippen.MolLogP(mol)
+        self.failUnless(feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp))
 
-      mr = self.mrs[i]
-      tmp = Crippen.MolMR(mol)
-      self.failUnless(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
-      
+        mr = self.mrs[i]
+        tmp = Crippen.MolMR(mol)
+        self.failUnless(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
+      else:
+        clog = Crippen.MolLogP(mol)
+        mr = Crippen.MolMR(mol)
+        print >>outF,'%s,%.4f,%.4f'%(smi,clog,mr)
   def testRepeat(self):
     self._readData()
     nMols = len(self.smis)
@@ -63,13 +68,33 @@ class TestCase(unittest.TestCase):
       clog = self.clogs[i]
       tmp = Crippen.MolLogP(mol)
       tmp = Crippen.MolLogP(mol)
-      self.failUnless(feq(clog,tmp),'bad logp for %s: %4.4f != %4.4f'%(smi,clog,tmp))
+      self.failUnless(feq(clog,tmp),'bad logp fooutF,r %s: %4.4f != %4.4f'%(smi,clog,tmp))
 
       mr = self.mrs[i]
       tmp = Crippen.MolMR(mol)
       tmp = Crippen.MolMR(mol)
       self.failUnless(feq(mr,tmp),'bad MR for %s: %4.4f != %4.4f'%(smi,mr,tmp))
       
+  def _writeDetailFile(self,inF,outF):
+    while 1:
+      try:
+        smi,refContribs = cPickle.load(inF)
+      except EOFError:
+        break
+      else:
+        try:
+          mol = Chem.MolFromSmiles(smi)
+        except:
+          import traceback
+          traceback.print_exc()
+          mol = None
+        if mol:
+          mol=Chem.AddHs(mol,1)
+          smi2 = Chem.MolToSmiles(mol)
+          contribs = Crippen._GetAtomContribs(mol)
+          cPickle.dump((smi,contribs),outF)
+        else:
+          print 'Problems with SMILES:',smi
   def _doDetailFile(self,inF,nFailsAllowed=1):
     done = 0
     verbose=0
@@ -119,13 +144,19 @@ class TestCase(unittest.TestCase):
           print 'Problems with SMILES:',smi
   def testDetails(self):
     Crippen._Init()
-    inF = open(self.detailName,'rb+')
+    inF = open(self.detailName,'rb')
+    if 0:
+      outF = open('tmp.pkl','wb+')
+      self._writeDetailFile(inF,outF)
     self._doDetailFile(inF)
 
   def testDetails2(self):
     Crippen._Init()
-    inF = open(self.detailName2,'rb+')
-    self._doDetailFile(inF,5)
+    inF = open(self.detailName2,'rb')
+    if 0:
+      outF = open('tmp.pkl','wb+')
+      self._writeDetailFile(inF,outF)
+    self._doDetailFile(inF)
 
   def testIssue80(self):
     from Chem import Lipinski
@@ -138,7 +169,7 @@ class TestCase(unittest.TestCase):
   def testIssue1749494(self):
     m1 = Chem.MolFromSmiles('[*]CC')
     v = Crippen.MolLogP(m1)
-    self.failUnless(feq(v,0.9709))
+    self.failUnless(feq(v,0.9739))
     
           
       

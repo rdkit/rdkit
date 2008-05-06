@@ -19,7 +19,7 @@
 namespace RDKit {
   class ROMol;
   namespace Descriptors {
-    const std::string crippenVersion="1.0.0";
+    const std::string crippenVersion="1.1.0";
 
     //! generate atomic contributions to the Wildman-Crippen LogP and MR
     //! estimates for a molecule

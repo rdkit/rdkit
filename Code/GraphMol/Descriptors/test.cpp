@@ -48,19 +48,19 @@ void test2(){
   mol = SmilesToMol("C");
   TEST_ASSERT(mol);
   CalcCrippenDescriptors(*mol,logp,mr);
-  TEST_ASSERT(feq(logp,0.6331));
+  TEST_ASSERT(feq(logp,0.6361));
   TEST_ASSERT(feq(mr,6.7310));
   // check that caching works:
   CalcCrippenDescriptors(*mol,logp,mr);
-  TEST_ASSERT(feq(logp,0.6331));
+  TEST_ASSERT(feq(logp,0.6361));
   TEST_ASSERT(feq(mr,6.7310));
   CalcCrippenDescriptors(*mol,logp,mr,true,true);
-  TEST_ASSERT(feq(logp,0.6331));
+  TEST_ASSERT(feq(logp,0.6361));
   TEST_ASSERT(feq(mr,6.7310));
 
   // check that things work when we don't add Hs:
   CalcCrippenDescriptors(*mol,logp,mr,false,true);
-  TEST_ASSERT(feq(logp,0.1411));
+  TEST_ASSERT(feq(logp,0.1441));
   TEST_ASSERT(feq(mr,2.503));
   delete mol;
 
@@ -102,14 +102,14 @@ void test2(){
   mol = SmilesToMol("C(C)(C)C");
   TEST_ASSERT(mol);
   CalcCrippenDescriptors(*mol,logp,mr);
-  TEST_ASSERT(feq(logp,1.6533));
+  TEST_ASSERT(feq(logp,1.6623));
   TEST_ASSERT(feq(mr,20.512));
   delete mol;
 
   mol = SmilesToMol("C(C)(C)(C)O");
   TEST_ASSERT(mol);
   CalcCrippenDescriptors(*mol,logp,mr);
-  TEST_ASSERT(feq(logp,0.7682));
+  TEST_ASSERT(feq(logp,0.7772));
   TEST_ASSERT(feq(mr,21.9718));
   delete mol;
 
