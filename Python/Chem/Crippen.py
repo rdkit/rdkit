@@ -158,7 +158,7 @@ def pyMolLogP(inMol,patts=None,order=None,verbose=0,addHs=1):
   atomContribs = _pyGetAtomContribs(mol,patts,order,verbose=verbose)
   #print 'AC:',atomContribs
   return sum(atomContribs)[0]
-pyMolLogP.version="1.0.0"
+pyMolLogP.version="1.1.0"
 
 def pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
   """ Crippen MR value
@@ -207,12 +207,39 @@ def pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
 
   atomContribs = _pyGetAtomContribs(mol,patts,order,verbose=verbose)
   return sum(atomContribs)[1]
-pyMolMR.version="1.0.0"
+pyMolMR.version="1.1.0"
 
 MolLogP=lambda *x,**y:rdMolDescriptors.CalcCrippenDescriptors(*x,**y)[0]
 MolLogP.version=rdMolDescriptors.__CalcCrippenDescriptors_version__
+MolLogP.__doc__=""" Wildman-Crippen LogP value
+
+  Uses an atom-based scheme based on the values in the paper:
+     S. A. Wildman and G. M. Crippen JCICS 39 868-873 (1999)
+
+  **Arguments**
+
+    - inMol: a molecule
+
+    - addHs: (optional) toggles adding of Hs to the molecule for the calculation.
+      If true, hydrogens will be added to the molecule and used in the calculation.
+
+"""
+
 MolMR=lambda *x,**y:rdMolDescriptors.CalcCrippenDescriptors(*x,**y)[1]
 MolMR.version=rdMolDescriptors.__CalcCrippenDescriptors_version__
+MolMR.__doc__=""" Wildman-Crippen MR value
+
+  Uses an atom-based scheme based on the values in the paper:
+     S. A. Wildman and G. M. Crippen JCICS 39 868-873 (1999)
+
+  **Arguments**
+
+    - inMol: a molecule
+
+    - addHs: (optional) toggles adding of Hs to the molecule for the calculation.
+      If true, hydrogens will be added to the molecule and used in the calculation.
+
+"""
 
 if __name__=='__main__':
   import sys
