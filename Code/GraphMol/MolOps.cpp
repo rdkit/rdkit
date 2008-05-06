@@ -37,7 +37,7 @@ namespace RDKit{
           // zwitterionic form.  e.g.:
           //  CN(=O)=O -> C[N+](=O)[O-]
           // and:
-          //  C1=CC=CN(=O)=C1 -> C1=CC=C[N+](O)=C1
+          //  C1=CC=CN(=O)=C1 -> C1=CC=C[N+]([O-])=C1
 
           // we only want to do neutrals so that things like this don't get
           // munged: 
