@@ -82,7 +82,7 @@ namespace RDKit{
         if(atom->getOwningMol().hasProp("_doIsoSmiles")){
           if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
             needsBracket = true;
-          } else if(massDiff>0.01){
+          } else if(massDiff>0.1){
             needsBracket=true;
           }
         }
@@ -91,7 +91,7 @@ namespace RDKit{
       }
       if( needsBracket ) res << "[";
 
-      if(massDiff>0.01 && atom->getOwningMol().hasProp("_doIsoSmiles")){
+      if(massDiff>0.1 && atom->getOwningMol().hasProp("_doIsoSmiles")){
         int iMass=static_cast<int>(atom->getMass()+.1);
         res <<iMass;
       }
