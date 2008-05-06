@@ -1,2 +1,0 @@
-13:58:42 [app] testing 1-2-3
-13:58:46 [app] an application message

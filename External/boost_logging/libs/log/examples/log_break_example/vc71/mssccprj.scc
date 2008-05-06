@@ -1,9 +1,0 @@
-SCC = This is a Source Code Control file
-
-[logbreak_example.sln]
-SCC_Aux_Path = "D:\vss"
-SCC_Project_Name = "$/projects/lib/boost-root/libs/log/examples/log_break_example/vc71", RLOAAAAA
-
-[logbreak_example.vcproj]
-SCC_Aux_Path = "D:\vss"
-SCC_Project_Name = "$/projects/lib/boost-root/libs/log/examples/log_break_example/vc71", RLOAAAAA

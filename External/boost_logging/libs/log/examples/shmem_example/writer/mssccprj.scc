@@ -1,9 +1,0 @@
-SCC = This is a Source Code Control file
-
-[basic.vcproj]
-SCC_Aux_Path = "D:\vss"
-SCC_Project_Name = "$/projects/lib/boost-root/libs/log/examples/shmem_example/writer", GNWAAAAA
-
-[writer.sln]
-SCC_Aux_Path = "D:\vss"
-SCC_Project_Name = "$/projects/lib/boost-root/libs/log/examples/shmem_example/writer", GNWAAAAA
