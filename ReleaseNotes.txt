@@ -14,16 +14,21 @@ Acknowledgements:
    Adrian Schreyer, Noel O'Boyle, and Markus Kossner.
 
 Bug Fixes
- - A core leak in MolAlign::getAlignmentTransform was fixed (issue 1899787)
+ - A core leak in MolAlign::getAlignmentTransform was fixed (issue
+   1899787) 
  - Mol suppliers now reset the EOF flag on their stream after they run
    off the end (issue 1904170) 
  - A problem causing the string "Sc" to not parse correctly in
    recursive SMARTS was fixed (issue 1912895) 
+ - Combined recursive smarts queries are now output correctly.
+   (issue 1914154)
  - A bug in the handling of chirality in reactions was fixed (issue
    1920627) 
  - Looping directly over a supplier no longer causes a crash (issue
    1928819) 
  - a core leak in the smiles parser was fixed (issue 1929199)
+ - Se and Te are now potential aromatic atoms (per the proposed
+   OpenSmiles standard). (issue 1932365)
  - isotope information (and other atomic modifiers) are now correctly
    propagated by chemical reactions (issue 1934052)
  - triple bonds no longer contribute 2 electrons to the count for
@@ -80,8 +85,6 @@ Other
    replaced with the much less powerful and flexible approach of just
    sending things to stdout or stderr. If and when the logging library
    is accepted into Boost, it will be integrated.
-
-
 
 ******  Release_Jan2008_1 *******
 (Changes relative to Release_Aug2007_1)
