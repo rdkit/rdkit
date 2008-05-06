@@ -2,29 +2,52 @@
 (Changes relative to Release_Jan2008_1)
  
 !!!!!! IMPORTANT !!!!!!
- - Bug fixes in the canonicalization algorithm have made it so that
-   the canonical SMILES from this version are not compatible with
-   those from older versions of the RDKit.
+ - A fix to the values of the parameters for the Crippen LogP
+   calculator means that the values calculated with this version are
+   not backwards compatible. Old values should be recalculated.
  - Please read the point about dummy atoms in the "New Features"
-   section. It explains a forthcoming change that will affect
-   backwards compatibility when dealing with dummy atoms.
- - The build system has been completely changed. Makefiles and Visual
-   Studio project files have been removed. See the "Other" section for
-   more info.
-   
+   section. It explains a change that affects backwards compatibility
+   when dealing with dummy atoms. 
+
 Acknowledgements:
  - Some of the bugs fixed in this release were found and reported by
    Adrian Schreyer, Noel O'Boyle, and Markus Kossner.
 
 Bug Fixes
  - A core leak in MolAlign::getAlignmentTransform was fixed (issue 1899787)
- - Mol suppliers now reset the EOF flag on their stream after they run off the end (issue 1904170)
- - A problem causing the string "Sc" to not parse correctly in recursive SMARTS was fixed (issue 1912895)
- - A bug in the handling of chirality in reactions was fixed (issue 1920627)
- - Looping directly over a supplier no longer causes a crash (issue 1928819)
+ - Mol suppliers now reset the EOF flag on their stream after they run
+   off the end (issue 1904170) 
+ - A problem causing the string "Sc" to not parse correctly in
+   recursive SMARTS was fixed (issue 1912895) 
+ - A bug in the handling of chirality in reactions was fixed (issue
+   1920627) 
+ - Looping directly over a supplier no longer causes a crash (issue
+   1928819) 
  - a core leak in the smiles parser was fixed (issue 1929199)
+ - isotope information (and other atomic modifiers) are now correctly
+   propagated by chemical reactions (issue 1934052)
+ - triple bonds no longer contribute 2 electrons to the count for
+   aromaticity (issue 1940646)
+ - Two bugs connected with square brackets in SMILES were fixed
+   (issues 1942220 and 1942657)
+ - atoms with coordination numbers higher than 4 now have tetrahedral
+   stereochemistry removed (issue 1942656)
+ - Bond.SetStereo() is no longer exposed to Python (issue 1944575)
+ - A few typos in the parameter data for the Crippen logp calculator
+   were fixed. Values calculated with this version should be assumed
+   to not be backwards compatible with older versions (issue 1950302)
+ - Isotope queries are now added correctly (if perhaps not optimally)
+   to SMARTS. 
 
 New Features
+ - Support for supplying dummy atoms as "[Du]", "[X]", "[Xa]", etc. is
+   now considered deprecated. In this release a warning will be
+   generated for these forms and in the next release the old form will
+   generate errors. Note that the output of dummy atoms has also
+   changed: the default output format is now "*", this means that the
+   canonical SMILES for molecules containing dummies are no longer
+   compatible with the canonical SMILES from previous releases.  (feature request
+   186217)
  - Atom and bond query information is now serializable; i.e. query
    molecules can now be pickled and not lose the query
    information. (feature request 1756596)
@@ -33,15 +56,32 @@ New Features
  - Conformations now support a dimensionality flag. Dimensionality
    information is now read from mol blocks and TDT files. (feature request
    1906758)
- - Support for supplying dummy atoms as "[Du]", "[X]", "[Xa]", etc. is
-   now considered deprecated. In this release a warning will be
-   generated for these forms and in the next release the old form will
-   generate errors. Note that the output of dummy atoms has also
-   changed: the default output format is now "*".  (feature request
-   186217)
+ - Bulk Dice similarity functions have been added for IntSparseIntVect
+   and LongSparseIntVect (feature request 1936450)
+ - Exceptions are no longer thrown during molecule parsing. Failure in
+   molecule parsing is indicated by returning None. Failure to *open* a
+   file when reading a molecule throws BadFileExceptions (feature
+   requests 1932875 and 1938303)
+ - The various similarity functions for BitVects and SparseIntVects
+   now take an optional returnDistance argument. If this is provided,
+   the functions return the corresponding distance instead of
+   similarity.
+ - Some additional query information from Mol files is now translated
+   when generating SMARTS. Additional queries now translated:
+     - number of ring bonds
+     - unsaturation queries
+     - atom lists are handled better as well
+   (feature request 1902466)
 
 Other
-   
+ - The unofficial and very obsolete version of John Torjo's v1
+   boost::logging library that was included with the RDKit
+   distribution is no longer used. The logging library has been
+   replaced with the much less powerful and flexible approach of just
+   sending things to stdout or stderr. If and when the logging library
+   is accepted into Boost, it will be integrated.
+
+
 
 ******  Release_Jan2008_1 *******
 (Changes relative to Release_Aug2007_1)
