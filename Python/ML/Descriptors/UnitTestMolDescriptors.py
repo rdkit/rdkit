@@ -16,9 +16,9 @@ class TestCase(unittest.TestCase):
     self.descs = ['MolLogP','Chi1v']
     self.calc = MoleculeDescriptors.MolecularDescriptorCalculator(self.descs)
     self.testD = [
-      ('CCOC',    (0.6497, 1.40403)),
-      ('CC=O',    (0.2022, 0.81305)),
-      ('CCC(=O)O',(0.475, 1.48839))]
+      ('CCOC',    (0.6527, 1.40403)),
+      ('CC=O',    (0.2052, 0.81305)),
+      ('CCC(=O)O',(0.481, 1.48839))]
 
   def testGetNames(self):
     assert self.calc.GetDescriptorNames()==tuple(self.descs),'bad descriptor names: %s'%(self.calc.GetDescriptorNames())
