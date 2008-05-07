@@ -18,17 +18,20 @@
 
 namespace RDKit{
   // caller owns the result, it must be deleted
-  ExplicitBitVect *DaylightFingerprintMol(const ROMol &mol,unsigned int minPath,
+  ExplicitBitVect *DaylightFingerprintMol(const ROMol &mol,
+                                          unsigned int minPath,
 					  unsigned int maxPath,
-					  unsigned int fpSize,unsigned int nBitsPerHash,
+					  unsigned int fpSize,
+                                          unsigned int nBitsPerHash,
 					  bool useHs,
-					  double tgtDensity,unsigned int minSize){
+					  double tgtDensity,
+                                          unsigned int minSize){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
     PRECONDITION(nBitsPerHash!=0,"nBitsPerHash==0");
 
-    typedef boost::minstd_rand rng_type;
+    typedef boost::mt19937 rng_type;
     typedef boost::uniform_int<> distrib_type;
     typedef boost::variate_generator<rng_type &,distrib_type> source_type;
     rng_type generator(42u);
@@ -53,8 +56,9 @@ namespace RDKit{
 	float balabanJ = static_cast<float>(MolOps::computeBalabanJ(mol,true,true,
 								    &path,false));
 	
-	unsigned long seed = *(unsigned long *)(&balabanJ);
-	generator.seed(seed);
+        boost::hash<float> floatHasher;
+	unsigned long seed = floatHasher(balabanJ);
+	generator.seed(static_cast<rng_type::result_type>(seed));
 
 	for(unsigned int i=0;i<nBitsPerHash;i++){
 	  unsigned int bit = randomSource();
@@ -89,7 +93,7 @@ namespace RDKit{
     PRECONDITION(fpSize!=0,"fpSize==0");
     PRECONDITION(nBitsPerHash!=0,"nBitsPerHash==0");
 
-    typedef boost::minstd_rand rng_type;
+    typedef boost::mt19937 rng_type;
     typedef boost::uniform_int<> distrib_type;
     typedef boost::variate_generator<rng_type &,distrib_type> source_type;
     rng_type generator(42u);
@@ -177,7 +181,7 @@ namespace RDKit{
         // seen in order to avoid resetting them. In some benchmarking I did, that
         // seemed to actually result in a longer runtime (at least when using
         // an std::set to store the hashes)
-        generator.seed(seed);
+        generator.seed(static_cast<rng_type::result_type>(seed));
         for(unsigned int i=0;i<nBitsPerHash;i++){
           unsigned int bit = randomSource();
           bit %= fpSize;
