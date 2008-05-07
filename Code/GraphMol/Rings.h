@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -66,7 +66,7 @@ namespace RingUtils {
      - each list of atom ids in "res" form a legitimate ring           
      - each of these list of ordered such that a ring can be traversed
   */
-  void convertToBonds(VECT_INT_VECT &res, VECT_INT_VECT &brings,
+  void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings,
 		      const RDKit::ROMol &mol);
 
 };

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -56,27 +56,6 @@ namespace RankAtoms {
     PRECONDITION(res.size()>=vect.size(),"vector size mismatch");
     unsigned int nEntries = vect.size();
 
-#if 0
-    std::priority_queue< std::pair<T,int>,
-                         std::vector< std::pair<T, int> >,
-                         pairGTFunctor<T> > sortedVect;
-    for(unsigned int i=0;i<nEntries;++i){
-      sortedVect.push(std::make_pair(vect[i],i));
-    }
-
-    int currRank=0;
-    T lastV = sortedVect.top().first;
-    for(unsigned int i=0;i<nEntries;++i){
-      const std::pair<T,int> &p = sortedVect.top();
-      if(p.first==lastV){
-        res[p.second] = currRank;
-      } else {
-        res[p.second] = ++currRank;
-        lastV = p.first;
-      }
-      sortedVect.pop();
-    }
-#else
     std::vector< std::pair<T,int> > sortedVect;
     sortedVect.resize(nEntries);
     for(unsigned int i=0;i<nEntries;++i){
@@ -94,7 +73,6 @@ namespace RankAtoms {
         lastV = p.first;
       }
     }
-#endif
   }    
 
   //! finds the relative rankings of the entries in \c vals.
@@ -121,30 +99,22 @@ namespace RankAtoms {
     newRanks.resize(vals.size());
     rankVect(vals,newRanks);
 
-    // EFF: this double vector strategy is maybe not the speediest
-    //   or most memory efficient.  The operation can probably be done
-    //   in place (in ranks) pretty painlessly, but I want to get
-    //   this damn thing WORKING.
-    INT_VECT fixedRanks;
-    fixedRanks.resize(nAtoms);
-
     // --------------
     //  
     // At the end of this operation, fixedRanks will contain the ranks
     // of atoms that are no longer active (-1 for active atoms).
     //
     // --------------
-    fixedRanks = ranks;
-    INT_LIST::const_iterator ilCIt;
-    for(ilCIt=indicesInPlay.begin();ilCIt!=indicesInPlay.end();ilCIt++){
-      fixedRanks[*ilCIt] = -1;
+    for(INT_LIST::const_iterator ilCIt=indicesInPlay.begin();
+        ilCIt!=indicesInPlay.end();++ilCIt){
+      ranks[*ilCIt] = -1;
     }
 
 #ifdef VERYVERBOSE_CANON
     std::cout << "new: ";
     debugVect(newRanks);
     std::cout << "fixed: ";
-    debugVect(fixedRanks);
+    debugVect(ranks);
 #endif
 
     INT_VECT idxVect;
@@ -161,34 +131,33 @@ namespace RankAtoms {
     int maxNewRank = *(std::max_element(newRanks.begin(),newRanks.end()));
     while(currNewRank<=maxNewRank){
       //
-      // If this rank is already present in fixedRanks, increment
+      // If this rank is already present in ranks, increment
       //  this rank and all new ranks that are higher:
       //
-      while(std::find(fixedRanks.begin(),fixedRanks.end(),currNewRank)!=fixedRanks.end()){
-        for(ivIt=newRanks.begin();ivIt!=newRanks.end();ivIt++){
+      while(std::find(ranks.begin(),ranks.end(),currNewRank)!=ranks.end()){
+        for(ivIt=newRanks.begin();ivIt!=newRanks.end();++ivIt){
           if(*ivIt>=currNewRank)
             *ivIt += 1;
         }
         // increment both thie current rank *and* the maximum new rank
-        currNewRank++;
-        maxNewRank++;
+        ++currNewRank;
+        ++maxNewRank;
       }
 
       //
       //  now grab all entries with this new rank and copy them into
-      //  the fixedRanks list
+      //  the ranks list
       //
       ivIt=std::find(newRanks.begin(),newRanks.end(),currNewRank);
       while(ivIt!=newRanks.end()){
         int offset=ivIt-newRanks.begin();
         int idx = idxVect[offset];
-        fixedRanks[idx] = currNewRank;
+        ranks[idx] = currNewRank;
         ivIt++;
         ivIt=std::find(ivIt,newRanks.end(),currNewRank);
       }
-      currNewRank++;
+      ++currNewRank;
     }
-    ranks = fixedRanks;
   }
 }
 #endif
