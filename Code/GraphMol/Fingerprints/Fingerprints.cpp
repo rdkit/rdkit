@@ -31,7 +31,7 @@ namespace RDKit{
     PRECONDITION(fpSize!=0,"fpSize==0");
     PRECONDITION(nBitsPerHash!=0,"nBitsPerHash==0");
 
-    typedef boost::mt19937 rng_type;
+    typedef boost::minstd_rand rng_type;
     typedef boost::uniform_int<> distrib_type;
     typedef boost::variate_generator<rng_type &,distrib_type> source_type;
     rng_type generator(42u);
@@ -56,8 +56,9 @@ namespace RDKit{
 	float balabanJ = static_cast<float>(MolOps::computeBalabanJ(mol,true,true,
 								    &path,false));
 	
-        boost::hash<float> floatHasher;
-	unsigned long seed = floatHasher(balabanJ);
+        //boost::hash<float> floatHasher;
+	//unsigned long seed = floatHasher(balabanJ);
+        unsigned long seed = *(unsigned long *)&balabanJ;
 	generator.seed(static_cast<rng_type::result_type>(seed));
 
 	for(unsigned int i=0;i<nBitsPerHash;i++){
