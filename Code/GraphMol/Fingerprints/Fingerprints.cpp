@@ -84,7 +84,7 @@ namespace RDKit{
 
 
   // caller owns the result, it must be deleted
-  ExplicitBitVect *RDKFingerprintMol2(const ROMol &mol,unsigned int minPath,
+  ExplicitBitVect *RDKFingerprintMol(const ROMol &mol,unsigned int minPath,
                                       unsigned int maxPath,
                                       unsigned int fpSize,unsigned int nBitsPerHash,
                                       bool useHs,

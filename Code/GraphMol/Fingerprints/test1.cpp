@@ -128,15 +128,15 @@ void test1alg2(){
   std::string smi = "C1=CC=CC=C1";
   RWMol *m1 = SmilesToMol(smi);
   TEST_ASSERT(m1->getNumAtoms()==6);
-  ExplicitBitVect *fp1=RDKFingerprintMol2(*m1);
-  ExplicitBitVect *fp2=RDKFingerprintMol2(*m1);
+  ExplicitBitVect *fp1=RDKFingerprintMol(*m1);
+  ExplicitBitVect *fp2=RDKFingerprintMol(*m1);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>=0.0);
   
   smi = "C1=CC=CC=N1";
   RWMol *m2 = SmilesToMol(smi);
   delete fp2;
-  fp2=RDKFingerprintMol2(*m2);
+  fp2=RDKFingerprintMol(*m2);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
 
@@ -154,9 +154,9 @@ void test2alg2(){
   RWMol *m1 = SmilesToMol(smi);
   TEST_ASSERT(m1->getNumAtoms()==6);
   BOOST_LOG(rdInfoLog) <<"--------------------  fp1 " << std::endl;
-  ExplicitBitVect *fp1=RDKFingerprintMol2(*m1,1,4,2048,4,false);
+  ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,4,false);
   BOOST_LOG(rdInfoLog) <<"--------------------  fp2 " << std::endl;
-  ExplicitBitVect *fp2=RDKFingerprintMol2(*m1,1,4,2048,4,false);
+  ExplicitBitVect *fp2=RDKFingerprintMol(*m1,1,4,2048,4,false);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
 
   INT_VECT::const_iterator i;
@@ -170,7 +170,7 @@ void test2alg2(){
   RWMol *m2 = SmilesToMol("CC");
   delete fp2;
   BOOST_LOG(rdInfoLog) <<"--------------------  fp2 " << std::endl;
-  fp2=RDKFingerprintMol2(*m2,1,4,2048,4,false);
+  fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
   TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
@@ -178,7 +178,7 @@ void test2alg2(){
   delete m2;
   m2 = SmilesToMol("CC=O");
   delete fp2;
-  fp2=RDKFingerprintMol2(*m2,1,4,2048,4,false);
+  fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
   TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
@@ -186,7 +186,7 @@ void test2alg2(){
   delete m2;
   m2 = SmilesToMol("CCCOC");
   delete fp2;
-  fp2=RDKFingerprintMol2(*m2,1,4,2048,4,false);
+  fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
   TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
@@ -208,20 +208,20 @@ void test4Trends(){
   ExplicitBitVect *fp1,*fp2;
   
   m = SmilesToMol("CCC");
-  fp1=RDKFingerprintMol2(*m);
+  fp1=RDKFingerprintMol(*m);
   delete m;
   m = SmilesToMol("C1CC1");
-  fp2=RDKFingerprintMol2(*m);
+  fp2=RDKFingerprintMol(*m);
   sim1=TanimotoSimilarity(*fp1,*fp2);
 
   delete m;
   m = SmilesToMol("CCCC");
   delete fp1;
-  fp1=RDKFingerprintMol2(*m);
+  fp1=RDKFingerprintMol(*m);
   delete m;
   m = SmilesToMol("C1CCC1");
   delete fp2;
-  fp2=RDKFingerprintMol2(*m);
+  fp2=RDKFingerprintMol(*m);
   sim2=TanimotoSimilarity(*fp1,*fp2);
   TEST_ASSERT(sim2>sim1);
   sim2=sim1;
@@ -229,11 +229,11 @@ void test4Trends(){
   delete m;
   m = SmilesToMol("CCCCC");
   delete fp1;
-  fp1=RDKFingerprintMol2(*m);
+  fp1=RDKFingerprintMol(*m);
   delete m;
   m = SmilesToMol("C1CCCC1");
   delete fp2;
-  fp2=RDKFingerprintMol2(*m);
+  fp2=RDKFingerprintMol(*m);
   sim2=TanimotoSimilarity(*fp1,*fp2);
   TEST_ASSERT(sim2>sim1);
   sim2=sim1;
@@ -241,11 +241,11 @@ void test4Trends(){
   delete m;
   m = SmilesToMol("CCCCCC");
   delete fp1;
-  fp1=RDKFingerprintMol2(*m);
+  fp1=RDKFingerprintMol(*m);
   delete m;
   m = SmilesToMol("C1CCCCC1");
   delete fp2;
-  fp2=RDKFingerprintMol2(*m);
+  fp2=RDKFingerprintMol(*m);
   sim2=TanimotoSimilarity(*fp1,*fp2);
   TEST_ASSERT(sim2>sim1);
   sim2=sim1;
@@ -253,11 +253,11 @@ void test4Trends(){
   delete m;
   m = SmilesToMol("CCCCCCC");
   delete fp1;
-  fp1=RDKFingerprintMol2(*m);
+  fp1=RDKFingerprintMol(*m);
   delete m;
   m = SmilesToMol("C1CCCCCC1");
   delete fp2;
-  fp2=RDKFingerprintMol2(*m);
+  fp2=RDKFingerprintMol(*m);
   sim2=TanimotoSimilarity(*fp1,*fp2);
   TEST_ASSERT(sim2>sim1);
   sim2=sim1;

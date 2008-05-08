@@ -649,7 +649,7 @@ namespace RDKit{
         bits in the fingerprint\n\
 \n\
 \n";
-      python::def("RDKFingerprint2", RDKFingerprintMol2,
+      python::def("RDKFingerprint", RDKFingerprintMol,
                   (python::arg("mol"),python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
