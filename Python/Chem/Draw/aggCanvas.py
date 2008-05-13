@@ -6,6 +6,7 @@
 #
 from aggdraw import Brush, Pen
 from aggdraw import Font
+import math
 import RDConfig,os
 
 faceMap={'sans':os.path.join(RDConfig.RDCodeDir,'Chem','Draw','FreeSans.ttf')}
@@ -14,16 +15,48 @@ def convertColor(color):
   color = (int(color[0]*255),int(color[1]*255),int(color[2]*255))
   return color
 
+def _doLine(canvas,p1,p2,pen,**kwargs):
+  if kwargs.get('dashes',(0,0)) == (0,0):
+    canvas.line((p1[0],p1[1],p2[0],p2[1]),pen)
+  else:
+    # the antialiasing makes the dashes appear too small
+    dash = [x*4 for x in kwargs['dashes']]
+    x1,y1=p1
+    x2,y2=p2
+    dx = x2-x1
+    dy = y2-y1
+    lineLen = math.sqrt(dx*dx+dy*dy)
+    theta = math.atan2(dy,dx)
+    cosT = math.cos(theta)
+    sinT = math.sin(theta)
+
+    pos = (x1,y1)
+    dist = 0
+    currDash = 0
+    dashOn = True
+    while dist < lineLen:
+      currL = dash[currDash%len(dash)]
+      if(dist+currL > lineLen): currL = lineLen-dist
+      endP = (pos[0] + currL*cosT, pos[1] + currL*sinT)
+      if dashOn:
+        canvas.line((pos[0],pos[1],endP[0],endP[1]),pen)
+      pos = endP
+      dist += currL
+      currDash += 1
+      dashOn = not dashOn
+    
+  
+
 def addCanvasLine(canvas,p1,p2,color=(0,0,0),color2=None,**kwargs):
   if color2 and color2!=color:
     mp = (p1[0]+p2[0])/2.,(p1[1]+p2[1])/2.
     color = convertColor(color)
-    canvas.line((p1[0],p1[1],mp[0],mp[1]),Pen(color,kwargs.get('linewidth',1)))
+    _doLine(canvas,p1,mp,Pen(color,kwargs.get('linewidth',1)),**kwargs)
     color2 = convertColor(color2)
-    canvas.line((mp[0],mp[1],p2[0],p2[1]),Pen(color2,kwargs.get('linewidth',1)))
+    _doLine(canvas,mp,p2,Pen(color2,kwargs.get('linewidth',1)),**kwargs)
   else:
     color = convertColor(color)
-    canvas.line((p1[0],p1[1],p2[0],p2[1]),Pen(color,kwargs.get('linewidth',1)))
+    _doLine(canvas,p1,p2,Pen(color,kwargs.get('linewidth',1)),**kwargs)
 
 def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
   color = convertColor(color)
