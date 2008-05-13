@@ -82,6 +82,9 @@ New Features
    fingerprints has been added. The new approach is a bit quicker and
    more robust than the old, but is not backwards compatible.
    Similarity trends are more or less conserved.
+ - The molecule drawing code in Chem.Draw.MolDrawing has been modified
+   so that it creates better drawings. A new option for drawing that
+   uses the AGG graphics library has been added.
 
 Other
  - The unofficial and very obsolete version of John Torjo's v1
