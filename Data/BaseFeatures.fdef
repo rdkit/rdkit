@@ -63,9 +63,11 @@ DefineFeature BasicGroup [{BasicNH2},{BasicNH1},{BasicNH0};!$(N[a])]
   Weights 1.0
 EndFeature
 
-DefineFeature PosN [#7;+]
-  Family PosIonizable
-  Weights 1.0
+# 14.11.2007 (GL): add !$([N+]-[O-]) constraint so we don't match
+# nitro (or similar) groups
+DefineFeature PosN [#7;+;!$([N+]-[O-])]
+ Family PosIonizable
+ Weights 1.0
 EndFeature
 
 # imidazole group can be positively charged (too promiscuous?)
@@ -151,8 +153,10 @@ EndFeature
 # hydrophobic features
 # any carbon that is not bonded to a polar atom is considered a hydrophobe
 # 
-# generic non-polar carbon atom
+# 23.11.2007 (GL): match any bond (not just single bonds); add #6 at
+#  beginning to make it more efficient
 AtomType Carbon_Polar [#6;$([#6]~[#7,#8,#9])]
+# 23.11.2007 (GL): don't match charged carbon
 AtomType Carbon_NonPolar [#6;+0;!{Carbon_Polar}]
 
 DefineFeature ThreeWayAttach [D3,D4;{Carbon_NonPolar}]
