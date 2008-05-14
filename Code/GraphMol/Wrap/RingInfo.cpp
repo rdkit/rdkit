@@ -11,8 +11,28 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 
-
 namespace python = boost::python;
+
+
+namespace {
+  using namespace RDKit;
+  python::object atomRings(const RingInfo *self){
+    python::list res;
+    VECT_INT_VECT rings=self->atomRings();
+    for(VECT_INT_VECT_I ringIt=rings.begin();ringIt!=rings.end();++ringIt){
+      res.append(python::tuple(*ringIt));
+    }
+    return python::tuple(res);
+  }
+  python::object bondRings(const RingInfo *self){
+    python::list res;
+    VECT_INT_VECT rings=self->bondRings();
+    for(VECT_INT_VECT_I ringIt=rings.begin();ringIt!=rings.end();++ringIt){
+      res.append(python::tuple(*ringIt));
+    }
+    return python::tuple(res);
+  }
+}
 
 namespace RDKit{
     std::string classDoc="contains information about a molecule's rings\n";
@@ -26,6 +46,8 @@ struct ringinfo_wrapper {
       .def("NumAtomRings",&RingInfo::numAtomRings)
       .def("NumBondRings",&RingInfo::numBondRings)
       .def("NumRings",&RingInfo::numRings)
+      .def("AtomRings",atomRings)
+      .def("BondRings",bondRings)
       ;
   };
 };

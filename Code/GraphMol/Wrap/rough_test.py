@@ -1591,13 +1591,13 @@ CAS<~>
     m = Chem.MolFromSmiles(smi)
     r = Chem.ReplaceCore(m,core)
     self.failUnless(r)
-    self.failUnless(Chem.MolToSmiles(r)=='[Xa]CC')
+    self.failUnless(Chem.MolToSmiles(r,True)=='[1*]CC')
 
     smi = 'C1CC(=O)CC1'
     m = Chem.MolFromSmiles(smi)
     r = Chem.ReplaceCore(m,core)
     self.failUnless(r)
-    self.failUnless(Chem.MolToSmiles(r) in ('[Xa]CCCC[Xb]','[Xb]CCCC[Xa]'))
+    self.failUnless(Chem.MolToSmiles(r,True) =='[1*]CCCC[2*]')
 
     smi = 'C1CC(=N)CC1'
     m = Chem.MolFromSmiles(smi)

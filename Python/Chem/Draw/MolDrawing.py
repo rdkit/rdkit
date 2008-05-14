@@ -119,6 +119,13 @@ class MolDrawing(object):
       for otherBond in a1.GetBonds():
         if otherBond.GetIdx()!=bondIdx and \
            otherBond.IsInRing():
+          sharedRing=False
+          for ring in self.bondRings:
+            if bondIdx in ring and otherBond.GetIdx() in ring:
+              sharedRing=True
+              break
+          if not sharedRing:
+            continue
           a3 = otherBond.GetOtherAtom(a1)
           if a3.GetIdx() != a2Idx:
             p3 = self.transformPoint(conf.GetAtomPosition(a3.GetIdx()))
@@ -276,6 +283,7 @@ class MolDrawing(object):
       
     self.atomPs[mol] = {}
     self.activeMol = mol
+    self.bondRings = mol.GetRingInfo().BondRings()
     for atom in mol.GetAtoms():
       idx = atom.GetIdx()
       pos = self.atomPs[mol].get(idx,None)
@@ -372,7 +380,12 @@ def registerCanvas(canvasNm):
   g['addCanvasPolygon']=addCanvasPolygon
         
 if __name__=='__main__':
-  mol = Chem.MolFromSmiles('O=C1C(CC=CN[C@H](Cl)Br)C(c2c(O)c(NN)ccc2)=C1C#N')
+  import sys
+  if len(sys.argv)<2:
+    mol = Chem.MolFromSmiles('O=C1C(CC=CN[C@H](Cl)Br)C(c2c(O)c(NN)ccc2)=C1C#N')
+  else:
+    mol = Chem.MolFromSmiles(sys.argv[1])
+    
   #mol = Chem.MolFromSmiles('OC1C(O)CC1')
   Chem.Kekulize(mol)
   from Chem import rdDepictor

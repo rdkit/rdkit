@@ -17,7 +17,6 @@ using namespace RDKit;
 
 void testDeleteSubstruct() 
 {
-  int i = 0;
   ROMol *mol1=0,*mol2=0,*matcher1=0,*matcher2=0,*matcher3=0;
   std::string smi,sma;
   
@@ -91,8 +90,7 @@ void testDeleteSubstruct()
 
 void testReplaceSubstructs() 
 {
-  int i = 0;
-  ROMol *mol1=0,*mol2=0,*matcher1=0,*frag=0;
+  ROMol *mol1=0,*matcher1=0,*frag=0;
   std::string smi,sma;
   std::vector<ROMOL_SPTR> vect;
 
@@ -178,7 +176,6 @@ void testReplaceSubstructs()
 
 void testReplaceSidechains() 
 {
-  int i = 0;
   ROMol *mol1=0,*mol2=0,*matcher1=0;
   std::string smi,sma;
   
@@ -218,8 +215,8 @@ void testReplaceSidechains()
   mol2 = replaceSidechains(*mol1,*matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==3);
-  smi = MolToSmiles(*mol2);
-  TEST_ASSERT(smi=="[Xa]C=O");
+  smi = MolToSmiles(*mol2,true);
+  TEST_ASSERT(smi=="[1*]C=O");
   
   delete mol1;
   smi = "CC(C)=O";
@@ -230,9 +227,9 @@ void testReplaceSidechains()
   mol2 = replaceSidechains(*mol1,*matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==4);
-  smi = MolToSmiles(*mol2);
+  smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xa]C([Xb])=O"||smi=="[Xb]C([Xa])=O");
+  TEST_ASSERT(smi=="[1*]C([2*])=O"||smi=="[2*]C([1*])=O");
 
   delete mol1;
   delete mol2;
@@ -243,7 +240,6 @@ void testReplaceSidechains()
 
 void testReplaceCore() 
 {
-  int i = 0;
   ROMol *mol1=0,*mol2=0,*matcher1=0;
   std::string smi,sma;
   
@@ -261,9 +257,9 @@ void testReplaceCore()
   mol2 = replaceCore(*mol1,*matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==4);
-  smi = MolToSmiles(*mol2);
+  smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xa]F.Cl[Xb]"||smi=="[Xb]F.Cl[Xa]");
+  TEST_ASSERT(smi=="[1*]Cl.[2*]F"||smi=="[2*]Cl.[1*]F");
 
   delete mol1;
   smi = "CCC=O";
@@ -279,8 +275,8 @@ void testReplaceCore()
   mol2 = replaceCore(*mol1,*matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==3);
-  smi = MolToSmiles(*mol2);
-  TEST_ASSERT(smi=="[Xa]CC");
+  smi = MolToSmiles(*mol2,true);
+  TEST_ASSERT(smi=="[1*]CC");
   
   delete mol1;
   smi = "C1C(=O)CC1";
@@ -296,9 +292,9 @@ void testReplaceCore()
   mol2 = replaceCore(*mol1,*matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
-  smi = MolToSmiles(*mol2);
+  smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xa]CCC[Xb]"||smi=="[Xb]CCC[Xa]");
+  TEST_ASSERT(smi=="[1*]CCC[2*]"||smi=="[1*]CCC[2*]");
 
 
   delete mol1;
@@ -315,9 +311,9 @@ void testReplaceCore()
   mol2 = replaceCore(*mol1,*matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==4);
-  smi = MolToSmiles(*mol2);
+  smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xa]C.[Xb]C"||smi=="[Xb]C.[Xa]C");
+  TEST_ASSERT(smi=="[1*]C.[2*]C"||smi=="[2*]C.[1*]C");
 
   delete mol1;
   smi = "OC1CCC1";
@@ -332,11 +328,11 @@ void testReplaceCore()
   delete mol2;
   mol2 = replaceCore(*mol1,*matcher1);
   TEST_ASSERT(mol2);
-  smi = MolToSmiles(*mol2);
+  smi = MolToSmiles(*mol2,true);
   TEST_ASSERT(mol2->getNumAtoms()==4);
-  smi = MolToSmiles(*mol2);
+  smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xb]C([Xa])O"||smi=="[Xa]C([Xb])O");
+  TEST_ASSERT(smi=="[2*]C([1*])O"||smi=="[1*]C([2*])O");
 
   delete mol1;
   smi = "C/C=C/CN/C=C/O";
@@ -354,8 +350,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2->getNumAtoms()==9);
   smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xa]C/C=C/C.O/C=C/[Xb]"||smi=="[Xb]C/C=C/C.O/C=C/[Xa]"||
-              smi=="[Xa]/C=C/O.C/C=C/C[Xb]"||smi=="[Xb]/C=C/O.C/C=C/C[Xa]");
+  TEST_ASSERT(smi=="[1*]C/C=C/C.[2*]/C=C/O"||smi=="[1*]/C=C/O.[2*]C/C=C/C");
 
   delete mol1;
   smi = "C[C@](F)(Cl)N";
@@ -371,7 +366,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[Xa][C@@](C)(F)Cl");
+  TEST_ASSERT(smi=="[1*][C@@](C)(F)Cl");
   delete mol1;
   smi = "C[C@](F)(N)Cl";
   mol1 = SmilesToMol(smi);
@@ -381,8 +376,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
   smi = MolToSmiles(*mol2,true);
-  BOOST_LOG(rdInfoLog)<<"smiles: "<<smi <<std::endl;
-  TEST_ASSERT(smi=="[Xa][C@](C)(F)Cl");
+  TEST_ASSERT(smi=="[1*][C@](C)(F)Cl");
   delete mol1;
   smi = "N[C@](C)(F)Cl";
   mol1 = SmilesToMol(smi);
@@ -392,8 +386,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
   smi = MolToSmiles(*mol2,true);
-  BOOST_LOG(rdInfoLog)<<"smiles: "<<smi <<std::endl;
-  TEST_ASSERT(smi=="[Xa][C@](C)(F)Cl");
+  TEST_ASSERT(smi=="[1*][C@](C)(F)Cl");
 
   delete mol1;
   smi = "C[C@@](F)(Cl)N";
@@ -409,7 +402,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[Xa][C@](C)(F)Cl");
+  TEST_ASSERT(smi=="[1*][C@](C)(F)Cl");
   delete mol1;
   smi = "C[C@@](F)(N)Cl";
   mol1 = SmilesToMol(smi);
@@ -419,7 +412,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[Xa][C@@](C)(F)Cl");
+  TEST_ASSERT(smi=="[1*][C@@](C)(F)Cl");
   smi = "C[C@@](N)(Cl)F";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
@@ -428,7 +421,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==5);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[Xa][C@@](C)(F)Cl");
+  TEST_ASSERT(smi=="[1*][C@@](C)(F)Cl");
 
 
   delete mol1;
@@ -445,7 +438,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==4);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[Xa][C@H](C)F");
+  TEST_ASSERT(smi=="[1*][C@H](C)F");
   delete mol1;
   smi = "C[C@H](N)F";
   mol1 = SmilesToMol(smi);
@@ -455,7 +448,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==4);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[Xa][C@@H](C)F");
+  TEST_ASSERT(smi=="[1*][C@@H](C)F");
 
   delete mol1;
   smi = "N[C@H](C)F";
@@ -466,8 +459,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==4);
   smi = MolToSmiles(*mol2,true);
-  BOOST_LOG(rdInfoLog)<<"smiles: "<<smi <<std::endl;
-  TEST_ASSERT(smi=="[Xa][C@H](C)F");
+  TEST_ASSERT(smi=="[1*][C@H](C)F");
   delete mol1;
   smi = "F[C@H](C)N";
   mol1 = SmilesToMol(smi);
@@ -477,7 +469,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==4);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[Xa][C@@H](C)F");
+  TEST_ASSERT(smi=="[1*][C@@H](C)F");
   
   delete mol1;
   smi = "N[C@H]1CCCO1";
@@ -488,7 +480,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==6);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[Xa][C@@H]1OCCC1");
+  TEST_ASSERT(smi=="[1*][C@@H]1OCCC1");
 
   delete mol1;
   smi = "ClC1CC(F)C1";
@@ -502,12 +494,11 @@ void testReplaceCore()
 
   mol2 = replaceCore(*mol1,*matcher1,false);
   TEST_ASSERT(mol2);
-  smi = MolToSmiles(*mol2);
-  BOOST_LOG(rdInfoLog)<<"smiles: "<<smi <<std::endl;
+  smi = MolToSmiles(*mol2,true);
   TEST_ASSERT(mol2->getNumAtoms()==4);
-  smi = MolToSmiles(*mol2);
+  smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xa]F.Cl[Xb]"||smi=="[Xb]F.Cl[Xa]");
+  TEST_ASSERT(smi=="[1*]F.[2*]Cl"||smi=="[1*]Cl.[2*]F");
 
   delete mol1;
   delete mol2;
@@ -518,7 +509,6 @@ void testReplaceCore()
 
 void testReplaceCoreCrash() 
 {
-  int i = 0;
   ROMol *mol1=0,*mol2=0,*matcher1=0;
   std::string smi,sma;
   
@@ -535,9 +525,9 @@ void testReplaceCoreCrash()
   mol2 = replaceCore(*mol1,*matcher1);
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==6);
-  smi = MolToSmiles(*mol2);
+  smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
-  TEST_ASSERT(smi=="[Xa]CC.[Xb]CC"||smi=="[Xb]CC.[Xa]CC");
+  TEST_ASSERT(smi=="[1*]CC.[2*]CC"||smi=="[2*]CC.[1*]CC");
 
 }
 

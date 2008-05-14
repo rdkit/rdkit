@@ -1,4 +1,4 @@
-******  Release_April2008_1 *******
+******  Release_May2008_1 *******
 (Changes relative to Release_Jan2008_1)
  
 !!!!!! IMPORTANT !!!!!!
@@ -42,7 +42,8 @@ Bug Fixes
    were fixed. Values calculated with this version should be assumed
    to not be backwards compatible with older versions (issue 1950302)
  - Isotope queries are now added correctly (if perhaps not optimally)
-   to SMARTS. 
+   to SMARTS.
+ - some drawing-related bugs have been cleared up. 
 
 
 New Features

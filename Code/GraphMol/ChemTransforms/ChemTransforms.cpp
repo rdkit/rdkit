@@ -219,11 +219,9 @@ namespace RDKit{
             // this neighbor isn't in the match, convert it to a dummy atom and save it
             Atom *at=newMol->getAtomWithIdx(*nbrIdx);
             at->setAtomicNum(0);
-            std::string label="X";
-            label+=static_cast<char>(static_cast<short>('a')+nDummies);
-            at->setProp("dummyLabel",label);
-            keepList.push_back(at);
             ++nDummies;
+            at->setMass(double(nDummies));
+            keepList.push_back(at);
           }
           nbrIdx++;
         }  
@@ -297,10 +295,8 @@ namespace RDKit{
           if(matchingIndices[nbrIdx]){
             bool removedPrecedingAtom=false;
             Atom *newAt=new Atom(0);
-            std::string label="X";
-            label+=static_cast<char>(static_cast<short>('a')+nDummies);
             ++nDummies;
-            newAt->setProp("dummyLabel",label);
+            newAt->setMass(double(nDummies));
             newMol->addAtom(newAt,false,true);
             keepList.push_back(newAt);
             Bond *bnd=connectingBond->copy();
