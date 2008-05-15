@@ -11,7 +11,7 @@ from Chem import Crippen
 from Chem import AllChem
 from Chem.ChemUtils.AlignDepict import AlignDepict
 
-_version="0.7.0"
+_version="0.7.1"
 _greet="This is TemplateExpand version %s"%_version
 
 _usage="""
@@ -73,7 +73,7 @@ def Usage():
   sys.exit(-1)
 
 nDumped=0 
-def _exploder(mol,depth,sidechains,outF,core,chainIndices,autoNames=True,templateName=''):
+def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName=''):
   global nDumped
   ourChains = sidechains[depth]
   patt = '[%d*]'%(depth+1)
@@ -85,8 +85,9 @@ def _exploder(mol,depth,sidechains,outF,core,chainIndices,autoNames=True,templat
     if rs:
       r = rs[0]
       if depth<len(sidechains)-1:
-        _exploder(r,depth+1,sidechains,outF,core,tchain,
-                  autoNames=autoNames,templateName=templateName)
+        for entry in _exploder(r,depth+1,sidechains,core,tchain,
+                               autoNames=autoNames,templateName=templateName):
+          yield entry
       else:
         try:
           Chem.SanitizeMol(r)
@@ -100,7 +101,7 @@ def _exploder(mol,depth,sidechains,outF,core,chainIndices,autoNames=True,templat
           except:
             import traceback
             traceback.print_exc()
-            print Chem.MolToSmiles(r)
+            print >>sys.stderr,Chem.MolToSmiles(r)
         else:
           print >>sys.stderr,'>>> no match'
           AllChem.Compute2DCoords(r)
@@ -118,25 +119,22 @@ def _exploder(mol,depth,sidechains,outF,core,chainIndices,autoNames=True,templat
             tName += '_' + bbNm
           
         r.SetProp("_Name",tName)
-        mb = Chem.MolToMolBlock(r)
-        outF.write(mb)
-        print >>outF,">  <seq_num>\n%d\n"%(nDumped+1)
-        print >>outF,">  <reagent_indices>\n%s\n"%('_'.join([str(x[1]) for x in tchain]))
+        r.SetProp('seq_num',str(nDumped+1))
+        r.SetProp('reagent_indices','_'.join([str(x[1]) for x in tchain]))
         for bbI,bb in enumerate(tchain):
-          
           bbMol = sidechains[bbI][bb[0]][1]
           if bbMol.HasProp('_Name'):
             bbNm = bbMol.GetProp('_Name')
           else:
             bbNm = str(bb[1])
-          print >>outF,">  <building_block_%d>\n%s\n"%(bbI+1,bbNm)
+          r.SetProp('building_block_%d'%(bbI+1),bbNm)
           for propN in bbMol.GetPropNames():
-            print >>outF,">  <building_block_%d_%s>\n%s\n"%(bbI+1,propN,bbMol.GetProp(propN))            
-        print >>outF,'$$$$'
+            r.SetProp('building_block_%d_%s'%(bbI+1,propN),bbMol.GetProp(propN))
         nDumped += 1
         if not nDumped%100:
           logger.info('Done %d molecules'%nDumped)
-          
+        yield r
+        
 def Explode(template,sidechains,outF,autoNames=True):
   chainIndices=[]
   core = Chem.DeleteSubstructs(template,Chem.MolFromSmiles('[*]'))
@@ -144,8 +142,11 @@ def Explode(template,sidechains,outF,autoNames=True):
     templateName = template.GetProp('_Name')
   except KeyError:
     templateName="template"
-  _exploder(template,0,sidechains,outF,core,chainIndices,autoNames=autoNames,templateName=templateName)
-                              
+  for mol in _exploder(template,0,sidechains,core,chainIndices,autoNames=autoNames,templateName=templateName):
+    outF.write(Chem.MolToMolBlock(mol))
+    for pN in mol.GetPropNames():
+      print >>outF,'>  <%s>\n%s\n'%(pN,mol.GetProp(pN))
+    print >>outF,'$$$$'
 
 def ConstructSidechains(suppl,sma=None,replace=True,useAll=False):
   if sma:
@@ -277,7 +278,7 @@ if __name__=='__main__':
         raise ValueError,'could not convert smarts "%s" to a query'%sma
       if i>=4:
         i+=1
-      replace = Chem.MolFromSmiles('[%dX]'%(i+1))
+      replace = Chem.MolFromSmiles('[%d*]'%(i+1))
       templateSmarts.append((patt,replace))
       
   if molTemplate:
@@ -309,7 +310,6 @@ if __name__=='__main__':
         sys.exit(1)
     for template in templates:
       AllChem.Compute2DCoords(template)
-     
   if templateSmarts:
     finalTs = []
     for i,template in enumerate(templates):
@@ -367,7 +367,6 @@ if __name__=='__main__':
     chains = ConstructSidechains(suppl,sma=sma,replace=replaceIt,useAll=useAll)
     if chains:
       sidechains.append(chains)
-
   count = 1
   for chain in sidechains:
     count *= len(chain)
