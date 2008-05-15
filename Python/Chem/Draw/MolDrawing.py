@@ -11,9 +11,11 @@ import math
 elemDict={
   7:(0,0,1),
   8:(1,0,0),
-  9:(.7,.7,0),
-  17:(0,1,0),
-  35:(.5,0,0),
+  9:(.7,1,1),
+  15:(1,.5,0),
+  16:(.8,.8,0),
+  17:(0,.8,0),
+  35:(.5,.3,.1),
   0:(.5,.5,.5),
   }
 
@@ -262,6 +264,10 @@ class MolDrawing(object):
       - specifying centerIt will cause molTrans and drawingTrans to be ignored
       
     """
+    try:
+      dl = addCanvasLine
+    except NameError:
+      registerCanvas('sping')
     if canvas is None:
       canvas = self.canvas
     else:
