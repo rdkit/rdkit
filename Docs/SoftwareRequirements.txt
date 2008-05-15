@@ -5,6 +5,8 @@ By: Greg Landrum
 A. Required Python and the like:
    1) Python 2.3 or later 
    2) Numeric Python (numpy.sourceforge.net)
+      binary versions for windows can be downloaded here:
+      http://biopython.org/DIST/Numeric-24.2.win32-py2.5.exe
    3) [not required with Python2.5 and later] A database wrapper, one of:
       - pyPgSQL (http://pypgsql.sourceforge.net/) 
       - pysqlite2 (http://www.initd.org/tracker/pysqlite/wiki/pysqlite)
@@ -18,14 +20,15 @@ B. Optional Python:
    2) The egenix mx base package:
       http://www.egenix.com/files/python/eGenix-mx-Extensions.html
       also required for the GUI tools
-   
+   3) aggdraw: a library for high-quality drawing in
+      Python. Instructions for downloading are here:
+      http://effbot.org/zone/aggdraw-index.htm
+      The new (May 2008) drawing code has been tested with v1.2a3 of
+      aggdraw. 
+ 
 B. Other required stuff
-   1) The boost libraries v1.33 or later (tested with 1.33 and 1.34)
-   2) boost logging (not yet part of the boost libraries themselves)
-      needs to be installed. There is a working distribution in
-      $RDBASE/boost_logging that can be copied into the boost distribution 
-      directory and built there.
-   3) PostgreSQL (if you're using pyPgSQL)
+   1) The boost libraries v1.33 or later (tested with 1.33, 1.34, and 1.35)
+   2) PostgreSQL (only if you're using pyPgSQL)
   
 C. Optional, but useful things to have on windows:
    1) Some form of chemdraw
@@ -36,11 +39,8 @@ D. Required environment variables:
    - RDBASE pointing to the root of the distribution
    - BOOSTBASE (for example boost-1_33)
    - PYTHONPATH: should include $RDBASE/Python
-   - On Linux:
-     - PYTHON_ROOT (for example /usr or /usr/local)
-     - PYTHON_VERSION (for example 2.5)
-     - RDOPTFLAGS (for example -O3) 
-     - RDF77LIB (for example "-g2c") 
+   - PATH: should include $RDBASE/bin
+   - On Linux: LD_LIBRARY_PATH should include $RDBASE/bin
 
 
 

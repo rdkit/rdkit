@@ -5,9 +5,13 @@
  - A fix to the values of the parameters for the Crippen LogP
    calculator means that the values calculated with this version are
    not backwards compatible. Old values should be recalculated.
+ - topological fingerprints generated with this version *may* not be
+   compatible with those from earlier versions. Please read the note
+   below in the "Other" section.
  - Please read the point about dummy atoms in the "New Features"
    section. It explains a change that affects backwards compatibility
-   when dealing with dummy atoms. 
+   when dealing with dummy atoms.
+  
 
 Acknowledgements:
  - Some of the bugs fixed in this release were found and reported by
@@ -85,16 +89,28 @@ New Features
    Similarity trends are more or less conserved.
  - The molecule drawing code in Chem.Draw.MolDrawing has been modified
    so that it creates better drawings. A new option for drawing that
-   uses the AGG graphics library has been added.
+   uses the aggdraw graphics library has been added.
 
 Other
+ - Changes in the underlying boost random-number generator in version
+   1.35 of the boost library may have broken backwards compatibility
+   of 2D fingerprints generated using the old fingerprinter. It is
+   strongly suggested that you regenerate any stored fingerprints (and
+   switch to the new fingerprinter if possible).
  - The unofficial and very obsolete version of John Torjo's v1
    boost::logging library that was included with the RDKit
    distribution is no longer used. The logging library has been
    replaced with the much less powerful and flexible approach of just
    sending things to stdout or stderr. If and when the logging library
    is accepted into Boost, it will be integrated.
+ - The DbCLI tools (in $RDBASE/Projects/DbCLI) generate topological
+   fingerprints using both the old and new aglorithms (unless the
+   --noOldFingerprints option is provided). The default search
+   uses the newer fingerprint.
+ - The directory $RDBASE/Data/SmartsLib contains a library of sample
+   SMARTS contributed by Richard Lewis.
 
+   
 ******  Release_Jan2008_1 *******
 (Changes relative to Release_Aug2007_1)
  

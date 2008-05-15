@@ -37,7 +37,7 @@ class TestCase(unittest.TestCase):
     d = conn.GetData('rdkitfps',fields='count(*)')
     self.failUnless(d[0][0]==10)
 
-    p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=sdf',
+    p = subprocess.Popen(('python', 'CreateDb.py','--noOldFingerprints','--dbDir=testData/bzr','--molFormat=sdf',
                           'testData/bzr.sdf'))
     res=p.wait()
     self.failIf(res)

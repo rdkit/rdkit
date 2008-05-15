@@ -95,6 +95,8 @@ parser.add_option('--noPairs',default=True,dest='doPairs',action='store_false',
                   help='skip calculating atom pairs')
 parser.add_option('--noFingerprints',default=True,dest='doFingerprints',action='store_false',
                   help='skip calculating 2D fingerprints')
+parser.add_option('--noOldFingerprints',default=True,dest='doOldFps',action='store_false',
+                  help='skip calculating 2D fingerprints using the old fingerprinter')
 parser.add_option('--noDescriptors',default=True,dest='doDescriptors',action='store_false',
                   help='skip calculating descriptors')
 parser.add_option('--noProps',default=False,dest='skipProps',action='store_true',
@@ -177,11 +179,11 @@ if __name__=='__main__':
       fpCurs.execute('drop table %s'%(options.fpTableName))
     except:
       pass
-    fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob,newfp blob)'%(options.fpTableName,
+    fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob,rdkfp blob)'%(options.fpTableName,
                                                                                                        options.molIdName))
-      from Chem.Fingerprints import FingerprintMols
-      details = FingerprintMols.FingerprinterDetails()
-      fpArgs = details.__dict__
+    from Chem.Fingerprints import FingerprintMols
+    details = FingerprintMols.FingerprinterDetails()
+    fpArgs = details.__dict__
   if options.doDescriptors:
     descrConn=DbConnect(os.path.join(options.outDir,options.descrDbName))
     calc = cPickle.load(file(options.descriptorCalcFilename,'rb'))
@@ -231,9 +233,12 @@ if __name__=='__main__':
         pairConn.Commit()
   
     if options.doFingerprints:
-      fp = FingerprintMols.FingerprintMol(mol,**fpArgs)
-      pkl1 = DbModule.binaryHolder(fp.ToBinary())
-      fp2 = Chem.RDKFingerprint2(mol)
+      if options.doOldFps:
+        fp = FingerprintMols.FingerprintMol(mol,**fpArgs)
+        pkl1 = DbModule.binaryHolder(fp.ToBinary())
+      else:
+        pkl1 = ''
+      fp2 = Chem.RDKFingerprint(mol)
       pkl2 = DbModule.binaryHolder(fp2.ToBinary())
       row = [id,pkl1,pkl2]
       fpRows.append(row)

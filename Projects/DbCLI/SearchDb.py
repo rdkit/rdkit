@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.7.1"
+_version = "0.7.2"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -93,6 +93,12 @@ def DepickleRDKitFP(pkl):
   fp = DataStructs.ExplicitBitVect(str(pkl))
   return fp
 def BuildRDKitFP(mol):
+  fp=Chem.RDKFingerprint(mol)
+  return fp
+def Depickle2DFP(pkl):
+  fp = DataStructs.ExplicitBitVect(str(pkl))
+  return fp
+def Build2DFP(mol):
   from Chem.Fingerprints.FingerprintMols import FingerprintMol
   fp=FingerprintMol(mol)
   return fp
@@ -197,8 +203,8 @@ parser.add_option('--fpDbName',default='Fingerprints.sqlt',
                   help='name of the 2D fingerprints database')
 parser.add_option('--fpTableName',default='rdkitfps',
                   help='name of the 2D fingerprints table')
-parser.add_option('--fpColName',default='autofragmentfp',
-                  help='name of the 2D fingerprint column')
+parser.add_option('--fpColName',default='',
+                  help='name of the 2D fingerprint column, a sensible default is used')
 parser.add_option('--descrDbName',default='Descriptors.sqlt',
                   help='name of the descriptor database')
 parser.add_option('--descrTableName',default='descriptors_v1',
@@ -206,7 +212,7 @@ parser.add_option('--descrTableName',default='descriptors_v1',
 parser.add_option('--descriptorCalcFilename',default=os.path.join(RDConfig.RDBaseDir,'Projects',
                                                                   'QuickMolDB','moe_like.dsc'),
                   help='name of the file containing the descriptor calculator')
-parser.add_option('--similarityType',default='2D',choices=['2D','AtomPairs','TopologicalTorsions'],
+parser.add_option('--similarityType',default='RDK',choices=['RDK','2D','AtomPairs','TopologicalTorsions'],
                   help='Choose the type of similarity to use, possible values: 2D, AtomPairs, TopologicalTorsions. The default is %default')
 parser.add_option('--outputDelim',default=',',
                   help='the delimiter for the output file. The default is %default')
@@ -262,12 +268,23 @@ if __name__=='__main__':
     dbName = os.path.join(options.dbDir,options.torsionsDbName)
     fpTableName = options.torsionsTableName
     fpColName = options.torsionsColName
-  elif options.similarityType=='2D':
+  elif options.similarityType=='RDK':
     fpBuilder=BuildRDKitFP
     fpDepickler=DepickleRDKitFP
     simMetric=DataStructs.FingerprintSimilarity
     dbName = os.path.join(options.dbDir,options.fpDbName)
     fpTableName = options.fpTableName
+    if not options.fpColName:
+      options.fpColName='rdkfp'
+    fpColName = options.fpColName
+  elif options.similarityType=='2D':
+    fpBuilder=Build2DFP
+    fpDepickler=Depickle2DFP
+    simMetric=DataStructs.FingerprintSimilarity
+    dbName = os.path.join(options.dbDir,options.fpDbName)
+    fpTableName = options.fpTableName
+    if not options.fpColName:
+      options.fpColName='autofragmentfp'
     fpColName = options.fpColName
 
   if options.smartsQuery:
