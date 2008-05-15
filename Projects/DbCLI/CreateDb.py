@@ -30,7 +30,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, July 2007
-_version = "0.7.1"
+_version = "0.7.2"
 _usage="""
  CreateDb [optional arguments] <filename>
 
@@ -177,9 +177,8 @@ if __name__=='__main__':
       fpCurs.execute('drop table %s'%(options.fpTableName))
     except:
       pass
-    if options.doFingerprints:
-      fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob)'%(options.fpTableName,
-                                                                                              options.molIdName))
+    fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob,newfp blob)'%(options.fpTableName,
+                                                                                                       options.molIdName))
       from Chem.Fingerprints import FingerprintMols
       details = FingerprintMols.FingerprinterDetails()
       fpArgs = details.__dict__
@@ -221,8 +220,8 @@ if __name__=='__main__':
     if options.doPairs:
       pairs = Pairs.GetAtomPairFingerprintAsIntVect(mol)
       torsions = Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol)
-      pkl1 = DbModule.binaryHolder(cPickle.dumps(pairs,2))
-      pkl2 = DbModule.binaryHolder(cPickle.dumps(torsions,2))
+      pkl1 = DbModule.binaryHolder(pairs.ToBinary())
+      pkl2 = DbModule.binaryHolder(torsions.ToBinary())
       row = [id,pkl1,pkl2]
       pairRows.append(row)
       if len(pairRows)>=500:
@@ -234,10 +233,12 @@ if __name__=='__main__':
     if options.doFingerprints:
       fp = FingerprintMols.FingerprintMol(mol,**fpArgs)
       pkl1 = DbModule.binaryHolder(fp.ToBinary())
-      row = [id,pkl1]
+      fp2 = Chem.RDKFingerprint2(mol)
+      pkl2 = DbModule.binaryHolder(fp2.ToBinary())
+      row = [id,pkl1,pkl2]
       fpRows.append(row)
       if len(fpRows)>=500:
-        fpCurs.executemany('insert into %s values (?,?)'%options.fpTableName,
+        fpCurs.executemany('insert into %s values (?,?,?)'%options.fpTableName,
                            fpRows)
         fpRows = []
         fpConn.Commit()
@@ -262,7 +263,7 @@ if __name__=='__main__':
     pairRows = []
     pairConn.Commit()
   if len(fpRows):
-    fpCurs.executemany('insert into %s values (?,?)'%options.fpTableName,
+    fpCurs.executemany('insert into %s values (?,?,?)'%options.fpTableName,
                        fpRows)
     fpRows = []
     fpConn.Commit()
