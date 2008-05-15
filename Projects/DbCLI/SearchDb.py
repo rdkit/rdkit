@@ -59,9 +59,20 @@ import cPickle,sets
 
 # ----------------------------------------
 # ATOM PAIRS
+import DataStructs
 from DataStructs import SparseIntVect
 def DepickleIntVectFP(pkl):
-  fp = cPickle.loads(str(pkl))
+  try:
+    fp = cPickle.loads(str(pkl))
+  except:
+    fp = DataStructs.IntSparseIntVect(str(pkl))
+  fp._sumCache = fp.GetTotalVal()
+  return fp
+def DepickleLongIntVectFP(pkl):
+  try:
+    fp = cPickle.loads(str(pkl))
+  except:
+    fp = DataStructs.LongSparseIntVect(str(pkl))
   fp._sumCache = fp.GetTotalVal()
   return fp
 def BuildAtomPairFP(mol):
@@ -246,7 +257,7 @@ if __name__=='__main__':
     fpColName = options.pairColName
   elif options.similarityType=='TopologicalTorsions':
     fpBuilder=BuildTorsionsFP
-    fpDepickler=DepickleIntVectFP
+    fpDepickler=DepickleLongIntVectFP
     simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.torsionsDbName)
     fpTableName = options.torsionsTableName
