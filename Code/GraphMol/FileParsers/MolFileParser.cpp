@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -62,7 +62,8 @@ namespace RDKit{
   //  
   //*************************************
   
-  void ParseOldAtomList(RWMol *mol,std::string text){
+  void ParseOldAtomList(RWMol *mol,const std::string &text){
+    PRECONDITION(mol,"bad mol");
     unsigned int idx;
     try {
       idx = stripSpacesAndCast<unsigned int>(text.substr(0,3))-1;
@@ -121,7 +122,8 @@ namespace RDKit{
     mol->replaceAtom(idx,&a); 
   };
   
-  void ParseChargeLine(RWMol *mol, std::string text,bool firstCall) {
+  void ParseChargeLine(RWMol *mol, const std::string &text,bool firstCall) {
+    PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  CHG"),"bad charge line");
     
 
@@ -161,7 +163,8 @@ namespace RDKit{
     }
   }
 
-  void ParseIsotopeLine(RWMol *mol, std::string text){
+  void ParseIsotopeLine(RWMol *mol, const std::string &text){
+    PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  ISO"),"bad isotope line");
     
     unsigned int nent;
@@ -198,7 +201,8 @@ namespace RDKit{
     
   }
 
-  void ParseSubstitutionCountLine(RWMol *mol, std::string text){
+  void ParseSubstitutionCountLine(RWMol *mol, const std::string &text){
+    PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  SUB"),"bad SUB line");
     
     unsigned int nent;
@@ -258,7 +262,8 @@ namespace RDKit{
     }
   }
 
-  void ParseUnsaturationLine(RWMol *mol, std::string text){
+  void ParseUnsaturationLine(RWMol *mol, const std::string &text){
+    PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  UNS"),"bad UNS line");
     
     unsigned int nent;
@@ -305,7 +310,8 @@ namespace RDKit{
     }
   }
 
-  void ParseRingBondCountLine(RWMol *mol, std::string text){
+  void ParseRingBondCountLine(RWMol *mol, const std::string &text){
+    PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  RBC"),"bad RBC line");
     
     unsigned int nent;
@@ -369,7 +375,8 @@ namespace RDKit{
     }
   }
 
-  void ParseNewAtomList(RWMol *mol,std::string text){
+  void ParseNewAtomList(RWMol *mol,const std::string &text){
+    PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  ALS"),"bad atom list line");
     
     unsigned int idx;
@@ -425,7 +432,8 @@ namespace RDKit{
     mol->replaceAtom(idx,a); 
   };
   
-  void ParseRGroupLabels(RWMol *mol,std::string text){
+  void ParseRGroupLabels(RWMol *mol,const std::string &text){
+    PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  RGP"),"bad R group label line");
     
     int nLabels;
@@ -464,47 +472,18 @@ namespace RDKit{
         errout << "Attempt to set R group label on nonexistent atom " << atIdx;
         throw FileParseException(errout.str()) ;
       }
-      QueryAtom atom;
+      QueryAtom atom(0);
       atom.setProp("_MolFileRLabel",rLabel);
-      std::string tmpLabel="X";
       if(rLabel>0 && rLabel<10){
-        switch(rLabel){
-        case 1:
-          tmpLabel="Xa";
-          break;
-        case 2:
-          tmpLabel="Xb";
-          break;
-        case 3:
-          tmpLabel="Xc";
-          break;
-        case 4:
-          tmpLabel="Xd";
-          break;
-        case 5:
-          tmpLabel="Xf";
-          break;
-        case 6:
-          tmpLabel="Xg";
-          break;
-        case 7:
-          tmpLabel="Xh";
-          break;
-        case 8:
-          tmpLabel="Xi";
-          break;
-        case 9:
-          tmpLabel="Xj";
-          break;
-        }
+        atom.setMass(double(rLabel));
       }
-      atom.setProp("dummyLabel",tmpLabel.c_str());
       atom.setQuery(makeAtomNullQuery());
       mol->replaceAtom(atIdx,&atom); 
     }
   };
   
-  void ParseAtomAlias(RWMol *mol,std::string text,std::string &nextLine){
+  void ParseAtomAlias(RWMol *mol,std::string text,const std::string &nextLine){
+    PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,2)==std::string("A "),"bad atom alias line");
       
     unsigned int idx;
@@ -578,7 +557,6 @@ namespace RDKit{
     }
     if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
        || symb=="R" || symb=="R#" || (symb>="R0" && symb<="R9") ){
-
       if(symb=="A"||symb=="Q"||symb=="*"){
         // according to the MDL spec, these match anything 
         QueryAtom *query=new QueryAtom(0);
@@ -622,7 +600,6 @@ namespace RDKit{
       res->setMass(res->getMass()+massDiff);
     }
     
-#if 1
     stereoCare=0;
     if(text.size()>=48 && text.substr(45,3)!="  0"){
       try {
@@ -683,11 +660,10 @@ namespace RDKit{
       }
       res->setProp("molExactChangeFlag",exactChangeFlag);
     }
-#endif    
     return res;
   };
   
-  Bond *ParseMolFileBondLine(const std::string text){
+  Bond *ParseMolFileBondLine(const std::string &text){
     int idx1,idx2,bType,stereo;
     int spos = 0;
     try {
@@ -708,7 +684,7 @@ namespace RDKit{
     idx1--;idx2--;
 
     Bond::BondType type;
-    Bond *res;  
+    Bond *res=0;  
     switch(bType){
     case 1: type = Bond::SINGLE;res = new Bond;break;
     case 2: type = Bond::DOUBLE;res = new Bond;break;
@@ -749,7 +725,7 @@ namespace RDKit{
     res->setEndAtomIdx(idx2);
     res->setBondType(type);
 
-    if( text.size() >= 12 && text.substr(9,3)!="  0")
+    if( text.size() >= 12 && text.substr(9,3)!="  0"){
       try {
         stereo = stripSpacesAndCast<int>(text.substr(9,3));
         //res->setProp("stereo",stereo);
@@ -773,8 +749,8 @@ namespace RDKit{
       } catch (boost::bad_lexical_cast) {
         ;
       }
-#if 1
-    if( text.size() >= 18 && text.substr(15,3)!="  0")
+    }
+    if( text.size() >= 18 && text.substr(15,3)!="  0"){
       try {
         int topology = stripSpacesAndCast<int>(text.substr(15,3));
         QueryBond *qBond=new QueryBond(*res);
@@ -796,15 +772,15 @@ namespace RDKit{
       } catch (boost::bad_lexical_cast) {
         ;
       }
-    
-    if( text.size() >= 21 && text.substr(18,3)!="  0")
+    }
+    if( text.size() >= 21 && text.substr(18,3)!="  0"){
       try {
         int reactStatus = stripSpacesAndCast<int>(text.substr(18,3));
         res->setProp("molReactStatus",reactStatus);
       } catch (boost::bad_lexical_cast) {
         ;
       }
-#endif    
+    }
     return res;
   };  
   
@@ -826,7 +802,6 @@ namespace RDKit{
     if(inStream->eof()){
       return NULL;
     }
-    //std::cerr <<"\tnew" <<std::endl;
     RWMol *res = new RWMol();
     res->setProp("_Name", tempStr);
     bool firstChargeLine=true;
@@ -859,7 +834,6 @@ namespace RDKit{
     // this needs to go into a try block because if the lexical_cast throws an
     // exception we want to catch and delete mol before leaving this function
     
-    //std::cerr <<"\tcounts" <<std::endl;
     unsigned int spos = 0;
     try {
       // it *sucks* that the lexical_cast stuff above doesn't work on linux        
@@ -868,10 +842,7 @@ namespace RDKit{
       nBonds = stripSpacesAndCast<int>(tempStr.substr(3,3));
       spos = 6;
     } catch (boost::bad_lexical_cast &) {
-      if (res) {
-        delete res;
-      }
-      
+      if (res) delete res;
       std::ostringstream errout;
       errout << "Cannot convert " << tempStr.substr(spos,3) << " to int";
       throw FileParseException(errout.str()) ;
@@ -910,15 +881,14 @@ namespace RDKit{
       // on the header line, so ignore problems parsing there.
     }
 
-    //std::cerr <<"\tnAtoms: " << nAtoms << " " << nBonds << std::endl;
+    // FIX: switch to "readatoms" and "readbonds" functions
+    Conformer *conf=0;
     try {
       if(nAtoms<=0){
         throw FileParseException("molecule has no atoms");
       }
-      int i;
-      Conformer *conf = new Conformer(nAtoms);
-      //std::cerr <<"\trAts" << std::endl;
-      for(i=0;i<nAtoms;i++){
+      conf = new Conformer(nAtoms);
+      for(int i=0;i<nAtoms;i++){
         line++;
         tempStr = getLine(inStream);
         CHECK_INVARIANT(!inStream->eof(),"premature EOF");
@@ -934,11 +904,10 @@ namespace RDKit{
         conf->set3D(true);
         res->clearProp("_3DConf");
       }
-      //std::cerr <<"\taddConf" << std::endl;
       res->addConformer(conf, true);
+      conf=0;
 
-      //std::cerr <<"\tbonds" << std::endl;
-      for(i=0;i<nBonds;i++){
+      for(int i=0;i<nBonds;i++){
         line++;
         tempStr = getLine(inStream);
         CHECK_INVARIANT(!inStream->eof(),"premature EOF");
@@ -955,7 +924,6 @@ namespace RDKit{
         }
         res->addBond(bond,true);
       }
-      //std::cerr <<"\tok" << std::endl;
       
       // older mol files can have an atom list block here
       line++;
@@ -1000,14 +968,13 @@ namespace RDKit{
     }
     catch (FileParseException &e) { // catch any exception because of lexical_casting etc
       // and throw them back after cleanup
-      if (res) {
-        delete res;
-      }
+      if(res) delete res;
+      if(conf) delete conf;
       throw e;
     }
 
     if(!fileComplete){
-      delete res;
+      if(res) delete res;
       throw FileParseException("Problems encountered parsing Mol data, M  END ");
     }
 
@@ -1015,10 +982,9 @@ namespace RDKit{
     // calculate explicit valence on each atom:
     for(RWMol::AtomIterator atomIt=res->beginAtoms();
         atomIt!=res->endAtoms();
-        atomIt++) {
+        ++atomIt) {
       (*atomIt)->calcExplicitValence(false);
     }
-    //std::cerr << "bloop "<<line << std::endl;
 
     if (res && sanitize ) {
       // update the chirality and stereo-chemistry and stuff:
@@ -1060,7 +1026,7 @@ namespace RDKit{
         DetectBondStereoChemistry(*res, &conf);
       }
       catch (MolSanitizeException &se){
-        delete res;
+        if(res) delete res;
         throw se;
       }
     }
