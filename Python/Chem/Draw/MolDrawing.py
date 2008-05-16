@@ -11,7 +11,7 @@ import math
 elemDict={
   7:(0,0,1),
   8:(1,0,0),
-  9:(.7,1,1),
+  9:(.2,.8,.8),
   15:(1,.5,0),
   16:(.8,.8,0),
   17:(0,.8,0),
@@ -158,12 +158,18 @@ class MolDrawing(object):
   def _drawBond(self,canvas,bond,atom,nbr,pos,nbrPos,conf,
                 width=bondLineWidth,color=defaultColor,color2=None):
     if bond.GetBondType() == Chem.BondType.SINGLE:
-      dir = bond.GetBondDir()
-      if dir==Chem.BondDir.BEGINWEDGE:
-        self._drawWedgedBond(canvas,bond,pos,nbrPos,color=color,width=width)
-      elif dir==Chem.BondDir.BEGINDASH:
-        width *= 2
-        addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,dashes=self.dash)
+      bDir = bond.GetBondDir()
+      if bDir in (Chem.BondDir.BEGINWEDGE,Chem.BondDir.BEGINDASH):
+        # if the bond is "backwards", change the drawing direction:
+        if bond.GetBeginAtom().GetChiralTag() in (Chem.ChiralType.CHI_TETRAHEDRAL_CW,Chem.ChiralType.CHI_TETRAHEDRAL_CCW):
+          p1,p2 = pos,nbrPos
+        else:
+          p2,p1 = pos,nbrPos
+        if bDir==Chem.BondDir.BEGINWEDGE:
+          self._drawWedgedBond(canvas,bond,p1,p2,color=color,width=width)
+        elif bDir==Chem.BondDir.BEGINDASH:
+          width *= 2
+          addCanvasLine(canvas,p1,p2,linewidth=width,color=color,dashes=self.dash)
       else:
         addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
     elif bond.GetBondType() == Chem.BondType.DOUBLE:
