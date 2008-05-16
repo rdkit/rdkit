@@ -1332,6 +1332,28 @@ void testMissingFiles(){
 }
 
 
+
+void testIssue1965035(){
+  BOOST_LOG(rdInfoLog) << "testing issue Issue1965035: problems with WedgeMolBonds " << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  RWMol *m;
+  std::string sma;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue1965035.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+
+  TEST_ASSERT(m->getBondWithIdx(4)->getBondDir()==Bond::BEGINDASH);
+
+  WedgeMolBonds(*m,&m->getConformer());
+  TEST_ASSERT(m->getBondWithIdx(4)->getBondDir()==Bond::BEGINDASH);
+
+  
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -1357,6 +1379,7 @@ int main(int argc,char *argv[]){
   testMolFileUnsaturationQueries();
   testMolFileQueryToSmarts();
   testMissingFiles();
+  testIssue1965035();
   //testCrash();
   return 0;
 }

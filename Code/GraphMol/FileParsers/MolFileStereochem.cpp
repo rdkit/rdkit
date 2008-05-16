@@ -282,23 +282,8 @@ namespace RDKit {
       Bond *bond=*bondIt;
       if(bond->getBondType()==Bond::SINGLE) {
         Bond::BondDir dir=DetermineBondWedgeState(bond,wedgeBonds,conf);
-        bond->setBondDir(dir);
-        // check to see if we need to reverse the bond
-        //  this is required because the wedging/dashing state assumes
-        //  that it's wedged/dashed from the beginning. So if the 
-        //  beginning of bond isn't the chiral atom, we'll need to 
-        //  remedy that.
-        Atom::ChiralType chiralType=bond->getBeginAtom()->getChiralTag();
-        if(chiralType != Atom::CHI_TETRAHEDRAL_CW && 
-           chiralType != Atom::CHI_TETRAHEDRAL_CCW ){
-          chiralType=bond->getEndAtom()->getChiralTag();
-          if(chiralType == Atom::CHI_TETRAHEDRAL_CW ||
-             chiralType == Atom::CHI_TETRAHEDRAL_CCW ){
-            unsigned int bIdx=bond->getBeginAtomIdx();
-            unsigned int eIdx=bond->getEndAtomIdx();
-            bond->setBeginAtomIdx(eIdx);
-            bond->setEndAtomIdx(bIdx);
-          }
+        if(dir==Bond::BEGINWEDGE || dir==Bond::BEGINDASH){
+          bond->setBondDir(dir);
         }
       }
     }
