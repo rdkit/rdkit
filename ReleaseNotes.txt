@@ -48,7 +48,9 @@ Bug Fixes
  - Isotope queries are now added correctly (if perhaps not optimally)
    to SMARTS.
  - some drawing-related bugs have been cleared up. 
-
+ - A bug in Chem.WedgeMolBonds (used in the drawing code) that was
+   causing incorrect stereochemistry in drawn structures was
+   fixed. (issue 1965035)
 
 New Features
  - Support for supplying dummy atoms as "[Du]", "[X]", "[Xa]", etc. is
@@ -57,8 +59,8 @@ New Features
    generate errors. Note that the output of dummy atoms has also
    changed: the default output format is now "*", this means that the
    canonical SMILES for molecules containing dummies are no longer
-   compatible with the canonical SMILES from previous releases.  (feature request
-   186217)
+   compatible with the canonical SMILES from previous releases.
+   (feature request 186217)
  - Atom and bond query information is now serializable; i.e. query
    molecules can now be pickled and not lose the query
    information. (feature request 1756596)
@@ -90,6 +92,9 @@ New Features
  - The molecule drawing code in Chem.Draw.MolDrawing has been modified
    so that it creates better drawings. A new option for drawing that
    uses the aggdraw graphics library has been added.
+ - The RingInfo class supports two new methods: AtomRings() and
+   BondRings() that return tuples of tuples with indices of the atoms
+   or bonds that make up the molecule's rings.
 
 Other
  - Changes in the underlying boost random-number generator in version
@@ -104,7 +109,7 @@ Other
    sending things to stdout or stderr. If and when the logging library
    is accepted into Boost, it will be integrated.
  - The DbCLI tools (in $RDBASE/Projects/DbCLI) generate topological
-   fingerprints using both the old and new aglorithms (unless the
+   fingerprints using both the old and new algorithms (unless the
    --noOldFingerprints option is provided). The default search
    uses the newer fingerprint.
  - The directory $RDBASE/Data/SmartsLib contains a library of sample
