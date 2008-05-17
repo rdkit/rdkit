@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+# Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
 import RDConfig
@@ -24,30 +24,38 @@ class GenericPicker(object):
 class TopNOverallPicker(GenericPicker):
   """  A class for picking the top N overall best matches across a library
 
-  Connect to a database:
+  Connect to a database and build molecules:
+  >>> import Chem
   >>> import os.path
   >>> from Dbase.DbConnection import DbConnect
   >>> dbName = RDConfig.RDTestDatabase
-  >>> conn = DbConnect(dbName,'simple_mols1_fp')
+  >>> conn = DbConnect(dbName,'simple_mols1')
   >>> [x.upper() for x in conn.GetColumnNames()]
-  ['ID', 'AUTOFRAGMENTFP']
-
-  Create a supplier to give us fingerprints from the database:
-  >>> import Chem
-  >>> from Chem.Fingerprints.DbFpSupplier import RandomAccessDbFpSupplier as FpSupplier
-  >>> suppl = FpSupplier(conn.GetData())
-  >>> len(suppl)
+  ['SMILES', 'ID']
+  >>> mols = []
+  >>> for smi,id in conn.GetData():
+  ...   mol = Chem.MolFromSmiles(str(smi))
+  ...   mol.SetProp('_Name',str(id))
+  ...   mols.append(mol)
+  >>> len(mols)
   12
-  
+
+  Calculate fingerprints:
+  >>> probefps = []
+  >>> for mol in mols:
+  ...   fp = Chem.RDKFingerprint(mol)
+  ...   fp._id = mol.GetProp('_Name')
+  ...   probefps.append(fp)
+
   Start by finding the top matches for a single probe.  This ether should pull
   other ethers from the db:
   >>> mol = Chem.MolFromSmiles('COC')
-  >>> probeFp = Chem.DaylightFingerprint(mol)
-  >>> picker = TopNOverallPicker(numToPick=2,probeFps=[probeFp],dataSet=suppl)
+  >>> probeFp = Chem.RDKFingerprint(mol)
+  >>> picker = TopNOverallPicker(numToPick=2,probeFps=[probeFp],dataSet=probefps)
   >>> len(picker)
   2
   >>> fp,score = picker[0]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'ether-1'
   >>> score
@@ -55,32 +63,31 @@ class TopNOverallPicker(GenericPicker):
 
   The results come back in order:
   >>> fp,score = picker[1]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'ether-2'
 
   Now find the top matches for 2 probes.  We'll get one ether and one acid:
   >>> fps = []
-  >>> fps.append(Chem.DaylightFingerprint(Chem.MolFromSmiles('COC')))
-  >>> fps.append(Chem.DaylightFingerprint(Chem.MolFromSmiles('CC(=O)O')))
-  >>> picker = TopNOverallPicker(numToPick=3,probeFps=fps,dataSet=suppl)
+  >>> fps.append(Chem.RDKFingerprint(Chem.MolFromSmiles('COC')))
+  >>> fps.append(Chem.RDKFingerprint(Chem.MolFromSmiles('CC(=O)O')))
+  >>> picker = TopNOverallPicker(numToPick=3,probeFps=fps,dataSet=probefps)
   >>> len(picker)
   3
   >>> fp,score = picker[0]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'acid-1'
   >>> fp,score = picker[1]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'ether-1'
   >>> score
   1.0
   >>> fp,score = picker[2]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'acid-2'
-  
   
   """
   def __init__(self,numToPick=10,probeFps=None,dataSet=None,
@@ -117,29 +124,37 @@ class SpreadPicker(GenericPicker):
   """  A class for picking the best matches across a library
 
   Connect to a database:
+  >>> import Chem
   >>> import os.path
   >>> from Dbase.DbConnection import DbConnect
   >>> dbName = RDConfig.RDTestDatabase
-  >>> conn = DbConnect(dbName,'simple_mols1_fp')
+  >>> conn = DbConnect(dbName,'simple_mols1')
   >>> [x.upper() for x in conn.GetColumnNames()]
-  ['ID', 'AUTOFRAGMENTFP']
-
-  Create a supplier to give us fingerprints from the database:
-  >>> import Chem
-  >>> from Chem.Fingerprints.DbFpSupplier import RandomAccessDbFpSupplier as FpSupplier
-  >>> suppl = FpSupplier(conn.GetData())
-  >>> len(suppl)
+  ['SMILES', 'ID']
+  >>> mols = []
+  >>> for smi,id in conn.GetData():
+  ...   mol = Chem.MolFromSmiles(str(smi))
+  ...   mol.SetProp('_Name',str(id))
+  ...   mols.append(mol)
+  >>> len(mols)
   12
-  
+
+  Calculate fingerprints:
+  >>> probefps = []
+  >>> for mol in mols:
+  ...   fp = Chem.RDKFingerprint(mol)
+  ...   fp._id = mol.GetProp('_Name')
+  ...   probefps.append(fp)
+
   Start by finding the top matches for a single probe.  This ether should pull
   other ethers from the db:
   >>> mol = Chem.MolFromSmiles('COC')
-  >>> probeFp = Chem.DaylightFingerprint(mol)
-  >>> picker = SpreadPicker(numToPick=2,probeFps=[probeFp],dataSet=suppl)
+  >>> probeFp = Chem.RDKFingerprint(mol)
+  >>> picker = SpreadPicker(numToPick=2,probeFps=[probeFp],dataSet=probefps)
   >>> len(picker)
   2
   >>> fp,score = picker[0]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'ether-1'
   >>> score
@@ -147,35 +162,33 @@ class SpreadPicker(GenericPicker):
 
   The results come back in order:
   >>> fp,score = picker[1]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'ether-2'
 
   Now find the top matches for 2 probes.  We'll get one ether and one acid:
   >>> fps = []
-  >>> fps.append(Chem.DaylightFingerprint(Chem.MolFromSmiles('COC')))
-  >>> fps.append(Chem.DaylightFingerprint(Chem.MolFromSmiles('CC(=O)O')))
-  >>> picker = SpreadPicker(numToPick=3,probeFps=fps,dataSet=suppl)
+  >>> fps.append(Chem.RDKFingerprint(Chem.MolFromSmiles('COC')))
+  >>> fps.append(Chem.RDKFingerprint(Chem.MolFromSmiles('CC(=O)O')))
+  >>> picker = SpreadPicker(numToPick=3,probeFps=fps,dataSet=probefps)
   >>> len(picker)
   3
   >>> fp,score = picker[0]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'ether-1'
   >>> score
   1.0
   >>> fp,score = picker[1]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'acid-1'
   >>> score
   1.0
   >>> fp,score = picker[2]
-  >>> id = fp._fieldsFromDb[0]
+  >>> id = fp._id
   >>> str(id)
   'ether-2'
-
-  
   
   """
   def __init__(self,numToPick=10,probeFps=None,dataSet=None,
