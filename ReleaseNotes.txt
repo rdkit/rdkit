@@ -101,7 +101,8 @@ Other
    1.35 of the boost library may have broken backwards compatibility
    of 2D fingerprints generated using the old fingerprinter. It is
    strongly suggested that you regenerate any stored fingerprints (and
-   switch to the new fingerprinter if possible).
+   switch to the new fingerprinter if possible). There is an explicit
+   test for this in $RDBASE/Code/GraphMol/Fingerprints/test1.cpp
  - The unofficial and very obsolete version of John Torjo's v1
    boost::logging library that was included with the RDKit
    distribution is no longer used. The logging library has been
