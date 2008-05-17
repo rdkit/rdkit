@@ -100,20 +100,18 @@ void test3(){
   RWMol *m = SmilesToMol("CCCOC");
 
   ExplicitBitVect *fp1,*fp2;
-  fp1=DaylightFingerprintMol(*m,1,4,2048,4,false,
+  fp2=DaylightFingerprintMol(*m,1,4,2048,4,false,
 			     0.3,256);
-  TEST_ASSERT(fp1->GetNumBits()==256);
-  TEST_ASSERT(fp1->GetNumOnBits()==29);
+  TEST_ASSERT(fp2->GetNumBits()==256);
+
 
   delete m;
-  delete fp1;
+  delete fp2;
   m=SmilesToMol("CN(C)Cc1n-2c(nn1)CN=C(c1ccccc1)c1cc(Cl)ccc12");
   fp1=DaylightFingerprintMol(*m,1,4,2048,4,false);
   TEST_ASSERT(fp1->GetNumBits()==2048);
-  TEST_ASSERT(fp1->GetNumOnBits()==334);
   fp2=DaylightFingerprintMol(*m,1,4,2048,4,false,0.3,256);  
-  TEST_ASSERT(fp2->GetNumBits()==1024);
-  TEST_ASSERT(fp2->GetNumOnBits()==309);
+  TEST_ASSERT(fp2->GetNumBits()<fp1->GetNumBits());
   
   delete m;
   delete fp1;
@@ -253,7 +251,7 @@ void test4Trends(){
   delete m;
   m = SmilesToMol("CCCCCCC");
   delete fp1;
-  fp1=RDKFingerprintMol(*m);
+  fp1=RDKFingerprintMol(*m),*fp2;;
   delete m;
   m = SmilesToMol("C1CCCCCC1");
   delete fp2;
@@ -271,13 +269,55 @@ void test4Trends(){
 }
 
 
+void test5BackwardsCompatibility(){
+  BOOST_LOG(rdInfoLog) <<"testing backwards compatibility of fingerprints" << std::endl;
+
+  double sim1,sim2;
+  RWMol *m;
+  ExplicitBitVect *fp1;
+  
+  m = SmilesToMol("CC");
+  fp1=RDKFingerprintMol(*m);
+  TEST_ASSERT(fp1->GetNumOnBits()==4);
+  TEST_ASSERT((*fp1)[951]);
+  TEST_ASSERT((*fp1)[961]);
+  TEST_ASSERT((*fp1)[1436]);
+  TEST_ASSERT((*fp1)[1590]);
+  delete fp1;
+
+#if 0 
+  // boost 1.35.0
+  fp1=DaylightFingerprintMol(*m);
+  CHECK_INVARIANT(fp1->GetNumOnBits()==4,"Fingerprint compatibility problem detected");
+  CHECK_INVARIANT((*fp1)[28],"Fingerprint compatibility problem detected");
+  CHECK_INVARIANT((*fp1)[1243],"Fingerprint compatibility problem detected");
+  CHECK_INVARIANT((*fp1)[1299],"Fingerprint compatibility problem detected");
+  CHECK_INVARIANT((*fp1)[1606],"Fingerprint compatibility problem detected");
+  delete fp1;
+#else
+  // boost 1.34.1 and earlier
+  fp1=DaylightFingerprintMol(*m);
+  CHECK_INVARIANT(fp1->GetNumOnBits()==4,"Fingerprint compatibility problem detected");
+  CHECK_INVARIANT((*fp1)[1141],"Fingerprint compatibility problem detected");
+  CHECK_INVARIANT((*fp1)[1317],"Fingerprint compatibility problem detected");
+  CHECK_INVARIANT((*fp1)[1606],"Fingerprint compatibility problem detected");
+  CHECK_INVARIANT((*fp1)[1952],"Fingerprint compatibility problem detected");
+  delete fp1;
+#endif
+
+  delete m;
+
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
   test1();
   test2();
-  //test3();
+  test3();
   test1alg2();
   test2alg2();
   test4Trends();
+  test5BackwardsCompatibility();
   return 0;
 }
