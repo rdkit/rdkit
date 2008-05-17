@@ -92,6 +92,37 @@ void WorkWithRingInfo(){
   TEST_ASSERT(bondRings[1].size()==6);
   // the same trick played above with the contents of each ring
   // can be played, but we won't
+
+  // count the number of rings of size 5:
+  unsigned int nRingsSize5=0;
+  for(VECT_INT_VECT_CI ringIt=atomRings.begin();
+      ringIt!=atomRings.end();++ringIt){
+    if(ringIt->size()==5) nRingsSize5++;
+  }
+  TEST_ASSERT(nRingsSize5==1);
+
+  // count the number of rings where all the bonds
+  // are aromatic.
+  delete mol;
+  mol=SmilesToMol("c1cccc2c1CCCC2");
+
+  unsigned int nAromaticRings=0;
+  for(VECT_INT_VECT_CI ringIt=bondRings.begin();
+      ringIt!=bondRings.end();++ringIt){
+    bool isAromatic=true;
+    for(INT_VECT_CI bondIt=ringIt->begin();
+        bondIt!=ringIt->end();++bondIt){
+      if(!mol->getBondWithIdx(*bondIt)->getIsAromatic()){
+        isAromatic=false;
+        break;
+      }
+    }
+    if(isAromatic) nAromaticRings++;
+  }
+  TEST_ASSERT(nAromaticRings==1);
+
+  delete mol;
+  
 }
 
 void WorkWithSmarts(){
@@ -112,7 +143,9 @@ void WorkWithSmarts(){
   TEST_ASSERT(matches[0][0].second==1);
   TEST_ASSERT(matches[0][1].first==1);
   TEST_ASSERT(matches[0][1].second==2);
-  
+
+  delete pattern;
+  delete mol;
 }
 
 void DepictDemo(){
@@ -125,6 +158,8 @@ void DepictDemo(){
   // generate a mol block (could also go to a file):
   std::string molBlock=MolToMolBlock(*mol);
   BOOST_LOG(rdInfoLog)<<molBlock;
+
+  delete mol;
 }
 
 int
