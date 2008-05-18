@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C)  2004-2007 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,6 +8,7 @@
 #include <RDGeneral/Invariant.h>
 
 #include "BFGSOpt.h"
+#include <cstring>
 
 namespace BFGSOpt {
 
@@ -49,17 +50,17 @@ namespace BFGSOpt {
     gradFunc(pos,grad);
 
     sum = 0.0;
+    memset(invHessian,0,dim*dim*sizeof(double));
     for(unsigned int i=0;i<dim;i++){
       unsigned int itab=i*dim;
       // initialize the inverse hessian to be identity:
-      for(unsigned int j=0;j<dim;j++) invHessian[itab+j]=0.0;
       invHessian[itab+i]=1.0;
       // the first line dir is -grad:
       xi[i] = -grad[i];
       sum += pos[i]*pos[i];
     }
     // pick a max step size:
-    maxStep = MAXSTEP * maxVal(sqrt(sum),static_cast<double>(dim));
+    maxStep = MAXSTEP * std::max(sqrt(sum),static_cast<double>(dim));
 
 
     for(unsigned int iter=1;iter<=maxIts;iter++){
@@ -78,7 +79,7 @@ namespace BFGSOpt {
       for(unsigned int i=0;i<dim;i++){
         xi[i] = newPos[i]-pos[i];
         pos[i] = newPos[i];
-        double temp=fabs(xi[i])/maxVal(fabs(pos[i]),1.0);
+        double temp=fabs(xi[i])/std::max(fabs(pos[i]),1.0);
         if(temp>test) test=temp;
         dGrad[i] = grad[i];
       }
@@ -92,9 +93,9 @@ namespace BFGSOpt {
         
       // is the gradient converged?
       test=0.0;
-      double term=maxVal(funcVal,1.0);
+      double term=std::max(funcVal,1.0);
       for(unsigned int i=0;i<dim;i++){
-        double temp=fabs(grad[i])*maxVal(fabs(pos[i]),1.0)/term;
+        double temp=fabs(grad[i])*std::max(fabs(pos[i]),1.0)/term;
         if(temp>test) test=temp;
       }
 

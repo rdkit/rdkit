@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C)  2005-2006 Rational Discovery LLC
+// Copyright (C)  2005-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -60,7 +60,7 @@ namespace BFGSOpt {
 
     test=0.0;
     for(unsigned int i=0;i<dim;i++){
-      double temp=fabs(dir[i])/maxVal(fabs(oldPt[i]),1.0);
+      double temp=fabs(dir[i])/std::max(fabs(oldPt[i]),1.0);
       if(temp>test) test=temp;
     }
 
@@ -113,7 +113,7 @@ namespace BFGSOpt {
       }
       lambda2 = lambda;
       val2 = newVal;
-      lambda = maxVal(tmpLambda,0.1*lambda);
+      lambda = std::max(tmpLambda,0.1*lambda);
     }
   }
 

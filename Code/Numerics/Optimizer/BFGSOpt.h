@@ -1,5 +1,5 @@
 //
-// Copyright (C)  2004-2007 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -11,12 +11,6 @@ namespace BFGSOpt {
   const double EPS=3e-8;      //!< Default gradient tolerance in the minimizer
   const double TOLX=4.*EPS;   //!< Default direction vector tolerance in the minimizer
   const double MAXSTEP=100.0; //!< Default maximim step size in the minimizer
-
-  template <typename T>
-  inline T maxVal(const T &v1,const T &v2) {
-    if(v1>v2) return v1;
-    else return v2;
-  };
 
   //! Do a Quasi-Newton minimization along a line.  
   /*!
