@@ -10,7 +10,7 @@
 #include <Numerics/SymmMatrix.h>
 #include <map>
 #include <Geometry/point.h>
-#include "EmbedObject.h"
+#include "ChiralSet.h"
 
 namespace ForceFields {
   class ForceField;

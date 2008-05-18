@@ -3,6 +3,7 @@
 //
 #ifndef __RD_FOURTHDIMCONTRIB_H__
 #define __RD_FOURTHDIMCONTRIB_H__
+
 #include <RDGeneral/Invariant.h>
 #include <ForceField/Contrib.h>
 #include <ForceField/ForceField.h>

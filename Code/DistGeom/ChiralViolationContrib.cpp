@@ -4,7 +4,7 @@
 //
 
 #include "ChiralViolationContrib.h"
-#include "EmbedObject.h"
+#include "ChiralSet.h"
 #include <ForceField/ForceField.h>
 #include <Geometry/point.h>
 

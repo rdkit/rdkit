@@ -18,7 +18,7 @@
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
 #include <DistGeom/DistGeomUtils.h>
-#include <DistGeom/EmbedObject.h>
+#include <DistGeom/ChiralSet.h>
 
 #include <ForceField/ForceField.h>
 

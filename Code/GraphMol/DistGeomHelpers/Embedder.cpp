@@ -21,7 +21,7 @@
 
 #include <Geometry/Transform3D.h>
 #include <Numerics/Alignment/AlignPoints.h>
-#include <DistGeom/EmbedObject.h>
+#include <DistGeom/ChiralSet.h>
 #include <GraphMol/MolOps.h>
 
 #define ERROR_TOL 0.00001
