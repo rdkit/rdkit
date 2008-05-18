@@ -25,7 +25,7 @@ namespace DistGeom {
       \param weight      optional weight for this contribution
     */
     DistViolationContrib(ForceFields::ForceField *owner,unsigned int idx1,unsigned int idx2,
-			 double ub, double lb, double weight=1.0);
+                         double ub, double lb, double weight=1.0);
 
     double getEnergy(double *pos) const;
     

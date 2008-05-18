@@ -28,7 +28,7 @@ namespace DistGeom {
     \return the largest element of the distance matrix
    */
   double pickRandomDistMat(const BoundsMatrix &mmat, 
-			   RDNumeric::SymmMatrix<double> &distmat, int seed=-1);
+                           RDNumeric::SymmMatrix<double> &distmat, int seed=-1);
 
   //! Compute an initial embedded in 3D based on a distance matrix
   /*! 

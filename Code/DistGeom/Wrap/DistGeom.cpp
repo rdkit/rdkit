@@ -63,9 +63,9 @@ namespace RDKit {
   }
 
   PyObject *embedBoundsMatrix(python::object boundsMatArg,int maxIters=10,
-			      bool randomizeOnFailure=false,int numZeroFail=2,
-			      python::list weights=python::list(),
-			      int randomSeed=-1){
+                              bool randomizeOnFailure=false,int numZeroFail=2,
+                              python::list weights=python::list(),
+                              int randomSeed=-1){
     PyObject *boundsMatObj = boundsMatArg.ptr();
     if(!PyArray_Check(boundsMatObj))
       throw_value_error("Argument isn't an array");
@@ -113,32 +113,32 @@ namespace RDKit {
       
       // and embed it:
       gotCoords=DistGeom::computeInitialCoords(distMat,posPtrs,randomizeOnFailure,
-					       numZeroFail);
+                                               numZeroFail);
     }
 
     if(gotCoords){
       std::map<std::pair<int,int>,double> weightMap;
       unsigned int nElems=PySequence_Size(weights.ptr());
       for(unsigned int entryIdx=0;entryIdx<nElems;entryIdx++){
-	PyObject *entry=PySequence_GetItem(weights.ptr(),entryIdx);
-	if(!PySequence_Check(entry) || PySequence_Size(entry)!=3){
-	  throw_value_error("weights argument must be a sequence of 3-sequences");
-	}
-	int idx1=PyInt_AsLong(PySequence_GetItem(entry,0));
-	int idx2=PyInt_AsLong(PySequence_GetItem(entry,1));
-	double w=PyFloat_AsDouble(PySequence_GetItem(entry,2));
-	weightMap[std::make_pair<int,int>(idx1,idx2)]=w;
+        PyObject *entry=PySequence_GetItem(weights.ptr(),entryIdx);
+        if(!PySequence_Check(entry) || PySequence_Size(entry)!=3){
+          throw_value_error("weights argument must be a sequence of 3-sequences");
+        }
+        int idx1=PyInt_AsLong(PySequence_GetItem(entry,0));
+        int idx2=PyInt_AsLong(PySequence_GetItem(entry,1));
+        double w=PyFloat_AsDouble(PySequence_GetItem(entry,2));
+        weightMap[std::make_pair<int,int>(idx1,idx2)]=w;
       }
       DistGeom::VECT_CHIRALSET csets;
       ForceFields::ForceField *field = DistGeom::constructForceField(bm,posPtrs,csets,0.0, 0.0,
-								     &weightMap);
+                                                                     &weightMap);
       CHECK_INVARIANT(field,"could not build dgeom force field");
       field->initialize();
       if(field->calcEnergy()>1e-5){
-	int needMore=1;
-	while(needMore){
-	  needMore=field->minimize();
-	}
+        int needMore=1;
+        while(needMore){
+          needMore=field->minimize();
+        }
       }
       delete field;
     } else {
@@ -155,9 +155,9 @@ namespace RDKit {
     for(unsigned int i=0;i<nrows;i++){
       unsigned int iTab=i*3;
       for (unsigned int j = 0; j < 3; ++j) {
-	resData[iTab + j]=positions[i][j]; //.x;
-	//resData[iTab+1]=positions[i].y;
-	//resData[iTab+2]=positions[i].z;
+        resData[iTab + j]=positions[i][j]; //.x;
+        //resData[iTab+1]=positions[i].y;
+        //resData[iTab+2]=positions[i].z;
       }
     }
     delete [] positions;
@@ -205,12 +205,12 @@ BOOST_PYTHON_MODULE(DistGeom) {
     a Numeric array of doubles with the coordinates\n\
 \n";
   python::def("EmbedBoundsMatrix", RDKit::embedBoundsMatrix,
-	      (python::arg("boundsMatrix"),python::arg("maxIters")=10,
-	       python::arg("randomizeOnFailure")=false,
-	       python::arg("numZeroFail")=2,
-	       python::arg("weights")=python::list(),
-	       python::arg("randomSeed")=-1),
-	      docString.c_str());
+              (python::arg("boundsMatrix"),python::arg("maxIters")=10,
+               python::arg("randomizeOnFailure")=false,
+               python::arg("numZeroFail")=2,
+               python::arg("weights")=python::list(),
+               python::arg("randomSeed")=-1),
+              docString.c_str());
 
 
 }

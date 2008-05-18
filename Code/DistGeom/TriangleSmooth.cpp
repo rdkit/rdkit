@@ -21,21 +21,21 @@ namespace DistGeom {
         if (i == k) {
           continue;
         }
-	Uik = boundsMat->getUpperBound(i,k);
-	Lik = boundsMat->getLowerBound(i,k);
+        Uik = boundsMat->getUpperBound(i,k);
+        Lik = boundsMat->getLowerBound(i,k);
         for (j = i+1; j < npt; j++) {
           if (j == k) {
             continue;
           }
-	  Ukj = boundsMat->getUpperBound(k,j);
-	  sumUikUkj = Uik + Ukj;
+          Ukj = boundsMat->getUpperBound(k,j);
+          sumUikUkj = Uik + Ukj;
           if (boundsMat->getUpperBound(i,j) > sumUikUkj) {
             boundsMat->setUpperBound(i,j, sumUikUkj);
           } 
           
-	  diffLikUjk = Lik - Ukj;
-	  diffLjkUik = boundsMat->getLowerBound(j,k) - Uik;
-	  if (boundsMat->getLowerBound(i,j) < diffLikUjk) {
+          diffLikUjk = Lik - Ukj;
+          diffLjkUik = boundsMat->getLowerBound(j,k) - Uik;
+          if (boundsMat->getLowerBound(i,j) < diffLikUjk) {
             boundsMat->setLowerBound(i,j, diffLikUjk);
           } else if (boundsMat->getLowerBound(i,j) < diffLjkUik) {
             boundsMat->setLowerBound(i,j, diffLjkUik);

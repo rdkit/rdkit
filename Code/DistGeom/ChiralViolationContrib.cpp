@@ -10,7 +10,7 @@
 
 namespace DistGeom {
   ChiralViolationContrib::ChiralViolationContrib(ForceFields::ForceField *owner, const ChiralSet* cset,
-						 double weight) {
+                                                 double weight) {
     PRECONDITION(owner,"bad owner");
     PRECONDITION(cset, "bad chiral set")
 
@@ -41,17 +41,17 @@ namespace DistGeom {
     // even if we are minimizing in higher dimension the chiral volume is 
     // calculated using only the first 3 dimensions
     RDGeom::Point3D v1(pos[d_idx1*dim] - pos[d_idx4*dim], 
-		       pos[d_idx1*dim+1] - pos[d_idx4*dim+1],
-		       pos[d_idx1*dim+2] - pos[d_idx4*dim+2]);
+                       pos[d_idx1*dim+1] - pos[d_idx4*dim+1],
+                       pos[d_idx1*dim+2] - pos[d_idx4*dim+2]);
     
 
     RDGeom::Point3D v2(pos[d_idx2*dim] - pos[d_idx4*dim], 
-		       pos[d_idx2*dim+1] - pos[d_idx4*dim+1],
-		       pos[d_idx2*dim+2] - pos[d_idx4*dim+2]);
+                       pos[d_idx2*dim+1] - pos[d_idx4*dim+1],
+                       pos[d_idx2*dim+2] - pos[d_idx4*dim+2]);
     
     RDGeom::Point3D v3(pos[d_idx3*dim] - pos[d_idx4*dim], 
-		       pos[d_idx3*dim+1] - pos[d_idx4*dim+1],
-		       pos[d_idx3*dim+2] - pos[d_idx4*dim+2]);
+                       pos[d_idx3*dim+1] - pos[d_idx4*dim+1],
+                       pos[d_idx3*dim+2] - pos[d_idx4*dim+2]);
 
     RDGeom::Point3D v2xv3 = v2.crossProduct(v3);
     
@@ -76,17 +76,17 @@ namespace DistGeom {
     // even if we are minimizing in higher dimension the chiral volume is 
     // calculated using only the first 3 dimensions
     RDGeom::Point3D v1(pos[d_idx1*dim] - pos[d_idx4*dim], 
-		       pos[d_idx1*dim+1] - pos[d_idx4*dim+1],
-		       pos[d_idx1*dim+2] - pos[d_idx4*dim+2]);
+                       pos[d_idx1*dim+1] - pos[d_idx4*dim+1],
+                       pos[d_idx1*dim+2] - pos[d_idx4*dim+2]);
     
 
     RDGeom::Point3D v2(pos[d_idx2*dim] - pos[d_idx4*dim], 
-		       pos[d_idx2*dim+1] - pos[d_idx4*dim+1],
-		       pos[d_idx2*dim+2] - pos[d_idx4*dim+2]);
+                       pos[d_idx2*dim+1] - pos[d_idx4*dim+1],
+                       pos[d_idx2*dim+2] - pos[d_idx4*dim+2]);
     
     RDGeom::Point3D v3(pos[d_idx3*dim] - pos[d_idx4*dim], 
-		       pos[d_idx3*dim+1] - pos[d_idx4*dim+1],
-		       pos[d_idx3*dim+2] - pos[d_idx4*dim+2]);
+                       pos[d_idx3*dim+1] - pos[d_idx4*dim+1],
+                       pos[d_idx3*dim+2] - pos[d_idx4*dim+2]);
 
     RDGeom::Point3D v2xv3 = v2.crossProduct(v3);
     
@@ -117,16 +117,16 @@ namespace DistGeom {
     grad[dim*d_idx3 + 2] += preFactor*((v2.y)*(v1.x) - (v2.x)*(v1.y));
 
     grad[dim*d_idx4] += preFactor*(pos[d_idx1*dim+2]*(pos[d_idx2*dim+1] - pos[d_idx3*dim+1])
-				   + pos[d_idx2*dim+2]*(pos[d_idx3*dim+1] - pos[d_idx1*dim+1])
-				   + pos[d_idx3*dim+2]*(pos[d_idx1*dim+1] - pos[d_idx2*dim+1]));
+                                   + pos[d_idx2*dim+2]*(pos[d_idx3*dim+1] - pos[d_idx1*dim+1])
+                                   + pos[d_idx3*dim+2]*(pos[d_idx1*dim+1] - pos[d_idx2*dim+1]));
 
     grad[dim*d_idx4+1] += preFactor*(pos[d_idx1*dim]*(pos[d_idx2*dim+2] - pos[d_idx3*dim+2])
-				     + pos[d_idx2*dim]*(pos[d_idx3*dim+2] - pos[d_idx1*dim+2])
-				     + pos[d_idx3*dim]*(pos[d_idx1*dim+2] - pos[d_idx2*dim+2]));
+                                     + pos[d_idx2*dim]*(pos[d_idx3*dim+2] - pos[d_idx1*dim+2])
+                                     + pos[d_idx3*dim]*(pos[d_idx1*dim+2] - pos[d_idx2*dim+2]));
 
     grad[dim*d_idx4+2] += preFactor*(pos[d_idx1*dim+1]*(pos[d_idx2*dim] - pos[d_idx3*dim])
-				     + pos[d_idx2*dim+1]*(pos[d_idx3*dim] - pos[d_idx1*dim])
-				     + pos[d_idx3*dim+1]*(pos[d_idx1*dim] - pos[d_idx2*dim]));
+                                     + pos[d_idx2*dim+1]*(pos[d_idx3*dim] - pos[d_idx1*dim])
+                                     + pos[d_idx3*dim+1]*(pos[d_idx1*dim] - pos[d_idx2*dim]));
   }
 }
 

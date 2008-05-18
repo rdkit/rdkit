@@ -22,7 +22,7 @@ namespace DistGeom {
                         
     */
     FourthDimContrib(ForceFields::ForceField *owner,unsigned int idx,
-		     double weight) : d_idx(idx), d_weight(weight) {
+                     double weight) : d_idx(idx), d_weight(weight) {
       PRECONDITION(owner,"bad force field");
       PRECONDITION(owner->dimension()==4,"force field has wrong dimension");
       dp_forceField=owner;
