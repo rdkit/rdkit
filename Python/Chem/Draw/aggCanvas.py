@@ -15,37 +15,47 @@ def convertColor(color):
   color = (int(color[0]*255),int(color[1]*255),int(color[2]*255))
   return color
 
+def _getLinePoints(p1,p2,dash):
+  x1,y1=p1
+  x2,y2=p2
+  dx = x2-x1
+  dy = y2-y1
+  lineLen = math.sqrt(dx*dx+dy*dy)
+  theta = math.atan2(dy,dx)
+  cosT = math.cos(theta)
+  sinT = math.sin(theta)
+
+  pos = (x1,y1)
+  pts = [pos]
+  dist = 0
+  currDash = 0
+  while dist < lineLen:
+    currL = dash[currDash%len(dash)]
+    if(dist+currL > lineLen): currL = lineLen-dist
+    endP = (pos[0] + currL*cosT, pos[1] + currL*sinT)
+    pts.append(endP)
+    pos = endP
+    dist += currL
+    currDash += 1
+  return pts
+
 def _doLine(canvas,p1,p2,pen,**kwargs):
   if kwargs.get('dashes',(0,0)) == (0,0):
     canvas.line((p1[0],p1[1],p2[0],p2[1]),pen)
   else:
     # the antialiasing makes the dashes appear too small
     dash = [x*4 for x in kwargs['dashes']]
-    x1,y1=p1
-    x2,y2=p2
-    dx = x2-x1
-    dy = y2-y1
-    lineLen = math.sqrt(dx*dx+dy*dy)
-    theta = math.atan2(dy,dx)
-    cosT = math.cos(theta)
-    sinT = math.sin(theta)
+    pts = _getLinePoints(p1,p2,dash)
 
-    pos = (x1,y1)
-    dist = 0
     currDash = 0
     dashOn = True
-    while dist < lineLen:
-      currL = dash[currDash%len(dash)]
-      if(dist+currL > lineLen): currL = lineLen-dist
-      endP = (pos[0] + currL*cosT, pos[1] + currL*sinT)
+    while currDash<(len(pts)-1):
       if dashOn:
-        canvas.line((pos[0],pos[1],endP[0],endP[1]),pen)
-      pos = endP
-      dist += currL
-      currDash += 1
+        p1 = pts[currDash]
+        p2 = pts[currDash+1]
+        canvas.line((p1[0],p1[1],p2[0],p2[1]),pen)
+      currDash+=1
       dashOn = not dashOn
-    
-  
 
 def addCanvasLine(canvas,p1,p2,color=(0,0,0),color2=None,**kwargs):
   if color2 and color2!=color:
@@ -77,3 +87,15 @@ def addCanvasPolygon(canvas,ps,color=(0,0,0),**kwargs):
     dps.extend(p)
   color = convertColor(color)
   canvas.polygon(dps,None,Brush(color));
+
+def addCanvasDashedWedge(canvas,p1,p2,p3,dash=(2,2),color=(0,0,0),
+                         color2=None,**kwargs):
+  pen = Pen(color,kwargs.get('linewidth',1))
+  dash = (3,3)
+  pts1 = _getLinePoints(p1,p2,dash)
+  pts2 = _getLinePoints(p1,p3,dash)
+
+  if len(pts2)<len(pts1): pts2,pts1=pts1,pts2
+
+  for i in range(len(pts1)):
+    canvas.line((pts1[i][0],pts1[i][1],pts2[i][0],pts2[i][1]),pen)

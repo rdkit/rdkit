@@ -54,6 +54,8 @@ class MolDrawing(object):
   canvas = None
   canvasSize=None
 
+  wedgeDashedBonds=False
+
   def __init__(self,canvas=None):
     self.canvas = canvas
     if canvas:
@@ -145,7 +147,8 @@ class MolDrawing(object):
     return fracP1,fracP2
     
   def _drawWedgedBond(self,canvas,bond,pos,nbrPos,
-                      width=bondLineWidth,color=defaultColor):
+                      width=bondLineWidth,color=defaultColor,
+                      dash=None):
     perp,offsetX,offsetY = self._getBondOffset(pos,nbrPos)
     offsetX *=.75
     offsetY *=.75
@@ -153,7 +156,13 @@ class MolDrawing(object):
             (nbrPos[0]+offsetX,nbrPos[1]+offsetY),
             (nbrPos[0]-offsetX,nbrPos[1]-offsetY))
     #canvas.drawPolygon(poly,edgeColor=color,edgeWidth=1,fillColor=color,closed=1)
-    addCanvasPolygon(canvas,poly,color=color)
+    if not dash:
+      addCanvasPolygon(canvas,poly,color=color)
+    elif self.wedgeDashedBonds and addCanvasDashedWedge:
+      addCanvasDashedWedge(canvas,poly[0],poly[1],poly[2],color=color)
+    else:
+      addCanvasLine(canvas,pos,nbrPos,linewidth=width*2,color=color,
+                    dashes=dash)
     
   def _drawBond(self,canvas,bond,atom,nbr,pos,nbrPos,conf,
                 width=bondLineWidth,color=defaultColor,color2=None):
@@ -161,15 +170,16 @@ class MolDrawing(object):
       bDir = bond.GetBondDir()
       if bDir in (Chem.BondDir.BEGINWEDGE,Chem.BondDir.BEGINDASH):
         # if the bond is "backwards", change the drawing direction:
-        if bond.GetBeginAtom().GetChiralTag() in (Chem.ChiralType.CHI_TETRAHEDRAL_CW,Chem.ChiralType.CHI_TETRAHEDRAL_CCW):
+        if bond.GetBeginAtom().GetChiralTag() in (Chem.ChiralType.CHI_TETRAHEDRAL_CW,
+                                                  Chem.ChiralType.CHI_TETRAHEDRAL_CCW):
           p1,p2 = pos,nbrPos
         else:
           p2,p1 = pos,nbrPos
         if bDir==Chem.BondDir.BEGINWEDGE:
-          self._drawWedgedBond(canvas,bond,p1,p2,color=color,width=width)
+          self._drawWedgedBond(canvas,bond,p1,p2,color=(0,0,0),width=width)
         elif bDir==Chem.BondDir.BEGINDASH:
-          width *= 2
-          addCanvasLine(canvas,p1,p2,linewidth=width,color=color,dashes=self.dash)
+          self._drawWedgedBond(canvas,bond,p1,p2,color=(0,0,0),width=width,
+                               dash=self.dash)
       else:
         addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
     elif bond.GetBondType() == Chem.BondType.DOUBLE:
@@ -380,21 +390,23 @@ class MolDrawing(object):
 def registerCanvas(canvasNm):
   g= globals()
   if canvasNm in ('sping','SPING'):
-    from spingCanvas import addCanvasLine,addCanvasText,addCanvasPolygon
+    from spingCanvas import addCanvasLine,addCanvasText,addCanvasPolygon,addCanvasDashedWedge
   elif canvasNm in ('agg','AGG'):
-    from aggCanvas import addCanvasLine,addCanvasText,addCanvasPolygon
+    from aggCanvas import addCanvasLine,addCanvasText,addCanvasPolygon,addCanvasDashedWedge
   elif canvasNm in ('mpl','MPL'):
     from mplCanvas import addCanvasLine,addCanvasText,addCanvasPolygon
+    addCanvasDashedWedge=None
   else:
     raise ValueError,'unrecognized canvas type'
   g['addCanvasLine']=addCanvasLine
   g['addCanvasText']=addCanvasText
   g['addCanvasPolygon']=addCanvasPolygon
+  g['addCanvasDashedWedge']=addCanvasDashedWedge
         
 if __name__=='__main__':
   import sys
   if len(sys.argv)<2:
-    mol = Chem.MolFromSmiles('O=C1C(CC=CN[C@H](Cl)Br)C(c2c(O)c(NN)ccc2)=C1C#N')
+    mol = Chem.MolFromSmiles('O=C1C([C@@H](F)C=CN[C@H](Cl)Br)C(c2c(O)c(NN)ccc2)=C1C#N')
   else:
     mol = Chem.MolFromSmiles(sys.argv[1])
     

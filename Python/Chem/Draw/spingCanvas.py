@@ -5,12 +5,37 @@
 #   @@ All Rights Reserved  @@
 #
 from sping import pid
+import math
 
 faceMap={'sans':'helvetica'}
 
 def convertColor(color):
   color = pid.Color(color[0],color[1],color[2])
   return color
+
+def _getLinePoints(p1,p2,dash):
+  x1,y1=p1
+  x2,y2=p2
+  dx = x2-x1
+  dy = y2-y1
+  lineLen = math.sqrt(dx*dx+dy*dy)
+  theta = math.atan2(dy,dx)
+  cosT = math.cos(theta)
+  sinT = math.sin(theta)
+
+  pos = (x1,y1)
+  pts = [pos]
+  dist = 0
+  currDash = 0
+  while dist < lineLen:
+    currL = dash[currDash%len(dash)]
+    if(dist+currL > lineLen): currL = lineLen-dist
+    endP = (pos[0] + currL*cosT, pos[1] + currL*sinT)
+    pts.append(endP)
+    pos = endP
+    dist += currL
+    currDash += 1
+  return pts
 
 def addCanvasLine(canvas,p1,p2,color=(0,0,0),color2=None,**kwargs):
   if color2 and color2!=color:
@@ -57,3 +82,16 @@ def addCanvasPolygon(canvas,ps,color=(0,0,0),**kwargs):
   edgeColor=pid.transparent
   color = convertColor(color)
   canvas.drawPolygon(ps,edgeColor=edgeColor,edgeWidth=edgeWidth,fillColor=color,closed=1)
+
+def addCanvasDashedWedge(canvas,p1,p2,p3,dash=(2,2),color=(0,0,0),
+                         color2=None,**kwargs):
+  color = convertColor(color)
+  dash = (4,4)
+  pts1 = _getLinePoints(p1,p2,dash)
+  pts2 = _getLinePoints(p1,p3,dash)
+
+  if len(pts2)<len(pts1): pts2,pts1=pts1,pts2
+
+  for i in range(len(pts1)):
+    canvas.drawLine(pts1[i][0],pts1[i][1],pts2[i][0],pts2[i][1],
+                    color=color,width=1)
