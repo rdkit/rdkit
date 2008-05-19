@@ -14,6 +14,7 @@
 #include <boost/random.hpp>
 #include <limits.h>
 #include <boost/functional/hash.hpp>
+#include <boost/cstdint.hpp>
 #include <algorithm>
 
 namespace RDKit{
@@ -58,9 +59,9 @@ namespace RDKit{
 	
         //boost::hash<float> floatHasher;
 	//unsigned long seed = floatHasher(balabanJ);
-        unsigned long seed = *(unsigned long *)&balabanJ;
+        //unsigned long seed = *(unsigned long *)&balabanJ;
+        boost::uint32_t seed = *(boost::uint32_t *)&balabanJ;
 	generator.seed(static_cast<rng_type::result_type>(seed));
-
 	for(unsigned int i=0;i<nBitsPerHash;i++){
 	  unsigned int bit = randomSource();
 	  bit %= fpSize;
