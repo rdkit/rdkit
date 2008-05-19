@@ -61,7 +61,7 @@ namespace ForceFields {
       if(order==0){
 	double sinTheta0=sin(at2Params->theta0);
 	double cosTheta0=cos(at2Params->theta0);
-	this->d_C2 = 1./(4.*sinTheta0*sinTheta0);
+	this->d_C2 = 1./(4.*std::max(sinTheta0*sinTheta0,1e-8));
 	this->d_C1 = -4.*this->d_C2*cosTheta0;
 	this->d_C0 = this->d_C2*(2.*cosTheta0*cosTheta0 + 1.);
       }
@@ -121,13 +121,7 @@ namespace ForceFields {
       RDGeom::Point3D p12=p1-p2;
       RDGeom::Point3D p32=p3-p2;
       double cosTheta = p12.dotProduct(p32)/(dist1*dist2);
-      double sinTheta = sqrt(1.0-cosTheta*cosTheta);
-
-
-      // ------------------------------------
-      // FIX: handle cases where sinTheta is zero
-      // ------------------------------------
-
+      double sinTheta = std::max(sqrt(1.0-cosTheta*cosTheta),1e-8);
 
       //std::cerr << "GRAD: " << cosTheta << " (" << acos(cosTheta)<< "), ";
       //std::cerr << sinTheta << " (" << asin(sinTheta)<< ")" << std::endl;
