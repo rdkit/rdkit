@@ -73,8 +73,11 @@ def Usage():
   sys.exit(-1)
 
 nDumped=0 
-def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName=''):
+def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName='',
+              resetCounter=True):
   global nDumped
+  if resetCounter:
+    nDumped=0
   ourChains = sidechains[depth]
   patt = '[%d*]'%(depth+1)
   patt = Chem.MolFromSmiles(patt)
@@ -86,7 +89,8 @@ def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName
       r = rs[0]
       if depth<len(sidechains)-1:
         for entry in _exploder(r,depth+1,sidechains,core,tchain,
-                               autoNames=autoNames,templateName=templateName):
+                               autoNames=autoNames,templateName=templateName,
+                               resetCounter=0):
           yield entry
       else:
         try:
