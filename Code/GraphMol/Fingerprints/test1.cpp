@@ -251,7 +251,7 @@ void test4Trends(){
   delete m;
   m = SmilesToMol("CCCCCCC");
   delete fp1;
-  fp1=RDKFingerprintMol(*m),*fp2;;
+  fp1=RDKFingerprintMol(*m);
   delete m;
   m = SmilesToMol("C1CCCCCC1");
   delete fp2;
@@ -272,7 +272,6 @@ void test4Trends(){
 void test5BackwardsCompatibility(){
   BOOST_LOG(rdInfoLog) <<"testing backwards compatibility of fingerprints" << std::endl;
 
-  double sim1,sim2;
   RWMol *m;
   ExplicitBitVect *fp1;
   
