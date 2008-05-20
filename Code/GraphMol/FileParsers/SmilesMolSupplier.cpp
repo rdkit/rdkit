@@ -168,7 +168,11 @@ namespace RDKit {
         res->setProp("_Name", mname);
       }
       else {
-        res->setProp("_Name", recs[d_name]);
+        if(d_name>=static_cast<int>(recs.size())){
+          BOOST_LOG(rdWarningLog)<<"WARNING: no name column found on line "<<d_line<<std::endl;
+        } else {
+          res->setProp("_Name", recs[d_name]);
+        }
       }
 
       // -----------
