@@ -1,4 +1,4 @@
-# $Id: TemplateExpand.py 837 2008-04-16 15:37:18Z landrgr1 $
+# $Id: TemplateExpand.py 872 2008-05-15 15:32:13Z landrgr1 $
 #
 #  Created by Greg Landrum August, 2006
 #
@@ -10,7 +10,7 @@ import Chem
 from Chem import Crippen
 from Chem import AllChem
 from Chem.ChemUtils.AlignDepict import AlignDepict
-
+import sys
 _version="0.7.1"
 _greet="This is TemplateExpand version %s"%_version
 
@@ -148,6 +148,27 @@ def Explode(template,sidechains,outF,autoNames=True):
       print >>outF,'>  <%s>\n%s\n'%(pN,mol.GetProp(pN))
     print >>outF,'$$$$'
 
+def MoveDummyNeighborsToBeginning(mol,useAll=False):
+  dummyPatt=Chem.MolFromSmiles('[*]')
+  matches = mol.GetSubstructMatches(dummyPatt)
+  res = []
+  for match in matches:
+    matchIdx = match[0]
+    smi = Chem.MolToSmiles(mol,True,rootedAtAtom=matchIdx)
+    entry = Chem.MolFromSmiles(smi)
+    # entry now has [*] as atom 0 and the neighbor
+    # as atom 1. Cleave the [*]:
+    entry = Chem.DeleteSubstructs(entry,dummyPatt)
+    for propN in mol.GetPropNames():
+      entry.SetProp(propN,mol.GetProp(propN));
+
+    # now we have a molecule with the atom to be joined
+    # in position zero; Keep that:
+    res.append(entry)
+    if not useAll:
+      break
+  return res
+
 def ConstructSidechains(suppl,sma=None,replace=True,useAll=False):
   if sma:
     try:
@@ -173,21 +194,16 @@ def ConstructSidechains(suppl,sma=None,replace=True,useAll=False):
         tmp = list(Chem.ReplaceSubstructs(mol,patt,replacement))
         if not useAll: tmp = [tmp[0]]
         for i,entry in enumerate(tmp):
-          match = entry.GetSubstructMatch(replacement)
-          if match:
-            matchIdx = match[0]
-            smi = Chem.MolToSmiles(entry,True,rootedAtAtom=matchIdx)
-            entry = Chem.MolFromSmiles(smi)
-            # entry now has [X] as atom 0 and the neighbor
-            # as atom 1. Cleave the [X]:
-            entry = Chem.DeleteSubstructs(entry,replacement)
+          entry = MoveDummyNeighborsToBeginning(entry)
+          if not entry:
+            continue
+          entry = entry[0]
 
-            for propN in mol.GetPropNames():
-              entry.SetProp(propN,mol.GetProp(propN));
-            
-            # now we have a molecule with the atom to be joined
-            # in position zero; Keep that:
-            tmp[i] = (idx+1,entry)
+          for propN in mol.GetPropNames():
+            entry.SetProp(propN,mol.GetProp(propN));
+          # now we have a molecule with the atom to be joined
+          # in position zero; Keep that:
+          tmp[i] = (idx+1,entry)
       else:
         # no replacement, use the pattern to reorder
         # atoms only:
