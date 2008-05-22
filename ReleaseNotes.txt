@@ -51,6 +51,10 @@ Bug Fixes
  - A bug in Chem.WedgeMolBonds (used in the drawing code) that was
    causing incorrect stereochemistry in drawn structures was
    fixed. (issue 1965035)
+ - A bug causing errors or crashes on Windows with [r<n>] queries was
+   fixed. (issue 1968930)
+ - A bug in the calculation of TPSA values in molecules that have Hs
+   in the graph was fixed. (issue 1969745)
 
 New Features
  - Support for supplying dummy atoms as "[Du]", "[X]", "[Xa]", etc. is
