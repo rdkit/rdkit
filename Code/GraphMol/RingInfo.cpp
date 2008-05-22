@@ -21,7 +21,7 @@ namespace RDKit{
   unsigned int RingInfo::minAtomRingSize(unsigned int idx) const {
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(idx>=0,"bad index");
-    if( idx < d_atomMembers.size() ){
+    if( idx < d_atomMembers.size() && d_atomMembers[idx].size() ){
       return *std::min_element(d_atomMembers[idx].begin(),d_atomMembers[idx].end());
     } else {
       return 0;
@@ -49,7 +49,7 @@ namespace RDKit{
   unsigned int RingInfo::minBondRingSize(unsigned int idx) const {
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(idx>=0,"bad index");
-    if( idx < d_bondMembers.size() ){
+    if( idx < d_bondMembers.size() && d_bondMembers[idx].size() ){
       return *std::min_element(d_bondMembers[idx].begin(),d_bondMembers[idx].end());
     } else {
       return 0;

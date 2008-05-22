@@ -1732,7 +1732,14 @@ CAS<~>
     self.failUnless(Chem.MolFromSmiles('c1ccc[te]1').HasSubstructMatch(p))
     self.failIf(Chem.MolFromSmiles('C1=CCC[Te]1').HasSubstructMatch(p))
 
+  def test50Issue1968608(self):
+    """ test sf.net issue 1968608
+    """
+    smarts = Chem.MolFromSmarts("[r5]")
+    mol = Chem.MolFromSmiles("N12CCC36C1CC(C(C2)=CCOC4CC5=O)C4C3N5c7ccccc76")
+    count = len(mol.GetSubstructMatches(smarts, uniquify=0))
+    self.failUnless(count==9)
+
 if __name__ == '__main__':
   unittest.main()
-
 

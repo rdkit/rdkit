@@ -2509,6 +2509,25 @@ void testSFIssue1942657()
 }
 
 
+void testSFIssue1968608()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 198608 " << std::endl;
+  RWMol *m;
+
+  std::string smi;
+
+  smi = "C1CC1CC1CC1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m->getRingInfo()->minAtomRingSize(0)==3);
+  TEST_ASSERT(m->getRingInfo()->minAtomRingSize(3)==0);
+  TEST_ASSERT(m->getRingInfo()->minBondRingSize(0)==3);
+  TEST_ASSERT(m->getRingInfo()->minBondRingSize(3)==0);
+
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
 
 int main(){
   RDLog::InitLogs();
@@ -2551,6 +2570,7 @@ int main(){
 #endif
   testAromaticityEdges();
   testSFIssue1942657();
+  testSFIssue1968608();
 
   
   return 0;
