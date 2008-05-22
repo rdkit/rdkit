@@ -67,7 +67,44 @@ class TestCase(unittest.TestCase):
           assert ok,'Line %d: TPSA Calculation failed for SMILES %s'%(lineNo,smi)
           assert feq(calc,ans),'Line %d: bad TPSA for SMILES %s (%.2f != %.2f)'%(lineNo,smi,calc,ans)
 
-        
+  def testHsAndTPSA(self):
+    """
+     testing the impact of Hs in the graph on PSA calculations
+     This was sf.net issue 1969745 
+    """
+    mol = Chem.MolFromSmiles('c1c[nH]cc1')
+    molH = Chem.AddHs(mol)
+    psa = MolSurf.TPSA(mol)
+    psaH = MolSurf.TPSA(molH)
+    self.failUnless(psa==psaH)
+
+    inName = RDConfig.RDDataDir+'/NCI/first_200.tpsa.csv'
+    inF = open(inName,'r')
+    lines = inF.readlines()
+    for line in lines:
+      if line[0] != '#':
+        line.strip()
+        smi,ans = line.split(',')
+        ans = float(ans)
+        mol = Chem.MolFromSmiles(smi)
+        mol = Chem.AddHs(mol)
+        calc = MolSurf.TPSA(mol)
+        self.failUnless(feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans))
+    if doLong:
+      inName = os.path.join(RDConfig.RDCodeDir,'Chem','tests','NCI_5K_TPSA.csv')
+      inF = open(inName,'r')
+      lines = inF.readlines()
+      for line in lines:
+        if line[0] != '#':
+          line.strip()
+          smi,ans = line.split(',')
+          ans = float(ans)
+          mol = Chem.MolFromSmiles(smi)
+          mol = Chem.AddHs(mol)
+          calc = MolSurf.TPSA(mol)
+          self.failUnless(feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans))
+      
+    
 if __name__ == '__main__':
   import sys,getopt,re
   doLong=0

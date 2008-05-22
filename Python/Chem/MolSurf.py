@@ -318,7 +318,9 @@ def _TPSAContribs(mol,verbose=False):
               nDoub += 1
             elif ord == Chem.BondType.TRIPLE:
               nTrip += 1
-
+        else:
+          numNeighbors-=1
+          nHs += 1
       tmp = -1
       if atNum == 7:
         if numNeighbors == 1:
