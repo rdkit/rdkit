@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2001-2006 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2001-2008 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -209,58 +209,60 @@ def PEOE_VSA_(mol,bins=None,force=1):
 #-------------------------------------------------
 # install the various VSA descriptors in the namespace
 #  (this is used by AvailDescriptors)
-for i in range(len(mrBins)):
+def _InstallDescriptors():
+  for i in range(len(mrBins)):
+    fn = lambda x,y=i:SMR_VSA_(x,force=0)[y]
+    if i > 0:
+      fn.__doc__="MOE MR VSA Descriptor %d (% 4.2f <= x < % 4.2f)"%(i+1,mrBins[i-1],mrBins[i])
+    else:
+      fn.__doc__="MOE MR VSA Descriptor %d (-inf < x < % 4.2f)"%(i+1,mrBins[i])
+    name="SMR_VSA%d"%(i+1)
+    fn.version="1.0.1"
+    globals()[name]=fn
+  i+=1
   fn = lambda x,y=i:SMR_VSA_(x,force=0)[y]
-  if i > 0:
-    fn.__doc__="MOE MR VSA Descriptor %d (% 4.2f <= x < % 4.2f)"%(i+1,mrBins[i-1],mrBins[i])
-  else:
-    fn.__doc__="MOE MR VSA Descriptor %d (-inf < x < % 4.2f)"%(i+1,mrBins[i])
+  fn.__doc__="MOE MR VSA Descriptor %d (% 4.2f <= x < inf)"%(i+1,mrBins[i-1])
+  fn.version="1.0.1"
   name="SMR_VSA%d"%(i+1)
-  fn.version="1.0.1"
-  exec('%s=fn'%(name))
-i+=1
-fn = lambda x,y=i:SMR_VSA_(x,force=0)[y]
-fn.__doc__="MOE MR VSA Descriptor %d (% 4.2f <= x < inf)"%(i+1,mrBins[i-1])
-fn.version="1.0.1"
-name="SMR_VSA%d"%(i+1)
-exec('%s=fn'%(name))
+  globals()[name]=fn
 
-for i in range(len(logpBins)):
+  for i in range(len(logpBins)):
+    fn = lambda x,y=i:SlogP_VSA_(x,force=0)[y]
+    if i > 0:
+      fn.__doc__="MOE logP VSA Descriptor %d (% 4.2f <= x < % 4.2f)"%(i+1,logpBins[i-1],
+                                                                      logpBins[i])
+    else:
+      fn.__doc__="MOE logP VSA Descriptor %d (-inf < x < % 4.2f)"%(i+1,logpBins[i])
+    name="SlogP_VSA%d"%(i+1)
+    fn.version="1.0.1"
+    globals()[name]=fn
+  i+=1
   fn = lambda x,y=i:SlogP_VSA_(x,force=0)[y]
-  if i > 0:
-    fn.__doc__="MOE logP VSA Descriptor %d (% 4.2f <= x < % 4.2f)"%(i+1,logpBins[i-1],
-                                                                    logpBins[i])
-  else:
-    fn.__doc__="MOE logP VSA Descriptor %d (-inf < x < % 4.2f)"%(i+1,logpBins[i])
+  fn.__doc__="MOE logP VSA Descriptor %d (% 4.2f <= x < inf)"%(i+1,logpBins[i-1])
+  fn.version="1.0.1"
   name="SlogP_VSA%d"%(i+1)
-  fn.version="1.0.1"
-  exec('%s=fn'%(name))
-i+=1
-fn = lambda x,y=i:SlogP_VSA_(x,force=0)[y]
-fn.__doc__="MOE logP VSA Descriptor %d (% 4.2f <= x < inf)"%(i+1,logpBins[i-1])
-fn.version="1.0.1"
-name="SlogP_VSA%d"%(i+1)
-exec('%s=fn'%(name))
+  globals()[name]=fn
 
-for i in range(len(chgBins)):
+  for i in range(len(chgBins)):
+    fn = lambda x,y=i:PEOE_VSA_(x,force=0)[y]
+    if i > 0:
+      fn.__doc__="MOE Charge VSA Descriptor %d (% 4.2f <= x < % 4.2f)"%(i+1,chgBins[i-1],
+                                                                        chgBins[i])
+    else:
+      fn.__doc__="MOE Chage VSA Descriptor %d (-inf < x < % 4.2f)"%(i+1,chgBins[i])
+    name="PEOE_VSA%d"%(i+1)
+    fn.version="1.0.1"
+    globals()[name]=fn
+  i+=1
   fn = lambda x,y=i:PEOE_VSA_(x,force=0)[y]
-  if i > 0:
-    fn.__doc__="MOE Charge VSA Descriptor %d (% 4.2f <= x < % 4.2f)"%(i+1,chgBins[i-1],
-                                                                      chgBins[i])
-  else:
-    fn.__doc__="MOE Chage VSA Descriptor %d (-inf < x < % 4.2f)"%(i+1,chgBins[i])
-  name="PEOE_VSA%d"%(i+1)
   fn.version="1.0.1"
-  exec('%s=fn'%(name))
-i+=1
-fn = lambda x,y=i:PEOE_VSA_(x,force=0)[y]
-fn.version="1.0.1"
-fn.__doc__="MOE Charge VSA Descriptor %d (% 4.2f <= x < inf)"%(i+1,chgBins[i-1])
-name="PEOE_VSA%d"%(i+1)
-exec('%s=fn'%(name))
-fn = None
-# Change log for the MOE-type descriptors:
-#  version 1.0.1: optimizations, values unaffected
+  fn.__doc__="MOE Charge VSA Descriptor %d (% 4.2f <= x < inf)"%(i+1,chgBins[i-1])
+  name="PEOE_VSA%d"%(i+1)
+  globals()[name]=fn
+  fn = None
+  # Change log for the MOE-type descriptors:
+  #  version 1.0.1: optimizations, values unaffected
+_InstallDescriptors()
 
 def pyLabuteASA(mol,includeHs=1):
   """ calculates Labute's Approximate Surface Area (ASA from MOE)
@@ -274,7 +276,8 @@ def pyLabuteASA(mol,includeHs=1):
 pyLabuteASA.version="1.0.1"
 # Change log for LabuteASA:
 #  version 1.0.1: optimizations, values unaffected
-LabuteASA=rdMolDescriptors.CalcLabuteASA
+LabuteASA=lambda *x,**y:rdMolDescriptors.CalcLabuteASA(*x,**y)
+LabuteASA.version=rdMolDescriptors.__CalcLabuteASA_version__
 
 
 def _TPSAContribs(mol,verbose=False):
@@ -395,7 +398,7 @@ def TPSA(mol,verbose=False):
   for contrib in contribs:
     res += contrib
   return res
-TPSA.version="1.0.0"
+TPSA.version="1.0.1"
 
 
 
