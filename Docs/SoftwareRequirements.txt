@@ -26,18 +26,17 @@ B. Optional Python:
       The new (May 2008) drawing code has been tested with v1.2a3 of
       aggdraw. 
  
-B. Other required stuff
+C. Other required stuff
    1) The boost libraries v1.33 or later (tested with 1.33, 1.34, and 1.35)
    2) PostgreSQL (only if you're using pyPgSQL)
   
-C. Optional, but useful things to have on windows:
+D. Optional, but useful things to have on windows:
    1) Some form of chemdraw
    2) MS-Excel 
    3) cygwin
 
-D. Required environment variables:
+E. Required environment variables:
    - RDBASE pointing to the root of the distribution
-   - BOOSTBASE (for example boost-1_33)
    - PYTHONPATH: should include $RDBASE/Python
    - PATH: should include $RDBASE/bin
    - On Linux: LD_LIBRARY_PATH should include $RDBASE/bin

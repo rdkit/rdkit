@@ -1,0 +1,19 @@
+The file Docs/SoftwareRequirements.txt documents the additional
+software that is required to build or use the RDKit.
+
+Up-to-date build instructions can be found on the wiki:
+http://code.google.com/p/rdkit/wiki/GettingStarted
+
+Some information about using the software from Python is in the
+"Getting Started in Python" document in Docs/Book
+
+If you have questions or suggestions, please subscribe to the
+rdkit-discuss mailing list: 
+http://lists.sourceforge.net/mailman/listinfo/rdkit-discuss
+
+Please see the file license.txt for details about the "New BSD"
+license which covers this software and its associated data and
+documents. 
+
+# $Id$
+# Copyright (C) 2008 Greg Landrum
