@@ -426,6 +426,54 @@ void testMisc()
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
 }
 
+void testDegree()
+{
+  BOOST_LOG(rdInfoLog)  << "-----------------------\n Testing degree operations" << std::endl;
+  RWMol *m;
+
+  m= new RWMol();
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(6));
+  m->addBond(0,1,Bond::SINGLE);
+  m->addBond(1,2,Bond::SINGLE);
+  m->addBond(0,2,Bond::SINGLE);
+  m->addBond(2,3,Bond::SINGLE);
+
+  MolOps::sanitizeMol(*m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getDegree()==2);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==2);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalDegree()==4);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getDegree()==3);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getTotalNumHs()==1);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getTotalDegree()==4);
+
+  delete m;
+  m= new RWMol();
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(1));
+  m->addBond(0,1,Bond::SINGLE);
+  m->addBond(1,2,Bond::SINGLE);
+  m->addBond(0,2,Bond::SINGLE);
+  m->addBond(2,3,Bond::SINGLE);
+  m->addBond(0,4,Bond::SINGLE);
+
+  MolOps::sanitizeMol(*m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getDegree()==3);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs(true)==2);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalDegree()==4);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getDegree()==3);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getTotalNumHs()==1);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getTotalDegree()==4);
+  
+  BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
+}
+
 // -------------------------------------------------------------------
 int main()
 {
@@ -542,5 +590,6 @@ int main()
   testAtomProps();
   testBondProps();
   testMisc();
+  testDegree();
   return 0;
 }

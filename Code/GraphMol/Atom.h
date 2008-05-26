@@ -119,12 +119,21 @@ namespace RDKit{
     */
     void setIdx(unsigned int index) {d_index=index;};
 
-    //! returns the degree of the Atom (number of bonded neighbors)
+    //! returns the explicit degree of the Atom (number of bonded
+    //!   neighbors in the graph)
     /*!
       <b>Notes:</b>
         - requires an owning molecule
     */
     unsigned int getDegree() const;
+
+    //! returns the total degree of the Atom (number of bonded
+    //!   neighbors + number of Hs)
+    /*!
+      <b>Notes:</b>
+        - requires an owning molecule
+    */
+    unsigned int getTotalDegree() const;
 
     //! \brief returns the total number of Hs (implicit and explicit) that
     //! this Atom is bound to

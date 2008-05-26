@@ -119,10 +119,15 @@ std::string Atom::getSymbol() const {
 }
 
 unsigned int Atom::getDegree() const {
-  PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules")
+  PRECONDITION(dp_mol,"degree not defined for atoms not associated with molecules");
   return getOwningMol().getAtomDegree(this);
 }
 
+unsigned int Atom::getTotalDegree() const {
+  PRECONDITION(dp_mol,"degree not defined for atoms not associated with molecules");
+  unsigned int res=this->getTotalNumHs(false)+this->getDegree();
+  return res;
+}
 
 //
 //  If includeNeighbors is set, we'll loop over our neighbors

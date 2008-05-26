@@ -581,6 +581,17 @@ namespace RDKit{
     //! removes bogus chirality markers (those on non-sp3 centers):
     void cleanupChirality(RWMol &mol);
 
+    //! \brief Uses a conformer to assign ChiralType to a molecule's atoms
+    /*!
+      \param mol                  the molecule of interest
+      \param confId               the conformer to use
+      \param replaceExistingTags  if this flag is true, any existing atomic chiral
+                                  tags will be replaced
+
+      If the conformer provided is not a 3D conformer, nothing will be done.
+    */
+    void assignChiralTypesFrom3D(ROMol &mol,int confId=-1,bool replaceExistingTags=true);
+
   }; // end of namespace MolOps
 }; // end of namespace RDKit
 

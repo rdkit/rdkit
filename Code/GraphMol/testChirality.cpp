@@ -575,6 +575,95 @@ void testChiralityCleanup(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testChiralityFrom3D(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "chirality perception from 3D coordinates: " << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  RWMol *m;
+  std::string fName,smi;
+  std::string cip;
+
+  fName = rdbase+"/Code/GraphMol/test_data/chi3d_r1.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==5);
+
+  MolOps::assignChiralTypesFrom3D(*m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+
+
+  delete m;
+  fName = rdbase+"/Code/GraphMol/test_data/chi3d_s1.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==5);
+
+  MolOps::assignChiralTypesFrom3D(*m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+
+
+  delete m;
+  fName = rdbase+"/Code/GraphMol/test_data/chi3d_r2.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+
+  MolOps::assignChiralTypesFrom3D(*m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+
+
+  delete m;
+  fName = rdbase+"/Code/GraphMol/test_data/chi3d_s2.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+
+  MolOps::assignChiralTypesFrom3D(*m);
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+
+  delete m;
+  fName = rdbase+"/Code/GraphMol/test_data/chi3d_r1_bad.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==5);
+
+  // this molecule starts out with incorrect stereochemistry (e.g. the bond wedging
+  // does not match the 3D structure. Start by verifying that the start position is bad:
+  MolOps::assignAtomChiralCodes(*m,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+  // now assign the stereochem based on the 3D structure and check that we get it
+  // right:
+  MolOps::assignChiralTypesFrom3D(*m,-1,true);
+  MolOps::assignAtomChiralCodes(*m,true,true);
+  TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+
+  delete m;
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -584,6 +673,7 @@ int main(){
   testMol2();
   testRoundTrip();
   testChiralityCleanup();
+  testChiralityFrom3D();
   
   return 0;
 }

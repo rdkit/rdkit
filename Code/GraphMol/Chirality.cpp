@@ -11,7 +11,9 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
+
 #include <boost/dynamic_bitset.hpp>
+#include <Geometry/point.h>
 
 namespace Chirality {
   using namespace RDKit;
@@ -820,6 +822,58 @@ namespace RDKit{
           (*atomIt)->setChiralTag(Atom::CHI_UNSPECIFIED);
         }
       }
+    }
+
+
+    void assignChiralTypesFrom3D(ROMol &mol,int confId,bool replaceExistingTags){
+      const double ZERO_VOLUME_TOL=0.1;
+      if(!mol.getNumConformers()) return;
+      const Conformer &conf=mol.getConformer(confId);
+      if(!conf.is3D()) return;
+
+      for(ROMol::AtomIterator atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();++atomIt){
+        Atom *atom=*atomIt;
+        // reasons not to do this atom:
+        if( (!replaceExistingTags && atom->getChiralTag()!=Atom::CHI_UNSPECIFIED) ||
+            atom->getDegree()<3 || // more than two implicit Hs and we ought not to consider it
+            atom->getTotalDegree()!=4 
+            ){
+          continue;
+        }
+        bool hasPreceder=false;
+        const RDGeom::Point3D &p0=conf.getAtomPos(atom->getIdx());
+        ROMol::ADJ_ITER nbrIdx,endNbrs;
+        boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atom);
+        const RDGeom::Point3D &p1=conf.getAtomPos(*nbrIdx);
+        if(*nbrIdx<atom->getIdx()) hasPreceder=true;
+        ++nbrIdx;
+        const RDGeom::Point3D &p2=conf.getAtomPos(*nbrIdx);
+        ++nbrIdx;
+        const RDGeom::Point3D &p3=conf.getAtomPos(*nbrIdx);
+
+        RDGeom::Point3D v1=p1-p0;
+        RDGeom::Point3D v2=p2-p0;
+        RDGeom::Point3D v3=p3-p0;
+        
+        double chiralVol= v1.dotProduct(v2.crossProduct(v3));
+        if(chiralVol<-ZERO_VOLUME_TOL){
+          atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+        } else if (chiralVol>ZERO_VOLUME_TOL){
+          atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+        } else {
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        }
+      
+        //BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" "<<chiralVol<<std::endl;
+
+        if(atom->getDegree()==3 && !hasPreceder){
+          // usual story: we'll need to flip the chiral tag
+          // if there's no preceding atom and we only have three
+          // neighbors:
+          atom->invertChirality();
+        }
+      }
+        
     }
 
   }  // end of namespace MolOps
