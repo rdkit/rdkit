@@ -581,7 +581,6 @@ void testSDSupplierEnding() {
 void testSuppliersEmptyFile() {
   std::string rdbase = getenv("RDBASE");
   std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/empty.sdf";
-  int i = 0;
   SDMolSupplier reader(infile);
   TEST_ASSERT(reader.atEnd());
 

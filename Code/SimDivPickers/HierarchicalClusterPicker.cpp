@@ -89,7 +89,7 @@ namespace RDPickers {
     RDKit::VECT_INT_VECT res;
     unsigned int j = 0;
     for (unsigned int i = 0; i < poolSize; i++) {
-      if (i == removed[j]) {
+      if (static_cast<int>(i) == removed[j]) {
         j++;
         continue;
       }

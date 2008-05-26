@@ -53,8 +53,7 @@ namespace RDKit {
   //python::def("GetFeatureMatchDict",GetFeatMatchDict,(python::arg("mol"),
   //						      python::arg("factory"),
   //						      python::arg("feats")),
-  //		  "Returns a dictionary (indexed by feature family) of MolChemicalFeatures\n\
-  // in the molecule matching those in the argument feats\n");
+  //           );
 
   python::dict GetFeatMatchDict(const ROMol *mol,const MolChemicalFeatureFactory *factory,
 				python::object feats){

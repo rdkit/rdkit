@@ -795,7 +795,7 @@ namespace RDKit {
 	  //        4    <- 4 is the O
 	  //        |    <- That's the double bond
 	  //    1   3
-	  //     \ / \
+	  //     \ / \                                         T.S.I.Left Blank
 	  //      2   5  <- 2 is an oxygen/nitrogen
 	  // 
 	  // Here we set the distance between atoms 1 and 4,
@@ -837,7 +837,7 @@ namespace RDKit {
 	  //        4    <- 4 is the O
 	  //        |    <- That's the double bond
 	  //    1   3
-	  //     \ / \
+	  //     \ / \                                          T.S.I.Left Blank
 	  //      2   5  <- 2 is oxygen or nitrogen
 	  // 
 	  // we set the 1-4 contact above.

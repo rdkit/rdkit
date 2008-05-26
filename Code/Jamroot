@@ -23,6 +23,7 @@ project RDKit
           <include>$(RDBASE)/External/Lapack++/include
           <include>$(RDBASE)/External/vflib-2.0/include
           <toolset>gcc:<cflags>-Wno-unused-function
+          <toolset>gcc:<cflags>-fno-strict-aliasing
           <toolset>msvc:<define>WIN32
         : default-build release ;
 

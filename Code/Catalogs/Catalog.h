@@ -360,7 +360,7 @@ namespace RDCatalog {
       const entryType *res=NULL;
       for(unsigned int i=idx;i<this->getNumEntries();i++){
         const entryType *e=pMap[i];
-        if(e->getBitId()==idx){
+        if(e->getBitId()==static_cast<int>(idx)){
 	  res=e;
           break;
         }

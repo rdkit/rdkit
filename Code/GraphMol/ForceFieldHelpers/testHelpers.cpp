@@ -614,7 +614,6 @@ void testSFIssue1653802(){
   RWMol *mol;
   int needMore;
   ForceFields::ForceField *field;
-  double e1,e2;
 
   mol = MolFileToMol("test_data/cyclobutadiene.mol",false);
   TEST_ASSERT(mol);

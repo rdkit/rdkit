@@ -234,9 +234,6 @@ void testIssue294(){
 
   m = mols[0];
 
-  const MOL_SPTR_VECT &fgrps = fcat.getCatalogParams()->getFuncGroups();
-  MOL_SPTR_VECT::const_iterator fgci;
-
   for(unsigned int i=0;i<200;i++){
     for (std::vector<ROMol *>::const_iterator mi = mols.begin();
 	 mi != mols.end(); mi++) {

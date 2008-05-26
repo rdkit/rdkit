@@ -24,7 +24,7 @@ void test1(){
   Mol *m = SmilesToMol(smi);
   Mol::AtomIterator atIt;
 
-  int idx=0;
+  unsigned int idx=0;
   for(atIt=m->beginAtoms();atIt!=m->endAtoms();atIt++){
     CHECK_INVARIANT((*atIt)->getIdx()==idx,"bad idx");
     idx++;
@@ -87,7 +87,7 @@ void test2(){
   Mol *m = SmilesToMol(smi);
   Mol::BondIterator bondIt;
 
-  int idx=0;
+  unsigned int idx=0;
   for(bondIt=m->beginBonds();bondIt!=m->endBonds();bondIt++){
     CHECK_INVARIANT((*bondIt)->getIdx()==idx,"bad idx");
     idx++;
@@ -125,11 +125,11 @@ void test2(){
 
 void test3(){
   string smi="C1COCCNCOCNSCC1";
-  char heteros[]={2,5,7,9,10};
+  unsigned char heteros[]={2,5,7,9,10};
   
   Mol *m = SmilesToMol(smi);
   Mol::HeteroatomIterator heteroIt;
-  int nSeen=0;
+  unsigned int nSeen=0;
   for(heteroIt=m->beginHeteros();heteroIt!=m->endHeteros();heteroIt++){
     CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[nSeen],"bad hetero");
     nSeen++;
@@ -148,13 +148,13 @@ void test3(){
 
 void test4(){
   string smi="C1COCCNCOCNSCC1";
-  int heteros1[]={2,7};
+  unsigned int heteros1[]={2,7};
   
   Mol *m = SmilesToMol(smi);
   QueryAtom *q= new QueryAtom();
   q->setQuery(makeAtomNumEqualsQuery(8));
   Mol::QueryAtomIterator queryIt;
-  int nSeen=0;
+  unsigned int nSeen=0;
   for(queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();queryIt++){
     CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[nSeen],"bad query");
     nSeen++;
@@ -168,7 +168,7 @@ void test4(){
   CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[1],"bad query");
 
   smi = "CC(C)CC(C)CC(C)CC(C)C";
-  int heteros2[]={1,4,7,10};
+  unsigned int heteros2[]={1,4,7,10};
   m = SmilesToMol(smi);
   //m->debugMol(cout);
   q->setQuery(makeAtomImplicitValenceQuery(1));
@@ -185,7 +185,7 @@ void test5(){
   string smi="CCCC";
   Mol *m = SmilesToMol(smi);
   Mol::BondIterator bondIt;
-  int idx=0;
+  unsigned int idx=0;
   for(bondIt=m->beginBonds();bondIt!=m->endBonds();bondIt++){
     CHECK_INVARIANT((*bondIt)->getIdx()==idx,"bad idx");
     idx++;
@@ -214,7 +214,7 @@ void test5(){
 #if 1
 void _test6Help(const ROMol *m){
   Mol::ConstAtomIterator atIt;
-  int idx=0;
+  unsigned int idx=0;
   for(atIt=m->beginAtoms();atIt!=m->endAtoms();atIt++){
     CHECK_INVARIANT((*atIt)->getIdx()==idx,"bad idx");
     idx++;
@@ -286,7 +286,7 @@ void test7(){
   Mol::AromaticAtomIterator atomIt;
   Mol::AromaticAtomIterator beginP(m->beginAromaticAtoms());
   Mol::AromaticAtomIterator endP(m->endAromaticAtoms());
-  int idx=0;
+  unsigned int idx=0;
   for(atomIt=beginP;atomIt!=endP;atomIt++){
     TEST_ASSERT((*atomIt)->getIdx()==idx);
     idx++;
@@ -318,7 +318,7 @@ void testIssue263(){
 #if 1
   Mol *m = SmilesToMol(smi);
   Mol::AtomIterator atomIt;
-  int idx=0;
+  unsigned int idx=0;
   for(atomIt=m->beginAtoms();atomIt!=m->endAtoms();++atomIt){
     TEST_ASSERT((*atomIt)->getIdx()==idx);
     idx++;

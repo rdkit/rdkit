@@ -21,7 +21,7 @@ void test1(){
   std::cout << " ----------------- Test 1" << std::endl;
   MatchVectType matchV;
   std::vector< MatchVectType > matches;
-  int n;
+  unsigned int n;
 
   RWMol *m,*q1;
   m = new RWMol();
@@ -53,7 +53,7 @@ void test2(){
   std::cout << " ----------------- Test 2" << std::endl;
   MatchVectType matchV;
   std::vector< MatchVectType > matches;
-  int n;
+  unsigned int n;
 
   RWMol *m,*q1;
   m = new RWMol();
@@ -104,7 +104,7 @@ void test3(){
   std::cout << " ----------------- Test 3" << std::endl;
   MatchVectType matchV;
   std::vector< MatchVectType > matches;
-  int n;
+  unsigned int n;
 
   RWMol *m,*q1;
   m = new RWMol();

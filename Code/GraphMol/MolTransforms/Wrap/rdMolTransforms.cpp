@@ -45,7 +45,6 @@ namespace RDKit {
     }
     PyArrayObject *transMat = reinterpret_cast<PyArrayObject *>(transObj);
     unsigned int nrows = transMat->dimensions[0];
-    unsigned int ncols = transMat->dimensions[1];
     unsigned int dSize = nrows*nrows;
     double *inData = reinterpret_cast<double *>(transMat->data);
     RDGeom::Transform3D transform;

@@ -145,8 +145,8 @@ namespace RDDepict {
     // we unfortunately cannot right away pick the largest angle - it is possible that
     // we pick an angle that is in a fused ring - see if I can explain this with a diagram
     //        _     _
-    //       / B   C \  
-    //      /   \ /   \ 
+    //       / B   C \                                this space
+    //      /   \ /   \                               intentionally left blank
     //     |     A     |
     //     |     |     |
     //      \    D    /  
@@ -1613,8 +1613,8 @@ namespace RDDepict {
     // Assuming that either aid1, and/or aid2 are degree 1 atoms, we will open up the angles 
     //
     //     1 2
-    //    /   \
-    //   /     \
+    //    /   \                                                   this space
+    //   /     \                                            intentionally left blank
     //  a-------b
     //
     // If 1 and 2 are too close to each other we open up angle(1ab) if 1 is a degree 1 node and
