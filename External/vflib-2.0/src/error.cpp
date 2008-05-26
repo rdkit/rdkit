@@ -35,7 +35,7 @@
  * except that a trailing \n is automatically
  * appended.
  -----------------------------------------*/
-void error(char *msg, ...)
+void error(const char *msg, ...)
   { va_list ap;
     va_start(ap, msg);
     fprintf(stderr, "ERROR: ");
