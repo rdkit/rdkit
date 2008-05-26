@@ -284,7 +284,7 @@ void test5BackwardsCompatibility(){
   TEST_ASSERT((*fp1)[1590]);
   delete fp1;
 
-#if 0 
+#if 1 
   // boost 1.35.0
   fp1=DaylightFingerprintMol(*m);
   CHECK_INVARIANT(fp1->GetNumOnBits()==4,"Fingerprint compatibility problem detected");
