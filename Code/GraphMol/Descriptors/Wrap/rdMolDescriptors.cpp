@@ -123,4 +123,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	       python::arg("force")=false),
               docString.c_str());
 
+  docString="returns the molecule's molecular weight";
+  python::def("_CalcMolWt",
+	      RDKit::Descriptors::CalcAMW,
+	      (python::arg("mol"),python::arg("onlyHeavy")=false),
+              docString.c_str());
+  python::scope().attr("__CalcMolWt_version__")="1.0.0";
+
 }

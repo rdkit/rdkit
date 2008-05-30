@@ -54,5 +54,18 @@ class TestCase(unittest.TestCase) :
     mol = Chem.MolFromSmiles("NCO");
     contribs = rdMD._CalcCrippenContribs(mol)
 
+  def testMolWt(self):
+    mol = Chem.MolFromSmiles("C");
+    amw = rdMD._CalcMolWt(mol);
+    self.failUnless(feq(amw,16.043,.001));
+    amw = rdMD._CalcMolWt(mol,True);
+    self.failUnless(feq(amw,12.011,.001));
+    mol2 = Chem.AddHs(mol);
+    amw = rdMD._CalcMolWt(mol2);
+    self.failUnless(feq(amw,16.043,.001));
+    amw = rdMD._CalcMolWt(mol2,True);
+    self.failUnless(feq(amw,12.011,.001));
+
+
 if __name__ == '__main__':
   unittest.main()
