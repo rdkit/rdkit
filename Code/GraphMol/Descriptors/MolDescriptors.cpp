@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2005-2006 Rational Discovery LLC
+//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -24,7 +24,7 @@ namespace RDKit{
 
 	// add our implicit Hs if we need to:
 	if(!onlyHeavy){
-	  res += (*atomIt)->getImplicitValence()*table->getAtomicWeight(1);
+	  res += (*atomIt)->getTotalNumHs()*table->getAtomicWeight(1);
 	}
       }
       return res;

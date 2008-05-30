@@ -176,6 +176,16 @@ void test3(){
   TEST_ASSERT(feq(amw,12.011,.001));
   delete mol;
   delete mol2;
+
+  mol = SmilesToMol("[CH4]");
+  TEST_ASSERT(mol);
+  amw = CalcAMW(*mol);
+  TEST_ASSERT(feq(amw,16.043,.001));
+  amw = CalcAMW(*mol,true);
+  TEST_ASSERT(feq(amw,12.011,.001));
+  delete mol;
+
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
