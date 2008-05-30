@@ -5,10 +5,17 @@
 #   @@ All Rights Reserved  @@
 #
 import Chem
+from Chem import rdMolDescriptors
 
-def MolWt(mol,heavyAtomsOnly=0):
+def pyMolWt(mol,heavyAtomsOnly=0):
   """ The average molecular weight of the molecule
 
+  >>> '%.2f'%pyMolWt(Chem.MolFromSmiles('CC'))
+  '30.07'
+  >>> '%.2f'%pyMolWt(Chem.MolFromSmiles('CC'),1)
+  '24.02'
+  >>> '%.2f'%pyMolWt(Chem.MolFromSmiles('[NH4+].[Cl-]'))
+  '53.49'
   >>> '%.2f'%MolWt(Chem.MolFromSmiles('CC'))
   '30.07'
   >>> '%.2f'%MolWt(Chem.MolFromSmiles('CC'),1)
@@ -23,7 +30,10 @@ def MolWt(mol,heavyAtomsOnly=0):
     if not heavyAtomsOnly:
       accum += atom.GetTotalNumHs()*hMass
   return accum
-MolWt.version="1.0.0"
+pyMolWt.version="1.0.0"
+MolWt = lambda *x,**y:rdMolDescriptors._CalcMolWt(*x,**y)
+MolWt.version=rdMolDescriptors.__CalcMolWt_version__
+
 
 HeavyAtomMolWt=lambda x:MolWt(x,1)
 HeavyAtomMolWt.__doc__="""The average molecular weight of the molecule ignoring hydrogens
