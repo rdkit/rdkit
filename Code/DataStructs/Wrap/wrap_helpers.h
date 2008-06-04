@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -28,21 +28,43 @@ namespace python = boost::python;
     return Base64Encode(tmp.c_str(),tmp.length());
   };
 
+  template <typename T>
+  void SetBitsFromList(T *bv, python::object onBitList) {
+    PySequenceHolder<int> bitL(onBitList);
+    for (unsigned int i = 0; i < bitL.size(); i++) {
+      bv->SetBit(bitL[i]);
+    }
+  }
+
   // used to support __getitem__
   template <typename T>
-  const int get_VectItem(const T& self,unsigned int which)
+  const int get_VectItem(const T& self,int which)
   {
-    return self.GetBit(which);
+    if(which<0){
+      if(which+self.GetNumBits()<0){
+        throw IndexErrorException(which);
+      } else {
+        which += self.GetNumBits();
+      }
+    }
+    return self.GetBit(static_cast<unsigned int>(which));
   }
 
   // used to support __setitem__
   template <typename T>
-  const int set_VectItem(T& self, const unsigned int which, const int val)
+  const int set_VectItem(T& self, int which, const int val)
   {
+    if(which<0){
+      if(which+self.GetNumBits()<0){
+        throw IndexErrorException(which);
+      } else {
+        which += self.GetNumBits();
+      }
+    }
     if(val){
-      return self.SetBit(which);
+      return self.SetBit(static_cast<unsigned int>(which));
     } else {
-      return self.UnSetBit(which);
+      return self.UnSetBit(static_cast<unsigned int>(which));
     }
   }
 

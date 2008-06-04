@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (c) 2001-2006 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2001-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -15,6 +15,7 @@
 #ifdef WIN32
 #include <ios>
 #endif
+#include <boost/cstdint.hpp>
 
 
 // """ -------------------------------------------------------
@@ -24,7 +25,7 @@
 //   the format produced by SparseBitVect::ToString
 //
 // """ -------------------------------------------------------
-SparseBitVect::SparseBitVect(const std::string s)
+SparseBitVect::SparseBitVect(const std::string &s)
 {
   d_size=0;dp_bits = 0;
   InitFromText(s.c_str(),s.length());
@@ -310,12 +311,13 @@ std::string SparseBitVect::ToString() const {
   // bytes it needs
   std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
 
-  unsigned int nOnBits=GetNumOnBits();
-  int tVers =ci_BITVECT_VERSION*-1;
-  
-  ss.write((const char *)&(tVers),sizeof(tVers));
-  ss.write((const char *)&d_size,sizeof(d_size));
-  ss.write((const char *)&nOnBits,sizeof(nOnBits));
+  boost:int32_t tInt = ci_BITVECT_VERSION*-1;
+  RDKit::streamWrite(ss,tInt);
+  tInt=d_size;
+  RDKit::streamWrite(ss,tInt);
+  tInt=GetNumOnBits();
+  RDKit::streamWrite(ss,tInt);
+
   int prev = -1;
   unsigned int zeroes;
   for (IntSetIter i=dp_bits->begin(); i!=dp_bits->end(); i++) {

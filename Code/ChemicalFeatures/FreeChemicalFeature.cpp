@@ -1,29 +1,34 @@
 // $Id$
 //
-// Copyright (c) 2005-2006 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2005-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
 #include "FreeChemicalFeature.h"
+#include <RDGeneral/StreamOps.h>
 #include <sstream>
+#include <boost/cstdint.hpp>
 
 
 namespace ChemicalFeatures {
+  using namespace RDKit;
+  using boost::int32_t;
+  using boost::uint32_t;
   const int ci_FEAT_VERSION=0x0010; //!< version number to use in pickles
 
   std::string FreeChemicalFeature::toString() const {
     std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
-    unsigned int tInt = ci_FEAT_VERSION;
-    ss.write((const char *)&(tInt),sizeof(tInt));
+    uint32_t tInt = ci_FEAT_VERSION;
+    streamWrite(ss,tInt);
     tInt = d_family.size()+1;
-    ss.write((const char *)&(tInt),sizeof(tInt));
+    streamWrite(ss,tInt);
     ss.write(d_family.c_str(),tInt*sizeof(char));
     tInt = d_type.size()+1;
-    ss.write((const char *)&(tInt),sizeof(tInt));
+    streamWrite(ss,tInt);
     ss.write(d_type.c_str(),tInt*sizeof(char));
-    ss.write((const char *)&d_position.x,sizeof(d_position.x));
-    ss.write((const char *)&d_position.y,sizeof(d_position.y));
-    ss.write((const char *)&d_position.z,sizeof(d_position.z));
+    streamWrite(ss,d_position.x);
+    streamWrite(ss,d_position.y);
+    streamWrite(ss,d_position.z);
     std::string res(ss.str());
     return res;
   };
@@ -31,8 +36,8 @@ namespace ChemicalFeatures {
     std::stringstream ss(pickle,
 			 std::ios_base::binary|std::ios_base::in|std::ios_base::out);
     int version=0;
-    unsigned int tInt;
-    ss.read((char *)&tInt,sizeof(tInt));
+    uint32_t tInt;
+    streamRead(ss,tInt);
     switch(tInt){
     case 0x0010:
       version=1;
@@ -42,21 +47,22 @@ namespace ChemicalFeatures {
     }
 
     char *tmpChr;
-    ss.read((char *)&(tInt),sizeof(tInt));
+    streamRead(ss,tInt);
     tmpChr = new char[tInt];
     ss.read(tmpChr,tInt*sizeof(char));
     d_family = tmpChr;
     delete [] tmpChr;
 
-    ss.read((char *)&(tInt),sizeof(tInt));
+    streamRead(ss,tInt);
     tmpChr = new char[tInt];
     ss.read(tmpChr,tInt*sizeof(char));
     d_type = tmpChr;
     delete [] tmpChr;
 
-    ss.read((char *)&d_position.x,sizeof(d_position.x));
-    ss.read((char *)&d_position.y,sizeof(d_position.x));
-    ss.read((char *)&d_position.z,sizeof(d_position.x));
+    streamRead(ss,d_position.x);
+    streamRead(ss,d_position.y);
+    streamRead(ss,d_position.z);
+
   };
 
   

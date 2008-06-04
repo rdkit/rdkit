@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <boost/cstdint.hpp>
 
 
 namespace RDKit {
@@ -90,13 +91,14 @@ namespace RDKit {
 
 
   bool FragCatalogEntry::match(const FragCatalogEntry *other, double tol) const {
-    PRECONDITION(other,"bad fragment to compare")
+    PRECONDITION(other,"bad fragment to compare");
+    //std::cerr << " MATCH: "<<d_order<<" " << other->getOrder()<<std::endl;
     if (d_order != other->getOrder()) {
       return false;
     }
-
     // now check if both the entries have the same number of functional groups
     const INT_INT_VECT_MAP &oFgpMap = other->getFuncGroupMap();
+    //std::cerr << "     "<<oFgpMap.size() <<" " <<d_aToFmap.size()<<std::endl;
     if (oFgpMap.size() != d_aToFmap.size()) {
       return false;
     }
@@ -105,18 +107,19 @@ namespace RDKit {
     INT_INT_VECT_MAP_CI tfi, ofi;
     for (tfi = d_aToFmap.begin(); tfi != d_aToFmap.end(); tfi++) {
       bool found = false;
+      //std::cerr << "     "<< (tfi->second[0]) << ":";
       for (ofi = oFgpMap.begin(); ofi != oFgpMap.end(); ofi++) {
+        //std::cerr << " "<< (ofi->second[0]);
 	if (tfi->second == ofi->second) {
 	  found = true;
 	  break;
 	}
       }
+      //std::cerr<<std::endl;
       if (!found) {
 	return false;
       }
     }
-
-    //std::cout << "in match\n";
 
     // FIX: if might be better if we just do the balaban first and then 
     // move onto eigen values
@@ -127,7 +130,12 @@ namespace RDKit {
     //double x1 = boost::tuples::get<0>(odiscs);
     //std::cout << x1 << "\n";
     tdiscs = this->getDiscrims();
-
+#if 0
+    std::cout << "DISCRIMS: " << d_descrip  << " ";
+    std::cout << tdiscs.get<0>() << " " << tdiscs.get<1>() << " " << tdiscs.get<2>();
+    std::cout << "  -- "<<odiscs.get<0>() << " " << odiscs.get<1>() << " " << odiscs.get<2>();
+    std::cout << std::endl;
+#endif
     // REVIEW: need an overload of feq that handles tuples in MolOps, or wherever
     // DiscrimTuple is defined
     if (!(feq(boost::tuples::get<0>(tdiscs), boost::tuples::get<0>(odiscs),tol)) ||
@@ -215,7 +223,7 @@ namespace RDKit {
   void FragCatalogEntry::toStream(std::ostream &ss) const {
     MolPickler::pickleMol(*dp_mol,ss);
 
-    int tmpInt;
+    boost::int32_t tmpInt;
     tmpInt = getBitId();
     streamWrite(ss,tmpInt);
       
@@ -223,18 +231,22 @@ namespace RDKit {
     streamWrite(ss,tmpInt);
     ss.write(d_descrip.c_str(),tmpInt*sizeof(char));
 
-    streamWrite(ss,d_order);
+    tmpInt=d_order;
+    streamWrite(ss,tmpInt);
 
     tmpInt = d_aToFmap.size();
     streamWrite(ss,tmpInt);
     for(INT_INT_VECT_MAP::const_iterator iivmci=d_aToFmap.begin();
 	iivmci!=d_aToFmap.end();
 	iivmci++){
-      streamWrite(ss,iivmci->first);
+      tmpInt=iivmci->first;
+      streamWrite(ss,tmpInt);
       INT_VECT tmpVect=iivmci->second;
-      streamWrite(ss,tmpVect.size());
+      tmpInt=tmpVect.size();
+      streamWrite(ss,tmpInt);
       for(INT_VECT_CI ivci=tmpVect.begin();ivci!=tmpVect.end();ivci++){
-	streamWrite(ss,*ivci);
+        tmpInt=*ivci;
+	streamWrite(ss,tmpInt);
       }
     }
   }
@@ -250,7 +262,7 @@ namespace RDKit {
     dp_mol = new ROMol();
     MolPickler::molFromPickle(ss,*dp_mol);
 
-    int tmpInt;
+    boost::int32_t tmpInt;
     // the bitId:
     streamRead(ss,tmpInt);
     setBitId(tmpInt);
@@ -263,12 +275,13 @@ namespace RDKit {
     d_descrip = tmpText;
     delete [] tmpText;
 
-    streamRead(ss,d_order);
+    streamRead(ss,tmpInt);
+    d_order=tmpInt;
 
     // now the map:
     streamRead(ss,tmpInt);
     for(int i=0;i<tmpInt;i++){
-      int key,value,size;
+      boost::int32_t key,value,size;
       streamRead(ss,key);
       streamRead(ss,size);
       INT_VECT tmpVect;

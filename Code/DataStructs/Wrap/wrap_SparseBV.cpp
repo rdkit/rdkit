@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -22,12 +22,6 @@ struct sbv_pickle_suite : python::pickle_suite
   };
 };
 
-void SetBitsFromList(SparseBitVect *bv, python::object onBitList) {
-  PySequenceHolder<int> bitL(onBitList);
-  for (unsigned int i = 0; i < bitL.size(); i++) {
-    bv->SetBit(bitL[i]);
-  }
-}
 
 std::string sbvClassDoc="A class to store sparse bit vectors.\n\
 \n\
@@ -55,7 +49,7 @@ struct SBV_wrapper {
       .def(python::init<std::string>())
       .def("SetBit",(bool (SBV::*)(unsigned int))&SBV::SetBit,
          "Turns on a particular bit on.  Returns the original state of the bit.\n")
-      .def("SetBitsFromList",SetBitsFromList,
+      .def("SetBitsFromList",(void (*)(SBV *,python::object))SetBitsFromList,
          "Turns on a set of bits.  The argument should be a tuple or list of bit ids.\n")
       .def("UnSetBit",(bool (SBV::*)(unsigned int))&SBV::UnSetBit,
          "Turns on a particular bit off.  Returns the original state of the bit.\n")
@@ -69,9 +63,9 @@ struct SBV_wrapper {
       .def("GetNumOffBits",&SBV::GetNumOffBits,
          "Returns the number of off bits.\n")
       .def("__getitem__",
-           (const int (*)(const SBV&,unsigned int))get_VectItem)
+           (const int (*)(const SBV&,int))get_VectItem)
       .def("__setitem__",
-           (const int (*)(SBV&,unsigned int,int))set_VectItem)
+           (const int (*)(SBV&,int,int))set_VectItem)
       .def("GetOnBits",
            (IntVect (*)(const SBV&))GetOnBits,
            "Returns a tuple containing IDs of the on bits.\n")

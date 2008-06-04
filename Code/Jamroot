@@ -25,6 +25,7 @@ project RDKit
           <toolset>gcc:<cflags>-Wno-unused-function
           <toolset>gcc:<cflags>-fno-strict-aliasing
           <toolset>msvc:<define>WIN32
+	  <address-model>64 <cflags>-fPIC
         : default-build release ;
 
 

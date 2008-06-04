@@ -13,13 +13,20 @@
 #include <RDGeneral/types.h>
 #include <Query/QueryObjects.h>
 #include <map>
-
+#include <boost/cstdint.hpp>
+using boost::int32_t;
+using boost::uint32_t;
 namespace RDKit{
 
-  const int MolPickler::versionMajor=6;
-  const int MolPickler::versionMinor=0;
-  const int MolPickler::versionPatch=0;
-  const int MolPickler::endianId=0xDEADBEEF;
+  const int32_t MolPickler::versionMajor=6;
+  const int32_t MolPickler::versionMinor=0;
+  const int32_t MolPickler::versionPatch=0;
+  const int32_t MolPickler::endianId=0xDEADBEEF;
+
+  void streamWrite(std::ostream &ss,MolPickler::Tags tag){
+    int32_t tmp=tag;
+    streamWrite(ss,tmp);
+  }
   template <typename T>
   void streamWrite(std::ostream &ss,MolPickler::Tags tag,const T &what){
     streamWrite(ss,tag);
@@ -40,6 +47,11 @@ namespace RDKit{
     what=buff;
     delete [] buff;
   };  
+  void streamRead(std::istream &ss,MolPickler::Tags &tag){
+    int32_t tmp;
+    streamRead(ss,tmp);
+    tag=static_cast<MolPickler::Tags>(tmp);
+  }
 
   namespace {
     using namespace Queries;
@@ -48,6 +60,7 @@ namespace RDKit{
       PRECONDITION(query,"no query");
       streamWrite(ss,query->getDescription());
       if(query->getNegation()) streamWrite(ss,MolPickler::QUERY_ISNEGATED);
+      int32_t queryVal;
       //if (typeid(*query)==typeid(ATOM_BOOL_QUERY)){
       //  streamWrite(ss,QUERY_BOOL);
       if (typeid(*query)==typeid(AndQuery<int,T const *,true>)){
@@ -58,35 +71,42 @@ namespace RDKit{
         streamWrite(ss,MolPickler::QUERY_XOR);
       } else if (typeid(*query)==typeid(EqualityQuery<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_EQUALS);
-        streamWrite(ss,MolPickler::QUERY_VALUE,
-                    static_cast<const EqualityQuery<int,T const *,true>*>(query)->getVal());
-        streamWrite(ss,static_cast<const EqualityQuery<int,T const *,true>*>(query)->getTol());
+        queryVal=static_cast<const EqualityQuery<int,T const *,true>*>(query)->getVal();
+        streamWrite(ss,MolPickler::QUERY_VALUE,queryVal);
+        queryVal=static_cast<const EqualityQuery<int,T const *,true>*>(query)->getTol();
+        streamWrite(ss,queryVal);
       } else if (typeid(*query)==typeid(GreaterQuery<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_GREATER);
-        streamWrite(ss,MolPickler::QUERY_VALUE,
-                    static_cast<const GreaterQuery<int,T const *,true>*>(query)->getVal());
-        streamWrite(ss,static_cast<const GreaterQuery<int,T const *,true>*>(query)->getTol());
+        queryVal=static_cast<const GreaterQuery<int,T const *,true>*>(query)->getVal();
+        streamWrite(ss,MolPickler::QUERY_VALUE,queryVal);
+        queryVal=static_cast<const GreaterQuery<int,T const *,true>*>(query)->getTol();
+        streamWrite(ss,queryVal);
       } else if (typeid(*query)==typeid(GreaterEqualQuery<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_GREATEREQUAL);
-        streamWrite(ss,MolPickler::QUERY_VALUE,
-                    static_cast<const GreaterEqualQuery<int,T const *,true>*>(query)->getVal());
-        streamWrite(ss,static_cast<const GreaterEqualQuery<int,T const *,true>*>(query)->getTol());
+        queryVal=static_cast<const GreaterEqualQuery<int,T const *,true>*>(query)->getVal();
+        streamWrite(ss,MolPickler::QUERY_VALUE,queryVal);
+        queryVal=static_cast<const GreaterEqualQuery<int,T const *,true>*>(query)->getTol();
+        streamWrite(ss,queryVal);
       } else if (typeid(*query)==typeid(LessQuery<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_LESS);
-        streamWrite(ss,MolPickler::QUERY_VALUE,
-                    static_cast<const LessQuery<int,T const *,true>*>(query)->getVal());
-        streamWrite(ss,static_cast<const LessQuery<int,T const *,true>*>(query)->getTol());
+        queryVal=static_cast<const LessQuery<int,T const *,true>*>(query)->getVal();
+        streamWrite(ss,MolPickler::QUERY_VALUE,queryVal);
+        queryVal=static_cast<const LessQuery<int,T const *,true>*>(query)->getTol();
+        streamWrite(ss,queryVal);
       } else if (typeid(*query)==typeid(LessEqualQuery<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_LESSEQUAL);
-        streamWrite(ss,MolPickler::QUERY_VALUE,
-                    static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getVal());
-        streamWrite(ss,static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getTol());
+        queryVal=static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getVal();
+        streamWrite(ss,MolPickler::QUERY_VALUE,queryVal);
+        queryVal=static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getTol();
+        streamWrite(ss,queryVal);
       } else if (typeid(*query)==typeid(RangeQuery<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_RANGE);
-        streamWrite(ss,MolPickler::QUERY_VALUE,
-                    static_cast<const RangeQuery<int,T const *,true>*>(query)->getLower());
-        streamWrite(ss,static_cast<const RangeQuery<int,T const *,true>*>(query)->getUpper());
-        streamWrite(ss,static_cast<const RangeQuery<int,T const *,true>*>(query)->getTol());
+        queryVal=static_cast<const RangeQuery<int,T const *,true>*>(query)->getLower();
+        streamWrite(ss,MolPickler::QUERY_VALUE,queryVal);
+        queryVal=static_cast<const RangeQuery<int,T const *,true>*>(query)->getUpper();
+        streamWrite(ss,queryVal);
+        queryVal=static_cast<const RangeQuery<int,T const *,true>*>(query)->getTol();
+        streamWrite(ss,queryVal);
         char ends;
         bool lowerOpen,upperOpen;
         boost::tie(lowerOpen,upperOpen)=static_cast<const RangeQuery<int,T const *,true>*>(query)->getEndsOpen();
@@ -94,19 +114,21 @@ namespace RDKit{
         streamWrite(ss,ends);
       } else if (typeid(*query)==typeid(SetQuery<int,T const *,true>)){
         streamWrite(ss,MolPickler::QUERY_SET);
-        streamWrite(ss,MolPickler::QUERY_VALUE,
-                    static_cast<const SetQuery<int,T const *,true>*>(query)->size());
+        queryVal=static_cast<const SetQuery<int,T const *,true>*>(query)->size();
+        streamWrite(ss,MolPickler::QUERY_VALUE,queryVal);
         typename SetQuery<int,T const *,true>::CONTAINER_TYPE::const_iterator cit;
         for(cit=static_cast<const SetQuery<int,T const *,true>*>(query)->beginSet();
             cit!=static_cast<const SetQuery<int,T const *,true>*>(query)->endSet();
             ++cit){
-          streamWrite(ss,*cit);
+          queryVal=*cit;
+          streamWrite(ss,queryVal);
         }
       } else if (typeid(*query)==typeid(AtomRingQuery)){
         streamWrite(ss,MolPickler::QUERY_ATOMRING);
-        streamWrite(ss,MolPickler::QUERY_VALUE,
-                    static_cast<const EqualityQuery<int,T const *,true>*>(query)->getVal());
-        streamWrite(ss,static_cast<const EqualityQuery<int,T const *,true>*>(query)->getTol());
+        queryVal=static_cast<const EqualityQuery<int,T const *,true>*>(query)->getVal();
+        streamWrite(ss,MolPickler::QUERY_VALUE,queryVal);
+        queryVal=static_cast<const EqualityQuery<int,T const *,true>*>(query)->getTol();
+        streamWrite(ss,queryVal);
       } else if (typeid(*query)==typeid(RecursiveStructureQuery)){
         streamWrite(ss,MolPickler::QUERY_RECURSIVE);
         streamWrite(ss,MolPickler::QUERY_VALUE);
@@ -218,7 +240,8 @@ namespace RDKit{
       PRECONDITION(owner,"no query");
       std::string descr;
       Query<int,T const *,true> *res=0;
-      int val,nMembers;
+      int32_t val;
+      int32_t nMembers;
       switch(tag){
       case MolPickler::QUERY_AND:
         res = new AndQuery<int,T const *,true>();
@@ -333,7 +356,7 @@ namespace RDKit{
         isNegated=true;
         streamRead(ss,tag);
       }
-      int val;
+      int32_t val;
       ROMol *tmpMol;
       switch(tag){
       case MolPickler::QUERY_ATOMRING:
@@ -427,7 +450,7 @@ namespace RDKit{
     streamWrite(ss,versionPatch);
 #ifndef OLD_PICKLE
     if(mol->getNumAtoms()>255){
-      _pickle<int>(mol,ss);
+      _pickle<int32_t>(mol,ss);
     } else {
       _pickle<unsigned char>(mol,ss);
     }
@@ -448,7 +471,7 @@ namespace RDKit{
   void MolPickler::molFromPickle(std::istream &ss,ROMol *mol){
     PRECONDITION(mol,"empty molecule");
     Tags tag;
-    int tmpInt;
+    int32_t tmpInt;
 
     mol->clearAllAtomBookmarks();
     mol->clearAllBondBookmarks();
@@ -462,7 +485,7 @@ namespace RDKit{
     if(tag!=VERSION){
       throw MolPicklerException("Bad pickle format: no version tag");
     }
-    int majorVersion,minorVersion,patchVersion;
+    int32_t majorVersion,minorVersion,patchVersion;
     streamRead(ss,majorVersion);
     streamRead(ss,minorVersion);
     streamRead(ss,patchVersion);
@@ -472,10 +495,10 @@ namespace RDKit{
     if(majorVersion==1){
       _depickleV1(ss,mol);
     } else {
-      int numAtoms;
+      int32_t numAtoms;
       streamRead(ss,numAtoms);
       if(numAtoms>255){
-	_depickle<int>(ss,mol,majorVersion,numAtoms);
+	_depickle<int32_t>(ss,mol,majorVersion,numAtoms);
       } else {
 	_depickle<unsigned char>(ss,mol,majorVersion,numAtoms);
       }
@@ -503,13 +526,13 @@ namespace RDKit{
   template <typename T>
   void MolPickler::_pickle(const ROMol *mol,std::ostream &ss){
     PRECONDITION(mol,"empty molecule");
-    int tmpInt;
+    int32_t tmpInt;
     bool includeAtomCoords=true;
     std::map<int,int> atomIdxMap;
 
-    tmpInt = static_cast<int>(mol->getNumAtoms());
+    tmpInt = static_cast<int32_t>(mol->getNumAtoms());
     streamWrite(ss,tmpInt);
-    tmpInt = static_cast<int>(mol->getNumBonds());
+    tmpInt = static_cast<int32_t>(mol->getNumBonds());
     streamWrite(ss,tmpInt);
 
     char flag = 0;
@@ -555,7 +578,7 @@ namespace RDKit{
     
     if (includeAtomCoords) {
       streamWrite(ss,BEGINCONFS);
-      tmpInt = static_cast<int>(mol->getNumConformers());
+      tmpInt = static_cast<int32_t>(mol->getNumConformers());
       streamWrite(ss,tmpInt);
       
       ROMol::ConstConformerIterator ci;
@@ -572,7 +595,7 @@ namespace RDKit{
     PRECONDITION(mol,"empty molecule");
     bool directMap= mol->getNumAtoms()==0;
     Tags tag;
-    int tmpInt;
+    int32_t tmpInt;
     //int numAtoms,numBonds;
     int numBonds;
     bool haveQuery=false;
@@ -729,7 +752,7 @@ namespace RDKit{
     PRECONDITION(conf,"empty conformer");
     char tmpChr = static_cast<int>(conf->is3D());
     streamWrite(ss,tmpChr);
-    int tmpInt = static_cast<int>(conf->getId());
+    int32_t tmpInt = static_cast<int32_t>(conf->getId());
     streamWrite(ss,tmpInt);
     T tmpT = static_cast<T>(conf->getNumAtoms());
     streamWrite(ss,tmpT);
@@ -1059,6 +1082,8 @@ namespace RDKit{
   //--------------------------------------
   //
   //            Version 1 Pickler:
+  //
+  //  NOTE: this is not 64bit clean, but it shouldn't be used anymore anyway
   //
   //--------------------------------------
 

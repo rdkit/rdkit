@@ -25,7 +25,7 @@ public:
   explicit ExplicitBitVect(unsigned int size) : dp_bits(0), d_size(0), d_numOnBits(0) {_InitForSize(size);};
   ExplicitBitVect(const ExplicitBitVect& other);
   //! construct from a string pickle
-  ExplicitBitVect(const std::string);
+  ExplicitBitVect(const std::string &);
   //! construct from a text pickle
   ExplicitBitVect(const char *,const unsigned int);
   
