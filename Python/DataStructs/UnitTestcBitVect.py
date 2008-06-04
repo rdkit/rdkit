@@ -25,12 +25,10 @@ class TestCase(unittest.TestCase):
     """
     v = klass(10)
     ok = 1
-    try:
-      v[0] = 1
-      v[2] = 1
-    except:
-      assert 0, 'setting bits failed'
-
+    v[0] = 1
+    v[2] = 1
+    v[9] = 1
+    
     try:
       v[10] = 1
     except IndexError:
@@ -40,19 +38,12 @@ class TestCase(unittest.TestCase):
     else:
       assert 0, 'setting high bit should have failed'
 
-    try:
-      v[-1] = 1
-    except IndexError:
-      ok = 1
-    except:
-      assert 0, 'setting negative bit should have failed with an IndexError'      
-    else:
-      assert 0, 'setting negative bit should have failed'
-
-
     assert v[0] == 1, 'bad bit'
     assert v[1] == 0, 'bad bit'
     assert v[2] == 1, 'bad bit'
+    assert v[9] == 1, 'bad bit'
+    assert v[-1] == 1, 'bad bit'
+    assert v[-2] == 0, 'bad bit'
 
     try:
       foo = v[10]
@@ -63,15 +54,6 @@ class TestCase(unittest.TestCase):
     else:
       assert 0, 'getting high bit should have failed'
     
-    try:
-      foo = v[-1]
-    except IndexError:
-      ok = 1
-    except:
-      assert 0, 'getting negative bit should have failed with an IndexError'      
-    else:
-      assert 0, 'getting negative bit should have failed'
-
 
   def testSparseBitGet(self):
     """ test operations to get sparse bits
