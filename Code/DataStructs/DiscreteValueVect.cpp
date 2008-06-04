@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -10,6 +10,7 @@
 #include "DatastructsException.h"
 #include "DiscreteDistMat.h"
 #include <RDBoost/Exceptions.h>
+#include <boost/cstdint.hpp>
 
 namespace RDKit {
   const int ci_DISCRETEVALUEVECTPICKLE_VERSION=0x1;
@@ -126,14 +127,19 @@ namespace RDKit {
   std::string DiscreteValueVect::toString() const {
     std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
 
-    int tVers=ci_DISCRETEVALUEVECTPICKLE_VERSION*-1;
+    boost::int32_t tVers=ci_DISCRETEVALUEVECTPICKLE_VERSION*-1;
     streamWrite(ss,tVers);
     streamWrite(ss,d_type);
-    streamWrite(ss,d_bitsPerVal);
-    streamWrite(ss,d_mask);
-    streamWrite(ss,d_length);
-    streamWrite(ss,d_numInts);
-    ss.write((const char *)d_data.get(),d_numInts*sizeof(unsigned int));
+    boost::uint32_t tInt;
+    tInt=d_bitsPerVal;
+    streamWrite(ss,tInt);
+    tInt=d_mask;
+    streamWrite(ss,tInt);
+    tInt=d_length;
+    streamWrite(ss,tInt);
+    tInt=d_numInts;
+    streamWrite(ss,tInt);
+    ss.write((const char *)d_data.get(),d_numInts*sizeof(tInt));
     
     std::string res(ss.str());
     return res;
@@ -142,7 +148,7 @@ namespace RDKit {
   void DiscreteValueVect::initFromText(const char *pkl,const unsigned int len){
     std::stringstream ss(std::ios_base::binary|std::ios_base::in|std::ios_base::out);
     ss.write(pkl,len);
-    int tVers;
+    boost::int32_t tVers;
     streamRead(ss,tVers);
     tVers *= -1;
     if(tVers==0x1){
@@ -152,14 +158,21 @@ namespace RDKit {
     }
     
     streamRead(ss,d_type);
-    streamRead(ss,d_bitsPerVal);
+    boost::uint32_t tInt;
+    
+    streamRead(ss,tInt);
+    d_bitsPerVal=tInt;
     d_valsPerInt = BITS_PER_INT/d_bitsPerVal;
-    streamRead(ss,d_mask);
-    streamRead(ss,d_length);
-    streamRead(ss,d_numInts);
-    unsigned int *data = new unsigned int[d_numInts];
-    ss.read((char *)data,d_numInts*sizeof(unsigned int));
+    streamRead(ss,tInt);
+    d_mask=tInt;
+    streamRead(ss,tInt);
+    d_length=tInt;
+    streamRead(ss,tInt);
+    d_numInts=tInt;
+    boost::uint32_t *data = new boost::uint32_t[d_numInts];
+    ss.read((char *)data,d_numInts*sizeof(boost::uint32_t));
     d_data.reset(data);
+
   };
 
 

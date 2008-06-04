@@ -8,6 +8,7 @@
 
 #include <boost/smart_ptr.hpp>
 #include <string>
+#include <boost/cstdint.hpp>
 
 namespace RDKit{
   // we are making an assumption here that an unsigned int is 32 bits long
@@ -16,7 +17,7 @@ namespace RDKit{
   //! a class for efficiently storing vectors of discrete values
   class DiscreteValueVect {
   public:
-    typedef boost::shared_array<unsigned int> DATA_SPTR;
+    typedef boost::shared_array<boost::uint32_t> DATA_SPTR;
   
     //! used to define the possible range of the values
     typedef enum {
