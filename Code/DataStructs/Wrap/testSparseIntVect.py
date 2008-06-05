@@ -63,7 +63,7 @@ class TestCase(unittest.TestCase):
     onVs = v1.GetNonzeroElements()
     self.failUnless(onVs=={0L:1,2L:2,1L<<35:3})
 
-  def test3Pickle(self):
+  def test3Pickle1(self):
     """
 
     """
@@ -81,7 +81,36 @@ class TestCase(unittest.TestCase):
     v3=  ds.LongSparseIntVect(v2.ToBinary())
     self.failUnless(v2==v3)
     self.failUnless(v1==v3)
+
+    #cPickle.dump(v1,file('lsiv.pkl','wb+'))
+    v3 = cPickle.load(file(os.path.join(RDConfig.RDBaseDir,
+                                        'Code/DataStructs/Wrap/testData/lsiv.pkl'),'rb'))
+    self.failUnless(v3==v1)
     
+  def test3Pickle2(self):
+    """
+
+    """
+    l=1L<<21
+    v1 = ds.IntSparseIntVect(l)
+    self.failUnlessRaises(IndexError,lambda:v1[l+1])
+    v1[0]=1
+    v1[2]=2
+    v1[1<<12]=3
+    self.failUnless(v1==v1)
+
+    v2=  cPickle.loads(cPickle.dumps(v1))
+    self.failUnless(v2==v1)
+    
+    v3=  ds.IntSparseIntVect(v2.ToBinary())
+    self.failUnless(v2==v3)
+    self.failUnless(v1==v3)
+
+    #cPickle.dump(v1,file('isiv.pkl','wb+'))
+    v3 = cPickle.load(file(os.path.join(RDConfig.RDBaseDir,
+                                        'Code/DataStructs/Wrap/testData/isiv.pkl'),'rb'))
+    self.failUnless(v3==v1)
+
   def test4Update(self):
     """
 

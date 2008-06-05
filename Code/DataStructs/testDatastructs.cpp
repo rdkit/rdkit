@@ -942,7 +942,6 @@ void test8BitVectPickles() {
     inS.open(pklName.c_str(),std::ios_base::binary);
     unsigned int length;
     inS >> length;
-    BOOST_LOG(rdErrorLog)<<"length: " <<length <<std::endl;
     char *buff = new char[length];
     length=inS.readsome(buff,length);
     inS.close();

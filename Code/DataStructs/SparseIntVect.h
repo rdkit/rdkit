@@ -12,6 +12,8 @@
 #include <RDGeneral/Invariant.h>
 #include <sstream>
 #include <RDBoost/Exceptions.h>
+#include <RDGeneral/StreamOps.h>
+#include <boost/cstdint.hpp>
 
 const int ci_SPARSEINTVECT_VERSION=0x0001; //!< version number to use in pickles
 namespace RDKit{
@@ -252,25 +254,28 @@ namespace RDKit{
     }
 
     //! returns a binary string representation (pickle)
-    const std::string toString() const {
+    std::string toString() const {
       std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
-      ss.write((const char *)&(ci_SPARSEINTVECT_VERSION),sizeof(ci_SPARSEINTVECT_VERSION));
-      unsigned int pieceSize=sizeof(IndexType);
-      ss.write((const char *)&pieceSize,sizeof(pieceSize));
-      ss.write((const char *)&d_length,sizeof(d_length));
+      boost::uint32_t tInt;
+      tInt=ci_SPARSEINTVECT_VERSION;
+      streamWrite(ss,tInt);
+      tInt=sizeof(IndexType);
+      streamWrite(ss,tInt);
+      streamWrite(ss,d_length);
       IndexType nEntries=d_data.size();
-      ss.write((const char *)&nEntries,sizeof(nEntries));
+      streamWrite(ss,nEntries);
 
       typename StorageType::const_iterator iter=d_data.begin();
       while(iter!=d_data.end()){
-        ss.write((const char *)&iter->first,sizeof(iter->first));
-        ss.write((const char *)&iter->second,sizeof(iter->second));
+        streamWrite(ss,iter->first);
+        boost::int32_t tInt=iter->second;
+        streamWrite(ss,tInt);
         ++iter;
       }
       return ss.str();
     };
 
-    void fromString(std::string &txt) {
+    void fromString(const std::string &txt) {
       initFromText(txt.c_str(),txt.length());
     }
 
@@ -283,21 +288,21 @@ namespace RDKit{
       std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
       ss.write(pkl,len);
       
-      int vers;
-      ss.read((char *)&vers,sizeof(vers));
+      boost::uint32_t vers;
+      streamRead(ss,vers);
       if(vers==0x0001){
-        unsigned int idxSize;
-        ss.read((char *)&idxSize,sizeof(idxSize));
-        if(idxSize>sizeof(IndexType)){
+        boost::uint32_t tInt;
+        streamRead(ss,tInt);
+        if(tInt>sizeof(IndexType)){
           throw ValueErrorException("IndexType cannot accomodate index size in SparseIntVect pickle");
         }
-        switch(idxSize){
+        switch(tInt){
         case sizeof(char):
           readVals<unsigned char>(ss);break;
-        case sizeof(int):
-          readVals<unsigned int>(ss);break;
-        case sizeof(long long):
-          readVals<unsigned long long>(ss);break;
+        case sizeof(boost::int32_t):
+          readVals<boost::uint32_t>(ss);break;
+        case sizeof(boost::int64_t):
+          readVals<boost::uint64_t>(ss);break;
         default:
           throw ValueErrorException("unreadable format");
         }
@@ -309,14 +314,14 @@ namespace RDKit{
     void readVals(std::stringstream &ss){
       PRECONDITION(sizeof(T)<=sizeof(IndexType),"invalid size");
       T tVal;
-      ss.read((char *)&tVal,sizeof(T));
+      streamRead(ss,tVal);
       d_length=tVal;
       T nEntries;
-      ss.read((char *)&nEntries,sizeof(T));
+      streamRead(ss,nEntries);
       for(T i=0;i<nEntries;++i){
-        ss.read((char *)&tVal,sizeof(tVal));
-        int val;
-        ss.read((char *)&val,sizeof(val));
+        streamRead(ss,tVal);
+        boost::int32_t val;
+        streamRead(ss,val);
         d_data[tVal]=val;
       }
     }

@@ -10,6 +10,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <DataStructs/SparseIntVect.h>
+#include <boost/cstdint.hpp>
 
 using namespace RDKit;
 
@@ -128,8 +129,8 @@ struct sparseIntVec_wrapper {
   }
 
   static void wrap() {
-    wrapOne<int>("IntSparseIntVect");
-    wrapOne<long long>("LongSparseIntVect");
+    wrapOne<boost::int32_t>("IntSparseIntVect");
+    wrapOne<boost::int64_t>("LongSparseIntVect");
   }
 };
   

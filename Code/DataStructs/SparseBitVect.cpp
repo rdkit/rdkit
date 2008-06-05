@@ -311,7 +311,7 @@ std::string SparseBitVect::ToString() const {
   // bytes it needs
   std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
 
-  boost:int32_t tInt = ci_BITVECT_VERSION*-1;
+  boost::int32_t tInt = ci_BITVECT_VERSION*-1;
   RDKit::streamWrite(ss,tInt);
   tInt=d_size;
   RDKit::streamWrite(ss,tInt);
