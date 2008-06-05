@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2008 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -27,9 +27,9 @@ namespace RDKit{
         return res;
       }
     
-      unsigned int getAtomCode(const Atom *atom,unsigned int branchSubtract){
+      boost::uint32_t getAtomCode(const Atom *atom,unsigned int branchSubtract){
         PRECONDITION(atom,"no atom");
-        unsigned int code;
+        boost::uint32_t code;
 
         unsigned int numBranches=0;
         if(atom->getDegree()>branchSubtract){
@@ -56,22 +56,22 @@ namespace RDKit{
         return code;
       };
 
-      unsigned int getAtomPairCode(unsigned int codeI,unsigned int codeJ,
+      boost::uint32_t getAtomPairCode(boost::uint32_t codeI,boost::uint32_t codeJ,
                                    unsigned int dist){
         PRECONDITION(dist<maxPathLen,"dist too long");
-        unsigned int res=dist;
+        boost::uint32_t res=dist;
         res |= std::min(codeI,codeJ) << numPathBits;
         res |= std::max(codeI,codeJ) << (numPathBits+codeSize);
         return res;
       }
 
-      SparseIntVect<int> *
+      SparseIntVect<boost::int32_t> *
       getAtomPairFingerprint(const ROMol &mol){
-        SparseIntVect<int> *res=new SparseIntVect<int>(1<<numAtomPairFingerprintBits);
+        SparseIntVect<boost::int32_t> *res=new SparseIntVect<boost::int32_t>(1<<numAtomPairFingerprintBits);
         const double *dm = MolOps::getDistanceMat(mol);
         const unsigned int nAtoms=mol.getNumAtoms();
 
-        std::vector<unsigned int> atomCodes;
+        std::vector<boost::uint32_t> atomCodes;
         for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
             atomItI!=mol.endAtoms();++atomItI){
           atomCodes.push_back(getAtomCode(*atomItI));
@@ -84,7 +84,7 @@ namespace RDKit{
             unsigned int j=(*atomItJ)->getIdx();
             unsigned int dist=static_cast<unsigned int>(floor(dm[i*nAtoms+j]));
             if(dist<maxPathLen){
-              unsigned int bitId=getAtomPairCode(atomCodes[i],atomCodes[j],dist);
+              boost::uint32_t bitId=getAtomPairCode(atomCodes[i],atomCodes[j],dist);
               res->setVal(bitId,(*res)[bitId]+1);
             }
           }
@@ -92,8 +92,8 @@ namespace RDKit{
         return res;
       }
 
-      unsigned long long int
-      getTopologicalTorsionCode(const std::vector<unsigned int> &pathCodes){
+      boost::uint64_t 
+      getTopologicalTorsionCode(const std::vector<boost::uint32_t> &pathCodes){
         bool reverseIt=false;
         unsigned int i=0;
         unsigned int j=pathCodes.size()-1;
@@ -108,16 +108,16 @@ namespace RDKit{
           --j;
         }
 
-        unsigned long long int res=0;
+        boost::uint64_t res=0;
         if(reverseIt){
           //std::cerr<<"r";
           for(unsigned int i=0;i<pathCodes.size();++i){
-            res |= static_cast<unsigned long long int>(pathCodes[pathCodes.size()-i-1])<<(codeSize*i);
+            res |= static_cast<boost::uint64_t>(pathCodes[pathCodes.size()-i-1])<<(codeSize*i);
           }
         }else{
           //std::cerr<<" ";
           for(unsigned int i=0;i<pathCodes.size();++i){
-            res |= static_cast<unsigned long long int>(pathCodes[i])<<(codeSize*i);
+            res |= static_cast<boost::uint64_t>(pathCodes[i])<<(codeSize*i);
           }
         }
         //for(unsigned int i=0;i<pathCodes.size();++i){
@@ -128,18 +128,18 @@ namespace RDKit{
         return res;
       }
 
-      SparseIntVect<long long int> *
+      SparseIntVect<boost::int64_t> *
       getTopologicalTorsionFingerprint(const ROMol &mol,unsigned int targetSize){
-        unsigned long long int sz=1;
+        boost::uint64_t sz=1;
         sz=(sz<<(targetSize*codeSize));
         // NOTE: this -1 is incorrect but it's needed for backwards compatibility.
         //  hopefully we'll never have a case with a torsion that hits this.
         //
         //  mmm, bug compatible.
         sz-=1;
-        SparseIntVect<long long int> *res=new SparseIntVect<long long int>(sz);
+        SparseIntVect<boost::int64_t> *res=new SparseIntVect<boost::int64_t>(sz);
 
-        std::vector<unsigned int> atomCodes;
+        std::vector<boost::uint32_t> atomCodes;
         for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
             atomItI!=mol.endAtoms();++atomItI){
           atomCodes.push_back(getAtomCode(*atomItI));
@@ -160,7 +160,7 @@ namespace RDKit{
             }
             pathCodes.push_back(code);
           }
-          long long int code=getTopologicalTorsionCode(pathCodes);
+          boost::int64_t code=getTopologicalTorsionCode(pathCodes);
           res->setVal(code,res->getVal(code)+1);
         }
         return res;

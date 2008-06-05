@@ -195,7 +195,7 @@ void testAtomCodes(){
   BOOST_LOG(rdErrorLog) << "    Test Atom Codes." << std::endl;
 
   ROMol *mol;
-  unsigned int tgt;
+  boost::uint32_t tgt;
   mol = SmilesToMol("C=C");
   TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0))==AtomPairs::getAtomCode(mol->getAtomWithIdx(1)));
   tgt = 1 | (1 | 1<<AtomPairs::numPiBits)<<AtomPairs::numBranchBits;
@@ -236,9 +236,9 @@ void testAtomPairs(){
   BOOST_LOG(rdErrorLog) << "    Test Atom Pairs." << std::endl;
 
   ROMol *mol;
-  SparseIntVect<int> *fp;
-  unsigned int tgt;
-  unsigned int c1,c2,c3;
+  SparseIntVect<boost::int32_t> *fp;
+  boost::uint32_t tgt;
+  boost::uint32_t c1,c2,c3;
 
   mol = SmilesToMol("CCCCC");
   c1=AtomPairs::getAtomCode(mol->getAtomWithIdx(0));
@@ -287,10 +287,10 @@ void testTorsions(){
   BOOST_LOG(rdErrorLog) << "    Test Topological Torsions." << std::endl;
 
   ROMol *mol;
-  SparseIntVect<long long int> *fp;
-  unsigned long long int tgt;
-  unsigned long long int c1,c2,c3,c4;
-  std::vector<unsigned int> codes;
+  SparseIntVect<boost::int64_t> *fp;
+  boost::uint64_t tgt;
+  boost::uint64_t  c1,c2,c3,c4;
+  std::vector<boost::uint32_t> codes;
 
   mol = SmilesToMol("CCCC");
   c1=AtomPairs::getAtomCode(mol->getAtomWithIdx(0))-1;
@@ -337,7 +337,7 @@ void testBulkTorsions(){
   SDMolSupplier suppl(fName);
   while(!suppl.atEnd()){
     ROMol *mol=suppl.next();
-    SparseIntVect<long long int> *fp;
+    SparseIntVect<boost::int64_t> *fp;
     fp = AtomPairs::getTopologicalTorsionFingerprint(*mol);
     TEST_ASSERT(fp->getTotalVal()>1);
     delete mol;
