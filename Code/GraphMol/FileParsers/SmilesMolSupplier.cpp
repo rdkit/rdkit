@@ -178,12 +178,12 @@ namespace RDKit {
       // -----------
       // read in the properties 
       // -----------
-      unsigned col;
-      unsigned iprop = 0;
-      for (col = 0; col < recs.size(); col++) {
+      unsigned int iprop = 0;
+      for (unsigned int col = 0; col < recs.size(); col++) {
+        if(col==d_smi || col==d_name) continue;
         std::string pname, pval;
-        if (d_props.size() > iprop) {
-          pname = d_props[iprop];
+        if (d_props.size() > col) {
+          pname = d_props[col];
         }
         else {
           pname = "Column_";
