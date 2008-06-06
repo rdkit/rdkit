@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -11,7 +11,7 @@
 #include <boost/cstdint.hpp>
 
 namespace RDKit{
-  // we are making an assumption here that an unsigned int is 32 bits long
+  // we require 32bit unsigneds using the boost::uint32_t type:
   const unsigned int BITS_PER_INT=32;
 
   //! a class for efficiently storing vectors of discrete values
@@ -34,8 +34,8 @@ namespace RDKit{
       d_valsPerInt = BITS_PER_INT/d_bitsPerVal;
       d_numInts = (length + d_valsPerInt -1)/d_valsPerInt;
       d_mask = ((1<<d_bitsPerVal) -1);
-      unsigned int *data = new unsigned int[d_numInts];
-      memset(static_cast<void *>(data),0,d_numInts*sizeof(unsigned int));
+      boost::uint32_t *data = new boost::uint32_t[d_numInts];
+      memset(static_cast<void *>(data),0,d_numInts*sizeof(boost::uint32_t));
       d_data.reset(data);
     }
 
@@ -69,7 +69,7 @@ namespace RDKit{
     unsigned int getLength() const;
 
     //! return a pointer to our raw data storage
-    const unsigned int *getData() const;
+    const boost::uint32_t *getData() const;
 
     //! return the number of bits used to store each value
     unsigned int getNumBitsPerVal() const {

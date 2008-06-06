@@ -148,7 +148,7 @@ namespace RDKit{
         PATH_LIST paths=findAllPathsOfLengthN(mol,targetSize,false);
         for(PATH_LIST::const_iterator pathIt=paths.begin();
             pathIt!=paths.end();++pathIt){
-          std::vector<unsigned int> pathCodes;
+          std::vector<boost::uint32_t> pathCodes;
           const PATH_TYPE &path=*pathIt;
           for(unsigned int i=0;i<targetSize;++i){
             unsigned int code=atomCodes[path[i]];

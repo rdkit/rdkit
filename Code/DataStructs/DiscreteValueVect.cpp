@@ -22,10 +22,10 @@ namespace RDKit {
     d_length = other.getLength();
     d_valsPerInt = other.d_valsPerInt;
     d_mask = other.d_mask;
-    const unsigned int *odata = other.getData();
-    unsigned int *data = new unsigned int[d_numInts];
+    const boost::uint32_t *odata = other.getData();
+    boost::uint32_t *data = new boost::uint32_t[d_numInts];
     memcpy(static_cast<void *>(data), static_cast<const void *>(odata),
-           d_numInts*sizeof(unsigned int));
+           d_numInts*sizeof(boost::uint32_t));
     d_data.reset(data);
   }
 
@@ -67,7 +67,7 @@ namespace RDKit {
     return d_length;
   }
 
-  const unsigned int *DiscreteValueVect::getData() const {
+  const boost::uint32_t *DiscreteValueVect::getData() const {
     return d_data.get();
   }
   
@@ -82,8 +82,8 @@ namespace RDKit {
       throw ValueErrorException("Comparing vector of different value types");
     }
 
-    const unsigned int* data1 = v1.getData();
-    const unsigned int* data2 = v2.getData();
+    const boost::uint32_t* data1 = v1.getData();
+    const boost::uint32_t* data2 = v2.getData();
 
     unsigned int res = 0;
     if (valType <= DiscreteValueVect::EIGHTBITVALUE) {

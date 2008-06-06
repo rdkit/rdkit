@@ -20,6 +20,7 @@
 #ifdef WIN32
 #include <ios>
 #endif
+#include <boost/cstdint.hpp>
 
 namespace RDKit{
   class ROMol;
@@ -40,8 +41,8 @@ namespace RDKit{
   //! handles pickling (serializing) molecules
   class MolPickler{
   public:
-    static const int versionMajor,versionMinor,versionPatch; //!< mark the pickle version
-    static const int endianId;  //! mark the endian-ness of the pickle
+    static const boost::int32_t versionMajor,versionMinor,versionPatch; //!< mark the pickle version
+    static const boost::int32_t endianId;  //! mark the endian-ness of the pickle
 
     //! the pickle format is tagged using these tags:
     //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM, otherwise
