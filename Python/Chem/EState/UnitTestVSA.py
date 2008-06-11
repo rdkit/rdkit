@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
                           'EState_VSA.csv')
     inL = open(inName,'r').readline()
     names = [x.strip() for x in inL.split(',')[1:]]
-    suppl = Chem.SmilesMolSupplier(inName,delimiter=',')
+    suppl = Chem.SmilesMolSupplier(inName,delimiter=',',nameColumn=-1)
     for mol in suppl:
       self.failUnless(mol)
       smi = Chem.MolToSmiles(mol)
