@@ -1,6 +1,6 @@
 // $Id$
 // 
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -10,6 +10,7 @@
 #include <RDBoost/Exceptions.h>
 #include "point.h"
 #include <fstream>
+#include <boost/cstdint.hpp>
 
 #define OFFSET_TOL 1.e-8
 #define SPACING_TOL 1.e-8
@@ -291,18 +292,22 @@ namespace RDGeom {
   
   std::string UniformGrid3D::toString() const {
     std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
-    int tVers = ci_GRIDPICKLE_VERSION*-1;
+    boost::int32_t tVers = ci_GRIDPICKLE_VERSION*-1;
     streamWrite(ss,tVers);
-    streamWrite(ss,d_numX);
-    streamWrite(ss,d_numY);
-    streamWrite(ss,d_numZ);
+    boost::uint32_t tInt;
+    tInt=d_numX;
+    streamWrite(ss,tInt);
+    tInt=d_numY;
+    streamWrite(ss,tInt);
+    tInt=d_numZ;
+    streamWrite(ss,tInt);
     streamWrite(ss,d_spacing);
     streamWrite(ss,d_offSet.x);
     streamWrite(ss,d_offSet.y);
     streamWrite(ss,d_offSet.z);
 
     std::string storePkl=dp_storage->toString();
-    unsigned int pklSz=storePkl.size();
+    boost::uint32_t pklSz=storePkl.size();
     streamWrite(ss,pklSz);
     ss.write(storePkl.c_str(),pklSz*sizeof(char));
 
@@ -312,7 +317,7 @@ namespace RDGeom {
   void UniformGrid3D::initFromText(const char *pkl,const unsigned int length){
     std::stringstream ss(std::ios_base::binary|std::ios_base::in|std::ios_base::out);
     ss.write(pkl,length);
-    int tVers;
+    boost::int32_t tVers;
     streamRead(ss,tVers);
     tVers *= -1;
     if(tVers==0x1){
@@ -320,9 +325,13 @@ namespace RDGeom {
     } else {
       throw ValueErrorException("bad version in UniformGrid3D pickle");
     }
-    streamRead(ss,d_numX);
-    streamRead(ss,d_numY);
-    streamRead(ss,d_numZ);
+    boost::uint32_t tInt;
+    streamRead(ss,tInt);
+    d_numX=tInt;
+    streamRead(ss,tInt);
+    d_numY=tInt;
+    streamRead(ss,tInt);
+    d_numZ=tInt;
     streamRead(ss,d_spacing);
     double oX,oY,oZ;
     streamRead(ss,oX);
@@ -330,7 +339,7 @@ namespace RDGeom {
     streamRead(ss,oZ);
     d_offSet = Point3D(oX,oY,oZ);
 
-    unsigned int pklSz;
+    boost::uint32_t pklSz;
     streamRead(ss,pklSz);
     char *buff = new char[pklSz];
     ss.read(buff,pklSz*sizeof(char));

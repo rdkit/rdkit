@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,8 +8,11 @@
 #include "FragCatalogUtils.h"
 #include <GraphMol/RDKitBase.h>
 #include <sstream>
+#include <boost/cstdint.hpp>
 
 namespace RDKit{
+  using boost::int32_t;
+  using boost::uint32_t;
 
   FragCatParams::FragCatParams(unsigned int lLen, unsigned int uLen,
 			       std::string fgroupFile, double tol) {

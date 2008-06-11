@@ -18,6 +18,7 @@
 #include <RDBoost/Exceptions.h>
 #include <DataStructs/SparseIntVect.h>
 
+#include <stdlib.h>
 
 using namespace std;
 using namespace RDKit;
@@ -58,35 +59,35 @@ template<typename T> void Test(T arg){
   t2.SetBit(17);
 
 
-  cout << "t1: ";
+  std::cout << "t1: ";
   t1.GetOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
-  cout << "t2: ";
+  std::cout << "t2: ";
   t2.GetOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
-  cout << "t1|t2: ";
+  std::cout << "t1|t2: ";
   T t3=t1|t2;
   t3.GetOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
-  cout << "t1&t2: ";
+  std::cout << "t1&t2: ";
   t3=t1 & t2;
   t3.GetOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
   
-  cout << "t1^t2: ";
+  std::cout << "t1^t2: ";
   t3=t1 ^ t2;
   t3.GetOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
-  cout << "~t1: ";
+  std::cout << "~t1: ";
   t3= ~t1;
   t3.GetOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
@@ -95,13 +96,13 @@ template<typename T> void Test(T arg){
   try{
     t3.GetBit(4000);
   } catch (IndexErrorException) {
-    cout << " except " << endl;
+    std::cout << " except " << endl;
   } catch (...) {
-    cout << " ERROR EXCEPT " << endl;
+    std::cout << " ERROR EXCEPT " << endl;
   }
 
   T t4(t1.ToString());
-  cout << "tan(t1,t4): " << TanimotoSimilarity(t1,t4) << endl;
+  std::cout << "tan(t1,t4): " << TanimotoSimilarity(t1,t4) << endl;
   
   T *t5 = FoldFingerprint(t1);
   TEST_ASSERT(t5->GetNumBits() == t1.GetNumBits()/2);
@@ -185,7 +186,7 @@ void test1DiscreteVect() {
   try {
     vect1.setVal(28,2);
   } catch (ValueErrorException &dexp) {
-    std::cout << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 
   // all these tests should fail if unsigned int changes from being 
@@ -202,7 +203,7 @@ void test1DiscreteVect() {
   try {
     vect2.setVal(28,10);
   } catch (ValueErrorException &dexp) {
-    std::cout << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 
   DiscreteValueVect vect4(DiscreteValueVect::FOURBITVALUE, 30);
@@ -217,7 +218,7 @@ void test1DiscreteVect() {
   try {
     vect4.setVal(28,16);
   } catch (ValueErrorException &dexp) {
-    std::cout << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 
   DiscreteValueVect vect8(DiscreteValueVect::EIGHTBITVALUE, 32);
@@ -232,7 +233,7 @@ void test1DiscreteVect() {
   try {
     vect8.setVal(28,257);
   } catch (ValueErrorException &dexp) {
-    std::cout << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
 
   DiscreteValueVect vect16(DiscreteValueVect::SIXTEENBITVALUE, 300);
@@ -249,7 +250,7 @@ void test1DiscreteVect() {
   try {
     vect16.setVal(28,65536);
   } catch (ValueErrorException &dexp) {
-    std::cout << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
   }
   
 }
@@ -908,15 +909,58 @@ void test7SparseIntVectPickles() {
       ;
     }
   }
-  
 }
 
+
+void test8BitVectPickles() {
+#if 0
+  {
+    std::string dirName = getenv("RDBASE");
+    dirName+="/Code/DataStructs/testData/";
+    std::string pklName = dirName+"test1.bin";
+    std::ofstream outS;
+    outS.open(pklName.c_str(),std::ios_base::binary);
+
+    ExplicitBitVect bv(32);
+    for(int i=0;i<32;i+=2){
+      bv.SetBit(i);
+    }
+    std::string pkl=bv.ToString();
+    unsigned int sz=pkl.size();
+    outS<<sz;
+    outS<<pkl;
+    outS.close();
+  }
+#endif
+
+
+  {
+    std::string dirName = getenv("RDBASE");
+    dirName+="/Code/DataStructs/testData/";
+    std::string pklName = dirName+"test1.bin";
+    std::ifstream inS;
+    inS.open(pklName.c_str(),std::ios_base::binary);
+    unsigned int length;
+    inS >> length;
+    char *buff = new char[length];
+    length=inS.readsome(buff,length);
+    inS.close();
+    std::string pkl(buff,length);
+    delete [] buff;
+    ExplicitBitVect bv(pkl);
+
+    TEST_ASSERT(bv.GetNumBits()==32);
+    TEST_ASSERT(bv.GetNumOnBits()==16);
+    TEST_ASSERT(bv[0]);
+    TEST_ASSERT(!bv[1]);
+  }
+}
 int main(){
   RDLog::InitLogs();
   try{
     throw IndexErrorException(3);
   } catch (IndexErrorException) {
-    cerr << "pass" << endl;
+    BOOST_LOG(rdInfoLog) << "pass" << endl;
   }
 
   stringstream ss(ios_base::binary|ios_base::out|ios_base::in);
@@ -937,35 +981,38 @@ int main(){
   TXTMSG("v3",v3);
   TXTMSG("v4",v4);
   
-  std::cerr << " SPARSE -----------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << " SPARSE -----------------------------------" << std::endl;
   SparseBitVect sparseFoo(10);
   Test(sparseFoo);
   TaniTest(sparseFoo);
   ProbeTest(sparseFoo);
-  std::cerr << " Explicit -----------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << " Explicit ----------------------------------" << std::endl;
   ExplicitBitVect explicitFoo(10);
   Test(explicitFoo);
   TaniTest(explicitFoo);
-  std::cerr << " Done" << std::endl;
+  BOOST_LOG(rdInfoLog) << " Done" << std::endl;
   
-  std::cout << " Test DiscreteValue Vectors 1 ------------------------------------" << endl;
+  BOOST_LOG(rdInfoLog) << " Test DiscreteValue Vectors 1 ----------------------------" << endl;
   test1DiscreteVect();
-  std::cout << " Test DiscreteValue Vectors 2 ------------------------------------" << endl;
+  BOOST_LOG(rdInfoLog) << " Test DiscreteValue Vectors 2 ------------------------------" << endl;
   test2DiscreteVectDists();
-  std::cout << " Test DiscreteValue Vectors 3 ------------------------------------" << endl;
+  BOOST_LOG(rdInfoLog) << " Test DiscreteValue Vectors 3 ---------------------------" << endl;
   test3DiscreteVectPickles();
 
-  std::cout << " Test DiscreteValue Operations ------------------------------------" << endl;
+  BOOST_LOG(rdInfoLog) << " Test DiscreteValue Operations -----------------------------" << endl;
   test4DiscreteVectOps1();
 
-  std::cout << " Test DiscreteValue Operations 2 ------------------------------------" << endl;
+  BOOST_LOG(rdInfoLog) << " Test DiscreteValue Operations 2 -------------------------- "<< endl;
   test5DiscreteVectOps2();
 
-  std::cout << " Test SparseIntVect  ------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << " Test SparseIntVect  ------------------------------------" << std::endl;
   test6SparseIntVect();
-  std::cout << " Test SparseIntVect Serialization  ------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << " Test SparseIntVect Serialization  --------------------------" << std::endl;
   test7SparseIntVectPickles();
 
+  BOOST_LOG(rdInfoLog) << " Test BitVect Serialization  -------------------------------" << std::endl;
+  test8BitVectPickles();
+  
   return 0;
   
 }

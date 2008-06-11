@@ -12,6 +12,7 @@
 #include <GraphMol/MolPickler.h>
 #include <iostream>
 #include <sstream>
+#include <boost/cstdint.hpp>
 
 
 namespace RDKit {
@@ -60,7 +61,7 @@ namespace RDKit {
     PRECONDITION(dp_mol,"bad mol");
     MolPickler::pickleMol(*dp_mol,ss);
 
-    int tmpInt;
+    boost::int32_t tmpInt;
     tmpInt = getBitId();
     streamWrite(ss,tmpInt);
       
@@ -95,7 +96,7 @@ namespace RDKit {
 
     dp_props = new Dict();
     
-    int tmpInt;
+    boost::int32_t tmpInt;
     // the bitId:
     streamRead(ss,tmpInt);
     setBitId(tmpInt);
@@ -111,7 +112,6 @@ namespace RDKit {
     tmpText[tmpInt]=0;
     d_descrip = tmpText;
     delete [] tmpText;
-
   }
 
   void MolCatalogEntry::initFromString(const std::string &text){

@@ -122,23 +122,41 @@ class TestCase(unittest.TestCase):
     self.failUnless(ds.ComputeL1Norm(v1, v2) == 21000)
 
   def test3Pickles(self):
+    #outF = file('dvvs.pkl','wb+')
+    inF = file(os.path.join(RDConfig.RDBaseDir,
+                            'Code/DataStructs/Wrap/testData/dvvs.pkl'),'rb')
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.ONEBITVALUE, 30)
     for i in range(15):
       v1[2*i] = 1
     v2 = cPickle.loads(cPickle.dumps(v1))
     self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    #cPickle.dump(v1,outF)
+    v2=cPickle.load(inF)
+    self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    self.failUnless(v1.GetTotalVal()==v2.GetTotalVal())
+    self.failUnless(v2.GetTotalVal()!=0)
 
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.TWOBITVALUE, 30)
     for i in range(30):
       v1[i] = i%4
     v2 = cPickle.loads(cPickle.dumps(v1))
     self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    #cPickle.dump(v1,outF)
+    v2=cPickle.load(inF)
+    self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    self.failUnless(v1.GetTotalVal()==v2.GetTotalVal())
+    self.failUnless(v2.GetTotalVal()!=0)
 
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.FOURBITVALUE, 16)
     for i in range(16):
       v1[i] = i%16
     v2 = cPickle.loads(cPickle.dumps(v1))
     self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    #cPickle.dump(v1,outF)
+    v2=cPickle.load(inF)
+    self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    self.failUnless(v1.GetTotalVal()==v2.GetTotalVal())
+    self.failUnless(v2.GetTotalVal()!=0)
 
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.EIGHTBITVALUE, 5)
     v1[0] = 34
@@ -148,6 +166,11 @@ class TestCase(unittest.TestCase):
     v1[4] = 128
     v2 = cPickle.loads(cPickle.dumps(v1))
     self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    #cPickle.dump(v1,outF)
+    v2=cPickle.load(inF)
+    self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    self.failUnless(v1.GetTotalVal()==v2.GetTotalVal())
+    self.failUnless(v2.GetTotalVal()!=0)
 
 
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.SIXTEENBITVALUE, 3)
@@ -156,6 +179,11 @@ class TestCase(unittest.TestCase):
     v1[2] = 34
     v2 = cPickle.loads(cPickle.dumps(v1))
     self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    #cPickle.dump(v1,outF)
+    v2=cPickle.load(inF)
+    self.failUnless(ds.ComputeL1Norm(v1, v2) == 0)
+    self.failUnless(v1.GetTotalVal()==v2.GetTotalVal())
+    self.failUnless(v2.GetTotalVal()!=0)
 
   def test4DiscreteVectOps(self):
     v1 = ds.DiscreteValueVect(ds.DiscreteValueType.TWOBITVALUE, 8)

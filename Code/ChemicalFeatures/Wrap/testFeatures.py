@@ -1,3 +1,11 @@
+# $Id$
+#
+# Copyright (C) 2006-2008 Greg Landrum
+#
+#  @@ All Rights Reserved @@
+#
+import RDConfig
+import os
 import Chem
 from Chem import ChemicalFeatures
 import unittest
@@ -55,6 +63,15 @@ class TestCase(unittest.TestCase):
       self.failUnless(ffeat2.GetFamily()==ffeat.GetFamily());
       self.failUnless(ffeat2.GetType()==ffeat.GetType());
       self.failUnless(ptFeq(ffeat2.GetPos(),ffeat.GetPos()))
+
+      #cPickle.dump(ffeat,file('feat.pkl','wb+'))
+      inF = file(os.path.join(RDConfig.RDBaseDir,
+                              'Code/ChemicalFeatures/Wrap/testData/feat.pkl'),'rb')
+      ffeat2=cPickle.load(inF)
+      self.failUnless(ffeat2.GetFamily()==ffeat.GetFamily());
+      self.failUnless(ffeat2.GetType()==ffeat.GetType());
+      self.failUnless(ptFeq(ffeat2.GetPos(),ffeat.GetPos()))
+
       
 if __name__ == '__main__':
     print "Testing ChemicalFeatures Wrapper code:"

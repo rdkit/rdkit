@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (c) 2003-2006 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -12,6 +12,7 @@
 #ifdef WIN32
 #include <ios>
 #endif
+#include <boost/cstdint.hpp>
 
 BitVect::~BitVect() {}; // must always implement virtual destructors
 
@@ -28,10 +29,10 @@ void BitVect::InitFromText(const char *data,const unsigned int dataLen,
     ss.write(data,dataLen);
   }
 
-  int format=0;
-  unsigned int nOn=0;
-  int size;
-  int version=0;
+  boost::int32_t format=0;
+  boost::uint32_t nOn=0;
+  boost::int32_t size;
+  boost::int32_t version=0;
   
   // earlier versions of the code did not have the version number encoded, so
   //  we'll use that to distinguish version 0
@@ -58,19 +59,19 @@ void BitVect::InitFromText(const char *data,const unsigned int dataLen,
   // if the either have older version or or version 16 with ints for on bits
   if( (format==0) || 
       ( (format == 1) && (size >= std::numeric_limits<unsigned short>::max()) ) ) {
-    unsigned int tmp;
+    boost::uint32_t tmp;
     for(unsigned int i=0; i<nOn; i++){
       ss.read((char *)&tmp,sizeof(tmp));
       SetBit(tmp);
     }
-  } else if (format == 1) { // version 16 and on bits sotred as short ints
-    unsigned short tmp;
+  } else if (format == 1) { // version 16 and on bits stored as short ints
+    boost::uint16_t tmp;
     for(unsigned int i=0; i<nOn; i++){
       ss.read((char *)&tmp,sizeof(tmp));
       SetBit(tmp);
     }
   } else if (format == 2) { // run length encoded format
-    unsigned int curr=0;
+    boost::uint32_t curr=0;
     for (unsigned int i=0; i<nOn; i++) {
       curr += RDKit::readPackedIntFromStream(ss);
       SetBit(curr);

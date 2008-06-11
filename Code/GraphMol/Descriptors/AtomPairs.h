@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2008 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,6 +13,7 @@
 #define __RD_ATOMPAIRS_H__
 
 #include <DataStructs/SparseIntVect.h>
+#include <boost/cstdint.hpp>
 namespace RDKit {
   class Atom;
 
@@ -39,7 +40,7 @@ namespace RDKit {
                                is calculated (used in the topological
                                torsions code)
       */
-      unsigned int getAtomCode(const Atom *atom,unsigned int branchSubtract=0);
+      boost::uint32_t getAtomCode(const Atom *atom,unsigned int branchSubtract=0);
 
       //! returns an atom pair hash based on two atom hashes and the
       //! distance between the atoms.
@@ -49,8 +50,8 @@ namespace RDKit {
 	\param dist   the distance (number of bonds) between the two
                       atoms
        */
-      unsigned int getAtomPairCode(unsigned int codeI,unsigned int codeJ,
-				   unsigned int dist);
+      boost::uint32_t getAtomPairCode(boost::uint32_t codeI,boost::uint32_t codeJ,
+                                      unsigned int dist);
 
       //! returns the atom-pair fingerprint for a molecule
       /*!
@@ -65,14 +66,14 @@ namespace RDKit {
                 responsible for calling delete on this.
 
        */
-      SparseIntVect<int> *getAtomPairFingerprint(const ROMol &mol);
+      SparseIntVect<boost::int32_t> *getAtomPairFingerprint(const ROMol &mol);
 
       //! returns an topological torsion hash based on the atom hashes
       //! passed in
       /*!
 	\param atomCodes  the vector of atom hashes
        */
-      unsigned long long int getTopologicalTorsionCode(const std::vector<unsigned int> &atomCodes);
+      boost::uint64_t getTopologicalTorsionCode(const std::vector<boost::uint32_t> &atomCodes);
 
       //! returns the topological-torsion fingerprint for a molecule
       /*!
@@ -88,8 +89,8 @@ namespace RDKit {
                 responsible for calling delete on this.
 
        */
-      SparseIntVect<long long int> *getTopologicalTorsionFingerprint(const ROMol &mol,
-								     unsigned int targetSize=4);
+      SparseIntVect<boost::int64_t > *getTopologicalTorsionFingerprint(const ROMol &mol,
+                                                                        unsigned int targetSize=4);
     }    
   } // end of namespace Descriptors
 }

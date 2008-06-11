@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -21,12 +21,6 @@ struct ebv_pickle_suite : python::pickle_suite
   };
 };
 
-void SetBitsFromList(ExplicitBitVect *bv, python::object onBitList) {
-  PySequenceHolder<int> bitL(onBitList);
-  for (unsigned int i=0; i<bitL.size(); i++) {
-    bv->SetBit(bitL[i]);
-  }
-}
 
 std::string ebvClassDoc="A class to store explicit bit vectors.\n\
 \n\
@@ -53,7 +47,7 @@ struct EBV_wrapper {
     .def(python::init<std::string>())
     .def("SetBit",(bool (EBV::*)(unsigned int))&EBV::SetBit,
          "Turns on a particular bit on.  Returns the original state of the bit.\n")
-    .def("SetBitsFromList",SetBitsFromList,
+    .def("SetBitsFromList",(void (*)(EBV *,python::object))SetBitsFromList,
          "Turns on a set of bits.  The argument should be a tuple or list of bit ids.\n")
     .def("UnSetBit",(bool (EBV::*)(unsigned int))&EBV::UnSetBit,
          "Turns on a particular bit off.  Returns the original state of the bit.\n")
@@ -67,9 +61,9 @@ struct EBV_wrapper {
     .def("GetNumOffBits",&EBV::GetNumOffBits,
          "Returns the number of off bits.\n")
     .def("__getitem__",
-         (const int (*)(const EBV&,unsigned int))get_VectItem)
+         (const int (*)(const EBV&,int))get_VectItem)
     .def("__setitem__",
-         (const int (*)(EBV&,unsigned int,int))set_VectItem)
+         (const int (*)(EBV&,int,int))set_VectItem)
     .def("GetOnBits",
          (IntVect (*)(const EBV&))GetOnBits,
          "Returns a tuple containing IDs of the on bits.\n")
