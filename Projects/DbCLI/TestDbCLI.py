@@ -423,7 +423,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(d[0][0]==10)
     d = conn.GetData('molecules',fields='*')
     self.failUnless(len(d)==10)
-    self.failUnless(len(d[0])==4)
+    self.failUnless(len(d[0])==2)
 
     
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
@@ -463,7 +463,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(d[0][0]==10)
     d = conn.GetData('molecules',fields='*')
     self.failUnless(len(d)==10)
-    self.failUnless(len(d[0])==5)
+    self.failUnless(len(d[0])==3)
 
     
     
