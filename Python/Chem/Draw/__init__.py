@@ -5,7 +5,7 @@
 #
 
 
-def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True):
+def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
   import MolDrawing
   try:
     from aggdraw import Draw
@@ -17,7 +17,8 @@ def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True):
     traceback.print_exc()
     useAGG=False
     from sping.PIL.pidPIL import PILCanvas as Canvas
-    canvas = Canvas(size=(300,300),name=filename)
+    canvas = Canvas(size=size,name='MolToImageFile')
+    img = canvas._image
     MolDrawing.registerCanvas('sping')
     drawer = MolDrawing.MolDrawing(canvas)
   if useAGG:
@@ -37,10 +38,11 @@ def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True):
   
   drawer.wedgeDashedBonds=wedgeBonds
   drawer.AddMol(mol)
+  canvas.flush()
 
-  if useAGG:
-    canvas.flush()
-    img.save(filename)
-  else:
-    canvas.save()
+  return img
+
+def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True):
+  img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds)
+  img.save(filename)
     
