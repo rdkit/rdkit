@@ -151,14 +151,14 @@ namespace RDKit{
     unsigned int getNumImplicitHs() const;
 
     //! returns the number of explicit Hs this Atom is bound to
-    int getExplicitValence(bool forceCalc=false) const;
+    int getExplicitValence() const;
 
     //! returns the implicit valence for this Atom
     /*!
       <b>Notes:</b>
         - requires an owning molecule
     */
-    int getImplicitValence(bool forceCalc=false) const;
+    int getImplicitValence() const;
 
     //! returns the formal charge of this atom
     const int getFormalCharge() const { return d_formalCharge; };

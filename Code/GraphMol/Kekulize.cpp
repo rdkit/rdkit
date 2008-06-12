@@ -69,8 +69,7 @@ namespace RDKit {
       // - check that an non aromatic atom does not have any aromatic bonds
       // - marks all aromatic bonds to single bonds
       // - marks atoms that can take a double bond 
-      std::vector<Bond *> makeSingle;
-
+      
       bool hasAromaticAtom=false;
       for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end();
            ++adx) {
@@ -82,6 +81,8 @@ namespace RDKit {
       // if there's not at least one atom in the ring that's
       // marked as being aromatic, there's no point in continuing:
       if(!hasAromaticAtom) return;
+
+      std::vector<Bond *> makeSingle;
 
       RWMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
       for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end();
@@ -355,7 +356,7 @@ namespace RDKit {
       valences.reserve(numAtoms);
       for (ROMol::AtomIterator ai = mol.beginAtoms();
            ai != mol.endAtoms(); ++ai) {
-        valences.push_back((*ai)->getImplicitValence(true));
+        valences.push_back((*ai)->getImplicitValence());
       }
     
       // A bit on the state of the molecule at this point
@@ -438,10 +439,10 @@ namespace RDKit {
       int i = 0;
       for (ROMol::AtomIterator ai = mol.beginAtoms();
            ai != mol.endAtoms(); ++ai) {
-        int val = (*ai)->getImplicitValence(true);
+        int val = (*ai)->getImplicitValence();
         if (val != valences[i]) {
           std::ostringstream errout;
-          errout << "Kekulization somehow screwed up valence on " << (*ai)->getIdx();
+          errout << "Kekulization somehow screwed up valence on " << (*ai)->getIdx() <<": "<<val<<"!="<<valences[i]<<std::endl;
           std::string msg = errout.str();
           BOOST_LOG(rdErrorLog) << msg<< std::endl;
           throw MolSanitizeException(msg);

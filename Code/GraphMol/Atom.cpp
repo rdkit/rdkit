@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -157,7 +157,7 @@ unsigned int Atom::getNumImplicitHs() const {
   return getImplicitValence();
 }
 
-int Atom::getExplicitValence(bool forceCalc) const {
+int Atom::getExplicitValence() const {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   PRECONDITION(d_explicitValence>-1,
                "getExplicitValence() called without call to calcExplicitValence()");
@@ -182,15 +182,19 @@ int Atom::calcExplicitValence(bool strict) {
   // check accum is greater than the default valence
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
-  if (accum > (dv + chr) && this->getIsAromatic()) {
+  if (accum > (dv + chr) && this->getIsAromatic()){
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
     // to this atom.  We set x = (v + chr) such that x is the
     // closest possible integer to "accum" but less than
-    // "accum". "v" here is one of the allowed valences e.g. if
-    // sulfur in the following smiles : O=c1ccs(=O)cc1
-    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
+    // "accum".
+    //
+    // "v" here is one of the allowed valences. For example:
+    //    sulfur here : O=c1ccs(=O)cc1
+    //    nitrogen here : c1cccn1C
+    
     int pval = dv + chr;
+    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
     for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi!=-1; ++vi) {
       int val = (*vi) + chr;
       if (val > accum) {
@@ -222,9 +226,7 @@ int Atom::calcExplicitValence(bool strict) {
     const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
     int maxValence=*(valens.rbegin());
     // maxValence == -1 signifies that we'll take anything at the high end
-    if(maxValence>0 && effectiveValence>maxValence){
-      //BOOST_LOG(rdErrorLog) << ">>> val:" << res<<" chg:" << getFormalCharge()<<" max:"<<maxValence << std::endl;
-
+    if( maxValence>0 &&effectiveValence>maxValence){
       // the explicit valence is greater than any
       // allowed valence for the atoms - raise an error
       std::ostringstream errout;
@@ -241,7 +243,7 @@ int Atom::calcExplicitValence(bool strict) {
   return res;
 }
 
-int Atom::getImplicitValence(bool forceCalc) const {
+int Atom::getImplicitValence() const {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   if(df_noImplicit) return 0;
   return d_implicitValence;

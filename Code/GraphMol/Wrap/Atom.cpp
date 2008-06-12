@@ -96,8 +96,6 @@ namespace RDKit{
 
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getTotalNumHs_ol, getTotalNumHs, 0, 1)
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getImplicitValence_ol, getImplicitValence, 0, 1)
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getExplicitValence_ol, getExplicitValence, 0, 1)
 
 
   // FIX: is there any reason at all to not just prevent the construction of Atoms?
@@ -139,18 +137,10 @@ struct atom_wrapper {
 	   "Returns the total number of implicit Hs on the atom.\n")
 
       .def("GetExplicitValence",&Atom::getExplicitValence,
-	   getExplicitValence_ol(python::args("forceCalc"),
-				 "Returns the number of explicit Hs on the atom.\n\n"
-				 "  ARGUMENTS:\n\n"
-				 "    - forceCalc: (optional) forces the value to be calculated, even if already cached.\n"
-				 "      Defaults to 0.\n"))
+           "Returns the number of explicit Hs on the atom.\n")
 
       .def("GetImplicitValence",&Atom::getImplicitValence,
-	   getImplicitValence_ol(python::args("forceCalc"),
-				 "Returns the number of implicit Hs on the atom.\n\n"
-				 "  ARGUMENTS:\n\n"
-				 "    - forceCalc: (optional) forces the value to be calculated, even if already cached.\n"
-				 "      Defaults to 0.\n"))
+           "Returns the number of implicit Hs on the atom.\n")
 
       .def("GetFormalCharge",&Atom::getFormalCharge)
       .def("SetFormalCharge",&Atom::setFormalCharge)

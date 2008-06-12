@@ -75,7 +75,7 @@ namespace RDKit{
           } // if this atom is 5 coordinate nitrogen
           // force a recalculation of the explicit valence here
           (*ai)->setIsAromatic(aromHolder);
-          (*ai)->getExplicitValence(true);
+          (*ai)->calcExplicitValence(false);
           break;
         case 17:
           // recognize perchlorate and convert it from:
@@ -169,7 +169,7 @@ namespace RDKit{
       // update computed properties on atoms and bonds:
       mol.updatePropertyCache();
 
-      // first do the keuklizations
+      // first do the kekulizations
       Kekulize(mol);
     
       // then do aromaticity perception
