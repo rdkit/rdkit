@@ -189,6 +189,33 @@ namespace RDKit{
 
     }
 
+    std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol,bool sanitizeFrags){
+      INT_VECT mapping;
+      unsigned int nFrags=getMolFrags(mol,mapping);
+      std::vector<ROMOL_SPTR> res;
+      if(nFrags==1){
+        ROMol *tmp=new ROMol(mol);
+        ROMOL_SPTR sptr(tmp);
+        res.push_back(sptr);
+      } else {
+        res.reserve(nFrags);
+        for(unsigned int fragIdx=0;fragIdx<nFrags;++fragIdx){
+          // copy the molecule, then remove the atoms that
+          // aren't in this fragment
+          RWMol *tmp=new RWMol(mol);
+          // loop over the atoms backwards so that indices
+          // stay valid:
+          for(int i=mol.getNumAtoms()-1;i>=0;--i){
+            if(mapping[i]!=static_cast<int>(fragIdx)) tmp->removeAtom(i);
+          }
+          if(sanitizeFrags) sanitizeMol(*tmp);
+          ROMOL_SPTR sptr(static_cast<ROMol *>(tmp));
+          res.push_back(sptr);
+        }
+      }
+      return res;
+    }
+
     unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
       mapping.resize(mol.getNumAtoms());
       const MolGraph *G_p = mol.getTopology();

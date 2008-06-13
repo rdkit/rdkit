@@ -26,12 +26,17 @@ void test1(){
   string smi;
   Mol *m;
   INT_VECT iv;
-  int count;
+  unsigned int count;
+  std::vector<ROMOL_SPTR> frags;
+
   smi = "CCCC(=O)O";
   m = SmilesToMol(smi);
   CHECK_INVARIANT(m,"smiles parse failed");
   count = MolOps::getMolFrags(*m,iv);
   CHECK_INVARIANT(count==1,"bad frag count");
+  frags = MolOps::getMolFrags(*m);
+  CHECK_INVARIANT(frags.size()==1,"bad frag count");
+  TEST_ASSERT(frags[0]->getNumAtoms()==6);
   delete m;
 
   smi = "CCCC(=O)[O-].[Na+]";
@@ -39,6 +44,10 @@ void test1(){
   CHECK_INVARIANT(m,"smiles parse failed");
   count = MolOps::getMolFrags(*m,iv);
   CHECK_INVARIANT(count==2,"bad frag count");
+  frags = MolOps::getMolFrags(*m);
+  CHECK_INVARIANT(frags.size()==2,"bad frag count");
+  TEST_ASSERT(frags[0]->getNumAtoms()==6);
+  TEST_ASSERT(frags[1]->getNumAtoms()==1);
   delete m;
 
   smi = "CCCC(=O)[O-].[Na+].[NH4+].[Cl-]";
@@ -46,6 +55,12 @@ void test1(){
   CHECK_INVARIANT(m,"smiles parse failed");
   count = MolOps::getMolFrags(*m,iv);
   CHECK_INVARIANT(count==4,"bad frag count");
+  frags = MolOps::getMolFrags(*m);
+  CHECK_INVARIANT(frags.size()==4,"bad frag count");
+  TEST_ASSERT(frags[0]->getNumAtoms()==6);
+  TEST_ASSERT(frags[1]->getNumAtoms()==1);
+  TEST_ASSERT(frags[2]->getNumAtoms()==1);
+  TEST_ASSERT(frags[3]->getNumAtoms()==1);
   delete m;
 
 };
@@ -2528,7 +2543,6 @@ void testSFIssue1968608()
 }
 
 
-
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -2571,7 +2585,6 @@ int main(){
   testAromaticityEdges();
   testSFIssue1942657();
   testSFIssue1968608();
-
   
   return 0;
 }

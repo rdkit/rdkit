@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2008 Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,6 +8,7 @@
 
 #include <RDGeneral/types.h>
 #include <boost/tuple/tuple.hpp>
+#include <boost/smart_ptr.hpp>
 
 extern const int ci_LOCAL_INF;
 namespace RDKit{
@@ -55,6 +56,19 @@ namespace RDKit{
       
     */
     unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags);
+
+    //! find fragments (disconnected components of the molecular graph)
+    /*!
+
+      \param mol     the molecule of interest
+      \param sanitizeFrags  toggles sanitization of the fragments after
+                            they are built
+
+      \return a vector of the fragments as pointers to ROMols
+      
+    */
+    std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,bool sanitizeFrags=true);
+
 
 
     //! returns a copy of a molecule with hydrogens added in as explicit Atoms
