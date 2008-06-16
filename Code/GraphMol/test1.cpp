@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -474,6 +474,47 @@ void testDegree()
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
 }
 
+
+void testIssue1993296(){
+  RWMol *m=new RWMol();
+  bool ok;
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 1993296" << std::endl;
+
+  m->addAtom(new Atom(6));
+  m->addAtom(new Atom(6));
+  m->addBond(0,1,Bond::SINGLE);
+  ok=false;
+  try{
+    m->addBond(0,1,Bond::SINGLE);
+  } catch (...) {
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+  ok=false;
+  try{
+    m->addBond(1,0,Bond::SINGLE);
+  } catch (...) {
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+
+  Bond *newB=new Bond();
+  newB->setBeginAtomIdx(0);
+  newB->setEndAtomIdx(1);
+  newB->setBondType(Bond::SINGLE);
+  ok=false;
+  try{
+    m->addBond(newB);
+  } catch (...) {
+    ok=true;
+  }
+  TEST_ASSERT(ok)
+
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 // -------------------------------------------------------------------
 int main()
 {
@@ -591,5 +632,8 @@ int main()
   testBondProps();
   testMisc();
   testDegree();
+
+  testIssue1993296();
+
   return 0;
 }

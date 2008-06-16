@@ -389,6 +389,7 @@ namespace RDKit{
     PRECONDITION(bond_pin,"null bond passed in");
     RANGE_CHECK(0,bond_pin->getBeginAtomIdx(),getNumAtoms()-1);
     RANGE_CHECK(0,bond_pin->getEndAtomIdx(),getNumAtoms()-1);
+    PRECONDITION(!getBondBetweenAtoms(bond_pin->getBeginAtomIdx(),bond_pin->getEndAtomIdx()),"bond already exists");
     Bond *bond_p;
     if(!takeOwnership) bond_p = bond_pin->copy();
     else bond_p = bond_pin;
