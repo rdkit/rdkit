@@ -82,6 +82,8 @@ struct SBV_wrapper {
       .def(python::self | python::self)
       .def(python::self ^ python::self)
       .def(~python::self)
+      .def(python::self == python::self)
+      .def(python::self != python::self)
 
       .def_pickle(sbv_pickle_suite())
       ;

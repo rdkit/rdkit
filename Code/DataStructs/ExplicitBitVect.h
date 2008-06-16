@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -52,6 +52,14 @@ public:
   std::string ToString() const;
   
   boost::dynamic_bitset<> *dp_bits; //!< our raw storage
+
+  bool operator==(const ExplicitBitVect &o) const {
+    return *dp_bits==*o.dp_bits;
+  }
+  bool operator!=(const ExplicitBitVect &o) const {
+    return *dp_bits!=*o.dp_bits;
+  }
+
 private:
   unsigned int d_size;
   unsigned int d_numOnBits;

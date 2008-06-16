@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -74,6 +74,15 @@ public:
   void GetOnBits (IntVect& v) const;
   void ClearBits() { dp_bits->clear(); };
   IntSet *dp_bits; //!< our raw data, exposed for the sake of efficiency
+
+  bool operator==(const SparseBitVect &o) const {
+    return *dp_bits==*o.dp_bits;
+  }
+  bool operator!=(const SparseBitVect &o) const {
+    return *dp_bits!=*o.dp_bits;
+  }
+
+
 private:
   unsigned int d_size;
   void _InitForSize(const unsigned int size);

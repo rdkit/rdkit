@@ -39,6 +39,7 @@ template<typename T> void Test(T arg){
   TXTMSG("Num:",t1.GetNumBits());
   TXTMSG("NumOn:",t1.GetNumOnBits());
   TXTMSG("NumOff:",t1.GetNumOffBits());
+  TEST_ASSERT(t1==t1);
 
   IntVect onBits;
   t1.GetOnBits(onBits);
@@ -50,6 +51,8 @@ template<typename T> void Test(T arg){
   TXTMSG("t2[19]:",t2[19]);
   TXTMSG("t2[14]:",t2[14]);
 
+  TEST_ASSERT(t2==t1);
+  
   t2 = t1;
   //onBits = t2.GetOnBits();
   TXTMSG("t2[19]:",t2[19]);
@@ -57,6 +60,7 @@ template<typename T> void Test(T arg){
   TXTMSG("t2[14]:",t2[14]);
   t2.SetBit(15);
   t2.SetBit(17);
+  TEST_ASSERT(t2!=t1);
 
 
   std::cout << "t1: ";

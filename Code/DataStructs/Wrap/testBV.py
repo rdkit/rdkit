@@ -24,6 +24,11 @@ class TestCase(unittest.TestCase):
       for i in range(1000) :
          assert bv1.GetBit(i) == bv2.GetBit(i)
 
+      self.failUnless(bv1==bv2)
+      bv2.SetBit(1)
+      self.failUnless(bv1!=bv2)
+      bv2.UnSetBit(1)
+      self.failUnless(bv1==bv2)
 
       bv1 = DataStructs.ExplicitBitVect(1000)
       bv2 = DataStructs.ExplicitBitVect(1000)
