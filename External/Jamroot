@@ -15,7 +15,7 @@ project RDKit_Externals
           #<library>/boost/log//boost_log
           <include>$(RDBASE)/Code
 	  <toolset>msvc:<define>WIN32
-	  <address-model>64 <cxxflags>-fPIC
+	  <address-model>64:<cxxflags>-fPIC
         : default-build release ;
 
 alias vflib : vflib-2.0 ;
