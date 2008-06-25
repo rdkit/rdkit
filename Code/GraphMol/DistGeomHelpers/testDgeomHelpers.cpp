@@ -888,6 +888,33 @@ void testRandomCoords() {
   }
 }
 
+void testIssue1989539() {
+  {
+    std::string smi="c1ccccc1.Cl";
+    RWMol *m = SmilesToMol(smi, 0, 1);
+    RWMol *m2 = (RWMol *)MolOps::addHs(*m);
+    delete m;
+    m=m2;
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+  {
+    std::string smi="[Cl-].c1ccccc1C[NH3+]";
+    RWMol *m = SmilesToMol(smi, 0, 1);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+
+}
+
 int main() { 
   RDLog::InitLogs();
     
@@ -970,6 +997,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testRandomCoords \n\n";
   testRandomCoords();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 1989539 \n\n";
+  testIssue1989539();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

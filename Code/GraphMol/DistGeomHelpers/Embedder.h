@@ -24,7 +24,10 @@ namespace RDKit {
        -# Compute initial coordinates from the distance matrix
        -# Repeat steps 3 and 4 until maxIterations is reached or embedding is successful
        -# Adjust initial coordinates by minimizing a Distance Violation error function
-      
+
+       **NOTE**: if the molecule has multiple fragments, they will be embedded separately,
+         this means that they will likely occupy the same region of space.
+       
       \param mol            Molecule of interest
       \param maxIterations  Max. number of times the embedding will be tried if coordinates are 
                             not obtained successfully
@@ -63,6 +66,10 @@ namespace RDKit {
     /*!
       This is kind of equivalent to calling EmbedMolecule multiple times - just that the bounds
       matrix is computed only once from the topology
+
+       **NOTE**: if the molecule has multiple fragments, they will be embedded separately,
+         this means that they will likely occupy the same region of space.
+
 
       \param mol            Molecule of interest
       \param numConfs       Number of conformations to be generated

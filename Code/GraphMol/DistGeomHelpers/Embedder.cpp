@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -23,6 +23,7 @@
 #include <Numerics/Alignment/AlignPoints.h>
 #include <DistGeom/ChiralSet.h>
 #include <GraphMol/MolOps.h>
+#include <boost/dynamic_bitset.hpp>
 
 #define ERROR_TOL 0.00001
 
@@ -231,83 +232,109 @@ namespace RDKit {
                                 bool randNegEig, unsigned int numZeroFail,
                                 double optimizerForceTol,double basinThresh,
                                 double pruneRmsThresh) {
-      unsigned int nat = mol.getNumAtoms();
-      DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nat);
-      DistGeom::BoundsMatPtr mmat(mat);
-      initBoundsMat(mmat);
-      
-      INT_VECT res;
-      setTopolBounds(mol, mmat, true, false);
-      
-      if (!DistGeom::triangleSmoothBounds(mmat)) {
-        // ok this bound matrix failed to triangle smooth - re-compute the bounds matrix 
-        // with out 15 bound and with VDW scaling
-        initBoundsMat(mmat);
-        setTopolBounds(mol, mmat, false, true);
-        // try triangle smoothing again - give up if we fail
-        if (!DistGeom::triangleSmoothBounds(mmat)) {
-          return res;
-        }
+      INT_VECT fragMapping;
+      std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
+      std::vector< Conformer * > confs;
+      confs.reserve(numConfs);
+      for(unsigned int i=0;i<numConfs;++i){
+        confs.push_back(new Conformer(mol.getNumAtoms()));
       }
-      
+      boost::dynamic_bitset<> confsOk(numConfs);
+      confsOk.set();
+
       if (clearConfs) {
         mol.clearConformers();
       }
-
-      // find all the chiral centers in the molecule
-      DistGeom::VECT_CHIRALSET chiralCenters;
-      MolOps::assignAtomChiralCodes(mol);
-      _findChiralSets(mol, chiralCenters);
-
-      // if we have any chiral centers or are using random coordinates, we will 
-      // first embed the molecule in four dimensions, otherwise we will use 3D 
-      RDGeom::PointPtrVect positions;
-      bool fourD = false;
-      if (useRandomCoords || chiralCenters.size() > 0) {
-        fourD = true;
-      }
-      for (unsigned int i = 0; i < nat; ++i) {
-	if(fourD){
-	  positions.push_back(new RDGeom::PointND(4));
-	} else {
-	  positions.push_back(new RDGeom::Point3D());
-	}
-      }
-      for (unsigned int ci=0; ci<numConfs; ci++) {
-        bool gotCoords = _embedPoints(positions, mmat,
-                                      useRandomCoords,boxSizeMult,
-                                      randNegEig, numZeroFail,
-                                      optimizerForceTol,
-                                      basinThresh, (ci+1)*seed,
-                                      maxIterations, chiralCenters);
-        if (gotCoords) {
-          Conformer *conf = new Conformer(nat);
-          for (unsigned int i = 0; i < nat; ++i) {
-            conf->setAtomPos(i, RDGeom::Point3D((*positions[i])[0],
-                                                (*positions[i])[1],
-                                                (*positions[i])[2]));
+      INT_VECT res;
+      
+      for(unsigned int fragIdx=0;fragIdx<molFrags.size();++fragIdx){
+        ROMOL_SPTR piece=molFrags[fragIdx];
+        unsigned int nAtoms = piece->getNumAtoms();
+        DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(nAtoms);
+        DistGeom::BoundsMatPtr mmat(mat);
+        initBoundsMat(mmat);
+      
+        setTopolBounds(*piece, mmat, true, false);
+      
+        if (!DistGeom::triangleSmoothBounds(mmat)) {
+          // ok this bound matrix failed to triangle smooth - re-compute the bounds matrix 
+          // with out 15 bound and with VDW scaling
+          initBoundsMat(mmat);
+          setTopolBounds(*piece, mmat, false, true);
+          // try triangle smoothing again - give up if we fail
+          if (!DistGeom::triangleSmoothBounds(mmat)) {
+            return res;
           }
+        }
+      
+        // find all the chiral centers in the molecule
+        DistGeom::VECT_CHIRALSET chiralCenters;
+        MolOps::assignAtomChiralCodes(*piece);
+        _findChiralSets(*piece, chiralCenters);
 
-          bool addConf = true; // add the conformation to the molecule by default
-	  // check if we are pruning away conformations:
-          if (pruneRmsThresh > 0.0) { 
-	    // check if a closeby conformation has already been chosen:
-            if (!_isConfFarFromRest(mol, *conf, pruneRmsThresh)) { 
-              addConf = false;
-              delete conf;
+        // if we have any chiral centers or are using random coordinates, we will 
+        // first embed the molecule in four dimensions, otherwise we will use 3D 
+        bool fourD = false;
+        if (useRandomCoords || chiralCenters.size() > 0) {
+          fourD = true;
+        }
+        RDGeom::PointPtrVect positions;
+        for (unsigned int i = 0; i < nAtoms; ++i) {
+          if(fourD){
+            positions.push_back(new RDGeom::PointND(4));
+          } else {
+            positions.push_back(new RDGeom::Point3D());
+          }
+        }
+        for (unsigned int ci=0; ci<numConfs; ci++) {
+          if(!confsOk[ci]){
+            // if one of the fragments here has already failed, there's no
+            // sense in embedding this one
+            continue;
+          }
+          bool gotCoords = _embedPoints(positions, mmat,
+                                        useRandomCoords,boxSizeMult,
+                                        randNegEig, numZeroFail,
+                                        optimizerForceTol,
+                                        basinThresh, (ci+1)*seed,
+                                        maxIterations, chiralCenters);
+          if (gotCoords) {
+            Conformer *conf = confs[ci];
+            unsigned int fragAtomIdx=0;
+            for (unsigned int i = 0; i < mol.getNumAtoms();++i){
+              if(fragMapping[i]==static_cast<int>(fragIdx) ){
+                conf->setAtomPos(i, RDGeom::Point3D((*positions[fragAtomIdx])[0],
+                                                    (*positions[fragAtomIdx])[1],
+                                                    (*positions[fragAtomIdx])[2]));
+                ++fragAtomIdx;
+              }
             }
+          } else {
+            confsOk[ci]=0;
           }
-          if (addConf) {
+        }
+        for (unsigned int i = 0; i < nAtoms; ++i) {
+          delete positions[i];
+        }
+      }
+      for(unsigned int ci=0;ci<confs.size();++ci){
+        Conformer *conf = confs[ci];
+        if(confsOk[ci]){
+          // check if we are pruning away conformations and 
+          // a closeby conformation has already been chosen :
+          if (pruneRmsThresh > 0.0 && 
+              !_isConfFarFromRest(mol, *conf, pruneRmsThresh)) { 
+            delete conf;
+          } else {
             int confId = (int)mol.addConformer(conf, true);
             res.push_back(confId);
           }
-        } 
-      }
-      for (unsigned int i = 0; i < nat; ++i) {
-        delete positions[i];
+        } else {
+          delete conf;
+        }
       }
       return res;
-    } 
+    }
   }
 }
     
