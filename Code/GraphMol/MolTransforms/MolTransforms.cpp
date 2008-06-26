@@ -116,7 +116,7 @@ namespace MolTransforms {
     //trans->SetTranslation(origin);
     // if we have a single atom system we don't need to do anyhting setting translation is sufficient
     if (nAtms > 1) {
-      RDNumeric::EigenSolvers::powerEigenSolver(3, *covMat, eigVecs, eigVals,
+      RDNumeric::EigenSolvers::powerEigenSolver(3, *covMat, eigVals, eigVecs,
                                                  conf.getNumAtoms());
       // deal with zero eigen value systems
       unsigned int i, j, dim = 3;
