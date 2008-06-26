@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -97,7 +97,7 @@ namespace DistGeom {
       }
     }
     unsigned int nEigs = (dim < N) ? dim : N;
-    RDNumeric::EigenSolvers::powerEigenSolver(nEigs, T, eigVecs, eigVals,
+    RDNumeric::EigenSolvers::powerEigenSolver(nEigs, T, eigVals, eigVecs,
                                               (int)(sumSqD2*N));
     
     double *eigData = eigVals.getData();
