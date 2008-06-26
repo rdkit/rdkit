@@ -36,7 +36,7 @@ void testPowerSolver() {
   
   DoubleMatrix eigVecs(N, N);
   DoubleVector eigVals(N);
-  bool converge = powerEigenSolver(N, mat, eigVecs, eigVals);
+  bool converge = powerEigenSolver(N, mat, eigVals, eigVecs );
   CHECK_INVARIANT(converge, "");
   DoubleVector ev1(N), ev2(N);
   eigVecs.getRow(0, ev1);
@@ -91,7 +91,7 @@ void test2PowerSolver() {
   
   DoubleVector eigVals(N);
   DoubleSquareMatrix eigVecs(N);
-  bool converge = powerEigenSolver(N, mat, eigVecs, eigVals, 100);
+  bool converge = powerEigenSolver(N, mat, eigVals, eigVecs, 100);
   CHECK_INVARIANT(converge, "");
   CHECK_INVARIANT(RDKit::feq(eigVals.getVal(0), 4.0, 0.001), "");
 

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -19,16 +19,18 @@
 namespace RDNumeric {
   namespace EigenSolvers {
     bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
-                          DoubleMatrix &eigenVectors, DoubleVector &eigenValues, int seed) {
+                          DoubleVector &eigenValues, DoubleMatrix *eigenVectors, int seed) {
       // first check all the sizes
       unsigned int N = mat.numRows();
-      unsigned int evRows, evCols;
-      evRows = eigenVectors.numRows();
-      evCols = eigenVectors.numCols();
-      CHECK_INVARIANT(evCols >= N, "");
-      CHECK_INVARIANT(evRows >= numEig, "");
       CHECK_INVARIANT(eigenValues.size() >= numEig, "");
       CHECK_INVARIANT(numEig <= N, "");
+      if(eigenVectors){
+        unsigned int evRows, evCols;
+        evRows = eigenVectors->numRows();
+        evCols = eigenVectors->numCols();
+        CHECK_INVARIANT(evCols >= N, "");
+        CHECK_INVARIANT(evRows >= numEig, "");
+      }
       
       unsigned int ei;
       double eigVal, prevVal, maxEval;
@@ -39,8 +41,8 @@ namespace RDNumeric {
       if(seed<=0) seed = clock();
       for (ei = 0; ei < numEig; ei++) {
         eigVal = -HUGE_EIGVAL;
-	seed += ei;
-	v.setToRandom(seed);
+        seed += ei;
+        v.setToRandom(seed);
 
         converged = false;
         for (iter = 0; iter < MAX_ITERATIONS; iter++) {
@@ -58,8 +60,8 @@ namespace RDNumeric {
           // compute the next estimate for the eigen vector
           v.assign(z);
           v /= eigVal;
-	  if (fabs(eigVal - prevVal) < TOLERANCE) {
-	    converged = true;
+          if (fabs(eigVal - prevVal) < TOLERANCE) {
+            converged = true;
             break;
           }
         }
@@ -70,14 +72,16 @@ namespace RDNumeric {
         
         // save this is a eigen vector and value
         // directly access the data instead of setVal so that we save time
-        double *eigVecData = eigenVectors.getData();
-        id = ei*evCols;
         double *vdata = v.getData();
-        for (i = 0; i < N; i++) {
-          eigVecData[id + i] = vdata[i];
-        }
-        eigenValues.getData()[ei] = eigVal;
-        
+        if(eigenVectors){
+          id = ei*eigenVectors->numCols();
+          double *eigVecData = eigenVectors->getData();
+          for (i = 0; i < N; i++) {
+            eigVecData[id + i] = vdata[i];
+          }
+        }        
+        eigenValues[ei]=eigVal;
+
         // now remove this eigen vector space out of the matrix
         double *matData = mat.getData();
         for (i = 0; i < N; i++) {

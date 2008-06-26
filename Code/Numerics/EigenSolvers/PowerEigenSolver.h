@@ -13,15 +13,16 @@
 
 namespace RDNumeric {
   namespace EigenSolvers {
-    //! Compute the \c numEig largest eigenvalues and the corresponding eigenvectors. 
+    //! Compute the \c numEig largest eigenvalues and, optionally,  the corresponding
+    //! eigenvectors. 
     /*!
       
     \param numEig       the number of eigenvalues we are interested in
     \param mat          symmetric input matrix of dimension N*N
-    \param eigenVectors Matrix used to return the eigenvectors (size = N*numEig)
     \param eigenValues  Vector used to return the eigenvalues (size = numEig)
-    \param seed         Optional values to seed the random value generator used to initialize 
-                        the eigen vectors
+    \param eigenVectors Optional matrix used to return the eigenvectors (size = N*numEig)
+    \param seed         Optional values to seed the random value generator used to 
+                        initialize the eigen vectors
     \return a boolean indicating whether or not the calculation converged.
     
     <b>Notes:</b>
@@ -46,8 +47,16 @@ namespace RDNumeric {
       
     */
     bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
-                          DoubleMatrix &eigenVectors, DoubleVector &eigenValues,
+                          DoubleVector &eigenValues,
+                          DoubleMatrix *eigenVectors=0, 
                           int seed=-1);
+    //! \overload
+    bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
+                          DoubleVector &eigenValues,
+                          DoubleMatrix &eigenVectors, 
+                          int seed=-1) {
+      return powerEigenSolver(numEig,mat,eigenValues,&eigenVectors,seed);
+    }
   };
 };
 
