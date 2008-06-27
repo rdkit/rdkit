@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -189,9 +189,17 @@ namespace RDKit{
 
     }
 
-    std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol,bool sanitizeFrags){
-      INT_VECT mapping;
-      unsigned int nFrags=getMolFrags(mol,mapping);
+    std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol,bool sanitizeFrags,
+                                        INT_VECT *frags){
+      bool ownIt=false;
+      INT_VECT *mapping;
+      if(frags){
+        mapping=frags;
+      } else {
+        mapping = new INT_VECT;
+        ownIt=true;
+      }
+      unsigned int nFrags=getMolFrags(mol,*mapping);
       std::vector<ROMOL_SPTR> res;
       if(nFrags==1){
         ROMol *tmp=new ROMol(mol);
@@ -206,12 +214,15 @@ namespace RDKit{
           // loop over the atoms backwards so that indices
           // stay valid:
           for(int i=mol.getNumAtoms()-1;i>=0;--i){
-            if(mapping[i]!=static_cast<int>(fragIdx)) tmp->removeAtom(i);
+            if((*mapping)[i]!=static_cast<int>(fragIdx)) tmp->removeAtom(i);
           }
           if(sanitizeFrags) sanitizeMol(*tmp);
           ROMOL_SPTR sptr(static_cast<ROMol *>(tmp));
           res.push_back(sptr);
         }
+      }
+      if(ownIt){
+        delete mapping;
       }
       return res;
     }

@@ -23,9 +23,6 @@ namespace Chirality {
   typedef std::vector<INT_PAIR>::iterator INT_PAIR_VECT_I;
   typedef std::vector<INT_PAIR>::const_iterator INT_PAIR_VECT_CI;
 
-  typedef INT_VECT CIP_ENTRY;
-  typedef std::vector< CIP_ENTRY > CIP_ENTRY_VECT;
-
   template <typename T>
   void debugVect(const std::vector<T> arg){
     typename std::vector<T>::const_iterator viIt;
@@ -100,140 +97,6 @@ namespace Chirality {
       res[atsSoFar++] = invariant;
     }
   }
-
-  // ************************************************************
-  //
-  // Figure out the CIP ranks for the atoms of a molecule
-  //
-  // ARGUMENTS:
-  //    mol: the molecule to be altered
-  //  ranks: used to store the set of ranks.  Should be at least
-  //         mol.getNumAtoms() long.
-  //
-  // NOTES: 
-  //    - All atoms also gain a property "_CIPRank" with their overall
-  //      CIP ranking.
-  //
-  // ************************************************************
-  void getAtomCIPRanks(const ROMol &mol, INT_VECT &ranks){
-    PRECONDITION(ranks.size()>=mol.getNumAtoms(),"bad ranks size");
-
-    if(!mol.hasProp("_CIPCalculated")){
-      int numAtoms = mol.getNumAtoms();
-      CIP_ENTRY_VECT cipEntries(numAtoms);
-      INT_LIST allIndices;
-      INT_LIST activeIndices;
-
-      for(int i=0;i<numAtoms;++i){
-        activeIndices.push_back(i);
-        allIndices.push_back(i);
-      }
-
-      // get the initial invariants:
-      DOUBLE_VECT invars(numAtoms,0);
-      buildCIPInvariants(mol,invars);
-
-#ifdef VERBOSE_CANON
-      BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
-      for(int i=0;i<numAtoms;i++){
-        BOOST_LOG(rdDebugLog) << i << ": " << invars[i] << std::endl;
-      }
-#endif  
-
-      // rank those:
-      RankAtoms::sortAndRankVect(numAtoms,invars,allIndices,ranks);
-#ifdef VERBOSE_CANON
-      BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
-      for(int i=0;i<numAtoms;++i){
-        BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << std::endl;
-      }
-#endif  
-      RankAtoms::updateInPlayIndices(ranks,activeIndices);
-      // Start each atom's rank vector with its atomic number:
-      //  Note: avoid the temptation to use invariants here, those lead to
-      //  incorrect answers
-      for(int i=0;i<numAtoms;i++){
-        cipEntries[i].push_back(mol.getAtomWithIdx(i)->getAtomicNum());
-      }
-      // loop until all classes are uniquified or we've gone through
-      // numAtoms times:
-      int numIts=0;
-      while( numIts<numAtoms && !activeIndices.empty()){
-        unsigned int longestEntry=0;
-        // ----------------------------------------------------
-        //
-        // for each atom, get a sorted list of its neighbors' ranks:
-        //
-        for(INT_LIST_I it=allIndices.begin();it!=allIndices.end();
-            ++it){
-          CIP_ENTRY localEntry;
-
-          // start by pushing on our neighbors' ranks:
-          ROMol::ADJ_ITER nbr,endNbrs;
-          boost::tie(nbr,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(*it));
-          while(nbr != endNbrs){
-            int rank=ranks[*nbr]+1;
-            unsigned int count=static_cast<int>(ceil(mol.getBondBetweenAtoms(*nbr,*it)->getBondTypeAsDouble()));
-            localEntry.insert(localEntry.end(),count,rank);
-            ++nbr;
-          }
-          // add a zero for each coordinated H:
-          localEntry.insert(localEntry.end(),
-                            mol.getAtomWithIdx(*it)->getTotalNumHs(),
-                            0);
-
-          // get a sorted list of our neighbors' ranks:
-          std::sort(localEntry.begin(),localEntry.end());
-          // and copy it on in reversed order:
-          cipEntries[*it].insert(cipEntries[*it].end(),
-                                 localEntry.rbegin(),
-                                 localEntry.rend());
-          if(cipEntries[*it].size() > longestEntry){
-            longestEntry = cipEntries[*it].size();
-          }
-        }
-        // ----------------------------------------------------
-        //
-        // pad the entries so that we compare rounds to themselves:
-        // 
-        for(INT_LIST_I it=allIndices.begin();it!=allIndices.end();
-            ++it){
-          unsigned int sz=cipEntries[*it].size();
-          if(sz<longestEntry){
-            cipEntries[*it].insert(cipEntries[*it].end(),
-                                   longestEntry-sz,
-                                   -1);
-          }
-        }
-        // ----------------------------------------------------
-        //
-        // sort the new ranks and update the list of active indices:
-        // 
-        RankAtoms::sortAndRankVect(numAtoms,cipEntries,allIndices,ranks);
-        RankAtoms::updateInPlayIndices(ranks,activeIndices);
-        ++numIts;
-#ifdef VERBOSE_CANON
-        BOOST_LOG(rdDebugLog) << "strings and ranks:" << std::endl;
-        for(int i=0;i<numAtoms;i++){
-          BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << " > ";
-          debugVect(cipEntries[i]);
-        }
-#endif
-      }
-      // copy the ranks onto the atoms:
-      for(int i=0;i<numAtoms;i++){
-        mol.getAtomWithIdx(i)->setProp("_CIPRank",ranks[i],1);
-      }
-      mol.setProp("_CIPCalculated",1,1);
-    } else {
-      // we've already calculated the ranks, so just read them
-      // from the atoms
-      for(unsigned int i=0;i<mol.getNumAtoms();++i){
-        mol.getAtomWithIdx(i)->getProp("_CIPRank",ranks[i]);
-      }
-    }
-  }
-
 
   // construct a vector with <atomIdx,direction> pairs for 
   // neighbors of a given atom.  This list will only be
@@ -451,6 +314,146 @@ namespace Chirality {
 namespace RDKit{
 
   namespace MolOps {
+    typedef INT_VECT CIP_ENTRY;
+    typedef std::vector< CIP_ENTRY > CIP_ENTRY_VECT;
+
+
+    // ************************************************************
+    //
+    // Figure out the CIP ranks for the atoms of a molecule
+    //
+    // ARGUMENTS:
+    //    mol: the molecule to be altered
+    //  ranks: used to store the set of ranks.  Should be at least
+    //         mol.getNumAtoms() long.
+    //
+    // NOTES: 
+    //    - All atoms also gain a property "_CIPRank" with their overall
+    //      CIP ranking.
+    //
+    // ************************************************************
+    void assignAtomCIPRanks(const ROMol &mol, INT_VECT &ranks){
+      PRECONDITION(ranks.size()>=mol.getNumAtoms(),"bad ranks size");
+
+      if(!mol.hasProp("_CIPCalculated")){
+        int numAtoms = mol.getNumAtoms();
+        CIP_ENTRY_VECT cipEntries(numAtoms);
+        INT_LIST allIndices;
+        INT_LIST activeIndices;
+
+        for(int i=0;i<numAtoms;++i){
+          activeIndices.push_back(i);
+          allIndices.push_back(i);
+        }
+
+        // get the initial invariants:
+        DOUBLE_VECT invars(numAtoms,0);
+        Chirality::buildCIPInvariants(mol,invars);
+
+#ifdef VERBOSE_CANON
+        BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
+        for(int i=0;i<numAtoms;i++){
+          BOOST_LOG(rdDebugLog) << i << ": " << invars[i] << std::endl;
+        }
+#endif  
+
+        // rank those:
+        RankAtoms::sortAndRankVect(numAtoms,invars,allIndices,ranks);
+#ifdef VERBOSE_CANON
+        BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
+        for(int i=0;i<numAtoms;++i){
+          BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << std::endl;
+        }
+#endif  
+        RankAtoms::updateInPlayIndices(ranks,activeIndices);
+        // Start each atom's rank vector with its atomic number:
+        //  Note: avoid the temptation to use invariants here, those lead to
+        //  incorrect answers
+        for(int i=0;i<numAtoms;i++){
+          cipEntries[i].push_back(mol.getAtomWithIdx(i)->getAtomicNum());
+        }
+        // loop until all classes are uniquified or we've gone through
+        // numAtoms times:
+        int numIts=0;
+        while( numIts<numAtoms && !activeIndices.empty()){
+          unsigned int longestEntry=0;
+          // ----------------------------------------------------
+          //
+          // for each atom, get a sorted list of its neighbors' ranks:
+          //
+          for(INT_LIST_I it=allIndices.begin();it!=allIndices.end();
+              ++it){
+            CIP_ENTRY localEntry;
+
+            // start by pushing on our neighbors' ranks:
+            ROMol::ADJ_ITER nbr,endNbrs;
+            boost::tie(nbr,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(*it));
+            while(nbr != endNbrs){
+              int rank=ranks[*nbr]+1;
+              unsigned int count=static_cast<int>(ceil(mol.getBondBetweenAtoms(*nbr,*it)->getBondTypeAsDouble()));
+              localEntry.insert(localEntry.end(),count,rank);
+              ++nbr;
+            }
+            // add a zero for each coordinated H:
+            // (as long as we're not query atom)
+            if(!mol.getAtomWithIdx(*it)->hasQuery()){
+              localEntry.insert(localEntry.end(),
+                                mol.getAtomWithIdx(*it)->getTotalNumHs(),
+                                0);
+            }
+
+            // get a sorted list of our neighbors' ranks:
+            std::sort(localEntry.begin(),localEntry.end());
+            // and copy it on in reversed order:
+            cipEntries[*it].insert(cipEntries[*it].end(),
+                                   localEntry.rbegin(),
+                                   localEntry.rend());
+            if(cipEntries[*it].size() > longestEntry){
+              longestEntry = cipEntries[*it].size();
+            }
+          }
+          // ----------------------------------------------------
+          //
+          // pad the entries so that we compare rounds to themselves:
+          // 
+          for(INT_LIST_I it=allIndices.begin();it!=allIndices.end();
+              ++it){
+            unsigned int sz=cipEntries[*it].size();
+            if(sz<longestEntry){
+              cipEntries[*it].insert(cipEntries[*it].end(),
+                                     longestEntry-sz,
+                                     -1);
+            }
+          }
+          // ----------------------------------------------------
+          //
+          // sort the new ranks and update the list of active indices:
+          // 
+          RankAtoms::sortAndRankVect(numAtoms,cipEntries,allIndices,ranks);
+          RankAtoms::updateInPlayIndices(ranks,activeIndices);
+          ++numIts;
+#ifdef VERBOSE_CANON
+          BOOST_LOG(rdDebugLog) << "strings and ranks:" << std::endl;
+          for(int i=0;i<numAtoms;i++){
+            BOOST_LOG(rdDebugLog) << i << ": " << ranks[i] << " > ";
+            debugVect(cipEntries[i]);
+          }
+#endif
+        }
+        // copy the ranks onto the atoms:
+        for(int i=0;i<numAtoms;i++){
+          mol.getAtomWithIdx(i)->setProp("_CIPRank",ranks[i],1);
+        }
+        mol.setProp("_CIPCalculated",1,1);
+      } else {
+        // we've already calculated the ranks, so just read them
+        // from the atoms
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          mol.getAtomWithIdx(i)->getProp("_CIPRank",ranks[i]);
+        }
+      }
+    }
+
     // ************************************************************
     //
     // Figure out the CIP chiral codes for the atoms of a molecule
@@ -463,11 +466,9 @@ namespace RDKit{
     //   force: (OPTIONAL) if this bool is set, the calculation will be repeated
     //            even if it has already been done
     //
-    // NOTES: 
+    // NOTES:
     //    - The codes are stored on atoms as a string property named
     //      "_CIPCode".
-    //    - All atoms also gain a property "_CIPRank" with their overall
-    //      CIP ranking.
     //    - Throughout we assume that we're working with a hydrogen-suppressed
     //      graph.
     //
@@ -477,10 +478,8 @@ namespace RDKit{
       
       INT_VECT ranks;
       ranks.resize(mol.getNumAtoms());
+      bool cipDone=false;
 
-      // ------------------
-      // get the "CIP" ranking of each atom:
-      Chirality::getAtomCIPRanks(mol,ranks);
 
       // ------------------
       // now loop over each atom and, if it's marked as chiral,
@@ -494,6 +493,11 @@ namespace RDKit{
         // we understand:
         if(tag != Atom::CHI_UNSPECIFIED &&
            tag != Atom::CHI_OTHER){
+          if(!cipDone){
+            //  if we need to, get the "CIP" ranking of each atom:
+            assignAtomCIPRanks(mol,ranks);
+            cipDone=true;
+          }
           // loop over all neighbors and form a decorated list of their
           // ranks:
           bool legalCenter;
@@ -621,10 +625,7 @@ namespace RDKit{
 
       INT_VECT ranks;
       ranks.resize(mol.getNumAtoms());
-    
-      // ------------------
-      // get the "CIP" ranking of each atom:
-      Chirality::getAtomCIPRanks(mol,ranks);
+      bool cipDone=false;
     
       // find the double bonds:
       for(ROMol::BondIterator bondIt=mol.beginBonds();
@@ -647,6 +648,14 @@ namespace RDKit{
               // look around each atom and see if it has at least one bond with
               // direction marked:
           
+              // ------------------
+              // get the "CIP" ranking of each atom if we haven't done
+              // so already:
+              if(!cipDone){
+                assignAtomCIPRanks(mol,ranks);
+                cipDone=true;
+              }
+
               // the pairs here are: atomrank,bonddir
               Chirality::INT_PAIR_VECT begAtomNeighbors,endAtomNeighbors;
               Chirality::findAtomNeighborDirHelper(mol,begAtom,dblBond,
@@ -730,10 +739,7 @@ namespace RDKit{
       } else {
         INT_VECT ranks;
         ranks.resize(mol.getNumAtoms());
-      
-        // ------------------
-        // get the CIP ranking of each atom:
-        Chirality::getAtomCIPRanks(mol,ranks);
+        bool cipDone=false;
 
         ROMol::BondIterator bondIt;
         for(bondIt=mol.beginBonds(); bondIt!=mol.endBonds(); ++bondIt){
@@ -753,6 +759,12 @@ namespace RDKit{
               // we're only going to handle 2 or three coordinate atoms:
               if( (begAtom->getDegree()==2 || begAtom->getDegree()==3) &&
                   (endAtom->getDegree()==2 || endAtom->getDegree()==3) ){
+                // ------------------
+                // get the CIP ranking of each atom if we need it:
+                if(!cipDone){
+                  assignAtomCIPRanks(mol,ranks);
+                  cipDone=true;
+                }
                 // find the neighbors for the begin atom and the endAtom
                 INT_VECT begAtomNeighbors,endAtomNeighbors;
                 Chirality::findAtomNeighborsHelper(mol,begAtom,dblBond,begAtomNeighbors);

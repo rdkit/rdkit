@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -19,7 +19,6 @@
 #include <lavd.h>
 #include <laslv.h>
 
-
 namespace RDKit {
 
   // local utility namespace
@@ -28,33 +27,33 @@ namespace RDKit {
       // NOTE that the distance matrix is modified here for the sake of 
       // efficiency
       PRECONDITION(distMat,"bogus distance matrix")
-	double sum = 0.0;
+        double sum = 0.0;
       int nActive=nAts;
       int mu = nb - nActive + 1;
     
       if(mu==-1) return 0.0;
     
       for(int i=0;i<nAts;i++){
-	int iTab=i*nAts;
-	sum = 0.0;
-	for(int j=0;j<nAts;j++){
-	  if(j!=i){
-	    sum += distMat[iTab+j];
-	  }
-	}
-	distMat[iTab+i]*=sum;
+        int iTab=i*nAts;
+        sum = 0.0;
+        for(int j=0;j<nAts;j++){
+          if(j!=i){
+            sum += distMat[iTab+j];
+          }
+        }
+        distMat[iTab+i]*=sum;
       }
       double accum = 0.0;
       for (int i = 0; i < nAts; i++) {
-	int iTab = i*nAts+i;
-	for (int j = i+1; j < nAts ; j++) {
-	  // NOTE: this isn't strictly the Balaban J value, because we
-	  // aren't only adding in adjacent atoms.  Since we're doing a
-	  // discriminator, that shouldn't be a problem.
-	  if(j!=i){
-	    accum += (1.0/sqrt(distMat[iTab]*distMat[j*nAts+j]));
-	  }
-	}
+        int iTab = i*nAts+i;
+        for (int j = i+1; j < nAts ; j++) {
+          // NOTE: this isn't strictly the Balaban J value, because we
+          // aren't only adding in adjacent atoms.  Since we're doing a
+          // discriminator, that shouldn't be a problem.
+          if(j!=i){
+            accum += (1.0/sqrt(distMat[iTab]*distMat[j*nAts+j]));
+          }
+        }
       }
       return nActive/((mu+1)*accum);
     }
@@ -62,124 +61,124 @@ namespace RDKit {
   
   namespace MolOps {
     DiscrimTuple computeDiscriminators(double *distMat, int nb, int na) {
-      PRECONDITION(distMat,"bogus distance matrix")
-	LaSymmMatDouble A(distMat, na, na);
-      LaVectorDouble eigs(na);
-      LaEigSolve(A, eigs);
-      double J = LocalBalaban(distMat, nb, na);
-    
+      PRECONDITION(distMat,"bogus distance matrix");
       double ev1 = 0.0;
       double ev2 = 0.0;
+      LaSymmMatDouble A(distMat, na, na);
+      LaVectorDouble eigs(na);
+      LaEigSolve(A, eigs);
       if (na > 1) {
-	ev1 = eigs(0);
+        ev1 = eigs(0);
       }
       if (na > 2) {
-	ev2 = eigs(na-1); 
+        ev2 = eigs(na-1); 
       }
+      double J = LocalBalaban(distMat, nb, na);
+    
       return boost::make_tuple(J,ev1,ev2);
     }
 
     DiscrimTuple computeDiscriminators(const ROMol &mol, 
-					       bool useBO,
-					       bool force) {
+                                       bool useBO,
+                                       bool force) {
       DiscrimTuple res;
       if ((mol.hasProp("Discrims")) && (!force)) {
-	mol.getProp("Discrims", res);
+        mol.getProp("Discrims", res);
       }
       else {
-	int nAts = mol.getNumAtoms();
-	double *dMat;
-	int nb = mol.getNumBonds();
-	dMat = MolOps::getDistanceMat(mol,useBO,true);
-	//  Our discriminators (based upon eigenvalues of the distance matrix
-	//  and Balaban indices) are good, but is a case they don't properly
-	//  handle by default.  These two fragments:
-	//    C-ccc and c-ccc
-	//  give the same discriminators because their distance matrices are
-	//  identical.  We'll work around this by adding 0.5 to the diagonal
-	//  elements of the distance matrix corresponding to aromatic atoms:
-	ROMol::ConstAromaticAtomIterator atomIt;
-	for(atomIt=mol.beginAromaticAtoms();
-	    atomIt!=mol.endAromaticAtoms();
-	    atomIt++){
-	  int idx=(*atomIt)->getIdx();
-	  dMat[idx*nAts+idx] += 0.5;
-	}
+        int nAts = mol.getNumAtoms();
+        double *dMat;
+        int nb = mol.getNumBonds();
+        dMat = MolOps::getDistanceMat(mol,useBO,true);
+        //  Our discriminators (based upon eigenvalues of the distance matrix
+        //  and Balaban indices) are good, but is a case they don't properly
+        //  handle by default.  These two fragments:
+        //    C-ccc and c-ccc
+        //  give the same discriminators because their distance matrices are
+        //  identical.  We'll work around this by adding 0.5 to the diagonal
+        //  elements of the distance matrix corresponding to aromatic atoms:
+        ROMol::ConstAromaticAtomIterator atomIt;
+        for(atomIt=mol.beginAromaticAtoms();
+            atomIt!=mol.endAromaticAtoms();
+            atomIt++){
+          int idx=(*atomIt)->getIdx();
+          dMat[idx*nAts+idx] += 0.5;
+        }
 #if 0
-	BOOST_LOG(rdDebugLog)<< "--------------------" << std::endl;
-	for(int i=0;i<nAts;i++){
-	  for(int j=0;j<nAts;j++){
-	    BOOST_LOG(rdDebugLog)<< "\t" << std::setprecision(4) << dMat[i*nAts+j];
-	  }
-	  BOOST_LOG(rdDebugLog)<< std::endl;
-	}
+        BOOST_LOG(rdDebugLog)<< "--------------------" << std::endl;
+        for(int i=0;i<nAts;i++){
+          for(int j=0;j<nAts;j++){
+            BOOST_LOG(rdDebugLog)<< "\t" << std::setprecision(4) << dMat[i*nAts+j];
+          }
+          BOOST_LOG(rdDebugLog)<< std::endl;
+        }
 #endif
       
-	res = MolOps::computeDiscriminators(dMat, nb, nAts);
-	mol.setProp("Discrims", res, true);
+        res = MolOps::computeDiscriminators(dMat, nb, nAts);
+        mol.setProp("Discrims", res, true);
       }
       return res;
     }
 
     double computeBalabanJ(const ROMol &mol, 
-				   bool useBO,
-				   bool force,
-				   const std::vector<int> *bondPath,
-				   bool cacheIt) {
+                           bool useBO,
+                           bool force,
+                           const std::vector<int> *bondPath,
+                           bool cacheIt) {
       double res=0.0;
       if (!force && mol.hasProp("BalanbanJ")) {
-	mol.getProp("BalabanJ", res);
+        mol.getProp("BalabanJ", res);
       }
       else {
-	double *dMat;
-	int nb=0,nAts=0;
-	if(bondPath){
-	  boost::dynamic_bitset<> atomsUsed(mol.getNumAtoms());
-	  boost::dynamic_bitset<> bondsUsed(mol.getNumBonds());
-	  for(std::vector<int>::const_iterator ci=bondPath->begin();
-	      ci!=bondPath->end();ci++){
-	    bondsUsed[*ci]=1;
-	  }
-	  std::vector<const Bond *> bonds;
-	  bonds.reserve(bondPath->size());
-	  std::vector<int> atomsInPath;
-	  atomsInPath.reserve(bondPath->size()+1);
+        double *dMat;
+        int nb=0,nAts=0;
+        if(bondPath){
+          boost::dynamic_bitset<> atomsUsed(mol.getNumAtoms());
+          boost::dynamic_bitset<> bondsUsed(mol.getNumBonds());
+          for(std::vector<int>::const_iterator ci=bondPath->begin();
+              ci!=bondPath->end();ci++){
+            bondsUsed[*ci]=1;
+          }
+          std::vector<const Bond *> bonds;
+          bonds.reserve(bondPath->size());
+          std::vector<int> atomsInPath;
+          atomsInPath.reserve(bondPath->size()+1);
 
-	  ROMol::GRAPH_MOL_BOND_PMAP::const_type bondMap = mol.getBondPMap();
-	  ROMol::EDGE_ITER beg,end;
-	  boost::tie(beg,end)=mol.getEdges();
-	  while(beg!=end){
-	    const Bond *bond=bondMap[*beg];
-	    if(bondsUsed[bond->getIdx()]){
-	      int begIdx=bond->getBeginAtomIdx();
-	      int endIdx=bond->getEndAtomIdx();
-	      bonds.push_back(bond);
-	      if(!atomsUsed[begIdx]){
-		atomsInPath.push_back(begIdx);
-		atomsUsed[begIdx]=1;
-	      }
-	      if(!atomsUsed[endIdx]){
-		atomsInPath.push_back(endIdx);
-		atomsUsed[endIdx]=1;
-	      }
-	    }
-	    beg++;
-	  }
-	  nb = bondPath->size();
-	  nAts = atomsInPath.size();
-	  dMat = MolOps::getDistanceMat(mol,atomsInPath,bonds,true,true);
-	  res = LocalBalaban(dMat,nb,nAts);
-	  delete [] dMat;
-	} else {
-	  nb = mol.getNumBonds();
-	  nAts = mol.getNumAtoms();
-	  dMat = MolOps::getDistanceMat(mol,true,true,true,0);
-	  res = LocalBalaban(dMat,nb,nAts);
-	  delete [] dMat;
-	}
+          ROMol::GRAPH_MOL_BOND_PMAP::const_type bondMap = mol.getBondPMap();
+          ROMol::EDGE_ITER beg,end;
+          boost::tie(beg,end)=mol.getEdges();
+          while(beg!=end){
+            const Bond *bond=bondMap[*beg];
+            if(bondsUsed[bond->getIdx()]){
+              int begIdx=bond->getBeginAtomIdx();
+              int endIdx=bond->getEndAtomIdx();
+              bonds.push_back(bond);
+              if(!atomsUsed[begIdx]){
+                atomsInPath.push_back(begIdx);
+                atomsUsed[begIdx]=1;
+              }
+              if(!atomsUsed[endIdx]){
+                atomsInPath.push_back(endIdx);
+                atomsUsed[endIdx]=1;
+              }
+            }
+            beg++;
+          }
+          nb = bondPath->size();
+          nAts = atomsInPath.size();
+          dMat = MolOps::getDistanceMat(mol,atomsInPath,bonds,true,true);
+          res = LocalBalaban(dMat,nb,nAts);
+          delete [] dMat;
+        } else {
+          nb = mol.getNumBonds();
+          nAts = mol.getNumAtoms();
+          dMat = MolOps::getDistanceMat(mol,true,true,true,0);
+          res = LocalBalaban(dMat,nb,nAts);
+          delete [] dMat;
+        }
 
 
-	if(cacheIt) mol.setProp("BalabanJ", res, true);
+        if(cacheIt) mol.setProp("BalabanJ", res, true);
       }
       return res;
     }

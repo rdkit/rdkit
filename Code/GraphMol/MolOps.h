@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2008 Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -63,11 +63,16 @@ namespace RDKit{
       \param mol     the molecule of interest
       \param sanitizeFrags  toggles sanitization of the fragments after
                             they are built
+      \param mapping used to return the mapping of Atoms->fragments.
+         On return \c mapping will be <tt>mol->getNumAtoms()</tt> long
+	 and will contain the fragment assignment for each Atom
 
       \return a vector of the fragments as pointers to ROMols
       
     */
-    std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,bool sanitizeFrags=true);
+    std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,
+                                                       bool sanitizeFrags=true,
+                                                       INT_VECT *frags=0);
 
 
 
@@ -544,6 +549,20 @@ namespace RDKit{
     void buildChiralAtomInvariants(const ROMol &mol,
 					  INVAR_VECT &res);
 
+
+    //! Figure out the CIP ranks for the atoms of a molecule
+    /*!
+      \param mol the molecule to be altered
+      \param ranks  used to return the set of ranks.  
+                    Should be at least mol.getNumAtoms() long.
+    
+      <b>Notes:</b>
+         - All atoms gain a property "_CIPRank" with their overall
+           CIP ranking.
+    
+    */
+    void assignAtomCIPRanks(const ROMol &mol,INT_VECT &ranks);
+
     //! calculate CIP (R/S) codes for a molecule's chiral centers
     /*!
       \param mol     the molecule of interest
@@ -555,8 +574,6 @@ namespace RDKit{
       <b>Notes:</b>
         - The codes are stored on atoms as a string property named
           "_CIPCode".
-        - All atoms also gain a property "_CIPRank" with their overall
-          CIP ranking.
         - Throughout we assume that we're working with a hydrogen-suppressed
           graph.
     */
