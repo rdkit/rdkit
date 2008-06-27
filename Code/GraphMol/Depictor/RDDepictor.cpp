@@ -162,7 +162,12 @@ namespace RDDepict {
   void computeInitialCoords(RDKit::ROMol &mol,
                             const RDGeom::INT_POINT2D_MAP *coordMap, 
                             std::list<EmbeddedFrag> &efrags) {
-    
+    RDKit::INT_VECT atomRanks;
+    atomRanks.resize(mol.getNumAtoms());
+
+    // we use the CIP ranks to order the atoms during drawing:
+    RDKit::MolOps::assignAtomCIPRanks(mol,atomRanks);
+
     // so that cis/trans bonds will be marked
     RDKit::MolOps::assignBondStereoCodes(mol, false);
 
@@ -209,13 +214,7 @@ namespace RDDepict {
         mrank = static_cast<int>(RDKit::MAX_INT);
         RDKit::INT_LIST_I nri, mnri;
         for (nri = nratms.begin(); nri != nratms.end(); nri++) {
-          const RDKit::Atom *at=mol.getAtomWithIdx(*nri);
-          if(at->hasProp("_CIPRank")){
-            at->getProp("_CIPRank", rank);
-          } else {
-            // if the thing has no CIP rank, just set it high:
-            rank = 2*mol.getNumAtoms();
-          }
+          rank=atomRanks[*nri];
           rank *= 1000;
           // use the atom index as well so that we at least
           // get reproduceable depictions in cases where things

@@ -18,7 +18,7 @@ namespace RDKit {
 
 namespace RDDepict {
 
-  //! \brief This the function the user gets to compute coodinates
+  //! \brief Generate 2D coordinates (a depiction) for a molecule
   /*! 
 
     \param mol the molecule were are interested in
@@ -39,10 +39,14 @@ namespace RDDepict {
     2D coordinates
 
   */
-  unsigned int compute2DCoords(RDKit::ROMol &mol, const RDGeom::INT_POINT2D_MAP *coordMap=0,
-                               bool canonOrient=false, bool clearConfs=true,
-                               unsigned int nFlipsPerSample=0, unsigned int nSamples=0,
-                               int sampleSeed=0, bool permuteDeg4Nodes=false);
+  unsigned int compute2DCoords(RDKit::ROMol &mol,
+                               const RDGeom::INT_POINT2D_MAP *coordMap=0,
+                               bool canonOrient=false,
+                               bool clearConfs=true,
+                               unsigned int nFlipsPerSample=0,
+                               unsigned int nSamples=0,
+                               int sampleSeed=0,
+                               bool permuteDeg4Nodes=false);
 
   //! \brief Compute the 2D coordinates such the interatom distances
   //   mimic those in a distance matrix
@@ -91,13 +95,14 @@ namespace RDDepict {
 
   */
   unsigned int compute2DCoordsMimicDistMat(RDKit::ROMol &mol,
-					   const DOUBLE_SMART_PTR *dmat=0,
-                                           bool canonOrient=true, bool clearConfs=true,
-					   double weightDistMat=0.5,
+                                           const DOUBLE_SMART_PTR *dmat=0,
+                                           bool canonOrient=true,
+                                           bool clearConfs=true,
+                                           double weightDistMat=0.5,
                                            unsigned int nFlipsPerSample=3,
-					   unsigned int nSamples=100,
+                                           unsigned int nSamples=100,
                                            int sampleSeed=25,
-					   bool permuteDeg4Nodes=true);
+                                           bool permuteDeg4Nodes=true);
 };
 
 #endif
