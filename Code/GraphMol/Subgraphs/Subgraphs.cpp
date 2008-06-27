@@ -17,7 +17,8 @@
 
 namespace RDKit {
 namespace Subgraphs {
-  INT_INT_VECT_MAP getNbrsList(const ROMol &mol, bool useHs) {
+  void getNbrsList(const ROMol &mol, bool useHs, INT_INT_VECT_MAP &nbrs) {
+    nbrs.clear();
     int nAtoms = mol.getNumAtoms();
 
     // create a list of neighbors for each bond
@@ -26,7 +27,6 @@ namespace Subgraphs {
     // a list of list of bonds is no longer appropriate here
     // some bond IDs may be missing to index the list on.
     // so using an associative container.
-    INT_INT_VECT_MAP nbrs;
 
     for (int i = 0; i < nAtoms; i++) {
       const Atom *atom = mol.getAtomWithIdx(i);
@@ -62,7 +62,6 @@ namespace Subgraphs {
         }
       }
     }
-    return nbrs;
   }
 
   // Everything passed here by reference                               
@@ -130,10 +129,10 @@ namespace Subgraphs {
   {
     unsigned int nsize = spath.size();
     if ((nsize >= lowerLen) && (nsize <= upperLen)) {
-      if (res.find(nsize) == res.end()) {
-        PATH_LIST ordern;
-        res[nsize] = ordern;
-      }
+      //if (res.find(nsize) == res.end()) {
+      //  PATH_LIST ordern;
+      //  res[nsize] = ordern;
+      //}
       res[nsize].push_back(spath);
     }
   
@@ -294,7 +293,8 @@ namespace Subgraphs {
     boost::dynamic_bitset<> forbidden(mol.getNumBonds());
   
     // this should be the only dependence on mol object:
-    INT_INT_VECT_MAP nbrs = Subgraphs::getNbrsList(mol, useHs); 
+    INT_INT_VECT_MAP nbrs;
+    Subgraphs::getNbrsList(mol, useHs,nbrs); 
   
     // Start path at each bond
     PATH_LIST res;
@@ -335,7 +335,8 @@ namespace Subgraphs {
     boost::dynamic_bitset<> forbidden(mol.getNumBonds());
 
 
-    INT_INT_VECT_MAP nbrs = Subgraphs::getNbrsList(mol, useHs);
+    INT_INT_VECT_MAP nbrs;
+    Subgraphs::getNbrsList(mol, useHs,nbrs);
   
     // Start path at each bond
     INT_PATH_LIST_MAP res;
