@@ -683,7 +683,8 @@ namespace RDKit {
   std::string MolToSmarts(ROMol &mol, bool doIsomericSmiles) {
     std::string res;
     unsigned int nAtoms = mol.getNumAtoms();
-    
+    if(!nAtoms) return "";
+
     INT_VECT ranks;
     ranks.resize(nAtoms);
     // For smiles writing we would be canonicalizing but we will not do that here.
