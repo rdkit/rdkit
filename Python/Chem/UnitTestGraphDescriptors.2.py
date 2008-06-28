@@ -12,8 +12,6 @@ import unittest,os.path
 import Chem
 from Chem import GraphDescriptors,MolSurf,Lipinski,Crippen
 
-from Numeric import *
-
 def feq(n1,n2,tol=1e-4):
   return abs(n1-n2)<=tol
 

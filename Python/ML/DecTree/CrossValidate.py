@@ -10,8 +10,7 @@ cross validation == evaluating the accuracy of a tree.
 """
 from ML.DecTree import ID3
 from ML.Data import SplitData
-from Numeric import *
-
+import numpy
 import RDRandom
 
 def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
@@ -74,7 +73,7 @@ def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
       errs[i],foo = CrossValidate(trees[i],examples,appendExamples=0)
     else:
       errs[i] = 1e6
-  best = argmin(errs)
+  best = numpy.argmin(errs)
   # FIX: this used to say 'trees[i]', could that possibly have been right?
   return trees[best]
 
@@ -107,7 +106,7 @@ def CrossValidate(tree,testExamples,appendExamples=0):
     testEx = testExamples[i]
     trueRes = testEx[-1]
     res = tree.ClassifyExample(testEx,appendExamples)
-    if trueRes != res:
+    if (trueRes != res).any():
       badExamples.append(testEx)
       nBad += 1
     

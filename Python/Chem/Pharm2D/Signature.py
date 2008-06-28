@@ -17,7 +17,6 @@
 import Chem
 from Chem.Pharm2D import Utils
 from DataStructs import SparseBitVect as BitVect
-from Numeric import *
 
 _verbose = 0
 

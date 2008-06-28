@@ -7,7 +7,7 @@
 #define CQUANTIZE_EXPORTS
 #endif
 #include "cQuantize.h"
-#include <Numeric/arrayobject.h>
+#include <numpy/oldnumeric.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
 #ifdef WIN32
 BOOL APIENTRY DllMain( HANDLE hModule, 

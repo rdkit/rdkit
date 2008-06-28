@@ -14,14 +14,15 @@ from Chem import Graphs
 from Chem import rdchem
 # FIX: remove this dependency here and below
 from Chem import pyPeriodicTable as PeriodicTable
-from Numeric import *
+import numpy
+import math
 from ML.InfoTheory import entropy
 
 periodicTable = rdchem.GetPeriodicTable()
 
-_log2val = log(2)
+_log2val = math.log(2)
 def _log2(x):
-  return log(x) / _log2val
+  return math.log(x) / _log2val
 
 def _VertexDegrees(mat,onlyOnes=0):
   """  *Internal Use Only*
@@ -32,7 +33,7 @@ def _VertexDegrees(mat,onlyOnes=0):
   if not onlyOnes:
     res = sum(mat)
   else:
-    res = sum(equal(mat,1))
+    res = sum(numpy.equal(mat,1))
   return res
 
 def _NumAdjacencies(mol,dMat):
@@ -100,7 +101,7 @@ def Ipc(mol, avg = 0, dMat = None, forceDMat = 0):
         dMat = Chem.GetDistanceMatrix(mol,0)
         mol._adjMat = dMat
 
-  adjMat = equal(dMat,1)
+  adjMat = numpy.equal(dMat,1)
   cPoly = abs(Graphs.CharacteristicPolynomial(mol, adjMat))
   if avg:
     return entropy.InfoEntropy(cPoly)
@@ -172,8 +173,8 @@ def Chi0(mol):
   deltas = [x.GetDegree() for x in mol.GetAtoms()]
   while 0 in deltas:
     deltas.remove(0)
-  deltas = array(deltas,Float)
-  res = sum(sqrt(1./deltas))
+  deltas = numpy.array(deltas,'d')
+  res = sum(numpy.sqrt(1./deltas))
   return res
 Chi0.version="1.0.0"
 
@@ -185,8 +186,8 @@ def Chi1(mol):
   c1s = [x.GetBeginAtom().GetDegree()*x.GetEndAtom().GetDegree() for x in mol.GetBonds()]
   while 0 in c1s:
     c1s.remove(0)
-  c1s = array(c1s,Float)
-  res = sum(sqrt(1./c1s))
+  c1s = numpy.array(c1s,'d')
+  res = sum(numpy.sqrt(1./c1s))
   return res
 Chi1.version="1.0.0"
   
@@ -218,7 +219,7 @@ def Chi0v(mol):
   deltas = _hkDeltas(mol)
   while 0 in deltas:
     deltas.remove(0)
-  res = sum(sqrt(1./array(deltas)))
+  res = sum(numpy.sqrt(1./numpy.array(deltas)))
   return res
 Chi0v.version="1.0.0"
 
@@ -226,12 +227,12 @@ def Chi1v(mol):
   """  From equations (5),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
    
   """
-  deltas = array(_hkDeltas(mol,skipHs=0))
+  deltas = numpy.array(_hkDeltas(mol,skipHs=0))
   res = 0.0
   for bond in mol.GetBonds():
     v = deltas[bond.GetBeginAtomIdx()]*deltas[bond.GetEndAtomIdx()]
     if v != 0.0:
-      res += sqrt(1./v)
+      res += numpy.sqrt(1./v)
   return res
 Chi1v.version="1.0.0"
   
@@ -245,7 +246,7 @@ def ChiNv_(mol,order=2):
   size 3.
   
   """
-  deltas = array(_hkDeltas(mol,skipHs=0))
+  deltas = numpy.array(_hkDeltas(mol,skipHs=0))
   accum = 0.0
   #print 'DELTAS',deltas
   for path in Chem.FindAllPathsOfLengthN(mol,order+1,useBonds=0):
@@ -255,7 +256,7 @@ def ChiNv_(mol,order=2):
     for idx in path:
       cAccum *= deltas[idx]
     if cAccum:  
-      accum += 1./sqrt(cAccum)
+      accum += 1./numpy.sqrt(cAccum)
   return accum
 
 def Chi2v(mol):
@@ -292,8 +293,8 @@ def Chi0n(mol):
   deltas = [_nVal(x) for x in mol.GetAtoms()]
   while deltas.count(0):
     deltas.remove(0)
-  deltas = array(deltas,Float)
-  res = sum(sqrt(1./deltas))
+  deltas = numpy.array(deltas,'d')
+  res = sum(numpy.sqrt(1./deltas))
   return res
 Chi0n.version="1.0.0"
 
@@ -301,12 +302,12 @@ def Chi1n(mol):
   """  Similar to Hall Kier Chi1v, but uses nVal instead of valence
    
   """
-  delts = array([_nVal(x) for x in mol.GetAtoms()],Float)
+  delts = numpy.array([_nVal(x) for x in mol.GetAtoms()],'d')
   res = 0.0
   for bond in mol.GetBonds():
     v = delts[bond.GetBeginAtomIdx()]*delts[bond.GetEndAtomIdx()]
     if v != 0.0:
-      res += sqrt(1./v)
+      res += numpy.sqrt(1./v)
   return res
 Chi1n.version="1.0.0"
 def ChiNn_(mol,order=2):
@@ -320,14 +321,14 @@ def ChiNn_(mol,order=2):
   size 3.
   
   """
-  deltas = array([_nVal(x) for x in mol.GetAtoms()],Float)
+  deltas = numpy.array([_nVal(x) for x in mol.GetAtoms()],'d')
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol,order+1,useBonds=0):
     cAccum = 1.0
     for idx in path:
       cAccum *= deltas[idx]
     if cAccum:
-      accum += 1./sqrt(cAccum)
+      accum += 1./numpy.sqrt(cAccum)
   return accum
 
 def Chi2n(mol):
@@ -419,7 +420,7 @@ def BalabanJ(mol,dMat=None,forceDMat=0):
     si = s[i]
     for j in range(i,nS):
       if adjMat[i,j] == 1:
-        sum += 1./sqrt(si*s[j])
+        sum += 1./numpy.sqrt(si*s[j])
 
   if mu+1 != 0:
     J = float(q) / float(mu + 1) * sum
@@ -487,10 +488,10 @@ def _CalculateEntropies(connectionDict, atomTypeDict, numAtoms):
   """
   connectionList = connectionDict.values()
   totConnections = sum(connectionList)
-  connectionIE = totConnections*(entropy.InfoEntropy(array(connectionList)) +
-                                 log(totConnections)/_log2val)
+  connectionIE = totConnections*(entropy.InfoEntropy(numpy.array(connectionList)) +
+                                 math.log(totConnections)/_log2val)
   atomTypeList = atomTypeDict.values()
-  atomTypeIE = numAtoms*entropy.InfoEntropy(array(atomTypeList))
+  atomTypeIE = numAtoms*entropy.InfoEntropy(numpy.array(atomTypeList))
   return atomTypeIE + connectionIE
 
 def _CreateBondDictEtc(mol, numAtoms):

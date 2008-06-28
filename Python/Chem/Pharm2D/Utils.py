@@ -13,7 +13,7 @@
   numbering
 
 """
-from Numeric import *
+import numpy
 
 #
 #  number of points in a scaffold -> sequence of distances (p1,p2) in

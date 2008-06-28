@@ -1,13 +1,13 @@
 # $Id$
 #
-# Copyright (C) 2001-2006  greg Landrum
+# Copyright (C) 2001-2008  greg Landrum
 #
 #   @@ All Rights Reserved  @@
 #
 """ contains the Cluster class for representing hierarchical cluster trees
 
 """
-from Numeric import *
+import numpy
 
 CMPTOL=1e-6
 
@@ -132,7 +132,7 @@ class Cluster(object):
       for child in children:
         res += child.GetPoints()
       self._points=res
-      self._pointsPositions = map(lambda x:x.GetPosition(),res)
+      self._pointsPositions = [x.GetPosition() for x in res]
 
   def AddChild(self,child):
     """Adds a child to our list

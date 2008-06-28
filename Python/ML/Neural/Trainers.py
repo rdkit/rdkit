@@ -1,5 +1,7 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #
-#  Copyright (C) 2000  greg Landrum
+#  Copyright (C) 2000-2008  greg Landrum
 #
 """ Training algorithms for feed-forward neural nets
 
@@ -8,8 +10,7 @@
     Dan W. Patterson, Prentice Hall, 1996
   
 """
-from Numeric import *
-
+import numpy
   
 class Trainer(object):
   """ "virtual base class" for network trainers
@@ -55,19 +56,19 @@ class BackProp(Trainer):
     """
     totNumNodes = net.GetNumNodes()
     if self.oldDeltaW is None:
-      self.oldDeltaW = zeros(totNumNodes,Float64)
+      self.oldDeltaW = numpy.zeros(totNumNodes,numpy.float64)
     outputNodeList = net.GetOutputNodeList()
     nOutput = len(outputNodeList)
-    targetVect = array(example[-nOutput:],Float64)
+    targetVect = numpy.array(example[-nOutput:],numpy.float64)
     trainVect = example[:-nOutput]
     if resVect is None:
       # classify the example
       net.ClassifyExample(trainVect)
       resVect = net.GetLastOutputs()
-    outputs = take(resVect,outputNodeList)
+    outputs = numpy.take(resVect,outputNodeList)
     errVect = targetVect - outputs
 
-    delta = zeros(totNumNodes,Float64)
+    delta = numpy.zeros(totNumNodes,numpy.float64)
     # start with the output layer
     for i in xrange(len(outputNodeList)):
       idx = outputNodeList[i]
@@ -107,12 +108,12 @@ class BackProp(Trainer):
         idxList = net.GetHiddenLayerNodeList(layer)
       for idx in idxList:
         node = net.GetNode(idx)
-        dW = self.speed * delta[idx] * take(resVect,node.GetInputs())
+        dW = self.speed * delta[idx] * numpy.take(resVect,node.GetInputs())
         newWeights = node.GetWeights() + dW
         node.SetWeights(newWeights)
       
     # return the RMS error from the OLD network
-    return sqrt(errVect*errVect)[0]
+    return numpy.sqrt(errVect*errVect)[0]
     
 
   def TrainOnLine(self,examples,net,maxIts=5000,errTol=0.1,useAvgErr=1,
@@ -263,8 +264,8 @@ if __name__ == '__main__':
     return net
 
   def runProfile(command):
-    import RandomArray
-    RandomArray.seed(23,42)
+    import random
+    random.seed(23)
     import profile,pstats
     datFile = '%s.prof.dat'%(command)
     profile.run('%s()'%command,datFile)

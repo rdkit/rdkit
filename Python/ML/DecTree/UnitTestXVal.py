@@ -37,9 +37,12 @@ class XValTestCase(unittest.TestCase):
                                                                 seed=self.randomArraySeed)
     tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,
                                                     nPossibleVals,silent=1)
+
     import cPickle
+    #cPickle.dump(tree,file(self.origTreeName,'w+'))
     inFile = open(self.origTreeName,'r')
     oTree = cPickle.load(inFile)
+
 
     assert oTree==tree,'Random CrossValidation test failed'
     
@@ -54,7 +57,7 @@ class XValTestCase(unittest.TestCase):
                                                     nPossibleVals,silent=1,
                                                     replacementSelection=1)
     assert tree
-    assert feq(frac,0.0333)
+    assert feq(frac,0.0833)
     
     
 

@@ -10,7 +10,7 @@ import Chem
 from Chem import ChemicalFeatures
 import EmbedLib
 import gzip
-from Numeric import *
+
 import DistanceGeometry as DG
 import Geometry
 import Pharmacophore

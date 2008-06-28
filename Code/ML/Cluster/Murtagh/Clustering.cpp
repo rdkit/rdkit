@@ -7,7 +7,7 @@
 #endif
 #define PYTH_FILE_WITH_INIT
 #include "Clustering.h"
-#include <Numeric/arrayobject.h>
+#include <numpy/oldnumeric.h>
 
 
 #ifdef WIN32

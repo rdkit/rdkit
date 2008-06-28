@@ -1,10 +1,11 @@
 #
-#  Copyright (C) 2000,2003  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #
 """ Implements a class used to represent N-ary trees
 
 """
 import cPickle
+import numpy
 
 # FIX: the TreeNode class has not been updated to new-style classes
 # (RD Issue380) because that would break all of our legacy pickled
@@ -257,8 +258,6 @@ class TreeNode:
       **Note**
 
         This works recursively
-
-
     """
     try:
       nChildren = len(self.children)

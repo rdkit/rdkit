@@ -1,6 +1,8 @@
 from SimDivFilters import rdSimDivPickers as rdsimdiv
-from Numeric import *
-from random import random
+import numpy
+import RDRandom
+RDRandom.seed(23)
+
 
 pkr = rdsimdiv.MaxMinPicker()
 
@@ -8,14 +10,13 @@ n = 1000
 m = 80
 dataPts = []
 for i in range(n) :
-    pt = zeros(2, 'd')
-    pt[0] = 10.*random()
-    pt[1] = 10.*random()
-    print pt[0], pt[1]
+    pt = numpy.zeros(2, 'd')
+    pt[0] = 10.*RDRandom.random()
+    pt[1] = 10.*RDRandom.random()
     dataPts.append(pt)
 
 # compute the distance matrix
-distMat = zeros(n*(n-1)/2, 'd')
+distMat = numpy.zeros(n*(n-1)/2, 'd')
 for i in range(n-1) :
     itab = n*i - ((i+1)*(i+2))/2
     pt1 = dataPts[i]
@@ -24,8 +25,7 @@ for i in range(n-1) :
         pt2 = dataPts[j]
         diff = pt2 - pt1
         
-        dist = sqrt(dot(diff, diff))
-        #print pt1, pt2, diff, dist
+        dist = numpy.sqrt(numpy.dot(diff, diff))
         distMat[id] = dist
         
 

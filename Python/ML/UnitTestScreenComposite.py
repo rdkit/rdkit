@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2003-2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -39,9 +39,9 @@ class TestCase(unittest.TestCase):
     assert nGood==93
     assert misCount==2
     assert nSkipped==0
-    assert feq(avgGood,.9753)
-    assert feq(avgBad,.8000)
-    assert tbl[0,0] == 54
+    assert feq(avgGood,.9849),avgGood
+    assert feq(avgBad,.8500),avgBad
+    assert tbl[0,0] == 54,tbl
     assert tbl[1,1] == 39
     assert tbl[0,1] == 2
     assert tbl[1,0] == 0
@@ -61,9 +61,9 @@ class TestCase(unittest.TestCase):
     assert nGood==28
     assert misCount==1
     assert nSkipped==0
-    assert feq(avgGood,.9607)
-    assert feq(avgBad,.9000)
-    assert tbl[0,0] == 16
+    assert feq(avgGood,.9857),avgGood
+    assert feq(avgBad,1.000),avgBad
+    assert tbl[0,0] == 16,tbl
     assert tbl[1,1] == 12
     assert tbl[0,1] == 1
     assert tbl[1,0] == 0
@@ -83,9 +83,9 @@ class TestCase(unittest.TestCase):
     assert nGood==65
     assert misCount==1
     assert nSkipped==0
-    assert feq(avgGood,.9815)
-    assert feq(avgBad,.7000)
-    assert tbl[0,0] == 38
+    assert feq(avgGood,.9846),avgGood
+    assert feq(avgBad,.7000),avgBad
+    assert tbl[0,0] == 38,tbl
     assert tbl[1,1] == 27
     assert tbl[0,1] == 1
     assert tbl[1,0] == 0
@@ -103,14 +103,14 @@ class TestCase(unittest.TestCase):
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
 
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==86,str(nGood)
+    assert nGood==87,str(nGood)
     assert misCount==1
-    assert nSkipped==8
-    assert feq(avgGood,.9930)
-    assert feq(avgBad,.9000)
-    assert feq(avgSkip,.7500)
+    assert nSkipped==7,nSkipped
+    assert feq(avgGood,1.0),avgGood
+    assert feq(avgBad,1.000),avgBad
+    assert feq(avgSkip,.7571),avgSkip
     assert tbl[0,0] == 50
-    assert tbl[1,1] == 36
+    assert tbl[1,1] == 37
     assert tbl[0,1] == 1
     assert tbl[1,0] == 0
     
@@ -123,15 +123,15 @@ class TestCase(unittest.TestCase):
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
 
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==93
-    assert misCount==10
+    assert nGood==94,nGood
+    assert misCount==9
     assert nSkipped==0
-    assert feq(avgGood,.9505)
-    assert feq(avgBad,.7600)
-    assert tbl[0,0] == 55
-    assert tbl[1,1] == 38
-    assert tbl[0,1] == 0
-    assert tbl[1,0] == 10
+    assert feq(avgGood,.9649),avgGood
+    assert feq(avgBad,.8111),avgBad
+    assert tbl[0,0] == 48,tbl
+    assert tbl[1,1] == 46
+    assert tbl[0,1] == 7
+    assert tbl[1,0] == 2
     
   def test6(self):
     """ multiple models """
@@ -143,20 +143,20 @@ class TestCase(unittest.TestCase):
     composites = [compos,compos]
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = \
                                                        ScreenComposite.ScreenFromDetails(composites,self.details)
-    assert feq(nGood[0],93)
-    assert feq(misCount[0],10)
+    assert feq(nGood[0],94),nGood
+    assert feq(misCount[0],9)
     assert feq(nSkipped[0],0)
-    assert feq(avgGood[0],.9505)
-    assert feq(avgBad[0],.7600)
+    assert feq(avgGood[0],.9649),avgGood
+    assert feq(avgBad[0],.8111),avgBad
     assert feq(nGood[1],0)
     assert feq(misCount[1],0)
     assert feq(nSkipped[1],0)
     assert feq(avgGood[1],0)
     assert feq(avgBad[1],0)
-    assert feq(tbl[0,0],55)
-    assert feq(tbl[1,1],38)
-    assert feq(tbl[0,1],0)
-    assert feq(tbl[1,0],10)
+    assert feq(tbl[0,0],48),tbl
+    assert feq(tbl[1,1],46)
+    assert feq(tbl[0,1],7)
+    assert feq(tbl[1,0],2)
     
   def test7(self):
     """ shuffle """
@@ -167,15 +167,15 @@ class TestCase(unittest.TestCase):
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     self.details.shuffleActivities=1
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==62
-    assert misCount==41
+    assert nGood==50,nGood
+    assert misCount==53
     assert nSkipped==0
-    assert feq(avgGood,.7839)
-    assert feq(avgBad,.7049)
-    assert tbl[0,0] == 36
-    assert tbl[1,1] == 26
-    assert tbl[0,1] == 19
-    assert tbl[1,0] == 22
+    assert feq(avgGood,.7380),avgGood
+    assert feq(avgBad,.7660),avgBad
+    assert tbl[0,0] == 30,tbl
+    assert tbl[1,1] == 20
+    assert tbl[0,1] == 25
+    assert tbl[1,0] == 28
     
   def test8(self):
     """ shuffle with segmentation """
@@ -187,15 +187,15 @@ class TestCase(unittest.TestCase):
     self.details.shuffleActivities=1
     self.details.doHoldout=1
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==15
-    assert misCount==16
+    assert nGood==19,nGood
+    assert misCount==12
     assert nSkipped==0
-    assert feq(avgGood,.6867)
-    assert feq(avgBad,.7750)
-    assert tbl[0,0] == 13
-    assert tbl[1,1] == 2
+    assert feq(avgGood,.7737),avgGood
+    assert feq(avgBad,.7500),avgBad
+    assert tbl[0,0] == 12,tbl
+    assert tbl[1,1] == 7
     assert tbl[0,1] == 6
-    assert tbl[1,0] == 10
+    assert tbl[1,0] == 6
     
   def test9(self):
     """ shuffle with segmentation2 """
@@ -207,15 +207,15 @@ class TestCase(unittest.TestCase):
     self.details.shuffleActivities=1
     self.details.doTraining=1
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==47
-    assert misCount==25
+    assert nGood==31,nGood
+    assert misCount==41
     assert nSkipped==0
-    assert feq(avgGood,.8149)
-    assert feq(avgBad,.6600)
-    assert tbl[0,0] == 23
-    assert tbl[1,1] == 24
-    assert tbl[0,1] == 13
-    assert tbl[1,0] == 12
+    assert feq(avgGood,.7161),avgGood
+    assert feq(avgBad,.7707),avgBad
+    assert tbl[0,0] == 18,tbl
+    assert tbl[1,1] == 13
+    assert tbl[0,1] == 19
+    assert tbl[1,0] == 22
     
   def test10(self):
     """ filtering """
@@ -238,7 +238,7 @@ class TestCase(unittest.TestCase):
     assert tbl[0,1] == 1
     assert tbl[1,0] == 12
     
-  def _test11(self):
+  def test11(self):
     """ filtering with segmentation """
     self.details.tableName = 'ferro_noquant'
     compos = pickle.load(open(os.path.join(self.baseDir,'ferromag_filt_10_3.pkl'),
@@ -250,14 +250,14 @@ class TestCase(unittest.TestCase):
     self.details.filterFrac=.33
 
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    print nGood,misCount,nSkipped,avgGood,avgBad,avgSkip
-    assert nGood==46,nGood
+
+    assert nGood==37,nGood
     assert misCount==6
     assert nSkipped==0
-    assert feq(avgGood,.9500)
-    assert feq(avgBad,.8333)
-    assert tbl[0,0] == 37
-    assert tbl[1,1] == 9
+    assert feq(avgGood,.9594)
+    assert feq(avgBad,.85)
+    assert tbl[0,0] == 14,tbl
+    assert tbl[1,1] == 23
     assert tbl[0,1] == 1
     assert tbl[1,0] == 5
 
@@ -270,15 +270,15 @@ class TestCase(unittest.TestCase):
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
     self.details.doHoldout=1
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood == 26
-    assert misCount == 5
-    assert nSkipped == 0
-    assert feq(avgGood, 0.9538)
-    assert feq(avgBad, 0.86)
-    assert tbl[0,0] == 9
+    assert nGood == 27,nGood
+    assert misCount == 4,misCount
+    assert nSkipped == 0,nSkipped
+    assert feq(avgGood, 0.9407),avgGood
+    assert feq(avgBad, 0.875),avgBad
+    assert tbl[0,0] == 11,tbl
     assert tbl[0,1] == 4
-    assert tbl[1,0] == 1
-    assert tbl[1,1] == 17
+    assert tbl[1,0] == 0
+    assert tbl[1,1] == 16
     
 
 if __name__ == '__main__':

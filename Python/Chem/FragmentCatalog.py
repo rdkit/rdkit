@@ -1,11 +1,10 @@
 # $Id$
 #
-#  Copyright (C) 2003-2006 Rational Discovery LLC
+#  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 import Chem
-from Numeric import *
 from rdfragcatalog import *
 import sys
 import sets

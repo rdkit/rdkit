@@ -1,13 +1,12 @@
 # $Id$
 #
-# Copyright (C) 2007 Greg Landrum
+# Copyright (C) 2007-2008 Greg Landrum
 #  All Rights Reserved
 #
 import RDConfig
 import unittest
 
 from ML.Cluster import Butina
-from Numeric import *
 import cPickle
 
 

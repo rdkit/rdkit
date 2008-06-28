@@ -1,9 +1,11 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 import Numerics.rdAlignment as rdAlg
 import Geometry
 import RDConfig
 import os,sys
 import unittest
-import Numeric
+import numpy.oldnumeric as Numeric
 import math
 import copy
 
@@ -22,7 +24,7 @@ def transformPoint(trans, pt):
   pt2 = copy.copy(list(pt))
   pt2.append(1.0)
   pt2 = Numeric.array(pt2)
-  res = Numeric.matrixmultiply(trans, pt2)
+  res = Numeric.dot(trans, pt2)
   return res[:3]
 
 class TestCase(unittest.TestCase):

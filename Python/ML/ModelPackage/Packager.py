@@ -1,5 +1,7 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #
-# Copyright (C) 2002 Greg Landrum and Rational Discovery LLC
+# Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 # All rights are reserved.
 #
 
@@ -69,6 +71,8 @@ class ModelPackage(object):
     try:
       res = self._model.ClassifyExample(argVect,threshold=threshold,appendExample=0)
     except:
+      import traceback
+      traceback.print_exc()
       raise ClassificationError,'problems encountered generating prediction'
 
     return res
@@ -85,40 +89,3 @@ class ModelPackage(object):
     self._model.SetInputOrder(order)
     
     self._initialized = 1
-
-if __name__=='__main__':
-  from Chem import *
-  import cPickle
-  from ML.ModelPackage import Packager
-  
-  calc = cPickle.load(open('test_data/Jan9_build3_calc.dsc','rb'))
-  model = cPickle.load(open('test_data/Jan9_build3_model.pkl','rb'))
-  pkg = Packager.ModelPackage(descCalc=calc,model=model)
-  pkg.SetNotes('General purpose model built from PhysProp data')
-  testD = [
-    ('Fc1ccc(NC(=O)c2cccnc2Oc3cccc(c3)C(F)(F)F)c(F)c1',0,1.0 ),
-    (r'CN/1(=C\C=C(/C=C1)\C\2=C\C=N(C)(Cl)\C=C2)Cl',0,0.70),
-    (r'NS(=O)(=O)c1cc(ccc1Cl)C2(O)NC(=O)c3ccccc32',1,0.70),
-    ]
-    
-  for smi,pred,conf in testD:
-    m = MolFromSmiles(smi)
-    p,c = pkg.Classify(m)
-    if pred!=p or conf!=c:
-      raise ValueError,'Bad Prediction: %s'%(repr((smi,pred,conf,p,c)))
-  cPickle.dump(pkg,open('test_data/Jan9_build3_pkg.pkl','wb+'))
-  from Numeric import *
-  import RandomArray
-  
-  names = calc.GetDescriptorNames()
-  perm = [names[x] for x in RandomArray.permutation(len(names))]
-  calc.simpleList = perm
-  calc.descriptorNames = perm
-  pkg.Init()
-  for smi,pred,conf in testD:
-    m = MolFromSmiles(smi)
-    p,c = pkg.Classify(m)
-    if pred!=p or conf!=c:
-      raise ValueError,'Bad Prediction: %s'%(repr((smi,pred,conf,p,c)))
-  
-              

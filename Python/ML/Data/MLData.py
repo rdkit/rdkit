@@ -1,12 +1,14 @@
 #
-#  Copyright (C) 2000-2004  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
 """ classes to be used to help work with data sets
 
 """
+import numpy
+import math
 import copy,types
-from Numeric import *
+
 
 numericTypes = [type(1),type(1.0),type(1L)]
 class MLDataSet(object):
@@ -94,8 +96,8 @@ class MLDataSet(object):
       for col in cols[:]:
         d = pt[col]
         if type(d) in numericTypes:
-          if floor(d) == d:
-            nPossible[col] = max(floor(d),nPossible[col])
+          if math.floor(d) == d:
+            nPossible[col] = max(math.floor(d),nPossible[col])
           else:
             nPossible[col] = -1
             cols.remove(col)
@@ -195,7 +197,7 @@ class MLQuantDataSet(MLDataSet):
 
     **Big differences to MLDataSet**
 
-      1) data are stored in a Numeric array since they are homogenous
+      1) data are stored in a numpy array since they are homogenous
 
       2) results are assumed to be quantized (i.e. no qBounds entry is required)
 
@@ -212,7 +214,7 @@ class MLQuantDataSet(MLDataSet):
          a list of nPossible values for each variable
 
     """
-    return [max(x)+1 for x in transpose(data)]
+    return [max(x)+1 for x in numpy.transpose(data)]
 
   def GetNamedData(self):
     """ returns a list of named examples
@@ -287,7 +289,7 @@ class MLQuantDataSet(MLDataSet):
         - nResults: the number of results columns in the data lists.  This is usually
                     1, but can be higher.
     """
-    self.data = array(data)
+    self.data = numpy.array(data)
     self.nResults = nResults
     if nVars is None:
       nVars = len(data[0])-self.nResults

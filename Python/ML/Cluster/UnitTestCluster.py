@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2001-2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2001-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -11,8 +11,7 @@ import RDConfig
 import unittest
 from ML.Cluster import Standardize,ClusterUtils
 from ML.Cluster import Clusters,Murtagh
-from Numeric import *
-import RandomArray
+import numpy
 import cPickle
 
 
@@ -21,7 +20,7 @@ class TestCase(unittest.TestCase):
     # this is the data set used by Romesburg in "Cluster Analysis for Researchers"
     #  to demonstrate the different clustering methods
     #print '\n%s: '%self.shortDescription(),
-    self.d = array([[10.,5.],[20.,20.],[30.,10.],[30.,15.],[5.,10.]])
+    self.d = numpy.array([[10.,5.],[20.,20.],[30.,10.],[30.,15.],[5.,10.]])
     self.names = ['p1','p2','p3','p4','p5']
   def testDivide(self):
     " tests the cluster division algorithms "
@@ -40,14 +39,14 @@ class TestCase(unittest.TestCase):
 
     cs = ClusterUtils.SplitIntoNClusters(c5,4,breadthFirst=1)
     assert len(cs)==4,'bad split length'
-    indices = map(lambda x:x.GetIndex(),cs)
+    indices = [x.GetIndex() for x in cs]
     for index in [9,8,1,2]:
       assert index in indices,'index %d not found in %s'%(index,str(indices))
     # we may not want to preserve order, but test it for now
     assert indices==[9,8,1,2],'bad index order'
     
     cs2 = ClusterUtils.SplitIntoNClusters(c5,4,breadthFirst=0)
-    indices = map(lambda x:x.GetIndex(),cs2)
+    indices = [x.GetIndex() for x in cs2]
     for index in [8,7,5,6]:
       assert index in indices,'index %d not found in %s'%(index,str(indices))
     # we may not want to preserve order, but test it for now
@@ -56,14 +55,14 @@ class TestCase(unittest.TestCase):
   def testMurtaghUPGMA(self):
     nPts = 5
     sz = 5
-    dataP = RandomArray.random((nPts,sz))
+    dataP = numpy.random.random((nPts,sz))
     newClust = Murtagh.ClusterData(dataP,nPts,Murtagh.UPGMA)[0]
     ds = []
     for i in range(nPts):
       for j in range(i):
         d = dataP[i]-dataP[j]
         ds.append(sum(d*d))
-    ds = array(ds)    
+    ds = numpy.array(ds)    
     newClust2 = Murtagh.ClusterData(ds,nPts,Murtagh.UPGMA,isDistData=1)[0]
 
     assert len(newClust)==len(newClust2),'length mismatch2'

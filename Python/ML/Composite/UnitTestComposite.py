@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2001,2003  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2001-2008  greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
 
@@ -67,37 +67,6 @@ class TestCase(unittest.TestCase):
     " testing tree-based composite screening "
     self.refCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.pkl','rb'))
     testCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.unittree.pkl','rb'))
-    for example in self.examples:
-      res,conf = testCompos.ClassifyExample(example)
-      cRes,cConf = self.refCompos.ClassifyExample(example)
-      assert res==cRes,'result mismatch'
-      assert conf==cConf,'confidence mismatch'
-    
-  def _testNetGrow(self):
-    " testing net-based composite "
-    self.refCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.net.pkl','rb'))
-    composite = Composite.Composite()
-    composite._varNames=self.varNames
-    composite.SetQuantBounds(self.qBounds,self.nPoss)
-    from ML.Neural import CrossValidate
-    driver = CrossValidate.CrossValidationDriver
-    pruner = None
-    composite.Grow(self.examples,self.attrs,[],buildDriver=driver,pruner=pruner,
-                   nTries=5,needsQuantization=1,silent=1)
-    composite.AverageErrors()
-    composite.SortModels()
-    assert len(composite) == len(self.refCompos),'length mismatch'
-    for i in xrange(len(composite)):
-      t1,c1,e1 = composite[i]
-      t2,c2,e2 = self.refCompos[i]
-      assert c1 == c2, 'count mismatch'
-      assert e1 == e2, 'error mismatch: %f != %f'%(e1,e2)
-    composite.Pickle(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.unitnet.pkl')
-
-  def testNetScreen(self):
-    " testing net-based composite screening "
-    self.refCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.net.pkl','rb'))
-    testCompos = cPickle.load(open(RDConfig.RDCodeDir+'/ML/Composite/test_data/composite_base.unitnet.pkl','rb'))
     for example in self.examples:
       res,conf = testCompos.ClassifyExample(example)
       cRes,cConf = self.refCompos.ClassifyExample(example)

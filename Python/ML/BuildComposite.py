@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2000-2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -198,7 +198,8 @@ import RDConfig
 from utils import listutils
 from ML.Composite import Composite,BayesComposite
 #from ML.SVM import SVMClassificationModel as SVM
-from Numeric import *
+import numpy
+import math
 from ML.Data import DataUtils,SplitData
 from ML import ScreenComposite
 from Dbase import DbModule
@@ -607,8 +608,8 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
   composite.AverageErrors()
   composite.SortModels()
   modelList,counts,avgErrs = composite.GetAllData()
-  counts = array(counts)
-  avgErrs = array(avgErrs)
+  counts = numpy.array(counts)
+  avgErrs = numpy.array(avgErrs)
   composite._varNames = data.GetVarNames()
 
   for i in xrange(len(modelList)):
@@ -619,7 +620,7 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
   averageErr = sum(weightedErrs)/sum(counts)
   devs = (avgErrs - averageErr)
   devs = devs * counts
-  devs = sqrt(devs*devs)
+  devs = numpy.sqrt(devs*devs)
   avgDev = sum(devs)/sum(counts)
   message('# Overall Average Error: %%% 5.2f, Average Deviation: %%% 6.2f'%(100.*averageErr,100.*avgDev))
   

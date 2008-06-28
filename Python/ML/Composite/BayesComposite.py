@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2000,2003  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
 """ code for dealing with Bayesian composite models
@@ -23,7 +23,7 @@ Other compatibility notes:
 
 """
 
-from Numeric import *
+import numpy
 from ML.Composite import Composite
 
 
@@ -48,11 +48,11 @@ class BayesComposite(Composite.Composite):
     # FIX: this is wrong because it doesn't take the counts of each model into account
     nModels = len(self)
     nResults = self.nPossibleVals[-1]
-    self.resultProbs = zeros(nResults,Float)
+    self.resultProbs = numpy.zeros(nResults,numpy.float)
     self.condProbs = [None]*nModels
 
     for i in xrange(nModels):
-      self.condProbs[i] = zeros((nResults,nResults),Float)
+      self.condProbs[i] = numpy.zeros((nResults,nResults),numpy.float)
     # FIX: this is a quick hack which may slow things down a lot
     for example in data:
       act = self.QuantizeActivity(example)[-1]
@@ -72,12 +72,12 @@ class BayesComposite(Composite.Composite):
 
       votes = self.CollectVotes(example,quantExample)
 
-      for i in xrange(nModels):
+      for i in range(nModels):
         self.condProbs[i][votes[i],trueRes] += 1
         
       #self.condProbs /= self.resultProbs
-    for i in xrange(nModels):
-      for j in xrange(nResults):
+    for i in range(nModels):
+      for j in range(nResults):
         self.condProbs[i][j] /= sum(self.condProbs[i][j])
       #self.condProbs[i] /= self.resultProbs
       
@@ -130,7 +130,7 @@ class BayesComposite(Composite.Composite):
         votes[j] += self.condProbs[i][predict,j]
 
     #totVotes = sum(votes)
-    res = argmax(votes)
+    res = numpy.argmax(votes)
     conf = votes[res] / len(self)
     if verbose:
       print votes,conf,example[-1]
@@ -169,7 +169,3 @@ def BayesCompositeToComposite(obj):
     obj.__class__ = Composite.Composite
     obj.resultProbs = None
     obj.condProbs = None
-  
-
-if __name__ == '__main__':
-  pass

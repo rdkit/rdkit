@@ -1,14 +1,16 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
-#  Copyright (C) 2001-2004  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2001-2008  greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
 """ 
 
 """
 
-from Numeric import *
-import RandomArray
+import numpy
+import random
 from ML.DecTree import QuantTree, ID3
 from ML.InfoTheory import entropy
 from ML.Data import Quantize
@@ -26,7 +28,8 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
   if nToTake > 0:
     nAttrs = len(attrs)
     if nToTake < nAttrs:
-      ids = RandomArray.permutation(nAttrs)
+      ids = range(nAttrs)
+      random.shuffle(ids)
       tmp = [attrs[x] for x in ids[:nToTake]]
       #print '\tavail:',tmp
       attrs = tmp
@@ -102,7 +105,7 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
   counts = [0]*nPossibleRes
   for res in resCodes:
     counts[res] += 1
-  nzCounts = nonzero(counts)
+  nzCounts = numpy.nonzero(counts)[0]
 
   if len(nzCounts) == 1:
     # bottomed out because there is only one result code left
@@ -117,7 +120,7 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
     #  We don't really know what to do here, so
     #  use the heuristic of picking the most prevalent
     #  result
-    v =  argmax(counts)
+    v =  numpy.argmax(counts)
     tree.SetLabel(v)
     tree.SetName('%d?'%v)
     tree.SetTerminal(1)
@@ -154,7 +157,7 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
           # this particular value of the variable has no examples,
           #  so there's not much sense in recursing.
           #  This can (and does) happen.
-          v =  argmax(counts)
+          v =  numpy.argmax(counts)
           tree.AddChild('%d'%v,label=v,data=0.0,isTerminal=1)
         else:
           # recurse
@@ -168,7 +171,7 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
       for index in indices:
         nextExamples.append(examples[index])
       if len(nextExamples) == 0:
-        v =  argmax(counts)
+        v =  numpy.argmax(counts)
         tree.AddChild('%d'%v,label=v,data=0.0,isTerminal=1)
       else:
         tree.AddChildNode(BuildQuantTree(nextExamples,best,
@@ -183,7 +186,7 @@ def BuildQuantTree(examples,target,attrs,nPossibleVals,nBoundsPerVar,
           if example[best] == val:
             nextExamples.append(example)
         if len(nextExamples) == 0:
-          v =  argmax(counts)
+          v =  numpy.argmax(counts)
           tree.AddChild('%d'%v,label=v,data=0.0,isTerminal=1)
         else:
           tree.AddChildNode(BuildQuantTree(nextExamples,best,
@@ -260,7 +263,7 @@ def QuantTreeBoot(examples,attrs,nPossibleVals,nBoundsPerVar,initialVar=None,
                                          depth=1,maxDepth=maxDepth,
                                          **kwargs))
       else:
-        v =  argmax(counts)
+        v =  numpy.argmax(counts)
         tree.AddChild('%d??'%(v),label=v,data=0.0,isTerminal=1)
     # add the last points remaining
     nextExamples = []
@@ -273,7 +276,7 @@ def QuantTreeBoot(examples,attrs,nPossibleVals,nBoundsPerVar,initialVar=None,
                                        depth=1,maxDepth=maxDepth,
                                        **kwargs))
     else:
-      v =  argmax(counts)
+      v =  numpy.argmax(counts)
       tree.AddChild('%d??'%(v),label=v,data=0.0,isTerminal=1)
   else:
     for val in xrange(nPossibleVals[best]):
@@ -288,7 +291,7 @@ def QuantTreeBoot(examples,attrs,nPossibleVals,nBoundsPerVar,initialVar=None,
                                          depth=1,maxDepth=maxDepth,
                                          **kwargs))
       else:
-        v =  argmax(counts)
+        v =  numpy.argmax(counts)
         tree.AddChild('%d??'%(v),label=v,data=0.0,isTerminal=1)
   return tree
 

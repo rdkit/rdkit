@@ -1,10 +1,11 @@
 #
-#  Copyright (C) 2000,2003  Rational Discovery LLC
+#  Copyright (C) 2000-2008  Greg Landrum and Rational Discovery LLC
 #
 
 from SimDivFilters import rdSimDivPickers as rdsimdiv
 import DataStructs
-from Numeric import *
+import numpy
+
 class BitClusterer(object):
     """ Class to cluster a set of bits based on their correllation
 

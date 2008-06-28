@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #
 #  $Id$
 #
@@ -9,7 +11,7 @@ import unittest
 import os,sys
 import cPickle as pickle
 from Chem.ChemUtils import AlignDepict
-import Numeric
+import numpy.oldnumeric as Numeric
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2

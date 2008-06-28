@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2007  Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved  @@
 //
 #define NO_IMPORT_ARRAY
@@ -8,7 +8,8 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdpicker_array_API
 #include <boost/python.hpp>
 #include <RDBoost/Wrap.h>
-#include "Numeric/arrayobject.h"
+#include <boost/python/numeric.hpp>
+#include "numpy/oldnumeric.h"
 #include <map>
 
 
@@ -21,13 +22,18 @@ namespace RDPickers {
   
   // REVIEW: the poolSize can be pulled from the numeric array
   RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, 
-                              python::numeric::array &distMat,
+                              python::object distMat,
                               int poolSize, 
                               int pickSize,
                               python::object firstPicks) {
     if(pickSize>=poolSize){
       throw ValueErrorException("pickSize must be less than poolSize");
     }
+
+    if (!PyArray_Check(distMat.ptr())){
+      throw ValueErrorException("distance mat argument must be a numpy matrix");
+    }
+
     PyArrayObject *copy;
     copy = (PyArrayObject *)PyArray_ContiguousFromObject(distMat.ptr(), 
 							 PyArray_DOUBLE, 1,1);

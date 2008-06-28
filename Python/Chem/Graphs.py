@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2001-2006 greg landrum and rational discovery llc
+# Copyright (C) 2001-2008 greg landrum and rational discovery llc
 #
 #   @@ All Rights Reserved  @@
 #
@@ -10,7 +10,7 @@ In theory much of the functionality in here should be migrating into the
 C/C++ codebase.
 
 """
-from Numeric import *
+import numpy
 import Chem
 import DataStructs
 import types
@@ -33,14 +33,14 @@ def CharacteristicPolynomial(mol,mat=None):
     pass
   else:
     A = mat
-  I = 1.*identity(nAtoms)
+  I = 1.*numpy.identity(nAtoms)
   An = A
-  res = zeros(nAtoms+1,Float)
+  res = numpy.zeros(nAtoms+1,numpy.float)
   res[0] = 1.0
   for n in xrange(1,nAtoms+1):
-    res[n] = 1./n*trace(An)
+    res[n] = 1./n*numpy.trace(An)
     Bn = An - res[n]*I
-    An = matrixmultiply(A,Bn)
+    An = numpy.dot(A,Bn)
 
   res[1:] *= -1
   return res  

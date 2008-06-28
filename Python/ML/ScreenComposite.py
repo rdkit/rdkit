@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2000-2006 greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -110,7 +110,7 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 import RDConfig
 import DataStructs
 import sys,cPickle,types,copy
-from Numeric import *
+import numpy
 
 try:
   from PIL import Image,ImageDraw
@@ -385,20 +385,20 @@ def ShowVoteResults(indices,data,composite,nResultCodes,threshold,verbose=1,
   if nSkip > 0:
     if verbose:
       print 'skipped: %d/%d (%%% 4.2f)'%(nSkip,nExamples,100.*float(nSkip)/nExamples)
-    noConf = array(map(lambda x:x[2],noVotes))
+    noConf = numpy.array([x[2] for x in noVotes])
     avgSkip = sum(noConf)/float(nSkip)
   else:
     avgSkip = 0.
     
   if nBad > 0:
-    badConf = array(map(lambda x:x[2],badVotes))
+    badConf = numpy.array([x[2] for x in badVotes])
     avgBad = sum(badConf)/float(nBad)
   else:
     avgBad = 0.
 
   if nGood > 0:
-    goodRes = map(lambda x:x[1],goodVotes)
-    goodConf = array(map(lambda x:x[2],goodVotes))
+    goodRes = [x[1] for x in goodVotes]
+    goodConf = numpy.array([x[2] for x in goodVotes])
     avgGood = sum(goodConf)/float(nGood)
   else:
     goodRes = []
@@ -410,7 +410,7 @@ def ShowVoteResults(indices,data,composite,nResultCodes,threshold,verbose=1,
     print 'average correct confidence:   % 6.4f'%avgGood
     print 'average incorrect confidence: % 6.4f'%avgBad
 
-  voteTab = zeros((nResultCodes,nResultCodes),Int)
+  voteTab = numpy.zeros((nResultCodes,nResultCodes),numpy.int)
   for res in goodRes:
     voteTab[res,res] += 1
   for ans,res,conf,idx in badVotes:
@@ -703,12 +703,12 @@ def ScreenFromDetails(models,details,callback=None,setup=None,appendExamples=0,
   if setup is not None:
     setup(nModels*data.GetNPts())
 
-  nGood = zeros(nModels,Float)
-  nBad = zeros(nModels,Float)
-  nSkip = zeros(nModels,Float)
-  confGood = zeros(nModels,Float)
-  confBad = zeros(nModels,Float)
-  confSkip = zeros(nModels,Float)
+  nGood = numpy.zeros(nModels,numpy.float)
+  nBad = numpy.zeros(nModels,numpy.float)
+  nSkip = numpy.zeros(nModels,numpy.float)
+  confGood = numpy.zeros(nModels,numpy.float)
+  confBad = numpy.zeros(nModels,numpy.float)
+  confSkip = numpy.zeros(nModels,numpy.float)
   voteTab = None
   if goodVotes is None:
     goodVotes = []
@@ -779,7 +779,7 @@ def ScreenFromDetails(models,details,callback=None,setup=None,appendExamples=0,
                                         noVotes=noVotes,
                                         errorEstimate=errorEstimate)
     if voteTab is None:
-      voteTab = zeros(vT.shape,Float)
+      voteTab = numpy.zeros(vT.shape,numpy.float)
     if hasattr(details,'errorAnalysis') and details.errorAnalysis:
       for a,p,c,idx in badVotes:
         label = testIdx[idx]
@@ -813,24 +813,24 @@ def ScreenFromDetails(models,details,callback=None,setup=None,appendExamples=0,
     voteTab /= nModels
     
     avgNBad = sum(nBad)/nModels
-    devNBad = sqrt(sum((nBad-avgNBad)**2)/(nModels-1))
+    devNBad = numpy.sqrt(sum((nBad-avgNBad)**2)/(nModels-1))
 
-    bestIdx = argsort(nBad)[0]
+    bestIdx = numpy.argsort(nBad)[0]
 
     avgNGood = sum(nGood)/nModels
-    devNGood = sqrt(sum((nGood-avgNGood)**2)/(nModels-1))
+    devNGood = numpy.sqrt(sum((nGood-avgNGood)**2)/(nModels-1))
 
     avgNSkip = sum(nSkip)/nModels
-    devNSkip = sqrt(sum((nSkip-avgNSkip)**2)/(nModels-1))
+    devNSkip = numpy.sqrt(sum((nSkip-avgNSkip)**2)/(nModels-1))
 
     avgConfBad = sum(confBad)/nModels
-    devConfBad = sqrt(sum((confBad-avgConfBad)**2)/(nModels-1))
+    devConfBad = numpy.sqrt(sum((confBad-avgConfBad)**2)/(nModels-1))
 
     avgConfGood = sum(confGood)/nModels
-    devConfGood = sqrt(sum((confGood-avgConfGood)**2)/(nModels-1))
+    devConfGood = numpy.sqrt(sum((confGood-avgConfGood)**2)/(nModels-1))
 
     avgConfSkip = sum(confSkip)/nModels
-    devConfSkip = sqrt(sum((confSkip-avgConfSkip)**2)/(nModels-1))
+    devConfSkip = numpy.sqrt(sum((confSkip-avgConfSkip)**2)/(nModels-1))
     return (avgNGood,devNGood),(avgNBad,devNBad),(avgNSkip,devNSkip),\
            (avgConfGood,devConfGood),(avgConfBad,devConfBad),(avgConfSkip,devConfSkip),\
            voteTab
@@ -937,8 +937,8 @@ def ScreenToHtml(nGood,nBad,nRej,avgGood,avgBad,avgSkip,voteTable,imgDir='.',
   nPoss = len(voteTable)
   pureCounts = sum(voteTable,1)
   accCounts = sum(voteTable,0)
-  pureVect = zeros(nPoss,Float)
-  accVect = zeros(nPoss,Float)
+  pureVect = numpy.zeros(nPoss,numpy.float)
+  accVect = numpy.zeros(nPoss,numpy.float)
   for i in range(nPoss):
     if pureCounts[i]:
       pureVect[i] = float(voteTable[i,i])/pureCounts[i]
@@ -1445,14 +1445,14 @@ if __name__ == '__main__':
         if details.note:
           xl[xlRow,xlCol]=details.note
           xlCol += 1
-      nGood = zeros(nModels,Float)
-      nBad = zeros(nModels,Float)
-      nSkip = zeros(nModels,Float)
-      confGood = zeros(nModels,Float)
-      confBad = zeros(nModels,Float)
-      confSkip = zeros(nModels,Float)
+      nGood = numpy.numpy.zeros(nModels,numpy.float)
+      nBad = numpy.numpy.zeros(nModels,numpy.float)
+      nSkip = numpy.numpy.zeros(nModels,numpy.float)
+      confGood = numpy.numpy.zeros(nModels,numpy.float)
+      confBad = numpy.numpy.zeros(nModels,numpy.float)
+      confSkip = numpy.numpy.zeros(nModels,numpy.float)
       if details.enrichTgt >= 0:
-        enrichments = zeros(nModels,Float)
+        enrichments = numpy.numpy.zeros(nModels,numpy.float)
       goodVoteDict = {}
       badVoteDict = {}
       noVoteDict = {}
@@ -1484,7 +1484,7 @@ if __name__ == '__main__':
                                               goodVotes=goodVotes,
                                               errorEstimate=details.errorEstimate)
           if voteTab is None:
-            voteTab = zeros(vT.shape,Float)
+            voteTab = numpy.zeros(vT.shape,numpy.float)
           if details.errorAnalysis:
             for a,p,c,idx in badVotes:
               label = testIdx[idx]
@@ -1550,24 +1550,24 @@ if __name__ == '__main__':
         print 'AVERAGES:'
 
         avgNBad = sum(nBad)/nModels
-        devNBad = sqrt(sum((nBad-avgNBad)**2)/(nModels-1))
+        devNBad = numpy.sqrt(sum((nBad-avgNBad)**2)/(nModels-1))
 
-        bestIdx = argsort(nBad)[0]
+        bestIdx = numpy.argsort(nBad)[0]
 
         avgNGood = sum(nGood)/nModels
-        devNGood = sqrt(sum((nGood-avgNGood)**2)/(nModels-1))
+        devNGood = numpy.sqrt(sum((nGood-avgNGood)**2)/(nModels-1))
 
         avgNSkip = sum(nSkip)/nModels
-        devNSkip = sqrt(sum((nSkip-avgNSkip)**2)/(nModels-1))
+        devNSkip = numpy.sqrt(sum((nSkip-avgNSkip)**2)/(nModels-1))
 
         avgConfBad = sum(confBad)/nModels
-        devConfBad = sqrt(sum((confBad-avgConfBad)**2)/(nModels-1))
+        devConfBad = numpy.sqrt(sum((confBad-avgConfBad)**2)/(nModels-1))
 
         avgConfGood = sum(confGood)/nModels
-        devConfGood = sqrt(sum((confGood-avgConfGood)**2)/(nModels-1))
+        devConfGood = numpy.sqrt(sum((confGood-avgConfGood)**2)/(nModels-1))
 
         avgConfSkip = sum(confSkip)/nModels
-        devConfSkip = sqrt(sum((confSkip-avgConfSkip)**2)/(nModels-1))
+        devConfSkip = numpy.sqrt(sum((confSkip-avgConfSkip)**2)/(nModels-1))
 
         nClassified = avgNGood + avgNBad
         nExamples = nClassified + avgNSkip
@@ -1642,7 +1642,7 @@ if __name__ == '__main__':
           if details.enrichTgt >-1:
             mean = sum(enrichments)/nModels
             enrichments -= mean
-            dev = sqrt(sum(enrichments*enrichments))/(nModels-1)
+            dev = numpy.sqrt(sum(enrichments*enrichments))/(nModels-1)
             message('   Enrichment of value %d: %.4f (%.4f)'%(details.enrichTgt,mean,dev))
       else:
         bestIdx=0

@@ -1,9 +1,11 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 import RDConfig
 import unittest
 from ML.InfoTheory import rdInfoTheory, BitClusterer
 from ML.Data import DataUtils
 import DataStructs
-import RandomArray
+import random
 
 def getValLTM(i, j, mat):
     if (i > j) :
@@ -36,9 +38,8 @@ class TestCase(unittest.TestCase):
         self.fps = []
         for fi in range(self.nfp) :
             fp = DataStructs.ExplicitBitVect(self.nbits)
-            #obits = range(self.nbits/2)
-            #random.shuffle(obits)
-            obits = RandomArray.permutation(self.nbits/2)
+            obits = range(self.nbits/2)
+            random.shuffle(obits)
             obits = obits[0:self.d]
             for bit in obits :
                 fp.SetBit(bit)
@@ -46,7 +47,6 @@ class TestCase(unittest.TestCase):
             self.fps.append(fp)
 
     def test0CorrMat(self) :
-
         cmg = rdInfoTheory.BitCorrMatGenerator()
         cmg.SetBitList(self.blist)
         for fp in self.fps:
@@ -61,7 +61,7 @@ class TestCase(unittest.TestCase):
             navr += getValLTM(i,i+1, corrMat)
 
         assert 2*avr/self.nbits == 400.0
-        assert 2*navr/self.nbits == 157.56,2*navr/self.nbits
+        assert 2*navr/self.nbits == 158.3,2*navr/self.nbits
 
     def test1Cluster(self) :
         cmg = rdInfoTheory.BitCorrMatGenerator()

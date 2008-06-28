@@ -7,7 +7,7 @@
 """ Basic EState definitions
 
 """
-from Numeric import *
+import numpy
 import Chem
 
 def GetPrincipleQuantumNumber(atNum):
@@ -31,7 +31,7 @@ def EStateIndices(mol,force=1):
     
   tbl = Chem.GetPeriodicTable()
   nAtoms = mol.GetNumAtoms()
-  Is = zeros(nAtoms,Float)
+  Is = numpy.zeros(nAtoms,numpy.float)
   for i in range(nAtoms):
     at = mol.GetAtomWithIdx(i)
     atNum = at.GetAtomicNum()
@@ -43,7 +43,7 @@ def EStateIndices(mol,force=1):
       Is[i] = (4./(N*N) * dv + 1)/d
   dists = Chem.GetDistanceMatrix(mol,useBO=0,useAtomWts=0)
   dists += 1
-  accum = zeros(nAtoms,Float)
+  accum = numpy.zeros(nAtoms,numpy.float)
   for i in range(nAtoms):
     for j in range(i+1,nAtoms):
       p = dists[i,j]

@@ -68,7 +68,7 @@ class TestCase(unittest.TestCase):
     for i in range(len(compos)):
       tree,count,err = cs[i]
       refTree,refCount,refErr = rcs[i]
-      assert count==refCount
+      assert count==refCount, str((count,refCount))
       assert feq(err,refErr),'%f != %f'%(err,refErr)
     
   def test1(self):
@@ -178,7 +178,6 @@ class TestCase(unittest.TestCase):
     self.details.mEstimateVal = 20.0
     self.details.qBounds = [0] + [2]*6 + [0]
     compos = BuildComposite.RunIt(self.details, saveIt= 0)
-    
     self.compare(compos,refCompos)
         
     

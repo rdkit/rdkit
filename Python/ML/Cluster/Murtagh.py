@@ -1,16 +1,15 @@
 # $Id$
 #
-# Copyright (C) 2001-2006  greg Landrum and Rational Discovery LLC
+# Copyright (C) 2001-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 """ Interface to the C++ Murtagh hierarchic clustering code
 
 """
-from Numeric import *
 from ML.Cluster import Clusters
 from ML.Cluster.Clustering import MurtaghCluster,MurtaghDistCluster
-
+import numpy
 
 
 # constants to select the clustering algorithm
@@ -95,7 +94,7 @@ def ClusterData(data,nPts,method,isDistData=0):
 
       - a single entry list with the cluster tree
   """
-  data = array(data)
+  data = numpy.array(data)
   if not isDistData:
     sz = data.shape[1]
     ia,ib,crit = MurtaghCluster(data,nPts,sz,method)

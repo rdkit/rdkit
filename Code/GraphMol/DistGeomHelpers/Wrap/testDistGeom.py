@@ -4,8 +4,8 @@ import RDConfig
 import unittest
 import os
 import cPickle as pickle
-from Numeric import *
 import math
+import numpy
 from Geometry import rdGeometry as geom
 from RDLogger import logger
 logger=logger()
@@ -45,7 +45,7 @@ def compareWithOld(smilesFile, sdFile) :
     return 1
 
 def compareMatrices(bm1, bm2, map, tol=1.0e-5) :
-    N = shape(bm1)[0]
+    N = numpy.shape(bm1)[0]
     for i in range(1,N):
         for j in range(i):
             l, m = map[i], map[j]
@@ -220,7 +220,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-            self.failUnless(fabs(vol-tgtVol)<1)
+            self.failUnless(abs(vol-tgtVol)<1)
 
         # turn of chirality and now we should see both chiral forms
         smiles = "ClC(C)(F)Br"
@@ -236,7 +236,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-            self.failUnless(fabs(vol-tgtVol)<1 or fabs(vol+tgtVol)<1)
+            self.failUnless(abs(vol-tgtVol)<1 or abs(vol+tgtVol)<1)
             if vol<0: nNeg+=1
             else: nPos+=1
         self.failUnless(nPos>0)
@@ -252,7 +252,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(1),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3))
-            self.failUnless(fabs(vol-tgtVol)<1)
+            self.failUnless(abs(vol-tgtVol)<1)
 
         expected = [-3.62, -3.67, -3.72,  3.91,  3.95,  3.98,  3.90,  3.94,  3.98,  3.91]
         nPos=0
@@ -266,7 +266,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(1),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3))
-            self.failUnless(fabs(vol-tgtVol)<1 or fabs(vol+tgtVol)<1)
+            self.failUnless(abs(vol-tgtVol)<1 or abs(vol+tgtVol)<1)
             if vol<0: nNeg+=1
             else: nPos+=1
 
@@ -289,7 +289,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-            self.failUnless(fabs(vol-tgtVol)<1.2)
+            self.failUnless(abs(vol-tgtVol)<1.2)
         
         # let's try a little more complicated system
         expectedV1 = -2.0
@@ -307,7 +307,7 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(7),
                                    conf.GetAtomPosition(13))
-            self.failUnless(fabs(vol-tgtVol)<1 or fabs(vol+tgtVol)<1)
+            self.failUnless(abs(vol-tgtVol)<1 or abs(vol+tgtVol)<1)
             if vol<0: nNeg+=1
             else: nPos+=1
 
@@ -316,7 +316,7 @@ class TestCase(unittest.TestCase) :
                                     conf.GetAtomPosition(16),
                                     conf.GetAtomPosition(18),
                                     conf.GetAtomPosition(19))
-            self.failUnless(fabs(vol2-expectedV2)<1)
+            self.failUnless(abs(vol2-expectedV2)<1)
 
         # remove the chiral specification and we should see other chiral
         # forms of the compound
@@ -341,8 +341,8 @@ class TestCase(unittest.TestCase) :
                                     conf.GetAtomPosition(16),
                                     conf.GetAtomPosition(18),
                                     conf.GetAtomPosition(19))
-            self.failUnless(fabs(fabs(vol1)-expectedV1)<1.0)
-            self.failUnless(fabs(fabs(vol2)-expectedV2)<1.0)
+            self.failUnless(abs(abs(vol1)-expectedV1)<1.0)
+            self.failUnless(abs(abs(vol2)-expectedV2)<1.0)
 
             
 if __name__ == '__main__':

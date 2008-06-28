@@ -6,7 +6,7 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdshapehelpers_array_API
 #include <boost/python.hpp>
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
 

@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 #  Copyright (C) 2004  Rational Discovery LLC
@@ -6,7 +8,7 @@
 import RDConfig
 import os,sys
 import unittest
-import Numeric
+import numpy.oldnumeric as Numeric
 import DistanceGeometry as DG
 
 def feq(v1,v2,tol2=1e-4):

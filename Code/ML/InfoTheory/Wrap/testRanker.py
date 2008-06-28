@@ -2,8 +2,11 @@ import RDConfig,RDRandom
 import unittest
 from ML.InfoTheory import rdInfoTheory as rdit
 import DataStructs
-from Numeric import *
+import numpy
 import os,cPickle
+
+def feq(a,b,tol=1e-4):
+    return abs(a-b)<tol
 
 class TestCase(unittest.TestCase):
 
@@ -11,34 +14,39 @@ class TestCase(unittest.TestCase):
         pass
 
     def test0GainFuns(self):
-       arr = array([9,5])
-       print arr, rdit.InfoEntropy(arr)
-       arr = array([9,9])
-       print arr, rdit.InfoEntropy(arr)
-       arr = array([5,5])
-       print arr, rdit.InfoEntropy(arr)
-       arr = array([5,0])
-       print arr, rdit.InfoEntropy(arr)
-       arr = array([5,5,5])
-       print arr, rdit.InfoEntropy(arr)
-       arr = array([2,5,5])
-       print arr, rdit.InfoEntropy(arr)
-       
-       mat2 = array([[6,2],[3,3]])
-       print 'gain: ', rdit.InfoGain(mat2)
-       print "Chi Square: ", rdit.ChiSquare(mat2)
-       
-       mat3 = array([[1,1],[2,1]])
-       print 'gain3: ', rdit.InfoGain(mat3)
-       
-       mat4 = array([[2,0],[1,2]])
-       print 'gain4: ', rdit.InfoGain(mat4)
+       arr = numpy.array([9,5])
+       self.failUnless(feq(rdit.InfoEntropy(arr),0.9403))
+       arr = numpy.array([9,9])
+       self.failUnless(feq(rdit.InfoEntropy(arr),1.0000))
+       arr = numpy.array([5,5])
+       self.failUnless(feq(rdit.InfoEntropy(arr),1.0000))
+       arr = numpy.array([5,0])
+       self.failUnless(feq(rdit.InfoEntropy(arr),0.0000))
+       arr = numpy.array([5,5,5])
+       self.failUnless(feq(rdit.InfoEntropy(arr),1.5850))
+       arr = numpy.array([2,5,5])
+       self.failUnless(feq(rdit.InfoEntropy(arr),1.4834))
 
-       mat5 = array([[0,0],[0,0]])
-       print 'gain5: ', rdit.InfoGain(mat5)
+       
+       mat2 = numpy.array([[6,2],[3,3]])
+       self.failUnless(feq(rdit.InfoGain(mat2),0.0481))
+       self.failUnless(feq(rdit.ChiSquare(mat2),0.9333))
+       
+       mat3 = numpy.array([[1,1],[2,1]])
+       self.failUnless(feq(rdit.InfoGain(mat3),0.0200))
 
-       mat6 = array([[1,0],[1,0]])
-       print 'gain6: ', rdit.InfoGain(mat6)
+       
+       mat4 = numpy.array([[2,0],[1,2]])
+       self.failUnless(feq(rdit.InfoGain(mat4),0.4200))
+
+
+       mat5 = numpy.array([[0,0],[0,0]])
+       self.failUnless(feq(rdit.InfoGain(mat5),0.0000))
+
+
+       mat6 = numpy.array([[1,0],[1,0]])
+       self.failUnless(feq(rdit.InfoGain(mat6),0.0000))
+
 
        
        
@@ -74,7 +82,7 @@ class TestCase(unittest.TestCase):
             rn2.AccumulateVotes(fp[0], fp[1])
 
         res2 = rn2.GetTopN(50)
-        assert res == res2
+        self.failUnless((res==res2).all())
         
         rn3 = rdit.InfoBitRanker(nbits, nc, rdit.InfoType.BIASENTROPY)
         #rn3.SetBiasList([0])
@@ -85,7 +93,7 @@ class TestCase(unittest.TestCase):
         for i in range(50) :
             fan = res3[i,2]/na
             fin = res3[i,3]/ni
-            assert fan > fin
+            self.failUnless(fan > fin)
                           
     def test2ranker(self) :
         nbits = 100
@@ -114,14 +122,14 @@ class TestCase(unittest.TestCase):
         res =  rn.GetTopN(5)
         ids = [int(x[0]) for x in res]
         ids.sort()
-        assert ids==[10,15,25,63,70],str(ids)
+        self.failUnless(ids==[10,15,25,63,70])
         try:
             res = rn.GetTopN(10)
         except:
             ok = 1
         else:
             ok = 0
-        assert ok,'expected failure did not happen'
+        self.failUnless(ok)
 
     def test3Issue140(self) :
         nbits = 2

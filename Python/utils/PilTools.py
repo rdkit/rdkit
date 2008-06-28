@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 #  Copyright (C) 2000,2001,2002,2003  greg Landrum and Rational Discovery LLC
@@ -157,7 +159,7 @@ def NumericMatrixToImage(data,scaleCols=0,transposeIt=0,
   for i in range(nRows):
     for j in range(nCols):
       imgMat[i,j] += (deltaColor*data[i,j]).astype(Int)
-  d = imgMat.astype('b').tostring()
+  d = imgMat.astype('B').tostring()
   img = Image.fromstring('RGB',(nCols,nRows),d)
   return img
 

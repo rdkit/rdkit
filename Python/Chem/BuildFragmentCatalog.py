@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2003-2006 Rational Discovery LLC
+#  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -64,7 +64,7 @@ import Chem
 import RDConfig
 from Chem import FragmentCatalog
 from Dbase.DbConnection import DbConnect
-from Numeric import *
+import numpy
 from ML import InfoTheory
 import types,sets
 
@@ -157,7 +157,7 @@ def ScoreMolecules(suppl,catalog,maxPts=-1,actName='',acts=None,
 
   """
   nBits = catalog.GetFPLength()
-  resTbl = zeros((nBits,2,nActs),Int)
+  resTbl = numpy.zeros((nBits,2,nActs),numpy.int)
   obls = []
 
   if not actName and not acts:
@@ -221,7 +221,7 @@ def ScoreFromLists(bitLists,suppl,catalog,maxPts=-1,actName='',acts=None,
     nPts = maxPts
   else:
     nPts = len(bitLists)
-  resTbl = zeros((nBits,2,nActs),Int)
+  resTbl = numpy.zeros((nBits,2,nActs),numpy.int)
   if not actName and not acts:
     actName = suppl[0].GetPropNames()[-1]
   suppl.reset()

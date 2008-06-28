@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 # Copyright (C) 2007 by Greg Landrum 
@@ -6,8 +8,8 @@
 import Geometry
 from Chem.Subshape import SubshapeObjects
 import math
-import Numeric
-import LinearAlgebra
+import numpy.oldnumeric as Numeric
+import numpy.oldnumeric.linear_algebra as LinearAlgebra
 
 
 #-----------------------------------------------------------------------------

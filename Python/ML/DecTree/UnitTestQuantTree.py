@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #
 #  Copyright (C) 2001,2003  greg Landrum and Rational Discovery LLC
 #
@@ -179,15 +181,15 @@ class TestCase(unittest.TestCase):
     
   def testRandomForest(self):
     """ try random forests descriptors """
-    import RandomArray
-    import Numeric
-    RandomArray.seed(23,42)
+    import random
+    
+    random.seed(23)
     nAttrs = 100
     nPts = 10
     examples = []
     for i in range(nPts):
-      descrs = list(RandomArray.random_integers(1,0,[nAttrs]))
-      act = Numeric.sum(descrs) > nAttrs/2
+      descrs = [random.randint(0,1) for x in range(nAttrs)]
+      act = sum(descrs) > nAttrs/2
       examples.append(descrs+[act])
     attrs = range(nAttrs)
     nPossibleVals = [2]*(nAttrs+1)
@@ -197,9 +199,9 @@ class TestCase(unittest.TestCase):
                                            maxDepth=1,
                                            recycleVars=1,
                                            randomDescriptors=3)
-    assert self.t1.GetLabel()==14,self.t1.GetLabel()
-    assert self.t1.GetChildren()[0].GetLabel()==16
-    assert self.t1.GetChildren()[1].GetLabel()==29
+    assert self.t1.GetLabel()==49,self.t1.GetLabel()
+    assert self.t1.GetChildren()[0].GetLabel()==3,self.t1.GetChildren()[0].GetLabel()
+    assert self.t1.GetChildren()[1].GetLabel()==54,self.t1.GetChildren()[1].GetLabel()
     
 
 

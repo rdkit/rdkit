@@ -7,7 +7,7 @@
 #include <boost/python.hpp>
 #define PY_ARRAY_UNIQUE_SYMBOL rdbase_array_API
 #include <RDBoost/Wrap.h>
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 
 #include <RDGeneral/RDLog.h>
 #if 0

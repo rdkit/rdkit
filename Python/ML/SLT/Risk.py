@@ -1,10 +1,9 @@
 #
-#  Copyright (C) 2000,2001  greg Landrum
+#  Copyright (C) 2000-2008  greg Landrum
 #
 """ code for calculating empirical risk
 
 """
-from Numeric import *
 import math
 
 def log2(x):
@@ -45,8 +44,8 @@ def BurgesRiskBound(VCDim,nData,nWrong,conf):
   l = nData
   eta = conf
   
-  numerator = h * (log(2.*l/h) + 1.) - log(eta/4.)
-  structRisk = sqrt(numerator/l)
+  numerator = h * (math.log(2.*l/h) + 1.) - math.log(eta/4.)
+  structRisk = math.sqrt(numerator/l)
 
   rEmp = float(nWrong)/l
   
@@ -86,7 +85,7 @@ def CristianiRiskBound(VCDim,nData,nWrong,conf):
   l = nData
   k = nWrong
 
-  structRisk = sqrt((4./nData) * ( d*log2((2.*math.e*l)/d) + log2(4./delta) ))
+  structRisk = math.sqrt((4./nData) * ( d*log2((2.*math.e*l)/d) + log2(4./delta) ))
   rEmp = 2.*k/l
   return rEmp + structRisk
 
@@ -130,31 +129,9 @@ def CherkasskyRiskBound(VCDim,nData,nWrong,conf,a1=1.0,a2=2.0):
   eta = conf
   rEmp = float(nWrong)/nData
   
-  numerator = h * (log(float(a2*n)/h) + 1) - log(eta/4.)
+  numerator = h * (math.log(float(a2*n)/h) + 1) - math.log(eta/4.)
   eps = a1 * numerator / n
   
-  structRisk = eps/2. * (1. + sqrt(1. + (4.*rEmp/eps)))
+  structRisk = eps/2. * (1. + math.sqrt(1. + (4.*rEmp/eps)))
 
   return rEmp + structRisk
-
-
-
-if __name__ == '__main__':
-  import sys
-  rEmp = 0
-  nWrong = 0
-  nPts = 10000
-  eps = min(4./sqrt(nPts),1.)
-  if len(sys.argv) > 1:
-    eps2 = float(sys.argv[1])
-  else:
-    eps2 = .05
-
-  for nClusters in arange(1,5000,1):
-    print '% 2f\t % 6.4f\t % 6.4f'%(nClusters,
-                                    CherkasskyRiskBound(nClusters,nPts,nWrong,eps),
-                                    BurgesRiskBound(nClusters,nPts,nWrong,eps2))
-  
-
-  
-

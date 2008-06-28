@@ -1,12 +1,14 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
-#  Copyright (C) 2001-2007  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2001-2008  greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
 """ various statistical operations on data
 
 """
-from Numeric import *
+import numpy
 
 def StandardizeMatrix(mat):
   """
@@ -16,7 +18,7 @@ def StandardizeMatrix(mat):
 
    **Arguments**
 
-     - mat: a Numeric array
+     - mat: a numpy array
 
    **Notes**
 
@@ -30,7 +32,7 @@ def StandardizeMatrix(mat):
   try:
     newMat = mat/devs
   except OverflowError:
-    newMat = zeros(mat.shape,Float)
+    newMat = numpy.zeros(mat.shape,'d')
     for i in range(mat.shape[1]):
       if devs[i] != 0.0:
         newMat[:,i] = mat[:,i]/devs[i]
@@ -42,7 +44,7 @@ def FormCovarianceMatrix(mat):
   """
   sumVect = sum(mat,1)
   sumVect = sumVect / float(shape(mat)[1])
-  for i in xrange(len(sumVect)):
+  for i in range(len(sumVect)):
     mat[i,:] = mat[i,:] - sumVect[i]
     
   return matrixmultiply(transpose(mat),mat)
@@ -51,21 +53,20 @@ def FormCorrelationMatrix(mat):
   """ form and return the covariance matrix
 
   """
-  #return matrixmultiply(transpose(mat),mat)
   nVars = len(mat[0])
   N = len(mat)
   
-  res = zeros((nVars,nVars),Float)
-  for i in xrange(nVars):
+  res = numpy.zeros((nVars,nVars),'d')
+  for i in range(nVars):
     x = mat[:,i]
     sumX = sum(x)
     sumX2 = sum(x*x)
-    for j in xrange(i,nVars):
+    for j in range(i,nVars):
       y = mat[:,j]
       sumY = sum(y)
       sumY2 = sum(y*y)
       numerator = N*sum(x*y) - sumX*sumY
-      denom = sqrt((N*sumX2-sumX**2)*(N*sumY2-sumY**2))
+      denom = numpy.sqrt((N*sumX2-sumX**2)*(N*sumY2-sumY**2))
       if denom != 0.0:
         res[i,j] = numerator/denom
         res[j,i] = numerator/denom
@@ -77,7 +78,7 @@ def PrincipalComponents(mat,reverseOrder=1):
   """ do a principal components analysis
 
   """
-  import LinearAlgebra
+  import numpy.oldnumeric.linear_algebra as LinearAlgebra
   covMat = FormCorrelationMatrix(mat)
 
   eigenVals,eigenVects = LinearAlgebra.eigenvectors(covMat)
@@ -91,11 +92,11 @@ def PrincipalComponents(mat,reverseOrder=1):
     pass
 
   # and now sort:
-  ptOrder = argsort(eigenVals).tolist()
+  ptOrder = numpy.argsort(eigenVals).tolist()
   if reverseOrder:
     ptOrder.reverse()
-  eigenVals = take(eigenVals,ptOrder)
-  eigenVects = take(eigenVects,ptOrder)
+  eigenVals = numpy.array([eigenVals[x] for x in ptOrder])
+  eigenVects = numpy.array([eigenVects[x] for x in ptOrder])
   return eigenVals,eigenVects
 
 def TransformPoints(tFormMat,pts):
@@ -103,28 +104,28 @@ def TransformPoints(tFormMat,pts):
 
     **Arguments**
 
-      - tFormMat: a Numeric array
+      - tFormMat: a numpy array
 
-      - pts: a list of Numeric arrays (or a 2D array)
+      - pts: a list of numpy arrays (or a 2D array)
 
     **Returns**
 
-      a list of Numeric arrays 
+      a list of numpy arrays 
 
   """
-  pts = array(pts)
+  pts = numpy.array(pts)
   nPts = len(pts)
   avgP = sum(pts)/nPts
   pts = pts - avgP
   res = [None]*nPts
-  for i in xrange(nPts):
-    res[i] = matrixmultiply(tFormMat,pts[i])
+  for i in range(nPts):
+    res[i] = numpy.dot(tFormMat,pts[i])
 
   return res  
 
 def MeanAndDev(vect,sampleSD=1):
   """ returns the mean and standard deviation of a vector """
-  vect = array(vect,Float)
+  vect = numpy.array(vect,'d')
   n = vect.shape[0]
   if n <= 0:
     return 0.,0.
@@ -132,9 +133,9 @@ def MeanAndDev(vect,sampleSD=1):
   v = vect-mean
   if n > 1:
     if sampleSD:
-      dev = sqrt(sum(v*v)/(n-1))
+      dev = numpy.sqrt(sum(v*v)/(n-1))
     else:
-      dev = sqrt(sum(v*v)/(n))
+      dev = numpy.sqrt(sum(v*v)/(n))
 
   else:
     dev = 0
@@ -151,7 +152,7 @@ def R2(orig,residSum):
   #
   #
 
-  vect = array(orig)
+  vect = numpy.array(orig)
   n = vect.shape[0]
   if n <= 0:
     return 0.,0.

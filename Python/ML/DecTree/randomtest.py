@@ -1,17 +1,17 @@
-from Numeric import *
-import RandomArray
+import numpy
+import random
 from ML.DecTree import ID3
 from ML.DecTree import CrossValidate
 
 def GenRandomExamples(nVars=10,randScale=0.3,bitProb=0.5,nExamples=500,seed=(0,0),
                       addResults=1):
-    apply(RandomArray.seed,seed)
-    varWeights = RandomArray.random(nVars)*randScale
+    random.seed(seed[0])
+    varWeights = numpy.array([random.random() for x in range(nVars)])*randScale
     examples = [None]*nExamples
 
     for i in xrange(nExamples):
-        varVals = map(lambda x,y=bitProb:x>y,RandomArray.random(nVars))
-        temp = array(varVals) * varWeights
+        varVals=[random.random()>bitProb for x in range(nVars)]
+        temp = numpy.array(varVals) * varWeights
         res = sum(temp)
         if addResults:
             varVals.append(res>=1.)

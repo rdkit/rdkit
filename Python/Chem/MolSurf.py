@@ -14,7 +14,7 @@ import Chem
 from Chem.PeriodicTable import numTable
 from Chem import Crippen
 from Chem import rdPartialCharges,rdMolDescriptors
-from Numeric import *
+import numpy
 import bisect
 radCol = 5
 bondScaleFacts = [ .1,0,.2,.3] # aromatic,single,double,triple
@@ -54,12 +54,12 @@ def _pyLabuteHelper(mol,includeHs=1,force=0):
     except AttributeError:
       pass
     else:
-      if res:
+      if res.all():
         return res
     
   nAts = mol.GetNumAtoms()
-  Vi = zeros(nAts+1,Float)
-  rads = zeros(nAts+1,Float)
+  Vi = numpy.zeros(nAts+1,'d')
+  rads = numpy.zeros(nAts+1,'d')
 
   # 0 contains the H information
   rads[0] = numTable[1][radCol]
@@ -112,7 +112,7 @@ def SMR_VSA_(mol,bins=None,force=1):
     except AttributeError:
       pass
     else:
-      if res:
+      if res.all():
         return res
 
   if bins is None: bins = mrBins
@@ -120,7 +120,7 @@ def SMR_VSA_(mol,bins=None,force=1):
   propContribs = Crippen._GetAtomContribs(mol,force=force)
   volContribs = _LabuteHelper(mol)
 
-  ans = zeros(len(bins)+1,Float)
+  ans = numpy.zeros(len(bins)+1,'d')
   for i in range(len(propContribs)):
     prop = propContribs[i]
     vol = volContribs[i+1]
@@ -145,7 +145,7 @@ def SlogP_VSA_(mol,bins=None,force=1):
     except AttributeError:
       pass
     else:
-      if res:
+      if res.all():
         return res
 
   if bins is None: bins = logpBins
@@ -153,7 +153,7 @@ def SlogP_VSA_(mol,bins=None,force=1):
   propContribs = Crippen._GetAtomContribs(mol,force=force)
   volContribs = _LabuteHelper(mol)
 
-  ans = zeros(len(bins)+1,Float)
+  ans = numpy.zeros(len(bins)+1,'d')
   for i in range(len(propContribs)):
     prop = propContribs[i]
     vol = volContribs[i+1]
@@ -174,7 +174,7 @@ def PEOE_VSA_(mol,bins=None,force=1):
     except AttributeError:
       pass
     else:
-      if res:
+      if res.all():
         return res
   if bins is None: bins = chgBins
   Crippen._Init()
@@ -195,7 +195,7 @@ def PEOE_VSA_(mol,bins=None,force=1):
   volContribs = _LabuteHelper(mol)
   #print '\tv',volContribs
 
-  ans = zeros(len(bins)+1,Float)
+  ans = numpy.zeros(len(bins)+1,'d')
   for i in range(len(propContribs)):
     prop = propContribs[i]
     vol = volContribs[i+1]

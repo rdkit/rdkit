@@ -16,7 +16,7 @@ import os
 import RDConfig
 import Chem
 from Chem import rdMolDescriptors
-from Numeric import *
+import numpy
 
 _smartsPatterns = {}
 _patternOrder = []
@@ -156,8 +156,7 @@ def pyMolLogP(inMol,patts=None,order=None,verbose=0,addHs=1):
     patts = _smartsPatterns
     order = _patternOrder
   atomContribs = _pyGetAtomContribs(mol,patts,order,verbose=verbose)
-  #print 'AC:',atomContribs
-  return sum(atomContribs)[0]
+  return numpy.sum(atomContribs,0)[0]
 pyMolLogP.version="1.1.0"
 
 def pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
@@ -206,7 +205,7 @@ def pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
     order = _patternOrder
 
   atomContribs = _pyGetAtomContribs(mol,patts,order,verbose=verbose)
-  return sum(atomContribs)[1]
+  return numpy.sum(atomContribs,0)[1]
 pyMolMR.version="1.1.0"
 
 MolLogP=lambda *x,**y:rdMolDescriptors.CalcCrippenDescriptors(*x,**y)[0]

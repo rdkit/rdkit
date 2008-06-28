@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000  greg Landrum
+#  Copyright (C) 2000-2008  greg Landrum
 #
 """ handles doing cross validation with k-nearest neighbors model
 
@@ -7,7 +7,6 @@ and evaluation of individual models
 
 """
 
-from Numeric import *
 from ML.KNN.KNNClassificationModel import KNNClassificationModel
 from ML.KNN.KNNRegressionModel import KNNRegressionModel
 import RDRandom

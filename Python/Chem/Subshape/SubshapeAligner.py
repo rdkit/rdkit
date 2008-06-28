@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 # Copyright (C) 2007 by Greg Landrum 
@@ -6,7 +8,7 @@
 import RDLogger
 logger = RDLogger.logger()
 import Chem,Geometry
-import Numeric
+import numpy.oldnumeric as Numeric
 from Numerics import Alignment
 from Chem.Subshape import SubshapeObjects
 

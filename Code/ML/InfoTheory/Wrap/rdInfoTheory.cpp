@@ -5,7 +5,7 @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
 #include <RDBoost/Wrap.h>
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 #include <ML/InfoTheory/InfoBitRanker.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
 

@@ -1,13 +1,13 @@
 # $Id$
 #
-#  Copyright (C) 2004-2005 Rational Discovery LLC
+#  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 #      All Rights Reserved
 #
 """ Defines Naive Baysean classification model
    Based on development in: Chapter 6 of "Machine Learning" by Tom Mitchell
 
 """
-from Numeric import *
+import numpy
 from ML.Data import Quantize
 
 def _getBinId(val, qBounds) :
@@ -69,7 +69,7 @@ class NaiveBayesClassifier :
     # to a numpy array instead of a dictionary. The three dimension array is indexed
     # on the the activity class, the discriptor ID and the descriptor binID
     #self._condProbs = {}
-    #self._condProbs = zeros((self._nClasses, max(self._attrs)+1, max(self._nPosVals)+1), Float)
+    #self._condProbs = numpy.zeros((self._nClasses, max(self._attrs)+1, max(self._nPosVals)+1), 'd')
     self._condProbs = [None]*self._nClasses
     for i in range(self._nClasses):
       if not (hasattr(self,'_useSigs') and self._useSigs):
@@ -123,7 +123,7 @@ class NaiveBayesClassifier :
     natr = len(self._attrs)
 
     # make a list of results and values
-    allVals = zeros((neg, natr), Float)
+    allVals = numpy.zeros((neg, natr), 'd')
     res = [] # list of y values
     i = 0
     for eg in self._trainingExamples:
