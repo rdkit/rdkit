@@ -33,10 +33,10 @@ typedef double real;
 
 
 extern "C"
-void distdriver_(int *n,int *len,
+void distdriver_(long int *n,long int *len,
 		 real *dists,
-		 int *toggle,
-		 int *ia,int *ib,real *crit);
+		 long int *toggle,
+		 long int *ia,long int *ib,real *crit);
 
 //
 // Rather than deal with any nonsense like trying to get
@@ -44,12 +44,12 @@ void distdriver_(int *n,int *len,
 // (thus drowning in the waves of f2c hate), we'll generate
 // the distance matrix on our own here and then call distdriver_
 //
-void clusterit(real *dataP,int n,int m,int iopt,
-	       int *ia,int *ib,real *crit){
+void clusterit(real *dataP,long int n,long int m,long int iopt,
+	       long int *ia,long int *ib,real *crit){
   real *dists;
-  int len;
-  int pos = 0;
-  int i,j,k,iTab,jTab;
+  long int len;
+  long int pos = 0;
+  long int i,j,k,iTab,jTab;
   double tmp;
 
   len = (n*(n-1))/2;
@@ -75,7 +75,7 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
   PyArrayObject *dataContig;
   PyObject *data;
   int nPts,sz,option;
-  int *ia,*ib;
+  long int *ia,*ib;
   real *crit;
   PyObject *res;
   PyObject *tmp;
@@ -85,8 +85,8 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
     return NULL;
   dataContig = (PyArrayObject *)PyArray_ContiguousFromObject(data,PyArray_DOUBLE,2,2);
 
-  ia = (int *)calloc(nPts,sizeof(int));
-  ib = (int *)calloc(nPts,sizeof(int));
+  ia = (long int *)calloc(nPts,sizeof(long int));
+  ib = (long int *)calloc(nPts,sizeof(long int));
   crit = (real *)calloc(nPts,sizeof(real));
 
   clusterit((real *)dataContig->data,nPts,sz,option,ia,ib,crit);
@@ -99,10 +99,10 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
   //  that's why it's ok that we do not free them in this function,
   //  Python will take care of it for us.
   //
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_INT,(char *)ia);
+  tmp = PyArray_FromDimsAndData(1,dims,PyArray_LONG,(char *)ia);
   PyTuple_SetItem(res,0,(PyObject *)tmp);
 
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_INT,(char *)ib);
+  tmp = PyArray_FromDimsAndData(1,dims,PyArray_LONG,(char *)ib);
   PyTuple_SetItem(res,1,(PyObject *)tmp);
 
   tmp = PyArray_FromDimsAndData(1,dims,PyArray_DOUBLE,(char *)crit);
@@ -114,9 +114,9 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
 
 
 
-void distclusterit(real *dists,int n,int iopt,
-		   int *ia,int *ib,real *crit){
-  int len;
+void distclusterit(real *dists,long int n,long int iopt,
+		   long int *ia,long int *ib,real *crit){
+  long int len;
 
   len = (n*(n-1))/2;
   distdriver_(&n,&len,dists,&iopt,ia,ib,crit);
@@ -128,8 +128,8 @@ Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
 {
   PyArrayObject *dataContig;
   PyObject *data;
-  int nPts,option;
-  int *ia,*ib;
+  long int nPts,option;
+  long int *ia,*ib;
   real *crit;
   PyObject *res=PyTuple_New(3);
   PyObject *tmp;
@@ -139,8 +139,8 @@ Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
     return NULL;
 
   dataContig = (PyArrayObject *)PyArray_ContiguousFromObject(data,PyArray_DOUBLE,1,1);
-  ia = (int *)calloc(nPts,sizeof(int));
-  ib = (int *)calloc(nPts,sizeof(int));
+  ia = (long int *)calloc(nPts,sizeof(long int));
+  ib = (long int *)calloc(nPts,sizeof(long int));
   crit = (real *)calloc(nPts,sizeof(real));
   distclusterit((real *)dataContig->data,nPts,option,ia,ib,crit);
 
@@ -151,10 +151,10 @@ Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
   //  that's why it's ok that we do not free them in this function,
   //  Python will take care of it for us.
   //
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_INT,(char *)ia);
+  tmp = PyArray_FromDimsAndData(1,dims,PyArray_LONG,(char *)ia);
   PyTuple_SetItem(res,0,tmp);
 
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_INT,(char *)ib);
+  tmp = PyArray_FromDimsAndData(1,dims,PyArray_LONG,(char *)ib);
   PyTuple_SetItem(res,1,tmp);
 
   tmp = PyArray_FromDimsAndData(1,dims,PyArray_DOUBLE,(char *)crit);
