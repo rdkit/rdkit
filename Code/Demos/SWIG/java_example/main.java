@@ -3,11 +3,9 @@
 //
 // @@  All Rights Reserved @@
 
-import org.junit.*;
-import static org.junit.Assert.*;
+import org.RDKit.*;
 
 public class main {
-
   static {
     try {
 	System.loadLibrary("RDKFuncs");
@@ -16,10 +14,8 @@ public class main {
       System.exit(1);
     }
   }
-
   public static void main(String argv[]) {
       String smiles="c1ccccc1";
-      //RDKitMol mol= RDKFuncs.MolFromSmiles(smiles);
       ROMol mol= RDKFuncs.MolFromSmiles(smiles);
       long nAtoms = mol.getNumAtoms();
       System.out.println("nAtoms: " + nAtoms);

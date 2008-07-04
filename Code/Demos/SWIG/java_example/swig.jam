@@ -1,8 +1,13 @@
 import type ;
 import generators ;
+import feature : feature ;
 
 type.register SWIG : i ;
 generators.register-standard  swig.swig-converter : SWIG : CPP ;
+feature package-name : : free ; 
+
+import toolset : flags ;
+flags swig.swig-converter INCLUDES <include> ;
 
 rule swig-converter ( targets * : sources * : properties * )
 {
@@ -11,18 +16,15 @@ rule swig-converter ( targets * : sources * : properties * )
     } else if <main-target-type>CSHARP_WRAPPER in $(properties) {
          OPTIONS on $(targets) = -csharp -outdir swig_csharp ;
     } else if <main-target-type>JAVA_WRAPPER in $(properties) {
-         OPTIONS on $(targets) = -java -outdir swig_java ;
+         OPTIONS on $(targets) = -java -outdir org/RDKit -package org.RDKit ;
     } else {
             EXIT "*** Error *** swig.swig-converter: Unknown main-target-type" ;
     }
 }
 
-import toolset : flags ;
-flags swig.swig-converter INCLUDES <include> ;
-
 actions swig-converter
 {
-    swig -c++ $(OPTIONS) -I"$(INCLUDES)" -o $(<) $(>)
+  swig -c++ $(OPTIONS) -I"$(INCLUDES)" -o $(<) $(>) 
 }
 
 type.register CSHARP_WRAPPER ;

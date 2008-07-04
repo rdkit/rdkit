@@ -16,7 +16,6 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/Atom.h>
 #include "RDKFuncs.h"
-
 %}
 
 SWIG_SHARED_PTR(ROMol, RDKit::ROMol)

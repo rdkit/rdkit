@@ -9,15 +9,16 @@ lib RDKFuncs : RDKFuncs_wrap.cpp RDKFuncs.cpp
   ../../../GraphMol/ChemReactions//ChemReactions
   ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry /RDKit//lapacklibs
   /RDKit//vflib 
-  : <cflags>-fno-strict-aliasing <include>/usr/include/java <include>/usr/include/java/linux ;
+  : <cflags>-fno-strict-aliasing <include>/usr/include/java <include>/usr/include/java/linux <include>. ;
 
-cpp RDKFuncs_wrap.cpp : RDKFuncs.i : <main-target-type>JAVA_WRAPPER <location>. ;
+cpp RDKFuncs_wrap.cpp : RDKFuncs.i : <main-target-type>JAVA_WRAPPER ;
 
 install lib-install : RDKFuncs : <location>. ;
 
 actions javacompile
 {
-  javac *.java swig_java/*.java
+  javac *.java org/RDKit/*.java
+  jar cf ./RDKit_Wrapper.jar org/RDKit/*.java
 }
 
 make main.class : main.java RDKFuncs_wrap.cpp : @javacompile ;

@@ -2,7 +2,7 @@ import os
 classP = os.environ.get("CLASSPATH","").split(":")
 if "." not in classP:
     classP.append(".")
-classP.append("swig_java")
+classP.append("RDKit_Wrapper.jar")
 classP = ":".join(classP)
 tests=[
   ("java","-cp %s WrapperTests"%classP,{}),

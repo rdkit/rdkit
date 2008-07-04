@@ -4,6 +4,7 @@
 // @@  All Rights Reserved @@
 import org.junit.*;
 import static org.junit.Assert.*;
+import org.RDKit.*;
 
 public class WrapperTests {
     private ROMol mol1;
