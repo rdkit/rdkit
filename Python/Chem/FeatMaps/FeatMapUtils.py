@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 # Copyright (C) 2006 Greg Landrum
@@ -5,7 +7,7 @@
 #   @@ All Rights Reserved  @@
 #
 import Geometry
-import Numeric
+import numpy.oldnumeric as Numeric
 from Chem.FeatMaps import FeatMaps
 from Chem.FeatMaps.FeatMapPoint import FeatMapPoint
 import math,copy

@@ -173,7 +173,7 @@ class TestCase(unittest.TestCase):
     scores2 = BuildFragmentCatalog.ScoreFromLists(obls,suppl,cat,acts=self.list2Acts,
                                                   reportFreq=20)
     for i in range(len(scores)):
-      assert scores[i]==scores2[i],'%d: %s != %s'%(i,str(scores[i]),str(scores2[i]))
+      assert (scores[i]==scores2[i]).all(),'%d: %s != %s'%(i,str(scores[i]),str(scores2[i]))
 
   def test8MolRanks(self):
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2),

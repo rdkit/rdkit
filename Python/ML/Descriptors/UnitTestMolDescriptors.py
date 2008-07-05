@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2002  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
 
 """ unit testing code for molecular descriptor calculators
@@ -7,9 +7,9 @@
 """
 import unittest,cPickle,os.path
 import RDConfig
-from Numeric import *
 from ML.Descriptors import MoleculeDescriptors
-from Chem import *
+import numpy
+import Chem
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -25,9 +25,9 @@ class TestCase(unittest.TestCase):
     
   def _testVals(self,calc,testD):
     for smi,vals in testD:
-      mol = MolFromSmiles(smi)
-      ans = array(vals)
-      res = array(calc.CalcDescriptors(mol))
+      mol = Chem.MolFromSmiles(smi)
+      ans = numpy.array(vals)
+      res = numpy.array(calc.CalcDescriptors(mol))
       assert max(abs(res-ans))<1e-4,'bad descriptor values for SMILES %s (%s)'%(smi,str(res))
     
   def testCalcVals(self):

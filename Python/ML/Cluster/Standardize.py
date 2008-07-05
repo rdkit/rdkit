@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2001-2006  greg Landrum
+# Copyright (C) 2001-2008  greg Landrum
 #
 #   @@ All Rights Reserved  @@
 #
@@ -8,7 +8,6 @@
 
 
 """
-from Numeric import *
 from ML.Data import Stats
 
 def StdDev(mat):

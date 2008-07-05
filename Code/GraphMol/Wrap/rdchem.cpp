@@ -8,7 +8,7 @@
 #include <RDBoost/Wrap.h>
 #include "rdchem.h"
 #include <GraphMol/RDKitBase.h>
-#include <Numeric/arrayobject.h>
+#include <numpy/oldnumeric.h>
 #include <GraphMol/SanitException.h>
 
 #include <sstream>

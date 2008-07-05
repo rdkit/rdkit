@@ -7,7 +7,7 @@
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 
 #include <RDBoost/Wrap.h>
 

@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
@@ -100,7 +102,7 @@ if __name__ == '__main__':
   import time
   import RDConfig,Chem
   from Chem.Pharm2D import Gobbi_Pharm2D,Generate
-  import RandomArray
+  import random
 
   factory = Gobbi_Pharm2D.factory
   nToDo=100
@@ -114,8 +116,8 @@ if __name__ == '__main__':
   sig = factory.GetSignature()
 
   nBits = 300
-  RandomArray.seed(23,47)
-  bits = RandomArray.random_integers(sig.GetSize()-1,0,shape=[nBits])
+  random.seed(23)
+  bits = [random.randint(0,sig.GetSize()-1) for x in range(nBits)]
 
   print 'Using the Lazy Generator'
   t1 = time.time()

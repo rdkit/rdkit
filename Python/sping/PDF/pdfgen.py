@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #pdfgen.py
 """ 
 PDFgen is a library to generate PDF files containing text and graphics.  It is the 
@@ -523,7 +525,7 @@ class Canvas:
 
     def setDash(self, array=[], phase=0):
         """Two notations.  pass two numbers, or an array and phase"""
-        if type(array) == IntType or type(array) == FloatType:
+        if isinstance(array, IntType or type(array) == FloatType):
             self._code.append('[%s %s] 0 d' % (array, phase))
         elif type(array) == ListType or type(Array) == TupleType:
             assert phase <= len(array), "setDash phase must be l.t.e. length of array"

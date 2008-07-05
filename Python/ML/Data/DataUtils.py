@@ -1,5 +1,7 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #
-#  Copyright (C) 2000-2004  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
 
@@ -58,7 +60,12 @@ from DataStructs import BitUtils
 import string
 import re,csv
 import cPickle
-import RandomArray
+import random
+
+def permutation(nToDo):
+  res = range(nToDo)
+  random.shuffle(res)
+  return res
 
 def WriteData(outFile,varNames,qBounds,examples):
   """ writes out a .qdat file
@@ -603,12 +610,10 @@ def InitRandomNumbers(seed):
 
     **Notes**
 
-      this seeds both the _Numeric.RandomArray_ generator and the one in the standard
+      this seeds both the RDRandom generator and the one in the standard
       Python _random_ module
 
   """
-  import RandomArray
-  apply(RandomArray.seed,seed)
   import RDRandom
   RDRandom.seed(seed[0])
   import random
@@ -693,11 +698,11 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
       nFinal -= 1
     
   others = range(start) + range(finish,nOrig)
-  othersTake = RandomArray.permutation(nOthers)
+  othersTake = permutation(nOthers)
   others = [others[x] for x in othersTake[:nOthersFinal]]
 
   targets = range(start,finish)
-  targetsTake = RandomArray.permutation(nWithVal)
+  targetsTake = permutation(nWithVal)
   targets = [targets[x] for x in targetsTake[:nTgtFinal]]
     
   # these are all the indices we'll be keeping
@@ -709,14 +714,14 @@ def FilterData(inData,val,frac,col=-1,indicesToUse=None,indicesOnly=0):
   rej = []
   # now pull the points, but in random order
   if not indicesOnly:
-    for i in RandomArray.permutation(nOrig):
+    for i in permutation(nOrig):
       if i in indicesToKeep:
         res.append(tmp[i])
       else:
         rej.append(tmp[i])
   else:
     # EFF: this is slower than it needs to be
-    for i in RandomArray.permutation(nOrig):
+    for i in permutation(nOrig):
       if not indicesToUse:
         idx = sortOrder[i]
       else:
@@ -767,21 +772,18 @@ def RandomizeActivities(dataSet,shuffle=0,runDetails=None):
 
       - _examples_ are randomized in place
 
-      - this uses Numeric's _RandomArray_ to do the randomization
       
   """
-  import RandomArray
   nPossible = dataSet.GetNPossibleVals()[-1]
   nPts = dataSet.GetNPts()
   if shuffle:
     if runDetails: runDetails.shuffled = 1
-    origActs = dataSet.GetResults()
-    perm = RandomArray.permutation(nPts)
-    acts = [origActs[x] for x in perm]
+    acts = dataSet.GetResults()[:]
+    random.shuffle(acts)
   else:
     if runDetails: runDetails.randomized = 1
-    acts = RandomArray.randint(0,nPossible,[len(examples)])
-  for i in xrange(nPts):
+    acts = [random.randint(0,nPossible) for x in len(examples)]
+  for i in range(nPts):
     tmp = dataSet[i]
     tmp[-1] = acts[i]
     dataSet[i] = tmp

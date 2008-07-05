@@ -7,7 +7,7 @@
 #define CENTROPY_EXPORTS
 #endif
 #include "cEntropy.h"
-#include <Numeric/arrayobject.h>
+#include <numpy/oldnumeric.h>
 #include <math.h>
 
 #if defined(WIN32) && defined(CENTROPY_EXPORTS)

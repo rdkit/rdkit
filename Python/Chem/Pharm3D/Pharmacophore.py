@@ -1,11 +1,11 @@
 # $Id$
 #
-# Copyright (C) 2004-2006 Rational Discovery LLC
+# Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 import Geometry
-from Numeric import *
+import numpy
 import Chem
 from Chem import ChemicalFeatures
 
@@ -13,8 +13,8 @@ class Pharmacophore:
   def __init__(self, feats,initMats=True):
     self._initializeFeats(feats)
     nf = len(feats)
-    self._boundsMat = zeros((nf, nf), Float)
-    self._boundsMat2D = zeros((nf, nf), Int)
+    self._boundsMat = numpy.zeros((nf, nf), numpy.float)
+    self._boundsMat2D = numpy.zeros((nf, nf), numpy.int)
     if initMats:
       self._initializeMatrices()
 

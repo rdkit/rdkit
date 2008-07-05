@@ -1,10 +1,10 @@
 #
-#  Copyright (C) 2000,2003  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #
 """ Contains functionality for doing tree pruning
 
 """
-from Numeric import *
+import numpy
 from ML.DecTree import CrossValidate, DecTree
 import copy
 
@@ -28,7 +28,7 @@ def MaxCount(examples):
   for i in xrange(maxVal+1):
     counts[i] = sum([x==i for x in resList])
 
-  return argmax(counts)
+  return numpy.argmax(counts)
 
 def _GetLocalError(node):
   nWrong = 0

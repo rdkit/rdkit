@@ -10,7 +10,7 @@ validation values are from the paper (JCICS _35_ 1039-1045 (1995))
 
 """
 import unittest
-from Numeric import *
+import numpy
 import Chem
 from Chem import EState
 from Chem.EState import Fingerprinter
@@ -23,16 +23,16 @@ class TestCase(unittest.TestCase):
     for smi,c,v in vals:
       mol = Chem.MolFromSmiles(smi)
       counts,vals = Fingerprinter.FingerprintMol(mol)
-      counts = take(counts,nonzero(counts))
-      vals = take(vals,nonzero(vals))
+      counts = counts[numpy.nonzero(counts)]
+      vals = vals[numpy.nonzero(vals)]
       if show:
         print counts
         print vals
       assert len(c)==len(counts),'bad count len for smiles: %s'%(smi)
       assert len(v)==len(vals),'bad val len for smiles: %s'%(smi)
-      c = array(c)
+      c = numpy.array(c)
       assert max(abs(c-counts))<tol,'bad count for SMILES: %s'%(smi)
-      v = array(v)
+      v = numpy.array(v)
       assert max(abs(v-vals))<tol,'bad val for SMILES: %s'%(smi)
       
   def test1(self):

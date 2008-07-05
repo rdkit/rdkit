@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2001,2002,2003  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2001-2008  Greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
 
@@ -15,7 +15,7 @@ lie.
     [0.9,1.,1.1,2.,2.2] -> [0,1,1,2,2]
 
 """
-from Numeric import *
+import numpy
 from ML.InfoTheory import entropy
 try:
   import cQuantize
@@ -80,9 +80,9 @@ def _GenVarTable(vals,cuts,starts,results,nPossibleRes):
      
   """
   nVals = len(cuts)+1
-  varTable = zeros((nVals,nPossibleRes),Int)
+  varTable = numpy.zeros((nVals,nPossibleRes),'i')
   idx = 0
-  for i in xrange(nVals-1):
+  for i in range(nVals-1):
     cut = cuts[i]
     while idx < starts[cut]:
       varTable[i,results[idx]] += 1
@@ -306,11 +306,9 @@ def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
     return [],-1e8
   
   # sort the variable values:
-  #  Bypass the type-checking stuff that happens in a normal
-  #  argsort call:
-  sortIdx = multiarray.argsort(vals)
-  sortVals = array(take(vals,sortIdx),Float)
-  sortResults = array(take(results,sortIdx),Int)
+  sortIdx = numpy.argsort(vals)
+  sortVals = numpy.array([vals[x] for x in sortIdx],'d')
+  sortResults = numpy.array([results[x] for x in sortIdx],'i')
   startNext=_FindStartPoints(sortVals,sortResults,nData)
   if not len(startNext):
     return [0],0.0

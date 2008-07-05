@@ -299,10 +299,17 @@ void testBasicCanon(){
   smi = MolToSmiles(*mol);
   TEST_ASSERT(refSmi==smi);
   
+  // make sure empty molecules return empty SMILES:
+  delete mol;
+  mol = new ROMol();
+  smi = MolToSmiles(*mol);
+  TEST_ASSERT(smi=="");
 
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
+
 void testLeak(){
   int i = 0;
   Mol *mol;

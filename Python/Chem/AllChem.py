@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 #  Copyright (C) 2006-2008  greg Landrum and Rational Discovery LLC
@@ -9,7 +11,7 @@
 """
 import rdBase
 import RDConfig
-import Numeric
+import numpy.oldnumeric as Numeric
 import DataStructs
 from Geometry import rdGeometry
 from Chem import *
@@ -32,7 +34,7 @@ def TransformMol(mol,tform):
   a single conformer
 
   """
-  import Numeric
+  import numpy.oldnumeric as Numeric
   newConf = Conformer()
   newConf.SetId(0)
   refConf = mol.GetConformer()

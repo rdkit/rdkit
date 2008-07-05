@@ -1,13 +1,13 @@
 # $Id$
 #
-# Copyright (C) 2007 Greg Landrum
+# Copyright (C) 2007-2008 Greg Landrum
 #   All Rights Reserved
 #
 """ Implementation of the clustering algorithm published in:
   Butina JCICS 39 747-750 (1999)
 
 """
-from Numeric import *
+import numpy
 import RDLogger
 logger=RDLogger.logger()
 
@@ -40,7 +40,7 @@ def ClusterData(data,nPts,distThresh,isDistData=False):
          The first element for each cluster is its centroid.
 
   """
-  data = array(data)
+  data = numpy.array(data)
   if isDistData and len(data)>(nPts*(nPts-1)/2):
     logger.warning("Distance matrix is too long")
   nbrLists = [None]*nPts

@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #  $Id$
 #
 #  Copyright (C) 2003-2005  Rational Discovery LLC
@@ -316,7 +318,7 @@ class TreeWindow(PiddleWindow):
       for example in examples:
         itm = FloatItem(listCtrl)
         for i in range(nCols):
-          if type(example[i]) == types.FloatType:
+          if isinstance(example[i], types.FloatType):
             itm.setText(i,'%4.3g'%example[i])
           else:
             itm.setText(i,str(example[i]))

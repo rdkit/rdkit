@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2007  Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
 //   @@ All Rights Reserved  @@
 //
 #define NO_IMPORT_ARRAY
@@ -8,7 +8,8 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdpicker_array_API
 #include <boost/python.hpp>
 
-#include "Numeric/arrayobject.h"
+#include <boost/python/numeric.hpp>
+#include "numpy/oldnumeric.h"
 #include <RDBoost/Wrap.h>
 
 #include <SimDivPickers/DistPicker.h>
@@ -19,12 +20,16 @@ namespace RDPickers {
 
   // REVIEW: the poolSize can be pulled from the numeric array
   RDKit::INT_VECT HierarchicalPicks(HierarchicalClusterPicker *picker,
-                                   python::numeric::array &distMat,
+                                   python::object &distMat,
                                    int poolSize, 
                                    int pickSize) {
     if(pickSize>=poolSize){
       throw ValueErrorException("pickSize must be less than poolSize");
     }
+    if (!PyArray_Check(distMat.ptr())){
+      throw ValueErrorException("distance mat argument must be a numpy matrix");
+    }
+
 
     PyArrayObject *copy;
     // it's painful to have to copy the input matrix, but the
@@ -40,9 +45,14 @@ namespace RDPickers {
 
   // REVIEW: the poolSize can be pulled from the numeric array
   RDKit::VECT_INT_VECT HierarchicalClusters(HierarchicalClusterPicker *picker,
-                                   python::numeric::array &distMat,
+                                   python::object &distMat,
                                    int poolSize, 
                                    int pickSize) {
+    if (!PyArray_Check(distMat.ptr())){
+      throw ValueErrorException("distance mat argument must be a numpy matrix");
+    }
+
+
     // REVIEW: check pickSize < poolSize, otherwise throw_value_error()
     PyArrayObject *copy;
     // it's painful to have to copy the input matrix, but the

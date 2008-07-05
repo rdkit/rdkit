@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000,2003  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #
 
 """ Informational Entropy functions
@@ -8,8 +8,9 @@
   book "Machine Learning"
   
 """
-from math import *
-from Numeric import *
+import numpy
+import math
+
 # try to get the C versions of these routines
 try:
   import rdInfoTheory as cEntropy
@@ -20,7 +21,7 @@ else:
 
 
 # it's pretty obvious what this is for ;-)
-_log2 = log(2)
+_log2 = math.log(2)
 
 def PyInfoEntropy(results):
   """ Calculates the informational entropy of a set of results.
@@ -58,8 +59,8 @@ def PyInfoEntropy(results):
 
   # Here's a perfectly safe approach that's a little bit more obfuscated
   #  and a tiny bit slower
-  t = choose(greater(probs,0.0),(1,probs))
-  return sum(-probs*log(t)/_log2)
+  t = numpy.choose(numpy.greater(probs,0.0),(1,probs))
+  return sum(-probs*numpy.log(t)/_log2)
 
 
 def PyInfoGain(varMat):
@@ -77,8 +78,8 @@ def PyInfoGain(varMat):
 
       The expected information gain
   """
-  variableRes = sum(varMat,1) # indexed by variable, Sv in Mitchell's notation
-  overallRes = sum(varMat) # indexed by result, S in Mitchell's notation
+  variableRes = numpy.sum(varMat,1) # indexed by variable, Sv in Mitchell's notation
+  overallRes = numpy.sum(varMat,0) # indexed by result, S in Mitchell's notation
 
   term2 = 0
   for i in xrange(len(variableRes)):
@@ -98,28 +99,3 @@ if hascEntropy:
 else:
   InfoEntropy = PyInfoEntropy
   InfoGain = PyInfoGain
-
-
-if __name__ == '__main__':
-  arr = array([9,5])
-  print arr, InfoEntropy(arr)
-  arr = array([9,9])
-  print arr, InfoEntropy(arr)
-  arr = array([5,5])
-  print arr, InfoEntropy(arr)
-  arr = array([5,0])
-  print arr, InfoEntropy(arr)
-  arr = array([5,5,5])
-  print arr, InfoEntropy(arr)
-  arr = array([2,5,5])
-  print arr, InfoEntropy(arr)
-
-  mat2 = array([[6,2],[3,3]])
-  print 'gain: ', InfoGain(mat2)
-
-
-  mat3 = array([[1,1],[2,1]])
-  print 'gain3: ', InfoGain(mat3)
-
-  mat4 = array([[2,0],[1,2]])
-  print 'gain4: ', InfoGain(mat4)

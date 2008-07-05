@@ -12,8 +12,6 @@ from ML.NaiveBayes import CrossValidate
 from DataStructs import ExplicitBitVect
 
 
-from Numeric import *
-
 def feq(a,b,tol=1e-4):
     return abs(a-b)<tol
 

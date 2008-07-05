@@ -1,5 +1,7 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #
-#  Copyright (C) 2002  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
 
 """ unit tests for the model and descriptor packager """
@@ -7,8 +9,8 @@ import RDConfig
 from ML.Data import DataUtils
 import unittest,os,cPickle,sys
 from ML.ModelPackage import Packager
-import RandomArray
 import Chem
+import random
 
 def feq(a,b,tol=1e-4):
   return abs(a-b)<=tol
@@ -80,7 +82,9 @@ class TestCase(unittest.TestCase):
         ref[desc] = fn(m)
 
       for i in range(5):
-        perm = [names[x] for x in RandomArray.permutation(len(names))]
+        perm = list(names)
+        random.shuffle(perm)
+
         m = Chem.MolFromSmiles(smi)
         for desc in perm:
           fn = AvailDescriptors.descDict.get(desc,lambda x:777)
@@ -97,7 +101,8 @@ class TestCase(unittest.TestCase):
     calc = pkg.GetCalculator()
     names = calc.GetDescriptorNames()
     DataUtils.InitRandomNumbers((23,42))
-    perm = [names[x] for x in RandomArray.permutation(len(names))]
+    perm = list(names)
+    random.shuffle(perm)
     calc.simpleList = perm
     calc.descriptorNames = perm
     pkg.Init()

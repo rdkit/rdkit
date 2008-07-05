@@ -1,13 +1,11 @@
 
 tests=[
-  ("python","EmbedLib.py",{}),
-  ("python","UnitTestEmbed.py",{}),
-  ("python","UnitTestPharmacophore.py",{}),
+  ("python","test_list.py",{'dir':'InfoTheory/Wrap'}),
+  ("python","test_list.py",{'dir':'FeatureSelect/Wrap'}),
   ]
 
-
-
-longTests=[]
+longTests = [
+  ]
 
 if __name__=='__main__':
   import sys

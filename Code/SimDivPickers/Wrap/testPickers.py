@@ -2,7 +2,7 @@ import RDConfig
 import unittest
 from SimDivFilters import rdSimDivPickers
 from DataManip.Metric import rdMetricMatrixCalc as rdmmc
-from Numeric import *
+import numpy
 import random
 
 class TestCase(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestCase(unittest.TestCase):
       self.n = 1000
       self.m = 80
       self.d = 2
-      self.dataPts = zeros((self.n, self.d), 'd')
+      self.dataPts = numpy.zeros((self.n, self.d), 'd')
       for i in range(self.n):
         for j in range(self.d):
           self.dataPts[i,j] = random.random()
@@ -43,7 +43,7 @@ class TestCase(unittest.TestCase):
     infil = open("test_data/points.csv", 'r')
     lines = infil.readlines()
     infil.close()
-    self.dataPts = zeros((len(lines), 2), 'd')
+    self.dataPts = numpy.zeros((len(lines), 2), 'd')
     labels = []
     i = 0
     for line in lines :
@@ -71,7 +71,7 @@ class TestCase(unittest.TestCase):
     for i in range(sz):
       for j in range(i+1,sz):
         m.append(random.random())
-    m = array(m)
+    m = numpy.array(m)
     picker = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
     p1 = list(picker.Pick(m,sz,N))
     p1.sort()
@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase):
     for i in range(sz):
       for j in range(i+1,sz):
         m.append(int(100*random.random()))
-    m = array(m)
+    m = numpy.array(m)
     picker = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
     p1 = list(picker.Pick(m,sz,N))
     p1.sort()
@@ -130,7 +130,7 @@ class TestCase(unittest.TestCase):
       for j in range(i+1,nvs):
         d = taniFunc(i,j)
         ds.append(d)
-    m = array(ds)
+    m = numpy.array(ds)
     picker = rdSimDivPickers.HierarchicalClusterPicker(rdSimDivPickers.ClusterMethod.WARD)
     p1 = list(picker.Pick(m,nvs,N))
 

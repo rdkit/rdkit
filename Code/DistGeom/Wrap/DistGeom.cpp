@@ -8,7 +8,7 @@
 #include <boost/python.hpp>
 
 #define PY_ARRAY_UNIQUE_SYMBOL DistGeom_array_API
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 #include <RDBoost/Wrap.h>
 
 #include <Geometry/point.h>

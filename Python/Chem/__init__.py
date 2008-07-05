@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 #  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
@@ -11,7 +13,7 @@
 """
 import rdBase
 import RDConfig
-import Numeric
+
 import DataStructs
 from Geometry import rdGeometry
 import PeriodicTable as pyPeriodicTable

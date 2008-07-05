@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 # Copyright (C) 2001-2006 greg Landrum and Rational Discovery LLC
@@ -12,7 +14,7 @@ from Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen,Descriptors
 from Chem.EState import EState_VSA
 mods = [GraphDescriptors,MolSurf,EState_VSA,Lipinski,Descriptors,Crippen,Fragments]
 
-import Numeric,Chem
+import numpy.oldnumeric as Numeric,Chem
 otherMods = [Numeric,Chem]
 
 others = []

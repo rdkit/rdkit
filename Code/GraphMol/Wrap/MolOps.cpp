@@ -7,7 +7,7 @@
 #define NO_IMPORT_ARRAY
 #include "rdmolops.h"
 #include <boost/python.hpp>
-#include <Numeric/arrayobject.h>
+#include <numpy/oldnumeric.h>
 #include <string>
 #include <math.h>
 

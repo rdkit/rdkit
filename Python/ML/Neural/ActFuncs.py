@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000  greg Landrum
+#  Copyright (C) 2000-2008  greg Landrum
 #
 """ Activation functions for neural network nodes
 
@@ -17,8 +17,7 @@ The current Backprop implementation also requires:
 In all cases _input_ is a float as is the value returned.
 
 """
-from Numeric import *
-
+import math
   
 class ActFunc(object):
   """ "virtual base class" for activation functions
@@ -31,7 +30,7 @@ class ActFunc(object):
 class Sigmoid(ActFunc):
   """ the standard sigmoidal function """
   def Eval(self,input):
-    return 1./(1.+exp(-self.beta*input))
+    return 1./(1.+math.exp(-self.beta*input))
 
   def Deriv(self,input):
     val = self.Eval(input)
@@ -46,8 +45,8 @@ class Sigmoid(ActFunc):
 class TanH(ActFunc):
   """ the standard hyperbolic tangent function """
   def Eval(self,input):
-    v1 = exp(self.beta*input)
-    v2 = exp(-self.beta*input)
+    v1 = math.exp(self.beta*input)
+    v2 = math.exp(-self.beta*input)
     return (v1 - v2)/(v1 + v2)
   
   def Deriv(self,input):

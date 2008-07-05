@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2002-2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -28,7 +28,7 @@ Usage:  AnalyzeComposite [optional args] <models>
       -v: be verbose whilst screening
 """
 
-from Numeric import *
+import numpy
 import sys,cPickle
 from ML.DecTree import TreeUtils,Tree
 from ML.Data import Stats
@@ -47,7 +47,6 @@ def ProcessIt(composites,nToConsider=3,verbose=0,reportToExcel=0):
   ns = composite.GetDescriptorNames()
   #nDesc = len(ns)-2
   if len(ns)>2:
-    #globalRes = zeros((nDesc,nToConsider),Float)
     globalRes = {}
 
     nDone = 1
@@ -65,11 +64,11 @@ def ProcessIt(composites,nToConsider=3,verbose=0,reportToExcel=0):
           levels = TreeUtils.CollectLabelLevels(model,{},0,nToConsider)
           TreeUtils.CollectDescriptorNames(model,descNames,0,nToConsider)
           for descId in levels.keys():
-            v = res.get(descId,zeros(nToConsider,Float))
+            v = res.get(descId,numpy.zeros(nToConsider,numpy.float))
             v[levels[descId]] += 1./nModels
             res[descId] = v
       for k in res:
-        v = globalRes.get(k,zeros(nToConsider,Float))
+        v = globalRes.get(k,numpy.zeros(nToConsider,numpy.float))
         v += res[k]/nComposites
         globalRes[k] = v
       if verbose > 0:
@@ -130,12 +129,12 @@ def ErrorStats(conn,where,enrich=1):
   if not nPts:
     sys.stderr.write('no runs found\n')
     return None
-  overall = zeros(nPts,Float)
-  overallEnrich = zeros(nPts,Float)
+  overall = numpy.zeros(nPts,numpy.float)
+  overallEnrich = numpy.zeros(nPts,numpy.float)
   oCorConf = 0.0
   oInCorConf = 0.0
-  holdout = zeros(nPts,Float)
-  holdoutEnrich = zeros(nPts,Float)
+  holdout = numpy.zeros(nPts,numpy.float)
+  holdoutEnrich = numpy.zeros(nPts,numpy.float)
   hCorConf = 0.0
   hInCorConf = 0.0
   overallMatrix = None
@@ -174,7 +173,7 @@ def ErrorStats(conn,where,enrich=1):
   oCorConf /= nPts
   oInCorConf /= nPts
   overallMatrix /= nPts
-  oSort = argsort(overall)
+  oSort = numpy.argsort(overall)
   oMin = overall[oSort[0]]
   overall -= avgOverall
   devOverall = sqrt(sum(overall**2)/(nPts-1))
@@ -197,7 +196,7 @@ def ErrorStats(conn,where,enrich=1):
     hCorConf /= nPts
     hInCorConf /= nPts
     holdoutMatrix /= nPts
-    hSort = argsort(holdout)
+    hSort = numpy.argsort(holdout)
     hMin = holdout[hSort[0]]
     holdout -= avgHoldout
     devHoldout = sqrt(sum(holdout**2)/(nPts-1))

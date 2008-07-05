@@ -8,7 +8,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>

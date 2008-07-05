@@ -1118,6 +1118,11 @@ void testMiscSmartsWriting(){
   TEST_ASSERT(sma=="C");
   delete mol;
 
+  mol = new RWMol();
+  sma = MolToSmarts(*mol);
+  TEST_ASSERT(sma=="");
+  delete mol;
+
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

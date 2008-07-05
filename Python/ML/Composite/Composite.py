@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2000,2003  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
 """ code for dealing with composite models
@@ -24,8 +24,8 @@ Other compatibility notes:
 """
 from ML.Data import DataUtils
 import cPickle
-from Numeric import *
 import math
+import numpy
 
 class Composite(object):
   """a composite model
@@ -160,7 +160,7 @@ class Composite(object):
 
       **Arguments**
 
-       - example: a data point (list, tuple or Numeric array)
+       - example: a data point (list, tuple or numpy array)
        
        - quantBounds:  a list of quantization bounds, each quantbound is a
              list of boundaries.  If this argument is not provided, the composite
@@ -312,7 +312,7 @@ class Composite(object):
       votes[res] = votes[res] + self.countList[i]
 
     totVotes = sum(votes)
-    res = argmax(votes)
+    res = numpy.argmax(votes)
     conf = float(votes[res])/float(totVotes)
     if conf > threshold:
       return res,conf
@@ -578,15 +578,15 @@ class Composite(object):
 
     """
     if sortOnError:
-      order = argsort(self.errList)
+      order = numpy.argsort(self.errList)
     else:
-      order = argsort(self.countList)      
+      order = numpy.argsort(self.countList)      
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...
-    self.modelList = list(take(self.modelList,order))
-    self.countList = list(take(self.countList,order))
-    self.errList = list(take(self.errList,order))
+    self.modelList = [self.modelList[x] for x in order]
+    self.countList = [self.countList[x] for x in order]
+    self.errList = [self.errList[x] for x in order]
 
     
   def GetModel(self,i):

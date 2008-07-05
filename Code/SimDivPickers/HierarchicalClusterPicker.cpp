@@ -10,10 +10,10 @@
 
 
 typedef double real;
-extern "C" void distdriver_(int *n,int *len,
+extern "C" void distdriver_(long int *n,long int *len,
                  real *dists,
-                 int *toggle,
-                 int *ia,int *ib,real *crit);
+                 long int *toggle,
+                 long int *ia,long int *ib,real *crit);
 
 namespace RDPickers {
 
@@ -25,16 +25,17 @@ namespace RDPickers {
                  "pickSize cannot be larger than the poolSize");
 
     // Do the clustering 
-    int method = (int)d_method;
-    int len = poolSize*(poolSize-1);
-    int *ia = (int *)calloc(poolSize, sizeof(int));
-    int *ib = (int *)calloc(poolSize, sizeof(int));
+    long int method = (long int)d_method;
+    long int len = poolSize*(poolSize-1);
+    long int *ia = (long int *)calloc(poolSize, sizeof(long int));
+    long int *ib = (long int *)calloc(poolSize, sizeof(long int));
     real *crit = (real *)calloc(poolSize,sizeof(real));
     CHECK_INVARIANT(ia,"failed to allocate memory");
     CHECK_INVARIANT(ib,"failed to allocate memory");
     CHECK_INVARIANT(crit,"failed to allocate memory");
+    long int poolSize2=static_cast<long int>(poolSize);
     
-    distdriver_(reinterpret_cast<int *>(&poolSize), // number of items in the pool
+    distdriver_(&poolSize2, // number of items in the pool
                 &len, // number of entries in the distance matrix
                 (real *)distMat, // distance matrix
                 &method, // the clustering method (ward, slink etc.)

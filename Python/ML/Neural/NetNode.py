@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000  greg Landrum
+#  Copyright (C) 2000-2008  greg Landrum
 #
 """ Contains the class _NetNode_ which is used to represent nodes in neural nets
 
@@ -19,7 +19,7 @@
   main node list.
 
 """
-from Numeric import *
+import numpy
 import ActFuncs
 
 # FIX: this class has not been updated to new-style classes
@@ -44,7 +44,7 @@ class NetNode:
     """
     if len(self.inputNodes) != 0:
       # grab our list of weighted inputs
-      inputs = take(valVect,self.inputNodes)
+      inputs = numpy.take(valVect,self.inputNodes)
       # weight them
       inputs = self.weights * inputs
       # run that through the activation function
@@ -91,7 +91,7 @@ class NetNode:
         this will bomb out with an assertion.
         
     """
-    self.weights = array(weights)
+    self.weights = numpy.array(weights)
     if self.inputNodes:
       assert (len(self.weights) == len(self.inputNodes)),\
              'lengths of weights and nodes do not match'
@@ -130,7 +130,7 @@ class NetNode:
     if inputNodes and weights:
       assert (len(weights) == len(inputNodes))
     if weights:
-      self.weights = array(weights)
+      self.weights = numpy.array(weights)
     else:
       self.weights = None
     if inputNodes:

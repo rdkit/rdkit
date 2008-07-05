@@ -1,13 +1,12 @@
 # $Id$
 #
-# Copyright (C) 2001-2006  greg Landrum
+# Copyright (C) 2001-2008  greg Landrum
 #
 #   @@ All Rights Reserved  @@
 #
 """utility functions for clustering
 
 """
-from Numeric import *
 
 def GetNodeList(cluster):
   """returns an ordered list of all nodes below cluster
@@ -26,9 +25,9 @@ def GetNodeList(cluster):
   if len(cluster) == 1:
     return [cluster]
   else:
-    res = []
     children = cluster.GetChildren()
     children.sort(lambda x,y:cmp(len(y),len(x)))
+    res = []
     for child in children:
       res += GetNodeList(child)
     res += [cluster]
@@ -71,7 +70,7 @@ def FindClusterCentroidFromDists(cluster,dists):
 
   """
   children = cluster.GetPoints()
-  pts = map(lambda x:x.GetData(),children)
+  pts = [x.GetData() for x in children]
 
   best = 1e24
   bestIdx = -1

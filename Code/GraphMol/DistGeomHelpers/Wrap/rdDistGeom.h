@@ -10,6 +10,6 @@
 #include <boost/python.hpp>
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdDistGeom_array_API
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 
 #endif

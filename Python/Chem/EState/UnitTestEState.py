@@ -10,7 +10,7 @@ validation values are from the paper (JCICS _31_ 76-81 (1991))
 
 """
 import unittest
-from Numeric import *
+import numpy
 import Chem
 from Chem import EState
 
@@ -22,7 +22,7 @@ class TestCase(unittest.TestCase):
   def _validate(self,vals,tol=1e-2,show=0):
     for smi,ans in vals:
       mol = Chem.MolFromSmiles(smi)
-      ans = array(ans)
+      ans = numpy.array(ans)
       inds = EState.EStateIndices(mol)
 
       maxV = max(abs(ans-inds))

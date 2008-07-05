@@ -8,7 +8,7 @@
 #include "rdmolops.h"
 #include <boost/python.hpp>
 
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 
 #include <RDGeneral/types.h>
 

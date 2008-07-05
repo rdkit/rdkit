@@ -349,6 +349,8 @@ namespace RDKit{
                           bool doKekule,int rootedAtAtom){
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
+    if(!mol.getNumAtoms()) return "";
+
     if(doIsomericSmiles){
       mol.setProp("_doIsoSmiles",1);
     } else if(mol.hasProp("_doIsoSmiles")){

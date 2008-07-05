@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000,2003  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2008  greg Landrum and Rational Discovery LLC
 #
 """ ID3 Decision Trees
 
@@ -11,7 +11,7 @@
 
 """
 
-from Numeric import *
+import numpy
 from ML.DecTree import DecTree
 from ML.InfoTheory import entropy
 
@@ -31,7 +31,7 @@ def CalcTotalEntropy(examples,nPossibleVals):
     
   """
   nRes = nPossibleVals[-1]
-  resList = zeros(nRes,Int)
+  resList = numpy.zeros(nRes,'i')
   for example in examples:
     res = example[-1]
     resList[res] = resList[res] + 1
@@ -64,7 +64,7 @@ def GenVarTable(examples,nPossibleVals,vars):
   nFuncVals = nPossibleVals[-1]
 
   for i in xrange(nVars):
-    res[i] = zeros((nPossibleVals[vars[i]],nFuncVals),Int)
+    res[i] = numpy.zeros((nPossibleVals[vars[i]],nFuncVals),'i')
   for example in examples:
     val = int(example[-1])
     for i in xrange(nVars):
@@ -117,7 +117,7 @@ def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
   tMat = GenVarTable(examples,nPossibleVals,[target])[0] 
   # counts of each result code:
   counts = sum(tMat)  
-  nzCounts = nonzero(counts)
+  nzCounts = numpy.nonzero(counts)[0]
 
   if len(nzCounts) == 1:
     # bottomed out because there is only one result code left
@@ -132,15 +132,15 @@ def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
     #  We don't really know what to do here, so
     #  use the heuristic of picking the most prevalent
     #  result
-    v =  argmax(counts)
+    v =  numpy.argmax(counts)
     tree.SetLabel(v)
     tree.SetName('%d?'%v)
     tree.SetTerminal(1)
   else:
     # find the variable which gives us the largest information gain
 
-    gains = map(lambda x: entropy.InfoGain(x),varTable)
-    best = attrs[argmax(gains)]
+    gains = [entropy.InfoGain(x) for x in varTable]
+    best = attrs[numpy.argmax(gains)]
 
 
     # remove that variable from the lists of possible variables
@@ -165,7 +165,7 @@ def ID3(examples,target,attrs,nPossibleVals,depth=0,maxDepth=-1,
         # this particular value of the variable has no examples,
         #  so there's not much sense in recursing.
         #  This can (and does) happen.
-        v =  argmax(counts)
+        v =  numpy.argmax(counts)
         tree.AddChild('%d'%v,label=v,data=0.0,isTerminal=1)
       else:
         # recurse
@@ -195,7 +195,7 @@ def ID3Boot(examples,attrs,nPossibleVals,initialVar=None,depth=0,maxDepth=-1,
   # <perl>you've got to love any language which will let you
   # do this much work in a single line :-)</perl>
   if initialVar is None:
-    best = attrs[argmax(map(lambda x: entropy.InfoGain(x),varTable))]
+    best = attrs[numpy.argmax([entropy.InfoGain(x) for x in varTable])]
   else:
     best = initialVar
 
@@ -216,129 +216,3 @@ def ID3Boot(examples,attrs,nPossibleVals,initialVar=None,depth=0,maxDepth=-1,
     tree.AddChildNode(ID3(nextExamples,best,nextAttrs,nPossibleVals,depth,maxDepth,
                           **kwargs))
   return tree
-  
-        
-def TestMultiTree():
-  """Testing code for generating trees with more than 2 possible results
-
-  """
-  from ML.Data import MLData
-  print 'Testing MultiValue Tree Construction'
-  examples = [[0,1,0,0],
-              [0,0,0,1],
-              [0,0,1,2],
-              [0,1,1,2],
-              [1,0,0,2],
-              [1,0,1,2],
-              [1,1,0,2],
-              [1,1,1,0]
-              ]
-  data = MLData.MLQuantDataSet(examples)
-  attrs = range(0,data.GetNVars())
-  t1 = ID3Boot(data.GetAllData(),attrs,data.GetNPossibleVals())
-  #t1.Print()
-  t1.Pickle('multi.pkl')
-
-  print 'Testing Pickle Load'
-  import cPickle
-  f = open('regress/MultiTreeRes.pkl','r')
-  t2 = cPickle.load(f)
-  print 'Testing Correctness'
-  assert t1 == t2,'Equality Test Failed'
-
-  print 'All Tests Passed!'
-  
-def TestTree():
-  """Testing code for trees with a single possible result
-
-  """
-  from ML.Data import MLData
-
-  print 'Testing Tree Construction'
-  examples = [[0,0,0,0,0],
-              [0,0,0,1,0],
-              [1,0,0,0,1],
-              [2,1,0,0,1],
-              [2,2,1,0,1],
-              [2,2,1,1,0],
-              [1,2,1,1,1],
-              [0,1,0,0,0],
-              [0,2,1,0,1],
-              [2,1,1,0,1],
-              [0,1,1,1,1],
-              [1,1,0,1,1],
-              [1,0,1,0,1],
-              [2,1,0,1,0]
-              ]
-
-  data = MLData.MLQuantDataSet(examples)
-  attrs = range(0,data.GetNVars())
-  t1 = ID3Boot(data.GetAllData(),attrs,data.GetNPossibleVals())
-
-  print 'Testing Tree Validity'
-  t2 = DecTree.DecTreeNode(None,'Var: 0',0)
-  
-  c = DecTree.DecTreeNode(t2,'Var: 2',2)
-  t2.AddChildNode(c)
-  c2 = DecTree.DecTreeNode(c,'0',0,isTerminal=1)
-  c.AddChildNode(c2)
-  c2 = DecTree.DecTreeNode(c,'1',1,isTerminal=1)
-  c.AddChildNode(c2)
-  
-  c = DecTree.DecTreeNode(t2,'1',1,isTerminal=1)
-  t2.AddChildNode(c)
-
-  c = DecTree.DecTreeNode(t2,'Var: 3',3)
-  t2.AddChildNode(c)
-  c2 = DecTree.DecTreeNode(c,'1',1,isTerminal=1)
-  c.AddChildNode(c2)
-  c2 = DecTree.DecTreeNode(c,'0',0,isTerminal=1)
-  c.AddChildNode(c2)
-
-  assert t2==t1,'Trees do not match'
-  #print 'Testing Printing'
-  #t1.Print(showData=1)
-  print 'Testing Pickle'
-  t1.Pickle('save.pkl')
-  print 'Classification Tests:'
-  assert t1.ClassifyExample(examples[0])==examples[0][-1],'Example 0 misclassified'
-  assert t1.ClassifyExample(examples[1])==examples[1][-1],'Example 1 misclassified'
-  assert t1.ClassifyExample(examples[6])==examples[6][-1],'Example 6 misclassified'
-
-  print 'Testing Copy'
-  import copy
-  t2 = copy.deepcopy(t1)
-  assert t1==t2,'copy failed'
-  print 'Testing Set Membership'
-  l = [t1]
-  assert t2 in l,'Set Membership failed'
-  #print 't2 in [t1]', t2 in l, 'index:',l.index(t2)
-  print 'All tests passed!'
-
-def TestNamedTree():
-  """ testing code for named trees
-
-  """
-  from ML.Data import MLData
-  print 'Testing Named Tree Construction'
-  examples = [[0,1,0,0],
-              [0,0,0,1],
-              [0,0,1,2],
-              [0,1,1,2],
-              [1,0,0,2],
-              [1,0,1,2],
-              [1,1,0,2],
-              [1,1,1,0]
-              ]
-  names = ['ex1','ex2','ex3','ex4','ex5','ex6','ex7','ex8']
-  data = MLData.MLQuantDataSet(examples,ptNames=names)
-  attrs = range(1,data.GetNVars()+1)
-  t1 = ID3Boot(data.GetNamedData(),attrs,[0]+data.GetNPossibleVals())
-  print 'All tests passed!'
-
-
-if __name__ == "__main__":
-  TestTree()
-  TestMultiTree()
-  TestNamedTree()
-  

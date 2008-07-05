@@ -1,14 +1,15 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
-#  Copyright (C) 2003-2005  Rational Discovery LLC
+#  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
 """ 
 
 """
 
-from Numeric import *
-import RandomArray
+import numpy
 from ML.DecTree import SigTree
 from ML import InfoTheory
 from ML.FeatureSelect import CMIM
@@ -31,7 +32,7 @@ def _GenerateRandomEnsemble(nToInclude,nBits):
   """
   # Before Python 2.3 added the random.sample() function, this was
   # way more complicated:
-  res = random.sample(xrange(nBits),nToInclude)
+  res = random.sample(range(nBits),nToInclude)
   return res
 
 def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
@@ -109,7 +110,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
     counts[res] += 1
   #print '    '*depth,'counts:',counts
 
-  nzCounts = nonzero(counts)
+  nzCounts = numpy.nonzero(counts)[0]
   if verbose: print '  '*depth,'\tcounts:',counts
   if len(nzCounts) == 1:
     # bottomed out because there is only one result code left
@@ -124,7 +125,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
     #  We don't really know what to do here, so
     #  use the heuristic of picking the most prevalent
     #  result
-    v =  argmax(counts)
+    v =  numpy.argmax(counts)
     tree.SetLabel(v)
     tree.SetName('%d?'%v)
     tree.SetTerminal(1)
@@ -171,7 +172,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
       print 'get top n failed'
       gain = -1.0
     if gain <= 0.0:
-      v =  argmax(counts)
+      v =  numpy.argmax(counts)
       tree.SetLabel(v)
       tree.SetName('?%d?'%v)
       tree.SetTerminal(1)
@@ -204,7 +205,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
     #print '    '*depth,len(offExamples),len(onExamples)
     for ex in (offExamples,onExamples):
       if len(ex) == 0:
-        v =  argmax(counts)
+        v =  numpy.argmax(counts)
         tree.AddChild('%d??'%v,label=v,data=0.0,isTerminal=1)
       else:
         child = BuildSigTree(ex,nPossibleRes,random=random,
@@ -213,7 +214,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
                              depth=depth+1,maxDepth=maxDepth,
                              verbose=verbose)
         if child is None:
-          v =  argmax(counts)
+          v =  numpy.argmax(counts)
           tree.AddChild('%d???'%v,label=v,data=0.0,isTerminal=1)
         else:
           tree.AddChildNode(child)
@@ -225,37 +226,4 @@ def SigTreeBuilder(examples,attrs,nPossibleVals,initialVar=None,ensemble=None,
                    **kwargs):
   nRes = nPossibleVals[-1]
   return BuildSigTree(examples,nRes,random=randomDescriptors,**kwargs)
-
-def testTrees1():
-  import DataStructs
-  pts = [ ['p1',[3],0],
-          ['p2',[1,3],1],
-          ['p3',[2],1],          
-          ['p4',[0],1],          
-          ['p5',[],0],
-          ]
-  for pt in pts:
-    bv = DataStructs.ExplicitBitVect(4)
-    if pt[1]:
-      bv.SetBitsFromList(pt[1])
-    pt[1] = bv
-  t = BuildSigTree(pts,2)
-  t.Print()
-  
-  RandomArray.seed(23,42)
-  t2 = BuildSigTree(pts,2,random=4)
-  t2.Print()
-  # these two happen to come out the same:
-  assert t==t2
-
-  RandomArray.seed(23,42)
-  # this is just screwing around:
-  t3 = BuildSigTree(pts,2,random=4,ensemble=range(4))
-  assert t3==t2
-
-  t3 = BuildSigTree(pts,2,useCMIM=3)
-  print t3
-
-if __name__ == "__main__":
-  testTrees1()
   

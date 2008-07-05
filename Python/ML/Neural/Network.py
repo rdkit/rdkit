@@ -1,5 +1,7 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #
-#  Copyright (C) 2000  greg Landrum
+#  Copyright (C) 2000-2008  greg Landrum
 #
 """ Contains the class _Network_ which is used to represent neural nets
 
@@ -19,8 +21,9 @@
   main node list.
 
 """
-from Numeric import *
-import RandomArray
+import numpy
+import random
+
 from ML.Neural import NetNode, ActFuncs
 
 # FIX: this class has not been updated to new-style classes
@@ -40,17 +43,11 @@ class Network:
 
         - maxWeight: the maximum value a weight can take
         
-      **Note**
-
-        random numbers are assigned using _Numeric_'s _RandomArray_ module, so
-        if you want to be seeding the generators, be sure to hit that one too.
-        
     """
     for node in self.nodeList:
       inputs = node.GetInputs()
       if inputs:
-        weights = RandomArray.uniform(minWeight,maxWeight,
-                                      shape=[len(inputs)])
+        weights = [random.uniform(minWeight,maxWeight) for x in range(len(inputs))]
         node.SetWeights(weights)
     
 
@@ -160,7 +157,7 @@ class Network:
         example = example[:-self.numOutputNodes]
     assert len(example) == self.numInputNodes
     totNumNodes = sum(self.nodeCounts)
-    results = zeros(totNumNodes,Float64)
+    results = numpy.zeros(totNumNodes,numpy.float64)
     for i in xrange(self.numInputNodes):
       results[i] = example[i]
     for i in xrange(self.numInputNodes,totNumNodes):

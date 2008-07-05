@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000  greg Landrum
+#  Copyright (C) 2000-2008  greg Landrum
 #
 """ code for dealing with forests (collections) of decision trees
 
@@ -7,7 +7,7 @@
 
 """
 import cPickle
-from Numeric import *
+import numpy
 from ML.DecTree import CrossValidate,PruneTree
 
 class Forest(object):
@@ -56,7 +56,7 @@ class Forest(object):
     """
     nTrees = len(self.treeList)
     votes = [0]*nTrees
-    for i in xrange(nTrees):
+    for i in range(nTrees):
       votes[i] = self.treeList[i].ClassifyExample(example)
     return votes
 
@@ -74,7 +74,7 @@ class Forest(object):
     """
     self.treeVotes = self.CollectVotes(example)
     votes = [0]*len(self._nPossible)
-    for i in xrange(len(self.treeList)):
+    for i in range(len(self.treeList)):
       res = self.treeVotes[i]
       votes[res] = votes[res] + self.countList[i]
 
@@ -114,7 +114,7 @@ class Forest(object):
 
     """
     self._nPossible = nPossibleVals
-    for i in xrange(nTries):
+    for i in range(nTries):
       tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,nPossibleVals,
                                                       silent=1,calcTotalError=1,
                                                       lessGreedy=lessGreedy)
@@ -169,7 +169,7 @@ class Forest(object):
 
       This does the conversion in place
     """
-    self.errList = map(lambda x,y:x/y,self.errList,self.countList)
+    self.errList = [x/y for x,y in zip(self.errList,self.countList)]
 
   def SortTrees(self,sortOnError=1):
     """ sorts the list of trees
@@ -180,16 +180,15 @@ class Forest(object):
 
     """
     if sortOnError:
-      order = argsort(self.errList)
+      order = numpy.argsort(self.errList)
     else:
-      order = argsort(self.countList)      
+      order = numpy.argsort(self.countList)      
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...
-    self.treeList = list(take(self.treeList,order))
-    self.countList = list(take(self.countList,order))
-    self.errList = list(take(self.errList,order))
-
+    self.treeList = [self.treeList[x] for x in order]
+    self.countList = [self.countList[x] for x in order]
+    self.errList = [self.errList[x] for x in order]
     
   def GetTree(self,i):
     return self.treeList[i]

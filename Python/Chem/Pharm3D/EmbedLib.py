@@ -1,15 +1,16 @@
 # $Id$
 #
-# Copyright (C) 2004-2006 Rational Discovery LLC
+# Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 import RDConfig
-from Numeric import *
+
 import sys,time,math,sets
 from ML.Data import Stats
 import DistanceGeometry as DG
 import Chem
+import numpy
 from Chem import rdDistGeom as MolDG
 from Chem import ChemicalFeatures
 from Chem import ChemicalForceFields
@@ -19,7 +20,6 @@ _times = {}
 
 import RDLogger as logging
 logger = logging.logger()
-#logging.EnableLog('rdApp.debug')
 defaultFeatLength=2.0
 
 def GetAtomHeavyNeighbors(atom):
@@ -58,7 +58,7 @@ def ReplaceGroup(match,bounds,slop=0.01,useDirs=False,dirLength=defaultFeatLengt
      new bounds mat
      index of point added
 
-   >>> boundsMat = array([[0.0,2.0,2.0],[1.0,0.0,2.0],[1.0,1.0,0.0]])
+   >>> boundsMat = numpy.array([[0.0,2.0,2.0],[1.0,0.0,2.0],[1.0,1.0,0.0]])
    >>> match = [0,1,2]
    >>> bm,idx = ReplaceGroup(match,boundsMat,slop=0.0)
 
@@ -112,9 +112,9 @@ def ReplaceGroup(match,bounds,slop=0.01,useDirs=False,dirLength=defaultFeatLengt
   
   replaceIdx = bounds.shape[0]
   if not useDirs:
-    bm = zeros((bounds.shape[0]+1,bounds.shape[1]+1),Float)
+    bm = numpy.zeros((bounds.shape[0]+1,bounds.shape[1]+1),numpy.float)
   else:
-    bm = zeros((bounds.shape[0]+2,bounds.shape[1]+2),Float)
+    bm = numpy.zeros((bounds.shape[0]+2,bounds.shape[1]+2),numpy.float)
   bm[0:bounds.shape[0],0:bounds.shape[1]]=bounds
   bm[:replaceIdx,replaceIdx]=1000.
     
@@ -180,7 +180,7 @@ def EmbedMol(mol,bm,atomMatch=None,weight=2.0,randomSeed=-1,
     conf.SetAtomPosition(i,list(coords[i]))
   if excludedVolumes:
     for vol in excludedVolumes:
-      vol.pos = array(coords[vol.index])
+      vol.pos = numpy.array(coords[vol.index])
     
   #print >>sys.stderr,'   % 7.4f   % 7.4f   % 7.4f Ar  0  0  0  0  0  0  0  0  0  0  0  0'%tuple(coords[-1])
   mol.AddConformer(conf)
@@ -192,7 +192,7 @@ def AddExcludedVolumes(bm,excludedVolumes,smoothIt=True):
   excludedVolumes is a list of ExcludedVolume objects
 
 
-   >>> boundsMat = array([[0.0,2.0,2.0],[1.0,0.0,2.0],[1.0,1.0,0.0]])
+   >>> boundsMat = numpy.array([[0.0,2.0,2.0],[1.0,0.0,2.0],[1.0,1.0,0.0]])
    >>> ev1 = ExcludedVolume.ExcludedVolume(([(0,),0.5,1.0],),exclusionDist=1.5)
    >>> bm = AddExcludedVolumes(boundsMat,(ev1,))
 
@@ -212,7 +212,7 @@ def AddExcludedVolumes(bm,excludedVolumes,smoothIt=True):
   """
   oDim = bm.shape[0]
   dim = oDim+len(excludedVolumes)
-  res = zeros((dim,dim),Float)
+  res = numpy.zeros((dim,dim),numpy.float)
   res[:oDim,:oDim] = bm
   for i,vol in enumerate(excludedVolumes):
     bmIdx = oDim+i
@@ -259,7 +259,7 @@ def UpdatePharmacophoreBounds(bm,atomMatch,pcophore,useDirs=False,
     >>> pcophore.setLowerBound(0,1, 1.0)
     >>> pcophore.setUpperBound(0,1, 2.0)
 
-    >>> boundsMat = array([[0.0,3.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
+    >>> boundsMat = numpy.array([[0.0,3.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
     >>> atomMatch = ((0,),(1,))
     >>> bm = UpdatePharmacophoreBounds(boundsMat,atomMatch,pcophore)
 
@@ -535,7 +535,7 @@ def OptimizeMol(mol,bm,atomMatches=None,excludedVolumes=None,
       for localIndices,foo,bar in exVol.featInfo:
         indices += list(localIndices)
       for i in range(nAts):
-        v = array(conf.GetAtomPosition(i))-array(exVol.pos)
+        v = numpy.array(conf.GetAtomPosition(i))-numpy.array(exVol.pos)
         d = sqrt(dot(v,v))
         if i not in indices:
           if d<5.0:
@@ -820,7 +820,7 @@ def DownsampleBoundsMatrix(bm,indices,maxThresh=4.0):
   the pharmacophore we're interested in. Because the bounds smoothing
   we eventually have to do is N^3, this can be a big win
 
-   >>> boundsMat = array([[0.0,3.0,4.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
+   >>> boundsMat = numpy.array([[0.0,3.0,4.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,),3.5)
    >>> bm.shape
    (2, 2)
@@ -835,32 +835,32 @@ def DownsampleBoundsMatrix(bm,indices,maxThresh=4.0):
    2.000, 0.000
 
    if the threshold is high enough, we don't do anything:
-   >>> boundsMat = array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
+   >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,),5.0)
    >>> bm.shape
    (3, 3)
 
    If there's a max value that's close enough to *any* of the indices
    we pass in, we'll keep it:
-   >>> boundsMat = array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
+   >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,1),3.5)
    >>> bm.shape
    (3, 3)
   
   """
   nPts = bm.shape[0]
-  k = zeros(nPts,Int0)
+  k = numpy.zeros(nPts,numpy.int0)
   for idx in indices: k[idx]=1
   for i in indices:
     row = bm[i]
     for j in range(i+1,nPts):
       if not k[j] and row[j]<maxThresh:
         k[j]=1
-  keep = nonzero(k)
-  bm2 = zeros((len(keep),len(keep)),Float)
+  keep = numpy.nonzero(k)[0]
+  bm2 = numpy.zeros((len(keep),len(keep)),numpy.float)
   for i,idx in enumerate(keep):
     row = bm[idx]
-    bm2[i] = take(row,keep)
+    bm2[i] = numpy.take(row,keep)
   return bm2
 
 def CoarseScreenPharmacophore(atomMatch,bounds,pcophore,verbose=False):
@@ -878,7 +878,7 @@ def CoarseScreenPharmacophore(atomMatch,bounds,pcophore,verbose=False):
   >>> pcophore.setLowerBound(1,2, 2.1)
   >>> pcophore.setUpperBound(1,2, 3.9)
 
-  >>> bounds = array([[0,2,3],[1,0,4],[2,3,0]],Float)
+  >>> bounds = numpy.array([[0,2,3],[1,0,4],[2,3,0]],numpy.float)
   >>> CoarseScreenPharmacophore(((0,),(1,)),bounds,pcophore)
   True
 
@@ -916,7 +916,7 @@ def CoarseScreenPharmacophore(atomMatch,bounds,pcophore,verbose=False):
   >>> pcophore.setUpperBound(1,3, 1.9)
   >>> pcophore.setLowerBound(2,3, 1.1)
   >>> pcophore.setUpperBound(2,3, 1.9)
-  >>> bounds = array([[0,3,3,3],[2,0,2,2],[2,1,0,2],[2,1,1,0]],Float)
+  >>> bounds = numpy.array([[0,3,3,3],[2,0,2,2],[2,1,0,2],[2,1,1,0]],numpy.float)
 
   >>> CoarseScreenPharmacophore(((0,),(1,),(2,),(3,)),bounds,pcophore)
   True

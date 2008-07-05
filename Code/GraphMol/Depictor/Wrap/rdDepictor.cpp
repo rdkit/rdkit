@@ -7,7 +7,7 @@
 #include <boost/python.hpp>
 
 #define PY_ARRAY_UNIQUE_SYMBOL Depictor_array_API
-#include "Numeric/arrayobject.h"
+#include "numpy/oldnumeric.h"
 #include <RDBoost/Wrap.h>
 
 #include <GraphMol/Depictor/RDDepictor.h>

@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2004-2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2004-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -10,11 +10,11 @@ import Chem
 from Chem import ChemicalFeatures,rdDistGeom
 import EmbedLib
 import gzip
-from Numeric import *
 import DistanceGeometry as DG
 import Geometry
 import Pharmacophore
 import cPickle
+import numpy
 
 def feq(n1,n2,tol=1e-5):
   return abs(n1-n2)<=tol
@@ -66,13 +66,16 @@ class TestCase(unittest.TestCase):
     else:
       return 0
     
-  def testSearch1FullMat(self):
+  def test1SearchFullMat(self):
     inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
+    #outF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.new.gz'),'wb+')
     nDone = 0
     nHits = 0
     while 1:
       try:
         tpl = cPickle.load(inF)
+        #tpl=tpl[0],tpl[1],numpy.array(tpl[2])
+        #cPickle.dump(tpl,outF)
       except:
         break
       if self._matchMol(tpl,self.pcophore,self.featFactory,0):
@@ -82,7 +85,7 @@ class TestCase(unittest.TestCase):
     #print 'nHits:',nHits
     self.failUnless(nHits==48)
     
-  def testSearch2Downsample(self):
+  def test2SearchDownsample(self):
     inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
     nDone = 0
     nHits = 0
@@ -99,7 +102,7 @@ class TestCase(unittest.TestCase):
     #print 'nHits:',nHits
     self.failUnless(nHits==48)
     
-  def testEmbed1(self):
+  def test3Embed(self):
     testResults={
       'mol_197':(160.52,21.70,83.37,4.99,83.21,4.86,75.07,1.16,0.00),
       'mol_223':(167.72,11.04,97.28,3.21,97.21,3.17,67.89,0.51,0.00),
@@ -144,7 +147,7 @@ class TestCase(unittest.TestCase):
     #print 'nHits:',nHits
     self.failUnless(nHits==50)
     
-  def testSearch(self):
+  def test4Search(self):
     featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(self.dataDir,
                                                         'BaseFeatures.fdef'))
 
@@ -211,6 +214,10 @@ class TestCase(unittest.TestCase):
                                           'Issue268_Mol2.mol'))
     pcop = cPickle.load(file(os.path.join(self.dataDir,
                                           'Issue268_Pcop.pkl'),'rb'))
+    #pcop._boundsMat=numpy.array(pcop._boundsMat)
+    #pcop._boundsMat2D=numpy.array(pcop._boundsMat2D)
+    #cPickle.dump(pcop,file(os.path.join(self.dataDir,
+    #                                    'Issue268_Pcop.new.pkl'),'wb+'))
     match,mList1 = EmbedLib.MatchFeatsToMol(m1,featFactory,pcop.getFeatures())
     match,mList2 = EmbedLib.MatchFeatsToMol(m2,featFactory,pcop.getFeatures())
     b1 = rdDistGeom.GetMoleculeBoundsMatrix(m1)

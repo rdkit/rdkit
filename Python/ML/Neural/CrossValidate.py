@@ -105,7 +105,7 @@ def CrossValidationDriver(examples,attrs=[],nPossibleVals=[],holdOutFrac=.3,sile
   if not silent:
     print 'Training with %d examples'%(nTrain)
 
-  nInput = len(allExamples[0])-1
+  nInput = len(examples[0])-1
   nOutput = 1
   if  hiddenSizes is None:
     nHidden = nInput

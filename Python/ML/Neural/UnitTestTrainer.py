@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 #
 #  Copyright (C) 2000  greg Landrum
 #
@@ -8,9 +10,9 @@
 """
 import unittest
 from ML.Neural import Network,Trainers
-from Numeric import *
-import RandomArray
-RandomArray.seed(23,42)
+import numpy
+import random
+random.seed(23)
 
 class TrainerTestCase(unittest.TestCase):
   def setUp(self):
