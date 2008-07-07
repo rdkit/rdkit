@@ -61,8 +61,33 @@ namespace RDKit {
     POSTCONDITION(dp_inStream,"bad instream");
   }
 
+
+  SmilesMolSupplier::SmilesMolSupplier(std::istream *inStream, bool takeOwnership,
+                                       const std::string &delimiter,
+                                       int smilesColumn,
+                                       int nameColumn, 
+                                       bool titleLine,
+                                       bool sanitize) {
+    CHECK_INVARIANT(inStream,"bad instream");
+    CHECK_INVARIANT(!(inStream->eof()),"early EOF");
+
+    init();
+    dp_inStream = inStream;
+    df_owner=takeOwnership;
+    d_delim = delimiter;
+    df_sanitize = sanitize;
+    df_title = titleLine;
+    d_smi = smilesColumn;
+    d_name = nameColumn;
+    df_end=false;
+    this->checkForEnd();
+    POSTCONDITION(dp_inStream,"bad instream");
+  }
+
+
+
   SmilesMolSupplier::~SmilesMolSupplier() {
-    if (df_owner) {
+    if (df_owner && dp_inStream) {
       delete dp_inStream;
     }
   }
@@ -180,7 +205,7 @@ namespace RDKit {
       // -----------
       unsigned int iprop = 0;
       for (unsigned int col = 0; col < recs.size(); col++) {
-        if(col==d_smi || col==d_name) continue;
+        if(static_cast<int>(col)==d_smi || static_cast<int>(col)==d_name) continue;
         std::string pname, pval;
         if (d_props.size() > col) {
           pname = d_props[col];

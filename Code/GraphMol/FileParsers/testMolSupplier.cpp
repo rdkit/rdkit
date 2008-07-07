@@ -7,6 +7,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <map>
 
 #include "MolSupplier.h"
@@ -19,30 +20,56 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
-#ifdef USEZIPSTREAM
-#include <RDGeneral/StreamOps.h>
-#include <ZipStream/zipstream.hpp>
-#include <fstream>
-#endif
 using namespace RDKit;
 int testMolSup() {
   
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   
-  //std::string fname("../test_data/NCI_aids_few.sdf");
-  SDMolSupplier sdsup(fname);
-  unsigned int i = 0;
-  while (!sdsup.atEnd()) {
-    ROMol *nmol = sdsup.next();
-    if (nmol) {
-      TEST_ASSERT(nmol->hasProp("_Name"));
-      TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
-      delete nmol;
+  {
+    SDMolSupplier sdsup(fname);
+    unsigned int i = 0;
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      if (nmol) {
+        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        delete nmol;
+      }
+      i++;
     }
-    i++;
+    TEST_ASSERT(i==16);
   }
-  TEST_ASSERT(i==16);
+  {
+    std::ifstream strm(fname.c_str());
+    SDMolSupplier sdsup(&strm,false);
+    unsigned int i = 0;
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      if (nmol) {
+        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        delete nmol;
+      }
+      i++;
+    }
+    TEST_ASSERT(i==16);
+  }
+  {
+    std::ifstream *strm=new std::ifstream(fname.c_str());
+    SDMolSupplier sdsup(strm,true);
+    unsigned int i = 0;
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      if (nmol) {
+        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        delete nmol;
+      }
+      i++;
+    }
+    TEST_ASSERT(i==16);
+  }
   return 1;
 }
 
@@ -109,31 +136,51 @@ void testSmilesSup() {
   ROMol *mol;
 
   std::string rdbase = getenv("RDBASE");
-#if 1
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
-  //fname = "../test_data/fewSmi.2.csv";
-  SmilesMolSupplier nSup2(fname, ",", 1, 0, true);
-  //SmilesMolSupplier nSup2=SmilesMolSupplier(fname, ",", 1, 0, true);
-  mol = nSup2[3];
-  CHECK_INVARIANT(nSup2.length() == 10, "");
+  {
+    SmilesMolSupplier nSup2(fname, ",", 1, 0, true);
 
-  mol->getProp("_Name", mname);
-  CHECK_INVARIANT(mname == "4", "");
-  mol->getProp("TPSA", mname);
-  CHECK_INVARIANT(mname == "82.78", "");
-  delete mol;
+    mol = nSup2[3];
+    CHECK_INVARIANT(nSup2.length() == 10, "");
 
-  mol = nSup2[9];
-  TEST_ASSERT(mol);
-  delete mol;
-  // now make sure we can grab earlier mols (was sf.net issue 1904170):
-  mol = nSup2[0];
-  TEST_ASSERT(mol);
-  delete mol;
+    mol->getProp("_Name", mname);
+    CHECK_INVARIANT(mname == "4", "");
+    mol->getProp("TPSA", mname);
+    CHECK_INVARIANT(mname == "82.78", "");
+    delete mol;
+
+    mol = nSup2[9];
+    TEST_ASSERT(mol);
+    delete mol;
+    // now make sure we can grab earlier mols (was sf.net issue 1904170):
+    mol = nSup2[0];
+    TEST_ASSERT(mol);
+    delete mol;
+  }
+  {
+    std::ifstream strm(fname.c_str());
+    SmilesMolSupplier nSup2(&strm,false,",", 1, 0, true);
+
+    mol = nSup2[3];
+    CHECK_INVARIANT(nSup2.length() == 10, "");
+
+    mol->getProp("_Name", mname);
+    CHECK_INVARIANT(mname == "4", "");
+    mol->getProp("TPSA", mname);
+    CHECK_INVARIANT(mname == "82.78", "");
+    delete mol;
+
+    mol = nSup2[9];
+    TEST_ASSERT(mol);
+    delete mol;
+    // now make sure we can grab earlier mols (was sf.net issue 1904170):
+    mol = nSup2[0];
+    TEST_ASSERT(mol);
+    delete mol;
+  }
 
 
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
-  //fname = "../test_data/first_200.tpsa.csv";
   SmilesMolSupplier smiSup(fname, ",", 0, -1);
   
   mol = smiSup[16];
@@ -166,9 +213,8 @@ void testSmilesSup() {
   }
   
   CHECK_INVARIANT(i == 200, "");
-#endif
+
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
-  //fname = "../test_data/fewSmi.csv";
   SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
 
   // check the length before we read anything out...
@@ -701,70 +747,6 @@ void testStereoRound() {
 
 }
 
-#ifdef USEZIPSTREAM
-void testZipStream() {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf.gz";
-  std::ifstream ifStream_;
-  ifStream_.open(fname.c_str(),std::ios::in|std::ios_base::binary);
-  zlib_stream::zip_istream *zs=new zlib_stream::zip_istream(ifStream_);
-  BOOST_LOG(rdErrorLog) << "TELL: " << " - " << zs->bad() << " - " << zs->tellg() << " - " << zs->eof() << std::endl;
-
-  std::string inL;
-
-  (*zs) >> inL;
-  BOOST_LOG(rdErrorLog) << "LINE: " << inL << "<--" << std::endl;
-  TEST_ASSERT(inL=="48");
-
-  inL="";
-  zs->seekg(0);
-  (*zs) >> inL;
-  BOOST_LOG(rdErrorLog) << "LINE: " << inL << "<--" << std::endl;
-  TEST_ASSERT(inL=="48");
-  
-  inL="";
-  zs->seekg(-1);
-  std::getline((*zs),inL);
-  BOOST_LOG(rdErrorLog) << "LINE: " << inL << "<--" << std::endl;
-  TEST_ASSERT(inL=="48");
-
-  inL="";
-  zs->seekg(-1);
-  std::getline((*zs),inL);
-  BOOST_LOG(rdErrorLog) << "LINE: " << inL << "<--" << std::endl;
-  TEST_ASSERT(inL=="48");
-
-}
-
-int testZipMolSup() {
-  
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf.gz";
-  std::ifstream ifStream_;
-  SDMolSupplier sdsup(fname);
-  int i = 0;
-  bool second = false;
-  while (!sdsup.atEnd()) {
-    ROMol *nmol = sdsup.next();
-    if (nmol) {
-      
-      //nmol->getProp(pname, nsc);
-      std::string name, nsc, ic50, ec50, sc;
-      nmol->getProp("_Name", name);
-
-      
-      CHECK_INVARIANT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"), "");
-            
-      delete nmol;
-    }
-    i++;
-  }
-  TEST_ASSERT(i==16);
-  return 1;
-}
-#endif
-
-
 void testIssue226() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue226.sdf";
@@ -787,33 +769,61 @@ void testIssue226() {
 int testTDTSupplier1() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
-  int i;
-  std::string prop1,prop2;
-  
-  TDTMolSupplier suppl(fname,"PN");
-  i=0;
-  while (!suppl.atEnd()) {
-    ROMol *nmol = suppl.next();
-    if (nmol) {
-      TEST_ASSERT(nmol->getNumAtoms()>0);
-      TEST_ASSERT(nmol->hasProp("PN"));
-      TEST_ASSERT(nmol->hasProp("_Name"));
-      TEST_ASSERT(nmol->hasProp("MFCD"));
+  {
+    TDTMolSupplier suppl(fname,"PN");
+    unsigned int i=0;
+    while (!suppl.atEnd()) {
+      ROMol *nmol = suppl.next();
+      if (nmol) {
+        std::string prop1,prop2;
+        TEST_ASSERT(nmol->getNumAtoms()>0);
+        TEST_ASSERT(nmol->hasProp("PN"));
+        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp("MFCD"));
 
-      nmol->getProp("PN",prop1);
-      nmol->getProp("_Name",prop2);
-      TEST_ASSERT(prop1==prop2);
+        nmol->getProp("PN",prop1);
+        nmol->getProp("_Name",prop2);
+        TEST_ASSERT(prop1==prop2);
       
-      // we didn't ask for 2D conformers, so there should be a property 2D:
-      TEST_ASSERT(nmol->hasProp("2D"));
-      // and no conformer:
-      TEST_ASSERT(!nmol->getNumConformers());
+        // we didn't ask for 2D conformers, so there should be a property 2D:
+        TEST_ASSERT(nmol->hasProp("2D"));
+        // and no conformer:
+        TEST_ASSERT(!nmol->getNumConformers());
       
-      delete nmol;
-      i++;
+        delete nmol;
+        i++;
+      }
     }
+    TEST_ASSERT(i==10);
   }
-  TEST_ASSERT(i==10);
+  {
+    std::ifstream strm(fname.c_str());
+    TDTMolSupplier suppl(&strm,false,"PN");
+    unsigned int i=0;
+    while (!suppl.atEnd()) {
+      ROMol *nmol = suppl.next();
+      if (nmol) {
+        std::string prop1,prop2;
+        TEST_ASSERT(nmol->getNumAtoms()>0);
+        TEST_ASSERT(nmol->hasProp("PN"));
+        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp("MFCD"));
+
+        nmol->getProp("PN",prop1);
+        nmol->getProp("_Name",prop2);
+        TEST_ASSERT(prop1==prop2);
+      
+        // we didn't ask for 2D conformers, so there should be a property 2D:
+        TEST_ASSERT(nmol->hasProp("2D"));
+        // and no conformer:
+        TEST_ASSERT(!nmol->getNumConformers());
+      
+        delete nmol;
+        i++;
+      }
+    }
+    TEST_ASSERT(i==10);
+  }
   return 1;
 }
 int testTDTSupplier2() {
@@ -1472,18 +1482,6 @@ int main() {
   testStereoRound();
   BOOST_LOG(rdErrorLog) <<"Finished: testStereoRound()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-#ifdef USEZIPSTREAM
-  BOOST_LOG(rdErrorLog) <<"\n-----------------------------------------\n";
-  testZipStream();
-  BOOST_LOG(rdErrorLog) <<"Finished: testZipStream()\n";
-  BOOST_LOG(rdErrorLog) <<"-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) <<"\n-----------------------------------------\n";
-  testZipMolSup();
-  BOOST_LOG(rdErrorLog) <<"Finished: testZipMolSup()\n";
-  BOOST_LOG(rdErrorLog) <<"-----------------------------------------\n\n";
-#endif
 
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testIssue226();

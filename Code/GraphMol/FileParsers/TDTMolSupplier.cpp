@@ -100,6 +100,27 @@ namespace RDKit {
     this->checkForEnd();
   }
 
+
+  TDTMolSupplier::TDTMolSupplier(std::istream *inStream, bool takeOwnership,
+                                 const std::string &nameRecord,
+                                 int confId2D,
+                                 int confId3D,
+                                 bool sanitize){
+    CHECK_INVARIANT(inStream,"bad instream");
+    CHECK_INVARIANT(!(inStream->eof()),"early EOF");
+    init();
+    dp_inStream = inStream;
+    df_owner = takeOwnership;
+    d_confId2D=confId2D;
+    d_confId3D=confId3D;
+    d_nameProp=nameRecord;
+    this->advanceToNextRecord();
+    d_molpos.push_back(dp_inStream->tellg());
+    df_sanitize = sanitize;
+    this->checkForEnd();
+  }
+
+
   void TDTMolSupplier::init(){
     dp_inStream=0;
     df_owner = false;
@@ -109,7 +130,7 @@ namespace RDKit {
     d_line = 0;
   }
   TDTMolSupplier::~TDTMolSupplier() {
-    if (df_owner) {
+    if (df_owner && dp_inStream) {
       delete dp_inStream;
     }
   }

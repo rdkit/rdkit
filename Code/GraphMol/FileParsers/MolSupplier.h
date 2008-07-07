@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2006 greg landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2008 greg landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -52,7 +52,11 @@ namespace RDKit {
     // for disaster.
     MolSupplier(const MolSupplier&);
     MolSupplier &operator=(const MolSupplier&);
-
+  protected:
+    // stream to read the molecules from:
+    std::istream *dp_inStream;
+    // do we own dp_inStream?
+    bool df_owner; 
   };
 
 
@@ -78,6 +82,10 @@ namespace RDKit {
      */
     explicit SDMolSupplier(const std::string &fileName, bool sanitize=true,
                            bool removeHs=true);
+    
+    explicit SDMolSupplier(std::istream *inStream, bool takeOwnership=true,
+                           bool sanitize=true,bool removeHs=true);
+
     
     ~SDMolSupplier();
     void init();
@@ -109,15 +117,10 @@ namespace RDKit {
   private :
     void readMolProps(ROMol *);
     void checkForEnd();
-    std::istream *dp_inStream;
-    bool df_owner;
     bool df_end; 
     int d_len; // total number of mol blocks in the file (initialized to -1)
     int d_last; // the molecule we are ready to read
     int d_line; // line number we are currently on
-#ifdef USEZIPSTREAM
-    std::istream *dp_streamHolder;
-#endif    
     std::vector<std::streampos> d_molpos;
     bool df_sanitize,df_removeHs;
   };
@@ -162,8 +165,15 @@ namespace RDKit {
 			       int smilesColumn=0,
 			       int nameColumn=1, 
 			       bool titleLine=true,		   
-			       bool sanitize=true);
+                               bool sanitize=true);
     SmilesMolSupplier();
+    explicit SmilesMolSupplier(std::istream *inStream, bool takeOwnership=true,
+			       const std::string &delimiter=" \t",
+			       int smilesColumn=0,
+			       int nameColumn=1, 
+			       bool titleLine=true,		   
+                               bool sanitize=true);                               
+
     ~SmilesMolSupplier();
     void setData(const std::string &text,
 		 const std::string &delimiter=" ",
@@ -191,14 +201,6 @@ namespace RDKit {
     int skipComments();
     void checkForEnd();
     
-    // stream to read the molecules from:
-    std::istream *dp_inStream; 
-
-    // do we own dp_inStream - right now this is always true since we
-    // are passed in a file name. But later we should have a
-    // constructor that can take a 'istream'
-    bool df_owner; 
-
     bool df_end; // have we reached the end of the file?
     int d_len; // total number of smiles in the file
     int d_next; // the  molecule we are ready to read
@@ -244,6 +246,10 @@ namespace RDKit {
 			    const std::string &nameRecord="",
 			    int confId2D=-1,int confId3D=0,
 			    bool sanitize=true);
+    explicit TDTMolSupplier(std::istream *inStream, bool takeOwnership=true,
+			    const std::string &nameRecord="",
+			    int confId2D=-1,int confId3D=0,
+			    bool sanitize=true);
     TDTMolSupplier();
     ~TDTMolSupplier();
     void setData(const std::string &text,
@@ -267,14 +273,6 @@ namespace RDKit {
     bool advanceToNextRecord();
     void checkForEnd();
     ROMol *parseMol(std::string inLine);
-    
-    // stream to read the molecules from:
-    std::istream *dp_inStream; 
-
-    // do we own dp_inStream - right now this is always true since we
-    // are passed in a file name. But later we should have a
-    // constructor that can take a 'istream'
-    bool df_owner; 
 
     bool df_end; // have we reached the end of the file?
     int d_len; // total number of mols in the file

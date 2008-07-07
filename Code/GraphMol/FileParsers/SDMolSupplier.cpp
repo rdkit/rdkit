@@ -55,6 +55,20 @@ namespace RDKit {
     POSTCONDITION(dp_inStream,"bad instream");
   }
 
+
+  SDMolSupplier::SDMolSupplier(std::istream *inStream, bool takeOwnership,
+                               bool sanitize, bool removeHs){
+    PRECONDITION(inStream,"bad stream");
+    init();
+    dp_inStream = inStream;
+    df_owner=takeOwnership;
+    d_molpos.push_back(dp_inStream->tellg());
+    df_sanitize = sanitize;
+    df_removeHs = removeHs;
+    this->checkForEnd();
+    POSTCONDITION(dp_inStream,"bad instream");
+  }
+
   void SDMolSupplier::init(){
     dp_inStream=0;
     df_owner = false;
@@ -65,7 +79,7 @@ namespace RDKit {
   }
 
   SDMolSupplier::~SDMolSupplier() {
-    if (df_owner) {
+    if (df_owner && dp_inStream) {
       delete dp_inStream;
     }
   }
