@@ -52,9 +52,11 @@ import string, os, types
 
 from math import *
 
+#SVG_HEADER = """<?xml version="1.0" encoding="iso-8859-1"?>
+#<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"
+#"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+#"""
 SVG_HEADER = """<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"
-"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 """
 
 def _ColorToSVG(color):
@@ -81,18 +83,24 @@ def _PointListToSVG(points,dupFirst=0):
   return outStr
 
 class SVGCanvas( Canvas ):
-  def __init__(self, size=(300,300), name='SVGCanvas'):
+  def __init__(self, size=(300,300), name='SVGCanvas',includeXMLHeader=True,extraHeaderText=''):
     self._nImages=1
     # I'd rather do this as PNG, but IBM's SVGView doesn't support those
     #  yet. Adobe's plugin works just fine with them, however.
     self._imageFormat='GIF'
     self.size = size
-    self._initOutput()
+    self._initOutput(includeXMLHeader=includeXMLHeader,extraHeaderText=extraHeaderText)
     Canvas.__init__(self, size, name)
 
-  def _initOutput(self):
-    self._txt = SVG_HEADER +\
-                '<svg xml:space="preserve" width="%dpx" height="%dpx">\n'%self.size
+  def _initOutput(self,includeXMLHeader=True,extraHeaderText=''):
+    if includeXMLHeader:
+      self._txt = SVG_HEADER
+    else:
+      self._txt = ""
+    self._txt += """<svg:svg version="1.1" baseProfile="full"
+        xmlns:svg="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xml:space="preserve" width="%dpx" height="%dpx" %s>\n"""%(self.size[0],self.size[1],extraHeaderText)
     
   def _findExternalFontName(self, font):       #copied from piddlePDF by cwl- hack away!
         """Attempts to return proper font name.
@@ -166,19 +174,19 @@ class SVGCanvas( Canvas ):
         else:
           familyStr = familyStr + ', %s'%face
     if font.italic:
-      styleStr = 'font-style:italic;'
+      styleStr = 'font-style="italic"'
     else:
       styleStr = ''
     if font.bold:
-      weightStr = 'font-weight:bold;'
+      weightStr = 'font-weight="bold"'
     else:
       weightStr = ''
     if font.size:
-      sizeStr = 'font-size:%.2f;'%font.size
+      sizeStr = 'font-size="%.2f"'%font.size
     else:
       sizeStr = ''
 
-    fontStr = 'font-family: %s; %s %s %s'%(familyStr,styleStr,weightStr,sizeStr)
+    fontStr = 'font-family="%s" %s %s %s'%(familyStr,styleStr,weightStr,sizeStr)
     return fontStr
 
   def _FormArcStr(self,x1,y1,x2,y2,theta1,extent):
@@ -260,11 +268,13 @@ class SVGCanvas( Canvas ):
         file = file + '.' + type
 
     fileobj = getFileObject(file, openFlags="w+")    
-    fileobj.write(self._txt+'</svg>')
+    fileobj.write(self._txt+'</svg:svg>')
     if isFileName:
       fileobj.close()   # do not close if handed a file handle instead of a file name
 
-
+  def text(self):
+    return self._txt+'</svg:svg>'
+    
 
   #------------- drawing methods --------------
   def drawLine(self, x1,y1, x2,y2, color=None, width=None,
@@ -285,10 +295,15 @@ class SVGCanvas( Canvas ):
     else:
       w = self.defaultLineWidth
 
-    styleStr = 'stroke:%s; stroke-width:%d;'%(svgColor,w)
+    styleStr = 'stroke="%s" stroke-width="%d"'%(svgColor,w)
     if dash is not None:
-      styleStr += ' stroke-dasharray: %d %d;'%dash 
-    outStr = '<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" style="%s" />\n'%(x1,y1,x2,y2,styleStr)
+      styleStr += ' stroke-dasharray="'
+      styleStr += ' '.join([str(x) for x in dash])
+      styleStr += '"'
+    outStr = '<svg:line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" %s>'%(x1,y1,x2,y2,styleStr)
+    if kwargs.has_key('bodyText'):
+      outStr+=kwargs['bodyText']
+    outStr += '</svg:line>\n'
     self._txt = self._txt + outStr
     
 
@@ -310,9 +325,9 @@ class SVGCanvas( Canvas ):
           
     # do the fill
     if filling:
-      fillStr = 'fill:%s;'%_ColorToSVG(fillColor)
+      fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
     else:
-      fillStr = 'fill:none;'
+      fillStr = 'fill="none"'
 
     # set color for edge...
     if not edgeColor:
@@ -321,12 +336,18 @@ class SVGCanvas( Canvas ):
     if edgeWidth == None: edgeWidth = self.defaultLineWidth
 
     # SVG markers
-    edgeStr = 'stroke:%s; stroke-width:%d;'%(_ColorToSVG(edgeColor),int(edgeWidth))
+    edgeStr = 'stroke="%s" stroke-width="%d"'%(_ColorToSVG(edgeColor),int(edgeWidth))
     if dash is not None:
-      edgeStr += 'stroke-dasharray:%d %d'%dash
+      edgeStr += ' stroke-dasharray="'
+      edgeStr += ' '.join([str(x) for x in dash])
+      edgeStr += '"'
+
 
     # draw it
-    outStr = '<polygon style="%s %s" points="%s"/>\n'%(fillStr,edgeStr,pointStr)
+    outStr = '<svg:polygon %s %s points="%s">'%(fillStr,edgeStr,pointStr)
+    if kwargs.has_key('bodyText'):
+      outStr+=kwargs['bodyText']
+    outStr += '</svg:polygon>\n'
     self._txt = self._txt + outStr
 
   def drawEllipse(self, x1,y1,x2,y2,
@@ -348,22 +369,31 @@ class SVGCanvas( Canvas ):
           
     # do the fill
     if filling:
-      fillStr = 'fill:%s;'%_ColorToSVG(fillColor)
+      fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
     else:
-      fillStr = 'fill:none;'
+      fillStr = 'fill="none"'
 
     # set color for edge...
     if not edgeColor:
       edgeColor = self.defaultLineColor
     # set edge width...
-    if edgeWidth == None: edgeWidth = self.defaultLineWidth
+    if edgeWidth == None:
+      edgeWidth = self.defaultLineWidth
 
-    edgeStr = 'stroke:%s; stroke-width:%d;'%(_ColorToSVG(edgeColor),int(edgeWidth))
+    edgeStr = 'stroke="%s" stroke-width="%d"'%(_ColorToSVG(edgeColor),int(edgeWidth))
     if dash is not None:
-      edgeStr += 'stroke-dasharray:%d %d'%dash
+      edgeStr += ' stroke-dasharray="'
+      edgeStr += ' '.join([str(x) for x in dash])
+      edgeStr += '"'
 
     # draw it
-    outStr = '<ellipse style="%s %s" %s/>\n'%(fillStr,edgeStr,ellipseStr)
+    mods = [fillStr,edgeStr,ellipseStr]
+    if kwargs.has_key('extraAttribs'):
+      mods.append(kwargs['extraAttribs'])
+    outStr = '<svg:ellipse %s>'%(' '.join(mods))
+    if kwargs.has_key('bodyText'):
+      outStr+=kwargs['bodyText']
+    outStr += '</svg:ellipse>\n'
     self._txt = self._txt + outStr
 
 
@@ -382,9 +412,9 @@ class SVGCanvas( Canvas ):
           
     # do the fill
     if filling:
-      fillStr = 'fill:%s;'%_ColorToSVG(fillColor)
+      fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
     else:
-      fillStr = 'fill:none;'
+      fillStr = 'fill="none"'
     arcStr = self._FormArcStr(x1,y1,x2,y2,theta1,extent)
 
     if not filling:
@@ -405,16 +435,26 @@ class SVGCanvas( Canvas ):
     if edgeWidth == None: edgeWidth = self.defaultLineWidth
 
     # SVG markers
-    edgeStr = 'stroke:%s; stroke-width:%d;'%(_ColorToSVG(edgeColor),int(edgeWidth))
+    edgeStr = 'stroke="%s" stroke-width"%d"'%(_ColorToSVG(edgeColor),int(edgeWidth))
     if dash is not None:
-      edgeStr += 'stroke-dasharray:%d %d'%dash
+      edgeStr += ' stroke-dasharray="'
+      edgeStr += ' '.join([str(x) for x in dash])
+      edgeStr += '"'
+
 
     # draw it
     if not filling:
-      outStr = '<path style="%s %s" d="%s"/>\n'%(fillStr,edgeStr,pathStr)
+      outStr = '<svg:path %s %s d="%s">'%(fillStr,edgeStr,pathStr)
+      if kwargs.has_key('bodyText'):
+        outStr+=kwargs['bodyText']
+      outStr += '</svg:path>\n'
     else:
-      outStr = '<path style="%s" d="%s"/>\n'%(fillStr,fillPathStr)
-      outStr = outStr+'<path style="fill:none; %s" d="%s"/>\n'%(edgeStr,strokePathStr)      
+      outStr = '<svg:path %s d="%s">'%(fillStr,fillPathStr)
+      outStr += '</svg:path>\n'
+      outStr = outStr+'<svg:path fill="none" %s d="%s">'%(edgeStr,strokePathStr)      
+      if kwargs.has_key('bodyText'):
+        outStr+=kwargs['bodyText']
+      outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
 
   def drawCurve(self, x1,y1,x2,y2,x3,y3,x4,y4,
@@ -434,9 +474,9 @@ class SVGCanvas( Canvas ):
           
     # do the fill
     if filling:
-      fillStr = 'fill:%s;'%_ColorToSVG(fillColor)
+      fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
     else:
-      fillStr = 'fill:none;'
+      fillStr = 'fill="none"'
 
     # set color for edge...
     if not edgeColor:
@@ -446,12 +486,17 @@ class SVGCanvas( Canvas ):
     if edgeWidth == None: edgeWidth = self.defaultLineWidth
 
     # SVG markers
-    edgeStr = 'stroke:%s; stroke-width:%d;'%(_ColorToSVG(edgeColor),int(edgeWidth))
+    edgeStr = 'stroke="%s" stroke-width="%d"'%(_ColorToSVG(edgeColor),int(edgeWidth))
     if dash is not None:
-      edgeStr += 'stroke-dasharray:%d %d'%dash
+      edgeStr += ' stroke-dasharray="'
+      edgeStr += ' '.join([str(x) for x in dash])
+      edgeStr += '"'
 
     # draw it
-    outStr = '<path style="%s %s" d="%s"/>\n'%(fillStr,edgeStr,curveStr)
+    outStr = '<svg:path %s %s d="%s">'%(fillStr,edgeStr,curveStr)
+    if kwargs.has_key('bodyText'):
+      outStr+=kwargs['bodyText']
+    outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
 
   
@@ -478,28 +523,30 @@ class SVGCanvas( Canvas ):
       #  the SVG spec and the behavior of Adobe's SVG plugin.  If you want it to work
       #  in IBM's SVGView, you'll have to use the second (commented out) form.
       # Ah, the joys of using mature technologies. ;-)
-      outStr = outStr + '<g transform="translate(%.2f,%.2f) rotate(%.2f)">\n'%(x,y,360-angle)
-      #outStr = outStr + '<g transform="rotate(%.2f) translate(%.2f,%.2f)">\n'%(360-angle,x,y)
+      outStr += '<svg:g transform="translate(%.2f,%.2f) rotate(%.2f)">\n'%(x,y,360-angle)
+      #outStr += '<svg:g transform="rotate(%.2f) translate(%.2f,%.2f)">\n'%(360-angle,x,y)
       xLoc = 0
       yLoc = 0
     else:
       xLoc = x
       yLoc = y
+      outStr +='<svg:g>'
     lines = string.split(s,'\n')
     lineHeight = self.fontHeight(font)
     yP = yLoc
     for line in lines:
-      outStr = outStr + self._drawStringOneLine(line,xLoc,yP,fontStr,svgColor,**kwargs)
+      outStr += self._drawStringOneLine(line,xLoc,yP,fontStr,svgColor,**kwargs)
       yP = yP + lineHeight
 
-    if angle != 0:
-      outStr = outStr + '</g>'
+    if kwargs.has_key('bodyText'):
+      outStr+=kwargs['bodyText']
+    outStr += '</svg:g>'
 
     self._txt = self._txt + outStr
 		
   def _drawStringOneLine(self,line,x,y,fontStr,svgColor,**kwargs):
-    styleStr = 'style="%s stroke:%s"'%(fontStr,svgColor)
-    return '  <text %s x="%.2f" y="%.2f">%s</text>\n'%(styleStr,x,y,line)
+    styleStr = '%s fill="%s"'%(fontStr,svgColor)
+    return '  <svg:text %s x="%.2f" y="%.2f">%s</svg:text>\n'%(styleStr,x,y,line)
 
   def drawFigure(self, partList,
                  edgeColor=None, edgeWidth=None, fillColor=None, closed=0,
@@ -516,9 +563,9 @@ class SVGCanvas( Canvas ):
           
     # do the fill
     if filling:
-      fillStr = 'fill:%s;'%_ColorToSVG(fillColor)
+      fillStr = 'fill="%s"'%_ColorToSVG(fillColor)
     else:
-      fillStr = 'fill:none;'
+      fillStr = 'fill="none"'
 
     # set color for edge...
     if not edgeColor:
@@ -527,9 +574,11 @@ class SVGCanvas( Canvas ):
     if edgeWidth == None: edgeWidth = self.defaultLineWidth
 
     # SVG markers
-    edgeStr = 'stroke:%s; stroke-width:%d;'%(_ColorToSVG(edgeColor),int(edgeWidth))
+    edgeStr = 'stroke="%s" stroke-width="%d"'%(_ColorToSVG(edgeColor),int(edgeWidth))
     if dash is not None:
-      edgeStr += 'stroke-dasharray:%d %d'%dash
+      edgeStr += ' stroke-dasharray="'
+      edgeStr += ' '.join([str(x) for x in dash])
+      edgeStr += '"'
 
     pathStr = ''
     for item in partList:
@@ -553,7 +602,10 @@ class SVGCanvas( Canvas ):
 
     if closed == 1:
       pathStr = pathStr + 'Z'
-    outStr = '<path style="%s %s" d="%s"/>\n'%(edgeStr,fillStr,pathStr)
+    outStr = '<svg:path %s %s d="%s">'%(edgeStr,fillStr,pathStr)
+    if kwargs.has_key('bodyText'):
+      outStr+=kwargs['bodyText']
+    outStr += '</svg:path>\n'
     self._txt = self._txt + outStr
 
   def drawImage(self, image, x1,y1, x2=None,y2=None, **kwargs):
@@ -571,8 +623,11 @@ class SVGCanvas( Canvas ):
       im_width = abs(x2-x1)
     if y2 is not None:
       im_height = abs(y2-y1)
-    outStr = '<image x="%.2f" y="%.2f" width="%.2f" height="%.2f" xlink:href="%s"/>\n'%\
+    outStr = '<svg:image x="%.2f" y="%.2f" width="%.2f" height="%.2f" xlink:href="%s">'%\
              (x1,y1,im_width,im_height,imageFileName)
+    if kwargs.has_key('bodyText'):
+      outStr+=kwargs['bodyText']
+    outStr += '</svg:image>\n'
     self._txt = self._txt + outStr
 
   def stringWidth(self, s, font=None):

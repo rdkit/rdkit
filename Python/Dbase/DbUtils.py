@@ -26,7 +26,7 @@ import sys,types,string
 from Dbase import DbInfo
 
 def GetColumns(dBase,table,fieldString,user='sysdba',password='masterkey',
-               join=''):
+               join='',cn=None):
   """ gets a set of data from a table
 
     **Arguments**
@@ -48,7 +48,8 @@ def GetColumns(dBase,table,fieldString,user='sysdba',password='masterkey',
      - a list of the data
 
   """
-  cn = DbModule.connect(dBase,user,password)
+  if not cn:
+    cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
   cmd = 'select %s from %s'%(fieldString,table)
   if join:
@@ -59,7 +60,7 @@ def GetColumns(dBase,table,fieldString,user='sysdba',password='masterkey',
   return c.fetchall()
 
 def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='masterkey',
-            removeDups=-1,join='',forceList=0,transform=None,randomAccess=1,extras=None):
+            removeDups=-1,join='',forceList=0,transform=None,randomAccess=1,extras=None,cn=None):
   """ a more flexible method to get a set of data from a table
 
     **Arguments**
@@ -83,7 +84,8 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
       - EFF: this isn't particularly efficient
 
   """
-  cn = DbModule.connect(dBase,user,password)
+  if not cn:
+    cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
   cmd = 'select %s from %s'%(fieldString,table)
   if join:
@@ -130,7 +132,7 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
 
 
 def DatabaseToExcel(dBase,table,fields='*',join='',where='',wrapper=None,
-                    user='sysdba',password='masterkey',lowMemory=False):
+                    user='sysdba',password='masterkey',lowMemory=False,cn=None):
   """ Pulls the contents of a database and puts them in an Excel worksheet
 
     **Arguments**
@@ -165,7 +167,8 @@ def DatabaseToExcel(dBase,table,fields='*',join='',where='',wrapper=None,
     join = 'join %s'%(join)
     
   sqlCommand = 'select %s from %s %s %s'%(fields,table,join,where)
-  cn = DbModule.connect(dBase,user,password)
+  if not cn:
+    cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
   try:
     c.execute(sqlCommand)
@@ -213,7 +216,7 @@ def DatabaseToExcel(dBase,table,fields='*',join='',where='',wrapper=None,
 
 
 def DatabaseToText(dBase,table,fields='*',join='',where='',wrapper=None,
-                  user='sysdba',password='masterkey',delim=','):
+                  user='sysdba',password='masterkey',delim=',',cn=None):
   """ Pulls the contents of a database and makes a deliminted text file from them
 
     **Arguments**
@@ -246,7 +249,8 @@ def DatabaseToText(dBase,table,fields='*',join='',where='',wrapper=None,
   if len(join) and join.strip().find('join') == -1:
     join = 'join %s'%(join)
   sqlCommand = 'select %s from %s %s %s'%(fields,table,join,where)
-  cn = DbModule.connect(dBase,user,password)
+  if not cn:
+    cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
   c.execute(sqlCommand)
   headers = []
@@ -358,6 +362,7 @@ def _AdjustColHeadings(colHeadings,maxColLabelLen):
     colHeadings[i] = string.strip(colHeadings[i])
     colHeadings[i] = string.replace(colHeadings[i],' ','_')
     colHeadings[i] = string.replace(colHeadings[i],'-','_')
+    colHeadings[i] = string.replace(colHeadings[i],'.','_')
 
     if len(colHeadings[i]) > maxColLabelLen:
       # interbase (at least) has a limit on the maximum length of a column name
@@ -406,13 +411,14 @@ def _insertBlock(conn,sqlStr,block,silent=False):
   return res
 
 def _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
-                 nullMarker=None,blockSize=100):
+                 nullMarker=None,blockSize=100,cn=None):
   """ *For Internal Use*
 
     (drops and) creates a table and then inserts the values
 
   """
-  cn = DbModule.connect(dBase,user,password)
+  if not cn:
+    cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
   try:
     c.execute('drop table %s'%(table))

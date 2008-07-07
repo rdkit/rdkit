@@ -59,6 +59,8 @@ class pySparseIntVect(object):
       else:
         res+=abs(v)
     return res
+  def GetTotalVal(self,useAbs=False):
+    return self.Sum(useAbs=useAbs)
   
 
   def __eq__(self,other):
@@ -419,6 +421,12 @@ def pyDiceSimilarity(v1,v2,bounds=None,useAbs=False):
       numer=v3.GetTotalVal(useAbs=useAbs)
     res = 2.*numer/denom
 
+  return res
+
+def DotProduct(bv1,bv2):
+  res = 0.0
+  for k,v in bv1.GetNonzeroElements().iteritems():
+    res += v*bv2[k]
   return res
 
 #------------------------------------

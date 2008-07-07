@@ -1,45 +1,15 @@
-# $Id: ShowFeats.py 491 2007-07-27 08:13:04Z landrgr1 $
+# $Id: ShowFeats.py 537 2007-08-20 14:54:35Z landrgr1 $
 #
 # Created by Greg Landrum Aug 2006
 #
 #
-_version = "0.3.1"
+_version = "0.3.2"
 
 
 _usage="""
    ShowFeats [optional args] <filenames>
 
   if "-" is provided as a filename, data will be read from stdin (the console)
-
-Optional arguments:
-   -x "list":     specify a comma-separated list of feature types to be excluded from
-                  the visualization
-
-   -f "fdef":
-     or
-   --fdef="fdef": specify the name of the fdef file.
-
-   --sd:
-     or
-   --sdf:         expect the input to be one or more SD files (otherwise mol files
-                  are expected)
-
-   --nodirs:      do not calculate and display feature directions
-
-   --noheads:     do not put heads on the feature-direction arrows (only cylinders 
-                  will be drawn)
-
-   --noclear:     do not clear PyMol before starting
-
-   --write:       print out the feature locations in a form suitable for reading by
-                  FeatureScorePoses.sh
-
-   --noMols:      only show features, not molecules
-                  
-   --verbose:     print the names of the molecules to the console as they are processed. This can make
-                  the output from the --write option more readable when processing SD files.
-                  
-   
 """
 
 _welcomeMessage="This is ShowFeats version %s"%(_version)
@@ -220,25 +190,29 @@ def ShowMolFeats(mol,factory,viewer,radius=0.5,confId=-1,showOnly=True,
       elif family=='Donor':
         aids = feat.GetAtomIds()
         if len(aids)==1:
-          if len(mol.GetAtomWithIdx(aids[0]).GetNeighbors())==1:
+          featAtom=mol.GetAtomWithIdx(aids[0])
+          hvyNbrs=[x for x in featAtom.GetNeighbors() if x.GetAtomicNum()!=1]
+          if len(hvyNbrs)==1:
             ps,fType = FeatDirUtils.GetDonor1FeatVects(mol.GetConformer(confId),
                                                        aids,scale=1.0)
-          elif len(mol.GetAtomWithIdx(aids[0]).GetNeighbors())==2:
+          elif len(hvyNbrs)==2:
             ps,fType = FeatDirUtils.GetDonor2FeatVects(mol.GetConformer(confId),
                                                        aids,scale=1.0)
-          elif len(mol.GetAtomWithIdx(aids[0]).GetNeighbors())==3:
+          elif len(hvyNbrs)==3:
             ps,fType = FeatDirUtils.GetDonor3FeatVects(mol.GetConformer(confId),
                                                        aids,scale=1.0)
       elif family=='Acceptor':
         aids = feat.GetAtomIds()
         if len(aids)==1:
-          if len(mol.GetAtomWithIdx(aids[0]).GetNeighbors())==1:
+          featAtom=mol.GetAtomWithIdx(aids[0])
+          hvyNbrs=[x for x in featAtom.GetNeighbors() if x.GetAtomicNum()!=1]
+          if len(hvyNbrs)==1:
             ps,fType = FeatDirUtils.GetAcceptor1FeatVects(mol.GetConformer(confId),
                                                           aids,scale=1.0)
-          elif len(mol.GetAtomWithIdx(aids[0]).GetNeighbors())==2:
+          elif len(hvyNbrs)==2:
             ps,fType = FeatDirUtils.GetAcceptor2FeatVects(mol.GetConformer(confId),
                                                        aids,scale=1.0)
-          elif len(mol.GetAtomWithIdx(aids[0]).GetNeighbors())==3:
+          elif len(hvyNbrs)==3:
             ps,fType = FeatDirUtils.GetAcceptor3FeatVects(mol.GetConformer(confId),
                                                        aids,scale=1.0)
 

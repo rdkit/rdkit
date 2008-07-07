@@ -65,3 +65,14 @@ NHOHCount.__doc__="Number of NHs or OHs"
 NHOHCount.version="1.0.0"
 
   
+def RingCount(mol):
+  " Number of rings a molecule has."
+  return mol.GetRingInfo().NumRings()
+RingCount.version = "1.0.0"
+
+def HeavyAtomCount(mol):
+  " Number of heavy atoms a molecule."
+  return mol.GetNumAtoms(onlyHeavy=True)
+HeavyAtomCount.version = "1.0.0"
+
+

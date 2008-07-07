@@ -51,7 +51,7 @@ def ClusterData(data,nPts,distThresh,isDistData=False):
     for j in range(i):
       if not isDistData:
         dv = data[i]-data[j]
-        dij = sqrt(dv*dv)
+        dij = numpy.sqrt(dv*dv)
       else:
         dij = data[dmIdx]
         dmIdx+=1

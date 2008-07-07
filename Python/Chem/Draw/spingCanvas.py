@@ -43,19 +43,19 @@ def addCanvasLine(canvas,p1,p2,color=(0,0,0),color2=None,**kwargs):
     color = convertColor(color)
     canvas.drawLine(p1[0],p1[1],mp[0],mp[1],
                     color=color,
-                    width=kwargs.get('linewidth',1),
+                    width=int(kwargs.get('linewidth',1)),
                     dash=kwargs.get('dash',None))
     color2 = convertColor(color2)
     canvas.drawLine(mp[0],mp[1],p2[0],p2[1],
                     color=color2,
-                    width=kwargs.get('linewidth',1),
+                    width=int(kwargs.get('linewidth',1)),
                     dash=kwargs.get('dash',None))
   else:
     color = convertColor(color)
     width=kwargs.get('linewidth',1)
     canvas.drawLine(p1[0],p1[1],p2[0],p2[1],
                     color=color,
-                    width=width,
+                    width=int(width),
                     dash=kwargs.get('dash',None))
 
 def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
@@ -81,7 +81,7 @@ def addCanvasPolygon(canvas,ps,color=(0,0,0),**kwargs):
   edgeWidth=kwargs.get('lineWidth',0)
   edgeColor=pid.transparent
   color = convertColor(color)
-  canvas.drawPolygon(ps,edgeColor=edgeColor,edgeWidth=edgeWidth,fillColor=color,closed=1)
+  canvas.drawPolygon(ps,edgeColor=edgeColor,edgeWidth=int(edgeWidth),fillColor=color,closed=1)
 
 def addCanvasDashedWedge(canvas,p1,p2,p3,dash=(2,2),color=(0,0,0),
                          color2=None,**kwargs):

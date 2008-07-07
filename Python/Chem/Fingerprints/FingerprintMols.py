@@ -19,9 +19,6 @@ Sample Usage:
 """
 import Chem
 from Chem import MACCSkeys
-from Dbase.DbConnection import DbConnect
-from Dbase import DbInfo,DbUtils,DbModule
-from ML.Data import DataUtils
 from ML.Cluster import Murtagh
 import DataStructs
 import sys
@@ -38,7 +35,23 @@ def error(msg):
 def message(msg):
   sys.stderr.write(msg)
 
+def GetDaylightFingerprint(mol):
+  """ uses default parameters """
+  details = FingerprinterDetails()
+  return apply(FingerprintMol,(mol,),details.__dict__)
 
+def FoldFingerprintToTargetDensity(fp,**fpArgs):
+  nOn = fp.GetNumOnBits()
+  nTot = fp.GetNumBits()
+  while( float(nOn)/nTot < fpArgs['tgtDensity'] ):
+    if nTot / 2 > fpArgs['minSize']:
+      fp = DataStructs.FoldFingerprint(fp,2)
+      nOn = fp.GetNumOnBits()
+      nTot = fp.GetNumBits()
+    else:
+      break
+  return fp
+  
 def FingerprintMol(mol,
                    fingerprinter=Chem.DaylightFingerprint,
                    **fpArgs):
@@ -48,12 +61,14 @@ def FingerprintMol(mol,
     
   if fingerprinter != Chem.DaylightFingerprint:
     fp = fingerprinter(mol,**fpArgs)
+    fp = FoldFingerprintToTargetDensity(fp,**fpArgs)
   else:
     fp = fingerprinter(mol,fpArgs['minPath'],fpArgs['maxPath'],
                        fpArgs['fpSize'],fpArgs['bitsPerHash'],
                        fpArgs['useHs'],fpArgs['tgtDensity'],
                        fpArgs['minSize'])
   return fp
+
 
 def FingerprintsFromSmiles(dataSource,idCol,smiCol,
                            fingerprinter=Chem.DaylightFingerprint,
@@ -72,6 +87,30 @@ def FingerprintsFromSmiles(dataSource,idCol,smiCol,
       mol = Chem.MolFromSmiles(smi)
     except:
       mol = None
+    if mol:
+      fp = FingerprintMol(mol,fingerprinter,**fpArgs)
+      res.append((id,fp))
+      nDone += 1
+      if reportFreq>0 and not nDone % reportFreq:
+        message('Done %d molecules\n'%(nDone))
+      if maxMols > 0 and nDone >= maxMols:
+        break
+    else:
+      error('Problems parsing SMILES: %s\n'%smi)
+  return res
+
+def FingerprintsFromMols(mols,
+                         fingerprinter=Chem.DaylightFingerprint,
+                         reportFreq=10,maxMols=-1,
+                         **fpArgs):
+  """ fpArgs are passed as keyword arguments to the fingerprinter
+
+  Returns a list of 2-tuples: (id,fp)
+  
+  """
+  res = []
+  nDone = 0
+  for id,mol in mols:
     if mol:
       fp = FingerprintMol(mol,fingerprinter,**fpArgs)
       res.append((id,fp))
@@ -113,9 +152,12 @@ def FingerprintsFromPickles(dataSource,idCol,pklCol,
       error('Problems parsing pickle for id: %s\n'%id)
   return res
 
-def FingerprintsFromDetails(details):
+def FingerprintsFromDetails(details,reportFreq=10):
   data = None
   if details.dbName and details.tableName:
+    from Dbase.DbConnection import DbConnect
+    from Dbase import DbInfo
+    from ML.Data import DataUtils
     try:
       conn = DbConnect(details.dbName,details.tableName)
     except:
@@ -125,16 +167,12 @@ def FingerprintsFromDetails(details):
       traceback.print_exc()
     if not details.idName:
       details.idName=DbInfo.GetColumnNames(details.dbName,details.tableName)[0]
-    dataName = details.smilesName
-    if details.molPklName:
-      dataName = details.molPklName
-    else:
-      dataName = details.smilesName
     dataSet = DataUtils.DBToData(details.dbName,details.tableName,
-                                 what='%s,%s'%(details.idName,dataName))
+                                 what='%s,%s'%(details.idName,details.smilesName))
     idCol = 0
     smiCol = 1
-  elif details.inFileName:
+  elif details.inFileName and details.useSmiles:
+    from ML.Data import DataUtils
     conn = None
     if not details.idName:
       details.idName='ID'
@@ -148,11 +186,42 @@ def FingerprintsFromDetails(details):
       
     idCol = 0
     smiCol = 1
+  elif details.inFileName and details.useSD:
+    conn = None
+    dataset=None
+    if not details.idName:
+      details.idName='ID'
+    dataSet = []
+    try:
+      s = Chem.SDMolSupplier(details.inFileName)
+    except:
+      import traceback
+      error('Problems reading from file %s\n'%(details.inFileName))
+      traceback.print_exc()
+    else:
+      while 1:
+        try:
+          m = s.next()
+        except StopIteration:
+          break
+        if m:
+          dataSet.append(m)
+          if reportFreq>0 and not len(dataSet) % reportFreq:
+            message('Read %d molecules\n'%(len(dataSet)))
+            if details.maxMols > 0 and len(dataSet) >= details.maxMols:
+              break
+
+    for i,mol in enumerate(dataSet):
+      if mol.HasProp(details.idName):
+        nm = mol.GetProp(details.idName)
+      else:
+        nm = mol.GetProp('_Name')
+      dataSet[i] = (nm,mol)
   else:
      dataSet = None
       
   fps = None
-  if dataSet:
+  if dataSet and not details.useSD:
     data = dataSet.GetNamedData()
     if not details.molPklName:
       fps = apply(FingerprintsFromSmiles,(data,idCol,smiCol),
@@ -160,6 +229,9 @@ def FingerprintsFromDetails(details):
     else:
       fps = apply(FingerprintsFromPickles,(data,idCol,smiCol),
                   details.__dict__)
+  elif dataSet and details.useSD:
+    fps = apply(FingerprintsFromMols,(dataSet,),details.__dict__)
+    
   if fps:
     if details.outFileName:
       outF = open(details.outFileName,'wb+')
@@ -168,6 +240,8 @@ def FingerprintsFromDetails(details):
       outF.close()
     dbName = details.outDbName or details.dbName
     if details.outTableName and dbName:
+      from Dbase.DbConnection import DbConnect
+      from Dbase import DbInfo,DbUtils,DbModule
       conn = DbConnect(dbName)
       #
       #  We don't have a db open already, so we'll need to figure out
@@ -230,12 +304,14 @@ class FingerprinterDetails(object):
     self.useValence=0
     self.bitsPerHash=4
     self.smilesName='SMILES'
-    self.molPklName=''
     self.maxMols=-1
     self.outFileName=''
     self.outTableName=''
     self.inFileName=''
     self.replaceTable=True
+    self.molPklName=''
+    self.useSmiles=True
+    self.useSD=False
 
   def _screenerInit(self):
     self.metric = DataStructs.TanimotoSimilarity
@@ -299,6 +375,9 @@ Usage: FingerprintMols.py [args] <fName>
 
     - --smilesName=val: sets the name of the SMILES column
       in the input database.  Default is *SMILES*.
+
+    - --useSD:  Assume that the input file is an SD file, not a SMILES
+       table.
 
     - --idName=val: sets the name of the id column in the input
       database.  Defaults to be the name of the first db column
@@ -382,6 +461,7 @@ def ParseArgs(details=None):
                                  'bitsPerHash=',
                                  'smilesName=',
                                  'molPkl=',
+                                 'useSD',
                                  'idName=',
                                  'discrim',
                                  'outTable=',
@@ -450,7 +530,10 @@ def ParseArgs(details=None):
     elif arg=='--smilesName':
       details.smilesName = val
     elif arg=='--molPkl':
-      details.molPklName=val
+      details.molPklName = val
+    elif arg=='--useSD':
+      details.useSmiles=False
+      details.useSD=True
     elif arg=='--idName':
       details.idName = val
     elif arg=='--maxMols':

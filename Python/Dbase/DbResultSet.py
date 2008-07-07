@@ -21,6 +21,7 @@ class DbResultBase(object):
     self.extras = extras
     self.Reset()
     self._initColumnNamesAndTypes()
+    self.Reset()
 
   def Reset(self):
     """ implement in subclasses

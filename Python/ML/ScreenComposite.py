@@ -129,7 +129,7 @@ try:
 except ImportError:
   Excel = None
   
-__VERSION_STRING="3.2.8"
+__VERSION_STRING="3.3.0"
 
 def message(msg,noRet=0):
   """ emits messages to _sys.stdout_
@@ -209,6 +209,15 @@ def CollectResults(indices,dataSet,composite,callback=None,appendExamples=0,
   #for i in range(len(composite)):
   #  print '  ',i,'TRAIN:',composite[i][0]._trainIndices
 
+  for j in range(len(composite)):
+    tmp = composite.GetModel(j)
+    if hasattr(tmp,'_trainIndices') and type(tmp._trainIndices)!=types.DictType:
+      tis = {}
+      if hasattr(tmp,'_trainIndices'):
+        for v in tmp._trainIndices: tis[v]=1
+      tmp._trainIndices=tis
+
+
   nPts = len(indices)
   res = [None]*nPts
   for i in range(nPts):
@@ -218,8 +227,7 @@ def CollectResults(indices,dataSet,composite,callback=None,appendExamples=0,
       use = []
       for j in range(len(composite)):
         mdl = composite.GetModel(j)
-        if not hasattr(mdl,'_trainIndices') or \
-           idx not in mdl._trainIndices:
+        if not mdl._trainIndices.get(idx,0):
           use.append(j)
     else:
       use = None
@@ -1138,7 +1146,7 @@ def MakePredPlot(details,indices,data,goodVotes,badVotes,nRes,idCol=0,verbose=0)
   set grid
   set nokey
   set term postscript enh color solid "Helvetica" 16
-  set term win
+  set term X
   """%(__VERSION_STRING,actLabel)
   gnuF.write(gnuHdr)
   plots = []
@@ -1435,7 +1443,7 @@ if __name__ == '__main__':
       xl = None
     for tol in details.screenVoteTol:
       if len(details.screenVoteTol)>1:
-        message('\n*****-----*****-----*****-----*****-----*****-----*****-----*****\n')
+        message('\n-----*****-----*****-----*****-----*****-----*****-----*****-----\n')
         message('Tolerance: %f'%tol)
       if xl:
         xlRow+=1  

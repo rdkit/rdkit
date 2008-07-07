@@ -3,7 +3,7 @@
 # Copyright (C) 2005,2006 Rational Discovery LLC
 #  All Rights Reserved
 #
-_version='0.9.46'
+_version='0.9.47'
 
 import os,sys
 from utils import comhack
@@ -42,6 +42,10 @@ _splashMessage="""
   Please see the file license.txt for information about the
   license.
 
+  This software is copyrighted.  The software may not be copied,
+  reproduced, translated or reduced to any electronic medium or
+  machine-readable form without the prior written consent of
+  Rational Discovery LLC.
 -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 """%(LocalConfig.applicationName,_version)
 
@@ -50,7 +54,7 @@ import os,sys
 if not os.environ.has_key('RDBASE') or not os.environ['RDBASE']:
   os.environ['RDBASE']=os.getcwd()
 import RDConfig
-from utils import chemdraw
+#from utils import chemdraw
 splashFilename = os.path.join(RDConfig.RDDocsDir,'Programs',LocalConfig.applicationName,
                               '%s-Splash.jpg'%LocalConfig.applicationName)
 if __name__=='__main__':
@@ -148,6 +152,11 @@ class Search3DApp(GuiBase.GuiBase):
     if not state:
       self._mbAdvancedActionMenu.setDisabled(True)
 
+    id=self._mbAdvancedActionMenu.insertItem(self.trUtf8('&Add Hs?'),
+                                             self.enableAddHs)
+    self._enableAddHsMenuId=id
+    self._mbAdvancedActionMenu.setItemChecked(self._enableAddHsMenuId,False)
+
   def expertModeEnabled(self):
     if hasattr(self,'_mbAdvancedActionMenu'):
       return self._mbAdvancedActionMenu.isItemChecked(self._expertModeMenuId)
@@ -162,6 +171,12 @@ class Search3DApp(GuiBase.GuiBase):
     self.searchWidget.enableExpertMode(state)
     self._fileMenu.setItemEnabled(self._fileLoadParamsId,state)
     
+  def enableAddHs(self,id=-1,state=None):
+    if state is None:
+      state = not self._mbAdvancedActionMenu.isItemChecked(self._enableAddHsMenuId)
+    self._mbAdvancedActionMenu.setItemChecked(self._enableAddHsMenuId,state)
+    self.searchWidget.addHs=state
+    
   def _initHelp(self):
     from StringIO import StringIO
     self._aboutWin = QDialog(None)
@@ -172,17 +187,21 @@ class Search3DApp(GuiBase.GuiBase):
 
     img = Image.open(splashFilename)
     d = ImageDraw.Draw(img)
-    fnt = ImageFont.truetype('arial.ttf',18)
-    sz = img.size
-    pos = sz[0]-120,sz[1]-25
-    d.text(pos,'Version: %s'%_version,font=fnt,fill=(0,0,0))
-    del d
-    sio = StringIO()
-    img.save(sio,format='bmp')
-    pix = QPixmap()
-    pix.loadFromData(sio.getvalue())
-    lab.setPixmap(pix)
-    vout.addWidget(lab)
+    try:
+      fnt = ImageFont.truetype('arial.ttf',18)
+    except IOError:
+      fnt = None
+    if fnt:
+      sz = img.size
+      pos = sz[0]-120,sz[1]-25
+      d.text(pos,'Version: %s'%_version,font=fnt,fill=(0,0,0))
+      del d
+      sio = StringIO()
+      img.save(sio,format='bmp')
+      pix = QPixmap()
+      pix.loadFromData(sio.getvalue())
+      lab.setPixmap(pix)
+      vout.addWidget(lab)
 
     hout = QHBoxLayout()
     vout.addLayout(hout)

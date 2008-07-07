@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms/Search3DWidget.ui'
+# Form implementation generated from reading ui file 'Search3DWidget.ui'
 #
-# Created: Fri Mar 10 08:37:59 2006
-#      by: The PyQt User Interface Compiler (pyuic) 3.11
+# Created: Thu Oct 19 08:53:50 2006
+#      by: The PyQt User Interface Compiler (pyuic) 3.16
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -29,7 +29,7 @@ class Search3DWidget(QWidget):
     layout11 = QGridLayout(None,1,1,0,2,"layout11")
 
     self.proteinFilename = QLineEdit(self.loadPage,"proteinFilename")
-    self.proteinFilename.setSizePolicy(QSizePolicy(3,0,0,0,self.proteinFilename.sizePolicy().hasHeightForWidth()))
+    self.proteinFilename.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Fixed,0,0,self.proteinFilename.sizePolicy().hasHeightForWidth()))
     self.proteinFilename.setMinimumSize(QSize(300,0))
     self.proteinFilename.setFrameShape(QLineEdit.LineEditPanel)
     self.proteinFilename.setFrameShadow(QLineEdit.Sunken)
@@ -37,13 +37,13 @@ class Search3DWidget(QWidget):
     layout11.addWidget(self.proteinFilename,1,1)
 
     self.molFileButton = QPushButton(self.loadPage,"molFileButton")
-    self.molFileButton.setSizePolicy(QSizePolicy(0,0,0,0,self.molFileButton.sizePolicy().hasHeightForWidth()))
+    self.molFileButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed,0,0,self.molFileButton.sizePolicy().hasHeightForWidth()))
     self.molFileButton.setMaximumSize(QSize(20,32767))
 
     layout11.addWidget(self.molFileButton,0,2)
 
     self.textLabel1_2 = QLabel(self.loadPage,"textLabel1_2")
-    self.textLabel1_2.setSizePolicy(QSizePolicy(5,5,0,0,self.textLabel1_2.sizePolicy().hasHeightForWidth()))
+    self.textLabel1_2.setSizePolicy(QSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred,0,0,self.textLabel1_2.sizePolicy().hasHeightForWidth()))
     self.textLabel1_2.setMinimumSize(QSize(0,0))
     self.textLabel1_2.setScaledContents(0)
     self.textLabel1_2.setAlignment(QLabel.AlignVCenter | QLabel.AlignRight)
@@ -51,7 +51,7 @@ class Search3DWidget(QWidget):
     layout11.addWidget(self.textLabel1_2,0,0)
 
     self.molFilename = QLineEdit(self.loadPage,"molFilename")
-    self.molFilename.setSizePolicy(QSizePolicy(3,0,0,0,self.molFilename.sizePolicy().hasHeightForWidth()))
+    self.molFilename.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Fixed,0,0,self.molFilename.sizePolicy().hasHeightForWidth()))
     self.molFilename.setMinimumSize(QSize(300,0))
     self.molFilename.setFrameShape(QLineEdit.LineEditPanel)
     self.molFilename.setFrameShadow(QLineEdit.Sunken)
@@ -59,7 +59,7 @@ class Search3DWidget(QWidget):
     layout11.addWidget(self.molFilename,0,1)
 
     self.proteinFileButton = QPushButton(self.loadPage,"proteinFileButton")
-    self.proteinFileButton.setSizePolicy(QSizePolicy(0,0,0,0,self.proteinFileButton.sizePolicy().hasHeightForWidth()))
+    self.proteinFileButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed,0,0,self.proteinFileButton.sizePolicy().hasHeightForWidth()))
     self.proteinFileButton.setMaximumSize(QSize(20,32767))
 
     layout11.addWidget(self.proteinFileButton,1,2)
@@ -71,7 +71,7 @@ class Search3DWidget(QWidget):
     loadPageLayout.addLayout(layout11)
     spacer14 = QSpacerItem(20,131,QSizePolicy.Minimum,QSizePolicy.Expanding)
     loadPageLayout.addItem(spacer14)
-    self.tabWidget.insertTab(self.loadPage,QString(""))
+    self.tabWidget.insertTab(self.loadPage,QString.fromLatin1(""))
 
     self.pcophorePage = QWidget(self.tabWidget,"pcophorePage")
     pcophorePageLayout = QVBoxLayout(self.pcophorePage,4,2,"pcophorePageLayout")
@@ -79,14 +79,14 @@ class Search3DWidget(QWidget):
     layout13_2 = QHBoxLayout(None,0,2,"layout13_2")
 
     self.fdefFileLabel = QLabel(self.pcophorePage,"fdefFileLabel")
-    self.fdefFileLabel.setSizePolicy(QSizePolicy(5,5,0,0,self.fdefFileLabel.sizePolicy().hasHeightForWidth()))
+    self.fdefFileLabel.setSizePolicy(QSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred,0,0,self.fdefFileLabel.sizePolicy().hasHeightForWidth()))
     self.fdefFileLabel.setMinimumSize(QSize(0,0))
     self.fdefFileLabel.setScaledContents(0)
     self.fdefFileLabel.setAlignment(QLabel.AlignVCenter | QLabel.AlignRight)
     layout13_2.addWidget(self.fdefFileLabel)
 
     self.fdefFilename = QLineEdit(self.pcophorePage,"fdefFilename")
-    self.fdefFilename.setSizePolicy(QSizePolicy(3,0,0,0,self.fdefFilename.sizePolicy().hasHeightForWidth()))
+    self.fdefFilename.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Fixed,0,0,self.fdefFilename.sizePolicy().hasHeightForWidth()))
     self.fdefFilename.setMinimumSize(QSize(300,0))
     self.fdefFilename.setMouseTracking(0)
     self.fdefFilename.setFrameShape(QLineEdit.LineEditPanel)
@@ -94,7 +94,7 @@ class Search3DWidget(QWidget):
     layout13_2.addWidget(self.fdefFilename)
 
     self.fdefFileButton = QPushButton(self.pcophorePage,"fdefFileButton")
-    self.fdefFileButton.setSizePolicy(QSizePolicy(0,0,0,0,self.fdefFileButton.sizePolicy().hasHeightForWidth()))
+    self.fdefFileButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed,0,0,self.fdefFileButton.sizePolicy().hasHeightForWidth()))
     self.fdefFileButton.setMaximumSize(QSize(20,32767))
     layout13_2.addWidget(self.fdefFileButton)
     pcophorePageLayout.addLayout(layout13_2)
@@ -107,7 +107,7 @@ class Search3DWidget(QWidget):
     self.addAtomsButton = QPushButton(self.pcophorePage,"addAtomsButton")
     layout7.addWidget(self.addAtomsButton)
     pcophorePageLayout.addLayout(layout7)
-    self.tabWidget.insertTab(self.pcophorePage,QString(""))
+    self.tabWidget.insertTab(self.pcophorePage,QString.fromLatin1(""))
 
     self.detailsPage = QWidget(self.tabWidget,"detailsPage")
     detailsPageLayout = QVBoxLayout(self.detailsPage,4,2,"detailsPageLayout")
@@ -133,21 +133,21 @@ class Search3DWidget(QWidget):
     molFileBoxLayout.setAlignment(Qt.AlignTop)
 
     self.textLabel1_2_3 = QLabel(self.molFileBox,"textLabel1_2_3")
-    self.textLabel1_2_3.setSizePolicy(QSizePolicy(5,5,0,0,self.textLabel1_2_3.sizePolicy().hasHeightForWidth()))
+    self.textLabel1_2_3.setSizePolicy(QSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred,0,0,self.textLabel1_2_3.sizePolicy().hasHeightForWidth()))
     self.textLabel1_2_3.setMinimumSize(QSize(0,0))
     self.textLabel1_2_3.setScaledContents(0)
     self.textLabel1_2_3.setAlignment(QLabel.AlignVCenter | QLabel.AlignRight)
     molFileBoxLayout.addWidget(self.textLabel1_2_3)
 
     self.sdFilename = QLineEdit(self.molFileBox,"sdFilename")
-    self.sdFilename.setSizePolicy(QSizePolicy(3,0,0,0,self.sdFilename.sizePolicy().hasHeightForWidth()))
+    self.sdFilename.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Fixed,0,0,self.sdFilename.sizePolicy().hasHeightForWidth()))
     self.sdFilename.setMinimumSize(QSize(300,0))
     self.sdFilename.setFrameShape(QLineEdit.LineEditPanel)
     self.sdFilename.setFrameShadow(QLineEdit.Sunken)
     molFileBoxLayout.addWidget(self.sdFilename)
 
     self.sdFileButton = QPushButton(self.molFileBox,"sdFileButton")
-    self.sdFileButton.setSizePolicy(QSizePolicy(0,0,0,0,self.sdFileButton.sizePolicy().hasHeightForWidth()))
+    self.sdFileButton.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed,0,0,self.sdFileButton.sizePolicy().hasHeightForWidth()))
     self.sdFileButton.setMaximumSize(QSize(20,32767))
     molFileBoxLayout.addWidget(self.sdFileButton)
     layout9.addWidget(self.molFileBox)
@@ -188,14 +188,14 @@ class Search3DWidget(QWidget):
     layout7_2.addWidget(self.clusterHitsButton)
 
     self.textLabel1 = QLabel(self.detailsPage,"textLabel1")
-    self.textLabel1.setSizePolicy(QSizePolicy(0,0,0,0,self.textLabel1.sizePolicy().hasHeightForWidth()))
+    self.textLabel1.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed,0,0,self.textLabel1.sizePolicy().hasHeightForWidth()))
     layout7_2.addWidget(self.textLabel1)
 
     self.numPicksBox = QSpinBox(self.detailsPage,"numPicksBox")
-    self.numPicksBox.setSizePolicy(QSizePolicy(0,0,0,0,self.numPicksBox.sizePolicy().hasHeightForWidth()))
+    self.numPicksBox.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,QSizePolicy.Fixed,0,0,self.numPicksBox.sizePolicy().hasHeightForWidth()))
     layout7_2.addWidget(self.numPicksBox)
     detailsPageLayout.addLayout(layout7_2)
-    self.tabWidget.insertTab(self.detailsPage,QString(""))
+    self.tabWidget.insertTab(self.detailsPage,QString.fromLatin1(""))
 
     self.resultsPage = QWidget(self.tabWidget,"resultsPage")
     resultsPageLayout = QVBoxLayout(self.resultsPage,4,2,"resultsPageLayout")
@@ -226,7 +226,7 @@ class Search3DWidget(QWidget):
     spacer9 = QSpacerItem(30,20,QSizePolicy.Expanding,QSizePolicy.Minimum)
     layout12.addItem(spacer9)
     resultsPageLayout.addLayout(layout12)
-    self.tabWidget.insertTab(self.resultsPage,QString(""))
+    self.tabWidget.insertTab(self.resultsPage,QString.fromLatin1(""))
     Search3DWidgetLayout.addWidget(self.tabWidget)
 
     self.languageChange()

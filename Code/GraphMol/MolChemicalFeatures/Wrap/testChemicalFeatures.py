@@ -24,6 +24,11 @@ class TestCase(unittest.TestCase):
     cfac = ChemicalFeatures.BuildFeatureFactory('../test_data/featDef.txt')
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
 
+    fNames = cfac.GetFeatureFamilies()
+    self.failUnless(len(fNames) == 2)
+    self.failUnless(fNames[0] == 'HBondDonor')
+    self.failUnless(fNames[1] == 'HBondAcceptor')
+
     mol = Chem.MolFromSmiles("COCN")
     rdDistGeom.EmbedMolecule(mol, 30, 100)
 

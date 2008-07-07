@@ -8,16 +8,21 @@
 
 """
 import Chem
-import xmlrpclib
+import xmlrpclib,os
 
 
 _server=None
 class MolViewer(object):
-  def __init__(self,host='localhost',port=9123,force=0,**kwargs):
+  def __init__(self,host=None,port=9123,force=0,**kwargs):
     global _server
     if not force and _server is not None:
       self.server=_server
     else:
+      if not host:
+        if os.environ.has_key('PYMOL_RPCHOST'):
+          host = os.environ['PYMOL_RPCHOST']
+        else:
+          host = 'localhost'
       _server=None
       serv = xmlrpclib.Server('http://%s:%d'%(host,port))
       serv.ping()

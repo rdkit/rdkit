@@ -32,9 +32,6 @@ from qtGui.Search3D.forms.Search3DWidget import Search3DWidget as _Form
 from qtGui.Search3D.PharmacophoreMixin import PharmacophoreMixin
 from qtGui.Search3D.ExcludedVolumeMixin import ExcludedVolumeMixin
 
-from qtGui.DbQueryWidgetImpl import insertQueryWidget
-from Chem.Suppliers.DbMolSupplier import ForwardDbMolSupplier as DbMolSupplier
-
 class Search3DWidget(_Form,PharmacophoreMixin,ExcludedVolumeMixin):
   def __init__(self,*args,**kwargs):
     _Form.__init__(self,*args,**kwargs)
@@ -57,6 +54,7 @@ class Search3DWidget(_Form,PharmacophoreMixin,ExcludedVolumeMixin):
 
     self.excludedAtoms = {}
     self.useDirs=True
+    self.addHs=False
 
     self.showProteinStateChanged()
 
@@ -116,10 +114,18 @@ class Search3DWidget(_Form,PharmacophoreMixin,ExcludedVolumeMixin):
       QToolTip.add(self.cdxGrabButton,self.trUtf8("Select the active molecule(s) in ChemDraw and attempt to align them to the current pharmacophore."))
       self.connect(self.cdxGrabButton,SIGNAL('clicked()'),self.cdxGrab)
       self.cdxGrabButton.show()
+    else:
+      self.cdxGrabButton = QPushButton('Grab Smiles From Clipboard',self.resultsPage)
+      self.resultsPage.layout().addWidget(self.cdxGrabButton)
+      QToolTip.add(self.cdxGrabButton,self.trUtf8("Construct molecule(s) from SMILES string(s) on the clipboard and attempt to align them to the current pharmacophore."))
+      self.connect(self.cdxGrabButton,SIGNAL('clicked()'),self.smilesGrab)
+      self.cdxGrabButton.show()
 
   def _initContents(self):
     self.enablePages()
     if hasattr(self.topLevelWidget(),'enableDbWidget') and self.topLevelWidget().enableDbWidget:
+      from qtGui.DbQueryWidgetImpl import insertQueryWidget
+
       layout10 = QHBoxLayout(None,0,2,"layout10")
 
       self.dbRadio = QRadioButton(self.inputTypeGroup,"dbRadio")
@@ -479,6 +485,7 @@ class Search3DWidget(_Form,PharmacophoreMixin,ExcludedVolumeMixin):
       self.targets = saveTgts
 
   def addTargetsFromDb(self,conn=None):
+    from Chem.Suppliers.DbMolSupplier import ForwardDbMolSupplier as DbMolSupplier
     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
     rawD = self.molDbWidget.getData(randomAccess=0)
     try:
@@ -520,7 +527,7 @@ class Search3DWidget(_Form,PharmacophoreMixin,ExcludedVolumeMixin):
       targets=[]
     try:
       SearchUtils.InitializeTargets(supplier,progressCallback=dlg,
-                                    res=targets)
+                                    res=targets,addHs=self.addHs)
     except qtUtils.ProgressStop:
       qtUtils.warning("Aborted")
     except:
@@ -856,7 +863,25 @@ class Search3DWidget(_Form,PharmacophoreMixin,ExcludedVolumeMixin):
     if not d:
       qtUtils.logger.debug('no data available from Chemdraw')
       return
-    smis = d.split('.')
+
+    self.smilesGrab(id=id,doSearch=doSearch,data=d)
+      
+  def smilesGrab(self,id=-1,doSearch=LocalConfig.searchOnCDXGrab,data=None):
+    if not hasattr(self,'activeFeats') or not self.activeFeats:
+      qtUtils.error('Please define pharmacophore features and distances before grabbing molecules')
+      return
+    if not hasattr(self,'distAssignmentWidget') or not self.distAssignmentWidget or \
+       not hasattr(self.distAssignmentWidget,'rows') or \
+       not self.distAssignmentWidget.rows:
+      qtUtils.error('Please define pharmacophore distances before grabbing molecules')
+      return
+      
+    if data is None:
+      data = str(QApplication.clipboard().text())
+      if not data:
+        qtUtils.warning('No text on clipboard')
+        return
+    smis = data.split('.')
     mols = []
     numProblems=0
     for smi in smis:
@@ -871,14 +896,14 @@ class Search3DWidget(_Form,PharmacophoreMixin,ExcludedVolumeMixin):
       quantity = '%d molecule'%numProblems
       if numProblems > 1:
         quantity += 's'
-      msg = 'Problems were encountered building %s.\nPlease check the sketches in ChemDraw to ensure that they are correct.\n'%quantity
+      msg = 'Problems were encountered building %s.\nPlease check the data to ensure that they are correct.\n'%quantity
       if len(mols):
         msg += 'The other molecules were successfully added.'
       qtUtils.warning(msg)
     if not len(mols):
       return
     targets =[]
-    SearchUtils.InitializeTargets(mols,res=targets)
+    SearchUtils.InitializeTargets(mols,res=targets,addHs=self.addHs)
     pcophore = self.buildPharmacophore()
     excludes = self.buildExcludedVolumes()
     if doSearch:
@@ -888,7 +913,7 @@ class Search3DWidget(_Form,PharmacophoreMixin,ExcludedVolumeMixin):
                                 useDirs=self.useDirs,
                                 res=hits)
       if not hits:
-        qtUtils.information("no hits found among the chemdraw molecules",
+        qtUtils.information("no hits found among the new molecules",
                             caption="Search Results")
     else:
       hits = targets

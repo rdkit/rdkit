@@ -1,5 +1,6 @@
+# $Id$
 #
-#  Copyright (C) 2002  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
 """ Various bits and pieces for calculating Molecular descriptors
 
@@ -8,6 +9,8 @@ import RDConfig
 from ML.Descriptors import Descriptors
 from Chem import AvailDescriptors
 AvailDescriptors.Desensitize()
+from RDLogger import logger
+logger = logger()
 import re
 
 class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
@@ -45,7 +48,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     try:
       f = open(fileName,'wb+')
     except:
-      print 'cannot open output file %s for writing'%(fileName)
+      logger.error('cannot open output file %s for writing'%(fileName))
       return
     cPickle.dump(self,f)
     f.close()
@@ -61,17 +64,14 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
         a tuple of all descriptor values
 
     """
-    res = [None]*len(self.simpleList)
-    for i in range(len(self.simpleList)):
-      nm = self.simpleList[i]
+    res = [-666]*len(self.simpleList)
+    for i,nm in enumerate(self.simpleList):
       fn = AvailDescriptors.descDict.get(nm,lambda x:777)
-      #print '>',nm
       try:
         res[i] = fn(mol)
       except:
         import traceback
         traceback.print_exc()
-        res[i]=-666
     return tuple(res)
 
   def GetDescriptorNames(self):
@@ -105,16 +105,17 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       res.append(fn)
     return tuple(res)  
     
-if __name__ == '__main__':
-  from Chem import *
-  from ML.Descriptors import MoleculeDescriptors
-  descs = ['MolLogP','IWd','Chi1v']
-  smis = ['CCOC','CC=O','CCC(=O)O']
-  calc = MoleculeDescriptors.MolecularDescriptorCalculator(descs)
-  calc.SaveState('test_data/molcalc.dsc')
-  print calc.GetDescriptorNames()
+  def GetDescriptorVersions(self):
+    """ returns a tuple of the versions of the descriptor calculators
 
-  for smi in smis:
-    mol = MolFromSmiles(smi)
-    print smi,calc.CalcDescriptors(mol)
-  
+    """
+    res = []
+    for nm in self.simpleList:
+      fn = AvailDescriptors.descDict.get(nm,lambda x:777)
+      if hasattr(fn,'version'):
+        vers = fn.version
+      else:
+        vers="N/A"
+      res.append(vers)
+    return tuple(res)  
+    

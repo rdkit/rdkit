@@ -65,7 +65,7 @@ class AtomCorrespondenceDialog(_Form):
     self.idTable.horizontalHeader().setLabel(0,"Alignment Id")
     self.idTable.horizontalHeader().setLabel(1,"Reference Id")
     self.idTable.horizontalHeader().setLabel(2,"Button")
-    self.idTable.setSizePolicy(QSizePolicy(3,7,0,0,self.idTable.sizePolicy().hasHeightForWidth()))
+    self.idTable.setSizePolicy(QSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred,0,0,self.idTable.sizePolicy().hasHeightForWidth()))
     self.idTable.setMinimumSize(QSize(0,0))
     self.idTable.setSelectionMode(QTable.Single)
     self.idTable.setColumnReadOnly(0,True)

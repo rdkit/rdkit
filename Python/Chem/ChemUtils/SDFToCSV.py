@@ -23,6 +23,8 @@ def Convert(suppl,outFile,keyCol='',stopAfter=-1,includeChirality=0,smilesFrom='
   w.writerow(outL)
   nDone = 0
   for mol in suppl:
+    if not mol:
+      continue
     if not smilesFrom or not mol.HasProp(smilesFrom):
       smi = Chem.MolToSmiles(mol,includeChirality)
     else:

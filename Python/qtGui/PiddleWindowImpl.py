@@ -10,15 +10,16 @@
 
 """    
 import RDConfig
-from qt import *
-from qtcanvas import *
+import qt
+import qtcanvas
+
 from qtGui.forms.PiddleWindow import PiddleWindow as _Form
 from qtGui import qtUtils
 from sping.Qt.pidQt import QtCanvas as Canvas
 import os.path
 from Logger import Logger
 
-class PiddleCanvasView(QCanvasView):
+class PiddleCanvasView(qtcanvas.QCanvasView):
   """  The actual canvas view which is displayed to the user
 
     **Notes**
@@ -28,12 +29,12 @@ class PiddleCanvasView(QCanvasView):
 
   """
   def __init__(self,*args,**kwargs):
-    QCanvasView.__init__(self,*args)
+    qtcanvas.QCanvasView.__init__(self,*args)
     self._leftClickHandlers = []
     self._rightClickHandlers = []
     self._leftDblClickHandlers = []
     self._rightDblClickHandlers = []
-    self._tformMat = QWMatrix()
+    self._tformMat = qt.QWMatrix()
     self._tformMat.setMatrix(1,0.0,0.0,1,0.0,0.0)
     self.setWorldMatrix(self._tformMat)
     self.rescaleOnResize=True
@@ -147,9 +148,9 @@ class PiddleCanvasView(QCanvasView):
 
     """
     but = evt.button()
-    if but == Qt.LeftButton:
+    if but == qt.Qt.LeftButton:
       self.__leftMouseEvent(evt)
-    elif but == Qt.RightButton:
+    elif but == qt.Qt.RightButton:
       self.__rightMouseEvent(evt)
     self.canvas().update()
 
@@ -165,9 +166,9 @@ class PiddleCanvasView(QCanvasView):
 
     """
     but = evt.button()
-    if but == Qt.LeftButton:
+    if but == qt.Qt.LeftButton:
       self.__leftMouseEvent(evt,dbl=1)
-    elif but == Qt.RightButton:
+    elif but == qt.Qt.RightButton:
       self.__rightMouseEvent(evt,dbl=1)
     self.canvas().update()
 
@@ -176,7 +177,7 @@ class PiddleCanvasView(QCanvasView):
     if self._sz is None:
       self._sz = evt.size()
       return
-    QCanvasView.resizeEvent(self,evt)
+    qtcanvas.QCanvasView.resizeEvent(self,evt)
     if self.rescaleOnResize:
       sz = evt.size()
       oldSz = evt.oldSize()
@@ -212,8 +213,8 @@ class PiddleWindow(_Form):
   def __init__(self,*args,**kwargs):
     _Form.__init__(self,*args,**kwargs)
     # set up the canvas view
-    self.setCentralWidget(QWidget(self,"qt_central_widget"))
-    self._mainLayout = QVBoxLayout(self.centralWidget(),2,2)
+    self.setCentralWidget(qt.QWidget(self,"qt_central_widget"))
+    self._mainLayout = qt.QVBoxLayout(self.centralWidget(),2,2)
     self._qCanvasView = PiddleCanvasView(self.centralWidget())
     self._mainLayout.addWidget(self._qCanvasView)
 
@@ -242,7 +243,7 @@ class PiddleWindow(_Form):
       - this actually destroys the current canvas and creates a new one.
 
     """
-    self._qCanvas = QCanvas(canvSize[0],canvSize[1])
+    self._qCanvas = qtcanvas.QCanvas(canvSize[0],canvSize[1])
     self._qCanvasView.setCanvas(self._qCanvas)
     self._canvas = Logger.Logger(Canvas,destCanvas=self._qCanvas,size=canvSize,
                                  loggerFlushCommand='clear',loggerIgnore=['size'])

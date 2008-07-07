@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms/MolEditDisplayWidget2.ui'
+# Form implementation generated from reading ui file 'MolEditDisplayWidget2.ui'
 #
-# Created: Tue May 16 14:50:57 2006
-#      by: The PyQt User Interface Compiler (pyuic) 3.14.1
+# Created: Thu Aug 31 13:51:31 2006
+#      by: The PyQt User Interface Compiler (pyuic) 3.16
 #
 # WARNING! All changes made in this file will be lost!
 

@@ -10,17 +10,6 @@
 import RDConfig
 import sys,types
 import exceptions
-if sys.platform == 'win32':
-  try:
-    raise NotImplementedError,'wxPython no longer supported'
-    #from Dbase import Gui
-    #from wxPython.wx import *
-  except:
-    haswx=0
-  else:
-    haswx=1
-else:
-  haswx=0
 
 class DbError(RuntimeError):
   pass
@@ -81,45 +70,6 @@ class DbConnect(object):
     dlg.sizer.Fit(dlg)
     dlg.sizer.SetSizeHints(dlg)
     dlg.Refresh()
-
-  if haswx:
-    def LaunchChoiceDialog(self,dlgParent):
-      """ launches the DB choice dialog
-
-        **Arguments**
-
-          - dlgParent: the parent of the dialog (should be a wxPython frame
-            or window)
-
-        **Notes**
-
-          - This dialog includes options to change:
-
-            1) the DB user name
-
-            2) the DB password
-
-            3) the actual DB file to be used
-
-            4) the name of the table to be used
-
-      """
-      dlg = Gui.DbTableSelectDialog(dlgParent,-1)
-      if self.dbName:
-        dlg.SetDbName(self.dbName)
-        dlg.SetTableName(self.tableName)
-      dlg.Finalize()
-      res = dlg.ShowModal()
-      if res == wxID_OK:
-        self.dbName = dlg.GetDbName()
-        self.tableName = dlg.GetTableName()
-        self.user = dlg.GetUserName()
-        self.password = dlg.GetPassword()
-      else:
-        raise RuntimeError,'db choice cancelled'
-  else:
-    def LaunchChoiceDialog(self,dlgParent):
-      return
                                       
   def GetTableNames(self,includeViews=0):
     """ gets a list of tables available in a database
@@ -140,7 +90,7 @@ class DbConnect(object):
 
     """
     return DbInfo.GetTableNames(self.dbName,self.user,self.password,
-                                 includeViews=includeViews)
+                                 includeViews=includeViews,cn=self.cn)
     
   def GetColumnNames(self,table='',join='',what='*',where='',**kwargs):
     """ gets a list of columns available in the current table
@@ -158,7 +108,7 @@ class DbConnect(object):
     if not table: table = self.tableName
     return DbInfo.GetColumnNames(self.dbName,table,
                                   self.user,self.password,
-                                  join=join,what=what)
+                                  join=join,what=what,cn=self.cn)
   def GetColumnNamesAndTypes(self,table='',join='',what='*',where='',**kwargs):
     """ gets a list of columns available in the current table along with their types
 
@@ -179,7 +129,7 @@ class DbConnect(object):
     if not table: table = self.tableName
     return DbInfo.GetColumnNamesAndTypes(self.dbName,table,
                                           self.user,self.password,
-                                          join=join,what=what)
+                                          join=join,what=what,cn=self.cn)
   def GetColumns(self,fields,table='',join='',**kwargs):
     """ gets a set of data from a table
 
@@ -233,7 +183,7 @@ class DbConnect(object):
     kwargs['forceList'] = kwargs.get('forceList',0)  
     return DbUtils.GetData(self.dbName,table,fieldString=fields,whereString=where,
                            user=self.user,password=self.password,removeDups=removeDups,
-                           join=join,
+                           join=join,cn=self.cn,
                            transform=transform,randomAccess=randomAccess,**kwargs)
 
   def GetDataCount(self,table=None,where='',join='',**kwargs):
@@ -259,7 +209,8 @@ class DbConnect(object):
     """
     if table is None:
       table = self.tableName
-    return DbUtils.GetData(self.dbName,table,fieldString='count(*)',whereString=where,
+    return DbUtils.GetData(self.dbName,table,fieldString='count(*)',
+                           whereString=where,cn=self.cn,
                            user=self.user,password=self.password,join=join,forceList=0)[0][0]
 
 

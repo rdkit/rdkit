@@ -23,7 +23,7 @@ for mod in otherMods:
   for name in tmp:
     if name[0] != '_':
       thing = getattr(mod,name)
-      if type(thing)==types.FunctionType:
+      if hasattr(thing,'__call__'):
         others.append(name)
 
 descList = []
@@ -34,7 +34,8 @@ for mod in mods:
   for name in tmp:
     if name[0] != '_' and name[-1] != '_' and name not in others:
       thing = getattr(mod,name)
-      if type(thing)==types.FunctionType:
+      if hasattr(thing,'__call__'):
+      #if type(thing)==types.FunctionType:
         # we need to store the name too, just in case
         #  the function is a lambda
         descList.append((name,thing))

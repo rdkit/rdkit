@@ -65,8 +65,8 @@ smartsPatts={
   50:('[C,c]=[C,c](~[C,c])~[C,c]',0), # C=C(C)C
   51:('[C,c]~[S,s]~[O,o]',0), # CSO
   52:('[N,n]~[N,n]',0), # NN
-  53:('[!C;!c;!#1;H,H2,H3,H4]~*~*~*~[!C;!c;!#1;H,H2,H3,H4]',0), # QHAAAQH FIX: possibly incomplete
-  54:('[!C;!c;!#1;H,H2,H3,H4]~*~*~[!C;!c;!#1;H,H2,H3,H4]',0), # QHAAQH FIX: possibly incomplete
+  53:('[!#6;!#1;!H0]~*~*~*~[!#6;!#1;!H0]',0), # QHAAAQH FIX: possibly incomplete
+  54:('[!#6;!#1;!H0]~*~*~[!#6;!#1;!H0]',0), # QHAAQH FIX: possibly incomplete
   55:('[O,o]~[S,s]~[O,o]',0), #OSO
   56:('[O,o]~[N,n](~[O,o])~[C,c]',0), # ON(O)C
   57:('[$(O@*),$(o@*)]',0), # O Heterocycle
@@ -80,8 +80,8 @@ smartsPatts={
   65:('[C,c]:[N,n]',0), # C%N
   66:('[C,c]~[C,c](~[C,c])(~[C,c])~*',0), # CC(C)(C)A
   67:('[!C;!c;!#1]~[S,s]',0), # QS
-  68:('[!C;!c;!#1;H,H2,H3,H4]~[!C;!c;!#1;H,H2,H3,H4]',0), # QHQH FIX: possibly incomplete
-  69:('[!C;!c;!#1]~[!C;!c;!#1;H,H2,H3,H4]',0), # QQH FIX: possibly incomplete
+  68:('[!#6;!#1;!H0]~[!#6;!#1;!H0]',0), # QHQH FIX: possibly incomplete
+  69:('[!C;!c;!#1]~[!#6;!#1;!H0]',0), # QQH FIX: possibly incomplete
   70:('[!C;!c;!#1]~[N,n]~[!C;!c;!#1]',0), # QNQ
   71:('[N,n]~[O,o]',0), # NO
   72:('[O,o]~*~*~[O,o]',0), # OAAO
@@ -94,7 +94,7 @@ smartsPatts={
   79:('[N,n]~*~*~[N,n]',0), # NAAN
   80:('[N,n]~*~*~*~[N,n]',0), # NAAAN
   81:('[S,s]~*(~*)~*',0), # SA(A)A
-  82:('*~[CH2]~[!C;!c;!#1;H,H2,H3,H4]',0), # ACH2QH
+  82:('*~[CH2]~[!#6;!#1;!H0]',0), # ACH2QH
   83:('[!C;!c;!#1]1~*~*~*~*~1',0), # QAAAA@1
   84:('[NH2]',0), #NH2
   85:('[C,c]~[N,n](~[C,c])~[C,c]',0), # CN(C)C
@@ -102,8 +102,8 @@ smartsPatts={
   87:('[F,Cl,Br,I]!@*@*',0), # X!A$A
   88:('[S,s]',0), # S
   89:('[O,o]~*~*~*~[O,o]',0), # OAAAO
-  90:('[!C;!c;!#1;H,H2,H3,H4]~*~*~[CH2]~*',0), # QHAACH2A
-  91:('[!C;!c;!#1;H,H2,H3,H4]~*~*~*~[CH2]~*',0), # QHAAACH2A
+  90:('[!#6;!#1;!H0]~*~*~[CH2]~*',0), # QHAACH2A
+  91:('[!#6;!#1;!H0]~*~*~*~[CH2]~*',0), # QHAAACH2A
   92:('[O,o]~[C,c](~[N,n])~[C,c]',0), # OC(N)C
   93:('[!C;!c;!#1]~[CH3]',0), # QCH3
   94:('[!C;!c;!#1]~[N,n]',0), # QN
@@ -116,7 +116,7 @@ smartsPatts={
   101:('[r8,r9,r10,r11,r12]',0), # 8M Ring or larger FIX: This is not exhaustive and it appears that oelib doesn't do this right
   102:('[!C;!c;!#1]~[O,o]',0), # QO
   103:('Cl',0), # CL
-  104:('[!C;!c;!#1;H,H2,H3,H4]~*~[CH2]~*',0), # QHACH2A
+  104:('[!#6;!#1;!H0]~*~[CH2]~*',0), # QHACH2A
   105:('[!C;!c;!#1]@*(@*)@*',0), # A$A($A)$A
   106:('[!C;!c;!#1]~*(~[!C;!c;!#1])~[!C;!c;!#1]',0), # QA(Q)Q
   107:('[F,Cl,Br,I]~*(~*)~*',0), # XA(A)A
@@ -143,7 +143,7 @@ smartsPatts={
   128:('*~[CH2]~*~*~*~[CH2]~*',0), # ACH2AAACH2A
   129:('*~[CH2]~*~*~[CH2]~*',0), # ACH2AACH2A
   130:('[!C;!c;!#1]~[!C;!c;!#1]',1), # QQ > 1 (&...)
-  131:('[!C;!c;!#1;H,H2,H3,H4]',1), # QH > 1
+  131:('[!#6;!#1;!H0]',1), # QH > 1
   132:('[O,o]~*~[CH2]~*',0), # OACH2A
   133:('*@*!:[N,n]',0), # A$A!N
   134:('[F,Cl,Br,I]',0), # X (HALOGEN)
@@ -163,7 +163,7 @@ smartsPatts={
   148:('*~[!C;!c;!#1](~*)~*',0), # AQ(A)A
   149:('[CH3]',1), # CH3 > 1
   150:('*!@*@*!@*',0), # A!A$A!A
-  151:('[NH,NH2,NH3,NH4]',0), # NH
+  151:('[N!H0]',0), # NH
   152:('[O,o]~[C,c](~[C,c])~[C,c]',0), # OC(C)C
   153:('[!C;!c;!#1]~[CH2]~*',0), # QCH2A
   154:('[C,c]=[O,o]',0), # C=O
@@ -228,8 +228,9 @@ def GenMACCSKeys(mol,**kwargs):
   if maccsKeys is None:
     maccsKeys = [(None,0)]*len(smartsPatts.keys())
     _InitKeys(maccsKeys,smartsPatts)
+  ctor=kwargs.get('ctor',DataStructs.SparseBitVect)
 
-  res = DataStructs.SparseBitVect(len(maccsKeys)+1)
+  res = ctor(len(maccsKeys)+1)
   for i,(patt,count) in enumerate(maccsKeys):
     if patt is not None:
       matches = mol.GetSubstructMatches(patt)

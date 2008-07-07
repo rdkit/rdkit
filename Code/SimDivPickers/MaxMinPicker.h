@@ -3,8 +3,8 @@
 //
 //   @@ All Rights Reserved  @@
 //
-#ifndef _RD_MAXMINPICKER_H_
-#define _RD_MAXMINPICKER_H_
+#ifndef __RD_MAXMINPICKER_H__
+#define __RD_MAXMINPICKER_H__
 
 #include <RDGeneral/types.h>
 #include <RDGeneral/utils.h>
@@ -65,16 +65,18 @@ namespace RDPickers {
      *
      * A subset of k items is to be selected from a pool containing N molecules. 
      * Then the MaxMin method is as follows:
-     *  1. Initialise Subset with a randomly chosen seed
+     *  -# Initialise Subset with some appropriately chosen seed
      *     compound and set x = 1.
-     *  2. For each of the N-x remaining compounds in Dataset
+     *  -# For each of the N-x remaining compounds in Dataset
      *     calculate its dissimilarity with each of the x compounds in
      *     Subset and retain the smallest of these x dissimilarities for
      *     each compound in Dataset.
-     *  3. Select the molecule from Dataset with the largest value
+     *  -# Select the molecule from Dataset with the largest value
      *     for the smallest dissimilarity calculated in Step 2 and
      *     transfer it to Subset.
-     *  4. Set x = x + 1 and return to Step 2 if x < k.
+     *  -# Set x = x + 1 and return to Step 2 if x < k.
+     *
+     *  
      *
      *   \param distMat - distance matrix - a vector of double. It is assumed that only the 
      *              lower triangle element of the matrix are supplied in a 1D array\n

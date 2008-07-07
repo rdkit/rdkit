@@ -275,11 +275,55 @@ void test4(){
 }
 
 
+void test5(){
+  BOOST_LOG(rdErrorLog) << "---------------------- Test5" << std::endl;
+  Mol m;
+
+  Atom *a = new Atom(6);
+  // we copy in addAtom, so this is safe
+  m.addAtom(a);
+  m.addAtom(a);
+  m.addAtom(a);
+  m.addAtom(a);
+  m.addAtom(a);
+  m.addAtom(a);
+  m.addAtom(a);
+  delete a;
+  m.addBond(0,1,Bond::SINGLE);
+  m.addBond(1,2,Bond::DOUBLE);
+  m.addBond(2,3,Bond::SINGLE);
+  m.addBond(3,4,Bond::DOUBLE);
+  m.addBond(4,5,Bond::SINGLE);
+  m.addBond(5,0,Bond::DOUBLE);
+  m.addBond(5,6,Bond::SINGLE);
+  MolOps::sanitizeMol(m);
+  
+  unsigned int valenceProd;
+  valenceProd=queryAtomBondProduct(m.getAtomWithIdx(0));
+  TEST_ASSERT(valenceProd==1681);  // aromatic*aromatic = 41 * 41 = 1681
+  valenceProd=queryAtomBondProduct(m.getAtomWithIdx(1));
+  TEST_ASSERT(valenceProd==1681);
+  
+  valenceProd=queryAtomBondProduct(m.getAtomWithIdx(5));
+  TEST_ASSERT(valenceProd==5043);
+
+  valenceProd=queryAtomBondProduct(m.getAtomWithIdx(6));
+  TEST_ASSERT(valenceProd==3);
+  
+  valenceProd=queryAtomAllBondProduct(m.getAtomWithIdx(6));
+  TEST_ASSERT(valenceProd==81);
+  
+
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
+
 int main(){
   RDLog::InitLogs();
   test1();
   test2();
   test3();
   test4();
+  test5();
   return 0;
 }

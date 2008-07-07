@@ -13,7 +13,7 @@ sqlFloatTypes = DbModule.sqlFloatTypes
 sqlBinTypes = DbModule.sqlBinTypes
 
 
-def GetDbNames(user='sysdba',password='masterkey',dirName='.',dBase='::template1'):
+def GetDbNames(user='sysdba',password='masterkey',dirName='.',dBase='::template1',cn=None):
   """ returns a list of databases that are available
 
     **Arguments**
@@ -28,11 +28,12 @@ def GetDbNames(user='sysdba',password='masterkey',dirName='.',dBase='::template1
 
   """
   if DbModule.getDbSql:
-    try:
-      cn = DbModule.connect(dBase,user,password)
-    except:
-      print 'Problems opening database: %s'%(dBase)
-      return []
+    if not cn:
+      try:
+        cn = DbModule.connect(dBase,user,password)
+      except:
+        print 'Problems opening database: %s'%(dBase)
+        return []
     c = cn.cursor()
     c.execute(DbModule.getDbSql)
     if RDConfig.usePgSQL:
@@ -49,7 +50,7 @@ def GetDbNames(user='sysdba',password='masterkey',dirName='.',dBase='::template1
 
 
 def GetTableNames(dBase,user='sysdba',password='masterkey',
-                  includeViews=0):
+                  includeViews=0,cn=None):
   """ returns a list of tables available in a database
 
     **Arguments**
@@ -68,11 +69,12 @@ def GetTableNames(dBase,user='sysdba',password='masterkey',
       - a list of table names (strings)
 
   """
-  try:
-    cn = DbModule.connect(dBase,user,password)
-  except:
-    print 'Problems opening database: %s'%(dBase)
-    return []
+  if not cn:
+    try:
+      cn = DbModule.connect(dBase,user,password)
+    except:
+      print 'Problems opening database: %s'%(dBase)
+      return []
   c = cn.cursor()
   if not includeViews:
     comm = DbModule.getTablesSql
@@ -89,27 +91,44 @@ def GetTableNames(dBase,user='sysdba',password='masterkey',
 def GetColumnInfoFromCursor(cursor):
   if cursor is None or cursor.description is None: return []
   results = []
-  for item in cursor.description:
-    cName = item[0]
-    cType = item[1]
-    if cType in sqlTextTypes:
-      typeStr='string'
-    elif cType in sqlIntTypes:
-      typeStr='integer'      
-    elif cType in sqlFloatTypes:
-      typeStr='float'
-    elif cType in sqlBinTypes:
-      typeStr='binary'
-    elif RDConfig.useSqlLite:
-      typeStr='string'
-    else:
-      sys.stderr.write('odd type in col %s: %s\n'%(cName,str(cType)))
-    results.append((cName,typeStr))
+  if not RDConfig.useSqlLite:
+    for item in cursor.description:
+      cName = item[0]
+      cType = item[1]
+      if cType in sqlTextTypes:
+        typeStr='string'
+      elif cType in sqlIntTypes:
+        typeStr='integer'      
+      elif cType in sqlFloatTypes:
+        typeStr='float'
+      elif cType in sqlBinTypes:
+        typeStr='binary'
+      else:
+        sys.stderr.write('odd type in col %s: %s\n'%(cName,str(cType)))
+      results.append((cName,typeStr))
+  else:
+    import types
+    r = cursor.fetchone()
+    if not r: return results
+    for i,v in enumerate(r):
+      cName = cursor.description[i][0]
+      typ = type(v)
+      if typ in types.StringTypes:
+        typeStr='string'
+      elif typ == types.IntType:
+        typeStr='integer'
+      elif typ == types.FloatType:
+        typeStr='float'
+      elif typ == types.BufferType:
+        typeStr='binary'
+      else:
+        sys.stderr.write('odd type in col %s: %s\n'%(cName,typ))
+      results.append((cName,typeStr))
   return results
   
 def GetColumnNamesAndTypes(dBase,table,
                            user='sysdba',password='masterkey',
-                           join='',what='*'):
+                           join='',what='*',cn=None):
   """ gets a list of columns available in a DB table along with their types
 
     **Arguments**
@@ -135,16 +154,18 @@ def GetColumnNamesAndTypes(dBase,table,
           2) column type
 
   """
-  cn = DbModule.connect(dBase,user,password)
+  if not cn:
+    cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
   cmd = 'select %s from %s'%(what,table)
   if join:
     cmd += ' join %s'%(join)
+  print 'cmd:',cmd
   c.execute(cmd)
   return GetColumnInfoFromCursor(c)
 
 def GetColumnNames(dBase,table,user='sysdba',password='masterkey',
-                   join='',what='*'):
+                   join='',what='*',cn=None):
   """ gets a list of columns available in a DB table
 
     **Arguments**
@@ -166,7 +187,8 @@ def GetColumnNames(dBase,table,user='sysdba',password='masterkey',
       -  a list of column names
 
   """
-  cn = DbModule.connect(dBase,user,password)
+  if not cn:
+    cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
   cmd = 'select %s from %s'%(what,table)
   if join:

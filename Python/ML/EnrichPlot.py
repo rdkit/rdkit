@@ -71,7 +71,7 @@ import DataStructs
 from ML import CompositeRun
 import sys,os,types
 
-__VERSION_STRING="2.3.3"
+__VERSION_STRING="2.4.0"
 def message(msg,noRet=0,dest=sys.stderr):
   """ emits messages to _sys.stderr_
     override this in modules which import this one to redirect output
@@ -126,6 +126,15 @@ def ScreenModel(mdl,descs,data,picking=[1],indices=[],errorEstimate=0):
        
   """
   mdl.SetInputOrder(descs)
+
+  for j in range(len(mdl)):
+    tmp = mdl.GetModel(j)
+    if hasattr(tmp,'_trainIndices') and type(tmp._trainIndices)!=types.DictType:
+      tis = {}
+      if hasattr(tmp,'_trainIndices'):
+        for v in tmp._trainIndices: tis[v]=1
+      tmp._trainIndices=tis
+
   res = []
   if mdl.GetQuantBounds():
     needsQuant = 1
@@ -139,8 +148,7 @@ def ScreenModel(mdl,descs,data,picking=[1],indices=[],errorEstimate=0):
       use=[]
       for j in range(len(mdl)):
         tmp = mdl.GetModel(j)
-        if not hasattr(tmp,'_trainIndices') or \
-           i not in tmp._trainIndices:
+        if not tmp._trainIndices.get(i,0):
           use.append(j)
     else:
       use=None
@@ -223,7 +231,7 @@ def MakePlot(details,final,counts,pickVects,nModels,nTrueActs=-1):
   set grid
   set nokey
   set term postscript enh color solid "Helvetica" 16
-  set term win
+  set term X
   """%(__VERSION_STRING)
   print >>gnuF,gnuHdr
   if nTrueActs >0:

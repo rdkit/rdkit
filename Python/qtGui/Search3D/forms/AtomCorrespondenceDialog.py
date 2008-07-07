@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'forms/AtomCorrespondenceDialog.ui'
+# Form implementation generated from reading ui file 'AtomCorrespondenceDialog.ui'
 #
-# Created: Fri Mar 10 08:37:57 2006
-#      by: The PyQt User Interface Compiler (pyuic) 3.11
+# Created: Thu Oct 19 08:53:57 2006
+#      by: The PyQt User Interface Compiler (pyuic) 3.16
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -18,7 +18,7 @@ class AtomCorrespondenceDialog(QDialog):
     if not name:
       self.setName("AtomCorrespondenceDialog")
 
-    self.setSizePolicy(QSizePolicy(5,5,0,0,self.sizePolicy().hasHeightForWidth()))
+    self.setSizePolicy(QSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred,0,0,self.sizePolicy().hasHeightForWidth()))
     self.setMinimumSize(QSize(0,0))
 
     AtomCorrespondenceDialogLayout = QVBoxLayout(self,11,6,"AtomCorrespondenceDialogLayout")
@@ -89,8 +89,8 @@ class AtomCorrespondenceDialog(QDialog):
     self.clearWState(Qt.WState_Polished)
 
     self.connect(self.refineButton,SIGNAL("clicked()"),self.refineClicked)
-    self.connect(self.okButton,SIGNAL("clicked()"),self,SLOT("accept()"))
-    self.connect(self.cancelButton,SIGNAL("clicked()"),self,SLOT("reject()"))
+    self.connect(self.okButton,SIGNAL("clicked()"),self.accept)
+    self.connect(self.cancelButton,SIGNAL("clicked()"),self.reject)
     self.connect(self.makeCorrespondenceButton,SIGNAL("clicked()"),self.makeCorrespondenceClicked)
     self.connect(self.showCorrespondenceBox,SIGNAL("stateChanged(int)"),self.showCorrespondenceChanged)
     self.connect(self.clearCorrespondenceButton,SIGNAL("clicked()"),self.clearCorrespondenceClicked)

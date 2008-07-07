@@ -1,4 +1,3 @@
-
 # $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
@@ -25,7 +24,9 @@ class DbMolSupplier(MolSupplier):
                molColumnFormats={'SMILES':'SMI',
                                  'SMI':'SMI',
                                  'MOLPKL':'PKL'},
-               nameCol='',**kwargs):
+               nameCol='',
+               transformFunc=None,
+               **kwargs):
     """
 
       DbResults should be a subclass of Dbase.DbResultSet.DbResultBase
@@ -35,6 +36,7 @@ class DbMolSupplier(MolSupplier):
     self._colNames = [x.upper() for x in self._data.GetColumnNames()]
     nameCol = nameCol.upper()
     self.molCol = -1
+    self.transformFunc=transformFunc
     try:
       self.nameCol = self._colNames.index(nameCol)
     except ValueError:
@@ -64,14 +66,23 @@ class DbMolSupplier(MolSupplier):
     self._numProcessed+=1;
     try:
       if self.molFmt =='SMI':
-        newM = Chem.MolFromSmiles(molD)
+        newM = Chem.MolFromSmiles(str(molD))
         if not newM:
           warning('Problems processing mol %d, smiles: %s\n'%(self._numProcessed,molD))
       elif self.molFmt =='PKL':
         newM = Chem.Mol(str(molD))
     except:
+      import traceback
+      traceback.print_exc()
       newM = None
     else:
+      if newM and self.transformFunc:
+        try:
+          newM = self.transformFunc(newM,data)
+        except:
+          import traceback
+          traceback.print_exc()
+          newM = None
       if newM:
         newM._fieldsFromDb = data
         nFields = len(data)

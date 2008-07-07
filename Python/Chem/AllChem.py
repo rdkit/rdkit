@@ -73,10 +73,9 @@ def ComputeMolVolume(mol,confId=-1,gridSpacing=0.1,boxMargin=2.0):
 
 def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
                                          **kwargs):
-  stripRef = RemoveHs(reference)
   nAts = mol.GetNumAtoms()
   dm = []
-  conf = stripRef.GetConformer(confId)
+  conf = mol.GetConformer(confId)
   for i in range(nAts):
     pi = conf.GetAtomPosition(i)
     for j in range(i+1,nAts):
@@ -84,6 +83,26 @@ def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
       dm.append((pi-pj).Length())
   dm = Numeric.array(dm)
   apply(Compute2DCoordsMimicDistmat,(mol,dm),kwargs)
+      
+def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
+  if not maps:
+    query = RemoveHs(probe)
+    matches = ref.GetSubstructMatches(query)
+    if not matches:
+      raise ValueError,'mol %s does not match mol %s'%(ref.GetProp('_Name'),
+                                                       probe.GetProp('_Name'))
+    maps = []
+    for match in matches:
+      t=[]
+      for j,idx in enumerate(match):
+        t.append((j,idx))
+    maps.append(t)
+  bestRMS=1000.
+  for amap in maps:
+    rms=AlignMol(probe,ref,probeConfId,refConfId,atomMap=amap)
+    if rms<bestRMS:
+      bestRMS=rms
+  return bestRMS
 
 def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   """ Returns a generator for the virtual library defined by
@@ -134,6 +153,7 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
     for prods in prodSets:
       yield prods
 
+
 #------------------------------------
 #
 #  doctest boilerplate
@@ -147,5 +167,3 @@ if __name__ == '__main__':
   import sys
   failed,tried = _test()
   sys.exit(failed)
-
-  

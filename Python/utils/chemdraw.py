@@ -7,11 +7,11 @@
 """ tools for interacting with chemdraw
 
 """
-from win32com.client import gencache,Dispatch,constants
-import pythoncom
 import string,tempfile,os,time
-import win32com.client.gencache
 try:
+  import pythoncom
+  from win32com.client import gencache,Dispatch,constants
+  import win32com.client.gencache
   cdxModule = win32com.client.gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}", 0, 7, 0)
 except:
   cdxModule = None
@@ -19,8 +19,10 @@ except:
   raise ImportError,"ChemDraw version (at least version 7) not found."
 else:
   _cdxVersion=7
-from win32com.client import Dispatch
-import win32gui
+
+if cdxModule:
+  from win32com.client import Dispatch
+  import win32gui
 import re
 
 cdApp = None

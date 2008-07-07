@@ -4,7 +4,7 @@
 #    All Rights Reserved
 #
 import RDConfig
-from qt import *
+import qt
 import os.path
 from sping.utils import availableCanvases
 import sys
@@ -58,28 +58,28 @@ _initLogger()
 def error(msg,parent=None,caption="Error",**kwargs):
   """ displays an error message """
   logger.error(msg,**kwargs)
-  mb = QMessageBox.critical(parent,caption,"ERROR: %s"%(msg),
-                            QMessageBox.Ok,QMessageBox.NoButton,QMessageBox.NoButton)
+  mb = qt.QMessageBox.critical(parent,caption,"ERROR: %s"%(msg),
+                            qt.QMessageBox.Ok,qt.QMessageBox.NoButton,qt.QMessageBox.NoButton)
   return mb
 
 def warning(msg,parent=None,caption="Warning",**kwargs):
   """ displays a warning message """
   logger.warning(msg,**kwargs)
-  mb = QMessageBox.warning(parent,caption,"Warning: %s"%(msg),
-                           QMessageBox.Ok,QMessageBox.NoButton,QMessageBox.NoButton)
+  mb = qt.QMessageBox.warning(parent,caption,"Warning: %s"%(msg),
+                           qt.QMessageBox.Ok,qt.QMessageBox.NoButton,qt.QMessageBox.NoButton)
   return mb
 def information(msg,parent=None,caption="Note",**kwargs):
   """ displays an informational message """
   logger.info(msg,**kwargs)
-  mb = QMessageBox.information(parent,caption,"%s"%(msg),
-                           QMessageBox.Ok,QMessageBox.NoButton,QMessageBox.NoButton)
+  mb = qt.QMessageBox.information(parent,caption,"%s"%(msg),
+                           qt.QMessageBox.Ok,qt.QMessageBox.NoButton,qt.QMessageBox.NoButton)
   return mb
 
 def infoPrompt(msg,parent=None,caption="Note",**kwargs):
   """ displays a warning message """
   logger.info(msg,**kwargs)
-  mb = QMessageBox.information(parent,caption,"%s"%(msg),
-                           QMessageBox.Yes,QMessageBox.No,QMessageBox.NoButton)
+  mb = qt.QMessageBox.information(parent,caption,"%s"%(msg),
+                           qt.QMessageBox.Yes,qt.QMessageBox.No,qt.QMessageBox.NoButton)
   return mb
 
 def GetSplashPixmap(fileN=None):
@@ -87,7 +87,7 @@ def GetSplashPixmap(fileN=None):
     fileN = os.path.join(RDConfig.RDImageDir,"RD-Splash.jpg")
   try:
     open(fileN,'r')
-    pix = QPixmap(fileN)
+    pix = qt.QPixmap(fileN)
   except:
     import traceback
     traceback.print_exc()
@@ -95,8 +95,8 @@ def GetSplashPixmap(fileN=None):
   return pix
 
 def ShowSplashScreen(app,fileN=None):
-  splash = QLabel(None,"RDGui Splash",
-                  Qt.WStyle_Customize|Qt.WStyle_NoBorder|Qt.WStyle_Tool)
+  splash = qt.QLabel(None,"RDGui Splash",
+                  qt.Qt.WStyle_Customize|qt.Qt.WStyle_NoBorder|qt.Qt.WStyle_Tool)
   pix = GetSplashPixmap(fileN=fileN)
   if pix:
     splash.setPixmap(pix)
@@ -134,13 +134,13 @@ def GetPiddleCanvas(size,extension='',dir=''):
       tStr = '%s files (*.%s)'%(availableCanvases[key][2],key)
       typeList.append(tStr)
     typeList = ';;'.join(typeList)
-    fileName = str(QFileDialog.getSaveFileName(dir,typeList))
+    fileName = str(qt.QFileDialog.getSaveFileName(dir,typeList))
     extension = fileName.split('.')[-1]
   else:
     moduleName,canvasName,typeName = availableCanvases[extension]
     prompt = 'Choose %s FileName'%typeName
     typeList = '%s Files (*.%s);;All Files (*.*)'%(typeName,extension)
-    fileName = str(QFileDialog.getSaveFileName(dir,typeList))
+    fileName = str(qt.QFileDialog.getSaveFileName(dir,typeList))
   if not fileName:
     return None,''
   # FIX: need some error checking here
@@ -154,22 +154,22 @@ class ProgressStop(StopIteration):
 
 class ProgressDialogHolder:
   def __init__(self,label,endPt):
-    self.dlg = QProgressDialog(label,'Cancel',endPt)
+    self.dlg = qt.QProgressDialog(label,'Cancel',endPt)
     self.dlg.setLabelText(label)
     self.dlg.setCaption(label)
-    image0 = QPixmap(logoImageData)
+    image0 = qt.QPixmap(logoImageData)
     self.dlg.setIcon(image0)
   def __call__(self,val):
     self.dlg.setProgress(val)
-    qApp.processEvents()
+    qt.qApp.processEvents()
     if self.dlg.wasCancelled():
       raise ProgressStop,'aborted'
     
 def safeDestroyWidget(widget):
-  widget.reparent(QWidget(),0,QPoint())
+  widget.reparent(qt.QWidget(),0,qt.QPoint())
 
-def getSaveFilenameAndFilter(dir,filter,mode=QFileDialog.AnyFile):
-  dlg = QFileDialog(dir,filter)
+def getSaveFilenameAndFilter(dir,filter,mode=qt.QFileDialog.AnyFile):
+  dlg = qt.QFileDialog(dir,filter)
   dlg.setMode(mode)
   r = dlg.exec_loop()
   fName = str(dlg.selectedFile())
@@ -178,7 +178,7 @@ def getSaveFilenameAndFilter(dir,filter,mode=QFileDialog.AnyFile):
 
 def getTokensFromClipboard():
   import re
-  clip = qApp.clipboard()
+  clip = qt.qApp.clipboard()
   txt = clip.text()
   ptList = []
   if txt.isEmpty():

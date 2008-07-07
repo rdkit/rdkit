@@ -60,6 +60,17 @@ namespace RDKit {
     return (*fi);
   }
 
+  python::tuple getFeatureFamilies(const MolChemicalFeatureFactory &factory){
+    python::list res;
+
+    MolChemicalFeatureDef::CollectionType::const_iterator iter;
+    for(iter=factory.beginFeatureDefs();iter!=factory.endFeatureDefs();++iter){
+      std::string fam= (*iter)->getFamily();
+      if(res.count(fam)==0) res.append(fam);
+    }
+    return python::tuple(res);
+  }
+
   
   
 
@@ -71,6 +82,8 @@ namespace RDKit {
 						factoryClassDoc.c_str(), python::no_init)
         .def("GetNumFeatureDefs", &MolChemicalFeatureFactory::getNumFeatureDefs,
              "Get the number of feature definitions")
+        .def("GetFeatureFamilies", getFeatureFamilies,
+             "Get a tuple of feature types")
         .def("GetNumMolFeatures", getNumMolFeatures,
 	     (python::arg("mol"),python::arg("includeOnly")=std::string("")),
              "Get the number of features the molecule has")

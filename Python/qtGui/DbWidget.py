@@ -149,7 +149,11 @@ class DbWidgetMixin:
   def getDbFilename(self):
     if RDConfig.usePgSQL:
       return None
-    fileN = str(QFileDialog.getOpenFileName(self._dbDir,"Interbase files (*.gdb);;All files (*.*)"))
+    if RDConfig.useSqlLite:
+      fileSpec="SqlLite files (*.sqlt);;All files (*.*)"            
+    else:
+      fileSpec="Interbase files (*.gdb);;All files (*.*)"
+    fileN = str(QFileDialog.getOpenFileName(self._dbDir,fileSpec))
     if fileN:
       self._dbDir,fileN = os.path.split(fileN)
       self._dbName = fileN

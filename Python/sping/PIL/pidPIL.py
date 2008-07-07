@@ -274,10 +274,10 @@ class PILCanvas( Canvas ):
         self._pen.line( (x1,y1,x2,y2) )
       elif PIL.Image.VERSION <= "1.0b1":
         self._pen.line( (x1,y1, x2,y2) )
-      elif PIL.Image.VERSION <= "1.1.4":
+      elif PIL.Image.VERSION <= "1.1.6":
         self._pen.line( (x1,y1, x2,y2) )
       else:
-        self._pen.line((x1,y1,x2,y2))
+        self._pen.line(x1,y1,x2,y2)
     else:
       dx = x2-x1
       dy = y2-y1

@@ -57,24 +57,23 @@ namespace RDKit{
     */
     unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags);
 
-    //! find fragments (disconnected components of the molecular graph)
+    //! splits a molecule into its component fragments
+    //  (disconnected components of the molecular graph)
     /*!
 
       \param mol     the molecule of interest
       \param sanitizeFrags  toggles sanitization of the fragments after
                             they are built
-      \param mapping used to return the mapping of Atoms->fragments.
-         On return \c mapping will be <tt>mol->getNumAtoms()</tt> long
-	 and will contain the fragment assignment for each Atom
+      \param frags used to return the mapping of Atoms->fragments.
+         if provided, \c frags will be <tt>mol->getNumAtoms()</tt> long 
+	 on return and will contain the fragment assignment for each Atom
 
-      \return a vector of the fragments as pointers to ROMols
+      \return a vector of the fragments as smart pointers to ROMols
       
     */
     std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,
                                                        bool sanitizeFrags=true,
                                                        INT_VECT *frags=0);
-
-
 
     //! returns a copy of a molecule with hydrogens added in as explicit Atoms
     /*!

@@ -129,7 +129,16 @@ def GetAcceptor2FeatVects(conf, featAtoms, scale=1.5):
   cpt = conf.GetAtomPosition(aid)
 
   mol = conf.GetOwningMol()
-  nbrs = mol.GetAtomWithIdx(aid).GetNeighbors()
+  nbrs = list(mol.GetAtomWithIdx(aid).GetNeighbors())
+  hydrogens = []
+  tmp=[]
+  while len(nbrs):
+    nbr = nbrs.pop()
+    if nbr.GetAtomicNum()==1:
+      hydrogens.append(nbr)
+    else:
+      tmp.append(nbr)
+  nbrs = tmp
   assert len(nbrs) == 2
   
   bvec = _findAvgVec(conf, cpt, nbrs)
@@ -245,14 +254,19 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5) :
   cpt = conf.GetAtomPosition(aid)
 
   # find the two atoms that are neighbors of this atoms
-  nbrs = mol.GetAtomWithIdx(aid).GetNeighbors()
+  nbrs = list(mol.GetAtomWithIdx(aid).GetNeighbors())
   assert len(nbrs) >= 2
 
   hydrogens = []
-  for nbr in nbrs:
-    if nbr.GetAtomicNum()<=1:
+  tmp=[]
+  while len(nbrs):
+    nbr = nbrs.pop()
+    if nbr.GetAtomicNum()==1:
       hydrogens.append(nbr)
-  
+    else:
+      tmp.append(nbr)
+  nbrs = tmp
+      
   if len(nbrs) == 2:
     # there should be no hydrogens in this case
     assert len(hydrogens) == 0
@@ -316,7 +330,7 @@ def GetDonor1FeatVects(conf, featAtoms, scale=1.5) :
   # find the neighboring heavy atom
   hnbr = -1
   for nbr in nbrs:
-    if nbr.GetAtomicNum()>1:
+    if nbr.GetAtomicNum()!=1:
       hnbr = nbr.GetIdx()
       break
 
@@ -355,7 +369,7 @@ def GetAcceptor1FeatVects(conf, featAtoms, scale=1.5) :
   # find the adjacent heavy atom
   heavyAt = -1
   for nbr in nbrs:
-    if nbr.GetAtomicNum()>1:
+    if nbr.GetAtomicNum()!=1:
       heavyAt = nbr
       break
 

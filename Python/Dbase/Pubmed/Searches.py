@@ -17,6 +17,12 @@ import QueryParams,Records
 import urllib,urllib2
 from xml.etree import ElementTree
 
+def openURL(url,args):
+  proxy_support = urllib2.ProxyHandler({})
+  opener = urllib2.build_opener(proxy_support)
+  conn = urllib2.urlopen(url,args)
+  return conn
+  
 def GetNumHits(query,url=QueryParams.searchBase):
   """ returns a tuple of pubmed ids (strings) for the query provided
 
@@ -42,7 +48,7 @@ def GetNumHits(query,url=QueryParams.searchBase):
 
   """
   query['rettype']='count'
-  conn = urllib2.urlopen(url,urllib.urlencode(query))
+  conn = openURL(url,urllib.urlencode(query))
   pubmed = ElementTree.parse(conn)
   countText = pubmed.findtext('Count')
   if countText:
@@ -73,7 +79,7 @@ def GetSearchIds(query,url=QueryParams.searchBase):
   
 
   """
-  conn = urllib2.urlopen(url,urllib.urlencode(query))
+  conn = openURL(url,urllib.urlencode(query))
   pubmed = ElementTree.parse(conn)
   res = [id.text for id in pubmed.getiterator('Id')]
   return tuple(res)
@@ -113,7 +119,7 @@ def GetSummaries(ids,query=None,url=QueryParams.summaryBase,conn=None):
       query = QueryParams.details()
     ids = map(str,ids)
     query['id'] = ','.join(ids)
-    conn = urllib2.urlopen(url,urllib.urlencode(query))
+    conn = openURL(url,urllib.urlencode(query))
   pubmed = ElementTree.parse(conn)
   res = []
   for summary in pubmed.getiterator('DocSum'):
@@ -171,7 +177,7 @@ def GetRecords(ids,query=None,url=QueryParams.fetchBase,conn=None):
     if not query:
       query = QueryParams.details()
     query['id'] = ','.join(map(str,ids))
-    conn = urllib2.urlopen(url,urllib.urlencode(query))
+    conn = openURL(url,urllib.urlencode(query))
 
   pubmed = ElementTree.parse(conn)
   res = []
@@ -190,7 +196,7 @@ def CheckForLinks(ids,query=None,url=QueryParams.linkBase,conn=None):
     if not query:
       query = QueryParams.details()
     query['id'] = ','.join(map(str,ids))
-    conn = urllib2.urlopen(url,urllib.urlencode(query))
+    conn = openURL(url,urllib.urlencode(query))
     query['cmd'] = 'ncheck'
   pubmed = ElementTree.parse(conn)
 
@@ -212,7 +218,7 @@ def GetLinks(ids,query=None,url=QueryParams.linkBase,conn=None):
     if not query:
       query = QueryParams.details()
     query['id'] = ','.join(map(str,ids))
-    conn = urllib2.urlopen(url,urllib.urlencode(query))
+    conn = openURL(url,urllib.urlencode(query))
     query['cmd'] = 'neighbor'
 
   pubmed = ElementTree.parse(conn)
