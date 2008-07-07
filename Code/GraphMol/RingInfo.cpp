@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,7 +13,8 @@ namespace RDKit{
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_atomMembers.size() ){
-      return std::find(d_atomMembers[idx].begin(),d_atomMembers[idx].end(),size)!=d_atomMembers[idx].end();
+      return std::find(d_atomMembers[idx].begin(),d_atomMembers[idx].end(),
+                       static_cast<int>(size))!=d_atomMembers[idx].end();
     } else {
       return false;
     }
