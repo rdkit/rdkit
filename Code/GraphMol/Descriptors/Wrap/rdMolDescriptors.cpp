@@ -4,9 +4,9 @@
 //
 //   @@ All Rights Reserved  @@
 //
+#include <RDBoost/Wrap.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
-#include <RDBoost/Wrap.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/AtomPairs.h>

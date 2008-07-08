@@ -4,9 +4,9 @@
 //
 //  @@ All Rights Reserved @@
 //
+#include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitVectUtils.h>
-#include <RDBoost/Wrap.h>
 namespace python = boost::python;
 
 ExplicitBitVect *createFromBitString(const std::string &bits){

@@ -5,14 +5,14 @@
 //   @@ All Rights Reserved  @@
 //
 
+#include <boost/python.hpp>
+#include <RDBoost/Wrap.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>
 #include <DataStructs/DiscreteValueVect.h>
 #include <Geometry/point.h>
 #include <Geometry/UniformGrid3D.h>
 #include <Geometry/GridUtils.h>
-#include <boost/python.hpp>
-#include <RDBoost/Wrap.h>
 namespace python = boost::python;
 
 using namespace RDKit;

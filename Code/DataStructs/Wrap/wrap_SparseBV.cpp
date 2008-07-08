@@ -4,8 +4,8 @@
 //
 //  @@ All Rights Reserved @@
 //
-#include <DataStructs/BitVects.h>
 #include <RDBoost/Wrap.h>
+#include <DataStructs/BitVects.h>
 #include <RDBoost/PySequenceHolder.h>
 
 #include "wrap_helpers.h"

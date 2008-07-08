@@ -7,6 +7,12 @@
 #define _RD_WRAP_H_
 
 
+//
+// Generic Wrapper utility functionality
+//
+#include <boost/python.hpp>
+
+
 // code for windows DLL handling taken from 
 // http://www.boost.org/more/separate_compilation.html
 #include <boost/config.hpp>
@@ -30,10 +36,6 @@
 #ifndef RDKIT_WRAP_DECL
 #define RDKIT_WRAP_DECL
 #endif
-//
-// Generic Wrapper utility functionality
-//
-#include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "list_indexing_suite.hpp"
 #include <vector>

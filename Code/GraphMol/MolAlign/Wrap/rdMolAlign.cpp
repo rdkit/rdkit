@@ -5,10 +5,10 @@
 //   @@ All Rights Reserved  @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolalign_array_API
-#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 #include "numpy/oldnumeric.h"
+#include <GraphMol/MolAlign/AlignMolecules.h>
 
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>

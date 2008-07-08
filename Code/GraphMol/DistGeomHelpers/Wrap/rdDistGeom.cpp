@@ -4,8 +4,8 @@
 //
 //   @@ All Rights Reserved  @@
 //
-#include <DistGeom/BoundsMatrix.h>
 #include "rdDistGeom.h"
+#include <DistGeom/BoundsMatrix.h>
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>

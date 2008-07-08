@@ -4,9 +4,9 @@
 //
 //   @@ All Rights Reserved  @@
 //
-#include <Geometry/point.h>
 #include <boost/python.hpp>
 #include <RDBoost/Wrap.h>
+#include <Geometry/point.h>
 namespace python = boost::python;
 
 namespace{
