@@ -93,8 +93,8 @@ char *Base64Decode(const char *inText,unsigned int *size){
   for(i='A';i<='Z';i++) transTable[i] = (unsigned char)i-'A';
   for(i='a';i<='z';i++) transTable[i] = (unsigned char)i-'a'+26;
   for(i='0';i<='9';i++) transTable[i] = (unsigned char)i-'0'+52;
-  transTable['+']=62;
-  transTable['/']=63;
+  transTable[static_cast<int>('+')]=62;
+  transTable[static_cast<int>('/')]=63;
 
   int outLen = 3*inLen/4;
   char *res = new char[outLen];
