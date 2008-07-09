@@ -25,7 +25,10 @@ namespace python = boost::python;
   {
     std::string tmp;
     tmp = self.ToString();
-    return Base64Encode(tmp.c_str(),tmp.length());
+    const char *txt=Base64Encode(tmp.c_str(),tmp.length());
+    std::string res(txt);
+    delete[] txt;
+    return res ;
   };
 
   template <typename T>

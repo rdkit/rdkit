@@ -1,11 +1,9 @@
 // $Id$
 //
-// Copyright (c) 2002-2006 greg landrum and rational discovery llc
+// Copyright (c) 2002-2008 greg landrum and rational discovery llc
 //
 //  @@ All Rights Reserved @@
 //
-#include <malloc.h>
-#include <string.h>
 #include <iostream>
 #include "base64.h"
 // Encoding table from RFC 2045
@@ -53,7 +51,7 @@ char *Base64Encode(const unsigned char *inText,const unsigned int inLen){
   int resSize;
   resSize = (4*inLen)/3;
   while(resSize % 4) resSize++;
-  res = (char *)malloc(resSize+1);
+  res = new char[resSize+1];
   unsigned int i = 0;
   int pos = 0;
   while(i < inLen){
@@ -99,7 +97,8 @@ char *Base64Decode(const char *inText,unsigned int *size){
   transTable['/']=63;
 
   int outLen = 3*inLen/4;
-  char *res = (char *)calloc(outLen,sizeof(char));
+  char *res = new char[outLen];
+  res[outLen-1]=0;
   int pos = 0;
   i = 0;
   // decode 4 bytes at a time
