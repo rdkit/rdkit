@@ -1,9 +1,10 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -11,6 +12,7 @@
 #include "BitVects.h"
 #include "BitOps.h"
 #include "BitVectUtils.h"
+#include "base64.h"
 #include <cmath>
 #include "DiscreteValueVect.h"
 #include <RDGeneral/Invariant.h>
@@ -106,7 +108,8 @@ template<typename T> void Test(T arg){
   }
 
   T t4(t1.ToString());
-  std::cout << "tan(t1,t4): " << TanimotoSimilarity(t1,t4) << endl;
+  TEST_ASSERT(t4==t1);
+  TEST_ASSERT(feq(TanimotoSimilarity(t1,t4),1.0));
   
   T *t5 = FoldFingerprint(t1);
   TEST_ASSERT(t5->GetNumBits() == t1.GetNumBits()/2);
@@ -116,6 +119,13 @@ template<typename T> void Test(T arg){
   TEST_ASSERT(!t5->GetBit(2));
   TEST_ASSERT(!t5->GetBit(3));
   delete t5;
+
+  std::string pkl=t1.ToString();
+  const char *pkl64=Base64Encode(pkl.c_str(),pkl.size());
+  T t6(t1.GetNumBits());
+  t6.InitFromText(pkl64,strlen(pkl64),true);
+  delete [] pkl64;
+  TEST_ASSERT(t6==t1);
 }
 
 
