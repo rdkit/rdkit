@@ -256,6 +256,10 @@ namespace RDKit {
       
       BOOST_LOG(rdErrorLog) << "Unexpected error hit on line " << d_line << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
+      while(!(dp_inStream->eof()) && (tempStr[0]!='$'||tempStr.substr(0,4)!="$$$$") ){
+        d_line++;
+        tempStr = getLine(dp_inStream);
+      }
     }
     d_last++;
     unsigned int posHold=dp_inStream->tellg();

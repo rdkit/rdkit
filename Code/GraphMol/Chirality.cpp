@@ -836,7 +836,6 @@ namespace RDKit{
       }
     }
 
-
     void assignChiralTypesFrom3D(ROMol &mol,int confId,bool replaceExistingTags){
       const double ZERO_VOLUME_TOL=0.1;
       if(!mol.getNumConformers()) return;
@@ -845,11 +844,16 @@ namespace RDKit{
 
       for(ROMol::AtomIterator atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();++atomIt){
         Atom *atom=*atomIt;
-        // reasons not to do this atom:
-        if( (!replaceExistingTags && atom->getChiralTag()!=Atom::CHI_UNSPECIFIED) ||
-            atom->getDegree()<3 || // more than two implicit Hs and we ought not to consider it
-            atom->getTotalDegree()!=4 
-            ){
+        // if we aren't replacing existing tags and the atom is already tagged, punt:
+        if(!replaceExistingTags && atom->getChiralTag()!=Atom::CHI_UNSPECIFIED){
+          continue;
+        }
+        atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        // additional rasons to skip the atom:
+        if(atom->getDegree()<3 || // not enough explicit neighbors
+           atom->getTotalDegree()!=4 ||  // not enough total neighbors
+           atom->getTotalNumHs(true)>1 // more than two Hs
+           ){
           continue;
         }
         bool hasPreceder=false;

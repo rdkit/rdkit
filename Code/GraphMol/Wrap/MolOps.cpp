@@ -545,6 +545,23 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
                   docString.c_str());
 
+      // ------------------------------------------------------------------------
+      docString="Sets the chiral tags on a molecule's atoms based on \n\
+  a 3D conformation.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+    - cleanIt: (optional) if provided, atoms with a chiral specifier that aren't\n\
+      actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,\n\
+      etc.) will have their chiral code set to CHI_UNSPECIFIED\n\
+    - force: (optional) causes the calculation to be repeated, even if it has already\n\
+      been done\n\
+\n";
+      python::def("AssignAtomChiralTagsFromStructure", MolOps::assignChiralTypesFrom3D,
+                  (python::arg("mol"),python::arg("confId")=-1,python::arg("replaceExistingTags")=true),
+                  docString.c_str());
+
 
       // ------------------------------------------------------------------------
       docString="Does the CIP stereochemistry assignment (Z/E)\n\
