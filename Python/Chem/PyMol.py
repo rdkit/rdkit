@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2004-2006 Rational Discovery LLC
+# Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -19,10 +19,7 @@ class MolViewer(object):
       self.server=_server
     else:
       if not host:
-        if os.environ.has_key('PYMOL_RPCHOST'):
-          host = os.environ['PYMOL_RPCHOST']
-        else:
-          host = 'localhost'
+        host=os.environ.get('PYMOL_RPCHOST','localhost')
       _server=None
       serv = xmlrpclib.Server('http://%s:%d'%(host,port))
       serv.ping()
@@ -44,15 +41,20 @@ class MolViewer(object):
     
 
   def DeleteAll(self):
+    " blows out everything in the viewer "
     self.server.deleteAll()
 
   def DeleteAllExcept(self,excludes):
+    " deletes everything except the items in the provided list of arguments "
     allNames = self.server.getNames('*',False)
     for nm in allNames:
       if nm not in excludes:
         self.server.deleteObject(nm)
 
   def LoadFile(self,filename,name,showOnly=False):
+    """ calls pymol's "load" command on the given filename; the loaded object
+    is assigned the name "name"
+    """
     if showOnly:
       self.DeleteAll()
     id = self.server.loadFile(filename,name)
@@ -86,7 +88,9 @@ class MolViewer(object):
     else:
       self.server.do('view rdinterface,recall')
     return id
+
   def GetSelectedAtoms(self,whichSelection=None):
+    " returns the selected atoms "
     if not whichSelection:
       sels = self.server.getNames('selections')
       if sels:
@@ -101,6 +105,7 @@ class MolViewer(object):
 
 
   def SelectAtoms(self,itemId,atomIndices,selName='selection'):
+    " selects a set of atoms "
     ids = '(id '
     ids += ','.join(['%d'%(x+1) for x in atomIndices])
     ids += ')'
@@ -108,6 +113,7 @@ class MolViewer(object):
     self.server.do(cmd)
   
   def HighlightAtoms(self,indices,where,extraHighlight=False):
+    " highlights a set of atoms " 
     if extraHighlight:
       idxText = ','.join(['%s and (id %d)'%(where,x) for x in indices])
       self.server.do('edit %s'%idxText)
@@ -116,20 +122,24 @@ class MolViewer(object):
       self.server.do('select selection, %s and (%s)'%(where,idxText))
 
   def SetDisplayStyle(self,obj,style=''):
+    " change the display style of the specified object "
     self.server.do('hide everything,%s'%(obj,))
     if style:
       self.server.do('show %s,%s'%(style,obj))
 
   def SelectProteinNeighborhood(self,aroundObj,inObj,distance=5.0,
                                 name='neighborhood',showSurface=False):
+    """ selects the area of a protein around a specified object/selection name;
+    optionally adds a surface to that """
     self.server.do('select %(name)s,byres (%(aroundObj)s around %(distance)f) and %(inObj)s'%locals())
+    
 
     if showSurface:
       self.server.do('show surface,%s'%name)
       self.server.do('disable %s'%name)
 
-
   def AddPharmacophore(self,locs,colors,label,sphereRad=0.5):
+    " adds a set of spheres "
     self.server.do('view rdinterface,store')
     self.server.resetCGO(label)
     for i,loc in enumerate(locs):
@@ -144,13 +154,12 @@ class MolViewer(object):
     else:
       self.server.do('set defer_update,0')
 
-      
   def GetAtomCoords(self,sels):
+    " returns the coordinates of the selected atoms " 
     res = {}
     for label,idx in sels:
       coords = self.server.getAtomCoords('(%s and id %d)'%(label,idx))
       res[(label,idx)] = coords
-      print 'grab:',label,idx,coords
     return res
 
   def HideAll(self):
@@ -168,6 +177,7 @@ class MolViewer(object):
   def DisplayHBonds(self,objName,molName,proteinName,
                     molSelText='(%(molName)s)',
                     proteinSelText='(%(proteinName)s and not het)'):
+    " toggles display of h bonds between the protein and a specified molecule "
     cmd = "delete %(objName)s;\n"
     cmd += "dist %(objName)s," + molSelText+","+proteinSelText+",mode=2;\n"
     cmd += "enable %(objName)s;"
@@ -179,6 +189,7 @@ class MolViewer(object):
                         color='red',
                         molSelText='(%(molName)s)',
                         proteinSelText='(%(proteinName)s and not het)'):
+    " toggles display of collisions between the protein and a specified molecule "
     cmd = "delete %(objName)s;\n"
     cmd += "dist %(objName)s," + molSelText+","+proteinSelText+",%(distCutoff)f,mode=0;\n"
     cmd += """enable %(objName)s
