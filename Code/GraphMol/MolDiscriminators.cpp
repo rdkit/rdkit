@@ -12,14 +12,22 @@
 #include <boost/dynamic_bitset.hpp>
 #include <iomanip>
 
+#ifdef RDK_USELAPACKPP
+//lapack ++ includes
+#include <lafnames.h>
+#include <lapack.h>
+#include <symd.h>
+#include <lavd.h>
+#include <laslv.h>
+#else
 // uBLAS and boost.bindings includes
 #include <boost/numeric/bindings/traits/ublas_matrix.hpp> 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/bindings/lapack/syev.hpp>
 #include <boost/numeric/ublas/io.hpp> 
-
 namespace ublas = boost::numeric::ublas;
 namespace lapack = boost::numeric::bindings::lapack;
+#endif
 
 namespace RDKit {
 
@@ -66,6 +74,11 @@ namespace RDKit {
       PRECONDITION(distMat,"bogus distance matrix");
       double ev1 = 0.0;
       double ev2 = 0.0;
+#ifdef RDK_USELAPACKPP
+      LaSymmMatDouble A(distMat, na, na);
+      LaVectorDouble eigs(na);
+      LaEigSolve(A, eigs);
+#else
       ublas::matrix<double> A(na,na);
       ublas::vector<double> eigs(na);
       for(unsigned int i=0;i<na;++i){
@@ -74,6 +87,7 @@ namespace RDKit {
         }
       }
       lapack::syev('N','L',A,eigs);
+#endif
       if (na > 1) {
         ev1 = eigs(0);
       }
