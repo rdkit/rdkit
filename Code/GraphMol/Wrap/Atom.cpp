@@ -95,9 +95,6 @@ namespace RDKit{
 
 
 
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(getTotalNumHs_ol, getTotalNumHs, 0, 1)
-
-
   // FIX: is there any reason at all to not just prevent the construction of Atoms?
   std::string atomClassDoc="The class to store Atoms.\n\
 Note that, though it is possible to create one, having an Atom on its own\n\
@@ -127,11 +124,11 @@ struct atom_wrapper {
 	   "  The degree is independent of bond orders.\n")
 
       .def("GetTotalNumHs",&Atom::getTotalNumHs,
-	   getTotalNumHs_ol(python::args("includeNeighbors"),
-			    "Returns the total number of Hs (explicit and implicit) on the atom.\n\n"
-			    "  ARGUMENTS:\n\n"
-			    "    - includeNeighbors: (optional) toggles inclusion of neighboring H atoms in the sum.\n"
-			    "      Defaults to 0.\n"))
+           (python::arg("self"),python::arg("includeNeighbors")=false),
+           "Returns the total number of Hs (explicit and implicit) on the atom.\n\n"
+           "  ARGUMENTS:\n\n"
+           "    - includeNeighbors: (optional) toggles inclusion of neighboring H atoms in the sum.\n"
+           "      Defaults to 0.\n")
 
       .def("GetNumImplicitHs",&Atom::getNumImplicitHs,
 	   "Returns the total number of implicit Hs on the atom.\n")
