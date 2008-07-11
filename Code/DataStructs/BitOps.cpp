@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -212,6 +212,25 @@ TanimotoSimilarity(const T1& bv1,
   else return x / (y+z-x);
 }
 
+
+template <typename T1, typename T2>
+const double
+TverskySimilarity(const T1& bv1,
+                  const T2& bv2,
+                  double a,
+                  double b)
+{
+  RANGE_CHECK(0,a,1);
+  RANGE_CHECK(0,b,1);
+  if(bv1.GetNumBits()!=bv2.GetNumBits())
+    throw ValueErrorException("BitVects must be same length");
+  double x = NumOnBitsInCommon(bv1,bv2);
+  double y = bv1.GetNumOnBits();
+  double z = bv2.GetNumOnBits();
+  double denom = a*y + b*z + (1-a-b)*x;
+  if(denom==0.0) return 1.0;
+  else return x / denom;
+}
 
 template <typename T1, typename T2>
 const double
@@ -615,6 +634,7 @@ BitVectToText(const T1& bv1){
 
 
 template const double TanimotoSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template const double TverskySimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2,double a, double b);
 template const double CosineSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template const double KulczynskiSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template const double DiceSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
@@ -633,6 +653,7 @@ template DoubleVect OnBitProjSimilarity(const SparseBitVect& bv1,const SparseBit
 template DoubleVect OffBitProjSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 
 template const double TanimotoSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template const double TverskySimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2,double a, double b);
 template const double CosineSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template const double KulczynskiSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template const double DiceSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);

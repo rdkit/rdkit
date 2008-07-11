@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -37,6 +37,26 @@ double SimilarityWrapper(const T &bv1,const T &bv2,
     delete bv2tmp;
   } else {
     res = metric(bv1,bv2);
+  }
+  if(returnDistance) res = 1.0-res;
+  return res;
+}
+//! \overload
+template <typename T>
+double SimilarityWrapper(const T &bv1,const T &bv2,double a,double b,
+                         const double (*metric)(const T &,const T &,double,double),
+                         bool returnDistance=false){
+  double res=0.0;
+  if(bv1.GetNumBits()>bv2.GetNumBits()){
+    T *bv1tmp = FoldFingerprint(bv1,bv1.GetNumBits()/bv2.GetNumBits());
+    res = metric(*bv1tmp,bv2,a,b);
+    delete bv1tmp;
+  } else if(bv2.GetNumBits()>bv1.GetNumBits()){
+    T *bv2tmp = FoldFingerprint(bv2,bv2.GetNumBits()/bv1.GetNumBits());
+    res = metric(bv1,*bv2tmp,a,b);
+    delete bv2tmp;
+  } else {
+    res = metric(bv1,bv2,a,b);
   }
   if(returnDistance) res = 1.0-res;
   return res;
@@ -96,6 +116,21 @@ template <typename T1, typename T2>
 const double
 DiceSimilarity(const T1& bv1,
                const T2& bv2);
+
+//! returns the Tversky similarity between two bit vects
+/*!
+  \return <tt>(bv1&bv2)_o / [a*bv1_o + b*bv2_o + (1 - a - b)*(bv1&bv2)_o]</tt>
+
+  Notes:  
+   # 0 <= a,b <= 1
+   # Tversky(a=1,b=1) = Tanimoto
+   # Tversky(a=1/2,b=1/2) = Dice
+ 
+*/
+template <typename T1, typename T2>
+const double
+TverskySimilarity(const T1& bv1,
+                  const T2& bv2,double a,double b);
 
 //! returns the Sokal similarity between two bit vects
 /*!

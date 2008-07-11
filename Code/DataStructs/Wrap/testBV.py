@@ -128,8 +128,19 @@ class TestCase(unittest.TestCase):
         sim = DataStructs.OnBitSimilarity(bvs[0],bvs[i])
         self.failUnless(feq(sim,sims[i]))
 
+      sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,1,1)
+      for i in range(len(bvs)):
+        sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],1,1)
+        self.failUnless(feq(sim,sims[i]))
+        sim = DataStructs.TanimotoSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
 
-
+      sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,.5,.5)
+      for i in range(len(bvs)):
+        sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],.5,.5)
+        self.failUnless(feq(sim,sims[i]))
+        sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
 
 if __name__ == '__main__':
    unittest.main()
