@@ -27,6 +27,8 @@ project RDKit
           <toolset>msvc:<define>WIN32
 	  <address-model>64:<cflags>-fPIC
           # <define>RDK_USELAPACKPP #<- uncomment this to use lapack++
+          <toolset>msvc:<define>BOOST_NUMERIC_BINDINGS_USE_CLAPACK
+          <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
         : default-build release ;
 
 
