@@ -158,7 +158,7 @@ void testSmilesSup() {
     delete mol;
   }
   {
-    std::ifstream strm(fname.c_str());
+    std::ifstream strm(fname.c_str(),std::ios_base::binary);
     SmilesMolSupplier nSup2(&strm,false,",", 1, 0, true);
 
     mol = nSup2[3];
