@@ -556,7 +556,7 @@ namespace RDKit{
     */
     void buildAtomInvariants(const ROMol &mol,INVAR_VECT &res,
 				    bool includeChirality=false);
-    @}
+    // @}
 
     //! \name Stereochemistry
     //@{

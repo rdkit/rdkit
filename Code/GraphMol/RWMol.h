@@ -152,7 +152,7 @@ namespace RDKit{
       issues of ownership.
     */
     unsigned int addBond(BOND_SPTR bsp){
-      return ROMol::addBond(bond);
+      return ROMol::addBond(bsp);
     };
 
 
