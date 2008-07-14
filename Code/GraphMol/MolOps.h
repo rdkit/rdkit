@@ -32,6 +32,26 @@ namespace RDKit{
 
   //! \brief Groups a variety of molecular query and transformation operations.
   namespace MolOps {
+
+    //! return the number of electrons available on an atom to donate for aromaticity
+    /*!
+       The result is determined using the default valency, number of lone pairs,
+       number of bonds and the formal charge. Note that the atom may not donate
+       all of these electrons to a ring for aromaticity (also used in Conjugation
+       and hybridization code).
+
+       \param at the atom of interest
+
+       \return the number of electrons
+    */
+    int countAtomElec(const Atom *at);
+
+    //! sums up all atomic formal charges and returns the result
+    int getFormalCharge(const ROMol &mol);
+
+    //! returns whether or not the given Atom is involved in a conjugated bond
+    bool atomHasConjugatedBond(const Atom *at);
+
     //! find fragments (disconnected components of the molecular graph)
     /*!
 
@@ -74,6 +94,60 @@ namespace RDKit{
     std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,
                                                        bool sanitizeFrags=true,
                                                        INT_VECT *frags=0);
+
+    //! finds a molecule's minimium spanning tree (MST)
+    /*!
+      \param mol  the molecule of interest
+      \param mst  used to return the MST as a vector of bond indices
+    */
+    void findSpanningTree(const ROMol &mol,INT_VECT &mst);
+
+    //! calculates a set of molecular discriminators from the distance matrix
+    /*!
+      Computes:
+        -# BalabanJ 
+        -# the first eigenvalue of the distance matrix 
+        -# the last but one eigenvalue of the distance matrix 
+
+      \param mol    the molecule of interest
+      \param useBO  toggles inclusion of the bond order in the discriminators
+                    (when false, the discriminators are purely topological)
+      \param force  forces the calculation (instead of using cached results)
+	
+      \return a \c DiscrimTuple with the results
+      
+    */
+    DiscrimTuple computeDiscriminators(const ROMol &mol, 
+					      bool useBO=true, 
+					      bool force=false);
+    //! \brief Same as MolOps::computeDiscriminators(const ROMol &mol),
+    //! except that this directly uses the user-supplied distance matrix
+    DiscrimTuple computeDiscriminators(double *distMat, int nb, int na);
+    
+
+    //! calculates Balaban's J index for the molecule
+    /*!
+      \param mol      the molecule of interest
+      \param useBO    toggles inclusion of the bond order in the calculation
+                      (when false, we're not really calculating the J value)
+      \param force    forces the calculation (instead of using cached results)
+      \param bondPath when included, only paths using bonds whose indices occur
+                      in this vector will be included in the calculation
+      \param cacheIt  If this is true, the calculated value will be cached
+                      as a property on the molecule
+      \return the J index
+      
+    */
+    double computeBalabanJ(const ROMol &mol, 
+				  bool useBO=true,
+				  bool force=false,
+				  const std::vector<int> *bondPath=0,
+				  bool cacheIt=true);
+				
+
+
+    //! \name Dealing with hydrogens
+    //{@
 
     //! returns a copy of a molecule with hydrogens added in as explicit Atoms
     /*!
@@ -138,19 +212,33 @@ namespace RDKit{
 	
     */
     ROMol *mergeQueryHs(const ROMol &mol);
+    //@}
 
-    //! return the number of electrons available on an atom to donate for aromaticity
+    //! \name Sanitization
+    //@{
+
+    //! \brief carries out a collection of tasks for cleaning up a molecule and ensuring
+    //! that it makes "chemical sense"
     /*!
-       The result is determined using the default valency, number of lone pairs,
-       number of bonds and the formal charge. Note that the atom may not donate
-       all of these electrons to a ring for aromaticity (also used in Conjugation
-       and hybridization code).
+       This functions calls the following in sequence
+         -# MolOps::cleanUp()
+         -# MolOps::Kekulize()
+         -# MolOps::setAromaticity()
+         -# MolOps::setConjugation()
+         -# MolOps::setHybridization()
+         -# MolOps::cleanupChirality()
+         -# MolOps::adjustHs()
+	 
+       \param mol the RWMol to be cleaned
 
-       \param at the atom of interest
-
-       \return the number of electrons
+       <b>Notes:</b>
+        - If there is a failure in the sanitization, a \c SanitException
+	  will be thrown.
+        - in general the user of this function should cast the molecule following this 
+          function to a ROMol, so that new atoms and bonds cannot be added to the 
+          molecule and screw up the sanitizing that has been done here
     */
-    int countAtomElec(const Atom *at);
+    void sanitizeMol(RWMol &mol);
 
     //! Sets up the aromaticity for a molecule
     /*!
@@ -211,6 +299,38 @@ namespace RDKit{
 
     */
     void adjustHs(RWMol &mol);
+    
+    //! Kekulizes the molecule
+    /*!
+
+       \param mol             the molecule of interest
+       \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
+                              on both the Bonds and Atoms are turned to false following
+                              the Kekulization, otherwise they are left alone in their 
+                              original state.
+       \param maxBackTracks   the maximum number of attempts at back-tracking. The algorithm 
+                              uses a back-tracking procedure to revist a previous setting of 
+                              double bond if we hit a wall in the kekulization process
+                              
+       <b>Notes:</b>
+         - even if \c markAtomsBonds is \c false the \c BondType for all aromatic
+	   bonds will be changed from \c RDKit::Bond::AROMATIC to \c RDKit::Bond::SINGLE
+	   or RDKit::Bond::DOUBLE during Kekulization.
+
+    */
+    void Kekulize(RWMol &mol, bool markAtomsBonds=true, unsigned int maxBackTracks=100);
+
+    //! flags the molecule's conjugated bonds
+    void setConjugation(ROMol &mol);
+
+    //! calculates and sets the hybridization of all a molecule's Stoms
+    void setHybridization(ROMol &mol);
+
+
+    // @}
+
+    //! \name Ring finding and SSSR
+    //@{
 
     //! finds a molecule's Smallest Set of Smallest Rings
     /*!
@@ -280,59 +400,10 @@ namespace RDKit{
     */
     int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res);
 
-    //! Kekulizes the molecule
-    /*!
+    //@}
 
-       \param mol             the molecule of interest
-       \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
-                              on both the Bonds and Atoms are turned to false following
-                              the Kekulization, otherwise they are left alone in their 
-                              original state.
-       \param maxBackTracks   the maximum number of attempts at back-tracking. The algorithm 
-                              uses a back-tracking procedure to revist a previous setting of 
-                              double bond if we hit a wall in the kekulization process
-                              
-       <b>Notes:</b>
-         - even if \c markAtomsBonds is \c false the \c BondType for all aromatic
-	   bonds will be changed from \c RDKit::Bond::AROMATIC to \c RDKit::Bond::SINGLE
-	   or RDKit::Bond::DOUBLE during Kekulization.
-
-    */
-    void Kekulize(RWMol &mol, bool markAtomsBonds=true, unsigned int maxBackTracks=100);
-
-    //! flags the molecule's conjugated bonds
-    void setConjugation(ROMol &mol);
-
-    //! returns whether or not the given Atom is involved in a conjugated bond
-    bool atomHasConjugatedBond(const Atom *at);
-
-
-    //! calculates and sets the hybridization of all a molecule's Stoms
-    void setHybridization(ROMol &mol);
-
-
-    //! \brief carries out a collection of tasks for cleaning up a molecule and ensuring
-    //! that it makes "chemical sense"
-    /*!
-       This functions calls the following in sequence
-         -# MolOps::cleanUp()
-         -# MolOps::Kekulize()
-         -# MolOps::setAromaticity()
-         -# MolOps::setConjugation()
-         -# MolOps::setHybridization()
-         -# MolOps::cleanupChirality()
-         -# MolOps::adjustHs()
-	 
-       \param mol the RWMol to be cleaned
-
-       <b>Notes:</b>
-        - If there is a failure in the sanitization, a \c SanitException
-	  will be thrown.
-        - in general the user of this function should cast the molecule following this 
-          function to a ROMol, so that new atoms and bonds cannot be added to the 
-          molecule and screw up the sanitizing that has been done here
-    */
-    void sanitizeMol(RWMol &mol);
+    //! \name Shortest paths and other matrices
+    //@{
 
     //! returns a molecule's adjacency matrix
     /*!
@@ -430,55 +501,10 @@ namespace RDKit{
     */
     INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2);
 
-    //! calculates a set of molecular discriminators from the distance matrix
-    /*!
-      Computes:
-        -# BalabanJ 
-        -# the first eigenvalue of the distance matrix 
-        -# the last but one eigenvalue of the distance matrix 
-
-      \param mol    the molecule of interest
-      \param useBO  toggles inclusion of the bond order in the discriminators
-                    (when false, the discriminators are purely topological)
-      \param force  forces the calculation (instead of using cached results)
-	
-      \return a \c DiscrimTuple with the results
-      
-    */
-    DiscrimTuple computeDiscriminators(const ROMol &mol, 
-					      bool useBO=true, 
-					      bool force=false);
-    //! \brief Same as MolOps::computeDiscriminators(const ROMol &mol),
-    //! except that this directly uses the user-supplied distance matrix
-    DiscrimTuple computeDiscriminators(double *distMat, int nb, int na);
-
-
-    //! calculates Balaban's J index for the molecule
-    /*!
-      \param mol      the molecule of interest
-      \param useBO    toggles inclusion of the bond order in the calculation
-                      (when false, we're not really calculating the J value)
-      \param force    forces the calculation (instead of using cached results)
-      \param bondPath when included, only paths using bonds whose indices occur
-                      in this vector will be included in the calculation
-      \param cacheIt  If this is true, the calculated value will be cached
-                      as a property on the molecule
-      \return the J index
-      
-    */
-    double computeBalabanJ(const ROMol &mol, 
-				  bool useBO=true,
-				  bool force=false,
-				  const std::vector<int> *bondPath=0,
-				  bool cacheIt=true);
-				
-
-    //! finds a molecule's minimium spanning tree (MST)
-    /*!
-      \param mol  the molecule of interest
-      \param mst  used to return the MST as a vector of bond indices
-    */
-    void findSpanningTree(const ROMol &mol,INT_VECT &mst);
+    //@}
+    
+    //! \name Canonicalization
+    //@{
 
     //! assign a canonical ordering to a molecule's atoms
     /*!
@@ -530,6 +556,25 @@ namespace RDKit{
     */
     void buildAtomInvariants(const ROMol &mol,INVAR_VECT &res,
 				    bool includeChirality=false);
+    @}
+
+    //! \name Stereochemistry
+    //@{
+
+    //! removes bogus chirality markers (those on non-sp3 centers):
+    void cleanupChirality(RWMol &mol);
+
+    //! \brief Uses a conformer to assign ChiralType to a molecule's atoms
+    /*!
+      \param mol                  the molecule of interest
+      \param confId               the conformer to use
+      \param replaceExistingTags  if this flag is true, any existing atomic chiral
+                                  tags will be replaced
+
+      If the conformer provided is not a 3D conformer, nothing will be done.
+    */
+    void assignChiralTypesFrom3D(ROMol &mol,int confId=-1,bool replaceExistingTags=true);
+
     //! calculates a set of chiral atom invariants
     /*!
       These are based upon Labute's proposal in the article:
@@ -605,22 +650,7 @@ namespace RDKit{
 	  need to be specially marked in the mol file
     */
     void findPotentialStereoBonds(ROMol &mol,bool cleanIt=false);
-    //! sums up all atomic formal charges and returns the result
-    int getFormalCharge(const ROMol &mol);
-
-    //! removes bogus chirality markers (those on non-sp3 centers):
-    void cleanupChirality(RWMol &mol);
-
-    //! \brief Uses a conformer to assign ChiralType to a molecule's atoms
-    /*!
-      \param mol                  the molecule of interest
-      \param confId               the conformer to use
-      \param replaceExistingTags  if this flag is true, any existing atomic chiral
-                                  tags will be replaced
-
-      If the conformer provided is not a 3D conformer, nothing will be done.
-    */
-    void assignChiralTypesFrom3D(ROMol &mol,int confId=-1,bool replaceExistingTags=true);
+    //@}
 
   }; // end of namespace MolOps
 }; // end of namespace RDKit

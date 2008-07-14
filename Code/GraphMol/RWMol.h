@@ -1,8 +1,13 @@
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
+/*! \file RWMol.h
+
+  \brief Defines the editable molecule class \c RWMol
+
+*/  
 
 #ifndef __RD_RWMOL_H__
 #define __RD_RWMOL_H__
@@ -20,9 +25,6 @@ namespace RDKit{
   class RWMol : public ROMol {
   public:
   
-    using ROMol::addAtom;
-    using ROMol::addBond;
-
     RWMol() { d_partialBonds.clear(); }
 
     //! copy constructor with a twist
@@ -39,11 +41,8 @@ namespace RDKit{
     void insertMol( const ROMol &other);
   
 
-    // --------------------------------------------
-    //
-    //  Atoms
-    //
-    // --------------------------------------------
+    //! \name Atoms
+    //@{
 
     //! adds an empty Atom to our collection
     /*!
@@ -54,6 +53,38 @@ namespace RDKit{
 
     */
     unsigned int addAtom(bool updateLabel=true);
+
+    //! adds an Atom to our collection
+    /*!
+      \param atom          pointer to the Atom to add
+      \param updateLabel   (optional) if this is true, the new Atom will be
+                           our \c activeAtom
+      \param takeOwnership (optional) if this is true, we take ownership of \c atom
+                           instead of copying it.
+
+      \return the new number of atoms
+    */
+    unsigned int addAtom(Atom *atom,bool updateLabel=true,bool takeOwnership=false){
+      return ROMol::addAtom(atom,updateLabel,takeOwnership);
+    };
+
+    //! adds an Atom to our collection
+    /*!
+      \param atom          pointer to the Atom to add
+      \param updateLabel   (optional) if this is true, the new Atom will be
+                           our \c activeAtom
+
+
+      \return the new number of atoms
+
+      <b>Note:</b> since this is using a smart pointer, we don't need to worry about
+      issues of ownership.
+
+    */
+    unsigned int addAtom(ATOM_SPTR atom,bool updateLabel=true){
+      return ROMol::addAtom(atom,updateLabel);
+    };
+
     //! replaces a particular Atom
     /*!
       \param idx          the index of the Atom to replace
@@ -80,12 +111,11 @@ namespace RDKit{
     //! \overload
     void removeAtom(Atom *atom);
 
+    //@}
 
-    // --------------------------------------------
-    //
-    //  Bonds
-    //
-    // --------------------------------------------
+
+    //! \name Bonds
+    //@{
 
     //! adds a Bond between the indicated Atoms
     /*!
@@ -99,6 +129,32 @@ namespace RDKit{
     //! \overload
     unsigned int addBond(Atom *beginAtom, Atom *endAtom,
 			 Bond::BondType order=Bond::UNSPECIFIED);
+
+
+    //! adds a Bond to our collection
+    /*!
+      \param bond          pointer to the Bond to add
+      \param takeOwnership (optional) if this is true, we take ownership of \c bond
+                           instead of copying it.
+
+      \return the new number of bonds
+    */
+    unsigned int addBond(Bond *bond,bool takeOwnership=false){
+      return ROMol::addBond(bond,takeOwnership);
+    };
+    //! adds a Bond to our collection
+    /*!
+      \param bond          pointer to the Bond to add
+
+      \return the new number of bonds
+
+      <b>Note:</b> since this is using a smart pointer, we don't need to worry about
+      issues of ownership.
+    */
+    unsigned int addBond(BOND_SPTR bsp){
+      return ROMol::addBond(bond);
+    };
+
 
     //! starts a Bond and sets its beginAtomIdx
     /*!
@@ -141,6 +197,7 @@ namespace RDKit{
 
     //! removes a bond from the molecule
     void removeBond(unsigned int beginAtomIdx, unsigned int endAtomIdx);
+    //@}
 
   private:
     std::vector<BOND_SPTR> d_partialBonds;

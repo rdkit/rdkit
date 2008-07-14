@@ -5,7 +5,7 @@
 //
 /*! \file ROMol.h
 
-  \brief Defines the primary molecule class ROMol as well as associated typedefs
+  \brief Defines the primary molecule class \c ROMol as well as associated typedefs
 
 */  
 
@@ -95,7 +95,10 @@ namespace RDKit{
     friend class MolPickler;
     friend class RWMol;
     
+    //! \cond TYPEDEFS
 
+    //! \name typedefs
+    //@{
     typedef boost::property_map<MolGraph,vertex_atom_t>  GRAPH_MOL_ATOM_PMAP;
     typedef boost::property_map<MolGraph,edge_bond_t>  GRAPH_MOL_BOND_PMAP;
     typedef boost::graph_traits<MolGraph> GRAPH_MOL_TRAITS;
@@ -157,6 +160,9 @@ namespace RDKit{
     typedef CONF_SPTR_LIST_I ConformerIterator;
     typedef  CONF_SPTR_LIST_CI ConstConformerIterator;
 
+    //@}
+    //! \endcond
+
     ROMol() { initMol(); }
 
     //! copy constructor with a twist
@@ -173,11 +179,8 @@ namespace RDKit{
     virtual ~ROMol() { destroy(); };
   
 
-    // --------------------------------------------
-    //
-    //  Atoms
-    //
-    // --------------------------------------------
+    //! \name Atoms
+    //@{
 
     //! returns our number of Atoms
     unsigned int getNumAtoms(bool onlyHeavy=1) const;
@@ -189,12 +192,10 @@ namespace RDKit{
     unsigned int getAtomDegree(const Atom *at) const;
     //! \overload
     unsigned int getAtomDegree(ATOM_SPTR at) const;
+    //@}
 
-    // --------------------------------------------
-    //
-    //  Bonds
-    //
-    // --------------------------------------------
+    //! \name Bonds
+    //@{
 
     //! returns our number of Bonds
     unsigned int getNumBonds(bool onlyHeavy=1) const; 
@@ -206,13 +207,11 @@ namespace RDKit{
     GRAPH_EDGE_TYPE getBondBetweenAtoms(unsigned int idx1,unsigned int idx2);
     //! \overload
     GRAPH_EDGE_CONST_TYPE getBondBetweenAtoms(unsigned int idx1,unsigned int idx2) const;
+    //@}
 
 
-    // --------------------------------------------
-    //
-    //  Bookmarks
-    //
-    // --------------------------------------------
+    //! \name Bookmarks
+    //@{
 
     //! associates an Atom pointer with a bookmark
     void setAtomBookmark(ATOM_SPTR at,int mark) {d_atomBookmarks[mark].push_back(at.get());};
@@ -256,12 +255,47 @@ namespace RDKit{
     //! returns a pointer to all of our bond \c bookmarks
     BOND_BOOKMARK_MAP *getBondBookmarks() { return &d_bondBookmarks; };
 
+    //@}
 
-    // --------------------------------------------
-    //
-    //  Collections
-    //
-    // --------------------------------------------
+
+    //! \name Conformers
+    //@{
+
+    //! return the conformer with a specified ID
+    //! if the ID is negative the first conformation will be returned
+    const Conformer &getConformer(int id=-1) const;
+    
+    //! return the conformer with a specified ID
+    //! if the ID is negative the first conformation will be returned
+    Conformer &getConformer(int id=-1);
+
+    //! Delete the conformation with the specified ID
+    void removeConformer(unsigned int id);
+    
+    //! Clear all the conformations on the molecule
+    void clearConformers() {d_confs.clear();}
+
+    //! Add a new conformation to the molecule
+    /*!
+      \param conf - conformation to be added to the molecule, this molecule takes ownership 
+                    of the conformer
+      \param assignId - a unique ID will be assigned to the the conformation if true
+                        otherwise it is assumed that the conformation already has an (unique) ID set
+    */
+    unsigned int addConformer(Conformer * conf, bool assignId=false);
+
+    inline unsigned int getNumConformers() const {
+      return d_confs.size();
+    }
+
+    //@}
+
+
+    //! \name Topology
+    //@{
+
+    //! returns a pointer to our RingInfo structure
+    RingInfo *getRingInfo() const { return dp_ringInfo; };
 
     //! provides access to all neighbors around an Atom
     /*!
@@ -385,15 +419,12 @@ namespace RDKit{
         \endcode
      */
     MolGraph const *getTopology() const { return &d_graph; };
+    //@}
 
-    //! sends some debugging info to a stream
-    void debugMol(std::ostream& str) const;
 
-    // --------------------------------------------
-    //
-    //  Iterators
-    //
-    // --------------------------------------------
+
+    //! \name Iterators
+    //@{
 
     //! get an AtomIterator pointing at our first Atom
     AtomIterator beginAtoms();
@@ -439,12 +470,27 @@ namespace RDKit{
     BondIterator endBonds();
     //! \overload
     ConstBondIterator endBonds() const;
-  
-    //---------------------------------------------------
-    //
-    //    Properties
-    //
-    //---------------------------------------------------
+
+    inline ConformerIterator beginConformers() {
+      return d_confs.begin();
+    }
+
+    inline ConformerIterator endConformers() {
+      return d_confs.end();
+    }
+
+    inline ConstConformerIterator beginConformers() const {
+      return d_confs.begin();
+    }
+
+    inline ConstConformerIterator endConformers() const {
+      return d_confs.end();
+    }
+
+    //@}
+
+    //! \name Properties
+    //@{
 
     //! returns a list with the names of our \c properties
     STR_VECT getPropList() const {
@@ -550,61 +596,15 @@ namespace RDKit{
     */
     void updatePropertyCache(bool strict=true);
 
-    //! returns a pointer to our RingInfo structure
-    RingInfo *getRingInfo() const { return dp_ringInfo; };
+    //@}
 
-    //! return the conformer with a specified ID
-    //! if the ID is negative the first conformation will be returned
-    const Conformer &getConformer(int id=-1) const;
-    
-    //! return the conformer with a specified ID
-    //! if the ID is negative the first conformation will be returned
-    Conformer &getConformer(int id=-1);
 
-    //! Delete the conformation with the specified ID
-    void removeConformer(unsigned int id);
-    
-    //! Clear all the conformations on the molecule
-    void clearConformers() {d_confs.clear();}
+    //! \name Misc
+    //@{
+    //! sends some debugging info to a stream
+    void debugMol(std::ostream& str) const;
+    //@}
 
-    //! Add a new conformation to the molecule
-    /*!
-      \param conf - conformation to be added to the molecule, this molecule takes ownership 
-                    of the conformer
-      \param assignId - a unique ID will be assigned to the the conformation if true
-                        otherwise it is assumed that the conformation already has an (unique) ID set
-    */
-    unsigned int addConformer(Conformer * conf, bool assignId=false);
-
-    //! return a reference to the list of conformers
-    //CONF_SPTR_LIST &getConformers() {
-    //  return d_confs;
-    //}
-
-    // return a const reference to the list of conformers
-    //const CONF_SPTR_LIST &getConformers() const {
-    //  return d_confs;
-    //}
-
-    inline unsigned int getNumConformers() const {
-      return d_confs.size();
-    }
-
-    inline ConformerIterator beginConformers() {
-      return d_confs.begin();
-    }
-
-    inline ConformerIterator endConformers() {
-      return d_confs.end();
-    }
-
-    inline ConstConformerIterator beginConformers() const {
-      return d_confs.begin();
-    }
-
-    inline ConstConformerIterator endConformers() const {
-      return d_confs.end();
-    }
 
   private:
     MolGraph d_graph;
