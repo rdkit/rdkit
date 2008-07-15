@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -24,7 +24,10 @@
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <RDGeneral/FileParseException.h>
 #include <ForceField/ForceField.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <math.h>
+
+
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
@@ -529,8 +532,7 @@ void testMultipleConfs() {
   std::string smi = "CC(C)(C)c(cc1)ccc1c(cc23)n[n]3C(=O)/C(=C\\N2)C(=O)OCC";
   ROMol *m = SmilesToMol(smi, 0, 1);
   INT_VECT cids = DGeomHelpers::EmbedMultipleConfs(*m, 10, 30, 100, true,
-						   false,-1,
-						   true, 1, 1e-3, 5.0);
+						   false,-1);
   INT_VECT_CI ci;
   SDWriter writer("junk.sdf");
   double energy;
@@ -915,6 +917,62 @@ void testIssue1989539() {
 
 }
 
+
+void testConstrainedEmbedding() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/constrain1.sdf";
+  SDMolSupplier sdsup(fname);
+
+  ROMol *ref=sdsup.next();
+  {
+    ROMol *test = new ROMol(*ref);
+    std::map<int,RDGeom::Point3D> coords;
+    coords[0]=ref->getConformer().getAtomPos(0);
+    coords[1]=ref->getConformer().getAtomPos(1);
+    coords[2]=ref->getConformer().getAtomPos(2);
+    coords[3]=ref->getConformer().getAtomPos(3);
+    coords[4]=ref->getConformer().getAtomPos(4);
+
+    int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
+    TEST_ASSERT(cid>-1);
+    
+    MatchVectType alignMap;
+    alignMap.push_back(std::make_pair(0,0));
+    alignMap.push_back(std::make_pair(1,1));
+    alignMap.push_back(std::make_pair(2,2));
+    alignMap.push_back(std::make_pair(3,3));
+    alignMap.push_back(std::make_pair(4,4));
+    double ssd=MolAlign::alignMol(*test,*ref,-1,-1,&alignMap);
+    BOOST_LOG(rdInfoLog)<<"ssd: "<<ssd<<std::endl;
+    TEST_ASSERT(ssd<0.1);
+  }
+
+  {
+    ROMol *test = sdsup.next();
+
+    std::map<int,RDGeom::Point3D> coords;
+    coords[4]=ref->getConformer().getAtomPos(0);
+    coords[5]=ref->getConformer().getAtomPos(1);
+    coords[6]=ref->getConformer().getAtomPos(2);
+    coords[7]=ref->getConformer().getAtomPos(3);
+    coords[8]=ref->getConformer().getAtomPos(4);
+    int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
+    TEST_ASSERT(cid>-1);
+    
+    MatchVectType alignMap;
+    alignMap.push_back(std::make_pair(4,0));
+    alignMap.push_back(std::make_pair(5,1));
+    alignMap.push_back(std::make_pair(6,2));
+    alignMap.push_back(std::make_pair(7,3));
+    alignMap.push_back(std::make_pair(8,4));
+    double ssd=MolAlign::alignMol(*test,*ref,-1,-1,&alignMap);
+    BOOST_LOG(rdInfoLog)<<"ssd: "<<ssd<<std::endl;
+    TEST_ASSERT(ssd<0.1);
+  }
+
+
+}
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1001,6 +1059,10 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 1989539 \n\n";
   testIssue1989539();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test constrained embedding \n\n";
+  testConstrainedEmbedding();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

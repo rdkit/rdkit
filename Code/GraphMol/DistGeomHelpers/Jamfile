@@ -10,6 +10,7 @@ install lib-install : DistGeomHelpers : <location>$(RDBASE)/bin ;
 exe main.exe : testDgeomHelpers.cpp DistGeomHelpers /RDKit//DistGeom
   ../ForceFieldHelpers//ForceFieldHelpers /RDKit//ForceField
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct
+  ../MolAlign//MolAlign ../MolTransforms//MolTransforms
   ..//GraphMol 
   /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;

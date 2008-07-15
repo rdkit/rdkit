@@ -16,29 +16,57 @@
 namespace python = boost::python;
 
 namespace RDKit {
-  int EmbedMolecule(ROMol &mol, unsigned int maxAttempts=30,
-                    int seed=-1, bool clearConfs=true,
-		    bool useRandomCoords=false,double boxSizeMult=2.0,
-                    bool randNegEig=true, unsigned int numZeroFail=1){
+  int EmbedMolecule(ROMol &mol, unsigned int maxAttempts,
+                    int seed, bool clearConfs,
+		    bool useRandomCoords,double boxSizeMult,
+                    bool randNegEig, unsigned int numZeroFail,
+                    python::dict &coordMap){
+    std::map<int,RDGeom::Point3D> pMap;
+    python::list ks = coordMap.keys();
+    unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
+    for(unsigned int i=0;i<nKeys;++i){
+      unsigned int id = python::extract<unsigned int>(ks[i]);
+      pMap[id]= python::extract<RDGeom::Point3D>(coordMap[id]);
+    }
+    std::map<int,RDGeom::Point3D> *pMapPtr=0;
+    if(nKeys){
+      pMapPtr=&pMap;
+    }
+
     int res = DGeomHelpers::EmbedMolecule(mol, maxAttempts, 
                                           seed, clearConfs,
 					  useRandomCoords,boxSizeMult,
 					  randNegEig,
-                                          numZeroFail);
+                                          numZeroFail,
+                                          pMapPtr);
     return res;
   }
 
-  INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs=10,
-			      unsigned int maxAttempts=30, 
-                              int seed=-1, bool clearConfs=true, 
-			      bool useRandomCoords=false,double boxSizeMult=2.0,
-                              bool randNegEig=true, unsigned int numZeroFail=1,
-			      double pruneRmsThresh=-1.0) {
+  INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
+			      unsigned int maxAttempts,
+                              int seed, bool clearConfs,
+			      bool useRandomCoords,double boxSizeMult,
+                              bool randNegEig, unsigned int numZeroFail,
+			      double pruneRmsThresh,python::dict &coordMap ) {
+
+    std::map<int,RDGeom::Point3D> pMap;
+    python::list ks = coordMap.keys();
+    unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
+    for(unsigned int i=0;i<nKeys;++i){
+      unsigned int id = python::extract<unsigned int>(ks[i]);
+      pMap[id]= python::extract<RDGeom::Point3D>(coordMap[id]);
+    }
+    std::map<int,RDGeom::Point3D> *pMapPtr=0;
+    if(nKeys){
+      pMapPtr=&pMap;
+    }
+
     INT_VECT res = DGeomHelpers::EmbedMultipleConfs(mol, numConfs, maxAttempts,
                                                     seed, clearConfs,
-						    useRandomCoords,boxSizeMult,
-                                                    randNegEig, numZeroFail, 1e-3,
-						    5.0, pruneRmsThresh);
+						    useRandomCoords,boxSizeMult, 
+                                                    randNegEig, numZeroFail,
+                                                    pruneRmsThresh,pMapPtr);
+
     return res;
   } 
 
@@ -102,7 +130,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
 	       python::arg("boxSizeMult")=2.0,
-               python::arg("randNegEig")=true, python::arg("numZeroFail")=1),
+               python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
+               python::arg("coordMap")=python::dict() ),
               docString.c_str());
 
   docString = "Use distance geometry to obtain multiple sets of \n\
@@ -148,7 +177,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("useRandomCoords")=false,
 	       python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
-	       python::arg("pruneRmsThresh")=-1.0),
+	       python::arg("pruneRmsThresh")=-1.0,
+               python::arg("coordMap")=python::dict()),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\

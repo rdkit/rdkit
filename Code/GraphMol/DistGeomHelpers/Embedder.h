@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -7,6 +7,8 @@
 #ifndef _RD_EMBEDDER_H_
 #define _RD_EMBEDDER_H_
 
+#include <map>
+#include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
 
 namespace RDKit {
@@ -47,11 +49,18 @@ namespace RDKit {
                             negative eigenvalues
       \param numZeroFail    Fail embedding if we find this many or more zero eigenvalues
                             (within a tolerance)
+      \param coordMap  a map of int to Point3D, between atom IDs and their locations
+                       their locations.  If this container is provided, the coordinates
+                       are used to set distance constraints on the embedding. The resulting
+                       conformer(s) should have distances between the specified atoms that
+                       reproduce those between the points in \c coordMap. Because the embedding
+                       produces a molecule in an arbitrary reference frame, an alignment step
+                       is required to actually reproduce the provided coordinates.
       \param optimizerForceTol set the tolerance on forces in the distgeom optimizer
                                (this shouldn't normally be altered in client code).
-
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
+
 
       \return ID of the conformations added to the molecule, -1 if the emdedding failed
     */
@@ -59,7 +68,9 @@ namespace RDKit {
                       bool clearConfs=true,
                       bool useRandomCoords=false,double boxSizeMult=2.0,
                       bool randNegEig=true,
-                      unsigned int numZeroFail=1,double optimizerForceTol=1e-3,
+                      unsigned int numZeroFail=1,
+                      const std::map<int,RDGeom::Point3D> *coordMap=0,
+                      double optimizerForceTol=1e-3,
                       double basinThresh=5.0);
 
     //*! Embed multiple conformations for a molecule
@@ -91,17 +102,24 @@ namespace RDKit {
                             negative eigenvalues
       \param numZeroFail    Fail embedding if we find this many or more zero eigenvalues
                             (within a tolerance)
-      \param optimizerForceTol set the tolerance on forces in the DGeom optimizer
-                               (this shouldn't normally be altered in client code).
-      \param basinThresh    set the basin threshold for the DGeom force field,
-                            (this shouldn't normally be altered in client code).
-
       \param pruneRmsThresh Retain only the conformations out of 'numConfs' after embedding that are
                             at least this far apart from each other. RMSD is computed on the heavy atoms.
                             Prunining is greedy; i.e. the first embedded conformation is retained and from
                             then on only those that are atleast pruneRmsThresh away from already 
                             retained conformations are kept. The pruning is done after embedding and 
                             bounds violation minimization. No pruning by default.
+      \param coordMap  a map of int to Point3D, between atom IDs and their locations
+                       their locations.  If this container is provided, the coordinates
+                       are used to set distance constraints on the embedding. The resulting
+                       conformer(s) should have distances between the specified atoms that
+                       reproduce those between the points in \c coordMap. Because the embedding
+                       produces a molecule in an arbitrary reference frame, an alignment step
+                       is required to actually reproduce the provided coordinates.
+
+      \param optimizerForceTol set the tolerance on forces in the DGeom optimizer
+                               (this shouldn't normally be altered in client code).
+      \param basinThresh    set the basin threshold for the DGeom force field,
+                            (this shouldn't normally be altered in client code).
 
       \return an INT_VECT of conformer ids
 
@@ -111,8 +129,10 @@ namespace RDKit {
                                 int seed=-1, bool clearConfs=true, 
 				bool useRandomCoords=false,double boxSizeMult=2.0,
                                 bool randNegEig=true, unsigned int numZeroFail=1,
-                                double optimizerForceTol=1e-3,double basinThresh=5.0,
-                                double pruneRmsThresh=-1.0);
+                                double pruneRmsThresh=-1.0,
+                                const std::map<int,RDGeom::Point3D> *coordMap=0,
+                                double optimizerForceTol=1e-3,double basinThresh=5.0);
+
   }
 }
 

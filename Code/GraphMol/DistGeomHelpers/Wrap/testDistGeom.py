@@ -1,8 +1,8 @@
 import Chem
-from Chem import rdDistGeom,ChemicalForceFields
+from Chem import rdDistGeom,ChemicalForceFields,rdMolAlign
 import RDConfig
 import unittest
-import os
+import os,copy
 import cPickle as pickle
 import math
 import numpy
@@ -205,7 +205,6 @@ class TestCase(unittest.TestCase) :
         self.failUnless(nconfs == expected)
 
     def test6Chirality(self):
-
         # turn on chirality and we should get chiral volume that is pretty consistent and
         # positive
         tgtVol=14.0
@@ -344,6 +343,23 @@ class TestCase(unittest.TestCase) :
             self.failUnless(abs(abs(vol1)-expectedV1)<1.0)
             self.failUnless(abs(abs(vol2)-expectedV2)<1.0)
 
+
+    def test7ConstrainedEmbedding(self):
+        ofile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','DistGeomHelpers',
+                             'test_data','constrain1.sdf')
+        suppl = Chem.SDMolSupplier(ofile);
+        ref = suppl.next()
+        probe = copy.deepcopy(ref)
+
+        cMap={}
+        for i in range(5):
+            cMap[i]=ref.GetConformer().GetAtomPosition(i)
+        ci = rdDistGeom.EmbedMolecule(probe,coordMap=cMap,randomSeed=23)
+        self.failUnless(ci>-1);
+        algMap = zip(range(5),range(5))
+        ssd = rdMolAlign.AlignMol(probe,ref,atomMap=algMap)
+        print 'ssd:',ssd
+        self.failUnless(ssd<0.1)
             
 if __name__ == '__main__':
   unittest.main()

@@ -211,11 +211,12 @@ namespace RDKit {
                       bool clearConfs,
                       bool useRandomCoords,double boxSizeMult,
                       bool randNegEig, unsigned int numZeroFail,
+                      const std::map<int,RDGeom::Point3D> *coordMap,
 		      double optimizerForceTol,double basinThresh){
       INT_VECT confIds;
       confIds=EmbedMultipleConfs(mol,1,maxIterations,seed,clearConfs,
                                  useRandomCoords,boxSizeMult,randNegEig,
-                                 numZeroFail,optimizerForceTol,basinThresh);
+                                 numZeroFail,-1.0,coordMap,optimizerForceTol,basinThresh);
       int res;
       if(confIds.size()){
         res=confIds[0];
@@ -225,15 +226,40 @@ namespace RDKit {
       return res;
     }
 
+    void adjustBoundsMatFromCoordMap(DistGeom::BoundsMatPtr mmat,unsigned int nAtoms,
+                                     const std::map<int,RDGeom::Point3D> *coordMap){
+      for(std::map<int,RDGeom::Point3D>::const_iterator iIt=coordMap->begin();
+          iIt!=coordMap->end();++iIt){
+        int iIdx=iIt->first;
+        const RDGeom::Point3D &iPoint=iIt->second;
+        
+        std::map<int,RDGeom::Point3D>::const_iterator jIt=iIt;
+        while(++jIt != coordMap->end()){
+          int jIdx=jIt->first;
+          const RDGeom::Point3D &jPoint=jIt->second;
+          double dist=(iPoint-jPoint).length();
+          mmat->setUpperBound(iIdx,jIdx,dist);
+          mmat->setLowerBound(iIdx,jIdx,dist);
+        }
+      }
+    }
+
+    
     INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
                                 unsigned int maxIterations, 
                                 int seed, bool clearConfs, 
                                 bool useRandomCoords,double boxSizeMult,
                                 bool randNegEig, unsigned int numZeroFail,
-                                double optimizerForceTol,double basinThresh,
-                                double pruneRmsThresh) {
+                                double pruneRmsThresh,
+                                const std::map<int,RDGeom::Point3D>  *coordMap,
+                                double optimizerForceTol,double basinThresh){
+
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
+      if(molFrags.size()>1 && coordMap){
+        BOOST_LOG(rdWarningLog)<<"Constrained conformer generation (via the coordMap argument) does not work with molecules that have multiple fragments."<<std::endl;
+        coordMap=0;
+      }
       std::vector< Conformer * > confs;
       confs.reserve(numConfs);
       for(unsigned int i=0;i<numConfs;++i){
@@ -255,12 +281,20 @@ namespace RDKit {
         initBoundsMat(mmat);
       
         setTopolBounds(*piece, mmat, true, false);
-      
+        if(coordMap){
+          adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
+        }
+        
         if (!DistGeom::triangleSmoothBounds(mmat)) {
           // ok this bound matrix failed to triangle smooth - re-compute the bounds matrix 
-          // with out 15 bound and with VDW scaling
+          // without 15 bounds and with VDW scaling
           initBoundsMat(mmat);
           setTopolBounds(*piece, mmat, false, true);
+
+          if(coordMap){
+            adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
+          }
+
           // try triangle smoothing again - give up if we fail
           if (!DistGeom::triangleSmoothBounds(mmat)) {
             return res;
