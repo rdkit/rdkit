@@ -35,12 +35,12 @@ namespace ForceFieldsHelper {
     // this is a continuation of the same hack to avoid
     // some potential numeric instabilities:
     if(maxGrad>10.0){
-      while(maxGrad>10.0){
-        maxGrad*=gradScale;
-      }
-      for(unsigned int i=0;i<_ffHolder->numPoints()*_ffHolder->dimension();i++){
-        grad[i] *= gradScale;
-      }
+     while(maxGrad*gradScale>10.0){
+       gradScale*=.5;
+     }
+     for(unsigned int i=0;i<_ffHolder->numPoints()*_ffHolder->dimension();i++){
+       grad[i] *= gradScale;
+     }
     }
   }
 }
