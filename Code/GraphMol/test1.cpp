@@ -499,6 +499,15 @@ void testIssue1993296(){
   }
   TEST_ASSERT(ok);
 
+  // not technically part of 1993296, but related: we also throw
+  // on adding self bonds
+  ok=false;
+  try{
+    m->addBond(1,1,Bond::SINGLE);
+  } catch (...) {
+    ok=true;
+  }
+
   Bond *newB=new Bond();
   newB->setBeginAtomIdx(0);
   newB->setEndAtomIdx(1);
@@ -509,8 +518,20 @@ void testIssue1993296(){
   } catch (...) {
     ok=true;
   }
-  TEST_ASSERT(ok)
+  TEST_ASSERT(ok);
 
+  // not technically part of 1993296, but related: we also throw
+  // on adding self bonds
+  newB->setBeginAtomIdx(0);
+  newB->setEndAtomIdx(0);
+  ok=false;
+  try{
+    m->addBond(newB);
+  } catch (...) {
+    ok=true;
+  }
+  TEST_ASSERT(ok);
+  delete newB;
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

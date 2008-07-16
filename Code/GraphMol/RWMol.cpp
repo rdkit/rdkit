@@ -178,6 +178,7 @@ namespace RDKit{
                               Bond::BondType bondType){
     RANGE_CHECK(0,atomIdx1,getNumAtoms()-1);
     RANGE_CHECK(0,atomIdx2,getNumAtoms()-1);
+    PRECONDITION(atomIdx1!=atomIdx2,"attempt to add self-bond");
     PRECONDITION(!getBondBetweenAtoms(atomIdx1,atomIdx2),"bond already exists");
     Bond *b = new Bond(bondType);
     b->setOwningMol(this);
