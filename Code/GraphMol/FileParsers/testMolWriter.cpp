@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2002-2006 Rational Discovery LLC
+//   Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,6 +8,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "MolSupplier.h"
 #include "MolWriters.h"
@@ -71,6 +72,43 @@ void testSmilesWriter() {
     }
   }
 
+}
+
+void testSmilesWriter2() {
+  {
+    std::stringstream ss;
+    SmilesWriter *writer = new SmilesWriter(&ss, " ","Name",false);
+    RWMol *mol;
+
+    mol = SmilesToMol("c1ccccc1");
+    //MolOps::Kekulize(*mol);
+    writer->write(*mol);
+    delete mol;
+
+    mol = SmilesToMol("F[C@H](Cl)Br");
+    writer->write(*mol);
+    delete mol;
+    writer->flush();
+    TEST_ASSERT(ss.str()=="c1ccccc1 0\nFC(Cl)Br 1\n");
+    delete writer;
+  }
+  {
+    std::stringstream ss;
+    SmilesWriter *writer = new SmilesWriter(&ss, " ","Name",false,false,true);
+    RWMol *mol;
+
+    mol = SmilesToMol("c1ccccc1");
+    MolOps::Kekulize(*mol);
+    writer->write(*mol);
+    delete mol;
+
+    mol = SmilesToMol("F[C@H](Cl)Br");
+    writer->write(*mol);
+    delete mol;
+    writer->flush();
+    TEST_ASSERT(ss.str()=="C1=CC=CC=C1 0\nF[C@H](Cl)Br 1\n");
+    delete writer;
+  }
 }
 
 
@@ -378,6 +416,12 @@ int main() {
   std::cout <<  "-----------------------------------------\n";
   std::cout << "Running testSmilesWriter()\n";
   testSmilesWriter();
+  std::cout << "Finished\n";
+  std::cout <<  "-----------------------------------------\n\n";
+
+  std::cout <<  "-----------------------------------------\n";
+  std::cout << "Running testSmilesWriter2()\n";
+  testSmilesWriter2();
   std::cout << "Finished\n";
   std::cout <<  "-----------------------------------------\n\n";
 

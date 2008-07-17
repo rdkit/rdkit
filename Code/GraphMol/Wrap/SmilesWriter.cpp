@@ -29,18 +29,22 @@ namespace RDKit {
   }
   std::string swDocStr="Constructor.\n\n"
   "   ARGUMENTS:\n\n"
-  "     - fileName: name of the output file.\n\n"
-  "     - delimiter: (optional) delimiter to be used to separate entries on each line.\n\n"
-  "     - nameHeader: (optional) text to use for the name column in the header line.\n\n"
-  "     - includeHeader: (optional) toggles inclusion of a header line in the output file.\n\n";
+  "     - fileName: name of the output file.\n"
+  "     - delimiter: (optional) delimiter to be used to separate entries on each line.\n"
+  "     - nameHeader: (optional) text to use for the name column in the header line.\n"
+  "     - includeHeader: (optional) toggles inclusion of a header line in the output file.\n"
+  "     - isomericSmiles: (optional) toggles output of isomeric smiles (includes stereochem information).\n"
+  "     - includeHeader: (optional) toggles output of kekule smiles (no aromatic bonds for molecules that have been kekulized).\n\n";
   struct smiwriter_wrap {
     static void wrap() {
       python::class_<SmilesWriter>("SmilesWriter",
 				   "A class for writing molecules to text files.",
-				   python::init<std::string,std::string,std::string,bool>((python::arg("fileName"),
+				   python::init<std::string,std::string,std::string,bool,bool,bool>((python::arg("fileName"),
 											   python::arg("delimiter")=" ",
 											   python::arg("nameHeader")="Name",
-											   python::arg("includeHeader")=true),
+											   python::arg("includeHeader")=true,
+                                                                                           python::arg("isomericSmiles")=false,
+                                                                                           python::arg("kekuleSmiles")=false),
 											  swDocStr.c_str()))
 	.def("SetProps", SetSmiWriterProps,
 	     "Sets the properties to be written to the output file\n\n"

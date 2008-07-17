@@ -37,12 +37,16 @@ namespace RDKit {
     SmilesWriter(std::string fileName, 
 		 std::string delimiter=" ",
 		 std::string nameHeader="Name",
-		 bool includeHeader=true);
+		 bool includeHeader=true,
+                 bool isomericSmiles=false,
+                 bool kekuleSmiles=false);
     SmilesWriter(std::ostream *outStream, 
 		 std::string delimiter=" ",
 		 std::string nameHeader="Name",
 		 bool includeHeader=true,
-		 bool takeOwnership=false);
+		 bool takeOwnership=false,
+                 bool isomericSmiles=false,
+                 bool kekuleSmiles=false);
 		 
     ~SmilesWriter();
 
@@ -71,7 +75,9 @@ namespace RDKit {
   private:
     // local initialization
     void init(std::string delimiter,std::string nameHeader,
-	       bool includeHeader);
+              bool includeHeader,
+              bool isomericSmiles,
+              bool kekuleSmiles);
 
 
     // dumps a header line to the output stream
@@ -79,12 +85,14 @@ namespace RDKit {
 
 
     std::ostream *dp_ostream;
-    bool d_owner;
-    bool d_includeHeader; // whether or not to include a title line
+    bool df_owner;
+    bool df_includeHeader; // whether or not to include a title line
     unsigned int d_molid; // the number of the molecules we wrote so far
     std::string d_delim; // delimiter string between various records
     std::string d_nameHeader; // header for the name column in the output file
     STR_VECT d_props; // list of property name that need to be written out
+    bool df_isomericSmiles; // whether or not to do isomeric smiles
+    bool df_kekuleSmiles; // whether or not to do kekule smiles
   };
 
 

@@ -21,7 +21,9 @@ namespace RDKit {
   SmilesWriter::SmilesWriter(std::string fileName, 
 			     std::string delimiter,
 			     std::string nameHeader,
-			     bool includeHeader) {
+			     bool includeHeader,
+                             bool isomericSmiles,
+                             bool kekuleSmiles) {
     if(fileName!= "-"){
       std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
       if (!tmpStream || !(*tmpStream) || (tmpStream->bad()) ) {
@@ -30,36 +32,42 @@ namespace RDKit {
         throw BadFileException(errout.str());
       }
       dp_ostream = static_cast<std::ostream *>(tmpStream);
-      d_owner = true;
+      df_owner = true;
     } else {
       dp_ostream = static_cast<std::ostream *>(&std::cout);
-      d_owner=false;
+      df_owner=false;
     }
-    this->init(delimiter,nameHeader,includeHeader);
+    this->init(delimiter,nameHeader,includeHeader,isomericSmiles,kekuleSmiles);
   }
 
   SmilesWriter::SmilesWriter(std::ostream *outStream, 
 			     std::string delimiter,
 			     std::string nameHeader,
 			     bool includeHeader,
-			     bool takeOwnership) {
+			     bool takeOwnership,
+                             bool isomericSmiles,
+                             bool kekuleSmiles) {
     PRECONDITION(outStream,"null stream");
     if (outStream->bad()){
       throw FileParseException("Bad output stream.");
     }
 
     dp_ostream = outStream;
-    d_owner = takeOwnership;
-    this->init(delimiter,nameHeader,includeHeader);
+    df_owner = takeOwnership;
+    this->init(delimiter,nameHeader,includeHeader,isomericSmiles,kekuleSmiles);
   }
   void SmilesWriter::init(std::string delimiter,
 			  std::string nameHeader,
-			  bool includeHeader){
+			  bool includeHeader,
+                          bool isomericSmiles,
+                          bool kekuleSmiles){
 
     d_molid = 0;
     d_delim = delimiter;
     d_nameHeader=nameHeader;
-    d_includeHeader=includeHeader;
+    df_includeHeader=includeHeader;
+    df_isomericSmiles=isomericSmiles;
+    df_kekuleSmiles=kekuleSmiles;
     //these are set by the setProps function as required
     d_props.clear();
   }
@@ -75,7 +83,7 @@ namespace RDKit {
 
   void SmilesWriter::dumpHeader() const {
     CHECK_INVARIANT(dp_ostream,"no output stream");
-    if(d_includeHeader){
+    if(df_includeHeader){
       (*dp_ostream) << "SMILES" << d_delim << d_nameHeader << d_delim;
 
       if (d_props.size() > 0) {
@@ -93,7 +101,7 @@ namespace RDKit {
 
   SmilesWriter::~SmilesWriter() {
     
-    if (d_owner) {
+    if (df_owner) {
       // this has to be froma ofstream
       // cast it back to fstream and clsoe it
       //std::ofstream *tmpStream = static_cast<std::ofstream *>(dp_ostream);
@@ -104,11 +112,11 @@ namespace RDKit {
 
   void SmilesWriter::write(ROMol &mol,int confId) {
     CHECK_INVARIANT(dp_ostream,"no output stream");
-    if(d_molid<=0 && d_includeHeader){
+    if(d_molid<=0 && df_includeHeader){
       dumpHeader();
     }
     
-    std::string name, smi = MolToSmiles(mol);
+    std::string name, smi = MolToSmiles(mol,df_isomericSmiles,df_kekuleSmiles);
     (*dp_ostream) << smi;
     if (mol.hasProp("_Name") ) {
       mol.getProp("_Name", name);
