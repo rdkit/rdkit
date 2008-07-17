@@ -8,13 +8,19 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib SmilesParse : lex.yysmiles.cpp   smiles.tab.cpp lex.yysmarts.cpp smarts.tab.cpp InputFiller.cpp SmilesParse.cpp SmilesParseOps.cpp SmilesWrite.cpp SmartsWrite.cpp
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs 
-  : <include>. <toolset>msvc:<link>static ;
+  : <include>. <toolset>msvc:<link>static 
+  <toolset>msvc:<define>YY_NO_UNISTD_H 
+;
 install lib-install : SmilesParse : <location>$(RDBASE)/bin ;
 
-cpp lex.yysmiles.cpp : smiles.ll : <flex.prefix>yysmiles_ ;
-cpp smiles.tab.cpp : smiles.yy : <bison.prefix>yysmiles_ <implicit-dependency>lex.yysmiles.cpp ;
-cpp lex.yysmarts.cpp : smarts.ll : <flex.prefix>yysmarts_ ;
-cpp smarts.tab.cpp : smarts.yy : <bison.prefix>yysmarts_ <implicit-dependency>lex.yysmarts.cpp ;
+cpp lex.yysmiles.cpp : smiles.ll : <flex.prefix>yysmiles_ 
+  <implicit-dependency>smiles.tab.cpp 
+  ;
+cpp smiles.tab.cpp : smiles.yy : <bison.prefix>yysmiles_ ;
+cpp lex.yysmarts.cpp : smarts.ll : <flex.prefix>yysmarts_ 
+  <implicit-dependency>smarts.tab.cpp 
+;
+cpp smarts.tab.cpp : smarts.yy : <bison.prefix>yysmarts_ ;
 
 exe test : test.cpp SmilesParse ..//GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
 exe smatest : smatest.cpp SmilesParse 
