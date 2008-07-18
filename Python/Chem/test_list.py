@@ -36,3 +36,9 @@ longTests=[
   ("python","UnitTestGraphDescriptors.2.py -l",{}),
   ("python","UnitTestSurf.py -l",{}),
   ]
+
+if __name__=='__main__':
+  import sys
+  import TestRunner
+  failed,tests = TestRunner.RunScript('test_list.py',0,1)
+  sys.exit(len(failed))
