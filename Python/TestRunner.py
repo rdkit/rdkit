@@ -20,6 +20,9 @@ def RunTest(exeName,args,extras):
   if extras.has_key('dir'):
     os.chdir(extras['dir'])
   expectedReturn = extras.get('returns',0)
+  if not os.path.exists(exeName):
+    print >>sys.stderr,"Could not find executable: %s."%exeName
+    return TEST_FAILED
   retVal = RDConfig.spawn(os.P_WAIT,exeName,[exeName]+args,os.environ)
   if extras.has_key('dir'):
     os.chdir(startDir)

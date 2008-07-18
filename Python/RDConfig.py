@@ -74,7 +74,7 @@ class UnimplementedCodeError(exceptions.Exception):
 # the following block contains stuff used by the
 # testing infrastructure
 if sys.platform=='win32':
-  pythonExe=os.path.join(os.environ.get('PYTHONHOME','c:/python23'),'python.exe')
+  pythonExe=os.path.join(os.environ.get('PYTHONHOME','c:/python25'),'python.exe')
   spawn = os.spawnve
 else:
   pythonExe="python"
