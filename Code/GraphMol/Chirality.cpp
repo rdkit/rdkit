@@ -372,16 +372,25 @@ namespace RDKit{
         for(int i=0;i<numAtoms;i++){
           cipEntries[i].push_back(mol.getAtomWithIdx(i)->getAtomicNum());
         }
-        // loop until all classes are uniquified or we've gone through
-        // numAtoms times:
+
+        // Loop until either:
+        //   1) all classes are uniquified
+        //   2) we've gone through numAtoms/2 times
+        //      We only do numAtoms/2 because that's the maximum
+        //      number of steps required for two atoms to "feel" each
+        //      other (each influences one additional neighbor shell
+        //      per iteration). 
+        //      EFF: This number could be reduced further using the
+        //           distance matrix.  
         int numIts=0;
-        while( numIts<numAtoms && !activeIndices.empty()){
+        while( numIts<numAtoms/2 && !activeIndices.empty()){
           unsigned int longestEntry=0;
           // ----------------------------------------------------
           //
           // for each atom, get a sorted list of its neighbors' ranks:
           //
-          for(INT_LIST_I it=allIndices.begin();it!=allIndices.end();
+          for(INT_LIST_I it=allIndices.begin();
+              it!=allIndices.end();
               ++it){
             CIP_ENTRY localEntry;
 
