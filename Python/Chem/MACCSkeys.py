@@ -102,8 +102,8 @@ smartsPatts={
   87:('[F,Cl,Br,I]!@*@*',0), # X!A$A
   88:('[#16]',0), # S
   89:('[#8]~*~*~*~[#8]',0), # OAAAO
-  90:('[!#6;!#1;!H0]~*~*~[CH2]~*',0), # QHAACH2A
-  91:('[!#6;!#1;!H0]~*~*~*~[CH2]~*',0), # QHAAACH2A
+  90:('[$([!#6;!#1;!H0]~*~*~[CH2]~*),$([!#6;!#1;!H0;R]1@[R]@[R]@[CH2;R]1),$([!#6;!#1;!H0]~[R]1@[R]@[CH2;R]1)]',0), # QHAACH2A
+  91:('[$([!#6;!#1;!H0]~*~*~*~[CH2]~*),$([!#6;!#1;!H0;R]1@[R]@[R]@[R]@[CH2;R]1),$([!#6;!#1;!H0]~[R]1@[R]@[R]@[CH2;R]1),$([!#6;!#1;!H0]~*~[R]1@[R]@[CH2;R]1)]',0), # QHAAACH2A
   92:('[#8]~[#6](~[#7])~[#6]',0), # OC(N)C
   93:('[!#6;!#1]~[CH3]',0), # QCH3
   94:('[!#6;!#1]~[#7]',0), # QN
@@ -113,7 +113,7 @@ smartsPatts={
   98:('[!#6;!#1]1~*~*~*~*~*~1',0), # QAAAAA@1
   99:('[#6]=[#6]',0), # C=C
   100:('*~[CH2]~[#7]',0), # ACH2N
-  101:('[r8,r9,r10,r11,r12,r13,r14,r15,r16,r17,R&!R1&$([r7,r6&r6,r6&r4,r6&r5,r5&r5])]',0), # 8M Ring or larger. This is hacked a bit since the smarts primitives are for SSSR and the MACCS key should match ring systems. Also we only deal with up to two fused rings
+  101:('[$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1)]',0), # 8M Ring or larger. This only handles up to ring sizes of 14
   102:('[!#6;!#1]~[#8]',0), # QO
   103:('Cl',0), # CL
   104:('[!#6;!#1;!H0]~*~[CH2]~*',0), # QHACH2A
@@ -128,9 +128,9 @@ smartsPatts={
   113:('[#8]!:*:*',0), # Onot%A%A
   114:('[CH3]~[CH2]~*',0), # CH3CH2A
   115:('[CH3]~*~[CH2]~*',0), # CH3ACH2A
-  116:('[CH3]~*~*~[CH2]~*',0), # CH3AACH2A
+  116:('[$([CH3]~*~*~[CH2]~*),$([CH3]~*1~*~[CH2]1)]',0), # CH3AACH2A
   117:('[#7]~*~[#8]',0), # NAO
-  118:('*~[CH2]~[CH2]~*',1), # ACH2CH2A > 1
+  118:('[$(*~[CH2]~[CH2]~*),$(*1~[CH2]~[CH2]1)]',1), # ACH2CH2A > 1
   119:('[#7]=*',0), # N=A
   120:('[!#6;R]',1), # Heterocyclic atom > 1 (&...) FIX: incomplete definition
   121:('[#7;R]',0), # N Heterocycle
@@ -140,8 +140,8 @@ smartsPatts={
   125:('?',0), # Aromatic Ring > 1
   126:('*!@[#8]!@*',0), # A!O!A
   127:('*@*!@[#8]',1), # A$A!O > 1 (&...) FIX: incomplete definition
-  128:('*~[CH2]~*~*~*~[CH2]~*',0), # ACH2AAACH2A
-  129:('*~[CH2]~*~*~[CH2]~*',0), # ACH2AACH2A
+  128:('[$(*~[CH2]~*~*~*~[CH2]~*),$([R]1@[CH2;R]@[R]@[R]@[R]@[CH2;R]1),$(*~[CH2]~[R]1@[R]@[R]@[CH2;R]1),$(*~[CH2]~*~[R]1@[R]@[CH2;R]1)]',0), # ACH2AAACH2A
+  129:('[$(*~[CH2]~*~*~[CH2]~*),$([R]1@[CH2]@[R]@[R]@[CH2;R]1),$(*~[CH2]~[R]1@[R]@[CH2;R]1)]',0), # ACH2AACH2A
   130:('[!#6;!#1]~[!#6;!#1]',1), # QQ > 1 (&...)  FIX: incomplete definition
   131:('[!#6;!#1;!H0]',1), # QH > 1
   132:('[#8]~*~[CH2]~*',0), # OACH2A
@@ -159,11 +159,11 @@ smartsPatts={
   144:('*!:*:*!:*',0), # Anot%A%Anot%A
   145:('*1~*~*~*~*~*~1',1), # 6M ring > 1
   146:('[#8]',2), # O > 2
-  147:('*~[CH2]~[CH2]~*',0), # ACH2CH2A
+  147:('[$(*~[CH2]~[CH2]~*),$([R]1@[CH2;R]@[CH2;R]1)]',0), # ACH2CH2A
   148:('*~[!#6;!#1](~*)~*',0), # AQ(A)A
   149:('[C;H3,H4]',1), # CH3 > 1
   150:('*!@*@*!@*',0), # A!A$A!A
-  151:('[N;!H0]',0), # NH
+  151:('[#7;!H0]',0), # NH
   152:('[#8]~[#6](~[#6])~[#6]',0), # OC(C)C
   153:('[!#6;!#1]~[CH2]~*',0), # QCH2A
   154:('[#6]=[#8]',0), # C=O
@@ -233,13 +233,34 @@ def GenMACCSKeys(mol,**kwargs):
   res = ctor(len(maccsKeys)+1)
   for i,(patt,count) in enumerate(maccsKeys):
     if patt is not None:
-      matches = mol.GetSubstructMatches(patt)
-      if matches:
-        if count == 0:
+      if count==0:
+        res[i+1] = mol.HasSubstructMatch(patt)
+      else:
+        matches = mol.GetSubstructMatches(patt)
+        if len(matches) > count:
           res[i+1] = 1
-        else:
-          if len(matches) > count:
-            res[i+1] = 1
+    elif (i+1)==125:
+      # special case: num aromatic rings > 1
+      ri = mol.GetRingInfo()
+      nArom=0
+      res[125]=0
+      for ring in ri.BondRings():
+        isArom=True
+        for bondIdx in ring:
+          if not mol.GetBondWithIdx(bondIdx).GetIsAromatic():
+            isArom=False
+            break
+        if isArom:
+          nArom+=1
+          if nArom>1:
+            res[125]=1
+            break
+    elif (i+1)==166:
+      res[166]=0
+      # special case: num frags > 1
+      if len(Chem.GetMolFrags(mol))>1:
+        res[166]=1
+          
   return res
 
 FingerprintMol = GenMACCSKeys
