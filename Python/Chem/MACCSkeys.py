@@ -1,11 +1,25 @@
 # $Id$
 #
-# Copyright (C) 2001-2006 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2001-2008 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 """ SMARTS definitions for the publically available MACCS keys
 and a MACCS fingerprinter
+
+I compared the MACCS fingerprints generated here with those from two
+other packages (not MDL, unfortunately). Of course there are
+disagreements between the various fingerprints still, but I think
+these definitions work pretty well. Some notes:
+
+1) most of the differences have to do with aromaticity
+2) there's a discrepancy sometimes because the current RDKit
+definitions do not require multiple matches to be distinct. e.g. the
+SMILES C(=O)CC(=O) can match the (hypothetical) key O=CC twice in my
+definition. It's not clear to me what the correct behavior is.
+3) Some keys are not fully defined in the MDL documentation
+4) Two keys, 125 and 166, have to be done outside of SMARTS.
+5) Key 1 (ISOTOPE) isn't defined
 
 """
 import Chem
