@@ -131,6 +131,8 @@ struct sparseIntVec_wrapper {
   static void wrap() {
     wrapOne<boost::int32_t>("IntSparseIntVect");
     wrapOne<boost::int64_t>("LongSparseIntVect");
+    wrapOne<boost::uint32_t>("UIntSparseIntVect");
+    wrapOne<boost::uint64_t>("ULongSparseIntVect");
   }
 };
   

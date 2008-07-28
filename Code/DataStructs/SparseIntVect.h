@@ -243,13 +243,13 @@ namespace RDKit{
       return res-=other;
     }
 
-    bool operator==(const SparseIntVect<IndexType> &v2){
+    bool operator==(const SparseIntVect<IndexType> &v2) const{
       if(d_length!=v2.d_length){
         return false;
       }
       return d_data==v2.d_data;
     }
-    bool operator!=(const SparseIntVect<IndexType> &v2){
+    bool operator!=(const SparseIntVect<IndexType> &v2) const {
       return !(*this==v2);
     }
 
