@@ -310,7 +310,7 @@ namespace RDKit{
         while(nbrIdx!=endNbrs){
           const Atom *at=molPtr->getAtomWithIdx(*nbrIdx);
           ... do something with the Atom ...
-          nbrIdx++;
+          ++nbrIdx;
         }
       \endcode
 
@@ -337,7 +337,7 @@ namespace RDKit{
         while(beg!=end){
           const Bond *bond=pMap[*beg];
           ... do something with the Bond ...
-          beg++;
+          ++beg;
         }
       \endcode
       or, if you need a non-const Bond *:
@@ -350,7 +350,7 @@ namespace RDKit{
         while(beg!=end){
           Bond *bond=pMap[*beg];
           ... do something with the Bond ...
-          beg++;
+          ++beg;
         }
       \endcode
       
@@ -378,7 +378,7 @@ namespace RDKit{
         while(atBegin!=atEnd){
           Atom *at2=atomMap[*atBegin];
           ... do something with the Atom ...
-          atBegin++;
+          ++atBegin;
         }
       \endcode
     */
@@ -395,7 +395,7 @@ namespace RDKit{
         while(firstB!=lastB){
           Bond *bond = bondMap[*firstB];
           ... do something with the Bond ...
-          firstB++;
+          ++firstB;
         }
       \endcode
     */
