@@ -10,7 +10,7 @@
 
 """
 
-from Numeric import *
+import numpy
 from PIL import Image, ImageDraw
 
 def CollectVotes(composite,data,badOnly):
@@ -95,13 +95,13 @@ def BuildVoteImage(nModels,data,values,trueValues=[],
       
   """
   nData = len(data)
-  data = array(data,Int)
+  data = numpy.array(data,numpy.integer)
   if sortTrueVals and trueValues != []:
-    order = argsort(trueValues)
+    order = numpy.argsort(trueValues)
   else:
-    order = argsort(values)    
-  data = take(data,order)
-  maxVal = max(ravel(data))
+    order = numpy.argsort(values)    
+  data = [data[x] for x in order]
+  maxVal = max(numpy.ravel(data))
   data = data * 255 / maxVal
   img = Image.fromstring('L',(nModels,nData),data.astype('B').tostring())
 

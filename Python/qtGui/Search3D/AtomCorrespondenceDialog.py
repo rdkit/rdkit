@@ -11,7 +11,6 @@ from qtGui import qtUtils
 from copy import deepcopy
 import Chem
 from Chem import ChemicalForceFields,rdShapeHelpers
-from Numeric import *
 
 class LocalComboTableItem(QComboTableItem):
   " we just use these to get a bit more space in tables "

@@ -3,7 +3,6 @@
 # Copyright (C) 2005,2006 Rational Discovery LLC
 #  All Rights Reserved
 #
-from Numeric import *
 from qt import *
 from qtGui import qtUtils
 import cPickle

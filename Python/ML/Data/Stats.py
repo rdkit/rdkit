@@ -42,12 +42,12 @@ def FormCovarianceMatrix(mat):
   """ form and return the covariance matrix
 
   """
-  sumVect = sum(mat,1)
-  sumVect = sumVect / float(shape(mat)[1])
-  for i in range(len(sumVect)):
-    mat[i,:] = mat[i,:] - sumVect[i]
-    
-  return matrixmultiply(transpose(mat),mat)
+  nPts = mat.shape[0]
+  sumVect = sum(mat)
+  sumVect /= float(nPts)
+  for row in mat:
+    row -= sumVect
+  return numpy.dot(numpy.transpose(mat),mat)/(nPts-1)
 
 def FormCorrelationMatrix(mat):
   """ form and return the covariance matrix

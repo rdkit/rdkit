@@ -1,12 +1,12 @@
 # $Id$
 #
-# Copyright (C) 2004-2006 Rational Discovery LLC
+# Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 import Geometry
 import Chem
-from Numeric import *
+import numpy
 import math
 
 # BIG NOTE: we are going assume atom IDs starting from 0 instead of 1
@@ -16,9 +16,9 @@ import math
 # are corrected before feeding them in here.
 
 def cross(v1,v2):
-  res = array([ v1[1]*v2[2] - v1[2]*v2[1],
+  res = numpy.array([ v1[1]*v2[2] - v1[2]*v2[1],
                 -v1[0]*v2[2] + v1[2]*v2[0],
-                v1[0]*v2[1] - v1[1]*v2[0]],Float)
+                v1[0]*v2[1] - v1[1]*v2[0]],numpy.double)
   return res
 
 def findNeighbors(atomId, adjMat):
@@ -90,17 +90,17 @@ def ArbAxisRotation(theta,ax,pt):
   mat = [ [t*X*X+c, t*X*Y+s*Z, t*X*Z-s*Y],
           [t*X*Y-s*Z,t*Y*Y+c,t*Y*Z+s*X],
           [t*X*Z+s*Y,t*Y*Z-s*X,t*Z*Z+c] ]
-  mat = array(mat)
+  mat = numpy.array(mat)
   if isinstance(pt,Geometry.Point3D):
-    pt = array((pt.x,pt.y,pt.z))
-    tmp = matrixmultiply(mat,pt)
+    pt = numpy.array((pt.x,pt.y,pt.z))
+    tmp = numpy.dot(mat,pt)
     res=Geometry.Point3D(tmp[0],tmp[1],tmp[2])
   elif isinstance(pt,list) or isinstance(pt,tuple):
     pts = pt
     res = []
     for pt in pts:
-      pt = array((pt.x,pt.y,pt.z))
-      tmp = matrixmultiply(mat,pt)
+      pt = numpy.array((pt.x,pt.y,pt.z))
+      tmp = numpy.dot(mat,pt)
       res.append(Geometry.Point3D(tmp[0],tmp[1],tmp[2]))
   else:
     res=None
@@ -301,9 +301,9 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5) :
     # in this case we should have two or more hydrogens we will simple use there directions
     res = []
     for hid in hydrogenss:
-      bvec = array(coords[3*(hid):3*hid+3])
+      bvec = numpy.array(coords[3*(hid):3*hid+3])
       bvec -= cpt
-      bvec /= (sqrt(innerproduct(bvec, bvec)))
+      bvec /= (numpy.sqrt(numpy.dot(bvec, bvec)))
       bvec *= scale
       bvec += cpt
       res.append((cpt, bvec))

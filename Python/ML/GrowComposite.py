@@ -90,7 +90,7 @@
 
 """
 import RDConfig
-from Numeric import *
+import numpy
 from ML.Data import DataUtils,SplitData
 from ML import ScreenComposite,BuildComposite
 from ML.Composite import AdjustComposite
@@ -213,8 +213,8 @@ def GrowIt(details,composite,progressCallback=None,
   composite.AverageErrors()
   composite.SortModels()
   modelList,counts,avgErrs = composite.GetAllData()
-  counts = array(counts)
-  avgErrs = array(avgErrs)
+  counts = numpy.array(counts)
+  avgErrs = numpy.array(avgErrs)
   composite._varNames = data.GetVarNames()
 
   for i in xrange(len(modelList)):
@@ -225,7 +225,7 @@ def GrowIt(details,composite,progressCallback=None,
   averageErr = sum(weightedErrs)/sum(counts)
   devs = (avgErrs - averageErr)
   devs = devs * counts
-  devs = sqrt(devs*devs)
+  devs = numpy.sqrt(devs*devs)
   avgDev = sum(devs)/sum(counts)
   if _verbose:
     message('# Overall Average Error: %%% 5.2f, Average Deviation: %%% 6.2f'%(100.*averageErr,100.*avgDev))

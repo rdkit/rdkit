@@ -129,8 +129,8 @@ def ReplaceGroup(match,bounds,slop=0.01,useDirs=False,dirLength=defaultFeatLengt
     bm[replaceIdx,idx1]=minVal
     if useDirs:
       # set the point - direction point bounds:
-      bm[idx1,replaceIdx+1] = sqrt(bm[replaceIdx,replaceIdx+1]**2+maxVal**2)
-      bm[replaceIdx+1,idx1] = sqrt(bm[replaceIdx+1,replaceIdx]**2+minVal**2)
+      bm[idx1,replaceIdx+1] = numpy.sqrt(bm[replaceIdx,replaceIdx+1]**2+maxVal**2)
+      bm[replaceIdx+1,idx1] = numpy.sqrt(bm[replaceIdx+1,replaceIdx]**2+minVal**2)
   return bm,replaceIdx
 
 def EmbedMol(mol,bm,atomMatch=None,weight=2.0,randomSeed=-1,
@@ -536,7 +536,7 @@ def OptimizeMol(mol,bm,atomMatches=None,excludedVolumes=None,
         indices += list(localIndices)
       for i in range(nAts):
         v = numpy.array(conf.GetAtomPosition(i))-numpy.array(exVol.pos)
-        d = sqrt(dot(v,v))
+        d = numpy.sqrt(numpy.dot(v,v))
         if i not in indices:
           if d<5.0:
             logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%d,%.0f)'%(i,idx,exVol.exclusionDist,1000,forceConstant))

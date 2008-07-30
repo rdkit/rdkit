@@ -11,7 +11,6 @@ import RDConfig
 import unittest,sys,os,cPickle
 import Chem
 from Chem import Crippen
-from Numeric import *
 
 def feq(n1,n2,tol=1e-5):
   return abs(n1-n2)<=tol

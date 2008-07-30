@@ -62,7 +62,7 @@ Optional Arguments:
 
 """
 import RDConfig
-from Numeric import *
+import numpy
 import cPickle,copy
 #from Dbase.DbConnection import DbConnect
 from ML.Data import DataUtils,SplitData,Stats
@@ -353,8 +353,8 @@ if __name__=='__main__':
   descs = dataSet.GetVarNames()
   nPts = dataSet.GetNPts()
   message('npts: %d\n'%(nPts))
-  final = zeros((nPts,2),Float)
-  counts = zeros(nPts,Int)
+  final = numpy.zeros((nPts,2),numpy.float)
+  counts = numpy.zeros(nPts,numpy.integer)
   selPts = [None]*nPts
 
   models = []

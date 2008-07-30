@@ -21,7 +21,7 @@ except ImportError:
   hasQt = 0
 else:
   hasQt=1
-from Numeric import *
+
 from PIL import Image
 # these are here to help the Installer work:
 import PIL.ImageFile
@@ -125,15 +125,16 @@ def FitImage(origImg,newSize,filter=Image.BILINEAR,bgColor=(255,255,255)):
 
 def NumericMatrixToImage(data,scaleCols=0,transposeIt=0,
                          minColor=(0,0,0),maxColor=(255,255,255)):
+  import numpy
   # copy the data
-  data = array(data,Float)
-  if transpose:
-    data = transpose(data)
+  data = numpy.array(data,numpy.float)
+  if numpy.transpose:
+    data = numpy.transpose(data)
   #nRows,nCols = data.shape
   nRows,nCols = data.shape
   if scaleCols:
-    minIndices = argmin(data,0)
-    maxIndices = argmax(data,0)
+    minIndices = numpy.argmin(data)
+    maxIndices = numpy.argmax(data)
     mins = zeros(nCols)
     maxs = zeros(nCols)
     for i in range(nCols):
@@ -143,22 +144,22 @@ def NumericMatrixToImage(data,scaleCols=0,transposeIt=0,
     data -= mins
     maxs -= mins
     # no zeros here please, we're dividing:
-    maxs += equal(maxs,0.0)
+    maxs += numpy.equal(maxs,0.0)
 
     # and divide:
     data /= maxs
   # okey dokey, get a three D matrix:
-  imgMat = ones((nRows,nCols,3),Int)
+  imgMat = numpy.ones((nRows,nCols,3),numpy.integer)
 
   # start at minColor:
-  minColor = array(minColor)
-  maxColor = array(maxColor)
+  minColor = numpy.array(minColor)
+  maxColor = numpy.array(maxColor)
   imgMat *= minColor
   deltaColor = maxColor-minColor
   # and move to maxColor:
   for i in range(nRows):
     for j in range(nCols):
-      imgMat[i,j] += (deltaColor*data[i,j]).astype(Int)
+      imgMat[i,j] += (deltaColor*data[i,j]).astype(numpy.integer)
   d = imgMat.astype('B').tostring()
   img = Image.fromstring('RGB',(nCols,nRows),d)
   return img

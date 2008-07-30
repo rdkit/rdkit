@@ -4,7 +4,7 @@
 
 """
 
-from Numeric import *
+import numpy
 import string,re
 
 class ReFile:
@@ -82,14 +82,14 @@ def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=Float):
   dataLines = inFile.readlines()
   nPts = len(dataLines)
 
-  if dataType in [Float, Float32, Float64]:
+  if dataType in [numpy.float, numpy.float32, numpy.float64]:
     _convfunc = float
   else:
     _convfunc = int
     
   nIndVars = len(string.split(dataLines[0]))-1
-  indVarMat = zeros((nPts,nIndVars),dataType)
-  depVarVect = zeros(nPts,dataType)
+  indVarMat = numpy.zeros((nPts,nIndVars),dataType)
+  depVarVect = numpy.zeros(nPts,dataType)
   for i in xrange(nPts):
     splitLine = string.split(dataLines[i])
     depVarVect[i] = _convfunc(splitLine[depVarCol])

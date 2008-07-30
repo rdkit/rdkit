@@ -14,8 +14,8 @@ try:
 except ImportError:
   from piddle import piddle
 import ClusterUtils
-from Numeric import *
 
+import numpy
 
 class VisOpts(object):
   """ stores visualization options for cluster viewing
@@ -50,7 +50,7 @@ def _scaleMetric(val,power=2,min=1e-4):
   if nval < min:
     return 0.0
   else:
-    return log(nval/min)
+    return numpy.log(nval/min)
 
 class ClusterRenderer(object):
   def __init__(self,canvas,size,

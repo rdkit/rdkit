@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
 #  Copyright (C) 2006-2008  greg Landrum and Rational Discovery LLC
@@ -11,7 +9,7 @@
 """
 import rdBase
 import RDConfig
-import numpy.oldnumeric as Numeric
+import numpy
 import DataStructs
 from Geometry import rdGeometry
 from Chem import *
@@ -34,14 +32,13 @@ def TransformMol(mol,tform):
   a single conformer
 
   """
-  import numpy.oldnumeric as Numeric
   newConf = Conformer()
   newConf.SetId(0)
   refConf = mol.GetConformer()
   for i in range(refConf.GetNumAtoms()):
     pos = list(refConf.GetAtomPosition(i))
     pos.append(1.0)
-    newPos = Numeric.matrixmultiply(tform,Numeric.array(pos))
+    newPos = numpy.dot(tform,numpy.array(pos))
     newConf.SetAtomPosition(i,list(newPos)[:3])
   mol.RemoveAllConformers()
   mol.AddConformer(newConf)
@@ -81,7 +78,7 @@ def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
     for j in range(i+1,nAts):
       pj = conf.GetAtomPosition(j)
       dm.append((pi-pj).Length())
-  dm = Numeric.array(dm)
+  dm = numpy.array(dm)
   apply(Compute2DCoordsMimicDistmat,(mol,dm),kwargs)
       
 def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):

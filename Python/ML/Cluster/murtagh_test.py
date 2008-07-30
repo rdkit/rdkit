@@ -1,9 +1,9 @@
-from Numeric import *
+import numpy
 from ML.Cluster import Murtagh,ClusterUtils
 from ML.Cluster import Murtagh
 
 print '1'
-d = array([[10.0,5.0],[20.0,20.0],[30.0,10.0],[30.0,15.0],[5.0,10.0]],Float)
+d = numpy.array([[10.0,5.0],[20.0,20.0],[30.0,10.0],[30.0,15.0],[5.0,10.0]],numpy.float)
 print '2'
 #clusters = Murtagh.ClusterData(d,len(d),Murtagh.WARDS)
 #for i in range(len(clusters)):
@@ -15,7 +15,7 @@ for i in range(len(d)):
   for j in range(i):
     dist = sum((d[i]-d[j])**2)
     dists.append(dist)
-dists = array(dists)
+dists = numpy.array(dists)
 
 
 print 'Wards:'

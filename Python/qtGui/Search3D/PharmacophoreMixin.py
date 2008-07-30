@@ -5,7 +5,6 @@
 #
 from qt import *
 from qtGui import qtUtils
-from Numeric import *
 import Chem
 from Chem.Pharm3D.Pharmacophore import Pharmacophore
 from qtGui.Search3D import SearchUtils,LocalConfig

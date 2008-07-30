@@ -6,7 +6,7 @@
 """ functionality to allow adjusting composite model contents
 
 """
-from Numeric import *
+import numpy
 import copy
 
 def BalanceComposite(model,set1,set2,weight,targetSize,names1=None,names2=None):
@@ -41,7 +41,7 @@ def BalanceComposite(model,set1,set2,weight,targetSize,names1=None,names2=None):
   res.quantizationRequirements = []
 
   startSize = len(model)
-  scores = zeros(startSize,Float)
+  scores = numpy.zeros(startSize,numpy.float)
   actQuantBounds = model.GetActivityQuantBounds()
   if names1 is not None:
     model.SetInputOrder(names1)
@@ -69,7 +69,7 @@ def BalanceComposite(model,set1,set2,weight,targetSize,names1=None,names2=None):
   nPts = S1+S2
   scores /= nPts
   # sort them:
-  bestOrder = list(argsort(scores))
+  bestOrder = list(numpy.argsort(scores))
   bestOrder.reverse()
   print '\tTAKE:',bestOrder[:targetSize]
   # and now take the best set:

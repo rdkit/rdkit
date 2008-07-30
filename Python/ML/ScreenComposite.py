@@ -427,7 +427,7 @@ def ShowVoteResults(indices,data,composite,nResultCodes,threshold,verbose=1,
   if verbose:
     print
     print '\tResults Table:'
-    vTab=transpose(voteTab)
+    vTab=numpy.transpose(voteTab)
     colCounts = sum(vTab)
     rowCounts = sum(vTab,1)
     message('')
@@ -1453,14 +1453,14 @@ if __name__ == '__main__':
         if details.note:
           xl[xlRow,xlCol]=details.note
           xlCol += 1
-      nGood = numpy.numpy.zeros(nModels,numpy.float)
-      nBad = numpy.numpy.zeros(nModels,numpy.float)
-      nSkip = numpy.numpy.zeros(nModels,numpy.float)
-      confGood = numpy.numpy.zeros(nModels,numpy.float)
-      confBad = numpy.numpy.zeros(nModels,numpy.float)
-      confSkip = numpy.numpy.zeros(nModels,numpy.float)
+      nGood = numpy.zeros(nModels,numpy.float)
+      nBad = numpy.zeros(nModels,numpy.float)
+      nSkip = numpy.zeros(nModels,numpy.float)
+      confGood = numpy.zeros(nModels,numpy.float)
+      confBad = numpy.zeros(nModels,numpy.float)
+      confSkip = numpy.zeros(nModels,numpy.float)
       if details.enrichTgt >= 0:
-        enrichments = numpy.numpy.zeros(nModels,numpy.float)
+        enrichments = numpy.zeros(nModels,numpy.float)
       goodVoteDict = {}
       badVoteDict = {}
       noVoteDict = {}
@@ -1617,7 +1617,7 @@ if __name__ == '__main__':
 
         if details.detailedScreen:
           message('Results Table:')
-          voteTab = transpose(voteTab)/nModels
+          voteTab = numpy.transpose(voteTab)/nModels
           nResultCodes = len(voteTab)
           colCounts = sum(voteTab)
           rowCounts = sum(voteTab,1)
@@ -1688,7 +1688,7 @@ if __name__ == '__main__':
       if nModels == 1 and details.detailedScreen:
         message('')
         message('Results Table:')
-        voteTab = transpose(vT)
+        voteTab = numpy.transpose(vT)
         nResultCodes = len(vT)
         colCounts = sum(voteTab)
         rowCounts = sum(voteTab,1)

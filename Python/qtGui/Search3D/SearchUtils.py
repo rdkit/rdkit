@@ -5,7 +5,7 @@
 #  Copyright (C) 2005,2006 Rational Discovery LLC
 #   All Rights Reserved
 #
-from Numeric import *
+import numpy
 import sys
 from qtGui.qtUtils import logger
 import Chem
@@ -13,7 +13,7 @@ from Chem import ChemicalForceFields,rdDistGeom,rdShapeHelpers
 from Chem.Pharm3D import EmbedLib
 EmbedLib.logger = logger
 import DistanceGeometry as DG
-import numpy.oldnumeric as Numerics.rdAlignment as Aligner
+import Numerics.rdAlignment as Aligner
 import DataStructs
 import cPickle
 from qtGui.Search3D import LocalConfig
@@ -23,12 +23,12 @@ colors=((1,0,1),(0,.8,.8),(0.2,0.2,1),(1,0,0),(.9,.9,.1),(.1,.7,.1),(.6,.6,.6),
 ZEROTOL=1e-3
 
 def GetFeatToPointDistanceRange(mol,feat,pos):
-  pos = array(pos)
+  pos = numpy.array(pos)
   atomIds = feat.GetAtomIds()
   if len(atomIds)==1:
-    coords = array(feat.GetPos())
+    coords = numpy.array(feat.GetPos())
     v = pos-coords
-    d = sqrt(dot(v,v))
+    d = numpy.sqrt(numpy.dot(v,v))
     minD = d
     maxD = d
   else:
@@ -36,9 +36,9 @@ def GetFeatToPointDistanceRange(mol,feat,pos):
     minD = 1e8
     maxD = -1e8
     for id in atomIds:
-      coords = array(conf.GetAtomPosition(id))
+      coords = numpy.array(conf.GetAtomPosition(id))
       v = pos-coords
-      d = sqrt(dot(v,v))
+      d = numpy.sqrt(numpy.dot(v,v))
       minD = min(minD,d)
       maxD = max(maxD,d)
   return minD,maxD
@@ -69,14 +69,14 @@ def GetFeatDistances(mol,feats):
   nFeats = len(feats)
   for i in range(nFeats):
     featI = feats[i]
-    posI = array(featI.GetPos())
+    posI = numpy.array(featI.GetPos())
     atomsI = list(featI.GetAtomIds())
     for j in range(i+1,nFeats):
       featJ = feats[j]
-      posJ = array(featJ.GetPos())
+      posJ = numpy.array(featJ.GetPos())
       atomsJ = list(featJ.GetAtomIds())
       delta = posI-posJ
-      dist = sqrt(dot(delta,delta))
+      dist = numpy.sqrt(numpy.dot(delta,delta))
       dist2D = 0
       for atomI in atomsI:
         for atomJ in atomsJ:
@@ -255,7 +255,7 @@ def TransformMol(mol,tform):
   for i in range(refConf.GetNumAtoms()):
     pos = list(refConf.GetAtomPosition(i))
     pos.append(1.0)
-    newPos = matrixmultiply(tform,array(pos))
+    newPos = numpy.dot(tform,numpy.array(pos))
     newConf.SetAtomPosition(i,list(newPos)[:3])
   mol.RemoveAllConformers()
   mol.AddConformer(newConf)
@@ -289,8 +289,8 @@ def AlignMatchToReference(mol,probeFeats,ref,refFeats,exVols=[],useDirs=False):
   probeVols = [list(x.pos) for x in exVols]
   refVols = [list(x.origPos) for x in exVols]
 
-  probeArr = array(probePts+probeDirs+probeVols)
-  refArr = array(refPts+refDirs+refVols)
+  probeArr = numpy.array(probePts+probeDirs+probeVols)
+  refArr = numpy.array(refPts+refDirs+refVols)
 
   weights = [8.0]*(nProbePts)+[1.0]*len(exVols)
 
@@ -301,7 +301,7 @@ def AlignMatchToReference(mol,probeFeats,ref,refFeats,exVols=[],useDirs=False):
   ssd,tform = Aligner.GetAlignmentTransform(refArr,probeArr,weights=weights)
   # if the molecule has chiral centers, do not try the reflected alignment:
   if not hasattr(mol,'_chiralCenters'):
-    centers=EmbedLib.FindMolChiralCenters(mol)
+    centers=Chem.FindMolChiralCenters(mol)
     mol._chiralCenters=centers
   if not mol._chiralCenters:
     ssd2,tform2 = Aligner.GetAlignmentTransform(refArr,probeArr,weights=weights,
@@ -309,12 +309,12 @@ def AlignMatchToReference(mol,probeFeats,ref,refFeats,exVols=[],useDirs=False):
     if ssd2<ssd:
       tform = tform2
       ssd = ssd2
-  rms = sqrt(ssd/sum(weights))
+  rms = numpy.sqrt(ssd/sum(weights))
   volPs=[]
   for vol in exVols:
     p = list(vol.pos)
     p.append(1.0)
-    p = list(matrixmultiply(tform,array(p)))[:-1]
+    p = list(numpy.dot(tform,numpy.array(p)))[:-1]
     volPs.append(p)
 
   if useDirs:
@@ -322,7 +322,7 @@ def AlignMatchToReference(mol,probeFeats,ref,refFeats,exVols=[],useDirs=False):
       rFeat = refDirs[i]
       p = list(pFeat)
       p.append(1.0)
-      p = list(matrixmultiply(tform,array(p)))[:-1]
+      p = list(numpy.dot(tform,numpy.array(p)))[:-1]
   TransformMol(mol,tform)
   tani = rdShapeHelpers.ShapeTanimotoDist(mol,ref,gridSpacing=0.5)
   shapeScore=1.0-tani
@@ -330,9 +330,9 @@ def AlignMatchToReference(mol,probeFeats,ref,refFeats,exVols=[],useDirs=False):
   return rms,volPs,shapeScore,tform
   
 def cross(v1,v2):
-  res = array([ v1[1]*v2[2] - v1[2]*v2[1],
+  res = numpy.array([ v1[1]*v2[2] - v1[2]*v2[1],
                 -v1[0]*v2[2] + v1[2]*v2[0],
-                v1[0]*v2[1] - v1[1]*v2[0]],Float)
+                v1[0]*v2[1] - v1[1]*v2[0]],numpy.double)
   return res
 
 
@@ -341,16 +341,16 @@ def _AddAromaticFeatDirs(mol,feat,dirLen=EmbedLib.defaultFeatLength,confId=-1):
     raise ValueError,'bad feature type'
   conf = mol.GetConformer(confId)
 
-  core = array(feat.GetPos())
+  core = numpy.array(feat.GetPos())
   atomIds = feat.GetAtomIds()
   a1 = conf.GetAtomPosition(atomIds[0])
   a2 = conf.GetAtomPosition(atomIds[1])
 
   v1 = a1-core
-  v1 = v1 / sqrt(dot(v1,v1))
+  v1 = v1 / numpy.sqrt(numpy.dot(v1,v1))
   
   v2 = a2-core
-  v2 = v2 / sqrt(dot(v2,v2))
+  v2 = v2 / numpy.sqrt(numpy.dot(v2,v2))
   
   dir1 = cross(v1,v2)
   dir1 *= dirLen
@@ -374,10 +374,10 @@ def _GetDegree1FeatDirs(conf,atom,dirLen=EmbedLib.defaultFeatLength,nbr=None):
     for nbr in atom.GetNeighbors():
       if nbr.GetAtomicNum()!=1:
         break
-  core = array(conf.GetAtomPosition(atom.GetIdx()))
-  a1 = array(conf.GetAtomPosition(nbr.GetIdx()))
+  core = numpy.array(conf.GetAtomPosition(atom.GetIdx()))
+  a1 = numpy.array(conf.GetAtomPosition(nbr.GetIdx()))
   v1 = core-a1
-  v1 = v1/dot(v1,v1)
+  v1 = v1/numpy.dot(v1,v1)
   v1 *= dirLen
 
   return core+v1,
@@ -466,7 +466,7 @@ def DiversityPick(hits,numToPick,pickledFpName='SIMILARITY_FP',
       dMat.append(1.0-DataStructs.FingerprintSimilarity(fpI,fpJ))
       if progressCallback:
         progressCallback(len(dMat))
-  dMat = array(dMat)
+  dMat = numpy.array(dMat)
   picker = SimDivFilters.HierarchicalClusterPicker(SimDivFilters.ClusterMethod.WARD)
   clusters = picker.Pick(dMat,nHits,numToPick)
   logger.debug('clusters: %s'%(str(list(clusters))))
@@ -497,9 +497,9 @@ def GetAlignmentRMSD(refMol,refFeats,probeMol,probeFeats,useDirs=True):
   ssd = 0.0
   for i,probePt in enumerate(probePts):
     refPt = refPts[i]
-    d = array(list(probePt))-array(list(refPt))
-    ssd += dot(d,d)
-  rmsd = sqrt(ssd/len(probePts))
+    d = numpy.array(list(probePt))-numpy.array(list(refPt))
+    ssd += numpy.dot(d,d)
+  rmsd = numpy.sqrt(ssd/len(probePts))
   return rmsd
 
       
@@ -513,7 +513,7 @@ def _MolMolAlignmentRMSD(refConf,probeConf,mapping):
     d2 += refP.LengthSq()
     nPts +=1
   d2 /= nPts
-  return sqrt(d2)
+  return numpy.sqrt(d2)
 
 def ImproveMolMolAlignment(refMol,probeMol,mapping,
                            forceConstant=LocalConfig.refineForceConstant,

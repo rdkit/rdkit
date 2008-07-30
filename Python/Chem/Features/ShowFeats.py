@@ -238,7 +238,7 @@ parser=OptionParser(_usage,version='%prog '+_version)
 
 parser.add_option('-x','--exclude',default='',
                   help='provide a list of feature names that should be excluded')
-parser.add_option('-f','--fdef',default=os.path.join(RDConfig.RDDataDir,'Novartis1.fdef'),
+parser.add_option('-f','--fdef',default=os.path.join(RDConfig.RDDataDir,'BaseFeatures.fdef'),
                   help='provide the name of the feature definition (fdef) file.')
 parser.add_option('--noDirs','--nodirs',dest='useDirs',default=True,action='store_false',
                   help='do not draw feature direction indicators')

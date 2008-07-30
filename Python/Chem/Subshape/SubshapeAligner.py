@@ -1,14 +1,12 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
-# Copyright (C) 2007 by Greg Landrum 
+# Copyright (C) 2007-2008 by Greg Landrum 
 #  All rights reserved
 #
 import RDLogger
 logger = RDLogger.logger()
 import Chem,Geometry
-import numpy.oldnumeric as Numeric
+import numpy
 from Numerics import Alignment
 from Chem.Subshape import SubshapeObjects
 
@@ -88,7 +86,7 @@ def TransformMol(mol,tform,confId=-1,newConfId=100):
   for i in range(refConf.GetNumAtoms()):
     pos = list(refConf.GetAtomPosition(i))
     pos.append(1.0)
-    newPos = Numeric.matrixmultiply(tform,Numeric.array(pos))
+    newPos = numpy.dot(tform,numpy.array(pos))
     newConf.SetAtomPosition(i,list(newPos)[:3])
   newConf.SetId(newConfId)
   mol.RemoveConformer(newConfId)

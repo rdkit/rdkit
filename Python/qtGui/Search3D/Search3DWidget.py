@@ -10,10 +10,9 @@ from Chem.Draw import MolDrawing
 # FIX: this is a hack of the worst kind to get the boxes around
 # labels in qt canvases smaller:
 MolDrawing.MolDrawing.minLabelPadding=(0,-1)
-import os,sys
+import os,sys,types
 import cPickle as pickle
 
-from Numeric import *
 import Chem
 from Chem import ChemicalFeatures,ShowMols,rdDepictor,rdDistGeom
 from qtGui.Search3D import SearchUtils,MolAlignmentList,LocalConfig

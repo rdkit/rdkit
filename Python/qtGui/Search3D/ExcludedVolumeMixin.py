@@ -5,7 +5,6 @@
 #
 from qt import *
 from qtGui import qtUtils
-from Numeric import *
 import Chem
 from Chem.Pharm3D.ExcludedVolume import ExcludedVolume
 from qtGui.Search3D import SearchUtils

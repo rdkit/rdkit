@@ -30,6 +30,27 @@ class TestCase(unittest.TestCase):
                     [7,4,5],
                     [8,2,2]],'d')
 
+  def testCovariance(self):
+    """ test the covariance x calculation
+
+      test case from:
+       http://www.itl.nist.gov/div898/handbook/pmc/section5/pmc541.htm
+    """
+    
+    d = numpy.array([[4.,2,0.6],
+                     [4.2,2.1,0.59],
+                     [3.9,2.0,0.58],
+                     [4.3,2.1,0.62],
+                     [4.1,2.2,0.63]])
+    m = Stats.FormCovarianceMatrix(d)
+    target = numpy.array([[ 0.025 ,   0.0075,   0.00175],
+                          [ 0.0075,   0.007,    0.00135],
+                          [ 0.00175,  0.00135,  0.00043]])
+    diff = abs(m - target)
+    assert max(diff.ravel())<FLOAT_TOL,'covariance matrix incorrect'
+
+
+
   def testCorrelation(self):
     " test the correlation matrix calculation "
     m = Stats.FormCorrelationMatrix(self.d)

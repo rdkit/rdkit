@@ -11,7 +11,7 @@ import RDConfig
 import unittest,sys,os,cPickle
 import Chem
 from Chem import Crippen
-from Numeric import *
+import numpy
 
 def feq(n1,n2,tol=1e-5):
   return abs(n1-n2)<=tol
@@ -107,7 +107,7 @@ class TestCase(unittest.TestCase):
         done = 1
       else:
         refContribs = [x[0] for x in refContribs]
-        refOrder= argsort(refContribs)
+        refOrder= numpy.argsort(refContribs)
         try:
           mol = Chem.MolFromSmiles(smi)
         except:
@@ -128,7 +128,7 @@ class TestCase(unittest.TestCase):
           #
           while len(contribs)>len(refContribs):
             del contribs[-1]
-          order = argsort(contribs)
+          order = numpy.argsort(contribs)
 
           for i in range(len(refContribs)):
             refL = refContribs[refOrder[i]]

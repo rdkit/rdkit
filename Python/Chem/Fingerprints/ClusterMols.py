@@ -22,7 +22,7 @@ from ML.Cluster import Murtagh
 import sys,cPickle
 from Chem.Fingerprints import FingerprintMols,MolSimilarity
 import DataStructs
-from Numeric import *
+import numpy
 _cvsVersion="$Id$"
 idx1 = _cvsVersion.find(':')+1
 idx2 = _cvsVersion.rfind('$')
@@ -40,7 +40,7 @@ def GetDistanceMatrix(data,metric,isSimilarity=1):
     
   """
   nPts = len(data)
-  res = zeros((nPts*(nPts-1)/2),Float)
+  res = numpy.zeros((nPts*(nPts-1)/2),numpy.float)
   nSoFar=0
   for col in xrange(1,nPts):
     for row in xrange(col):

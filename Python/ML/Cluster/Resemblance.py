@@ -21,7 +21,7 @@
        '(col*(col-1))/2 + row'
 
 """
-from Numeric import *
+import numpy
 
 
 def EuclideanDistance(inData):
@@ -39,14 +39,14 @@ def EuclideanDistance(inData):
 
   """
   nObjs = len(inData)
-  res = zeros((nObjs*(nObjs-1)/2),Float)
+  res = numpy.zeros((nObjs*(nObjs-1)/2),numpy.float)
   nSoFar = 0
   for col in xrange(1,nObjs):
     for row in xrange(col):
       t = inData[row]-inData[col]
       res[nSoFar] = sum(t*t)
       nSoFar += 1
-  return sqrt(res)
+  return numpy.sqrt(res)
 
 def CalcMetricMatrix(inData,metricFunc):
   """ generates a metric matrix
@@ -95,7 +95,7 @@ def FindMinValInList(mat,nObjs,minIdx=None):
   """
   assert len(mat) == nObjs*(nObjs-1)/2, 'bad matrix length in FindMinValInList'
   if minIdx is None:
-    minIdx = argmin(mat)
+    minIdx = numpy.argmin(mat)
 
   nSoFar = 0
   col = 0
