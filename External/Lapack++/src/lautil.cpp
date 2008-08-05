@@ -32,7 +32,7 @@
 //#include LA_UTIL_H // changed of VC++
 #include "lautil.h"
 #include "lapackd.h"
-#include <string>     // strlen()
+#include <cstring>     // strlen()
 
 int LaEnvBlockSize(const char *fname, const LaGenMatDouble &A)
 {

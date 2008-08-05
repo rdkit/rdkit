@@ -6,6 +6,7 @@
 //
 
 #include <RDGeneral/Invariant.h>
+#include <cstring>
 #include "Transform.h"
 #include "Transform3D.h"
 #include <math.h>

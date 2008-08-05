@@ -7,6 +7,7 @@
 #define CQUANTIZE_EXPORTS
 #endif
 #include "cQuantize.h"
+#include <cstring>
 #include <numpy/oldnumeric.h>
 #include <ML/InfoTheory/InfoGainFuncs.h>
 #ifdef WIN32

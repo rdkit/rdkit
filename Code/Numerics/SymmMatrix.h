@@ -8,6 +8,7 @@
 
 #include "Matrix.h"
 #include "SquareMatrix.h"
+#include <cstring>
 #include <boost/smart_ptr.hpp>
 
 //#ifndef INVARIANT_SILENT_METHOD

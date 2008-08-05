@@ -24,6 +24,7 @@ extern INPUT_FUNC_TYPE gp_myInput;
 #include <io.h>
 #endif
 #include <string>
+#include <cstring>
 #include "smarts.tab.hpp"
 
 using namespace RDKit;

@@ -7,6 +7,7 @@
   //   @@ All Rights Reserved  @@
   //
 
+#include <cstring>
 #include <iostream>
 #include <vector>
 

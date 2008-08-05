@@ -26,7 +26,7 @@
 #include <list>
 #include<limits>
 
-#include <stdlib.h>
+#include <cstring>
 
 #include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>

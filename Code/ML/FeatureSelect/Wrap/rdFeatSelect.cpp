@@ -3,6 +3,7 @@
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //     All Rights Reserved
 //
+#include <cstring>
 #include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>

@@ -96,6 +96,7 @@
 #include <iostream>
 #include <assert.h>
 #include <stddef.h>
+#include <cstring>
 
 /*--------------------------------------------------------
  * General definitions

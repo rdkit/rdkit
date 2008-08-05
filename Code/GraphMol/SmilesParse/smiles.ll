@@ -26,6 +26,7 @@ extern INPUT_FUNC_TYPE gp_myInput;
 #include <io.h>
 #endif
 #include <string>
+#include <cstring>
 #include "smiles.tab.hpp"
 
 using namespace RDKit;

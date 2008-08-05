@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2006 Rational Discovery LLC
+// Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -530,6 +530,7 @@ namespace RDGeom {
   typedef std::map<int, Point2D> INT_POINT2D_MAP;
   typedef INT_POINT2D_MAP::iterator INT_POINT2D_MAP_I;
   typedef INT_POINT2D_MAP::const_iterator INT_POINT2D_MAP_CI;
+
 }
 
 

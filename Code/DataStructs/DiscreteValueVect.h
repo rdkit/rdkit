@@ -8,6 +8,7 @@
 
 #include <boost/smart_ptr.hpp>
 #include <string>
+#include <cstring>
 #include <boost/cstdint.hpp>
 
 namespace RDKit{
@@ -110,8 +111,6 @@ namespace RDKit{
 
     DiscreteValueVect& operator+=(const DiscreteValueVect &other);
     DiscreteValueVect& operator-=(const DiscreteValueVect &other);
-
-
 
     //! returns a binary string representation (pickle)
     std::string toString() const;

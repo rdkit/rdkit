@@ -5,6 +5,7 @@
 //   @@ All Rights Reserved  @@
 //
 #include <RDGeneral/Invariant.h>
+#include <cstring>
 #include "Transform.h"
 #include "Transform2D.h"
 #include <math.h>

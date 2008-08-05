@@ -12,6 +12,7 @@
 #include <RDGeneral/utils.h>
 
 #include <iostream>
+#include <cstring>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 

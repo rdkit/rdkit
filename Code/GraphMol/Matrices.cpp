@@ -12,6 +12,7 @@
 #include <memory.h>
 #include <boost/shared_array.hpp>
 #include <algorithm>
+#include <cstring>
 
 namespace RDKit{
 
