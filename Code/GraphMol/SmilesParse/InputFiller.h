@@ -1,13 +1,12 @@
 //
-//  Copyright (C) 2001-2006 Randal Henne, Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Randal Henne, Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #ifndef _RD_INPUT_FILLER_H
 #define _RD_INPUT_FILLER_H
-#ifdef WIN32
-#include <io.h>
-#endif
+#include <cstdio>
+
 
 typedef int (* INPUT_FUNC_TYPE )( char *, int ) ;
 

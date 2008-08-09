@@ -519,13 +519,17 @@ namespace RDKit {
     numErrors=0;
     
     if(!this->getNumReactantTemplates()){
-      if(!silent) BOOST_LOG(rdErrorLog)<<"reaction has no reactants\n";
+      if(!silent){
+        BOOST_LOG(rdErrorLog)<<"reaction has no reactants\n";
+      }
       numErrors++;
       res=false;
     }
     
     if(!this->getNumProductTemplates()){
-      if(!silent) BOOST_LOG(rdErrorLog)<<"reaction has no products\n";
+      if(!silent){
+        BOOST_LOG(rdErrorLog)<<"reaction has no products\n";
+      }
       numErrors++;
       res=false;
     }
@@ -542,7 +546,9 @@ namespace RDKit {
           int mapNum;
           (*atomIt)->getProp("molAtomMapNumber",mapNum);
           if(std::find(mapNumbersSeen.begin(),mapNumbersSeen.end(),mapNum)!=mapNumbersSeen.end()){
-            if(!silent) BOOST_LOG(rdErrorLog)<<"reactant atom-mapping number "<<mapNum<<" found multiple times.\n";
+            if(!silent){
+              BOOST_LOG(rdErrorLog)<<"reactant atom-mapping number "<<mapNum<<" found multiple times.\n";
+            }
             numErrors++;
             res=false;
           } else {
@@ -551,7 +557,9 @@ namespace RDKit {
         }
       }
       if(!thisMolMapped){
-        if(!silent) BOOST_LOG(rdWarningLog)<<"reactant "<<molIdx<<" has no mapped atoms.\n";
+        if(!silent){
+          BOOST_LOG(rdWarningLog)<<"reactant "<<molIdx<<" has no mapped atoms.\n";
+        }
         numWarnings++;
       }
       molIdx++;
@@ -570,16 +578,18 @@ namespace RDKit {
           (*atomIt)->getProp("molAtomMapNumber",mapNum);
           if(std::find(productNumbersSeen.begin(),
                        productNumbersSeen.end(),mapNum)!=productNumbersSeen.end()){
-            if(!silent)
+            if(!silent){
               BOOST_LOG(rdErrorLog)<<"product atom-mapping number "<<mapNum<<" found multiple times.\n";
+            }
             numErrors++;
             res=false;
           }
           std::vector<int>::iterator ivIt=std::find(mapNumbersSeen.begin(),
                                                     mapNumbersSeen.end(),mapNum);
           if(ivIt==mapNumbersSeen.end()){
-            if(!silent)
+            if(!silent){
               BOOST_LOG(rdErrorLog)<<"product atom-mapping number "<<mapNum<<" not found in reactants.\n";
+            }
             numErrors++;
             res=false;
           } else {
@@ -598,9 +608,10 @@ namespace RDKit {
             }
             if(query->getDescription()=="AtomFormalCharge"){
               if((*atomIt)->hasProp("_QueryFormalCharge")){
-                if(!silent)
+                if(!silent){
                   BOOST_LOG(rdWarningLog)<<"atom "<<(*atomIt)->getIdx()<<" in product " 
                                          << molIdx << " has multiple charge specifications.\n";
+                }
                 numWarnings++;
               } else {
                 (*atomIt)->setProp("_QueryFormalCharge",
@@ -608,9 +619,10 @@ namespace RDKit {
               }
             } else if(query->getDescription()=="AtomHCount"){
               if((*atomIt)->hasProp("_QueryHCount")){
-                if(!silent)
+                if(!silent){
                   BOOST_LOG(rdWarningLog)<<"atom "<<(*atomIt)->getIdx()<<" in product " 
                                          << molIdx << " has multiple H count specifications.\n";
+                }
                 numWarnings++;
               } else {
                 (*atomIt)->setProp("_QueryHCount",
@@ -618,9 +630,10 @@ namespace RDKit {
               }
             } else if(query->getDescription()=="AtomMass"){
               if((*atomIt)->hasProp("_QueryMass")){
-                if(!silent)
+                if(!silent) {
                   BOOST_LOG(rdWarningLog)<<"atom "<<(*atomIt)->getIdx()<<" in product " 
                                          << molIdx << " has multiple isotope specifications.\n";
+                }
                 numWarnings++;
               } else {
                 (*atomIt)->setProp("_QueryMass",
@@ -631,7 +644,9 @@ namespace RDKit {
         }
       }
       if(!thisMolMapped){
-        if(!silent) BOOST_LOG(rdWarningLog)<<"product "<<molIdx<<" has no mapped atoms.\n";
+        if(!silent){
+          BOOST_LOG(rdWarningLog)<<"product "<<molIdx<<" has no mapped atoms.\n";
+        }
         numWarnings++;
       }
     

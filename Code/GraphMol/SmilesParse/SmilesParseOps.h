@@ -21,7 +21,7 @@ namespace SmilesParseOps {
   RDKit::Bond::BondType GetUnspecifiedBondType(const RDKit::RWMol *mol,
 					       const RDKit::Atom *atom1,
 					       const RDKit::Atom *atom2);
-  void CloseMolRings(RDKit::RWMol *mol,bool toleratePartials=0);
+  void CloseMolRings(RDKit::RWMol *mol,bool toleratePartials);
   void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
 };
 

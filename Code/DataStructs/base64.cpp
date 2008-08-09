@@ -5,6 +5,7 @@
 //  @@ All Rights Reserved @@
 //
 #include <iostream>
+#include <cstring>
 #include "base64.h"
 // Encoding table from RFC 2045
 //

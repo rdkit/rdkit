@@ -55,7 +55,7 @@ namespace RDKit{
       } else {
         res = SmilesParse::molList_g[0];
         SmilesParse::molList_g.resize(0);
-        SmilesParseOps::CloseMolRings(res);
+        SmilesParseOps::CloseMolRings(res,false);
         SmilesParseOps::AdjustAtomChiralityFlags(res);
         // No sense leaving this bookmark intact:
         if(res->hasAtomBookmark(ci_RIGHTMOST_ATOM)){

@@ -2,12 +2,12 @@
 
 // $Id$
 //
-//  Copyright (C) 2001-2006 Randal Henne, Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Randal Henne, Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 
-#include <stdio.h>
+#include <cstdio>
 
 #undef YY_INPUT
 
@@ -22,9 +22,6 @@ extern INPUT_FUNC_TYPE gp_myInput;
 #include <GraphMol/Bond.h>
 #include <GraphMol/PeriodicTable.h>
 
-#ifdef WIN32
-#include <io.h>
-#endif
 #include <string>
 #include <cstring>
 #include "smiles.tab.hpp"

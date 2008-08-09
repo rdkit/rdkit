@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003-2006 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2003-2008 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -7,6 +7,8 @@
 #define __RD_BITVECT_H__
 
 #include <vector>
+#include <string>
+
 using std::vector;
 typedef vector<int> IntVect;
 typedef IntVect::iterator IntVectIter;

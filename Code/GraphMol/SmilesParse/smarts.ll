@@ -7,7 +7,7 @@
 //   @@ All Rights Reserved  @@
 //
 
-#include <stdio.h>
+#include <cstdio>
 
 #undef YY_INPUT
 
@@ -20,9 +20,6 @@ extern INPUT_FUNC_TYPE gp_myInput;
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 
-#ifdef WIN32
-#include <io.h>
-#endif
 #include <string>
 #include <cstring>
 #include "smarts.tab.hpp"
