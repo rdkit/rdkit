@@ -8,6 +8,9 @@
 //
 
 #include <cstdio>
+#ifdef WIN32
+#include <io.h> 	 
+#endif
 
 #undef YY_INPUT
 

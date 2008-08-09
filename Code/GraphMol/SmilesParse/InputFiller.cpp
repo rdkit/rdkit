@@ -6,7 +6,9 @@
 //
 #include "InputFiller.h"
 #include <cstring>
-
+#ifdef WIN32
+#include <io.h> 	 
+#endif
 int filePtrFunc( char * , int );
 
 INPUT_FUNC_TYPE gp_myInput = filePtrFunc;
