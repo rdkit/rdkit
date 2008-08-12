@@ -25,21 +25,34 @@ namespace RDKit {
     virtual unsigned int numMols() const =0;
   };
 
+  //! The SmilesWriter is for writing molecules and properties to
+  //! delimited text files.
   class SmilesWriter : public MolWriter {
     /******************************************************************************
      * A Smiles Table writer - this is how it is used
-     *  - create a SDMolWriter with a output file name (or a ostream), a delimiter,
+     *  - create a SmilesWriter with a output file name (or a ostream), a delimiter,
      *     and a list of properties that need to be written out
      *  - then a call is made to the write function for each molecule that needs to
      *     be written out
      ******************************************************************************/
   public:
+    /*!
+      \param fileName       : filename to write to
+      \param delimiter      : delimiter to use in the text file
+      \param nameHeader     : used to label the name column in the output. If this
+                              is provided as the empty string, no names will be written.
+      \param includeHeader  : toggles inclusion of a header line in the output
+      \param isomericSmiles : toggles generation of isomeric SMILES
+      \param kekuleSmiles   : toggles the generation of kekule SMILES
+
+     */
     SmilesWriter(std::string fileName, 
 		 std::string delimiter=" ",
 		 std::string nameHeader="Name",
 		 bool includeHeader=true,
                  bool isomericSmiles=false,
                  bool kekuleSmiles=false);
+    //! \overload
     SmilesWriter(std::ostream *outStream, 
 		 std::string delimiter=" ",
 		 std::string nameHeader="Name",
@@ -50,26 +63,20 @@ namespace RDKit {
 		 
     ~SmilesWriter();
 
-    // FIX; unfornately we cannot handle this through he constructor for now
-    // because of the conversion issues betweem python list of strings and
-    // STR_VECT - this is currently handled through a wrapper function and I do not
-    // know how to wrap a constructor.
-    // set a vector of property names that are need to be
-    // written out for each molecule
+    //! \brief set a vector of property names that are need to be
+    //! written out for each molecule
     void setProps(const STR_VECT &propNames);
 
-    // write a new molecule to the file
-    // NOTE: the default value for the confId parameter is set in the
-    //   baseClass, do *not* redefine it.
+    //! \brief write a new molecule to the file
     void write(ROMol &mol,int confId=defaultConfId);
 
-    // flush the ostream
+    //! \brief flush the ostream
     void flush() {
       PRECONDITION(dp_ostream,"no output stream");
       dp_ostream->flush();
     };
 
-    // get the number of molecules written so far
+    //! \brief get the number of molecules written so far
     unsigned int numMols() const { return d_molid;} ;
 
   private:
@@ -96,6 +103,8 @@ namespace RDKit {
   };
 
 
+  //! The SDWriter is for writing molecules and properties to
+  //! SD files 
   class SDWriter : public MolWriter {
     /**************************************************************************************
      * A SD file ( or stream) writer - this is how it is used
@@ -109,26 +118,20 @@ namespace RDKit {
 
     ~SDWriter();
 
-    // FIX; unfornately we cannot handle this through he constructor for now
-    // because of the conversion issues betweem python list of strings and
-    // STR_VECT - this is currently handled through a wrapper function and I do not
-    // know how to wrap a constructor.
-    // set a vector of property names that are need to be
-    // written out for each molecule
+    //! \brief set a vector of property names that are need to be
+    //! written out for each molecule
     void setProps(const STR_VECT &propNames);
 
-    // write a new molecule to the file
-    // NOTE: the default value for the confId parameter is set in the
-    //   baseClass, do *not* redefine it.
+    //! \brief write a new molecule to the file
     void write(ROMol &mol, int confId=defaultConfId);
 
-    // flush the ostream
+    //! \brief flush the ostream
     void flush() { 
       PRECONDITION(dp_ostream,"no output stream");
       dp_ostream->flush();
     } ;
 
-    // get the number of molecules written so far
+    //! \brief get the number of molecules written so far
     unsigned int numMols() const { return d_molid; };
 
   private:
@@ -140,6 +143,8 @@ namespace RDKit {
     STR_VECT d_props; // list of property name that need to be written out
   };
 
+  //! The TDTWriter is for writing molecules and properties to
+  //! TDT files 
   class TDTWriter : public MolWriter {
     /**************************************************************************************
      * A TDT file ( or stream) writer - this is how it is used
@@ -153,26 +158,20 @@ namespace RDKit {
 
     ~TDTWriter();
 
-    // FIX; unfornately we cannot handle this through he constructor for now
-    // because of the conversion issues betweem python list of strings and
-    // STR_VECT - this is currently handled through a wrapper function and I do not
-    // know how to wrap a constructor.
-    // set a vector of property names that are need to be
-    // written out for each molecule
+    //! \brief set a vector of property names that are need to be
+    //! written out for each molecule
     void setProps(const STR_VECT &propNames);
 
-    // write a new molecule to the file
-    // NOTE: the default value for the confId parameter is set in the
-    //   baseClass, do *not* redefine it.
+    //! \brief write a new molecule to the file
     void write(ROMol &mol, int confId=defaultConfId);
 
-    // flush the ostream
+    //! \brief flush the ostream
     void flush() { 
       PRECONDITION(dp_ostream,"no output stream");
       dp_ostream->flush();
     };
 
-    // get the number of molecules written so far
+    //! \brief get the number of molecules written so far
     unsigned int numMols() const { return d_molid; };
 
     void setWrite2D(bool state=true) { df_write2D=state; };

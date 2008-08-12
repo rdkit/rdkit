@@ -71,7 +71,6 @@ void testSmilesWriter() {
       break;
     }
   }
-
 }
 
 void testSmilesWriter2() {
@@ -111,6 +110,55 @@ void testSmilesWriter2() {
   }
 }
 
+void testSmilesWriterNoNames() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+  SmilesMolSupplier *nSup = new SmilesMolSupplier(fname, ",", 1, 0, false);
+  std::string oname = rdbase + "/Code/GraphMol/FileParsers/test_data/outSmiles.csv";
+  
+  STR_VECT propNames;
+  propNames.push_back(std::string("Column_2"));
+  SmilesWriter *writer = new SmilesWriter(oname," ","");
+  writer->setProps(propNames);
+
+  STR_VECT props;
+  ROMol *mol = nSup->next();
+  while (mol) {
+    std::string mname, pval;
+    mol->getProp("Column_2", pval);
+    mol->setProp("_Name","bogus");
+    props.push_back(pval);
+    writer->write(*mol);
+    delete mol;
+    try {
+      mol = nSup->next();
+    } catch (FileParseException &) {
+      break;
+    }
+  }
+  writer->flush();
+  delete writer;
+  delete nSup;
+
+  // now read the molecules back in a check if we have the same properties etc
+  nSup = new SmilesMolSupplier(oname,",",0,-1);
+  int i = 0;
+  mol = nSup->next();
+  while (mol){
+    std::string mname, pval;
+    mol->getProp("_Name", mname);
+    TEST_ASSERT(mname!="bogus");
+    mol->getProp("Column_2", pval);
+    TEST_ASSERT(pval == props[i]);
+    i++;
+    delete mol;
+    try {
+      mol = nSup->next();
+    } catch (FileParseException &) {
+      break;
+    }
+  }
+}
 
 void testSDWriter() {
   std::string rdbase = getenv("RDBASE");
@@ -424,6 +472,13 @@ int main() {
   testSmilesWriter2();
   std::cout << "Finished\n";
   std::cout <<  "-----------------------------------------\n\n";
+
+  std::cout <<  "-----------------------------------------\n";
+  std::cout << "Running testSmilesWriterNoNames()\n";
+  testSmilesWriterNoNames();
+  std::cout << "Finished\n";
+  std::cout <<  "-----------------------------------------\n\n";
+
 
   std::cout <<  "-----------------------------------------\n";
   std::cout << "Running testSDWriter()\n";

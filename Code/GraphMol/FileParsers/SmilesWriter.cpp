@@ -84,7 +84,8 @@ namespace RDKit {
   void SmilesWriter::dumpHeader() const {
     CHECK_INVARIANT(dp_ostream,"no output stream");
     if(df_includeHeader){
-      (*dp_ostream) << "SMILES" << d_delim << d_nameHeader << d_delim;
+      (*dp_ostream) << "SMILES" << d_delim;
+      if(d_nameHeader!="") (*dp_ostream) << d_nameHeader << d_delim;
 
       if (d_props.size() > 0) {
 	STR_VECT_CI pi = d_props.begin();
@@ -118,16 +119,17 @@ namespace RDKit {
     
     std::string name, smi = MolToSmiles(mol,df_isomericSmiles,df_kekuleSmiles);
     (*dp_ostream) << smi;
-    if (mol.hasProp("_Name") ) {
-      mol.getProp("_Name", name);
+    if(d_nameHeader!=""){
+      if (mol.hasProp("_Name") ) {
+        mol.getProp("_Name", name);
+      } else {
+        std::stringstream tstream;
+        tstream << d_molid;
+        name = tstream.str();
+      }
+    
+      (*dp_ostream) << d_delim << name;
     }
-    else {
-      std::stringstream tstream;
-      tstream << d_molid;
-      name = tstream.str();
-    }
-
-    (*dp_ostream) << d_delim << name;
 
     STR_VECT_CI pi;
     for (pi = d_props.begin(); pi != d_props.end(); pi++) {
