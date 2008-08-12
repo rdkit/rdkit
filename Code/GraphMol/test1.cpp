@@ -106,6 +106,8 @@ void testMolProps()
 {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Mol Property Caches" << std::endl;
   RWMol m2;
+  STR_VECT propNames;
+
   m2.addAtom(new Atom(6));
   m2.addAtom(new Atom(6));
   m2.addBond(0,1,Bond::TRIPLE);
@@ -116,22 +118,29 @@ void testMolProps()
   int tmpI;
   std::string tmpS;
   CHECK_INVARIANT(m2.hasProp("prop1"),"");
-  CHECK_INVARIANT(!m2.hasProp("prop2"),"");
   m2.getProp("prop1",tmpI);
   CHECK_INVARIANT(tmpI==2,"");
   m2.getProp("prop1",tmpS);
   CHECK_INVARIANT(tmpS=="2","");
   m2.setProp("prop1",std::string("2"));
   CHECK_INVARIANT(m2.hasProp("prop1"),"");
-  CHECK_INVARIANT(!m2.hasProp("prop2"),"");
   m2.getProp("prop1",tmpS);
   CHECK_INVARIANT(tmpS=="2","");
   std::string tmpString("2");
   m2.setProp("prop1",tmpString.c_str());
   CHECK_INVARIANT(m2.hasProp("prop1"),"");
-  CHECK_INVARIANT(!m2.hasProp("prop2"),"");
   m2.getProp("prop1",tmpS);
   CHECK_INVARIANT(tmpS=="2","");
+
+  tmpS="name";
+  m2.setProp("_Name",tmpS);
+
+  propNames=m2.getPropList(false,false);
+  TEST_ASSERT(propNames.size()==1);
+  propNames=m2.getPropList(true,false);
+  TEST_ASSERT(propNames.size()==2);
+
+  
 
   // check for computed properties
   m2.setProp("cprop1", 1, true);
@@ -142,6 +151,17 @@ void testMolProps()
   CHECK_INVARIANT(cplst[0] == "cprop1", "");
   CHECK_INVARIANT(cplst[1] == "cprop2", "");
 
+  propNames=m2.getPropList(false,false);
+  TEST_ASSERT(propNames.size()==1);
+  propNames=m2.getPropList(true,false);
+  TEST_ASSERT(propNames.size()==2);
+  propNames=m2.getPropList(false,true);
+  TEST_ASSERT(propNames.size()==4);
+  propNames=m2.getPropList(true,true);
+  TEST_ASSERT(propNames.size()==5);
+  propNames=m2.getPropList();
+  TEST_ASSERT(propNames.size()==5);
+
   m2.clearProp("cprop1");
   CHECK_INVARIANT(!m2.hasProp("cprop1"), "");
   m2.getProp("computedProps", cplst);
@@ -151,6 +171,12 @@ void testMolProps()
   CHECK_INVARIANT(!m2.hasProp("cprop2"), "");
   m2.getProp("computedProps", cplst);
   CHECK_INVARIANT(cplst.size() == 0, "");
+
+  
+
+
+
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

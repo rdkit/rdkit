@@ -493,9 +493,26 @@ namespace RDKit{
     //@{
 
     //! returns a list with the names of our \c properties
-    STR_VECT getPropList() const {
-      return dp_props->keys();
+    STR_VECT getPropList(bool includePrivate=true,
+                         bool includeComputed=true) const {
+      const STR_VECT &tmp=dp_props->keys();
+      STR_VECT res,computed;
+      if(!includeComputed && hasProp("computedProps")){
+        getProp("computedProps",computed);
+        computed.push_back("computedProps");
+      }
+      
+      STR_VECT::const_iterator pos = tmp.begin();
+      while(pos!=tmp.end()){
+        if((includePrivate || (*pos)[0]!='_') &&
+	 std::find(computed.begin(),computed.end(),*pos)==computed.end()){
+          res.push_back(*pos);
+	}
+        pos++;
+      }
+      return res;
     }
+      
 
     //! sets a \c property value
     /*!

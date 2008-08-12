@@ -118,60 +118,6 @@ namespace RDKit {
     return res;
   }
 
-#if 1
-  std::vector<std::string> MolGetPropNames(const ROMol &mol,
-					   bool includePrivate=false,
-					   bool includeComputed=false){
-    std::vector<std::string> res,computed,tmp;
-    tmp=mol.getPropList();
-    if(!includeComputed) mol.getProp("computedProps",computed);
-    // we'll never return this:
-    computed.push_back("computedProps");
-    std::vector<std::string>::iterator pos = tmp.begin();
-    while(pos!=tmp.end()){
-      if((includePrivate || (*pos)[0]!='_') &&
-	 std::find(computed.begin(),computed.end(),*pos)==computed.end()){
-	std::string holder;
-	try {
-	  mol.getProp(*pos,holder);
-	  res.push_back(*pos);
-	} catch (const boost::bad_any_cast &) {
-	  ;
-	}
-	
-      }
-      pos++;
-    }
-    return res;
-  }
-#else
-  python::list MolGetPropNames(const ROMol &mol,
-					   bool includePrivate=false,
-					   bool includeComputed=false){
-    std::vector<std::string> computed,tmp;
-    python::list res;
-    tmp=mol.getPropList();
-    if(!includeComputed) mol.getProp("computedProps",computed);
-    // we'll never return this:
-    computed.push_back("computedProps");
-    std::vector<std::string>::iterator pos = tmp.begin();
-    while(pos!=tmp.end()){
-      if((includePrivate || (*pos)[0]!='_') &&
-	 std::find(computed.begin(),computed.end(),*pos)==computed.end()){
-	std::string holder;
-	try {
-	  mol.getProp(*pos,holder);
-	  res.append(*pos);
-	} catch (const boost::bad_any_cast &) {
-	  ;
-	}
-	
-      }
-      pos++;
-    }
-    return res;
-  }
-#endif
   int MolHasProp(const ROMol &mol,const char *key){
     int res = mol.hasProp(key);
     //std::cout << "key: "  << key << ": " << res << std::endl;
@@ -389,7 +335,7 @@ struct mol_wrapper {
 	    "Regenerates computed properties like implicit valence and ring information.\n\n")
 
 
-      .def("GetPropNames",MolGetPropNames,
+      .def("GetPropNames",&ROMol::getPropList,
 	   (python::arg("self"),python::arg("includePrivate")=false,
 	    python::arg("includeComputed")=false),
 	   "Returns a tuple with all property names for this molecule.\n\n"

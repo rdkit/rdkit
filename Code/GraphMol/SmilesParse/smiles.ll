@@ -254,7 +254,7 @@ std::string("Xi"));
 \+			{ return PLUS_TOKEN; }
 
 [\=\#\:]    { yysmiles_lval.bond = new Bond();
-              Bond::BondType bt;
+              Bond::BondType bt=Bond::UNSPECIFIED;
               switch(yytext[0]){
 	      case '=':
 		bt = Bond::DOUBLE;
@@ -265,6 +265,8 @@ std::string("Xi"));
 	      case ':':
 		bt = Bond::AROMATIC;
 		break;
+              default:
+                CHECK_INVARIANT(0,"cannot get here");
 	      }
 	      yysmiles_lval.bond->setBondType(bt);
 	return BOND_TOKEN; }	
