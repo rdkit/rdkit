@@ -32,6 +32,7 @@ namespace RDKit {
   "     - fileName: name of the output file.\n"
   "     - delimiter: (optional) delimiter to be used to separate entries on each line.\n"
   "     - nameHeader: (optional) text to use for the name column in the header line.\n"
+  "                   If this is blank, names will not be dumped.\n"
   "     - includeHeader: (optional) toggles inclusion of a header line in the output file.\n"
   "     - isomericSmiles: (optional) toggles output of isomeric smiles (includes stereochem information).\n"
   "     - includeHeader: (optional) toggles output of kekule smiles (no aromatic bonds for molecules that have been kekulized).\n\n";
