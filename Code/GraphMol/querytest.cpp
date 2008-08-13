@@ -324,11 +324,11 @@ void test6(){
   Atom *a = new Atom(6);
   int massVal;
   massVal=queryAtomMass(a);
-  TEST_ASSERT(massVal==static_cast<int>(12.011*massIntegerConversionFactor));
+  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(12.011*massIntegerConversionFactor)));
 
   a->setMass(13);
   massVal=queryAtomMass(a);
-  TEST_ASSERT(massVal==static_cast<int>(13.000*massIntegerConversionFactor));
+  TEST_ASSERT(massVal==static_cast<int>(RDKit::round(13.000*massIntegerConversionFactor)));
   
   
 

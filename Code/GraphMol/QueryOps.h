@@ -66,7 +66,6 @@ namespace RDKit{
   static int queryAtomNum(Atom const * at) { return at->getAtomicNum(); };
   static int massIntegerConversionFactor=1000;
   static int queryAtomMass(Atom const * at) {
-    // FIX: this really shouldn't be using integers
     return static_cast<int>(round(massIntegerConversionFactor*at->getMass()));
   };
   static int queryAtomFormalCharge(Atom const * at) { 
