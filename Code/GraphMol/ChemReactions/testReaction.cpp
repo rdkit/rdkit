@@ -1561,7 +1561,7 @@ void test18PropertyTransfer(){
   TEST_ASSERT(nError==0);
 
   reacts.clear();
-  smi = "C";
+  smi = "[12CH4]";
   mol = SmilesToMol(smi);
   reacts.push_back(ROMOL_SPTR(mol));
   prods = rxn->runReactants(reacts);
@@ -1569,7 +1569,7 @@ void test18PropertyTransfer(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   TEST_ASSERT(prod->getNumAtoms()==1);
-  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),13,.1));
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),13,.001));
 
   reacts.clear();
   smi = "[13CH4]";
@@ -1597,7 +1597,7 @@ void test18PropertyTransfer(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   TEST_ASSERT(prod->getNumAtoms()==1);
-  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.001));
 
   reacts.clear();
   smi = "C";
@@ -1625,7 +1625,7 @@ void test18PropertyTransfer(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   TEST_ASSERT(prod->getNumAtoms()==1);
-  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.001));
 
   reacts.clear();
   smi = "[13CH4]";
@@ -1636,7 +1636,7 @@ void test18PropertyTransfer(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   TEST_ASSERT(prod->getNumAtoms()==1);
-  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.1));
+  TEST_ASSERT(feq(prod->getAtomWithIdx(0)->getMass(),12,.001));
 
   delete rxn;
   smi = "[C:1](=[O:2])>>[C:1](=[S:2])";
