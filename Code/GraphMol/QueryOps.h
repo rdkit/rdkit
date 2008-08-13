@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -64,9 +64,10 @@ namespace RDKit{
   static int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
   static int queryAtomUnsaturated(Atom const * at) { return static_cast<int>(at->getDegree())<at->getExplicitValence(); };
   static int queryAtomNum(Atom const * at) { return at->getAtomicNum(); };
+  static int massIntegerConversionFactor=1000;
   static int queryAtomMass(Atom const * at) {
     // FIX: this really shouldn't be using integers
-    return static_cast<int>(round(at->getMass()));
+    return static_cast<int>(round(massIntegerConversionFactor*at->getMass()));
   };
   static int queryAtomFormalCharge(Atom const * at) { 
       return static_cast<int>(at->getFormalCharge()); 

@@ -637,7 +637,7 @@ namespace RDKit {
                 numWarnings++;
               } else {
                 (*atomIt)->setProp("_QueryMass",
-                                   ((const ATOM_EQUALS_QUERY *)query)->getVal());
+                                   ((const ATOM_EQUALS_QUERY *)query)->getVal()/massIntegerConversionFactor);
               }
             }
           }

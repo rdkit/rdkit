@@ -414,9 +414,9 @@ bool Atom::Match(Atom const *what) const {
     }
     if( res ){
       // this is the new behavior, based on the isotopes:
-      int tgt=static_cast<int>(floor(this->getMass()));
-      int test=static_cast<int>(floor(what->getMass()));
-      if(tgt && test && tgt!=test ){
+      double tgt=this->getMass();
+      double test=what->getMass();
+      if(fabs(tgt)>1e-4 && fabs(test)>1e-4 && fabs(tgt-test)>1e-4 ){
         res = false;
       }
     }

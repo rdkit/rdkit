@@ -181,7 +181,7 @@ namespace RDKit {
         case Atom::SP3: res << "3"; break;
         }
       } else if (descrip == "AtomMass") {
-        res << query->getVal()<<"*";
+        res << query->getVal()/massIntegerConversionFactor <<"*";
         needParen = true;
       } else if (descrip == "AtomRingBondCount") {
         int count=query->getVal();

@@ -139,7 +139,6 @@ ATOM_EQUALS_QUERY *makeAtomSimpleQuery(int what,int func(Atom const *)){
   return res;
 }
 
-
 unsigned int queryAtomBondProduct(Atom const * at) {
   ROMol::OEDGE_ITER beg,end;
   ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
@@ -225,7 +224,8 @@ ATOM_EQUALS_QUERY *makeAtomUnsaturatedQuery(){
 }
 
 ATOM_EQUALS_QUERY *makeAtomMassQuery(int what){
-  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomMass);
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(massIntegerConversionFactor*what,
+                                             queryAtomMass);
   res->setDescription("AtomMass");
   return res;
 }

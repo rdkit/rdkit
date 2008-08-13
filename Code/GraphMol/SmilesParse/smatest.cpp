@@ -262,11 +262,6 @@ void testMatches3(){
 
   _checkMatches("C[-]", "CC(=O)[S-]", 1, 2);
 
-  _checkMatches("C[16*,32*]", "CC(=O)[O-]", 1, 2);
-
-  _checkMatches("C[16*,32*]", "CC(=O)[S-]", 1, 2);
-  _checkNoMatches("C[16*,32*]", "CC(=O)N");
-
   _checkMatches("[CH3][CH]", "C(C)(C)CC(=O)[O-]", 2, 2);
 
   _checkMatches("[c;H]", "c1ccccc1", 6, 1);
@@ -323,6 +318,19 @@ void testMatches3(){
   _checkMatches("[$([Sc])]", "[Sc]C",1,1);
   _checkNoMatches("[$(Sc)]", "[Sc]C");
   _checkNoMatches("[$([Sc])]", "Sc1ccccc1");
+
+
+  // -----
+  // This block is connected to SF-Issue 1968930
+  //   http://sourceforge.net/tracker/index.php?func=detail&aid=1968930&group_id=160139&atid=814650
+  _checkNoMatches("C[16*,32*]", "CC(=O)[O-]");
+  _checkMatches("C[16*,32*]", "CC(=O)[16O-]",1,2);
+  _checkNoMatches("C[16*,32*]", "CC(=O)[S-]");
+  _checkMatches("C[16*,32*]", "CC(=O)[32S-]", 1, 2);
+
+
+
+
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

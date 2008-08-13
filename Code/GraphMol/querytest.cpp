@@ -317,6 +317,24 @@ void test5(){
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
+void test6(){
+  BOOST_LOG(rdErrorLog) << "---------------------- Test6" << std::endl;
+  Mol m;
+
+  Atom *a = new Atom(6);
+  int massVal;
+  massVal=queryAtomMass(a);
+  TEST_ASSERT(massVal==static_cast<int>(12.011*massIntegerConversionFactor));
+
+  a->setMass(13);
+  massVal=queryAtomMass(a);
+  TEST_ASSERT(massVal==static_cast<int>(13.000*massIntegerConversionFactor));
+  
+  
+
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -325,5 +343,6 @@ int main(){
   test3();
   test4();
   test5();
+  test6();
   return 0;
 }
