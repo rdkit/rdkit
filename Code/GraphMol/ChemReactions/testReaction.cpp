@@ -1339,7 +1339,6 @@ void test17Issue1920627(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-  //prod->debugMol(std::cerr);
   MolOps::assignAtomChiralCodes(*prod);
   TEST_ASSERT(prod->getNumAtoms()==10);
   TEST_ASSERT(prod->getAtomWithIdx(4)->hasProp("_CIPCode"));
@@ -1361,7 +1360,6 @@ void test17Issue1920627(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-  //prod->debugMol(std::cerr);
   MolOps::assignAtomChiralCodes(*prod);
   TEST_ASSERT(prod->getNumAtoms()==9);
   TEST_ASSERT(prod->getAtomWithIdx(4)->hasProp("_CIPCode"));
@@ -1447,7 +1445,6 @@ void test17Issue1920627(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-  //prod->debugMol(std::cerr);
   MolOps::assignAtomChiralCodes(*prod);
   TEST_ASSERT(prod->getNumAtoms()==9);
   TEST_ASSERT(prod->getAtomWithIdx(4)->hasProp("_CIPCode"));
@@ -1463,7 +1460,6 @@ void test17Issue1920627(){
   TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
-  mol->debugMol(std::cerr);
   
   reacts.push_back(ROMOL_SPTR(mol));
   prods = rxn->runReactants(reacts);
@@ -1471,7 +1467,6 @@ void test17Issue1920627(){
   TEST_ASSERT(prods[0].size()==1);
   prod = prods[0][0];
   MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
-  prod->debugMol(std::cerr);
   MolOps::assignAtomChiralCodes(*prod);
   TEST_ASSERT(prod->getNumAtoms()==7);
   TEST_ASSERT(prod->getAtomWithIdx(3)->hasProp("_CIPCode"));
@@ -1494,7 +1489,6 @@ void test17Issue1920627(){
   prod = prods[0][0];
   MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
   MolOps::assignAtomChiralCodes(*prod);
-  prod->debugMol(std::cerr);
   TEST_ASSERT(prod->getNumAtoms()==7);
   TEST_ASSERT(prod->getAtomWithIdx(3)->hasProp("_CIPCode"));
   prod->getAtomWithIdx(3)->getProp("_CIPCode",cip);
@@ -1701,6 +1695,48 @@ void test18PropertyTransfer(){
 }
 
 
+
+void test19Issue2050085(){
+  ROMol *mol=0;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  std::vector<MOL_SPTR_VECT> prods;
+  ROMOL_SPTR prod;
+  std::string smi;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 2050085: recap failing on chiral molecules." << std::endl;
+
+  smi = "[N;!D1;+0](-!@[*:1])-!@[*:2]>>[*][*:1].[*:2][*]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==2);
+
+  reacts.clear();
+  smi = "C1CC1N[C@H](C)F";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  MolOps::assignAtomChiralCodes(*mol);
+
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==2);
+  TEST_ASSERT(prods[0].size()==2);
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][1].get())));
+
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==4);
+  prod = prods[0][1];
+  TEST_ASSERT(prod->getNumAtoms()==4);
+
+  
+  delete rxn;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1725,8 +1761,9 @@ int main() {
   test15Issue1882749();
   test16Exceptions();
   test17Issue1920627();
-#endif
   test18PropertyTransfer();
+#endif
+  test19Issue2050085();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

@@ -70,7 +70,7 @@ namespace RDKit {
         //   There's no particularly straightforward way of solving this problem of recognizing cases
         //   where we should give all matches and cases where we shouldn't; it's safer to just
         //   produce everything and let the client deal with uniquifying their results.
-        int matchCount=SubstructMatch(*(reactants[i]),*(reactantTemplates[i]),matchesHere,false,true,true);
+        int matchCount=SubstructMatch(*(reactants[i]),*(reactantTemplates[i]),matchesHere,false,true,false);
         if(!matchCount){
           // no point continuing if we don't match one of the reactants:
           res=false;
