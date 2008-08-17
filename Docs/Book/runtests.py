@@ -4,7 +4,7 @@
   them as doctests.
 
   In the ODF files the code samples are recognized as things in
-  classes CDT, CDT1, CDTX, C1, or CodeSample
+  styles CDT, CDT1, CDTX, C1, or CodeSample
 
   Modifications to standard doctest behavior :
   1) sample output lines that begin with "#" are ignored. This allows
