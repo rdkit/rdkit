@@ -102,7 +102,8 @@ void WorkWithRingInfo(){
   TEST_ASSERT(nRingsSize5==1);
   delete mol;
 
-  // count the number of aromatic atoms in 5-rings:
+  // count the number of atoms in 5-rings where all the atoms
+  // are aromatic:
   mol=SmilesToMol("C1CC2=C(C1)C1=C(NC3=C1C=CC=C3)C=C2");
   ringInfo = mol->getRingInfo();
   atomRings=ringInfo->atomRings();
@@ -149,7 +150,6 @@ void WorkWithRingInfo(){
   }
   TEST_ASSERT(nAromaticRings==1);
   delete mol;
-
 }
 
 void WorkWithSmarts(){
