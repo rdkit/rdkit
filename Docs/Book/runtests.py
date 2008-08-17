@@ -1,8 +1,33 @@
 #!/usr/bin/env python
-#
-#  Derived from the file 
-#  http://svn.python.org/view/sandbox/trunk/userref/test_examples.py
-#
+"""
+  Looks through all ODF and text files in a directory and tries to run
+  them as doctests.
+
+  In the ODF files the code samples are recognized as things in
+  classes CDT, CDT1, CDTX, C1, or CodeSample
+
+  Modifications to standard doctest behavior :
+  1) sample output lines that begin with "#" are ignored. This allows
+  output that doctest wouldn't normally "see" (i.e. stuff to stderr or
+  things sent to stdout by extension modules) to be shown in the
+  documentation without causing tests to fail
+
+  2) everything on sample output lines that follows "#<-" is
+  ignored. This allows clarifications in the sample output. NOTE: the
+  test script uses the NORMALIZE_WHITESPACE option, so this
+  modification will cause everything in the sample output following
+  the #<- to be ignored. Here's an example:
+    >>> dosomething()
+    3.5 7.4   #<- Everything after this point is ignored
+    this is all
+    ignored as
+    well
+    >>> 
+
+  Modified by Greg Landrum from the file :
+  http://svn.python.org/view/sandbox/trunk/userref/test_examples.py
+
+"""
 
 import os, os.path
 import doctest # Custom doctest that checks sys.displayhook
