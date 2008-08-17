@@ -100,12 +100,40 @@ void WorkWithRingInfo(){
     if(ringIt->size()==5) nRingsSize5++;
   }
   TEST_ASSERT(nRingsSize5==1);
+  delete mol;
+
+  // count the number of aromatic atoms in 5-rings:
+  mol=SmilesToMol("C1CC2=C(C1)C1=C(NC3=C1C=CC=C3)C=C2");
+  ringInfo = mol->getRingInfo();
+  atomRings=ringInfo->atomRings();
+
+  unsigned int nMatchingAtoms=0;
+  for(VECT_INT_VECT_CI ringIt=atomRings.begin();
+      ringIt!=atomRings.end();++ringIt){
+    if(ringIt->size()!=5){
+      continue;
+    }
+    bool isAromatic=true;
+    for(INT_VECT_CI atomIt=ringIt->begin();
+        atomIt!=ringIt->end();++atomIt){
+      if(!mol->getAtomWithIdx(*atomIt)->getIsAromatic()){
+        isAromatic=false;
+        break;
+      }
+    }
+    if(isAromatic){
+      nMatchingAtoms+=5;
+    }
+  }
+  TEST_ASSERT(nMatchingAtoms==5);
+  delete mol;
 
   // count the number of rings where all the bonds
   // are aromatic.
-  delete mol;
   mol=SmilesToMol("c1cccc2c1CCCC2");
-
+  ringInfo = mol->getRingInfo();
+  bondRings=ringInfo->bondRings();
+  
   unsigned int nAromaticRings=0;
   for(VECT_INT_VECT_CI ringIt=bondRings.begin();
       ringIt!=bondRings.end();++ringIt){
@@ -120,9 +148,8 @@ void WorkWithRingInfo(){
     if(isAromatic) nAromaticRings++;
   }
   TEST_ASSERT(nAromaticRings==1);
-
   delete mol;
-  
+
 }
 
 void WorkWithSmarts(){
@@ -162,10 +189,56 @@ void DepictDemo(){
   delete mol;
 }
 
+
+void CleanupMolecule(){
+  // build: C1CC1C(:O):O
+  RWMol *mol=new RWMol();
+
+  // add atoms and bonds:
+  mol->addAtom(new Atom(6)); // atom 0
+  mol->addAtom(new Atom(6)); // atom 1
+  mol->addAtom(new Atom(6)); // atom 2
+  mol->addAtom(new Atom(6)); // atom 3
+  mol->addAtom(new Atom(8)); // atom 4
+  mol->addAtom(new Atom(8)); // atom 5
+  mol->addBond(3,4,Bond::AROMATIC); // bond 0
+  mol->addBond(3,5,Bond::AROMATIC); // bond 1
+  mol->addBond(3,2,Bond::SINGLE); // bond 2
+  mol->addBond(2,1,Bond::SINGLE); // bond 3
+  mol->addBond(1,0,Bond::SINGLE); // bond 4
+  mol->addBond(0,2,Bond::SINGLE); // bond 5
+  
+  // instead of calling sanitize mol, which would generate an error,
+  // we'll perceive the rings, then take care of aromatic bonds
+  // that aren't in a ring, then sanitize:
+  MolOps::findSSSR(*mol);
+  for(ROMol::BondIterator bondIt=mol->beginBonds();
+      bondIt!=mol->endBonds();++bondIt){
+    if( ((*bondIt)->getIsAromatic() ||
+         (*bondIt)->getBondType()==Bond::AROMATIC)
+        && !mol->getRingInfo()->numBondRings((*bondIt)->getIdx()) ){
+      (*bondIt)->setIsAromatic(false);
+      // NOTE: this isn't really reasonable:
+      (*bondIt)->setBondType(Bond::SINGLE);      
+    }
+  }
+    
+  // now it's safe to sanitize:
+  RDKit::MolOps::sanitizeMol(*mol);
+
+  // Get the canonical SMILES, include stereochemistry:
+  std::string smiles;
+  smiles = MolToSmiles(*(static_cast<ROMol *>(mol)),true); 
+  BOOST_LOG(rdInfoLog)<<" fixed SMILES: " <<smiles<<std::endl;
+}
+
+
+
 int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
+  CleanupMolecule();
   BuildSimpleMolecule();
   WorkWithRingInfo();
   WorkWithSmarts();
