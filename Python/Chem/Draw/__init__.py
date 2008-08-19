@@ -6,6 +6,8 @@
 
 
 def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
+  if not mol:
+    raise ValueError,'Null molecule provided'
   import MolDrawing
   try:
     from aggdraw import Draw
@@ -45,4 +47,26 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
 def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True):
   img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds)
   img.save(filename)
+    
+tkRoot=None
+tkLabel=None
+tkPI=None
+def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
+            title='RDKit Molecule'):
+  global tkRoot,tkLabel,tkPI
+  import Tkinter
+  from PIL import ImageTk
+
+  img = MolToImage(mol,size,kekulize,wedgeBonds)
+
+  if not tkRoot:
+    tkRoot = Tkinter.Tk()
+    tkRoot.title(title)
+    tkPI = ImageTk.PhotoImage(img)
+    tkLabel = Tkinter.Label(tkRoot,image=tkPI)
+    tkLabel.place(x=0,y=0,width=img.size[0],height=img.size[1])
+  else:
+    tkPI.paste(img)
+  tkRoot.geometry('%dx%d'%(img.size))
+
     
