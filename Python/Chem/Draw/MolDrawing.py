@@ -54,7 +54,7 @@ class MolDrawing(object):
   canvas = None
   canvasSize=None
 
-  wedgeDashedBonds=False
+  wedgeDashedBonds=True
 
   def __init__(self,canvas=None):
     self.canvas = canvas
@@ -166,7 +166,8 @@ class MolDrawing(object):
     
   def _drawBond(self,canvas,bond,atom,nbr,pos,nbrPos,conf,
                 width=bondLineWidth,color=defaultColor,color2=None):
-    if bond.GetBondType() == Chem.BondType.SINGLE:
+    bType=bond.GetBondType()
+    if bType == Chem.BondType.SINGLE:
       bDir = bond.GetBondDir()
       if bDir in (Chem.BondDir.BEGINWEDGE,Chem.BondDir.BEGINDASH):
         # if the bond is "backwards", change the drawing direction:
@@ -182,7 +183,7 @@ class MolDrawing(object):
                                dash=self.dash)
       else:
         addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
-    elif bond.GetBondType() == Chem.BondType.DOUBLE:
+    elif bType == Chem.BondType.DOUBLE:
       if bond.IsInRing() or (atom.GetDegree()!=1 and bond.GetOtherAtom(atom).GetDegree()!=1):
         addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
         fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
@@ -194,13 +195,12 @@ class MolDrawing(object):
         fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf,dir=-.5,
                                       lenFrac=1.0)
         addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
-    elif bond.GetBondType() == Chem.BondType.AROMATIC:
+    elif bType == Chem.BondType.AROMATIC:
       addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
       addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2,
                     dash=self.dash)
-      #DASH
-    elif bond.GetBondType() == Chem.BondType.TRIPLE:
+    elif bType == Chem.BondType.TRIPLE:
       addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
       addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
@@ -211,21 +211,20 @@ class MolDrawing(object):
     canvasSize = self.canvasSize
     xAccum = 0
     yAccum = 0
-    nAts = 0
     minX = 1e8
     minY = 1e8
     maxX = -1e8
     maxY = -1e8
 
-    for atom in mol.GetAtoms():
-      pos = conf.GetAtomPosition(atom.GetIdx())
+    nAts = mol.GetNumAtoms()
+    for i in range(nAts):
+      pos = conf.GetAtomPosition(i)
       xAccum += pos[0]
       yAccum += pos[1]
       minX = min(minX,pos[0])
       minY = min(minY,pos[1])
       maxX = max(maxX,pos[0])
       maxY = max(maxY,pos[1])
-      nAts += 1
 
     dx = abs(maxX-minX)
     dy = abs(maxY-minY)
@@ -238,9 +237,6 @@ class MolDrawing(object):
       molTrans = -(minX+(maxX-minX)/2),-(minY+(maxY-minY)/2)
     self.dotsPerAngstrom=30.0
     self.molTrans = molTrans
-    self.drawingTrans=(0,0)
-    tMin = self.transformPoint((minX,minY))
-    tMax = self.transformPoint((maxX,maxY))
 
     if xSize>=.95*canvasSize[0]:
       scale = .9*canvasSize[0]/xSize
@@ -301,7 +297,6 @@ class MolDrawing(object):
 
     if not mol.HasProp('_drawingBondsWedged'):
       Chem.WedgeMolBonds(mol,conf)
-      mol.SetProp('_drawingBondsWedged','set',True)
       
     self.atomPs[mol] = {}
     self.activeMol = mol
@@ -337,7 +332,7 @@ class MolDrawing(object):
               
           # make sure we draw from the beginning to the end
           # (this was Issue400)
-          if atom.GetIdx()==bond.GetBeginAtomIdx():
+          if idx==bond.GetBeginAtomIdx():
             self._drawBond(canvas,bond,atom,nbr,pos,nbrPos,conf,
                            color=color,width=width,color2=color2)
           else:
@@ -348,41 +343,41 @@ class MolDrawing(object):
         nbrSum[0] += nbrPos[0]-pos[0]
         nbrSum[1] += nbrPos[1]-pos[1]
   
-          
-      base = atom.GetSymbol()
-      nHs = atom.GetTotalNumHs()
-      if nHs>0:
-        if nHs>1:
-          hs='H%d'%nHs
-        else:
-          hs ='H'
-      else:
-        hs = ''
-      chg = atom.GetFormalCharge()
-      if chg!=0:
-        if chg==1:
-          chg = '+'
-        elif chg==-1:
-          chg = '-'
-        elif chg>1:
-          chg = '+%d'%chg
-        elif chg<-1:
-          chg = '-%d'%chg
-      else:
-        chg = ''
-      if nbrSum[0]<=0:
-        symbol = '%s%s%s'%(base,hs,chg)
-      else:
-        symbol = '%s%s%s'%(chg,hs,base)
 
-      #symbol = str(atom.GetIdx()+1)
       labelIt= not self.noCarbonSymbols or \
                atom.GetAtomicNum()!=6 or \
                atom.GetFormalCharge()!=0 or \
                self.includeAtomNumbers 
-      if self.includeAtomNumbers:
-        symbol = str(atom.GetIdx())
       if labelIt:
+        if self.includeAtomNumbers:
+          symbol = str(atom.GetIdx())
+        else:
+          base = atom.GetSymbol()
+          nHs = atom.GetTotalNumHs()
+          if nHs>0:
+            if nHs>1:
+              hs='H%d'%nHs
+            else:
+              hs ='H'
+          else:
+            hs = ''
+          chg = atom.GetFormalCharge()
+          if chg!=0:
+            if chg==1:
+              chg = '+'
+            elif chg==-1:
+              chg = '-'
+            elif chg>1:
+              chg = '+%d'%chg
+            elif chg<-1:
+              chg = '-%d'%chg
+          else:
+            chg = ''
+          if nbrSum[0]<=0:
+            symbol = '%s%s%s'%(base,hs,chg)
+          else:
+            symbol = '%s%s%s'%(chg,hs,base)
+
         color = elemDict.get(atom.GetAtomicNum(),(0,0,0))
         self._drawLabel(canvas,symbol,pos,font,color=color,
                         highlightIt=(highlightAtoms and idx in highlightAtoms))
