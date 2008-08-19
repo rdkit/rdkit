@@ -43,10 +43,8 @@ namespace RDKit{
     } catch (...) {
       newM=0;
     }
+    return static_cast<ROMol *>(newM);
     if(!newM) return 0;
-    ROMol *res =new ROMol(*newM);
-    delete newM; 
-    return res;
   }
 
   ROMol *MolFromSmarts(const char *smarts,bool mergeHs=false){
@@ -56,10 +54,7 @@ namespace RDKit{
     } catch (...) {
       newM=0;
     }
-    if(!newM) return 0;
-    ROMol *res =new ROMol(*newM);
-    delete newM; 
-    return res;
+    return static_cast<ROMol *>(newM);
   }
    
   ROMol *MolFromTPLFile(const char *filename, bool sanitize=true,
@@ -67,13 +62,13 @@ namespace RDKit{
     RWMol *newM;
     try {
       newM = TPLFileToMol(filename,sanitize,skipFirstConf);
+    } catch (RDKit::BadFileException &e) {
+      PyErr_SetString(PyExc_IOError,e.message());
+      throw python::error_already_set();
     } catch (...) {
       newM=0;
     }
-    if(!newM) return 0;
-    ROMol *res =new ROMol(*newM);
-    delete newM; 
-    return res;
+    return static_cast<ROMol *>(newM);
   }
 
   ROMol *MolFromTPLBlock(std::string tplBlock, bool sanitize=true,
@@ -86,10 +81,7 @@ namespace RDKit{
     } catch (...) {
       newM=0;
     }
-    if(!newM) return 0;
-    ROMol *res =new ROMol(*newM);
-    delete newM; 
-    return res;
+    return static_cast<ROMol *>(newM);
   }
 
   ROMol *MolFromMolFile(const char *molFilename, bool sanitize=true, bool removeHs=true) {
@@ -99,11 +91,10 @@ namespace RDKit{
     } catch (RDKit::BadFileException &e) {
       PyErr_SetString(PyExc_IOError,e.message());
       throw python::error_already_set();
+    } catch (...) {
+      newM=0;
     }
-    if(!newM) return 0;
-    ROMol *res =new ROMol(*newM);
-    delete newM; 
-    return res;
+    return static_cast<ROMol *>(newM);
   }
 
   ROMol *MolFromMolBlock(std::string molBlock, bool sanitize=true, bool removeHs=true) {
@@ -115,10 +106,7 @@ namespace RDKit{
     } catch (...) {
       newM=0;
     }
-    if(!newM) return 0;
-    ROMol *res =new ROMol(*newM);
-    delete newM; 
-    return res;
+    return static_cast<ROMol *>(newM);
   }
 
 }

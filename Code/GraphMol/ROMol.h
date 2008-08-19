@@ -295,6 +295,7 @@ namespace RDKit{
     //@{
 
     //! returns a pointer to our RingInfo structure
+    //! <b>Note:</b> the client should not delete this.
     RingInfo *getRingInfo() const { return dp_ringInfo; };
 
     //! provides access to all neighbors around an Atom

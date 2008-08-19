@@ -4,9 +4,9 @@ By: Greg Landrum
 
 A. Required Python and the like:
    1) Python 2.3 or later 
-   2) Numeric Python (numpy.sourceforge.net)
-      binary versions for windows can be downloaded here:
-      http://biopython.org/DIST/Numeric-24.2.win32-py2.5.exe
+   2) NumPy (http://numpy.scipy.org/)
+      binary versions can be downloaded here:
+      http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103
    3) [not required with Python2.5 and later] A database wrapper, one of:
       - pyPgSQL (http://pypgsql.sourceforge.net/) 
       - pysqlite2 (http://www.initd.org/tracker/pysqlite/wiki/pysqlite)

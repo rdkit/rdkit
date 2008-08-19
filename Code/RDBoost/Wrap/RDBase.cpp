@@ -1,11 +1,13 @@
 // $Id$
 //
-// Copyright (c) 2004-2006 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2004-2008 greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #include <boost/python.hpp>
 #define PY_ARRAY_UNIQUE_SYMBOL rdbase_array_API
+#include <iostream>
+#include <fstream>
 #include <RDBoost/Wrap.h>
 #include "numpy/oldnumeric.h"
 

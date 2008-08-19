@@ -76,7 +76,7 @@ namespace Gasteiger {
 namespace RDKit {
   /*! \brief compute the gaseiger partial charges and return a new molecule with the charges set
    *
-   * Ref : J.Gasteiger, M. Marseli, "Iterative Equalization of Oribital Electronegatiity
+   * Ref : J.Gasteiger, M. Marsili, "Iterative Equalization of Oribital Electronegatiity
    *  A Rapid Access to Atomic Charges", Tetrahedron Vol 36 p3219 1980
    */
   void computeGasteigerCharges(const ROMol *mol, int nIter, bool throwOnParamFailure) {
