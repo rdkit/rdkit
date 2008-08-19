@@ -33,11 +33,11 @@ for mod in mods:
 
   for name in tmp:
     if name[0] != '_' and name[-1] != '_' and name not in others:
+      # filter out python reference implementations:
+      if name[:2]=='py' and name[2:] in tmp:
+        continue
       thing = getattr(mod,name)
       if hasattr(thing,'__call__'):
-      #if type(thing)==types.FunctionType:
-        # we need to store the name too, just in case
-        #  the function is a lambda
         descList.append((name,thing))
         descDict[name] = thing
 

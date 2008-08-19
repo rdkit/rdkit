@@ -168,7 +168,10 @@ def RecapDecompose(mol,allNodes=None,minFragmentSize=0):
     while activePool:
       nSmi = activePool.keys()[0]
       node = activePool.pop(nSmi)
-      ps = reaction.RunReactants((node.mol,))
+      if node.mol:
+        ps = reaction.RunReactants((node.mol,))
+      else:
+        ps = None
       if not ps:
         #print '  !',nSmi
 	localRes[nSmi]=node
@@ -198,12 +201,18 @@ def RecapDecompose(mol,allNodes=None,minFragmentSize=0):
             rxnApplied=True
   	    for nats,prod in prodSeq:
 	      pSmi = prod.pSmi
-	      pNode = allNodes.get(pSmi,RecapHierarchyNode(prod))
-              pNode.smiles=pSmi
-              pNode.parents[nSmi]=weakref.proxy(node)
-	      node.children[pSmi]=pNode
-	      activePool[pSmi] = pNode
-	      allNodes[pSmi]=pNode
+              if not allNodes.has_key(pSmi):
+                pNode = RecapHierarchyNode(prod)
+                pNode.smiles=pSmi
+                pNode.parents[nSmi]=weakref.proxy(node)
+                node.children[pSmi]=pNode
+                activePool[pSmi] = pNode
+                allNodes[pSmi]=pNode
+              else:
+                pNode=allNodes[pSmi]
+                pNode.parents[nSmi]=weakref.proxy(node)
+                node.children[pSmi]=pNode
+                localRes[pSmi]=pNode
         if not rxnApplied:
           localRes[nSmi]=node
     activePool=localRes

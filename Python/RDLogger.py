@@ -43,5 +43,3 @@ class logger(object):
       EnableLog(_levels[i])
     for i in range(0,val):
       DisableLog(_levels[i])
-      
-      

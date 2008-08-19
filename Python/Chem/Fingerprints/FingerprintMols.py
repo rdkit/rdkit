@@ -53,13 +53,13 @@ def FoldFingerprintToTargetDensity(fp,**fpArgs):
   return fp
   
 def FingerprintMol(mol,
-                   fingerprinter=Chem.DaylightFingerprint,
+                   fingerprinter=Chem.RDKFingerprint,
                    **fpArgs):
   if not fpArgs:
     details = FingerprinterDetails()
     fpArgs = details.__dict__
     
-  if fingerprinter != Chem.DaylightFingerprint:
+  if fingerprinter != Chem.RDKFingerprint:
     fp = fingerprinter(mol,**fpArgs)
     fp = FoldFingerprintToTargetDensity(fp,**fpArgs)
   else:
@@ -71,7 +71,7 @@ def FingerprintMol(mol,
 
 
 def FingerprintsFromSmiles(dataSource,idCol,smiCol,
-                           fingerprinter=Chem.DaylightFingerprint,
+                           fingerprinter=Chem.RDKFingerprint,
                            reportFreq=10,maxMols=-1,
                            **fpArgs):
   """ fpArgs are passed as keyword arguments to the fingerprinter
@@ -100,7 +100,7 @@ def FingerprintsFromSmiles(dataSource,idCol,smiCol,
   return res
 
 def FingerprintsFromMols(mols,
-                         fingerprinter=Chem.DaylightFingerprint,
+                         fingerprinter=Chem.RDKFingerprint,
                          reportFreq=10,maxMols=-1,
                          **fpArgs):
   """ fpArgs are passed as keyword arguments to the fingerprinter
@@ -124,7 +124,7 @@ def FingerprintsFromMols(mols,
   return res
 
 def FingerprintsFromPickles(dataSource,idCol,pklCol,
-                            fingerprinter=Chem.DaylightFingerprint,
+                            fingerprinter=Chem.RDKFingerprint,
                             reportFreq=10,maxMols=-1,
                             **fpArgs):
   """ fpArgs are passed as keyword arguments to the fingerprinter
@@ -288,7 +288,7 @@ class FingerprinterDetails(object):
     self._clusterInit()
 
   def _fingerprinterInit(self):
-    self.fingerprinter = Chem.DaylightFingerprint
+    self.fingerprinter = Chem.RDKFingerprint
     self.fpColName="AutoFragmentFP"
     self.idName=''
     self.dbName=''
