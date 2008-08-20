@@ -1010,7 +1010,6 @@ namespace RDKit{
         const Conformer &conf = res->getConformer();
         DetectAtomStereoChemistry(*res, &conf);
       }
-
       try {
         if(removeHs){
           ROMol *tmp=MolOps::removeHs(*res,false,false);
@@ -1029,12 +1028,15 @@ namespace RDKit{
         if(res) delete res;
         throw se;
       }
+      MolOps::assignStereochemistry(*res,true);
     }
 
     if(res->hasProp("_NeedsQueryScan")){
       res->clearProp("_NeedsQueryScan");
       CompleteMolQueries(res);
     }
+
+
     return res;
   };
   

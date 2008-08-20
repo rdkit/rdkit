@@ -83,8 +83,8 @@ RWMol *SmilesToMol(std::string smi,int debugParse,bool sanitize){
     ROMol *tmp = MolOps::removeHs(*res,false,false);
     delete res;
     res = static_cast<RWMol *>(tmp);
-    // figure out bond stereocodes (i.e. E vs Z):
-    MolOps::assignBondStereoCodes(*res,true);
+    // figure out stereochemistry:
+    MolOps::assignStereochemistry(*res,true);
   }
 
   return res;

@@ -550,14 +550,17 @@ void testSmiles1(){
 
 
 void testChiralityCleanup(){
-  ROMol *mol;
+  ROMol *mol,*mol2;
   std::string smi,cip;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "chirality cleanup" << std::endl;
 
   smi = "F[C@H+](Cl)(Br)I";
-  mol = SmilesToMol(smi);
+  mol = SmilesToMol(smi,false,false);
+  mol2 = MolOps::removeHs(*mol,false,false);
+  delete mol;
+  mol=mol2;
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignAtomChiralCodes(*mol,true);
   TEST_ASSERT(!mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
@@ -565,7 +568,10 @@ void testChiralityCleanup(){
   delete mol;
 
   smi = "F[C@+](C)(Cl)(Br)I";
-  mol = SmilesToMol(smi);
+  mol = SmilesToMol(smi,false,false);
+  mol2 = MolOps::removeHs(*mol,false,false);
+  delete mol;
+  mol=mol2;
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignAtomChiralCodes(*mol,true);
   TEST_ASSERT(!mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
@@ -591,7 +597,7 @@ void testChiralityFrom3D(){
   TEST_ASSERT(m->getNumAtoms()==5);
 
   MolOps::assignChiralTypesFrom3D(*m);
-  MolOps::assignAtomChiralCodes(*m,true);
+  MolOps::assignStereochemistry(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
@@ -605,7 +611,7 @@ void testChiralityFrom3D(){
   TEST_ASSERT(m->getNumAtoms()==5);
 
   MolOps::assignChiralTypesFrom3D(*m);
-  MolOps::assignAtomChiralCodes(*m,true);
+  MolOps::assignStereochemistry(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
@@ -619,7 +625,7 @@ void testChiralityFrom3D(){
   TEST_ASSERT(m->getNumAtoms()==4);
 
   MolOps::assignChiralTypesFrom3D(*m);
-  MolOps::assignAtomChiralCodes(*m,true);
+  MolOps::assignStereochemistry(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
   TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
@@ -633,7 +639,7 @@ void testChiralityFrom3D(){
   TEST_ASSERT(m->getNumAtoms()==4);
 
   MolOps::assignChiralTypesFrom3D(*m);
-  MolOps::assignAtomChiralCodes(*m,true);
+  MolOps::assignStereochemistry(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
   TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
@@ -647,14 +653,14 @@ void testChiralityFrom3D(){
 
   // this molecule starts out with incorrect stereochemistry (e.g. the bond wedging
   // does not match the 3D structure. Start by verifying that the start position is bad:
-  MolOps::assignAtomChiralCodes(*m,true);
+  MolOps::assignStereochemistry(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
   // now assign the stereochem based on the 3D structure and check that we get it
   // right:
   MolOps::assignChiralTypesFrom3D(*m,-1,true);
-  MolOps::assignAtomChiralCodes(*m,true,true);
+  MolOps::assignStereochemistry(*m,true,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -664,16 +670,351 @@ void testChiralityFrom3D(){
 }
 
 
+void testIterativeChirality(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "iterative chirality (sf.net issue 1931470): " << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+
+  // unless otherwise noted, the R/S and Z/E assignments here 
+  // match Marvin and ChemDraw.
+  
+  {  // atom-chirality -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi1a.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+ 
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    delete m;
+  }
+
+  { // atom-chirality -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi1b.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    delete m;
+  }
+
+  { // atom-chirality -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi1c.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+
+    delete m;
+  }
+
+  { // atom-chirality -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi1d.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+
+    delete m;
+  }
+
+  { // atom-chirality -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi1e.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    TEST_ASSERT(!m->getAtomWithIdx(2)->hasProp("_CIPCode"));
+    TEST_ASSERT(!m->getAtomWithIdx(4)->hasProp("_CIPCode"));
+
+    delete m;
+  }
+
+  { // bond-stereochem -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi2a.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREOZ);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  // this value is from ChemDraw, Marvin doesn't tag it.
+
+    delete m;
+  }
+
+  {  // bond-stereochem -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi2b.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREOZ);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");  // this value is from ChemDraw, Marvin doesn't tag it.
+
+    delete m;
+  }
+
+  {  // bond-stereochem -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi2c.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREOE);
+
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    delete m;
+  }
+
+  {  // bond-stereochem -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi2d.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREONONE);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");  // this value is from ChemDraw, Marvin doesn't tag it.
+
+    delete m;
+  }
+
+  {  // bond-stereochem -> atom-chirality
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi2e.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREONONE);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  // this value is from ChemDraw, Marvin doesn't tag it.
+
+    delete m;
+  }
+
+  {  // atom chirality -> bond stereochemistry
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi3a.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");  
+
+    TEST_ASSERT(m->getAtomWithIdx(7)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(7)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+
+
+    TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREOZ); // this value is from ChemDraw, Marvin doesn't tag it.
+
+    delete m;
+  }
+
+  {  // atom chirality -> bond stereochemistry
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi3b.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+
+    TEST_ASSERT(m->getAtomWithIdx(7)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(7)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");  
+
+
+    TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREOE); // this value is from ChemDraw, Marvin doesn't tag it.
+
+    delete m;
+  }
+
+  {  // atom chirality -> bond stereochemistry
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi3c.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==11);
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");  
+
+    TEST_ASSERT(m->getAtomWithIdx(7)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(7)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");  
+
+
+    TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREONONE);
+    delete m;
+  }
+
+
+  {  // bond stereochemistry -> bond stereochemistry
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi4a.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,7)->getStereo()==Bond::STEREOZ);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getStereo()==Bond::STEREOE);
+    
+    delete m;
+  }
+
+  {  // bond stereochemistry -> bond stereochemistry
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi4b.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,7)->getStereo()==Bond::STEREOE);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getStereo()==Bond::STEREOZ);
+    
+    delete m;
+  }
+
+  {  // bond stereochemistry -> bond stereochemistry
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi4c.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,7)->getStereo()==Bond::STEREOE);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getStereo()==Bond::STEREONONE);
+    
+    delete m;
+  }
+
+  {  // bond stereochemistry -> bond stereochemistry
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/iChi4d.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,7)->getStereo()==Bond::STEREOZ);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getStereo()==Bond::STEREONONE);
+    
+    delete m;
+  }
+
+}
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
+#if 0
   testSmiles1();
   testMol1();
   testMol2();
   testRoundTrip();
   testChiralityCleanup();
   testChiralityFrom3D();
+#endif
+  testIterativeChirality();
   
   return 0;
 }

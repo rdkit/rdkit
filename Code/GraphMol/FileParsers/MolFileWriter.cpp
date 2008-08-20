@@ -199,8 +199,9 @@ namespace RDKit{
     RWMol &trwmol = static_cast<RWMol &>(tromol);
     MolOps::Kekulize(trwmol);
 
+#if 0
     if(includeStereo){
-      // assign "any" status to any stereo bond that are not 
+      // assign "any" status to any stereo bonds that are not 
       // marked with "E" or "Z" code - these bonds need to be explictly written
       // out to the mol file
       MolOps::findPotentialStereoBonds(trwmol);
@@ -208,6 +209,7 @@ namespace RDKit{
       // single bonds
       MolOps::assignBondStereoCodes(trwmol);
     }
+#endif
     const RWMol &tmol = const_cast<RWMol &>(trwmol);
 
     std::string res;

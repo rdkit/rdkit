@@ -205,146 +205,106 @@ namespace RankAtoms{
     return numClasses;
   }
 
+  // --------------------------------------------------
+  //
+  // Calculates invariants for the atoms of a molecule
+  //
+  // NOTE: if the atom has not had chirality info pre-calculated, it doesn't
+  // much matter what value includeChirality has!
+  // --------------------------------------------------
+  void buildAtomInvariants(const ROMol &mol,INVAR_VECT &res,
+                           bool includeChirality){
+    PRECONDITION(res.size()>=mol.getNumAtoms(),"res vect too small");
+    unsigned int atsSoFar=0;
+
+    for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
+      Atom const *atom = *atIt;
+      // FIX: this is just for debugging purposes:
+      unsigned long invariant = atom->getIdx();
+      int nHs = atom->getTotalNumHs() % 8;
+      int chg = abs(atom->getFormalCharge()) % 8;
+      int chgSign = atom->getFormalCharge() > 0;
+      int num =    atom->getAtomicNum() % 128;
+      int nConns = atom->getDegree() % 8;
+      int deltaMass = static_cast<int>(atom->getMass() -
+                                       PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
+      deltaMass += 8;
+      if(deltaMass < 0) deltaMass = 0;
+      else deltaMass = deltaMass % 16;
+
+      
+      // figure out the minimum-sized ring we're involved in
+      int inRing = 0;
+      if(atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx())){
+        RingInfo *ringInfo=atom->getOwningMol().getRingInfo();
+        inRing=3;
+        while(inRing<256){
+          if(ringInfo->isAtomInRingOfSize(atom->getIdx(),inRing)){
+            break;
+          } else {
+            inRing++;
+          }
+        }
+      }
+      inRing = inRing % 16;
+
+      invariant = 0;
+      invariant = (invariant << 3) | nConns;
+      // we used to include the number of explicitHs, but that
+      // didn't make much sense. TotalValence is another possible
+      // discriminator here, but the information is essentially
+      // redundant with nCons, num, and nHs.
+      // invariant = (invariant << 4) | totalVal; 
+      invariant = (invariant << 7) | num;  
+      invariant = (invariant << 4) | deltaMass;
+      invariant = (invariant << 3) | nHs;
+      invariant = (invariant << 4) | inRing;
+      invariant = (invariant << 3) | chg;
+      invariant = (invariant << 1) | chgSign;
+      if(includeChirality ){
+        int isR=0;
+        if( atom->hasProp("_CIPCode")){
+          std::string cipCode;
+          atom->getProp("_CIPCode",cipCode);
+          if(cipCode=="R"){
+            isR=1;
+          } else {
+            isR=2;
+          }
+        }
+        invariant = (invariant << 2) | isR;
+      }
+
+      // now deal with cis/trans - this is meant to address issue 174
+      // loop over the bonds on this atom and check if we have a double bond with
+      // a chiral code marking 
+      if (includeChirality) {
+        ROMol::OBOND_ITER_PAIR atomBonds = atom->getOwningMol().getAtomBonds(atom);
+        ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
+        int isT=0;
+        while (atomBonds.first != atomBonds.second){
+          Bond *tBond = pMap[*(atomBonds.first)];
+          if( (tBond->getBondType() == Bond::DOUBLE) &&
+              (tBond->getStereo()>Bond::STEREOANY )) {
+            if (tBond->getStereo()==Bond::STEREOE) {
+              isT = 1;
+            } else if(tBond->getStereo()==Bond::STEREOZ) {
+              isT=2;
+            }
+            break;
+          }
+          atomBonds.first++;
+        }
+        invariant = (invariant << 2) | isT;
+      }
+      res[atsSoFar++] = invariant;
+    }
+  }
+
 }// end of RankAtoms namespace
 
 namespace RDKit{
-
   namespace MolOps {
-    // --------------------------------------------------
-    //
-    // Calculates chiral invariants for the atoms of a molecule
-    //  These are based on Labute's proposal in:
-    //  "An Efficient Algorithm for the Determination of Topological
-    //   RS Chirality" Journal of the CCG (1996)
-    //
-    // --------------------------------------------------
-    void buildChiralAtomInvariants(const ROMol &mol,INVAR_VECT &res){
-      PRECONDITION(res.size()>=mol.getNumAtoms(),"res vect too small");
-      unsigned int atsSoFar=0;
-      for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
-        Atom const *atom = *atIt;
-        unsigned long invariant = 0;
-        int num = atom->getAtomicNum() % 128;
-        int nMult = (atom->getExplicitValence() -
-                     atom->getNumExplicitHs() -
-                     atom->getDegree()) % 8;
-        // get an int with the deviation in the mass from the default:
-        int mass = static_cast<int>(atom->getMass() -
-                                    PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-        mass += 8;
-        if(mass < 0) mass = 0;
-        else mass = mass % 16;
-
-        int nHs = atom->getTotalNumHs() % 8;
-        int deg = atom->getDegree() % 8;
-        // we need to deviate a little bit from the Labute definition because
-        // of the possibility of hydrogens:
-        invariant = num; // 7 bits here
-        invariant = (invariant << 4) | mass;
-        invariant = (invariant << 3) | nMult;
-        invariant = (invariant << 3) | deg;
-        invariant = (invariant << 3) | nHs;
-        //BOOST_LOG(rdDebugLog)<< "\t\tAt: " << atom->getIdx() << ": " << invariant << std::endl;
-        res[atsSoFar++] = invariant;
-      }
-    }
-
-
-    // --------------------------------------------------
-    //
-    // Calculates invariants for the atoms of a molecule
-    //
-    // NOTE: if the atom has not had chirality info pre-calculated, it doesn't
-    // much matter what value includeChirality has!
-    // --------------------------------------------------
-    void buildAtomInvariants(const ROMol &mol,INVAR_VECT &res,
-                                     bool includeChirality){
-      PRECONDITION(res.size()>=mol.getNumAtoms(),"res vect too small");
-      unsigned int atsSoFar=0;
-
-      for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
-        Atom const *atom = *atIt;
-        // FIX: this is just for debugging purposes:
-        unsigned long invariant = atom->getIdx();
-        int nHs = atom->getTotalNumHs() % 8;
-        int chg = abs(atom->getFormalCharge()) % 8;
-        int chgSign = atom->getFormalCharge() > 0;
-        int num =    atom->getAtomicNum() % 128;
-        int nConns = atom->getDegree() % 8;
-        int deltaMass = static_cast<int>(atom->getMass() -
-                                         PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-        deltaMass += 8;
-        if(deltaMass < 0) deltaMass = 0;
-        else deltaMass = deltaMass % 16;
-
-      
-        // figure out the minimum-sized ring we're involved in
-        int inRing = 0;
-        if(atom->getOwningMol().getRingInfo()->numAtomRings(atom->getIdx())){
-          RingInfo *ringInfo=atom->getOwningMol().getRingInfo();
-          inRing=3;
-          while(inRing<256){
-            if(ringInfo->isAtomInRingOfSize(atom->getIdx(),inRing)){
-              break;
-            } else {
-              inRing++;
-            }
-          }
-        }
-        inRing = inRing % 16;
-
-        invariant = 0;
-        invariant = (invariant << 3) | nConns;
-        // we used to include the number of explicitHs, but that
-        // didn't make much sense. TotalValence is another possible
-        // discriminator here, but the information is essentially
-        // redundant with nCons, num, and nHs.
-        // invariant = (invariant << 4) | totalVal; 
-        invariant = (invariant << 7) | num;  
-        invariant = (invariant << 4) | deltaMass;
-        invariant = (invariant << 3) | nHs;
-        invariant = (invariant << 4) | inRing;
-        invariant = (invariant << 3) | chg;
-        invariant = (invariant << 1) | chgSign;
-        if(includeChirality ){
-          int isR=0;
-          if( atom->hasProp("_CIPCode")){
-            std::string cipCode;
-            atom->getProp("_CIPCode",cipCode);
-            if(cipCode=="R"){
-              isR=1;
-            } else {
-              isR=2;
-            }
-          }
-          invariant = (invariant << 2) | isR;
-        }
-
-        // now deal with cis/trans - this is meant to address issue 174
-        // loop over the bonds on this atom and check if we have a double bond with
-        // a chiral code marking 
-        if (includeChirality) {
-          ROMol::OBOND_ITER_PAIR atomBonds = atom->getOwningMol().getAtomBonds(atom);
-          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
-          int isT=0;
-          while (atomBonds.first != atomBonds.second){
-            Bond *tBond = pMap[*(atomBonds.first)];
-            if( (tBond->getBondType() == Bond::DOUBLE) &&
-                (tBond->getStereo()>Bond::STEREOANY )) {
-              if (tBond->getStereo()==Bond::STEREOE) {
-                isT = 1;
-              } else if(tBond->getStereo()==Bond::STEREOZ) {
-                isT=2;
-              }
-              break;
-            }
-            atomBonds.first++;
-          }
-          invariant = (invariant << 2) | isT;
-        }
-        res[atsSoFar++] = invariant;
-      }
-    }
     // --------------------------------------------------
     //
     //  Daylight canonicalization, based up on algorithm described in
@@ -352,14 +312,11 @@ namespace RDKit{
     //  When appropriate, specific references are made to the algorithm
     //  description in that paper.  Steps refer to Table III of the paper
     //
-    // NOTE: if the atom has not had chirality info pre-calculated, it doesn't
-    // much matter what value includeChirality has!
     // --------------------------------------------------
     void rankAtoms(const ROMol &mol,INT_VECT &ranks,
-                           AtomInvariantType invariantType,
-                           bool breakTies,
-                           VECT_INT_VECT *rankHistory,
-                           bool includeChirality){
+                   bool breakTies,
+                   VECT_INT_VECT *rankHistory){
+
       unsigned int i;
       unsigned int nAtoms = mol.getNumAtoms();
       PRECONDITION(ranks.size()>=nAtoms,"");
@@ -378,14 +335,7 @@ namespace RDKit{
         // ----------------------
         INVAR_VECT invariants;
         invariants.resize(nAtoms);
-        switch(invariantType){
-        case ComprehensiveInvariants:
-          MolOps::buildAtomInvariants(mol,invariants,includeChirality);
-          break;
-        case ChiralSearchInvariants:
-          MolOps::buildChiralAtomInvariants(mol,invariants);
-          break;
-        }
+        RankAtoms::buildAtomInvariants(mol,invariants,true);
       
 #ifdef VERBOSE_CANON
         BOOST_LOG(rdDebugLog)<< "invariants:" << std::endl;

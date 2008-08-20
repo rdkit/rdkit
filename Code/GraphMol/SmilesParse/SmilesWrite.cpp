@@ -375,12 +375,10 @@ namespace RDKit{
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
-      MolOps::assignAtomChiralCodes(mol,true);
-      MolOps::rankAtoms(mol,ranks,ComprehensiveInvariants,
-                        true,0,true);
-    } else {
-      MolOps::rankAtoms(mol,ranks);
+      MolOps::assignStereochemistry(mol,true);
     }
+    MolOps::rankAtoms(mol,ranks);
+
 #ifdef VERBOSE_CANON
     for(unsigned int tmpI=0;tmpI<ranks.size();tmpI++){
       std::cout << tmpI << " " << ranks[tmpI] << " " << *(mol.getAtomWithIdx(tmpI)) << std::endl;

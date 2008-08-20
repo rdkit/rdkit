@@ -129,12 +129,6 @@ namespace RDKit{
     return frags;
   }
 
-  INT_VECT AssignAtomCIPRanks(const ROMol &mol){
-    INT_VECT res;
-    MolOps::assignAtomCIPRanks(mol,res);
-    return res;
-  }
-  
   struct molops_wrapper {
     static void wrap() {
       std::string docString;
@@ -510,20 +504,6 @@ namespace RDKit{
     - mol: the molecule to use\n\
 \n";
       python::def("GetFormalCharge", &MolOps::getFormalCharge,docString.c_str());
-
-      // ------------------------------------------------------------------------
-      docString="Assigns CIP ranks to an molecule's atoms\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-  RETURNS: a list of the ranks indexed by atom id \n\
-\n\
-\n";
-      python::def("AssignAtomCIPRanks", AssignAtomCIPRanks,
-                  (python::arg("mol")),
-                  docString.c_str());
 
 
       // ------------------------------------------------------------------------

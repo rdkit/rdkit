@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -9,6 +9,7 @@
 #include <RDGeneral/RDLog.h>
 #include "MolFileStereochem.h"
 #include <Geometry/point.h>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
   typedef std::list<double> DOUBLE_LIST;
@@ -240,39 +241,6 @@ namespace RDKit {
     return res;
   }
       
-  void ComputeBondStereoChemistry(ROMol &mol, Bond *dblBond,
-                                  const Conformer *conf) {
-    // ok this function got a lot easier than before 
-    //   - now we do not have to set the directions on the single
-    //     bonds surrounding a double bond
-    //   - we simply have to figure the if the high ranking neighbor
-    //     of the double bond are in cis or trans position and set 
-    //     the BondStereo on the Bond
-    // we want to deal only with double bonds:
-    PRECONDITION(dblBond, "");
-    PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "");
-    PRECONDITION(conf,"no conformer");
-
-    const INT_VECT &ctNbrs = dblBond->getStereoAtoms();
-    if (ctNbrs.size() >= 2) {
-      int cnbr1 = ctNbrs[0];
-      int cnbr2 = ctNbrs[1];
-      RDGeom::Point3D begNbrLoc, begAtmLoc, endAtmLoc, endNbrLoc;
-      begNbrLoc = conf->getAtomPos(cnbr1);
-      begAtmLoc = conf->getAtomPos(dblBond->getBeginAtomIdx());
-      endAtmLoc = conf->getAtomPos(dblBond->getEndAtomIdx());
-      endNbrLoc = conf->getAtomPos(cnbr2);
-      double ang = RDGeom::computeDihedralAngle(begNbrLoc, begAtmLoc,
-                                                endAtmLoc, endNbrLoc);
-      if (ang < RDKit::PI/2) {
-        dblBond->setStereo(Bond::STEREOZ);
-      } else {
-        dblBond->setStereo(Bond::STEREOE);
-      }
-    }
-  }
-
-
   void WedgeMolBonds(ROMol &mol, const Conformer *conf){
     PRECONDITION(conf,"no conformer");
     INT_MAP_INT wedgeBonds=pickBondsToWedge(mol);
@@ -509,24 +477,77 @@ namespace RDKit {
             atom->updatePropertyCache();
           }
         }
-        }
+      }
     }
-    
-    // now cleanup any bad specification we might have seen:
-    MolOps::assignAtomChiralCodes(mol,true);
   }
   
+
+  void UpdateDoubleBondNeighbors(ROMol &mol, Bond *dblBond,
+                                 const Conformer *conf,
+                                 boost::dynamic_bitset<> &dirSet ) {
+    // we want to deal only with double bonds:
+    PRECONDITION(dblBond, "bad bond");
+    PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "not a double bond");
+    PRECONDITION(conf,"no conformer");
+
+    ROMol::OEDGE_ITER beg,end;
+    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
+    
+    Bond *bond1=0;
+    boost::tie(beg,end) = mol.getAtomBonds(dblBond->getBeginAtom());
+    while(beg!=end){
+      bond1=pMap[*beg];
+      if(bond1->getBondType()==Bond::SINGLE){
+        break;
+      }
+      beg++;
+    }
+    if(!bond1){
+      // no single bonds from the beginning atom, mark
+      // the double bond as directionless and return:
+      dblBond->setBondDir(Bond::EITHERDOUBLE);
+      return;
+    }
+    
+    Bond *bond2=0;
+    boost::tie(beg,end) = mol.getAtomBonds(dblBond->getEndAtom());
+    while(beg!=end ){
+      bond2=pMap[*beg];
+      if(bond2->getBondType()==Bond::SINGLE){
+        break;
+      }
+      beg++;
+    }
+    if(!bond2){
+      dblBond->setBondDir(Bond::EITHERDOUBLE);
+      return;
+    }
+    
+
+    
+  }
+
+
   void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
     PRECONDITION(conf,"no conformer");      
 
-    // mark all the non-ring double bonds that can be cis/trans:
-    MolOps::findPotentialStereoBonds(mol);
+    // start by making sure all single bonds contain
+    // no directionality information:
     for (RWMol::BondIterator bondIt = mol.beginBonds();
          bondIt != mol.endBonds(); ++bondIt) {
-      if ((*bondIt)->getBondType() == Bond::DOUBLE) {
-        ComputeBondStereoChemistry(mol, *bondIt, conf);
+      if ((*bondIt)->getBondType() == Bond::SINGLE) {
+        (*bondIt)->setBondDir(Bond::NONE);
       }
     }
-    MolOps::assignBondStereoCodes(mol);
+    // now loop over the double bonds and set the directionality on
+    // their neighbors:
+    boost::dynamic_bitset<> dirSet(mol.getNumBonds());
+    for (RWMol::BondIterator bondIt = mol.beginBonds();
+         bondIt != mol.endBonds(); ++bondIt) {
+      if ((*bondIt)->getBondType() == Bond::DOUBLE &&
+          (*bondIt)->getBondDir() != Bond::EITHERDOUBLE ) {
+        UpdateDoubleBondNeighbors(mol, *bondIt, conf,dirSet);
+      }
+    }
   }
 }

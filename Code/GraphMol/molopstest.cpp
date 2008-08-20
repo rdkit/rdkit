@@ -9,6 +9,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -760,7 +761,7 @@ void test10()
 
   INT_VECT ranks;
   ranks.resize(m->getNumAtoms());
-  MolOps::assignAtomCIPRanks(*m,ranks);
+  Chirality::assignAtomCIPRanks(*m,ranks);
 
   int cip1,cip2;
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPRank"));
@@ -783,7 +784,7 @@ void test10()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   ranks.resize(m->getNumAtoms());
-  MolOps::assignAtomCIPRanks(*m,ranks);
+  Chirality::assignAtomCIPRanks(*m,ranks);
   for(unsigned int i=0;i<m->getNumAtoms();i++){
     int cip;
     TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"));
@@ -1413,7 +1414,7 @@ void testIssue188()
   m = SmilesToMol(smi);
   INT_VECT ranks;
   ranks.resize(m->getNumAtoms());
-  MolOps::assignAtomCIPRanks(*m,ranks);
+  Chirality::assignAtomCIPRanks(*m,ranks);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPRank"));
   m->getAtomWithIdx(1)->getProp("_CIPRank",cip1);
@@ -1430,7 +1431,7 @@ void testIssue188()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   ranks.resize(m->getNumAtoms());
-  MolOps::assignAtomCIPRanks(*m,ranks);
+  Chirality::assignAtomCIPRanks(*m,ranks);
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPRank"));
   m->getAtomWithIdx(0)->getProp("_CIPRank",cip1);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPRank"));
