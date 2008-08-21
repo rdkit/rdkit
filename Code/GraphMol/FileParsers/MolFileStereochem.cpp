@@ -10,6 +10,7 @@
 #include "MolFileStereochem.h"
 #include <Geometry/point.h>
 #include <boost/dynamic_bitset.hpp>
+#include <algorithm>
 
 namespace RDKit {
   typedef std::list<double> DOUBLE_LIST;
@@ -496,9 +497,13 @@ namespace RDKit {
     Bond *bond1=0;
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getBeginAtom());
     while(beg!=end){
-      bond1=pMap[*beg];
-      if(bond1->getBondType()==Bond::SINGLE){
-        break;
+      Bond *tBond=pMap[*beg];
+      if(tBond->getBondType()==Bond::SINGLE){
+        bond1=tBond;
+        // prefer bonds that already have their directionality set:
+        if(dirSet[bond1->getIdx()]){
+          break;
+        }
       }
       beg++;
     }
@@ -512,9 +517,13 @@ namespace RDKit {
     Bond *bond2=0;
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getEndAtom());
     while(beg!=end ){
-      bond2=pMap[*beg];
-      if(bond2->getBondType()==Bond::SINGLE){
-        break;
+      Bond *tBond=pMap[*beg];
+      if(tBond->getBondType()==Bond::SINGLE){
+        bond2=tBond;
+        // prefer bonds that already have their directionality set:
+        if(dirSet[bond2->getIdx()]){
+          break;
+        }
       }
       beg++;
     }
@@ -523,31 +532,129 @@ namespace RDKit {
       return;
     }
     
+    CHECK_INVARIANT(bond1 && bond2,"no bonds found");
+    RDGeom::Point3D beginP=conf->getAtomPos(dblBond->getBeginAtomIdx());
+    RDGeom::Point3D endP=conf->getAtomPos(dblBond->getEndAtomIdx());
+    RDGeom::Point3D bond1P=conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
+    RDGeom::Point3D bond2P=conf->getAtomPos(bond2->getOtherAtomIdx(dblBond->getEndAtomIdx()));
+    double ang=RDGeom::computeDihedralAngle(bond1P,beginP,endP,bond2P);
+    bool sameDir;
+    if(ang < RDKit::PI/2){
+      sameDir=false;
+    } else {
+      sameDir=true;
+    }
 
-    
+    if(dirSet[bond1->getIdx()]){
+      if(dirSet[bond2->getIdx()]){
+        // check that we agree
+      } else{
+        if(sameDir){
+          bond2->setBondDir(bond1->getBondDir());
+        } else {
+          bond2->setBondDir(bond1->getBondDir()==Bond::ENDUPRIGHT ?
+                            Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
+        }
+      }
+    } else if(dirSet[bond2->getIdx()]){
+      if(sameDir){
+        bond1->setBondDir(bond2->getBondDir());
+      } else {
+        bond1->setBondDir(bond2->getBondDir()==Bond::ENDUPRIGHT ?
+                          Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
+      }
+    } else {
+      bond1->setBondDir(Bond::ENDDOWNRIGHT);
+      if(sameDir){
+        bond2->setBondDir(Bond::ENDDOWNRIGHT);
+      } else {
+        bond2->setBondDir(Bond::ENDUPRIGHT);
+      }
+    }
+    dirSet[bond1->getIdx()]=1;
+    dirSet[bond2->getIdx()]=1;
   }
 
-
-  void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
-    PRECONDITION(conf,"no conformer");      
-
-    // start by making sure all single bonds contain
-    // no directionality information:
+  void ClearSingleBondDirFlags(ROMol &mol){
     for (RWMol::BondIterator bondIt = mol.beginBonds();
          bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::SINGLE) {
         (*bondIt)->setBondDir(Bond::NONE);
       }
     }
-    // now loop over the double bonds and set the directionality on
-    // their neighbors:
-    boost::dynamic_bitset<> dirSet(mol.getNumBonds());
+  }
+  
+  void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
+    PRECONDITION(conf,"no conformer");      
+
+    // used to store the number of double bonds a given
+    // single bond is adjacent to
+    std::vector<unsigned int> singleBondCounts(mol.getNumBonds(),0);
+    std::vector<Bond *> bondsInPlay;
+    VECT_INT_VECT dblBondNbrs(mol.getNumBonds());
+
+    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
+
+    // find double bonds that should be considered for
+    // stereochemistry : 
     for (RWMol::BondIterator bondIt = mol.beginBonds();
          bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::DOUBLE &&
-          (*bondIt)->getBondDir() != Bond::EITHERDOUBLE ) {
-        UpdateDoubleBondNeighbors(mol, *bondIt, conf,dirSet);
+          (*bondIt)->getBondDir() != Bond::EITHERDOUBLE &&
+          (*bondIt)->getBeginAtom()->getDegree()>1 &&
+          (*bondIt)->getEndAtom()->getDegree()>1 ){
+        bondsInPlay.push_back(*bondIt);
+
+        const Atom *a1=(*bondIt)->getBeginAtom();
+        const Atom *a2=(*bondIt)->getEndAtom();
+
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = mol.getAtomBonds(a1);
+        while(beg!=end){
+          const Bond *nbrBond=pMap[*beg];
+          if(nbrBond->getBondType()==Bond::SINGLE){
+            singleBondCounts[nbrBond->getIdx()] += 1;
+            dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
+          }
+          beg++;
+        }
+        boost::tie(beg,end) = mol.getAtomBonds(a2);
+        while(beg!=end){
+          const Bond *nbrBond=pMap[*beg];
+          if(nbrBond->getBondType()==Bond::SINGLE){
+            singleBondCounts[nbrBond->getIdx()] += 1;
+            dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
+          }
+          beg++;
+        }
       }
+    }
+
+    if(!bondsInPlay.size()){
+      return;
+    }
+
+    // order the double bonds based on the singleBondCounts of their neighbors:
+    std::vector< std::pair<unsigned int,Bond *> > orderedBondsInPlay;
+    for(unsigned int i=0;i<bondsInPlay.size();++i){
+      Bond *dblBond=bondsInPlay[i];
+      unsigned int maxHere=0;
+      for(INT_VECT::const_iterator iter=dblBondNbrs[dblBond->getIdx()].begin();
+          iter!=dblBondNbrs[dblBond->getIdx()].end();++iter){
+        maxHere = std::max(maxHere,singleBondCounts[*iter]);
+      }
+      orderedBondsInPlay.push_back(std::make_pair(maxHere,dblBond));
+    }
+    std::sort(orderedBondsInPlay.begin(),orderedBondsInPlay.end());
+
+    // oof, now loop over the double bonds in that order and
+    // update their neighbor directionalities:
+    boost::dynamic_bitset<> dirSet(mol.getNumBonds());
+    std::vector< std::pair<unsigned int,Bond *> >::reverse_iterator pairIter;
+    for (pairIter=orderedBondsInPlay.rbegin();
+         pairIter!=orderedBondsInPlay.rend();
+         ++pairIter){
+      UpdateDoubleBondNeighbors(mol,pairIter->second,conf,dirSet);
     }
   }
 }

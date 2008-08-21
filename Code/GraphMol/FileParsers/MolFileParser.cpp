@@ -1010,6 +1010,7 @@ namespace RDKit{
         const Conformer &conf = res->getConformer();
         DetectAtomStereoChemistry(*res, &conf);
       }
+
       try {
         if(removeHs){
           ROMol *tmp=MolOps::removeHs(*res,false,false);
@@ -1018,9 +1019,14 @@ namespace RDKit{
         } else {
           MolOps::sanitizeMol(*res);
         }
-        // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry here after
-        // sanitization because the rings should have been perceived by now, in order to
-        // correctly recognize double bonds that may be cis/trans type
+
+        // now that atom stereochem has been perceived, the wedging
+        // information is no longer needed, so we clear
+        // single bond dir flags:
+        ClearSingleBondDirFlags(*res);
+      
+        // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry 
+        // here after sanitization because we need the ring information:
         const Conformer &conf = res->getConformer();
         DetectBondStereoChemistry(*res, &conf);
       }
