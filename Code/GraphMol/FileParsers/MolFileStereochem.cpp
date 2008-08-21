@@ -511,6 +511,10 @@ namespace RDKit {
     ROMol::OEDGE_ITER beg,end;
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
     
+    // FIX: this is order dependent. We shouldn't be using getBeginAtom() and
+    // getEndAtom() but the singleBondCounts so that we start the numbering
+    // at the fixed end first.
+
     Bond *bond1=0,*obond1=0;
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getBeginAtom());
     while(beg!=end){

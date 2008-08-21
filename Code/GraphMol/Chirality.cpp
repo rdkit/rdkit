@@ -173,6 +173,7 @@ namespace RDKit{
             unsigned int count=static_cast<int>(ceil(bond->getBondTypeAsDouble()));
             localEntry.insert(localEntry.end(),count,rank);
 
+#if 0
             unsigned int sLabel=0;
             // push on an additional marker for the bond
             // so that we can weight double bonds that have
@@ -185,14 +186,21 @@ namespace RDKit{
               }
             }
             localEntry.push_back(sLabel);
+#endif
             ++nbr;
           }
           // add two zeroes for each coordinated H:
           // (as long as we're not a query atom)
           if(!mol.getAtomWithIdx(*it)->hasQuery()){
+#if 0
             localEntry.insert(localEntry.end(),
                               2*mol.getAtomWithIdx(*it)->getTotalNumHs(),
                               0);
+#else
+            localEntry.insert(localEntry.end(),
+                              mol.getAtomWithIdx(*it)->getTotalNumHs(),
+                              0);
+#endif
           }
 
           // get a sorted list of our neighbors' ranks:
@@ -698,7 +706,9 @@ namespace RDKit{
       }
 #endif
 
-
+      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
+    
+      
       DOUBLE_VECT invars(mol.getNumAtoms());
       // and now supplement them:
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -709,10 +719,23 @@ namespace RDKit{
           std::string cipCode;
           atom->getProp("_CIPCode",cipCode);
           if(cipCode=="S"){
-            invars[i]+=1;
+            invars[i]+=10;
           } else if(cipCode=="R"){
-            invars[i]+=2;
+            invars[i]+=20;
           }
+        }
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = mol.getAtomBonds(atom);
+        while(beg!=end){
+          const Bond *oBond=pMap[*beg];
+          if(oBond->getBondType()==Bond::DOUBLE){
+            if(oBond->getStereo()==Bond::STEREOE){
+              invars[i]+=1;
+            } else if(oBond->getStereo()==Bond::STEREOZ){
+              invars[i]+=2;
+            }
+          }
+          ++beg;
         }
       }
       iterateCIPRanks(mol,invars,ranks,true);
@@ -783,6 +806,9 @@ namespace RDKit{
           // update the atom ranks based on the new information we have:
           Chirality::rerankAtoms(mol,atomRanks);
         }
+        std::cout<<"*************** done iteration "<<keepGoing<<" ***********"<<std::endl;
+        mol.debugMol(std::cout);
+        std::cout<<"*************** done iteration "<<keepGoing<<" ***********"<<std::endl;
       }
 
       if(cleanIt){
