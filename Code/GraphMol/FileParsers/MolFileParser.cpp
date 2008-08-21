@@ -1034,7 +1034,12 @@ namespace RDKit{
         if(res) delete res;
         throw se;
       }
+      std::cout<<"PRE_ASSIGN"<<std::endl;
+      res->debugMol(std::cout);
       MolOps::assignStereochemistry(*res,true);
+      std::cout<<"POST_ASSIGN"<<std::endl;
+      res->debugMol(std::cout);
+      std::cout<<"-------------"<<std::endl;
     }
 
     if(res->hasProp("_NeedsQueryScan")){

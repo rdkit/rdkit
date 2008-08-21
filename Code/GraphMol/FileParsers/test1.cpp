@@ -749,7 +749,7 @@ void testSymmetricDblBondStereochem(){
   fName = rdbase+"cistrans.1a.mol";
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
-
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="C/C=C/Cl");
 
@@ -757,6 +757,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="C/C=C\\Cl");
@@ -765,6 +766,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="C/C=C/C");
@@ -773,6 +775,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="C/C=C\\C");
@@ -781,6 +784,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="CC=CC");
@@ -1345,11 +1349,13 @@ void testIssue1965035(){
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
 
-  TEST_ASSERT(m->getBondWithIdx(4)->getBondDir()==Bond::BEGINDASH);
+  // the mol file parser removes bond wedging info:
+  TEST_ASSERT(m->getBondWithIdx(4)->getBondDir()==Bond::NONE);
+  // but a chiral tag is assigned:
+  TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
 
   WedgeMolBonds(*m,&m->getConformer());
   TEST_ASSERT(m->getBondWithIdx(4)->getBondDir()==Bond::BEGINDASH);
-
   
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -1366,6 +1372,7 @@ int main(int argc,char *argv[]){
   testIssue148();
   test7();
   test8();
+#endif
   testIssue180();
   testIssue264();
   testIssue399();
@@ -1373,7 +1380,6 @@ int main(int argc,char *argv[]){
   testSymmetricDblBondStereochem();
   testRingDblBondStereochem();
   testMolFileRGroups();
-#endif
   testMolFileDegreeQueries();
   testMolFileRBCQueries();
   testMolFileUnsaturationQueries();

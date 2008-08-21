@@ -288,7 +288,7 @@ namespace RDKit{
       if(!seenDir) {
         neighbors.clear();
       } else {
-        if(neighbors.size()==2 ){
+        if(neighbors.size()==2 && !ranks.size() ){
           assignAtomCIPRanks(mol,ranks);
         }
         if( neighbors.size() == 2 &&
@@ -777,7 +777,7 @@ namespace RDKit{
         } else {
           changedStereoBonds=false;
         }
-        keepGoing=(hasStereoAtoms&&changedStereoAtoms) || (hasStereoBonds && changedStereoBonds);
+        keepGoing=(hasStereoAtoms||hasStereoBonds) && (changedStereoAtoms||changedStereoBonds);
 
         if(keepGoing){
           // update the atom ranks based on the new information we have:

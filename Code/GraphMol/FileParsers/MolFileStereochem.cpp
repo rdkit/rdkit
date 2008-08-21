@@ -481,11 +481,28 @@ namespace RDKit {
       }
     }
   }
-  
+
+
+  void setBondDirRelativeToAtom(Bond *bond,Atom *atom,
+                                Bond::BondDir dir,bool reverse){
+    PRECONDITION(bond,"bad bond");
+    PRECONDITION(atom,"bad atom");
+    PRECONDITION(dir==Bond::ENDUPRIGHT||dir==Bond::ENDDOWNRIGHT,"bad dir");
+    PRECONDITION(atom==bond->getBeginAtom()||atom==bond->getEndAtom(),
+                 "atom doesn't belong to bond")
+    if(bond->getBeginAtom() != atom){
+      reverse = !reverse;
+    }
+    if(reverse){
+      dir = (dir==Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
+    }
+    bond->setBondDir(dir);
+  }
 
   void UpdateDoubleBondNeighbors(ROMol &mol, Bond *dblBond,
                                  const Conformer *conf,
-                                 boost::dynamic_bitset<> &dirSet ) {
+                                 boost::dynamic_bitset<> &dirSet,
+                                 std::vector<unsigned int> &singleBondCounts ) {
     // we want to deal only with double bonds:
     PRECONDITION(dblBond, "bad bond");
     PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "not a double bond");
@@ -494,15 +511,23 @@ namespace RDKit {
     ROMol::OEDGE_ITER beg,end;
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
     
-    Bond *bond1=0;
+    Bond *bond1=0,*obond1=0;
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getBeginAtom());
     while(beg!=end){
       Bond *tBond=pMap[*beg];
       if(tBond->getBondType()==Bond::SINGLE){
-        bond1=tBond;
-        // prefer bonds that already have their directionality set:
-        if(dirSet[bond1->getIdx()]){
-          break;
+        // prefer bonds that already have their directionality set
+        // or that are adjacent to more double bonds:
+        if(dirSet[tBond->getIdx()]){
+          obond1=bond1;
+          bond1=tBond;
+        } else if (!bond1) {
+          bond1 = tBond;
+        } else if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond1->getIdx()]){
+          obond1=bond1;
+          bond1=tBond;
+        } else if(!obond1){
+          obond1=tBond;
         }
       }
       beg++;
@@ -514,15 +539,21 @@ namespace RDKit {
       return;
     }
     
-    Bond *bond2=0;
+    Bond *bond2=0,*obond2=0;
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getEndAtom());
     while(beg!=end ){
       Bond *tBond=pMap[*beg];
       if(tBond->getBondType()==Bond::SINGLE){
-        bond2=tBond;
-        // prefer bonds that already have their directionality set:
-        if(dirSet[bond2->getIdx()]){
-          break;
+        if(dirSet[tBond->getIdx()]){
+          obond2=bond2;
+          bond2=tBond;
+        } else if (!bond2) {
+          bond2 = tBond;
+        } else if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond2->getIdx()]){
+          obond2=bond2;
+          bond2=tBond;
+        } else if(!obond2){
+          obond2=tBond;
         }
       }
       beg++;
@@ -545,34 +576,63 @@ namespace RDKit {
       sameDir=true;
     }
 
+
+    /*
+       Time for some clarificatory text, because this gets really
+       confusing really fast.
+
+       The dihedral angle analysis above is based on viewing things
+       with an atom order as follows:
+
+       1
+        \
+         2 = 3
+              \
+               4
+
+       so dihedrals > 90 correspond to sameDir=true
+       
+       however, the stereochemistry representation is
+       based on something more like this:
+
+       2
+        \
+         1 = 3
+              \
+               4
+       (i.e. we consider the direction-setting single bonds to be
+        starting at the double-bonded atom)
+
+    */
+    
     if(dirSet[bond1->getIdx()]){
       if(dirSet[bond2->getIdx()]){
         // check that we agree
       } else{
-        if(sameDir){
-          bond2->setBondDir(bond1->getBondDir());
-        } else {
-          bond2->setBondDir(bond1->getBondDir()==Bond::ENDUPRIGHT ?
-                            Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
-        }
+        setBondDirRelativeToAtom(bond2,dblBond->getEndAtom(),
+                                 bond1->getBondDir(),sameDir);
       }
     } else if(dirSet[bond2->getIdx()]){
-      if(sameDir){
-        bond1->setBondDir(bond2->getBondDir());
-      } else {
-        bond1->setBondDir(bond2->getBondDir()==Bond::ENDUPRIGHT ?
-                          Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
-      }
+      setBondDirRelativeToAtom(bond1,dblBond->getBeginAtom(),
+                               bond2->getBondDir(),sameDir);
     } else {
-      bond1->setBondDir(Bond::ENDDOWNRIGHT);
-      if(sameDir){
-        bond2->setBondDir(Bond::ENDDOWNRIGHT);
-      } else {
-        bond2->setBondDir(Bond::ENDUPRIGHT);
-      }
+      setBondDirRelativeToAtom(bond1,dblBond->getBeginAtom(),
+                               Bond::ENDDOWNRIGHT,false);
+      setBondDirRelativeToAtom(bond2,dblBond->getEndAtom(),
+                               Bond::ENDDOWNRIGHT,sameDir);
     }
     dirSet[bond1->getIdx()]=1;
     dirSet[bond2->getIdx()]=1;
+    if(obond1 && !dirSet[obond1->getIdx()] ){
+      setBondDirRelativeToAtom(obond1,dblBond->getBeginAtom(),
+                               bond1->getBondDir(),bond1->getBeginAtom()==dblBond->getBeginAtom());
+      dirSet[obond1->getIdx()]=1;
+    }
+    if(obond2 && !dirSet[obond2->getIdx()] ){
+      setBondDirRelativeToAtom(obond2,dblBond->getEndAtom(),
+                               bond2->getBondDir(),bond2->getBeginAtom()==dblBond->getEndAtom());
+      dirSet[obond2->getIdx()]=1;
+    }
   }
 
   void ClearSingleBondDirFlags(ROMol &mol){
@@ -654,7 +714,7 @@ namespace RDKit {
     for (pairIter=orderedBondsInPlay.rbegin();
          pairIter!=orderedBondsInPlay.rend();
          ++pairIter){
-      UpdateDoubleBondNeighbors(mol,pairIter->second,conf,dirSet);
+      UpdateDoubleBondNeighbors(mol,pairIter->second,conf,dirSet,singleBondCounts);
     }
   }
 }
