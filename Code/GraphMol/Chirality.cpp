@@ -296,9 +296,6 @@ namespace RDKit{
       if(!seenDir) {
         neighbors.clear();
       } else {
-        if(neighbors.size()==2 && !ranks.size() ){
-          assignAtomCIPRanks(mol,ranks);
-        }
         if( neighbors.size() == 2 &&
             ranks[neighbors[0].first] == ranks[neighbors[1].first] ){
           // the two substituents are identical, no stereochemistry here:
@@ -509,7 +506,7 @@ namespace RDKit{
           }
           // loop over all neighbors and form a decorated list of their
           // ranks:
-          bool legalCenter;
+          bool legalCenter=true;
           bool hasDupes=false;
           bool hasTruePrecedingAtom=false;
           Chirality::INT_PAIR_VECT nbrs;
@@ -552,9 +549,6 @@ namespace RDKit{
                  (nbrs.size()==3 && atom->getTotalNumHs()!=1 )){
                 // we only handle 3-coordinate atoms that have an implicit H
                 legalCenter=false;
-              } else {
-                // if we haven't disqualified the center, it must be ok.
-                legalCenter=true;
               }
             }
           }        
@@ -622,6 +616,9 @@ namespace RDKit{
           Bond *dblBond=*bondIt;
           if(dblBond->getStereo()!=Bond::STEREONONE){
             continue;
+          }
+          if(!ranks.size()){
+            assignAtomCIPRanks(mol,ranks);
           }
           dblBond->getStereoAtoms().clear();
 
@@ -806,9 +803,11 @@ namespace RDKit{
           // update the atom ranks based on the new information we have:
           Chirality::rerankAtoms(mol,atomRanks);
         }
+#if 0
         std::cout<<"*************** done iteration "<<keepGoing<<" ***********"<<std::endl;
         mol.debugMol(std::cout);
         std::cout<<"*************** done iteration "<<keepGoing<<" ***********"<<std::endl;
+#endif
       }
 
       if(cleanIt){

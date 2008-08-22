@@ -1364,9 +1364,9 @@ void testIssue191(){
   TEST_ASSERT(mol->getBondWithIdx(7)->getStereo() == Bond::STEREOE);
   refSmi = MolToSmiles(*mol,1);
   delete mol;
+  //std::cout << "ref: " << refSmi << std::endl;
   mol = SmilesToMol(refSmi);
   TEST_ASSERT(mol);
-  //std::cout << "ref: " << refSmi << std::endl;
   //mol->debugMol(std::cout);
   numE = 0;
   for(RWMol::BondIterator bondIt=mol->beginBonds();

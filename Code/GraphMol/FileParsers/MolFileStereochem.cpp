@@ -508,13 +508,19 @@ namespace RDKit {
     PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "not a double bond");
     PRECONDITION(conf,"no conformer");
 
+#if 0
+    std::cerr << "**********************\n";
+    std::cerr << "**********************\n";
+    std::cerr << "**********************\n";
+    std::cerr << "UDBN: "<<dblBond->getIdx()<<"\n";
+    std::cerr << "**********************\n";
+    std::cerr << "**********************\n";
+    std::cerr << "**********************\n";
+#endif
+    
     ROMol::OEDGE_ITER beg,end;
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
     
-    // FIX: this is order dependent. We shouldn't be using getBeginAtom() and
-    // getEndAtom() but the singleBondCounts so that we start the numbering
-    // at the fixed end first.
-
     Bond *bond1=0,*obond1=0;
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getBeginAtom());
     while(beg!=end){
@@ -522,11 +528,15 @@ namespace RDKit {
       if(tBond->getBondType()==Bond::SINGLE){
         // prefer bonds that already have their directionality set
         // or that are adjacent to more double bonds:
-        if(dirSet[tBond->getIdx()]){
-          obond1=bond1;
+        if(!bond1){
           bond1=tBond;
-        } else if (!bond1) {
-          bond1 = tBond;
+        } else if(dirSet[tBond->getIdx()]){
+          if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond1->getIdx()]){
+            obond1=bond1;
+            bond1=tBond;
+          } else {
+            obond1 = tBond;
+          }
         } else if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond1->getIdx()]){
           obond1=bond1;
           bond1=tBond;
@@ -548,11 +558,15 @@ namespace RDKit {
     while(beg!=end ){
       Bond *tBond=pMap[*beg];
       if(tBond->getBondType()==Bond::SINGLE){
-        if(dirSet[tBond->getIdx()]){
-          obond2=bond2;
+        if(!bond2){
           bond2=tBond;
-        } else if (!bond2) {
-          bond2 = tBond;
+        } else if(dirSet[tBond->getIdx()]){
+          if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond2->getIdx()]){
+            obond2=bond2;
+            bond2=tBond;
+          } else {
+            obond2 = tBond;
+          }
         } else if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond2->getIdx()]){
           obond2=bond2;
           bond2=tBond;
@@ -608,33 +622,34 @@ namespace RDKit {
         starting at the double-bonded atom)
 
     */
+    Atom *atom1=dblBond->getBeginAtom(),*atom2=dblBond->getEndAtom();
     
     if(dirSet[bond1->getIdx()]){
       if(dirSet[bond2->getIdx()]){
         // check that we agree
       } else{
-        setBondDirRelativeToAtom(bond2,dblBond->getEndAtom(),
+        setBondDirRelativeToAtom(bond2,atom2,
                                  bond1->getBondDir(),sameDir);
       }
     } else if(dirSet[bond2->getIdx()]){
-      setBondDirRelativeToAtom(bond1,dblBond->getBeginAtom(),
+      setBondDirRelativeToAtom(bond1,atom1,
                                bond2->getBondDir(),sameDir);
     } else {
-      setBondDirRelativeToAtom(bond1,dblBond->getBeginAtom(),
+      setBondDirRelativeToAtom(bond1,atom1,
                                Bond::ENDDOWNRIGHT,false);
-      setBondDirRelativeToAtom(bond2,dblBond->getEndAtom(),
+      setBondDirRelativeToAtom(bond2,atom2,
                                Bond::ENDDOWNRIGHT,sameDir);
     }
     dirSet[bond1->getIdx()]=1;
     dirSet[bond2->getIdx()]=1;
     if(obond1 && !dirSet[obond1->getIdx()] ){
-      setBondDirRelativeToAtom(obond1,dblBond->getBeginAtom(),
-                               bond1->getBondDir(),bond1->getBeginAtom()==dblBond->getBeginAtom());
+      setBondDirRelativeToAtom(obond1,atom1,
+                               bond1->getBondDir(),bond1->getBeginAtom()==atom1);
       dirSet[obond1->getIdx()]=1;
     }
     if(obond2 && !dirSet[obond2->getIdx()] ){
-      setBondDirRelativeToAtom(obond2,dblBond->getEndAtom(),
-                               bond2->getBondDir(),bond2->getBeginAtom()==dblBond->getEndAtom());
+      setBondDirRelativeToAtom(obond2,atom2,
+                               bond2->getBondDir(),bond2->getBeginAtom()==atom2);
       dirSet[obond2->getIdx()]=1;
     }
   }
@@ -650,7 +665,15 @@ namespace RDKit {
   
   void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
     PRECONDITION(conf,"no conformer");      
-
+#if 0
+    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
+    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
+    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
+    std::cerr << "DBSN: "<<"\n";
+    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
+    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
+    std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
+#endif
     // used to store the number of double bonds a given
     // single bond is adjacent to
     std::vector<unsigned int> singleBondCounts(mol.getNumBonds(),0);
