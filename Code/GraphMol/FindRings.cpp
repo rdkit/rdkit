@@ -738,6 +738,11 @@ namespace RDKit {
       return res.size();
     }
   
+    int symmetrizeSSSR(ROMol &mol) {
+      VECT_INT_VECT tmp;
+      return symmetrizeSSSR(mol,tmp);
+    };
+
     int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
       res.clear();res.resize(0);
       unsigned int nsssr;

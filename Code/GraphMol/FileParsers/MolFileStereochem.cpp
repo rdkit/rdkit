@@ -484,38 +484,63 @@ namespace RDKit {
 
 
   void setBondDirRelativeToAtom(Bond *bond,Atom *atom,
-                                Bond::BondDir dir,bool reverse){
+                                Bond::BondDir dir,bool reverse,
+                                boost::dynamic_bitset<> &needsDir){
     PRECONDITION(bond,"bad bond");
     PRECONDITION(atom,"bad atom");
     PRECONDITION(dir==Bond::ENDUPRIGHT||dir==Bond::ENDDOWNRIGHT,"bad dir");
     PRECONDITION(atom==bond->getBeginAtom()||atom==bond->getEndAtom(),
-                 "atom doesn't belong to bond")
+                 "atom doesn't belong to bond");
+    Atom *oAtom;
     if(bond->getBeginAtom() != atom){
       reverse = !reverse;
+      oAtom = bond->getBeginAtom();
+    } else {
+      oAtom=bond->getEndAtom();
     }
     if(reverse){
       dir = (dir==Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
     }
     bond->setBondDir(dir);
+
+    // check for other single bonds around the other atom who need their
+    // direction set and set it as demanded by the direction of this one:
+    ROMol::OEDGE_ITER beg,end;
+    boost::tie(beg,end) = oAtom->getOwningMol().getAtomBonds(oAtom);
+    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = oAtom->getOwningMol().getBondPMap();
+    while(beg!=end){
+      Bond *nbrBond=pMap[*beg];
+      if(nbrBond!=bond && needsDir[nbrBond->getIdx()]){
+        Bond::BondDir nbrDir=Bond::NONE;
+        if( (nbrBond->getBeginAtom()==oAtom && bond->getBeginAtom()==oAtom) ||
+            (nbrBond->getEndAtom()==oAtom && bond->getEndAtom()==oAtom) ){
+          // both bonds either start or end here; they *must* have different directions:
+          nbrDir=(dir==Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
+        } else {
+          // one starts here, the other ends here, they need to have the same direction:
+          nbrDir=dir;
+        }
+        nbrBond->setBondDir(nbrDir);
+        needsDir[nbrBond->getIdx()]=0;
+      }
+      ++beg;
+    }
   }
 
-  void UpdateDoubleBondNeighbors(ROMol &mol, Bond *dblBond,
+  void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond,
                                  const Conformer *conf,
-                                 boost::dynamic_bitset<> &dirSet,
+                                 boost::dynamic_bitset<> &needsDir,
                                  std::vector<unsigned int> &singleBondCounts ) {
     // we want to deal only with double bonds:
     PRECONDITION(dblBond, "bad bond");
     PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "not a double bond");
     PRECONDITION(conf,"no conformer");
 
-#if 0
+#if 1
     std::cerr << "**********************\n";
     std::cerr << "**********************\n";
     std::cerr << "**********************\n";
     std::cerr << "UDBN: "<<dblBond->getIdx()<<"\n";
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
-    std::cerr << "**********************\n";
 #endif
     
     ROMol::OEDGE_ITER beg,end;
@@ -530,7 +555,7 @@ namespace RDKit {
         // or that are adjacent to more double bonds:
         if(!bond1){
           bond1=tBond;
-        } else if(dirSet[tBond->getIdx()]){
+        } else if(needsDir[tBond->getIdx()]){
           if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond1->getIdx()]){
             obond1=bond1;
             bond1=tBond;
@@ -560,7 +585,7 @@ namespace RDKit {
       if(tBond->getBondType()==Bond::SINGLE){
         if(!bond2){
           bond2=tBond;
-        } else if(dirSet[tBond->getIdx()]){
+        } else if(needsDir[tBond->getIdx()]){
           if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond2->getIdx()]){
             obond2=bond2;
             bond2=tBond;
@@ -624,34 +649,51 @@ namespace RDKit {
     */
     Atom *atom1=dblBond->getBeginAtom(),*atom2=dblBond->getEndAtom();
     
-    if(dirSet[bond1->getIdx()]){
-      if(dirSet[bond2->getIdx()]){
+    if(!needsDir[bond1->getIdx()]){
+      if(!needsDir[bond2->getIdx()]){
         // check that we agree
       } else{
         setBondDirRelativeToAtom(bond2,atom2,
-                                 bond1->getBondDir(),sameDir);
+                                 bond1->getBondDir(),sameDir,
+                                 needsDir);
       }
-    } else if(dirSet[bond2->getIdx()]){
+    } else if(!needsDir[bond2->getIdx()]){
       setBondDirRelativeToAtom(bond1,atom1,
-                               bond2->getBondDir(),sameDir);
+                               bond2->getBondDir(),sameDir,
+                               needsDir);
     } else {
       setBondDirRelativeToAtom(bond1,atom1,
-                               Bond::ENDDOWNRIGHT,false);
+                               Bond::ENDDOWNRIGHT,false,
+                               needsDir);
       setBondDirRelativeToAtom(bond2,atom2,
-                               Bond::ENDDOWNRIGHT,sameDir);
+                               Bond::ENDDOWNRIGHT,sameDir,
+                               needsDir);
     }
-    dirSet[bond1->getIdx()]=1;
-    dirSet[bond2->getIdx()]=1;
-    if(obond1 && !dirSet[obond1->getIdx()] ){
+    needsDir[bond1->getIdx()]=0;
+    needsDir[bond2->getIdx()]=0;
+    if(obond1 && needsDir[obond1->getIdx()] ){
       setBondDirRelativeToAtom(obond1,atom1,
-                               bond1->getBondDir(),bond1->getBeginAtom()==atom1);
-      dirSet[obond1->getIdx()]=1;
+                               bond1->getBondDir(),bond1->getBeginAtom()==atom1,
+                               needsDir);
+      needsDir[obond1->getIdx()]=0;
     }
-    if(obond2 && !dirSet[obond2->getIdx()] ){
+    if(obond2 && needsDir[obond2->getIdx()] ){
       setBondDirRelativeToAtom(obond2,atom2,
-                               bond2->getBondDir(),bond2->getBeginAtom()==atom2);
-      dirSet[obond2->getIdx()]=1;
+                               bond2->getBondDir(),bond2->getBeginAtom()==atom2,
+                               needsDir);
+      needsDir[obond2->getIdx()]=0;
     }
+#if 1
+    std::cerr << "  1:"<<bond1->getIdx()<<" ";
+    if(obond1) std::cerr<<obond1->getIdx()<<std::endl;
+    else  std::cerr<<"N/A"<<std::endl;
+    std::cerr << "  2:"<<bond2->getIdx()<<" ";
+    if(obond2) std::cerr<<obond2->getIdx()<<std::endl;
+    else  std::cerr<<"N/A"<<std::endl;
+    std::cerr << "**********************\n";
+    std::cerr << "**********************\n";
+    std::cerr << "**********************\n";
+#endif
   }
 
   void ClearSingleBondDirFlags(ROMol &mol){
@@ -679,6 +721,7 @@ namespace RDKit {
     std::vector<unsigned int> singleBondCounts(mol.getNumBonds(),0);
     std::vector<Bond *> bondsInPlay;
     VECT_INT_VECT dblBondNbrs(mol.getNumBonds());
+    boost::dynamic_bitset<> needsDir(mol.getNumBonds());
 
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
 
@@ -701,6 +744,7 @@ namespace RDKit {
           const Bond *nbrBond=pMap[*beg];
           if(nbrBond->getBondType()==Bond::SINGLE){
             singleBondCounts[nbrBond->getIdx()] += 1;
+            needsDir[nbrBond->getIdx()]=1;
             dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
           }
           beg++;
@@ -710,6 +754,7 @@ namespace RDKit {
           const Bond *nbrBond=pMap[*beg];
           if(nbrBond->getBondType()==Bond::SINGLE){
             singleBondCounts[nbrBond->getIdx()] += 1;
+            needsDir[nbrBond->getIdx()]=1;
             dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
           }
           beg++;
@@ -736,12 +781,11 @@ namespace RDKit {
 
     // oof, now loop over the double bonds in that order and
     // update their neighbor directionalities:
-    boost::dynamic_bitset<> dirSet(mol.getNumBonds());
     std::vector< std::pair<unsigned int,Bond *> >::reverse_iterator pairIter;
     for (pairIter=orderedBondsInPlay.rbegin();
          pairIter!=orderedBondsInPlay.rend();
          ++pairIter){
-      UpdateDoubleBondNeighbors(mol,pairIter->second,conf,dirSet,singleBondCounts);
+      updateDoubleBondNeighbors(mol,pairIter->second,conf,needsDir,singleBondCounts);
     }
   }
 }

@@ -2090,14 +2090,12 @@ void testSFIssue1719053()
   smi = "C[C@@H]1CCCCC1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
 
   delete m;
   smi = "C[C@@H]1CC[C@@H](C)CC1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
 
@@ -2105,14 +2103,12 @@ void testSFIssue1719053()
   smi = "C[C@@H]1C(C)CCCC1C";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
 
   delete m;
   smi = "C[C@@H]1[C@H](C)CCC[C@H]1C";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(7)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
@@ -2121,7 +2117,6 @@ void testSFIssue1719053()
   smi = "C[C@@H]1C=C[C@@H](C)C=C1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
 
@@ -2129,7 +2124,6 @@ void testSFIssue1719053()
   smi = "C[N@@]1C=C[C@@H](C)C=C1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_UNSPECIFIED);
 
@@ -2137,7 +2131,6 @@ void testSFIssue1719053()
   smi = "C[N@@]1CC[C@@H](C)CC1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
 
@@ -2592,13 +2585,13 @@ int main(){
   testIssue276();
   testHsAndAromaticity();
   testSFIssue1694023();
+#endif
   testSFIssue1719053();
   testSFIssue1811276();
   testSFIssue1836576();
   testChiralityAndRemoveHs();
   test11();
   testSFIssue1894348();
-#endif
   testAromaticityEdges();
   testSFIssue1942657();
   testSFIssue1968608();

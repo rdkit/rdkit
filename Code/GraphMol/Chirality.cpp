@@ -344,103 +344,6 @@ namespace RDKit{
       }
     }
 
-    // clear the ENDUPRIGHT or ENDDOWNRIGHT tags on any bonds in a ring 
-    // FIX: At some point we may want to consider cis/trans stuff in rings as well
-    void clearCisTransRingBonds(ROMol &mol) {
-      ROMol::OEDGE_ITER beg, end;
-      ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
-      // on the first pass mark all single bond neighbors to non-ring double bonds
-      // that have cis/trans
-      for(ROMol::BondIterator bondIt=mol.beginBonds();
-          bondIt!=mol.endBonds();
-          ++bondIt){
-        unsigned int bid = (*bondIt)->getIdx();
-        if (!(mol.getRingInfo()->numBondRings(bid)) &&
-            ((*bondIt)->getBondType() == Bond::DOUBLE)) {
-          Atom *begAtom = (*bondIt)->getBeginAtom();
-          Atom *endAtom = (*bondIt)->getEndAtom();
-          unsigned int nBegDir = 0;
-          unsigned int nEndDir = 0;
-          
-          boost::tie(beg, end) = mol.getAtomBonds(begAtom);
-          while (beg != end) {
-            const Bond *bond= pMap[*beg];
-            Bond::BondDir dir = bond->getBondDir();
-            if( bond->getIdx() != bid)  {
-              if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
-                ++nBegDir;
-              }
-            }
-            ++beg;
-          }
-
-          boost::tie(beg, end) = mol.getAtomBonds(endAtom);
-          while (beg != end) {
-            const Bond *bond= pMap[*beg];
-            Bond::BondDir dir = bond->getBondDir();
-            if( bond->getIdx() != bid)  {
-              if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
-                ++nEndDir;
-              }
-            }
-            ++beg;
-          }
-        
-          // now mark these single bond is both end of the double bond has atleast one direction bond neighbor
-          if ((nBegDir>0) && (nEndDir>0)) {
-            boost::tie(beg, end) = mol.getAtomBonds(begAtom);
-            while (beg != end) {
-              const Bond *bond= pMap[*beg];
-              Bond::BondDir dir = bond->getBondDir();
-              if( bond->getIdx() != bid)  {
-                if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
-                  // check if _keepDir has already been set on this bond (from  a previous double bond)
-                  // in this case this single bond is involved in more than one cis/trans systems
-                  int val = 0;
-                  if (bond->hasProp("_keepDir")) {
-                    bond->getProp("_keepDir", val);
-                  }
-                  ++val;
-                  bond->setProp("_keepDir", val, 1);
-                }
-              }
-              ++beg;
-            }
-            boost::tie(beg, end) = mol.getAtomBonds(endAtom);
-            while (beg != end) {
-              const Bond *bond= pMap[*beg];
-              Bond::BondDir dir = bond->getBondDir();
-              if( bond->getIdx() != bid)  {
-                if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
-                  int val = 0;
-                  if (bond->hasProp("_keepDir")) {
-                    bond->getProp("_keepDir", val);
-                  }
-                  ++val;
-                  bond->setProp("_keepDir", val, 1);
-                }
-              }
-              ++beg;
-            } // end of while over neighbor bonds around endAtom
-            // finally mark this double bond itself as containing neihbors with directions
-            (*bondIt)->setProp("_hasDirNbrs", 1);
-          } // end of if both end of double bond have dir bonds
-        } // loop over non-ring double bonds
-      } // loop over all bonds
- 
-      // clear directions on any bonds that do not have the "_keepDir" property set on
-      for(ROMol::BondIterator bondIt=mol.beginBonds();
-          bondIt!=mol.endBonds();
-          ++bondIt){
-        Bond::BondDir dir = (*bondIt)->getBondDir();
-        if (!(*bondIt)->hasProp("_keepDir") &&
-            ((dir == Bond::ENDDOWNRIGHT) || (dir == Bond::ENDUPRIGHT)) ) {
-          (*bondIt)->setBondDir(Bond::NONE);
-        }
-      }
-    }
-
-
     // returns true if the atom is allowed to have stereochemistry specified
     bool checkChiralAtomSpecialCases(ROMol &mol,const Atom *atom){
       PRECONDITION(atom,"bad atom");
@@ -766,6 +669,17 @@ namespace RDKit{
         return;
       }
 
+      // later we're going to need ring information, get it now if we don't
+      // have it already:
+      if(!mol.getRingInfo()->isInitialized()){
+        MolOps::symmetrizeSSSR(mol);
+      }
+
+
+      std::cerr<<">>>>>>>>>>>>>\n";
+      std::cerr<<"assign stereochem\n";
+      mol.debugMol(std::cerr);
+      
       if(cleanIt){
         for(ROMol::AtomIterator atIt=mol.beginAtoms();
             atIt!=mol.endAtoms();++atIt){
@@ -815,7 +729,8 @@ namespace RDKit{
             atIt!=mol.endAtoms();++atIt){
           Atom *atom=*atIt;
           if(atom->getChiralTag()!=Atom::CHI_UNSPECIFIED
-             && !atom->hasProp("_CIPCode") ){
+             && !atom->hasProp("_CIPCode") &&
+             !Chirality::checkChiralAtomSpecialCases(mol,atom) ){
             atom->setChiralTag(Atom::CHI_UNSPECIFIED);
             
             // If the atom has an explicit hydrogen and no charge, that H
@@ -833,6 +748,12 @@ namespace RDKit{
         }        
       }
       mol.setProp("_StereochemDone",1,true);
+
+      std::cerr<<"---\n";
+      mol.debugMol(std::cerr);
+      std::cerr<<"<<<<<<<<<<<<<<<<\n";
+      
+
     }
 
     // Find bonds than can be cis/trans in a molecule and mark them as "any"

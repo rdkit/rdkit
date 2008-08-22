@@ -393,6 +393,8 @@ namespace RDKit{
        - if no SSSR rings are found on the molecule - MolOps::findSSSR() is called first
     */
     int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res);
+    //! \overload
+    int symmetrizeSSSR(ROMol &mol);
 
     //@}
 
