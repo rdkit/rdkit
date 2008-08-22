@@ -678,7 +678,7 @@ void testIterativeChirality(){
 
   // unless otherwise noted, the R/S and Z/E assignments here 
   // match Marvin and ChemDraw.
-  
+#if 0  
   {  // atom-chirality -> atom-chirality
     std::string cip;
 
@@ -933,7 +933,7 @@ void testIterativeChirality(){
     TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREONONE);
     delete m;
   }
-
+#endif
 
   {  // bond stereochemistry -> bond stereochemistry
     std::string cip;
