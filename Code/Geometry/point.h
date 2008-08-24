@@ -21,31 +21,6 @@
 #include <Numerics/Vector.h>
 #include <boost/smart_ptr.hpp>
 
-namespace RDGeom {
-  class Point3D;
-  class Point2D;
-  class Point;
-  class PointND;
-}
-
-
-std::ostream & operator<<(std::ostream& target, const RDGeom::Point &pt);
-
-RDGeom::Point3D operator+ (const RDGeom::Point3D& p1, const RDGeom::Point3D& p2);
-RDGeom::Point3D operator- (const RDGeom::Point3D& p1, const RDGeom::Point3D& p2);
-RDGeom::Point3D operator* (const RDGeom::Point3D& p1, const double v);
-RDGeom::Point3D operator/ (const RDGeom::Point3D& p1, const double v);
-
-RDGeom::Point2D operator+ (const RDGeom::Point2D& p1, const RDGeom::Point2D& p2);
-RDGeom::Point2D operator- (const RDGeom::Point2D& p1, const RDGeom::Point2D& p2);
-RDGeom::Point2D operator* (const RDGeom::Point2D& p1, const double v);
-RDGeom::Point2D operator/ (const RDGeom::Point2D& p1, const double v);
-
-RDGeom::PointND operator+ (const RDGeom::PointND& p1, const RDGeom::PointND& p2);
-RDGeom::PointND operator- (const RDGeom::PointND& p1, const RDGeom::PointND& p2);
-RDGeom::PointND operator* (const RDGeom::PointND& p1, const double v);
-RDGeom::PointND operator/ (const RDGeom::PointND& p1, const double v);
-
 
 namespace RDGeom {
 
@@ -255,7 +230,7 @@ namespace RDGeom {
       }
       double l=res.length();
       POSTCONDITION(l>0.0,"zero perpendicular");
-      res = res/l;
+      res /= l;
       return res;
     }
   };
@@ -264,7 +239,8 @@ namespace RDGeom {
   // plane of the first three points (pt1, pt2, pt3) and the plane of the 
   // last three points (pt2, pt3, pt4)
   // the computed angle is between 0 and PI
-  double computeDihedralAngle(Point3D pt1, Point3D pt2, Point3D pt3, Point3D pt4);
+  double computeDihedralAngle(const Point3D &pt1, const Point3D &pt2,
+                              const Point3D &pt3, const Point3D &pt4);
 
   class Point2D : public Point {
   public:
@@ -531,9 +507,22 @@ namespace RDGeom {
   typedef INT_POINT2D_MAP::iterator INT_POINT2D_MAP_I;
   typedef INT_POINT2D_MAP::const_iterator INT_POINT2D_MAP_CI;
 
+  std::ostream & operator<<(std::ostream& target, const RDGeom::Point &pt);
+
+  RDGeom::Point3D operator+ (const RDGeom::Point3D& p1, const RDGeom::Point3D& p2);
+  RDGeom::Point3D operator- (const RDGeom::Point3D& p1, const RDGeom::Point3D& p2);
+  RDGeom::Point3D operator* (const RDGeom::Point3D& p1, double v);
+  RDGeom::Point3D operator/ (const RDGeom::Point3D& p1, double v);
+
+  RDGeom::Point2D operator+ (const RDGeom::Point2D& p1, const RDGeom::Point2D& p2);
+  RDGeom::Point2D operator- (const RDGeom::Point2D& p1, const RDGeom::Point2D& p2);
+  RDGeom::Point2D operator* (const RDGeom::Point2D& p1, double v);
+  RDGeom::Point2D operator/ (const RDGeom::Point2D& p1, double v);
+
+  RDGeom::PointND operator+ (const RDGeom::PointND& p1, const RDGeom::PointND& p2);
+  RDGeom::PointND operator- (const RDGeom::PointND& p1, const RDGeom::PointND& p2);
+  RDGeom::PointND operator* (const RDGeom::PointND& p1, double v);
+  RDGeom::PointND operator/ (const RDGeom::PointND& p1, double v);
 }
-
-
-
 
 #endif
