@@ -491,6 +491,7 @@ namespace RDKit {
     PRECONDITION(dir==Bond::ENDUPRIGHT||dir==Bond::ENDDOWNRIGHT,"bad dir");
     PRECONDITION(atom==bond->getBeginAtom()||atom==bond->getEndAtom(),
                  "atom doesn't belong to bond");
+    //std::cerr<<"\t\t>sbdra :  bond "<<bond->getIdx()<<" atom "<<atom->getIdx()<<" dir: " << dir << " reverse: "<<reverse<<std::endl;
     Atom *oAtom;
     if(bond->getBeginAtom() != atom){
       reverse = !reverse;
@@ -502,6 +503,7 @@ namespace RDKit {
       dir = (dir==Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
     }
     bond->setBondDir(dir);
+    //std::cerr<<"\t\t\t\t -> dir "<<dir<<std::endl;
 
     // check for other single bonds around the other atom who need their
     // direction set and set it as demanded by the direction of this one:
@@ -522,6 +524,8 @@ namespace RDKit {
         }
         nbrBond->setBondDir(nbrDir);
         needsDir[nbrBond->getIdx()]=0;
+        //std::cerr<<"\t\t\t\t update bond "<<nbrBond->getIdx()<<" to dir "<< nbrDir<<std::endl;
+
       }
       ++beg;
     }
@@ -536,7 +540,7 @@ namespace RDKit {
     PRECONDITION(dblBond->getBondType() == Bond::DOUBLE, "not a double bond");
     PRECONDITION(conf,"no conformer");
 
-#if 1
+#if 0
     std::cerr << "**********************\n";
     std::cerr << "**********************\n";
     std::cerr << "**********************\n";
@@ -612,12 +616,13 @@ namespace RDKit {
     RDGeom::Point3D bond1P=conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
     RDGeom::Point3D bond2P=conf->getAtomPos(bond2->getOtherAtomIdx(dblBond->getEndAtomIdx()));
     double ang=RDGeom::computeDihedralAngle(bond1P,beginP,endP,bond2P);
-    bool sameDir;
+    bool sameTorsionDir;
     if(ang < RDKit::PI/2){
-      sameDir=false;
+      sameTorsionDir=false;
     } else {
-      sameDir=true;
+      sameTorsionDir=true;
     }
+    //std::cerr << "   angle: "<<ang<<" sameTorsionDir: " <<sameTorsionDir<<"\n";
 
 
     /*
@@ -647,26 +652,36 @@ namespace RDKit {
         starting at the double-bonded atom)
 
     */
+    bool reverseBondDir=sameTorsionDir;
+
+
     Atom *atom1=dblBond->getBeginAtom(),*atom2=dblBond->getEndAtom();
-    
     if(!needsDir[bond1->getIdx()]){
       if(!needsDir[bond2->getIdx()]){
         // check that we agree
       } else{
+        if(bond1->getBeginAtom()!=atom1){
+          reverseBondDir=!reverseBondDir;
+        }
         setBondDirRelativeToAtom(bond2,atom2,
-                                 bond1->getBondDir(),sameDir,
+                                 bond1->getBondDir(),
+                                 reverseBondDir,
                                  needsDir);
       }
     } else if(!needsDir[bond2->getIdx()]){
+      if(bond2->getBeginAtom()!=atom2){
+        reverseBondDir=!reverseBondDir;
+      }
       setBondDirRelativeToAtom(bond1,atom1,
-                               bond2->getBondDir(),sameDir,
+                               bond2->getBondDir(),
+                               reverseBondDir,
                                needsDir);
     } else {
       setBondDirRelativeToAtom(bond1,atom1,
                                Bond::ENDDOWNRIGHT,false,
                                needsDir);
       setBondDirRelativeToAtom(bond2,atom2,
-                               Bond::ENDDOWNRIGHT,sameDir,
+                               Bond::ENDDOWNRIGHT,reverseBondDir,
                                needsDir);
     }
     needsDir[bond1->getIdx()]=0;
@@ -683,7 +698,7 @@ namespace RDKit {
                                needsDir);
       needsDir[obond2->getIdx()]=0;
     }
-#if 1
+#if 0
     std::cerr << "  1:"<<bond1->getIdx()<<" ";
     if(obond1) std::cerr<<obond1->getIdx()<<std::endl;
     else  std::cerr<<"N/A"<<std::endl;

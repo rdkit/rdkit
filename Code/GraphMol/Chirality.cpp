@@ -676,9 +676,11 @@ namespace RDKit{
       }
 
 
+#if 0
       std::cerr<<">>>>>>>>>>>>>\n";
       std::cerr<<"assign stereochem\n";
       mol.debugMol(std::cerr);
+#endif
       
       if(cleanIt){
         for(ROMol::AtomIterator atIt=mol.beginAtoms();
@@ -749,10 +751,11 @@ namespace RDKit{
       }
       mol.setProp("_StereochemDone",1,true);
 
+#if 0
       std::cerr<<"---\n";
       mol.debugMol(std::cerr);
       std::cerr<<"<<<<<<<<<<<<<<<<\n";
-      
+#endif      
 
     }
 

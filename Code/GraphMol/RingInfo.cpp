@@ -41,7 +41,7 @@ namespace RDKit{
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_bondMembers.size() ){
-      return std::find(d_bondMembers[idx].begin(),d_bondMembers[idx].end(),size)!=d_bondMembers[idx].end();
+      return std::find(d_bondMembers[idx].begin(),d_bondMembers[idx].end(),static_cast<int>(size))!=d_bondMembers[idx].end();
     } else {
       return false;
     }
