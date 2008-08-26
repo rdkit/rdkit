@@ -1,45 +1,64 @@
-Required pieces for the RDKit software
+Required pieces to use the RDKit software
 Last update: $Date$
 By: Greg Landrum
 
-A. Required Python and the like:
-   1) Python 2.3 or later 
+A. Required Python packages:
+   1) Python 2.3 or later (2.5 recommended)
+
    2) NumPy (http://numpy.scipy.org/)
       binary versions can be downloaded here:
       http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103
-   3) [not required with Python2.5 and later] A database wrapper, one of:
-      - pyPgSQL (http://pypgsql.sourceforge.net/) 
-      - pysqlite2 (http://www.initd.org/tracker/pysqlite/wiki/pysqlite)
-   4) PIL: the python imaging library
+
+   3) PIL: the python imaging library
       (http://www.pythonware.com/products/pil/index.htm)
 
+   4) [not required with Python2.5 and later] A database wrapper, one of:
+      - pyPgSQL (http://pypgsql.sourceforge.net/) 
+      - pysqlite2 (http://www.initd.org/tracker/pysqlite/wiki/pysqlite)
+
+
 B. Optional Python:
-   1) PyQt: (http://www.riverbankcomputing.co.uk/pyqt/)
-      This is required to use the GUI tools.
-      Note that you need qt v3.x, not v4.x.
-   2) The egenix mx base package:
-      http://www.egenix.com/files/python/eGenix-mx-Extensions.html
-      also required for the GUI tools
-   3) aggdraw: a library for high-quality drawing in
+   1) aggdraw: a library for high-quality drawing in
       Python. Instructions for downloading are here:
       http://effbot.org/zone/aggdraw-index.htm
       The new (May 2008) drawing code has been tested with v1.2a3 of
-      aggdraw. 
+      aggdraw. Despite the alpha label, the code is stable and functional.
+
+   2) matplotlib: a library for plotting from python.
+      http://sourceforge.net/project/showfiles.php?group_id=80706&package_id=278194&release_id=617552
+
+   3) ipython : a very useful interactive shell (and much more) for python:
+      http://ipython.scipy.org/dist/
+
+   4) PyQt: (http://www.riverbankcomputing.co.uk/pyqt/)
+      This is only required to use the GUI tools.
+      Note that you need qt v3.x, not v4.x.
+
+   5) The egenix mx base package:
+      http://www.egenix.com/files/python/eGenix-mx-Extensions.html
+      also only required for the GUI tools
+
  
 C. Other required stuff
-   1) The boost libraries v1.33 or later (tested with 1.33, 1.34, and 1.35)
-   2) PostgreSQL (only if you're using pyPgSQL)
-  
-D. Optional, but useful things to have on windows:
-   1) Some form of chemdraw
-   2) MS-Excel 
-   3) cygwin
+   1) The boost shared libraries v1.33 or later (tested with 1.33-1.36)
 
-E. Required environment variables:
+   2) PostgreSQL (only if you're using pyPgSQL)
+
+  
+D. Required environment variables:
    - RDBASE pointing to the root of the distribution
    - PYTHONPATH: should include $RDBASE/Python
    - PATH: should include $RDBASE/bin
    - On Linux: LD_LIBRARY_PATH should include $RDBASE/bin
+
+
+E. WINDOWS ONLY: Optional, but useful things to have:
+   1) cygwin
+
+   2) Some form of chemdraw
+
+   3) MS-Excel 
+
 
 
 
