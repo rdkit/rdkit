@@ -172,35 +172,14 @@ namespace RDKit{
             const Bond *bond=mol.getBondBetweenAtoms(*nbr,*it);
             unsigned int count=static_cast<int>(ceil(bond->getBondTypeAsDouble()));
             localEntry.insert(localEntry.end(),count,rank);
-
-#if 0
-            unsigned int sLabel=0;
-            // push on an additional marker for the bond
-            // so that we can weight double bonds that have
-            // stereochemistry indicated
-            if(bond->getBondType()==Bond::DOUBLE){
-              if( bond->getStereo() == Bond::STEREOE ){
-                sLabel = 10;
-              } else if( bond->getStereo() == Bond::STEREOZ ){
-                sLabel = 20;
-              }
-            }
-            localEntry.push_back(sLabel);
-#endif
             ++nbr;
           }
           // add two zeroes for each coordinated H:
           // (as long as we're not a query atom)
           if(!mol.getAtomWithIdx(*it)->hasQuery()){
-#if 0
-            localEntry.insert(localEntry.end(),
-                              2*mol.getAtomWithIdx(*it)->getTotalNumHs(),
-                              0);
-#else
             localEntry.insert(localEntry.end(),
                               mol.getAtomWithIdx(*it)->getTotalNumHs(),
                               0);
-#endif
           }
 
           // get a sorted list of our neighbors' ranks:

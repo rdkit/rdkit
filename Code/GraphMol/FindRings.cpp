@@ -152,7 +152,7 @@ namespace FindRings {
     } // end of loop over all set of duplicate candidates
   }
 
-  bool compRings(const INT_VECT &ring1, const INT_VECT &ring2) {
+  bool compRingSize(const INT_VECT &ring1, const INT_VECT &ring2) {
     return (ring1.size() < ring2.size());
   }
 
@@ -160,7 +160,7 @@ namespace FindRings {
     // convert each ring in res from a list of atom ids to list of bonds id
 
     // sort on size
-    std::sort(res.begin(), res.end(), compRings);
+    std::sort(res.begin(), res.end(), compRingSize);
 
     // change the rings from atom IDs to bondIds
     VECT_INT_VECT brings;

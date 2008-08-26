@@ -46,6 +46,17 @@ namespace RankAtoms {
     return v1.first < v2.first;
   }
 
+  template <typename T>
+  class argless {
+  public:
+    argless(const T& c) : container(c) {};
+    bool operator() (unsigned int v1,unsigned int v2){
+      return container[v1]<container[v2];
+    }
+    const T &container;
+  };
+
+  
   //! ranks the entries in a vector
   /*!
     \param vect the vector to rank
@@ -56,21 +67,19 @@ namespace RankAtoms {
     PRECONDITION(res.size()>=vect.size(),"vector size mismatch");
     unsigned int nEntries = vect.size();
 
-    std::vector< std::pair<T,int> > sortedVect;
-    sortedVect.resize(nEntries);
-    for(unsigned int i=0;i<nEntries;++i){
-      sortedVect[i]=std::make_pair(vect[i],i);
-    }
-    std::sort(sortedVect.begin(),sortedVect.end(),pairLess<T>);
+    std::vector< unsigned int > indices(nEntries);
+    for(unsigned int i=0;i<nEntries;++i) indices[i]=i; 
+    std::sort(indices.begin(),indices.end(),argless< std::vector<T> >(vect) );
+
     int currRank=0;
-    T lastV = sortedVect[0].first;
+    T lastV = vect[indices[0]];
     for(unsigned int i=0;i<nEntries;++i){
-      const std::pair<T,int> &p = sortedVect[i];
-      if(p.first==lastV){
-        res[p.second] = currRank;
+      T v = vect[indices[i]];
+      if(v==lastV){
+        res[indices[i]] = currRank;
       } else {
-        res[p.second] = ++currRank;
-        lastV = p.first;
+        res[indices[i]] = ++currRank;
+        lastV = v;
       }
     }
   }    
