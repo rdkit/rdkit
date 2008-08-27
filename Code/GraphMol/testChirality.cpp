@@ -678,7 +678,7 @@ void testIterativeChirality(){
 
   // unless otherwise noted, the R/S and Z/E assignments here 
   // match Marvin and ChemDraw.
-#if 0  
+#if 1  
   {  // atom-chirality -> atom-chirality
     std::string cip;
 
@@ -699,6 +699,14 @@ void testIterativeChirality(){
     m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -722,6 +730,14 @@ void testIterativeChirality(){
     m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");
 
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -743,6 +759,16 @@ void testIterativeChirality(){
 
     TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
 
+#if 0 // this fails due to sf.net bug 1896935
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+#endif
+    
     delete m;
   }
 
@@ -764,6 +790,15 @@ void testIterativeChirality(){
 
     TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
 
+#if 0 // this fails due to sf.net bug 1896935
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+#endif    
     delete m;
   }
 
@@ -779,6 +814,15 @@ void testIterativeChirality(){
     TEST_ASSERT(!m->getAtomWithIdx(2)->hasProp("_CIPCode"));
     TEST_ASSERT(!m->getAtomWithIdx(4)->hasProp("_CIPCode"));
 
+#if 0 // this fails due to sf.net bug 1896935
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+#endif    
     delete m;
   }
 
@@ -797,6 +841,14 @@ void testIterativeChirality(){
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  // this value is from ChemDraw, Marvin doesn't tag it.
 
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -815,6 +867,14 @@ void testIterativeChirality(){
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");  // this value is from ChemDraw, Marvin doesn't tag it.
 
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -830,6 +890,15 @@ void testIterativeChirality(){
     TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREOE);
 
     TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -848,6 +917,14 @@ void testIterativeChirality(){
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");  // this value is from ChemDraw, Marvin doesn't tag it.
 
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -866,6 +943,14 @@ void testIterativeChirality(){
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  // this value is from ChemDraw, Marvin doesn't tag it.
 
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -888,6 +973,14 @@ void testIterativeChirality(){
 
     TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREOZ); // this value is from ChemDraw, Marvin doesn't tag it.
 
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -910,6 +1003,14 @@ void testIterativeChirality(){
 
     TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREOE); // this value is from ChemDraw, Marvin doesn't tag it.
 
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -931,6 +1032,15 @@ void testIterativeChirality(){
 
 
     TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREONONE);
+
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 #endif
@@ -948,6 +1058,14 @@ void testIterativeChirality(){
 
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getStereo()==Bond::STEREOE);
     
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -963,6 +1081,14 @@ void testIterativeChirality(){
     TEST_ASSERT(m->getBondBetweenAtoms(3,7)->getStereo()==Bond::STEREOE);
 
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getStereo()==Bond::STEREOZ);
+    
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
     
     delete m;
   }
@@ -980,6 +1106,14 @@ void testIterativeChirality(){
 
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getStereo()==Bond::STEREONONE);
     
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -996,6 +1130,14 @@ void testIterativeChirality(){
 
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getStereo()==Bond::STEREONONE);
     
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
     delete m;
   }
 
@@ -1007,7 +1149,7 @@ int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   testSmiles1();
   testMol1();
   testMol2();
