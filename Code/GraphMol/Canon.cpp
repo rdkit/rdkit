@@ -397,6 +397,8 @@ namespace Canon {
         cycles[possibleIdx].push_back(lowestRingIdx);
         ++lowestRingIdx;
 
+        molStack.push_back(MolStackElem(bond,
+                                        atom->getIdx()));
         molStack.push_back(MolStackElem(lowestRingIdx));
 
         // we need to add this bond (which closes the ring) to the traversal list for the
@@ -430,8 +432,6 @@ namespace Canon {
     for(unsigned int i=0;i<ringClosures.size();i++){
       int ringIdx=cycles[atomIdx][i];
       ringIdx += 1;
-      molStack.push_back(MolStackElem(mol.getBondWithIdx(ringClosures[i]),
-                                      atom->getIdx()));
       molStack.push_back(MolStackElem(ringIdx));
     }
     cycles[atomIdx].resize(0);
@@ -521,39 +521,57 @@ namespace Canon {
   }
 
   void clearBondDirs(ROMol &mol,Bond *refBond,Atom *fromAtom,
-                     INT_VECT &bondDirCounts){
+                     INT_VECT &bondDirCounts,const INT_VECT &bondVisitOrders){
     PRECONDITION(bondDirCounts.size()>=mol.getNumBonds(),"bad dirCount size");
     PRECONDITION(refBond,"bad bond");
     PRECONDITION(&refBond->getOwningMol()==&mol,"bad bond");
     PRECONDITION(fromAtom,"bad atom");
     PRECONDITION(&fromAtom->getOwningMol()==&mol,"bad bond");
-    
+
+    //std::cerr<<"cBD: bond: "<<refBond->getIdx()<<" atom: "<<fromAtom->getIdx()<<": ";
+
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol.getAtomBonds(fromAtom);
-    bool nbrPossible=false,cleared=false;
+    bool nbrPossible=false,adjusted=false;
     while(beg!=end){
-      if( pMap[*beg] != refBond && canHaveDirection(pMap[*beg])){
+      Bond *oBond=pMap[*beg];
+      if( oBond != refBond && canHaveDirection(oBond) ){
         nbrPossible=true;
-        if(bondDirCounts[pMap[*beg]->getIdx()] <= bondDirCounts[refBond->getIdx()]){
-          bondDirCounts[pMap[*beg]->getIdx()] = 0;
-          // no one is setting the direction here:
-          pMap[*beg]->setBondDir(Bond::NONE);
-          cleared=true;
+        if(bondDirCounts[oBond->getIdx()] <= bondDirCounts[oBond->getIdx()]){
+          adjusted=true;
+          bondDirCounts[oBond->getIdx()] -= 1;
+          if(!bondDirCounts[oBond->getIdx()]){
+            // no one is setting the direction here:
+            oBond->setBondDir(Bond::NONE);
+            //std::cerr<<oBond->getIdx()<<" ";
+          }
         }
       }
       beg++;
     }
-    if(nbrPossible && !cleared){
+    if(nbrPossible && !adjusted){
       // we found a neighbor that could have directionality set,
       // but it had a higher bondDirCount that us, so we must
-      // need to be cleared:
-      refBond->setBondDir(Bond::NONE);
+      // need to be adjusted:
+      bondDirCounts[refBond->getIdx()] -= 1;
+      if(!bondDirCounts[refBond->getIdx()]){
+        refBond->setBondDir(Bond::NONE);
+        //std::cerr<<refBond->getIdx()<<" ";
+      }
     }
+    //std::cerr<<std::endl;
   }
 
-  void removeRedundantBondDirSpecs(ROMol &mol,MolStack &molStack,INT_VECT bondDirCounts){
+  void removeRedundantBondDirSpecs(ROMol &mol,MolStack &molStack,INT_VECT &bondDirCounts,
+                                   const INT_VECT &bondVisitOrders){
     PRECONDITION(bondDirCounts.size()>=mol.getNumBonds(),"bad dirCount size");
+#if 0
+    mol.debugMol(std::cerr);
+    std::cerr<<"rRBDS: ";
+    std::copy(bondDirCounts.begin(),bondDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
+    std::cerr<<"\n";
+#endif    
     // find bonds that have directions indicated that are redundant:
     for(MolStack::iterator msI=molStack.begin();
         msI!=molStack.end(); msI++) {
@@ -576,7 +594,7 @@ namespace Canon {
             beg++;
           }
           if(dblBondAtom != NULL){
-            clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts);
+            clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts,bondVisitOrders);
           }
           dblBondAtom = NULL;
           boost::tie(beg,end) = mol.getAtomBonds(tBond->getEndAtom());
@@ -589,8 +607,11 @@ namespace Canon {
             beg++;
           }
           if(dblBondAtom != NULL){
-            clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts);
+            clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts,bondVisitOrders);
           }
+        } else if(tBond->getBondDir()!=Bond::NONE){
+          // we aren't supposed to have a direction set, but we do:
+          tBond->setBondDir(Bond::NONE);
         }
       }
     }
@@ -653,7 +674,7 @@ namespace Canon {
       }
     }
 
-    Canon::removeRedundantBondDirSpecs(mol,molStack,bondDirCounts);
+    Canon::removeRedundantBondDirSpecs(mol,molStack,bondDirCounts,bondVisitOrders);
   }
 };
 

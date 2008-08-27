@@ -1032,7 +1032,7 @@ void testSmilesSmarts(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[#6]:1:[#6]:[#6]:[#6]:[#6]:[#6]1");
+  TEST_ASSERT(sma=="[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1");
   delete mol;
 
 
@@ -1110,7 +1110,7 @@ void testMiscSmartsWriting(){
   std::string sma;
   
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing miscellaenous bits of SMARTS writing" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing miscellaneous bits of SMARTS writing" << std::endl;
 
   sma ="[13C]";
   mol = SmartsToMol(sma);

@@ -1634,7 +1634,7 @@ void testBug1842174(){
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol,true,false,-1);
   BOOST_LOG(rdInfoLog) << smi << std::endl;
-  TEST_ASSERT(smi=="O/N=C/1COC[N+]1=N\\O");
+  TEST_ASSERT(smi=="O/N=C1\\COC/[N+]1=N/O");
   // ^^^^^^^^^^^^^^^^^^^^^^
   // end of the pair
   // ----------------------

@@ -12,6 +12,7 @@
 #include <RDGeneral/RDLog.h>
 //#include <boost/log/functions.hpp>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -1145,11 +1146,61 @@ void testIterativeChirality(){
 }
 
 
+void testBondDirRemoval(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing that the removal of bond directions is correct: " << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+
+
+  {  
+    std::string cip;
+
+    std::string fName = rdbase+"/Code/GraphMol/test_data/stereoOrder1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==7);
+ 
+    TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereo()==Bond::STEREOE);
+
+    // on input all the single bonds are ENDUPRIGHT:
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondDir()==Bond::ENDUPRIGHT);
+    TEST_ASSERT(m->getBondBetweenAtoms(1,4)->getBondDir()==Bond::ENDUPRIGHT);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondDir()==Bond::ENDUPRIGHT);
+    TEST_ASSERT(m->getBondBetweenAtoms(5,6)->getBondDir()==Bond::ENDUPRIGHT);
+
+    std::string smi1=MolToSmiles(*m,true);
+    // generating smiles removes redundant bond direction information:
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondDir()==Bond::NONE);
+    // but leaves the others intact:
+    //   NOTE: the dirs here may change with
+    //   changes to the canonicalization algorithm
+    TEST_ASSERT(m->getBondBetweenAtoms(1,4)->getBondDir()==Bond::ENDUPRIGHT);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondDir()==Bond::ENDUPRIGHT);
+    TEST_ASSERT(m->getBondBetweenAtoms(5,6)->getBondDir()==Bond::ENDUPRIGHT);
+
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
+    delete m;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+#if 1
   testSmiles1();
   testMol1();
   testMol2();
@@ -1158,6 +1209,7 @@ int main(){
   testChiralityFrom3D();
 #endif
   testIterativeChirality();
+  testBondDirRemoval();
   
   return 0;
 }

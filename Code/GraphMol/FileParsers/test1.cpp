@@ -33,7 +33,7 @@ void test1(){
   TEST_ASSERT(smi=="C1=CC=CC=C1");  
 
   smi = MolToSmarts(*m);
-  TEST_ASSERT(smi=="[#6]-1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]1");
+  TEST_ASSERT(smi=="[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1");
 
 
   smi = "C1=CC=CC=C1";
@@ -736,6 +736,45 @@ void testMolFileChgLines(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testDblBondStereochem(){
+  BOOST_LOG(rdInfoLog) << "testing basic double bond stereochemistry" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"simple_z.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
+    delete m1;
+  }
+
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"simple_e.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    delete m1;
+  }
+
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"simple_either.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir()==Bond::EITHERDOUBLE);
+    delete m1;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 void testSymmetricDblBondStereochem(){
   // this was sf.net issue 1718794:
   // http://sourceforge.net/tracker/index.php?func=detail&aid=1718794&group_id=160139&atid=814650)
@@ -1377,6 +1416,7 @@ int main(int argc,char *argv[]){
   testIssue264();
   testIssue399();
   testMolFileChgLines();
+  testDblBondStereochem();
   testSymmetricDblBondStereochem();
   testRingDblBondStereochem();
   testMolFileRGroups();
