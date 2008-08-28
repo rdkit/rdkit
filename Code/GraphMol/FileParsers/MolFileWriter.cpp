@@ -33,11 +33,11 @@ namespace RDKit{
       res=atom->getSymbol();
     } else {
       if(!atom->hasProp("dummyLabel")){
-      	res = "*";
+      	res = "R";
       } else {
 	      std::string symb;
         atom->getProp("dummyLabel",symb);
-        if(symb=="*") res="*";
+        if(symb=="*") res="R";
         else if(symb=="X") res="R";
         else if(symb=="Xa") res="R1";
         else if(symb=="Xb") res="R2";

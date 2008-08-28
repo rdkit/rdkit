@@ -563,6 +563,8 @@ namespace RDKit{
         query->setQuery(makeAtomNullQuery());
         delete res;
         res=query;  
+        // queries have no implicit Hs:
+        res->setNoImplicit(true);
       } else {
         res->setAtomicNum(0);
       }
