@@ -327,13 +327,6 @@ namespace RDKit{
     bool checkChiralAtomSpecialCases(ROMol &mol,const Atom *atom){
       PRECONDITION(atom,"bad atom");
 
-      // we currently ignore chirality unless the atom is 4 coordinate
-      // and only has one hydrogen:
-      int nHs = atom->getTotalNumHs();
-      if(nHs>1 || atom->getDegree() + nHs !=4){
-        return false;
-      }
-      
       if(!mol.getRingInfo()->isInitialized()){
         VECT_INT_VECT sssrs;
         MolOps::symmetrizeSSSR(mol, sssrs);

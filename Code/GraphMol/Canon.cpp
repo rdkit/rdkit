@@ -630,12 +630,12 @@ namespace Canon {
     INT_VECT cyclesAvailable;
     INT_VECT_I viIt;
     cyclesAvailable.resize(MAX_CYCLES);
-    for(viIt=cyclesAvailable.begin();viIt!=cyclesAvailable.end();viIt++) *viIt=1;
+    for(viIt=cyclesAvailable.begin();viIt!=cyclesAvailable.end();++viIt) *viIt=1;
 
     VECT_INT_VECT  cycles;
     cycles.resize(nAtoms);
     VECT_INT_VECT_I vviIt;
-    for(vviIt=cycles.begin();vviIt!=cycles.end();vviIt++) vviIt->resize(0);
+    for(vviIt=cycles.begin();vviIt!=cycles.end();++vviIt) vviIt->resize(0);
 
     // make sure that we've done the bond stereo perception:
     MolOps::assignBondStereoCodes(mol,false);
@@ -652,11 +652,69 @@ namespace Canon {
     Canon::canonicalDFSTraversal(mol,atomIdx,-1,colors,cycles,
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
                                  bondVisitOrders);
+
+    // --------------
+    // Adjust the stereochemistry of ring atoms without chirality:
+
+    std::vector<Atom::ChiralType> origChis(mol.getNumAtoms());
+    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
+        atomIt!=mol.endAtoms();++atomIt){
+      origChis[(*atomIt)->getIdx()]=(*atomIt)->getChiralTag();
+    }
+    RingInfo *ringInfo=mol.getRingInfo();
+    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
+        atomIt!=mol.endAtoms();++atomIt){
+      if((*atomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+         !(*atomIt)->hasProp("_CIPCode") &&
+         ringInfo->numAtomRings((*atomIt)->getIdx())!=0){
+        bool adjusted=false;
+        // look to our ring atoms and see if anyone that has already been
+        // traversed has stereochem set:
+        for(VECT_INT_VECT_CI vivci=ringInfo->atomRings().begin();
+            vivci!=ringInfo->atomRings().end();++vivci){
+          if(std::find(vivci->begin(),vivci->end(),(*atomIt)->getIdx())!=vivci->end()){
+            for(INT_VECT_CI ivci=vivci->begin();ivci!=vivci->end();++ivci){
+              if( atomVisitOrders[*ivci]<atomVisitOrders[(*atomIt)->getIdx()] &&
+                  mol.getAtomWithIdx(*ivci)->getChiralTag()!=Atom::CHI_UNSPECIFIED ) {
+                // this atom has its stereochemistry set, use it to
+                // determine ours:
+                if(origChis[*ivci]!=origChis[(*atomIt)->getIdx()]){
+                  // not the same:
+                  switch(mol.getAtomWithIdx(*ivci)->getChiralTag()){
+                  case Atom::CHI_TETRAHEDRAL_CW:
+                    (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+                    break;
+                  case Atom::CHI_TETRAHEDRAL_CCW:
+                    (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+                    break;
+                  default:
+                    BOOST_LOG(rdWarningLog)<<"Warning: unsupported chirality found on atom "<<*ivci<<"."<<std::endl;
+                    (*atomIt)->setChiralTag(Atom::CHI_UNSPECIFIED);
+                  }
+                } else {
+                  //otherwise it's the same, so we don't have to do anything
+                }
+
+                adjusted = true;
+                break;
+              }
+            }
+          }
+          if(adjusted) break;
+        }
+        // we haven't set this using one of the other atoms in its rings, so pick
+        // an arbitrary value:
+        if(!adjusted){
+          (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+        }
+      }
+    }
+
     
     // remove the current directions on single bonds around double bonds:
     for(ROMol::BondIterator bondIt=mol.beginBonds();
         bondIt!=mol.endBonds();
-        bondIt++){
+        ++bondIt){
       Bond::BondDir dir = (*bondIt)->getBondDir();
       if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
         (*bondIt)->setBondDir(Bond::NONE);
@@ -665,7 +723,7 @@ namespace Canon {
 
     // traverse the stack and clean up double bonds
     for(MolStack::iterator msI=molStack.begin();
-        msI!=molStack.end(); msI++){
+        msI!=molStack.end(); ++msI){
       if(msI->type == MOL_STACK_BOND &&
          msI->obj.bond->getBondType() == Bond::DOUBLE &&
          msI->obj.bond->getStereo() > Bond::STEREOANY){

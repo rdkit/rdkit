@@ -579,9 +579,29 @@ void testChiralityCleanup(){
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
   delete mol;
 
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testRingStereochemistry(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test ring stereochemistry " << std::endl;
+
+  {
+    std::string smi = "C[C@H]1CC[C@H](C)CC1";
+    RWMol *m = SmilesToMol(smi);
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smi1);
+    TEST_ASSERT(m);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 void testChiralityFrom3D(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -760,7 +780,7 @@ void testIterativeChirality(){
 
     TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
 
-#if 0 // this fails due to sf.net bug 1896935
+#if 1 // this fails due to sf.net bug 1896935
     std::string smi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(smi1);
@@ -791,7 +811,7 @@ void testIterativeChirality(){
 
     TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
 
-#if 0 // this fails due to sf.net bug 1896935
+#if 1 // this fails due to sf.net bug 1896935
     std::string smi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(smi1);
@@ -815,7 +835,7 @@ void testIterativeChirality(){
     TEST_ASSERT(!m->getAtomWithIdx(2)->hasProp("_CIPCode"));
     TEST_ASSERT(!m->getAtomWithIdx(4)->hasProp("_CIPCode"));
 
-#if 0 // this fails due to sf.net bug 1896935
+#if 1 // this fails due to sf.net bug 1896935
     std::string smi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(smi1);
@@ -1189,8 +1209,6 @@ void testBondDirRemoval(){
     
     delete m;
   }
-
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -1208,6 +1226,7 @@ int main(){
   testChiralityCleanup();
   testChiralityFrom3D();
 #endif
+  testRingStereochemistry();
   testIterativeChirality();
   testBondDirRemoval();
   
