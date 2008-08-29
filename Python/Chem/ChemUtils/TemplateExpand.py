@@ -1,4 +1,4 @@
-# $Id: TemplateExpand.py 872 2008-05-15 15:32:13Z landrgr1 $
+# $Id: TemplateExpand.py 1053 2008-07-30 12:03:29Z landrgr1 $
 #
 #  Created by Greg Landrum August, 2006
 #
@@ -10,8 +10,9 @@ import Chem
 from Chem import Crippen
 from Chem import AllChem
 from Chem.ChemUtils.AlignDepict import AlignDepict
+
 import sys
-_version="0.7.1"
+_version="0.8.0"
 _greet="This is TemplateExpand version %s"%_version
 
 _usage="""
@@ -65,16 +66,23 @@ Usage: TemplateExpand [options] template <sidechains>
                          otherwise the names of the template and building blocks (from
                          the input files) will be combined to form a name for each
                          product molecule.
-                             
+
+   --3D :                Generate 3d coordinates for the product molecules instead of 2d coordinates,
+                         requires the --moltemplate option
+
+   --tether :            refine the 3d conformations using a tethered minimization
+
+
 """
 def Usage():
   import sys
   print >>sys.stderr,_usage
   sys.exit(-1)
 
+ 
 nDumped=0 
 def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName='',
-              resetCounter=True):
+              resetCounter=True,do3D=False,useTethers=False):
   global nDumped
   if resetCounter:
     nDumped=0
@@ -90,7 +98,7 @@ def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName
       if depth<len(sidechains)-1:
         for entry in _exploder(r,depth+1,sidechains,core,tchain,
                                autoNames=autoNames,templateName=templateName,
-                               resetCounter=0):
+                               resetCounter=0,do3D=do3D,useTethers=useTethers):
           yield entry
       else:
         try:
@@ -99,16 +107,20 @@ def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName
           import traceback
           traceback.print_exc()
           continue
-        if r.HasSubstructMatch(core):
-          try:
-            AlignDepict(r,core)
-          except:
-            import traceback
-            traceback.print_exc()
-            print >>sys.stderr,Chem.MolToSmiles(r)
+        if not do3D:
+          if r.HasSubstructMatch(core):
+            try:
+              AlignDepict(r,core)
+            except:
+              import traceback
+              traceback.print_exc()
+              print >>sys.stderr,Chem.MolToSmiles(r)
+          else:
+            print >>sys.stderr,'>>> no match'
+            AllChem.Compute2DCoords(r)
         else:
-          print >>sys.stderr,'>>> no match'
-          AllChem.Compute2DCoords(r)
+          r = Chem.AddHs(r)
+          AllChem.ConstrainedEmbed(r,core,useTethers)
         Chem.Kekulize(r)
         if autoNames:
           tName = "TemplateEnum: Mol_%d"%(nDumped+1)
@@ -139,14 +151,15 @@ def _exploder(mol,depth,sidechains,core,chainIndices,autoNames=True,templateName
           logger.info('Done %d molecules'%nDumped)
         yield r
         
-def Explode(template,sidechains,outF,autoNames=True):
+def Explode(template,sidechains,outF,autoNames=True,do3D=False,useTethers=False):
   chainIndices=[]
   core = Chem.DeleteSubstructs(template,Chem.MolFromSmiles('[*]'))
   try:
     templateName = template.GetProp('_Name')
   except KeyError:
     templateName="template"
-  for mol in _exploder(template,0,sidechains,core,chainIndices,autoNames=autoNames,templateName=templateName):
+  for mol in _exploder(template,0,sidechains,core,chainIndices,autoNames=autoNames,
+                       templateName=templateName,do3D=do3D,useTethers=useTethers):
     outF.write(Chem.MolToMolBlock(mol))
     for pN in mol.GetPropNames():
       print >>outF,'>  <%s>\n%s\n'%(pN,mol.GetProp(pN))
@@ -239,6 +252,7 @@ if __name__=='__main__':
     args,extras = getopt.getopt(sys.argv[1:],'o:h',[
       'sdf',
       'moltemplate',
+      'molTemplate',
       'smilesFileTemplate',
       'templateSmarts=',
       'redraw',
@@ -246,6 +260,9 @@ if __name__=='__main__':
       'useall',
       'useallmatches',
       'autoNames',
+      '3D','3d',
+      'tethers',
+      'tether',
       ])
   except:
     import traceback
@@ -265,12 +282,14 @@ if __name__=='__main__':
   templateSmarts=[]
   smilesFileTemplate=False
   autoNames=False
+  do3D=False
+  useTethers=False
   for arg,val in args:
     if arg=='-o':
       outF=val
     elif arg=='--sdf':
       sdLigands=True
-    elif arg=='--moltemplate':
+    elif arg in ('--moltemplate','--molTemplate'):
       molTemplate=True
     elif arg=='--smilesFileTemplate':
       smilesFileTemplate=True
@@ -284,11 +303,22 @@ if __name__=='__main__':
       autoNames=True
     elif arg in ('--useall','--useallmatches'):
       useAll=True
+    elif arg in ('--3D','--3d'):
+      do3D=True
+    elif arg in ('--tethers','--tether'):
+      useTethers=True
     elif arg=='-h':
       Usage()
       sys.exit(0)
 
+  if do3D:
+    if not molTemplate:
+      raise ValueError,'the --3D option is only useable in combination with --moltemplate'
+    if redrawTemplate:
+      logger.warning('--redrawTemplate does not make sense in combination with --molTemplate. removing it')
+      redrawTemplate=False
 
+    
   if templateSmarts:
     splitL = templateSmarts.split(' ')
     templateSmarts = []
@@ -300,10 +330,11 @@ if __name__=='__main__':
         i+=1
       replace = Chem.MolFromSmiles('[%d*]'%(i+1))
       templateSmarts.append((patt,replace))
-      
+
   if molTemplate:
+    removeHs = not do3D
     try:
-      s = Chem.SDMolSupplier(extras[0])
+      s = Chem.SDMolSupplier(extras[0],removeHs=removeHs)
       templates = [x for x in s]
     except:
       logger.error('Could not construct templates from input file: %s'%extras[0],
@@ -413,7 +444,8 @@ if __name__=='__main__':
     outF = sys.stdout
 
   for template in templates:
-    Explode(template,sidechains,outF,autoNames=autoNames)
+    Explode(template,sidechains,outF,autoNames=autoNames,do3D=do3D,
+            useTethers=useTethers)
   
 
 
