@@ -656,45 +656,52 @@ namespace Canon {
     // --------------
     // Adjust the stereochemistry of ring atoms without chirality:
 
+    std::vector< std::pair<int,Atom *> > atomsToConsider;
+    RingInfo *ringInfo=mol.getRingInfo();
     std::vector<Atom::ChiralType> origChis(mol.getNumAtoms());
     for(ROMol::AtomIterator atomIt=mol.beginAtoms();
         atomIt!=mol.endAtoms();++atomIt){
       origChis[(*atomIt)->getIdx()]=(*atomIt)->getChiralTag();
-    }
-    RingInfo *ringInfo=mol.getRingInfo();
-    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
-        atomIt!=mol.endAtoms();++atomIt){
       if((*atomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
          !(*atomIt)->hasProp("_CIPCode") &&
          ringInfo->numAtomRings((*atomIt)->getIdx())!=0){
+        atomsToConsider.push_back(std::make_pair(atomVisitOrders[(*atomIt)->getIdx()],
+                                                 *atomIt));
+      }
+    }
+    // sort the atoms we're concerned about by visit order:
+    if(atomsToConsider.size()){
+      std::sort(atomsToConsider.begin(),atomsToConsider.end());
+      for( std::vector< std::pair<int,Atom  *> >::iterator pairIt=atomsToConsider.begin();
+           pairIt!=atomsToConsider.end();++pairIt ){
+        Atom *atom=pairIt->second;
         bool adjusted=false;
         // look to our ring atoms and see if anyone that has already been
         // traversed has stereochem set:
         for(VECT_INT_VECT_CI vivci=ringInfo->atomRings().begin();
             vivci!=ringInfo->atomRings().end();++vivci){
-          if(std::find(vivci->begin(),vivci->end(),(*atomIt)->getIdx())!=vivci->end()){
+          if(std::find(vivci->begin(),vivci->end(),atom->getIdx())!=vivci->end()){
             for(INT_VECT_CI ivci=vivci->begin();ivci!=vivci->end();++ivci){
-              if( atomVisitOrders[*ivci]<atomVisitOrders[(*atomIt)->getIdx()] &&
+              if( atomVisitOrders[*ivci]<pairIt->first &&
                   mol.getAtomWithIdx(*ivci)->getChiralTag()!=Atom::CHI_UNSPECIFIED ) {
                 // this atom has its stereochemistry set, use it to
                 // determine ours:
-                if(origChis[*ivci]!=origChis[(*atomIt)->getIdx()]){
+                if(origChis[*ivci]==origChis[atom->getIdx()]){
+                  atom->setChiralTag(mol.getAtomWithIdx(*ivci)->getChiralTag());
+                } else {
                   // not the same:
                   switch(mol.getAtomWithIdx(*ivci)->getChiralTag()){
                   case Atom::CHI_TETRAHEDRAL_CW:
-                    (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
                     break;
                   case Atom::CHI_TETRAHEDRAL_CCW:
-                    (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
                     break;
                   default:
                     BOOST_LOG(rdWarningLog)<<"Warning: unsupported chirality found on atom "<<*ivci<<"."<<std::endl;
-                    (*atomIt)->setChiralTag(Atom::CHI_UNSPECIFIED);
+                    atom->setChiralTag(Atom::CHI_UNSPECIFIED);
                   }
-                } else {
-                  //otherwise it's the same, so we don't have to do anything
                 }
-
                 adjusted = true;
                 break;
               }
@@ -705,11 +712,25 @@ namespace Canon {
         // we haven't set this using one of the other atoms in its rings, so pick
         // an arbitrary value:
         if(!adjusted){
-          (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+          atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+        }
+
+        // now we have the fun of adjusting for the traversal order:
+        INT_LIST trueOrder;
+        atom->getProp("_TraversalBondIndexOrder",trueOrder);
+        int nSwaps =  atom->getPerturbationOrder(trueOrder);
+        if(nSwaps%2){
+          switch(atom->getChiralTag()){
+          case Atom::CHI_TETRAHEDRAL_CW:
+            atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+            break;
+          case Atom::CHI_TETRAHEDRAL_CCW:
+            atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+            break;
+          }
         }
       }
     }
-
     
     // remove the current directions on single bonds around double bonds:
     for(ROMol::BondIterator bondIt=mol.beginBonds();

@@ -589,15 +589,30 @@ void testRingStereochemistry(){
   BOOST_LOG(rdInfoLog) << "test ring stereochemistry " << std::endl;
 
   {
+    std::string smi = "B[C@H]1CC[C@H](C)CC1";
+    RWMol *m = SmilesToMol(smi);
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi1==smi);
+    delete m;
+  }
+  {
+    std::string smi = "C[C@H]1CC[C@H](F)CC1";
+    RWMol *m = SmilesToMol(smi);
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi1==smi);
+    delete m;
+  }
+  {
     std::string smi = "C[C@H]1CC[C@H](C)CC1";
     RWMol *m = SmilesToMol(smi);
     std::string smi1=MolToSmiles(*m,true);
     delete m;
-    m = SmilesToMol(smi1);
-    TEST_ASSERT(m);
-    std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
-    TEST_ASSERT(smi1==smi2);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi1==smi);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -836,11 +851,23 @@ void testIterativeChirality(){
     TEST_ASSERT(!m->getAtomWithIdx(4)->hasProp("_CIPCode"));
 
 #if 1 // this fails due to sf.net bug 1896935
+    std::cerr<<"m pre -----"<<std::endl;
+    m->debugMol(std::cerr);
+    std::cerr<<"-----"<<std::endl;
     std::string smi1=MolToSmiles(*m,true);
+    std::cerr<<"m post -----"<<std::endl;
+    m->debugMol(std::cerr);
+    std::cerr<<"-----"<<std::endl;
     delete m;
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
+    std::cerr<<"m2 pre -----"<<std::endl;
+    m->debugMol(std::cerr);
+    std::cerr<<"-----"<<std::endl;
     std::string smi2=MolToSmiles(*m,true);
+    std::cerr<<"m post -----"<<std::endl;
+    m->debugMol(std::cerr);
+    std::cerr<<"-----"<<std::endl;
     BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
     TEST_ASSERT(smi1==smi2);
 #endif    
@@ -1184,21 +1211,17 @@ void testBondDirRemoval(){
     TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREOZ);
     TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereo()==Bond::STEREOE);
 
-    // on input all the single bonds are ENDUPRIGHT:
-    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondDir()==Bond::ENDUPRIGHT);
-    TEST_ASSERT(m->getBondBetweenAtoms(1,4)->getBondDir()==Bond::ENDUPRIGHT);
-    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondDir()==Bond::ENDUPRIGHT);
-    TEST_ASSERT(m->getBondBetweenAtoms(5,6)->getBondDir()==Bond::ENDUPRIGHT);
+    // on input all the single bonds are in the same direction:
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondDir()==m->getBondBetweenAtoms(1,4)->getBondDir());
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondDir()==m->getBondBetweenAtoms(1,4)->getBondDir());
+    TEST_ASSERT(m->getBondBetweenAtoms(5,6)->getBondDir()==m->getBondBetweenAtoms(1,4)->getBondDir());
 
     std::string smi1=MolToSmiles(*m,true);
     // generating smiles removes redundant bond direction information:
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondDir()==Bond::NONE);
     // but leaves the others intact:
-    //   NOTE: the dirs here may change with
-    //   changes to the canonicalization algorithm
-    TEST_ASSERT(m->getBondBetweenAtoms(1,4)->getBondDir()==Bond::ENDUPRIGHT);
-    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondDir()==Bond::ENDUPRIGHT);
-    TEST_ASSERT(m->getBondBetweenAtoms(5,6)->getBondDir()==Bond::ENDUPRIGHT);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondDir()==m->getBondBetweenAtoms(1,4)->getBondDir());
+    TEST_ASSERT(m->getBondBetweenAtoms(5,6)->getBondDir()==m->getBondBetweenAtoms(1,4)->getBondDir());
 
     delete m;
     m = SmilesToMol(smi1);
