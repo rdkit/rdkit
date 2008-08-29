@@ -1,3 +1,5 @@
+## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
+
 # $Id$
 #
 #  Copyright (C) 2006-2008  greg Landrum and Rational Discovery LLC
@@ -9,7 +11,7 @@
 """
 import rdBase
 import RDConfig
-import numpy
+import numpy.oldnumeric as Numeric
 import DataStructs
 from Geometry import rdGeometry
 from Chem import *
@@ -25,20 +27,21 @@ from rdChemReactions import *
 import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
-
+import numpy
 
 def TransformMol(mol,tform):
   """  Applies the transformation to a molecule and sets it up with
   a single conformer
 
   """
+  import numpy.oldnumeric as Numeric
   newConf = Conformer()
   newConf.SetId(0)
   refConf = mol.GetConformer()
   for i in range(refConf.GetNumAtoms()):
     pos = list(refConf.GetAtomPosition(i))
     pos.append(1.0)
-    newPos = numpy.dot(tform,numpy.array(pos))
+    newPos = Numeric.dot(tform,Numeric.array(pos))
     newConf.SetAtomPosition(i,list(newPos)[:3])
   mol.RemoveAllConformers()
   mol.AddConformer(newConf)
@@ -78,7 +81,7 @@ def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
     for j in range(i+1,nAts):
       pj = conf.GetAtomPosition(j)
       dm.append((pi-pj).Length())
-  dm = numpy.array(dm)
+  dm = Numeric.array(dm)
   apply(Compute2DCoordsMimicDistmat,(mol,dm),kwargs)
       
 def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
@@ -149,6 +152,62 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
     prodSets = reaction.RunReactants(chains)
     for prods in prodSets:
       yield prods
+
+
+
+def ConstrainedEmbed(mol,core,useTethers,randomseed=2342):
+  match = mol.GetSubstructMatch(core)
+  if not match:
+    raise ValueError,"molecule doesn't match the core"
+  coordMap={}
+  coreConf = core.GetConformer()
+  for i,idxI in enumerate(match):
+    corePtI = coreConf.GetAtomPosition(i)
+    coordMap[idxI]=corePtI
+
+  ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed)
+  if ci<0:
+    logger.error('could not embed molecule %s, no coordinates generated.'%mol.GetProp('_Name'))
+
+  algMap=[]
+  for i,itm in enumerate(match):
+    algMap.append((itm,i))
+
+  if not useTethers:
+    # clean up the conformation
+    ff = UFFGetMoleculeForceField(mol,confId=0)
+    for i,idxI in enumerate(match):
+      for j in range(i+1,len(match)):
+        idxJ = match[j]
+        d = coordMap[idxI].Distance(coordMap[idxJ])
+        ff.AddDistanceConstraint(idxI,idxJ,d,d,100.)
+    ff.Initialize()
+    n=4
+    more=ff.Minimize()
+    while more and n:
+      more=ff.Minimize()
+      n-=1
+    # rotate the embedded conformation onto the core:
+    ssd =AlignMol(mol,core,atomMap=algMap)
+  else:
+    # rotate the embedded conformation onto the core:
+    ssd = AlignMol(mol,core,atomMap=algMap)
+    ff =  UFFGetMoleculeForceField(mol,confId=0)
+    conf = core.GetConformer()
+    for i in range(core.GetNumAtoms()):
+      p =conf.GetAtomPosition(i)
+      pIdx=ff.AddExtraPoint(p.x,p.y,p.z,fixed=True)-1
+      ff.AddDistanceConstraint(pIdx,match[i],0,0,100.)
+    ff.Initialize()
+    n=4
+    more=ff.Minimize(energyTol=1e-4,forceTol=1e-3)
+    while more and n:
+      more=ff.Minimize(energyTol=1e-4,forceTol=1e-3)
+      n-=1
+    # realign
+    ssd = AlignMol(mol,core,atomMap=algMap)
+  print numpy.sqrt(ssd/len(algMap))
+  return mol
 
 
 #------------------------------------
