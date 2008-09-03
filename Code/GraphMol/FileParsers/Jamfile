@@ -7,7 +7,7 @@ lib FileParsers : MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp
   SDFileParser.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp 
   SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp TDTMolSupplier.cpp 
   TplFileParser.cpp TplFileWriter.cpp
-  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs 
+  ..//GraphMol ../SmilesParse//SmilesParse ../..//RDGeneral//RDGeneral ../../Geometry//RDGeometry
   : <toolset>msvc:<link>static ;
 install lib-install : FileParsers : <location>$(RDBASE)/bin ;
 

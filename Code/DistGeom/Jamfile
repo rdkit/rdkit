@@ -6,6 +6,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib DistGeom : DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp 
   ChiralViolationContrib.cpp
+../Numerics/EigenSolvers//EigenSolvers ../ForceField//ForceField ../Geometry//RDGeometry ../DataStructs//DataStructs ../RDGeneral//RDGeneral
 	:  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : DistGeom : <location>$(RDBASE)/bin ;
 

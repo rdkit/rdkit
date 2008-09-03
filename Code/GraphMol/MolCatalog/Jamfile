@@ -4,6 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib MolCatalog : MolCatalogEntry.cpp MolCatalogParams.cpp
+ ..//GraphMol ../../Catalogs//Catalogs ../../RDGeneral//RDGeneral
   : <toolset>msvc:<link>static ;
 install lib-install : MolCatalog : <location>$(RDBASE)/bin ;
 

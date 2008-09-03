@@ -4,6 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib MolTransforms : MolTransforms.cpp
+ ..//GraphMol ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../../Numerics/EigenSolvers//EigenSolvers
   :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : MolTransforms : <location>$(RDBASE)/bin ;
 

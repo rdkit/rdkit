@@ -4,6 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Depictor : RDDepictor.cpp EmbeddedFrag.cpp DepictUtils.cpp
+   ..//GraphMol ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry
   :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : Depictor : <location>$(RDBASE)/bin ;
 

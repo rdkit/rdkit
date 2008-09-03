@@ -5,6 +5,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib MolChemicalFeatures : MolChemicalFeature.cpp MolChemicalFeatureDef.cpp 
   MolChemicalFeatureFactory.cpp FeatureParser.cpp
+..//GraphMol ../Substruct//Substruct ../SmilesParse//SmilesParse ../../RDGeneral//RDGeneral
   :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : MolChemicalFeatures : <location>$(RDBASE)/bin ;
 

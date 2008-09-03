@@ -35,6 +35,5 @@ CALGORITHMS_API void initClustering(void);
 
 
 
-#include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 

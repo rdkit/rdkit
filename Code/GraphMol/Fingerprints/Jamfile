@@ -4,7 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Fingerprints : Fingerprints.cpp
-  :  <toolset>msvc:<link>static ; # <link>static ;
+ ..//GraphMol ../Subgraphs//Subgraphs ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral
+:  <toolset>msvc:<link>static ; # <link>static ;
 install lib-install : Fingerprints : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp Fingerprints

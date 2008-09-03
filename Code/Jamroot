@@ -25,6 +25,8 @@ project RDKit
           <toolset>gcc:<cflags>-Wno-unused-function
           <toolset>gcc:<cflags>-fno-strict-aliasing
           <toolset>msvc:<define>WIN32
+          <toolset>darwin:<include>/System/Library/Frameworks/Python.framework/Versions/2.5/Extras/lib/python/numpy/core/include
+
 	  <address-model>64:<cflags>-fPIC
         : default-build release ;
 

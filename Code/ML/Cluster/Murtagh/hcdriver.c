@@ -3,10 +3,10 @@
    hand-modified by gL, but it's still ugly as sin
 
 */
+#include <stdlib.h>
 
 #include "f2c.h"
-#include <malloc.h>
-#include <assert.h>
+
 
 int distdriver_(n, len, d__, iopt, ia, ib, crit)
 integer *n, *len;

@@ -4,6 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib ForceFieldHelpers : UFF/AtomTyper.cpp UFF/Builder.cpp ../SmilesParse//SmilesParse ../Substruct//Substruct ..//GraphMol
+ ..//GraphMol ../../ForceField//ForceField ../../RDGeneral//RDGeneral ../../Numerics/Optimizer//Optimizer ../../Geometry//RDGeometry
   :  <toolset>msvc:<link>static ; # <link>static ;
 install lib-install : ForceFieldHelpers : <location>$(RDBASE)/bin ;
 

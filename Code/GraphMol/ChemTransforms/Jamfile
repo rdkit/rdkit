@@ -4,6 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib ChemTransforms : ChemTransforms.cpp
+..//GraphMol  ../../RDGeneral//RDGeneral ../Substruct//Substruct
   : <toolset>msvc:<link>static ;
 install lib-install : ChemTransforms : <location>$(RDBASE)/bin ;
 

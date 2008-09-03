@@ -5,6 +5,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib FragCatalog : FragCatalogUtils.cpp FragCatGenerator.cpp FragCatalogEntry.cpp 
   FragCatParams.cpp FragFPGenerator.cpp
+ ..//GraphMol ../Subgraphs//Subgraphs ../Substruct//Substruct ../SmilesParse//SmilesParse ../../Catalogs//Catalogs ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral
   : <toolset>msvc:<link>static ;
 install lib-install : FragCatalog : <location>$(RDBASE)/bin ;
 

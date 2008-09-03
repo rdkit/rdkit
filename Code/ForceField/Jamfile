@@ -6,7 +6,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib ForceField : ForceField.cpp UFF/AngleBend.cpp UFF/BondStretch.cpp 
     UFF/Nonbonded.cpp UFF/TorsionAngle.cpp UFF/DistanceConstraint.cpp 
-    UFF/Params.cpp ../Geometry//RDGeometry
+    UFF/Params.cpp 
+../Numerics/Optimizer//Optimizer ../Geometry//RDGeometry ../RDGeneral//RDGeneral
 	:  <toolset>msvc:<link>static ; # <link>static ;
 install lib-install : ForceField : <location>$(RDBASE)/bin ;
 

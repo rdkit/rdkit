@@ -3,7 +3,9 @@ project Numerics/EigenSolvers : : ;
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
-lib EigenSolvers : PowerEigenSolver.cpp :  <toolset>msvc:<link>static ; #<link>static ;
+lib EigenSolvers : PowerEigenSolver.cpp 
+../../Geometry//RDGeometry ../../RDGeneral//RDGeneral
+:  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : EigenSolvers : <location>$(RDBASE)/bin ;
 
 exe main : testEigenSolvers.cpp EigenSolvers /RDKit//RDGeneral /RDKit//lapacklibs : 
