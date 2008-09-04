@@ -80,7 +80,7 @@ namespace RDKit {
       if(totalValence + nouter - chg < 8){
         // we're below an octet, so we need to think
         // about radicals:
-        int numRadicals = 8 - (nouter-chg) - totalValence;
+        int numRadicals = at->getNumRadicalElectrons();
         int numLonePairs = (numFreeElectrons - numRadicals)/2;
         return deg + numLonePairs + numRadicals;
       } else {

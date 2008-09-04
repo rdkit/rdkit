@@ -115,11 +115,7 @@ namespace RDKit {
         int chrg = at->getFormalCharge();
         dv += chrg;
         int tbo = at->getExplicitValence() + at->getImplicitValence();
-        int nRadicals=0;
-        nRadicals = 8 - (PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum()) - chrg) - tbo;
-        if(nRadicals<0) nRadicals=0;
-
-        
+        int nRadicals=at->getNumRadicalElectrons();
         
         const INT_VECT &valList =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());

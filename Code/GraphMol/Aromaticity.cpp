@@ -545,11 +545,7 @@ namespace RDKit {
       // subtract the charge to get the true number of lone pair electrons:
       nlp -= at->getFormalCharge(); 
 
-      int tbo = at->getExplicitValence() + at->getImplicitValence();
-      int nRadicals=0;
-      nRadicals = 8 - (PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum()) - at->getFormalCharge()) - tbo;
-      if(nRadicals<0) nRadicals=0;
-
+      int nRadicals=at->getNumRadicalElectrons();
       
       // num electrons available for donation into the pi system:
       int res = (dv-degree) + nlp - nRadicals;

@@ -160,6 +160,14 @@ namespace RDKit{
     */
     int getImplicitValence() const;
 
+    //! returns the number of radical electrons for this Atom
+    /*!
+      <b>Notes:</b>
+        - requires an owning molecule
+    */
+    unsigned int getNumRadicalElectrons() const;
+
+
     //! returns the formal charge of this atom
     const int getFormalCharge() const { return d_formalCharge; };
     //! set's the formal charge of this atom
@@ -170,7 +178,7 @@ namespace RDKit{
     void setNoImplicit( bool what ) { df_noImplicit = what; };
     //! returns the \c noImplicit flag
     bool getNoImplicit() const { return df_noImplicit; };
-
+    
     //! sets our number of explict Hs
     void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; };
     //! returns our number of explict Hs

@@ -164,6 +164,17 @@ int Atom::getExplicitValence() const {
   return d_explicitValence;
 }
 
+unsigned int Atom::getNumRadicalElectrons() const {
+  PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
+  int totalValence = getExplicitValence() + getImplicitValence();
+  int chg = getFormalCharge();
+  int nOuter = PeriodicTable::getTable()->getNouterElecs(getAtomicNum());
+  int numRadicals = 8 - (nOuter - chg) - totalValence;
+  if(numRadicals<0) return 0;
+  else return static_cast<unsigned int>(numRadicals);
+}
+
+  
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   unsigned int res;
