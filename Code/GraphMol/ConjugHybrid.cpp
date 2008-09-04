@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -67,12 +67,26 @@ namespace RDKit {
     }
 
     int numBondsPlusLonePairs(Atom *at) {
+      PRECONDITION(at,"bad atom");
+      int deg = at->getTotalDegree();
+      if (at->getAtomicNum()<=1){
+        return deg;
+      }
       int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
-      int sbo = at->getDegree() + at->getTotalNumHs();
-      int nused = at->getExplicitValence() + at->getImplicitValence();
+      int totalValence = at->getExplicitValence() + at->getImplicitValence();
       int chg = at->getFormalCharge();
-      int norbs = sbo + ((nouter - chg - nused)/2);
-      return norbs;
+
+      int numFreeElectrons=nouter - (totalValence+chg);
+      if(totalValence + nouter - chg < 8){
+        // we're below an octet, so we need to think
+        // about radicals:
+        int numRadicals = 8 - (nouter-chg) - totalValence;
+        int numLonePairs = (numFreeElectrons - numRadicals)/2;
+        return deg + numLonePairs + numRadicals;
+      } else {
+        int numLonePairs= numFreeElectrons/2;
+        return deg + numLonePairs;
+      }
     }
   } //end of utility namespace
 
@@ -144,7 +158,7 @@ namespace RDKit {
 	  //   has norbs = 4, and a conjugated bond, but clearly should
 	  //   not be SP2)
 	  // This is Issue276
-	  if(!MolOps::atomHasConjugatedBond(*ai) || (*ai)->getDegree()>3){
+	  if((*ai)->getDegree()>3 || !MolOps::atomHasConjugatedBond(*ai)){
 	    (*ai)->setHybridization(Atom::SP3);
 	  } else {
 	    (*ai)->setHybridization(Atom::SP2);

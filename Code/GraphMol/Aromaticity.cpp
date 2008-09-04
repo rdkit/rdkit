@@ -452,13 +452,12 @@ namespace {
     int nelec = MolOps::countAtomElec(at);
     int who = -1;
     const ROMol &mol = at->getOwningMol();
-
     if (nelec < 0) {
       res = NoElectronDonorType;
     }
     else if (nelec == 0) {
       if (incidentNonCyclicMultipleBond(at, who)) {
-        // This is border-line no electron to spare but may have an empty p-orbital 
+        // This is borderline:  no electron to spare but may have an empty p-orbital 
         // Not sure if this should return vacantElectronDonorType 
         // FIX: explicitly doing this as a note for potential problems
         // 
@@ -546,8 +545,14 @@ namespace RDKit {
       // subtract the charge to get the true number of lone pair electrons:
       nlp -= at->getFormalCharge(); 
 
+      int tbo = at->getExplicitValence() + at->getImplicitValence();
+      int nRadicals=0;
+      nRadicals = 8 - (PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum()) - at->getFormalCharge()) - tbo;
+      if(nRadicals<0) nRadicals=0;
+
+      
       // num electrons available for donation into the pi system:
-      int res = (dv-degree) + nlp;
+      int res = (dv-degree) + nlp - nRadicals;
 
       if(res>1){
         // if we have an incident bond with order higher than 2,

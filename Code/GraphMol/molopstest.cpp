@@ -1971,7 +1971,7 @@ void testHsAndAromaticity() {
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   //std::cerr << mol->getAtomWithIdx(0)->getHybridization() << std::endl;
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization()==Atom::SP2);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getImplicitValence()==0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
   TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
@@ -2489,8 +2489,30 @@ void testAromaticityEdges()
   TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
   TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
   delete m;
-  
 
+  // ------
+  // this was sf.net bug 2091839
+  
+  smi = "c1cccc[c]1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
+  
+  smi = "C1=CC=CC=[C]1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
+
+  smi = "c1cccc[n+]1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -2558,6 +2580,200 @@ void testSFIssue1968608()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testHybridization()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing hybridization assignment " << std::endl;
+
+  {
+    RWMol *m;
+    std::string smi="CCC";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="CNC";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="COC";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[C-2]C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[CH-]C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[CH]C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[C]C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[C-]C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[CH+]C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="CC=C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="CN=C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[C-]=C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[C]=C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[N+]=C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+
+  
+  {
+    RWMol *m;
+    std::string smi="C#C";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C#[C-]";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C#[C]";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[O]";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smi="C[N-]";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    delete m;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -2597,10 +2813,11 @@ int main(){
   testChiralityAndRemoveHs();
   test11();
   testSFIssue1894348();
-#endif
-  testAromaticityEdges();
   testSFIssue1942657();
   testSFIssue1968608();
+  testHybridization();
+#endif
+  testAromaticityEdges();
   
   return 0;
 }

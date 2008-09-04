@@ -115,6 +115,12 @@ namespace RDKit {
         int chrg = at->getFormalCharge();
         dv += chrg;
         int tbo = at->getExplicitValence() + at->getImplicitValence();
+        int nRadicals=0;
+        nRadicals = 8 - (PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum()) - chrg) - tbo;
+        if(nRadicals<0) nRadicals=0;
+
+        
+        
         const INT_VECT &valList =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
         unsigned int vi = 1;
@@ -144,7 +150,8 @@ namespace RDKit {
           ++beg;
         }
         sbo +=  at->getTotalNumHs();
-      
+        sbo += nRadicals;
+
         if (dv==(sbo + 1) || !at->getAtomicNum() ) {
           dBndCands[*adx]=1;
         } 
