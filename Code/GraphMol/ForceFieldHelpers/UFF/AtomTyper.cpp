@@ -25,6 +25,26 @@ namespace RDKit {
 
         // FIX: come up with some way of handling metals here
         switch(atom->getAtomicNum()){
+        case 12: // Mg
+          switch(totalValence){
+          case 2:
+            atomKey += "+2";
+            break;
+          default:
+            if(tolerateChargeMismatch) atomKey += "+2";
+            BOOST_LOG(rdErrorLog) << "UFFTYPER: Unrecognized charge state for atom: "<< atom->getIdx() << std::endl;
+          }
+          break;
+        case 13: // Al
+          if(totalValence!=3){
+            BOOST_LOG(rdErrorLog) << "UFFTYPER: Unrecognized charge state for atom: "<< atom->getIdx() << std::endl;
+          }
+          break;
+        case 14: // Si
+          if(totalValence!=4){
+            BOOST_LOG(rdErrorLog) << "UFFTYPER: Unrecognized charge state for atom: "<< atom->getIdx() << std::endl;
+          }
+          break;
         case 15: // P
           switch(totalValence){
           case 3:
@@ -203,6 +223,9 @@ namespace RDKit {
           if( table->getNouterElecs(atNum)!=1 &&
               table->getNouterElecs(atNum)!=7 ){
             switch(atom->getAtomicNum()){
+            case 12:
+            case 13:
+            case 14:
             case 15:
             case 50:
             case 51:
@@ -213,13 +236,13 @@ namespace RDKit {
             case 84:
               atomKey += '3';
               if(atom->getHybridization()!=Atom::SP3){
-                BOOST_LOG(rdWarningLog) << "UFFTYPER: Warning, hybridization set to SP3 for atom "<< atom->getIdx() << std::endl;
+                BOOST_LOG(rdWarningLog) << "UFFTYPER: Warning: hybridization set to SP3 for atom "<< atom->getIdx() << std::endl;
               }
               break;
             case 80:
               atomKey += '1';
               if(atom->getHybridization()!=Atom::SP){
-                BOOST_LOG(rdWarningLog) << "UFFTYPER: Warning, hybridization set to SP for atom "<< atom->getIdx() << std::endl;
+                BOOST_LOG(rdWarningLog) << "UFFTYPER: Warning: hybridization set to SP for atom "<< atom->getIdx() << std::endl;
               }
               break;
             default:

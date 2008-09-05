@@ -157,7 +157,41 @@ void testUFFTyper2(){
     TEST_ASSERT((*it));
   }
   
-  
+
+  // connected with sf.net bug 2094445 
+  mol = SmilesToMol("[SiH2]=C");
+  TEST_ASSERT(mol);
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(0));
+  TEST_ASSERT(key=="Si3");
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(1));
+  TEST_ASSERT(key=="C_2");
+
+  mol = SmilesToMol("[AlH]=C");
+  TEST_ASSERT(mol);
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(0));
+  TEST_ASSERT(key=="Al3");
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(1));
+  TEST_ASSERT(key=="C_2");
+
+  mol = SmilesToMol("[Mg]=C");
+  TEST_ASSERT(mol);
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(0));
+  TEST_ASSERT(key=="Mg3+2");
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(1));
+  TEST_ASSERT(key=="C_2");
+
+  mol = SmilesToMol("[SiH3][Si]([SiH3])=C");
+  TEST_ASSERT(mol);
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(0));
+  TEST_ASSERT(key=="Si3");
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(1));
+  TEST_ASSERT(key=="Si3");
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(2));
+  TEST_ASSERT(key=="Si3");
+  key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(3));
+  TEST_ASSERT(key=="C_2");
+
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
