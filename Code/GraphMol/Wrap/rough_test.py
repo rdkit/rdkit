@@ -678,13 +678,13 @@ class TestCase(unittest.TestCase):
     smi = Chem.MolToSmiles(query)
     self.failUnless(smi=='c1ccccc1')
     smi = Chem.MolToSmarts(query)
-    self.failUnless(smi=='[#6]:1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]1')
+    self.failUnless(smi=='[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1',smi)
 
     query = Chem.MolFromMolFile(fileN,sanitize=False)
     smi = Chem.MolToSmiles(query)
     self.failUnless(smi=='C1=CC=CC=C1')
     smi = Chem.MolToSmarts(query)
-    self.failUnless(smi=='[#6]-1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]1')
+    self.failUnless(smi=='[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
     smi = "C1=CC=CC=C1"
     mol = Chem.MolFromSmiles(smi,0)
     self.failUnless(mol.HasSubstructMatch(query))

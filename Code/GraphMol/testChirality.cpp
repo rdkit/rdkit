@@ -592,26 +592,37 @@ void testRingStereochemistry(){
     std::string smi = "B[C@H]1CC[C@H](C)CC1";
     RWMol *m = SmilesToMol(smi);
     std::string smi1=MolToSmiles(*m,true);
-    delete m;
     BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi1==smi);
+    delete m;
+    smi="B[C@@H]1CC[C@@H](C)CC1";
+    m = SmilesToMol(smi);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi2==smi1);
     delete m;
   }
   {
     std::string smi = "C[C@H]1CC[C@H](F)CC1";
     RWMol *m = SmilesToMol(smi);
     std::string smi1=MolToSmiles(*m,true);
-    delete m;
     BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
     TEST_ASSERT(smi1==smi);
+    delete m;
+    smi="C[C@@H]1CC[C@@H](F)CC1";
+    m = SmilesToMol(smi);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi2==smi1);
     delete m;
   }
   {
     std::string smi = "C[C@H]1CC[C@H](C)CC1";
     RWMol *m = SmilesToMol(smi);
+    m->debugMol(std::cerr);
     std::string smi1=MolToSmiles(*m,true);
-    delete m;
     BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
+    m->debugMol(std::cerr);
     TEST_ASSERT(smi1==smi);
     delete m;
   }

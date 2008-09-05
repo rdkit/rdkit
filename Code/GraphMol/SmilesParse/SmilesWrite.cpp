@@ -117,7 +117,39 @@ namespace RDKit{
         }
         std::cout << std::endl;
 #endif    
-        int nSwaps =  atom->getPerturbationOrder(trueOrder);
+        int nSwaps;
+        if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") ) {
+          // this is a special case where the atom has stereochem indicated
+          // but isn't a chiral center. This can happen in ring stereochem
+          // situations. Instead of using the bond indices to collect
+          // perturbation order (as is normal), we use the priorities of the
+          // atoms at the end of the bonds
+          INT_LIST ref;
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = atom->getOwningMol().getAtomBonds(atom);
+          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
+          while(beg!=end){
+            const Atom *endAtom=pMap[*beg]->getOtherAtom(atom);
+            int cipRank=0;
+            if(endAtom->hasProp("_CIPRank")){
+              endAtom->getProp("_CIPRank",cipRank);
+            }
+            ref.push_back(cipRank);
+            ++beg;
+          }
+          for(INT_LIST::iterator oIt=trueOrder.begin();oIt!=trueOrder.end();
+              ++oIt){
+            const Atom *endAtom=atom->getOwningMol().getBondWithIdx(*oIt)->getOtherAtom(atom);
+            int cipRank=0;
+            if(endAtom->hasProp("_CIPRank")){
+              endAtom->getProp("_CIPRank",cipRank);
+            }
+            *oIt=cipRank;
+          }
+          nSwaps=static_cast<int>(countSwapsToInterconvert(ref,trueOrder));
+        } else {
+          nSwaps =  atom->getPerturbationOrder(trueOrder);
+        }
 
         if(atom->getDegree()==3){
           // Does the atom have a preceder in the original ordering?
