@@ -715,6 +715,7 @@ namespace Canon {
           atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
         }
 
+#if 1    
         // now we have the fun of adjusting for the traversal order:
         INT_LIST trueOrder;
         atom->getProp("_TraversalBondIndexOrder",trueOrder);
@@ -729,6 +730,7 @@ namespace Canon {
             break;
           }
         }
+#endif
       }
     }
     

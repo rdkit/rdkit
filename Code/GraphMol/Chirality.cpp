@@ -336,26 +336,40 @@ namespace RDKit{
       if(ringInfo->numAtomRings(atom->getIdx())){
         // the atom is in a ring, so the "chirality" specification may actually
         // be handling ring stereochemistry, check for another chiral tagged
-        // atom in this atom's rings:
+        // atom without stereochem in this atom's rings:
+        INT_VECT ringStereoAtoms;
+        if(atom->hasProp("_ringStereoAtoms")){
+          atom->getProp("_ringStereoAtoms",ringStereoAtoms);
+        }
         const VECT_INT_VECT atomRings=ringInfo->atomRings();
         for(VECT_INT_VECT::const_iterator ringIt=atomRings.begin();
             ringIt!=atomRings.end();++ringIt){
-          if(std::find(ringIt->begin(),ringIt->end(),static_cast<int>(atom->getIdx()))!=ringIt->end()){
+          if(std::find(ringIt->begin(),ringIt->end(),
+                       static_cast<int>(atom->getIdx()))!=ringIt->end()){
             for(INT_VECT::const_iterator idxIt=ringIt->begin();
                 idxIt!=ringIt->end();++idxIt){
               if(*idxIt!=static_cast<int>(atom->getIdx()) &&
-                 mol.getAtomWithIdx(*idxIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED){
+                 mol.getAtomWithIdx(*idxIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+                 !mol.getAtomWithIdx(*idxIt)->hasProp("_CIPCode") ){
                 // we get to keep the stereochem specification on this atom:
-                return true;
+                ringStereoAtoms.push_back(*idxIt);
+                INT_VECT oAtoms;
+                if(mol.getAtomWithIdx(*idxIt)->hasProp("_ringStereoAtoms")){
+                  mol.getAtomWithIdx(*idxIt)->getProp("_ringStereoAtoms",oAtoms);
+                }
+                oAtoms.push_back(atom->getIdx());
+                mol.getAtomWithIdx(*idxIt)->setProp("_ringStereoAtoms",oAtoms);
               }
             }
           }
         }
+        atom->setProp("_ringStereoAtoms",ringStereoAtoms);
+        if(ringStereoAtoms.size()){
+          return true;
+        }
       }
       return false;
     }
-
-
 
     // returns a pair:
     //   1) are there unassigned stereoatoms
