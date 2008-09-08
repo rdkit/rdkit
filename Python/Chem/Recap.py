@@ -42,9 +42,10 @@ For example:
 >>> res
 <Chem.Recap.RecapHierarchyNode object at 0x00CDB5D0>
 >>> res.children.keys()
-['[*]C1CC1', '[*]c1ccccc1-c1ncc(OC)cc1']
+['[*]C1CC1', '[*]c1ccccc1-c1ncc(OC)cc1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1OC1CC1']
 >>> res.GetAllChildren().keys()
-['[*]c1ccccc1[*]', '[*]c1ccc(OC)cn1', '[*]C1CC1', '[*]c1ccccc1-c1ncc(OC)cc1']
+['[*]c1ccccc1[*]', '[*]C1CC1', '[*]c1ccccc1-c1ncc(OC)cc1', '[*]c1ccc(OC)cn1', '[*]c1ccccc1OC1CC1']
+
 
 To get the standard set of RECAP results, use GetLeaves():
 >>> leaves=res.GetLeaves()

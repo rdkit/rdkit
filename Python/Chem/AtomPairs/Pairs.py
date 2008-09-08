@@ -51,7 +51,7 @@ def pyScorePair(at1,at2,dist,atomCodes=None):
     code2 = Utils.GetAtomCode(at2)
   else:
     code1,code2=atomCodes
-  accum = dist % _maxPathLen
+  accum = int(dist) % _maxPathLen
   accum |= min(code1,code2) << numPathBits
   accum |= max(code1,code2) << (rdMolDescriptors.AtomPairsParameters.codeSize+numPathBits)
   return accum
