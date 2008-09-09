@@ -348,16 +348,20 @@ namespace RDKit{
                        static_cast<int>(atom->getIdx()))!=ringIt->end()){
             for(INT_VECT::const_iterator idxIt=ringIt->begin();
                 idxIt!=ringIt->end();++idxIt){
+              int same=1;
               if(*idxIt!=static_cast<int>(atom->getIdx()) &&
                  mol.getAtomWithIdx(*idxIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
                  !mol.getAtomWithIdx(*idxIt)->hasProp("_CIPCode") ){
                 // we get to keep the stereochem specification on this atom:
-                ringStereoAtoms.push_back(*idxIt);
+                if(mol.getAtomWithIdx(*idxIt)->getChiralTag()!=atom->getChiralTag()){
+                  same=-1;
+                }
+                ringStereoAtoms.push_back(same*(*idxIt+1));
                 INT_VECT oAtoms;
                 if(mol.getAtomWithIdx(*idxIt)->hasProp("_ringStereoAtoms")){
                   mol.getAtomWithIdx(*idxIt)->getProp("_ringStereoAtoms",oAtoms);
                 }
-                oAtoms.push_back(atom->getIdx());
+                oAtoms.push_back(same*(atom->getIdx()));
                 mol.getAtomWithIdx(*idxIt)->setProp("_ringStereoAtoms",oAtoms);
               }
             }

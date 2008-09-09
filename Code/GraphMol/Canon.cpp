@@ -622,6 +622,7 @@ namespace Canon {
                             INT_VECT &ranks,
                             MolStack &molStack){
     int nAtoms=mol.getNumAtoms();
+    bool ringStereoWarn=false;
     
     INT_VECT atomVisitOrders(nAtoms,0);
     INT_VECT bondVisitOrders(mol.getNumBonds(),0);
@@ -671,6 +672,7 @@ namespace Canon {
     }
     // sort the atoms we're concerned about by visit order:
     if(atomsToConsider.size()){
+      ringStereoWarn=true;
       std::sort(atomsToConsider.begin(),atomsToConsider.end());
       for( std::vector< std::pair<int,Atom  *> >::iterator pairIt=atomsToConsider.begin();
            pairIt!=atomsToConsider.end();++pairIt ){
@@ -714,8 +716,7 @@ namespace Canon {
         if(!adjusted){
           atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
         }
-
-#if 1    
+#if 1
         // now we have the fun of adjusting for the traversal order:
         INT_LIST trueOrder;
         atom->getProp("_TraversalBondIndexOrder",trueOrder);
@@ -728,10 +729,15 @@ namespace Canon {
           case Atom::CHI_TETRAHEDRAL_CCW:
             atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
             break;
+          default:
+            break;
           }
         }
-#endif
+#endif        
       }
+    }
+    if(ringStereoWarn){
+      BOOST_LOG(rdWarningLog)<<"Warning: ring stereochemistry detected. This may not be handled correctly."<<std::endl;
     }
     
     // remove the current directions on single bonds around double bonds:
@@ -756,6 +762,7 @@ namespace Canon {
     }
 
     Canon::removeRedundantBondDirSpecs(mol,molStack,bondDirCounts,bondVisitOrders);
+
   }
 };
 

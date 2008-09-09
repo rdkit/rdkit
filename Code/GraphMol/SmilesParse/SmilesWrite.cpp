@@ -146,12 +146,14 @@ namespace RDKit{
             }
             *oIt=cipRank;
           }
+#if 0
           BOOST_LOG(rdErrorLog)<<" ****"<<std::endl;
           std::copy(ref.begin(),ref.end(),std::ostream_iterator<int>(std::cerr," "));
           std::cerr<<std::endl;
           std::copy(trueOrder.begin(),trueOrder.end(),std::ostream_iterator<int>(std::cerr," "));
           std::cerr<<std::endl;
           BOOST_LOG(rdErrorLog)<<" ****"<<std::endl;
+#endif
           nSwaps=static_cast<int>(countSwapsToInterconvert(ref,trueOrder));
         } else {
           nSwaps =  atom->getPerturbationOrder(trueOrder);
@@ -173,14 +175,14 @@ namespace RDKit{
             ++beg;
           }
 
-          BOOST_LOG(rdErrorLog)<<"          "<<atom->getIdx()<<" "<<hasTruePrecedingAtom<<" "<<bondIn<<" "<<nSwaps<<std::endl;
+          //BOOST_LOG(rdErrorLog)<<"          "<<atom->getIdx()<<" "<<hasTruePrecedingAtom<<" "<<bondIn<<" "<<nSwaps<<std::endl;
           if(hasTruePrecedingAtom^static_cast<bool>(bondIn)){
             // if we had a preceder and don't now, or vice versa,
             // we need another swap to reflect the H position
             ++nSwaps;
           }
         }
-        BOOST_LOG(rdErrorLog)<<">>>> "<<atom->getIdx()<<" "<<nSwaps<<" "<<atom->getChiralTag()<<std::endl;
+        //BOOST_LOG(rdErrorLog)<<">>>> "<<atom->getIdx()<<" "<<nSwaps<<" "<<atom->getChiralTag()<<std::endl;
         std::string atStr="";
         switch(atom->getChiralTag()){
         case Atom::CHI_TETRAHEDRAL_CW:

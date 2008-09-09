@@ -2109,7 +2109,8 @@ void testSFIssue1719053()
   smi = "C[C@@H]1[C@H](C)CCC[C@H]1C";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+  // this is a truly symmetric case, so the stereochem should be removed:
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(7)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
 
