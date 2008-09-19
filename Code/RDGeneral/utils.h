@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -8,6 +8,7 @@
 #define __RD_UTILS_H__
 
 #include "types.h"
+#include <RDGeneral/Invariant.h>
 
 #include <boost/random.hpp>
 
@@ -36,6 +37,38 @@ namespace RDKit{
   //! Return a random double value between 0.0 and 1.0
   //! Optionally seed the random number generator 
   double getRandomVal(int seed = -1);
+
+
+  template <class T>
+  unsigned int countSwapsToInterconvert(const T &ref,T probe){
+    PRECONDITION(ref.size()==probe.size(),"size mismatch");
+    typename T::const_iterator refIt=ref.begin();
+    typename T::iterator probeIt=probe.begin();
+    typename T::iterator probeIt2;
+
+    unsigned int nSwaps = 0;
+    while(refIt!=ref.end()){
+      if((*probeIt)!=(*refIt)){
+        bool foundIt=false;
+        probeIt2=probeIt;
+        while((*probeIt2)!=(*refIt) && probeIt2!=probe.end()){
+          ++probeIt2;
+        }
+        if(probeIt2 != probe.end()){
+          foundIt=true;
+        }
+        CHECK_INVARIANT(foundIt,"could not find probe element");
+
+        std::swap(*probeIt,*probeIt2);
+        nSwaps++;
+      }
+      ++probeIt;
+      ++refIt;
+    }
+    return nSwaps;
+  }
+  
+
   
 }
 

@@ -117,7 +117,47 @@ namespace RDKit{
         }
         std::cout << std::endl;
 #endif    
-        int nSwaps =  atom->getPerturbationOrder(trueOrder);
+        int nSwaps;
+        if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") ) {
+          // this is a special case where the atom has stereochem indicated
+          // but isn't a chiral center. This can happen in ring stereochem
+          // situations. Instead of using the bond indices to collect
+          // perturbation order (as is normal), we use the priorities of the
+          // atoms at the end of the bonds
+          INT_LIST ref;
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = atom->getOwningMol().getAtomBonds(atom);
+          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
+          while(beg!=end){
+            const Atom *endAtom=pMap[*beg]->getOtherAtom(atom);
+            int cipRank=0;
+            if(endAtom->hasProp("_CIPRank")){
+              endAtom->getProp("_CIPRank",cipRank);
+            }
+            ref.push_back(cipRank);
+            ++beg;
+          }
+          for(INT_LIST::iterator oIt=trueOrder.begin();oIt!=trueOrder.end();
+              ++oIt){
+            const Atom *endAtom=atom->getOwningMol().getBondWithIdx(*oIt)->getOtherAtom(atom);
+            int cipRank=0;
+            if(endAtom->hasProp("_CIPRank")){
+              endAtom->getProp("_CIPRank",cipRank);
+            }
+            *oIt=cipRank;
+          }
+#if 0
+          BOOST_LOG(rdErrorLog)<<" ****"<<std::endl;
+          std::copy(ref.begin(),ref.end(),std::ostream_iterator<int>(std::cerr," "));
+          std::cerr<<std::endl;
+          std::copy(trueOrder.begin(),trueOrder.end(),std::ostream_iterator<int>(std::cerr," "));
+          std::cerr<<std::endl;
+          BOOST_LOG(rdErrorLog)<<" ****"<<std::endl;
+#endif
+          nSwaps=static_cast<int>(countSwapsToInterconvert(ref,trueOrder));
+        } else {
+          nSwaps =  atom->getPerturbationOrder(trueOrder);
+        }
 
         if(atom->getDegree()==3){
           // Does the atom have a preceder in the original ordering?
@@ -135,12 +175,14 @@ namespace RDKit{
             ++beg;
           }
 
+          //BOOST_LOG(rdErrorLog)<<"          "<<atom->getIdx()<<" "<<hasTruePrecedingAtom<<" "<<bondIn<<" "<<nSwaps<<std::endl;
           if(hasTruePrecedingAtom^static_cast<bool>(bondIn)){
             // if we had a preceder and don't now, or vice versa,
             // we need another swap to reflect the H position
             ++nSwaps;
           }
         }
+        //BOOST_LOG(rdErrorLog)<<">>>> "<<atom->getIdx()<<" "<<nSwaps<<" "<<atom->getChiralTag()<<std::endl;
         std::string atStr="";
         switch(atom->getChiralTag()){
         case Atom::CHI_TETRAHEDRAL_CW:
@@ -375,12 +417,10 @@ namespace RDKit{
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
-      MolOps::assignAtomChiralCodes(mol,true);
-      MolOps::rankAtoms(mol,ranks,ComprehensiveInvariants,
-                        true,0,true);
-    } else {
-      MolOps::rankAtoms(mol,ranks);
+      MolOps::assignStereochemistry(mol,true);
     }
+    MolOps::rankAtoms(mol,ranks);
+
 #ifdef VERBOSE_CANON
     for(unsigned int tmpI=0;tmpI<ranks.size();tmpI++){
       std::cout << tmpI << " " << ranks[tmpI] << " " << *(mol.getAtomWithIdx(tmpI)) << std::endl;

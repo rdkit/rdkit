@@ -20,15 +20,9 @@ namespace RDKit{
   typedef INVAR_VECT::iterator INVAR_VECT_I;
   typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
 
-  //! used to request particular types of atom invariants
-  typedef enum {
-    ComprehensiveInvariants, //!< for general atomic ranking
-    ChiralSearchInvariants,  //!< for ranking atoms for calculating CIP codes
-  } AtomInvariantType;
 
   //! used to return atomic discriminators (three doubles)
   typedef boost::tuples::tuple<double,double,double> DiscrimTuple;
-
 
   //! \brief Groups a variety of molecular query and transformation operations.
   namespace MolOps {
@@ -399,6 +393,8 @@ namespace RDKit{
        - if no SSSR rings are found on the molecule - MolOps::findSSSR() is called first
     */
     int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res);
+    //! \overload
+    int symmetrizeSSSR(ROMol &mol);
 
     //@}
 
@@ -513,11 +509,8 @@ namespace RDKit{
       
       \param mol               the molecule of interest
       \param ranks             used to return the ranks
-      \param invariantType     the type of invariant to be computed 
       \param breakTies         toggles breaking of ties (see below)
       \param rankHistory       used to return the rank history (see below)
-      \param includeChirality  toggles inclusion of chirality in the atom ranking
-                               (see below)
 
       <b>Notes:</b>
         - Tie breaking should be done when it's important to have a full ordering
@@ -527,35 +520,10 @@ namespace RDKit{
 	      - if the \c rankHistory argument is provided, the evolution of the ranks of
 	        individual atoms will be tracked.  The \c rankHistory pointer should be
 	        to a VECT_INT_VECT that has at least \c mol.getNumAtoms() elements.
-        - the \c includeChirality argument only makes sense when generating full
-          invariants (i.e. ComprehensiveInvariant)
     */
     void rankAtoms(const ROMol &mol,INT_VECT &ranks,
-			  AtomInvariantType invariantType=ComprehensiveInvariants,
-			  bool breakTies=true,VECT_INT_VECT *rankHistory=0,
-			  bool includeChirality=false);
+                   bool breakTies=true,VECT_INT_VECT *rankHistory=0);
 
-    //! calculates a set of atom invariants
-    /*!
-      These invariants include terms for:
-        -# degree
-        -# explicit valence
-        -# atomic number
-        -# isotope
-        -# number of hs
-        -# size of rings an atom is involved in
-        -# formal charge
-        -# chiral code (optional)
-        -# whether of not the atom determines the stereochemistry of a
-        	   double bond. (optional)
-      
-      \param mol               the molecule of interest
-      \param res               used to return the results
-      \param includeChirality  toggles inclusion of chirality, see MolOps::rankAtoms()
-                                for an explanation.
-    */
-    void buildAtomInvariants(const ROMol &mol,INVAR_VECT &res,
-				    bool includeChirality=false);
     // @}
 
     //! \name Stereochemistry
@@ -575,55 +543,9 @@ namespace RDKit{
     */
     void assignChiralTypesFrom3D(ROMol &mol,int confId=-1,bool replaceExistingTags=true);
 
-    //! calculates a set of chiral atom invariants
+    //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)
     /*!
-      These are based upon Labute's proposal in the article:
-      "An Efficient Algorithm for the Determination of Topological
-      RS Chirality" <i>Journal of the CCG</i> (1996)
-      and include terms for:
-        -# atomic number
-        -# isotope
-        -# number of multiple bonds from/to this atom
-        -# degree
-        -# number of hydrogens
 
-      \param mol               the molecule of interest
-      \param res               used to return the results
-    */
-    void buildChiralAtomInvariants(const ROMol &mol,
-					  INVAR_VECT &res);
-
-
-    //! Figure out the CIP ranks for the atoms of a molecule
-    /*!
-      \param mol the molecule to be altered
-      \param ranks  used to return the set of ranks.  
-                    Should be at least mol.getNumAtoms() long.
-    
-      <b>Notes:</b>
-         - All atoms gain a property "_CIPRank" with their overall
-           CIP ranking.
-    
-    */
-    void assignAtomCIPRanks(const ROMol &mol,INT_VECT &ranks);
-
-    //! calculate CIP (R/S) codes for a molecule's chiral centers
-    /*!
-      \param mol     the molecule of interest
-      \param cleanIt toggles removal of chiral flags from atoms that do
-                     not have four unique neighbors
-      \param force   forces the calculation to be repeated even if it has 
-                     already been done 
-
-      <b>Notes:</b>
-        - The codes are stored on atoms as a string property named
-          "_CIPCode".
-        - Throughout we assume that we're working with a hydrogen-suppressed
-          graph.
-    */
-    void assignAtomChiralCodes(ROMol &mol,bool cleanIt=false,bool force=false);
-    //! calculate CIP (Z/E) codes for a molecule's double bonds
-    /*!
       \param mol     the molecule of interest
       \param cleanIt toggles removal of stereo flags from double bonds that can
                      not have stereochemistry
@@ -635,7 +557,18 @@ namespace RDKit{
           graph.
 
     */
-    void assignBondStereoCodes(ROMol &mol,bool cleanIt=false,bool force=false);
+    void assignStereochemistry(ROMol &mol,bool cleanIt=false,bool force=false);
+
+    //! \deprecated Use assignStereochemistry() instead
+    static void assignAtomChiralCodes(ROMol &mol,bool cleanIt=false,bool force=false){
+      assignStereochemistry(mol,cleanIt,force);
+    };
+    //! \deprecated Use assignStereochemistry() instead
+    static void assignBondStereoCodes(ROMol &mol,bool cleanIt=false,bool force=false){
+      assignStereochemistry(mol,cleanIt,force);
+    };
+
+
     //! \brief finds bonds that could be cis/trans in a molecule and mark them as
     //!  Bond::STEREONONE
     /*!

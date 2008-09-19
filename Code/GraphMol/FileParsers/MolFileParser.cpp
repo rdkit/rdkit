@@ -1021,9 +1021,14 @@ namespace RDKit{
         } else {
           MolOps::sanitizeMol(*res);
         }
-        // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry here after
-        // sanitization because the rings should have been perceived by now, in order to
-        // correctly recognize double bonds that may be cis/trans type
+
+        // now that atom stereochem has been perceived, the wedging
+        // information is no longer needed, so we clear
+        // single bond dir flags:
+        ClearSingleBondDirFlags(*res);
+      
+        // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry 
+        // here after sanitization because we need the ring information:
         const Conformer &conf = res->getConformer();
         DetectBondStereoChemistry(*res, &conf);
       }
@@ -1031,12 +1036,15 @@ namespace RDKit{
         if(res) delete res;
         throw se;
       }
+      MolOps::assignStereochemistry(*res,true);
     }
 
     if(res->hasProp("_NeedsQueryScan")){
       res->clearProp("_NeedsQueryScan");
       CompleteMolQueries(res);
     }
+
+
     return res;
   };
   

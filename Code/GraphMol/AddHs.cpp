@@ -315,10 +315,11 @@ namespace RDKit{
     ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
       Atom *atom;
       unsigned int currIdx=0,origIdx=0;
+      std::map<unsigned int,unsigned int> idxMap;
       RWMol *res = new RWMol(mol);
       while(currIdx < res->getNumAtoms()){
         atom = res->getAtomWithIdx(currIdx);
-        atom->setProp("_origAtomIdx",origIdx);
+        idxMap[origIdx]=currIdx;
         origIdx++;
         if(atom->getAtomicNum()==1){
           bool removeIt=false;
@@ -427,10 +428,20 @@ namespace RDKit{
         if(sanitize){
           sanitizeMol(*res);
         }
-        if(mol.hasProp("_BondStereoSet")){
-          // double bond stereochem had been perceived in the original molecule,
-          // redo that with the new indices:
-          MolOps::assignBondStereoCodes(*res,true,true);
+        if(mol.hasProp("_StereochemDone")){
+          // stereochem had been perceived in the original molecule,
+          // loop over the bonds and fix their stereoAtoms fields:
+          for(ROMol::BondIterator bondIt=res->beginBonds();
+              bondIt!=res->endBonds();
+              ++bondIt){
+            Bond *bond=*bondIt;
+            if( bond->getBondType()==Bond::DOUBLE &&
+                bond->getStereo()!=Bond::STEREONONE){
+              for(INT_VECT_I it=bond->getStereoAtoms().begin();it!=bond->getStereoAtoms().end();++it){
+                *it = idxMap[*it];
+              }
+            }
+          }
         }
       }
 

@@ -462,32 +462,7 @@ int Atom::getPerturbationOrder(INT_LIST probe) const{
     ref.push_back(pMap[*beg]->getIdx());
     beg++;
   }
-  //std::cerr <<"\n";
-  PRECONDITION(ref.size()==probe.size(),"size mismatch");
-  INT_LIST::const_iterator refIt=ref.begin();
-  INT_LIST::iterator probeIt=probe.begin(),probeIt2;
-
-  int nSwaps = 0;
-  while(refIt!=ref.end()){
-    if((*probeIt)!=(*refIt)){
-      bool foundIt=false;
-      probeIt2=probeIt;
-      while((*probeIt2)!=(*refIt) && probeIt2!=probe.end()){
-        probeIt2++;
-      }
-      if(probeIt2 != probe.end()){
-        foundIt=true;
-      }
-      CHECK_INVARIANT(foundIt,"could not find probe element");
-
-      int tmp=*probeIt2;
-      *probeIt2=*probeIt;
-      *probeIt=tmp;
-      nSwaps++;
-    }
-    probeIt++;
-    refIt++;
-  }
+  int nSwaps=static_cast<int>(countSwapsToInterconvert(ref,probe));
   return nSwaps;
 }
 

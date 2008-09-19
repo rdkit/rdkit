@@ -1364,9 +1364,9 @@ void testIssue191(){
   TEST_ASSERT(mol->getBondWithIdx(7)->getStereo() == Bond::STEREOE);
   refSmi = MolToSmiles(*mol,1);
   delete mol;
+  //std::cout << "ref: " << refSmi << std::endl;
   mol = SmilesToMol(refSmi);
   TEST_ASSERT(mol);
-  //std::cout << "ref: " << refSmi << std::endl;
   //mol->debugMol(std::cout);
   numE = 0;
   for(RWMol::BondIterator bondIt=mol->beginBonds();
@@ -1634,7 +1634,7 @@ void testBug1842174(){
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol,true,false,-1);
   BOOST_LOG(rdInfoLog) << smi << std::endl;
-  TEST_ASSERT(smi=="O/N=C/1COC[N+]1=N\\O");
+  TEST_ASSERT(smi=="O/N=C1\\COC/[N+]1=N/O");
   // ^^^^^^^^^^^^^^^^^^^^^^
   // end of the pair
   // ----------------------

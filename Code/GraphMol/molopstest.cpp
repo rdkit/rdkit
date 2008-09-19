@@ -9,6 +9,7 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -760,7 +761,7 @@ void test10()
 
   INT_VECT ranks;
   ranks.resize(m->getNumAtoms());
-  MolOps::assignAtomCIPRanks(*m,ranks);
+  Chirality::assignAtomCIPRanks(*m,ranks);
 
   int cip1,cip2;
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPRank"));
@@ -783,7 +784,7 @@ void test10()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   ranks.resize(m->getNumAtoms());
-  MolOps::assignAtomCIPRanks(*m,ranks);
+  Chirality::assignAtomCIPRanks(*m,ranks);
   for(unsigned int i=0;i<m->getNumAtoms();i++){
     int cip;
     TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"));
@@ -1413,7 +1414,7 @@ void testIssue188()
   m = SmilesToMol(smi);
   INT_VECT ranks;
   ranks.resize(m->getNumAtoms());
-  MolOps::assignAtomCIPRanks(*m,ranks);
+  Chirality::assignAtomCIPRanks(*m,ranks);
   TEST_ASSERT(m);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPRank"));
   m->getAtomWithIdx(1)->getProp("_CIPRank",cip1);
@@ -1430,7 +1431,7 @@ void testIssue188()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
   ranks.resize(m->getNumAtoms());
-  MolOps::assignAtomCIPRanks(*m,ranks);
+  Chirality::assignAtomCIPRanks(*m,ranks);
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPRank"));
   m->getAtomWithIdx(0)->getProp("_CIPRank",cip1);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPRank"));
@@ -2089,14 +2090,12 @@ void testSFIssue1719053()
   smi = "C[C@@H]1CCCCC1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
 
   delete m;
   smi = "C[C@@H]1CC[C@@H](C)CC1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
 
@@ -2104,15 +2103,14 @@ void testSFIssue1719053()
   smi = "C[C@@H]1C(C)CCCC1C";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
 
   delete m;
   smi = "C[C@@H]1[C@H](C)CCC[C@H]1C";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
-  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+  // this is a truly symmetric case, so the stereochem should be removed:
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(7)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
 
@@ -2120,7 +2118,6 @@ void testSFIssue1719053()
   smi = "C[C@@H]1C=C[C@@H](C)C=C1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
 
@@ -2128,7 +2125,6 @@ void testSFIssue1719053()
   smi = "C[N@@]1C=C[C@@H](C)C=C1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_UNSPECIFIED);
 
@@ -2136,7 +2132,6 @@ void testSFIssue1719053()
   smi = "C[N@@]1CC[C@@H](C)CC1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  MolOps::assignAtomChiralCodes(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
 
@@ -2807,6 +2802,7 @@ int main(){
   testIssue276();
   testHsAndAromaticity();
   testSFIssue1694023();
+#endif
   testSFIssue1719053();
   testSFIssue1811276();
   testSFIssue1836576();
@@ -2816,7 +2812,6 @@ int main(){
   testSFIssue1942657();
   testSFIssue1968608();
   testHybridization();
-#endif
   testAromaticityEdges();
   
   return 0;

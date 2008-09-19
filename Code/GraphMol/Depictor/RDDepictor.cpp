@@ -165,11 +165,7 @@ namespace RDDepict {
     RDKit::INT_VECT atomRanks;
     atomRanks.resize(mol.getNumAtoms());
 
-    // we use the CIP ranks to order the atoms during drawing:
-    RDKit::MolOps::assignAtomCIPRanks(mol,atomRanks);
-
-    // so that cis/trans bonds will be marked
-    RDKit::MolOps::assignBondStereoCodes(mol, false);
+    RDKit::MolOps::assignStereochemistry(mol, false);
 
     efrags.clear();
     RDKit::VECT_INT_VECT arings;

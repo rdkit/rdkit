@@ -397,6 +397,8 @@ namespace Canon {
         cycles[possibleIdx].push_back(lowestRingIdx);
         ++lowestRingIdx;
 
+        molStack.push_back(MolStackElem(bond,
+                                        atom->getIdx()));
         molStack.push_back(MolStackElem(lowestRingIdx));
 
         // we need to add this bond (which closes the ring) to the traversal list for the
@@ -430,8 +432,6 @@ namespace Canon {
     for(unsigned int i=0;i<ringClosures.size();i++){
       int ringIdx=cycles[atomIdx][i];
       ringIdx += 1;
-      molStack.push_back(MolStackElem(mol.getBondWithIdx(ringClosures[i]),
-                                      atom->getIdx()));
       molStack.push_back(MolStackElem(ringIdx));
     }
     cycles[atomIdx].resize(0);
@@ -521,39 +521,57 @@ namespace Canon {
   }
 
   void clearBondDirs(ROMol &mol,Bond *refBond,Atom *fromAtom,
-                     INT_VECT &bondDirCounts){
+                     INT_VECT &bondDirCounts,const INT_VECT &bondVisitOrders){
     PRECONDITION(bondDirCounts.size()>=mol.getNumBonds(),"bad dirCount size");
     PRECONDITION(refBond,"bad bond");
     PRECONDITION(&refBond->getOwningMol()==&mol,"bad bond");
     PRECONDITION(fromAtom,"bad atom");
     PRECONDITION(&fromAtom->getOwningMol()==&mol,"bad bond");
-    
+
+    //std::cerr<<"cBD: bond: "<<refBond->getIdx()<<" atom: "<<fromAtom->getIdx()<<": ";
+
     ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol.getAtomBonds(fromAtom);
-    bool nbrPossible=false,cleared=false;
+    bool nbrPossible=false,adjusted=false;
     while(beg!=end){
-      if( pMap[*beg] != refBond && canHaveDirection(pMap[*beg])){
+      Bond *oBond=pMap[*beg];
+      if( oBond != refBond && canHaveDirection(oBond) ){
         nbrPossible=true;
-        if(bondDirCounts[pMap[*beg]->getIdx()] <= bondDirCounts[refBond->getIdx()]){
-          bondDirCounts[pMap[*beg]->getIdx()] = 0;
-          // no one is setting the direction here:
-          pMap[*beg]->setBondDir(Bond::NONE);
-          cleared=true;
+        if(bondDirCounts[oBond->getIdx()] <= bondDirCounts[oBond->getIdx()]){
+          adjusted=true;
+          bondDirCounts[oBond->getIdx()] -= 1;
+          if(!bondDirCounts[oBond->getIdx()]){
+            // no one is setting the direction here:
+            oBond->setBondDir(Bond::NONE);
+            //std::cerr<<oBond->getIdx()<<" ";
+          }
         }
       }
       beg++;
     }
-    if(nbrPossible && !cleared){
+    if(nbrPossible && !adjusted){
       // we found a neighbor that could have directionality set,
       // but it had a higher bondDirCount that us, so we must
-      // need to be cleared:
-      refBond->setBondDir(Bond::NONE);
+      // need to be adjusted:
+      bondDirCounts[refBond->getIdx()] -= 1;
+      if(!bondDirCounts[refBond->getIdx()]){
+        refBond->setBondDir(Bond::NONE);
+        //std::cerr<<refBond->getIdx()<<" ";
+      }
     }
+    //std::cerr<<std::endl;
   }
 
-  void removeRedundantBondDirSpecs(ROMol &mol,MolStack &molStack,INT_VECT bondDirCounts){
+  void removeRedundantBondDirSpecs(ROMol &mol,MolStack &molStack,INT_VECT &bondDirCounts,
+                                   const INT_VECT &bondVisitOrders){
     PRECONDITION(bondDirCounts.size()>=mol.getNumBonds(),"bad dirCount size");
+#if 0
+    mol.debugMol(std::cerr);
+    std::cerr<<"rRBDS: ";
+    std::copy(bondDirCounts.begin(),bondDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
+    std::cerr<<"\n";
+#endif    
     // find bonds that have directions indicated that are redundant:
     for(MolStack::iterator msI=molStack.begin();
         msI!=molStack.end(); msI++) {
@@ -576,7 +594,7 @@ namespace Canon {
             beg++;
           }
           if(dblBondAtom != NULL){
-            clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts);
+            clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts,bondVisitOrders);
           }
           dblBondAtom = NULL;
           boost::tie(beg,end) = mol.getAtomBonds(tBond->getEndAtom());
@@ -589,8 +607,11 @@ namespace Canon {
             beg++;
           }
           if(dblBondAtom != NULL){
-            clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts);
+            clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts,bondVisitOrders);
           }
+        } else if(tBond->getBondDir()!=Bond::NONE){
+          // we aren't supposed to have a direction set, but we do:
+          tBond->setBondDir(Bond::NONE);
         }
       }
     }
@@ -601,6 +622,7 @@ namespace Canon {
                             INT_VECT &ranks,
                             MolStack &molStack){
     int nAtoms=mol.getNumAtoms();
+    bool ringStereoWarn=false;
     
     INT_VECT atomVisitOrders(nAtoms,0);
     INT_VECT bondVisitOrders(mol.getNumBonds(),0);
@@ -609,12 +631,12 @@ namespace Canon {
     INT_VECT cyclesAvailable;
     INT_VECT_I viIt;
     cyclesAvailable.resize(MAX_CYCLES);
-    for(viIt=cyclesAvailable.begin();viIt!=cyclesAvailable.end();viIt++) *viIt=1;
+    for(viIt=cyclesAvailable.begin();viIt!=cyclesAvailable.end();++viIt) *viIt=1;
 
     VECT_INT_VECT  cycles;
     cycles.resize(nAtoms);
     VECT_INT_VECT_I vviIt;
-    for(vviIt=cycles.begin();vviIt!=cycles.end();vviIt++) vviIt->resize(0);
+    for(vviIt=cycles.begin();vviIt!=cycles.end();++vviIt) vviIt->resize(0);
 
     // make sure that we've done the bond stereo perception:
     MolOps::assignBondStereoCodes(mol,false);
@@ -631,11 +653,97 @@ namespace Canon {
     Canon::canonicalDFSTraversal(mol,atomIdx,-1,colors,cycles,
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
                                  bondVisitOrders);
+
+    // --------------
+    // Adjust the stereochemistry of ring atoms without chirality:
+
+    std::vector< std::pair<int,Atom *> > atomsToConsider;
+    RingInfo *ringInfo=mol.getRingInfo();
+    std::vector<Atom::ChiralType> origChis(mol.getNumAtoms());
+    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
+        atomIt!=mol.endAtoms();++atomIt){
+      origChis[(*atomIt)->getIdx()]=(*atomIt)->getChiralTag();
+      if((*atomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+         !(*atomIt)->hasProp("_CIPCode") &&
+         ringInfo->numAtomRings((*atomIt)->getIdx())!=0){
+        atomsToConsider.push_back(std::make_pair(atomVisitOrders[(*atomIt)->getIdx()],
+                                                 *atomIt));
+      }
+    }
+    // sort the atoms we're concerned about by visit order:
+    if(atomsToConsider.size()){
+      ringStereoWarn=true;
+      std::sort(atomsToConsider.begin(),atomsToConsider.end());
+      for( std::vector< std::pair<int,Atom  *> >::iterator pairIt=atomsToConsider.begin();
+           pairIt!=atomsToConsider.end();++pairIt ){
+        Atom *atom=pairIt->second;
+        bool adjusted=false;
+        // look to our ring atoms and see if anyone that has already been
+        // traversed has stereochem set:
+        for(VECT_INT_VECT_CI vivci=ringInfo->atomRings().begin();
+            vivci!=ringInfo->atomRings().end();++vivci){
+          if(std::find(vivci->begin(),vivci->end(),atom->getIdx())!=vivci->end()){
+            for(INT_VECT_CI ivci=vivci->begin();ivci!=vivci->end();++ivci){
+              if( atomVisitOrders[*ivci]<pairIt->first &&
+                  mol.getAtomWithIdx(*ivci)->getChiralTag()!=Atom::CHI_UNSPECIFIED ) {
+                // this atom has its stereochemistry set, use it to
+                // determine ours:
+                if(origChis[*ivci]==origChis[atom->getIdx()]){
+                  atom->setChiralTag(mol.getAtomWithIdx(*ivci)->getChiralTag());
+                } else {
+                  // not the same:
+                  switch(mol.getAtomWithIdx(*ivci)->getChiralTag()){
+                  case Atom::CHI_TETRAHEDRAL_CW:
+                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+                    break;
+                  case Atom::CHI_TETRAHEDRAL_CCW:
+                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+                    break;
+                  default:
+                    BOOST_LOG(rdWarningLog)<<"Warning: unsupported chirality found on atom "<<*ivci<<"."<<std::endl;
+                    atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+                  }
+                }
+                adjusted = true;
+                break;
+              }
+            }
+          }
+          if(adjusted) break;
+        }
+        // we haven't set this using one of the other atoms in its rings, so pick
+        // an arbitrary value:
+        if(!adjusted){
+          atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+        }
+#if 1
+        // now we have the fun of adjusting for the traversal order:
+        INT_LIST trueOrder;
+        atom->getProp("_TraversalBondIndexOrder",trueOrder);
+        int nSwaps =  atom->getPerturbationOrder(trueOrder);
+        if(nSwaps%2){
+          switch(atom->getChiralTag()){
+          case Atom::CHI_TETRAHEDRAL_CW:
+            atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+            break;
+          case Atom::CHI_TETRAHEDRAL_CCW:
+            atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+            break;
+          default:
+            break;
+          }
+        }
+#endif        
+      }
+    }
+    if(ringStereoWarn){
+      BOOST_LOG(rdWarningLog)<<"Warning: ring stereochemistry detected. This may not be handled correctly."<<std::endl;
+    }
     
     // remove the current directions on single bonds around double bonds:
     for(ROMol::BondIterator bondIt=mol.beginBonds();
         bondIt!=mol.endBonds();
-        bondIt++){
+        ++bondIt){
       Bond::BondDir dir = (*bondIt)->getBondDir();
       if (dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT) {
         (*bondIt)->setBondDir(Bond::NONE);
@@ -644,7 +752,7 @@ namespace Canon {
 
     // traverse the stack and clean up double bonds
     for(MolStack::iterator msI=molStack.begin();
-        msI!=molStack.end(); msI++){
+        msI!=molStack.end(); ++msI){
       if(msI->type == MOL_STACK_BOND &&
          msI->obj.bond->getBondType() == Bond::DOUBLE &&
          msI->obj.bond->getStereo() > Bond::STEREOANY){
@@ -653,7 +761,8 @@ namespace Canon {
       }
     }
 
-    Canon::removeRedundantBondDirSpecs(mol,molStack,bondDirCounts);
+    Canon::removeRedundantBondDirSpecs(mol,molStack,bondDirCounts,bondVisitOrders);
+
   }
 };
 
