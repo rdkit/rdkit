@@ -33,7 +33,7 @@ void test1(){
   TEST_ASSERT(smi=="C1=CC=CC=C1");  
 
   smi = MolToSmarts(*m);
-  TEST_ASSERT(smi=="[#6]-1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]1");
+  TEST_ASSERT(smi=="[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1");
 
 
   smi = "C1=CC=CC=C1";
@@ -736,6 +736,45 @@ void testMolFileChgLines(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testDblBondStereochem(){
+  BOOST_LOG(rdInfoLog) << "testing basic double bond stereochemistry" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"simple_z.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
+    delete m1;
+  }
+
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"simple_e.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    delete m1;
+  }
+
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"simple_either.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir()==Bond::EITHERDOUBLE);
+    delete m1;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 void testSymmetricDblBondStereochem(){
   // this was sf.net issue 1718794:
   // http://sourceforge.net/tracker/index.php?func=detail&aid=1718794&group_id=160139&atid=814650)
@@ -749,7 +788,7 @@ void testSymmetricDblBondStereochem(){
   fName = rdbase+"cistrans.1a.mol";
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
-
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="C/C=C/Cl");
 
@@ -757,6 +796,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="C/C=C\\Cl");
@@ -765,6 +805,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="C/C=C/C");
@@ -773,6 +814,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="C/C=C\\C");
@@ -781,6 +823,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="CC=CC");
@@ -1345,11 +1388,13 @@ void testIssue1965035(){
   m = MolFileToMol(fName);
   TEST_ASSERT(m);
 
-  TEST_ASSERT(m->getBondWithIdx(4)->getBondDir()==Bond::BEGINDASH);
+  // the mol file parser removes bond wedging info:
+  TEST_ASSERT(m->getBondWithIdx(4)->getBondDir()==Bond::NONE);
+  // but a chiral tag is assigned:
+  TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
 
   WedgeMolBonds(*m,&m->getConformer());
   TEST_ASSERT(m->getBondWithIdx(4)->getBondDir()==Bond::BEGINDASH);
-
   
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -1366,14 +1411,15 @@ int main(int argc,char *argv[]){
   testIssue148();
   test7();
   test8();
+#endif
   testIssue180();
   testIssue264();
   testIssue399();
   testMolFileChgLines();
+  testDblBondStereochem();
   testSymmetricDblBondStereochem();
   testRingDblBondStereochem();
   testMolFileRGroups();
-#endif
   testMolFileDegreeQueries();
   testMolFileRBCQueries();
   testMolFileUnsaturationQueries();
