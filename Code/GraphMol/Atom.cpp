@@ -41,6 +41,7 @@ Atom::Atom( const Atom & other){
   df_isAromatic = other.df_isAromatic;
   d_dativeFlag = other.d_dativeFlag;
   d_numExplicitHs = other.d_numExplicitHs;
+  d_numRadicalElectrons = other.d_numRadicalElectrons;
   d_mass = other.d_mass;
   //d_pos = other.d_pos;
   d_chiralTag=other.d_chiralTag;
@@ -60,6 +61,7 @@ void Atom::initAtom(){
   df_noImplicit = false;
   d_dativeFlag=0;
   d_numExplicitHs = 0;
+  d_numRadicalElectrons=0;
   d_formalCharge = 0;
   d_index = 0;
   if(d_atomicNum){
@@ -164,17 +166,6 @@ int Atom::getExplicitValence() const {
   return d_explicitValence;
 }
 
-unsigned int Atom::getNumRadicalElectrons() const {
-  PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
-  int totalValence = getExplicitValence() + getImplicitValence();
-  int chg = getFormalCharge();
-  int nOuter = PeriodicTable::getTable()->getNouterElecs(getAtomicNum());
-  int numRadicals = 8 - (nOuter - chg) - totalValence;
-  if(numRadicals<0) return 0;
-  else return static_cast<unsigned int>(numRadicals);
-}
-
-  
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   unsigned int res;
@@ -260,8 +251,8 @@ int Atom::getImplicitValence() const {
   return d_implicitValence;
 }
 
-// NOTE: this uses the explicitValence, so you need to call calcExplicitValence()
-// before calling this... updatePropertyCache() takes care of that.
+// NOTE: this uses the explicitValence, so it will call
+// calcExplictValence() if it hasn't already been called
 int Atom::calcImplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   if(df_noImplicit) return 0;
@@ -271,6 +262,7 @@ int Atom::calcImplicitValence(bool strict) {
   // many Hs to add
   // 
   int res;
+
   // here is how we are going to deal with the possibility of
   // multiple valences
   // - check the explicit valence "ev"
@@ -284,7 +276,7 @@ int Atom::calcImplicitValence(bool strict) {
   const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
   INT_VECT_CI vi;
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
-  int explicitV = getExplicitValence();
+  int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
   int chg = getFormalCharge();
 
   // NOTE: this is here to take care of the difference in element on
@@ -322,22 +314,22 @@ int Atom::calcImplicitValence(bool strict) {
 
   // if we have an aromatic case treat it differently
   if (getIsAromatic()) {
-    if (explicitV <= (static_cast<int>(dv) + chg)) {
-      res = dv + chg - explicitV;
+    if (explicitPlusRadV <= (static_cast<int>(dv) + chg)) {
+      res = dv + chg - explicitPlusRadV;
     }
     else {
-      // As we assume when finding the explicitValence if we are
+      // As we assume when finding the explicitPlusRadValence if we are
       // aromatic we should not be adding any hydrogen and already
       // be at an accepted valence state,
 
       // FIX: this is just ERROR checking and probably moot - the
-      // explicitValence function called above should assure us that
+      // explicitPlusRadValence function called above should assure us that
       // we satisfy one of the accepted valence states for the
       // atom. The only diff I can think of is in the way we handle
       // formal charge here vs the explicit valence function.
       bool satis = false;
       for (vi = valens.begin(); vi!=valens.end() && *vi>0; vi++) {
-        if (explicitV == ((*vi) + chg)) {
+        if (explicitPlusRadV == ((*vi) + chg)) {
           satis = true;
           break;
         }
@@ -359,8 +351,8 @@ int Atom::calcImplicitValence(bool strict) {
     res = -1;
     for (vi = valens.begin(); vi != valens.end() && *vi>=0; ++vi) {
       int tot = (*vi) + chg;
-      if (explicitV <= tot) {
-        res = tot - explicitV;
+      if (explicitPlusRadV <= tot) {
+        res = tot - explicitPlusRadV;
         break;
       }
     }
@@ -504,5 +496,8 @@ std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   target << " hyb: " << at.getHybridization();
   target << " arom?: " << at.getIsAromatic();
   target << " chi: " << at.getChiralTag();
+  if(at.getNumRadicalElectrons()){
+    target << " rad: " << at.getNumRadicalElectrons();
+  }
   return target;
 };

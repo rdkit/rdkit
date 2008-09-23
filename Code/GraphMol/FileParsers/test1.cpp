@@ -716,22 +716,44 @@ void testIssue399(){
 }
 
 void testMolFileChgLines(){
-  BOOST_LOG(rdInfoLog) << "testing SF.Net Issue1603923: problems with multiple chg lines" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing handling of charge lines" << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
 
-  RWMol *m1;
-  std::string fName;
 
-  fName = rdbase+"MolFileChgBug.mol";
-  m1 = MolFileToMol(fName);
-  TEST_ASSERT(m1);
-  TEST_ASSERT(m1->getAtomWithIdx(24)->getFormalCharge()==-1);
-  TEST_ASSERT(m1->getAtomWithIdx(25)->getFormalCharge()==-1);
-  
+  // SF.Net Issue1603923: problems with multiple chg lines
+  {
+    RWMol *m1;
+    std::string fName;
+    fName = rdbase+"MolFileChgBug.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getAtomWithIdx(24)->getFormalCharge()==-1);
+    TEST_ASSERT(m1->getAtomWithIdx(25)->getFormalCharge()==-1);
+    delete m1;
+  }
 
-  delete m1;
+  // many charges in one molecule:
+  {
+    RWMol *m1;
+    std::string fName;
+    fName = rdbase+"manycharges.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getFormalCharge()==-1);
+    TEST_ASSERT(m1->getAtomWithIdx(13)->getFormalCharge()==-1);
 
+    std::string molBlock = MolToMolBlock(*m1);
+
+    std::cerr<<molBlock<<std::endl;
+    
+    delete m1;
+    m1 = MolBlockToMol(molBlock);
+    m1->debugMol(std::cerr);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getFormalCharge()==-1);
+    TEST_ASSERT(m1->getAtomWithIdx(13)->getFormalCharge()==-1);
+  }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -1399,6 +1421,32 @@ void testIssue1965035(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testRadicals(){
+  BOOST_LOG(rdInfoLog) << "testing handling of radicals " << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  RWMol *m;
+  std::string smiles;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/radical.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+  
+  std::string molBlock = MolToMolBlock(*m);
+  delete m;
+  m = MolBlockToMol(molBlock);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+  delete m;
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -1426,6 +1474,7 @@ int main(int argc,char *argv[]){
   testMolFileQueryToSmarts();
   testMissingFiles();
   testIssue1965035();
+  testRadicals();
   //testCrash();
   return 0;
 }

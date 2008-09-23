@@ -19,7 +19,7 @@ using boost::uint32_t;
 namespace RDKit{
 
   const int32_t MolPickler::versionMajor=6;
-  const int32_t MolPickler::versionMinor=0;
+  const int32_t MolPickler::versionMinor=1;
   const int32_t MolPickler::versionPatch=0;
   const int32_t MolPickler::endianId=0xDEADBEEF;
 
@@ -492,6 +492,7 @@ namespace RDKit{
     if(majorVersion>versionMajor||(majorVersion==versionMajor&&minorVersion>versionMinor)){
       BOOST_LOG(rdWarningLog)<<"Depickling from a version number ("<<majorVersion<<"." << minorVersion<<")" << "that is higher than our version ("<<versionMajor<<"."<<versionMinor<<").\nThis probably won't work."<<std::endl;
     }
+    majorVersion=1000*majorVersion+minorVersion;
     if(majorVersion==1){
       _depickleV1(ss,mol);
     } else {
@@ -505,7 +506,7 @@ namespace RDKit{
     }
     mol->clearAllAtomBookmarks();
     mol->clearAllBondBookmarks();
-    if(majorVersion<4){
+    if(majorVersion<4000){
       // FIX for issue 220 - probably better to change the pickle format later
       MolOps::assignBondStereoCodes(*mol,true);
     }
@@ -605,7 +606,7 @@ namespace RDKit{
 
     // did we include coordinates
     bool includeCoords=false;
-    if (version >= 3) {
+    if (version >= 3000) {
       char flag;
       streamRead(ss,flag);
       if (flag & 0x1<<7) includeCoords = true;
@@ -620,7 +621,7 @@ namespace RDKit{
       throw MolPicklerException("Bad pickle format: BEGINATOM tag not found.");
     }
     Conformer *conf = 0;
-    if ((version == 2) && includeCoords) {
+    if ((version >= 2000 && version<3000) && includeCoords) {
       // there can only one conformation - since the poositions were stored on
       // the atoms themselves in this version
       conf = new Conformer(numAtoms);
@@ -629,7 +630,7 @@ namespace RDKit{
     for(int i=0;i<numAtoms;i++){
       RDGeom::Point3D pos;
       Atom *atom=_addAtomFromPickle<T>(ss,mol,pos,version,directMap);
-      if ((version == 2) && includeCoords) {
+      if ((version >= 2000 && version<3000) && includeCoords) {
         // this is a older pickle so we go the pos
         conf->setAtomPos(i, pos);
       }
@@ -734,6 +735,8 @@ namespace RDKit{
       streamWrite(ss,tmpChar);
       tmpChar = static_cast<char>(atom->getImplicitValence());
       streamWrite(ss,tmpChar);
+      tmpChar = static_cast<char>(atom->getNumRadicalElectrons());
+      streamWrite(ss,tmpChar);
     } else {
       streamWrite(ss,BEGINQUERY);
       pickleQuery(ss,static_cast<const QueryAtom*>(atom)->getQuery());
@@ -772,7 +775,7 @@ namespace RDKit{
   Conformer *MolPickler::_conformerFromPickle(std::istream &ss,int version) {
     float tmpFloat;
     bool is3D=true;
-    if(version>4){
+    if(version>4000){
       char tmpChr;
       streamRead(ss, tmpChr);
       is3D=static_cast<bool>(tmpChr);
@@ -815,7 +818,7 @@ namespace RDKit{
 
     bool hasQuery=false;
     streamRead(ss,flags);
-    if(version>5){
+    if(version>5000){
       hasQuery=flags&0x1<<4;
     }
     if(!hasQuery){
@@ -841,7 +844,7 @@ namespace RDKit{
       pos.z = static_cast<double>(z);
     }
     
-    if(version<=5 || !hasQuery){
+    if(version<=5000 || !hasQuery){
       streamRead(ss,tmpSchar);
       atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
                     static_cast<int>(tmpSchar));
@@ -856,10 +859,14 @@ namespace RDKit{
       streamRead(ss,tmpChar);
       atom->setNumExplicitHs(static_cast<int>(tmpChar));
       streamRead(ss,tmpChar);
-      atom->d_explicitValence  = tmpChar;
+      atom->d_explicitValence = tmpChar;
       streamRead(ss,tmpChar);
-      atom->d_implicitValence  = tmpChar;
-    } else if(version>5){
+      atom->d_implicitValence = tmpChar;
+      if(version>6000){
+        streamRead(ss,tmpChar);
+        atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);
+      }
+    } else if(version>5000){
       // we have a query:
       streamRead(ss,tag);
       if(tag != BEGINQUERY){
@@ -872,7 +879,7 @@ namespace RDKit{
       }
     }
 
-    if(version>5){
+    if(version>5000){
       unsigned int sPos=ss.tellg();
       Tags tag;
       streamRead(ss,tag);
@@ -966,7 +973,7 @@ namespace RDKit{
     streamRead(ss,flags);
     bool hasQuery=flags&0x1<<4;
 
-    if(version<=5 || !hasQuery){
+    if(version<=5000 || !hasQuery){
       bond = new Bond();
       bond->setIsAromatic(flags & 0x1<<6);
       bond->setIsConjugated(flags & 0x1<<5);
@@ -975,7 +982,7 @@ namespace RDKit{
       streamRead(ss,tmpChar);
       bond->setBondDir(static_cast<Bond::BondDir>(tmpChar));
 
-      if(version>3){
+      if(version>3000){
         streamRead(ss,tmpChar);
         Bond::BondStereo stereo=static_cast<Bond::BondStereo>(tmpChar);
         bond->setStereo(stereo);
@@ -987,7 +994,7 @@ namespace RDKit{
           }
         }
       }
-    } else if(version>5) {
+    } else if(version>5000) {
       Tags tag;
       bond = new QueryBond();
       // we have a query:

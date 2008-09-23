@@ -1971,10 +1971,12 @@ void testHsAndAromaticity() {
   smi = "[CH]1-[CH]-[CH]-[CH]-[CH]-[CH]-1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
+  mol->debugMol(std::cerr);
   //std::cerr << mol->getAtomWithIdx(0)->getHybridization() << std::endl;
   TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getImplicitValence()==0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
   TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
   TEST_ASSERT(!mol->getBondBetweenAtoms(0,1)->getIsAromatic());
 
@@ -2507,6 +2509,41 @@ void testAromaticityEdges()
   TEST_ASSERT(m);
   TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
   TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
+
+#if 0 // currently fails
+  smi = "[n]1cccc1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
+#endif
+  
+  smi = "[n]1ccccc1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+  TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+  delete m;
+
+  smi = "[H]n1cccc1";
+  m = SmilesToMol(smi,0,0);
+  TEST_ASSERT(m);
+  MolOps::sanitizeMol(*m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic());
+  TEST_ASSERT(m->getAtomWithIdx(1)->getNumRadicalElectrons()==0);
+  TEST_ASSERT(!m->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+  delete m;
+
+  smi = "[H]";
+  m = SmilesToMol(smi,0,0);
+  TEST_ASSERT(m);
+  MolOps::sanitizeMol(*m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
   delete m;
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

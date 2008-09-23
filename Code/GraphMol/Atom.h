@@ -165,7 +165,8 @@ namespace RDKit{
       <b>Notes:</b>
         - requires an owning molecule
     */
-    unsigned int getNumRadicalElectrons() const;
+    unsigned int getNumRadicalElectrons() const { return d_numRadicalElectrons; };
+    void setNumRadicalElectrons(unsigned int num) { d_numRadicalElectrons=num; };
 
 
     //! returns the formal charge of this atom
@@ -443,6 +444,7 @@ namespace RDKit{
     // a lazy scheme and are initialized to -1 to indicate that the
     // calculation has not yet been done.
     int d_implicitValence, d_explicitValence;
+    unsigned int d_numRadicalElectrons;
     ChiralType d_chiralTag;
     HybridizationType d_hybrid;
     double d_mass;

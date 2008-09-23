@@ -63,7 +63,9 @@ namespace RDKit {
 
 
     void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
-                        boost::dynamic_bitset<> &dBndCands, INT_VECT &done){
+                        boost::dynamic_bitset<> &dBndCands,
+                        INT_VECT &questions,
+                        INT_VECT &done){
       // ok this function does more than mark atoms that are candidates for 
       // double bonds during kekulization
       // - check that an non aromatic atom does not have any aromatic bonds
@@ -90,6 +92,12 @@ namespace RDKit {
         // if this atom is not either aromatic or a dummy, don't
         // have to kekulize it
         Atom *at = mol.getAtomWithIdx(*adx);
+        // dummies are always candidates:
+        if(!at->getAtomicNum()){
+          dBndCands[*adx]=1;
+          continue;
+        }
+
         if (!at->getIsAromatic() && at->getAtomicNum() ) {
           done.push_back(*adx);
           // make sure all the bonds on this atom are also non aromatic
@@ -116,6 +124,7 @@ namespace RDKit {
         dv += chrg;
         int tbo = at->getExplicitValence() + at->getImplicitValence();
         int nRadicals=at->getNumRadicalElectrons();
+        int totalDegree=at->getDegree()+at->getImplicitValence();
         
         const INT_VECT &valList =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
@@ -124,6 +133,12 @@ namespace RDKit {
         while ( tbo>dv && vi<valList.size() && valList[vi]>0 ) {
           dv = valList[vi] + chrg;
           ++vi;
+        }
+
+        if(totalDegree+nRadicals>=dv){
+          // if our degree + nRadicals exceeds the default valence, 
+          // there's no way we can take a double bond, just continue.
+          continue;
         }
         
         RWMol::OEDGE_ITER beg,end;
@@ -146,11 +161,16 @@ namespace RDKit {
           ++beg;
         }
         sbo +=  at->getTotalNumHs();
-        sbo += nRadicals;
 
-        if (dv==(sbo + 1) || !at->getAtomicNum() ) {
+        
+        
+        if( dv==(sbo+1) ){
           dBndCands[*adx]=1;
-        } 
+        } else if( !nRadicals && at->getNoImplicit() && dv==(sbo+2) ){
+          // special case: there is currently no radical on the atom, but if
+          // if we allow one then this is a candidate:
+          dBndCands[*adx]=1;
+        }
       }// loop over all atoms in the fused system
 
       // now turn all the aromatic bond in this fused system to single
@@ -160,31 +180,11 @@ namespace RDKit {
       }
     }
 
-    void kekulizeFused(RWMol &mol,
-                       const VECT_INT_VECT &arings,
-                       unsigned int maxBackTracks) { 
-      // get all the atoms in the ring system
-      INT_VECT allAtms;
-      Union(arings, allAtms);
-
-      // get all the atoms that are candidates to receive a double bond
-      // also mark atoms in the fused system that are not aromatic to begin with
-      // as done. Mark all the bonds that are part of the aromatic system
-      // to be single bonds
-      INT_VECT done;
-      int nats = mol.getNumAtoms();
-      int nbnds = mol.getNumBonds();
-      boost::dynamic_bitset<> dBndCands(nats);
-      boost::dynamic_bitset<> dBndAdds(nbnds);
-
-      markDbondCands(mol, allAtms, dBndCands, done);
-
-#if 0
-      std::cerr << "candidates: ";
-      for(unsigned int i=0;i<nats;++i) std::cerr << dBndCands[i];
-      std::cerr << std::endl;
-#endif
-
+    bool kekulizeWorker(RWMol &mol,INT_VECT &allAtms,
+                        boost::dynamic_bitset<> dBndCands,
+                        boost::dynamic_bitset<> dBndAdds,
+                        INT_VECT done,
+                        unsigned int maxBackTracks){
       INT_DEQUE astack;
       INT_INT_DEQ_MAP options;
       int lastOpt=-1;
@@ -329,20 +329,53 @@ namespace RDKit {
               numBT++;
             }
             else {
-              // we exhausted all option (or crossed the allowed
-              // number of backTracks) and we still need to backtrack
-              // can't kekulize this thing
-              std::ostringstream errout;
-              errout << "Can't kekulize mol " << std::endl; 
-              std::string msg = errout.str();
-              BOOST_LOG(rdErrorLog) << msg<< std::endl;
-              throw MolSanitizeException(msg);
+              return false;
             }
           } // end of else try to backtrack
         } // end of curr atom atom being a cand for double bond
       } // end of while we are not done with all atoms
+      return true;
     }
 
+    void kekulizeFused(RWMol &mol,
+                       const VECT_INT_VECT &arings,
+                       unsigned int maxBackTracks) { 
+      // get all the atoms in the ring system
+      INT_VECT allAtms;
+      Union(arings, allAtms);
+
+      // get all the atoms that are candidates to receive a double bond
+      // also mark atoms in the fused system that are not aromatic to begin with
+      // as done. Mark all the bonds that are part of the aromatic system
+      // to be single bonds
+      INT_VECT done;
+      INT_VECT questions;
+      int nats = mol.getNumAtoms();
+      int nbnds = mol.getNumBonds();
+      boost::dynamic_bitset<> dBndCands(nats);
+      boost::dynamic_bitset<> dBndAdds(nbnds);
+
+      markDbondCands(mol, allAtms, dBndCands, questions, done);
+      
+#if 0
+      std::cerr << "candidates: ";
+      for(int i=0;i<nats;++i) std::cerr << dBndCands[i];
+      std::cerr << std::endl;
+#endif
+
+      bool kekulized;
+      kekulized=kekulizeWorker(mol,allAtms,dBndCands,dBndAdds,done,maxBackTracks);
+      if(!kekulized){
+        // we exhausted all option (or crossed the allowed
+        // number of backTracks) and we still need to backtrack
+        // can't kekulize this thing
+        std::ostringstream errout;
+        errout << "Can't kekulize mol " << std::endl; 
+        std::string msg = errout.str();
+        BOOST_LOG(rdErrorLog) << msg<< std::endl;
+        throw MolSanitizeException(msg);
+      }
+    }
   }// end of utility namespace
 
   namespace MolOps {

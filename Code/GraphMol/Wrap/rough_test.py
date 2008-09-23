@@ -1740,6 +1740,33 @@ CAS<~>
     count = len(mol.GetSubstructMatches(smarts, uniquify=0))
     self.failUnless(count==9)
 
+  def test51RadicalHandling(self):
+    """ test handling of atoms with radicals
+    """
+    mol = Chem.MolFromSmiles("[C]C")
+    self.failUnless(mol)
+    atom=mol.GetAtomWithIdx(0)
+    self.failUnless(atom.GetNumRadicalElectrons()==3)
+    self.failUnless(atom.GetNoImplicit())
+    atom.SetNoImplicit(False)
+    atom.SetNumRadicalElectrons(1)
+    mol.UpdatePropertyCache()
+    self.failUnless(atom.GetNumRadicalElectrons()==1)
+    self.failUnless(atom.GetNumImplicitHs()==2)
+    
+    mol = Chem.MolFromSmiles("[c]1ccccc1")
+    self.failUnless(mol)
+    atom=mol.GetAtomWithIdx(0)
+    self.failUnless(atom.GetNumRadicalElectrons()==1)
+    self.failUnless(atom.GetNoImplicit())
+
+    mol = Chem.MolFromSmiles("[n]1ccccc1")
+    self.failUnless(mol)
+    atom=mol.GetAtomWithIdx(0)
+    self.failUnless(atom.GetNumRadicalElectrons()==0)
+    self.failUnless(atom.GetNoImplicit())
+
+
 if __name__ == '__main__':
   unittest.main()
 
