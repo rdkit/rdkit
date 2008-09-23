@@ -914,7 +914,6 @@ void testIssue1989539() {
     TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
     delete m;
   }
-
 }
 
 
@@ -969,9 +968,38 @@ void testConstrainedEmbedding() {
     BOOST_LOG(rdInfoLog)<<"ssd: "<<ssd<<std::endl;
     TEST_ASSERT(ssd<0.1);
   }
-
-
 }
+
+void testIssue2091864() {
+  {
+    std::string smi="C1C2CC12";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    delete m;
+  }
+  {
+    std::string smi="C1CC2C3C1C23";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+  {
+    std::string smi="c1ccc2c(c1)C1C3C2C13";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -1047,7 +1075,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue355 \n\n";
   testIssue355();
-#endif
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
   test1();
@@ -1063,6 +1090,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test constrained embedding \n\n";
   testConstrainedEmbedding();
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091864 \n\n";
+  testIssue2091864();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
