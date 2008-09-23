@@ -93,9 +93,10 @@ namespace RDDepict {
         }
         nbrIdx++;
       }
-      // we should have atleast one nbr that is inside the embedded fragment
-      CHECK_INVARIANT(doneNbrs.size() > 0, ""); 
-      if (doneNbrs.size() == 1) {
+      if (doneNbrs.size() == 0) {
+        d_eatoms[*dai].normal = RDGeom::Point2D(1.,0.);
+        d_eatoms[*dai].angle = -1.;
+      } else if (doneNbrs.size() == 1) {
         int nbid = doneNbrs.front();
         d_eatoms[*dai].nbr1 = nbid; 
         d_eatoms[*dai].normal = computeNormal(d_eatoms[*dai].loc, 
