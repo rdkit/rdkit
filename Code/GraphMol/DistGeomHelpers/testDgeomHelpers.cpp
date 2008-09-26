@@ -932,6 +932,7 @@ void testConstrainedEmbedding() {
     coords[3]=ref->getConformer().getAtomPos(3);
     coords[4]=ref->getConformer().getAtomPos(4);
 
+#if 1
     int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
     
@@ -944,6 +945,8 @@ void testConstrainedEmbedding() {
     double ssd=MolAlign::alignMol(*test,*ref,-1,-1,&alignMap);
     BOOST_LOG(rdInfoLog)<<"ssd: "<<ssd<<std::endl;
     TEST_ASSERT(ssd<0.1);
+#endif
+    delete test;
   }
 
   {
@@ -967,6 +970,7 @@ void testConstrainedEmbedding() {
     double ssd=MolAlign::alignMol(*test,*ref,-1,-1,&alignMap);
     BOOST_LOG(rdInfoLog)<<"ssd: "<<ssd<<std::endl;
     TEST_ASSERT(ssd<0.1);
+    delete test;
   }
 }
 
@@ -1000,6 +1004,27 @@ void testIssue2091864() {
   }
 }
 
+void testIssue2091974() {
+  {
+    std::string smi="CCOC(OCC)(OCC)OCC";
+    RWMol *m = SmilesToMol(smi);
+    ROMol *m2 =MolOps::addHs(*m);
+    delete m;
+    int cid = DGeomHelpers::EmbedMolecule(*m2);
+    TEST_ASSERT(cid >= 0);
+    delete m2;
+  }
+  {
+    std::string smi="O=N(=O)OCC(CON(=O)=O)(CON(=O)=O)CON(=O)=O";
+    RWMol *m = SmilesToMol(smi);
+    ROMol *m2 =MolOps::addHs(*m);
+    delete m;
+    int cid = DGeomHelpers::EmbedMolecule(*m2);
+    TEST_ASSERT(cid >= 0);
+    delete m2;
+  }
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -1010,8 +1035,8 @@ int main() {
 #if 1
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
-  test2();
-  
+  test2(); 
+ 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test3 \n\n";
   test3();
@@ -1020,9 +1045,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test4 \n\n";
   test4();
 
-  //BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  //BOOST_LOG(rdInfoLog) << "\t test5 \n\n";
-  //test5();
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test5 \n\n";
+  test5();
   
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test6 \n\n";
@@ -1088,15 +1113,20 @@ int main() {
   testIssue1989539();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "\t test constrained embedding \n\n";
-  testConstrainedEmbedding();
-#endif
-
-  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091864 \n\n";
   testIssue2091864();
 
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test constrained embedding \n\n";
+  testConstrainedEmbedding();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091974 \n\n";
+  testIssue2091974();
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
+
   return(0);
 }
 

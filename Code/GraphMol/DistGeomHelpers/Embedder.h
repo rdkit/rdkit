@@ -32,7 +32,7 @@ namespace RDKit {
        
       \param mol            Molecule of interest
       \param maxIterations  Max. number of times the embedding will be tried if coordinates are 
-                            not obtained successfully
+                            not obtained successfully. The default value is 10x the number of atoms.
       \param seed           provides a seed for the random number generator (so that the same
                             coordinates can be obtained for a molecule on multiple runs)
                             If negative, the RNG will not be seeded.
@@ -64,7 +64,7 @@ namespace RDKit {
 
       \return ID of the conformations added to the molecule, -1 if the emdedding failed
     */
-    int EmbedMolecule(ROMol &mol, unsigned int maxIterations=30, int seed=-1,
+    int EmbedMolecule(ROMol &mol, unsigned int maxIterations=0, int seed=-1,
                       bool clearConfs=true,
                       bool useRandomCoords=false,double boxSizeMult=2.0,
                       bool randNegEig=true,
@@ -85,7 +85,7 @@ namespace RDKit {
       \param mol            Molecule of interest
       \param numConfs       Number of conformations to be generated
       \param maxIterations  Max. number of times the embedding will be tried if coordinates are 
-                            not obtained successfully
+                            not obtained successfully. The default value is 10x the number of atoms.
       \param seed           provides a seed for the random number generator (so that the same
                             coordinates can be obtained for a molecule on multiple runs).
                             If negative, the RNG will not be seeded.

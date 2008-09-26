@@ -126,7 +126,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
     ID of the new conformation added to the molecule \n\
 \n";
   python::def("EmbedMolecule", RDKit::EmbedMolecule,
-              (python::arg("mol"), python::arg("maxAttempts")=30,
+              (python::arg("mol"), python::arg("maxAttempts")=0,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
 	       python::arg("boxSizeMult")=2.0,
@@ -172,7 +172,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
 \n";
   python::def("EmbedMultipleConfs", RDKit::EmbedMultipleConfs,
               (python::arg("mol"), python::arg("numConfs")=10, 
-               python::arg("maxAttempts")=10,
+               python::arg("maxAttempts")=0,
                python::arg("randomSeed")=-1, python::arg("clearConfs")=true,
                python::arg("useRandomCoords")=false,
 	       python::arg("boxSizeMult")=2.0,
