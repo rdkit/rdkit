@@ -242,6 +242,8 @@ Copied blocks from Excel can also be used (e.g. copy a column of point names and
       print '\t',pick
     self.draw()
     self.highlightPoints(picks)
+    return picks
+    
 
   def launchExamplesWin(self,view,cluster,newWin=1):
     if not newWin:

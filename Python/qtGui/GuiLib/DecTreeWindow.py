@@ -1,5 +1,3 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 #  $Id$
 #
 #  Copyright (C) 2003-2005  Rational Discovery LLC
@@ -298,6 +296,7 @@ class TreeWindow(PiddleWindow):
 
     """
     examples = node.GetExamples()
+    actCounts = {}
     if examples:
       if not newWin and len(self._exampleListCtrls):
         listCtrl = self._exampleListCtrls[-1]
@@ -318,11 +317,15 @@ class TreeWindow(PiddleWindow):
       for example in examples:
         itm = FloatItem(listCtrl)
         for i in range(nCols):
-          if isinstance(example[i], types.FloatType):
+          if type(example[i]) == types.FloatType:
             itm.setText(i,'%4.3g'%example[i])
           else:
             itm.setText(i,str(example[i]))
-      self.statusBar().message('%d Examples'%(len(examples)))
+        actCounts[example[-1]]=actCounts.get(example[-1],0)+1
+      actCountsKeys = actCounts.keys()
+      actCountsKeys.sort()
+      actTxt = ''.join(['Act %s: %d|'%(str(x),actCounts[x]) for x in actCountsKeys])
+      self.statusBar().message('%d Examples |%s'%(len(examples),actTxt))
     else:
       self.statusBar().message('No Examples')
 

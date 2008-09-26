@@ -4,7 +4,7 @@
 #    All Rights Reserved
 #
 """ Mixin GUI launcher code """
-from qt import *
+import qt
 import os.path
 import qtGui
 from qtGui import qtUtils
@@ -28,7 +28,7 @@ def StandardGui(args,**kwargs):
   return window
 
 def Launcher(klass,*args,**kwargs):
-  app = QApplication([klass.__name__])
+  app = qt.QApplication([klass.__name__])
   widget = klass(*args,**kwargs)
   widget.show()
   app.setMainWidget(widget)
@@ -67,9 +67,8 @@ if __name__ == '__main__':
     args = extras
   else:
     args = ['CompositeBuilder','MolCluster','MolDescriptors','ClusterInteract','MolSimilarity']
-
-  app = QApplication(sys.argv)
-  QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+  app = qt.QApplication(sys.argv)
+  qt.QApplication.setOverrideCursor(qt.QCursor(qt.Qt.WaitCursor))
   splash,pix = qtUtils.ShowSplashScreen(app)
   if not doUnits:
     win = StandardGui(args,startServer=startServer)
@@ -78,8 +77,8 @@ if __name__ == '__main__':
   splash.hide()
   win.show()
   win.updateGeometry()
-  win.setCaption('Rational Discovery LLC')
-  QApplication.restoreOverrideCursor()
+  win.setCaption('RDKit Gui')
+  qt.QApplication.restoreOverrideCursor()
   win.setActiveWindow()
   win.raiseW()
   app.setMainWidget(win)

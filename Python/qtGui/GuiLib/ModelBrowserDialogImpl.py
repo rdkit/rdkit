@@ -91,7 +91,7 @@ class ModelBrowserDialog(_Form):
       for i in range(nModels):
         model = models[i]
         self.modelsTable.setText(i,_idCol,str(i+1))
-        self.modelsTable.setItem(i,_useCol,QCheckTableItem(self.modelsTable,None))
+        self.modelsTable.setItem(i,_useCol,QCheckTableItem(self.modelsTable,''))
         self.modelsTable.setText(i,_noteCol,str(model[0]))
         self.modelsTable.setText(i,_holdoutCol,_stringify(model[1]))
         self.modelsTable.setText(i,_overallCol,_stringify(model[2]))

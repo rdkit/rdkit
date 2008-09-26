@@ -88,7 +88,7 @@ def insertTable(parent,klass,*args,**kwargs):
     layout = QVBoxLayout(parent,1,1,'tablelayout')
   else:
     if not layout.isEmpty():
-      if clearExisting and len(layout.children()):
+      if clearExisting and layout.children() and len(layout.children()):
         layout.deleteAllItems()
   if addInPos < 0:
     layout.addWidget(tbl)

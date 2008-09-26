@@ -15,7 +15,7 @@ class DescTable(QTable):
   """
   checkCol=1
   def __init__(self,*args,**kwargs):
-    QTable.__init__(self,*args,**kwargs)
+    QTable.__init__(self,*args)
     QObject.connect(self,SIGNAL('selectionChanged()'),self.selectionChanged)
     QObject.connect(self,SIGNAL('currentChanged(int,int)'),self.currentChanged)
     self.setSelectionMode(self.Single)

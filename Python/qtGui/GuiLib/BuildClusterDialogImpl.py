@@ -177,8 +177,12 @@ class BuildClusterDialog(_Form):
               acts[i] = bound
       else:
         endP = len(rawD[0])+1
-
-      data = array([x[startP:endP] for x in rawD])
+      try:
+        data = array([x[startP:endP] for x in rawD])
+      except ValueError:
+        qtUtils.error('Unable to copy data table.\nThe problem is probably due to one or more of the following:\n  1) Attempting to normally cluster fingerprint data.\n  2) The "Activities Present?" box is checked for a dataset where no activities are present.')
+        return
+        
     else:
       data = array(rawD)
       #data = rawD

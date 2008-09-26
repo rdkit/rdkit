@@ -45,7 +45,27 @@ def __LocateMol(self,clustWin,cluster,targetCol=1):
     tbl.setCurrentCell(row,0)
     tbl.ensureCellVisible(row,targetCol)
 
+def _clusterWinPickCenters(self,nToPick,method=None,colHeading='Picked?',targetCol=1):
+  picks = self._origPickCenters(nToPick,method=method)
+  if hasattr(self,'_mcMolBrowser') and self._mcMolBrowser():
+    tbl = self._mcMolBrowser().inDataTable
+    hdr = tbl.horizontalHeader()
+    lab = str(hdr.label(tbl.numCols()-1))
+    if lab!=colHeading:
+      nC = tbl.numCols()
+      tbl.insertColumns(nC)
+      lab = hdr.setLabel(nC,colHeading)
+    colId = tbl.numCols()-1
+    for row in range(tbl.numRows()):
+      txt = str(tbl.text(row,targetCol))
+      if txt in picks:
+        tbl.setText(row,colId,"1")
+      else:
+        tbl.setText(row,colId,"0")
     
+      
+  
+  return picks
   
   
 def __ClusterWindowAssociateBrowser(self):
@@ -71,8 +91,8 @@ def _clusterWinInitMenubar(self):
 def LocalInit(self):
   ClusterWindow._origInitMenubar=ClusterWindow._initMenubar
   ClusterWindow._initMenubar=_clusterWinInitMenubar
-
-
+  ClusterWindow._origPickCenters = ClusterWindow.pickCenters
+  ClusterWindow.pickCenters = _clusterWinPickCenters
 
                                 
                                 

@@ -460,7 +460,6 @@ class MolTable(GuiTable.GuiTable):
     if drawTarget is None:
       drawTarget=self.molCanvas
 
-
     if hasattr(mols,'reset'):
       mols.reset()
     self._includeCheckboxes = includeCheckboxes
@@ -531,6 +530,19 @@ class MolTable(GuiTable.GuiTable):
             self.setText(row,col+nExtraCols,str(d))
           else:
             self.setText(row,col+nExtraCols,"<Undisplayable>")
+        for pn in mol.GetPropNames():
+          if pn not in colNames:
+            colNames.append(pn)
+            nCols += 1
+            idx = len(colNames)+nExtraCols
+            self.setNumCols(idx)
+            self.horizontalHeader().setLabel(idx-1,pn)
+            self.redraw()
+            d = mol.GetProp(pn)
+            if type(d) in self._displayableTypes:
+              self.setText(row,idx-1,str(d))
+            else:
+              self.setText(row,idx-1,"<Undisplayable>")
         row += 1
         if dlg:
           try:

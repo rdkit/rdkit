@@ -90,7 +90,7 @@ class MolDescriptorWin(_Form):
     
     hdr = tbl.horizontalHeader()
     hdr.setLabel(0,self.trUtf8("Name"))
-    hdr.setLabel(1,None)
+    hdr.setLabel(1,"")
     hdr.setLabel(2,self.trUtf8("Description"))
     
     for i in range(nDescs):
@@ -101,7 +101,7 @@ class MolDescriptorWin(_Form):
         doc = re.sub('\ *\n\ *',' ',doc)
         tbl.setText(i,2,doc)
         tbl.adjustRow(i)
-      itm = QCheckTableItem(tbl,None)
+      itm = QCheckTableItem(tbl,"")
       tbl.setItem(i,1,itm)
     tbl.adjustColumn(0)
     tbl.adjustColumn(1)

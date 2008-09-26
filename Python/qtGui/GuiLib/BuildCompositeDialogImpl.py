@@ -71,7 +71,7 @@ class BuildCompositeDialog(_Form):
     tbl.setNumRows(nDescs)
     for i in range(nDescs):
       tbl.setText(i,_nameCol,self._colNames[i])
-      chk = QCheckTableItem(tbl,None)
+      chk = QCheckTableItem(tbl,'')
       tbl.setItem(i,_useCol,chk)
       chk.setChecked(1)
       role = QComboTableItem(tbl,_roleItems)

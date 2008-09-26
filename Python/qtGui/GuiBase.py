@@ -1,3 +1,4 @@
+# $Id$
 #
 #  Copyright (C) 2002  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
@@ -6,12 +7,15 @@
 
 """
 import RDConfig
-from qt import *
+import qt
 from qtGui import GuiShell,GuiTextViewer
-from qtGui import rpcClient
+try:
+  from qtGui import rpcClient
+except:
+  rpcClient=None
 from qtGui import qtUtils
 
-class GuiBase(QMainWindow):
+class GuiBase(qt.QMainWindow):
   """ Base class for the qt MixinGui
 
     This opens a QMainWindow with menu and status bars.
@@ -20,12 +24,12 @@ class GuiBase(QMainWindow):
 
   """
   def __init__(self,parent=None,name="GuiBase",startServer=False,includeLogo=True):
-    apply(QMainWindow.__init__,(self,parent,name,Qt.WDestructiveClose))
+    apply(qt.QMainWindow.__init__,(self,parent,name,qt.Qt.WDestructiveClose))
     self.setCaption(self.trUtf8(name))
     self._initMenus()
     self.statusBar()
-    if startServer:
-      client = rpcClient.rpcClient(qApp,self)
+    if startServer and rpcClient:
+      client = rpcClient.rpcClient(qt.qApp,self)
       self.servThread = rpcClient.ServThread(client)
       self.servThread.start()
     #self.resize(400,400)
@@ -35,27 +39,27 @@ class GuiBase(QMainWindow):
     if includeLogo:
       self._addLogo()
     self.adjustSize()
-    image0 = QPixmap(qtUtils.logoImageData)
+    image0 = qt.QPixmap(qtUtils.logoImageData)
     self.setIcon(image0)
 
 
   def _addLogo(self):
     if not self.centralWidget():
-      self.setCentralWidget(QWidget(self,'central_widget'))
+      self.setCentralWidget(qt.QWidget(self,'central_widget'))
 
     # code to build the logo pixmap
-    self._displayLabel = QLabel(self.centralWidget(),'picture')
+    self._displayLabel = qt.QLabel(self.centralWidget(),'picture')
     self._displayLabel.setScaledContents(0)
-    self._logoPM = QPixmap()
+    self._logoPM = qt.QPixmap()
     self._logoPM.load(RDConfig.RDDocsDir+'/logo.jpg')
     self._displayLabel.setPixmap(self._logoPM)
 
     # now insert it nicely
-    layout = QHBoxLayout(self.centralWidget(),1,1,'labellayout')
-    spacer = QSpacerItem(2,0,QSizePolicy.Expanding,QSizePolicy.Minimum)
+    layout = qt.QHBoxLayout(self.centralWidget(),1,1,'labellayout')
+    spacer = qt.QSpacerItem(2,0,qt.QSizePolicy.Expanding,qt.QSizePolicy.Minimum)
     layout.addItem(spacer)
     layout.addWidget(self._displayLabel)
-    spacer = QSpacerItem(2,0,QSizePolicy.Expanding,QSizePolicy.Minimum)
+    spacer = qt.QSpacerItem(2,0,qt.QSizePolicy.Expanding,qt.QSizePolicy.Minimum)
     layout.addItem(spacer)
 
   def aboutBox(self):
@@ -81,10 +85,10 @@ class GuiBase(QMainWindow):
     """ INTERNAL USE ONLY
 
     """
-    self._fileMenu = QPopupMenu(self)
-    self._editMenu = QPopupMenu(self)
-    self._viewMenu = QPopupMenu(self)
-    self._helpMenu = QPopupMenu(self)
+    self._fileMenu = qt.QPopupMenu(self)
+    self._editMenu = qt.QPopupMenu(self)
+    self._viewMenu = qt.QPopupMenu(self)
+    self._helpMenu = qt.QPopupMenu(self)
  
     self._fileMenu._id=self.menuBar().insertItem(self.trUtf8('&File'),self._fileMenu)
     self._editMenu._id=self.menuBar().insertItem(self.trUtf8('&Edit'),self._editMenu)
@@ -106,7 +110,7 @@ class GuiBase(QMainWindow):
     """
     if includeShell:
       self._fileMenu._pyShellId=self._fileMenu.insertItem(self.trUtf8('&PyShell'),self.launchShell)
-    self._fileMenu.insertItem(self.trUtf8('&Quit'),qApp,SLOT("quit()"),Qt.CTRL+Qt.Key_Q )
+    self._fileMenu.insertItem(self.trUtf8('&Quit'),qt.qApp,qt.SLOT("quit()"),qt.Qt.CTRL+qt.Qt.Key_Q )
     self.menuBar().insertItem(self.trUtf8('&Help'),self._helpMenu)
 
     self._helpMenu.insertItem(self.trUtf8('&About'),self.aboutBox)
@@ -118,24 +122,25 @@ class GuiBase(QMainWindow):
     self._shell.close(1)
     self._helpWin.close(1)
     # FIX: this ain't right
-    qApp.quit()
+    qt.qApp.quit()
 
   def customEvent(self,evt):
     """ event handler for custom events
 
     """
-    if evt.type() == rpcClient._rpcEventID:
+    if rpcClient and evt.type() == rpcClient._rpcEventID:
       rpcClient.HandleRPCEvent(self,evt)
 
     
 
 if __name__ == '__main__':
   import sys
-  a = QApplication(sys.argv)
+  qApp = qt.QApplication(sys.argv)
+  print qt.qApp
   widg = GuiBase(startServer=0)
   widg.finalizeMenus()
   widg.show()
-  a.setMainWidget(widg)
-  a.exec_loop()
+  qApp.setMainWidget(widg)
+  qApp.exec_loop()
 
 
