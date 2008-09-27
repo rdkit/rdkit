@@ -1,20 +1,49 @@
 ******  Release_Q32008_1 *******
 (Changes relative to Release_May2008_1)
- 
-!!!!!! IMPORTANT !!!!!!
- - Please read the point about dummy atoms in the "New Features"
-   section. It explains a change that affects backwards compatibility
-   when dealing with dummy atoms.
-
 
 Acknowledgements:
- - Noel O'Boyle, Igor Filippov, Evgueni Kolossov
-
+ - Noel O'Boyle, Igor Filippov, Evgueni Kolossov, Greg Magoon
 
 Bug Fixes
- - A memory leak in the ToBase64 and FromBase64 wrapper functions was fixed.
+ - A memory leak in the ToBase64 and FromBase64 wrapper functions was
+   fixed. 
+ - The UFF atom typer has been made more permissive: it now will pick
+   "close" atom types for things it does not recognize. (issue
+   2094445)
+ - The handling of molecules containing radicals has been greatly
+   improved (issues 2091839, 2091890, 2093420)
+ - Iterative (or secondary, or dependent) chirality is now supported,
+   see this page for more information:
+   http://code.google.com/p/rdkit/wiki/IterativeChirality
+   (issue 1931470)
+ - Isotope handling has been changed, this allows correct matching of
+   SMARTS with specified isotopes. (issue 1968930)
+ - Some problems with the MACCS key definitions have been
+   fixed. (issue 2027446)
+ - Molecules with multiple fragments can now be correctly
+   embedded. (issue 1989539)
+ - Adding multiple bonds between the same atoms in a molecule now
+   produces an error. (issue 1993296)
+ - The chemical reaction code now handles chiral atoms correctly in
+   when applying reactions with no stereochem information
+   provided. (issue 2050085)
+ - A problem with single-atom cores in TemplateExpand.py has been
+   fixed. (issue 2091304)  
+ - A problem causing bicyclobutane containing molecules to not be
+   embeddable has been fixed. (issue 2091864)
+ - The default parameters for embedding are now molecule-size
+   dependent. This should help with the embedding of large, and
+   crowded molecules. (issue 2091974)
+ - The codebase can now be built with boost 1.36. (issue 2071168)
 
 New Features
+ - The RDKit can now be built under Darwin (Mac OS/X).
+ - Tversky similarity can now be calculated. (request 2015633)
+ - Many of the core datastructures now support equality comparison
+   (operator==). (request 1997439)
+ - Chirality information can now be assigned based on the 3D
+   coordinates of a molecule using
+   MolOps::assignChiralTypesFrom3D(). (request 1973062) 
 
 Other
  - the pointers returned from Base64Encode/Decode are now allocated
@@ -27,6 +56,11 @@ Other
  - The new (as of May2008) hashing algorithm for fingerprints is now
    the default in the python fingerprinting code 
    (Chem.Fingerprints.FingerprintMols).
+ - The RDKit no longer uses the old numeric python library. It now
+   uses numpy, which is actively supported.
+ - The functions MolOps::assignAtomChiralCodes() and
+   MolOps::assignBondStereoCodes() are deprecated. Use
+   MolOps::assignStereochemistry() instead.
 
 
 ******  Release_May2008_1 *******
