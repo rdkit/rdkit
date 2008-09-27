@@ -1,3 +1,34 @@
+******  Release_Q32008_1 *******
+(Changes relative to Release_May2008_1)
+ 
+!!!!!! IMPORTANT !!!!!!
+ - Please read the point about dummy atoms in the "New Features"
+   section. It explains a change that affects backwards compatibility
+   when dealing with dummy atoms.
+
+
+Acknowledgements:
+ - Noel O'Boyle, Igor Filippov, Evgueni Kolossov
+
+
+Bug Fixes
+ - A memory leak in the ToBase64 and FromBase64 wrapper functions was fixed.
+
+New Features
+
+Other
+ - the pointers returned from Base64Encode/Decode are now allocated
+   using new instead of malloc or calloc. the memory should be
+   released with delete[]. 
+ - the generation of invariants for chirality testing is now quite a
+   bit faster; this results in faster parsing of molecules. 
+ - The use of C include files instead of their C++ replacements has
+   been dramatically reduced. 
+ - The new (as of May2008) hashing algorithm for fingerprints is now
+   the default in the python fingerprinting code 
+   (Chem.Fingerprints.FingerprintMols).
+
+
 ******  Release_May2008_1 *******
 (Changes relative to Release_Jan2008_1)
  
