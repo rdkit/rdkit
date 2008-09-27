@@ -21,6 +21,8 @@ project RDKit_Externals
 alias vflib : vflib-2.0 ;
 alias cmim : cmim-1.0 ;
 
-alias all-libraries : vflib cmim Lapack++ ;
+alias all-libraries : vflib cmim 
+   # Lapack++  # <- to use lapack++, uncomment this line
+;
 
 

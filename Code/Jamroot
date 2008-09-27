@@ -29,6 +29,9 @@ project RDKit
           <toolset>gcc:<include>/usr/lib/python2.5/site-packages/numpy/core/include
           <toolset>darwin:<include>/System/Library/Frameworks/Python.framework/Versions/2.5/Extras/lib/python/numpy/core/include
 	  <address-model>64:<cflags>-fPIC
+          # <define>RDK_USELAPACKPP #<- uncomment this to use lapack++
+          <toolset>msvc:<define>BOOST_NUMERIC_BINDINGS_USE_CLAPACK
+          <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
         : default-build release ;
 
 
@@ -76,6 +79,8 @@ lib blas
   <toolset>msvc:<file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
   :
   ;
-alias lapacklibs : /RDKit_Externals//Lapack++ lapack blas ;
+# if you want to use Lapack++, use this version:
+#alias lapacklibs : /RDKit_Externals//Lapack++ lapack blas ;
+alias lapacklibs : lapack blas ;
 alias vflib : /RDKit_Externals//vflib ;
 
