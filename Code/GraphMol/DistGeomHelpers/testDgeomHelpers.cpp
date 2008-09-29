@@ -838,8 +838,8 @@ void testRandomCoords() {
                            C1CC1(C)C C12(C)CC1CC2";
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.random.sdf";
-  //SDMolSupplier sdsup(fname);
-  SDWriter writer(fname);
+  SDMolSupplier sdsup(fname,true,false);
+  //SDWriter writer(fname);
 
   boost::char_separator<char> spaceSep(" ");
   tokenizer tokens(smiString,spaceSep);
@@ -852,11 +852,12 @@ void testRandomCoords() {
     m=m2;
     int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true);
     CHECK_INVARIANT(cid >= 0, "");
-    writer.write(*m);
-#if 0
-    m2 = sdsup.next();
+    //writer.write(*m);
+#if 1
+    m2 = static_cast<RWMol *>(sdsup.next());
     //ROMol *m2 = NULL;
     if(m2){
+      TEST_ASSERT(m->getNumAtoms()==m2->getNumAtoms());
       unsigned int nat = m->getNumAtoms();
     
       const Conformer &conf1 = m->getConformer(0);
@@ -886,7 +887,7 @@ void testRandomCoords() {
     }
 #endif
     delete m;
-    //delete m2;
+    delete m2;
   }
 }
 
