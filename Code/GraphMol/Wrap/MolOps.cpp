@@ -123,10 +123,28 @@ namespace RDKit{
     return (PyObject *) res;
   }
 
-  VECT_INT_VECT GetMolFrags(const ROMol &mol){
-    VECT_INT_VECT frags;
-    MolOps::getMolFrags(mol,frags);
-    return frags;
+  python::tuple GetMolFrags(const ROMol &mol,bool asMols){
+    python::list res;
+
+    if(!asMols){
+      VECT_INT_VECT frags;
+      MolOps::getMolFrags(mol,frags);
+
+      for(unsigned int i=0;i<frags.size();++i){
+        python::list tpl;
+        for(unsigned int j=0;j<frags[i].size();++j){
+          tpl.append(frags[i][j]);
+        }
+        res.append(python::tuple(tpl));
+      }
+    } else {
+      std::vector<boost::shared_ptr<ROMol> > frags;
+      frags=MolOps::getMolFrags(mol);
+      for(unsigned int i=0;i<frags.size();++i){
+        res.append(frags[i]);
+      }
+    }
+    return python::tuple(res);
   }
 
   struct molops_wrapper {
@@ -491,10 +509,15 @@ namespace RDKit{
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
+    - asMols: (optional) if this is provided and true, the fragments\n\
+      will be returned as molecules instead of atom ids.\n\        
 \n\
-  RETURNS: a tuple of tuples with IDs for the atoms in each fragment.\n\
+  RETURNS: a tuple of tuples with IDs for the atoms in each fragment\n\
+           or a tuple of molecules.\n\
 \n";
-      python::def("GetMolFrags", &GetMolFrags,docString.c_str());
+      python::def("GetMolFrags", &GetMolFrags,
+                  (python::arg("mol"),python::arg("asMols")=false),
+                  docString.c_str());
 
       // ------------------------------------------------------------------------
       docString="Returns the formal charge for the molecule.\n\
