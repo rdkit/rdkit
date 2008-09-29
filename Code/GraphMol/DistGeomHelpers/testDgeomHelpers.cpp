@@ -366,8 +366,6 @@ void test5() {
   std::string smifile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/cis_trans_cases.csv";
   SmilesMolSupplier smiSup(smifile, ",", 0, 1);
   
-  std::string sdfile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/embedDistOpti2.sdf";
-  SDWriter writer(sdfile);
   ROMol *mol;
   int i = 0;
   int cid;
@@ -375,13 +373,9 @@ void test5() {
     try {
       i++;
       mol = smiSup.next();
-      std::string mname, mname2;
       cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1); //getCoords(*mol, iter);
       TEST_ASSERT(cid>-1);
-      mol->getProp("_Name", mname);
-      writer.write(*mol);
       delete mol;
-      
     } catch (FileParseException &) {
       break;
     }
@@ -838,8 +832,8 @@ void testRandomCoords() {
                            C1CC1(C)C C12(C)CC1CC2";
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.random.sdf";
-  //SDMolSupplier sdsup(fname);
-  SDWriter writer(fname);
+  SDMolSupplier sdsup(fname,true,false);
+  //SDWriter writer(fname);
 
   boost::char_separator<char> spaceSep(" ");
   tokenizer tokens(smiString,spaceSep);
@@ -852,11 +846,12 @@ void testRandomCoords() {
     m=m2;
     int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true);
     CHECK_INVARIANT(cid >= 0, "");
-    writer.write(*m);
-#if 0
-    m2 = sdsup.next();
+    //writer.write(*m);
+#if 1
+    m2 = static_cast<RWMol *>(sdsup.next());
     //ROMol *m2 = NULL;
     if(m2){
+      TEST_ASSERT(m->getNumAtoms()==m2->getNumAtoms());
       unsigned int nat = m->getNumAtoms();
     
       const Conformer &conf1 = m->getConformer(0);
@@ -886,7 +881,7 @@ void testRandomCoords() {
     }
 #endif
     delete m;
-    //delete m2;
+    delete m2;
   }
 }
 
