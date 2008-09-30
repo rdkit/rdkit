@@ -510,7 +510,7 @@ namespace RDKit{
 \n\
     - mol: the molecule to use\n\
     - asMols: (optional) if this is provided and true, the fragments\n\
-      will be returned as molecules instead of atom ids.\n\        
+      will be returned as molecules instead of atom ids.\n\
 \n\
   RETURNS: a tuple of tuples with IDs for the atoms in each fragment\n\
            or a tuple of molecules.\n\
