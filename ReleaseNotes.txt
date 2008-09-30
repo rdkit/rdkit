@@ -35,6 +35,8 @@ Bug Fixes
    dependent. This should help with the embedding of large, and
    crowded molecules. (issue 2091974)
  - The codebase can now be built with boost 1.36. (issue 2071168)
+ - A problem with serialization of bond directions was fixed. 
+   (issue 2113433)
 
 New Features
  - The RDKit can now be built under Darwin (Mac OS/X).
@@ -44,6 +46,11 @@ New Features
  - Chirality information can now be assigned based on the 3D
    coordinates of a molecule using
    MolOps::assignChiralTypesFrom3D(). (request 1973062) 
+ - MolOps::getMolFrags() can now return a list of split molecules
+   instead of just a list of atom ids. (request 1992648)
+ - ROMol::getPropNames() now supports the includePrivate and
+   includeComputed options. (request 2047386)
+
 
 Other
  - the pointers returned from Base64Encode/Decode are now allocated
@@ -56,12 +63,14 @@ Other
  - The new (as of May2008) hashing algorithm for fingerprints is now
    the default in the python fingerprinting code 
    (Chem.Fingerprints.FingerprintMols).
- - The RDKit no longer uses the old numeric python library. It now
-   uses numpy, which is actively supported.
  - The functions MolOps::assignAtomChiralCodes() and
    MolOps::assignBondStereoCodes() are deprecated. Use
    MolOps::assignStereochemistry() instead.
-
+ - The RDKit no longer uses the old numeric python library. It now
+   uses numpy, which is actively supported.
+ - By default Lapack++ is no longer used. The replacement is the boost
+   numeric bindings: http://mathema.tician.de/software/boost-bindings.
+   
 
 ******  Release_May2008_1 *******
 (Changes relative to Release_Jan2008_1)
