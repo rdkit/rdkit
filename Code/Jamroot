@@ -1,7 +1,5 @@
 import os ;
 local BOOSTHOME = [ os.environ BOOSTHOME ] ;
-local PYTHON_ROOT = [ os.environ PYTHON_ROOT ] ;
-local PYTHON_VERSION = [ os.environ PYTHON_VERSION ] ;
 local RDBASE = [ os.environ RDBASE ] ;
 
 # make sure all executables end in .exe:

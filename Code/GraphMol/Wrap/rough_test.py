@@ -1767,6 +1767,38 @@ CAS<~>
     self.failUnless(atom.GetNoImplicit())
 
 
+  def test52MolFrags(self):
+    """ test GetMolFrags functionality
+    """
+    mol = Chem.MolFromSmiles("C.CC")
+    self.failUnless(mol)
+    fs = Chem.GetMolFrags(mol)
+    self.failUnless(len(fs)==2)
+    self.failUnless(len(fs[0])==1)
+    self.failUnless(tuple(fs[0])==(0,))
+    self.failUnless(len(fs[1])==2)
+    self.failUnless(tuple(fs[1])==(1,2))
+
+    fs = Chem.GetMolFrags(mol,True)
+    self.failUnless(len(fs)==2)
+    self.failUnless(fs[0].GetNumAtoms()==1)
+    self.failUnless(fs[1].GetNumAtoms()==2)
+    
+    mol = Chem.MolFromSmiles("CCC")
+    self.failUnless(mol)
+    fs = Chem.GetMolFrags(mol)
+    self.failUnless(len(fs)==1)
+    self.failUnless(len(fs[0])==3)
+    self.failUnless(tuple(fs[0])==(0,1,2))
+    fs = Chem.GetMolFrags(mol,True)
+    self.failUnless(len(fs)==1)
+    self.failUnless(fs[0].GetNumAtoms()==3)
+
+    
+    
+    
+
+    
 if __name__ == '__main__':
   unittest.main()
 

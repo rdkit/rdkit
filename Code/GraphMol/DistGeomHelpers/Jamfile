@@ -16,7 +16,14 @@ exe main.exe : testDgeomHelpers.cpp DistGeomHelpers /RDKit//DistGeom
   /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
 
-install regrs : main.exe
+exe bench.exe : bench.cpp DistGeomHelpers /RDKit//DistGeom
+  ../ForceFieldHelpers//ForceFieldHelpers /RDKit//ForceField
+  ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct
+  ..//GraphMol 
+  /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+
+install regrs : main.exe bench.exe
   : <location>testExecs ;
 
 

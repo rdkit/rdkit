@@ -366,8 +366,6 @@ void test5() {
   std::string smifile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/cis_trans_cases.csv";
   SmilesMolSupplier smiSup(smifile, ",", 0, 1);
   
-  std::string sdfile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/embedDistOpti2.sdf";
-  SDWriter writer(sdfile);
   ROMol *mol;
   int i = 0;
   int cid;
@@ -375,13 +373,9 @@ void test5() {
     try {
       i++;
       mol = smiSup.next();
-      std::string mname, mname2;
       cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1); //getCoords(*mol, iter);
       TEST_ASSERT(cid>-1);
-      mol->getProp("_Name", mname);
-      writer.write(*mol);
       delete mol;
-      
     } catch (FileParseException &) {
       break;
     }
