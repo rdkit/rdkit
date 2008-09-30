@@ -16,7 +16,7 @@ exe main.exe : testDgeomHelpers.cpp DistGeomHelpers /RDKit//DistGeom
   /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
 
-install regrs : main.exe bench.exe
+install regrs : main.exe
   : <location>testExecs ;
 
 
