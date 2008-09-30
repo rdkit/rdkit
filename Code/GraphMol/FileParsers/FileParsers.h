@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2007 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -28,8 +28,7 @@ namespace RDKit{
   /*! 
    *   \param inStream - stream containing the data
    *   \param line     - current line number (used for error reporting)
-   *   \param sanitize - toggles sanitization and stereochemistry
-   *                     perception of the molecule 
+   *   \param sanitize - toggles sanitization of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
    */
@@ -41,24 +40,20 @@ namespace RDKit{
   // \brief construct a molecule from an MDL mol block
   /*! 
    *   \param molBlock - string containing the mol block
-   *   \param sanitize - toggles sanitization and stereochemistry
-   *                     perception of the molecule 
+   *   \param sanitize - toggles sanitization of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
    */
-  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize=true,
-                       bool removeHs=true);
+  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize=true,bool removeHs=true);
   
   // \brief construct a molecule from an MDL mol file
   /*! 
    *   \param fName    - string containing the file name
-   *   \param sanitize - toggles sanitization and stereochemistry
-   *                     perception of the molecule 
+   *   \param sanitize - toggles sanitization of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
    */
-  RWMol *MolFileToMol(std::string fName, bool sanitize=true,
-                      bool removeHs=true);
+  RWMol *MolFileToMol(std::string fName, bool sanitize=true,bool removeHs=true);
 
   // \brief generates an MDL mol block for a molecule
   /*! 
@@ -66,8 +61,7 @@ namespace RDKit{
    *   \param includeStereo - toggles inclusion of stereochemistry information
    *   \param confId        - selects the conformer to be used
    */
-  std::string MolToMolBlock(const ROMol &mol,bool includeStereo=true,
-                            int confId=-1);
+  std::string MolToMolBlock(const ROMol &mol,bool includeStereo=true, int confId=-1);
   // \brief construct a molecule from an MDL mol file
   /*! 
    *   \param mol           - the molecule in question
@@ -75,8 +69,7 @@ namespace RDKit{
    *   \param includeStereo - toggles inclusion of stereochemistry information
    *   \param confId        - selects the conformer to be used
    */
-  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo=true,
-                    int confId=-1);
+  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo=true, int confId=-1);
 
 
   //-----
@@ -124,7 +117,38 @@ namespace RDKit{
 		    std::string partialChargeProp="_GasteigerCharge",
 		    bool writeFirstConfTwice=false);
 
+  //-----
+  //  MOL2 handling
+  //-----
 
+  // \brief construct a molecule from a TRIPOS mol2 file
+  /*! 
+   *   \param fName    - string containing the file name
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   */
+  RWMol *Mol2FileToMol(std::string fName,bool sanitize=true,bool removeHs=true);
+
+  // \brief construct a molecule from Tripos mol2 data in a stream
+  /*!  
+   *   \param inStream - stream containing the data
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   */
+  RWMol *Mol2DataStreamToMol(std::istream *inStream,bool sanitize=true,bool removeHs=true);
+  // \overload 
+  RWMol *Mol2DataStreamToMol(std::istream &inStream,bool sanitize=true,bool removeHs=true);
+
+  // \brief construct a molecule from an Tripos mol2 mol block
+  /*! 
+   *   \param molBlock - string containing the mol block
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   */
+  RWMol *Mol2BlockToMol(const std::string &molBlock,bool sanitize=true,bool removeHs=true);
 
 }
 

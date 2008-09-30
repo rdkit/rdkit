@@ -1,0 +1,22 @@
+project wrapSLNParse : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdSLNParse : rdSLNParse.cpp
+  ../../SLNParse//SLNParse
+  ../../SmilesParse//SmilesParse ../../Substruct//Substruct  
+  ../..//GraphMol
+  ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+/RDKit//vflib /RDKit//lapacklibs 
+  ;
+
+install pymod : rdSLNParse
+  : <location>$(RDBASE)/Python/Chem ;
+
+
+
+
+

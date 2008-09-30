@@ -1,0 +1,26 @@
+project GraphMol/SmilesParse : : ;
+import os ;
+import bison ;
+import lex ;
+
+local RDBASE = [ os.environ RDBASE ] ;
+
+lib SLNParse : lex.yysln.cpp   sln.tab.cpp InputFiller.cpp SLNParse.cpp SLNAttribs.cpp ..//GraphMol ../..//RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs
+  : <include>. <toolset>msvc:<link>static 
+  <toolset>msvc:<define>YY_NO_UNISTD_H ;
+install lib-install : SLNParse : <location>$(RDBASE)/bin ;
+
+cpp lex.yysln.cpp : sln.ll : <flex.prefix>yysln_ <implicit-dependency>sln.tab.cpp  ;
+cpp sln.tab.cpp : sln.yy : <bison.prefix>yysln_ ;
+
+exe test : test.cpp SLNParse 
+  ..//GraphMol   ../SmilesParse//SmilesParse
+  ../Substruct//Substruct /RDKit//vflib 
+  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs 
+;
+
+install regrs : test
+  : <location>testExecs ;
+
+
+
