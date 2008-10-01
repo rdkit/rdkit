@@ -608,6 +608,28 @@ void testQueries(){
 }
 
 
+void testRadicals(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing radical handling in pickles." << std::endl;
+
+  std::string smi="C[CH]C";
+  ROMol *m1 = SmilesToMol(smi);
+  TEST_ASSERT(m1);
+  TEST_ASSERT(m1->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+  std::string pickle;
+  ROMol *m2;
+  MolPickler::pickleMol(*m1,pickle);
+  m2 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m2);
+  TEST_ASSERT(m1->getNumAtoms()==m2->getNumAtoms());
+  TEST_ASSERT(m1->getNumBonds()==m2->getNumBonds());
+  TEST_ASSERT(m2->getAtomWithIdx(1)->getNumRadicalElectrons()==1);
+  
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+  
+}
+
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong=false;
@@ -629,6 +651,7 @@ int main(int argc, char *argv[]) {
 #endif
   //timeTest(doLong);
   testQueries();
+  testRadicals();
   
   return 0;
 

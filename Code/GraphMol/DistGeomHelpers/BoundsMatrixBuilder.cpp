@@ -173,12 +173,13 @@ namespace RDKit {
     void _checkAndSetBounds(unsigned int i, unsigned int j, 
                             double lb, double ub, 
                             DistGeom::BoundsMatPtr mmat) {
-      CHECK_INVARIANT(lb > DIST12_DELTA, "");
-      CHECK_INVARIANT(ub > lb, "");
-      
       // get the exisiting bounds
       double clb = mmat->getLowerBound(i, j);
       double cub = mmat->getUpperBound(i, j);
+
+      CHECK_INVARIANT(ub>lb, "upper bound not greater than lower bound");
+      CHECK_INVARIANT(lb>DIST12_DELTA || clb>DIST12_DELTA, "bad lower bound");
+
       if (clb <= DIST12_DELTA) {
         mmat->setLowerBound(i, j, lb);
       } else {

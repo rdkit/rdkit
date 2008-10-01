@@ -366,8 +366,6 @@ void test5() {
   std::string smifile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/cis_trans_cases.csv";
   SmilesMolSupplier smiSup(smifile, ",", 0, 1);
   
-  std::string sdfile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/embedDistOpti2.sdf";
-  SDWriter writer(sdfile);
   ROMol *mol;
   int i = 0;
   int cid;
@@ -375,13 +373,9 @@ void test5() {
     try {
       i++;
       mol = smiSup.next();
-      std::string mname, mname2;
       cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1); //getCoords(*mol, iter);
       TEST_ASSERT(cid>-1);
-      mol->getProp("_Name", mname);
-      writer.write(*mol);
       delete mol;
-      
     } catch (FileParseException &) {
       break;
     }
@@ -838,8 +832,8 @@ void testRandomCoords() {
                            C1CC1(C)C C12(C)CC1CC2";
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.random.sdf";
-  //SDMolSupplier sdsup(fname);
-  SDWriter writer(fname);
+  SDMolSupplier sdsup(fname,true,false);
+  //SDWriter writer(fname);
 
   boost::char_separator<char> spaceSep(" ");
   tokenizer tokens(smiString,spaceSep);
@@ -852,11 +846,12 @@ void testRandomCoords() {
     m=m2;
     int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true);
     CHECK_INVARIANT(cid >= 0, "");
-    writer.write(*m);
-#if 0
-    m2 = sdsup.next();
+    //writer.write(*m);
+#if 1
+    m2 = static_cast<RWMol *>(sdsup.next());
     //ROMol *m2 = NULL;
     if(m2){
+      TEST_ASSERT(m->getNumAtoms()==m2->getNumAtoms());
       unsigned int nat = m->getNumAtoms();
     
       const Conformer &conf1 = m->getConformer(0);
@@ -886,7 +881,7 @@ void testRandomCoords() {
     }
 #endif
     delete m;
-    //delete m2;
+    delete m2;
   }
 }
 
@@ -914,7 +909,6 @@ void testIssue1989539() {
     TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
     delete m;
   }
-
 }
 
 
@@ -933,6 +927,7 @@ void testConstrainedEmbedding() {
     coords[3]=ref->getConformer().getAtomPos(3);
     coords[4]=ref->getConformer().getAtomPos(4);
 
+#if 1
     int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
     
@@ -945,6 +940,8 @@ void testConstrainedEmbedding() {
     double ssd=MolAlign::alignMol(*test,*ref,-1,-1,&alignMap);
     BOOST_LOG(rdInfoLog)<<"ssd: "<<ssd<<std::endl;
     TEST_ASSERT(ssd<0.1);
+#endif
+    delete test;
   }
 
   {
@@ -968,10 +965,61 @@ void testConstrainedEmbedding() {
     double ssd=MolAlign::alignMol(*test,*ref,-1,-1,&alignMap);
     BOOST_LOG(rdInfoLog)<<"ssd: "<<ssd<<std::endl;
     TEST_ASSERT(ssd<0.1);
+    delete test;
   }
-
-
 }
+
+void testIssue2091864() {
+  {
+    std::string smi="C1C2CC12";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    delete m;
+  }
+  {
+    std::string smi="C1CC2C3C1C23";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+  {
+    std::string smi="c1ccc2c(c1)C1C3C2C13";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+}
+
+void testIssue2091974() {
+  {
+    std::string smi="CCOC(OCC)(OCC)OCC";
+    RWMol *m = SmilesToMol(smi);
+    ROMol *m2 =MolOps::addHs(*m);
+    delete m;
+    int cid = DGeomHelpers::EmbedMolecule(*m2);
+    TEST_ASSERT(cid >= 0);
+    delete m2;
+  }
+  {
+    std::string smi="O=N(=O)OCC(CON(=O)=O)(CON(=O)=O)CON(=O)=O";
+    RWMol *m = SmilesToMol(smi);
+    ROMol *m2 =MolOps::addHs(*m);
+    delete m;
+    int cid = DGeomHelpers::EmbedMolecule(*m2);
+    TEST_ASSERT(cid >= 0);
+    delete m2;
+  }
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -982,8 +1030,8 @@ int main() {
 #if 1
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test2 \n\n";
-  test2();
-  
+  test2(); 
+ 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test3 \n\n";
   test3();
@@ -992,9 +1040,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test4 \n\n";
   test4();
 
-  //BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
-  //BOOST_LOG(rdInfoLog) << "\t test5 \n\n";
-  //test5();
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test5 \n\n";
+  test5();
   
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test6 \n\n";
@@ -1047,7 +1095,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue355 \n\n";
   testIssue355();
-#endif
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
   test1();
@@ -1061,10 +1108,20 @@ int main() {
   testIssue1989539();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091864 \n\n";
+  testIssue2091864();
+
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test constrained embedding \n\n";
   testConstrainedEmbedding();
 
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091974 \n\n";
+  testIssue2091974();
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
+
   return(0);
 }
 

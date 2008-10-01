@@ -419,6 +419,18 @@ void testRemoveHsCrash() {
 }
     
 
+void testIssue2091304() {
+  RDGeom::INT_POINT2D_MAP crdMap;
+  crdMap[0] = RDGeom::Point2D(0., 1.50);
+
+  std::string smi = "COC";
+  RWMol *m1 = SmilesToMol(smi);
+  unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
+  
+  delete m1;
+}
+
+
 
 int main() { 
   RDLog::InitLogs();
@@ -478,6 +490,11 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test crashes associated with RemoveHs \n";
   testRemoveHsCrash();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Issue 2091304\n";
+  testIssue2091304();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);

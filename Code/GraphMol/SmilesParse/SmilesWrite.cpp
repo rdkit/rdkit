@@ -75,6 +75,10 @@ namespace RDKit{
         if(num==7 && atom->getIsAromatic() && atom->getNumExplicitHs()){
           nonStandard=true;
         }
+
+        if(atom->getNumRadicalElectrons()){
+          nonStandard=true;
+        }
         
         if(fc || nonStandard){
           needsBracket=true;

@@ -294,7 +294,7 @@ namespace {
                           const VECT_INT_VECT &srings, // list of all ring as atom IDS
                           const VECT_INT_VECT &brings, // list of all rings as bond ids
                           const INT_VECT &fused, // list of ring ids in the current fused system
-                          const VECT_EDON_TYPE &edon, // eletron donar state for each atom
+                          const VECT_EDON_TYPE &edon, // eletron donor state for each atom
                           INT_INT_VECT_MAP &ringNeighs, // list of neighbors for eac candidate ring
                           int &narom // number of aromatic ring so far 
                           ) {

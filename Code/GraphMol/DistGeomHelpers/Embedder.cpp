@@ -40,6 +40,9 @@ namespace RDKit {
                       double basinThresh, int seed, unsigned int maxIterations,
                       const DistGeom::VECT_CHIRALSET &chiralCenters){
       unsigned int nat = positions.size();
+      if(maxIterations==0){
+        maxIterations=10*nat;
+      }
       RDNumeric::DoubleSymmMatrix distMat(nat, 0.0);
       
       bool gotCoords = false;

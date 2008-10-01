@@ -25,7 +25,59 @@ namespace RDKit{
   //  
   //*************************************
 
-  std::string AtomGetMolFileSymbol(const Atom *atom){
+  const std::string GetMolFileChargeInfo(const RWMol &mol){
+    std::stringstream res;
+    std::stringstream chgss;
+    std::stringstream radss;
+    unsigned int nChgs=0;
+    unsigned int nRads=0;
+    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+        atomIt!=mol.endAtoms();++atomIt){
+      const Atom *atom=*atomIt;
+      if(atom->getFormalCharge()!=0){
+        ++nChgs;
+        chgss << boost::format(" % 3d % 3d") % (atom->getIdx()+1) % atom->getFormalCharge();
+        if(nChgs==8){
+          res << boost::format("M  CHG% 3d")%nChgs << chgss.str()<<std::endl;
+          chgss.str("");
+          nChgs=0;
+        }
+      }
+      unsigned int nRadEs=atom->getNumRadicalElectrons();
+      if(nRadEs!=0){
+        ++nRads;
+        switch(nRadEs){
+        case 1:
+          nRadEs=2;
+          break;
+        case 2:
+          nRadEs=3; // we use triplets, not singlets:
+          break;
+        default:
+          BOOST_LOG(rdWarningLog)<<" unsupported radical count: "<<nRadEs<<" set to 3."<<std::endl;
+          nRadEs=3;
+        }
+        radss << boost::format(" % 3d % 3d") % (atom->getIdx()+1) % nRadEs;
+        if(nRads==8){
+          res << boost::format("M  RAD% 3d")%nRads << radss.str()<<std::endl;
+          radss.str("");
+          nRads=0;
+        }
+      }
+    }
+    if(nChgs){
+      res << boost::format("M  CHG% 3d")%nChgs << chgss.str()<<std::endl;
+    }
+    if(nRads){
+      res << boost::format("M  RAD% 3d")%nRads << radss.str()<<std::endl;
+    }
+    return res.str();
+  }
+  const std::string GetMolFileQueryInfo(const RWMol &mol){
+    return "";
+  }
+
+  const std::string AtomGetMolFileSymbol(const Atom *atom){
     PRECONDITION(atom,"");
 
     std::string res;
@@ -55,7 +107,7 @@ namespace RDKit{
     while(res.size()<3) res += " ";
     return res;
   }
-  std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf=0){
+  const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf=0){
     PRECONDITION(atom,"");
     std::string res;
     int massDiff,chg,stereoCare,hCount,totValence,rxnComponentType;
@@ -74,17 +126,6 @@ namespace RDKit{
     double atomMassDiff=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
     massDiff = static_cast<int>(atomMassDiff+.1);
     
-    if(atom->getFormalCharge()!=0){
-      switch(atom->getFormalCharge()){
-      case 1: chg=3;break;
-      case 2: chg=2;break;
-      case 3: chg=1;break;
-      case -1: chg=5;break;
-      case -2: chg=6;break;
-      case -3: chg=7;break;
-      default: chg=0;
-      }
-    }
     double x, y, z;
     x = y = z = 0.0;
     if (conf) {
@@ -100,7 +141,7 @@ namespace RDKit{
     return res;
   };
   
-  std::string BondGetMolFileSymbol(const Bond *bond){
+  const std::string BondGetMolFileSymbol(const Bond *bond){
     PRECONDITION(bond,"");
     // FIX: should eventually recognize queries
     std::string res;
@@ -141,7 +182,7 @@ namespace RDKit{
     return res;
   }
 
-  std::string GetMolFileBondLine(const Bond *bond, const INT_MAP_INT &wedgeBonds,
+  const std::string GetMolFileBondLine(const Bond *bond, const INT_MAP_INT &wedgeBonds,
                                  const Conformer *conf){
     PRECONDITION(bond,"");
     std::string symbol = BondGetMolFileSymbol(bond);
@@ -293,6 +334,10 @@ namespace RDKit{
       res += "\n";
     }
 
+    res += GetMolFileChargeInfo(tmol);
+    res += GetMolFileQueryInfo(tmol);
+    
+    
     // FIX: aliases, atom lists, etc.
     res += "M  END\n";
     return res;

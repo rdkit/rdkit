@@ -9,6 +9,7 @@
 #include <GraphMol/Atom.h>
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
+#include <GraphMol/PeriodicTable.h>
 
 #include <vector>
 #include <algorithm> 
@@ -30,7 +31,7 @@ namespace RDKit{
       ROMol::AtomIterator ai; 
       int aid;
       bool aromHolder;
-      for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
+      for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
         switch( (*ai)->getAtomicNum() ){
         case 7:
           // convert neutral 5 coordinate Ns with double bonds to Os to the
@@ -127,11 +128,10 @@ namespace RDKit{
       //  valence of everything has been calculated.
       //
       ROMol::AtomIterator ai; 
-      for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
+      for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
         int origImplicitV = (*ai)->getImplicitValence();
         (*ai)->calcExplicitValence();
         int origExplicitV = (*ai)->getNumExplicitHs();
-        //(*ai)->setNumExplicitHs(0);
         
         int newImplicitV = (*ai)->calcImplicitValence();
         //
@@ -156,7 +156,38 @@ namespace RDKit{
         }
       }
     }
-                
+
+    void assignRadicals(RWMol &mol){
+      for (ROMol::AtomIterator ai = mol.beginAtoms();
+           ai != mol.endAtoms(); ++ai) {
+        // we only put automatically assign radicals to things that
+        // don't have them already and don't have implicit Hs:
+        if( !(*ai)->getNoImplicit() || (*ai)->getNumRadicalElectrons() || !(*ai)->getAtomicNum()){
+          continue;
+        }
+        double accum = 0.0;
+        RWMol::OEDGE_ITER beg,end;
+        RWMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
+        boost::tie(beg,end) = mol.getAtomBonds(*ai);
+        while(beg!=end){
+          accum += pMap[*beg]->getValenceContrib(*ai);
+          ++beg;
+        }
+        accum += (*ai)->getNumExplicitHs();
+        int totalValence = static_cast<int>(accum+0.1);
+        int chg = (*ai)->getFormalCharge();
+        int nOuter = PeriodicTable::getTable()->getNouterElecs((*ai)->getAtomicNum());
+        int baseCount=8;
+        if((*ai)->getAtomicNum()==1){
+          baseCount=2;
+        }
+
+        int numRadicals = baseCount - (nOuter - chg) - totalValence;
+        if(numRadicals>0){
+          (*ai)->setNumRadicalElectrons(numRadicals);
+        }
+      }
+    }
                 
     void sanitizeMol(RWMol &mol) {
 
@@ -171,7 +202,17 @@ namespace RDKit{
 
       // first do the kekulizations
       Kekulize(mol);
-    
+
+      // look for radicals:
+      // We do this now because we need to know
+      // that the N in [N]1C=CC=C1 has a radical
+      // before we move into setAromaticity().
+      // It's important that this happen post-Kekulization
+      // because there's no way of telling what to do 
+      // with the same molecule if it's in the form
+      // [n]1cccc1
+      assignRadicals(mol);
+      
       // then do aromaticity perception
       setAromaticity(mol);
     

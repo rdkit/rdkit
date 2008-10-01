@@ -163,6 +163,62 @@ namespace RDKit{
     }
   }
 
+  void ParseRadicalLine(RWMol *mol, const std::string &text,bool firstCall) {
+    PRECONDITION(mol,"bad mol");
+    PRECONDITION(text.substr(0,6)==std::string("M  RAD"),"bad charge line");
+
+    // if this line is specified all the atom other than those specified
+    // here should carry a charge of 0; but we should only do this once:
+    if(firstCall){
+      for (ROMol::AtomIterator ai = mol->beginAtoms();
+           ai != mol->endAtoms(); ++ai) {
+        (*ai)->setFormalCharge(0);
+      }
+    }
+
+    int ie, nent;
+    try {
+      nent = stripSpacesAndCast<int>(text.substr(6,3));
+    }
+    catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert " << text.substr(6,3) << " to int";
+      throw FileParseException(errout.str()) ;
+    }
+    int spos = 9;
+    for (ie = 0; ie < nent; ie++) {
+      int aid, rad;
+      std::ostringstream errout;
+      
+      try {
+        aid = stripSpacesAndCast<int>(text.substr(spos,4));
+        spos += 4;
+        rad = stripSpacesAndCast<int>(text.substr(spos,4));
+        spos += 4;
+
+        switch(rad) {
+        case 1:
+          mol->getAtomWithIdx(aid-1)->setNumRadicalElectrons(2);
+          break;
+        case 2:
+          mol->getAtomWithIdx(aid-1)->setNumRadicalElectrons(1);
+          break;
+        case 3:
+          mol->getAtomWithIdx(aid-1)->setNumRadicalElectrons(2);
+          break;
+        default:
+          errout << "Unrecognized radical value " << rad << " for atom "<< aid-1 << std::endl;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(spos,4) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+    }
+  }
+
   void ParseIsotopeLine(RWMol *mol, const std::string &text){
     PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  ISO"),"bad isotope line");
@@ -958,6 +1014,10 @@ namespace RDKit{
         else if(lineBeg=="M  UNS") ParseUnsaturationLine(res,tempStr);
         else if(lineBeg=="M  CHG") {
           ParseChargeLine(res, tempStr,firstChargeLine);
+          firstChargeLine=false;
+        }
+        else if(lineBeg=="M  RAD") {
+          ParseRadicalLine(res, tempStr,firstChargeLine);
           firstChargeLine=false;
         }
         line++;

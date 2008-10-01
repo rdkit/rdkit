@@ -11,12 +11,22 @@
 #include <Numerics/Vector.h>
 #include <RDGeneral/utils.h>
 
+#ifdef RDK_USELAPACKPP
 //lapack ++ includes
 #include <lafnames.h>
 #include <lapack.h>
 #include <symd.h>
 #include <lavd.h>
 #include <laslv.h>
+#else
+// uBLAS and boost.bindings includes
+#include <boost/numeric/bindings/traits/ublas_matrix.hpp> 
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/bindings/lapack/syev.hpp>
+#include <boost/numeric/ublas/io.hpp> 
+namespace ublas = boost::numeric::ublas;
+namespace lapack = boost::numeric::bindings::lapack;
+#endif
 
 using namespace RDNumeric;
 using namespace RDNumeric::EigenSolvers;
@@ -44,6 +54,7 @@ void testPowerSolver() {
   CHECK_INVARIANT(RDKit::feq(ev1.dotProduct(ev2), 0.0, 0.001), "");
   
   // compare this solvers to the values we get from the lapack solver
+#ifdef RDK_USELAPACKPP
   double data[25];
   double *leigs = new double[5];
   unsigned int i, j;
@@ -55,9 +66,7 @@ void testPowerSolver() {
   LaSymmMatDouble laMat(data, N, N);
   LaVectorDouble laEigs(leigs, N);
   LaGenMatDouble laEigVecs(N, N); //(leigvecs, N, N);
-  
   LaEigSolve(laMat, laEigs, laEigVecs);
-  
   DoubleVector nEigVals(N, Vector<double>::DATA_SPTR(leigs));
   double *ndata = new double[N*N];
   memcpy(static_cast<void *>(ndata), 
@@ -77,6 +86,36 @@ void testPowerSolver() {
     eigVals.setVal(ei, 0.0);
     nEigVals.setVal(nei, 0.0);
   }
+#else
+  ublas::matrix<double> laMat(N,N);
+  ublas::vector<double> laEigVecs(N);
+  for(unsigned int i=0;i<N;++i){
+    for(unsigned int j=i;j<N;++j){
+      laMat(i,j)=nmat.getVal(i,j);
+    }
+  }
+  lapack::syev('V','L',laMat,laEigVecs);
+  DoubleVector nEigVals(N);
+  DoubleSquareMatrix nEigVecs(N);
+  for(unsigned int i=0;i<N;++i){
+    nEigVals.setVal(i,laEigVecs(i));
+    for(unsigned int j=0;j<N;++j){
+      nEigVecs.setVal(i,j,laMat(i,j));
+    }
+  }
+  for (unsigned int i = 0; i < N; i++) {
+    unsigned int ei = eigVals.largestValId();
+    unsigned int nei = nEigVals.largestValId();
+    CHECK_INVARIANT(RDKit::feq(eigVals.getVal(ei), nEigVals.getVal(nei), 0.01), "");
+    eigVecs.getRow(ei, ev1);
+    nEigVecs.getRow(nei, ev2);
+    CHECK_INVARIANT(RDKit::feq(fabs(ev1.dotProduct(ev2)), 1.0, 0.01), "" );
+    eigVals.setVal(ei, 0.0);
+    nEigVals.setVal(nei, 0.0);
+    eigVals.setVal(ei, 0.0);
+    nEigVals.setVal(nei, 0.0);
+  }
+#endif  
 }
 
 void test2PowerSolver() {
@@ -91,10 +130,12 @@ void test2PowerSolver() {
   
   DoubleVector eigVals(N);
   DoubleSquareMatrix eigVecs(N);
+  DoubleVector ev1(N), ev2(N);
   bool converge = powerEigenSolver(N, mat, eigVals, eigVecs, 100);
   CHECK_INVARIANT(converge, "");
   CHECK_INVARIANT(RDKit::feq(eigVals.getVal(0), 4.0, 0.001), "");
 
+#ifdef RDK_USELAPACKPP
   double data[25];//, leigvecs[25];
   double *leigs = new double[5];
   unsigned int i, j;
@@ -108,7 +149,6 @@ void test2PowerSolver() {
   LaGenMatDouble laEigVecs(N, N); //(leigvecs, N, N);
   
   LaEigSolve(laMat, laEigs, laEigVecs);
-  DoubleVector ev1(N), ev2(N);
   DoubleVector nEigVals(N, Vector<double>::DATA_SPTR(leigs));
   double *ndata = new double[N*N];
   memcpy(static_cast<void *>(ndata), 
@@ -129,6 +169,36 @@ void test2PowerSolver() {
     eigVals.setVal(ei, 0.0);
     nEigVals.setVal(nei, 0.0);
   }
+#else
+  ublas::matrix<double> laMat(N,N);
+  ublas::vector<double> laEigVecs(N);
+  for(unsigned int i=0;i<N;++i){
+    for(unsigned int j=i;j<N;++j){
+      laMat(i,j)=nmat.getVal(i,j);
+    }
+  }
+  lapack::syev('V','L',laMat,laEigVecs);
+  DoubleVector nEigVals(N);
+  DoubleSquareMatrix nEigVecs(N);
+  for(unsigned int i=0;i<N;++i){
+    nEigVals.setVal(i,laEigVecs(i));
+    for(unsigned int j=0;j<N;++j){
+      nEigVecs.setVal(i,j,laMat(i,j));
+    }
+  }
+  for (unsigned int i = 0; i < N; i++) {
+    unsigned int ei = eigVals.largestValId();
+    unsigned int nei = nEigVals.largestValId();
+    CHECK_INVARIANT(RDKit::feq(eigVals.getVal(ei), nEigVals.getVal(nei), 0.01), "");
+    eigVecs.getRow(ei, ev1);
+    nEigVecs.getRow(nei, ev2);
+    CHECK_INVARIANT(RDKit::feq(fabs(ev1.dotProduct(ev2)), 1.0, 0.01), "" );
+    eigVals.setVal(ei, 0.0);
+    nEigVals.setVal(nei, 0.0);
+    eigVals.setVal(ei, 0.0);
+    nEigVals.setVal(nei, 0.0);
+  }
+#endif
 }
 
 int main() {
@@ -142,6 +212,7 @@ int main() {
   std::cout << "---------------------------------------\n";
   std::cout << "\t test2PowerSolver\n";
   test2PowerSolver();
+  std::cout << "---------------------------------------\n";
   return (0);
 }
 
