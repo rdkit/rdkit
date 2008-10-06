@@ -1,7 +1,8 @@
 The file Docs/SoftwareRequirements.txt documents the additional
 software that is required to build or use the RDKit.
 
-Up-to-date build instructions can be found on the wiki:
+Build instructions are in the file INSTALL.
+The most up-to-date build instructions can be found on the wiki:
 http://code.google.com/p/rdkit/wiki/GettingStarted
 
 Some information about using the software from Python is in the
