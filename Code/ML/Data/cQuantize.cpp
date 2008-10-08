@@ -284,7 +284,8 @@ cQuantize_RecurseOnBounds(PyObject *self, PyObject *args)
     PyList_SetItem(cutObj,i,PyInt_FromLong((long int)cuts[i]));
   }
   PyTuple_SetItem(res,1,cutObj);
-
+  free(cuts);
+  free(starts);
   Py_DECREF(contigVals);
   Py_DECREF(contigResults);
   return res;
@@ -307,6 +308,7 @@ cQuantize_FindStartPoints(PyObject *self, PyObject *args)
   contigResults = (PyArrayObject *)PyArray_ContiguousFromObject(results,PyArray_LONG,1,1);
   int *res=(int *)contigResults->data;
   PyObject *startPts = PyList_New(0);
+
   int i=0;
   bool actHomog=true;
   bool valHomog=true;
@@ -327,13 +329,16 @@ cQuantize_FindStartPoints(PyObject *self, PyObject *args)
       } else {
         // we don't need to touch i, the dividing line goes right before it
       }
-      PyList_Append(startPts,PyInt_FromLong(i));
+      PyObject *pyint=PyInt_FromLong(i);
+      PyList_Append(startPts,pyint);
+      Py_DECREF(pyint);
       start=i;
       actHomog=true;
       valHomog=true;
     }
     i++; 
   }
+
   Py_DECREF(contigVals);
   Py_DECREF(contigResults);
   return startPts;

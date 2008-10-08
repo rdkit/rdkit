@@ -39,6 +39,7 @@ namespace RDInfoTheory {
       long int *data = (long int *)copy->data;
       res = InfoEntropy(data, ncols);
     }
+    Py_DECREF(copy);
     return res;
   }
    
@@ -69,6 +70,7 @@ namespace RDInfoTheory {
     } else {
       throw_value_error("Numeric array object of type int or long or float or double");
     }
+    Py_DECREF(copy);
     return res;
   }
 
@@ -99,6 +101,7 @@ namespace RDInfoTheory {
     } else {
       throw_value_error("Numeric array object of type int or long or float or double");
     }
+    Py_DECREF(copy);
     return res;
   }
 }
