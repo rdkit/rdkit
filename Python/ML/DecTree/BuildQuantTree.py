@@ -61,6 +61,10 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
       bestGain = gainHere
       bestBounds = qBounds
       best = var
+    elif bestGain==gainHere:
+      if len(qBounds)<len(bestBounds):
+        best = var
+        bestBounds = qBounds
   if best == -1:
     print 'best unaltered'
     print '\tattrs:',attrs
@@ -68,7 +72,19 @@ def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
     print '\texamples:'
     for example in (examples[x] for x in exIndices):
       print '\t\t',example
+      
 
+  if 0:
+    print 'BEST:',len(exIndices),best,bestGain,bestBounds
+    if(len(exIndices)<10):
+      print len(exIndices),len(resCodes),len(examples)
+      exs = [examples[x] for x in exIndices]
+      vals = [x[best] for x in exs]
+      sortIdx = numpy.argsort(vals)
+      sortVals = [exs[x] for x in sortIdx]
+      sortResults = [resCodes[x] for x in sortIdx]
+      for i in range(len(vals)):
+        print '   ',i,['%.4f'%x for x in sortVals[i][1:-1]],sortResults[i]
   return best,bestGain,bestBounds
 
 

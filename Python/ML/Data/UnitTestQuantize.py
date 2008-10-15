@@ -250,5 +250,180 @@ class TestCase(unittest.TestCase):
            'split bound comparison failed: %s != %s'%(res[0],target[0])
 
 
+  def test9NewSplits(self):
+    """ 
+    """
+    d = [ (0,0),
+          (1,1),
+          (2,0),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[1,2],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[1,2],str(res))
+
+    d = [ (0,1),
+          (1,0),
+          (2,1),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[1,2],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[1,2],str(res))
+
+
+    d = [ (0,0),
+          (0,0),
+          (1,1),
+          (1,1),
+          (2,0),
+          (2,1),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2,4],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2,4],str(res))
+
+    d = [ (0,0),
+          (0,1),
+          (1,1),
+          (1,1),
+          (2,0),
+          (2,1),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2,4],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2,4],str(res))
+
+    d = [ (0,0),
+          (0,0),
+          (1,0),
+          (1,1),
+          (2,0),
+          (2,1),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2,4],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2,4],str(res))
+
+    d = [ (0,0),
+          (0,0),
+          (1,0),
+          (1,0),
+          (2,1),
+          (2,1),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[4],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[4],str(res))
+
+    d = [ (0,0),
+          (0,0),
+          (1,1),
+          (1,1),
+          (2,1),
+          (2,1),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2],str(res))
+
+    d = [ (0,0),
+          (0,0),
+          (1,0),
+          (1,0),
+          (2,0),
+          (2,0),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[],str(res))
+
+    d = [ (0,0),
+          (0,1),
+          (1,0),
+          (1,1),
+          (2,0),
+          (2,0),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2,4],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[2,4],str(res))
+
+    d = [ (1,0),
+          (2,1),
+          (2,1),
+          (3,1),
+          (3,1),
+          (3,1),
+          (4,0),
+          (4,1),
+          (4,1),
+         ]
+    varValues = [x[0] for x in d]
+    resCodes = [x[1] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[1,6],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[1,6],str(res))
+
+
+    d=[(1, 1.65175902843, 0),
+       (2, 1.89935600758, 0),
+       (3, 1.89935600758, 1),
+       (4, 1.89935600758, 1),
+       (5, 2.7561609745, 1),
+       (6, 2.7561609745, 1),
+       (7, 2.7561609745, 1),
+       (8, 2.7561609745, 1),
+       (9, 3.53454303741, 1),
+       (10, 3.53454303741, 1),
+       (11, 3.53454303741, 1),
+       (12, 3.53454303741, 1),
+       (13, 3.53454303741, 1)]
+
+    varValues = [x[1] for x in d]
+    resCodes = [x[2] for x in d]
+    nPossibleRes = 2
+    res = Quantize._NewPyFindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[1,4],str(res))
+    res = Quantize._FindStartPoints(varValues,resCodes,len(d))
+    self.failUnless(res==[1,4],str(res))
+
+
 if __name__ == '__main__':
   unittest.main()

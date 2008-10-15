@@ -68,3 +68,16 @@ class QuantTreeNode(DecTree.DecTreeNode):
     return cmp(type(self),type(other)) or \
            cmp(self.qBounds,other.qBounds) or \
            Tree.TreeNode.__cmp__(self,other)
+
+  def __str__(self):
+    """ returns a string representation of the tree
+
+      **Note**
+
+        this works recursively
+    
+    """
+    here = '%s%s %s\n'%('  '*self.level,self.name,str(self.qBounds))
+    for child in self.children:
+      here = here + str(child)
+    return here

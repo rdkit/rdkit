@@ -174,9 +174,9 @@ class TestCase(unittest.TestCase):
                                            recycleVars=1)
     assert self.t1.GetLabel()==0,self.t1.GetLabel()
     assert self.t1.GetChildren()[0].GetLabel()==1
-    assert self.t1.GetChildren()[1].GetLabel()==0
+    assert self.t1.GetChildren()[1].GetLabel()==1
     assert self.t1.GetChildren()[1].GetChildren()[0].GetLabel()==0
-    assert self.t1.GetChildren()[1].GetChildren()[1].GetLabel()==1
+    assert self.t1.GetChildren()[1].GetChildren()[1].GetLabel()==0
     
     
   def testRandomForest(self):

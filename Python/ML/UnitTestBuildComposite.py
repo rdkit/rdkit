@@ -146,7 +146,6 @@ class TestCase(unittest.TestCase):
     self.details.limitDepth = 3
     self.details.nModels = 10
     compos = BuildComposite.RunIt(self.details,saveIt=0)
-
     self.compare(compos,refCompos)
 
   def test6(self):
@@ -163,7 +162,6 @@ class TestCase(unittest.TestCase):
     self.details.nModels = 10
     self.details.activityBounds=[0.5]
     compos = BuildComposite.RunIt(self.details,saveIt=0)
-
     self.compare(compos,refCompos)
 
   def test7(self):

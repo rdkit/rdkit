@@ -238,41 +238,40 @@ def _NewPyRecurseOnBounds(vals,cuts,which,starts,results,nPossibleRes,varTable=N
   #    2) the result score must change across it
   #
   #  So, in the list [(0,0),(1,0),(1,1),(2,1)]:
-  #    - we cannot divide before (1,0) (same activity value)
-  #    - we cannot divide before (1,1) (same descriptor value)
-  #    - we can divide before (2,1) (same descriptor value)
+  #    we should divide before (1,0) and (2,1)
   #
   # --------------------------------
 def _NewPyFindStartPoints(sortVals,sortResults,nData):
   startNext = []
   tol = 1e-8
-  i = 0
-  start=0
-  actHomog=1
-  valHomog=1
+  blockAct=sortResults[0]
+  lastBlockAct=None
+  lastDiv=None
+  i = 1
   while i<nData:
-    # we don't need to use abs (the list is ordered)
-    if sortVals[i]-sortVals[start]>tol:
-      valHomog=0
-    if sortResults[i]!=sortResults[start]:
-      actHomog=0
-    if not actHomog and not valHomog:
-      # we have a switch, now we just need to figure out where the
-      #  switch is.
-      if( sortVals[i]-sortVals[i-1]<tol ):
-        # we're in a block with constant descriptor value, find its beginning:
-        while i>1 and sortVals[i]-sortVals[i-1]<tol:
-          i-=1
-        # i is now just upstream of the transition, which is exactly where
-        #  we want the cut point
+    # move to the end of this block:
+    while i<nData and sortVals[i]-sortVals[i-1]<=tol:
+      if sortResults[i] != blockAct:
+        # this block is heterogeneous
+        blockAct=-1
+      i+=1
+    if lastBlockAct is None:
+      # first time through:
+      lastBlockAct = blockAct
+      lastDiv = i
+    else:
+      if blockAct==-1 or lastBlockAct==-1 or blockAct!=lastBlockAct:
+        startNext.append(lastDiv)
+        lastDiv = i
+        lastBlockAct = blockAct
       else:
-        # we don't need to touch i, the dividing line goes right before it
-        pass
-      startNext.append(i)
-      start = i
-      actHomog = 1
-      valHomog = 1
-    i += 1
+        lastDiv=i
+    if i<nData:
+      blockAct=sortResults[i]
+    i+=1
+  # catch the case that the last point also sets a bin:
+  if blockAct != lastBlockAct :
+    startNext.append(lastDiv)
   return startNext
 
 def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
@@ -306,9 +305,9 @@ def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
     return [],-1e8
   
   # sort the variable values:
-  sortIdx = numpy.argsort(vals)
-  sortVals = numpy.array([vals[x] for x in sortIdx],'d')
-  sortResults = numpy.array([results[x] for x in sortIdx],'i')
+  svs = zip(vals,results)
+  svs.sort()
+  sortVals,sortResults = zip(*svs)
   startNext=_FindStartPoints(sortVals,sortResults,nData)
   if not len(startNext):
     return [0],0.0
@@ -332,6 +331,7 @@ def FindVarMultQuantBounds(vals,nBounds,results,nPossibleRes):
       
   return quantBounds,maxGain
 
+#hascQuantize=0
 if hascQuantize:
   _RecurseOnBounds = cQuantize._RecurseOnBounds
   _FindStartPoints = cQuantize._FindStartPoints

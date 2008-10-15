@@ -306,21 +306,23 @@ cQuantize_FindStartPoints(PyObject *self, PyObject *args)
   double *vals=(double *)contigVals->data;
 
   contigResults = (PyArrayObject *)PyArray_ContiguousFromObject(results,PyArray_LONG,1,1);
-  int *res=(int *)contigResults->data;
+  long *res=(long *)contigResults->data;
   PyObject *startPts = PyList_New(0);
 
   int i=0;
   bool actHomog=true;
   bool valHomog=true;
-  int start=0;
+  int start=0,endP=0;
   double tol=1e-8;
   i=0;
   while(i<nData){
+    //std::cerr<<"    comp: "<<i<<" "<<vals[i]<<" "<<res[i]<<std::endl;
     if(vals[i]-vals[start]>tol) valHomog=false;
     if(res[i]!=res[start]) actHomog=false;
     // we have a switch, now we just need to figure out where the
     // switch is.
     if(!actHomog && !valHomog){
+      endP=i;
       if(vals[i]-vals[i-1]<tol){
         // we're in a block with constant descriptor value, find its beginning:
         while(i>1 && vals[i]-vals[i-1]<tol) i--;
@@ -332,6 +334,8 @@ cQuantize_FindStartPoints(PyObject *self, PyObject *args)
       PyObject *pyint=PyInt_FromLong(i);
       PyList_Append(startPts,pyint);
       Py_DECREF(pyint);
+      //std::cerr<<"   ... "<<i<<" "<<endP<<std::endl;
+      i=endP;
       start=i;
       actHomog=true;
       valHomog=true;
