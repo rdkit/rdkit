@@ -1,6 +1,6 @@
 """ an XML-RPC server to allow remote control of PyMol
  
-  Author: Greg Landrum (Landrum@RationalDiscovery.com)
+  Author: Greg Landrum (glandrum@users.sourceforge.net)
   Created:       January 2002
   $LastChangedDate$
   License:  PyMol
