@@ -4,8 +4,11 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib MolAlign : AlignMolecules.cpp
- ..//GraphMol ../MolTransforms//MolTransforms ../Substruct//Substruct ../../Numerics/Alignment//Alignment ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry
-  :  <toolset>msvc:<link>static ; #<link>static ;
+ ..//GraphMol ../MolTransforms//MolTransforms ../Substruct//Substruct 
+ ../../Numerics/Alignment//Alignment ../../RDGeneral//RDGeneral
+ ../../Numerics/EigenSolvers//EigenSolvers 
+ ../../Geometry//RDGeometry ../../DataStructs//DataStructs 
+  :  <toolset>msvc:<link>static ;
 install lib-install : MolAlign : <location>$(RDBASE)/bin ;
 
 exe testMolAlign : testMolAlign.cpp MolAlign ../MolTransforms//MolTransforms

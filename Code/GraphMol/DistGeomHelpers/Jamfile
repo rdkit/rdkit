@@ -4,8 +4,11 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib DistGeomHelpers : BoundsMatrixBuilder.cpp Embedder.cpp
- ..//GraphMol ../ForceFieldHelpers//ForceFieldHelpers ../../Numerics/Alignment//Alignment ../../DistGeom//DistGeom ../../ForceField//ForceField ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry
-  :  <toolset>msvc:<link>static ; #<link>static ;
+ ..//GraphMol ../ForceFieldHelpers//ForceFieldHelpers ../../Numerics/Alignment//Alignment 
+ ../../DistGeom//DistGeom ../../ForceField//ForceField ../../RDGeneral//RDGeneral 
+ ../../Numerics/Optimizer//Optimizer ../../Numerics/EigenSolvers//EigenSolvers
+ ../../Geometry//RDGeometry
+  :  <toolset>msvc:<link>static ;
 install lib-install : DistGeomHelpers : <location>$(RDBASE)/bin ;
 
 exe main.exe : testDgeomHelpers.cpp DistGeomHelpers /RDKit//DistGeom
