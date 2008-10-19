@@ -116,7 +116,7 @@ namespace RDKit{
 					      bool force=false);
     //! \brief Same as MolOps::computeDiscriminators(const ROMol &mol),
     //! except that this directly uses the user-supplied distance matrix
-    DiscrimTuple computeDiscriminators(double *distMat, int nb, int na);
+    DiscrimTuple computeDiscriminators(double *distMat, unsigned int nb, unsigned int na);
     
 
     //! calculates Balaban's J index for the molecule

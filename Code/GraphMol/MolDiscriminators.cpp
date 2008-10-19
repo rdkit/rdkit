@@ -70,7 +70,7 @@ namespace RDKit {
   }
   
   namespace MolOps {
-    DiscrimTuple computeDiscriminators(double *distMat, int nb, int na) {
+    DiscrimTuple computeDiscriminators(double *distMat, unsigned int nb, unsigned int na) {
       PRECONDITION(distMat,"bogus distance matrix");
       double ev1 = 0.0;
       double ev2 = 0.0;
@@ -107,9 +107,9 @@ namespace RDKit {
         mol.getProp("Discrims", res);
       }
       else {
-        int nAts = mol.getNumAtoms();
+        unsigned int nAts = mol.getNumAtoms();
         double *dMat;
-        int nb = mol.getNumBonds();
+        unsigned int nb = mol.getNumBonds();
         dMat = MolOps::getDistanceMat(mol,useBO,true);
         //  Our discriminators (based upon eigenvalues of the distance matrix
         //  and Balaban indices) are good, but is a case they don't properly
@@ -122,7 +122,7 @@ namespace RDKit {
         for(atomIt=mol.beginAromaticAtoms();
             atomIt!=mol.endAromaticAtoms();
             atomIt++){
-          int idx=(*atomIt)->getIdx();
+          unsigned int idx=(*atomIt)->getIdx();
           dMat[idx*nAts+idx] += 0.5;
         }
 #if 0

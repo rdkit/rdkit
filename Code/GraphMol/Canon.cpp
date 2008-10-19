@@ -682,7 +682,7 @@ namespace Canon {
         // traversed has stereochem set:
         for(VECT_INT_VECT_CI vivci=ringInfo->atomRings().begin();
             vivci!=ringInfo->atomRings().end();++vivci){
-          if(std::find(vivci->begin(),vivci->end(),atom->getIdx())!=vivci->end()){
+          if(std::find(vivci->begin(),vivci->end(),static_cast<int>(atom->getIdx()))!=vivci->end()){
             for(INT_VECT_CI ivci=vivci->begin();ivci!=vivci->end();++ivci){
               if( atomVisitOrders[*ivci]<pairIt->first &&
                   mol.getAtomWithIdx(*ivci)->getChiralTag()!=Atom::CHI_UNSPECIFIED ) {
