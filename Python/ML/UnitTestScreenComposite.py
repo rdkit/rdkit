@@ -123,15 +123,15 @@ class TestCase(unittest.TestCase):
     assert len(compos)==tgt,'bad composite loaded: %d != %d'%(len(compos),tgt)
 
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = ScreenComposite.ScreenFromDetails(compos,self.details)
-    assert nGood==93,nGood
-    assert misCount==10
+    assert nGood==96,nGood
+    assert misCount==7
     assert nSkipped==0
-    assert feq(avgGood,.9699),avgGood
-    assert feq(avgBad,.81),avgBad
-    assert tbl[0,0] == 48,tbl
-    assert tbl[1,1] == 45
-    assert tbl[0,1] == 7
-    assert tbl[1,0] == 3
+    assert feq(avgGood,.9604),avgGood
+    assert feq(avgBad,.7857),avgBad
+    assert tbl[0,0] == 50,tbl
+    assert tbl[1,1] == 46
+    assert tbl[0,1] == 5
+    assert tbl[1,0] == 2
     
   def test6(self):
     """ multiple models """
@@ -143,20 +143,20 @@ class TestCase(unittest.TestCase):
     composites = [compos,compos]
     nGood,misCount,nSkipped,avgGood,avgBad,avgSkip,tbl = \
                                                        ScreenComposite.ScreenFromDetails(composites,self.details)
-    assert feq(nGood[0],93),nGood
-    assert feq(misCount[0],10)
+    assert feq(nGood[0],96),nGood
+    assert feq(misCount[0],7)
     assert feq(nSkipped[0],0)
-    assert feq(avgGood[0],.9699),avgGood
-    assert feq(avgBad[0],.81),avgBad
+    assert feq(avgGood[0],.9604),avgGood
+    assert feq(avgBad[0],.7857),avgBad
     assert feq(nGood[1],0)
     assert feq(misCount[1],0)
     assert feq(nSkipped[1],0)
     assert feq(avgGood[1],0)
     assert feq(avgBad[1],0)
-    assert feq(tbl[0,0],48),tbl
-    assert feq(tbl[1,1],45)
-    assert feq(tbl[0,1],7)
-    assert feq(tbl[1,0],3)
+    assert feq(tbl[0,0],50),tbl
+    assert feq(tbl[1,1],46)
+    assert feq(tbl[0,1],5)
+    assert feq(tbl[1,0],2)
     
   def test7(self):
     """ shuffle """
