@@ -8,7 +8,9 @@ python-extension rdForceField : ForceField.cpp
   ..//ForceField
   ../../Numerics/Optimizer//Optimizer
   ../../DataStructs//DataStructs
-  ../../RDGeneral//RDGeneral ../../RDBoost//RDBoost ;
+  ../../Geometry//RDGeometry 
+  ../../RDGeneral//RDGeneral ../../RDBoost//RDBoost 
+;
 
 install pymod : rdForceField : <location>$(RDBASE)/Python/ForceField ;
 
