@@ -81,37 +81,39 @@ namespace RDInfoTheory {
   }
 
   template<class T> double InfoEntropyGain(T *dMat, long int dim1,long int dim2) {
-    int i,j;
     T *variableRes, *overallRes;
     double gain,term2;
     int tSum;
 
+    //std::cerr<<" --------\n    ieg: "<<dim1<<" "<<dim2<<std::endl;
     variableRes = new T[dim1];
-    for(i=0;i<dim1;i++){
-      int idx1 = i*dim2;
+    for(long int i=0;i<dim1;i++){
+      long int idx1 = i*dim2;
       variableRes[i] = (T)0.0;
-      for(j=0;j<dim2;j++){
+      for(long int j=0;j<dim2;j++){
         variableRes[i] += dMat[idx1+j];
+        //std::cerr<<"  "<<i<<" "<<j<<" "<<dMat[idx1+j]<<std::endl;
       }
     }
 
     overallRes = new T[dim2];
     // do the col sums
-    for(i=0;i<dim2;i++){
+    for(long int i=0;i<dim2;i++){
       overallRes[i] = (T)0.0;
-      for(j=0;j<dim1;j++){
+      for(long int j=0;j<dim1;j++){
         overallRes[i] += dMat[j*dim2+i];
+        //std::cerr<<"  "<<i<<" "<<j<<" "<<dMat[j*dim2+i]<<std::endl;
       }
     }
 
     term2 = 0.0;
-    for(i=0;i<dim1;i++) {
+    for(long int i=0;i<dim1;i++) {
       T *tPtr;
       tPtr = dMat + i*dim2;
       term2 += variableRes[i] * InfoEntropy(tPtr,dim2);
     }
     tSum = 0;
-    for(i=0;i<dim2;i++){
+    for(long int i=0;i<dim2;i++){
       tSum += static_cast<int>(overallRes[i]);
     }
     
@@ -122,6 +124,7 @@ namespace RDInfoTheory {
     else{
       gain = 0.0;
     }
+    //std::cerr<<"  >gain> "<<gain<<std::endl;
     
     delete [] overallRes;
     delete [] variableRes;

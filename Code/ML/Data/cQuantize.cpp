@@ -66,8 +66,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
  ***********************************************/
 long int *
-GenVarTable(double *vals,int nVals,int *cuts,int nCuts,int *starts,
-	    int *results,int nPossibleRes,long int *varTable)
+GenVarTable(double *vals,int nVals,long int *cuts,int nCuts,long int *starts,
+	    long int *results,int nPossibleRes,long int *varTable)
 {
   int nBins = nCuts + 1;
   int idx,i,iTab;
@@ -131,34 +131,34 @@ GenVarTable(double *vals,int nVals,int *cuts,int nCuts,int *starts,
 
  ***********************************************/
 double
-RecurseHelper(double *vals,int nVals,int *cuts,int nCuts,int which,
-	      int *starts,int nStarts,int *results,int nPossibleRes)
+RecurseHelper(double *vals,int nVals,long int *cuts,int nCuts,int which,
+	      long int *starts,int nStarts,long int *results,int nPossibleRes)
 {
   double maxGain=-1e6,gainHere;
-  int *bestCuts,*tCuts;
+  long int *bestCuts,*tCuts;
   long int *varTable=0;
   int highestCutHere = nStarts - nCuts + which;
   int i,nBounds=nCuts;
   
   varTable = (long int *)calloc((nCuts+1)*nPossibleRes,sizeof(long int));
-  bestCuts = (int *)calloc(nCuts,sizeof(int));
-  tCuts = (int *)calloc(nCuts,sizeof(int));
+  bestCuts = (long int *)calloc(nCuts,sizeof(long int));
+  tCuts = (long int *)calloc(nCuts,sizeof(long int));
   GenVarTable(vals,nVals,cuts,nCuts,starts,results,nPossibleRes,varTable);
   while(cuts[which] <= highestCutHere){
     gainHere = RDInfoTheory::InfoEntropyGain(varTable,nCuts+1,nPossibleRes);
     if(gainHere > maxGain){
       maxGain = gainHere;
-      memcpy(bestCuts,cuts,nCuts*sizeof(int));
+      memcpy(bestCuts,cuts,nCuts*sizeof(long int));
     }
 
     // recurse on the next vars if needed
     if(which < nBounds-1){
-      memcpy(tCuts,cuts,nCuts*sizeof(int));
+      memcpy(tCuts,cuts,nCuts*sizeof(long int));
       gainHere = RecurseHelper(vals,nVals,tCuts,nCuts,which+1,starts,nStarts,
 			       results,nPossibleRes);
       if(gainHere > maxGain){
         maxGain = gainHere;
-	memcpy(bestCuts,tCuts,nCuts*sizeof(int));
+	memcpy(bestCuts,tCuts,nCuts*sizeof(long int));
       }
     }
 
@@ -180,7 +180,7 @@ RecurseHelper(double *vals,int nVals,int *cuts,int nCuts,int which,
       if(cuts[i] == cuts[i-1]) cuts[i] += 1;
     }
   }
-  memcpy(cuts,bestCuts,nCuts*sizeof(int));
+  memcpy(cuts,bestCuts,nCuts*sizeof(long int));
   free(tCuts);
   free(bestCuts);
   free(varTable);
@@ -233,7 +233,7 @@ cQuantize_RecurseOnBounds(PyObject *self, PyObject *args)
   int which,nPossibleRes;
 
   PyArrayObject *contigVals,*contigResults;
-  int *cuts,*starts;
+  long int *cuts,*starts;
   PyObject *res,*cutObj;
   double gain;
   int i,nCuts,nStarts;
@@ -254,12 +254,12 @@ cQuantize_RecurseOnBounds(PyObject *self, PyObject *args)
   contigResults = (PyArrayObject *)PyArray_ContiguousFromObject(results,PyArray_LONG,1,1);
   
   nCuts = PyList_Size(pyCuts);
-  cuts = (int *)calloc(nCuts,sizeof(int));
+  cuts = (long int *)calloc(nCuts,sizeof(long int));
   for(i=0;i<nCuts;i++){
     cuts[i] = PyInt_AsLong(PyList_GetItem(pyCuts,i));
   }
   nStarts = PyList_Size(pyStarts);
-  starts = (int *)calloc(nStarts,sizeof(int));
+  starts = (long int *)calloc(nStarts,sizeof(long int));
   for(i=0;i<nStarts;i++){
     starts[i] = PyInt_AsLong(PyList_GetItem(pyStarts,i));
   }
@@ -267,7 +267,7 @@ cQuantize_RecurseOnBounds(PyObject *self, PyObject *args)
   // do the real work
   gain = RecurseHelper((double *)contigVals->data,contigVals->dimensions[0],
 		       cuts,nCuts,which,starts,nStarts,
-		       (int *)contigResults->data,nPossibleRes);
+		       (long int *)contigResults->data,nPossibleRes);
 		       
   /*
     -------
