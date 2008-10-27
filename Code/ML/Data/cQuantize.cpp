@@ -302,47 +302,56 @@ cQuantize_FindStartPoints(PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "OOi",&values,&results,&nData)){
     return NULL;
   }
+  PyObject *startPts = PyList_New(0);
+
+  if(nData<2){
+    return startPts;
+  }
+
   contigVals = (PyArrayObject *)PyArray_ContiguousFromObject(values,PyArray_DOUBLE,1,1);
   double *vals=(double *)contigVals->data;
 
   contigResults = (PyArrayObject *)PyArray_ContiguousFromObject(results,PyArray_LONG,1,1);
   long *res=(long *)contigResults->data;
-  PyObject *startPts = PyList_New(0);
 
-  int i=0;
-  bool actHomog=true;
-  bool valHomog=true;
-  int start=0,endP=0;
+  bool firstBlock=true;
+  long lastBlockAct=-2,blockAct=res[0];
+  int lastDiv=-1;
   double tol=1e-8;
-  i=0;
+
+  int i=1;
   while(i<nData){
-    //std::cerr<<"    comp: "<<i<<" "<<vals[i]<<" "<<res[i]<<std::endl;
-    if(vals[i]-vals[start]>tol) valHomog=false;
-    if(res[i]!=res[start]) actHomog=false;
-    // we have a switch, now we just need to figure out where the
-    // switch is.
-    if(!actHomog && !valHomog){
-      endP=i;
-      if(vals[i]-vals[i-1]<tol){
-        // we're in a block with constant descriptor value, find its beginning:
-        while(i>1 && vals[i]-vals[i-1]<tol) i--;
-	// i is now just upstream of the transition, which is exactly where
-	//  we want the cut point
-      } else {
-        // we don't need to touch i, the dividing line goes right before it
+    while(i<nData && vals[i]-vals[i-1]<=tol){
+      if(res[i]!=blockAct){
+        blockAct=-1;
       }
-      PyObject *pyint=PyInt_FromLong(i);
-      PyList_Append(startPts,pyint);
-      Py_DECREF(pyint);
-      //std::cerr<<"   ... "<<i<<" "<<endP<<std::endl;
-      i=endP;
-      start=i;
-      actHomog=true;
-      valHomog=true;
+      ++i;
     }
-    i++; 
+    if(firstBlock){
+      firstBlock=false;
+      lastBlockAct=blockAct;
+      lastDiv=i;
+    } else {
+      if(blockAct==-1 || lastBlockAct==-1 || blockAct!=lastBlockAct){
+        PyObject *pyint=PyInt_FromLong(lastDiv);
+        PyList_Append(startPts,pyint);
+        Py_DECREF(pyint);
+        lastDiv=i;
+        lastBlockAct=blockAct;
+      } else {
+        lastDiv=i;
+      }
+    }
+    if(i<nData) blockAct=res[i];
+    ++i; 
   }
 
+  // catch the case that the last point also sets a bin:
+  if( blockAct != lastBlockAct ){
+    PyObject *pyint=PyInt_FromLong(lastDiv);
+    PyList_Append(startPts,pyint);
+    Py_DECREF(pyint);
+  }
   Py_DECREF(contigVals);
   Py_DECREF(contigResults);
   return startPts;
