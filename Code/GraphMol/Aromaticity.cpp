@@ -461,8 +461,6 @@ namespace {
         // Not sure if this should return vacantElectronDonorType 
         // FIX: explicitly doing this as a note for potential problems
         // 
-        //res = NoElectronDonorType;
-        
         res = VacantElectronDonorType;
       }
       else if (incidentCyclicMultipleBond(at)) {

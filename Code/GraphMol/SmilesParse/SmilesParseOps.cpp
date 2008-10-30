@@ -385,9 +385,11 @@ namespace SmilesParseOps{
 	    if(matchedBond->getBondType()==Bond::UNSPECIFIED){
 	      Bond::BondType bondT=GetUnspecifiedBondType(mol,atom1,atom2);
 	      matchedBond->setBondType(bondT);
-	      if(bondT==Bond::AROMATIC) matchedBond->setIsAromatic(true);
 	    }
 	    matchedBond->setOwningMol(mol);
+            if(matchedBond->getBondType()==Bond::AROMATIC){
+              matchedBond->setIsAromatic(true);
+            }
 
 #if 0
 	    //

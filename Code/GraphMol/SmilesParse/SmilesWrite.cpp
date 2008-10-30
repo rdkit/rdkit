@@ -249,7 +249,8 @@ namespace RDKit{
         Atom *a1,*a2;
         a1 = bond->getOwningMol().getAtomWithIdx(atomToLeftIdx);
         a2 = bond->getOwningMol().getAtomWithIdx(bond->getOtherAtomIdx(atomToLeftIdx));
-        if(a1->getIsAromatic() && a2->getIsAromatic()) aromatic=true;
+        if((a1->getIsAromatic() && a2->getIsAromatic()) &&
+           (a1->getAtomicNum()||a2->getAtomicNum())) aromatic=true;
       }
 
       Bond::BondDir dir= bond->getBondDir();

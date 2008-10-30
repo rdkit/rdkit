@@ -688,10 +688,6 @@ namespace RDKit{
       throw MolPicklerException("Bad pickle format: ENDMOL tag not found.");
     }
 
-    if(haveQuery){
-      // FIX: this is a hack to prevent a crash in canonicalization
-      mol->setProp("_BondStereoSet",1);
-    }
   }
 
 

@@ -72,31 +72,26 @@ namespace RDKit {
       // - marks all aromatic bonds to single bonds
       // - marks atoms that can take a double bond 
       
-      bool hasAromaticAtom=false;
+      bool hasAromaticOrDummyAtom=false;
       for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end();
            ++adx) {
-        if(mol.getAtomWithIdx(*adx)->getIsAromatic()){
-          hasAromaticAtom=true;
+        if(mol.getAtomWithIdx(*adx)->getIsAromatic() ||
+           !mol.getAtomWithIdx(*adx)->getAtomicNum()){
+          hasAromaticOrDummyAtom=true;
           break;
         }
       }
       // if there's not at least one atom in the ring that's
-      // marked as being aromatic, there's no point in continuing:
-      if(!hasAromaticAtom) return;
+      // marked as being aromatic or a dummy,
+      // there's no point in continuing:
+      if(!hasAromaticOrDummyAtom) return;
 
       std::vector<Bond *> makeSingle;
 
       RWMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
       for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end();
            ++adx) {
-        // if this atom is not either aromatic or a dummy, don't
-        // have to kekulize it
         Atom *at = mol.getAtomWithIdx(*adx);
-        // dummies are always candidates:
-        if(!at->getAtomicNum()){
-          dBndCands[*adx]=1;
-          continue;
-        }
 
         if (!at->getIsAromatic() && at->getAtomicNum() ) {
           done.push_back(*adx);
@@ -117,30 +112,11 @@ namespace RDKit {
           }
           continue;
         }
-      
-        int sbo = 0;
-        int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
-        int chrg = at->getFormalCharge();
-        dv += chrg;
-        int tbo = at->getExplicitValence() + at->getImplicitValence();
-        int nRadicals=at->getNumRadicalElectrons();
-        int totalDegree=at->getDegree()+at->getImplicitValence();
-        
-        const INT_VECT &valList =
-          PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
-        unsigned int vi = 1;
-      
-        while ( tbo>dv && vi<valList.size() && valList[vi]>0 ) {
-          dv = valList[vi] + chrg;
-          ++vi;
-        }
 
-        if(totalDegree+nRadicals>=dv){
-          // if our degree + nRadicals exceeds the default valence, 
-          // there's no way we can take a double bond, just continue.
-          continue;
-        }
-        
+        // count the number of neighbors connected with single,
+        // double, or aromatic bonds. Along the way, mark
+        // bonds that we will later mark as being single:
+        int sbo = 0;
         RWMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = mol.getAtomBonds(at);
         while (beg != end) {
@@ -160,16 +136,47 @@ namespace RDKit {
           }
           ++beg;
         }
-        sbo +=  at->getTotalNumHs();
 
-        
-        
-        if( dv==(sbo+1) ){
+
+        if(!at->getAtomicNum()){
+          // dummies always start as candidates to have a double bond:
           dBndCands[*adx]=1;
-        } else if( !nRadicals && at->getNoImplicit() && dv==(sbo+2) ){
-          // special case: there is currently no radical on the atom, but if
-          // if we allow one then this is a candidate:
-          dBndCands[*adx]=1;
+          // but they don't have to have one, so mark them as questionable:
+          questions.push_back(*adx);
+        } else {
+          // for non dummies, it's a bit more work to figure out if they
+          // can take a double bond:
+
+          sbo +=  at->getTotalNumHs();
+          int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
+          int chrg = at->getFormalCharge();
+          dv += chrg;
+          int tbo = at->getExplicitValence() + at->getImplicitValence();
+          int nRadicals=at->getNumRadicalElectrons();
+          int totalDegree=at->getDegree()+at->getImplicitValence();
+        
+          const INT_VECT &valList =
+            PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
+          unsigned int vi = 1;
+      
+          while ( tbo>dv && vi<valList.size() && valList[vi]>0 ) {
+            dv = valList[vi] + chrg;
+            ++vi;
+          }
+
+          if(totalDegree+nRadicals>=dv){
+            // if our degree + nRadicals exceeds the default valence, 
+            // there's no way we can take a double bond, just continue.
+            continue;
+          }
+        
+          if( dv==(sbo+1) ){
+            dBndCands[*adx]=1;
+          } else if( !nRadicals && at->getNoImplicit() && dv==(sbo+2) ){
+            // special case: there is currently no radical on the atom, but if
+            // if we allow one then this is a candidate:
+            dBndCands[*adx]=1;
+          }
         }
       }// loop over all atoms in the fused system
 
@@ -180,7 +187,7 @@ namespace RDKit {
       }
     }
 
-    bool kekulizeWorker(RWMol &mol,INT_VECT &allAtms,
+    bool kekulizeWorker(RWMol &mol,const INT_VECT &allAtms,
                         boost::dynamic_bitset<> dBndCands,
                         boost::dynamic_bitset<> dBndAdds,
                         INT_VECT done,
@@ -337,6 +344,62 @@ namespace RDKit {
       return true;
     }
 
+    class QuestionEnumerator{
+    public:
+      QuestionEnumerator(const INT_VECT &questions) : d_questions(questions) , d_pos(1) {};
+      INT_VECT next() {
+        INT_VECT res;
+        if(d_pos >= (0x1u<<d_questions.size())){
+          return res;
+        }
+        for(unsigned int i=0;i<d_questions.size();++i){
+          if(d_pos&(0x1u<<i)){
+            res.push_back(d_questions[i]);
+          }
+        }
+        ++d_pos;
+        return res;
+      };
+    private:
+      INT_VECT d_questions;
+      unsigned int d_pos;
+    };
+
+    bool permuteDummiesAndKekulize(RWMol &mol,const INT_VECT &allAtms,
+                                   boost::dynamic_bitset<> dBndCands,
+                                   INT_VECT &questions,
+                                   unsigned int maxBackTracks){
+      boost::dynamic_bitset<> dBndAdds(mol.getNumBonds());
+      INT_VECT done;
+      bool kekulized=false;
+      QuestionEnumerator qEnum(questions);
+      while(!kekulized && questions.size()){
+        // reset the state: all aromatic bonds are remarked to single:
+        for(RWMol::BondIterator bi=mol.beginBonds();bi!=mol.endBonds();++bi){
+          if((*bi)->getIsAromatic() && (*bi)->getBondType()!=Bond::SINGLE){
+            (*bi)->setBondType(Bond::SINGLE);
+          }
+        }
+        // pick a new permutation of the questionable atoms:
+        const INT_VECT &switchOff=qEnum.next();
+        if(!switchOff.size()) break;
+        boost::dynamic_bitset<> tCands=dBndCands;
+        for(INT_VECT_CI it=switchOff.begin();it!=switchOff.end();++it){
+          tCands[*it]=0;
+        }
+#if 0
+        std::cerr<<"permute: ";
+        for (boost::dynamic_bitset<>::size_type i = 0; i < tCands.size(); ++i){
+          std::cerr << tCands[i];
+        }
+        std::cerr<<std::endl;
+#endif
+        // try kekulizing again:
+        kekulized=kekulizeWorker(mol,allAtms,tCands,dBndAdds,done,maxBackTracks);
+      }
+      return kekulized;
+    }
+
     void kekulizeFused(RWMol &mol,
                        const VECT_INT_VECT &arings,
                        unsigned int maxBackTracks) { 
@@ -356,7 +419,6 @@ namespace RDKit {
       boost::dynamic_bitset<> dBndAdds(nbnds);
 
       markDbondCands(mol, allAtms, dBndCands, questions, done);
-      
 #if 0
       std::cerr << "candidates: ";
       for(int i=0;i<nats;++i) std::cerr << dBndCands[i];
@@ -365,6 +427,10 @@ namespace RDKit {
 
       bool kekulized;
       kekulized=kekulizeWorker(mol,allAtms,dBndCands,dBndAdds,done,maxBackTracks);
+      if(!kekulized && questions.size()){
+        // we failed, but there are some dummy atoms we can try permuting:
+        kekulized=permuteDummiesAndKekulize(mol,allAtms,dBndCands,questions,maxBackTracks);
+      }
       if(!kekulized){
         // we exhausted all option (or crossed the allowed
         // number of backTracks) and we still need to backtrack

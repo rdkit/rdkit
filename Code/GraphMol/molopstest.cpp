@@ -1887,9 +1887,6 @@ void testSanitOps()
   TEST_ASSERT(m->getAtomWithIdx(7)->getFormalCharge()==3);
   delete m;
   
-  
-  
-  
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -2803,9 +2800,143 @@ void testHybridization()
     delete m;
   }
 
-
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+void testSFNetIssue2196817() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2196817: handling of aromatic dummies" << std::endl;
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"dummyArom.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomicNum()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic()==true);
+
+    MolOps::Kekulize(*m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::SINGLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getBondType()==Bond::SINGLE);
+      
+    delete m;
+  }
+  
+  {
+    std::string smi="*1cncc1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomicNum()==0);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic()==true);
+    delete m;
+  }
+  
+  {
+    std::string smi="*1C=NC=C1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getAtomicNum()==0);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic()==true);
+    delete m;
+  }
+
+  {
+    // case where all must be ignored:
+    std::string smi="c1*ccc1-c1*ccc1-c1*ccc1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    delete m;
+  }
+  
+  {
+    std::string smi="c1*[nH]*c1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    smi=MolToSmiles(*m);
+    TEST_ASSERT(smi=="c1c[*][nH][*]1");
+    delete m;
+    smi="c1***c1";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    smi=MolToSmiles(*m);
+    TEST_ASSERT(smi=="[*]1:[*]cc[*]:1");
+    delete m;
+    smi="c:1:*:*:*:*1";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    smi=MolToSmiles(*m);
+    TEST_ASSERT(smi=="[*]1:[*]:[*]c[*]:1");
+
+    delete m;
+    smi="*:1:*:*:*:*:1";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    smi=MolToSmiles(*m);
+    TEST_ASSERT(smi=="[*]1:[*]:[*]:[*]:[*]:1");
+    delete m;
+  }
+  
+  {
+    std::string smi="c1*[nH]cc1-c1*[nH]cc1-c1*ccc1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    delete m;
+    smi="c1*[nH]cc1-c1*ccc1-c1*[nH]cc1";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    delete m;
+    smi="c1*ccc1-c1*[nH]cc1-c1*[nH1]cc1";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    delete m;
+  }
+  
+  {
+    std::string smi="c1*[nH]cc1-c1*[nH]cc1-c1*[nH]cc1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+void testSFNetIssue2208994() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2208994 : kekulization error" << std::endl;
+
+  {
+    std::string smi="Cn1ccc(=O)n1C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic()==true);
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsAromatic()==true);
+
+    delete m;
+  }
+  
+  {
+    std::string smi="c:1:c:c:c:c:c1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic()==true);
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsAromatic()==true);
+
+    delete m;
+  }
+  
+  {
+    std::string smi="c1:c:c:c:c:c:1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic()==true);
+    TEST_ASSERT(m->getBondWithIdx(1)->getIsAromatic()==true);
+
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -2850,6 +2981,8 @@ int main(){
   testSFIssue1968608();
   testHybridization();
   testAromaticityEdges();
+  testSFNetIssue2196817();
+  testSFNetIssue2208994();
   
   return 0;
 }

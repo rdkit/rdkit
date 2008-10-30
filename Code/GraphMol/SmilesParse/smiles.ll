@@ -264,6 +264,7 @@ std::string("Xi"));
 		break;
 	      case ':':
 		bt = Bond::AROMATIC;
+                yysmiles_lval.bond->setIsAromatic(true);
 		break;
               default:
                 CHECK_INVARIANT(0,"cannot get here");

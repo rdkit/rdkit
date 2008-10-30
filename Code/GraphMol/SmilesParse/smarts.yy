@@ -322,8 +322,6 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
   RWMol *molP = SmilesParse::molList_g[$2];
   // close any rings in the molecule:
   SmilesParseOps::CloseMolRings(molP,0);
-  // FIX: this is a hack to prevent a crash in canonicalization
-  molP->setProp("_BondStereoSet",1);
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP));

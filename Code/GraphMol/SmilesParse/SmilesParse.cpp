@@ -98,9 +98,6 @@ RWMol *SmartsToMol(std::string sma,int debugParse,bool mergeHs){
     delete res;
     res = static_cast<RWMol *>(tmp);
   }
-  
-  // FIX: this is a hack to prevent a crash in canonicalization
-  if(res) res->setProp("_BondStereoSet",1);
   return res;
 };
 }
