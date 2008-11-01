@@ -44,6 +44,18 @@ class TestCase(unittest.TestCase):
         orig = int(m.GetProp('NUM_ROTATABLEBONDS'))
         assert calc==orig,'bad num rotors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
       idx += 1
+
+  def testIssue2183420(self):
+    " testing a problem with the acceptor definition "
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC'))==1)
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC'))==1)
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CN(C)C'))==1)
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC(=O)'))==1)
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('NC(=O)C'))==1)
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC(=O)'))==1)
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('CNC(=O)C'))==1)
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('O=CNC(=O)C'))==2)
+    self.failUnless(Lipinski.NumHAcceptors(Chem.MolFromSmiles('O=C(C)NC(=O)C'))==2)
       
 
 if __name__ == '__main__':

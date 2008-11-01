@@ -22,12 +22,18 @@ import Chem
 # Heteroatom '[B,N,O,P,S,F,Cl,Br,I]'
 
 
-# 2 definitions from Gobbi Paper
+# 2 definitions adapted from those in the Gobbi Paper
 #  NOTE: if you want traditional Lipinski numbers, you
 #  should use NOCounts (below) instead of HAcceptor
 #
 HDonorSmarts = Chem.MolFromSmarts('[$([N;!H0;v3]),$([N;!H0;+1;v4]),$([O,S;H1;+0]),$([n;H1;+0])]')
-HAcceptorSmarts = Chem.MolFromSmarts('[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N&v3;H1,H2]-[!$(*=[O,N,P,S])]),$([N;v3;H0]),$([n,o,s;+0]),F]')
+# changes log for HAcceptorSmarts:
+#  v2, 1-Nov-2008, GL : fix amide-N exclusion; remove Fs from definition
+HAcceptorSmarts = Chem.MolFromSmarts('[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),\
+$([O,S;H0;v2]),$([O,S;-]),\
+$([N;v3;!$(N-*=!@[O,N,P,S])]),\
+$([nH0,o,s;+0])\
+]')
 HeteroatomSmarts = Chem.MolFromSmarts('[!#6;!#1]')
 #  NOTE: the Rotatable bond smarts here doesn't treat deuteriums (which are left in the graph
 #  and therefore contribute to the degree of a carbon) the same as hydrogens (which are removed
@@ -47,7 +53,7 @@ NumHDonors.version="1.0.0"
 _HDonors = lambda x,y=HDonorSmarts:x.GetSubstructMatches(y,uniquify=1)
 NumHAcceptors = lambda x,y=HAcceptorSmarts:_NumMatches(x,y)
 NumHAcceptors.__doc__="Number of Hydrogen Bond Acceptors"
-NumHAcceptors.version="1.0.0"
+NumHAcceptors.version="2.0.0"
 _HAcceptors = lambda x,y=HAcceptorSmarts:x.GetSubstructMatches(y,uniquify=1)
 NumHeteroatoms = lambda x,y=HeteroatomSmarts:_NumMatches(x,y)
 NumHeteroatoms.__doc__="Number of Heteroatoms"
