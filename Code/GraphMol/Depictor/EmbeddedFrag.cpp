@@ -1728,6 +1728,7 @@ namespace RDDepict {
               break;
             } else  {
               // we made the wrong move earlier - reject the flip move it back
+
               flipAboutBond((*ri));
               colls = this->findCollisions(dmat);
             }
@@ -1782,8 +1783,10 @@ namespace RDDepict {
       }
       // now find the path between the two ends
       RDKit::INT_LIST path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
-      // add the last atom also to the mix path
-      path.push_back(aid2);
+
+      // aid1 is on the front of the path, pop it off:
+      CHECK_INVARIANT(path.front()==aid1,"bad path head");
+      path.pop_front();
 
       int nOpen = _anyNonRingBonds(aid1, path, dp_mol);
       if (nOpen > 0) {
