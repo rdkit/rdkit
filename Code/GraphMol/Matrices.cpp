@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -370,17 +370,20 @@ namespace RDKit{
       }
 
       INT_LIST res;
-      done = false;
-      int prev = aid2;
-      while (!done) {
-	prev = pred[prev];
-	if (prev != aid1) {
-	  res.push_front(prev);
-	} else {
-	  done = true;
-	}
-      }
-  
+      if(done){
+        done = false;
+        int prev = aid2;
+        res.push_back(aid2);
+        while (!done) {
+          prev = pred[prev];
+          if (prev != aid1) {
+            res.push_front(prev);
+          } else {
+            done = true;
+          }
+        }
+        res.push_front(aid1);
+      }  
       return res;
  
     }

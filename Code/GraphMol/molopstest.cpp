@@ -1631,18 +1631,43 @@ void testIssue190()
 }
 
 void testShortestPath() {
-  std::string smi ="CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O";
-  ROMol *m = SmilesToMol(smi);
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing shortest path code. This should finish very quickly." << std::endl;
+  {
+    std::string smi ="CC(OC1C(CCCC3)C3C(CCCC2)C2C1OC(C)=O)=O";
+    ROMol *m = SmilesToMol(smi);
 
-  INT_LIST path = MolOps::getShortestPath(*m, 1, 20);
-  CHECK_INVARIANT(path.size() == 5, "");
-  INT_LIST_CI pi = path.begin();
-  CHECK_INVARIANT((*pi) == 2, ""); pi++;
-  CHECK_INVARIANT((*pi) == 3, ""); pi++;
-  CHECK_INVARIANT((*pi) == 16, ""); pi++;
-  CHECK_INVARIANT((*pi) == 17, ""); pi++;
-  CHECK_INVARIANT((*pi) == 18, "");
-  delete m;
+    INT_LIST path = MolOps::getShortestPath(*m, 1, 20);
+    CHECK_INVARIANT(path.size() == 7, "");
+    INT_LIST_CI pi = path.begin();
+    CHECK_INVARIANT((*pi) == 1, ""); pi++;
+    CHECK_INVARIANT((*pi) == 2, ""); pi++;
+    CHECK_INVARIANT((*pi) == 3, ""); pi++;
+    CHECK_INVARIANT((*pi) == 16, ""); pi++;
+    CHECK_INVARIANT((*pi) == 17, ""); pi++;
+    CHECK_INVARIANT((*pi) == 18, ""); pi++;
+    CHECK_INVARIANT((*pi) == 20, ""); pi++;
+    delete m;
+  }
+  {
+    // issue 2219400
+    std::string smi ="CC.C";
+    ROMol *m = SmilesToMol(smi);
+
+    INT_LIST path = MolOps::getShortestPath(*m, 0, 1);
+    std::cerr<<"path: "<<path.size()<<std::endl;
+    CHECK_INVARIANT(path.size() == 2, "");
+    INT_LIST_CI pi = path.begin();
+    CHECK_INVARIANT((*pi) == 0, ""); pi++;
+    CHECK_INVARIANT((*pi) == 1, "");
+
+    path = MolOps::getShortestPath(*m, 1, 2);
+    CHECK_INVARIANT(path.size() == 0, "");
+
+    path = MolOps::getShortestPath(*m, 0, 2);
+    CHECK_INVARIANT(path.size() == 0, "");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 

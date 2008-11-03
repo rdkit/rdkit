@@ -492,7 +492,8 @@ namespace RDKit{
         path
 
      <b>Notes:</b>
-       - the starting and end atoms are not include in the path
+       - the starting and end atoms are included in the path
+       - if no path is found, an empty path is returned
 
     */
     INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2);

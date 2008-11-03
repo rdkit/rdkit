@@ -302,22 +302,26 @@ namespace RDDepict {
 
     RDKit::INT_LIST path = RDKit::MolOps::getShortestPath(mol, aid1, aid2);
     RDKit::INT_VECT res;
-    if (path.size() >= 2) {
+    if (path.size() >= 4) {
+      // remove the first atom (aid1) and last atom (aid2)
+      CHECK_INVARIANT(path.front()==aid1,"bad first element");
+      path.pop_front();
+      CHECK_INVARIANT(path.back()==aid2,"bad last element");
+      path.pop_back();
+      
       RDKit::INT_LIST_CI pi = path.begin();
       int pid = (*pi);
-      int aid;
-      pi++;
-      const RDKit::Bond *bond;
+      ++pi;
       while (pi != path.end()) {
-        aid = (*pi);
-        bond = mol.getBondBetweenAtoms(pid, aid);
+        int aid = (*pi);
+        const RDKit::Bond *bond = mol.getBondBetweenAtoms(pid, aid);
         int bid = bond->getIdx();
         if ( (bond->getStereo() <= RDKit::Bond::STEREOANY) &&
              (!(mol.getRingInfo()->numBondRings(bid))) ) {
           res.push_back(bid);
         }
         pid = aid;
-        pi++;
+        ++pi;
       }
     }
     return res;
