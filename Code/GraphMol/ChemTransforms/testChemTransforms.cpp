@@ -249,6 +249,15 @@ void testReplaceCore()
   smi = "ClC1CC(F)C1";
   mol1 = SmilesToMol(smi);
   TEST_ASSERT(mol1);
+  sma = "C1CC1";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  mol2 = replaceCore(*mol1,*matcher1);
+  TEST_ASSERT(!mol2);
+
+  smi = "ClC1CC(F)C1";
+  mol1 = SmilesToMol(smi);
+  TEST_ASSERT(mol1);
 
   sma = "C1CCC1";
   matcher1 = SmartsToMol(sma);
@@ -507,6 +516,93 @@ void testReplaceCore()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testReplaceCoreLabels() 
+{
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing replaceCore with labels" << std::endl;
+
+  {
+    std::string sma = "n1cocc1";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+
+    std::string smi = "n1c(CC)oc(C)c1";
+    ROMol *mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    ROMol *mol2 = replaceCore(*mol1,*matcher,true,true);
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(mol2->getNumAtoms()==5);
+    smi = MolToSmiles(*mol2,true);
+    TEST_ASSERT(smi=="[1*]CC.[3*]C");
+
+    delete mol1;
+    delete mol2;
+    delete matcher;
+  }
+
+  {
+    std::string sma = "n1cocc1";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+
+    std::string smi = "n1c(C)oc(CC)c1";
+    ROMol *mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    ROMol *mol2 = replaceCore(*mol1,*matcher,true,true);
+    TEST_ASSERT(mol2);
+    smi = MolToSmiles(*mol2,true);
+    TEST_ASSERT(smi=="[1*]C.[3*]CC");
+
+    delete mol1;
+    delete mol2;
+    delete matcher;
+  }
+
+  {
+    std::string sma = "n1cocc1";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+
+    std::string smi = "CCC1=C(OC)N=C(C)O1";
+    ROMol *mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    ROMol *mol2 = replaceCore(*mol1,*matcher,true,true);
+    TEST_ASSERT(mol2);
+    smi = MolToSmiles(*mol2,true);
+    TEST_ASSERT(smi=="[1*]C.[3*]CC.[4*]OC");
+
+    delete mol1;
+    delete mol2;
+    delete matcher;
+  }
+
+  {
+    std::string sma = "n1cocc1";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+
+    std::string smi = "C1=C(OC)N=CO1";
+    ROMol *mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    ROMol *mol2 = replaceCore(*mol1,*matcher,true,true);
+    TEST_ASSERT(mol2);
+    smi = MolToSmiles(*mol2,true);
+    TEST_ASSERT(smi=="[4*]OC");
+
+    delete mol1;
+    delete mol2;
+    delete matcher;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 void testReplaceCoreCrash() 
 {
   ROMol *mol1=0,*mol2=0,*matcher1=0;
@@ -543,6 +639,7 @@ int main() {
   testReplaceSidechains();
 #endif
   testReplaceCore();
+  testReplaceCoreLabels();
   testReplaceCoreCrash();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

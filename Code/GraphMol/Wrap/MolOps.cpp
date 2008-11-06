@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -773,7 +773,8 @@ namespace RDKit{
 \n";
       python::def("ReplaceCore", replaceCore,
                   (python::arg("mol"),python::arg("coreQuery"),
-                   python::arg("replaceDummies")=true),
+                   python::arg("replaceDummies")=true,
+                   python::arg("labelByIndex")=false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
 

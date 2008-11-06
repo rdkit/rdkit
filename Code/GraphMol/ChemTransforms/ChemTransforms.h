@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2007 Greg Landrum
+//  Copyright (C) 2006-2008 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -89,12 +89,15 @@ namespace RDKit{
       \param mol            - the ROMol of interest
       \param coreQuery      - a query ROMol to be used to match the core
       \param replaceDummies - if set, atoms matching dummies in the core will also be replaced
+      \param labelByIndex  - if set, the dummy atoms at attachment points are labelled with the
+                             index+1 of the corresponding atom in the core
 
       \return a copy of \c mol with the non-matching atoms and bonds (if any)
               removed and dummies at the connection points. The client is responsible
               for deleting this molecule
   */
-  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery, bool replaceDummies=true);
+  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
+                     bool replaceDummies=true,bool labelByIndex=false);
         
 
 

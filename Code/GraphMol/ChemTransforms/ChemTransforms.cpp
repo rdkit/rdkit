@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2006-22007 Greg Landrum
+//  Copyright (C) 2006-2008 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -245,7 +245,8 @@ namespace RDKit{
     return static_cast<ROMol *>(newMol);
   }
 
-  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery, bool replaceDummies){
+  ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery, bool replaceDummies,
+                     bool labelByIndex){
     MatchVectType matchV;
 
     // do the substructure matching and get the atoms that match the query
@@ -258,11 +259,11 @@ namespace RDKit{
     }
 
     unsigned int origNumAtoms=mol.getNumAtoms();
-    boost::dynamic_bitset<> matchingIndices(origNumAtoms);
+    std::vector<int> matchingIndices(origNumAtoms,-1);
     for(MatchVectType::const_iterator mvit=matchV.begin();
         mvit!=matchV.end();mvit++){
       if(replaceDummies || coreQuery.getAtomWithIdx(mvit->first)->getAtomicNum()>0){
-        matchingIndices[mvit->second] = 1;
+        matchingIndices[mvit->second] = mvit->first;
       }
     }
 
@@ -270,7 +271,7 @@ namespace RDKit{
     std::vector<Atom *> keepList;
     unsigned int nDummies=0;
     for(unsigned int i=0;i<origNumAtoms;++i){
-      if(!matchingIndices[i]){
+      if(matchingIndices[i]==-1){
         Atom *sidechainAtom=newMol->getAtomWithIdx(i);
         // we're keeping the sidechain atoms:
         keepList.push_back(sidechainAtom);
@@ -292,11 +293,15 @@ namespace RDKit{
             lIter!=nbrList.end();++lIter){
           unsigned int nbrIdx=*lIter;
           Bond *connectingBond=newMol->getBondBetweenAtoms(i,nbrIdx);
-          if(matchingIndices[nbrIdx]){
+          if(matchingIndices[nbrIdx]>-1){
             bool removedPrecedingAtom=false;
             Atom *newAt=new Atom(0);
             ++nDummies;
-            newAt->setMass(double(nDummies));
+            if(!labelByIndex){
+              newAt->setMass(double(nDummies));
+            } else {
+              newAt->setMass(matchingIndices[nbrIdx]);
+            }
             newMol->addAtom(newAt,false,true);
             keepList.push_back(newAt);
             Bond *bnd=connectingBond->copy();
