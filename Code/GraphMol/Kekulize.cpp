@@ -369,17 +369,25 @@ namespace RDKit {
                                    boost::dynamic_bitset<> dBndCands,
                                    INT_VECT &questions,
                                    unsigned int maxBackTracks){
-      boost::dynamic_bitset<> dBndAdds(mol.getNumBonds());
-      INT_VECT done;
+      boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
+      for(INT_VECT_CI ai=allAtms.begin();ai!=allAtms.end();++ai){
+        atomsInPlay[*ai]=1;
+      }
       bool kekulized=false;
       QuestionEnumerator qEnum(questions);
       while(!kekulized && questions.size()){
+        boost::dynamic_bitset<> dBndAdds(mol.getNumBonds());
+        INT_VECT done;
+#if 1
         // reset the state: all aromatic bonds are remarked to single:
         for(RWMol::BondIterator bi=mol.beginBonds();bi!=mol.endBonds();++bi){
-          if((*bi)->getIsAromatic() && (*bi)->getBondType()!=Bond::SINGLE){
+          if((*bi)->getIsAromatic() && (*bi)->getBondType()!=Bond::SINGLE &&
+             atomsInPlay[(*bi)->getBeginAtomIdx()] &&
+             atomsInPlay[(*bi)->getEndAtomIdx()] ){
             (*bi)->setBondType(Bond::SINGLE);
           }
         }
+#endif
         // pick a new permutation of the questionable atoms:
         const INT_VECT &switchOff=qEnum.next();
         if(!switchOff.size()) break;
@@ -413,8 +421,8 @@ namespace RDKit {
       // to be single bonds
       INT_VECT done;
       INT_VECT questions;
-      int nats = mol.getNumAtoms();
-      int nbnds = mol.getNumBonds();
+      unsigned int nats = mol.getNumAtoms();
+      unsigned int nbnds = mol.getNumBonds();
       boost::dynamic_bitset<> dBndCands(nats);
       boost::dynamic_bitset<> dBndAdds(nbnds);
 
@@ -428,7 +436,7 @@ namespace RDKit {
       bool kekulized;
       kekulized=kekulizeWorker(mol,allAtms,dBndCands,dBndAdds,done,maxBackTracks);
       if(!kekulized && questions.size()){
-        // we failed, but there are some dummy atoms we can try permuting:
+        // we failed, but there are some dummy atoms we can try permuting.
         kekulized=permuteDummiesAndKekulize(mol,allAtms,dBndCands,questions,maxBackTracks);
       }
       if(!kekulized){

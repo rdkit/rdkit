@@ -1758,25 +1758,25 @@ void testAddHsCoords()
   const Conformer *conf2 = &(m2->getConformer());
   TEST_ASSERT(m2->getNumAtoms()==5);
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(1)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(2)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(3)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(4)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(2)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(3)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(4)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(2) - conf2->getAtomPos(3)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(2) - conf2->getAtomPos(4)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(3) - conf2->getAtomPos(4)).length(),
-		  tetDist));	      
+                  tetDist));          
   delete m;
   delete m2;
   
@@ -1793,29 +1793,29 @@ void testAddHsCoords()
   conf2 = &(m2->getConformer());
   TEST_ASSERT(m2->getNumAtoms()==8);
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(2)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(3)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(4)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(2) - conf2->getAtomPos(3)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(2) - conf2->getAtomPos(4)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(3) - conf2->getAtomPos(4)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(5)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(6)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(7)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(5) - conf2->getAtomPos(6)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(5) - conf2->getAtomPos(7)).length(),
-		  tetDist));
+                  tetDist));
   TEST_ASSERT(feq((conf2->getAtomPos(6) - conf2->getAtomPos(7)).length(),
-		  tetDist));
+                  tetDist));
 
   delete m;
   delete m2;
@@ -1836,17 +1836,17 @@ void testAddHsCoords()
   TEST_ASSERT(m2->getNumAtoms()==6);
   
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(2)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(3)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(4)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(5)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(2) - conf2->getAtomPos(3)).length(),
-		  sp2Dist));
+                  sp2Dist));
   TEST_ASSERT(feq((conf2->getAtomPos(4) - conf2->getAtomPos(5)).length(),
-		  sp2Dist));
+                  sp2Dist));
   delete m;
   delete m2;
   
@@ -1863,13 +1863,13 @@ void testAddHsCoords()
   conf2 = &(m2->getConformer());
   TEST_ASSERT(m2->getNumAtoms()==4);
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(2)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(3)).length(),
-		  bondLength));
+                  bondLength));
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(3)).length(),
-		  bondLength+1.2));
+                  bondLength+1.2));
   TEST_ASSERT(feq((conf2->getAtomPos(1) - conf2->getAtomPos(2)).length(),
-		  bondLength+1.2));
+                  bondLength+1.2));
 
   delete m;
   delete m2;
@@ -2922,6 +2922,27 @@ void testSFNetIssue2196817() {
     delete m;
   }
   
+  {
+    std::string smi="c1ccc(C2CC(n4cc[*]c4=C2))cc1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(0,14)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::AROMATIC);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,14)->getBondType()==Bond::AROMATIC);
+    MolOps::Kekulize(*m);
+    TEST_ASSERT(!m->getBondBetweenAtoms(0,1)->getIsAromatic());
+    TEST_ASSERT(!m->getBondBetweenAtoms(0,14)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::DOUBLE||
+                m->getBondBetweenAtoms(0,14)->getBondType()==Bond::DOUBLE);
+    MolOps::setAromaticity(*m);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(0,14)->getIsAromatic());
+    TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::AROMATIC);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,14)->getBondType()==Bond::AROMATIC);
+    delete m;
+  }
+  
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -2995,7 +3016,6 @@ int main(){
   testIssue276();
   testHsAndAromaticity();
   testSFIssue1694023();
-#endif
   testSFIssue1719053();
   testSFIssue1811276();
   testSFIssue1836576();
@@ -3006,6 +3026,7 @@ int main(){
   testSFIssue1968608();
   testHybridization();
   testAromaticityEdges();
+#endif
   testSFNetIssue2196817();
   testSFNetIssue2208994();
   
