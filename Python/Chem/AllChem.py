@@ -11,7 +11,6 @@
 """
 import rdBase
 import RDConfig
-import numpy.oldnumeric as Numeric
 import DataStructs
 from Geometry import rdGeometry
 from Chem import *
@@ -34,14 +33,13 @@ def TransformMol(mol,tform):
   a single conformer
 
   """
-  import numpy.oldnumeric as Numeric
   newConf = Conformer()
   newConf.SetId(0)
   refConf = mol.GetConformer()
   for i in range(refConf.GetNumAtoms()):
     pos = list(refConf.GetAtomPosition(i))
     pos.append(1.0)
-    newPos = Numeric.dot(tform,Numeric.array(pos))
+    newPos = numpy.dot(tform,numpy.array(pos))
     newConf.SetAtomPosition(i,list(newPos)[:3])
   mol.RemoveAllConformers()
   mol.AddConformer(newConf)
@@ -81,7 +79,7 @@ def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
     for j in range(i+1,nAts):
       pj = conf.GetAtomPosition(j)
       dm.append((pi-pj).Length())
-  dm = Numeric.array(dm)
+  dm = numpy.array(dm)
   apply(Compute2DCoordsMimicDistmat,(mol,dm),kwargs)
       
 def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
@@ -168,7 +166,7 @@ def ConstrainedEmbed(mol,core,useTethers,randomseed=2342):
   ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed)
   if ci<0:
     logger.error('could not embed molecule %s, no coordinates generated.'%mol.GetProp('_Name'))
-
+  
   algMap=[]
   for i,itm in enumerate(match):
     algMap.append((itm,i))
@@ -188,10 +186,10 @@ def ConstrainedEmbed(mol,core,useTethers,randomseed=2342):
       more=ff.Minimize()
       n-=1
     # rotate the embedded conformation onto the core:
-    ssd =AlignMol(mol,core,atomMap=algMap)
+    rms =AlignMol(mol,core,atomMap=algMap)
   else:
     # rotate the embedded conformation onto the core:
-    ssd = AlignMol(mol,core,atomMap=algMap)
+    rms = AlignMol(mol,core,atomMap=algMap)
     ff =  UFFGetMoleculeForceField(mol,confId=0)
     conf = core.GetConformer()
     for i in range(core.GetNumAtoms()):
@@ -205,8 +203,8 @@ def ConstrainedEmbed(mol,core,useTethers,randomseed=2342):
       more=ff.Minimize(energyTol=1e-4,forceTol=1e-3)
       n-=1
     # realign
-    ssd = AlignMol(mol,core,atomMap=algMap)
-  print numpy.sqrt(ssd/len(algMap))
+    rms = AlignMol(mol,core,atomMap=algMap)
+  print rms
   return mol
 
 
