@@ -9,9 +9,9 @@ lib RDGeometry : point.cpp Transform2D.cpp Transform3D.cpp UniformGrid3D.cpp Gri
 :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : RDGeometry  ../DataStructs//DataStructs : <location>$(RDBASE)/bin ;
 
-exe testTransforms : testTransforms.cpp RDGeometry /RDKit//RDGeneral /RDKit//DataStructs ;
+exe testTransforms : testTransforms.cpp RDGeometry ../RDGeneral//RDGeneral ../DataStructs//DataStructs ;
 
-exe testGrid : testGrid.cpp RDGeometry /RDKit//RDGeneral /RDKit//DataStructs ;
+exe testGrid : testGrid.cpp RDGeometry ../RDGeneral//RDGeneral ../DataStructs//DataStructs ;
 
 install regrs : testTransforms testGrid : <location>testExecs ;
 

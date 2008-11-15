@@ -5,8 +5,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib PartialCharges : GasteigerCharges.cpp GasteigerParams.cpp
  ..//GraphMol ../../RDGeneral//RDGeneral
-  ../../DataStructs//DataStructs ../../Geometry//RDGeometry 
-  :  <toolset>msvc:<link>static ;
+  :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : PartialCharges : <location>$(RDBASE)/bin ;
 
 

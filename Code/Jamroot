@@ -4,8 +4,8 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 # make sure all executables end in .exe:
 import type : change-generated-target-suffix ;
-type.change-generated-target-suffix EXE : : exe ;
-
+type.change-generated-target-suffix EXE : <target-os>linux : exe ;
+type.change-generated-target-suffix EXE : <target-os>darwin : exe ;
 
 # Specify the path to the Boost project.
 use-project boost 
@@ -21,36 +21,38 @@ project RDKit
           <include>$(RDBASE)/External/Lapack++/include
           <include>$(RDBASE)/External/vflib-2.0/include
           <toolset>gcc:<cflags>-Wno-unused-function
-          <toolset>darwin:<cflags>-Wno-unused-function
           <toolset>gcc:<cflags>-fno-strict-aliasing
           <toolset>msvc:<define>WIN32
-          <toolset>msvc:<include>c:/Python25/lib/site-packages/numpy/core/include
+          <target-os>windows:<include>c:/Python25/lib/site-packages/numpy/core/include
           <toolset>gcc:<include>/usr/lib/python2.5/site-packages/numpy/core/include
           <toolset>darwin:<include>/System/Library/Frameworks/Python.framework/Versions/2.5/Extras/lib/python/numpy/core/include
 	  <address-model>64:<cflags>-fPIC
           # <define>RDK_USELAPACKPP #<- uncomment this to use lapack++
-          <toolset>msvc:<define>BOOST_NUMERIC_BINDINGS_USE_CLAPACK
+          <target-os>windows:<define>BOOST_NUMERIC_BINDINGS_USE_CLAPACK
           <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
         : default-build release ;
 
 
-alias all-libraries : Catalogs DataManip/MetricMatrixCalc DataStructs DistGeom ForceField Geometry GraphMol Numerics Query RDBoost RDGeneral SimDivPickers ChemicalFeatures ;
-
-alias all-wrappers : RDBoost/Wrap 
-  DataStructs/Wrap
-  Geometry/Wrap
-  ML/Cluster/Murtagh ML/InfoTheory/Wrap ML/Data ML/FeatureSelect/Wrap
-  DataManip/MetricMatrixCalc/Wrap
-  SimDivPickers/Wrap
-  ForceField/Wrap 
-  DistGeom/Wrap
-  Numerics/Alignment/Wrap 
-  ChemicalFeatures/Wrap
-  GraphMol//all-wrappers
- ;
+alias all-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures GraphMol
+;
 
 
-alias nonmol-libraries : Catalogs DataManip/MetricMatrixCalc DataStructs DistGeom ForceField Geometry Numerics Query RDBoost RDGeneral SimDivPickers ChemicalFeatures ;
+#alias all-wrappers : RDBoost/Wrap 
+#  DataStructs/Wrap
+#  Geometry/Wrap
+#  ML/Cluster/Murtagh ML/InfoTheory/Wrap ML/Data ML/FeatureSelect/Wrap
+#  DataManip/MetricMatrixCalc/Wrap
+#  SimDivPickers/Wrap
+#  ForceField/Wrap 
+#  DistGeom/Wrap
+#  Numerics/Alignment/Wrap 
+#  ChemicalFeatures/Wrap
+#  GraphMol//all-wrappers
+# ;
+
+
+alias nonmol-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures 
+;
 
 alias nonmol-wrappers : RDBoost/Wrap 
   DataStructs/Wrap
@@ -69,13 +71,13 @@ alias nonmol-wrappers : RDBoost/Wrap
 lib lapack
   :
   : <name>lapack
-  <toolset>msvc:<file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
+  <target-os>windows:<file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
   :
   ;
 lib blas
   :
   : <name>blas
-  <toolset>msvc:<file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
+  <target-os>windows:<file>$(RDBASE)/External/Lapack/win32/BLAS.lib
   :
   ;
 # if you want to use Lapack++, use this version:

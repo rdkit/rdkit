@@ -4,7 +4,8 @@ import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
 python-extension rdFeatSelect : rdFeatSelect.cpp /RDKit_Externals//cmim
-  /RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs 
+  ../../../RDBoost//RDBoost
 : <include>$(RDBASE)/External/cmim-1.0
 ;
 

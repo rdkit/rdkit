@@ -10,7 +10,10 @@ install lib-install : MolTransforms : <location>$(RDBASE)/bin ;
 
 exe testMolTransform : test1.cpp MolTransforms
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse 
-..//GraphMol /RDKit//Numerics/EigenSolvers /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+  ..//GraphMol 
+  ../../Numerics/EigenSolvers//EigenSolvers 
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ;
 
 install regrs : testMolTransform
   : <location>testExecs ;

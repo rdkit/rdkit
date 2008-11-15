@@ -7,7 +7,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 lib ChemicalFeatures : FreeChemicalFeature.cpp :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : ChemicalFeatures : <location>$(RDBASE)/bin ;
 
-exe main : testChemicalFeatures.cpp ChemicalFeatures /RDKit//RDGeneral ;
+exe main : testChemicalFeatures.cpp ChemicalFeatures ../RDGeneral//RDGeneral ;
 
 install regrs : main : <location>testExecs ;
 

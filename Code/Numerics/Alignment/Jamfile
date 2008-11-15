@@ -4,10 +4,12 @@ import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
 lib Alignment : AlignPoints.cpp 
-../../Geometry//RDGeometry ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral
-:  <toolset>msvc:<link>static ; 
+../../Geometry//RDGeometry ../../RDGeneral//RDGeneral
+:  <toolset>msvc:<link>static ; #<link>static ;
+
 install lib-install : Alignment : <location>$(RDBASE)/bin ;
-exe main : testAlignment.cpp Alignment /RDKit//Geometry /RDKit//RDGeneral ;
+
+exe main : testAlignment.cpp Alignment ../../Geometry//RDGeometry ../../RDGeneral//RDGeneral ;
 
 install regrs : main : <location>testExecs ;
 

@@ -11,8 +11,9 @@ python-extension rdForceFieldHelpers : rdForceFields.cpp
   ../../../ForceField//ForceField
   ../../../Numerics/Optimizer//Optimizer
   ../../../Geometry//RDGeometry
-  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-/RDKit//vflib /RDKit//lapacklibs 
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs 
+  ../../../RDBoost//RDBoost 
+  ../../..//vflib ../../..//lapacklibs 
   ;
 
 install pymod : rdForceFieldHelpers

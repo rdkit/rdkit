@@ -4,14 +4,14 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Fingerprints : Fingerprints.cpp
- ..//GraphMol ../Subgraphs//Subgraphs ../../DataStructs//DataStructs 
- ../../Geometry//RDGeometry ../../RDGeneral//RDGeneral
-:  <toolset>msvc:<link>static ;
+ ..//GraphMol ../Subgraphs//Subgraphs ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral
+:  <toolset>msvc:<link>static ; # <link>static ;
 install lib-install : Fingerprints : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp Fingerprints
   ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs
-  ..//GraphMol /RDKit//DataStructs /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+  ..//GraphMol ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral 
+  ../../Geometry//RDGeometry ../..//lapacklibs ;
 
 install regrs : test1
   : <location>testExecs ;

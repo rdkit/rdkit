@@ -12,20 +12,24 @@ lib FileParsers : MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp
 install lib-install : FileParsers : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct ..//GraphMol 
-  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ../..//vflib ;
 
 exe testMolSupplier : testMolSupplier.cpp FileParsers 
   ../Depictor//Depictor
   ../SmilesParse//SmilesParse ../Substruct//Substruct ..//GraphMol 
-  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ../..//vflib ;
 
 exe testMolWriter : testMolWriter.cpp FileParsers 
   ../SmilesParse//SmilesParse ..//GraphMol 
-  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ;
 
 exe testTplParser : testTpls.cpp FileParsers 
   ../SmilesParse//SmilesParse ..//GraphMol 
-  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ;
 
 install regrs : test1 testMolSupplier testMolWriter testTplParser
   : <location>testExecs ;

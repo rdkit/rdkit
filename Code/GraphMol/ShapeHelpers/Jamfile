@@ -4,17 +4,18 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib ShapeHelpers : ShapeEncoder.cpp ShapeUtils.cpp
- ..//GraphMol ../../RDGeneral//RDGeneral ../MolTransforms//MolTransforms 
- ../../DataStructs//DataStructs ../../Geometry//RDGeometry
- ../../Numerics/EigenSolvers//EigenSolvers
-  :  <toolset>msvc:<link>static ;
+ ..//GraphMol ../../RDGeneral//RDGeneral ../MolTransforms//MolTransforms ../../DataStructs//DataStructs ../../Geometry//RDGeometry
+  :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : ShapeHelpers : <location>$(RDBASE)/bin ;
 
 exe main : testShapeHelpers.cpp ShapeHelpers
   ../SmilesParse//SmilesParse ../FileParsers//FileParsers
   ../MolTransforms//MolTransforms ../Substruct//Substruct ../MolAlign//MolAlign
-  ../../Numerics/EigenSolvers//EigenSolvers /RDKit//Numerics/Alignment
-  ..//GraphMol /RDKit//DataStructs /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib
+  ../../Numerics/EigenSolvers//EigenSolvers 
+  ../../Numerics/Alignment//Alignment
+  ..//GraphMol ../../DataStructs//DataStructs 
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ../..//vflib
  ;
 
 install regrs : main

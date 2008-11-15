@@ -8,12 +8,16 @@ lib ForceFieldHelpers : UFF/AtomTyper.cpp UFF/Builder.cpp ../SmilesParse//Smiles
   :  <toolset>msvc:<link>static ; # <link>static ;
 install lib-install : ForceFieldHelpers : <location>$(RDBASE)/bin ;
 
-exe testHelpers : testHelpers.cpp ForceFieldHelpers  /RDKit//ForceField
+exe testHelpers : testHelpers.cpp ForceFieldHelpers 
+  ../../ForceField//ForceField
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct
-  ../DistGeomHelpers//DistGeomHelpers /RDKit//DistGeom
+  ../DistGeomHelpers//DistGeomHelpers ../../DistGeom//DistGeom
   ..//GraphMol 
-   /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
-   /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+  ../../Numerics/Optimizer//Optimizer 
+  ../../Numerics/EigenSolvers//EigenSolvers
+  ../..//Numerics/Alignment//Alignment
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ../..//vflib ;
 
 install regrs : testHelpers
   : <location>testExecs ;

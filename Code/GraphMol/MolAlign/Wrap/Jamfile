@@ -12,8 +12,9 @@ python-extension rdMolAlign : rdMolAlign.cpp
   ../../../Numerics/Alignment//Alignment
   ../../../Numerics/EigenSolvers//EigenSolvers
   ../../../Geometry//RDGeometry
-  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-/RDKit//vflib /RDKit//lapacklibs 
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs 
+  ../../../RDBoost//RDBoost 
+  ../../..//vflib ../../..//lapacklibs 
   ;
 
 install pymod : rdMolAlign

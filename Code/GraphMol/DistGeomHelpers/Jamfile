@@ -4,20 +4,19 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib DistGeomHelpers : BoundsMatrixBuilder.cpp Embedder.cpp
- ..//GraphMol ../ForceFieldHelpers//ForceFieldHelpers ../../Numerics/Alignment//Alignment 
- ../../DistGeom//DistGeom ../../ForceField//ForceField ../../RDGeneral//RDGeneral 
- ../../Numerics/Optimizer//Optimizer ../../Numerics/EigenSolvers//EigenSolvers
- ../../Geometry//RDGeometry
-  :  <toolset>msvc:<link>static ;
+ ..//GraphMol ../ForceFieldHelpers//ForceFieldHelpers ../../Numerics/Alignment//Alignment ../../DistGeom//DistGeom ../../ForceField//ForceField ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry
+  :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : DistGeomHelpers : <location>$(RDBASE)/bin ;
 
-exe main.exe : testDgeomHelpers.cpp DistGeomHelpers /RDKit//DistGeom
-  ../ForceFieldHelpers//ForceFieldHelpers /RDKit//ForceField
+exe main.exe : testDgeomHelpers.cpp DistGeomHelpers ../../DistGeom//DistGeom
+  ../ForceFieldHelpers//ForceFieldHelpers ../../ForceField//ForceField
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct
   ../MolAlign//MolAlign ../MolTransforms//MolTransforms
   ..//GraphMol 
-  /RDKit//Numerics/Optimizer /RDKit//Numerics/EigenSolvers  /RDKit//Numerics/Alignment
-  /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+  ../../Numerics/Optimizer//Optimizer ../../Numerics/EigenSolvers//EigenSolvers  
+  ../../Numerics/Alignment//Alignment
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ../..//vflib ;
 
 install regrs : main.exe
   : <location>testExecs ;

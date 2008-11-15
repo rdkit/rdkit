@@ -10,7 +10,7 @@ python-extension rdMolCatalog : rdMolCatalog.cpp
   ../../../Catalogs//Catalogs
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-  /RDKit//lapacklibs 
+  ../../..//lapacklibs 
   ;
 
 install pymod : rdMolCatalog 

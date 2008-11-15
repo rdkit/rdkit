@@ -9,7 +9,7 @@ lib DataStructs : BitVect.cpp SparseBitVect.cpp ExplicitBitVect.cpp Utils.cpp
 :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : DataStructs : <location>$(RDBASE)/bin ;
 
-exe test : testDatastructs.cpp DataStructs /RDKit//RDGeneral ;
+exe test : testDatastructs.cpp DataStructs ../RDGeneral//RDGeneral ;
 
 install regrs : test : <location>testExecs ;
 
