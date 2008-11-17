@@ -403,6 +403,10 @@ void test4MultipleProducts(){
   prods = rxn.runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==2);
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][1].get())));
+  std::cerr<<"1: "<<MolToSmiles(*prods[0][0])<<std::endl;
+  std::cerr<<"2: "<<MolToSmiles(*prods[0][1])<<std::endl;
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
   TEST_ASSERT(prods[0][1]->getNumAtoms()==4);
   TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
@@ -1246,6 +1250,32 @@ void test15Issue1882749(){
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getMass()==15);
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge()==-1);
 
+
+
+  reacts.clear();
+  smi = "CS(=O)C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  delete rxn;
+  smi = "[S:1]=[O:2]>>[S:1;+2]-[O:2;-]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge()==+2);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getFormalCharge()==-1);
+
+
+
   delete rxn;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1736,6 +1766,95 @@ void test19Issue2050085(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test20BondQueriesInProduct(){
+  ROMol *mol=0;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  std::vector<MOL_SPTR_VECT> prods;
+  ROMOL_SPTR prod;
+  std::string smi;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing bond queries in the product." << std::endl;
+
+  smi = "[O:1]~[C:2]>>[O:1]~[C:2]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+  reacts.clear();
+  smi = "OCC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
+
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==3);
+  TEST_ASSERT(prod->getBondBetweenAtoms(0,1)->getBondType()==Bond::SINGLE);
+
+  reacts.clear();
+  smi = "O=CC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
+
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==3);
+  TEST_ASSERT(prod->getBondBetweenAtoms(0,1)->getBondType()==Bond::DOUBLE);
+  delete rxn;
+
+  smi = "[O:1]~[C:2]>>[O:1][C:2]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+  reacts.clear();
+  smi = "OCC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
+
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==3);
+  TEST_ASSERT(prod->getBondBetweenAtoms(0,1)->getBondType()==Bond::SINGLE);
+
+  reacts.clear();
+  smi = "O=CC";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+
+  reacts.push_back(ROMOL_SPTR(mol));
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
+
+  prod = prods[0][0];
+  TEST_ASSERT(prod->getNumAtoms()==3);
+  TEST_ASSERT(prod->getBondBetweenAtoms(0,1)->getBondType()==Bond::SINGLE);
+  delete rxn;
+
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -1764,9 +1883,11 @@ int main() {
   test18PropertyTransfer();
 #endif
   test19Issue2050085();
+  test20BondQueriesInProduct();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
 }
+
 

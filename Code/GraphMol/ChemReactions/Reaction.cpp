@@ -186,6 +186,27 @@ namespace RDKit {
         //  This caused Issue 1748846
         //   http://sourceforge.net/tracker/index.php?func=detail&aid=1748846&group_id=160139&atid=814650
         //  We need to fix that little problem now:
+#if 1
+        if( oldB->hasQuery()){
+          //  remember that the product has been processed by the SMARTS parser.
+          std::string queryDescription=oldB->getQuery()->getDescription();
+          if(queryDescription=="BondOr" &&
+             oldB->getBondType()==Bond::SINGLE){
+            //  The SMARTS parser tags unspecified bonds as single, but then adds
+            //  a query so that they match single or double
+            //  This caused Issue 1748846
+            //   http://sourceforge.net/tracker/index.php?func=detail&aid=1748846&group_id=160139&atid=814650
+            //  We need to fix that little problem now:
+            if(newB->getBeginAtom()->getIsAromatic() && newB->getEndAtom()->getIsAromatic()){
+              newB->setBondType(Bond::AROMATIC);
+            } else {
+              newB->setBondType(Bond::SINGLE);
+            }
+          } else if(queryDescription=="BondNull") {
+            newB->setProp("NullBond",1);
+          }
+        }
+#else
         if( oldB->hasQuery() &&
             oldB->getQuery()->getDescription()=="BondOr" &&
             oldB->getBondType()==Bond::SINGLE){
@@ -195,6 +216,7 @@ namespace RDKit {
             newB->setBondType(Bond::SINGLE);
           }
         }
+#endif
       }
       
       return RWMOL_SPTR(res);  
@@ -214,6 +236,7 @@ namespace RDKit {
       boost::dynamic_bitset<> mappedAtoms(reactantSptr->getNumAtoms());
       boost::dynamic_bitset<> skippedAtoms(reactantSptr->getNumAtoms());
       std::map<unsigned int,unsigned int> reactProdAtomMap; // this maps atom indices from reactant->product
+      std::vector<int> prodReactAtomMap(product->getNumAtoms(),-1); // this maps atom indices from product->reactant
       std::vector<const Atom *> chiralAtomsToCheck; 
       for(unsigned int i=0;i<match.size();i++){
         const Atom *templateAtom=reactantTemplate->getAtomWithIdx(match[i].first);
@@ -222,8 +245,11 @@ namespace RDKit {
           templateAtom->getProp("molAtomMapNumber",molAtomMapNumber);
           
           if(product->hasAtomBookmark(molAtomMapNumber)){
-            reactProdAtomMap[match[i].second] = product->getAtomWithBookmark(molAtomMapNumber)->getIdx();
+            unsigned int pIdx=product->getAtomWithBookmark(molAtomMapNumber)->getIdx();
+            reactProdAtomMap[match[i].second] = pIdx;
             mappedAtoms[match[i].second]=1;
+            CHECK_INVARIANT(pIdx<product->getNumAtoms(),"yikes!");
+            prodReactAtomMap[pIdx]=match[i].second;
           } else {
             // this skippedAtom has an atomMapNumber, but it's not in this product 
             // (it's either in another product or it's not mapped at all).
@@ -240,7 +266,30 @@ namespace RDKit {
       const ROMol *reactant=reactantSptr.get();
 
       // ---------- ---------- ---------- ---------- ---------- ---------- 
-      // Now loop over the atoms in the match that were added to the product
+      // Loop over the bonds in the product and look for those that have
+      // the NullBond property set. These are bonds for which no information
+      // (other than their existance) was provided in the template:
+      ROMol::BOND_ITER_PAIR bondItP = product->getEdges();
+      ROMol::GRAPH_MOL_BOND_PMAP::type bondMap = product->getBondPMap();
+      while(bondItP.first != bondItP.second ){
+        Bond *pBond=bondMap[*(bondItP.first)];
+        ++bondItP.first;
+        if(pBond->hasProp("NullBond")){
+          if(prodReactAtomMap[pBond->getBeginAtomIdx()]>-1 &&
+             prodReactAtomMap[pBond->getEndAtomIdx()]>-1){
+            // the bond is between two mapped atoms from this reactant:
+            const Bond *rBond=reactant->getBondBetweenAtoms(prodReactAtomMap[pBond->getBeginAtomIdx()],
+                                                            prodReactAtomMap[pBond->getEndAtomIdx()]);
+            if(!rBond) continue;
+            pBond->setBondType(rBond->getBondType());
+            pBond->setBondDir(rBond->getBondDir());
+            pBond->clearProp("NullBond");
+          }
+        }
+      }
+
+      // ---------- ---------- ---------- ---------- ---------- ---------- 
+      // Loop over the atoms in the match that were added to the product
       // From the corresponding atom in the reactant, do a graph traversal
       //  to find other connected atoms that should be added: 
       for(unsigned int matchIdx=0;matchIdx<match.size();matchIdx++){
@@ -380,6 +429,7 @@ namespace RDKit {
         }
       } // end of loop over matched atoms
 
+      // ---------- ---------- ---------- ---------- ---------- ---------- 
       // now we need to loop over atoms from the reactants that were chiral but not
       // directly involved in the reaction in order to make sure their chirality hasn't
       // been disturbed
