@@ -313,6 +313,7 @@ namespace RDKit {
               productAtom->setNoImplicit(reactantAtom->getNoImplicit());
               productAtom->setNumExplicitHs(reactantAtom->getNumExplicitHs());
               productAtom->setMass(reactantAtom->getMass());
+              productAtom->setIsAromatic(reactantAtom->getIsAromatic());
             } else {
               updateImplicitAtomProperties(productAtom,reactantAtom);
             }

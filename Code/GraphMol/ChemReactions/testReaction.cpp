@@ -818,8 +818,31 @@ void test9ProductQueries(){
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(2)->getAtomicNum()==7);
   TEST_ASSERT(MolToSmiles(*prods[0][0])=="CNC=O");
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  delete rxn;
+  smi = "[*:1]1:[*:2]:[*:3]:[*:4]:[*:5]:[*:6]:1>>[*:1]1:[*:2]:[*:3]:[*:4]:[*:5]:[*:6]:1C";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+
+  reacts.clear();
+  smi = "c1ccccc1";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+
+  prods = rxn->runReactants(reacts);
+  std::cerr<<"SZ:"<<prods.size()<<std::endl;
+  TEST_ASSERT(prods.size()==12);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==7);
   
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getIsAromatic());
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getIsAromatic());
+  TEST_ASSERT(prods[0][0]->getBondBetweenAtoms(0,1)->getIsAromatic());
+  
+  delete rxn;
+
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 void test10ChiralityDaylight(){
