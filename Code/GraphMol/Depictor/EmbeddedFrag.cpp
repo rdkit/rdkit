@@ -1783,64 +1783,69 @@ namespace RDDepict {
       }
       // now find the path between the two ends
       RDKit::INT_LIST path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
-
-      // aid1 is on the front of the path, pop it off:
-      CHECK_INVARIANT(path.front()==aid1,"bad path head");
-      path.pop_front();
-
-      int nOpen = _anyNonRingBonds(aid1, path, dp_mol);
-      if (nOpen > 0) {
-        // depending on how long the path is we will shorten the bonds
-        // by an increasing amount/ i.e. the first bond in the path gets
-        // shortened less than the next one and so on
-        unsigned int npts = path.size();
-        double factor = COLLISION_THRES/(npts*BOND_LEN);
-        int prev = aid1;
-        RDKit::INT_LIST_CI pi;
-        int cnt = 1;
-        for (pi = path.begin(); pi != path.end(); pi++) {
-          RDGeom::Point2D loc = d_eatoms[*pi].loc;
-          loc -= d_eatoms[prev].loc;
-          loc *= (1 - factor*cnt);
-          loc += d_eatoms[prev].loc;
-          d_eatoms[*pi].loc = loc;
-          cnt++;
-          prev = (*pi);
-        }
+      if(!path.size()){
+        // there's no path between the ends, so there's nothing
+        // we can really do about this collision.
+        colls.erase(colls.begin());
       } else {
-        // we probably have a bridged system
-        // lets hope that aids has only two ring bond on it
-        RDKit::INT_VECT rPath;
-        RDKit::INT_INT_VECT_MAP nbrMap;
-        _recurseDegTwoRingAtoms(aid1, dp_mol, rPath, nbrMap);
-        if (rPath.size() == 0) {
-          _recurseDegTwoRingAtoms(aid2, dp_mol, rPath, nbrMap);
-        }
-        // now we will take each of the atoms in rPath and
-        // "move them in" a little bit this is what "move them
-        //  in" means (what we need is hand drawn picture in the comments)
-        // - let r1 and r2 be the ring neighbor of the current atom r0
-        // - we will find the vector that bisects angle(r1, r0, r2) 
-        // - we will move r0 along this vector
-        RDKit::INT_VECT_CI rpi;
-        RDGeom::INT_POINT2D_MAP moveMap;
-        for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
-          RDGeom::Point2D move;
-          move = d_eatoms[nbrMap[*rpi][0]].loc;
-          move += d_eatoms[nbrMap[*rpi][1]].loc;
-          move *= 0.5;
-          move -= d_eatoms[*rpi].loc;
-          move.normalize();
-          move *= COLLISION_THRES;
-          moveMap[*rpi] = move;
-        } 
-        for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
-          d_eatoms[*rpi].loc += moveMap[*rpi];
-        }
+       // aid1 is on the front of the path, pop it off:
+       CHECK_INVARIANT(path.front()==aid1,"bad path head");
+       path.pop_front();
+
+       int nOpen = _anyNonRingBonds(aid1, path, dp_mol);
+       if (nOpen > 0) {
+         // depending on how long the path is we will shorten the bonds
+         // by an increasing amount/ i.e. the first bond in the path gets
+         // shortened less than the next one and so on
+         unsigned int npts = path.size();
+         double factor = COLLISION_THRES/(npts*BOND_LEN);
+         int prev = aid1;
+         RDKit::INT_LIST_CI pi;
+         int cnt = 1;
+         for (pi = path.begin(); pi != path.end(); pi++) {
+           RDGeom::Point2D loc = d_eatoms[*pi].loc;
+           loc -= d_eatoms[prev].loc;
+           loc *= (1 - factor*cnt);
+           loc += d_eatoms[prev].loc;
+           d_eatoms[*pi].loc = loc;
+           cnt++;
+           prev = (*pi);
+         }
+       } else {
+         // we probably have a bridged system
+         // lets hope that aids has only two ring bond on it
+         RDKit::INT_VECT rPath;
+         RDKit::INT_INT_VECT_MAP nbrMap;
+         _recurseDegTwoRingAtoms(aid1, dp_mol, rPath, nbrMap);
+         if (rPath.size() == 0) {
+           _recurseDegTwoRingAtoms(aid2, dp_mol, rPath, nbrMap);
+         }
+         // now we will take each of the atoms in rPath and
+         // "move them in" a little bit this is what "move them
+         //  in" means (what we need is hand drawn picture in the comments)
+         // - let r1 and r2 be the ring neighbor of the current atom r0
+         // - we will find the vector that bisects angle(r1, r0, r2) 
+         // - we will move r0 along this vector
+         RDKit::INT_VECT_CI rpi;
+         RDGeom::INT_POINT2D_MAP moveMap;
+         for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
+           RDGeom::Point2D move;
+           move = d_eatoms[nbrMap[*rpi][0]].loc;
+           move += d_eatoms[nbrMap[*rpi][1]].loc;
+           move *= 0.5;
+           move -= d_eatoms[*rpi].loc;
+           move.normalize();
+           move *= COLLISION_THRES;
+           moveMap[*rpi] = move;
+         } 
+         for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
+           d_eatoms[*rpi].loc += moveMap[*rpi];
+         }
+       }
+       colls = this->findCollisions(dmat,0);
       }
-      colls = this->findCollisions(dmat,0);
       ncols = colls.size();
-      iter++;
+      ++iter;
     }
   }
 

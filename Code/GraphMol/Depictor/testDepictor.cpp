@@ -430,6 +430,39 @@ void testIssue2091304() {
   delete m1;
 }
 
+void testIssue2303566() {
+  RDGeom::INT_POINT2D_MAP crdMap;
+  crdMap[0]=RDGeom::Point2D(0.0781827, -0.112109);
+  crdMap[1]=RDGeom::Point2D(1.13205, -0.415657);
+  crdMap[2]=RDGeom::Point2D(0.676323, -1.51974);
+  crdMap[3]=RDGeom::Point2D(0.735363, -2.62024);
+  crdMap[4]=RDGeom::Point2D(0.974216, -1.5726);
+  crdMap[5]=RDGeom::Point2D(1.02041, -1.56945);
+  std::string mb = "\n\
+     RDKit          2D\n\
+\n\
+  6  7  0  0  0  0  0  0  0  0999 V2000\n\
+    0.0782   -0.1121    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.1321   -0.4157    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.6763   -1.5197    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.7354   -2.6202    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.0098   -1.5757    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.0218   -1.5749    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0\n\
+  1  3  1  0\n\
+  3  2  1  0\n\
+  3  4  1  0\n\
+  5  6  2  0\n\
+  2  4  1  0\n\
+  1  4  1  0\n\
+M  END\n";
+
+  RWMol *m1 = MolBlockToMol(mb);
+  unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
+  
+  delete m1;
+}
+
 
 
 int main() { 
@@ -495,6 +528,11 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Issue 2091304\n";
   testIssue2091304();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Issue 2303566\n";
+  testIssue2303566();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);
