@@ -174,6 +174,11 @@ ATOM_EQUALS_QUERY *makeAtomImplicitValenceQuery(int what){
   res->setDescription("AtomImplicitValence");
   return res;
 }
+ATOM_EQUALS_QUERY *makeAtomExplicitValenceQuery(int what){
+  ATOM_EQUALS_QUERY *res = makeAtomSimpleQuery(what,queryAtomExplicitValence);
+  res->setDescription("AtomExplicitValence");
+  return res;
+}
   
 ATOM_EQUALS_QUERY *makeAtomTotalValenceQuery(int what){
   ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomTotalValence);
