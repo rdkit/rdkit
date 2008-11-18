@@ -458,8 +458,10 @@ void testIssue2303566() {
 M  END\n";
 
   RWMol *m1 = MolBlockToMol(mb);
+  // in the original bug, this led to a crash, so just having it complete
+  // means the test passed.
   unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
-  
+  TEST_ASSERT(cid1>=0);
   delete m1;
 }
 
