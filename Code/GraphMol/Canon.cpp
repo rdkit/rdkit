@@ -152,8 +152,12 @@ namespace Canon {
         if(secondFromAtom1){
           // both bonds have their directionalities set, make sure
           // they are compatible:
-          CHECK_INVARIANT(firstFromAtom1->getBondDir() !=
-                          secondFromAtom1->getBondDir(),"inconsistent state");
+          if( firstFromAtom1->getBondDir()==secondFromAtom1->getBondDir() &&
+              bondDirCounts[firstFromAtom2->getIdx()] ){
+            CHECK_INVARIANT((firstFromAtom1->getBeginAtomIdx()==atom1->getIdx() ^
+                              secondFromAtom1->getBeginAtomIdx()==atom1->getIdx())
+                            ,"inconsistent state");
+          }
         }
       } else {
         // the second bond must be present and setting the direction:
