@@ -8,6 +8,8 @@ import Geometry
 import numpy
 import Chem
 from Chem import ChemicalFeatures
+from RDLogger import logger
+logger = logger()
 
 class Pharmacophore:
   def __init__(self, feats,initMats=True):
@@ -167,7 +169,6 @@ class ExplicitPharmacophore:
         
   def initFromLines(self,lines):
     from Chem import ChemicalFeatures
-    logger = logging.logger()
 
     import re
     spaces = re.compile('[\ \t]+')
