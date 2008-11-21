@@ -7,7 +7,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL rdalignment_array_API
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
-#include "numpy/oldnumeric.h"
+#include "numpy/arrayobject.h"
 
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
@@ -123,10 +123,10 @@ namespace RDNumeric {
       RDGeom::Transform3D trans;
       double ssd = AlignPoints(refPts, probePts, trans, wtsVec, reflect, maxIterations);
       
-      int dims[2];
+      npy_intp dims[2];
       dims[0] = 4;
       dims[1] = 4;
-      PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(2,dims,PyArray_DOUBLE);
+      PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
       double *resData=reinterpret_cast<double *>(res->data);
       const double *tdata = trans.getData();
       for(unsigned int i=0; i < trans.numRows(); ++i){
@@ -147,7 +147,7 @@ namespace RDNumeric {
       PyObject *resTup = PyTuple_New(2);
       PyObject *ssdItem = PyFloat_FromDouble(ssd);
       PyTuple_SetItem(resTup,0,ssdItem);
-      PyTuple_SetItem(resTup,1,reinterpret_cast<PyObject *>(res));
+      PyTuple_SetItem(resTup,1,PyArray_Return(res));
       return resTup;
     }
   }

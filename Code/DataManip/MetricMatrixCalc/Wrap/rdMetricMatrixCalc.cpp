@@ -1,13 +1,13 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmetric_array_API
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
-#include "numpy/oldnumeric.h"
+#include "numpy/arrayobject.h"
 
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
@@ -57,23 +57,22 @@ namespace RDDataManip {
       int i;
       CHECK_INVARIANT((nrows > 0) && (ncols > 0), "");
 
-      int dMatLen = nrows*(nrows-1)/2;
+      npy_intp dMatLen = nrows*(nrows-1)/2;
       
       // now that we have the dimensions declare the distance matrix which is always a 
       // 1D double array
-      distRes = (PyArrayObject *)PyArray_FromDims(1, &dMatLen, PyArray_DOUBLE);
+      distRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
       
       // grab a pointer to the data in the array so that we can directly put values in there
-      // and avoid copying (as I understand it PyArray_FromDimsAndData will do it here for us
-      // because python will never free the malloced memory this way)
+      // and avoid copying : 
       double *dMat = (double *)distRes->data;
 
-      // if we have double array
       PyArrayObject *copy;
       copy = (PyArrayObject *)PyArray_ContiguousFromObject(descMatObj, 
 							   ((PyArrayObject *)descMatObj)->descr->type_num,
 							   2,2);
-      if (((PyArrayObject *)descMatObj)->descr->type_num == PyArray_DOUBLE) {
+      // if we have double array
+      if (((PyArrayObject *)descMatObj)->descr->type_num == NPY_DOUBLE) {
         double *desc = (double *)copy->data;
         
 	// REVIEW: create an adaptor object to hold a double * and support
@@ -96,7 +95,7 @@ namespace RDDataManip {
       }
       
       // if we have a float array
-      else if (((PyArrayObject *)descMatObj)->descr->type_num == PyArray_FLOAT) {
+      else if (((PyArrayObject *)descMatObj)->descr->type_num == NPY_FLOAT) {
         float* desc = (float *)copy->data;
         float **desc2D = new float*[nrows];
         for (i = 0; i < nrows; i++) {
@@ -111,7 +110,7 @@ namespace RDDataManip {
       }
 
       // if we have an interger array
-      else if (((PyArrayObject *)descMatObj)->descr->type_num == PyArray_INT) {
+      else if (((PyArrayObject *)descMatObj)->descr->type_num == NPY_INT) {
         int *desc = (int *)copy->data;
         int **desc2D = new int*[nrows];
         for (i = 0; i < nrows; i++) {
@@ -138,8 +137,8 @@ namespace RDDataManip {
       unsigned int nrows = python::extract<unsigned int>(descripMat.attr("__len__")());
       CHECK_INVARIANT(nrows > 0, "Empty list passed in");
 
-      int dMatLen = nrows*(nrows-1)/2;
-      distRes = (PyArrayObject *)PyArray_FromDims(1, &dMatLen, PyArray_DOUBLE);
+      npy_intp dMatLen = nrows*(nrows-1)/2;
+      distRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
       double *dMat = (double *)distRes->data;
       
       // assume that we a have a list of list of values (that can be extracted to double)
@@ -177,8 +176,8 @@ namespace RDDataManip {
       throw_value_error("GetTanimotoDistMat can only take a sequence of ExplicitBitVects or SparseBitvects");
     }
 
-    int dMatLen = nrows*(nrows-1)/2;
-    PyArrayObject *simRes = (PyArrayObject *)PyArray_FromDims(1, &dMatLen, PyArray_DOUBLE);
+    npy_intp dMatLen = nrows*(nrows-1)/2;
+    PyArrayObject *simRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
     double *sMat = (double *)simRes->data;
     
     if (ebvWorks.check()) {
@@ -210,8 +209,8 @@ namespace RDDataManip {
       throw_value_error("GetTanimotoDistMat can only take a sequence of ExplicitBitVects or SparseBitvects");
     }
 
-    int dMatLen = nrows*(nrows-1)/2;
-    PyArrayObject *simRes = (PyArrayObject *)PyArray_FromDims(1, &dMatLen, PyArray_DOUBLE);
+    npy_intp dMatLen = nrows*(nrows-1)/2;
+    PyArrayObject *simRes = (PyArrayObject *)PyArray_SimpleNew(1, &dMatLen, NPY_DOUBLE);
     double *sMat = (double *)simRes->data;
     
     if (ebvWorks.check()) {

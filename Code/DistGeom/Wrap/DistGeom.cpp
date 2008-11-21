@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,7 +8,7 @@
 #include <boost/python.hpp>
 
 #define PY_ARRAY_UNIQUE_SYMBOL DistGeom_array_API
-#include "numpy/oldnumeric.h"
+#include "numpy/arrayobject.h"
 #include <RDBoost/Wrap.h>
 
 #include <Geometry/point.h>
@@ -28,8 +28,6 @@
 namespace python = boost::python;
 
 namespace RDKit {
-
-
   bool doTriangleSmoothing(python::object boundsMatArg){
     PyObject *boundsMatObj = boundsMatArg.ptr();
     if(!PyArray_Check(boundsMatObj))
@@ -59,7 +57,7 @@ namespace RDKit {
     memcpy(static_cast<void *>(inData), 
            static_cast<const void *>(cData),
            dSize*sizeof(double));
-    return (PyObject *) res;
+    return res;
   }
 
   PyObject *embedBoundsMatrix(python::object boundsMatArg,int maxIters=10,
@@ -147,24 +145,21 @@ namespace RDKit {
 
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- 
     // construct the results matrix:
-    int dims[2];
+    npy_intp dims[2];
     dims[0] = nrows;
     dims[1] = 3;
-    PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(2,dims,PyArray_DOUBLE);
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     double *resData=reinterpret_cast<double *>(res->data);
     for(unsigned int i=0;i<nrows;i++){
       unsigned int iTab=i*3;
       for (unsigned int j = 0; j < 3; ++j) {
         resData[iTab + j]=positions[i][j]; //.x;
-        //resData[iTab+1]=positions[i].y;
-        //resData[iTab+2]=positions[i].z;
       }
     }
     delete [] positions;
 
-    return (PyObject *) res;
+    return PyArray_Return(res);
   }
-
 }
 
 BOOST_PYTHON_MODULE(DistGeom) {

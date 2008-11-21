@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2007 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and  Rational Discovery LLC
 //   All Rights Reserved
 //
 
@@ -8,7 +8,7 @@
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
-#include "numpy/oldnumeric.h"
+#include "numpy/arrayobject.h"
 
 #include <RDBoost/Wrap.h>
 #include <RDBoost/PySequenceHolder.h>
@@ -22,11 +22,11 @@ namespace RDInfoTheory {
   PyObject *getCorrMatrix(BitCorrMatGenerator *cmGen) {
     double *dres = cmGen->getCorrMat();
     unsigned int nb = cmGen->getCorrBitList().size();
-    int dim = nb*(nb-1)/2;
-    PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(1,&dim,PyArray_DOUBLE);
+    npy_intp dim = nb*(nb-1)/2;
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1,&dim,NPY_DOUBLE);
     memcpy(static_cast<void *>(res->data),
            static_cast<void *>(dres), dim*sizeof(double));
-    return (PyObject *) res;
+    return PyArray_Return(res);
   }
 
   void setBitList(BitCorrMatGenerator *cmGen, python::object bitList) {

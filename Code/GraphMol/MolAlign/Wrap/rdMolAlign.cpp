@@ -1,13 +1,13 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolalign_array_API
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
-#include "numpy/oldnumeric.h"
+#include "numpy/arrayobject.h"
 #include <GraphMol/MolAlign/AlignMolecules.h>
 
 #include <RDBoost/PySequenceHolder.h>
@@ -105,10 +105,10 @@ namespace RDKit {
     RDGeom::Transform3D trans;
     double rmsd = MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid, refCid, aMap, 
                                                   wtsVec, reflect, maxIters);
-    int dims[2];
+    npy_intp dims[2];
     dims[0] = 4;
     dims[1] = 4;
-    PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(2,dims,PyArray_DOUBLE);
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     double *resData=reinterpret_cast<double *>(res->data);
     unsigned int j, itab;
     const double *tdata = trans.getData();
@@ -128,7 +128,7 @@ namespace RDKit {
     PyObject *resTup = PyTuple_New(2);
     PyObject *rmsdItem = PyFloat_FromDouble(rmsd);
     PyTuple_SetItem(resTup,0,rmsdItem);
-    PyTuple_SetItem(resTup,1,reinterpret_cast<PyObject *>(res));
+    PyTuple_SetItem(resTup,1,PyArray_Return(res));
     return resTup;
   }
 

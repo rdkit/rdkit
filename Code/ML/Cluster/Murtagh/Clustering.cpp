@@ -1,5 +1,6 @@
+// $Id$
 //
-//  Copyright (C) 2002,2003 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //     All Rights Reserved
 //
 #ifdef WIN32
@@ -7,8 +8,7 @@
 #endif
 #define PYTH_FILE_WITH_INIT
 #include "Clustering.h"
-#include <numpy/oldnumeric.h>
-
+#include <numpy/arrayobject.h>
 
 #ifdef WIN32
 BOOL APIENTRY DllMain( HANDLE hModule, 
@@ -79,7 +79,7 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
   real *crit;
   PyObject *res;
   PyObject *tmp;
-  int dims[2];
+  npy_intp dims[2];
 
   if(!PyArg_ParseTuple(args,"Oiii",&data,&nPts,&sz,&option))
     return NULL;
@@ -94,18 +94,17 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
   dims[0] = nPts;
   res = PyTuple_New(3);
 
-  //
   //  NOTE: these operations maintain pointers to the respective arrays,
   //  that's why it's ok that we do not free them in this function,
   //  Python will take care of it for us.
   //
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_LONG,(char *)ia);
+  tmp = PyArray_SimpleNewFromData(1,dims,NPY_LONG,(void *)ia);
   PyTuple_SetItem(res,0,(PyObject *)tmp);
 
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_LONG,(char *)ib);
+  tmp = PyArray_SimpleNewFromData(1,dims,NPY_LONG,(void *)ib);
   PyTuple_SetItem(res,1,(PyObject *)tmp);
 
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_DOUBLE,(char *)crit);
+  tmp = PyArray_SimpleNewFromData(1,dims,NPY_DOUBLE,(void *)crit);
   PyTuple_SetItem(res,2,(PyObject *)tmp);
 
   Py_DECREF(dataContig);
@@ -133,7 +132,7 @@ Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
   real *crit;
   PyObject *res=PyTuple_New(3);
   PyObject *tmp;
-  int dims[] = {1};
+  npy_intp dims[] = {1};
 
   if(!PyArg_ParseTuple(args,"Oii",&data,&nPts,&option))
     return NULL;
@@ -151,13 +150,13 @@ Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
   //  that's why it's ok that we do not free them in this function,
   //  Python will take care of it for us.
   //
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_LONG,(char *)ia);
+  tmp = PyArray_SimpleNewFromData(1,dims,NPY_LONG,(void *)ia);
   PyTuple_SetItem(res,0,tmp);
 
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_LONG,(char *)ib);
+  tmp = PyArray_SimpleNewFromData(1,dims,NPY_LONG,(void *)ib);
   PyTuple_SetItem(res,1,tmp);
 
-  tmp = PyArray_FromDimsAndData(1,dims,PyArray_DOUBLE,(char *)crit);
+  tmp = PyArray_SimpleNewFromData(1,dims,NPY_DOUBLE,(void *)crit);
   PyTuple_SetItem(res,2,tmp);
   
   Py_DECREF(dataContig);

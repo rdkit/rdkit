@@ -1349,8 +1349,6 @@ M  END
     self.failUnless(not m3H.HasSubstructMatch(q2))
     self.failUnless(not m3H.HasSubstructMatch(q3))
 
-
-
   def test34Issue124(self) :
     """ issue 124 relates to calculation of the distance matrix
        
@@ -1794,7 +1792,44 @@ CAS<~>
     self.failUnless(len(fs)==1)
     self.failUnless(fs[0].GetNumAtoms()==3)
 
-    
+  def test53Matrices(self) :
+    """ test adjacency and distance matrices
+       
+    """ 
+    m = Chem.MolFromSmiles('CC=C')
+    d = Chem.GetDistanceMatrix(m,0)
+    self.failUnless(feq(d[0,1],1.0))
+    self.failUnless(feq(d[0,2],2.0))
+    self.failUnless(feq(d[1,0],1.0))
+    self.failUnless(feq(d[2,0],2.0))
+    a = Chem.GetAdjacencyMatrix(m,0)
+    self.failUnless(a[0,1]==1)
+    self.failUnless(a[0,2]==0)
+    self.failUnless(a[1,2]==1)
+    self.failUnless(a[1,0]==1)
+    self.failUnless(a[2,0]==0)
+
+    m = Chem.MolFromSmiles('C1CC1')
+    d = Chem.GetDistanceMatrix(m,0)
+    self.failUnless(feq(d[0,1],1.0))
+    self.failUnless(feq(d[0,2],1.0))
+    a = Chem.GetAdjacencyMatrix(m,0)
+    self.failUnless(a[0,1]==1)
+    self.failUnless(a[0,2]==1)
+    self.failUnless(a[1,2]==1)
+
+    m = Chem.MolFromSmiles('CC.C')
+    d = Chem.GetDistanceMatrix(m,0)
+    self.failUnless(feq(d[0,1],1.0))
+    self.failUnless(d[0,2]>1000)
+    self.failUnless(d[1,2]>1000)
+    a = Chem.GetAdjacencyMatrix(m,0)
+    self.failUnless(a[0,1]==1)
+    self.failUnless(a[0,2]==0)
+    self.failUnless(a[1,2]==0)
+
+
+
     
     
 

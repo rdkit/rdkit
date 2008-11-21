@@ -1,10 +1,12 @@
 // $Id$
 //
-//  Copyright (C) 2004-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
-#include "rdDistGeom.h"
+#include <boost/python.hpp>
+#define PY_ARRAY_UNIQUE_SYMBOL rdDistGeom_array_API
+#include "numpy/arrayobject.h"
 #include <DistGeom/BoundsMatrix.h>
 
 #include <GraphMol/GraphMol.h>
@@ -72,20 +74,20 @@ namespace RDKit {
 
   PyObject *getMolBoundsMatrix(ROMol &mol, bool set15bounds=true,
                                bool scaleVDW=false) {
-    int dims[2];
     unsigned int nats = mol.getNumAtoms();
+    npy_intp dims[2];
     dims[0] = nats;
     dims[1] = nats;
 
     DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
     DGeomHelpers::initBoundsMat(mat);
     DGeomHelpers::setTopolBounds(mol,mat, set15bounds, scaleVDW);
-    PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(2,dims,PyArray_DOUBLE);
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     memcpy(static_cast<void *>(res->data),
 	   static_cast<void *>(mat->getData()),
 	   nats*nats*sizeof(double));
 	   
-    return (PyObject *) res;
+    return PyArray_Return(res);
   }
 }
 

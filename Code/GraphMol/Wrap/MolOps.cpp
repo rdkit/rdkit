@@ -7,7 +7,7 @@
 #define NO_IMPORT_ARRAY
 #include "rdmolops.h"
 #include <boost/python.hpp>
-#include <numpy/oldnumeric.h>
+#include <numpy/arrayobject.h>
 #include <string>
 #include <math.h>
 
@@ -77,27 +77,27 @@ namespace RDKit{
   PyObject *getDistanceMatrix(ROMol &mol, bool useBO=false,
                               bool useAtomWts=false,bool force=false,
                               const char *prefix=0) {
-    int dims[2];
     int nats = mol.getNumAtoms();
+    npy_intp dims[2];
     dims[0] = nats;
     dims[1] = nats;
     double *distMat;
     
     distMat = MolOps::getDistanceMat(mol, useBO, useAtomWts,force,prefix);
     
-    PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(2,dims,PyArray_DOUBLE);
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     
     memcpy(static_cast<void *>(res->data),
          static_cast<void *>(distMat),nats*nats*sizeof(double));
     
-    return (PyObject *) res;
+    return PyArray_Return(res);
   }
 
   PyObject *getAdjacencyMatrix(ROMol &mol, bool useBO=false,
                                int emptyVal=0,bool force=false,
                                const char *prefix=0) {
-    int dims[2];
     int nats = mol.getNumAtoms();
+    npy_intp  dims[2];
     dims[0] = nats;
     dims[1] = nats;
 
@@ -106,13 +106,13 @@ namespace RDKit{
     PyArrayObject *res;
     if(useBO){
       // if we're using valence, the results matrix is made up of doubles
-      res = (PyArrayObject *)PyArray_FromDims(2,dims,
-                                              PyArray_DOUBLE);
+      res = (PyArrayObject *)PyArray_SimpleNew(2,dims,
+                                              NPY_DOUBLE);
       memcpy(static_cast<void *>(res->data),
              static_cast<void *>(tmpMat),nats*nats*sizeof(double));
     } else {
-      res = (PyArrayObject *)PyArray_FromDims(2,dims,
-                                              PyArray_INT);
+      res = (PyArrayObject *)PyArray_SimpleNew(2,dims,
+                                              NPY_INT);
       int *data = (int *)res->data;
       for(int i=0;i<nats;i++){
         for(int j=0;j<nats;j++){
@@ -120,7 +120,7 @@ namespace RDKit{
         }
       }
     }
-    return (PyObject *) res;
+    return PyArray_Return(res);
   }
 
   python::tuple GetMolFrags(const ROMol &mol,bool asMols){

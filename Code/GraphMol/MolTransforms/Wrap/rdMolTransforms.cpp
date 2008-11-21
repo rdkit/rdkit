@@ -1,12 +1,12 @@
 // $Id$
 //
-//  Copyright (C) 2005-2006 Rational Discovery LLC
+//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmoltransforms_array_API
 #include <boost/python.hpp>
-#include "numpy/oldnumeric.h"
+#include "numpy/arrayobject.h"
 #include <GraphMol/ROMol.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/Conformer.h>
@@ -20,22 +20,17 @@ namespace RDKit {
   PyObject *computeCanonTrans(const Conformer &conf, const RDGeom::Point3D *center=0,
                               bool normalizeCovar=false, bool ignoreHs=true) {
     RDGeom::Transform3D *trans;
-    //if (center == NULL) { 
-    //  trans = MolTransforms::computeCanonicalTransform(conf, 0, 
-    //                                                   normalizeCovar);
-    //} else {
     trans = MolTransforms::computeCanonicalTransform(conf, center, 
                                                      normalizeCovar, ignoreHs);
-    //}
-    int dims[2];
+    npy_intp dims[2];
     dims[0] = 4;
     dims[1] = 4;
-    PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(2,dims,PyArray_DOUBLE);
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     double *resData=reinterpret_cast<double *>(res->data);
     const double *tdata = trans->getData();
     memcpy(static_cast<void *>(resData), static_cast<const void *>(tdata), 4*4*sizeof(double));
     delete trans;
-    return reinterpret_cast<PyObject *>(res);
+    return PyArray_Return(res);
   }
 
   void transConformer(Conformer &conf, python::object trans) {

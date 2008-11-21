@@ -1,13 +1,13 @@
 // $Id$
 //
-//  Copyright (C) 2003-2007 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and  Rational Discovery LLC
 //   All Rights Reserved
 //
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
 #define PY_ARRAY_UNIQUE_SYMBOL rdinfotheory_array_API
-#include "numpy/oldnumeric.h"
+#include "numpy/arrayobject.h"
 
 #include <RDBoost/Wrap.h>
 
@@ -21,13 +21,13 @@ namespace RDInfoTheory {
   
   PyObject *getTopNbits(InfoBitRanker *ranker, int num){// int ignoreNoClass=-1) {
     double *dres = ranker->getTopN(num);
-    int dims[2];
+    npy_intp dims[2];
     dims[0] = num;
     dims[1] = ranker->getNumClasses() + 2;
-    PyArrayObject *res = (PyArrayObject *)PyArray_FromDims(2,dims,PyArray_DOUBLE);
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
     memcpy(static_cast<void *>(res->data),
            static_cast<void *>(dres), dims[0]*dims[1]*sizeof(double));
-    return (PyObject *) res;
+    return PyArray_Return(res);
   }
 
   void AccumulateVotes(InfoBitRanker *ranker, python::object bitVect, int label) {
