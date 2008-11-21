@@ -2983,6 +2983,21 @@ void testSFNetIssue2208994() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFNetIssue2316677() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2316677 : canonicalization error" << std::endl;
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue2316677.mol");
+    TEST_ASSERT(m);
+    std::string smi=MolToSmiles(*m,true);
+    TEST_ASSERT(smi=="Cc1ccc(S(/N=C2\\SC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)(=O)=O)cc1");
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -3029,6 +3044,7 @@ int main(){
 #endif
   testSFNetIssue2196817();
   testSFNetIssue2208994();
+  testSFNetIssue2316677();
   
   return 0;
 }
