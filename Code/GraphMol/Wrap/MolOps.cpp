@@ -695,6 +695,44 @@ namespace RDKit{
                    python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
 
+      // ------------------------------------------------------------------------
+      docString="Returns a layered fingerprint for a molecule\n\
+\n\
+  Explanation of the algorithm below.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - minPath: (optional) minimum number of bonds to include in the subgraphs\n\
+      Defaults to 1.\n\
+\n\
+    - maxPath: (optional) maximum number of bonds to include in the subgraphs\n\
+      Defaults to 7.\n\
+\n\
+    - fpSize: (optional) number of bits in the fingerprint\n\
+      Defaults to 2048.\n\
+\n\
+    - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
+      been reached\n\
+      Defaults to 0.\n\
+\n\
+    - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
+      trying to reach tgtDensity\n\
+      Defaults to 128.\n\
+\n\
+  RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
+\n\
+  ALGORITHM:\n\
+\n\
+\n";
+      python::def("LayeredFingerprint", LayeredFingerprintMol,
+                  (python::arg("mol"),
+                   python::arg("layerFlags")=0xFFFFFFFF,
+                   python::arg("minPath")=1,
+                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
+                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
 
 
       docString="Set the wedging on single bonds in a molecule.\n \

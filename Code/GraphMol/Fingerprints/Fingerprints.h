@@ -62,8 +62,13 @@ namespace RDKit{
                                     unsigned int minPath=1,unsigned int maxPath=7,
                                     unsigned int fpSize=2048,unsigned int nBitsPerHash=4,
                                     bool useHs=true,
-                                    double tgtDensity=0.0,unsigned int minSize=128);
+                                     double tgtDensity=0.0,unsigned int minSize=128);
 
+  ExplicitBitVect *LayeredFingerprintMol(const ROMol &mol,
+                                         unsigned int layerFlags=0xFFFFFFFF,
+                                         unsigned int minPath=1,unsigned int maxPath=7,
+                                         unsigned int fpSize=2048,
+                                         double tgtDensity=0.0,unsigned int minSize=128);
 }
 
 #endif
