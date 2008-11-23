@@ -295,7 +295,6 @@ void test5BackwardsCompatibility(){
 
 void test1Layers(){
   BOOST_LOG(rdInfoLog) <<"testing basics layered fps" << std::endl;
-
   {
     RWMol *m1 = SmilesToMol("C1=CC=CC=C1");
     RWMol *m2 = SmilesToMol("C1=CC=CC=N1");
@@ -404,19 +403,16 @@ void test1Layers(){
   }
 
   {
-    RWMol *m1 = SmilesToMol("C1=CC=CC=C1");
+    RWMol *m1 = SmilesToMol("c1ccccc1");
     RWMol *m2 = SmilesToMol("C1CCCCC1");
     RWMol *m3 = SmilesToMol("CCCCCC");
-    RWMol *m4 = SmilesToMol("C1CCCCCC1");
+    RWMol *m4 = SmilesToMol("C1CCCCC1");
     unsigned int layers=0xF;  // add the "in ring" bit
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,layers,1,5);
 
-    std::cerr<<"------------ fp2 ----------"<<std::endl;
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,layers,1,5);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
-
-    std::cerr<<"------------ fp3 ----------"<<std::endl;
     ExplicitBitVect *fp3=LayeredFingerprintMol(*m3,layers,1,5);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)<1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)>0.0);

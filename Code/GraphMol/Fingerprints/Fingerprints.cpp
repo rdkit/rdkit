@@ -221,11 +221,20 @@ namespace RDKit{
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
 
+    typedef boost::mt19937 rng_type;
+    typedef boost::uniform_int<> distrib_type;
+    typedef boost::variate_generator<rng_type &,distrib_type> source_type;
+    rng_type generator(42u);
+
+    //
     // if we generate arbitrarily sized ints then mod them down to the
     // appropriate size, we can guarantee that a fingerprint of
     // size x has the same bits set as one of size 2x that's been folded
     // in half.  This is a nice guarantee to have.
     //
+    distrib_type dist(0,INT_MAX);
+    source_type randomSource(generator,dist);
+
     boost::hash<std::vector<unsigned int> > vectHasher;
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
@@ -306,9 +315,9 @@ namespace RDKit{
             hashLayers[4].push_back(ourHash);
           }
         }
-
+        unsigned int l=0;
         for(std::vector< std::vector<unsigned int> >::iterator layerIt=hashLayers.begin();
-            layerIt!=hashLayers.end();++layerIt){
+            layerIt!=hashLayers.end();++layerIt,++l){
           if(!layerIt->size()) continue;
           // ----
           std::sort(layerIt->begin(),layerIt->end());
@@ -319,7 +328,20 @@ namespace RDKit{
 
           // hash the path to generate a seed:
           unsigned long seed = vectHasher(*layerIt);
-          res->SetBit(seed%fpSize);
+#if 0
+          if(!res->GetBit(seed%fpSize)) {
+            std::cerr<<"seed "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
+          } else {
+            std::cerr<<"         "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
+          }
+#endif
+          // and now generate a random number:
+          // NOTE: since we're only generating a single number here, it seems like it
+          // might make sense to just use the hash itself. In early testing of these
+          // fingerprints, this led to a bunch of collisions between layers 3 and 4,
+          // so it's back to the RNG.
+          generator.seed(static_cast<rng_type::result_type>(seed));
+          res->SetBit(randomSource()%fpSize);
         }
       }
       // EFF: this could be faster by folding by more than a factor
