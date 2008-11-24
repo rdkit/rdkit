@@ -1447,6 +1447,31 @@ void testRadicals(){
 
 }
 
+void testBadBondOrders(){
+  BOOST_LOG(rdInfoLog) << "testing handling of bogus bond orders (issue 2337369)" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  RWMol *m;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/bondorder0.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondType()==Bond::UNSPECIFIED);
+  TEST_ASSERT(!m->getBondBetweenAtoms(0,1)->hasQuery());
+  delete m;
+
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/bondorder9.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getBondBetweenAtoms(0,1)->hasQuery());
+  TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getQuery()->getDescription()=="BondNull");
+  delete m;
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -1475,6 +1500,7 @@ int main(int argc,char *argv[]){
   testMissingFiles();
   testIssue1965035();
   testRadicals();
+  testBadBondOrders();
   //testCrash();
   return 0;
 }

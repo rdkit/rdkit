@@ -748,6 +748,11 @@ namespace RDKit{
     case 2: type = Bond::DOUBLE;res = new Bond;break;
     case 3: type = Bond::TRIPLE;res = new Bond;break;
     case 4: type = Bond::AROMATIC;res = new Bond;break;
+    case 0:
+      type = Bond::UNSPECIFIED;
+      res = new Bond;
+      BOOST_LOG(rdWarningLog) << "bond with order 0 found. This is not part of the MDL specification."<<std::endl;
+      break;
     default:
       type = Bond::UNSPECIFIED;
       // it's a query bond of some type
@@ -756,7 +761,7 @@ namespace RDKit{
         BOND_NULL_QUERY *q;
         q = makeBondNullQuery();
         res->setQuery(q);
-      } else {
+      } else if (bType==5 || bType==6 || bType==7 ){
         BOND_OR_QUERY *q;
         q = new BOND_OR_QUERY;
         if(bType == 5){
@@ -776,7 +781,12 @@ namespace RDKit{
           q->setDescription("BondOr");
         }
         res->setQuery(q);
-      } 
+      } else {
+        BOND_NULL_QUERY *q;
+        q = makeBondNullQuery();
+        res->setQuery(q);
+        BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType <<", found. Using an \"any\" query."<<std::endl;          
+      }
       break;
     }
     res->setBeginAtomIdx(idx1);
