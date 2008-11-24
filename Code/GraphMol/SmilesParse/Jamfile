@@ -22,11 +22,14 @@ cpp lex.yysmarts.cpp : smarts.ll : <flex.prefix>yysmarts_
 ;
 cpp smarts.tab.cpp : smarts.yy : <bison.prefix>yysmarts_ ;
 
-exe test : test.cpp SmilesParse ..//GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs ;
+exe test : test.cpp SmilesParse ..//GraphMol 
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//lapacklibs ;
+
 exe smatest : smatest.cpp SmilesParse 
    ..//GraphMol ../Substruct//Substruct 
-  /RDKit//RDGeneral /RDKit//Geometry /RDKit//vflib /RDKit//lapacklibs ;
-
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
+  ../..//vflib ../..//lapacklibs ;
 
 install regrs : test  smatest
   : <location>testExecs ;

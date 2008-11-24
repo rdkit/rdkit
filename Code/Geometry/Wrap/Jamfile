@@ -5,7 +5,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 import python ;
 
 python-extension rdGeometry : Point.cpp UniformGrid3D.cpp rdGeometry.cpp
-  /RDKit//Geometry /RDKit//DataStructs /RDKit//RDBoost /RDKit//RDGeneral ;
+  ../../Geometry//RDGeometry ../../DataStructs//DataStructs ../../RDBoost//RDBoost ../../RDGeneral//RDGeneral ;
 
 install pymod : rdGeometry : <location>$(RDBASE)/Python/Geometry ;
 

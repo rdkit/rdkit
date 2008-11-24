@@ -5,7 +5,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 import python ;
 
 python-extension rdMetricMatrixCalc : rdMetricMatrixCalc.cpp
-  /RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost ;
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost ;
 
 install pymod : rdMetricMatrixCalc : <location>$(RDBASE)/Python/DataManip/Metric ;
 

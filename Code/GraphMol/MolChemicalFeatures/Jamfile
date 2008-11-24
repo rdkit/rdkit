@@ -5,16 +5,16 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib MolChemicalFeatures : MolChemicalFeature.cpp MolChemicalFeatureDef.cpp 
   MolChemicalFeatureFactory.cpp FeatureParser.cpp
-  ..//GraphMol ../Substruct//Substruct ../SmilesParse//SmilesParse 
-  ../../DataStructs//DataStructs ../../Geometry//RDGeometry 
-  ../../RDGeneral//RDGeneral
-  :  <toolset>msvc:<link>static ; 
+..//GraphMol ../Substruct//Substruct ../SmilesParse//SmilesParse ../../RDGeneral//RDGeneral
+  :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : MolChemicalFeatures : <location>$(RDBASE)/bin ;
 
 exe testFeatures : testFeatures.cpp MolChemicalFeatures
-  /RDKit//Catalogs ../SmilesParse//SmilesParse
+  ../../Catalogs//Catalogs ../SmilesParse//SmilesParse
   ../Substruct//Substruct
-  ..//GraphMol /RDKit//DataStructs /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib
+  ..//GraphMol 
+  ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral 
+  ../../Geometry//RDGeometry ../..//lapacklibs ../..//vflib
  ;
 
 install regrs : testFeatures

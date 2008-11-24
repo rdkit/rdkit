@@ -1,10 +1,5 @@
 project ML/Data : : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread ;
 
-import os ;
-local RDBASE = [ os.environ RDBASE ] ;
-
-import python ;
-
 python-extension cQuantize : cQuantize.cpp ../InfoTheory//InfoTheory
 ;
 

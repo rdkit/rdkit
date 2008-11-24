@@ -7,7 +7,7 @@ alias Query
   : <include>./
   ;
 
-exe test : test.cpp Query /RDKit//RDGeneral ;
+exe test : test.cpp Query ../RDGeneral//RDGeneral ;
 
 install regrs : test : <location>testExecs ;
 

@@ -9,8 +9,8 @@ python-extension rdPartialCharges : rdPartialCharges.cpp
   ../..//GraphMol
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-/RDKit//lapacklibs 
-  ;
+ ../../..//lapacklibs 
+ ;
 
 install pymod : rdPartialCharges 
   : <location>$(RDBASE)/Python/Chem ;

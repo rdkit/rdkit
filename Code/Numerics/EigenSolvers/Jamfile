@@ -8,7 +8,7 @@ lib EigenSolvers : PowerEigenSolver.cpp
 :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : EigenSolvers : <location>$(RDBASE)/bin ;
 
-exe main : testEigenSolvers.cpp EigenSolvers /RDKit//RDGeneral /RDKit//lapacklibs : 
+exe main : testEigenSolvers.cpp EigenSolvers ../../RDGeneral//RDGeneral ../..//lapacklibs : 
 	;
 
 install regrs : main : <location>testExecs ;

@@ -5,13 +5,12 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 lib ChemTransforms : ChemTransforms.cpp
 ..//GraphMol  ../../RDGeneral//RDGeneral ../Substruct//Substruct
- ../../DataStructs//DataStructs ../../Geometry//RDGeometry
   : <toolset>msvc:<link>static ;
 install lib-install : ChemTransforms : <location>$(RDBASE)/bin ;
 
 exe main : testChemTransforms.cpp ChemTransforms
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse
-../Substruct//Substruct ..//GraphMol /RDKit//RDGeneral /RDKit//Geometry /RDKit//lapacklibs /RDKit//vflib ;
+../Substruct//Substruct ..//GraphMol ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs ../..//vflib ;
 
 install regrs : main
   : <location>testExecs ;

@@ -5,8 +5,9 @@ local RDBASE = [ os.environ RDBASE ] ;
 import python ;
 
 python-extension rdSimDivPickers : MaxMinPicker.cpp HierarchicalClusterPicker.cpp 
-  rdSimDivPickers.cpp /RDKit//SimDivPickers ../../ML/Cluster/Murtagh//hc
-  /RDKit//RDGeneral /RDKit//DataStructs /RDKit//RDBoost ;
+  rdSimDivPickers.cpp ..//SimDivPickers ../../ML/Cluster/Murtagh//hc
+  ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs 
+  ../../RDBoost//RDBoost ;
 
 install pymod : rdSimDivPickers : <location>$(RDBASE)/Python/SimDivFilters ;
 

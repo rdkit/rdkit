@@ -2,17 +2,17 @@ project ForceField : : ;
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
+
+
 lib ForceField : ForceField.cpp UFF/AngleBend.cpp UFF/BondStretch.cpp 
     UFF/Nonbonded.cpp UFF/TorsionAngle.cpp UFF/DistanceConstraint.cpp 
     UFF/Params.cpp 
- ../Numerics/Optimizer//Optimizer ../Geometry//RDGeometry ../DataStructs//DataStructs 
-  ../Geometry//RDGeometry 
- ../RDGeneral//RDGeneral
-	:  <toolset>msvc:<link>static ;
+../Numerics/Optimizer//Optimizer ../Geometry//RDGeometry ../RDGeneral//RDGeneral
+	:  <toolset>msvc:<link>static ; # <link>static ;
 install lib-install : ForceField : <location>$(RDBASE)/bin ;
 
-exe testForceField : testForceField.cpp ForceField /RDKit//Numerics/Optimizer 
-   /RDKit//Geometry /RDKit//RDGeneral ;
+exe testForceField : testForceField.cpp ForceField ../Numerics/Optimizer//Optimizer ../Geometry//RDGeometry ../RDGeneral//RDGeneral ;
+
 
 install regrs : testForceField : <location>testExecs ;
 

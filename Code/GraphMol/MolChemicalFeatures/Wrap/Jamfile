@@ -12,7 +12,7 @@ python-extension rdMolChemicalFeatures : rdMolChemicalFeatures.cpp
   ../..//GraphMol
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-/RDKit//vflib /RDKit//lapacklibs 
+  ../../..//vflib ../../..//lapacklibs 
   ;
 
 install pymod : rdMolChemicalFeatures

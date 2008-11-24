@@ -8,7 +8,7 @@ lib Optimizer : BFGSOpt.cpp LinearSearch.cpp
 :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : Optimizer : <location>$(RDBASE)/bin ;
 
-exe testOptimizer : testOptimizer.cpp Optimizer /RDKit//RDGeneral ;
+exe testOptimizer : testOptimizer.cpp Optimizer ../../RDGeneral//RDGeneral ;
 
 install regrs : testOptimizer : <location>testExecs ;
 
