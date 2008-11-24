@@ -221,7 +221,13 @@ namespace RDKit{
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
 
-    typedef boost::mt19937 rng_type;
+    
+    // create a mersenne twister with customized parameters. 
+    // The standard parameters (used to create boost::mt19937) 
+    // result in an RNG that's much too computationally intensive
+    // to seed.
+    typedef boost::random::mersenne_twister<boost::uint32_t,32,4,2,31,0x9908b0df,11,7,0x9d2c5680,15,0xefc60000,18, 3346425566U>  rng_type;
+    
     typedef boost::uniform_int<> distrib_type;
     typedef boost::variate_generator<rng_type &,distrib_type> source_type;
     rng_type generator(42u);
@@ -342,6 +348,7 @@ namespace RDKit{
           // so it's back to the RNG.
           generator.seed(static_cast<rng_type::result_type>(seed));
           res->SetBit(randomSource()%fpSize);
+          //res->SetBit(seed%fpSize);
         }
       }
       // EFF: this could be faster by folding by more than a factor
