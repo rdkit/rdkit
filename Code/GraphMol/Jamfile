@@ -39,11 +39,11 @@ install regrs : test1 cptest querytest MolOpsTest testCanon testChirality testPi
 
 alias all-libraries : lib-install SmilesParse Substruct FileParsers Subgraphs Fingerprints FragCatalog 
   Depictor PartialCharges MolTransforms ForceFieldHelpers DistGeomHelpers Descriptors
-  MolChemicalFeatures MolAlign ShapeHelpers ChemTransforms MolCatalog ChemReactions
+  MolChemicalFeatures MolAlign ShapeHelpers ChemTransforms MolCatalog ChemReactions SLNParse
 ;
 
 alias all-wrappers : Wrap FragCatalog/Wrap PartialCharges/Wrap Depictor/Wrap 
   DistGeomHelpers/Wrap ForceFieldHelpers/Wrap MolChemicalFeatures/Wrap
   MolAlign/Wrap MolTransforms/Wrap ShapeHelpers/Wrap MolCatalog/Wrap
-  ChemReactions/Wrap Descriptors/Wrap
+  ChemReactions/Wrap Descriptors/Wrap SLNParse/Wrap
  ;

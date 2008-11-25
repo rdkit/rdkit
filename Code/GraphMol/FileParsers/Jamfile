@@ -6,7 +6,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 lib FileParsers : MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp 
   SDFileParser.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp 
   SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp TDTMolSupplier.cpp 
-  TplFileParser.cpp TplFileWriter.cpp
+  TplFileParser.cpp TplFileWriter.cpp Mol2FileParser.cpp
   ..//GraphMol ../SmilesParse//SmilesParse ../..//RDGeneral//RDGeneral ../../Geometry//RDGeometry
   : <toolset>msvc:<link>static ;
 install lib-install : FileParsers : <location>$(RDBASE)/bin ;
@@ -31,7 +31,11 @@ exe testTplParser : testTpls.cpp FileParsers
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
   ../..//lapacklibs ;
 
-install regrs : test1 testMolSupplier testMolWriter testTplParser
+exe testMol2ToMol : testMol2ToMol.cpp FileParsers 
+  ../SmilesParse//SmilesParse ..//GraphMol 
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs ;
+
+install regrs : test1 testMolSupplier testMolWriter testTplParser testMol2ToMol
   : <location>testExecs ;
 
 

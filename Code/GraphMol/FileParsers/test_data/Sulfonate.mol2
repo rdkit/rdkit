@@ -1,0 +1,36 @@
+#	Name: NoName
+#	Creating user name:	stiefni2
+#	Creation time:	12. 06. 2008 13:32
+
+#	Modifying user name:	stiefni2
+#	Modification time:	12. 06. 2008 13:32
+
+#	Program:	corina 3.40 0006  02.08.2006
+
+@<TRIPOS>MOLECULE
+NoName
+   8    7    0    0    0
+SMALL
+NO_CHARGES
+
+
+@<TRIPOS>ATOM
+   1 C1            -0.0225     1.8097     0.0120 C.3     
+   2 S2             0.0021    -0.0041     0.0020 S.o2    
+   3 O3             0.7082    -0.4700     1.1854 O.co2   
+   4 O4            -1.3684    -0.4918     0.0125 O.co2   
+   5 O5             0.6854    -0.4572    -1.1995 O.co2   
+   6 H6             1.0001     2.1870     0.0043 H       
+   7 H7            -0.5497     2.1708    -0.8711 H       
+   8 H8            -0.5327     2.1613     0.9088 H       
+@<TRIPOS>BOND
+   1    1    2 1
+   2    1    6 1
+   3    1    7 1
+   4    1    8 1
+   5    2    3 ar
+   6    2    4 ar
+   7    2    5 ar
+
+#	End of record
+

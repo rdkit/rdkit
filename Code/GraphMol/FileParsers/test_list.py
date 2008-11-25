@@ -4,6 +4,7 @@ tests=[
   ("testExecs/testMolSupplier.exe","",{}),
   ("testExecs/testMolWriter.exe","",{}),
   ("testExecs/testTplParser.exe","",{}),
+  ("testExecs/testMol2ToMol.exe","",{}),
   ]
 
 

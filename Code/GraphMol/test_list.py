@@ -34,6 +34,9 @@ tests=[
   ("python","test_list.py",{'dir':'MolCatalog/Wrap'}),
 
   ("python","test_list.py",{'dir':'ChemReactions'}),
+
+  ("python","test_list.py",{'dir':'SLNParse'}),
+  ("python","test_list.py",{'dir':'SLNParse/Wrap'}),
   
   ]
 

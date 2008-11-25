@@ -29,7 +29,7 @@ namespace RDKit{
    *   \param inStream - stream containing the data
    *   \param line     - current line number (used for error reporting)
    *   \param sanitize - toggles sanitization and stereochemistry
-   *                     perception of the molecule 
+   *                     perception of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
    */
@@ -42,7 +42,7 @@ namespace RDKit{
   /*! 
    *   \param molBlock - string containing the mol block
    *   \param sanitize - toggles sanitization and stereochemistry
-   *                     perception of the molecule 
+   *                     perception of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
    */
@@ -53,7 +53,7 @@ namespace RDKit{
   /*! 
    *   \param fName    - string containing the file name
    *   \param sanitize - toggles sanitization and stereochemistry
-   *                     perception of the molecule 
+   *                     perception of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
    */
@@ -87,7 +87,8 @@ namespace RDKit{
   /*!
     \param inStream:      the stream from which to read
     \param line:          used to track the line number of errors
-    \param sanitize:      toggles sanitization of the molecule
+    \param sanitize:      toggles sanitization and stereochemistry
+                          perception of the molecule
     \param skipFirstConf: according to the TPL format description, the atomic
                           coords in the atom-information block describe the first
 			  conformation and the first conf block describes second 
@@ -104,7 +105,8 @@ namespace RDKit{
   //! \brief construct a multi-conf molecule from a TPL (BioCad format) file
   /*!
     \param fName:         the name of the file from which to read
-    \param sanitize:      toggles sanitization of the molecule
+    \param sanitize:      toggles sanitization and stereochemistry
+                          perception of the molecule
     \param skipFirstConf: according to the TPL format description, the atomic
                           coords in the atom-information block describe the first
 			  conformation and the first conf block describes second 
@@ -124,7 +126,50 @@ namespace RDKit{
 		    std::string partialChargeProp="_GasteigerCharge",
 		    bool writeFirstConfTwice=false);
 
+  //-----
+  //  MOL2 handling
+  //-----
 
+  typedef enum {
+    CORINA=0  //! supports output from Corina and some dbtranslate output
+  } Mol2Type;
+
+  // \brief construct a molecule from a Tripos mol2 file
+  /*! 
+   *
+   *   \param fName    - string containing the file name
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   *   \param variant  - the atom type definitions to use
+   */
+  RWMol *Mol2FileToMol(std::string fName,bool sanitize=true,bool removeHs=true,
+                       Mol2Type variant=CORINA);
+
+  // \brief construct a molecule from Tripos mol2 data in a stream
+  /*!  
+   *   \param inStream - stream containing the data
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   *   \param variant  - the atom type definitions to use
+   */
+  RWMol *Mol2DataStreamToMol(std::istream *inStream,bool sanitize=true,bool removeHs=true,
+                             Mol2Type variant=CORINA);
+  // \overload 
+  RWMol *Mol2DataStreamToMol(std::istream &inStream,bool sanitize=true,bool removeHs=true,
+                             Mol2Type variant=CORINA);
+
+  // \brief construct a molecule from a Tripos mol2 block
+  /*! 
+   *   \param molBlock - string containing the mol block
+   *   \param sanitize - toggles sanitization of the molecule
+   *   \param removeHs - toggles removal of Hs from the molecule. H removal
+   *                     is only done if the molecule is sanitized
+   *   \param variant  - the atom type definitions to use
+   */
+  RWMol *Mol2BlockToMol(const std::string &molBlock,bool sanitize=true,bool removeHs=true,
+                        Mol2Type variant=CORINA);
 
 }
 
