@@ -109,6 +109,29 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
 
+  ROMol *MolFromMol2File(const char *molFilename, bool sanitize=true, bool removeHs=true) {
+    RWMol *newM;
+    try {
+      newM = Mol2FileToMol(molFilename, sanitize,removeHs);
+    } catch (RDKit::BadFileException &e) {
+      PyErr_SetString(PyExc_IOError,e.message());
+      throw python::error_already_set();
+    } catch (...) {
+      newM=0;
+    }
+    return static_cast<ROMol *>(newM);
+  }
+
+  ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize=true, bool removeHs=true){
+    std::istringstream inStream(mol2Block);
+    RWMol *newM;
+    try {
+      newM = Mol2DataStreamToMol(inStream, sanitize, removeHs);
+    } catch (...) {
+      newM=0;
+    }
+    return static_cast<ROMol *>(newM);
+  }
 }
 
 // MolSupplier stuff
@@ -223,6 +246,61 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     a Mol object, None on failure.\n\
 \n";  
   python::def("MolFromMolBlock", RDKit::MolFromMolBlock,
+	      (python::arg("molBlock"),
+	       python::arg("sanitize")=true,
+	       python::arg("removeHs")=true),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+
+  docString="Construct a molecule from a Tripos Mol2 file.\n\n\
+  NOTE:\n \
+    The parser expects the atom-typing scheme used by Corina.\n\
+    Atom types from Tripos' dbtranslate are less supported.\n\
+    Other atom typing schemes are unlikely to work.\n\
+\n\
+  ARGUMENTS:\n                                  \
+\n\
+    - fileName: name of the file to read\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to true.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\
+      Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromMol2File", RDKit::MolFromMol2File,
+	      (python::arg("molFileName"),
+	       python::arg("sanitize")=true,
+               python::arg("removeHs")=true),
+	      docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+  docString="Construct a molecule from a Tripos Mol2 block.\n\n\
+  NOTE:\n \
+    The parser expects the atom-typing scheme used by Corina.\n\
+    Atom types from Tripos' dbtranslate are less supported.\n\
+    Other atom typing schemes are unlikely to work.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol2Block: string containing the Mol2 block\n\
+\n\
+    - sanitize: (optional) toggles sanitization of the molecule.\n\
+      Defaults to 1.\n\
+\n\
+    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+      This only make sense when sanitization is done.\n\
+      Defaults to true.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";  
+  python::def("MolFromMol2Block", RDKit::MolFromMol2Block,
 	      (python::arg("molBlock"),
 	       python::arg("sanitize")=true,
 	       python::arg("removeHs")=true),

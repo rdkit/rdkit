@@ -1794,6 +1794,15 @@ CAS<~>
     self.failUnless(len(fs)==1)
     self.failUnless(fs[0].GetNumAtoms()==3)
 
+  def test54Mol2Parser(self):
+    """ test the mol2 parser
+    """
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','pyrazole_pyridine.mol2')
+    m = Chem.MolFromMol2File(fileN)
+    self.failUnless(m.GetNumAtoms()==5)
+    self.failUnless(Chem.MolToSmiles(m)=='c1cn[nH]c1',Chem.MolToSmiles(m))
+    
     
     
     

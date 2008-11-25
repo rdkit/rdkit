@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2007 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -121,14 +121,21 @@ namespace RDKit{
   //  MOL2 handling
   //-----
 
-  // \brief construct a molecule from a TRIPOS mol2 file
+  typedef enum {
+    CORINA=0  //! supports output from Corina and some dbtranslate output
+  } Mol2Type;
+
+  // \brief construct a molecule from a Tripos mol2 file
   /*! 
+   *
    *   \param fName    - string containing the file name
    *   \param sanitize - toggles sanitization of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
+   *   \param variant  - the atom type definitions to use
    */
-  RWMol *Mol2FileToMol(std::string fName,bool sanitize=true,bool removeHs=true);
+  RWMol *Mol2FileToMol(std::string fName,bool sanitize=true,bool removeHs=true,
+                       Mol2Type variant=CORINA);
 
   // \brief construct a molecule from Tripos mol2 data in a stream
   /*!  
@@ -136,19 +143,24 @@ namespace RDKit{
    *   \param sanitize - toggles sanitization of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
+   *   \param variant  - the atom type definitions to use
    */
-  RWMol *Mol2DataStreamToMol(std::istream *inStream,bool sanitize=true,bool removeHs=true);
+  RWMol *Mol2DataStreamToMol(std::istream *inStream,bool sanitize=true,bool removeHs=true,
+                             Mol2Type variant=CORINA);
   // \overload 
-  RWMol *Mol2DataStreamToMol(std::istream &inStream,bool sanitize=true,bool removeHs=true);
+  RWMol *Mol2DataStreamToMol(std::istream &inStream,bool sanitize=true,bool removeHs=true,
+                             Mol2Type variant=CORINA);
 
-  // \brief construct a molecule from an Tripos mol2 mol block
+  // \brief construct a molecule from a Tripos mol2 block
   /*! 
    *   \param molBlock - string containing the mol block
    *   \param sanitize - toggles sanitization of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
+   *   \param variant  - the atom type definitions to use
    */
-  RWMol *Mol2BlockToMol(const std::string &molBlock,bool sanitize=true,bool removeHs=true);
+  RWMol *Mol2BlockToMol(const std::string &molBlock,bool sanitize=true,bool removeHs=true,
+                        Mol2Type variant=CORINA);
 
 }
 

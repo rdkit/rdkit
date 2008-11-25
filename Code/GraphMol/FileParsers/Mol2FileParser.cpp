@@ -721,7 +721,8 @@ namespace RDKit{
   //  Read a molecule from a stream
   //
   //------------------------------------------------
-  RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs){
+  RWMol *Mol2DataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
+                             Mol2Type variant){
     PRECONDITION(inStream,"no stream");
     std::string tempStr,lineBeg;
     typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -894,7 +895,8 @@ namespace RDKit{
   };
   
 
-  RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs){
+  RWMol *Mol2DataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
+                             Mol2Type variant){
     return Mol2DataStreamToMol(&inStream,sanitize,removeHs);
   };
   //------------------------------------------------
@@ -902,7 +904,8 @@ namespace RDKit{
   //  Read a molecule from a string
   //
   //------------------------------------------------
-  RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs){
+  RWMol *Mol2BlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,
+                        Mol2Type variant){
     std::istringstream inStream(molBlock);
     return Mol2DataStreamToMol(inStream, sanitize, removeHs);
   }    
@@ -913,7 +916,8 @@ namespace RDKit{
   //  Read a molecule from a file
   //
   //------------------------------------------------
-  RWMol *Mol2FileToMol(std::string fName, bool sanitize, bool removeHs){
+  RWMol *Mol2FileToMol(std::string fName, bool sanitize, bool removeHs,
+                       Mol2Type variant){
     std::ifstream inStream(fName.c_str());
     if(!inStream || (inStream.bad())){
       std::ostringstream errout;

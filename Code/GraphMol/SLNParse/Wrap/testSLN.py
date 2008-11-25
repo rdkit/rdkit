@@ -43,7 +43,6 @@ class TestCase(unittest.TestCase) :
   def setUp(self):
     self.dataDir = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','SLNParse','testData')
 
-
   def test1Basics(self):
     m1 = rdSLNParse.MolFromSLN('CH3CH3')
     self.failUnless(m1)
@@ -52,7 +51,7 @@ class TestCase(unittest.TestCase) :
     m1 = rdSLNParse.MolFromSLN('C[1]H:CH:CH:CH:CH:CH:@1')
     self.failUnless(m1)
     self.failUnless(m1.GetNumAtoms()==6)
-
+    
   def test2Queries(self):
     patt = rdSLNParse.MolFromQuerySLN('C[HC=2]~O')
     self.failUnless(patt)
@@ -63,10 +62,5 @@ class TestCase(unittest.TestCase) :
     ms = m.GetSubstructMatches(patt)
     self.failUnless(len(ms)==1)
     
-
-
-    
-
-        
 if __name__ == '__main__':
   unittest.main()
