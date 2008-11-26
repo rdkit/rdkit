@@ -1273,8 +1273,6 @@ void test15Issue1882749(){
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getMass()==15);
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge()==-1);
 
-
-
   reacts.clear();
   smi = "CS(=O)C";
   mol = SmilesToMol(smi);
@@ -1297,7 +1295,50 @@ void test15Issue1882749(){
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge()==+2);
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getFormalCharge()==-1);
 
-
+  reacts.clear();
+  smi = "CO";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  delete rxn;
+  smi = "[O:1]>>[O:1][13C]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==3);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getMass()==13);
+  
+  reacts.clear();
+  smi = "CO";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  delete rxn;
+  smi = "[O:1]>>[O:1][3#0]";
+  rxn = RxnSmartsToChemicalReaction(smi); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+  TEST_ASSERT(rxn->validate(nWarn,nError,false));
+  TEST_ASSERT(nWarn==0);
+  TEST_ASSERT(nError==0);
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==3);
+  
+  MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getMass()==3);
+  TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="[3*]OC");
 
   delete rxn;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1904,9 +1945,9 @@ int main() {
   test16Exceptions();
   test17Issue1920627();
   test18PropertyTransfer();
-#endif
   test19Issue2050085();
   test20BondQueriesInProduct();
+#endif
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

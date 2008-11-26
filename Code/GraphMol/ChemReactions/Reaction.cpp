@@ -151,22 +151,23 @@ namespace RDKit {
           int mapNum;
           newAtom->getProp("molAtomMapNumber",mapNum);
           res->setAtomBookmark(newAtom,mapNum);
-          // check for properties we need to set:
-          if(newAtom->hasProp("_QueryFormalCharge")){
-            int val;
-            newAtom->getProp("_QueryFormalCharge",val);
-            newAtom->setFormalCharge(val);
-          }
-          if(newAtom->hasProp("_QueryHCount")){
-            int val;
-            newAtom->getProp("_QueryHCount",val);
-            newAtom->setNumExplicitHs(val);
-          }
-          if(newAtom->hasProp("_QueryMass")){
-            int val;
-            newAtom->getProp("_QueryMass",val);
-            newAtom->setMass(val);
-          }
+        }
+
+        // check for properties we need to set:
+        if(newAtom->hasProp("_QueryFormalCharge")){
+          int val;
+          newAtom->getProp("_QueryFormalCharge",val);
+          newAtom->setFormalCharge(val);
+        }
+        if(newAtom->hasProp("_QueryHCount")){
+          int val;
+          newAtom->getProp("_QueryHCount",val);
+          newAtom->setNumExplicitHs(val);
+        }
+        if(newAtom->hasProp("_QueryMass")){
+          int val;
+          newAtom->getProp("_QueryMass",val);
+          newAtom->setMass(val);
         }
       }
       // and the bonds:
@@ -314,9 +315,8 @@ namespace RDKit {
               productAtom->setNumExplicitHs(reactantAtom->getNumExplicitHs());
               productAtom->setMass(reactantAtom->getMass());
               productAtom->setIsAromatic(reactantAtom->getIsAromatic());
-            } else {
-              updateImplicitAtomProperties(productAtom,reactantAtom);
             }
+            updateImplicitAtomProperties(productAtom,reactantAtom);
           }
           // One might be tempted to copy over the reactant atom's chirality into the
           // product atom if chirality is not specified on the product. This would be a
