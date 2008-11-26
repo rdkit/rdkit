@@ -151,7 +151,9 @@ namespace RDKit{
         runReactants.
     */
     void initReactantMatchers();
-        
+
+    bool isInitialized() const { return !df_needsInit; };
+    
     //! validates the reactants and products to make sure the reaction seems "reasonable"
     /*! 
         \return   true if the reaction validates without errors (warnings do not stop validation)

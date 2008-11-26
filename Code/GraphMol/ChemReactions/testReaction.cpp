@@ -78,7 +78,8 @@ void test1Basics(){
   mol = SmartsToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
-  
+
+  rxn.initReactantMatchers();
   prods = rxn.runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   
@@ -152,6 +153,7 @@ void test2SimpleReactions(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn.initReactantMatchers();
   prods = rxn.runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -262,6 +264,7 @@ void test3RingFormation(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn.initReactantMatchers();
   prods = rxn.runReactants(reacts);
   TEST_ASSERT(prods.size()==4);
   TEST_ASSERT(prods[0].size()==1);
@@ -380,6 +383,7 @@ void test4MultipleProducts(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn.initReactantMatchers();
   prods = rxn.runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==2);
@@ -455,6 +459,7 @@ void test5Salts(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn.initReactantMatchers();
   prods = rxn.runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -490,6 +495,7 @@ void test6DaylightParser(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -515,6 +521,7 @@ void test6DaylightParser(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==2);
@@ -579,6 +586,7 @@ void test7MDLParser(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -605,6 +613,7 @@ void test7MDLParser(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -630,6 +639,7 @@ void test7MDLParser(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -654,6 +664,7 @@ void test7MDLParser(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==4);
   TEST_ASSERT(prods[0].size()==1);
@@ -781,6 +792,7 @@ void test9ProductQueries(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -795,6 +807,7 @@ void test9ProductQueries(){
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -809,6 +822,7 @@ void test9ProductQueries(){
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -829,8 +843,8 @@ void test9ProductQueries(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
-  std::cerr<<"SZ:"<<prods.size()<<std::endl;
   TEST_ASSERT(prods.size()==12);
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==7);
@@ -869,6 +883,7 @@ void test10ChiralityDaylight(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -904,6 +919,7 @@ void test10ChiralityDaylight(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -960,6 +976,7 @@ void test11ChiralityRxn(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==2);
@@ -977,6 +994,7 @@ void test11ChiralityRxn(){
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==2);
   TEST_ASSERT(rxn->getNumProductTemplates()==2);
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==2);
@@ -995,6 +1013,7 @@ void test11ChiralityRxn(){
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==2);
   TEST_ASSERT(rxn->getNumProductTemplates()==2);
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==2);
@@ -1032,6 +1051,7 @@ void test12DoubleBondStereochem(){
   reacts.push_back(ROMOL_SPTR(mol));
   MolOps::assignStereochemistry(*mol);
     
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1062,6 +1082,7 @@ void test12DoubleBondStereochem(){
   reacts.push_back(ROMOL_SPTR(mol));
   MolOps::assignStereochemistry(*mol);
     
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1104,6 +1125,7 @@ void test13Issue1748846(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()>0);
   BOOST_LOG(rdInfoLog)<<prods[0].size()<<std::endl;
@@ -1133,6 +1155,7 @@ void test13Issue1748846(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()>0);
   TEST_ASSERT(prods[0].size()==1);
@@ -1171,6 +1194,7 @@ void test14Issue1804420(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==2);
@@ -1221,6 +1245,7 @@ void test15Issue1882749(){
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1236,6 +1261,7 @@ void test15Issue1882749(){
   TEST_ASSERT(rxn->validate(nWarn,nError,false));
   TEST_ASSERT(nWarn==0);
   TEST_ASSERT(nError==0);
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1251,6 +1277,7 @@ void test15Issue1882749(){
   TEST_ASSERT(rxn->validate(nWarn,nError,false));
   TEST_ASSERT(nWarn==0);
   TEST_ASSERT(nError==0);
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1266,6 +1293,7 @@ void test15Issue1882749(){
   TEST_ASSERT(rxn->validate(nWarn,nError,false));
   TEST_ASSERT(nWarn==0);
   TEST_ASSERT(nError==0);
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1288,6 +1316,7 @@ void test15Issue1882749(){
   TEST_ASSERT(rxn->validate(nWarn,nError,false));
   TEST_ASSERT(nWarn==0);
   TEST_ASSERT(nError==0);
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1310,6 +1339,7 @@ void test15Issue1882749(){
   TEST_ASSERT(rxn->validate(nWarn,nError,false));
   TEST_ASSERT(nWarn==0);
   TEST_ASSERT(nError==0);
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1331,6 +1361,7 @@ void test15Issue1882749(){
   TEST_ASSERT(rxn->validate(nWarn,nError,false));
   TEST_ASSERT(nWarn==0);
   TEST_ASSERT(nError==0);
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1428,6 +1459,7 @@ void test17Issue1920627(){
   TEST_ASSERT(cip=="R");
   
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1620,6 +1652,7 @@ void test18PropertyTransfer(){
   smi = "C";
   mol = SmilesToMol(smi);
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1652,6 +1685,7 @@ void test18PropertyTransfer(){
   smi = "[12CH4]";
   mol = SmilesToMol(smi);
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1680,6 +1714,7 @@ void test18PropertyTransfer(){
   smi = "[13CH4]";
   mol = SmilesToMol(smi);
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1708,6 +1743,7 @@ void test18PropertyTransfer(){
   smi = "C";
   mol = SmilesToMol(smi);
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1740,6 +1776,7 @@ void test18PropertyTransfer(){
   smi = "C=O";
   mol = SmilesToMol(smi);
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1764,6 +1801,7 @@ void test18PropertyTransfer(){
   smi = "c1ccccn1";
   mol = SmilesToMol(smi);
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==2);
   TEST_ASSERT(prods[0].size()==1);
@@ -1814,6 +1852,7 @@ void test19Issue2050085(){
   MolOps::assignStereochemistry(*mol);
 
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==2);
   TEST_ASSERT(prods[0].size()==2);
@@ -1853,6 +1892,7 @@ void test20BondQueriesInProduct(){
   TEST_ASSERT(mol);
 
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
@@ -1890,6 +1930,7 @@ void test20BondQueriesInProduct(){
   TEST_ASSERT(mol);
 
   reacts.push_back(ROMOL_SPTR(mol));
+  rxn->initReactantMatchers();
   prods = rxn->runReactants(reacts);
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);

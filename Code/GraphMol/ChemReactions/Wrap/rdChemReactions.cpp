@@ -54,7 +54,10 @@ void rdChemicalReactionExceptionTranslator(RDKit::ChemicalReactionException cons
 
 namespace RDKit {
   template <typename T>
-  PyObject* RunReactants(const ChemicalReaction *self,T reactants){
+  PyObject* RunReactants(ChemicalReaction *self,T reactants){
+    if(!self->isInitialized()){
+      self->initReactantMatchers();
+    }
     MOL_SPTR_VECT reacts;
     unsigned int len1 = python::extract<unsigned int>(reactants.attr("__len__")());
     reacts.resize(len1);
@@ -115,10 +118,14 @@ Sample Usage:\n\
          "adds a reactant (a Molecule) to the reaction")
     .def("AddProductTemplate",&RDKit::ChemicalReaction::addProductTemplate,
          "adds a product (a Molecule)")
-    .def("RunReactants",(PyObject *(*)(const RDKit::ChemicalReaction *,python::tuple))RDKit::RunReactants,
+    .def("RunReactants",(PyObject *(*)(RDKit::ChemicalReaction *,python::tuple))RDKit::RunReactants,
          "apply the reaction to a sequence of reactant molecules and return the products as a tuple of tuples")
-    .def("RunReactants",(PyObject *(*)(const RDKit::ChemicalReaction *,python::list))RDKit::RunReactants,
+    .def("RunReactants",(PyObject *(*)(RDKit::ChemicalReaction *,python::list))RDKit::RunReactants,
          "apply the reaction to a sequence of reactant molecules and return the products as a tuple of tuples")
+    .def("Initialize",&RDKit::ChemicalReaction::initReactantMatchers,
+         "initializes the reaction so that it can be used")
+    .def("IsInitialized",&RDKit::ChemicalReaction::isInitialized,
+         "checks if the reaction is ready for use")
     .def("Validate",&RDKit::ValidateReaction,
          (python::arg("self"),python::arg("silent")=false),
          "checks the reaction for potential problems, returns (numWarnings,numErrors)")

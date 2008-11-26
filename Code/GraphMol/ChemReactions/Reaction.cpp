@@ -520,7 +520,7 @@ namespace RDKit {
   }
   
   std::vector<MOL_SPTR_VECT> ChemicalReaction::runReactants(const MOL_SPTR_VECT reactants) const {
-    if(!this->df_needsInit) {
+    if(this->df_needsInit) {
      throw ChemicalReactionException("initMatchers() must be called before runReactants()");
     }
     
@@ -559,7 +559,13 @@ namespace RDKit {
   } // end of ChemicalReaction::runReactants()
   
   void ChemicalReaction::initReactantMatchers() {
-    df_needsInit=false;  
+    unsigned int nWarnings,nErrors;
+    if(!this->validate(nWarnings,nErrors)){
+      BOOST_LOG(rdErrorLog)<<"initialization failed\n";
+      this->df_needsInit=true;
+    } else {
+      this->df_needsInit=false;
+    }
   }
 
   bool ChemicalReaction::validate(unsigned int &numWarnings,

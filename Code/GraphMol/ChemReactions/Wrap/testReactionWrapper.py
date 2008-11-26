@@ -274,6 +274,15 @@ M  END
       self.failUnless(len(ps[0])==1)
       if not i%1000: print i
 
+  def test8Properties(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[O:1]>>[O:1][3#0]')
+    self.failUnless(rxn)
+    ps=rxn.RunReactants((Chem.MolFromSmiles('CO'),))
+    self.failUnless(len(ps)==1)
+    self.failUnless(len(ps[0])==1)
+    Chem.SanitizeMol(ps[0][0])
+    self.failUnless(ps[0][0].GetAtomWithIdx(1).GetMass()==3);
+
         
 if __name__ == '__main__':
   unittest.main()
