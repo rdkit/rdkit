@@ -137,7 +137,11 @@ def _test_text_file(name):
     return doctest.testfile(name, optionflags=test_options)
 
 def _is_odt_example(name):
-    return re.search(".*Python\.odt", name) is not None
+    if re.search(".*Python\.odt", name) is not None:
+        return True
+    elif re.search(".*Book\.odt", name) is not None:
+        return True
+    return False
 
 
 _style_attr = "{urn:oasis:names:tc:opendocument:xmlns:text:1.0}style-name"
@@ -200,7 +204,6 @@ _code_styles = "CDT CDT1 CDTX C1 CodeSample".split()
 #outF = file('rt.out','w+')
 def _test_odt_file(name):
     txt = _get_odt_text(name, _code_styles)
-    #print >>outF,txt
     return _teststring(txt, name=os.path.basename(name),
                             globs=test_globals,
                             optionflags=test_options)
@@ -224,16 +227,30 @@ def abs_walk(walk_dir):
             yield abs_name, ext
 
 def _test_all(test_dir='.'):
-    for fname, fext in abs_walk(test_dir):
-        try:
-            is_example = extension_checks[fext]
-            test_example = extension_tests[fext]
-        except KeyError:
-            continue
-        if is_example(fname):
-            failed, tests = test_example(fname)
-            print ("Passed %d of %d tests in %s" %
-                   (tests - failed, tests, fname))
+    import sys
+    if len(sys.argv)<2:
+        for fname, fext in abs_walk(test_dir):
+            try:
+                is_example = extension_checks[fext]
+                test_example = extension_tests[fext]
+            except KeyError:
+                continue
+            if is_example(fname):
+                failed, tests = test_example(fname)
+                print ("Passed %d of %d tests in %s" %
+                       (tests - failed, tests, fname))
+    else:
+        for fname in sys.argv[1:]:
+            __, fext = os.path.splitext(fname)
+            try:
+                is_example = extension_checks[fext]
+                test_example = extension_tests[fext]
+            except KeyError:
+                continue
+            if is_example(fname):
+                failed, tests = test_example(fname)
+                print ("Passed %d of %d tests in %s" %
+                       (tests - failed, tests, fname))
 
 if __name__ == "__main__":
     _test_all()
