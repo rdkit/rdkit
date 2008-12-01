@@ -23,6 +23,7 @@ from rdMolAlign import *
 from rdMolTransforms import *
 from rdShapeHelpers import *
 from rdChemReactions import *
+from rdSLNParse import *
 import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
