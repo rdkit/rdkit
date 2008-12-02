@@ -2983,9 +2983,26 @@ void testSFNetIssue2208994() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFNetIssue2313979() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2313979: aromaticity assignment hangs " << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue2313979.2.mol",false);
+    TEST_ASSERT(m);
+    BOOST_LOG(rdInfoLog) << "   This should finish in a few seconds.  >>>" << std::endl;
+    MolOps::sanitizeMol(*m);
+    BOOST_LOG(rdInfoLog) << "   <<< Done." << std::endl;
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 void testSFNetIssue2316677() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2316677 : canonicalization error" << std::endl;
-
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
@@ -3041,9 +3058,10 @@ int main(){
   testSFIssue1968608();
   testHybridization();
   testAromaticityEdges();
-#endif
   testSFNetIssue2196817();
   testSFNetIssue2208994();
+#endif
+  testSFNetIssue2313979();
   testSFNetIssue2316677();
   
   return 0;

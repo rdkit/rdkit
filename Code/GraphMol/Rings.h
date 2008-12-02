@@ -38,7 +38,7 @@ namespace RingUtils {
    
   */
   void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
-		      boost::dynamic_bitset<> &done);
+		      boost::dynamic_bitset<> &done,int depth=0);
 
   //! \brief For each ring in bring compute and strore the ring that are fused
   //! (share atleast one bond with it). 

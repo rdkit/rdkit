@@ -30,16 +30,23 @@ namespace RingUtils {
 
   void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap,
                       INT_VECT &res,
-                      boost::dynamic_bitset<> &done) {
+                      boost::dynamic_bitset<> &done,
+                      int depth){
     INT_INT_VECT_MAP::const_iterator pos= neighMap.find(curr);
     PRECONDITION(pos!=neighMap.end(),"bad argument");
-    const INT_VECT &neighs = pos->second;
-    INT_VECT_CI ni;
     done[curr] = 1;
     res.push_back(curr);
-    for (ni = neighs.begin(); ni != neighs.end(); ni++) {
+
+    const INT_VECT &neighs = pos->second;
+#if 0
+    std::cerr<<"depth: "<<depth<<" ring: "<<curr<<" size: "<<res.size()<<" neighs: "<<neighs.size()<<std::endl;
+    std::cerr<<"   ";
+    std::copy(neighs.begin(),neighs.end(),std::ostream_iterator<int>(std::cerr," "));
+    std::cerr<<"\n";
+#endif
+    for (INT_VECT_CI ni = neighs.begin(); ni != neighs.end(); ++ni) {
       if (!done[*ni]) {
-        pickFusedRings((*ni), neighMap, res, done);
+        pickFusedRings((*ni), neighMap, res, done,depth+1);
       }
     }
   }
@@ -90,6 +97,14 @@ namespace RingUtils {
         }
       }
     }
+#if 0
+    for (i = 0; i < nrings; i++) {
+      std::cerr<<"**************\n    "<<i<<"\n*************\n";
+      std::copy(neighMap[i].begin(),neighMap[i].end(),std::ostream_iterator<int>(std::cerr," "));
+      std::cerr<<"\n";
+    }
+#endif
+    
   }
   
 
@@ -139,7 +154,8 @@ namespace {
                                  const INT_VECT &fused, // list of ring ids in the current fused system
                                  const VECT_EDON_TYPE &edon, // eletron donar state for each atom
                                  INT_INT_VECT_MAP &ringNeighs,
-                                 int &narom // number of aromatic ring so far 
+                                 int &narom, // number of aromatic ring so far
+                                 unsigned int maxNumFusedRings
                                  );
 
   void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings, 
@@ -296,7 +312,8 @@ namespace {
                           const INT_VECT &fused, // list of ring ids in the current fused system
                           const VECT_EDON_TYPE &edon, // eletron donor state for each atom
                           INT_INT_VECT_MAP &ringNeighs, // list of neighbors for eac candidate ring
-                          int &narom // number of aromatic ring so far 
+                          int &narom, // number of aromatic ring so far
+                          unsigned int maxNumFusedRings
                           ) {
 
     // this function check huckel rule on a fused system it starts
@@ -307,7 +324,7 @@ namespace {
 
     INT_VECT aromRings;
     aromRings.resize(0);
-    unsigned int nrings = fused.size();
+    unsigned int nrings = std::min(fused.size(),maxNumFusedRings);
     INT_VECT curRs;
     INT_VECT_CI mri;
     curRs.push_back(fused.front());
@@ -322,7 +339,7 @@ namespace {
     while (1) {
       if (pos == -1 ) {
         
-        curSize += 1;
+        curSize++;
         // check is we are done with all the atoms in the fused
         // system, if so quit. This is a fix for Issue252 REVIEW: is
         // this check sufficient or should we add an additional
@@ -330,7 +347,7 @@ namespace {
         // fused system that we will try. The number of combinations
         // can obviously be quite large when the number of rings in
         // the fused system is large
-        if ((doneAtoms.size() == nAtms) || (curSize > nrings)) {
+        if ((doneAtoms.size() == nAtms) || (curSize > nrings) ) {
           break;
         }
         comb.resize(curSize);
@@ -647,6 +664,8 @@ namespace RDKit {
       INT_INT_VECT_MAP neighMap;
       RingUtils::makeRingNeighborMap(brings, neighMap);
 
+      
+      
       // now loop over all the candidate rings and check the
       // huckel rule - of course paying attention to fused systems.
       INT_VECT doneRs;
@@ -657,7 +676,7 @@ namespace RDKit {
       while (curr < cnrs) {
         fused.resize(0);
         RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-        applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom);
+        applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,6);
 
         int rix;
         for (rix = 0; rix < cnrs; rix++) {
