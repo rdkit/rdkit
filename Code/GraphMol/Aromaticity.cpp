@@ -324,7 +324,7 @@ namespace {
 
     INT_VECT aromRings;
     aromRings.resize(0);
-    unsigned int nrings = std::min(fused.size(),maxNumFusedRings);
+    unsigned int nrings = fused.size();
     INT_VECT curRs;
     INT_VECT_CI mri;
     curRs.push_back(fused.front());
@@ -347,7 +347,7 @@ namespace {
         // fused system that we will try. The number of combinations
         // can obviously be quite large when the number of rings in
         // the fused system is large
-        if ((doneAtoms.size() == nAtms) || (curSize > nrings) ) {
+        if ((doneAtoms.size() == nAtms) || (curSize > std::min(nrings,maxNumFusedRings)) ){
           break;
         }
         comb.resize(curSize);

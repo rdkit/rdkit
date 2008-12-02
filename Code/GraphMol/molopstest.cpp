@@ -14,6 +14,9 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
+
 
 #include <iostream>
 
@@ -1952,6 +1955,7 @@ void testIssue252() {
   // lets check if we can sanitize C60
   std::string smi = "C12=C3C4=C5C6=C1C7=C8C9=C1C%10=C%11C(=C29)C3=C2C3=C4C4=C5C5=C9C6=C7C6=C7C8=C1C1=C8C%10=C%10C%11=C2C2=C3C3=C4C4=C5C5=C%11C%12=C(C6=C95)C7=C1C1=C%12C5=C%11C4=C3C3=C5C(=C81)C%10=C23";
   ROMol *mol = SmilesToMol(smi);
+  mol->debugMol(std::cerr);
   for(ROMol::BondIterator it=mol->beginBonds();
       it!=mol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
@@ -2988,12 +2992,21 @@ void testSFNetIssue2313979() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2313979.2.mol",false);
-    TEST_ASSERT(m);
-    BOOST_LOG(rdInfoLog) << "   This should finish in a few seconds.  >>>" << std::endl;
-    MolOps::sanitizeMol(*m);
-    BOOST_LOG(rdInfoLog) << "   <<< Done." << std::endl;
-    delete m;
+    SDMolSupplier suppl(pathName+"Issue2313979.sdf",false);
+
+    while(!suppl.atEnd()){
+      ROMol *m=suppl.next();
+      TEST_ASSERT(m);
+      std::string nm;
+      m->getProp("_Name",nm);
+      BOOST_LOG(rdInfoLog) << "   Doing molecule: "<<nm<< std::endl;
+      
+      BOOST_LOG(rdInfoLog) << "     This should finish in a few seconds.  >>>" << std::endl;
+      MolOps::sanitizeMol(*(RWMol *)m);
+      delete m;
+      BOOST_LOG(rdInfoLog) << "   <<< Done." << std::endl;
+    }
+
   }
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
