@@ -404,6 +404,10 @@ namespace RDKit{
       mol.clearProp("_doIsoSmiles");
     }
 
+    if(mol.hasProp("_ringStereoWarning")){
+      mol.clearProp("_ringStereoWarning");
+    }
+
 #if 0
     std::cout << "----------------------------" << std::endl;
     std::cout << "MolToSmiles:"<< std::endl;

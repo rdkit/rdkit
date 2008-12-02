@@ -2009,6 +2009,29 @@ void testBug1942220(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testRingStereochem(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing error reporting with ring stereochem" << std::endl;
+
+  RWMol *m;
+  std::string smi;
+
+  smi="C[C@H]1CC[C@@H](C)CC1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==8);
+
+  smi = MolToSmiles(*m,true);
+  TEST_ASSERT(m->hasProp("_ringStereoWarning"));
+
+  smi = MolToSmiles(*m,false);
+  TEST_ASSERT((!m->hasProp("_ringStereoWarning")));
+
+  
+  delete m;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int
 main(int argc, char *argv[])

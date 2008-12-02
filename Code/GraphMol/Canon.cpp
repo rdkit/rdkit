@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -686,7 +686,8 @@ namespace Canon {
         // traversed has stereochem set:
         for(VECT_INT_VECT_CI vivci=ringInfo->atomRings().begin();
             vivci!=ringInfo->atomRings().end();++vivci){
-          if(std::find(vivci->begin(),vivci->end(),static_cast<int>(atom->getIdx()))!=vivci->end()){
+          if(std::find(vivci->begin(),vivci->end(),
+                       static_cast<int>(atom->getIdx())) != vivci->end()){
             for(INT_VECT_CI ivci=vivci->begin();ivci!=vivci->end();++ivci){
               if( atomVisitOrders[*ivci]<pairIt->first &&
                   mol.getAtomWithIdx(*ivci)->getChiralTag()!=Atom::CHI_UNSPECIFIED ) {
@@ -742,6 +743,7 @@ namespace Canon {
     }
     if(ringStereoWarn){
       BOOST_LOG(rdWarningLog)<<"Warning: ring stereochemistry detected. This may not be handled correctly."<<std::endl;
+      mol.setProp("_ringStereoWarning",true,true);
     }
     
     // remove the current directions on single bonds around double bonds:
