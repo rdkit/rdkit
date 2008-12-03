@@ -678,7 +678,67 @@ void testSFIssue1653802(){
   
   delete mol;
   delete field;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testSFIssue2378119(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing SFIssue2378119." << std::endl;
+
+  {
+    RWMol *mol = MolFileToMol("test_data/Issue2378119.mol");
+    TEST_ASSERT(mol);
+    ForceFields::ForceField *field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    double e1 = field->calcEnergy();
+    TEST_ASSERT(e1>0.0 && e1<1e12);
+
+    int needMore = field->minimize(200,1e-6,1e-3);
+    TEST_ASSERT(!needMore);
+    double e2 = field->calcEnergy();
+    TEST_ASSERT(e2>0.0 && e2<e1);
+
+    delete mol;
+    delete field;
+  }
+  {
+    RWMol *mol = MolFileToMol("test_data/Issue2378119.2.mol");
+    TEST_ASSERT(mol);
+    ForceFields::ForceField *field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    double e1 = field->calcEnergy();
+    TEST_ASSERT(e1==0.0);
+
+    int needMore = field->minimize(200,1e-6,1e-3);
+    TEST_ASSERT(!needMore);
+    double e2 = field->calcEnergy();
+    TEST_ASSERT(e2==e1);
+
+    delete mol;
+    delete field;
+  }
+  {
+    RWMol *mol = MolFileToMol("test_data/Issue2378119.2.mol");
+    TEST_ASSERT(mol);
+    ForceFields::ForceField *field=UFF::constructForceField(*mol,100.0,-1,false);
+    TEST_ASSERT(field);
+    field->initialize();
+    double e1 = field->calcEnergy();
+    TEST_ASSERT(e1>0.0 && e1<1e12);
+
+    int needMore = field->minimize(200,1e-6,1e-3);
+    TEST_ASSERT(!needMore);
+    double e2 = field->calcEnergy();
+    TEST_ASSERT(e2<e1);
+
+    delete mol;
+    delete field;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -694,6 +754,7 @@ int main(){
   testUFFBuilderSpecialCases();
   testIssue239();
   testIssue242();
-#endif
   testSFIssue1653802();
+#endif
+  testSFIssue2378119();
 }

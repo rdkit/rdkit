@@ -31,12 +31,15 @@ namespace RDKit {
 			for that contact will not be included.
       \param confId     the optional conformer id, if this isn't provided, the molecule's
                         default confId will be used.
-    
+      \param ignoreInterfragInteractions if true, nonbonded terms will not be added between
+                                         fragments
+
       \return the new force field. The client is responsible for free'ing this.
     */
     ForceFields::ForceField *constructForceField(ROMol &mol,
 						 double vdwThresh=100.0,
-						 int confId=-1);
+						 int confId=-1,
+                                                 bool ignoreInterfragInteractions=true);
 
     //! Builds and returns a UFF force field for a molecule
     /*!
@@ -50,13 +53,16 @@ namespace RDKit {
 			for that contact will not be included.
       \param confId     the optional conformer id, if this isn't provided, the molecule's
                         default confId will be used.
+      \param ignoreInterfragInteractions if true, nonbonded terms will not be added between
+                                         fragments
     
       \return the new force field. The client is responsible for free'ing this.
     */
     ForceFields::ForceField *constructForceField(ROMol &mol,
 						 const AtomicParamVect &params,
 						 double vdwThresh=100.0,
-						 int confId=-1);
+						 int confId=-1,
+                                                 bool ignoreInterfragInteractions=true);
 
     namespace Tools {
       // these functions are primarily exposed so they can be tested.
@@ -67,7 +73,7 @@ namespace RDKit {
 		     ForceFields::ForceField *field,int *neighborMatrix);
       void addNonbonded(const ROMol &mol,int confId, const AtomicParamVect &params,
 			ForceFields::ForceField *field,int *neighborMatrix,
-			double vdwThresh=100.0);
+			double vdwThresh=100.0,bool ignoreInterfragInteractions=true);
       void addTorsions(const ROMol &mol,const AtomicParamVect &params,
 		       ForceFields::ForceField *field,
                        std::string torsionBondSmarts="[!$(*#*)&!D1]~[!$(*#*)&!D1]");

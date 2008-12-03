@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -17,17 +17,23 @@ namespace python = boost::python;
 
 namespace RDKit {
   int UFFOptimizeMolecule(ROMol &mol, int maxIters=200,
-			  double vdwThresh=10.0, int confId=-1 ){
-    ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, confId);
+			  double vdwThresh=10.0, int confId=-1,
+                          bool ignoreInterfragInteractions=true ){
+    ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, confId,
+                                                         ignoreInterfragInteractions);
     ff->initialize();
     int res=ff->minimize(maxIters);
     delete ff;
     return res;
   }
+
   ForceFields::PyForceField *UFFGetMoleculeForceField(ROMol &mol,
-						    double vdwThresh=10.0,
-						    int confId=-1 ){
-    ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, confId);
+                                                      double vdwThresh=10.0,
+                                                      int confId=-1,
+                                                      bool ignoreInterfragInteractions=true ){
+
+    ForceFields::ForceField *ff=UFF::constructForceField(mol,vdwThresh, confId,
+                                                         ignoreInterfragInteractions);
     ForceFields::PyForceField *res=new ForceFields::PyForceField(ff);
     res->initialize();
     return res;
@@ -47,10 +53,13 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - vdwThresh : used to exclude long-range van der Waals interactions\n\
                   (defaults to 10.0)\n\
     - confId : indicates which conformer to optimize\n\
+    - ignoreInterfragInteractions : if true, nonbonded terms between \n\
+                  fragments will not be added to the forcefield.\n\
 \n";
   python::def("UFFOptimizeMolecule", RDKit::UFFOptimizeMolecule,
 	      (python::arg("self"),python::arg("maxIters")=200,
-	       python::arg("vdwThresh")=10.0,python::arg("confId")=-1),
+	       python::arg("vdwThresh")=10.0,python::arg("confId")=-1,
+               python::arg("ignoreInterfragInteractions")=true),
 	      docString.c_str());
 
  docString = "returns a UFF force field for a molecule\n\n\
@@ -60,9 +69,12 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - vdwThresh : used to exclude long-range van der Waals interactions\n\
                   (defaults to 10.0)\n\
     - confId : indicates which conformer to optimize\n\
+    - ignoreInterfragInteractions : if true, nonbonded terms between \n\
+                  fragments will not be added to the forcefield.\n\
 \n";
   python::def("UFFGetMoleculeForceField", RDKit::UFFGetMoleculeForceField,
-	      (python::arg("mol"),python::arg("vdwThresh")=10.0,python::arg("confId")=-1),
+	      (python::arg("mol"),python::arg("vdwThresh")=10.0,python::arg("confId")=-1,
+               python::arg("ignoreInterfragInteractions")=true),
 	      python::return_value_policy<python::manage_new_object>(),
 	      docString.c_str());
 

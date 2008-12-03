@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C)  2004-2006 Rational Discovery LLC
+// Copyright (C)  2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -146,6 +146,12 @@ void testUFF2(){
   param1.Z1 = 1.912;
   param1.GMP_Xi = 5.343;
 
+  // C_3 - C_3, r0=1.514, k01=699.5918
+  ForceFields::ForceFieldContrib *bs;
+  bs = new ForceFields::UFF::BondStretchContrib(&ff,0,1,1,&param1,&param1);
+  ff.contribs().push_back(ForceFields::ContribPtr(bs));
+  ff.initialize();
+
   double *p,*g;
   p = new double[6];
   g = new double[6];
@@ -153,16 +159,22 @@ void testUFF2(){
     p[i] = 0.0;
     g[i] = 0.0;
   }
+
+  double E;
+  // edge case: zero bond length:
+  E=bs->getEnergy(p);
+  TEST_ASSERT(E>0.0);
+  bs->getGrad(p,g);
+  for(int i=0;i<6;i++){
+    TEST_ASSERT(abs(g[i])>0.0);
+  }
+
   p[0] = 0;
   p[3] = 1.514;
-
+  for(int i=0;i<6;i++){
+    g[i] = 0.0;
+  }
   ff.initialize();
-
-  // C_3 - C_3, r0=1.514, k01=699.5918
-  ForceFields::ForceFieldContrib *bs;
-  bs = new ForceFields::UFF::BondStretchContrib(&ff,0,1,1,&param1,&param1);
-  ff.contribs().push_back(ForceFields::ContribPtr(bs));
-  double E;
   E=bs->getEnergy(p);
   TEST_ASSERT(RDKit::feq(E,0.0));
   bs->getGrad(p,g);
@@ -170,9 +182,9 @@ void testUFF2(){
     TEST_ASSERT(RDKit::feq(g[i],0.0));
   }
 
-  ff.initialize();
   (*ff.positions()[1])[0] = 1.814;
   p[3] = 1.814;
+  ff.initialize();
   E=bs->getEnergy(p);
   TEST_ASSERT(RDKit::feq(E,31.4816));
   bs->getGrad(p,g);
@@ -617,6 +629,12 @@ void testUFF6(){
   // try a bit of minimization
   RDGeom::Point3D d;
   ff.initialize();
+
+  // edge case: our energy at zero length should be zero:
+  double E;
+  E=ff.calcEnergy();
+  TEST_ASSERT(RDKit::feq(E,0.0));
+  
   (*ff.positions()[0])[0] = 0.0;
   (*ff.positions()[1])[0] = 4.0;
   ff.minimize(10,1e-8,1e-8);

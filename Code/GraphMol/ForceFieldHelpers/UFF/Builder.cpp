@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -324,14 +324,22 @@ namespace RDKit {
       // ------------------------------------------------------------------------
       void addNonbonded(const ROMol &mol,int confId,const AtomicParamVect &params,
                         ForceFields::ForceField *field,int *neighborMatrix,
-                        double vdwThresh){
+                        double vdwThresh,bool ignoreInterfragInteractions){
         PRECONDITION(mol.getNumAtoms()==params.size(),"bad parameters");
         PRECONDITION(field,"bad forcefield");
+
+        INT_VECT fragMapping;
+        if(ignoreInterfragInteractions){
+          std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
+        }
 
         unsigned int nAtoms=mol.getNumAtoms();
         const Conformer &conf = mol.getConformer(confId);
         for(unsigned int i=0;i<nAtoms;i++){
           for(unsigned int j=i+1;j<nAtoms;j++){
+            if(ignoreInterfragInteractions && fragMapping[i]!=fragMapping[j]){
+              continue;
+            }
             if(neighborMatrix[i*nAtoms+j]==-2){
               double dist=(conf.getAtomPos(i) - conf.getAtomPos(j)).length();
               if(dist <
@@ -475,7 +483,8 @@ namespace RDKit {
     // ------------------------------------------------------------------------
     ForceFields::ForceField *constructForceField(ROMol &mol,
                                                  const AtomicParamVect &params,
-                                                 double vdwThresh, int confId){
+                                                 double vdwThresh, int confId,
+                                                 bool ignoreInterfragInteractions){
       PRECONDITION(mol.getNumAtoms()==params.size(),"bad parameters");
         
       ForceFields::ForceField *res=new ForceFields::ForceField();
@@ -490,7 +499,7 @@ namespace RDKit {
       int *neighborMat = Tools::buildNeighborMatrix(mol);
       Tools::addAngles(mol,params,res,neighborMat);
       Tools::addAngleSpecialCases(mol,confId,params,res);
-      Tools::addNonbonded(mol,confId,params,res,neighborMat,vdwThresh);
+      Tools::addNonbonded(mol,confId,params,res,neighborMat,vdwThresh,ignoreInterfragInteractions);
       Tools::addTorsions(mol,params,res);
       //Tools::addInversions(mol,params,res);
 
@@ -503,9 +512,10 @@ namespace RDKit {
     //
     //
     // ------------------------------------------------------------------------
-    ForceFields::ForceField *constructForceField(ROMol &mol,double vdwThresh, int confId){
+    ForceFields::ForceField *constructForceField(ROMol &mol,double vdwThresh, int confId,
+                                                 bool ignoreInterfragInteractions){
       AtomicParamVect params=getAtomTypes(mol);
-      return constructForceField(mol,params,vdwThresh, confId);
+      return constructForceField(mol,params,vdwThresh, confId,ignoreInterfragInteractions);
     }
 
   }

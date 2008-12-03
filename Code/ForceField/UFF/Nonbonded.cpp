@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -52,7 +52,7 @@ namespace ForceFields {
       PRECONDITION(pos,"bad vector");
 
       double dist=this->dp_forceField->distance(this->d_at1Idx,this->d_at2Idx,pos);
-      if(dist>this->d_thresh) return 0.0;
+      if(dist>this->d_thresh || dist<=0.0) return 0.0;
 
       double r=this->d_xij/dist;
       double r6=pow(r,6);
@@ -66,10 +66,19 @@ namespace ForceFields {
       PRECONDITION(pos,"bad vector");
       PRECONDITION(grad,"bad vector");
 
-
       double dist=this->dp_forceField->distance(this->d_at1Idx,this->d_at2Idx,pos);
       if(dist>this->d_thresh) return;
 
+      if(dist<=0){
+        for(int i=0;i<3;i++){
+          // move in an arbitrary direction
+          double dGrad=100.0;
+          grad[3*this->d_at1Idx+i] += dGrad;
+          grad[3*this->d_at2Idx+i] -= dGrad;
+        }    
+        return;
+      }
+      
       double r = this->d_xij/dist;
       double r7 = pow(r,7);
       double r13= pow(r,13);
@@ -78,13 +87,7 @@ namespace ForceFields {
       double *at1Coords = &(pos[3*this->d_at1Idx]);
       double *at2Coords = &(pos[3*this->d_at2Idx]);
       for(int i=0;i<3;i++){
-        double dGrad;
-        if(dist>0.0){
-          dGrad=preFactor * (at1Coords[i]-at2Coords[i])/dist;
-        } else {
-          // FIX: this likely isn't right
-          dGrad=preFactor * (at1Coords[i]-at2Coords[i]);
-        }
+        double dGrad=preFactor * (at1Coords[i]-at2Coords[i])/dist;
         grad[3*this->d_at1Idx+i] += dGrad;
         grad[3*this->d_at2Idx+i] -= dGrad;
       }    

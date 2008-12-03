@@ -130,6 +130,8 @@ namespace ForceFields {
   int ForceField::minimize(unsigned int maxIts,double forceTol,double energyTol){
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(static_cast<unsigned int>(d_numPoints)==d_positions.size(),"size mismatch");
+    if(d_contribs.empty()) return 0;
+
     unsigned int numIters=0;
     unsigned int dim=this->d_numPoints*d_dimension;
     double finalForce;
@@ -149,6 +151,7 @@ namespace ForceFields {
   double ForceField::calcEnergy() const{
     PRECONDITION(df_init,"not initialized");
     double res = 0.0;
+    if(d_contribs.empty()) return res;
 
     unsigned int N = d_positions.size();
     double *pos = new double[d_dimension*N];
@@ -168,6 +171,7 @@ namespace ForceFields {
     double res = 0.0;
 
     this->initDistanceMatrix();
+    if(d_contribs.empty()) return res;
 
     // now loop over the contribs
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
@@ -181,6 +185,7 @@ namespace ForceFields {
   void ForceField::calcGrad(double *grad) const {
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(grad,"bad gradient vector");
+    if(d_contribs.empty()) return;
 
     unsigned int N = d_positions.size();
     double *pos = new double[d_dimension*N];
@@ -204,6 +209,7 @@ namespace ForceFields {
     PRECONDITION(df_init,"not initialized");
     PRECONDITION(pos,"bad position vector");
     PRECONDITION(grad,"bad gradient vector");
+    if(d_contribs.empty()) return;
 
     for(ContribPtrVect::const_iterator contrib=d_contribs.begin();
         contrib != d_contribs.end();contrib++){

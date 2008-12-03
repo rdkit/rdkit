@@ -220,6 +220,7 @@ namespace RDKit {
       confIds=EmbedMultipleConfs(mol,1,maxIterations,seed,clearConfs,
                                  useRandomCoords,boxSizeMult,randNegEig,
                                  numZeroFail,-1.0,coordMap,optimizerForceTol,basinThresh);
+
       int res;
       if(confIds.size()){
         res=confIds[0];
@@ -256,7 +257,6 @@ namespace RDKit {
                                 double pruneRmsThresh,
                                 const std::map<int,RDGeom::Point3D>  *coordMap,
                                 double optimizerForceTol,double basinThresh){
-
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
       if(molFrags.size()>1 && coordMap){

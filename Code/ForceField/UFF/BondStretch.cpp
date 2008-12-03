@@ -90,8 +90,8 @@ namespace ForceFields {
 	if(dist>0.0){
 	  dGrad=preFactor * (end1Coords[i]-end2Coords[i])/dist;
 	} else {
-	  // FIX: this likely isn't right
-	  dGrad=preFactor * (end1Coords[i]-end2Coords[i]);
+	  // move a small amount in an arbitrary direction
+	  dGrad=this->d_forceConstant*.01;
 	}
 	grad[3*this->d_end1Idx+i] += dGrad;
 	grad[3*this->d_end2Idx+i] -= dGrad;
