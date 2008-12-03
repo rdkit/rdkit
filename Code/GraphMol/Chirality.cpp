@@ -323,6 +323,57 @@ namespace RDKit{
       }
     }
 
+    bool atomIsCandidateForRingStereochem(const ROMol &mol,const Atom *atom){
+      PRECONDITION(atom,"bad atom");
+      bool res=false;
+      if(atom->hasProp("_ringStereochemCand")){
+        atom->getProp("_ringStereochemCand",res);
+      } else {
+        const RingInfo *ringInfo=mol.getRingInfo();
+        if(ringInfo->isInitialized() &&
+           ringInfo->numAtomRings(atom->getIdx())){
+          ROMol::OEDGE_ITER beg,end;
+          ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
+          boost::tie(beg,end) = mol.getAtomBonds(atom);
+          std::vector<const Atom *> nonRingNbrs;
+          while(beg!=end){
+            const Bond *bond=pMap[*beg];
+            if(!ringInfo->numBondRings(bond->getIdx())){
+              nonRingNbrs.push_back(bond->getOtherAtom(atom));
+            }
+            ++beg;
+          }
+
+          int rank1=0,rank2=0;
+          switch(nonRingNbrs.size()){
+          case 0:
+            // don't do spiro:
+            res=false;
+            break;
+          case 1:
+            res=true;
+            break;
+          case 2:
+            if( nonRingNbrs[0]->hasProp("_CIPRank") &&
+                nonRingNbrs[1]->hasProp("_CIPRank") ){
+              nonRingNbrs[0]->getProp("_CIPRank",rank1);
+              nonRingNbrs[1]->getProp("_CIPRank",rank2);
+              if(rank1==rank2){
+                res=false;
+              } else {
+                res=true;
+              }
+            }
+            break;
+          default:
+            res=false;
+          }
+        }
+        atom->setProp("_ringStereochemCand",res,1);
+      }
+      return res;
+    }
+
     // returns true if the atom is allowed to have stereochemistry specified
     bool checkChiralAtomSpecialCases(ROMol &mol,const Atom *atom){
       PRECONDITION(atom,"bad atom");
@@ -333,9 +384,12 @@ namespace RDKit{
       }
 
       const RingInfo *ringInfo=mol.getRingInfo();
-      if(ringInfo->numAtomRings(atom->getIdx())){
+      if(ringInfo->numAtomRings(atom->getIdx()) &&
+         atomIsCandidateForRingStereochem(mol,atom) ){
         // the atom is in a ring, so the "chirality" specification may actually
-        // be handling ring stereochemistry, check for another chiral tagged
+        // be handling ring stereochemistry.
+
+        // check for another chiral tagged
         // atom without stereochem in this atom's rings:
         INT_VECT ringStereoAtoms;
         if(atom->hasProp("_ringStereoAtoms")){
@@ -351,7 +405,8 @@ namespace RDKit{
               int same=1;
               if(*idxIt!=static_cast<int>(atom->getIdx()) &&
                  mol.getAtomWithIdx(*idxIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-                 !mol.getAtomWithIdx(*idxIt)->hasProp("_CIPCode") ){
+                 !mol.getAtomWithIdx(*idxIt)->hasProp("_CIPCode") &&
+                 atomIsCandidateForRingStereochem(mol,mol.getAtomWithIdx(*idxIt)) ){
                 // we get to keep the stereochem specification on this atom:
                 if(mol.getAtomWithIdx(*idxIt)->getChiralTag()!=atom->getChiralTag()){
                   same=-1;
@@ -740,6 +795,7 @@ namespace RDKit{
                atom->getFormalCharge()==0 &&
                !atom->getIsAromatic() ){
               atom->setNumExplicitHs(0);
+              atom->setNoImplicit(false);
               atom->calcExplicitValence(false);
               atom->calcImplicitValence(false);
             }

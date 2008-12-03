@@ -647,6 +647,19 @@ void testRingStereochemistry(){
     delete m;
   }
 
+  {
+    std::string smi = "F[C@H]1CC[C@](C)(C)CC1";
+    RWMol *m = SmilesToMol(smi);
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    smi="FC1CCC(C)(C)CC1";
+    m = SmilesToMol(smi);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi2==smi1);
+    delete m;
+  }
+
 #if 0
   // FIX : these tests do not pass
   {
