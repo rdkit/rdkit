@@ -660,6 +660,46 @@ void testRingStereochemistry(){
     delete m;
   }
 
+  {
+    std::string smi = "C1C[C@H]2CC[C@@H]1CC2";
+    RWMol *m = SmilesToMol(smi);
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    smi="C1CC2CCC1CC2";
+    m = SmilesToMol(smi);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi2==smi1);
+    delete m;
+  }
+
+  {
+    std::string smi = "C[C@]12CC[C@](C)(CC1)CC2";
+    RWMol *m = SmilesToMol(smi);
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    smi="CC12CCC(C)(CC1)CC2";
+    m = SmilesToMol(smi);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi2==smi1);
+    delete m;
+  }
+
+  {
+    // make sure we aren't removing stereochem that should still be there
+    std::string smi = "C[C@@]12CC[C@@](C)(NC1)OC2";
+    RWMol *m = SmilesToMol(smi);
+    std::string smi1=MolToSmiles(*m,true);
+    delete m;
+    smi="CC12CCC(C)(NC1)OC2";
+    m = SmilesToMol(smi);
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
+    TEST_ASSERT(smi2!=smi1);
+    delete m;
+  }
+
 #if 0
   // FIX : these tests do not pass
   {

@@ -336,10 +336,13 @@ namespace RDKit{
           ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
           boost::tie(beg,end) = mol.getAtomBonds(atom);
           std::vector<const Atom *> nonRingNbrs;
+          std::vector<const Atom *> ringNbrs;
           while(beg!=end){
             const Bond *bond=pMap[*beg];
             if(!ringInfo->numBondRings(bond->getIdx())){
               nonRingNbrs.push_back(bond->getOtherAtom(atom));
+            } else {
+              ringNbrs.push_back(bond->getOtherAtom(atom));
             }
             ++beg;
           }
@@ -351,7 +354,7 @@ namespace RDKit{
             res=false;
             break;
           case 1:
-            res=true;
+            if(ringNbrs.size()==2) res=true;
             break;
           case 2:
             if( nonRingNbrs[0]->hasProp("_CIPRank") &&
