@@ -697,7 +697,7 @@ void testSFIssue2378119(){
     int needMore = field->minimize(200,1e-6,1e-3);
     TEST_ASSERT(!needMore);
     double e2 = field->calcEnergy();
-    TEST_ASSERT(e2>0.0 && e2<e1);
+    TEST_ASSERT(e2<e1);
 
     delete mol;
     delete field;

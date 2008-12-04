@@ -166,7 +166,7 @@ void testUFF2(){
   TEST_ASSERT(E>0.0);
   bs->getGrad(p,g);
   for(int i=0;i<6;i++){
-    TEST_ASSERT(abs(g[i])>0.0);
+    TEST_ASSERT(fabs(g[i])>0.0);
   }
 
   p[0] = 0;
