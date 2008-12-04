@@ -78,6 +78,10 @@ namespace RDKit{
     //       initialized. These are handled by parseFinalBondAttribs()
     void parseBondAttribs(Bond *bond,AttribListType attribs,bool doingQuery);
     void parseFinalBondAttribs(Bond *bond,bool doingQuery);
+
+    //! parses the attributes provided for a ctab and sets
+    // the appropriate RD properties/queries.
+    void parseMolAttribs(ROMol *mol,AttribListType attribs);
     
     void adjustAtomChiralities(RWMol *mol);
   }

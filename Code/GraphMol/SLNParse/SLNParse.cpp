@@ -50,7 +50,6 @@ namespace RDKit {
   namespace SLNParse {
     std::vector<RDKit::RWMol *> molList_g;
 
-
     RWMol *finalizeQueryMol(ROMol *mol,bool mergeHs){
       PRECONDITION(mol,"bad query molecule");
 
@@ -65,7 +64,6 @@ namespace RDKit {
             (*atomIt)->expandQuery(makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
           }
         }
-        
       }
 
       // we don't want to sanitize, but we do need to get 
@@ -76,7 +74,6 @@ namespace RDKit {
           atomIt!=mol->endAtoms();++atomIt){
         SLNParse::parseFinalAtomAttribs(*atomIt,true);
       }
-      
       return static_cast<RWMol *>(mol);
     }
 
@@ -92,6 +89,16 @@ namespace RDKit {
         } else {
           res = SLNParse::molList_g[0];
           SLNParse::molList_g.resize(0);
+
+          for(ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt=res->getBondBookmarks()->begin();
+              bmIt != res->getBondBookmarks()->end();++bmIt){
+            if(bmIt->first>0 && bmIt->first<static_cast<int>(res->getNumAtoms())){
+              std::stringstream err;
+              err << "SLN Parser error: Ring closure " << bmIt->first << " does not have a corresponding opener.";
+              throw SLNParseException(err.str());
+            }
+          }
+
         }
       } catch (SLNParseException &e) {
         BOOST_LOG(rdErrorLog) << e.message() << std::endl;

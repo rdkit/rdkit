@@ -56,6 +56,11 @@ namespace RDKit{
             err << "SLN Parser error: Atom ID " << label << " used a second time.";
             throw SLNParseException(err.str());
           }
+          if(mp->hasBondBookmark(label)){
+            std::stringstream err;
+            err << "SLN Parser error: Atom ID " << label << " appears *after* its ring closure.";
+            throw SLNParseException(err.str());
+          }
           mp->setAtomBookmark(atom,label);
         }
       }
@@ -204,7 +209,12 @@ namespace RDKit{
           std::stringstream err;
           err << "SLN Parser error: Atom ID " << bmIt->first << " used a second time.";
           throw SLNParseException(err.str());
-        } else {
+        } else if(mp->hasBondBookmark(bmIt->first)){
+            std::stringstream err;
+            err << "SLN Parser error: Atom ID " << bmIt->first << " appears *after* its ring closure.";
+            throw SLNParseException(err.str());
+          }
+        else {
           CHECK_INVARIANT(bmIt->second.size()==1,"bad atom bookmark list on branch");
           Atom *tgtAtom=mp->getAtomWithIdx((*bmIt->second.begin())->getIdx()+nOrigAtoms);
           mp->setAtomBookmark(tgtAtom,bmIt->first);
@@ -214,13 +224,22 @@ namespace RDKit{
       // loop over bond bookmarks in the branch and close the corresponding rings
       for(ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt=branch->getBondBookmarks()->begin();
           bmIt != branch->getBondBookmarks()->end();++bmIt){
-        if(bmIt->first < 0) continue;
-        CHECK_INVARIANT(bmIt->second.size()==1,"bad bond bookmark list on branch");
-        Bond *tgtBond=*bmIt->second.begin();
-        Atom *tmpAtom=mp->getActiveAtom();
-        mp->setActiveAtom(mp->getAtomWithIdx(tgtBond->getEndAtomIdx()+nOrigAtoms));
-        closeRingBond(molList,molIdx,bmIt->first,tgtBond,false);
-        mp->setActiveAtom(tmpAtom);
+        CHECK_INVARIANT(bmIt->second.size()>=1,"bad bond bookmark list on branch");
+        for(ROMol::BOND_PTR_LIST::const_iterator bondIt=bmIt->second.begin();
+            bondIt!=bmIt->second.end();++bondIt){
+          Bond *tgtBond=*bondIt;
+          if(bmIt->first>0 && mp->hasAtomBookmark(bmIt->first)){
+            Atom *tmpAtom=mp->getActiveAtom();
+            mp->setActiveAtom(mp->getAtomWithIdx(tgtBond->getEndAtomIdx()+nOrigAtoms));
+            closeRingBond(molList,molIdx,bmIt->first,tgtBond,false);
+            mp->setActiveAtom(tmpAtom);
+          } else {
+            // no partner found yet, copy into this mol:
+            tgtBond->setOwningMol(mp);
+            tgtBond->setEndAtomIdx(tgtBond->getEndAtomIdx()+nOrigAtoms);
+            mp->setBondBookmark(tgtBond,bmIt->first);
+          }
+        }
       }
       
       // set the connecting bond:

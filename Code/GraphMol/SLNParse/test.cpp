@@ -261,6 +261,14 @@ void test3(){
   TEST_ASSERT(pval=="baz");
   TEST_ASSERT(!mol->getAtomWithIdx(0)->hasProp("baz"));
   
+  delete mol;
+  sln = "H[I=2]-C(-H[I=2])(F)F";
+  mol=RDKit::SLNToMol(sln,true,true);
+  TEST_ASSERT(mol);
+  std::cerr<<MolToSmiles(*mol,true)<<std::endl;
+  TEST_ASSERT(mol->getNumAtoms()==5);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getMass()==2.0);
+  TEST_ASSERT(mol->getAtomWithIdx(2)->getMass()==2.0);
 
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1305,11 +1313,34 @@ void test13(){
   TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size()==4);
 
   delete mol;
-  sln = "CH2(CH2@1)CH2(CH2CH2C[1]H2)";
+  sln = "C[1]H2(CH2(CH2(CH2(C[2]H(CH@1(CH2(CH2@2)))))))";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==8);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==2);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size()==6);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size()==4);
+
+  delete mol;
+  sln = "C[1](CH2CH2CH(CH2CH2@1)CH2CH2@1)Cl";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==9);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==3);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size()==6);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size()==6);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[2].size()==6);
+
+
+  delete mol;
+  sln = "CH2(CH2@1)CH2(C[1]H2)";
   mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
 
-  delete mol;
+  sln = "CH2(CH2@1)";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(!mol);
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1327,6 +1358,75 @@ void test14(){
   sln = "CH2(CH2[1])CH2(CH2CH2CH2@1)";
   mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test15(){
+  RDKit::RWMol *mol;
+  std::string sln;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test15: CTAB properties " << std::endl;
+
+  {
+    sln = "CH4<blah>";
+    mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->hasProp("blah"));;
+    delete mol;
+  }
+
+  {
+    sln = "CH4<name=methane>";
+    mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->hasProp("_Name"));;
+    std::string sval;
+    mol->getProp("_Name",sval);
+    TEST_ASSERT(sval=="methane");
+    delete mol;
+  }
+
+  {
+    sln = "CH4<blah;foo=\"1\">";
+    mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->hasProp("blah"));;
+    TEST_ASSERT(mol->hasProp("foo"));;
+    std::string sval;
+    mol->getProp("foo",sval);
+    TEST_ASSERT(sval=="1");
+    delete mol;
+  }
+  {
+    sln = "CH4<blah;foo=1>";
+    mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->hasProp("blah"));;
+    TEST_ASSERT(mol->hasProp("foo"));;
+    std::string sval;
+    mol->getProp("foo",sval);
+    TEST_ASSERT(sval=="1");
+    delete mol;
+  }
+  {
+    sln = "CH4<name=\"methane\";blah;coord2d=(1,0);too.small;test=lots and-lots of special,characters all at once.>";
+    mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->hasProp("blah"));;
+    std::string sval;
+    mol->getProp("_Name",sval);
+    TEST_ASSERT(sval=="methane");
+    mol->getProp("coord2d",sval);
+    TEST_ASSERT(sval=="(1,0)");
+    TEST_ASSERT(mol->hasProp("too.small"));;
+    TEST_ASSERT(mol->hasProp("test"));;
+    mol->getProp("test",sval);
+    TEST_ASSERT(sval=="lots and-lots of special,characters all at once.");
+    delete mol;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1353,7 +1453,8 @@ main(int argc, char *argv[])
   test10();
   //test11();
   test12();
-#endif
   test13();
   test14();
+  test15();
+#endif
 }

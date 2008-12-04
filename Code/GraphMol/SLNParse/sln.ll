@@ -63,7 +63,8 @@ extern bool slnParserDoQueries;
 
 %option stack
 %s IN_SLN_PARAM_STATE
-%s IN_CTAB_PARAM_STATE
+%s IN_CTAB_PARAM_NAME_STATE
+%s IN_CTAB_PARAM_VAL_STATE
 %s IN_PROP_VAL_STATE
 %s IN_RECURSE_STATE
 %%
@@ -75,7 +76,17 @@ extern bool slnParserDoQueries;
   return TEXT_BLOCK; 
 }
 
-<IN_CTAB_PARAM_STATE,IN_SLN_PARAM_STATE>[a-zA-Z]+[a-zA-Z0-9_\-,]* { 
+<IN_SLN_PARAM_STATE>[a-zA-Z]+[a-zA-Z0-9_\-,]* { 
+  yysln_lval.text_T=new std::string(yysln_text);
+  return TEXT_BLOCK; 
+}
+
+<IN_CTAB_PARAM_VAL_STATE>[\"]?[a-zA-Z0-9_\-,\ \.\(\)]+[\"]? { 
+  yysln_lval.text_T=new std::string(yysln_text);
+  return TEXT_BLOCK; 
+}
+
+<IN_CTAB_PARAM_NAME_STATE>[a-zA-Z]+[a-zA-Z0-9_\.]* { 
   yysln_lval.text_T=new std::string(yysln_text);
   return TEXT_BLOCK; 
 }
@@ -230,25 +241,50 @@ extern bool slnParserDoQueries;
 \(              { return OPEN_PAREN_TOKEN; }
 \)              { return CLOSE_PAREN_TOKEN; }
 
-<IN_SLN_PARAM_STATE,IN_CTAB_PARAM_STATE>\!\= |
-<IN_SLN_PARAM_STATE,IN_CTAB_PARAM_STATE>\>\= |
-<IN_SLN_PARAM_STATE,IN_CTAB_PARAM_STATE>\<\= |
-<IN_SLN_PARAM_STATE,IN_CTAB_PARAM_STATE>\= |
-<IN_SLN_PARAM_STATE,IN_CTAB_PARAM_STATE>\> |
-<IN_SLN_PARAM_STATE,IN_CTAB_PARAM_STATE>\< {
+<IN_SLN_PARAM_STATE>\!\= |
+<IN_SLN_PARAM_STATE>\>\= |
+<IN_SLN_PARAM_STATE>\<\= |
+<IN_SLN_PARAM_STATE>\= |
+<IN_SLN_PARAM_STATE>\> |
+<IN_SLN_PARAM_STATE>\< {
   yy_push_state(IN_PROP_VAL_STATE);
   yysln_lval.text_T=new std::string(yytext);
   return COMPARE_TOKEN; 
+}
+
+<IN_CTAB_PARAM_NAME_STATE>\= {
+  yy_pop_state();
+  yy_push_state(IN_CTAB_PARAM_VAL_STATE);
+  return EQUALS_TOKEN; 
+}
+<IN_CTAB_PARAM_NAME_STATE>\:\= {
+  yy_pop_state();
+  yy_push_state(IN_CTAB_PARAM_VAL_STATE);
+  return COLON_EQUALS_TOKEN; 
+}
+<IN_CTAB_PARAM_NAME_STATE>\^\= {
+  yy_pop_state();
+  yy_push_state(IN_CTAB_PARAM_VAL_STATE);
+  return CARET_EQUALS_TOKEN; 
 }
 
 <INITIAL,IN_RECURSE_STATE>\= {
  return EQUALS_TOKEN; 
 }
 
+
+
 <IN_RECURSE_STATE>\; { 
   yy_pop_state(); 
   return SEMI_TOKEN; 
 }
+<IN_CTAB_PARAM_NAME_STATE>\; { return SEMI_TOKEN; }
+<IN_CTAB_PARAM_VAL_STATE>\; {
+ yy_pop_state();
+ yy_push_state(IN_CTAB_PARAM_NAME_STATE);
+ return SEMI_TOKEN; 
+}
+
 <IN_PROP_VAL_STATE>\; { yy_pop_state(); return SEMI_TOKEN; }
 \; { return SEMI_TOKEN; }
 <IN_PROP_VAL_STATE>\& { yy_pop_state(); return AND_TOKEN; }
@@ -280,6 +316,20 @@ extern bool slnParserDoQueries;
 
 <IN_SLN_PARAM_STATE>\]          { yy_pop_state(); return CLOSE_BRACKET_TOKEN; }
 
+\<                      { yy_push_state(IN_CTAB_PARAM_NAME_STATE); return OPEN_ANGLE_TOKEN; }
+<IN_CTAB_PARAM_NAME_STATE>\> { yy_pop_state(); return CLOSE_ANGLE_TOKEN; }
+<IN_CTAB_PARAM_VAL_STATE>\> { yy_pop_state(); return CLOSE_ANGLE_TOKEN; }
+<IN_PROP_VAL_STATE>\>   { 
+  // if we're currently in a CTAB property block (e.g. in <>'s), we need
+  // to pop both the prop_val state and the property block state:
+  yy_pop_state();
+  if(YY_START==IN_CTAB_PARAM_VAL_STATE) {
+    yy_pop_state();
+  } 
+  return CLOSE_ANGLE_TOKEN; 
+}
+
+
 \.              { return SEPARATOR_TOKEN; }
 <IN_RECURSE_STATE>\, { 
   return COMMA_TOKEN; 
@@ -295,21 +345,6 @@ extern bool slnParserDoQueries;
 .               return yytext[0];
 
 %%
-#if 0
-// NOTE: this code belongs up above, but flex-- doesn't seem to
-// provide the ability to comment stuff out in blocks.
-\<                      { yy_push_state(IN_CTAB_PARAM_STATE); return OPEN_ANGLE_TOKEN; }
-<IN_CTAB_PARAM_STATE>\> { yy_pop_state(); return CLOSE_ANGLE_TOKEN; }
-<IN_PROP_VAL_STATE>\>   { 
-  // if we're currently in a CTAB property block (e.g. in <>'s), we need
-  // to pop both the prop_val state and the property block state:
-  yy_pop_state();
-  if(YY_START==IN_CTAB_PARAM_STATE) {
-    yy_pop_state();
-  } 
-  return CLOSE_ANGLE_TOKEN; 
-}
-#endif
 
 #undef yysln_wrap
 int yysln_wrap( void ) { return 1; }

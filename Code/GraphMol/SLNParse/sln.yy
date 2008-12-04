@@ -83,8 +83,8 @@ yysln_error( const char * msg )
 
 %type <atom_T> atom primatom
 %type <bond_T> bond primbond onebond
-%type <attriblist_T> attriblist
-%type <attrib_T> attrib recursivequery
+%type <attriblist_T> attriblist ctabattriblist
+%type <attrib_T> attrib ctabattrib recursivequery
 %type <mol_T> mol cmpd primmol
 %type <ival_T> number
 %token <text_T> TEXT_BLOCK
@@ -101,7 +101,7 @@ yysln_error( const char * msg )
 %token EOS_TOKEN
 %token PLUS_TOKEN MINUS_TOKEN
 %token COLON_TOKEN EQUALS_TOKEN TILDE_TOKEN HASH_TOKEN COMMA_TOKEN
-%token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN
+%token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN CARET_EQUALS_TOKEN COLON_EQUALS_TOKEN
 %token RECURSE_TOKEN NEG_RECURSE_TOKEN
 %token ERROR_TOKEN
 
@@ -114,8 +114,11 @@ yysln_error( const char * msg )
 
 /* --------------------------------------------------------------- */
 cmpd: mol
-| cmpd SEPARATOR_TOKEN mol {
-  $$=SLNParse::addFragToMol(SLNParse::molList_g,$1,$3);
+| mol OPEN_ANGLE_TOKEN ctabattriblist CLOSE_ANGLE_TOKEN {
+  RDKit::ROMol *mol=SLNParse::molList_g[$1];
+  SLNParse::parseMolAttribs(mol,*$3);
+  delete $3;
+  $$=$1;
 }
 | cmpd error EOS_TOKEN {
   yyclearin;
@@ -149,7 +152,9 @@ cmpd: mol
 ;
 
 mol: primmol
-| primmol OPEN_ANGLE_TOKEN attriblist CLOSE_ANGLE_TOKEN
+| mol SEPARATOR_TOKEN primmol {
+  $$=SLNParse::addFragToMol(SLNParse::molList_g,$1,$3);
+}
 ;
 
 
@@ -189,10 +194,7 @@ primmol: atom {
 }
 ;
 
-atom: H_TOKEN {
-  $$ = new RDKit::Atom(1);
-}
-| primatom
+atom: primatom
 | primatom H_TOKEN {
   $1->setNumExplicitHs(1);
   $$=$1;
@@ -204,6 +206,9 @@ atom: H_TOKEN {
 ;
 
 primatom: ATOM_TOKEN 
+| H_TOKEN {
+  $$ = new RDKit::Atom(1);
+}
 | primatom ASTERIX_TOKEN{
   $$->setProp("_starred",1,true);
 }
@@ -322,6 +327,17 @@ attriblist: attrib {
 }
 ;
 
+ctabattriblist: ctabattrib {
+  $$ = new SLNParse::AttribListType();
+  $$->push_back(std::make_pair(SLNParse::AttribAnd,
+                               boost::shared_ptr<SLNParse::AttribType>($1)));
+}
+| ctabattriblist SEMI_TOKEN ctabattrib {
+  $$->push_back(std::make_pair(SLNParse::AttribAnd,
+                               boost::shared_ptr<SLNParse::AttribType>($3)));
+}
+;
+
 attrib: TEXT_BLOCK {
   $$ = new SLNParse::AttribType();
   $$->first = *$1;
@@ -418,6 +434,47 @@ recursivequery: RECURSE_TOKEN cmpd {
    RDKit::ATOM_OR_QUERY *orq=static_cast<RDKit::ATOM_OR_QUERY *>($1->structQuery);
    orq->addChild(RDKit::ATOM_OR_QUERY::CHILD_TYPE(rsq));
    $$=$1;
+}
+;
+
+
+ctabattrib: TEXT_BLOCK {
+  $$ = new SLNParse::AttribType();
+  $$->first = *$1;
+  boost::to_lower($$->first);
+  $$->op = "";
+  $$->second = "";
+  delete $1;
+}
+| TEXT_BLOCK EQUALS_TOKEN TEXT_BLOCK {
+  $$ = new SLNParse::AttribType();
+  $$->first = *$1;
+  $$->op = "=";
+  $$->second = *$3;
+  boost::to_lower($$->first);
+  boost::to_lower($$->second);
+  delete $1;
+  delete $3;
+}
+| TEXT_BLOCK COLON_EQUALS_TOKEN TEXT_BLOCK {
+  $$ = new SLNParse::AttribType();
+  $$->first = *$1;
+  $$->op = ":=";
+  $$->second = *$3;
+  boost::to_lower($$->first);
+  boost::to_lower($$->second);
+  delete $1;
+  delete $3;
+}
+| TEXT_BLOCK CARET_EQUALS_TOKEN TEXT_BLOCK {
+  $$ = new SLNParse::AttribType();
+  $$->first = *$1;
+  $$->op = "^=";
+  $$->second = *$3;
+  boost::to_lower($$->first);
+  boost::to_lower($$->second);
+  delete $1;
+  delete $3;
 }
 ;
 

@@ -134,6 +134,8 @@ namespace RDKit{
           how=Queries::COMPOSITE_OR;  break;
         case AttribLowPriAnd:
           how=Queries::COMPOSITE_AND;  break;
+        default:
+          throw SLNParseException("unrecognized query composition operator");
         }
 
         boost::shared_ptr<AttribType> attribPtr=it->second;
@@ -325,6 +327,8 @@ namespace RDKit{
           how=Queries::COMPOSITE_OR;  break;
         case AttribLowPriAnd:
           how=Queries::COMPOSITE_AND;  break;
+        default:
+          throw SLNParseException("unrecognized query composition operator");
         }
 
         boost::shared_ptr<AttribType> attribPtr=it->second;
@@ -377,6 +381,30 @@ namespace RDKit{
         }
       } 
     }
+
+    void parseMolAttribs(ROMol *mol,AttribListType attribs){
+      for(AttribListType::const_iterator it=attribs.begin();
+          it!=attribs.end();++it){
+        CHECK_INVARIANT(it->first==AttribAnd,"bad attrib type");
+
+        boost::shared_ptr<AttribType> attribPtr=it->second;
+        std::string attribName=attribPtr->first;
+        boost::to_lower(attribName);    
+        std::string attribVal=attribPtr->second;
+        if(*(attribVal.begin())=='"' &&
+           *(attribVal.begin())==*(attribVal.rbegin()) ){
+          attribVal.erase(attribVal.begin());
+          attribVal.erase(--(attribVal.end()));
+        }
+        if(attribName=="name"){
+          mol->setProp("_Name",attribVal);
+        } else {
+          mol->setProp(attribName,attribVal);
+        }
+      } 
+    }
+
+
     void adjustAtomChiralities(RWMol *mol){
       for(RWMol::AtomIterator atomIt=mol->beginAtoms();
           atomIt != mol->endAtoms();
@@ -408,7 +436,7 @@ namespace RDKit{
             ++nbrIdx;
           }          
 
-          std::cerr << "CHIRAL " << (*atomIt)->getIdx();
+          //std::cerr << "CHIRAL " << (*atomIt)->getIdx();
 
           // sort by neighbor idx:
           neighbors.sort();
@@ -417,7 +445,7 @@ namespace RDKit{
           for(std::list< std::pair<int,int> >::const_iterator nbrIt=neighbors.begin();
               nbrIt!= neighbors.end();++nbrIt){
             bondOrdering.push_back(nbrIt->second);
-            std::cerr << " " << nbrIt->second;
+            //std::cerr << " " << nbrIt->second;
           }
 
           // ok, we now have the ordering of the bonds (used for RDKit chirality), 
@@ -427,7 +455,7 @@ namespace RDKit{
           //nSwaps += numPrecedingAtoms;
           
           // if the atom has an explicit hydrogen, that means it was int
-          std::cerr << " swaps: " << nSwaps << std::endl;
+          //std::cerr << " swaps: " << nSwaps << std::endl;
           
           
           if(nSwaps%2){
@@ -435,9 +463,6 @@ namespace RDKit{
                                     Atom::CHI_TETRAHEDRAL_CCW :
                                     Atom::CHI_TETRAHEDRAL_CW);
           }
-
-          
-          
         }
 #if 0    
         Atom::ChiralType chiralType=(*atomIt)->getChiralTag();
