@@ -1,4 +1,4 @@
-// $Id: SLNAttribs.cpp 1043 2008-07-25 12:00:41Z landrgr1 $
+// $Id$
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
