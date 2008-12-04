@@ -121,7 +121,6 @@ void test1(){
 }
 
 void test2(){
-  bool ok;
   RDKit::RWMol *mol;
   std::string sln;
 
@@ -180,7 +179,7 @@ void test2(){
   TEST_ASSERT(mol->getBondBetweenAtoms(3,4)->getBondType()==RDKit::Bond::AROMATIC);
   TEST_ASSERT(mol->getBondBetweenAtoms(4,5)->getBondType()==RDKit::Bond::AROMATIC);
   TEST_ASSERT(mol->getBondBetweenAtoms(5,0)->getBondType()==RDKit::Bond::AROMATIC);
-
+  
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -268,7 +267,6 @@ void test3(){
 }
 
 void test4(){
-  bool ok;
   RDKit::RWMol *mol;
   std::string sln;
 
@@ -1061,7 +1059,7 @@ void test10(){
 
 void test11(){
   std::string pval,cip;
-  RDKit::RWMol *patt,*mol;
+  RDKit::RWMol *mol;
   std::vector<RDKit::MatchVectType> mV;
   std::string sln,smi;
 
@@ -1145,7 +1143,6 @@ void test11(){
 }
 
 void test12(){
-  bool ok;
   RDKit::RWMol *patt,*mol;
   std::vector<RDKit::MatchVectType> mV;
   std::string sln,smi;
@@ -1268,6 +1265,73 @@ void test12(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test13(){
+  RDKit::RWMol *mol;
+  std::string sln;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test13: ring closure details " << std::endl;
+
+  sln = "C[1]H2CH2CH2CH2CH2CH2@1";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==6);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size()==6);
+
+  delete mol;
+  sln = "C[1]H2CH2(CH2CH2CH2CH2@1)";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==6);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size()==6);
+
+  delete mol;
+  sln = "CH2(C[1]H2)CH2(CH2CH2CH2@1)";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==6);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size()==6);
+
+  delete mol;
+  sln = "C[1]H2CH2CH2CH2C[2]HCH@1CH2CH2@2";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==8);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==2);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[0].size()==6);
+  TEST_ASSERT(mol->getRingInfo()->atomRings()[1].size()==4);
+
+  delete mol;
+  sln = "CH2(CH2@1)CH2(CH2CH2C[1]H2)";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(!mol);
+
+  delete mol;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test14(){
+  RDKit::RWMol *mol;
+  std::string sln;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test14: error catching " << std::endl;
+
+  sln = "CH2(C@1H2)CH2(CH2CH2C[1]H2)";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(!mol);
+
+  sln = "CH2(CH2[1])CH2(CH2CH2CH2@1)";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(!mol);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1290,5 +1354,6 @@ main(int argc, char *argv[])
   //test11();
   test12();
 #endif
-  //test8();
+  test13();
+  test14();
 }

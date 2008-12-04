@@ -102,7 +102,8 @@ namespace RDKit{
     // ------------------------------------------------------------------------------------
     //! adds an atom to a molecule
     template<typename AtomType,typename BondType>
-    void addAtomToMol(std::vector<RWMol *> &molList,unsigned int idx,AtomType *atom,BondType *bond){
+    void addAtomToMol(std::vector<RWMol *> &molList,unsigned int idx,AtomType *atom,
+                      BondType *bond){
       PRECONDITION(idx<molList.size(),"bad index");
       RWMol *mp=molList[idx];
       PRECONDITION(mp,"null molecule");
@@ -133,11 +134,52 @@ namespace RDKit{
       addAtomToMol(molList,idx,atom,new Bond(Bond::SINGLE));
     }
 
+    // ------------------------------------------------------------------------------------
+    //! closes an indexed ring in a molecule using the bond provided
+    // The bond is formed from the atom in the molecule with the
+    // corresponding bookmark to the active atom
+    //
+    template <typename BondType>
+    void closeRingBond(std::vector<RWMol *> &molList,unsigned int molIdx,
+                       unsigned int ringIdx,BondType *bond,
+                       bool postponeAllowed=true){
+      PRECONDITION(molIdx<molList.size(),"bad index");
+      RWMol *mp=molList[molIdx];
+      PRECONDITION(mp,"null molecule");
+      PRECONDITION(bond,"Null bond");
+
+      if(!mp->hasAtomBookmark(ringIdx)){
+        if(postponeAllowed){
+          // save it for later:
+          bond->setOwningMol(mp);
+          bond->setEndAtomIdx(mp->getActiveAtom()->getIdx());
+          mp->setBondBookmark(bond,ringIdx);
+          return;
+        } else {
+          std::stringstream err;
+          err << "SLN Parser error: Ring closure " << ringIdx << " does not have a corresponding opener.";
+          throw SLNParseException(err.str());
+        }
+      }
+      Atom *opener=mp->getAtomWithBookmark(ringIdx);
+      CHECK_INVARIANT(opener,"invalid atom");
+
+      Atom *closer=mp->getActiveAtom();
+      bond->setOwningMol(mp);
+      bond->setBeginAtom(opener);
+      bond->setEndAtom(closer);
+      addBondToMol(mp,bond);
+    };
+    //! \overload
+    void closeRingBond(std::vector<RWMol *> &molList,unsigned int molIdx,unsigned int ringIdx){
+      closeRingBond(molList,molIdx,ringIdx,new Bond(Bond::SINGLE));
+    };
 
     // ------------------------------------------------------------------------------------
     // NOTE: this takes over responsibility for the bond
     template <typename BondType>
-    int addBranchToMol(std::vector<RWMol *> &molList,unsigned int molIdx,unsigned int branchIdx,BondType *&bond){
+    int addBranchToMol(std::vector<RWMol *> &molList,unsigned int molIdx,
+                       unsigned int branchIdx,BondType *&bond){
       PRECONDITION(molIdx<molList.size(),"bad index");
       RWMol *mp=molList[molIdx];
       PRECONDITION(mp,"null molecule");
@@ -154,7 +196,34 @@ namespace RDKit{
       //
       mp->insertMol(*branch);
 
-      // set the bond:
+      // copy in any atom bookmarks from the branch:
+      for(ROMol::ATOM_BOOKMARK_MAP::const_iterator bmIt=branch->getAtomBookmarks()->begin();
+          bmIt != branch->getAtomBookmarks()->end();++bmIt){
+        if(bmIt->first<0) continue;
+        if(mp->hasAtomBookmark(bmIt->first)){
+          std::stringstream err;
+          err << "SLN Parser error: Atom ID " << bmIt->first << " used a second time.";
+          throw SLNParseException(err.str());
+        } else {
+          CHECK_INVARIANT(bmIt->second.size()==1,"bad atom bookmark list on branch");
+          Atom *tgtAtom=mp->getAtomWithIdx((*bmIt->second.begin())->getIdx()+nOrigAtoms);
+          mp->setAtomBookmark(tgtAtom,bmIt->first);
+        }
+      }
+      
+      // loop over bond bookmarks in the branch and close the corresponding rings
+      for(ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt=branch->getBondBookmarks()->begin();
+          bmIt != branch->getBondBookmarks()->end();++bmIt){
+        if(bmIt->first < 0) continue;
+        CHECK_INVARIANT(bmIt->second.size()==1,"bad bond bookmark list on branch");
+        Bond *tgtBond=*bmIt->second.begin();
+        Atom *tmpAtom=mp->getActiveAtom();
+        mp->setActiveAtom(mp->getAtomWithIdx(tgtBond->getEndAtomIdx()+nOrigAtoms));
+        closeRingBond(molList,molIdx,bmIt->first,tgtBond,false);
+        mp->setActiveAtom(tmpAtom);
+      }
+      
+      // set the connecting bond:
       if(bond->getBondType()!=Bond::IONIC){
         bond->setOwningMol(mp);
         bond->setBeginAtomIdx(activeAtomIdx);
@@ -165,9 +234,8 @@ namespace RDKit{
       }
       bond=0;
         
-        
       delete branch;
-      int sz = molList.size();
+      unsigned int sz = molList.size();
       if ( sz==branchIdx+1) {
         molList.resize( sz-1 );
       }
@@ -186,41 +254,26 @@ namespace RDKit{
       return addBranchToMol(molList,molIdx,fragIdx,newBond);
     }
 
-    
-
-    // ------------------------------------------------------------------------------------
-    //! closes an indexed ring in a molecule using the bond provided
-    template <typename BondType>
-    void closeRingBond(std::vector<RWMol *> &molList,unsigned int molIdx,unsigned int ringIdx,BondType *bond){
-      PRECONDITION(molIdx<molList.size(),"bad index");
-      RWMol *mp=molList[molIdx];
-      PRECONDITION(mp,"null molecule");
-      PRECONDITION(bond,"Null bond");
-
-      if(!mp->hasAtomBookmark(ringIdx)){
-        std::stringstream err;
-        err << "SLN Parser error: Ring closure " << ringIdx << " does not have a corresponding opener.";
-        throw SLNParseException(err.str());
-      }
-      Atom *opener=mp->getAtomWithBookmark(ringIdx);
-      CHECK_INVARIANT(opener,"invalid atom");
-
-      Atom *closer=mp->getActiveAtom();
-      bond->setOwningMol(mp);
-      bond->setBeginAtom(opener);
-      bond->setEndAtom(closer);
-      addBondToMol(mp,bond);
-    };
-    //! \overload
-    void closeRingBond(std::vector<RWMol *> &molList,unsigned int molIdx,unsigned int ringIdx){
-      closeRingBond(molList,molIdx,ringIdx,new Bond(Bond::SINGLE));
-    };
-
     //! convenience function to convert the argument to a string
     template <typename T>
     std::string convertToString(T val){
       std::string res=boost::lexical_cast<std::string>(val);
       return  res;
+    }
+
+    void CleanupAfterParseError(RWMol *mol){
+      PRECONDITION(mol,"no molecule");
+      // blow out any partial bonds:
+      RWMol::BOND_BOOKMARK_MAP *marks = mol->getBondBookmarks();
+      RWMol::BOND_BOOKMARK_MAP::iterator markI=marks->begin();
+      while(markI != marks->end()){
+        RWMol::BOND_PTR_LIST &bonds=markI->second;
+        for(RWMol::BOND_PTR_LIST::iterator bondIt=bonds.begin();
+            bondIt!=bonds.end();++bondIt){
+          delete *bondIt;
+        }
+        ++markI;
+      }
     }
   } // end of namespace SLNParse
 } // end of namespace RDKit

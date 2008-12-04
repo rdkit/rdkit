@@ -288,7 +288,7 @@ extern bool slnParserDoQueries;
 \@              { return AT_TOKEN; }
 \*              { return ASTERIX_TOKEN; }
 
-[0-9]+  { yysln_lval.ival_T = atoi( yytext ); return NUMBER_TOKEN; }
+[0-9]+  { yysln_lval.ival_T = atoi( yytext ); return DIGIT_TOKEN; }
 
 
 <<EOF>>         { return EOS_TOKEN; }

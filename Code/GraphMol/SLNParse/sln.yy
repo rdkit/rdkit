@@ -86,9 +86,10 @@ yysln_error( const char * msg )
 %type <attriblist_T> attriblist
 %type <attrib_T> attrib recursivequery
 %type <mol_T> mol cmpd primmol
+%type <ival_T> number
 %token <text_T> TEXT_BLOCK
 %token<char_T> CHAR_TOKEN
-%token <ival_T> NUMBER_TOKEN
+%token <ival_T> DIGIT_TOKEN
 %token H_TOKEN AT_TOKEN
 %token <atom_T> ATOM_TOKEN
 %token <text_T> COMPARE_TOKEN
@@ -119,6 +120,14 @@ cmpd: mol
 | cmpd error EOS_TOKEN {
   yyclearin;
   yyerrok;
+  BOOST_LOG(rdErrorLog) << "SLN Parse Error" << std::endl;
+  for(std::vector<RDKit::RWMol *>::iterator iter=SLNParse::molList_g.begin();
+      iter!=SLNParse::molList_g.end();++iter){
+    SLNParse::CleanupAfterParseError(*iter);
+    delete *iter;
+  }
+  SLNParse::molList_g.clear();
+  SLNParse::molList_g.resize(0);
   YYABORT;
 }
 | cmpd EOS_TOKEN {
@@ -127,6 +136,14 @@ cmpd: mol
 | error EOS_TOKEN {
   yyclearin;
   yyerrok;
+  BOOST_LOG(rdErrorLog) << "SLN Parse Error" << std::endl;
+  for(std::vector<RDKit::RWMol *>::iterator iter=SLNParse::molList_g.begin();
+      iter!=SLNParse::molList_g.end();++iter){
+    SLNParse::CleanupAfterParseError(*iter);
+    delete *iter;
+  }
+  SLNParse::molList_g.clear();
+  SLNParse::molList_g.resize(0);
   YYABORT;
 }
 ;
@@ -147,11 +164,11 @@ primmol: atom {
   SLNParse::addAtomToMol(SLNParse::molList_g,$$,$3,$2);
   $$=$1;
 }
-| primmol AT_TOKEN NUMBER_TOKEN {
+| primmol AT_TOKEN number {
   SLNParse::closeRingBond(SLNParse::molList_g,$$,$3);
   $$=$1;
 }
-| primmol bond AT_TOKEN NUMBER_TOKEN {
+| primmol bond AT_TOKEN number {
   // closeRingBond() takes ownership of the bond
   SLNParse::closeRingBond(SLNParse::molList_g,$$,$4,$2);
   $$=$1;
@@ -166,21 +183,21 @@ primmol: atom {
   SLNParse::addBranchToMol(SLNParse::molList_g,$$,$4,$3);
   $$=$1;
 }
-| primmol OPEN_PAREN_TOKEN bond AT_TOKEN NUMBER_TOKEN CLOSE_PAREN_TOKEN{
+| primmol OPEN_PAREN_TOKEN bond AT_TOKEN number CLOSE_PAREN_TOKEN{
   SLNParse::closeRingBond(SLNParse::molList_g,$$,$5,$3);
   $$=$1;
 }
 ;
 
-atom: primatom
-| H_TOKEN {
+atom: H_TOKEN {
   $$ = new RDKit::Atom(1);
 }
+| primatom
 | primatom H_TOKEN {
   $1->setNumExplicitHs(1);
   $$=$1;
 }
-| primatom H_TOKEN NUMBER_TOKEN {
+| primatom H_TOKEN DIGIT_TOKEN {
   $1->setNumExplicitHs($3);
   $$=$1;
 }
@@ -190,11 +207,11 @@ primatom: ATOM_TOKEN
 | primatom ASTERIX_TOKEN{
   $$->setProp("_starred",1,true);
 }
-| primatom OPEN_BRACKET_TOKEN NUMBER_TOKEN CLOSE_BRACKET_TOKEN {
+| primatom OPEN_BRACKET_TOKEN number CLOSE_BRACKET_TOKEN {
   $1->setProp("_AtomID",static_cast<unsigned int>($3));
   $$=$1;
 }
-| primatom OPEN_BRACKET_TOKEN NUMBER_TOKEN COLON_TOKEN attriblist CLOSE_BRACKET_TOKEN {
+| primatom OPEN_BRACKET_TOKEN number COLON_TOKEN attriblist CLOSE_BRACKET_TOKEN {
   $1->setProp("_AtomID",static_cast<unsigned int>($3));
   SLNParse::parseAtomAttribs($1,*$5,slnParserDoQueries);
   delete $5;
@@ -334,7 +351,7 @@ attrib: TEXT_BLOCK {
   $$->op = "=";
   $$->second = "+1";
 }
-| PLUS_TOKEN NUMBER_TOKEN {
+| PLUS_TOKEN DIGIT_TOKEN {
   $$ = new SLNParse::AttribType();
   $$->first = "charge";
   $$->op = "=";
@@ -346,7 +363,7 @@ attrib: TEXT_BLOCK {
   $$->op = "=";
   $$->second = "-1";
 }
-| MINUS_TOKEN NUMBER_TOKEN {
+| MINUS_TOKEN DIGIT_TOKEN {
   $$ = new SLNParse::AttribType();
   $$->first = "charge";
   $$->op = "=";
@@ -402,6 +419,10 @@ recursivequery: RECURSE_TOKEN cmpd {
    orq->addChild(RDKit::ATOM_OR_QUERY::CHILD_TYPE(rsq));
    $$=$1;
 }
+;
+
+number:  DIGIT_TOKEN
+| number DIGIT_TOKEN { $$ = $1*10 + $2; }
 ;
 %%
 
