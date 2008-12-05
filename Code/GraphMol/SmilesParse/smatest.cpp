@@ -196,9 +196,9 @@ void _checkNoMatches(std::string smarts, std::string smiles) {
   MolOps::findSSSR(*mol);
 
   matches = SubstructMatch(*mol,*matcher,mV);
-  CHECK_INVARIANT(!matches,"");
+  CHECK_INVARIANT(!matches,smarts+"|"+smiles);
   matches = SubstructMatch(*mol,*matcher2,mV);
-  CHECK_INVARIANT(!matches,"");
+  CHECK_INVARIANT(!matches,smarts+"|"+smiles);
   delete mol;
   delete matcher;
   delete matcher2;

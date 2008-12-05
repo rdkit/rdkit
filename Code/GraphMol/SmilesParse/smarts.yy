@@ -68,7 +68,7 @@ namespace RDKit {
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol branch
 %type <atom> atomd element simple_atom
-%type <atom> atom_expr atom_expr_piece point_query atom_query recursive_query
+%type <atom> atom_expr point_query atom_query recursive_query
 %type <ival> ring_number number charge_spec
 %type <bond> bondd bond_expr bond_query
 %token EOS_TOKEN
@@ -262,10 +262,6 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   delete $3;
 }
 | atom_expr OR_TOKEN atom_expr {
-
-  //std::cout << "-*-*-*-* OR *-*-*-" << std::endl;
-  //std::cout << "\t" << typeid(*($1->getQuery())).name() << std::endl;
-  //std::cout << "\t" << typeid(*($3->getQuery())).name() << std::endl;
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   delete $3;
 }
@@ -277,6 +273,17 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   $2->getQuery()->setNegation(!($2->getQuery()->getNegation()));
   $$ = $2;
 }
+| atom_expr NOT_TOKEN point_query {
+  // FIX: this stuff (formerly element NOT_TOKEN atom_expr_piece) is making us shift-reduce-a-riffic
+  $3->getQuery()->setNegation(!($3->getQuery()->getNegation()));
+  $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
+  delete $3;
+  }
+| atom_expr point_query {
+  // FIX: this stuff (formerly element atom_expr_piece) is making us shift-reduce-a-riffic
+  $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
+  delete $2;
+}
 | atom_expr COLON_TOKEN number {
   if($1->hasProp("molAtomMapNumber")){
     BOOST_LOG(rdWarningLog) << "Warning: Atom-map index (:%d) specified multiple times for one atom, additional specifications ignored" << std::endl;
@@ -284,29 +291,10 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
     $1->setProp("molAtomMapNumber",$3);
   }
 }
-| atom_expr NOT_TOKEN atom_expr_piece {
-  // FIX: this stuff (formerly element NOT_TOKEN atom_expr_piece) is making us shift-reduce-a-riffic
-  $3->getQuery()->setNegation(!($3->getQuery()->getNegation()));
-  $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  delete $3;
-  }
-| atom_expr atom_expr_piece {
-  // FIX: this stuff (formerly element atom_expr_piece) is making us shift-reduce-a-riffic
-  $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  delete $2;
-}
-| atom_expr_piece
+| point_query
 | element AT_TOKEN AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); $$=$1;}
 | element AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); $$=$1;}
 | element
-;
-
-/* --------------------------------------------------------------- */
-atom_expr_piece: point_query
-| atom_expr_piece point_query {
-  $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  delete $2;
-}
 ;
 
 /* --------------------------------------------------------------- */
