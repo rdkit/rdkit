@@ -224,7 +224,14 @@ int Atom::calcExplicitValence(bool strict) {
   res = static_cast<int>(round(accum));
 
   if(strict){
-    int effectiveValence=res-getFormalCharge();
+    int effectiveValence;
+    if(PeriodicTable::getTable()->getNouterElecs(d_atomicNum)>=4){
+      effectiveValence=res-getFormalCharge();
+    } else {
+      // for boron and co, we move to the right in the PT, so adding
+      // extra valences means adding negative charge
+      effectiveValence=res+getFormalCharge();
+    }
     const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
     int maxValence=*(valens.rbegin());
     // maxValence == -1 signifies that we'll take anything at the high end

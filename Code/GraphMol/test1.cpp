@@ -562,6 +562,125 @@ void testIssue1993296(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+
+void testIssue2381580(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 2381580" << std::endl;
+
+  {
+    RWMol *m=new RWMol();
+    m->addAtom(new Atom(5));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(0,1,Bond::SINGLE);
+    m->addBond(0,2,Bond::SINGLE);
+    m->addBond(0,3,Bond::SINGLE);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==0);
+    delete m;
+  }
+
+  {
+    RWMol *m=new RWMol();
+    m->addAtom(new Atom(5));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(0,1,Bond::SINGLE);
+    m->addBond(0,2,Bond::SINGLE);
+    m->addBond(0,3,Bond::SINGLE);
+    m->addBond(0,4,Bond::SINGLE);
+    m->getAtomWithIdx(0)->setFormalCharge(-1);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==-1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==0);
+    delete m;
+  }
+
+  {
+    RWMol *m=new RWMol();
+    m->addAtom(new Atom(5));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(0,1,Bond::SINGLE);
+    m->addBond(0,2,Bond::SINGLE);
+    m->addBond(0,3,Bond::SINGLE);
+    m->addBond(0,4,Bond::SINGLE);
+    bool ok=false;
+    try{
+      MolOps::sanitizeMol(*m);
+    } catch (MolSanitizeException &e) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    delete m;
+  }
+
+  {
+    RWMol *m=new RWMol();
+    m->addAtom(new Atom(5));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(0,1,Bond::SINGLE);
+    m->addBond(0,2,Bond::SINGLE);
+    m->addBond(0,3,Bond::SINGLE);
+    m->addBond(0,4,Bond::SINGLE);
+    m->getAtomWithIdx(0)->setFormalCharge(+1);
+    bool ok=false;
+    try{
+      MolOps::sanitizeMol(*m);
+    } catch (MolSanitizeException &e) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    delete m;
+  }
+
+  {
+    RWMol *m=new RWMol();
+    m->addAtom(new Atom(5));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(0,1,Bond::SINGLE);
+    m->addBond(0,2,Bond::SINGLE);
+    m->getAtomWithIdx(0)->setFormalCharge(+1);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==0);
+    delete m;
+  }
+
+  {
+    RWMol *m=new RWMol();
+    m->addAtom(new Atom(5));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addAtom(new Atom(6));
+    m->addBond(0,1,Bond::SINGLE);
+    m->addBond(0,2,Bond::SINGLE);
+    m->addBond(0,3,Bond::SINGLE);
+    m->getAtomWithIdx(0)->setFormalCharge(-1);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==-1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1);
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 // -------------------------------------------------------------------
 int main()
 {
@@ -681,6 +800,7 @@ int main()
   testDegree();
 
   testIssue1993296();
+  testIssue2381580();
 
   return 0;
 }
