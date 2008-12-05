@@ -277,6 +277,16 @@ void test3(){
   TEST_ASSERT(mol->getAtomWithIdx(2)->getMass()==2.0);
 
   delete mol;
+  sln = "C[*]H3";
+  mol=RDKit::SLNToMol(sln,true,true);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==1);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs()==3);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+  delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -303,8 +313,6 @@ void test4(){
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs()==3);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
-
-
   
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;

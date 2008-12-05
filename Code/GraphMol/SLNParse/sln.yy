@@ -406,6 +406,12 @@ attrib: TEXT_BLOCK {
   $$->op = "=";
   $$->second = SLNParse::convertToString(-$2);
 }
+| ASTERIX_TOKEN {
+  $$ = new SLNParse::AttribType();
+  $$->first = "spin";
+  $$->op = "=";
+  $$->second = "d";
+}
 | recursivequery {
   $$ = $1;
 }
