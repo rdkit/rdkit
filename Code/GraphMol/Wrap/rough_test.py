@@ -1366,12 +1366,12 @@ M  END
     """ Test perception of chirality and CIP encoding       
     """ 
     m = Chem.MolFromSmiles('F[C@]([C@])(Cl)Br')
-    Chem.AssignAtomChiralCodes(m,1)
+    Chem.AssignStereochemistry(m,1)
     self.failUnless(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
     self.failIf(m.GetAtomWithIdx(2).HasProp('_CIPCode'))
     
     m = Chem.MolFromSmiles('F[C@H](C)C')
-    Chem.AssignAtomChiralCodes(m,1)
+    Chem.AssignStereochemistry(m,1)
     self.failUnless(m.GetAtomWithIdx(1).GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED)
     self.failIf(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
 

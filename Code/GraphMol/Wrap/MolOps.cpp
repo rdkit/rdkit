@@ -68,6 +68,11 @@ namespace RDKit{
     MolOps::Kekulize(wmol,clearAromaticFlags);
   }
 
+  void setAromaticityMol(ROMol &mol){
+    RWMol &wmol = static_cast<RWMol &>(mol);
+    MolOps::setAromaticity(wmol);
+  }
+
   VECT_INT_VECT getSymmSSSR(ROMol &mol) {
     VECT_INT_VECT rings;
     MolOps::symmetrizeSSSR(mol, rings);
@@ -400,6 +405,24 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("clearAromaticFlags")=false),
                   docString.c_str());
       
+
+      // ------------------------------------------------------------------------
+      docString="does aromaticity perception\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+      python::def("SetAromaticity", setAromaticityMol,
+                  (python::arg("mol")),
+                  docString.c_str());
+      
+
+
       // ------------------------------------------------------------------------
       docString="Finds all subgraphs of a particular length in a molecule\n\
 \n\
@@ -530,8 +553,8 @@ namespace RDKit{
 
 
       // ------------------------------------------------------------------------
-      docString="Does the CIP chirality assignment (R/S) \n\
-  for the molecule's atoms.\n\
+      docString="Does the CIP stereochemistry assignment \n\
+  for the molecule's atoms (R/S) and double bond (Z/E).\n\
   Chiral atoms will have a property '_CIPCode' indicating\n\
   their chiral code.\n\
 \n\
@@ -544,6 +567,12 @@ namespace RDKit{
     - force: (optional) causes the calculation to be repeated, even if it has already\n\
       been done\n\
 \n";
+      python::def("AssignStereochemistry", MolOps::assignAtomChiralCodes,
+                  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
+                  docString.c_str());
+
+      // ------------------------------------------------------------------------
+      docString="DEPRECATED: use AssignStereochemistry() instead\n";
       python::def("AssignAtomChiralCodes", MolOps::assignAtomChiralCodes,
                   (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
                   docString.c_str());
@@ -567,18 +596,7 @@ namespace RDKit{
 
 
       // ------------------------------------------------------------------------
-      docString="Does the CIP stereochemistry assignment (Z/E)\n\
-   for the molecule's bonds .\n\
-  Qualifying bonds will have a property '_CIPCode' indicating\n\
-  their stereochemistry.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-    - cleanIt: (optional) ignored\n\
-    - force: (optional) causes the calculation to be repeated, even if it has already\n\
-      been done\n\
-\n";
+      docString="DEPRECATED: use AssignStereochemistry() instead\n";
       python::def("AssignBondStereoCodes", MolOps::assignBondStereoCodes,
                   (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
                   docString.c_str());
