@@ -81,7 +81,7 @@ yysln_error( const char * msg )
 
 
 
-%type <atom_T> atom primatom
+%type <atom_T> atom primatom hatom anyatom
 %type <bond_T> bond primbond onebond
 %type <attriblist_T> attriblist ctabattriblist
 %type <attrib_T> attrib ctabattrib recursivequery
@@ -157,15 +157,14 @@ mol: primmol
 }
 ;
 
-
-primmol: atom {
+primmol: anyatom {
   $$=SLNParse::startMol(SLNParse::molList_g,$1);
 }
 | primmol atom {
   SLNParse::addAtomToMol(SLNParse::molList_g,$$,$2);
   $$=$1;
 }
-| primmol bond atom{
+| primmol bond anyatom {
   SLNParse::addAtomToMol(SLNParse::molList_g,$$,$3,$2);
   $$=$1;
 }
@@ -194,6 +193,8 @@ primmol: atom {
 }
 ;
 
+anyatom: hatom | atom ;
+
 atom: primatom
 | primatom H_TOKEN {
   $1->setNumExplicitHs(1);
@@ -205,10 +206,30 @@ atom: primatom
 }
 ;
 
-primatom: ATOM_TOKEN 
-| H_TOKEN {
+hatom: H_TOKEN {
   $$ = new RDKit::Atom(1);
 }
+| hatom ASTERIX_TOKEN{
+  $$->setProp("_starred",1,true);
+}
+| hatom OPEN_BRACKET_TOKEN number CLOSE_BRACKET_TOKEN {
+  $1->setProp("_AtomID",static_cast<unsigned int>($3));
+  $$=$1;
+}
+| hatom OPEN_BRACKET_TOKEN number COLON_TOKEN attriblist CLOSE_BRACKET_TOKEN {
+  $1->setProp("_AtomID",static_cast<unsigned int>($3));
+  SLNParse::parseAtomAttribs($1,*$5,slnParserDoQueries);
+  delete $5;
+  $$=$1;
+}
+| hatom OPEN_BRACKET_TOKEN attriblist CLOSE_BRACKET_TOKEN {
+  SLNParse::parseAtomAttribs($1,*$3,slnParserDoQueries);
+  delete $3;
+  $$=$1;
+}
+ 
+
+primatom: ATOM_TOKEN 
 | primatom ASTERIX_TOKEN{
   $$->setProp("_starred",1,true);
 }

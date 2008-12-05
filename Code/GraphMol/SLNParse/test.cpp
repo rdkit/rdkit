@@ -82,7 +82,6 @@ void test1(){
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms()==1);
   TEST_ASSERT(mol->getRingInfo()->numRings()==0);
-
   
   delete mol;
   sln = "CH3CH(CH3)OCH3";
@@ -108,7 +107,15 @@ void test1(){
   TEST_ASSERT(mol->getAtomWithIdx(3)->getDegree()==2);
   TEST_ASSERT(mol->getAtomWithIdx(4)->getDegree()==1);
   TEST_ASSERT(mol->getAtomWithIdx(5)->getDegree()==0);
-  
+
+  delete mol;
+  sln = "H-O-H";
+  mol=RDKit::SLNToMol(sln,false);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==3);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getAtomicNum()==1);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getAtomicNum()==8);
+  TEST_ASSERT(mol->getAtomWithIdx(2)->getAtomicNum()==1);
   
   delete mol;
   sln = "HC(F)(Cl)Br";
@@ -263,9 +270,8 @@ void test3(){
   
   delete mol;
   sln = "H[I=2]-C(-H[I=2])(F)F";
-  mol=RDKit::SLNToMol(sln,true,true);
+  mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
-  std::cerr<<MolToSmiles(*mol,true)<<std::endl;
   TEST_ASSERT(mol->getNumAtoms()==5);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getMass()==2.0);
   TEST_ASSERT(mol->getAtomWithIdx(2)->getMass()==2.0);
