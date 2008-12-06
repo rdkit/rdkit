@@ -658,9 +658,9 @@ namespace Canon {
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
                                  bondVisitOrders);
 
+#if 0
     // --------------
     // Adjust the stereochemistry of ring atoms without chirality:
-
     std::vector< std::pair<int,Atom *> > atomsToConsider;
     RingInfo *ringInfo=mol.getRingInfo();
     std::vector<Atom::ChiralType> origChis(mol.getNumAtoms());
@@ -745,7 +745,7 @@ namespace Canon {
       BOOST_LOG(rdWarningLog)<<"Warning: ring stereochemistry detected. This may not be handled correctly."<<std::endl;
       mol.setProp("_ringStereoWarning",true,true);
     }
-    
+#endif    
     // remove the current directions on single bonds around double bonds:
     for(ROMol::BondIterator bondIt=mol.beginBonds();
         bondIt!=mol.endBonds();

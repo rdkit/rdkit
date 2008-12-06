@@ -122,6 +122,7 @@ namespace RDKit{
         std::cout << std::endl;
 #endif    
         int nSwaps;
+#if 0
         if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") ) {
           // this is a special case where the atom has stereochem indicated
           // but isn't a chiral center. This can happen in ring stereochem
@@ -162,7 +163,14 @@ namespace RDKit{
         } else {
           nSwaps =  atom->getPerturbationOrder(trueOrder);
         }
-
+#else
+        if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") &&
+            !atom->getOwningMol().hasProp("_ringSteroWarning") ){
+          BOOST_LOG(rdWarningLog)<<"Warning: ring stereochemistry detected. The output SMILES is not canonical."<<std::endl;
+          atom->getOwningMol().setProp("_ringStereoWarning",true,true);
+        }
+        nSwaps =  atom->getPerturbationOrder(trueOrder);
+#endif
         if(atom->getDegree()==3){
           // Does the atom have a preceder in the original ordering?
           bool hasTruePrecedingAtom=false;
