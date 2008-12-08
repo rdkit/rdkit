@@ -16,6 +16,7 @@ SQLITE_EXTENSION_INIT1
 #include <DataStructs/SparseIntVect.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <boost/cstdint.hpp>
 #include <string>
 #include <map>
 
@@ -298,6 +299,45 @@ static void bvTanimotoSim(
   delete bv2;
   sqlite3_result_double(context, res);
 }
+static void ucvTanimotoSim(
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  // table from Andrew Dalke:
+  static const unsigned int popCounts[] = {
+    0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,
+    1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+    1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+    2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+    1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+    2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+    2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+    3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,4,5,5,6,5,6,6,7,5,6,6,7,6,7,7,8,
+  };
+  const unsigned char *t1=(const unsigned char *)sqlite3_value_blob(argv[0]);
+  int nB1=sqlite3_value_bytes(argv[0]);
+  const unsigned char *t2=(const unsigned char *)sqlite3_value_blob(argv[1]);
+  int nB2=sqlite3_value_bytes(argv[1]);
+  if(nB1!=nB2){
+    std::string errorMsg="bit vectors not ths same length";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+  unsigned int x=0,y=0,z=0;
+  for(unsigned int i=0;i<(unsigned int)nB1;++i){
+    y+= popCounts[*t1];
+    z+= popCounts[*t2];
+    x+= popCounts[(*t1)&(*t2)];
+    ++t1;
+    ++t2;
+  }
+  double res=0;
+  if(y+z-x>0){
+    res=double(x) / (y+z-x);
+  }
+  sqlite3_result_double(context, res);
+}
 
 static void sivDiceSim(
   sqlite3_context *context,
@@ -323,6 +363,134 @@ static void sivDiceSim(
   sqlite3_result_double(context, res);
 }
 
+static void sivDiceSim2(
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  const unsigned char *t1=(const unsigned char *)sqlite3_value_blob(argv[0]);
+  int nB1=sqlite3_value_bytes(argv[0]);
+  const unsigned char *t2=(const unsigned char *)sqlite3_value_blob(argv[1]);
+  int nB2=sqlite3_value_bytes(argv[1]);
+
+  // check the version flags:
+  boost::uint32_t tmp;
+  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  if(tmp!=ci_SPARSEINTVECT_VERSION){
+    std::string errorMsg="BLOB (argument 1) could not be converted into an int vector";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+  tmp = *(reinterpret_cast<const boost::uint32_t *>(t2));
+  t2+=sizeof(boost::uint32_t);
+  if(tmp!=ci_SPARSEINTVECT_VERSION){
+    std::string errorMsg="BLOB (argument 2) could not be converted into an int vector";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+
+  // check the element size:
+  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  if(tmp!=sizeof(boost::uint32_t)){
+    std::string errorMsg="BLOB (argument 1) could not be converted into an uint32_t vector";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+  tmp = *(reinterpret_cast<const boost::uint32_t *>(t2));
+  t2+=sizeof(boost::uint32_t);
+  if(tmp!=sizeof(boost::uint32_t)){
+    std::string errorMsg="BLOB (argument 2) could not be converted into an uint32_t vector";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+ 
+  double res=0.;
+  // start reading:
+  boost::uint32_t len1,len2;
+  len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  len2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
+  t2+=sizeof(boost::uint32_t);
+  if(len1!=len2){
+    std::string errorMsg="attempt to compare fingerprints of different length";
+    sqlite3_result_error(context,errorMsg.c_str(),errorMsg.length());
+    return;
+  }
+
+  boost::uint32_t nElem1,nElem2;
+  nElem1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  nElem2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
+  t2+=sizeof(boost::uint32_t);
+
+  if(!nElem1 || !nElem2){
+    res=0.0;
+    sqlite3_result_double(context, res);
+  }
+
+  double v1Sum=0,v2Sum=0,numer=0;
+  boost::uint32_t idx1=0;
+  boost::int32_t v1;
+  boost::uint32_t idx2=0;
+  boost::int32_t v2;
+  idx1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
+  t1+=sizeof(boost::int32_t);
+  nElem1--;
+  v1Sum += v1;
+
+  idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
+  t2+=sizeof(boost::uint32_t);
+  v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
+  t2+=sizeof(boost::int32_t);
+  nElem2--;
+  v2Sum += v2;
+
+  while(1){
+    while(nElem2 && idx2<idx1){
+      idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
+      t2+=sizeof(boost::uint32_t);
+      v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
+      t2+=sizeof(boost::int32_t);
+      nElem2--;
+      v2Sum += v2;
+    }
+    if(idx2==idx1 ){
+      //std::cerr<<"   --- "<<idx1<<" "<<v1<<" - "<<idx2<<" "<<v2<<std::endl;
+      numer += std::min(v1,v2);
+    }
+    if(nElem1){
+      idx1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+      t1+=sizeof(boost::uint32_t);
+      v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
+      t1+=sizeof(boost::int32_t);
+      nElem1--;
+      v1Sum += v1;
+    } else {
+      break;
+    }
+  }
+  while(nElem2){
+    idx2 = *(reinterpret_cast<const boost::uint32_t *>(t2));
+    t2+=sizeof(boost::uint32_t);
+    v2 = *(reinterpret_cast<const boost::int32_t *>(t2));
+    t2+=sizeof(boost::int32_t);
+    nElem2--;
+    v2Sum += v2;
+  }
+  double denom=v1Sum+v2Sum;
+  if(fabs(denom)<1e-6){
+    res=0.0;
+  } else {
+    res = 2.*numer/denom;
+  }
+  //std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" "<<numer<<" "<<res<<std::endl;
+  sqlite3_result_double(context, res);
+}
+
 /* SQLite invokes this routine once when it loads the extension.
 ** Create new functions, collating sequences, and virtual table
 ** modules here.  This is usually the only exported symbol in
@@ -342,10 +510,14 @@ extern "C" int sqlite3_extension_init(
 			  blobToRDKitFingerprint, 0, 0);
   sqlite3_create_function(db, "rdk_bvTanimotoSim", 2, SQLITE_ANY, 0,
 			  bvTanimotoSim, 0, 0);
+  sqlite3_create_function(db, "rdk_ucvTanimotoSim", 2, SQLITE_ANY, 0,
+			  ucvTanimotoSim, 0, 0);
   sqlite3_create_function(db, "rdk_molToAtomPairFP", 1, SQLITE_ANY, 0,
 			  blobToAtomPairFingerprint, 0, 0);
   sqlite3_create_function(db, "rdk_sivDiceSim", 2, SQLITE_ANY, 0,
 			  sivDiceSim, 0, 0);
+  sqlite3_create_function(db, "rdk_sivDiceSim2", 2, SQLITE_ANY, 0,
+			  sivDiceSim2, 0, 0);
   sqlite3_create_function(db, "rdk_molHasSubstruct", 2, SQLITE_ANY,
 			  static_cast<void *>(molMap),
                           molHasSubstruct, 0, 0);
