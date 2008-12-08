@@ -13,6 +13,7 @@
 #define __RD_ATOMPAIRS_H__
 
 #include <DataStructs/SparseIntVect.h>
+#include <DataStructs/BitVects.h>
 #include <boost/cstdint.hpp>
 namespace RDKit {
   class Atom;
@@ -68,6 +69,18 @@ namespace RDKit {
        */
       SparseIntVect<boost::int32_t> *getAtomPairFingerprint(const ROMol &mol);
 
+      //! returns the hashed atom-pair fingerprint for a molecule
+      /*!
+        \param mol:   the molecule to be fingerprinted
+        \param nBits:   the length of the fingerprint to generate
+	\return a pointer to the fingerprint. The client is
+                responsible for calling delete on this.
+
+       */
+      ExplicitBitVect *getHashedAtomPairFingerprint(const ROMol &mol,
+                                                    unsigned int nBits=2048);
+
+      
       //! returns an topological torsion hash based on the atom hashes
       //! passed in
       /*!

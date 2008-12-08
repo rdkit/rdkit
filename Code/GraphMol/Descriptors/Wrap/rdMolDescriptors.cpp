@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2008 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -82,6 +82,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetAtomPairFingerprint",
 	      RDKit::Descriptors::AtomPairs::getAtomPairFingerprint,
 	      python::arg("mol"),
+              docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+  python::def("GetHashedAtomPairFingerprint",
+	      RDKit::Descriptors::AtomPairs::getHashedAtomPairFingerprint,
+	      (python::arg("mol"),python::arg("nBits")=2048),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   docString="Returns the topological-torsion fingerprint for a molecule as a LongIntSparseIntVect";

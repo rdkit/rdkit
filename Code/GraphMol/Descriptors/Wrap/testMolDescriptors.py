@@ -1,5 +1,6 @@
 import Chem
 from Chem import rdMolDescriptors as rdMD
+import DataStructs
 import RDConfig
 import unittest
 
@@ -31,6 +32,14 @@ class TestCase(unittest.TestCase) :
     self.failUnless(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==\
                     0 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
 
+  def testHashedAtomPairs(self):
+    m = Chem.MolFromSmiles('c1ccccc1')
+    fp1 = rdMD.GetHashedAtomPairFingerprint(m)
+    m = Chem.MolFromSmiles('c1ccccn1')
+    fp2 = rdMD.GetHashedAtomPairFingerprint(m)
+    sim= DataStructs.TanimotoSimilarity(fp1,fp2)
+    self.failUnless(sim>0.0 and sim<1.0)
+    
 
   def testTopologicalTorsions(self):
     mol = Chem.MolFromSmiles("CC");

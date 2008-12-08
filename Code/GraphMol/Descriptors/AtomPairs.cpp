@@ -10,6 +10,7 @@
 #include <GraphMol/Descriptors/AtomPairs.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <DataStructs/SparseIntVect.h>
+#include <boost/functional/hash.hpp>
 
 namespace RDKit{
   namespace Descriptors {
@@ -86,6 +87,36 @@ namespace RDKit{
             if(dist<maxPathLen){
               boost::uint32_t bitId=getAtomPairCode(atomCodes[i],atomCodes[j],dist);
               res->setVal(bitId,(*res)[bitId]+1);
+            }
+          }
+        }
+        return res;
+      }
+
+      ExplicitBitVect *
+      getHashedAtomPairFingerprint(const ROMol &mol,unsigned int nBits){
+        ExplicitBitVect *res=new ExplicitBitVect(nBits);
+        const double *dm = MolOps::getDistanceMat(mol);
+        const unsigned int nAtoms=mol.getNumAtoms();
+
+        std::vector<boost::uint32_t> atomCodes;
+        for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
+            atomItI!=mol.endAtoms();++atomItI){
+          atomCodes.push_back(getAtomCode(*atomItI));
+        }
+        for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
+            atomItI!=mol.endAtoms();++atomItI){
+          unsigned int i=(*atomItI)->getIdx();
+          for(ROMol::ConstAtomIterator atomItJ=atomItI+1;
+              atomItJ!=mol.endAtoms();++atomItJ){
+            unsigned int j=(*atomItJ)->getIdx();
+            unsigned int dist=static_cast<unsigned int>(floor(dm[i*nAtoms+j]));
+            if(dist<maxPathLen){
+              std::size_t bit=0;
+              boost::hash_combine(bit,atomCodes[i]);
+              boost::hash_combine(bit,dist);
+              boost::hash_combine(bit,atomCodes[j]);
+              res->SetBit(bit%nBits);
             }
           }
         }

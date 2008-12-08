@@ -20,6 +20,8 @@
 #include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/Descriptors/AtomPairs.h>
 
+#include <DataStructs/BitVects.h>
+#include <DataStructs/BitOps.h>
 using namespace RDKit;
 using namespace RDKit::Descriptors;
 
@@ -282,6 +284,35 @@ void testAtomPairs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testHashedAtomPairs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Hashed Atom Pairs." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("c1ccccc1");
+    ExplicitBitVect *fp1;
+    fp1=AtomPairs::getHashedAtomPairFingerprint(*mol);
+    ExplicitBitVect *fp2;
+    fp2=AtomPairs::getHashedAtomPairFingerprint(*mol);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
+    TEST_ASSERT(*fp1==*fp2);
+
+    delete mol;
+    delete fp2;
+    mol = SmilesToMol("c1ccccn1");
+    fp2=AtomPairs::getHashedAtomPairFingerprint(*mol);
+    RANGE_CHECK(0.0,TanimotoSimilarity(*fp1,*fp2),1.0);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 void testTorsions(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test Topological Torsions." << std::endl;
@@ -389,6 +420,7 @@ int main(){
   testAtomPairs();
   testTorsions();
   testBulkTorsions();
-#endif
   testLabute();
+#endif
+  testHashedAtomPairs();
 }

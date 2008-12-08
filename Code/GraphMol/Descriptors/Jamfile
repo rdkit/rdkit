@@ -4,13 +4,13 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib Descriptors : Crippen.cpp MolDescriptors.cpp AtomPairs.cpp MolSurf.cpp
-..//GraphMol ../Substruct//Substruct ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs ../../RDGeneral//RDGeneral
+..//GraphMol ../Substruct//Substruct ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral
   :  <toolset>msvc:<link>static ; #<link>static ;
 install lib-install : Descriptors : <location>$(RDBASE)/bin ;
 
 exe testDescriptors : test.cpp Descriptors
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs
-../Substruct//Substruct ..//GraphMol ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs ../..//vflib ;
+../Substruct//Substruct ..//GraphMol ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs ../..//vflib ;
 
 install regrs : testDescriptors
   : <location>testExecs ;
