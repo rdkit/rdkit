@@ -499,31 +499,41 @@ namespace RDKit{
             //
             //  First we'll search for an H query:
             bool hasHQuery=false;
-            std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack;
-            QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
-            for(child1=nbr->getQuery()->beginChildren();
-                child1!=nbr->getQuery()->endChildren();
-                child1++){
-              childStack.push_back(*child1);
-            }
-            while( !hasHQuery && childStack.size() ){
-              QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
-              childStack.pop_front();
-              if(query->getDescription()=="AtomHCount"){
-                hasHQuery=true;
-              } else {
-                for(child1=query->beginChildren();
-                    child1!=query->endChildren();
-                    child1++){
-                  childStack.push_back(*child1);
+            if(nbr->hasQuery()){
+              std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack;
+              QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
+              for(child1=nbr->getQuery()->beginChildren();
+                  child1!=nbr->getQuery()->endChildren();
+                  child1++){
+                childStack.push_back(*child1);
+              }
+              while( !hasHQuery && childStack.size() ){
+                QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
+                childStack.pop_front();
+                if(query->getDescription()=="AtomHCount"){
+                  hasHQuery=true;
+                } else {
+                  for(child1=query->beginChildren();
+                      child1!=query->endChildren();
+                      child1++){
+                    childStack.push_back(*child1);
+                  }
                 }
               }
-            }
 
-            if(!hasHQuery){
+              if(!hasHQuery){
+                ATOM_EQUALS_QUERY *tmp=makeAtomHCountQuery(0);
+                tmp->setNegation(true);
+                nbr->expandQuery(tmp);
+              }
+            } else {
+              // it wasn't a query atom, we need to replace it:
               ATOM_EQUALS_QUERY *tmp=makeAtomHCountQuery(0);
               tmp->setNegation(true);
-              nbr->expandQuery(tmp);
+              QueryAtom *newAt = new QueryAtom;
+              newAt->setQuery(tmp);
+              res->replaceAtom(nbr->getIdx(),newAt);
+              delete newAt;
             }
             res->removeAtom(atom);
           } else {

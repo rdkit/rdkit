@@ -391,6 +391,12 @@ class TestCase(unittest.TestCase):
     self.failUnless(m2.GetNumAtoms()==5)
     m2 = Chem.RemoveHs(m2)
     self.failUnless(m2.GetNumAtoms()==4)
+    m = Chem.MolFromSmiles('CC[H]',False)
+    self.failUnless(m.GetNumAtoms()==3)
+    print 'merge'
+    m2 = Chem.MergeQueryHs(m)
+    self.failUnless(m2.GetNumAtoms()==2)
+    self.failUnless(m2.GetAtomWithIdx(1).HasQuery())
     
   def test15Neighbors(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')

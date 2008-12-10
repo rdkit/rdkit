@@ -251,6 +251,11 @@ namespace RDKit{
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 
+      python::def("MergeQueryHs", MolOps::mergeQueryHs,
+                  (python::arg("mol")),
+                  "merges hydrogens into their neighboring atoms as queries",
+                  python::return_value_policy<python::manage_new_object>());
+
       // ------------------------------------------------------------------------
       docString="Removes atoms matching a substructure query from a molecule\n\
 \n\
