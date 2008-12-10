@@ -684,10 +684,20 @@ void test8()
   m2 = MolOps::removeHs(*m);
   CHECK_INVARIANT(m,"");
   CHECK_INVARIANT(m->getNumAtoms()==6,"");
-  
-  
   delete m;
   delete m2;
+
+  smi = "CC[H]";
+  m = SmilesToMol(smi,false,false);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==3);
+  m2 = MolOps::mergeQueryHs(*m);
+  TEST_ASSERT(m2->getNumAtoms()==2);
+  TEST_ASSERT(!m->getAtomWithIdx(1)->hasQuery());
+  TEST_ASSERT(m2->getAtomWithIdx(1)->hasQuery());
+  delete m;
+  delete m2;
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
