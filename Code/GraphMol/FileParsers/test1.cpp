@@ -112,6 +112,30 @@ void test1(){
   TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
   delete m2;
   
+  // longer list queries, this was issue 2413431:
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/list-query-long.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(14)->hasQuery());
+
+  smi = "C1COC2=CC3=CC4=C(C=CC=C4)C=C3C=C2C1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1C[Se]C2=CC3=CC4=C(C=CC=C4)C=C3C=C2C1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1C[Te]C2=CC3=CC4=C(C=CC=C4)C=C3C=C2C1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+  delete m2;
+  smi = "C1C[As]C2=CC3=CC4=C(C=CC=C4)C=C3C=C2C1";
+  m2 = SmilesToMol(smi);
+  TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  delete m2;
+
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -285,7 +309,7 @@ void test6(){
   TEST_ASSERT(cip=="R");  
 #if 1
   smi = MolToSmiles(*m,true);
-  BOOST_LOG(rdInfoLog) << " smi: " << smi << std::endl;
+  //BOOST_LOG(rdInfoLog) << " smi: " << smi << std::endl;
   TEST_ASSERT(smi=="C[C@H](F)Cl");
 #endif
   delete m;
@@ -396,7 +420,7 @@ void test7(){
   smi = MolToSmiles(*m,true);
   TEST_ASSERT(smi=="C[C@H](F)Cl");
   molBlock=MolToMolBlock(*m);
-  BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  //BOOST_LOG(rdInfoLog) << molBlock << std::endl;
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   MolOps::assignAtomChiralCodes(*m2);
@@ -453,7 +477,7 @@ void test7(){
   delete m2;
   //BOOST_LOG(rdInfoLog) << "SMI: "<< smi << std::endl;
   molBlock=MolToMolBlock(*m);
-  BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  //BOOST_LOG(rdInfoLog) << molBlock << std::endl;
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   smi2 = MolToSmiles(*m2,true);
@@ -467,8 +491,8 @@ void test7(){
   delete m;
   fName = rdbase+"test_data/Issue142b.mol";
   m = MolFileToMol(fName);
-  BOOST_LOG(rdInfoLog) << m->getNumAtoms() << "\n";
-  BOOST_LOG(rdInfoLog) << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-" << std::endl;
+  //BOOST_LOG(rdInfoLog) << m->getNumAtoms() << "\n";
+  //BOOST_LOG(rdInfoLog) << "-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-" << std::endl;
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms()==9);
   MolOps::assignAtomChiralCodes(*m);
@@ -493,7 +517,7 @@ void test7(){
   //BOOST_LOG(rdInfoLog) << "SMI: "<< smi << std::endl;
   BOOST_LOG(rdInfoLog) << m->getNumAtoms() << " " << m->getConformer().getNumAtoms() << "\n";
   molBlock=MolToMolBlock(*m);
-  BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  //BOOST_LOG(rdInfoLog) << molBlock << std::endl;
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   smi2 = MolToSmiles(*m2,true);
@@ -520,7 +544,7 @@ void test7(){
   delete m2;
 
   molBlock=MolToMolBlock(*m);
-  BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  //BOOST_LOG(rdInfoLog) << molBlock << std::endl;
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   smi2 = MolToSmiles(*m2,true);
@@ -671,8 +695,8 @@ void testIssue264(){
   
   smi1 = MolToSmiles(*m1,true);
   smi2 = MolToSmiles(*m2,true);
-  BOOST_LOG(rdInfoLog) << smi1 << std::endl;
-  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  //BOOST_LOG(rdInfoLog) << smi1 << std::endl;
+  //BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi1!=smi2);
   
   delete m1;
@@ -744,12 +768,10 @@ void testMolFileChgLines(){
     TEST_ASSERT(m1->getAtomWithIdx(13)->getFormalCharge()==-1);
 
     std::string molBlock = MolToMolBlock(*m1);
-
-    std::cerr<<molBlock<<std::endl;
-    
+    //std::cerr<<molBlock<<std::endl;
     delete m1;
     m1 = MolBlockToMol(molBlock);
-    m1->debugMol(std::cerr);
+    //m1->debugMol(std::cerr);
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getAtomWithIdx(0)->getFormalCharge()==-1);
     TEST_ASSERT(m1->getAtomWithIdx(13)->getFormalCharge()==-1);

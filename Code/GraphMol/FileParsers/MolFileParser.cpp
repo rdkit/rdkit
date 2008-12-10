@@ -437,11 +437,11 @@ namespace RDKit{
     
     unsigned int idx;
     try {
-      idx = stripSpacesAndCast<unsigned int>(text.substr(9,3))-1;
+      idx = stripSpacesAndCast<unsigned int>(text.substr(7,3))-1;
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert " << text.substr(9,3) << " to int";
+      errout << "Cannot convert " << text.substr(7,3) << " to int";
       throw FileParseException(errout.str()) ;
     }
     RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
