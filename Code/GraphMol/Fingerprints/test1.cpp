@@ -118,23 +118,21 @@ void test1alg2(){
   std::string smi = "C1=CC=CC=C1";
   RWMol *m1 = SmilesToMol(smi);
   TEST_ASSERT(m1->getNumAtoms()==6);
-  smi = "C1=CC=CC=N1";
-  RWMol *m2 = SmilesToMol(smi);
-
   ExplicitBitVect *fp1=RDKFingerprintMol(*m1);
   ExplicitBitVect *fp2=RDKFingerprintMol(*m1);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
   
+  smi = "C1=CC=CC=N1";
+  RWMol *m2 = SmilesToMol(smi);
   delete fp2;
   fp2=RDKFingerprintMol(*m2);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
   TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
 
-  delete fp1;
-  delete fp2;
-
   delete m1;
   delete m2;
+  delete fp1;
+  delete fp2;
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
@@ -270,7 +268,7 @@ void test5BackwardsCompatibility(){
   delete fp1;
 
 #if 1 
-  // boost 1.35.0
+  // boost 1.35.0 and later
   fp1=DaylightFingerprintMol(*m);
   CHECK_INVARIANT(fp1->GetNumOnBits()==4,"Fingerprint compatibility problem detected");
   CHECK_INVARIANT((*fp1)[28],"Fingerprint compatibility problem detected");
