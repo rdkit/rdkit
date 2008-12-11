@@ -15,6 +15,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <boost/cstdint.hpp>
 
+
 const int ci_SPARSEINTVECT_VERSION=0x0001; //!< version number to use in pickles
 namespace RDKit{
   //! a class for efficiently storing sparse vectors of ints
@@ -346,21 +347,25 @@ namespace RDKit{
     if(v1.getLength()!=v2.getLength()){
       throw ValueErrorException("SparseIntVect size mismatch");
     }
-    double v1Sum=v1.getTotalVal();
-    double v2Sum=v2.getTotalVal();
-    double denom=v1Sum+v2Sum;
-    if(fabs(denom)<1e-6){
-      if(returnDistance){
-        return 1.0;
-      } else {
-        return 0.0;
-      }
-    }
+    double v1Sum=0.0;
+    double v2Sum=0.0;
     if(!returnDistance && bounds>0.0){
+      v1Sum=v1.getTotalVal();
+      v2Sum=v2.getTotalVal();
+      double denom=v1Sum+v2Sum;
+      if(fabs(denom)<1e-6){
+        if(returnDistance){
+          return 1.0;
+        } else {
+          return 0.0;
+        }
+      }
       double minV=v1Sum<v2Sum?v1Sum:v2Sum;
       if(2.*minV/denom<bounds){
         return 0.0;
       }
+      v1Sum=0.0;
+      v2Sum=0.0;
     }
 
     double numer=0.0;
@@ -368,10 +373,13 @@ namespace RDKit{
     // the other vector:
     typename SparseIntVect<IndexType>::StorageType::const_iterator iter1,iter2;
     iter1=v1.getNonzeroElements().begin();
+    if(iter1!=v1.getNonzeroElements().end()) v1Sum+=iter1->second; 
     iter2=v2.getNonzeroElements().begin();
+    if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
     while(iter1 != v1.getNonzeroElements().end()){
       while(iter2!=v2.getNonzeroElements().end() && iter2->first < iter1->first){
         ++iter2;
+        if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
       }
       if(iter2!=v2.getNonzeroElements().end()){
         if(iter2->first == iter1->first){
@@ -381,14 +389,38 @@ namespace RDKit{
             numer += iter1->second;
           }
           ++iter2;
+          if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
         }
         ++iter1;
+        if(iter1!=v1.getNonzeroElements().end()) v1Sum+=iter1->second; 
       } else {
         break;
       }
     }
-    double sim=2.*numer/denom;
+    if(iter1 != v1.getNonzeroElements().end()){
+      ++iter1;
+      while(iter1!=v1.getNonzeroElements().end()){
+        v1Sum+=iter1->second;
+        ++iter1;
+      }
+    }
+
+    if(iter2!=v2.getNonzeroElements().end()){
+      ++iter2;
+      while(iter2!=v2.getNonzeroElements().end()){
+        v2Sum+=iter2->second;
+        ++iter2;
+      }
+    }
+    double denom=v1Sum+v2Sum;
+    double sim;
+    if(fabs(denom)<1e-6){
+      sim=0.0;
+    } else {
+      sim=2.*numer/denom;
+    }
     if(returnDistance) sim = 1.-sim;
+    //std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" " << numer << " " << sim <<std::endl;
     return sim;
   }
 } 
