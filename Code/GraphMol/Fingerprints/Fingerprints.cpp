@@ -5,6 +5,7 @@
 //   @@ All Rights Reserved  @@
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 #include "Fingerprints.h"
@@ -16,6 +17,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/cstdint.hpp>
 #include <algorithm>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit{
   // caller owns the result, it must be deleted
@@ -83,7 +85,6 @@ namespace RDKit{
     return res;
   }
 
-
   // caller owns the result, it must be deleted
   ExplicitBitVect *RDKFingerprintMol(const ROMol &mol,unsigned int minPath,
                                       unsigned int maxPath,
@@ -112,6 +113,7 @@ namespace RDKit{
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
 							       useHs);
+    boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
       for( PATH_LIST_CI pathIt=paths->second.begin();
 	   pathIt!=paths->second.end();
@@ -125,13 +127,13 @@ namespace RDKit{
         // initialize the bond hashes to the number of neighbors the bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size());
         std::fill(bondNbrs.begin(),bondNbrs.end(),0);
-        std::set<unsigned int> atomsInPath;
+        atomsInPath.reset();
         std::vector<unsigned int> bondHashes;
         bondHashes.reserve(path.size()+1);
         for(unsigned int i=0;i<path.size();++i){
           const Bond *bi = mol.getBondWithIdx(path[i]);
-          atomsInPath.insert(bi->getBeginAtomIdx());
-          atomsInPath.insert(bi->getEndAtomIdx());
+          atomsInPath.set(bi->getBeginAtomIdx());
+          atomsInPath.set(bi->getEndAtomIdx());
           for(unsigned int j=i+1;j<path.size();++j){
             const Bond *bj = mol.getBondWithIdx(path[j]);
             if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx() ||
@@ -165,12 +167,13 @@ namespace RDKit{
           ourHash |= a1Hash<<nBitsInHash; // 8 bits
           nBitsInHash+=8;
           ourHash |= a2Hash<<nBitsInHash; // 8 bits
-          bondHashes.insert(std::lower_bound(bondHashes.begin(),bondHashes.end(),ourHash),ourHash);
+          bondHashes.push_back(ourHash);
         }
+        std::sort(bondHashes.begin(),bondHashes.end());
 
         // finally, we will add the number of distinct atoms in the path at the end
         // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-        bondHashes.push_back(atomsInPath.size());
+        bondHashes.push_back(atomsInPath.count());
         
         // hash the path to generate a seed:
         boost::hash<std::vector<unsigned int> > vectHasher;
@@ -204,6 +207,162 @@ namespace RDKit{
       }
     }
     
+    return res;
+  }
+
+  // caller owns the result, it must be deleted
+  ExplicitBitVect *LayeredFingerprintMol(const ROMol &mol,
+                                         unsigned int layerFlags,
+                                         unsigned int minPath,
+                                         unsigned int maxPath,
+                                         unsigned int fpSize,
+                                         double tgtDensity,unsigned int minSize){
+    PRECONDITION(minPath!=0,"minPath==0");
+    PRECONDITION(maxPath>=minPath,"maxPath<minPath");
+    PRECONDITION(fpSize!=0,"fpSize==0");
+
+    
+    // create a mersenne twister with customized parameters. 
+    // The standard parameters (used to create boost::mt19937) 
+    // result in an RNG that's much too computationally intensive
+    // to seed.
+    typedef boost::random::mersenne_twister<boost::uint32_t,32,4,2,31,0x9908b0df,11,7,0x9d2c5680,15,0xefc60000,18, 3346425566U>  rng_type;
+    
+    typedef boost::uniform_int<> distrib_type;
+    typedef boost::variate_generator<rng_type &,distrib_type> source_type;
+    rng_type generator(42u);
+
+    //
+    // if we generate arbitrarily sized ints then mod them down to the
+    // appropriate size, we can guarantee that a fingerprint of
+    // size x has the same bits set as one of size 2x that's been folded
+    // in half.  This is a nice guarantee to have.
+    //
+    distrib_type dist(0,INT_MAX);
+    source_type randomSource(generator,dist);
+
+    boost::hash<std::vector<unsigned int> > vectHasher;
+    ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+    INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
+    boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
+    for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
+      for( PATH_LIST_CI pathIt=paths->second.begin();
+	   pathIt!=paths->second.end();
+	   pathIt++ ){
+	const PATH_TYPE &path=*pathIt;
+
+        std::vector< std::vector<unsigned int> > hashLayers(10);
+
+        // calculate the number of neighbors each bond has in the path:
+        std::vector<unsigned int> bondNbrs(path.size(),0);
+        atomsInPath.reset();
+        for(unsigned int i=0;i<path.size();++i){
+          const Bond *bi = mol.getBondWithIdx(path[i]);
+          atomsInPath.set(bi->getBeginAtomIdx());
+          atomsInPath.set(bi->getEndAtomIdx());
+          for(unsigned int j=i+1;j<path.size();++j){
+            const Bond *bj = mol.getBondWithIdx(path[j]);
+            if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx() ||
+               bi->getBeginAtomIdx()==bj->getEndAtomIdx() ||
+               bi->getEndAtomIdx()==bj->getBeginAtomIdx() ||
+               bi->getEndAtomIdx()==bj->getEndAtomIdx() ){
+              ++bondNbrs[i];
+              ++bondNbrs[j];
+            }
+          }
+#ifdef VERBOSE_FINGERPRINTING        
+          std::cerr<<"   bond("<<i<<"):"<<bondNbrs[i]<<std::endl;
+#endif
+          // we have the count of neighbors for bond bi, compute its hash layers:
+          unsigned int ourHash=0;
+          unsigned int nBitsInHash=0;
+
+          if(layerFlags & 0x1){
+            // layer 1: straight topology
+            ourHash |= bondNbrs[i]%8; // 3 bits here
+            nBitsInHash+=3;
+            hashLayers[0].push_back(ourHash);
+          }
+          if(layerFlags & 0x2){
+            // layer 2: include bond orders:
+            unsigned int bondHash;
+            if(bi->getIsAromatic()){
+              // makes sure aromatic bonds always hash the same:
+              bondHash = Bond::AROMATIC;
+            } else {
+              bondHash = bi->getBondType();
+            }
+            ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
+            nBitsInHash+=4;
+            hashLayers[1].push_back(ourHash);
+          }
+          if(layerFlags & 0x4){
+            // layer 3: include atom types:
+            unsigned int a1Hash,a2Hash;
+            a1Hash = (bi->getBeginAtom()->getAtomicNum()%128)<<1 | bi->getBeginAtom()->getIsAromatic();
+            a2Hash = (bi->getEndAtom()->getAtomicNum()%128)<<1 | bi->getEndAtom()->getIsAromatic();
+            if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
+            ourHash |= a1Hash<<nBitsInHash; // 8 bits
+            nBitsInHash+=8;
+            ourHash |= a2Hash<<nBitsInHash; // 8 bits
+            nBitsInHash+=8;
+            hashLayers[2].push_back(ourHash);
+          }
+          if(layerFlags & 0x8){
+            // layer 4: include ring information
+            ourHash |= queryIsBondInRing(bi)<<nBitsInHash; // 1 bit
+            nBitsInHash++;
+            hashLayers[3].push_back(ourHash);
+          }
+          if(layerFlags & 0x10){
+            // layer 5: include ring size information
+            ourHash |= (queryBondMinRingSize(bi)%8)<<nBitsInHash; // 3 bits here
+            nBitsInHash+=3;
+            hashLayers[4].push_back(ourHash);
+          }
+        }
+        unsigned int l=0;
+        for(std::vector< std::vector<unsigned int> >::iterator layerIt=hashLayers.begin();
+            layerIt!=hashLayers.end();++layerIt,++l){
+          if(!layerIt->size()) continue;
+          // ----
+          std::sort(layerIt->begin(),layerIt->end());
+        
+          // finally, we will add the number of distinct atoms in the path at the end
+          // of the vect. This allows us to distinguish C1CC1 from CC(C)C
+          layerIt->push_back(atomsInPath.count());
+
+          // hash the path to generate a seed:
+          unsigned long seed = vectHasher(*layerIt);
+#if 0
+          if(!res->GetBit(seed%fpSize)) {
+            std::cerr<<"seed "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
+          } else {
+            std::cerr<<"         "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
+          }
+#endif
+          // and now generate a random number:
+          // NOTE: since we're only generating a single number here, it seems like it
+          // might make sense to just use the hash itself. In early testing of these
+          // fingerprints, this led to a bunch of collisions between layers 3 and 4,
+          // so it's back to the RNG.
+          generator.seed(static_cast<rng_type::result_type>(seed));
+          res->SetBit(randomSource()%fpSize);
+          //res->SetBit(seed%fpSize);
+        }
+      }
+      // EFF: this could be faster by folding by more than a factor
+      // of 2 each time, but we're not going to be spending much
+      // time here anyway
+      if(tgtDensity>0.0){
+        while( static_cast<double>(res->GetNumOnBits())/res->GetNumBits() < tgtDensity &&
+               res->GetNumBits() >= 2*minSize ){
+          ExplicitBitVect *tmpV=FoldFingerprint(*res,2);
+          delete res;
+          res = tmpV;
+        }
+      }
+    }
     return res;
   }
 
