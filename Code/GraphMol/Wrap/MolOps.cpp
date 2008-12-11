@@ -704,6 +704,9 @@ namespace RDKit{
 \n\
     - mol: the molecule to use\n\
 \n\
+    - layerFlags: (optional) which layers to include in the fingerprint\n\
+      See below for definitions. Defaults to all.\n\
+\n\
     - minPath: (optional) minimum number of bonds to include in the subgraphs\n\
       Defaults to 1.\n\
 \n\
@@ -723,7 +726,12 @@ namespace RDKit{
 \n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\
-  ALGORITHM:\n\
+  Layer definitions:\n\
+     - 0x01: pure topology\n\
+     - 0x02: bond order\n\
+     - 0x04: atom types\n\
+     - 0x08: presence of rings\n\
+     - 0x10: ring sizes\n\
 \n\
 \n";
       python::def("LayeredFingerprint", LayeredFingerprintMol,
@@ -733,7 +741,6 @@ namespace RDKit{
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
-
 
       docString="Set the wedging on single bonds in a molecule.\n \
    The wedging scheme used is that from Mol files.\n \
