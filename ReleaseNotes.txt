@@ -1,3 +1,52 @@
+******  Release_Q42008_1 *******
+(Changes relative to Release_Q32008_1)
+
+!!!!!! IMPORTANT !!!!!!
+ - A fix in the handling of stereochemistry in rings means that the
+   SMILES generated with this release are different from those in
+   previous releases. Note that the canonicalization algorithm does
+   not work in cases of pure ring stereochemistry (rings with chiral
+   centers are handled fine).
+
+Acknowledgements:
+ - Kirk DeLisle, Markus Kossner, George Magoon, Nik Stiefl 
+
+Bug Fixes
+ - core leaks in learning code (issue 2152622)
+ - H-bond acceptor definitions (issue 2183240)
+ - handling of aromatic dummies (issue 2196817)
+ - errors in variable quantization (issue 2202974)
+ - errors in information theory functions on 64 bit machines (issue 2202977)
+ - kekulization problems (issue 2202977)
+ - infinite loop in getShortestPaths() for disconnected structures (issue 2219400)
+ - error in depictor for double bonds with stereochemistry connected
+   to rings (issue 2303566)
+ - aromaticity flags not copied to null atoms in reaction products
+   (issue 2308128)
+ - aromaticity perception in large molecule hangs (issue 2313979)
+ - invariant error in canonicalization (issue 2316677)
+ - mol file parser handling of bogus bond orders (issue 2337369)
+ - UFF optimization not terminating when atoms are on top of each
+   other (issue 2378119)
+ - incorrect valence errors with 4 coordinate B- (issue 2381580)
+ - incorrect parsing of atom-list queries with high-numbered atoms
+   (issue 2413431)
+ - MolOps::mergeQueryHs() crashing with non-query molecules. (issue
+   2414779) 
+
+New Features
+ - SLN parser (request 2136703).
+ - Mol2 parser : Corina atom types (request 2136705).
+ - Building under mingw (request 2292153).
+ - Null bonds in reaction products are replaced with the corresponding
+   bond from the reactants (request 2308123).
+
+Other
+ - a bunch of deprecation warnings from numpy have been cleaned up
+   (issue 2318431)
+ - updated documentation
+ - some optimization work on the fingerprinter
+
 ******  Release_Q32008_1 *******
 (Changes relative to Release_May2008_1)
 
