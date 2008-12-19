@@ -391,7 +391,8 @@ namespace RDKit{
         std::string attribName=attribPtr->first;
         boost::to_lower(attribName);    
         std::string attribVal=attribPtr->second;
-        if(*(attribVal.begin())=='"' &&
+        if(attribVal.begin()!=attribVal.end() &&
+           *(attribVal.begin())=='"' &&
            *(attribVal.begin())==*(attribVal.rbegin()) ){
           attribVal.erase(attribVal.begin());
           attribVal.erase(--(attribVal.end()));
