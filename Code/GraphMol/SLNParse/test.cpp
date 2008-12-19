@@ -70,6 +70,20 @@ void test1(){
   TEST_ASSERT(mol->getRingInfo()->numRings()==1);
     
   delete mol;
+  sln = "C[2]H2CH2CH2@2";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==3);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+
+  delete mol;
+  sln = "C[200]H2CH2CH2@200";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==3);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+
+  delete mol;
   sln = "C[1:foo]H2CH2CH2@1";
   mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
