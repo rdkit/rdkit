@@ -292,7 +292,7 @@ void test3(){
 
   delete mol;
   sln = "C[*]H3";
-  mol=RDKit::SLNToMol(sln,true,true);
+  mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms()==1);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs()==3);
