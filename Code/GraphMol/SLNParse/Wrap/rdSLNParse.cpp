@@ -1,4 +1,4 @@
-// $Id: rdSLNParse.cpp 1043 2008-07-25 12:00:41Z landrgr1 $
+// $Id$
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -80,7 +80,7 @@ BOOST_PYTHON_MODULE(rdSLNParse) {
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
-\n\    
+\n\
   NOTE: the SLN should not contain query information or properties. To build a\n\
     query from SLN, use MolFromQuerySLN.\n\
 \n";  
