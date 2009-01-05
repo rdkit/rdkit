@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -23,12 +23,12 @@ class MatchError(exceptions.Exception):
   pass
 
 _verbose = 0
-def GetAtomsMatchingBit(sig,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=None):
+def GetAtomsMatchingBit(sigFactory,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=None):
   """ Returns a list of lists of atom indices for a bit
 
     **Arguments**
 
-      - sig: a signature
+      - sigFactory: a SigFactory
 
       - bitIdx: the bit to be queried
 
@@ -48,28 +48,27 @@ def GetAtomsMatchingBit(sig,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=None):
 
       a list of tuples with the matching atoms
   """
-  assert sig.GetShortestPathsOnly(),'not implemented for non-shortest path signatures'
-  nPts,pattCombo,scaffold = sig.GetBitInfo(bitIdx)
+  assert sigFactory.shortestPathsOnly,'not implemented for non-shortest path signatures'
+  nPts,featCombo,scaffold = sigFactory.GetBitInfo(bitIdx)
   if _verbose:
     print 'info:',nPts
-    print '\t',pattCombo
+    print '\t',featCombo
     print '\t',scaffold
   
-  # find the atoms that match each pattern
+  if matchingAtoms is None:
+    matchingAtoms = sigFactory.GetMolFeats(mol)
+
+  # find the atoms that match each features
+  fams = sigFactory.GetFeatFamilies()
   choices = []
-  for pattIdx in pattCombo:
-    tmp = None
-    if matchingAtoms is not None:
-      tmp = matchingAtoms[pattIdx]
-    else:
-      patt = sig.GetPattern(pattIdx)
-      tmp = mol.GetSubstructMatches(patt)
+  for featIdx in featCombo:
+    tmp = matchingAtoms[featIdx]
     if tmp:
       choices.append(tmp)
     else:
       # one of the patterns didn't find a match, we
       #  can return now
-      if _verbose: print 'no match found for pattern:',pattIdx
+      if _verbose: print 'no match found for feature:',featIdx
       return []
  
   if _verbose:
@@ -77,8 +76,7 @@ def GetAtomsMatchingBit(sig,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=None):
     print choices
 
   if dMat is None:
-    useBO = sig.GetIncludeBondOrder()
-    dMat = Chem.GetDistanceMatrix(mol,useBO)
+    dMat = Chem.GetDistanceMatrix(mol,sigFactory.includeBondOrder)
 
   matches = []
   distsToCheck = Utils.nPointDistDict[nPts]
@@ -89,7 +87,7 @@ def GetAtomsMatchingBit(sig,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=None):
   for protoPharm in protoPharmacophores:
     if _verbose: print 'protoPharm:',protoPharm
     for i in range(len(distsToCheck)):
-      dLow,dHigh = sig.GetBin(scaffold[i])
+      dLow,dHigh = sigFactory.GetBins()[scaffold[i]]
       a1,a2 = distsToCheck[i]
       #
       # FIX: this is making all kinds of assumptions about

@@ -1,202 +1,203 @@
 # $Id$
 #
-#  Copyright (C) 2002-2006  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2002-2008  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 """unit testing code for the signatures
 
 """
-import unittest
 import Chem
+import unittest
 from Chem.Pharm2D import Signature,Generate,SigFactory,Utils
-import cPickle
+from Chem import ChemicalFeatures
+import os.path
+import RDConfig
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    self.factory = SigFactory.SigFactory()
-    self.factory.SetPatternsFromSmarts(['O','N'])
+    fdefFile = os.path.join(RDConfig.RDCodeDir,'Chem','Pharm2D','test_data','BaseFeatures.fdef')
+    featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
+    self.factory = SigFactory.SigFactory(featFactory,minPointCount=2,maxPointCount=3)
     self.factory.SetBins([(0,2),(2,5),(5,8)])
-    self.factory.SetMinCount(2)
-    self.factory.SetMaxCount(3)
-    
-  def testSizes(self):
-    sig = Signature.Pharm2DSig()
-    sig.SetPatternsFromSmarts(['O','N'])
-    sig.SetBins([(1,2),(2,5),(5,6)])
-    sig.SetMinCount(2)
+    self.factory.Init()
 
-    sig.SetMaxCount(2)
-    sig.Init()
-    assert sig.GetSize()==9,'bad 2 point size %d'%(sig.GetSize())
+  def test1Sizes(self):
+    self.factory.maxPointCount=2
+    self.factory.Init()
+    sig = self.factory.GetSignature()
+    self.failUnlessEqual(len(sig),45)
     
-    sig.SetMaxCount(3)
-    sig.Init()
-    assert sig.GetSize()==105,'bad 3 point size %d'%(sig.GetSize())
+    self.factory.maxPointCount=3
+    self.factory.Init()
+    sig = self.factory.GetSignature()
+    self.failUnlessEqual(len(sig),885)
     
-    sig.SetMaxCount(4)
-    sig.Init()
-    assert sig.GetSize()==1075,'bad 4 point size %d'%(sig.GetSize())
+    self.factory.maxPointCount=4
+    self.factory.Init()
+    sig = self.factory.GetSignature()
+    self.failUnlessEqual(len(sig),14465)
     
-  def testBitIdx(self,sig=None):
+  def test2BitIdx(self):
     data = [
+      ( (0,0),[0],0 ),
       ( (0,0),[2],1 ),
       ( (0,0),[5],2 ),
       ( (0,1),[5],5 ),
-      ( (1,1),[4],7 ),
-      ( (1,1),[7],8 ),
-      ( (0,0,0),[1,1,1],9),
-      ( (0,0,1),[1,1,1],33),
-      ( (0,0,1),[1,1,3],34),
-      ( (0,0,1),[3,1,1],40),
-      ( (0,0,1),[3,3,1],43),
+      ( (1,1),[4],16 ),
+      ( (1,1),[7],17 ),
+      ( (0,0,0),[1,1,1],45),
+      ( (0,0,1),[1,1,1],69),
+      ( (0,0,1),[1,1,3],70),
+      ( (0,0,1),[3,1,1],76),
+      ( (0,0,1),[3,3,1],79),
       ]
-    if sig is None:
-      sig = self.factory.GetSignature()
     for tpl in data:
       patts,dists,bit = tpl
-      try:
-        idx = sig.GetBitIdx(patts,dists)
-      except:
-        assert 0,'GetBitIdx failed for probe %s'%(str(tpl))
-      else:
-        assert bit==idx,'bad idx (%d) for probe %s'%(idx,str(tpl))
-            
-  def testSimpleSig(self,sig=None):
-    if sig is None:
-      sig = Signature.Pharm2DSig()
-      sig.SetPatternsFromSmarts(['O'])
-      sig.SetBins([(1,3),(3,4),(4,8)])
-      sig.SetMinCount(2)
-      sig.SetMaxCount(3)
-      sig.Init()
+      idx = self.factory.GetBitIdx(patts,dists)
+      self.failUnlessEqual(bit,idx)
 
-    mol = Chem.MolFromSmiles('OCCC1COCCO1')
-    Generate.Gen2DFingerprint(mol,sig)
-    assert sig.GetSize()==30,'bad sig size: %d'%(sig.GetSize())
-    bs = tuple(sig.GetOnBits())
-    assert bs==(1,2,20),'bad bit list: %s'%(str(bs))
+      cnt,feats,bins = self.factory.GetBitInfo(bit)
+      self.failUnlessEqual(cnt,len(patts))
+      self.failUnlessEqual(feats,patts)
 
-  def testSimpleSig2(self,sig=None):
-    if sig is None:
-      sig = Signature.Pharm2DSig()
-      sig.SetPatternsFromSmarts(['O'])
-      sig.SetBins([(1,3),(3,4),(4,8)])
-      sig.SetMinCount(2)
-      sig.SetMaxCount(3)
-      sig.Init()
-
-    mol = Chem.MolFromSmiles('OCCC1COCCO1')
-    Generate.Gen2DFingerprint(mol,sig)
-    assert sig.GetSize()==30,'bad sig size: %d'%(sig.GetSize())
-    bs = tuple(sig.GetOnBits())
-    assert bs==(1,2,20),'bad bit list: %s'%(str(bs))
-
-  def testBitIDs1(self):
+  def test3BitIdx(self):
     """ test 3 point p'cophore ids,
     you can never have too much of this stuff
 
     """
-    sig = self.factory.GetSignature()
-    sig.SetBins(((0,2),(2,4),(4,8)))
-    sig.Init()
-    assert sig.GetSize()==117,'bad signature size: %d'%(sig.GetSize())
-    probes = [((0,0,0),(1,3,1),12),
-              ((0,0,0),(1,3,3),13),
-              ((0,0,1),(1,3,1),39),
+    self.factory.SetBins(((0,2),(2,4),(4,8)))
+    self.factory.Init()
+    self.failUnlessEqual(self.factory.GetSigSize(),990)
+    probes = [((0,0,0),(1,3,1),48),
+              ((0,0,0),(1,3,3),49),
+              ((0,0,1),(1,3,1),75),
               ]
-    for patts,bins,ans in probes:
-      idx = sig.GetBitIdx(patts,bins)
-      assert idx==ans,'bad idx: %d != %d'%(idx,ans)
-    patts,bins = (1,0,0),(1,3,1)
-    try:
-      sig.GetBitIdx(patts,bins,checkPatts=1)
-    except ValueError:
-      pass
-    except:
-      assert 0,'bad exception type'
-    else:
-      assert 0,'expected exception was not raised'
-  
-    # we don't bother checking the return value here because it's bogus
-    try:
-      sig.GetBitIdx(patts,bins,checkPatts=0)
-    except:
-      assert 0,'should not have thrown an exception here'
+    for patts,dists,ans in probes:
+      idx = self.factory.GetBitIdx(patts,dists)
+      self.failUnlessEqual(idx,ans)
 
+      cnt,feats,bins = self.factory.GetBitInfo(ans)
+      self.failUnlessEqual(cnt,len(patts))
+      self.failUnlessEqual(feats,patts)
 
-    
-
-  def testBitIDs2(self):
+      
+  def test4BitIdx(self):
     """ test 3 point p'cophore ids where the triangle
       inequality has been used to remove some bits
     """
     sig = self.factory.GetSignature()
-    assert sig.GetSize()==105,'bad signature size: %d'%(sig.GetSize())
-    probes = [((0,0,0),(1,3,1),11),
-              ((0,0,0),(1,3,3),12),
-              ((0,0,1),(1,3,1),35),
-              ]
-    for patts,bins,ans in probes:
-      idx = sig.GetBitIdx(patts,bins)
-      assert idx==ans,'bad idx: %d != %d'%(idx,ans)
-    patts,bins = (1,0,0),(1,3,1)
-    try:
-      sig.GetBitIdx(patts,bins,checkPatts=1)
-    except ValueError:
-      pass
-    except:
-      assert 0,'bad exception type'
-    else:
-      assert 0,'expected exception was not raised'
-    # we don't bother checking the return value here because it's bogus
-    try:
-      sig.GetBitIdx(patts,bins,checkPatts=0)
-    except:
-      assert 0,'should not have thrown an exception here'
+    self.failUnlessEqual(len(sig),885)
 
-  
+    probes = [((0,0,0),(1,3,1),47),
+              ((0,0,0),(1,3,3),48),
+              ((0,0,1),(1,3,1),71),
+              ]
+    for patts,dists,ans in probes:
+      idx = self.factory.GetBitIdx(patts,dists)
+      self.failUnlessEqual(idx,ans)
+      cnt,feats,bins = self.factory.GetBitInfo(ans)
+      self.failUnlessEqual(cnt,len(patts))
+      self.failUnlessEqual(feats,patts)
+
+  def test5SimpleSig(self):
+    factory = self.factory
+    factory.SetBins([(1,3),(3,7),(7,10)])
+    factory.minPointCount=2
+    factory.maxPointCount=3
+    factory.Init()
+
+    mol = Chem.MolFromSmiles('O=CCC=O')
+    sig=Generate.Gen2DFingerprint(mol,factory)
+    self.failUnlessEqual(len(sig),885)
+    bs = tuple(sig.GetOnBits())
+    self.failUnlessEqual(bs,(1,))
+
+    mol = Chem.MolFromSmiles('O=CC(CC=O)CCC=O')
+    sig=Generate.Gen2DFingerprint(mol,factory)
+    self.failUnlessEqual(len(sig),885)
+    bs = tuple(sig.GetOnBits())
+    self.failUnlessEqual(bs,(1,2,64))
+
+  def test6SimpleSigCounts(self):
+    factory = self.factory
+    factory.SetBins([(1,3),(3,7),(7,10)])
+    factory.minPointCount=2
+    factory.maxPointCount=3
+    factory.useCounts=True
+    factory.Init()
+
+    mol = Chem.MolFromSmiles('O=CCC=O')
+    sig=Generate.Gen2DFingerprint(mol,factory)
+    self.failUnlessEqual(sig.GetLength(),885)
+    cs = tuple(sig.GetNonzeroElements().iteritems())
+    self.failUnlessEqual(cs,((1,1),))
+
+    mol = Chem.MolFromSmiles('O=CC(CC=O)CCC=O')
+    sig=Generate.Gen2DFingerprint(mol,factory)
+    self.failUnlessEqual(sig.GetLength(),885)
+    elems = sig.GetNonzeroElements()
+    bs = elems.keys()
+    bs.sort()
+    cs = [(x,elems[x]) for x in bs]
+    self.failUnlessEqual(tuple(cs),((1,2),(2,1),(64,1)))
+
+  def test7SimpleSigSkip(self):
+    factory = self.factory
+    factory.SetBins([(1,3),(3,7),(7,10)])
+    factory.minPointCount=2
+    factory.maxPointCount=3
+    factory.skipFeats='Acceptor'
+    factory.Init()
+
+    mol = Chem.MolFromSmiles('O=CCC=O')
+    sig=Generate.Gen2DFingerprint(mol,factory)
+    self.failUnlessEqual(len(sig),510)
+    bs = tuple(sig.GetOnBits())
+    self.failUnlessEqual(bs,())
+    
+  def test8MultiPointMatches(self):
+    factory = self.factory
+    factory.SetBins([(1,3),(3,7),(7,10)])
+    factory.minPointCount=2
+    factory.maxPointCount=3
+    factory.Init()
+
+    mol = Chem.MolFromSmiles('O=Cc1ccccc1')
+    sig=Generate.Gen2DFingerprint(mol,factory)
+    self.failUnlessEqual(len(sig),885)
+    bs = tuple(sig.GetOnBits())
+    self.failUnlessEqual(bs,(3,))
+
+    mol = Chem.MolFromSmiles('O=CCCCCCCCCc1ccccc1')
+    sig=Generate.Gen2DFingerprint(mol,factory)
+    self.failUnlessEqual(len(sig),885)
+    bs = tuple(sig.GetOnBits())
+    self.failUnlessEqual(bs,())
 
   # FIX: add test for perms argument to Gen2DFingerprint
 
-  def testBondOrderSigs(self):
+  def test9BondOrderSigs(self):
     """ test sigs where bond order is used
 
     """
-    mol = Chem.MolFromSmiles('OCCC(=O)CCCN')
-    sig = self.factory.GetSignature()
-    assert sig.GetSize()==105,'bad signature size: %d'%(sig.GetSize())
-    sig.SetIncludeBondOrder(0)
+    factory = self.factory
+    factory.SetBins([(1,4),(4,7),(7,10)])
+    factory.minPointCount=2
+    factory.maxPointCount=3
+    factory.Init()
 
-    Generate.Gen2DFingerprint(mol,sig)
-    tgt = (1,5,48)
-    onBits = tuple(sig.GetOnBits())
-    assert len(onBits)==len(tgt),'bad on bit length (%d!=%d)'%(len(onBits),len(tgt))
-    assert onBits==tgt,'bad on bits (%s != %s)'%(onBits,tgt)
+    mol = Chem.MolFromSmiles('[O-]CCC(=O)')
+    sig=Generate.Gen2DFingerprint(mol,self.factory)
+    self.failUnlessEqual(len(sig),990)
+    bs = tuple(sig.GetOnBits())
+    self.failUnlessEqual(bs,(1,))
     
-    mol = Chem.MolFromSmiles('OCCC(=O)CCCN')
-    sig = self.factory.GetSignature()
-    sig.SetIncludeBondOrder(1)
-    Generate.Gen2DFingerprint(mol,sig)
-    tgt = (1,4,5,45)
-    onBits = tuple(sig.GetOnBits())
-    assert len(onBits)==len(tgt),'bad on bit length (%d!=%d)'%(len(onBits),len(tgt))
-
-    assert onBits==tgt,'bad on bits (%s != %s)'%(onBits,tgt)
-    
-  def testPickle(self):
-    onBits = (12,25)
-    sig = self.factory.GetSignature()
-    self.testBitIdx(sig=sig)
-    for bit in onBits:
-      sig._bv.SetBit(bit)
-    
-    text = cPickle.dumps(sig)
-    sig = cPickle.loads(text)
-    assert tuple(sig._bv.GetOnBits())==onBits,'bad onbits (%s != %s)'%(str(sig._bv.GetOnBits()),
-                                                                str(onBits))
-    self.testBitIdx(sig=sig)
-
+    self.factory.includeBondOrder=True
+    sig=Generate.Gen2DFingerprint(mol,self.factory)
+    self.failUnlessEqual(len(sig),990)
+    bs = tuple(sig.GetOnBits())
+    self.failUnlessEqual(bs,(0,))
 
 if __name__ == '__main__':
   unittest.main()

@@ -15,8 +15,7 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     self.factory = Gobbi_Pharm2D.factory
 
-  def testPatts(self):
-    patts = Gobbi_Pharm2D.patts
+  def test1Sigs(self):
     probes = [
       ('OCCC=O',{'HA':(1,((0,),(4,))),
                  'HD':(1,((0,),)),
@@ -35,7 +34,7 @@ class TestCase(unittest.TestCase):
                  'RR':(0,None),
                  'X':(0,None),
                  'BG':(0,None),
-                 'AG':(1,((3,4,5),)),
+                 'AG':(1,((3,),)),
                  }
        ),
       ('CCCN',{'HA':(1,((3,),)),
@@ -89,29 +88,30 @@ class TestCase(unittest.TestCase):
                           }
        ),
       ]
-    
     for smi,d in probes:
       mol = Chem.MolFromSmiles(smi)
+      feats=self.factory.featFactory.GetFeaturesForMol(mol)
       for k in d.keys():
         shouldMatch,mapList=d[k]
-        patt = patts[k][0]
-        self.failUnless(mol.HasSubstructMatch(patt)==shouldMatch,'bad match (!=%d) for smi %s and patt %s'%(shouldMatch,smi,k))
+        feats=self.factory.featFactory.GetFeaturesForMol(mol,includeOnly=k)
         if shouldMatch:
-          mapL = mol.GetSubstructMatches(patt)
-          self.failUnless(mapL==mapList,
-                          'bad match (%s!=%s) for smi %s and patt %s'%(str(mapL),
-                                                                       str(mapList),
-                                                                       smi,k))
+          self.failUnless(feats)
+          self.failUnlessEqual(len(feats),len(mapList))
+          aids = [(x.GetAtomIds()[0],) for x in feats]
+          aids.sort()
+          self.failUnlessEqual(tuple(aids),mapList)
 
-
-  def testSig(self):
-    probes = [('O=CCC=O',1)]
+  def test2Sigs(self):
+    probes = [('O=CCC=O',(149,)),
+              ('OCCC=O',(149,156)),
+              ('OCCC(=O)O',(22, 29, 149, 154, 156, 184, 28810, 30055)),
+              ]
     for smi,tgt in probes:
       sig = Generate.Gen2DFingerprint(Chem.MolFromSmiles(smi),self.factory)
-      cnt = len(sig.GetOnBits())
-      self.failUnless(cnt==tgt,'bad # onbits for smi %s: %d != %d'%(smi,cnt,tgt))
-    
-
+      self.failUnlessEqual(len(sig),39972)
+      bs = tuple(sig.GetOnBits())
+      self.failUnlessEqual(len(bs),len(tgt))
+      self.failUnlessEqual(bs,tgt)
 
 if __name__ == '__main__':
   unittest.main()

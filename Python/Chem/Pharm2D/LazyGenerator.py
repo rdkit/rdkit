@@ -1,16 +1,15 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
 # Copyright (C) 2003-2006 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
+raise NotImplementedError,'not finished yet'
 """ lazy generator of 2D pharmacophore signature data
 
 """
 import Chem
-from Chem.Pharm2D import SigFactory,Matcher
+from Chem.Pharm2D import SigFactory,Matcher,Utils
 
 class Generator(object):
   """
@@ -19,17 +18,20 @@ class Generator(object):
 
    - mol: the molecules whose signature is being worked with
 
-   - sig: the signature to be used to decide what bits are set in the
-     molecule.  This signature can be considered to be constant in
-     this class, none of the class methods modify sig
+   - sigFactory : the SigFactory object with signature parameters
+            NOTE: no preprocessing is carried out for _sigFactory_. 
+                  It *must* be pre-initialized.     
 
+   **Notes**  
+
+     - 
   """
-  def __init__(self,sig,mol,dMat=None,bitCache=1):
+  def __init__(self,sigFactory,mol,dMat=None,bitCache=True):
     """ constructor
 
       **Arguments**
 
-       - sig: a signature, see class docs
+       - sigFactory: a signature factory, see class docs
 
        - mol: a molecule, see class docs
 
@@ -41,13 +43,14 @@ class Generator(object):
          be recalculate each time a bit is queried.
        
     """
-    if isinstance(sig,SigFactory.SigFactory):
-      sig = sig.GetSignature()
-    self.sig = sig
+    if not isinstance(sigFactory,SigFactory.SigFactory):
+      raise ValueError,'bad factory'
+
+    self.sigFactory = sigFactory
     self.mol = mol
 
     if dMat is None:
-      useBO = self.sig.GetIncludeBondOrder()
+      useBO = sigFactory.includeBondOrder
       dMat = Chem.GetDistanceMatrix(mol,useBO)
 
     self.dMat = dMat
@@ -57,11 +60,18 @@ class Generator(object):
     else:
       self.bits = None
 
-    nPatts = self.sig.GetNumPatterns()
-    pattMatches = [None]*nPatts
-    for i in range(nPatts):
-      patt = self.sig.GetPattern(i)
-      pattMatches[i]=self.mol.GetSubstructMatches(patt)
+    featFamilies=[fam for fam in sigFactory.featFactory.GetFeatureFamilies() if fam not in sigFactory.skipFeats]
+    nFeats = len(featFamilies)
+    featMatches={}
+    for fam in featFamilies:
+      featMatches[fam] =  []
+    feats = sigFactory.featFactory.GetFeaturesForMol(mol)
+    for feat in feats:
+      if feat.GetFamily() not in sigFactory.skipFeats:
+        featMatches[feat.GetFamily()].append(feat.GetAtomIds())
+    featMatches = [None]*nFeats
+    for i in range(nFeats):
+      featMatches[i]=sigFactory.featFactory.GetMolFeature(
     self.pattMatches = pattMatches
     
   def GetBit(self,idx):
