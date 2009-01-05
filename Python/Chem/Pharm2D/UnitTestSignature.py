@@ -18,7 +18,8 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     fdefFile = os.path.join(RDConfig.RDCodeDir,'Chem','Pharm2D','test_data','BaseFeatures.fdef')
     featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
-    self.factory = SigFactory.SigFactory(featFactory,minPointCount=2,maxPointCount=3)
+    self.factory = SigFactory.SigFactory(featFactory,minPointCount=2,maxPointCount=3,
+                                         trianglePruneBins=False)
     self.factory.SetBins([(0,2),(2,5),(5,8)])
     self.factory.Init()
 
@@ -31,12 +32,12 @@ class TestCase(unittest.TestCase):
     self.factory.maxPointCount=3
     self.factory.Init()
     sig = self.factory.GetSignature()
-    self.failUnlessEqual(len(sig),885)
+    self.failUnlessEqual(len(sig),990)
     
     self.factory.maxPointCount=4
     self.factory.Init()
     sig = self.factory.GetSignature()
-    self.failUnlessEqual(len(sig),14465)
+    self.failUnlessEqual(len(sig),18000)
     
   def test2BitIdx(self):
     data = [
@@ -47,10 +48,10 @@ class TestCase(unittest.TestCase):
       ( (1,1),[4],16 ),
       ( (1,1),[7],17 ),
       ( (0,0,0),[1,1,1],45),
-      ( (0,0,1),[1,1,1],69),
-      ( (0,0,1),[1,1,3],70),
-      ( (0,0,1),[3,1,1],76),
-      ( (0,0,1),[3,3,1],79),
+      ( (0,0,1),[1,1,1],72),
+      ( (0,0,1),[1,1,3],73),
+      ( (0,0,1),[3,1,1],81),
+      ( (0,0,1),[3,3,1],84),
       ]
     for tpl in data:
       patts,dists,bit = tpl
@@ -86,6 +87,8 @@ class TestCase(unittest.TestCase):
     """ test 3 point p'cophore ids where the triangle
       inequality has been used to remove some bits
     """
+    self.factory.trianglePruneBins=True
+    self.factory.Init()
     sig = self.factory.GetSignature()
     self.failUnlessEqual(len(sig),885)
 
@@ -109,15 +112,15 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('O=CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),885)
+    self.failUnlessEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
     self.failUnlessEqual(bs,(1,))
 
     mol = Chem.MolFromSmiles('O=CC(CC=O)CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),885)
+    self.failUnlessEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
-    self.failUnlessEqual(bs,(1,2,64))
+    self.failUnlessEqual(bs,(1,2,67))
 
   def test6SimpleSigCounts(self):
     factory = self.factory
@@ -129,18 +132,18 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('O=CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(sig.GetLength(),885)
+    self.failUnlessEqual(sig.GetLength(),990)
     cs = tuple(sig.GetNonzeroElements().iteritems())
     self.failUnlessEqual(cs,((1,1),))
 
     mol = Chem.MolFromSmiles('O=CC(CC=O)CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(sig.GetLength(),885)
+    self.failUnlessEqual(sig.GetLength(),990)
     elems = sig.GetNonzeroElements()
     bs = elems.keys()
     bs.sort()
     cs = [(x,elems[x]) for x in bs]
-    self.failUnlessEqual(tuple(cs),((1,2),(2,1),(64,1)))
+    self.failUnlessEqual(tuple(cs),((1,2),(2,1),(67,1)))
 
   def test7SimpleSigSkip(self):
     factory = self.factory
@@ -152,7 +155,7 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('O=CCC=O')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),510)
+    self.failUnlessEqual(len(sig),570)
     bs = tuple(sig.GetOnBits())
     self.failUnlessEqual(bs,())
     
@@ -165,13 +168,13 @@ class TestCase(unittest.TestCase):
 
     mol = Chem.MolFromSmiles('O=Cc1ccccc1')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),885)
+    self.failUnlessEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
     self.failUnlessEqual(bs,(3,))
 
     mol = Chem.MolFromSmiles('O=CCCCCCCCCc1ccccc1')
     sig=Generate.Gen2DFingerprint(mol,factory)
-    self.failUnlessEqual(len(sig),885)
+    self.failUnlessEqual(len(sig),990)
     bs = tuple(sig.GetOnBits())
     self.failUnlessEqual(bs,())
 

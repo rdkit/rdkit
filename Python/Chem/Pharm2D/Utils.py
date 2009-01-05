@@ -94,11 +94,11 @@ def BinsTriangleInequality(d1,d2,d3):
        d1(upper) + d2(upper) >= d3(lower)
 
   """
-  if d1[1]+d2[1]<d3[0]: return 0
-  if d2[1]+d3[1]<d1[0]: return 0
-  if d3[1]+d1[1]<d2[0]: return 0
+  if d1[1]+d2[1]<d3[0]: return False
+  if d2[1]+d3[1]<d1[0]: return False
+  if d3[1]+d1[1]<d2[0]: return False
   
-  return 1
+  return True
 
 def ScaffoldPasses(combo,bins=None):
   """ checks the scaffold passed in to see if all
@@ -113,8 +113,8 @@ def ScaffoldPasses(combo,bins=None):
   for tri in tris:
     ds = [bins[combo[x]] for x in tri]
     if not BinsTriangleInequality(ds[0],ds[1],ds[2]):
-      return 0
-  return 1
+      return False
+  return True
 
 
 _numCombDict = {}
@@ -280,7 +280,7 @@ def UniquifyCombinations(combos):
     resD[tuple(k)] = tuple(combo)
   return resD.values() 
 
-def GetPossibleScaffolds(nPts,bins):
+def GetPossibleScaffolds(nPts,bins,useTriangleInequality=True):
   """ gets all realizable scaffolds (passing the triangle inequality) with the
      given number of points and returns them as a list of tuples
 
@@ -294,7 +294,7 @@ def GetPossibleScaffolds(nPts,bins):
     combos = GetAllCombinations([range(len(bins))]*nDists,noDups=0)
     res = []
     for combo in combos:
-      if ScaffoldPasses(combo,bins):
+      if not useTriangleInequality or ScaffoldPasses(combo,bins):
         res.append(tuple(combo))
   return res    
   

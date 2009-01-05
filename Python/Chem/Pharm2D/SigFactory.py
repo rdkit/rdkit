@@ -25,13 +25,15 @@ class SigFactory(object):
 
   """
   def __init__(self,featFactory,useCounts=False,minPointCount=2,maxPointCount=3,
-               shortestPathsOnly=True,includeBondOrder=False,skipFeats=None):
+               shortestPathsOnly=True,includeBondOrder=False,skipFeats=None,
+               trianglePruneBins=True):
     self.featFactory = featFactory
     self.useCounts=useCounts
     self.minPointCount=minPointCount
     self.maxPointCount=maxPointCount
     self.shortestPathsOnly=shortestPathsOnly
     self.includeBondOrder=includeBondOrder
+    self.trianglePruneBins=trianglePruneBins
     if skipFeats is None:
       self.skipFeats=[]
     else:
@@ -226,7 +228,9 @@ class SigFactory(object):
         print '\tbins:',repr(self._bins),type(self._bins)
       bin = self._findBinIdx(dists,self._bins,self._scaffolds[len(dists)])
     except ValueError:
-      raise IndexError,'distance bin not found'
+      fams = self.GetFeatFamilies()
+      fams = [fams[x] for x in featIndices]
+      raise IndexError,'distance bin not found: feats: %s; dists=%s; bins=%s; scaffolds: %s'%(fams,dists,self._bins,self._scaffolds)
 
     return startIdx + offset + bin
 
@@ -298,7 +302,8 @@ class SigFactory(object):
     for i in range(self.minPointCount,self.maxPointCount+1):
       self._starts[i] = accum
       nDistsHere = len(Utils.nPointDistDict[i])
-      scaffoldsHere = Utils.GetPossibleScaffolds(i,self._bins)
+      scaffoldsHere = Utils.GetPossibleScaffolds(i,self._bins,
+                                                 useTriangleInequality=self.trianglePruneBins)
       nBitsHere = len(scaffoldsHere)
       self._scaffolds[nDistsHere] = scaffoldsHere
       pointsHere = Utils.NumCombinations(self._nFeats,i) * nBitsHere

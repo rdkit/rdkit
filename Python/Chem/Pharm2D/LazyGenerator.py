@@ -71,7 +71,7 @@ class Generator(object):
         featMatches[feat.GetFamily()].append(feat.GetAtomIds())
     featMatches = [None]*nFeats
     for i in range(nFeats):
-      featMatches[i]=sigFactory.featFactory.GetMolFeature(
+      featMatches[i]=sigFactory.featFactory.GetMolFeature()
     self.pattMatches = pattMatches
     
   def GetBit(self,idx):
