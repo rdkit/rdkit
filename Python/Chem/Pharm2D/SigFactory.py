@@ -173,10 +173,9 @@ class SigFactory(object):
     featMatches = {}
     for fam in featFamilies:
       featMatches[fam] =  []
-    feats = self.featFactory.GetFeaturesForMol(mol)
-    for feat in feats:
-      if feat.GetFamily() not in self.skipFeats:
-        featMatches[feat.GetFamily()].append(feat.GetAtomIds())
+      feats = self.featFactory.GetFeaturesForMol(mol,includeOnly=fam)
+      for feat in feats:
+        featMatches[fam].append(feat.GetAtomIds())
     return [featMatches[x] for x in featFamilies]
   
   def GetBitIdx(self,featIndices,dists,sortIndices=True):
