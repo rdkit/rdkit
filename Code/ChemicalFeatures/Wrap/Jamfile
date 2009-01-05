@@ -5,7 +5,9 @@ local RDBASE = [ os.environ RDBASE ] ;
 import python ;
 
 python-extension rdChemicalFeatures : rdChemicalFeatures.cpp FreeChemicalFeature.cpp
-  ..//ChemicalFeatures ../../RDGeneral//RDGeneral ../../RDBoost//RDBoost ;
+  ../../GraphMol//GraphMol ..//ChemicalFeatures ../../RDGeneral//RDGeneral ../../RDBoost//RDBoost 
+ ../../Geometry//RDGeometry ../..//lapacklibs 
+;
 
 install pymod : rdChemicalFeatures : <location>$(RDBASE)/Python/Chem ;
 
