@@ -104,7 +104,6 @@ struct sparseIntVec_wrapper {
 	   (python::args("useAbs")=false),
 	   "Get the sum of the values in the vector, basically L1 norm")
       .def("GetLength", &SparseIntVect<IndexType>::getLength,
-	   (python::args("useAbs")=false),
 	   "Returns the length of the vector")
       .def("ToBinary", &SparseIntVect<IndexType>::toString,
 	   "returns a binary (pickle) representation of the vector")
