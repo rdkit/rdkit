@@ -9,7 +9,7 @@
 """
 import Chem
 import unittest
-from Chem.Pharm2D import Signature,Generate,SigFactory,Utils
+from Chem.Pharm2D import Generate,SigFactory,Utils
 from Chem import ChemicalFeatures
 import os.path
 import RDConfig
