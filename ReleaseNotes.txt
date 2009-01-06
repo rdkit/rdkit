@@ -5,8 +5,9 @@
  - A fix in the handling of stereochemistry in rings means that the
    SMILES generated with this release are different from those in
    previous releases. Note that the canonicalization algorithm does
-   not work in cases of pure ring stereochemistry (rings with chiral
-   centers are handled fine).
+   not work in cases of pure ring stereochemistry : the SMILES should
+   be correct, but it is not canonical. Rings containing chiral
+   centers should be fine.
 
 Acknowledgements:
  - Kirk DeLisle, Markus Kossner, George Magoon, Nik Stiefl 
