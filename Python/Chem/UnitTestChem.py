@@ -110,7 +110,9 @@ class TestCase(unittest.TestCase):
 
   def testPkl(self):
     " testing molecule pickle "
-    self.fName = 'chemtest.pkl'
+    import tempfile
+    f,self.fName = tempfile.mkstemp('.pkl')
+    f=None
     self.m = Chem.MolFromSmiles('CC(=O)CC')
     outF = open(self.fName,'wb+')
     cPickle.dump(self.m,outF)
