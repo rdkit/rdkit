@@ -36,7 +36,7 @@ namespace RDKit {
     init();
     // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
     // the function "tellg" does not work correctly if we do not open it this way
-    // Need to check if this has been fixed in VC++ 7.0
+    //   Jan 2009: Confirmed that this is still the case in visual studio 2008
     std::istream *tmpStream=0;
     tmpStream = static_cast<std::istream *>(new std::ifstream(fileName.c_str(), std::ios_base::binary));
     if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad()) ) {
