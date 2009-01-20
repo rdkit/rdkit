@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,11 +8,12 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
+#include <vector>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <boost/format.hpp>
-#include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 
 
@@ -107,6 +108,44 @@ namespace RDKit{
     while(res.size()<3) res += " ";
     return res;
   }
+
+  namespace {
+    bool compPair(const std::pair<unsigned int,RDGeom::Point3D> &v1,
+                  const std::pair<unsigned int,RDGeom::Point3D> &v2) {
+      return (v1.first < v2.first);
+    }
+
+    unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf){
+      PRECONDITION(atom,"bad atom");
+      PRECONDITION(conf,"bad conformer");
+      if(!conf->is3D()||atom->getDegree()!=4) return 0;
+
+      const ROMol &mol=atom->getOwningMol();
+      RDGeom::Point3D pos=conf->getAtomPos(atom->getIdx());
+      std::vector< std::pair<unsigned int,RDGeom::Point3D> > vs;
+      ROMol::ADJ_ITER nbrIdx,endNbrs;
+      boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atom);
+      while(nbrIdx!=endNbrs){
+        const Atom *at=mol.getAtomWithIdx(*nbrIdx);
+        unsigned int idx=at->getIdx();
+        RDGeom::Point3D v = conf->getAtomPos(idx);
+        v -= pos;
+        if(at->getAtomicNum()==1){
+          idx += mol.getNumAtoms();
+        }
+        vs.push_back(std::make_pair(idx,v));
+        ++nbrIdx;
+      }
+      std::sort(vs.begin(),vs.end(),compPair);
+      double vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);
+      if(vol<0){
+        return 2;
+      } else if(vol>0) {
+        return 1;
+      } 
+      return 0;
+    }
+  }
   const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf=0){
     PRECONDITION(atom,"");
     std::string res;
@@ -126,16 +165,23 @@ namespace RDKit{
     double atomMassDiff=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
     massDiff = static_cast<int>(atomMassDiff+.1);
     
+    unsigned int parityFlag=0;
     double x, y, z;
     x = y = z = 0.0;
     if (conf) {
       const RDGeom::Point3D pos = conf->getAtomPos(atom->getIdx());
       x = pos.x; y = pos.y; z = pos.z;
+      if(conf->is3D() &&
+         atom->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+         atom->getChiralTag()!=Atom::CHI_OTHER
+         && atom->getDegree()==4 ){
+        parityFlag=getAtomParityFlag(atom,conf);
+      }
     } 
     std::string symbol = AtomGetMolFileSymbol(atom);
     std::stringstream ss;
-    ss << boost::format("% 10.4f% 10.4f% 10.4f %3s% 2d% 3d  0% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d") % x % y % z % symbol.c_str() %
-      massDiff%chg%hCount%stereoCare%totValence%rxnComponentType%
+    ss << boost::format("% 10.4f% 10.4f% 10.4f %3s% 2d% 3d% 3d% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d") % x % y % z % symbol.c_str() %
+      massDiff%chg%parityFlag%hCount%stereoCare%totValence%rxnComponentType%
       rxnComponentNumber%atomMapNumber%inversionFlag%exactChangeFlag;
     res += ss.str();
     return res;

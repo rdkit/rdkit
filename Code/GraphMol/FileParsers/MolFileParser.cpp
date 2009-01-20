@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -558,12 +558,9 @@ namespace RDKit{
   
   Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos) {
     Atom *res = new Atom;
-    //double pX,pY,pZ;
     std::string symb;
     int massDiff,chg,hCount;
-    int stereoCare,totValence;
-    int atomMapNumber,inversionFlag,exactChangeFlag;
-    
+
     try {
       pos.x = stripSpacesAndCast<double>(text.substr(0,10));
       pos.y = stripSpacesAndCast<double>(text.substr(10,10));
@@ -648,6 +645,7 @@ namespace RDKit{
     
     //res->setPos(pX,pY,pZ);
     if(chg!=0) res->setFormalCharge(4-chg);
+
     // FIX: this does not appear to be correct
     if(hCount==1){
       res->setNoImplicit(true);
@@ -658,8 +656,21 @@ namespace RDKit{
       res->setMass(res->getMass()+massDiff);
     }
     
-    stereoCare=0;
+    if(text.size()>=42 && text.substr(39,3)!="  0"){
+      int parity=0;
+      try {
+        parity = stripSpacesAndCast<int>(text.substr(39,3),true);
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(39,3) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+      res->setProp("molParity",parity);
+    }
+
     if(text.size()>=48 && text.substr(45,3)!="  0"){
+      int stereoCare=0;
       try {
         stereoCare = stripSpacesAndCast<int>(text.substr(45,3),true);
       }
@@ -670,8 +681,8 @@ namespace RDKit{
       }
       res->setProp("molStereoCare",stereoCare);
     }
-    totValence=0;
     if(text.size()>=51 && text.substr(48,3)!="  0"){
+      int totValence=0;
       try {
         totValence= stripSpacesAndCast<int>(text.substr(48,3),true);
       }
@@ -682,8 +693,8 @@ namespace RDKit{
       }
       res->setProp("molTotValence",totValence);
     }
-    atomMapNumber=0;
     if(text.size()>=63 && text.substr(60,3)!="  0"){
+      int atomMapNumber=0;
       try {
         atomMapNumber = stripSpacesAndCast<int>(text.substr(60,3),true);
       }
@@ -694,8 +705,8 @@ namespace RDKit{
       }
       res->setProp("molAtomMapNumber",atomMapNumber);
     }
-    inversionFlag=0;
     if(text.size()>=66 && text.substr(63,3)!="  0"){
+      int inversionFlag=0;
       try {
         inversionFlag= stripSpacesAndCast<int>(text.substr(63,3),true);
       }
@@ -706,8 +717,8 @@ namespace RDKit{
       }
       res->setProp("molInversionFlag",inversionFlag);
     }
-    exactChangeFlag=0;
     if(text.size()>=69 && text.substr(66,3)!="  0"){
+      int exactChangeFlag=0;
       try {
         exactChangeFlag = stripSpacesAndCast<int>(text.substr(66,3),true);
       }
