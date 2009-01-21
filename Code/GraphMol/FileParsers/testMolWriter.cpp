@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -457,62 +457,62 @@ void testSDMemoryCorruption() {
 #endif
 }
 
-
 int main() {
   RDLog::InitLogs();
 #if 1
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testSmilesWriter()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testSmilesWriter()\n";
   testSmilesWriter();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testSmilesWriter2()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testSmilesWriter2()\n";
   testSmilesWriter2();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testSmilesWriterNoNames()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testSmilesWriterNoNames()\n";
   testSmilesWriterNoNames();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
 
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testSDWriter()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testSDWriter()\n";
   testSDWriter();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testTDTWriter()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testTDTWriter()\n";
   testTDTWriter();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testSmilesWriterStrm()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testSmilesWriterStrm()\n";
   testSmilesWriterStrm();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testSDWriterStrm()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testSDWriterStrm()\n";
   testSDWriterStrm();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testTDTWriterStrm()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testTDTWriterStrm()\n";
   testTDTWriterStrm();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 #endif
-  std::cout <<  "-----------------------------------------\n";
-  std::cout << "Running testSDMemoryCorruption()\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testSDMemoryCorruption()\n";
   testSDMemoryCorruption();
-  std::cout << "Finished\n";
-  std::cout <<  "-----------------------------------------\n\n";
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
 }

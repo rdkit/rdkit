@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2009 Greg Landrum and Rational Discovery LLC
 //       All Rights Reserved
 //
 
@@ -1494,6 +1494,128 @@ void testBadBondOrders(){
 
 }
 
+void testAtomParity(){
+  BOOST_LOG(rdInfoLog) << "testing handling of atom stereo parity flags" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {
+    int parity;
+    std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.simple1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
+    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==1);
+
+    // if we don't perceive the stereochem first, no parity
+    // flags end up in the output:
+    std::string molBlock = MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(molBlock);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp("molParity"));
+    delete m2;
+    
+    // now perceive stereochem, then look for the parity
+    // flags:
+    MolOps::assignChiralTypesFrom3D(*m);
+    molBlock = MolToMolBlock(*m);
+    m2 = MolBlockToMol(molBlock);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
+    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==1);
+    delete m2;
+
+    delete m;
+  }
+
+  {
+    int parity;
+    std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.simple2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
+    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==2);
+
+    MolOps::assignChiralTypesFrom3D(*m);
+    std::string molBlock = MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(molBlock);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
+    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==2);
+    delete m2;
+
+    delete m;
+  }
+
+  {
+    // a case with an H on the chiral center:
+    int parity;
+    std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.simpleH1.mol";
+    RWMol *m = MolFileToMol(fName,true,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
+    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==1);
+
+    MolOps::assignChiralTypesFrom3D(*m);
+    std::string molBlock = MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(molBlock,true,false);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
+    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==1);
+    delete m2;
+
+    // if we remove the H and write things out, there is no
+    // parity flag:
+    m2 = (RWMol *)MolOps::removeHs(*((ROMol *)m));
+    molBlock = MolToMolBlock(*m2);
+    delete m2;
+    m2 = MolBlockToMol(molBlock);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp("molParity"));
+    delete m2;
+
+    delete m;
+  }
+
+  {
+    // a case with an H on the chiral center:
+    int parity;
+    std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.simpleH2.mol";
+    RWMol *m = MolFileToMol(fName,true,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
+    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==2);
+
+    MolOps::assignChiralTypesFrom3D(*m);
+    std::string molBlock = MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(molBlock,true,false);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
+    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==2);
+    delete m2;
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -1523,6 +1645,7 @@ int main(int argc,char *argv[]){
   testIssue1965035();
   testRadicals();
   testBadBondOrders();
+  testAtomParity();
   //testCrash();
   return 0;
 }
