@@ -90,10 +90,8 @@ echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 cd $RDBASE/Code
 python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
-cd GraphMol
-python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
 cd $RDBASE/Python
-find . -name 'test_list.py' -exec python $RDBASE/Python/TestRunner.py \{\} >> $LOGFILE 2>&1 \; 
+python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
 cd $RDBASE/Projects
 python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
 
