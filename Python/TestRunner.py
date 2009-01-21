@@ -44,7 +44,6 @@ def RunTest(exeName,args,extras):
     return TEST_PASSED
 
 def RunScript(script,doLongTests,verbose):
-
   # -------------------------------------------------------
   # this is pretty funny.  Whatever directory we started python in
   # will be in the search path, and if we've changed to another

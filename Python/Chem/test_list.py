@@ -22,10 +22,14 @@ tests=[
   ("python","UnitTestDescriptors.py",{}),
   ("python","AllChem.py",{}),
   ("python","test_list.py",{'dir':'AtomPairs'}),
+  ("python","test_list.py",{'dir':'ChemUtils'}),
   ("python","test_list.py",{'dir':'EState'}),
   ("python","test_list.py",{'dir':'FeatMaps'}),
+  ("python","test_list.py",{'dir':'Fingerprints'}),
   ("python","test_list.py",{'dir':'Pharm2D'}),
   ("python","test_list.py",{'dir':'Pharm3D'}),
+  ("python","test_list.py",{'dir':'Subshape'}),
+  ("python","test_list.py",{'dir':'Suppliers'}),
   ]
 
 
