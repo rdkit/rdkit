@@ -15,7 +15,7 @@ from Dbase.DbConnection import DbConnect
 class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
-    self.baseDir = os.path.join(RDConfig.RDCodeDir,'Dbase','testData')
+    self.baseDir = os.path.join(RDConfig.RDCodeDir,'Dbase','test_data')
     self.dbName =  RDConfig.RDTestDatabase
     self.colHeads=('int_col','floatCol','strCol')
     self.colTypes=('integer','float','string')

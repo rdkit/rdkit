@@ -4,8 +4,8 @@ from Chem.PyMol import MolViewer
 from Chem.Subshape import SubshapeBuilder,SubshapeObjects,SubshapeAligner
 import cPickle,copy
 
-m1 = Chem.MolFromMolFile('testData/square1.mol')
-m2 = Chem.MolFromMolFile('testData/square2.mol')
+m1 = Chem.MolFromMolFile('test_data/square1.mol')
+m2 = Chem.MolFromMolFile('test_data/square2.mol')
 
 b = SubshapeBuilder.SubshapeBuilder()
 b.gridDims=(10.,10.,5)
@@ -14,18 +14,18 @@ b.winRad=2.0
 if 1:
   print 'm1:'
   s1 = b.GenerateSubshapeShape(m1)
-  cPickle.dump(s1,file('testData/square1.shp.pkl','wb+'))
+  cPickle.dump(s1,file('test_data/square1.shp.pkl','wb+'))
   print 'm2:'
   s2 = b.GenerateSubshapeShape(m2)
-  cPickle.dump(s2,file('testData/square2.shp.pkl','wb+'))
+  cPickle.dump(s2,file('test_data/square2.shp.pkl','wb+'))
   ns1 = b.CombineSubshapes(s1,s2)
   b.GenerateSubshapeSkeleton(ns1)
-  cPickle.dump(ns1,file('testData/combined.shp.pkl','wb+'))
+  cPickle.dump(ns1,file('test_data/combined.shp.pkl','wb+'))
 else:
-  s1 = cPickle.load(file('testData/square1.shp.pkl','rb'))
-  s2 = cPickle.load(file('testData/square2.shp.pkl','rb'))
-  #ns1 = cPickle.load(file('testData/combined.shp.pkl','rb'))
-  ns1=cPickle.load(file('testData/combined.shp.pkl','rb'))
+  s1 = cPickle.load(file('test_data/square1.shp.pkl','rb'))
+  s2 = cPickle.load(file('test_data/square2.shp.pkl','rb'))
+  #ns1 = cPickle.load(file('test_data/combined.shp.pkl','rb'))
+  ns1=cPickle.load(file('test_data/combined.shp.pkl','rb'))
 
 v = MolViewer()
 SubshapeObjects.DisplaySubshape(v,s1,'shape1')

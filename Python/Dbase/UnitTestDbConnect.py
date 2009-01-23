@@ -16,7 +16,7 @@ class TestCase(unittest.TestCase):
     #print '\n%s: '%self.shortDescription(),
     #sys.stderr.write('\n%s: \n'%self.shortDescription())
     #sys.stderr.flush()
-    self.baseDir = os.path.join(RDConfig.RDCodeDir,'Dbase','testData')
+    self.baseDir = os.path.join(RDConfig.RDCodeDir,'Dbase','test_data')
     self.dbName = RDConfig.RDTestDatabase
     self.colHeads=('int_col','floatCol','strCol')
     self.colTypes=('integer','float','string')

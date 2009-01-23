@@ -16,7 +16,7 @@ class TestCase(unittest.TestCase):
     pass
   def test1(self):
     suppl = Chem.SDMolSupplier(os.path.join(RDConfig.RDCodeDir,'Chem','Subshape',
-                                        'testData/5ht3ligs.sdf'))
+                                        'test_data/5ht3ligs.sdf'))
     builder = SubshapeBuilder.SubshapeBuilder()
     builder.gridDims=(20.,20.,10)
     builder.gridSpacing=0.5
