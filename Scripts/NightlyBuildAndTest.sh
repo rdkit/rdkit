@@ -58,11 +58,11 @@ svn checkout  $SVNROOT RDKit &> /dev/null
 if test -f $RDBASE/Data/RDTests.sqlt; then 
   rm $RDBASE/Data/RDTests.sqlt
 fi
-$DBLOADER $RDBASE/Data/RDTests.sqlt < $RDBASE/Python/Dbase/testData/RDTests.sqlite
+$DBLOADER $RDBASE/Data/RDTests.sqlt < $RDBASE/Python/Dbase/test_data/RDTests.sqlite
 if test -f $RDBASE/Data/RDData.sqlt; then 
   rm $RDBASE/Data/RDData.sqlt
 fi
-$DBLOADER $RDBASE/Data/RDData.sqlt < $RDBASE/Python/Dbase/testData/RDData.sqlite
+$DBLOADER $RDBASE/Data/RDData.sqlt < $RDBASE/Python/Dbase/test_data/RDData.sqlite
 # ------------------------- -------------------------
 #
 #               Build
