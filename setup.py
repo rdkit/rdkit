@@ -31,17 +31,24 @@ child_packages = [
                "Python.utils",
                ]
 
-sos = ['Python/rdBase'+module_ext]
+sos = [('Python',['Python/rdBase'+module_ext])]
+py_packages = ["Python"]+child_packages
+
 for pkg in child_packages:
      for root,dirs,files in os.walk(pkg.replace('.','/')):
           if '.svn' in dirs: dirs.remove('.svn')
+
+          modName=root.replace('/','.')
+          if '__init__.py' in files and modName not in py_packages:
+               py_packages.append(modName)
+
           files=[os.path.join(root,file) for file in files if (os.path.splitext(file)[-1]==module_ext or\
                                                                     'test_data' in root)]
           sos.extend([(root,files)])
+
 ext_modules = [
                ]
 
-py_packages = ["Python"]+child_packages
 
 scripts = []
 if sys.platform == "win32":
@@ -55,25 +62,14 @@ data_files.extend([('',glob.glob('./*.txt'))])
 data_files.extend([('bin',glob.glob('bin/*'))])
 data_files.extend(sos)
 
-#### add documentation
-
-def add_documentation(all, directory, files):
-    if '.svn' in files: files.remove('.svn')
-    dest = directory.replace('Docs',
-                             'share/doc/RDKit-%s'%version)
-    all.append((dest,
-                [os.path.join(directory, file)
-                 for file in files
-                 if os.path.isfile(os.path.join(directory, file))]))
 
 documentation = []
-os.path.walk('Docs', add_documentation, documentation)
-#data_files.extend(documentation)
+
 
 setup(distclass=RDKDist,
       zip_safe=False,
       name='pyRDKit',
-      version='version',
+      version=version,
       description='RDKit Cheminformatics Library',
       author='Greg Landrum',
       author_email='glandrum@users.sourceforge.net',
