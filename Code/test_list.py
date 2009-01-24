@@ -15,10 +15,10 @@ tests=[
   #("python","test_list.py",{'dir':'PgSQL/RDLib'}),
   ("python","test_list.py",{'dir':'SimDivPickers/Wrap'}),
   ("python","test_list.py",{'dir':'ML'}),
+  ("python","test_list.py",{'dir':'GraphMol'}),
   ]
 
 longTests = [
-  ("python","test_list.py",{'dir':'GraphMol'}),
   ]
 
 if __name__=='__main__':
