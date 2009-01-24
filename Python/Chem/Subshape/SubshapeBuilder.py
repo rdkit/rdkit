@@ -3,10 +3,10 @@
 # Copyright (C) 2007 by Greg Landrum 
 #  All rights reserved
 #
-import Chem,Geometry
-from Chem import AllChem
-from Chem.Subshape import SubshapeObjects
-from Chem.Subshape import BuilderUtils
+from pyRDKit import Chem,Geometry
+from pyRDKit.Chem import AllChem
+from pyRDKit.Chem.Subshape import SubshapeObjects
+from pyRDKit.Chem.Subshape import BuilderUtils
 import time,cPickle
 
 #-----------------------------------------------------------------------------
@@ -84,8 +84,8 @@ class SubshapeBuilder(object):
 
     
 if __name__=='__main__':
-  from Chem import AllChem,ChemicalFeatures
-  from Chem.PyMol import MolViewer
+  from pyRDKit.Chem import AllChem,ChemicalFeatures
+  from pyRDKit.Chem.PyMol import MolViewer
   #cmpd = Chem.MolFromSmiles('CCCc1cc(C(=O)O)ccc1')
   #cmpd = Chem.AddHs(cmpd)
   if 1:

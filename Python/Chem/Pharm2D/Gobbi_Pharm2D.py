@@ -8,10 +8,10 @@
   Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
 
 """
-import Chem
-import RDConfig
+from pyRDKit import Chem
+from pyRDKit import RDConfig
 import os,sys
-from Chem.Pharm2D.SigFactory import SigFactory
+from pyRDKit.Chem.Pharm2D.SigFactory import SigFactory
 
 patts={
   'LH':('[$([C;H2,H1](!=*)[C;H2,H1][C;H2,H1][$([C;H1,H2,H3]);!$(C=*)]),$(C([C;H2,H3])([C;H2,H3])[C;H2,H3])]',

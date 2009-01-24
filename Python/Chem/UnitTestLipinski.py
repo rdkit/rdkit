@@ -12,7 +12,7 @@
 from pyRDKit import RDConfig
 import unittest,cPickle,os
 from pyRDKit import Chem
-from pyRDkit.Chem import Lipinski
+from pyRDKit.Chem import Lipinski
 
 class TestCase(unittest.TestCase):
   def setUp(self):

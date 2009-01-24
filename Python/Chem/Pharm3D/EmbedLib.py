@@ -4,21 +4,21 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import RDConfig
+from pyRDKit import RDConfig
 
 import sys,time,math,sets
-from ML.Data import Stats
-import DistanceGeometry as DG
-import Chem
+from pyRDKit.ML.Data import Stats
+import pyRDKit.DistanceGeometry as DG
+from pyRDKit import Chem
 import numpy
-from Chem import rdDistGeom as MolDG
-from Chem import ChemicalFeatures
-from Chem import ChemicalForceFields
+from pyRDKit.Chem import rdDistGeom as MolDG
+from pyRDKit.Chem import ChemicalFeatures
+from pyRDKit.Chem import ChemicalForceFields
 import Pharmacophore,ExcludedVolume
-import Geometry
+from pyRDKit import Geometry
 _times = {}
 
-import RDLogger as logging
+from pyRDKit import RDLogger as logging
 logger = logging.logger()
 defaultFeatLength=2.0
 

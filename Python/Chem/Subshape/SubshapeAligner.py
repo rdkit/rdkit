@@ -3,12 +3,12 @@
 # Copyright (C) 2007-2008 by Greg Landrum 
 #  All rights reserved
 #
-import RDLogger
+from pyRDKit import RDLogger
 logger = RDLogger.logger()
-import Chem,Geometry
+from pyRDKit import Chem,Geometry
 import numpy
-from Numerics import Alignment
-from Chem.Subshape import SubshapeObjects
+from pyRDKit.Numerics import Alignment
+from pyRDKit.Chem.Subshape import SubshapeObjects
 
 class SubshapeAlignment(object):
   transform=None
@@ -59,7 +59,7 @@ def ClusterAlignments(mol,alignments,builder,
                       neighborTol=0.1,
                       distMetric=SubshapeDistanceMetric.PROTRUDE,
                       tempConfId=1001):
-  from ML.Cluster import Butina
+  from pyRDKit.ML.Cluster import Butina
   dists = []
   for i in range(len(alignments)):
     TransformMol(mol,alignments[i].transform,newConfId=tempConfId)
@@ -343,7 +343,7 @@ if __name__=='__main__':
   algs = aligner.GetSubshapeAlignments(tgtMol,tgtShape,queryMol,queryShape,builder)
   print len(algs)
 
-  from Chem.PyMol import MolViewer
+  from pyRDKit.Chem.PyMol import MolViewer
   v = MolViewer()
   v.ShowMol(tgtMol,name='Target',showOnly=True)
   v.ShowMol(queryMol,name='Query',showOnly=False)

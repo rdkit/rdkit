@@ -8,8 +8,8 @@
 #DOC 
 
 """
-import Chem
-from Chem.Suppliers.MolSupplier import MolSupplier
+from pyRDKit import Chem
+from pyRDKit.Chem.Suppliers.MolSupplier import MolSupplier
 import sys
 def warning(msg,dest=sys.stderr):
   dest.write(msg)

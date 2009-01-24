@@ -10,7 +10,7 @@ longTests=[
 
 if __name__=='__main__':
   import sys
-  import TestRunner
+  from pyRDKit import TestRunner
   doLong = 0
   if '-l' in sys.argv:
     doLong=1

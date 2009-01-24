@@ -8,8 +8,8 @@
 
 """
 import unittest
-import Chem
-from Chem.Pharm2D import Generate,SigFactory,Matcher,Gobbi_Pharm2D
+from pyRDKit import Chem
+from pyRDKit.Chem.Pharm2D import Generate,SigFactory,Matcher,Gobbi_Pharm2D
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -82,13 +82,14 @@ class TestCase(unittest.TestCase):
     sig = Generate.Gen2DFingerprint(mol,factory)
     onBits = sig.GetOnBits()
     for bit in onBits:
-      as = Matcher.GetAtomsMatchingBit(sig,bit,mol,justOne=1)
-      assert len(as),'bit %d failed to match'%(bit)
+      ats = Matcher.GetAtomsMatchingBit(sig,bit,mol,justOne=1)
+      assert len(ats),'bit %d failed to match'%(bit)
 
   def testRoundtrip(self):
     """ longer-running Bug 28 test
     """
-    import RDConfig,os
+    from pyRDKit import RDConfig
+    import os
     nToDo=20
     inD = open(os.path.join(RDConfig.RDDataDir,'NCI','first_5K.smi'),'r').readlines()[:nToDo]
     factory = Gobbi_Pharm2D.factory
@@ -99,8 +100,8 @@ class TestCase(unittest.TestCase):
       sig = Generate.Gen2DFingerprint(mol,factory)
       onBits = sig.GetOnBits()
       for bit in onBits:
-        as = Matcher.GetAtomsMatchingBit(sig,bit,mol,justOne=1)
-        assert len(as),'bit %d failed to match for smi %s'%(bit,smi)
+        ats = Matcher.GetAtomsMatchingBit(sig,bit,mol,justOne=1)
+        assert len(ats),'bit %d failed to match for smi %s'%(bit,smi)
 
     
 

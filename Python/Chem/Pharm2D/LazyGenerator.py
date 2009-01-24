@@ -9,8 +9,8 @@
 """ lazy generator of 2D pharmacophore signature data
 
 """
-import Chem
-from Chem.Pharm2D import SigFactory,Matcher
+from pyRDKit import Chem
+from pyRDKit.Chem.Pharm2D import SigFactory,Matcher
 
 class Generator(object):
   """
@@ -100,8 +100,8 @@ class Generator(object):
 
 if __name__ == '__main__':
   import time
-  import RDConfig,Chem
-  from Chem.Pharm2D import Gobbi_Pharm2D,Generate
+  from pyRDKit import RDConfig,Chem
+  from pyRDKit.Chem.Pharm2D import Gobbi_Pharm2D,Generate
   import random
 
   factory = Gobbi_Pharm2D.factory

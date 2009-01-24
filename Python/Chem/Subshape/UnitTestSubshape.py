@@ -3,12 +3,12 @@
 #  Copyright (C) 2007 Greg Landrum
 #   @@ All Rights Reserved  @@
 #
-import RDConfig
+from pyRDKit import RDConfig
 import unittest
-import Chem
+from pyRDKit import Chem
 
-from Chem import AllChem
-from Chem.Subshape import SubshapeBuilder,SubshapeObjects,SubshapeAligner
+from pyRDKit.Chem import AllChem
+from pyRDKit.Chem.Subshape import SubshapeBuilder,SubshapeObjects,SubshapeAligner
 import cPickle,copy,sys,os
 
 class TestCase(unittest.TestCase):

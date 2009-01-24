@@ -14,9 +14,9 @@
   numbering
 
 """
-import Chem
-from Chem.Pharm2D import Utils
-from DataStructs import SparseBitVect as BitVect
+from pyRDKit import Chem
+from pyRDKit.Chem.Pharm2D import Utils
+from pyRDKit.DataStructs import SparseBitVect as BitVect
 
 _verbose = 0
 
@@ -126,7 +126,7 @@ class Pharm2DSig(object):
   def SetPatterns(self,patts):
     self._patts = patts[:]
   def SetPatternsFromSmarts(self,smarts):
-    import Chem
+    from pyRDKit import Chem
     self._patts = [None]*len(smarts)
     for i in range(len(smarts)):
       p = Chem.MolFromSmarts(smarts[i])
@@ -484,7 +484,7 @@ class Pharm2DSig(object):
 
 
 try:
-  from Chem.Pharmacophores import cUtils
+  from pyRDKit.Chem.Pharmacophores import cUtils
 except ImportError:
   pass
 else:
@@ -514,7 +514,7 @@ if __name__=='__main__':
       print patts,dist,idx
       
   def test4():
-    import Chem
+    from pyRDKit import Chem
     import Generate
     sig = Pharm2DSig()
     sig.SetPatternsFromSmarts(['O'])

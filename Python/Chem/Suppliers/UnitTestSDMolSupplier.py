@@ -9,8 +9,8 @@
 
 """
 import unittest,sys,os
-import RDConfig
-import Chem
+from pyRDKit import RDConfig
+from pyRDKit import Chem
 import tempfile
 from cStringIO import StringIO
 

@@ -4,11 +4,11 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import Geometry
+from pyRDKit import Geometry
 import numpy
-import Chem
-from Chem import ChemicalFeatures
-from RDLogger import logger
+from pyRDKit import Chem
+from pyRDKit.Chem import ChemicalFeatures
+from pyRDKit.RDLogger import logger
 logger = logger()
 
 class Pharmacophore:
@@ -168,7 +168,7 @@ class ExplicitPharmacophore:
     self.initFromLines(inF.readlines())
         
   def initFromLines(self,lines):
-    from Chem import ChemicalFeatures
+    from pyRDKit.Chem import ChemicalFeatures
 
     import re
     spaces = re.compile('[\ \t]+')

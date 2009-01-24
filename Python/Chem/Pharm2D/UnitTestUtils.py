@@ -8,7 +8,7 @@
 
 """
 import unittest
-from Chem.Pharm2D import Utils
+from pyRDKit.Chem.Pharm2D import Utils
 
 class TestCase(unittest.TestCase):
   def testCounts(self):
