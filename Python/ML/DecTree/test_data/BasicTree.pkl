@@ -1,16 +1,16 @@
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p1
 (dp2
 S'children'
 p3
 (lp4
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 (dp5
 g3
 (lp6
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 (dp7
 g3
@@ -58,7 +58,7 @@ p20
 NsS'name'
 p21
 S'0'
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 (dp22
 g3
@@ -111,7 +111,7 @@ I1
 sg20
 Nsg21
 S'Var: 2'
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 (dp27
 g3
@@ -155,12 +155,12 @@ I1
 sg20
 Nsg21
 S'1'
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 (dp33
 g3
 (lp34
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 (dp35
 g3
@@ -198,7 +198,7 @@ I1
 sg20
 Nsg21
 S'1'
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 (dp40
 g3

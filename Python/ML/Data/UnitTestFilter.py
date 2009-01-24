@@ -6,8 +6,8 @@
 
 """
 import unittest
-import RDConfig
-from ML.Data import DataUtils
+from pyRDKit import RDConfig
+from pyRDKit.ML.Data import DataUtils
 
 class TestCase(unittest.TestCase):
   def setUp(self):

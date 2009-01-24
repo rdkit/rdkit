@@ -8,8 +8,8 @@
 
 """
 import unittest
-import Chem
-import DataStructs
+from pyRDKit import Chem
+from pyRDKit import DataStructs
 
 def feq(v1,v2,tol=1e-4):
   return abs(v1-v2)<=tol

@@ -7,9 +7,9 @@
 """ Various storage (molecular and otherwise) functionality
 
 """
-import RDConfig
-from Dbase import DbModule
-from Dbase.DbConnection import DbConnect
+from pyRDKit import RDConfig
+from pyRDKit.Dbase import DbModule
+from pyRDKit.Dbase.DbConnection import DbConnect
 
 def ValidateRDId(id):
   """ returns whether or not an RDId is valid

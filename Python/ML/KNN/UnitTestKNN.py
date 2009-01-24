@@ -3,14 +3,14 @@
 #   All Rights Reserved
 
 """ unit testing code for knn models """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest
-from ML.Data import DataUtils, MLData
-from ML.KNN import CrossValidate,DistFunctions
-from ML.KNN import KNNModel,KNNClassificationModel,KNNRegressionModel
+from pyRDKit.ML.Data import DataUtils, MLData
+from pyRDKit.ML.KNN import CrossValidate,DistFunctions
+from pyRDKit.ML.KNN import KNNModel,KNNClassificationModel,KNNRegressionModel
 import os.path
 import cPickle
-import RDRandom
+from pyRDKit import RDRandom
 
 def feq(a,b,tol=1e-4):
   return abs(a-b)<tol

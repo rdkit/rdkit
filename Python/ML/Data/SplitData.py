@@ -4,7 +4,7 @@
 #  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
-import RDConfig,RDRandom
+from pyRDKit import RDConfig,RDRandom
 import random
 import types,os.path,sys
 SeqTypes=(types.ListType,types.TupleType)
@@ -44,7 +44,7 @@ def SplitIndices(nPts,frac,silent=1,legacy=0,replacement=0):
 
   We'll start with a set of indices and pick from them using
   the three different approaches:
-  >>> from ML.Data import DataUtils
+  >>> from pyRDKit.ML.Data import DataUtils
 
   The base approach always returns the same number of compounds in
   each set and has no duplicates:
@@ -196,8 +196,8 @@ def SplitDbData(conn,fracs,table='',fields='*',where='',join='',
 
   Set up the db connection, the simple tables we're using have actives with even
   ids and inactives with odd ids:
-  >>> from ML.Data import DataUtils
-  >>> from Dbase.DbConnection import DbConnect
+  >>> from pyRDKit.ML.Data import DataUtils
+  >>> from pyRDKit.Dbase.DbConnection import DbConnect
   >>> conn = DbConnect(RDConfig.RDTestDatabase)
   
   Pull a set of points from a simple table... take 33% of all points:

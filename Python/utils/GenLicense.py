@@ -4,7 +4,7 @@
 """ generates license files for our primitive license handler
 
 """
-from utils import Licensing
+from pyRDKit.utils import Licensing
 import sha,base64,time,StringIO
 import sys
 

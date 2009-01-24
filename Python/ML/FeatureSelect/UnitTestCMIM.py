@@ -1,6 +1,6 @@
-from ML.FeatureSelect import CMIM
-import DataStructs as DS
-import RDConfig
+from pyRDKit.ML.FeatureSelect import CMIM
+from pyRDKit import DataStructs as DS
+from pyRDKit import RDConfig
 import unittest
 
 class TestCase(unittest.TestCase):

@@ -9,10 +9,10 @@
 """
 
 try:
-  from sping import pid
+  from pyRDKit.sping import pid
   piddle = pid
 except ImportError:
-  from piddle import piddle
+  from pyRDKit.piddle import piddle
 import ClusterUtils
 
 import numpy
@@ -367,9 +367,9 @@ def ClusterToPDF(cluster,fileName,size=(300,300),ptColors=[],lineWidth=None,
        
   """
   try:
-    from sping.PDF import pidPDF
+    from pyRDKit.sping.PDF import pidPDF
   except ImportError:
-    from piddle import piddlePDF
+    from pyRDKit.piddle import piddlePDF
     pidPDF = piddlePDF
 
   canvas = pidPDF.PDFCanvas(size,fileName)
@@ -409,9 +409,9 @@ def ClusterToSVG(cluster,fileName,size=(300,300),ptColors=[],lineWidth=None,
        
   """
   try:
-    from sping.SVG import pidSVG
+    from pyRDKit.sping.SVG import pidSVG
   except ImportError:
-    from piddle.piddleSVG import piddleSVG
+    from pyRDKit.piddle.piddleSVG import piddleSVG
     pidSVG = piddleSVG
 
   canvas = pidSVG.SVGCanvas(size,fileName)
@@ -455,9 +455,9 @@ def ClusterToImg(cluster,fileName,size=(300,300),ptColors=[],lineWidth=None,
        
   """
   try:
-    from sping.PIL import pidPIL
+    from pyRDKit.sping.PIL import pidPIL
   except ImportError:
-    from piddle import piddlePIL
+    from pyRDKit.piddle import piddlePIL
     pidPIL = piddlePIL
   canvas = pidPIL.PILCanvas(size,fileName)
   if lineWidth is None:

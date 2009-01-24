@@ -3,10 +3,10 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import RDConfig
+from pyRDKit import RDConfig
 import sys,os,types
-import Chem
-from VLib.Transform import TransformNode
+from pyRDKit import Chem
+from pyRDKit.VLib.Transform import TransformNode
 
 class SmartsRemover(TransformNode):
   """ transforms molecules by removing atoms matching smarts patterns
@@ -19,7 +19,7 @@ class SmartsRemover(TransformNode):
   Sample Usage:
     >>> smis = ['C1CCC1.C=O','C1CCC1C=O','CCC=O.C=O','NCC=O.C=O.CN']
     >>> mols = [Chem.MolFromSmiles(x) for x in smis]
-    >>> from VLib.Supply import SupplyNode
+    >>> from pyRDKit.VLib.Supply import SupplyNode
     >>> suppl = SupplyNode(contents=mols)
     >>> ms = [x for x in suppl]
     >>> len(ms)
@@ -103,7 +103,7 @@ class SmartsRemover(TransformNode):
 biggerTest="""
 >>> smis = ['CCOC','CCO.Cl','CC(=O)[O-].[Na+]','OCC','C[N+](C)(C)C.[Cl-]']
 >>> mols = [Chem.MolFromSmiles(x) for x in smis]
->>> from VLib.Supply import SupplyNode
+>>> from pyRDKit.VLib.Supply import SupplyNode
 >>> suppl = SupplyNode(contents=mols)
 >>> ms = [x for x in suppl]
 >>> len(ms)

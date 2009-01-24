@@ -8,7 +8,7 @@
 """
 
 import unittest
-from DataStructs import BitVect
+from pyRDKit.DataStructs import BitVect
 
 def feq(v1,v2,tol=1e-4):
   return abs(v1-v2)<tol
@@ -273,9 +273,9 @@ class TestCase(unittest.TestCase):
       panel of pubchem compounds (chosen to have different lengths: 5x2048,
       5x1024, 5x512, 3x256)
     """  
-    import DataStructs
+    from pyRDKit import DataStructs
     import cPickle,os
-    import RDConfig
+    from pyRDKit import RDConfig
     fps = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
                                          'pubchem_fps.pkl'),'rb'))
     dm = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
@@ -293,9 +293,9 @@ class TestCase(unittest.TestCase):
     """
       verify that the bounded similarity (tanimoto) works
     """  
-    import DataStructs
+    from pyRDKit import DataStructs
     import cPickle,os
-    import RDConfig
+    from pyRDKit import RDConfig
     fps = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',
                                          'pubchem_fps.pkl'),'rb'))
     dm = cPickle.load(file(os.path.join(RDConfig.RDCodeDir,'DataStructs','test_data',

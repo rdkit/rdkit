@@ -7,9 +7,9 @@
 and evaluation of individual models
 
 """
-from ML.NaiveBayes.ClassificationModel import NaiveBayesClassifier
-from ML.Data import SplitData
-from ML.FeatureSelect import CMIM
+from pyRDKit.ML.NaiveBayes.ClassificationModel import NaiveBayesClassifier
+from pyRDKit.ML.Data import SplitData
+from pyRDKit.ML.FeatureSelect import CMIM
 
 def makeNBClassificationModel(trainExamples, attrs, nPossibleValues, nQuantBounds,
                               mEstimateVal=-1.0,

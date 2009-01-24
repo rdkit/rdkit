@@ -1,9 +1,9 @@
-import RDConfig
+from pyRDKit import RDConfig
 RDConfig.usePgSQL=0
 import unittest
-from ML import InfoTheory
-import DataStructs
-from Dbase.DbConnection import DbConnect
+from pyRDKit.ML import InfoTheory
+from pyRDKit import DataStructs
+from pyRDKit.Dbase.DbConnection import DbConnect
 import os
 import cPickle as pickle
 

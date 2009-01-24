@@ -10,16 +10,16 @@ The bugs were in the OELib code, so these are maybe no longer
 relevant... but tests are tests
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,cPickle,os
-import Chem
+from pyRDKit import Chem
 
 def feq(n1,n2,tol=1e-4):
   return abs(n1-n2)<=tol
 
 class TestCase(unittest.TestCase):
   def testBug12a(self):
-    from Chem import MolSurf
+    from pyRDKit.Chem import MolSurf
     inD=[
       ('OC(=O)[CH](CC1=CC=CC=C1)C2=CC=CC=C2', 37.3),
       ('OC(=O)C(C1=CC=CC=C1)(C2=CC=CC=C2)C3=CC=CC=C3', 37.3),
@@ -62,7 +62,7 @@ class TestCase(unittest.TestCase):
     """ failures for Bug12 which are actually related to Bug14
 
     """
-    from Chem import MolSurf
+    from pyRDKit.Chem import MolSurf
     inD=[
       ('[O-][N+](=O)C1=CNC(=N)S1', 82.78),
       ]

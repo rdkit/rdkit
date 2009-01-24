@@ -4,8 +4,8 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import RDConfig
-import Chem
+from pyRDKit import RDConfig
+from pyRDKit import Chem
 import sys,csv
 
 def Convert(suppl,outFile,keyCol='',stopAfter=-1,includeChirality=0,smilesFrom=''):

@@ -1,10 +1,10 @@
 ## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
-import RDConfig
+from pyRDKit import RDConfig
 import unittest
-from ML.InfoTheory import rdInfoTheory, BitClusterer
-from ML.Data import DataUtils
-import DataStructs
+from pyRDKit.ML.InfoTheory import rdInfoTheory, BitClusterer
+from pyRDKit.ML.Data import DataUtils
+from pyRDKit import DataStructs
 import random
 
 def getValLTM(i, j, mat):

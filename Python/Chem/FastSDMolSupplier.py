@@ -4,7 +4,7 @@
 #   @@ All Rights Reserved @@
 #
 import sys
-import Chem
+from pyRDKit import Chem
 
 class FastSDMolSupplier(object):
   """ A wrapper around an SDMolSupplier that precomputes and stores 

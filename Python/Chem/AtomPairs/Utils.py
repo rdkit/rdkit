@@ -4,8 +4,8 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import Chem
-from Chem import rdMolDescriptors
+from pyRDKit import Chem
+from pyRDKit.Chem import rdMolDescriptors
 import math
 
 def ExplainAtomCode(code,branchSubtract=0):

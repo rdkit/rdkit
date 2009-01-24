@@ -4,10 +4,10 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import RDConfig
+from pyRDKit import RDConfig
 import unittest
-import Chem
-from Chem import FragmentCatalog, BuildFragmentCatalog
+from pyRDKit import Chem
+from pyRDKit.Chem import FragmentCatalog, BuildFragmentCatalog
 import cPickle
 import os
 

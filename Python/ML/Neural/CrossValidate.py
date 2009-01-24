@@ -8,11 +8,11 @@ cross validation == evaluating the accuracy of a net.
 
 """
 
-from ML.Neural import Network,Trainers
-from ML.Data import SplitData
+from pyRDKit.ML.Neural import Network,Trainers
+from pyRDKit.ML.Data import SplitData
 import math
 
-import RDRandom
+from pyRDKit import RDRandom
 
 def CrossValidate(net,testExamples,tolerance,appendExamples=0):
   """ Determines the classification error for the testExamples

@@ -7,10 +7,10 @@
 """unit testing code for the Crippen clogp and MR calculators
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,sys,os,cPickle
-import Chem
-from Chem import Crippen
+from pyRDKit import Chem
+from pyRDKit.Chem import Crippen
 
 def feq(n1,n2,tol=1e-5):
   return abs(n1-n2)<=tol

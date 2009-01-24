@@ -9,14 +9,14 @@
 
 
 """
-import Chem
-from Chem import Graphs
-from Chem import rdchem
+from pyRDKit import Chem
+from pyRDKit.Chem import Graphs
+from pyRDKit.Chem import rdchem
 # FIX: remove this dependency here and below
-from Chem import pyPeriodicTable as PeriodicTable
+from pyRDKit.Chem import pyPeriodicTable as PeriodicTable
 import numpy
 import math
-from ML.InfoTheory import entropy
+from pyRDKit.ML.InfoTheory import entropy
 
 periodicTable = rdchem.GetPeriodicTable()
 

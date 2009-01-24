@@ -4,11 +4,11 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,sys,os,math
-import Chem
-from Chem.FeatMaps import FeatMaps,FeatMapParser
-from Geometry import Point3D
+from pyRDKit import Chem
+from pyRDKit.Chem.FeatMaps import FeatMaps,FeatMapParser
+from pyRDKit.Geometry import Point3D
 
 def feq(n1,n2,tol=1e-5):
   return abs(n1-n2)<=tol

@@ -5,7 +5,7 @@
 #   @@ All Rights Reserved  @@
 #
 
-from rdBase import EnableLog,DisableLog,AttachFileToLog,LogMessage
+from pyRDKit.rdBase import EnableLog,DisableLog,AttachFileToLog,LogMessage
 import sys,traceback
 
 _levels=['rdApp.debug','rdApp.info','rdApp.warning','rdApp.error']

@@ -17,9 +17,9 @@ _splashMessage="""
   Rational Discovery LLC.
 -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 """%_version
-import Chem
-from Chem import ChemicalFeatures
-import RDLogger
+from pyRDKit import Chem
+from pyRDKit.Chem import ChemicalFeatures
+from pyRDKit import RDLogger
 logger = RDLogger.logger()
 import sys,os
 import re

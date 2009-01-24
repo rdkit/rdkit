@@ -24,7 +24,7 @@
 import numpy
 import random
 
-from ML.Neural import NetNode, ActFuncs
+from pyRDKit.ML.Neural import NetNode, ActFuncs
 
 # FIX: this class has not been updated to new-style classes
 # (RD Issue380) because that would break all of our legacy pickled

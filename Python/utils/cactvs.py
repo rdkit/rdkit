@@ -2,7 +2,7 @@
 #  Copyright (C) 2003  Rational Discovery LLC
 #   All Rights Reserved
 #
-import RDConfig
+from pyRDKit import RDConfig
 import sys,os,tempfile
 from PIL import Image
 

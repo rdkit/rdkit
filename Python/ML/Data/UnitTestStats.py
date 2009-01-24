@@ -8,8 +8,8 @@
 
 """
 import unittest,sys
-import RDConfig
-from ML.Data import Stats
+from pyRDKit import RDConfig
+from pyRDKit.ML.Data import Stats
 import numpy
 
 FLOAT_TOL = 1e-4

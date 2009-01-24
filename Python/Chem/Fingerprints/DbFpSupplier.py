@@ -8,9 +8,9 @@
 #DOC 
 
 """
-import RDConfig
-from VLib.Node import VLibNode
-import DataStructs
+from pyRDKit import RDConfig
+from pyRDKit.VLib.Node import VLibNode
+from pyRDKit import DataStructs
 import cPickle
 import sys
 def warning(msg,dest=sys.stderr):
@@ -72,7 +72,7 @@ class ForwardDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting only forward iteration
 
   >>> import os.path
-  >>> from Dbase.DbConnection import DbConnect
+  >>> from pyRDKit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(fName,'simple_combined')
   >>> suppl = ForwardDbFpSupplier(conn.GetData())
@@ -112,7 +112,7 @@ class ForwardDbFpSupplier(DbFpSupplier):
 class RandomAccessDbFpSupplier(DbFpSupplier):  
   """ DbFp supplier supporting random access:
   >>> import os.path
-  >>> from Dbase.DbConnection import DbConnect
+  >>> from pyRDKit.Dbase.DbConnection import DbConnect
   >>> fName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(fName,'simple_combined')
   >>> suppl = RandomAccessDbFpSupplier(conn.GetData())

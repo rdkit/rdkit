@@ -61,14 +61,14 @@ Optional Arguments:
     displayed in gnuplot.
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import numpy
 import cPickle,copy
-#from Dbase.DbConnection import DbConnect
-from ML.Data import DataUtils,SplitData,Stats
-from Dbase.DbConnection import DbConnect
-import DataStructs
-from ML import CompositeRun
+#from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.ML.Data import DataUtils,SplitData,Stats
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit import DataStructs
+from pyRDKit.ML import CompositeRun
 import sys,os,types
 
 __VERSION_STRING="2.4.0"

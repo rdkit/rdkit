@@ -7,7 +7,7 @@
 """ uses DSViewer to interact with molecules
 
 """
-import Chem
+from pyRDKit import Chem
 from win32com.client import Dispatch
 import tempfile,os
 
@@ -356,8 +356,8 @@ class MolViewer(object):
 
 
 if __name__=='__main__':
-  import Chem
-  from Chem import rdDistGeom, rdForceFieldHelpers
+  from pyRDKit import Chem
+  from pyRDKit.Chem import rdDistGeom, rdForceFieldHelpers
   
   m = Chem.MolFromSmiles('c1cccc2c1cccc2')
   rdDistGeom.EmbedMolecule(m)

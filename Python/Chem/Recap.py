@@ -58,8 +58,8 @@ To get the standard set of RECAP results, use GetLeaves():
 
 """
 import weakref
-import Chem
-from Chem import rdChemReactions as Reactions
+from pyRDKit import Chem
+from pyRDKit.Chem import rdChemReactions as Reactions
 import sys
 
 # These are the definitions that will be applied to fragment molecules:

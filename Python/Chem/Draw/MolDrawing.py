@@ -4,8 +4,8 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import Chem
-import RDConfig
+from pyRDKit import Chem
+from pyRDKit import RDConfig
 import math
 
 elemDict={
@@ -407,7 +407,7 @@ if __name__=='__main__':
     
   #mol = Chem.MolFromSmiles('OC1C(O)CC1')
   Chem.Kekulize(mol)
-  from Chem import rdDepictor
+  from pyRDKit.Chem import rdDepictor
   rdDepictor.Compute2DCoords(mol)
 
   if 1:
@@ -437,7 +437,7 @@ if __name__=='__main__':
     canv = FigureCanvasAgg(fig)
     canv.print_figure("foo.png",dpi=80)
   else:
-    from sping.PDF.pidPDF import PDFCanvas as Canvas
+    from pyRDKit.sping.PDF.pidPDF import PDFCanvas as Canvas
     canvas = Canvas(size=(300,300),name='test.pdf')
     registerCanvas('sping')
     drawer = MolDrawing(canvas)

@@ -4,8 +4,8 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import Geometry
-import Chem
+from pyRDKit import Geometry
+from pyRDKit import Chem
 import numpy
 import math
 

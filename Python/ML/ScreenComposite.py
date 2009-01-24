@@ -107,8 +107,8 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
 
 """
-import RDConfig
-import DataStructs
+from pyRDKit import RDConfig
+from pyRDKit import DataStructs
 import sys,cPickle,types,copy
 import numpy
 
@@ -119,13 +119,13 @@ except ImportError:
 else:
   hasPil=1
 
-from ML.Data import DataUtils,SplitData
-from ML import CompositeRun
-from Dbase.DbConnection import DbConnect
-from Dbase import DbModule
+from pyRDKit.ML.Data import DataUtils,SplitData
+from pyRDKit.ML import CompositeRun
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.Dbase import DbModule
 _details = CompositeRun.CompositeRun()
 try:
-  from Excel.ExcelWrapper import ExcelWrapper as Excel
+  from pyRDKit.Excel.ExcelWrapper import ExcelWrapper as Excel
 except ImportError:
   Excel = None
   

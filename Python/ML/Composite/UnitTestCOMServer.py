@@ -3,9 +3,9 @@
 #
 
 # unit testing code for the composite model COM server
-import RDConfig
+from pyRDKit import RDConfig
 import unittest
-from ML.Composite import Composite
+from pyRDKit.ML.Composite import Composite
 from win32com.client import Dispatch
 from Numeric import *
 

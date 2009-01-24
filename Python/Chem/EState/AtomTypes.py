@@ -8,7 +8,7 @@
 
  defined in: Hall and Kier JCICS _35_ 1039-1045 (1995)  Table 1
 """
-import Chem
+from pyRDKit import Chem
 
 _rawD = [
   ('sLi','[LiD1]-*'),

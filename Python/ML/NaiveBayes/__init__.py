@@ -4,4 +4,4 @@
 An implementation of the Naive Bayes Classifier
 
 """
-import rdBase
+from pyRDKit import rdBase

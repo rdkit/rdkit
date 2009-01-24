@@ -13,9 +13,9 @@
 
 """
 import os
-import RDConfig
-import Chem
-from Chem import rdMolDescriptors
+from pyRDKit import RDConfig
+from pyRDKit import Chem
+from pyRDKit.Chem import rdMolDescriptors
 import numpy
 
 _smartsPatterns = {}

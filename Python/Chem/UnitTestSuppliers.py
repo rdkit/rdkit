@@ -7,9 +7,9 @@
 """ unit testing code for molecule suppliers
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,cPickle,os
-import Chem
+from pyRDKit import Chem
 
 
 class TestCase(unittest.TestCase):

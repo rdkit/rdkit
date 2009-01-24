@@ -1,4 +1,4 @@
-(iML.Descriptors.CompoundDescriptors
+(ipyRDKit.ML.Descriptors.CompoundDescriptors
 CompoundDescriptorCalculator
 p1
 (dp2

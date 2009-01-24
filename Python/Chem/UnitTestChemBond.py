@@ -9,7 +9,7 @@
 
 """
 import unittest
-import Chem
+from pyRDKit import Chem
 
 
 class TestCase(unittest.TestCase):

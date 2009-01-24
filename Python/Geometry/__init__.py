@@ -1,5 +1,5 @@
 """ A module for Geometry stuff	
  
 """
-import DataStructs
+from pyRDKit import DataStructs
 from rdGeometry import *

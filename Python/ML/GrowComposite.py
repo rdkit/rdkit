@@ -89,13 +89,13 @@
   - -V: print the version number and exit
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import numpy
-from ML.Data import DataUtils,SplitData
-from ML import ScreenComposite,BuildComposite
-from ML.Composite import AdjustComposite
-from Dbase.DbConnection import DbConnect
-from ML import CompositeRun
+from pyRDKit.ML.Data import DataUtils,SplitData
+from pyRDKit.ML import ScreenComposite,BuildComposite
+from pyRDKit.ML.Composite import AdjustComposite
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.ML import CompositeRun
 import sys,cPickle,time,types
 
 _runDetails = CompositeRun.CompositeRun()
@@ -180,12 +180,12 @@ def GrowIt(details,composite,progressCallback=None,
   attrs = range(1,nVars+1)
 
   if details.useTrees:
-    from ML.DecTree import CrossValidate,PruneTree
+    from pyRDKit.ML.DecTree import CrossValidate,PruneTree
     if details.qBounds != []:
-      from ML.DecTree import BuildQuantTree
+      from pyRDKit.ML.DecTree import BuildQuantTree
       builder = BuildQuantTree.QuantTreeBoot
     else:
-      from ML.DecTree import ID3
+      from pyRDKit.ML.DecTree import ID3
       builder = ID3.ID3Boot
     driver = CrossValidate.CrossValidationDriver
     pruner = PruneTree.PruneTree
@@ -205,7 +205,7 @@ def GrowIt(details,composite,progressCallback=None,
 
 
   else:
-    from ML.Neural import CrossValidate
+    from pyRDKit.ML.Neural import CrossValidate
     driver = CrossValidate.CrossValidationDriver
     composite.Grow(trainExamples,attrs,[0]+nPossibleVals,nTries=details.nModels,
                    buildDriver=driver,needsQuantization=0)

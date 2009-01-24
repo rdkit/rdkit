@@ -9,22 +9,22 @@
 """ Import all RDKit chemistry modules
  
 """
-import rdBase
-import RDConfig
-import DataStructs
-from Geometry import rdGeometry
-from Chem import *
+from pyRDKit import rdBase
+from pyRDKit import RDConfig
+from pyRDKit import DataStructs
+from pyRDKit.Geometry import rdGeometry
+from pyRDKit.Chem import *
 from rdPartialCharges import *
 from rdDepictor import *
 from rdForceFieldHelpers import *
-from Chem.ChemicalFeatures import *
+from pyRDKit.Chem.ChemicalFeatures import *
 from rdDistGeom import *
 from rdMolAlign import *
 from rdMolTransforms import *
 from rdShapeHelpers import *
 from rdChemReactions import *
 from rdSLNParse import *
-import ForceField
+from pyRDKit import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
 import numpy
@@ -107,8 +107,8 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   """ Returns a generator for the virtual library defined by
    a reaction and a sequence of sidechain sets
 
-  >>> import Chem
-  >>> from Chem import AllChem
+  >>> from pyRDKit import Chem
+  >>> from pyRDKit.Chem import AllChem
   >>> s1=[Chem.MolFromSmiles(x) for x in ('NC','NCC')]
   >>> s2=[Chem.MolFromSmiles(x) for x in ('OC=O','OC(=O)C')]
   >>> rxn = AllChem.ReactionFromSmarts('[O:2]=[C:1][OH].[N:3]>>[O:2]=[C:1][N:3]')

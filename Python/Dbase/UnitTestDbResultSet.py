@@ -7,10 +7,10 @@
 """unit testing code for the DbResultSet object
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,os
-from Dbase.DbConnection import DbConnect
-from Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
 
 class TestCase(unittest.TestCase):
   def setUp(self):

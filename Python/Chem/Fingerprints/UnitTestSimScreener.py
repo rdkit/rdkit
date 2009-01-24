@@ -6,9 +6,9 @@
 
 """
 import unittest
-import Chem
-from Chem.Fingerprints import SimilarityScreener
-import DataStructs
+from pyRDKit import Chem
+from pyRDKit.Chem.Fingerprints import SimilarityScreener
+from pyRDKit import DataStructs
 
 def feq(v1,v2,tol=1e-4):
   return abs(v1-v2)<=tol

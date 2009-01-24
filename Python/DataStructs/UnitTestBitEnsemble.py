@@ -6,12 +6,12 @@
 #
 """ unit testing code for BitEnsembles
 """
-import RDConfig
+from pyRDKit import RDConfig
 import os
 import unittest
-from DataStructs.BitEnsemble import BitEnsemble
-from DataStructs import BitEnsembleDb
-from DataStructs import SparseBitVect
+from pyRDKit.DataStructs.BitEnsemble import BitEnsemble
+from pyRDKit.DataStructs import BitEnsembleDb
+from pyRDKit.DataStructs import SparseBitVect
 
 
 class TestCase(unittest.TestCase):
@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
     assert score==2,'bad score: %d'%(score)
 
   def _setupDb(self):
-    from Dbase.DbConnection import DbConnect
+    from pyRDKit.Dbase.DbConnection import DbConnect
     fName = RDConfig.RDTestDatabase
     self.conn  = DbConnect(fName)
     self.dbTblName = 'bit_ensemble_test'

@@ -6,10 +6,10 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import Geometry
+from pyRDKit import Geometry
 import numpy.oldnumeric as Numeric
-from Chem.FeatMaps import FeatMaps
-from Chem.FeatMaps.FeatMapPoint import FeatMapPoint
+from pyRDKit.Chem.FeatMaps import FeatMaps
+from pyRDKit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
 import math,copy
 
 class MergeMethod(object):

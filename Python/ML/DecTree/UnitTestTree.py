@@ -3,9 +3,9 @@
 #
 
 """ unit testing code for trees and decision trees (not learning/xvalidation) """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest
-from ML.DecTree import Tree,DecTree
+from pyRDKit.ML.DecTree import Tree,DecTree
 import copy
 import cPickle
 
@@ -14,7 +14,7 @@ class TreeTestCase(unittest.TestCase):
   def setUp(self):
     print '\n%s: '%self.shortDescription(),
     self.baseTree = Tree.TreeNode(None,'root')    
-    self.pickleFileName = RDConfig.RDCodeDir+'/ML/DecTree/regress/treeunit.pkl'
+    self.pickleFileName = RDConfig.RDCodeDir+'/ML/DecTree/test_data/treeunit.pkl'
     
   def testAdd(self):
     " testing AddChild "

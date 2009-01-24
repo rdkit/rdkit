@@ -8,7 +8,7 @@
 
 
 """
-from ML.Data import Stats
+from pyRDKit.ML.Data import Stats
 
 def StdDev(mat):
   """ the standard deviation classifier

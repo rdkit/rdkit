@@ -10,10 +10,10 @@
 """
 
 import numpy
-from ML.DecTree import SigTree
-from ML import InfoTheory
-from ML.FeatureSelect import CMIM
-from DataStructs.VectCollection import VectCollection
+from pyRDKit.ML.DecTree import SigTree
+from pyRDKit.ML import InfoTheory
+from pyRDKit.ML.FeatureSelect import CMIM
+from pyRDKit.DataStructs.VectCollection import VectCollection
 import copy
 import random
 def _GenerateRandomEnsemble(nToInclude,nBits):

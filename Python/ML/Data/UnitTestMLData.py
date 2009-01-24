@@ -7,8 +7,8 @@
 """
 import unittest
 import cPickle
-from ML.Data import MLData,DataUtils
-import RDConfig
+from pyRDKit.ML.Data import MLData,DataUtils
+from pyRDKit import RDConfig
     
 
 class TestCase(unittest.TestCase):

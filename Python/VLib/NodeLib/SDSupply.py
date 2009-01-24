@@ -4,9 +4,9 @@
 #     All Rights Reserved
 #
 import sys,os.path
-import RDConfig
-from VLib.Supply import SupplyNode
-import Chem
+from pyRDKit import RDConfig
+from pyRDKit.VLib.Supply import SupplyNode
+from pyRDKit import Chem
 
 class SDSupplyNode(SupplyNode):
   """ SD supplier

@@ -7,9 +7,9 @@
 """unit testing code for database connection objects
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,os,sys
-from Dbase.DbConnection import DbConnect
+from pyRDKit.Dbase.DbConnection import DbConnect
 
 class TestCase(unittest.TestCase):
   def setUp(self):

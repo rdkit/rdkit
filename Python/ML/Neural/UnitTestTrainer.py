@@ -9,7 +9,7 @@
 
 """
 import unittest
-from ML.Neural import Network,Trainers
+from pyRDKit.ML.Neural import Network,Trainers
 import numpy
 import random
 random.seed(23)

@@ -3,12 +3,12 @@
 #  Copyright (C) 2005  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,os
-from ML.DecTree.SigTree import SigTreeNode
-from ML import InfoTheory
-from DataStructs import ExplicitBitVect
-from DataStructs.VectCollection import VectCollection
+from pyRDKit.ML.DecTree.SigTree import SigTreeNode
+from pyRDKit.ML import InfoTheory
+from pyRDKit.DataStructs import ExplicitBitVect
+from pyRDKit.DataStructs.VectCollection import VectCollection
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -141,7 +141,7 @@ class TestCase(unittest.TestCase):
   def test4(self):
     import gzip,cPickle
     from BuildSigTree import BuildSigTree
-    gz = gzip.open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','regress',
+    gz = gzip.open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','test_data',
                                 'cdk2-few.pkl.gz'),
                    'r')
     examples = cPickle.load(gz)

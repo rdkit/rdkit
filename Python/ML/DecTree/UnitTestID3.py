@@ -3,17 +3,17 @@
 #
 
 """ unit tests for the ID3 implementation """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest
-from ML.DecTree import ID3,DecTree
+from pyRDKit.ML.DecTree import ID3,DecTree
 import cPickle
-from ML.Data import MLData
+from pyRDKit.ML.Data import MLData
 
 class ID3TestCase(unittest.TestCase):
   def setUp(self):
     print '\n%s: '%self.shortDescription(),
-    self.basicTreeName=RDConfig.RDCodeDir+'/ML/DecTree/regress/BasicTree.pkl'
-    self.multiTreeName=RDConfig.RDCodeDir+'/ML/DecTree/regress/MultiTree.pkl'
+    self.basicTreeName=RDConfig.RDCodeDir+'/ML/DecTree/test_data/BasicTree.pkl'
+    self.multiTreeName=RDConfig.RDCodeDir+'/ML/DecTree/test_data/MultiTree.pkl'
   def _setupBasicTree(self):
     examples = [[0,0,0,0,0],
                 [0,0,0,1,0],
@@ -87,7 +87,7 @@ class ID3TestCase(unittest.TestCase):
 
   # ------------- force python in the ID3 code   
   def _setupPyBasicTree(self):
-    from ML.InfoTheory import entropy
+    from pyRDKit.ML.InfoTheory import entropy
     ID3.entropy.InfoEntropy = entropy.PyInfoEntropy
     ID3.entropy.InfoGain = entropy.PyInfoGain
     
@@ -121,7 +121,7 @@ class ID3TestCase(unittest.TestCase):
     assert self.t1 == t2, 'Incorrect tree generated.'
 
   def _setupPyMultiTree(self):
-    from ML.InfoTheory import entropy
+    from pyRDKit.ML.InfoTheory import entropy
     ID3.entropy.InfoEntropy = entropy.PyInfoEntropy
     ID3.entropy.InfoGain = entropy.PyInfoGain
 

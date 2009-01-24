@@ -4,7 +4,7 @@
 """ utility functions with "chemical know-how"
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import string,re,os
 
 if not RDConfig.usePgSQL:
@@ -39,7 +39,7 @@ def GetAtomicData(atomDict,descriptorsDesired,dBase=_atomDbName,
 
   """
   extraFields =['NVAL','NVAL_NO_FULL_F','NVAL_NO_FULL_D','NVAL_NO_FULL']
-  from Dbase import DbModule
+  from pyRDKit.Dbase import DbModule
   cn = DbModule.connect(dBase,user,password)
   c = cn.cursor()
   descriptorsDesired = map(string.upper,descriptorsDesired)

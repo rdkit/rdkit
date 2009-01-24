@@ -17,10 +17,10 @@ Sample Usage:
 
 
 """
-import Chem
-from Chem import MACCSkeys
-from ML.Cluster import Murtagh
-import DataStructs
+from pyRDKit import Chem
+from pyRDKit.Chem import MACCSkeys
+from pyRDKit.ML.Cluster import Murtagh
+from pyRDKit import DataStructs
 import sys
 import cPickle
 
@@ -155,9 +155,9 @@ def FingerprintsFromPickles(dataSource,idCol,pklCol,
 def FingerprintsFromDetails(details,reportFreq=10):
   data = None
   if details.dbName and details.tableName:
-    from Dbase.DbConnection import DbConnect
-    from Dbase import DbInfo
-    from ML.Data import DataUtils
+    from pyRDKit.Dbase.DbConnection import DbConnect
+    from pyRDKit.Dbase import DbInfo
+    from pyRDKit.ML.Data import DataUtils
     try:
       conn = DbConnect(details.dbName,details.tableName)
     except:
@@ -172,7 +172,7 @@ def FingerprintsFromDetails(details,reportFreq=10):
     idCol = 0
     smiCol = 1
   elif details.inFileName and details.useSmiles:
-    from ML.Data import DataUtils
+    from pyRDKit.ML.Data import DataUtils
     conn = None
     if not details.idName:
       details.idName='ID'
@@ -240,8 +240,8 @@ def FingerprintsFromDetails(details,reportFreq=10):
       outF.close()
     dbName = details.outDbName or details.dbName
     if details.outTableName and dbName:
-      from Dbase.DbConnection import DbConnect
-      from Dbase import DbInfo,DbUtils,DbModule
+      from pyRDKit.Dbase.DbConnection import DbConnect
+      from pyRDKit.Dbase import DbInfo,DbUtils,DbModule
       conn = DbConnect(dbName)
       #
       #  We don't have a db open already, so we'll need to figure out

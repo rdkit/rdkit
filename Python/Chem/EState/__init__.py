@@ -10,5 +10,5 @@ Unless otherwise noted, all definitions here can be found in:
 
 """
 
-from Chem.EState.EState import  *
-from Chem.EState.AtomTypes import *
+from pyRDKit.Chem.EState.EState import  *
+from pyRDKit.Chem.EState.AtomTypes import *

@@ -24,7 +24,7 @@ Other compatibility notes:
 """
 
 import numpy
-from ML.Composite import Composite
+from pyRDKit.ML.Composite import Composite
 
 
 class BayesComposite(Composite.Composite):

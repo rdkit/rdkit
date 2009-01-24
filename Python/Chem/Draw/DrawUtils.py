@@ -6,8 +6,8 @@
 #
 import os
 from MolDrawing import MolDrawing
-from sping.SVG.pidSVG import SVGCanvas as Canvas
-from sping import pid
+from pyRDKit.sping.SVG.pidSVG import SVGCanvas as Canvas
+from pyRDKit.sping import pid
 import tempfile
 
 _batikLoc=os.environ.get('BATIK_HOME','/usr/local/src/batik-1.5.1/')
@@ -85,7 +85,7 @@ def MolsToJpeg(mols,filenames,size=(200,200),dblSize=0,frame=0,
         if verbose: traceback.print_exc()
   return ok
 def SmilesToJpeg(smiles,filenames,**kwargs):
-  import Chem
+  from pyRDKit import Chem
   if isinstance(filenames,basestring):
     smiles = [smiles]
     filenames = [filenames]
@@ -97,7 +97,7 @@ def SmilesToJpeg(smiles,filenames,**kwargs):
   return MolsToJpeg(mols,filenames,**kwargs)
     
 if __name__=='__main__':
-  import Chem
+  from pyRDKit import Chem
   import tempfile
   fN1 = tempfile.mktemp('.jpg')
   print fN1

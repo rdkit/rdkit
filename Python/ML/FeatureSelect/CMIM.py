@@ -11,8 +11,8 @@
             (2004)
   
 """
-import RDConfig
-import DataStructs
+from pyRDKit import RDConfig
+from pyRDKit import DataStructs
 import tempfile
 import os
 import rdFeatSelect

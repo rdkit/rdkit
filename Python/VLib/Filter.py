@@ -5,7 +5,7 @@
 #
 import sys
 
-from VLib.Node import VLibNode
+from pyRDKit.VLib.Node import VLibNode
 
 class FilterNode(VLibNode):
   """ base class for nodes which filter their input
@@ -20,7 +20,7 @@ class FilterNode(VLibNode):
     - we return a tuple if there's more than one input
   
   Usage Example:
-    >>> from VLib.Supply import SupplyNode
+    >>> from pyRDKit.VLib.Supply import SupplyNode
     >>> def func(a,b):
     ...   return a+b < 5
     >>> filt = FilterNode(func=func)

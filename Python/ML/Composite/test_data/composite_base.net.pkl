@@ -1,7 +1,7 @@
 ccopy_reg
 _reconstructor
 p1
-(cML.Composite.Composite
+(cpyRDKit.ML.Composite.Composite
 Composite
 p2
 c__builtin__
@@ -23,7 +23,7 @@ p11
 sS'modelList'
 p13
 (lp14
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p15
 (dp16
@@ -513,7 +513,7 @@ F0.53494369909710671
 sS'children'
 p114
 (lp115
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p116
 (dp117
@@ -555,7 +555,7 @@ sg114
 sS'testExamples'
 p126
 (lp127
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p128
 (dp129
@@ -579,7 +579,7 @@ sg113
 F1
 sg114
 (lp134
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p135
 (dp136
@@ -607,7 +607,7 @@ sg114
 (lp141
 sg126
 (lp142
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p143
 (dp144
@@ -635,7 +635,7 @@ sg114
 (lp149
 sg126
 (lp150
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p151
 (dp152
@@ -665,7 +665,7 @@ sg126
 (lp158
 sbasg126
 (lp159
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p160
 (dp161
@@ -894,7 +894,7 @@ aI1
 aI1
 aI2
 aI0
-aasba(iML.DecTree.DecTree
+aasba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p208
 (dp209
@@ -1017,7 +1017,7 @@ asg113
 F0.60717165487130287
 sg114
 (lp215
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p216
 (dp217
@@ -1045,7 +1045,7 @@ sg114
 (lp222
 sg126
 (lp223
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p224
 (dp225
@@ -1069,7 +1069,7 @@ sg113
 F0.98522813603425152
 sg114
 (lp230
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p231
 (dp232
@@ -1097,7 +1097,7 @@ sg114
 (lp237
 sg126
 (lp238
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p239
 (dp240
@@ -1126,7 +1126,7 @@ sg114
 (lp245
 sg126
 (lp246
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p247
 (dp248
@@ -1156,7 +1156,7 @@ sg126
 (lp254
 sbasg126
 (lp255
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p256
 (dp257
@@ -1200,7 +1200,7 @@ ag91
 ag204
 ag105
 ag107
-asba(iML.DecTree.DecTree
+asba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p265
 (dp266
@@ -1309,7 +1309,7 @@ asg113
 F0.47707130621932969
 sg114
 (lp272
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p273
 (dp274
@@ -1337,7 +1337,7 @@ sg114
 (lp279
 sg126
 (lp280
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p281
 (dp282
@@ -1361,7 +1361,7 @@ sg113
 F1
 sg114
 (lp287
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p288
 (dp289
@@ -1389,7 +1389,7 @@ sg114
 (lp294
 sg126
 (lp295
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p296
 (dp297
@@ -1418,7 +1418,7 @@ sg114
 (lp302
 sg126
 (lp303
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p304
 (dp305
@@ -1448,7 +1448,7 @@ sg126
 (lp311
 sbasg126
 (lp312
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p313
 (dp314
@@ -1472,7 +1472,7 @@ sg113
 F0
 sg114
 (lp319
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p320
 (dp321
@@ -1501,7 +1501,7 @@ sg114
 (lp326
 sg126
 (lp327
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p328
 (dp329
@@ -1530,7 +1530,7 @@ sg114
 (lp334
 sg126
 (lp335
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p336
 (dp337
@@ -1585,7 +1585,7 @@ ag91
 ag95
 ag99
 ag105
-asba(iML.DecTree.DecTree
+asba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p346
 (dp347
@@ -1699,7 +1699,7 @@ asg113
 F0.60060857541318702
 sg114
 (lp353
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p354
 (dp355
@@ -1727,7 +1727,7 @@ sg114
 (lp360
 sg126
 (lp361
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p362
 (dp363
@@ -1751,7 +1751,7 @@ sg113
 F0.97095059445466858
 sg114
 (lp368
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p369
 (dp370
@@ -1779,7 +1779,7 @@ sg114
 (lp375
 sg126
 (lp376
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p377
 (dp378
@@ -1808,7 +1808,7 @@ sg114
 (lp383
 sg126
 (lp384
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p385
 (dp386
@@ -1838,7 +1838,7 @@ sg126
 (lp392
 sbasg126
 (lp393
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p394
 (dp395
@@ -1862,7 +1862,7 @@ sg113
 F0
 sg114
 (lp400
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p401
 (dp402
@@ -1891,7 +1891,7 @@ sg114
 (lp407
 sg126
 (lp408
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p409
 (dp410
@@ -1920,7 +1920,7 @@ sg114
 (lp415
 sg126
 (lp416
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p417
 (dp418
@@ -1973,7 +1973,7 @@ ag87
 ag91
 ag105
 ag107
-asba(iML.DecTree.DecTree
+asba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p427
 (dp428
@@ -2073,7 +2073,7 @@ asg113
 F0.78712658620126896
 sg114
 (lp434
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p435
 (dp436
@@ -2101,7 +2101,7 @@ sg114
 (lp441
 sg126
 (lp442
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p443
 (dp444
@@ -2125,7 +2125,7 @@ sg113
 F0.59167277858232747
 sg114
 (lp449
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p450
 (dp451
@@ -2154,7 +2154,7 @@ sg114
 (lp456
 sg126
 (lp457
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p458
 (dp459
@@ -2182,7 +2182,7 @@ sg114
 (lp464
 sg126
 (lp465
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p466
 (dp467
@@ -2212,7 +2212,7 @@ sg126
 (lp473
 sbasg126
 (lp474
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p475
 (dp476
@@ -2269,7 +2269,7 @@ ag101
 ag103
 ag206
 ag107
-asba(iML.DecTree.DecTree
+asba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p484
 (dp485
@@ -2380,7 +2380,7 @@ asg113
 F0.67895389951857588
 sg114
 (lp491
-(iML.DecTree.DecTree
+(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p492
 (dp493
@@ -2408,7 +2408,7 @@ sg114
 (lp498
 sg126
 (lp499
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p500
 (dp501
@@ -2436,7 +2436,7 @@ sg114
 (lp506
 sg126
 (lp507
-sba(iML.DecTree.DecTree
+sba(ipyRDKit.ML.DecTree.DecTree
 DecTreeNode
 p508
 (dp509

@@ -10,7 +10,7 @@ Dumping CDXML from python
 
 """
 from elementtree.SimpleXMLWriter import XMLWriter
-import Chem
+from pyRDKit import Chem
 
 header = """<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE CDXML SYSTEM "http://www.camsoft.com/xml/cdxml.dtd" >
@@ -101,10 +101,10 @@ def MolToCDXML(mol,outF,highlightBonds=[],highlightAtoms=[]):
 if __name__ == '__main__':
   import sys,cStringIO
   try:
-    from utils import chemdraw
+    from pyRDKit.utils import chemdraw
   except:
     chemdraw = None
-  import Chem
+  from pyRDKit import Chem
   for smi in ['c1cnccc1','C1=CN=CC=C1']:
     print '---------------------------------'
     m = Chem.MolFromSmiles(smi)

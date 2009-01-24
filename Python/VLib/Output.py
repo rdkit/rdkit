@@ -5,7 +5,7 @@
 #
 import sys
 
-from VLib.Node import VLibNode
+from pyRDKit.VLib.Node import VLibNode
 
 class OutputNode(VLibNode):
   """ base class for nodes which dump output
@@ -21,7 +21,7 @@ class OutputNode(VLibNode):
 
 
   Usage Example:
-    >>> from VLib.Supply import SupplyNode
+    >>> from pyRDKit.VLib.Supply import SupplyNode
     >>> supplier = SupplyNode(contents=[1,2,3])
     >>> import StringIO
     >>> io = StringIO.StringIO()

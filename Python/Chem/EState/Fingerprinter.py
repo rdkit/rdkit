@@ -9,9 +9,9 @@
 """  EState fingerprinting
 
 """
-import numpy.oldnumeric as Numeric
-from Chem.EState import EStateIndices
-from Chem.EState import AtomTypes
+import numpy
+from pyRDKit.Chem.EState import EStateIndices
+from pyRDKit.Chem.EState import AtomTypes
 
 def FingerprintMol(mol):
   """ generates the EState fingerprints for the molecule
@@ -29,8 +29,8 @@ def FingerprintMol(mol):
   esIndices = EStateIndices(mol)
 
   nPatts = len(AtomTypes.esPatterns)
-  counts = Numeric.zeros(nPatts,Numeric.Int)
-  sums = Numeric.zeros(nPatts,Numeric.Float)
+  counts = numpy.zeros(nPatts,numpy.int)
+  sums = numpy.zeros(nPatts,numpy.float)
 
   for i,(name,pattern) in enumerate(AtomTypes.esPatterns):
     matches = mol.GetSubstructMatches(pattern,uniquify=1)
@@ -41,7 +41,7 @@ def FingerprintMol(mol):
 
 
 if __name__ == '__main__':
-  import Chem
+  from pyRDKit import Chem
   smis = ['CC','CCC','c1[nH]cnc1CC(N)C(O)=O','NCCc1ccc(O)c(O)c1']
   for smi in smis:
     m = Chem.MolFromSmiles(smi)

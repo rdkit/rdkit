@@ -4,7 +4,7 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import RDConfig
+from pyRDKit import RDConfig
 import DbModule
 import sys
 sqlTextTypes = DbModule.sqlTextTypes

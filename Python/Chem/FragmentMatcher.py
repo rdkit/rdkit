@@ -36,7 +36,7 @@ now the matcher will not hit anything that has a benzene ring.
 
 
 """
-import Chem
+from pyRDKit import Chem
 
 
 class FragmentMatcher(object):

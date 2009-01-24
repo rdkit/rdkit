@@ -5,19 +5,19 @@
 #
 
 """ unit tests for the QuantTree implementation """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest
-from ML.DecTree import BuildQuantTree
-from ML.DecTree.QuantTree import QuantTreeNode
+from pyRDKit.ML.DecTree import BuildQuantTree
+from pyRDKit.ML.DecTree.QuantTree import QuantTreeNode
 
 import cPickle
-from ML.Data import MLData
+from pyRDKit.ML.Data import MLData
 
 class TestCase(unittest.TestCase):
   def setUp(self):
     print '\n%s: '%self.shortDescription(),
-    self.qTree1Name=RDConfig.RDCodeDir+'/ML/DecTree/regress/QuantTree1.pkl'
-    self.qTree2Name=RDConfig.RDCodeDir+'/ML/DecTree/regress/QuantTree2.pkl'
+    self.qTree1Name=RDConfig.RDCodeDir+'/ML/DecTree/test_data/QuantTree1.pkl'
+    self.qTree2Name=RDConfig.RDCodeDir+'/ML/DecTree/test_data/QuantTree2.pkl'
 
   def _setupTree1(self):
     examples1 = [['p1',0,1,0.1,0],
@@ -154,8 +154,8 @@ class TestCase(unittest.TestCase):
   def testBug29_2(self):
     """ a more extensive test of the cmp stuff using pickled trees"""
     import cPickle,os
-    t1 = cPickle.load(open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','regress','CmpTree1.pkl'),'rb'))
-    t2 = cPickle.load(open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','regress','CmpTree2.pkl'),'rb'))
+    t1 = cPickle.load(open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','test_data','CmpTree1.pkl'),'rb'))
+    t2 = cPickle.load(open(os.path.join(RDConfig.RDCodeDir,'ML','DecTree','test_data','CmpTree2.pkl'),'rb'))
     assert cmp(t1,t2),'equality failed'
 
 

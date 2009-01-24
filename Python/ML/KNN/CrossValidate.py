@@ -7,11 +7,11 @@ and evaluation of individual models
 
 """
 
-from ML.KNN.KNNClassificationModel import KNNClassificationModel
-from ML.KNN.KNNRegressionModel import KNNRegressionModel
-import RDRandom
-from ML.KNN import DistFunctions
-from ML.Data import SplitData
+from pyRDKit.ML.KNN.KNNClassificationModel import KNNClassificationModel
+from pyRDKit.ML.KNN.KNNRegressionModel import KNNRegressionModel
+from pyRDKit import RDRandom
+from pyRDKit.ML.KNN import DistFunctions
+from pyRDKit.ML.Data import SplitData
 
 def makeClassificationModel(numNeigh, attrs, distFunc) :
   return KNNClassificationModel(numNeigh, attrs, distFunc)

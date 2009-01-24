@@ -7,7 +7,7 @@
 """ uses pymol to interact with molecules
 
 """
-import Chem
+from pyRDKit import Chem
 import xmlrpclib,os
 
 

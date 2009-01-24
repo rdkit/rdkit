@@ -1,2 +1,2 @@
-import DataStructs
+from pyRDKit import DataStructs
 from rdFeatSelect import *

@@ -4,9 +4,9 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import Geometry
-import Chem
-from Chem import ChemicalFeatures
+from pyRDKit import Geometry
+from pyRDKit import Chem
+from pyRDKit.Chem import ChemicalFeatures
 
 class FeatMapPoint(ChemicalFeatures.FreeChemicalFeature):
   weight=0.0

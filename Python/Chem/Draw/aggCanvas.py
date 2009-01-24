@@ -7,7 +7,8 @@
 from aggdraw import Brush, Pen
 from aggdraw import Font
 import math
-import RDConfig,os
+from pyRDKit import RDConfig
+import os
 
 faceMap={'sans':os.path.join(RDConfig.RDCodeDir,'Chem','Draw','FreeSans.ttf')}
 

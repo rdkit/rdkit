@@ -11,9 +11,9 @@
 
 import numpy
 import random
-from ML.DecTree import QuantTree, ID3
-from ML.InfoTheory import entropy
-from ML.Data import Quantize
+from pyRDKit.ML.DecTree import QuantTree, ID3
+from pyRDKit.ML.InfoTheory import entropy
+from pyRDKit.ML.Data import Quantize
 
 def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
              nPossibleVals,attrs,exIndices=None,**kwargs):
@@ -361,12 +361,12 @@ def TestQuantTree():
   
   print 'base'
   t1 = QuantTreeBoot(examples1,attrs,nPossibleVals,boundsPerVar)
-  t1.Pickle('regress/QuantTree1.pkl')
+  t1.Pickle('test_data/QuantTree1.pkl')
   t1.Print()
 
   print 'depth limit'
   t1 = QuantTreeBoot(examples1,attrs,nPossibleVals,boundsPerVar,maxDepth=1)
-  t1.Pickle('regress/QuantTree1.pkl')
+  t1.Pickle('test_data/QuantTree1.pkl')
   t1.Print()
 
 def TestQuantTree2():
@@ -388,7 +388,7 @@ def TestQuantTree2():
   
   t1 = QuantTreeBoot(examples1,attrs,nPossibleVals,boundsPerVar)
   t1.Print()
-  t1.Pickle('regress/QuantTree2.pkl')
+  t1.Pickle('test_data/QuantTree2.pkl')
 
   for example in examples1:
     print example,t1.ClassifyExample(example)

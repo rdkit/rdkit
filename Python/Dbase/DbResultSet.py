@@ -9,7 +9,7 @@
 
 """
 import sys
-from Dbase import DbInfo
+from pyRDKit.Dbase import DbInfo
 
 class DbResultBase(object):
   def __init__(self,cursor,conn,cmd,removeDups=-1,transform=None,extras=None):
@@ -173,7 +173,7 @@ class RandomAccessDbResultSet(DbResultBase):
     return res
   
 if __name__ == '__main__':
-  from Dbase.DbConnection import DbConnect
+  from pyRDKit.Dbase.DbConnection import DbConnect
   conn = DbConnect('TEST.GDB')
   curs = conn.GetCursor()
   print 'curs:',repr(curs)

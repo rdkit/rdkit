@@ -9,7 +9,7 @@
   _QuantTreeNode_ is derived from _DecTree.DecTreeNode_
 
 """
-from ML.DecTree import DecTree,Tree
+from pyRDKit.ML.DecTree import DecTree,Tree
 
 class QuantTreeNode(DecTree.DecTreeNode):
   """ 

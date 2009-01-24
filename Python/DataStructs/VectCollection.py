@@ -4,7 +4,7 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import DataStructs
+from pyRDKit import DataStructs
 import copy,struct,cPickle
 
 class VectCollection(object):

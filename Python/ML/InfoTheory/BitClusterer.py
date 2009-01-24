@@ -2,8 +2,8 @@
 #  Copyright (C) 2000-2008  Greg Landrum and Rational Discovery LLC
 #
 
-from SimDivFilters import rdSimDivPickers as rdsimdiv
-import DataStructs
+from pyRDKit.SimDivFilters import rdSimDivPickers as rdsimdiv
+from pyRDKit import DataStructs
 import numpy
 
 class BitClusterer(object):

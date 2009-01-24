@@ -7,10 +7,10 @@
 """unit testing code for the Crippen clogp and MR calculators
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,sys,os,cPickle
-import Chem
-from Chem import Crippen
+from pyRDKit import Chem
+from pyRDKit.Chem import Crippen
 import numpy
 
 def feq(n1,n2,tol=1e-5):
@@ -159,7 +159,7 @@ class TestCase(unittest.TestCase):
     self._doDetailFile(inF)
 
   def testIssue80(self):
-    from Chem import Lipinski
+    from pyRDKit.Chem import Lipinski
     m = Chem.MolFromSmiles('CCOC')
     ref = Crippen.MolLogP(m)
     Lipinski.NHOHCount(m)

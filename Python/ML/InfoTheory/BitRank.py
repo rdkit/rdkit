@@ -19,7 +19,7 @@
 
 """
 import numpy
-from ML.InfoTheory import entropy
+from pyRDKit.ML.InfoTheory import entropy
 
 def FormCounts(bitVects,actVals,whichBit,nPossibleActs,nPossibleBitVals=2):
   """ generates the counts matrix for a particular bit

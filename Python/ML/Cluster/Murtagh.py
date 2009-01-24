@@ -7,8 +7,8 @@
 """ Interface to the C++ Murtagh hierarchic clustering code
 
 """
-from ML.Cluster import Clusters
-from ML.Cluster.Clustering import MurtaghCluster,MurtaghDistCluster
+from pyRDKit.ML.Cluster import Clusters
+from pyRDKit.ML.Cluster.Clustering import MurtaghCluster,MurtaghDistCluster
 import numpy
 
 

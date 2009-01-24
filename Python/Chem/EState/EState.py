@@ -8,7 +8,7 @@
 
 """
 import numpy
-import Chem
+from pyRDKit import Chem
 
 def GetPrincipleQuantumNumber(atNum):
   if atNum<=2: return 1

@@ -27,10 +27,10 @@ def RestoreState(self,varDictString):
     
 
 if __name__ == '__main__':
-  import RDConfig
-  from GuiFramework import GuiBase
+  from pyRDKit import RDConfig
+  from pyRDKit.GuiFramework import GuiBase
 
-  from mixins import Loader
+  from pyRDKit.mixins import Loader
   loadOrder = []
   loadedMixIns=Loader.LoadMixIns(REQUIRED_MIXINS,loadOrder,
                                  [RDConfig.RDCodeDir+'/GuiFramework/GuiLib'])

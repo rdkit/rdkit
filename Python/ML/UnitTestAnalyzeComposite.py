@@ -7,9 +7,9 @@
 """unit testing code for the AnalyzeComposite functionality
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,os
-from ML import AnalyzeComposite
+from pyRDKit.ML import AnalyzeComposite
 import cPickle as pickle
 
 def feq(a,b,tol=1e-4):

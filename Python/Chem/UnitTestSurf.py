@@ -9,10 +9,10 @@
 FIX: add tests for LabuteASA
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,cPickle,os
-import Chem
-from Chem import MolSurf
+from pyRDKit import Chem
+from pyRDKit.Chem import MolSurf
 import os.path
 
 def feq(n1,n2,tol=1e-4):

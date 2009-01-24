@@ -4,5 +4,5 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from ForceField import *
+from pyRDKit.ForceField import *
 from Chem.rdForceFieldHelpers import *

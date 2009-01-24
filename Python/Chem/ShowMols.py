@@ -4,13 +4,13 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import RDConfig
+from pyRDKit import RDConfig
 
 # change this to use another viewer:
 if RDConfig.molViewer in ('WEBLAB','DSVIEWER'):
-  from Chem.DSViewer import *
+  from pyRDKit.Chem.DSViewer import *
 elif RDConfig.molViewer=='PYMOL':
-  from Chem.PyMol import *
+  from pyRDKit.Chem.PyMol import *
 else:
   raise ValueError,'invalid RD_MOLVIEWER specified'
 

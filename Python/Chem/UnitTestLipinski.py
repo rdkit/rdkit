@@ -9,10 +9,10 @@
   This provides a workout for the SMARTS matcher
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import unittest,cPickle,os
-import Chem
-from Chem import Lipinski
+from pyRDKit import Chem
+from pyRDkit.Chem import Lipinski
 
 class TestCase(unittest.TestCase):
   def setUp(self):

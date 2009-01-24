@@ -3,11 +3,12 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import RDConfig
-import Chem,os.path
+from pyRDKit import RDConfig
+from pyRDKit import Chem
+import os.path
 
-from VLib.NodeLib import *
-from VLib import Supply,Filter
+from pyRDKit.VLib.NodeLib import *
+from pyRDKit.VLib import Supply,Filter
 
 # this would be a real input, from an sd file:
 #fName = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib','test_data','NCI_aids.10.dupes.sdf')

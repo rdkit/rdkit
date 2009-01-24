@@ -4,10 +4,10 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import Geometry
-import Chem
-from Chem import ChemicalFeatures
-from Chem.FeatMaps.FeatMapPoint import FeatMapPoint
+from pyRDKit import Geometry
+from pyRDKit import Chem
+from pyRDKit.Chem import ChemicalFeatures
+from pyRDKit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
 import math
 
 class FeatMapScoreMode(object):

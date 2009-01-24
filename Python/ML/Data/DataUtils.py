@@ -52,11 +52,11 @@
     4) A python list of lists with the data points
 
 """
-import RDConfig
-from utils import fileutils
-from ML.Data import MLData
-from Dbase.DbConnection import DbConnect
-from DataStructs import BitUtils
+from pyRDKit import RDConfig
+from pyRDKit.utils import fileutils
+from pyRDKit.ML.Data import MLData
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.DataStructs import BitUtils
 import string
 import re,csv
 import cPickle
@@ -614,7 +614,7 @@ def InitRandomNumbers(seed):
       Python _random_ module
 
   """
-  import RDRandom
+  from pyRDKit import RDRandom
   RDRandom.seed(seed[0])
   import random
   random.seed(seed[0])

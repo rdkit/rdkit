@@ -7,7 +7,7 @@
   _DecTreeNode_ is derived from _Tree.TreeNode_
 
 """
-from ML.DecTree import Tree
+from pyRDKit.ML.DecTree import Tree
 
 class DecTreeNode(Tree.TreeNode):
   """ This is used to represent decision trees

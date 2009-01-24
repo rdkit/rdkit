@@ -30,12 +30,12 @@ Usage:  AnalyzeComposite [optional args] <models>
 
 import numpy
 import sys,cPickle
-from ML.DecTree import TreeUtils,Tree
-from ML.Data import Stats
-from Dbase.DbConnection import DbConnect
-from ML import ScreenComposite
+from pyRDKit.ML.DecTree import TreeUtils,Tree
+from pyRDKit.ML.Data import Stats
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.ML import ScreenComposite
 try:
-  from Excel.ExcelWrapper import ExcelWrapper as Excel
+  from pyRDKit.Excel.ExcelWrapper import ExcelWrapper as Excel
 except ImportError:
   Excel = None
 

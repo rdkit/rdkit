@@ -5,7 +5,7 @@
 #
 import sys
 
-from VLib.Node import VLibNode
+from pyRDKit.VLib.Node import VLibNode
 
 class SupplyNode(VLibNode):
   """ base class for nodes which supply things

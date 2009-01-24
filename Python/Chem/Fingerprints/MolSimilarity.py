@@ -15,22 +15,22 @@ Sample Usage:
       --smilesName="structure" -o results.csv 
 
 """
-import RDConfig
-import DataStructs
-import Chem
-from Dbase.DbConnection import DbConnect
-from Dbase import DbModule
-from DataStructs.TopNContainer import TopNContainer
+from pyRDKit import RDConfig
+from pyRDKit import DataStructs
+from pyRDKit import Chem
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.Dbase import DbModule
+from pyRDKit.DataStructs.TopNContainer import TopNContainer
 import sys,types
 import cPickle
-from Chem.Fingerprints import FingerprintMols,DbFpSupplier
+from pyRDKit.Chem.Fingerprints import FingerprintMols,DbFpSupplier
 try:  
-  from VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq
+  from pyRDKit.VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq
 except ImportError:
   _dataSeq=None
   
 
-import DataStructs
+from pyRDKit import DataStructs
 
 _cvsVersion="$Id$"
 idx1 = _cvsVersion.find(':')+1

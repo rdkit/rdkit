@@ -22,8 +22,8 @@ definition. It's not clear to me what the correct behavior is.
 5) Key 1 (ISOTOPE) isn't defined
 
 """
-import Chem
-import DataStructs
+from pyRDKit import Chem
+from pyRDKit import DataStructs
 # these are SMARTS patterns corresponding to the MDL MACCS keys
 smartsPatts={
   1:('?',0), # ISOTOPE

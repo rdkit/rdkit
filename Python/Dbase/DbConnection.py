@@ -7,14 +7,14 @@
 """ defines class _DbConnect_, for abstracting connections to databases
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import sys,types
 import exceptions
 
 class DbError(RuntimeError):
   pass
   
-from Dbase import DbUtils,DbInfo
+from pyRDKit.Dbase import DbUtils,DbInfo
 import DbModule
 
 

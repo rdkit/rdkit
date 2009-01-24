@@ -14,14 +14,14 @@ Sample Usage:
     --actTable="dop_test" --actName="moa_quant"
 
 """
-from Dbase.DbConnection import DbConnect
-from Dbase import DbInfo,DbUtils
-from ML.Data import DataUtils
-from ML.Cluster import Clusters
-from ML.Cluster import Murtagh
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.Dbase import DbInfo,DbUtils
+from pyRDKit.ML.Data import DataUtils
+from pyRDKit.ML.Cluster import Clusters
+from pyRDKit.ML.Cluster import Murtagh
 import sys,cPickle
-from Chem.Fingerprints import FingerprintMols,MolSimilarity
-import DataStructs
+from pyRDKit.Chem.Fingerprints import FingerprintMols,MolSimilarity
+from pyRDKit import DataStructs
 import numpy
 _cvsVersion="$Id$"
 idx1 = _cvsVersion.find(':')+1

@@ -11,11 +11,11 @@
  see Chem/index.html in the doc tree for documentation
  
 """
-import rdBase
-import RDConfig
+from pyRDKit import rdBase
+from pyRDKit import RDConfig
 
-import DataStructs
-from Geometry import rdGeometry
+from pyRDKit import DataStructs
+from pyRDKit.Geometry import rdGeometry
 import PeriodicTable as pyPeriodicTable
 import rdchem
 _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
@@ -25,7 +25,7 @@ from rdmolops import *
 
 def GetSmartsMatchCDXML(mol,patt,maps,which=0,showAllAtoms=0):
   try:
-    from Chem import CDXMLWriter
+    from pyRDKit.Chem import CDXMLWriter
   except:
     CDXMLWriter = None
   if CDXMLWriter is None:
@@ -61,7 +61,7 @@ def GetSmartsMatchCDXML(mol,patt,maps,which=0,showAllAtoms=0):
 
 def DisplaySmartsMatch(mol,patt,maps,which=0,showAllAtoms=0):
   try:
-    from utils import chemdraw
+    from pyRDKit.utils import chemdraw
   except:
     chemdraw = None
   cdxml = GetSmartsMatchCDXML(mol,patt,maps,which=which,showAllAtoms=showAllAtoms)

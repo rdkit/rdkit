@@ -4,9 +4,9 @@
 #     All Rights Reserved
 #
 import sys,types
-import Chem
+from pyRDKit import Chem
 
-from VLib.Output import OutputNode as BaseOutputNode
+from pyRDKit.VLib.Output import OutputNode as BaseOutputNode
 
 class OutputNode(BaseOutputNode):
   """ dumps smiles output
@@ -21,7 +21,7 @@ class OutputNode(BaseOutputNode):
   Usage Example:
     >>> smis = ['C1CCC1','C1CC1','C=O','NCC']
     >>> mols = [Chem.MolFromSmiles(x) for x in smis]
-    >>> from VLib.Supply import SupplyNode
+    >>> from pyRDKit.VLib.Supply import SupplyNode
     >>> suppl = SupplyNode(contents=mols)
     >>> import StringIO
     >>> io = StringIO.StringIO()

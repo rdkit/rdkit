@@ -5,7 +5,7 @@
 #   @@ All Rights Reserved  @@
 #
 import random
-import Chem
+from pyRDKit import Chem
 
 def RandomizeMolBlock(molB):
   splitB = molB.split('\n')
@@ -59,7 +59,7 @@ def CheckCanonicalization(mol,nReps=10):
 
              
 if __name__=='__main__':
-  from Chem import Randomize
+  from pyRDKit.Chem import Randomize
   CheckCanonicalization(Chem.MolFromSmiles('CON'))
   CheckCanonicalization(Chem.MolFromSmiles('c1ccccn1'))
   CheckCanonicalization(Chem.MolFromSmiles('C/C=C/F'))

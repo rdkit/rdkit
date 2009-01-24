@@ -4,16 +4,16 @@
 #     All Rights Reserved
 #
 import sys,os.path
-import RDConfig
-from VLib.Supply import SupplyNode
-import Chem
-from Chem.Suppliers import DbMolSupplier
+from pyRDKit import RDConfig
+from pyRDKit.VLib.Supply import SupplyNode
+from pyRDKit import Chem
+from pyRDKit.Chem.Suppliers import DbMolSupplier
 
 class DbMolSupplyNode(SupplyNode):
   """ Supplies molecules from a db result set:
 
   Sample Usage:
-    >>> from Dbase.DbConnection import DbConnect
+    >>> from pyRDKit.Dbase.DbConnection import DbConnect
     >>> dbName = os.path.join(RDConfig.RDCodeDir,'Chem','Fingerprints',\
                              'test_data','data.gdb')
     >>> conn = DbConnect(dbName,'simple_mols')
@@ -52,7 +52,7 @@ class DbMolSupplyNode(SupplyNode):
     return self._supplier.next()
 
 def GetNode(dbName,tableName):
-  from Dbase.DbConnection import DbConnect
+  from pyRDKit.Dbase.DbConnection import DbConnect
   conn = DbConnect(dbName,tableName)
   return DbMolSupplyNode(conn.GetData())
   

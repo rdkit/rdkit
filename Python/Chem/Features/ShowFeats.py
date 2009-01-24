@@ -17,12 +17,12 @@ _welcomeMessage="This is ShowFeats version %s"%(_version)
 
 import math
 #set up the logger:
-import RDLogger as logging
+from pyRDKit import RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 
-import Geometry
-from Chem.Features import FeatDirUtilsRD as FeatDirUtils
+from pyRDKit import Geometry
+from pyRDKit.Chem.Features import FeatDirUtilsRD as FeatDirUtils
 
 _featColors = {
   'Donor':(0,1,1),
@@ -232,7 +232,7 @@ def ShowMolFeats(mol,factory,viewer,radius=0.5,confId=-1,showOnly=True,
 
 # --- ----  --- ----  --- ----  --- ----  --- ----  --- ---- 
 import sys,os,getopt
-import RDConfig
+from pyRDKit import RDConfig
 from optparse import OptionParser
 parser=OptionParser(_usage,version='%prog '+_version)
 
@@ -256,9 +256,9 @@ parser.add_option('--verbose',default=False,action='store_true',
                   help='be verbose')
 
 if __name__=='__main__':
-  import Chem
-  from Chem import AllChem
-  from Chem.PyMol import MolViewer
+  from pyRDKit import Chem
+  from pyRDKit.Chem import AllChem
+  from pyRDKit.Chem.PyMol import MolViewer
 
   options,args = parser.parse_args()
   if len(args)<1:

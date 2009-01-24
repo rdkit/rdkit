@@ -6,7 +6,7 @@
 #
 import unittest
 import random
-from DataStructs.TopNContainer import TopNContainer
+from pyRDKit.DataStructs.TopNContainer import TopNContainer
 
 class TestCase(unittest.TestCase):
   def test1(self):

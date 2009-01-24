@@ -4,9 +4,9 @@
 #
 #   @@ All Rights Reserved  @@
 #
-import Chem
+from pyRDKit import Chem
 import sys
-from Chem import Randomize
+from pyRDKit.Chem import Randomize
 
 def TestMolecule(mol):
   try:

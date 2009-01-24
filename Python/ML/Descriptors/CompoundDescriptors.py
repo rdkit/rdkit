@@ -5,11 +5,11 @@
   (only the composition is required)
 
 """
-import RDConfig
-from utils import chemutils
+from pyRDKit import RDConfig
+from pyRDKit.utils import chemutils
 import os
-from Dbase.DbConnection import DbConnect
-from ML.Descriptors import Parser,Descriptors
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.ML.Descriptors import Parser,Descriptors
 
 import string
 

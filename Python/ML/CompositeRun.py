@@ -8,11 +8,11 @@
 Composite building
 
 """
-import RDConfig
-from Dbase.DbConnection import DbConnect
-import DataStructs
-from Dbase import DbModule
-##from ML.SVM import SVMClassificationModel as SVM
+from pyRDKit import RDConfig
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit import DataStructs
+from pyRDKit.Dbase import DbModule
+##from pyRDKit.ML.SVM import SVMClassificationModel as SVM
 
 def SetDefaults(runDetails):
   """  initializes a details object with default values
@@ -227,7 +227,7 @@ class CompositeRun:
     values.
 
     """
-    from ML.Data import DataUtils
+    from pyRDKit.ML.Data import DataUtils
     data = DataUtils.DBToData(self.dbName,self.tableName,
                               user=self.dbUser,password=self.dbPassword,
                               what=self.dbWhat,where=self.dbWhere,
@@ -241,7 +241,7 @@ class CompositeRun:
     values.
 
     """
-    from Dbase.DbConnection import DbConnect
+    from pyRDKit.Dbase.DbConnection import DbConnect
     conn = DbConnect(self.dbName,self.tableName)
     res = conn.GetColumnNamesAndTypes(join=self.dbJoin,what=self.dbWhat,where=self.dbWhere)
     return res
