@@ -1,4 +1,4 @@
-(iML.DecTree.Tree
+(ipyRDKit.ML.DecTree.Tree
 TreeNode
 p1
 (dp2
@@ -24,7 +24,7 @@ p11
 NsS'children'
 p12
 (lp13
-(iML.DecTree.Tree
+(ipyRDKit.ML.DecTree.Tree
 TreeNode
 p14
 (dp15
@@ -43,7 +43,7 @@ sg9
 sg11
 Nsg12
 (lp18
-sba(iML.DecTree.Tree
+sba(ipyRDKit.ML.DecTree.Tree
 TreeNode
 p19
 (dp20
