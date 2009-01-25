@@ -49,18 +49,18 @@ _usage="""
     - Property names are not case sensitive in the database.
 
  """
-import RDConfig
-from Dbase.DbConnection import DbConnect
+from pyRDKit import RDConfig
+from pyRDKit.Dbase.DbConnection import DbConnect
 
-from RDLogger import logger
+from pyRDKit.RDLogger import logger
 logger=logger()
 import cPickle,sets
 
 
+from pyRDKit import DataStructs
 # ----------------------------------------
 # ATOM PAIRS
-import DataStructs
-from DataStructs import SparseIntVect
+from pyRDKit.DataStructs import SparseIntVect
 def DepickleIntVectFP(pkl):
   try:
     fp = cPickle.loads(str(pkl))
@@ -76,19 +76,18 @@ def DepickleLongIntVectFP(pkl):
   fp._sumCache = fp.GetTotalVal()
   return fp
 def BuildAtomPairFP(mol):
-  from Chem.AtomPairs import Pairs
+  from pyRDKit.Chem.AtomPairs import Pairs
   fp=Pairs.GetAtomPairFingerprintAsIntVect(mol)
   fp._sumCache = fp.GetTotalVal()
   return fp
 def BuildTorsionsFP(mol):
-  from Chem.AtomPairs import Torsions
+  from pyRDKit.Chem.AtomPairs import Torsions
   fp=Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol)
   fp._sumCache = fp.GetTotalVal()
   return fp
 
 # ----------------------------------------
 # RDKit topological fingerprints:
-import DataStructs
 def DepickleRDKitFP(pkl):
   fp = DataStructs.ExplicitBitVect(str(pkl))
   return fp
@@ -99,7 +98,7 @@ def Depickle2DFP(pkl):
   fp = DataStructs.ExplicitBitVect(str(pkl))
   return fp
 def Build2DFP(mol):
-  from Chem.Fingerprints.FingerprintMols import FingerprintMol
+  from pyRDKit.Chem.Fingerprints.FingerprintMols import FingerprintMol
   fp=FingerprintMol(mol)
   return fp
 
@@ -110,7 +109,7 @@ def GetNeighborLists(probes,topN,cursor,
   probeFps = [x[1] for x in probes]
   validProbes = [x for x in range(len(probeFps)) if probeFps[x] is not None]
   validFps=[probeFps[x] for x in validProbes]
-  from DataStructs.TopNContainer import TopNContainer
+  from pyRDKit.DataStructs.TopNContainer import TopNContainer
   nbrLists = [TopNContainer(topN) for x in range(len(probeFps))]
 
   row = curs.fetchone()
@@ -248,7 +247,7 @@ parser.add_option('--silent',default=False,action='store_true',
 
 if __name__=='__main__':
   import sys,getopt,time
-  import Chem
+  from pyRDKit import Chem
   
   options,args = parser.parse_args()
   if len(args)!=1 and not (options.smartsQuery or options.propQuery):

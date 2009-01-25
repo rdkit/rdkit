@@ -30,7 +30,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, July 2007
-_version = "0.7.2"
+_version = "0.7.3"
 _usage="""
  CreateDb [optional arguments] <filename>
 
@@ -53,12 +53,12 @@ _usage="""
 
       
 """
-import RDConfig
-import Chem
-from Dbase.DbConnection import DbConnect
-from Dbase import DbModule
-from RDLogger import logger
-from  Chem.MolDb import Loader
+from pyRDKit import RDConfig
+from pyRDKit import Chem
+from pyRDKit.Dbase.DbConnection import DbConnect
+from pyRDKit.Dbase import DbModule
+from pyRDKit.RDLogger import logger
+from pyRDKit.Chem.MolDb import Loader
 
 logger = logger()
 import cPickle,sys,os
@@ -162,7 +162,7 @@ if __name__=='__main__':
                 skipSmiles=options.skipSmiles,maxRowsCached=int(options.maxRowsCached),
                 silent=options.silent,nameProp=options.nameProp,lazySupplier=False)
   if options.doPairs:
-    from Chem.AtomPairs import Pairs,Torsions
+    from pyRDKit.Chem.AtomPairs import Pairs,Torsions
     pairConn = DbConnect(os.path.join(options.outDir,options.pairDbName))
     pairCurs = pairConn.GetCursor()
     try:
@@ -181,7 +181,7 @@ if __name__=='__main__':
       pass
     fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob,rdkfp blob)'%(options.fpTableName,
                                                                                                        options.molIdName))
-    from Chem.Fingerprints import FingerprintMols
+    from pyRDKit.Chem.Fingerprints import FingerprintMols
     details = FingerprintMols.FingerprinterDetails()
     fpArgs = details.__dict__
   if options.doDescriptors:
