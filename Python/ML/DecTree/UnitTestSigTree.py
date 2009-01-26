@@ -3,12 +3,12 @@
 #  Copyright (C) 2005  greg Landrum and Rational Discovery LLC
 #   All Rights Reserved
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,os
-from pyRDKit.ML.DecTree.SigTree import SigTreeNode
-from pyRDKit.ML import InfoTheory
-from pyRDKit.DataStructs import ExplicitBitVect
-from pyRDKit.DataStructs.VectCollection import VectCollection
+from rdkit.ML.DecTree.SigTree import SigTreeNode
+from rdkit.ML import InfoTheory
+from rdkit.DataStructs import ExplicitBitVect
+from rdkit.DataStructs.VectCollection import VectCollection
 
 class TestCase(unittest.TestCase):
   def setUp(self):

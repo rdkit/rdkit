@@ -54,16 +54,16 @@ _usage="""
       cause some problems if they are case sensitive in the sd file
       
 """
-from pyRDKit import Chem
-from pyRDKit.Chem import AllChem
-from pyRDKit.Dbase.DbConnection import DbConnect
-from pyRDKit.Dbase import DbModule
-from pyRDKit.Chem.MolDb import Loader
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.Dbase import DbModule
+from rdkit.Chem.MolDb import Loader
 import sys,os,time
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 
 # set up the logger:
-from pyRDKit import RDLogger as logging
+from rdkit import RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 

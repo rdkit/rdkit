@@ -6,8 +6,8 @@
 
 """
 import unittest
-from pyRDKit import RDConfig
-from pyRDKit.ML.Data import Quantize    
+from rdkit import RDConfig
+from rdkit.ML.Data import Quantize    
 
 class TestCase(unittest.TestCase):
   def setUp(self):

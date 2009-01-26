@@ -10,7 +10,7 @@
   **NOTE**: the two functions defined here have been moved to ML.Data.Stats
 
 """
-from pyRDKit.ML.Data import Stats
+from rdkit.ML.Data import Stats
 
 FormCovarianceMatrix = Stats.FormCovarianceMatrix
 PrincipalComponents = Stats.PrincipalComponents

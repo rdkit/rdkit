@@ -10,8 +10,8 @@ No user-servicable parts inside.  ;-)
 
 """
 import os
-from pyRDKit import RDConfig
-from pyRDKit import Chem
+from rdkit import RDConfig
+from rdkit import Chem
 
 
 defaultPatternFileName = os.path.join(RDConfig.RDDataDir,'FragmentDescriptors.csv')

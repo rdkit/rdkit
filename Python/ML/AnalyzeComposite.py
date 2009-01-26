@@ -30,12 +30,12 @@ Usage:  AnalyzeComposite [optional args] <models>
 
 import numpy
 import sys,cPickle
-from pyRDKit.ML.DecTree import TreeUtils,Tree
-from pyRDKit.ML.Data import Stats
-from pyRDKit.Dbase.DbConnection import DbConnect
-from pyRDKit.ML import ScreenComposite
+from rdkit.ML.DecTree import TreeUtils,Tree
+from rdkit.ML.Data import Stats
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.ML import ScreenComposite
 try:
-  from pyRDKit.Excel.ExcelWrapper import ExcelWrapper as Excel
+  from rdkit.Excel.ExcelWrapper import ExcelWrapper as Excel
 except ImportError:
   Excel = None
 

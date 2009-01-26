@@ -7,11 +7,11 @@ export BASE=$TMPDIR/$DIRNAME
 
 #MAILIT=/home/glandrum/RDKit/Scripts/MailResults.py
 export RDBASE=$BASE/RDKit
-export BOOSTBASE="boost_1_34_1"
+export BOOSTBASE="boost_1_37_0"
 export BOOSTHOME="/usr/local/src/$BOOSTBASE"
 export BOOST_BUILD_PATH=$BOOSTHOME
 export BJAM="/usr/local/bin/bjam"
-export PYTHONPATH="$RDBASE/Python"
+export PYTHONPATH="$RDBASE"
 export PATH="$RDBASE/bin:$PATH"
 export LD_LIBRARY_PATH="$RDBASE/bin:/usr/local/lib"
 LOGFILE=$BASE"/build_log_"$DATESTRING
@@ -58,11 +58,11 @@ svn checkout  $SVNROOT RDKit &> /dev/null
 if test -f $RDBASE/Data/RDTests.sqlt; then 
   rm $RDBASE/Data/RDTests.sqlt
 fi
-$DBLOADER $RDBASE/Data/RDTests.sqlt < $RDBASE/Python/Dbase/test_data/RDTests.sqlite
+$DBLOADER $RDBASE/Data/RDTests.sqlt < $RDBASE/rdkit/Dbase/test_data/RDTests.sqlite
 if test -f $RDBASE/Data/RDData.sqlt; then 
   rm $RDBASE/Data/RDData.sqlt
 fi
-$DBLOADER $RDBASE/Data/RDData.sqlt < $RDBASE/Python/Dbase/test_data/RDData.sqlite
+$DBLOADER $RDBASE/Data/RDData.sqlt < $RDBASE/rdkit/Dbase/test_data/RDData.sqlite
 # ------------------------- -------------------------
 #
 #               Build
@@ -89,11 +89,11 @@ echo "****  TEST  ****"
 echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 cd $RDBASE/Code
-python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
-cd $RDBASE/Python
-python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
+python $RDBASE/rdkit/TestRunner.py test_list.py >> $LOGFILE 2>&1
+cd $RDBASE/rdkit
+python $RDBASE/rdkit/TestRunner.py test_list.py >> $LOGFILE 2>&1
 cd $RDBASE/Projects
-python $RDBASE/Python/TestRunner.py test_list.py >> $LOGFILE 2>&1
+python $RDBASE/rdkit/TestRunner.py test_list.py >> $LOGFILE 2>&1
 
 
 # ------------------------- -------------------------
@@ -109,7 +109,7 @@ echo >> $LOGFILE 2>&1
 echo >> $LOGFILE 2>&1
 cd $RDBASE/Code
 /usr/bin/doxygen doxygen.config > /dev/null 2>&1
-cd $RDBASE/Python
+cd $RDBASE/rdkit
 epydoc --config  epydoc.config > /dev/null 2>&1
 
 # ------------------------- -------------------------

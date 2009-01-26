@@ -7,7 +7,7 @@
 """  Functionality for SATIS typing atoms
 
 """
-from pyRDKit import Chem
+from rdkit import Chem
 
 _debug = 0
 

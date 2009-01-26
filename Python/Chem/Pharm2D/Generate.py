@@ -30,7 +30,7 @@
   numbering
 
 """
-from pyRDKit.Chem.Pharm2D import Utils,Signature,SigFactory
+from rdkit.Chem.Pharm2D import Utils,Signature,SigFactory
 
 _verbose = 0
 
@@ -93,7 +93,7 @@ def Gen2DFingerprint(mol,sig,perms=None,dMat=None):
 
   # generate the molecule's distance matrix, if required
   if dMat is None:
-    from pyRDKit import Chem
+    from rdkit import Chem
     useBO = sig.GetIncludeBondOrder()
     dMat = Chem.GetDistanceMatrix(mol,useBO)
 
@@ -129,7 +129,7 @@ def Gen2DFingerprint(mol,sig,perms=None,dMat=None):
 
   return sig
 if __name__ == '__main__':
-  from pyRDKit import Chem
+  from rdkit import Chem
   def test1():
     sig = Signature.Pharm2DSig()
     sig.SetPatternsFromSmarts(['O','N'])

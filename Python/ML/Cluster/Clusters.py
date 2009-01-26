@@ -274,7 +274,7 @@ class Cluster(object):
     
 
 if __name__ == '__main__':
-    from pyRDKit.ML.Cluster import ClusterUtils
+    from rdkit.ML.Cluster import ClusterUtils
     root = Cluster(index=1,metric=1000)
     c1 = Cluster(index=10,metric=100)
     c1.AddChild(Cluster(index=30,metric=10))

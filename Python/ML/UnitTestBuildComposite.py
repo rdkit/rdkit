@@ -7,11 +7,11 @@
 """unit testing code for the BuildComposite functionality
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,os
-from pyRDKit.ML import BuildComposite
-from pyRDKit.ML import ScreenComposite
-from pyRDKit.Dbase.DbConnection import DbConnect
+from rdkit.ML import BuildComposite
+from rdkit.ML import ScreenComposite
+from rdkit.Dbase.DbConnection import DbConnect
 import cPickle as pickle
 
 def feq(a,b,tol=1e-4):

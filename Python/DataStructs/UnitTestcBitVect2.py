@@ -8,7 +8,7 @@
 """
 import unittest,os,sys
 import cPickle
-from pyRDKit.DataStructs import cDataStructs
+from rdkit.DataStructs import cDataStructs
 klass = cDataStructs.ExplicitBitVect
 
 def feq(n1,n2,tol=1e-4):

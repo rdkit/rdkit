@@ -1,7 +1,7 @@
-from pyRDKit import Chem
-from pyRDKit.Chem import AllChem
-from pyRDKit.Chem.PyMol import MolViewer
-from pyRDKit.Chem.Subshape import SubshapeBuilder,SubshapeObjects,SubshapeAligner
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem.PyMol import MolViewer
+from rdkit.Chem.Subshape import SubshapeBuilder,SubshapeObjects,SubshapeAligner
 import cPickle,copy
 
 m1 = Chem.MolFromMolFile('test_data/square1.mol')
@@ -39,7 +39,7 @@ print len(algs)
 print pruneStats
 
 import os,tempfile
-from pyRDKit Geometry
+from rdkit Geometry
 fName = tempfile.mktemp('.grd')
 Geometry.WriteGridToFile(ns1.coarseGrid.grid,fName)
 v.server.loadSurface(fName,'coarse','',2.5)

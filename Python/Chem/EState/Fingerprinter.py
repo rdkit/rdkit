@@ -10,8 +10,8 @@
 
 """
 import numpy
-from pyRDKit.Chem.EState import EStateIndices
-from pyRDKit.Chem.EState import AtomTypes
+from rdkit.Chem.EState import EStateIndices
+from rdkit.Chem.EState import AtomTypes
 
 def FingerprintMol(mol):
   """ generates the EState fingerprints for the molecule
@@ -41,7 +41,7 @@ def FingerprintMol(mol):
 
 
 if __name__ == '__main__':
-  from pyRDKit import Chem
+  from rdkit import Chem
   smis = ['CC','CCC','c1[nH]cnc1CC(N)C(O)=O','NCCc1ccc(O)c(O)c1']
   for smi in smis:
     m = Chem.MolFromSmiles(smi)

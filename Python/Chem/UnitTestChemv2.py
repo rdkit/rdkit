@@ -7,10 +7,10 @@
 """basic unit testing code for the rdkit Boost wrapper
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,cPickle,os
-from pyRDKit import Chem
-from pyRDKit.Chem import AllChem
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
 class TestCase(unittest.TestCase):
   def setUp(self):

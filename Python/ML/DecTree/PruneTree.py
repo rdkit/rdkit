@@ -5,7 +5,7 @@
 
 """
 import numpy
-from pyRDKit.ML.DecTree import CrossValidate, DecTree
+from rdkit.ML.DecTree import CrossValidate, DecTree
 import copy
 
 _verbose = 0
@@ -206,7 +206,7 @@ def PruneTree(tree,trainExamples,testExamples,minimizeTestErrorOnly=1):
 #  testing code
 # -------
 def _testRandom():
-  from pyRDKit.ML.DecTree import randomtest
+  from rdkit.ML.DecTree import randomtest
   #examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nVars=20,randScale=0.25,nExamples = 200)
   examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nVars=10,randScale=0.5,nExamples = 200)
   tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,nPossibleVals)
@@ -222,7 +222,7 @@ def _testRandom():
 
 
 def _testSpecific():
-  from pyRDKit.ML.DecTree import ID3
+  from rdkit.ML.DecTree import ID3
   oPts= [ \
     [0,0,1,0],
     [0,1,1,1],
@@ -249,7 +249,7 @@ def _testSpecific():
   print len(tree),len(newTree)
 
 def _testChain():
-  from pyRDKit.ML.DecTree import ID3
+  from rdkit.ML.DecTree import ID3
   oPts= [ \
     [1,0,0,0,1],
     [1,0,0,0,1],

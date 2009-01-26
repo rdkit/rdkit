@@ -200,7 +200,7 @@ class BackProp(Trainer):
 
 
 if __name__ == '__main__':
-  from pyRDKit.ML.Neural import Network
+  from rdkit.ML.Neural import Network
 
   def testAnd():
     examples = [

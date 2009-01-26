@@ -8,7 +8,7 @@
 """
 import cPickle
 import numpy
-from pyRDKit.ML.DecTree import CrossValidate,PruneTree
+from rdkit.ML.DecTree import CrossValidate,PruneTree
 
 class Forest(object):
   """a forest of unique decision trees.
@@ -287,7 +287,7 @@ class Forest(object):
     self.treeVotes=[]
 
 if __name__ == '__main__':
-  from pyRDKit.ML.DecTree import DecTree
+  from rdkit.ML.DecTree import DecTree
   f = Forest()
   n = DecTree.DecTreeNode(None,'foo')
   f.AddTree(n,0.5)

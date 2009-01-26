@@ -6,7 +6,7 @@
 from qt import *
 import sys
 if sys.platform == 'win32':
-  from pyRDKit.qtGui.qtActiveX import MakeActiveXClass
+  from rdkit.qtGui.qtActiveX import MakeActiveXClass
   import win32com.client.gencache
   import win32clipboard
   try:

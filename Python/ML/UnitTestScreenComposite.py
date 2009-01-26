@@ -7,10 +7,10 @@
 """unit testing code for the ScreenComposite functionality
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,os
-from pyRDKit.ML import BuildComposite
-from pyRDKit.ML import ScreenComposite
+from rdkit.ML import BuildComposite
+from rdkit.ML import ScreenComposite
 import cPickle as pickle
 
 def feq(a,b,tol=1e-4):

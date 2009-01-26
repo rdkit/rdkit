@@ -18,7 +18,7 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
     import traceback
     traceback.print_exc()
     useAGG=False
-    from pyRDKit.sping.PIL.pidPIL import PILCanvas as Canvas
+    from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
     canvas = Canvas(size=size,name='MolToImageFile')
     img = canvas._image
     MolDrawing.registerCanvas('sping')
@@ -30,12 +30,12 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
     drawer = MolDrawing.MolDrawing(canvas)
 
   if kekulize:
-    from pyRDKit import Chem
+    from rdkit import Chem
     mol = Chem.Mol(mol.ToBinary())
     Chem.Kekulize(mol)
     
   if not mol.GetNumConformers():
-    from pyRDKit.Chem import AllChem
+    from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
   
   drawer.wedgeDashedBonds=wedgeBonds

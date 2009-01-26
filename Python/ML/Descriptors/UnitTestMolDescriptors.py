@@ -6,10 +6,10 @@
 
 """
 import unittest,cPickle,os.path
-from pyRDKit import RDConfig
-from pyRDKit.ML.Descriptors import MoleculeDescriptors
+from rdkit import RDConfig
+from rdkit.ML.Descriptors import MoleculeDescriptors
 import numpy
-from pyRDKit import Chem
+from rdkit import Chem
 
 class TestCase(unittest.TestCase):
   def setUp(self):

@@ -5,8 +5,8 @@
 #   @@ All Rights Reserved  @@
 #
 import unittest,subprocess,os
-from pyRDKit import RDConfig
-from pyRDKit.Dbase.DbConnection import DbConnect
+from rdkit import RDConfig
+from rdkit.Dbase.DbConnection import DbConnect
 
 class TestCase(unittest.TestCase):
   def test1Create(self):
@@ -312,7 +312,7 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out')
     
   def test3_3SDSearch(self):
-    from pyRDKit import Chem
+    from rdkit import Chem
     self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
 
     p = subprocess.Popen(('python', 'SDSearch.py','--dbName=testData/bzr/Compounds.sqlt',
@@ -338,7 +338,7 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out.sdf')
     
   def test3_4SDSearch(self):
-    from pyRDKit import Chem
+    from rdkit import Chem
     self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
 
     p = subprocess.Popen(('python', 'SDSearch.py','--dbName=testData/bzr/Compounds.sqlt',

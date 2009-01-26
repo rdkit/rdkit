@@ -3,11 +3,11 @@
 #
 
 """ unit tests for the ID3 implementation """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
-from pyRDKit.ML.DecTree import ID3,DecTree
+from rdkit.ML.DecTree import ID3,DecTree
 import cPickle
-from pyRDKit.ML.Data import MLData
+from rdkit.ML.Data import MLData
 
 class ID3TestCase(unittest.TestCase):
   def setUp(self):
@@ -87,7 +87,7 @@ class ID3TestCase(unittest.TestCase):
 
   # ------------- force python in the ID3 code   
   def _setupPyBasicTree(self):
-    from pyRDKit.ML.InfoTheory import entropy
+    from rdkit.ML.InfoTheory import entropy
     ID3.entropy.InfoEntropy = entropy.PyInfoEntropy
     ID3.entropy.InfoGain = entropy.PyInfoGain
     
@@ -121,7 +121,7 @@ class ID3TestCase(unittest.TestCase):
     assert self.t1 == t2, 'Incorrect tree generated.'
 
   def _setupPyMultiTree(self):
-    from pyRDKit.ML.InfoTheory import entropy
+    from rdkit.ML.InfoTheory import entropy
     ID3.entropy.InfoEntropy = entropy.PyInfoEntropy
     ID3.entropy.InfoGain = entropy.PyInfoGain
 

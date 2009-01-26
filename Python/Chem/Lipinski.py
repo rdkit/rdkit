@@ -8,7 +8,7 @@
 
 """
 #from Chem import rdchem
-from pyRDKit import Chem
+from rdkit import Chem
 
 #-----------------------------------
 # on import build the SMARTS patterns so we only have to do it once

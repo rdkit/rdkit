@@ -3,15 +3,15 @@
 #  Copyright (C) 2007-2008 Greg Landrum
 #   @@ All Rights Reserved @@
 #
-from pyRDKit import Chem
-from pyRDKit.Chem import AllChem
-from pyRDKit.Chem import Lipinski,Descriptors,Crippen
-from pyRDKit.Dbase.DbConnection import DbConnect
-from pyRDKit.Dbase import DbModule
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem import Lipinski,Descriptors,Crippen
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.Dbase import DbModule
 import re
 
 #set up the logger:
-import pyRDKit.RDLogger as logging
+import rdkit.RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 

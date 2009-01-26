@@ -11,9 +11,9 @@
 
 import numpy
 import random
-from pyRDKit.ML.DecTree import QuantTree, ID3
-from pyRDKit.ML.InfoTheory import entropy
-from pyRDKit.ML.Data import Quantize
+from rdkit.ML.DecTree import QuantTree, ID3
+from rdkit.ML.InfoTheory import entropy
+from rdkit.ML.Data import Quantize
 
 def FindBest(resCodes,examples,nBoundsPerVar,nPossibleRes,
              nPossibleVals,attrs,exIndices=None,**kwargs):

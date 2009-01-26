@@ -7,7 +7,7 @@
 """ This functionality gets mixed into the BitEnsemble class
 
 """
-from pyRDKit.DataStructs.BitEnsemble import BitEnsemble
+from rdkit.DataStructs.BitEnsemble import BitEnsemble
 
 def _InitScoreTable(self,dbConn,tableName,idInfo='',actInfo=''):
   """ inializes a db table to store our scores

@@ -4,7 +4,7 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 
 if hasattr(RDConfig,"usePgSQL") and RDConfig.usePgSQL:
   useGvib=0

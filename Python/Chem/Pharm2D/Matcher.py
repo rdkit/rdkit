@@ -14,8 +14,8 @@
   numbering
 
 """
-from pyRDKit import Chem
-from pyRDKit.Chem.Pharm2D import Utils
+from rdkit import Chem
+from rdkit.Chem.Pharm2D import Utils
 
 import types
 import exceptions
@@ -112,8 +112,8 @@ def GetAtomsMatchingBit(sig,bitIdx,mol,dMat=None,justOne=0,matchingAtoms=None):
   return res
 
 if __name__ == '__main__':
-  from pyRDKit import Chem
-  from pyRDKit.Chem.Pharm2D import SigFactory,Generate
+  from rdkit import Chem
+  from rdkit.Chem.Pharm2D import SigFactory,Generate
       
   factory = SigFactory.SigFactory()
   factory.SetBins([(1,2),(2,5),(5,8)])

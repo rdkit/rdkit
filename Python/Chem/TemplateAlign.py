@@ -4,9 +4,9 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import Chem
-from pyRDKit.Chem import rdDepictor
-from pyRDKit import Geometry
+from rdkit import Chem
+from rdkit.Chem import rdDepictor
+from rdkit import Geometry
 
 def AlignMolToTemplate2D(mol,template,match=None,clearConfs=False,
                          templateConfId=-1,):

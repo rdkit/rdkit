@@ -1,7 +1,7 @@
 ccopy_reg
 _reconstructor
 p1
-(cpyRDKit.ML.Composite.Composite
+(crdkit.ML.Composite.Composite
 Composite
 p2
 c__builtin__
@@ -65,7 +65,7 @@ F0
 sS'modelList'
 p23
 (lp24
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p25
 (dp26
@@ -154,7 +154,7 @@ F0.7342799412431873
 sS'children'
 p45
 (lp46
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p47
 (dp48
@@ -200,7 +200,7 @@ sg45
 sS'testExamples'
 p58
 (lp59
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p60
 (dp61
@@ -227,7 +227,7 @@ sg44
 I-666
 sg45
 (lp66
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p67
 (dp68
@@ -259,7 +259,7 @@ sg45
 (lp74
 sg58
 (lp75
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p76
 (dp77
@@ -291,7 +291,7 @@ sg45
 (lp83
 sg58
 (lp84
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p85
 (dp86
@@ -325,7 +325,7 @@ sg58
 (lp93
 sbasg58
 (lp94
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p95
 (dp96
@@ -359,7 +359,7 @@ sg58
 (lp103
 sbasg58
 (lp104
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p105
 (dp106
@@ -436,7 +436,7 @@ asg44
 F0.59292087758790557
 sg45
 (lp112
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p113
 (dp114
@@ -468,7 +468,7 @@ sg45
 (lp120
 sg58
 (lp121
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p122
 (dp123
@@ -495,7 +495,7 @@ sg44
 I-666
 sg45
 (lp128
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p129
 (dp130
@@ -527,7 +527,7 @@ sg45
 (lp136
 sg58
 (lp137
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p138
 (dp139
@@ -559,7 +559,7 @@ sg45
 (lp145
 sg58
 (lp146
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p147
 (dp148
@@ -593,7 +593,7 @@ sg58
 (lp155
 sbasg58
 (lp156
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p157
 (dp158
@@ -620,7 +620,7 @@ sg44
 I-666
 sg45
 (lp163
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p164
 (dp165
@@ -649,7 +649,7 @@ sg45
 (lp170
 sg58
 (lp171
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p172
 (dp173
@@ -676,7 +676,7 @@ sg44
 I-666
 sg45
 (lp178
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p179
 (dp180
@@ -705,7 +705,7 @@ sg45
 (lp185
 sg58
 (lp186
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p187
 (dp188
@@ -732,7 +732,7 @@ sg44
 I-666
 sg45
 (lp193
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p194
 (dp195
@@ -761,7 +761,7 @@ sg45
 (lp200
 sg58
 (lp201
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p202
 (dp203
@@ -796,7 +796,7 @@ sg58
 (lp211
 sbasg58
 (lp212
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p213
 (dp214
@@ -827,7 +827,7 @@ sg58
 (lp220
 sbasg58
 (lp221
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p222
 (dp223
@@ -863,7 +863,7 @@ sbasg58
 (lp231
 sbasg58
 (lp232
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p233
 (dp234
@@ -937,7 +937,7 @@ asg44
 F0.60990241944845858
 sg45
 (lp240
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p241
 (dp242
@@ -969,7 +969,7 @@ sg45
 (lp248
 sg58
 (lp249
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p250
 (dp251
@@ -996,7 +996,7 @@ sg44
 I-666
 sg45
 (lp256
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p257
 (dp258
@@ -1028,7 +1028,7 @@ sg45
 (lp264
 sg58
 (lp265
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p266
 (dp267
@@ -1060,7 +1060,7 @@ sg45
 (lp273
 sg58
 (lp274
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p275
 (dp276
@@ -1094,7 +1094,7 @@ sg58
 (lp283
 sbasg58
 (lp284
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p285
 (dp286
@@ -1121,7 +1121,7 @@ sg44
 I-666
 sg45
 (lp291
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p292
 (dp293
@@ -1150,7 +1150,7 @@ sg45
 (lp298
 sg58
 (lp299
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p300
 (dp301
@@ -1177,7 +1177,7 @@ sg44
 I-666
 sg45
 (lp306
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p307
 (dp308
@@ -1206,7 +1206,7 @@ sg45
 (lp313
 sg58
 (lp314
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p315
 (dp316
@@ -1233,7 +1233,7 @@ sg44
 I-666
 sg45
 (lp321
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p322
 (dp323
@@ -1262,7 +1262,7 @@ sg45
 (lp328
 sg58
 (lp329
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p330
 (dp331
@@ -1297,7 +1297,7 @@ sg58
 (lp339
 sbasg58
 (lp340
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p341
 (dp342
@@ -1328,7 +1328,7 @@ sg58
 (lp348
 sbasg58
 (lp349
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p350
 (dp351
@@ -1361,7 +1361,7 @@ sbasg58
 (lp358
 sbasg58
 (lp359
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p360
 (dp361
@@ -1445,7 +1445,7 @@ asg44
 F0.63089875862468325
 sg45
 (lp367
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p368
 (dp369
@@ -1477,7 +1477,7 @@ sg45
 (lp375
 sg58
 (lp376
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p377
 (dp378
@@ -1504,7 +1504,7 @@ sg44
 I-666
 sg45
 (lp383
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p384
 (dp385
@@ -1536,7 +1536,7 @@ sg45
 (lp391
 sg58
 (lp392
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p393
 (dp394
@@ -1568,7 +1568,7 @@ sg45
 (lp400
 sg58
 (lp401
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p402
 (dp403
@@ -1602,7 +1602,7 @@ sg58
 (lp410
 sbasg58
 (lp411
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p412
 (dp413
@@ -1629,7 +1629,7 @@ sg44
 I-666
 sg45
 (lp418
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p419
 (dp420
@@ -1661,7 +1661,7 @@ sg45
 (lp426
 sg58
 (lp427
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p428
 (dp429
@@ -1688,7 +1688,7 @@ sg44
 I-666
 sg45
 (lp434
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p435
 (dp436
@@ -1720,7 +1720,7 @@ sg45
 (lp442
 sg58
 (lp443
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p444
 (dp445
@@ -1747,7 +1747,7 @@ sg44
 I-666
 sg45
 (lp450
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p451
 (dp452
@@ -1776,7 +1776,7 @@ sg45
 (lp457
 sg58
 (lp458
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p459
 (dp460
@@ -1809,7 +1809,7 @@ sg45
 (lp467
 sg58
 (lp468
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p469
 (dp470
@@ -1840,7 +1840,7 @@ sg58
 (lp476
 sbasg58
 (lp477
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p478
 (dp479
@@ -1875,7 +1875,7 @@ sbasg58
 (lp487
 sbasg58
 (lp488
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p489
 (dp490
@@ -1957,7 +1957,7 @@ asg44
 F0.67168291836390193
 sg45
 (lp496
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p497
 (dp498
@@ -1989,7 +1989,7 @@ sg45
 (lp504
 sg58
 (lp505
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p506
 (dp507
@@ -2016,7 +2016,7 @@ sg44
 I-666
 sg45
 (lp512
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p513
 (dp514
@@ -2048,7 +2048,7 @@ sg45
 (lp520
 sg58
 (lp521
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p522
 (dp523
@@ -2080,7 +2080,7 @@ sg45
 (lp529
 sg58
 (lp530
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p531
 (dp532
@@ -2114,7 +2114,7 @@ sg58
 (lp539
 sbasg58
 (lp540
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p541
 (dp542
@@ -2141,7 +2141,7 @@ sg44
 I-666
 sg45
 (lp547
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p548
 (dp549
@@ -2173,7 +2173,7 @@ sg45
 (lp555
 sg58
 (lp556
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p557
 (dp558
@@ -2200,7 +2200,7 @@ sg44
 I-666
 sg45
 (lp563
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p564
 (dp565
@@ -2232,7 +2232,7 @@ sg45
 (lp571
 sg58
 (lp572
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p573
 (dp574
@@ -2259,7 +2259,7 @@ sg44
 I-666
 sg45
 (lp579
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p580
 (dp581
@@ -2288,7 +2288,7 @@ sg45
 (lp586
 sg58
 (lp587
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p588
 (dp589
@@ -2321,7 +2321,7 @@ sg45
 (lp596
 sg58
 (lp597
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p598
 (dp599
@@ -2354,7 +2354,7 @@ sbasg58
 (lp606
 sbasg58
 (lp607
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p608
 (dp609
@@ -2387,7 +2387,7 @@ sbasg58
 (lp616
 sbasg58
 (lp617
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p618
 (dp619
@@ -2468,7 +2468,7 @@ asg44
 F0.59705745934925836
 sg45
 (lp625
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p626
 (dp627
@@ -2500,7 +2500,7 @@ sg45
 (lp633
 sg58
 (lp634
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p635
 (dp636
@@ -2527,7 +2527,7 @@ sg44
 I-666
 sg45
 (lp641
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p642
 (dp643
@@ -2559,7 +2559,7 @@ sg45
 (lp649
 sg58
 (lp650
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p651
 (dp652
@@ -2591,7 +2591,7 @@ sg45
 (lp658
 sg58
 (lp659
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p660
 (dp661
@@ -2625,7 +2625,7 @@ sg58
 (lp668
 sbasg58
 (lp669
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p670
 (dp671
@@ -2652,7 +2652,7 @@ sg44
 I-666
 sg45
 (lp676
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p677
 (dp678
@@ -2684,7 +2684,7 @@ sg45
 (lp684
 sg58
 (lp685
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p686
 (dp687
@@ -2711,7 +2711,7 @@ sg44
 I-666
 sg45
 (lp692
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p693
 (dp694
@@ -2740,7 +2740,7 @@ sg45
 (lp699
 sg58
 (lp700
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p701
 (dp702
@@ -2767,7 +2767,7 @@ sg44
 I-666
 sg45
 (lp707
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p708
 (dp709
@@ -2796,7 +2796,7 @@ sg45
 (lp714
 sg58
 (lp715
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p716
 (dp717
@@ -2831,7 +2831,7 @@ sg58
 (lp725
 sbasg58
 (lp726
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p727
 (dp728
@@ -2862,7 +2862,7 @@ sg58
 (lp734
 sbasg58
 (lp735
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p736
 (dp737
@@ -2895,7 +2895,7 @@ sbasg58
 (lp744
 sbasg58
 (lp745
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p746
 (dp747
@@ -2972,7 +2972,7 @@ asg44
 F0.54730074759711544
 sg45
 (lp753
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p754
 (dp755
@@ -3004,7 +3004,7 @@ sg45
 (lp761
 sg58
 (lp762
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p763
 (dp764
@@ -3031,7 +3031,7 @@ sg44
 I-666
 sg45
 (lp769
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p770
 (dp771
@@ -3063,7 +3063,7 @@ sg45
 (lp777
 sg58
 (lp778
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p779
 (dp780
@@ -3095,7 +3095,7 @@ sg45
 (lp786
 sg58
 (lp787
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p788
 (dp789
@@ -3129,7 +3129,7 @@ sg58
 (lp796
 sbasg58
 (lp797
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p798
 (dp799
@@ -3156,7 +3156,7 @@ sg44
 I-666
 sg45
 (lp804
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p805
 (dp806
@@ -3188,7 +3188,7 @@ sg45
 (lp812
 sg58
 (lp813
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p814
 (dp815
@@ -3215,7 +3215,7 @@ sg44
 I-666
 sg45
 (lp820
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p821
 (dp822
@@ -3247,7 +3247,7 @@ sg45
 (lp828
 sg58
 (lp829
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p830
 (dp831
@@ -3281,7 +3281,7 @@ sg58
 (lp838
 sbasg58
 (lp839
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p840
 (dp841
@@ -3314,7 +3314,7 @@ sbasg58
 (lp848
 sbasg58
 (lp849
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p850
 (dp851
@@ -3397,7 +3397,7 @@ asg44
 F0.6742256294191068
 sg45
 (lp857
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p858
 (dp859
@@ -3429,7 +3429,7 @@ sg45
 (lp865
 sg58
 (lp866
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p867
 (dp868
@@ -3456,7 +3456,7 @@ sg44
 I-666
 sg45
 (lp873
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p874
 (dp875
@@ -3488,7 +3488,7 @@ sg45
 (lp881
 sg58
 (lp882
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p883
 (dp884
@@ -3520,7 +3520,7 @@ sg45
 (lp890
 sg58
 (lp891
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p892
 (dp893
@@ -3554,7 +3554,7 @@ sg58
 (lp900
 sbasg58
 (lp901
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p902
 (dp903
@@ -3581,7 +3581,7 @@ sg44
 I-666
 sg45
 (lp908
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p909
 (dp910
@@ -3613,7 +3613,7 @@ sg45
 (lp916
 sg58
 (lp917
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p918
 (dp919
@@ -3640,7 +3640,7 @@ sg44
 I-666
 sg45
 (lp924
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p925
 (dp926
@@ -3672,7 +3672,7 @@ sg45
 (lp932
 sg58
 (lp933
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p934
 (dp935
@@ -3699,7 +3699,7 @@ sg44
 I-666
 sg45
 (lp940
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p941
 (dp942
@@ -3728,7 +3728,7 @@ sg45
 (lp947
 sg58
 (lp948
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p949
 (dp950
@@ -3761,7 +3761,7 @@ sg45
 (lp957
 sg58
 (lp958
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p959
 (dp960
@@ -3794,7 +3794,7 @@ sbasg58
 (lp967
 sbasg58
 (lp968
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p969
 (dp970
@@ -3827,7 +3827,7 @@ sbasg58
 (lp977
 sbasg58
 (lp978
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p979
 (dp980
@@ -3903,7 +3903,7 @@ asg44
 F0.54079541144982524
 sg45
 (lp986
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p987
 (dp988
@@ -3935,7 +3935,7 @@ sg45
 (lp994
 sg58
 (lp995
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p996
 (dp997
@@ -3962,7 +3962,7 @@ sg44
 I-666
 sg45
 (lp1002
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1003
 (dp1004
@@ -3994,7 +3994,7 @@ sg45
 (lp1010
 sg58
 (lp1011
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1012
 (dp1013
@@ -4026,7 +4026,7 @@ sg45
 (lp1019
 sg58
 (lp1020
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1021
 (dp1022
@@ -4060,7 +4060,7 @@ sg58
 (lp1029
 sbasg58
 (lp1030
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1031
 (dp1032
@@ -4087,7 +4087,7 @@ sg44
 I-666
 sg45
 (lp1037
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1038
 (dp1039
@@ -4119,7 +4119,7 @@ sg45
 (lp1045
 sg58
 (lp1046
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1047
 (dp1048
@@ -4146,7 +4146,7 @@ sg44
 I-666
 sg45
 (lp1053
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1054
 (dp1055
@@ -4178,7 +4178,7 @@ sg45
 (lp1061
 sg58
 (lp1062
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1063
 (dp1064
@@ -4205,7 +4205,7 @@ sg44
 I-666
 sg45
 (lp1069
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1070
 (dp1071
@@ -4234,7 +4234,7 @@ sg45
 (lp1076
 sg58
 (lp1077
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1078
 (dp1079
@@ -4267,7 +4267,7 @@ sg45
 (lp1086
 sg58
 (lp1087
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1088
 (dp1089
@@ -4298,7 +4298,7 @@ sg58
 (lp1095
 sbasg58
 (lp1096
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1097
 (dp1098
@@ -4333,7 +4333,7 @@ sbasg58
 (lp1106
 sbasg58
 (lp1107
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1108
 (dp1109
@@ -4411,7 +4411,7 @@ asg44
 F0.59643002468235662
 sg45
 (lp1115
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1116
 (dp1117
@@ -4443,7 +4443,7 @@ sg45
 (lp1123
 sg58
 (lp1124
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1125
 (dp1126
@@ -4470,7 +4470,7 @@ sg44
 I-666
 sg45
 (lp1131
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1132
 (dp1133
@@ -4502,7 +4502,7 @@ sg45
 (lp1139
 sg58
 (lp1140
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1141
 (dp1142
@@ -4534,7 +4534,7 @@ sg45
 (lp1148
 sg58
 (lp1149
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1150
 (dp1151
@@ -4568,7 +4568,7 @@ sg58
 (lp1158
 sbasg58
 (lp1159
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1160
 (dp1161
@@ -4595,7 +4595,7 @@ sg44
 I-666
 sg45
 (lp1166
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1167
 (dp1168
@@ -4627,7 +4627,7 @@ sg45
 (lp1174
 sg58
 (lp1175
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1176
 (dp1177
@@ -4654,7 +4654,7 @@ sg44
 I-666
 sg45
 (lp1182
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1183
 (dp1184
@@ -4686,7 +4686,7 @@ sg45
 (lp1190
 sg58
 (lp1191
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1192
 (dp1193
@@ -4718,7 +4718,7 @@ sg45
 (lp1199
 sg58
 (lp1200
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1201
 (dp1202
@@ -4753,7 +4753,7 @@ sbasg58
 (lp1210
 sbasg58
 (lp1211
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1212
 (dp1213
@@ -4830,7 +4830,7 @@ asg44
 F0.68547781279618536
 sg45
 (lp1219
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1220
 (dp1221
@@ -4862,7 +4862,7 @@ sg45
 (lp1227
 sg58
 (lp1228
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1229
 (dp1230
@@ -4889,7 +4889,7 @@ sg44
 I-666
 sg45
 (lp1235
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1236
 (dp1237
@@ -4918,7 +4918,7 @@ sg45
 (lp1242
 sg58
 (lp1243
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1244
 (dp1245
@@ -4950,7 +4950,7 @@ sg45
 (lp1251
 sg58
 (lp1252
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1253
 (dp1254
@@ -4984,7 +4984,7 @@ sg58
 (lp1261
 sbasg58
 (lp1262
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1263
 (dp1264
@@ -5011,7 +5011,7 @@ sg44
 I-666
 sg45
 (lp1269
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1270
 (dp1271
@@ -5043,7 +5043,7 @@ sg45
 (lp1277
 sg58
 (lp1278
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1279
 (dp1280
@@ -5070,7 +5070,7 @@ sg44
 I-666
 sg45
 (lp1285
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1286
 (dp1287
@@ -5099,7 +5099,7 @@ sg45
 (lp1292
 sg58
 (lp1293
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1294
 (dp1295
@@ -5126,7 +5126,7 @@ sg44
 I-666
 sg45
 (lp1300
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1301
 (dp1302
@@ -5155,7 +5155,7 @@ sg45
 (lp1307
 sg58
 (lp1308
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1309
 (dp1310
@@ -5188,7 +5188,7 @@ sg45
 (lp1317
 sg58
 (lp1318
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1319
 (dp1320
@@ -5219,7 +5219,7 @@ sg58
 (lp1326
 sbasg58
 (lp1327
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1328
 (dp1329
@@ -5254,7 +5254,7 @@ sbasg58
 (lp1337
 sbasg58
 (lp1338
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1339
 (dp1340
@@ -5328,7 +5328,7 @@ asg44
 F0.68660000945431765
 sg45
 (lp1346
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1347
 (dp1348
@@ -5360,7 +5360,7 @@ sg45
 (lp1354
 sg58
 (lp1355
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1356
 (dp1357
@@ -5387,7 +5387,7 @@ sg44
 I-666
 sg45
 (lp1362
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1363
 (dp1364
@@ -5416,7 +5416,7 @@ sg45
 (lp1369
 sg58
 (lp1370
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1371
 (dp1372
@@ -5448,7 +5448,7 @@ sg45
 (lp1378
 sg58
 (lp1379
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1380
 (dp1381
@@ -5482,7 +5482,7 @@ sg58
 (lp1388
 sbasg58
 (lp1389
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1390
 (dp1391
@@ -5509,7 +5509,7 @@ sg44
 I-666
 sg45
 (lp1396
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1397
 (dp1398
@@ -5541,7 +5541,7 @@ sg45
 (lp1404
 sg58
 (lp1405
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1406
 (dp1407
@@ -5568,7 +5568,7 @@ sg44
 I-666
 sg45
 (lp1412
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1413
 (dp1414
@@ -5597,7 +5597,7 @@ sg45
 (lp1419
 sg58
 (lp1420
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1421
 (dp1422
@@ -5624,7 +5624,7 @@ sg44
 I-666
 sg45
 (lp1427
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1428
 (dp1429
@@ -5653,7 +5653,7 @@ sg45
 (lp1434
 sg58
 (lp1435
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1436
 (dp1437
@@ -5688,7 +5688,7 @@ sg58
 (lp1445
 sbasg58
 (lp1446
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1447
 (dp1448
@@ -5719,7 +5719,7 @@ sg58
 (lp1454
 sbasg58
 (lp1455
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1456
 (dp1457
@@ -5752,7 +5752,7 @@ sbasg58
 (lp1464
 sbasg58
 (lp1465
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1466
 (dp1467
@@ -5834,7 +5834,7 @@ asg44
 F0.72702729152258416
 sg45
 (lp1473
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1474
 (dp1475
@@ -5866,7 +5866,7 @@ sg45
 (lp1481
 sg58
 (lp1482
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1483
 (dp1484
@@ -5893,7 +5893,7 @@ sg44
 I-666
 sg45
 (lp1489
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1490
 (dp1491
@@ -5922,7 +5922,7 @@ sg45
 (lp1496
 sg58
 (lp1497
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1498
 (dp1499
@@ -5954,7 +5954,7 @@ sg45
 (lp1505
 sg58
 (lp1506
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1507
 (dp1508
@@ -5988,7 +5988,7 @@ sg58
 (lp1515
 sbasg58
 (lp1516
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1517
 (dp1518
@@ -6015,7 +6015,7 @@ sg44
 I-666
 sg45
 (lp1523
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1524
 (dp1525
@@ -6047,7 +6047,7 @@ sg45
 (lp1531
 sg58
 (lp1532
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1533
 (dp1534
@@ -6074,7 +6074,7 @@ sg44
 I-666
 sg45
 (lp1539
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1540
 (dp1541
@@ -6106,7 +6106,7 @@ sg45
 (lp1547
 sg58
 (lp1548
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1549
 (dp1550
@@ -6133,7 +6133,7 @@ sg44
 I-666
 sg45
 (lp1555
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1556
 (dp1557
@@ -6162,7 +6162,7 @@ sg45
 (lp1562
 sg58
 (lp1563
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1564
 (dp1565
@@ -6195,7 +6195,7 @@ sg45
 (lp1572
 sg58
 (lp1573
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1574
 (dp1575
@@ -6228,7 +6228,7 @@ sbasg58
 (lp1582
 sbasg58
 (lp1583
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1584
 (dp1585
@@ -6261,7 +6261,7 @@ sbasg58
 (lp1592
 sbasg58
 (lp1593
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1594
 (dp1595
@@ -6340,7 +6340,7 @@ asg44
 F0.69557716229519673
 sg45
 (lp1601
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1602
 (dp1603
@@ -6372,7 +6372,7 @@ sg45
 (lp1609
 sg58
 (lp1610
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1611
 (dp1612
@@ -6399,7 +6399,7 @@ sg44
 I-666
 sg45
 (lp1617
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1618
 (dp1619
@@ -6428,7 +6428,7 @@ sg45
 (lp1624
 sg58
 (lp1625
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1626
 (dp1627
@@ -6460,7 +6460,7 @@ sg45
 (lp1633
 sg58
 (lp1634
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1635
 (dp1636
@@ -6494,7 +6494,7 @@ sg58
 (lp1643
 sbasg58
 (lp1644
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1645
 (dp1646
@@ -6521,7 +6521,7 @@ sg44
 I-666
 sg45
 (lp1651
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1652
 (dp1653
@@ -6553,7 +6553,7 @@ sg45
 (lp1659
 sg58
 (lp1660
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1661
 (dp1662
@@ -6580,7 +6580,7 @@ sg44
 I-666
 sg45
 (lp1667
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1668
 (dp1669
@@ -6612,7 +6612,7 @@ sg45
 (lp1675
 sg58
 (lp1676
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1677
 (dp1678
@@ -6639,7 +6639,7 @@ sg44
 I-666
 sg45
 (lp1683
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1684
 (dp1685
@@ -6668,7 +6668,7 @@ sg45
 (lp1690
 sg58
 (lp1691
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1692
 (dp1693
@@ -6701,7 +6701,7 @@ sg45
 (lp1700
 sg58
 (lp1701
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1702
 (dp1703
@@ -6732,7 +6732,7 @@ sg58
 (lp1709
 sbasg58
 (lp1710
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1711
 (dp1712
@@ -6767,7 +6767,7 @@ sbasg58
 (lp1720
 sbasg58
 (lp1721
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1722
 (dp1723
@@ -6848,7 +6848,7 @@ asg44
 F0.63133621721058242
 sg45
 (lp1729
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1730
 (dp1731
@@ -6880,7 +6880,7 @@ sg45
 (lp1737
 sg58
 (lp1738
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1739
 (dp1740
@@ -6907,7 +6907,7 @@ sg44
 I-666
 sg45
 (lp1745
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1746
 (dp1747
@@ -6939,7 +6939,7 @@ sg45
 (lp1753
 sg58
 (lp1754
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1755
 (dp1756
@@ -6971,7 +6971,7 @@ sg45
 (lp1762
 sg58
 (lp1763
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1764
 (dp1765
@@ -7005,7 +7005,7 @@ sg58
 (lp1772
 sbasg58
 (lp1773
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1774
 (dp1775
@@ -7032,7 +7032,7 @@ sg44
 I-666
 sg45
 (lp1780
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1781
 (dp1782
@@ -7064,7 +7064,7 @@ sg45
 (lp1788
 sg58
 (lp1789
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1790
 (dp1791
@@ -7091,7 +7091,7 @@ sg44
 I-666
 sg45
 (lp1796
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1797
 (dp1798
@@ -7120,7 +7120,7 @@ sg45
 (lp1803
 sg58
 (lp1804
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1805
 (dp1806
@@ -7147,7 +7147,7 @@ sg44
 I-666
 sg45
 (lp1811
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1812
 (dp1813
@@ -7176,7 +7176,7 @@ sg45
 (lp1818
 sg58
 (lp1819
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1820
 (dp1821
@@ -7211,7 +7211,7 @@ sg58
 (lp1829
 sbasg58
 (lp1830
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1831
 (dp1832
@@ -7242,7 +7242,7 @@ sg58
 (lp1838
 sbasg58
 (lp1839
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1840
 (dp1841
@@ -7275,7 +7275,7 @@ sbasg58
 (lp1848
 sbasg58
 (lp1849
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1850
 (dp1851
@@ -7343,7 +7343,7 @@ asg44
 F0.65156215139170093
 sg45
 (lp1857
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1858
 (dp1859
@@ -7375,7 +7375,7 @@ sg45
 (lp1865
 sg58
 (lp1866
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1867
 (dp1868
@@ -7402,7 +7402,7 @@ sg44
 I-666
 sg45
 (lp1873
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1874
 (dp1875
@@ -7431,7 +7431,7 @@ sg45
 (lp1880
 sg58
 (lp1881
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1882
 (dp1883
@@ -7463,7 +7463,7 @@ sg45
 (lp1889
 sg58
 (lp1890
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1891
 (dp1892
@@ -7497,7 +7497,7 @@ sg58
 (lp1899
 sbasg58
 (lp1900
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1901
 (dp1902
@@ -7524,7 +7524,7 @@ sg44
 I-666
 sg45
 (lp1907
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1908
 (dp1909
@@ -7556,7 +7556,7 @@ sg45
 (lp1915
 sg58
 (lp1916
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1917
 (dp1918
@@ -7583,7 +7583,7 @@ sg44
 I-666
 sg45
 (lp1923
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1924
 (dp1925
@@ -7615,7 +7615,7 @@ sg45
 (lp1931
 sg58
 (lp1932
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1933
 (dp1934
@@ -7642,7 +7642,7 @@ sg44
 I-666
 sg45
 (lp1939
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1940
 (dp1941
@@ -7671,7 +7671,7 @@ sg45
 (lp1946
 sg58
 (lp1947
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1948
 (dp1949
@@ -7704,7 +7704,7 @@ sg45
 (lp1956
 sg58
 (lp1957
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1958
 (dp1959
@@ -7737,7 +7737,7 @@ sbasg58
 (lp1966
 sbasg58
 (lp1967
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p1968
 (dp1969
@@ -7770,7 +7770,7 @@ sbasg58
 (lp1976
 sbasg58
 (lp1977
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1978
 (dp1979
@@ -7845,7 +7845,7 @@ asg44
 F0.61873965324066593
 sg45
 (lp1985
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1986
 (dp1987
@@ -7877,7 +7877,7 @@ sg45
 (lp1993
 sg58
 (lp1994
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1995
 (dp1996
@@ -7904,7 +7904,7 @@ sg44
 I-666
 sg45
 (lp2001
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2002
 (dp2003
@@ -7936,7 +7936,7 @@ sg45
 (lp2009
 sg58
 (lp2010
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2011
 (dp2012
@@ -7968,7 +7968,7 @@ sg45
 (lp2018
 sg58
 (lp2019
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2020
 (dp2021
@@ -8002,7 +8002,7 @@ sg58
 (lp2028
 sbasg58
 (lp2029
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2030
 (dp2031
@@ -8029,7 +8029,7 @@ sg44
 I-666
 sg45
 (lp2036
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2037
 (dp2038
@@ -8061,7 +8061,7 @@ sg45
 (lp2044
 sg58
 (lp2045
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2046
 (dp2047
@@ -8093,7 +8093,7 @@ sg45
 (lp2053
 sg58
 (lp2054
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2055
 (dp2056
@@ -8126,7 +8126,7 @@ sbasg58
 (lp2063
 sbasg58
 (lp2064
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2065
 (dp2066
@@ -8197,7 +8197,7 @@ asg44
 F0.501979484978613
 sg45
 (lp2072
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2073
 (dp2074
@@ -8229,7 +8229,7 @@ sg45
 (lp2080
 sg58
 (lp2081
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2082
 (dp2083
@@ -8256,7 +8256,7 @@ sg44
 I-666
 sg45
 (lp2088
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2089
 (dp2090
@@ -8288,7 +8288,7 @@ sg45
 (lp2096
 sg58
 (lp2097
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2098
 (dp2099
@@ -8320,7 +8320,7 @@ sg45
 (lp2105
 sg58
 (lp2106
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2107
 (dp2108
@@ -8354,7 +8354,7 @@ sg58
 (lp2115
 sbasg58
 (lp2116
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2117
 (dp2118
@@ -8381,7 +8381,7 @@ sg44
 I-666
 sg45
 (lp2123
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2124
 (dp2125
@@ -8413,7 +8413,7 @@ sg45
 (lp2131
 sg58
 (lp2132
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2133
 (dp2134
@@ -8440,7 +8440,7 @@ sg44
 I-666
 sg45
 (lp2139
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2140
 (dp2141
@@ -8469,7 +8469,7 @@ sg45
 (lp2146
 sg58
 (lp2147
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2148
 (dp2149
@@ -8496,7 +8496,7 @@ sg44
 I-666
 sg45
 (lp2154
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2155
 (dp2156
@@ -8525,7 +8525,7 @@ sg45
 (lp2161
 sg58
 (lp2162
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2163
 (dp2164
@@ -8558,7 +8558,7 @@ sg45
 (lp2171
 sg58
 (lp2172
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2173
 (dp2174
@@ -8589,7 +8589,7 @@ sg58
 (lp2180
 sbasg58
 (lp2181
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2182
 (dp2183
@@ -8624,7 +8624,7 @@ sbasg58
 (lp2191
 sbasg58
 (lp2192
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2193
 (dp2194
@@ -8701,7 +8701,7 @@ asg44
 F0.69552464749606902
 sg45
 (lp2200
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2201
 (dp2202
@@ -8733,7 +8733,7 @@ sg45
 (lp2208
 sg58
 (lp2209
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2210
 (dp2211
@@ -8760,7 +8760,7 @@ sg44
 I-666
 sg45
 (lp2216
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2217
 (dp2218
@@ -8792,7 +8792,7 @@ sg45
 (lp2224
 sg58
 (lp2225
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2226
 (dp2227
@@ -8821,7 +8821,7 @@ sg45
 (lp2232
 sg58
 (lp2233
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2234
 (dp2235
@@ -8855,7 +8855,7 @@ sg58
 (lp2242
 sbasg58
 (lp2243
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2244
 (dp2245
@@ -8882,7 +8882,7 @@ sg44
 I-666
 sg45
 (lp2250
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2251
 (dp2252
@@ -8914,7 +8914,7 @@ sg45
 (lp2258
 sg58
 (lp2259
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2260
 (dp2261
@@ -8941,7 +8941,7 @@ sg44
 I-666
 sg45
 (lp2266
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2267
 (dp2268
@@ -8973,7 +8973,7 @@ sg45
 (lp2274
 sg58
 (lp2275
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2276
 (dp2277
@@ -9000,7 +9000,7 @@ sg44
 I-666
 sg45
 (lp2282
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2283
 (dp2284
@@ -9029,7 +9029,7 @@ sg45
 (lp2289
 sg58
 (lp2290
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2291
 (dp2292
@@ -9062,7 +9062,7 @@ sg45
 (lp2299
 sg58
 (lp2300
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2301
 (dp2302
@@ -9093,7 +9093,7 @@ sg58
 (lp2308
 sbasg58
 (lp2309
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2310
 (dp2311
@@ -9128,7 +9128,7 @@ sbasg58
 (lp2319
 sbasg58
 (lp2320
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2321
 (dp2322
@@ -9202,7 +9202,7 @@ asg44
 F0.69628627049033653
 sg45
 (lp2328
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2329
 (dp2330
@@ -9234,7 +9234,7 @@ sg45
 (lp2336
 sg58
 (lp2337
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2338
 (dp2339
@@ -9261,7 +9261,7 @@ sg44
 I-666
 sg45
 (lp2344
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2345
 (dp2346
@@ -9293,7 +9293,7 @@ sg45
 (lp2352
 sg58
 (lp2353
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2354
 (dp2355
@@ -9322,7 +9322,7 @@ sg45
 (lp2360
 sg58
 (lp2361
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2362
 (dp2363
@@ -9356,7 +9356,7 @@ sg58
 (lp2370
 sbasg58
 (lp2371
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2372
 (dp2373
@@ -9383,7 +9383,7 @@ sg44
 I-666
 sg45
 (lp2378
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2379
 (dp2380
@@ -9415,7 +9415,7 @@ sg45
 (lp2386
 sg58
 (lp2387
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2388
 (dp2389
@@ -9442,7 +9442,7 @@ sg44
 I-666
 sg45
 (lp2394
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2395
 (dp2396
@@ -9474,7 +9474,7 @@ sg45
 (lp2402
 sg58
 (lp2403
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2404
 (dp2405
@@ -9501,7 +9501,7 @@ sg44
 I-666
 sg45
 (lp2410
-(ipyRDKit.ML.DecTree.DecTree
+(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2411
 (dp2412
@@ -9530,7 +9530,7 @@ sg45
 (lp2417
 sg58
 (lp2418
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p2419
 (dp2420
@@ -9563,7 +9563,7 @@ sg45
 (lp2427
 sg58
 (lp2428
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2429
 (dp2430
@@ -9596,7 +9596,7 @@ sbasg58
 (lp2437
 sbasg58
 (lp2438
-sba(ipyRDKit.ML.DecTree.DecTree
+sba(irdkit.ML.DecTree.DecTree
 DecTreeNode
 p2439
 (dp2440

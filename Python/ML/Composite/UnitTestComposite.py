@@ -9,9 +9,9 @@
 """
 import unittest
 import cPickle
-from pyRDKit.ML.Composite import Composite
-from pyRDKit.ML.DecTree.DecTree import DecTreeNode as Node
-from pyRDKit import RDConfig
+from rdkit.ML.Composite import Composite
+from rdkit.ML.DecTree.DecTree import DecTreeNode as Node
+from rdkit import RDConfig
     
 
 class TestCase(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestCase(unittest.TestCase):
     self.qBounds = [[],[1.89,3.53],[],[],[],[0.55,0.73],[11.81,14.52],[]]
     self.nPoss= [0,3,2,2,2,3,3,2]
     self.attrs = range(1,len(self.varNames)-1)
-    from pyRDKit.ML.Data import DataUtils
+    from rdkit.ML.Data import DataUtils
     DataUtils.InitRandomNumbers((23,43))
 
 
@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
     composite = Composite.Composite()
     composite._varNames=self.varNames
     composite.SetQuantBounds(self.qBounds,self.nPoss)
-    from pyRDKit.ML.DecTree import CrossValidate
+    from rdkit.ML.DecTree import CrossValidate
     driver = CrossValidate.CrossValidationDriver
     pruner = None
     composite.Grow(self.examples,self.attrs,[],buildDriver=driver,

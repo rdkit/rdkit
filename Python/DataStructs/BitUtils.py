@@ -7,7 +7,7 @@
 def ConstructEnsembleBV(bv,bitsToKeep):
   """
 
-  >>> from pyRDKit import DataStructs
+  >>> from rdkit import DataStructs
   >>> bv = DataStructs.ExplicitBitVect(128)
   >>> bv.SetBitsFromList((1,5,47,99,120))
   >>> r = ConstructEnsembleBV(bv,(0,1,2,3,45,46,47,48,49))

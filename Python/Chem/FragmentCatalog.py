@@ -4,7 +4,7 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import Chem
+from rdkit import Chem
 from rdfragcatalog import *
 import sys
 import sets
@@ -91,7 +91,7 @@ def GetMolsMatchingBit(mols,bit,fps):
 xl = None
 def ShowMolsMatchingBit(mols,bit,fps,actName="",wrapper=None,col=1,row=1):
   global xl
-  from pyRDKit.Excel import Molecules
+  from rdkit.Excel import Molecules
   if wrapper is not None:
     xl = wrapper
   if xl is None:

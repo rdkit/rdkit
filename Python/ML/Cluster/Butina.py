@@ -8,7 +8,7 @@
 
 """
 import numpy
-from pyRDKit import RDLogger
+from rdkit import RDLogger
 logger=RDLogger.logger()
 
 def ClusterData(data,nPts,distThresh,isDistData=False):

@@ -3,10 +3,10 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import sys,os,types
-from pyRDKit import Chem
-from pyRDKit.VLib.Filter import FilterNode
+from rdkit import Chem
+from rdkit.VLib.Filter import FilterNode
 
 class SmartsFilter(FilterNode):
   """ filter out molecules matching one or more SMARTS patterns
@@ -22,7 +22,7 @@ class SmartsFilter(FilterNode):
   Sample Usage:
     >>> smis = ['C1CCC1','C1CCC1C=O','CCCC','CCC=O','CC(=O)C','CCN','NCCN','NCC=O']
     >>> mols = [Chem.MolFromSmiles(x) for x in smis]
-    >>> from pyRDKit.VLib.Supply import SupplyNode
+    >>> from rdkit.VLib.Supply import SupplyNode
     >>> suppl = SupplyNode(contents=mols)
     >>> ms = [x for x in suppl]
     >>> len(ms)

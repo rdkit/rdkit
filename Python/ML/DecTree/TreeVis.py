@@ -221,7 +221,7 @@ def _simpleTest(canv):
 
   
 if __name__ == '__main__':
-  from pyRDKit.sping.PIL.pidPIL import PILCanvas
+  from rdkit.sping.PIL.pidPIL import PILCanvas
   canv = PILCanvas(size=(300,300),name='test.png')
   _simpleTest(canv)
   canv.save()

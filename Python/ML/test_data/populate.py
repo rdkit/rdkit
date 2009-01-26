@@ -1,5 +1,5 @@
-from pyRDKit import RDConfig
-from pyRDKit.Dbase import DbUtils
+from rdkit import RDConfig
+from rdkit.Dbase import DbUtils
 from cStringIO import StringIO
 
 ferro_quant="""COMPOUND,MAX_DED,ELCONC,ATVOL,HAS3D,HAS4D,HAS5D,ISFERROMAGNETIC

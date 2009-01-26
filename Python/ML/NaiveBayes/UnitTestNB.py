@@ -5,11 +5,11 @@
 #
 import sys
 import unittest
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import os
-from pyRDKit.ML.Data import DataUtils, MLData
-from pyRDKit.ML.NaiveBayes import CrossValidate
-from pyRDKit.DataStructs import ExplicitBitVect
+from rdkit.ML.Data import DataUtils, MLData
+from rdkit.ML.NaiveBayes import CrossValidate
+from rdkit.DataStructs import ExplicitBitVect
 
 
 def feq(a,b,tol=1e-4):

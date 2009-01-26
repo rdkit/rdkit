@@ -16,7 +16,7 @@ lie.
 
 """
 import numpy
-from pyRDKit.ML.InfoTheory import entropy
+from rdkit.ML.InfoTheory import entropy
 try:
   import cQuantize
 except:

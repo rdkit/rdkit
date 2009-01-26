@@ -10,12 +10,12 @@
 
 """
 import types
-from pyRDKit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen,Descriptors
-from pyRDKit.Chem.EState import EState_VSA
+from rdkit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen,Descriptors
+from rdkit.Chem.EState import EState_VSA
 mods = [GraphDescriptors,MolSurf,EState_VSA,Lipinski,Descriptors,Crippen,Fragments]
 
 import numpy.oldnumeric as Numeric
-from pyRDKit import Chem
+from rdkit import Chem
 otherMods = [Numeric,Chem]
 
 others = []
@@ -54,7 +54,7 @@ def Desensitize():
   
 
 if __name__ == '__main__':
-  from pyRDKit import Chem
+  from rdkit import Chem
 
   m = Chem.MolFromSmiles('CCOC')
   for name,fn in descs:

@@ -60,12 +60,12 @@
 
 """
 import sys,os,cPickle
-from pyRDKit import Chem
-from pyRDKit import RDConfig
-from pyRDKit.Chem import FragmentCatalog
-from pyRDKit.Dbase.DbConnection import DbConnect
+from rdkit import Chem
+from rdkit import RDConfig
+from rdkit.Chem import FragmentCatalog
+from rdkit.Dbase.DbConnection import DbConnect
 import numpy
-from pyRDKit.ML import InfoTheory
+from rdkit.ML import InfoTheory
 import types,sets
 
 _cvsVersion="$Revision$"
@@ -387,8 +387,8 @@ def ShowDetails(catalog,gains,nToDo=-1,outF=sys.stdout,idCol=0,gainCol=1,
       outF.write('%s\n'%(outDelim.join((str(id),descr,str(gain)))))
 
 def SupplierFromDetails(details):
-  from pyRDKit.VLib.NodeLib.DbMolSupply import DbMolSupplyNode
-  from pyRDKit.VLib.NodeLib.SmilesSupply import SmilesSupplyNode
+  from rdkit.VLib.NodeLib.DbMolSupply import DbMolSupplyNode
+  from rdkit.VLib.NodeLib.SmilesSupply import SmilesSupplyNode
 
   if details.dbName:
     conn = DbConnect(details.dbName,details.tableName)

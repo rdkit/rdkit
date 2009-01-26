@@ -5,9 +5,9 @@
 #   @@ All Rights Reserved  @@
 #
 import unittest,cPickle,os,gzip
-from pyRDKit import Chem
-from pyRDKit import RDConfig
-from pyRDKit.Chem.AtomPairs import Pairs,Torsions
+from rdkit import Chem
+from rdkit import RDConfig
+from rdkit.Chem.AtomPairs import Pairs,Torsions
 
 class TestCase(unittest.TestCase):
   def setUp(self):

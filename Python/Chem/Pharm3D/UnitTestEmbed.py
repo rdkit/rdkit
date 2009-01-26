@@ -4,14 +4,14 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,sys,os,cPickle
-from pyRDKit import Chem
-from pyRDKit.Chem import ChemicalFeatures,rdDistGeom
+from rdkit import Chem
+from rdkit.Chem import ChemicalFeatures,rdDistGeom
 import EmbedLib
 import gzip
-from pyRDKit import DistanceGeometry as DG
-from pyRDKit import Geometry
+from rdkit import DistanceGeometry as DG
+from rdkit import Geometry
 import Pharmacophore
 import cPickle
 import numpy
@@ -204,7 +204,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(nHits==37)
 
   def testIssue268(self):
-    from pyRDKit import RDLogger
+    from rdkit import RDLogger
     #RDLogger.EnableLog('rdApp.debug')
     featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(self.dataDir,
                                                         'Issue268.fdef'))
@@ -232,7 +232,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
                                                     mol=m2,use2DLimits=True)[2])==4)
 
-    from pyRDKit import DistanceGeometry as DG
+    from rdkit import DistanceGeometry as DG
     self.failUnless(DG.DoTriangleSmoothing(b1))
     self.failUnless(DG.DoTriangleSmoothing(b2))
 

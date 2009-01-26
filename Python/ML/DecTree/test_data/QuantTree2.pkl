@@ -1,21 +1,21 @@
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 p1
 (dp2
 S'children'
 p3
 (lp4
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp5
 g3
 (lp6
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp7
 g3
 (lp8
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp9
 g3
@@ -54,7 +54,7 @@ p22
 NsS'name'
 p23
 S'1'
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp24
 g3
@@ -103,7 +103,7 @@ I1
 sg22
 Nsg23
 S'Var: 3'
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp30
 g3
@@ -161,17 +161,17 @@ I1
 sg22
 Nsg23
 S'Var: 1'
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp38
 g3
 (lp39
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp40
 g3
 (lp41
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp42
 g3
@@ -199,7 +199,7 @@ I1
 sg22
 Nsg23
 S'0'
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp46
 g3
@@ -248,12 +248,12 @@ I1
 sg22
 Nsg23
 S'Var: 3'
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp52
 g3
 (lp53
-(ipyRDKit.ML.DecTree.QuantTree
+(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp54
 g3
@@ -281,7 +281,7 @@ I1
 sg22
 Nsg23
 S'2'
-sba(ipyRDKit.ML.DecTree.QuantTree
+sba(irdkit.ML.DecTree.QuantTree
 QuantTreeNode
 (dp58
 g3

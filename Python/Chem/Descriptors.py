@@ -4,8 +4,8 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import Chem
-from pyRDKit.Chem import rdMolDescriptors
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
 
 def pyMolWt(mol,heavyAtomsOnly=0):
   """ The average molecular weight of the molecule

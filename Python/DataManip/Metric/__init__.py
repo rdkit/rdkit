@@ -4,5 +4,5 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import rdBase
+from rdkit import rdBase
 from rdMetricMatrixCalc import *

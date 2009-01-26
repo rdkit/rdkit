@@ -12,19 +12,19 @@ except ImportError:
   GetReportlabTable = None
   QuickReport = None
 else:
-  from pyRDKit import Chem
+  from rdkit import Chem
   try:
     from pyRDkit.utils import chemdraw
   except ImportError:
     hasCDX=0
   else:
     hasCDX=1
-  from pyRDKit.utils import cactvs  
-  from pyRDKit.Chem import rdDepictor
-  from pyRDKit.Chem.Draw import DrawUtils
-  from pyRDKit.Dbase.DbConnection import DbConnect
-  from pyRDKit.Dbase import DbInfo
-  from pyRDKit.Reports.PDFReport import PDFReport,ReportUtils
+  from rdkit.utils import cactvs  
+  from rdkit.Chem import rdDepictor
+  from rdkit.Chem.Draw import DrawUtils
+  from rdkit.Dbase.DbConnection import DbConnect
+  from rdkit.Dbase import DbInfo
+  from rdkit.Reports.PDFReport import PDFReport,ReportUtils
   import os,tempfile,sys
   
   def GetReportlabTable(self,*args,**kwargs):
@@ -112,8 +112,8 @@ else:
       return res
         
 
-  from pyRDKit.sping.ReportLab.pidReportLab import RLCanvas as Canvas
-  from pyRDKit.Chem.Draw.MolDrawing import MolDrawing
+  from rdkit.sping.ReportLab.pidReportLab import RLCanvas as Canvas
+  from rdkit.Chem.Draw.MolDrawing import MolDrawing
   class ReportLabImageTransformer(object):
     def __init__(self,smiCol,width=1.,verbose=1,tempHandler=None):
       self.smiCol = smiCol

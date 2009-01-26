@@ -1,7 +1,7 @@
 ccopy_reg
 _reconstructor
 p1
-(cpyRDKit.Chem.Subshape.SubshapeObjects
+(crdkit.Chem.Subshape.SubshapeObjects
 ShapeWithSkeleton
 p2
 c__builtin__
@@ -20,7 +20,7 @@ sS'skelPts'
 p9
 (lp10
 g1
-(cpyRDKit.Chem.Subshape.SubshapeObjects
+(crdkit.Chem.Subshape.SubshapeObjects
 SkeletonPoint
 p11
 g3

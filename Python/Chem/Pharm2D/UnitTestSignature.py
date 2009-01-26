@@ -8,8 +8,8 @@
 
 """
 import unittest
-from pyRDKit import Chem
-from pyRDKit.Chem.Pharm2D import Signature,Generate,SigFactory,Utils
+from rdkit import Chem
+from rdkit.Chem.Pharm2D import Signature,Generate,SigFactory,Utils
 import cPickle
 
 class TestCase(unittest.TestCase):

@@ -6,7 +6,7 @@
 
 """
 import unittest
-from pyRDKit.ML.Descriptors import CompoundDescriptors
+from rdkit.ML.Descriptors import CompoundDescriptors
 
     
 

@@ -7,10 +7,10 @@
 """ unit testing code for MOE-type descriptors with EStates
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,os
-from pyRDKit import Chem
-from pyRDKit.Chem.EState import EState_VSA
+from rdkit import Chem
+from rdkit.Chem.EState import EState_VSA
 import os.path
 
 def feq(n1,n2,tol=1e-4):

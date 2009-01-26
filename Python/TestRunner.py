@@ -4,7 +4,7 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import os,sys,time
 if sys.version_info[0]>2 or sys.version_info[1]>4:
   import subprocess

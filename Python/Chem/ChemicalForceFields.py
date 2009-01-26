@@ -4,5 +4,5 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit.ForceField import *
-from pyRDKit.Chem.rdForceFieldHelpers import *
+from rdkit.ForceField import *
+from rdkit.Chem.rdForceFieldHelpers import *

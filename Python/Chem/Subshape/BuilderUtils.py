@@ -5,8 +5,8 @@
 # Copyright (C) 2007 by Greg Landrum 
 #  All rights reserved
 #
-from pyRDKit import Geometry
-from pyRDKit.Chem.Subshape import SubshapeObjects
+from rdkit import Geometry
+from rdkit.Chem.Subshape import SubshapeObjects
 import math
 import numpy.oldnumeric as Numeric
 import numpy.oldnumeric.linear_algebra as LinearAlgebra

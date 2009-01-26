@@ -8,8 +8,8 @@
 
 """
 import unittest
-from pyRDKit import Chem
-from pyRDKit.Chem.Pharm2D import Gobbi_Pharm2D,Generate
+from rdkit import Chem
+from rdkit.Chem.Pharm2D import Gobbi_Pharm2D,Generate
 
 class TestCase(unittest.TestCase):
   def setUp(self):

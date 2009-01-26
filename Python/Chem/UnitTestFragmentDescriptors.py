@@ -8,8 +8,8 @@
 
 """
 import unittest
-from pyRDKit import Chem
-from pyRDKit.Chem import Fragments
+from rdkit import Chem
+from rdkit.Chem import Fragments
 
 class TestCase(unittest.TestCase):
   def setUp(self) :

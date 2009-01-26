@@ -177,7 +177,7 @@ def Usage():
 if __name__ == '__main__':
   import sys,getopt
   import cPickle
-  from pyRDKit.ML.Data import DataUtils
+  from rdkit.ML.Data import DataUtils
 
   args,extra = getopt.getopt(sys.argv[1:],'o:bthx:y:d:')
   if len(extra) < 2:

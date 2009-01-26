@@ -5,11 +5,11 @@
 #
 
 """ unit tests for the model and descriptor packager """
-from pyRDKit import RDConfig
-from pyRDKit.ML.Data import DataUtils
+from rdkit import RDConfig
+from rdkit.ML.Data import DataUtils
 import unittest,os,cPickle,sys
-from pyRDKit.ML.ModelPackage import Packager
-from pyRDKit import Chem
+from rdkit.ML.ModelPackage import Packager
+from rdkit import Chem
 import random
 
 def feq(a,b,tol=1e-4):
@@ -69,7 +69,7 @@ class TestCase(unittest.TestCase):
   
   def testPerm1(self):
     """ tests the descriptor remapping stuff in a packager """
-    from pyRDKit.Chem import AvailDescriptors
+    from rdkit.Chem import AvailDescriptors
     pkg = cPickle.load(open(os.path.join(self.dataDir,'Jan9_build3_pkg.pkl'),'rb'))
     calc = pkg.GetCalculator()
     names = calc.GetDescriptorNames()

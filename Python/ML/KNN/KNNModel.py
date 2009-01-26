@@ -7,7 +7,7 @@
 """ Define the class _KNNModel_, used to represent a k-nearest neighbhors model
 
 """
-from pyRDKit.ML.KNN import DistFunctions
+from rdkit.ML.KNN import DistFunctions
 import bisect
 class KNNModel(object):
   """ This is a base class used by KNNClassificationModel

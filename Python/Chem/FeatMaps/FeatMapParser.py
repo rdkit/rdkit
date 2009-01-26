@@ -4,9 +4,9 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import Geometry
-from pyRDKit.Chem import ChemicalFeatures
-from pyRDKit.Chem.FeatMaps import FeatMaps,FeatMapPoint
+from rdkit import Geometry
+from rdkit.Chem import ChemicalFeatures
+from rdkit.Chem.FeatMaps import FeatMaps,FeatMapPoint
 import re
 
 """

@@ -6,7 +6,7 @@
 """
 import sys,cgi,os,time,exceptions,types
 import Cookie
-from pyRDKit.utils import GUIDs
+from rdkit.utils import GUIDs
 
 
 def _FormGet(self,key,default=''):

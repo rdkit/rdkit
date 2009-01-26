@@ -8,8 +8,8 @@
 
 """
 import unittest
-from pyRDKit import Chem
-from pyRDKit.Chem.Pharm2D import Generate,SigFactory,Matcher,Gobbi_Pharm2D
+from rdkit import Chem
+from rdkit.Chem.Pharm2D import Generate,SigFactory,Matcher,Gobbi_Pharm2D
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -88,7 +88,7 @@ class TestCase(unittest.TestCase):
   def testRoundtrip(self):
     """ longer-running Bug 28 test
     """
-    from pyRDKit import RDConfig
+    from rdkit import RDConfig
     import os
     nToDo=20
     inD = open(os.path.join(RDConfig.RDDataDir,'NCI','first_5K.smi'),'r').readlines()[:nToDo]

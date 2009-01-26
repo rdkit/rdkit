@@ -5,13 +5,13 @@
 #
 
 """ unit tests for the QuantTree implementation """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
-from pyRDKit.ML.DecTree import BuildQuantTree
-from pyRDKit.ML.DecTree.QuantTree import QuantTreeNode
+from rdkit.ML.DecTree import BuildQuantTree
+from rdkit.ML.DecTree.QuantTree import QuantTreeNode
 
 import cPickle
-from pyRDKit.ML.Data import MLData
+from rdkit.ML.Data import MLData
 
 class TestCase(unittest.TestCase):
   def setUp(self):

@@ -10,8 +10,8 @@
 
 """
 import numpy.oldnumeric as Numeric
-from pyRDKit.Chem.EState.EState import EStateIndices as EStateIndices_
-from pyRDKit.Chem.MolSurf import _LabuteHelper as VSAContribs_
+from rdkit.Chem.EState.EState import EStateIndices as EStateIndices_
+from rdkit.Chem.MolSurf import _LabuteHelper as VSAContribs_
 import bisect
 
 """

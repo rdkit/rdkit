@@ -7,9 +7,9 @@
 """basic unit testing code for the molecule boost wrapper
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,cPickle,os
-from pyRDKit import Chem
+from rdkit import Chem
 
 
 class TestCase(unittest.TestCase):

@@ -4,7 +4,7 @@
 """ Various bits and pieces for calculating descriptors
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 
 class DescriptorCalculator:
   """ abstract base class for descriptor calculators

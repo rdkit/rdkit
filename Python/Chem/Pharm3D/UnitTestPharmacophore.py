@@ -4,15 +4,15 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,sys,os,cPickle
-from pyRDKit import Chem
-from pyRDKit.Chem import ChemicalFeatures
+from rdkit import Chem
+from rdkit.Chem import ChemicalFeatures
 import EmbedLib
 import gzip
 
-from pyRDKit import DistanceGeometry as DG
-from pyRDKit import Geometry
+from rdkit import DistanceGeometry as DG
+from rdkit import Geometry
 import Pharmacophore
 
 def feq(n1,n2,tol=1e-5):

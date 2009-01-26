@@ -5,8 +5,8 @@
 
 """
 
-from pyRDKit import RDConfig
-from pyRDKit.ML.Descriptors import Descriptors,Parser
+from rdkit import RDConfig
+from rdkit.ML.Descriptors import Descriptors,Parser
 import cPickle
 import sys
 import winerror

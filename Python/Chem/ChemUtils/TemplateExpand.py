@@ -3,13 +3,13 @@
 #  Created by Greg Landrum August, 2006
 #
 #
-from pyRDKit import RDLogger as logging
+from rdkit import RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)
-from pyRDKit import Chem
-from pyRDKit.Chem import Crippen
-from pyRDKit.Chem import AllChem
-from pyRDKit.Chem.ChemUtils.AlignDepict import AlignDepict
+from rdkit import Chem
+from rdkit.Chem import Crippen
+from rdkit.Chem import AllChem
+from rdkit.Chem.ChemUtils.AlignDepict import AlignDepict
 
 import sys
 _version="0.8.0"

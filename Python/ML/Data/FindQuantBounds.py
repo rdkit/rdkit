@@ -3,9 +3,9 @@
 #
 
 
-from pyRDKit.ML.Data import Quantize
-from pyRDKit.Dbase import DbConnection
-from pyRDKit import RDConfig
+from rdkit.ML.Data import Quantize
+from rdkit.Dbase import DbConnection
+from rdkit import RDConfig
 
 def runIt(namesAndTypes,dbConnect,nBounds,resCol,typesToDo=['float']):
   results = map(lambda x:x[0],dbConnect.GetColumns(namesAndTypes[resCol][0]))

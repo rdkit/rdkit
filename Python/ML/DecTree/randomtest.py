@@ -1,7 +1,7 @@
 import numpy
 import random
-from pyRDKit.ML.DecTree import ID3
-from pyRDKit.ML.DecTree import CrossValidate
+from rdkit.ML.DecTree import ID3
+from rdkit.ML.DecTree import CrossValidate
 
 def GenRandomExamples(nVars=10,randScale=0.3,bitProb=0.5,nExamples=500,seed=(0,0),
                       addResults=1):

@@ -15,22 +15,22 @@ Sample Usage:
       --smilesName="structure" -o results.csv 
 
 """
-from pyRDKit import RDConfig
-from pyRDKit import DataStructs
-from pyRDKit import Chem
-from pyRDKit.Dbase.DbConnection import DbConnect
-from pyRDKit.Dbase import DbModule
-from pyRDKit.DataStructs.TopNContainer import TopNContainer
+from rdkit import RDConfig
+from rdkit import DataStructs
+from rdkit import Chem
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.Dbase import DbModule
+from rdkit.DataStructs.TopNContainer import TopNContainer
 import sys,types
 import cPickle
-from pyRDKit.Chem.Fingerprints import FingerprintMols,DbFpSupplier
+from rdkit.Chem.Fingerprints import FingerprintMols,DbFpSupplier
 try:  
-  from pyRDKit.VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq
+  from rdkit.VLib.NodeLib.DbPickleSupplier import _lazyDataSeq as _dataSeq
 except ImportError:
   _dataSeq=None
   
 
-from pyRDKit import DataStructs
+from rdkit import DataStructs
 
 _cvsVersion="$Id$"
 idx1 = _cvsVersion.find(':')+1

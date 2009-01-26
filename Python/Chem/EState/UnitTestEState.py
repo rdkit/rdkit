@@ -11,8 +11,8 @@ validation values are from the paper (JCICS _31_ 76-81 (1991))
 """
 import unittest
 import numpy
-from pyRDKit import Chem
-from pyRDKit.Chem import EState
+from rdkit import Chem
+from rdkit.Chem import EState
 
 class TestCase(unittest.TestCase):
   def setUp(self):

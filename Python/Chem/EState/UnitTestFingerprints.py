@@ -11,9 +11,9 @@ validation values are from the paper (JCICS _35_ 1039-1045 (1995))
 """
 import unittest
 import numpy
-from pyRDKit import Chem
-from pyRDKit.Chem import EState
-from pyRDKit.Chem.EState import Fingerprinter
+from rdkit import Chem
+from rdkit.Chem import EState
+from rdkit.Chem.EState import Fingerprinter
 
 class TestCase(unittest.TestCase):
   def setUp(self):

@@ -5,7 +5,7 @@
 #
 import sys
 
-from pyRDKit.VLib.Node import VLibNode
+from rdkit.VLib.Node import VLibNode
 
 class TransformNode(VLibNode):
   """ base class for nodes which filter their input
@@ -18,7 +18,7 @@ class TransformNode(VLibNode):
     - inputs (parents) can be stepped through in lockstep
 
   Usage Example:
-    >>> from pyRDKit.VLib.Supply import SupplyNode
+    >>> from rdkit.VLib.Supply import SupplyNode
     >>> def func(a,b):
     ...   return a+b
     >>> tform = TransformNode(func)

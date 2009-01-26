@@ -1,4 +1,4 @@
-(ipyRDKit.ML.Descriptors.MoleculeDescriptors
+(irdkit.ML.Descriptors.MoleculeDescriptors
 MolecularDescriptorCalculator
 p1
 (dp2

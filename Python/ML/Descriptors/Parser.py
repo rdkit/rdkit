@@ -45,7 +45,7 @@ Here's the general flow of things:
 
 """
 __DEBUG=0
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import string
 
 # we do this to allow the use of stuff in the math module

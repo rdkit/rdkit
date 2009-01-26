@@ -3,9 +3,9 @@
 #
 
 """ unit testing code for cross validation """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
-from pyRDKit.ML.DecTree import CrossValidate
+from rdkit.ML.DecTree import CrossValidate
 import random
 
 def feq(a,b,tol=1e-4):
@@ -20,7 +20,7 @@ class XValTestCase(unittest.TestCase):
 
   def testRun(self):
     " test that the CrossValidationDriver runs "
-    from pyRDKit.ML.DecTree import randomtest
+    from rdkit.ML.DecTree import randomtest
     examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nExamples = 200)
     try:
       tree,frac = CrossValidate.CrossValidationDriver(examples,attrs,
@@ -30,8 +30,8 @@ class XValTestCase(unittest.TestCase):
 
   def testResults(self):
     " test the results of CrossValidation "
-    from pyRDKit.ML.DecTree import randomtest
-    from pyRDKit import RDRandom
+    from rdkit.ML.DecTree import randomtest
+    from rdkit import RDRandom
     RDRandom.seed(self.randomSeed)
     examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nExamples = 200,
                                                                 seed=self.randomArraySeed)
@@ -48,8 +48,8 @@ class XValTestCase(unittest.TestCase):
     
   def testReplacementSelection(self):
     " use selection with replacement "
-    from pyRDKit.ML.DecTree import randomtest
-    from pyRDKit import RDRandom
+    from rdkit.ML.DecTree import randomtest
+    from rdkit import RDRandom
     RDRandom.seed(self.randomSeed)
     examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nExamples = 200,
                                                                 seed=self.randomArraySeed)

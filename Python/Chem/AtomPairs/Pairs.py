@@ -12,11 +12,11 @@ R.E. Carhart, D.H. Smith, R. Venkataraghavan;
 Definition and Applications" JCICS 25, 64-73 (1985).
 
 """
-from pyRDKit.DataStructs import IntSparseIntVect
-from pyRDKit import Chem
-from pyRDKit.Chem import rdMolDescriptors
-from pyRDKit.Chem.AtomPairs import Utils
-from pyRDKit import DataStructs
+from rdkit.DataStructs import IntSparseIntVect
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem.AtomPairs import Utils
+from rdkit import DataStructs
 
 GetAtomPairFingerprint=rdMolDescriptors.GetAtomPairFingerprint
 GetAtomPairFingerprintAsIntVect=rdMolDescriptors.GetAtomPairFingerprint

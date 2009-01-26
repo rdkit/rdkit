@@ -9,21 +9,21 @@
  When possible, it's probably preferable to use a _DbConnection.DbConnect_ object
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 try:
-  from pyRDKit.Excel import ExcelWrapper
+  from rdkit.Excel import ExcelWrapper
 except:
   haveExcel = 0
 else:
   haveExcel = 1
 
-from pyRDKit.Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
+from rdkit.Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
 def _take(fromL,what):
   return map(lambda x,y=fromL:y[x],what)
 
-from pyRDKit.Dbase import DbModule
+from rdkit.Dbase import DbModule
 import sys,types,string
-from pyRDKit.Dbase import DbInfo
+from rdkit.Dbase import DbInfo
 
 def GetColumns(dBase,table,fieldString,user='sysdba',password='masterkey',
                join='',cn=None):
@@ -620,7 +620,7 @@ if __name__=='__main__':
   io.write('1.1,4,5\n')
   io.write('4,foo,6\n')
   io.seek(0)
-  from pyRDKit import RDConfig
+  from rdkit import RDConfig
   import os
   dirLoc = os.path.join(RDConfig.RDCodeDir,'Dbase','TEST.GDB')
 

@@ -7,10 +7,10 @@
 """ General descriptor testing code
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,os.path
-from pyRDKit import Chem
-from pyRDKit.Chem import AvailDescriptors
+from rdkit import Chem
+from rdkit.Chem import AvailDescriptors
 
 def feq(n1,n2,tol=1e-4):
   return abs(n1-n2)<=tol

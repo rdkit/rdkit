@@ -3,9 +3,9 @@
 #  Copyright (C) 2006 Greg Landrum
 #  This file is part of RDKit and covered by $RDBASE/license.txt
 #
-from pyRDKit import Chem
-from pyRDKit.Chem import rdDepictor
-from pyRDKit import Geometry
+from rdkit import Chem
+from rdkit.Chem import rdDepictor
+from rdkit import Geometry
 
 def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
   """

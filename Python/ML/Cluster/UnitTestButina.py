@@ -3,10 +3,10 @@
 # Copyright (C) 2007-2008 Greg Landrum
 #  All Rights Reserved
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
 
-from pyRDKit.ML.Cluster import Butina
+from rdkit.ML.Cluster import Butina
 import cPickle
 
 

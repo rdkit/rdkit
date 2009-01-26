@@ -3,9 +3,9 @@
 #  Copyright (C) 2004 Rational Discovery LLC
 #     All Rights Reserved
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import sys,os.path
-from pyRDKit.VLib.Supply import SupplyNode
+from rdkit.VLib.Supply import SupplyNode
 import cPickle
 
 if RDConfig.usePgSQL:
@@ -159,7 +159,7 @@ class DbPickleSupplyNode(SupplyNode):
   """ Supplies pickled objects from a db result set:
 
   Sample Usage:
-    >>> from pyRDKit.Dbase.DbConnection import DbConnect
+    >>> from rdkit.Dbase.DbConnection import DbConnect
   
   """
   def __init__(self,cursor,cmd,binaryCol,**kwargs):
@@ -177,7 +177,7 @@ class DbPickleSupplyNode(SupplyNode):
     return self._supplier.next()
 
 def GetNode(dbName,tableName):
-  from pyRDKit.Dbase.DbConnection import DbConnect
+  from rdkit.Dbase.DbConnection import DbConnect
   conn = DbConnect(dbName,tableName)
   return DbMolSupplyNode(conn.GetData())
   

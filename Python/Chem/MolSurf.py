@@ -10,10 +10,10 @@ descriptors.
   The MOE-like VSA descriptors are also calculated here
 
 """
-from pyRDKit import Chem
-from pyRDKit.Chem.PeriodicTable import numTable
-from pyRDKit.Chem import Crippen
-from pyRDKit.Chem import rdPartialCharges,rdMolDescriptors
+from rdkit import Chem
+from rdkit.Chem.PeriodicTable import numTable
+from rdkit.Chem import Crippen
+from rdkit.Chem import rdPartialCharges,rdMolDescriptors
 import numpy
 import bisect
 radCol = 5

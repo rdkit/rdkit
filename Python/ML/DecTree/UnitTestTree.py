@@ -3,9 +3,9 @@
 #
 
 """ unit testing code for trees and decision trees (not learning/xvalidation) """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
-from pyRDKit.ML.DecTree import Tree,DecTree
+from rdkit.ML.DecTree import Tree,DecTree
 import copy
 import cPickle
 

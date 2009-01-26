@@ -4,7 +4,7 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from pyRDKit import rdBase
+from rdkit import rdBase
 import cDataStructs
 __doc__=cDataStructs.__doc__
 from cDataStructs import *

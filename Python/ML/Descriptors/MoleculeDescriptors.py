@@ -5,11 +5,11 @@
 """ Various bits and pieces for calculating Molecular descriptors
 
 """
-from pyRDKit import RDConfig
-from pyRDKit.ML.Descriptors import Descriptors
-from pyRDKit.Chem import AvailDescriptors
+from rdkit import RDConfig
+from rdkit.ML.Descriptors import Descriptors
+from rdkit.Chem import AvailDescriptors
 AvailDescriptors.Desensitize()
-from pyRDKit.RDLogger import logger
+from rdkit.RDLogger import logger
 logger = logger()
 import re
 

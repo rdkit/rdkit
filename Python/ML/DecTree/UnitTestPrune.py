@@ -3,9 +3,9 @@
 #
 
 """ """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
-from pyRDKit.ML.DecTree import ID3,PruneTree,CrossValidate
+from rdkit.ML.DecTree import ID3,PruneTree,CrossValidate
 import copy
 import cPickle
 

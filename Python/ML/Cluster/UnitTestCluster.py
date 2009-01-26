@@ -7,10 +7,10 @@
 """unit testing code for clustering
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
-from pyRDKit.ML.Cluster import Standardize,ClusterUtils
-from pyRDKit.ML.Cluster import Clusters,Murtagh
+from rdkit.ML.Cluster import Standardize,ClusterUtils
+from rdkit.ML.Cluster import Clusters,Murtagh
 import numpy
 import cPickle
 

@@ -6,7 +6,7 @@
 
 """
 import unittest
-from pyRDKit.ML.SLT import Risk
+from rdkit.ML.SLT import Risk
 import math
 import numpy    
 

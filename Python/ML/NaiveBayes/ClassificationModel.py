@@ -8,7 +8,7 @@
 
 """
 import numpy
-from pyRDKit.ML.Data import Quantize
+from rdkit.ML.Data import Quantize
 
 def _getBinId(val, qBounds) :
   bid = 0

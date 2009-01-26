@@ -5,9 +5,9 @@
 
 """
 
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import string
-from pyRDKit.ML.Composite import Composite
+from rdkit.ML.Composite import Composite
 import cPickle
 import sys
 import winerror

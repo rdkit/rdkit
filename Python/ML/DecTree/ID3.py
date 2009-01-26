@@ -12,8 +12,8 @@
 """
 
 import numpy
-from pyRDKit.ML.DecTree import DecTree
-from pyRDKit.ML.InfoTheory import entropy
+from rdkit.ML.DecTree import DecTree
+from rdkit.ML.InfoTheory import entropy
 
 def CalcTotalEntropy(examples,nPossibleVals):
   """ Calculates the total entropy of the data set (w.r.t. the results)

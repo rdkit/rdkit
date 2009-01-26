@@ -8,7 +8,7 @@
 
 
 """
-from pyRDKit.Chem.Pharm2D.Signature import Pharm2DSig as Signature
+from rdkit.Chem.Pharm2D.Signature import Pharm2DSig as Signature
 
 class SigFactory(object):
   """
@@ -31,7 +31,7 @@ class SigFactory(object):
   def SetPatterns(self,patts):
     self._patts = patts[:]
   def SetPatternsFromSmarts(self,smarts):
-    from pyRDKit import Chem
+    from rdkit import Chem
     self._patts = [None]*len(smarts)
     for i in range(len(smarts)):
       p = Chem.MolFromSmarts(smarts[i])

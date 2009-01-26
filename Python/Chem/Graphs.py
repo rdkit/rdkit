@@ -11,8 +11,8 @@ C/C++ codebase.
 
 """
 import numpy
-from pyRDKit import Chem
-from pyRDKit import DataStructs
+from rdkit import Chem
+from rdkit import DataStructs
 import types
 
 def CharacteristicPolynomial(mol,mat=None):

@@ -22,7 +22,7 @@ Other compatibility notes:
 
 
 """
-from pyRDKit.ML.Data import DataUtils
+from rdkit.ML.Data import DataUtils
 import cPickle
 import math
 import numpy
@@ -709,7 +709,7 @@ class Composite(object):
     
 if __name__ == '__main__':
   if 0:
-    from pyRDKit.ML.DecTree import DecTree
+    from rdkit.ML.DecTree import DecTree
     c = Composite()
     n = DecTree.DecTreeNode(None,'foo')
     c.AddModel(n,0.5)

@@ -3,9 +3,9 @@
 # Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 #  All Rights Reserved
 #
-from pyRDKit import RDConfig
-from pyRDKit import DataStructs
-from pyRDKit.DataStructs.TopNContainer import TopNContainer
+from rdkit import RDConfig
+from rdkit import DataStructs
+from rdkit.DataStructs.TopNContainer import TopNContainer
 import bisect
 
 class GenericPicker(object):
@@ -25,9 +25,9 @@ class TopNOverallPicker(GenericPicker):
   """  A class for picking the top N overall best matches across a library
 
   Connect to a database and build molecules:
-  >>> from pyRDKit import Chem
+  >>> from rdkit import Chem
   >>> import os.path
-  >>> from pyRDKit.Dbase.DbConnection import DbConnect
+  >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> dbName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(dbName,'simple_mols1')
   >>> [x.upper() for x in conn.GetColumnNames()]
@@ -124,9 +124,9 @@ class SpreadPicker(GenericPicker):
   """  A class for picking the best matches across a library
 
   Connect to a database:
-  >>> from pyRDKit import Chem
+  >>> from rdkit import Chem
   >>> import os.path
-  >>> from pyRDKit.Dbase.DbConnection import DbConnect
+  >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> dbName = RDConfig.RDTestDatabase
   >>> conn = DbConnect(dbName,'simple_mols1')
   >>> [x.upper() for x in conn.GetColumnNames()]

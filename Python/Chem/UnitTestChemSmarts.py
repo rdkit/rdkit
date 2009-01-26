@@ -7,10 +7,10 @@
 """basic unit testing code for the wrapper of the SMARTS matcher
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
 import os.path
-from pyRDKit import Chem
+from rdkit import Chem
 
 
 class TestCase(unittest.TestCase):

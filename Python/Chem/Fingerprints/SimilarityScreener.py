@@ -9,9 +9,9 @@
 See _SimilarityScreener_ for overview of required API
 
 """
-from pyRDKit import DataStructs
-from pyRDKit.DataStructs import TopNContainer
-from pyRDKit import RDConfig
+from rdkit import DataStructs
+from rdkit.DataStructs import TopNContainer
+from rdkit import RDConfig
 
 class SimilarityScreener(object):
   """  base class

@@ -5,7 +5,7 @@
 """ unit testing code for the descriptor COM server
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest
 import Parser
 from win32com.client import Dispatch

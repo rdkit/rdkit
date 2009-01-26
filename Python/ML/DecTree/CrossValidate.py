@@ -8,10 +8,10 @@ cross validation == evaluating the accuracy of a tree.
 
 
 """
-from pyRDKit.ML.DecTree import ID3
-from pyRDKit.ML.Data import SplitData
+from rdkit.ML.DecTree import ID3
+from rdkit.ML.Data import SplitData
 import numpy
-from pyRDKit import RDRandom
+from rdkit import RDRandom
 
 def ChooseOptimalRoot(examples,trainExamples,testExamples,attrs,
                       nPossibleVals,treeBuilder,nQuantBounds=[],
@@ -208,7 +208,7 @@ def TestRun():
   """ testing code
 
   """
-  from pyRDKit.ML.DecTree import randomtest
+  from rdkit.ML.DecTree import randomtest
   examples,attrs,nPossibleVals = randomtest.GenRandomExamples(nExamples = 200)
   tree,frac = CrossValidationDriver(examples,attrs,
                                     nPossibleVals)

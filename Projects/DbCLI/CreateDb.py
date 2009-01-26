@@ -53,12 +53,12 @@ _usage="""
 
       
 """
-from pyRDKit import RDConfig
-from pyRDKit import Chem
-from pyRDKit.Dbase.DbConnection import DbConnect
-from pyRDKit.Dbase import DbModule
-from pyRDKit.RDLogger import logger
-from pyRDKit.Chem.MolDb import Loader
+from rdkit import RDConfig
+from rdkit import Chem
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.Dbase import DbModule
+from rdkit.RDLogger import logger
+from rdkit.Chem.MolDb import Loader
 
 logger = logger()
 import cPickle,sys,os
@@ -162,7 +162,7 @@ if __name__=='__main__':
                 skipSmiles=options.skipSmiles,maxRowsCached=int(options.maxRowsCached),
                 silent=options.silent,nameProp=options.nameProp,lazySupplier=False)
   if options.doPairs:
-    from pyRDKit.Chem.AtomPairs import Pairs,Torsions
+    from rdkit.Chem.AtomPairs import Pairs,Torsions
     pairConn = DbConnect(os.path.join(options.outDir,options.pairDbName))
     pairCurs = pairConn.GetCursor()
     try:
@@ -181,7 +181,7 @@ if __name__=='__main__':
       pass
     fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob,rdkfp blob)'%(options.fpTableName,
                                                                                                        options.molIdName))
-    from pyRDKit.Chem.Fingerprints import FingerprintMols
+    from rdkit.Chem.Fingerprints import FingerprintMols
     details = FingerprintMols.FingerprinterDetails()
     fpArgs = details.__dict__
   if options.doDescriptors:

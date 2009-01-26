@@ -3,10 +3,10 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import sys,os
 import Chem
-from pyRDKit.VLib.Filter import FilterNode
+from rdkit.VLib.Filter import FilterNode
 
 class DupeFilter(FilterNode):
   """ canonical-smiles based duplicate filter
@@ -17,7 +17,7 @@ class DupeFilter(FilterNode):
 
 
   Sample Usage:
-    >>> from pyRDKit.VLib.NodeLib.SDSupply import SDSupplyNode
+    >>> from rdkit.VLib.NodeLib.SDSupply import SDSupplyNode
     >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
                              'test_data','NCI_aids.10.sdf')
     >>> suppl = SDSupplyNode(fileN)

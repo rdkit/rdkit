@@ -194,19 +194,19 @@ a QDAT file.
      
 
 """
-from pyRDKit import RDConfig
-from pyRDKit.utils import listutils
-from pyRDKit.ML.Composite import Composite,BayesComposite
+from rdkit import RDConfig
+from rdkit.utils import listutils
+from rdkit.ML.Composite import Composite,BayesComposite
 #from ML.SVM import SVMClassificationModel as SVM
 import numpy
 import math
-from pyRDKit.ML.Data import DataUtils,SplitData
-from pyRDKit.ML import ScreenComposite
-from pyRDKit.Dbase import DbModule
-from pyRDKit.Dbase.DbConnection import DbConnect
-from pyRDKit.ML import CompositeRun
+from rdkit.ML.Data import DataUtils,SplitData
+from rdkit.ML import ScreenComposite
+from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.ML import CompositeRun
 import sys,cPickle,time
-from pyRDKit import DataStructs
+from rdkit import DataStructs
 
 _runDetails = CompositeRun.CompositeRun()
 
@@ -469,12 +469,12 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
   if details.nModels==1:
     details.internalHoldoutFrac=0.0
   if details.useTrees:
-    from pyRDKit.ML.DecTree import CrossValidate,PruneTree
+    from rdkit.ML.DecTree import CrossValidate,PruneTree
     if details.qBounds != []:
-      from pyRDKit.ML.DecTree import BuildQuantTree
+      from rdkit.ML.DecTree import BuildQuantTree
       builder = BuildQuantTree.QuantTreeBoot
     else:
-      from pyRDKit.ML.DecTree import ID3
+      from rdkit.ML.DecTree import ID3
       builder = ID3.ID3Boot
     driver = CrossValidate.CrossValidationDriver
     pruner = PruneTree.PruneTree
@@ -499,8 +499,8 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
                    silent=not _verbose)
 
   elif details.useSigTrees:
-    from pyRDKit.ML.DecTree import CrossValidate
-    from pyRDKit.ML.DecTree import BuildSigTree
+    from rdkit.ML.DecTree import CrossValidate
+    from rdkit.ML.DecTree import BuildSigTree
     builder = BuildSigTree.SigTreeBuilder
     driver = CrossValidate.CrossValidationDriver
     nPossibleVals = data.GetNPossibleVals()
@@ -535,8 +535,8 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
                    silent=not _verbose)
 
   elif details.useKNN:
-    from pyRDKit.ML.KNN import CrossValidate
-    from pyRDKit.ML.KNN import DistFunctions
+    from rdkit.ML.KNN import CrossValidate
+    from rdkit.ML.KNN import DistFunctions
     
     driver = CrossValidate.CrossValidationDriver
     dfunc = ''
@@ -556,7 +556,7 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
                    distFunc=dfunc)
 
   elif details.useNaiveBayes or details.useSigBayes:
-    from pyRDKit.ML.NaiveBayes import CrossValidate
+    from rdkit.ML.NaiveBayes import CrossValidate
     driver = CrossValidate.CrossValidationDriver
     if not (hasattr(details,'useSigBayes') and details.useSigBayes):
       composite.Grow(trainExamples, attrs, nPossibleVals=[0]+nPossibleVals,
@@ -584,7 +584,7 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
       
     
 ##   elif details.useSVM:
-##     from pyRDKit.ML.SVM import CrossValidate
+##     from rdkit.ML.SVM import CrossValidate
 ##     driver = CrossValidate.CrossValidationDriver
 ##     composite.Grow(trainExamples, attrs, nPossibleVals=[0]+nPossibleVals,
 ##                    buildDriver=driver, nTries=details.nModels,
@@ -600,7 +600,7 @@ def RunOnData(details,data,progressCallback=None,saveIt=1,setDescNames=0):
 ##                    silent=not _verbose)
     
   else:
-    from pyRDKit.ML.Neural import CrossValidate
+    from rdkit.ML.Neural import CrossValidate
     driver = CrossValidate.CrossValidationDriver
     composite.Grow(trainExamples,attrs,[0]+nPossibleVals,nTries=details.nModels,
                    buildDriver=driver,needsQuantization=0)

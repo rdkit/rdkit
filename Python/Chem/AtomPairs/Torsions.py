@@ -12,8 +12,8 @@ R. Nilakantan, N. Bauman, J. S. Dixon, R. Venkataraghavan;
 Comparison with Other Descriptors" JCICS 27, 82-85 (1987).
 
 """
-from pyRDKit import Chem
-from pyRDKit.Chem import rdMolDescriptors
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
 import Utils
 
 def pyScorePath(mol,path,size,atomCodes=None):

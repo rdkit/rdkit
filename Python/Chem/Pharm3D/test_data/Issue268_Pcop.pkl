@@ -1,4 +1,4 @@
-(ipyRDKit.Chem.Pharm3D.Pharmacophore
+(irdkit.Chem.Pharm3D.Pharmacophore
 Pharmacophore
 p1
 (dp2
@@ -55,7 +55,7 @@ S"\x00\x00\x00\x00\x00\x00\x00\x00h\x91\xed|?5\x05@{\x14\xaeG\xe1z\x15@\\\x8f\xc
 tbsS'_feats'
 p12
 (lp13
-cpyRDKit.Chem.rdChemicalFeatures
+crdkit.Chem.rdChemicalFeatures
 FreeChemicalFeature
 p14
 (S'\x10\x00\x00\x00\t\x00\x00\x00Acceptor\x00\x13\x00\x00\x00SingleAtomAcceptor\x00\xbaI\x0c\x02+\x87\xfe?V\x0e-\xb2\x9do>@\xd3Mb\x10X\xb9\x18@'

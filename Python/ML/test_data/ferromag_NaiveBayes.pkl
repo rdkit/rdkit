@@ -1,7 +1,7 @@
 ccopy_reg
 _reconstructor
 p1
-(cpyRDKit.ML.Composite.Composite
+(crdkit.ML.Composite.Composite
 Composite
 p2
 c__builtin__
@@ -55,7 +55,7 @@ F0
 sS'modelList'
 p23
 (lp24
-(ipyRDKit.ML.NaiveBayes.ClassificationModel
+(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p25
 (dp26
@@ -844,7 +844,7 @@ aI3
 aI4
 aI5
 aI6
-asba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+asba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p198
 (dp199
@@ -1193,7 +1193,7 @@ sI1
 F0.40000000000000008
 ssg196
 g197
-sba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+sba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p262
 (dp263
@@ -1474,7 +1474,7 @@ sI1
 F0.40425531914893598
 ssg196
 g197
-sba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+sba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p313
 (dp314
@@ -1735,7 +1735,7 @@ sI1
 F0.43636363636363645
 ssg196
 g197
-sba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+sba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p356
 (dp357
@@ -1981,7 +1981,7 @@ sI1
 F0.44230769230769212
 ssg196
 g197
-sba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+sba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p397
 (dp398
@@ -2219,7 +2219,7 @@ sI1
 F0.47916666666666646
 ssg196
 g197
-sba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+sba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p438
 (dp439
@@ -2459,7 +2459,7 @@ sI1
 F0.44897959183673486
 ssg196
 g197
-sba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+sba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p479
 (dp480
@@ -2697,7 +2697,7 @@ sI1
 F0.45833333333333315
 ssg196
 g197
-sba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+sba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p520
 (dp521
@@ -2945,7 +2945,7 @@ sI1
 F0.490566037735849
 ssg196
 g197
-sba(ipyRDKit.ML.NaiveBayes.ClassificationModel
+sba(irdkit.ML.NaiveBayes.ClassificationModel
 NaiveBayesClassifier
 p561
 (dp562

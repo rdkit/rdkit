@@ -1,6 +1,6 @@
 import numpy
-from pyRDKit.ML.Cluster import Murtagh,ClusterUtils
-from pyRDKit.ML.Cluster import Murtagh
+from rdkit.ML.Cluster import Murtagh,ClusterUtils
+from rdkit.ML.Cluster import Murtagh
 
 print '1'
 d = numpy.array([[10.0,5.0],[20.0,20.0],[30.0,10.0],[30.0,15.0],[5.0,10.0]],numpy.float)

@@ -12,7 +12,7 @@ out to PubMed itself.  Actual calls to the functions would not include
 the _conn_ argument.
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import QueryParams,Records
 import urllib,urllib2
 from xml.etree import ElementTree

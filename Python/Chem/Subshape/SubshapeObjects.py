@@ -3,8 +3,8 @@
 # Copyright (C) 2007 by Greg Landrum 
 #  All rights reserved
 #
-from pyRDKit import Chem
-from pyRDKit import Geometry
+from rdkit import Chem
+from rdkit import Geometry
 
 class SkeletonPoint(object):
   location=None
@@ -63,7 +63,7 @@ def DisplaySubshapeSkeleton(viewer,shape,name,color=(1,0,1),colorByOrder=False):
     _displaySubshapeSkelPt(viewer,pt,cgoNm,color)
   
 def DisplaySubshape(viewer,shape,name,showSkelPts=True,color=(1,0,1)):
-  from pyRDKit import Geometry
+  from rdkit import Geometry
   import os,tempfile
   fName = tempfile.mktemp('.grd')
   Geometry.WriteGridToFile(shape.grid,fName)

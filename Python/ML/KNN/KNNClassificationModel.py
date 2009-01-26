@@ -9,8 +9,8 @@
     Inherits from _KNNModel_
 """
 
-from pyRDKit.ML.KNN import KNNModel
-from pyRDKit.ML.KNN import DistFunctions
+from rdkit.ML.KNN import KNNModel
+from rdkit.ML.KNN import DistFunctions
 import math
 
 

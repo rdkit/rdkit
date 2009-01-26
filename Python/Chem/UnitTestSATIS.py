@@ -8,8 +8,8 @@
 
 """
 import unittest
-from pyRDKit.Chem import *
-from pyRDKit.Chem import SATIS
+from rdkit.Chem import *
+from rdkit.Chem import SATIS
 
 class TestCase(unittest.TestCase):
   def setUp(self):

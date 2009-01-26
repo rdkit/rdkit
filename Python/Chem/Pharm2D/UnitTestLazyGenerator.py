@@ -8,8 +8,8 @@
 
 """
 import unittest
-from pyRDKit import Chem
-from pyRDKit.Chem.Pharm2D import SigFactory,LazyGenerator
+from rdkit import Chem
+from rdkit.Chem.Pharm2D import SigFactory,LazyGenerator
 
 class TestCase(unittest.TestCase):
   def setUp(self):

@@ -7,10 +7,10 @@
 """unit testing code for the database utilities
 
 """
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import unittest,os
-from pyRDKit.Dbase import DbUtils
-from pyRDKit.Dbase.DbConnection import DbConnect
+from rdkit.Dbase import DbUtils
+from rdkit.Dbase.DbConnection import DbConnect
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -46,7 +46,7 @@ class TestCase(unittest.TestCase):
     import sys
     if sys.platform!='win32':
       return
-    from pyRDKit.Excel import ExcelWrapper
+    from rdkit.Excel import ExcelWrapper
     w = ExcelWrapper.ExcelWrapper()
     xlFile = os.path.join(self.baseDir,'dbtest.xls')
     w.Workbooks.Open(xlFile)
@@ -68,7 +68,7 @@ class TestCase(unittest.TestCase):
     import sys
     if sys.platform!='win32':
       return
-    from pyRDKit.Excel import ExcelWrapper
+    from rdkit.Excel import ExcelWrapper
     w = ExcelWrapper.ExcelWrapper()
     xlFile = os.path.join(self.baseDir,'dbtest.nulls.xls')
     w.Workbooks.Open(xlFile)

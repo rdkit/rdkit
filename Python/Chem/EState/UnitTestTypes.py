@@ -10,9 +10,9 @@ validation values are from the paper (JCICS _35_ 1039-1045 (1995))
 
 """
 import unittest
-from pyRDKit import Chem
-from pyRDKit.Chem import EState
-from pyRDKit.Chem.EState import AtomTypes
+from rdkit import Chem
+from rdkit.Chem import EState
+from rdkit.Chem.EState import AtomTypes
 
 class TestCase(unittest.TestCase):
   def setUp(self):
