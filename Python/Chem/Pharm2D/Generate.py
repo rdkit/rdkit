@@ -30,6 +30,8 @@
 
 """
 from Chem.Pharm2D import Utils,SigFactory
+from RDLogger import logger
+logger = logger()
 
 _verbose = 0
 
@@ -60,9 +62,11 @@ def _ShortestPathsMatch(match,featureSet,sig,dMat,sigFactory):
     if d == 0 or d < minD or d >= maxD:
       return
     dist[i] = d
-  if _verbose:
-    print '\t',dist,minD,maxD
+    
   idx = sigFactory.GetBitIdx(featureSet,dist,sortIndices=False)
+  if _verbose:
+    print '\t',dist,minD,maxD,idx
+
   if sigFactory.useCounts:
     sig[idx] = sig[idx]+1
   else:
@@ -95,6 +99,9 @@ def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None):
   nFeats = len(featFamilies)
   minCount = sigFactory.minPointCount
   maxCount = sigFactory.maxPointCount
+  if maxCount>3:
+    logger.warning(' Pharmacophores with more than 3 points are not currently supported.\nSetting maxCount to 3.')
+    maxCount=3
 
   # generate the molecule's distance matrix, if required
   if dMat is None:
@@ -117,7 +124,13 @@ def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None):
   for perm in perms:
     # the permutation is a combination of feature indices
     #   defining the feature set for a proto-pharmacophore
-
+    featClasses=[0]
+    for i in range(1,len(perm)):
+      if perm[i]==perm[i-1]:
+        featClasses.append(featClasses[-1])
+      else:
+        featClasses.append(featClasses[-1]+1)
+    
     # Get a set of matches at each index of
     #  the proto-pharmacophore.
     matchPerms = [featMatches[x] for x in perm]
@@ -126,7 +139,12 @@ def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None):
       print '    matchPerms: %s'%(str(matchPerms))
     
     # Get all unique combinations of those possible matches:
-    matchesToMap = Utils.UniquifyCombinations(Utils.GetAllCombinations(matchPerms))
+    matchesToMap=Utils.GetUniqueCombinations(matchPerms,featClasses)
+    for i,entry in enumerate(matchesToMap):
+      entry = [x[1] for x in entry]
+      matchesToMap[i]=entry
+    if _verbose:
+      print '    mtM:',matchesToMap
     
     for match in matchesToMap:
       if sigFactory.shortestPathsOnly:

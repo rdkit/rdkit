@@ -22,6 +22,7 @@ class TestCase(unittest.TestCase):
                                          trianglePruneBins=False)
     self.factory.SetBins([(0,2),(2,5),(5,8)])
     self.factory.Init()
+    SigFactory._verbose=False
 
   def test1Sizes(self):
     self.factory.maxPointCount=2
@@ -49,7 +50,7 @@ class TestCase(unittest.TestCase):
       ( (1,1),[7],17 ),
       ( (0,0,0),[1,1,1],45),
       ( (0,0,1),[1,1,1],72),
-      ( (0,0,1),[1,1,3],73),
+      ( (0,0,1),[1,1,3],75),
       ( (0,0,1),[3,1,1],81),
       ( (0,0,1),[3,3,1],84),
       ]
@@ -70,8 +71,10 @@ class TestCase(unittest.TestCase):
     self.factory.SetBins(((0,2),(2,4),(4,8)))
     self.factory.Init()
     self.failUnlessEqual(self.factory.GetSigSize(),990)
-    probes = [((0,0,0),(1,3,1),48),
-              ((0,0,0),(1,3,3),49),
+    probes = [((0,0,0),(1,3,1),54),
+              ((0,0,0),(3,1,1),54),
+              ((0,0,0),(1,1,3),54),
+              ((0,0,0),(1,3,3),57),
               ((0,0,1),(1,3,1),75),
               ]
     for patts,dists,ans in probes:
@@ -84,16 +87,15 @@ class TestCase(unittest.TestCase):
 
       
   def test4BitIdx(self):
-    """ test 3 point p'cophore ids where the triangle
-      inequality has been used to remove some bits
-    """
     self.factory.trianglePruneBins=True
     self.factory.Init()
     sig = self.factory.GetSignature()
     self.failUnlessEqual(len(sig),885)
 
-    probes = [((0,0,0),(1,3,1),47),
-              ((0,0,0),(1,3,3),48),
+    probes = [((0,0,0),(1,3,1),52),
+              ((0,0,0),(1,1,3),52),
+              ((0,0,0),(3,1,1),52),
+              ((0,0,0),(1,3,3),55),
               ((0,0,1),(1,3,1),71),
               ]
     for patts,dists,ans in probes:

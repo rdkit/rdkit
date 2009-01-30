@@ -5,6 +5,7 @@ tests=[
   #("python","UnitTestLazyGenerator.py",{}),
   ("python","UnitTestUtils.py",{}),
   ("python","UnitTestGobbi.py",{}),
+  ("python","Utils.py",{}),
 
   ]
 

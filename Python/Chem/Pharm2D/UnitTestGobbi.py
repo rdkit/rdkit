@@ -8,6 +8,8 @@
 
 """
 import unittest
+import os
+import RDConfig
 import Chem
 from Chem.Pharm2D import Gobbi_Pharm2D,Generate
 
@@ -104,7 +106,7 @@ class TestCase(unittest.TestCase):
   def test2Sigs(self):
     probes = [('O=CCC=O',(149,)),
               ('OCCC=O',(149,156)),
-              ('OCCC(=O)O',(22, 29, 149, 154, 156, 184, 28810, 30055)),
+              ('OCCC(=O)O',(22, 29, 149, 154, 156, 184, 28822, 30134)),
               ]
     for smi,tgt in probes:
       sig = Generate.Gen2DFingerprint(Chem.MolFromSmiles(smi),self.factory)
@@ -112,6 +114,52 @@ class TestCase(unittest.TestCase):
       bs = tuple(sig.GetOnBits())
       self.failUnlessEqual(len(bs),len(tgt))
       self.failUnlessEqual(bs,tgt)
+
+  def testOrderBug(self):
+    sdFile = os.path.join(RDConfig.RDCodeDir,'Chem','Pharm2D','test_data','orderBug.sdf')
+    suppl = Chem.SDMolSupplier(sdFile)
+    m1 =suppl.next()
+    m2 = suppl.next()
+    sig1 = Generate.Gen2DFingerprint(m1,self.factory)
+    sig2 = Generate.Gen2DFingerprint(m2,self.factory)
+    ob1 = set(sig1.GetOnBits())
+    ob2 = set(sig2.GetOnBits())
+    self.failUnlessEqual(sig1,sig2)
+
+  def testOrderBug2(self):
+    from Chem import Randomize
+    import DataStructs
+    probes = ['Oc1nc(Oc2ncccc2)ccc1']
+    for smi in probes:
+      m1 = Chem.MolFromSmiles(smi)
+      #m1.Debug()
+      sig1 = Generate.Gen2DFingerprint(m1,self.factory)
+      csmi = Chem.MolToSmiles(m1)
+      m2 = Chem.MolFromSmiles(csmi)
+      #m2.Debug()
+      sig2 = Generate.Gen2DFingerprint(m2,self.factory)
+      self.failUnless(list(sig1.GetOnBits())==list(sig2.GetOnBits()),'%s %s'%(smi,csmi))
+      self.failUnlessEqual(DataStructs.DiceSimilarity(sig1,sig2),1.0)
+      self.failUnlessEqual(sig1,sig2)
+      for i in range(10):
+        m2 = Randomize.RandomizeMol(m1)
+        sig2 = Generate.Gen2DFingerprint(m2,self.factory)
+        if sig2!=sig1:
+          Generate._verbose=True
+          print '----------------'
+          sig1 = Generate.Gen2DFingerprint(m1,self.factory)
+          print '----------------'
+          sig2 = Generate.Gen2DFingerprint(m2,self.factory)
+          print '----------------'
+          print Chem.MolToMolBlock(m1)
+          print '----------------'
+          print Chem.MolToMolBlock(m2)
+          print '----------------'
+          s1 = set(sig1.GetOnBits())
+          s2= set(sig2.GetOnBits())
+          print s1.difference(s2)
+        self.failUnlessEqual(sig1,sig2)
+
 
 if __name__ == '__main__':
   unittest.main()

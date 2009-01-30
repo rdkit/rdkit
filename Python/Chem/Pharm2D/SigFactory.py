@@ -161,6 +161,11 @@ class SigFactory(object):
         return None
       whichBins[i] = where
     res = scaffolds.index(tuple(whichBins))
+    if _verbose:
+      print '----- _fBI  -----------'
+      print ' scaffolds:',scaffolds
+      print ' bins:',whichBins
+      print ' res:',res
     return res
 
   def GetFeatFamilies(self):
@@ -198,6 +203,8 @@ class SigFactory(object):
       
     """
     nPoints = len(featIndices)
+    if nPoints>3:
+      raise NotImplementedError,'>3 points not supported'
     if nPoints < self.minPointCount: raise IndexError,'bad number of points'
     if nPoints > self.maxPointCount: raise IndexError,'bad number of points'
 
@@ -207,7 +214,6 @@ class SigFactory(object):
     #
     # now we need to map the pattern indices to an offset from startIdx
     # 
-
     if sortIndices:
       tmp = list(featIndices)
       tmp.sort()
@@ -215,9 +221,15 @@ class SigFactory(object):
 
     if featIndices[0]<0: raise IndexError,'bad feature index'
     if max(featIndices)>=self._nFeats: raise IndexError,'bad feature index'
+
+    if nPoints==3:
+      featIndices,dists=Utils.OrderTriangle(featIndices,dists)
+            
+
     offset = Utils.CountUpTo(self._nFeats,nPoints,featIndices)
     if _verbose: print 'offset for feature %s: %d'%(str(featIndices),offset)
     offset *= len(self._scaffolds[len(dists)])
+
       
     try:
       if _verbose:
