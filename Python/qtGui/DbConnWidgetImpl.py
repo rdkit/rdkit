@@ -5,12 +5,12 @@
 """ implementation bits for DbConnWidgets
 
 """    
-import RDConfig
+from pyRDKit import RDConfig
 from qt import *
-from qtGui.forms.DbConnWidget import DbConnWidget as _Form
-from qtGui import DbWidget
+from pyRDKit.qtGui.forms.DbConnWidget import DbConnWidget as _Form
+from pyRDKit.qtGui import DbWidget
 import os,os.path
-from Dbase import DbConnection
+from pyRDKit.Dbase import DbConnection
 
 
 def insertConnWidget(parent,*args,**kwargs):

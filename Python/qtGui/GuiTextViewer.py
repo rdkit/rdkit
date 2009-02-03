@@ -8,8 +8,8 @@
 """
 import sys
 from qt import *
-from qtGui.forms.TextViewer import TextViewer as _Form
-from qtGui.qtUtils  import warning,error
+from pyRDKit.qtGui.forms.TextViewer import TextViewer as _Form
+from pyRDKit.qtGui.qtUtils  import warning,error
 
 class GuiTextViewer(_Form):
   """ a class for displaying rich text

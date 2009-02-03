@@ -3,10 +3,10 @@
 #  Copyright (C) 2002-2005  Greg Landrum and Rational Discovery LLC
 #    All Rights Reserved
 #
-import RDConfig
+from pyRDKit import RDConfig
 import qt
 import os.path
-from sping.utils import availableCanvases
+from pyRDKit.sping.utils import availableCanvases
 import sys
 
 logoImageData=[
@@ -49,7 +49,7 @@ if 0:
     logger.addHandler(hdlr)
     logger.setLevel(logging.DEBUG)
 else:
-  import RDLogger as logging
+  import pyRDKit.RDLogger as logging
   def _initLogger():
     global logger
     logger = logging.logger()

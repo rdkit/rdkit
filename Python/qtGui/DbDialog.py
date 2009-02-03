@@ -5,7 +5,7 @@
 """ contains simple dialog box for holding db widgets
 
 """    
-import RDConfig
+from pyRDKit import RDConfig
 from qt import *
 
 class DbDialog(QDialog):

@@ -8,7 +8,7 @@
 
 import sys
 from qt import *
-from qtGui.forms.pyshell import PyShell as _Form
+from pyRDKit.qtGui.forms.pyshell import PyShell as _Form
 from code import InteractiveInterpreter
 
 class PyShell(_Form,InteractiveInterpreter):

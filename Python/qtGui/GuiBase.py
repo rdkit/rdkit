@@ -6,14 +6,14 @@
 """ base class for the main window in the qt MixinGui
 
 """
-import RDConfig
+from pyRDKit import RDConfig
 import qt
-from qtGui import GuiShell,GuiTextViewer
+from pyRDKit.qtGui import GuiShell,GuiTextViewer
 try:
-  from qtGui import rpcClient
+  from pyRDKit.qtGui import rpcClient
 except:
   rpcClient=None
-from qtGui import qtUtils
+from pyRDKit.qtGui import qtUtils
 
 class GuiBase(qt.QMainWindow):
   """ Base class for the qt MixinGui
