@@ -4,10 +4,10 @@
 #
 #  @@ All Rights Reserved @@
 #
-import RDConfig
+from rdkit import RDConfig
 import os,sys,cPickle
 import unittest
-import DataStructs as ds
+from rdkit import DataStructs as ds
 
 def feq(v1,v2,tol=1e-4):
   return abs(v1-v2)<tol

@@ -3,7 +3,7 @@
 """basic unit testing code for query mols
 
 """
-import RDConfig
+from rdkit import RDConfig
 import unittest,os,sys
 
 class TestCase(unittest.TestCase):

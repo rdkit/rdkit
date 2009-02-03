@@ -1,6 +1,6 @@
-import Chem
-from Chem import rdPartialCharges
-import RDConfig
+from rdkit import Chem
+from rdkit.Chem import rdPartialCharges
+from rdkit import RDConfig
 import unittest
 import os
 import cPickle as pickle

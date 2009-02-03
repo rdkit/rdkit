@@ -9,12 +9,12 @@ it's intended to be shallow, but broad
 
 """
 import unittest,os
-import RDConfig
-from RDLogger import logger
+from rdkit import RDConfig
+from rdkit.RDLogger import logger
 logger=logger()
-import Chem
-from Chem import FragmentCatalog
-import DataStructs
+from rdkit import Chem
+from rdkit.Chem import FragmentCatalog
+from rdkit import DataStructs
 import cPickle
 
 

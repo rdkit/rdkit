@@ -1,8 +1,8 @@
 ## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
-import Numerics.rdAlignment as rdAlg
-import Geometry
-import RDConfig
+import rdkit.Numerics.rdAlignment as rdAlg
+from rdkit import Geometry
+from rdkit import RDConfig
 import os,sys
 import unittest
 import numpy.oldnumeric as Numeric

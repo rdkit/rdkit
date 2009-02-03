@@ -29,11 +29,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import rdBase
-import Chem
-from Chem import rdChemReactions
-import Geometry
-import RDConfig
+from rdkit import rdBase
+from rdkit import Chem
+from rdkit.Chem import rdChemReactions
+from rdkit import Geometry
+from rdkit import RDConfig
 import unittest
 import os,sys
 import cPickle as pickle

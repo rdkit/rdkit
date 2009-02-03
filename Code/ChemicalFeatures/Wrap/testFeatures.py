@@ -4,13 +4,13 @@
 #
 #  @@ All Rights Reserved @@
 #
-import RDConfig
+from rdkit import RDConfig
 import os
-import Chem
-from Chem import ChemicalFeatures
+from rdkit import Chem
+from rdkit.Chem import ChemicalFeatures
 import unittest
 import cPickle
-from Geometry import rdGeometry as geom
+from rdkit.Geometry import rdGeometry as geom
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2

@@ -32,10 +32,10 @@
 #
 # Created by Greg Landrum, September 2006
 #
-import Chem
-from Chem import rdSLNParse
-import Geometry
-import RDConfig
+from rdkit import Chem
+from rdkit.Chem import rdSLNParse
+from rdkit import Geometry
+from rdkit import RDConfig
 import unittest
 import os,sys
 

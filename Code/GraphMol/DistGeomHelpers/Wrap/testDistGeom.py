@@ -1,13 +1,13 @@
-import Chem
-from Chem import rdDistGeom,ChemicalForceFields,rdMolAlign
-import RDConfig
+from rdkit import Chem
+from rdkit.Chem import rdDistGeom,ChemicalForceFields,rdMolAlign
+from rdkit import RDConfig
 import unittest
 import os,copy
 import cPickle as pickle
 import math
 import numpy
-from Geometry import rdGeometry as geom
-from RDLogger import logger
+from rdkit.Geometry import rdGeometry as geom
+from rdkit.RDLogger import logger
 logger=logger()
 
 def feq(v1, v2, tol=1.e-4) :

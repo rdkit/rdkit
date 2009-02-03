@@ -1,7 +1,7 @@
-import RDConfig
+from rdkit import RDConfig
 import unittest
-from SimDivFilters import rdSimDivPickers
-from DataManip.Metric import rdMetricMatrixCalc as rdmmc
+from rdkit.SimDivFilters import rdSimDivPickers
+from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
 import numpy
 import random
 
@@ -97,7 +97,7 @@ class TestCase(unittest.TestCase):
 
             
   def testNonUniqueCrash(self) :
-    import DataStructs
+    from rdkit import DataStructs
     sz = 10
     nbits=20
     nBitsToSet=int(nbits*.3)

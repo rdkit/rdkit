@@ -1,7 +1,7 @@
-import DataStructs
-import Chem
-from Chem import ChemicalFeatures,rdDistGeom
-import Geometry
+from rdkit import DataStructs
+from rdkit import Chem
+from rdkit.Chem import ChemicalFeatures,rdDistGeom
+from rdkit import Geometry
 import unittest
 
 

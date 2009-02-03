@@ -1,12 +1,12 @@
-import RDConfig
+from rdkit import RDConfig
 import os,sys
 import unittest
-import DataStructs
-import Chem
-from Chem import rdMolAlign
-from Geometry import rdGeometry as geom
-from Chem import rdShapeHelpers as rdshp
-from Chem import rdMolTransforms as rdmt
+from rdkit import DataStructs
+from rdkit import Chem
+from rdkit.Chem import rdMolAlign
+from rdkit.Geometry import rdGeometry as geom
+from rdkit.Chem import rdShapeHelpers as rdshp
+from rdkit.Chem import rdMolTransforms as rdmt
 import math
 
 def feq(v1, v2, tol=1.0e-4):

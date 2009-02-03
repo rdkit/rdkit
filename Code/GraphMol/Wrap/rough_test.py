@@ -8,11 +8,11 @@
 it's intended to be shallow, but broad
 
 """
-import RDConfig
+from rdkit import RDConfig
 import os,sys,tempfile
 import unittest
-import DataStructs
-import Chem
+from rdkit import DataStructs
+from rdkit import Chem
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
@@ -715,7 +715,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(mol.GetNumAtoms()==39)
 
   def test24DaylightFingerprint(self):
-    import DataStructs
+    from rdkit import DataStructs
     m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
     fp1 = Chem.DaylightFingerprint(m1)
     self.failUnless(len(fp1)==2048)
@@ -736,7 +736,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(len(fp3)<2048)
     
   def test24RDKFingerprint(self):
-    import DataStructs
+    from rdkit import DataStructs
     m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
     fp1 = Chem.RDKFingerprint(m1)
     self.failUnless(len(fp1)==2048)

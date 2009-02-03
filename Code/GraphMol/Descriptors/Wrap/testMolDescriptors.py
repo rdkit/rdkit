@@ -1,7 +1,7 @@
-import Chem
-from Chem import rdMolDescriptors as rdMD
-import DataStructs
-import RDConfig
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit import DataStructs
+from rdkit import RDConfig
 import unittest
 
 def feq(v1, v2, tol=1.e-4) :

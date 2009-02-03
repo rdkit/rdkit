@@ -1,5 +1,5 @@
-import DataStructs
-import RDConfig
+from rdkit import DataStructs
+from rdkit import RDConfig
 import unittest
 import cPickle as pickle
 import random

@@ -1,6 +1,6 @@
-import Chem
-from Chem import ChemicalForceFields
-import RDConfig
+from rdkit import Chem
+from rdkit.Chem import ChemicalForceFields
+from rdkit import RDConfig
 import unittest
 import os
 
