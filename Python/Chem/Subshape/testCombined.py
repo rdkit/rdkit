@@ -39,7 +39,7 @@ print len(algs)
 print pruneStats
 
 import os,tempfile
-from rdkit Geometry
+from rdkit import Geometry
 fName = tempfile.mktemp('.grd')
 Geometry.WriteGridToFile(ns1.coarseGrid.grid,fName)
 v.server.loadSurface(fName,'coarse','',2.5)
