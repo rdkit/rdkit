@@ -17,7 +17,7 @@ python-extension rdForceFieldHelpers : rdForceFields.cpp
   ;
 
 install pymod : rdForceFieldHelpers
-  : <location>$(RDBASE)/Python/Chem ;
+  : <location>$(RDBASE)/rdkit/Chem ;
 
 
 

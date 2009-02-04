@@ -19,7 +19,7 @@ python-extension rdDistGeom : rdDistGeom.cpp
   ;
 
 install pymod : rdDistGeom
-  : <location>$(RDBASE)/Python/Chem ;
+  : <location>$(RDBASE)/rdkit/Chem ;
 
 
 

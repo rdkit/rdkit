@@ -9,7 +9,7 @@ python-extension rdChemicalFeatures : rdChemicalFeatures.cpp FreeChemicalFeature
  ../../Geometry//RDGeometry ../..//lapacklibs 
 ;
 
-install pymod : rdChemicalFeatures : <location>$(RDBASE)/Python/Chem ;
+install pymod : rdChemicalFeatures : <location>$(RDBASE)/rdkit/Chem ;
 
 
 

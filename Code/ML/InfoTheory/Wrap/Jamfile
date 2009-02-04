@@ -11,4 +11,4 @@ python-extension rdInfoTheory : InfoBitRanker.cpp BitCorrMatGenerator.cpp rdInfo
 ;
 
 
-install pymod : rdInfoTheory : <location>$(RDBASE)/Python/ML/InfoTheory ;
+install pymod : rdInfoTheory : <location>$(RDBASE)/rdkit/ML/InfoTheory ;
