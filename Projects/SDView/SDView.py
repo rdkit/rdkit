@@ -22,16 +22,16 @@ _usage="""
 """
 _welcomeMessage="This is SDView version %s"%(_version)
 import sys,os,copy
-from RDLogger import logger
+from pyRDKit.RDLogger import logger
 logger = logger()
-import Chem
-from Chem import AllChem
-from Chem.ChemUtils.AlignDepict import AlignDepict
+from pyRDKit import Chem
+from pyRDKit.Chem import AllChem
+from pyRDKit.Chem.ChemUtils.AlignDepict import AlignDepict
 from qt import *
-from qtGui import qtUtils
-from qtGui.GuiLib.MolTable import MolTable
-from qtGui.GuiLib.MolCanvas import MolCanvasView
-from qtGui.GuiBase import GuiBase
+from pyRDKit.qtGui import qtUtils
+from pyRDKit.qtGui.GuiLib.MolTable import MolTable
+from pyRDKit.qtGui.GuiLib.MolCanvas import MolCanvasView
+from pyRDKit.qtGui.GuiBase import GuiBase
 
 class SDViewTable(MolTable):
   def __init__(self,*args,**kwargs):
@@ -85,14 +85,14 @@ class SDViewGui(GuiBase):
 
 def RunGui(suppl,redraw=False,do3D=False,showOnly=None,numberAtoms=False,
            alignCore=None,alignPatt=None,keepHs=False,matchConf=False):
-  from qtGui import Gui
+  from pyRDKit.qtGui import Gui
   app,win = Gui.Launcher(SDViewGui,None,includeLogo=False)
   widg = win.centralWidget()
   widg.molCanvas.includeAtomNumbers=numberAtoms
       
   processFunc=None
   if do3D:
-    from Chem.PyMol import MolViewer
+    from pyRDKit.Chem.PyMol import MolViewer
     try:
       pymol = MolViewer()
     except:
@@ -219,7 +219,7 @@ if __name__=='__main__':
     options.redraw=True
 
   if not options.smiles:
-    from Chem.FastSDMolSupplier import FastSDMolSupplier
+    from pyRDKit.Chem.FastSDMolSupplier import FastSDMolSupplier
     if args[0] != "-":
       suppl = FastSDMolSupplier(args[0],removeHs=options.removeHs)
     else:
@@ -247,7 +247,6 @@ if __name__=='__main__':
       suppl.SetData(d,delimiter=options.delimiter)
       d = None
   if options.alignCore:
-    import os
     core = None
     if os.path.exists(options.alignCore):
       try:
