@@ -34,7 +34,7 @@ python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cp
   ;
 
 install pymod : rdchem rdmolops rdmolfiles 
-  : <location>$(RDBASE)/Python/Chem ;
+  : <location>$(RDBASE)/rdkit/Chem ;
 
 
 

@@ -24,7 +24,7 @@ project RDKit
           <toolset>gcc:<cflags>-fno-strict-aliasing
           <toolset>msvc:<define>WIN32
           <target-os>windows:<include>c:/Python25/lib/site-packages/numpy/core/include
-          <toolset>gcc:<include>/usr/lib/python2.5/site-packages/numpy/core/include
+          <toolset>gcc:<include>/usr/lib/python2.5/site-packages/numpy-1.2.1-py2.5-linux-i686.egg/numpy/core/include
           <toolset>darwin:<include>/System/Library/Frameworks/Python.framework/Versions/2.5/Extras/lib/python/numpy/core/include
 	  <address-model>64:<cflags>-fPIC
           # <define>RDK_USELAPACKPP #<- uncomment this to use lapack++

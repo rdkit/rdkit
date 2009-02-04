@@ -7,7 +7,7 @@ python-extension Clustering : Clustering.cpp hc : #<library>/boost/python//boost
 
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;
-install pymod : Clustering : <location>$(RDBASE)/Python/ML/Cluster ;
+install pymod : Clustering : <location>$(RDBASE)/rdkit/ML/Cluster ;
 
 
 

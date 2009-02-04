@@ -18,7 +18,7 @@ python-extension rdMolAlign : rdMolAlign.cpp
   ;
 
 install pymod : rdMolAlign
-  : <location>$(RDBASE)/Python/Chem ;
+  : <location>$(RDBASE)/rdkit/Chem ;
 
 
 

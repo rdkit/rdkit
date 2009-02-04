@@ -14,7 +14,7 @@ python-extension rdSLNParse : rdSLNParse.cpp
   ;
 
 install pymod : rdSLNParse
-  : <location>$(RDBASE)/Python/Chem ;
+  : <location>$(RDBASE)/rdkit/Chem ;
 
 
 

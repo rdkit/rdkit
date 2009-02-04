@@ -9,7 +9,7 @@ python-extension rdSimDivPickers : MaxMinPicker.cpp HierarchicalClusterPicker.cp
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs 
   ../../RDBoost//RDBoost ;
 
-install pymod : rdSimDivPickers : <location>$(RDBASE)/Python/SimDivFilters ;
+install pymod : rdSimDivPickers : <location>$(RDBASE)/rdkit/SimDivFilters ;
 
 
 
