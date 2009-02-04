@@ -11,4 +11,4 @@ python-extension cEntropy : cEntropy.cpp InfoTheory : <library>/boost/python//bo
 
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;
-install pymod : cEntropy : <location>$(RDBASE)/rdkit/ML/InfoTheory ;
+install pymod : cEntropy : <location>$(RDBASE)/Python/ML/InfoTheory ;

@@ -16,7 +16,7 @@ python-extension rdMolChemicalFeatures : rdMolChemicalFeatures.cpp
   ;
 
 install pymod : rdMolChemicalFeatures
-  : <location>$(RDBASE)/rdkit/Chem ;
+  : <location>$(RDBASE)/Python/Chem ;
 
 
 

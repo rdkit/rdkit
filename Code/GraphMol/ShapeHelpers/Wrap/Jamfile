@@ -15,7 +15,7 @@ python-extension rdShapeHelpers : rdShapeHelpers.cpp
   ;
 
 install pymod : rdShapeHelpers
-  : <location>$(RDBASE)/rdkit/Chem ;
+  : <location>$(RDBASE)/Python/Chem ;
 
 
 

@@ -15,7 +15,7 @@ python-extension rdChemReactions : rdChemReactions.cpp
   ;
 
 install pymod : rdChemReactions
-  : <location>$(RDBASE)/rdkit/Chem ;
+  : <location>$(RDBASE)/Python/Chem ;
 
 
 

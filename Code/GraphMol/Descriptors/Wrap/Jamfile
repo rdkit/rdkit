@@ -15,7 +15,7 @@ python-extension rdMolDescriptors : rdMolDescriptors.cpp
   ;
 
 install pymod : rdMolDescriptors 
-  : <location>$(RDBASE)/rdkit/Chem ;
+  : <location>$(RDBASE)/Python/Chem ;
 
 
 

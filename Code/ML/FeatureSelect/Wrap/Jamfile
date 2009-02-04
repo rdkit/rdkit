@@ -9,4 +9,4 @@ python-extension rdFeatSelect : rdFeatSelect.cpp /RDKit_Externals//cmim
 : <include>$(RDBASE)/External/cmim-1.0
 ;
 
-install pymod : rdFeatSelect : <location>$(RDBASE)/rdkit/ML/FeatureSelect ;
+install pymod : rdFeatSelect : <location>$(RDBASE)/Python/ML/FeatureSelect ;

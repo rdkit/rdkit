@@ -5,7 +5,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 import python ;
 
 python-extension rdBase : RDBase.cpp ..//RDBoost ../../RDGeneral//RDGeneral ;
-install pymod : rdBase : <location>$(RDBASE)/rdkit ;
+install pymod : rdBase : <location>$(RDBASE)/Python ;
 
 
 

@@ -7,7 +7,7 @@ import python ;
 python-extension rdMetricMatrixCalc : rdMetricMatrixCalc.cpp
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost ;
 
-install pymod : rdMetricMatrixCalc : <location>$(RDBASE)/rdkit/DataManip/Metric ;
+install pymod : rdMetricMatrixCalc : <location>$(RDBASE)/Python/DataManip/Metric ;
 
 
 
