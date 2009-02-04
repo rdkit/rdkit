@@ -1575,17 +1575,18 @@ void testAtomParity(){
     TEST_ASSERT(parity==1);
     delete m2;
 
-    // if we remove the H and write things out, there is no
-    // parity flag:
+    // if we remove the H and write things out, we should 
+    // still get the right answer back:
     m2 = (RWMol *)MolOps::removeHs(*((ROMol *)m));
     molBlock = MolToMolBlock(*m2);
     delete m2;
     m2 = MolBlockToMol(molBlock);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
-    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp("molParity"));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
+    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==1);
     delete m2;
-
     delete m;
   }
 
@@ -1610,8 +1611,63 @@ void testAtomParity(){
     TEST_ASSERT(parity==2);
     delete m2;
 
+    m2 = (RWMol *)MolOps::removeHs(*((ROMol *)m));
+    molBlock = MolToMolBlock(*m2);
+    delete m2;
+    m2 = MolBlockToMol(molBlock);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molParity"));
+    m2->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==2);
+    delete m2;
     delete m;
   }
+
+  {
+    // a case with an N as the "chiral" center
+    int parity;
+    std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.nitrogen.mol";
+    RWMol *m = MolFileToMol(fName,true,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molParity"));
+    m->getAtomWithIdx(1)->getProp("molParity",parity);
+    TEST_ASSERT(parity==1);
+
+    MolOps::assignChiralTypesFrom3D(*m);
+    std::string molBlock = MolToMolBlock(*m);
+    RWMol *m2 = MolBlockToMol(molBlock,true,false);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp("molParity"));
+    delete m2;
+    delete m;
+  }
+
+  {
+    // a case with two Hs on the chiral center:
+    int parity;
+    std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.twoHs.mol";
+    RWMol *m = MolFileToMol(fName,true,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("molParity"));
+
+    // add a bogus chiral spec:
+    m->getAtomWithIdx(0)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+    std::string molBlock = MolToMolBlock(*m);
+    RWMol *m2 = (RWMol *)MolOps::removeHs(*((ROMol *)m));
+    molBlock = MolToMolBlock(*m2);
+    delete m2;
+    m2 = MolBlockToMol(molBlock,true,false);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molParity"));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp("molParity"));
+    delete m2;
+    delete m;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }

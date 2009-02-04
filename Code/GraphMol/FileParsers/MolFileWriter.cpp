@@ -118,7 +118,8 @@ namespace RDKit{
     unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf){
       PRECONDITION(atom,"bad atom");
       PRECONDITION(conf,"bad conformer");
-      if(!conf->is3D()||atom->getDegree()!=4) return 0;
+      if(!conf->is3D() ||
+         !(atom->getDegree()>=3 && atom->getTotalDegree()==4)) return 0;
 
       const ROMol &mol=atom->getOwningMol();
       RDGeom::Point3D pos=conf->getAtomPos(atom->getIdx());
@@ -137,7 +138,12 @@ namespace RDKit{
         ++nbrIdx;
       }
       std::sort(vs.begin(),vs.end(),compPair);
-      double vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);
+      double vol;
+      if(vs.size()==4) {
+        vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);
+      }  else {
+        vol = -vs[0].second.crossProduct(vs[1].second).dotProduct(vs[2].second);
+      }
       if(vol<0){
         return 2;
       } else if(vol>0) {
@@ -174,7 +180,8 @@ namespace RDKit{
       if(conf->is3D() &&
          atom->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
          atom->getChiralTag()!=Atom::CHI_OTHER
-         && atom->getDegree()==4 ){
+         && atom->getDegree()>=3 &&
+         atom->getTotalDegree()==4 ){
         parityFlag=getAtomParityFlag(atom,conf);
       }
     } 

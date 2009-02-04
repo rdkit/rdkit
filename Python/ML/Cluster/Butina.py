@@ -26,10 +26,13 @@ def ClusterData(data,nPts,distThresh,isDistData=False):
 
       - isDistData: set this toggle when the data passed in is a
           distance matrix.  The distance matrix should be stored
-          symmetrically so that _LookupDist (above) can retrieve
-          the results:
-            for i<j: d_ij = dists[j*(j-1)/2 + i]
+          symmetrically. An example of how to do this:
 
+            dists = []
+            for i in range(nPts):
+              for j in range(i):
+                dists.append( distfunc(i,j) )
+          
     **Returns**
 
       - a tuple of tuples containing information about the clusters:

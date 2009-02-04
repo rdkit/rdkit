@@ -1961,6 +1961,78 @@ void test20BondQueriesInProduct(){
 }
 
 
+void test21Issue2540021(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 2540021: bad handling of atoms with explicit Hs." << std::endl;
+
+  {
+    std::string smi  = "[#7:1;!H0]>>[#7:1]C";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    smi = "C1=CNC=C1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    rxn->initReactantMatchers();
+
+    std::vector<MOL_SPTR_VECT> prods;
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+
+    ROMOL_SPTR prod = prods[0][0];
+    MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
+    TEST_ASSERT(prod->getNumAtoms()==6);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum()==7);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence()==0);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence()==3);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit()==false);
+
+    delete rxn;
+  }
+
+  {
+    std::string smi="[c:1]1[c:2][n:3;H1][c:4][n:5]1>>[c:1]1[c:2][n:3][c:4](C)[n:5]1";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    smi = "C1=CNC=N1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    rxn->initReactantMatchers();
+
+    std::vector<MOL_SPTR_VECT> prods;
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+
+    ROMOL_SPTR prod = prods[0][0];
+    MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
+    TEST_ASSERT(prod->getNumAtoms()==6);
+    TEST_ASSERT(prod->getAtomWithIdx(2)->getAtomicNum()==7);
+    TEST_ASSERT(prod->getAtomWithIdx(2)->getNumExplicitHs()==1);
+    TEST_ASSERT(prod->getAtomWithIdx(5)->getAtomicNum()==7);
+    TEST_ASSERT(prod->getAtomWithIdx(5)->getNumExplicitHs()==0);
+
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1989,6 +2061,7 @@ int main() {
   test19Issue2050085();
   test20BondQueriesInProduct();
 #endif
+  test21Issue2540021();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

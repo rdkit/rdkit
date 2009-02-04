@@ -112,13 +112,15 @@ namespace RDKit {
       if(!prodAtom->hasProp("_QueryFormalCharge")){
         prodAtom->setFormalCharge(reactAtom->getFormalCharge());
       }
-      if(!prodAtom->hasProp("_QueryHCount")){
-        prodAtom->setNumExplicitHs(reactAtom->getNumExplicitHs());
-      }
       if(!prodAtom->hasProp("_QueryMass")){
         prodAtom->setMass(reactAtom->getMass());
       }
-      prodAtom->setNoImplicit(reactAtom->getNoImplicit());
+      if(!prodAtom->hasProp("_ReactionDegreeChanged")){
+        if(!prodAtom->hasProp("_QueryHCount")){
+          prodAtom->setNumExplicitHs(reactAtom->getNumExplicitHs());
+        }
+        prodAtom->setNoImplicit(reactAtom->getNoImplicit());
+      }
     }    
 
     void generateReactantCombinations(const VectVectMatchVectType &matchesByReactant,
@@ -322,7 +324,6 @@ namespace RDKit {
           // product atom if chirality is not specified on the product. This would be a
           // very bad idea because the order of bonds will almost certainly change on the
           // atom and the chirality is referenced to bond order.
-
 
           // --------- --------- --------- --------- --------- --------- 
           // While we're here, set the stereochemistry 
@@ -592,6 +593,7 @@ namespace RDKit {
     }
     
     std::vector<int> mapNumbersSeen;
+    std::map<int,const Atom *> reactingAtoms;
     unsigned int molIdx=0;
     for(MOL_SPTR_VECT::const_iterator molIter=this->beginReactantTemplates();
         molIter!=this->endReactantTemplates();++molIter){
@@ -610,6 +612,7 @@ namespace RDKit {
             res=false;
           } else {
             mapNumbersSeen.push_back(mapNum);
+            reactingAtoms[mapNum]=*atomIt;
           }
         }
       }
@@ -651,8 +654,21 @@ namespace RDKit {
             res=false;
           } else {
             mapNumbersSeen.erase(ivIt); 
+
+            // ------------
+            //   The atom is mapped, check to see if its connectivity changes
+            // ------------
+            const Atom *rAtom=reactingAtoms[mapNum];
+            CHECK_INVARIANT(rAtom,"missing atom");
+            if(rAtom->getDegree()!=(*atomIt)->getDegree()){
+              (*atomIt)->setProp("_ReactionDegreeChanged",1);
+            }
           }
         }
+
+        // ------------
+        //    Deal with queries
+        // ------------
         if((*atomIt)->hasQuery()){
           std::list<const Atom::QUERYATOM_QUERY *>queries;
           queries.push_back((*atomIt)->getQuery());
@@ -706,7 +722,6 @@ namespace RDKit {
         }
         numWarnings++;
       }
-    
       molIdx++;
     }
     if(!mapNumbersSeen.empty()){
