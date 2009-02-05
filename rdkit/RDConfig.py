@@ -13,7 +13,7 @@ try:
   RDBaseDir=os.environ['RDBASE']
 except:
   RDBaseDir='d:/RD'  
-RDCodeDir=os.path.join(RDBaseDir,'Python')
+RDCodeDir=os.path.join(RDBaseDir,'rdkit')
 RDImageDir=os.path.join(RDCodeDir,'qtGui','Images')  # images used within the GUI tools
 RDDataDir=os.path.join(RDBaseDir,'Data')
 RDDocsDir=os.path.join(RDBaseDir,'Docs')
