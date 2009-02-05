@@ -76,10 +76,10 @@ This section assumes that python is installed in c:\Python25, that the boost lib
   * If you are planning on using a development version of the RDKit: get a copy of the current RDKit source using subversion. If you're using the command-line client the command is: `svn co http://rdkit.svn.sourceforge.net/svnroot/rdkit/trunk c:\RDKit` 
   * If you are planning on using a released version of the RDKit : get a copy of the most recent release and extract it into the directory c:\RDKit 
   * Set the required environment variables (you can set this in cygwin or in windows. If you set them in windows, be sure to restart your cygwin window):
-  ** RDBASE = c:\RDKit
-  ** BOOSTHOME = c:\boost\boost_1_36_0
-  ** BOOST_BUILD_PATH = c:\boost\boost_1_36_0
-  ** If Python is not installed in the standard location, the PYTHONHOME environment variable should point to the root of your Python installation.
+    * RDBASE = c:\RDKit
+    * BOOSTHOME = c:\boost\boost_1_36_0
+    * BOOST_BUILD_PATH = c:\boost\boost_1_36_0
+    * If Python is not installed in the standard location, the PYTHONHOME environment variable should point to the root of your Python installation.
   * Make sure that the directory c:\Python25 is in your PATH
   * Make sure that the directory c:\RDKit\bin is in your PATH
   * Make sure that the directory c:\boost\lib is in your PATH
@@ -113,5 +113,5 @@ Please see the file license.txt for details about the "New BSD"
 license which covers this software and its associated data and
 documents. 
 
-# $Id: README 694 2008-05-24 05:56:39Z glandrum $
-# Copyright (C) 2008 Greg Landrum
+# $Id$
+# Copyright (C) 2008-2009 Greg Landrum
