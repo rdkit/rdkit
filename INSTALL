@@ -59,9 +59,9 @@ The instructions below are for source distributions from Q1 2009 on.
   * numpy : the [http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103 current version of numpy] should be installed. It's fine to use the binary installer. Note that a directory from the numpy installation needs to be copied to a new location; details are below in the Setup and Preparation section.
   * boost : download a copy of the current versions of the [http://www.boost.org/users/download/ boost source distribution and boost-Jam]. Both are available from the same link, be sure to get the `.ntx86.zip` file for boost-Jam.  Extract the source distribution (to, for example, c:\boost\boost_1_36_0) and copy the bjam.exe executable from the boost jam zip file to the  same directory.
   * boost numeric bindings : download the most recent version from from [http://mathema.tician.de/dl/software/boost-bindings http://mathema.tician.de/dl/software/boost-bindings].
-    ** extract the tar ball to some temporary location.
-    ** copy the directory `boost-numeric-bindings\boost\numeric\bindings` to `c:\boost\boost_1_36_0\boost\numeric`
-    ** copy the directory `boost-numeric-bindings\libs\numeric\bindings` to `c:\boost\boost_1_36_0\libs\numeric`
+    * extract the tar ball to some temporary location.
+    * copy the directory `boost-numeric-bindings\boost\numeric\bindings` to `c:\boost\boost_1_36_0\boost\numeric`
+    * copy the directory `boost-numeric-bindings\libs\numeric\bindings` to `c:\boost\boost_1_36_0\libs\numeric`
 
   * a subversion client : _This is only necessary if you are planning on building development versions of the RDKit_. A command line client for subversion can be installed as part of the cygwin installation, or a very nice graphical client that integrates well with windows explorer can be downloaded from the [http://tortoisesvn.tigris.org/ Tortoise SVN home page].
 
