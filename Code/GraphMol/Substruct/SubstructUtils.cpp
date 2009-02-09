@@ -51,48 +51,6 @@ bool bondCompat(Bond const *b1,Bond const *b2){
   return res;
 }
 
-void MolToVFGraph(const ROMol &mol,ARGEdit *vgEd){
-  PRECONDITION(vgEd,"bad argument");
-  ROMol::ConstAtomIterator atomIt;
-  for(atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();atomIt++){
-    vgEd->InsertNode((void *)*atomIt);
-  }
-  ROMol::ConstBondIterator bondIt;
-  for(bondIt=mol.beginBonds();bondIt!=mol.endBonds();bondIt++){
-    Bond const *bond = *bondIt;
-    int idx1=bond->getBeginAtomIdx(),idx2=bond->getEndAtomIdx();
-    vgEd->InsertEdge(idx1,idx2,(void *)bond);
-    // FIX: this maybe ought to be changed to include other dative bond types?
-    if(bond->getBondType() != Bond::DATIVE){
-      vgEd->InsertEdge(idx2,idx1,(void *)bond);
-    }
-  }
-}
-
-bool substructVisitor(int n, node_id ni1[],node_id ni2[],void *mvp)
-{
-  std::vector< MatchVectType > *matchV = (std::vector< MatchVectType > *)mvp;
-  MatchVectType locV;
-  locV.resize(n);
-  for(int i=0;i<n;i++){
-    locV[i] = std::pair<int,int>(ni1[i],ni2[i]);
-  }
-  matchV->push_back(locV);
-  return false;
-}
-
-bool substructHeadVisitor(int n, node_id ni1[],node_id ni2[],void *mvp)
-{
-  std::vector< int > *matchV = (std::vector< int > *)mvp;
-  for(int i=0;i<n;i++){
-    if(ni1[i]==0){
-      matchV->push_back(ni2[i]);
-      break;
-    }
-  }
-  return false;
-}
-
 double toPrime(const MatchVectType &v){
   double res = 1.0;
   MatchVectType::const_iterator ci;
@@ -134,5 +92,50 @@ void removeDuplicates(std::vector<MatchVectType> &v){
   }
   v = res;
 }
+
+
+#ifdef USE_VFLIB
+void MolToVFGraph(const ROMol &mol,ARGEdit *vgEd){
+  PRECONDITION(vgEd,"bad argument");
+  ROMol::ConstAtomIterator atomIt;
+  for(atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();atomIt++){
+    vgEd->InsertNode((void *)*atomIt);
+  }
+  ROMol::ConstBondIterator bondIt;
+  for(bondIt=mol.beginBonds();bondIt!=mol.endBonds();bondIt++){
+    Bond const *bond = *bondIt;
+    int idx1=bond->getBeginAtomIdx(),idx2=bond->getEndAtomIdx();
+    vgEd->InsertEdge(idx1,idx2,(void *)bond);
+    // FIX: this maybe ought to be changed to include other dative bond types?
+    if(bond->getBondType() != Bond::DATIVE){
+      vgEd->InsertEdge(idx2,idx1,(void *)bond);
+    }
+  }
+}
+
+bool substructVisitor(int n, node_id ni1[],node_id ni2[],void *mvp)
+{
+  std::vector< MatchVectType > *matchV = (std::vector< MatchVectType > *)mvp;
+  MatchVectType locV;
+  locV.resize(n);
+  for(int i=0;i<n;i++){
+    locV[i] = std::pair<int,int>(ni1[i],ni2[i]);
+  }
+  matchV->push_back(locV);
+  return false;
+}
+
+bool substructHeadVisitor(int n, node_id ni1[],node_id ni2[],void *mvp)
+{
+  std::vector< int > *matchV = (std::vector< int > *)mvp;
+  for(int i=0;i<n;i++){
+    if(ni1[i]==0){
+      matchV->push_back(ni2[i]);
+      break;
+    }
+  }
+  return false;
+}
+#endif
 
 }

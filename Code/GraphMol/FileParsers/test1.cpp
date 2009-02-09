@@ -44,6 +44,7 @@ void test1(){
   // sanitize it, which will aromatize the bonds... we will not match:
   MolOps::sanitizeMol(*m2);
   TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+  std::cerr<<"size: "<<mv.size()<<std::endl;
   TEST_ASSERT(mv.size()==0);
 
   delete m2;

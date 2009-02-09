@@ -25,7 +25,9 @@ namespace RDKit {
     PRECONDITION(includeOnly,"bad limits");
     std::string limits(includeOnly);
     
+#ifdef USE_VFLIB
     AR_MOLGRAPH *molG=getMolGraph(mol);
+#endif
     FeatSPtrList res;
     typedef std::vector< std::pair< std::string,std::set<int> > > MatchSetCollection;
     MatchSetCollection matchSets;
@@ -34,7 +36,11 @@ namespace RDKit {
       MolChemicalFeatureDef::CollectionType::value_type featDef=*featDefIt;
       if(limits=="" || limits==featDef->getFamily()){
         std::vector< MatchVectType > matches;
+#ifdef USE_VFLIB
         unsigned int numMatches=SubstructMatch(molG,*featDef->getPattern(),matches);
+#else
+        unsigned int numMatches=SubstructMatch(mol,*featDef->getPattern(),matches);
+#endif
         for(unsigned int i=0;i<numMatches;i++){
           const MatchVectType &match=matches[i];
           std::set<int> matchSet;
@@ -79,8 +85,10 @@ namespace RDKit {
         }
       }
     }
+#ifdef USE_VFLIB
 #ifndef CACHE_ARMOLGRAPHS
     delete molG;
+#endif
 #endif
     return res;
   }
