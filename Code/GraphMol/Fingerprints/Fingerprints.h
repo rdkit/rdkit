@@ -11,6 +11,8 @@ namespace RDKit{
   class ROMol;
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule
   /*!
+    \deprecated NOTE: This function is deprecated. Please use RDKFingerprintMol()
+                instead.
 
     \param mol:          the molecule to be fingerprinted
     \param minPath:      the minimum path length (in bonds) to be included

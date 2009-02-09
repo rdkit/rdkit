@@ -21,6 +21,7 @@
 
 namespace RDKit{
   // caller owns the result, it must be deleted
+  // NOTE: This function is deprecated. Please use RDKFingerprintMol() instead.
   ExplicitBitVect *DaylightFingerprintMol(const ROMol &mol,
                                           unsigned int minPath,
 					  unsigned int maxPath,
