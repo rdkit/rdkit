@@ -186,7 +186,7 @@ namespace boost {
       // initialize the matrix:
       for (size_t i=0; i<rows; ++i) {
         for (size_t j=0; j<cols; ++j) {
-          if(vertex_labeling(i,j)) {
+          if(out_degree(j,g2)>=out_degree(i,g1) && vertex_labeling(i,j)) {
             M(i,j)=1;
           }
           else M(i,j)=0;
