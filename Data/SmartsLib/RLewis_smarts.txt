@@ -484,4 +484,3 @@ NC(=S)N thiourea
 [$([CX4,c][CH]=S),$([CX4,c]C(=S)[CX4,c])] thiocarbonyl 
 [D2R0]-[D2R0]-[D2R0]-[D2R0]-[D2R0] unbranched_chain 
 NC(=O)N urea 
-
