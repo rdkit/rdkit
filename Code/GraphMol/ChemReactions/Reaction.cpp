@@ -143,9 +143,8 @@ namespace RDKit {
       
       // copy in the atoms:
       ROMol::ATOM_ITER_PAIR atItP = prodTemplate->getVertices();
-      ROMol::GRAPH_MOL_ATOM_PMAP::const_type atMap = prodTemplate->getAtomPMap();
       while(atItP.first != atItP.second ){
-        Atom *oAtom=atMap[*(atItP.first++)];
+        Atom *oAtom=(*prodTemplate)[*(atItP.first++)].get();
         Atom *newAtom=new Atom(*oAtom);
         res->addAtom(newAtom,false,true);
         if(newAtom->hasProp("molAtomMapNumber")){
@@ -174,9 +173,8 @@ namespace RDKit {
       }
       // and the bonds:
       ROMol::BOND_ITER_PAIR bondItP = prodTemplate->getEdges();
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type bondMap = prodTemplate->getBondPMap();
       while(bondItP.first != bondItP.second ){
-        const Bond *oldB=bondMap[*(bondItP.first++)];
+        const BOND_SPTR oldB=(*prodTemplate)[*(bondItP.first++)];
         unsigned int bondIdx;
         bondIdx=res->addBond(oldB->getBeginAtomIdx(),oldB->getEndAtomIdx(),oldB->getBondType())-1;
         // make sure we don't lose the bond dir information:
@@ -273,9 +271,8 @@ namespace RDKit {
       // the NullBond property set. These are bonds for which no information
       // (other than their existance) was provided in the template:
       ROMol::BOND_ITER_PAIR bondItP = product->getEdges();
-      ROMol::GRAPH_MOL_BOND_PMAP::type bondMap = product->getBondPMap();
       while(bondItP.first != bondItP.second ){
-        Bond *pBond=bondMap[*(bondItP.first)];
+        BOND_SPTR pBond=(*product)[*(bondItP.first)];
         ++bondItP.first;
         if(pBond->hasProp("NullBond")){
           if(prodReactAtomMap[pBond->getBeginAtomIdx()]>-1 &&
@@ -460,10 +457,9 @@ namespace RDKit {
           INT_LIST newOrder; 
           bool hasPreceder=false;
           ROMol::OEDGE_ITER beg,end;
-          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = reactantAtom->getOwningMol().getBondPMap();
           boost::tie(beg,end) = reactantAtom->getOwningMol().getAtomBonds(reactantAtom);
           while(beg!=end){
-            const Bond *reactantBond=pMap[*beg];
+            const BOND_SPTR reactantBond=reactantAtom->getOwningMol()[*beg];
             unsigned int oAtomIdx=reactantBond->getOtherAtomIdx(reactantAtom->getIdx());
             if(oAtomIdx<reactantAtom->getIdx() &&
                reactantBond->getBeginAtomIdx()==oAtomIdx) {

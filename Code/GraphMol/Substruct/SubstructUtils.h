@@ -7,19 +7,22 @@
 #define _RD_SUBSTRUCT_UTILS_H_
 
 #include "SubstructMatch.h"
+#include <boost/smart_ptr.hpp>
 
 #ifdef USE_VFLIB
 class ARGEdit;
 #endif
 
 namespace RDKit{
+  class ROMol;
   class Atom;
   class Bond;
-  class ROMol;
+  typedef boost::shared_ptr<Atom>    ATOM_SPTR;
+  typedef boost::shared_ptr<Bond>    BOND_SPTR;
   
-  bool atomCompat(Atom const *a1,Atom const *a2);
-  bool chiralAtomCompat(Atom const *a1,Atom const *a2);
-  bool bondCompat(Bond const *b1,Bond const *b2);
+  bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2);
+  bool chiralAtomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2);
+  bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2);
   double toPrime(const MatchVectType &v);
   void removeDuplicates(std::vector<MatchVectType> &v);
 #ifdef USE_VFLIB

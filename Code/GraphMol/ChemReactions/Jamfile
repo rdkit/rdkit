@@ -11,7 +11,7 @@ install lib-install : ChemReactions : <location>$(RDBASE)/bin ;
 exe testReaction : testReaction.cpp ChemReactions 
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse
   ../Substruct//Substruct ..//GraphMol ../../RDGeneral//RDGeneral 
-  ../../Geometry//RDGeometry ../..//lapacklibs ../..//vflib ;
+  ../../Geometry//RDGeometry ../..//lapacklibs  ;
 
 install regrs : testReaction
   : <location>testExecs ;

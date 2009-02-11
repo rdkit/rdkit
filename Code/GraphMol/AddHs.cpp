@@ -341,11 +341,10 @@ namespace RDKit{
           if(removeIt){
             ROMol::OEDGE_ITER beg,end;
             boost::tie(beg,end) = res->getAtomBonds(atom);
-            ROMol::GRAPH_MOL_BOND_PMAP::type pMap = res->getBondPMap();
             // note the assumption that the H only has one neighbor... I
             // feel no need to handle the case of hypervalent hydrogen!
             // :-) 
-            Bond const *bond = pMap[*beg];
+            const BOND_SPTR bond = (*res)[*beg];
             Atom *heavyAtom =bond->getOtherAtom(atom);
 
             // we'll update the atom's explicit H count if we were told to
@@ -378,10 +377,10 @@ namespace RDKit{
 
               boost::tie(beg,end) = res->getAtomBonds(heavyAtom);
               while(beg!=end){
-                if(pMap[*beg]->getIdx()!=bond->getIdx()){
-                  neighborIndices.push_back(pMap[*beg]->getIdx());
-                  if(pMap[*beg]->getBeginAtomIdx()!=heavyAtom->getIdx() &&
-                     pMap[*beg]->getOtherAtom(heavyAtom)->getIdx()<heavyAtom->getIdx() ){
+                if((*res)[*beg]->getIdx()!=bond->getIdx()){
+                  neighborIndices.push_back((*res)[*beg]->getIdx());
+                  if((*res)[*beg]->getBeginAtomIdx()!=heavyAtom->getIdx() &&
+                     (*res)[*beg]->getOtherAtom(heavyAtom)->getIdx()<heavyAtom->getIdx() ){
                     ++atomsBeforeHeavy;
                   }
                 }

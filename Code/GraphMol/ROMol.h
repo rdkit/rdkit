@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -17,42 +17,47 @@
 #include <map>
 
 // boost stuff
-#include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/smart_ptr.hpp>
+
 // our stuff
-#include "AtomProps.h"
-#include "BondProps.h"
+#include "Atom.h"
+#include "Bond.h"
 
 #include "Conformer.h"
 
 namespace RDKit{
+  class Atom;
+  class Bond;
+  typedef boost::shared_ptr<Atom>    ATOM_SPTR;
+  typedef boost::shared_ptr<Bond>    BOND_SPTR;
+
   //! This is the BGL type used to store the topology:
   typedef boost::adjacency_list< boost::vecS,
                                  boost::vecS,
                                  boost::undirectedS,
-                                 AtomProperty,
-                                 BondProperty> MolGraph; 
+                                 ATOM_SPTR,
+                                 BOND_SPTR> MolGraph; 
   class MolPickler;
   class RWMol;
-  class Atom;
-  class Bond;
   class QueryAtom;
   class QueryBond;
   class RingInfo;
 
-  template <class T1,class T2,class T3>
+  template <class T1,class T2>
   class AtomIterator_;
-  template <class T1,class T2,class T3>
-  class AromaticAtomIterator_;
-  template <class T1,class T2,class T3>
-  class HeteroatomIterator_;
-  template <class T1,class T2,class T3>
-  class QueryAtomIterator_;
   class BondIterator_;
   class ConstBondIterator_;
 
-  typedef boost::shared_ptr<Atom>    ATOM_SPTR;
-  typedef boost::shared_ptr<Bond>    BOND_SPTR;
+  template <class T1,class T2>
+  class AromaticAtomIterator_;
+  template <class T1,class T2>
+  class HeteroatomIterator_;
+  template <class T1,class T2>
+  class QueryAtomIterator_;
+
+
+
 
   extern const int ci_RIGHTMOST_ATOM;
   extern const int ci_LEADING_BOND;
@@ -99,13 +104,13 @@ namespace RDKit{
 
     //! \name typedefs
     //@{
-    typedef boost::property_map<MolGraph,vertex_atom_t>  GRAPH_MOL_ATOM_PMAP;
-    typedef boost::property_map<MolGraph,edge_bond_t>  GRAPH_MOL_BOND_PMAP;
-    typedef boost::graph_traits<MolGraph> GRAPH_MOL_TRAITS;
-    typedef GRAPH_MOL_TRAITS::edge_iterator EDGE_ITER;
-    typedef GRAPH_MOL_TRAITS::out_edge_iterator OEDGE_ITER;
-    typedef GRAPH_MOL_TRAITS::vertex_iterator VERTEX_ITER;
-    typedef GRAPH_MOL_TRAITS::adjacency_iterator ADJ_ITER;
+    typedef MolGraph::vertex_descriptor vertex_descriptor;
+    typedef MolGraph::edge_descriptor edge_descriptor;
+
+    typedef MolGraph::edge_iterator EDGE_ITER;
+    typedef MolGraph::out_edge_iterator OEDGE_ITER;
+    typedef MolGraph::vertex_iterator VERTEX_ITER;
+    typedef MolGraph::adjacency_iterator ADJ_ITER;
     typedef std::pair<EDGE_ITER,EDGE_ITER> BOND_ITER_PAIR;
     typedef std::pair<OEDGE_ITER,OEDGE_ITER> OBOND_ITER_PAIR;
     typedef std::pair<VERTEX_ITER,VERTEX_ITER> ATOM_ITER_PAIR;
@@ -139,23 +144,20 @@ namespace RDKit{
     typedef std::pair<CONF_SPTR_LIST_I, CONF_SPTR_LIST_I> CONFS_I_PAIR;
 
     // ROFIX: these will need to be readonly somehow?
-    typedef Atom * GRAPH_NODE_TYPE;
-    typedef Bond * GRAPH_EDGE_TYPE;
-    typedef Atom const * GRAPH_NODE_CONST_TYPE;
-    typedef Bond const * GRAPH_EDGE_CONST_TYPE;
     typedef std::map<int,ATOM_PTR_LIST> ATOM_BOOKMARK_MAP;
     typedef std::map<int,BOND_PTR_LIST> BOND_BOOKMARK_MAP;
 
-    typedef class AtomIterator_<Atom,ROMol,GRAPH_MOL_ATOM_PMAP::type> AtomIterator;
-    typedef class AtomIterator_<const Atom,const ROMol,GRAPH_MOL_ATOM_PMAP::const_type> ConstAtomIterator;
-    typedef class AromaticAtomIterator_<Atom,ROMol,GRAPH_MOL_ATOM_PMAP::type> AromaticAtomIterator;
-    typedef class AromaticAtomIterator_<const Atom,const ROMol,GRAPH_MOL_ATOM_PMAP::const_type> ConstAromaticAtomIterator;
-    typedef class HeteroatomIterator_<Atom,ROMol,GRAPH_MOL_ATOM_PMAP::type> HeteroatomIterator;
-    typedef class HeteroatomIterator_<const Atom,const ROMol,GRAPH_MOL_ATOM_PMAP::const_type> ConstHeteroatomIterator;
-    typedef class QueryAtomIterator_<Atom,ROMol,GRAPH_MOL_ATOM_PMAP::type> QueryAtomIterator;
-    typedef class QueryAtomIterator_<const Atom,const ROMol,GRAPH_MOL_ATOM_PMAP::const_type> ConstQueryAtomIterator;
+    typedef class AtomIterator_<Atom,ROMol> AtomIterator;
+    typedef class AtomIterator_<const Atom,const ROMol> ConstAtomIterator;
     typedef class BondIterator_ BondIterator;
     typedef class ConstBondIterator_ ConstBondIterator;
+    typedef class AromaticAtomIterator_<Atom,ROMol> AromaticAtomIterator;
+    typedef class AromaticAtomIterator_<const Atom,const ROMol> ConstAromaticAtomIterator;
+    typedef class HeteroatomIterator_<Atom,ROMol> HeteroatomIterator;
+    typedef class HeteroatomIterator_<const Atom,const ROMol> ConstHeteroatomIterator;
+    typedef class QueryAtomIterator_<Atom,ROMol> QueryAtomIterator;
+    typedef class QueryAtomIterator_<const Atom,const ROMol> ConstQueryAtomIterator;
+
 
     typedef CONF_SPTR_LIST_I ConformerIterator;
     typedef  CONF_SPTR_LIST_CI ConstConformerIterator;
@@ -185,9 +187,9 @@ namespace RDKit{
     //! returns our number of Atoms
     unsigned int getNumAtoms(bool onlyHeavy=1) const;
     //! returns a pointer to a particular Atom
-    GRAPH_NODE_TYPE getAtomWithIdx(unsigned int idx);
+    Atom *getAtomWithIdx(unsigned int idx);
     //! \overload
-    GRAPH_NODE_CONST_TYPE getAtomWithIdx(unsigned int idx) const;
+    const Atom *getAtomWithIdx(unsigned int idx) const;
     //! returns the degree (number of neighbors) of an Atom in the graph
     unsigned int getAtomDegree(const Atom *at) const;
     //! \overload
@@ -200,13 +202,13 @@ namespace RDKit{
     //! returns our number of Bonds
     unsigned int getNumBonds(bool onlyHeavy=1) const; 
     //! returns a pointer to a particular Bond
-    GRAPH_EDGE_TYPE getBondWithIdx(unsigned int idx);
+    Bond *getBondWithIdx(unsigned int idx);
     //! \overload
-    GRAPH_EDGE_CONST_TYPE getBondWithIdx(unsigned int idx) const;
+    const Bond * getBondWithIdx(unsigned int idx) const;
     //! returns a pointer to the bond between two atoms, Null on failure
-    GRAPH_EDGE_TYPE getBondBetweenAtoms(unsigned int idx1,unsigned int idx2);
+    Bond *getBondBetweenAtoms(unsigned int idx1,unsigned int idx2);
     //! \overload
-    GRAPH_EDGE_CONST_TYPE getBondBetweenAtoms(unsigned int idx1,unsigned int idx2) const;
+    const Bond *getBondBetweenAtoms(unsigned int idx1,unsigned int idx2) const;
     //@}
 
 
@@ -218,7 +220,7 @@ namespace RDKit{
     //! \overload
     void setAtomBookmark(Atom *at,int mark) {d_atomBookmarks[mark].push_back(at);};
     //! returns the first Atom associated with the \c bookmark provided
-    GRAPH_NODE_TYPE  getAtomWithBookmark(int mark);
+    Atom *getAtomWithBookmark(int mark);
     //! returns all Atoms associated with the \c bookmark provided
     ATOM_PTR_LIST &getAllAtomsWithBookmark(int mark);
     //! removes a \c bookmark from our collection
@@ -239,7 +241,7 @@ namespace RDKit{
     //! \overload
     void setBondBookmark(Bond *bond,int mark) {d_bondBookmarks[mark].push_back(bond);};
     //! returns the first Bond associated with the \c bookmark provided
-    GRAPH_EDGE_TYPE getBondWithBookmark(int mark);
+    Bond *getBondWithBookmark(int mark);
     //! returns all bonds associated with the \c bookmark provided
     BOND_PTR_LIST &getAllBondsWithBookmark(int mark);
     //! removes a \c bookmark from our collection
@@ -251,7 +253,7 @@ namespace RDKit{
     //! blows out all bond \c bookmarks
     void clearAllBondBookmarks() { d_bondBookmarks.clear(); };
     //! queries whether or not any bonds are associated with a \c bookmark
-    bool hasBondBookmark(int mark) {return d_bondBookmarks.count(mark);};
+    bool hasBondBookmark(int mark) const {return d_bondBookmarks.count(mark);};
     //! returns a pointer to all of our bond \c bookmarks
     BOND_BOOKMARK_MAP *getBondBookmarks() { return &d_bondBookmarks; };
 
@@ -304,21 +306,17 @@ namespace RDKit{
 
       <b>Usage</b>
       \code
-        ... molPtr is a const ROMol * ...
+        ... molPtr is a const ROMol & ...
         ... atomPtr is a const Atom * ...
         ROMol::ADJ_ITER nbrIdx,endNbrs;
-        boost::tie(nbrIdx,endNbrs) = molPtr->getAtomNeighbors(atomPtr);
+        boost::tie(nbrIdx,endNbrs) = molPtr.getAtomNeighbors(atomPtr);
         while(nbrIdx!=endNbrs){
-          const Atom *at=molPtr->getAtomWithIdx(*nbrIdx);
+          const ATOM_SPTR at=molPtr[*nbrIdx];
           ... do something with the Atom ...
           ++nbrIdx;
         }
       \endcode
 
-      <b>Notes:</b>
-        - technically, we're probably suppposed to be using the atom pmap here
-          (accessible using ROMol::getAtomPMap()), but that's not actually required.
-          
     */
     ADJ_ITER_PAIR getAtomNeighbors(Atom const *at) const;
     //! \overload
@@ -333,10 +331,9 @@ namespace RDKit{
         ... molPtr is a const ROMol * ...
         ... atomPtr is a const Atom * ...
         ROMol::OEDGE_ITER beg,end;
-        ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = molPtr->getBondPMap();
         boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
         while(beg!=end){
-          const Bond *bond=pMap[*beg];
+          const BOND_SPTR bond=(*molPtr)[*beg];
           ... do something with the Bond ...
           ++beg;
         }
@@ -346,10 +343,9 @@ namespace RDKit{
         ... molPtr is a ROMol * ...
         ... atomPtr is a const Atom * ...
         ROMol::OEDGE_ITER beg,end;
-        ROMol::GRAPH_MOL_BOND_PMAP::type pMap = molPtr->getBondPMap();
         boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
         while(beg!=end){
-          Bond *bond=pMap[*beg];
+          BOND_SPTR bond=(*molPtr)[*beg];
           ... do something with the Bond ...
           ++beg;
         }
@@ -358,26 +354,17 @@ namespace RDKit{
       
     */
     OBOND_ITER_PAIR getAtomBonds(Atom const *at) const;
-    //! returns the atom PMap
-    GRAPH_MOL_ATOM_PMAP::type getAtomPMap();
-    //! returns the bond PMap (required to use Bond iterators)
-    GRAPH_MOL_BOND_PMAP::type getBondPMap();
-    //! \overload
-    GRAPH_MOL_ATOM_PMAP::const_type getAtomPMap() const;
-    //! \overload
-    GRAPH_MOL_BOND_PMAP::const_type getBondPMap() const;
 
     //! returns an iterator pair for looping over all Atoms
     /*!
 
       <b>Usage</b>
       \code
-        ... molPtr is an ROMol * ...
-        ROMol::GRAPH_MOL_ATOM_PMAP::type atomMap = molPtr->getAtomPMap();
+
         ROMol::VERTEX_ITER atBegin,atEnd;
         boost::tie(atBegin,atEnd) = mol.getVertices();  
         while(atBegin!=atEnd){
-          Atom *at2=atomMap[*atBegin];
+          ATOM_SPTR at2=mol[*atBegin];
           ... do something with the Atom ...
           ++atBegin;
         }
@@ -389,12 +376,11 @@ namespace RDKit{
 
       <b>Usage</b>
       \code
-        ... molPtr is a ROMol * ...
+
         ROMol::EDGE_ITER firstB,lastB;
         boost::tie(firstB,lastB) = mol.getEdges();
-        ROMol::GRAPH_MOL_BOND_PMAP::type bondMap = mol.getBondPMap();
         while(firstB!=lastB){
-          Bond *bond = bondMap[*firstB];
+          BOND_SPTR bond = mol[*firstB];
           ... do something with the Bond ...
           ++firstB;
         }
@@ -415,13 +401,12 @@ namespace RDKit{
            ... mol is a const ROMol ...
            ... mapping is an INT_VECT ...
            mapping.resize(mol.getNumAtoms());
-           const MolGraph *G_p = mol.getTopology();
-           int res = boost::connected_components(*G_p,&mapping[0]);
+           const MolGraph &G_p = mol.getTopology();
+           int res = boost::connected_components(G_p,&mapping[0]);
         \endcode
      */
-    MolGraph const *getTopology() const { return &d_graph; };
+    MolGraph const &getTopology() const { return d_graph; };
     //@}
-
 
 
     //! \name Iterators
@@ -435,6 +420,14 @@ namespace RDKit{
     AtomIterator endAtoms();
     //! \overload
     ConstAtomIterator endAtoms() const;
+    //! get a BondIterator pointing at our first Bond
+    BondIterator beginBonds();
+    //! \overload
+    ConstBondIterator beginBonds() const;
+    //! get a BondIterator pointing at the end of our Bonds
+    BondIterator endBonds();
+    //! \overload
+    ConstBondIterator endBonds() const;
   
     //! get an AtomIterator pointing at our first aromatic Atom
     AromaticAtomIterator beginAromaticAtoms();
@@ -462,15 +455,6 @@ namespace RDKit{
     QueryAtomIterator endQueryAtoms();
     //! \overload
     ConstQueryAtomIterator endQueryAtoms() const;
-
-    //! get a BondIterator pointing at our first Bond
-    BondIterator beginBonds();
-    //! \overload
-    ConstBondIterator beginBonds() const;
-    //! get a BondIterator pointing at the end of our Bonds
-    BondIterator endBonds();
-    //! \overload
-    ConstBondIterator endBonds() const;
 
     inline ConformerIterator beginConformers() {
       return d_confs.begin();
@@ -624,6 +608,12 @@ namespace RDKit{
     //@}
 
 
+    ATOM_SPTR operator[](const vertex_descriptor &v) { return d_graph[v]; };
+    const ATOM_SPTR operator[](const vertex_descriptor &v)  const { return d_graph[v]; };
+    
+    BOND_SPTR operator[](const edge_descriptor &e) { return d_graph[e]; };
+    const BOND_SPTR operator[](const edge_descriptor &e)  const { return d_graph[e]; };
+    
   private:
     MolGraph d_graph;
     ATOM_BOOKMARK_MAP d_atomBookmarks;

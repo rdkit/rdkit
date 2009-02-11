@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -59,10 +59,9 @@ namespace RDKit{
     python::list res;
     const ROMol *parent = &atom->getOwningMol();
     ROMol::OEDGE_ITER begin,end;
-    ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = parent->getBondPMap();
     boost::tie(begin,end) = parent->getAtomBonds(atom);
     while(begin!=end){
-      Bond *tmpB = pMap[*begin];
+      Bond *tmpB = (*parent)[*begin].get();
       res.append(python::ptr(tmpB));
       begin++;
     }

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -24,47 +24,43 @@ namespace RDKit{
 
   void RWMol::insertMol(const ROMol &other)
   {
-    GRAPH_MOL_ATOM_PMAP::const_type atom_pMap = other.getAtomPMap();
 
     VERTEX_ITER firstA,lastA;
     boost::tie(firstA,lastA) = boost::vertices(other.d_graph);
     while(firstA!=lastA){
-      GRAPH_NODE_TYPE newAt_sp = atom_pMap[*firstA];
-      // adding the atom copies the existing Atom, so we'll need to reacquire
-      // a pointer to id after addition
-      int newIdx = addAtom(newAt_sp,false);
-      newAt_sp = getAtomWithIdx(newIdx);
+      Atom *newAt = other.d_graph[*firstA]->copy();
+      addAtom(newAt,false,true);
       // set a bookmark for this atom's original index so we can update bonds
-      setAtomBookmark(newAt_sp,ci_ATOM_HOLDER + *firstA);
-      firstA++;
+      setAtomBookmark(newAt,ci_ATOM_HOLDER + other.d_graph[*firstA]->getIdx());
+      ++firstA;
     }
 
-    GRAPH_MOL_BOND_PMAP::const_type bond_pMap = other.getBondPMap();
     EDGE_ITER firstB,lastB;
     boost::tie(firstB,lastB) = boost::edges(other.d_graph);
     while(firstB != lastB){
-      GRAPH_EDGE_TYPE bond_p = bond_pMap[*firstB]->copy();
-      int idx1,idx2;
+      Bond *bond_p = other.d_graph[*firstB]->copy();
+      unsigned int idx1,idx2;
       idx1 = getAtomWithBookmark(ci_ATOM_HOLDER + bond_p->getBeginAtomIdx())->getIdx();
       idx2 = getAtomWithBookmark(ci_ATOM_HOLDER + bond_p->getEndAtomIdx())->getIdx();
       bond_p->setOwningMol(this);
       bond_p->setBeginAtomIdx(idx1);
       bond_p->setEndAtomIdx(idx2);
       addBond(bond_p,true);
-      firstB++;
+      ++firstB;
     }
     // blow out those bookmarks we set
     boost::tie(firstA,lastA) = boost::vertices(other.d_graph);
     while(firstA!=lastA){
       clearAtomBookmark(ci_ATOM_HOLDER + *firstA);
-      firstA++;
+      ++firstA;
     }
   }
 
   unsigned int RWMol::addAtom(bool updateLabel){
     Atom *atom_p = new Atom();
     atom_p->setOwningMol(this);
-    int which = boost::add_vertex(AtomProperty(atom_p),d_graph);
+    MolGraph::vertex_descriptor which = boost::add_vertex(d_graph);
+    d_graph[which].reset(atom_p);
     atom_p->setIdx(which);
     if(updateLabel){
       if(hasAtomBookmark(ci_RIGHTMOST_ATOM)) clearAtomBookmark(ci_RIGHTMOST_ATOM);
@@ -79,15 +75,12 @@ namespace RDKit{
     Atom *atom_p = atom_pin->copy();
     atom_p->setOwningMol(this);
     atom_p->setIdx(idx);
-    int vd = boost::vertex(idx,d_graph);
-    GRAPH_MOL_ATOM_PMAP::type pMap = boost::get(vertex_atom_t(),d_graph);
-    Atom *oldAtom = pMap[vd];
-    pMap[vd] = atom_p;
-    delete oldAtom;
+    MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
+    d_graph[vd].reset(atom_p);
     // FIX: do something about bookmarks
   };
 
-  RWMol::GRAPH_NODE_TYPE RWMol::getActiveAtom() {
+  Atom *RWMol::getActiveAtom() {
     if(hasAtomBookmark(ci_RIGHTMOST_ATOM)) return getAtomWithBookmark(ci_RIGHTMOST_ATOM);
     else return getLastAtom();
   };
@@ -164,10 +157,10 @@ namespace RDKit{
     }
 
     // remove all connections to the atom:
-    boost::clear_vertex(idx,d_graph);
-    delete oatom;
+    MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
+    boost::clear_vertex(vd,d_graph);
     // finally remove the vertex itself
-    boost::remove_vertex(idx,d_graph);
+    boost::remove_vertex(vd,d_graph);
   }
 
   void RWMol::removeAtom(Atom *atom) {
@@ -193,12 +186,15 @@ namespace RDKit{
       getAtomWithIdx(atomIdx1)->setIsAromatic(1);
       getAtomWithIdx(atomIdx2)->setIsAromatic(1);
     }
-    Bond *bsp = b;
-    boost::add_edge(atomIdx1,atomIdx2,BondProperty(bsp,BondWeight(1.0)),d_graph);
+    bool ok;
+    MolGraph::edge_descriptor which;
+    boost::tie(which,ok) = boost::add_edge(atomIdx1,atomIdx2,d_graph);
+    d_graph[which].reset(b);
     unsigned int res = boost::num_edges(d_graph);
     b->setIdx(res-1);
     b->setBeginAtomIdx(atomIdx1);
     b->setEndAtomIdx(atomIdx2);
+    
     return res;
   }
 
@@ -233,8 +229,9 @@ namespace RDKit{
         clearBondBookmark(tmpI->first,bnd);
       }
     }
-    boost::remove_edge(aid1, aid2, d_graph);
-    delete bnd;
+    MolGraph::vertex_descriptor vd1 = boost::vertex(aid1,d_graph);
+    MolGraph::vertex_descriptor vd2 = boost::vertex(aid2,d_graph);
+    boost::remove_edge(vd1, vd2, d_graph);
   }
 
   Bond *RWMol::createPartialBond(unsigned int atomIdx1,Bond::BondType bondType){
@@ -251,7 +248,7 @@ namespace RDKit{
     PRECONDITION(hasBondBookmark(bondBookmark),"no such partial bond");
     RANGE_CHECK(0,atomIdx2,getNumAtoms()-1);
 
-    GRAPH_EDGE_TYPE bsp = getBondWithBookmark(bondBookmark);
+    Bond *bsp = getBondWithBookmark(bondBookmark);
     if(bondType==Bond::UNSPECIFIED){
       bondType = bsp->getBondType();
     }

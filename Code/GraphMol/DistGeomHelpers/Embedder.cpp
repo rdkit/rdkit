@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -108,7 +108,6 @@ namespace RDKit {
       ROMol::ConstAtomIterator ati;
       INT_PAIR_VECT nbrs;
       ROMol::OEDGE_ITER beg,end;
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
       Atom *oatom;
       for (ati = mol.beginAtoms(); ati != mol.endAtoms(); ati++) {
         if ((*ati)->getAtomicNum() != 1) { //skip hydrogens
@@ -120,14 +119,12 @@ namespace RDKit {
 	    // nbr list along with their CIPRanks
             boost::tie(beg,end) = mol.getAtomBonds(*ati);
             while (beg != end) {
-              oatom = pMap[*beg]->getOtherAtom(*ati);
-              //if (oatom->getAtomicNum() != 1) { // skip hydrogens
+              oatom = mol[*beg]->getOtherAtom(*ati);
               int rank;
               oatom->getProp("_CIPRank", rank);
               INT_PAIR rAid(rank, oatom->getIdx());
               nbrs.push_back(rAid);
-              //}
-              beg++;
+              ++beg;
             }
             // if we have less than 4 heavy atoms as neighbors,
 	    // we need to include the chiral center into the mix

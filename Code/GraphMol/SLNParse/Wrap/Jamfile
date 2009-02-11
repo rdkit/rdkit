@@ -10,7 +10,7 @@ python-extension rdSLNParse : rdSLNParse.cpp
   ../..//GraphMol
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-/RDKit//vflib /RDKit//lapacklibs 
+/RDKit//lapacklibs 
   ;
 
 install pymod : rdSLNParse

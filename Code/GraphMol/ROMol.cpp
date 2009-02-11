@@ -17,8 +17,10 @@
 #include "QueryBond.h"
 #include "MolPickler.h"
 
+#if 0
 #include "AtomIterators.h"
 #include "BondIterators.h"
+#endif
 
 #include "Conformer.h"
 
@@ -31,19 +33,21 @@ namespace RDKit{
   const int ci_ATOM_HOLDER=-0xDEADD06;
 
   void ROMol::destroy(){
-    // blow out atoms
-    ROMol::ATOM_ITER_PAIR atItP = getVertices();
-    ROMol::GRAPH_MOL_ATOM_PMAP::type atMap = getAtomPMap();
-    while(atItP.first != atItP.second ){
-      delete atMap[*(atItP.first++)];
-    }
 
-    // and the bonds:
-    ROMol::BOND_ITER_PAIR bondItP = getEdges();
-    ROMol::GRAPH_MOL_BOND_PMAP::type bondMap = getBondPMap();
-    while(bondItP.first != bondItP.second ){
-      delete bondMap[*(bondItP.first++)];
+#if 0
+    // blow out atoms and edges:
+    MolGraph::vertex_iterator begVerts,endVerts;
+    boost::tie(begVerts,endVerts)= boost::vertices(d_graph);
+    while(begVerts != endVerts){
+      MolGraph::vertex_descriptor u=*begVerts;
+      ++begVerts;
+      // first remove all connections to the atom:
+      boost::clear_vertex(u,d_graph);
+      // now remove the atom itself:
+      boost::remove_vertex(u,d_graph);
     }
+#endif
+    
     d_atomBookmarks.clear();
     d_bondBookmarks.clear();
     d_graph.clear();
@@ -64,17 +68,17 @@ namespace RDKit{
   
   void ROMol::initFromOther(const ROMol &other,bool quickCopy){
     // copy over the atoms
+    const MolGraph &oGraph=other.d_graph;
     ROMol::ATOM_ITER_PAIR atItP = other.getVertices();
-    ROMol::GRAPH_MOL_ATOM_PMAP::const_type atMap = other.getAtomPMap();
     while(atItP.first != atItP.second ){
-      addAtom(atMap[*(atItP.first++)]->copy(),false,true);
+      addAtom(oGraph[*atItP.first]->copy(),false,true);
+      ++atItP.first;
     }
 
     // and the bonds:
     ROMol::BOND_ITER_PAIR bondItP = other.getEdges();
-    ROMol::GRAPH_MOL_BOND_PMAP::const_type bondMap = other.getBondPMap();
     while(bondItP.first != bondItP.second ){
-      addBond(bondMap[*(bondItP.first++)]->copy(),true);
+      addBond(oGraph[*(bondItP.first++)]->copy(),true);
     }
 
     // ring information
@@ -157,33 +161,31 @@ namespace RDKit{
   };
 
 
-  ROMol::GRAPH_NODE_TYPE ROMol::getAtomWithIdx(unsigned int idx)
+  Atom *ROMol::getAtomWithIdx(unsigned int idx)
   {
     PRECONDITION(getNumAtoms()>0,"no atoms");
     RANGE_CHECK(0,idx,getNumAtoms()-1);
   
-    int vd = boost::vertex(idx,d_graph);
-    GRAPH_MOL_ATOM_PMAP::type pMap = boost::get(vertex_atom_t(),d_graph);
-
-    ROMol::GRAPH_NODE_TYPE res = pMap[vd];
-    POSTCONDITION(res,"")
-      return res;
+    MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
+    Atom *res = d_graph[vd].get();
+    POSTCONDITION(res,"");
+    return res;
   }
 
-  ROMol::GRAPH_NODE_CONST_TYPE ROMol::getAtomWithIdx(unsigned int idx) const 
+  const Atom *ROMol::getAtomWithIdx(unsigned int idx) const 
   {
+    PRECONDITION(getNumAtoms()>0,"no atoms");
     RANGE_CHECK(0,idx,getNumAtoms()-1);
   
-    int vd = boost::vertex(idx,d_graph);
-    GRAPH_MOL_ATOM_PMAP::const_type pMap = boost::get(vertex_atom_t(),d_graph);
+    MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
+    const Atom *res = d_graph[vd].get();
 
-    ROMol::GRAPH_NODE_TYPE res = pMap[vd];
-    POSTCONDITION(res,"")
-      return res;
+    POSTCONDITION(res,"");
+    return res;
   }
 
   // returns the first inserted atom with the given bookmark
-  ROMol::GRAPH_NODE_TYPE ROMol::getAtomWithBookmark(const int mark) {
+  Atom * ROMol::getAtomWithBookmark(const int mark) {
     PRECONDITION(d_atomBookmarks.count(mark) != 0,"atom bookmark not found");
     PRECONDITION(d_atomBookmarks[mark].begin() != d_atomBookmarks[mark].end(),"atom bookmark not found");
 
@@ -197,7 +199,7 @@ namespace RDKit{
   };
 
   // returns the first inserted bond with the given bookmark
-  ROMol::GRAPH_EDGE_TYPE ROMol::getBondWithBookmark(const int mark) {
+  Bond *ROMol::getBondWithBookmark(const int mark) {
     PRECONDITION(d_bondBookmarks.count(mark) != 0,"bond bookmark not found");
     PRECONDITION(d_bondBookmarks[mark].begin() != d_bondBookmarks[mark].end(),"bond bookmark not found");
     return *(d_bondBookmarks[mark].begin());
@@ -267,62 +269,60 @@ namespace RDKit{
   }
 
 
-  ROMol::GRAPH_EDGE_TYPE ROMol::getBondWithIdx(unsigned int idx){
+  Bond *ROMol::getBondWithIdx(unsigned int idx){
     PRECONDITION(getNumBonds()>0,"no bonds");
     RANGE_CHECK(0,idx,getNumBonds()-1);
 
-    GRAPH_MOL_BOND_PMAP::type bondMap = getBondPMap();
     BOND_ITER_PAIR bIter = getEdges();
-    for(unsigned int i=0;i<idx;i++) bIter.first++;
-    ROMol::GRAPH_EDGE_TYPE res = bondMap[*(bIter.first)];
+    for(unsigned int i=0;i<idx;i++) ++bIter.first;
+    Bond *res = d_graph[*(bIter.first)].get();
 
     POSTCONDITION(res!=0,"Invalid bond requested");
     return res;
   }
   
 
-  ROMol::GRAPH_EDGE_CONST_TYPE ROMol::getBondWithIdx(unsigned int idx) const {
+  const Bond * ROMol::getBondWithIdx(unsigned int idx) const {
+    PRECONDITION(getNumBonds()>0,"no bonds");
     RANGE_CHECK(0,idx,getNumBonds()-1);
 
-    GRAPH_MOL_BOND_PMAP::const_type bondMap = getBondPMap();
     BOND_ITER_PAIR bIter = getEdges();
-    for(unsigned int i=0;i<idx;i++) bIter.first++;
-    return bondMap[*(bIter.first)];
+    for(unsigned int i=0;i<idx;i++) ++bIter.first;
+    const Bond *res = d_graph[*(bIter.first)].get();
+
+    POSTCONDITION(res!=0,"Invalid bond requested");
+    return res;
   }
   
 
-  ROMol::GRAPH_EDGE_TYPE ROMol::getBondBetweenAtoms(unsigned int idx1,unsigned int idx2){
+  Bond * ROMol::getBondBetweenAtoms(unsigned int idx1,unsigned int idx2){
     RANGE_CHECK(0,idx1,getNumAtoms()-1);
     RANGE_CHECK(0,idx2,getNumAtoms()-1);
-    GRAPH_EDGE_TYPE res;
+    Bond *res=0;
 
-    GRAPH_MOL_TRAITS::edge_descriptor edge;
+    MolGraph::edge_descriptor edge;
     bool found;
     boost::tie(edge,found) = boost::edge(boost::vertex(idx1,d_graph),
                                          boost::vertex(idx2,d_graph),
                                          d_graph);
-    if(!found){
-      res = static_cast<GRAPH_EDGE_TYPE>(0);
-    } else {
-      res = getBondPMap()[edge];
+    if(found){
+      res = d_graph[edge].get();
     }
     return res;
   }
 
-  ROMol::GRAPH_EDGE_CONST_TYPE ROMol::getBondBetweenAtoms(unsigned int idx1,unsigned int idx2) const{
+  const Bond * ROMol::getBondBetweenAtoms(unsigned int idx1,unsigned int idx2) const{
     RANGE_CHECK(0,idx1,getNumAtoms()-1);
     RANGE_CHECK(0,idx2,getNumAtoms()-1);
-    GRAPH_EDGE_TYPE res;
+    const Bond *res=0;
 
-    GRAPH_MOL_TRAITS::edge_descriptor edge;
+    MolGraph::edge_descriptor edge;
     bool found;
     boost::tie(edge,found) = boost::edge(boost::vertex(idx1,d_graph),
                                          boost::vertex(idx2,d_graph),
                                          d_graph);
-    if(!found){
-      res = static_cast<GRAPH_EDGE_TYPE>(0);
-    } else {
-      res = getBondPMap()[edge];
+    if(found){
+      res = d_graph[edge].get();
     }
     return res;
   }
@@ -339,21 +339,6 @@ namespace RDKit{
     return boost::out_edges(at->getIdx(),d_graph);
   }
 
-  ROMol::GRAPH_MOL_ATOM_PMAP::type ROMol::getAtomPMap() {
-    return boost::get(vertex_atom_t(),d_graph);
-  }
-  
-  ROMol::GRAPH_MOL_BOND_PMAP::type ROMol::getBondPMap() {
-    return boost::get(edge_bond_t(),d_graph);
-  }
-  ROMol::GRAPH_MOL_ATOM_PMAP::const_type ROMol::getAtomPMap() const {
-    return boost::get(vertex_atom_t(),d_graph);
-  }
-  
-  ROMol::GRAPH_MOL_BOND_PMAP::const_type ROMol::getBondPMap() const{
-    return boost::get(edge_bond_t(),d_graph);
-  }
-
   ROMol::ATOM_ITER_PAIR ROMol::getVertices() { return boost::vertices(d_graph);}
   ROMol::BOND_ITER_PAIR ROMol::getEdges() {return boost::edges(d_graph);}
   ROMol::ATOM_ITER_PAIR ROMol::getVertices() const { return boost::vertices(d_graph);}
@@ -367,7 +352,8 @@ namespace RDKit{
     else atom_p = atom_pin;
 
     atom_p->setOwningMol(this);
-    int which = boost::add_vertex(AtomProperty(atom_p),d_graph);
+    MolGraph::vertex_descriptor which=boost::add_vertex(d_graph);
+    d_graph[which].reset(atom_p);
     atom_p->setIdx(which);
     if(updateLabel){
       if(hasAtomBookmark(ci_RIGHTMOST_ATOM)) clearAtomBookmark(ci_RIGHTMOST_ATOM);
@@ -398,8 +384,11 @@ namespace RDKit{
     else bond_p = bond_pin;
 
     bond_p->setOwningMol(this);
-    boost::add_edge(bond_p->getBeginAtomIdx(),bond_p->getEndAtomIdx(),
-                    BondProperty(bond_p,BondWeight(1.0)),d_graph);
+    bool ok;
+    MolGraph::edge_descriptor which;
+    boost::tie(which,ok) = boost::add_edge(bond_p->getBeginAtomIdx(),bond_p->getEndAtomIdx(),d_graph);
+    CHECK_INVARIANT(ok,"bond could not be added");
+    d_graph[which].reset(bond_p);
     int res = boost::num_edges(d_graph);
     bond_p->setIdx(res-1);
     return res;
@@ -409,21 +398,18 @@ namespace RDKit{
   }
 
 
-
   void ROMol::debugMol(std::ostream &str) const{
     ATOM_ITER_PAIR atItP = getVertices();
-    GRAPH_MOL_ATOM_PMAP::const_type atMap = getAtomPMap();
     BOND_ITER_PAIR bondItP = getEdges();
-    GRAPH_MOL_BOND_PMAP::const_type bondMap = getBondPMap();
 
     str << "Atoms:" << std::endl;
     while(atItP.first != atItP.second ){
-      str << "\t" << *atMap[*(atItP.first++)] << std::endl;
+      str << "\t" << *d_graph[*(atItP.first++)].get() << std::endl;
     }
 
     str << "Bonds:" << std::endl;
     while(bondItP.first != bondItP.second ){
-      str << "\t" << *bondMap[*(bondItP.first++)] << std::endl;
+      str << "\t" << *d_graph[*(bondItP.first++)].get() << std::endl;
     }
   }
 
@@ -446,7 +432,6 @@ namespace RDKit{
     return ConstAtomIterator(this,getNumAtoms());
   }
 
-
   ROMol::AromaticAtomIterator ROMol::beginAromaticAtoms(){
     return AromaticAtomIterator(this);
   }
@@ -459,10 +444,6 @@ namespace RDKit{
   ROMol::ConstAromaticAtomIterator ROMol::endAromaticAtoms() const{
     return ConstAromaticAtomIterator(this,getNumAtoms());
   }
-
-
-
-
 
   ROMol::HeteroatomIterator ROMol::beginHeteros(){
     return HeteroatomIterator(this);

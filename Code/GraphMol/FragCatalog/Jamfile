@@ -15,7 +15,7 @@ exe test1 : test1.cpp FragCatalog
   ../Substruct//Substruct ../FileParsers//FileParsers
   ..//GraphMol ../../DataStructs//DataStructs 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs ../..//vflib ;
+  ../..//lapacklibs  ;
 
 install regrs : test1
   : <location>testExecs ;

@@ -15,7 +15,7 @@ exe main : testShapeHelpers.cpp ShapeHelpers
   ../../Numerics/Alignment//Alignment
   ..//GraphMol ../../DataStructs//DataStructs 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs ../..//vflib
+  ../..//lapacklibs 
  ;
 
 install regrs : main

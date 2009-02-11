@@ -9,12 +9,13 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 
+#ifdef USE_VFLIB
 #include <argedit.h>
-
+#endif
 
 namespace RDKit{
 
-bool atomCompat(Atom const *a1,Atom const *a2){
+bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2){
   PRECONDITION(a1,"bad atom");
   PRECONDITION(a2,"bad atom");
   //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
@@ -22,7 +23,7 @@ bool atomCompat(Atom const *a1,Atom const *a2){
   return res;
 }
 
-bool chiralAtomCompat(Atom const *a1,Atom const *a2){
+bool chiralAtomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2){
   PRECONDITION(a1,"bad atom");
   PRECONDITION(a2,"bad atom");
   //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
@@ -43,7 +44,7 @@ bool chiralAtomCompat(Atom const *a1,Atom const *a2){
   return res;
 }
 
-bool bondCompat(Bond const *b1,Bond const *b2){
+bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2){
   PRECONDITION(b1,"bad bond");
   PRECONDITION(b2,"bad bond");
   bool res = b1->Match(b2);

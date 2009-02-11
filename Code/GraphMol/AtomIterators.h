@@ -21,10 +21,10 @@ namespace RDKit{
   class QueryAtom;
   
   //! A general random access iterator
-  template <class Atom_, class Mol_, class PMAP_>
+  template <class Atom_, class Mol_>
   class AtomIterator_ {
   public:
-    typedef AtomIterator_<Atom_,Mol_,PMAP_> ThisType;
+    typedef AtomIterator_<Atom_,Mol_> ThisType;
     AtomIterator_() : _pos(0),_max(-1),_mol(0) {}; 
     AtomIterator_(Mol_ * mol);
     AtomIterator_(Mol_ * mol,int pos);
@@ -60,15 +60,14 @@ namespace RDKit{
   private:
     int _pos,_max;
     Mol_ * _mol;
-    PMAP_ _pMap;
   };
 
 
   //! Iterate over heteroatoms, this is bidirectional
-  template <class Atom_, class Mol_, class PMAP_>
+  template <class Atom_, class Mol_>
   class HeteroatomIterator_ {
   public:
-    typedef HeteroatomIterator_<Atom_,Mol_,PMAP_> ThisType;
+    typedef HeteroatomIterator_<Atom_,Mol_> ThisType;
     HeteroatomIterator_() : _mol(0) {}; 
     HeteroatomIterator_(Mol_ * mol);
     HeteroatomIterator_(Mol_ * mol,int pos);
@@ -88,7 +87,6 @@ namespace RDKit{
     ThisType &operator--();
     ThisType operator--(int);
   private:
-    PMAP_ _pMap;
     int _end,_pos;
     Mol_ * _mol;
     //FIX: somehow changing the following to a pointer make the regression test pass
@@ -102,10 +100,10 @@ namespace RDKit{
 
 
   //! Iterate over aromatic atoms, this is bidirectional
-  template <class Atom_, class Mol_, class PMAP_>
+  template <class Atom_, class Mol_>
   class AromaticAtomIterator_ {
   public:
-    typedef AromaticAtomIterator_<Atom_,Mol_,PMAP_> ThisType;
+    typedef AromaticAtomIterator_<Atom_,Mol_> ThisType;
     AromaticAtomIterator_() : _mol(0) {}; 
     AromaticAtomIterator_(Mol_ * mol);
     AromaticAtomIterator_(Mol_ * mol,int pos);
@@ -125,7 +123,6 @@ namespace RDKit{
     ThisType &operator--();
     ThisType operator--(int);
   private:
-    PMAP_ _pMap;
     int _end,_pos;
     Mol_ * _mol;
 
@@ -136,10 +133,10 @@ namespace RDKit{
 
   
   //! Iterate over atoms matching a query. This is bidirectional.
-  template <class Atom_, class Mol_, class PMAP_>
+  template <class Atom_, class Mol_>
   class QueryAtomIterator_ {
   public:
-    typedef QueryAtomIterator_<Atom_,Mol_,PMAP_> ThisType;
+    typedef QueryAtomIterator_<Atom_,Mol_> ThisType;
     QueryAtomIterator_() : _mol(0),_qA(0) {}; 
     QueryAtomIterator_(Mol_ * mol,QueryAtom const *what);
     QueryAtomIterator_(Mol_ * mol,int pos);
@@ -159,7 +156,6 @@ namespace RDKit{
     ThisType &operator--();
     ThisType operator--(int);
   private:
-    PMAP_ _pMap;
     int _end,_pos;
     Mol_ * _mol;
     QueryAtom *_qA;
@@ -167,6 +163,7 @@ namespace RDKit{
     int _findNext(int from);  
     int _findPrev(int from);
   };
+
 
 }  /* end o namespace */
 

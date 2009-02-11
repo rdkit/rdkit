@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -165,11 +165,10 @@ namespace RDKit {
           std::vector<int> atomsInPath;
           atomsInPath.reserve(bondPath->size()+1);
 
-          ROMol::GRAPH_MOL_BOND_PMAP::const_type bondMap = mol.getBondPMap();
           ROMol::EDGE_ITER beg,end;
           boost::tie(beg,end)=mol.getEdges();
           while(beg!=end){
-            const Bond *bond=bondMap[*beg];
+            const Bond *bond=mol[*beg].get();
             if(bondsUsed[bond->getIdx()]){
               int begIdx=bond->getBeginAtomIdx();
               int endIdx=bond->getEndAtomIdx();

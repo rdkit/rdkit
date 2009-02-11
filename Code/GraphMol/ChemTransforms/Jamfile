@@ -10,7 +10,7 @@ install lib-install : ChemTransforms : <location>$(RDBASE)/bin ;
 
 exe main : testChemTransforms.cpp ChemTransforms
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse
-../Substruct//Substruct ..//GraphMol ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs ../..//vflib ;
+../Substruct//Substruct ..//GraphMol ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs  ;
 
 install regrs : main
   : <location>testExecs ;

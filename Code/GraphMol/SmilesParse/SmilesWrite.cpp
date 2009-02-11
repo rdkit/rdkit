@@ -176,9 +176,8 @@ namespace RDKit{
           bool hasTruePrecedingAtom=false;
           ROMol::OEDGE_ITER beg,end;
           boost::tie(beg,end) = atom->getOwningMol().getAtomBonds(atom);
-          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
           while(beg!=end){
-            Bond *nbrBond=pMap[*beg];
+            BOND_SPTR nbrBond=atom->getOwningMol()[*beg];
             unsigned int oIdx=nbrBond->getOtherAtomIdx(atom->getIdx());
             if(oIdx<atom->getIdx() && nbrBond->getBeginAtomIdx()==oIdx){
               hasTruePrecedingAtom=true;

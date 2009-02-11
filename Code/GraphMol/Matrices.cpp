@@ -191,9 +191,8 @@ namespace RDKit{
 
       ROMol::EDGE_ITER firstB,lastB;
       boost::tie(firstB,lastB) = mol.getEdges();
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type bondMap = mol.getBondPMap();
       while(firstB!=lastB){
-	const Bond *bond = bondMap[*firstB];
+	const BOND_SPTR bond = mol[*firstB];
 	i = bond->getBeginAtomIdx();
 	j = bond->getEndAtomIdx();
 	double contrib;
@@ -208,7 +207,7 @@ namespace RDKit{
 	}
 	dMat[i*nAts+j]=contrib;
 	dMat[j*nAts+i]=contrib;
-	firstB++;
+	++firstB;
       }
 
       int *pathMat = new int[nAts*nAts];

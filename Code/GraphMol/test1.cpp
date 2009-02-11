@@ -21,9 +21,9 @@ void testBookmarks(ROMol m){
 
   // ------------------------
   // simple bookmark stuff
-  ROMol::GRAPH_NODE_TYPE a1 = m.getAtomWithIdx(1);
+  Atom *a1 = m.getAtomWithIdx(1);
   m.setAtomBookmark(a1,666);
-  ROMol::GRAPH_NODE_TYPE a2 = m.getAtomWithBookmark(666);
+  Atom *a2 = m.getAtomWithBookmark(666);
 
   TEST_ASSERT(a2->getIdx()==a1->getIdx());
 
@@ -66,9 +66,9 @@ void testBookmarks(ROMol m){
 
   //----------------------------
   // now do bond bookmarks
-  ROMol::GRAPH_EDGE_TYPE b1 = m.getBondWithIdx(0);
+  Bond * b1 = m.getBondWithIdx(0);
   m.setBondBookmark(b1,23);
-  ROMol::GRAPH_EDGE_TYPE b2 = m.getBondWithBookmark(23);
+  Bond * b2 = m.getBondWithBookmark(23);
   CHECK_INVARIANT(b2->getIdx()==b1->getIdx(),"");
 
   m.clearBondBookmark(23);
@@ -188,9 +188,9 @@ void testAtomProps()
   m2.addAtom(new Atom(6));
   m2.addBond(0,1,Bond::TRIPLE);
 
-  ROMol::GRAPH_NODE_TYPE a1 = m2.getAtomWithIdx(0);
-  ROMol::GRAPH_NODE_TYPE a2 = m2.getAtomWithIdx(0);
-  ROMol::GRAPH_NODE_TYPE a3 = &(*a1);
+  Atom *a1 = m2.getAtomWithIdx(0);
+  Atom *a2 = m2.getAtomWithIdx(0);
+  Atom *a3 = &(*a1);
   CHECK_INVARIANT(!a1->hasProp("prop1"),"");
   CHECK_INVARIANT(!a1->hasProp("prop2"),"");
   CHECK_INVARIANT(!a2->hasProp("prop1"),"");
@@ -255,8 +255,8 @@ void testBondProps()
   m2.addAtom(new Atom(6));
   m2.addBond(0,1,Bond::TRIPLE);
 
-  ROMol::GRAPH_EDGE_TYPE b1 = m2.getBondWithIdx(0);
-  ROMol::GRAPH_EDGE_TYPE b2 = m2.getBondWithIdx(0);
+  Bond * b1 = m2.getBondWithIdx(0);
+  Bond * b2 = m2.getBondWithIdx(0);
   CHECK_INVARIANT(!b1->hasProp("prop1"),"");
   CHECK_INVARIANT(!b1->hasProp("prop2"),"");
   CHECK_INVARIANT(!b2->hasProp("prop1"),"");
@@ -314,8 +314,8 @@ void testPropLeak()
   m2.addAtom(new Atom(6));
   m2.addBond(0,1,Bond::TRIPLE);
 
-  ROMol::GRAPH_NODE_TYPE a1 = m2.getAtomWithIdx(0);
-  ROMol::GRAPH_NODE_TYPE a2 = m2.getAtomWithIdx(0);
+  Atom *a1 = m2.getAtomWithIdx(0);
+  Atom *a2 = m2.getAtomWithIdx(0);
   CHECK_INVARIANT(!a1->hasProp("prop1"),"");
   CHECK_INVARIANT(!a1->hasProp("prop2"),"");
   CHECK_INVARIANT(!a2->hasProp("prop1"),"");
@@ -339,8 +339,8 @@ void testPropLeak()
   a2->getProp("prop2",tmp);
   CHECK_INVARIANT(tmp==4,"");
 
-  ROMol::GRAPH_EDGE_TYPE b1 = m2.getBondWithIdx(0);
-  ROMol::GRAPH_EDGE_TYPE b2 = m2.getBondWithIdx(0);
+  Bond * b1 = m2.getBondWithIdx(0);
+  Bond * b2 = m2.getBondWithIdx(0);
   CHECK_INVARIANT(!b1->hasProp("prop1"),"");
   CHECK_INVARIANT(!b1->hasProp("prop2"),"");
   CHECK_INVARIANT(!b2->hasProp("prop1"),"");
@@ -381,7 +381,7 @@ void testMisc()
 
   MolOps::sanitizeMol(m2);
   
-  ROMol::GRAPH_EDGE_TYPE bnd;
+  Bond * bnd;
   bnd = m2.getBondBetweenAtoms(0,1);
   CHECK_INVARIANT(bnd,"");
   bnd = m2.getBondBetweenAtoms(1,0);
@@ -390,7 +390,7 @@ void testMisc()
   CHECK_INVARIANT(!bnd,"");
   bnd = m2.getBondBetweenAtoms(0,3);
   CHECK_INVARIANT(!bnd,"");
-  ROMol::GRAPH_EDGE_CONST_TYPE cbnd;
+  const Bond *cbnd;
   cbnd = m2.getBondBetweenAtoms(0,1);
   CHECK_INVARIANT(cbnd,"");
   cbnd = m2.getBondBetweenAtoms(1,0);
@@ -430,21 +430,19 @@ void testMisc()
 
 
   const Atom *at = m2.getAtomWithIdx(1);
-  ROMol::GRAPH_MOL_BOND_PMAP::type pMap = m2.getBondPMap();
   ROMol::OEDGE_ITER begin,end;
   boost::tie(begin,end) = m2.getAtomBonds(at);
   while(begin!=end){
-    const Atom *at2 = pMap[*begin]->getOtherAtom(at);
+    const Atom *at2 = m2[*begin]->getOtherAtom(at);
     TEST_ASSERT(at2);
     begin++;
   }
 
-  ROMol::GRAPH_MOL_ATOM_PMAP::type atomMap = m2.getAtomPMap();
   ROMol::VERTEX_ITER atBegin,atEnd;
   boost::tie(atBegin,atEnd) = m2.getVertices();
   TEST_ASSERT(atBegin!=atEnd);
   while(atBegin!=atEnd){
-    const Atom *at2=atomMap[*atBegin];
+    const ATOM_SPTR at2=m2[*atBegin];
     TEST_ASSERT(at2->getIdx()>=0);
     atBegin++;
   }
@@ -736,7 +734,7 @@ int main()
   unsigned int i;
   m.updatePropertyCache();
   for(i=0;i<m.getNumAtoms();i++){
-    ROMol::GRAPH_NODE_TYPE a = m.getAtomWithIdx(i);
+    Atom *a = m.getAtomWithIdx(i);
     BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
   }
 
@@ -746,7 +744,7 @@ int main()
   BOOST_LOG(rdInfoLog)  << "Again:" << endl;
   m.updatePropertyCache();
   for(i=0;i<m.getNumAtoms();i++){
-    ROMol::GRAPH_NODE_TYPE a = m.getAtomWithIdx(i);
+    Atom *a = m.getAtomWithIdx(i);
     BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
   }
 
@@ -765,7 +763,7 @@ int main()
   m.updatePropertyCache();
   BOOST_LOG(rdInfoLog)  << "post-insert:" << endl;
   for(i=0;i<m.getNumAtoms();i++){
-    ROMol::GRAPH_NODE_TYPE a = m.getAtomWithIdx(i);
+    Atom *a = m.getAtomWithIdx(i);
     BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
   }
 

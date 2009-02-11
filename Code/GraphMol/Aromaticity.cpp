@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -243,13 +243,13 @@ namespace {
     // check if "at" has an non-cyclic multiple bond on it
     // if yes check which atom this bond goes to  
     // and record the atomID in who
+    const ROMol &mol=at->getOwningMol();
     ROMol::OEDGE_ITER beg,end;
-    boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
+    boost::tie(beg,end) = mol.getAtomBonds(at);
     while(beg!=end){
-      if(!at->getOwningMol().getRingInfo()->numBondRings(pMap[*beg]->getIdx())){
-        if (pMap[*beg]->getValenceContrib(at) >= 2.0) {
-          who = pMap[*beg]->getOtherAtomIdx(at->getIdx());
+      if(!mol.getRingInfo()->numBondRings(mol[*beg]->getIdx())){
+        if (mol[*beg]->getValenceContrib(at) >= 2.0) {
+          who = mol[*beg]->getOtherAtomIdx(at->getIdx());
           return true;
         }
        }
@@ -260,12 +260,12 @@ namespace {
    
   bool incidentCyclicMultipleBond(const Atom *at) {
     PRECONDITION(at,"bad atom");
+    const ROMol &mol=at->getOwningMol();
     ROMol::OEDGE_ITER beg,end;
-    boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
+    boost::tie(beg,end) = mol.getAtomBonds(at);
     while(beg!=end){
-      if(at->getOwningMol().getRingInfo()->numBondRings(pMap[*beg]->getIdx())){
-        if (pMap[*beg]->getValenceContrib(at) >= 2.0) {
+      if(mol.getRingInfo()->numBondRings(mol[*beg]->getIdx())){
+        if (mol[*beg]->getValenceContrib(at) >= 2.0) {
           return true;
          }
        }
@@ -432,11 +432,9 @@ namespace {
       unsigned int nMult=0;
       const ROMol &mol = at->getOwningMol();
       ROMol::OEDGE_ITER beg,end;
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap=mol.getBondPMap();
       boost::tie(beg,end) = mol.getAtomBonds(at);
       while(beg!=end){
-        const Bond *bond=pMap[*beg];
-        switch(bond->getBondType()){
+        switch(mol[*beg]->getBondType()){
         case Bond::SINGLE:
         case Bond::AROMATIC:
           break;

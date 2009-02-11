@@ -38,7 +38,6 @@ namespace RDKit{
     BondIterator_ &operator--();
     BondIterator_ operator--(int);
   private:
-    ROMol::GRAPH_MOL_BOND_PMAP::type _pMap;
     ROMol::EDGE_ITER _beg,_end,_pos;
     ROMol *_mol;
   };
@@ -61,7 +60,6 @@ namespace RDKit{
     ConstBondIterator_ &operator--();
     ConstBondIterator_ operator--(int);
   private:
-    ROMol::GRAPH_MOL_BOND_PMAP::const_type _pMap;
     ROMol::EDGE_ITER _beg,_end,_pos;
     ROMol const *_mol;
   };

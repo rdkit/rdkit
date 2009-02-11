@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -95,13 +95,13 @@ namespace RDKit{
     */
     void replaceAtom(unsigned int idx,Atom *atom,bool updateLabel=false);
     //! returns a pointer to the highest-numbered Atom
-    GRAPH_NODE_TYPE getLastAtom() { return getAtomWithIdx(getNumAtoms()-1); };
+    Atom *getLastAtom() { return getAtomWithIdx(getNumAtoms()-1); };
     //! returns a pointer to the "active" Atom
     /*!
        If we have an \c activeAtom, it will be returned,
        otherwise the results of getLastAtom() will be returned.
      */
-    GRAPH_NODE_TYPE getActiveAtom();
+    Atom *getActiveAtom();
     //! sets our \c activeAtom
     void setActiveAtom(Atom *atom);
     //! \overload

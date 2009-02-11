@@ -15,7 +15,7 @@ cpp sln.tab.cpp : sln.yy : <bison.prefix>yysln_ ;
 
 exe test : test.cpp SLNParse 
   ..//GraphMol   ../SmilesParse//SmilesParse
-  ../Substruct//Substruct /RDKit//vflib 
+  ../Substruct//Substruct 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs 
 ;
 

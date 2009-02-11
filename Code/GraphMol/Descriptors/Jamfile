@@ -10,7 +10,7 @@ install lib-install : Descriptors : <location>$(RDBASE)/bin ;
 
 exe testDescriptors : test.cpp Descriptors
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs
-../Substruct//Substruct ..//GraphMol ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs ../..//vflib ;
+../Substruct//Substruct ..//GraphMol ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs  ;
 
 install regrs : testDescriptors
   : <location>testExecs ;

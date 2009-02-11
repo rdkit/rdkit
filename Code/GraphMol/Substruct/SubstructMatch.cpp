@@ -26,9 +26,9 @@ namespace RDKit{
       bool operator()(unsigned int i,unsigned int j){
         bool res=false;
         if(!df_useChirality){
-          res=atomCompat(d_query.getAtomWithIdx(i),d_mol.getAtomWithIdx(j));
+          res=atomCompat(d_query[i],d_mol[j]);
         } else {
-          res=chiralAtomCompat(d_query.getAtomWithIdx(i),d_mol.getAtomWithIdx(j));
+          res=chiralAtomCompat(d_query[i],d_mol[j]);
         }
         //std::cerr<<" alf: "<<i<<" - "<<j<<"? "<<res<<std::endl;
         return res;
@@ -43,7 +43,7 @@ namespace RDKit{
       BondLabelFunctor(const ROMol &query,const ROMol &mol) :
         d_query(query), d_mol(mol) {};
       bool operator()(MolGraph::edge_descriptor i,MolGraph::edge_descriptor j){
-        bool res=bondCompat(d_query.getBondPMap()[i],d_mol.getBondPMap()[j]);
+        bool res=bondCompat(d_query[i],d_mol[j]);
         return res;
       }
     private:
@@ -79,7 +79,7 @@ namespace RDKit{
     detail::BondLabelFunctor bondLabeler(query,mol);
 
     detail::ssPairType match;
-    bool res=boost::ullmann(*query.getTopology(),*mol.getTopology(),
+    bool res=boost::ullmann(query.getTopology(),mol.getTopology(),
                             atomLabeler,bondLabeler,match);
     if(res){
      matchVect.resize(query.getNumAtoms());
@@ -120,7 +120,7 @@ namespace RDKit{
     detail::BondLabelFunctor bondLabeler(query,mol);
     
     std::list<detail::ssPairType> pms;
-    bool found=boost::ullmann_all(*query.getTopology(),*mol.getTopology(),
+    bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
                                   atomLabeler,bondLabeler,pms);
     unsigned int res=0;
     if(found){
@@ -165,7 +165,7 @@ namespace RDKit{
     matches.clear();
     matches.resize(0);
     std::list<detail::ssPairType> pms;
-    bool found=boost::ullmann_all(*query.getTopology(),*mol.getTopology(),
+    bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
                             atomLabeler,bondLabeler,pms);
 
     unsigned int res=0;

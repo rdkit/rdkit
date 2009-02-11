@@ -17,7 +17,7 @@ exe testHelpers : testHelpers.cpp ForceFieldHelpers
   ../../Numerics/EigenSolvers//EigenSolvers
   ../..//Numerics/Alignment//Alignment
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs ../..//vflib ;
+  ../..//lapacklibs  ;
 
 install regrs : testHelpers
   : <location>testExecs ;

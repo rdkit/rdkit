@@ -14,7 +14,7 @@ python-extension rdfragcatalog : rdfragcatalog.cpp
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs 
   ../../../RDBoost//RDBoost 
-  ../../..//vflib ../../..//lapacklibs 
+   ../../..//lapacklibs 
   ;
 
 install pymod : rdfragcatalog 

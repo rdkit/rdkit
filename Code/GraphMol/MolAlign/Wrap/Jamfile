@@ -14,7 +14,7 @@ python-extension rdMolAlign : rdMolAlign.cpp
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs 
   ../../../RDBoost//RDBoost 
-  ../../..//vflib ../../..//lapacklibs 
+   ../../..//lapacklibs 
   ;
 
 install pymod : rdMolAlign

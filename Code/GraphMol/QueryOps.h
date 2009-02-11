@@ -108,10 +108,9 @@ namespace RDKit{
   static int queryAtomRingBondCount(Atom const *at) {
     // EFF: cache this result
     int res=0;
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
     ROMol::OBOND_ITER_PAIR atomBonds=at->getOwningMol().getAtomBonds(at);
     while(atomBonds.first != atomBonds.second){
-      unsigned int bondIdx=pMap[*atomBonds.first]->getIdx();
+      unsigned int bondIdx=at->getOwningMol().getTopology()[*atomBonds.first]->getIdx();
       if(at->getOwningMol().getRingInfo()->numBondRings(bondIdx)) {
         res++;
       }

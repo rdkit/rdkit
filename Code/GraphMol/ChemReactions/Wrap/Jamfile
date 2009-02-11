@@ -11,7 +11,7 @@ python-extension rdChemReactions : rdChemReactions.cpp
   ../..//GraphMol
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-../../..//vflib ../../..//lapacklibs 
+ ../../..//lapacklibs 
   ;
 
 install pymod : rdChemReactions

@@ -21,13 +21,13 @@ exe MolOpsTest : molopstest.cpp GraphMol
   ../RDGeneral//RDGeneral ../Geometry//RDGeometry ..//lapacklibs ;
 exe testCanon : testCanon.cpp GraphMol 
   ./SmilesParse//SmilesParse ./Substruct//Substruct 
-  ../RDGeneral//RDGeneral ../Geometry//RDGeometry ..//lapacklibs ..//vflib ;
+  ../RDGeneral//RDGeneral ../Geometry//RDGeometry ..//lapacklibs ;
 exe testChirality : testChirality.cpp GraphMol 
   ./SmilesParse//SmilesParse ./FileParsers//FileParsers
-  ../RDGeneral//RDGeneral ../Geometry//RDGeometry ..//lapacklibs ..//vflib ;
+  ../RDGeneral//RDGeneral ../Geometry//RDGeometry ..//lapacklibs ;
 exe testPickler : testPickler.cpp GraphMol 
   ./SmilesParse//SmilesParse ./FileParsers//FileParsers ./Substruct//Substruct 
-  ../RDGeneral//RDGeneral ../Geometry//RDGeometry ..//lapacklibs  ..//vflib ;
+  ../RDGeneral//RDGeneral ../Geometry//RDGeometry ..//lapacklibs  ;
 exe itertest : itertest.cpp GraphMol 
   ./SmilesParse//SmilesParse 
   ../RDGeneral//RDGeneral ../Geometry//RDGeometry ..//lapacklibs ;

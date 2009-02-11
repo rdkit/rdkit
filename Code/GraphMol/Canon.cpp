@@ -72,45 +72,45 @@ namespace Canon {
     Bond *firstFromAtom2=NULL,*secondFromAtom2=NULL;
 
     int firstVisitOrder=100000;
+
+    ROMol &mol=dblBond->getOwningMol();
     
     ROMol::OBOND_ITER_PAIR atomBonds;
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = dblBond->getOwningMol().getBondPMap();
-
     // -------------------------------------------------------
     // find the lowest visit order bonds from each end and determine
     // if anything is already constraining our choice of directions:
     bool dir1Set=false,dir2Set=false;
-    atomBonds = dblBond->getOwningMol().getAtomBonds(atom1);
+    atomBonds = mol.getAtomBonds(atom1);
     while( atomBonds.first != atomBonds.second ){
-      if(pMap[*atomBonds.first] != dblBond){
-        int bondIdx = pMap[*atomBonds.first]->getIdx();      
+      if(mol[*atomBonds.first].get() != dblBond){
+        int bondIdx = mol[*atomBonds.first]->getIdx();      
         if( bondDirCounts[bondIdx] > 0 ){
           dir1Set = true;
         }
         if(!firstFromAtom1 || bondVisitOrders[bondIdx] < firstVisitOrder ){
           if(firstFromAtom1) secondFromAtom1 = firstFromAtom1;
-          firstFromAtom1 = pMap[*atomBonds.first];
+          firstFromAtom1 = mol[*atomBonds.first].get();
           firstVisitOrder = bondVisitOrders[bondIdx];
         } else {
-          secondFromAtom1 = pMap[*atomBonds.first];
+          secondFromAtom1 = mol[*atomBonds.first].get();
         }
       }
       atomBonds.first++;
     }
-    atomBonds = dblBond->getOwningMol().getAtomBonds(atom2);
+    atomBonds = mol.getAtomBonds(atom2);
     firstVisitOrder = 10000;
     while( atomBonds.first != atomBonds.second ){
-      if(pMap[*atomBonds.first] != dblBond){
-        int bondIdx = pMap[*atomBonds.first]->getIdx();      
+      if(mol[*atomBonds.first].get() != dblBond){
+        int bondIdx =mol[*atomBonds.first]->getIdx();      
         if( bondDirCounts[bondIdx] > 0 ){
           dir2Set = true;
         }
         if(!firstFromAtom2 || bondVisitOrders[bondIdx] < firstVisitOrder){
           if(firstFromAtom2) secondFromAtom2 = firstFromAtom2;
-          firstFromAtom2 = pMap[*atomBonds.first];
+          firstFromAtom2 = mol[*atomBonds.first].get();
           firstVisitOrder = bondVisitOrders[bondIdx];
         } else {
-          secondFromAtom2 = pMap[*atomBonds.first];
+          secondFromAtom2 = mol[*atomBonds.first].get();
         }
       }
       atomBonds.first++;
@@ -154,8 +154,8 @@ namespace Canon {
           // they are compatible:
           if( firstFromAtom1->getBondDir()==secondFromAtom1->getBondDir() &&
               bondDirCounts[firstFromAtom2->getIdx()] ){
-            CHECK_INVARIANT((firstFromAtom1->getBeginAtomIdx()==atom1->getIdx() ^
-                              secondFromAtom1->getBeginAtomIdx()==atom1->getIdx())
+            CHECK_INVARIANT(((firstFromAtom1->getBeginAtomIdx()==atom1->getIdx()) ^
+                             (secondFromAtom1->getBeginAtomIdx()==atom1->getIdx()))
                             ,"inconsistent state");
           }
         }
@@ -307,10 +307,9 @@ namespace Canon {
     possibles.resize(0);
     ROMol::OBOND_ITER_PAIR bondsPair = mol.getAtomBonds(atom);
     possibles.reserve(bondsPair.second-bondsPair.first);
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
 
     while(bondsPair.first != bondsPair.second){
-      Bond *theBond = pMap[*(bondsPair.first)];
+      BOND_SPTR theBond = mol[*(bondsPair.first)];
       if(inBondIdx<0 || theBond->getIdx() != static_cast<unsigned int>(inBondIdx)){
         int otherIdx = theBond->getOtherAtomIdx(atomIdx);
         long rank=ranks[otherIdx];
@@ -342,7 +341,7 @@ namespace Canon {
           rank += static_cast<int>(Bond::OTHER - theBond->getBondType()) *
             MAX_NATOMS*MAX_NATOMS;
         }
-        possibles.push_back(makePossible(rank,otherIdx,theBond));
+        possibles.push_back(makePossible(rank,otherIdx,theBond.get()));
       }
       bondsPair.first++;
     }
@@ -534,12 +533,11 @@ namespace Canon {
 
     //std::cerr<<"cBD: bond: "<<refBond->getIdx()<<" atom: "<<fromAtom->getIdx()<<": ";
 
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol.getAtomBonds(fromAtom);
     bool nbrPossible=false,adjusted=false;
     while(beg!=end){
-      Bond *oBond=pMap[*beg];
+      Bond *oBond=mol[*beg].get();
       if( oBond != refBond && canHaveDirection(oBond) ){
         nbrPossible=true;
         if(bondDirCounts[oBond->getIdx()] <= bondDirCounts[oBond->getIdx()]){
@@ -583,15 +581,13 @@ namespace Canon {
         Bond *tBond = msI->obj.bond;
         if(canHaveDirection(tBond) &&
            bondDirCounts[tBond->getIdx()]>=1 ) {
-          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
-          ROMol::OEDGE_ITER beg,end;
-
           // start by finding the double bond that sets tBond's direction:
           Atom *dblBondAtom=NULL;
+          ROMol::OEDGE_ITER beg,end;
           boost::tie(beg,end) = mol.getAtomBonds(tBond->getBeginAtom());
           while(beg!=end){
-            if( pMap[*beg] != tBond && pMap[*beg]->getBondType()==Bond::DOUBLE &&
-                pMap[*beg]->getStereo() > Bond::STEREOANY ){
+            if( mol[*beg].get() != tBond && mol[*beg]->getBondType()==Bond::DOUBLE &&
+                mol[*beg]->getStereo() > Bond::STEREOANY ){
               dblBondAtom = tBond->getBeginAtom();
               break;
             }
@@ -603,8 +599,8 @@ namespace Canon {
           dblBondAtom = NULL;
           boost::tie(beg,end) = mol.getAtomBonds(tBond->getEndAtom());
           while(beg!=end){
-            if( pMap[*beg] != tBond && pMap[*beg]->getBondType()==Bond::DOUBLE &&
-                pMap[*beg]->getStereo() > Bond::STEREOANY ){
+            if( mol[*beg].get() != tBond && mol[*beg]->getBondType()==Bond::DOUBLE &&
+                mol[*beg]->getStereo() > Bond::STEREOANY ){
               dblBondAtom = tBond->getEndAtom();
               break;
             }
@@ -626,7 +622,6 @@ namespace Canon {
                             INT_VECT &ranks,
                             MolStack &molStack){
     int nAtoms=mol.getNumAtoms();
-    bool ringStereoWarn=false;
     
     INT_VECT atomVisitOrders(nAtoms,0);
     INT_VECT bondVisitOrders(mol.getNumBonds(),0);

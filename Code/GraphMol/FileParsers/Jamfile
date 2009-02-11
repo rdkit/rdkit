@@ -13,13 +13,13 @@ install lib-install : FileParsers : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct ..//GraphMol 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs ../..//vflib ;
+  ../..//lapacklibs ;
 
 exe testMolSupplier : testMolSupplier.cpp FileParsers 
   ../Depictor//Depictor
   ../SmilesParse//SmilesParse ../Substruct//Substruct ..//GraphMol 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs ../..//vflib ;
+  ../..//lapacklibs ;
 
 exe testMolWriter : testMolWriter.cpp FileParsers 
   ../SmilesParse//SmilesParse ..//GraphMol 

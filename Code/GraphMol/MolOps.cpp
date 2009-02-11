@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -167,10 +167,9 @@ namespace RDKit{
         }
         double accum = 0.0;
         RWMol::OEDGE_ITER beg,end;
-        RWMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
         boost::tie(beg,end) = mol.getAtomBonds(*ai);
         while(beg!=end){
-          accum += pMap[*beg]->getValenceContrib(*ai);
+          accum += mol[*beg]->getValenceContrib(*ai);
           ++beg;
         }
         accum += (*ai)->getNumExplicitHs();
@@ -270,8 +269,7 @@ namespace RDKit{
 
     unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
       mapping.resize(mol.getNumAtoms());
-      const MolGraph *G_p = mol.getTopology();
-      return boost::connected_components(*G_p,&mapping[0]);
+      return boost::connected_components(mol.getTopology(),&mapping[0]);
     };
 
     unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
@@ -296,7 +294,7 @@ namespace RDKit{
       }
       return frags.size();
     }
-
+#if 0
     void findSpanningTree(const ROMol &mol,INT_VECT &mst){
       //
       //  The BGL provides Prim's and Kruskal's algorithms for finding
@@ -304,9 +302,8 @@ namespace RDKit{
       //  Kruskal's is O(e log e) (e=# of bonds).  For molecules, where
       //  e << n2, Kruskal's should be a win.
       //
-      const MolGraph *mgraph = mol.getTopology();
+      const MolGraph *mgraph = &mol.getTopology();
       MolGraph *molGraph = const_cast<MolGraph *> (mgraph);
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
     
       std::vector<MolGraph::edge_descriptor> treeEdges;
       treeEdges.reserve(boost::num_vertices(*molGraph));
@@ -353,10 +350,10 @@ namespace RDKit{
       mst.resize(0);
       for(std::vector<MolGraph::edge_descriptor>::iterator edgeIt=treeEdges.begin();
           edgeIt!=treeEdges.end();edgeIt++){
-        mst.push_back(pMap[*edgeIt]->getIdx());
+        mst.push_back(mol[*edgeIt]->getIdx());
       }
     }
-
+#endif
     int getFormalCharge(const ROMol &mol){
       int accum = 0;
       for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();

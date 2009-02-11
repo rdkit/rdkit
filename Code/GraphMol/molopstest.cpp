@@ -439,11 +439,12 @@ void test6(){
   
 }
 */
+
 void test7(){
   string smi;
   Mol *m;
   INT_VECT tree;
-
+#if 0
 #if 1
   smi = "C(CO)OCC";
   m = SmilesToMol(smi);
@@ -496,6 +497,7 @@ void test7(){
   MolOps::findSpanningTree(*m,tree);
   CHECK_INVARIANT(tree.size()==13,"bad mst");
   delete m;
+#endif
 }
 
 void test8()

@@ -174,10 +174,9 @@ int Atom::calcExplicitValence(bool strict) {
   double accum=0;
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = getOwningMol().getAtomBonds(this);
-  ROMol::GRAPH_MOL_BOND_PMAP::type pMap = getOwningMol().getBondPMap();
   while(beg!=end){
-    accum += pMap[*beg]->getValenceContrib(this);
-    beg++;
+    accum += getOwningMol()[*beg]->getValenceContrib(this);
+    ++beg;
   }
   accum += getNumExplicitHs();
 
@@ -454,12 +453,11 @@ int Atom::getPerturbationOrder(INT_LIST probe) const{
   INT_LIST ref;
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = getOwningMol().getAtomBonds(this);
-  ROMol::GRAPH_MOL_BOND_PMAP::type pMap = getOwningMol().getBondPMap();
   //std::cerr<<"  gPO("<<getIdx()<<"):";
   while(beg!=end){
     //std::cerr << " "<<pMap[*beg]->getIdx();
-    ref.push_back(pMap[*beg]->getIdx());
-    beg++;
+    ref.push_back(getOwningMol()[*beg]->getIdx());
+    ++beg;
   }
   int nSwaps=static_cast<int>(countSwapsToInterconvert(ref,probe));
   return nSwaps;
