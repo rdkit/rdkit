@@ -3,6 +3,17 @@
 
 !!!!!! IMPORTANT !!!!!!
 
+ - The directory structure of the distribution has been changed in
+   order to make installation of the RDKit python modules more
+   straightforward. Specifically the directory $RDBASE/Python has been
+   renamed to $RDBASE/rdkit and the Python code now expects that
+   $RDBASE is in your PYTHONPATH. When importing RDKit Python modules,
+   one should now do: "from rdkit import Chem" instead of "import
+   Chem". Old code will continue to work if you also add $RDBASE/rdkit
+   to your PYTHONPATH, but it is strongly suggested that you update
+   your scripts to reflect the new organization.
+
+
 Acknowledgements:
 
 Bug Fixes

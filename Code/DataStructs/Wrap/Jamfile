@@ -8,7 +8,7 @@ python-extension cDataStructs : DataStructs.cpp DiscreteValueVect.cpp SparseIntV
   wrap_SparseBV.cpp wrap_ExplicitBV.cpp wrap_BitOps.cpp wrap_Utils.cpp 
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost ;
 
-install pymod : cDataStructs : <location>$(RDBASE)/Python/DataStructs ;
+install pymod : cDataStructs : <location>$(RDBASE)/rdkit/DataStructs ;
 
 
 

@@ -1,0 +1,611 @@
+BEGIN TRANSACTION;
+CREATE TABLE basic_2class (
+    id character varying(5),
+    val double precision,
+    act integer
+);
+INSERT INTO "basic_2class" VALUES('id-1',1.0,0);
+INSERT INTO "basic_2class" VALUES('id-2',23.0,1);
+INSERT INTO "basic_2class" VALUES('id-3',4.0,0);
+INSERT INTO "basic_2class" VALUES('id-4',6.0,1);
+INSERT INTO "basic_2class" VALUES('id-5',321.0,0);
+INSERT INTO "basic_2class" VALUES('id-6',885.0,1);
+INSERT INTO "basic_2class" VALUES('id-7',252.0,0);
+INSERT INTO "basic_2class" VALUES('id-8',1351.1,1);
+INSERT INTO "basic_2class" VALUES('id-9',3215.0,0);
+INSERT INTO "basic_2class" VALUES('id-10',2585.0,1);
+INSERT INTO "basic_2class" VALUES('id-11',55.0,0);
+INSERT INTO "basic_2class" VALUES('id-12',12.0,1);
+CREATE TABLE ferro_noquant (
+    compound character varying(7),
+    elconc double precision,
+    atvol double precision,
+    has3d integer,
+    has4d integer,
+    has5d integer,
+    max_ded double precision,
+    isferromagnetic integer
+);
+INSERT INTO "ferro_noquant" VALUES('FeCo',0.734059888337,11.579436685,1,0,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Ni',0.917132325319,10.903552,1,0,0,1.89935600758,1);
+INSERT INTO "ferro_noquant" VALUES('Fe',0.676821728076,11.8199515,1,0,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('AlFe3',0.55352822994,12.1945,1,0,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Mn',0.592219012066,11.8199515,1,0,0,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('FeNi3',0.847581242231,11.2083650825,1,0,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Fe3Pd',0.610901434436,13.9138648575,1,1,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('HfV2',0.139474782705,33.458855975,1,0,1,2.28774404526,0);
+INSERT INTO "ferro_noquant" VALUES('Pd',0.679533993934,14.71596725,0,1,0,0.0,0);
+INSERT INTO "ferro_noquant" VALUES('FePt3',0.654602335855,14.5126277125,1,0,1,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('CrPt3',0.619669341609,14.523874905,1,0,1,3.67481803894,1);
+INSERT INTO "ferro_noquant" VALUES('Fe3Pt',0.655167614325,12.97377925,1,0,1,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Cr3Rh',0.528844066155,12.76368675,1,1,0,3.67481803894,1);
+INSERT INTO "ferro_noquant" VALUES('Pt',0.66405154315,15.059072,0,0,1,0.708856999874,0);
+INSERT INTO "ferro_noquant" VALUES('Cr3Ir',0.525127756509,12.8540148875,1,0,1,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('V',0.363060641874,13.771804,1,0,0,2.28774404526,0);
+INSERT INTO "ferro_noquant" VALUES('Cr3Ru',0.507626409314,12.80469235,1,1,0,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('Co2Nb',0.295973106247,25.9032544,1,1,0,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('CoTi2',0.223081584245,25.4017680833,1,0,0,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('Cr3Os',0.506002525507,12.8457856875,1,0,1,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('CoTi',0.483896935837,13.43261244,1,0,0,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('Nb',0.278264741075,17.9685,0,1,0,2.32224798203,0);
+INSERT INTO "ferro_noquant" VALUES('Cr3Pt',0.537319075144,13.027640975,1,0,1,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('Cr2Nb',0.202560378073,27.9751979167,1,1,0,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('Rh',0.656072313748,13.718,0,1,0,1.34492301941,0);
+INSERT INTO "ferro_noquant" VALUES('IrTi3',0.334192112374,15.7095269625,1,0,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('Ta',0.27575031592,18.1323455,0,0,1,1.56566202641,0);
+INSERT INTO "ferro_noquant" VALUES('CoZr',0.398968508292,16.29201269,1,1,0,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('Co2Y',0.223929923609,31.2597793417,1,1,0,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('Cr2Ta',0.20160161711,28.1082401417,1,0,1,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('Ir2Sc',0.211811319911,33.0482809083,1,0,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('CoHf',0.410425114374,15.83723747,1,0,1,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('Ir2Zr',0.220813826304,33.210480775,0,1,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('Ir',0.635782877604,14.155776,0,0,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('IrNb3',0.354710173223,16.9152182625,0,1,1,2.32224798203,0);
+INSERT INTO "ferro_noquant" VALUES('IrV3',0.437299330113,13.7205789875,1,0,1,2.28774404526,0);
+INSERT INTO "ferro_noquant" VALUES('IrZr',0.355888707002,18.264136715,0,1,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('CoV3',0.469782020722,12.7718808625,1,0,0,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('HfRh3',0.518200999109,14.9555867575,0,1,1,1.34492301941,0);
+INSERT INTO "ferro_noquant" VALUES('HfIr3',0.512284018996,15.128326695,0,0,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('HfTc',0.314593269655,17.4828915,0,1,1,2.99570298195,0);
+INSERT INTO "ferro_noquant" VALUES('HfPt',0.415451631385,16.8491335,0,0,1,1.00957000256,0);
+INSERT INTO "ferro_noquant" VALUES('Ir3Ti',0.545346664721,14.2111440325,1,0,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('Cr',0.502346965021,11.943936,1,0,0,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('HfNi2',0.291468422875,27.4472271167,1,0,1,1.89935600758,0);
+INSERT INTO "ferro_noquant" VALUES('Mo',0.38392782157,15.6279375,0,1,0,2.92410993576,0);
+INSERT INTO "ferro_noquant" VALUES('Cr2Zr',0.170400540374,31.2988052833,1,1,0,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('Ir2Y',0.197054630259,35.5231439667,0,1,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('Cr2Hf',0.175826907904,30.332862,1,0,1,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('Ir3V',0.577685281306,13.8483708325,1,0,1,2.28774404526,0);
+INSERT INTO "ferro_noquant" VALUES('HfMo2',0.14900548029,35.7928669667,0,1,1,2.92410993576,0);
+INSERT INTO "ferro_noquant" VALUES('Cr2Ti',0.190316268905,28.023528225,1,0,0,3.67481803894,0);
+INSERT INTO "ferro_noquant" VALUES('CoSc',0.385761868518,15.553636815,1,0,0,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('W',0.380294459465,15.777248,0,0,1,2.13846206665,0);
+INSERT INTO "ferro_noquant" VALUES('HfW2',0.146370867336,36.43712325,0,0,1,2.13846206665,0);
+INSERT INTO "ferro_noquant" VALUES('IrY',0.305312436393,19.652,0,1,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('Ir3Nb',0.542371383308,14.75004074,0,1,1,2.32224798203,0);
+INSERT INTO "ferro_noquant" VALUES('Ir3Ta',0.545307648931,14.670617615,0,0,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('HfRu',0.357760253062,16.771007815,0,1,1,1.89930105209,0);
+INSERT INTO "ferro_noquant" VALUES('IrSc',0.364158701622,16.47633291,1,0,1,1.65175902843,0);
+INSERT INTO "ferro_noquant" VALUES('HfOs',0.353141211025,16.99037046,0,0,1,2.19160604477,0);
+INSERT INTO "ferro_noquant" VALUES('CoPt',0.711237553343,13.357,1,0,1,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('MnNi',0.715485369808,11.88004725,1,0,0,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('MnPd',0.57281499373,14.8389970462,1,1,0,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('MnPt',0.579019073569,14.68,1,0,1,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('NiPt',0.762940221016,13.1071868078,1,0,1,1.89935600758,1);
+INSERT INTO "ferro_noquant" VALUES('CoPt3',0.693630451435,14.0564762977,1,0,1,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('Cr3Pt',0.52048373619,13.4490273437,1,0,1,3.67481803894,1);
+INSERT INTO "ferro_noquant" VALUES('CrPt3',0.619669341641,14.5238749043,1,0,1,3.67481803894,1);
+INSERT INTO "ferro_noquant" VALUES('FePt',0.63528643082,14.1668380803,1,0,1,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Mn3Pt',0.550484678757,14.0785026343,1,0,1,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('MnNi3',0.797682514859,11.5960922143,1,0,0,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('MnPt3',0.627116911982,14.7500407392,1,0,1,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('Cr4Pt',0.521967101489,13.027640977,1,0,1,3.67481803894,1);
+INSERT INTO "ferro_noquant" VALUES('FeRh',0.636606657779,13.3520438345,1,1,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Co3Pt',0.749745284698,12.337523408,1,0,1,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('Co4Os',0.773638394777,11.37482325,1,0,1,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('Co4Ru',0.767173483555,11.470678,1,1,0,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('CoRh',0.728289934974,12.35771575,1,1,0,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('CrPt',0.529327190925,15.113525504,1,0,1,3.67481803894,1);
+INSERT INTO "ferro_noquant" VALUES('CrPt4',0.631970074197,14.557651344,1,0,1,3.67481803894,1);
+INSERT INTO "ferro_noquant" VALUES('Fe13Pd7',0.641773222364,13.5561904063,1,1,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Fe13Pt7',0.644834950054,13.4918245347,1,0,1,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Fe3Pt17',0.657625302294,14.7500407392,1,0,1,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Fe3Rh7',0.648586371291,13.4137878702,1,1,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('FePd26',0.675906847437,14.6853460112,1,1,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Mn2Pt3',0.59614900293,14.761410246,1,0,1,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('MnPd3',0.692173333021,13.3637046657,1,1,0,4.20857000351,1);
+INSERT INTO "ferro_noquant" VALUES('NiPd',0.752482590563,13.289344,1,1,0,1.89935600758,1);
+INSERT INTO "ferro_noquant" VALUES('NiRh',0.759710124228,12.5047695128,1,1,0,1.89935600758,0);
+INSERT INTO "ferro_noquant" VALUES('Fe2Hf',0.46150987372,14.4453391927,1,0,1,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Fe2Zr',0.449503092939,14.8311919793,1,1,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Co3Ir',0.750380223096,11.9939195131,1,0,1,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('Co3Ir7',0.744357269808,12.0909680943,1,0,1,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('Co3Rh',0.750380223096,11.9939195131,1,1,0,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('Co4Rh',0.772980027292,11.6432503845,1,1,0,2.7561609745,1);
+INSERT INTO "ferro_noquant" VALUES('CoIr',0.720410936244,12.4928697598,1,0,1,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('CoOs',0.680645456475,12.4881462429,1,0,1,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('CoRu',0.697198731059,12.1916458269,1,1,0,2.7561609745,0);
+INSERT INTO "ferro_noquant" VALUES('Fe16Rh',0.668851387723,12.0487505556,1,1,0,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Fe32Pt',0.672765581933,11.9812996935,1,0,1,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Fe9Pt',0.662584205604,12.3757854936,1,0,1,3.53454303741,1);
+INSERT INTO "ferro_noquant" VALUES('Fe9Rh',0.664715105171,12.1856716313,1,1,0,3.53454303741,1);
+CREATE TABLE ferro_noquant_realact (
+    compound character varying(7),
+    elconc double precision,
+    atvol double precision,
+    has3d integer,
+    has4d integer,
+    has5d integer,
+    max_ded double precision,
+    isferromagnetic double precision
+);
+INSERT INTO "ferro_noquant_realact" VALUES('FeCo',0.734059888337,11.579436685,1,0,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ni',0.917132325319,10.903552,1,0,0,1.89935600758,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe',0.676821728076,11.8199515,1,0,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('AlFe3',0.55352822994,12.1945,1,0,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Mn',0.592219012066,11.8199515,1,0,0,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('FeNi3',0.847581242231,11.2083650825,1,0,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe3Pd',0.610901434436,13.9138648575,1,1,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfV2',0.139474782705,33.458855975,1,0,1,2.28774404526,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Pd',0.679533993934,14.71596725,0,1,0,0.0,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('FePt3',0.654602335855,14.5126277125,1,0,1,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CrPt3',0.619669341609,14.523874905,1,0,1,3.67481803894,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe3Pt',0.655167614325,12.97377925,1,0,1,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr3Rh',0.528844066155,12.76368675,1,1,0,3.67481803894,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Pt',0.66405154315,15.059072,0,0,1,0.708856999874,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr3Ir',0.525127756509,12.8540148875,1,0,1,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('V',0.363060641874,13.771804,1,0,0,2.28774404526,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr3Ru',0.507626409314,12.80469235,1,1,0,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co2Nb',0.295973106247,25.9032544,1,1,0,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoTi2',0.223081584245,25.4017680833,1,0,0,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr3Os',0.506002525507,12.8457856875,1,0,1,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoTi',0.483896935837,13.43261244,1,0,0,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Nb',0.278264741075,17.9685,0,1,0,2.32224798203,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr3Pt',0.537319075144,13.027640975,1,0,1,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr2Nb',0.202560378073,27.9751979167,1,1,0,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Rh',0.656072313748,13.718,0,1,0,1.34492301941,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('IrTi3',0.334192112374,15.7095269625,1,0,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ta',0.27575031592,18.1323455,0,0,1,1.56566202641,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoZr',0.398968508292,16.29201269,1,1,0,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co2Y',0.223929923609,31.2597793417,1,1,0,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr2Ta',0.20160161711,28.1082401417,1,0,1,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ir2Sc',0.211811319911,33.0482809083,1,0,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoHf',0.410425114374,15.83723747,1,0,1,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ir2Zr',0.220813826304,33.210480775,0,1,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ir',0.635782877604,14.155776,0,0,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('IrNb3',0.354710173223,16.9152182625,0,1,1,2.32224798203,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('IrV3',0.437299330113,13.7205789875,1,0,1,2.28774404526,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('IrZr',0.355888707002,18.264136715,0,1,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoV3',0.469782020722,12.7718808625,1,0,0,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfRh3',0.518200999109,14.9555867575,0,1,1,1.34492301941,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfIr3',0.512284018996,15.128326695,0,0,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfTc',0.314593269655,17.4828915,0,1,1,2.99570298195,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfPt',0.415451631385,16.8491335,0,0,1,1.00957000256,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ir3Ti',0.545346664721,14.2111440325,1,0,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr',0.502346965021,11.943936,1,0,0,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfNi2',0.291468422875,27.4472271167,1,0,1,1.89935600758,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Mo',0.38392782157,15.6279375,0,1,0,2.92410993576,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr2Zr',0.170400540374,31.2988052833,1,1,0,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ir2Y',0.197054630259,35.5231439667,0,1,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr2Hf',0.175826907904,30.332862,1,0,1,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ir3V',0.577685281306,13.8483708325,1,0,1,2.28774404526,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfMo2',0.14900548029,35.7928669667,0,1,1,2.92410993576,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr2Ti',0.190316268905,28.023528225,1,0,0,3.67481803894,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoSc',0.385761868518,15.553636815,1,0,0,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('W',0.380294459465,15.777248,0,0,1,2.13846206665,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfW2',0.146370867336,36.43712325,0,0,1,2.13846206665,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('IrY',0.305312436393,19.652,0,1,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ir3Nb',0.542371383308,14.75004074,0,1,1,2.32224798203,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Ir3Ta',0.545307648931,14.670617615,0,0,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfRu',0.357760253062,16.771007815,0,1,1,1.89930105209,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('IrSc',0.364158701622,16.47633291,1,0,1,1.65175902843,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('HfOs',0.353141211025,16.99037046,0,0,1,2.19160604477,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoPt',0.711237553343,13.357,1,0,1,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('MnNi',0.715485369808,11.88004725,1,0,0,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('MnPd',0.57281499373,14.8389970462,1,1,0,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('MnPt',0.579019073569,14.68,1,0,1,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('NiPt',0.762940221016,13.1071868078,1,0,1,1.89935600758,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoPt3',0.693630451435,14.0564762977,1,0,1,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr3Pt',0.52048373619,13.4490273437,1,0,1,3.67481803894,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CrPt3',0.619669341641,14.5238749043,1,0,1,3.67481803894,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('FePt',0.63528643082,14.1668380803,1,0,1,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Mn3Pt',0.550484678757,14.0785026343,1,0,1,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('MnNi3',0.797682514859,11.5960922143,1,0,0,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('MnPt3',0.627116911982,14.7500407392,1,0,1,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Cr4Pt',0.521967101489,13.027640977,1,0,1,3.67481803894,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('FeRh',0.636606657779,13.3520438345,1,1,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co3Pt',0.749745284698,12.337523408,1,0,1,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co4Os',0.773638394777,11.37482325,1,0,1,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co4Ru',0.767173483555,11.470678,1,1,0,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoRh',0.728289934974,12.35771575,1,1,0,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CrPt',0.529327190925,15.113525504,1,0,1,3.67481803894,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CrPt4',0.631970074197,14.557651344,1,0,1,3.67481803894,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe13Pd7',0.641773222364,13.5561904063,1,1,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe13Pt7',0.644834950054,13.4918245347,1,0,1,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe3Pt17',0.657625302294,14.7500407392,1,0,1,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe3Rh7',0.648586371291,13.4137878702,1,1,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('FePd26',0.675906847437,14.6853460112,1,1,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Mn2Pt3',0.59614900293,14.761410246,1,0,1,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('MnPd3',0.692173333021,13.3637046657,1,1,0,4.20857000351,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('NiPd',0.752482590563,13.289344,1,1,0,1.89935600758,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('NiRh',0.759710124228,12.5047695128,1,1,0,1.89935600758,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe2Hf',0.46150987372,14.4453391927,1,0,1,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe2Zr',0.449503092939,14.8311919793,1,1,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co3Ir',0.750380223096,11.9939195131,1,0,1,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co3Ir7',0.744357269808,12.0909680943,1,0,1,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co3Rh',0.750380223096,11.9939195131,1,1,0,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Co4Rh',0.772980027292,11.6432503845,1,1,0,2.7561609745,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoIr',0.720410936244,12.4928697598,1,0,1,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoOs',0.680645456475,12.4881462429,1,0,1,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('CoRu',0.697198731059,12.1916458269,1,1,0,2.7561609745,0.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe16Rh',0.668851387723,12.0487505556,1,1,0,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe32Pt',0.672765581933,11.9812996935,1,0,1,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe9Pt',0.662584205604,12.3757854936,1,0,1,3.53454303741,1.1);
+INSERT INTO "ferro_noquant_realact" VALUES('Fe9Rh',0.664715105171,12.1856716313,1,1,0,3.53454303741,1.1);
+CREATE TABLE ferro_quant (
+    compound character varying(7),
+    max_ded integer,
+    elconc integer,
+    atvol integer,
+    has3d integer,
+    has4d integer,
+    has5d integer,
+    isferromagnetic integer
+);
+INSERT INTO "ferro_quant" VALUES('AlFe3',2,1,1,1,0,0,1);
+INSERT INTO "ferro_quant" VALUES('Co2Nb',1,0,2,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Co2Y',1,0,2,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Co3Ir',1,2,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Co3Ir7',1,2,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Co3Pt',1,2,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Co3Rh',1,2,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('Co4Os',1,2,0,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Co4Rh',1,2,0,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('Co4Ru',1,2,0,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('CoHf',1,0,2,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('CoIr',1,1,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('CoOs',1,1,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('CoRu',1,1,1,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('CoSc',1,0,2,1,0,0,0);
+INSERT INTO "ferro_quant" VALUES('CoTi',1,0,1,1,0,0,0);
+INSERT INTO "ferro_quant" VALUES('CoTi2',1,0,2,1,0,0,0);
+INSERT INTO "ferro_quant" VALUES('CoV3',1,0,1,1,0,0,0);
+INSERT INTO "ferro_quant" VALUES('CoZr',1,0,2,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Cr',2,0,1,1,0,0,0);
+INSERT INTO "ferro_quant" VALUES('Cr2Hf',2,0,2,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Cr2Nb',2,0,2,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Cr2Ta',2,0,2,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Cr2Ti',2,0,2,1,0,0,0);
+INSERT INTO "ferro_quant" VALUES('Cr2Zr',2,0,2,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Cr3Ir',2,0,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Cr3Os',2,0,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Cr3Pt',2,0,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Cr3Rh',2,0,1,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Cr3Ru',2,0,1,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('CrPt3',2,1,2,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('CrPt3',2,1,2,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('CrPt4',2,1,2,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Fe',2,1,1,1,0,0,1);
+INSERT INTO "ferro_quant" VALUES('Fe13Pd7',2,1,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('Fe13Pt7',2,1,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Fe16Rh',2,1,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('Fe32Pt',2,1,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Fe3Pd',2,1,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('Fe3Pt',2,1,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Fe3Pt17',2,1,2,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Fe3Rh7',2,1,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('Fe9Pt',2,1,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Fe9Rh',2,1,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('FeCo',2,2,0,1,0,0,1);
+INSERT INTO "ferro_quant" VALUES('FeNi3',2,2,0,1,0,0,1);
+INSERT INTO "ferro_quant" VALUES('FePd26',2,1,2,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('FePt',2,1,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('FePt3',2,1,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('FeRh',2,1,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('HfIr3',0,0,2,0,0,1,0);
+INSERT INTO "ferro_quant" VALUES('HfMo2',1,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('HfNi2',1,0,2,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('HfOs',1,0,2,0,0,1,0);
+INSERT INTO "ferro_quant" VALUES('HfPt',0,0,2,0,0,1,0);
+INSERT INTO "ferro_quant" VALUES('HfRh3',0,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('HfRu',1,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('HfTc',1,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('HfV2',1,0,2,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('HfW2',1,0,2,0,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Ir',0,1,1,0,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Ir2Sc',0,0,2,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Ir2Y',0,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('Ir2Zr',0,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('Ir3Nb',1,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('Ir3Ta',0,0,2,0,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Ir3Ti',0,0,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Ir3V',1,1,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('IrNb3',1,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('IrSc',0,0,2,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('IrTi3',0,0,2,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('IrV3',1,0,1,1,0,1,0);
+INSERT INTO "ferro_quant" VALUES('IrY',0,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('IrZr',0,0,2,0,1,1,0);
+INSERT INTO "ferro_quant" VALUES('Mn',2,1,1,1,0,0,1);
+INSERT INTO "ferro_quant" VALUES('Mn2Pt3',2,1,2,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Mn3Pt',2,1,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('MnNi',2,1,1,1,0,0,1);
+INSERT INTO "ferro_quant" VALUES('MnNi3',2,2,0,1,0,0,1);
+INSERT INTO "ferro_quant" VALUES('MnPd',2,1,2,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('MnPd3',2,1,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('MnPt',2,1,2,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('MnPt3',2,1,2,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('Mo',1,0,2,0,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Nb',1,0,2,0,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Ni',1,2,0,1,0,0,1);
+INSERT INTO "ferro_quant" VALUES('NiPd',1,2,1,1,1,0,1);
+INSERT INTO "ferro_quant" VALUES('NiPt',1,2,1,1,0,1,1);
+INSERT INTO "ferro_quant" VALUES('NiRh',1,2,1,1,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Pd',0,1,2,0,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Pt',0,1,2,0,0,1,0);
+INSERT INTO "ferro_quant" VALUES('Rh',0,1,1,0,1,0,0);
+INSERT INTO "ferro_quant" VALUES('Ta',0,0,2,0,0,1,0);
+INSERT INTO "ferro_quant" VALUES('V',1,0,1,1,0,0,0);
+INSERT INTO "ferro_quant" VALUES('W',1,0,2,0,0,1,0);
+CREATE TABLE float_2class (
+    id character varying(5),
+    val double precision,
+    act double precision
+);
+INSERT INTO "float_2class" VALUES('id-1',1.0,-0.1);
+INSERT INTO "float_2class" VALUES('id-2',23.0,1.2);
+INSERT INTO "float_2class" VALUES('id-3',4.0,0.5);
+INSERT INTO "float_2class" VALUES('id-4',6.0,1.01);
+INSERT INTO "float_2class" VALUES('id-5',321.0,0.7);
+INSERT INTO "float_2class" VALUES('id-6',885.0,2.0);
+INSERT INTO "float_2class" VALUES('id-7',252.0,0.0);
+INSERT INTO "float_2class" VALUES('id-8',1351.1,1.1);
+INSERT INTO "float_2class" VALUES('id-9',3215.0,-0.9);
+INSERT INTO "float_2class" VALUES('id-10',2585.0,1.3);
+INSERT INTO "float_2class" VALUES('id-11',55.0,0.9);
+INSERT INTO "float_2class" VALUES('id-12',12.0,3.0);
+CREATE TABLE simple_mols (
+    smiles character varying(15),
+    id character varying(7)
+);
+INSERT INTO "simple_mols" VALUES('COC','ether-1');
+INSERT INTO "simple_mols" VALUES('CC(=O)O','acid-1');
+INSERT INTO "simple_mols" VALUES('c1ccccc1','arom-1');
+INSERT INTO "simple_mols" VALUES('CCOC','ether-2');
+INSERT INTO "simple_mols" VALUES('CCC(=O)O','acid-2');
+INSERT INTO "simple_mols" VALUES('Cc1ccccc1','arom-2');
+INSERT INTO "simple_mols" VALUES('CCOCC','ether-3');
+INSERT INTO "simple_mols" VALUES('CC(C)C(=O)O','acid-3');
+INSERT INTO "simple_mols" VALUES('Cc1cc(C)ccc1','arom-3');
+INSERT INTO "simple_mols" VALUES('CCCOCC','ether-4');
+INSERT INTO "simple_mols" VALUES('CCC(C)C(=O)O','acid-4');
+INSERT INTO "simple_mols" VALUES('Cc1cc(C)cc(C)c1','arom-4');
+CREATE TABLE simple_mols_fps (
+    id character varying(7) NOT NULL,
+    autofragmentfp bytea
+);
+INSERT INTO "simple_mols_fps" VALUES('ether-1','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x80\x00\x00\x00\x07\x00\x00\x00\x1c\x04\x10\x1e\x02\x18n\x1c''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('acid-1','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x80\x00\x00\x00\x1a\x00\x00\x00\x1a\x00\x0c\x00\x04\x00\n\x04\x02\x08\n\x08\x12\x08\x02\n\x0e\n\n\x1a\x00\x02\x02\x02\x02\x04\n''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('arom-1','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x80\x00\x00\x00\x17\x00\x00\x00\x00 \x02\x06\x04\n\x02\x04\x08\x02\x0c\n\x02\n\x08\x00\x00\x08$\x18\x02\x06\x16\x00''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('ether-2','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x80\x00\x00\x00\x11\x00\x00\x00\x1c\x04\x10\n\x08\x08\x02\x12\x04\n\x0cH\n\x02\x02\x02\x04\n''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('acid-2','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S"\xe0\xff\xff\xff\x80\x00\x00\x00''\x00\x00\x00\x00\x00\x06\n\x02\x00\x0c\x00\x04\x00\n\x04\x00\x00\x08\n\x00\x06\n\x06\x08\x02\x04\x04\x0e\x08\x00\x06\x00\x00\x00\x04\x12\x00\x02\x02\x02\x02\x04\n"
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('arom-2','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x80\x00\x00\x006\x00\x00\x00\x00\x14\x02\x02\x00\x00\x00\x00\x04\x00\x02\x00\x04\x00\x02\x02\x04\x04\x02\x00\x00\x04\x04\x00\x02\x06\x02\x00\x04\x02\x00\x02\x02\x00\x00\x08\x02\x00\x00\x00\x00\x00\x02\x12\x04\x04\x04\x06\x02\x02\x02\x02\x08\x08\x00''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('ether-3','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x80\x00\x00\x00\x15\x00\x00\x00\x1c\x04\x10\n\x08\x06\x00\x02\x12\x04\x00\x08\x0c\x06\x10.\n\x02\x02\x02\x04\n''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('acid-3','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x80\x00\x00\x002\x00\x00\x00\x00\x00\x04\x00\n\x02\x00\x06\x04\x00\x04\x00\x00\x08\x04\x00\x00\x06\x00\n\x00\x06\x04\x00\x02\x00\x04\x08\x02\x04\x00\x02\x0e\x00\x06\x00\x06\x00\x00\x00\x00\x02\x12\x00\x02\x02\x02\x02\x04\x00\x08''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('arom-3','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x01\x00\x00Y\x00\x00\x00\x16\x06\x00\x00\x00\x08\x00\x02\x04\x00\x02\x08\x04\x02\x00\x00\x02\x0c\x00\x04\n\x00\x00\x08\x00\x06\x02\x02\x04\x00\x00\x10\x08\x00\x04\x00\x02\n\x02\x06\x00\x10\x00\x14\x02\x00\x08\x04\x00\x02\x08\x02\x02\x00\x02\x04\x02\x00\x06\x00\x00\x00\x00\n\x02\x00\x08\x00\x02\x00\x00\x00\x00\x02\n\x00\x04\x00\x00\x08\x08\x0c\n\x06\x02\x02\x04\x02\x08\x00''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('ether-4','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x80\x00\x00\x00$\x00\x00\x00\x02\x0e\x02\x04\x04\x10\x00\x08\x08\x06\x00\x02\x04\x02\x08\x04\x00\x08\x0c\x04\x00\x0e\x00\n\x00\x06\x04\x06\n\x00\x08\x02\x02\x02\x00\x02\n''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('acid-4','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x01\x00\x00N\x00\x00\x00\x02\x06\x08\x00\x02\x00\x04\x06\x00\x00\x02\x02\x0e\x00\x00\x06\x00\x18\x02\n\x08\x02\x04\x00\x00\x00\x0e\x00\x04\x02\x06\x00\x02\x00\n\n\x00\x02\x02\x00\x00\x02\x00\x0e\x06\x1a\x06\x04\x00\n\x02\x00\x00\x16\x00\x06\x02\x00\x04\x00\x04\x06\x10\x06\x08\x06\x08\x02\x06\x06\x00\x02\x02\x00\x02\x12\x00\x04\x02''
+tRp2
+.');
+INSERT INTO "simple_mols_fps" VALUES('arom-4','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x01\x00\x00Z\x00\x00\x00\x16\x06\x00\x00\x00\x08\x00\x02\x04\x00\x02\x08\x04\x02\x00\x00\x02\x0c\x00\x04\n\x00\x00\x08\x00\x06\x02\x02\x04\x00\x00\x10\x08\x00\x04\x00\x02\n\x02\x06\x00\x02\x0c\x00\x14\x02\x00\x08\x04\x00\x02\x08\x02\x02\x00\x02\x04\x02\x00\x06\x00\x00\x00\x00\n\x02\x00\x08\x00\x02\x00\x00\x00\x00\x02\n\x00\x04\x00\x00\x08\x08\x0c\n\x06\x02\x02\x04\x02\x08\x00''
+tRp2
+.');
+CREATE TABLE simple_mols1 (
+    smiles character varying(15),
+    id character varying(7)
+);
+INSERT INTO "simple_mols1" VALUES('COC','ether-1');
+INSERT INTO "simple_mols1" VALUES('CC(=O)O','acid-1');
+INSERT INTO "simple_mols1" VALUES('c1ccccc1','arom-1');
+INSERT INTO "simple_mols1" VALUES('CCOC','ether-2');
+INSERT INTO "simple_mols1" VALUES('CCC(=O)O','acid-2');
+INSERT INTO "simple_mols1" VALUES('Cc1ccccc1','arom-2');
+INSERT INTO "simple_mols1" VALUES('CCOCC','ether-3');
+INSERT INTO "simple_mols1" VALUES('CC(C)C(=O)O','acid-3');
+INSERT INTO "simple_mols1" VALUES('Cc1cc(C)ccc1','arom-3');
+INSERT INTO "simple_mols1" VALUES('CCCOCC','ether-4');
+INSERT INTO "simple_mols1" VALUES('CCC(C)C(=O)O','acid-4');
+INSERT INTO "simple_mols1" VALUES('Cc1cc(C)cc(C)c1','arom-4');
+CREATE TABLE simple_mols1_fp (
+    id character varying(10),
+    autofragmentfp bytea
+);
+INSERT INTO "simple_mols1_fp" VALUES('ether-1','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00\x08\x00\x00\x00\xe5\x04a\x00\xcd\x04]\x00T\x1d\x06\xd1\x00&\xca''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('acid-1','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00\x1c\x00\x00\x008\x95\x04*\xea\x06\x9aY\x01ZLZ\x92\x1e\x0e\x82\x0eD"n8\x84\x1a\x85\x00\x16,N\xad\x01\x1e6\xf2''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('arom-1','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00\x17\x00\x00\x00"4\x18\xc1\x02D.m\x02\x0c\xfa<\x85\x01\x16e\x00\x18nB\x0cH\xeex!\x00h\xb2\xc9\x00''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('ether-2','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00\x14\x00\x00\x008\x8e\xba\xd9\x01a\x00\x91\x02\t\x00\x16\xaa\x82T"\x1cP\xbeI\x01)\x00\xd1\x00&6\x92''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('acid-2','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00*\x00\x00\x00\n,\x12\xfd\x004\x01\x01*\xe2\x06\x06\x9aza\x00\x10HLZ\x08\x18\x12Z\x1e\x0e\x82\x0eD"n8\x84\x1a\xc4@:\x16,N%\x00$\x9c\x1e6\xf2''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('arom-2','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00J\x00\x00\x00"\x14\x1e\x18\x8e\x16:P\x94\x1ax@\x02 \x0c\n\x1a\x18\xb6X(\x9a\x12\x08\x0c\x8cl<\x06\x8a\x0e\x1d\x00\x0e\x16\x062\xaa\x10\x06\x0c\x10\x10\x18*\x04(\x12(\x18\x0c\x06"\x1c*D|\x06*D $>,.\x12\x16hRN\x0eV\x96*F\x00''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('ether-3','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00\x18\x00\x00\x008\x8e\xba\x99\x01\x1ea\x00\xa2\x95\x00X\t\x00\x16fB\x82T"\x1cP\xbeI\x01)\x00\xd1\x00&6\x92''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('acid-3','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00:\x00\x00\x00\n,\x12\xfd\x00(\n\xd9\x00\x12*\x84\x1a@\x06\x06\x9az\xb4\x18`\x10HLZ\x08\x18\x12\x12\x1c(\x1e\n\x02\x82\x0eD\x04\x1cn8\x84\x1aD~@:\x16,N\x0c\x8aP&$\x9c\x04\x186V\x9a''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('arom-3','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00h\x00\x00\x00"\x0c\x06\x1e\x18\x8e\x16&\x12<\x12\x1ax\x1a&\x12,\x0e@\x02\x00\x10\x0c\x0c\n\x1a\x08\x0e\xb6\x10F(\x8c\x08\x02\x12\x08\n\x00\x8c\x06d:\x00\x06\x8a\n\x02\xfc\x10\x00\x0c\x16\x06\x12\x1e\x98\x10\x10\x06\x0c\x10\x10\x18*\x04\x14\x12\n\x06(\x18\x0c\x06"\x1c*D|\x06*D $\x06\n\x06",.\x12\x16P\x16RN\x00\x0cVR\x18(*F\x00''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('ether-4','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00(\x00\x00\x008\x12z\xba\x99\x01\x1e<\xe2\x0e\xa2r\xd6X\x90r\x08\x0cfB\x82\x10B"\x1cP\xbe>6\x14\x1a\nl\x80)\x00L\x0c\x16\xf4&6\x92''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('acid-4','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00Y\x00\x00\x00\n\x08"\x12u\x00B\x08\x08\x14\n\x9e\xcc\x12*p\x12\x1a@\x06\x06BVj\x0eX\x0e\x06B\x18\x08\x10\x1e$\x10HL6\x08\x18\x08\x18\x12\x06\n\x06\x14(\x1e\n\x02\x82\x02\nD\x04\x1cD(2\x04\x1cf\x1a \x16\n~\x12,:\x16,N\x00\n\x8a\x0e@&$VD\x04\x18\x1a\x1a2"l,''
+tRp2
+.');
+INSERT INTO "simple_mols1_fp" VALUES('arom-4','crdkit.DataStructs.cDataStructs
+ExplicitBitVect
+p1
+(S''\xe0\xff\xff\xff\x00\x08\x00\x00l\x00\x00\x00"\x0c\x06\x1e\x18\x8e\x16&\x12<\x12\x1ax\x1a&\x12,\x0e@\x02\x00\x10\x0c\x0c\n\x1a\x08\x0e$\x90\x10F(\x8c\x08\x02\x12\x08\n\x00\x8c\x06d:\x00\x06\x8a\n\x02\x06\xf4\x10\x00\x0c\x16\x06\x12\x1e\x98\x10\x10\x06\x06\x04\x10\x10\x18*\x04\x14\x12\n\x06(\x18\x0c\x06"\x1c*D|\x06*D $\x06\n\x06",.\x12\x16P\x16RN\x00\x0cVR\x18(*2\x12\x00''
+tRp2
+.');
+CREATE TABLE ten_elements (
+    id integer,
+    val integer
+);
+INSERT INTO "ten_elements" VALUES(0,11);
+INSERT INTO "ten_elements" VALUES(2,21);
+INSERT INTO "ten_elements" VALUES(4,31);
+INSERT INTO "ten_elements" VALUES(6,41);
+INSERT INTO "ten_elements" VALUES(8,51);
+INSERT INTO "ten_elements" VALUES(10,61);
+INSERT INTO "ten_elements" VALUES(12,71);
+INSERT INTO "ten_elements" VALUES(14,81);
+INSERT INTO "ten_elements" VALUES(16,91);
+INSERT INTO "ten_elements" VALUES(18,101);
+CREATE TABLE ten_elements_dups (
+    id integer,
+    val integer
+);
+INSERT INTO "ten_elements_dups" VALUES(0,11);
+INSERT INTO "ten_elements_dups" VALUES(0,11);
+INSERT INTO "ten_elements_dups" VALUES(2,21);
+INSERT INTO "ten_elements_dups" VALUES(2,21);
+INSERT INTO "ten_elements_dups" VALUES(4,31);
+INSERT INTO "ten_elements_dups" VALUES(4,31);
+INSERT INTO "ten_elements_dups" VALUES(6,41);
+INSERT INTO "ten_elements_dups" VALUES(6,41);
+INSERT INTO "ten_elements_dups" VALUES(8,51);
+INSERT INTO "ten_elements_dups" VALUES(8,51);
+INSERT INTO "ten_elements_dups" VALUES(10,61);
+INSERT INTO "ten_elements_dups" VALUES(10,61);
+INSERT INTO "ten_elements_dups" VALUES(12,71);
+INSERT INTO "ten_elements_dups" VALUES(12,71);
+INSERT INTO "ten_elements_dups" VALUES(14,81);
+INSERT INTO "ten_elements_dups" VALUES(14,81);
+INSERT INTO "ten_elements_dups" VALUES(16,91);
+INSERT INTO "ten_elements_dups" VALUES(16,91);
+INSERT INTO "ten_elements_dups" VALUES(18,101);
+INSERT INTO "ten_elements_dups" VALUES(18,101);
+CREATE TABLE bit_ensemble_test (id varchar(10),Bit_1 smallint,Bit_3 smallint,Bit_4 smallint,act int);
+INSERT INTO "bit_ensemble_test" VALUES('foo',0,0,0,1);
+INSERT INTO "bit_ensemble_test" VALUES('foo',1,1,0,1);
+INSERT INTO "bit_ensemble_test" VALUES('foo',1,0,1,1);
+INSERT INTO "bit_ensemble_test" VALUES('foo',1,0,1,1);
+CREATE TABLE fromtext (int_col integer,floatCol double precision,strCol varchar(4));
+INSERT INTO "fromtext" VALUES(1,1.0,'1');
+INSERT INTO "fromtext" VALUES(2,2.4,'1');
+INSERT INTO "fromtext" VALUES(3,3.0,'fiib');
+CREATE TABLE fromtext2 (int_col integer,floatCol double precision,strCol varchar(4));
+INSERT INTO "fromtext2" VALUES(1,1.0,'1');
+INSERT INTO "fromtext2" VALUES(2,2.4,'1');
+INSERT INTO "fromtext2" VALUES(3,3.0,'fiib');
+INSERT INTO "fromtext2" VALUES(4,NULL,'foo');
+CREATE TABLE StorageTest (id varchar(32) not null primary key,label varchar(40),val int);
+INSERT INTO "StorageTest" VALUES('RDCmpd-000-001-1','label1',1);
+INSERT INTO "StorageTest" VALUES('RDCmpd-000-002-2','label2',1);
+INSERT INTO "StorageTest" VALUES('RDCmpd-000-010-1','label10',1);
+CREATE VIEW simple_combined AS 
+ SELECT id, smiles, autofragmentfp
+   FROM simple_mols mols
+   JOIN simple_mols_fps fps using (id);
+COMMIT;

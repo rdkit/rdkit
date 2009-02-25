@@ -9,7 +9,7 @@ python-extension DistGeom : DistGeom.cpp
   ../../Numerics/Optimizer//Optimizer   ../../Numerics/EigenSolvers//EigenSolvers
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost ;
 
-install pymod : DistGeom : <location>$(RDBASE)/Python/DistanceGeometry ;
+install pymod : DistGeom : <location>$(RDBASE)/rdkit/DistanceGeometry ;
 
 
 

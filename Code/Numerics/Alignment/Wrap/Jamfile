@@ -7,7 +7,7 @@ import python ;
 python-extension rdAlignment : rdAlignment.cpp
   ../../Alignment//Alignment ../../../Geometry//RDGeometry ../../../RDBoost//RDBoost ../../../RDGeneral//RDGeneral ;
 
-install pymod : rdAlignment : <location>$(RDBASE)/Python/Numerics ;
+install pymod : rdAlignment : <location>$(RDBASE)/rdkit/Numerics ;
 
 
 

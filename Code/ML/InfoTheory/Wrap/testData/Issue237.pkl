@@ -2,7 +2,7 @@
 (lp2
 S'MAC-0024696'
 p3
-acDataStructs.cDataStructs
+acrdkit.DataStructs.cDataStructs
 ExplicitBitVect
 p4
 (S'\xe0\xff\xff\xffy\x0c\x00\x00\x00\x00\x00\x00\xe5/'

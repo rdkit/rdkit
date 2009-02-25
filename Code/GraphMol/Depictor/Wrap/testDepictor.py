@@ -3,14 +3,14 @@
 #
 #  $Id$
 #
-import Chem
-from Chem import rdDepictor
-import Geometry
-import RDConfig
+from rdkit import Chem
+from rdkit.Chem import rdDepictor
+from rdkit import Geometry
+from rdkit import RDConfig
 import unittest
 import os,sys
 import cPickle as pickle
-from Chem.ChemUtils import AlignDepict
+from rdkit.Chem.ChemUtils import AlignDepict
 import numpy.oldnumeric as Numeric
 
 def feq(v1,v2,tol2=1e-4):

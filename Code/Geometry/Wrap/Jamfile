@@ -7,7 +7,7 @@ import python ;
 python-extension rdGeometry : Point.cpp UniformGrid3D.cpp rdGeometry.cpp
   ../../Geometry//RDGeometry ../../DataStructs//DataStructs ../../RDBoost//RDBoost ../../RDGeneral//RDGeneral ;
 
-install pymod : rdGeometry : <location>$(RDBASE)/Python/Geometry ;
+install pymod : rdGeometry : <location>$(RDBASE)/rdkit/Geometry ;
 
 
 

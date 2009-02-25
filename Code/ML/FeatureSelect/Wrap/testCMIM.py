@@ -1,6 +1,6 @@
-from ML import FeatureSelect as FS
-import DataStructs as DS
-import RDConfig
+from rdkit.ML import FeatureSelect as FS
+from rdkit import DataStructs as DS
+from rdkit import RDConfig
 import unittest
 
 class TestCase(unittest.TestCase):

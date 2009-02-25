@@ -1,21 +1,23 @@
-The instructions below are for source distributions from Q3 2008 on. 
+The instructions below are for source distributions from Q1 2009 on. 
 = Building on Linux =
 
 == Getting Ready ==
  * Required packages:
-   ** The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
    ** Blas and lapack. This is also probably just a matter of finding the appropriate package for your linux.
    ** flex and bison. These are frequently already installed if you have the various pieces of the development environment installed
-   ** sqlite3. You also need the shared libraries. This may require that you install a sqlite3-dev package.
-   ** You need to have numpy (http://www.scipy.org/NumPy) installed. If you do not have python and/or numpy installed in the standard location, you need to edit the Jamroot ($RDBASE/Code/Jamroot) to reflect the location, i.e. replace `<toolset>gcc:<include>/usr/lib/python2.5/site-packages/numpy/core/include` with whatever is appropriate for your python/numpy installation.
+   ** The following are required if you are planning on using the Python wrappers:
+     *** The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
+     *** sqlite3. You also need the shared libraries. This may require that you install a sqlite3-dev package.
+   *** You need to have numpy (http://www.scipy.org/NumPy) installed.
 
 == Installing Boost ==
   * download the boost source distribution from [http://www.boost.org the boost web site]
   * extract the source to a _non-temporary_ location on your machine, you're going to need it to build the RDKit as well as boost. (e.g. `/usr/local/src/boost_1_36_0`)
-  * build and install the required boost shared libraries: 
-    ** `cd $BOOST`
-    ** `bjam  --with-thread --with-python release install`
-  If you have any problems with this step, check the boost [http://www.boost.org/more/getting_started/unix-variants.html installation instructions].
+  * The following are required if you are planning on using the Python wrappers:
+    ** build and install the required boost shared libraries: 
+     *** `cd $BOOST`
+     *** `bjam  --with-thread --with-python release install`
+    If you have any problems with this step, check the boost [http://www.boost.org/more/getting_started/unix-variants.html installation instructions].
 
 == Installing the boost numeric bindings ==
   * download the most recent version of the boost numeric bindings from [http://mathema.tician.de/dl/software/boost-bindings http://mathema.tician.de/dl/software/boost-bindings].
@@ -30,20 +32,22 @@ The instructions below are for source distributions from Q3 2008 on.
     ** RDBASE: the root directory of the RDKit distribution (e.g. ~/RDKit)
     ** BOOSTHOME: should be wherever you extracted the boost source (e.g. /usr/local/src/boost_1_34_1)
     ** BOOST_BUILD_PATH: should be the same as $BOOSTHOME
-    ** PYTHON_ROOT: wherever python is installed (e.g. /usr)
-    ** PYTHON_VERSION: the first two digits of the python version (e.g. 2.5, *not* 2.5.1)
-    ** PYTHONPATH: make sure it includes $RDBASE/Python
     ** LD_LIBRARY_PATH: make sure it includes $RDBASE/bin and wherever the boost shared libraries were installed
+    ** The following are required if you are planning on using the Python wrappers:
+      ** PYTHON_ROOT: wherever python is installed (e.g. /usr)
+      ** PYTHON_VERSION: the first two digits of the python version (e.g. 2.5, *not* 2.5.1)
+      ** PYTHONPATH: make sure it includes $RDBASE
+  * If you are planning on using the Python wrappers:
+    ** cd to $RDBASE/Code and do `python CompleteJamroot.py`
   * Building: cd to $RDBASE/Code and do `bjam` (`bjam address-model=64` on 64bit systems), this builds all libraries, wrappers, and regression tests. This command will generate a lot of text (mostly compiler warnings), but it should not generate any errors. At the end you should *not* see any messages about failed or skipped targets. 
 
 == Testing the Build (optional, but recommended) ==
-  * cd to $RDBASE/Code and do `python $RDBASE/Python/TestRunner.py test_list.py`
-  * cd to $RDBASE/Code/GraphMol and do `python $RDBASE/Python/TestRunner.py test_list.py`
+  * cd to $RDBASE/Code and do `python $RDBASE/rdkit/TestRunner.py test_list.py`
   * create the databases used by the Python tests, requires sqlite3 to be installed:
-    ** `sqlite3 $RDBASE/Data/RDTests.sqlt < $RDBASE/Python/Dbase/testData/RDTests.sqlite`
-    ** `sqlite3 $RDBASE/Data/RDData.sqlt < $RDBASE/Python/Dbase/testData/RDData.sqlite`
-  * cd to $RDBASE/Python and do: `find . -name 'test_list.py' -exec python $RDBASE/Python/TestRunner.py \{\} >> pytests.out 2>&1 \;`
-  * cd to $RDBASE/Projects and do: `python $RDBASE/Python/TestRunner.py test_list.py`
+    ** `sqlite3 $RDBASE/Data/RDTests.sqlt < $RDBASE/rdkit/Dbase/testData/RDTests.sqlite`
+    ** `sqlite3 $RDBASE/Data/RDData.sqlt < $RDBASE/rdkit/Dbase/testData/RDData.sqlite`
+  * cd to $RDBASE/Python and do: `python $RDBASE/rdkit/TestRunner.py test_list.py`
+  * cd to $RDBASE/Projects and do: `python $RDBASE/rdkit/TestRunner.py test_list.py`
 
 
 = Building on Windows =
@@ -55,9 +59,9 @@ The instructions below are for source distributions from Q3 2008 on.
   * numpy : the [http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103 current version of numpy] should be installed. It's fine to use the binary installer. Note that a directory from the numpy installation needs to be copied to a new location; details are below in the Setup and Preparation section.
   * boost : download a copy of the current versions of the [http://www.boost.org/users/download/ boost source distribution and boost-Jam]. Both are available from the same link, be sure to get the `.ntx86.zip` file for boost-Jam.  Extract the source distribution (to, for example, c:\boost\boost_1_36_0) and copy the bjam.exe executable from the boost jam zip file to the  same directory.
   * boost numeric bindings : download the most recent version from from [http://mathema.tician.de/dl/software/boost-bindings http://mathema.tician.de/dl/software/boost-bindings].
-    ** extract the tar ball to some temporary location.
-    ** copy the directory `boost-numeric-bindings\boost\numeric\bindings` to `c:\boost\boost_1_36_0\boost\numeric`
-    ** copy the directory `boost-numeric-bindings\libs\numeric\bindings` to `c:\boost\boost_1_36_0\libs\numeric`
+    * extract the tar ball to some temporary location.
+    * copy the directory `boost-numeric-bindings\boost\numeric\bindings` to `c:\boost\boost_1_36_0\boost\numeric`
+    * copy the directory `boost-numeric-bindings\libs\numeric\bindings` to `c:\boost\boost_1_36_0\libs\numeric`
 
   * a subversion client : _This is only necessary if you are planning on building development versions of the RDKit_. A command line client for subversion can be installed as part of the cygwin installation, or a very nice graphical client that integrates well with windows explorer can be downloaded from the [http://tortoisesvn.tigris.org/ Tortoise SVN home page].
 
@@ -72,17 +76,18 @@ This section assumes that python is installed in c:\Python25, that the boost lib
   * If you are planning on using a development version of the RDKit: get a copy of the current RDKit source using subversion. If you're using the command-line client the command is: `svn co http://rdkit.svn.sourceforge.net/svnroot/rdkit/trunk c:\RDKit` 
   * If you are planning on using a released version of the RDKit : get a copy of the most recent release and extract it into the directory c:\RDKit 
   * Set the required environment variables (you can set this in cygwin or in windows. If you set them in windows, be sure to restart your cygwin window):
-  ** RDBASE = c:\RDKit
-  ** BOOSTHOME = c:\boost\boost_1_36_0
-  ** BOOST_BUILD_PATH = c:\boost\boost_1_36_0
-  ** If Python is not installed in the standard location, the PYTHONHOME environment variable should point to the root of your Python installation.
+    * RDBASE = c:\RDKit
+    * BOOSTHOME = c:\boost\boost_1_36_0
+    * BOOST_BUILD_PATH = c:\boost\boost_1_36_0
+    * If Python is not installed in the standard location, the PYTHONHOME environment variable should point to the root of your Python installation.
   * Make sure that the directory c:\Python25 is in your PATH
   * Make sure that the directory c:\RDKit\bin is in your PATH
   * Make sure that the directory c:\boost\lib is in your PATH
-  * Make sure that the directory c:\RDKit\Python is in your PYTHONPATH
+  * Make sure that the directory c:\RDKit is in your PYTHONPATH
 
 == Building the RDKit ==
   * cd to your $RDBASE\Code directory
+  * run : `python CompleteJamroot.py`
   * run : `c:\boost\boost_1_36_0\bjam.exe --toolset=msvc`. This will take a while and will generate a lot of text (including many warnings), but it should finish without errors. 
 
 If the last step above completed without errors, you have succeeded in building the RDKit C++ libraries and Python wrappers. Congratulations!
@@ -91,16 +96,14 @@ If the last step above completed without errors, you have succeeded in building 
 It's a good idea to test your build to make sure everything is ok. Here's how to do so.
 
   * cd to your $RDBASE\Code directory
-  * run `python c:/RDKit/Python/TestRunner.py test_list.py`. After this completes (less than 30 seconds), you should see a message like this:
+  * run `python c:/RDKit/rdkit/TestRunner.py test_list.py`. After this completes (a minute or so), you should see a message like this:
 {{{
 -----------------
         Script: test_list.py.  Passed 14 tests in 9.63 seconds
 }}}
   Note that the number of tests passed and time required to run will change as the code itself changes.  The important thing is that no failures are reported.
-  * cd to your $RDBASE\Code\GraphMol directory
-  * run `python c:/RDKit/Python/TestRunner.py test_list.py`. After this completes (less than 60 seconds), you should see a message like the one above.
-  * cd to your $RDBASE\Python\Chem directory
-  * run `python c:/RDKit/Python/TestRunner.py test_list.py`. After this completes (less than 60 seconds), you should see a message like the one above.
+  * cd to your $RDBASE\rdkit\Chem directory
+  * run `python c:/RDKit/rdkit/TestRunner.py test_list.py`. After this completes (less than 60 seconds), you should see a message like the one above.
 
 If these three test suites pass without failures, your RDKit installation is in good shape and you are ready to go.
 
@@ -110,5 +113,7 @@ Please see the file license.txt for details about the "New BSD"
 license which covers this software and its associated data and
 documents. 
 
-# $Id: README 694 2008-05-24 05:56:39Z glandrum $
-# Copyright (C) 2008 Greg Landrum
+=======
+# $Id$
+# Copyright (C) 2008-2009 Greg Landrum
+

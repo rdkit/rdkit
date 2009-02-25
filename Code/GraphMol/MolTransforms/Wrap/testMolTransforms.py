@@ -1,10 +1,10 @@
-import RDConfig
+from rdkit import RDConfig
 import os,sys
 import unittest
-import DataStructs
-import Chem
-from Geometry import rdGeometry as geom
-from Chem import rdMolTransforms as rdmt
+from rdkit import DataStructs
+from rdkit import Chem
+from rdkit.Geometry import rdGeometry as geom
+from rdkit.Chem import rdMolTransforms as rdmt
 
 def feq(v1, v2, tol=1.0e-4):
     return abs(v1-v2) < tol

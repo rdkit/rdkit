@@ -4,10 +4,10 @@
 #
 #  @@ All Rights Reserved @@
 #
-import RDConfig
+from rdkit import RDConfig
 import os,sys,cPickle
 import unittest
-import DataStructs as ds
+from rdkit import DataStructs as ds
 
 class TestCase(unittest.TestCase):
   def setUp(self) :

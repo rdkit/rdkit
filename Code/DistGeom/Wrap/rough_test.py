@@ -5,11 +5,11 @@
 #  Copyright (C) 2004  Rational Discovery LLC
 #         All Rights Reserved
 #
-import RDConfig
+from rdkit import RDConfig
 import os,sys
 import unittest
 import numpy.oldnumeric as Numeric
-import DistanceGeometry as DG
+from rdkit import DistanceGeometry as DG
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2

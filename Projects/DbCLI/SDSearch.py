@@ -31,7 +31,7 @@
 #
 # Created by Greg Landrum Nov 2006
 #
-_version = "0.5.1"
+_version = "0.5.2"
 
 _usage="""
   SDSearch [optional arguments] <sdfilename>
@@ -54,16 +54,16 @@ _usage="""
       cause some problems if they are case sensitive in the sd file
       
 """
-import Chem
-from Chem import AllChem
-from Dbase.DbConnection import DbConnect
-from Dbase import DbModule
-from Chem.MolDb import Loader
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.Dbase import DbModule
+from rdkit.Chem.MolDb import Loader
 import sys,os,time
-import RDConfig
+from rdkit import RDConfig
 
 # set up the logger:
-import RDLogger as logging
+from rdkit import RDLogger as logging
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 

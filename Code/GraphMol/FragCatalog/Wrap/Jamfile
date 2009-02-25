@@ -18,7 +18,7 @@ python-extension rdfragcatalog : rdfragcatalog.cpp
   ;
 
 install pymod : rdfragcatalog 
-  : <location>$(RDBASE)/Python/Chem ;
+  : <location>$(RDBASE)/rdkit/Chem ;
 
 
 

@@ -1,9 +1,9 @@
-import RDConfig
+from rdkit import RDConfig
 import unittest
-from DataManip.Metric import rdMetricMatrixCalc as rdmmc
+from rdkit.DataManip.Metric import rdMetricMatrixCalc as rdmmc
 import numpy
 import random
-import DataStructs
+from rdkit import DataStructs
 
 def feq(v1,v2,tol2=1e-4):
     return abs(v1-v2)<=tol2

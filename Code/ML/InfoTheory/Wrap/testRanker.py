@@ -1,7 +1,7 @@
-import RDConfig,RDRandom
+from rdkit import RDConfig,RDRandom
 import unittest
-from ML.InfoTheory import rdInfoTheory as rdit
-import DataStructs
+from rdkit.ML.InfoTheory import rdInfoTheory as rdit
+from rdkit import DataStructs
 import numpy
 import os,cPickle
 

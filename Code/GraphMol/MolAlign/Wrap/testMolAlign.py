@@ -4,11 +4,11 @@
 #
 #     @@  All Rights Reserved  @@
 #
-import RDConfig
+from rdkit import RDConfig
 import os,sys
 import unittest
-import Chem
-from Chem import rdMolAlign,rdDistGeom,ChemicalForceFields
+from rdkit import Chem
+from rdkit.Chem import rdMolAlign,rdDistGeom,ChemicalForceFields
 
 def lstFeq(l1, l2, tol=1.e-4):
   if (len(list(l1)) != len(list(l2))):

@@ -3,11 +3,11 @@
 #  Copyright (C) 2006  Greg Landrum
 #
 import unittest,os,sys
-import RDConfig
-import Chem
-import DataStructs
+from rdkit import RDConfig
+from rdkit import Chem
+from rdkit import DataStructs
 import cPickle
-from Chem import MolCatalog
+from rdkit.Chem import MolCatalog
 
 class TestCase(unittest.TestCase):
   def test1(self):
