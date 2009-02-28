@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -35,10 +35,9 @@ namespace Subgraphs {
       // move on
       if( atom->getAtomicNum()!=1 || useHs ){
         ROMol::OEDGE_ITER bIt1,end;
-        ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
         boost::tie(bIt1,end) = mol.getAtomBonds(atom);
         while(bIt1!=end){
-          Bond *bond1 = pMap[*bIt1];
+          const BOND_SPTR bond1 = mol[*bIt1];
           // if this bond connect to a hydrogen and we are not interested
           // in it ignore 
           if( bond1->getOtherAtom(atom)->getAtomicNum() != 1 || useHs ){
@@ -50,7 +49,7 @@ namespace Subgraphs {
             ROMol::OEDGE_ITER bIt2;
             bIt2 = mol.getAtomBonds(atom).first;
             while(bIt2 != end){
-              Bond *bond2 = pMap[*bIt2];
+              const BOND_SPTR bond2 = mol[*bIt2];
               int bid2 = bond2->getIdx();
               if (bid1 != bid2 &&
                   (bond2->getOtherAtom(atom)->getAtomicNum() != 1 || useHs ) ){

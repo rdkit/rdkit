@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -299,7 +299,6 @@ namespace RDKit {
       // - finally set all other 13 distances
       const RingInfo *rinfo = mol.getRingInfo();
       CHECK_INVARIANT(rinfo, "");
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
       ROMol::OEDGE_ITER beg1, beg2, end1, end2;
       
       unsigned int aid2, aid1, aid3, bid1, bid2;
@@ -368,12 +367,12 @@ namespace RDKit {
           //  3) Ring atoms that belong to different rings (that are part of a fused system
           
           while (beg1 != end1) {
-            const Bond* bnd1 = pMap[*beg1];
+            const BOND_SPTR bnd1 = mol[*beg1];
             bid1 = bnd1->getIdx();
             aid1 = bnd1->getOtherAtomIdx(aid2);
             boost::tie(beg2,end2) = mol.getAtomBonds(atom);
             while (beg2 != beg1) {
-              const Bond* bnd2 = pMap[*beg2];
+              const BOND_SPTR bnd2 = mol[*beg2];
               bid2 = bnd2->getIdx();
               //invar = firstThousandPrimes[bid1]*firstThousandPrimes[bid2];
               if (accumData.bondAngles->getVal(bid1, bid2) < 0.0) {
@@ -412,19 +411,19 @@ namespace RDKit {
                 angleTaken[aid2] += angle;
                 visited[aid2] += 1;
               } 
-              beg2++;
+              ++beg2;
             } // while loop over the seconf bond
-            beg1++;
+            ++beg1;
           } // while loop over the first bond
         } else if (visited[aid2] == 0) { 
           // non-ring atoms - we will simply use angles based on hydridization
           while (beg1 != end1) {
-            const Bond* bnd1 = pMap[*beg1];
+            const BOND_SPTR bnd1 = mol[*beg1];
             bid1 = bnd1->getIdx();
             aid1 = bnd1->getOtherAtomIdx(aid2);
             boost::tie(beg2,end2) = mol.getAtomBonds(atom);
             while (beg2 != beg1) {
-              const Bond* bnd2 = pMap[*beg2];
+              const BOND_SPTR bnd2 = mol[*beg2];
               bid2 = bnd2->getIdx();
               if (ahyb == Atom::SP) {
                 angle = RDKit::PI;
@@ -448,9 +447,9 @@ namespace RDKit {
               accumData.bondAdj->setVal(bid1, bid2, aid2);
               angleTaken[aid2] += angle;
               visited[aid2] += 1;     
-              beg2++;
+              ++beg2;
             } // while loop over second bond
-            beg1++;
+            ++beg1;
           } // while loop over first bond
         } // done with non-ring atoms
       } // done with all atoms
@@ -915,7 +914,6 @@ namespace RDKit {
       
       const RingInfo *rinfo = mol.getRingInfo(); // FIX: make sure we have ring info
       CHECK_INVARIANT(rinfo, "");
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
       const VECT_INT_VECT &bondRings = rinfo->bondRings();
       VECT_INT_VECT_CI rii;
       unsigned int i, aid2, aid3;
@@ -962,19 +960,18 @@ namespace RDKit {
           bid1 = bid2;
         } // loop over bonds in the ring
       } // end of all rings
-      const Bond *bnd1, *bnd3;
       for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
         bid2 = (*bi)->getIdx();
         aid2 = (*bi)->getBeginAtomIdx();
         aid3 = (*bi)->getEndAtomIdx();
         boost::tie(beg1,end1) = mol.getAtomBonds(mol.getAtomWithIdx(aid2));
         while (beg1 != end1) {
-          bnd1 = pMap[*beg1];
+          const Bond *bnd1 = mol[*beg1].get();
           bid1 = bnd1->getIdx();
           if (bid1 != bid2) {
             boost::tie(beg2,end2) = mol.getAtomBonds(mol.getAtomWithIdx(aid3));
             while (beg2 != end2) {
-              bnd3 = pMap[*beg2];
+              const Bond *bnd3 = mol[*beg2].get();
               bid3 = bnd3->getIdx();
               if (bid3 != bid2) {
                 id1 = nb*nb*bid1 + nb*bid2 + bid3;
@@ -1015,10 +1012,10 @@ namespace RDKit {
                   }
                 }
               }
-              beg2++;
+              ++beg2;
             }
           }
-          beg1++;
+          ++beg1;
         }
       }
     }  

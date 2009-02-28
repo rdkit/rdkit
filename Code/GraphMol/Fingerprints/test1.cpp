@@ -456,6 +456,21 @@ void test1Layers(){
     delete m1;delete m2;delete m3;delete m4;
   }
 
+  {
+    RWMol *m1 = SmilesToMol("Cc1ncccc1");
+    RWMol *m2 = SmilesToMol("Cn1ccc2nn(C)c(=O)c-2c1C");
+    unsigned int layers=0x7;
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,layers,1,5);
+
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,layers,1,5);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+    TEST_ASSERT(((*fp1)&(*fp2))==(*fp1));
+
+    delete fp1;delete fp2;
+    delete m1;delete m2;
+  }
+
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 

@@ -19,6 +19,7 @@ project RDKit
           <include>$(BOOSTHOME)
           <include>$(RDBASE)/External/Lapack++/include
           <include>$(RDBASE)/External/vflib-2.0/include
+          <define>USE_VFLIB
           <toolset>gcc:<cflags>-Wno-unused-function
           <toolset>darwin:<cflags>-Wno-unused-function
           <toolset>gcc:<cflags>-fno-strict-aliasing

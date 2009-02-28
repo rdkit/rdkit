@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -38,16 +38,15 @@ namespace Gasteiger {
         marker.push_back(aix);
         ROMol::OEDGE_ITER bnd1, end1, bnd2, end2;
         boost::tie(bnd1,end1) = mol->getAtomBonds(at);
-        ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol->getBondPMap();
         while (bnd1 != end1) {
-          if (pMap[*bnd1]->getIsConjugated()) {
-            aax = pMap[*bnd1]->getOtherAtomIdx(aix);
+          if ((*mol)[*bnd1]->getIsConjugated()) {
+            aax = (*mol)[*bnd1]->getOtherAtomIdx(aix);
             aat = mol->getAtomWithIdx(aax);
             boost::tie(bnd2,end2) = mol->getAtomBonds(aat);
             while (bnd2 != end2) {
               if ((*bnd1) != (*bnd2)) {
-                if (pMap[*bnd2]->getIsConjugated()) {
-                  yax = pMap[*bnd2]->getOtherAtomIdx(aax);
+                if ((*mol)[*bnd2]->getIsConjugated()) {
+                  yax = (*mol)[*bnd2]->getOtherAtomIdx(aax);
                   yat = mol->getAtomWithIdx(yax);
                   if (at->getAtomicNum() == yat->getAtomicNum()) {
                     formal += yat->getFormalCharge();

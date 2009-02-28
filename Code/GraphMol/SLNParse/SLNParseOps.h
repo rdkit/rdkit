@@ -115,7 +115,7 @@ namespace RDKit{
       PRECONDITION(atom,"empty atom");
       PRECONDITION(bond,"null bond");
 
-      RWMol::GRAPH_NODE_TYPE a1 = mp->getActiveAtom();
+      Atom *a1 = mp->getActiveAtom();
       int atomIdx1=a1->getIdx();
       int atomIdx2=mp->addAtom(atom,true,true);
       bookmarkAtomID(mp,atom);

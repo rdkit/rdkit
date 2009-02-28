@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -78,9 +78,8 @@ namespace RDKit {
     bool hasTruePrecedingAtom=false;
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol.getAtomBonds(atom);
-    ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
     while(beg!=end){
-      Bond *nbrBond=pMap[*beg];
+      Bond *nbrBond=mol[*beg].get();
       if(nbrBond->getBondType() != Bond::SINGLE){
         allSingle=false;
         break;
@@ -271,7 +270,6 @@ namespace RDKit {
     INT_MAP_INT res;
     Atom::ChiralType type;
     RDKit::ROMol::OBOND_ITER_PAIR atomBonds;
-    RDKit::ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
     int bid;
     const Bond *bond;
     for (cai = mol.beginAtoms(); cai != mol.endAtoms(); cai++) {
@@ -280,7 +278,7 @@ namespace RDKit {
         int pick = -1;
         atomBonds = mol.getAtomBonds(*cai);
         while (atomBonds.first != atomBonds.second ){
-          bond = pMap[*atomBonds.first];
+          bond = mol[*atomBonds.first].get();
           bid = bond->getIdx();
           if (res.find(bid) == res.end()) {
             if(bond->getBeginAtomIdx() == (*cai)->getIdx() &&
@@ -357,9 +355,8 @@ namespace RDKit {
     bool hasTruePrecedingAtom=false;
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol->getAtomBonds(atom);
-    ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol->getBondPMap();
     while(beg!=end){
-      Bond *nbrBond=pMap[*beg];
+      Bond *nbrBond=(*mol)[*beg].get();
       Atom *otherAtom = nbrBond->getOtherAtom(atom);
       if(nbrBond != bond){
         tmpPt = conf->getAtomPos(otherAtom->getIdx());
@@ -509,9 +506,8 @@ namespace RDKit {
     // direction set and set it as demanded by the direction of this one:
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = oAtom->getOwningMol().getAtomBonds(oAtom);
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = oAtom->getOwningMol().getBondPMap();
     while(beg!=end){
-      Bond *nbrBond=pMap[*beg];
+      Bond *nbrBond=oAtom->getOwningMol()[*beg].get();
       if(nbrBond!=bond && needsDir[nbrBond->getIdx()]){
         Bond::BondDir nbrDir=Bond::NONE;
         if( (nbrBond->getBeginAtom()==oAtom && bond->getBeginAtom()==oAtom) ||
@@ -548,12 +544,11 @@ namespace RDKit {
 #endif
     
     ROMol::OEDGE_ITER beg,end;
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
     
     Bond *bond1=0,*obond1=0;
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getBeginAtom());
     while(beg!=end){
-      Bond *tBond=pMap[*beg];
+      Bond *tBond=mol[*beg].get();
       if(tBond->getBondType()==Bond::SINGLE){
         // prefer bonds that already have their directionality set
         // or that are adjacent to more double bonds:
@@ -585,7 +580,7 @@ namespace RDKit {
     Bond *bond2=0,*obond2=0;
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getEndAtom());
     while(beg!=end ){
-      Bond *tBond=pMap[*beg];
+      Bond *tBond=mol[*beg].get();
       if(tBond->getBondType()==Bond::SINGLE){
         if(!bond2){
           bond2=tBond;
@@ -738,7 +733,6 @@ namespace RDKit {
     VECT_INT_VECT dblBondNbrs(mol.getNumBonds());
     boost::dynamic_bitset<> needsDir(mol.getNumBonds());
 
-    ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
 
     // find double bonds that should be considered for
     // stereochemistry : 
@@ -756,7 +750,7 @@ namespace RDKit {
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = mol.getAtomBonds(a1);
         while(beg!=end){
-          const Bond *nbrBond=pMap[*beg];
+          const Bond *nbrBond=mol[*beg].get();
           if(nbrBond->getBondType()==Bond::SINGLE){
             singleBondCounts[nbrBond->getIdx()] += 1;
             needsDir[nbrBond->getIdx()]=1;
@@ -766,7 +760,7 @@ namespace RDKit {
         }
         boost::tie(beg,end) = mol.getAtomBonds(a2);
         while(beg!=end){
-          const Bond *nbrBond=pMap[*beg];
+          const Bond *nbrBond=mol[*beg].get();
           if(nbrBond->getBondType()==Bond::SINGLE){
             singleBondCounts[nbrBond->getIdx()] += 1;
             needsDir[nbrBond->getIdx()]=1;

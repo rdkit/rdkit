@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -168,8 +168,6 @@ namespace RDKit {
         const Bond *ax1=0,*ax2=0;
         const Bond *eq1=0,*eq2=0,*eq3=0;
 
-        ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
-
         const Conformer &conf = mol.getConformer(confId);
         //------------------------------------------------------------
         // identify the axial and equatorial bonds:
@@ -178,14 +176,14 @@ namespace RDKit {
         boost::tie(beg1,end1) = mol.getAtomBonds(atom);
         unsigned int aid = atom->getIdx();
         while(beg1!=end1){
-          const Bond *bond1=pMap[*beg1];
+          const Bond *bond1=mol[*beg1].get();
           unsigned int oaid = bond1->getOtherAtomIdx(aid);
           RDGeom::Point3D v1=conf.getAtomPos(aid).directionVector(conf.getAtomPos(oaid));
                   
           ROMol::OEDGE_ITER beg2,end2;
           boost::tie(beg2,end2) = mol.getAtomBonds(atom);
           while(beg2 != end2){
-            const Bond *bond2=pMap[*beg2];
+            const Bond *bond2=mol[*beg2].get();
             if(bond2->getIdx() > bond1->getIdx()){
               unsigned int oaid2 = bond2->getOtherAtomIdx(aid);
               RDGeom::Point3D v2=conf.getAtomPos(aid).directionVector(conf.getAtomPos(oaid2));
@@ -382,8 +380,6 @@ namespace RDKit {
         PRECONDITION(mol.getNumAtoms()==params.size(),"bad parameters");
         PRECONDITION(field,"bad forcefield");
 
-        ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
-
         // find all of the torsion bonds:
         std::vector<MatchVectType> matchVect;
         ROMol *query=SmartsToMol(torsionBondSmarts);
@@ -406,13 +402,13 @@ namespace RDKit {
             ROMol::OEDGE_ITER beg1,end1;
             boost::tie(beg1,end1) = mol.getAtomBonds(atom1);
             while(beg1!=end1){
-              const Bond *tBond1=pMap[*beg1];
+              const Bond *tBond1=mol[*beg1].get();
               if(tBond1!=bond){
                 int bIdx = tBond1->getOtherAtomIdx(idx1);
                 ROMol::OEDGE_ITER beg2,end2;
                 boost::tie(beg2,end2) = mol.getAtomBonds(atom2);
                 while(beg2 != end2){
-                  const Bond *tBond2=pMap[*beg2];
+                  const Bond *tBond2=mol[*beg2].get();
                   if(tBond2!=bond && tBond2!=tBond1){
                     int eIdx=tBond2->getOtherAtomIdx(idx2);
                     // make sure this isn't a three-membered ring:

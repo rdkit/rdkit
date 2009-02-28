@@ -2,7 +2,7 @@
 
   // $Id$
   //
-  //  Copyright (C) 2001-2006 Randal Henne, Greg Landrum and Rational Discovery LLC
+  //  Copyright (C) 2001-2009 Randal Henne, Greg Landrum and Rational Discovery LLC
   //
   //   @@ All Rights Reserved  @@
   //
@@ -115,7 +115,7 @@ mol: atomd {
 
 | mol atomd       {
   RWMol *mp = SmilesParse::molList_g[$$];
-  RWMol::GRAPH_NODE_TYPE a1 = mp->getActiveAtom();
+  Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom($2);
   mp->addBond(atomIdx1,atomIdx2,

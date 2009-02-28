@@ -9,12 +9,14 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 
+#ifdef USE_VFLIB
 #include <argedit.h>
-
+#endif
 
 namespace RDKit{
 
-bool atomCompat(Atom const *a1,Atom const *a2){
+#ifdef USE_VFLIB
+bool atomCompat(const Atom *a1,const Atom *a2){
   PRECONDITION(a1,"bad atom");
   PRECONDITION(a2,"bad atom");
   //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
@@ -22,7 +24,7 @@ bool atomCompat(Atom const *a1,Atom const *a2){
   return res;
 }
 
-bool chiralAtomCompat(Atom const *a1,Atom const *a2){
+bool chiralAtomCompat(const Atom *a1,const Atom *a2){
   PRECONDITION(a1,"bad atom");
   PRECONDITION(a2,"bad atom");
   //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
@@ -43,7 +45,7 @@ bool chiralAtomCompat(Atom const *a1,Atom const *a2){
   return res;
 }
 
-bool bondCompat(Bond const *b1,Bond const *b2){
+bool bondCompat(const Bond *b1,const Bond *b2){
   PRECONDITION(b1,"bad bond");
   PRECONDITION(b2,"bad bond");
   bool res = b1->Match(b2);
@@ -51,47 +53,44 @@ bool bondCompat(Bond const *b1,Bond const *b2){
   return res;
 }
 
-void MolToVFGraph(const ROMol &mol,ARGEdit *vgEd){
-  PRECONDITION(vgEd,"bad argument");
-  ROMol::ConstAtomIterator atomIt;
-  for(atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();atomIt++){
-    vgEd->InsertNode((void *)*atomIt);
-  }
-  ROMol::ConstBondIterator bondIt;
-  for(bondIt=mol.beginBonds();bondIt!=mol.endBonds();bondIt++){
-    Bond const *bond = *bondIt;
-    int idx1=bond->getBeginAtomIdx(),idx2=bond->getEndAtomIdx();
-    vgEd->InsertEdge(idx1,idx2,(void *)bond);
-    // FIX: this maybe ought to be changed to include other dative bond types?
-    if(bond->getBondType() != Bond::DATIVE){
-      vgEd->InsertEdge(idx2,idx1,(void *)bond);
-    }
-  }
+#else
+bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2){
+  PRECONDITION(a1,"bad atom");
+  PRECONDITION(a2,"bad atom");
+  //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
+  bool res = a1->Match(a2);
+  return res;
 }
 
-bool substructVisitor(int n, node_id ni1[],node_id ni2[],void *mvp)
-{
-  std::vector< MatchVectType > *matchV = (std::vector< MatchVectType > *)mvp;
-  MatchVectType locV;
-  locV.resize(n);
-  for(int i=0;i<n;i++){
-    locV[i] = std::pair<int,int>(ni1[i],ni2[i]);
-  }
-  matchV->push_back(locV);
-  return false;
-}
-
-bool substructHeadVisitor(int n, node_id ni1[],node_id ni2[],void *mvp)
-{
-  std::vector< int > *matchV = (std::vector< int > *)mvp;
-  for(int i=0;i<n;i++){
-    if(ni1[i]==0){
-      matchV->push_back(ni2[i]);
-      break;
+bool chiralAtomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2){
+  PRECONDITION(a1,"bad atom");
+  PRECONDITION(a2,"bad atom");
+  //std::cerr << "\t\tatomCompat: "<< a1 << " " << a1->getIdx() << "-" << a2 << " " << a2->getIdx() << std::endl;
+  bool res = a1->Match(a2);
+  if(res){
+    if(a1->hasProp("_CIPCode") || a2->hasProp("_CIPCode")){
+      // if either atom has a CIPCode, they need to both have it and match:
+      if(a1->hasProp("_CIPCode") && a2->hasProp("_CIPCode")){
+	std::string s1,s2;
+	a1->getProp("_CIPCode",s1);
+	a2->getProp("_CIPCode",s2);
+	if(s1!=s2) res=false;
+      } else {
+	res=false;
+      }
     }
   }
-  return false;
+  return res;
 }
+
+bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2){
+  PRECONDITION(b1,"bad bond");
+  PRECONDITION(b2,"bad bond");
+  bool res = b1->Match(b2);
+  //std::cout << "\t\tbondCompat: "<< b1->getIdx() << "-" << b2->getIdx() << ": " << res << std::endl;
+  return res;
+}
+#endif
 
 double toPrime(const MatchVectType &v){
   double res = 1.0;
@@ -134,5 +133,50 @@ void removeDuplicates(std::vector<MatchVectType> &v){
   }
   v = res;
 }
+
+
+#ifdef USE_VFLIB
+void MolToVFGraph(const ROMol &mol,ARGEdit *vgEd){
+  PRECONDITION(vgEd,"bad argument");
+  ROMol::ConstAtomIterator atomIt;
+  for(atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();atomIt++){
+    vgEd->InsertNode((void *)*atomIt);
+  }
+  ROMol::ConstBondIterator bondIt;
+  for(bondIt=mol.beginBonds();bondIt!=mol.endBonds();bondIt++){
+    Bond const *bond = *bondIt;
+    int idx1=bond->getBeginAtomIdx(),idx2=bond->getEndAtomIdx();
+    vgEd->InsertEdge(idx1,idx2,(void *)bond);
+    // FIX: this maybe ought to be changed to include other dative bond types?
+    if(bond->getBondType() != Bond::DATIVE){
+      vgEd->InsertEdge(idx2,idx1,(void *)bond);
+    }
+  }
+}
+
+bool substructVisitor(int n, node_id ni1[],node_id ni2[],void *mvp)
+{
+  std::vector< MatchVectType > *matchV = (std::vector< MatchVectType > *)mvp;
+  MatchVectType locV;
+  locV.resize(n);
+  for(int i=0;i<n;i++){
+    locV[i] = std::pair<int,int>(ni1[i],ni2[i]);
+  }
+  matchV->push_back(locV);
+  return false;
+}
+
+bool substructHeadVisitor(int n, node_id ni1[],node_id ni2[],void *mvp)
+{
+  std::vector< int > *matchV = (std::vector< int > *)mvp;
+  for(int i=0;i<n;i++){
+    if(ni1[i]==0){
+      matchV->push_back(ni2[i]);
+      break;
+    }
+  }
+  return false;
+}
+#endif
 
 }

@@ -154,10 +154,9 @@ namespace RDKit{
           double accum=0; //FIX: could this give non int values ?
           ROMol::OEDGE_ITER beg,end;
           boost::tie(beg,end) = res->getAtomBonds(at);
-          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = res->getBondPMap();
           while(beg!=end){
-            accum += pMap[*beg]->getValenceContrib(at);
-            if (pMap[*beg]->getBondType() == Bond::AROMATIC){
+            accum += (*res)[*beg]->getValenceContrib(at);
+            if ((*res)[*beg]->getBondType() == Bond::AROMATIC){
               ++noAromBonds;
             }
             ++beg;

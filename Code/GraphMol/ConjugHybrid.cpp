@@ -29,20 +29,19 @@ namespace RDKit {
       }
 
       ROMol::OEDGE_ITER bnd1, end1, bnd2, end2;
-      boost::tie(bnd1,end1) = at->getOwningMol().getAtomBonds(at);
-      ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
+      boost::tie(bnd1,end1) = mol.getAtomBonds(at);
       while (bnd1 != end1) {
-	if (pMap[*bnd1]->getValenceContrib(at) < 1.5) {
+	if (mol[*bnd1]->getValenceContrib(at) < 1.5) {
 	  bnd1++;
 	  continue;
 	}
-	boost::tie(bnd2,end2) = at->getOwningMol().getAtomBonds(at);
+	boost::tie(bnd2,end2) = mol.getAtomBonds(at);
 	while (bnd2 != end2) {
 	  if (bnd1 == bnd2) {
 	    bnd2++;
 	    continue;
 	  }
-	  at2 = mol.getAtomWithIdx(pMap[*bnd2]->getOtherAtomIdx(atx));
+	  at2 = mol.getAtomWithIdx(mol[*bnd2]->getOtherAtomIdx(atx));
 	  sbo = at2->getDegree() + at2->getTotalNumHs();
 	  if (sbo > 3) {
 	    bnd2++;
@@ -57,8 +56,8 @@ namespace RDKit {
 	  int nouter = PeriodicTable::getTable()->getNouterElecs(at2->getAtomicNum());
 	  if ((MolOps::countAtomElec(at2) > 0) && 
 	      ((at2->getAtomicNum() <= 10) || (nouter != 5)) ) {
-	    pMap[*bnd1]->setIsConjugated(true);
-	    pMap[*bnd2]->setIsConjugated(true);
+	    mol[*bnd1]->setIsConjugated(true);
+	    mol[*bnd2]->setIsConjugated(true);
 	  }
 	  bnd2++;
 	}
@@ -96,10 +95,9 @@ namespace RDKit {
       PRECONDITION(at,"bad atom");
 
       ROMol::OEDGE_ITER beg,end;
-      ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
       boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
       while(beg!=end){
-	if(pMap[*beg]->getIsConjugated()) return true;
+	if(at->getOwningMol()[*beg]->getIsConjugated()) return true;
 	beg++;
       }
       return false;

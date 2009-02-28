@@ -8,6 +8,7 @@
 
 class ExplicitBitVect;
 namespace RDKit{
+  const std::string DaylightFingerprintMolVersion="2.0.0-deprecated";
   class ROMol;
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule
   /*!
@@ -60,6 +61,7 @@ namespace RDKit{
       - the caller is responsible for <tt>delete</tt>ing the result
     
   */
+  const std::string RDKFingerprintMolVersion="1.0.0";
   ExplicitBitVect *RDKFingerprintMol(const ROMol &mol,
                                     unsigned int minPath=1,unsigned int maxPath=7,
                                     unsigned int fpSize=2048,unsigned int nBitsPerHash=4,
@@ -70,6 +72,9 @@ namespace RDKit{
   //!        using an alternate (faster) hashing algorithm  
   /*!
 
+    <b>Experimental:</b> This function is experimental. The API or results may change from
+    release to release.
+    
     \param mol:          the molecule to be fingerprinted
     \param layers:       the layers to be included (see below)
     \param minPath:      the minimum path length (in bonds) to be included
@@ -92,6 +97,7 @@ namespace RDKit{
        - 0x08: presence of rings
        - 0x10: ring sizes
   */
+  const std::string LayeredFingerprintMolVersion="0.2.0";
   ExplicitBitVect *LayeredFingerprintMol(const ROMol &mol,
                                          unsigned int layerFlags=0xFFFFFFFF,
                                          unsigned int minPath=1,unsigned int maxPath=7,

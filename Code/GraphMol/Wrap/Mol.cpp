@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -199,7 +199,7 @@ struct mol_wrapper {
 	   "  ARGUMENTS:\n"
 	   "    - onlyHeavy: (optional) include only heavy atoms (not Hs)\n"
 	   "                 defaults to 1.\n")
-      .def("GetAtomWithIdx",(ROMol::GRAPH_NODE_TYPE (ROMol::*)(unsigned int))&ROMol::getAtomWithIdx,
+      .def("GetAtomWithIdx",(Atom * (ROMol::*)(unsigned int))&ROMol::getAtomWithIdx,
 	   python::return_value_policy<python::reference_existing_object>(),
 	   "Returns a particular Atom.\n\n"
 	   "  ARGUMENTS:\n"
@@ -213,7 +213,7 @@ struct mol_wrapper {
 	   "    - onlyHeavy: (optional) include only bonds to heavy atoms (not Hs)\n"
 	   "                  defaults to 1.\n")
 
-      .def("GetBondWithIdx",(ROMol::GRAPH_EDGE_TYPE (ROMol::*)(unsigned int))&ROMol::getBondWithIdx,
+      .def("GetBondWithIdx",(Bond * (ROMol::*)(unsigned int))&ROMol::getBondWithIdx,
 	   python::return_value_policy<python::reference_existing_object>(),
 	   "Returns a particular Bond.\n\n"
 	   "  ARGUMENTS:\n"
@@ -242,7 +242,7 @@ struct mol_wrapper {
       .def("RemoveConformer", &ROMol::removeConformer,
            "Remove the conformer with the specified ID")
       .def("GetBondBetweenAtoms", 
-	   (ROMol::GRAPH_EDGE_TYPE (ROMol::*)(unsigned int,unsigned int))&ROMol::getBondBetweenAtoms,
+	   (Bond *(ROMol::*)(unsigned int,unsigned int))&ROMol::getBondBetweenAtoms,
 	   python::return_value_policy<python::reference_existing_object>(),
 	   "Returns the bond between two atoms, if there is one.\n\n"
 	   "  ARGUMENTS:\n"

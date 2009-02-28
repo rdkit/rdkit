@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -88,7 +88,6 @@ namespace RDKit {
 
       std::vector<Bond *> makeSingle;
 
-      RWMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
       for (INT_VECT_CI adx = allAtms.begin(); adx != allAtms.end();
            ++adx) {
         Atom *at = mol.getAtomWithIdx(*adx);
@@ -101,7 +100,7 @@ namespace RDKit {
           boost::tie(beg,end) = mol.getAtomBonds(at);
           while (beg != end) {
             // ok we can't have an aromatic atom
-            if (pMap[*beg]->getIsAromatic()) {
+            if (mol[*beg]->getIsAromatic()) {
               std::ostringstream errout;
               errout << "Aromatic bonds on non aromatic atom " << at->getIdx();
               std::string msg = errout.str();
@@ -120,7 +119,7 @@ namespace RDKit {
         RWMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = mol.getAtomBonds(at);
         while (beg != end) {
-          Bond *bond=pMap[*beg];
+          Bond *bond=mol[*beg].get();
           if (bond->getIsAromatic() &&
               (bond->getBondType()==Bond::SINGLE ||
                bond->getBondType()==Bond::DOUBLE ||

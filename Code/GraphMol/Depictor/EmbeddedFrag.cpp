@@ -1491,12 +1491,10 @@ namespace RDDepict {
     // aid is where will start looking and then we will recurse
     RDKit::ROMol::OBOND_ITER_PAIR atomBonds;
     atomBonds = mol->getAtomBonds(mol->getAtomWithIdx(aid));
-    RDKit::ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol->getBondPMap();
     int bondId;
     RDKit::INT_VECT nbrs;
-    const RDKit::Bond *bnd;
     while( atomBonds.first != atomBonds.second ){
-      bnd = pMap[*atomBonds.first];
+      const RDKit::BOND_SPTR bnd = (*mol)[*atomBonds.first];
       bondId = bnd->getIdx();
       if (mol->getRingInfo()->numBondRings(bondId)) {
         nbrs.push_back(bnd->getOtherAtomIdx(aid));

@@ -48,7 +48,7 @@ namespace SmilesParseOps{
 		    Bond::BondDir bondDir,bool closeRings,bool doingQuery ){
     PRECONDITION(mol,"no molecule");
     PRECONDITION(frag,"no fragment");
-    RWMol::GRAPH_NODE_TYPE lastAt = mol->getActiveAtom();
+    Atom *lastAt = mol->getActiveAtom();
     int nOrigAtoms = mol->getNumAtoms();
     int nOrigBonds = mol->getNumBonds();
 
@@ -87,14 +87,14 @@ namespace SmilesParseOps{
     //
     if( bondOrder != Bond::IONIC ){
       // FIX: this is not so much with the elegance...
-      RWMol::GRAPH_NODE_TYPE firstAt = mol->getAtomWithIdx(nOrigAtoms);
+      Atom *firstAt = mol->getAtomWithIdx(nOrigAtoms);
       Bond::BondType bo;
       int atomIdx1,atomIdx2;
       atomIdx1 = firstAt->getIdx();
       atomIdx2 = lastAt->getIdx();
       if(frag->hasBondBookmark(ci_LEADING_BOND)){
 	//std::cout << "found it" << std::endl;
-	RWMol::GRAPH_EDGE_TYPE leadingBond = frag->getBondWithBookmark(ci_LEADING_BOND);
+	Bond *leadingBond = frag->getBondWithBookmark(ci_LEADING_BOND);
 	// we've already got a bond, so just set its local info
 	// and then add it to the molecule intact (no sense doing
 	// any extra work).

@@ -223,6 +223,7 @@ namespace RDKit{
     PRECONDITION(fpSize!=0,"fpSize==0");
 
     
+#ifdef LAYEREDFP_USE_MT
     // create a mersenne twister with customized parameters. 
     // The standard parameters (used to create boost::mt19937) 
     // result in an RNG that's much too computationally intensive
@@ -241,6 +242,7 @@ namespace RDKit{
     //
     distrib_type dist(0,INT_MAX);
     source_type randomSource(generator,dist);
+#endif
 
     boost::hash<std::vector<unsigned int> > vectHasher;
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
@@ -289,6 +291,21 @@ namespace RDKit{
             unsigned int bondHash;
             if(bi->getIsAromatic()){
               // makes sure aromatic bonds always hash the same:
+              bondHash = Bond::AROMATIC;
+            } else if(bi->getBondType()==Bond::SINGLE &&
+                      bi->getBeginAtom()->getIsAromatic() &&
+                      bi->getEndAtom()->getIsAromatic() &&
+                      queryIsBondInRing(bi)
+                      ){
+              // a special case that comes up if we're using these to filter
+              // substructure matches:
+              //   This molecule: 
+              //     Cn1ccc2nn(C)c(=O)c-2c1C
+              //   which has a non-aromatic bridging bond between aromatic
+              //   atoms, matches the SMARTS query:
+              //    Cc1ncccc1
+              //   because unspecified bonds in SMARTS are aromatic or single
+              // We need to make sure to capture this case.  
               bondHash = Bond::AROMATIC;
             } else {
               bondHash = bi->getBondType();
@@ -342,14 +359,20 @@ namespace RDKit{
             std::cerr<<"         "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
           }
 #endif
-          // and now generate a random number:
           // NOTE: since we're only generating a single number here, it seems like it
           // might make sense to just use the hash itself. In early testing of these
           // fingerprints, this led to a bunch of collisions between layers 3 and 4,
-          // so it's back to the RNG.
+
+#ifdef LAYEREDFP_USE_MT
+          // One solution to this problem is to go back to using a PRNG:
           generator.seed(static_cast<rng_type::result_type>(seed));
           res->SetBit(randomSource()%fpSize);
-          //res->SetBit(seed%fpSize);
+#else
+          // The other solution is to shift the seed so that we look at different
+          // bits for the different layers:
+          seed = seed>>l;          
+          res->SetBit(seed%fpSize);
+#endif
         }
       }
       // EFF: this could be faster by folding by more than a factor

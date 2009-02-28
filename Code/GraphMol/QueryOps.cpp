@@ -141,25 +141,22 @@ ATOM_EQUALS_QUERY *makeAtomSimpleQuery(int what,int func(Atom const *)){
 
 unsigned int queryAtomBondProduct(Atom const * at) {
   ROMol::OEDGE_ITER beg,end;
-  ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
   boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
   unsigned int prod=1;
   while(beg!=end){
-    const Bond *bond=pMap[*beg];
-    prod *= static_cast<unsigned int>(firstThousandPrimes[bond->getBondType()]);
-    beg++;
+    prod *= static_cast<unsigned int>(firstThousandPrimes[at->getOwningMol()[*beg]->getBondType()]);
+    ++beg;
   }
   return prod;
 }
 unsigned int queryAtomAllBondProduct(Atom const * at) {
   ROMol::OEDGE_ITER beg,end;
-  ROMol::GRAPH_MOL_BOND_PMAP::type pMap = at->getOwningMol().getBondPMap();
+
   boost::tie(beg,end) = at->getOwningMol().getAtomBonds(at);
   unsigned int prod=1;
   while(beg!=end){
-    const Bond *bond=pMap[*beg];
-    prod *= static_cast<unsigned int>(firstThousandPrimes[bond->getBondType()]);
-    beg++;
+    prod *= static_cast<unsigned int>(firstThousandPrimes[at->getOwningMol()[*beg]->getBondType()]);
+    ++beg;
   }
   for(unsigned int i=0;i<at->getTotalNumHs();i++){
     prod *= static_cast<unsigned int>(firstThousandPrimes[Bond::SINGLE]);

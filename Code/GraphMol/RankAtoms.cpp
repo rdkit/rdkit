@@ -280,10 +280,9 @@ namespace RankAtoms{
       // a chiral code marking 
       if (includeChirality) {
         ROMol::OBOND_ITER_PAIR atomBonds = atom->getOwningMol().getAtomBonds(atom);
-        ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
         int isT=0;
         while (atomBonds.first != atomBonds.second){
-          Bond *tBond = pMap[*(atomBonds.first)];
+          BOND_SPTR tBond = atom->getOwningMol()[*(atomBonds.first)];
           if( (tBond->getBondType() == Bond::DOUBLE) &&
               (tBond->getStereo()>Bond::STEREOANY )) {
             if (tBond->getStereo()==Bond::STEREOE) {

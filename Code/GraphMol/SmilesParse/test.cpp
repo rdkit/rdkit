@@ -146,7 +146,7 @@ void testFail(){
 
 void testDetails(){
   Mol *mol;
-  Mol::GRAPH_NODE_TYPE a;
+  Atom *a;
   std::string smi;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -321,7 +321,10 @@ void testLeak(){
   smi = "C1CC1";
   for(i=0;i<1000000;i++){
     mol = SmilesToMol(smi,0,1);
-    if(!(i%1000)) BOOST_LOG(rdInfoLog) << i << std::endl;
+    if(!(i%1000)){
+      BOOST_LOG(rdInfoLog) << i << std::endl;
+    }
+      
     delete mol;
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;

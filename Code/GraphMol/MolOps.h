@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -89,12 +89,14 @@ namespace RDKit{
                                                        bool sanitizeFrags=true,
                                                        INT_VECT *frags=0);
 
+#if 0
     //! finds a molecule's minimium spanning tree (MST)
     /*!
       \param mol  the molecule of interest
       \param mst  used to return the MST as a vector of bond indices
     */
     void findSpanningTree(const ROMol &mol,INT_VECT &mst);
+#endif
 
     //! calculates a set of molecular discriminators from the distance matrix
     /*!

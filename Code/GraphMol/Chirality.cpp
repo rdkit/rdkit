@@ -253,9 +253,8 @@ namespace RDKit{
       bool seenDir=false;
       ROMol::OEDGE_ITER beg,end;
       boost::tie(beg,end) = mol.getAtomBonds(atom);
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
       while(beg!=end){
-        Bond *bond = pMap[*beg];
+        const BOND_SPTR bond = mol[*beg];
         Bond::BondDir dir=bond->getBondDir();
         if( bond->getIdx() != refBond->getIdx()){
           if(dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT){
@@ -305,9 +304,8 @@ namespace RDKit{
       PRECONDITION(refBond,"bad bond");
       ROMol::OEDGE_ITER beg, end;
       boost::tie(beg, end) = mol.getAtomBonds(atom);
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
       while (beg != end) {
-        const Bond *bond=pMap[*beg];
+        const BOND_SPTR bond=mol[*beg];
         Bond::BondDir dir = bond->getBondDir();
         if (bond->getBondType()==Bond::SINGLE && bond->getIdx() != refBond->getIdx()) {
           if (checkDir) {
@@ -333,12 +331,11 @@ namespace RDKit{
         if(ringInfo->isInitialized() &&
            ringInfo->numAtomRings(atom->getIdx())){
           ROMol::OEDGE_ITER beg,end;
-          ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
           boost::tie(beg,end) = mol.getAtomBonds(atom);
           std::vector<const Atom *> nonRingNbrs;
           std::vector<const Atom *> ringNbrs;
           while(beg!=end){
-            const Bond *bond=pMap[*beg];
+            const BOND_SPTR bond=mol[*beg];
             if(!ringInfo->numBondRings(bond->getIdx())){
               nonRingNbrs.push_back(bond->getOtherAtom(atom));
             } else {
@@ -475,9 +472,8 @@ namespace RDKit{
             boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
             ROMol::OEDGE_ITER beg,end;
             boost::tie(beg,end) = mol.getAtomBonds(atom);
-            ROMol::GRAPH_MOL_BOND_PMAP::type pMap = mol.getBondPMap();
             while(beg!=end){
-              unsigned int otherIdx=pMap[*beg]->getOtherAtom(atom)->getIdx();
+              unsigned int otherIdx=mol[*beg]->getOtherAtom(atom)->getIdx();
               CHECK_INVARIANT(ranks[otherIdx]<static_cast<int>(mol.getNumAtoms()),
                               "CIP rank higher than the number of atoms.");
               // watch for neighbors with duplicate ranks, which would mean
@@ -489,13 +485,13 @@ namespace RDKit{
               }
               codesSeen[ranks[otherIdx]]=1;
               nbrs.push_back(std::make_pair(ranks[otherIdx],
-                                            pMap[*beg]->getIdx()));
+                                            mol[*beg]->getIdx()));
 
               // check to see if the neighbor is a "true preceder"
               // (i.e. it occurs before the atom both in the atom
               // ordering and the bond starts at the neighbor):
               if(otherIdx<atom->getIdx() &&
-                 pMap[*beg]->getBeginAtomIdx()==otherIdx){
+                 mol[*beg]->getBeginAtomIdx()==otherIdx){
                 hasTruePrecedingAtom=true;
               }
               ++beg;
@@ -661,9 +657,6 @@ namespace RDKit{
       }
 #endif
 
-      ROMol::GRAPH_MOL_BOND_PMAP::const_type pMap = mol.getBondPMap();
-    
-      
       DOUBLE_VECT invars(mol.getNumAtoms());
       // and now supplement them:
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
@@ -682,7 +675,7 @@ namespace RDKit{
         ROMol::OEDGE_ITER beg,end;
         boost::tie(beg,end) = mol.getAtomBonds(atom);
         while(beg!=end){
-          const Bond *oBond=pMap[*beg];
+          const BOND_SPTR oBond=mol[*beg];
           if(oBond->getBondType()==Bond::DOUBLE){
             if(oBond->getStereo()==Bond::STEREOE){
               invars[i]+=1;
