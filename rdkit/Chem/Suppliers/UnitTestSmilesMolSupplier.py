@@ -82,6 +82,11 @@ class TestCase(unittest.TestCase):
   def test3BoundaryConditions(self):
     smis = ['CC','CCOC','fail','CCO']
     supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
+    assert len(supp)==4
+    assert supp[2] is None
+    assert supp[3]
+
+    supp = Chem.SmilesMolSupplierFromText('\n'.join(smis),',',0,-1,0)
     assert supp[2] is None
     assert supp[3]
     assert len(supp)==4
