@@ -55,6 +55,8 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
     - confId : indicates which conformer to optimize\n\
     - ignoreInterfragInteractions : if true, nonbonded terms between \n\
                   fragments will not be added to the forcefield.\n\
+\n\
+ RETURNS: 0 if the optimization converged, 1 if more iterations are required.\n\
 \n";
   python::def("UFFOptimizeMolecule", RDKit::UFFOptimizeMolecule,
 	      (python::arg("self"),python::arg("maxIters")=200,
