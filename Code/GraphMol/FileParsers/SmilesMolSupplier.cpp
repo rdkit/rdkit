@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -171,7 +171,12 @@ namespace RDKit {
         std::string rec = strip(*tokIter);
         recs.push_back(rec);
       }
-      
+      if(recs.size()<=static_cast<unsigned int>(d_smi)){
+        std::ostringstream errout;
+        errout << "ERROR: line #" << d_line  << "does not contain enough tokens\n";
+        throw FileParseException(errout.str());
+      }
+
       // -----------
       // get the smiles and create a molecule
       // -----------
@@ -274,6 +279,7 @@ namespace RDKit {
       // flag on inStream and increment our line counter:
       dp_inStream->clear();
       d_line++;
+      df_end = true;
     } else {
       d_line++;
     }
@@ -339,23 +345,10 @@ namespace RDKit {
   std::string SmilesMolSupplier::getItemText(unsigned int idx){
     PRECONDITION(dp_inStream,"no stream");
     unsigned int holder=d_next;
+    // this throws the relevant exception if we go too far:
     moveTo(idx);
-    unsigned int begP=d_molpos[idx];
-    unsigned int endP;
-    try {
-      moveTo(idx+1);
-      endP=d_molpos[idx+1];
-    } catch (FileParseException &) {
-      dp_inStream->clear();
-      dp_inStream->seekg(0,std::ios_base::end);
-      endP=dp_inStream->tellg();
-    }
+    std::string res=getLine(dp_inStream);
     d_next=holder;
-    char *buff=new char[endP-begP];
-    dp_inStream->seekg(begP);
-    dp_inStream->read(buff,endP-begP);
-    std::string res(buff,endP-begP);
-    delete [] buff;
     return res;
   }
 
@@ -371,7 +364,6 @@ namespace RDKit {
     PRECONDITION(dp_inStream,"bad instream");
     // get the easy situations (boundary conditions) out of the
     // way first:
-
     if( d_len>-1 && idx>=static_cast<unsigned int>(d_len)) {
       df_end=true;
       std::ostringstream errout;
@@ -384,44 +376,56 @@ namespace RDKit {
     //
     // Set the stream position and return
     // -----------
-    if(idx < d_molpos.size()){
+    if(!d_molpos.empty() && d_molpos.size()>idx){
       dp_inStream->clear(); // clear the EOF tag if it has been set
+      df_end = false;
       dp_inStream->seekg(d_molpos[idx]);
       d_next = idx;
       d_line = d_lineNums[idx];
-      df_end = false;
       return;
     }
-
 
     // -----------
     // Case 2: we haven't read the entry, so move forward until
     //   we've gone far enough.
     // -----------
-    if(d_next < 0){
-      // if we are just starting out, process the title line:
+    if(d_molpos.empty()){
+      // if we are just starting out, process the title line
       dp_inStream->seekg(0);
       if(df_title) this->processTitleLine();
-      d_next=0;
+    } else {
+      // move to the last position we've seen:
+      dp_inStream->seekg(d_molpos.back());
+      // read that line:
+      std::string tmp=getLine(dp_inStream);
     }
-    while(d_next<static_cast<int>(idx)){
+
+    // the stream pointer is now at the last thing we read in
+    while(d_molpos.size()<=idx){
       int nextP = this->skipComments();
-      if(nextP>=0){
-        d_molpos.push_back(nextP);
-        d_lineNums.push_back(d_line);
-
-        dp_inStream->seekg(nextP);
-
-        // grab the line:
-        std::string inLine=getLine(dp_inStream);
-        d_next++;
-      } else {
+      if(nextP<0){
         std::ostringstream errout;
         errout << "ERROR: Index error (idx = " << idx  << "): " << "ran out of lines\n";
         throw FileParseException(errout.str());
+      } else {
+        d_molpos.push_back(nextP);
+        d_lineNums.push_back(d_line);
+        if(d_molpos.size()==idx+1 && df_end) {
+          // boundary condition: we could read the point we were looking for
+          // but not the next one.
+          // indicate that we've reached EOF:
+          dp_inStream->clear();
+          dp_inStream->seekg(0,std::ios_base::end);
+          d_len=d_molpos.size();
+          break;
+        }
       }
-      
     }
+
+    POSTCONDITION(d_molpos.size()>idx,"not enough lines");
+    dp_inStream->seekg(d_molpos[idx]);
+    d_next = idx;
+    return;
   }
 
   // ----------------------------------------------------------------------
@@ -436,84 +440,42 @@ namespace RDKit {
     PRECONDITION(dp_inStream,"no stream");
     ROMol *res=NULL;
 
-    // ---------
-    // Case 1: we've earlier encountered EOF and this takes us beyond it:
-    //
-    // throw an exception:
-    // ---------
-    if( (d_len<0 && this->atEnd()) || (d_len>-1 && d_next>=d_len) ){
-      throw FileParseException("End of input reached.");
-    }
-
-    // ---------
-    // Case 2: we've already processed the appropriate line
-    //
-    // build the molecule:
-    // ---------
-    if(d_next>-1 && d_next < static_cast<int>(d_molpos.size()) ){
-      // set the stream to the relevant position:
-      dp_inStream->clear(); // clear the EOF tag if it has been set
-      dp_inStream->seekg(d_molpos[d_next]);
-      d_line = d_lineNums[d_next];
-      // grab the line:
-      std::string inLine=getLine(dp_inStream);
-      // and process it:
-      res=this->processLine(inLine);
-      // increment our position:
-      d_next++;
-      if(d_next < static_cast<int>(d_lineNums.size()) ){
-        d_line = d_lineNums[d_next];
-      }
-
-      // if we just hit the last one, simulate EOF:
-      if(d_next==static_cast<int>(d_molpos.size()-1)) df_end=1;
-      
-      return res;
-    }
-
-    // ---------
-    // Case 3: we're in unexplored territory
-    //
-    // read a line and build a molecule if we didn't hit EOF:
-    // ---------
-    if(d_next < 0){
-      // if we are just starting out, process the title line:
-      dp_inStream->seekg(0);
-      if(df_title) this->processTitleLine();
+    if(d_next<0){
       d_next=0;
     }
-    int nextP = this->skipComments();
-    if(nextP>=0){
-      d_molpos.push_back(nextP);
-      d_lineNums.push_back(d_line);
 
-      dp_inStream->seekg(nextP);
+    // This throws an exception if it fails:
+    moveTo(d_next);
+    CHECK_INVARIANT(static_cast<int>(d_molpos.size())>d_next,"bad index length");
 
-      // grab the line:
-      std::string inLine=getLine(dp_inStream);
-      // and process it:
-      res=this->processLine(inLine);
-      d_next++;
+    // ---------
+    // if we get here we can just build the molecule:
+    // ---------
+    // set the stream to the relevant position:
+    dp_inStream->clear(); // clear the EOF tag if it has been set
+    dp_inStream->seekg(d_molpos[d_next]);
+    d_line = d_lineNums[d_next];
+    // grab the line:
+    std::string inLine=getLine(dp_inStream);
+    // and process it:
+    res=this->processLine(inLine);
 
-      // look ahead to see if we'll be able to get another line:
-      int currPos=dp_inStream->tellg();
-      int tempPos=this->skipComments();
-      if(tempPos<0){
-        // nope, there is nothing else present:
-        dp_inStream->clear();
-        dp_inStream->seekg(0,std::ios_base::end);
-        d_molpos.push_back(dp_inStream->tellg());
-        d_len = d_molpos.size()-1;
-      } else {
-        // we actually can read something new:
-        d_line--;
-        // move back to where we were:
-        dp_inStream->seekg(currPos);
-      }
-    } else {
-      throw FileParseException("End of input reached.");
+    // if we don't already know the length of the supplier,
+    // check if we can read another line:
+    if(d_len<0&&this->skipComments()<0){
+      d_len=d_molpos.size();
     }
-    
+
+    // make sure the line number is correct:
+    if(d_next < static_cast<int>(d_lineNums.size()) ){
+      d_line = d_lineNums[d_next];
+    }
+
+    ++d_next;
+    // if we just hit the last one, simulate EOF:
+    if(d_len>0 && d_next==d_len ) {
+      df_end=1;
+    }
     return res;
   }
 
@@ -568,15 +530,9 @@ namespace RDKit {
         d_lineNums.push_back(d_line);
         pos = this->skipComments();
       }
-      // we ran off the end, set the last element:
-      dp_inStream->clear();
-      dp_inStream->seekg(0,std::ios_base::end);
-      d_molpos.push_back(dp_inStream->tellg());
-
       // now remember to set the stream to its original position:
       dp_inStream->seekg(oPos);
-
-      d_len = d_molpos.size()-1;
+      d_len = d_molpos.size();
       return d_len;
     }
   }

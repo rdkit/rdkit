@@ -139,9 +139,14 @@ void testSmilesSup() {
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.2.csv";
   {
     SmilesMolSupplier nSup2(fname, ",", 1, 0, true);
+    TEST_ASSERT(nSup2.length() == 10);
+  }
+  {
+    SmilesMolSupplier nSup2(fname, ",", 1, 0, true);
 
     mol = nSup2[3];
-    CHECK_INVARIANT(nSup2.length() == 10, "");
+    TEST_ASSERT(!nSup2.atEnd())
+    TEST_ASSERT(nSup2.length() == 10);
 
     mol->getProp("_Name", mname);
     CHECK_INVARIANT(mname == "4", "");
@@ -1326,106 +1331,179 @@ void testGetItemText() {
   std::string molB,smiles;
   bool ok;
 
-  fname=rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  SDMolSupplier sdsup(fname);
-  TEST_ASSERT(sdsup.length()==16);
+  {
+    fname=rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+    SDMolSupplier sdsup(fname);
+    TEST_ASSERT(sdsup.length()==16);
   
-  molB = sdsup.getItemText(0);
-  mol1 = sdsup[0];
-  TEST_ASSERT(mol1);
-  mol2 = MolBlockToMol(molB);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
-  delete mol1;
-  delete mol2;
+    molB = sdsup.getItemText(0);
+    mol1 = sdsup[0];
+    TEST_ASSERT(mol1);
+    mol2 = MolBlockToMol(molB);
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
+    delete mol1;
+    delete mol2;
 
-  // make sure getItemText() doesn't screw up the current position:
-  molB = sdsup.getItemText(10);
-  mol1 = sdsup.next();
-  molB = sdsup.getItemText(1);
-  TEST_ASSERT(mol1);
-  mol2 = MolBlockToMol(molB);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
-  delete mol1;
-  delete mol2;
+    // make sure getItemText() doesn't screw up the current position:
+    molB = sdsup.getItemText(10);
+    mol1 = sdsup.next();
+    molB = sdsup.getItemText(1);
+    TEST_ASSERT(mol1);
+    mol2 = MolBlockToMol(molB);
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
+    delete mol1;
+    delete mol2;
   
-  // make sure getItemText() works on the last molecule
-  // (this was sf.net issue 1874882
-  molB = sdsup.getItemText(15);
-  mol1 = sdsup[15];
-  mol2 = MolBlockToMol(molB);
-  TEST_ASSERT(mol2);
-  TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
-  delete mol1;
-  delete mol2;
+    // make sure getItemText() works on the last molecule
+    // (this was sf.net issue 1874882
+    molB = sdsup.getItemText(15);
+    mol1 = sdsup[15];
+    mol2 = MolBlockToMol(molB);
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
+    delete mol1;
+    delete mol2;
   
-  try {
-    molB=sdsup.getItemText(16);
-    ok = false;
-  } catch (FileParseException &) {
-    ok=true;
+    try {
+      molB=sdsup.getItemText(16);
+      ok = false;
+    } catch (FileParseException &) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+
+    try {
+      molB=sdsup.getItemText(20);
+      ok = false;
+    } catch (FileParseException &) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
   }
-  TEST_ASSERT(ok);
 
-  try {
-    molB=sdsup.getItemText(20);
-    ok = false;
-  } catch (FileParseException &) {
-    ok=true;
+  {
+    fname=rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+    SDMolSupplier sdsup(fname);
+
+    // make sure getItemText() works if we haven't read at all from the supplier:
+    // (this was sf.net issue 2632960)
+    molB = sdsup.getItemText(0);
+    mol2 = MolBlockToMol(molB);
+    TEST_ASSERT(mol2);
+    mol1 = sdsup[0];
+    TEST_ASSERT(mol1);
+    TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
+    delete mol1;
+    delete mol2;
+
+    molB = sdsup.getItemText(5);
+    mol2 = MolBlockToMol(molB);
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(mol2->getNumAtoms()==16);
+    mol1 = sdsup[5];
+    TEST_ASSERT(mol1);
+    TEST_ASSERT(mol2->getNumAtoms()==mol1->getNumAtoms());
+    delete mol1;
+    delete mol2;
+
   }
-  TEST_ASSERT(ok);
 
-  fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
-  SmilesMolSupplier smisup(fname,",",1,0,false);
-  TEST_ASSERT(smisup.length()==10);
+  {
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+    SmilesMolSupplier smisup(fname,",",1,0,false);
+    TEST_ASSERT(smisup.length()==10);
   
-  molB = smisup.getItemText(0);
-  TEST_ASSERT(molB=="1, CC1=CC(=O)C=CC1=O, 34.14\n");
-  mol1 = smisup[0];
-  TEST_ASSERT(mol1);
-  delete mol1;
+    molB = smisup.getItemText(0);
+    TEST_ASSERT(molB=="1, CC1=CC(=O)C=CC1=O, 34.14");
+    mol1 = smisup[0];
+    TEST_ASSERT(mol1);
+    delete mol1;
 
-  molB = smisup.getItemText(5);
-  TEST_ASSERT(molB=="6, OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br, 87.74\n");
-  mol1 = smisup.next();
-  TEST_ASSERT(mol1);
-  TEST_ASSERT(mol1->getNumAtoms()==20);
-  delete mol1;
+    molB = smisup.getItemText(5);
+    TEST_ASSERT(molB=="6, OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br, 87.74");
+    mol1 = smisup.next();
+    TEST_ASSERT(mol1);
+    TEST_ASSERT(mol1->getNumAtoms()==20);
+    delete mol1;
 
-  // make sure getItemText() works on the last molecule
-  // (this was sf.net issue 1874882
-  molB = smisup.getItemText(8);
-  TEST_ASSERT(molB=="9, CC(=NO)C(C)=NO, 65.18\n");
-  molB = smisup.getItemText(9);
-  TEST_ASSERT(molB=="10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00\n");
+    // make sure getItemText() works on the last molecule
+    // (this was sf.net issue 1874882
+    molB = smisup.getItemText(8);
+    TEST_ASSERT(molB=="9, CC(=NO)C(C)=NO, 65.18");
+    molB = smisup.getItemText(9);
+    TEST_ASSERT(molB=="10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
+
+    mol1 = smisup[0];
+    TEST_ASSERT(mol1);
+    smiles = MolToSmiles(*mol1, 1);
+    TEST_ASSERT(smiles=="CC1=CC(=O)C=CC1=O");
+    TEST_ASSERT(mol1->getNumAtoms()==9);
+    delete mol1;
+
+  }
+
+  {
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+    SmilesMolSupplier smisup(fname,",",1,0,false);
+
+    // make sure getItemText() works if we haven't read at all from the supplier:
+    // (this was sf.net issue 2632960)
+    molB = smisup.getItemText(0);
+    TEST_ASSERT(molB=="1, CC1=CC(=O)C=CC1=O, 34.14");
+
+    molB = smisup.getItemText(5);
+    TEST_ASSERT(molB=="6, OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br, 87.74");
+
+    molB = smisup.getItemText(8);
+    TEST_ASSERT(molB=="9, CC(=NO)C(C)=NO, 65.18");
+    molB = smisup.getItemText(9);
+    TEST_ASSERT(molB=="10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
+  }
+
+
+  {
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
+    TDTMolSupplier tdtsup(fname);
+    // make sure getItemText() works if we haven't read at all from the supplier:
+    // (this was sf.net issue 2632960)
+    molB = tdtsup.getItemText(0);
+    TEST_ASSERT(molB!="");
   
-  fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
-  TDTMolSupplier tdtsup(fname);
-  TEST_ASSERT(tdtsup.length()==10);
+  }
+
+  {
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
+    TDTMolSupplier tdtsup(fname);
+    TEST_ASSERT(tdtsup.length()==10);
   
-  molB = tdtsup.getItemText(0);
-  mol1 = smisup[0];
-  TEST_ASSERT(mol1);
-  smiles = MolToSmiles(*mol1, 1);
-  TEST_ASSERT(smiles=="CC1=CC(=O)C=CC1=O");
-  TEST_ASSERT(mol1->getNumAtoms()==9);
-  delete mol1;
+    molB = tdtsup.getItemText(0);
+    TEST_ASSERT(molB!="");
 
-  molB = tdtsup.getItemText(5);
-  mol1 = tdtsup.next();
-  TEST_ASSERT(mol1);
-  smiles = MolToSmiles(*mol1, 1);
-  TEST_ASSERT(smiles=="Cc1nnc(N)nc1C");
-  TEST_ASSERT(mol1->getNumAtoms()==9);
-  delete mol1;
+    mol1 = tdtsup[0];
+    TEST_ASSERT(mol1);
+    smiles = MolToSmiles(*mol1, 1);
+    TEST_ASSERT(smiles=="Cc1nnc(N)nc1C");
+    TEST_ASSERT(mol1->getNumAtoms()==9);
+    delete mol1;
+
+    // make sure getItemText doesn't screw up next()
+    molB = tdtsup.getItemText(5);
+    mol1 = tdtsup.next();
+    TEST_ASSERT(mol1);
+    TEST_ASSERT(mol1->getNumAtoms()==9);
+    smiles = MolToSmiles(*mol1, 1);
+    TEST_ASSERT(smiles=="Cc1n[nH]c(=O)nc1N");
+    delete mol1;
 
 
-  // make sure getItemText() works on the last molecule
-  // (this was sf.net issue 1874882
-  molB = tdtsup.getItemText(9);
-  TEST_ASSERT(molB!="");
-  TEST_ASSERT(molB.substr(0,12)=="$SMI<Cc1n[nH");
+    // make sure getItemText() works on the last molecule
+    // (this was sf.net issue 1874882
+    molB = tdtsup.getItemText(9);
+    TEST_ASSERT(molB!="");
+    TEST_ASSERT(molB.substr(0,12)=="$SMI<Cc1n[nH");
+  }
 }
 
 
