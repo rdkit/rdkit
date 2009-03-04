@@ -286,6 +286,9 @@ void testSmilesSupFromText() {
     mol = nSup2[2];
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==4);
+    TEST_ASSERT(mol->hasProp("_Name"));
+    mol->getProp("_Name",mname);
+    TEST_ASSERT(mname=="2");
   }
   {
     nSup2.setData(text," ",0,-1,false,true);
@@ -293,10 +296,16 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==4);
+    TEST_ASSERT(mol->hasProp("_Name"));
+    mol->getProp("_Name",mname);
+    TEST_ASSERT(mname=="2");
     mol = nSup2[3];
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==6);
+    TEST_ASSERT(mol->hasProp("_Name"));
+    mol->getProp("_Name",mname);
+    TEST_ASSERT(mname=="3");
   }
   {
     nSup2.setData(text," ",0,-1,false,true);
@@ -304,10 +313,16 @@ void testSmilesSupFromText() {
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==6);
+    TEST_ASSERT(mol->hasProp("_Name"));
+    mol->getProp("_Name",mname);
+    TEST_ASSERT(mname=="3");
     mol = nSup2[2];
     TEST_ASSERT(mol);
     nAts = mol->getNumAtoms();
     TEST_ASSERT(nAts==4);
+    TEST_ASSERT(mol->hasProp("_Name"));
+    mol->getProp("_Name",mname);
+    TEST_ASSERT(mname=="2");
   }
   // --------------
   // basics:

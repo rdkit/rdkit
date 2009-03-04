@@ -276,11 +276,10 @@ namespace RDKit {
       }
     } else if(dp_inStream->eof()) {
       // we got some data before hitting EOF. So clear the
-      // flag on inStream and increment our line counter:
+      // flag on inStream
       dp_inStream->clear();
-    } else {
-      d_line++;
     }
+    d_line++;
     return tempStr;
   }
 
