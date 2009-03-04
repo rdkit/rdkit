@@ -278,8 +278,6 @@ namespace RDKit {
       // we got some data before hitting EOF. So clear the
       // flag on inStream and increment our line counter:
       dp_inStream->clear();
-      d_line++;
-      df_end = true;
     } else {
       d_line++;
     }
@@ -474,7 +472,7 @@ namespace RDKit {
     ++d_next;
     // if we just hit the last one, simulate EOF:
     if(d_len>0 && d_next==d_len ) {
-      df_end=1;
+      df_end=true;
     }
     return res;
   }

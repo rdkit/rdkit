@@ -266,26 +266,49 @@ void testSmilesSupFromText() {
     "CCOC\n"
     "CCCCOC"
     ;
-  nSup2.setData(text," ",0,-1,false,true);
-  //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
-  mol = nSup2.next();
-  nAts = mol->getNumAtoms();
-  TEST_ASSERT(nAts==2);
-  mol = nSup2[3];
-  nAts = mol->getNumAtoms();
-  TEST_ASSERT(nAts==6);
-  TEST_ASSERT(nSup2.length()==4);
-  failed=false;
-  try {
-    mol = nSup2[4];
-  } catch (FileParseException &) {
-    failed=true;
+  {
+    nSup2.setData(text," ",0,-1,false,true);
+    //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
+    mol = nSup2.next();
+    nAts = mol->getNumAtoms();
+    TEST_ASSERT(nAts==2);
+    mol = nSup2[3];
+    nAts = mol->getNumAtoms();
+    TEST_ASSERT(nAts==6);
+    TEST_ASSERT(nSup2.length()==4);
+    failed=false;
+    try {
+      mol = nSup2[4];
+    } catch (FileParseException &) {
+      failed=true;
+    }
+    TEST_ASSERT(failed);
+    mol = nSup2[2];
+    nAts = mol->getNumAtoms();
+    TEST_ASSERT(nAts==4);
   }
-  TEST_ASSERT(failed);
-  mol = nSup2[2];
-  nAts = mol->getNumAtoms();
-  TEST_ASSERT(nAts==4);
-
+  {
+    nSup2.setData(text," ",0,-1,false,true);
+    mol = nSup2[2];
+    TEST_ASSERT(mol);
+    nAts = mol->getNumAtoms();
+    TEST_ASSERT(nAts==4);
+    mol = nSup2[3];
+    TEST_ASSERT(mol);
+    nAts = mol->getNumAtoms();
+    TEST_ASSERT(nAts==6);
+  }
+  {
+    nSup2.setData(text," ",0,-1,false,true);
+    mol = nSup2[3];
+    TEST_ASSERT(mol);
+    nAts = mol->getNumAtoms();
+    TEST_ASSERT(nAts==6);
+    mol = nSup2[2];
+    TEST_ASSERT(mol);
+    nAts = mol->getNumAtoms();
+    TEST_ASSERT(nAts==4);
+  }
   // --------------
   // basics:
   text="Id SMILES Column_2\n"
