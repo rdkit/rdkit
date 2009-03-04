@@ -200,8 +200,10 @@ namespace RDKit {
             //  We need to fix that little problem now:
             if(newB->getBeginAtom()->getIsAromatic() && newB->getEndAtom()->getIsAromatic()){
               newB->setBondType(Bond::AROMATIC);
+              newB->setIsAromatic(true);
             } else {
               newB->setBondType(Bond::SINGLE);
+              newB->setIsAromatic(false);
             }
           } else if(queryDescription=="BondNull") {
             newB->setProp("NullBond",1);
@@ -213,8 +215,10 @@ namespace RDKit {
             oldB->getBondType()==Bond::SINGLE){
           if(newB->getBeginAtom()->getIsAromatic() && newB->getEndAtom()->getIsAromatic()){
             newB->setBondType(Bond::AROMATIC);
+            newB->setIsAromatic(true);
           } else {
             newB->setBondType(Bond::SINGLE);
+            newB->setIsAromatic(false);
           }
         }
 #endif
@@ -283,6 +287,7 @@ namespace RDKit {
             if(!rBond) continue;
             pBond->setBondType(rBond->getBondType());
             pBond->setBondDir(rBond->getBondDir());
+            pBond->setIsAromatic(rBond->getIsAromatic());
             pBond->clearProp("NullBond");
           }
         }
