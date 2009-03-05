@@ -147,7 +147,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetAtomPairAtomCode", RDKit::Descriptors::AtomPairs::getAtomCode,
               (python::arg("atom"), python::arg("branchSubtract")=0),
               docString.c_str());
-
+  docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
               (python::arg("mol"),
                python::arg("includingAtoms")=python::list()),

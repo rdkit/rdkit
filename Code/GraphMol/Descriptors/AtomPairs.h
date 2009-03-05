@@ -100,7 +100,7 @@ namespace RDKit {
 
         \param mol:         the molecule to be fingerprinted
         \param targetSize:  the number of atoms to include in the torsions
-        \param fromAtoms:   if provided, only torsionst that start or end at
+        \param fromAtoms:   if provided, only torsions that start or end at
             the specified atoms will be included in the fingerprint
 
 	\return a pointer to the fingerprint. The client is

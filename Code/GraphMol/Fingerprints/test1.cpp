@@ -610,8 +610,6 @@ void test1MorganFPs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-
-
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
   test1();
