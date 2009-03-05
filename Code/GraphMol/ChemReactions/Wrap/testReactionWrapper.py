@@ -285,13 +285,14 @@ M  END
 
         
   def testAromaticityTransfer(self):
-     mol = Chem.MolFromSmiles('c1ccc(C2C3(Cc4c(cccc4)C2)CCCC3)cc1')
-     rxn = rdChemReactions.ReactionFromSmarts('[A:1]1~[*:2]~[*:3]~[*:4]~[*:5]~[A:6]-;@1>>[*:1]~[*:2]~[*:3]~[*:4]~[*:5]~[*:6]')
-     products = rxn.RunReactants([mol])
-     self.failUnlessEqual(len(products),6)
-     for p in products:
-       self.failUnlessEqual(len(p),1)
-       Chem.SanitizeMol(p[0])
+    # this was issue 2664121
+    mol = Chem.MolFromSmiles('c1ccc(C2C3(Cc4c(cccc4)C2)CCCC3)cc1')
+    rxn = rdChemReactions.ReactionFromSmarts('[A:1]1~[*:2]~[*:3]~[*:4]~[*:5]~[A:6]-;@1>>[*:1]~[*:2]~[*:3]~[*:4]~[*:5]~[*:6]')
+    products = rxn.RunReactants([mol])
+    self.failUnlessEqual(len(products),6)
+    for p in products:
+      self.failUnlessEqual(len(p),1)
+      Chem.SanitizeMol(p[0])
 
 
 if __name__ == '__main__':
