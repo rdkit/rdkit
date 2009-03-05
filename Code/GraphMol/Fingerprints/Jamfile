@@ -3,7 +3,7 @@ import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
 
-lib Fingerprints : Fingerprints.cpp
+lib Fingerprints : Fingerprints.cpp MorganFingerprints.cpp
  ..//GraphMol ../Subgraphs//Subgraphs ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral
 :  <toolset>msvc:<link>static ; # <link>static ;
 install lib-install : Fingerprints : <location>$(RDBASE)/bin ;

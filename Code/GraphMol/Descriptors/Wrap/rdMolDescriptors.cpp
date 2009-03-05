@@ -10,6 +10,7 @@
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/AtomPairs.h>
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
 
 #include <vector>
 
@@ -44,6 +45,32 @@ namespace {
     RDKit::Descriptors::CalcCrippenDescriptors(mol,logp,mr,includeHs,force);
     return python::make_tuple(logp,mr);
   }
+
+
+  RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(const RDKit::ROMol &mol,
+                                                              int radius,
+                                                              python::object invariants){
+    std::vector<boost::uint32_t> *vect=0;
+    if(invariants){
+      unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
+      if(nInvar){
+        if(nInvar!=mol.getNumAtoms()){
+          throw_value_error("length of invariant vector != number of atoms");
+        }
+        vect = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          (*vect)[i] = python::extract<boost::uint32_t>(invariants[i]);
+        }
+      }
+    }
+    RDKit::SparseIntVect<boost::uint32_t> *res;
+    res = RDKit::MorganFingerprints::getFingerprint(mol,
+                                                    static_cast<unsigned int>(radius),
+                                                    vect);
+    if(vect) delete vect;
+    return res;
+  }
+
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -96,6 +123,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
+  docString="Returns a Morgan fingerprint for a molecule";
+  python::def("GetMorganFingerprint", GetMorganFingerprint,
+              (python::arg("mol"),python::arg("radius"),
+               python::arg("invariants")=python::list()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  python::scope().attr("__MorganFingerprint_version__")=
+    RDKit::MorganFingerprints::morganFingerprintVersion;
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
     "the Wildman-Cripppen logp and mr value";

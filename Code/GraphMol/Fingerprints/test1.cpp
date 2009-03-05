@@ -9,6 +9,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 #include <RDGeneral/RDLog.h>
@@ -474,6 +475,141 @@ void test1Layers(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void test1MorganFPs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints." << std::endl;
+
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+
+    mol = SmilesToMol("CCCCC");
+    fp = MorganFingerprints::getFingerprint(*mol,0);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,1);
+    TEST_ASSERT(fp->getNonzeroElements().size()==5);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,2);
+    TEST_ASSERT(fp->getNonzeroElements().size()==7);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==7);
+    delete fp;
+  
+  
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+
+    mol = SmilesToMol("O=C(O)CC1CC1");
+    fp = MorganFingerprints::getFingerprint(*mol,0);
+    TEST_ASSERT(fp->getNonzeroElements().size()==5);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,1);
+    TEST_ASSERT(fp->getNonzeroElements().size()==11);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,2);
+    TEST_ASSERT(fp->getNonzeroElements().size()==15);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==16);
+    delete fp;
+
+    delete mol;
+  }
+
+  {
+    // test that the results aren't order dependent, i.e. that we're
+    // "canonicalizing" the fps correctly
+    ROMol *mol,*mol2;
+    SparseIntVect<boost::uint32_t> *fp,*fp2;
+
+    mol = SmilesToMol("O=C(O)CC1CC1");
+    mol2 = SmilesToMol("OC(=O)CC1CC1");
+    fp = MorganFingerprints::getFingerprint(*mol,0);
+    fp2 = MorganFingerprints::getFingerprint(*mol2,0);
+    TEST_ASSERT(fp->getNonzeroElements().size()==5);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==5);
+    TEST_ASSERT(*fp==*fp2);
+    delete fp;
+    delete fp2;
+
+    fp = MorganFingerprints::getFingerprint(*mol,1);
+    fp2 = MorganFingerprints::getFingerprint(*mol2,1);
+    TEST_ASSERT(fp->getNonzeroElements().size()==11);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==11);
+    TEST_ASSERT(*fp==*fp2);
+    delete fp;
+    delete fp2;
+
+    fp = MorganFingerprints::getFingerprint(*mol,2);
+    fp2 = MorganFingerprints::getFingerprint(*mol2,2);
+    TEST_ASSERT(fp->getNonzeroElements().size()==15);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==15);
+    TEST_ASSERT(*fp==*fp2);
+    delete fp;
+    delete fp2;
+
+    fp = MorganFingerprints::getFingerprint(*mol,3);
+    fp2 = MorganFingerprints::getFingerprint(*mol2,3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==16);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==16);
+    TEST_ASSERT(*fp==*fp2);
+    delete fp;
+    delete fp2;
+
+    delete mol;
+    delete mol2;
+  }
+
+  {
+    // symmetry test:
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+
+    mol = SmilesToMol("OCCCCO");
+    fp = MorganFingerprints::getFingerprint(*mol,2);
+    TEST_ASSERT(fp->getNonzeroElements().size()==7);
+    SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter;
+    for(iter=fp->getNonzeroElements().begin();
+        iter!=fp->getNonzeroElements().end();++iter){
+      TEST_ASSERT(iter->second==2 || iter->second==4);
+    }
+    
+    delete fp;
+    delete mol;
+  }
+
+  {
+    // chirality test:
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+
+    mol = SmilesToMol("CC(F)(Cl)C(F)(Cl)C");
+    fp = MorganFingerprints::getFingerprint(*mol,0);
+    TEST_ASSERT(fp->getNonzeroElements().size()==4);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,1);
+    TEST_ASSERT(fp->getNonzeroElements().size()==8);
+    delete mol;
+    delete fp;
+
+    mol = SmilesToMol("CC(F)(Cl)[C@](F)(Cl)C");
+    fp = MorganFingerprints::getFingerprint(*mol,0);
+    TEST_ASSERT(fp->getNonzeroElements().size()==4);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,1);
+    TEST_ASSERT(fp->getNonzeroElements().size()==9);
+    delete fp;
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 
 int main(int argc,char *argv[]){
@@ -486,5 +622,6 @@ int main(int argc,char *argv[]){
   test4Trends();
   test5BackwardsCompatibility();
   test1Layers();
+  test1MorganFPs();
   return 0;
 }

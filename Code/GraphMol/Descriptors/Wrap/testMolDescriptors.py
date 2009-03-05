@@ -1,3 +1,5 @@
+# $Id$
+# 
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as rdMD
 from rdkit import DataStructs
@@ -40,7 +42,6 @@ class TestCase(unittest.TestCase) :
     sim= DataStructs.TanimotoSimilarity(fp1,fp2)
     self.failUnless(sim>0.0 and sim<1.0)
     
-
   def testTopologicalTorsions(self):
     mol = Chem.MolFromSmiles("CC");
     fp = rdMD.GetTopologicalTorsionFingerprint(mol)
@@ -58,6 +59,22 @@ class TestCase(unittest.TestCase) :
     fp = rdMD.GetTopologicalTorsionFingerprint(mol,3)
     self.failUnless(fp.GetTotalVal()==2)
     
+  def testMorganFingerprints(self):
+    mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
+    fp = rdMD.GetMorganFingerprint(mol,0)
+    self.failUnless(len(fp.GetNonzeroElements())==4)
+    fp = rdMD.GetMorganFingerprint(mol,1)
+    self.failUnless(len(fp.GetNonzeroElements())==8)
+    fp = rdMD.GetMorganFingerprint(mol,2)
+    self.failUnless(len(fp.GetNonzeroElements())==9)
+
+    mol = Chem.MolFromSmiles('CC(F)(Cl)[C@](F)(Cl)C')
+    fp = rdMD.GetMorganFingerprint(mol,0)
+    self.failUnless(len(fp.GetNonzeroElements())==4)
+    fp = rdMD.GetMorganFingerprint(mol,1)
+    self.failUnless(len(fp.GetNonzeroElements())==9)
+    fp = rdMD.GetMorganFingerprint(mol,2)
+    self.failUnless(len(fp.GetNonzeroElements())==10)
 
   def testCrippen(self):
     mol = Chem.MolFromSmiles("NCO");

@@ -6,7 +6,7 @@ import python ;
 
 python-extension rdMolDescriptors : rdMolDescriptors.cpp
   ..//Descriptors
-  ../../SmilesParse//SmilesParse ../../Substruct//Substruct
+  ../../SmilesParse//SmilesParse ../../Substruct//Substruct ../../Fingerprints//Fingerprints
   ../../Subgraphs//Subgraphs
   ../..//GraphMol
   ../../../Geometry//RDGeometry
