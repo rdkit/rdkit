@@ -42,6 +42,15 @@ class TestCase(unittest.TestCase) :
     sim= DataStructs.TanimotoSimilarity(fp1,fp2)
     self.failUnless(sim>0.0 and sim<1.0)
     
+  def testRootedAtomPairs(self):
+    m = Chem.MolFromSmiles('Oc1ccccc1')
+    fp1 = rdMD.GetAtomPairFingerprint(m)
+    fp2 = rdMD.GetAtomPairFingerprint(m,includingAtoms=(0,))
+    nz1 = fp1.GetNonzeroElements()
+    nz2 = fp2.GetNonzeroElements()
+    for k,v in nz2.iteritems():
+      self.failUnless(v<=nz1[k])
+
   def testTopologicalTorsions(self):
     mol = Chem.MolFromSmiles("CC");
     fp = rdMD.GetTopologicalTorsionFingerprint(mol)
@@ -59,6 +68,15 @@ class TestCase(unittest.TestCase) :
     fp = rdMD.GetTopologicalTorsionFingerprint(mol,3)
     self.failUnless(fp.GetTotalVal()==2)
     
+  def testRootedTorsions(self):
+    m = Chem.MolFromSmiles('Oc1ccccc1')
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m)
+    fp2 = rdMD.GetTopologicalTorsionFingerprint(m,includingAtoms=(0,))
+    nz1 = fp1.GetNonzeroElements()
+    nz2 = fp2.GetNonzeroElements()
+    for k,v in nz2.iteritems():
+      self.failUnless(v<=nz1[k])
+
   def testMorganFingerprints(self):
     mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')
     fp = rdMD.GetMorganFingerprint(mol,0)

@@ -406,6 +406,71 @@ void testLabute(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testRootedAtomPairs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Rooted Atom Pairs." << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<boost::int32_t> *fp1,*fp2;
+  std::vector<boost::uint32_t> roots;
+
+  mol = SmilesToMol("OCCCCC");
+  fp1=AtomPairs::getAtomPairFingerprint(*mol);
+  SparseIntVect<boost::int32_t>::StorageType nz1=fp1->getNonzeroElements();
+  TEST_ASSERT(nz1.size()>0);
+
+  roots.push_back(0);
+  fp2=AtomPairs::getAtomPairFingerprint(*mol,&roots);
+  SparseIntVect<boost::int32_t>::StorageType nz2=fp2->getNonzeroElements();
+  TEST_ASSERT(nz2.size()>0);
+  TEST_ASSERT(nz2.size()<nz1.size());
+
+  for(SparseIntVect<boost::int32_t>::StorageType::const_iterator bIt=nz2.begin();
+      bIt!=nz2.end();++bIt){
+    TEST_ASSERT(bIt->second<=fp2->getVal(bIt->first));
+  }
+
+  delete mol;
+  delete fp1;
+  delete fp2;
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+void testRootedTorsions(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Rooted Topological Torsions." << std::endl;
+
+  ROMol *mol;
+  SparseIntVect<boost::int64_t> *fp1,*fp2;
+  std::vector<boost::uint32_t> roots;
+
+
+  mol = SmilesToMol("OCCCC");
+  roots.push_back(0);
+
+  fp1 = AtomPairs::getTopologicalTorsionFingerprint(*mol);
+  SparseIntVect<boost::int64_t>::StorageType nz1=fp1->getNonzeroElements();
+  TEST_ASSERT(nz1.size()>0);
+
+  fp2 = AtomPairs::getTopologicalTorsionFingerprint(*mol,4,&roots);
+  SparseIntVect<boost::int64_t>::StorageType nz2=fp2->getNonzeroElements();
+  TEST_ASSERT(nz2.size()>0);
+  TEST_ASSERT(nz2.size()<nz1.size());
+
+  for(SparseIntVect<boost::int64_t>::StorageType::const_iterator bIt=nz2.begin();
+      bIt!=nz2.end();++bIt){
+    TEST_ASSERT(bIt->second<=fp2->getVal(bIt->first));
+  }
+
+  delete mol;
+  delete fp1;
+  delete fp2;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -423,4 +488,6 @@ int main(){
   testLabute();
 #endif
   testHashedAtomPairs();
+  testRootedAtomPairs();
+  testRootedTorsions();
 }

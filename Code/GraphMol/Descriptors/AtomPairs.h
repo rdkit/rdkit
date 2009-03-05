@@ -20,7 +20,7 @@ namespace RDKit {
 
   namespace Descriptors {
     namespace AtomPairs {
-      const std::string atomPairsVersion="1.0.0";
+      const std::string atomPairsVersion="1.1.0";
       const unsigned int numTypeBits=4;
       const unsigned int atomNumberTypes[1<<numTypeBits]={5,6,7,8,9,14,15,16,17,33,34,35,51,52,43};
       const unsigned int numPiBits=2;
@@ -63,11 +63,14 @@ namespace RDKit {
 
       
         \param mol:   the molecule to be fingerprinted
+        \param fromAtoms:   if provided, only atom pairs that involve
+            the specified atoms will be included in the fingerprint
 	\return a pointer to the fingerprint. The client is
                 responsible for calling delete on this.
 
        */
-      SparseIntVect<boost::int32_t> *getAtomPairFingerprint(const ROMol &mol);
+      SparseIntVect<boost::int32_t> *getAtomPairFingerprint(const ROMol &mol,
+                                                            const std::vector<boost::uint32_t> *fromAtoms=0);
 
       //! returns the hashed atom-pair fingerprint for a molecule
       /*!
@@ -97,13 +100,16 @@ namespace RDKit {
 
         \param mol:         the molecule to be fingerprinted
         \param targetSize:  the number of atoms to include in the torsions
+        \param fromAtoms:   if provided, only torsionst that start or end at
+            the specified atoms will be included in the fingerprint
 
 	\return a pointer to the fingerprint. The client is
                 responsible for calling delete on this.
 
        */
       SparseIntVect<boost::int64_t > *getTopologicalTorsionFingerprint(const ROMol &mol,
-                                                                        unsigned int targetSize=4);
+                                                                       unsigned int targetSize=4,
+                                                                       const std::vector<boost::uint32_t> *fromAtoms=0);
     }    
   } // end of namespace Descriptors
 }
