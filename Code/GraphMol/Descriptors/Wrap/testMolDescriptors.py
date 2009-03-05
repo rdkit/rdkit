@@ -94,6 +94,11 @@ class TestCase(unittest.TestCase) :
     fp = rdMD.GetMorganFingerprint(mol,2)
     self.failUnless(len(fp.GetNonzeroElements())==10)
 
+    mol = Chem.MolFromSmiles('CCCCC')
+    fp = rdMD.GetMorganFingerprint(mol,0,fromAtoms=(0,))
+    self.failUnless(len(fp.GetNonzeroElements())==1)
+
+    
   def testCrippen(self):
     mol = Chem.MolFromSmiles("NCO");
     contribs = rdMD._CalcCrippenContribs(mol)

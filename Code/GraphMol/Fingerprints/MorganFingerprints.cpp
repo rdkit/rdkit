@@ -39,6 +39,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
+#include <boost/foreach.hpp>
 #include <algorithm>
 
 namespace RDKit{
@@ -75,7 +76,8 @@ namespace RDKit{
     SparseIntVect<uint32_t> *
     getFingerprint(const ROMol &mol,
                    unsigned int radius,
-                   std::vector<uint32_t> *invariants){
+                   std::vector<uint32_t> *invariants,
+                   const std::vector<uint32_t> *fromAtoms){
       unsigned int nAtoms=mol.getNumAtoms();
       bool owner=false;
       if(!invariants){
@@ -87,9 +89,11 @@ namespace RDKit{
       res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
 
       // add the round 0 invariants to the result:
-      for(std::vector<uint32_t>::const_iterator it=invariants->begin();
-          it!=invariants->end();++it){
-        res->setVal(*it,res->getVal(*it)+1);
+      for(unsigned int i=0;i<nAtoms;++i){
+        if(!fromAtoms ||
+           std::find(fromAtoms->begin(),fromAtoms->end(),i)!=fromAtoms->end()){
+          res->setVal((*invariants)[i],res->getVal((*invariants)[i])+1);
+        }
       }
 
       boost::dynamic_bitset<> chiralAtoms(nAtoms);
@@ -101,6 +105,12 @@ namespace RDKit{
       std::vector< boost::dynamic_bitset<> > atomNeighborhoods(nAtoms,
                                                                boost::dynamic_bitset<>(mol.getNumBonds()));
       boost::dynamic_bitset<> deadAtoms(nAtoms);
+      if(fromAtoms){
+        deadAtoms.set();
+        BOOST_FOREACH(uint32_t idx,*fromAtoms){
+          deadAtoms.set(idx,0);
+        }
+      }
 
       // now do our subsequent rounds:
       for(unsigned int layer=0;layer<radius;++layer){

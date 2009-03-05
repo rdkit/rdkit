@@ -610,6 +610,52 @@ void test1MorganFPs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void test2MorganFPsFromAtoms(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints using fromAtoms argument." << std::endl;
+
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    std::vector<boost::uint32_t> atoms;
+    atoms.push_back(0);
+    
+    mol = SmilesToMol("CCCCC");
+    fp = MorganFingerprints::getFingerprint(*mol,0);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    delete fp;
+
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+    delete fp;
+  
+    fp = MorganFingerprints::getFingerprint(*mol,1,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    delete fp;
+  
+    delete mol;
+  }
+
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    std::vector<boost::uint32_t> atoms;
+    
+    mol = SmilesToMol("CCCCC");
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==0);
+    delete fp;
+  
+    fp = MorganFingerprints::getFingerprint(*mol,1,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==0);
+    delete fp;
+  
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
   test1();
@@ -621,5 +667,6 @@ int main(int argc,char *argv[]){
   test5BackwardsCompatibility();
   test1Layers();
   test1MorganFPs();
+  test2MorganFPsFromAtoms();
   return 0;
 }

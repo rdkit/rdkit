@@ -91,25 +91,37 @@ namespace {
 
   RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(const RDKit::ROMol &mol,
                                                               int radius,
-                                                              python::object invariants){
-    std::vector<boost::uint32_t> *vect=0;
+                                                              python::object invariants,
+                                                              python::object fromAtoms){
+    std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
       if(nInvar){
         if(nInvar!=mol.getNumAtoms()){
           throw_value_error("length of invariant vector != number of atoms");
         }
-        vect = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+        invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
         for(unsigned int i=0;i<mol.getNumAtoms();++i){
-          (*vect)[i] = python::extract<boost::uint32_t>(invariants[i]);
+          (*invars)[i] = python::extract<boost::uint32_t>(invariants[i]);
+        }
+      }
+    }
+    std::vector<boost::uint32_t> *froms=0;
+    if(fromAtoms){
+      unsigned int nFrom=python::extract<unsigned int>(fromAtoms.attr("__len__")());
+      if(nFrom){
+        froms = new std::vector<boost::uint32_t>();
+        for(unsigned int i=0;i<nFrom;++i){
+          froms->push_back(python::extract<boost::uint32_t>(fromAtoms[i]));
         }
       }
     }
     RDKit::SparseIntVect<boost::uint32_t> *res;
     res = RDKit::MorganFingerprints::getFingerprint(mol,
                                                     static_cast<unsigned int>(radius),
-                                                    vect);
-    if(vect) delete vect;
+                                                    invars,froms);
+    if(invars) delete invars;
+    if(froms) delete froms;
     return res;
   }
 
@@ -170,7 +182,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString="Returns a Morgan fingerprint for a molecule";
   python::def("GetMorganFingerprint", GetMorganFingerprint,
               (python::arg("mol"),python::arg("radius"),
-               python::arg("invariants")=python::list()),
+               python::arg("invariants")=python::list(),
+               python::arg("fromAtoms")=python::list()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   python::scope().attr("__MorganFingerprint_version__")=

@@ -63,6 +63,8 @@ namespace RDKit {
       \param invariants : optional pointer to a set of atom invariants to
             be used. By default ECFP-type invariants are used 
             (calculated by getConnectivityInvariants())
+      \param fromAtoms : if this is provided, only the atoms in the vector will be
+                         used as centers in the fingerprint
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -71,7 +73,9 @@ namespace RDKit {
     SparseIntVect<boost::uint32_t> *
       getFingerprint(const ROMol &mol,
                      unsigned int radius,
-                     std::vector<boost::uint32_t> *invariants=0);
+                     std::vector<boost::uint32_t> *invariants=0,
+                     const std::vector<boost::uint32_t> *fromAtoms=0);
+
       
     //! returns the connectivity invariants for a molecule
     /*!  
