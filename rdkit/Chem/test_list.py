@@ -19,6 +19,7 @@ tests=[
   ("python","UnitTestCatalog.py",{}),
   ("python","TemplateAlign.py",{}),
   ("python","Recap.py",{}),
+  ("python","BRICS.py",{}),
   ("python","UnitTestDescriptors.py",{}),
   ("python","AllChem.py",{}),
   ("python","test_list.py",{'dir':'AtomPairs'}),
