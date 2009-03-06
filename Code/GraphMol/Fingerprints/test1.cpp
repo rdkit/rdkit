@@ -633,6 +633,10 @@ void test2MorganFPsFromAtoms(){
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
   
+    fp = MorganFingerprints::getFingerprint(*mol,2,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    delete fp;
+  
     delete mol;
   }
 
@@ -653,6 +657,35 @@ void test2MorganFPsFromAtoms(){
     delete mol;
   }
 
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    std::vector<boost::uint32_t> atoms;
+    atoms.push_back(0);
+    
+    mol = SmilesToMol("C(CC)CO");
+
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+    delete fp;
+  
+    fp = MorganFingerprints::getFingerprint(*mol,1,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    delete fp;
+  
+    fp = MorganFingerprints::getFingerprint(*mol,2,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==3);
+    delete fp;
+  
+    fp = MorganFingerprints::getFingerprint(*mol,3,0,&atoms);
+    TEST_ASSERT(fp->getNonzeroElements().size()==3);
+    delete fp;
+  
+    delete mol;
+  }
+
+
+  
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 

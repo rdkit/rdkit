@@ -105,11 +105,14 @@ namespace RDKit{
       std::vector< boost::dynamic_bitset<> > atomNeighborhoods(nAtoms,
                                                                boost::dynamic_bitset<>(mol.getNumBonds()));
       boost::dynamic_bitset<> deadAtoms(nAtoms);
+
+      boost::dynamic_bitset<> includeAtoms(nAtoms);
       if(fromAtoms){
-        deadAtoms.set();
         BOOST_FOREACH(uint32_t idx,*fromAtoms){
-          deadAtoms.set(idx,0);
+          includeAtoms.set(idx,1);
         }
+      } else {
+        includeAtoms.set();
       }
 
       // now do our subsequent rounds:
@@ -183,7 +186,9 @@ namespace RDKit{
           // if we haven't seen this exact environment before, update the fingerprint:
           if(std::find(neighborhoods.begin(),neighborhoods.end(),
                        iter->get<0>())==neighborhoods.end()){
-            res->setVal(iter->get<1>(),res->getVal(iter->get<1>())+1);
+            if(includeAtoms[iter->get<2>()]){
+              res->setVal(iter->get<1>(),res->getVal(iter->get<1>())+1);
+            }
             neighborhoods.push_back(iter->get<0>());
             //std::cerr<<" layer: "<<layer<<" atom: "<<iter->get<2>()<<" " <<iter->get<0>()<< " " << iter->get<1>() << " " << deadAtoms[iter->get<2>()]<<std::endl;
           } else {
