@@ -572,8 +572,15 @@ namespace RDKit{
     - force: (optional) causes the calculation to be repeated, even if it has already\n\
       been done\n\
 \n";
-      python::def("AssignStereochemistry", MolOps::assignAtomChiralCodes,
+      python::def("AssignStereochemistry", MolOps::assignStereochemistry,
                   (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
+                  docString.c_str());
+
+      // ------------------------------------------------------------------------
+      docString="Removes all stereochemistry info from the molecule.\n\
+\n";
+      python::def("RemoveStereochemistry", MolOps::removeStereochemistry,
+                  (python::arg("mol")),
                   docString.c_str());
 
       // ------------------------------------------------------------------------

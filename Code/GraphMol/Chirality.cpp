@@ -998,5 +998,31 @@ namespace RDKit{
 
     }
 
+    void removeStereochemistry(ROMol &mol){
+      if(mol.hasProp("_StereochemDone")){
+        mol.clearProp("_StereochemDone");
+      }
+      for(ROMol::AtomIterator atIt=mol.beginAtoms();
+          atIt!=mol.endAtoms();++atIt){
+        (*atIt)->setChiralTag(Atom::CHI_UNSPECIFIED);
+        if((*atIt)->hasProp("_CIPCode")){
+          (*atIt)->clearProp("_CIPCode");
+        }
+        if((*atIt)->hasProp("_CIPRank")){
+          (*atIt)->clearProp("_CIPRank");
+        }
+
+      }        
+      for(ROMol::BondIterator bondIt=mol.beginBonds();
+          bondIt!=mol.endBonds();
+          ++bondIt){
+        if( (*bondIt)->getBondType()==Bond::DOUBLE ){
+          (*bondIt)->setStereo(Bond::STEREONONE);
+          (*bondIt)->getStereoAtoms().clear();
+        } else if( (*bondIt)->getBondType()==Bond::SINGLE ){
+          (*bondIt)->setBondDir(Bond::NONE);
+        }
+      }
+    }
   }  // end of namespace MolOps
 }  // end of namespace RDKit

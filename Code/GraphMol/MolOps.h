@@ -561,6 +561,12 @@ namespace RDKit{
 
     */
     void assignStereochemistry(ROMol &mol,bool cleanIt=false,bool force=false);
+    //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds (i.e. Z/E)
+    /*!
+
+      \param mol     the molecule of interest
+    */
+    void removeStereochemistry(ROMol &mol);
 
     //! \deprecated Use assignStereochemistry() instead
     static void assignAtomChiralCodes(ROMol &mol,bool cleanIt=false,bool force=false){

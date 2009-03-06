@@ -50,6 +50,8 @@ void testMol1(){
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
   m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
+  MolOps::removeStereochemistry(*m);
+  TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("_CIPCode"));
 
   BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< " << std::endl;
   delete m;
@@ -71,6 +73,8 @@ void testMol1(){
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
+  MolOps::removeStereochemistry(*m);
+  TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
 
   delete m;
   fName = rdbase+"/Code/GraphMol/FileParsers/test_data/ChiralityAndBondDir2a.mol";
@@ -81,6 +85,8 @@ void testMol1(){
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
+  MolOps::removeStereochemistry(*m);
+  TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
 
   delete m;
   fName = rdbase+"/Code/GraphMol/FileParsers/test_data/ChiralityAndBondDir2b.mol";
@@ -91,6 +97,8 @@ void testMol1(){
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
   m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
+  MolOps::removeStereochemistry(*m);
+  TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 };
@@ -1008,13 +1016,19 @@ void testIterativeChirality(){
     TEST_ASSERT(cip=="S");  // this value is from ChemDraw, Marvin doesn't tag it.
 
     std::string smi1=MolToSmiles(*m,true);
+
+    MolOps::removeStereochemistry(*m);
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREONONE);
+    
     delete m;
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
     std::string smi2=MolToSmiles(*m,true);
     BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
     TEST_ASSERT(smi1==smi2);
-    
+
     delete m;
   }
 

@@ -1375,6 +1375,9 @@ M  END
     Chem.AssignStereochemistry(m,1)
     self.failUnless(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
     self.failIf(m.GetAtomWithIdx(2).HasProp('_CIPCode'))
+    Chem.RemoveStereochemistry(m)
+    self.failIf(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
+
     
     m = Chem.MolFromSmiles('F[C@H](C)C')
     Chem.AssignStereochemistry(m,1)
@@ -1388,6 +1391,9 @@ M  END
     self.failUnless(0 in atoms)
     self.failUnless(3 in atoms)
     self.failUnless(m.GetBondWithIdx(2).GetStereo()==Chem.BondStereo.STEREONONE)
+    Chem.RemoveStereochemistry(m)
+    self.failUnless(m.GetBondWithIdx(1).GetStereo()==Chem.BondStereo.STEREONONE)
+
     
     m = Chem.MolFromSmiles('F\\C=CCl')
     self.failUnless(m.GetBondWithIdx(1).GetStereo()==Chem.BondStereo.STEREONONE)
