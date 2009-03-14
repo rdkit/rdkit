@@ -8,7 +8,10 @@ import os, sys, re, glob, shutil
 version='2009.Q1b1'
 
 module_ext = sysconfig.get_config_var('SO')
-install_base = os.path.join(sysconfig.get_config_var('LIBDEST'),'site-packages')
+if sys.platform=="win32":
+     install_base="Lib/site-packages"
+else:
+     install_base = os.path.join(sysconfig.get_config_var('LIBDEST'),'site-packages')
 ext_modules=[]
 
 child_packages = [
@@ -57,7 +60,10 @@ for root,dirs,files in os.walk('Projects'):
 
 data_files = [(extraBase+'/Data',glob.glob('Data/*.*'))]
 data_files.extend([(extraBase,glob.glob('./*.txt'))])
-data_files.extend([(extraBase+'/lib',glob.glob('bin/*'))])
+if sys.platform=='win32':
+     data_files.extend([(extraBase+'/lib',glob.glob('bin/*.dll'))])
+else:
+     data_files.extend([(extraBase+'/lib',glob.glob('bin/*'))])
 data_files.extend(sos)
 
 
@@ -68,6 +74,12 @@ for root,dirs,files in os.walk('Docs'):
 
      files=[os.path.join(root,filen) for filen in files]
      documentation.append((extraBase+'/'+root,files))
+
+if sys.platform=='win32':
+     scripts=("postinstall_win32.py",)
+else:
+     scripts=()
+
 
 setup(
       name='rdkit',
@@ -80,6 +92,7 @@ setup(
       download_url = 'http://code.google.com/p/rdkit/downloads/list',
       license='BSD',
       platforms=['Windows','Linux','Mac OS-X'],
+      scripts=scripts,
       classifiers = ['Development Status :: 5 - Production/Stable',
                      'Environment :: Console',
                      'Intended Audience :: Developers',
