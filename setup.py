@@ -75,11 +75,6 @@ for root,dirs,files in os.walk('Docs'):
      files=[os.path.join(root,filen) for filen in files]
      documentation.append((extraBase+'/'+root,files))
 
-if sys.platform=='win32':
-     scripts=("postinstall_win32.py",)
-else:
-     scripts=()
-
 
 setup(
       name='rdkit',
@@ -92,7 +87,6 @@ setup(
       download_url = 'http://code.google.com/p/rdkit/downloads/list',
       license='BSD',
       platforms=['Windows','Linux','Mac OS-X'],
-      scripts=scripts,
       classifiers = ['Development Status :: 5 - Production/Stable',
                      'Environment :: Console',
                      'Intended Audience :: Developers',
