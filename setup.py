@@ -5,7 +5,7 @@ from distutils.core import setup,Extension
 from distutils import sysconfig
 import os, sys, re, glob, shutil
 
-version='2009.Q1b1'
+version='2009.Q1b2'
 
 module_ext = sysconfig.get_config_var('SO')
 if sys.platform=="win32":
