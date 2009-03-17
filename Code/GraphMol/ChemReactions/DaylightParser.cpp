@@ -101,8 +101,6 @@ namespace RDKit {
     boost::split(reactSmarts,reactText,boost::is_any_of("."));
 
     std::string productText=text.substr(pos+2);
-    std::vector<std::string> productSmarts;
-    boost::split(productSmarts,productText,boost::is_any_of("."));
     
     ChemicalReaction *rxn=new ChemicalReaction();
    
@@ -117,15 +115,17 @@ namespace RDKit {
       rxn->addReactantTemplate(ROMOL_SPTR(mol));        
     }
     //std::cerr << " ---------------------------------------------------------" << std::endl;    
-    for(std::vector<std::string>::const_iterator txtIt=productSmarts.begin();
-        txtIt!=productSmarts.end();++txtIt){
-      ROMol *mol=SmartsToMol(*txtIt);
-      if(!mol){
-        std::string errMsg="Problems constructing product from SMARTS: ";
-        errMsg += *txtIt;
-        throw ChemicalReactionParserException(errMsg);
-      }
-      rxn->addProductTemplate(ROMOL_SPTR(mol));        
+    ROMol *prodMol=SmartsToMol(productText);
+    if(!prodMol){
+      std::string errMsg="Problems constructing product from SMARTS: ";
+      errMsg += productText;
+      throw ChemicalReactionParserException(errMsg);
+    }
+    std::vector<ROMOL_SPTR> prods=MolOps::getMolFrags(*prodMol,false);
+    delete prodMol;
+    for(std::vector<ROMOL_SPTR>::iterator pIt=prods.begin();
+        pIt!=prods.end();++pIt){
+      rxn->addProductTemplate(*pIt);        
     }
     //std::cerr << " ---------------------------------------------------------" << std::endl;    
     DaylightParserUtils::updateProductsStereochem(rxn);

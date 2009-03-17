@@ -2032,6 +2032,48 @@ void test21Issue2540021(){
 }
 
 
+void test22DotsToRemoveBonds(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing using dots in the products to remove bonds." << std::endl;
+
+  {
+    std::string smi  = "[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    smi = "C1ON1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    std::vector<MOL_SPTR_VECT> prods;
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+
+    ROMOL_SPTR prod = prods[0][0];
+    MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
+    TEST_ASSERT(prod->getNumAtoms()==3);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum()==6);
+    TEST_ASSERT(prod->getAtomWithIdx(1)->getAtomicNum()==8);
+    TEST_ASSERT(prod->getAtomWithIdx(2)->getAtomicNum()==7);
+    TEST_ASSERT(prod->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(prod->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(!prod->getBondBetweenAtoms(1,2));
+
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 int main() { 
   RDLog::InitLogs();
@@ -2062,6 +2104,7 @@ int main() {
   test20BondQueriesInProduct();
 #endif
   test21Issue2540021();
+  test22DotsToRemoveBonds();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

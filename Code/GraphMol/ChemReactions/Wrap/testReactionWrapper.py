@@ -294,6 +294,16 @@ M  END
       self.failUnlessEqual(len(p),1)
       Chem.SanitizeMol(p[0])
 
+  def testDotSeparation(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1')
+    mol = Chem.MolFromSmiles('C1ON1')
+    products = rxn.RunReactants([mol])
+    self.failUnlessEqual(len(products),1)
+    for p in products:
+      self.failUnlessEqual(len(p),1)
+      self.failUnlessEqual(p[0].GetNumAtoms(),3)
+      self.failUnlessEqual(p[0].GetNumBonds(),2)
+
 
 if __name__ == '__main__':
   unittest.main()
