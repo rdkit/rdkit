@@ -1648,7 +1648,6 @@ void testAtomParity(){
 
   {
     // a case with two Hs on the chiral center:
-    int parity;
     std::string fName= rdbase + "/Code/GraphMol/FileParsers/test_data/parity.twoHs.mol";
     RWMol *m = MolFileToMol(fName,true,false);
     TEST_ASSERT(m);
@@ -1672,6 +1671,46 @@ void testAtomParity(){
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void testIssue2692246(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " Testing issue 2692246 "<< std::endl;
+  std::string smiles(120,'C');
+  smiles += "[CH3+]";
+  RWMol *m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+  std::string molBlock = MolToMolBlock(*m);
+  delete m;
+  m = MolBlockToMol(molBlock);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==121);
+  TEST_ASSERT(m->getAtomWithIdx(120)->getFormalCharge()==1);
+  delete m;
+
+  BOOST_LOG(rdInfoLog) << " done"<< std::endl;
+}
+
+void testKekulizationSkip(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " Testing mol blocks without kekulization "<< std::endl;
+  std::string smiles("c1ccccc1");
+  RWMol *m = SmilesToMol(smiles);
+  TEST_ASSERT(m);
+  std::string molBlock = MolToMolBlock(*m,true,-1,false);
+  TEST_ASSERT(molBlock.find("1  2  4")!=std::string::npos);
+  TEST_ASSERT(molBlock.find("2  3  4")!=std::string::npos);
+  TEST_ASSERT(molBlock.find("3  4  4")!=std::string::npos);
+
+  molBlock = MolToMolBlock(*m);
+  TEST_ASSERT(molBlock.find("1  2  4")==std::string::npos);
+  TEST_ASSERT(molBlock.find("2  3  4")==std::string::npos);
+  TEST_ASSERT(molBlock.find("3  4  4")==std::string::npos);
+
+  delete m;
+  BOOST_LOG(rdInfoLog) << " done"<< std::endl;
+}
+
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -1703,6 +1742,8 @@ int main(int argc,char *argv[]){
   testRadicals();
   testBadBondOrders();
   testAtomParity();
+  testIssue2692246();
+  testKekulizationSkip();
   //testCrash();
   return 0;
 }

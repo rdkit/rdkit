@@ -65,18 +65,20 @@ namespace RDKit{
    *   \param mol           - the molecule in question
    *   \param includeStereo - toggles inclusion of stereochemistry information
    *   \param confId        - selects the conformer to be used
+   *   \param kekulize      - triggers kekulization of the molecule before it is written
    */
   std::string MolToMolBlock(const ROMol &mol,bool includeStereo=true,
-                            int confId=-1);
+                            int confId=-1,bool kekulize=true);
   // \brief construct a molecule from an MDL mol file
   /*! 
    *   \param mol           - the molecule in question
    *   \param fName         - the name of the file to use
    *   \param includeStereo - toggles inclusion of stereochemistry information
    *   \param confId        - selects the conformer to be used
+   *   \param kekulize      - triggers kekulization of the molecule before it is written
    */
   void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo=true,
-                    int confId=-1);
+                    int confId=-1,bool kekulize=true);
 
 
   //-----

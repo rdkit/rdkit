@@ -37,9 +37,9 @@ namespace RDKit{
       const Atom *atom=*atomIt;
       if(atom->getFormalCharge()!=0){
         ++nChgs;
-        chgss << boost::format(" % 3d % 3d") % (atom->getIdx()+1) % atom->getFormalCharge();
+        chgss << boost::format(" %3d %3d") % (atom->getIdx()+1) % atom->getFormalCharge();
         if(nChgs==8){
-          res << boost::format("M  CHG% 3d")%nChgs << chgss.str()<<std::endl;
+          res << boost::format("M  CHG%3d")%nChgs << chgss.str()<<std::endl;
           chgss.str("");
           nChgs=0;
         }
@@ -58,19 +58,19 @@ namespace RDKit{
           BOOST_LOG(rdWarningLog)<<" unsupported radical count: "<<nRadEs<<" set to 3."<<std::endl;
           nRadEs=3;
         }
-        radss << boost::format(" % 3d % 3d") % (atom->getIdx()+1) % nRadEs;
+        radss << boost::format(" %3d %3d") % (atom->getIdx()+1) % nRadEs;
         if(nRads==8){
-          res << boost::format("M  RAD% 3d")%nRads << radss.str()<<std::endl;
+          res << boost::format("M  RAD%3d")%nRads << radss.str()<<std::endl;
           radss.str("");
           nRads=0;
         }
       }
     }
     if(nChgs){
-      res << boost::format("M  CHG% 3d")%nChgs << chgss.str()<<std::endl;
+      res << boost::format("M  CHG%3d")%nChgs << chgss.str()<<std::endl;
     }
     if(nRads){
-      res << boost::format("M  RAD% 3d")%nRads << radss.str()<<std::endl;
+      res << boost::format("M  RAD%3d")%nRads << radss.str()<<std::endl;
     }
     return res.str();
   }
@@ -187,7 +187,7 @@ namespace RDKit{
     } 
     std::string symbol = AtomGetMolFileSymbol(atom);
     std::stringstream ss;
-    ss << boost::format("% 10.4f% 10.4f% 10.4f %3s% 2d% 3d% 3d% 3d% 3d% 3d  0% 3d% 3d% 3d% 3d% 3d") % x % y % z % symbol.c_str() %
+    ss << boost::format("%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d") % x % y % z % symbol.c_str() %
       massDiff%chg%parityFlag%hCount%stereoCare%totValence%rxnComponentType%
       rxnComponentNumber%atomMapNumber%inversionFlag%exactChangeFlag;
     res += ss.str();
@@ -286,12 +286,12 @@ namespace RDKit{
   //  gets a mol block as a string
   //
   //------------------------------------------------
-  std::string MolToMolBlock(const ROMol &mol,bool includeStereo, int confId){
-    // NOTE: kekulize the molecule before writing it out
-    // because of the way mol files handle aromaticity
+  std::string MolToMolBlock(const ROMol &mol,bool includeStereo, int confId, bool kekulize){
     ROMol tromol(mol);
     RWMol &trwmol = static_cast<RWMol &>(tromol);
-    MolOps::Kekulize(trwmol);
+    // NOTE: kekulize the molecule before writing it out
+    // because of the way mol files handle aromaticity
+    if(kekulize) MolOps::Kekulize(trwmol);
 
 #if 0
     if(includeStereo){
@@ -401,14 +401,14 @@ namespace RDKit{
   //  Dump a molecule to a file
   //
   //------------------------------------------------
-  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo, int confId){
+  void MolToMolFile(const ROMol &mol,std::string fName,bool includeStereo, int confId, bool kekulize){
     std::ofstream *outStream = new std::ofstream(fName.c_str());
     if (!outStream || !(*outStream) || outStream->bad() ) {
       std::ostringstream errout;
       errout << "Bad output file " << fName;
       throw BadFileException(errout.str());
     }
-    std::string outString = MolToMolBlock(mol,includeStereo, confId);
+    std::string outString = MolToMolBlock(mol,includeStereo,confId,kekulize);
     *outStream  << outString;
     delete outStream;
   }    

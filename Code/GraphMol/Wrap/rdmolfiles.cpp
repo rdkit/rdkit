@@ -315,6 +315,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - includeStereo: (optional) toggles inclusion of stereochemical\n\
                      information in the output\n\
     - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - kekulize: (optional) triggers kekulization of the molecule before it's written,\n\
+                as suggested by the MDL spec.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -322,7 +324,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 \n";  
   python::def("MolToMolBlock",RDKit::MolToMolBlock,
 	      (python::arg("mol"),python::arg("includeStereo")=false,
-	       python::arg("confId")=-1),
+	       python::arg("confId")=-1,python::arg("kekulize")=true),
 	      docString.c_str());
 
 
