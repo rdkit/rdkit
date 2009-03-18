@@ -57,7 +57,7 @@ namespace RDKit {
 
 %token <atom> AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
 %token <atom> SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN RINGSIZE_ATOM_QUERY_TOKEN
-%token <ival> DIGIT_TOKEN
+%token <ival> ZERO_TOKEN NONZERO_DIGIT_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN
 %token HASH_TOKEN MINUS_TOKEN PLUS_TOKEN 
 %token CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
@@ -69,7 +69,7 @@ namespace RDKit {
 %type <moli> cmpd mol branch
 %type <atom> atomd element simple_atom
 %type <atom> atom_expr point_query atom_query recursive_query
-%type <ival> ring_number number charge_spec
+%type <ival> ring_number nonzero_number number charge_spec digit
 %type <bond> bondd bond_expr bond_query
 %token EOS_TOKEN
 
@@ -284,7 +284,7 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $2;
 }
-| atom_expr COLON_TOKEN number {
+| atom_expr COLON_TOKEN nonzero_number {
   if($1->hasProp("molAtomMapNumber")){
     BOOST_LOG(rdWarningLog) << "Warning: Atom-map index (:%d) specified multiple times for one atom, additional specifications ignored" << std::endl;
   } else {
@@ -347,7 +347,7 @@ atom_query: COMPLEX_ATOM_QUERY_TOKEN
   newQ->setQuery(makeAtomHCountQuery($2));
   $$=newQ;
 }
-| HYB_TOKEN DIGIT_TOKEN {
+| HYB_TOKEN NONZERO_DIGIT_TOKEN {
   QueryAtom *newQ = new QueryAtom();
   Atom::HybridizationType hyb=Atom::UNSPECIFIED;
   // we're following the oelib "standard", where:
@@ -465,18 +465,28 @@ charge_spec: PLUS_TOKEN PLUS_TOKEN { $$=2; }
 
 /* --------------------------------------------------------------- */
 /*
-chival:	CHI_CLASS_TOKEN number
+chival:	CHI_CLASS_TOKEN nonzero_number
 	| AT_TOKEN
         ;
 */
 /* --------------------------------------------------------------- */
-ring_number:  DIGIT_TOKEN
-| PERCENT_TOKEN DIGIT_TOKEN DIGIT_TOKEN { $$ = $2*10 + $3; }
+ring_number:  digit
+| PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit { $$ = $2*10+$3; }
+;
+
+
+/* --------------------------------------------------------------- */
+number:  ZERO_TOKEN
+| nonzero_number 
 ;
 
 /* --------------------------------------------------------------- */
-number:  DIGIT_TOKEN
-| number DIGIT_TOKEN { $$ = $1*10 + $2; }
+nonzero_number:  NONZERO_DIGIT_TOKEN
+| nonzero_number digit { $$ = $1*10 + $2; }
+;
+
+digit: NONZERO_DIGIT_TOKEN
+| ZERO_TOKEN
 ;
 
 %%

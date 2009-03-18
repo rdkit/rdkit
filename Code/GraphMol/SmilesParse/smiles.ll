@@ -291,7 +291,8 @@ std::string("Xi"));
 
 \%              { return PERCENT_TOKEN; }
 
-[0-9]		{ yysmiles_lval.ival = atoi( yytext ); return DIGIT_TOKEN; }
+[0]		{ yysmiles_lval.ival = 0; return ZERO_TOKEN; }
+[1-9]		{ yysmiles_lval.ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
 
 
 

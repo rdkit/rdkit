@@ -46,14 +46,14 @@ static RWMol * curMol_gps = 0;
 }
 
 %token <atom> AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
-%token <ival> DIGIT_TOKEN
+%token <ival> NONZERO_DIGIT_TOKEN ZERO_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN LOOP_CONNECTOR_TOKEN
 %token MINUS_TOKEN PLUS_TOKEN CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol branch
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
-%type <ival>  number ring_number
+%type <ival>  nonzero_number number ring_number digit
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token EOS_TOKEN
 
@@ -278,17 +278,24 @@ simple_atom:      ORGANIC_ATOM_TOKEN
                 | AROMATIC_ATOM_TOKEN
                 ;
 
-
 /* --------------------------------------------------------------- */
-ring_number:  DIGIT_TOKEN
-| PERCENT_TOKEN DIGIT_TOKEN DIGIT_TOKEN { $$ = $2*10 + $3; }
+ring_number:  digit
+| PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit { $$ = $2*10+$3; }
 ;
 
 /* --------------------------------------------------------------- */
-number:  DIGIT_TOKEN
-| number DIGIT_TOKEN { $$ = $1*10 + $2; }
+number:  ZERO_TOKEN
+| nonzero_number 
 ;
 
+/* --------------------------------------------------------------- */
+nonzero_number:  NONZERO_DIGIT_TOKEN
+| nonzero_number digit { $$ = $1*10 + $2; }
+;
+
+digit: NONZERO_DIGIT_TOKEN
+| ZERO_TOKEN
+;
 
 /*
   chival:	CHI_CLASS_TOKEN DIGIT_TOKEN

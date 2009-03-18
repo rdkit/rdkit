@@ -325,7 +325,7 @@ namespace SmilesParseOps{
     while(bookmarkIt!=mol->getAtomBookmarks()->end()){
       // don't bother even considering bookmarks outside
       // the range used for loops
-      if(bookmarkIt->first < 100 && bookmarkIt->first > 0){
+      if(bookmarkIt->first < 100 && bookmarkIt->first >= 0){
 	RWMol::ATOM_PTR_LIST::iterator atomIt,atomsEnd;
 	RWMol::ATOM_PTR_LIST bookmarkedAtomsToRemove;
 	atomIt = bookmarkIt->second.begin();

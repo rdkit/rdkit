@@ -293,7 +293,8 @@ A			{
 
 \%              { return PERCENT_TOKEN; }
 
-[0-9]		{ yysmarts_lval.ival = atoi( yytext ); return DIGIT_TOKEN; }
+[0]		{ yysmarts_lval.ival =0; return ZERO_TOKEN; }
+[1-9]		{ yysmarts_lval.ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
 
 \!			{ return NOT_TOKEN; }
 

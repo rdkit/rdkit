@@ -68,6 +68,8 @@ void testPass(){
     "[C^3]",
     "[se]",
     "[te]",
+    // test zeros as ring indices, issue 2690982:
+    "C0CC0", 
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
@@ -99,6 +101,14 @@ void testFail(){
     "C1CC",
     "C1CC1",
     "fff",
+    "C1CC1",
+    "C=0", // part of sf.net issue 2525792
+    "C1CC1",
+    "C0", // part of sf.net issue 2525792
+    "C1CC1",
+    "C-0", // part of sf.net issue 2525792
+    "C1CC1",
+    "C+0", // part of sf.net issue 2525792
     "C1CC1",
     "EOS"};
   while( smis[i] != "EOS" ){
@@ -618,6 +628,7 @@ void testSmartsWrite() {
   while( smis[i] != "EOS" ){
     std::string smi = smis[i];
     mol = SmartsToMol(smi);
+    CHECK_INVARIANT(mol,smi);
     std::string nsma = MolToSmarts(*mol);
     if (smi != nsma) {
       diffSmi.push_back(smi);

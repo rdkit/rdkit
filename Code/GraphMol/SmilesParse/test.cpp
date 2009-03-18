@@ -79,6 +79,8 @@ void testPass(){
     // test aromatic se and te:
     "c1ccc[se]1",
     "c1ccc[te]1",
+    // test zeros as ring indices, issue 2690982:
+    "C0CC0", 
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
@@ -119,6 +121,14 @@ void testFail(){
     "fff", // tests the situation where the parser cannot do anything at all
     "CCC",
     "N(=O)(=O)=O", // bad sanitization failure
+    "C1CC1",
+    "C=0", // part of sf.net issue 2525792
+    "C1CC1",
+    "C0", // part of sf.net issue 2525792
+    "C1CC1",
+    "C-0", // part of sf.net issue 2525792
+    "C1CC1",
+    "C+0", // part of sf.net issue 2525792
     "C1CC1",
     "EOS"};
 
@@ -1675,11 +1685,9 @@ void testBug1844617(){
   delete mol;
 #endif
   smi ="O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
-  std::cerr << "1-----------------------------------------------" << std::endl;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   //mol->debugMol(std::cout);
-  std::cerr << "2-----------------------------------------------" << std::endl;
   MolOps::assignAtomChiralCodes(*mol);
   //mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
@@ -1698,10 +1706,8 @@ void testBug1844617(){
   mol->getAtomWithIdx(15)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");
 #if 1  
-  std::cerr << "3-----------------------------------------------" << std::endl;
   smi = MolToSmiles(*mol,true);
   delete mol;
-  std::cerr << "4-----------------------------------------------" << std::endl;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   //mol->debugMol(std::cout);
@@ -1713,11 +1719,9 @@ void testBug1844617(){
 
   delete mol;
   smi ="O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
-  std::cerr << "12-----------------------------------------------" << std::endl;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   //mol->debugMol(std::cout);
-  std::cerr << "22-----------------------------------------------" << std::endl;
   MolOps::assignAtomChiralCodes(*mol);
   //mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
@@ -1736,10 +1740,8 @@ void testBug1844617(){
   mol->getAtomWithIdx(15)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");
 #if 1  
-  std::cerr << "32-----------------------------------------------" << std::endl;
   smi = MolToSmiles(*mol,true,false,0);
   delete mol;
-  std::cerr << "42-----------------------------------------------" << std::endl;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   //mol->debugMol(std::cout);
