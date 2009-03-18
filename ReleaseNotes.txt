@@ -12,16 +12,49 @@
    Chem". Old code will continue to work if you also add $RDBASE/rdkit
    to your PYTHONPATH, but it is strongly suggested that you update
    your scripts to reflect the new organization.
-
-
-Acknowledgements:
-
+ - For C++ programmers: There is a non-backwards compatible change in
+   the way atoms and bonds are stored on molecules. See the *Other*
+   section for details.
+   
+Acknowledgements
+ - Kirk DeLisle, Noel O'Boyle, Andrew Dalke
+ 
 Bug Fixes
+ - Incorrect handling of 0s as ring closure digits (issues 2525792,
+ and 2690982)
+ - Incorrect handling of atoms with explicit Hs in reactions (issue 2540021)
+ - SmilesMolSupplier.GetItemText() crashes (issue 2632960)
+ - Incorrect handling of dot separations in reaction SMARTS (issue 2690530)
 
 New Features
+ - BRICS implementation
+ - Morgan/circular fingerprints implementation 
 
 Other
-
+ - For C++ programmers: The ROMol methods getAtomPMap() and
+   getBondPMap() have been removed. The molecules themselves now support
+   an operator[]() method that can be used to convert graph iterators
+   (e.g. ROMol:edge_iterator, ROMol::vertex_iterator,
+   ROMol::adjacency_iterator) to the corresponding Atoms and Bonds.
+   New API for looping over an atom's bonds:
+        ... molPtr is a const ROMol * ...
+        ... atomPtr is a const Atom * ...
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = molPtr->getAtomBonds(atomPtr);
+        while(beg!=end){
+          const BOND_SPTR bond=(*molPtr)[*beg];
+          ... do something with the Bond ...
+          ++beg;
+        }
+  New API for looping over a molecule's atoms:
+        ... mol is an ROMol ...
+        ROMol::VERTEX_ITER atBegin,atEnd;
+        boost::tie(atBegin,atEnd) = mol.getVertices();  
+        while(atBegin!=atEnd){
+          ATOM_SPTR at2=mol[*atBegin];
+          ... do something with the Atom ...
+          ++atBegin;
+        }
 
 ******  Release_Q42008_1 *******
 (Changes relative to Release_Q32008_1)
