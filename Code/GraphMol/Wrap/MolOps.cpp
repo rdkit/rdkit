@@ -682,6 +682,9 @@ namespace RDKit{
       // ------------------------------------------------------------------------
       docString="Returns a layered fingerprint for a molecule\n\
 \n\
+  NOTE: This function is experimental. The API or results may change from\n\
+    release to release.\n\
+\n\
   Explanation of the algorithm below.\n\
 \n\
   ARGUMENTS:\n\
