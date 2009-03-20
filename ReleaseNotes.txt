@@ -27,6 +27,8 @@ Bug Fixes
  - Incorrect handling of dot separations in reaction SMARTS (issue 2690530)
  - Bad charge lines in mol blocks for large molecules (issue 2692246)
  - Order dependence in the 2D pharmacophore code
+ - the LayeredFingerprints now handle non-aromatic single ring bonds
+   between aromatic atoms correctly.
 
 New Features
  - BRICS implementation
@@ -35,8 +37,20 @@ New Features
  - Atom parity information in CTABs now written and read. If present
    on reading, atom parity flags are stored in the atomic property
    "molParity".
+ - An optional "fromAtoms" argument has been added to the atom pairs
+   and topological torsion fingerprints. If this is provided, only atom
+   pairs including the specified atoms, or torsions that either start
+   or end at the specified atoms, will be included in the fingerprint.
+ - Kekulization is now optional when generating CTABs. Since the MDL
+   spec suggests that aromatic bonds not be used, this is primarily
+   intended for debugging purposes.
+ - the removeStereochemistry() (RemoveStereoChemistry() from Python)
+   function has been added to remove all stereochemical information
+   from a molecule.
 
 Other
+ - The function DaylightFingerprintMol() is now deprecated, use
+   RDKFingerprintMol() instead.
  - For C++ programmers: The ROMol methods getAtomPMap() and
    getBondPMap() have been removed. The molecules themselves now support
    an operator[]() method that can be used to convert graph iterators
