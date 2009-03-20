@@ -150,39 +150,3 @@ def Gen2DFingerprint(mol,sigFactory,perms=None,dMat=None):
       if sigFactory.shortestPathsOnly:
         _ShortestPathsMatch(match,perm,sig,dMat,sigFactory)
   return sig
-
-if __name__ == '__main__':
-  from rdkit import Chem
-  def test1():
-    sig = Signature.Pharm2DSig()
-    sig.SetPatternsFromSmarts(['O','N'])
-    sig.SetBins([(1,2),(2,4),(4,6)])
-    sig.SetMinCount(2)
-    sig.SetMaxCount(3)
-    sig.Init()
-
-    mol = Chem.MolFromSmiles('C1OCOCC1O')
-    Gen2DFingerprint(mol,sig)
-
-    print list(sig.GetOnBits())
-    print sig._size
-
-  def test2():
-    sig = Signature.Pharm2DSig()
-    sig.SetPatternsFromSmarts(['[OD1]','[OD2]','[CD3]',])
-    sig.SetBins([(1,3),(3,8)])
-    sig.SetMinCount(3)
-    sig.SetMaxCount(3)
-    sig.Init()
-    mol = Chem.MolFromSmiles('OCCC1COCCO1')
-    dMat= Chem.GetDistanceMatrix(mol)
-
-    #Signature._verbose = 1
-    Gen2DFingerprint(mol,sig)
-
-    #print sig._binCombos
-    print list(sig.GetOnBits())
-    print sig._size
-  Signature._verbose=1
-  _verbose = 1
-  test1()

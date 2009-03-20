@@ -55,8 +55,21 @@ class SigFactory(object):
   def GetSignature(self):
     return self.sigKlass(self._sigSize)
 
-  def GetBitDescription(self,bitIdx,includeBins=0,fullPage=1):
-    """  returns HTML with a description of the bit
+  def _GetBitSummaryData(self,bitIdx):
+    nPts,combo,scaffold = self.GetBitInfo(bitIdx)
+    fams=self.GetFeatFamilies()
+    labels = [fams[x] for x in combo]
+    dMat = numpy.zeros((nPts,nPts),numpy.int)
+    dVect = Utils.nPointDistDict[nPts]
+    for idx in range(len(dVect)):
+      i,j = dVect[idx]
+      dMat[i,j] = scaffold[idx]
+      dMat[j,i] = scaffold[idx]
+    
+    return nPts,combo,scaffold,labels,dMat
+
+  def GetBitDescriptionAsText(self,bitIdx,includeBins=0,fullPage=1):
+    """  returns text with a description of the bit
 
     **Arguments**
 
@@ -73,39 +86,26 @@ class SigFactory(object):
       a string with the HTML
 
     """
-    nPts,combo,scaffold = self.GetBitInfo(bitIdx)
-    labels = [self._labels[x] for x in combo]
-    dMat = numpy.zeros((nPts,nPts),numpy.int)
-    dVect = Utils.nPointDistDict[nPts]
-    for idx in range(len(dVect)):
-      i,j = dVect[idx]
-      dMat[i,j] = scaffold[idx]
-      dMat[j,i] = scaffold[idx]
-    if fullPage:
-      lines = ['<html><body>']
-    else:
-      lines = []
-    lines.append("""<h2>Bit %d</h2>
-    <p><b>Num Points:</b> %d
-    """%(bitIdx,nPts))
-    lines.append('<p><b>Distances</b><table border=1>')
-    hdr = ' '.join(['<th>%s</th>'%x for x in labels])
-    lines.append('<tr><td></td>%s</tr>'%(hdr))
-    for i in range(nPts):
-      row = ' '.join(['<td>%s</td>'%(str(dMat[i,x])) for x in range(nPts)])
-      lines.append('<tr><th>%s</th>%s</tr>'%(labels[i],row))
-    lines.append('</table>')
+    nPts,combo,scaffold,labels,dMat=self._GetBitSummaryData(bitIdx)
 
-    if includeBins:
-      lines.append('<p> <b>Distance Bin Information</b>')
-      lines.append('<table border=1>')
-      lines.append('<tr><td>bin</td><td>begin</td><td>end</td></tr>')
-      for idx,(beg,end) in enumerate(self.GetBins()):
-        lines.append('<tr><td>%d</td><td>%d</td><td>%d</td></tr>'%(idx,beg,end))
-      lines.append('</table>')
-    if fullPage:
-      lines.append("</body></html>")
-    return '\n'.join(lines)
+  def GetBitDescription(self,bitIdx):
+    """  returns a text description of the bit
+
+    **Arguments**
+
+      - bitIdx: an integer bit index
+
+    **Returns**
+
+      a string
+
+    """
+    nPts,combo,scaffold,labels,dMat=self._GetBitSummaryData(bitIdx)
+    res = " ".join(labels)+ " "
+    for row in dMat:
+      res += "|"+" ".join([str(x) for x in row])
+    res += "|"
+    return res
 
   def _findBinIdx(self,dists,bins,scaffolds):
     """ OBSOLETE: this has been rewritten in C++

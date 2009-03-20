@@ -204,6 +204,38 @@ class TestCase(unittest.TestCase):
     bs = tuple(sig.GetOnBits())
     self.failUnlessEqual(bs,(0,))
 
+  def testDefaultFactory(self):
+    from rdkit.Chem import Pharm2D
+    factory = Pharm2D.DefaultSigFactory()
+    #Generate._verbose=True
+    mol = Chem.MolFromSmiles('OCCC(=O)')
+    sig=Generate.Gen2DFingerprint(mol,factory)
+    self.failUnlessEqual(len(sig),19355)
+    self.failUnlessEqual(tuple(sig.GetOnBits()),(2,16,21,84,1274,4361,))
+    nPts,combo,scaffold,labels,dMat=factory._GetBitSummaryData(21)
+    self.failUnlessEqual(nPts,2)
+    self.failUnlessEqual(labels,['Acceptor','Hydrophobe'])
+    self.failUnlessEqual(list(dMat[0]),[0,0])
+    self.failUnlessEqual(list(dMat[1]),[0,0])
+
+    txt=factory.GetBitDescription(21)
+    self.failUnlessEqual(txt,'Acceptor Hydrophobe |0 0|0 0|')
+    
+    nPts,combo,scaffold,labels,dMat=factory._GetBitSummaryData(2)
+    self.failUnlessEqual(nPts,2)
+    self.failUnlessEqual(labels,['Acceptor','Acceptor'])
+    self.failUnlessEqual(list(dMat[0]),[0,2])
+    self.failUnlessEqual(list(dMat[1]),[2,0])
+
+    nPts,combo,scaffold,labels,dMat=factory._GetBitSummaryData(4361)
+    self.failUnlessEqual(nPts,3)
+    self.failUnlessEqual(labels,['Acceptor','Donor','Hydrophobe'])
+    self.failUnlessEqual(list(dMat[0]),[0,2,0])
+    self.failUnlessEqual(list(dMat[1]),[2,0,0])
+    self.failUnlessEqual(list(dMat[2]),[0,0,0])
+    self.failUnlessEqual(factory.GetBitDescription(4361),
+                         'Acceptor Donor Hydrophobe |0 2 0|2 0 0|0 0 0|')
+
 if __name__ == '__main__':
   unittest.main()
 
