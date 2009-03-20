@@ -46,7 +46,7 @@ The instructions below are for source distributions from Q1 2009 on.
   * create the databases used by the Python tests, requires sqlite3 to be installed:
     ** `sqlite3 $RDBASE/Data/RDTests.sqlt < $RDBASE/rdkit/Dbase/testData/RDTests.sqlite`
     ** `sqlite3 $RDBASE/Data/RDData.sqlt < $RDBASE/rdkit/Dbase/testData/RDData.sqlite`
-  * cd to $RDBASE/Python and do: `python $RDBASE/rdkit/TestRunner.py test_list.py`
+  * cd to $RDBASE/rdkit and do: `python $RDBASE/rdkit/TestRunner.py test_list.py`
   * cd to $RDBASE/Projects and do: `python $RDBASE/rdkit/TestRunner.py test_list.py`
 
 

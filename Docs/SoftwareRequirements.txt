@@ -40,7 +40,7 @@ B. Optional Python:
 
  
 C. Other required stuff
-   1) The boost shared libraries v1.33 or later (tested with 1.33-1.36)
+   1) The boost shared libraries v1.33 or later (tested with 1.33-1.38)
 
    2) PostgreSQL (only if you're using pyPgSQL)
 

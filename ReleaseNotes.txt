@@ -25,10 +25,16 @@ Bug Fixes
  - Incorrect handling of atoms with explicit Hs in reactions (issue 2540021)
  - SmilesMolSupplier.GetItemText() crashes (issue 2632960)
  - Incorrect handling of dot separations in reaction SMARTS (issue 2690530)
+ - Bad charge lines in mol blocks for large molecules (issue 2692246)
+ - Order dependence in the 2D pharmacophore code
 
 New Features
  - BRICS implementation
  - Morgan/circular fingerprints implementation 
+ - The 2D pharmacophore code now uses standard RDKit fdef files.
+ - Atom parity information in CTABs now written and read. If present
+   on reading, atom parity flags are stored in the atomic property
+   "molParity".
 
 Other
  - For C++ programmers: The ROMol methods getAtomPMap() and
