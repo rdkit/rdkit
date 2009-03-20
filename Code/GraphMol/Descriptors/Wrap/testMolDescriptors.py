@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase) :
   def testRootedAtomPairs(self):
     m = Chem.MolFromSmiles('Oc1ccccc1')
     fp1 = rdMD.GetAtomPairFingerprint(m)
-    fp2 = rdMD.GetAtomPairFingerprint(m,includingAtoms=(0,))
+    fp2 = rdMD.GetAtomPairFingerprint(m,fromAtoms=(0,))
     nz1 = fp1.GetNonzeroElements()
     nz2 = fp2.GetNonzeroElements()
     for k,v in nz2.iteritems():
@@ -71,11 +71,19 @@ class TestCase(unittest.TestCase) :
   def testRootedTorsions(self):
     m = Chem.MolFromSmiles('Oc1ccccc1')
     fp1 = rdMD.GetTopologicalTorsionFingerprint(m)
-    fp2 = rdMD.GetTopologicalTorsionFingerprint(m,includingAtoms=(0,))
+    fp2 = rdMD.GetTopologicalTorsionFingerprint(m,fromAtoms=(0,))
     nz1 = fp1.GetNonzeroElements()
     nz2 = fp2.GetNonzeroElements()
     for k,v in nz2.iteritems():
       self.failUnless(v<=nz1[k])
+
+    m = Chem.MolFromSmiles('COCC')
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m)
+    self.failUnlessEqual(len(fp1.GetNonzeroElements()),1)
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m,fromAtoms=(0,))
+    self.failUnlessEqual(len(fp1.GetNonzeroElements()),1)
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m,fromAtoms=(1,))
+    self.failUnlessEqual(len(fp1.GetNonzeroElements()),0)
 
   def testMorganFingerprints(self):
     mol = Chem.MolFromSmiles('CC(F)(Cl)C(F)(Cl)C')

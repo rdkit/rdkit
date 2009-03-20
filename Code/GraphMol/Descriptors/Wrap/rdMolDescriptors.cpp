@@ -162,7 +162,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
               (python::arg("mol"),
-               python::arg("includingAtoms")=python::list()),
+               python::arg("fromAtoms")=python::list()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
@@ -175,7 +175,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetTopologicalTorsionFingerprint",
 	      GetTopologicalTorsionFingerprint,
 	      (python::arg("mol"),python::arg("targetSize")=4,
-               python::arg("includingAtoms")=0),
+               python::arg("fromAtoms")=0),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
