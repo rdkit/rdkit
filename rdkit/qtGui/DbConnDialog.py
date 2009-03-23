@@ -5,10 +5,10 @@
 """  dialog for establishing db connections
 
 """    
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 from qt import *
-from pyRDKit.qtGui.DbConnWidgetImpl import insertConnWidget
-from pyRDKit.qtGui.DbDialog import DbDialog
+from rdkit.qtGui.DbConnWidgetImpl import insertConnWidget
+from rdkit.qtGui.DbDialog import DbDialog
 
 
 class DbConnDialog(DbDialog):

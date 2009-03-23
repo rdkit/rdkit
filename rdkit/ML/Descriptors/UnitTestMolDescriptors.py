@@ -14,6 +14,7 @@ from rdkit import Chem
 class TestCase(unittest.TestCase):
   def setUp(self):
     self.descs = ['MolLogP','Chi1v']
+    self.vers= ('1.1.0','1.0.0')
     self.calc = MoleculeDescriptors.MolecularDescriptorCalculator(self.descs)
     self.testD = [
       ('CCOC',    (0.6527, 1.40403)),
@@ -21,14 +22,14 @@ class TestCase(unittest.TestCase):
       ('CCC(=O)O',(0.481, 1.48839))]
 
   def testGetNames(self):
-    assert self.calc.GetDescriptorNames()==tuple(self.descs),'bad descriptor names: %s'%(self.calc.GetDescriptorNames())
+    self.failUnlessEqual(self.calc.GetDescriptorNames(),tuple(self.descs))
     
   def _testVals(self,calc,testD):
     for smi,vals in testD:
       mol = Chem.MolFromSmiles(smi)
       ans = numpy.array(vals)
       res = numpy.array(calc.CalcDescriptors(mol))
-      assert max(abs(res-ans))<1e-4,'bad descriptor values for SMILES %s (%s)'%(smi,str(res))
+      self.failUnless(max(abs(res-ans))<1e-4,'bad descriptor values for SMILES %s (%s)'%(smi,str(res)))
     
   def testCalcVals(self):
     self._testVals(self.calc,self.testD)
@@ -48,7 +49,8 @@ class TestCase(unittest.TestCase):
     assert ok,'problems reading saved file %s'%(fName)
       
 
-    assert calc.GetDescriptorNames()==tuple(self.descs),'bad descriptor names'
+    self.failUnlessEqual(calc.GetDescriptorNames(),tuple(self.descs))
+    self.failUnlessEqual(calc.GetDescriptorVersions(),tuple(self.vers))
     self._testVals(calc,self.testD)
     
     

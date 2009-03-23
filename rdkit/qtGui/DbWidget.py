@@ -5,11 +5,11 @@
 """ contains a mixin class for the various Database widgets
 
 """    
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 from qt import *
 import os,os.path
-from pyRDKit.Dbase import DbConnection
-from pyRDKit.qtGui.qtUtils import logger
+from rdkit.Dbase import DbConnection
+from rdkit.qtGui.qtUtils import logger
 
 def insertDbWidget(parent,klass,*args,**kwargs):
   """ constructs a widget and inserts it into a parent widget
@@ -162,7 +162,7 @@ class DbWidgetMixin:
   def getDbName(self):
     if not RDConfig.usePgSQL:
       return None
-    from pyRDKit.Dbase import DbInfo
+    from rdkit.Dbase import DbInfo
     names = QStringList.fromStrList(DbInfo.GetDbNames())
     res,ok = QInputDialog.getItem('Select Database','Select Database',names,0,False)
 

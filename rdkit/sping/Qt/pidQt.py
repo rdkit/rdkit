@@ -34,7 +34,7 @@ Greg Landrum (Landrum@RationalDiscovery.com) 29 Octover, 2002
 
 """
 
-from sping import pid
+from rdkit.sping import pid
 import string, os, types
 from qt import *
 from qtcanvas import *

@@ -6,16 +6,16 @@
 """ defines classes to make QTables more useful for us
 
 """    
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
-from pyRDKit.qtGui.DbConnDialog import DbConnDialog
-from pyRDKit.qtGui.qtUtils import logger
+from rdkit.qtGui.DbConnDialog import DbConnDialog
+from rdkit.qtGui.qtUtils import logger
 try:
   from cStringIO import StringIO
 except ImportError:
   from StringIO import StringIO
-from pyRDKit.Dbase import DbUtils
+from rdkit.Dbase import DbUtils
 import types
 
 

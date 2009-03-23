@@ -6,10 +6,10 @@
 """ Mixin GUI launcher code """
 import qt
 import os.path
-from pyRDKit import qtGui
-from pyRDKit.qtGui import qtUtils
+from rdkit import qtGui
+from rdkit.qtGui import qtUtils
 
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 lookHere = [os.path.join(RDConfig.RDCodeDir,'qtGui/VisProg'),
             os.path.join(RDConfig.RDCodeDir,'qtGui/MixIns'),
             '.']
@@ -18,7 +18,7 @@ def StandardGui(args,**kwargs):
   """ launches a standard mixin GUI
 
   """
-  from pyRDKit.mixins import Loader
+  from rdkit.mixins import Loader
   loadOrder = []
   loadedMixIns=Loader.LoadMixIns(args,loadOrder,
                                  lookHere)

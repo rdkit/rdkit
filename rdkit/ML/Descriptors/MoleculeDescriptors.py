@@ -32,9 +32,23 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
            a list of strings which are keys into _AvailDescriptors.descDict_
 
     """
-    self.simpleList = simpleList[:]
-    self.descriptorNames = self.simpleList[:]
+    self.simpleList = tuple(simpleList)
+    self.descriptorNames = tuple(self.simpleList)
     self.compoundList = None
+    self._findVersions()
+
+  def _findVersions(self):
+    """ returns a tuple of the versions of the descriptor calculators
+
+    """
+    self.descriptorVersions=[]
+    for nm in self.simpleList:
+      vers='N/A'
+      if AvailDescriptors.descDict.has_key(nm):
+        fn = AvailDescriptors.descDict[nm]
+        if hasattr(fn,'version'):
+          vers = fn.version
+      self.descriptorVersions.append(vers)
   
   def SaveState(self,fileName):
     """ Writes this calculator off to a file so that it can be easily loaded later
@@ -78,7 +92,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """ returns a tuple of the names of the descriptors this calculator generates
 
     """
-    return tuple(self.descriptorNames)
+    return self.descriptorNames
 
   def GetDescriptorSummaries(self):
     """ returns a tuple of summaries for the descriptors this calculator generates
@@ -109,13 +123,5 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """ returns a tuple of the versions of the descriptor calculators
 
     """
-    res = []
-    for nm in self.simpleList:
-      fn = AvailDescriptors.descDict.get(nm,lambda x:777)
-      if hasattr(fn,'version'):
-        vers = fn.version
-      else:
-        vers="N/A"
-      res.append(vers)
-    return tuple(res)  
+    return tuple(self.descriptorVersions)  
     

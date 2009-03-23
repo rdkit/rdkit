@@ -6,10 +6,10 @@
 
 """    
 
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 from qt import *
-from pyRDKit.qtGui.DbQueryWidgetImpl import insertQueryWidget
-from pyRDKit.qtGui.DbDialog import DbDialog
+from rdkit.qtGui.DbQueryWidgetImpl import insertQueryWidget
+from rdkit.qtGui.DbDialog import DbDialog
 
 class DbQueryDialog(DbDialog):
   """  dialog for establishing db connections

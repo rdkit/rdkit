@@ -100,7 +100,7 @@ __version_min_number__ = "0"  # should match "12"
 __version__ =  __version_maj_number__ + "." + __version_min_number__ # c.f. "1.0.12"
 
 from types import StringType, IntType, InstanceType
-from sping.colors import *
+from rdkit.sping.colors import *
 
 inch = 72		# 1 PIDDLE drawing unit == 1/72 imperial inch
 cm = inch/2.54	# more sensible measurement unit

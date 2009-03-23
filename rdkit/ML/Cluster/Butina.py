@@ -11,13 +11,18 @@ import numpy
 from rdkit import RDLogger
 logger=RDLogger.logger()
 
-def ClusterData(data,nPts,distThresh,isDistData=False):
+def EuclideanDist(pi,pj):
+  dv = array(pi)- array(pj)
+  return numpy.sqrt(dv*dv)
+  
+  
+def ClusterData(data,nPts,distThresh,isDistData=False,distFunc=EuclideanDist):
   """  clusters the data points passed in and returns the list of clusters
 
     **Arguments**
 
-      - data: a list of lists (or array, or whatever) with the input
-        data (see discussion of _isDistData_ argument for the exception)
+      - data: a list of items with the input data 
+        (see discussion of _isDistData_ argument for the exception)
 
       - nPts: the number of points to be used
 
@@ -32,6 +37,9 @@ def ClusterData(data,nPts,distThresh,isDistData=False):
             for i in range(nPts):
               for j in range(i):
                 dists.append( distfunc(i,j) )
+
+      - distFunc: a function to calculate distances between points.
+           Receives 2 points as arguments, should return a float
           
     **Returns**
 
@@ -43,7 +51,6 @@ def ClusterData(data,nPts,distThresh,isDistData=False):
          The first element for each cluster is its centroid.
 
   """
-  data = numpy.array(data)
   if isDistData and len(data)>(nPts*(nPts-1)/2):
     logger.warning("Distance matrix is too long")
   nbrLists = [None]*nPts
@@ -53,12 +60,10 @@ def ClusterData(data,nPts,distThresh,isDistData=False):
   for i in range(nPts):
     for j in range(i):
       if not isDistData:
-        dv = data[i]-data[j]
-        dij = numpy.sqrt(dv*dv)
+        dij = distFunc(data[i],data[j])
       else:
         dij = data[dmIdx]
         dmIdx+=1
-        #print i,j,dij
       if dij<=distThresh:
         nbrLists[i].append(j)
         nbrLists[j].append(i)

@@ -9,15 +9,15 @@
  this class handles interaction
 
 """    
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 import qt
 import qtcanvas
 
-from pyRDKit.qtGui.forms.PiddleWindow import PiddleWindow as _Form
-from pyRDKit.qtGui import qtUtils
-from pyRDKit.sping.Qt.pidQt import QtCanvas as Canvas
+from rdkit.qtGui.forms.PiddleWindow import PiddleWindow as _Form
+from rdkit.qtGui import qtUtils
+from rdkit.sping.Qt.pidQt import QtCanvas as Canvas
 import os.path
-from pyRDKit.Logger import Logger
+from rdkit.Logger import Logger
 
 class PiddleCanvasView(qtcanvas.QCanvasView):
   """  The actual canvas view which is displayed to the user
@@ -299,7 +299,7 @@ class PiddleWindow(_Form):
   def resizeEvent(self,evt):
     pass
 if __name__ == '__main__':
-  from pyRDKit.qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(PiddleWindow,None)
   widg.resize(640,480)

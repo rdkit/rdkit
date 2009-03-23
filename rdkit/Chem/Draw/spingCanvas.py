@@ -4,7 +4,7 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from sping import pid
+from rdkit.sping import pid
 import math
 
 faceMap={'sans':'helvetica'}

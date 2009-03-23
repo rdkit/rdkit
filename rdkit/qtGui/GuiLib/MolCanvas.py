@@ -3,20 +3,20 @@
 #  Copyright (C) 2005-2006 Rational Discovery LLC
 #    All Rights Reserved
 #
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qtcanvas import *
-from qtGui.PiddleWindowImpl import PiddleCanvasView
-from Chem.Draw import MolDrawing
+from rdkit.qtGui.PiddleWindowImpl import PiddleCanvasView
+from rdkit.Chem.Draw import MolDrawing
 MolDrawing.registerCanvas('sping')
 
 import cPickle,os,copy,types
-import Chem
-from Chem import rdDepictor
+from rdkit import Chem
+from rdkit.Chem import rdDepictor
 
-from Logger import Logger
-from sping.Qt.pidQt import QtCanvas as Canvas
-from sping.Qt import pidQt
+from rdkit.Logger import Logger
+from rdkit.sping.Qt.pidQt import QtCanvas as Canvas
+from rdkit.sping.Qt import pidQt
 import traceback
 
 class PickModes:
@@ -247,7 +247,7 @@ class MolCanvasView(PiddleCanvasView):
 
 if __name__ == '__main__':
   import sys,getopt
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
   
   app,widg = Gui.Launcher(MolCanvasView,None,interactive=True)
 

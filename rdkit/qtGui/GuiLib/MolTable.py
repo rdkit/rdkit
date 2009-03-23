@@ -6,21 +6,21 @@
 """ defines classes required for using molecules in QTables
 
 """    
-import RDConfig
-import Chem
-from Chem import AllChem
-from Chem import rdDepictor
+from rdkit import RDConfig
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem import rdDepictor
 from qt import *
 from qttable import *
-from utils.PilTools import PilImgToQPixmap
-from qtGui import GuiTable,qtUtils
+from rdkit.utils.PilTools import PilImgToQPixmap
+from rdkit.qtGui import GuiTable,qtUtils
 import copy
 tryChemdraw=False
 hasCDX=0
 
 if tryChemdraw:
   try:
-    from utils import chemdraw
+    from rdkit.utils import chemdraw
   except ImportError:
     hasCDX=0
   else:
@@ -31,7 +31,7 @@ if tryChemdraw:
     else:
       hasCDX=1
   try:
-    from utils import chemdraw_qax
+    from rdkit.utils import chemdraw_qax
   except ImportError:
     hasCDX_ax=0
   else:
@@ -41,7 +41,7 @@ if tryChemdraw:
       hasCDX_ax=0
     else:
       hasCDX_ax=1
-from utils import PilTools
+from rdkit.utils import PilTools
 import StringIO,types
 
 drawInChemdraw=1
@@ -164,8 +164,8 @@ class MolTableItem(QTableItem):
         if not where.isVisible(): where.show()
 
   def toImage(self,fName=None,size=(100,100),fontSize=12,lineWidth=.5):
-    from Chem.Draw.MolDrawing import MolDrawing
-    from sping.ReportLab.pidReportLab import RLCanvas as Canvas
+    from rdkit.Chem.Draw.MolDrawing import MolDrawing
+    from rdkit.sping.ReportLab.pidReportLab import RLCanvas as Canvas
     canv = Canvas(size)
     d = MolDrawing(canvas=canv)
     d.atomLabelFontSize=fontSize
@@ -277,7 +277,7 @@ class MolTable(GuiTable.GuiTable):
 
 
   def contentsToPDF(self,fName=None,skipCols=None,replaceMolName=0,sketchWidth=1.5):
-    from Reports import PDFReport, ReportUtils
+    from rdkit.Reports import PDFReport, ReportUtils
     from cStringIO import StringIO
     import os
     
@@ -741,55 +741,4 @@ class MolTable(GuiTable.GuiTable):
       itms.append(fn)
     if itms:
       popup.exec_loop(pos)
-    
-
-
-def test1():
-  import os
-  # start out by grabbing some data:
-  from Dbase.DbConnection import DbConnect
-  from Chem.Suppliers.DbMolSupplier import RandomAccessDbMolSupplier
-  from Chem.Suppliers.DbMolSupplier import ForwardDbMolSupplier
-  dbName = os.path.join(RDConfig.RDCodeDir,'qtGui','GuiLib','demoData','data.gdb')
-  conn = DbConnect(dbName,'some_mols_dupes')
-  data = conn.GetData()
-  if 1:
-    mols = RandomAccessDbMolSupplier(data)
-  else:
-    mols = ForwardDbMolSupplier(data)
-
-
-  # build the app and widget
-  from qtGui import Gui
-  app,widg = Gui.Launcher(MolTable,None)
-
-  # and load up those molecules:
-  widg.loadFromMolSupplier(mols,includeCheckboxes=0)
-
-  w = Chem.SmilesWriter('foob.txt',delimiter='\t',nameHeader="Mol_ID")
-  widg.exportToMolWriter(w)
-  
-  app.exec_loop()
-  widg.destroy(1)
-    
-def test2():
-  import os
-  # start out by grabbing some data:
-  from VLib.NodeLib import DbMolSupply
-  dbName = os.path.join(RDConfig.RDCodeDir,'qtGui','GuiLib','demoData','data.gdb')
-  node = DbMolSupply.GetNode(dbName,'some_mols_dupes')
-
-  # build the app and widget
-  from qtGui import Gui
-  app,widg = Gui.Launcher(MolTable,None)
-
-  # and load up those molecules:
-  widg.loadFromVLib(node,includeCheckboxes=0)
-
-  app.exec_loop()
-  widg.destroy(1)
-    
-if __name__ == '__main__':
-  #test1()
-  test2()
     

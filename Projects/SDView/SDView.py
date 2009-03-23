@@ -22,16 +22,16 @@ _usage="""
 """
 _welcomeMessage="This is SDView version %s"%(_version)
 import sys,os,copy
-from pyRDKit.RDLogger import logger
+from rdkit.RDLogger import logger
 logger = logger()
-from pyRDKit import Chem
-from pyRDKit.Chem import AllChem
-from pyRDKit.Chem.ChemUtils.AlignDepict import AlignDepict
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from rdkit.Chem.ChemUtils.AlignDepict import AlignDepict
 from qt import *
-from pyRDKit.qtGui import qtUtils
-from pyRDKit.qtGui.GuiLib.MolTable import MolTable
-from pyRDKit.qtGui.GuiLib.MolCanvas import MolCanvasView
-from pyRDKit.qtGui.GuiBase import GuiBase
+from rdkit.qtGui import qtUtils
+from rdkit.qtGui.GuiLib.MolTable import MolTable
+from rdkit.qtGui.GuiLib.MolCanvas import MolCanvasView
+from rdkit.qtGui.GuiBase import GuiBase
 
 class SDViewTable(MolTable):
   def __init__(self,*args,**kwargs):
@@ -85,14 +85,14 @@ class SDViewGui(GuiBase):
 
 def RunGui(suppl,redraw=False,do3D=False,showOnly=None,numberAtoms=False,
            alignCore=None,alignPatt=None,keepHs=False,matchConf=False):
-  from pyRDKit.qtGui import Gui
+  from rdkit.qtGui import Gui
   app,win = Gui.Launcher(SDViewGui,None,includeLogo=False)
   widg = win.centralWidget()
   widg.molCanvas.includeAtomNumbers=numberAtoms
       
   processFunc=None
   if do3D:
-    from pyRDKit.Chem.PyMol import MolViewer
+    from rdkit.Chem.PyMol import MolViewer
     try:
       pymol = MolViewer()
     except:
@@ -160,7 +160,7 @@ def RunGui(suppl,redraw=False,do3D=False,showOnly=None,numberAtoms=False,
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---  --- --- ---  --- --- ---  --- --- --- 
 # set up the option parser
 from optparse import OptionParser
-import os,RDConfig
+import os
 parser=OptionParser(_usage,version='%prog '+_version)
 parser.add_option('--do3D','--3D','--3d','--do3d',default=False,action='store_true',
                   help='display the molecules in 3D using PyMol')
@@ -219,7 +219,7 @@ if __name__=='__main__':
     options.redraw=True
 
   if not options.smiles:
-    from pyRDKit.Chem.FastSDMolSupplier import FastSDMolSupplier
+    from rdkit.Chem.FastSDMolSupplier import FastSDMolSupplier
     if args[0] != "-":
       suppl = FastSDMolSupplier(args[0],removeHs=options.removeHs)
     else:

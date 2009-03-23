@@ -5,13 +5,13 @@
 """ implementation bits for DbQueryWidgets
 
 """    
-from pyRDKit import RDConfig
+from rdkit import RDConfig
 from qt import *
-from pyRDKit.qtGui.forms.DbQueryWidget import DbQueryWidget as _Form
-from pyRDKit.qtGui.forms.ListSelectorDialog import ListSelectorDialog
-from pyRDKit.qtGui import DbWidget
+from rdkit.qtGui.forms.DbQueryWidget import DbQueryWidget as _Form
+from rdkit.qtGui.forms.ListSelectorDialog import ListSelectorDialog
+from rdkit.qtGui import DbWidget
 import os,os.path
-from pyRDKit.Dbase import DbConnection
+from rdkit.Dbase import DbConnection
 
 
 def insertQueryWidget(parent,*args,**kwargs):
@@ -112,7 +112,7 @@ class DbQueryWidget(DbWidget.DbWidgetMixin,_Form):
 if __name__ == '__main__':
   # build the app and widget
   import os
-  from pyRDKit.qtGui import Gui
+  from rdkit.qtGui import Gui
   app,widg = Gui.Launcher(DbQueryWidget,None)
 
   app.exec_loop()
