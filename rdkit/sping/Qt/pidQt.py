@@ -387,7 +387,7 @@ def dashtest(canvas):
 
 if __name__=='__main__':
   import sys
-  from sping.pid import *
+  from rdkit.sping.pid import *
   app = QApplication(sys.argv)
   w = QCanvasView()
   qCanv = QCanvas(300,300)

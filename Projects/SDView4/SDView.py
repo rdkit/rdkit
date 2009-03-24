@@ -2,11 +2,11 @@
 
 import sys,cStringIO
 from PyQt4 import QtCore, QtGui, QtSvg
-from sping.Qt.pidQt4 import QtCanvas
-from Chem.Draw.MolDrawing import MolDrawing
-from Chem.Draw.MolDrawing import registerCanvas
-import Chem
-from Chem import AllChem
+from rdkit.sping.Qt.pidQt4 import QtCanvas
+from rdkit.Chem.Draw.MolDrawing import MolDrawing
+from rdkit.Chem.Draw.MolDrawing import registerCanvas
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
 class SDUtils(object):
   @staticmethod
@@ -99,7 +99,7 @@ class MainWindow(QtGui.QMainWindow):
 
     self.readSettings()
 
-    fName= 'bzr.sdf'
+    fName= sys.argv[1]
     suppl=Chem.SDMolSupplier(fName)
     #pns = list(SDUtils.GetSDPropNames(fName=fName))
     self.sdModel=MolTableModel()

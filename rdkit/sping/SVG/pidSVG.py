@@ -46,8 +46,8 @@ Greg Landrum (greglandrum@earthlink.net) 3/10/2000
 
 """
 
-from sping.pid import *
-from sping.PDF import pdfmetrics # for font info
+from rdkit.sping.pid import *
+from rdkit.sping.PDF import pdfmetrics # for font info
 import string, os, types
 
 from math import *

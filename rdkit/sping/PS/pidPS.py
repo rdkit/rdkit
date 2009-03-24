@@ -36,7 +36,7 @@ piddlePS - a PostScript backend for the PIDDLE drawing module
 
 #  DSC: plan uses flags for keeping track of BeginX/EndX pairs.
 #            convention: use flag _inXFlag
-from sping.pid import *
+from rdkit.sping.pid import *
 import string, cStringIO
 import psmetrics # for font info
 import exceptions

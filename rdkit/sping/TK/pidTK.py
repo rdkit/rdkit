@@ -18,7 +18,7 @@ You can find the latest version of this file:
 
 import Tkinter, tkFont
 tk = Tkinter
-import sping.pid
+from rdkit import sping.pid
 import string
   
 __version__ = "0.3" 
@@ -303,7 +303,7 @@ class TKCanvas(tk.Canvas, sping.pid.Canvas):
     def _drawRotatedString(self, s, x,y, font=None, color=None, angle=0):
         # we depend on PIL for rotated strings so watch for changes in PIL
         try:
-            import sping.PIL.pidPIL
+            from rdkit import sping.PIL.pidPIL
             from PIL import Image, ImageTk
             pp = sping.PIL.pidPIL
         except ImportError:
@@ -480,7 +480,7 @@ class TKCanvas(tk.Canvas, sping.pid.Canvas):
 
 
 try :
-    import sping.PIL
+    from rdkit import sping.PIL
 
     class TKCanvasPIL(sping.PIL.PILCanvas):
 

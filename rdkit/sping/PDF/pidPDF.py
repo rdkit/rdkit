@@ -24,8 +24,8 @@ import types
 from math import sin, cos, pi, ceil
 
 # app specific
-import sping.pagesizes
-from sping.pid import *
+from rdkit import sping.pagesizes
+from rdkit.sping.pid import *
 import pdfgen
 import pdfgeom
 

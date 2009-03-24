@@ -24,7 +24,7 @@ Greg Landrum (glandrum@users.sourceforge.net)
 
 """
 
-from sping import pid
+from rdkit.sping import pid
 import string, os, types
 from PyQt4 import QtCore, QtGui, QtSvg
 from math import *
@@ -347,7 +347,7 @@ def dashtest(canvas):
 
 if __name__=='__main__':
   import sys
-  from sping.pid import *
+  from rdkit.sping.pid import *
   from PIL import Image
   app = QtGui.QApplication(sys.argv)
   w = QtGui.QGraphicsView()

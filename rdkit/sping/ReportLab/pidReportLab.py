@@ -35,8 +35,8 @@ Greg Landrum (greg.landrum@gmail.com) 3/28/2005
 
 """
 
-from sping.pid import *
-from sping.PDF import pidPDF,pdfmetrics
+from rdkit.sping.pid import *
+from rdkit.sping.PDF import pidPDF,pdfmetrics
 from reportlab.lib import colors
 from reportlab.graphics import shapes
 import string, os, types

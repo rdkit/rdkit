@@ -6,8 +6,8 @@
 #   __ native drawArc    
 #   __ drawImage support (work on Pyart side of things)
 import pyart
-from sping.pid import *
-from sping.PDF import pdfmetrics
+from rdkit.sping.pid import *
+from rdkit.sping.PDF import pdfmetrics
 import Fontmapping  # helps by mapping pid font classes to Pyart font names
 
 # note for now I'm just going to do the standard PDF fonts & forget the rest
@@ -283,7 +283,7 @@ class PyartCanvas(Canvas):
     
 ## basic tests ##
 if __name__=='__main__':
-    import sping.tests.pidtest
+    from rdkit import sping.tests.pidtest
     can = PyartCanvas(size=(300,300), name='basictest.png')
 
     #can.defaultLineColor = Color(0.7, 0.7, 1.0)

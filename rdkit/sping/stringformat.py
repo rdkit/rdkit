@@ -36,7 +36,7 @@ StringFormat XML characters
 #	To add or change greek letter to symbol font mappings only
 #	the greekchars map needs to change.
 
-from sping.pid import Font
+from rdkit.sping.pid import Font
 import xmllib
 import math
 

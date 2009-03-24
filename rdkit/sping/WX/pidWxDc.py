@@ -18,7 +18,7 @@ see also piddleWxDcDemo.py
 '''
 import exceptions
 from wxPython.wx import *
-import sping.pid
+from rdkit import sping.pid
 
 class WxCanvasError(RuntimeError):
     pass
