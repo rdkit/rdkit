@@ -986,12 +986,13 @@ namespace RDKit{
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
         }
       
-        //BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" "<<chiralVol<<std::endl;
+        BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" "<<chiralVol<<std::endl;
 
         if(atom->getDegree()==3 && !hasPreceder){
           // usual story: we'll need to flip the chiral tag
           // if there's no preceding atom and we only have three
           // neighbors:
+          BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" invert"<<std::endl;
           atom->invertChirality();
         }
       }
