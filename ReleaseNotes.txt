@@ -17,7 +17,7 @@
    section for details.
    
 Acknowledgements
- - Kirk DeLisle, Noel O'Boyle, Andrew Dalke
+ - Kirk DeLisle, Noel O'Boyle, Andrew Dalke, Peter Gedeck, Armin Widmer
  
 Bug Fixes
  - Incorrect handling of 0s as ring closure digits (issues 2525792,
