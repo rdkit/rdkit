@@ -955,7 +955,7 @@ namespace RDKit{
           continue;
         }
         atom->setChiralTag(Atom::CHI_UNSPECIFIED);
-        // additional rasons to skip the atom:
+        // additional reasons to skip the atom:
         if(atom->getDegree()<3 || // not enough explicit neighbors
            atom->getTotalDegree()!=4 ||  // not enough total neighbors
            atom->getTotalNumHs(true)>1 // more than two Hs
@@ -967,7 +967,10 @@ namespace RDKit{
         ROMol::ADJ_ITER nbrIdx,endNbrs;
         boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atom);
         const RDGeom::Point3D &p1=conf.getAtomPos(*nbrIdx);
-        if(*nbrIdx<atom->getIdx()) hasPreceder=true;
+        if(*nbrIdx<atom->getIdx() &&
+           mol.getBondBetweenAtoms(*nbrIdx,atom->getIdx())->getBeginAtomIdx()==*nbrIdx){
+          hasPreceder=true;
+        }
         ++nbrIdx;
         const RDGeom::Point3D &p2=conf.getAtomPos(*nbrIdx);
         ++nbrIdx;
@@ -986,13 +989,12 @@ namespace RDKit{
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
         }
       
-        BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" "<<chiralVol<<std::endl;
-
+        //BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" "<<chiralVol<<std::endl;
         if(atom->getDegree()==3 && !hasPreceder){
           // usual story: we'll need to flip the chiral tag
           // if there's no preceding atom and we only have three
           // neighbors:
-          BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" invert"<<std::endl;
+          //BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" invert"<<std::endl;
           atom->invertChirality();
         }
       }

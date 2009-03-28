@@ -1480,31 +1480,38 @@ void testIssue2705543(){
     TEST_ASSERT(m->getNumAtoms()==13);
 
     MolOps::assignChiralTypesFrom3D(*m);
-    m->debugMol(std::cerr);
     MolOps::assignStereochemistry(*m,true);
 
+#if 0
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      if(m->getAtomWithIdx(i)->hasProp("_CIPCode")){
+        m->getAtomWithIdx(i)->getProp("_CIPCode",cip);
+        std::cerr<<"  >> "<<i<<" "<<cip<<std::endl;
+      }
+    }
+#endif    
     TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    //TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
     m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
-    //TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");
 
     TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("_CIPCode"));
-    //TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
     m->getAtomWithIdx(2)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    //TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
     m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_CIPCode"));
-    //TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(4)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");
 
