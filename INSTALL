@@ -16,7 +16,8 @@ The instructions below are for source distributions from Q1 2009 on.
   * The following are required if you are planning on using the Python wrappers:
     ** build and install the required boost shared libraries: 
      *** `cd $BOOST`
-     *** `bjam  --with-thread --with-python release install`
+     *** Building on 32 bit systems: `bjam  --with-thread --with-python release install`
+     *** Building on 64 bit systems: `bjam --with-thread --with-python address-model=64 release install`
     If you have any problems with this step, check the boost [http://www.boost.org/more/getting_started/unix-variants.html installation instructions].
 
 == Installing the boost numeric bindings ==
@@ -34,12 +35,22 @@ The instructions below are for source distributions from Q1 2009 on.
     ** BOOST_BUILD_PATH: should be the same as $BOOSTHOME
     ** LD_LIBRARY_PATH: make sure it includes $RDBASE/bin and wherever the boost shared libraries were installed
     ** The following are required if you are planning on using the Python wrappers:
-      ** PYTHON_ROOT: wherever python is installed (e.g. /usr)
-      ** PYTHON_VERSION: the first two digits of the python version (e.g. 2.5, *not* 2.5.1)
-      ** PYTHONPATH: make sure it includes $RDBASE
-  * If you are planning on using the Python wrappers:
-    ** cd to $RDBASE/Code and do `python CompleteJamroot.py`
-  * Building: cd to $RDBASE/Code and do `bjam` (`bjam address-model=64` on 64bit systems), this builds all libraries, wrappers, and regression tests. This command will generate a lot of text (mostly compiler warnings), but it should not generate any errors. At the end you should *not* see any messages about failed or skipped targets. 
+      *** PYTHON_ROOT: wherever python is installed (e.g. /usr)
+      *** PYTHON_VERSION: the first two digits of the python version (e.g. 2.5, *not* 2.5.1)
+      *** PYTHONPATH: make sure it includes $RDBASE
+  * Building:  
+    ** cd to $RDBASE/Code
+    ** If you are planning on using the Python wrappers:
+      *** do `python CompleteJamroot.py`
+      *** 32 bit systems: `bjam` 
+      *** 64 bit systems: `bjam address-model=64`
+    ** without the Python wrappers:
+      *** 32 bit systems: `bjam all-libraries` 
+      *** 64 bit systems: `bjam address-model=64 all-libraries`
+    this builds all libraries, regression tests, and wrappers (by default). This command
+    will generate a lot of text (mostly compiler warnings), but it should not generate
+    any errors. At the end you should *not* see any messages about failed or skipped
+    targets. 
 
 == Testing the Build (optional, but recommended) ==
   * cd to $RDBASE/Code and do `python $RDBASE/rdkit/TestRunner.py test_list.py`
@@ -48,7 +59,6 @@ The instructions below are for source distributions from Q1 2009 on.
     ** `sqlite3 $RDBASE/Data/RDData.sqlt < $RDBASE/rdkit/Dbase/testData/RDData.sqlite`
   * cd to $RDBASE/rdkit and do: `python $RDBASE/rdkit/TestRunner.py test_list.py`
   * cd to $RDBASE/Projects and do: `python $RDBASE/rdkit/TestRunner.py test_list.py`
-
 
 = Building on Windows =
 

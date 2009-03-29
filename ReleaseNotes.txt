@@ -26,9 +26,11 @@ Bug Fixes
  - SmilesMolSupplier.GetItemText() crashes (issue 2632960)
  - Incorrect handling of dot separations in reaction SMARTS (issue 2690530)
  - Bad charge lines in mol blocks for large molecules (issue 2692246)
+ - Order dependence in AssignAtomChiralTagsFromStructure (issue 2705543)
  - Order dependence in the 2D pharmacophore code
  - the LayeredFingerprints now handle non-aromatic single ring bonds
    between aromatic atoms correctly.
+   
 
 New Features
  - BRICS implementation
