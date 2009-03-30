@@ -24,6 +24,7 @@ from rdMolTransforms import *
 from rdShapeHelpers import *
 from rdChemReactions import *
 from rdSLNParse import *
+from rdMolDescriptors import *
 from rdkit import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
