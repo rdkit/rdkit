@@ -6,15 +6,15 @@
 """ implementation bits for Pubmed searching
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
-from qtGui.GuiLib.forms.PubmedSearchWidget import PubmedSearchWidget as _Form
-from qtGui import qtUtils
-from qtGui.forms import CountDialog
-from Dbase.Pubmed import Searches,QueryParams,PubmedUtils
-from qtGui import GuiTable
-from qtGui.GuiLib.PubmedRecordImpl import PubmedRecord
+from rdkit.qtGui.GuiLib.forms.PubmedSearchWidget import PubmedSearchWidget as _Form
+from rdkit.qtGui import qtUtils
+from rdkit.qtGui.forms import CountDialog
+from rdkit.Dbase.Pubmed import Searches,QueryParams,PubmedUtils
+from rdkit.qtGui import GuiTable
+from rdkit.qtGui.GuiLib.PubmedRecordImpl import PubmedRecord
 import os
 
 class PubmedSummaryTable(GuiTable.GuiTable):
@@ -387,7 +387,7 @@ class PubmedSearchWidget(_Form):
       self.exportButton.setEnabled(0)
 
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(PubmedSearchWidget,None,'PubmedSearch')
   app.exec_loop()

@@ -6,11 +6,11 @@
 """ defines classes required to put models in QTables
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
-from qtGui import GuiTable,qtUtils
-from ML.DecTree import TreeVis,Tree
+from rdkit.qtGui import GuiTable,qtUtils
+from rdkit.ML.DecTree import TreeVis,Tree
 
 class ModelTableItem(QTableItem):
   """ class for containing models in ModelTables

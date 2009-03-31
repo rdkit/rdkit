@@ -5,17 +5,17 @@
 """ implementation bits for ScreenCompositeDialogs
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
-from qtGui.GuiLib.forms.ScreenCompositeDialog import ScreenCompositeDialog as _Form
-from qtGui.DbQueryWidgetImpl import insertQueryWidget
-from qtGui.GuiLib import CompositeUtils
-from qtGui.GuiTextViewer import GuiTextViewer
-from qtGui import GuiTable,qtUtils
-from ML import ScreenComposite
-from ML.Data import DataUtils
-from Dbase.DbConnection import DbConnect
+from rdkit.qtGui.GuiLib.forms.ScreenCompositeDialog import ScreenCompositeDialog as _Form
+from rdkit.qtGui.DbQueryWidgetImpl import insertQueryWidget
+from rdkit.qtGui.GuiLib import CompositeUtils
+from rdkit.qtGui.GuiTextViewer import GuiTextViewer
+from rdkit.qtGui import GuiTable,qtUtils
+from rdkit.ML import ScreenComposite
+from rdkit.ML.Data import DataUtils
+from rdkit.Dbase.DbConnection import DbConnect
 
 class ScreenCompositeDialog(_Form):
   """ class used to handle composite screening

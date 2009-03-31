@@ -7,11 +7,11 @@
   Doesn't really do much other than add a _Composite_ menu
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 
 REQUIRED_MIXINS = []
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 METHODS_DEFINED = {
   }
 

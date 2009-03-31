@@ -5,21 +5,21 @@
 """ Ties the MolBrowser and ClusterInteract widgets together
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.GuiLib.MolBrowserImpl import MolBrowser
-from qtGui.GuiLib.MolTable import MolTable
-from qtGui.GuiLib.ClusterWindow import ClusterWindow
+from rdkit.qtGui.GuiLib.MolBrowserImpl import MolBrowser
+from rdkit.qtGui.GuiLib.MolTable import MolTable
+from rdkit.qtGui.GuiLib.ClusterWindow import ClusterWindow
 import os,weakref
 
 REQUIRED_MIXINS = ['MolBrowser','ClusterInteract']
-MODULES_ALTERED = ['qtGui.GuiLib.MolBrowserImpl',
-                   'qtGui.GuiLib.ClusterWindow']
+MODULES_ALTERED = ['rdkit.qtGui.GuiLib.MolBrowserImpl',
+                   'rdkit.qtGui.GuiLib.ClusterWindow']
 
 METHODS_DEFINED = {
-  '__ClusterHighlightMol':'qtGui.GuiLib.MolBrowserImpl.MolBrowser.mcClusterHighlightMol',
-  '__LocateMol':'qtGui.GuiLib.ClusterWindow.ClusterWindow.mcLocateMol',
-  '__ClusterWindowAssociateBrowser':'qtGui.GuiLib.ClusterWindow.ClusterWindow.mcAssociateBrowser',
+  '__ClusterHighlightMol':'rdkit.qtGui.GuiLib.MolBrowserImpl.MolBrowser.mcClusterHighlightMol',
+  '__LocateMol':'rdkit.qtGui.GuiLib.ClusterWindow.ClusterWindow.mcLocateMol',
+  '__ClusterWindowAssociateBrowser':'rdkit.qtGui.GuiLib.ClusterWindow.ClusterWindow.mcAssociateBrowser',
   }
 
 def __ClusterHighlightMol(self,tbl,row,col):

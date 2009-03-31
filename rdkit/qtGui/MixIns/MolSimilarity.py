@@ -5,16 +5,16 @@
 """ Allows similarity searching with molecules
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.GuiLib.SimilaritySearchWidgetImpl import SimilaritySearchWidget
-from qtGui.qtUtils import logoImageData
+from rdkit.qtGui.GuiLib.SimilaritySearchWidgetImpl import SimilaritySearchWidget
+from rdkit.qtGui.qtUtils import logoImageData
 import os
 
 REQUIRED_MIXINS = ['MolBrowser']
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 METHODS_DEFINED = {
-  '__LaunchSimilarityWin':'qtGui.GuiBase.GuiBase.msLaunchSimilarityWin',
+  '__LaunchSimilarityWin':'rdkit.qtGui.GuiBase.GuiBase.msLaunchSimilarityWin',
   }
 
 

@@ -8,20 +8,20 @@
 #DOC entire file
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.GuiLib.BuildClusterDialogImpl import BuildClusterDialog
-from qtGui.GuiLib.ClusterWindow import ClusterWindow
-from qtGui import qtUtils
+from rdkit.qtGui.GuiLib.BuildClusterDialogImpl import BuildClusterDialog
+from rdkit.qtGui.GuiLib.ClusterWindow import ClusterWindow
+from rdkit.qtGui import qtUtils
 import cPickle
 import os.path,types
 
 REQUIRED_MIXINS = []
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 
 METHODS_DEFINED = {
-  '__LoadPickledClusterTree':'qtGui.GuiBase.GuiBase.clusterLoadPickledTree',
-  '__LaunchBuilder':'qtGui.GuiBase.GuiBase.clusterLaunchBuilder',
+  '__LoadPickledClusterTree':'rdkit.qtGui.GuiBase.GuiBase.clusterLoadPickledTree',
+  '__LaunchBuilder':'rdkit.qtGui.GuiBase.GuiBase.clusterLaunchBuilder',
   }
 VARS_TO_SAVE = [
 ]

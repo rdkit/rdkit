@@ -6,17 +6,17 @@
 """ implementation bits for CompositeWindows
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qtcanvas import *
-from qtGui.GuiLib.forms.CompositeWindow import CompositeWindow as _Form
-from qtGui import GuiTable
-from qtGui.GuiTextViewer import GuiTextViewer
-from qtGui.GuiLib import ModelTable,CompositeUtils
-from qtGui.GuiLib.ScreenCompositeDialogImpl import ScreenCompositeDialog
-from qtGui import qtUtils,DbQueryDialog
-from ML import AnalyzeComposite
-from ML.DecTree import TreeVis
+from rdkit.qtGui.GuiLib.forms.CompositeWindow import CompositeWindow as _Form
+from rdkit.qtGui import GuiTable
+from rdkit.qtGui.GuiTextViewer import GuiTextViewer
+from rdkit.qtGui.GuiLib import ModelTable,CompositeUtils
+from rdkit.qtGui.GuiLib.ScreenCompositeDialogImpl import ScreenCompositeDialog
+from rdkit.qtGui import qtUtils,DbQueryDialog
+from rdkit.ML import AnalyzeComposite
+from rdkit.ML.DecTree import TreeVis
 import os
 
 class CompositeWindow(_Form):

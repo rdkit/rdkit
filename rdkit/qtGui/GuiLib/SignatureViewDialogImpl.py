@@ -7,16 +7,16 @@
  2D pharmacophore signatures
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
-from qtGui.GuiLib.forms.SignatureViewDialog import SignatureViewDialog as _Form
-from qtGui.DbQueryWidgetImpl import insertQueryWidget
-from qtGui.GuiLib import SignatureTable
-from qtGui import qtUtils
-import DataStructs
+from rdkit.qtGui.GuiLib.forms.SignatureViewDialog import SignatureViewDialog as _Form
+from rdkit.qtGui.DbQueryWidgetImpl import insertQueryWidget
+from rdkit.qtGui.GuiLib import SignatureTable
+from rdkit.qtGui import qtUtils
+from rdkit import DataStructs
 import cPickle
-import Chem
+from rdkit import Chem
 
 
 class SignatureViewDialog(_Form):
@@ -180,7 +180,7 @@ class SignatureViewDialog(_Form):
     
 
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(SignatureViewDialog,None,'SigView')
   widg.exec_loop()

@@ -5,15 +5,15 @@
 """ Allows browsing and manipulating sets of molecules
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.GuiLib.MolBrowserImpl import MolBrowser
+from rdkit.qtGui.GuiLib.MolBrowserImpl import MolBrowser
 import os
 
 REQUIRED_MIXINS = ['PiddleCanvas']
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 METHODS_DEFINED = {
-  '__LaunchBrowserWin':'qtGui.GuiBase.GuiBase.mbLaunchBrowserWin',
+  '__LaunchBrowserWin':'rdkit.qtGui.GuiBase.GuiBase.mbLaunchBrowserWin',
   }
 
 def __LaunchBrowserWin(self):

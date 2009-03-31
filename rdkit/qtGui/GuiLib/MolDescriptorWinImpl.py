@@ -6,19 +6,19 @@
 """ implementation bits for MolDescriptorWins
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
-from qtGui.GuiLib.forms.MolDescriptorWin import MolDescriptorWin as _Form
-from qtGui.DbQueryWidgetImpl import insertQueryWidget,DbQueryWidget
-from qtGui import GuiTable
-from qtGui.GuiLib import MolTable
-from qtGui.GuiLib.DescTable import DescTable
-from qtGui import qtUtils
-import Chem
-from Chem import AvailDescriptors
-from Chem.Suppliers.DbMolSupplier import RandomAccessDbMolSupplier
-from ML.Descriptors import MoleculeDescriptors
+from rdkit.qtGui.GuiLib.forms.MolDescriptorWin import MolDescriptorWin as _Form
+from rdkit.qtGui.DbQueryWidgetImpl import insertQueryWidget,DbQueryWidget
+from rdkit.qtGui import GuiTable
+from rdkit.qtGui.GuiLib import MolTable
+from rdkit.qtGui.GuiLib.DescTable import DescTable
+from rdkit.qtGui import qtUtils
+from rdkit import Chem
+from rdkit.Chem import AvailDescriptors
+from rdkit.Chem.Suppliers.DbMolSupplier import RandomAccessDbMolSupplier
+from rdkit.ML.Descriptors import MoleculeDescriptors
 
 import re,types,os,sys
 
@@ -313,7 +313,7 @@ class MolDescriptorWin(_Form):
       qtUtils.warning("No table")
 
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(MolDescriptorWin,'DescriptorWindow',Qt.WDestructiveClose)
   app.exec_loop()

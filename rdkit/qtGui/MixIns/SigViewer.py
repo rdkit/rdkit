@@ -5,16 +5,16 @@
 """ #DOC
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui import GuiTextViewer
-from qtGui.GuiLib.SignatureViewDialogImpl import SignatureViewDialog
+from rdkit.qtGui import GuiTextViewer
+from rdkit.qtGui.GuiLib.SignatureViewDialogImpl import SignatureViewDialog
 import os
 
 REQUIRED_MIXINS = ['PiddleCanvas']
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 METHODS_DEFINED = {
-  '__LaunchSigViewer':'qtGui.GuiBase.GuiBase.svLaunchSigViewer',
+  '__LaunchSigViewer':'rdkit.qtGui.GuiBase.GuiBase.svLaunchSigViewer',
   }
 
 def __LaunchSigViewer(self):

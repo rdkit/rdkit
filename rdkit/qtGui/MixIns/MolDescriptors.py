@@ -5,16 +5,16 @@
 """ Allows calculation of molecular descriptors
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui import GuiTextViewer
-from qtGui.GuiLib.MolDescriptorWinImpl import MolDescriptorWin
+from rdkit.qtGui import GuiTextViewer
+from rdkit.qtGui.GuiLib.MolDescriptorWinImpl import MolDescriptorWin
 import os
 
 REQUIRED_MIXINS = ['PiddleCanvas','MolBrowser']
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 METHODS_DEFINED = {
-  '__LaunchDescriptorWin':'qtGui.GuiBase.GuiBase.mdLaunchDescriptorWin',
+  '__LaunchDescriptorWin':'rdkit.qtGui.GuiBase.GuiBase.mdLaunchDescriptorWin',
   }
 
 def __LaunchDescriptorWin(self):

@@ -6,7 +6,7 @@
 """ functionality for drawing trees on sping canvases
 
 """    
-from sping import pid as piddle
+from rdkit.sping import pid as piddle
 import math
 
 class VisOpts(object):

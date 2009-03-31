@@ -9,17 +9,17 @@
 from qt import *
 import re
 import os,os.path
-from qtGui.GuiLib.forms.SimilaritySearch import SimilaritySearchWidget as _Form
-from qtGui.GuiLib.FingerprintDbWidget import insertFingerprintDbWidget
-from qtGui.GuiLib.SimilarityParamsImpl import SimilarityParamsWidget
-from qtGui.GuiLib.MolEditDisplayWidget2 import MolEditDisplayWidget
-from qtGui.GuiLib.MolCanvas import MolCanvasView
-from qtGui.GuiLib import MolTable 
-from qtGui import qtUtils
+from rdkit.qtGui.GuiLib.forms.SimilaritySearch import SimilaritySearchWidget as _Form
+from rdkit.qtGui.GuiLib.FingerprintDbWidget import insertFingerprintDbWidget
+from rdkit.qtGui.GuiLib.SimilarityParamsImpl import SimilarityParamsWidget
+from rdkit.qtGui.GuiLib.MolEditDisplayWidget2 import MolEditDisplayWidget
+from rdkit.qtGui.GuiLib.MolCanvas import MolCanvasView
+from rdkit.qtGui.GuiLib import MolTable 
+from rdkit.qtGui import qtUtils
 
-import Chem
-from Chem.Fingerprints import MolSimilarity,FingerprintMols
-from Chem.Suppliers.DbMolSupplier import ForwardDbMolSupplier as Supplier
+from rdkit import Chem
+from rdkit.Chem.Fingerprints import MolSimilarity,FingerprintMols
+from rdkit.Chem.Suppliers.DbMolSupplier import ForwardDbMolSupplier as Supplier
 
 
 class SimilaritySearchWidget(_Form):
@@ -229,7 +229,7 @@ class SimilaritySearchWidget(_Form):
       self.showResults(res)
 
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(SimilaritySearchWidget)
   app.exec_loop()

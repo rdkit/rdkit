@@ -5,10 +5,10 @@
 """ implementation bits for Pubmed searching
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.GuiLib.forms.PubmedRecordWidget import PubmedRecord as _Form
-from qtGui import qtUtils
+from rdkit.qtGui.GuiLib.forms.PubmedRecordWidget import PubmedRecord as _Form
+from rdkit.qtGui import qtUtils
 import os
 
 class PubmedRecord(_Form):
@@ -82,14 +82,14 @@ class PubmedRecord(_Form):
       
 if __name__ == '__main__':
   import os.path
-  from Dbase.Pubmed import Searches
+  from rdkit.Dbase.Pubmed import Searches
   #fName = os.path.join(RDConfig.RDCodeDir,'Dbase','Pubmed','test_data','records.xml')
   #ids=['11960484']
   fName = os.path.join(RDConfig.RDCodeDir,'Dbase','Pubmed','test_data','encoding_author_record.xml')
   ids=['12653536']
   inF = open(fName,'r')
   recs = Searches.GetRecords(ids,conn=inF)
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(PubmedRecord,None,'Record')
   widg.setRecord(recs[0])

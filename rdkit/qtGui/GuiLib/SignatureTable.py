@@ -6,18 +6,18 @@
 """ defines classes required for using 2D pharmacophore signatures in QTables
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
-from qtGui import GuiTable,qtUtils
-from qtGui.GuiLib import MolTable
-from Chem.Pharm2D import Matcher
-from qtGui.GuiTextViewer import GuiTextViewer
-from Chem import CDXMLWriter
+from rdkit.qtGui import GuiTable,qtUtils
+from rdkit.qtGui.GuiLib import MolTable
+from rdkit.Chem.Pharm2D import Matcher
+from rdkit.qtGui.GuiTextViewer import GuiTextViewer
+from rdkit.Chem import CDXMLWriter
 import cStringIO
 
 try:
-  from utils import chemdraw
+  from rdkit.utils import chemdraw
 except ImportError:
   hasCDX=0
 else:
@@ -27,7 +27,7 @@ else:
     hasCDX=0
   else:
     hasCDX=1
-from utils import PilTools
+from rdkit.utils import PilTools
 import StringIO
   
 

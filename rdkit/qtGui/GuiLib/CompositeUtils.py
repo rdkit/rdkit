@@ -6,8 +6,8 @@
 
 """
 from qt import *
-from Dbase.DbConnection import DbConnect
-from ML import ScreenComposite
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.ML import ScreenComposite
 
 #FIX: I'm not sure that this module should live in this directory
 

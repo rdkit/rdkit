@@ -6,12 +6,12 @@
 """ implementation bits for Model Browsers
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
-from qtGui.GuiLib.forms.ModelBrowserDialog import ModelBrowserDialog as _Form
-from qtGui.DbConnWidgetImpl import insertConnWidget
-from qtGui import GuiTable,qtUtils
+from rdkit.qtGui.GuiLib.forms.ModelBrowserDialog import ModelBrowserDialog as _Form
+from rdkit.qtGui.DbConnWidgetImpl import insertConnWidget
+from rdkit.qtGui import GuiTable,qtUtils
 import cPickle
 
 # column numbers in the model table

@@ -5,7 +5,7 @@
 """ defines the DescTable class
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
 from qttable import *
 

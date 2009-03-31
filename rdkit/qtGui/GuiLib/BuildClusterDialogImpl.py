@@ -8,17 +8,17 @@
 #DOC this entire file
 
 """
-import RDConfig
-from ML.Cluster import Murtagh
+from rdkit import RDConfig
+from rdkit.ML.Cluster import Murtagh
 from qt import *
 from qttable import *
-from qtGui.GuiLib.forms.BuildClusterDialog import ClusterBuilderDialog as _Form
-from qtGui.GuiLib.FingerprintDbWidget import insertFingerprintDbWidget
-from qtGui import GuiTable,qtUtils
-from qtGui.GuiLib.ClusterWindow import ClusterWindow
-from ML.Cluster import Murtagh,Resemblance,Standardize
-from Chem.Fingerprints import ClusterMols
-import DataStructs
+from rdkit.qtGui.GuiLib.forms.BuildClusterDialog import ClusterBuilderDialog as _Form
+from rdkit.qtGui.GuiLib.FingerprintDbWidget import insertFingerprintDbWidget
+from rdkit.qtGui import GuiTable,qtUtils
+from rdkit.qtGui.GuiLib.ClusterWindow import ClusterWindow
+from rdkit.ML.Cluster import Murtagh,Resemblance,Standardize
+from rdkit.Chem.Fingerprints import ClusterMols
+from rdkit import DataStructs
 import cPickle,types
 
 
@@ -433,9 +433,9 @@ class BuildClusterDialog(_Form):
       
     
 if __name__ == '__main__':
-  import RDLogger
+  from rdkit import RDLogger
   RDLogger.EnableLog('rdApp.debug')
-  from qtGui import Gui
+  from rkdit.qtGui import Gui
 
   app,widg = Gui.Launcher(BuildClusterDialog)
   app.exec_loop()

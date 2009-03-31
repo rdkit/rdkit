@@ -6,8 +6,8 @@
 
 """
 from qt import *
-from qtGui.DbWidget import insertDbWidget
-from qtGui.DbQueryWidgetImpl import DbQueryWidget
+from rdkit.qtGui.DbWidget import insertDbWidget
+from rdkit.qtGui.DbQueryWidgetImpl import DbQueryWidget
 
 def insertFingerprintDbWidget(parent,*args,**kwargs):
   widg = insertDbWidget(parent,FingerprintDbWidget,*args,**kwargs)

@@ -51,6 +51,10 @@ New Features
    from a molecule.
 
 Other
+ - The Qt3-based GUI functionality in $RDBASE/rdkit/qtGui and
+   $RDBASE/Projects/SDView is deprecated. It should still work, but it
+   will be removed in a future release. Please do not build anything
+   new on this (very old and creaky) framework.
  - The function DaylightFingerprintMol() is now deprecated, use
    RDKFingerprintMol() instead.
  - For C++ programmers: The ROMol methods getAtomPMap() and

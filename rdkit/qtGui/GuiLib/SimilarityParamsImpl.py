@@ -7,7 +7,7 @@
 """    
 from qt import *
 from forms.SimilarityParams import SimilarityParamsWidget as _Form
-import DataStructs
+from rdkit import DataStructs
 
 class SimilarityParamsWidget(_Form):
   def __init__(self,*args,**kwargs):

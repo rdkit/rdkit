@@ -6,16 +6,16 @@
 """ implementation bits for MolEditDisplayWidgets
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.GuiLib.forms.MolEditDisplayWidget2 import MolEditDisplayWidget as _Form
-from qtGui import qtUtils
+from rdkit.qtGui.GuiLib.forms.MolEditDisplayWidget2 import MolEditDisplayWidget as _Form
+from rdkit.qtGui import qtUtils
 import cStringIO as StringIO
 from PIL import Image
-from utils import PilTools
+from rdkit.utils import PilTools
 import os.path,types,re
 try:
-  from utils import chemdraw
+  from rdkit.utils import chemdraw
 except ImportError:
   chemdraw = None
 else:
@@ -23,7 +23,7 @@ else:
     chemdraw.StartChemDraw
   except AttributeError:
     chemdraw = None
-from qtGui.GuiLib import MolCanvas
+from rdkit.qtGui.GuiLib import MolCanvas
 
 fileFormats={
   'mol':('Mol Files (*.mol)','chemical/x-mdl-molfile'),
@@ -134,7 +134,7 @@ class MolEditDisplayWidget(_Form):
     self.insertMolUpdateCallback(self.setMolPicture)
 
   def setMolPicture(self,data,format):
-    import Chem
+    from rdkit import Chem
     if format=='chemical/daylight-smiles':
       try:
         mol = Chem.MolFromSmiles(data)
@@ -487,7 +487,7 @@ class MolEditDisplayWidget(_Form):
     
 
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(MolEditDisplayWidget,None,'MolEditDisplay',allowArrows=1)
   app.exec_loop()

@@ -8,11 +8,11 @@
 #DOC entire module
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.PiddleWindowImpl import PiddleWindow
-from qtGui import qtUtils
-from ML.DecTree import TreeVis
+from rdkit.qtGui.PiddleWindowImpl import PiddleWindow
+from rdkit.qtGui import qtUtils
+from rdkit.ML.DecTree import TreeVis
 import cPickle,os,copy,types
 
 
@@ -398,7 +398,7 @@ class TreeWindow(PiddleWindow):
 
 
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
   
   app,widg = Gui.Launcher(TreeWindow,None)
 

@@ -5,17 +5,17 @@
 """ Mixin for building composite models
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.GuiLib.BuildCompositeDialogImpl import BuildCompositeDialog
-from ML import BuildComposite
+from rdkit.qtGui.GuiLib.BuildCompositeDialogImpl import BuildCompositeDialog
+from rdkit.ML import BuildComposite
 
 REQUIRED_MIXINS = ['CompositeBase','CompositeInteract']
-MODULES_ALTERED = ['qtGui.GuiBase','qtGui.GuiLib.BuildCompositeDialogImpl']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase','rdkit.qtGui.GuiLib.BuildCompositeDialogImpl']
 METHODS_DEFINED = {
-  '__LaunchBuilder':'qtGui.GuiBase.GuiBase.cbLaunchCompositeBuilder',
-  '__BuildCompositeFromDetails':'qtGui.GuiBase.GuiBase.cbBuildCompositeFromDetails',
-  '__TransferComposite':'qtGui.GuiLib.BuildCompositeDialogImpl.BuildCompositeDialog.inspectIt',
+  '__LaunchBuilder':'rdkit.qtGui.GuiBase.GuiBase.cbLaunchCompositeBuilder',
+  '__BuildCompositeFromDetails':'rdkit.qtGui.GuiBase.GuiBase.cbBuildCompositeFromDetails',
+  '__TransferComposite':'rdkit.qtGui.GuiLib.BuildCompositeDialogImpl.BuildCompositeDialog.inspectIt',
   }
 VARS_TO_SAVE = [
   'self._cbComposites',

@@ -5,15 +5,15 @@
 """ Allows calculation of molecular descriptors
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.PiddleWindowImpl import PiddleWindow
+from rdkit.qtGui.PiddleWindowImpl import PiddleWindow
 
 
 REQUIRED_MIXINS = []
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 METHODS_DEFINED = {
-  '__LaunchCanvasWin':'qtGui.GuiBase.GuiBase.pcLaunchCanvasWin',
+  '__LaunchCanvasWin':'rdkit.qtGui.GuiBase.GuiBase.pcLaunchCanvasWin',
   }
 
 def __LaunchCanvasWin(self,*args,**kwargs):

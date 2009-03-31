@@ -7,16 +7,16 @@
 #DOC: multiple composite stuff
 
 """    
-import RDConfig
-from ML import BuildComposite
+from rdkit import RDConfig
+from rdkit.ML import BuildComposite
 #from ML.SVM import SVMClassificationModel as SVM
 from qt import *
 from qttable import *
-from qtGui.GuiLib.forms.BuildCompositeDialog import CompositeBuilderDialog as _Form
-from qtGui.DbQueryWidgetImpl import insertQueryWidget,DbQueryWidget
-from qtGui.GuiLib import CompositeUtils
-from qtGui.GuiTextViewer import GuiTextViewer
-from qtGui import qtUtils
+from rdkit.qtGui.GuiLib.forms.BuildCompositeDialog import CompositeBuilderDialog as _Form
+from rdkit.qtGui.DbQueryWidgetImpl import insertQueryWidget,DbQueryWidget
+from rdkit.qtGui.GuiLib import CompositeUtils
+from rdkit.qtGui.GuiTextViewer import GuiTextViewer
+from rdkit.qtGui import qtUtils
 
 _nameCol = 0
 _useCol = 1
@@ -444,7 +444,7 @@ class BuildCompositeDialog(_Form):
 
 
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(BuildCompositeDialog)
   app.exec_loop()

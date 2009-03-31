@@ -5,22 +5,22 @@
 """ Mixin for interacting with composite models
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui import GuiTextViewer
-from qtGui.GuiLib.CompositeWindowImpl import CompositeWindow
-from qtGui.GuiLib.DecTreeWindow import TreeWindow
-from qtGui import qtUtils
+from rdkit.qtGui import GuiTextViewer
+from rdkit.qtGui.GuiLib.CompositeWindowImpl import CompositeWindow
+from rdkit.qtGui.GuiLib.DecTreeWindow import TreeWindow
+from rdkit.qtGui import qtUtils
 import cPickle
 import os.path,types
 
 REQUIRED_MIXINS = ['PiddleCanvas','CompositeBase']
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 METHODS_DEFINED = {
-  '__LoadPickledComposite':'qtGui.GuiBase.GuiBase.ciLoadPickledComposite',
-  '__LoadCompositesFromDb':'qtGui.GuiBase.GuiBase.ciLoadCompositesFromDb',
-  '__LaunchCompositeBrowser':'qtGui.GuiBase.GuiBase.ciLaunchCompositeBrowser',
-  '__AddComposite':'qtGui.GuiBase.GuiBase.ciAddComposite',
+  '__LoadPickledComposite':'rdkit.qtGui.GuiBase.GuiBase.ciLoadPickledComposite',
+  '__LoadCompositesFromDb':'rdkit.qtGui.GuiBase.GuiBase.ciLoadCompositesFromDb',
+  '__LaunchCompositeBrowser':'rdkit.qtGui.GuiBase.GuiBase.ciLaunchCompositeBrowser',
+  '__AddComposite':'rdkit.qtGui.GuiBase.GuiBase.ciAddComposite',
   }
 VARS_TO_SAVE = [
   'self._ciComposites',
@@ -97,7 +97,7 @@ def __LoadCompositesFromDb(self,idx=0,fileN=None):
       
   """
   # FIX: get the stupid directory stuff done properly here
-  from qtGui.DbQueryDialog import DbQueryDialog
+  from rdkit.qtGui.DbQueryDialog import DbQueryDialog
 
   dlg = DbQueryDialog()
   widget = dlg.dbWidget()
@@ -131,7 +131,7 @@ def __LaunchCompositeBrowser(self,idx=0):
 
   """
   # FIX: get the stupid directory stuff done properly here
-  from qtGui.GuiLib.ModelBrowserDialogImpl import ModelBrowserDialog
+  from rdkit.qtGui.GuiLib.ModelBrowserDialogImpl import ModelBrowserDialog
 
   self._ciModelBrowserDlg = ModelBrowserDialog(self)
   self._ciModelBrowserDlg.show()

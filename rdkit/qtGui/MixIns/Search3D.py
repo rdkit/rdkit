@@ -5,16 +5,16 @@
 """ Enables the Search3D (pharmacophore search) widget
 
 """
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.Search3D import Search3D
+from rdkit.qtGui.Search3D import Search3D
 
 REQUIRED_MIXINS = ['MolBrowser']
-MODULES_ALTERED = ['qtGui.GuiBase']
+MODULES_ALTERED = ['rdkit.qtGui.GuiBase']
 
 
 METHODS_DEFINED = {
-  '__LaunchSearchWidget':'qtGui.GuiBase.GuiBase.s3dLaunchSearchWidget',
+  '__LaunchSearchWidget':'rdkit.qtGui.GuiBase.GuiBase.s3dLaunchSearchWidget',
   }
 
 

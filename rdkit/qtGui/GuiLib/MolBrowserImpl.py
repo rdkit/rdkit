@@ -6,18 +6,18 @@
 """ implementation bits for MolBrowsers
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.GuiLib.forms.MolBrowser import MolBrowser as _Form
-from qtGui.DbQueryWidgetImpl import insertQueryWidget,DbQueryWidget
-from qtGui.DbConnWidgetImpl import insertConnWidget
-from qtGui import GuiTable
-from qtGui.GuiLib import MolTable
-from qtGui.GuiLib.MolCanvas import MolCanvasView
+from rdkit.qtGui.GuiLib.forms.MolBrowser import MolBrowser as _Form
+from rdkit.qtGui.DbQueryWidgetImpl import insertQueryWidget,DbQueryWidget
+from rdkit.qtGui.DbConnWidgetImpl import insertConnWidget
+from rdkit.qtGui import GuiTable
+from rdkit.qtGui.GuiLib import MolTable
+from rdkit.qtGui.GuiLib.MolCanvas import MolCanvasView
 
-from qtGui import qtUtils
-import Chem
-from Chem.Suppliers.DbMolSupplier import RandomAccessDbMolSupplier
+from rdkit.qtGui import qtUtils
+from rdkit import Chem
+from rdkit.Chem.Suppliers.DbMolSupplier import RandomAccessDbMolSupplier
 
 class MolBrowser(_Form):
   """ Defines the class which is to be used to browse molecules
@@ -100,7 +100,7 @@ class MolBrowser(_Form):
                                 1,2)
       if res!=1:
         return
-    from Dbase import DbUtils
+    from rdkit.Dbase import DbUtils
     from cStringIO import StringIO
     # FIX: this is, how you say, hacky:
     QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
@@ -139,7 +139,7 @@ class MolBrowser(_Form):
   
     
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
 
   app,widg = Gui.Launcher(MolBrowser,'MolBrowser',Qt.WDestructiveClose)
   app.exec_loop()

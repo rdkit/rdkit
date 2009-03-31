@@ -51,7 +51,7 @@ class GuiBase(qt.QMainWindow):
     self._displayLabel = qt.QLabel(self.centralWidget(),'picture')
     self._displayLabel.setScaledContents(0)
     self._logoPM = qt.QPixmap()
-    self._logoPM.load(RDConfig.RDDocsDir+'/logo.jpg')
+    self._logoPM.load(RDConfig.RDDocsDir+'/Images/logo.png')
     self._displayLabel.setPixmap(self._logoPM)
 
     # now insert it nicely

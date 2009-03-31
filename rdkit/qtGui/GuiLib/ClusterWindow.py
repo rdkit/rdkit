@@ -8,11 +8,11 @@
 #DOC entire module
 
 """    
-import RDConfig
+from rdkit import RDConfig
 from qt import *
-from qtGui.PiddleWindowImpl import PiddleWindow
-from qtGui import qtUtils
-from ML.Cluster import ClusterVis,Clusters
+from rdkit.qtGui.PiddleWindowImpl import PiddleWindow
+from rdkit.qtGui import qtUtils
+from rdkit.ML.Cluster import ClusterVis,Clusters
 
 import cPickle,os,copy,types
 
@@ -225,7 +225,7 @@ Copied blocks from Excel can also be used (e.g. copy a column of point names and
     self._divPickDlg.show()
 
   def pickCenters(self,nToPick,method=None):
-    import SimDivFilters
+    from rdkit import SimDivFilters
     if nToPick <= 0 or not (self._cluster and self._dists):
       return
     if method is None:
@@ -502,7 +502,7 @@ Copied blocks from Excel can also be used (e.g. copy a column of point names and
 
 
 if __name__ == '__main__':
-  from qtGui import Gui
+  from rdkit.qtGui import Gui
   
   app,widg = Gui.Launcher(ClusterWindow,None)
 
