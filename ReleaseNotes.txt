@@ -1,4 +1,4 @@
-******  Release_Q12009_1 *******
+******  Release_Q12009_2 *******
 (Changes relative to Release_Q42008_1)
 
 !!!!!! IMPORTANT !!!!!!
@@ -20,6 +20,7 @@ Acknowledgements
  - Kirk DeLisle, Noel O'Boyle, Andrew Dalke, Peter Gedeck, Armin Widmer
  
 Bug Fixes
+ - Incorrect coordinates from mol2 files (issue 2727976)
  - Incorrect handling of 0s as ring closure digits (issues 2525792,
  and 2690982)
  - Incorrect handling of atoms with explicit Hs in reactions (issue 2540021)
