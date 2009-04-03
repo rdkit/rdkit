@@ -1,4 +1,4 @@
-// $Id: Mol2FileParser.cpp 1112 2008-09-08 18:01:45Z stiefni2 $
+// $Id: Mol2FileParser.cpp 1457 2009-04-03 09:05:17Z landrgr1 $
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -483,8 +483,8 @@ namespace RDKit{
        throw FileParseException("premature end of mol2 atom line");
       }
       try{
-        ++itemIt;
         pos.x = boost::lexical_cast<double>(*itemIt);
+        ++itemIt;
         if(itemIt==tokens.end()){
           throw FileParseException("premature end of mol2 atom line");
         }

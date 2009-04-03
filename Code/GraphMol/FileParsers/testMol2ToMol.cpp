@@ -1,4 +1,4 @@
-// $Id: testMol2ToMol.cpp 1069 2008-08-14 13:14:35Z stiefni2 $
+// $Id: testMol2ToMol.cpp 1457 2009-04-03 09:05:17Z landrgr1 $
 //
 //  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
@@ -66,6 +66,14 @@ void testGeneral(std::string rdbase){
     RWMol *m = Mol2FileToMol(fName);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==5);
+
+    // this was sf.net issue 2727976:
+    TEST_ASSERT(m->getNumConformers()==1);
+    TEST_ASSERT(m->getConformer().is3D());
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x,1.5019));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y,1.0435));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z,0.0000));
+
     delete m;
   }
   {
