@@ -157,7 +157,12 @@ struct bond_wrapper {
            "Queries a Bond to see if a particular property has been assigned.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - key: the name of the property to check for (a string).\n")
-      ;
+
+      .def("GetPropNames",&Bond::getPropList,
+	   (python::arg("self")),
+           "Returns a list of the properties set on the Bond.\n\n"
+           )
+      
       ;
 
     python::enum_<Bond::BondType>("BondType")
