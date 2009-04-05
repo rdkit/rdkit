@@ -64,8 +64,10 @@ class QCanvasRotText:
     qP.restore()
 
 class QtCanvas( pid.Canvas ):
-  def __init__(self,scene,size=(300,300), name='QtCanvas'):
-    self.size = size
+  def __init__(self,scene,size=None,name='QtCanvas'):
+    if size is None:
+      size = scene.width(),scene.height()
+    self.size=size
     pid.Canvas.__init__(self, size, name)
     self._scene = scene
     self._brush = QtGui.QBrush()

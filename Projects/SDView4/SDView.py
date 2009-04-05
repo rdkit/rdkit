@@ -1,31 +1,121 @@
 #!/usr/bin/env python
-
-import sys,cStringIO
+# $Id$
+#
+#  Copyright (c) 2008-2009, Novartis Institutes for BioMedical Research Inc.
+#  All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met: 
+#
+#     * Redistributions of source code must retain the above copyright 
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following 
+#       disclaimer in the documentation and/or other materials provided 
+#       with the distribution.
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
+#       nor the names of its contributors may be used to endorse or promote 
+#       products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Created by Greg Landrum
+#
+import sys,cStringIO,math
 from PyQt4 import QtCore, QtGui, QtSvg
 from rdkit.sping.Qt.pidQt4 import QtCanvas
 from rdkit.Chem.Draw.MolDrawing import MolDrawing
 from rdkit.Chem.Draw.MolDrawing import registerCanvas
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.RDLogger import logger
+logger = logger()
 
 class SDUtils(object):
   @staticmethod
-  def GetSDPropNames(fName=None,data=None):
+  def GetSDPropNames(fName=None,data=None,blockSize=1024,nBlocks=2):
     if not (fName or data): raise ValueError,"provide at least one value"
     import re
+    nRead=0
     nmMatcher=re.compile(r'^> +<(\w+)>',re.M)
     res=set()
     if data:
       res.update((x.group(1) for x in nmMatcher.finditer(data)))
     else:
       f = file(fName,'r')
-      lines = f.readlines(9192)
-      while lines:
+      lines = f.readlines(blockSize)
+      while lines and nBlocks:
         res.update((x.group(1) for x in nmMatcher.finditer(''.join(lines))))
-        lines = f.readlines(9192)
+        nBlocks-=1
+        lines = f.readlines(blockSize)
     return res
       
+class MolView(QtGui.QGraphicsView):
+  def __init__(self,parent=None,scene=None,size=(300,300)):
+    QtGui.QGraphicsView.__init__(self,scene,parent)
+    scene = QtGui.QGraphicsScene(0,0,size[0],size[1])
+    self.setRenderHints(QtGui.QPainter.Antialiasing|QtGui.QPainter.TextAntialiasing)
+    self.setScene(scene)
+    self._scenes=[scene]
+    registerCanvas('sping')
+    self.molDrawer=MolDrawing()
+    self.molDrawer.atomLabelMinFontSize=6
+    self.mols=[]
+
+  def clearMols(self):
+    if self.mols:
+      self.molDrawer.canvas.clear()
+      self.scene().clear()
+    self.mols=[]
+
+  def addMol(self,mol):
+    if not hasattr(self.molDrawer,'canvas') or self.molDrawer.canvas is None:
+      self.molDrawer.canvas=QtCanvas(self.scene())
+    self.molDrawer.AddMol(mol)
+    self.mols.append(mol)
+
+  def setMol(self,mol):
+    self.clearMols()
+    self.molDrawer.canvas=QtCanvas(self.scene())
+    self.addMol(mol)
+
+  def setMols(self,mols):
+    self.clearMols()
+    nMols = len(mols)
+    nCols = int(math.ceil(math.sqrt(nMols)))
+    nRows = int(math.ceil(1.*nMols/nCols))
+
+    sz = self.size()
+    self.scene().setSceneRect(0,0,sz.width(),sz.height())
     
+    w = 0.9*self.scene().width()/nCols
+    h = 0.9*self.scene().height()/nRows
+    self.scene().clear()
+    for i,mol in enumerate(mols):
+      rowIdx=i//nCols
+      colIdx=i%nCols
+      self.molDrawer.canvas=QtCanvas(self.scene(),size=(w,h))
+      self.molDrawer.scaleAndCenter(mol,mol.GetConformer(),canvasSize=(w,h))
+      self.molDrawer.AddMol(mol,drawingTrans=(w*colIdx+w/2,-h*rowIdx+h/2),molTrans=self.molDrawer.molTrans,
+                            centerIt=False)
+      self.mols.append(mol)
+      
+
+class MolTableView(QtGui.QTableView):
+  def __init__(self,parent=None):
+    QtGui.QTableView.__init__(self,parent)
+
     
 class MolTableModel(QtCore.QAbstractTableModel):
   _supplier=None
@@ -35,6 +125,7 @@ class MolTableModel(QtCore.QAbstractTableModel):
     return QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
   def rowCount(self,parent):
     return len(self._supplier)
+
   def columnCount(self,parent):
     return len(self._propNames)
   def data(self,index,role):
@@ -48,7 +139,7 @@ class MolTableModel(QtCore.QAbstractTableModel):
     elif mol.HasProp(pn):
       res=mol.GetProp(pn)
     else:
-      res='N/A'
+      res='NA'
     return QtCore.QVariant(res)
   def mol(self,index,role):
     if not index.isValid() or role!=QtCore.Qt.DisplayRole:
@@ -101,56 +192,40 @@ class MainWindow(QtGui.QMainWindow):
 
     fName= sys.argv[1]
     suppl=Chem.SDMolSupplier(fName)
-    #pns = list(SDUtils.GetSDPropNames(fName=fName))
+    pns = ['_Name']+list(SDUtils.GetSDPropNames(fName=fName))
     self.sdModel=MolTableModel()
-    self.sdModel.setSupplier(suppl)
+    self.sdModel.setSupplier(suppl,propNames=pns)
     self.sdModel._molCache={}
 
-    self.molView = QtGui.QTableView()
+    self.tblView = MolTableView()
     
-    self.molView.setModel(self.sdModel)
-    self.setCentralWidget(self.molView)
-    self.connect(self.molView.selectionModel(),
-                 QtCore.SIGNAL('currentChanged(QModelIndex,QModelIndex)'),
+    self.tblView.setModel(self.sdModel)
+    self.setCentralWidget(self.tblView)
+    self.connect(self.tblView.selectionModel(),
+                 QtCore.SIGNAL('selectionChanged(QItemSelection,QItemSelection)'),
                  self.changeCurrent)
-    #self.molView.setSortingEnabled(True)
-    #self.connect(self.textEdit.document(), QtCore.SIGNAL("contentsChanged()"),
-    #             self.documentWasModified)
-
-    #self.setCurrentFile(QtCore.QString())
-
-
-    #self.molSVGWin=QtSvg.QSvgWidget()
-    #self.molSVGWin.show()
-    self.molWin=QtGui.QGraphicsView()
-    self.molWin.setRenderHints(QtGui.QPainter.Antialiasing|QtGui.QPainter.TextAntialiasing)
-    self.molWin.show()
-    scene = QtGui.QGraphicsScene(0,0,300,300)
-    self.molWin.setScene(scene)
-    registerCanvas('sping')
-    self.molDrawer=MolDrawing()
-    self.molDrawer.canvas=QtCanvas(scene)
+    self.molView=MolView()
+    self.molView.show()
 
 
   def changeCurrent(self,current,prev):
-    if not current.isValid():
+    idxL = self.tblView.selectedIndexes()
+    if not len(idxL):
       return
-    print 'cc:',current.column(),current.row()
-    mol = self.sdModel.mol(current,QtCore.Qt.DisplayRole)
-    print '\t:',Chem.MolToSmiles(mol)
-    self.showMol(mol)
-    
-  def showMol(self,mol,erase=True):
-    if erase:
-      self.molDrawer.canvas.clear()
-    self.molDrawer.AddMol(mol)
-
+    mols = []
+    for i,idx in enumerate(idxL):
+      mol = self.sdModel.mol(idx,QtCore.Qt.DisplayRole)
+      mols.append(mol)
+    if len(mols)==1:
+      self.molView.setMol(mols[0])
+    else:
+      self.molView.setMols(mols)
     
   def closeEvent(self, event):
     if self.maybeSave():
       self.writeSettings()
       self.molDrawer=None
-      self.molWin=None
+      self.molView=None
       event.accept()
     else:
       event.ignore()

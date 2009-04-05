@@ -119,9 +119,8 @@ namespace RDKit {
         d_len = d_molpos.size();
         return;
       }
-      stmp = strip(tempStr);
-      if (stmp.length() == 0) {
-        nempty++;
+      if(tempStr.find_first_not_of(" \t\r\n")==std::string::npos){
+        ++nempty;
       }
     }
     if (nempty == 4) {
@@ -348,17 +347,14 @@ namespace RDKit {
       d_len = d_molpos.size();
       dp_inStream->seekg(d_molpos.back());
       while (!dp_inStream->eof()) {
-        tempStr = getLine(dp_inStream);
-        
-        if (tempStr[0]=='$' && tempStr[1]=='$' && tempStr[2]=='$' && tempStr[3]=='$'){
+        std::getline(*dp_inStream,tempStr);
+        if (tempStr.length()>=4 && tempStr[0]=='$' && tempStr[1]=='$' && tempStr[2]=='$' && tempStr[3]=='$'){
           unsigned int posHold=dp_inStream->tellg();
           // don't worry about the last molecule:
           this->checkForEnd();
           if (!this->df_end){
             d_molpos.push_back(posHold);
-            d_len++;
-            dp_inStream->seekg(posHold);
-
+            ++d_len;
           }
         }
       }

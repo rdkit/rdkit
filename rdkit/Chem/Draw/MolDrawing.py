@@ -64,8 +64,8 @@ class MolDrawing(object):
 
   def transformPoint(self,pos):
     res = [0,0]
-    res[0] = (pos[0] + self.molTrans[0])*self.dotsPerAngstrom + self.drawingTrans[0]
-    res[1] = self.canvasSize[1]-((pos[1] + self.molTrans[1])*self.dotsPerAngstrom + \
+    res[0] = (pos[0] + self.molTrans[0])*self.currDotsPerAngstrom + self.drawingTrans[0]
+    res[1] = self.canvasSize[1]-((pos[1] + self.molTrans[1])*self.currDotsPerAngstrom + \
                                  self.drawingTrans[1])
     return res
   
@@ -80,8 +80,8 @@ class MolDrawing(object):
     perp = ang + math.pi/2.
 
     # here's the offset for the parallel bond:
-    offsetX = math.cos(perp)*self.dblBondOffset*self.dotsPerAngstrom
-    offsetY = math.sin(perp)*self.dblBondOffset*self.dotsPerAngstrom
+    offsetX = math.cos(perp)*self.dblBondOffset*self.currDotsPerAngstrom
+    offsetY = math.sin(perp)*self.dblBondOffset*self.currDotsPerAngstrom
 
     return perp,offsetX,offsetY
 
@@ -138,8 +138,8 @@ class MolDrawing(object):
             dotP = dx2*offsetX + dy2*offsetY
             if dotP < 0:
               perp += math.pi
-              offsetX = math.cos(perp)*self.dblBondOffset*self.dotsPerAngstrom
-              offsetY = math.sin(perp)*self.dblBondOffset*self.dotsPerAngstrom
+              offsetX = math.cos(perp)*self.dblBondOffset*self.currDotsPerAngstrom
+              offsetY = math.sin(perp)*self.dblBondOffset*self.currDotsPerAngstrom
             
     fracP1,fracP2 = self._getOffsetBondPts(p1,p2,
                                            offsetX,offsetY,
@@ -207,8 +207,9 @@ class MolDrawing(object):
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf,dir=-1)
       addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
       
-  def _scaleAndCenter(self,mol,conf,coordCenter=False):
-    canvasSize = self.canvasSize
+  def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None):
+    if canvasSize is None:
+      canvasSize=self.canvasSize
     xAccum = 0
     yAccum = 0
     minX = 1e8
@@ -235,27 +236,26 @@ class MolDrawing(object):
       molTrans = -xAccum/nAts,-yAccum/nAts
     else:
       molTrans = -(minX+(maxX-minX)/2),-(minY+(maxY-minY)/2)
-    self.dotsPerAngstrom=30.0
     self.molTrans = molTrans
 
+    self.currDotsPerAngstrom=self.dotsPerAngstrom
+    self.currAtomLabelFontSize=self.atomLabelFontSize
     if xSize>=.95*canvasSize[0]:
       scale = .9*canvasSize[0]/xSize
       xSize*=scale
       ySize*=scale
-      self.dotsPerAngstrom*=scale
-      self.atomLabelFontSize = max(self.atomLabelFontSize*scale,
-                                   self.atomLabelMinFontSize)
+      self.currDotsPerAngstrom*=scale
+      self.currAtomLabelFontSize = max(self.currAtomLabelFontSize*scale,
+                                       self.atomLabelMinFontSize)
     if ySize>=.95*canvasSize[1]:
       scale = .9*canvasSize[1]/ySize
       xSize*=scale
       ySize*=scale
-      self.dotsPerAngstrom*=scale
-      self.atomLabelFontSize = max(self.atomLabelFontSize*scale,
-                                   self.atomLabelMinFontSize)
+      self.currDotsPerAngstrom*=scale
+      self.currAtomLabelFontSize = max(self.currAtomLabelFontSize*scale,
+                                       self.atomLabelMinFontSize)
     drawingTrans = canvasSize[0]/2,canvasSize[1]/2
     self.drawingTrans = drawingTrans
-    tMax = self.transformPoint((maxX,maxY))
-    tMin = self.transformPoint((minX,minY))
 
   def _drawLabel(self,canvas,label,pos,font,color=None,
                  highlightIt=False):
@@ -268,7 +268,7 @@ class MolDrawing(object):
     labelP = x1,y1
     addCanvasText(canvas,label,(x1,y1),font,color)
     
-  def AddMol(self,mol,canvas=None,centerIt=True,molTrans=(0,0),drawingTrans=(0,0),
+  def AddMol(self,mol,canvas=None,centerIt=True,molTrans=None,drawingTrans=None,
              highlightAtoms=[],confId=-1):
     """
 
@@ -289,11 +289,16 @@ class MolDrawing(object):
     conf = mol.GetConformer(confId)
 
     if centerIt:
-      self._scaleAndCenter(mol,conf)
+      self.scaleAndCenter(mol,conf)
     else:
+      if molTrans is None:
+        molTrans = (0,0)
       self.molTrans = molTrans
+      if drawingTrans is None:
+        drawingTrans = (0,0)
       self.drawingTrans = drawingTrans
-    font = Font(face=self.atomLabelFontFace,size=self.atomLabelFontSize)
+
+    font = Font(face=self.atomLabelFontFace,size=self.currAtomLabelFontSize)
 
     if not mol.HasProp('_drawingBondsWedged'):
       Chem.WedgeMolBonds(mol,conf)
