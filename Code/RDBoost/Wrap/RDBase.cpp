@@ -44,7 +44,6 @@ void AttachFileToLog(std::string spec,std::string filename,int delay=100){
     .add_appender(logging::write_to_file(filename));
 
 #endif
-  // FIX: we should be able to enable/disable things
 #endif
 }
 void LogMessage(std::string spec,std::string msg){
@@ -55,7 +54,7 @@ void LogMessage(std::string spec,std::string msg){
   }
 #else
   //  FIX: get this more general
-  std::ostream *dest;
+  boost::logging::rdLogger *dest;
   if(spec=="rdApp.error"){
     dest=rdErrorLog;
   } else if(spec=="rdApp.warning"){

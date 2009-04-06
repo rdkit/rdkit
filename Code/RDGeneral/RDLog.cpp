@@ -10,36 +10,64 @@
 #include <iomanip>
 #include <time.h>
 
-std::ostream *rdAppLog=0;
-std::ostream *rdDebugLog=0;
-std::ostream *rdInfoLog=0;
-std::ostream *rdErrorLog=0;
-std::ostream *rdWarningLog=0;
-std::ostream *rdStatusLog=0;
+boost::logging::rdLogger *rdAppLog=0;
+boost::logging::rdLogger *rdDebugLog=0;
+boost::logging::rdLogger *rdInfoLog=0;
+boost::logging::rdLogger *rdErrorLog=0;
+boost::logging::rdLogger *rdWarningLog=0;
+boost::logging::rdLogger *rdStatusLog=0;
+
 namespace boost {
   namespace logging {
-    void enable_logs(const char *arg) {};
-    void enable_logs(const std::string &arg) {};
-    void disable_logs(const char *arg) {};
-    void disable_logs(const std::string &arg) {};
+
+    void enable_logs(const char *arg) { enable_logs(std::string(arg));};
+    void enable_logs(const std::string &arg) {
+      // Yes... this is extremely crude
+      if(arg=="rdApp.debug"||arg=="rdApp.*"){
+        if(rdDebugLog) rdDebugLog->df_enabled=true;
+      }
+      if(arg=="rdApp.info"||arg=="rdApp.*"){
+        if(rdInfoLog) rdInfoLog->df_enabled=true;
+      }
+      if(arg=="rdApp.warning"||arg=="rdApp.*"){
+        if(rdWarningLog) rdWarningLog->df_enabled=true;
+      }
+      if(arg=="rdApp.error"||arg=="rdApp.*"){
+        if(rdErrorLog) rdErrorLog->df_enabled=true;
+      }
+    };
+    void disable_logs(const char *arg) {disable_logs(std::string(arg));};
+    void disable_logs(const std::string &arg) {
+      // Yes... this is extremely crude
+      if(arg=="rdApp.debug"||arg=="rdApp.*"){
+        if(rdDebugLog) rdDebugLog->df_enabled=false;
+      }
+      if(arg=="rdApp.info"||arg=="rdApp.*"){
+        if(rdInfoLog) rdInfoLog->df_enabled=false;
+      }
+      if(arg=="rdApp.warning"||arg=="rdApp.*"){
+        if(rdWarningLog) rdWarningLog->df_enabled=false;
+      }
+      if(arg=="rdApp.error"||arg=="rdApp.*"){
+        if(rdErrorLog) rdErrorLog->df_enabled=false;
+      }
+    };
   }
 }
 
 
 namespace RDLog {
   void InitLogs(){
-    rdAppLog=&std::cout;
-    rdDebugLog=&std::cerr;
-    rdInfoLog=&std::cout;
-    rdErrorLog=&std::cerr;
-    rdWarningLog=&std::cerr;
-    rdStatusLog=&std::cout;
+    rdDebugLog=new boost::logging::rdLogger(&std::cerr);
+    rdInfoLog=new boost::logging::rdLogger(&std::cout);
+    rdWarningLog=new boost::logging::rdLogger(&std::cerr);
+    rdErrorLog=new boost::logging::rdLogger(&std::cerr);
   }
-  std::ostream &toStream(std::ostream &strm) {
+  std::ostream &toStream(std::ostream &logstrm) {
     time_t t = time(0); 
     tm details = *localtime( &t);
-    strm << "["<<std::setw(2)<<std::setfill('0')<<details.tm_hour<<":"<<std::setw(2)<<std::setfill('0')<<details.tm_min<<":"<<std::setw(2)<<std::setfill('0')<<int(details.tm_sec)<<"] ";
-    return strm;
+    logstrm << "["<<std::setw(2)<<std::setfill('0')<<details.tm_hour<<":"<<std::setw(2)<<std::setfill('0')<<details.tm_min<<":"<<std::setw(2)<<std::setfill('0')<<int(details.tm_sec)<<"] ";
+    return logstrm;
   }
 
 }
