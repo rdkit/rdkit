@@ -32,6 +32,8 @@
 #
 # Created by Greg Landrum
 #
+_version = "0.1.0"
+
 import sys,cStringIO,math
 from PyQt4 import QtCore, QtGui, QtSvg
 from rdkit.sping.Qt.pidQt4 import QtCanvas
@@ -60,8 +62,14 @@ class SDUtils(object):
         nBlocks-=1
         lines = f.readlines(blockSize)
     return res
-      
-class MolView(QtGui.QGraphicsView):
+
+from rdkit.Chem import PyMol
+class Mol3DView(PyMol.MolViewer):
+  pass
+  
+
+  
+class MolCanvasView(QtGui.QGraphicsView):
   def __init__(self,parent=None,scene=None,size=(300,300)):
     QtGui.QGraphicsView.__init__(self,scene,parent)
     scene = QtGui.QGraphicsScene(0,0,size[0],size[1])
@@ -82,7 +90,9 @@ class MolView(QtGui.QGraphicsView):
   def addMol(self,mol):
     if not hasattr(self.molDrawer,'canvas') or self.molDrawer.canvas is None:
       self.molDrawer.canvas=QtCanvas(self.scene())
-    self.molDrawer.AddMol(mol)
+    confId=-1
+    if mol.HasProp('_2DConfId'): confId=int(mol.GetProp('_2DConfId'))
+    self.molDrawer.AddMol(mol,confId=confId)
     self.mols.append(mol)
 
   def setMol(self,mol):
@@ -106,8 +116,12 @@ class MolView(QtGui.QGraphicsView):
       rowIdx=i//nCols
       colIdx=i%nCols
       self.molDrawer.canvas=QtCanvas(self.scene(),size=(w,h))
-      self.molDrawer.scaleAndCenter(mol,mol.GetConformer(),canvasSize=(w,h))
-      self.molDrawer.AddMol(mol,drawingTrans=(w*colIdx+w/2,-h*rowIdx+h/2),molTrans=self.molDrawer.molTrans,
+      confId=-1
+      if mol.HasProp('_2DConfId'): confId=int(mol.GetProp('_2DConfId'))
+      self.molDrawer.scaleAndCenter(mol,mol.GetConformer(confId),canvasSize=(w,h))
+      self.molDrawer.AddMol(mol,confId=confId,
+                            drawingTrans=(w*colIdx+w/2,-h*rowIdx+h/2),
+                            molTrans=self.molDrawer.molTrans,
                             centerIt=False)
       self.mols.append(mol)
       
@@ -116,11 +130,18 @@ class MolTableView(QtGui.QTableView):
   def __init__(self,parent=None):
     QtGui.QTableView.__init__(self,parent)
 
-    
+class MolTableRedrawMode(object):
+  Never=0
+  Always=1
+  WhenNeeded=2
+
 class MolTableModel(QtCore.QAbstractTableModel):
+  redrawMode=MolTableRedrawMode.WhenNeeded
+  kekulizeMode=True
   _supplier=None
   _propNames=None
   _molCache=None
+  
   def flags(self,index):
     return QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
   def rowCount(self,parent):
@@ -128,6 +149,7 @@ class MolTableModel(QtCore.QAbstractTableModel):
 
   def columnCount(self,parent):
     return len(self._propNames)
+
   def data(self,index,role):
     if not index.isValid() or role!=QtCore.Qt.DisplayRole:
       return QtCore.QVariant()
@@ -139,8 +161,9 @@ class MolTableModel(QtCore.QAbstractTableModel):
     elif mol.HasProp(pn):
       res=mol.GetProp(pn)
     else:
-      res='NA'
+      res=''
     return QtCore.QVariant(res)
+
   def mol(self,index,role):
     if not index.isValid() or role!=QtCore.Qt.DisplayRole:
       return None
@@ -149,8 +172,13 @@ class MolTableModel(QtCore.QAbstractTableModel):
       mol = self._molCache.get(row,None)
       if not mol:
         mol = self._supplier[row]
-        AllChem.Compute2DCoords(mol)
-        Chem.Kekulize(mol)
+        if self.redrawMode==MolTableRedrawMode.Always or \
+              (self.redrawMode==MolTableRedrawMode.WhenNeeded and \
+                 ( mol.GetNumConformers()==0 or mol.GetConformer().Is3D() )):
+          confId=AllChem.Compute2DCoords(mol,clearConfs=False)
+          mol.SetProp('_2DConfId',str(confId))
+        if self.kekulizeMode:
+          Chem.Kekulize(mol)
         self._molCache[row]=mol
     else:
       mol = self._supplier[row]
@@ -161,28 +189,36 @@ class MolTableModel(QtCore.QAbstractTableModel):
       if role==QtCore.Qt.DisplayRole:
         return QtCore.QVariant(self._propNames[section])
     return QtCore.QVariant()
-  def setSupplier(self,supplier,propNames=None):
+
+  def setSupplier(self,supplier,propNames=None,nameProp='_Name',
+                  maxMolsForProps=100):
     self._supplier=supplier
     if propNames:
       self._propNames=propNames
     else:
+      i=0
+      self._propNames=[nameProp]
       for m in supplier:
         if m:
-          self._propNames=['_Name']+list(m.GetPropNames())
+          i+=1
+          for pn in m.GetPropNames():
+            if pn not in self._propNames:
+              self._propNames.append(pn)
+          if i==maxMolsForProps: break
       supplier.reset()
+    self._cache={}
+
   def sort(self,col,order):
     print 'SORT!',col,order
     
 class MainWindow(QtGui.QMainWindow):
   _applicationName="SDView"
   _vendorName="rdkit.org"
-  def __init__(self):
+  molCanvas=None
+  mol3DViewer=None
+  def __init__(self,filename):
     QtGui.QMainWindow.__init__(self)
     self.curFile = QtCore.QString()
-
-    
-    #self.textEdit = QtGui.QTextEdit()
-    #self.setCentralWidget(self.textEdit)
 
     self.createActions()
     self.createMenus()
@@ -190,9 +226,8 @@ class MainWindow(QtGui.QMainWindow):
 
     self.readSettings()
 
-    fName= sys.argv[1]
-    suppl=Chem.SDMolSupplier(fName)
-    pns = ['_Name']+list(SDUtils.GetSDPropNames(fName=fName))
+    suppl=Chem.SDMolSupplier(filename)
+    pns = ['_Name']+list(SDUtils.GetSDPropNames(fName=filename))
     self.sdModel=MolTableModel()
     self.sdModel.setSupplier(suppl,propNames=pns)
     self.sdModel._molCache={}
@@ -204,10 +239,19 @@ class MainWindow(QtGui.QMainWindow):
     self.connect(self.tblView.selectionModel(),
                  QtCore.SIGNAL('selectionChanged(QItemSelection,QItemSelection)'),
                  self.changeCurrent)
-    self.molView=MolView()
-    self.molView.show()
 
-
+  def attachMolCanvas(self,canvas=None):
+    if canvas is None:
+      self.molCanvas=MolCanvasView()
+    else:
+      self.molCanvas=canvas
+    self.molCanvas.show()
+  def attachMol3DViewer(self,viewer=None):
+    if viewer is None:
+      self.mol3DViewer=Mol3DView()
+    else:
+      self.mol3DViewer=viewer
+    
   def changeCurrent(self,current,prev):
     idxL = self.tblView.selectedIndexes()
     if not len(idxL):
@@ -217,15 +261,24 @@ class MainWindow(QtGui.QMainWindow):
       mol = self.sdModel.mol(idx,QtCore.Qt.DisplayRole)
       mols.append(mol)
     if len(mols)==1:
-      self.molView.setMol(mols[0])
+      if self.molCanvas:
+        self.molCanvas.setMol(mols[0])
+      if self.mol3DViewer:
+        self.mol3DViewer.ShowMol(mols[0],name=mols[0].GetProp('_Name'),
+                                 showOnly=True)
     else:
-      self.molView.setMols(mols)
-    
+      if self.molCanvas:
+        self.molCanvas.setMols(mols)
+      if self.mol3DViewer:
+        self.mol3DViewer.DeleteAll()
+        for mol in mols:
+          self.mol3DViewer.ShowMol(mol,name=mol.GetProp('_Name'),
+                                   showOnly=False)
   def closeEvent(self, event):
     if self.maybeSave():
       self.writeSettings()
       self.molDrawer=None
-      self.molView=None
+      self.molCanvas=None
       event.accept()
     else:
       event.ignore()
@@ -402,9 +455,27 @@ class MainWindow(QtGui.QMainWindow):
     #self.statusBar().showMessage(self.tr("File saved"), 2000)
     return True
 
+from optparse import OptionParser
+import os
+parser=OptionParser("This is SDView",version='%prog '+_version)
+parser.add_option('--do3D','--3D','--3d','--do3d',default=False,action='store_true',
+                  help='display the molecules in 3D using PyMol')
+parser.add_option('--no2D','--no2d',dest='do2D',default=True,action='store_false',
+                  help='skip the 2D display of the molecules')
+parser.add_option('--redraw',default=False,action='store_true',
+                  help='force the generation of new 2D coordinates for the molecules')
 
 if __name__ == "__main__":
+  options,args = parser.parse_args()
+  if len(args)<1:
+    parser.error('no SD file provided')
   app = QtGui.QApplication(sys.argv)
-  mainWin = MainWindow()
+  mainWin = MainWindow(args[0])
+  if options.do2D:
+    mainWin.attachMolCanvas()
+  if options.do3D:
+    mainWin.attachMol3DViewer()
+  if options.redraw:
+    mainWin.tblView.redrawMode=MolTableRedrawMode.Always
   mainWin.show()
   sys.exit(app.exec_())
