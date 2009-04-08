@@ -22,6 +22,7 @@ tests=[
   ("python","BRICS.py",{}),
   ("python","UnitTestDescriptors.py",{}),
   ("python","AllChem.py",{}),
+  ("python","PropertyMol.py",{}),
   ("python","test_list.py",{'dir':'AtomPairs'}),
   ("python","test_list.py",{'dir':'ChemUtils'}),
   ("python","test_list.py",{'dir':'EState'}),
