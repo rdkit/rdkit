@@ -24,14 +24,14 @@ import types
 from math import sin, cos, pi, ceil
 
 # app specific
-from rdkit import sping.pagesizes
+from rdkit.sping import pagesizes
 from rdkit.sping.pid import *
 import pdfgen
 import pdfgeom
 
 #edit this is the setting offends you, or set it in the constructor
-DEFAULT_PAGE_SIZE = sping.pagesizes.A4
-#DEFAULT_PAGE_SIZE = sping.pagesizes.letter
+DEFAULT_PAGE_SIZE = pagesizes.A4
+#DEFAULT_PAGE_SIZE = pagesizes.letter
 
 
 
