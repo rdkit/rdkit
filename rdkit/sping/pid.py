@@ -281,6 +281,9 @@ class Canvas:
 		pass 
 		
 	#------------ string/font info ------------
+        def stringBox(self,s,font=None):
+                return self.stringWidth(s,font),self.fontHeight(font)
+        
 	def stringWidth(self, s, font=None):
 		"Return the logical width of the string if it were drawn \
 		in the current font (defaults to self.font)."

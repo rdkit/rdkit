@@ -70,6 +70,10 @@ class Mol3DView(PyMol.MolViewer):
 
   
 class MolCanvasView(QtGui.QGraphicsView):
+  _mp=None
+  selectingMols=True
+  selectingAtoms=True
+  atomSelectPadding=5
   def __init__(self,parent=None,scene=None,size=(300,300)):
     QtGui.QGraphicsView.__init__(self,scene,parent)
     scene = QtGui.QGraphicsScene(0,0,size[0],size[1])
@@ -93,6 +97,8 @@ class MolCanvasView(QtGui.QGraphicsView):
     confId=-1
     if mol.HasProp('_2DConfId'): confId=int(mol.GetProp('_2DConfId'))
     self.molDrawer.AddMol(mol,confId=confId)
+    mol._bbox=self.molDrawer.boundingBoxes[mol]
+    mol._atomPs=self.molDrawer.atomPs[mol]
     self.mols.append(mol)
 
   def setMol(self,mol):
@@ -123,8 +129,39 @@ class MolCanvasView(QtGui.QGraphicsView):
                             drawingTrans=(w*colIdx+w/2,-h*rowIdx+h/2),
                             molTrans=self.molDrawer.molTrans,
                             centerIt=False)
+      mol._bbox=self.molDrawer.boundingBoxes[mol]
+      mol._atomPs=self.molDrawer.atomPs[mol]
       self.mols.append(mol)
       
+  def mousePressEvent(self,evt):
+    if not self.selectingMols or not self.selectingAtoms:
+      return
+    self._mp=evt
+    evt.accept()
+  def mouseReleaseEvent(self,evt):
+    if not self._mp:
+      return
+    else:
+      mp = self._mp
+      self._mp=None
+      coords = self.mapToScene(mp.pos())
+      x,y = coords.x(),coords.y()
+      for mol in self.mols:
+        if x>mol._bbox[0] and x<mol._bbox[2] and \
+              y>mol._bbox[1] and y<mol._bbox[3] :
+          if self.selectingAtoms:
+            for atomIdx in range(mol.GetNumAtoms()):
+              px,py = mol._atomPs[atomIdx]
+              if x>px-self.atomSelectPadding and x<px+self.atomSelectPadding and\
+                    y>py-self.atomSelectPadding and y<py+self.atomSelectPadding:
+                self.emit(QtCore.SIGNAL("atomSelected(PyQt_PyObject,int)"),mol,atomIdx)
+                break
+          if self.selectingMols:
+            self.emit(QtCore.SIGNAL("molSelected(PyQt_PyObject)"),mol)
+          break
+      print coords.x(),coords.y()
+      evt.accept()
+
 
 class MolTableView(QtGui.QTableView):
   def __init__(self,parent=None):
@@ -233,7 +270,6 @@ class MainWindow(QtGui.QMainWindow):
     self.sdModel._molCache={}
 
     self.tblView = MolTableView()
-    
     self.tblView.setModel(self.sdModel)
     self.setCentralWidget(self.tblView)
     self.connect(self.tblView.selectionModel(),
@@ -245,7 +281,14 @@ class MainWindow(QtGui.QMainWindow):
       self.molCanvas=MolCanvasView()
     else:
       self.molCanvas=canvas
+    self.connect(self.molCanvas,QtCore.SIGNAL('molSelected(PyQt_PyObject)'),self.molCanvasMolSelected)
+    self.connect(self.molCanvas,QtCore.SIGNAL('atomSelected(PyQt_PyObject,int)'),self.molCanvasAtomSelected)
     self.molCanvas.show()
+  def molCanvasMolSelected(self,mol):
+    print 'mol: ',mol.GetProp('_Name')
+  def molCanvasAtomSelected(self,mol,atomIdx):
+    print 'Mol: ',mol.GetProp('_Name'),'Atom: ',atomIdx,mol.GetAtomWithIdx(atomIdx).GetSymbol()
+
   def attachMol3DViewer(self,viewer=None):
     if viewer is None:
       self.mol3DViewer=Mol3DView()

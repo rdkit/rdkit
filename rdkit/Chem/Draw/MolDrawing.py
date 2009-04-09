@@ -61,6 +61,7 @@ class MolDrawing(object):
     if canvas:
       self.canvasSize=canvas.size
     self.atomPs = {}
+    self.boundingBoxes = {}
 
   def transformPoint(self,pos):
     res = [0,0]
@@ -304,6 +305,7 @@ class MolDrawing(object):
       Chem.WedgeMolBonds(mol,conf)
       
     self.atomPs[mol] = {}
+    self.boundingBoxes[mol] = [0]*4
     self.activeMol = mol
     self.bondRings = mol.GetRingInfo().BondRings()
     for atom in mol.GetAtoms():
@@ -312,6 +314,10 @@ class MolDrawing(object):
       if pos is None:
         pos = self.transformPoint(conf.GetAtomPosition(idx))
         self.atomPs[mol][idx] = pos
+        self.boundingBoxes[mol][0]=min(self.boundingBoxes[mol][0],pos[0])
+        self.boundingBoxes[mol][1]=min(self.boundingBoxes[mol][1],pos[1])
+        self.boundingBoxes[mol][2]=max(self.boundingBoxes[mol][2],pos[0])
+        self.boundingBoxes[mol][3]=max(self.boundingBoxes[mol][3],pos[1])
       nbrSum = [0,0]
       for bond in atom.GetBonds():
         nbr = bond.GetOtherAtom(atom)
@@ -321,6 +327,10 @@ class MolDrawing(object):
           if nbrPos is None:
             nbrPos = self.transformPoint(conf.GetAtomPosition(nbrIdx))
             self.atomPs[mol][nbrIdx] = nbrPos
+            self.boundingBoxes[mol][0]=min(self.boundingBoxes[mol][0],nbrPos[0])
+            self.boundingBoxes[mol][1]=min(self.boundingBoxes[mol][1],nbrPos[1])
+            self.boundingBoxes[mol][2]=max(self.boundingBoxes[mol][2],nbrPos[0])
+            self.boundingBoxes[mol][3]=max(self.boundingBoxes[mol][3],nbrPos[1])
             
           if highlightAtoms and idx in highlightAtoms and nbrIdx in highlightAtoms:
             width=2.0*self.bondLineWidth

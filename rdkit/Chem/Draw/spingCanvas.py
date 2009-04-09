@@ -60,8 +60,7 @@ def addCanvasLine(canvas,p1,p2,color=(0,0,0),color2=None,**kwargs):
 
 def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
   font = pid.Font(face=faceMap[font.face],size=font.size)
-  txtWidth=canvas.stringWidth(text,font)
-  txtHeight=canvas.fontAscent(font)
+  txtWidth,txtHeight=canvas.stringBox(text,font)
   labelP = pos[0]-txtWidth/2,pos[1]+txtHeight/2
   xPad = kwargs.get('xPadding',0)
   yPad = kwargs.get('yPadding',0)
