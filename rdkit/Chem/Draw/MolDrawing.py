@@ -209,6 +209,8 @@ class MolDrawing(object):
       addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
       
   def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None):
+    self.currDotsPerAngstrom=self.dotsPerAngstrom
+    self.currAtomLabelFontSize=self.atomLabelFontSize
     if canvasSize is None:
       canvasSize=self.canvasSize
     xAccum = 0
@@ -230,8 +232,8 @@ class MolDrawing(object):
 
     dx = abs(maxX-minX)
     dy = abs(maxY-minY)
-    xSize = dx*self.dotsPerAngstrom
-    ySize = dy*self.dotsPerAngstrom
+    xSize = dx*self.currDotsPerAngstrom
+    ySize = dy*self.currDotsPerAngstrom
 
     if coordCenter:
       molTrans = -xAccum/nAts,-yAccum/nAts
@@ -239,8 +241,6 @@ class MolDrawing(object):
       molTrans = -(minX+(maxX-minX)/2),-(minY+(maxY-minY)/2)
     self.molTrans = molTrans
 
-    self.currDotsPerAngstrom=self.dotsPerAngstrom
-    self.currAtomLabelFontSize=self.atomLabelFontSize
     if xSize>=.95*canvasSize[0]:
       scale = .9*canvasSize[0]/xSize
       xSize*=scale
@@ -405,6 +405,9 @@ def registerCanvas(canvasNm):
     from aggCanvas import addCanvasLine,addCanvasText,addCanvasPolygon,addCanvasDashedWedge
   elif canvasNm in ('mpl','MPL'):
     from mplCanvas import addCanvasLine,addCanvasText,addCanvasPolygon
+    addCanvasDashedWedge=None
+  elif canvasNm in ('cairo','CAIRO'):
+    from cairoCanvas import addCanvasLine,addCanvasText,addCanvasPolygon,addCanvasDashedWedge
     addCanvasDashedWedge=None
   else:
     raise ValueError,'unrecognized canvas type'

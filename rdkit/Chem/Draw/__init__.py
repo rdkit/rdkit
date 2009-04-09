@@ -3,7 +3,7 @@
 # Copyright (C) 2006-2008 Greg Landrum
 #  All Rights Reserved
 #
-
+import os.path
 
 def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
   if not mol:
@@ -13,20 +13,27 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
     from aggdraw import Draw
     from PIL import Image
     MolDrawing.registerCanvas('agg')
+    Canvas = Draw
     useAGG=True
   except:
-    import traceback
-    traceback.print_exc()
     useAGG=False
-    from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
-    canvas = Canvas(size=size,name='MolToImageFile')
-    img = canvas._image
-    MolDrawing.registerCanvas('sping')
-    drawer = MolDrawing.MolDrawing(canvas)
-  if useAGG:
+    try:
+      import cairo
+      from PIL import Image
+      MolDrawing.registerCanvas('cairo')
+      from cairoCanvas import Canvas
+      useCAIRO=True
+    except:
+      from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
+      canvas = Canvas(size=size,name='MolToImageFile')
+      img = canvas._image
+      MolDrawing.registerCanvas('sping')
+      drawer = MolDrawing.MolDrawing(canvas)
+  if useAGG or useCAIRO:
     img = Image.new("RGBA",size,"white")
-    canvas = Draw(img)
-    canvas.setantialias(True)
+    canvas = Canvas(img)
+    if useAGG:
+      canvas.setantialias(True)
     drawer = MolDrawing.MolDrawing(canvas)
 
   if kekulize:
@@ -43,6 +50,52 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
   canvas.flush()
 
   return img
+
+def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True):
+  # original contribution from Uwe Hoffmann
+  import cairo
+
+  if not fileName:
+    raise ValueError,'no fileName provided'
+  if not mol:
+    raise ValueError,'Null molecule provided'
+
+  import MolDrawing
+  imageType=os.path.splitext(fileName)[1][1:]
+  try:
+    import cairo
+    MolDrawing.registerCanvas('cairo')
+    canvas=cairoCanvas.Canvas(size=size,imageType=imageType,
+                              fileName=fileName)
+    useCAIRO=True
+  except ImportError:
+    useCAIRO=False
+    MolDrawing.registerCanvas('sping')
+    if imageType=="pdf":
+      from rdkit.sping.PDF.pidPDF import PDFCanvas as Canvas
+    elif imageType=="ps":
+      from rdkit.sping.PS.pidPS import PSCanvas as Canvas
+    elif imageType=="svg":
+      from rdkit.sping.SVG.pidSVG import SVGCanvas as Canvas
+    elif imageType=="png":
+      from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
+    canvas = Canvas(size=size,name=fileName)
+  drawer = MolDrawing.MolDrawing(canvas)
+  if kekulize:
+    from rdkit import Chem
+    mol = Chem.Mol(mol.ToBinary())
+    Chem.Kekulize(mol)
+    
+  if not mol.GetNumConformers():
+    from rdkit.Chem import AllChem
+    AllChem.Compute2DCoords(mol)
+  
+  drawer.wedgeDashedBonds=wedgeBonds
+  drawer.AddMol(mol)
+  if useCAIRO:
+    canvas.flush()
+  else:
+    canvas.save()
 
 def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True):
   img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds)
