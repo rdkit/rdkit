@@ -1,21 +1,22 @@
 // $Id$
 /*
- * vf2_sub_state.h
- * Interface of vf2_sub_state.cc
- * Definition of a class representing a state of the matching
- * process between two ARGs.
- * See: argraph.h state.h
+ * This is an extensive modification by Greg Landrum of
+ * pieces from several files in the vflib-2.0 distribution
  *
- * Author: P. Foggia
- *-----------------------------------------------------------------*/
-// Extensively modified by Greg Landrum to work with the BGL, Feb 2009
+ * The initial version of the modifications was completed
+ *   in April 2009.
+ *
+ * the original author of the vflib files is:
+ *    Author: P. Foggia
+ *  http://amalfi.dis.unina.it/graph/db/vflib-2.0/doc/vflib.html
+ *
+ */
 #include <boost/graph/adjacency_list.hpp>
 #include <vector>
 #include <algorithm>
 
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
-
 
 namespace boost{
   namespace detail {
@@ -224,7 +225,7 @@ namespace boost{
           t1out_len>t2out_len ||
           t1in_len>t2in_len;
       };
-      int CoreLen() { return core_len; }
+      unsigned int CoreLen() { return core_len; }
       Graph *GetGraph1() { return g1; }
       Graph *GetGraph2() { return g2; }
 
@@ -374,7 +375,7 @@ namespace boost{
         }
         //std::cerr<<(termin1 <= termin2 && termout1 <= termout2 && (termin1+termout1+new1)<=(termin2+termout2+new2))<<std::endl;
 
-    return termin1 <= termin2 && termout1 <= termout2 && (termin1+termout1+new1)<=(termin2+termout2+new2);
+        return termin1 <= termin2 && termout1 <= termout2 && (termin1+termout1+new1)<=(termin2+termout2+new2);
       };
       void AddPair(node_id node1, node_id node2){
         assert(node1 < n1);
@@ -527,7 +528,7 @@ namespace boost{
           SubState *s1=s.Clone();
           s1->AddPair(n1, n2);
           found=match(pn, c1, c2, *s1);
-          s1->BackTrack(); // FIX: is this really necessary?
+          s1->BackTrack();
           delete s1;
         }
       }
@@ -535,74 +536,24 @@ namespace boost{
       return found;
     }
 
-
-    template <class SubState>
-    bool match(int *pn, node_id c1[], node_id c2[], SubState &s);
-
-    template <class SubState,typename match_visitor>
-    bool match(node_id c1[], node_id c2[], match_visitor vis, 
-               void *usr_data, SubState &s, int *pcount); 
-
-
-    /*-------------------------------------------------------------
-     * bool match(s0, pn, c1, c2)
-     * Finds a matching between two graph, if it exists, given the 
-     * initial state of the matching process. 
-     * Returns true a match has been found.
-     * *pn is assigned the number of matched nodes, and
-     * c1 and c2 will contain the ids of the corresponding nodes 
-     * in the two graphs
-     ------------------------------------------------------------*/
-    template <class SubState>
-    bool match(SubState &s0, int *pn, node_id c1[], node_id c2[])
-    { 
-      return match(pn,c1,c2,s0);
-    }
-
-    /*------------------------------------------------------------
-     * int match(s0, vis, usr_data)
-     * Visits all the matches between two graphs, given the
-     * initial state of the match.
-     * Returns the number of visited matches.
-     * Stops when there are no more matches, or the visitor vis
-     * returns true.
-     ----------------------------------------------------------*/
-    template <class SubState,typename match_visitor>
-    int match(SubState &s0, match_visitor vis, void *usr_data)
-    {
-      unsigned int n1=boost::num_vertices(*(s0.GetGraph1()));
-      unsigned int n2=boost::num_vertices(*(s0.GetGraph2()));
-
-      /* Choose a conservative dimension for the arrays */
-      int n=std::max(n1,n2);
-      node_id *c1=new node_id[n];
-      node_id *c2=new node_id[n];
-      int count=0;
-      match(c1, c2, vis, usr_data, s0, &count);
-
-      delete[] c1;
-      delete[] c2;
-      return count;
-    }
-
-
     /*-------------------------------------------------------------
      * static bool match(c1, c2, vis, usr_data, pcount)
      * Visits all the matchings between two graphs,  starting
      * from state s.
      * Returns true if the caller must stop the visit.
-     * Stops when there are no more matches, or the visitor vis
-     * returns true.
+     * Stops when there are no more matches
+     *
      ------------------------------------------------------------*/
-    template <class SubState,typename match_visitor>
-    bool match(node_id c1[], node_id c2[], 
-               match_visitor vis, void *usr_data, SubState &s, int *pcount)
-    {
+    template <class SubState,class DoubleBackInsertionSequence>
+    bool match(node_id c1[], node_id c2[], SubState &s, DoubleBackInsertionSequence &res) {
       if (s.IsGoal()){
-        ++*pcount;
-        int n=s.CoreLen();
         s.GetCoreSet(c1, c2);
-        return vis(n, c1, c2, usr_data);
+        typename DoubleBackInsertionSequence::value_type newSeq;
+        for(unsigned int i=0;i<s.CoreLen();++i){
+          newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
+        }
+        res.push_back(newSeq);
+        return false;
       }
 
       if (s.IsDead())
@@ -613,13 +564,13 @@ namespace boost{
         if (s.IsFeasiblePair(n1, n2)){
           SubState *s1=s.Clone();
           s1->AddPair(n1, n2);
-          if (match(c1, c2, vis, usr_data, *s1, pcount)){
-            s1->BackTrack(); // FIX: is this really necessary?
+          if (match(c1, c2, *s1,res)){
+            s1->BackTrack(); 
             delete s1;
             return true;
           }
           else {
-            s1->BackTrack(); // FIX: is this really necessary?
+            s1->BackTrack(); 
             delete s1;
           }
         }
@@ -645,7 +596,7 @@ namespace boost{
     
     F.clear();
     F.resize(0);
-    if(match(s0,&n,ni1,ni2)){
+    if(match(&n,ni1,ni2,s0)){
       for(unsigned int i=0;i<num_vertices(g1);i++){
         F.push_back(std::pair<int,int>(ni1[i],ni2[i]));
       }
@@ -664,6 +615,19 @@ namespace boost{
                VertexLabeling& vertex_labeling,
                EdgeLabeling& edge_labeling,
                DoubleBackInsertionSequence& F) {
+    detail::VF2SubState<const Graph,VertexLabeling,EdgeLabeling> s0(&g1,&g2,vertex_labeling,
+                                                                    edge_labeling,false);
+    detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
+    detail::node_id *ni2 = new detail::node_id[num_vertices(g2)];
+    
+    F.clear();
+    F.resize(0);
+
+    match(ni1,ni2,s0,F);
+
+    delete [] ni1;
+    delete [] ni2;
+    
     return !F.empty();
   };
 } // end of namespace boost

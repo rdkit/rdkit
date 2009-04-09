@@ -418,8 +418,13 @@ namespace RDKit{
     detail::BondLabelFunctor bondLabeler(query,mol);
     
     std::list<detail::ssPairType> pms;
+#if 0
     bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
                                   atomLabeler,bondLabeler,pms);
+#else
+    bool found=boost::vf2_all(query.getTopology(),mol.getTopology(),
+                                  atomLabeler,bondLabeler,pms);
+#endif
     unsigned int res=0;
     if(found){
       unsigned int nQueryAtoms=query.getNumAtoms();
@@ -463,9 +468,13 @@ namespace RDKit{
     matches.clear();
     matches.resize(0);
     std::list<detail::ssPairType> pms;
+#if 0
     bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
                             atomLabeler,bondLabeler,pms);
-
+#else
+    bool found=boost::vf2_all(query.getTopology(),mol.getTopology(),
+                              atomLabeler,bondLabeler,pms);
+#endif
     unsigned int res=0;
     if(found){
       matches.reserve(pms.size());
