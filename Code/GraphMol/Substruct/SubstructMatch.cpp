@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -305,6 +305,7 @@ namespace SubstructLocal {
 
 #else
 #include "ullmann.hpp"
+#include "vf2.hpp"
 
 namespace RDKit{
   void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,bool registerQuery);
@@ -315,7 +316,7 @@ namespace RDKit{
     public:
       AtomLabelFunctor(const ROMol &query,const ROMol &mol, bool useChirality) :
         d_query(query), d_mol(mol), df_useChirality(useChirality) {};
-      bool operator()(unsigned int i,unsigned int j){
+      bool operator()(unsigned int i,unsigned int j) const{
         bool res=false;
         if(!df_useChirality){
           res=atomCompat(d_query[i],d_mol[j]);
@@ -334,8 +335,9 @@ namespace RDKit{
     public:
       BondLabelFunctor(const ROMol &query,const ROMol &mol) :
         d_query(query), d_mol(mol) {};
-      bool operator()(MolGraph::edge_descriptor i,MolGraph::edge_descriptor j){
+      bool operator()(MolGraph::edge_descriptor i,MolGraph::edge_descriptor j) const{
         bool res=bondCompat(d_query[i],d_mol[j]);
+        //std::cerr<<" blf: "<<i<<" - "<<j<<"? "<<res<<std::endl;
         return res;
       }
     private:
@@ -366,13 +368,17 @@ namespace RDKit{
     matchVect.clear();
     matchVect.resize(0);
 
-    
     detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
     detail::BondLabelFunctor bondLabeler(query,mol);
 
     detail::ssPairType match;
+#if 0
     bool res=boost::ullmann(query.getTopology(),mol.getTopology(),
                             atomLabeler,bondLabeler,match);
+#else
+    bool res=boost::vf2(query.getTopology(),mol.getTopology(),
+                        atomLabeler,bondLabeler,match);
+#endif
     if(res){
      matchVect.resize(query.getNumAtoms());
      for(detail::ssPairType::const_iterator iter=match.begin();iter!=match.end();++iter){

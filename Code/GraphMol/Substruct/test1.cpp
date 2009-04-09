@@ -102,6 +102,7 @@ void test2(){
   q1->addAtom(new QueryAtom(8));
   q1->addBond(0,1,Bond::SINGLE);
 
+  
   n = SubstructMatch(*m,*q1,matchV);
   TEST_ASSERT(n);
   TEST_ASSERT(matchV.size()==2);
@@ -173,6 +174,7 @@ void test3(){
   CHECK_INVARIANT(SubstructMatch(*m,*q1,matchV),"");
   CHECK_INVARIANT(matchV.size()==2,"");
 
+
   delete m;
   m = new RWMol();
   m->addAtom(new Atom(6));
@@ -193,6 +195,23 @@ void test3(){
 
   CHECK_INVARIANT(SubstructMatch(*m,*q1,matchV),"");
   CHECK_INVARIANT(matchV.size()==2,"");
+
+
+  delete q1;
+  q1 = new RWMol();
+  q1->addAtom(new QueryAtom(6));
+  q1->addAtom(new QueryAtom(6));
+  q1->addBond(0,1,Bond::UNSPECIFIED);
+  n = SubstructMatch(*m,*q1,matches,false);
+  TEST_ASSERT(n==2);
+  TEST_ASSERT(matches.size()==n);
+  TEST_ASSERT(matches[0].size()==2);
+  TEST_ASSERT(matches[1].size()==2);
+  TEST_ASSERT(matches[0][0].second!=matches[1][0].second);
+  TEST_ASSERT(matches[0][1].second!=matches[1][1].second);
+  n = SubstructMatch(*m,*q1,matches,true);
+  TEST_ASSERT(n==1);
+  TEST_ASSERT(matches.size()==n);
 
   std::cout << "Done\n" << std::endl;
 }
@@ -245,9 +264,12 @@ void test4(){
   TEST_ASSERT(matchV[1].first==1);
   TEST_ASSERT(matchV[1].second==0||matchV[1].second==3);
   n = SubstructMatch(*m,*q2,matches,true);
-  CHECK_INVARIANT(n==2,"");
-  CHECK_INVARIANT(matches[0].size()==2,"");
-
+  TEST_ASSERT(n==2);
+  TEST_ASSERT(matches.size()==n);
+  TEST_ASSERT(matches[0].size()==2);
+  TEST_ASSERT(matches[1].size()==2);
+  TEST_ASSERT(matches[0][0].second==matches[1][0].second);
+  TEST_ASSERT(matches[0][1].second!=matches[1][1].second);
 
   std::cout << "Done\n" << std::endl;
 }
@@ -494,13 +516,13 @@ int main(int argc,char *argv[])
   test1();  
   test2();  
   test3();  
-#endif
   test4();  
   test5();  
   test6();  
   if(argc>1 && !strcmp(argv[1],"-l"))
     test7();  
   test9();  
+#endif
   return 0;
 }
 
