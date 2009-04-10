@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -17,7 +17,6 @@
 #include <iostream>
 #include <fstream>
 #include <boost/cstdint.hpp>
-
 
 namespace RDKit {
   
@@ -123,7 +122,7 @@ namespace RDKit {
 
     // FIX: if might be better if we just do the balaban first and then 
     // move onto eigen values
-    Subgraphs::PathDiscrimTuple tdiscs, odiscs;// = MolOps::computeDiscriminators(*mol, true)
+    Subgraphs::DiscrimTuple tdiscs, odiscs;
     odiscs = other->getDiscrims();
     
     
@@ -149,8 +148,8 @@ namespace RDKit {
     return true;
   }
 
-  DiscrimTuple FragCatalogEntry::getDiscrims() const {
-    DiscrimTuple res;
+  Subgraphs::DiscrimTuple FragCatalogEntry::getDiscrims() const {
+    Subgraphs::DiscrimTuple res;
     if (this->hasProp("Discrims")) {
       this->getProp("Discrims", res);
     }
@@ -208,7 +207,7 @@ namespace RDKit {
 	dMat[aid*nAts+aid] = diagElem;
       }
       // now do the discriminators
-      res = MolOps::computeDiscriminators(dMat, nBds, nAts);
+      res = Subgraphs::computeDiscriminators(dMat, nBds, nAts);
 
       this->setProp("Discrims", res);
     }

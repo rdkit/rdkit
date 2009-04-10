@@ -10,7 +10,7 @@ python-extension rdchem : rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
   ..//GraphMol
   ../../Geometry//RDGeometry
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
-../..//vflib ../..//lapacklibs 
+../..//vflib 
   ;
 
 python-extension rdmolops : rdmolops.cpp MolOps.cpp
@@ -30,7 +30,7 @@ python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cp
   ..//GraphMol
  ../../Geometry//RDGeometry
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
-../..//vflib ../..//lapacklibs 
+../..//vflib 
   ;
 
 install pymod : rdchem rdmolops rdmolfiles 

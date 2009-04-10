@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2007 Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -12,8 +12,31 @@
 namespace RDKit{
   class ROMol;
   namespace Subgraphs {
-    typedef boost::tuples::tuple<double,double,double> PathDiscrimTuple;
-    PathDiscrimTuple CalcPathDiscriminators(const ROMol &mol,const PATH_TYPE &path,
+    //! used to return atomic discriminators (three doubles)
+    typedef boost::tuples::tuple<double,double,double> DiscrimTuple;
+    //! calculates a set of molecular discriminators from the distance matrix
+    /*!
+      Computes:
+        -# BalabanJ 
+        -# the first eigenvalue of the distance matrix 
+        -# the last but one eigenvalue of the distance matrix 
+
+      \param mol    the molecule of interest
+      \param useBO  toggles inclusion of the bond order in the discriminators
+                    (when false, the discriminators are purely topological)
+      \param force  forces the calculation (instead of using cached results)
+	
+      \return a \c DiscrimTuple with the results
+      
+    */
+    DiscrimTuple computeDiscriminators(const ROMol &mol, 
+					      bool useBO=true, 
+					      bool force=false);
+    //! \brief Same as MolOps::computeDiscriminators(const ROMol &mol),
+    //! except that this directly uses the user-supplied distance matrix
+    DiscrimTuple computeDiscriminators(double *distMat, unsigned int nb, unsigned int na);
+
+    DiscrimTuple CalcPathDiscriminators(const ROMol &mol,const PATH_TYPE &path,
                                            bool useBO=true);
     PATH_LIST uniquifyPaths (const ROMol &mol, const PATH_LIST &allPathsb,
                              bool useBO=true,double tol=1e-8);

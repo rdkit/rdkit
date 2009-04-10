@@ -52,7 +52,7 @@ namespace RDKit {
     
     bool match(const FragCatalogEntry *other, double tol) const;
          
-    DiscrimTuple getDiscrims() const;
+    Subgraphs::DiscrimTuple getDiscrims() const;
     
     unsigned int getOrder() const {
       return dp_mol->getNumBonds();

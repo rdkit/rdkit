@@ -10,6 +10,8 @@
 
 #include <GraphMol/FragCatalog/FragCatGenerator.h>
 #include <GraphMol/FragCatalog/FragCatParams.h>
+#include <GraphMol/FragCatalog/FragCatalogEntry.h>
+
 
 namespace python = boost::python;
 namespace RDKit{
@@ -91,7 +93,7 @@ namespace RDKit{
       throw_index_error(idx);
     DOUBLE_VECT res;
     const FragCatalogEntry *entry=self->getEntryWithBitId(idx);
-    DiscrimTuple tmp=entry->getDiscrims();
+    Subgraphs::DiscrimTuple tmp=entry->getDiscrims();
     res.push_back(tmp.get<0>());
     res.push_back(tmp.get<1>());
     res.push_back(tmp.get<2>());

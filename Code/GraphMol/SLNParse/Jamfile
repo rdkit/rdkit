@@ -5,7 +5,7 @@ import lex ;
 
 local RDBASE = [ os.environ RDBASE ] ;
 
-lib SLNParse : lex.yysln.cpp   sln.tab.cpp InputFiller.cpp SLNParse.cpp SLNAttribs.cpp ..//GraphMol ../..//RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs
+lib SLNParse : lex.yysln.cpp   sln.tab.cpp InputFiller.cpp SLNParse.cpp SLNAttribs.cpp ..//GraphMol ../..//RDGeneral//RDGeneral ../../Geometry//RDGeometry 
   : <include>. <toolset>msvc:<link>static 
   <toolset>msvc:<define>YY_NO_UNISTD_H ;
 install lib-install : SLNParse : <location>$(RDBASE)/bin ;
@@ -16,7 +16,7 @@ cpp sln.tab.cpp : sln.yy : <bison.prefix>yysln_ ;
 exe test : test.cpp SLNParse 
   ..//GraphMol   ../SmilesParse//SmilesParse
   ../Substruct//Substruct ../..//vflib 
-  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ../..//lapacklibs 
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
 ;
 
 install regrs : test
