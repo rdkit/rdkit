@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <string>
+#include <boost/shared_array.hpp>
 
 namespace ForceFields {
   class ForceField;
@@ -68,11 +69,11 @@ namespace RDKit {
       // these functions are primarily exposed so they can be tested.
       void addBonds(const ROMol &mol,const AtomicParamVect &params,
 		    ForceFields::ForceField *field);
-      int *buildNeighborMatrix(const ROMol &mol);
+      boost::shared_array<int> buildNeighborMatrix(const ROMol &mol);
       void addAngles(const ROMol &mol,const AtomicParamVect &params,
-		     ForceFields::ForceField *field,int *neighborMatrix);
+		     ForceFields::ForceField *field,boost::shared_array<int> neighborMatrix);
       void addNonbonded(const ROMol &mol,int confId, const AtomicParamVect &params,
-			ForceFields::ForceField *field,int *neighborMatrix,
+			ForceFields::ForceField *field,boost::shared_array<int> neighborMatrix,
 			double vdwThresh=100.0,bool ignoreInterfragInteractions=true);
       void addTorsions(const ROMol &mol,const AtomicParamVect &params,
 		       ForceFields::ForceField *field,

@@ -210,11 +210,21 @@ namespace RDKit {
       for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
         begId = (*bi)->getBeginAtomIdx();
         endId = (*bi)->getEndAtomIdx();
-        bl = ForceFields::UFF::Utils::calcBondRestLength((*bi)->getBondTypeAsDouble(),
-                                                         atomParams[begId], atomParams[endId]);
-        accumData.bondLengths[(*bi)->getIdx()] = bl;
-        mmat->setUpperBound(begId, endId, bl + DIST12_DELTA);
-        mmat->setLowerBound(begId, endId, bl - DIST12_DELTA);
+        if(atomParams[begId] && atomParams[endId]){
+          bl = ForceFields::UFF::Utils::calcBondRestLength((*bi)->getBondTypeAsDouble(),
+                                                           atomParams[begId], atomParams[endId]);
+          accumData.bondLengths[(*bi)->getIdx()] = bl;
+          mmat->setUpperBound(begId, endId, bl + DIST12_DELTA);
+          mmat->setLowerBound(begId, endId, bl - DIST12_DELTA);
+        } else {
+          // we don't have parameters for one of the atoms... so we're forced to use 
+          // very crude bounds:
+          double vw1 = PeriodicTable::getTable()->getRvdw(mol.getAtomWithIdx(begId)->getAtomicNum());
+          double vw2 = PeriodicTable::getTable()->getRvdw(mol.getAtomWithIdx(endId)->getAtomicNum());
+          mmat->setUpperBound(begId, endId, vw1+vw2);
+          mmat->setLowerBound(begId, endId, 1.0 );
+          
+        }
       }
     }
     

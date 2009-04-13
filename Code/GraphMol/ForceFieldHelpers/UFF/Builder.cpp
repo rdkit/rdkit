@@ -41,11 +41,13 @@ namespace RDKit {
 
           // FIX: recognize amide bonds here.
 
-          BondStretchContrib *contrib;
-          contrib = new BondStretchContrib(field,idx1,idx2,
-                                           (*bi)->getBondTypeAsDouble(),
-                                           params[idx1],params[idx2]);
-          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          if(params[idx1]&&params[idx2]){
+            BondStretchContrib *contrib;
+            contrib = new BondStretchContrib(field,idx1,idx2,
+                                             (*bi)->getBondTypeAsDouble(),
+                                             params[idx1],params[idx2]);
+            field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          }
         }
       }
 
@@ -60,9 +62,9 @@ namespace RDKit {
       //  on the result
       //
       // ------------------------------------------------------------------------
-      int *buildNeighborMatrix(const ROMol &mol){
+      boost::shared_array<int> buildNeighborMatrix(const ROMol &mol){
         unsigned int nAtoms = mol.getNumAtoms();
-        int *res=new int[nAtoms*nAtoms];
+        boost::shared_array<int> res(new int[nAtoms*nAtoms]);
         for(unsigned int i=0;i<nAtoms;i++){
           unsigned int iTab=i*nAtoms;
           for(unsigned int j=i;j<nAtoms;j++){
@@ -111,15 +113,18 @@ namespace RDKit {
       //
       // ------------------------------------------------------------------------
       void addAngles(const ROMol &mol,const AtomicParamVect &params,
-                     ForceFields::ForceField *field,int *neighborMatrix){
+                     ForceFields::ForceField *field,boost::shared_array<int> neighborMatrix){
         PRECONDITION(mol.getNumAtoms()==params.size(),"bad parameters");
         PRECONDITION(field,"bad forcefield");
 
         unsigned int nAtoms=mol.getNumAtoms();
         for(unsigned int i=0;i<nAtoms;i++){
+          if(!params[i]) continue;
           for(unsigned int j=i+1;j<nAtoms;j++){
+            if(!params[j]) continue;
             if(neighborMatrix[i*nAtoms+j]>-1){
               int k = neighborMatrix[i*nAtoms+j];
+              if(!params[k]) continue;
               const Atom *atomK = mol.getAtomWithIdx(k);
               // skip special cases:
               if( !(atomK->getHybridization()==Atom::SP3D && atomK->getDegree()==5) ){
@@ -219,80 +224,97 @@ namespace RDKit {
         // Axial-Axial
         i=ax1->getOtherAtomIdx(atomIdx);
         j=ax2->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       ax1->getBondTypeAsDouble(),
-                                       ax2->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j],2);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
-        
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         ax1->getBondTypeAsDouble(),
+                                         ax2->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j],2);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }        
         // Equatorial-Equatorial
         i=eq1->getOtherAtomIdx(atomIdx);
         j=eq2->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       eq1->getBondTypeAsDouble(),
-                                       eq2->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j],3);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         eq1->getBondTypeAsDouble(),
+                                         eq2->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j],3);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
         i=eq1->getOtherAtomIdx(atomIdx);
         j=eq3->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       eq1->getBondTypeAsDouble(),
-                                       eq3->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j],3);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         eq1->getBondTypeAsDouble(),
+                                         eq3->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j],3);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
         i=eq2->getOtherAtomIdx(atomIdx);
         j=eq3->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       eq2->getBondTypeAsDouble(),
-                                       eq3->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j],3);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
-        
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         eq2->getBondTypeAsDouble(),
+                                         eq3->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j],3);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }        
 
         // Axial-Equatorial
         i=ax1->getOtherAtomIdx(atomIdx);
         j=eq1->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       ax1->getBondTypeAsDouble(),
-                                       eq1->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j]);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         ax1->getBondTypeAsDouble(),
+                                         eq1->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j]);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
         i=ax1->getOtherAtomIdx(atomIdx);
         j=eq2->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       ax1->getBondTypeAsDouble(),
-                                       eq2->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j]);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         ax1->getBondTypeAsDouble(),
+                                         eq2->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j]);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
         i=ax1->getOtherAtomIdx(atomIdx);
         j=eq3->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       ax1->getBondTypeAsDouble(),
-                                       eq3->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j]);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         ax1->getBondTypeAsDouble(),
+                                         eq3->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j]);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
         i=ax2->getOtherAtomIdx(atomIdx);
         j=eq1->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       ax2->getBondTypeAsDouble(),
-                                       eq1->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j]);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         ax2->getBondTypeAsDouble(),
+                                         eq1->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j]);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
         i=ax2->getOtherAtomIdx(atomIdx);
         j=eq2->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       ax2->getBondTypeAsDouble(),
-                                       eq2->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j]);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         ax2->getBondTypeAsDouble(),
+                                         eq2->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j]);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
         i=ax2->getOtherAtomIdx(atomIdx);
         j=eq3->getOtherAtomIdx(atomIdx);
-        contrib = new AngleBendContrib(field,i,atomIdx,j,
-                                       ax2->getBondTypeAsDouble(),
-                                       eq3->getBondTypeAsDouble(),
-                                       params[i],params[atomIdx],params[j]);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
-
+        if(params[i]&&params[j]){
+          contrib = new AngleBendContrib(field,i,atomIdx,j,
+                                         ax2->getBondTypeAsDouble(),
+                                         eq3->getBondTypeAsDouble(),
+                                         params[i],params[atomIdx],params[j]);
+          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        }
       }
 
       // ------------------------------------------------------------------------
@@ -321,7 +343,7 @@ namespace RDKit {
       //
       // ------------------------------------------------------------------------
       void addNonbonded(const ROMol &mol,int confId,const AtomicParamVect &params,
-                        ForceFields::ForceField *field,int *neighborMatrix,
+                        ForceFields::ForceField *field,boost::shared_array<int> neighborMatrix,
                         double vdwThresh,bool ignoreInterfragInteractions){
         PRECONDITION(mol.getNumAtoms()==params.size(),"bad parameters");
         PRECONDITION(field,"bad forcefield");
@@ -334,8 +356,9 @@ namespace RDKit {
         unsigned int nAtoms=mol.getNumAtoms();
         const Conformer &conf = mol.getConformer(confId);
         for(unsigned int i=0;i<nAtoms;i++){
+          if(!params[i]) continue;
           for(unsigned int j=i+1;j<nAtoms;j++){
-            if(ignoreInterfragInteractions && fragMapping[i]!=fragMapping[j]){
+            if(ignoreInterfragInteractions && fragMapping[i]!=fragMapping[j] || !params[j]){
               continue;
             }
             if(neighborMatrix[i*nAtoms+j]==-2){
@@ -385,12 +408,14 @@ namespace RDKit {
         ROMol *query=SmartsToMol(torsionBondSmarts);
         TEST_ASSERT(query);
         unsigned int nHits=SubstructMatch(mol,*query,matchVect);
+        delete query;
 
         for(unsigned int i=0; i<nHits; i++){
           MatchVectType match=matchVect[i];
           TEST_ASSERT(match.size()==2);
           int idx1=match[0].second;
           int idx2=match[1].second;
+          if(!params[idx1]||!params[idx2]) continue;
           const Bond *bond=mol.getBondBetweenAtoms(idx1,idx2);
           std::vector<TorsionAngleContrib *> contribsHere;
           TEST_ASSERT(bond);
@@ -492,14 +517,13 @@ namespace RDKit {
       }
       
       Tools::addBonds(mol,params,res);
-      int *neighborMat = Tools::buildNeighborMatrix(mol);
+      boost::shared_array<int> neighborMat = Tools::buildNeighborMatrix(mol);
       Tools::addAngles(mol,params,res,neighborMat);
       Tools::addAngleSpecialCases(mol,confId,params,res);
       Tools::addNonbonded(mol,confId,params,res,neighborMat,vdwThresh,ignoreInterfragInteractions);
       Tools::addTorsions(mol,params,res);
       //Tools::addInversions(mol,params,res);
 
-      delete [] neighborMat;
       return res;
     }
     
