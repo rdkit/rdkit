@@ -201,8 +201,10 @@ namespace RDKit {
       unsigned int npt = mmat->numRows();
       CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
       CHECK_INVARIANT(accumData.bondLengths.size() >= mol.getNumBonds(), "Wrong size accumData");
-      UFF::AtomicParamVect atomParams = UFF::getAtomTypes(mol);
-      CHECK_INVARIANT(atomParams.size()==mol.getNumAtoms(),"could not find all parameters");
+      bool foundAll;
+      UFF::AtomicParamVect atomParams;
+      boost::tie(atomParams,foundAll)= UFF::getAtomTypes(mol);
+      CHECK_INVARIANT(atomParams.size()==mol.getNumAtoms(),"parameter vector size mismatch");
       
       ROMol::ConstBondIterator bi;
       unsigned int begId, endId;
@@ -221,9 +223,10 @@ namespace RDKit {
           // very crude bounds:
           double vw1 = PeriodicTable::getTable()->getRvdw(mol.getAtomWithIdx(begId)->getAtomicNum());
           double vw2 = PeriodicTable::getTable()->getRvdw(mol.getAtomWithIdx(endId)->getAtomicNum());
-          mmat->setUpperBound(begId, endId, vw1+vw2);
-          mmat->setLowerBound(begId, endId, 1.0 );
-          
+          double bl=(vw1+vw2)/2;
+          accumData.bondLengths[(*bi)->getIdx()] = bl;
+          mmat->setUpperBound(begId, endId, 1.5*bl);
+          mmat->setLowerBound(begId, endId, .5*bl );
         }
       }
     }
@@ -232,6 +235,7 @@ namespace RDKit {
       unsigned int npt = mmat->numRows();
       PRECONDITION(npt == mol.getNumAtoms(), "Wrong size metric matrix");
       unsigned int i, j;
+
       double vw1, vw2;
       double *dmat=0;
       dmat = MolOps::getDistanceMat(mol);
@@ -422,7 +426,7 @@ namespace RDKit {
                 visited[aid2] += 1;
               } 
               ++beg2;
-            } // while loop over the seconf bond
+            } // while loop over the second bond
             ++beg1;
           } // while loop over the first bond
         } else if (visited[aid2] == 0) { 

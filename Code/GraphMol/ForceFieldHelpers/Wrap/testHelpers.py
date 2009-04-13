@@ -73,6 +73,14 @@ M  END"""
     e2 = ff.CalcEnergy()
     self.failUnless(e2<e1);
     
+  def test3(self) :
+    m = Chem.MolFromSmiles('[Cu](C)(C)(C)(C)C')
+    self.failIf(ChemicalForceFields.UFFHasAllMoleculeParams(m))
+
+    m = Chem.MolFromSmiles('C(C)(C)(C)C')
+    self.failUnless(ChemicalForceFields.UFFHasAllMoleculeParams(m))
+
+    
 
 
 

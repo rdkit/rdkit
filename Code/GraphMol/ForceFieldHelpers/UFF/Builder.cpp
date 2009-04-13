@@ -358,7 +358,7 @@ namespace RDKit {
         for(unsigned int i=0;i<nAtoms;i++){
           if(!params[i]) continue;
           for(unsigned int j=i+1;j<nAtoms;j++){
-            if(ignoreInterfragInteractions && fragMapping[i]!=fragMapping[j] || !params[j]){
+            if(!params[j] || (ignoreInterfragInteractions && fragMapping[i]!=fragMapping[j])){
               continue;
             }
             if(neighborMatrix[i*nAtoms+j]==-2){
@@ -534,7 +534,9 @@ namespace RDKit {
     // ------------------------------------------------------------------------
     ForceFields::ForceField *constructForceField(ROMol &mol,double vdwThresh, int confId,
                                                  bool ignoreInterfragInteractions){
-      AtomicParamVect params=getAtomTypes(mol);
+      bool foundAll;
+      AtomicParamVect params;
+      boost::tie(params,foundAll)=getAtomTypes(mol);
       return constructForceField(mol,params,vdwThresh, confId,ignoreInterfragInteractions);
     }
 

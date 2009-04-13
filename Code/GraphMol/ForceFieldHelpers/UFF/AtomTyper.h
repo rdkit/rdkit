@@ -21,7 +21,7 @@ namespace RDKit {
   namespace UFF {
     typedef std::vector<const ForceFields::UFF::AtomicParams *> AtomicParamVect;
 
-    AtomicParamVect getAtomTypes(const ROMol &mol,const std::string &paramData="");
+    std::pair<AtomicParamVect,bool> getAtomTypes(const ROMol &mol,const std::string &paramData="");
 
     namespace Tools {
       // these functions are primarily exposed so they can be tested.

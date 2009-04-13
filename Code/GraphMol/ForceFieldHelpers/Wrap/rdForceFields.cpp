@@ -11,6 +11,7 @@
 
 #include <ForceField/ForceField.h>
 #include <ForceField/Wrap/PyForceField.h>
+#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 
 namespace python = boost::python;
@@ -37,6 +38,13 @@ namespace RDKit {
     ForceFields::PyForceField *res=new ForceFields::PyForceField(ff);
     res->initialize();
     return res;
+  }
+
+  bool UFFHasAllMoleculeParams(const ROMol &mol){
+    UFF::AtomicParamVect types;
+    bool foundAll;
+    boost::tie(types,foundAll)=UFF::getAtomTypes(mol);
+    return foundAll;
   }
 }
 
@@ -78,6 +86,15 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
 	      (python::arg("mol"),python::arg("vdwThresh")=10.0,python::arg("confId")=-1,
                python::arg("ignoreInterfragInteractions")=true),
 	      python::return_value_policy<python::manage_new_object>(),
+	      docString.c_str());
+
+ docString = "checks if UFF parameters are available for all of a molecule's atoms\n\n\
+ \n\
+ ARGUMENTS:\n\n\
+    - mol : the molecule of interrest\n\
+\n";
+  python::def("UFFHasAllMoleculeParams", RDKit::UFFHasAllMoleculeParams,
+	      (python::arg("mol")),
 	      docString.c_str());
 
 }

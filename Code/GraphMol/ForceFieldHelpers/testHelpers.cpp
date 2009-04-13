@@ -12,6 +12,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
@@ -142,7 +143,9 @@ void testUFFTyper2(){
   TEST_ASSERT(mol);
 
   UFF::AtomicParamVect types;
-  types = UFF::getAtomTypes(*mol);
+  bool foundAll;
+  boost::tie(types,foundAll)=UFF::getAtomTypes(*mol);
+  TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol->getNumAtoms());
   for(UFF::AtomicParamVect::const_iterator it=types.begin();
       it!=types.end();it++){
@@ -150,14 +153,14 @@ void testUFFTyper2(){
   }
   mol2 = MolOps::addHs(*mol);
   delete mol;
-  types = UFF::getAtomTypes(*mol2);
+  boost::tie(types,foundAll)=UFF::getAtomTypes(*mol2);
+  TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol2->getNumAtoms());
   for(UFF::AtomicParamVect::const_iterator it=types.begin();
       it!=types.end();it++){
     TEST_ASSERT((*it));
   }
   
-
   // connected with sf.net bug 2094445 
   mol = SmilesToMol("[SiH2]=C");
   TEST_ASSERT(mol);
@@ -204,14 +207,16 @@ void testUFFBuilder1(){
   std::string key;
 
   UFF::AtomicParamVect types;
+  bool foundAll;
   ForceFields::ForceField *field;
-  int *nbrMat;
+  boost::shared_array<int> nbrMat;
 
   mol = SmilesToMol("CC(O)C");
   Conformer *conf = new Conformer(mol->getNumAtoms());
   int cid = static_cast<int>(mol->addConformer(conf, true));
   TEST_ASSERT(mol);
-  types=UFF::getAtomTypes(*mol);
+  boost::tie(types,foundAll)=UFF::getAtomTypes(*mol);
+  TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol->getNumAtoms());
   field=new ForceFields::ForceField();
   UFF::Tools::addBonds(*mol,types,field);
@@ -236,13 +241,13 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==6);
 
   delete mol;
-  delete [] nbrMat;
   delete field;
   mol = SmilesToMol("CCOC");
   Conformer *conf2 = new Conformer(mol->getNumAtoms());
   cid = static_cast<int>(mol->addConformer(conf2, true));
   TEST_ASSERT(mol);
-  types=UFF::getAtomTypes(*mol);
+  boost::tie(types,foundAll)=UFF::getAtomTypes(*mol);
+  TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol->getNumAtoms());
   field=new ForceFields::ForceField();
   UFF::Tools::addBonds(*mol,types,field);
@@ -265,14 +270,15 @@ void testUFFBuilder1(){
 
 
   delete mol;
-  delete [] nbrMat;
   delete field;
   mol = SmilesToMol("CO");
   Conformer *conf3 = new Conformer(mol->getNumAtoms());
   cid = static_cast<int>(mol->addConformer(conf3, true));
   TEST_ASSERT(mol);
-  types=UFF::getAtomTypes(*mol);
+  boost::tie(types,foundAll)=UFF::getAtomTypes(*mol);
+  TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol->getNumAtoms());
+
   field=new ForceFields::ForceField();
   UFF::Tools::addBonds(*mol,types,field);
 
@@ -292,11 +298,12 @@ void testUFFBuilder1(){
   
   mol2 = MolOps::addHs(*mol);
   TEST_ASSERT(mol2->getNumAtoms()==6);
-  delete [] nbrMat;
   delete field;
   
-  types=UFF::getAtomTypes(*mol2);
+  boost::tie(types,foundAll)=UFF::getAtomTypes(*mol2);
+  TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol2->getNumAtoms());
+
   field=new ForceFields::ForceField();
   UFF::Tools::addBonds(*mol2,types,field);
   TEST_ASSERT(field->contribs().size()==5);
@@ -311,7 +318,6 @@ void testUFFBuilder1(){
   delete mol2;
 
   delete mol;
-  delete [] nbrMat;
   delete field;
   
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -655,8 +661,10 @@ void testSFIssue1653802(){
 
 
   UFF::AtomicParamVect types;
-  int *nbrMat;
-  types=UFF::getAtomTypes(*mol);
+  bool foundAll;
+  boost::shared_array<int> nbrMat;
+  boost::tie(types,foundAll)=UFF::getAtomTypes(*mol);
+  TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol->getNumAtoms());
   field=new ForceFields::ForceField();
   UFF::Tools::addBonds(*mol,types,field);
@@ -740,6 +748,46 @@ void testSFIssue2378119(){
 }
 
 
+
+void testMissingParams(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing handling missing parameters." << std::endl;
+
+  {
+    UFF::AtomicParamVect types;
+    bool foundAll;
+
+    RWMol *mol = SmilesToMol("[Cu](C)(C)(C)(C)C");
+    TEST_ASSERT(mol);
+
+    ROMol *mol2 = MolOps::addHs(*mol);
+    delete mol;
+
+    TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2)>=0);
+    
+    boost::tie(types,foundAll)=UFF::getAtomTypes(*mol2);
+    TEST_ASSERT(!foundAll);
+    TEST_ASSERT(types.size()==mol2->getNumAtoms());
+    TEST_ASSERT(!types[0]);
+
+    // make sure we can optimize anyway:
+    ForceFields::ForceField *field=UFF::constructForceField(*mol2,types);
+    TEST_ASSERT(field);
+    field->initialize();
+    double e1=field->calcEnergy();
+    int needMore = field->minimize();
+    TEST_ASSERT(needMore);
+    double e2 = field->calcEnergy();
+    TEST_ASSERT(e2<e1);
+
+    delete mol2;
+    delete field;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -755,6 +803,8 @@ int main(){
   testIssue239();
   testIssue242();
   testSFIssue1653802();
-#endif
   testSFIssue2378119();
+#endif
+  testMissingParams();
+
 }
