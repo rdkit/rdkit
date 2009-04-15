@@ -231,11 +231,17 @@ namespace RDKit{
 
 
   namespace MolOps {
-    // NOTE that we do not need to check for chiral atoms when adding Hs
-    // because the bond order goes from hydrogen implicitly first to
-    // hydrogen explicitly last. This is a cyclic permutation, so it
-    // doesn't affect the chirality.  (Of course there can only be one H
-    // on the atom... otherwise it wouldn't be chiral!)
+    // NOTE that in most cases we do not need to check for chiral
+    // atoms when adding Hs because the bond order goes from hydrogen
+    // implicitly first to hydrogen explicitly last. This is a cyclic
+    // permutation, so it doesn't affect the chirality.  (Of course
+    // there can only be one H on the atom... otherwise it wouldn't be
+    // chiral!)
+    // The exception to this rule is when the central atom has no
+    // preceding bond in the molecule; in that case the implicit H
+    // is the first bond and the permutation is no longer cyclic.
+    // This includes situations like [C@H](C)(Cl)F, which needs to
+    // go to [C@@](C)(Cl)(F)[H]
     ROMol *addHs(const ROMol &mol,bool explicitOnly,bool addCoords){
       RWMol *res = new RWMol(mol);
 
@@ -256,25 +262,51 @@ namespace RDKit{
         }
       }
       unsigned int nSize = mol.getNumAtoms() + numAddHyds;
-      // now if we want to add coordinates to the hydrogens;
+
       // loop over the conformations of the molecule and allocate new space
-      // for their locations
+      // for the H locations (need to do this even if we aren't adding coords so
+      // that the conformers have the correct number of atoms).
       for (ROMol::ConformerIterator cfi = res->beginConformers();
            cfi != res->endConformers(); ++cfi) {
         (*cfi)->reserve(nSize);
       }
 
       for(ROMol::ConstAtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
-        unsigned int oldIdx,newIdx;
-        oldIdx = (*at)->getIdx();
-        Atom *newAt = res->getAtomWithIdx(oldIdx);
+        unsigned int newIdx;
+        Atom *newAt=res->getAtomWithIdx((*at)->getIdx());
+        // check the chirality special case:
+        unsigned int nHere=(*at)->getNumExplicitHs()+(*at)->getNumImplicitHs();
+        if(nHere==1 && ((*at)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
+                        (*at)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW )) {
+          bool hasTruePrecedingAtom=false;
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = mol.getAtomBonds(*at);
+          while(beg!=end){
+            unsigned int otherIdx=mol[*beg]->getOtherAtom(*at)->getIdx();
+            if( otherIdx < (*at)->getIdx() &&
+                mol[*beg]->getBeginAtomIdx()==otherIdx){
+              hasTruePrecedingAtom=true;
+              break;
+            }
+            ++beg;
+          }
+          if(!hasTruePrecedingAtom){
+            // this is the special case described above. switch the stereochem:
+            if((*at)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
+              newAt->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+            } else {
+              newAt->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+            }
+          }
+        }
+
         newAt->clearComputedProps();
         // always convert explicit Hs
         for(unsigned int i=0;i<(*at)->getNumExplicitHs();i++){
           newIdx=res->addAtom(new Atom(1),false,true);
-          res->addBond(oldIdx,newIdx,Bond::SINGLE);
+          res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
           res->getAtomWithIdx(newIdx)->updatePropertyCache();
-          if(addCoords) setHydrogenCoords(res,newIdx,newAt->getIdx());
+          if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
         }
         // clear the local property
         newAt->setNumExplicitHs(0);
@@ -283,15 +315,15 @@ namespace RDKit{
           // take care of implicits
           for(unsigned int i=0;i<(*at)->getNumImplicitHs();i++){
             newIdx=res->addAtom(new Atom(1),false,true);
-            res->addBond(oldIdx,newIdx,Bond::SINGLE);
+            res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
             // set the isImplicit label so that we can strip these back
             // off later if need be.
             res->getAtomWithIdx(newIdx)->setProp("isImplicit",1, true);
             res->getAtomWithIdx(newIdx)->updatePropertyCache();
-            if(addCoords) setHydrogenCoords(res,newIdx,newAt->getIdx());
+            if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
           }
           // be very clear about implicits not being allowed in this representation
-          newAt->setProp("origNoImplicit",newAt->getNoImplicit(), true);
+          newAt->setProp("origNoImplicit",(*at)->getNoImplicit(), true);
           newAt->setNoImplicit(true);
         }
         // update the atom's derived properties (valence count, etc.)
