@@ -18,6 +18,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <RDBoost/Wrap.h>
 
 namespace python = boost::python;
 
