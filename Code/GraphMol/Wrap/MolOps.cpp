@@ -152,6 +152,40 @@ namespace RDKit{
     return python::tuple(res);
   }
 
+  ExplicitBitVect *wrapLayeredFingerprint(const ROMol &mol,unsigned int layerFlags,
+                                          unsigned int minPath,unsigned int maxPath,
+                                          unsigned int fpSize,
+                                          double tgtDensity,
+                                          unsigned int minSize,
+                                          python::list atomCounts,
+                                          ExplicitBitVect *includeOnlyBits){
+    std::vector<unsigned int> *atomCountsV=0;
+    if(atomCounts){
+      atomCountsV = new std::vector<unsigned int>;
+      unsigned int nAts=python::extract<unsigned int>(atomCounts.attr("__len__")());
+      if(nAts<mol.getNumAtoms()){
+        throw_value_error("atomCounts shorter than the number of atoms");
+      }
+      atomCountsV->resize(nAts);
+      for(unsigned int i=0;i<nAts;++i){
+        (*atomCountsV)[i] = python::extract<unsigned int>(atomCounts[i]);
+      }
+    }
+
+    ExplicitBitVect *res;
+    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits);
+
+    if(atomCountsV){
+      for(unsigned int i=0;i<atomCountsV->size();++i){
+        atomCounts[i] = (*atomCountsV)[i];
+      }
+      delete atomCountsV;
+    }
+    
+    return res;
+  }
+
+
   struct molops_wrapper {
     static void wrap() {
       std::string docString;
@@ -721,12 +755,14 @@ namespace RDKit{
      - 0x10: ring sizes\n\
 \n\
 \n";
-      python::def("LayeredFingerprint", LayeredFingerprintMol,
+      python::def("LayeredFingerprint", wrapLayeredFingerprint,
                   (python::arg("mol"),
                    python::arg("layerFlags")=0xFFFFFFFF,
                    python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
-                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
+                   python::arg("atomCounts")=python::list(),
+                   python::arg("setOnlyBits")=(ExplicitBitVect *)0),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
 
       docString="Set the wedging on single bonds in a molecule.\n \
