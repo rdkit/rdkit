@@ -631,11 +631,9 @@ namespace RDKit{
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
-    - cleanIt: (optional) if provided, atoms with a chiral specifier that aren't\n\
-      actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,\n\
-      etc.) will have their chiral code set to CHI_UNSPECIFIED\n\
-    - force: (optional) causes the calculation to be repeated, even if it has already\n\
-      been done\n\
+    - confId: the conformer id to use, -1 for the default \n\
+    - replaceExistingTags: if True, existing stereochemistry information will be cleared \n\
+                           before running the calculation. \n\
 \n";
       python::def("AssignAtomChiralTagsFromStructure", MolOps::assignChiralTypesFrom3D,
                   (python::arg("mol"),python::arg("confId")=-1,python::arg("replaceExistingTags")=true),
