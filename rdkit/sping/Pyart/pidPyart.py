@@ -283,18 +283,18 @@ class PyartCanvas(Canvas):
     
 ## basic tests ##
 if __name__=='__main__':
-    from rdkit import sping.tests.pidtest
+    import rdkit.sping.tests.pidtest
     can = PyartCanvas(size=(300,300), name='basictest.png')
 
     #can.defaultLineColor = Color(0.7, 0.7, 1.0)
     #can.drawLine(10,10, 290,290)
     #can.drawLine(10,10, 50, 10, color=green, width = 4.5)
-    sping.tests.pidtest.drawBasics(can)
+    rdkit.sping.tests.pidtest.drawBasics(can)
     can.save(file='basicTest.png')
     print 'saving basicTest.png'
 
     can = PyartCanvas(size=(400,400), name='test-strings.png')
-    sping.tests.pidtest.drawStrings(can)
+    rdkit.sping.tests.pidtest.drawStrings(can)
     can.save()
 
 

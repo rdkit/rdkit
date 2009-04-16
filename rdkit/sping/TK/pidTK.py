@@ -18,7 +18,7 @@ You can find the latest version of this file:
 
 import Tkinter, tkFont
 tk = Tkinter
-from rdkit import sping.pid
+import rdkit.sping.pid
 import string
   
 __version__ = "0.3" 
@@ -176,7 +176,7 @@ class FontManager:
         return tkfont.metrics("descent")
 
 
-class TKCanvas(tk.Canvas, sping.pid.Canvas): 
+class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas): 
 
     __TRANSPARENT = ''                  # transparent for Tk color
     def __init__(self, size=(300,300), name="sping.TK",
@@ -194,7 +194,7 @@ class TKCanvas(tk.Canvas, sping.pid.Canvas):
         set the "scrollregion" option to the same size as the 'size' passed to __init__.
         Tkinter's scrollregion option essentially makes 'size' ignored.  """
         
-        sping.pid.Canvas.__init__(self, size=size, name=size)
+        rdkit.sping.pid.Canvas.__init__(self, size=size, name=size)
         if scrollingViewPortSize:   # turn on ability to scroll
             kw["scrollregion"] = (0, 0, size[0], size[1])
             kw["height"] = scrollingViewPortSize[0]
@@ -253,7 +253,7 @@ class TKCanvas(tk.Canvas, sping.pid.Canvas):
     def _getTkColor(self, color, defaultColor): 
         if color is None: 
             color = defaultColor 
-        if color is sping.pid.transparent: 
+        if color is rdkit.sping.pid.transparent: 
             color = self.__TRANSPARENT
         else:
             color = self._colorToTkColor(color) 
@@ -303,9 +303,9 @@ class TKCanvas(tk.Canvas, sping.pid.Canvas):
     def _drawRotatedString(self, s, x,y, font=None, color=None, angle=0):
         # we depend on PIL for rotated strings so watch for changes in PIL
         try:
-            from rdkit import sping.PIL.pidPIL
+            import rdkit.sping.PIL.pidPIL
             from PIL import Image, ImageTk
-            pp = sping.PIL.pidPIL
+            pp = rdkit.sping.PIL.pidPIL
         except ImportError:
             raise ImportError("Rotated strings only possible with PIL support")
 
@@ -320,7 +320,7 @@ class TKCanvas(tk.Canvas, sping.pid.Canvas):
   
         if not color:
             color = self.defaultLineColor
-        if color == sping.pid.transparent: return
+        if color == rdkit.sping.pid.transparent: return
 
         # draw into an offscreen Image
         tempsize = pilCan.stringWidth(s, font) * 1.2
@@ -480,9 +480,9 @@ class TKCanvas(tk.Canvas, sping.pid.Canvas):
 
 
 try :
-    from rdkit import sping.PIL
+    import rdkit.sping.PIL
 
-    class TKCanvasPIL(sping.PIL.PILCanvas):
+    class TKCanvasPIL(rdkit.sping.PIL.PILCanvas):
 
         """This canvas maintains a PILCanvas as its backbuffer.  Drawing calls
         are made to the backbuffer and flush() sends the image to the screen
@@ -491,11 +491,11 @@ try :
         supported by PIL"""
         
         def  __init__(self, size=(300,300), name='TKCanvas',  master = None, **kw) :
-            sping.PIL.PILCanvas.__init__(self, size=size, name=name)
+            rdkit.sping.PIL.PILCanvas.__init__(self, size=size, name=name)
             self._tkcanvas = apply(TKCanvas, (size, name, master), kw)
 
         def flush(self) :
-            sping.PIL.PILCanvas.flush(self) # call inherited one first
+            rdkit.sping.PIL.PILCanvas.flush(self) # call inherited one first
             self._tkcanvas.drawImage(self._image, 0,0)  # self._image should be a PIL image
             self._tkcanvas.flush()
 
