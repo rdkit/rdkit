@@ -18,6 +18,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <RDBoost/Wrap.h>
 
 namespace python = boost::python;
 
@@ -151,6 +152,40 @@ namespace RDKit{
     }
     return python::tuple(res);
   }
+
+  ExplicitBitVect *wrapLayeredFingerprint(const ROMol &mol,unsigned int layerFlags,
+                                          unsigned int minPath,unsigned int maxPath,
+                                          unsigned int fpSize,
+                                          double tgtDensity,
+                                          unsigned int minSize,
+                                          python::list atomCounts,
+                                          ExplicitBitVect *includeOnlyBits){
+    std::vector<unsigned int> *atomCountsV=0;
+    if(atomCounts){
+      atomCountsV = new std::vector<unsigned int>;
+      unsigned int nAts=python::extract<unsigned int>(atomCounts.attr("__len__")());
+      if(nAts<mol.getNumAtoms()){
+        throw_value_error("atomCounts shorter than the number of atoms");
+      }
+      atomCountsV->resize(nAts);
+      for(unsigned int i=0;i<nAts;++i){
+        (*atomCountsV)[i] = python::extract<unsigned int>(atomCounts[i]);
+      }
+    }
+
+    ExplicitBitVect *res;
+    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits);
+
+    if(atomCountsV){
+      for(unsigned int i=0;i<atomCountsV->size();++i){
+        atomCounts[i] = (*atomCountsV)[i];
+      }
+      delete atomCountsV;
+    }
+    
+    return res;
+  }
+
 
   struct molops_wrapper {
     static void wrap() {
@@ -596,11 +631,9 @@ namespace RDKit{
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
-    - cleanIt: (optional) if provided, atoms with a chiral specifier that aren't\n\
-      actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,\n\
-      etc.) will have their chiral code set to CHI_UNSPECIFIED\n\
-    - force: (optional) causes the calculation to be repeated, even if it has already\n\
-      been done\n\
+    - confId: the conformer id to use, -1 for the default \n\
+    - replaceExistingTags: if True, existing stereochemistry information will be cleared \n\
+                           before running the calculation. \n\
 \n";
       python::def("AssignAtomChiralTagsFromStructure", MolOps::assignChiralTypesFrom3D,
                   (python::arg("mol"),python::arg("confId")=-1,python::arg("replaceExistingTags")=true),
@@ -721,12 +754,14 @@ namespace RDKit{
      - 0x10: ring sizes\n\
 \n\
 \n";
-      python::def("LayeredFingerprint", LayeredFingerprintMol,
+      python::def("LayeredFingerprint", wrapLayeredFingerprint,
                   (python::arg("mol"),
                    python::arg("layerFlags")=0xFFFFFFFF,
                    python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
-                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
+                   python::arg("atomCounts")=python::list(),
+                   python::arg("setOnlyBits")=(ExplicitBitVect *)0),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
 
       docString="Set the wedging on single bonds in a molecule.\n \

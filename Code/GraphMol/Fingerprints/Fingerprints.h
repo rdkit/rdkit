@@ -84,6 +84,14 @@ namespace RDKit{
                          be folded until the density is reached.
     \param minSize:      the minimum size to which the fingerprint will be
                          folded
+    \param atomCounts:   if provided, this will be used to provide the count of the number
+                         of paths that set bits each atom is involved in. The vector should
+                         have at least as many entries as the molecule has atoms and is not
+                         zeroed out here.
+    \param setOnlyBits:  if provided, only bits that are set in this bit vector will be set
+                         in the result. This is essentially the same as doing:
+                            (*res) &= (*setOnlyBits);
+                         but also has an impact on the atomCounts (if being used)
 
     \return the molecular fingerprint, as an ExplicitBitVect
 
@@ -102,7 +110,9 @@ namespace RDKit{
                                          unsigned int layerFlags=0xFFFFFFFF,
                                          unsigned int minPath=1,unsigned int maxPath=7,
                                          unsigned int fpSize=2048,
-                                         double tgtDensity=0.0,unsigned int minSize=128);
+                                         double tgtDensity=0.0,unsigned int minSize=128,
+                                         std::vector<unsigned int> *atomCounts=0,
+                                         ExplicitBitVect *setOnlyBits=0);
 }
 
 #endif

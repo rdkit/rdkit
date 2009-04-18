@@ -22,6 +22,7 @@ project RDKit
           <define>USE_VFLIB
           <toolset>gcc:<cflags>-Wno-unused-function
           <toolset>darwin:<cflags>-Wno-unused-function
+          <toolset>gcc:<cflags>-Wno-deprecated
           <toolset>gcc:<cflags>-fno-strict-aliasing
           <toolset>msvc:<define>WIN32
           <include>NUMPY_INCLUDE_DIR
@@ -32,9 +33,11 @@ project RDKit
         : default-build release ;
 
 
-alias all-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures GraphMol
+alias all-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures GraphMol//all-libraries
 ;
 
+alias minimal : DistGeom ForceField DataStructs Geometry Query RDGeneral Numerics ChemicalFeatures GraphMol//minimal 
+;
 
 alias all-wrappers : RDBoost/Wrap 
   DataStructs/Wrap

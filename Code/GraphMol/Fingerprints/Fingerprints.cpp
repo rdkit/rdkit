@@ -217,10 +217,14 @@ namespace RDKit{
                                          unsigned int minPath,
                                          unsigned int maxPath,
                                          unsigned int fpSize,
-                                         double tgtDensity,unsigned int minSize){
+                                         double tgtDensity,unsigned int minSize,
+                                         std::vector<unsigned int> *atomCounts,
+                                         ExplicitBitVect *setOnlyBits){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
+    PRECONDITION(!atomCounts || atomCounts->size()>=mol.getNumAtoms(),"bad atomCounts size");
+    PRECONDITION(!setOnlyBits || setOnlyBits->GetNumBits()==fpSize,"bad setOnlyBits size");
 
     
 #ifdef LAYEREDFP_USE_MT
@@ -340,6 +344,7 @@ namespace RDKit{
           }
         }
         unsigned int l=0;
+        bool flaggedPath=false;
         for(std::vector< std::vector<unsigned int> >::iterator layerIt=hashLayers.begin();
             layerIt!=hashLayers.end();++layerIt,++l){
           if(!layerIt->size()) continue;
@@ -363,16 +368,28 @@ namespace RDKit{
           // might make sense to just use the hash itself. In early testing of these
           // fingerprints, this led to a bunch of collisions between layers 3 and 4,
 
+          unsigned int bitId;
 #ifdef LAYEREDFP_USE_MT
           // One solution to this problem is to go back to using a PRNG:
           generator.seed(static_cast<rng_type::result_type>(seed));
-          res->SetBit(randomSource()%fpSize);
+          bitId=randomSource()%fpSize;
 #else
           // The other solution is to shift the seed so that we look at different
           // bits for the different layers:
-          seed = seed>>l;          
-          res->SetBit(seed%fpSize);
+          seed = seed>>l;
+          bitId=seed%fpSize;
 #endif
+          if(!setOnlyBits || (*setOnlyBits)[bitId]){
+            res->SetBit(bitId);
+            if(atomCounts && !flaggedPath){
+              for(unsigned int aIdx=0;aIdx<atomsInPath.size();++aIdx){
+                if(atomsInPath[aIdx]){
+                  (*atomCounts)[aIdx]+=1;
+                }
+              }
+              flaggedPath=true;
+            }
+          }
         }
       }
       // EFF: this could be faster by folding by more than a factor

@@ -13,7 +13,7 @@ exe test1 : test1.cpp MolCatalog
   ../FileParsers//FileParsers
   ..//GraphMol ../../DataStructs//DataStructs 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs ;
+  ;
 
 install regrs : test1
   : <location>testExecs ;

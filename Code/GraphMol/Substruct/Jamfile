@@ -10,7 +10,7 @@ install lib-install : Substruct : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp Substruct ..//GraphMol 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs  ../..//vflib
+  ../..//vflib
  ; 
 
 install regrs : test1

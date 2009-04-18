@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,8 +13,99 @@
 #include <algorithm>
 #include <map>
 
+#ifdef RDK_USELAPACKPP
+//lapack ++ includes
+#include <lafnames.h>
+#include <lapack.h>
+#include <symd.h>
+#include <lavd.h>
+#include <laslv.h>
+#else
+// uBLAS and boost.bindings includes
+#include <boost/numeric/bindings/traits/ublas_matrix.hpp> 
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/bindings/lapack/syev.hpp>
+#include <boost/numeric/ublas/io.hpp> 
+namespace ublas = boost::numeric::ublas;
+namespace lapack = boost::numeric::bindings::lapack;
+#endif
+
+
 namespace RDKit {
   namespace Subgraphs {
+
+    DiscrimTuple computeDiscriminators(double *distMat, unsigned int nb, unsigned int na) {
+      PRECONDITION(distMat,"bogus distance matrix");
+      double ev1 = 0.0;
+      double ev2 = 0.0;
+#ifdef RDK_USELAPACKPP
+      LaSymmMatDouble A(distMat, na, na);
+      LaVectorDouble eigs(na);
+      LaEigSolve(A, eigs);
+#else
+      ublas::matrix<double> A(na,na);
+      ublas::vector<double> eigs(na);
+      for(unsigned int i=0;i<na;++i){
+        for(unsigned int j=i;j<na;++j){
+          A(i,j)=distMat[i*na+j];
+        }
+      }
+      lapack::syev('N','L',A,eigs);
+#endif
+      if (na > 1) {
+        ev1 = eigs(0);
+      }
+      if (na > 2) {
+        ev2 = eigs(na-1); 
+      }
+      double J = MolOps::computeBalabanJ(distMat, nb, na);
+    
+      return boost::make_tuple(J,ev1,ev2);
+    }
+
+    DiscrimTuple computeDiscriminators(const ROMol &mol, 
+                                       bool useBO,
+                                       bool force) {
+      DiscrimTuple res;
+      if ((mol.hasProp("Discrims")) && (!force)) {
+        mol.getProp("Discrims", res);
+      }
+      else {
+        unsigned int nAts = mol.getNumAtoms();
+        double *dMat;
+        unsigned int nb = mol.getNumBonds();
+        dMat = MolOps::getDistanceMat(mol,useBO,true);
+        //  Our discriminators (based upon eigenvalues of the distance matrix
+        //  and Balaban indices) are good, but is a case they don't properly
+        //  handle by default.  These two fragments:
+        //    C-ccc and c-ccc
+        //  give the same discriminators because their distance matrices are
+        //  identical.  We'll work around this by adding 0.5 to the diagonal
+        //  elements of the distance matrix corresponding to aromatic atoms:
+        ROMol::ConstAromaticAtomIterator atomIt;
+        for(atomIt=mol.beginAromaticAtoms();
+            atomIt!=mol.endAromaticAtoms();
+            atomIt++){
+          unsigned int idx=(*atomIt)->getIdx();
+          dMat[idx*nAts+idx] += 0.5;
+        }
+#if 0
+        BOOST_LOG(rdDebugLog)<< "--------------------" << std::endl;
+        for(int i=0;i<nAts;i++){
+          for(int j=0;j<nAts;j++){
+            BOOST_LOG(rdDebugLog)<< "\t" << std::setprecision(4) << dMat[i*nAts+j];
+          }
+          BOOST_LOG(rdDebugLog)<< std::endl;
+        }
+#endif
+      
+        res = computeDiscriminators(dMat, nb, nAts);
+        mol.setProp("Discrims", res, true);
+      }
+      return res;
+    }
+
+
 ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
                     bool useQuery) {
   INT_MAP_INT aIdxMap;
@@ -105,7 +196,7 @@ ROMol *PathToSubmol(const ROMol &mol, const PATH_TYPE &path,
     return bids;
   }
 
-PathDiscrimTuple
+DiscrimTuple
 CalcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path, bool useBO) {
 
   //---------------------------------------------------
@@ -114,13 +205,13 @@ CalcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path, bool useBO) {
   //
   ROMol *subMol=PathToSubmol(mol,path);
 
-  PathDiscrimTuple res = MolOps::computeDiscriminators(*subMol, useBO);
+  DiscrimTuple res = computeDiscriminators(*subMol, useBO);
   
   delete subMol;
   return res;
 }
 
-  bool operator==(const PathDiscrimTuple &t1,const PathDiscrimTuple &t2){
+  bool operator==(const DiscrimTuple &t1,const DiscrimTuple &t2){
 #ifndef WIN32
     if( !feq(t1.get<0>(),t2.get<0>()) ){
       return false;
@@ -140,7 +231,7 @@ CalcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path, bool useBO) {
 #endif
     return true;
   }
-  bool operator!=(const PathDiscrimTuple &t1,const PathDiscrimTuple &t2){
+  bool operator!=(const DiscrimTuple &t1,const DiscrimTuple &t2){
     return !(t1==t2);
   }
 
@@ -152,12 +243,12 @@ CalcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path, bool useBO) {
   PATH_LIST uniquifyPaths (const ROMol &mol, const PATH_LIST &allPaths,
                            bool useBO,double tol) {
     PATH_LIST res;
-    std::vector<PathDiscrimTuple> discrimsSeen;
+    std::vector<DiscrimTuple> discrimsSeen;
     for(PATH_LIST::const_iterator path=allPaths.begin();
         path!=allPaths.end();++path){
-      PathDiscrimTuple discrims = CalcPathDiscriminators(mol,*path,useBO);
+      DiscrimTuple discrims = CalcPathDiscriminators(mol,*path,useBO);
       bool found=false;
-      for(std::vector<PathDiscrimTuple>::iterator discrimIt=discrimsSeen.begin();
+      for(std::vector<DiscrimTuple>::iterator discrimIt=discrimsSeen.begin();
           discrimIt!=discrimsSeen.end();
           ++discrimIt){
         if( feq(boost::tuples::get<0>(discrims),boost::tuples::get<0>(*discrimIt),tol) &&

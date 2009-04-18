@@ -1523,6 +1523,146 @@ void testIssue2705543(){
 }
 
 
+void testIssue2762917(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 2762917: chirality swap on addHs()" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+
+  {
+    RWMol *m,*m2;
+    std::string cip;
+    std::string smiles="[C@@H](C)(Cl)O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+
+    MolOps::assignStereochemistry(*m,true);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    m2 = (RWMol *)MolOps::addHs(*m);
+    TEST_ASSERT(m2);
+
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    MolOps::assignStereochemistry(*m2,true);
+
+    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m2->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    delete m;
+    delete m2;
+  }
+
+  {
+    RWMol *m,*m2;
+    std::string cip;
+    std::string smiles="CCC.[C@@H](C)(Cl)O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+
+    MolOps::assignStereochemistry(*m,true);
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    m2 = (RWMol *)MolOps::addHs(*m);
+    TEST_ASSERT(m2);
+
+    TEST_ASSERT(m2->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    MolOps::assignStereochemistry(*m2,true);
+
+    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m2->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    delete m;
+    delete m2;
+  }
+
+  {
+    RWMol *m,*m2;
+    std::string cip;
+    std::string smiles="[C@@H]([C@H](C)O)(C)O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+
+    MolOps::assignStereochemistry(*m,true);
+
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    m2 = (RWMol *)MolOps::addHs(*m);
+    TEST_ASSERT(m2);
+
+    TEST_ASSERT(m2->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(m2->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+
+    MolOps::assignStereochemistry(*m2,true);
+
+    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("_CIPCode"));
+    m2->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m2->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    delete m;
+    delete m2;
+  }
+
+
+  {
+    RWMol *m,*m2;
+    std::string cip;
+    std::string smiles="C1CC.[C@@H]1(Cl)O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+
+    MolOps::assignStereochemistry(*m,true);
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    m2 = (RWMol *)MolOps::addHs(*m);
+    TEST_ASSERT(m2);
+
+    TEST_ASSERT(m2->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    MolOps::assignStereochemistry(*m2,true);
+
+    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp("_CIPCode"));
+    m2->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+
+    delete m;
+    delete m2;
+  }
+
+
+  
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -1539,6 +1679,7 @@ int main(){
   testIterativeChirality();
   testBondDirRemoval();
   testIssue2705543();
+  testIssue2762917();
   
   return 0;
 }

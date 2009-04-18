@@ -288,7 +288,8 @@ namespace RDKit {
     } // end of namespace Tools
 
     // ---------------------------------------------------------------
-    AtomicParamVect getAtomTypes(const ROMol &mol,const std::string &paramData){
+    std::pair<AtomicParamVect,bool>  getAtomTypes(const ROMol &mol,const std::string &paramData){
+      bool foundAll=true;
       ParamCollection *params=ParamCollection::getParams();
 
       AtomicParamVect paramVect;
@@ -303,13 +304,14 @@ namespace RDKit {
         // ok, we've got the atom key, now get the parameters:
         const AtomicParams *theParams=(*params)(atomKey);
         if(!theParams){
+          foundAll=false;
           BOOST_LOG(rdErrorLog) << "UFFTYPER: Unrecognized atom type: " << atomKey << " (" << i << ")"<< std::endl;
         }
 
         paramVect[i] = theParams;
       }
       
-      return paramVect;
+      return std::make_pair(paramVect,foundAll);
     }
 
   }

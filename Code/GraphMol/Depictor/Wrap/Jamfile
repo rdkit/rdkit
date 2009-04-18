@@ -9,7 +9,6 @@ python-extension rdDepictor : rdDepictor.cpp
   ../..//GraphMol
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-../../..//lapacklibs 
   ;
 
 install pymod : rdDepictor

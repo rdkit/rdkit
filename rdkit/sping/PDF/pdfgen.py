@@ -525,7 +525,7 @@ class Canvas:
 
     def setDash(self, array=[], phase=0):
         """Two notations.  pass two numbers, or an array and phase"""
-        if isinstance(array, IntType or type(array) == FloatType):
+        if type(array) == IntType or type(array) == FloatType:
             self._code.append('[%s %s] 0 d' % (array, phase))
         elif type(array) == ListType or type(Array) == TupleType:
             assert phase <= len(array), "setDash phase must be l.t.e. length of array"

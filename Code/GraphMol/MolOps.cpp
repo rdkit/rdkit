@@ -157,6 +157,14 @@ namespace RDKit{
       }
     }
 
+    //! \deprecated Use assignStereochemistry() instead
+    void assignAtomChiralCodes(ROMol &mol,bool cleanIt,bool force){
+      assignStereochemistry(mol,cleanIt,force);
+    };
+    //! \deprecated Use assignStereochemistry() instead
+    void assignBondStereoCodes(ROMol &mol,bool cleanIt,bool force){
+      assignStereochemistry(mol,cleanIt,force);
+    };
     void assignRadicals(RWMol &mol){
       for (ROMol::AtomIterator ai = mol.beginAtoms();
            ai != mol.endAtoms(); ++ai) {

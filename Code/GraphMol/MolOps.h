@@ -20,10 +20,6 @@ namespace RDKit{
   typedef INVAR_VECT::iterator INVAR_VECT_I;
   typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
 
-
-  //! used to return atomic discriminators (three doubles)
-  typedef boost::tuples::tuple<double,double,double> DiscrimTuple;
-
   //! \brief Groups a variety of molecular query and transformation operations.
   namespace MolOps {
 
@@ -98,29 +94,6 @@ namespace RDKit{
     void findSpanningTree(const ROMol &mol,INT_VECT &mst);
 #endif
 
-    //! calculates a set of molecular discriminators from the distance matrix
-    /*!
-      Computes:
-        -# BalabanJ 
-        -# the first eigenvalue of the distance matrix 
-        -# the last but one eigenvalue of the distance matrix 
-
-      \param mol    the molecule of interest
-      \param useBO  toggles inclusion of the bond order in the discriminators
-                    (when false, the discriminators are purely topological)
-      \param force  forces the calculation (instead of using cached results)
-	
-      \return a \c DiscrimTuple with the results
-      
-    */
-    DiscrimTuple computeDiscriminators(const ROMol &mol, 
-					      bool useBO=true, 
-					      bool force=false);
-    //! \brief Same as MolOps::computeDiscriminators(const ROMol &mol),
-    //! except that this directly uses the user-supplied distance matrix
-    DiscrimTuple computeDiscriminators(double *distMat, unsigned int nb, unsigned int na);
-    
-
     //! calculates Balaban's J index for the molecule
     /*!
       \param mol      the molecule of interest
@@ -139,9 +112,9 @@ namespace RDKit{
 				  bool force=false,
 				  const std::vector<int> *bondPath=0,
 				  bool cacheIt=true);
+    //! \overload
+    double computeBalabanJ(double *distMat, int nb, int nAts);
 				
-
-
     //! \name Dealing with hydrogens
     //{@
 
@@ -569,14 +542,10 @@ namespace RDKit{
     void removeStereochemistry(ROMol &mol);
 
     //! \deprecated Use assignStereochemistry() instead
-    static void assignAtomChiralCodes(ROMol &mol,bool cleanIt=false,bool force=false){
-      assignStereochemistry(mol,cleanIt,force);
-    };
-    //! \deprecated Use assignStereochemistry() instead
-    static void assignBondStereoCodes(ROMol &mol,bool cleanIt=false,bool force=false){
-      assignStereochemistry(mol,cleanIt,force);
-    };
+    void assignAtomChiralCodes(ROMol &mol,bool cleanIt=false,bool force=false);
 
+    //! \deprecated Use assignStereochemistry() instead
+    void assignBondStereoCodes(ROMol &mol,bool cleanIt=false,bool force=false);
 
     //! \brief finds bonds that could be cis/trans in a molecule and mark them as
     //!  Bond::STEREONONE
