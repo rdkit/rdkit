@@ -542,14 +542,10 @@ namespace RDKit{
     void removeStereochemistry(ROMol &mol);
 
     //! \deprecated Use assignStereochemistry() instead
-    static void assignAtomChiralCodes(ROMol &mol,bool cleanIt=false,bool force=false){
-      assignStereochemistry(mol,cleanIt,force);
-    };
-    //! \deprecated Use assignStereochemistry() instead
-    static void assignBondStereoCodes(ROMol &mol,bool cleanIt=false,bool force=false){
-      assignStereochemistry(mol,cleanIt,force);
-    };
+    void assignAtomChiralCodes(ROMol &mol,bool cleanIt=false,bool force=false);
 
+    //! \deprecated Use assignStereochemistry() instead
+    void assignBondStereoCodes(ROMol &mol,bool cleanIt=false,bool force=false);
 
     //! \brief finds bonds that could be cis/trans in a molecule and mark them as
     //!  Bond::STEREONONE
