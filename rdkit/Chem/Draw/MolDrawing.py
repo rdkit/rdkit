@@ -408,7 +408,6 @@ def registerCanvas(canvasNm):
     addCanvasDashedWedge=None
   elif canvasNm in ('cairo','CAIRO'):
     from cairoCanvas import addCanvasLine,addCanvasText,addCanvasPolygon,addCanvasDashedWedge
-    addCanvasDashedWedge=None
   else:
     raise ValueError,'unrecognized canvas type'
   g['addCanvasLine']=addCanvasLine
