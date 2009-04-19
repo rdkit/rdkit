@@ -1,0 +1,14 @@
+project RDKit/DemoDraw : : ;
+
+
+exe demo : demo.cpp 
+  ../../../GraphMol/SmilesParse//SmilesParse
+  ../../../GraphMol/Depictor//Depictor
+  ../../../GraphMol//GraphMol 
+  ../../../DataStructs//DataStructs	
+  ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
+;
+
+
+install demo.exe : demo
+  : <location>. ;
