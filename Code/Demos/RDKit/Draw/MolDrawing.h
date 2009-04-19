@@ -19,7 +19,7 @@
   BOUNDS x1 y1 x2 y2
   LINE width dashed atom1_atnum atom2_atnum x1 y1 x2 y2
   WEDGE dashed atom1_atnum atom2_atnum x1 y1 x2 y2 x3 y3 
-  ATOM idx atnum x y
+  ATOM idx atnum x y num_chars char1-char x 
 
 *************/
 
@@ -86,13 +86,13 @@ namespace RDKit {
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a2.x));
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a2.y));
 
-          if(bond->getBondType()==Bond::DOUBLE){
+          if(bond->getBondType()==Bond::DOUBLE || bond->getBondType()==Bond::TRIPLE ){
             RDGeom::Point2D obv=a2-a1;
             RDGeom::Point2D perp=obv;
             perp.rotate90();
             perp.normalize();
 
-            if(mol.getRingInfo()->numBondRings(bond->getIdx())){
+            if(bond->getBondType()==Bond::DOUBLE && mol.getRingInfo()->numBondRings(bond->getIdx())){
               // we're in a ring... we might need to flip sides:
               ROMol::OEDGE_ITER nbr2,endNbrs2;
               boost::tie(nbr2,endNbrs2) = mol.getAtomBonds(mol[*bAts].get());
@@ -124,7 +124,7 @@ namespace RDKit {
             }
             perp *= dblBondOffset;
 
-            RDGeom::Point2D offsetStart=a1 + perp + obv*(.5*(1.-dblBondLengthFrac));
+            RDGeom::Point2D offsetStart=a1 + obv*(.5*(1.-dblBondLengthFrac));
 
             obv *= dblBondLengthFrac;
 
@@ -133,17 +133,34 @@ namespace RDKit {
             res.push_back(0);
             res.push_back(mol[*bAts]->getAtomicNum());
             res.push_back(mol.getAtomWithIdx(a2Idx)->getAtomicNum());
-            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x)));
-            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y)));
-            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x+obv.x)));
-            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y+obv.y)));
+            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x+perp.x)));
+            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y+perp.y)));
+            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x+obv.x+perp.x)));
+            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y+obv.y+perp.y)));
+            
+            if(bond->getBondType()==Bond::TRIPLE){
+              res.push_back(LINE);
+              res.push_back(1);
+              res.push_back(0);
+              res.push_back(mol[*bAts]->getAtomicNum());
+              res.push_back(mol.getAtomWithIdx(a2Idx)->getAtomicNum());
+              res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x-perp.x)));
+              res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y-perp.y)));
+              res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x+obv.x-perp.x)));
+              res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y+obv.y-perp.y)));
+            }
           }
-
         }
         res.push_back(ATOM);
         res.push_back(mol[*bAts]->getAtomicNum());
         res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
         res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.y));
+        std::string symbol=mol[*bAts]->getSymbol();
+        res.push_back(static_cast<ElementType>(symbol.length()));
+        BOOST_FOREACH(char c, symbol){
+          res.push_back(static_cast<ElementType>(c));
+        }
+        
         ++bAts;
       }
       

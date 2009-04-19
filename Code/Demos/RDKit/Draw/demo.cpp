@@ -15,7 +15,7 @@
 
 using namespace RDKit;
 void DrawDemo(){
-  RWMol *mol=SmilesToMol("Clc1ccc(C(=O)NCc2sccc2)cc1");
+  RWMol *mol=SmilesToMol("Clc1c(C#N)cc(C(=O)NCc2sccc2)cc1");
   //RWMol *mol=SmilesToMol("c1ncncn1");
   RDKit::MolOps::Kekulize(*mol);
 

@@ -78,6 +78,7 @@ function DrawMol(canvasId,molData){
 
   ctx.translate(cx,cy);
   ctx.scale(scale,scale);
+  ctx.font = "2em 'arial'";
 
   var idx=7;
   while(idx<molData.length){
@@ -128,6 +129,32 @@ function DrawMol(canvasId,molData){
       var n1=molData[idx++];
       var x1=molData[idx++];
       var y1=molData[idx++];
+      var nChars=molData[idx++];
+      var symb="";
+      for(j=0;j<nChars;++j){
+          symb+=String.fromCharCode(molData[idx++]);
+      }
+      
+      // not all canvas implementations have fillText
+      if(ctx.fillText){
+          if(symb!="C"){
+              var c1 = elemDict[n1];
+              if(!c1) c1=elemDict[6];
+              ctx.textAlign='center';
+              ctx.textBaseline='middle';
+              measure = ctx.measureText(symb);
+              ctx.beginPath();
+              ctx.fillStyle="rgb(255,255,255)";
+              ctx.arc(x1,y1,measure.width,0,6.3,0);
+              ctx.closePath();
+              ctx.fill();
+              ctx.beginPath();
+              ctx.fillStyle=c1;
+              ctx.fillText(symb,x1,y1);
+              ctx.closePath();
+              ctx.fill();
+          }
+      }
     } else {
       alert("bad tag!");
       return;
