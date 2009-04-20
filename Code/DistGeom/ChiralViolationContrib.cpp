@@ -56,14 +56,14 @@ namespace DistGeom {
     RDGeom::Point3D v2xv3 = v2.crossProduct(v3);
     
     double vol = v1.dotProduct(v2xv3);
-    
+    double res=0.0;
     if (vol < d_volLower) {
-      return d_weight*(vol - d_volLower)*(vol - d_volLower);
+      res=d_weight*(vol - d_volLower)*(vol - d_volLower);
     } else if (vol > d_volUpper) {
-      return d_weight*(vol - d_volUpper)*(vol - d_volUpper);
-    } else {
-      return 0.0;
+      res=d_weight*(vol - d_volUpper)*(vol - d_volUpper);
     }
+    //std::cerr<<"Chiral Violation vol: "<<vol<<" E: "<<res<<std::endl;
+    return res;
   }
 
   
@@ -127,6 +127,8 @@ namespace DistGeom {
     grad[dim*d_idx4+2] += preFactor*(pos[d_idx1*dim+1]*(pos[d_idx2*dim] - pos[d_idx3*dim])
                                      + pos[d_idx2*dim+1]*(pos[d_idx3*dim] - pos[d_idx1*dim])
                                      + pos[d_idx3*dim+1]*(pos[d_idx1*dim] - pos[d_idx2*dim]));
+    //std::cerr<<"Chiral Violation grad: "<<preFactor<<std::endl;
+
   }
 }
 

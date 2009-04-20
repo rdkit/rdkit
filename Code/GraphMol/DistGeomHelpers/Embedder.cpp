@@ -78,28 +78,33 @@ namespace RDKit {
 	if(field->calcEnergy() > ERROR_TOL){
 	  int needMore = 1;
 	  while(needMore){
+            //std::cerr<<"********* Minimize1 from: "<<field->calcEnergy()<<std::endl;
 	    needMore = field->minimize(200,optimizerForceTol);
 	    ++nPasses;
 	  }
+          //std::cerr<<"********* Finished1 at "<<field->calcEnergy()<<std::endl;
 	}
-	delete field;
         // now redo the minimization if we have a chiral center, this
         // time removing the chiral constraints and
         // increasing the weight on the fourth dimension
         if (chiralCenters.size()>0 || useRandomCoords) {
-          ForceFields::ForceField *field = DistGeom::constructForceField(*mmat, positions,
+          ForceFields::ForceField *field2 = DistGeom::constructForceField(*mmat, positions,
                                                                          chiralCenters,
-                                                                         0.0, 1.0, 0,
+                                                                         0.1, 1.0, 0,
                                                                          basinThresh);
-	  field->initialize();
-	  if(field->calcEnergy() > ERROR_TOL){
+	  field2->initialize();
+	  if(field2->calcEnergy() > ERROR_TOL){
 	    int needMore = 1;
 	    while(needMore){
-	      needMore = field->minimize(200,optimizerForceTol);
+              //std::cerr<<"********* Minimize2 from: "<<field2->calcEnergy()<<std::endl;
+	      needMore = field2->minimize(200,optimizerForceTol);
 	    }
+            //std::cerr<<"********* Finished2 at "<<field2->calcEnergy()<<std::endl;
 	  }
-	  delete field;
+	  delete field2;
+          //std::cerr<<"********* Field1 again: "<<field->calcEnergy()<<std::endl;
         }
+	delete field;
       }
       return gotCoords;
     }
@@ -151,7 +156,7 @@ namespace RDKit {
 								  nbrs[1].second,
 								  nbrs[2].second,
                                                                   nbrs[3].second,
-								  3.0, 100.0);
+								  5.0, 100.0);
               DistGeom::ChiralSetPtr cptr(cset);
               chiralCenters.push_back(cptr);
             } else {
@@ -159,7 +164,7 @@ namespace RDKit {
 								  nbrs[1].second,
 								  nbrs[2].second,
                                                                   nbrs[3].second,
-								  -100.0, -3.0);
+								  -100.0, -5.0);
               DistGeom::ChiralSetPtr cptr(cset);
               chiralCenters.push_back(cptr);
             }
