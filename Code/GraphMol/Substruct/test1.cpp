@@ -102,7 +102,6 @@ void test2(){
   q1->addAtom(new QueryAtom(8));
   q1->addBond(0,1,Bond::SINGLE);
 
-  
   n = SubstructMatch(*m,*q1,matchV);
   TEST_ASSERT(n);
   TEST_ASSERT(matchV.size()==2);
@@ -173,7 +172,6 @@ void test3(){
 
   CHECK_INVARIANT(SubstructMatch(*m,*q1,matchV),"");
   CHECK_INVARIANT(matchV.size()==2,"");
-
 
   delete m;
   m = new RWMol();
