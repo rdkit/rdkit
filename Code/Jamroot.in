@@ -32,7 +32,7 @@ project RDKit
         : default-build release ;
 
 
-alias all-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures GraphMol//all-libraries
+alias all-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures GraphMol
 ;
 
 alias minimal : DistGeom ForceField DataStructs Geometry Query RDGeneral Numerics ChemicalFeatures GraphMol//minimal 
