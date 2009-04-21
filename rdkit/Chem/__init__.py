@@ -110,7 +110,7 @@ def SupplierFromFilename(fileN,delim='',**kwargs):
     
   return suppl
 
-def FindMolChiralCenters(mol,force=False):
+def FindMolChiralCenters(mol,force=True):
   """
     >>> mol = Chem.MolFromSmiles('[C@H](Cl)(F)Br')
     >>> FindMolChiralCenters(mol)
