@@ -242,7 +242,7 @@ class TestCase(unittest.TestCase) :
         self.failUnless(nPos>0)
         self.failUnless(nNeg>0)
 
-        tgtVol=3.5
+        tgtVol=5.0
         for i in range(10):
             smiles = "Cl[C@H](F)Br"
             mol = Chem.MolFromSmiles(smiles)
@@ -252,8 +252,10 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(1),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3))
-            self.failUnless(abs(vol-tgtVol)<1)
+            self.failUnless(abs(vol-tgtVol)<1,"%s %s"%(vol,tgtVol))
 
+
+        tgtVol=3.5
         expected = [-3.62, -3.67, -3.72,  3.91,  3.95,  3.98,  3.90,  3.94,  3.98,  3.91]
         nPos=0
         nNeg=0
@@ -273,8 +275,6 @@ class TestCase(unittest.TestCase) :
         self.failUnless(nPos>0)
         self.failUnless(nNeg>0)
 
-
-
         smiles = "Cl[C@H](F)Br"
         m = Chem.MolFromSmiles(smiles)
         mol = Chem.AddHs(m)
@@ -282,7 +282,6 @@ class TestCase(unittest.TestCase) :
                                              randomSeed=100)
         self.failUnless(len(cids)==10)
         tgtVol=11
-        # FIX: there's something wrong with the second result here
         for cid in cids:
             conf = mol.GetConformer(cid)
             vol = computeChiralVol(conf.GetAtomPosition(0),
