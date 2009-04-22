@@ -110,7 +110,7 @@ def SupplierFromFilename(fileN,delim='',**kwargs):
     
   return suppl
 
-def FindMolChiralCenters(mol):
+def FindMolChiralCenters(mol,force=True):
   """
     >>> mol = Chem.MolFromSmiles('[C@H](Cl)(F)Br')
     >>> FindMolChiralCenters(mol)
@@ -123,7 +123,7 @@ def FindMolChiralCenters(mol):
     []
   
   """
-  AssignAtomChiralCodes(mol)
+  AssignStereochemistry(mol,force=force)
   centers = []
   for atom in mol.GetAtoms():
     if atom.HasProp('_CIPCode'):
