@@ -9,6 +9,7 @@ var WEDGE=2;
 var ATOM=3;
 var BOUNDS=4;
 var RESOLUTION=5;
+var END=-1;
 
 var elemDict={
   6:"rgb(0,0,0)",
@@ -29,6 +30,8 @@ function DrawMol(canvasId,molData){
   }
   var canvas = document.getElementById(canvasId);
   var ctx = canvas.getContext('2d');
+  ctx.restore();
+  ctx.clearRect(0,0,canvas.width,canvas.height); // clear canvas
 
   if(molData[0]!=RESOLUTION || molData[1]<=0) {
     alert("no resolution data!")
@@ -75,7 +78,8 @@ function DrawMol(canvasId,molData){
     scale=yscale;
   }
 
-
+  
+  ctx.save();
   ctx.translate(cx,cy);
   ctx.scale(scale,scale);
   ctx.font = "2em 'arial'";
@@ -155,6 +159,8 @@ function DrawMol(canvasId,molData){
               ctx.fill();
           }
       }
+    } else if(tag==END){
+        break;
     } else {
       alert("bad tag!");
       return;
