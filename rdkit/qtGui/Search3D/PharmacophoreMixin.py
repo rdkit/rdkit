@@ -9,7 +9,6 @@ import Chem
 from Chem.Pharm3D.Pharmacophore import Pharmacophore
 from qtGui.Search3D import SearchUtils,LocalConfig
 from qtGui.Search3D.PharmacophoreDefWidgets import DistAssignmentWidget
-import sets
 
 # ------------------------------------------------------------------------
 class PharmacophoreMixin:
@@ -74,9 +73,9 @@ class PharmacophoreMixin:
 
     # check for feature consistency:
     for i,feat in enumerate(self.activeFeats):
-      atomsI = sets.Set(list(feat.GetAtomIds()))
+      atomsI = set(list(feat.GetAtomIds()))
       for j in range(i+1,len(self.activeFeats)):
-        atomsJ = sets.Set(list(self.activeFeats[j].GetAtomIds()))
+        atomsJ = set(list(self.activeFeats[j].GetAtomIds()))
         if len(atomsI.intersection(atomsJ)):
           QApplication.restoreOverrideCursor()
           qtUtils.error('Features %d and %d have an atom in common.\nThis is not allowed.'%(i+1,j+1))

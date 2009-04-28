@@ -66,7 +66,7 @@ from rdkit.Chem import FragmentCatalog
 from rdkit.Dbase.DbConnection import DbConnect
 import numpy
 from rdkit.ML import InfoTheory
-import types,sets
+import types
 
 _cvsVersion="$Revision$"
 idx1 = _cvsVersion.find(':')+1
@@ -233,7 +233,7 @@ def ScoreFromLists(bitLists,suppl,catalog,maxPts=-1,actName='',acts=None,
       act = acts[i-1]
     if i and not i%reportFreq:
       message('Done %d of %d\n'%(i,nPts))
-    ids = sets.Set()
+    ids = set()
     for id in bitLists[i-1]:
       ids.add(id-1)
     for j in range(nBits):

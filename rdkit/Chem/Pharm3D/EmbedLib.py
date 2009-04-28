@@ -6,7 +6,7 @@
 #
 from rdkit import RDConfig
 
-import sys,time,math,sets
+import sys,time,math
 from rdkit.ML.Data import Stats
 import rdkit.DistanceGeometry as DG
 from rdkit import Chem

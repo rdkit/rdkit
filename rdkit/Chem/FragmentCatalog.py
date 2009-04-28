@@ -7,7 +7,7 @@
 from rdkit import Chem
 from rdfragcatalog import *
 import sys
-import sets
+
 
 def message(msg,dest=sys.stdout):
   dest.write(msg)
@@ -52,7 +52,7 @@ def BuildAdjacencyList(catalog,bits,limitInclusion=1,orderLevels=0):
     entry = catalog.GetBitEntryId(bitId)
     tmp = []
     order = catalog.GetEntryOrder(entry)
-    s = levels.get(order,sets.Set())
+    s = levels.get(order,set())
     s.add(bitId)
     levels[order] = s
     for down in catalog.GetEntryDownIds(entry):
@@ -60,7 +60,7 @@ def BuildAdjacencyList(catalog,bits,limitInclusion=1,orderLevels=0):
       if not limitInclusion or id in bitIds:
         tmp.append(id)
         order = catalog.GetEntryOrder(down)
-        s = levels.get(order,sets.Set())
+        s = levels.get(order,set())
         s.add(id)
         levels[order] = s
     adjs[bitId] = tmp
