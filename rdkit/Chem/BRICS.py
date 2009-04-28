@@ -40,19 +40,22 @@ import sys,re
 
 # These are the definitions that will be applied to fragment molecules:
 environs = {
-  'L1':('[#6:1,#7,#8,#0][C:2](=[O:3])','[*:1][C:2](=[O:3])-[1*]'),
-  'L2':('[N:21;!$(N=*)]-;!@[#6:22,#0]','[2*]-[N:21][*:22]'),
-  'L3':('[O:31]-;!@[#6:32]','[3*]-[O:31][*:32]'),
+  'L1':('[#0:1,#6,#7,#8][C:2](=[O:3])','[*:1][C:2](=[O:3])-[1*]'),
+  'L2':('[N:21;!$(N=*)]-;!@[#0:22,#6]','[2*]-[N:21][*:22]'),
+  # this one turned out to be too tricky to define above, so we set it off
+  # in its own definition:
+  'L2a':('[N:21;D3;R;$(N(@[C;!$(C=*)])@[C;!$(C=*)])]','[2*]-[N:21]'),
+  'L3':('[O:31]-;!@[#0:32,#6]','[3*]-[O:31][*:32]'),
   'L4':('[#6:41]-;!@[C:42;!$(C=*)]','[*:41]-[C:42]-[4*]'),
-  'L5':('[N:51;!$(N*!-*);!$(N=*);!$(N-[!C])]-[C:52]','[5*]-[N:51][*:52]'),
-  'L6':('[C:61](=[O:62])-;!@[#6:63,#7,#8]','[6*]-[C:61](=[O:62])[*:63]'), 
+  'L5':('[N:51;!$(N*!-*);!$(N=*);!$(N-[!C;!#0])]-[#0:52,C]','[5*]-[N:51][*:52]'),
+  'L6':('[C:61](=[O:62])-;!@[#0:63,#6,#7,#8]','[6*]-[C:61](=[O:62])[*:63]'), 
   'L7a':('[#6:71]-;!@[C:72]','[#6:71]-;!@[C:72]=[7*]'),
   'L7b':('[C:74]-;!@[#6:73]','[#6:73]-;!@[C:74]=[7*]'),
   'L8':('[C:81]-;!@[C:82]-;!@[#6:83]','[8*]-[C:81]-;!@[C:82]-;!@[*:83]'),
   'L9':('[n:91;$(n(:[c,n,o,s]):[c,n,o,s])]','[9*]-[*:91]'),
   'L10':('[N:101;R;$(N(@C(=O))@[C,N,O,S])]','[10*]-[N:101]'),
-  'L11':('[S:112](-;!@[#6:111])','[*:111][S:112]-[11*]'),
-  'L12':('[#6:121][S:122](=[O:123])(=[O:124])','[*:121][S:122](=[O:123])(=[O:124])-[12*]'),
+  'L11':('[S:112](-;!@[#0:111,#6])','[*:111][S:112]-[11*]'),
+  'L12':('[#6:121,#0][S:122](=[O:123])(=[O:124])','[*:121][S:122](=[O:123])(=[O:124])-[12*]'),
   'L13':('[C:131;$(C(-;@[C,N,O,S])-;@[N,O,S])]','[*:131]-[13*]'),
   'L14':('[c:141;$(c(:[c,n,o,s]):[n,o,s])]','[*:141]-[14*]'),
   'L14b':('[c:142;$(c(:[c,n,o,s]):[n,o,s])]','[*:142]-[14*]'),
@@ -66,6 +69,7 @@ reactionDefs = (
   [
   "{L1}-;!@{L3}>>{L1p}.{L3p}",
   "{L1}-;!@{L2}>>{L1p}.{L2p}",
+  "{L1}-;!@{L2a}>>{L1p}.{L2ap}",
   "{L1}-;!@{L10}>>{L1p}.{L10p}",
   ],
 
@@ -74,6 +78,13 @@ reactionDefs = (
   "{L12}-;!@{L2}>>{L12p}.{L2p}",
   "{L14}-;!@{L2}>>{L14p}.{L2p}",
   "{L16}-;!@{L2}>>{L16p}.{L2p}",
+  ],
+  
+  # L2a 
+  [
+  "{L12}-;!@{L2a}>>{L12p}.{L2ap}",
+  "{L14}-;!@{L2a}>>{L14p}.{L2ap}",
+  "{L16}-;!@{L2a}>>{L16p}.{L2ap}",
   ],
   
   # L3 
@@ -195,9 +206,26 @@ for i,rxnSet in enumerate(smartsGps):
     labels = re.findall(r'\[([0-9]+?)\*\]',ps)
     rxn._matchers=[Chem.MolFromSmiles('[%s*]'%x) for x in labels]
     reverseReactions.append(rxn)
-def BRICSDecompose(mol,allNodes=None,minFragmentSize=2,onlyUseReactions=None,
-                   silent=True,keepNonLeafNodes=False):
-  """ returns the BRICS decomposition for a molecule """
+
+def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
+                   silent=True,keepNonLeafNodes=False,singlePass=False):
+  """ returns the BRICS decomposition for a molecule
+
+  >>> from rdkit import Chem
+  >>> m = Chem.MolFromSmiles('CCCOCc1cc(c2ncccc2)ccc1')
+  >>> res = list(BRICSDecompose(m))
+  >>> res.sort()
+  >>> res
+  ['[14*]c1ncccc1', '[16*]c1cccc(C[4*])c1', '[3*]O[3*]', '[4*]CCC']
+
+  nexavar, an example from the paper (corrected):
+  >>> m = Chem.MolFromSmiles('CNC(=O)C1=NC=CC(OC2=CC=C(NC(=O)NC3=CC(=C(Cl)C=C3)C(F)(F)F)C=C2)=C1')
+  >>> res = list(BRICSDecompose(m))
+  >>> res.sort()
+  >>> res
+  ['[1*]C([1*])=O', '[1*]C([6*])=O', '[14*]c1nccc([16*])c1', '[16*]c1ccc(Cl)c(C(F)(F)F)c1', '[16*]c1ccc([16*])cc1', '[2*]NC', '[2*]N[2*]', '[3*]O[3*]']
+
+  """
   mSmi = Chem.MolToSmiles(mol,1)
   
   if allNodes is None:
@@ -242,12 +270,17 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=2,onlyUseReactions=None,
                 pSmi = prod.pSmi
                 #print '\t',nats,pSmi
                 if pSmi not in allNodes:
-                  activePool[pSmi] = prod
+                  if not singlePass:
+                    activePool[pSmi] = prod
                   allNodes.add(pSmi)
-      if not matched:
+      if singlePass or not matched:
         newPool[nSmi]=mol
     activePool = newPool
-  return set(activePool.keys())
+  if not singlePass:
+    res = set(activePool.keys())
+  else:
+    res = allNodes
+  return res
 
 
 import random
@@ -296,7 +329,7 @@ def BRICSBuild(fragments,onlyCompleteMols=True,seeds=None,uniquify=True,
                 yield p[0]
             else:
               yield p[0]
-    if nextSteps and maxDepth>1:
+    if nextSteps and maxDepth>0:
       for p in BRICSBuild(fragments,onlyCompleteMols=onlyCompleteMols,
                           seeds=nextSteps,uniquify=uniquify,
                           maxDepth=maxDepth-1):
@@ -312,6 +345,16 @@ def BRICSBuild(fragments,onlyCompleteMols=True,seeds=None,uniquify=True,
 
 # ------- ------- ------- ------- ------- ------- ------- -------
 # Begin testing code
+
+
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+  import doctest,sys
+  return doctest.testmod(sys.modules["__main__"])
+
 if __name__=='__main__':
   import unittest
   class TestCase(unittest.TestCase):
@@ -324,17 +367,17 @@ if __name__=='__main__':
       m = Chem.MolFromSmiles('CC(=O)N1CCC1=O')
       res = BRICSDecompose(m)
       self.failUnless(res)
-      self.failUnless(len(res)==2)
+      self.failUnless(len(res)==2,res)
 
       m = Chem.MolFromSmiles('c1ccccc1N(C)C')
       res = BRICSDecompose(m)
       self.failUnless(res)
-      self.failUnless(len(res)==2)
+      self.failUnless(len(res)==2,res)
 
       m = Chem.MolFromSmiles('c1cccnc1N(C)C')
       res = BRICSDecompose(m)
       self.failUnless(res)
-      self.failUnless(len(res)==2)
+      self.failUnless(len(res)==2,res)
 
       m = Chem.MolFromSmiles('o1ccnc1N(C)C')
       res = BRICSDecompose(m)
@@ -359,20 +402,29 @@ if __name__=='__main__':
       m = Chem.MolFromSmiles('CCCSCC')
       res = BRICSDecompose(m)
       self.failUnless(res)
-      self.failUnless(len(res)==4)
+      self.failUnless(len(res)==3,res)
+      self.failUnless('[11*]S[11*]' in res,res)
+
+      m = Chem.MolFromSmiles('CCNC(=O)C1CC1')
+      res = BRICSDecompose(m)
+      self.failUnless(res)
+      self.failUnless(len(res)==4,res)
+      self.failUnless('[2*]N[5*]' in res,res)
 
     def test2(self):
       # example from the paper, nexavar: 
       m = Chem.MolFromSmiles('CNC(=O)C1=NC=CC(OC2=CC=C(NC(=O)NC3=CC(=C(Cl)C=C3)C(F)(F)F)C=C2)=C1')
       res = BRICSDecompose(m)
       self.failUnless(res)
-      self.failUnless(len(res)==7,res)
+      self.failUnless(len(res)==8,res)
 
     def test3(self):
       m = Chem.MolFromSmiles('FC(F)(F)C1=C(Cl)C=CC(NC(=O)NC2=CC=CC=C2)=C1')
       res = BRICSDecompose(m)
       self.failUnless(res)
-      self.failUnless(len(res)==3,res)
+      self.failUnless(len(res)==4,res)
+      self.failUnless('[2*]N[2*]' in res,res)
+      self.failUnless('[16*]c1ccccc1' in res,res)
 
 
     def test4(self):
@@ -381,25 +433,26 @@ if __name__=='__main__':
       res = BRICSDecompose(m,allNodes=allNodes)
       self.failUnless(res)
       leaves=res
-      self.failUnless(len(allNodes)==5,allNodes)
+      self.failUnless(len(leaves)==3,leaves)
+      self.failUnless(len(allNodes)==6,allNodes)
       res = BRICSDecompose(m,allNodes=allNodes)
       self.failIf(res)
-      self.failUnless(len(allNodes)==5,allNodes)
+      self.failUnless(len(allNodes)==6,allNodes)
 
       m = Chem.MolFromSmiles('c1ccccc1OCCCC')
       res = BRICSDecompose(m,allNodes=allNodes)
       self.failUnless(res)
       leaves.update(res)
-      self.failUnless(len(allNodes)==8,allNodes)
-      self.failUnless(len(leaves)==6,leaves)
+      self.failUnless(len(allNodes)==9,allNodes)
+      self.failUnless(len(leaves)==4,leaves)
       
       
       m = Chem.MolFromSmiles('c1cc(C(=O)NCC)ccc1OCCC')
       res = BRICSDecompose(m,allNodes=allNodes)
       self.failUnless(res)
       leaves.update(res)
-      self.failUnless(len(allNodes)==13,allNodes)
-      self.failUnless(len(leaves)==9,leaves)
+      self.failUnless(len(leaves)==8,leaves)
+      self.failUnless(len(allNodes)==18,allNodes)
 
     def test5(self):
       allNodes = set()
@@ -416,6 +469,23 @@ if __name__=='__main__':
       smis = [Chem.MolToSmiles(x,True) for x in res]
       self.failUnless('c1ccc(-c2ccccc2)cc1' in smis)
       self.failUnless('c1ccc(-c2ncccc2)cc1' in smis)
+
+    def test5a(self):
+      allNodes = set()
+      frags = [
+        '[3*]O[3*]',
+        '[16*]c1ccccc1',
+        ]
+      frags = [Chem.MolFromSmiles(x) for x in frags]
+      res = BRICSBuild(frags)
+      self.failUnless(res)
+      res=list(res)
+      smis = [Chem.MolToSmiles(x,True) for x in res]
+      self.failUnless(len(smis)==2,smis)
+      self.failUnless('c1ccc(Oc2ccccc2)cc1' in smis)
+      self.failUnless('c1ccc(-c2ccccc2)cc1' in smis)
+
+      
       
     def test6(self):
       allNodes = set()
@@ -455,11 +525,37 @@ if __name__=='__main__':
       random.seed(23)
       base = Chem.MolFromSmiles("n1cncnc1OCC(C1CC1)OC1CNC1")
       catalog = BRICSDecompose(base)
-      self.failUnless(len(catalog)==8)
+      self.failUnless(len(catalog)==4,catalog)
       catalog = [Chem.MolFromSmiles(x) for x in catalog]
-      ms = list(BRICSBuild(catalog))
-      self.failUnless(len(ms)==19)
+      ms = [Chem.MolToSmiles(x) for x in BRICSBuild(catalog)]
+      self.failUnless(len(ms)==9,ms)
 
+      ts = ['n1cnc(C2CNC2)nc1','n1cnc(-c2ncncn2)nc1','C(OC1CNC1)C(C1CC1)OC1CNC1',
+            'n1cnc(OC(COC2CNC2)C2CC2)nc1']
+      ts = [Chem.MolToSmiles(Chem.MolFromSmiles(x),True) for x in ts]
+      for t in ts:
+        self.failUnless(t in ms,(t,ms))
+        
+    def test9(self):
+      m = Chem.MolFromSmiles('CCOc1ccccc1c1ncc(c2nc(NCCCC)ncn2)cc1')
+      res=BRICSDecompose(m)
+      self.failUnlessEqual(len(res),7)
+      self.failUnless('[3*]O[3*]' in res)
+      self.failIf('[14*]c1ncnc(NCCCC)n1' in res)
+      res = BRICSDecompose(m,singlePass=True)
+      self.failUnlessEqual(len(res),11)
+      self.failUnless('[3*]OCC' in res)
+      self.failUnless('[14*]c1ncnc(NCCCC)n1' in res)
+
+    def test10(self):
+      m = Chem.MolFromSmiles('C1CCCCN1c1ccccc1')
+      res=BRICSDecompose(m)
+      self.failUnlessEqual(len(res),2,res)
+
+
+  failed,tried = _test()
+  if failed:
+    sys.exit(failed)
 
   unittest.main()
 
