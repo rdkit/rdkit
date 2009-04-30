@@ -36,7 +36,7 @@
 """
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions as Reactions
-import sys,re
+import sys,re,random
 
 # These are the definitions that will be applied to fragment molecules:
 environs = {
@@ -179,8 +179,8 @@ reactionDefs = (
     ('16','16','-'), # not in original paper
     ],
   )
-import re
-smartsGps=reactionDefs
+import copy
+smartsGps=copy.deepcopy(reactionDefs)
 for gp in smartsGps:
   for j,defn in enumerate(gp):
     g1,g2,bnd = defn
@@ -211,6 +211,127 @@ for i,rxnSet in enumerate(smartsGps):
     rxn._matchers=[Chem.MolFromSmiles('[%s*]'%x) for x in labels]
     reverseReactions.append(rxn)
 
+def FindBRICSBonds(mol,randomizeOrder=False,silent=True):
+  """ returns the bonds in a molecule that BRICS would cleave
+
+  >>> from rdkit import Chem
+  >>> m = Chem.MolFromSmiles('CCCOCC')
+  >>> res = list(FindBRICSBonds(m))
+  >>> res
+  [((3, 2), ('3', '4')), ((3, 4), ('3', '4'))]
+
+  a more complicated case:
+  >>> m = Chem.MolFromSmiles('CCCOCCC(=O)c1ccccc1')
+  >>> res = list(FindBRICSBonds(m))
+  >>> res
+  [((3, 2), ('3', '4')), ((3, 4), ('3', '4')), ((6, 8), ('6', '16'))]
+
+  we can also randomize the order of the results:
+  >>> random.seed(23)
+  >>> res = list(FindBRICSBonds(m,randomizeOrder=True))
+  >>> res
+  [((6, 8), ('6', '16')), ((3, 2), ('3', '4')), ((3, 4), ('3', '4'))]
+
+  Note that this is a generator function :
+  >>> res = FindBRICSBonds(m)
+  >>> res
+  <generator object at 0x...>
+  >>> res.next()
+  ((3, 2), ('3', '4'))
+
+  >>> m = Chem.MolFromSmiles('CC=CC')
+  >>> res = list(FindBRICSBonds(m))
+  >>> res.sort()
+  >>> res
+  [((1, 2), ('7', '7'))]
+  
+  """
+  letter = re.compile('[a-z,A-Z]')
+  indices = range(len(reactionDefs))
+  bondsDone=set()
+  if randomizeOrder: random.shuffle(indices)
+  for gpIdx in indices:
+    if randomizeOrder:
+      compats =reactionDefs[gpIdx][:]
+      random.shuffle(compats)
+    else:
+      compats =reactionDefs[gpIdx]
+    for i1,i2,bType in compats:
+      e1 = environs['L%s'%i1]
+      e2 = environs['L%s'%i2]
+      patt = '[$(%s)]%s[$(%s)]'%(e1,bType,e2)
+      patt = Chem.MolFromSmarts(patt)
+      matches = mol.GetSubstructMatches(patt)
+      i1 = letter.sub('',i1)
+      i2 = letter.sub('',i2)
+      for match in matches:
+        if match not in bondsDone:
+          bondsDone.add(match)
+          yield(((match[0],match[1]),(i1,i2)))
+
+def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
+  """ breaks the BRICS bonds in a molecule and returns the results
+
+  >>> from rdkit import Chem
+  >>> m = Chem.MolFromSmiles('CCCOCC')
+  >>> m2=BreakBRICSBonds(m)
+  >>> Chem.MolToSmiles(m2,True)
+  '[4*]CC.[4*]CCC.[3*]O[3*]'
+
+  a more complicated case:
+  >>> m = Chem.MolFromSmiles('CCCOCCC(=O)c1ccccc1')
+  >>> m2=BreakBRICSBonds(m)
+  >>> Chem.MolToSmiles(m2,True)
+  '[16*]c1ccccc1.[3*]O[3*].[4*]CCC.[6*]C(=O)CC[4*]'
+
+  can also specify a limited set of bonds to work with:
+  >>> m = Chem.MolFromSmiles('CCCOCC')
+  >>> m2 = BreakBRICSBonds(m,[((3, 2), ('3', '4'))])
+  >>> Chem.MolToSmiles(m2,True)
+  '[3*]OCC.[4*]CCC'
+  
+  this can be used as an alternate approach for doing a BRICS decomposition by
+  following BreakBRICSBonds with a call to Chem.GetMolFrags:
+  >>> m = Chem.MolFromSmiles('CCCOCC')
+  >>> m2=BreakBRICSBonds(m)
+  >>> frags = Chem.GetMolFrags(m2,asMols=True)
+  >>> [Chem.MolToSmiles(x,True) for x in frags]
+  ['[4*]CCC', '[3*]O[3*]', '[4*]CC']
+
+  """
+  if not bonds:
+    bonds = FindBRICSBonds(mol)
+  if not bonds:
+    return Chem.Mol(mol.ToBinary())
+  eMol = Chem.EditableMol(mol)
+  nAts = mol.GetNumAtoms()
+  for indices,dummyTypes in bonds:
+    ia,ib = indices
+    obond = mol.GetBondBetweenAtoms(ia,ib)
+    bondType=obond.GetBondType()
+    eMol.RemoveBond(ia,ib)
+
+    da,db = dummyTypes
+    atoma = Chem.Atom(0)
+    atoma.SetMass(int(da))
+    atoma.SetNoImplicit(True)
+    idxa = nAts
+    nAts+=1
+    eMol.AddAtom(atoma)
+    eMol.AddBond(ia,idxa,bondType)
+    
+    atomb = Chem.Atom(0)
+    atomb.SetMass(int(db))
+    atomb.SetNoImplicit(True)
+    idxb = nAts
+    nAts+=1
+    eMol.AddAtom(atomb)
+    eMol.AddBond(ib,idxb,bondType)
+
+  res = eMol.GetMol()
+  if sanitize:
+    Chem.SanitizeMol(res)
+  return res
 
 def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
                    silent=True,keepNonLeafNodes=False,singlePass=False):
@@ -231,6 +352,7 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
   ['[1*]C([1*])=O', '[1*]C([6*])=O', '[14*]c1nccc([16*])c1', '[16*]c1ccc(Cl)c(C(F)(F)F)c1', '[16*]c1ccc([16*])cc1', '[2*]NC', '[2*]N[2*]', '[3*]O[3*]']
 
   """
+  global reactions
   mSmi = Chem.MolToSmiles(mol,1)
   
   if allNodes is None:
@@ -252,7 +374,7 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
           continue
         if not silent:
           print '--------'
-          print reactionDefs[gpIdx][rxnIdx]
+          print smartsGps[gpIdx][rxnIdx]
         ps = reaction.RunReactants((mol,))
         if ps:
           if not silent: print  nSmi,'->',len(ps),'products'
@@ -358,7 +480,8 @@ def BRICSBuild(fragments,onlyCompleteMols=True,seeds=None,uniquify=True,
 #
 def _test():
   import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
+  return doctest.testmod(sys.modules["__main__"],
+                         optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
 
 if __name__=='__main__':
   import unittest
