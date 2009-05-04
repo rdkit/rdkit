@@ -200,6 +200,21 @@ for gp in smartsGps:
       print defn
       raise
 
+environMatchers={}
+for env,sma in environs.iteritems():
+  environMatchers[env]=Chem.MolFromSmarts(sma)
+  
+bondMatchers=[]
+for i,compats in enumerate(reactionDefs):
+  tmp=[]
+  for i1,i2,bType in compats:
+      e1 = environs['L%s'%i1]
+      e2 = environs['L%s'%i2]
+      patt = '[$(%s)]%s[$(%s)]'%(e1,bType,e2)
+      patt = Chem.MolFromSmarts(patt)
+      tmp.append((i1,i2,bType,patt))
+  bondMatchers.append(tmp)
+    
 reactions = tuple([[Reactions.ReactionFromSmarts(y) for y in x] for x in smartsGps])
 reverseReactions = []
 for i,rxnSet in enumerate(smartsGps):
@@ -247,20 +262,21 @@ def FindBRICSBonds(mol,randomizeOrder=False,silent=True):
   
   """
   letter = re.compile('[a-z,A-Z]')
-  indices = range(len(reactionDefs))
+  indices = range(len(bondMatchers))
   bondsDone=set()
   if randomizeOrder: random.shuffle(indices)
+
+  envMatches={}
+  for env,patt in environMatchers.iteritems():
+    envMatches[env]=mol.HasSubstructMatch(patt)
   for gpIdx in indices:
     if randomizeOrder:
-      compats =reactionDefs[gpIdx][:]
+      compats =bondMatchers[gpIdx][:]
       random.shuffle(compats)
     else:
-      compats =reactionDefs[gpIdx]
-    for i1,i2,bType in compats:
-      e1 = environs['L%s'%i1]
-      e2 = environs['L%s'%i2]
-      patt = '[$(%s)]%s[$(%s)]'%(e1,bType,e2)
-      patt = Chem.MolFromSmarts(patt)
+      compats = bondMatchers[gpIdx]
+    for i1,i2,bType,patt in compats:
+      if not envMatches['L'+i1] or not envMatches['L'+i2]: continue
       matches = mol.GetSubstructMatches(patt)
       i1 = letter.sub('',i1)
       i2 = letter.sub('',i2)
