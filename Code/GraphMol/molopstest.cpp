@@ -2584,6 +2584,16 @@ void testAromaticityEdges()
   TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
   delete m;
   
+  // ------
+  // this was sf.net bug 2787221.
+  smi = "O=C1C(=O)C=C1";
+  m = SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic());
+  TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getIsAromatic());
+  delete m;
+
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -3034,7 +3044,7 @@ void testSFNetIssue2316677() {
     RWMol *m = MolFileToMol(pathName+"Issue2316677.mol");
     TEST_ASSERT(m);
     std::string smi=MolToSmiles(*m,true);
-    TEST_ASSERT(smi=="Cc1ccc(S(/N=C2\\SC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)(=O)=O)cc1");
+    TEST_ASSERT(smi=="Cc1ccc(S(/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)(=O)=O)cc1");
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

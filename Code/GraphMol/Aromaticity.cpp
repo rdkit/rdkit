@@ -300,6 +300,8 @@ namespace {
           break;
         }
       }
+    } else if (rup==2) {
+      aromatic = true;
     }
     return aromatic;
   }
