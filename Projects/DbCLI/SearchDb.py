@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.7.2"
+_version = "0.7.3"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -148,8 +148,9 @@ def GetMolsFromSmilesFile(dataFilename,errFile,nameProp):
       m = Chem.MolFromSmiles(smi)
     except:
       m=None
-    if not m and errFile:
-      print >>errFile,idx,nm,smi
+    if not m:
+      if errfile:
+        print >>errFile,idx,nm,smi
       continue
     yield (nm,smi,m)
 
@@ -157,12 +158,13 @@ def GetMolsFromSDFile(dataFilename,errFile,nameProp):
   suppl = Chem.SDMolSupplier(dataFilename)
 
   for idx,m in enumerate(suppl):
-    if not m and errFile:
-      if hasattr(suppl,'GetItemText'):
-        d = suppl.GetItemText(idx)
-        errFile.write(d)
-      else:
-        logger.warning('full error file support not complete')
+    if not m:
+      if errFile:
+        if hasattr(suppl,'GetItemText'):
+          d = suppl.GetItemText(idx)
+          errFile.write(d)
+        else:
+          logger.warning('full error file support not complete')
       continue
     smi = Chem.MolToSmiles(m,True)
     if m.HasProp(nameProp):
