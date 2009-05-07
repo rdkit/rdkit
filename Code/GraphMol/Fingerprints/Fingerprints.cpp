@@ -20,6 +20,39 @@
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit{
+  namespace {
+    bool isComplexQuery(const Bond *b){
+      if( !b->hasQuery()) return false;
+      // negated things are always complex:
+      if( b->getQuery()->getNegation()) return true;
+      std::string descr=b->getQuery()->getDescription();
+      if(descr=="BondOrder") return false;
+      if(descr=="BondAnd" || descr=="BondOr" || descr=="BondXor") return true;
+      
+      return true;
+    }
+    bool isComplexQuery(const Atom *a){
+      if( !a->hasQuery()) return false;
+      // negated things are always complex:
+      if( a->getQuery()->getNegation()) return true;
+      std::string descr=a->getQuery()->getDescription();
+      if(descr=="AtomAtomicNum") return false;
+      if(descr=="AtomOr" || descr=="AtomXor") return true;
+      if(descr=="AtomAnd"){
+        Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
+        if( (*childIt)->getDescription()=="AtomAtomicNum" &&
+            ((*(childIt+1))->getDescription()=="AtomIsAliphatic" ||
+             (*(childIt+1))->getDescription()=="AtomIsAromatic") &&
+            (childIt+2)==a->getQuery()->endChildren()){
+          return false;
+        }
+        return true;
+      }
+      
+      return true;
+    }
+  } // end of anonymous namespace
+
   // caller owns the result, it must be deleted
   // NOTE: This function is deprecated. Please use RDKFingerprintMol() instead.
   ExplicitBitVect *DaylightFingerprintMol(const ROMol &mol,
@@ -226,6 +259,9 @@ namespace RDKit{
     PRECONDITION(!atomCounts || atomCounts->size()>=mol.getNumAtoms(),"bad atomCounts size");
     PRECONDITION(!setOnlyBits || setOnlyBits->GetNumBits()==fpSize,"bad setOnlyBits size");
 
+    if(!mol.getRingInfo()->isInitialized()){
+      MolOps::findSSSR(mol);
+    }
     
 #ifdef LAYEREDFP_USE_MT
     // create a mersenne twister with customized parameters. 
@@ -260,6 +296,18 @@ namespace RDKit{
 
         std::vector< std::vector<unsigned int> > hashLayers(10);
 
+        // should we keep this path?
+        bool keepPath=true;
+        for(unsigned int i=0;i<path.size();++i){
+          const Bond *bi = mol.getBondWithIdx(path[i]);
+          if(isComplexQuery(bi) ||
+             isComplexQuery(bi->getBeginAtom()) ||
+             isComplexQuery(bi->getEndAtom())) {
+            keepPath=false;
+            break;
+          }
+        }
+
         // calculate the number of neighbors each bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size(),0);
         atomsInPath.reset();
@@ -286,11 +334,11 @@ namespace RDKit{
 
           if(layerFlags & 0x1){
             // layer 1: straight topology
-            ourHash |= bondNbrs[i]%8; // 3 bits here
-            nBitsInHash+=3;
+            ourHash = bondNbrs[i]%8; // 3 bits here
             hashLayers[0].push_back(ourHash);
           }
-          if(layerFlags & 0x2){
+          nBitsInHash+=3;
+          if(layerFlags & 0x2 && keepPath){
             // layer 2: include bond orders:
             unsigned int bondHash;
             if(bi->getIsAromatic()){
@@ -314,34 +362,34 @@ namespace RDKit{
             } else {
               bondHash = bi->getBondType();
             }
-            ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
-            nBitsInHash+=4;
+            ourHash = (bondHash%16)<<nBitsInHash; // 4 bits here
             hashLayers[1].push_back(ourHash);
           }
-          if(layerFlags & 0x4){
+          nBitsInHash+=4;
+          if(layerFlags & 0x4 && keepPath){
+            //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 3: include atom types:
             unsigned int a1Hash,a2Hash;
             a1Hash = (bi->getBeginAtom()->getAtomicNum()%128)<<1 | bi->getBeginAtom()->getIsAromatic();
             a2Hash = (bi->getEndAtom()->getAtomicNum()%128)<<1 | bi->getEndAtom()->getIsAromatic();
             if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
-            ourHash |= a1Hash<<nBitsInHash; // 8 bits
-            nBitsInHash+=8;
-            ourHash |= a2Hash<<nBitsInHash; // 8 bits
-            nBitsInHash+=8;
+            ourHash = a1Hash<<nBitsInHash; // 8 bits
+            ourHash |= a2Hash<<(nBitsInHash+8); // 8 bits
             hashLayers[2].push_back(ourHash);
           }
-          if(layerFlags & 0x8){
+          nBitsInHash += 16;
+          if(layerFlags & 0x8 && keepPath){
             // layer 4: include ring information
-            ourHash |= queryIsBondInRing(bi)<<nBitsInHash; // 1 bit
-            nBitsInHash++;
+            ourHash = queryIsBondInRing(bi)<<nBitsInHash; // 1 bit
             hashLayers[3].push_back(ourHash);
           }
-          if(layerFlags & 0x10){
+          nBitsInHash++;
+          if(layerFlags & 0x10 && keepPath){
             // layer 5: include ring size information
-            ourHash |= (queryBondMinRingSize(bi)%8)<<nBitsInHash; // 3 bits here
-            nBitsInHash+=3;
+            ourHash = (queryBondMinRingSize(bi)%8)<<nBitsInHash; // 3 bits here
             hashLayers[4].push_back(ourHash);
           }
+          nBitsInHash+=3;
         }
         unsigned int l=0;
         bool flaggedPath=false;
@@ -376,8 +424,11 @@ namespace RDKit{
 #else
           // The other solution is to shift the seed so that we look at different
           // bits for the different layers:
+          //std::cerr<<"layer: "<<l<<" seed: "<<seed<<std::endl;
           seed = seed>>l;
+          //std::cerr<<"   >>> "<<seed<<std::endl;
           bitId=seed%fpSize;
+          //std::cerr<<"   bit "<<bitId<<std::endl;
 #endif
           if(!setOnlyBits || (*setOnlyBits)[bitId]){
             res->SetBit(bitId);
