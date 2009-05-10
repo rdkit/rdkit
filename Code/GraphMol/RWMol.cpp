@@ -100,12 +100,12 @@ namespace RDKit{
     ATOM_BOOKMARK_MAP *marks = getAtomBookmarks();
     ATOM_BOOKMARK_MAP::iterator markI=marks->begin();
     while(markI != marks->end()){
-      ATOM_PTR_LIST &atoms=markI->second;
+      const ATOM_PTR_LIST &atoms=markI->second;
       // we need to copy the iterator then increment it, because the
       // deletion we're going to do in clearAtomBookmark will invalidate
       // it.
       ATOM_BOOKMARK_MAP::iterator tmpI=markI;
-      markI++;
+      ++markI;
       if(std::find(atoms.begin(),atoms.end(),oatom)!=atoms.end()){
         clearAtomBookmark(tmpI->first,oatom);
       }
@@ -135,7 +135,7 @@ namespace RDKit{
       RDGeom::POINT3D_VECT &positions = (*ci)->getPositions();
       RDGeom::POINT3D_VECT_I pi = positions.begin();
       for (unsigned int i = 0; i < getNumAtoms()-1;i++) {
-        pi++;
+        ++pi;
         if (i >= idx) {
           positions[i] = positions[i+1];
         }
@@ -145,10 +145,11 @@ namespace RDKit{
     // now deal with bonds:
     //   their end indices may need to be decremented and their
     //   indices will need to be handled
-    BondIterator bondIt;
     unsigned int nBonds=0;
-    for(bondIt=beginBonds();bondIt!=endBonds();bondIt++){
-      Bond *bond = *bondIt;
+    EDGE_ITER beg,end;
+    boost::tie(beg,end)=getEdges();
+    while(beg!=end){
+      BOND_SPTR bond = d_graph[*beg++];
       unsigned int tmpIdx = bond->getBeginAtomIdx();
       if( tmpIdx > idx) bond->setBeginAtomIdx(tmpIdx-1);
       tmpIdx = bond->getEndAtomIdx();

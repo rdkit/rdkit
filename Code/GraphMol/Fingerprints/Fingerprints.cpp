@@ -284,39 +284,51 @@ namespace RDKit{
     source_type randomSource(generator,dist);
 #endif
 
+    std::vector<const Bond *> bondCache;
+    bondCache.resize(mol.getNumBonds());
+    boost::dynamic_bitset<> isQueryBond(mol.getNumBonds());
+    for(unsigned int i=0;i<mol.getNumBonds();++i){
+      const Bond *bi = mol.getBondWithIdx(i);
+      bondCache[i] = bi;
+      if(isComplexQuery(bi) ||
+         isComplexQuery(bi->getBeginAtom()) ||
+         isComplexQuery(bi->getEndAtom())) {
+        isQueryBond.set(i);
+      }
+    }
+    
     boost::hash<std::vector<unsigned int> > vectHasher;
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
+    unsigned int maxAtoms=mol.getNumAtoms()+1;
+
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
-    for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
+    for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();++paths){
       for( PATH_LIST_CI pathIt=paths->second.begin();
 	   pathIt!=paths->second.end();
-	   pathIt++ ){
+	   ++pathIt ){
 	const PATH_TYPE &path=*pathIt;
 
-        std::vector< std::vector<unsigned int> > hashLayers(10);
+        std::vector< std::vector<unsigned int> > hashLayers(maxFingerprintLayers);
+        for(unsigned int i=0;i<maxFingerprintLayers;++i){
+          if(layerFlags & (0x1<<i)) hashLayers[i].reserve(maxPath);
+        }
 
         // should we keep this path?
         bool keepPath=true;
-        for(unsigned int i=0;i<path.size();++i){
-          const Bond *bi = mol.getBondWithIdx(path[i]);
-          if(isComplexQuery(bi) ||
-             isComplexQuery(bi->getBeginAtom()) ||
-             isComplexQuery(bi->getEndAtom())) {
-            keepPath=false;
-            break;
-          }
+        for(PATH_TYPE::const_iterator pIt=path.begin();pIt!=path.end();++pIt){
+          if(isQueryBond[*pIt]) keepPath=false;
         }
 
         // calculate the number of neighbors each bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size(),0);
         atomsInPath.reset();
         for(unsigned int i=0;i<path.size();++i){
-          const Bond *bi = mol.getBondWithIdx(path[i]);
+          const Bond *bi = bondCache[path[i]];
           atomsInPath.set(bi->getBeginAtomIdx());
           atomsInPath.set(bi->getEndAtomIdx());
           for(unsigned int j=i+1;j<path.size();++j){
-            const Bond *bj = mol.getBondWithIdx(path[j]);
+            const Bond *bj = bondCache[path[j]];
             if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx() ||
                bi->getBeginAtomIdx()==bj->getEndAtomIdx() ||
                bi->getEndAtomIdx()==bj->getBeginAtomIdx() ||

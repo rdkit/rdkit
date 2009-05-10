@@ -15,11 +15,18 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 
-typedef std::set<double> DOUBLE_SET;
-typedef DOUBLE_SET::const_iterator DOUBLE_SET_CI;
+
+typedef double RINGINVAR;
+typedef std::set< RINGINVAR > RINGINVAR_SET;
+typedef RINGINVAR_SET::const_iterator RINGINVAR_SET_CI;
+typedef std::vector< RINGINVAR > RINGINVAR_VECT;
 
 namespace RingUtils {
   using namespace RDKit;
+
+  RINGINVAR computeRingInvariant(const INT_VECT &ring,unsigned int nAtoms){
+    return computeIntVectPrimesProduct(ring);
+  }
 
   void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings, const ROMol &mol) {
     for (VECT_INT_VECT_CI ri=res.begin(); ri!=res.end(); ++ri) {
@@ -103,14 +110,21 @@ namespace FindRings {
     }
   }
 
+#if 0
   typedef std::map<double, INT_VECT> DOUBLE_INT_VECT_MAP;
   typedef DOUBLE_INT_VECT_MAP::iterator DOUBLE_INT_VECT_MAP_I;
   typedef DOUBLE_INT_VECT_MAP::const_iterator DOUBLE_INT_VECT_MAP_CI;
+#else
+  typedef std::map<RINGINVAR, INT_VECT> RINGINVAR_INT_VECT_MAP;
+  typedef RINGINVAR_INT_VECT_MAP::iterator RINGINVAR_INT_VECT_MAP_I;
+  typedef RINGINVAR_INT_VECT_MAP::const_iterator RINGINVAR_INT_VECT_MAP_CI;
+#endif
+
 
   void findSSSRforDupCands(const RWMol &mol, VECT_INT_VECT &res, 
-                           DOUBLE_SET &invars, const INT_INT_VECT_MAP dupMap, 
-                           const DOUBLE_INT_VECT_MAP &dupD2Cands) {
-    for (DOUBLE_INT_VECT_MAP_CI dvmi = dupD2Cands.begin();
+                           RINGINVAR_SET &invars, const INT_INT_VECT_MAP dupMap, 
+                           const RINGINVAR_INT_VECT_MAP &dupD2Cands) {
+    for (RINGINVAR_INT_VECT_MAP_CI dvmi = dupD2Cands.begin();
          dvmi != dupD2Cands.end(); ++dvmi) {
       const INT_VECT &dupCands = dvmi->second;
       if (dupCands.size() > 1) {
@@ -141,7 +155,7 @@ namespace FindRings {
       
         for (VECT_INT_VECT_CI nri = nrings.begin(); nri != nrings.end(); ++nri) {
           if (nri->size() == minSiz) {
-            double invr = computeIntVectPrimesProduct((*nri));
+            RINGINVAR invr = RingUtils::computeRingInvariant(*nri,mol.getNumAtoms());
             if (invars.find(invr) == invars.end()) {
               res.push_back((*nri));
               invars.insert(invr);
@@ -224,11 +238,10 @@ namespace FindRings {
   }
 
   void findRingsD2nodes(RWMol &tMol, VECT_INT_VECT &res, 
-                        DOUBLE_SET &invars, const INT_VECT &d2nodes) {
+                        RINGINVAR_SET &invars, const INT_VECT &d2nodes) {
     // place to record any duplicate rings discovered from the current d2 nodes
-    DOUBLE_INT_VECT_MAP dupD2Cands;
+    RINGINVAR_INT_VECT_MAP dupD2Cands;
     int cand, nsmall;
-    double invr;
     INT_VECT_CI d2i;
 
     INT_INT_VECT_MAP dupMap;
@@ -243,22 +256,18 @@ namespace FindRings {
     //  - so we will keep track for each d2 all the other node that resulted in duplicate rings
     //  - the bonds to these nodes will be broken and we attempt to find a new ring, for e.g. by breaking
     //    bonds to 7 and 13, we will find a 7 membered ring with 6 (this is done in findSSSRforDupCands)
-    std::map<int, DOUBLE_VECT> nodeInvars;
-    std::map<int, DOUBLE_VECT>::const_iterator nici;
+    std::map<int, RINGINVAR_VECT> nodeInvars;
+    std::map<int, RINGINVAR_VECT>::const_iterator nici;
     DOUBLE_VECT_CI ici;
-    for (d2i = d2nodes.begin(); d2i != d2nodes.end(); d2i++) {
+    for (d2i = d2nodes.begin(); d2i != d2nodes.end(); ++d2i) {
       cand = (*d2i);
     
       VECT_INT_VECT srings;
-    
-      VECT_INT_VECT_CI sri;
-    
       // we have to find all non duplicate possible smallest rings for each node
-      //rsiz = MolOps::findSmallestRing(cand, tMol, ring, invars);
       nsmall = smallestRingsBfs(tMol, cand, srings);
-      for (sri = srings.begin(); sri != srings.end(); sri++) {
+      for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
-        invr = computeIntVectPrimesProduct(nring);
+        RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
         if (invars.find(invr) == invars.end()) {
           res.push_back(nring);
           invars.insert(invr);
@@ -294,13 +303,11 @@ namespace FindRings {
     findSSSRforDupCands(tMol, res, invars, dupMap, dupD2Cands);
   }
 
-  void findRingsD3Node(RWMol &tMol, VECT_INT_VECT &res, DOUBLE_SET &invars, int cand) {
+  void findRingsD3Node(RWMol &tMol, VECT_INT_VECT &res, RINGINVAR_SET &invars, int cand) {
   
     // this is brutal - we have no degree 2 nodes - find the first possible degree 3 node
     int nsmall;
 
-    double invr; 
-  
     // We've got a degree three node. The goal of what follows is to find the
     // three rings in which it's involved, push those onto our results, and
     // then remove the node from consideration.  This will create a bunch of degree
@@ -324,8 +331,7 @@ namespace FindRings {
   
     for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
       const INT_VECT &nring = (*sri);
-      invr = computeIntVectPrimesProduct(nring); 
-    
+      RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
       if (invars.find(invr) == invars.end()) {
         res.push_back(nring);
         invars.insert(invr);
@@ -367,7 +373,8 @@ namespace FindRings {
         smallestRingsBfs(tMol, cand, trings, &forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
-          invr = computeIntVectPrimesProduct(nring); 
+          RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
+
           if (invars.find(invr) == invars.end()) {
             res.push_back(nring);
             invars.insert(invr);
@@ -399,7 +406,7 @@ namespace FindRings {
         int nrngs = smallestRingsBfs(tMol, cand, trings, &forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
-          invr = computeIntVectPrimesProduct(nring); 
+          RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
           if (invars.find(invr) == invars.end()) {
             res.push_back(nring);
             invars.insert(invr);
@@ -413,7 +420,7 @@ namespace FindRings {
         nrngs = smallestRingsBfs(tMol, cand, trings, &forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
-          invr = computeIntVectPrimesProduct(nring); 
+          RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
           if (invars.find(invr) == invars.end()) {
             res.push_back(nring);
             invars.insert(invr);
@@ -627,7 +634,7 @@ namespace RDKit {
         mol.getRingInfo()->initialize();
       }
 
-      DOUBLE_SET invars;
+      RINGINVAR_SET invars;
       //DOUBLE_VECT invars;
 
       // make a copy of the molecule that we can chop around

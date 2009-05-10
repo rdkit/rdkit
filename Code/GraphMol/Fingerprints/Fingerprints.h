@@ -105,7 +105,8 @@ namespace RDKit{
        - 0x08: presence of rings
        - 0x10: ring sizes
   */
-  const std::string LayeredFingerprintMolVersion="0.2.0";
+  const unsigned int maxFingerprintLayers=10;
+  const std::string LayeredFingerprintMolVersion="0.2.1";
   ExplicitBitVect *LayeredFingerprintMol(const ROMol &mol,
                                          unsigned int layerFlags=0xFFFFFFFF,
                                          unsigned int minPath=1,unsigned int maxPath=7,
