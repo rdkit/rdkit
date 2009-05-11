@@ -556,6 +556,24 @@ namespace RDKit{
     at->setProp("molFileAlias",nextLine);
   };
   
+  void ParseAtomValue(RWMol *mol,std::string text){
+    PRECONDITION(mol,"bad mol");
+    PRECONDITION(text.substr(0,2)==std::string("V "),"bad atom value line");
+      
+    unsigned int idx;
+    try {
+      idx = stripSpacesAndCast<unsigned int>(text.substr(3,3))-1;
+    }
+    catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Cannot convert " << text.substr(3,3) << " to int";
+      throw FileParseException(errout.str()) ;
+    }
+    RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
+    Atom *at = mol->getAtomWithIdx(idx);
+    at->setProp("molFileValue",text.substr(7,text.length()-7));
+  };
+  
   Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos) {
     Atom *res = new Atom;
     std::string symb;
@@ -1012,22 +1030,23 @@ namespace RDKit{
         ParseOldAtomList(res,tempStr);
       }
       
-      while(!inStream->eof() && tempStr[0] != 'M'){
+      std::string lineBeg=tempStr.substr(0,6);
+      while(!inStream->eof() && lineBeg!="M  END" && tempStr.substr(0,4)!="$$$$"){
         if(tempStr[0]=='A'){
           line++;
           std::string nextLine = getLine(inStream);
           if(tempStr.substr(0,6)!="M  END"){
             ParseAtomAlias(res,tempStr,nextLine);
           }
+        } else if(tempStr[0]=='G'){
+          BOOST_LOG(rdWarningLog)<<" deprecated group abbreviation ignored"<<std::endl;
+        } else if(tempStr[0]=='V'){
+          ParseAtomValue(res,tempStr);
+        } else if(lineBeg=="S  SKP") {
+          // pass
         }
-        line++;
-        tempStr = getLine(inStream);
-      }
-      
-      //tempStr = inLine;
-      std::string lineBeg=tempStr.substr(0,6);
-      while(!inStream->eof() && lineBeg!="M  END" && tempStr.substr(0,4)!="$$$$"){
-        if(lineBeg=="M  ALS") ParseNewAtomList(res,tempStr);
+
+        else if(lineBeg=="M  ALS") ParseNewAtomList(res,tempStr);
         else if(lineBeg=="M  ISO") ParseIsotopeLine(res,tempStr);
         else if(lineBeg=="M  RGP") ParseRGroupLabels(res,tempStr);
         else if(lineBeg=="M  RBC") ParseRingBondCountLine(res,tempStr);

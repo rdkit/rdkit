@@ -1710,6 +1710,53 @@ void testKekulizationSkip(){
   BOOST_LOG(rdInfoLog) << " done"<< std::endl;
 }
 
+void testMolFileAtomValues(){
+  BOOST_LOG(rdInfoLog) << "testing atom values in mol files" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/";
+
+  {
+    RWMol *m;
+    std::string fName,val;
+
+    fName = rdbase+"test_data/AtomProps1.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molFileValue"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molFileValue"));
+    m->getAtomWithIdx(1)->getProp("molFileValue",val);
+    TEST_ASSERT(val=="acidchloride");
+
+    delete m;
+  }
+  
+  {
+    RWMol *m;
+    std::string fName,val;
+
+    fName = rdbase+"test_data/AtomProps2.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp("molFileValue"));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molFileValue"));
+    m->getAtomWithIdx(1)->getProp("molFileValue",val);
+    TEST_ASSERT(val=="acidchloride");
+
+    TEST_ASSERT(m->getAtomWithIdx(2)->hasProp("molFileValue"));
+    m->getAtomWithIdx(2)->getProp("molFileValue",val);
+    TEST_ASSERT(val=="testing");
+
+    TEST_ASSERT(m->getAtomWithIdx(3)->getFormalCharge()==-1);
+
+    delete m;
+  }
+  
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+
 
 
 int main(int argc,char *argv[]){
@@ -1744,6 +1791,7 @@ int main(int argc,char *argv[]){
   testAtomParity();
   testIssue2692246();
   testKekulizationSkip();
+  testMolFileAtomValues();
   //testCrash();
   return 0;
 }
