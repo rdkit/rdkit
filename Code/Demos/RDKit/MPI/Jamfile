@@ -1,0 +1,19 @@
+project /RDKit/DemoMPI : requirements <library>/mpi//mpi : ;
+import mpi ;
+
+if [ mpi.configured ]
+{
+exe rdkexample1 : rdkexample1.cpp /boost/mpi//boost_mpi 
+RDKLibs
+;
+
+alias RDKLibs :   ../../../GraphMol/SmilesParse//SmilesParse
+  ../../../GraphMol//GraphMol 
+  ../../../DataStructs//DataStructs	
+  ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
+;
+
+install rdkexample1.exe : rdkexample1
+  : <location>. ;
+
+}
