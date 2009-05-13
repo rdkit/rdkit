@@ -12,6 +12,8 @@
 #include <vector>
 #include <algorithm>
 #include <boost/mpi.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -24,21 +26,55 @@ int main(int argc, char* argv[])
   mpi::environment env(argc, argv);
   mpi::communicator world;
 
-  std::srand(time(0) + world.rank());
-  std::string txt(std::rand()%10+1,'C');
-
-  RDKit::ROMol *m=RDKit::SmilesToMol(txt);
-
+  // construct the data:
+  std::vector<std::string> data;
   if (world.rank() == 0) {
-    std::vector<unsigned int> all_vals;
-    gather(world, m->getNumAtoms(), all_vals, 0);
-    for (int proc = 0; proc < world.size(); ++proc)
-      std::cout << "Process #" << proc << " thought of " 
-                << all_vals[proc] << std::endl;
-  } else {
-    gather(world, m->getNumAtoms(), 0);
+    for(unsigned int i=0;i<100;++i){
+      std::string txt(i+1,'C');
+      data.push_back(txt);
+    }
   }
-  delete m;
+
+  // broadcast it:
+  broadcast(world,data,0);
+
+  // process it:
+  std::vector<unsigned int> res;
+  std::vector<std::vector<unsigned int> > allRes;
+  // start by finding our chunk:
+  unsigned int nProcs=world.size(); 
+  unsigned int chunkSize=data.size() / nProcs;
+  unsigned int extraBits=data.size() % nProcs;
+
+  // handle extra bits on the root node:
+  if( world.rank() == 0 ){
+    for(unsigned int i=0;i<extraBits;++i){
+      const std::string &elem=data[i];
+      res.push_back(elem.length());
+    }
+  }
+  
+  unsigned int pos=extraBits+world.rank()*chunkSize;
+  for(unsigned int i=0;i<chunkSize;++i){
+    const std::string &elem=data[pos++];
+    res.push_back(elem.length());
+  }
+
+  if( world.rank() == 0 ){
+    gather(world,res,allRes,0);
+  } else {
+    gather(world,res,0);
+  }
+
+  // reporting:
+  if(world.rank()==0){
+    for(unsigned int i=0;i<static_cast<unsigned int>(world.size());++i){
+      std::cout<<"results from process "<<i<<": ";
+      std::copy(allRes[i].begin(),allRes[i].end(),std::ostream_iterator<int,char>(std::cout, " "));
+      std::cout<<std::endl;
+    }
+
+  }
   return 0;
 } 
 
