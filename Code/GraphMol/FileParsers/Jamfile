@@ -4,7 +4,7 @@ local RDBASE = [ os.environ RDBASE ] ;
 
 
 lib FileParsers : MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp 
-  SDFileParser.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp 
+  ForwardSDMolSupplier.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp 
   SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp TDTMolSupplier.cpp 
   TplFileParser.cpp TplFileWriter.cpp Mol2FileParser.cpp
   ..//GraphMol ../SmilesParse//SmilesParse ../..//RDGeneral//RDGeneral ../../Geometry//RDGeometry
@@ -13,13 +13,16 @@ install lib-install : FileParsers : <location>$(RDBASE)/bin ;
 
 exe test1 : test1.cpp FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct ..//GraphMol 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//vflib ;
+  ;
 
 exe testMolSupplier : testMolSupplier.cpp FileParsers 
   ../Depictor//Depictor
   ../SmilesParse//SmilesParse ../Substruct//Substruct ..//GraphMol 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//vflib ;
+# comment the next line out if you don't want to test the gzipped SD
+# file reading:
+   /boost/iostreams//boost_iostreams :  <define>TEST_GZIP_SD 
+ ;
 
 exe testMolWriter : testMolWriter.cpp FileParsers 
   ../SmilesParse//SmilesParse ..//GraphMol 
@@ -34,6 +37,9 @@ exe testTplParser : testTpls.cpp FileParsers
 exe testMol2ToMol : testMol2ToMol.cpp FileParsers 
   ../SmilesParse//SmilesParse ..//GraphMol 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ;
+
+lib profiler : : <name>profiler ;
+
 
 install regrs : test1 testMolSupplier testMolWriter testTplParser testMol2ToMol
   : <location>testExecs ;

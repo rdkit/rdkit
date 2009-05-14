@@ -13,6 +13,7 @@
 #include <GraphMol/ROMol.h>
 
 namespace RDKit {
+  std::string strip(const std::string &orig);
 
   /*! 
   //
@@ -60,8 +61,41 @@ namespace RDKit {
   };
 
 
+  // \brief a supplier from an SD file that only reads forward:
+  class ForwardSDMolSupplier : public MolSupplier {
+    /*************************************************************************
+     * A lazy mol supplier from a SD file. 
+     *  - When new molecules are read using "next" their positions in the file are noted. 
+     ***********************************************************************************/
+  public:
+    ForwardSDMolSupplier() { init(); };
+
+    explicit ForwardSDMolSupplier(std::istream *inStream, bool takeOwnership=true,
+                                  bool sanitize=true,bool removeHs=true);
+
+    virtual ~ForwardSDMolSupplier() {
+      if (df_owner && dp_inStream) {
+        delete dp_inStream;
+        df_owner=false;
+        dp_inStream=NULL;
+      }
+    };
+
+    virtual void init();
+    virtual void reset();
+    virtual ROMol *next();
+    virtual bool atEnd(); 
+
+  protected:
+    virtual void readMolProps(ROMol *);
+    bool df_end; 
+    int d_line; // line number we are currently on
+    bool df_sanitize,df_removeHs;
+  };
+
+
   // \brief a lazy supplier from an SD file
-  class SDMolSupplier : public MolSupplier {
+  class SDMolSupplier : public ForwardSDMolSupplier {
     /*************************************************************************
      * A lazy mol supplier from a SD file. 
      *  - When new molecules are read using "next" their positions in the file are noted. 
@@ -87,7 +121,7 @@ namespace RDKit {
                            bool sanitize=true,bool removeHs=true);
 
     
-    ~SDMolSupplier();
+    ~SDMolSupplier() {};
     void init();
     void reset();
     ROMol *next();
@@ -114,15 +148,12 @@ namespace RDKit {
      */
     void setStreamIndices(const std::vector<std::streampos> &locs);
 
-  private :
-    void readMolProps(ROMol *);
+  private:
     void checkForEnd();
-    bool df_end; 
     int d_len; // total number of mol blocks in the file (initialized to -1)
     int d_last; // the molecule we are ready to read
-    int d_line; // line number we are currently on
     std::vector<std::streampos> d_molpos;
-    bool df_sanitize,df_removeHs;
+
   };
 
   //! lazy file parser for Smiles tables

@@ -20,7 +20,14 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+
+
 using namespace RDKit;
+namespace io=boost::iostreams;
+
 int testMolSup() {
   
   std::string rdbase = getenv("RDBASE");
@@ -1347,9 +1354,11 @@ int testRemoveHs() {
   TEST_ASSERT(nmol->getNumAtoms()==28);
   delete nmol;
 
+  std::cerr<<"build:"<<std::endl;
   SDMolSupplier sdsup2(fname,true,false);
   nmol = sdsup2.next();
   TEST_ASSERT(nmol);
+  //std::cerr<<" count: "<<nmol->getNumAtoms()<<std::endl;
   TEST_ASSERT(nmol->getNumAtoms()==39);
   delete nmol;
   nmol = sdsup2.next();
@@ -1545,6 +1554,51 @@ void testGetItemText() {
 }
 
 
+int testForwardSDSupplier() {
+  
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+  std::string fname2 = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf.gz";
+  
+  {
+    std::ifstream strm(fname.c_str());
+    ForwardSDMolSupplier sdsup(&strm,false);
+    unsigned int i = 0;
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      if (nmol) {
+        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        delete nmol;
+        i++;
+      }
+    }
+    TEST_ASSERT(i==16);
+  }
+#ifdef TEST_GZIP_SD
+  {
+    io::filtering_istream strm;
+    strm.push(io::gzip_decompressor());
+    strm.push(io::file_source(fname2));
+
+    ForwardSDMolSupplier sdsup(&strm,false);
+    unsigned int i = 0;
+    while (!sdsup.atEnd()) {
+      ROMol *nmol = sdsup.next();
+      if (nmol) {
+        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        delete nmol;
+        i++;
+      }
+    }
+    TEST_ASSERT(i==16);
+  }
+#endif
+  return 1;
+}
+
+
 int main() {
   RDLog::InitLogs();
 
@@ -1661,6 +1715,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGetItemText();
   BOOST_LOG(rdErrorLog) <<"Finished: testGetItemText()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testForwardSDSupplier();
+  BOOST_LOG(rdErrorLog) <<"Finished: testForwardSDSupplier()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

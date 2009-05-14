@@ -55,6 +55,26 @@ namespace RDKit{
     }
   }
 
+  int toInt(const std::string &input,bool acceptSpaces=false){
+    // atoi returns zero on failure:
+    int res=atoi(input.c_str());
+    if(!res && !acceptSpaces && input[0]==' '){
+      std::string trimmed=boost::trim_copy(input);
+      if(trimmed.length()==0) throw boost::bad_lexical_cast();
+    }
+    return res;
+  }
+
+  double toDouble(const std::string &input,bool acceptSpaces=true){
+    // atoi returns zero on failure:
+    double res=atof(input.c_str());
+    if(res==0.0 && !acceptSpaces && input[0]==' '){
+      std::string trimmed=boost::trim_copy(input);
+      if(trimmed.length()==0) throw boost::bad_lexical_cast();
+    }
+    return res;
+  }
+
   //*************************************
   //
   // Every effort has been made to adhere to MDL's standard
@@ -94,7 +114,7 @@ namespace RDKit{
     
     int nQueries;
     try {
-      nQueries = stripSpacesAndCast<int>(text.substr(9,1));
+      nQueries = toInt(text.substr(9,1));
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
@@ -107,7 +127,7 @@ namespace RDKit{
       int pos = 11+i*4;
       int atNum;
       try {
-        atNum = stripSpacesAndCast<int>(text.substr(pos,3));
+        atNum = toInt(text.substr(pos,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -138,7 +158,7 @@ namespace RDKit{
 
     int ie, nent;
     try {
-      nent = stripSpacesAndCast<int>(text.substr(6,3));
+      nent = toInt(text.substr(6,3));
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
@@ -149,9 +169,9 @@ namespace RDKit{
     for (ie = 0; ie < nent; ie++) {
       int aid, chg;
       try {
-        aid = stripSpacesAndCast<int>(text.substr(spos,4));
+        aid = toInt(text.substr(spos,4));
         spos += 4;
-        chg = stripSpacesAndCast<int>(text.substr(spos,4));
+        chg = toInt(text.substr(spos,4));
         spos += 4;
         mol->getAtomWithIdx(aid-1)->setFormalCharge(chg);
       }
@@ -178,7 +198,7 @@ namespace RDKit{
 
     int ie, nent;
     try {
-      nent = stripSpacesAndCast<int>(text.substr(6,3));
+      nent = toInt(text.substr(6,3));
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
@@ -191,9 +211,9 @@ namespace RDKit{
       std::ostringstream errout;
       
       try {
-        aid = stripSpacesAndCast<int>(text.substr(spos,4));
+        aid = toInt(text.substr(spos,4));
         spos += 4;
-        rad = stripSpacesAndCast<int>(text.substr(spos,4));
+        rad = toInt(text.substr(spos,4));
         spos += 4;
 
         switch(rad) {
@@ -241,7 +261,7 @@ namespace RDKit{
         spos += 4;
         Atom *atom=mol->getAtomWithIdx(aid-1); 
         if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-          mass = stripSpacesAndCast<int>(text.substr(spos,4));
+          mass = toInt(text.substr(spos,4));
           atom->setMass(static_cast<double>(mass));
           spos += 4;
         } else {
@@ -279,7 +299,7 @@ namespace RDKit{
         spos += 4;
         Atom *atom=mol->getAtomWithIdx(aid-1); 
         if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-          count = stripSpacesAndCast<int>(text.substr(spos,4));
+          count = toInt(text.substr(spos,4));
           if(count==0) continue;
           ATOM_EQUALS_QUERY *q=makeAtomExplicitDegreeQuery(0);
           switch(count){
@@ -340,7 +360,7 @@ namespace RDKit{
         spos += 4;
         Atom *atom=mol->getAtomWithIdx(aid-1); 
         if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-          count = stripSpacesAndCast<int>(text.substr(spos,4));
+          count = toInt(text.substr(spos,4));
           if(count==0){
             continue;
           } else if(count==1){
@@ -388,7 +408,7 @@ namespace RDKit{
         spos += 4;
         Atom *atom=mol->getAtomWithIdx(aid-1); 
         if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-          count = stripSpacesAndCast<int>(text.substr(spos,4));
+          count = toInt(text.substr(spos,4));
           if(count==0) continue;
           ATOM_EQUALS_QUERY *q=makeAtomRingBondCountQuery(0);
           switch(count){
@@ -449,7 +469,7 @@ namespace RDKit{
     
     int nQueries;
     try {
-      nQueries = stripSpacesAndCast<int>(text.substr(10,3));
+      nQueries = toInt(text.substr(10,3));
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
@@ -494,7 +514,7 @@ namespace RDKit{
     
     int nLabels;
     try {
-      nLabels = stripSpacesAndCast<int>(text.substr(6,3));
+      nLabels = toInt(text.substr(6,3));
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
@@ -580,9 +600,9 @@ namespace RDKit{
     int massDiff,chg,hCount;
 
     try {
-      pos.x = stripSpacesAndCast<double>(text.substr(0,10));
-      pos.y = stripSpacesAndCast<double>(text.substr(10,10));
-      pos.z = stripSpacesAndCast<double>(text.substr(20,10));
+      pos.x = toDouble(text.substr(0,10));
+      pos.y = toDouble(text.substr(10,10));
+      pos.z = toDouble(text.substr(20,10));
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
@@ -596,7 +616,7 @@ namespace RDKit{
     massDiff=0;
     if(text.size()>=36 && text.substr(34,2)!=" 0"){
       try {
-        massDiff = stripSpacesAndCast<int>(text.substr(34,2),true);
+        massDiff = toInt(text.substr(34,2),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -607,7 +627,7 @@ namespace RDKit{
     chg=0;
     if(text.size()>=39 && text.substr(36,3)!="  0"){
       try {
-        chg = stripSpacesAndCast<int>(text.substr(36,3),true);
+        chg = toInt(text.substr(36,3),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -618,7 +638,7 @@ namespace RDKit{
     hCount = 0;
     if(text.size()>=45 && text.substr(42,3)!="  0"){
       try {
-        hCount = stripSpacesAndCast<int>(text.substr(42,3),true);
+        hCount = toInt(text.substr(42,3),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -677,7 +697,7 @@ namespace RDKit{
     if(text.size()>=42 && text.substr(39,3)!="  0"){
       int parity=0;
       try {
-        parity = stripSpacesAndCast<int>(text.substr(39,3),true);
+        parity = toInt(text.substr(39,3),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -690,7 +710,7 @@ namespace RDKit{
     if(text.size()>=48 && text.substr(45,3)!="  0"){
       int stereoCare=0;
       try {
-        stereoCare = stripSpacesAndCast<int>(text.substr(45,3),true);
+        stereoCare = toInt(text.substr(45,3),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -702,7 +722,7 @@ namespace RDKit{
     if(text.size()>=51 && text.substr(48,3)!="  0"){
       int totValence=0;
       try {
-        totValence= stripSpacesAndCast<int>(text.substr(48,3),true);
+        totValence= toInt(text.substr(48,3),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -714,7 +734,7 @@ namespace RDKit{
     if(text.size()>=63 && text.substr(60,3)!="  0"){
       int atomMapNumber=0;
       try {
-        atomMapNumber = stripSpacesAndCast<int>(text.substr(60,3),true);
+        atomMapNumber = toInt(text.substr(60,3),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -726,7 +746,7 @@ namespace RDKit{
     if(text.size()>=66 && text.substr(63,3)!="  0"){
       int inversionFlag=0;
       try {
-        inversionFlag= stripSpacesAndCast<int>(text.substr(63,3),true);
+        inversionFlag= toInt(text.substr(63,3),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -738,7 +758,7 @@ namespace RDKit{
     if(text.size()>=69 && text.substr(66,3)!="  0"){
       int exactChangeFlag=0;
       try {
-        exactChangeFlag = stripSpacesAndCast<int>(text.substr(66,3),true);
+        exactChangeFlag = toInt(text.substr(66,3),true);
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -754,11 +774,11 @@ namespace RDKit{
     int idx1,idx2,bType,stereo;
     int spos = 0;
     try {
-      idx1 = stripSpacesAndCast<int>(text.substr(spos,3));
+      idx1 = toInt(text.substr(spos,3));
       spos += 3;
-      idx2 = stripSpacesAndCast<int>(text.substr(spos,3));
+      idx2 = toInt(text.substr(spos,3));
       spos += 3;
-      bType = stripSpacesAndCast<int>(text.substr(spos,3));  
+      bType = toInt(text.substr(spos,3));  
     }
     catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
@@ -824,7 +844,7 @@ namespace RDKit{
 
     if( text.size() >= 12 && text.substr(9,3)!="  0"){
       try {
-        stereo = stripSpacesAndCast<int>(text.substr(9,3));
+        stereo = toInt(text.substr(9,3));
         //res->setProp("stereo",stereo);
         switch(stereo){
         case 0:
@@ -849,7 +869,7 @@ namespace RDKit{
     }
     if( text.size() >= 18 && text.substr(15,3)!="  0"){
       try {
-        int topology = stripSpacesAndCast<int>(text.substr(15,3));
+        int topology = toInt(text.substr(15,3));
         QueryBond *qBond=new QueryBond(*res);
         BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
         switch(topology){
@@ -872,7 +892,7 @@ namespace RDKit{
     }
     if( text.size() >= 21 && text.substr(18,3)!="  0"){
       try {
-        int reactStatus = stripSpacesAndCast<int>(text.substr(18,3));
+        int reactStatus = toInt(text.substr(18,3));
         res->setProp("molReactStatus",reactStatus);
       } catch (boost::bad_lexical_cast) {
         ;
@@ -934,9 +954,9 @@ namespace RDKit{
     unsigned int spos = 0;
     try {
       // it *sucks* that the lexical_cast stuff above doesn't work on linux        
-      nAtoms = stripSpacesAndCast<int>(tempStr.substr(0,3));
+      nAtoms = toInt(tempStr.substr(0,3));
       spos = 3;
-      nBonds = stripSpacesAndCast<int>(tempStr.substr(3,3));
+      nBonds = toInt(tempStr.substr(3,3));
       spos = 6;
     } catch (boost::bad_lexical_cast &) {
       if (res) delete res;
@@ -947,31 +967,31 @@ namespace RDKit{
     try {
       spos = 6;
       if(tempStr.size()>=9)
-        nLists = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nLists = toInt(tempStr.substr(spos,3));
 
       spos = 12;
       if(tempStr.size()>=spos+3)
-        chiralFlag = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        chiralFlag = toInt(tempStr.substr(spos,3));
 
       spos = 15;
       if(tempStr.size()>=spos+3)
-        nsText = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nsText = toInt(tempStr.substr(spos,3));
 
       spos = 18;
       if(tempStr.size()>=spos+3)
-        nRxnComponents = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nRxnComponents = toInt(tempStr.substr(spos,3));
 
       spos = 21;
       if(tempStr.size()>=spos+3)
-        nReactants   = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nReactants   = toInt(tempStr.substr(spos,3));
 
       spos = 24;
       if(tempStr.size()>=spos+3)
-        nProducts   = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nProducts   = toInt(tempStr.substr(spos,3));
 
       spos = 27;
       if(tempStr.size()>=spos+3)
-        nIntermediates = stripSpacesAndCast<int>(tempStr.substr(spos,3));
+        nIntermediates = toInt(tempStr.substr(spos,3));
 
     } catch (boost::bad_lexical_cast &) {
       // some SD files (such as some from NCI) lack all the extra information
