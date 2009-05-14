@@ -17,8 +17,6 @@ use-project RDKit_Externals
 project RDKit
 	: requirements <include>.  <threading>multi
           <include>$(BOOSTHOME)
-          <include>$(RDBASE)/External/vflib-2.0/include
-          #<define>USE_VFLIB
           <toolset>gcc:<cflags>-Wno-unused-function
           <toolset>gcc:<cflags>-Wno-deprecated
           <toolset>darwin:<cflags>-Wno-unused-function
@@ -84,5 +82,3 @@ lib blas
 # if you want to use Lapack++, use this version:
 #alias lapacklibs : /RDKit_Externals//Lapack++ lapack blas ;
 alias lapacklibs : lapack blas ;
-alias vflib : /RDKit_Externals//vflib ;
-
