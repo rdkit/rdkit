@@ -8,6 +8,7 @@
 
 #if 1
 #include <iomanip>
+#include <string>
 #include <time.h>
 
 boost::logging::rdLogger *rdAppLog=0;
