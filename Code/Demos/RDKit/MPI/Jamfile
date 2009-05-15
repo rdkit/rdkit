@@ -3,17 +3,24 @@ import mpi ;
 
 if [ mpi.configured ]
 {
-exe rdkexample1 : rdkexample1.cpp /boost/mpi//boost_mpi 
-RDKLibs
-;
-
 alias RDKLibs :   ../../../GraphMol/SmilesParse//SmilesParse
   ../../../GraphMol//GraphMol 
   ../../../DataStructs//DataStructs	
   ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
 ;
 
+exe rdkexample1 : rdkexample1.cpp /boost/mpi//boost_mpi 
+RDKLibs
+;
+
 install rdkexample1.exe : rdkexample1
+  : <location>. ;
+
+exe rdkexample2 : rdkexample2.cpp /boost/mpi//boost_mpi 
+RDKLibs
+;
+
+install rdkexample2.exe : rdkexample2
   : <location>. ;
 
 }
