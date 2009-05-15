@@ -1,6 +1,6 @@
 // $Id: SDMolSupplier.cpp 585 2008-03-30 13:36:56Z glandrum $
 //
-//  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2009 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -54,12 +54,23 @@ namespace RDKit {
     std::vector<std::string> splitName;
     boost::split(splitName,filename,boost::is_any_of("."));
     io::filtering_istream *strm=new io::filtering_istream();
-    if(splitName.back()=="gz"){
+    if(splitName.back()=="sdf"){
+    }
+    else if(splitName.back()=="gz"){
+#ifndef RDK_NOGZIP
       strm->push(io::gzip_decompressor());
-    } else if(splitName.back()=="bz"){
+#else
+      throw_value_error("gzip support not enabled");
+#endif      
+    }
+    else if(splitName.back()=="bz2"){
+#ifndef RDK_NOBZIP2
       strm->push(io::bzip2_decompressor());
-    } else if(splitName.back()=="sdf"){
-    } else {
+#else
+      throw_value_error("bzip2 support not enabled");
+#endif
+    }
+    else {
       std::string errorTxt="Unrecognized extension: "+splitName.back();
       throw_value_error(errorTxt);
     }

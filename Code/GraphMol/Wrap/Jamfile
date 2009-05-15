@@ -29,7 +29,10 @@ python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cp
   ..//GraphMol
  ../../Geometry//RDGeometry
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
-   /boost/iostreams//boost_iostreams 
+   /boost/iostreams//boost_iostreams
+   :
+   # include either (or both) of these to disable inclusion of
+   # gzip or bzip2 support: #<define>RDK_NOGZIP #<define>RDK_NOBZIP2
   ;
 
 install pymod : rdchem rdmolops rdmolfiles 
