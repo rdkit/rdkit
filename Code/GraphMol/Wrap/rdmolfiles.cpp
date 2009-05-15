@@ -135,6 +135,7 @@ namespace RDKit{
 }
 
 // MolSupplier stuff
+void wrap_compressedsdsupplier();
 void wrap_sdsupplier();
 void wrap_tdtsupplier();
 void wrap_smisupplier();
@@ -447,6 +448,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   /********************************************************
    * MolSupplier stuff
    *******************************************************/
+  wrap_compressedsdsupplier();
   wrap_sdsupplier();
   wrap_tdtsupplier();
   wrap_smisupplier();

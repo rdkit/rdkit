@@ -1882,6 +1882,32 @@ CAS<~>
     self.failUnlessEqual(atomCounts,[3,6,3,3])
 
 
+  def test56LazySDMolSupplier(self) :
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    sdSup = Chem.CompressedSDMolSupplier(fileN)
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+            "192", "203", "210", "211", "213", "220", "229", "256"]
+
+    chgs192 = {8:1, 11:1, 15:-1, 18:-1, 20:1, 21:1, 23:-1, 25:-1} 
+    i = 0
+    for mol in sdSup :
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+      if (mol.GetProp("_Name") == "192") :
+        # test parsed charges on one of the molecules
+        for id in chgs192.keys() :
+          self.failUnless(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
+    self.failUnlessEqual(i,16)
+          
+    sdSup = Chem.CompressedSDMolSupplier(fileN)
+    ns = [mol.GetProp("_Name") for mol in sdSup]
+    self.failUnless(ns == molNames)
+
+    sdSup = Chem.CompressedSDMolSupplier(fileN, 0)
+    for mol in sdSup :
+      self.failUnless(not mol.HasProp("numArom"))
     
 if __name__ == '__main__':
   unittest.main()
