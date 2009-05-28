@@ -1756,12 +1756,106 @@ void testMolFileAtomValues(){
 }
 
 
+void testMolFileAtomQueries(){
+  BOOST_LOG(rdInfoLog) << "testing handling of A, Q, and * in mol files" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/query_star.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    RWMol *m2;
+    MatchVectType mv;
+    std::string smi;
+
+    smi = "[H]c1ccccc1";
+    m2 = SmilesToMol(smi,false,false);
+    MolOps::sanitizeMol(*m2);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==7);
+    delete m2;
+  
+    smi = "Cc1ccccc1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==7);
+    delete m2;
+
+    smi = "Clc1ccccc1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==7);
+    delete m2;
+
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/query_A.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    RWMol *m2;
+    MatchVectType mv;
+    std::string smi;
+
+    smi = "[H]c1ccccc1";
+    m2 = SmilesToMol(smi,false,false);
+    MolOps::sanitizeMol(*m2);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+    delete m2;
+  
+    smi = "Cc1ccccc1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==7);
+    delete m2;
+
+    smi = "Clc1ccccc1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==7);
+    delete m2;
+
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/query_Q.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    RWMol *m2;
+    MatchVectType mv;
+    std::string smi;
+
+    smi = "[H]c1ccccc1";
+    m2 = SmilesToMol(smi,false,false);
+    MolOps::sanitizeMol(*m2);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+    delete m2;
+  
+    smi = "Cc1ccccc1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+    delete m2;
+
+    smi = "Clc1ccccc1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==7);
+    delete m2;
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 1
+
   test1();
   test2();
   test4();
@@ -1771,7 +1865,6 @@ int main(int argc,char *argv[]){
   testIssue148();
   test7();
   test8();
-#endif
   testIssue180();
   testIssue264();
   testIssue399();
@@ -1784,6 +1877,7 @@ int main(int argc,char *argv[]){
   testMolFileRBCQueries();
   testMolFileUnsaturationQueries();
   testMolFileQueryToSmarts();
+
   testMissingFiles();
   testIssue1965035();
   testRadicals();
@@ -1792,6 +1886,9 @@ int main(int argc,char *argv[]){
   testIssue2692246();
   testKekulizationSkip();
   testMolFileAtomValues();
+
+  testMolFileAtomQueries();
+
   //testCrash();
   return 0;
 }

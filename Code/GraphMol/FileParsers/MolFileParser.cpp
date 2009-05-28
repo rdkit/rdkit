@@ -599,6 +599,12 @@ namespace RDKit{
     std::string symb;
     int massDiff,chg,hCount;
 
+    if(text.size()<34){
+      std::ostringstream errout;
+      errout << "Atom line too short: '"<<text<<"'";
+      throw FileParseException(errout.str()) ;
+    }
+
     try {
       pos.x = toDouble(text.substr(0,10));
       pos.y = toDouble(text.substr(10,10));
@@ -649,9 +655,22 @@ namespace RDKit{
     if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
        || symb=="R" || symb=="R#" || (symb>="R0" && symb<="R9") ){
       if(symb=="A"||symb=="Q"||symb=="*"){
-        // according to the MDL spec, these match anything 
+
         QueryAtom *query=new QueryAtom(0);
-        query->setQuery(makeAtomNullQuery());
+        if(symb=="*"){
+          // according to the MDL spec, these match anything
+          query->setQuery(makeAtomNullQuery());
+        } else if(symb=="Q"){
+          ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
+          q->setDescription("AtomOr");
+          q->setNegation(true);
+          q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(6)));
+          q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(1)));
+          query->setQuery(q);
+        } else if(symb=="A"){
+          query->setQuery(makeAtomNumEqualsQuery(1));
+          query->getQuery()->setNegation(true);
+        }
         delete res;
         res=query;  
         // queries have no implicit Hs:
@@ -773,6 +792,13 @@ namespace RDKit{
   Bond *ParseMolFileBondLine(const std::string &text){
     int idx1,idx2,bType,stereo;
     int spos = 0;
+
+    if(text.size()<9){
+      std::ostringstream errout;
+      errout << "Bond line too short: '"<<text<<"'";
+      throw FileParseException(errout.str()) ;
+    }
+
     try {
       idx1 = toInt(text.substr(spos,3));
       spos += 3;
