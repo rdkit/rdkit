@@ -95,7 +95,8 @@ namespace RDKit{
     }
 
     RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
-    QueryAtom a;
+    QueryAtom a(*(mol->getAtomWithIdx(idx)));
+
     ATOM_OR_QUERY *q = new ATOM_OR_QUERY;
     q->setDescription("AtomOr");
     
@@ -136,6 +137,7 @@ namespace RDKit{
       }
       RANGE_CHECK(0,atNum,200);  // goofy!
       q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumEqualsQuery(atNum)));
+      if(!i) a.setAtomicNum(atNum);
     }
     
     a.setQuery(q);
@@ -322,7 +324,8 @@ namespace RDKit{
               throw FileParseException(errout.str()) ;
           }
           if(!atom->hasQuery()){
-            QueryAtom a(atom->getAtomicNum());
+            QueryAtom a(*(mol->getAtomWithIdx(aid-1)));
+            a.setAtomicNum(mol->getAtomWithIdx(aid-1)->getAtomicNum());
             mol->replaceAtom(aid-1,&a);           
             atom = mol->getAtomWithIdx(aid-1);
           }
@@ -435,7 +438,7 @@ namespace RDKit{
               throw FileParseException(errout.str()) ;
           }
           if(!atom->hasQuery()){
-            QueryAtom a(atom->getAtomicNum());
+            QueryAtom a(*(mol->getAtomWithIdx(aid-1)));
             mol->replaceAtom(aid-1,&a);           
             atom = mol->getAtomWithIdx(aid-1);
           }
@@ -452,6 +455,11 @@ namespace RDKit{
   }
 
   void ParseNewAtomList(RWMol *mol,const std::string &text){
+    if(text.size()<15){
+      std::ostringstream errout;
+      errout << "Atom list line too short: '"<<text<<"'";
+      throw FileParseException(errout.str()) ;
+    }
     PRECONDITION(mol,"bad mol");
     PRECONDITION(text.substr(0,6)==std::string("M  ALS"),"bad atom list line");
     
@@ -478,14 +486,20 @@ namespace RDKit{
     }
 
     ASSERT_INVARIANT(nQueries>0,"no queries provided");
-    
-    for(int i=0;i<nQueries;i++){
-      int pos = 16+i*4;
+    for(unsigned int i=0;i<static_cast<unsigned int>(nQueries);i++){
+      unsigned int pos = 16+i*4;
+      if(text.size()<pos+4){
+        std::ostringstream errout;
+        errout << "Atom list line too short: '"<<text<<"'";
+        throw FileParseException(errout.str()) ;
+      }
+
       std::string atSymb = text.substr(pos,4);
       atSymb.erase(atSymb.find(" "),atSymb.size());
       int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
       if(!i){
-        a = new QueryAtom(atNum);
+        a = new QueryAtom(*(mol->getAtomWithIdx(idx)));
+        a->setAtomicNum(atNum);
       } else {
         a->expandQuery(makeAtomNumEqualsQuery(atNum),Queries::COMPOSITE_OR,true);
       }
@@ -548,13 +562,13 @@ namespace RDKit{
         errout << "Attempt to set R group label on nonexistent atom " << atIdx;
         throw FileParseException(errout.str()) ;
       }
-      QueryAtom atom(0);
-      atom.setProp("_MolFileRLabel",rLabel);
+      QueryAtom qatom(*(mol->getAtomWithIdx(atIdx)));
+      qatom.setProp("_MolFileRLabel",rLabel);
       if(rLabel>0 && rLabel<10){
-        atom.setMass(double(rLabel));
+        qatom.setMass(double(rLabel));
       }
-      atom.setQuery(makeAtomNullQuery());
-      mol->replaceAtom(atIdx,&atom); 
+      qatom.setQuery(makeAtomNullQuery());
+      mol->replaceAtom(atIdx,&qatom); 
     }
   };
   
@@ -655,7 +669,6 @@ namespace RDKit{
     if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
        || symb=="R" || symb=="R#" || (symb>="R0" && symb<="R9") ){
       if(symb=="A"||symb=="Q"||symb=="*"){
-
         QueryAtom *query=new QueryAtom(0);
         if(symb=="*"){
           // according to the MDL spec, these match anything

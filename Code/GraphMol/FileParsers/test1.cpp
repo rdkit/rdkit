@@ -1845,6 +1845,31 @@ void testMolFileAtomQueries(){
     TEST_ASSERT(SubstructMatch(*m2,*m,mv));
     TEST_ASSERT(mv.size()==7);
     delete m2;
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+void testListsAndValues(){
+  BOOST_LOG(rdInfoLog) << "testing handling of mol files with atom lists and values" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/lists_plus_values.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    std::string value;
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("molFileValue"));
+    m->getAtomWithIdx(1)->getProp("molFileValue",value);
+    TEST_ASSERT(value=="halogen");
+    
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getQuery()->getDescription()=="AtomOr");
+    
 
     delete m;
   }
@@ -1877,7 +1902,6 @@ int main(int argc,char *argv[]){
   testMolFileRBCQueries();
   testMolFileUnsaturationQueries();
   testMolFileQueryToSmarts();
-
   testMissingFiles();
   testIssue1965035();
   testRadicals();
@@ -1886,9 +1910,9 @@ int main(int argc,char *argv[]){
   testIssue2692246();
   testKekulizationSkip();
   testMolFileAtomValues();
-
   testMolFileAtomQueries();
-
+  testListsAndValues();
   //testCrash();
+
   return 0;
 }
