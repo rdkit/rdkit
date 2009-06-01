@@ -82,6 +82,7 @@ class TestCase(unittest.TestCase) :
     self.failUnless(rxn)
     self.failUnless(rxn.GetNumReactantTemplates()==2)
     self.failUnless(rxn.GetNumProductTemplates()==1)
+    self.failUnless(rxn.GetImplicitPropertiesFlag())
     
     reacts = (Chem.MolFromSmiles('C(=O)O'),Chem.MolFromSmiles('N'))
     ps = rxn.RunReactants(reacts)
@@ -99,6 +100,7 @@ class TestCase(unittest.TestCase) :
     fileN = os.path.join(self.dataDir,'AmideBond.rxn')
     rxn = rdChemReactions.ReactionFromRxnFile(fileN) 
     self.failUnless(rxn)
+    self.failIf(rxn.GetImplicitPropertiesFlag())
 
     self.failUnless(rxn.GetNumReactantTemplates()==2)
     self.failUnless(rxn.GetNumProductTemplates()==1)
@@ -303,6 +305,34 @@ M  END
       self.failUnlessEqual(len(p),1)
       self.failUnlessEqual(p[0].GetNumAtoms(),3)
       self.failUnlessEqual(p[0].GetNumBonds(),2)
+
+  def testImplicitProperties(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]O>>[C:1]')
+    mol = Chem.MolFromSmiles('CCO')
+    products = rxn.RunReactants([mol])
+    self.failUnlessEqual(len(products),1)
+    for p in products:
+      self.failUnlessEqual(len(p),1)
+      self.failUnlessEqual(Chem.MolToSmiles(p[0]),'CC')
+    mol2 = Chem.MolFromSmiles('C[CH-]O')
+    products = rxn.RunReactants([mol2])
+    self.failUnlessEqual(len(products),1)
+    for p in products:
+      self.failUnlessEqual(len(p),1)
+      self.failUnlessEqual(Chem.MolToSmiles(p[0]),'[CH2-]C')
+
+    rxn.SetImplicitPropertiesFlag(False)
+    products = rxn.RunReactants([mol])
+    self.failUnlessEqual(len(products),1)
+    for p in products:
+      self.failUnlessEqual(len(p),1)
+      self.failUnlessEqual(Chem.MolToSmiles(p[0]),'CC')
+    products = rxn.RunReactants([mol2])
+    self.failUnlessEqual(len(products),1)
+    for p in products:
+      self.failUnlessEqual(len(p),1)
+      self.failUnlessEqual(Chem.MolToSmiles(p[0]),'CC')
+
 
 
 if __name__ == '__main__':

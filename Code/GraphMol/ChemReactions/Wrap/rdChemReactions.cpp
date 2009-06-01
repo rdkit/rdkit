@@ -129,6 +129,10 @@ Sample Usage:\n\
     .def("Validate",&RDKit::ValidateReaction,
          (python::arg("self"),python::arg("silent")=false),
          "checks the reaction for potential problems, returns (numWarnings,numErrors)")
+    .def("SetImplicitPropertiesFlag",&RDKit::ChemicalReaction::setImplicitPropertiesFlag,
+         "toggles whether or not the reaction uses implicit properties")
+    .def("GetImplicitPropertiesFlag",&RDKit::ChemicalReaction::getImplicitPropertiesFlag,
+         "returns whether or not the reaction uses implicit properties")
   ;
 
   def("ReactionFromSmarts",RDKit::RxnSmartsToChemicalReaction,
