@@ -9,6 +9,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -630,6 +631,34 @@ void testRadicals(){
 }
 
 
+void testIssue2788233(bool doLong=0){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 2788233." << std::endl;
+
+  {
+    std::string fName = getenv("RDBASE");
+    fName += "/Code/GraphMol/test_data/Issue2788233.mol";
+  
+    RWMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    TEST_ASSERT(m->getNumBonds()==0);
+
+    std::string pickle;
+    MolPickler::pickleMol(*m,pickle);
+    RWMol *m2 = new RWMol();
+    MolPickler::molFromPickle(pickle,*m2);
+    TEST_ASSERT(m2->getNumAtoms()==2);
+    TEST_ASSERT(m2->getNumBonds()==0);
+
+    delete m;
+    delete m2;
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong=false;
@@ -648,10 +677,11 @@ int main(int argc, char *argv[]) {
   testIssue164();
   testIssue219();
   testIssue220();
-#endif
   //timeTest(doLong);
   testQueries();
   testRadicals();
+#endif
+  testIssue2788233();
   
   return 0;
 

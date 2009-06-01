@@ -19,7 +19,7 @@ using boost::uint32_t;
 namespace RDKit{
 
   const int32_t MolPickler::versionMajor=6;
-  const int32_t MolPickler::versionMinor=1;
+  const int32_t MolPickler::versionMinor=2;
   const int32_t MolPickler::versionPatch=0;
   const int32_t MolPickler::endianId=0xDEADBEEF;
 
@@ -492,7 +492,7 @@ namespace RDKit{
     if(majorVersion>versionMajor||(majorVersion==versionMajor&&minorVersion>versionMinor)){
       BOOST_LOG(rdWarningLog)<<"Depickling from a version number ("<<majorVersion<<"." << minorVersion<<")" << "that is higher than our version ("<<versionMajor<<"."<<versionMinor<<").\nThis probably won't work."<<std::endl;
     }
-    majorVersion=1000*majorVersion+minorVersion;
+    majorVersion=1000*majorVersion+minorVersion*10+patchVersion;
     if(majorVersion==1){
       _depickleV1(ss,mol);
     } else {
@@ -712,6 +712,7 @@ namespace RDKit{
     if(atom->getIsAromatic()) flags |= 0x1<<6;
     if(atom->getNoImplicit()) flags |= 0x1<<5;
     if(atom->hasQuery()) flags |= 0x1<<4;
+    if(atom->hasProp("molAtomMapNumber")) flags |= 0x1<<3;
     streamWrite(ss,flags);
     
     if(!atom->hasQuery()){
@@ -830,6 +831,11 @@ namespace RDKit{
     atom->setIsAromatic(flags & 0x1<<6);
     atom->setNoImplicit(flags & 0x1<<5);
 
+    bool hasAtomMap=0;
+    if(version>=6020){
+      hasAtomMap=flags & 0x1<<3;
+    }
+
     // are coordinates present?
     if(flags & 0x1<<7){
       streamRead(ss,x);
@@ -876,16 +882,28 @@ namespace RDKit{
     }
 
     if(version>5000){
-      unsigned int sPos=ss.tellg();
-      Tags tag;
-      streamRead(ss,tag);
-      if(tag==ATOM_MAPNUMBER){
+      if(version<6020){
+        unsigned int sPos=ss.tellg();
+        Tags tag;
+        streamRead(ss,tag);
+        if(tag==ATOM_MAPNUMBER){
+          int tmpInt;
+          streamRead(ss,tmpChar);
+          tmpInt=tmpChar;
+          atom->setProp("molAtomMapNumber",tmpInt);
+        } else {
+          ss.seekg(sPos);
+        }
+      } else if(hasAtomMap) {
+        Tags tag;
+        streamRead(ss,tag);
+        if(tag != ATOM_MAPNUMBER){
+          throw MolPicklerException("Bad pickle format: ATOM_MAPNUMBER tag not found.");
+        }
         int tmpInt;
         streamRead(ss,tmpChar);
         tmpInt=tmpChar;
         atom->setProp("molAtomMapNumber",tmpInt);
-      } else {
-        ss.seekg(sPos);
       }
     }
 
