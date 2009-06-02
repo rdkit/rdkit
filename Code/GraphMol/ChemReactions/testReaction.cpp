@@ -2181,6 +2181,36 @@ void test23Pickling(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test24AtomFlags(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing preservation of atom flags from rxn files." << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  unsigned int nWarn,nError;
+
+  {
+  
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/atomflags.rxn";
+    ChemicalReaction *rxn = RxnFileToChemicalReaction(fName); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+    TEST_ASSERT(rxn->beginReactantTemplates()->get()->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+    TEST_ASSERT((++(rxn->beginReactantTemplates()))->get()->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+    TEST_ASSERT((++(rxn->beginReactantTemplates()))->get()->getAtomWithIdx(1)->hasProp("molAtomMapNumber"));
+    
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 int main() { 
@@ -2214,6 +2244,7 @@ int main() {
   test21Issue2540021();
   test22DotsToRemoveBonds();
   test23Pickling();
+  test24AtomFlags();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

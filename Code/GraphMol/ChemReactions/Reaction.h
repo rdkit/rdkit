@@ -42,7 +42,6 @@ namespace RDKit{
   //! used to indicate an error in the chemical reaction engine
   class ChemicalReactionException : public std::exception {
   public:
-
     //! construct with an error message
     explicit ChemicalReactionException(const char *msg) : _msg(msg) {};
     //! construct with an error message

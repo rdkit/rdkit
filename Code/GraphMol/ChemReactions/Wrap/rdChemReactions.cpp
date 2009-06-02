@@ -104,6 +104,25 @@ namespace RDKit {
     return python::make_tuple(numWarn,numError);
   }
 
+  ROMol * GetProductTemplate(const ChemicalReaction *self,unsigned int which){
+    if(which>=self->getNumProductTemplates()){
+      throw_value_error("requested template index too high");
+    }
+    MOL_SPTR_VECT::const_iterator iter=self->beginProductTemplates();
+    iter += which;
+    ROMol *res = const_cast<ROMol *>(iter->get());
+    return res;
+  }
+  ROMol * GetReactantTemplate(const ChemicalReaction *self,unsigned int which){
+    if(which>=self->getNumReactantTemplates()){
+      throw_value_error("requested template index too high");
+    }
+    MOL_SPTR_VECT::const_iterator iter=self->beginReactantTemplates();
+    iter += which;
+    ROMol *res = const_cast<ROMol *>(iter->get());
+    return res;
+  }
+
 }
 
 BOOST_PYTHON_MODULE(rdChemReactions) {
@@ -150,10 +169,20 @@ Sample Usage:\n\
     .def("Validate",&RDKit::ValidateReaction,
          (python::arg("self"),python::arg("silent")=false),
          "checks the reaction for potential problems, returns (numWarnings,numErrors)")
-    .def("SetImplicitPropertiesFlag",&RDKit::ChemicalReaction::setImplicitPropertiesFlag,
-         "toggles whether or not the reaction uses implicit properties")
-    .def("GetImplicitPropertiesFlag",&RDKit::ChemicalReaction::getImplicitPropertiesFlag,
-         "returns whether or not the reaction uses implicit properties")
+    .def("GetProductTemplate",&RDKit::GetProductTemplate,
+         (python::arg("self"),python::arg("which")),
+         python::return_value_policy<python::reference_existing_object>(),
+         "returns one of our product templates")
+    .def("GetReactantTemplate",&RDKit::GetReactantTemplate,
+         (python::arg("self"),python::arg("which")),
+         python::return_value_policy<python::reference_existing_object>(),
+         "returns one of our reactant templates")
+    .def("_setImplicitPropertiesFlag",&RDKit::ChemicalReaction::setImplicitPropertiesFlag,
+         (python::arg("self"),python::arg("val")),
+         "EXPERT USER: indicates that the reaction can have implicit properties")
+    .def("_getImplicitPropertiesFlag",&RDKit::ChemicalReaction::getImplicitPropertiesFlag,
+         (python::arg("self")),
+         "EXPERT USER: returns whether or not the reaction can have implicit properties")
     .def("ToBinary",RDKit::ReactionToBinary,
          "Returns a binary string representation of the reaction.\n")
     // enable pickle support
