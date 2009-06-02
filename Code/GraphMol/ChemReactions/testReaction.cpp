@@ -38,6 +38,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
 
 using namespace RDKit;
 
@@ -2073,6 +2074,113 @@ void test22DotsToRemoveBonds(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test23Pickling(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing pickling and depickling reactions." << std::endl;
+
+  {
+    std::string smi;
+    ChemicalReaction *rxn; 
+    MOL_SPTR_VECT reacts;
+    std::vector<MOL_SPTR_VECT> prods;
+
+    smi="[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1";
+    rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+
+    std::string pkl;
+    ReactionPickler::pickleReaction(rxn,pkl);
+    delete rxn;
+    rxn = new ChemicalReaction();
+    ReactionPickler::reactionFromPickle(pkl,rxn);
+    rxn->initReactantMatchers();
+    
+    reacts.clear();
+    smi = "C1ON1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+
+    ROMOL_SPTR prod = prods[0][0];
+    MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
+    TEST_ASSERT(prod->getNumAtoms()==3);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum()==6);
+    TEST_ASSERT(prod->getAtomWithIdx(1)->getAtomicNum()==8);
+    TEST_ASSERT(prod->getAtomWithIdx(2)->getAtomicNum()==7);
+    TEST_ASSERT(prod->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(prod->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(!prod->getBondBetweenAtoms(1,2));
+
+    // test construction from a pickle:
+    delete rxn;
+    rxn = new ChemicalReaction(pkl);
+    rxn->initReactantMatchers();
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    prod = prods[0][0];
+    MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
+    TEST_ASSERT(prod->getNumAtoms()==3);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum()==6);
+    TEST_ASSERT(prod->getAtomWithIdx(1)->getAtomicNum()==8);
+    TEST_ASSERT(prod->getAtomWithIdx(2)->getAtomicNum()==7);
+    TEST_ASSERT(prod->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(prod->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(!prod->getBondBetweenAtoms(1,2));
+    
+    delete rxn;
+  }
+
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+    std::string smi;
+    ChemicalReaction *rxn;
+    MOL_SPTR_VECT reacts;
+    std::vector<MOL_SPTR_VECT> prods;
+
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/cyclization1.rxn";
+    rxn = RxnFileToChemicalReaction(fName); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+    std::string pkl;
+    ReactionPickler::pickleReaction(rxn,pkl);
+    delete rxn;
+    rxn = new ChemicalReaction();
+    ReactionPickler::reactionFromPickle(pkl,rxn);
+    rxn->initReactantMatchers();
+
+    smi = "OC(=O)CN";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "OC(=O)CN";    
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+  
+    rxn->initReactantMatchers();
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
+    TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 int main() { 
@@ -2105,6 +2213,7 @@ int main() {
 #endif
   test21Issue2540021();
   test22DotsToRemoveBonds();
+  test23Pickling();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

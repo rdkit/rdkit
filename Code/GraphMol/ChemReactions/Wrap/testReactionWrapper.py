@@ -36,7 +36,7 @@ from rdkit import Geometry
 from rdkit import RDConfig
 import unittest
 import os,sys
-import cPickle as pickle
+import cPickle
 
 def feq(v1,v2,tol2=1e-4):
   return abs(v1-v2)<=tol2
@@ -285,8 +285,7 @@ M  END
     Chem.SanitizeMol(ps[0][0])
     self.failUnless(ps[0][0].GetAtomWithIdx(1).GetMass()==3);
 
-        
-  def testAromaticityTransfer(self):
+  def test9AromaticityTransfer(self):
     # this was issue 2664121
     mol = Chem.MolFromSmiles('c1ccc(C2C3(Cc4c(cccc4)C2)CCCC3)cc1')
     rxn = rdChemReactions.ReactionFromSmarts('[A:1]1~[*:2]~[*:3]~[*:4]~[*:5]~[A:6]-;@1>>[*:1]~[*:2]~[*:3]~[*:4]~[*:5]~[*:6]')
@@ -296,7 +295,7 @@ M  END
       self.failUnlessEqual(len(p),1)
       Chem.SanitizeMol(p[0])
 
-  def testDotSeparation(self):
+  def test10DotSeparation(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1')
     mol = Chem.MolFromSmiles('C1ON1')
     products = rxn.RunReactants([mol])
@@ -306,7 +305,7 @@ M  END
       self.failUnlessEqual(p[0].GetNumAtoms(),3)
       self.failUnlessEqual(p[0].GetNumBonds(),2)
 
-  def testImplicitProperties(self):
+  def test11ImplicitProperties(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]O>>[C:1]')
     mol = Chem.MolFromSmiles('CCO')
     products = rxn.RunReactants([mol])
@@ -334,6 +333,25 @@ M  END
       self.failUnlessEqual(Chem.MolToSmiles(p[0]),'CC')
 
 
+  def test12Pickles(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>[C:1]1[O:2].[N:3]1')
+    pkl = cPickle.dumps(rxn)
+    rxn = cPickle.loads(pkl)
+    mol = Chem.MolFromSmiles('C1ON1')
+    products = rxn.RunReactants([mol])
+    self.failUnlessEqual(len(products),1)
+    for p in products:
+      self.failUnlessEqual(len(p),1)
+      self.failUnlessEqual(p[0].GetNumAtoms(),3)
+      self.failUnlessEqual(p[0].GetNumBonds(),2)
+
+    rxn = rdChemReactions.ChemicalReaction(rxn.ToBinary())
+    products = rxn.RunReactants([mol])
+    self.failUnlessEqual(len(products),1)
+    for p in products:
+      self.failUnlessEqual(len(p),1)
+      self.failUnlessEqual(p[0].GetNumAtoms(),3)
+      self.failUnlessEqual(p[0].GetNumBonds(),2)
 
 if __name__ == '__main__':
   unittest.main()

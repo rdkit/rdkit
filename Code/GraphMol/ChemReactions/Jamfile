@@ -3,7 +3,7 @@ import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 
 
-lib ChemReactions : Reaction.cpp MDLParser.cpp DaylightParser.cpp
+lib ChemReactions : Reaction.cpp MDLParser.cpp DaylightParser.cpp ReactionPickler.cpp
 ..//GraphMol ../FileParsers//FileParsers ../SmilesParse//SmilesParse ../Substruct//Substruct ../../RDGeneral//RDGeneral
 : <toolset>msvc:<link>static ;
 install lib-install : ChemReactions : <location>$(RDBASE)/bin ;

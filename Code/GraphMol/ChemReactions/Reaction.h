@@ -37,10 +37,12 @@
 #include <vector>
 
 namespace RDKit{
+  class ReactionPickler;
      
   //! used to indicate an error in the chemical reaction engine
   class ChemicalReactionException : public std::exception {
   public:
+
     //! construct with an error message
     explicit ChemicalReactionException(const char *msg) : _msg(msg) {};
     //! construct with an error message
@@ -93,6 +95,9 @@ namespace RDKit{
         m_reactantTemplates=other.m_reactantTemplates;
         m_productTemplates=other.m_productTemplates;
     }
+    //! construct a reaction from a pickle string
+    ChemicalReaction(const std::string &binStr);
+
     //! Adds a new reactant template
     /*!
       \return the number of reactants

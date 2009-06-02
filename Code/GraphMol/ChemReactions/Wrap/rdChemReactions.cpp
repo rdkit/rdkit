@@ -31,6 +31,7 @@
 //
 #include <boost/python.hpp>
 #include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 
 #include <RDBoost/Wrap.h>
@@ -53,6 +54,24 @@ void rdChemicalReactionExceptionTranslator(RDKit::ChemicalReactionException cons
 }
 
 namespace RDKit {
+  std::string ReactionToBinary(const ChemicalReaction &self){
+    std::string res;
+    ReactionPickler::pickleReaction(self,res);
+    return res;
+  }
+  //
+  // allows reactions to be pickled.
+  //
+  struct reaction_pickle_suite : python::pickle_suite
+  {
+    static python::tuple
+    getinitargs(const ChemicalReaction & self)
+    {
+      return python::make_tuple(ReactionToBinary(self));
+    };
+  };
+
+
   template <typename T>
   PyObject* RunReactants(ChemicalReaction *self,T reactants){
     if(!self->isInitialized()){
@@ -109,7 +128,9 @@ Sample Usage:\n\
 'CN(C)C=O'\n\
 \n\
 ";
-  python::class_<RDKit::ChemicalReaction>("ChemicalReaction",docString.c_str())
+  python::class_<RDKit::ChemicalReaction>("ChemicalReaction",docString.c_str(),
+                                          python::init<>("Constructor, takes no arguments"))
+    .def(python::init<const std::string &>())
     .def("GetNumReactantTemplates",&RDKit::ChemicalReaction::getNumReactantTemplates,
          "returns the number of reactants this reaction expects")
     .def("GetNumProductTemplates",&RDKit::ChemicalReaction::getNumProductTemplates,
@@ -133,6 +154,11 @@ Sample Usage:\n\
          "toggles whether or not the reaction uses implicit properties")
     .def("GetImplicitPropertiesFlag",&RDKit::ChemicalReaction::getImplicitPropertiesFlag,
          "returns whether or not the reaction uses implicit properties")
+    .def("ToBinary",RDKit::ReactionToBinary,
+         "Returns a binary string representation of the reaction.\n")
+    // enable pickle support
+    .def_pickle(RDKit::reaction_pickle_suite())
+
   ;
 
   def("ReactionFromSmarts",RDKit::RxnSmartsToChemicalReaction,

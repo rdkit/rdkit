@@ -31,6 +31,7 @@
 //
 
 #include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/QueryOps.h>
 #include <boost/dynamic_bitset.hpp>
@@ -559,6 +560,10 @@ namespace RDKit {
     
     return productMols;
   } // end of ChemicalReaction::runReactants()
+
+  ChemicalReaction::ChemicalReaction(const std::string &pickle) {
+    ReactionPickler::reactionFromPickle(pickle,this);
+  }
   
   void ChemicalReaction::initReactantMatchers() {
     unsigned int nWarnings,nErrors;
