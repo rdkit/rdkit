@@ -83,6 +83,12 @@ namespace {
       }
     }
 
+    if(targetSize*RDKit::Descriptors::AtomPairs::codeSize>64){
+      std::ostringstream errout;
+      errout << "Maximum supported topological torsion path length is " << 64/RDKit::Descriptors::AtomPairs::codeSize<<std::endl;
+      throw_value_error(errout.str());
+    }
+    
     RDKit::SparseIntVect<boost::int64_t> *res;
     res = RDKit::Descriptors::AtomPairs::getTopologicalTorsionFingerprint(mol,targetSize,vect);
     if(vect) delete vect;

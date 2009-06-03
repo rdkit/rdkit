@@ -67,6 +67,10 @@ class TestCase(unittest.TestCase) :
     self.failUnless(fp.GetTotalVal()==1)
     fp = rdMD.GetTopologicalTorsionFingerprint(mol,3)
     self.failUnless(fp.GetTotalVal()==2)
+
+    mol = Chem.MolFromSmiles("CCCCCCCCCCC");
+    fp = rdMD.GetTopologicalTorsionFingerprint(mol,7)
+    self.failUnlessRaises(ValueError,lambda : rdMD.GetTopologicalTorsionFingerprint(mol,8))
     
   def testRootedTorsions(self):
     m = Chem.MolFromSmiles('Oc1ccccc1')
