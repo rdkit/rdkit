@@ -153,6 +153,31 @@ class TestCase(unittest.TestCase) :
     amw = rdMD._CalcMolWt(mol2,True);
     self.failUnless(feq(amw,12.011,.001));
 
+  def testPairValues(self):
+    import base64
+    testD=(('CCCO','AQAAAAQAAAAAAIAABgAAACGECAABAAAAIoQIAAEAAABBhAgAAQAAACNEGAABAAAAQUQYAAEAAABC\nRBgAAQAAAA==\n'),
+           ('CNc1ccco1','AQAAAAQAAAAAAIAAEAAAACOECgABAAAAJIQKAAIAAABBhQoAAgAAAEKFCgABAAAAIsQKAAEAAABB\nxQoAAQAAAELFCgACAAAAIYQQAAEAAABChRAAAQAAAEOFEAACAAAAYYUQAAEAAAAjhBoAAQAAAEGF\nGgABAAAAQoUaAAIAAABhhRoAAQAAAEKIGgABAAAA\n'),
+           )
+    for smi,txt in testD:
+      pkl = base64.decodestring(txt)
+      fp = rdMD.GetAtomPairFingerprint(Chem.MolFromSmiles(smi))
+      fp2 = DataStructs.IntSparseIntVect(pkl)
+      self.failUnlessEqual(DataStructs.DiceSimilarity(fp,fp2),1.0)
+      self.failUnlessEqual(fp,fp2)
+           
+  def testTorsionValues(self):
+    import base64
+    testD=(('CCCO','AQAAAAgAAAD/////DwAAAAEAAAAAAAAAIECAAAMAAAABAAAA\n'),
+           ('CNc1ccco1','AQAAAAgAAAD/////DwAAAAkAAAAAAAAAIICkSAEAAAABAAAAKVKgSQEAAAABAAAAKVCgUAEAAAAB\nAAAAKVCgUQEAAAABAAAAKVCkCAIAAAABAAAAKdCkCAIAAAABAAAAKVCgSAMAAAABAAAAKVCkSAMA\nAAABAAAAIICkSAMAAAABAAAA\n'),
+           )
+    for smi,txt in testD:
+      pkl = base64.decodestring(txt)
+      fp = rdMD.GetTopologicalTorsionFingerprint(Chem.MolFromSmiles(smi))
+      fp2 = DataStructs.LongSparseIntVect(pkl)
+      self.failUnlessEqual(DataStructs.DiceSimilarity(fp,fp2),1.0)
+      self.failUnlessEqual(fp,fp2)
+           
+    
 
 if __name__ == '__main__':
   unittest.main()
