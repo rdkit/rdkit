@@ -284,6 +284,28 @@ void testAtomPairs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testAtomPairs2(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Atom Pairs part 2." << std::endl;
+
+  {
+    ROMol *mol;
+    SparseIntVect<boost::int32_t> *fp;
+
+    mol = SmilesToMol("CCC");
+    fp=AtomPairs::getAtomPairFingerprint(*mol,1,2);
+    TEST_ASSERT(fp->getTotalVal()==3);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+  
+    delete fp;
+    fp=AtomPairs::getAtomPairFingerprint(*mol,2,2);
+    TEST_ASSERT(fp->getTotalVal()==1);
+    TEST_ASSERT(fp->getNonzeroElements().size()==1);
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testHashedAtomPairs(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test Hashed Atom Pairs." << std::endl;
@@ -291,18 +313,37 @@ void testHashedAtomPairs(){
   {
     ROMol *mol;
     mol = SmilesToMol("c1ccccc1");
-    ExplicitBitVect *fp1;
+    SparseIntVect<boost::int32_t> *fp1;
     fp1=AtomPairs::getHashedAtomPairFingerprint(*mol);
-    ExplicitBitVect *fp2;
+    SparseIntVect<boost::int32_t> *fp2;
     fp2=AtomPairs::getHashedAtomPairFingerprint(*mol);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
+    TEST_ASSERT(DiceSimilarity(*fp1,*fp2)==1.0);
     TEST_ASSERT(*fp1==*fp2);
 
     delete mol;
     delete fp2;
     mol = SmilesToMol("c1ccccn1");
     fp2=AtomPairs::getHashedAtomPairFingerprint(*mol);
-    RANGE_CHECK(0.0,TanimotoSimilarity(*fp1,*fp2),1.0);
+    RANGE_CHECK(0.0,DiceSimilarity(*fp1,*fp2),1.0);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+  }
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("c1ccccc1");
+    SparseIntVect<boost::int32_t> *fp1;
+    fp1=AtomPairs::getHashedAtomPairFingerprint(*mol,2048);
+    SparseIntVect<boost::int32_t> *fp2;
+    fp2=AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,3);
+    TEST_ASSERT(DiceSimilarity(*fp1,*fp2)==1.0);
+    TEST_ASSERT(*fp1==*fp2);
+
+    delete fp2;
+    fp2=AtomPairs::getHashedAtomPairFingerprint(*mol,2048,1,2);
+    RANGE_CHECK(0.0,DiceSimilarity(*fp1,*fp2),1.0);
 
     delete mol;
     delete fp1;
@@ -357,6 +398,58 @@ void testTorsions(){
   delete fp;
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testHashedTorsions(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Hashed torsions." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("c1ccccc1");
+    SparseIntVect<boost::int64_t> *fp1;
+    fp1=AtomPairs::getHashedTopologicalTorsionFingerprint(*mol);
+    SparseIntVect<boost::int64_t> *fp2;
+    fp2=AtomPairs::getHashedTopologicalTorsionFingerprint(*mol);
+    TEST_ASSERT(DiceSimilarity(*fp1,*fp2)==1.0);
+    TEST_ASSERT(*fp1==*fp2);
+
+    delete mol;
+    delete fp2;
+    mol = SmilesToMol("c1ccccn1");
+    fp2=AtomPairs::getHashedTopologicalTorsionFingerprint(*mol);
+    RANGE_CHECK(0.0,DiceSimilarity(*fp1,*fp2),1.0);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+  }
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("c1ccccc1");
+    SparseIntVect<boost::int64_t> *fp1;
+    fp1=AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,2048,6);
+    SparseIntVect<boost::int64_t> *fp2;
+    fp2=AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,2048,6);
+    TEST_ASSERT(DiceSimilarity(*fp1,*fp2)==1.0);
+    TEST_ASSERT(*fp1==*fp2);
+
+    delete mol;
+    delete fp2;
+    mol = SmilesToMol("c1ccccn1");
+    fp2=AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,2048,6);
+    RANGE_CHECK(0.0,DiceSimilarity(*fp1,*fp2),1.0);
+
+    delete mol;
+    delete fp1;
+    delete fp2;
+  }
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 
 
 void testBulkTorsions(){
@@ -483,11 +576,13 @@ int main(){
   test3();
   testAtomCodes();
   testAtomPairs();
+  testAtomPairs2();
   testTorsions();
   testBulkTorsions();
   testLabute();
 #endif
   testHashedAtomPairs();
+  testHashedTorsions();
   testRootedAtomPairs();
   testRootedTorsions();
 }

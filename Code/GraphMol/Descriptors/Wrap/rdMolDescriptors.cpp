@@ -47,7 +47,9 @@ namespace {
   }
 
   RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(const RDKit::ROMol &mol,
-                                                                python::object fromAtoms){
+                                                               unsigned int minLength,
+                                                               unsigned int maxLength,
+                                                               python::object fromAtoms){
     std::vector<boost::uint32_t> *vect=0;
     if(fromAtoms){
       vect = new std::vector<boost::uint32_t>;
@@ -62,7 +64,8 @@ namespace {
     }
 
     RDKit::SparseIntVect<boost::int32_t> *res;
-    res = RDKit::Descriptors::AtomPairs::getAtomPairFingerprint(mol,vect);
+    res = RDKit::Descriptors::AtomPairs::getAtomPairFingerprint(mol,minLength,maxLength,
+                                                                vect);
     if(vect) delete vect;
     return res;
   }
@@ -91,6 +94,28 @@ namespace {
     
     RDKit::SparseIntVect<boost::int64_t> *res;
     res = RDKit::Descriptors::AtomPairs::getTopologicalTorsionFingerprint(mol,targetSize,vect);
+    if(vect) delete vect;
+    return res;
+  }
+
+  RDKit::SparseIntVect<boost::int64_t> *GetHashedTopologicalTorsionFingerprint(const RDKit::ROMol &mol,
+                                                                               unsigned int nBits,
+                                                                         unsigned int targetSize,
+                                                                         python::object fromAtoms){
+    std::vector<boost::uint32_t> *vect=0;
+    if(fromAtoms){
+      vect = new std::vector<boost::uint32_t>;
+      unsigned int nFrom=python::extract<unsigned int>(fromAtoms.attr("__len__")());
+      for(unsigned int i=0;i<nFrom;++i){
+        boost::uint32_t v=python::extract<boost::uint32_t>(fromAtoms[i]);
+        if(v>=mol.getNumAtoms()){
+          throw_value_error("atom index specified that is larger than the number of atoms");
+        }
+        vect->push_back(v);
+      }
+    }
+    RDKit::SparseIntVect<boost::int64_t> *res;
+    res = RDKit::Descriptors::AtomPairs::getHashedTopologicalTorsionFingerprint(mol,nBits,targetSize,vect);
     if(vect) delete vect;
     return res;
   }
@@ -168,19 +193,32 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
               (python::arg("mol"),
+               python::arg("minLength")=1,
+               python::arg("maxLength")=RDKit::Descriptors::AtomPairs::maxPathLen-1,
                python::arg("fromAtoms")=python::list()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
   python::def("GetHashedAtomPairFingerprint",
-	      RDKit::Descriptors::AtomPairs::getHashedAtomPairFingerprint,
-	      (python::arg("mol"),python::arg("nBits")=2048),
+	      (RDKit::SparseIntVect<boost::int32_t> *(*)(const RDKit::ROMol&,unsigned int,unsigned int,unsigned int))RDKit::Descriptors::AtomPairs::getHashedAtomPairFingerprint,
+	      (python::arg("mol"),
+               python::arg("nBits")=2048,
+               python::arg("minLength")=1,
+               python::arg("maxLength")=RDKit::Descriptors::AtomPairs::maxPathLen-1),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   docString="Returns the topological-torsion fingerprint for a molecule as a LongIntSparseIntVect";
   python::def("GetTopologicalTorsionFingerprint",
 	      GetTopologicalTorsionFingerprint,
 	      (python::arg("mol"),python::arg("targetSize")=4,
+               python::arg("fromAtoms")=0),
+              docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+  python::def("GetHashedTopologicalTorsionFingerprint",
+	      GetHashedTopologicalTorsionFingerprint,
+	      (python::arg("mol"),
+               python::arg("nBits")=2048,
+               python::arg("targetSize")=4,
                python::arg("fromAtoms")=0),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());

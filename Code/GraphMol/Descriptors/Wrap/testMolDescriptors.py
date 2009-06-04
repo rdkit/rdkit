@@ -34,12 +34,31 @@ class TestCase(unittest.TestCase) :
     self.failUnless(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==\
                     0 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
 
+  def testAtomPairs(self):
+    m = Chem.MolFromSmiles('CCC')
+    fp1 = rdMD.GetAtomPairFingerprint(m)
+    fp2 = rdMD.GetAtomPairFingerprint(m,minLength=1,maxLength=2)
+    nz1 = fp1.GetNonzeroElements()
+    self.failUnlessEqual(len(nz1),2)
+    nz2 = fp2.GetNonzeroElements()
+    self.failUnlessEqual(len(nz2),2)
+
+    fp2 = rdMD.GetAtomPairFingerprint(m,minLength=1,maxLength=1)
+    nz2 = fp2.GetNonzeroElements()
+    self.failUnlessEqual(len(nz2),1)
+
   def testHashedAtomPairs(self):
     m = Chem.MolFromSmiles('c1ccccc1')
-    fp1 = rdMD.GetHashedAtomPairFingerprint(m)
+    fp1 = rdMD.GetHashedAtomPairFingerprint(m,2048)
+    fp2 = rdMD.GetHashedAtomPairFingerprint(m,2048,1,3)
+    self.failUnless(fp1==fp2)
+    fp2 = rdMD.GetHashedAtomPairFingerprint(m,2048,1,2)
+    sim= DataStructs.DiceSimilarity(fp1,fp2)
+    self.failUnless(sim>0.0 and sim<1.0)
+
     m = Chem.MolFromSmiles('c1ccccn1')
-    fp2 = rdMD.GetHashedAtomPairFingerprint(m)
-    sim= DataStructs.TanimotoSimilarity(fp1,fp2)
+    fp2 = rdMD.GetHashedAtomPairFingerprint(m,2048)
+    sim= DataStructs.DiceSimilarity(fp1,fp2)
     self.failUnless(sim>0.0 and sim<1.0)
     
   def testRootedAtomPairs(self):
@@ -72,6 +91,13 @@ class TestCase(unittest.TestCase) :
     fp = rdMD.GetTopologicalTorsionFingerprint(mol,7)
     self.failUnlessRaises(ValueError,lambda : rdMD.GetTopologicalTorsionFingerprint(mol,8))
     
+  def testHashedTopologicalTorsions(self):
+    mol = Chem.MolFromSmiles("c1ncccc1");
+    fp1 = rdMD.GetHashedTopologicalTorsionFingerprint(mol)
+    mol = Chem.MolFromSmiles("n1ccccc1");
+    fp2 = rdMD.GetHashedTopologicalTorsionFingerprint(mol)
+    self.failUnlessEqual(DataStructs.DiceSimilarity(fp1,fp2),1.0)
+
   def testRootedTorsions(self):
     m = Chem.MolFromSmiles('Oc1ccccc1')
     fp1 = rdMD.GetTopologicalTorsionFingerprint(m)
