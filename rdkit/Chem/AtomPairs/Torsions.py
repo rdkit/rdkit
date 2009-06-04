@@ -136,10 +136,10 @@ def ExplainPathScore(score,size=4):
     res[i] = expl
   return tuple(res)
 
+from rdkit.Chem.rdMolDescriptors import GetTopologicalTorsionFingerprint,GetHashedTopologicalTorsionFingerprint
 GetTopologicalTorsionFingerprintAsIntVect=rdMolDescriptors.GetTopologicalTorsionFingerprint
-GetTopologicalTorsionFingerprint=rdMolDescriptors.GetTopologicalTorsionFingerprint
 def GetTopologicalTorsionFingerprintAsIds(mol,targetSize=4):
-  iv = rdMolDescriptors.GetTopologicalTorsionFingerprint(mol,targetSize)
+  iv = GetTopologicalTorsionFingerprint(mol,targetSize)
   res=[]
   for k,v in iv.GetNonzeroElements().iteritems():
     res.extend([k]*v)

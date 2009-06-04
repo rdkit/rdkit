@@ -18,7 +18,7 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.AtomPairs import Utils
 from rdkit import DataStructs
 
-GetAtomPairFingerprint=rdMolDescriptors.GetAtomPairFingerprint
+from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint,GetHashedAtomPairFingerprint
 GetAtomPairFingerprintAsIntVect=rdMolDescriptors.GetAtomPairFingerprint
 
 numPathBits=rdMolDescriptors.AtomPairsParameters.numPathBits
