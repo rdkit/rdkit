@@ -241,9 +241,9 @@ namespace RDKit{
     virtual QUERYBOND_QUERY *getQuery() const;
 
     //! NOT CALLABLE
-    void expandQuery(QUERYBOND_QUERY *what,
-		     Queries::CompositeQueryType how=Queries::COMPOSITE_AND,
-		     bool maintainOrder=true);
+    virtual void expandQuery(QUERYBOND_QUERY *what,
+                             Queries::CompositeQueryType how=Queries::COMPOSITE_AND,
+                             bool maintainOrder=true);
 
     //! returns whether or not we match the argument
     /*!
