@@ -1876,6 +1876,128 @@ void testListsAndValues(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void test1V3K(){
+  BOOST_LOG(rdInfoLog) << "testing basic handling of v3000 mol files" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getNumBonds()==8);
+
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.3.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==9);
+    TEST_ASSERT(m->getNumBonds()==9);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getFormalCharge()==-1);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getMass()==17.0);
+    //m->debugMol(std::cerr);
+    //TEST_ASSERT(m->getBondWithIdx(8)->getBondDir()==Bond::BEGINWEDGE);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void test2V3K(){
+  BOOST_LOG(rdInfoLog) << "testing more queries from v3000 mol files" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==8);
+    TEST_ASSERT(m->getNumBonds()==8);
+
+    std::string smiles="O=C(O)C1OCCC1";
+    RWMol *m2 = SmilesToMol(smiles);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="O=C(O)C1OCCC1";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="O=C(O)C1SCCS1";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="O=C(O)C1OCCN1";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="O=C(O)C1OCCO1";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.4a.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    TEST_ASSERT(m->getNumBonds()==1);
+
+    std::string smiles="OC1OCC1";
+    RWMol *m2 = SmilesToMol(smiles);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="C1OCC1";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="COCC";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.4b.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    TEST_ASSERT(m->getNumBonds()==1);
+
+    std::string smiles="OC1OCC1";
+    RWMol *m2 = SmilesToMol(smiles);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="C1OCC1";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="COCC";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 int main(int argc,char *argv[]){
@@ -1913,6 +2035,8 @@ int main(int argc,char *argv[]){
   testMolFileAtomQueries();
   testListsAndValues();
   //testCrash();
+  test1V3K();
+  test2V3K();
 
   return 0;
 }
