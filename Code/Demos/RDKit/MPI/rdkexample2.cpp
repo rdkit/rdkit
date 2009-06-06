@@ -13,34 +13,33 @@
 #include <vector>
 #include <algorithm>
 #include <boost/mpi.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/vector.hpp>
+#include <boost/foreach.hpp>
 #include <iostream>
 #include <cstdlib>
 #include <string>
 
 namespace mpi = boost::mpi;
 
-namespace boost {
-  namespace serialization {
-    template<class Archive>
-    void save(Archive & ar, const RDKit::ROMol & mol, unsigned int version)
-    {
-      std::string pkl;
-      RDKit::MolPickler::pickleMol(mol,pkl);
-      ar << pkl;
+void broadcastMols(mpi::communicator &world,std::vector<RDKit::ROMOL_SPTR> &mols){
+  std::vector<std::string> data;
+  if (world.rank() == 0) {
+    data.reserve(mols.size());
+    BOOST_FOREACH( const RDKit::ROMOL_SPTR &ptr, mols ) {
+      std::string pickle;
+      RDKit::MolPickler::pickleMol(*ptr,pickle);
+      data.push_back(pickle);
     }
-    template<class Archive>
-    void load(Archive & ar, RDKit::ROMol & mol, unsigned int version)
-    {
-      std::string pkl;
-      ar >> pkl;
-      RDKit::MolPickler::molFromPickle(pkl,mol);
+  }
+  broadcast(world,data,0);
+  if (world.rank() != 0) {
+    mols.reserve(data.size());
+    BOOST_FOREACH( const std::string &pickle, data ) {
+      RDKit::ROMol *mol=new RDKit::ROMol;
+      RDKit::MolPickler::molFromPickle(pickle,mol);
+      mols.push_back(RDKit::ROMOL_SPTR(mol));
     }
   }
 }
-BOOST_SERIALIZATION_SPLIT_FREE(RDKit::ROMol)
-
 
 int main(int argc, char* argv[])
 {
@@ -48,18 +47,17 @@ int main(int argc, char* argv[])
   mpi::communicator world;
 
   // construct the data:
-  std::vector<RDKit::ROMol> data;
+  std::vector<RDKit::ROMOL_SPTR> data;
   if (world.rank() == 0) {
     for(unsigned int i=0;i<100;++i){
       std::string txt(i+1,'C');
       RDKit::ROMol *m=RDKit::SmilesToMol(txt);
-      data.push_back(*m);
-      delete m;
+      data.push_back(RDKit::ROMOL_SPTR(m));
     }
   }
 
   // broadcast it:
-  broadcast(world,data,0);
+  broadcastMols(world,data);
 
   // process it:
   std::vector<unsigned int> res;
@@ -72,15 +70,13 @@ int main(int argc, char* argv[])
   // handle extra bits on the root node:
   if( world.rank() == 0 ){
     for(unsigned int i=0;i<extraBits;++i){
-      //const std::string &elem=data[i];
-      res.push_back(data[i].getNumAtoms());
+      res.push_back(data[i]->getNumAtoms());
     }
   }
   
   unsigned int pos=extraBits+world.rank()*chunkSize;
   for(unsigned int i=0;i<chunkSize;++i){
-    const std::string &elem=data[pos++];
-    res.push_back(data[pos++].getNumAtoms());
+    res.push_back(data[pos++]->getNumAtoms());
   }
 
   if( world.rank() == 0 ){
