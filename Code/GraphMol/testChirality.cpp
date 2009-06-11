@@ -1091,7 +1091,7 @@ void testIterativeChirality(){
     TEST_ASSERT(m->getNumAtoms()==8);
 
     TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREOE);
-    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREOANY);
 
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
@@ -1116,7 +1116,7 @@ void testIterativeChirality(){
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==8);
 
-    TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREONONE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,5)->getStereo()==Bond::STEREOANY);
     TEST_ASSERT(m->getBondBetweenAtoms(0,4)->getStereo()==Bond::STEREOZ);
 
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));

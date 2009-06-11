@@ -740,7 +740,8 @@ namespace RDKit{
         for(ROMol::BondIterator bondIt=mol.beginBonds();
             bondIt!=mol.endBonds();
             ++bondIt){
-          if( (*bondIt)->getBondType()==Bond::DOUBLE ){
+          if( (*bondIt)->getBondType()==Bond::DOUBLE &&
+	      (*bondIt)->getStereo() != Bond::STEREOANY ){
             (*bondIt)->setStereo(Bond::STEREONONE);
             (*bondIt)->getStereoAtoms().clear();
           }
@@ -846,7 +847,8 @@ namespace RDKit{
             // we are ignoring ring bonds here - read the FIX above
             Bond *dblBond=*bondIt;
             // if the bond is flagged as EITHERDOUBLE, we ignore it:
-            if(dblBond->getBondDir()==Bond::EITHERDOUBLE){
+            if(dblBond->getBondDir()==Bond::EITHERDOUBLE ||
+	       dblBond->getStereo()==Bond::STEREOANY ){
               break;
             }
             // proceed only if we either want to clean the stereocode on this bond

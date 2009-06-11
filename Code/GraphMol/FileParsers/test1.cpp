@@ -810,7 +810,7 @@ void testDblBondStereochem(){
     std::string fName=rdbase+"simple_either.mol";
     m1 = MolFileToMol(fName);
     TEST_ASSERT(m1);
-    TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
+    TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOANY);
     TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir()==Bond::EITHERDOUBLE);
     delete m1;
   }
@@ -868,7 +868,7 @@ void testSymmetricDblBondStereochem(){
   delete m1;
   m1 = MolFileToMol(fName);
   TEST_ASSERT(m1);
-  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREONONE);
+  TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOANY);
 
   smi = MolToSmiles(*m1,true);
   TEST_ASSERT(smi=="CC=CC");
@@ -1900,6 +1900,42 @@ void test1V3K(){
     TEST_ASSERT(m->getAtomWithIdx(4)->getMass()==17.0);
     //m->debugMol(std::cerr);
     //TEST_ASSERT(m->getBondWithIdx(8)->getBondDir()==Bond::BEGINWEDGE);
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.5a.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==5);
+    TEST_ASSERT(m->getNumBonds()==4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.5b.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==5);
+    TEST_ASSERT(m->getNumBonds()==4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.6a.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getNumBonds()==3);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.6b.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getNumBonds()==3);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOANY);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

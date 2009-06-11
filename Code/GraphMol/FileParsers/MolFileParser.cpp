@@ -900,7 +900,8 @@ namespace RDKit{
             break;
           case 3: // "either" double bond
             res->setBondDir(Bond::EITHERDOUBLE);
-            break;
+	    res->setStereo(Bond::STEREOANY);
+	    break;
           case 4: // "either" single bond
             res->setBondDir(Bond::UNKNOWN);
             break;
@@ -962,11 +963,10 @@ namespace RDKit{
     }
 
     // returns whether or not any sign of chirality was detected
-    bool ParseMolBlockBonds(std::istream *inStream,unsigned int &line,
-                           unsigned int nBonds,RWMol *mol){
+    void ParseMolBlockBonds(std::istream *inStream,unsigned int &line,
+			    unsigned int nBonds,RWMol *mol,bool &chiralityPossible){
       PRECONDITION(inStream,"bad stream");
       PRECONDITION(mol,"bad molecule");
-      bool chiralityPossible=false;
       for(unsigned int i=0;i<nBonds;++i){
         ++line;
         std::string tempStr = getLine(inStream);
@@ -986,9 +986,7 @@ namespace RDKit{
         }
         mol->addBond(bond,true);
       }
-      return chiralityPossible;
     }
-
 
     bool ParseMolBlockProperties(std::istream *inStream,unsigned int &line,
                                  RWMol *mol){
@@ -1321,7 +1319,8 @@ namespace RDKit{
       conf=0;
     }
     void ParseV3000BondBlock(std::istream *inStream,unsigned int &line,
-                             unsigned int nBonds,RWMol *mol){
+                             unsigned int nBonds,RWMol *mol,
+			     bool &chiralityPossible){
       PRECONDITION(inStream,"bad stream");
       PRECONDITION(nBonds>0,"bad bond count");
       PRECONDITION(mol,"bad molecule");
@@ -1408,13 +1407,18 @@ namespace RDKit{
             case 0: break;
             case 1:
               bond->setBondDir(Bond::BEGINWEDGE);
+	      chiralityPossible=true;
               break;
             case 2:
               if(bType==1) bond->setBondDir(Bond::UNKNOWN);
-              else if(bType==2) bond->setBondDir(Bond::EITHERDOUBLE);
+              else if(bType==2){
+		bond->setBondDir(Bond::EITHERDOUBLE);
+		bond->setStereo(Bond::STEREOANY);
+	      }
               break;
             case 3:
               bond->setBondDir(Bond::BEGINDASH);
+	      chiralityPossible=true;
               break;
             default:
               errout << "bad bond CFG "<<val<<"' on line "<<line;
@@ -1455,10 +1459,10 @@ namespace RDKit{
       if(tempStr.length()<8 || tempStr.substr(0,8) != "END BOND"){
         throw FileParseException("END BOND line not found") ;
       }
-      
     }
     bool ParseV3000MolBlock(std::istream *inStream,unsigned int &line,
-                            RWMol *mol, Conformer *&conf){
+                            RWMol *mol, Conformer *&conf,
+			    bool &chiralityPossible){
       PRECONDITION(inStream,"bad stream");
       PRECONDITION(mol,"bad molecule");
 
@@ -1497,7 +1501,7 @@ namespace RDKit{
       if(splitLine.size()>4) chiralFlag = toInt(splitLine[4]);
 
       ParseV3000AtomBlock(inStream,line,nAtoms,mol,conf);
-      ParseV3000BondBlock(inStream,line,nBonds,mol);
+      ParseV3000BondBlock(inStream,line,nBonds,mol,chiralityPossible);
 
       if(nSgroups){
         BOOST_LOG(rdWarningLog)<<"S group information in mol block igored"<<std::endl;
@@ -1580,8 +1584,6 @@ namespace RDKit{
     line++;
     tempStr = getLine(inStream);
     res->setProp("_MolFileComments", tempStr);
-
-    // FIX: if name is NULL, copy in _MolFileInfo or something
         
     int nAtoms=0,nBonds=0,nLists=0,chiralFlag=0,nsText=0,nRxnComponents=0;
     int nReactants=0,nProducts=0,nIntermediates=0;
@@ -1681,14 +1683,14 @@ namespace RDKit{
         res->addConformer(conf, true);
         conf=0;
 
-        chiralityPossible=ParseMolBlockBonds(inStream,line,nBonds,res);
+        ParseMolBlockBonds(inStream,line,nBonds,res,chiralityPossible);
       
         fileComplete=ParseMolBlockProperties(inStream,line,res);
       } else {
         if(nAtoms!=0 || nBonds!=0){
           throw FileParseException("V3000 mol blocks should have 0s in the initial counts line.") ;
         }
-        fileComplete=ParseV3000MolBlock(inStream,line,res,conf);
+        fileComplete=ParseV3000MolBlock(inStream,line,res,conf,chiralityPossible);
       }
     }
     catch (FileParseException &e) { // catch any exception because of lexical_casting etc
@@ -1702,7 +1704,6 @@ namespace RDKit{
       if(res) delete res;
       throw FileParseException("Problems encountered parsing Mol data, M  END ");
     }
-
 
     // calculate explicit valence on each atom:
     for(RWMol::AtomIterator atomIt=res->beginAtoms();
@@ -1766,7 +1767,6 @@ namespace RDKit{
       res->clearProp("_NeedsQueryScan");
       CompleteMolQueries(res);
     }
-
 
     return res;
   };
