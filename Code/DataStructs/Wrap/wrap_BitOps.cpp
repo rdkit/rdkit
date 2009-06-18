@@ -327,6 +327,10 @@ struct BitOps_wrapper {
 
 
     python::def("AllProbeBitsMatch",
+                (bool (*)(const SBV &,const SBV &))AllProbeBitsMatch);
+    python::def("AllProbeBitsMatch",
+                (bool (*)(const EBV &,const EBV &))AllProbeBitsMatch);
+    python::def("AllProbeBitsMatch",
                 (bool (*)(const SBV &,const std::string &))AllProbeBitsMatch);
     python::def("AllProbeBitsMatch",(bool (*)(const EBV &,const std::string &))AllProbeBitsMatch,
                 "Returns True if all bits in the first argument match all bits in the \n\

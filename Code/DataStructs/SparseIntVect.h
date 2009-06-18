@@ -339,6 +339,61 @@ namespace RDKit{
     }
   }
 
+  namespace {
+    template <typename IndexType>
+    void calcVectParams(const SparseIntVect<IndexType> &v1,
+                          const SparseIntVect<IndexType> &v2,
+                          double &v1Sum,double &v2Sum,
+                          double &andSum){
+      if(v1.getLength()!=v2.getLength()){
+        throw ValueErrorException("SparseIntVect size mismatch");
+      }
+      v1Sum=v2Sum=andSum=0.0;
+      // we're doing : (v1&v2).getTotalVal(), but w/o generating
+      // the other vector:
+      typename SparseIntVect<IndexType>::StorageType::const_iterator iter1,iter2;
+      iter1=v1.getNonzeroElements().begin();
+      if(iter1!=v1.getNonzeroElements().end()) v1Sum+=iter1->second; 
+      iter2=v2.getNonzeroElements().begin();
+      if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
+      while(iter1 != v1.getNonzeroElements().end()){
+        while(iter2!=v2.getNonzeroElements().end() && iter2->first < iter1->first){
+          ++iter2;
+          if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
+        }
+        if(iter2!=v2.getNonzeroElements().end()){
+          if(iter2->first == iter1->first){
+            if(iter2->second<iter1->second){
+              andSum += iter2->second;
+            } else {
+              andSum += iter1->second;
+            }
+            ++iter2;
+            if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
+          }
+          ++iter1;
+          if(iter1!=v1.getNonzeroElements().end()) v1Sum+=iter1->second; 
+        } else {
+          break;
+        }
+      }
+      if(iter1 != v1.getNonzeroElements().end()){
+        ++iter1;
+        while(iter1!=v1.getNonzeroElements().end()){
+          v1Sum+=iter1->second;
+          ++iter1;
+        }
+      }
+      if(iter2!=v2.getNonzeroElements().end()){
+        ++iter2;
+        while(iter2!=v2.getNonzeroElements().end()){
+          v2Sum+=iter2->second;
+          ++iter2;
+        }
+      }
+    }
+  }
+  
   template <typename IndexType>
   double DiceSimilarity(const SparseIntVect<IndexType> &v1,
                         const SparseIntVect<IndexType> &v2,
@@ -369,49 +424,9 @@ namespace RDKit{
     }
 
     double numer=0.0;
-    // we're doing : (v1&v2).getTotalVal(), but w/o generating
-    // the other vector:
-    typename SparseIntVect<IndexType>::StorageType::const_iterator iter1,iter2;
-    iter1=v1.getNonzeroElements().begin();
-    if(iter1!=v1.getNonzeroElements().end()) v1Sum+=iter1->second; 
-    iter2=v2.getNonzeroElements().begin();
-    if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
-    while(iter1 != v1.getNonzeroElements().end()){
-      while(iter2!=v2.getNonzeroElements().end() && iter2->first < iter1->first){
-        ++iter2;
-        if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
-      }
-      if(iter2!=v2.getNonzeroElements().end()){
-        if(iter2->first == iter1->first){
-          if(iter2->second<iter1->second){
-            numer += iter2->second;
-          } else {
-            numer += iter1->second;
-          }
-          ++iter2;
-          if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
-        }
-        ++iter1;
-        if(iter1!=v1.getNonzeroElements().end()) v1Sum+=iter1->second; 
-      } else {
-        break;
-      }
-    }
-    if(iter1 != v1.getNonzeroElements().end()){
-      ++iter1;
-      while(iter1!=v1.getNonzeroElements().end()){
-        v1Sum+=iter1->second;
-        ++iter1;
-      }
-    }
 
-    if(iter2!=v2.getNonzeroElements().end()){
-      ++iter2;
-      while(iter2!=v2.getNonzeroElements().end()){
-        v2Sum+=iter2->second;
-        ++iter2;
-      }
-    }
+    calcVectParams(v1,v2,v1Sum,v2Sum,numer);
+
     double denom=v1Sum+v2Sum;
     double sim;
     if(fabs(denom)<1e-6){
@@ -423,6 +438,44 @@ namespace RDKit{
     //std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" " << numer << " " << sim <<std::endl;
     return sim;
   }
+
+
+  template <typename IndexType>
+  double TverskySimilarity(const SparseIntVect<IndexType> &v1,
+                           const SparseIntVect<IndexType> &v2,
+                           double a, double b,
+                           bool returnDistance=false,
+                           double bounds=0.0){
+    if(v1.getLength()!=v2.getLength()){
+      throw ValueErrorException("SparseIntVect size mismatch");
+    }
+    double v1Sum=0.0;
+    double v2Sum=0.0;
+    double andSum=0.0;
+
+    calcVectParams(v1,v2,v1Sum,v2Sum,andSum);
+
+    double denom=a*v1Sum+b*v2Sum+(1-a-b)*andSum;
+    double sim;
+
+    if(fabs(denom)<1e-6){
+      sim=0.0;
+    } else {
+      sim=andSum/denom;
+    }
+    if(returnDistance) sim = 1.-sim;
+    //std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" " << numer << " " << sim <<std::endl;
+    return sim;
+  }
+
+  template <typename IndexType>
+  double TanimotoSimilarity(const SparseIntVect<IndexType> &v1,
+                            const SparseIntVect<IndexType> &v2,
+                            bool returnDistance=false,
+                            double bounds=0.0){
+    return TverskySimilarity(v1,v2,1.0,1.0,returnDistance,bounds);
+  }
+
 } 
 
 

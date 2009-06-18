@@ -168,6 +168,28 @@ class TestCase(unittest.TestCase):
     bulkDs = ds.BulkDiceSimilarity(vs[0],vs[1:])
     for i in range(len(baseDs)):
       self.failUnless(feq(baseDs[i],bulkDs[i]))
+
+  def test6BulkTversky(self):
+    """
+
+    """
+    sz=10
+    nToSet=5
+    nVs=6
+    import random
+    vs = []
+    for i in range(nVs):
+      v = ds.IntSparseIntVect(sz)
+      for j in range(nToSet):
+        v[random.randint(0,sz-1)]=random.randint(1,10)
+      vs.append(v)
+
+    baseDs = [ds.TverskySimilarity(vs[0],vs[x],.5,.5) for x in range(1,nVs)]
+    bulkDs = ds.BulkTverskySimilarity(vs[0],vs[1:],0.5,0.5)
+    diceDs = [ds.DiceSimilarity(vs[0],vs[x]) for x in range(1,nVs)]
+    for i in range(len(baseDs)):
+      self.failUnless(feq(baseDs[i],bulkDs[i]))
+      self.failUnless(feq(baseDs[i],diceDs[i]))
     
     
 if __name__ == '__main__':

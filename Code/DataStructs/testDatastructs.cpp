@@ -578,6 +578,11 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV2[4]==6);
 
     TEST_ASSERT(feq(DiceSimilarity(iV1,iV2),18./24.));
+    TEST_ASSERT(feq(TverskySimilarity(iV1,iV2,0.5,0.5,false),9./12.));
+    TEST_ASSERT(feq(TverskySimilarity(iV1,iV2,1.0,1.0,false),9./15.));
+    TEST_ASSERT(feq(TanimotoSimilarity(iV1,iV2),9./15.));
+    TEST_ASSERT(feq(TverskySimilarity(iV1,iV2,0.333333333,0.66666666667,false),9./13.));
+    TEST_ASSERT(feq(TverskySimilarity(iV1,iV2,1.0,0.0,false),9./9.));
 
     try {
       iV1 &= iVect;

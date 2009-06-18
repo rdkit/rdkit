@@ -154,6 +154,17 @@ bool AllProbeBitsMatch(const T1 &probe,const std::string &pkl){
 }
 template bool AllProbeBitsMatch(const SparseBitVect& bv1,const std::string &pkl);
 template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,const std::string &pkl);
+template <typename T1>
+bool AllProbeBitsMatch(const T1 &probe,const T1 &ref){
+  for(unsigned int i=0;i<probe.GetNumBits();++i){
+    if(probe.GetBit(i) && !ref.GetBit(i)){
+      return false;
+    }
+  }
+  return true;
+}
+template bool AllProbeBitsMatch(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,const ExplicitBitVect &bv2);
 
 // """ -------------------------------------------------------
 //

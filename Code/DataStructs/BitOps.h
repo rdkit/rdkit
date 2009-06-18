@@ -70,6 +70,9 @@ bool AllProbeBitsMatch(const std::string &probe,const std::string &ref);
 template <typename T1>
 bool AllProbeBitsMatch(const T1 &probe,const std::string &pkl);
 
+template <typename T1>
+bool AllProbeBitsMatch(const T1 &probe,const T1 &ref);
+
 
 //! returns the number of on bits in common between two bit vectors
 /*!
