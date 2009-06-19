@@ -4,12 +4,16 @@
 !!!!!! IMPORTANT !!!!!!
 
 Acknowledgements
+  - Uwe Hoffmann
 
-Bugs
-
+Bug Fixes
+  - 
+   
 New Features
+  - cairo support in the mol drawing code (from Uwe Hoffmann) (issue 2720611)
 
 Other
+  -
 
 
 ******  Release_Q12009_2 *******
