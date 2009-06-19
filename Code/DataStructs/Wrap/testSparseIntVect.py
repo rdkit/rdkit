@@ -191,6 +191,14 @@ class TestCase(unittest.TestCase):
       self.failUnless(feq(baseDs[i],bulkDs[i]))
       self.failUnless(feq(baseDs[i],diceDs[i]))
     
+    bulkDs = ds.BulkTverskySimilarity(vs[0],vs[1:],1.0,1.0)
+    taniDs = [ds.TanimotoSimilarity(vs[0],vs[x]) for x in range(1,nVs)]
+    for i in range(len(bulkDs)):
+      self.failUnless(feq(bulkDs[i],taniDs[i]))
+    taniDs = ds.BulkTanimotoSimilarity(vs[0],vs[1:])
+    for i in range(len(bulkDs)):
+      self.failUnless(feq(bulkDs[i],taniDs[i]))
+    
     
 if __name__ == '__main__':
     unittest.main()

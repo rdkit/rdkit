@@ -59,6 +59,20 @@ namespace {
     return res;
   }
   template <typename T>
+  python::list BulkTanimoto(const T &siv1,python::list sivs,bool returnDistance){
+    python::list res;
+    unsigned int nsivs=python::extract<unsigned int>(sivs.attr("__len__")());
+    for(unsigned int i=0;i<nsivs;++i){
+      double simVal;
+      const T &siv2=python::extract<T>(sivs[i])();
+      simVal = TanimotoSimilarity(siv1,siv2,returnDistance);
+      res.append(simVal);
+    }
+    return res;
+  }
+
+
+  template <typename T>
   python::list BulkTversky(const T &siv1,python::list sivs,double a,double b,bool returnDistance){
     python::list res;
     unsigned int nsivs=python::extract<unsigned int>(sivs.attr("__len__")());
@@ -137,6 +151,15 @@ struct sparseIntVec_wrapper {
 		(python::args("v1"),python::args("v2"),
                  python::args("returnDistance")=false),
                 "return the Dice similarities between one vector and a sequence of others");
+    python::def("TanimotoSimilarity",&TanimotoSimilarity<IndexType>,
+		(python::args("siv1"),python::args("siv2"),
+		 python::args("returnDistance")=false,
+		 python::args("bounds")=0.0),
+                "return the Tanimoto similarity between two vectors");
+    python::def("BulkTanimotoSimilarity",&BulkTanimoto<SparseIntVect<IndexType> >,
+		(python::args("v1"),python::args("v2"),
+                 python::args("returnDistance")=false),
+                "return the Tanimoto similarities between one vector and a sequence of others");
     python::def("TverskySimilarity",&TverskySimilarity<IndexType>,
 		(python::args("siv1"),python::args("siv2"),
                  python::args("a"),python::args("b"),
