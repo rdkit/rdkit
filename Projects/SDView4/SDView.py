@@ -160,6 +160,16 @@ class MolCanvasView(QtGui.QGraphicsView):
             self.emit(QtCore.SIGNAL("molSelected(PyQt_PyObject)"),mol)
           break
       print coords.x(),coords.y()
+      r=self.viewport().rect()
+      img = QtGui.QImage(r.width(),r.height(),QtGui.QImage.Format_RGB32)
+      img.fill(QtGui.QColor(255,255,255).rgb())
+      painter = QtGui.QPainter(img)
+      painter.setRenderHints(QtGui.QPainter.Antialiasing|QtGui.QPainter.TextAntialiasing|QtGui.QPainter.SmoothPixmapTransform)
+      self.render(painter)
+      clip=QtGui.QApplication.clipboard()
+      clip.setImage(img)
+      painter = None
+      img=None
       evt.accept()
 
 
@@ -175,30 +185,63 @@ class MolTableRedrawMode(object):
 class MolTableModel(QtCore.QAbstractTableModel):
   redrawMode=MolTableRedrawMode.WhenNeeded
   kekulizeMode=True
+  nRows=0
+  nCols=0
   _supplier=None
   _propNames=None
   _molCache=None
   
   def flags(self,index):
     return QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled
-  def rowCount(self,parent):
-    return len(self._supplier)
 
+  def rowCount(self,parent):
+    if parent.isValid(): return 0
+    return self.nRows
   def columnCount(self,parent):
     return len(self._propNames)
 
-  def data(self,index,role):
-    if not index.isValid() or role!=QtCore.Qt.DisplayRole:
+
+  def canFetchMore(self,index):
+    if self._supplIter is not None:
+      return True
+    else:
+      return False
+
+  def fetchMore(self,index):
+    if self._supplIter is None:
+      return
+
+    maxRows=5
+    rowAdded=0
+    try:
+      m = self._supplIter.next()
+    except StopIteration:
+      self._supplIter=None
+    while rowAdded<maxRows and self._supplIter is not None:
+      rowAdded+=1
+      try:
+        m = self._supplIter.next()
+      except StopIteration:
+        self._supplIter=None
+        break
+    self.beginInsertRows(QtCore.QModelIndex(),self.nRows,self.nRows+rowAdded)
+    self.endInsertRows()
+    self.nRows += rowAdded
+    #print '   ',self.nRows
+    
+  def data(self,index,role=QtCore.Qt.DisplayRole):
+    if not index.isValid() or role!=QtCore.Qt.DisplayRole \
+          or index.row()<0 or index.column()<0 or index.row()>=self.nRows :
       return QtCore.QVariant()
     row,col = index.row(),index.column()
     pn = self._propNames[col]
     mol = self.mol(index,role)
     if not mol:
-      res=''
+      res='No mol'
     elif mol.HasProp(pn):
       res=mol.GetProp(pn)
     else:
-      res=''
+      res='No prop'
     return QtCore.QVariant(res)
 
   def mol(self,index,role):
@@ -235,18 +278,28 @@ class MolTableModel(QtCore.QAbstractTableModel):
     else:
       i=0
       self._propNames=[nameProp]
-      for m in supplier:
+      if hasattr(supplier,'reset'):
+        lookin=supplier
+      else:
+        lookin=iter(supplier)
+      for m in lookin:
         if m:
           i+=1
           for pn in m.GetPropNames():
             if pn not in self._propNames:
               self._propNames.append(pn)
           if i==maxMolsForProps: break
-      supplier.reset()
+      if hasattr(supplier,'reset'):
+        supplier.reset()
+    self._supplIter=iter(self._supplier)
     self._cache={}
 
   def sort(self,col,order):
     print 'SORT!',col,order
+
+class SSSProxy(QtGui.QSortFilterProxyModel):
+  def filterAcceptsRow(self,row,index):
+    return row%2
     
 class MainWindow(QtGui.QMainWindow):
   _applicationName="SDView"
@@ -275,6 +328,15 @@ class MainWindow(QtGui.QMainWindow):
     self.connect(self.tblView.selectionModel(),
                  QtCore.SIGNAL('selectionChanged(QItemSelection,QItemSelection)'),
                  self.changeCurrent)
+
+    if 0:
+      self.pModel=SSSProxy()
+      self.pModel.setSourceModel(self.sdModel)
+      self.filtView = MolTableView()
+      self.filtView.setModel(self.pModel)
+      self.filtView.setWindowTitle('filtered')
+      self.filtView.setVisible(True)
+
 
   def attachMolCanvas(self,canvas=None):
     if canvas is None:
@@ -474,28 +536,12 @@ class MainWindow(QtGui.QMainWindow):
                   self.tr("Cannot read file %1:\n%2.").arg(fileName).arg(file.errorString()))
       return
 
-    #inf = QtCore.QTextStream(file)
-    #QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-    #self.textEdit.setPlainText(inf.readAll())
-    #QbtGui.QApplication.restoreOverrideCursor()
-
-    #self.setCurrentFile(fileName)
-    #self.statusBar().showMessage(self.tr("File loaded"), 2000)
-
   def saveFile(self, fileName):
     file = QtCore.QFile(fileName)
     if not file.open(QtCore.QFile.WriteOnly | QtCore.QFile.Text):
       QtGui.QMessageBox.warning(self, self.tr("Application"),
                   self.tr("Cannot write file %1:\n%2.").arg(fileName).arg(file.errorString()))
       return False
-
-    #outf = QtCore.QTextStream(file)
-    #QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-    #outf << self.textEdit.toPlainText()
-    #QtGui.QApplication.restoreOverrideCursor()
-
-    #self.setCurrentFile(fileName);
-    #self.statusBar().showMessage(self.tr("File saved"), 2000)
     return True
 
 from optparse import OptionParser
