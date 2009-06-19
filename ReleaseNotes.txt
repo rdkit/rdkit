@@ -4,17 +4,56 @@
 !!!!!! IMPORTANT !!!!!!
 
 Acknowledgements
-  - Uwe Hoffmann
+  - Uwe Hoffmann, Marshall Levesque, Armin Widmer
 
 Bug Fixes
-  - 
+  - handling of crossed bonds in mol files fixed (issue 2804599) 
+  - serialization bug fixed (issue 2788233) 
+  - pi systems with 2 electrons now flagged as aromatic (issue 2787221) 
+  - Chirality swap on AddHs (issue 2762917) 
+  - core leak in UFFOptimizeMolecule fixed (issue 2757824) 
    
 New Features
   - cairo support in the mol drawing code (from Uwe Hoffmann) (issue 2720611)
+  - Tversky and Tanimoto similarities now supported for SparseIntVects
+  - AllProbeBitsMatch supported for BitVect-BitVect comparisons
+  - ChemicalReactions support serialization (pickling) (issue 2799770)
+  - GetAtomPairFingerprint() supports minLength and maxLength arguments
+  - GetHashedTopologicalTorsionFingerprint() added
+  - preliminary support added for v3K mol files
+  - ForwardSDMolSupplier added
+  - CompressedSDMolSupplier added (not supported on windows)
+  - UFFHasAllMoleculeParams() added
+  - substructure searching code now uses an RDKit implementation of
+    the vf2 algorithm. It's much faster.
+  - Atom.GetPropNames() and Bond.GetPropNames() now available from
+    python
+  - BRICS code now supports FindBRICSBonds() and BreakBRICSBonds()
+  - atom labels Q, A, and * in CTABs are more correctly supported 
+    (issue 2797708)
+  - rdkit.Chem.PropertyMol added (issue 2742959)
+  - support has been added for enabling and disabling logs
+    (issue 2738020)
 
+  
 Other
-  -
-
+  - A demo has been added for using the MPI with the RDKit
+    ($RDBASE/Code/Demos/RDKit/MPI).
+  - Embedding code is now better at handling chiral structures and
+    should produce results for molecules with atoms that don't have
+    UFF parameters. 
+  - the UFF code is more robust w.r.t. missing parameters
+  - GetHashedAtomPairFingerprint() returns SparseIntVect instead of
+    ExplicitBitVect
+  - the CTAB parser (used for mol files and SD files) is faster
+  - extensive changes to the layered fingerprinting code;
+    fingerprinting queries is now possible
+  - molecule discriminator code moved into $RDBASE/Code/GraphMol/Subgraphs
+  - the SDView4 prototype has been expanded
+  - $RDBASE/Regress has been added to contain regression and
+    benchmarking data and scripts.
+  - support for sqlalchemy has been added to $RDBASE/rdkit/Chem/MolDb
+  - the BRICS code has been refactored  
 
 ******  Release_Q12009_2 *******
 (Changes relative to Release_Q42008_1)
