@@ -24,7 +24,6 @@ decBase = declarative_base()
 class Compound(decBase):
   __tablename__='molecules'
   guid=Column(Integer,primary_key=True)
-  smiles=Column(Text,unique=True)
   molpkl=Column(Binary)
 
 
@@ -101,6 +100,8 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
       os.unlink(dbName)
     sIter=iter(suppl)
     setattr(Compound,nameCol.lower(),Column(nameCol.lower(),String,default=defaultVal,unique=uniqNames))
+    if not skipSmiles:
+      Compound.smiles = Column(Text,unique=True)
     if not skipProps:
       while numForPropScan>0:
         m = sIter.next()
