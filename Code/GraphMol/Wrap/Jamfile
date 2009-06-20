@@ -23,16 +23,17 @@ python-extension rdmolops : rdmolops.cpp MolOps.cpp
   ;
 
 python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
-  SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp  CompressedSDMolSupplier.cpp
+  SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp  
   ../SmilesParse//SmilesParse
   ../FileParsers//FileParsers
   ..//GraphMol
- ../../Geometry//RDGeometry
+  ../../Geometry//RDGeometry
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
-   /boost/iostreams//boost_iostreams
-   :
-   # include either (or both) of these to disable inclusion of
-   # gzip or bzip2 support: #<define>RDK_NOGZIP #<define>RDK_NOBZIP2
+  # uncomment the block below to include compressed SDMolSupplier support:
+  # CompressedSDMolSupplier.cpp /boost/iostreams//boost_iostreams  <toolset>msvc:/boost/iostreams//boost_zlib 
+  #:
+  # <define>RDK_NOGZIP <define>RDK_NOBZIP2
+  # <define>SUPPORT_COMPRESSED_SUPPLIERS
   ;
 
 install pymod : rdchem rdmolops rdmolfiles 

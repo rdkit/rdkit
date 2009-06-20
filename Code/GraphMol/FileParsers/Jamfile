@@ -21,8 +21,9 @@ exe testMolSupplier : testMolSupplier.cpp FileParsers
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
 # comment the next line out if you don't want to test the gzipped SD
 # file reading:
-   /boost/iostreams//boost_iostreams :  <define>TEST_GZIP_SD 
+# /boost/iostreams//boost_iostreams <toolset>msvc:/boost/iostreams//boost_zlib : <define>TEST_GZIP_SD 
  ;
+
 
 exe testMolWriter : testMolWriter.cpp FileParsers 
   ../SmilesParse//SmilesParse ..//GraphMol 

@@ -20,13 +20,14 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 
+#ifdef TEST_GZIP_SD
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
-
+namespace io=boost::iostreams;
+#endif
 
 using namespace RDKit;
-namespace io=boost::iostreams;
 
 int testMolSup() {
   
@@ -1576,6 +1577,35 @@ int testForwardSDSupplier() {
     TEST_ASSERT(i==16);
   }
 #ifdef TEST_GZIP_SD
+  // make sure the boost::iostreams are working
+  {
+    io::filtering_istream strm;
+    strm.push(io::file_source(fname));
+
+    unsigned int i = 0;
+    while (!strm.eof()) {
+      std::string line;
+      std::getline(strm,line);
+      ++i;
+      if(i>1000) break;
+    }
+    TEST_ASSERT(i==998);
+  }
+  {
+    io::filtering_istream strm;
+    strm.push(io::gzip_decompressor());
+    strm.push(io::file_source(fname2));
+
+    unsigned int i = 0;
+    while (!strm.eof()) {
+      std::string line;
+      std::getline(strm,line);
+      ++i;
+      if(i>1000) break;
+    }
+    TEST_ASSERT(i==998);
+  }
+  // looks good, now do a supplier:
   {
     io::filtering_istream strm;
     strm.push(io::gzip_decompressor());
@@ -1710,13 +1740,13 @@ int main() {
   BOOST_LOG(rdErrorLog) <<"Finished: testRemoveHs()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-#endif
   
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGetItemText();
   BOOST_LOG(rdErrorLog) <<"Finished: testGetItemText()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
+#endif
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testForwardSDSupplier();
   BOOST_LOG(rdErrorLog) <<"Finished: testForwardSDSupplier()\n";
