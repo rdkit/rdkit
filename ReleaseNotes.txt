@@ -1,8 +1,6 @@
 ******  Release_Q22009_1 *******
 (Changes relative to Release_Q12009_2)
 
-!!!!!! IMPORTANT !!!!!!
-
 Acknowledgements
   - Uwe Hoffmann, Marshall Levesque, Armin Widmer
 
@@ -35,7 +33,6 @@ New Features
   - support has been added for enabling and disabling logs
     (issue 2738020)
 
-  
 Other
   - A demo has been added for using the MPI with the RDKit
     ($RDBASE/Code/Demos/RDKit/MPI).
