@@ -452,19 +452,26 @@ if __name__=='__main__':
   if molsOut and ids:
     molDbName = os.path.join(options.dbDir,options.molDbName)
     conn = DbConnect(molDbName)
-    cns = conn.GetColumnNames('molecules')
+    cns = list(conn.GetColumnNames('molecules'))
+    if cns[0]=='guid':
+      # from sqlalchemy, ditch it:
+      del cns[0]
+    if cns[-1]!='molpkl':
+      cns.remove('molpkl')
+      cns.append('molpkl')
     curs = conn.GetCursor()
     ids = [(x,) for x in ids]
     curs.execute('create temporary table _tmpTbl (%(idName)s varchar)'%locals())
     curs.executemany('insert into _tmpTbl values (?)',ids)
-    curs.execute('select * from molecules join _tmpTbl using (%(idName)s)'%locals())
+    cnText=','.join(cns)
+    curs.execute('select %(cnText)s from molecules join _tmpTbl using (%(idName)s)'%locals())
     row=curs.fetchone()
     while row:
       m = Chem.Mol(str(row[-1]))
       if sdfOut:
         m.SetProp('_Name',str(row[0]))
         print >>sdfOut,Chem.MolToMolBlock(m)
-        for i in range(1,len(cns)-2):
+        for i in range(1,len(cns)-1):
           pn = cns[i]
           pv = str(row[i])
           print >>sdfOut,'> <%s>\n%s\n'%(pn,pv)
