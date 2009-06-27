@@ -49,7 +49,7 @@ class PropertyMol(Chem.Mol):
    ArgumentError: Python argument types in
        Mol.SetProp(Mol, str, int)
    did not match C++ signature:
-       SetProp(RDKit::ROMol self, char const* key, std::string val, bool computed=False)
+     ...
 
    but the Property mols still convert all values to strings before storing:
    >>> pm.GetProp('IntVal')
@@ -85,7 +85,7 @@ class PropertyMol(Chem.Mol):
 #
 def _test():
   import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
+  return doctest.testmod(sys.modules["__main__"],optionflags=doctest.ELLIPSIS)
 
 if __name__ == '__main__':
   import sys
