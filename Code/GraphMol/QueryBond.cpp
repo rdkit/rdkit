@@ -58,21 +58,13 @@ void QueryBond::setBondDir(BondDir bD) {
   //   situations, whatever those may be.
   //
   d_dirTag = bD;
+#if 0  
   if(dp_query){
     delete dp_query;
     dp_query = 0;
   }
   dp_query = makeBondDirEqualsQuery(bD);
-}
-
-
-bool QueryBond::Match(const Bond::BOND_SPTR what) const {
-  return Match(what.get());
-}
-  
-bool QueryBond::Match(Bond const *what) const {
-  PRECONDITION(dp_query,"no query set");
-  return dp_query->Match(what);
+#endif
 }
 
 void QueryBond::expandQuery(QUERYBOND_QUERY *what,
@@ -105,5 +97,106 @@ void QueryBond::expandQuery(QUERYBOND_QUERY *what,
     dp_query->addChild(QUERYBOND_QUERY::CHILD_TYPE(origQ));
   }
 }
+
+bool QueryBond::Match(const Bond::BOND_SPTR what) const {
+  return Match(what.get());
+}
+  
+
+  namespace {
+    bool localMatch(BOND_EQUALS_QUERY const *q1,BOND_EQUALS_QUERY const *q2){
+      if(q1->getNegation()==q2->getNegation()){
+        return q1->getVal()==q2->getVal();
+      } else {
+        return q1->getVal()!=q2->getVal();
+      }
+    }
+
+    bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
+                      QueryBond::QUERYBOND_QUERY const *q2){
+      PRECONDITION(q1,"no q1");
+      PRECONDITION(q2,"no q2");
+
+      static const unsigned int nQueries=6;
+      static std::string equalityQueries[nQueries]={"BondRingSize","BondMinRingSize","BondOrder","BondDir",\
+                                                    "BondInRing","BondInNRings"};
+                                                  
+      bool res=false;
+      std::string d1=q1->getDescription();
+      std::string d2=q2->getDescription();
+      if(d1=="BondNull"||d2=="BondNull"){
+        res = true;
+      } else if(d1=="BondOr"){
+        // FIX: handle negation on BondOr and BondAnd
+        for(QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter1=q1->beginChildren();iter1!=q1->endChildren();++iter1){
+          if(d2=="BondOr"){
+            for(QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter2=q2->beginChildren();iter2!=q2->endChildren();++iter2){
+              if(queriesMatch(iter1->get(),iter2->get())){
+                res=true;
+                break;
+              }
+            }
+          } else {
+            if(queriesMatch(iter1->get(),q2)) {
+              res=true;
+            }
+          }
+          if(res) break;
+        }
+      } else if(d1=="BondAnd"){
+          res=true;
+          for(QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter1=q1->beginChildren();iter1!=q1->endChildren();++iter1){
+            bool matched=false;
+            if(d2=="BondAnd"){
+              for(QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter2=q2->beginChildren();iter2!=q2->endChildren();++iter2){
+                if(queriesMatch(iter1->get(),iter2->get())){
+                  matched=true;
+                  break;
+                }
+              }
+            } else {
+              matched = queriesMatch(iter1->get(),q2);
+            }
+            if(!matched){
+              res=false;
+              break;
+            }
+          }
+      // FIX : handle BondXOr
+      } else if(d2=="BondOr"){
+        // FIX: handle negation on BondOr and BondAnd
+        for(QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter2=q2->beginChildren();iter2!=q2->endChildren();++iter2){
+          if(queriesMatch(q1,iter2->get())) {
+            res=true;
+            break;
+          }
+        }
+      } else if(d2=="BondAnd"){
+        res=true;
+        for(QueryBond::QUERYBOND_QUERY::CHILD_VECT_CI iter2=q2->beginChildren();iter2!=q2->endChildren();++iter2){
+          if(queriesMatch(q1,iter2->get())){
+            res=false;
+            break;
+          }
+        }
+      } else if(std::find(&equalityQueries[0],&equalityQueries[nQueries],d1)!= &equalityQueries[nQueries]){
+          res=localMatch(static_cast<BOND_EQUALS_QUERY const *>(q1),
+                         static_cast<BOND_EQUALS_QUERY const *>(q2));
+      } 
+      return res;
+    }
+  } //end of local namespace
+
+bool QueryBond::Match(Bond const *what) const {
+  PRECONDITION(dp_query,"no query set");
+  if(!what->hasQuery()){
+    return dp_query->Match(what);
+  } else {
+    return queriesMatch(dp_query,what->getQuery());
+  }
+}
+
+
+
 
 } // end o' namespace

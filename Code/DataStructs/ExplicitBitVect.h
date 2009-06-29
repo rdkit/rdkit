@@ -41,9 +41,9 @@ public:
   ExplicitBitVect operator& (const ExplicitBitVect &other) const;
   ExplicitBitVect operator| (const ExplicitBitVect &other) const;
   ExplicitBitVect operator~ () const;
-  const unsigned int GetNumBits() const;
-  const unsigned int GetNumOnBits() const;
-  const unsigned int GetNumOffBits() const;
+  unsigned int GetNumBits() const;
+  unsigned int GetNumOnBits() const;
+  unsigned int GetNumOffBits() const;
 
   void GetOnBits (IntVect& v) const;
 

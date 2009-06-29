@@ -1146,6 +1146,20 @@ void testMiscSmartsWriting(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testSmartsStereochem(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing handling (or lack thereof) of stereochem in smarts (sf.net issue 2738320)" << std::endl;
+
+  _checkMatches("C/C=C/C", "CC=CC", 1, 4);
+  _checkMatches("C/C=C/C", "C/C=C/C", 1, 4);
+  _checkMatches("C/C=C/C", "C\\C=C\\C", 1, 4);
+  _checkMatches("C/C=C/C", "C/C=C\\C", 1, 4);
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1174,5 +1188,6 @@ main(int argc, char *argv[])
   testIssue1914154();
   testMiscSmartsWriting();
   //testIssue1804420();
+  testSmartsStereochem();
   return 0;
 }

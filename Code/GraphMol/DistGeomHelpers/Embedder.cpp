@@ -73,38 +73,33 @@ namespace RDKit {
                                                                        chiralCenters,
                                                                        1.0, 0.1, 
                                                                        0,basinThresh);
-	unsigned int nPasses=0;
-	field->initialize();
-	if(field->calcEnergy() > ERROR_TOL){
-	  int needMore = 1;
-	  while(needMore){
-            //std::cerr<<"********* Minimize1 from: "<<field->calcEnergy()<<std::endl;
-	    needMore = field->minimize(200,optimizerForceTol);
-	    ++nPasses;
-	  }
-          //std::cerr<<"********* Finished1 at "<<field->calcEnergy()<<std::endl;
-	}
+        unsigned int nPasses=0;
+        field->initialize();
+        if(field->calcEnergy() > ERROR_TOL){
+          int needMore = 1;
+          while(needMore){
+            needMore = field->minimize(200,optimizerForceTol);
+            ++nPasses;
+          }
+        }
         // now redo the minimization if we have a chiral center, this
         // time removing the chiral constraints and
         // increasing the weight on the fourth dimension
         if (chiralCenters.size()>0 || useRandomCoords) {
           ForceFields::ForceField *field2 = DistGeom::constructForceField(*mmat, positions,
-                                                                         chiralCenters,
-                                                                         0.1, 1.0, 0,
-                                                                         basinThresh);
-	  field2->initialize();
-	  if(field2->calcEnergy() > ERROR_TOL){
-	    int needMore = 1;
-	    while(needMore){
-              //std::cerr<<"********* Minimize2 from: "<<field2->calcEnergy()<<std::endl;
-	      needMore = field2->minimize(200,optimizerForceTol);
-	    }
-            //std::cerr<<"********* Finished2 at "<<field2->calcEnergy()<<std::endl;
-	  }
-	  delete field2;
-          //std::cerr<<"********* Field1 again: "<<field->calcEnergy()<<std::endl;
+                                                                          chiralCenters,
+                                                                          0.1, 1.0, 0,
+                                                                          basinThresh);
+          field2->initialize();
+          if(field2->calcEnergy() > ERROR_TOL){
+            int needMore = 1;
+            while(needMore){
+              needMore = field2->minimize(200,optimizerForceTol);
+            }
+          }
+          delete field2;
         }
-	delete field;
+        delete field;
       }
       return gotCoords;
     }
@@ -121,7 +116,7 @@ namespace RDKit {
             nbrs.clear();
             nbrs.reserve(4);
             // find the neighbors of this atom and enter them into the
-	    // nbr list along with their CIPRanks
+            // nbr list along with their CIPRanks
             boost::tie(beg,end) = mol.getAtomBonds(*ati);
             while (beg != end) {
               oatom = mol[*beg]->getOtherAtom(*ati);
@@ -132,7 +127,7 @@ namespace RDKit {
               ++beg;
             }
             // if we have less than 4 heavy atoms as neighbors,
-	    // we need to include the chiral center into the mix
+            // we need to include the chiral center into the mix
             // we should at least have 3 though
             bool includeSelf = false;
             CHECK_INVARIANT(nbrs.size() >= 3, "Cannot be a chiral center");
@@ -153,18 +148,18 @@ namespace RDKit {
             if (cipCode == "S") { 
               // postive chiral volume
               DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(nbrs[0].second,
-								  nbrs[1].second,
-								  nbrs[2].second,
+                                                                  nbrs[1].second,
+                                                                  nbrs[2].second,
                                                                   nbrs[3].second,
-								  5.0, 100.0);
+                                                                  5.0, 100.0);
               DistGeom::ChiralSetPtr cptr(cset);
               chiralCenters.push_back(cptr);
             } else {
               DistGeom::ChiralSet *cset = new DistGeom::ChiralSet(nbrs[0].second,
-								  nbrs[1].second,
-								  nbrs[2].second,
+                                                                  nbrs[1].second,
+                                                                  nbrs[2].second,
                                                                   nbrs[3].second,
-								  -100.0, -5.0);
+                                                                  -100.0, -5.0);
               DistGeom::ChiralSetPtr cptr(cset);
               chiralCenters.push_back(cptr);
             }
@@ -184,7 +179,7 @@ namespace RDKit {
     }
         
     bool _isConfFarFromRest(const ROMol &mol, const Conformer &conf,
-			    double threshold) {
+                            double threshold) {
       // NOTE: it is tempting to use some triangle inequality to prune
       // conformations here but some basic testing has shown very
       // little advantage and given that the time for pruning fades in
@@ -217,7 +212,7 @@ namespace RDKit {
                       bool useRandomCoords,double boxSizeMult,
                       bool randNegEig, unsigned int numZeroFail,
                       const std::map<int,RDGeom::Point3D> *coordMap,
-		      double optimizerForceTol,double basinThresh){
+                      double optimizerForceTol,double basinThresh){
       INT_VECT confIds;
       confIds=EmbedMultipleConfs(mol,1,maxIterations,seed,clearConfs,
                                  useRandomCoords,boxSizeMult,randNegEig,

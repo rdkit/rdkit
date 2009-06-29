@@ -17,16 +17,13 @@ use-project RDKit_Externals
 project RDKit
 	: requirements <include>.  <threading>multi
           <include>$(BOOSTHOME)
-          <include>$(RDBASE)/External/Lapack++/include
-          <include>$(RDBASE)/External/vflib-2.0/include
-          #<define>USE_VFLIB
           <toolset>gcc:<cflags>-Wno-unused-function
           <toolset>gcc:<cflags>-Wno-deprecated
           <toolset>darwin:<cflags>-Wno-unused-function
           <toolset>gcc:<cflags>-fno-strict-aliasing
           <toolset>msvc:<define>WIN32
-          <include>/usr/lib/python2.5/site-packages/numpy-1.2.1-py2.5-linux-i686.egg/numpy/core/include
-	  <address-model>64:<cflags>-fPIC
+          <include>MISSING
+          <address-model>64:<cflags>-fPIC
           # <define>RDK_USELAPACKPP #<- uncomment this to use lapack++
           <target-os>windows:<define>BOOST_NUMERIC_BINDINGS_USE_CLAPACK
           <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
@@ -35,7 +32,10 @@ project RDKit
 
 alias all-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures GraphMol
 ;
+alias all : all-libraries all-wrappers ;
 
+alias minimal : DistGeom ForceField DataStructs Geometry Query RDGeneral Numerics ChemicalFeatures GraphMol//minimal 
+;
 
 alias all-wrappers : RDBoost/Wrap 
   DataStructs/Wrap
@@ -83,6 +83,5 @@ lib blas
 # if you want to use Lapack++, use this version:
 #alias lapacklibs : /RDKit_Externals//Lapack++ lapack blas ;
 alias lapacklibs : lapack blas ;
-alias vflib : /RDKit_Externals//vflib ;
 
 

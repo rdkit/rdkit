@@ -10,7 +10,7 @@ lib rdk_funcs : rdk_funcs.cpp
   ../../GraphMol//GraphMol
   /RDKit//DataStructs	
   /RDKit//RDGeneral /RDKit//Geometry
-  /RDKit//vflib /RDKit//lapacklibs
+  /RDKit//lapacklibs
  ;
 
 install lib-install : rdk_funcs : <location>. ;

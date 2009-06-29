@@ -262,12 +262,10 @@ A			{
 
 [\\]    { yysmarts_lval.bond = new QueryBond(Bond::SINGLE);
 	yysmarts_lval.bond->setBondDir(Bond::ENDDOWNRIGHT);
-        yysmarts_lval.bond->setQuery(makeBondDirEqualsQuery(Bond::ENDDOWNRIGHT));
 	return BOND_TOKEN;  }
 	
 [\/]    { yysmarts_lval.bond = new QueryBond(Bond::SINGLE);
 	yysmarts_lval.bond->setBondDir(Bond::ENDUPRIGHT);
-        yysmarts_lval.bond->setQuery(makeBondDirEqualsQuery(Bond::ENDUPRIGHT));
 	return BOND_TOKEN;  }
 
 

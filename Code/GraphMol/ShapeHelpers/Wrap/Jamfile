@@ -11,7 +11,7 @@ python-extension rdShapeHelpers : rdShapeHelpers.cpp
   ../../../Numerics/EigenSolvers//EigenSolvers
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-../../..//vflib ../../..//lapacklibs 
+ ../../..//lapacklibs 
   ;
 
 install pymod : rdShapeHelpers

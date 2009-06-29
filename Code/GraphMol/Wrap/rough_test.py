@@ -391,9 +391,9 @@ class TestCase(unittest.TestCase):
     self.failUnless(m2.GetNumAtoms()==5)
     m2 = Chem.RemoveHs(m2)
     self.failUnless(m2.GetNumAtoms()==4)
+
     m = Chem.MolFromSmiles('CC[H]',False)
     self.failUnless(m.GetNumAtoms()==3)
-    print 'merge'
     m2 = Chem.MergeQueryHs(m)
     self.failUnless(m2.GetNumAtoms()==2)
     self.failUnless(m2.GetAtomWithIdx(1).HasQuery())
@@ -1909,6 +1909,37 @@ CAS<~>
     sdSup = Chem.CompressedSDMolSupplier(fileN, 0)
     for mol in sdSup :
       self.failUnless(not mol.HasProp("numArom"))
+
+  def test57AddRecursiveQuery(self):
+    q1 = Chem.MolFromSmiles('CC')
+    q2 = Chem.MolFromSmiles('CO')
+    Chem.AddRecursiveQuery(q1,q2,1)
+
+    m1 = Chem.MolFromSmiles('OCC')
+    self.failUnless(m1.HasSubstructMatch(q2))
+    self.failUnless(m1.HasSubstructMatch(q1))
+    self.failUnless(m1.HasSubstructMatch(q1))
+    self.failUnless(m1.GetSubstructMatch(q1)==(2,1))
+
+    q3 = Chem.MolFromSmiles('CS')
+    Chem.AddRecursiveQuery(q1,q3,1)
+    
+    self.failIf(m1.HasSubstructMatch(q3))
+    self.failIf(m1.HasSubstructMatch(q1))
+
+    m2 = Chem.MolFromSmiles('OC(S)C')
+    self.failUnless(m2.HasSubstructMatch(q1))
+    self.failUnless(m2.GetSubstructMatch(q1)==(3,1))
+    
+    m3 = Chem.MolFromSmiles('SCC')
+    self.failUnless(m3.HasSubstructMatch(q3))
+    self.failIf(m3.HasSubstructMatch(q1))
+
+    q1 = Chem.MolFromSmiles('CC')
+    Chem.AddRecursiveQuery(q1,q2,1)
+    Chem.AddRecursiveQuery(q1,q3,1,False)
+    self.failUnless(m3.HasSubstructMatch(q1))
+    self.failUnless(m3.GetSubstructMatch(q1)==(2,1))
     
 if __name__ == '__main__':
   unittest.main()

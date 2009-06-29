@@ -11,7 +11,7 @@ python-extension rdMolDescriptors : rdMolDescriptors.cpp
   ../..//GraphMol
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-../../..//vflib ../../..//lapacklibs 
+ ../../..//lapacklibs 
   ;
 
 install pymod : rdMolDescriptors 

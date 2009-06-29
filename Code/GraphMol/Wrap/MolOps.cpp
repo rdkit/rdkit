@@ -13,6 +13,7 @@
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
@@ -48,6 +49,34 @@ namespace RDKit{
     }
     return res;
   }
+
+  void addRecursiveQuery(ROMol &mol,
+                         const ROMol &query,
+                         unsigned int atomIdx,
+                         bool preserveExistingQuery){
+    if(atomIdx>=mol.getNumAtoms()){
+      throw_value_error("atom index exceeds mol.GetNumAtoms()");
+    }
+    RecursiveStructureQuery *q = new RecursiveStructureQuery(new ROMol(query));
+
+    Atom *oAt=mol.getAtomWithIdx(atomIdx);
+    if(!oAt->hasQuery()){
+      QueryAtom qAt(*oAt);
+      static_cast<RWMol &>(mol).replaceAtom(atomIdx,&qAt);
+      oAt = mol.getAtomWithIdx(atomIdx);
+    }
+
+    
+    if(!preserveExistingQuery){
+      // FIX: this leaks a query atom on oAt
+      oAt->setQuery(q);
+    } else {
+      oAt->expandQuery(q,Queries::COMPOSITE_AND);
+    }
+    
+  }
+
+
 
   void sanitizeMol(ROMol &mol) {
     RWMol &wmol = static_cast<RWMol &>(mol);
@@ -370,7 +399,7 @@ namespace RDKit{
                   docString.c_str());
 
       // ------------------------------------------------------------------------
-      docString="Returns the molecule's distance matrix.\n\
+      docString="Returns the molecule's topological distance matrix.\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -844,6 +873,28 @@ namespace RDKit{
                    python::arg("labelByIndex")=false),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
+
+      // ------------------------------------------------------------------------
+      docString="Adds a recursive query to an atom\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to be modified\n\
+\n\
+    - query: the molecule to be used as the recursive query (this will be copied)\n\
+\n\
+    - atomIdx: the atom to modify\n\
+\n\
+    - preserveExistingQuery: (optional) if this is set, existing query information on the atom will be preserved\n\
+\n\
+  RETURNS: None\n\
+\n";
+      python::def("AddRecursiveQuery", addRecursiveQuery,
+                  (python::arg("mol"),python::arg("query"),
+                   python::arg("atomIdx"),python::arg("preserveExistingQuery")=true),
+                  docString.c_str());
+
+
 
     };
   };

@@ -330,7 +330,184 @@ void test6(){
   massVal=queryAtomMass(a);
   TEST_ASSERT(massVal==static_cast<int>(RDKit::round(13.000*massIntegerConversionFactor)));
   
+  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+}
+
+
+void testQueryQueryMatches(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing query--query matches" << std::endl;
+
+  // =====================================
+  // ATOMS
+  // =====================================
+  {
+    QueryAtom a1,a2;
+    a1.setQuery(makeAtomNullQuery());
+    a2.setQuery(makeAtomNullQuery());
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1,a2(6);
+    a1.setQuery(makeAtomNullQuery());
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1(6),a2(8);
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1(6),a2(6);
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1,a2;
+    a1.setQuery(makeAtomAromaticQuery());
+    a2.setQuery(makeAtomAromaticQuery());
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1,a2;
+    a1.setQuery(makeAtomAromaticQuery());
+    a2.setQuery(makeAtomAliphaticQuery());
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1(6),a2(8);
+    a1.expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeAtomNumEqualsQuery(9),Queries::COMPOSITE_OR);
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1(6),a2(8);
+    a1.expandQuery(makeAtomNumEqualsQuery(7),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeAtomNumEqualsQuery(9),Queries::COMPOSITE_OR);
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1(6),a2(6);
+    a1.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
+    a2.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1(6),a2(6);
+    a1.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
+    a2.expandQuery(makeAtomExplicitValenceQuery(4),Queries::COMPOSITE_AND);
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1(6),a2(8);
+    a1.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
+    a2.expandQuery(makeAtomExplicitValenceQuery(3),Queries::COMPOSITE_AND);
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryAtom a1(6),a2(8);
+    a1.expandQuery(makeAtomNumEqualsQuery(8),Queries::COMPOSITE_OR);
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  // =====================================
+  // BONDS
+  // =====================================
   
+  {
+    QueryBond a1,a2;
+    a1.setQuery(makeBondNullQuery());
+    a2.setQuery(makeBondNullQuery());
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1,a2(Bond::SINGLE);
+    a1.setQuery(makeBondNullQuery());
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1(Bond::SINGLE),a2(Bond::SINGLE);
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
+    a1.expandQuery(makeBondOrderEqualsQuery(Bond::DOUBLE),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),Queries::COMPOSITE_OR);
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
+    a1.expandQuery(makeBondOrderEqualsQuery(Bond::TRIPLE),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),Queries::COMPOSITE_OR);
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
+    a1.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_OR);
+    a2.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_OR);
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1(Bond::SINGLE),a2(Bond::DOUBLE);
+    a1.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_AND);
+    a2.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_AND);
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1(Bond::SINGLE),a2(Bond::SINGLE);
+    a1.expandQuery(makeBondMinRingSizeQuery(5),Queries::COMPOSITE_AND);
+    a2.expandQuery(makeBondMinRingSizeQuery(4),Queries::COMPOSITE_AND);
+    TEST_ASSERT(!a1.Match(&a2));
+    TEST_ASSERT(!a2.Match(&a1));
+  }
+
+  {
+    QueryBond a1(Bond::SINGLE),a2(Bond::AROMATIC);
+    a1.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),Queries::COMPOSITE_OR);
+    TEST_ASSERT(a1.Match(&a2));
+    TEST_ASSERT(a2.Match(&a1));
+  }
 
   BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
@@ -344,5 +521,8 @@ int main(){
   test4();
   test5();
   test6();
+  testQueryQueryMatches();
+
+
   return 0;
 }

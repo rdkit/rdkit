@@ -39,9 +39,6 @@ exe testMol2ToMol : testMol2ToMol.cpp FileParsers
   ../SmilesParse//SmilesParse ..//GraphMol 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ;
 
-lib profiler : : <name>profiler ;
-
-
 install regrs : test1 testMolSupplier testMolWriter testTplParser testMol2ToMol
   : <location>testExecs ;
 

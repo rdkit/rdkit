@@ -24,7 +24,7 @@
 //! that may be of unequal size (will automatically fold as appropriate)
 template <typename T>
 double SimilarityWrapper(const T &bv1,const T &bv2,
-                         const double (*metric)(const T &,const T &),
+                         double (*metric)(const T &,const T &),
                          bool returnDistance=false){
   double res=0.0;
   if(bv1.GetNumBits()>bv2.GetNumBits()){
@@ -44,7 +44,7 @@ double SimilarityWrapper(const T &bv1,const T &bv2,
 //! \overload
 template <typename T>
 double SimilarityWrapper(const T &bv1,const T &bv2,double a,double b,
-                         const double (*metric)(const T &,const T &,double,double),
+                         double (*metric)(const T &,const T &,double,double),
                          bool returnDistance=false){
   double res=0.0;
   if(bv1.GetNumBits()>bv2.GetNumBits()){
@@ -90,7 +90,7 @@ NumOnBitsInCommon(const ExplicitBitVect & bv1,const ExplicitBitVect & bv2);
   \return <tt>(bv1&bv2)_o / [bv1_o + bv2_o - (bv1&bv2)_o]</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 TanimotoSimilarity(const T1& bv1,const T2& bv2);
 
 //! returns the Cosine similarity between two bit vects
@@ -98,7 +98,7 @@ TanimotoSimilarity(const T1& bv1,const T2& bv2);
   \return <tt>(bv1&bv2)_o / sqrt(bv1_o + bv2_o)</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 CosineSimilarity(const T1& bv1,
                  const T2& bv2);
 
@@ -107,7 +107,7 @@ CosineSimilarity(const T1& bv1,
   \return <tt>(bv1&bv2)_o * [bv1_o + bv2_o] / [2 * bv1_o * bv2_o]</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 KulczynskiSimilarity(const T1& bv1,
                      const T2& bv2);
 
@@ -116,7 +116,7 @@ KulczynskiSimilarity(const T1& bv1,
   \return <tt>2*(bv1&bv2)_o / [bv1_o + bv2_o]</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 DiceSimilarity(const T1& bv1,
                const T2& bv2);
 
@@ -131,7 +131,7 @@ DiceSimilarity(const T1& bv1,
  
 */
 template <typename T1, typename T2>
-const double
+double
 TverskySimilarity(const T1& bv1,
                   const T2& bv2,double a,double b);
 
@@ -140,7 +140,7 @@ TverskySimilarity(const T1& bv1,
   \return <tt>(bv1&bv2)_o / [2*bv1_o + 2*bv2_o - 3*(bv1&bv2)_o]</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 SokalSimilarity(const T1& bv1,
                 const T2& bv2);
 
@@ -149,7 +149,7 @@ SokalSimilarity(const T1& bv1,
   \return <tt>[(bv1&bv2)_o * (bv1_o + bv2_o) - (bv1_o * bv2_o)] / (bv1_o * bv2_o)</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 McConnaugheySimilarity(const T1& bv1,
                        const T2& bv2);
 
@@ -158,7 +158,7 @@ McConnaugheySimilarity(const T1& bv1,
   \return <tt>(bv1&bv2)_o / min(bv1_o,bv2_o)</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 AsymmetricSimilarity(const T1& bv1,
                      const T2& bv2);
 
@@ -167,7 +167,7 @@ AsymmetricSimilarity(const T1& bv1,
   \return <tt>(bv1&bv2)_o / max(bv1_o,bv2_o)</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 BraunBlanquetSimilarity(const T1& bv1,
                         const T2& bv2);
 
@@ -180,7 +180,7 @@ BraunBlanquetSimilarity(const T1& bv1,
 
 */
 template <typename T1, typename T2>
-const double
+double
 RusselSimilarity(const T1& bv1,
                  const T2& bv2);
 
@@ -190,7 +190,7 @@ RusselSimilarity(const T1& bv1,
   \return <tt>(bv1&bv2)_o / (bv1|bv2)_o </tt>
 */
 template <typename T1, typename T2>
-const double
+double
 OnBitSimilarity(const T1& bv1,const T2& bv2);
 
 //! returns the number of common bits (on and off) between two bit vects
@@ -198,7 +198,7 @@ OnBitSimilarity(const T1& bv1,const T2& bv2);
   \return <tt>bv1_n - (bv1^bv2)_o</tt>
 */
 template <typename T1, typename T2>
-const int
+int
 NumBitsInCommon(const T1& bv1,const T2& bv2);
 
 //! returns the commong-bit similarity (on and off) between two bit vects
@@ -206,7 +206,7 @@ NumBitsInCommon(const T1& bv1,const T2& bv2);
   \return <tt>[bv1_n - (bv1^bv2)_o] / bv1_n</tt>
 */
 template <typename T1, typename T2>
-const double
+double
 AllBitSimilarity(const T1& bv1,const T2& bv2);
 
 //! returns an IntVect with indices of all on bits in common between two bit vects

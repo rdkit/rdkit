@@ -254,7 +254,6 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(3))
             self.failUnless(abs(vol-tgtVol)<1,"%s %s"%(vol,tgtVol))
 
-
         tgtVol=3.5
         expected = [-3.62, -3.67, -3.72,  3.91,  3.95,  3.98,  3.90,  3.94,  3.98,  3.91]
         nPos=0

@@ -58,7 +58,7 @@ public:
   //! returns a (const) pointer to our raw storage
   const IntSet *GetBitSet() const { return dp_bits;}
 
-  const unsigned int GetNumBits() const { return d_size; };
+  unsigned int GetNumBits() const { return d_size; };
   bool SetBit(const unsigned int which);
   bool SetBit(const IntSetIter which);
   bool UnSetBit(const unsigned int which);
@@ -66,8 +66,8 @@ public:
   bool GetBit(const IntVectIter which) const;
   bool GetBit(const IntSetIter which) const;
 
-  const unsigned int GetNumOnBits() const { return dp_bits->size(); };
-  const unsigned int GetNumOffBits() const { return d_size - dp_bits->size(); };
+  unsigned int GetNumOnBits() const { return dp_bits->size(); };
+  unsigned int GetNumOffBits() const { return d_size - dp_bits->size(); };
 
   std::string ToString() const;
 

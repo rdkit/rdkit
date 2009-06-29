@@ -104,13 +104,13 @@ ExplicitBitVect::ExplicitBitVect(const char *data,const unsigned int dataLen)
     return(ans);
   };
 
-  const unsigned int ExplicitBitVect::GetNumBits() const {
+  unsigned int ExplicitBitVect::GetNumBits() const {
     return d_size;
   };
-  const unsigned int ExplicitBitVect::GetNumOnBits() const {
+  unsigned int ExplicitBitVect::GetNumOnBits() const {
     return d_numOnBits;
   };
-  const unsigned int ExplicitBitVect::GetNumOffBits() const {
+  unsigned int ExplicitBitVect::GetNumOffBits() const {
     return d_size - d_numOnBits;
   };
 

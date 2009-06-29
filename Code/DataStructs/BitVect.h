@@ -27,11 +27,11 @@ public:
   //! returns the value of a particular bit
   virtual bool GetBit(const unsigned int which) const = 0;
   //! returns the number of bits (the length of the BitVect)
-  virtual const unsigned int GetNumBits() const = 0;
+  virtual unsigned int GetNumBits() const = 0;
   //! returns the number of on bits
-  virtual const unsigned int GetNumOnBits() const = 0;
+  virtual unsigned int GetNumOnBits() const = 0;
   //! returns the number of off bits
-  virtual const unsigned int GetNumOffBits() const =0;
+  virtual unsigned int GetNumOffBits() const =0;
   //! replaces the contents of \c v with indices of our on bits
   virtual void GetOnBits (IntVect& v) const = 0;
   //! clears (sets to off) all of our bits

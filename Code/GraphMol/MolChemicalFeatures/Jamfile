@@ -14,7 +14,7 @@ exe testFeatures : testFeatures.cpp MolChemicalFeatures
   ../Substruct//Substruct
   ..//GraphMol 
   ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral 
-  ../../Geometry//RDGeometry ../..//vflib
+  ../../Geometry//RDGeometry
  ;
 
 install regrs : testFeatures

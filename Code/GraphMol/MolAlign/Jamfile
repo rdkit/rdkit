@@ -17,7 +17,7 @@ exe testMolAlign : testMolAlign.cpp MolAlign ../MolTransforms//MolTransforms
   ../..//Numerics/Alignment//Alignment
   ../Substruct//Substruct ..//GraphMol 
   ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-   ../..//vflib ;
+ ;
 
 install regrs : testMolAlign
   : <location>testExecs ;

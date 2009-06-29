@@ -210,7 +210,7 @@ NumOnBitsInCommon(const ExplicitBitVect& bv1,
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-const double
+double
 TanimotoSimilarity(const T1& bv1,
                    const T2& bv2)
 {
@@ -225,7 +225,7 @@ TanimotoSimilarity(const T1& bv1,
 
 
 template <typename T1, typename T2>
-const double
+double
 TverskySimilarity(const T1& bv1,
                   const T2& bv2,
                   double a,
@@ -244,7 +244,7 @@ TverskySimilarity(const T1& bv1,
 }
 
 template <typename T1, typename T2>
-const double
+double
 CosineSimilarity(const T1& bv1,
                    const T2& bv2)
 {
@@ -262,7 +262,7 @@ CosineSimilarity(const T1& bv1,
 }
 
 template <typename T1, typename T2>
-const double
+double
 KulczynskiSimilarity(const T1& bv1,
                    const T2& bv2)
 {
@@ -281,7 +281,7 @@ KulczynskiSimilarity(const T1& bv1,
 
 
 template <typename T1, typename T2>
-const double
+double
 DiceSimilarity(const T1& bv1,
               const T2& bv2)
 {
@@ -299,7 +299,7 @@ DiceSimilarity(const T1& bv1,
 }
 
 template <typename T1, typename T2>
-const double
+double
 SokalSimilarity(const T1& bv1,
               const T2& bv2)
 {
@@ -313,7 +313,7 @@ SokalSimilarity(const T1& bv1,
 }
 
 template <typename T1, typename T2>
-const double
+double
 McConnaugheySimilarity(const T1& bv1,
                        const T2& bv2)
 {
@@ -343,7 +343,7 @@ inline T tmax(T v1,T v2) {
 }
 
 template <typename T1, typename T2>
-const double
+double
 AsymmetricSimilarity(const T1& bv1,
                      const T2& bv2)
 {
@@ -361,7 +361,7 @@ AsymmetricSimilarity(const T1& bv1,
 }
 
 template <typename T1, typename T2>
-const double
+double
 BraunBlanquetSimilarity(const T1& bv1,
                      const T2& bv2)
 {
@@ -379,7 +379,7 @@ BraunBlanquetSimilarity(const T1& bv1,
 }
 
 template <typename T1, typename T2>
-const double
+double
 RusselSimilarity(const T1& bv1,
                      const T2& bv2)
 {
@@ -405,7 +405,7 @@ RusselSimilarity(const T1& bv1,
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-const double
+double
 OnBitSimilarity(const T1& bv1,
                 const T2& bv2)
 {
@@ -436,7 +436,7 @@ OnBitSimilarity(const T1& bv1,
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-const int
+int
 NumBitsInCommon(const T1& bv1,
                 const T2& bv2)
 {
@@ -462,7 +462,7 @@ NumBitsInCommon(const T1& bv1,
 //
 // """ -------------------------------------------------------
 template <typename T1, typename T2>
-const double
+double
 AllBitSimilarity(const T1& bv1,
                 const T2& bv2)
 {
@@ -644,38 +644,38 @@ BitVectToText(const T1& bv1){
 
 
 
-template const double TanimotoSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double TverskySimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2,double a, double b);
-template const double CosineSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double KulczynskiSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double DiceSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double SokalSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double McConnaugheySimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double AsymmetricSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double BraunBlanquetSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double RusselSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double OnBitSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const int NumBitsInCommon(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template const double AllBitSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double TanimotoSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double TverskySimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2,double a, double b);
+template double CosineSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double KulczynskiSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double DiceSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double SokalSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double McConnaugheySimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double AsymmetricSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double BraunBlanquetSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double RusselSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double OnBitSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template int NumBitsInCommon(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double AllBitSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template int NumOnBitsInCommon(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template IntVect OnBitsInCommon(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template IntVect OffBitsInCommon(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template DoubleVect OnBitProjSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template DoubleVect OffBitProjSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 
-template const double TanimotoSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double TverskySimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2,double a, double b);
-template const double CosineSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double KulczynskiSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double DiceSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double SokalSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double McConnaugheySimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double AsymmetricSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double BraunBlanquetSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double RusselSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double OnBitSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const int NumBitsInCommon(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
-template const double AllBitSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double TanimotoSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double TverskySimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2,double a, double b);
+template double CosineSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double KulczynskiSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double DiceSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double SokalSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double McConnaugheySimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double AsymmetricSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double BraunBlanquetSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double RusselSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double OnBitSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template int NumBitsInCommon(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double AllBitSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template IntVect OnBitsInCommon(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template IntVect OffBitsInCommon(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template DoubleVect OnBitProjSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
