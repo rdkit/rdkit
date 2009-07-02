@@ -313,7 +313,7 @@ Datum rd_substructfp(PG_FUNCTION_ARGS)
     }
     if(mol) {
       try{
-	bv = DaylightFingerprintMol(*mol,1,7,fpSize);
+	bv = RDKFingerprintMol(*mol,1,7,fpSize);
       } catch (...) {
 	bv = new ExplicitBitVect(fpSize);
       }
@@ -351,7 +351,7 @@ Datum rd_substructfp_bits(PG_FUNCTION_ARGS)
     }
     if(mol) {
       try{
-	bv = DaylightFingerprintMol(*mol,1,7,fpSize);
+	bv = RDKFingerprintMol(*mol,1,7,fpSize);
       } catch (...) {
 	bv = 0;
       }
@@ -391,7 +391,7 @@ Datum rd_similarityfp(PG_FUNCTION_ARGS)
     }
     if(mol) {
       try{
-	bv = DaylightFingerprintMol(*mol,1,7,fpSize);
+	bv = RDKFingerprintMol(*mol,1,7,fpSize);
 	double density=static_cast<double>(bv->GetNumOnBits())/bv->GetNumBits();
 	while(density<tgtDensity && bv->GetNumBits()>8){
 	  ExplicitBitVect *tmp=FoldFingerprint(*bv,2);
@@ -436,7 +436,7 @@ Datum rd_similarityfp_bits(PG_FUNCTION_ARGS)
     }
     if(mol) {
       try{
-	bv = DaylightFingerprintMol(*mol,1,7,fpSize);
+	bv = RDKFingerprintMol(*mol,1,7,fpSize);
 	double density=static_cast<double>(bv->GetNumOnBits())/bv->GetNumBits();
 	while(density<tgtDensity && bv->GetNumBits()>8){
 	  ExplicitBitVect *tmp=FoldFingerprint(*bv,2);

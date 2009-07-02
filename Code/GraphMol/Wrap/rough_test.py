@@ -714,26 +714,7 @@ class TestCase(unittest.TestCase):
     self.failUnless(mol)
     self.failUnless(mol.GetNumAtoms()==39)
 
-  def test24DaylightFingerprint(self):
-    from rdkit import DataStructs
-    m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
-    fp1 = Chem.DaylightFingerprint(m1)
-    self.failUnless(len(fp1)==2048)
-    m2 = Chem.MolFromSmiles('C1=CC=CC=C1')
-    fp2 = Chem.DaylightFingerprint(m2)
-
-    tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
-    self.failUnless(tmp==1.0,tmp)
-
-    m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
-    fp2 = Chem.DaylightFingerprint(m2)
-    self.failUnless(len(fp2)==2048)
-    tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
-    self.failUnless(tmp<1.0,tmp)
-    self.failUnless(tmp>0.0,tmp)
-
-    fp3 = Chem.DaylightFingerprint(m1,tgtDensity=0.3)
-    self.failUnless(len(fp3)<2048)
+  # test23 was for Chem.DaylightFingerprint, which is deprecated
     
   def test24RDKFingerprint(self):
     from rdkit import DataStructs

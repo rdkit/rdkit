@@ -675,17 +675,6 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
                   docString.c_str());
 
-
-      // ------------------------------------------------------------------------
-      docString="DEPRECATED: use RDKFingerprint() instead.\n";
-      python::def("DaylightFingerprint", DaylightFingerprintMol,
-                  (python::arg("mol"),python::arg("minPath")=1,
-                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
-                   python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
-                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
-                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
-
-
       // ------------------------------------------------------------------------
       docString="Returns an RDKit topological fingerprint for a molecule\n\
 \n\

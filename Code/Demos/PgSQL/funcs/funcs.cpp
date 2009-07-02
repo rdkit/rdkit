@@ -69,7 +69,7 @@ Datum substructfp(PG_FUNCTION_ARGS)
   RDKit::RWMol *mol=RDKit::SmilesToMol(smiS);
   if(mol) {
     try{
-      bv = DaylightFingerprintMol(mol,1,7,fpSize);
+      bv = RDKFingerprintMol(mol,1,7,fpSize);
     } catch (...) {
       bv = new ExplicitBitVect(fpSize);
     }
