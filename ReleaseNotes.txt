@@ -1,3 +1,16 @@
+******  Release_Q32009_1 *******
+(Changes relative to Release_Q12009_2)
+
+Acknowledgements
+
+Bug Fixes
+   
+New Features
+
+Other
+  - the function DaylightFingerprintMol() has been removed
+
+
 ******  Release_Q22009_1 *******
 (Changes relative to Release_Q12009_2)
 
@@ -50,6 +63,8 @@ Other
   - $RDBASE/Regress has been added to contain regression and
     benchmarking data and scripts.
   - support for sqlalchemy has been added to $RDBASE/rdkit/Chem/MolDb
+  - $RDBASE/Projects/DbCLI/SDSearch.py has been removed; use the
+    CreateDb.py and SearchDb.py scripts in the same directory instead.
   - the BRICS code has been refactored  
 
 ******  Release_Q12009_2 *******
