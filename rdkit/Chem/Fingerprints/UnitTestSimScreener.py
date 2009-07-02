@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
                                            nameColumn=-1,
                                            titleLine=0)
     metric = DataStructs.TanimotoSimilarity
-    fingerprinter = lambda x:Chem.DaylightFingerprint(x,minPath=2,maxPath=7,fpSize=2048)
+    fingerprinter = lambda x:Chem.RDKFingerprint(x,minPath=2,maxPath=7,fpSize=2048)
     probe = fingerprinter(Chem.MolFromSmiles('C1OCCCC1'))
 
     screener = SimilarityScreener.TopNScreener(3,probe=probe,metric=metric,
@@ -52,7 +52,7 @@ class TestCase(unittest.TestCase):
                                            titleLine=0)
 
     metric = DataStructs.TanimotoSimilarity
-    fingerprinter = lambda x:Chem.DaylightFingerprint(x,minPath=2,maxPath=7,fpSize=2048)
+    fingerprinter = lambda x:Chem.RDKFingerprint(x,minPath=2,maxPath=7,fpSize=2048)
     probe = fingerprinter(Chem.MolFromSmiles('C1OCCCC1'))
 
     screener = SimilarityScreener.ThresholdScreener(0.09,probe=probe,metric=metric,
@@ -76,8 +76,8 @@ class TestCase(unittest.TestCase):
 
 
     metric = DataStructs.TanimotoSimilarity
-    fingerprinter = lambda x:Chem.DaylightFingerprint(x,minPath=2,maxPath=7,fpSize=2048)
-    probe = Chem.DaylightFingerprint(Chem.MolFromSmiles('C1OCCCC1'),
+    fingerprinter = lambda x:Chem.RDKFingerprint(x,minPath=2,maxPath=7,fpSize=2048)
+    probe = Chem.RDKFingerprint(Chem.MolFromSmiles('C1OCCCC1'),
                                      minPath=2,maxPath=7,fpSize=4096)
 
     screener = SimilarityScreener.ThresholdScreener(0.09,probe=probe,metric=metric,

@@ -39,11 +39,11 @@ class TestCase(unittest.TestCase):
              ]
     for smi,matches in tgts:
       m = Chem.MolFromSmiles(smi)
-      fp1 = Chem.DaylightFingerprint(m,2,7,9192,4,0)
+      fp1 = Chem.RDKFingerprint(m,2,7,9192,4,0)
       obs = fp1.GetOnBits()
       for match in matches:
         m2 = Chem.MolFromSmiles(match)
-        fp2 = Chem.DaylightFingerprint(m2,2,7,9192,4,0)
+        fp2 = Chem.RDKFingerprint(m2,2,7,9192,4,0)
         v1,v2 = DataStructs.OnBitProjSimilarity(fp2,fp1)
         assert feq(v1,1.0000),'substruct %s not properly contained in %s'%(match,smi)
 
@@ -56,11 +56,11 @@ class TestCase(unittest.TestCase):
              ]
     for smi,matches in tgts:
       m = Chem.MolFromSmiles(smi)
-      fp1 = Chem.DaylightFingerprint(m,2,7,9192,4,1)
+      fp1 = Chem.RDKFingerprint(m,2,7,9192,4,1)
       obs = fp1.GetOnBits()
       for match in matches:
         m2 = Chem.MolFromSmiles(match)
-        fp2 = Chem.DaylightFingerprint(m2,2,7,9192,4,1)
+        fp2 = Chem.RDKFingerprint(m2,2,7,9192,4,1)
         v1,v2 = DataStructs.OnBitProjSimilarity(fp2,fp1)
         assert feq(v1,1.0000),'substruct %s not properly contained in %s'%(match,smi)
 
@@ -72,12 +72,12 @@ class TestCase(unittest.TestCase):
     smis = [ 'CCC(O)C(=O)O','c1ccccc1','C1CCCCC1','C1NCCCC1','CNCNCNC']
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
-      fp1 = Chem.DaylightFingerprint(m,2,7,4096)
+      fp1 = Chem.RDKFingerprint(m,2,7,4096)
       fp2 = DataStructs.FoldFingerprint(fp1,2)
-      fp3 = Chem.DaylightFingerprint(m,2,7,2048)
+      fp3 = Chem.RDKFingerprint(m,2,7,2048)
       assert tuple(fp2.GetOnBits())==tuple(fp3.GetOnBits())
       fp2 = DataStructs.FoldFingerprint(fp2,2)
-      fp3 = Chem.DaylightFingerprint(m,2,7,1024)
+      fp3 = Chem.RDKFingerprint(m,2,7,1024)
       assert tuple(fp2.GetOnBits())==tuple(fp3.GetOnBits())
       fp2 = DataStructs.FoldFingerprint(fp1,4)
       assert tuple(fp2.GetOnBits())==tuple(fp3.GetOnBits())

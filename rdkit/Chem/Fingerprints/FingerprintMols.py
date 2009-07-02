@@ -35,7 +35,7 @@ def error(msg):
 def message(msg):
   sys.stderr.write(msg)
 
-def GetDaylightFingerprint(mol):
+def GetRDKFingerprint(mol):
   """ uses default parameters """
   details = FingerprinterDetails()
   return apply(FingerprintMol,(mol,),details.__dict__)

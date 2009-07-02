@@ -7,7 +7,7 @@ import Chem
 if RDConfig.usePgSQL:
   dbName="::RDTests"
 else:
-  dbName="data.gdb"
+  dbName="data.sqlt"
 
 molTblName =  'simple_mols1'
 fpTblName = 'simple_mols1_fp'
@@ -17,7 +17,7 @@ d = conn.GetData()
 for smi,id in d:
   print repr(id),repr(smi)
   mol = Chem.MolFromSmiles(smi)
-  fp = Chem.DaylightFingerprint(mol)
+  fp = Chem.RDKFingerprint(mol)
   pkl = cPickle.dumps(fp)
   conn.InsertData(fpTblName,(id,DbModule.binaryHolder(pkl)))
 conn.Commit()
