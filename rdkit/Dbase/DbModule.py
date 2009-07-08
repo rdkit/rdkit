@@ -7,7 +7,6 @@
 from rdkit import RDConfig
 
 if hasattr(RDConfig,"usePgSQL") and RDConfig.usePgSQL:
-  useGvib=0
   from pyPgSQL import PgSQL
   # as of this writing (March 2004), this results in a speedup in
   # getting results back from the wrapper:
@@ -35,7 +34,6 @@ if hasattr(RDConfig,"usePgSQL") and RDConfig.usePgSQL:
   binaryHolder = PgBytea
   RDTestDatabase="::RDTests"
 elif hasattr(RDConfig,"useSqlLite") and RDConfig.useSqlLite:
-  useGvib=0
   try:
     import sqlite3 as sqlite
     #from sqlite3 import *
@@ -56,27 +54,4 @@ elif hasattr(RDConfig,"useSqlLite") and RDConfig.useSqlLite:
 
   connect = lambda x,*args:sqlite.connect(x)
 else:
-  useGvib=1
-  from gvib import *
-  sqlTextTypes = [gvibTypes.SQL_TEXT,gvibTypes.SQL_VARYING]
-  sqlIntTypes = [gvibTypes.SQL_SHORT,gvibTypes.SQL_LONG,
-                 gvibTypes.SQL_INT64]
-  sqlFloatTypes = [gvibTypes.SQL_FLOAT,gvibTypes.SQL_DOUBLE,
-                   gvibTypes.SQL_D_FLOAT]
-  sqlBinTypes = [gvibTypes.SQL_BLOB,gvibTypes.SQL_ARRAY]
-  getTablesSql = """SELECT RDB$RELATION_NAME
-    FROM RDB$RELATIONS
-    WHERE ((RDB$SYSTEM_FLAG = 0) OR 
-    (RDB$SYSTEM_FLAG IS NULL)) AND 
-    (RDB$VIEW_SOURCE IS NULL)
-    ORDER BY RDB$RELATION_NAME"""
-  getTablesAndViewsSql="""SELECT RDB$RELATION_NAME
-      FROM RDB$RELATIONS
-      WHERE ((RDB$SYSTEM_FLAG = 0) OR 
-      (RDB$SYSTEM_FLAG IS NULL))
-      ORDER BY RDB$RELATION_NAME"""
-  getDbSql = None
-  dbFileWildcard='*.gdb'
-  placeHolder='?'
-  binaryTypeName="blob"
-  binaryHolder = lambda x:x
+  raise ImportError,"Neither sqlite nor PgSQL support found."

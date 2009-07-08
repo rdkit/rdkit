@@ -33,12 +33,12 @@ class TestCase(unittest.TestCase):
         
         assert feq(mod._classProbs[0], 0.54167)
         assert feq(mod._classProbs[1], 0.45833)
-        assert (mod._QBoundVals[1][0], -0.56995)
-        assert (mod._QBoundVals[1][1], 0.114)
-        assert (mod._QBoundVals[2][0], -0.7022)
-        assert (mod._QBoundVals[2][1], -0.2347)
-        assert (mod._QBoundVals[3][0], -0.3659)
-        assert (mod._QBoundVals[3][1], 1.17275)
+        assert feq(mod._QBoundVals[1][0], -0.56995)
+        assert feq(mod._QBoundVals[1][1], 0.114)
+        assert feq(mod._QBoundVals[2][0], -0.7022)
+        assert feq(mod._QBoundVals[2][1], -0.2347)
+        assert feq(mod._QBoundVals[3][0], -0.3659)
+        assert feq(mod._QBoundVals[3][1], 1.17275)
         
         assert feq(err, 0.16129)
 

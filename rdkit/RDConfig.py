@@ -82,31 +82,26 @@ else:
 
 # ---------------------
 # the following block contains stuff controlling database access:
-#usePgSQL=1
-usePgSQL=0
-useSqlLite=0
-if not (os.environ.has_key('RD_USEGVIB') and os.environ['RD_USEGVIB']):
-  if not os.environ.get('RD_USESQLLITE',''):
-    try:
-      from pyPgSQL import PgSQL
-      usePgSQL=1
-    except ImportError:
-      usePgSQL=0
-      try:
-        # python2.5 has this:
-        import sqlite3
-        useSqlLite=True
-      except ImportError:
-        try:
-          # earlier versions of python:
-          from pysqlite2 import dbapi2
-          useSqlLite=True
-        except:
-          pass
-  else:
+usePgSQL=False
+useSqlLite=False
+if not os.environ.get('RD_USESQLLITE',''):
+  try:
+    from pyPgSQL import PgSQL
+    usePgSQL=True
+  except ImportError:
+    usePgSQL=False
+if not usePgSQL:
+  try:
+    # python2.5 has this:
+    import sqlite3
     useSqlLite=True
-else:
-  usePgSQL=0
+  except ImportError:
+    try:
+      # earlier versions of python:
+      from pysqlite2 import dbapi2
+      useSqlLite=True
+    except:
+      pass
 
 if usePgSQL:
   RDTestDatabase='::RDTests'
@@ -115,8 +110,8 @@ elif useSqlLite:
   RDTestDatabase=os.path.join(RDDataDir,"RDTests.sqlt")
   RDDataDatabase=os.path.join(RDDataDir,"RDData.sqlt")
 else:  
-  RDTestDatabase=os.path.join(RDDataDir,"RDTests.gdb")
-  RDDataDatabase=os.path.join(RDDataDir,"RDData.gdb")
+  RDTestDatabase=None
+  RDDataDatabase=None
 
 # ---------------------
 # the following block contains stuff controlling the program used for
