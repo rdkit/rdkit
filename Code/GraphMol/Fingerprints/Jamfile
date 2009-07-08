@@ -13,14 +13,7 @@ exe test1 : test1.cpp Fingerprints
   ..//GraphMol ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral 
   ../../Geometry//RDGeometry ../..//lapacklibs ;
 
-exe bench : bench.cpp Fingerprints
-  ../FileParsers//FileParsers ../Subgraphs//Subgraphs
-  ..//GraphMol ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral 
-  ../../Geometry//RDGeometry ../..//lapacklibs profiler ;
-
-lib profiler : : <name>profiler ;
-
-install regrs : test1 bench
+install regrs : test1
   : <location>testExecs ;
 
 
