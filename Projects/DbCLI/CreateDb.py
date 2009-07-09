@@ -30,7 +30,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, July 2007
-_version = "0.7.3"
+_version = "0.11.0"
+
 _usage="""
  CreateDb [optional arguments] <filename>
 
@@ -60,8 +61,47 @@ from rdkit.Dbase import DbModule
 from rdkit.RDLogger import logger
 from rdkit.Chem.MolDb import Loader
 
+from rdkit.Chem.Descriptors import rdMolDescriptors
+from rdkit import DataStructs
+
 logger = logger()
 import cPickle,sys,os
+
+from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory
+
+class LayeredOptions:
+  loadLayerFlags=0xFFFFFFFF
+  searchLayerFlags=0x7
+  minPath=1
+  maxPath=6
+  fpSize=1024
+  wordSize=32
+  nWords=fpSize//wordSize
+  @staticmethod
+  def GetFingerprint(mol,query=True):
+    if query:
+      flags=LayeredOptions.searchLayerFlags
+    else:
+      flags=LayeredOptions.loadLayerFlags
+    return Chem.LayeredFingerprint(mol,layerFlags=flags,
+                                   minPath=LayeredOptions.minPath,maxPath=LayeredOptions.maxPath,
+                                   fpSize=LayeredOptions.fpSize)
+  @staticmethod
+  def GetWords(mol,query=True):
+    txt = LayeredOptions.GetFingerprint(mol,query=query).ToBitString()
+    words = [int(txt[x:x+32],2) for x in range(0,len(txt),32)]
+    return  words
+
+  @staticmethod
+  def GetQueryText(mol,query=True):
+    words = LayeredOptions.GetWords(mol,query=query)
+    colqs = []
+    for idx,word in enumerate(words):
+      if not word:
+        continue
+      idx = idx+1
+      colqs.append('%(word)d&Col_%(idx)d=%(word)d'%locals())
+    return  ' and '.join(colqs)
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ---- 
 from optparse import OptionParser
@@ -82,6 +122,8 @@ parser.add_option('--fpDbName',default='Fingerprints.sqlt',
                   help='name of the 2D fingerprints database')
 parser.add_option('--fpTableName',default='rdkitfps',
                   help='name of the 2D fingerprints table')
+parser.add_option('--layeredTableName',default='layeredfps',
+                  help='name of the layered fingerprints table')
 parser.add_option('--descrDbName',default='Descriptors.sqlt',
                   help='name of the descriptor database')
 parser.add_option('--descrTableName',default='descriptors_v1',
@@ -95,8 +137,8 @@ parser.add_option('--noPairs',default=True,dest='doPairs',action='store_false',
                   help='skip calculating atom pairs')
 parser.add_option('--noFingerprints',default=True,dest='doFingerprints',action='store_false',
                   help='skip calculating 2D fingerprints')
-parser.add_option('--noOldFingerprints',default=True,dest='doOldFps',action='store_false',
-                  help='skip calculating 2D fingerprints using the old fingerprinter')
+parser.add_option('--noLayeredFps',default=True,dest='doLayered',action='store_false',
+                  help='skip calculating layered fingerprints')
 parser.add_option('--noDescriptors',default=True,dest='doDescriptors',action='store_false',
                   help='skip calculating descriptors')
 parser.add_option('--noProps',default=False,dest='skipProps',action='store_true',
@@ -119,15 +161,42 @@ parser.add_option('--addProps',default=False,action='store_true',
                   help='add computed properties to the output')
 parser.add_option('--noExtras',default=False,action='store_true',
                   help='skip all non-molecule databases')
+parser.add_option('--skipLoad',action="store_false",dest='loadMols',default=True,
+                  help='skip the molecule loading (assumes mol db already exists)')
+
+parser.add_option('--doPharm2D',default=False,
+                  action='store_true',
+                  help='skip calculating Pharm2D fingerprints')
+parser.add_option('--pharm2DTableName',default='pharm2dfps',
+                  help='name of the Pharm2D fingerprints table')
+parser.add_option('--fdefFile','--fdef',
+                  default=os.path.join(RDConfig.RDDataDir,'Novartis1.fdef'),
+                  help='provide the name of the fdef file to use for 2d pharmacophores')
+parser.add_option('--doGobbi2D',default=False,
+                  action='store_true',
+                  help='skip calculating Gobbi 2D fingerprints')
+parser.add_option('--gobbi2DTableName',default='gobbi2dfps',
+                  help='name of the Gobbi 2D fingerprints table')
+
+parser.add_option('--noMorganFps','--noCircularFps',default=True,dest='doMorganFps',action='store_false',
+                  help='skip calculating Morgan (circular) fingerprints')
+parser.add_option('--morganFpTableName',default='morganfps',
+                  help='name of the Morgan fingerprints table')
 
 parser.add_option('--delimiter','--delim',default=' ',
                   help='the delimiter in the input file')
 parser.add_option('--titleLine',default=False,action='store_true',
                   help='the input file contains a title line')
+parser.add_option('--smilesColumn','--smilesCol',default=0,type='int',
+                  help='the column index with smiles')
+parser.add_option('--nameColumn','--nameCol',default=1,type='int',
+                  help='the column index with mol names')
+
+
 
 if __name__=='__main__':
   options,args = parser.parse_args()
-  if len(args)!=1:
+  if len(args)!=1 and options.loadMols:
     parser.error('please provide a filename argument')
 
   if not os.path.exists(options.outDir):
@@ -137,30 +206,42 @@ if __name__=='__main__':
       logger.error('could not create output directory %s'%options.outDir)
       sys.exit(1)
   molConn = DbConnect(os.path.join(options.outDir,options.molDbName))
-  dataFilename = args[0]
-  dataFile = file(dataFilename,'r')
-  dataFile=None
   errFile=file(os.path.join(options.outDir,options.errFilename),'w+')
-  
-  if options.molFormat=='smiles':
-    supplier=Chem.SmilesMolSupplier(dataFilename,
-                                    titleLine=options.titleLine,
-                                    delimiter=options.delimiter)
-  else:
-    supplier = Chem.SDMolSupplier(dataFilename)
 
   if options.noExtras:
     options.doPairs=False
     options.doDescriptors=False
     options.doFingerprints=False
+    options.doPharm2D=False
+    options.doGobbi2D=False
+    options.doLayered=False
+    options.doMorganFps=False
 
-  if not options.silent: logger.info('Reading molecules and constructing molecular database.')
-  Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
-                errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
-                skipProps=options.skipProps,defaultVal=options.missingPropertyVal,
-                addComputedProps=options.addProps,uniqNames=True,
-                skipSmiles=options.skipSmiles,maxRowsCached=int(options.maxRowsCached),
-                silent=options.silent,nameProp=options.nameProp,lazySupplier=False)
+  if options.loadMols:
+    dataFilename = args[0]
+    dataFile = file(dataFilename,'r')
+    dataFile=None
+
+    if options.molFormat=='smiles':
+      if options.delimiter=='\\t': options.delimiter='\t'
+      supplier=Chem.SmilesMolSupplier(dataFilename,
+                                      titleLine=options.titleLine,
+                                      delimiter=options.delimiter,
+                                      smilesColumn=options.smilesColumn,
+                                      nameColumn=options.nameColumn
+                                      )
+    else:
+      supplier = Chem.SDMolSupplier(dataFilename)
+
+
+    if not options.silent: logger.info('Reading molecules and constructing molecular database.')
+    Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
+                  errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
+                  skipProps=options.skipProps,defaultVal=options.missingPropertyVal,
+                  addComputedProps=options.addProps,uniqNames=True,
+                  skipSmiles=options.skipSmiles,maxRowsCached=int(options.maxRowsCached),
+                  silent=options.silent,nameProp=options.nameProp,
+                  lazySupplier=int(options.maxRowsCached)>0)
   if options.doPairs:
     from rdkit.Chem.AtomPairs import Pairs,Torsions
     pairConn = DbConnect(os.path.join(options.outDir,options.pairDbName))
@@ -172,18 +253,63 @@ if __name__=='__main__':
     pairCurs.execute('create table %s (%s varchar not null primary key,atompairfp blob,torsionfp blob)'%(options.pairTableName,
                                                                                                          options.molIdName))
 
-  if options.doFingerprints:
+  if options.doFingerprints or options.doPharm2D or options.doGobbi2D or options.doLayered:
     fpConn = DbConnect(os.path.join(options.outDir,options.fpDbName))
     fpCurs=fpConn.GetCursor()
     try:
       fpCurs.execute('drop table %s'%(options.fpTableName))
     except:
       pass
-    fpCurs.execute('create table %s (%s varchar not null primary key,autofragmentfp blob,rdkfp blob)'%(options.fpTableName,
-                                                                                                       options.molIdName))
-    from rdkit.Chem.Fingerprints import FingerprintMols
-    details = FingerprintMols.FingerprinterDetails()
-    fpArgs = details.__dict__
+    try:
+      fpCurs.execute('drop table %s'%(options.pharm2DTableName))
+    except:
+      pass
+    try:
+      fpCurs.execute('drop table %s'%(options.gobbi2DTableName))
+    except:
+      pass
+    try:
+      fpCurs.execute('drop table %s'%(options.layeredTableName))
+    except:
+      pass
+
+    if options.doFingerprints:
+      fpCurs.execute('create table %s (%s varchar not null primary key,rdkfp blob)'%(options.fpTableName,
+                                                                                     options.molIdName))
+      from rdkit.Chem.Fingerprints import FingerprintMols
+      details = FingerprintMols.FingerprinterDetails()
+      fpArgs = details.__dict__
+
+    if options.doLayered:
+      colDefs=','.join(['Col_%d integer'%(x+1) for x in range(LayeredOptions.nWords)])
+      fpCurs.execute('create table %s (%s varchar not null primary key,%s)'%(options.layeredTableName,
+                                                                             options.molIdName,
+                                                                             colDefs))
+      
+    if options.doPharm2D:
+      fpCurs.execute('create table %s (%s varchar not null primary key,pharm2dfp blob)'%(options.pharm2DTableName,
+                                                                                     options.molIdName))
+      from rdkit.Chem.Pharm2D import Generate
+      sigFactory = BuildSigFactory(options)
+    if options.doGobbi2D:
+      fpCurs.execute('create table %s (%s varchar not null primary key,gobbi2dfp blob)'%(options.gobbi2DTableName,
+                                                                                     options.molIdName))
+      from rdkit.Chem.Pharm2D import Generate,Gobbi_Pharm2D
+
+  if options.doMorganFps :
+    fpConn = DbConnect(os.path.join(options.outDir,options.fpDbName))
+    fpCurs=fpConn.GetCursor()
+
+    try:
+      fpCurs.execute('drop table %s'%(options.morganFpTableName))
+    except:
+      pass
+
+    if options.doMorganFps:
+      fpCurs.execute('create table %s (%s varchar not null primary key,morganfp blob)'%(options.morganFpTableName,
+                                                                                        options.molIdName))
+  morganRows = []
+
   if options.doDescriptors:
     descrConn=DbConnect(os.path.join(options.outDir,options.descrDbName))
     calc = cPickle.load(file(options.descriptorCalcFilename,'rb'))
@@ -199,7 +325,10 @@ if __name__=='__main__':
     descrQuery=','.join([DbModule.placeHolder]*len(descrs))
   pairRows = []
   fpRows = []
+  layeredRows = []
   descrRows = []
+  pharm2DRows=[]
+  gobbi2DRows=[]
 
   if not options.silent: logger.info('Generating fingerprints and descriptors:')
   molCurs = molConn.GetCursor()
@@ -208,6 +337,7 @@ if __name__=='__main__':
   else:
     molCurs.execute('select %s,molpkl from %s'%(options.molIdName,options.regName))
   i=0
+
   while 1:
     try:
       tpl = molCurs.fetchone()
@@ -220,8 +350,8 @@ if __name__=='__main__':
     if not mol: continue
      
     if options.doPairs:
-      pairs = Pairs.GetAtomPairFingerprintAsIntVect(mol)
-      torsions = Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol)
+      pairs = Pairs.GetAtomPairFingerprint(mol)
+      torsions = Torsions.GetTopologicalTorsionFingerprint(mol)
       pkl1 = DbModule.binaryHolder(pairs.ToBinary())
       pkl2 = DbModule.binaryHolder(torsions.ToBinary())
       row = [id,pkl1,pkl2]
@@ -233,19 +363,25 @@ if __name__=='__main__':
         pairConn.Commit()
   
     if options.doFingerprints:
-      if options.doOldFps:
-        fp = FingerprintMols.FingerprintMol(mol,**fpArgs)
-        pkl1 = DbModule.binaryHolder(fp.ToBinary())
-      else:
-        pkl1 = ''
       fp2 = Chem.RDKFingerprint(mol)
-      pkl2 = DbModule.binaryHolder(fp2.ToBinary())
-      row = [id,pkl1,pkl2]
+      pkl = DbModule.binaryHolder(fp2.ToBinary())
+      row = [id,pkl]
       fpRows.append(row)
       if len(fpRows)>=500:
-        fpCurs.executemany('insert into %s values (?,?,?)'%options.fpTableName,
+        fpCurs.executemany('insert into %s values (?,?)'%options.fpTableName,
                            fpRows)
         fpRows = []
+        fpConn.Commit()
+
+    if options.doLayered:
+      words = LayeredOptions.GetWords(mol)
+      row = [id]+words
+      layeredRows.append(row)
+      qs = ','.join('?'*LayeredOptions.nWords)
+      if len(fpRows)>=500:
+        fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,qs),
+                           layeredRows)
+        layeredRows = []
         fpConn.Commit()
 
     if options.doDescriptors:
@@ -259,6 +395,38 @@ if __name__=='__main__':
         descrRows = []
         descrConn.Commit()
 
+    if options.doPharm2D:
+      fp= Generate.Gen2DFingerprint(mol,sigFactory)
+      pkl = DbModule.binaryHolder(fp.ToBinary())
+      row = (id,pkl)
+      pharm2DRows.append(row)
+      if len(pharm2DRows)>=500:
+        fpCurs.executemany('insert into %s values (?,?)'%options.pharm2DTableName,
+                           pharm2DRows)
+        pharm2DRows = []
+        fpConn.Commit()
+    if options.doGobbi2D:
+      fp= Generate.Gen2DFingerprint(mol,Gobbi_Pharm2D.factory)
+      pkl = DbModule.binaryHolder(fp.ToBinary())
+      row = (id,pkl)
+      gobbi2DRows.append(row)
+      if len(gobbi2DRows)>=500:
+        fpCurs.executemany('insert into %s values (?,?)'%options.gobbi2DTableName,
+                           gobbi2DRows)
+        gobbi2DRows = []
+        fpConn.Commit()
+
+    if options.doMorganFps:
+      morgan = rdMolDescriptors.GetMorganFingerprint(mol,4)
+      pkl1 = DbModule.binaryHolder(morgan.ToBinary())
+      row = [id,pkl1]
+      morganRows.append(row)
+      if len(morganRows)>=500:
+        fpCurs.executemany('insert into %s values (?,?)'%options.morganFpTableName,
+                             morganRows)
+        morganRows = []
+        fpConn.Commit()
+        
     if not options.silent and not i%500: 
       logger.info('  Done: %d'%(i))
 
@@ -268,16 +436,42 @@ if __name__=='__main__':
     pairRows = []
     pairConn.Commit()
   if len(fpRows):
-    fpCurs.executemany('insert into %s values (?,?,?)'%options.fpTableName,
+    fpCurs.executemany('insert into %s values (?,?)'%options.fpTableName,
                        fpRows)
     fpRows = []
     fpConn.Commit()
+
+  if len(layeredRows):
+    qs = ','.join('?'*LayeredOptions.nWords)
+    fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,qs),
+                       layeredRows)
+    layeredRows = []
+    fpConn.Commit()
+
   if len(descrRows):
     descrCurs.executemany('insert into %s values (%s)'%(options.descrTableName,descrQuery),
                           descrRows)
     descrRows = []
     descrConn.Commit()
+  if len(pharm2DRows):
+    fpCurs.executemany('insert into %s values (?,?)'%options.pharm2DTableName,
+                       pharm2DRows)
+    pharm2DRows = []
+    fpConn.Commit()
+  if len(gobbi2DRows):
+    fpCurs.executemany('insert into %s values (?,?)'%options.gobbi2DTableName,
+                       gobbi2DRows)
+    gobbi2DRows = []
+    fpConn.Commit()
+
+  if len(morganRows):
+    fpCurs.executemany('insert into %s values (?,?)'%options.morganFpTableName,
+                       morganRows)
+    morganRows = []
+    fpConn.Commit()
     
+  if not options.silent:
+    logger.info('Finished.')
                 
 
 

@@ -37,7 +37,8 @@ class TestCase(unittest.TestCase):
     d = conn.GetData('rdkitfps',fields='count(*)')
     self.failUnless(d[0][0]==10)
 
-    p = subprocess.Popen(('python', 'CreateDb.py','--noOldFingerprints','--dbDir=testData/bzr','--molFormat=sdf',
+    p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=sdf',
+                          '--doGobbi2D',
                           'testData/bzr.sdf'))
     res=p.wait()
     self.failIf(res)
@@ -279,6 +280,42 @@ class TestCase(unittest.TestCase):
     self.failUnless(len(lines)==25)
     os.unlink('testData/bzr/search.out')
 
+  def test2_7SearchGobbi(self):
+    self.failUnless(os.path.exists('testData/bzr/Compounds.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/AtomPairs.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/Descriptors.sqlt'))
+    self.failUnless(os.path.exists('testData/bzr/Fingerprints.sqlt'))
+    
+    p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr','--molFormat=sdf','--topN=5',
+                          '--outF=testData/bzr/search.out','--similarityType=Gobbi2D',
+                          'testData/bzr.sdf'))
+    res=p.wait()
+    self.failIf(res)
+    p=None
+
+    self.failUnless(os.path.exists('testData/bzr/search.out'))
+    inF = file('testData/bzr/search.out','r')
+    lines=inF.readlines()
+    inF=None
+    self.failUnless(len(lines)==163)
+    splitLs=[x.strip().split(',') for x in lines]
+    for line in splitLs:
+      lbl = line[0]
+      i=1
+      nbrs={}
+      lastVal=1.0
+      while i<len(line):
+        nbrs[line[i]]=line[i+1]
+        self.failUnless(float(line[i+1])<=lastVal)
+        lastVal=float(line[i+1])
+        i+=2
+      self.failUnless(nbrs.has_key(lbl))
+      self.failUnless(nbrs[lbl]=='1.000')
+    self.failUnlessEqual(splitLs[0][0],'Adinazolam')
+    self.failUnlessEqual(splitLs[0][3],'alpha-hydroxytriazolam')
+    self.failUnlessEqual(splitLs[0][4],'0.631')
+    os.unlink('testData/bzr/search.out')
+
     
   def test4CreateOptions(self):
     if os.path.exists('testData/bzr/Compounds.sqlt'):
@@ -291,7 +328,8 @@ class TestCase(unittest.TestCase):
       os.unlink('testData/bzr/Fingerprints.sqlt')
     
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
-                          '--noProps','--noSmiles','--noFingerprints','--noPairs','--noDescriptors',
+                          '--noProps','--noSmiles','--noFingerprints','--noLayeredFps',
+                          '--noPairs','--noMorganFps','--noDescriptors',
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
@@ -323,7 +361,7 @@ class TestCase(unittest.TestCase):
       os.unlink('testData/bzr/Fingerprints.sqlt')
     
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
-                          '--noSmiles','--noFingerprints','--noPairs','--noDescriptors',
+                          '--noSmiles','--noFingerprints','--noLayeredFps','--noMorganFps','--noPairs','--noDescriptors',
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
@@ -343,7 +381,7 @@ class TestCase(unittest.TestCase):
     self.failIf('smiles' in cns)
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
-                          '--noProps','--noFingerprints','--noPairs','--noDescriptors',
+                          '--noProps','--noFingerprints','--noLayeredFps','--noMorganFps','--noPairs','--noDescriptors',
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
@@ -363,7 +401,7 @@ class TestCase(unittest.TestCase):
     self.failUnless('smiles' in cns)
 
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
-                          '--noFingerprints','--noPairs','--noDescriptors',
+                          '--noFingerprints','--noLayeredFps','--noMorganFps','--noPairs','--noDescriptors',
                           '--maxRowsCached=4',
                           'testData/bzr.smi'))
     res=p.wait()
