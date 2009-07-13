@@ -67,41 +67,7 @@ from rdkit import DataStructs
 logger = logger()
 import cPickle,sys,os
 
-from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory
-
-class LayeredOptions:
-  loadLayerFlags=0xFFFFFFFF
-  searchLayerFlags=0x7
-  minPath=1
-  maxPath=6
-  fpSize=1024
-  wordSize=32
-  nWords=fpSize//wordSize
-  @staticmethod
-  def GetFingerprint(mol,query=True):
-    if query:
-      flags=LayeredOptions.searchLayerFlags
-    else:
-      flags=LayeredOptions.loadLayerFlags
-    return Chem.LayeredFingerprint(mol,layerFlags=flags,
-                                   minPath=LayeredOptions.minPath,maxPath=LayeredOptions.maxPath,
-                                   fpSize=LayeredOptions.fpSize)
-  @staticmethod
-  def GetWords(mol,query=True):
-    txt = LayeredOptions.GetFingerprint(mol,query=query).ToBitString()
-    words = [int(txt[x:x+32],2) for x in range(0,len(txt),32)]
-    return  words
-
-  @staticmethod
-  def GetQueryText(mol,query=True):
-    words = LayeredOptions.GetWords(mol,query=query)
-    colqs = []
-    for idx,word in enumerate(words):
-      if not word:
-        continue
-      idx = idx+1
-      colqs.append('%(word)d&Col_%(idx)d=%(word)d'%locals())
-    return  ' and '.join(colqs)
+from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory,LayeredOptions
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ---- 
 from optparse import OptionParser
@@ -194,7 +160,7 @@ parser.add_option('--nameColumn','--nameCol',default=1,type='int',
 
 
 
-if __name__=='__main__':
+def run():
   options,args = parser.parse_args()
   if len(args)!=1 and options.loadMols:
     parser.error('please provide a filename argument')
@@ -474,6 +440,15 @@ if __name__=='__main__':
     logger.info('Finished.')
                 
 
+if __name__=='__main__':
+  if 0:
+    import cProfile
+    cProfile.run('run()','fooprof')
+    import pstats
+    p = pstats.Stats('fooprof')
+    p.sort_stats('cumulative').print_stats(25)
+  else:
+    run()
 
 
 

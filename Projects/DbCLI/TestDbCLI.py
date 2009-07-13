@@ -328,8 +328,8 @@ class TestCase(unittest.TestCase):
       os.unlink('testData/bzr/Fingerprints.sqlt')
     
     p = subprocess.Popen(('python', 'CreateDb.py','--dbDir=testData/bzr','--molFormat=smiles',
-                          '--noProps','--noSmiles','--noFingerprints','--noLayeredFps',
-                          '--noPairs','--noMorganFps','--noDescriptors',
+                          '--noExtras','--noSmiles',
+
                           'testData/bzr.smi'))
     res=p.wait()
     self.failIf(res)
