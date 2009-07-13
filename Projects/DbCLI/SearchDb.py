@@ -60,7 +60,6 @@ from rdkit import Chem
 from rdkit.Chem.MolDb.FingerprintUtils import supportedSimilarityMethods,BuildSigFactory,DepickleFP
 from CreateDb import LayeredOptions
 
-from rdkit import DataStructs
 from rdkit.Chem.AtomPairs import Torsions
 from rdkit.Chem.AtomPairs import Pairs
 
@@ -283,8 +282,6 @@ def RunSearch(options,queryFilename):
         where='where %s'%options.propQuery
       else:
         where=''
-
-
       if not options.silent:
         curs.execute('select count(*) from molecules %(where)s'%locals())
         nToDo = curs.fetchone()[0]
@@ -343,7 +340,6 @@ def RunSearch(options,queryFilename):
       ids = [str(x[0]) for x in curs.fetchall()]
     if not options.silent:
       logger.info('Found %d molecules matching the query'%(len(ids)))
-        
 
   t1=time.time()
   if probes:
@@ -411,7 +407,6 @@ def RunSearch(options,queryFilename):
   if molsOut and ids:
     molDbName = os.path.join(options.dbDir,options.molDbName)
     conn = DbConnect(molDbName)
-
     cns = [x.lower() for x in conn.GetColumnNames('molecules')]
     if cns[0]=='guid':
       # from sqlalchemy, ditch it:
@@ -437,7 +432,6 @@ def RunSearch(options,queryFilename):
       if sdfOut:
         m.SetProp('_Name',nm)
         print >>sdfOut,Chem.MolToMolBlock(m)
-
         for i in range(1,len(cns)-1):
           pn = cns[i]
           pv = str(row[i])
@@ -525,7 +519,6 @@ parser.add_option('--silent',default=False,action='store_true',
 
 parser.add_option('--zipMols','--zip',default=False,action='store_true',
                   help='read compressed mols from the database')
-
 
 parser.add_option('--pharm2DTableName',default='pharm2dfps',
                   help='name of the Pharm2D fingerprints table')

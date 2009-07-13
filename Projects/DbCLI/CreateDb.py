@@ -72,7 +72,7 @@ from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory,LayeredOptions
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ---- 
 from optparse import OptionParser
 parser=OptionParser(_usage,version='%prog '+_version)
-parser.add_option('--outDir','--dbDir',default='.',
+parser.add_option('--outDir','--dbDir',default='',
                   help='name of the output directory')
 parser.add_option('--molDbName',default='Compounds.sqlt',
                   help='name of the molecule database')
@@ -117,7 +117,7 @@ parser.add_option('--maxRowsCached',default=-1,
 parser.add_option('--silent',default=False,action='store_true',
                   help='do not provide status messages')
 
-parser.add_option('--molFormat',default='smiles',choices=('smiles','sdf'),
+parser.add_option('--molFormat',default='',choices=('smiles','sdf',''),
                   help='specify the format of the input file')
 parser.add_option('--nameProp',default='_Name',
                   help='specify the SD property to be used for the molecule names. Default is to use the mol block name')
@@ -127,7 +127,7 @@ parser.add_option('--addProps',default=False,action='store_true',
                   help='add computed properties to the output')
 parser.add_option('--noExtras',default=False,action='store_true',
                   help='skip all non-molecule databases')
-parser.add_option('--skipLoad',action="store_false",dest='loadMols',default=True,
+parser.add_option('--skipLoad','--skipMols',action="store_false",dest='loadMols',default=True,
                   help='skip the molecule loading (assumes mol db already exists)')
 
 parser.add_option('--doPharm2D',default=False,
@@ -162,8 +162,20 @@ parser.add_option('--nameColumn','--nameCol',default=1,type='int',
 
 def run():
   options,args = parser.parse_args()
-  if len(args)!=1 and options.loadMols:
-    parser.error('please provide a filename argument')
+  if options.loadMols:
+    if len(args)!=1:
+      parser.error('please provide a filename argument')
+    dataFilename = args[0]
+    try:
+      dataFile = file(dataFilename,'r')
+    except IOError:
+      logger.error('input file %s does not exist'%(dataFilename))
+      sys.exit(0)
+    dataFile=None
+
+  if not options.outDir:
+    prefix = os.path.splitext(dataFilename)[0]
+    options.outDir=prefix
 
   if not os.path.exists(options.outDir):
     try:
@@ -171,7 +183,6 @@ def run():
     except: 
       logger.error('could not create output directory %s'%options.outDir)
       sys.exit(1)
-  molConn = DbConnect(os.path.join(options.outDir,options.molDbName))
   errFile=file(os.path.join(options.outDir,options.errFilename),'w+')
 
   if options.noExtras:
@@ -184,10 +195,23 @@ def run():
     options.doMorganFps=False
 
   if options.loadMols:
-    dataFilename = args[0]
-    dataFile = file(dataFilename,'r')
-    dataFile=None
+    if not options.molFormat:
+      ext = os.path.splitext(dataFilename)[-1].lower()
+      if ext=='.sdf':
+        options.molFormat='sdf'
+      elif ext in ('.smi','.smiles','.txt','.csv'):
+        options.molFormat='smiles'
+        if not options.delimiter:
+          # guess the delimiter
+          import csv
+          sniffer = csv.Sniffer()
+          dlct=sniffer.sniff(file(dataFilename,'r').read(2000))
+          options.delimiter=dlct.delimiter
+          if not options.silent:
+            logger.info('Guessing that delimiter is %s. Use --delimiter argument if this is wrong.'%repr(options.delimiter))
 
+      if not options.silent:
+        logger.info('Guessing that mol format is %s. Use --molFormat argument if this is wrong.'%repr(options.molFormat))  
     if options.molFormat=='smiles':
       if options.delimiter=='\\t': options.delimiter='\t'
       supplier=Chem.SmilesMolSupplier(dataFilename,
@@ -271,8 +295,7 @@ def run():
     except:
       pass
 
-    if options.doMorganFps:
-      fpCurs.execute('create table %s (%s varchar not null primary key,morganfp blob)'%(options.morganFpTableName,
+    fpCurs.execute('create table %s (%s varchar not null primary key,morganfp blob)'%(options.morganFpTableName,
                                                                                         options.molIdName))
   morganRows = []
 
@@ -297,6 +320,7 @@ def run():
   gobbi2DRows=[]
 
   if not options.silent: logger.info('Generating fingerprints and descriptors:')
+  molConn = DbConnect(os.path.join(options.outDir,options.molDbName))
   molCurs = molConn.GetCursor()
   if not options.skipSmiles:
     molCurs.execute('select %s,smiles,molpkl from %s'%(options.molIdName,options.regName))
@@ -406,14 +430,12 @@ def run():
                        fpRows)
     fpRows = []
     fpConn.Commit()
-
   if len(layeredRows):
     qs = ','.join('?'*LayeredOptions.nWords)
     fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,qs),
                        layeredRows)
     layeredRows = []
     fpConn.Commit()
-
   if len(descrRows):
     descrCurs.executemany('insert into %s values (%s)'%(options.descrTableName,descrQuery),
                           descrRows)
@@ -438,7 +460,6 @@ def run():
     
   if not options.silent:
     logger.info('Finished.')
-                
 
 if __name__=='__main__':
   if 0:
@@ -449,6 +470,3 @@ if __name__=='__main__':
     p.sort_stats('cumulative').print_stats(25)
   else:
     run()
-
-
-
