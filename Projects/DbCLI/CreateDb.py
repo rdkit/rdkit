@@ -68,6 +68,7 @@ logger = logger()
 import cPickle,sys,os
 
 from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory,LayeredOptions
+from rdkit.Chem.MolDb import FingerprintUtils
 
 # ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ----  ---- ---- ---- ---- 
 from optparse import OptionParser
@@ -266,10 +267,6 @@ def run():
     if options.doFingerprints:
       fpCurs.execute('create table %s (%s varchar not null primary key,rdkfp blob)'%(options.fpTableName,
                                                                                      options.molIdName))
-      from rdkit.Chem.Fingerprints import FingerprintMols
-      details = FingerprintMols.FingerprinterDetails()
-      fpArgs = details.__dict__
-
     if options.doLayered:
       colDefs=','.join(['Col_%d integer'%(x+1) for x in range(LayeredOptions.nWords)])
       fpCurs.execute('create table %s (%s varchar not null primary key,%s)'%(options.layeredTableName,
@@ -279,7 +276,6 @@ def run():
     if options.doPharm2D:
       fpCurs.execute('create table %s (%s varchar not null primary key,pharm2dfp blob)'%(options.pharm2DTableName,
                                                                                      options.molIdName))
-      from rdkit.Chem.Pharm2D import Generate
       sigFactory = BuildSigFactory(options)
     if options.doGobbi2D:
       fpCurs.execute('create table %s (%s varchar not null primary key,gobbi2dfp blob)'%(options.gobbi2DTableName,
@@ -289,12 +285,10 @@ def run():
   if options.doMorganFps :
     fpConn = DbConnect(os.path.join(options.outDir,options.fpDbName))
     fpCurs=fpConn.GetCursor()
-
     try:
       fpCurs.execute('drop table %s'%(options.morganFpTableName))
     except:
       pass
-
     fpCurs.execute('create table %s (%s varchar not null primary key,morganfp blob)'%(options.morganFpTableName,
                                                                                         options.molIdName))
   morganRows = []
@@ -340,8 +334,8 @@ def run():
     if not mol: continue
      
     if options.doPairs:
-      pairs = Pairs.GetAtomPairFingerprint(mol)
-      torsions = Torsions.GetTopologicalTorsionFingerprint(mol)
+      pairs = FingerprintUtils.BuildAtomPairFP(mol)
+      torsions = FingerprintUtils.BuildTorsionsFP(mol)
       pkl1 = DbModule.binaryHolder(pairs.ToBinary())
       pkl2 = DbModule.binaryHolder(torsions.ToBinary())
       row = [id,pkl1,pkl2]
@@ -353,7 +347,7 @@ def run():
         pairConn.Commit()
   
     if options.doFingerprints:
-      fp2 = Chem.RDKFingerprint(mol)
+      fp2 = FingerprintUtils.BuildRDKitFP(mol)
       pkl = DbModule.binaryHolder(fp2.ToBinary())
       row = [id,pkl]
       fpRows.append(row)
@@ -386,7 +380,8 @@ def run():
         descrConn.Commit()
 
     if options.doPharm2D:
-      fp= Generate.Gen2DFingerprint(mol,sigFactory)
+      FingerprintUtils.sigFactory=sigFactory
+      fp= FingerprintUtils.BuildPharm2DFP(mol)
       pkl = DbModule.binaryHolder(fp.ToBinary())
       row = (id,pkl)
       pharm2DRows.append(row)
@@ -396,7 +391,8 @@ def run():
         pharm2DRows = []
         fpConn.Commit()
     if options.doGobbi2D:
-      fp= Generate.Gen2DFingerprint(mol,Gobbi_Pharm2D.factory)
+      FingerprintUtils.sigFactory=Gobbi_Pharm2D.factory
+      fp= FingerprintUtils.BuildPharm2DFP(mol)
       pkl = DbModule.binaryHolder(fp.ToBinary())
       row = (id,pkl)
       gobbi2DRows.append(row)
@@ -407,7 +403,7 @@ def run():
         fpConn.Commit()
 
     if options.doMorganFps:
-      morgan = rdMolDescriptors.GetMorganFingerprint(mol,4)
+      morgan = FingerprintUtils.BuildMorganFP(mol)
       pkl1 = DbModule.binaryHolder(morgan.ToBinary())
       row = [id,pkl1]
       morganRows.append(row)

@@ -210,7 +210,7 @@ class TestCase(unittest.TestCase):
     inF = file('testData/bzr/search.out','r')
     lines=inF.readlines()
     inF=None
-    self.failUnless(len(lines)==49)
+    self.failUnlessEqual(len(lines),49)
     os.unlink('testData/bzr/search.out')
     
     if os.path.exists('/dev/null'):
@@ -262,7 +262,7 @@ class TestCase(unittest.TestCase):
     inF = file('testData/bzr/search.out','r')
     lines=inF.readlines()
     inF=None
-    self.failUnless(len(lines)==5)
+    self.failUnlessEqual(len(lines),5)
     os.unlink('testData/bzr/search.out')
     
     p = subprocess.Popen(('python', 'SearchDb.py','--dbDir=testData/bzr',

@@ -57,6 +57,7 @@ logger=logger()
 import cPickle,zlib
 from rdkit import Chem
 
+from rdkit.Chem.MolDb import FingerprintUtils
 from rdkit.Chem.MolDb.FingerprintUtils import supportedSimilarityMethods,BuildSigFactory,DepickleFP
 from CreateDb import LayeredOptions
 
@@ -64,23 +65,7 @@ from rdkit.Chem.AtomPairs import Torsions
 from rdkit.Chem.AtomPairs import Pairs
 
 from rdkit import DataStructs
-def BuildPharm2DFP(mol):
-  global sigFactory
-  from rdkit.Chem.Pharm2D import Generate
-  try:
-    fp=Generate.Gen2DFingerprint(mol,sigFactory)
-  except IndexError:
-    print 'FAIL:',Chem.MolToSmiles(mol,True)
-    raise
-  return fp
 
-# ----------------------------------------
-# Morgan (circular) fingerprints
-from rdkit.Chem.Descriptors import rdMolDescriptors
-def BuildMorganFP(mol):
-  fp = rdMolDescriptors.GetMorganFingerprint(mol,4)
-  fp._sumCache = fp.GetTotalVal()
-  return fp
 
 def GetNeighborLists(probes,topN,pool,
                      simMetric=DataStructs.DiceSimilarity,
@@ -153,19 +138,19 @@ def GetMolsFromSDFile(dataFilename,errFile,nameProp):
 def RunSearch(options,queryFilename):
   global sigFactory
   if options.similarityType=='AtomPairs':
-    fpBuilder=Pairs.GetAtomPairFingerprint
+    fpBuilder=FingerprintUtils.BuildAtomPairFP
     simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.pairDbName)
     fpTableName = options.pairTableName
     fpColName = options.pairColName
   elif options.similarityType=='TopologicalTorsions':
-    fpBuilder=Torsions.GetTopologicalTorsionFingerprint
+    fpBuilder=FingerprintUtils.BuildTorsionsFP
     simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.torsionsDbName)
     fpTableName = options.torsionsTableName
     fpColName = options.torsionsColName
   elif options.similarityType=='RDK':
-    fpBuilder=Chem.RDKFingerprint
+    fpBuilder=FingerprintUtils.BuildRDKitFP
     simMetric=DataStructs.FingerprintSimilarity
     dbName = os.path.join(options.dbDir,options.fpDbName)
     fpTableName = options.fpTableName
@@ -173,26 +158,26 @@ def RunSearch(options,queryFilename):
       options.fpColName='rdkfp'
     fpColName = options.fpColName
   elif options.similarityType=='Pharm2D':
-    fpBuilder=BuildPharm2DFP
+    fpBuilder=FingerprintUtils.BuildPharm2DFP
     simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.fpDbName)
     fpTableName = options.pharm2DTableName
     if not options.fpColName:
       options.fpColName='pharm2dfp'
     fpColName = options.fpColName
-    sigFactory = BuildSigFactory(options)
+    FingerprintUtils.sigFactory = BuildSigFactory(options)
   elif options.similarityType=='Gobbi2D':
     from rdkit.Chem.Pharm2D import Gobbi_Pharm2D
-    fpBuilder=BuildPharm2DFP
+    fpBuilder=FingerprintUtils.BuildPharm2DFP
     simMetric=DataStructs.TanimotoSimilarity
     dbName = os.path.join(options.dbDir,options.fpDbName)
     fpTableName = options.gobbi2DTableName
     if not options.fpColName:
       options.fpColName='gobbi2dfp'
     fpColName = options.fpColName
-    sigFactory = Gobbi_Pharm2D.factory
+    FingerprintUtils.sigFactory = Gobbi_Pharm2D.factory
   elif options.similarityType=='Morgan':
-    fpBuilder=BuildMorganFP
+    fpBuilder=FingerprintUtils.BuildMorganFP
     simMetric=DataStructs.DiceSimilarity
     dbName = os.path.join(options.dbDir,options.morganFpDbName)
     fpTableName = options.morganFpTableName

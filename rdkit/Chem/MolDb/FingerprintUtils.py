@@ -68,6 +68,33 @@ similarityMethods={'RDK':DataStructs.ExplicitBitVect,
                    }
 supportedSimilarityMethods=similarityMethods.keys()
 
+def BuildAtomPairFP(mol):
+  from rdkit.Chem.AtomPairs import Pairs
+  fp=Pairs.GetAtomPairFingerprintAsIntVect(mol)
+  fp._sumCache = fp.GetTotalVal()
+  return fp
+def BuildTorsionsFP(mol):
+  from rdkit.Chem.AtomPairs import Torsions
+  fp=Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol)
+  fp._sumCache = fp.GetTotalVal()
+  return fp
+def BuildRDKitFP(mol):
+  fp=Chem.RDKFingerprint(mol)
+  return fp
+def BuildPharm2DFP(mol):
+  global sigFactory
+  from rdkit.Chem.Pharm2D import Generate
+  try:
+    fp=Generate.Gen2DFingerprint(mol,sigFactory)
+  except IndexError:
+    print 'FAIL:',Chem.MolToSmiles(mol,True)
+    raise
+  return fp
+def BuildMorganFP(mol):
+  from rdkit.Chem import rdMolDescriptors
+  fp = rdMolDescriptors.GetMorganFingerprint(mol,4)
+  fp._sumCache = fp.GetTotalVal()
+  return fp
 
 def DepickleFP(pkl,similarityMethod):
     try:
