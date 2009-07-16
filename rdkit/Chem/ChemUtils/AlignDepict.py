@@ -44,7 +44,7 @@ def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
       pt3 = conf.GetAtomPosition(coreMatch[i])
       pt2 = Geometry.Point2D(pt3.x,pt3.y)
       coordMap[idx] = pt2
-  rdDepictor.Compute2DCoords(mol,clearConfs=True,coordMap=coordMap)
+  rdDepictor.Compute2DCoords(mol,clearConfs=True,coordMap=coordMap,canonOrient=False)
 
 if __name__=='__main__':
   import sys,getopt

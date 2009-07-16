@@ -1079,46 +1079,56 @@ namespace RDDepict {
   }
 
   void EmbeddedFrag::canonicalizeOrientation() {
-    if (d_eatoms.size() > 1) { 
-      // fix for issue 198
-      // no need to canonicalize if we are dealing with a single atm
-      RDGeom::Point2D cent(0.0, 0.0);
-      INT_EATOM_MAP_I eri;
-      for (eri = d_eatoms.begin(); eri != d_eatoms.end(); eri++) {
-        cent += eri->second.loc;
-      }
-      cent *= (1.0/d_eatoms.size());
+    // fix for issue 198
+    // no need to canonicalize if we are dealing with a single atm
+    if (d_eatoms.size() <= 1) return;
+    
+    RDGeom::Point2D cent(0.0, 0.0);
+    INT_EATOM_MAP_I eri;
+    for (eri = d_eatoms.begin(); eri != d_eatoms.end(); eri++) {
+      cent += eri->second.loc;
+    }
+    cent *= (1.0/d_eatoms.size());
       
-      double xx, xy, yy;
-      xx = 0.0; xy = 0.0; yy = 0.0; 
+    double xx, xy, yy;
+    xx = 0.0; xy = 0.0; yy = 0.0; 
       
-      // shift the center of the fragment to the origin and compute the covariance matrix
-      for (eri = d_eatoms.begin(); eri != d_eatoms.end(); eri++) {
-        eri->second.loc -= cent;
-        xx += (eri->second.loc.x)*(eri->second.loc.x);
-        xy += (eri->second.loc.x)*(eri->second.loc.y);
-        yy += (eri->second.loc.y)*(eri->second.loc.y);
-      }
+    // shift the center of the fragment to the origin and compute the covariance matrix
+    for (eri = d_eatoms.begin(); eri != d_eatoms.end(); eri++) {
+      eri->second.loc -= cent;
+      xx += (eri->second.loc.x)*(eri->second.loc.x);
+      xy += (eri->second.loc.x)*(eri->second.loc.y);
+      yy += (eri->second.loc.y)*(eri->second.loc.y);
+    }
       
-      RDGeom::Point2D eig1, eig2;
-      // the eigen vectors are given by (2*xy, (yy - xx) + d) and (2*xy, (yy - xx) - d), wher
-      // d = sqrt((xx - yy)^2 + 4*xy^2)
-      double d = (xx - yy)*(xx - yy) + 4*xy*xy;
-      d = sqrt(d);
-      RDGeom::Transform2D trans;
-      eig1.x = 2*xy;
-      eig1.y = (yy - xx) + d;
-      eig1.normalize();
-      eig2.x = 2*xy;
-      eig2.y = (yy - xx) - d;
-      eig2.normalize();
-      
-      trans.setVal(0,0, eig1.x);
-      trans.setVal(1,0, eig1.y);
-      trans.setVal(0,1, eig2.x);
-      trans.setVal(1,1, eig2.y);
-      this->Transform(trans);
-    }   
+    RDGeom::Point2D eig1, eig2;
+    // the eigen vectors are given by (2*xy, (yy - xx) + d) and (2*xy, (yy - xx) - d) 
+    // where d = sqrt((xx - yy)^2 + 4*xy^2)
+    double d = (xx - yy)*(xx - yy) + 4*xy*xy;
+    d = sqrt(d);
+    RDGeom::Transform2D trans;
+    eig1.x = 2*xy;
+    eig1.y = (yy - xx) + d;
+    double eVal1=(xx+yy+d)/2;
+    eig1.normalize();
+    
+    eig2.x = 2*xy;
+    eig2.y = (yy - xx) - d;
+    double eVal2=(xx+yy-d)/2;
+    eig2.normalize();
+
+    // make sure eig1 corresponds to the larger eigenvalue:
+    if(eVal2>eVal1){
+      RDGeom::Point2D tmp=eig1;
+      eig1=eig2;
+      eig2=tmp;
+    }
+    // now rotate eig1 onto the X axis:
+    trans.setVal(0,0, eig1.x);
+    trans.setVal(1,0, -eig1.y);
+    trans.setVal(0,1, eig1.y);
+    trans.setVal(1,1, eig1.x);
+    this->Transform(trans);
   }
 
   void _recurseAtomOneSide(unsigned int endAid, unsigned int begAid, const RDKit::ROMol *mol,

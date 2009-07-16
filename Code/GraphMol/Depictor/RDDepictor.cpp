@@ -308,11 +308,11 @@ namespace RDDepict {
       eri->removeCollisionsOpenAngles();
       eri->removeCollisionsShortenBonds();
     }
-    if (!coordMap) {
-      if (canonOrient || efrags.size() >= 2) {
-      // if we do not have any prespecified coordinates - canonicalize
-      // the orientation of the fragment so that the longest axes fall
-      // along the x-axis etc.
+    if (!coordMap || !coordMap->size() ) {
+      if (canonOrient && efrags.size() ) {
+        // if we do not have any prespecified coordinates - canonicalize
+        // the orientation of the fragment so that the longest axes fall
+        // along the x-axis etc.
         for (eri = efrags.begin(); eri != efrags.end(); eri++) {
           eri->canonicalizeOrientation();
         }
@@ -385,9 +385,9 @@ namespace RDDepict {
       eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed, dmat, 
                                             weightDistMat, permuteDeg4Nodes);
     }
-    if (canonOrient || efrags.size() >= 2) {
-      // if we do not have any prespecified coordinates - canonicalize the 
-      // oreintation of the fragment so that the longest axes fall along the x-axis etc.
+    if (canonOrient && efrags.size()) {
+      // canonicalize the orientation of the fragment so that the
+      // longest axes fall along the x-axis etc.
       for (eri = efrags.begin(); eri != efrags.end(); eri++) {
         eri->canonicalizeOrientation();
       }

@@ -112,7 +112,7 @@ BOOST_PYTHON_MODULE(rdDepictor)
      ID of the conformation added to the molecule\n";
   python::def("Compute2DCoords", RDDepict::Compute2DCoords,
 	      (python::arg("mol"),
-	       python::arg("canonOrient")=false,
+	       python::arg("canonOrient")=true,
 	       python::arg("clearConfs")=true,
 	       python::arg("coordMap")=python::dict(),
                python::arg("nFlipsPerSample")=0,

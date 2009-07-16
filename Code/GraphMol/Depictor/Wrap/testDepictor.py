@@ -57,7 +57,7 @@ def compareWithOld(smilesFile, sdFile) :
   im = 0
   for mol in smiSup :
     omol = sdsup[im]
-    rdDepictor.Compute2DCoords(mol)
+    rdDepictor.Compute2DCoords(mol,canonOrient=False)
     conf = mol.GetConformer()
     oconf = omol.GetConformer()
     nat = mol.GetNumAtoms()
@@ -123,7 +123,7 @@ class TestCase(unittest.TestCase) :
 
     def test3IssueSF1526844(self):
       t = Chem.MolFromSmiles('c1nc(N)ccc1')
-      rdDepictor.Compute2DCoords(t)
+      rdDepictor.Compute2DCoords(t,canonOrient=False)
       
       m2 = Chem.MolFromSmiles('c1nc(NC=O)ccc1')
       AlignDepict.AlignDepict(m2,t)
@@ -147,11 +147,11 @@ class TestCase(unittest.TestCase) :
       mol= Chem.MolFromMolFile('../test_data/7UPJ_xtal.mol')
 
       # default mode
-      rdDepictor.Compute2DCoords(mol)
+      rdDepictor.Compute2DCoords(mol,canonOrient=False)
       self.failUnless(compareCoords(mol, '../test_data/7UPJ_default.mol'))
 
       # spread the structure as much as possible by sampling
-      rdDepictor.Compute2DCoords(mol, nFlipsPerSample=3, nSample=100,
+      rdDepictor.Compute2DCoords(mol,canonOrient=False, nFlipsPerSample=3, nSample=100,
                                  sampleSeed=100, permuteDeg4Nodes=1)
       self.failUnless(compareCoords(mol, '../test_data/7UPJ_spread.mol'))
       

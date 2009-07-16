@@ -9,7 +9,9 @@ New Features
 
 Other
   - the function DaylightFingerprintMol() has been removed
-
+  - the outdated support for Interbase has been removed
+  - the Compute2DCoords() function in Python now canonicalizes the
+    orientation of the molecule by default.
 
 ******  Release_Q22009_1 *******
 (Changes relative to Release_Q12009_2)

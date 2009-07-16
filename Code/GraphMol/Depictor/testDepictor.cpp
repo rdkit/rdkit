@@ -85,7 +85,6 @@ void test1() {
       token!=tokens.end();
       ++token){
     std::string smi=*token;
-    BOOST_LOG(rdInfoLog) << "Smiles: " << smi << "\n";
     RWMol *m = SmilesToMol(smi, 0, 1); 
     TEST_ASSERT(m)
     RDDepict::compute2DCoords(*m);
@@ -114,14 +113,12 @@ void testCollisions() {
       token!=tokens.end();
       ++token){
     std::string smi=*token;
-    BOOST_LOG(rdInfoLog)<< "Smiles: " << smi << "\n";
     RWMol *m = SmilesToMol(smi, 0, 1);
     TEST_ASSERT(m);
     unsigned int confId = RDDepict::compute2DCoords(*m);
     // check that there are no collisions in the molecules
     const Conformer &conf = m->getConformer(confId);
     int natms = m->getNumAtoms();
-    std::cerr<<MolToMolBlock(*m,true,confId)<<"----"<<std::endl;;
     for (int i = 0; i < natms; i++) {
       RDGeom::Point3D loci = conf.getAtomPos(i);
       for (int j = i+1; j < natms; j++) {
@@ -189,14 +186,12 @@ void test3() {
   std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/cis_trans_cpp.sdf";
   SDWriter writer(ofile);
   ROMol *mol;
-  int i = 0;
   while (1) {
     try {
       mol = smiSup.next();
       std::string mname;
       //wmol = static_cast<RWMol *>(mol);
       RDDepict::compute2DCoords(*mol);
-      BOOST_LOG(rdInfoLog)<< i++ << "\n";
       writer.write(*mol);
     } catch (FileParseException &) {
       break;
@@ -349,7 +344,6 @@ void testIssue248() {
       token!=tokens.end();
       ++token){
     std::string smi=*token;
-    BOOST_LOG(rdInfoLog)<< "Smiles: " << smi << "\n";
     RWMol *m = SmilesToMol(smi, 0, 1); 
     unsigned int confId = RDDepict::compute2DCoords(*m);
     // check that there are no collisions in the molecules
@@ -382,7 +376,6 @@ void testQueries() {
       token!=tokens.end();
       ++token){
     std::string sma=*token;
-    BOOST_LOG(rdInfoLog)<< "Smarts: " << sma << "\n";
     RWMol *m = SmartsToMol(sma);
     unsigned int confId = RDDepict::compute2DCoords(*m);
     // check that there are no collisions in the molecules
@@ -420,13 +413,13 @@ void testRemoveHsCrash() {
     
 
 void testIssue2091304() {
+  // the problem here was a crash, so just finishing is success.
   RDGeom::INT_POINT2D_MAP crdMap;
   crdMap[0] = RDGeom::Point2D(0., 1.50);
 
   std::string smi = "COC";
   RWMol *m1 = SmilesToMol(smi);
-  unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
-  
+  RDDepict::compute2DCoords(*m1, &crdMap, false);
   delete m1;
 }
 
@@ -463,6 +456,65 @@ M  END\n";
   unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
   TEST_ASSERT(cid1>=0);
   delete m1;
+}
+
+void testIssue2821647() {
+  {
+    std::string smi = "CCCCC";
+    RWMol *m1 = SmilesToMol(smi);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    double xx=0,yy=0;
+    for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
+      const Conformer &conf = m1->getConformer(cid1);
+      RDGeom::Point3D loci = conf.getAtomPos(i);
+      xx+=loci.x*loci.x;
+      yy+=loci.y*loci.y;
+    }
+    TEST_ASSERT(xx>yy);
+    delete m1;
+  }
+  {
+    std::string smi = "c1ccccc1CCCCCC1CC1";
+    RWMol *m1 = SmilesToMol(smi);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    double xx=0,yy=0;
+    for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
+      const Conformer &conf = m1->getConformer(cid1);
+      RDGeom::Point3D loci = conf.getAtomPos(i);
+      xx+=loci.x*loci.x;
+      yy+=loci.y*loci.y;
+    }
+    TEST_ASSERT(xx>yy);
+    delete m1;
+  }
+  {
+    std::string smi = "c1ccc2c(c1)oc1c3ccccc3oc21";
+    RWMol *m1 = SmilesToMol(smi);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    double xx=0,yy=0;
+    for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
+      const Conformer &conf = m1->getConformer(cid1);
+      RDGeom::Point3D loci = conf.getAtomPos(i);
+      xx+=loci.x*loci.x;
+      yy+=loci.y*loci.y;
+    }
+    TEST_ASSERT(xx>yy);
+    delete m1;
+  }
+  {
+    std::string smi = "[H]n1c2ccccc2c2n([H])c3ccccc3c12";
+    RWMol *m1 = SmilesToMol(smi);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    double xx=0,yy=0;
+    for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
+      const Conformer &conf = m1->getConformer(cid1);
+      RDGeom::Point3D loci = conf.getAtomPos(i);
+      xx+=loci.x*loci.x;
+      yy+=loci.y*loci.y;
+    }
+    TEST_ASSERT(xx>yy);
+    delete m1;
+  }
 }
 
 
@@ -535,6 +587,11 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Issue 2303566\n";
   testIssue2303566();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Issue 2821647\n";
+  testIssue2821647();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);
