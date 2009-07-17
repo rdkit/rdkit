@@ -173,7 +173,7 @@ namespace RDDepict {
     
     // now find the smallest angle that contains one of these nbrs
     std::list<DOUBLE_INT_PAIR>::const_iterator apci;
-    int nb2=0, nb1=0;
+    int nb2=-1, nb1=-1;
     for (apci = anglePairs.begin(); apci != anglePairs.end(); apci++) {
       INT_PAIR nbrPair = apci->second;
       if (wnb1 == nbrPair.first) {
@@ -200,7 +200,7 @@ namespace RDDepict {
     d_eatoms[aid].rotDir = rotationDir(d_eatoms[aid].loc, d_eatoms[nb1].loc,
                                        d_eatoms[nb2].loc, wAng);
     d_eatoms[aid].nbr1 = nb1;
-    d_eatoms[aid].nbr1 = nb2;
+    d_eatoms[aid].nbr2 = nb2;
     d_eatoms[aid].angle = 2*RDKit::PI - wAng;
   }
 
