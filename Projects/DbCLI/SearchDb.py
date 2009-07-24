@@ -54,12 +54,12 @@ from rdkit.Dbase.DbConnection import DbConnect
 
 from rdkit.RDLogger import logger
 logger=logger()
-import cPickle,zlib
+import zlib
 from rdkit import Chem
 
+from rdkit.Chem.MolDb.FingerprintUtils import supportedSimilarityMethods,BuildSigFactory,DepickleFP,LayeredOptions
 from rdkit.Chem.MolDb import FingerprintUtils
-from rdkit.Chem.MolDb.FingerprintUtils import supportedSimilarityMethods,BuildSigFactory,DepickleFP
-from CreateDb import LayeredOptions
+
 
 from rdkit.Chem.AtomPairs import Torsions
 from rdkit.Chem.AtomPairs import Pairs

@@ -4,7 +4,7 @@
 #  All Rights Reserved
 #
 import cPickle
-from rdkit import DataStructs
+from rdkit import DataStructs,Chem
 from rdkit import Chem
 
 class LayeredOptions:

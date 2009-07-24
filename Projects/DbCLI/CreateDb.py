@@ -30,7 +30,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, July 2007
-_version = "0.11.0"
+_version = "0.12.0"
 
 _usage="""
  CreateDb [optional arguments] <filename>
@@ -161,7 +161,7 @@ parser.add_option('--nameColumn','--nameCol',default=1,type='int',
 
 
 
-def run():
+def runit():
   options,args = parser.parse_args()
   if options.loadMols:
     if len(args)!=1:
@@ -268,6 +268,7 @@ def run():
       fpCurs.execute('create table %s (%s varchar not null primary key,rdkfp blob)'%(options.fpTableName,
                                                                                      options.molIdName))
     if options.doLayered:
+      layeredQs = ','.join('?'*LayeredOptions.nWords)
       colDefs=','.join(['Col_%d integer'%(x+1) for x in range(LayeredOptions.nWords)])
       fpCurs.execute('create table %s (%s varchar not null primary key,%s)'%(options.layeredTableName,
                                                                              options.molIdName,
@@ -291,7 +292,6 @@ def run():
       pass
     fpCurs.execute('create table %s (%s varchar not null primary key,morganfp blob)'%(options.morganFpTableName,
                                                                                         options.molIdName))
-  morganRows = []
 
   if options.doDescriptors:
     descrConn=DbConnect(os.path.join(options.outDir,options.descrDbName))
@@ -312,20 +312,18 @@ def run():
   descrRows = []
   pharm2DRows=[]
   gobbi2DRows=[]
+  morganRows = []
 
   if not options.silent: logger.info('Generating fingerprints and descriptors:')
   molConn = DbConnect(os.path.join(options.outDir,options.molDbName))
   molCurs = molConn.GetCursor()
-  if not options.skipSmiles:
-    molCurs.execute('select %s,smiles,molpkl from %s'%(options.molIdName,options.regName))
-  else:
-    molCurs.execute('select %s,molpkl from %s'%(options.molIdName,options.regName))
-  i=0
+  molCurs.execute('select %s,molpkl from %s'%(options.molIdName,options.regName))
 
+  i=0
   while 1:
     try:
       tpl = molCurs.fetchone()
-      id = tpl[0]
+      molId = tpl[0]
       pkl = tpl[-1]
       i+=1
     except:
@@ -338,76 +336,72 @@ def run():
       torsions = FingerprintUtils.BuildTorsionsFP(mol)
       pkl1 = DbModule.binaryHolder(pairs.ToBinary())
       pkl2 = DbModule.binaryHolder(torsions.ToBinary())
-      row = [id,pkl1,pkl2]
+      row = (molId,pkl1,pkl2)
       pairRows.append(row)
-      if len(pairRows)>=500:
-        pairCurs.executemany('insert into %s values (?,?,?)'%options.pairTableName,
-                             pairRows)
-        pairRows = []
-        pairConn.Commit()
-  
     if options.doFingerprints:
       fp2 = FingerprintUtils.BuildRDKitFP(mol)
       pkl = DbModule.binaryHolder(fp2.ToBinary())
-      row = [id,pkl]
+      row = (molId,pkl)
       fpRows.append(row)
-      if len(fpRows)>=500:
-        fpCurs.executemany('insert into %s values (?,?)'%options.fpTableName,
-                           fpRows)
-        fpRows = []
-        fpConn.Commit()
-
     if options.doLayered:
       words = LayeredOptions.GetWords(mol)
-      row = [id]+words
+      row = [molId]+words
       layeredRows.append(row)
-      qs = ','.join('?'*LayeredOptions.nWords)
-      if len(fpRows)>=500:
-        fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,qs),
-                           layeredRows)
-        layeredRows = []
-        fpConn.Commit()
-
     if options.doDescriptors:
       descrs= calc.CalcDescriptors(mol)
-      row = [id]
+      row = [molId]
       row.extend(descrs)
       descrRows.append(row)
-      if len(descrRows)>=500:
-        descrCurs.executemany('insert into %s values (%s)'%(options.descrTableName,descrQuery),
-                              descrRows)
-        descrRows = []
-        descrConn.Commit()
-
     if options.doPharm2D:
       FingerprintUtils.sigFactory=sigFactory
       fp= FingerprintUtils.BuildPharm2DFP(mol)
       pkl = DbModule.binaryHolder(fp.ToBinary())
-      row = (id,pkl)
+      row = (molId,pkl)
       pharm2DRows.append(row)
-      if len(pharm2DRows)>=500:
-        fpCurs.executemany('insert into %s values (?,?)'%options.pharm2DTableName,
-                           pharm2DRows)
-        pharm2DRows = []
-        fpConn.Commit()
     if options.doGobbi2D:
       FingerprintUtils.sigFactory=Gobbi_Pharm2D.factory
       fp= FingerprintUtils.BuildPharm2DFP(mol)
       pkl = DbModule.binaryHolder(fp.ToBinary())
-      row = (id,pkl)
+      row = (molId,pkl)
       gobbi2DRows.append(row)
-      if len(gobbi2DRows)>=500:
+    if options.doMorganFps:
+      morgan = FingerprintUtils.BuildMorganFP(mol)
+      pkl = DbModule.binaryHolder(morgan.ToBinary())
+      row = (molId,pkl)
+      morganRows.append(row)
+
+    if not i%500:
+      if len(pairRows):
+        pairCurs.executemany('insert into %s values (?,?,?)'%options.pairTableName,
+                             pairRows)
+        pairRows = []
+        pairConn.Commit()
+      if len(fpRows):
+        fpCurs.executemany('insert into %s values (?,?)'%options.fpTableName,
+                           fpRows)
+        fpRows = []
+        fpConn.Commit()
+      if len(layeredRows):
+        fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,layeredQs),
+                           layeredRows)
+        layeredRows = []
+        fpConn.Commit()
+      if len(descrRows):
+        descrCurs.executemany('insert into %s values (%s)'%(options.descrTableName,descrQuery),
+                              descrRows)
+        descrRows = []
+        descrConn.Commit()
+      if len(pharm2DRows):
+        fpCurs.executemany('insert into %s values (?,?)'%options.pharm2DTableName,
+                           pharm2DRows)
+        pharm2DRows = []
+        fpConn.Commit()
+      if len(gobbi2DRows):
         fpCurs.executemany('insert into %s values (?,?)'%options.gobbi2DTableName,
                            gobbi2DRows)
         gobbi2DRows = []
         fpConn.Commit()
-
-    if options.doMorganFps:
-      morgan = FingerprintUtils.BuildMorganFP(mol)
-      pkl1 = DbModule.binaryHolder(morgan.ToBinary())
-      row = [id,pkl1]
-      morganRows.append(row)
-      if len(morganRows)>=500:
+      if len(morganRows):
         fpCurs.executemany('insert into %s values (?,?)'%options.morganFpTableName,
                              morganRows)
         morganRows = []
@@ -427,8 +421,7 @@ def run():
     fpRows = []
     fpConn.Commit()
   if len(layeredRows):
-    qs = ','.join('?'*LayeredOptions.nWords)
-    fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,qs),
+    fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,layeredQs),
                        layeredRows)
     layeredRows = []
     fpConn.Commit()
@@ -447,7 +440,6 @@ def run():
                        gobbi2DRows)
     gobbi2DRows = []
     fpConn.Commit()
-
   if len(morganRows):
     fpCurs.executemany('insert into %s values (?,?)'%options.morganFpTableName,
                        morganRows)
@@ -456,13 +448,12 @@ def run():
     
   if not options.silent:
     logger.info('Finished.')
-
 if __name__=='__main__':
-  if 0:
-    import cProfile
-    cProfile.run('run()','fooprof')
-    import pstats
-    p = pstats.Stats('fooprof')
-    p.sort_stats('cumulative').print_stats(25)
+  if 1:
+    runit()
   else:
-    run()
+    import cProfile
+    cProfile.run("runit()","create.prof")
+    import pstats
+    p = pstats.Stats('create.prof')
+    p.strip_dirs().sort_stats('cumulative').print_stats(25)
