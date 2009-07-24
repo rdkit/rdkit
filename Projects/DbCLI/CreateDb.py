@@ -61,9 +61,6 @@ from rdkit.Dbase import DbModule
 from rdkit.RDLogger import logger
 from rdkit.Chem.MolDb import Loader
 
-from rdkit.Chem.Descriptors import rdMolDescriptors
-from rdkit import DataStructs
-
 logger = logger()
 import cPickle,sys,os
 
@@ -224,7 +221,6 @@ def runit():
     else:
       supplier = Chem.SDMolSupplier(dataFilename)
 
-
     if not options.silent: logger.info('Reading molecules and constructing molecular database.')
     Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
                   errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
@@ -234,7 +230,6 @@ def runit():
                   silent=options.silent,nameProp=options.nameProp,
                   lazySupplier=int(options.maxRowsCached)>0)
   if options.doPairs:
-    from rdkit.Chem.AtomPairs import Pairs,Torsions
     pairConn = DbConnect(os.path.join(options.outDir,options.pairDbName))
     pairCurs = pairConn.GetCursor()
     try:
@@ -317,8 +312,10 @@ def runit():
   if not options.silent: logger.info('Generating fingerprints and descriptors:')
   molConn = DbConnect(os.path.join(options.outDir,options.molDbName))
   molCurs = molConn.GetCursor()
-  molCurs.execute('select %s,molpkl from %s'%(options.molIdName,options.regName))
-
+  if not options.skipSmiles:
+    molCurs.execute('select %s,smiles,molpkl from %s'%(options.molIdName,options.regName))
+  else:
+    molCurs.execute('select %s,molpkl from %s'%(options.molIdName,options.regName))
   i=0
   while 1:
     try:

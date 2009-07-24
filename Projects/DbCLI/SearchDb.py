@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.11.0"
+_version = "0.12.0"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -59,10 +59,6 @@ from rdkit import Chem
 
 from rdkit.Chem.MolDb.FingerprintUtils import supportedSimilarityMethods,BuildSigFactory,DepickleFP,LayeredOptions
 from rdkit.Chem.MolDb import FingerprintUtils
-
-
-from rdkit.Chem.AtomPairs import Torsions
-from rdkit.Chem.AtomPairs import Pairs
 
 from rdkit import DataStructs
 
@@ -527,7 +523,6 @@ parser.add_option('--morganFpColName',default='morganfp',
 
 if __name__=='__main__':
   import sys,getopt,time
-  from rdkit import Chem
   
   options,args = parser.parse_args()
   if len(args)!=1 and not (options.smilesQuery or options.smartsQuery or options.propQuery):
@@ -537,7 +532,5 @@ if __name__=='__main__':
     queryFilename=args[0]
   else:
     queryFilename=None
-
   options.queryMol=None
-
   RunSearch(options,queryFilename)
