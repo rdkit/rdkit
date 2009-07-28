@@ -7,6 +7,16 @@ import cPickle
 from rdkit import DataStructs,Chem
 from rdkit import Chem
 
+similarityMethods={'RDK':DataStructs.ExplicitBitVect,
+                   'AtomPairs':DataStructs.IntSparseIntVect,
+                   'TopologicalTorsions':DataStructs.LongSparseIntVect,
+                   'Pharm2D':DataStructs.SparseBitVect,
+                   'Gobbi2D':DataStructs.SparseBitVect,
+                   'Morgan':DataStructs.UIntSparseIntVect
+                   }
+supportedSimilarityMethods=similarityMethods.keys()
+
+
 class LayeredOptions:
   loadLayerFlags=0xFFFFFFFF
   searchLayerFlags=0x7
@@ -58,15 +68,6 @@ def BuildSigFactory(options=None,fdefFile=None,
                                      trianglePruneBins=False)
   sigFactory.SetBins(bins)
   return sigFactory
-
-similarityMethods={'RDK':DataStructs.ExplicitBitVect,
-                   'AtomPairs':DataStructs.IntSparseIntVect,
-                   'TopologicalTorsions':DataStructs.LongSparseIntVect,
-                   'Pharm2D':DataStructs.SparseBitVect,
-                   'Gobbi2D':DataStructs.SparseBitVect,
-                   'Morgan':DataStructs.UIntSparseIntVect
-                   }
-supportedSimilarityMethods=similarityMethods.keys()
 
 def BuildAtomPairFP(mol):
   from rdkit.Chem.AtomPairs import Pairs
