@@ -30,7 +30,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, July 2007
-_version = "0.12.0"
+_version = "0.13.0"
 
 _usage="""
  CreateDb [optional arguments] <filename>
@@ -156,32 +156,14 @@ parser.add_option('--smilesColumn','--smilesCol',default=0,type='int',
 parser.add_option('--nameColumn','--nameCol',default=1,type='int',
                   help='the column index with mol names')
 
+def CreateDb(options,dataFilename='',supplier=None):
+  if not dataFilename and supplier is None:
+    raise ValueError,'Please provide either a data filename or a supplier'
 
-
-def runit():
-  options,args = parser.parse_args()
-  if options.loadMols:
-    if len(args)!=1:
-      parser.error('please provide a filename argument')
-    dataFilename = args[0]
-    try:
-      dataFile = file(dataFilename,'r')
-    except IOError:
-      logger.error('input file %s does not exist'%(dataFilename))
-      sys.exit(0)
-    dataFile=None
-
-  if not options.outDir:
-    prefix = os.path.splitext(dataFilename)[0]
-    options.outDir=prefix
-
-  if not os.path.exists(options.outDir):
-    try:
-      os.mkdir(options.outDir)
-    except: 
-      logger.error('could not create output directory %s'%options.outDir)
-      sys.exit(1)
-  errFile=file(os.path.join(options.outDir,options.errFilename),'w+')
+  if options.errFilename:
+    errFile=file(os.path.join(options.outDir,options.errFilename),'w+')
+  else:
+    errFile=None
 
   if options.noExtras:
     options.doPairs=False
@@ -193,34 +175,34 @@ def runit():
     options.doMorganFps=False
 
   if options.loadMols:
-    if not options.molFormat:
-      ext = os.path.splitext(dataFilename)[-1].lower()
-      if ext=='.sdf':
-        options.molFormat='sdf'
-      elif ext in ('.smi','.smiles','.txt','.csv'):
-        options.molFormat='smiles'
-        if not options.delimiter:
-          # guess the delimiter
-          import csv
-          sniffer = csv.Sniffer()
-          dlct=sniffer.sniff(file(dataFilename,'r').read(2000))
-          options.delimiter=dlct.delimiter
-          if not options.silent:
-            logger.info('Guessing that delimiter is %s. Use --delimiter argument if this is wrong.'%repr(options.delimiter))
+    if supplier is None:
+      if not options.molFormat:
+        ext = os.path.splitext(dataFilename)[-1].lower()
+        if ext=='.sdf':
+          options.molFormat='sdf'
+        elif ext in ('.smi','.smiles','.txt','.csv'):
+          options.molFormat='smiles'
+          if not options.delimiter:
+            # guess the delimiter
+            import csv
+            sniffer = csv.Sniffer()
+            dlct=sniffer.sniff(file(dataFilename,'r').read(2000))
+            options.delimiter=dlct.delimiter
+            if not options.silent:
+              logger.info('Guessing that delimiter is %s. Use --delimiter argument if this is wrong.'%repr(options.delimiter))
 
-      if not options.silent:
-        logger.info('Guessing that mol format is %s. Use --molFormat argument if this is wrong.'%repr(options.molFormat))  
-    if options.molFormat=='smiles':
-      if options.delimiter=='\\t': options.delimiter='\t'
-      supplier=Chem.SmilesMolSupplier(dataFilename,
-                                      titleLine=options.titleLine,
-                                      delimiter=options.delimiter,
-                                      smilesColumn=options.smilesColumn,
-                                      nameColumn=options.nameColumn
-                                      )
-    else:
-      supplier = Chem.SDMolSupplier(dataFilename)
-
+        if not options.silent:
+          logger.info('Guessing that mol format is %s. Use --molFormat argument if this is wrong.'%repr(options.molFormat))  
+      if options.molFormat=='smiles':
+        if options.delimiter=='\\t': options.delimiter='\t'
+        supplier=Chem.SmilesMolSupplier(dataFilename,
+                                        titleLine=options.titleLine,
+                                        delimiter=options.delimiter,
+                                        smilesColumn=options.smilesColumn,
+                                        nameColumn=options.nameColumn
+                                        )
+      else:
+        supplier = Chem.SDMolSupplier(dataFilename)
     if not options.silent: logger.info('Reading molecules and constructing molecular database.')
     Loader.LoadDb(supplier,os.path.join(options.outDir,options.molDbName),
                   errorsTo=errFile,regName=options.regName,nameCol=options.molIdName,
@@ -445,12 +427,36 @@ def runit():
     
   if not options.silent:
     logger.info('Finished.')
+
 if __name__=='__main__':
+  options,args = parser.parse_args()
+  if options.loadMols:
+    if len(args)!=1:
+      parser.error('please provide a filename argument')
+    dataFilename = args[0]
+    try:
+      dataFile = file(dataFilename,'r')
+    except IOError:
+      logger.error('input file %s does not exist'%(dataFilename))
+      sys.exit(0)
+    dataFile=None
+
+  if not options.outDir:
+    prefix = os.path.splitext(dataFilename)[0]
+    options.outDir=prefix
+
+  if not os.path.exists(options.outDir):
+    try:
+      os.mkdir(options.outDir)
+    except: 
+      logger.error('could not create output directory %s'%options.outDir)
+      sys.exit(1)
+
   if 1:
-    runit()
+    CreateDb(options,dataFilename)
   else:
     import cProfile
-    cProfile.run("runit()","create.prof")
+    cProfile.run("CreateDb(options,dataFilename)","create.prof")
     import pstats
     p = pstats.Stats('create.prof')
     p.strip_dirs().sort_stats('cumulative').print_stats(25)
