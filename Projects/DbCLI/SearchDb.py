@@ -31,7 +31,7 @@
 #
 #  Created by Greg Landrum, July 2007
 #
-_version = "0.12.0"
+_version = "0.13.0"
 _usage="""
  SearchDb [optional arguments] <sdfilename>
 
@@ -194,6 +194,8 @@ def RunSearch(options,queryFilename):
 
   if options.outF=='-':
     outF=sys.stdout
+  elif options.outF=='':
+    outF=None
   else:
     outF = file(options.outF,'w+')
   
@@ -253,8 +255,13 @@ def RunSearch(options,queryFilename):
   conn=None
   idName = options.molIdName
   ids=None
+  names=None
+  molDbName = os.path.join(options.dbDir,options.molDbName)
+  molIdName = options.molIdName
+  mConn = DbConnect(molDbName)
+  cns = [(x.lower(),y) for x,y in mConn.GetColumnNamesAndTypes('molecules')]
+  idCol,idTyp=cns[0]
   if options.propQuery or options.queryMol:
-    molDbName = os.path.join(options.dbDir,options.molDbName)
     conn = DbConnect(molDbName)
     curs = conn.GetCursor()
     if options.queryMol:
@@ -278,7 +285,7 @@ def RunSearch(options,queryFilename):
           pass
         else:
           doSubstructFPs=True
-          join = 'join fpdb.%s using (%s)'%(options.layeredTableName,idName)
+          join = 'join fpdb.%s using (%s)'%(options.layeredTableName,idCol)
           query = LayeredOptions.GetQueryText(options.queryMol)
           if query:
             if not where:
@@ -287,7 +294,7 @@ def RunSearch(options,queryFilename):
               where += ' and'
             where += ' '+query
 
-      cmd = 'select %(idName)s,molpkl from molecules %(join)s %(where)s'%locals()
+      cmd = 'select %(idCol)s,molpkl from molecules %(join)s %(where)s'%locals()
       curs.execute(cmd)
       row=curs.fetchone()
       nDone=0
@@ -317,8 +324,8 @@ def RunSearch(options,queryFilename):
     elif options.propQuery:
       if not options.silent: logger.info('Doing property query')
       propQuery=options.propQuery.split(';')[0]
-      curs.execute('select %(idName)s from molecules where %(propQuery)s'%locals())
-      ids = [str(x[0]) for x in curs.fetchall()]
+      curs.execute('select %(idCol)s from molecules where %(propQuery)s'%locals())
+      ids = [x[0] for x in curs.fetchall()]
     if not options.silent:
       logger.info('Found %d molecules matching the query'%(len(ids)))
 
@@ -326,22 +333,34 @@ def RunSearch(options,queryFilename):
   if probes:
     if not options.silent: logger.info('Finding Neighbors')
     conn = DbConnect(dbName)
+    cns = conn.GetColumnNames(fpTableName)
     curs = conn.GetCursor()
+
     if ids:
       ids = [(x,) for x in ids]
-      curs.execute('create temporary table _tmpTbl (%(idName)s varchar)'%locals())
+      curs.execute('create temporary table _tmpTbl (%(idCol)s %(idTyp)s)'%locals())
       curs.executemany('insert into _tmpTbl values (?)',ids)
-      join='join  _tmpTbl using (%(idName)s)'%locals()
+      join='join  _tmpTbl using (%(idCol)s)'%locals()
     else:
       join=''
 
-    curs.execute('select %(idName)s,%(fpColName)s from %(fpTableName)s %(join)s'%locals())
+    if cns[0].lower() != idCol.lower():
+      # backwards compatibility to the days when mol tables had a guid and
+      # the fps tables did not:
+      curs.execute("attach database '%(molDbName)s' as mols"%locals())
+      curs.execute("""
+  select %(idCol)s,%(fpColName)s from %(fpTableName)s join
+      (select %(idCol)s,%(molIdName)s from mols.molecules %(join)s)
+    using (%(molIdName)s)
+"""%(locals()))
+    else:
+      curs.execute('select %(idCol)s,%(fpColName)s from %(fpTableName)s %(join)s'%locals())
     def poolFromCurs(curs,similarityMethod):
       row = curs.fetchone()
       while row:
-        nm,pkl = row
+        id,pkl = row
         fp = DepickleFP(str(pkl),similarityMethod)
-        yield (nm,fp)
+        yield (id,fp)
         row = curs.fetchone()
     topNLists = GetNeighborLists(probes,options.topN,poolFromCurs(curs,options.similarityType),
                                  simMetric=simMetric)
@@ -353,55 +372,71 @@ def RunSearch(options,queryFilename):
       scores=topNLists[i].GetPts()
       nbrNames = topNLists[i].GetExtras()
       nbrs = []
-      for j,nbrNm in enumerate(nbrNames):
-        if nbrNm is None:
+      for j,nbrGuid in enumerate(nbrNames):
+        if nbrGuid is None:
           break
         else:
-          uniqIds.add(nbrNm)
-          nbrs.append((nbrNm,scores[j]))
+          uniqIds.add(nbrGuid)
+          nbrs.append((nbrGuid,scores[j]))
       nbrLists[(i,nm)] = nbrs
     t2=time.time()
     if not options.silent: logger.info('The search took %.1f seconds'%(t2-t1))
     
     if not options.silent: logger.info('Creating output')
+
+    
+    curs = mConn.GetCursor()
+    ids = list(uniqIds)
+
+    ids = [(x,) for x in ids]
+    curs.execute('create temporary table _tmpTbl (%(idCol)s %(idTyp)s)'%locals())
+    curs.executemany('insert into _tmpTbl values (?)',ids)
+    curs.execute('select %(idCol)s,%(molIdName)s from molecules join _tmpTbl using (%(idCol)s)'%locals())
+    nmDict={}
+    for guid,id in curs.fetchall():
+      nmDict[guid]=str(id)
+    
     ks = nbrLists.keys()
     ks.sort()
     if not options.transpose:
       for i,nm in ks:
         nbrs= nbrLists[(i,nm)]
-        nbrTxt=options.outputDelim.join([nm]+['%s%s%.3f'%(x,options.outputDelim,y) for x,y in nbrs])
-        print >>outF,nbrTxt
+        nbrTxt=options.outputDelim.join([nm]+['%s%s%.3f'%(nmDict[id],options.outputDelim,score) for id,score in nbrs])
+        if outF: print >>outF,nbrTxt
     else:
       labels = ['%s%sSimilarity'%(x[1],options.outputDelim) for x in ks]
-      print >>outF,options.outputDelim.join(labels)
+      if outF: print >>outF,options.outputDelim.join(labels)
       for i in range(options.topN):
         outL = []
         for idx,nm in ks:
           nbr = nbrLists[(idx,nm)][i]
-          outL.append(nbr[0])
+          outL.append(nmDict[nbr[0]])
           outL.append('%.3f'%nbr[1])
-        print >>outF,options.outputDelim.join(outL)
-    ids = list(uniqIds)
+        if outF: print >>outF,options.outputDelim.join(outL)
   else:
     if not options.silent: logger.info('Creating output')
-    print >>outF,'\n'.join(ids)
+    curs = mConn.GetCursor()
+    ids = [(x,) for x in set(ids)]
+    curs.execute('create temporary table _tmpTbl (%(idCol)s %(idTyp)s)'%locals())
+    curs.executemany('insert into _tmpTbl values (?)',ids)
+    molIdName = options.molIdName
+    curs.execute('select %(idCol)s,%(molIdName)s from molecules join _tmpTbl using (%(idCol)s)'%locals())
+    nmDict={}
+    for guid,id in curs.fetchall():
+      nmDict[guid]=str(id)
+    if outF: print >>outF,'\n'.join(nmDict.values())
   if molsOut and ids:
     molDbName = os.path.join(options.dbDir,options.molDbName)
-    conn = DbConnect(molDbName)
-    cns = [x.lower() for x in conn.GetColumnNames('molecules')]
-    if cns[0]=='guid':
-      # from sqlalchemy, ditch it:
-      del cns[0]
+    cns = [x.lower() for x in mConn.GetColumnNames('molecules')]
     if cns[-1]!='molpkl':
       cns.remove('molpkl')
       cns.append('molpkl')
 
-    curs = conn.GetCursor()
-    ids = [(x,) for x in ids]
-    curs.execute('create temporary table _tmpTbl (%(idName)s varchar)'%locals())
-    curs.executemany('insert into _tmpTbl values (?)',ids)
+    curs = mConn.GetCursor()
+    #curs.execute('create temporary table _tmpTbl (guid integer)'%locals())
+    #curs.executemany('insert into _tmpTbl values (?)',ids)
     cnText=','.join(cns)
-    curs.execute('select %(cnText)s from molecules join _tmpTbl using (%(idName)s)'%locals())
+    curs.execute('select %(cnText)s from molecules join _tmpTbl using (%(idCol)s)'%locals())
 
     row=curs.fetchone()
     molD = {}
@@ -409,7 +444,8 @@ def RunSearch(options,queryFilename):
       row = list(row)
       pkl = row[-1]
       m = Chem.Mol(str(pkl))
-      nm = str(row[0])
+      guid = row[0]
+      nm = nmDict[guid]
       if sdfOut:
         m.SetProp('_Name',nm)
         print >>sdfOut,Chem.MolToMolBlock(m)
@@ -418,10 +454,10 @@ def RunSearch(options,queryFilename):
           pv = str(row[i])
           print >>sdfOut,'> <%s>\n%s\n'%(pn,pv)
         print >>sdfOut,'$$$$'
-      if smilesOut :
+      if smilesOut:
         smi=Chem.MolToSmiles(m,options.chiralSmiles)        
       if smilesOut:
-        print >>smilesOut,'%s %s'%(smi,str(row[0]))
+        print >>smilesOut,'%s %s'%(smi,str(row[1]))
       row=curs.fetchone()
   if not options.silent: logger.info('Done!')
 
@@ -511,8 +547,7 @@ parser.add_option('--gobbi2DTableName',default='gobbi2dfps',
 
 parser.add_option('--similarityType','--simType','--sim',
                   default='RDK',choices=supportedSimilarityMethods,
-                  help='Choose the type of similarity to use, possible values: RDK, AtomPairs, TopologicalTorsions, Pharm2D, Gobbi2D, Morgan. The default is %default')
-
+                  help='Choose the type of similarity to use, possible values: RDK, AtomPairs, TopologicalTorsions, Pharm2D, Gobbi2D, Avalon, Morgan. The default is %default')
 parser.add_option('--morganFpDbName',default='Fingerprints.sqlt',
                   help='name of the morgan fingerprints database')
 parser.add_option('--morganFpTableName',default='morganfps',

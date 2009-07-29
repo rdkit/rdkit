@@ -63,7 +63,6 @@ from rdkit.Chem.MolDb import Loader
 
 logger = logger()
 import cPickle,sys,os
-
 from rdkit.Chem.MolDb.FingerprintUtils import BuildSigFactory,LayeredOptions
 from rdkit.Chem.MolDb import FingerprintUtils
 
@@ -218,7 +217,7 @@ def CreateDb(options,dataFilename='',supplier=None):
       pairCurs.execute('drop table %s'%(options.pairTableName))
     except:
       pass
-    pairCurs.execute('create table %s (%s varchar not null primary key,atompairfp blob,torsionfp blob)'%(options.pairTableName,
+    pairCurs.execute('create table %s (guid integer not null primary key,%s varchar not null unique,atompairfp blob,torsionfp blob)'%(options.pairTableName,
                                                                                                          options.molIdName))
 
   if options.doFingerprints or options.doPharm2D or options.doGobbi2D or options.doLayered:
@@ -242,21 +241,21 @@ def CreateDb(options,dataFilename='',supplier=None):
       pass
 
     if options.doFingerprints:
-      fpCurs.execute('create table %s (%s varchar not null primary key,rdkfp blob)'%(options.fpTableName,
+      fpCurs.execute('create table %s (guid integer not null primary key,%s varchar not null unique,rdkfp blob)'%(options.fpTableName,
                                                                                      options.molIdName))
     if options.doLayered:
       layeredQs = ','.join('?'*LayeredOptions.nWords)
       colDefs=','.join(['Col_%d integer'%(x+1) for x in range(LayeredOptions.nWords)])
-      fpCurs.execute('create table %s (%s varchar not null primary key,%s)'%(options.layeredTableName,
+      fpCurs.execute('create table %s (guid integer not null primary key,%s varchar not null unique,%s)'%(options.layeredTableName,
                                                                              options.molIdName,
                                                                              colDefs))
       
     if options.doPharm2D:
-      fpCurs.execute('create table %s (%s varchar not null primary key,pharm2dfp blob)'%(options.pharm2DTableName,
+      fpCurs.execute('create table %s (guid integer not null primary key,%s varchar not null unique,pharm2dfp blob)'%(options.pharm2DTableName,
                                                                                      options.molIdName))
       sigFactory = BuildSigFactory(options)
     if options.doGobbi2D:
-      fpCurs.execute('create table %s (%s varchar not null primary key,gobbi2dfp blob)'%(options.gobbi2DTableName,
+      fpCurs.execute('create table %s (guid integer not null primary key,%s varchar not null unique,gobbi2dfp blob)'%(options.gobbi2DTableName,
                                                                                      options.molIdName))
       from rdkit.Chem.Pharm2D import Generate,Gobbi_Pharm2D
 
@@ -267,7 +266,7 @@ def CreateDb(options,dataFilename='',supplier=None):
       fpCurs.execute('drop table %s'%(options.morganFpTableName))
     except:
       pass
-    fpCurs.execute('create table %s (%s varchar not null primary key,morganfp blob)'%(options.morganFpTableName,
+    fpCurs.execute('create table %s (guid integer not null primary key,%s varchar not null unique,morganfp blob)'%(options.morganFpTableName,
                                                                                         options.molIdName))
 
   if options.doDescriptors:
@@ -275,7 +274,7 @@ def CreateDb(options,dataFilename='',supplier=None):
     calc = cPickle.load(file(options.descriptorCalcFilename,'rb'))
     nms = [x for x in calc.GetDescriptorNames()]
     descrCurs = descrConn.GetCursor()
-    descrs = ['%s varchar not null primary key'%options.molIdName]
+    descrs = ['guid integer not null primary key','%s varchar not null unique'%options.molIdName]
     descrs.extend(['%s float'%x for x in nms])
     try:
       descrCurs.execute('drop table %s'%(options.descrTableName))
@@ -295,14 +294,15 @@ def CreateDb(options,dataFilename='',supplier=None):
   molConn = DbConnect(os.path.join(options.outDir,options.molDbName))
   molCurs = molConn.GetCursor()
   if not options.skipSmiles:
-    molCurs.execute('select %s,smiles,molpkl from %s'%(options.molIdName,options.regName))
+    molCurs.execute('select guid,%s,smiles,molpkl from %s'%(options.molIdName,options.regName))
   else:
-    molCurs.execute('select %s,molpkl from %s'%(options.molIdName,options.regName))
+    molCurs.execute('select guid,%s,molpkl from %s'%(options.molIdName,options.regName))
   i=0
   while 1:
     try:
       tpl = molCurs.fetchone()
-      molId = tpl[0]
+      molGuid = tpl[0]
+      molId = tpl[1]
       pkl = tpl[-1]
       i+=1
     except:
@@ -315,53 +315,53 @@ def CreateDb(options,dataFilename='',supplier=None):
       torsions = FingerprintUtils.BuildTorsionsFP(mol)
       pkl1 = DbModule.binaryHolder(pairs.ToBinary())
       pkl2 = DbModule.binaryHolder(torsions.ToBinary())
-      row = (molId,pkl1,pkl2)
+      row = (molGuid,molId,pkl1,pkl2)
       pairRows.append(row)
     if options.doFingerprints:
       fp2 = FingerprintUtils.BuildRDKitFP(mol)
       pkl = DbModule.binaryHolder(fp2.ToBinary())
-      row = (molId,pkl)
+      row = (molGuid,molId,pkl)
       fpRows.append(row)
     if options.doLayered:
       words = LayeredOptions.GetWords(mol)
-      row = [molId]+words
+      row = [molGuid,molId]+words
       layeredRows.append(row)
     if options.doDescriptors:
       descrs= calc.CalcDescriptors(mol)
-      row = [molId]
+      row = [molGuid,molId]
       row.extend(descrs)
       descrRows.append(row)
     if options.doPharm2D:
       FingerprintUtils.sigFactory=sigFactory
       fp= FingerprintUtils.BuildPharm2DFP(mol)
       pkl = DbModule.binaryHolder(fp.ToBinary())
-      row = (molId,pkl)
+      row = (molGuid,molId,pkl)
       pharm2DRows.append(row)
     if options.doGobbi2D:
       FingerprintUtils.sigFactory=Gobbi_Pharm2D.factory
       fp= FingerprintUtils.BuildPharm2DFP(mol)
       pkl = DbModule.binaryHolder(fp.ToBinary())
-      row = (molId,pkl)
+      row = (molGuid,molId,pkl)
       gobbi2DRows.append(row)
     if options.doMorganFps:
       morgan = FingerprintUtils.BuildMorganFP(mol)
       pkl = DbModule.binaryHolder(morgan.ToBinary())
-      row = (molId,pkl)
+      row = (molGuid,molId,pkl)
       morganRows.append(row)
 
     if not i%500:
       if len(pairRows):
-        pairCurs.executemany('insert into %s values (?,?,?)'%options.pairTableName,
+        pairCurs.executemany('insert into %s values (?,?,?,?)'%options.pairTableName,
                              pairRows)
         pairRows = []
         pairConn.Commit()
       if len(fpRows):
-        fpCurs.executemany('insert into %s values (?,?)'%options.fpTableName,
+        fpCurs.executemany('insert into %s values (?,?,?)'%options.fpTableName,
                            fpRows)
         fpRows = []
         fpConn.Commit()
       if len(layeredRows):
-        fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,layeredQs),
+        fpCurs.executemany('insert into %s values (?,?,%s)'%(options.layeredTableName,layeredQs),
                            layeredRows)
         layeredRows = []
         fpConn.Commit()
@@ -371,17 +371,17 @@ def CreateDb(options,dataFilename='',supplier=None):
         descrRows = []
         descrConn.Commit()
       if len(pharm2DRows):
-        fpCurs.executemany('insert into %s values (?,?)'%options.pharm2DTableName,
+        fpCurs.executemany('insert into %s values (?,?,?)'%options.pharm2DTableName,
                            pharm2DRows)
         pharm2DRows = []
         fpConn.Commit()
       if len(gobbi2DRows):
-        fpCurs.executemany('insert into %s values (?,?)'%options.gobbi2DTableName,
+        fpCurs.executemany('insert into %s values (?,?,?)'%options.gobbi2DTableName,
                            gobbi2DRows)
         gobbi2DRows = []
         fpConn.Commit()
       if len(morganRows):
-        fpCurs.executemany('insert into %s values (?,?)'%options.morganFpTableName,
+        fpCurs.executemany('insert into %s values (?,?,?)'%options.morganFpTableName,
                              morganRows)
         morganRows = []
         fpConn.Commit()
@@ -390,17 +390,17 @@ def CreateDb(options,dataFilename='',supplier=None):
       logger.info('  Done: %d'%(i))
 
   if len(pairRows):
-    pairCurs.executemany('insert into %s values (?,?,?)'%options.pairTableName,
+    pairCurs.executemany('insert into %s values (?,?,?,?)'%options.pairTableName,
                          pairRows)
     pairRows = []
     pairConn.Commit()
   if len(fpRows):
-    fpCurs.executemany('insert into %s values (?,?)'%options.fpTableName,
+    fpCurs.executemany('insert into %s values (?,?,?)'%options.fpTableName,
                        fpRows)
     fpRows = []
     fpConn.Commit()
   if len(layeredRows):
-    fpCurs.executemany('insert into %s values (?,%s)'%(options.layeredTableName,layeredQs),
+    fpCurs.executemany('insert into %s values (?,?,%s)'%(options.layeredTableName,layeredQs),
                        layeredRows)
     layeredRows = []
     fpConn.Commit()
@@ -410,17 +410,17 @@ def CreateDb(options,dataFilename='',supplier=None):
     descrRows = []
     descrConn.Commit()
   if len(pharm2DRows):
-    fpCurs.executemany('insert into %s values (?,?)'%options.pharm2DTableName,
+    fpCurs.executemany('insert into %s values (?,?,?)'%options.pharm2DTableName,
                        pharm2DRows)
     pharm2DRows = []
     fpConn.Commit()
   if len(gobbi2DRows):
-    fpCurs.executemany('insert into %s values (?,?)'%options.gobbi2DTableName,
+    fpCurs.executemany('insert into %s values (?,?,?)'%options.gobbi2DTableName,
                        gobbi2DRows)
     gobbi2DRows = []
     fpConn.Commit()
   if len(morganRows):
-    fpCurs.executemany('insert into %s values (?,?)'%options.morganFpTableName,
+    fpCurs.executemany('insert into %s values (?,?,?)'%options.morganFpTableName,
                        morganRows)
     morganRows = []
     fpConn.Commit()
