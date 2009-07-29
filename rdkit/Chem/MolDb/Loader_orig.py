@@ -1,4 +1,4 @@
-# $Id: Loader.py 997 2009-02-25 06:12:43Z glandrum $
+# $Id$
 #
 #  Copyright (C) 2007-2008 Greg Landrum
 #   @@ All Rights Reserved @@
@@ -78,15 +78,14 @@ def ProcessMol(mol,typeConversions,globalProps,nDone,nameProp='_Name',nameCol='c
 
 def ConvertRows(rows,globalProps,defaultVal,skipSmiles):
   for i,row in enumerate(rows):
-    newRow = []
-    newRow.append(row[0])
+    newRow = [row[0],row[1]]
     pD=row[-1]
     for pn in globalProps:
       pv = pD.get(pn,defaultVal)
       newRow.append(pv)
-    newRow.append(row[1])
+    newRow.append(row[2])
     if not skipSmiles:
-      newRow.append(row[2])
+      newRow.append(row[3])
     rows[i] = newRow
 
 def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
@@ -123,7 +122,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
                    addComputedProps=addComputedProps,skipSmiles=skipSmiles,
                    uniqNames=uniqNames,namesSeen=namesSeen)
     if row is None: continue
-    rows.append(row)
+    rows.append([nDone]+row)
     if not silent and not nDone%100:
       logger.info('  done %d'%nDone)
     if len(rows)==maxRowsCached:
@@ -132,7 +131,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   nameDef='%s varchar not null'%nameCol
   if uniqNames:
     nameDef += ' unique'
-  typs = [nameDef]
+  typs = ['guid integer not null primary key',nameDef]
   pns = []
   for pn,v in globalProps.iteritems():
     addNm = re.sub(r'[\W]','_',pn)
@@ -181,7 +180,7 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
                    addComputedProps=addComputedProps,skipSmiles=skipSmiles,
                    uniqNames=uniqNames,namesSeen=namesSeen)
     if not row: continue
-    rows.append(row)
+    rows.append([nDone]+row)
     if not silent and not nDone%100:
       logger.info('  done %d'%nDone)
     if len(rows)==maxRowsCached:

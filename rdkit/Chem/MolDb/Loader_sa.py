@@ -1,4 +1,4 @@
-# $Id: Loader.py 1580 2009-04-29 14:54:33Z landrgr1 $
+# $Id$
 #
 #  Copyright (C) 2007-2009 Greg Landrum
 #   @@ All Rights Reserved @@
@@ -17,7 +17,6 @@ from sqlalchemy import Table,Column,MetaData
 from sqlalchemy import Integer,Text,String,ForeignKey,Binary,DateTime,Float
 from sqlalchemy.orm import relation,mapper,sessionmaker,backref
 from sqlalchemy import create_engine
-
 
 decBase = declarative_base()
 
