@@ -317,7 +317,7 @@ def RunSearch(options,queryFilename):
           else:
             logger.info('  searched through %d molecules; %d hits so far'%(nDone,len(ids)))
         row=curs.fetchone()
-      if not options.silent and doSubstructFPs:
+      if not options.silent and doSubstructFPs and nToDo:
         nFiltered = nToDo-nDone
         logger.info('   Fingerprint screenout rate: %d of %d (%%%.2f)'%(nFiltered,nToDo,100.*nFiltered/nToDo))
 
