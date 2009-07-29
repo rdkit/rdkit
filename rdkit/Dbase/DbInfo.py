@@ -160,7 +160,6 @@ def GetColumnNamesAndTypes(dBase,table,
   cmd = 'select %s from %s'%(what,table)
   if join:
     cmd += ' join %s'%(join)
-  print 'cmd:',cmd
   c.execute(cmd)
   return GetColumnInfoFromCursor(c)
 
