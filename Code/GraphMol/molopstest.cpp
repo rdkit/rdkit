@@ -441,10 +441,10 @@ void test6(){
 */
 
 void test7(){
+#if 0
   string smi;
   Mol *m;
   INT_VECT tree;
-#if 0
 #if 1
   smi = "C(CO)OCC";
   m = SmilesToMol(smi);
@@ -3050,6 +3050,25 @@ void testSFNetIssue2316677() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSanitizeNonringAromatics() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2830244: make sure that non-ring aromatic atoms generate errors:" << std::endl;
+  {
+    std::string smi="c-C";
+    
+    RWMol *m = SmilesToMol(smi,0,false);
+    bool ok=false;
+    try {
+      MolOps::Kekulize(*m);
+    } catch (MolSanitizeException &vee){
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    delete m;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -3098,7 +3117,7 @@ int main(){
 #endif
   testSFNetIssue2313979();
   testSFNetIssue2316677();
-  
+  testSanitizeNonringAromatics();  
   return 0;
 }
 

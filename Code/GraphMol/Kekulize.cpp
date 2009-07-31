@@ -479,7 +479,6 @@ namespace RDKit {
 
       // first find the all the simple rings in the molecule
       VECT_INT_VECT arings;
-    
       MolOps::symmetrizeSSSR(mol, arings);
 
       // convert the rings to bonds ids
@@ -522,7 +521,16 @@ namespace RDKit {
         // that here.
         for (ROMol::AtomIterator ai = mol.beginAtoms();
              ai != mol.endAtoms(); ++ai) {
-          (*ai)->setIsAromatic(false);
+          if((*ai)->getIsAromatic()){
+            if(!mol.getRingInfo()->numAtomRings((*ai)->getIdx())){
+              std::ostringstream errout;
+              errout << "non-ring atom " << (*ai)->getIdx()<<" marked aromatic";
+              std::string msg = errout.str();
+              BOOST_LOG(rdErrorLog) << msg<< std::endl;
+              throw MolSanitizeException(msg);
+            }
+            (*ai)->setIsAromatic(false);
+          }
         }
         for (ROMol::BondIterator bi = mol.beginBonds();
              bi != mol.endBonds(); ++bi) {
