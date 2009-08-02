@@ -508,7 +508,7 @@ namespace RDKit{
     mol->clearAllBondBookmarks();
     if(majorVersion<4000){
       // FIX for issue 220 - probably better to change the pickle format later
-      MolOps::assignBondStereoCodes(*mol,true);
+      MolOps::assignStereochemistry(*mol,true);
     }
   }
   void MolPickler::molFromPickle(const std::string &pickle,ROMol *mol){

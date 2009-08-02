@@ -637,8 +637,8 @@ namespace Canon {
     VECT_INT_VECT_I vviIt;
     for(vviIt=cycles.begin();vviIt!=cycles.end();++vviIt) vviIt->resize(0);
 
-    // make sure that we've done the bond stereo perception:
-    MolOps::assignBondStereoCodes(mol,false);
+    // make sure that we've done the stereo perception:
+    MolOps::assignStereochemistry(mol,false);
 
     // we need ring information make sure findSSSR has been called before
     // if not call now

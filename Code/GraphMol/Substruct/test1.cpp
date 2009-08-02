@@ -474,9 +474,9 @@ void test9(){
   q1->getAtomWithIdx(0)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
 
   MolOps::sanitizeMol(*m);
-  MolOps::assignAtomChiralCodes(*m);
+  MolOps::assignStereochemistry(*m);
   MolOps::sanitizeMol(*q1);
-  MolOps::assignAtomChiralCodes(*q1);
+  MolOps::assignStereochemistry(*q1);
 
   bool found;
   // test with default options (no chirality):

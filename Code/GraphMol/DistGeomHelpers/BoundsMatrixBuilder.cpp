@@ -645,18 +645,27 @@ namespace RDKit {
       return false;
     }
     
+    // here we look for something like this:
+    // It's an amide or ester:
+    //
+    //        4    <- 4 is the O
+    //        |    <- That's the double bond
+    //    1   3
+    //     \ / \                                         T.S.I.Left Blank
+    //      2   5  <- 2 is an oxygen/nitrogen
     bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
 			    const Atom *atm2, const Atom *atm3, const Atom *atm4) { 
+      unsigned int a1Num = atm1->getAtomicNum();
       unsigned int a2Num = atm2->getAtomicNum();
-      if ( (a2Num == 8) || 
-           ((a2Num == 7) && (atm2->getTotalNumHs() == 1)) ) {
-        if ((atm1->getAtomicNum() != 1) && (bnd1->getBondType() == Bond::SINGLE)) {
-	  unsigned int a4Num=atm4->getAtomicNum();
-          if ((atm3->getAtomicNum() == 6) && (a4Num == 8 || a4Num==7) &&
-              (bnd3->getBondType() == Bond::DOUBLE)) {
-            return true;
-          }
-        }
+      unsigned int a3Num = atm3->getAtomicNum();
+      unsigned int a4Num = atm4->getAtomicNum();
+      
+      if ( a1Num != 1 && a3Num==6 &&
+           bnd3->getBondType()==Bond::DOUBLE &&
+           (a4Num==8 || a4Num==7) &&
+           bnd1->getBondType()==Bond::SINGLE &&
+           (a2Num==8 || (a2Num==7 && atm2->getTotalNumHs()==1)) ){
+        return true;
       }
       return false;
     }
@@ -795,7 +804,8 @@ namespace RDKit {
         } else 
 #endif
         if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16)) {
-          // this is *S-S* situation //FIX: this cannot be right is sulfur has more than two coordinated
+          // this is *S-S* situation
+          //FIX: this cannot be right is sulfur has more than two coordinated
           // the torsion angle is 90 deg 
           dl = RDGeom::compute14Dist3D(bl1, bl2, bl3, ba12, ba23, RDKit::PI/2) - GEN_DIST_TOL;
           du = dl + 2*GEN_DIST_TOL;
@@ -857,7 +867,7 @@ namespace RDKit {
 	  // we set the 1-4 contact above.
 
 	  // If we're going to have a hope of getting good geometries
-	  // out of here we need to set some reasonbly smart bounds between 1
+	  // out of here we need to set some reasonably smart bounds between 1
 	  // and 5 (ref Issue355):
 
 	  // NOTE THAT WE REVERSE THE ORDER HERE:

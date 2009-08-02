@@ -419,12 +419,6 @@ namespace RDKit{
                   docString.c_str());
 
       // ------------------------------------------------------------------------
-      docString="DEPRECATED: use AssignStereochemistry() instead\n";
-      python::def("AssignAtomChiralCodes", MolOps::assignAtomChiralCodes,
-                  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
-                  docString.c_str());
-
-      // ------------------------------------------------------------------------
       docString="Sets the chiral tags on a molecule's atoms based on \n\
   a 3D conformation.\n\
 \n\
@@ -437,13 +431,6 @@ namespace RDKit{
 \n";
       python::def("AssignAtomChiralTagsFromStructure", MolOps::assignChiralTypesFrom3D,
                   (python::arg("mol"),python::arg("confId")=-1,python::arg("replaceExistingTags")=true),
-                  docString.c_str());
-
-
-      // ------------------------------------------------------------------------
-      docString="DEPRECATED: use AssignStereochemistry() instead\n";
-      python::def("AssignBondStereoCodes", MolOps::assignBondStereoCodes,
-                  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
                   docString.c_str());
 
       docString="Set the wedging on single bonds in a molecule.\n \

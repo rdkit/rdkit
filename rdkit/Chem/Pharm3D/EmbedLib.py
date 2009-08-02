@@ -1139,7 +1139,7 @@ def ComputeChiralVolume(mol,centerIdx,confId=-1):
 
     R configuration atoms give negative volumes:
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-r.mol'))
-    >>> Chem.AssignAtomChiralCodes(mol)
+    >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'R'
     >>> ComputeChiralVolume(mol,1) < 0
@@ -1147,7 +1147,7 @@ def ComputeChiralVolume(mol,centerIdx,confId=-1):
   
     S configuration atoms give positive volumes:
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s.mol'))
-    >>> Chem.AssignAtomChiralCodes(mol)
+    >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'S'
     >>> ComputeChiralVolume(mol,1) > 0
@@ -1159,14 +1159,14 @@ def ComputeChiralVolume(mol,centerIdx,confId=-1):
 
     We also work on 3-coordinate atoms (with implicit Hs):
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-r-3.mol'))
-    >>> Chem.AssignAtomChiralCodes(mol)
+    >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'R'
     >>> ComputeChiralVolume(mol,1)<0
     True
   
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s-3.mol'))
-    >>> Chem.AssignAtomChiralCodes(mol)
+    >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'S'
     >>> ComputeChiralVolume(mol,1)>0
@@ -1176,7 +1176,7 @@ def ComputeChiralVolume(mol,centerIdx,confId=-1):
   
   """
   conf = mol.GetConformer(confId)
-  Chem.AssignAtomChiralCodes(mol)
+  Chem.AssignStereochemistry(mol)
   center = mol.GetAtomWithIdx(centerIdx)
   if not center.HasProp('_CIPCode'): 
     return 0.0
