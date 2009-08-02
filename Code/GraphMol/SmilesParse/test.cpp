@@ -353,7 +353,7 @@ void testStereochem(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_UNSPECIFIED);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -364,7 +364,7 @@ void testStereochem(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_UNSPECIFIED);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -382,7 +382,7 @@ void testStereochem(){
   smi = "Cl[C@](Br)(F)I";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -393,7 +393,7 @@ void testStereochem(){
   smi = "Cl[C@](F)(I)Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -404,7 +404,7 @@ void testStereochem(){
   smi = "I[C@](F)(Br)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -415,7 +415,7 @@ void testStereochem(){
   smi = "I[C@](Br)(Cl)F";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -426,7 +426,7 @@ void testStereochem(){
   smi = "F[C@@](Br)(Cl)I";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -437,7 +437,7 @@ void testStereochem(){
   smi = "F[C@@](Cl)(I)Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -448,7 +448,7 @@ void testStereochem(){
   smi = "Cl[C@@](Br)(I)F";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -459,7 +459,7 @@ void testStereochem(){
   smi = "Cl[C@@](F)(Br)I";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -470,7 +470,7 @@ void testStereochem(){
   smi = "[C@@](Cl)(F)(Br)I";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
@@ -481,7 +481,7 @@ void testStereochem(){
   smi = "F[C@H](Cl)Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -492,7 +492,7 @@ void testStereochem(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   smi = MolToSmiles(*mol,1);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -502,7 +502,7 @@ void testStereochem(){
   smi = "Br[C@]([H])(F)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -513,7 +513,7 @@ void testStereochem(){
   smi = "Br[C@](F)(Cl)[H]";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -524,7 +524,7 @@ void testStereochem(){
   smi = "Br[C@]1(F)(Cl).[H]1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -535,7 +535,7 @@ void testStereochem(){
   smi = "Br[C@H]1Cl.F1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -546,7 +546,7 @@ void testStereochem(){
   smi = "Br[C@]12Cl.F2.[H]1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -557,7 +557,7 @@ void testStereochem(){
   smi = "Br[C@]21Cl.F1.[H]2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -568,7 +568,7 @@ void testStereochem(){
   smi = "[C@@H](Br)(F)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -581,7 +581,7 @@ void testStereochem(){
   smi = "[H][C@@](Br)(F)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
@@ -886,7 +886,7 @@ void testIssue153(){
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(2)->getProp("_CIPCode",code);
   TEST_ASSERT(code=="S");
@@ -909,7 +909,7 @@ void testIssue153(){
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(2)->getProp("_CIPCode",code);
   TEST_ASSERT(code=="R");
@@ -944,7 +944,7 @@ void testIssue157(){
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   TEST_ASSERT(mol->getAtomWithIdx(4)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
 
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",code);
   TEST_ASSERT(code=="R");
@@ -975,7 +975,7 @@ void testIssue157(){
   smi = "[H][C@@]12CC(CO1)CN2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   mol->getAtomWithIdx(0)->getProp("_CIPCode",smi);
   TEST_ASSERT(smi=="S");
   refSmi = MolToSmiles(*mol,true);
@@ -993,7 +993,7 @@ void testIssue157(){
   //smi="C1=C[C@@H]2C[C@H]1C1C(=O)NC(=O)C21";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   mol->getAtomWithIdx(0)->getProp("_CIPCode",smi);
   TEST_ASSERT(smi=="R");
   mol->getAtomWithIdx(2)->getProp("_CIPCode",smi);
@@ -1667,7 +1667,7 @@ void testBug1844617(){
   smi ="O=C1C2OCC[C@@]22C(CC1)CNCC2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   //mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(6)->getProp("_CIPCode",label);
@@ -1688,7 +1688,7 @@ void testBug1844617(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   //mol->debugMol(std::cout);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   //mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
@@ -1722,7 +1722,7 @@ void testBug1844617(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   //mol->debugMol(std::cout);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   //mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
@@ -1756,7 +1756,7 @@ void testBug1844617(){
   smi ="O=C1CC[C@@]2(O)[C@@H]3N(CC4CC4)CC[C@]22[C@H]1OC[C@H]2CC3";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   //mol->debugMol(std::cout);
   TEST_ASSERT(mol->getAtomWithIdx(4)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(4)->getProp("_CIPCode",label);
@@ -1802,7 +1802,7 @@ void testBug1844959(){
   smi ="C[C@]12CNOC2.F1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="R");
@@ -1810,7 +1810,7 @@ void testBug1844959(){
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="R");
@@ -1822,7 +1822,7 @@ void testBug1844959(){
   smi ="C[C@]12CNOC1.F2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");
@@ -1830,7 +1830,7 @@ void testBug1844959(){
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");
@@ -1841,7 +1841,7 @@ void testBug1844959(){
   smi ="C[C@@]12CNOC2.F1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");
@@ -1849,7 +1849,7 @@ void testBug1844959(){
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");
@@ -1859,7 +1859,7 @@ void testBug1844959(){
   smi ="C[C@@]12CNOC1.F2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="R");
@@ -1867,7 +1867,7 @@ void testBug1844959(){
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="R");
@@ -1885,7 +1885,7 @@ void testBug1844959(){
   smi ="C[C@]12CNOC2.[H]1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   //mol->debugMol(std::cerr);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
@@ -1895,7 +1895,7 @@ void testBug1844959(){
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   //mol->debugMol(std::cerr);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
@@ -1908,7 +1908,7 @@ void testBug1844959(){
   smi ="C[C@]12CNOC1.[H]2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="R");
@@ -1916,7 +1916,7 @@ void testBug1844959(){
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="R");
@@ -1927,7 +1927,7 @@ void testBug1844959(){
   smi ="C[C@@]12CNOC2.[H]1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="R");
@@ -1935,7 +1935,7 @@ void testBug1844959(){
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="R");
@@ -1945,7 +1945,7 @@ void testBug1844959(){
   smi ="C[C@@]12CNOC1.[H]2";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");
@@ -1953,7 +1953,7 @@ void testBug1844959(){
   delete mol;
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  MolOps::assignAtomChiralCodes(*mol);
+  MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(1)->getProp("_CIPCode",label);
   TEST_ASSERT(label=="S");

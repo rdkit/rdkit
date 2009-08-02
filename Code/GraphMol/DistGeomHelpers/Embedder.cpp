@@ -303,7 +303,7 @@ namespace RDKit {
       
         // find all the chiral centers in the molecule
         DistGeom::VECT_CHIRALSET chiralCenters;
-        MolOps::assignAtomChiralCodes(*piece);
+        MolOps::assignStereochemistry(*piece);
         _findChiralSets(*piece, chiralCenters);
 
         // if we have any chiral centers or are using random coordinates, we will 

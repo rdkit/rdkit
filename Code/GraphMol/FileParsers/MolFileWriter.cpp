@@ -301,7 +301,7 @@ namespace RDKit{
       MolOps::findPotentialStereoBonds(trwmol);
       // now assign stereo code if any have been specified by the directions on
       // single bonds
-      MolOps::assignBondStereoCodes(trwmol);
+      MolOps::assignStereochemistry(trwmol);
     }
 #endif
     const RWMol &tmol = const_cast<RWMol &>(trwmol);
