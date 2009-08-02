@@ -11,6 +11,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
 
 #include <vector>
 
@@ -155,6 +156,39 @@ namespace {
     if(froms) delete froms;
     return res;
   }
+  ExplicitBitVect *wrapLayeredFingerprint(const RDKit::ROMol &mol,unsigned int layerFlags,
+                                          unsigned int minPath,unsigned int maxPath,
+                                          unsigned int fpSize,
+                                          double tgtDensity,
+                                          unsigned int minSize,
+                                          python::list atomCounts,
+                                          ExplicitBitVect *includeOnlyBits){
+    std::vector<unsigned int> *atomCountsV=0;
+    if(atomCounts){
+      atomCountsV = new std::vector<unsigned int>;
+      unsigned int nAts=python::extract<unsigned int>(atomCounts.attr("__len__")());
+      if(nAts<mol.getNumAtoms()){
+        throw_value_error("atomCounts shorter than the number of atoms");
+      }
+      atomCountsV->resize(nAts);
+      for(unsigned int i=0;i<nAts;++i){
+        (*atomCountsV)[i] = python::extract<unsigned int>(atomCounts[i]);
+      }
+    }
+
+    ExplicitBitVect *res;
+    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits);
+
+    if(atomCountsV){
+      for(unsigned int i=0;i<atomCountsV->size();++i){
+        atomCounts[i] = (*atomCountsV)[i];
+      }
+      delete atomCountsV;
+    }
+    
+    return res;
+  }
+
 
 }
 
@@ -232,6 +266,117 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               python::return_value_policy<python::manage_new_object>());
   python::scope().attr("__MorganFingerprint_version__")=
     RDKit::MorganFingerprints::morganFingerprintVersion;
+
+      // ------------------------------------------------------------------------
+      docString="Returns an RDKit topological fingerprint for a molecule\n\
+\n\
+  Explanation of the algorithm below.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - minPath: (optional) minimum number of bonds to include in the subgraphs\n\
+      Defaults to 1.\n\
+\n\
+    - maxPath: (optional) maximum number of bonds to include in the subgraphs\n\
+      Defaults to 7.\n\
+\n\
+    - fpSize: (optional) number of bits in the fingerprint\n\
+      Defaults to 2048.\n\
+\n\
+    - nBitsPerPath: (optional) number of bits to set per path\n\
+      Defaults to 4.\n\
+\n\
+    - useHs: (optional) include information about number of Hs on each\n\
+      atom when calculating path hashes.\n\
+      Defaults to 1.\n\
+\n\
+    - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
+      been reached\n\
+      Defaults to 0.\n\
+\n\
+    - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
+      trying to reach tgtDensity\n\
+      Defaults to 128.\n\
+\n\
+  RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
+\n\
+  ALGORITHM:\n\
+\n\
+   This algorithm functions by find all paths between minPath and maxPath in\n \
+   length.  For each path:\n\
+\n\
+     1) A hash is calculated.\n\
+\n\
+     2) The hash is used to seed a random-number generator\n\
+\n\
+     3) _nBitsPerPath_ random numbers are generated and used to set the corresponding\n\
+        bits in the fingerprint\n\
+\n\
+\n";
+      python::def("RDKFingerprint", RDKit::RDKFingerprintMol,
+                  (python::arg("mol"),python::arg("minPath")=1,
+                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
+                   python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
+                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
+  python::scope().attr("__RDKFingerprint_version__")=
+    RDKit::RDKFingerprintMolVersion;
+
+      // ------------------------------------------------------------------------
+      docString="Returns a layered fingerprint for a molecule\n\
+\n\
+  NOTE: This function is experimental. The API or results may change from\n\
+    release to release.\n\
+\n\
+  Explanation of the algorithm below.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - layerFlags: (optional) which layers to include in the fingerprint\n\
+      See below for definitions. Defaults to all.\n\
+\n\
+    - minPath: (optional) minimum number of bonds to include in the subgraphs\n\
+      Defaults to 1.\n\
+\n\
+    - maxPath: (optional) maximum number of bonds to include in the subgraphs\n\
+      Defaults to 7.\n\
+\n\
+    - fpSize: (optional) number of bits in the fingerprint\n\
+      Defaults to 2048.\n\
+\n\
+    - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
+      been reached\n\
+      Defaults to 0.\n\
+\n\
+    - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
+      trying to reach tgtDensity\n\
+      Defaults to 128.\n\
+\n\
+  RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
+\n\
+  Layer definitions:\n\
+     - 0x01: pure topology\n\
+     - 0x02: bond order\n\
+     - 0x04: atom types\n\
+     - 0x08: presence of rings\n\
+     - 0x10: ring sizes\n\
+\n\
+\n";
+      python::def("LayeredFingerprint", wrapLayeredFingerprint,
+                  (python::arg("mol"),
+                   python::arg("layerFlags")=0xFFFFFFFF,
+                   python::arg("minPath")=1,
+                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
+                   python::arg("atomCounts")=python::list(),
+                   python::arg("setOnlyBits")=(ExplicitBitVect *)0),
+                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
+  python::scope().attr("__LayeredFingerprint_version__")=
+    RDKit::LayeredFingerprintMolVersion;
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
     "the Wildman-Cripppen logp and mr value";

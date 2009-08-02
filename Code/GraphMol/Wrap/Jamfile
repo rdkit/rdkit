@@ -6,20 +6,18 @@ import python ;
 
 python-extension rdchem : rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
   Conformer.cpp RingInfo.cpp EditableMol.cpp
-  ../SmilesParse//SmilesParse ../ChemTransforms//ChemTransforms ../Substruct//Substruct	
+  ../SmilesParse//SmilesParse ../Substruct//Substruct	
   ..//GraphMol
   ../../Geometry//RDGeometry
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
   ;
 
 python-extension rdmolops : rdmolops.cpp MolOps.cpp
-  ../SmilesParse//SmilesParse ../ChemTransforms//ChemTransforms ../Substruct//Substruct	
-  ../Subgraphs//Subgraphs ../Fingerprints//Fingerprints
+  ../SmilesParse//SmilesParse ../Substruct//Substruct	
   ../FileParsers//FileParsers
   ..//GraphMol 
-  ../../Catalogs//Catalogs ../../Geometry//RDGeometry
+  ../../Geometry//RDGeometry
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
-../..//lapacklibs 
   ;
 
 python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
@@ -36,7 +34,7 @@ python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cp
   # <define>SUPPORT_COMPRESSED_SUPPLIERS
   ;
 
-install pymod : rdchem rdmolops rdmolfiles 
+install pymod : rdchem rdmolops rdmolfiles
   : <location>$(RDBASE)/rdkit/Chem ;
 
 

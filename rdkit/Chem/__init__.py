@@ -22,6 +22,9 @@ _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
 from rdchem import *
 from rdmolfiles import *
 from rdmolops import *
+from rdsubgraphs import *
+from rdchemtransforms import *
+from rdMolDescriptors import RDKFingerprint,LayeredFingerprint
 
 def GetSmartsMatchCDXML(mol,patt,maps,which=0,showAllAtoms=0):
   try:

@@ -48,9 +48,11 @@ alias minimal : lib-install SmilesParse Substruct FileParsers Depictor PartialCh
 
 alias core : lib-install SmilesParse//SmilesParse Substruct//Substruct FileParsers//FileParsers Depictor//Depictor
 ;
+alias core-regrs : core SmilesParse//regrs Substruct//regrs FileParsers//regrs Depictor//regrs
+;
 
 alias all-wrappers : Wrap FragCatalog/Wrap PartialCharges/Wrap Depictor/Wrap 
   DistGeomHelpers/Wrap ForceFieldHelpers/Wrap MolChemicalFeatures/Wrap
   MolAlign/Wrap MolTransforms/Wrap ShapeHelpers/Wrap MolCatalog/Wrap
-  ChemReactions/Wrap Descriptors/Wrap SLNParse/Wrap
+  ChemReactions/Wrap Descriptors/Wrap SLNParse/Wrap Subgraphs/Wrap ChemTransforms/Wrap
  ;

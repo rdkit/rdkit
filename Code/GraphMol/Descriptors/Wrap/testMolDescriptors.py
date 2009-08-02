@@ -177,6 +177,59 @@ class TestCase(unittest.TestCase) :
       self.failUnlessEqual(DataStructs.DiceSimilarity(fp,fp2),1.0)
       self.failUnlessEqual(fp,fp2)
            
+  def test24RDKFingerprint(self):
+    from rdkit import DataStructs
+    m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
+    fp1 = Chem.RDKFingerprint(m1)
+    self.failUnless(len(fp1)==2048)
+    m2 = Chem.MolFromSmiles('C1=CC=CC=C1')
+    fp2 = Chem.RDKFingerprint(m2)
+
+    tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
+    self.failUnless(tmp==1.0,tmp)
+
+    m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
+    fp2 = Chem.RDKFingerprint(m2)
+    self.failUnless(len(fp2)==2048)
+    tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
+    self.failUnless(tmp<1.0,tmp)
+    self.failUnless(tmp>0.0,tmp)
+
+    fp3 = Chem.RDKFingerprint(m1,tgtDensity=0.3)
+    self.failUnless(len(fp3)<2048)
+    
+  def test55LayeredFingerprint(self):
+    m1 = Chem.MolFromSmiles('CC(C)C')
+    fp1 = Chem.LayeredFingerprint(m1)
+    self.failUnlessEqual(len(fp1),2048)
+    atomCounts=[0]*m1.GetNumAtoms()
+    fp2 = Chem.LayeredFingerprint(m1,atomCounts=atomCounts)
+    self.failUnlessEqual(fp1,fp2)
+    self.failUnlessEqual(atomCounts,[4,7,4,4])
+
+    fp2 = Chem.LayeredFingerprint(m1,atomCounts=atomCounts)
+    self.failUnlessEqual(fp1,fp2)
+    self.failUnlessEqual(atomCounts,[8,14,8,8])
+
+    pbv=DataStructs.ExplicitBitVect(2048)
+    fp3 = Chem.LayeredFingerprint(m1,setOnlyBits=pbv)
+    self.failUnlessEqual(fp3.GetNumOnBits(),0)
+
+    fp3 = Chem.LayeredFingerprint(m1,setOnlyBits=fp2)
+    self.failUnlessEqual(fp3,fp2)
+
+    m2=Chem.MolFromSmiles('CC')
+    fp4 = Chem.LayeredFingerprint(m2)
+    atomCounts=[0]*m1.GetNumAtoms()
+    fp3 = Chem.LayeredFingerprint(m1,setOnlyBits=fp4,atomCounts=atomCounts)
+    self.failUnlessEqual(atomCounts,[1,3,1,1])
+
+    m2=Chem.MolFromSmiles('CCC')
+    fp4 = Chem.LayeredFingerprint(m2)
+    atomCounts=[0]*m1.GetNumAtoms()
+    fp3 = Chem.LayeredFingerprint(m1,setOnlyBits=fp4,atomCounts=atomCounts)
+    self.failUnlessEqual(atomCounts,[3,6,3,3])
+
     
 
 if __name__ == '__main__':

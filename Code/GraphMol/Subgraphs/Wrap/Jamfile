@@ -1,0 +1,20 @@
+project wrapSubgraphs : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdsubgraphs : rdSubgraphs.cpp
+  ..//Subgraphs
+  ../..//GraphMol 
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+../../..//lapacklibs 
+  ;
+
+install pymod : rdsubgraphs
+  : <location>$(RDBASE)/rdkit/Chem ;
+
+
+
+
+

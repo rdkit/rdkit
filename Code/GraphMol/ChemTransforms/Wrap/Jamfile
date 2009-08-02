@@ -1,0 +1,18 @@
+project wrapChemTransforms : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+import os ;
+local RDBASE = [ os.environ RDBASE ] ;
+
+import python ;
+
+python-extension rdchemtransforms : rdchemtransforms.cpp
+  ..//ChemTransforms ../../Substruct//Substruct	
+  ../..//GraphMol 
+  ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
+  ;
+install pymod : rdchemtransforms
+  : <location>$(RDBASE)/rdkit/Chem ;
+
+
+
+
+

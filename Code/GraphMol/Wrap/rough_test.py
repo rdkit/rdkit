@@ -468,135 +468,6 @@ class TestCase(unittest.TestCase):
     Chem.Kekulize(m,1)
     smi = Chem.MolToSmiles(m)
     self.failUnless(smi=='C1=CC=CC=C1', smi)
-
-  def test18Paths(self):
-
-
-    m = Chem.MolFromSmiles("C1CC2C1CC2")
-    #self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
-    #print Chem.FindAllPathsOfLengthN(m,3,useBonds=0)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==10,
-           Chem.FindAllPathsOfLengthN(m,2,useBonds=1))
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==14)
-    
-
-    m = Chem.MolFromSmiles('C1CC1C')
-    self.failUnless(m)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==4)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3,Chem.FindAllPathsOfLengthN(m,3,useBonds=1))
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,4,useBonds=1))==1,Chem.FindAllPathsOfLengthN(m,4,useBonds=1))
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,5,useBonds=1))==0,Chem.FindAllPathsOfLengthN(m,5,useBonds=1))
-
-    #
-    #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
-    #  Rev. Comp. Chem. vol 2, 367-422, (1991)
-    #
-    m = Chem.MolFromSmiles("CCCCCC")
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==4)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3)
-    
-    m = Chem.MolFromSmiles("CCC(C)CC")
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==4,Chem.FindAllPathsOfLengthN(m,3,useBonds=1))
-    
-    m = Chem.MolFromSmiles("CCCC(C)C")
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==5)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3)
-    
-    m = Chem.MolFromSmiles("CC(C)C(C)C")
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==6)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==4)
-    
-    m = Chem.MolFromSmiles("CC(C)(C)CC")
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==5)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==7)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==3,Chem.FindAllPathsOfLengthN(m,3,useBonds=1))
-    
-    m = Chem.MolFromSmiles("C1CCCCC1")
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==6)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==6)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==6)
-    
-    m = Chem.MolFromSmiles("C1CC2C1CC2")
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==10,
-           Chem.FindAllPathsOfLengthN(m,2,useBonds=1))
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==14)
-    
-    
-    m = Chem.MolFromSmiles("CC2C1CCC12")
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,1,useBonds=1))==7)
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,2,useBonds=1))==11)
-    # FIX: this result disagrees with the paper (which says 13),
-    #   but it seems right
-    self.failUnless(len(Chem.FindAllPathsOfLengthN(m,3,useBonds=1))==15,
-           Chem.FindAllPathsOfLengthN(m,3,useBonds=1))
-    
-    
-    
-  def test19Subgraphs(self):
-    m = Chem.MolFromSmiles('C1CC1C')
-    self.failUnless(m)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1,0))==4)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==5)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==4)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,4))==1)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,5))==0)
-
-    #
-    #  Hexane example from Hall-Kier Rev.Comp.Chem. paper
-    #  Rev. Comp. Chem. vol 2, 367-422, (1991)
-    #
-    m = Chem.MolFromSmiles("CCCCCC")
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==4)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==3)
-    
-    m = Chem.MolFromSmiles("CCC(C)CC")
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==5)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==5)
-    
-    m = Chem.MolFromSmiles("CCCC(C)C")
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==5)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==4)
-    
-    m = Chem.MolFromSmiles("CC(C)C(C)C")
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==6)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==6)
-    
-    m = Chem.MolFromSmiles("CC(C)(C)CC")
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==7)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==7,Chem.FindAllSubgraphsOfLengthN(m,3))
-    
-    m = Chem.MolFromSmiles("C1CCCCC1")
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==6)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==6)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==6)
-    #self.failUnless(len(Chem.FindUniqueSubgraphsOfLengthN(m,1))==1)
-    self.failUnless(len(Chem.FindUniqueSubgraphsOfLengthN(m,2))==1)
-    self.failUnless(len(Chem.FindUniqueSubgraphsOfLengthN(m,3))==1)
-    
-    m = Chem.MolFromSmiles("C1CC2C1CC2")
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==7)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==10)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==16)
-    
-
-    m = Chem.MolFromSmiles("CC2C1CCC12")
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==7)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==11)
-    self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==18,
-           len(Chem.FindAllSubgraphsOfLengthN(m,3)))
-    
     
   def test20IsInRing(self):
     m = Chem.MolFromSmiles('C1CCC1C')
@@ -631,36 +502,6 @@ class TestCase(unittest.TestCase):
       ok=True
     self.failUnless(ok  )
 
-  def test22DeleteSubstruct(self) :
-    query = Chem.MolFromSmarts('C(=O)O')
-    mol = Chem.MolFromSmiles('CCC(=O)O')
-    nmol = Chem.DeleteSubstructs(mol, query)
-    
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CC')
-
-    mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
-    # now delete only fragments
-    nmol = Chem.DeleteSubstructs(mol, query, 1)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(=O)O',Chem.MolToSmiles(nmol))
-    
-    mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
-    nmol = Chem.DeleteSubstructs(mol, query, 0)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CC')
-    
-    mol = Chem.MolFromSmiles('CCCO')
-    nmol = Chem.DeleteSubstructs(mol, query, 0)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CCCO')
-
-    # Issue 96 prevented this from working:
-    mol = Chem.MolFromSmiles('CCC(=O)O.O=CO')
-    nmol = Chem.DeleteSubstructs(mol, query, 1)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(=O)O')
-    nmol = Chem.DeleteSubstructs(nmol, query, 1)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CCC(=O)O')
-    nmol = Chem.DeleteSubstructs(nmol, query, 0)
-    self.failUnless(Chem.MolToSmiles(nmol) == 'CC')
-
-    
   def test23MolFileParsing(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','triazine.mol')
@@ -713,30 +554,6 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromMolFile(fileN,removeHs=False)
     self.failUnless(mol)
     self.failUnless(mol.GetNumAtoms()==39)
-
-  # test23 was for Chem.DaylightFingerprint, which is deprecated
-    
-  def test24RDKFingerprint(self):
-    from rdkit import DataStructs
-    m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
-    fp1 = Chem.RDKFingerprint(m1)
-    self.failUnless(len(fp1)==2048)
-    m2 = Chem.MolFromSmiles('C1=CC=CC=C1')
-    fp2 = Chem.RDKFingerprint(m2)
-
-    tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
-    self.failUnless(tmp==1.0,tmp)
-
-    m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
-    fp2 = Chem.RDKFingerprint(m2)
-    self.failUnless(len(fp2)==2048)
-    tmp = DataStructs.TanimotoSimilarity(fp1,fp2)
-    self.failUnless(tmp<1.0,tmp)
-    self.failUnless(tmp>0.0,tmp)
-
-    fp3 = Chem.RDKFingerprint(m1,tgtDensity=0.3)
-    self.failUnless(len(fp3)<2048)
-    
 
   def test25SDMolSupplier(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
@@ -1571,30 +1388,6 @@ CAS<~>
     self.failUnless(ri.IsBondInRingOfSize(2,3))
     self.failUnless(ri.IsBondInRingOfSize(2,4))
 
-  def test46ReplaceCore(self):
-    """ test the ReplaceCore functionality
-
-    """
-
-    core = Chem.MolFromSmiles('C=O')
-
-    smi = 'CCC=O'
-    m = Chem.MolFromSmiles(smi)
-    r = Chem.ReplaceCore(m,core)
-    self.failUnless(r)
-    self.failUnless(Chem.MolToSmiles(r,True)=='[1*]CC')
-
-    smi = 'C1CC(=O)CC1'
-    m = Chem.MolFromSmiles(smi)
-    r = Chem.ReplaceCore(m,core)
-    self.failUnless(r)
-    self.failUnless(Chem.MolToSmiles(r,True) =='[1*]CCCC[2*]')
-
-    smi = 'C1CC(=N)CC1'
-    m = Chem.MolFromSmiles(smi)
-    r = Chem.ReplaceCore(m,core)
-    self.failIf(r)
-
   def test47RWMols(self):
     """ test the RWMol class
 
@@ -1829,38 +1622,6 @@ CAS<~>
     m = Chem.MolFromMol2File(fileN)
     self.failUnless(m.GetNumAtoms()==5)
     self.failUnless(Chem.MolToSmiles(m)=='c1cn[nH]c1',Chem.MolToSmiles(m))
-
-  def test55LayeredFingerprint(self):
-    m1 = Chem.MolFromSmiles('CC(C)C')
-    fp1 = Chem.LayeredFingerprint(m1)
-    self.failUnlessEqual(len(fp1),2048)
-    atomCounts=[0]*m1.GetNumAtoms()
-    fp2 = Chem.LayeredFingerprint(m1,atomCounts=atomCounts)
-    self.failUnlessEqual(fp1,fp2)
-    self.failUnlessEqual(atomCounts,[4,7,4,4])
-
-    fp2 = Chem.LayeredFingerprint(m1,atomCounts=atomCounts)
-    self.failUnlessEqual(fp1,fp2)
-    self.failUnlessEqual(atomCounts,[8,14,8,8])
-
-    pbv=DataStructs.ExplicitBitVect(2048)
-    fp3 = Chem.LayeredFingerprint(m1,setOnlyBits=pbv)
-    self.failUnlessEqual(fp3.GetNumOnBits(),0)
-
-    fp3 = Chem.LayeredFingerprint(m1,setOnlyBits=fp2)
-    self.failUnlessEqual(fp3,fp2)
-
-    m2=Chem.MolFromSmiles('CC')
-    fp4 = Chem.LayeredFingerprint(m2)
-    atomCounts=[0]*m1.GetNumAtoms()
-    fp3 = Chem.LayeredFingerprint(m1,setOnlyBits=fp4,atomCounts=atomCounts)
-    self.failUnlessEqual(atomCounts,[1,3,1,1])
-
-    m2=Chem.MolFromSmiles('CCC')
-    fp4 = Chem.LayeredFingerprint(m2)
-    atomCounts=[0]*m1.GetNumAtoms()
-    fp3 = Chem.LayeredFingerprint(m1,setOnlyBits=fp4,atomCounts=atomCounts)
-    self.failUnlessEqual(atomCounts,[3,6,3,3])
 
 
   def test56LazySDMolSupplier(self) :

@@ -15,10 +15,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/Subgraphs/Subgraphs.h>
-#include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
-#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <RDBoost/Wrap.h>
 
 namespace python = boost::python;
@@ -34,20 +31,6 @@ namespace RDKit{
     VECT_INT_VECT rings;
     int nr = MolOps::findSSSR(mol, rings);
     return nr;
-  }
-
-  PyObject* replaceSubstructures(const ROMol &orig,
-                                 const ROMol &query,
-                                 const ROMol &replacement,
-                                 bool replaceAll=false) {
-    std::vector<ROMOL_SPTR> v=replaceSubstructs(orig, query,
-                                                replacement, replaceAll);
-    PyObject *res=PyTuple_New(v.size());
-    for(unsigned int i=0;i<v.size();++i){
-      PyTuple_SetItem(res,i,
-                      python::converter::shared_ptr_to_python(v[i]));
-    }
-    return res;
   }
 
   void addRecursiveQuery(ROMol &mol,
@@ -182,39 +165,6 @@ namespace RDKit{
     return python::tuple(res);
   }
 
-  ExplicitBitVect *wrapLayeredFingerprint(const ROMol &mol,unsigned int layerFlags,
-                                          unsigned int minPath,unsigned int maxPath,
-                                          unsigned int fpSize,
-                                          double tgtDensity,
-                                          unsigned int minSize,
-                                          python::list atomCounts,
-                                          ExplicitBitVect *includeOnlyBits){
-    std::vector<unsigned int> *atomCountsV=0;
-    if(atomCounts){
-      atomCountsV = new std::vector<unsigned int>;
-      unsigned int nAts=python::extract<unsigned int>(atomCounts.attr("__len__")());
-      if(nAts<mol.getNumAtoms()){
-        throw_value_error("atomCounts shorter than the number of atoms");
-      }
-      atomCountsV->resize(nAts);
-      for(unsigned int i=0;i<nAts;++i){
-        (*atomCountsV)[i] = python::extract<unsigned int>(atomCounts[i]);
-      }
-    }
-
-    ExplicitBitVect *res;
-    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits);
-
-    if(atomCountsV){
-      for(unsigned int i=0;i<atomCountsV->size();++i){
-        atomCounts[i] = (*atomCountsV)[i];
-      }
-      delete atomCountsV;
-    }
-    
-    return res;
-  }
-
 
   struct molops_wrapper {
     static void wrap() {
@@ -321,84 +271,6 @@ namespace RDKit{
                   python::return_value_policy<python::manage_new_object>());
 
       // ------------------------------------------------------------------------
-      docString="Removes atoms matching a substructure query from a molecule\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to be modified\n\
-\n\
-    - query: the molecule to be used as a substructure query\n\
-\n\
-    - onlyFrags: (optional) if this toggle is set, atoms will only be removed if\n\
-      the entire fragment in which they are found is matched by the query.\n\
-      See below for examples.\n\
-      Default value is 0 (remove the atoms whether or not the entire fragment matches)\n\
-\n\
-  RETURNS: a new molecule with the substructure removed\n\
-\n\
-  NOTES:\n\
-\n\
-    - The original molecule is *not* modified.\n\
-\n\
-  EXAMPLES:\n\
-\n\
-   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
-   to actually use molecules:\n\
-\n\
-    - DeleteSubstructs('CCOC','OC') -> 'CC'\n\
-\n\
-    - DeleteSubstructs('CCOC','OC',1) -> 'CCOC'\n\
-\n\
-    - DeleteSubstructs('CCOCCl.Cl','Cl',1) -> 'CCOCCl'\n\
-\n\
-    - DeleteSubstructs('CCOCCl.Cl','Cl') -> 'CCOC'\n\
-\n";
-      python::def("DeleteSubstructs", deleteSubstructs,
-                  (python::arg("mol"),python::arg("query"),
-                   python::arg("onlyFrags")=false),
-                  docString.c_str(),
-                  python::return_value_policy<python::manage_new_object>());
-
-      // ------------------------------------------------------------------------
-      docString="Replaces atoms matching a substructure query in a molecule\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to be modified\n\
-\n\
-    - query: the molecule to be used as a substructure query\n\
-\n\
-    - replacement: the molecule to be used as the replacement\n\
-\n\
-    - replaceAll: (optional) if this toggle is set, all substructures matching\n\
-      the query will be replaced in a single result, otherwise each result will\n\
-      contain a separate replacement.\n\
-      Default value is False (return multiple replacements)\n\
-\n\
-  RETURNS: a tuple of new molecules with the substructures replaced removed\n\
-\n\
-  NOTES:\n\
-\n\
-    - The original molecule is *not* modified.\n\
-\n\
-  EXAMPLES:\n\
-\n\
-   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
-   to actually use molecules:\n\
-\n\
-    - ReplaceSubstructs('CCOC','OC','NC') -> ('CCNC',)\n\
-\n\
-    - ReplaceSubstructs('COCCOC','OC','NC') -> ('COCCNC','CNCCOC')\n\
-\n\
-    - ReplaceSubstructs('COCCOC','OC','NC',True) -> ('CNCCNC',)\n\
-\n";
-      python::def("ReplaceSubstructs", replaceSubstructures,
-                  (python::arg("mol"),python::arg("query"),
-                   python::arg("replacement"),
-                   python::arg("replaceAll")=false),
-                  docString.c_str());
-
-      // ------------------------------------------------------------------------
       docString="Returns the molecule's topological distance matrix.\n\
 \n\
   ARGUMENTS:\n\
@@ -490,108 +362,7 @@ namespace RDKit{
                   (python::arg("mol")),
                   docString.c_str());
       
-
-
-      // ------------------------------------------------------------------------
-      docString="Finds all subgraphs of a particular length in a molecule\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-    - length: an integer with the target number of bonds for the subgraphs.\n\
-\n\
-    - useHs: (optional) toggles whether or not bonds to Hs that are part of the graph\n\
-      should be included in the results.\n\
-      Defaults to 0.\n\
-\n\
-    - verbose: (optional, internal use) toggles verbosity in the search algorithm.\n\
-      Defaults to 0.\n\
-\n\
-  RETURNS: a tuple of 2-tuples with bond IDs\n\
-\n\
-  NOTES: \n\
-\n\
-   - Difference between _subgraphs_ and _paths_ :: \n\
-\n\
-       Subgraphs are potentially branched, whereas paths (in our \n\
-       terminology at least) cannot be.  So, the following graph: \n\
-\n\
-            C--0--C--1--C--3--C\n\
-                  |\n\
-                  2\n\
-                  |\n\
-                  C\n\
-  has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)\n\
-  but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
-\n";
-      python::def("FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN,
-                  (python::arg("mol"),python::arg("length"),
-                   python::arg("useHs")=false),
-                  docString.c_str());
-      // ------------------------------------------------------------------------
-      docString="Finds unique subgraphs of a particular length in a molecule\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-    - length: an integer with the target number of bonds for the subgraphs.\n\
-\n\
-    - useHs: (optional) toggles whether or not bonds to Hs that are part of the graph\n\
-      should be included in the results.\n\
-      Defaults to 0.\n\
-\n\
-    - useBO: (optional) Toggles use of bond orders in distinguishing one subgraph from\n\
-      another.\n\
-      Defaults to 1.\n\
-\n\
-  RETURNS: a tuple of tuples with bond IDs\n\
-\n\
-\n";
-      python::def("FindUniqueSubgraphsOfLengthN", &findUniqueSubgraphsOfLengthN, 
-                  (python::arg("mol"),python::arg("length"),
-                   python::arg("useHs")=false,python::arg("useBO")=true),
-                  docString.c_str());
-                  
-      // ------------------------------------------------------------------------
-      docString="Finds all paths of a particular length in a molecule\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-    - length: an integer with the target length for the paths.\n\
-\n\
-    - useBonds: (optional) toggles the use of bond indices in the paths.\n\
-      Otherwise atom indices are used.  *Note* this behavior is different\n\
-      from that for subgraphs.\n\
-      Defaults to 1.\n\
-\n\
-  RETURNS: a tuple of tuples with IDs for the bonds.\n\
-\n\
-  NOTES: \n\
-\n\
-   - Difference between _subgraphs_ and _paths_ :: \n\
-\n\
-       Subgraphs are potentially branched, whereas paths (in our \n\
-       terminology at least) cannot be.  So, the following graph: \n\
-\n\
-            C--0--C--1--C--3--C\n\
-                  |\n\
-                  2\n\
-                  |\n\
-                  C\n\
-\n\
-       has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)\n\
-       but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
-\n";
-      python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN, 
-                  (python::arg("mol"),python::arg("length"),
-                   python::arg("useBonds")=true,python::arg("useHs")=false),
-                  docString.c_str());
-
-      
+   
       // ------------------------------------------------------------------------
       docString="Finds the disconnected fragments from a molecule.\n\
 \n\
@@ -675,113 +446,6 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
                   docString.c_str());
 
-      // ------------------------------------------------------------------------
-      docString="Returns an RDKit topological fingerprint for a molecule\n\
-\n\
-  Explanation of the algorithm below.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-    - minPath: (optional) minimum number of bonds to include in the subgraphs\n\
-      Defaults to 1.\n\
-\n\
-    - maxPath: (optional) maximum number of bonds to include in the subgraphs\n\
-      Defaults to 7.\n\
-\n\
-    - fpSize: (optional) number of bits in the fingerprint\n\
-      Defaults to 2048.\n\
-\n\
-    - nBitsPerPath: (optional) number of bits to set per path\n\
-      Defaults to 4.\n\
-\n\
-    - useHs: (optional) include information about number of Hs on each\n\
-      atom when calculating path hashes.\n\
-      Defaults to 1.\n\
-\n\
-    - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
-      been reached\n\
-      Defaults to 0.\n\
-\n\
-    - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
-      trying to reach tgtDensity\n\
-      Defaults to 128.\n\
-\n\
-  RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
-\n\
-  ALGORITHM:\n\
-\n\
-   This algorithm functions by find all paths between minPath and maxPath in\n \
-   length.  For each path:\n\
-\n\
-     1) A hash is calculated.\n\
-\n\
-     2) The hash is used to seed a random-number generator\n\
-\n\
-     3) _nBitsPerPath_ random numbers are generated and used to set the corresponding\n\
-        bits in the fingerprint\n\
-\n\
-\n";
-      python::def("RDKFingerprint", RDKFingerprintMol,
-                  (python::arg("mol"),python::arg("minPath")=1,
-                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
-                   python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
-                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
-                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
-
-      // ------------------------------------------------------------------------
-      docString="Returns a layered fingerprint for a molecule\n\
-\n\
-  NOTE: This function is experimental. The API or results may change from\n\
-    release to release.\n\
-\n\
-  Explanation of the algorithm below.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-    - layerFlags: (optional) which layers to include in the fingerprint\n\
-      See below for definitions. Defaults to all.\n\
-\n\
-    - minPath: (optional) minimum number of bonds to include in the subgraphs\n\
-      Defaults to 1.\n\
-\n\
-    - maxPath: (optional) maximum number of bonds to include in the subgraphs\n\
-      Defaults to 7.\n\
-\n\
-    - fpSize: (optional) number of bits in the fingerprint\n\
-      Defaults to 2048.\n\
-\n\
-    - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
-      been reached\n\
-      Defaults to 0.\n\
-\n\
-    - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
-      trying to reach tgtDensity\n\
-      Defaults to 128.\n\
-\n\
-  RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
-\n\
-  Layer definitions:\n\
-     - 0x01: pure topology\n\
-     - 0x02: bond order\n\
-     - 0x04: atom types\n\
-     - 0x08: presence of rings\n\
-     - 0x10: ring sizes\n\
-\n\
-\n";
-      python::def("LayeredFingerprint", wrapLayeredFingerprint,
-                  (python::arg("mol"),
-                   python::arg("layerFlags")=0xFFFFFFFF,
-                   python::arg("minPath")=1,
-                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
-                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
-                   python::arg("atomCounts")=python::list(),
-                   python::arg("setOnlyBits")=(ExplicitBitVect *)0),
-                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
-
       docString="Set the wedging on single bonds in a molecule.\n \
    The wedging scheme used is that from Mol files.\n \
 \n\
@@ -792,76 +456,6 @@ namespace RDKit{
 \n";
       python::def("WedgeMolBonds", WedgeMolBonds,
                   docString.c_str());
-
-      // ------------------------------------------------------------------------
-      docString="Replaces sidechains in a molecule with dummy atoms for their attachment points.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to be modified\n\
-\n\
-    - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
-\n\
-  RETURNS: a new molecule with the sidechains removed\n\
-\n\
-  NOTES:\n\
-\n\
-    - The original molecule is *not* modified.\n\
-\n\
-  EXAMPLES:\n\
-\n\
-   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
-   to actually use molecules:\n\
-\n\
-    - ReplaceSidechains('CCC1CCC1','C1CCC1') -> '[Xa]C1CCC1'\n\
-\n\
-    - ReplaceSidechains('CCC1CC1','C1CCC1') -> ''\n\
-\n\
-    - ReplaceSidechains('C1CC2C1CCC2','C1CCC1') -> '[Xa]C1CCC1[Xb]'\n\
-\n";
-      python::def("ReplaceSidechains", replaceSidechains,
-                  (python::arg("mol"),python::arg("coreQuery")),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
-
-      // ------------------------------------------------------------------------
-      docString="Removes the core of a molecule and labels the sidechains with dummy atoms.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to be modified\n\
-\n\
-    - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
-\n\
-    - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
-\n\
-  RETURNS: a new molecule with the core removed\n\
-\n\
-  NOTES:\n\
-\n\
-    - The original molecule is *not* modified.\n\
-\n\
-  EXAMPLES:\n\
-\n\
-   The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
-   to actually use molecules:\n\
-\n\
-    - ReplaceCore('CCC1CCC1','C1CCC1') -> 'CC[Xa]'\n\
-\n\
-    - ReplaceCore('CCC1CC1','C1CCC1') -> ''\n\
-\n\
-    - ReplaceCore('C1CC2C1CCC2','C1CCC1') -> '[Xa]C1CCC1[Xb]'\n\
-\n\
-    - ReplaceCore('C1CNCC1','N') -> '[Xa]CCCC[Xb]'\n\
-\n\
-    - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[Xa]CN'\n\
-\n";
-      python::def("ReplaceCore", replaceCore,
-                  (python::arg("mol"),python::arg("coreQuery"),
-                   python::arg("replaceDummies")=true,
-                   python::arg("labelByIndex")=false),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
 
       // ------------------------------------------------------------------------
       docString="Adds a recursive query to an atom\n\
