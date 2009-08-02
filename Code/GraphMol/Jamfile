@@ -46,6 +46,9 @@ alias all-libraries : lib-install SmilesParse Substruct FileParsers Subgraphs Fi
 alias minimal : lib-install SmilesParse Substruct FileParsers Depictor PartialCharges MolTransforms ForceFieldHelpers DistGeomHelpers MolChemicalFeatures MolAlign ChemTransforms ChemReactions SLNParse
 ;
 
+alias core : lib-install SmilesParse//SmilesParse Substruct//Substruct FileParsers//FileParsers Depictor//Depictor
+;
+
 alias all-wrappers : Wrap FragCatalog/Wrap PartialCharges/Wrap Depictor/Wrap 
   DistGeomHelpers/Wrap ForceFieldHelpers/Wrap MolChemicalFeatures/Wrap
   MolAlign/Wrap MolTransforms/Wrap ShapeHelpers/Wrap MolCatalog/Wrap
