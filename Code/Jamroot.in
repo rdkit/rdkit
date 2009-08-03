@@ -37,6 +37,14 @@ alias all : all-libraries all-wrappers ;
 alias minimal : DistGeom ForceField DataStructs Geometry Query RDGeneral Numerics ChemicalFeatures GraphMol//minimal 
 ;
 
+alias core : DataStructs//DataStructs Geometry//RDGeometry RDGeneral//RDGeneral
+  GraphMol//core
+;
+
+alias core-wrappers : core DataStructs/Wrap//cDataStructs Geometry/Wrap//rdGeometry RDBoost/Wrap//rdBase
+  GraphMol/Wrap//mol-wrappers 
+;
+
 alias all-wrappers : RDBoost/Wrap 
   DataStructs/Wrap
   Geometry/Wrap

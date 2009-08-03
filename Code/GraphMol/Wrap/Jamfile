@@ -34,7 +34,9 @@ python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cp
   # <define>SUPPORT_COMPRESSED_SUPPLIERS
   ;
 
-install pymod : rdchem rdmolops rdmolfiles
+alias mol-wrappers : rdchem rdmolops rdmolfiles ;
+
+install pymod : mol-wrappers
   : <location>$(RDBASE)/rdkit/Chem ;
 
 

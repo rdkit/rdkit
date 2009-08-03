@@ -41,6 +41,10 @@ alias core : DataStructs//DataStructs Geometry//RDGeometry RDGeneral//RDGeneral
   GraphMol//core
 ;
 
+alias core-wrappers : core DataStructs/Wrap//cDataStructs Geometry/Wrap//rdGeometry RDBoost/Wrap//rdBase
+  GraphMol/Wrap//mol-wrappers 
+;
+
 alias all-wrappers : RDBoost/Wrap 
   DataStructs/Wrap
   Geometry/Wrap
