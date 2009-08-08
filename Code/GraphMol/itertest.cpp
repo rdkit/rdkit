@@ -123,64 +123,6 @@ void test2(){
   BOOST_LOG(rdInfoLog)<< "test2 done" << endl;
 };
 
-void test3(){
-  string smi="C1COCCNCOCNSCC1";
-  unsigned char heteros[]={2,5,7,9,10};
-  
-  Mol *m = SmilesToMol(smi);
-  Mol::HeteroatomIterator heteroIt;
-  unsigned int nSeen=0;
-  for(heteroIt=m->beginHeteros();heteroIt!=m->endHeteros();heteroIt++){
-    CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[nSeen],"bad hetero");
-    nSeen++;
-  }
-
-  heteroIt = m->beginHeteros();
-  heteroIt++;
-  heteroIt++;
-  heteroIt--;
-  CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[1],"bad hetero");
-  CHECK_INVARIANT((*--heteroIt)->getIdx()==heteros[0],"bad hetero");
-  CHECK_INVARIANT((*heteroIt)->getIdx()==heteros[0],"bad hetero");
-
-  BOOST_LOG(rdInfoLog)<< "test3 done" << endl;
-};
-
-void test4(){
-  string smi="C1COCCNCOCNSCC1";
-  unsigned int heteros1[]={2,7};
-  
-  Mol *m = SmilesToMol(smi);
-  QueryAtom *q= new QueryAtom();
-  q->setQuery(makeAtomNumEqualsQuery(8));
-  Mol::QueryAtomIterator queryIt;
-  unsigned int nSeen=0;
-  for(queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();queryIt++){
-    CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[nSeen],"bad query");
-    nSeen++;
-  }
-
-  queryIt = m->beginQueryAtoms(q);
-  queryIt++;
-  queryIt--;
-  CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[0],"bad query");
-  CHECK_INVARIANT((*++queryIt)->getIdx()==heteros1[1],"bad query");
-  CHECK_INVARIANT((*queryIt)->getIdx()==heteros1[1],"bad query");
-
-  smi = "CC(C)CC(C)CC(C)CC(C)C";
-  unsigned int heteros2[]={1,4,7,10};
-  m = SmilesToMol(smi);
-  //m->debugMol(cout);
-  q->setQuery(makeAtomImplicitValenceQuery(1));
-  nSeen = 0;
-  for(queryIt=m->beginQueryAtoms(q);queryIt!=m->endQueryAtoms();queryIt++){
-    CHECK_INVARIANT((*queryIt)->getIdx()==heteros2[nSeen],"bad query");
-    nSeen++;
-  }
-
-  BOOST_LOG(rdInfoLog)<< "test4 done" << endl;
-};
-
 void test5(){
   string smi="CCCC";
   Mol *m = SmilesToMol(smi);
@@ -279,40 +221,6 @@ void test6(){
 };
 #endif
 
-void test7(){
-  string smi="c1ccccc1C";
-#if 1
-  Mol *m = SmilesToMol(smi);
-  Mol::AromaticAtomIterator atomIt;
-  Mol::AromaticAtomIterator beginP(m->beginAromaticAtoms());
-  Mol::AromaticAtomIterator endP(m->endAromaticAtoms());
-  unsigned int idx=0;
-  for(atomIt=beginP;atomIt!=endP;atomIt++){
-    TEST_ASSERT((*atomIt)->getIdx()==idx);
-    idx++;
-  }
-  TEST_ASSERT(idx==6);
-
-  atomIt = beginP;
-  atomIt++;
-  atomIt--;
-  TEST_ASSERT((*atomIt)->getIdx()==0);
-
-  delete m;
-  smi = "Cc1ccccc1";
-  m = SmilesToMol(smi);
-  beginP = m->beginAromaticAtoms();
-  endP = m->endAromaticAtoms();
-  idx=0;
-  for(atomIt=beginP;atomIt!=endP;atomIt++){
-    TEST_ASSERT((*atomIt)->getIdx()==idx+1);
-    idx++;
-  }
-  TEST_ASSERT(idx==6);
-#endif  
-  BOOST_LOG(rdInfoLog)<< "test7 done" << endl;
-}
-
 void testIssue263(){
   string smi="c1ccccc1C";
 #if 1
@@ -344,11 +252,8 @@ int main(){
   RDLog::InitLogs();
   test1();
   test2();
-  test3();
-  test4();
   test5();
   test6();
-  test7();
   testIssue263();
 
   

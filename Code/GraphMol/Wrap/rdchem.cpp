@@ -64,34 +64,10 @@ BOOST_PYTHON_MODULE(rdchem)
   python::class_< AtomIterSeq >("_ROAtomSeq",
 				"Read-only sequence of atoms, not constructable from Python.",
 				python::no_init)
-    // FIX: we ought to be able to expose these:
-    //.def("__iter__",&AtomIterSeq::__iter__,
-    //   python::return_value_policy<python::reference_existing_object>())
-    //.def("next",&AtomIterSeq::next,
-    //	   python::return_value_policy<python::reference_existing_object>())
-
     .def("__len__",&AtomIterSeq::len)
     .def("__getitem__",&AtomIterSeq::get_item,
 	 python::return_value_policy<python::reference_existing_object>())
     ;
-#if 0
-  python::class_< AromaticAtomIterSeq >("_ROAromaticAtomSeq",
-				      "Read-only sequence of aromatic atoms, not constructable from Python.",
-				      python::no_init)
-    // FIX: we ought to be able to expose an iteration interface
-    .def("__len__",&AromaticAtomIterSeq::len)
-    .def("__getitem__",&AromaticAtomIterSeq::get_item,
-	 python::return_value_policy<python::reference_existing_object>())
-    ;
-  python::class_< HeteroatomIterSeq >("_ROHeteroatomSeq",
-				      "Read-only sequence of heteroatoms, not constructable from Python.",
-				      python::no_init)
-    // FIX: we ought to be able to expose an iteration interface
-    .def("__len__",&HeteroatomIterSeq::len)
-    .def("__getitem__",&HeteroatomIterSeq::get_item,
-	 python::return_value_policy<python::reference_existing_object>())
-    ;
-#endif  
   python::class_< BondIterSeq >("_ROBondSeq",
 				"Read-only sequence of bonds, not constructable from Python.",
 				python::no_init)

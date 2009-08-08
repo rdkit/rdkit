@@ -49,20 +49,9 @@ namespace RDKit{
   class BondIterator_;
   class ConstBondIterator_;
 
-  template <class T1,class T2>
-  class AromaticAtomIterator_;
-  template <class T1,class T2>
-  class HeteroatomIterator_;
-  template <class T1,class T2>
-  class QueryAtomIterator_;
-
-
-
-
   extern const int ci_RIGHTMOST_ATOM;
   extern const int ci_LEADING_BOND;
   extern const int ci_ATOM_HOLDER;
-
 
   //! ROMol is a molecule class that is intended to have a fixed topology
   /*!
@@ -142,8 +131,10 @@ namespace RDKit{
     typedef CONF_SPTR_LIST::iterator CONF_SPTR_LIST_I;
     typedef CONF_SPTR_LIST::const_iterator CONF_SPTR_LIST_CI;
     typedef std::pair<CONF_SPTR_LIST_I, CONF_SPTR_LIST_I> CONFS_I_PAIR;
+    typedef CONF_SPTR_LIST_I ConformerIterator;
+    typedef  CONF_SPTR_LIST_CI ConstConformerIterator;
 
-    // ROFIX: these will need to be readonly somehow?
+
     typedef std::map<int,ATOM_PTR_LIST> ATOM_BOOKMARK_MAP;
     typedef std::map<int,BOND_PTR_LIST> BOND_BOOKMARK_MAP;
 
@@ -151,16 +142,6 @@ namespace RDKit{
     typedef class AtomIterator_<const Atom,const ROMol> ConstAtomIterator;
     typedef class BondIterator_ BondIterator;
     typedef class ConstBondIterator_ ConstBondIterator;
-    typedef class AromaticAtomIterator_<Atom,ROMol> AromaticAtomIterator;
-    typedef class AromaticAtomIterator_<const Atom,const ROMol> ConstAromaticAtomIterator;
-    typedef class HeteroatomIterator_<Atom,ROMol> HeteroatomIterator;
-    typedef class HeteroatomIterator_<const Atom,const ROMol> ConstHeteroatomIterator;
-    typedef class QueryAtomIterator_<Atom,ROMol> QueryAtomIterator;
-    typedef class QueryAtomIterator_<const Atom,const ROMol> ConstQueryAtomIterator;
-
-
-    typedef CONF_SPTR_LIST_I ConformerIterator;
-    typedef  CONF_SPTR_LIST_CI ConstConformerIterator;
 
     //@}
     //! \endcond
@@ -428,33 +409,6 @@ namespace RDKit{
     BondIterator endBonds();
     //! \overload
     ConstBondIterator endBonds() const;
-  
-    //! get an AtomIterator pointing at our first aromatic Atom
-    AromaticAtomIterator beginAromaticAtoms();
-    //! \overload
-    ConstAromaticAtomIterator beginAromaticAtoms() const;
-    //! get an AtomIterator pointing at the end of our Atoms
-    AromaticAtomIterator endAromaticAtoms();
-    //! \overload
-    ConstAromaticAtomIterator endAromaticAtoms() const;
-
-    //! get an AtomIterator pointing at our first hetero Atom
-    HeteroatomIterator beginHeteros();
-    //! \overload
-    ConstHeteroatomIterator beginHeteros() const;
-    //! get an AtomIterator pointing at the end of our Atoms
-    HeteroatomIterator endHeteros();
-    //! \overload
-    ConstHeteroatomIterator endHeteros() const;
-
-    //! get an AtomIterator pointing at our first Atom that matches \c query
-    QueryAtomIterator beginQueryAtoms(QueryAtom const *query);
-    //! \overload
-    ConstQueryAtomIterator beginQueryAtoms(QueryAtom const *) const;
-    //! gte an AtomIterator pointing at the end of our Atoms
-    QueryAtomIterator endQueryAtoms();
-    //! \overload
-    ConstQueryAtomIterator endQueryAtoms() const;
 
     inline ConformerIterator beginConformers() {
       return d_confs.begin();

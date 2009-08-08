@@ -304,9 +304,9 @@ namespace RDDepict {
     RDKit::INT_VECT res;
     if (path.size() >= 4) {
       // remove the first atom (aid1) and last atom (aid2)
-      CHECK_INVARIANT(path.front()==aid1,"bad first element");
+      CHECK_INVARIANT(static_cast<unsigned int>(path.front())==aid1,"bad first element");
       path.pop_front();
-      CHECK_INVARIANT(path.back()==aid2,"bad last element");
+      CHECK_INVARIANT(static_cast<unsigned int>(path.back())==aid2,"bad last element");
       path.pop_back();
       
       RDKit::INT_LIST_CI pi = path.begin();

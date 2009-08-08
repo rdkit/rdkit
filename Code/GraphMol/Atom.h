@@ -440,7 +440,7 @@ namespace RDKit{
     int d_formalCharge;
     unsigned int d_atomicNum;
     unsigned int d_index;
-    // NOTE that these cannot be signed ints, they are calculated using
+    // NOTE that these cannot be unsigned ints, they are calculated using
     // a lazy scheme and are initialized to -1 to indicate that the
     // calculation has not yet been done.
     int d_implicitValence, d_explicitValence;

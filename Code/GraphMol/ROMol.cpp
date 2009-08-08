@@ -17,11 +17,6 @@
 #include "QueryBond.h"
 #include "MolPickler.h"
 
-#if 0
-#include "AtomIterators.h"
-#include "BondIterators.h"
-#endif
-
 #include "Conformer.h"
 
 namespace RDKit{
@@ -430,45 +425,6 @@ namespace RDKit{
   }
   ROMol::ConstAtomIterator ROMol::endAtoms() const{
     return ConstAtomIterator(this,getNumAtoms());
-  }
-
-  ROMol::AromaticAtomIterator ROMol::beginAromaticAtoms(){
-    return AromaticAtomIterator(this);
-  }
-  ROMol::ConstAromaticAtomIterator ROMol::beginAromaticAtoms() const{
-    return ConstAromaticAtomIterator(this);
-  }
-  ROMol::AromaticAtomIterator ROMol::endAromaticAtoms(){
-    return AromaticAtomIterator(this,getNumAtoms());
-  }
-  ROMol::ConstAromaticAtomIterator ROMol::endAromaticAtoms() const{
-    return ConstAromaticAtomIterator(this,getNumAtoms());
-  }
-
-  ROMol::HeteroatomIterator ROMol::beginHeteros(){
-    return HeteroatomIterator(this);
-  }
-  ROMol::ConstHeteroatomIterator ROMol::beginHeteros() const{
-    return ConstHeteroatomIterator(this);
-  }
-  ROMol::HeteroatomIterator ROMol::endHeteros(){
-    return HeteroatomIterator(this,getNumAtoms());
-  }
-  ROMol::ConstHeteroatomIterator ROMol::endHeteros() const{
-    return ConstHeteroatomIterator(this,getNumAtoms());
-  }
-
-  ROMol::QueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const *what) {
-    return QueryAtomIterator(this,what);
-  }
-  ROMol::ConstQueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const *what) const {
-    return ConstQueryAtomIterator(this,what);
-  }
-  ROMol::QueryAtomIterator ROMol::endQueryAtoms(){
-    return QueryAtomIterator(this,getNumAtoms());
-  }
-  ROMol::ConstQueryAtomIterator ROMol::endQueryAtoms() const{
-    return ConstQueryAtomIterator(this,getNumAtoms());
   }
 
   ROMol::BondIterator ROMol::beginBonds(){

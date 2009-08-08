@@ -234,7 +234,6 @@ namespace RDKit{
     // This method can be used to distinguish query bonds from standard bonds
     virtual bool hasQuery() const { return false; };
 
-    // FIX: the const crap here is all mucked up.
     //! NOT CALLABLE
     virtual void setQuery(QUERYBOND_QUERY *what);
     //! NOT CALLABLE

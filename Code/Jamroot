@@ -29,7 +29,6 @@ project RDKit
           <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
         : default-build release ;
 
-
 alias all-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures GraphMol
 ;
 alias all : all-libraries all-wrappers ;
@@ -41,8 +40,8 @@ alias core : DataStructs//DataStructs Geometry//RDGeometry RDGeneral//RDGeneral
   GraphMol//core
 ;
 
-alias core-wrappers : core DataStructs/Wrap//cDataStructs Geometry/Wrap//rdGeometry RDBoost/Wrap//rdBase
-  GraphMol/Wrap//mol-wrappers 
+alias core-wrappers : core DataStructs/Wrap Geometry/Wrap RDBoost/Wrap
+  GraphMol//core-wrappers
 ;
 
 alias all-wrappers : RDBoost/Wrap 

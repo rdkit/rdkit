@@ -1495,7 +1495,7 @@ namespace RDKit{
       }
       conf = new Conformer(nAtoms);
       
-      unsigned int nSgroups,n3DConstraints,chiralFlag;
+      unsigned int nSgroups=0,n3DConstraints=0,chiralFlag=0;
       if(splitLine.size()>2) nSgroups = toInt(splitLine[2]);
       if(splitLine.size()>3) n3DConstraints = toInt(splitLine[3]);
       if(splitLine.size()>4) chiralFlag = toInt(splitLine[4]);
