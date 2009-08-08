@@ -10,9 +10,6 @@ type.change-generated-target-suffix EXE : <target-os>darwin : exe ;
 # Specify the path to the Boost project.
 use-project boost 
   : $(BOOSTHOME) ;
-use-project RDKit_Externals 
-  : $(RDBASE)/External  ;
-
 
 project RDKit
 	: requirements <include>.  <threading>multi
@@ -24,18 +21,9 @@ project RDKit
           <toolset>msvc:<define>WIN32
           <include>NUMPY_INCLUDE_DIR
           <address-model>64:<cflags>-fPIC
-          # <define>RDK_USELAPACKPP #<- uncomment this to use lapack++
-          <target-os>windows:<define>BOOST_NUMERIC_BINDINGS_USE_CLAPACK
           <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
         : default-build release ;
 
-
-alias all-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures GraphMol
-;
-alias all : all-libraries all-wrappers ;
-
-alias minimal : DistGeom ForceField DataStructs Geometry Query RDGeneral Numerics ChemicalFeatures GraphMol//minimal 
-;
 
 alias core : DataStructs//DataStructs Geometry//RDGeometry RDGeneral//RDGeneral
   GraphMol//core
@@ -45,50 +33,4 @@ alias core-wrappers : core DataStructs/Wrap Geometry/Wrap RDBoost/Wrap
   GraphMol//core-wrappers
 ;
 
-alias all-wrappers : RDBoost/Wrap 
-  DataStructs/Wrap
-  Geometry/Wrap
-  ML/Cluster/Murtagh ML/InfoTheory/Wrap ML/Data ML/FeatureSelect/Wrap
-  DataManip/MetricMatrixCalc/Wrap
-  SimDivPickers/Wrap
-  ForceField/Wrap 
-  DistGeom/Wrap
-  Numerics/Alignment/Wrap 
-  ChemicalFeatures/Wrap
-  GraphMol//all-wrappers
- ;
-
-
-alias nonmol-libraries : Catalogs DistGeom ForceField DataManip/MetricMatrixCalc DataStructs Geometry Query RDBoost RDGeneral Numerics  SimDivPickers ChemicalFeatures 
-;
-
-alias nonmol-wrappers : RDBoost/Wrap 
-  DataStructs/Wrap
-  Geometry/Wrap
-  ML/Cluster/Murtagh ML/InfoTheory/Wrap ML/Data ML/FeatureSelect/Wrap
-  DataManip/MetricMatrixCalc/Wrap
-  SimDivPickers/Wrap
-  ForceField/Wrap 
-  DistGeom/Wrap
-  Numerics/Alignment/Wrap 
-  ChemicalFeatures/Wrap
- ;
-
-
-
-lib lapack
-  :
-  : <name>lapack
-  <target-os>windows:<file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
-  :
-  ;
-lib blas
-  :
-  : <name>blas
-  <target-os>windows:<file>$(RDBASE)/External/Lapack/win32/BLAS.lib
-  :
-  ;
-# if you want to use Lapack++, use this version:
-#alias lapacklibs : /RDKit_Externals//Lapack++ lapack blas ;
-alias lapacklibs : lapack blas ;
 
