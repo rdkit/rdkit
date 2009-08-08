@@ -1,0 +1,4 @@
+* first pass getting it working
+** export BOOST_ROOT=/usr/local/src/boost_1_39_0
+** bison and flex support downloaded from tracker: http://public.kitware.com/Bug/view.php?id=4018 and put into /usr/share/cmake
+** getting information about what it's doing: VERBOSE=1 make

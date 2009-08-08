@@ -10,8 +10,6 @@ type.change-generated-target-suffix EXE : <target-os>darwin : exe ;
 # Specify the path to the Boost project.
 use-project boost 
   : $(BOOSTHOME) ;
-use-project RDKit_Externals 
-  : $(RDBASE)/External  ;
 
 project RDKit
 	: requirements <include>.  <threading>multi
