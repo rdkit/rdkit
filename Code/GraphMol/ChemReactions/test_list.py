@@ -2,7 +2,7 @@ import sys
 
 tests=[
   ("testExecs/testReaction.exe","",{}),
-  #("python","test_list.py",{'dir':'Wrap'}),
+  ("python","test_list.py",{'dir':'Wrap'}),
     ]
 
 longTests=[
