@@ -82,10 +82,11 @@ namespace RDKit {
         //  give the same discriminators because their distance matrices are
         //  identical.  We'll work around this by adding 0.5 to the diagonal
         //  elements of the distance matrix corresponding to aromatic atoms:
-        ROMol::ConstAromaticAtomIterator atomIt;
-        for(atomIt=mol.beginAromaticAtoms();
-            atomIt!=mol.endAromaticAtoms();
-            atomIt++){
+        ROMol::ConstAtomIterator atomIt;
+        for(atomIt=mol.beginAtoms();
+            atomIt!=mol.endAtoms();
+            ++atomIt){
+          if(!(*atomIt)->getIsAromatic()) continue;
           unsigned int idx=(*atomIt)->getIdx();
           dMat[idx*nAts+idx] += 0.5;
         }
