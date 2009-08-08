@@ -1,0 +1,10 @@
+project Numerics : : ;
+
+alias all-libraries : Alignment EigenSolvers Optimizer ; 
+
+exe main : testMatrices.cpp ../RDGeneral//RDGeneral ;
+
+install regrs : main : <location>testExecs ;
+
+
+
