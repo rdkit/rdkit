@@ -18,3 +18,5 @@ rdkit_python_extension(rdmolfiles
   LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol 
      RDGeometry DataStructs RDGeneral RDBoost )
 
+add_test( pyGraphMolWrap python ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py )
+add_test( pyTestConformerWrap python ${CMAKE_CURRENT_SOURCE_DIR}/testConformer.py )

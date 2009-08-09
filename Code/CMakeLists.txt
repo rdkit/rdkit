@@ -33,4 +33,5 @@ add_subdirectory(RDBoost)
 add_subdirectory(DataStructs)
 add_subdirectory(Geometry)
 add_subdirectory(GraphMol)
+add_subdirectory(Query)
 

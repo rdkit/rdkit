@@ -776,7 +776,7 @@ mol-4,CCOC
                                       titleLine=0)
     propNames = []
     propNames.append("Column_2")
-    ofile = "test_data/outSmiles.txt"
+    ofile = os.path.join(RDConfig.RDBaseDir,"Code","GraphMol","Wrap","test_data/outSmiles.txt")
     writer = Chem.SmilesWriter(ofile)
     writer.SetProps(propNames)
     for mol in smiSup :

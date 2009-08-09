@@ -1,11 +1,6 @@
-
-PYTHON_ADD_MODULE(rdGeometry
+rdkit_python_extension(rdGeometry
   Point.cpp UniformGrid3D.cpp rdGeometry.cpp
-)
-set_target_properties(rdGeometry PROPERTIES PREFIX "")
-target_link_libraries(rdGeometry 
-  RDGeometry DataStructs RDGeneral RDBoost 
-  ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
-INSTALL(TARGETS rdGeometry
- LIBRARY DESTINATION ${RDKit_PythonDir}/Geometry )
+  DEST Geometry
+  LINK_LIBRARIES RDGeometry DataStructs RDGeneral RDBoost )
+add_test( pyGeometry python ${CMAKE_CURRENT_SOURCE_DIR}/testGeometry.py )
 
