@@ -1,6 +1,4 @@
-add_library(RDGeneral Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp )
+add_library(RDGeneral  SHARED Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp )
+INSTALL(TARGETS RDGeneral LIBRARY DESTINATION ${RDKit_LibDir})
+rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
 
-add_executable(testDict testDict.cpp)
-target_link_libraries(testDict RDGeneral)
-
-add_test(testDict ${EXECUTABLE_OUTPUT_PATH}/testDict)

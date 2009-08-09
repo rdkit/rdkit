@@ -1,26 +1,14 @@
 cmake_minimum_required(VERSION 2.6)
 project (RDKit)
 
-include(BoostUtils.cmake)
-macro(rdkit_python_extension)
-  PARSE_ARGUMENTS(RDKPY
-    "LINK_LIBRARIES;DEPENDS;DEST"
-    ""
-    ${ARGN}
-    )
-  CAR(RDKPY_NAME ${RDKPY_DEFAULT_ARGS})
-  CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
-  PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES}  )
-  set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
-  
-  target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES} ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
-
-  INSTALL(TARGETS ${RDKPY_NAME} 
-      LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST} )
-endmacro(rdkit_python_extension)
+#------- 
+# Config variables:
+set(RDKit_LibDir $ENV{RDBASE}/bin)
+# pull in python:
+set(RDKit_PythonDir $ENV{RDBASE}/rdkit)
 
 
-
+include(RDKitUtils.cmake)
 
 # pull in python:
 find_package(PythonLibs REQUIRED)
@@ -38,8 +26,6 @@ enable_testing()
 if(CMAKE_COMPILER_IS_GNUCXX)
 ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing")
 endif()
-
-set(RDKit_PythonDir $ENV{RDBASE}/rdkit)
 
 include_directories(.)
 add_subdirectory(RDGeneral)
