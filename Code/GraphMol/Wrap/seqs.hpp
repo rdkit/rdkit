@@ -72,8 +72,6 @@ namespace RDKit{
   };
 
   typedef ReadOnlySeq<ROMol::AtomIterator,Atom*> AtomIterSeq;
-  typedef ReadOnlySeq<ROMol::AromaticAtomIterator,Atom*> AromaticAtomIterSeq;
-  typedef ReadOnlySeq<ROMol::HeteroatomIterator,Atom*> HeteroatomIterSeq;
   typedef ReadOnlySeq<ROMol::BondIterator,Bond*> BondIterSeq;
 }
 #endif

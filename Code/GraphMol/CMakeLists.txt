@@ -5,13 +5,17 @@ add_library(GraphMol Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp MolOps.cpp
   AddHs.cpp RankAtoms.cpp Matrices.cpp Chirality.cpp RingInfo.cpp
   Conformer.cpp )
 
+add_executable(test1 test1.cpp)
+target_link_libraries(test1  GraphMol RDGeneral RDGeometry )
+add_test(test1 ${EXECUTABLE_OUTPUT_PATH}/test1 )
+
+
 add_subdirectory(Depictor)
 add_subdirectory(FileParsers)
 add_subdirectory(SmilesParse)
 add_subdirectory(Substruct)
 add_subdirectory(ChemReactions)
 
-add_executable(test1 test1.cpp)
-target_link_libraries(test1  GraphMol RDGeneral RDGeometry )
-add_test(test1 ${EXECUTABLE_OUTPUT_PATH}/test1 )
+add_subdirectory(Wrap)
+
 

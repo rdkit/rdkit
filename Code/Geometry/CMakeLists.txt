@@ -8,3 +8,4 @@ add_executable(testGrid testGrid.cpp)
 target_link_libraries(testGrid  RDGeometry RDGeneral DataStructs)
 add_test(testGrid ${EXECUTABLE_OUTPUT_PATH}/testGrid)
 
+add_subdirectory(Wrap)
