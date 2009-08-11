@@ -18,15 +18,15 @@ see also piddleWxDcDemo.py
 '''
 import exceptions
 from wxPython.wx import *
-from rdkit import sping.pid
+from rdkit.sping import pid as sping_pid
 
 class WxCanvasError(RuntimeError):
     pass
 
-class PiddleWxDc(sping.pid.Canvas):
+class PiddleWxDc(sping_pid.Canvas):
 
     def __init__(self, aWxDc, size=(300,300), name="piddleWX"): 
-        sping.pid.Canvas.__init__(self, size, name)
+        sping_pid.Canvas.__init__(self, size, name)
         self.dc = aWxDc
         self.dc.BeginDrawing()
 
@@ -36,7 +36,7 @@ class PiddleWxDc(sping.pid.Canvas):
     def _getWXcolor(self, color, default = None):
         '''Converts PIDDLE colors to wx colors'''
         if color is not None:
-           if color == sping.pid.transparent:
+           if color == sping_pid.transparent:
              return None
            elif color.red >= 0 and color.green >= 0 and color.blue >= 0:
              return wxColour(color.red * 255, color.green * 255, color.blue * 255)
@@ -49,7 +49,7 @@ class PiddleWxDc(sping.pid.Canvas):
     def _getWXbrush(self, color, default_color = None):
         '''Converts PIDDLE colors to a wx brush'''
 
-        if color == sping.pid.transparent:
+        if color == sping_pid.transparent:
           return wxTRANSPARENT_BRUSH
 
         wxcolor = self._getWXcolor(color)
@@ -68,7 +68,7 @@ class PiddleWxDc(sping.pid.Canvas):
         if width is None or width < 0:
             width = self.defaultLineWidth
 
-        if color == sping.pid.transparent:
+        if color == sping_pid.transparent:
           return wxTRANSPARENT_PEN
 
         wxcolor = self._getWXcolor(color)
@@ -167,7 +167,7 @@ class PiddleWxDc(sping.pid.Canvas):
         
         self._setWXfont(font)
 
-        if color == sping.pid.transparent:
+        if color == sping_pid.transparent:
             return
 
         # No defaultFontColor?
@@ -199,7 +199,7 @@ class PiddleWxDc(sping.pid.Canvas):
         
         # [kbj] Hack since the default system font may not be able to rotate.
         if font is None:
-          font = sping.pid.Font(face='helvetica')            
+          font = sping_pid.Font(face='helvetica')            
           self._setWXfont(font)
 
         ascent = self.fontAscent(font)
