@@ -14,7 +14,7 @@
   numbering
 
 """
-form rdkit import Chem
+from rdkit import Chem
 from rdkit.Chem.Pharm2D import Utils
 
 import types
