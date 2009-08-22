@@ -679,10 +679,34 @@ void testIssue2381580(){
 }
 
 
-// -------------------------------------------------------------------
-int main()
-{
-  RDLog::InitLogs();
+void testIssue2840217(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 2840217" << std::endl;
+
+  {
+    RWMol *m=new RWMol();
+    for(unsigned int i=0;i<200;++i){
+      m->addAtom(new Atom(6));
+      m->addAtom(new Atom(6));
+      m->addAtom(new Atom(6));
+      m->addAtom(new Atom(6));
+      m->addAtom(new Atom(6));
+      m->addAtom(new Atom(6));
+      for(unsigned int j=0;j<5;++j){
+        m->addBond(i*6+j,i*6+j+1,Bond::AROMATIC);
+      }
+      m->addBond(i*6,i*6+5,Bond::AROMATIC);
+    }
+    TEST_ASSERT(m->getNumBonds()==1200);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getNumAtoms()==1200);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test1(){
   RWMol m;
   Atom *newAtom = new Atom(8);
 
@@ -775,21 +799,15 @@ int main()
   BOOST_LOG(rdInfoLog)  << " trying a replace " << endl;
   Atom *repA = new Atom(22);
   m.replaceAtom(newIdx,repA);
-#if 0
-  //m.debugMol(cout);
-  MolOps::sanitizeMol(m);
+}
 
-  BOOST_LOG(rdInfoLog) << "\n\n\n********************************\n";
-  string pickle;
-  m.debugMol(cout);
-
-  MolPickler::pickleMol(m,pickle);
-  ROMol *mFromP = new ROMol(pickle);
-  TEST_ASSERT(mFromP->getNumAtoms()==m.getNumAtoms());
-  //mFromP->debugMol(cout);
-#endif  
+// -------------------------------------------------------------------
+int main()
+{
+  RDLog::InitLogs();
   boost::logging::enable_logs("rdApp.info");
-
+#if 1
+  test1();
   testPropLeak();
   testMolProps();
   testAtomProps();
@@ -799,6 +817,8 @@ int main()
 
   testIssue1993296();
   testIssue2381580();
+#endif
+  testIssue2840217();
 
   return 0;
 }

@@ -34,6 +34,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <iostream>
+#include <Geometry/point.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemReactions/Reaction.h>
@@ -2212,6 +2213,171 @@ void test24AtomFlags(){
 }
 
 
+void test25Conformers(){
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing transfer of conformer data from reactants->products." << std::endl;
+
+  unsigned int nWarn,nError;
+
+  {
+    std::string smi;
+    smi="[C:1]=[O:2].[N:3]>>[O:2]=[C:1][N:3]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    ROMol *mol;
+    Conformer *conf;
+    MOL_SPTR_VECT reacts;
+    std::vector<MOL_SPTR_VECT> prods;
+
+    reacts.clear();
+    smi = "C(=O)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    conf=new Conformer(3);
+    conf->setAtomPos(0,RDGeom::Point3D(1,0,0));
+    conf->setAtomPos(1,RDGeom::Point3D(1,1,0));
+    conf->setAtomPos(2,RDGeom::Point3D(1,0,1));
+    mol->addConformer(conf,true);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "CN";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    conf=new Conformer(2);
+    conf->setAtomPos(0,RDGeom::Point3D(-1,0,0));
+    conf->setAtomPos(1,RDGeom::Point3D(-1,1,0));
+    mol->addConformer(conf,true);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms()==5);
+    TEST_ASSERT(prods[0][0]->getNumConformers()==1);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).x==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).y==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).x==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).x==-1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).y==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).x==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).z==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).x==-1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).z==0.0);
+
+    // test when only the first reactant has a conf:
+    reacts.clear();
+    smi = "C(=O)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    conf=new Conformer(3);
+    conf->setAtomPos(0,RDGeom::Point3D(1,0,0));
+    conf->setAtomPos(1,RDGeom::Point3D(1,1,0));
+    conf->setAtomPos(2,RDGeom::Point3D(1,0,1));
+    mol->addConformer(conf,true);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "CN";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms()==5);
+    TEST_ASSERT(prods[0][0]->getNumConformers()==1);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).x==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).y==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).x==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).x==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).x==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).z==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).x==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).z==0.0);
+
+    // test when only the second reactant has a conf:
+    reacts.clear();
+    smi = "C(=O)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "CN";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    conf=new Conformer(2);
+    conf->setAtomPos(0,RDGeom::Point3D(-1,0,0));
+    conf->setAtomPos(1,RDGeom::Point3D(-1,1,0));
+    mol->addConformer(conf,true);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms()==5);
+    TEST_ASSERT(prods[0][0]->getNumConformers()==1);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).x==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(0).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).x==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(1).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).x==-1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).y==1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(2).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).x==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(3).z==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).x==-1.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).y==0.0);
+    TEST_ASSERT(prods[0][0]->getConformer().getAtomPos(4).z==0.0);
+    
+    // and, of course, when neither has a conformer:
+    reacts.clear();
+    smi = "C(=O)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "CN";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms()==5);
+    TEST_ASSERT(prods[0][0]->getNumConformers()==0);
+
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 int main() { 
   RDLog::InitLogs();
@@ -2245,6 +2411,7 @@ int main() {
   test22DotsToRemoveBonds();
   test23Pickling();
   test24AtomFlags();
+  test25Conformers();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

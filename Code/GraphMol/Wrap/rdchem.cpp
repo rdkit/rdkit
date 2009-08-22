@@ -4,11 +4,9 @@
 //
 //   @@ All Rights Reserved  @@
 //
-#define PY_ARRAY_UNIQUE_SYMBOL rdchem_array_API
 #include <RDBoost/Wrap.h>
 #include "rdchem.h"
 #include <GraphMol/RDKitBase.h>
-#include <numpy/oldnumeric.h>
 #include <GraphMol/SanitException.h>
 
 #include <sstream>
@@ -50,7 +48,6 @@ BOOST_PYTHON_MODULE(rdchem)
     ;
   RegisterListConverter<RDKit::Atom*>();
   RegisterListConverter<RDKit::Bond*>();
-  import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);

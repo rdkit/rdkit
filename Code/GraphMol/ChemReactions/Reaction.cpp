@@ -35,6 +35,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/QueryOps.h>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/foreach.hpp>
 #include <map>
 #include <algorithm>
 
@@ -231,7 +232,8 @@ namespace RDKit {
     void addReactantAtomsAndBonds(const ChemicalReaction *rxn,
                                   RWMOL_SPTR product,const ROMOL_SPTR reactantSptr,
                                   const MatchVectType &match,
-                                  const ROMOL_SPTR reactantTemplate){
+                                  const ROMOL_SPTR reactantTemplate,
+                                  Conformer *productConf){
       PRECONDITION(rxn,"bad reaction");
       // start by looping over all matches and marking the reactant atoms that
       // have already been "added" by virtue of being in the product. We'll also
@@ -492,6 +494,21 @@ namespace RDKit {
           // not tetrahedral chirality, don't do anything.
         }
       } // end of loop over chiralAtomsToCheck
+
+      // ---------- ---------- ---------- ---------- ---------- ---------- 
+      // finally we may need to set the coordinates in the product conformer:
+      if(productConf){
+        productConf->resize(product->getNumAtoms());
+        if(reactantSptr->getNumConformers()){
+          const Conformer &reactConf=reactantSptr->getConformer();
+          if(reactConf.is3D()) productConf->set3D(true);
+          for(std::map<unsigned int,unsigned int>::const_iterator pr=reactProdAtomMap.begin();
+              pr!=reactProdAtomMap.end();++pr){
+            productConf->setAtomPos(pr->second,reactConf.getAtomPos(pr->first));
+          }
+        }
+      } // end of conformer update loop
+
     } // end of addReactantAtomsAndBonds()
   } // End of namespace ReactionUtils
   
@@ -501,20 +518,38 @@ namespace RDKit {
     PRECONDITION(reactants.size()==reactantsMatch.size(),"vector size mismatch");                                                          
     MOL_SPTR_VECT res;
     res.resize(this->getNumProductTemplates());
+
+    // if any of the reactants have a conformer, we'll go ahead and
+    // generate conformers for the products:
+    bool doConfs=false;
+    BOOST_FOREACH(ROMOL_SPTR reactant,reactants){
+      if(reactant->getNumConformers()){
+        doConfs=true;
+        break;
+      }
+    }
     
     unsigned int prodId=0;
     for(MOL_SPTR_VECT::const_iterator pTemplIt=this->beginProductTemplates();
         pTemplIt!=this->endProductTemplates();++pTemplIt){
       RWMOL_SPTR product=ReactionUtils::initProduct(*pTemplIt);
-
+      Conformer *conf=0;
+      if(doConfs){
+        conf = new Conformer();
+        conf->set3D(false);
+      }
+      
       for(unsigned int reactantId=0;reactantId<reactants.size();++reactantId){
         ReactionUtils::addReactantAtomsAndBonds(this,
                                                 product,reactants[reactantId],
                                                 reactantsMatch[reactantId],
-                                                this->m_reactantTemplates[reactantId]);  
+                                                this->m_reactantTemplates[reactantId],
+                                                conf);  
       }                    
-      
       product->clearAllAtomBookmarks();      
+      if(doConfs){
+        product->addConformer(conf,true);
+      }
       res[prodId] = product;
       ++prodId;
     }

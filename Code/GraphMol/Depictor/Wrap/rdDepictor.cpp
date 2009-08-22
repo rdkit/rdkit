@@ -91,7 +91,6 @@ BOOST_PYTHON_MODULE(rdDepictor)
   import_array();
 
   std::string docString;
-  
   docString = "Compute 2D coordinates for a molecule. \n\
   The resulting coordinates are stored on each atom of the molecule \n\n\
   ARGUMENTS: \n\n\

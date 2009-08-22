@@ -635,7 +635,6 @@ namespace RDKit {
       }
 
       RINGINVAR_SET invars;
-      //DOUBLE_VECT invars;
 
       // make a copy of the molecule that we can chop around
       // mind you we will never remove atoms to avoid numbering issues
@@ -656,24 +655,24 @@ namespace RDKit {
         // the following is the list of atoms that are useful in the next round of trimming
         // basically atoms that become degree 0 or 1 because of bond removals
         // initialized with atoms of degrees 0 and 1
-        INT_VECT doneAts; // atoms that we already dealt with int he fragment
+        boost::dynamic_bitset<> doneAts(mol.getNumAtoms());
+        unsigned int nAtomsDone=0;
         INT_SET changed;
-        INT_VECT_CI aidi;
-        int deg, cand;
-        for (aidi = curFrag.begin(); aidi != curFrag.end(); aidi++) {
-          deg = tMol.getAtomWithIdx((*aidi))->getDegree();
+        for (INT_VECT_CI aidi = curFrag.begin(); aidi != curFrag.end(); aidi++) {
+          unsigned int deg = tMol.getAtomWithIdx((*aidi))->getDegree();
           if ((deg == 0) || (deg == 1)) {
             changed.insert((*aidi));
           }
         }
     
-        while (doneAts.size() < curFrag.size()) {
-          //trim all bonds that connect to degree 0 and 1 bonds
+        while (nAtomsDone < curFrag.size()) {
+          // trim all bonds that connect to degree 0 and 1 atoms
           while (changed.size() > 0) {
-            cand = *(changed.begin());
+            int cand = *(changed.begin());
             changed.erase(changed.begin());
-            if (std::find(doneAts.begin(), doneAts.end(), cand) == doneAts.end()) {
-              doneAts.push_back(cand);
+            if (!doneAts[cand]){
+              doneAts.set(cand);
+              ++nAtomsDone;
               FindRings::trimBonds(cand, tMol, changed);
             }
           }
@@ -681,8 +680,6 @@ namespace RDKit {
           // all atoms left in the fragment should atleast have a degree >= 2
           // collect all the degree two nodes;
           INT_VECT d2nodes;
-    
-          // pick all the d2nodes from the current fragment
           FindRings::pickD2Nodes(tMol, d2nodes, curFrag);
           
           if (d2nodes.size() > 0) { // deal with the current degree two nodes
@@ -692,18 +689,17 @@ namespace RDKit {
             INT_VECT_CI d2i;
             // trim after we have dealt with all the current d2 nodes, 
             for (d2i = d2nodes.begin(); d2i != d2nodes.end(); d2i++) {
-              doneAts.push_back((*d2i));
+              doneAts.set(*d2i);
+              ++nAtomsDone;
               FindRings::trimBonds((*d2i), tMol, changed);
             }
           } // end of degree two nodes
     
-          else if ( doneAts.size() < curFrag.size() ) { // now deal with higher degree nodes
-        
-            //INT_VECT ring;
+          else if ( nAtomsDone < curFrag.size() ) { // now deal with higher degree nodes
             // this is brutal - we have no degree 2 nodes - find the first possible degree 3 node
-            cand = -1;
-            for (aidi = curFrag.begin(); aidi != curFrag.end(); aidi++) {
-              deg = tMol.getAtomWithIdx((*aidi))->getDegree();
+            int cand = -1;
+            for (INT_VECT_CI aidi = curFrag.begin(); aidi != curFrag.end(); aidi++) {
+              unsigned int deg = tMol.getAtomWithIdx((*aidi))->getDegree();
               if (deg == 3){ 
                 cand = (*aidi); 
                 break;
@@ -716,7 +712,8 @@ namespace RDKit {
               break;
             }
             FindRings::findRingsD3Node(tMol, res, invars, cand);
-            doneAts.push_back(cand);
+            doneAts.set(cand);
+            ++nAtomsDone;
             FindRings::trimBonds(cand, tMol, changed); 
           } // done with degree 3 node
         } // done finding rings in this fragement

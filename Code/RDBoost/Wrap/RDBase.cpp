@@ -5,11 +5,10 @@
 //   @@ All Rights Reserved  @@
 //
 #include <boost/python.hpp>
-#define PY_ARRAY_UNIQUE_SYMBOL rdbase_array_API
+
 #include <iostream>
 #include <fstream>
 #include <RDBoost/Wrap.h>
-#include "numpy/oldnumeric.h"
 
 #include <RDGeneral/RDLog.h>
 #if 0
@@ -93,9 +92,6 @@ BOOST_PYTHON_MODULE(rdBase)
 
   RegisterListConverter< int >();
   RegisterListConverter< std::vector<int> >();
-
-  
-  import_array();
 
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
