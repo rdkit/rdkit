@@ -35,7 +35,7 @@ namespace RDKit{
       
   double computeIntVectPrimesProduct(const INT_VECT &vect) {
     double invr = 1.0;
-    for (INT_VECT_CI ci = ring.begin(); ci != ring.end(); ++ci) {
+    for (INT_VECT_CI ci = vect.begin(); ci != vect.end(); ++ci) {
       // this thing with using mod introduces a slight risk of
       // getting collisions. We'll have to either live with that
       // or switch to using a different hashing algorithm
