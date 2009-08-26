@@ -35,10 +35,14 @@ class Canvas(object):
     if image is not None:
       imgd = image.tostring()
       a = array.array('B',imgd)
-      stride = cairo.ImageSurface.format_stride_for_width (cairo.FORMAT_ARGB32,
-                                                           image.size[0])
-      if stride != image.size[0] * 4:
-        raise Exception ,"invalid stride"
+      #if hasattr(cairo.ImageSurface,'format_stride_for_width'):
+      #  stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_ARGB32,
+      #                                                      image.size[0])
+      #else:
+      #  stride=image.size[0]*4
+      #if stride != image.size[0] * 4:
+      #  raise Exception ,"invalid stride"
+      stride=image.size[0]*4
       surface = cairo.ImageSurface.create_for_data (
         a, cairo.FORMAT_ARGB32,
         image.size[0], image.size[1], stride)

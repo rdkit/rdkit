@@ -5,7 +5,7 @@
 #
 import os.path
 
-def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
+def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=[]):
   if not mol:
     raise ValueError,'Null molecule provided'
   import MolDrawing
@@ -24,6 +24,7 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
       from cairoCanvas import Canvas
       useCAIRO=True
     except:
+      useCAIRO=False
       from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
       canvas = Canvas(size=size,name='MolToImageFile')
       img = canvas._image
@@ -46,12 +47,13 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True):
     AllChem.Compute2DCoords(mol)
   
   drawer.wedgeDashedBonds=wedgeBonds
-  drawer.AddMol(mol)
+  drawer.AddMol(mol,highlightAtoms=highlightAtoms)
   canvas.flush()
 
   return img
 
-def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True):
+def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
+              highlightAtoms=[]):
   # original contribution from Uwe Hoffmann
   import cairo
 
@@ -91,14 +93,15 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True):
     AllChem.Compute2DCoords(mol)
   
   drawer.wedgeDashedBonds=wedgeBonds
-  drawer.AddMol(mol)
+  drawer.AddMol(mol,highlightAtoms=highlightAtoms)
   if useCAIRO:
     canvas.flush()
   else:
     canvas.save()
 
-def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True):
-  img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds)
+def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True,
+                   highlightAtoms=[]):
+  img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds,highlightAtoms=highlightAtoms)
   img.save(filename)
     
 tkRoot=None
