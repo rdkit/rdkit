@@ -11,7 +11,6 @@
 #include <string>
 #include <math.h>
 
-#include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Substruct/SubstructMatch.h>

@@ -209,70 +209,6 @@ class TestCase(unittest.TestCase):
         for i in range(len(pt)):
             self.failUnless(feq(pt2[i],pt[i]))
 
-    def test3UniformGrid(self):
-        ugrid = geom.UniformGrid3D(20, 18, 15)
-        self.failUnless(ugrid.GetNumX() == 40)
-        self.failUnless(ugrid.GetNumY() == 36)
-        self.failUnless(ugrid.GetNumZ() == 30)
-        dvect = ugrid.GetOccupancyVect()
-        ugrid = geom.UniformGrid3D(20, 18, 15, 0.5, DataStructs.DiscreteValueType.TWOBITVALUE)
-        dvect = ugrid.GetOccupancyVect()
-        self.failUnless(dvect.GetValueType() == DataStructs.DiscreteValueType.TWOBITVALUE)
-
-        grd = geom.UniformGrid3D(10.0, 10.0, 10.0, 0.5)
-        grd.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.5, 0.25)
-        grd.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.5, 0.25)
-        grd.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.5, 0.25)
-        grd.SetSphereOccupancy(geom.Point3D(2.0, 2.0, 0.0), 1.5, 0.25)
-
-        geom.WriteGridToFile(grd, "junk.grd")
-        grd2 = geom.UniformGrid3D(10.0, 10.0, 10.0, 0.5)
-        grd2.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.5, 0.25)
-        grd2.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.5, 0.25)
-        grd2.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.5, 0.25)
-
-        dist = geom.TanimotoDistance(grd, grd2)
-        self.failUnless(dist == 0.25)
-        dist = geom.ProtrudeDistance(grd, grd2)
-        self.failUnless(dist == 0.25)
-        dist = geom.ProtrudeDistance(grd2, grd)
-        self.failUnless(dist==0.0)
-
-        grd2 = geom.UniformGrid3D(10.0, 10.0, 10.0, 0.5, DataStructs.DiscreteValueType.FOURBITVALUE)
-        grd2.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.5, 0.25, 3)
-        grd2.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.5, 0.25, 3)
-        grd2.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.5, 0.25, 3)
-        self.failUnlessRaises(ValueError, lambda : geom.TanimotoDistance(grd, grd2))
-
-        grd2 = geom.UniformGrid3D(10.0, 10.0, 10.0, 1.0)
-        self.failUnlessRaises(ValueError, lambda : geom.TanimotoDistance(grd, grd2))
-
-        grd2 = geom.UniformGrid3D(11.0, 10.0, 10.0, 1.0)
-        self.failUnlessRaises(ValueError, lambda : geom.TanimotoDistance(grd, grd2))
-
-    def testSymmetry(self):
-        grd = geom.UniformGrid3D(10.0, 10.0, 10.0, 0.5)
-        grd.SetSphereOccupancy(geom.Point3D(-2.2, -2.0, 0.0), 1.65, 0.25)
-        grd.SetSphereOccupancy(geom.Point3D(2.2, -2.0, 0.0), 1.65, 0.25)
-        
-        bPt1 = geom.Point3D(-4.0, -2.0, -2.0)
-        bPt2 = geom.Point3D(4.0, -2.0, -2.0)
-        for k in range(8) :
-            bPt1 += geom.Point3D(0.0, 0.0, 0.5)
-            bPt2 += geom.Point3D(0.0, 0.0, 0.5)
-            for j in range(8):
-                 bPt1 += geom.Point3D(0.0, 0.5, 0.0)
-                 bPt2 += geom.Point3D(0.0, 0.5, 0.0)
-                 for i in range(8) :
-                     bPt1 += geom.Point3D(0.5, 0.0, 0.0)
-                     bPt2 -= geom.Point3D(0.5, 0.0, 0.0)
-                     self.failUnless(grd.GetValPoint(bPt1) == grd.GetValPoint(bPt2))
-                 
-                 bPt1.x = -4.0
-                 bPt2.x = 4.0
-            bPt1.y = -2.0
-            bPt2.y = -2.0
-
     def testPointPickles(self):
         pt = geom.Point3D(2.0,-3.0,1.0)
         pt2 = cPickle.loads(cPickle.dumps(pt))
@@ -285,64 +221,6 @@ class TestCase(unittest.TestCase):
         self.failUnless(feq(pt.x,pt2.x,1e-6))
         self.failUnless(feq(pt.y,pt2.y,1e-6))
 
-    def test4GridPickles(self):
-        grd = geom.UniformGrid3D(10.0, 9.0, 8.0, 0.5)
-        self.failUnless(grd.GetNumX() == 20)
-        self.failUnless(grd.GetNumY() == 18)
-        self.failUnless(grd.GetNumZ() == 16)
-        grd.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.5, 0.25)
-        grd.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.5, 0.25)
-        grd.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.5, 0.25)
-        grd.SetSphereOccupancy(geom.Point3D(2.0, 2.0, 0.0), 1.5, 0.25)
-
-        self.failUnless(geom.TanimotoDistance(grd,grd)==0.0)
-
-        grd2 = cPickle.loads(cPickle.dumps(grd))
-        self.failUnless(grd2.GetNumX() == 20)
-        self.failUnless(grd2.GetNumY() == 18)
-        self.failUnless(grd2.GetNumZ() == 16)
-        self.failUnless(geom.TanimotoDistance(grd,grd2)==0.0)
-        
-    def test5GridOps(self):
-        grd = geom.UniformGrid3D(10, 10, 10)
-        grd.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.0, 0.25)
-        grd.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.0, 0.25)
-
-        grd2 = geom.UniformGrid3D(10, 10, 10)
-        grd2.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.0, 0.25)
-        grd2.SetSphereOccupancy(geom.Point3D(2.0, 2.0, 0.0), 1.0, 0.25)
-
-        self.failUnless(geom.TanimotoDistance(grd,grd)==0.0)
-        self.failUnless(geom.TanimotoDistance(grd,grd2)==1.0)
-
-        grd3 = copy.deepcopy(grd)
-        grd3 |= grd2
-        self.failUnless(geom.TanimotoDistance(grd3,grd)==.5)
-        self.failUnless(geom.TanimotoDistance(grd3,grd2)==.5)
-
-        grd3 = copy.deepcopy(grd)
-        grd3 += grd2
-        self.failUnless(geom.TanimotoDistance(grd3,grd)==.5)
-        self.failUnless(geom.TanimotoDistance(grd3,grd2)==.5)
-
-        grd3 -= grd
-        self.failUnless(geom.TanimotoDistance(grd3,grd)==1.0)
-        self.failUnless(geom.TanimotoDistance(grd3,grd2)==0)
-
-        grd4 = geom.UniformGrid3D(10, 10, 10)
-        grd4.SetSphereOccupancy(geom.Point3D(-2.0, -2.0, 0.0), 1.0, 0.25)
-        grd4.SetSphereOccupancy(geom.Point3D(-2.0, 2.0, 0.0), 1.0, 0.25)
-        grd4.SetSphereOccupancy(geom.Point3D(2.0, -2.0, 0.0), 1.0, 0.25)
-        self.failUnless(feq(geom.TanimotoDistance(grd4,grd),.3333))
-        self.failUnless(feq(geom.TanimotoDistance(grd4,grd2),.75))
-
-        grd4&=grd2
-        self.failUnless(feq(geom.TanimotoDistance(grd4,grd),1.0))
-        self.failUnless(feq(geom.TanimotoDistance(grd4,grd2),.5))
-        
-
-        
-        
 if __name__=='__main__':
     print "Testing Geometry wrapper"
     unittest.main()
