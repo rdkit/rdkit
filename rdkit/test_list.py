@@ -1,12 +1,6 @@
 
 tests=[
-  ("python","test_list.py",{'dir':'ML'}),
   ("python","test_list.py",{'dir':'Chem'}),
-  ("python","test_list.py",{'dir':'DataStructs'}),
-  ("python","test_list.py",{'dir':'Dbase'}),
-  ("python","test_list.py",{'dir':'SimDivFilters'}),
-  ("python","test_list.py",{'dir':'VLib'}),
-
   ]
 
 
