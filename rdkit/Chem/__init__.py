@@ -14,9 +14,7 @@
 from rdkit import rdBase
 from rdkit import RDConfig
 
-from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
-import PeriodicTable as pyPeriodicTable
 import rdchem
 _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
 from rdchem import *
@@ -49,8 +47,6 @@ def SupplierFromFilename(fileN,delim='',**kwargs):
     if not delim:
       delim='\t'
     suppl = SmilesMolSupplier(fileN,delimiter=delim,**kwargs)
-  elif ext=='tdt':
-    suppl = TDTMolSupplier(fileN,delimiter=delim,**kwargs)
   else:
     raise ValueError,"unrecognized extension: %s"%ext
     

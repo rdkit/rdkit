@@ -23,7 +23,7 @@ class TestCase(unittest.TestCase):
         pass
 
   def test1SDSupplier(self):
-    fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib','test_data','NCI_aids.10.sdf')
+    fileN = os.path.join(RDConfig.RDCodeDir,'Chem','tests','NCI_aids.10.sdf')
     
     suppl = Chem.SDMolSupplier(fileN)
     ms = [x for x in suppl]
@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
     assert ok  
     
   def test2SmilesSupplier(self):
-    fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib','test_data','pgp_20.txt')
+    fileN = os.path.join(RDConfig.RDCodeDir,'Chem','tests','pgp_20.txt')
     
     suppl = Chem.SmilesMolSupplier(fileN,delimiter='\t',smilesColumn=2,
                                    nameColumn=1,titleLine=1)
