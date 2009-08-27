@@ -68,25 +68,6 @@ class TestCase(unittest.TestCase):
       ]
 
 
-  def _testPkl10(self):
-    " testing 5k molecule pickles "
-    inLines = open('%s/NCI/first_5K.smi'%(RDConfig.RDDataDir),'r').readlines()
-    smis = []
-    for line in inLines:
-      smis.append(line.split('\t')[0])
-    for smi in smis:
-      m = Chem.MolFromSmiles(smi)
-      newM1 = cPickle.loads(cPickle.dumps(m))
-      newSmi1 = Chem.MolToSmiles(newM1)
-      newM2 = cPickle.loads(cPickle.dumps(newM1))
-      newSmi2 = Chem.MolToSmiles(newM2)
-      assert newM1.GetNumAtoms()==m.GetNumAtoms(),'num atoms comparison failed'
-      assert newM2.GetNumAtoms()==m.GetNumAtoms(),'num atoms comparison failed'
-      assert len(newSmi1)>0,'empty smi1'
-      assert len(newSmi2)>0,'empty smi2'
-      assert newSmi1==newSmi2,'string compare failed:\n%s\n\t!=\n%s\norig smiles:\n%s'%(newSmi1,newSmi2,smi)
-
-
   def testPkl1(self):
     " testing single molecule pickle "
     m = Chem.MolFromSmiles('CCOC')

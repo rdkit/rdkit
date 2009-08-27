@@ -402,7 +402,7 @@ void testTDTWriterStrm() {
 
 void testSDMemoryCorruption() {
   std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + "/Data/NCI/first_200.props.sdf";
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/first_200.props.sdf";
   SDMolSupplier sdsup(fname,true);
   std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_first_200.props.sdf";
   std::ostream *os=new std::ofstream(ofile.c_str());
