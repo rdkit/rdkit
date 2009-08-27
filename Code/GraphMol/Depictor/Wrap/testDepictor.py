@@ -144,31 +144,31 @@ class TestCase(unittest.TestCase) :
         self.failUnless(ptEq(pos, expected[i], 0.001))
 
     def test4SamplingSpread(self):
-      mol= Chem.MolFromMolFile('../test_data/7UPJ_xtal.mol')
+      mol= Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_xtal.mol'))
 
       # default mode
       rdDepictor.Compute2DCoords(mol,canonOrient=False)
-      self.failUnless(compareCoords(mol, '../test_data/7UPJ_default.mol'))
+      self.failUnless(compareCoords(mol, os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_default.mol')))
 
       # spread the structure as much as possible by sampling
       rdDepictor.Compute2DCoords(mol,canonOrient=False, nFlipsPerSample=3, nSample=100,
                                  sampleSeed=100, permuteDeg4Nodes=1)
-      self.failUnless(compareCoords(mol, '../test_data/7UPJ_spread.mol'))
+      self.failUnless(compareCoords(mol, os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_spread.mol')))
       
     def test5SamplingMimic3D(self):
-      mol = Chem.MolFromMolFile('../test_data/7UPJ_xtal.mol')
+      mol = Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_xtal.mol'))
       dmat3D = getDistMat(mol)
 
       # now mimic the coordinate with a very small weight
       rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.001)
-      self.failUnless(compareCoords(mol, '../test_data/7UPJ_mimic3D_1.mol'))
+      self.failUnless(compareCoords(mol, os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_mimic3D_1.mol')))
       
       # now mimic the coordinate with a very small weight
       rdDepictor.Compute2DCoordsMimicDistmat(mol, dmat3D, weightDistMat=0.003)
-      self.failUnless(compareCoords(mol, '../test_data/7UPJ_mimic3D_2.mol'))
+      self.failUnless(compareCoords(mol, os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_mimic3D_2.mol')))
 
       #mb = Chem.MolToMolBlock(mol)
-      #ofile = open('../test_data/7UPJ_mimic3D_2.mol', 'w')
+      #ofile = open(os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_mimic3D_2.mol', 'w'))
       #ofile.write(mb)
       #ofile.close()
       

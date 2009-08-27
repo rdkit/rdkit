@@ -11,7 +11,6 @@ it's intended to be shallow, but broad
 from rdkit import RDConfig
 import os,sys,tempfile
 import unittest
-from rdkit import DataStructs
 from rdkit import Chem
 
 def feq(v1,v2,tol2=1e-4):

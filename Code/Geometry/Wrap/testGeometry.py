@@ -1,7 +1,6 @@
 from rdkit import RDConfig
 import os,sys
 import unittest
-from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry as geom
 import cPickle,copy
 import math
