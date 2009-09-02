@@ -159,6 +159,9 @@ namespace RDKit{
           unsigned int bit = randomSource();
           bit %= fpSize;
           res->SetBit(bit);
+#ifdef VERBOSE_FINGERPRINTING        
+          std::cerr<<"   bit: "<<i<<" "<<bit<<std::endl;
+#endif
         }
       }
     }
@@ -234,7 +237,6 @@ namespace RDKit{
     boost::hash<std::vector<unsigned int> > vectHasher;
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
-    unsigned int maxAtoms=mol.getNumAtoms()+1;
 
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();++paths){

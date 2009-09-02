@@ -14,6 +14,7 @@
 #include <DataStructs/BitOps.h>
 #include <RDGeneral/RDLog.h>
 #include <string>
+#include <boost/version.hpp>
 
 using namespace RDKit;
 
@@ -262,23 +263,19 @@ void test5BackwardsCompatibility(){
   m = SmilesToMol("CC");
   fp1=RDKFingerprintMol(*m);
   TEST_ASSERT(fp1->GetNumOnBits()==4);
+#if BOOST_VERSION/100 < 1040
+  // bug fixes in the uniform_int<> distribution in version 1.40
+  // necessitate this
   TEST_ASSERT((*fp1)[951]);
   TEST_ASSERT((*fp1)[961]);
   TEST_ASSERT((*fp1)[1436]);
   TEST_ASSERT((*fp1)[1590]);
-  delete fp1;
-
-  fp1=RDKFingerprintMol(*m);
-  CHECK_INVARIANT(fp1->GetNumOnBits()==4,"Fingerprint compatibility problem detected");
-#if 0
-  std::vector<int> onbits;
-  fp1->GetOnBits(onbits);
-  std::copy(onbits.begin(),onbits.end(),std::ostream_iterator<int>(std::cout," "));
+#else
+  TEST_ASSERT((*fp1)[419]);
+  TEST_ASSERT((*fp1)[718]);
+  TEST_ASSERT((*fp1)[1499]);
+  TEST_ASSERT((*fp1)[1504]);
 #endif
-  CHECK_INVARIANT((*fp1)[951],"Fingerprint compatibility problem detected");
-  CHECK_INVARIANT((*fp1)[961],"Fingerprint compatibility problem detected");
-  CHECK_INVARIANT((*fp1)[1436],"Fingerprint compatibility problem detected");
-  CHECK_INVARIANT((*fp1)[1590],"Fingerprint compatibility problem detected");
   delete fp1;
 
   delete m;
@@ -935,12 +932,12 @@ int main(int argc,char *argv[]){
   test1alg2();
   test2alg2();
   test4Trends();
-  test5BackwardsCompatibility();
   test1Layers();
   test2Layers();
   test1MorganFPs();
   test2MorganFPsFromAtoms();
-#endif
   test3Layers();
+#endif
+  test5BackwardsCompatibility();
   return 0;
 }
