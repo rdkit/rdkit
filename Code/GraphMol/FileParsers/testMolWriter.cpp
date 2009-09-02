@@ -212,45 +212,6 @@ void testSDWriter() {
 
 }
 
-void testTDTWriter() {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  SDMolSupplier sdsup(fname);
-  
-  std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.tdt";
-  TDTWriter *writer = new TDTWriter(ofile);
-
-  STR_VECT names;
- 
-  while (!sdsup.atEnd()) {
-    ROMol *mol = sdsup.next();
-    std::string mname;
-    mol->getProp("CAS_RN", mname);
-    names.push_back(mname);
-
-    writer->write(*mol);
-    delete mol;
-  }
-  writer->flush();
-  TEST_ASSERT(writer->numMols() == 16);
-  delete writer;
-
-  // now read in the file we just finished writing
-  TDTMolSupplier reader(ofile);
-  int i = 0;
-  while (!reader.atEnd()) {
-    ROMol *mol = reader.next();
-    if(mol){
-      std::string mname;
-      mol->getProp("CAS_RN", mname);
-      CHECK_INVARIANT(mname == names[i], "");
-      delete mol;
-    }
-    i++;
-  }
-  TEST_ASSERT(i==16);
-}
-
 void testSmilesWriterStrm() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
@@ -360,46 +321,6 @@ void testSDWriterStrm() {
 
 }
 
-void testTDTWriterStrm() {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  SDMolSupplier sdsup(fname);
-  
-  std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.tdt";
-  std::ofstream *oStream=new std::ofstream(ofile.c_str());
-  TDTWriter *writer = new TDTWriter(oStream);
-
-  STR_VECT names;
- 
-  while (!sdsup.atEnd()) {
-    ROMol *mol = sdsup.next();
-    std::string mname;
-    mol->getProp("CAS_RN", mname);
-    names.push_back(mname);
-
-    writer->write(*mol);
-    delete mol;
-  }
-  writer->flush();
-  TEST_ASSERT(writer->numMols() == 16);
-  delete writer;
-
-  // now read in the file we just finished writing
-  TDTMolSupplier reader(ofile);
-  int i = 0;
-  while (!reader.atEnd()) {
-    ROMol *mol = reader.next();
-    if(mol){
-      std::string mname;
-      mol->getProp("CAS_RN", mname);
-      CHECK_INVARIANT(mname == names[i], "");
-      delete mol;
-    }
-    i++;
-  }
-  TEST_ASSERT(i==16);
-}
-
 void testSDMemoryCorruption() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/first_200.props.sdf";
@@ -486,12 +407,6 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testTDTWriter()\n";
-  testTDTWriter();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testSmilesWriterStrm()\n";
   testSmilesWriterStrm();
   BOOST_LOG(rdInfoLog) << "Finished\n";
@@ -503,11 +418,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
-  BOOST_LOG(rdInfoLog) << "Running testTDTWriterStrm()\n";
-  testTDTWriterStrm();
-  BOOST_LOG(rdInfoLog) << "Finished\n";
-  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 #endif
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testSDMemoryCorruption()\n";

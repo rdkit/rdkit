@@ -1215,33 +1215,6 @@ M  END
     self.failUnless(mol)
     self.failUnlessRaises(ValueError,lambda:Chem.SanitizeMol(mol))
 
-  def test38TDTSuppliers(self):
-    data="""$SMI<Cc1nnc(N)nc1C>
-CAS<17584-12-2>
-|
-$SMI<Cc1n[nH]c(=O)nc1N>
-CAS<~>
-|
-$SMI<Cc1n[nH]c(=O)[nH]c1=O>
-CAS<932-53-6>
-|
-$SMI<Cc1nnc(NN)nc1O>
-CAS<~>
-|"""
-    suppl = Chem.TDTMolSupplier()
-    suppl.SetData(data,"CAS")
-    i=0;
-    for mol in suppl:
-      self.failUnless(mol)
-      self.failUnless(mol.GetNumAtoms())
-      self.failUnless(mol.HasProp("CAS"))
-      self.failUnless(mol.HasProp("_Name"))
-      self.failUnless(mol.GetProp("CAS")==mol.GetProp("_Name"))
-      self.failUnless(mol.GetNumConformers()==0)
-      i+=1
-    self.failUnless(i==4)
-    self.failUnless(len(suppl)==4)
-
   def test38Issue266(self):
     """ test issue 266: generation of kekulized smiles"""
     mol = Chem.MolFromSmiles('c1ccccc1')
@@ -1325,39 +1298,6 @@ CAS<~>
   def test42LifeTheUniverseAndEverything(self) :
     self.failUnless(True)
     
-  def test43TplFileParsing(self) :
-    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
-                                            'test_data','cmpd2.tpl')
-    m1 = Chem.MolFromTPLFile(fileN)
-    self.failUnless(m1 is not None)
-    self.failUnless(m1.GetNumAtoms()==12)
-    self.failUnless(m1.GetNumConformers()==2)
-    
-    m1 = Chem.MolFromTPLFile(fileN,skipFirstConf=True)
-    self.failUnless(m1 is not None)
-    self.failUnless(m1.GetNumAtoms()==12)
-    self.failUnless(m1.GetNumConformers()==1)
-
-    block = file(fileN,'r').read()
-    m1 = Chem.MolFromTPLBlock(block)
-    self.failUnless(m1 is not None)
-    self.failUnless(m1.GetNumAtoms()==12)
-    self.failUnless(m1.GetNumConformers()==2)
-    
-  def test44TplFileWriting(self) :
-    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
-                                            'test_data','cmpd2.tpl')
-    m1 = Chem.MolFromTPLFile(fileN)
-    self.failUnless(m1 is not None)
-    self.failUnless(m1.GetNumAtoms()==12)
-    self.failUnless(m1.GetNumConformers()==2)
-
-    block = Chem.MolToTPLBlock(m1)
-    m1 = Chem.MolFromTPLBlock(block)
-    self.failUnless(m1 is not None)
-    self.failUnless(m1.GetNumAtoms()==12)
-    self.failUnless(m1.GetNumConformers()==2)
-
   def test45RingInfo(self):
     """ test the RingInfo class
 
@@ -1481,11 +1421,6 @@ CAS<~>
     for m in Chem.SmilesMolSupplier(fileN,titleLine=False,smilesColumn=1): count+=1
     self.failUnless(count==10)
     
-    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
-                                            'test_data','acd_few.tdt')
-    count=0
-    for m in Chem.TDTMolSupplier(fileN): count+=1
-    self.failUnless(count==10)
 
   def test49Issue1932365(self):
     """ test aromatic Se and Te from smiles/smarts
@@ -1612,16 +1547,6 @@ CAS<~>
     self.failUnless(a[0,1]==1)
     self.failUnless(a[0,2]==0)
     self.failUnless(a[1,2]==0)
-
-  def test54Mol2Parser(self):
-    """ test the mol2 parser
-    """
-    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
-                                            'test_data','pyrazole_pyridine.mol2')
-    m = Chem.MolFromMol2File(fileN)
-    self.failUnless(m.GetNumAtoms()==5)
-    self.failUnless(Chem.MolToSmiles(m)=='c1cn[nH]c1',Chem.MolToSmiles(m))
-
 
   def test56LazySDMolSupplier(self) :
     if not hasattr(Chem,'CompressedSDMolSupplier'): return

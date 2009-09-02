@@ -816,177 +816,6 @@ void testIssue226() {
   TEST_ASSERT(mol->hasProp("E2"));
 }
 
-
-int testTDTSupplier1() {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
-  {
-    TDTMolSupplier suppl(fname,"PN");
-    unsigned int i=0;
-    while (!suppl.atEnd()) {
-      ROMol *nmol = suppl.next();
-      if (nmol) {
-        std::string prop1,prop2;
-        TEST_ASSERT(nmol->getNumAtoms()>0);
-        TEST_ASSERT(nmol->hasProp("PN"));
-        TEST_ASSERT(nmol->hasProp("_Name"));
-        TEST_ASSERT(nmol->hasProp("MFCD"));
-
-        nmol->getProp("PN",prop1);
-        nmol->getProp("_Name",prop2);
-        TEST_ASSERT(prop1==prop2);
-      
-        // we didn't ask for 2D conformers, so there should be a property 2D:
-        TEST_ASSERT(nmol->hasProp("2D"));
-        // and no conformer:
-        TEST_ASSERT(!nmol->getNumConformers());
-      
-        delete nmol;
-        i++;
-      }
-    }
-    TEST_ASSERT(i==10);
-  }
-  {
-    std::ifstream strm(fname.c_str());
-    TDTMolSupplier suppl(&strm,false,"PN");
-    unsigned int i=0;
-    while (!suppl.atEnd()) {
-      ROMol *nmol = suppl.next();
-      if (nmol) {
-        std::string prop1,prop2;
-        TEST_ASSERT(nmol->getNumAtoms()>0);
-        TEST_ASSERT(nmol->hasProp("PN"));
-        TEST_ASSERT(nmol->hasProp("_Name"));
-        TEST_ASSERT(nmol->hasProp("MFCD"));
-
-        nmol->getProp("PN",prop1);
-        nmol->getProp("_Name",prop2);
-        TEST_ASSERT(prop1==prop2);
-      
-        // we didn't ask for 2D conformers, so there should be a property 2D:
-        TEST_ASSERT(nmol->hasProp("2D"));
-        // and no conformer:
-        TEST_ASSERT(!nmol->getNumConformers());
-      
-        delete nmol;
-        i++;
-      }
-    }
-    TEST_ASSERT(i==10);
-  }
-  return 1;
-}
-int testTDTSupplier2() {
-  std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
-  int i;
-  std::string prop1,prop2;
-  
-  TDTMolSupplier suppl(fname,"PN",2);
-  i=0;
-  while (!suppl.atEnd()) {
-    ROMol *nmol = suppl.next();
-    if (nmol) {
-      TEST_ASSERT(nmol->getNumAtoms()>0);
-      TEST_ASSERT(nmol->hasProp("PN"));
-      TEST_ASSERT(nmol->hasProp("_Name"));
-      TEST_ASSERT(nmol->hasProp("MFCD"));
-
-      nmol->getProp("PN",prop1);
-      nmol->getProp("_Name",prop2);
-      TEST_ASSERT(prop1==prop2);
-      
-      // we asked for 2D conformers, so there should be no property 2D:
-      TEST_ASSERT(!nmol->hasProp("2D"));
-      // and a conformer:
-      TEST_ASSERT(nmol->getNumConformers()==1);
-      // with id "2":
-      TEST_ASSERT(nmol->beginConformers()->get()->getId()==2);
-      
-      delete nmol;
-      i++;
-    }
-  }
-  TEST_ASSERT(i==10);
-  return 1;
-}
-int testTDTSupplier3() {
-  std::string data;
-  int i;
-  std::string prop1,prop2;
-  
-  TDTMolSupplier suppl;
-
-  data="$SMI<Cc1nnc(N)nc1C>\n"
-    "CAS<17584-12-2>\n"
-    "|\n"
-    "$SMI<Cc1n[nH]c(=O)nc1N>\n"
-    "CAS<~>\n"
-    "|\n"
-    "$SMI<Cc1n[nH]c(=O)[nH]c1=O>\n"
-    "CAS<932-53-6>\n"
-    "|\n"
-    "$SMI<Cc1nnc(NN)nc1O>\n"
-    "CAS<~>\n"
-    "|\n";
-  suppl.setData(data,"CAS");
-
-  i=0;
-  while (!suppl.atEnd()) {
-    ROMol *nmol = suppl.next();
-    if (nmol) {
-      TEST_ASSERT(nmol->getNumAtoms()>0);
-      TEST_ASSERT(nmol->hasProp("CAS"));
-      TEST_ASSERT(nmol->hasProp("_Name"));
-
-      nmol->getProp("CAS",prop1);
-      nmol->getProp("_Name",prop2);
-      TEST_ASSERT(prop1==prop2);
-      
-      // no conformers should have been read:
-      TEST_ASSERT(nmol->getNumConformers()==0);
-
-      delete nmol;
-      i++;
-    }
-  }
-  TEST_ASSERT(i==4);
-  TEST_ASSERT(suppl.length()==4);
-
-  // now make sure we can grab earlier mols (was sf.net issue 1904170):
-  ROMol *mol = suppl[0];
-  TEST_ASSERT(mol);
-  delete mol;
-
-  // make sure we can reset the supplier and still process it properly;
-  suppl.setData(data,"CAS");
-
-  i=0;
-  while (!suppl.atEnd()) {
-    ROMol *nmol = suppl.next();
-    if (nmol) {
-      TEST_ASSERT(nmol->getNumAtoms()>0);
-      TEST_ASSERT(nmol->hasProp("CAS"));
-      TEST_ASSERT(nmol->hasProp("_Name"));
-
-      nmol->getProp("CAS",prop1);
-      nmol->getProp("_Name",prop2);
-      TEST_ASSERT(prop1==prop2);
-      
-      // no conformers should have been read:
-      TEST_ASSERT(nmol->getNumConformers()==0);
-
-      delete nmol;
-      i++;
-    }
-  }
-  TEST_ASSERT(i==4);
-
-  return 1;
-}
-
-
 void testSDSupplierFromText() {
   std::string text;
   int i = 0;
@@ -1064,13 +893,6 @@ void testIssue265() {
   }
   TEST_ASSERT(ok);
 
-  try {
-    TDTMolSupplier reader(fname);
-    ok = false;
-  } catch (BadFileException &) {
-    ok=true;
-  }
-  TEST_ASSERT(ok);
 }
 
 void testSDErrorHandling() {
@@ -1277,63 +1099,6 @@ int testMixIterAndRandom() {
   TEST_ASSERT(ok);
   delete nSup;
 
-
-  fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
-  TDTMolSupplier *tSup;
-  tSup = new TDTMolSupplier(fname);
-  TEST_ASSERT(tSup);
-  TEST_ASSERT(tSup->length()==10);
-  mol=(*tSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms()==9);
-  delete mol;
-  delete tSup;
-
-  tSup = new TDTMolSupplier(fname);
-  TEST_ASSERT(tSup);
-  mol=(*tSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms()==9);
-  TEST_ASSERT(tSup->length()==10);
-  delete mol;
-  delete tSup;
-
-  tSup = new TDTMolSupplier(fname);
-  TEST_ASSERT(tSup);
-  mol=tSup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms()==9);
-  TEST_ASSERT(tSup->length()==10);
-  delete mol;
-  mol=(*tSup)[0];
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms()==9);
-  TEST_ASSERT(tSup->length()==10);
-  delete mol;
-  mol=tSup->next();
-  TEST_ASSERT(mol);
-  mol=tSup->next();
-  TEST_ASSERT(mol);
-  mol=tSup->next();
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms()==10);
-  delete tSup;
-  delete mol;
-
-  tSup = new TDTMolSupplier(fname);
-  TEST_ASSERT(tSup);
-  mol=0;
-  try {
-    mol=(*tSup)[20];
-    ok = false;
-  } catch (FileParseException &) {
-    ok=true;
-  }
-  TEST_ASSERT(ok);
-  delete tSup;
-
-
-    
   return 1;
 }
 
@@ -1509,49 +1274,6 @@ void testGetItemText() {
     molB = smisup.getItemText(9);
     TEST_ASSERT(molB=="10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
   }
-
-
-  {
-    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
-    TDTMolSupplier tdtsup(fname);
-    // make sure getItemText() works if we haven't read at all from the supplier:
-    // (this was sf.net issue 2632960)
-    molB = tdtsup.getItemText(0);
-    TEST_ASSERT(molB!="");
-  
-  }
-
-  {
-    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
-    TDTMolSupplier tdtsup(fname);
-    TEST_ASSERT(tdtsup.length()==10);
-  
-    molB = tdtsup.getItemText(0);
-    TEST_ASSERT(molB!="");
-
-    mol1 = tdtsup[0];
-    TEST_ASSERT(mol1);
-    smiles = MolToSmiles(*mol1, 1);
-    TEST_ASSERT(smiles=="Cc1nnc(N)nc1C");
-    TEST_ASSERT(mol1->getNumAtoms()==9);
-    delete mol1;
-
-    // make sure getItemText doesn't screw up next()
-    molB = tdtsup.getItemText(5);
-    mol1 = tdtsup.next();
-    TEST_ASSERT(mol1);
-    TEST_ASSERT(mol1->getNumAtoms()==9);
-    smiles = MolToSmiles(*mol1, 1);
-    TEST_ASSERT(smiles=="Cc1n[nH]c(=O)nc1N");
-    delete mol1;
-
-
-    // make sure getItemText() works on the last molecule
-    // (this was sf.net issue 1874882
-    molB = tdtsup.getItemText(9);
-    TEST_ASSERT(molB!="");
-    TEST_ASSERT(molB.substr(0,12)=="$SMI<Cc1n[nH");
-  }
 }
 
 
@@ -1686,21 +1408,6 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testIssue226();
   BOOST_LOG(rdErrorLog) <<"Finished: testIssue226()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testTDTSupplier1();
-  BOOST_LOG(rdErrorLog) <<"Finished: testTDTSupplier1()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testTDTSupplier2();
-  BOOST_LOG(rdErrorLog) <<"Finished: testTDTSupplier2()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testTDTSupplier3();
-  BOOST_LOG(rdErrorLog) <<"Finished: testTDTSupplier3()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";

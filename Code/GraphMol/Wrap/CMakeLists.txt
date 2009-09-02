@@ -12,8 +12,8 @@ rdkit_python_extension(rdmolops
      RDGeometry RDGeneral RDBoost )
 
 rdkit_python_extension(rdmolfiles
-  rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
-  SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp TDTWriter.cpp  
+  rdmolfiles.cpp SDMolSupplier.cpp 
+  SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
   DEST Chem 
   LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol 
      RDGeometry RDGeneral RDBoost )

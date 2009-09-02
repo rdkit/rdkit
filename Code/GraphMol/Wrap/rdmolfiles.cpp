@@ -57,33 +57,6 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
    
-  ROMol *MolFromTPLFile(const char *filename, bool sanitize=true,
-			bool skipFirstConf=false ) {
-    RWMol *newM;
-    try {
-      newM = TPLFileToMol(filename,sanitize,skipFirstConf);
-    } catch (RDKit::BadFileException &e) {
-      PyErr_SetString(PyExc_IOError,e.message());
-      throw python::error_already_set();
-    } catch (...) {
-      newM=0;
-    }
-    return static_cast<ROMol *>(newM);
-  }
-
-  ROMol *MolFromTPLBlock(std::string tplBlock, bool sanitize=true,
-			bool skipFirstConf=false ) {
-    std::istringstream inStream(tplBlock);
-    unsigned int line = 0;
-    RWMol *newM;
-    try {
-      newM = TPLDataStreamToMol(&inStream,line,sanitize,skipFirstConf);
-    } catch (...) {
-      newM=0;
-    }
-    return static_cast<ROMol *>(newM);
-  }
-
   ROMol *MolFromMolFile(const char *molFilename, bool sanitize=true, bool removeHs=true) {
     RWMol *newM;
     try {
@@ -108,30 +81,6 @@ namespace RDKit{
     }
     return static_cast<ROMol *>(newM);
   }
-
-  ROMol *MolFromMol2File(const char *molFilename, bool sanitize=true, bool removeHs=true) {
-    RWMol *newM;
-    try {
-      newM = Mol2FileToMol(molFilename, sanitize,removeHs);
-    } catch (RDKit::BadFileException &e) {
-      PyErr_SetString(PyExc_IOError,e.message());
-      throw python::error_already_set();
-    } catch (...) {
-      newM=0;
-    }
-    return static_cast<ROMol *>(newM);
-  }
-
-  ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize=true, bool removeHs=true){
-    std::istringstream inStream(mol2Block);
-    RWMol *newM;
-    try {
-      newM = Mol2DataStreamToMol(inStream, sanitize, removeHs);
-    } catch (...) {
-      newM=0;
-    }
-    return static_cast<ROMol *>(newM);
-  }
 }
 
 // MolSupplier stuff
@@ -139,13 +88,11 @@ namespace RDKit{
 void wrap_compressedsdsupplier();
 #endif
 void wrap_sdsupplier();
-void wrap_tdtsupplier();
 void wrap_smisupplier();
 
 // mol writer stuff
 void wrap_smiwriter();
 void wrap_sdwriter();
-void wrap_tdtwriter();
 
 
 BOOST_PYTHON_MODULE(rdmolfiles)
@@ -159,55 +106,6 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);
   python::register_exception_translator<RDKit::BadFileException>(&rdBadFileExceptionTranslator);
-
-
-  docString="Construct a molecule from a TPL file.\n\n\
-  ARGUMENTS:\n\
-\n\
-    - fileName: name of the file to read\n\
-\n\
-    - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to True.\n\
-\n\
-    - skipFirstConf: (optional) skips reading the first conformer.\n\
-      Defaults to False.\n\
-      This should be set to True when reading TPLs written by \n\
-      the CombiCode.\n\
-\n\
-  RETURNS:\n\
-\n\
-    a Mol object, None on failure.\n\
-\n";  
-  python::def("MolFromTPLFile", RDKit::MolFromTPLFile,
-	      (python::arg("fileName"),
-	       python::arg("sanitize")=true,
-	       python::arg("skipFirstConf")=false),
-	      docString.c_str(),
-	      python::return_value_policy<python::manage_new_object>());
-
-  docString="Construct a molecule from a TPL block.\n\n\
-  ARGUMENTS:\n\
-\n\
-    - fileName: name of the file to read\n\
-\n\
-    - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to True.\n\
-\n\
-    - skipFirstConf: (optional) skips reading the first conformer.\n\
-      Defaults to False.\n\
-      This should be set to True when reading TPLs written by \n\
-      the CombiCode.\n\
-\n\
-  RETURNS:\n\
-\n\
-    a Mol object, None on failure.\n\
-\n";  
-  python::def("MolFromTPLBlock", RDKit::MolFromTPLBlock,
-	      (python::arg("tplBlock"),
-	       python::arg("sanitize")=true,
-	       python::arg("skipFirstConf")=false),
-	      docString.c_str(),
-	      python::return_value_policy<python::manage_new_object>());
 
   docString="Construct a molecule from a Mol file.\n\n\
   ARGUMENTS:\n\
@@ -254,62 +152,6 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("removeHs")=true),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
-
-  docString="Construct a molecule from a Tripos Mol2 file.\n\n\
-  NOTE:\n \
-    The parser expects the atom-typing scheme used by Corina.\n\
-    Atom types from Tripos' dbtranslate are less supported.\n\
-    Other atom typing schemes are unlikely to work.\n\
-\n\
-  ARGUMENTS:\n                                  \
-\n\
-    - fileName: name of the file to read\n\
-\n\
-    - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to true.\n\
-\n\
-    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
-      This only make sense when sanitization is done.\n\
-      Defaults to true.\n\
-\n\
-  RETURNS:\n\
-\n\
-    a Mol object, None on failure.\n\
-\n";  
-  python::def("MolFromMol2File", RDKit::MolFromMol2File,
-	      (python::arg("molFileName"),
-	       python::arg("sanitize")=true,
-               python::arg("removeHs")=true),
-	      docString.c_str(),
-	      python::return_value_policy<python::manage_new_object>());
-  docString="Construct a molecule from a Tripos Mol2 block.\n\n\
-  NOTE:\n \
-    The parser expects the atom-typing scheme used by Corina.\n\
-    Atom types from Tripos' dbtranslate are less supported.\n\
-    Other atom typing schemes are unlikely to work.\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol2Block: string containing the Mol2 block\n\
-\n\
-    - sanitize: (optional) toggles sanitization of the molecule.\n\
-      Defaults to 1.\n\
-\n\
-    - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
-      This only make sense when sanitization is done.\n\
-      Defaults to true.\n\
-\n\
-  RETURNS:\n\
-\n\
-    a Mol object, None on failure.\n\
-\n";  
-  python::def("MolFromMol2Block", RDKit::MolFromMol2Block,
-	      (python::arg("molBlock"),
-	       python::arg("sanitize")=true,
-	       python::arg("removeHs")=true),
-	      docString.c_str(),
-	      python::return_value_policy<python::manage_new_object>());
-
 
   docString="Returns the a Mol block for a molecule\n\
   ARGUMENTS:\n\
@@ -404,48 +246,6 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::def("MolToSmarts",RDKit::MolToSmarts,
 	      (python::arg("mol"),python::arg("isomericSmiles")=false),
 	      docString.c_str());
-
-  docString="Writes a molecule to a TPL file.\n\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule\n\
-    - fileName: name of the file to write\n\
-    - partialChargeProp: name of the property to use for partial charges\n\
-      Defaults to '_GasteigerCharge'.\n\
-    - writeFirstConfTwice: Defaults to False.\n\
-      This should be set to True when writing TPLs to be read by \n\
-      the CombiCode.\n\
-\n";  
-  python::def("MolToTPLFile", RDKit::MolToTPLFile,
-	      (python::arg("mol"),
-	       python::arg("fileName"),
-	       python::arg("partialChargeProp")="_GasteigerCharge",
-	       python::arg("writeFirstConfTwice")=false),
-	      docString.c_str());
-
-  docString="Returns the Tpl block for a molecule.\n\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule\n\
-    - partialChargeProp: name of the property to use for partial charges\n\
-      Defaults to '_GasteigerCharge'.\n\
-    - writeFirstConfTwice: Defaults to False.\n\
-      This should be set to True when writing TPLs to be read by \n\
-      the CombiCode.\n\
-\n\
-  RETURNS:\n\
-\n\
-    a string\n\
-\n";  
-  python::def("MolToTPLBlock", RDKit::MolToTPLText,
-	      (python::arg("mol"),
-	       python::arg("partialChargeProp")="_GasteigerCharge",
-	       python::arg("writeFirstConfTwice")=false),
-	      docString.c_str());
-
-
-  
-
   
   /********************************************************
    * MolSupplier stuff
@@ -454,7 +254,6 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   wrap_compressedsdsupplier();
 #endif
   wrap_sdsupplier();
-  wrap_tdtsupplier();
   wrap_smisupplier();
 
   /********************************************************
@@ -462,11 +261,6 @@ BOOST_PYTHON_MODULE(rdmolfiles)
    *******************************************************/
   wrap_smiwriter();
   wrap_sdwriter();
-  wrap_tdtwriter();
-
-
-  
-
 }
 
 

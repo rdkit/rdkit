@@ -1408,14 +1408,6 @@ void testMissingFiles(){
   }
   TEST_ASSERT(ok);
 
-  ok=false;
-  try{
-    m = TPLFileToMol(fName);
-  } catch (BadFileException &e){
-    ok=true;
-  }
-  TEST_ASSERT(ok);
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
