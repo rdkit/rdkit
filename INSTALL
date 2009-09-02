@@ -6,6 +6,9 @@
    ** The following are required if you are planning on using the Python wrappers:
      *** The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
 
+ * extra pieces for cmake:
+   ** download support for bison and flex from tracker: http://public.kitware.com/Bug/view.php?id=4018 and put somewhere cmake can find it (I used /usr/share/cmake).
+
 == Installing Boost ==
   * download the boost source distribution from [http://www.boost.org the boost web site]
   * extract the source to a _non-temporary_ location on your machine, you're going to need it to build the RDKit as well as boost. (e.g. `/usr/local/src/boost_1_39_0`)
