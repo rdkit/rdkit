@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.6)
 project (RDKit)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
 #------- 
 # Config variables:
 set(RDKit_LibDir $ENV{RDBASE}/bin)
-# pull in python:
 set(RDKit_PythonDir $ENV{RDBASE}/rdkit)
-
 
 include(RDKitUtils.cmake)
 
@@ -14,6 +14,8 @@ include(RDKitUtils.cmake)
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_PATH})
 link_directories(${PYTHON_LIBRARIES})
+find_package(NumPy REQUIRED)
+include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
 
 # pull in boost:
 find_package(Boost COMPONENTS python thread REQUIRED)

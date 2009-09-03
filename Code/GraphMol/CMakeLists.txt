@@ -4,6 +4,8 @@ add_library(GraphMol SHARED Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp MolOps
   Aromaticity.cpp Kekulize.cpp MolDiscriminators.cpp ConjugHybrid.cpp
   AddHs.cpp RankAtoms.cpp Matrices.cpp Chirality.cpp RingInfo.cpp
   Conformer.cpp )
+target_link_libraries(GraphMol RDGeometry RDGeneral )
+
 INSTALL(TARGETS GraphMol LIBRARY DESTINATION ${RDKit_LibDir})
 
 add_subdirectory(Depictor)
