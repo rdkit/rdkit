@@ -430,7 +430,7 @@ if __name__=='__main__':
     print >>sys.stderr,"This will generate %d molecules."%count
     print >>sys.stderr,"Continue anyway? [no] ",
     sys.stderr.flush()
-    ans = sys.stdin.readline()
+    ans = sys.stdin.readline().strip()
     if ans not in ('y','yes','Y','YES'):
       sys.exit(0)
 
