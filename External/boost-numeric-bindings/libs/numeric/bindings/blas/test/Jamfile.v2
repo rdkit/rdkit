@@ -1,0 +1,22 @@
+# Copyright Thomas Klimpel 2008.
+# Use, modification and distribution are subject to the
+# Boost Software License, Version 1.0. (See accompanying file
+# LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+project libs/numeric/bindings/blas/test : requirements
+        <include>$(BOOST_ROOT)
+        <include>$(BOOST)
+        <library>/numeric-bindings//blas_lib ;
+
+import testing ;
+
+alias bindings-blas-tests :
+    [ run scal.cpp ]
+    [ run blas1.cpp ]
+    [ link blas2.cpp ]
+    [ run blas3.cpp ]
+    [ run ublas_slice.cpp ]
+    [ run vector2.cpp ]
+    [ run dense_matrix_stride.cpp ]
+;
+

@@ -1,0 +1,65 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="boost.css">
+<title>Boost.Numeric.Bindings.Blas</title>
+</head>
+
+<body link="#0000ff" vlink="#800080">
+<table border="0" cellpadding="7" cellspacing="0" width="100%" summary="header">
+<tr>
+<td valign="top" width="300">
+<h3><a href="../../../index.htm"><img height="86" width="277" alt="C++ Boost" src="../../../c++boost.gif" border="0"></a></h3>
+</td>
+<td valign="top">
+<h1 align="center">Boost.Numeric.Bindings.Blas</h1>
+</td>
+</tr>
+</table>
+<hr>
+<h2>Content</h2>
+<ol>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#mapping">Mapping onto standard BLAS functions</a></li>
+<ol>
+<li>Fortran symbols</li>
+<li>C signatures</li>
+<li>Overloads</li>
+<li>High level API</li>
+</ol>
+</ol>
+
+<h2><a name="introduction">1. Introduction</a></h2>
+<p>For calculating <code> y += a * x </code> where <code>y</code> 
+and <code>x</code> are vectors of doubles and <code>a</code> a scalar, the BLAS daxpy function can be used. On many systems optimised BLAS libraries are available which provide optimal performance. The BLAS bindings can be used to call these functions on uBLAS vectors, std::vector's and many other C++ classes modelling vectors.
+
+
+<h2><a name="#mapping">2. Mapping onto standard BLAS functions</a></h2>
+The bindings consist of a number of different layers to provide maximal flexibility. For instance, the bindings can be used from within C. From within C++ overloaded functions are available and on a next level, increments, leading-dimensions etc will be extracted from the matrix and vector classes.
+
+<h3>2.1. Fortran symbols</h3>
+<p>Many BLAS implementations are written in Fortran. Therefor, when calling these functions from C or C++, the way these symbols are written in the object file (by the Fortran compiler) need to be matched. Many compilers for instance add an extra understore to the function name or store function names always in capitals.
+<p>To match the function names as stored in the BLAS library, a macro <code>FORTRAN_ID</code> can be used on the function name. This macro will, dependent on the toolset, change the function-name to match the corresponding function in the BLAS library.
+<p>See blas_names.h
+
+<h3>2.2. C signatures</h3>
+<p>At the second level, C signatures are provided which map directly onto the BLAS functions. The mapping from Fortran to C types is as follows:
+<table border=1>
+<tr><td>Fortran type<td>Mapped to C type
+<tr><td>REAL<td>float
+<tr><td>DOUBLE<td>double
+<tr><td>COMPLEX<td>fcomplex_t
+<tr><td>COMPLEX*16<td>dcomplex_t
+</table>
+Due to the lack of a complex datatype in C, fcomplex_t and dcomplex_t are defined in <code>traits/type.h</code>. These are respectively typedefs to float and double but pointers to fcomplex_ or dcomplex_t are supposed to point to two consecutive floating points in memory that represent the real and imaginary value.
+<p>Note that all arguments are passed by reference to match the calling conventions used by Fortran compilers. Note also that these signatures are const-correct although const-ness is not mentioned in the BLAS standard. If not const-correct however, using the bindings would require to cast many consts away.
+<p>See blas.h
+
+<h3>2.3. Overloads</h3>
+<p>The C layer of bindings provide different functions for every operation with different datatypes. To provide generics, at this level overloaded functions are available that can be called for all supported datatypes.
+<p>See blas_overloads.hpp
+
+<h3>2.4. High level API</h3>
+<p>The flexibility of the BLAS functions also have a price. BLAS functions allow vectors to have increments different from one or only manipulate parts of matrices (taking into account the leading dimension of the matrix). This requires however all functions to have many arguments. But many of the information that needs to be passes on to BLAS is already contained in C++ matrix libraries. Therefor high level bindings are provided which require you to only specify the containers and the operation you want to perform on them. 
+<p>See blas1.hpp, blas2.hpp and blas3.hpp
+
+</body>

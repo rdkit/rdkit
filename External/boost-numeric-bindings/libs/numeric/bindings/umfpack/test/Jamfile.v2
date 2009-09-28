@@ -1,0 +1,20 @@
+# Copyright Thomas Klimpel 2008.
+# Use, modification and distribution are subject to the
+# Boost Software License, Version 1.0. (See accompanying file
+# LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+project libs/numeric/bindings/umfpack/test : requirements
+        <include>$(BOOST_ROOT)
+        <include>$(BOOST)
+        <library>/numeric-bindings//umfpack_lib ;
+
+import testing ;
+
+alias bindings-umfpack-tests :
+    [ run umf4.cc : a : in1 : : umf4_in1 ]
+    [ run umf4.cc : a : in4 : : umf4_in4 ]
+    [ run umfpack_di_demo.cc : -y ]
+    [ run umfpack_simple.cc ]
+    [ run umfpack_zi_demo.cc : -y ]
+;
+

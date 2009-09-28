@@ -1,0 +1,731 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="boost.css">
+<title>Boost.Numeric.Bindings.UMFPACK</title>
+</head>
+
+<body link="#0000ff" vlink="#800080">
+<table border="0" cellpadding="7" cellspacing="0" width="100%" summary="header">
+<tr>
+<td valign="top" width="300">
+<h3><a href="../../../index.htm"><img height="86" width="277" alt="C++ Boost" src="../../doc/c++boost.gif" border="0"></a></h3>
+</td>
+<td valign="center">
+<h1 align="center">Boost.Numeric.Bindings.UMFPACK</h1>
+</td>
+</tr>
+</table>
+
+<hr>
+
+<br>
+Back to <a href="../../doc/index.html">Bindings Library Synopsis</a>
+
+<h2>Contents</h2>
+<ol>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#using_umfpack">Using UMFPACK bindings</a></li>
+<ol>
+<li><a href="#lineqs">Solving Linear Systems</a>
+<li><a href="#func_call">Function Call Syntax and Semantics</a>
+<ol>
+<li><a href="#symb"><code>symbolic()</code></a>
+<li><a href="#num"><code>numeric()</code></a>
+<li><a href="#fact"><code>factor()</code></a>
+<li><a href="#solve"><code>solve()</code></a>
+<li><a href="#usolve"><code>umf_solve()</code></a>
+<li><a href="#free"><code>free()</code></a>
+<li><a href="#defaults"><code>defaults()</code></a>
+<li><a href="#scale"><code>scale()</code></a>
+<li><a href="#r_stat"><code>report_status()</code></a>
+<li><a href="#r_cont"><code>report_control()</code></a>
+<li><a href="#r_info"><code>report_info()</code></a>
+<li><a href="#r_matr"><code>report_matrix()</code></a>
+<li><a href="#r_vct"><code>report_vector()</code></a>
+<li><a href="#r_sym"><code>report_symbolic()</code></a>
+<li><a href="#r_num"><code>report_numeric()</code></a>
+<li><a href="#r_perm"><code>report_permutation()</code></a>
+</ol>
+</ol>
+<li><a href="#storage">Matrix Storage Schemes</a></li>
+<li><a href="#types">Associted Types</a>
+<li><a href="#copyright">UMFPACK Copyright, Licence and Availability</a>
+</ol>
+
+<hr>
+
+<h2><a name="introduction">1. Introduction</a></h2>
+
+<a href="http://www.cise.ufl.edu/research/sparse/umfpack">UMFPACK</a> 
+(current version <a href = "http://www.cise.ufl.edu/research/sparse/umfpack/v4.1/UMFPACKv4.1/UMFPACK/Doc/ChangeLog">4.1</a>) 
+is a set of functions for the direct solution of 
+systems of linear equations <code>Ax=b</code> and related systems, where <code>A</code> is
+sparse and unsymmetric coefficient matrix, <code>b</code> is right-hand side vector and
+<code>x</code> is vector of unknowns. 
+Matrix <code>A</code> can be square or rectangular, regular or
+singular. 
+Rectangular matrices can only be factorised; to solve the system
+<code>Ax=b</code>, matrix <code>A</code> must be square. 
+(If solving system with singular <code>A</code>, divide by zero will
+occur and solutions will contain <code>Inf</code>s and/or
+<code>NaN</code>s, but parts of the solution may be valid.)
+Matrix elements can be real (C/C++ type <code>double</code>) or
+complex (real and imaginary part are represented by <code>double</code>s). 
+
+<p>
+UMFPACK is based on the 
+<b>U</b>nsymmetric-pattern <b>M</b>ulti<b>F</b>rontal method. 
+It factorises <code>PAQ</code>, <code>PRAQ</code> or
+<code>PR<sup>-1</sup>AQ</code> into <code>LU</code>, where: 
+<ul>
+<li><code>P</code> and <code>Q</code> are permutation matrices -- 
+column ordering <code>Q</code> is selected to give a good <i>a
+priori</i> upper bound on fill-in and is refined during numerical
+factorisation, while the row ordering <code>P</code> has the dual 
+role of preserving sparsity and maintaining numerical accuracy via
+relaxed partial pivoting and row interchanges; 
+<li><code>R</code> is a diagonal matrix of row scaling factors; 
+<li><code>L</code> and <code>U</code> are lower and upper triangular matrices. 
+</ul>
+Method is described in more details in:
+Timothy A. Davis, <i>A column pre-ordering strategy for the
+unsymmetric-pattern multifrontal method</i>, Univ. of Florida, CISE
+Dept., Technical report TR-03-006, 2003
+(<a href = "http://www.cise.ufl.edu/research/sparse/umfpack/v4.1/UMFPACKv4.1/Papers/umf4.pdf">PDF</a>
+or 
+<a href = "http://www.cise.ufl.edu/research/sparse/umfpack/v4.1/UMFPACKv4.1/Papers/umf4.ps">PS</a>). 
+
+<p>
+UMFPACK (version 4.1) is written in ANSI C. <a name="user_guide">Interface</a> of the
+so-called primary routines, with a simple example, is described in:
+Timothy A. Davis, <i>UMFPACK Version 4.1 Quick Start Guide</i>, TR-03-009  
+(<a href = "http://www.cise.ufl.edu/research/sparse/umfpack/v4.1/UMFPACKv4.1/UMFPACK/Doc/QuickStart.pdf">PDF</a>);
+see also: Timothy A. Davis, <i>Algorithm 8xx: UMFPACK V4.1, an unsymmetric-pattern multifrontal method</i>,  TR-03-007 
+(<a href = "http://www.cise.ufl.edu/research/sparse/umfpack/v4.1/UMFPACKv4.1/Papers/umf4algo.pdf">PDF</a> 
+or 
+<a href = "http://www.cise.ufl.edu/research/sparse/umfpack/v4.1/UMFPACKv4.1/Papers/umf4algo.ps">PS</a>).
+Detailed description of the C interface is given in:
+Timothy A. Davis, <i>UMFPACK Version 4.1 User Guide</i>, TR-03-008 
+(<a href = "http://www.cise.ufl.edu/research/sparse/umfpack/v4.1/UMFPACKv4.1/UMFPACK/Doc/UserGuide.pdf">PDF</a>). 
+
+<p>
+UMFPACK Bindings Library provides generic, higher level interface to UMFPACK
+functions. By `generic' we mean that bindings are based on
+<a href="../../traits/doc/index.html">traits</a> and therefore can be used with various
+matrix and vector classes, and by `higher level' that some
+complexities of the C interface are hidden from the user. 
+
+
+<h2><a name="using_umfpack">2. Using UMFPACK bindings</a></h2>
+
+All header files are in the directory <code>boost/numeric/bindings/umfpack</code>. 
+C++ program should include <code>umfpack.hpp</code>. 
+All `public'
+functions are in the namespace <code>boost::numeric::bindings::umfpack</code>. 
+
+<p>
+The location of UMFPACK header files may depend on your installation, so
+probably you should edit <code>umfpack_incl.hpp</code> providing your path
+to UMFPACK's header <code>umfpack.h</code>. 
+
+<h3><a name="lineqs">2.1 Solving Linear Systems</a></h3>
+
+Let's start with a short program which illustrates the basic usage of
+UMFPACK bindings (this is an adaptation of the simple introductory example
+from <a href = "#user_guide">UMFPACK documentation</a>): 
+<pre class="programlisting">
+    #include &lt;iostream&gt;
+    #include &lt;boost/numeric/bindings/traits/ublas_vector.hpp&gt;
+    #include &lt;boost/numeric/bindings/traits/ublas_sparse.hpp&gt;
+    #include &lt;boost/numeric/bindings/umfpack/umfpack.hpp&gt;
+    #include &lt;boost/numeric/ublas/io.hpp&gt;
+
+    namespace ublas = boost::numeric::ublas;
+    namespace umf = boost::numeric::bindings::umfpack;
+
+    int main() {
+
+      ublas::compressed_matrix&lt;double, ublas::column_major, 0,
+       ublas::unbounded_array&lt;int&gt;, ublas::unbounded_array&lt;double&gt; &gt; A (5,5,12); 
+      ublas::vector&lt;double&gt; B (5), X (5);
+
+      A(0,0) = 2.; A(0,1) = 3; 
+      A(1,0) = 3.; A(1,2) = 4.; A(1,4) = 6;
+      A(2,1) = -1.; A(2,2) = -3.; A(2,3) = 2.;
+      A(3,2) = 1.;
+      A(4,1) = 4.; A(4,2) = 2.; A(4,4) = 1.; 
+
+      B(0) = 8.; B(1) = 45.; B(2) = -3.; B(3) = 3.; B(4) = 19.; 
+
+      umf::symbolic_type&lt;double&gt; Symbolic;
+      umf::numeric_type&lt;double&gt; Numeric;
+
+      umf::symbolic (A, Symbolic); 
+      umf::numeric (A, Symbolic, Numeric); 
+      umf::solve (A, X, B, Numeric);   
+
+      std::cout << X << std::endl;  // output: [5](1,2,3,4,5)
+    } 
+</pre> 
+Solution of the linear system <code>AX = B</code> consists of three
+steps: symbolic analysis of the matrix <code>A</code>, numerical
+factorisation and backward substition. In more details: 
+<ol>
+<li>Function <b><code>symbolic()</code></b> 
+pre-orders the columns of <code>A</code> to reduce fill-in (using COLAMD, AMD
+or user-provided ordering), finds the supernodal column elimination
+tree and post-orders the tree. 
+(Matrix <code>A</code> can be rectangular or square.) 
+Symbolic analysis details are returned in an object of type <code>symbolic_type&lt;&gt;</code> (see <a href = "#types">sec. 4</a>) which is passed by reference.  
+
+<li>Function <b><code>numeric()</code></b> 
+performs the numerical factorisation <code>PAQ = LU</code>, 
+<code>PRAQ = LU</code> or <code>PR<sup>-1</sup>AQ = LU</code>, 
+using the symbolic analysis previously computed by <code>symbolic()</code>. 
+Numerical factorisation is returned in an object of type <code>numeric_type&lt;&gt;</code> (see <a href = "#types">sec. 4</a>)
+which is passed by reference.  
+
+<li>Function <b><code>solve()</code></b> 
+solves a linear system for the solution <code>X</code>, 
+using numerical factorisation previously computed by <code>numeric()</code>.
+Only square systems are handled. Optionally, function performs 
+iterative refinement. 
+
+</ol>
+
+<p>
+Functions <code>symbolic()</code>, <code>numeric()</code> and
+<code>solve()</code> correspond to UMFPACK's functions 
+<code>umfpack_*_symbolic()</code>/<code>umfpack_*_qsymbolic()</code>, 
+<code>umfpack_*_numeric()</code> and <code>umfpack_*_solve()</code>,
+where <code>*</code> can be <code>di</code> or <code>zi</code>,
+that is, matrix and vector elements can be <code>double</code>s or 
+complex numbers represented by two <code>double</code>s, while
+indices, sizes etc. have type <code>int</code>. 
+
+<p>
+Bindings provide two additional functions: 
+<ul>
+<li><b><code>factor()</code></b> combines symbolic analysis and
+numerical factorisation (<code>symbolic_type&lt;&gt;</code> object is
+used only internally): 
+<pre class="programlisting">
+     // ...
+     umf::numeric_type<double> Numeric;
+
+     umf::factor (A, Numeric);
+     umf::solve (A, X, B, Numeric);
+</pre>
+<li><b><code>umf_solve()</code></b> combines all three steps 
+(both <code>symbolic_type&lt;&gt;</code> and <code>numeric_type&lt;&gt;</code> objects are used internally): 
+<pre class="programlisting">
+     // ...
+     umf::umf_solve (A, X, B);
+</pre>
+</ul> 
+
+<h3><a name="func_call">2.2 Function Call Syntax and Semantics</a></h3>
+
+Used symbols: 
+<p>
+<table border=1>
+<tr><th>Symbol<th>Type
+<tr><td><code>status, sys</code> <td><code>int</code>
+<tr><td><code>A</code> <td>matrix
+(see <a href = "#storage">sec. 3</a>)
+<tr><td><code>B</code>, <code>X</code> <td> vector
+<tr><td><code>Qinit</code> <td> vector of <code>int</code>s 
+<tr><td><code>Symbolic</code> <td><code>symbolic_type&lt;&gt;</code> 
+(see <a href = "#types">sec. 4</a>)
+<tr><td><code>Numeric</code> <td><code>numeric_type&lt;&gt;</code>
+(see <a href = "#types">sec. 4</a>)
+<tr><td><code>Control</code> <td><code>control_type&lt;&gt;</code>
+(see <a href = "#types">sec. 4</a>)
+<tr><td><code>Info</code> <td><code>info_type&lt;&gt;</code>
+(see <a href = "#types">sec. 4</a>).
+</table>
+
+<p> 
+For possible values assigned to <code>status</code> 
+see <a href = "#user_guide">UMFPACK User Guide</a>.
+
+<h4><a hname="symb">2.2.1 <code>symbolic()</code></a></h4>
+
+Performs symbolic analysis. (Calls <code>umfpack_*_symbolic()</code> or
+<code>umfpack_*_qsymbolic()</code>.)
+
+<p>
+Syntax:
+<p>
+<table border=1>
+<tr><td>1<td><code>&nbsp;&nbsp;status = symbolic (A, Symbolic);</code>
+<tr><td>2<td><code>&nbsp;&nbsp;status = symbolic (A, Symbolic, Control);</code>
+<tr><td>3<td><code>&nbsp;&nbsp;status = symbolic (A, Symbolic, Control, Info);</code>
+<tr><td>4<td><code>&nbsp;&nbsp;status = symbolic (A, Qinit, Symbolic);</code>
+<tr><td>5<td><code>&nbsp;&nbsp;status = symbolic (A, Qinit, Symbolic, Control);</code>
+<tr><td>6<td><code>&nbsp;&nbsp;status = symbolic (A, Qinit, Symbolic, Control, Info);</code>&nbsp;&nbsp;
+</table>
+
+<p>
+Symbolic analysis details are returned in <code>Symbolic</code>.
+
+<p>
+1, 2, 3  use COLAMD or AMD for column pre-ordering, while 4, 5, 6
+use pre-ordering given in <code>Qinit</code>  (for more details
+see <a href = "#user_guide">UMFPACK documentation</a>).
+
+<p>
+1, 4 use default control settings; 2, 3, 5, 6 use control settings
+given in <code>Control</code>.
+
+<p>
+3, 6 return statistics about ordering in <code>Info</code>. 
+
+<h4><a hname="num">2.2.2 <code>numeric()</code></a></h4>
+
+Performs numerical factorisation using <code>Symbolic</code>
+computed previously by <code>symbolic()</code>. (Calls <code>umfpack_*_numeric()</code>).
+
+<p>
+Syntax:
+<p> 
+<table border=1>
+<tr><td>1<td><code>&nbsp;&nbsp;status = numeric (A, Symbolic, Numeric);</code>
+<tr><td>2<td><code>&nbsp;&nbsp;status = numeric (A, Symbolic, Numeric, Control);</code>
+<tr><td>3<td><code>&nbsp;&nbsp;status = numeric (A, Symbolic, Numeric, Control, Info);</code>&nbsp;&nbsp;
+</table>
+
+<p>
+Numerical factorisation is returned in <code>Numeric</code>.
+
+
+<p>
+1 uses default control settings; 2, 3 use control settings
+given in <code>Control</code>.
+
+<p>
+3 returns statistics about factorisation in <code>Info</code>. 
+
+
+<h4><a hname="fact">2.2.3 <code>factor()</code></a></h4>
+
+Performs symbolic analysis (using COLAMD or AMD) and numerical factorisation. 
+(Calls <code>umfpack_*_symbolic()</code> or
+<code>umfpack_*_qsymbolic()</code> and then <code>umfpack_*_numeric()</code>.)
+
+<p>
+Syntax:
+<p> 
+<table border=1>
+<tr><td>1<td><code>&nbsp;&nbsp;status = factor (A, Numeric);</code>
+<tr><td>2<td><code>&nbsp;&nbsp;status = factor (A, Numeric, Control);</code>
+<tr><td>3<td><code>&nbsp;&nbsp;status = factor (A, Numeric, Control, Info);</code>&nbsp;&nbsp;
+</table>
+
+<p>
+Numerical factorisation is returned in <code>Numeric</code>.
+
+<p>
+1 uses default control settings; 2, 3 use control settings
+given in <code>Control</code>.
+
+<p>
+3 returns statistics about factorisation in <code>Info</code>. 
+
+<h4><a hname="solve">2.2.4 <code>solve()</code></a></h4>
+
+Solves the linear system <code>AX = B</code> or related systems (see
+below) using <code>Numeric</code> computed previously by
+<code>numeric()</code> or <code>factor()</code>. 
+(Calls <code>umfpack_*_solve()</code>).
+
+<p>
+Syntax:
+<p> 
+<table border=1>
+<tr><td>1<td><code>&nbsp;&nbsp;status = solve (A, X, B, Numeric);</code>
+<tr><td>2<td><code>&nbsp;&nbsp;status = solve (A, X, B, Numeric, Control);</code>
+<tr><td>3<td><code>&nbsp;&nbsp;status = solve (A, X, B, Numeric, Control, Info);</code>&nbsp;&nbsp;
+<tr><td>4<td><code>&nbsp;&nbsp;status = solve (sys, A, X, B, Numeric);</code>
+<tr><td>5<td><code>&nbsp;&nbsp;status = solve (sys, A, X, B, Numeric, Control);</code>
+<tr><td>6<td><code>&nbsp;&nbsp;status = solve (sys, A, X, B, Numeric, Control, Info);</code>&nbsp;&nbsp;
+</table>
+
+<p> 
+1, 2, 3 solve system <code>AX = B</code>; 4, 5, 6 solve system denoted
+by <code>sys</code>: 
+
+<p>
+<p> 
+<table border=1>
+<tr><th><code>sys</code><th>System
+<tr><td><code>UMFPACK_A</code><td><code>AX = B</code>
+<tr><td><code>UMFPACK_At</code><td><code>A<sup>H</sup>X = B</code>
+<tr><td><code>UMFPACK_Aat</code><td><code>A<sup>T</sup>X = B</code>
+<tr><td><code>UMFPACK_Pt_L</code><td><code>P<sup>T</sup>LX = B</code>
+<tr><td><code>UMFPACK_L</code><td><code>LX = B</code>
+<tr><td><code>UMFPACK_Lt_P</code><td><code>L<sup>H</sup>PX = B</code>
+<tr><td><code>UMFPACK_Lat_P</code><td><code>L<sup>T</sup>PX = B</code>
+<tr><td><code>UMFPACK_Lt</code><td><code>L<sup>H</sup>X = B</code>
+<tr><td><code>UMFPACK_Lat</code><td><code>L<sup>T</sup>X = B</code>
+<tr><td><code>UMFPACK_U_Qt</code><td><code>UQ<sup>T</sup>X = B</code>
+<tr><td><code>UMFPACK_U</code><td><code>UX = B</code>
+<tr><td><code>UMFPACK_Q_Ut</code><td><code>QU<sup>H</sup>X = B</code>
+<tr><td><code>UMFPACK_Q_Uat</code><td><code>QU<sup>T</sup>X = B</code>
+<tr><td><code>UMFPACK_Ut</code><td><code>U<sup>H</sup>X = B</code>
+<tr><td><code>UMFPACK_Uat</code><td><code>U<sup>T</sup>X = B</code>
+</table> 
+
+<p>
+1, 4 use default control settings; 2, 3, 5, 6 use control settings
+given in <code>Control</code>.
+
+<p>
+3, 6 return statistics about ordering in <code>Info</code>. 
+
+<h4><a hname="usolve">2.2.5 <code>umf_solve()</code></a></h4>
+
+Performs symbolic analysis and numerical factorisation and then solves 
+the linear system <code>AX = B</code>. 
+(Calls
+<code>umfpack_*_symbolic()</code>/<code>umfpack_*_qsymbolic()</code>,
+<code>umfpack_*_numeric()</code> and <code>umfpack_*_solve()</code>.)
+
+
+<p>
+Syntax:
+<p> 
+<table border=1>
+<tr><td>1<td><code>&nbsp;&nbsp;status = umf_solve (A, X, B);</code>
+<tr><td>2<td><code>&nbsp;&nbsp;status = umf_solve (A, X, B, Control);</code>
+<tr><td>3<td><code>&nbsp;&nbsp;status = umf_solve (A, X, B, Control, Info);</code>&nbsp;&nbsp;
+</table>
+
+<p>
+1 uses default control settings; 2, 3 use control settings
+given in <code>Control</code>.
+
+<p>
+3 returns statistics about factorisation in <code>Info</code>. 
+
+<h4><a name="free">2.2.6 <code>free()</code></a></h4>
+
+Clears the contents of <code>symbolic_type&lt;&gt;</code> or
+<code>numeric_type&lt;&gt;</code> objects. 
+(Calls <code>umfpack_*_free_symbolic()</code> or 
+<code>umfpack_*_free_numeric()</code>.) 
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>free (Symbolic);</code>
+<tr><td><td><code>Symbolic.free();</code>
+<tr><td><td><code>free (Numeric);</code>
+<tr><td><td><code>Numeric.free();</code>
+</table>
+
+<h4><a name="defaults">2.2.7 <code>defaults()</code></a></h4>
+
+Sets the default control parameters in the 
+<code>control_type&lt;&gt;</code> object's array. 
+(Calls <code>umfpack_*_defaults()</code>.
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>defaults (Control);</code>
+<tr><td><td><code>Control.defaults();</code>
+</table>
+
+<h4><a name="scale">2.2.8 <code>scale()</code></a></h4>
+
+Computes <code>X = B</code>, <code>X = RB</code>
+or <code>X = R<sup>-1</sup>B</code>, as appropriate. 
+(Calls <code>umfpack_*_scale()</code>.)
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>status = scale (X, B, Numeric);</code>
+</table>
+
+<h4><a name="r_stat">2.2.9 <code>report_status()</code></a></h4>
+
+Prints the status (return value) of other UMFPACK bindings functions.
+(Calls <code>umfpack_*_report_status()</code>.)
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>report_status (Control, status);</code>
+</table>
+
+<p>
+For control parameters used in various <code>report_*</code> functions
+see <a href = "#user_guide">UMFPACK User Guide</a>.
+
+<h4><a name="r_cont">2.2.10 <code>report_control()</code></a></h4>
+
+Prints the current control settings. 
+(Calls <code>umfpack_*_report_control()</code>.)
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>report_control (Control);</code>
+</table>
+
+<h4><a name="r_info">2.2.11 <code>report_info()</code></a></h4>
+
+Prints the statistics returned in <code>Info</code> by
+<code>symbolic()</code>, <code>numeric()</code>,
+<code>factor()</code>, <code>solve()</code> and <code>umf_solve()</code>.
+(Calls <code>umfpack_*_report_info()</code>.)
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>report_info (Control, Info);</code>
+</table>
+
+<h4><a name="r_matr">2.2.12 <code>report_matrix()</code></a></h4>
+
+Verifies and prints a sparse matrix in compressed column or coordinate
+form (for matrix storage forms see <a href = "#storage">sec. 2.3</a>). 
+(Calls <code>umfpack_*_report_matrix()</code> or <code>umfpack_*_report_triplet()</code>.)
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>status = report_matrix (A, Control);</code>
+</table>
+
+<h4><a name="r_vct">2.2.13 <code>report_vector()</code></a></h4>
+
+Verifies and prints a dense vector.
+(Calls <code>umfpack_*_report_vector()</code>.) 
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>status = report_vector (X, Control);</code>
+</table>
+
+
+<h4><a name="r_sym">2.2.14 <code>report_symbolic()</code></a></h4>
+
+Verifies and prints a <code>symbolic_type&lt;&gt;</code> object. 
+(Calls <code>umfpack_*_report_symbolic()</code>.) 
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>status = report_symbolic (Symbolic, Control);</code>
+</table>
+
+<h4><a name="r_num">2.2.15 <code>report_numeric()</code></a></h4>
+
+Verifies and prints a <code>numeric_type&lt;&gt;</code> object. 
+(Calls <code>umfpack_*_report_numeric()</code>.) 
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>status = report_numeric (Numeric, Control);</code>
+</table>
+
+<h4><a name="r_perm">2.2.16 <code>report_permutation()</code></a></h4>
+
+Verifies and prints a permutation vector. 
+(Calls <code>umfpack_*_report_perm()</code>.) 
+
+<p>
+Syntax:
+<p> 
+<table border=0>
+<tr><td><td><code>status = report_permutation (Qinit, Control);</code>
+</table>
+
+<h2><a name="storage">3 Matrix Storage Schemes</a></h2>
+
+<p>
+UMFPACK functions manipulate matrices stored in compressed column format. Let
+<code>A</code> be <i>m</i>-by-<i>n</i> with <i>nnz</i> nonzero <code>double</code> entries. 
+Its compressed column storage consists of three arrays: 
+<pre class="programlisting">
+     int Ap[n+1];
+     int Ai[nnz];
+     double Ax[nnz]; 
+</pre>
+<code>Ax</code> contains nonzero entries: elements of the matrix column
+<code>k</code>, sorted in ascending order of corresponding row indices 
+and without duplicates, are in <code>Ax[Ap[k]]</code> to (and including)
+<code>Ax[Ap[k+1]-1]</code> and their row indices are in 
+<code>Ai[Ap[k]]</code> to <code>Ai[Ap[k+1]-1]</code>. 
+Thus, <code>Ap</code> is the array of column start locations in 
+<code>Ai</code> and <code>Ax</code>; 
+<code>Ap[0] == 0</code> and <code>Ap[n] == nnz</code>.
+This is the storage scheme of 
+<a href = "http://www.boost.org/libs/numeric/ublas/doc/matrix_sparse.htm#compressed_matrix">
+<code>ublas::compressed_matrix&lt;double, ublas::column_major, 0&gt;</code></a>.
+
+<p>
+For example, the matrix 
+<pre>
+     [2  3  0 0 0]
+     [3  0  4 0 6]
+     [0 -1 -3 2 0]
+     [0  0  1 0 0]
+     [0  4  2 0 1]
+</pre>
+is represented by 
+<pre class="programlisting">
+     int    Ap[] = { 0, 2, 5, 9, 10, 12 };
+     int    Ai[] = {  0,  1,  0,   2,  4,  1,   2,  3,  4,  2,  1,  4 };
+     double Ax[] = { 2., 3., 3., -1., 4., 4., -3., 1., 2., 2., 6., 1. }; 
+</pre>
+
+<p>
+For complex matrices, array <code>Ax</code> contains the real parts of
+complex numbers and there is an additional array for imaginary parts:
+<pre class="programlisting">
+     double Az[nnz]; 
+</pre>
+Note that this is <b>not</b> the storage scheme of 
+<code>ublas::compressed_matrix&lt;std::complex&lt;double&gt;, ublas::column_major, 0&gt;</code></a> 
+which contains one array of complex values. 
+But, UMFPACK bindings internally use function <code>traits::detail::disentangle()</code>,
+which converts array of complex numbers into two real arrays holding
+real and imaginary parts, and
+function <code>traits::detail::interlace()</code>, which performs
+opposite conversion, so you can still write:
+<pre class="programlisting">
+     ublas::compressed_matrix&lt;std::complex&lt;double&gt;, ublas::column_major&gt; C (5,5,12);
+     std::vector&lt;std::complex&lt;double&gt; &gt; B (5), X (5); 
+     // ...
+     umf::umf_solve (C, X, B); 
+</pre>
+
+UMFPACK provide functions <code>umfpack_*_triplet_to_col()</code>
+which convert coordinate (AKA triplet) storage format of a sparse matrix to
+compressed column format. The coordinate format consists of three arrays:
+<pre class="programlisting">
+     int Ti[nnz];
+     int Tj[nnz];
+     double Tx[nnz]; 
+</pre>
+Matrix entry <i>a<sub>ij</sub></i> is stored in <i>k</i>th triplet such
+that <code>Ti[k]</code> == <i>i</i>, <code>Tj[k]</code> == <i>j</i> and 
+<code>Tx[k]</code> == <i>a<sub>ij</sub></i>. In general, triplets can be in any order
+(moreover, duplicate entries can exist). If column indices are stored
+in ascending order and if, within each column, row indices are sorted
+in ascending order (and if there is no duplicates), that is, for
+previous example
+<pre class="programlisting">
+     int    Ti[] = {  0,  1,  0,   2,  4,  1,   2,  3,  4,  2,  1,  4 };
+     int    Tj[] = {  0,  0,  1,   1,  1,  2,   2,  2,  2,  3,  4,  4 };
+     double Tx[] = { 2., 3., 3., -1., 4., 4., -3., 1., 2., 2., 6., 1. }; 
+</pre>
+UMFPACK bindings can be used with matrices in coordinate format
+(internally, bindings functions use <code>umfpack_*_triplet_to_col()</code> 
+to create just the pattern of the compressed column matrix
+(arrays <code>Ap</code> and <code>Ai</code>), and array
+<code>Tx</code> is used instead of </code>Ax</code>). 
+Instead of <code>ublas::compressed_matrix&lt;&gt;</code> one can use
+<pre class="programlisting">
+     ublas::coordinate_matrix&lt;double, ublas::column_major, 0&gt; A (5,5,12);
+</pre>
+in the example in <a hre="#lineqs">section 2</a>. 
+(Conversion will be performed three times -- in <code>symbolic()</code>, 
+<code>numeric()</code> and <code>solve()</code>. But if you use
+<code>umf_solve()</code>, conversion will be performed only once.)
+
+
+<h2><a name="types">4 Associated Types</a></h2>
+
+Classes <code>symbolic_type&lt;&gt;</code> and <code>numeric_type&lt;&gt;</code>
+wrap <code>void</code> pointers which UMFPACK uses to pass around
+symbolic analysis and numerical factorisation information. 
+Their destructors call <code>umfpack_*_free_symbolic()</code> and
+<code>umfpack_*_free_numeric()</code>, respectively; 
+see also <a href="#free"><code>free()</code></a>. 
+
+<p>
+Classes <code>control_type&lt;&gt;</code> and <code>info_type&lt;&gt;</code> 
+wrap UMFPACK's control and info arrays. 
+For arrays' entries (e.g. control parameters and error codes) 
+see <a href = "#user_guide">UMFPACK User Guide</a>.
+Both classes provide <code>operator[]</code> for accessing individual entries; e.g.: 
+<pre class="programlisting">
+     control_type&lt;double&gt; Control; 
+     Control[UMFPACK_STRATEGY] = UMFPACK_STRATEGY_UNSYMMETRIC; 
+</pre> 
+<code>control_type&lt;&gt;</code>'s constructor sets default
+parameters in the control array (i.e. calls <code>umfpack_*_defaults()</code>);
+see also <a href="#defaults"><code>defaults()</code></a>. 
+
+<p>
+Template argument when constructing objects of these classes 
+must be the type of matrix and vector elements: 
+<pre class="programlisting">
+     compressed_matrix&lt;std::complex&lt;double&gt;, column_major&gt; C (5,5,12);
+     control_type&lt;std::complex&lt;double&gt; &gt; Control;
+     info_type&lt;std::complex&lt;double&gt; &gt; Info;
+     symbolic_type&lt;std::complex&lt;double&gt; &gt; Symbolic; 
+     numeric_type&lt;std::complex&lt;double&gt; &gt; Numeric; 
+</pre>
+
+
+<br><hr><br>
+
+<h2><a name="copyright">5 UMFPACK Copyright, Licence and Availability</a></h2>
+
+UMFPACK Version 4.1 (Apr. 30, 2003),  Copyright (c) 2003 by Timothy A.
+Davis.  All Rights Reserved.
+
+<p>
+<b>UMFPACK License:</b>
+
+<p>
+    Your use or distribution of UMFPACK or any modified version of
+    UMFPACK implies that you agree to this License.
+
+<p>
+    THIS MATERIAL IS PROVIDED AS IS, WITH ABSOLUTELY NO WARRANTY
+    EXPRESSED OR IMPLIED.  ANY USE IS AT YOUR OWN RISK.
+
+<p>
+    Permission is hereby granted to use or copy this program, provided
+    that the Copyright, this License, and the Availability of the original
+    version is retained on all copies.  User documentation of any code that
+    uses UMFPACK or any modified version of UMFPACK code must cite the
+    Copyright, this License, the Availability note, and "Used by permission."
+    Permission to modify the code and to distribute modified code is granted,
+    provided the Copyright, this License, and the Availability note are
+    retained, and a notice that the code was modified is included.  This
+    software was developed with support from the National Science Foundation,
+    and is provided to you free of charge.
+
+<p>
+<b>Availability:</b>
+
+<p>
+<a href="http://www.cise.ufl.edu/research/sparse/umfpack">
+http://www.cise.ufl.edu/research/sparse/umfpack</a>
+
+<p>
+<b>Used by permission.</b>
+
+<br><p><br>
+</body>
+</html>

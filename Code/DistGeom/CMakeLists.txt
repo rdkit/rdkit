@@ -1,0 +1,10 @@
+### ISSUE: This library was originally named DistGeom. I've renamed it here
+### to avoid a target name clash in ./Wrap
+rdkit_library(DistGeometry
+              DistGeomUtils.cpp TriangleSmooth.cpp DistViolationContrib.cpp 
+              ChiralViolationContrib.cpp
+              LINK_LIBRARIES EigenSolvers ForceField)
+
+rdkit_test(testDistGeom testDistGeom.cpp LINK_LIBRARIES DistGeometry)
+
+add_subdirectory(Wrap)

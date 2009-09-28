@@ -1,0 +1,697 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="boost.css">
+<title>Boost.Numeric.Bindings.Traits</title>
+</head>
+
+<body link="#0000ff" vlink="#800080">
+<table border="0" cellpadding="7" cellspacing="0" width="100%" summary="header">
+<tr>
+<td valign="top" width="300">
+<h3><a href="../../../index.htm"><img height="86" width="277" alt="C++ Boost" src="../../doc/c++boost.gif" border="0"></a></h3>
+</td>
+<td valign="center">
+<h1 align="center">Boost.Numeric.Bindings.Traits</h1>
+</td>
+</tr>
+</table>
+<hr>
+
+<br>
+Back to <a href="../../doc/index.html">Bindings Library Synopsis</a>
+
+<h2>Contents</h2>
+<ol>
+<li><a href="#generic_storage_layout">Generic Storage Layout Information</a></li>
+<ol>
+<li><a href="#rationale">Rationale</a></li>
+<li><a href="#using_the_traits">Using Traits Classes</a></li>
+<li><a href="#vector_traits">Vector Traits</a></li>
+<ol>
+<li><a href="#vt-desc">Description</a></li>
+<li><a href="#vt-def">Definition</a></li>
+<li><a href="#vt-assoct">Associated Types</a></li>
+<li><a href="#vt-es">Expression Semantics</a></li>
+<li><a href="#vt-impl">Implementation</a></li> 
+</ol>
+<li><a href="#matrix_traits">Matrix Traits</a></li>
+<ol>
+<li><a href="#mt-desc">Description</a></li>
+<li><a href="#mt-def">Definition</a></li>
+<li><a href="#mt-assoct">Associated Types</a></li>
+<li><a href="#mt-es">Expression Semantics</a></li>
+<li><a href="#mt-impl">Implementation</a></li> 
+</ol>
+<li><a href="#spmatrix_traits">Sparse Matrix Traits</a></li>
+<ol>
+<li><a href="#spmt-desc">Description</a></li>
+<li><a href="#spmt-def">Definition</a></li>
+<li><a href="#spmt-assoct">Associated Types</a></li>
+<li><a href="#spmt-sc">Static Constants</a></li>
+<li><a href="#spmt-es">Expression Semantics</a></li>
+<li><a href="#spmt-impl">Implementation</a></li> 
+</ol>
+<li><a href="#free_functions">Free functions</a></li>
+</ol>
+<li><a href="#calling_conventions">Calling Conventions</a></li>
+<li><a href="#type_mapping">Type Mapping</a></li>
+</ol>
+<hr>
+
+<h2><a name="generic_storage_layout">1. Generic Storage Layout Information</a></h2>
+
+<h3><a name="rationale">1.1 Rationale</a></h3>
+
+<p>The Traits Library provides the mappings from the interfaces of
+various vector and matrix C++ libraries to the storage layout
+format required by the original API's of different external numeric libraries. 
+
+<p>These mappings are implemented by means of traits classes and their
+specialisations. One advantage of this approach is that the traits idiom is
+non-intrusive: no changes or additions to vector and matrix classes are needed. 
+Another advantage is the extensibility
+since traits classes can be specialised for many different vector
+or matrix libraries. Furthermore, the traits idiom is a compile-time mechanism
+and thus adds no run-time overhead. 
+
+<h3><a name="using_the_traits">1.2 Using Traits Classes</a></h3>
+
+To use particular vector or matrix class in bindings to some external
+library, proper traits specialisation must be included. Specialisations for following vector and matrix classes are currently available:
+<ul>
+<li>vector classes:
+<ul>
+<li><a href="http://www.boost.org/libs/numeric/ublas/doc/index.htm">uBLAS</a>: 
+<ul>
+<li><code>ublas::vector&lt;&gt;</code>, <code>ublas::c_vector&lt;&gt;</code> and vector proxies -- in <code>ublas_vector.hpp</code>
+<li><code>ublas::matrix_row&lt;&gt;</code> and <code>ublas::matrix_column&lt;&gt;</code> -- in <code>ublas_matrix.hpp</code>
+</ul>
+<li><a href="http://anubis.dkuug.dk/jtc1/sc22/open/n2356/lib-numerics.html#lib.numarray"><code>std::valarray&lt;&gt;</code></a> -- in <code>std_valarray.hpp</code>
+<li><a href="http://anubis.dkuug.dk/jtc1/sc22/open/n2356/lib-containers.html#lib.vector"><code>std::vector&lt;&gt;</code></a> -- in <code>std_vector.hpp</code>
+<li><a href="http://www.boost.org/libs/array/index.htm"><code>boost::array&lt;&gt;</code></a> -- in <code>boost_array.hpp</code>
+<li><a href="http://anubis.dkuug.dk/jtc1/sc22/open/n2356/decl.html#dcl.array">C array</a> -- in <code>c_array.hpp</code>
+<li><a href="http://math.nist.gov/tnt/index.htm">TNT</a> 1D arrays -- in <code>tnt.hpp</code>
+</ul>
+<li>matrix classes:
+<ul>
+<li><a href="http://www.boost.org/libs/numeric/ublas/doc/index.htm">uBLAS</a>: 
+<ul>
+<li><code>ublas::matrix&lt;&gt;</code>, <code>ublas::c_matrix&lt;&gt;</code> and matrix proxies -- in <code>ublas_matrix.hpp</code>
+<li><code>ublas::symmetric_matrix&lt;&gt;</code> and <code>ublas::symmetric_adaptor&lt;&gt;</code> -- in <code>ublas_symmetric.hpp</code>
+<li><code>ublas::hermitian_matrix&lt;&gt;</code> and <code>ublas::hermitian_adaptor&lt;&gt;</code> -- in <code>ublas_hermitian.hpp</code>
+<li><code>ublas::vector&lt;&gt;</code> and <code>ublas::c_vector&lt;&gt;</code>  (matrices with one column and one row) -- in <code>ublas_vector2.hpp</code>
+</ul>
+<li><a href="http://math.nist.gov/tnt/index.htm">TNT</a> 2D arrays -- in <code>tnt.hpp</code>
+</ul>
+<li>sparse matrix classes:
+<ul>
+<li><a href="http://www.boost.org/libs/numeric/ublas/doc/index.htm">uBLAS</a>: 
+<ul>
+<li><code>ublas::compressed_matrix&lt;&gt;</code> and <code>ublas::coordinate_matrix&lt;&gt;</code> -- in <code>ublas_sparse.hpp</code>
+</ul>
+</ul>
+</ul>
+All mentioned files are in the directory <code>boost/numeric/bindings/traits</code>. 
+
+<p>
+If you are using any of these vector or matrix classes, this is in
+fact all you need to know about traits classes and their specialisations. 
+
+<p> 
+<b>Example.</b> Simple initialisation and dot product of vectors
+<code>v</code> (represented by <code>std::vector&lt;&gt;</code>) and
+<code>w</code> (represented by 
+`plain' C array) using <a href="../../atlas/doc/index.html">ATLAS bindings</a>: 
+<pre class="programlisting">
+  #include &lt;iostream&gt; 
+  #include &lt;boost/numeric/bindings/traits/std_vector.hpp&gt;
+  #include &lt;boost/numeric/bindings/traits/c_array.hpp&gt;
+  #include &lt;boost/numeric/bindings/atlas/cblas1.hpp&gt;
+
+  namespace atlas = boost::numeric::bindings::atlas;
+
+  int main() {
+    std::vector<double> v(10);
+    double w[10]; 
+    atlas::set (0.1, v);  // v = [ 0.1  0.1  ...  0.1 ]^T
+    atlas::set (0.2, w);  // w = [ 0.2  0.2  ...  0.2 ]^T
+    std::cout &lt;&lt; atlas::dot (v, w) &lt;&lt; std::endl; 
+  }
+</pre> 
+
+<h3><a name="vector_traits">1.3 Vector Traits</a></h3>
+
+<h4><a name="vt-desc">1.3.1.Description</a></h4>
+
+Generic bindings functions which manipulate vectors are written in
+terms of types (<a href="#vt-assoct">subsection 1.3.3</a>) and static functions
+(<a href="#vt-es">subsection 1.3.4</a>) defined in the <code>vector_traits&lt;&gt;</code> class.
+This class was designed taking into account requirements of the
+interfaces of BLAS levels 1 and 2 functions. 
+
+<h4><a name="vt-def">1.3.2.Definition</a></h4>
+
+Generic class <code>vector_traits&lt;&gt;</code> is defined in the header <code>boost/numeric/bindings/traits/vector_traits.hpp</code>.
+
+<p>
+Specialisations are defined in: 
+<p>
+<table border=1>
+<tr><th>Header<th>Vector class(es)
+<tr><td><code>boost_array.hpp</code> <td><code>boost::array&lt;&gt;</code> 
+<tr><td><code>c_array.hpp</code> <td>C array: <code>T[N]</code>
+<tr><td><code>std_valarray.hpp</code> <td><code>std::valarray&lt;&gt;</code> 
+<tr><td><code>std_vector.hpp</code> <td><code>std::vector&lt;&gt;</code>
+<tr><td><code>tnt.hpp</code> <td><code>TNT::Array1D&lt;&gt;</code>, <code>TNT::Fortran_Array1D&lt;&gt;</code>
+<tr><td><code>ublas_matrix.hpp</code> <td>
+<code>ublas::matrix_row&lt;&gt;</code>, <code>ublas::matrix_column&lt;&gt;</code>
+<tr><td><code>ublas_vector.hpp</code> <td>
+<code>ublas::vector&lt;&gt;</code>, <code>ublas::c_vector&lt;&gt;</code>, <code>ublas::vector_range&lt;&gt;</code>, <code>ublas::vector_slice&lt;&gt;</code>
+</table>
+<p>
+All headers are in <code>boost/numeric/bindings/traits/</code>.
+
+<h4><a name="vt-assoct">1.3.3 Associated Types</a></h4>
+
+<table border=1>
+<tr><td>Value type<td><code>value_type</code><td>The type of the objects contained in the vector
+<tr><td>Pointer type<td><code>pointer</code><td>Data type used to point to any entry of the vector in memory
+</table>
+
+<h4><a name="vt-es">1.3.4 Expression Semantics</a></h4>
+
+<table border=1>
+<tr><th>Name<th>Expression<th>Semantics
+<tr><td>Beginning of storage<td><code>storage(v)</code><td>Returns a
+pointer to the beginning of the storage of vector <code>v</code>
+<tr><td>Size of vector<td><code>size(v)</code><td>Returns the size of
+vector <code>v</code>
+<tr><td>Stride<td><code>stride(v)</code><td>Returns the distance
+between pointers pointing to consecutive entries in <code>v</code>
+</table>
+
+<h4><a name="vt-impl">1.3.5 Implementation</a></h4>
+
+
+Class <code>vector_traits&lt;&gt;</code> is implemented in three steps
+(see <code>vector_traits.hpp</code>):
+<ol>
+<li> definition of class <code>default_vector_traits&lt;&gt;</code>,
+<li> definition of class <code>vector_detail_traits&lt;&gt;</code>,
+<li> definition of class <code>vector_traits&lt;&gt;</code>. 
+</ol>
+
+<b>1.</b> Class <code>default_vector_traits&lt;&gt;</code> defines
+default functionality: 
+<pre class="programlisting">
+  template &lt;typename V, typename T = typename V::value_type&gt;
+  struct default_vector_traits {
+    typedef T value_type;
+    typedef typename detail::generate_const&lt;V,T&gt;::type* pointer;
+    static pointer storage (V&amp; v) { return v.begin(); }
+    static std::ptrdiff_t size (V&amp; v) { return v.size(); }
+    static std::ptrdiff_t stride (V&amp; v) { return 1; }
+  };
+</pre> 
+
+<p>
+Metafunction <code>generate_const&lt;&gt;</code> `copies'
+<code>const</code>, if present, from <code>V</code> to <code>T</code>,
+that is, if vector type <code>V</code> is non-<code>const</code>,  
+<code>pointer</code> will be <code>T*</code>, and if <code>V</code> is
+<code>const</code>, <code>pointer</code> will be <code>T const*</code>. 
+
+<p> 
+As can be seen from the implementation of function <code>storage()</code>,
+the assumption is that <code>V</code> provides function
+<code>begin()</code> and that <code>V::iterator</code> (or <code>V::const_iterator</code>, if <code>V</code> is <code>const</code>) is pointer, as 
+e.g. uBLAS storage classes (<code>unbounded_array&lt;&gt;</code>,
+<code>bounded_array&lt;&gt;</code> and <code>array_adaptor&lt;&gt;</code>) 
+and <code>boost::array&lt;&gt;</code>. 
+Also, it is assumed that <code>V</code> provides function <code>size()</code>
+and that stride is 1. If this is not the case with your vector class, you must write
+specialisation. 
+
+<p>
+<b>2.</b> Class <code>vector_detail_traits&lt;&gt;</code> was
+introduced having the writing of specialisations in mind. 
+It has two template parameters: <code>VIdentifier</code> and <code>VType</code>. 
+<code>VIdentifier</code> is used to identify the (written) implementation  
+and <code>VType</code> is the actual type for which the
+specialisation is needed in the code which uses traits
+-- <code>VIdentifier</code> is always non-<code>const</code> 
+(e.g. <code>ublas::vector&lt;&gt;</code>), while <code>VType</code> 
+can be <code>const</code> (e.g. <code>ublas::vector&lt;&gt;</code> or
+<code>ublas::vector&lt;&gt; const</code>). 
+
+<p>
+Generic/default implementation is: 
+<pre class="programlisting">
+  template &lt;typename VIdentifier, typename VType&gt;
+  struct vector_detail_traits : default_vector_traits&lt;VType&gt; {};
+</pre>
+
+<p>
+<b>3.</b> Class <code>vector_traits&lt;&gt;</code> is derived from 
+<code>vector_detail_traits&lt;&gt;</code>. It deduces
+<code>VIdentifier</code> from its template parameter <code>VType</code> by removing <code>const</code>, if present: 
+<pre class="programlisting">
+  template &lt;typename VType&gt;
+  struct vector_traits : vector_detail_traits&lt;typename boost::remove_const&lt;VType&gt;::type, VType&gt; {}; 
+</pre>
+
+<p>
+<b>Specialisations.</b> Class
+<code>vector_detail_traits&lt;&gt;</code> can be specialised if
+default implementation is not appropriate for particular vector type. 
+All specialisations must provide types defined in <a href="#vt-assoct">subsection 1.3.3</a> and static
+member functions defined in <a href="#vt-es">subsection 1.3.4</a>. 
+
+<p>
+<p>
+<b>Example.</b> Specialisation for 
+built-in C array (see <code>c_array.hpp</code>):
+<pre class="programlisting">
+  template &lt;typename T, std::size_t N, typename VType&gt;
+  struct vector_detail_traits&lt;T[N],VType&gt; {
+    typedef T value_type;
+    typedef typename detail::generate_const&lt;VType,T&gt;::type* pointer; 
+    static pointer storage (VType&amp; a) { return a; }
+    static std::ptrdiff_t size (VType&amp;) { return N; }
+    static std::ptrdiff_t stride (VType&amp;) { return 1; }
+  };
+</pre>
+
+<p>
+<b>Example.</b> Specialisation for <code>std::vector&lt;&gt;</code>
+(see <code>std_vector.hpp</code>):
+<pre class="programlisting">
+  template &lt;typename T, typename Alloc, typename VType&gt;
+  struct vector_traits&lt;std::vector&lt;T, Alloc&gt;, VType&gt; : default_vector_traits&lt;V,T&gt; {
+    typedef typename default_vector_traits&lt;VType,T&gt;::pointer pointer;
+    static pointer storage (VType&amp; v) { return &amp;v.front(); }
+  };
+</pre>
+Type <code>value_type</code> and functions
+<code>size()</code> and <code>stride()</code> are inherited from
+<code>default_vector_traits&lt;&gt;</code>.
+
+
+<h3><a name="matrix_traits">1.4 Matrix Traits</a></h3>
+
+<h4><a name="mt-desc">1.4.1 Description</a></h4>
+
+Generic bindings functions which manipulate matrices are written in
+terms of types (<a href="#mt-assoct">subsection 1.4.3</a>) and static 
+functions (<a href="#mt-es">subsection 1.4.4</a>) defined in the <code>matrix_traits&lt;&gt;</code> class. 
+This class was  designed taking into account requirements of the
+interfaces of BLAS (levels 2 and 3) and LAPACK functions. 
+
+<h4><a name="mt-def">1.4.2 Definition</a></h4>
+
+Generic class <code>matrix_traits&lt;&gt;</code> is defined in header <code>boost/numeric/bindings/traits/matrix_traits.hpp</code>.
+
+<p>
+Specialisations are defined in:
+<p>
+<table border=1>
+<tr><th>Header<th>Matrix classes
+<tr><td><code>tnt.hpp</code> <td><code>TNT::Array2D&lt;&gt;</code>, <code>TNT::Fortran_Array2D&lt;&gt;</code>
+<tr><td><code>ublas_hermitian.hpp</code> <td><code>ublas::hermitian_matrix&lt;&gt;</code>, <code>ublas::hermitian_adaptor&lt;&gt;</code>
+<tr><td><code>ublas_matrix.hpp</code>
+<td><code>ublas::matrix&lt;&gt;</code>, <code>ublas::c_matrix&lt;&gt;</code>, <code>ublas::matrix_range&lt;&gt;</code>, <code>ublas::matrix_slice&lt;&gt;</code>
+<tr><td><code>ublas_symmetric.hpp</code> <td><code>ublas::symmetric_matrix&lt;&gt;</code>, <code>ublas::symmetric_adaptor&lt;&gt;</code>
+<tr><td><code>ublas_vector2.hpp</code>
+<td><code>ublas::vector&lt;&gt;</code> (as <i>n</i>-by-1 matrix), <code>ublas::c_vector&lt;&gt;</code> (as 1-by-<i>n</i> matrix)
+</table>
+<p>
+All headers are in <code>boost/numeric/bindings/traits/</code>.
+
+
+
+<h4><a name="mt-assoct">1.4.3 Associated Types</a></h4>
+
+<table border=1>
+<tr><td>Value type<td><code>value_type</code><td>The type of the objects contained in the matrix
+<tr><td>Pointer type<td><code>pointer</code><td>Data type used to point to any entry of the matrix in memory
+<tr><td>Matrix structure<td><code>matrix_structure</code><td>Describes
+the pattern of nonzero and zero elements and the storage layout [1]
+<tr><td>Ordering type<td><code>ordering_type</code><td>Row or column major [2]
+<tr><td>Upper/lower type<td><code>uplo_type</code><td> For triangular,
+symmetric and hermitian matrices:
+indicates whether upper or lower triangular part is referenced or stored [3]
+</table>
+
+<p>
+[1] <code>matrix_structure</code> is a tag which can be: 
+<ul>
+<li> <code>general_t</code>
+<li> <code>symmetric_t</code>
+<li> <code>symmetric_packed_t</code>
+<li> <code>hermitian_t</code>
+<li> <code>hermitian_packed_t</code>
+<li> <code>unknown_structure_t</code>
+</ul>
+
+<p>
+[2] <code>ordering_type</code> can be:
+<ul>
+<li> <code>row_major_t</code>
+<li> <code>column_major_t</code>
+</ul>
+
+<p>
+[3] Upper/lower tag must be defined only for triangular (full and packed),
+symmetric (full and packed) and hermitian (full and packed) matrices. For packed types
+it indicates whether upper or lower triangular part is stored, and for
+full matrices it denotes part that is referenced.
+<code>uplo_type</code> can be: 
+<ul>
+<li> <code>upper_t</code>
+<li> <code>lower_t</code>
+</ul>
+
+
+<h4><a name="mt-es">1.4.4 Expression Semantics</a></h4>
+<table border=1>
+<tr><th>Name<th>Expression<th>Semantics
+<tr><td>Beginning of storage<td><code>storage(m)</code><td>Returns a pointer to the
+beginning of the storage of matrix <code>m</code>
+<tr><td>Size of storage<td><code>storage_size(m)</code><td>Returns the size of the storage
+<tr><td>Number of rows<td><code>num_rows(m)</code><td>Returns the number of rows of matrix <code>m</code>
+<tr><td>Number of columns<td><code>num_columns(m)</code><td>Returns the number of
+columns matrix <code>m</code>
+<tr><td>Leading
+dimension<td><code>leading_dimension(m)</code><td>Returns the distance
+between pointers to the first element in consecutive rows/columns in
+case of row-major/column-major matrices [1] 
+</table>
+
+<p>
+[1] Not needed for all matrix types (e.g. not needed for triangular, symmetric and hermitian packed matrices). 
+
+<h4><a name="mt-impl">1.4.5 Implementation</a></h4>
+
+Implementation of <code>matrix_traits&lt;&gt;</code> is
+similar to the <code>vector_traits&lt;&gt;</code>'s implementation 
+(<a href="#vt-impl">subsection 1.3.5</a>); only, first step is omitted because
+there is no reasonable default -- different matrix libraries provide 
+different interfaces (for example, functions that return number of
+rows and columns are named <code>num_rows()</code>, <code>num_columns()</code> 
+in uBLAS, <code>dim1()</code>, <code>dim2()</code> in TNT, 
+and <code>nrows()</code>, <code>ncols()</code> in MTL).
+Definitions in <code>matrix_traits.hpp</code> are: 
+<pre class="programlisting">
+  template &lt;typename MIdentifier, typename MType&gt;
+  struct matrix_detail_traits {};
+
+  template &lt;typename MType&gt;
+  struct matrix_traits : matrix_detail_traits&lt;typename boost::remove_const<M>::type, MType&gt; {};
+</pre>
+
+<p>
+Specialisations of <code>matrix_detail_traits&lt;&gt;</code> must provide
+types defined in <a href="#mt-assoct">subsection 1.4.3</a> and static member functions defined
+in <a href="#mt-es">subsection 1.4.4</a>. 
+
+<p>
+<b>Example.</b> Specialisation of <code>matrix_detail_traits&lt;&gt;</code>
+for <code>ublas::matrix&lt;&gt;</code> (see <code>ublas_matrix.hpp</code>): 
+<pre class="programlisting">
+  template &lt;typename T, typename F, typename ArrT, typename MType&gt;
+  struct matrix_detail_traits&lt;boost::numeric::ublas::matrix&lt;T,F,ArrT&gt;, Mtype&gt; {
+
+    typedef general_t matrix_structure;
+    typedef typename detail::ublas_ordering&lt;typename F::orientation_category&gt;::type ordering_type;
+
+    typedef T value_type;
+    typedef typename detail::generate_const&lt;MType,T&gt;::type* pointer; 
+
+    static pointer storage (MType&amp; m) {
+      typedef typename detail::generate_const&lt;MType,ArrT&gt;::type array_type;
+      return vector_traits&lt;array_type&gt;::storage (m.data());
+    }
+    static std::ptrdiff_t num_rows (MType&amp; m) { return m.size1(); }
+    static std::ptrdiff_t num_columns (MType&amp; m) { return m.size2(); }
+    static std::ptrdiff_t storage_size (MType&amp; m) { return num_rows (m) * size2 (m); }
+    static std::ptrdiff_t leading_dimension (MType&amp; m) { return F::size2 (m.size1(), m.size2()); }
+
+    static std::ptrdiff_t stride1 (MType&amp; m) { return F::one1 (m.size1(), m.size2()); }
+    static std::ptrdiff_t stride2 (MType&amp; m) { return F::one2 (m.size1(), m.size2()); }
+  };
+</pre>
+
+Notes: 
+
+<p>
+[1] As <code>ublas::matrix&lt;&gt;</code> is general matrix,
+<code>uplo_type</code> is not defined.
+
+<p>
+[2] Metafunction <code>detail::ublas_ordering&lt;&gt;</code> (defined
+in <code>detail/ublas_ordering.hpp</code>) 
+maps <code>orientation_category</code>, as defined in uBLAS, to corresponding ordering type. 
+
+
+<p>
+[3] Note that the <code>storage()</code> function uses
+<code>vector_traits::storage&lt;&gt;()</code>. 
+
+<p> 
+[4] This specialisation also defines functions <code>stride1()</code> and
+<code>stride2()</code> because they are needed in specialisations of
+<code>vector_traits&lt;&gt;</code> for  <code>ublas::matrix_row&lt;&gt;</code>
+and <code>ublas::matrix_column&lt;&gt;</code>. 
+
+<p>
+<b>Example.</b> Specialisation of <code>matrix_detail_traits&lt;&gt;</code>
+for <code>ublas::symmetric_matrix&lt;&gt;</code>
+(see <code>ublas_symmetric.hpp</code>): 
+<pre class="programlisting">
+  template &lt;typename T, typename F1, typename F2, typename A, typename MType&gt;
+  struct matrix_detail_traits&lt;boost::numeric::ublas::symmetric_matrix&lt;T, F1, F2, A&gt;, Mtype&gt; {
+
+    typedef symmetric_packed_t matrix_structure;
+    typedef typename detail::ublas_ordering&lt;typename F2::orientation_category&gt;::type ordering_type;
+    typedef typename detail::ublas_uplo&lt;typename F1::packed_category&gt;::type uplo_type;
+
+    typedef T value_type;
+    typedef typename detail::generate_const&lt;MType,T&gt;::type* pointer; 
+
+    static pointer storage (MType&amp; sm) {
+      typedef typename detail::generate_const&lt;MType,A&gt;::type array_type ;
+      return vector_traits&lt;array_type&gt;::storage (sm.data());
+    }
+    static std::ptrdiff_t num_rows (MType&amp; sm) { return sm.size1(); }
+    static std::ptrdiff_t num_columns (MType&amp; sm) { return sm.size2(); }
+    static std::ptrdiff_t storage_size (MType&amp; sm) { return (num_rows (sm) + 1) * num_columns (sm) / 2; }
+  };
+</pre>
+
+This specialisation defines <code>uplo_type</code>, but
+<code>leading_dimension()</code> makes no sense for packed matrix
+storage types. 
+
+
+<h3><a name="spmatrix_traits">1.5 Sparse Matrix Traits</a></h3>
+
+<h4><a name="spmt-desc">1.5.1 Description</a></h4>
+
+Generic bindings functions which manipulate sparse matrices are written in
+terms of types (<a href="#spmt-assoct">subsection 1.5.3</a>), 
+static constants (<a href="#spmt-sc">subsection 1.5.4</a>)
+and static functions (<a href="#spmt-es">subsection 1.5.5</a>) defined in the <code>sparse_matrix_traits&lt;&gt;</code> class. 
+
+<h4><a name="spmt-def">1.5.2 Definition</a></h4>
+
+Generic class <code>sparse_matrix_traits&lt;&gt;</code> is defined in header <code>boost/numeric/bindings/traits/sparse_traits.hpp</code>.
+
+<p>
+Specialisations are defined in:
+<p>
+<table border=1>
+<tr><th>Header<th>Matrix classes
+<tr><td><code>ublas_sparse.hpp</code> <td><code>ublas::compressed_matrix&lt;&gt;</code>, <code>ublas::coordinate_matrix&lt;&gt;</code>
+</table>
+<p>
+All headers are in <code>boost/numeric/bindings/traits/</code>.
+
+
+<h4><a name="spmt-assoct">1.5.3 Associated Types</a></h4>
+
+<table border=1>
+<tr><td>Value type<td><code>value_type</code><td>The type of the objects contained in the matrix
+<tr><td>Value pointer type<td><code>value_pointer</code><td>Data type used to point to (nonzero) matrix elements 
+<tr><td>Index pointer type<td><code>index_pointer</code><td>Data type used to point to row and column indices 
+<tr><td>Matrix structure<td><code>matrix_structure</code><td>Describes
+the pattern of nonzero and zero elements and the storage layout [1]
+<tr><td>Ordering type<td><code>ordering_type</code><td>Row or column major [2]
+<tr><td>Storage format<td><code>storage_format</code><td>Data structure used to store the matrix [3]
+</table>
+
+<p>
+[1] <code>matrix_structure</code> is a tag which can be: 
+<ul>
+<li> <code>general_t</code>
+</ul>
+
+<p>
+[2] <code>ordering_type</code> can be:
+<ul>
+<li> <code>row_major_t</code>
+<li> <code>column_major_t</code>
+</ul>
+
+<p>
+[3] <code>storage_format</code> can be:
+<ul>
+<li> <code>compressed_t</code>
+<li> <code>coordinate_t</code>
+</ul>
+
+<h4><a name="spmt-sc">1.5.4 Static Constants</a></h4>
+
+<pre class="programlisting">
+BOOST_STATIC_CONSTANT (std::size_t, index_base);
+</pre>
+
+<h4><a name="spmt-es">1.5.5 Expression Semantics</a></h4>
+<table border=1>
+<tr><th>Name<th>Expression<th>Semantics
+<tr><td>Major index<td><code>index1_storage(m)</code><td>
+Depends on <code>storage_format</code> and <code>ordering_type</code> [1]
+<tr><td>Minor index<td><code>index2_storage(m)</code><td>
+Depends on <code>storage_format</code> and <code>ordering_type</code> [2]
+<tr><td>Element storage<td><code>storage(m)</code><td>Returns a pointer to the
+beginning of the storage of matrix entries [3]
+<tr><td>Number of rows<td><code>num_rows(m)</code><td>Returns the number of rows of matrix <code>m</code>
+<tr><td>Number of columns<td><code>num_columns(m)</code><td>Returns the number of
+columns matrix <code>m</code>
+<tr><td>Number of entries<td><code>num_nonzeros(m)</code><td>Returns
+the number of matrix entries [3]
+</table>
+
+<p>
+[1] Returned value is a pointer to the beginning of:
+
+<p>
+<table border=0>
+<tr><td><td><td>the array of column start locations<td><td>for compressed column format;
+<tr><td><td><td>the array of row start locations<td><td>for compressed row format;
+<tr><td><td><td>the array of column indices<td><td>for column major coordinate format;
+<tr><td><td><td>the array of row indices<td><td>for row major coordinate format.
+</table>
+
+<p>
+[2] Returned value is a pointer to the beginning of:
+
+<p>
+<table border=0>
+<tr><td><td><td>the array of row indices<td><td>for compressed column format;
+<tr><td><td><td>the array of column indices<td><td>for compressed row format;
+<tr><td><td><td>the array of row indices<td><td>for column major coordinate format;
+<tr><td><td><td>the array of column indices<td><td>for row major coordinate format.
+</table>
+
+<p>
+[3] All nonzeros are entries, but an entry may be numerically zero. 
+
+<h4><a name="spmt-impl">1.5.6 Implementation</a></h4>
+
+Implementation of <code>sparse_matrix_traits&lt;&gt;</code> is
+similar to the <code>matrix_traits&lt;&gt;</code>'s implementation 
+(<a href="#mt-impl">subsection 1.4.5</a>).
+
+<p>
+Specialisations of <code>sparse_matrix_detail_traits&lt;&gt;</code> must provide
+types defined in <a href="#spmt-assoct">subsection 1.5.3</a>,
+static constants defined in <a href="#spmt-se">subsection 1.5.4</a>
+and static member functions defined in <a href="#spmt-es">subsection 1.5.5</a>.
+
+
+<h3><a name="free_functions">1.6 Free functions</a></h3>
+
+<p>There are also free functions available to obtain storage layout
+information:
+<ul>
+<li> in <code>vector_traits.hpp</code>:
+
+<p>
+<table border=1>
+<tr><th>Expression<th>Semantics
+<tr><td><code>vector_storage(v)</code><td>Returns a
+pointer to the beginning of the storage of vector <code>v</code>
+<tr><td><code>vector_size(v)</code><td>Returns the size of
+vector <code>v</code>
+<tr><td><code>vector_stride(v)</code><td>Returns the distance
+between pointers pointing to consecutive entries in <code>v</code>
+</table>
+<p>
+
+<li> in <code>matrix_traits.hpp</code>:
+
+<p>
+<table border=1>
+<tr><th>Expression<th>Semantics
+<tr><td><code>matrix_storage(m)</code><td>Returns a pointer to the
+beginning of the storage of matrix <code>m</code>
+<tr><td><code>matrix_storage_size(m)</code><td>Returns the size of the storage
+<tr><td><code>matrix_num_rows(m)</code><td>Returns the number of rows of matrix <code>m</code>
+<tr><td><code>matrix_num_columns(m)</code><td>Returns the number of
+columns matrix <code>m</code>
+<tr><td><code>leading_dimension(m)</code><td>Returns the leading
+dimension of matrix <code>m</code>
+</table>
+
+</ul>
+
+<p>
+The syntax of these is slightly simpler than that of the traits class;
+e.g. instead of 
+<pre class="programlisting">
+  traits::vector_traits&lt;some_vector_type const&gt;::storage (v)
+</pre>
+one can write
+<pre class="programlisting">
+  traits::vector_storage (v)
+</pre>
+
+
+<p> 
+Although these free functions generally rely
+on the traits classes, they can also implement an alternative strategy
+on compilers that are unable to handle the traits idiom (see
+<code>vector_raw.hpp</code> and <code>matrix_raw.hpp</code>).
+
+<h2><a name="calling_conventions">2. Calling conventions</a></h2>
+<p>To facilitate generic bindings for libraries of which the API
+is defined in Fortran, the Traits Library provides
+a multi-platform mapping between C and Fortran calling conventions:
+some Fortran compilers add a trailing underscore to all defined 
+symbols, some generate symbols in uppercase only. 
+<p>When including the <code>traits/fortran.h</code> header, one of following
+symbols will be defined:
+<ul>
+<li><code>BIND_FORTRAN_LOWERCASE_UNDERSCORE</code>
+<li><code>BIND_FORTRAN_LOWERCASE</code>
+</ul>
+Function names are generated using the <code>FORTRAN_ID</code> macro:
+<pre  class="programlisting">
+      #if defined(BIND_FORTRAN_LOWERCASE_UNDERSCORE)
+      #define FORTRAN_ID( id ) id##_
+      #elif defined(BIND_FORTRAN_LOWERCASE)
+      #define FORTRAN_ID( id ) id
+      #endif 
+</pre>
+
+<p><a href="http://www.aei.mpg.de/~jthorn/c2f.html">Here's more
+information</a> on how to call Fortran routines from C and C++. 
+
+<h2><a name="type_mapping">3. Type mapping</a></h2>
+
+<p>See type.h for mapping of Fortran types to C.
+<p>See type.hpp for mapping of Fortran types to C++
+<p>See value_traits.hpp for value_type inside complex types.
+
+</body>
+</html>

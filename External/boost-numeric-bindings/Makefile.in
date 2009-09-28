@@ -1,0 +1,8 @@
+all:
+	true
+
+install:
+	for header in `find boost -name '*.hpp' -o -name '*.h'`; do \
+	  install -D $$header ${PREFIX}/include/boost-numeric-bindings/$$header ; \
+	  done
+	  
