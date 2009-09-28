@@ -21,10 +21,18 @@ find_package(Boost COMPONENTS python thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-# pull BLAS and LAPACK (Fortran required by LAPACK)
-enable_language(Fortran)
+# -----------
+# pull BLAS and LAPACK
+
+# Things are easy if we have fortran:
+workaround_9220(Fortran OPTIONAL)
+IF (CMAKE_Fortran_COMPILER_WORKS)
 find_package(BLAS)
 find_package(LAPACK)
+ELSE()
+# otherwise just assume there are lapack and blas libraries out there somewhere:
+set(LAPACK_LIBRARIES lapack blas)
+ENDIF()
 
 # setup our compiler flags:
 if(CMAKE_COMPILER_IS_GNUCXX)
