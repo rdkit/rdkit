@@ -10,7 +10,13 @@
 // Boost graph stuff
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 104000
+#include <boost/property_map/property_map.hpp>
+#else
 #include <boost/property_map.hpp>
+#endif
+
 
 // for some typedefs
 #include <RDGeneral/types.h>
