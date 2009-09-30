@@ -6,6 +6,10 @@ set(lib_srcs Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp MolOps.cpp
   Conformer.cpp )
 
 if(MSVC)
+add_library(GraphMol ${lib_srcs} )
+INSTALL(TARGETS GraphMol 
+  DESTINATION ${RDKit_LibDir}
+)
 else(MSVC)
 add_library(GraphMol SHARED ${lib_srcs} )
 target_link_libraries(GraphMol RDGeometryLib RDGeneral )

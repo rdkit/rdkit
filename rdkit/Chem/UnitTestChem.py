@@ -8,7 +8,7 @@
 
 """
 from rdkit import RDConfig
-import unittest,cPickle,os
+import unittest,cPickle,os,time
 from rdkit import Chem
 
 
@@ -95,13 +95,12 @@ class TestCase(unittest.TestCase):
     f,self.fName = tempfile.mkstemp('.pkl')
     f=None
     self.m = Chem.MolFromSmiles('CC(=O)CC')
-    outF = open(self.fName,'wb+')
-    cPickle.dump(self.m,outF)
-    outF.close()
-    inF = open(self.fName,'rb')
-    m2 = cPickle.load(inF)
-    inF.close()
-    os.unlink(self.fName)
+    cPickle.dump(self.m,open(self.fName,'wb+'))
+    m2 = cPickle.load(open(self.fName,'rb'))
+    try:
+      os.unlink(self.fName)
+    except:
+      pass
     oldSmi = Chem.MolToSmiles(self.m)
     newSmi = Chem.MolToSmiles(m2)
     assert oldSmi==newSmi,'string compare failed'
