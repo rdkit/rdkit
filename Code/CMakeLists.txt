@@ -18,6 +18,11 @@ find_package(NumPy REQUIRED)
 include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
 
 # pull in boost:
+if(MSVC)
+# I cannot, for the life of me, get this working without hard coding BOOST_ROOT
+# here
+set(BOOST_ROOT "c:\\boost\\boost_1_40_0")
+endif(MSVC)
 find_package(Boost COMPONENTS python thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})

@@ -3,8 +3,8 @@ add_library(FileParsers MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cp
   SmilesWriter.cpp SDWriter.cpp )
 
 rdkit_test(fileParsersTest1 test1.cpp LINK_LIBRARIES 
-  FileParsers Depictor SmilesParse SubstructMatch GraphMol RDGeneral RDGeometry )
+  FileParsers Depictor SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
 rdkit_test(testMolSupplier testMolSupplier.cpp LINK_LIBRARIES
-  FileParsers Depictor SmilesParse SubstructMatch GraphMol RDGeneral RDGeometry )
+  FileParsers Depictor SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
 rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES
-  FileParsers Depictor SmilesParse SubstructMatch GraphMol RDGeneral RDGeometry )
+  FileParsers Depictor SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )

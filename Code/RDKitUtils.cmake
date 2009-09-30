@@ -9,7 +9,9 @@ macro(rdkit_python_extension)
   CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
   PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES}  )
   set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
-  
+if(MSVC)
+  set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd")
+endif(MSVC)  
   target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES} ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 
   INSTALL(TARGETS ${RDKPY_NAME} 

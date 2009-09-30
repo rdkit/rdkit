@@ -2,7 +2,7 @@ FIND_PACKAGE(BISON)
 FIND_PACKAGE(FLEX)
 
 if(MSVC)
-ADD_DEFINITIONS("-dYY_NO_UNISTD_H")
+ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
 endif()
 
 
@@ -17,10 +17,10 @@ add_library(SmilesParse InputFiller.cpp SmilesParse.cpp SmilesParseOps.cpp Smile
     ${BISON_SmilesY_OUTPUTS} ${BISON_SmartsY_OUTPUTS} ${FLEX_SmilesL_OUTPUTS} ${FLEX_SmartsL_OUTPUTS} )
 
 add_executable(smiTest1 test.cpp)
-target_link_libraries(smiTest1  SmilesParse GraphMol RDGeneral RDGeometry )
+target_link_libraries(smiTest1  SmilesParse GraphMol RDGeneral RDGeometryLib )
 add_test(smiTest1 ${EXECUTABLE_OUTPUT_PATH}/smiTest1 )
 
 add_executable(smaTest1 smatest.cpp)
-target_link_libraries(smaTest1  SmilesParse SubstructMatch GraphMol RDGeneral RDGeometry )
+target_link_libraries(smaTest1  SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
 add_test(smaTest1 ${EXECUTABLE_OUTPUT_PATH}/smaTest1 )
 
