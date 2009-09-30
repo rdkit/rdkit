@@ -1,16 +1,18 @@
-add_library(GraphMol Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp MolOps.cpp
+set(lib_srcs Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp MolOps.cpp
   FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp atomic_data.cpp
   QueryOps.cpp MolPickler.cpp Canon.cpp AtomIterators.cpp BondIterators.cpp
   Aromaticity.cpp Kekulize.cpp MolDiscriminators.cpp ConjugHybrid.cpp
   AddHs.cpp RankAtoms.cpp Matrices.cpp Chirality.cpp RingInfo.cpp
   Conformer.cpp )
-target_link_libraries(GraphMol RDGeometryLib RDGeneral )
 
+if(MSVC)
+else(MSVC)
+add_library(GraphMol SHARED ${lib_srcs} )
+target_link_libraries(GraphMol RDGeometryLib RDGeneral )
 INSTALL(TARGETS GraphMol 
-  LIBRARY DESTINATION ${RDKit_LibDir}
-  ARCHIVE DESTINATION ${RDKit_LibDir}
-  RUNTIME DESTINATION ${RDKit_LibDir}
+  DESTINATION ${RDKit_LibDir}
 )
+endif(MSVC)
 
 add_subdirectory(Depictor)
 add_subdirectory(FileParsers)
