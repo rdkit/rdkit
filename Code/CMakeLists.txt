@@ -25,8 +25,9 @@ link_directories(${Boost_LIBRARY_DIRS})
 # pull BLAS and LAPACK
 
 # Things are easy if we have fortran:
-workaround_9220(Fortran OPTIONAL)
-IF (CMAKE_Fortran_COMPILER_WORKS)
+workaround_9220(Fortran W9220_Fortran_COMPILER_WORKS)
+IF (W9220_Fortran_COMPILER_WORKS)
+enable_language(Fortran)
 find_package(BLAS)
 find_package(LAPACK)
 ELSE()
