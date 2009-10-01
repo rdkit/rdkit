@@ -12,7 +12,7 @@ macro(rdkit_library)
     target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
   ENDIF(RDKLIB_LINK_LIBRARIES)
   INSTALL(TARGETS ${RDKLIB_NAME} 
-          LIBRARY DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+          DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
 endmacro(rdkit_library)
   
 macro(rdkit_python_extension)
