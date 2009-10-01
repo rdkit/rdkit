@@ -2,7 +2,7 @@ FIND_PACKAGE(BISON)
 FIND_PACKAGE(FLEX)
 
 if(MSVC)
-ADD_DEFINITIONS("-dYY_NO_UNISTD_H")
+ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
 endif()
 
 
@@ -29,7 +29,7 @@ rdkit_library(SmilesParse
               ${FLEX_SmilesL_OUTPUTS}  ${FLEX_SmartsL_OUTPUTS}
               LINK_LIBRARIES GraphMol)
 
-rdkit_test(smiTest1 test.cpp LINK_LIBRARIES SmilesParse)
+rdkit_test(smiTest1 test.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral RDGeometryLib )
 
-rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch)
+rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
 

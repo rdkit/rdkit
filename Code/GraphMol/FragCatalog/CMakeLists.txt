@@ -1,9 +1,9 @@
 rdkit_library(FragCatalog
               FragCatalogUtils.cpp FragCatGenerator.cpp FragCatalogEntry.cpp 
               FragCatParams.cpp FragFPGenerator.cpp
-              LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse Catalogs)
+              LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse Catalogs GraphMol RDGeometryLib RDGeneral )
 
-rdkit_test(testFragCatalog test1.cpp LINK_LIBRARIES FileParsers FragCatalog)
+rdkit_test(testFragCatalog test1.cpp LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse Catalogs FileParsers FragCatalog GraphMol DataStructs RDGeometryLib RDGeneral ${LAPACK_LIBRARIES} )
 
 add_subdirectory(Wrap)
 

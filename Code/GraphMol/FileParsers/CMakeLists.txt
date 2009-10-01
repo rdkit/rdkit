@@ -7,12 +7,13 @@ rdkit_library(FileParsers
               LINK_LIBRARIES SmilesParse)
 
 rdkit_test(fileParsersTest1 test1.cpp 
-           LINK_LIBRARIES FileParsers Depictor SubstructMatch)
+           LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(testMolSupplier testMolSupplier.cpp 
-           LINK_LIBRARIES FileParsers Depictor SubstructMatch)
+           LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )
 
-rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers)
+rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
-rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers)
+rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )
 
+rdkit_test(testMol2ToMol testMol2ToMol.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeneral RDGeometryLib )

@@ -2,7 +2,8 @@ rdkit_library(Descriptors
               Crippen.cpp MolDescriptors.cpp AtomPairs.cpp MolSurf.cpp
               LINK_LIBRARIES FileParsers Subgraphs SubstructMatch)
 
-rdkit_test(testDescriptors test.cpp LINK_LIBRARIES Descriptors)
+rdkit_test(testDescriptors test.cpp 
+LINK_LIBRARIES Descriptors FileParsers SmilesParse Subgraphs SubstructMatch GraphMol DataStructs RDGeneral RDGeometryLib ${LAPACK_LIBRARIES} )
 
 add_subdirectory(Wrap)
 

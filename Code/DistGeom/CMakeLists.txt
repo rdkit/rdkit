@@ -5,6 +5,7 @@ rdkit_library(DistGeometry
               ChiralViolationContrib.cpp
               LINK_LIBRARIES EigenSolvers ForceField)
 
-rdkit_test(testDistGeom testDistGeom.cpp LINK_LIBRARIES DistGeometry)
+rdkit_test(testDistGeom testDistGeom.cpp 
+LINK_LIBRARIES DistGeometry EigenSolvers ForceField Optimizer RDGeneral RDGeometryLib )
 
 add_subdirectory(Wrap)

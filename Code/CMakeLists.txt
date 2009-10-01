@@ -3,6 +3,7 @@ set(CMAKE_MODULE_PATH
 
 #------- 
 # Config variables:
+set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
 set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/bin")
 set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
 
@@ -17,6 +18,11 @@ find_package(NumPy REQUIRED)
 include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
 
 # pull in boost:
+if(MSVC)
+# I cannot, for the life of me, get this working without hard coding BOOST_ROOT
+# here
+set(BOOST_ROOT "c:\\boost\\boost_1_40_0")
+endif(MSVC)
 find_package(Boost COMPONENTS python thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
@@ -32,6 +38,11 @@ find_package(BLAS)
 find_package(LAPACK)
 ELSE()
 # otherwise just assume there are lapack and blas libraries out there somewhere:
+if(MSVC)
+# on windows look for our own copy:
+ADD_DEFINITIONS("/D BOOST_NUMERIC_BINDINGS_USE_CLAPACK")
+LINK_DIRECTORIES(${RDKit_ExternalDir}/Lapack/win32)
+endif(MSVC)
 set(LAPACK_LIBRARIES lapack blas)
 ENDIF()
 

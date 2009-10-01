@@ -7,12 +7,16 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
-  add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
-  IF(RDKLIB_LINK_LIBRARIES)
-    target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
-  ENDIF(RDKLIB_LINK_LIBRARIES)
-  INSTALL(TARGETS ${RDKLIB_NAME} 
-          DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+  if(MSVC)
+    add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
+  else(MSVC)
+    add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
+    IF(RDKLIB_LINK_LIBRARIES)
+      target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
+    ENDIF(RDKLIB_LINK_LIBRARIES)
+    INSTALL(TARGETS ${RDKLIB_NAME} 
+            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+  endif(MSVC)
 endmacro(rdkit_library)
   
 macro(rdkit_python_extension)
@@ -24,7 +28,9 @@ macro(rdkit_python_extension)
   CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
   PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
   set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
-  
+if(MSVC)
+  set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd")
+endif(MSVC)  
   target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES} 
                         ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 

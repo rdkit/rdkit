@@ -3,7 +3,7 @@ rdkit_library(RDGeometryLib
               UniformGrid3D.cpp GridUtils.cpp
               LINK_LIBRARIES DataStructs RDGeneral)
 
-rdkit_test(testTransforms testTransforms.cpp LINK_LIBRARIES RDGeometryLib)
-rdkit_test(testGrid testGrid.cpp LINK_LIBRARIES RDGeometryLib)
+rdkit_test(testTransforms testTransforms.cpp LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral )
+rdkit_test(testGrid testGrid.cpp LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral )
 
 add_subdirectory(Wrap)

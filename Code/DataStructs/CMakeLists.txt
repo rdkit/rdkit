@@ -4,6 +4,6 @@ rdkit_library(DataStructs
               LINK_LIBRARIES RDGeneral)
 
 rdkit_test(testDataStructs testDatastructs.cpp 
-           LINK_LIBRARIES DataStructs)
+           LINK_LIBRARIES DataStructs RDGeneral)
 
 add_subdirectory(Wrap)

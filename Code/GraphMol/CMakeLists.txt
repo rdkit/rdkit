@@ -33,24 +33,24 @@ add_subdirectory(SLNParse)
 
 add_subdirectory(Wrap)
 
-rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES GraphMol)
+rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES GraphMol)
+rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES GraphMol)
+rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmolMolOpsTest molopstest.cpp 
-           LINK_LIBRARIES FileParsers)
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmoltestCanon testCanon.cpp  
-           LINK_LIBRARIES SubstructMatch SmilesParse)
+           LINK_LIBRARIES SubstructMatch SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmoltestChirality testChirality.cpp  
-           LINK_LIBRARIES FileParsers)
+           LINK_LIBRARIES SmilesParse FileParsers GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmoltestPickler testPickler.cpp  
-           LINK_LIBRARIES SubstructMatch FileParsers)
+           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse)
+rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 

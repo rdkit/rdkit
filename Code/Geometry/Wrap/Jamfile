@@ -1,4 +1,4 @@
-project wrapDataStructs : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
+project wrapGeometry : requirements <library>/boost/python//boost_python  <library>/boost/thread//boost_thread : ;
 import os ;
 local RDBASE = [ os.environ RDBASE ] ;
 

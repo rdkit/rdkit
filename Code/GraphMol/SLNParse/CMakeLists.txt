@@ -1,9 +1,8 @@
 FIND_PACKAGE(BISON)
 FIND_PACKAGE(FLEX)
 
-
 if(MSVC)
-ADD_DEFINITIONS("-dYY_NO_UNISTD_H")
+ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
 endif()
 
 FLEX_TARGET(SlnL sln.ll 
@@ -22,7 +21,9 @@ rdkit_library(SLNParse
               LINK_LIBRARIES GraphMol)
 
 rdkit_test(testSLNParse test.cpp 
-           LINK_LIBRARIES SLNParse SmilesParse SubstructMatch)
+           LINK_LIBRARIES SLNParse SmilesParse SubstructMatch
+GraphMol RDGeometryLib RDGeneral
+)
 
 add_subdirectory(Wrap)
 

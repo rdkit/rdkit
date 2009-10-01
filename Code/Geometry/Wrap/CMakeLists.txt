@@ -1,7 +1,7 @@
 rdkit_python_extension(rdGeometry
                        Point.cpp UniformGrid3D.cpp rdGeometry.cpp
                        DEST Geometry
-                       LINK_LIBRARIES RDGeometryLib RDBoost)
+                       LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral RDBoost)
 
-add_test(pyGeometry python ${CMAKE_CURRENT_SOURCE_DIR}/testGeometry.py)
+add_test(testPyGeometry python ${CMAKE_CURRENT_SOURCE_DIR}/testGeometry.py)
 

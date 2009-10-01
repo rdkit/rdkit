@@ -4,7 +4,7 @@ rdkit_library(ChemTransforms ChemTransforms.cpp LINK_LIBRARIES SubstructMatch)
 #add_subdirectory(Wrap)
 
 rdkit_test(testChemTransforms testChemTransforms.cpp 
-           LINK_LIBRARIES ChemTransforms FileParsers)
+           LINK_LIBRARIES ChemTransforms FileParsers SmilesParse SubstructMatch GraphMol RDGeometryLib RDGeneral )
 
 
 
