@@ -732,6 +732,8 @@ namespace RDKit {
       
       unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
       unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+      const Atom *atm1 = mol.getAtomWithIdx(aid1);
+      const Atom *atm4 = mol.getAtomWithIdx(aid4);
       
       double bl1 = accumData.bondLengths[bid1];
       double bl2 = accumData.bondLengths[bid2];
@@ -741,10 +743,8 @@ namespace RDKit {
       double ba23 = accumData.bondAngles->getVal(bid2, bid3);
       CHECK_INVARIANT(ba12 > 0.0, "");
       CHECK_INVARIANT(ba23 > 0.0, "");
-      double dl, du;
-      
-      const Atom *atm1 = mol.getAtomWithIdx(aid1);
-      const Atom *atm4 = mol.getAtomWithIdx(aid4);
+      bool setTheBound=true;
+      double dl=0.0, du=0.0;
       
       // if the middle bond is double 
       Path14Configuration path14;
@@ -852,15 +852,22 @@ namespace RDKit {
           accumData.transPaths[bid1*nb*nb + bid2*nb + bid3] = 1;
           accumData.transPaths[bid3*nb*nb + bid2*nb + bid1] = 1;
 #else
-	  // force the amide to be cis:
-          dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23); 
-          path14.type = Path14Configuration::CIS;
-          accumData.cisPaths[bid1*nb*nb + bid2*nb + bid3] = 1;
-          accumData.cisPaths[bid3*nb*nb + bid2*nb + bid1] = 1;
+          if(atm2->getAtomicNum()==7 && atm2->getDegree()==3 &&
+             atm1->getAtomicNum()==1 && atm2->getTotalNumHs(true)==1){
+            // secondary amide, this is the H
+            setTheBound=false;
+          } else {
+            // force the amide to be cis:
+            dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23); 
+            path14.type = Path14Configuration::CIS;
+            accumData.cisPaths[bid1*nb*nb + bid2*nb + bid3] = 1;
+            accumData.cisPaths[bid3*nb*nb + bid2*nb + bid1] = 1;
+          }
 #endif
           du = dl;
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
+
 	  //BOOST_LOG(rdDebugLog) << "  amide: " << aid1 << " " << aid4 << ": " << dl << "->" << du << "\n";
         } else if (( _checkAmideEster15(mol, bnd1, bnd3, atm1, atm2, atm3, atm4)) ||
                    ( _checkAmideEster15(mol, bnd3, bnd1, atm4, atm3, atm2, atm1))) {
@@ -888,10 +895,16 @@ namespace RDKit {
           accumData.cisPaths[bid3*nb*nb + bid2*nb + bid1] = 1;
 #else
 	  // amide is cis, we're trans:
-          dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23); 
-          path14.type = Path14Configuration::TRANS;
-          accumData.transPaths[bid1*nb*nb + bid2*nb + bid3] = 1;
-          accumData.transPaths[bid3*nb*nb + bid2*nb + bid1] = 1;
+          if(atm2->getAtomicNum()==7 && atm2->getDegree()==3 &&
+             atm1->getAtomicNum()==1 && atm2->getTotalNumHs(true)==1){
+            // secondary amide, this is the H
+            setTheBound=false;
+          } else {
+            dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23); 
+            path14.type = Path14Configuration::TRANS;
+            accumData.transPaths[bid1*nb*nb + bid2*nb + bid3] = 1;
+            accumData.transPaths[bid3*nb*nb + bid2*nb + bid1] = 1;
+          }
 #endif
           du = dl;
           dl -= GEN_DIST_TOL;
@@ -910,12 +923,14 @@ namespace RDKit {
         
         path14.type = Path14Configuration::OTHER;
       }
-      if (fabs(du-dl) < DIST12_DELTA) {
+      if(setTheBound){
+        if (fabs(du-dl) < DIST12_DELTA) {
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
+        }
+        _checkAndSetBounds(aid1, aid4, dl, du, mmat);
+        accumData.paths14.push_back(path14);
       }
-      _checkAndSetBounds(aid1, aid4, dl, du, mmat);
-      accumData.paths14.push_back(path14);
     }  
     
     void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
