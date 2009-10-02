@@ -13,14 +13,8 @@ BISON_TARGET(SmartsY smarts.yy ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp COMPIL
 ADD_FLEX_BISON_DEPENDENCY(SmilesL SmilesY)
 ADD_FLEX_BISON_DEPENDENCY(SmartsL SmartsY)
 
-add_library(SmilesParse InputFiller.cpp SmilesParse.cpp SmilesParseOps.cpp SmilesWrite.cpp SmartsWrite.cpp
+rdkit_library(SmilesParse InputFiller.cpp SmilesParse.cpp SmilesParseOps.cpp SmilesWrite.cpp SmartsWrite.cpp
     ${BISON_SmilesY_OUTPUTS} ${BISON_SmartsY_OUTPUTS} ${FLEX_SmilesL_OUTPUTS} ${FLEX_SmartsL_OUTPUTS} )
 
-add_executable(smiTest1 test.cpp)
-target_link_libraries(smiTest1  SmilesParse GraphMol RDGeneral RDGeometryLib )
-add_test(smiTest1 ${EXECUTABLE_OUTPUT_PATH}/smiTest1 )
-
-add_executable(smaTest1 smatest.cpp)
-target_link_libraries(smaTest1  SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )
-add_test(smaTest1 ${EXECUTABLE_OUTPUT_PATH}/smaTest1 )
-
+rdkit_test(smiTest1 test.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral RDGeometryLib )
+rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )

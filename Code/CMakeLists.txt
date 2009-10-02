@@ -1,14 +1,13 @@
-cmake_minimum_required(VERSION 2.6)
-project (RDKit)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+set(CMAKE_MODULE_PATH 
+    ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 #------- 
 # Config variables:
 set(RDKit_LibDir $ENV{RDBASE}/bin)
 set(RDKit_PythonDir $ENV{RDBASE}/rdkit)
 
-include(RDKitUtils.cmake)
+# defines macros: rdkit_python_extension, rdkit_test
+include(RDKitUtils)
 
 # pull in python:
 find_package(PythonLibs REQUIRED)
@@ -27,14 +26,12 @@ find_package(Boost COMPONENTS python thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-enable_testing()
-
 # setup our compiler flags:
 if(CMAKE_COMPILER_IS_GNUCXX)
-ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing")
+ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wl,-E")
 endif()
 
-include_directories(.)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(RDGeneral)
 add_subdirectory(RDBoost)
 add_subdirectory(Geometry)

@@ -1,6 +1,7 @@
-add_library(FileParsers MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp 
+rdkit_library(FileParsers MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp 
   ForwardSDMolSupplier.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp 
-  SmilesWriter.cpp SDWriter.cpp )
+  SmilesWriter.cpp SDWriter.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral)
+
 
 rdkit_test(fileParsersTest1 test1.cpp LINK_LIBRARIES 
   FileParsers Depictor SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )

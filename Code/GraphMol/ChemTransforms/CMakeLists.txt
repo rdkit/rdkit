@@ -1,4 +1,4 @@
-add_library(ChemTransforms ChemTransforms.cpp)
+rdkit_library(ChemTransforms ChemTransforms.cpp)
 
 add_subdirectory(Wrap)
 

@@ -17,7 +17,13 @@
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 104000
+#include <boost/property_map/property_map.hpp>
+#else
 #include <boost/property_map.hpp>
+#endif
+
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>

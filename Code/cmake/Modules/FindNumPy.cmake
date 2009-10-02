@@ -6,9 +6,11 @@
 # PYTHON_NUMPY_INCLUDE_PATH  - directory where the arrayobject.h header file can be found
 #
 #
+
 find_package(PythonInterp REQUIRED)
 IF(PYTHON_EXECUTABLE)
-  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/det_npp.py "try: import numpy; print numpy.get_include()\nexcept: pass\n")
+  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/det_npp.py 
+       "try: import numpy; print numpy.get_include()\nexcept: pass\n")
   EXEC_PROGRAM("${PYTHON_EXECUTABLE}"
     ARGS "\"${CMAKE_CURRENT_BINARY_DIR}/det_npp.py\""
     OUTPUT_VARIABLE NUMPY_PATH
