@@ -195,7 +195,7 @@ class TestCase(unittest.TestCase) :
 
 
         nconfs = []
-        expected = [5, 8, 8, 5, 4, 4]#[5, 8, 7, 5, 4, 4] 
+        expected = [5, 8, 8, 5, 6, 4]
         for smi in smiles:
             mol = Chem.MolFromSmiles(smi)
             cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30,

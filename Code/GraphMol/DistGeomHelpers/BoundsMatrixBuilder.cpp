@@ -556,14 +556,22 @@ namespace RDKit {
       bid3 = bnd3->getIdx();
       const Atom *atm2 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid1, bid2)); 
       PRECONDITION(atm2, "");
-      Atom::HybridizationType ahyb2 = atm2->getHybridization(); 
       const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3)); 
       PRECONDITION(atm3, "");
-      Atom::HybridizationType ahyb3 = atm3->getHybridization();
       
       unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
       unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
-      
+
+      // when we have fused rings, it can happen that this isn't actually a 1-4 contact,
+      // (this was the cause of sf.net bug 2835784) check that now:
+      if(mol.getBondBetweenAtoms(aid1,atm3->getIdx()) or
+         mol.getBondBetweenAtoms(aid4,atm2->getIdx())) {
+        return;
+      }
+
+      Atom::HybridizationType ahyb3 = atm3->getHybridization();
+      Atom::HybridizationType ahyb2 = atm2->getHybridization(); 
+
       double bl1 = accumData.bondLengths[bid1];
       double bl2 = accumData.bondLengths[bid2];
       double bl3 = accumData.bondLengths[bid3];
