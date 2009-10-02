@@ -128,7 +128,10 @@ void testUniformGridPickling() {
     unsigned int length;
     inS >> length;
     char *buff = new char[length];
-    length=inS.readsome(buff,length);
+    unsigned int nRead=0;
+    while(nRead<length){
+      nRead+=inS.readsome(buff+nRead,length-nRead);
+    }
     inS.close();
     std::string pkl(buff,length);
     delete [] buff;
@@ -140,6 +143,10 @@ void testUniformGridPickling() {
     grd2.setSphereOccupancy(Point3D(2.0, -2.0, 0.0), 1.5, 0.25);
     grd2.setSphereOccupancy(Point3D(2.0, 2.0, 0.0), 1.5, 0.25);
 
+    std::string pkl2=grd2.toString();
+    TEST_ASSERT(pkl2.length()==pkl.length());
+    TEST_ASSERT(pkl2==pkl);
+    
     TEST_ASSERT(grd.getSize()==grd2.getSize());
     TEST_ASSERT(grd.getNumX()==grd2.getNumX());
     TEST_ASSERT(grd.getNumY()==grd2.getNumY());
