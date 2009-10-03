@@ -5,7 +5,7 @@ set(lib_srcs Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp MolOps.cpp
   AddHs.cpp RankAtoms.cpp Matrices.cpp Chirality.cpp RingInfo.cpp
   Conformer.cpp )
 
-rdkit_library(GraphMol ${lib_srcs} LINK_LIBRARIES RDGeometryLib RDGeneral )
+rdkit_library(GraphMol ${lib_srcs} SHARED LINK_LIBRARIES RDGeometryLib RDGeneral )
 
 add_subdirectory(Depictor)
 add_subdirectory(FileParsers)
