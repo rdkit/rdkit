@@ -5,6 +5,7 @@
 //   @@ All Rights Reserved  @@
 //
 #include "rdmolops.h"
+#include <fstream>
 #include <boost/python.hpp>
 
 #include <RDGeneral/types.h>
@@ -58,13 +59,25 @@ namespace RDKit{
   }
    
   ROMol *MolFromMolFile(const char *molFilename, bool sanitize=true, bool removeHs=true) {
-    RWMol *newM;
+    // sometimes problems with exception-passing between modules
+    // causes the BadFileException to get lost. This is something
+    // of a hack to route around that.
+    std::ifstream inStream(molFilename);
+    if (!inStream || (inStream.bad()) ) {
+      std::ostringstream errout;
+      errout << "Bad input file " << molFilename;
+      PyErr_SetString(PyExc_IOError,errout.str().c_str());
+      throw python::error_already_set();
+    }
+    
+    RWMol *newM=0;
     try {
       newM = MolFileToMol(molFilename, sanitize,removeHs);
-    } catch (RDKit::BadFileException &e) {
+    } catch (const RDKit::BadFileException &e) {
       PyErr_SetString(PyExc_IOError,e.message());
       throw python::error_already_set();
-    } catch (...) {
+    }
+    catch (...) {
       newM=0;
     }
     return static_cast<ROMol *>(newM);
@@ -105,7 +118,6 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
   python::register_exception_translator<RDKit::MolSanitizeException>(&rdSanitExceptionTranslator);
-  python::register_exception_translator<RDKit::BadFileException>(&rdBadFileExceptionTranslator);
 
   docString="Construct a molecule from a Mol file.\n\n\
   ARGUMENTS:\n\

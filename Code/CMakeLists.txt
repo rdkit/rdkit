@@ -28,7 +28,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 # setup our compiler flags:
 if(CMAKE_COMPILER_IS_GNUCXX)
-ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wl,-E")
+ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
