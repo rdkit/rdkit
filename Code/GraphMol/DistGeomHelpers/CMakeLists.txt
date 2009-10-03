@@ -3,7 +3,7 @@ rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp
 
 rdkit_test(testDistGeomHelpers testDgeomHelpers.cpp
            LINK_LIBRARIES
-           DistGeomHelpers DistGeometry FileParsers MolTransforms SmilesParse SubstructMatch ForceFieldHelpers ForceField MolAlign Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral )
+           DistGeomHelpers DistGeometry ForceFieldHelpers ForceField MolAlign MolTransforms  FileParsers SmilesParse SubstructMatch Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral )
 
 add_subdirectory(Wrap)
 

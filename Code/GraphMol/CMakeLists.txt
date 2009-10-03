@@ -5,7 +5,7 @@ rdkit_library(GraphMol
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp 
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp RankAtoms.cpp 
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
-              LINK_LIBRARIES RDGeometryLib)
+              SHARED LINK_LIBRARIES RDGeometryLib)
 
 add_subdirectory(Depictor)
 add_subdirectory(SmilesParse)

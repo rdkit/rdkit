@@ -3,8 +3,8 @@ rdkit_library(MolAlign AlignMolecules.cpp
 
 rdkit_test(testMolAlign testMolAlign.cpp
            LINK_LIBRARIES MolAlign 
-FileParsers DistGeomHelpers MolTransforms
-SmilesParse DistGeometry ForceFieldHelpers ForceField Optimizer EigenSolvers Alignment SubstructMatch
+FileParsers DistGeomHelpers MolTransforms ForceFieldHelpers 
+SmilesParse DistGeometry ForceField Optimizer EigenSolvers Alignment SubstructMatch
 GraphMol RDGeneral RDGeometryLib )
 
 add_subdirectory(Wrap)

@@ -3,19 +3,23 @@ include(BoostUtils)
 macro(rdkit_library)
   PARSE_ARGUMENTS(RDKLIB
     "LINK_LIBRARIES;DEST"
-    ""
+    "SHARED"
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
   else(MSVC)
-    add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
+    IF(RDKLIB_SHARED)
+      add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
+      INSTALL(TARGETS ${RDKLIB_NAME} 
+              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+    ELSE(RDKLIB_SHARED)        
+      add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
+    ENDIF(RDKLIB_SHARED)        
     IF(RDKLIB_LINK_LIBRARIES)
       target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
     ENDIF(RDKLIB_LINK_LIBRARIES)
-    INSTALL(TARGETS ${RDKLIB_NAME} 
-            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
   endif(MSVC)
 endmacro(rdkit_library)
   
