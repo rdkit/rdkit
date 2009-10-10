@@ -35,7 +35,8 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
-#include <boost/functional/hash.hpp>
+#include <RDGeneral/hash/hash.hpp>
+
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
@@ -53,7 +54,7 @@ namespace RDKit{
                                    bool includeRingMembership){
       unsigned int nAtoms=mol.getNumAtoms();
       PRECONDITION(invars.size()>=nAtoms,"vector too small");
-      boost::hash<std::vector<uint32_t> > vectHasher;
+      gboost::hash<std::vector<uint32_t> > vectHasher;
       for(unsigned int i=0;i<nAtoms;++i){
         Atom const *atom = mol.getAtomWithIdx(i);
         std::vector<uint32_t> components;
@@ -144,12 +145,12 @@ namespace RDKit{
             // and now calculate the new invariant and test if the atom is newly
             // "chiral"
             std::size_t invar=layer;
-            boost::hash_combine(invar,(*invariants)[atomIdx]);
+            gboost::hash_combine(invar,(*invariants)[atomIdx]);
             bool looksChiral = (mol.getAtomWithIdx(atomIdx)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
             for(std::vector< std::pair<int32_t,uint32_t> >::const_iterator it=nbrs.begin();
                 it!=nbrs.end();++it){
               // add the contribution to the new invariant:
-              boost::hash_combine(invar, *it);
+              gboost::hash_combine(invar, *it);
 
               //std::cerr<<"     "<<atomIdx<<": "<<it->first<<" "<<it->second<<" -> "<<invar<<std::endl;
                 
@@ -166,7 +167,7 @@ namespace RDKit{
             if(looksChiral){
               chiralAtoms[atomIdx]=1;
               // add an extra value to the invariant to reflect chirality:
-              boost::hash_combine(invar, 1);
+              gboost::hash_combine(invar, 1);
             }
             roundInvariants[atomIdx]=static_cast<uint32_t>(invar);
             neighborhoodsThisRound.push_back(boost::make_tuple(roundAtomNeighborhoods[atomIdx],

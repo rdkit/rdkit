@@ -4,6 +4,7 @@
 //
 //   @@ All Rights Reserved  @@
 //
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <DataStructs/ExplicitBitVect.h>
@@ -14,8 +15,8 @@
 #include <RDGeneral/Invariant.h>
 #include <boost/random.hpp>
 #include <limits.h>
-#include <boost/functional/hash.hpp>
 #include <boost/cstdint.hpp>
+#include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 
@@ -144,8 +145,7 @@ namespace RDKit{
         bondHashes.push_back(atomsInPath.count());
         
         // hash the path to generate a seed:
-        boost::hash<std::vector<unsigned int> > vectHasher;
-	unsigned long seed = vectHasher(bondHashes);
+	unsigned long seed = gboost::hash_range(bondHashes.begin(),bondHashes.end());
 
 #ifdef VERBOSE_FINGERPRINTING        
         std::cerr<<" hash: "<<seed<<std::endl;
@@ -234,7 +234,6 @@ namespace RDKit{
       }
     }
     
-    boost::hash<std::vector<unsigned int> > vectHasher;
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
 
@@ -352,7 +351,7 @@ namespace RDKit{
           layerIt->push_back(atomsInPath.count());
 
           // hash the path to generate a seed:
-          unsigned long seed = vectHasher(*layerIt);
+          unsigned long seed = gboost::hash_range(layerIt->begin(),layerIt->end());
 #if 0
           if(!res->GetBit(seed%fpSize)) {
             std::cerr<<"seed "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;

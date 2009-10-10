@@ -917,11 +917,54 @@ void test2MorganFPsFromAtoms(){
   
     delete mol;
   }
-
-
   
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testIssue2875658(){
+  BOOST_LOG(rdInfoLog) <<"testing issue 2875658" << std::endl;
+
+  RWMol *m;
+  ExplicitBitVect *fp1,*fp2;
+  
+  m = SmilesToMol("c1ccccc1");
+  fp1=RDKFingerprintMol(*m);
+  delete m;
+  m = SmilesToMol("c1cccnc1");
+  fp2=RDKFingerprintMol(*m);
+  delete m;
+
+#if BOOST_VERSION/100 >= 1040
+  // bug fixes in the uniform_int<> distribution in version 1.40
+  // necessitate this
+  TEST_ASSERT(fp1->GetNumOnBits()==24);
+  TEST_ASSERT((*fp1)[11]);
+  TEST_ASSERT((*fp1)[857]);
+  TEST_ASSERT((*fp1)[1786]);
+  TEST_ASSERT((*fp1)[2020]);
+
+  TEST_ASSERT(fp2->GetNumOnBits()==64);
+  TEST_ASSERT((*fp2)[11]);
+  TEST_ASSERT((*fp2)[179]);
+  TEST_ASSERT((*fp2)[1878]);
+  TEST_ASSERT((*fp2)[2020]);
+#else
+  TEST_ASSERT(fp1->GetNumOnBits()==24);
+  TEST_ASSERT((*fp1)[23]);
+  TEST_ASSERT((*fp1)[434]);
+  TEST_ASSERT((*fp1)[1445]);
+  TEST_ASSERT((*fp1)[2031]);
+
+  TEST_ASSERT(fp2->GetNumOnBits()==62);
+  TEST_ASSERT((*fp2)[23]);
+  TEST_ASSERT((*fp2)[173]);
+  TEST_ASSERT((*fp2)[1847]);
+  TEST_ASSERT((*fp2)[1975]);
+#endif
+  delete fp1;
+  delete fp2;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -939,5 +982,6 @@ int main(int argc,char *argv[]){
   test3Layers();
 #endif
   test5BackwardsCompatibility();
+  testIssue2875658();
   return 0;
 }
