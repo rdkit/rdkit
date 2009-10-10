@@ -564,7 +564,7 @@ namespace RDKit {
 
       // when we have fused rings, it can happen that this isn't actually a 1-4 contact,
       // (this was the cause of sf.net bug 2835784) check that now:
-      if(mol.getBondBetweenAtoms(aid1,atm3->getIdx()) or
+      if(mol.getBondBetweenAtoms(aid1,atm3->getIdx()) ||
          mol.getBondBetweenAtoms(aid4,atm2->getIdx())) {
         return;
       }
