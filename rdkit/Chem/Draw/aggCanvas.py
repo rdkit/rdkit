@@ -11,6 +11,7 @@ from rdkit import RDConfig
 import os
 
 faceMap={'sans':os.path.join(RDConfig.RDCodeDir,'Chem','Draw','FreeSans.ttf')}
+#faceMap={'sans':os.path.join(os.path.dirname(__file__),'FreeSans.ttf')}
 
 def convertColor(color):
   color = (int(color[0]*255),int(color[1]*255),int(color[2]*255))
