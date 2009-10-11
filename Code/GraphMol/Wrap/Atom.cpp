@@ -142,10 +142,10 @@ struct atom_wrapper {
       .def("SetFormalCharge",&Atom::setFormalCharge)
 
 
-      .def("SetNoImplicit",&Atom::setNoImplicit,
+      .def("SetNoImplicit",&Atom::setNoImplicitHydrogens,
 	   "Sets a marker on the atom that *disallows* implicit Hs.\n"
 	   "  This holds even if the atom would otherwise have implicit Hs added.\n")
-      .def("GetNoImplicit",&Atom::getNoImplicit,
+      .def("GetNoImplicit",&Atom::getNoImplicitHydrogens,
 	   "Returns whether or not the atom is *allowed* to have implicit Hs.\n")
 
       .def("SetNumExplicitHs",&Atom::setNumExplicitHs)

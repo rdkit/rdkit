@@ -710,7 +710,7 @@ namespace RDKit{
 
     flags = 0;
     if(atom->getIsAromatic()) flags |= 0x1<<6;
-    if(atom->getNoImplicit()) flags |= 0x1<<5;
+    if(atom->getNoImplicitHydrogens()) flags |= 0x1<<5;
     if(atom->hasQuery()) flags |= 0x1<<4;
     if(atom->hasProp("molAtomMapNumber")) flags |= 0x1<<3;
     streamWrite(ss,flags);
@@ -829,7 +829,7 @@ namespace RDKit{
       }
     }
     atom->setIsAromatic(flags & 0x1<<6);
-    atom->setNoImplicit(flags & 0x1<<5);
+    atom->setNoImplicitHydrogens(flags & 0x1<<5);
 
     bool hasAtomMap=0;
     if(version>=6020){

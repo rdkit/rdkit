@@ -1994,7 +1994,7 @@ void test21Issue2540021(){
     TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum()==7);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence()==0);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence()==3);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit()==false);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicitHydrogens()==false);
 
     delete rxn;
   }

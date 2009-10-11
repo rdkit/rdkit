@@ -171,7 +171,7 @@ namespace RDKit {
         
           if( dv==(sbo+1) ){
             dBndCands[*adx]=1;
-          } else if( !nRadicals && at->getNoImplicit() && dv==(sbo+2) ){
+          } else if( !nRadicals && at->getNoImplicitHydrogens() && dv==(sbo+2) ){
             // special case: there is currently no radical on the atom, but if
             // if we allow one then this is a candidate:
             dBndCands[*adx]=1;

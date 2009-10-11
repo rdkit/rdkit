@@ -143,7 +143,7 @@ namespace RDKit{
     */
     unsigned int getTotalNumHs(bool includeNeighbors=false) const;
 
-    //! returns the number of implicit Hs this Atom is bound to
+    //! returns the number of explicit Hs this Atom is bound to
     /*!
       <b>Notes:</b>
         - requires an owning molecule
@@ -168,7 +168,6 @@ namespace RDKit{
     unsigned int getNumRadicalElectrons() const { return d_numRadicalElectrons; };
     void setNumRadicalElectrons(unsigned int num) { d_numRadicalElectrons=num; };
 
-
     //! returns the formal charge of this atom
     const int getFormalCharge() const { return d_formalCharge; };
     //! set's the formal charge of this atom
@@ -176,9 +175,9 @@ namespace RDKit{
 
     //! \brief sets our \c noImplicit flag, indicating whether or not
     //!  we are allowed to have implicit Hs
-    void setNoImplicit( bool what ) { df_noImplicit = what; };
+    void setNoImplicitHydrogens( bool what ) { df_noImplicit = what; };
     //! returns the \c noImplicit flag
-    bool getNoImplicit() const { return df_noImplicit; };
+    bool getNoImplicitHydrogens() const { return df_noImplicit; };
     
     //! sets our number of explict Hs
     void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; };

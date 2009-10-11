@@ -169,17 +169,17 @@ void testDetails(){
   a = mol->getAtomWithIdx(0);
   CHECK_INVARIANT(a->getImplicitValence()==1,"");
   CHECK_INVARIANT(a->getExplicitValence()==1,"");
-  CHECK_INVARIANT(a->getNoImplicit()==0,"");
+  CHECK_INVARIANT(a->getNoImplicitHydrogens()==0,"");
   CHECK_INVARIANT(a->getFormalCharge()==0,"");
   a = mol->getAtomWithIdx(2);
   CHECK_INVARIANT(a->getImplicitValence()==0,"");
   CHECK_INVARIANT(a->getExplicitValence()==2,"");
-  CHECK_INVARIANT(a->getNoImplicit()==1,"");
+  CHECK_INVARIANT(a->getNoImplicitHydrogens()==1,"");
   CHECK_INVARIANT(a->getFormalCharge()==0,"");
   a = mol->getAtomWithIdx(4);
   CHECK_INVARIANT(a->getImplicitValence()==0,"");
   CHECK_INVARIANT(a->getExplicitValence()==1,"");
-  CHECK_INVARIANT(a->getNoImplicit()==1,"");
+  CHECK_INVARIANT(a->getNoImplicitHydrogens()==1,"");
   CHECK_INVARIANT(a->getFormalCharge()==-1,"");
     
 
@@ -1520,7 +1520,7 @@ void testBug1670149(){
   TEST_ASSERT(smi=="C1CC[NH2+]C1");
 
   mol->getAtomWithIdx(1)->setNumExplicitHs(0);
-  mol->getAtomWithIdx(1)->setNoImplicit(false);
+  mol->getAtomWithIdx(1)->setNoImplicitHydrogens(false);
   mol->getAtomWithIdx(1)->updatePropertyCache();
   TEST_ASSERT(mol->getAtomWithIdx(1)->getNumImplicitHs()==2);
   smi = MolToSmiles(*mol,false,false,-1);

@@ -121,7 +121,7 @@ namespace RDKit {
         if(!prodAtom->hasProp("_QueryHCount")){
           prodAtom->setNumExplicitHs(reactAtom->getNumExplicitHs());
         }
-        prodAtom->setNoImplicit(reactAtom->getNoImplicit());
+        prodAtom->setNoImplicitHydrogens(reactAtom->getNoImplicitHydrogens());
       }
     }    
 
@@ -318,7 +318,7 @@ namespace RDKit {
               // If the product atom is a dummy, set everything
               productAtom->setAtomicNum(reactantAtom->getAtomicNum());
               productAtom->setFormalCharge(reactantAtom->getFormalCharge());
-              productAtom->setNoImplicit(reactantAtom->getNoImplicit());
+              productAtom->setNoImplicitHydrogens(reactantAtom->getNoImplicitHydrogens());
               productAtom->setNumExplicitHs(reactantAtom->getNumExplicitHs());
               productAtom->setMass(reactantAtom->getMass());
               productAtom->setIsAromatic(reactantAtom->getIsAromatic());

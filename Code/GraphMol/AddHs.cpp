@@ -323,8 +323,8 @@ namespace RDKit{
             if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
           }
           // be very clear about implicits not being allowed in this representation
-          newAt->setProp("origNoImplicit",(*at)->getNoImplicit(), true);
-          newAt->setNoImplicit(true);
+          newAt->setProp("origNoImplicit",(*at)->getNoImplicitHydrogens(), true);
+          newAt->setNoImplicitHydrogens(true);
         }
         // update the atom's derived properties (valence count, etc.)
         newAt->updatePropertyCache();
@@ -383,7 +383,7 @@ namespace RDKit{
             // *or* if the atom is chiral, in which case the H is needed
             // in order to complete the coordination
             // *or* if the atom has the noImplicit flag set:
-            if( updateExplicitCount || heavyAtom->getNoImplicit() || 
+            if( updateExplicitCount || heavyAtom->getNoImplicitHydrogens() || 
                 heavyAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
               heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs()+1);
             } else {
@@ -444,7 +444,7 @@ namespace RDKit{
             //  multiple times on a single molecule without intervening addHs() calls)
             bool tmpBool;
             atom->getProp("origNoImplicit",tmpBool);    
-            atom->setNoImplicit(tmpBool);
+            atom->setNoImplicitHydrogens(tmpBool);
             atom->clearProp("origNoImplicit");
           }
         }

@@ -792,7 +792,7 @@ namespace RDKit{
                atom->getFormalCharge()==0 &&
                !atom->getIsAromatic() ){
               atom->setNumExplicitHs(0);
-              atom->setNoImplicit(false);
+              atom->setNoImplicitHydrogens(false);
               atom->calcExplicitValence(false);
               atom->calcImplicitValence(false);
             }

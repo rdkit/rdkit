@@ -168,7 +168,7 @@ namespace RDKit{
            ai != mol.endAtoms(); ++ai) {
         // we only put automatically assign radicals to things that
         // don't have them already and don't have implicit Hs:
-        if( !(*ai)->getNoImplicit() || (*ai)->getNumRadicalElectrons() || !(*ai)->getAtomicNum()){
+        if( !(*ai)->getNoImplicitHydrogens() || (*ai)->getNumRadicalElectrons() || !(*ai)->getAtomicNum()){
           continue;
         }
         double accum = 0.0;

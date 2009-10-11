@@ -690,7 +690,7 @@ namespace RDKit{
           delete res;
           res=query;  
           // queries have no implicit Hs:
-          res->setNoImplicit(true);
+          res->setNoImplicitHydrogens(true);
         } else {
           res->setAtomicNum(0);
         }
@@ -721,7 +721,7 @@ namespace RDKit{
 
       // FIX: this does not appear to be correct
       if(hCount==1){
-        res->setNoImplicit(true);
+        res->setNoImplicitHydrogens(true);
       }
     
       if(massDiff!=0) {
@@ -1121,7 +1121,7 @@ namespace RDKit{
               res->getQuery()->setNegation(true);
             }
             // queries have no implicit Hs:
-            res->setNoImplicit(true);
+            res->setNoImplicitHydrogens(true);
           } else {
             res->setAtomicNum(0);
           }
