@@ -532,6 +532,7 @@ namespace RDKit {
         // basically we will assume 0 to 180 allowed
         dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23); 
         du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+        if(du<dl) std::swap(du,dl);
         if (fabs(du-dl) < DIST12_DELTA) {
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
