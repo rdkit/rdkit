@@ -8,7 +8,7 @@
 
 Acknowledgements
   - Uwe Hoffmann, Nik Stiefl, George Magoon, Ari Gold-Parker,
-    Akihiro Yokota, Kei Taneishi, Riccardo Vianello
+    Akihiro Yokota, Kei Taneishi, Riccardo Vianello, Markus Kossner
 
 Bug Fixes
   - the canonOrient argument to the depiction code now works 
@@ -25,6 +25,8 @@ Bug Fixes
     (issue 2867325)
   - fingerprint incompatibility on 64bit machines fixed
     (issue 2875658)
+  - PropertyMol properties are now written to SD files
+    (issue 2880943)
 
 New Features
   - to the extent possible, reactions now transfer coordinates from
