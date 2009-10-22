@@ -35,7 +35,7 @@ class TestCase(unittest.TestCase):
     mdl.SetTrainingExamples(examples)
     neighbors = mdl.GetNeighbors(pt)
     for i in range(numNeigh):
-      assert feq(tgt[i][0],neighbors[i][0])
+      assert feq(-tgt[i][0],neighbors[i][0])
       assert tgt[i][1][0]==neighbors[i][1][0]
 
   def test2XValClass(self):
