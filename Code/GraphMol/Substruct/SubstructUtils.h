@@ -21,7 +21,7 @@ namespace RDKit{
   typedef boost::shared_ptr<Bond>    BOND_SPTR;
   
   double toPrime(const MatchVectType &v);
-  void removeDuplicates(std::vector<MatchVectType> &v);
+  void removeDuplicates(std::vector<MatchVectType> &v,unsigned int nAtoms);
 #ifdef USE_VFLIB
   bool atomCompat(const Atom *a1,const Atom *a2);
   bool chiralAtomCompat(const Atom *a1,const Atom *a2);

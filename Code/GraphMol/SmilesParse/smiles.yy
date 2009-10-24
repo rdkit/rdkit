@@ -159,6 +159,7 @@ mol: atomd {
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     Bond::UNSPECIFIED);
   mp->setBondBookmark(newB,$2);
+  newB->setProp("_unspecifiedOrder",1);
   INT_VECT tmp;
   if(atom->hasProp("_RingClosures")){
     atom->getProp("_RingClosures",tmp);

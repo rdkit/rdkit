@@ -373,7 +373,7 @@ namespace SmilesParseOps{
 	    //   bond, we'll just take the first one and ignore others
 	    //   NOTE: we used to do this the other way (take the last specification),
 	    //   but that turned out to be troublesome in odd cases like C1CC11CC1.
-	    if(bond1->getBondType()!=Bond::UNSPECIFIED){
+	    if(!bond1->hasProp("_unspecifiedOrder")){
 	      matchedBond = bond1;
 	      matchedBond->setEndAtomIdx(atom2->getIdx());
 	      delete bond2;
