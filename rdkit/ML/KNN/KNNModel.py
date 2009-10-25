@@ -7,8 +7,7 @@
 """ Define the class _KNNModel_, used to represent a k-nearest neighbhors model
 
 """
-from rdkit.ML.KNN import DistFunctions
-import bisect
+from rdkit.DataStructs.TopNContainer import TopNContainer
 class KNNModel(object):
   """ This is a base class used by KNNClassificationModel
   and KNNRegressionModel to represent a k-nearest neighbor predictor. In general
@@ -28,10 +27,10 @@ class KNNModel(object):
     4) _k_: the number of closest neighbors used for prediction
 
   """
-  def __init__(self, k, attrs, dfunc) :
-    self._setup(k, attrs, dfunc)
+  def __init__(self, k, attrs, dfunc, radius=None) :
+    self._setup(k, attrs, dfunc, radius)
       
-  def _setup(self, k, attrs, dfunc) :
+  def _setup(self, k, attrs, dfunc, radius) :
     self._examples = []
     self._trainingExamples = []
     self._testExamples = []
@@ -39,6 +38,7 @@ class KNNModel(object):
     self._attrs = attrs
     self._dfunc = dfunc
     self._name = ""
+    self._radius = radius
 
   def GetName(self) :
     return self_name
@@ -68,14 +68,11 @@ class KNNModel(object):
     """ Returns the k nearest neighbors of the example
 
     """
-    # we'll maintain a sorted list of nearest neighbors in res:
-    res = [(1e8,0)]*self._k
+    nbrs = TopNContainer(self._k)
     for trex in self._trainingExamples:
       dist = self._dfunc(trex, example, self._attrs)
-      knn = (dist, trex)
-      if dist < res[-1][0]:
-        loc = bisect.bisect(res,knn)
-        res.insert(loc,knn)
-        res.pop()
-    return res
+      if self._radius is None or dist<self._radius:
+        nbrs.Insert(-dist,trex)
+    nbrs.reverse()
+    return [x for x in nbrs]
     

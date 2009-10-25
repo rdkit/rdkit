@@ -10,17 +10,14 @@
 """
 
 from rdkit.ML.KNN import KNNModel
-from rdkit.ML.KNN import DistFunctions
-import math
-
 
 class KNNClassificationModel(KNNModel.KNNModel) :
   """ This is used to represent a k-nearest neighbor classifier
 
   """
 
-  def __init__(self, k, attrs, dfunc) :
-    self._setup(k, attrs, dfunc)
+  def __init__(self, k, attrs, dfunc,radius=None) :
+    self._setup(k, attrs, dfunc,radius)
         
     self._badExamples = [] # list of examples incorrectly classified
 
@@ -35,7 +32,7 @@ class KNNClassificationModel(KNNModel.KNNModel) :
   def NameModel(self, varNames) :
     self.SetName(self.type())
 
-  def ClassifyExample(self, example, appendExamples=0) :
+  def ClassifyExample(self, example, appendExamples=0, neighborList=None) :
     """ Classify a an example by looking at its closest neighbors
 
     The class assigned to this example is same as the class for the mojority of its
@@ -46,6 +43,8 @@ class KNNClassificationModel(KNNModel.KNNModel) :
     - examples: the example to be classified
 
     - appendExamples: if this is nonzero then the example will be stored on this model
+
+    - neighborList: if provided, will be used to return the list of neighbors
 
     **Returns**
 
@@ -65,6 +64,8 @@ class KNNClassificationModel(KNNModel.KNNModel) :
         clsCnt[cls] += 1
       else :
         clsCnt[cls] = 1
+    if neighborList is not None:
+      neighborList.extend(knnLst)
 
     # now return the class with the maximum count
     mkey = -1

@@ -10,7 +10,8 @@
 #include <GraphMol/Descriptors/AtomPairs.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <DataStructs/SparseIntVect.h>
-#include <boost/functional/hash.hpp>
+#include <RDGeneral/hash/hash.hpp>
+#include <boost/cstdint.hpp>
 
 namespace RDKit{
   namespace Descriptors {
@@ -137,10 +138,10 @@ namespace RDKit{
             unsigned int j=(*atomItJ)->getIdx();
             unsigned int dist=static_cast<unsigned int>(floor(dm[i*nAtoms+j]));
             if(dist>=minLength && dist<=maxLength){
-              std::size_t bit=0;
-              boost::hash_combine(bit,std::min(atomCodes[i],atomCodes[j]));
-              boost::hash_combine(bit,dist);
-              boost::hash_combine(bit,std::max(atomCodes[i],atomCodes[j]));
+              boost::uint32_t bit=0;
+              gboost::hash_combine(bit,std::min(atomCodes[i],atomCodes[j]));
+              gboost::hash_combine(bit,dist);
+              gboost::hash_combine(bit,std::max(atomCodes[i],atomCodes[j]));
               res->setVal(bit%nBits,(*res)[bit%nBits]+1);
             }
           }
@@ -200,14 +201,14 @@ namespace RDKit{
           --j;
         }
 
-        size_t res=0;
+        boost::uint32_t res=0;
         if(reverseIt){
           for(unsigned int i=0;i<pathCodes.size();++i){
-            boost::hash_combine(res,pathCodes[pathCodes.size()-i-1]);
+            gboost::hash_combine(res,pathCodes[pathCodes.size()-i-1]);
           }
         }else{
           for(unsigned int i=0;i<pathCodes.size();++i){
-            boost::hash_combine(res,pathCodes[i]);
+            gboost::hash_combine(res,pathCodes[i]);
           }
         }
         return res;

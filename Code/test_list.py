@@ -1,6 +1,8 @@
 
 tests=[
   ("python","test_list.py",{'dir':'RDGeneral'}),
+  ("python","test_list.py",{'dir':'Geometry'}),
+  ("python","test_list.py",{'dir':'Geometry/Wrap'}),
   ("python","test_list.py",{'dir':'DataStructs'}),
   ("python","test_list.py",{'dir':'DataStructs/Wrap'}),
   ("python","test_list.py",{'dir':'Query'}),

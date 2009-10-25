@@ -169,21 +169,21 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   std::string docString = "";
 
   python::class_<python::object>("AtomPairsParameters")
-    .def_readonly("version",
+    .setattr("version",
 		  RDKit::Descriptors::AtomPairs::atomPairsVersion)
-    .def_readonly("numTypeBits",
+    .setattr("numTypeBits",
 		  RDKit::Descriptors::AtomPairs::numTypeBits)
-    .def_readonly("numPiBits",
+    .setattr("numPiBits",
 		  RDKit::Descriptors::AtomPairs::numPiBits)
-    .def_readonly("numBranchBits",
+    .setattr("numBranchBits",
 		  RDKit::Descriptors::AtomPairs::numBranchBits)
-    .def_readonly("codeSize",
+    .setattr("codeSize",
 		  RDKit::Descriptors::AtomPairs::codeSize)
-    .def_readonly("atomTypes",
+    .setattr("atomTypes",
 		  atomPairTypes)
-    .def_readonly("numPathBits",
+    .setattr("numPathBits",
 		  RDKit::Descriptors::AtomPairs::numPathBits)
-    .def_readonly("numAtomPairFingerprintBits",
+    .setattr("numAtomPairFingerprintBits",
 		  RDKit::Descriptors::AtomPairs::numAtomPairFingerprintBits)
     ;
   docString="Returns the atom code (hash) for an atom";

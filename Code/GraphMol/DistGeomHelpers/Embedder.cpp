@@ -300,7 +300,13 @@ namespace RDKit {
             return res;
           }
         }
-      
+#if 0
+        for(unsigned int li=0;li<piece->getNumAtoms();++li){
+          for(unsigned int lj=li+1;lj<piece->getNumAtoms();++lj){
+            std::cerr<<" ("<<li<<","<<lj<<"): "<<mat->getLowerBound(li,lj)<<" -> "<<mat->getUpperBound(li,lj)<<std::endl;
+          }
+        }
+#endif
         // find all the chiral centers in the molecule
         DistGeom::VECT_CHIRALSET chiralCenters;
         MolOps::assignStereochemistry(*piece);

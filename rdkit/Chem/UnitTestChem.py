@@ -120,7 +120,10 @@ class TestCase(unittest.TestCase):
     inF = open(self.fName,'rb')
     m2 = cPickle.load(inF)
     inF.close()
-    os.unlink(self.fName)
+    try:
+      os.unlink(self.fName)
+    except:
+      pass
     oldSmi = Chem.MolToSmiles(self.m)
     newSmi = Chem.MolToSmiles(m2)
     assert oldSmi==newSmi,'string compare failed'

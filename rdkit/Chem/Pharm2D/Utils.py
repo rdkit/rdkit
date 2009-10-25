@@ -277,7 +277,9 @@ def GetUniqueCombinations(choices,classes,which=0):
                                 which=which+1)
     for thing in choices[which]:
       for other in tmp:
-        idxThere=len([x for x in other if x[1]==thing])
+        idxThere=0
+        for x in other:
+          if x[1]==thing:idxThere+=1
         if not idxThere:
           newL = [(classes[which],thing)]+other
           newL.sort()

@@ -1,17 +1,45 @@
 ******  Release_Q32009_1 *******
-(Changes relative to Release_Q12009_2)
+(Changes relative to Release_Q22009_1)
+
+!!!!!! IMPORTANT !!!!!!
+  - Due to bug fixes in the boost random-number generator, RDK
+    fingerprints generated with boost 1.40 are not backwards
+    compatible with those from earlier versions.
 
 Acknowledgements
+  - Uwe Hoffmann, Nik Stiefl, George Magoon, Ari Gold-Parker,
+    Akihiro Yokota, Kei Taneishi, Riccardo Vianello, Markus Kossner
 
 Bug Fixes
-   
-New Features
+  - the canonOrient argument to the depiction code now works 
+    (issue 2821647)
+  - typo in the depictor 2D embedding code fixed  
+    (issue 2822883)
+  - single aromatic atoms in chains now (correctly) fail sanitization
+    (issue 2830244)
+  - problem with embedding and fused rings fixed
+    (issue 2835784)
+  - crash when reading some large molecules fixed
+    (issue 2840217)
+  - trailing newline in TemplateExpand.py fixed
+    (issue 2867325)
+  - fingerprint incompatibility on 64bit machines fixed
+    (issue 2875658)
+  - PropertyMol properties are now written to SD files
+    (issue 2880943)
 
+New Features
+  - to the extent possible, reactions now transfer coordinates from
+    reactant molecules to product molecules (issue 2832951)
 Other
   - the function DaylightFingerprintMol() has been removed
   - the outdated support for Interbase has been removed
   - the Compute2DCoords() function in Python now canonicalizes the
     orientation of the molecule by default.
+  - the distance-geometry code should now generate less bad amide
+    conformations. (issue 2819563)
+  - the quality of distance-geometry embeddings for substituted- and
+    fused-ring systems should be better.  
 
 ******  Release_Q22009_1 *******
 (Changes relative to Release_Q12009_2)

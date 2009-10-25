@@ -1159,6 +1159,142 @@ void testSmartsStereochem(){
 }
 
 
+void testIssue2884178_part1(){
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 2884178 part1: SubstructMatch not returning correct number of matches" << std::endl;
+
+  {
+    // part one of the problem: number of unique matches incorrect
+    RWMol *patt,*mol;
+    std::string sma;
+    sma ="*~1~*~*~*~*~*~*~*~*~*~*~*~*~*1";
+    patt = SmartsToMol(sma);
+    TEST_ASSERT(patt);
+    sma ="CC1CCC3C4CCCCC4CCC3C1";
+    mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    std::vector< MatchVectType > mVV;
+    unsigned int count=SubstructMatch(*mol,*patt,mVV,true);
+    TEST_ASSERT(count==1);
+    TEST_ASSERT(mVV.size()==1);
+    delete patt;
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testIssue2884178_part2(){
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 2884178 part2: SubstructMatch not returning correct number of matches" << std::endl;
+
+  {
+    RWMol *patt,*mol;
+    std::string sma;
+    sma ="C~1~C~C~1";
+    patt = SmartsToMol(sma);
+    unsigned int count;
+
+    TEST_ASSERT(patt);
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1)->hasQuery());
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1)->getQuery()->getDescription()=="BondNull");
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2)->hasQuery());
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2)->getQuery()->getDescription()=="BondNull");
+
+    sma ="C1CC1";
+    mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    std::vector< MatchVectType > mVV;
+    count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==6);
+    TEST_ASSERT(mVV.size()==6);
+
+    delete mol;
+    sma ="C1C=C1";
+    mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==6);
+    TEST_ASSERT(mVV.size()==6);
+    
+    delete patt;
+    delete mol;
+  }
+  {
+    RWMol *patt,*mol;
+    std::string sma;
+    sma ="C~1~C~C1";
+    unsigned int count;
+
+    patt = SmartsToMol(sma);
+    TEST_ASSERT(patt);
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1)->hasQuery());
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1)->getQuery()->getDescription()=="BondNull");
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2)->hasQuery());
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2)->getQuery()->getDescription()=="BondNull");
+
+    sma ="C1CC1";
+    mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    std::vector< MatchVectType > mVV;
+    count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==6);
+    TEST_ASSERT(mVV.size()==6);
+
+    delete mol;
+    sma ="C1C=C1";
+    mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==6);
+    TEST_ASSERT(mVV.size()==6);
+    
+    delete patt;
+    delete mol;
+  }
+  {
+    RWMol *patt,*mol;
+    std::string sma;
+    unsigned int count;
+
+    sma ="C1~C~C~1";
+    patt = SmartsToMol(sma);
+    TEST_ASSERT(patt);
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1)->hasQuery());
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,1)->getQuery()->getDescription()=="BondNull");
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2));
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2)->hasQuery());
+    TEST_ASSERT(patt->getBondBetweenAtoms(0,2)->getQuery()->getDescription()=="BondNull");
+
+    sma ="C1CC1";
+    mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    std::vector< MatchVectType > mVV;
+    count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==6);
+    TEST_ASSERT(mVV.size()==6);
+
+    delete mol;
+    sma ="C1C=C1";
+    mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==6);
+    TEST_ASSERT(mVV.size()==6);
+    
+    delete patt;
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 int
 main(int argc, char *argv[])
@@ -1189,5 +1325,7 @@ main(int argc, char *argv[])
   testMiscSmartsWriting();
   //testIssue1804420();
   testSmartsStereochem();
+  testIssue2884178_part1();
+  testIssue2884178_part2();
   return 0;
 }

@@ -78,9 +78,10 @@ void test1() {
 	  double d1=(pt1j-pt1i).length();
 	  double d2=(pt2j-pt2i).length();
 	  if(m->getBondBetweenAtoms(i,j)){
-            //BOOST_LOG(rdInfoLog) << ">>> " << d1 << " " << d2 << std::endl;
+            //BOOST_LOG(rdInfoLog) << ">-> " <<i<<","<<j<<":"<< d1 << " " << d2 << std::endl;
 	    TEST_ASSERT(fabs(d1-d2)/d1<0.06);
           }else{
+            //BOOST_LOG(rdInfoLog) << ">.> " <<i<<","<<j<<":"<< d1 << " " << d2 << std::endl;
 	    TEST_ASSERT(fabs(d1-d2)/d1<0.12);
 	  }
 	}
@@ -1021,6 +1022,57 @@ void testIssue2091974() {
 }
 
 
+void testIssue2835784() {
+#if 1
+  {
+    std::string smi="C1C=C1";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+  {
+    std::string smi="C1C=C1";
+    RWMol *m = SmilesToMol(smi);
+    ROMol *m2 =MolOps::addHs(*m);
+    delete m;
+    int cid = DGeomHelpers::EmbedMolecule(*m2);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m2,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m2;
+  }
+  {
+    std::string smi="C12=CCC1C2";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+#endif
+  {
+    std::string smi="C12=CCC1C2";
+    RWMol *m = SmilesToMol(smi);
+    ROMol *m2 =MolOps::addHs(*m);
+    delete m;
+    int cid = DGeomHelpers::EmbedMolecule(*m2);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m2,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m2;
+  }
+}
+
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1111,7 +1163,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091864 \n\n";
   testIssue2091864();
 
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test constrained embedding \n\n";
@@ -1120,6 +1171,13 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091974 \n\n";
   testIssue2091974();
+  BOOST_LOG(rdInfoLog) << "*******************************************************\n";
+
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2835784 \n\n";
+  testIssue2835784();
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
 
   return(0);

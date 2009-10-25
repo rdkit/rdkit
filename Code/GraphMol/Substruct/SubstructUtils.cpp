@@ -8,6 +8,8 @@
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <boost/dynamic_bitset.hpp>
+
 
 #ifdef USE_VFLIB
 #include <argedit.h>
@@ -92,24 +94,11 @@ bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2){
 }
 #endif
 
-double toPrime(const MatchVectType &v){
-  double res = 1.0;
-  MatchVectType::const_iterator ci;
-  for(ci=v.begin();ci!=v.end();ci++){
-    int idx=ci->second;;
-    //std::cout << " " << idx;
-    CHECK_INVARIANT(idx<NUM_PRIMES_AVAIL,"number too large");
-    res *= firstThousandPrimes[idx];
-  }
-  return res;
-}
-
-void removeDuplicates(std::vector<MatchVectType> &v){
+void removeDuplicates(std::vector<MatchVectType> &v,unsigned int nAtoms){
   //
-  //  This works by calculating a product of primes based on the
-  //  indices of the atoms in each match vector.  This can lead to
-  //  unexpected behavior when looking at rings and queries that don't
-  //  specify bond orders.  For example querying this molecule:
+  //  This works by tracking the indices of the atoms in each match vector.  
+  //  This can lead to unexpected behavior when looking at rings and queries 
+  //  that don't specify bond orders.  For example querying this molecule:
   //    C1CCC=1
   //  with the pattern constructed from SMARTS C~C~C~C will return a
   //  single match, despite the fact that there are 4 different paths
@@ -117,16 +106,15 @@ void removeDuplicates(std::vector<MatchVectType> &v){
   //  that the 4 paths are equivalent in the semantics of the query.
   //  Also, OELib returns the same results
   //
-  DOUBLE_VECT seen;
+  std::vector< boost::dynamic_bitset<> > seen;
   std::vector<MatchVectType> res;
-  std::vector<MatchVectType>::iterator i;
-  for(i=v.begin();i!=v.end();i++){
-    //std::cout << "Path: ";
-    double val = toPrime(*i);
-    //std::cout << " " << val << std::endl;
-    if(std::find(seen.begin(),seen.end(),val) == seen.end()){
+  for(std::vector<MatchVectType>::const_iterator i=v.begin();i!=v.end();++i){
+    boost::dynamic_bitset<> val(nAtoms);
+    for(MatchVectType::const_iterator ci=i->begin();ci!=i->end();++ci){
+      val.set(ci->second);
+    }
+    if(std::find(seen.begin(),seen.end(),val)==seen.end()){
       // it's something new
-      //std::cout << "KEEP" << std::endl;
       res.push_back(*i);
       seen.push_back(val);
     }

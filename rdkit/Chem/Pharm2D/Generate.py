@@ -53,9 +53,8 @@ def _ShortestPathsMatch(match,featureSet,sig,dMat,sigFactory):
     minSeen=maxD
     for idx1 in match[pt0]:
       for idx2 in match[pt1]:
-        d = dMat[idx1,idx2]
-        if d<minSeen:
-          minSeen=d
+        minSeen=min(minSeen, dMat[idx1,idx2])
+        if minSeen==0 or minSeen<minD: return
     # FIX: this won't be an int if we're using the bond order.
     d = int(minSeen)
     # do a quick distance filter
