@@ -21,7 +21,8 @@ include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
 if(MSVC)
 # I cannot, for the life of me, get this working without hard coding BOOST_ROOT
 # here
-set(BOOST_ROOT "c:\\boost\\boost_1_40_0")
+#set(BOOST_ROOT "c:\\boost\\boost_1_40_0")
+SET(Boost_ADDITIONAL_VERSIONS "1.40" "1.40.0")
 endif(MSVC)
 find_package(Boost COMPONENTS python thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
