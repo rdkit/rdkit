@@ -611,7 +611,9 @@ void testReplaceCoreCrash()
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing a former crash in replaceCore" << std::endl;
 
-  mol1 = MolFileToMol("testData/oldcrash.mol");
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ChemTransforms/testData/oldcrash.mol";
+  mol1 = MolFileToMol(pathName);
   TEST_ASSERT(mol1);
 
   sma = "N";

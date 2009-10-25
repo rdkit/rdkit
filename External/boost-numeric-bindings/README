@@ -1,0 +1,7 @@
+How to obtain a new version:
+checkout-boost.sh
+
+Make a patch:
+diff -wruN -x '.svn' -x '.git' \
+  -x '*.orig' -x '*.patch' -x '*.rej' -x '*~' \
+  . ~/tmp/bindings/

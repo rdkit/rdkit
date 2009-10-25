@@ -18,7 +18,6 @@
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #include <boost/graph/johnson_all_pairs_shortest.hpp>
 #include <boost/version.hpp>
-
 #if BOOST_VERSION >= 104000
 #include <boost/property_map/property_map.hpp>
 #else

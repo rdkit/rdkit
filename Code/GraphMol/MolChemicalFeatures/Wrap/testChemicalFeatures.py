@@ -1,8 +1,9 @@
 from rdkit import DataStructs
+from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import ChemicalFeatures,rdDistGeom
 from rdkit import Geometry
-import unittest
+import unittest,os
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -21,7 +22,8 @@ class TestCase(unittest.TestCase):
     pass
 
   def testBasic(self):
-    cfac = ChemicalFeatures.BuildFeatureFactory('../test_data/featDef.txt')
+    cfac = ChemicalFeatures.BuildFeatureFactory(os.path.join(RDConfig.RDBaseDir,
+                                                             'Code','GraphMol','MolChemicalFeatures','test_data','featDef.txt'))
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
 
     fNames = cfac.GetFeatureFamilies()
@@ -65,7 +67,8 @@ class TestCase(unittest.TestCase):
 
 
   def testIncludeOnly(self):
-    cfac = ChemicalFeatures.BuildFeatureFactory('../test_data/featDef.txt')
+    cfac = ChemicalFeatures.BuildFeatureFactory(os.path.join(RDConfig.RDBaseDir,
+                                                             'Code','GraphMol','MolChemicalFeatures','test_data','featDef.txt'))
     self.failUnless(cfac.GetNumFeatureDefs() == 2)
 
     mol = Chem.MolFromSmiles("COCN")

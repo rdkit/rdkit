@@ -13,10 +13,11 @@ class TestCase(unittest.TestCase):
         pass
 
     def test0HalgrenSet(self) :
-        smiSup = Chem.SmilesMolSupplier("test_data/halgren.smi",delimiter='\t')
+        smiSup = Chem.SmilesMolSupplier(os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','PartialCharges','Wrap','test_data','halgren.smi'),delimiter='\t')
 
         #parse the original file
-        infil = open("test_data/halgren_out.txt", 'r')
+        infil = file(os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','PartialCharges','Wrap','test_data','halgren_out.txt'),
+                     'r')
         lines = infil.readlines()
         infil.close()
         
@@ -42,12 +43,12 @@ class TestCase(unittest.TestCase):
 	  i += 1
         
     def test1PPDataset(self):
-        fileN = os.path.join('test_data', 'PP_descrs_regress.2.csv')
+        fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','PartialCharges','Wrap','test_data', 'PP_descrs_regress.2.csv')
         infil = open(fileN, 'r')
         lines = infil.readlines()
         infil.close()
 
-        infile = os.path.join('test_data', 'PP_combi_charges.pkl')
+        infile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','PartialCharges','Wrap','test_data', 'PP_combi_charges.pkl')
         cchFile = open(infile, 'rb')
         combiCharges = pickle.load(cchFile)
 

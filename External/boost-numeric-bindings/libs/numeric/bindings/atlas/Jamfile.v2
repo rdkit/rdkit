@@ -1,0 +1,60 @@
+# Copyright Thomas Klimpel 2008.
+# Use, modification and distribution are subject to the
+# Boost Software License, Version 1.0. (See accompanying file
+# LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+project libs/numeric/bindings/atlas : requirements
+        <include>$(BOOST_ROOT)
+        <include>$(B_ROOT)
+        <library>/numeric-bindings//lapack_atlas_lib
+        <library>/numeric-bindings//cblas_lib
+        <library>/numeric-bindings//atlas_lib ;
+
+import testing ;
+
+alias bindings-atlas-tests :
+    [ run init.cc ]
+    [ run others.cc ]
+
+    [ run tnt2.cc : : : <build>no ]
+    [ run tnt3.cc : : : <build>no ]
+
+    [ run ublas_cmatr2.cc ]
+    [ run ublas_cmatr2ger.cc ]
+    [ run ublas_cmatr3.cc ]
+    [ run ublas_cvct.cc ]
+    [ run ublas_gesv.cc ]
+    [ run ublas_gesv2.cc ]
+    [ run ublas_gesv3.cc ]
+    [ run ublas_gesv4.cc ]
+    [ run ublas_gesv5.cc ]
+    [ run ublas_getrf_getrs.cc ]
+
+    [ link ublas_getri.cc ]
+
+    [ run ublas_matr1.cc ]
+    [ run ublas_matr2.cc ]
+    [ run ublas_matr22.cc ]
+    [ link ublas_matr2_bench.cc ]
+    [ run ublas_matr2ger.cc ]
+    [ run ublas_matr3.cc ]
+    [ run ublas_posv.cc ]
+    [ run ublas_potrf_potrs.cc ]
+
+    [ link ublas_potri.cc ]
+
+    [ link ublas_herm3.cc ]
+    [ run ublas_herm3h2k.cc ]
+    [ run ublas_herm3herk.cc ]
+
+    [ link ublas_symm2.cc ]
+    [ link ublas_symm3.cc ]
+    [ link ublas_symm2syr.cc ]
+    [ link ublas_symm32.cc ]
+    [ link ublas_symm33.cc ]
+    [ link ublas_symm3s2k.cc ]
+    [ link ublas_symm3syrk.cc ]
+    [ link ublas_symmc3.cc ]
+    [ run ublas_vct.cc ]
+;
+

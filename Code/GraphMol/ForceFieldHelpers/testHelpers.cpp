@@ -334,7 +334,9 @@ void testUFFBuilder2(){
 
   ForceFields::ForceField *field;
 
-  mol = MolFileToMol("test_data/small1.mol",false);
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  mol = MolFileToMol(pathName+"/small1.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
@@ -347,7 +349,7 @@ void testUFFBuilder2(){
   delete mol;
   delete field;
 
-  mol = MolFileToMol("test_data/small2.mol",false);
+  mol = MolFileToMol(pathName+"/small2.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
@@ -360,7 +362,7 @@ void testUFFBuilder2(){
   delete mol;
   delete field;
 
-  mol = MolFileToMol("test_data/benzene.mol",false);
+  mol = MolFileToMol(pathName+"/benzene.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
@@ -373,8 +375,7 @@ void testUFFBuilder2(){
   delete mol;
   delete field;
   
-
-  mol = MolFileToMol("test_data/toluene.mol",false);
+  mol = MolFileToMol(pathName+"/toluene.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
@@ -387,8 +388,7 @@ void testUFFBuilder2(){
   delete mol;
   delete field;
 
-  
-  mol = MolFileToMol("test_data/complex1.mol",false);
+  mol = MolFileToMol(pathName+"/complex1.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
@@ -416,7 +416,9 @@ void testUFFBatch(){
 
   ForceFields::ForceField *field;
 
-  SDMolSupplier suppl("test_data/bulk.sdf",false);
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  SDMolSupplier suppl(pathName+"/bulk.sdf",false);
 
   int count=0;
   mol = suppl.next();
@@ -459,10 +461,12 @@ void testUFFBuilderSpecialCases(){
   RDGeom::Point3D v1,v2;
   ForceFields::ForceField *field;
 
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
   // ----------
   //  Trigonal bipyramid
   // ----------
-  mol = MolFileToMol("test_data/tbp.mol",false);
+  mol = MolFileToMol(pathName+"/tbp.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
@@ -518,7 +522,9 @@ void testIssue239(){
   ForceFields::ForceField *field;
   double e1,e2;
 
-  mol = MolFileToMol("test_data/Issue239.mol",false);
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  mol = MolFileToMol(pathName+"/Issue239.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
@@ -553,10 +559,13 @@ void testIssue242(){
   std::string mb1,mb2;
   double e1,e2;
 
-  mol = MolFileToMol("test_data/Issue242.mol");
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+
+  mol = MolFileToMol(pathName+"/Issue242.mol");
   TEST_ASSERT(mol);
 
-  mol2 = MolFileToMol("test_data/Issue242.mol");
+  mol2 = MolFileToMol(pathName+"/Issue242.mol");
   TEST_ASSERT(mol2);
 
   TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2,30,2300)>=0);
@@ -604,10 +613,10 @@ void testIssue242(){
   delete field;
   delete field2;
 
-  mol = MolFileToMol("test_data/Issue242-2.mol");
+  mol = MolFileToMol(pathName+"/Issue242-2.mol");
   TEST_ASSERT(mol);
 
-  mol2 = MolFileToMol("test_data/Issue242-2.mol");
+  mol2 = MolFileToMol(pathName+"/Issue242-2.mol");
   TEST_ASSERT(mol2);
 
   TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2,30,2370)>=0);
@@ -655,7 +664,10 @@ void testSFIssue1653802(){
   int needMore;
   ForceFields::ForceField *field;
 
-  mol = MolFileToMol("test_data/cyclobutadiene.mol",false);
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+
+  mol = MolFileToMol(pathName+"/cyclobutadiene.mol",false);
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
@@ -693,8 +705,10 @@ void testSFIssue2378119(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Testing SFIssue2378119." << std::endl;
 
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
   {
-    RWMol *mol = MolFileToMol("test_data/Issue2378119.mol");
+    RWMol *mol = MolFileToMol(pathName+"/Issue2378119.mol");
     TEST_ASSERT(mol);
     ForceFields::ForceField *field=UFF::constructForceField(*mol);
     TEST_ASSERT(field);
@@ -711,7 +725,7 @@ void testSFIssue2378119(){
     delete field;
   }
   {
-    RWMol *mol = MolFileToMol("test_data/Issue2378119.2.mol");
+    RWMol *mol = MolFileToMol(pathName+"/Issue2378119.2.mol");
     TEST_ASSERT(mol);
     ForceFields::ForceField *field=UFF::constructForceField(*mol);
     TEST_ASSERT(field);
@@ -728,7 +742,7 @@ void testSFIssue2378119(){
     delete field;
   }
   {
-    RWMol *mol = MolFileToMol("test_data/Issue2378119.2.mol");
+    RWMol *mol = MolFileToMol(pathName+"/Issue2378119.2.mol");
     TEST_ASSERT(mol);
     ForceFields::ForceField *field=UFF::constructForceField(*mol,100.0,-1,false);
     TEST_ASSERT(field);

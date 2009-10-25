@@ -1,0 +1,16 @@
+#exe ublas_vector 
+#        : ublas_vector.cpp 
+#        : <include>$(BOOST)
+#        ;
+#
+#exe ublas_vector_proxy 
+#        : ublas_vector_proxy.cpp 
+#        : <include>$(BOOST)
+#        ;
+
+exe compatible_calling_conventions
+        : compatible_calling_convention.cpp
+          fortran_functions.f
+          /user-config//libfortran # should point to fortran runtime library
+        : <include>$(BOOST)
+        ;
