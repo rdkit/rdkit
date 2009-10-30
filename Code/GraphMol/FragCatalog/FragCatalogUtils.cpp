@@ -187,7 +187,7 @@ namespace RDKit {
 
     INT_MAP_INT aIdxMap; // a map from atom id in mol to the new atoms id in coreMol
     
-    ROMol *coreMol = Subgraphs::PathToSubmol(mol, cBonds, false, aIdxMap);
+    ROMol *coreMol = Subgraphs::pathToSubmol(mol, cBonds, false, aIdxMap);
     
     // now map the functional groups on mol to coreMol using aIdxMap
     MatchVectType::iterator mati;

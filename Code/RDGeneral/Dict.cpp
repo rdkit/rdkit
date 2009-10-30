@@ -8,6 +8,7 @@
 
 
 #include <boost/shared_array.hpp>
+#include <boost/cstdint.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <vector>
 #include <list>
@@ -95,6 +96,8 @@ namespace RDKit{
     //ANY_FORCE( boost::tuples::tuple<double,double,double> );
     tD.fromany< boost::tuples::tuple<double,double,double> >(boost::any(1));
     tD.toany< boost::tuples::tuple<double,double,double> >(boost::tuples::tuple<double,double,double>());
+    tD.fromany< boost::tuples::tuple<boost::uint32_t,boost::uint32_t,boost::uint32_t> >(boost::any(1));
+    tD.toany< boost::tuples::tuple<boost::uint32_t,boost::uint32_t,boost::uint32_t> >(boost::tuples::tuple<boost::uint32_t,boost::uint32_t,boost::uint32_t>());
 
   }
 

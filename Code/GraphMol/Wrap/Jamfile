@@ -19,7 +19,6 @@ python-extension rdmolops : rdmolops.cpp MolOps.cpp
   ..//GraphMol 
   ../../Catalogs//Catalogs ../../Geometry//RDGeometry
   ../../RDGeneral//RDGeneral ../../DataStructs//DataStructs ../../RDBoost//RDBoost 
-../..//lapacklibs 
   ;
 
 python-extension rdmolfiles : rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp

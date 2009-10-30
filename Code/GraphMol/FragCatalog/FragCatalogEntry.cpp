@@ -17,6 +17,7 @@
 #include <iostream>
 #include <fstream>
 #include <boost/cstdint.hpp>
+#include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
   
@@ -29,7 +30,7 @@ namespace RDKit {
     d_aToFmap.clear();
     setBitId(-1); 
     INT_MAP_INT aIdxMap; // a map from atom id in omol to the new atoms id in mol
-    dp_mol = Subgraphs::PathToSubmol(*omol, path, false, aIdxMap); // Using Subgraphs functionality
+    dp_mol = Subgraphs::pathToSubmol(*omol, path, false, aIdxMap); // Using Subgraphs functionality
     d_order = path.size();
     
     // using aIdxMap initialize the location (and their IDs) of the 
@@ -154,61 +155,26 @@ namespace RDKit {
       this->getProp("Discrims", res);
     }
     else {
-      int nAts = dp_mol->getNumAtoms();
-      int nBds = dp_mol->getNumBonds();
-      double *dMat;
-      // Get the distance matrix without touching the diagonal elements
-      //  (we'll modify those ourselves below):
-      dMat = MolOps::getDistanceMat(*dp_mol, true, false);
+      PATH_TYPE path;
+      for(unsigned int i=0;i<dp_mol->getNumBonds();++i) path.push_back(i);
 
-      //  Our discriminators (based upon eigenvalues of the distance matrix
-      //  and Balaban indices) are good, but is a case they don't properly
-      //  handle by default.  These two fragments:
-      //    C-ccc and c-ccc
-      //  give the same discriminators because their distance matrices are
-      //  identical.  We'll work around this by modifying the diagonal
-      //  elements of the distance matrix corresponding to aromatic atoms
-
-
-      // now modify the diagonal element of distance matrix to reflect:
-      //   1) the identity of the atom
-      //   2) whether or not the atom is aromatic
-      //   3) the functional groups attached to the atom
-      int aid;
+      // create invariant additions to reflect the functional groups attached to the atoms
+      std::vector<boost::uint32_t> funcGpInvars;
+      gboost::hash<INT_VECT > vectHasher;
       for(ROMol::AtomIterator atomIt=dp_mol->beginAtoms();
 	  atomIt!=dp_mol->endAtoms();
-	  atomIt++){
-	double diagElem;
-	aid = (*atomIt)->getIdx();
-	// start with atom identity and aromaticity:
-	if((*atomIt)->getIsAromatic()){
-	  diagElem = 6.0 / ((*atomIt)->getAtomicNum() + 0.5);
-	} else {
-	  diagElem = 6.0 / (*atomIt)->getAtomicNum();
-	}
-
+	  ++atomIt){
+	unsigned int aid = (*atomIt)->getIdx();
+        uint32_t invar=0;
 	INT_INT_VECT_MAP_CI mapPos = d_aToFmap.find(aid);
 	if(mapPos!= d_aToFmap.end()){
-	  // figure out the product of the primes for the functional group
-	  // indices on this atom:
-	  double prod = 1.0;
-	  const INT_VECT &fGroups = mapPos->second;
-	  for(INT_VECT_CI fGroupIdx=fGroups.begin();
-	      fGroupIdx != fGroups.end();
-	      fGroupIdx++){
-	    prod *= firstThousandPrimes[*fGroupIdx];
-	  }
-	  // divide that until it's less than 10:
-	  while(prod>10.) prod /= 10.;
-	  // and add it to the diagonal:
-	  diagElem += prod;
+	  INT_VECT fGroups = mapPos->second;
+          std::sort(fGroups.begin(),fGroups.end());
+          invar=vectHasher(fGroups);
 	}
-
-	dMat[aid*nAts+aid] = diagElem;
+        funcGpInvars.push_back(invar);
       }
-      // now do the discriminators
-      res = Subgraphs::computeDiscriminators(dMat, nBds, nAts);
-
+      res = Subgraphs::calcPathDiscriminators(*dp_mol,path,true,&funcGpInvars);
       this->setProp("Discrims", res);
     }
 

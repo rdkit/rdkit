@@ -89,6 +89,28 @@ void testSubgraphs()
   std::cout << "Finished" << std::endl;
 }
 
+void testSubgraphs2a() {
+  // these have been moved here from test2.cpp
+  std::cout << "-----------------------\n testSubgraphs2a" << std::endl;
+  RWMol *mol=SmilesToMol("C1CC2C1N2");
+  CHECK_INVARIANT(mol,"");
+  int nAll=0;
+  int nUnique=0;
+  for(unsigned int i=1;i<7;++i){
+    PATH_LIST tmp;
+    tmp = findAllSubgraphsOfLengthN(*mol,i);
+    nAll += tmp.size();
+    tmp = findUniqueSubgraphsOfLengthN(*mol,i);
+    nUnique += tmp.size();
+  }
+  
+  CHECK_INVARIANT(nAll==49,"");
+  CHECK_INVARIANT(nUnique==21,"");
+  delete mol;
+
+  std::cout << "Finished" << std::endl;
+}
+
 void testSubgraphs2 () {
   // these have been moved here from test2.cpp
   std::cout << "-----------------------\n testSubgraphs2" << std::endl;
@@ -375,12 +397,15 @@ void testLeak() {
 // -------------------------------------------------------------------
 int main()
 {
+#if 1
   testSubgraphs();
+  testSubgraphs2a();
   testSubgraphs2();
   testPaths();
   testPaths2();
   testUniqueSubgraphs();
   testUniqueSubgraphs2();
+#endif
   //testLeak();
   return 0;
 }

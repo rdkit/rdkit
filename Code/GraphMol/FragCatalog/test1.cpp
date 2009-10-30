@@ -110,6 +110,7 @@ void test1(){
   TEST_ASSERT(mols.size()==16);
   TEST_ASSERT(nDone==16);
   int nents = fcat.getNumEntries();
+  std::cerr<<" "<<nents<<std::endl;
   TEST_ASSERT(nents==21);
   FragFPGenerator fpGen;
 
