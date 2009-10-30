@@ -17,6 +17,7 @@ use-project RDKit_Externals
 project RDKit
 	: requirements <include>.  <threading>multi
           <include>$(BOOSTHOME)
+          <include>$(RDBASE)/External/boost-numeric-bindings
           <toolset>gcc:<cflags>-Wno-unused-function
           <toolset>gcc:<cflags>-Wno-deprecated
           <toolset>darwin:<cflags>-Wno-unused-function
