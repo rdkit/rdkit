@@ -165,7 +165,7 @@ namespace RDKit {
 	  atomIt!=dp_mol->endAtoms();
 	  ++atomIt){
 	unsigned int aid = (*atomIt)->getIdx();
-        uint32_t invar=0;
+        boost::uint32_t invar=0;
 	INT_INT_VECT_MAP_CI mapPos = d_aToFmap.find(aid);
 	if(mapPos!= d_aToFmap.end()){
 	  INT_VECT fGroups = mapPos->second;

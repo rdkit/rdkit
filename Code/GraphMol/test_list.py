@@ -25,6 +25,7 @@ tests=[
   ("python","test_list.py",{'dir':'ForceFieldHelpers'}),
   ("python","test_list.py",{'dir':'DistGeomHelpers'}),
   ("python","test_list.py",{'dir':'Descriptors'}),
+  ("python","test_list.py",{'dir':'Descriptors/Wrap'}),
   ("python","test_list.py",{'dir':'MolChemicalFeatures'}),
   ("python","test_list.py",{'dir':'MolAlign'}),
   ("python","test_list.py",{'dir':'ShapeHelpers'}),
