@@ -11,23 +11,6 @@
 #include <Numerics/Vector.h>
 #include <RDGeneral/utils.h>
 
-#ifdef RDK_USELAPACKPP
-//lapack ++ includes
-#include <lafnames.h>
-#include <lapack.h>
-#include <symd.h>
-#include <lavd.h>
-#include <laslv.h>
-#else
-// uBLAS and boost.bindings includes
-#include <boost/numeric/bindings/traits/ublas_matrix.hpp> 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/bindings/lapack/syev.hpp>
-#include <boost/numeric/ublas/io.hpp> 
-namespace ublas = boost::numeric::ublas;
-namespace lapack = boost::numeric::bindings::lapack;
-#endif
-
 using namespace RDNumeric;
 using namespace RDNumeric::EigenSolvers;
 
@@ -43,79 +26,24 @@ void testPowerSolver() {
   mat.setVal(4,0,z); mat.setVal(4,1,y); mat.setVal(4,2,x); mat.setVal(4,3,1.0);
 
   DoubleSymmMatrix nmat(mat);
-  
   DoubleMatrix eigVecs(N, N);
   DoubleVector eigVals(N);
-  bool converge = powerEigenSolver(N, mat, eigVals, eigVecs );
-  CHECK_INVARIANT(converge, "");
+  bool converge = powerEigenSolver(N, mat, eigVals, eigVecs,23);
+  TEST_ASSERT(converge);
   DoubleVector ev1(N), ev2(N);
   eigVecs.getRow(0, ev1);
   eigVecs.getRow(1, ev2);
-  CHECK_INVARIANT(RDKit::feq(ev1.dotProduct(ev2), 0.0, 0.001), "");
+  TEST_ASSERT(RDKit::feq(ev1.dotProduct(ev2), 0.0, 0.001));
   
-  // compare this solvers to the values we get from the lapack solver
-#ifdef RDK_USELAPACKPP
-  double data[25];
-  double *leigs = new double[5];
-  unsigned int i, j;
-  for (i = 0; i < N; i++) {
-    for (j = 0; j < N; j++) {
-      data[i*N + j] = nmat.getVal(i,j);
-    }
-  }
-  LaSymmMatDouble laMat(data, N, N);
-  LaVectorDouble laEigs(leigs, N);
-  LaGenMatDouble laEigVecs(N, N); //(leigvecs, N, N);
-  LaEigSolve(laMat, laEigs, laEigVecs);
-  DoubleVector nEigVals(N, Vector<double>::DATA_SPTR(leigs));
-  double *ndata = new double[N*N];
-  memcpy(static_cast<void *>(ndata), 
-	 static_cast<const void *>(laEigVecs.addr()),
-	 N*N*sizeof(double));
-  Matrix<double>::DATA_SPTR sdata(ndata);
-  DoubleSquareMatrix nEigVecs(N, sdata);
-  
-  // compare eigen values and eigen vectors
-  for (i = 0; i < N; i++) {
-    unsigned int ei = eigVals.largestValId();
-    unsigned int nei = nEigVals.largestValId();
-    CHECK_INVARIANT(RDKit::feq(eigVals.getVal(ei), nEigVals.getVal(nei), 0.01), "");
-    eigVecs.getRow(ei, ev1);
-    nEigVecs.getRow(nei, ev2);
-    CHECK_INVARIANT(RDKit::feq(fabs(ev1.dotProduct(ev2)), 1.0, 0.01), "" );
-    eigVals.setVal(ei, 0.0);
-    nEigVals.setVal(nei, 0.0);
-  }
-#else
-  ublas::matrix<double> laMat(N,N);
-  ublas::vector<double> laEigVecs(N);
-  for(unsigned int i=0;i<N;++i){
-    for(unsigned int j=i;j<N;++j){
-      laMat(i,j)=nmat.getVal(i,j);
-    }
-  }
-  lapack::syev('V','L',laMat,laEigVecs);
-  DoubleVector nEigVals(N);
-  DoubleSquareMatrix nEigVecs(N);
-  for(unsigned int i=0;i<N;++i){
-    nEigVals.setVal(i,laEigVecs(i));
-    for(unsigned int j=0;j<N;++j){
-      nEigVecs.setVal(i,j,laMat(i,j));
-    }
-  }
-  for (unsigned int i = 0; i < N; i++) {
-    unsigned int ei = eigVals.largestValId();
-    unsigned int nei = nEigVals.largestValId();
-    CHECK_INVARIANT(RDKit::feq(eigVals.getVal(ei), nEigVals.getVal(nei), 0.01), "");
-    eigVecs.getRow(ei, ev1);
-    nEigVecs.getRow(nei, ev2);
-    CHECK_INVARIANT(RDKit::feq(fabs(ev1.dotProduct(ev2)), 1.0, 0.01), "" );
-    eigVals.setVal(ei, 0.0);
-    nEigVals.setVal(nei, 0.0);
-    eigVals.setVal(ei, 0.0);
-    nEigVals.setVal(nei, 0.0);
-  }
-#endif  
+  TEST_ASSERT(RDKit::feq(eigVals[0],6.981,0.001));
+  TEST_ASSERT(RDKit::feq(eigVals[1],-3.982,0.001));
+  TEST_ASSERT(RDKit::feq(eigVals[2],-1.395,0.001));
+  TEST_ASSERT(RDKit::feq(eigVals[3],-1.016,0.001));
+  TEST_ASSERT(RDKit::feq(eigVals[4],-0.586,0.001));
+  TEST_ASSERT(RDKit::feq(eigVecs.getVal(0,0),0.523,0.001));
+  TEST_ASSERT(RDKit::feq(eigVecs.getVal(2,1),0.201,0.001));
+  TEST_ASSERT(RDKit::feq(eigVecs.getVal(4,0),-.230,0.001));
+
 }
 
 void test2PowerSolver() {
@@ -135,70 +63,15 @@ void test2PowerSolver() {
   CHECK_INVARIANT(converge, "");
   CHECK_INVARIANT(RDKit::feq(eigVals.getVal(0), 4.0, 0.001), "");
 
-#ifdef RDK_USELAPACKPP
-  double data[25];//, leigvecs[25];
-  double *leigs = new double[5];
-  unsigned int i, j;
-  for (i = 0; i < N; i++) {
-    for (j = 0; j < N; j++) {
-      data[i*N + j] = nmat.getVal(i,j);
-    }
-  }
-  LaSymmMatDouble laMat(data, N, N);
-  LaVectorDouble laEigs(leigs, N);
-  LaGenMatDouble laEigVecs(N, N); //(leigvecs, N, N);
-  
-  LaEigSolve(laMat, laEigs, laEigVecs);
-  DoubleVector nEigVals(N, Vector<double>::DATA_SPTR(leigs));
-  double *ndata = new double[N*N];
-  memcpy(static_cast<void *>(ndata), 
-	 static_cast<const void *>(laEigVecs.addr()),
-	 N*N*sizeof(double));
-  Matrix<double>::DATA_SPTR sdata(ndata);
-  DoubleSquareMatrix nEigVecs(N, sdata);//laEigVecs.addr());
-  for (i = 0; i < N; i++) {
-    unsigned int ei = eigVals.largestValId();
-    unsigned int nei = nEigVals.largestValId();
-    CHECK_INVARIANT(RDKit::feq(eigVals.getVal(ei), nEigVals.getVal(nei), 0.001), "");
-    
-    if (i == 0) {
-      eigVecs.getRow(ei, ev1);
-      nEigVecs.getRow(nei, ev2);
-      CHECK_INVARIANT(RDKit::feq(fabs(ev1.dotProduct(ev2)), 1.0, 0.001), "" );
-    }
-    eigVals.setVal(ei, 0.0);
-    nEigVals.setVal(nei, 0.0);
-  }
-#else
-  ublas::matrix<double> laMat(N,N);
-  ublas::vector<double> laEigVecs(N);
-  for(unsigned int i=0;i<N;++i){
-    for(unsigned int j=i;j<N;++j){
-      laMat(i,j)=nmat.getVal(i,j);
-    }
-  }
-  lapack::syev('V','L',laMat,laEigVecs);
-  DoubleVector nEigVals(N);
-  DoubleSquareMatrix nEigVecs(N);
-  for(unsigned int i=0;i<N;++i){
-    nEigVals.setVal(i,laEigVecs(i));
-    for(unsigned int j=0;j<N;++j){
-      nEigVecs.setVal(i,j,laMat(i,j));
-    }
-  }
-  for (unsigned int i = 0; i < N; i++) {
-    unsigned int ei = eigVals.largestValId();
-    unsigned int nei = nEigVals.largestValId();
-    CHECK_INVARIANT(RDKit::feq(eigVals.getVal(ei), nEigVals.getVal(nei), 0.01), "");
-    eigVecs.getRow(ei, ev1);
-    nEigVecs.getRow(nei, ev2);
-    CHECK_INVARIANT(RDKit::feq(fabs(ev1.dotProduct(ev2)), 1.0, 0.01), "" );
-    eigVals.setVal(ei, 0.0);
-    nEigVals.setVal(nei, 0.0);
-    eigVals.setVal(ei, 0.0);
-    nEigVals.setVal(nei, 0.0);
-  }
-#endif
+
+  TEST_ASSERT(RDKit::feq(eigVals[0],4.000,0.001));
+  TEST_ASSERT(RDKit::feq(eigVals[1],-1.0,0.001));
+  TEST_ASSERT(RDKit::feq(eigVals[2],-1.0,0.001));
+  TEST_ASSERT(RDKit::feq(eigVals[3],-1.0,0.001));
+  TEST_ASSERT(RDKit::feq(eigVals[4],-1.0,0.001));
+  TEST_ASSERT(RDKit::feq(eigVecs.getVal(0,0),0.447,0.001));
+  TEST_ASSERT(RDKit::feq(eigVecs.getVal(2,1),0.028,0.001));
+  TEST_ASSERT(RDKit::feq(eigVecs.getVal(4,0),0.193,0.001));
 }
 
 int main() {

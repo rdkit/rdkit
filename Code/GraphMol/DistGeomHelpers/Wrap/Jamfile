@@ -15,7 +15,6 @@ python-extension rdDistGeom : rdDistGeom.cpp
   ../../../Numerics/EigenSolvers//EigenSolvers
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-/RDKit//lapacklibs 
   ;
 
 install pymod : rdDistGeom

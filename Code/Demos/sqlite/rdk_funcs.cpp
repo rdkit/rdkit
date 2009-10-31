@@ -339,6 +339,8 @@ static void ucvTanimotoSim(
   sqlite3_result_double(context, res);
 }
 
+#if 0
+// Naive approach: actually construct two sparse int vects:
 static void sivDiceSim(
   sqlite3_context *context,
   int argc,
@@ -362,8 +364,9 @@ static void sivDiceSim(
   delete v2;
   sqlite3_result_double(context, res);
 }
-
-static void sivDiceSim2(
+#else
+// faster, just parse the format directly
+static void sivDiceSim(
   sqlite3_context *context,
   int argc,
   sqlite3_value **argv
@@ -490,6 +493,7 @@ static void sivDiceSim2(
   //std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" "<<numer<<" "<<res<<std::endl;
   sqlite3_result_double(context, res);
 }
+#endif
 
 /* SQLite invokes this routine once when it loads the extension.
 ** Create new functions, collating sequences, and virtual table

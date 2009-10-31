@@ -15,8 +15,7 @@ exe main.exe : testDgeomHelpers.cpp DistGeomHelpers ../../DistGeom//DistGeom
   ..//GraphMol 
   ../../Numerics/Optimizer//Optimizer ../../Numerics/EigenSolvers//EigenSolvers  
   ../../Numerics/Alignment//Alignment
-  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs ;
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ;
 
 install regrs : main.exe
   : <location>testExecs ;

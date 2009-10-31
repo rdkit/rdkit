@@ -10,7 +10,6 @@ python-extension rdMolTransforms : rdMolTransforms.cpp
   ../../../Numerics/EigenSolvers//EigenSolvers
   ../../../Geometry//RDGeometry
   ../../../RDGeneral//RDGeneral ../../../DataStructs//DataStructs ../../../RDBoost//RDBoost 
-  ../../..//lapacklibs 
   ;
 
 install pymod : rdMolTransforms

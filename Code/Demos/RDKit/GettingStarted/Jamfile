@@ -9,7 +9,6 @@ exe sample : sample.cpp
   ../../../GraphMol//GraphMol 
   ../../../DataStructs//DataStructs	
   ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
- ../../..//lapacklibs
 ;
 
 

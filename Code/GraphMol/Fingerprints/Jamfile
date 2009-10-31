@@ -11,7 +11,7 @@ install lib-install : Fingerprints : <location>$(RDBASE)/bin ;
 exe test1 : test1.cpp Fingerprints
   ../SmilesParse//SmilesParse ../Subgraphs//Subgraphs
   ..//GraphMol ../../DataStructs//DataStructs ../../RDGeneral//RDGeneral 
-  ../../Geometry//RDGeometry ../..//lapacklibs ;
+  ../../Geometry//RDGeometry ;
 
 install regrs : test1
   : <location>testExecs ;

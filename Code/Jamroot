@@ -25,8 +25,6 @@ project RDKit
           <toolset>msvc:<define>WIN32
           <include>MISSING
           <address-model>64:<cflags>-fPIC
-          # <define>RDK_USELAPACKPP #<- uncomment this to use lapack++
-          <target-os>windows:<define>BOOST_NUMERIC_BINDINGS_USE_CLAPACK
           <toolset>msvc:<define>_CRT_SECURE_NO_DEPRECATE
         : default-build release ;
 
@@ -66,23 +64,4 @@ alias nonmol-wrappers : RDBoost/Wrap
   Numerics/Alignment/Wrap 
   ChemicalFeatures/Wrap
  ;
-
-
-
-lib lapack
-  :
-  : <name>lapack
-  <target-os>windows:<file>$(RDBASE)/External/Lapack/win32/LAPACK.lib
-  :
-  ;
-lib blas
-  :
-  : <name>blas
-  <target-os>windows:<file>$(RDBASE)/External/Lapack/win32/BLAS.lib
-  :
-  ;
-# if you want to use Lapack++, use this version:
-#alias lapacklibs : /RDKit_Externals//Lapack++ lapack blas ;
-alias lapacklibs : lapack blas ;
-
 

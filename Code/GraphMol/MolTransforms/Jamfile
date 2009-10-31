@@ -12,8 +12,7 @@ exe testMolTransform : test1.cpp MolTransforms
   ../FileParsers//FileParsers ../SmilesParse//SmilesParse 
   ..//GraphMol 
   ../../Numerics/EigenSolvers//EigenSolvers 
-  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry 
-  ../..//lapacklibs ;
+  ../../RDGeneral//RDGeneral ../../Geometry//RDGeometry ;
 
 install regrs : testMolTransform
   : <location>testExecs ;

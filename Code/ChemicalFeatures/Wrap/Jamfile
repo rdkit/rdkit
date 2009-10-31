@@ -6,8 +6,7 @@ import python ;
 
 python-extension rdChemicalFeatures : rdChemicalFeatures.cpp FreeChemicalFeature.cpp
   ../../GraphMol//GraphMol ..//ChemicalFeatures ../../RDGeneral//RDGeneral ../../RDBoost//RDBoost 
- ../../Geometry//RDGeometry ../..//lapacklibs 
-;
+ ../../Geometry//RDGeometry ;
 
 install pymod : rdChemicalFeatures : <location>$(RDBASE)/rdkit/Chem ;
 

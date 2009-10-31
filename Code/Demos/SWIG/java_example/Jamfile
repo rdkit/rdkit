@@ -7,7 +7,7 @@ lib RDKFuncs : RDKFuncs_wrap.cpp RDKFuncs.cpp
   ../../../GraphMol//GraphMol ../../../GraphMol/SmilesParse//SmilesParse 
   ../../../GraphMol/Substruct//Substruct
   ../../../GraphMol/ChemReactions//ChemReactions
-  ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry /RDKit//lapacklibs
+  ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
   : <cflags>-fno-strict-aliasing <include>/usr/include/java <include>/usr/include/java/linux <include>. ;
 
 cpp RDKFuncs_wrap.cpp : RDKFuncs.i : <main-target-type>JAVA_WRAPPER ;

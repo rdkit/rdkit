@@ -30,6 +30,7 @@ public class WrapperTests {
         String smi=RDKFuncs.MolToSmiles(mol1);
         assertEquals(smi,"c1ccccc1",smi);
     }
+    /*
     @Test public void testReactionBasics() {
 	ChemicalReaction rxn;
 	rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
@@ -55,7 +56,7 @@ public class WrapperTests {
 	assertTrue(r2.getNumAtoms()==3);
 
 	assertTrue(ps.get(0).get(0).getNumAtoms()==6);
-    }
+        }*/
     @Test public void testSubstruct1() {
 	ROMol p;
 	Match_Vect mv;
