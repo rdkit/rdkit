@@ -21,10 +21,10 @@
 //--------------------------------------------------
 // Nitrogen containing
 -NO2	   *-[N;D3](=[O;D1])[O;D1]	nitro
--N=O	   *-N=[O;D1]	nitroso
-=N-O	   *=N-[O;D1]	oximes
-=NCH3	   *=N-[C;D1;H3]	Imines
--N=CH2	   *-N=[C;D1;H2]	Imines
+-N=O	   *-[N;R0]=[O;D1]	nitroso
+=N-O	   *=[N;R0]-[O;D1]	oximes
+=NCH3	   *=[N;R0]-[C;D1;H3]	Imines
+-N=CH2	   *-[N;R0]=[C;D1;H2]	Imines
 -N=NCH3	   *-[N;D2]=[N;D2]-[C;D1;H3]	terminal azo
 -N=N	   *-[N;D2]=[N;D1]	hydrazines
 -N#N	   *-[N;D2]#[N;D1]		diazo
