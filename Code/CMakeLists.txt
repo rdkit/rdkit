@@ -25,27 +25,6 @@ find_package(Boost COMPONENTS python thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-include_directories(${RDKit_ExternalDir}/boost-numeric-bindings)
-
-# -----------
-# pull BLAS and LAPACK
-
-# Things are easy if we have fortran:
-workaround_9220(Fortran W9220_Fortran_COMPILER_WORKS)
-IF (W9220_Fortran_COMPILER_WORKS)
-enable_language(Fortran)
-find_package(BLAS)
-find_package(LAPACK)
-ELSE()
-# otherwise just assume there are lapack and blas libraries out there somewhere:
-if(MSVC)
-# on windows look for our own copy:
-ADD_DEFINITIONS("/D BOOST_NUMERIC_BINDINGS_USE_CLAPACK")
-LINK_DIRECTORIES(${RDKit_ExternalDir}/Lapack/win32)
-endif(MSVC)
-set(LAPACK_LIBRARIES lapack blas)
-ENDIF()
-
 # setup our compiler flags:
 if(CMAKE_COMPILER_IS_GNUCXX)
 ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")

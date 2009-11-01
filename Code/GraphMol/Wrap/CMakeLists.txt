@@ -10,7 +10,7 @@ rdkit_python_extension(rdmolops
                        DEST Chem 
                        LINK_LIBRARIES 
                        FileParsers SubstructMatch Fingerprints ChemTransforms
-                       Catalogs Subgraphs GraphMol RDGeometryLib DataStructs RDGeneral RDBoost ${LAPACK_LIBRARIES} )
+                       Catalogs Subgraphs GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
 
 rdkit_python_extension(rdmolfiles
                        rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp

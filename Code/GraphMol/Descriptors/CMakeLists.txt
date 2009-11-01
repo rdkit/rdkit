@@ -3,7 +3,7 @@ rdkit_library(Descriptors
               LINK_LIBRARIES FileParsers Subgraphs SubstructMatch)
 
 rdkit_test(testDescriptors test.cpp 
-LINK_LIBRARIES Descriptors FileParsers SmilesParse Subgraphs SubstructMatch GraphMol DataStructs RDGeneral RDGeometryLib ${LAPACK_LIBRARIES} )
+LINK_LIBRARIES Descriptors FileParsers SmilesParse Subgraphs SubstructMatch GraphMol DataStructs RDGeneral RDGeometryLib  )
 
 add_subdirectory(Wrap)
 
