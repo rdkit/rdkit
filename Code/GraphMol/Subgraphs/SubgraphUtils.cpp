@@ -5,6 +5,7 @@
 //   @@ All Rights Reserved  @@
 //
 #include "SubgraphUtils.h"
+#include "Subgraphs.h"
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
@@ -12,7 +13,7 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
-
+#include <boost/tuple/tuple_comparison.hpp>
 #include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
@@ -114,10 +115,13 @@ namespace RDKit {
                             std::vector<boost::uint32_t> *extraInvars) {
       if(extraInvars) CHECK_INVARIANT(extraInvars->size()==mol.getNumAtoms(),"bad extra invars");
       DiscrimTuple res;
-      std::vector<int32_t> atomsUsed(mol.getNumAtoms(),-1);
-      std::vector<const Atom *> atoms;
-      std::vector<uint32_t> pathDegrees;
-      for(PATH_TYPE::const_iterator pathIter=path.begin(); pathIter!=path.end(); pathIter++){
+
+      // Start by collecting the atoms in the path and their degrees
+      std::vector<int32_t> atomsUsed(mol.getNumAtoms(),-1); // map from atom index->path index
+      std::vector<const Atom *> atoms; // to contain the atoms in the path
+      std::vector<uint32_t> pathDegrees; // degrees of each atom *in the path*
+      for(PATH_TYPE::const_iterator pathIter=path.begin();
+	  pathIter!=path.end(); ++pathIter){
         const Bond *bond=mol.getBondWithIdx(*pathIter);
         if(atomsUsed[bond->getBeginAtomIdx()]<0){
           atomsUsed[bond->getBeginAtomIdx()]=atoms.size();
@@ -135,6 +139,7 @@ namespace RDKit {
         }
       }
 
+      // Calculate the atomic invariants
       unsigned int nAtoms=atoms.size();
       std::vector<uint32_t> invars(nAtoms);
       for(unsigned int i=0;i<nAtoms;++i){
@@ -153,23 +158,20 @@ namespace RDKit {
         }
         invars[i] = invar;
       }
-#if 0
-      std::cerr<<"-------------------"<<std::endl;;
-      std::cerr<<"      ats: >>>";
-      std::copy(atomsUsed.begin(),atomsUsed.end(),std::ostream_iterator<int>(std::cerr," "));
-      std::cerr<<std::endl;
-#endif
+
+      // now do the Morgan iterations:
+      // the most number of cycles we need for the atoms on the edges
+      // to feel each other is pathSize/2
+      // EFF: it may be worth revisiting this at some point to see
+      // if the iteration count can be even smaller (and if it
+      // makes a difference in runtime)
       unsigned int nCycles=path.size()/2+1;
       gboost::hash<std::vector<uint32_t> > vectHasher;
-
       for(unsigned int cycle=0;cycle<nCycles;++cycle){
-#if 0
-        std::cerr<<"             round: >>>"<<" "<<cycle<<": ";
-        std::copy(invars.begin(),invars.end(),std::ostream_iterator<int>(std::cerr," "));
-        std::cerr<<std::endl;
-#endif
+	// let each atom feel it's neighbors:
         std::vector< std::vector<uint32_t> > locInvars(nAtoms);
-        for(PATH_TYPE::const_iterator pathIter=path.begin(); pathIter!=path.end(); ++pathIter){
+        for(PATH_TYPE::const_iterator pathIter=path.begin();
+	    pathIter!=path.end(); ++pathIter){
           const Bond *bond=mol.getBondWithIdx(*pathIter);
           uint32_t v1=invars[atomsUsed[bond->getBeginAtomIdx()]];
           uint32_t v2=invars[atomsUsed[bond->getEndAtomIdx()]];
@@ -180,25 +182,20 @@ namespace RDKit {
           locInvars[atomsUsed[bond->getBeginAtomIdx()]].push_back(v2);
           locInvars[atomsUsed[bond->getEndAtomIdx()]].push_back(v1);
         }
+	// we need to sort by the neighbor invariants to be order
+	// independent:
         for(unsigned int i=0;i<nAtoms;++i){
           std::sort(locInvars[i].begin(),locInvars[i].end());
           invars[i]=vectHasher(locInvars[i]);
         }
       }  
 
-#if 0
-      std::cerr<<"      invars: >>>";
-      std::copy(invars.begin(),invars.end(),std::ostream_iterator<int>(std::cerr," "));
-      std::cerr<<std::endl;
-#endif
+      // again, a sort for order independence:
       std::sort(invars.begin(),invars.end());
       uint32_t pathInvar=vectHasher(invars);
-#if 0
-      std::cerr<<"      >>>";
-      std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr," "));
-      std::cerr<<std::endl;
-      std::cerr<<"         >>>"<<pathInvar<<","<<path.size()<<","<<nAtoms<<std::endl;
-#endif
+
+      // also include the path size (bond count) and number of atoms
+      // in the discriminator
       return boost::make_tuple(pathInvar,path.size(),nAtoms);
     }
 

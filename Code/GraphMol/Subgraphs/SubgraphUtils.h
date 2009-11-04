@@ -8,17 +8,19 @@
 
 #include "Subgraphs.h"
 #include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_comparison.hpp>
 #include <boost/cstdint.hpp>
 
 namespace RDKit{
   class ROMol;
+
   namespace Subgraphs {
-    //! used to return atomic discriminators (three doubles)
+    //! used to return path discriminators (three unsigned ints):
     typedef boost::tuples::tuple<boost::uint32_t,boost::uint32_t,boost::uint32_t> DiscrimTuple;
 
+    
     DiscrimTuple calcPathDiscriminators(const ROMol &mol,const PATH_TYPE &path,
-                                        bool useBO=true, std::vector<boost::uint32_t> *extraInvars=0);
+                                        bool useBO=true,
+					std::vector<boost::uint32_t> *extraInvars=0);
     PATH_LIST uniquifyPaths (const ROMol &mol, const PATH_LIST &allPathsb,
                              bool useBO=true);
 
