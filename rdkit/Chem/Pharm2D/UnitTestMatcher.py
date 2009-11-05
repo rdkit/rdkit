@@ -30,7 +30,7 @@ class TestCase(unittest.TestCase):
     self.factory.skipFeats=['Donor']
     self.factory.Init()
     self.assertEqual(self.factory.GetSigSize(),510)
-    Generate._verbose=True
+    Generate._verbose=False
     sig=Generate.Gen2DFingerprint(mol,self.factory)
     Generate._verbose=False
     tgt = (1,2,11,52,117)
@@ -45,11 +45,11 @@ class TestCase(unittest.TestCase):
     for i in range(len(onBits)):
       bit = onBits[i]
       matches = Matcher.GetAtomsMatchingBit(self.factory,bit,mol)
-      print bit,matches
+      #print bit,matches
       #tgt = bitMatches[i]
       #self.failUnlessEqual(matches,tgt)
 
-  def _test2Bug28(self):
+  def test2Bug28(self):
     smi = 'Cc([s]1)nnc1SCC(\CS2)=C(/C([O-])=O)N3C(=O)[C@H]([C@@H]23)NC(=O)C[n]4cnnn4'
     mol = Chem.MolFromSmiles(smi)
     factory = Gobbi_Pharm2D.factory
@@ -57,10 +57,10 @@ class TestCase(unittest.TestCase):
     sig = Generate.Gen2DFingerprint(mol,factory)
     onBits = sig.GetOnBits()
     for bit in onBits:
-      as = Matcher.GetAtomsMatchingBit(factory,bit,mol,justOne=1)
-      self.failUnless(len(as))
+      atoms = Matcher.GetAtomsMatchingBit(factory,bit,mol,justOne=1)
+      self.failUnless(len(atoms))
 
-  def _test3Roundtrip(self):
+  def test3Roundtrip(self):
     """ longer-running Bug 28 test
     """
     from rdkit import RDConfig
@@ -75,8 +75,8 @@ class TestCase(unittest.TestCase):
       sig = Generate.Gen2DFingerprint(mol,factory)
       onBits = sig.GetOnBits()
       for bit in onBits:
-        as = Matcher.GetAtomsMatchingBit(sig,bit,mol,justOne=1)
-        assert len(as),'bit %d failed to match for smi %s'%(bit,smi)
+        atoms = Matcher.GetAtomsMatchingBit(factory,bit,mol,justOne=1)
+        assert len(atoms),'bit %d failed to match for smi %s'%(bit,smi)
 
     
 

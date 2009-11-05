@@ -126,8 +126,8 @@ if __name__ == '__main__':
 
   _verbose=0
   for bit in sig.GetOnBits():
-    as = GetAtomsMatchingBit(sig,bit,mol)
-    print '\tBit %d: '%(bit),as
+    atoms = GetAtomsMatchingBit(sig,bit,mol)
+    print '\tBit %d: '%(bit),atoms
 
     
   print '--------------------------'
@@ -137,8 +137,8 @@ if __name__ == '__main__':
   print 'onbits:',list(sig.GetOnBits())
 
   for bit in sig.GetOnBits():
-    as = GetAtomsMatchingBit(sig,bit,mol)
-    print '\tBit %d: '%(bit),as
+    atoms = GetAtomsMatchingBit(sig,bit,mol)
+    print '\tBit %d: '%(bit),atoms
 
   
   
