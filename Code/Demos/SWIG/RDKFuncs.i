@@ -134,7 +134,7 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
 %include <GraphMol/Bond.h>
 
 %ignore initialize;
-%ignore isInitialized;
+%ignore RDKit::RingInfo::isInitialized;
 %ignore addRing;
 %ignore reset;
 %ignore preallocate;

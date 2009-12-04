@@ -25,13 +25,19 @@ RDKit::ROMOL_SPTR MolFromMolFile(std::string filename,
   return RDKit::ROMOL_SPTR(RDKit::MolFileToMol(filename,sanitize,removeHs));
 };
 RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma){
-  return RDKit::RxnSmartsToChemicalReaction(sma);
+  RDKit::ChemicalReaction *res=RDKit::RxnSmartsToChemicalReaction(sma);
+  if(res) res->initReactantMatchers();
+  return res;
 };
 RDKit::ChemicalReaction *ReactionFromRxnBlock(std::string block){
-  return RDKit::RxnBlockToChemicalReaction(block);
+  RDKit::ChemicalReaction *res=RDKit::RxnBlockToChemicalReaction(block);
+  if(res) res->initReactantMatchers();
+  return res;
 };
 RDKit::ChemicalReaction *ReactionFromRxnFile(std::string filename){
-  return RDKit::RxnFileToChemicalReaction(filename);
+  RDKit::ChemicalReaction *res=RDKit::RxnFileToChemicalReaction(filename);
+  if(res) res->initReactantMatchers();
+  return res;
 };
 
 std::string MolToSmiles(RDKit::ROMOL_SPTR mol,bool doIsomericSmiles=false,
