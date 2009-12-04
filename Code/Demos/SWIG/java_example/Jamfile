@@ -3,14 +3,14 @@ project RDKFuncs_java : : ;
 import swig ;
 
 
-lib RDKFuncs : RDKFuncs_wrap.cpp RDKFuncs.cpp 
+lib RDKFuncs : RDKFuncs_wrap.cpp ../RDKFuncs.cpp 
   ../../../GraphMol//GraphMol ../../../GraphMol/SmilesParse//SmilesParse 
   ../../../GraphMol/Substruct//Substruct
   ../../../GraphMol/ChemReactions//ChemReactions
   ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
-  : <cflags>-fno-strict-aliasing <include>/usr/include/java <include>/usr/include/java/linux <include>. ;
+  : <cflags>-fno-strict-aliasing <include>/usr/include/java <include>/usr/include/java/linux <include>.. ;
 
-cpp RDKFuncs_wrap.cpp : RDKFuncs.i : <main-target-type>JAVA_WRAPPER ;
+cpp RDKFuncs_wrap.cpp : ../RDKFuncs.i : <main-target-type>JAVA_WRAPPER ;
 
 install lib-install : RDKFuncs : <location>. ;
 
@@ -22,5 +22,5 @@ actions javacompile
 
 make main.class : main.java RDKFuncs_wrap.cpp : @javacompile ;
 
-#make WrapperTests.class : WrapperTests.java RDKFuncs_wrap.cpp : @javacompile ;
+make WrapperTests.class : WrapperTests.java RDKFuncs_wrap.cpp : @javacompile ;
 
