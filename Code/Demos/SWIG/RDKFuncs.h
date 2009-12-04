@@ -1,5 +1,6 @@
+// $Id$
 //
-// Copyright (C) 2008 Greg Landrum
+// Copyright (C) 2008-2009 Greg Landrum
 // All Rights Reserved
 //
 #include <GraphMol/RDKitBase.h>
@@ -19,12 +20,18 @@ RDKit::ROMOL_SPTR MolFromMolBlock(std::string molB,
                                   bool sanitize=true,bool removeHs=true){
   return RDKit::ROMOL_SPTR(RDKit::MolBlockToMol(molB,sanitize,removeHs));
 };
-RDKit::ROMOL_SPTR MolFromMolFile(std::string fileName,
+RDKit::ROMOL_SPTR MolFromMolFile(std::string filename,
                                  bool sanitize=true,bool removeHs=true){
-  return RDKit::ROMOL_SPTR(RDKit::MolFileToMol(fileName,sanitize,removeHs));
+  return RDKit::ROMOL_SPTR(RDKit::MolFileToMol(filename,sanitize,removeHs));
 };
 RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma){
   return RDKit::RxnSmartsToChemicalReaction(sma);
+};
+RDKit::ChemicalReaction *ReactionFromRxnBlock(std::string block){
+  return RDKit::RxnBlockToChemicalReaction(block);
+};
+RDKit::ChemicalReaction *ReactionFromRxnFile(std::string filename){
+  return RDKit::RxnFileToChemicalReaction(filename);
 };
 
 std::string MolToSmiles(RDKit::ROMOL_SPTR mol,bool doIsomericSmiles=false,

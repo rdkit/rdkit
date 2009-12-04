@@ -21,12 +21,19 @@
 SWIG_SHARED_PTR(ROMol, RDKit::ROMol)
 SWIG_SHARED_PTR(Atom, RDKit::Atom)
 SWIG_SHARED_PTR(Bond, RDKit::Bond)
+#if SWIGCSHARP
+SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(ROMol, boost::shared_ptr<RDKit::ROMol> )
+SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(ROMol_Vect, std::vector< boost::shared_ptr<RDKit::ROMol> >);
+SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Int_Vect, std::vector<int>)
+SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Int_Pair, std::pair<int,int> );
+SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >);
+#endif
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
-%template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Int_Vect) std::vector<int>;
-%template(Int_Vect_Vect) std::vector<std::vector<int> >;
 %template(Int_Pair) std::pair<int, int >;
 %template(Match_Vect) std::vector<std::pair<int,int> >;
+%template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
+%template(Int_Vect_Vect) std::vector<std::vector<int> >;
 %template(Match_Vect_Vect) std::vector<std::vector<std::pair<int,int> > >;
 
 

@@ -4,7 +4,8 @@ import swig ;
 
 
 lib RDKFuncs : RDKFuncs_wrap.cpp ../RDKFuncs.cpp 
-  ../../../GraphMol//GraphMol ../../../GraphMol/SmilesParse//SmilesParse 
+  ../../../GraphMol//GraphMol ../../../GraphMol/SmilesParse//SmilesParse
+  ../../../GraphMol/FileParsers//FileParsers
   ../../../GraphMol/Substruct//Substruct
   ../../../GraphMol/ChemReactions//ChemReactions
   ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
