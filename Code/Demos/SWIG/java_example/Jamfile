@@ -8,10 +8,12 @@ lib RDKFuncs : RDKFuncs_wrap.cpp ../RDKFuncs.cpp
   ../../../GraphMol/FileParsers//FileParsers
   ../../../GraphMol/Substruct//Substruct
   ../../../GraphMol/ChemReactions//ChemReactions
+  ../../../GraphMol/Fingerprints//Fingerprints
+  ../../../DataStructs//DataStructs
   ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
   : <cflags>-fno-strict-aliasing <include>/usr/include/java <include>/usr/include/java/linux <include>.. ;
 
-cpp RDKFuncs_wrap.cpp : ../RDKFuncs.i : <main-target-type>JAVA_WRAPPER ;
+cpp RDKFuncs_wrap.cpp : RDKFuncs.i : <main-target-type>JAVA_WRAPPER ;
 
 install lib-install : RDKFuncs : <location>. ;
 
@@ -21,7 +23,7 @@ actions javacompile
   jar cf ./RDKit_Wrapper.jar org/RDKit/*.java
 }
 
-make main.class : main.java RDKFuncs_wrap.cpp : @javacompile ;
+#make main.class : main.java RDKFuncs_wrap.cpp : @javacompile ;
 
 make WrapperTests.class : WrapperTests.java RDKFuncs_wrap.cpp : @javacompile ;
 

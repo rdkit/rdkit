@@ -1,9 +1,8 @@
 // $Id$
 //
-// Copyright (C) 2008 Greg Landrum
+// Copyright (C) 2008-2009 Greg Landrum
 // All Rights Reserved
 //
-%module RDKFuncs
 %include "std_string.i"
 %include "std_vector.i"
 %include "std_pair.i"
@@ -144,5 +143,38 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
 %include <GraphMol/ChemReactions/Reaction.h>
 
 %include "RDKFuncs.h"
+
+// ------------------- EBV fingerprints
+%{
+#include <DataStructs/ExplicitBitVect.h>
+#include <DataStructs/BitOps.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
+%}
+#if SWIGCSHARP
+%csmethodmodifiers ExplicitBitVect::ToString() const "public override";
+#endif
+%ignore ExplicitBitVect::dp_bits;
+%include <DataStructs/ExplicitBitVect.h>
+%include <GraphMol/Fingerprints/Fingerprints.h>
+
+// ------------------- SIV fingerprints
+%{
+#include <boost/cstdint.hpp>
+#include <DataStructs/SparseIntVect.h>
+#include <GraphMol/Fingerprints/MorganFingerprints.h>
+%}
+#if SWIGCSHARP
+%csmethodmodifiers ExplicitBitVect::ToString() const "public override";
+#endif
+%include <DataStructs/SparseIntVect.h>
+%template(SparseIntVectu32) RDKit::SparseIntVect<boost::uint32_t>;
+%rename(MorganFingerprintMol) RDKit::MorganFingerprints::getFingerprint;
+%include <GraphMol/Fingerprints/MorganFingerprints.h>
+
+
+%include <DataStructs/BitOps.h>
+%template(TanimotoSimilarityEBV) TanimotoSimilarity<ExplicitBitVect,ExplicitBitVect>;
+%template(DiceSimilaritySIVu32) RDKit::DiceSimilarity<boost::uint32_t>;
+
 
 

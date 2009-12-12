@@ -6,12 +6,13 @@ import swig ;
 lib RDKFuncs : RDKFuncs_wrap.cpp ../RDKFuncs.cpp 
   ../../../GraphMol//GraphMol ../../../GraphMol/SmilesParse//SmilesParse
   ../../../GraphMol/FileParsers//FileParsers
+  ../../../GraphMol/Fingerprints//Fingerprints
   ../../../GraphMol/Substruct//Substruct
   ../../../GraphMol/ChemReactions//ChemReactions
-  ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry
+  ../../../RDGeneral//RDGeneral ../../../Geometry//RDGeometry ../../../DataStructs//DataStructs
   : <cflags>-fno-strict-aliasing <include>/usr/include/java <include>/usr/include/java/linux <include>.. ;
 
-cpp RDKFuncs_wrap.cpp : ../RDKFuncs.i : <main-target-type>CSHARP_WRAPPER ;
+cpp RDKFuncs_wrap.cpp : RDKFuncs.i : <main-target-type>CSHARP_WRAPPER ;
 
 install lib-install : RDKFuncs : <location>. ;
 
