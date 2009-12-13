@@ -1,6 +1,8 @@
 set(CMAKE_MODULE_PATH 
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
+option(RDK_BUILD_SWIG_WRAPPERS "build the optional SWIG wrappers" OFF )
+
 #------- 
 # Config variables:
 set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
@@ -50,3 +52,9 @@ add_subdirectory(SimDivPickers)
 
 add_subdirectory(ML)
 add_subdirectory(ChemicalFeatures)
+
+
+if(RDK_BUILD_SWIG_WRAPPERS)
+add_subdirectory(Demos/SWIG)
+endif()
+
