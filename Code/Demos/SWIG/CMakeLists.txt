@@ -9,8 +9,8 @@ SET(CMAKE_SWIG_FLAGS "")
 SET_SOURCE_FILES_PROPERTIES(RDKFuncs.i PROPERTIES CPLUSPLUS ON)
 SET_SOURCE_FILES_PROPERTIES(RDKFuncs.i PROPERTIES SWIG_FLAGS "-module RDKFuncs")
 set(RDKit_Wrapper_Libs FileParsers SmilesParse 
-SubstructMatch ChemReactions Fingerprints
-GraphMol 
+SubstructMatch ChemReactions Fingerprints Subgraphs
+GraphMol DataStructs
 RDGeometryLib RDGeneral )
 
 add_subdirectory(python_example)
