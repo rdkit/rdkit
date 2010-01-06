@@ -21,7 +21,7 @@ include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
 
 # pull in boost:
 if(MSVC)
-SET(Boost_ADDITIONAL_VERSIONS "1.40" "1.40.0")
+SET(Boost_ADDITIONAL_VERSIONS "1.41" "1.41.0" "1.40" "1.40.0")
 endif(MSVC)
 find_package(Boost COMPONENTS python thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -52,7 +52,6 @@ add_subdirectory(SimDivPickers)
 
 add_subdirectory(ML)
 add_subdirectory(ChemicalFeatures)
-
 
 if(RDK_BUILD_SWIG_WRAPPERS)
 add_subdirectory(Demos/SWIG)
