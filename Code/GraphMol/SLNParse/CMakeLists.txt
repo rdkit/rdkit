@@ -7,11 +7,11 @@ endif()
 
 FLEX_TARGET(SlnL sln.ll 
             ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysln.cpp 
-            COMPILE_FLAGS "-P yysln_")
+            COMPILE_FLAGS "-Pyysln_")
 
 BISON_TARGET(SlnY sln.yy 
              ${CMAKE_CURRENT_SOURCE_DIR}/sln.tab.cpp 
-             COMPILE_FLAGS "-p yysln_")
+             COMPILE_FLAGS "-pyysln_")
 
 ADD_FLEX_BISON_DEPENDENCY(SlnL SlnY)
 

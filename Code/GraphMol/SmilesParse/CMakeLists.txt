@@ -8,16 +8,16 @@ endif()
 
 FLEX_TARGET(SmilesL smiles.ll 
             ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp 
-            COMPILE_FLAGS "-P yysmiles_" )
+            COMPILE_FLAGS "-Pyysmiles_" )
 FLEX_TARGET(SmartsL smarts.ll 
             ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp 
-            COMPILE_FLAGS "-P yysmarts_" )
+            COMPILE_FLAGS "-Pyysmarts_" )
 BISON_TARGET(SmilesY smiles.yy 
              ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp 
-             COMPILE_FLAGS "-p yysmiles_" )
+             COMPILE_FLAGS "-pyysmiles_" )
 BISON_TARGET(SmartsY smarts.yy 
              ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp 
-             COMPILE_FLAGS "-p yysmarts_" )
+             COMPILE_FLAGS "-pyysmarts_" )
 
 ADD_FLEX_BISON_DEPENDENCY(SmilesL SmilesY)
 ADD_FLEX_BISON_DEPENDENCY(SmartsL SmartsY)
