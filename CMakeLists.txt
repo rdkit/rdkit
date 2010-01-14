@@ -5,3 +5,5 @@ enable_testing()
 
 add_subdirectory(External)
 add_subdirectory(Code)
+add_subdirectory(Projects)
+add_subdirectory(rdkit)
