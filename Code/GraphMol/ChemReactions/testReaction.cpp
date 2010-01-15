@@ -1182,7 +1182,7 @@ void test14Issue1804420(){
   // NOTE that this bug was actually in the smarts parser, so this is really
   // just another reaction test... still, more tests are better
   
-  smi = "[N:1;D3;R]-!@[*:2]>>[At][N:1].[*:2][At]";
+  smi = "[N;D3;R:1]-!@[*:2]>>[At][N:1].[*:2][At]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -1222,7 +1222,7 @@ void test15Issue1882749(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 1882749: property handling in products." << std::endl;
 
-  smi = "[N:1]-!@[*]>>[N:1;+1,+0][#0]";
+  smi = "[N:1]-!@[*]>>[N;+1,+0:1][#0]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -1232,7 +1232,7 @@ void test15Issue1882749(){
   TEST_ASSERT(nError==0);
 
   delete rxn;
-  smi = "[N:1]-!@[*]>>[N:1;-1]";
+  smi = "[N:1]-!@[*]>>[N;-1:1]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -1255,7 +1255,7 @@ void test15Issue1882749(){
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge()==-1);
 
   delete rxn;
-  smi = "[N:1;D3]-!@[*]>>[N:1;H1]";
+  smi = "[N;D3:1]-!@[*]>>[N;H1:1]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -1271,7 +1271,7 @@ void test15Issue1882749(){
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getNumExplicitHs()==1);
 
   delete rxn;
-  smi = "[N:1;D3]-!@[*]>>[15N:1]";
+  smi = "[N;D3:1]-!@[*]>>[15N:1]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -1287,7 +1287,7 @@ void test15Issue1882749(){
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getMass()==15);
 
   delete rxn;
-  smi = "[N:1;D3]-!@[*]>>[15N:1;-1]";
+  smi = "[N;D3:1]-!@[*]>>[15N;-1:1]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -1310,7 +1310,7 @@ void test15Issue1882749(){
   reacts.push_back(ROMOL_SPTR(mol));
   
   delete rxn;
-  smi = "[S:1]=[O:2]>>[S:1;+2]-[O:2;-]";
+  smi = "[S:1]=[O:2]>>[S;+2:1]-[O;-:2]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -1790,7 +1790,7 @@ void test18PropertyTransfer(){
   // ------ ------ ------ ------ ------ ------ ------ ------ ------ ------ -----
   // now look at some other properties
   delete rxn;
-  smi = "[c:1;H1][n:2]>>[c:1](O)[n:2]";
+  smi = "[c;H1:1][n:2]>>[c:1](O)[n:2]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -1969,7 +1969,7 @@ void test21Issue2540021(){
   BOOST_LOG(rdInfoLog) << "Testing sf.net Issue 2540021: bad handling of atoms with explicit Hs." << std::endl;
 
   {
-    std::string smi  = "[#7:1;!H0]>>[#7:1]C";
+    std::string smi  = "[#7;!H0:1]>>[#7:1]C";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates()==1);
@@ -2000,7 +2000,7 @@ void test21Issue2540021(){
   }
 
   {
-    std::string smi="[c:1]1[c:2][n:3;H1][c:4][n:5]1>>[c:1]1[c:2][n:3][c:4](C)[n:5]1";
+    std::string smi="[c:1]1[c:2][n;H1:3][c:4][n:5]1>>[c:1]1[c:2][n:3][c:4](C)[n:5]1";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxn->getNumReactantTemplates()==1);

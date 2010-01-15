@@ -257,7 +257,7 @@ def FindBRICSBonds(mol,randomizeOrder=False,silent=True):
   Note that this is a generator function :
   >>> res = FindBRICSBonds(m)
   >>> res
-  <generator object at 0x...>
+  <generator object ...>
   >>> res.next()
   ((3, 2), ('3', '4'))
 

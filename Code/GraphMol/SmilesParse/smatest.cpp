@@ -908,17 +908,11 @@ void testAtomMap(){
 
   sma = "[C:10H3]CC";
   matcher1 = SmartsToMol(sma);
-  TEST_ASSERT(matcher1);
-  TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
-  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
-  TEST_ASSERT(mapNum==10);
-  delete matcher1;
+  TEST_ASSERT(!matcher1);
 
   sma = "[C:10:3]ON";
   matcher1 = SmartsToMol(sma);
-  TEST_ASSERT(matcher1);
-  matcher1->getAtomWithIdx(0)->getProp("molAtomMapNumber",mapNum);
-  TEST_ASSERT(mapNum==10);
+  TEST_ASSERT(!matcher1);
 
   sma ="C-C";
   matcher1 = SmartsToMol(sma);
@@ -929,7 +923,7 @@ void testAtomMap(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-#if 0
+#if 1
 void testIssue1804420(){
   ROMol *matcher1;
   std::string sma;
