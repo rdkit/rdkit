@@ -10,6 +10,12 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 
 enable_testing()
 
+# setup our compiler flags:
+if(CMAKE_COMPILER_IS_GNUCXX)
+ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+endif()
+
+
 add_subdirectory(External)
 add_subdirectory(Code)
 add_subdirectory(Projects)
