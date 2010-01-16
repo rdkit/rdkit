@@ -253,6 +253,14 @@ void testMatches2(){
 
   _checkMatches("C!@C", "CCCCC", 4, 2);
 
+  _checkMatches("[x2]", "C1CCC1", 4, 1);
+  _checkNoMatches("[x1]", "C1CCC1");
+  _checkNoMatches("[x3]", "C1CCC1");
+  _checkMatches("[x2]", "C1CC2C1CC2", 4, 1);
+  _checkMatches("[x3]", "C1CC2C1CC2", 2, 1);
+  _checkNoMatches("[x0]", "C1CCC1");
+  _checkMatches("[x0]", "CC1CCC1", 1, 1);
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
