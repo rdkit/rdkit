@@ -35,12 +35,12 @@ namespace RDKit {
   Usage examples:\n \
 \n \
     1) Lazy evaluation: the molecules are not constructed until we ask for them:\n \
-       >>> suppl = SDMolSupplier('in.smi')\n \
+       >>> suppl = SDMolSupplier('in.sdf')\n \
        >>> for mol in suppl:\n \
        ...    mol.GetNumAtoms()\n \
 \n \
     2) Lazy evaluation 2:\n \
-       >>> suppl = SDMolSupplier('in.smi')\n \
+       >>> suppl = SDMolSupplier('in.sdf')\n \
        >>> mol1 = suppl.next()\n \
        >>> mol2 = suppl.next()\n \
        >>> suppl.reset()\n \
@@ -50,7 +50,7 @@ namespace RDKit {
 \n \
     3) Random Access:  all molecules are constructed as soon as we ask for the\n \
        length:\n \
-       >>> suppl = SDMolSupplier('in.smi')\n \
+       >>> suppl = SDMolSupplier('in.sdf')\n \
        >>> nMols = len(suppl)\n \
        >>> for i in range(nMols):\n \
        ...   suppl[i].GetNumAtoms()\n \

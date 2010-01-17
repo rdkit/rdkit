@@ -44,6 +44,8 @@ def RunTest(exeName,args,extras):
     return TEST_PASSED
 
 def RunScript(script,doLongTests,verbose):
+  if len(sys.argv)==3 and sys.argv[1]=='--testDir':
+    os.chdir(sys.argv[2])
   # -------------------------------------------------------
   # this is pretty funny.  Whatever directory we started python in
   # will be in the search path, and if we've changed to another
@@ -103,6 +105,7 @@ def ReportResults(script,failedTests,nTests,runTime,verbose,dest):
     if verbose:
       for exeName,args,extras in failedTests:
         dirName = extras.get('dir','.')
+        dirName = os.path.abspath(dirName)
         dest.write('\t\t(%s): %s %s\n'%(dirName,exeName,args))
 
   

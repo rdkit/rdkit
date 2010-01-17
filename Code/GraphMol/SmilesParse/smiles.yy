@@ -159,6 +159,7 @@ mol: atomd {
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     Bond::UNSPECIFIED);
   mp->setBondBookmark(newB,$2);
+  newB->setProp("_unspecifiedOrder",1);
   INT_VECT tmp;
   if(atom->hasProp("_RingClosures")){
     atom->getProp("_RingClosures",tmp);
@@ -238,7 +239,7 @@ atomd:	simple_atom
 | ATOM_OPEN_TOKEN charge_element ATOM_CLOSE_TOKEN
 {
   $$ = $2;
-  $2->setNoImplicit(true);
+  $2->setNoImplicitHydrogens(true);
 }
 ;
 

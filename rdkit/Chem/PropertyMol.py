@@ -55,6 +55,21 @@ class PropertyMol(Chem.Mol):
    >>> pm.GetProp('IntVal')
    '1'
    
+   This is a test for sf.net issue 2880943: make sure properties end up in SD files:
+   >>> import tempfile,os
+   >>> fn = tempfile.mktemp('.sdf')
+   >>> w = Chem.SDWriter(fn)
+   >>> w.write(pm)
+   >>> w=None
+   >>> txt = file(fn,'r').read()
+   >>> '<IntVal>' in txt
+   True
+   >>> try:
+   ...   os.unlink(fn)
+   ... except:
+   ...   pass
+   
+   
   """
   __getstate_manages_dict__=True
   def __init__(self,mol):
@@ -62,13 +77,15 @@ class PropertyMol(Chem.Mol):
     Chem.Mol.__init__(self,mol.ToBinary())
     self.__propDict={}
     for pn in mol.GetPropNames(includePrivate=True):
-      self.__propDict[pn]=mol.GetProp(pn)
+      self.SetProp(pn,mol.GetProp(pn))
   def GetPropNames(self):
     return self.__propDict.keys()
   def GetProp(self,prop):
     return self.__propDict[prop]
   def SetProp(self,prop,val,**kwargs):
-    self.__propDict[prop]=str(val)
+    val=str(val)
+    Chem.Mol.SetProp(self,prop,val)
+    self.__propDict[prop]=val
   def HasProp(self,prop):
     return int(self.__propDict.has_key(prop))
   def __getstate__(self):

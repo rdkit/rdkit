@@ -193,8 +193,8 @@ namespace SubstructLocal {
 
     if(res){
       if(uniquify){
-           removeDuplicates(matches);
-           res = matches.size();
+        removeDuplicates(matches,molG->getNumAtoms());
+        res = matches.size();
       }
     } else {
       matches.clear();
@@ -440,7 +440,7 @@ namespace RDKit{
         matches.push_back(matchVect);
       }
       if(uniquify){
-        removeDuplicates(matches);
+        removeDuplicates(matches,mol.getNumAtoms());
       }
       res = matches.size();
     } 

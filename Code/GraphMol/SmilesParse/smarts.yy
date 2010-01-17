@@ -188,6 +188,7 @@ mol: atomd {
   			    Queries::COMPOSITE_OR,
   			    true);
   }
+  newB->setProp("_unspecifiedOrder",1);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,$2);
@@ -250,9 +251,19 @@ atomd:	simple_atom
 {
   $$ = new QueryAtom(1);
 }
+| ATOM_OPEN_TOKEN H_TOKEN COLON_TOKEN nonzero_number ATOM_CLOSE_TOKEN
+{
+  $$ = new QueryAtom(1);
+  $$->setProp("molAtomMapNumber",$4);
+}
 | ATOM_OPEN_TOKEN atom_expr ATOM_CLOSE_TOKEN
 {
   $$ = $2;
+}
+| ATOM_OPEN_TOKEN atom_expr COLON_TOKEN nonzero_number ATOM_CLOSE_TOKEN
+{
+  $$ = $2;
+  $$->setProp("molAtomMapNumber",$4);
 }
 ;
 
@@ -283,13 +294,6 @@ atom_expr: atom_expr AND_TOKEN atom_expr {
   // FIX: this stuff (formerly element atom_expr_piece) is making us shift-reduce-a-riffic
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete $2;
-}
-| atom_expr COLON_TOKEN nonzero_number {
-  if($1->hasProp("molAtomMapNumber")){
-    BOOST_LOG(rdWarningLog) << "Warning: Atom-map index (:%d) specified multiple times for one atom, additional specifications ignored" << std::endl;
-  } else {
-    $1->setProp("molAtomMapNumber",$3);
-  }
 }
 | point_query
 | element AT_TOKEN AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); $$=$1;}

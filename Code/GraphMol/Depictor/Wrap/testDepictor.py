@@ -124,9 +124,11 @@ class TestCase(unittest.TestCase) :
     def test4SamplingSpread(self):
       mol= Chem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_xtal.mol'))
 
+
       # default mode
       rdDepictor.Compute2DCoords(mol,canonOrient=False)
       self.failUnless(compareCoords(mol, os.path.join(RDConfig.RDBaseDir,'Code/GraphMol/Depictor','test_data/7UPJ_default.mol')))
+
 
       # spread the structure as much as possible by sampling
       rdDepictor.Compute2DCoords(mol,canonOrient=False, nFlipsPerSample=3, nSample=100,

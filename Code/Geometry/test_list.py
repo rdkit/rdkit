@@ -2,7 +2,6 @@
 tests=[
   ("testExecs/testTransforms.exe","",{}),
   ("testExecs/testGrid.exe","",{}),
-  ("python","test_list.py",{'dir':'Wrap'}),
 ]
 
 

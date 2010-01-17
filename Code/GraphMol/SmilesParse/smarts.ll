@@ -143,17 +143,22 @@ using namespace RDKit;
 			}
 <IN_ATOM_STATE>D {
 	yysmarts_lval.atom = new QueryAtom();
-	yysmarts_lval.atom->setQuery(makeAtomExplicitDegreeQuery(0));
+	yysmarts_lval.atom->setQuery(makeAtomExplicitDegreeQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 <IN_ATOM_STATE>X {
 	yysmarts_lval.atom = new QueryAtom();
-	yysmarts_lval.atom->setQuery(makeAtomTotalDegreeQuery(0));
+	yysmarts_lval.atom->setQuery(makeAtomTotalDegreeQuery(1));
+	return COMPLEX_ATOM_QUERY_TOKEN;
+}
+<IN_ATOM_STATE>x {
+	yysmarts_lval.atom = new QueryAtom();
+	yysmarts_lval.atom->setQuery(makeAtomRingBondCountQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 <IN_ATOM_STATE>v {
 	yysmarts_lval.atom = new QueryAtom();
-	yysmarts_lval.atom->setQuery(makeAtomTotalValenceQuery(0));
+	yysmarts_lval.atom->setQuery(makeAtomTotalValenceQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 <IN_ATOM_STATE>h {
