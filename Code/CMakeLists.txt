@@ -13,8 +13,36 @@ set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
 include(RDKitUtils)
 
 # pull in python:
-find_package(PythonLibs REQUIRED)
-include_directories(${PYTHON_INCLUDE_PATH})
+# start with a bit of hackery to allow the user to provide their own
+# path to python:
+if(PYTHON_LIBRARIES)
+  set(oPYTHON_LIBRARIES ${PYTHON_LIBRARIES})
+endif(PYTHON_LIBRARIES)
+if(PYTHON_INCLUDE_DIRS)
+  set(oPYTHON_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
+endif(PYTHON_INCLUDE_DIRS)
+find_package(PythonLibs)
+if(oPYTHON_LIBRARIES)
+  set(PYTHON_LIBRARIES ${oPYTHON_LIBRARIES})
+endif(oPYTHON_LIBRARIES)
+if(oPYTHON_INCLUDE_DIRS)
+  set(PYTHON_INCLUDE_DIRS ${oPYTHON_INCLUDE_DIRS})
+endif(oPYTHON_INCLUDE_DIRS)
+
+
+if(NOT PYTHON_LIBRARIES AND NOT PYTHON_INCLUDE_DIRS)
+  set(PYTHON_FOUND "NO")
+else(NOT PYTHON_LIBRARIES AND NOT PYTHON_INCLUDE_DIRS)
+  set(PYTHON_FOUND "YES")
+endif(NOT PYTHON_LIBRARIES AND NOT PYTHON_INCLUDE_DIRS)
+if(PYTHON_FOUND)
+  MESSAGE(STATUS "Found Python libraries in ${PYTHON_INCLUDE_DIRS} as ${PYTHON_LIBRARIES}")
+else(PYTHO_NFOUND)
+  MESSAGE(FATAL_ERROR "Python libraries not found")
+endif(PYTHON_FOUND)
+
+
+include_directories(${PYTHON_INCLUDE_DIRS})
 link_directories(${PYTHON_LIBRARIES})
 find_package(NumPy REQUIRED)
 include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
