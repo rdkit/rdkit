@@ -3,7 +3,7 @@ rdkit_python_extension(rdMetricMatrixCalc rdMetricMatrixCalc.cpp
                        LINK_LIBRARIES
                        RDGeneral DataStructs RDBoost)
 
-add_test(pyMatCalc python ${CMAKE_CURRENT_SOURCE_DIR}/testMatricCalc.py)
+add_test(pyMatCalc ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testMatricCalc.py)
 
 
 

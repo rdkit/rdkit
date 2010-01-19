@@ -6,10 +6,10 @@ rdkit_python_extension(cDataStructs
                        LINK_LIBRARIES
                        RDGeneral DataStructs RDBoost)
 
-add_test(pyBV python ${CMAKE_CURRENT_SOURCE_DIR}/testBV.py)
-add_test(pyDiscreteValueVect python 
+add_test(pyBV ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/testBV.py)
+add_test(pyDiscreteValueVect ${PYTHON_EXECUTABLE} 
          ${CMAKE_CURRENT_SOURCE_DIR}/testDiscreteValueVect.py)
-add_test(pySparseIntVect python
+add_test(pySparseIntVect ${PYTHON_EXECUTABLE}
          ${CMAKE_CURRENT_SOURCE_DIR}/testSparseIntVect.py)
  
 

@@ -6,4 +6,4 @@ EigenSolvers
 GraphMol DataStructs RDGeometryLib RDGeneral 
 RDBoost)
 
-add_test(pyMolTransforms python ${CMAKE_CURRENT_SOURCE_DIR}/testMolTransforms.py)
+add_test(pyMolTransforms ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testMolTransforms.py)

@@ -5,4 +5,4 @@ rdkit_python_extension(rdPartialCharges
 GraphMol RDGeometryLib RDGeneral DataStructs
 RDBoost) 
 
-add_test(pyPartialCharges python ${CMAKE_CURRENT_SOURCE_DIR}/testPartialCharges.py)
+add_test(pyPartialCharges ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testPartialCharges.py)

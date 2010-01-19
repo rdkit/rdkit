@@ -3,5 +3,5 @@ rdkit_python_extension(rdAlignment
                        DEST Numerics 
                        LINK_LIBRARIES Alignment RDGeneral RDGeometryLib RDBoost)
 
-add_test(pyAlignment python ${CMAKE_CURRENT_SOURCE_DIR}/testAlignment.py)
+add_test(pyAlignment ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testAlignment.py)
 

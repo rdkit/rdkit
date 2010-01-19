@@ -4,6 +4,6 @@ rdkit_python_extension(rdChemReactions
                        LINK_LIBRARIES 
 ChemReactions FileParsers SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib RDBoost)
 
-add_test(pyChemReactions python 
+add_test(pyChemReactions ${PYTHON_EXECUTABLE}  
          ${CMAKE_CURRENT_SOURCE_DIR}/testReactionWrapper.py)
 

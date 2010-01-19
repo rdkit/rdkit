@@ -19,8 +19,8 @@ rdkit_python_extension(rdmolfiles
                        DEST Chem 
                        LINK_LIBRARIES SmilesParse FileParsers GraphMol RDGeometryLib RDGeneral RDBoost)
 
-add_test(pyGraphMolWrap python 
+add_test(pyGraphMolWrap ${PYTHON_EXECUTABLE}  
          ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)
 
-add_test(pyTestConformerWrap python 
+add_test(pyTestConformerWrap ${PYTHON_EXECUTABLE}  
          ${CMAKE_CURRENT_SOURCE_DIR}/testConformer.py)

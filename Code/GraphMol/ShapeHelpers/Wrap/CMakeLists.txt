@@ -6,7 +6,7 @@ MolTransforms EigenSolvers
 DataStructs GraphMol RDGeometryLib RDGeneral
 RDBoost)
 
-add_test(pyShapeHelpers python
+add_test(pyShapeHelpers ${PYTHON_EXECUTABLE} 
          ${CMAKE_CURRENT_SOURCE_DIR}/testShapeHelpers.py)
 
 

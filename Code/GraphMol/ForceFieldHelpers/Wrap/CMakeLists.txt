@@ -5,7 +5,7 @@ rdkit_python_extension(rdForceFieldHelpers rdForceFields.cpp
 SmilesParse SubstructMatch GraphMol ForceField Optimizer RDGeometryLib RDGeneral DataStructs
 RDBoost) 
 
-add_test(pyForceFieldHelpers python ${CMAKE_CURRENT_SOURCE_DIR}/testHelpers.py)
+add_test(pyForceFieldHelpers ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testHelpers.py)
 
 
 
