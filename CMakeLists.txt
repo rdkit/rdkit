@@ -12,6 +12,8 @@ enable_testing()
 set(CMAKE_MODULE_PATH 
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
+option(RDK_BUILD_SWIG_WRAPPERS "build the experimental SWIG wrappers" OFF )
+
 #------- 
 # Config variables:
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
@@ -62,7 +64,7 @@ include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
 if(MSVC)
 SET(Boost_ADDITIONAL_VERSIONS "1.41" "1.41.0" "1.40" "1.40.0")
 endif(MSVC)
-find_package(Boost 1.39.0 COMPONENTS python thread REQUIRED)
+find_package(Boost 1.39.0 COMPONENTS python REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
