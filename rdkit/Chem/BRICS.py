@@ -63,7 +63,7 @@ environs = {
   'L3':'[O;D2]-;!@[#0,#6,#1]',
   'L4':'[C;!D1;!$(C=*)]-;!@[#6]',
   #'L5':'[N;!D1;!$(N*!-*);!$(N=*);!$(N-[!C;!#0])]-[#0,C]',
-  'L5':'[N;!D1;!$(N=*);!$(N-[!#6;!#0;!#1]);!$([N;R]@[C;R]=O)]',
+  'L5':'[N;!D1;!$(N=*);!$(N-[!#6;!#16;!#0;!#1]);!$([N;R]@[C;R]=O)]',
   'L6':'[C;D3;!R](=O)-;!@[#0,#6,#7,#8]',
   'L7a':'[C;D2,D3]-[#6]',
   'L7b':'[C;D2,D3]-[#6]',
@@ -941,6 +941,18 @@ M  END
       p2 = c2.GetAtomPosition(2)
       self.failUnlessEqual((p1-p2).Length(),0.0)
 
+    def test12(self):
+      m = Chem.MolFromSmiles('CCS(=O)(=O)NCC')
+      res=list(FindBRICSBonds(m))
+      self.failUnlessEqual(len(res),2,res)
+      atIds = [x[0] for x in res]
+      atIds.sort()
+      self.failUnlessEqual(atIds,[(5,2), (6,5)])
+      
+      
+
+
+      
   failed,tried = _test()
   if failed:
     sys.exit(failed)
