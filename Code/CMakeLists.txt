@@ -1,6 +1,8 @@
 
 add_subdirectory(RDGeneral)
-add_subdirectory(RDBoost)
+if(RDK_BUILD_PYTHON_WRAPPERS)
+  add_subdirectory(RDBoost)
+endif(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(DataStructs)
 add_subdirectory(Geometry)
 
@@ -19,6 +21,6 @@ add_subdirectory(ML)
 add_subdirectory(ChemicalFeatures)
 
 if(RDK_BUILD_SWIG_WRAPPERS)
-add_subdirectory(Demos/SWIG)
+  add_subdirectory(Demos/SWIG)
 endif()
 

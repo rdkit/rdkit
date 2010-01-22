@@ -5,4 +5,4 @@ rdkit_python_extension(rdInfoTheory
                        LINK_LIBRARIES
                        InfoTheory RDGeneral DataStructs RDBoost)
 
-add_test(pyRanker ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testRanker.py)
+add_pytest(pyRanker ${CMAKE_CURRENT_SOURCE_DIR}/testRanker.py)

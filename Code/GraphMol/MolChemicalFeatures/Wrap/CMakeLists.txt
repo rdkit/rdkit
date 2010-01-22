@@ -8,7 +8,7 @@ SmilesParse SubstructMatch DataStructs
 GraphMol RDGeometryLib RDGeneral
 RDBoost)
 
-add_test(pyChemicalFeatures ${PYTHON_EXECUTABLE} 
+add_pytest(pyChemicalFeatures
          ${CMAKE_CURRENT_SOURCE_DIR}/testChemicalFeatures.py)
 
 

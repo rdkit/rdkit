@@ -6,7 +6,7 @@ EigenSolvers Alignment Optimizer SubstructMatch
 GraphMol RDGeneral RDGeometryLib DataStructs
                        RDBoost)
 
-add_test(pyMolAlign ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testMolAlign.py)
+add_pytest(pyMolAlign ${CMAKE_CURRENT_SOURCE_DIR}/testMolAlign.py)
 
 
 

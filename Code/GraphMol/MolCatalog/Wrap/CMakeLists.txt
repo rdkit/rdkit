@@ -4,7 +4,7 @@ rdkit_python_extension(rdMolCatalog rdMolCatalog.cpp
 MolCatalog FileParsers Catalogs SmilesParse GraphMol DataStructs RDGeneral RDGeometryLib 
 RDBoost)
 
-add_test(pyMolCatalog ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)
+add_pytest(pyMolCatalog ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)
 
 
 

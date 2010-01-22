@@ -5,4 +5,4 @@ rdkit_python_extension(rdFeatSelect rdFeatSelect.cpp
                        LINK_LIBRARIES
                        fastentropy DataStructs RDGeneral RDBoost)
 
-add_test(pyCMIM ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testCMIM.py)
+add_pytest(pyCMIM ${CMAKE_CURRENT_SOURCE_DIR}/testCMIM.py)

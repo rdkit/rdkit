@@ -4,7 +4,7 @@ rdkit_python_extension(rdChemicalFeatures
                        LINK_LIBRARIES
                        ChemicalFeatures GraphMol RDGeometryLib RDGeneral RDBoost) 
 
-add_test(pyFeatures ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testFeatures.py)
+add_pytest(pyFeatures ${CMAKE_CURRENT_SOURCE_DIR}/testFeatures.py)
 
 
 

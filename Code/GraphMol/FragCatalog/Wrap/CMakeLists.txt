@@ -7,4 +7,4 @@ rdkit_python_extension(rdfragcatalog
 Subgraphs SubstructMatch SmilesParse Catalogs FileParsers GraphMol DataStructs RDGeometryLib RDGeneral 
  RDBoost) 
 
-add_test(pyFragCatalog ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)
+add_pytest(pyFragCatalog ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)

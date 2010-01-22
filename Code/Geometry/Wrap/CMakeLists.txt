@@ -3,5 +3,5 @@ rdkit_python_extension(rdGeometry
                        DEST Geometry
                        LINK_LIBRARIES RDGeometryLib DataStructs RDGeneral RDBoost)
 
-add_test(testPyGeometry ${PYTHON_EXECUTABLE}  ${CMAKE_CURRENT_SOURCE_DIR}/testGeometry.py)
+add_pytest(testPyGeometry ${CMAKE_CURRENT_SOURCE_DIR}/testGeometry.py)
 
