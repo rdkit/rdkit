@@ -1,4 +1,4 @@
 
 def version():
     """ return the RDKit version (as a string) """
-    return "Q42009_1"
+    return "2009Q4_1"
