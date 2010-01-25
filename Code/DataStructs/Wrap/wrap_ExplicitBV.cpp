@@ -71,10 +71,10 @@ struct EBV_wrapper {
          "Returns a binary string representation of the vector.\n")
     .def("FromBase64",
          (void (*)(EBV &,const std::string &))InitFromBase64,
-         "Initializes the vector from a base64 string (the Daylight encoding).\n")
+         "Initializes the vector from a base64 encoded binary string.\n")
     .def("ToBase64",
          (std::string (*)(EBV &))ToBase64,
-         "Converts the vector to a base64 string (the Daylight encoding).\n")
+         "Converts the vector to a base64 string (the base64 encoded version of the results of ToString()).\n")
     .def(python::self & python::self)
     .def(python::self | python::self)
     .def(python::self ^ python::self)
