@@ -1,15 +1,14 @@
 // $Id$
 //
-// Copyright (c) 2004-2008 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2004-2010 greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 #include <boost/python.hpp>
-#define PY_ARRAY_UNIQUE_SYMBOL rdbase_array_API
 #include <iostream>
 #include <fstream>
 #include <RDBoost/Wrap.h>
-#include "numpy/oldnumeric.h"
+#include <RDGeneral/versions.h>
 
 #include <RDGeneral/RDLog.h>
 #if 0
@@ -79,7 +78,6 @@ BOOST_PYTHON_MODULE(rdBase)
 {
   python::scope().attr("__doc__") =
     "Module containing basic definitions for wrapped C++ code\n"
-    "  No user-serviceable parts inside.\n"
     "\n"
     ;
   RDLog::InitLogs();
@@ -94,13 +92,13 @@ BOOST_PYTHON_MODULE(rdBase)
   RegisterListConverter< int >();
   RegisterListConverter< std::vector<int> >();
 
-  
-  import_array();
-
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
 
-  python::def("_version",_version);
+  python::def("_version",_version,"Deprecated, use the constant rdkitVersion instead");
+
+  python::scope().attr("rdkitVersion")=RDKit::rdkitVersion;
+  python::scope().attr("boostVersion")=RDKit::boostVersion;
 
   python::def("EnableLog",EnableLog);
   python::def("DisableLog",DisableLog);

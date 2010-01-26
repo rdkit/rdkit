@@ -716,6 +716,7 @@ namespace RDKit{
                    python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
                    python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
+      python::scope().attr("__RDKFingerprint_version__")=RDKit::RDKFingerprintMolVersion;
 
       // ------------------------------------------------------------------------
       docString="Returns a layered fingerprint for a molecule\n\
@@ -768,6 +769,7 @@ namespace RDKit{
                    python::arg("atomCounts")=python::list(),
                    python::arg("setOnlyBits")=(ExplicitBitVect *)0),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
+      python::scope().attr("__LayeredFingerprint_version__")=RDKit::LayeredFingerprintMolVersion;
 
       docString="Set the wedging on single bonds in a molecule.\n \
    The wedging scheme used is that from Mol files.\n \
