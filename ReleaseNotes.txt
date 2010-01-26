@@ -23,8 +23,6 @@ Bug Fixes
     (issue 1804420)
   - a bug in the way SMARTS matches are uniquified has been fixed
     (issue 2884178)
-  - a bug in the BRICS atom-typing rules that caused sulfonamides 
-    to be skipped has been fixed.  
     
 New Features
   - The new SMARTS atomic query feature "x" (number of ring bonds) is
@@ -35,8 +33,11 @@ New Features
   - Information about the current RDKit and boost versions is now
     available from C++ (file RDGeneral/versions.h) and Python 
     (rdBase.rdkitVersion and rdBase.boostVersion)
+  - The KNN code now supports weighted nearest-neighbors calculations
+    with a radius cutoff.
 
 Other
+  - The lapack dependency has been completely removed from the RDKit.
   - The supported build system for the RDKit is now cmake
     (http://www.cmake.org) instead of bjam. See the file INSTALL for
     the new installation instructions. Files for bjam are still
