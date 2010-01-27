@@ -230,7 +230,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=python::list()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  python::scope().attr("__MorganFingerprint_version__")=
+  python::scope().attr("_MorganFingerprint_version")=
     RDKit::MorganFingerprints::morganFingerprintVersion;
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
@@ -246,7 +246,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol"),python::arg("includeHs")=true,
 	       python::arg("force")=false),
               docString.c_str());
-  python::scope().attr("__CalcCrippenDescriptors_version__")=
+  python::scope().attr("_CalcCrippenDescriptors_version")=
     RDKit::Descriptors::crippenVersion;
   
   docString="returns the Labute ASA value for a molecule";
@@ -255,7 +255,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol"),python::arg("includeHs")=true,
 	       python::arg("force")=false),
               docString.c_str());
-  python::scope().attr("__CalcLabuteASA_version__")=RDKit::Descriptors::labuteASAVersion;
+  python::scope().attr("_CalcLabuteASA_version")=RDKit::Descriptors::labuteASAVersion;
 
   docString="returns a list of atomic contributions to the Labute ASA";
   python::def("_CalcLabuteASAContribs",
@@ -269,6 +269,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      RDKit::Descriptors::CalcAMW,
 	      (python::arg("mol"),python::arg("onlyHeavy")=false),
               docString.c_str());
-  python::scope().attr("__CalcMolWt_version__")="1.0.0";
+  python::scope().attr("_CalcMolWt_version")="1.0.0";
 
 }

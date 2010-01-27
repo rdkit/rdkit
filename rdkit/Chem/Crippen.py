@@ -209,7 +209,7 @@ def pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
 pyMolMR.version="1.1.0"
 
 MolLogP=lambda *x,**y:rdMolDescriptors.CalcCrippenDescriptors(*x,**y)[0]
-MolLogP.version=rdMolDescriptors.__CalcCrippenDescriptors_version__
+MolLogP.version=rdMolDescriptors._CalcCrippenDescriptors_version
 MolLogP.__doc__=""" Wildman-Crippen LogP value
 
   Uses an atom-based scheme based on the values in the paper:
@@ -225,7 +225,7 @@ MolLogP.__doc__=""" Wildman-Crippen LogP value
 """
 
 MolMR=lambda *x,**y:rdMolDescriptors.CalcCrippenDescriptors(*x,**y)[1]
-MolMR.version=rdMolDescriptors.__CalcCrippenDescriptors_version__
+MolMR.version=rdMolDescriptors._CalcCrippenDescriptors_version
 MolMR.__doc__=""" Wildman-Crippen MR value
 
   Uses an atom-based scheme based on the values in the paper:

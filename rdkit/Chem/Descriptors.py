@@ -32,7 +32,7 @@ def pyMolWt(mol,heavyAtomsOnly=0):
   return accum
 pyMolWt.version="1.0.0"
 MolWt = lambda *x,**y:rdMolDescriptors._CalcMolWt(*x,**y)
-MolWt.version=rdMolDescriptors.__CalcMolWt_version__
+MolWt.version=rdMolDescriptors._CalcMolWt_version
 
 
 HeavyAtomMolWt=lambda x:MolWt(x,1)

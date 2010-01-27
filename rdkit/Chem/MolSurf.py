@@ -277,7 +277,7 @@ pyLabuteASA.version="1.0.1"
 # Change log for LabuteASA:
 #  version 1.0.1: optimizations, values unaffected
 LabuteASA=lambda *x,**y:rdMolDescriptors.CalcLabuteASA(*x,**y)
-LabuteASA.version=rdMolDescriptors.__CalcLabuteASA_version__
+LabuteASA.version=rdMolDescriptors._CalcLabuteASA_version
 
 
 def _TPSAContribs(mol,verbose=False):
