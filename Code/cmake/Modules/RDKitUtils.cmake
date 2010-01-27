@@ -65,6 +65,6 @@ macro(add_pytest)
   CDR(PYTEST_SOURCES ${PYTEST_DEFAULT_ARGS})
   if(RDK_BUILD_PYTHON_WRAPPERS)
     add_test(${PYTEST_NAME}  ${PYTHON_EXECUTABLE}
-             ${EXECUTABLE_OUTPUT_PATH}/${PYTEST_SOURCES})
+             ${PYTEST_SOURCES})
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(add_pytest)
