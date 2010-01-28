@@ -1,9 +1,126 @@
+The most recent version of the build instructions can always be found
+linked from the RDKit wiki: 
+http://code.google.com/p/rdkit/wiki/GettingStarted
+
 The instructions below are for source distributions from Q4 2009 on. 
-= Building on Linux =
+= Building on Linux or the Mac =
+
+== Getting Ready ==
+ * Required packages:
+   * cmake. You need version 2.6 (or more recent). http://www.cmake.org if your linux distribution doesn't have an appropriate package. _Update: It seems that v2.8 is a better bet than v2.6. It might be worth compiling your own copy of v2.8 even if v2.6 is already installed._
+   * flex and bison. These are frequently already installed if you have the various pieces of the development environment installed
+   * The following are required if you are planning on using the Python wrappers:
+      * The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
+      * sqlite3. You also need the shared libraries. This may require that you install a sqlite3-dev package.
+      * You need to have numpy (http://www.scipy.org/NumPy) installed.
+
+*Mac Note* : I have tested this under Leopard using the standard MacOS development tools and python 2.5 distribution.
+
+== Installing Boost ==
+  * *NOTE*: if your linux distribution has a boost-devel package including the python libraries, you may be able to use that and save yourself the steps below. I haven't tested this. _Update: if you *do* have a version of the boost libraries pre-installed and you want to use your own version, be careful when you build the code. We've seen at least one example on a Fedora system where cmake compiled using a user-installed version of boost and then linked against the system version. This led to segmentation faults._
+  * download the boost source distribution from [http://www.boost.org the boost web site]
+  * extract the source somewhere on your machine, you're going to need it to build the RDKit as well as boost. (e.g. `/usr/local/src/boost_1_40_0`)
+  * The following are required if you are planning on using the Python wrappers:
+    * build and install the required boost shared libraries: 
+     * `cd $BOOST`
+     * Building on 32 bit systems: `bjam --with-python release install`
+     * Building on 64 bit systems: `bjam --with-python address-model=64 release install`
+
+    If you have any problems with this step, check the boost [http://www.boost.org/more/getting_started/unix-variants.html installation instructions].
+
+== Building the Code ==
+  * follow the Installing Boost instructions above.
+  * environment variables:
+    * RDBASE: the root directory of the RDKit distribution (e.g. ~/RDKit)
+    * LD_LIBRARY_PATH: make sure it includes $RDBASE/bin and wherever the boost shared libraries were installed
+    * The following are required if you are planning on using the Python wrappers:
+      * PYTHONPATH: make sure it includes $RDBASE
+    * if you built your own version of boost and cmake complains about not being able to find it, define the environment variable BOOST_ROOT to point to the directory containing the boost source.
+  * Building: 
+    * cd to $RDBASE
+    * `mkdir build`
+    * `cd build`
+    * `cmake ..` : See the section below on configuring the build if you need to specify a non-default version of python
+    * `make` : this builds all libraries, regression tests, and wrappers (by default).
+    * `make install`
+
+== Testing the Build (optional, but recommended) ==
+  * create the databases used by the Python tests, requires sqlite3 to be installed:
+    * `sqlite3 $RDBASE/Data/RDTests.sqlt < $RDBASE/rdkit/Dbase/test_data/RDTests.sqlite`
+    * `sqlite3 $RDBASE/Data/RDData.sqlt < $RDBASE/rdkit/Dbase/test_data/RDData.sqlite`
+  * cd to $RDBASE/build and do `ctest`
+  * you're done!
+
+== Advanced : Configuring the Build ==
+
+=== Specifying an alternate Python installation ===
+
+You need to tell cmake where to find the python library it should link against and the python header files.
+
+Here's a sample command line:
+
+{{{cmake -D PYTHON_LIBRARY=/usr/lib/python2.5/config/libpython2.5.a -D PYTHON_INCLUDE_DIR=/usr/include/python2.5/ -D PYTHON_EXECUTABLE=/usr/bin/python ..}}}
+
+The `PYTHON_EXECUTABLE` part is optional if the correct python is the first version in your PATH.
+
+=== Disabling the Python wrappers ==
+
+You can completely disable building of the python wrappers by setting the configuration variable RDK_BUILD_PYTHON_WRAPPERS to nil:
+
+{{{cmake -D RDK_BUILD_PYTHON_WRAPPERS= ..}}}
+
 
 
 = Building on Windows =
 
+== Software to Install ==
+  * Microsoft Visual C++ : The Express version has everything necessary and can be downloaded for free [http://www.microsoft.com/express/download/ from Microsoft]. This is a big installation and will take a while. The RDKit has been successfully built with all version of visual c++ since 6.0, so the current version of VC++ (2008 as of this writing) should be fine. 
+  * flex and bison : these are easily installed as part of a [http://www.cygwin.com cygwin] installation, but one can also find flex and bison binaries for windows elsewhere. Cygwin is not required to build the RDKit, but it's very useful to have (a minimal cygwin installation is fine). *Note* if you install flex and bison without cygwin, be sure to read [http://eli.thegreenplace.net/2007/07/27/bison-looking-for-bisonsimple-on-windows/ this web page] about environment variables and set the BISON_SIMPLE environment variable to the appropriate value.
+  * python : [http://www.python.org/download python] should be installed
+  * numpy : the [http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103 current version of numpy] should be installed. It's fine to use the binary installer. 
+  * boost : download a copy of the current versions of the [http://www.boost.org/users/download/ boost source distribution and boost-Jam]. Both are available from the same link, be sure to get the `.ntx86.zip` file for boost-Jam.  Extract the source distribution (to, for example, c:\boost\boost_1_37_0) and copy the bjam.exe executable from the boost jam zip file to the  same directory.
+  * a subversion client : _This is only necessary if you are planning on building development versions of the RDKit_. A command line client for subversion can be installed as part of the cygwin installation, or a very nice graphical client that integrates well with windows explorer can be downloaded from the [http://tortoisesvn.tigris.org/ Tortoise SVN home page].
+
+== Setup and Preparation ==
+This section assumes that python is installed in c:\Python25, that the boost libraries have been extracted to c:\boost\boost_1_37_0, and that you will build the RDKit from a directory named c:\RDKit. If any of these conditions is not true, just change the corresponding paths. 
+
+ Notes : 
+    # If you install things in paths that have spaces in their names, be sure to use quotes properly in your environment variable definitions.
+    # If you have more than one version of visual studio installed, the instructions below may not use the correct compiler. In this case you need to use a different `--toolset` argument to specify the version of the compiler used in all commands. Information for this situation is covered in [http://www.boost.org/doc/libs/1_37_0/more/getting_started/windows.html the boost.build documentation].
+
+  * Make sure that boost builds properly by going to the directory c:\boost\boost_1_37_0 and executing the command: `.\bjam.exe --toolset=msvc --with-python release install`. This may take a while, but it should finish without errors. 
+  * If you are planning on using a development version of the RDKit: get a copy of the current RDKit source using subversion. If you're using the command-line client the command is: `svn co http://rdkit.svn.sourceforge.net/svnroot/rdkit/trunk c:\RDKit` 
+  * If you are planning on using a released version of the RDKit : get a copy of the most recent release and extract it into the directory c:\RDKit 
+  * Set the required environment variables (you can set this in cygwin or in windows. If you set them in windows, be sure to restart your cygwin window):
+    * RDBASE = c:\RDKit
+    * BOOST_ROOT = c:\boost\boost_1_37_0
+  * Make sure that the directory c:\Python25 is in your PATH
+  * Make sure that the directory c:\RDKit\bin is in your PATH
+  * Make sure that the directory c:\boost\lib is in your PATH
+  * Make sure that the directory c:\RDKit is in your PYTHONPATH
+
+== Building the Code ==
+  * follow the Installing Boost instructions above.
+  * environment variables:
+    * RDBASE: the root directory of the RDKit distribution (e.g. c:/RDKit)
+    * if you built your own version of boost and cmake complains about not being able to find it, define the environment variable BOOST_ROOT to point to the directory containing the boost source.
+  * Configure the build:
+    * Start the cmake gui
+    * tell it where the source code is (e.g. c:/RDKit) and where to build the binaries (recommended: c:/RDKit/build)
+    * click "Configure", select your compiler, and wait until the basic configuration is complete, you'll see a bunch of red lines entries in the main windows.
+    * click "Configure" again
+    * click "Generate"
+  * Build:
+    * open the solution file that cmake created (c:/RDKit/build/RDKit.sln) with Visual Studio.
+    * build the "ALL_BUILD" target; this will take a while and generate warnings, but there should be no errors.
+    * build the "INSTALL" target
+
+== Testing the Build (optional, but recommended) ==
+  * create the databases used by the Python tests, requires sqlite3 to be installed:
+    * `sqlite3 $RDBASE/Data/RDTests.sqlt < $RDBASE/rdkit/Dbase/test_data/RDTests.sqlite`
+    * `sqlite3 $RDBASE/Data/RDData.sqlt < $RDBASE/rdkit/Dbase/test_data/RDData.sqlite`
+  * cd to $RDBASE/build and run `ctest`
+  * you're done!
 
 
 
