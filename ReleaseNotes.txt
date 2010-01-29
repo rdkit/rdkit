@@ -1,3 +1,20 @@
+******  Release_Q12010_1 *******
+(Changes relative to Release_Q42009_1)
+!!!!!! IMPORTANT !!!!!!
+
+Acknowledgements
+   
+Bug Fixes
+    
+New Features
+
+Other
+ - the vflib source, which is no longer used, was removed from the
+   External source tree. It's still available in svn at rev1323 or via
+   this tarball:
+   http://rdkit.svn.sourceforge.net/viewvc/rdkit/trunk/External/vflib-2.0.tar.gz?view=tar&pathrev=1323
+
+
 ******  Release_Q42009_1 *******
 (Changes relative to Release_Q32009_1)
 
