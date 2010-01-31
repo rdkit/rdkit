@@ -81,9 +81,9 @@ class TestCase(unittest.TestCase):
       if self._matchMol(tpl,self.pcophore,self.featFactory,0):
         nHits+=1
       nDone += 1
-    self.failUnless(nDone==100)
+    self.failUnlessEqual(nDone,100)
     #print 'nHits:',nHits
-    self.failUnless(nHits==48)
+    self.failUnlessEqual(nHits,47)
     
   def test2SearchDownsample(self):
     inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
@@ -98,15 +98,15 @@ class TestCase(unittest.TestCase):
       if self._matchMol(tpl,self.pcophore, self.featFactory,1):
         nHits+=1
       nDone += 1
-    self.failUnless(nDone==100)
+    self.failUnlessEqual(nDone,100)
     #print 'nHits:',nHits
-    self.failUnless(nHits==48)
+    self.failUnlessEqual(nHits,47)
     
   def test3Embed(self):
     testResults={
-      'mol_197':(160.52,21.70,83.37,4.99,83.21,4.86,75.07,1.16,0.00),
-      'mol_223':(167.72,11.04,97.28,3.21,97.21,3.17,67.89,0.51,0.00),
-      'mol_269':(135.98,7.82,60.02,0.58,60.02,0.58,60.02,0.58,6.00),
+      'mol_197':(181.30,30.21,92.03,8.73,91.60,8.33,74.68,1.35,0.00),
+      'mol_223':(211.07,4.22,114.14,1.57,114.08,1.58,68.22,0.48,0.00),
+      'mol_269':(162.28,2.03,74.50,1.00,73.45,0.96,60.18,0.91,6.00),
       }
     inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
     nDone = 0
@@ -135,17 +135,17 @@ class TestCase(unittest.TestCase):
             stats = EmbedLib.EmbedOne(mol,name,match,self.pcophore,count=10,
                                       silent=1,randomSeed=23)
             tgt = testResults[name]
-            self.failUnless(len(tgt)==len(stats))
+            self.failUnlessEqual(len(tgt),len(stats))
             print name
             print ','.join(['%.2f'%x for x in stats])
             # we'll use different tolerances for the different values:
-            self.failUnless(feq(tgt[0],stats[0],5.0))
+            self.failUnless(feq(tgt[0],stats[0],5.0),(tgt[0],stats[0]))
             for i in range(2,len(tgt)):
-              self.failUnless(feq(tgt[i],stats[i],5.0))
+              self.failUnless(feq(tgt[i],stats[i],5.0),(tgt[i],stats[i]))
         
-    self.failUnless(nDone==100)
+    self.failUnlessEqual(nDone,100)
     #print 'nHits:',nHits
-    self.failUnless(nHits==50)
+    self.failUnlessEqual(nHits,50)
     
   def test4Search(self):
     featFactory = ChemicalFeatures.BuildFeatureFactory(os.path.join(self.dataDir,
@@ -198,10 +198,10 @@ class TestCase(unittest.TestCase):
         if not failed:
           nHits+=1
 
-    self.failUnless(nDone==100)
-    self.failUnless(nMatches==93)
+    self.failUnlessEqual(nDone,100)
+    self.failUnlessEqual(nMatches,93)
     #print 'nhits:',nHits
-    self.failUnless(nHits==37)
+    self.failUnlessEqual(nHits,19)
 
   def testIssue268(self):
     from rdkit import RDLogger
@@ -223,26 +223,26 @@ class TestCase(unittest.TestCase):
     b1 = rdDistGeom.GetMoleculeBoundsMatrix(m1)
     b2 = rdDistGeom.GetMoleculeBoundsMatrix(m2)
 
-    self.failUnless(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2])==4)
-    self.failUnless(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2])==4)
+    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2]),4)
+    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2]),4)
 
 
-    self.failUnless(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop,
-                                                    mol=m1,use2DLimits=True)[2])==4)
-    self.failUnless(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
-                                                    mol=m2,use2DLimits=True)[2])==4)
+    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop,
+                                                    mol=m1,use2DLimits=True)[2]),4)
+    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
+                                                    mol=m2,use2DLimits=True)[2]),4)
 
     from rdkit import DistanceGeometry as DG
     self.failUnless(DG.DoTriangleSmoothing(b1))
     self.failUnless(DG.DoTriangleSmoothing(b2))
 
-    self.failUnless(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2])==4)
-    self.failUnless(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2])==4)
+    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop)[2]),4)
+    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop)[2]),4)
     
-    self.failUnless(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop,
-                                                    mol=m1,use2DLimits=True)[2])==4)
-    self.failUnless(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
-                                                    mol=m2,use2DLimits=True)[2])==4)
+    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList1,b1,pcop,
+                                                    mol=m1,use2DLimits=True)[2]),4)
+    self.failUnlessEqual(len(EmbedLib.MatchPharmacophore(mList2,b2,pcop,
+                                                    mol=m2,use2DLimits=True)[2]),4)
 
     
  

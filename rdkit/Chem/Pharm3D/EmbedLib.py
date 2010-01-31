@@ -76,8 +76,9 @@ def ReplaceGroup(match,bounds,slop=0.01,useDirs=False,dirLength=defaultFeatLengt
 
    
    We make the assumption that the points of the
-   feature form a regular polygon and the replacement
-   point goes at the center:
+   feature form a regular polygon, are listed in order
+   (i.e. pt 0 is a neighbor to pt 1 and pt N-1)
+   and that the replacement point goes at the center:
    >>> print ', '.join(['%.3f'%x for x in bm[-1]])
    0.577, 0.577, 0.577, 0.000
    >>> print ', '.join(['%.3f'%x for x in bm[:,-1]])
@@ -96,16 +97,18 @@ def ReplaceGroup(match,bounds,slop=0.01,useDirs=False,dirLength=defaultFeatLengt
   minVal = 1e8
   nPts = len(match)
   for i in range(nPts):
-    for j in range(i+1,nPts):
       idx0 = match[i]
-      idx1 = match[j]
+      if i<nPts-1:
+        idx1 = match[i+1]
+      else:
+        idx1 = match[0]
       if idx1<idx0:
         idx0,idx1 = idx1,idx0
       minVal = min(minVal,bounds[idx1,idx0])
       maxVal = max(maxVal,bounds[idx0,idx1])
   maxVal *= (1+slop)
   minVal *= (1-slop)
-  
+
   scaleFact = 1.0/(2.0*math.sin(math.pi/nPts))
   minVal *= scaleFact
   maxVal *= scaleFact
