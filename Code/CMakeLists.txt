@@ -1,5 +1,3 @@
-set(CMAKE_MODULE_PATH 
-    ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 #------- 
 # Config variables:
@@ -55,7 +53,9 @@ link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(RDGeneral)
-add_subdirectory(RDBoost)
+if(RDK_BUILD_PYTHON_WRAPPERS)
+  add_subdirectory(RDBoost)
+endif(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Geometry)
 add_subdirectory(Numerics)
 add_subdirectory(GraphMol)

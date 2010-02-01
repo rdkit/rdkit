@@ -30,16 +30,18 @@ macro(rdkit_python_extension)
     ${ARGN})
   CAR(RDKPY_NAME ${RDKPY_DEFAULT_ARGS})
   CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
-  PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
-  set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
+  if(RDK_BUILD_PYTHON_WRAPPERS)
+    PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
+    set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
 if(MSVC)
-  set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd")
+    set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd")
 endif(MSVC)  
-  target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES} 
-                        ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+    target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES} 
+                          ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 
-  INSTALL(TARGETS ${RDKPY_NAME} 
-          LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST})
+    INSTALL(TARGETS ${RDKPY_NAME} 
+            LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST})
+  endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(rdkit_python_extension)
 
 macro(rdkit_test)
@@ -53,3 +55,16 @@ macro(rdkit_test)
   target_link_libraries(${RDKTEST_NAME} ${RDKTEST_LINK_LIBRARIES})
   add_test(${RDKTEST_NAME} ${EXECUTABLE_OUTPUT_PATH}/${RDKTEST_NAME})
 endmacro(rdkit_test)
+
+macro(add_pytest)
+  PARSE_ARGUMENTS(PYTEST
+    "LINK_LIBRARIES;DEPENDS;DEST"
+    ""
+    ${ARGN})
+  CAR(PYTEST_NAME ${PYTEST_DEFAULT_ARGS})
+  CDR(PYTEST_SOURCES ${PYTEST_DEFAULT_ARGS})
+  if(RDK_BUILD_PYTHON_WRAPPERS)
+    add_test(${PYTEST_NAME}  ${PYTHON_EXECUTABLE}
+             ${PYTEST_SOURCES})
+  endif(RDK_BUILD_PYTHON_WRAPPERS)
+endmacro(add_pytest)

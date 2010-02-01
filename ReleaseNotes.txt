@@ -1,3 +1,67 @@
+******  Release_Q12010_1 *******
+(Changes relative to Release_Q42009_1)
+!!!!!! IMPORTANT !!!!!!
+
+Acknowledgements
+   
+Bug Fixes
+    
+New Features
+
+Other
+ - the vflib source, which is no longer used, was removed from the
+   External source tree. It's still available in svn at rev1323 or via
+   this tarball:
+   http://rdkit.svn.sourceforge.net/viewvc/rdkit/trunk/External/vflib-2.0.tar.gz?view=tar&pathrev=1323
+
+
+******  Release_Q42009_1 *******
+(Changes relative to Release_Q32009_1)
+
+!!!!!! IMPORTANT !!!!!!
+  - A bug fix in the SMARTS parser has changed the way atom-map
+    numbers in Reaction SMARTS are parsed.
+      Earlier versions of the RDKit required that atom maps be
+      specified at the beginning of a complex atom query:
+        [CH3:1,NH2]>>[*:1]O
+      The corrected version only accepts this form:
+        [CH3,NH2:1]>>[*:1]O
+    This change may break existing SMARTS patterns.
+  - A switch to using cmake as the build system instead of bjam has
+    made the RDKit much easier to build.
+
+Acknowledgements
+  - Andrew Dalke, Kirk DeLisle, David Hall, Markus Kossner, Adrian
+    Schreyer, Nikolaus Stiefl, Jeremy Yang
+   
+Bug Fixes
+  - the SMARTS parser now correctly requires tha atom-map numbers be
+    at the end of a complex atom query.
+    (issue 1804420)
+  - a bug in the way SMARTS matches are uniquified has been fixed
+    (issue 2884178)
+    
+New Features
+  - The new SMARTS atomic query feature "x" (number of ring bonds) is
+    now supported.
+  - The proof-of-concept for a SWIG-based wrapper around the RDKit has
+    been expanded a bit in functionality. Samples are now included for
+    Java, C#, and Python.
+  - Information about the current RDKit and boost versions is now
+    available from C++ (file RDGeneral/versions.h) and Python 
+    (rdBase.rdkitVersion and rdBase.boostVersion)
+  - The KNN code now supports weighted nearest-neighbors calculations
+    with a radius cutoff.
+
+Other
+  - The lapack dependency has been completely removed from the RDKit.
+  - The supported build system for the RDKit is now cmake
+    (http://www.cmake.org) instead of bjam. See the file INSTALL for
+    the new installation instructions. Files for bjam are still
+    included in the distribution but are deprecated and will be
+    removed in a future version.
+
+
 ******  Release_Q32009_1 *******
 (Changes relative to Release_Q22009_1)
 
