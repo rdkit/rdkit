@@ -4,7 +4,7 @@ SET_SOURCE_FILES_PROPERTIES(Dict.cpp PROPERTIES COMPILE_FLAGS -O0)
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 rdkit_library(RDGeneral 
-              Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp)
+              Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp SHARED)
 
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
 
