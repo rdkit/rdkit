@@ -13,9 +13,11 @@ macro(rdkit_library)
     IF(RDKLIB_SHARED)
       add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
       INSTALL(TARGETS ${RDKLIB_NAME} 
-              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+              DESTINATION ${RDKit_BinDir}/${RDKLIB_DEST})
     ELSE(RDKLIB_SHARED)        
       add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
+      INSTALL(TARGETS ${RDKLIB_NAME} 
+              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
     ENDIF(RDKLIB_SHARED)        
     IF(RDKLIB_LINK_LIBRARIES)
       target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})

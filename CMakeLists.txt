@@ -19,7 +19,8 @@ option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 # Config variables:
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
-set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/bin")
+set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
+set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/lib")
 set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
 
 # defines macros: rdkit_python_extension, rdkit_test
