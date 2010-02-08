@@ -171,6 +171,24 @@ if tests[13]:
     logger.info('Results13: %.2f seconds'%(t2-t1))
     ts.append(t2-t1)
 
+if tests[14]:
+    logger.info('Find unique subgraphs')
+    t1=time.time()
+    for mol in mols:
+        Chem.FindUniqueSubgraphsOfLengthN(mol,6)
+    t2 = time.time()
+    logger.info('Results14: %.2f seconds'%(t2-t1))
+    ts.append(t2-t1)
+
+if tests[15]:
+    logger.info('Generate topological fingerprints')
+    t1=time.time()
+    for mol in mols:
+        Chem.RDKFingerprint(mol)
+    t2 = time.time()
+    logger.info('Results15: %.2f seconds'%(t2-t1))
+    ts.append(t2-t1)
+
 
     
 
