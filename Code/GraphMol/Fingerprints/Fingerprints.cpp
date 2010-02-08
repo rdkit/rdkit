@@ -82,6 +82,16 @@ namespace RDKit{
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
 							       useHs);
+    std::vector<const Bond *> bondCache;
+    bondCache.resize(mol.getNumBonds());
+    ROMol::EDGE_ITER firstB,lastB;
+    boost::tie(firstB,lastB) = mol.getEdges();
+    while(firstB!=lastB){
+      BOND_SPTR bond = mol[*firstB];
+      bondCache[bond->getIdx()]=bond.get();
+      ++firstB;
+    }
+    
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
       for( PATH_LIST_CI pathIt=paths->second.begin();
@@ -100,11 +110,11 @@ namespace RDKit{
         std::vector<unsigned int> bondHashes;
         bondHashes.reserve(path.size()+1);
         for(unsigned int i=0;i<path.size();++i){
-          const Bond *bi = mol.getBondWithIdx(path[i]);
+          const Bond *bi = bondCache[path[i]];
           atomsInPath.set(bi->getBeginAtomIdx());
           atomsInPath.set(bi->getEndAtomIdx());
           for(unsigned int j=i+1;j<path.size();++j){
-            const Bond *bj = mol.getBondWithIdx(path[j]);
+            const Bond *bj = bondCache[path[j]];
             if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx() ||
                bi->getBeginAtomIdx()==bj->getEndAtomIdx() ||
                bi->getEndAtomIdx()==bj->getBeginAtomIdx() ||
@@ -224,16 +234,19 @@ namespace RDKit{
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
     boost::dynamic_bitset<> isQueryBond(mol.getNumBonds());
-    for(unsigned int i=0;i<mol.getNumBonds();++i){
-      const Bond *bi = mol.getBondWithIdx(i);
-      bondCache[i] = bi;
-      if(isComplexQuery(bi) ||
-         isComplexQuery(bi->getBeginAtom()) ||
-         isComplexQuery(bi->getEndAtom())) {
-        isQueryBond.set(i);
+
+    ROMol::EDGE_ITER firstB,lastB;
+    boost::tie(firstB,lastB) = mol.getEdges();
+    while(firstB!=lastB){
+      const Bond *bond = mol[*firstB].get();
+      bondCache[bond->getIdx()]=bond;
+      if(isComplexQuery(bond) ||
+         isComplexQuery(bond->getBeginAtom()) ||
+         isComplexQuery(bond->getEndAtom())) {
+        isQueryBond.set(bond->getIdx());
       }
+      ++firstB;
     }
-    
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
 
