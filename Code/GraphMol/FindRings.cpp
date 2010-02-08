@@ -13,12 +13,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
-
-#include <boost/graph/depth_first_search.hpp>
-#include <boost/graph/visitors.hpp>
 #include <boost/dynamic_bitset.hpp>
-
-
 
 typedef double RINGINVAR;
 typedef std::set< RINGINVAR > RINGINVAR_SET;

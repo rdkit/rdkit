@@ -30,7 +30,6 @@ include(RDKitUtils)
 if(MSVC)
 SET(Boost_ADDITIONAL_VERSIONS "1.41" "1.41.0" "1.40" "1.40.0")
 endif(MSVC)
-
 if(RDK_BUILD_PYTHON_WRAPPERS)
   #------- 
   # pull in python:

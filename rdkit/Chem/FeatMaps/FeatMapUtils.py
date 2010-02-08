@@ -47,10 +47,10 @@ class DirMergeMode(object):
 
 def __copyAll(res,fm1,fm2):
   """ no user-serviceable parts inside """
-  for feat in fm1.getFeatures():
-    res.addFeatPoint(copy.deepcopy(feat))
-  for feat in fm2.getFeatures():
-    res.addFeatPoint(copy.deepcopy(feat))
+  for feat in fm1.GetFeatures():
+    res.AddFeatPoint(copy.deepcopy(feat))
+  for feat in fm2.GetFeatures():
+    res.AddFeatPoint(copy.deepcopy(feat))
 
 
 def GetFeatFeatDistMatrix(fm,mergeMetric,mergeTol,dirMergeMode,compatFunc):
