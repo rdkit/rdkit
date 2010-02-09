@@ -1,7 +1,12 @@
 // $Id$
 //
-//  Copyright (C) 2008 Greg Landrum
+//  Copyright (C) 2008-2010 Greg Landrum
 //   All Rights Reserved
+//
+//  Can be built with:
+//   g++ -o sample.exe sample.cpp -I$RDBASE/Code -I$RDBASE/Extern \ 
+//       -L$RDBASE/lib -L$RDBASE/bin -lFileParsers -lSmilesParse -lDepictor \ 
+//       -lSubstructMatch -lGraphMol -lDataStructs -lRDGeometryLib -lRDGeneral
 //
 
 #include <RDGeneral/Invariant.h>
@@ -191,6 +196,9 @@ void DepictDemo(){
 
 
 void CleanupMolecule(){
+  // an example of doing some cleaning up of a molecule before
+  // calling the sanitizeMol function()
+  
   // build: C1CC1C(:O):O
   RWMol *mol=new RWMol();
 
@@ -207,7 +215,7 @@ void CleanupMolecule(){
   mol->addBond(2,1,Bond::SINGLE); // bond 3
   mol->addBond(1,0,Bond::SINGLE); // bond 4
   mol->addBond(0,2,Bond::SINGLE); // bond 5
-  
+
   // instead of calling sanitize mol, which would generate an error,
   // we'll perceive the rings, then take care of aromatic bonds
   // that aren't in a ring, then sanitize:
@@ -217,12 +225,18 @@ void CleanupMolecule(){
     if( ((*bondIt)->getIsAromatic() ||
          (*bondIt)->getBondType()==Bond::AROMATIC)
         && !mol->getRingInfo()->numBondRings((*bondIt)->getIdx()) ){
+      // remove the aromatic flag on the bond:
       (*bondIt)->setIsAromatic(false);
+      // and cleanup its attached atoms as well (they were
+      // also marked aromatic when the bond was added)
+      (*bondIt)->getBeginAtom()->setIsAromatic(false);
+      (*bondIt)->getEndAtom()->setIsAromatic(false);
+      
       // NOTE: this isn't really reasonable:
       (*bondIt)->setBondType(Bond::SINGLE);      
     }
   }
-    
+
   // now it's safe to sanitize:
   RDKit::MolOps::sanitizeMol(*mol);
 
@@ -238,9 +252,9 @@ int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
-  CleanupMolecule();
   BuildSimpleMolecule();
   WorkWithRingInfo();
   WorkWithSmarts();
   DepictDemo();
+  CleanupMolecule();
 }
