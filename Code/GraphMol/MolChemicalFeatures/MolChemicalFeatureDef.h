@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <GraphMol/ROMol.h>
+#include <RDBoost/Exceptions.h>
 
 #include <boost/shared_ptr.hpp>
 namespace RDKit {
@@ -32,6 +34,9 @@ namespace RDKit {
 
     void setWeights(const std::vector<double> &weights){
       d_weights.insert(d_weights.begin(),weights.begin(),weights.end());
+      if(getPattern() && d_weights.size()!=getPattern()->getNumAtoms()){
+        throw ValueErrorException(" pattern->getNumAtoms() != len(feature weight vector)");
+      }
     }
 
     const std::string &getFamily() const {return d_family;};

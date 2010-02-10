@@ -5,7 +5,7 @@ rdkit_library(MolChemicalFeatures
 
 rdkit_test(testFeatures testFeatures.cpp 
            LINK_LIBRARIES MolChemicalFeatures Catalogs
-SmilesParse SubstructMatch DataStructs
+FileParsers SmilesParse SubstructMatch DataStructs
 GraphMol RDGeometryLib RDGeneral
 )
 

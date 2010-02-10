@@ -31,7 +31,7 @@ class TestCase(unittest.TestCase):
                    EndFeature
                    DefineFeature Aromatic1 c1ccccc1
                       Family Aromatic
-                      Weights 1.0
+                      Weights 1.0,1.0,1.0,1.0,1.0,1.0
                    EndFeature\n"""
 
     self.featFactory = ChemicalFeatures.BuildFeatureFactoryFromString(self.fdefBlock)
