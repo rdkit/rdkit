@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -3062,6 +3062,31 @@ void testSanitizeNonringAromatics() {
 }
 
 
+void testSFNetIssue2951221() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2951221 : hydrogens added with bad coordinates" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue2951221.mol");
+    TEST_ASSERT(m);
+    ROMol *m2 = MolOps::addHs(*m,false,true);
+    TEST_ASSERT(m2);
+    delete m;
+    TEST_ASSERT(m2->getNumAtoms(false)==12);
+    RDGeom::Point3D coords[4];
+    coords[0]= m2->getConformer().getAtomPos(2);
+    coords[1]= m2->getConformer().getAtomPos(0);
+    coords[2]= m2->getConformer().getAtomPos(1);
+    coords[3]= m2->getConformer().getAtomPos(9);
+    double dot=(coords[3]-coords[0]).dotProduct((coords[1]-coords[0]).crossProduct(coords[2]-coords[0]));
+    TEST_ASSERT(dot>1.0);
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -3106,10 +3131,12 @@ int main(){
   testAromaticityEdges();
   testSFNetIssue2196817();
   testSFNetIssue2208994();
-#endif
   testSFNetIssue2313979();
   testSFNetIssue2316677();
   testSanitizeNonringAromatics();  
+#endif
+  testSFNetIssue2951221();
+
   return 0;
 }
 

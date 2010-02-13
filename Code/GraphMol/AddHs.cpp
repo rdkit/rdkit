@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006  Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -209,8 +209,16 @@ namespace RDKit{
           nbr1Vect = (*cfi)->getAtomPos(nbr1->getIdx()).directionVector(heavyPos);
           nbr2Vect = (*cfi)->getAtomPos(nbr2->getIdx()).directionVector(heavyPos);
           nbr3Vect = (*cfi)->getAtomPos(nbr3->getIdx()).directionVector(heavyPos);
-          dirVect = nbr1Vect+nbr2Vect+nbr3Vect;
-          dirVect.normalize();
+          // if three neighboring atoms are more or less planar, this
+          // is going to be in a quasi-random (but wrong) direction...
+          // correct for this case:
+          if(fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect)))<0.1){
+            dirVect = nbr1Vect.crossProduct(nbr2Vect);
+            // FIX: check chiral volume
+          } else {
+            dirVect = nbr1Vect+nbr2Vect+nbr3Vect;
+            dirVect.normalize();
+          }
           hydPos = heavyPos + dirVect*bondLength;
           (*cfi)->setAtomPos(hydIdx, hydPos);
         }
