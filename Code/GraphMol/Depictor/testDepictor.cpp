@@ -517,6 +517,16 @@ void testIssue2821647() {
   }
 }
 
+void testIssue2948402() {
+  {
+    std::string smi = "C1C2CC3=CC=CC(C2)CC(O3)C1";
+    RWMol *m1 = SmilesToMol(smi);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    TEST_ASSERT(cid1>=0);
+    delete m1;
+  }
+}
+
 
 
 int main() { 
@@ -572,8 +582,6 @@ int main() {
   testQueries();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
-#endif
-  
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test crashes associated with RemoveHs \n";
   testRemoveHsCrash();
@@ -592,6 +600,13 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Issue 2821647\n";
   testIssue2821647();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
+#endif
+  
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Issue 2948402\n";
+  testIssue2948402();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);

@@ -73,7 +73,11 @@ namespace RDGeom {
 
     double dp = rvec.dotProduct(pvec);
     double lp = (rvec.length())*(pvec.length());
-    CHECK_INVARIANT(lp > 0.0, "");
+    if(lp<=0.0){
+      this->setToIdentity();
+      return;
+    }
+
     double cval = dp/lp;
     if (cval < -1.0) {
       cval = -1.0;
