@@ -3067,7 +3067,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.mol");
+    RWMol *m = MolFileToMol(pathName+"Issue2951221.1.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -3080,6 +3080,39 @@ void testSFNetIssue2951221() {
     coords[3]= m2->getConformer().getAtomPos(9);
     double dot=(coords[3]-coords[0]).dotProduct((coords[1]-coords[0]).crossProduct(coords[2]-coords[0]));
     TEST_ASSERT(dot>1.0);
+  }
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue2951221.2.mol");
+    TEST_ASSERT(m);
+    ROMol *m2 = MolOps::addHs(*m,false,true);
+    TEST_ASSERT(m2);
+    delete m;
+    TEST_ASSERT(m2->getNumAtoms(false)==5);
+    MolOps::assignChiralTypesFrom3D(*m2);
+    MolOps::assignStereochemistry(*m2,true,true);
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    std::string cip;
+    m2->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+  }
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue2951221.3.mol");
+    TEST_ASSERT(m);
+    ROMol *m2 = MolOps::addHs(*m,false,true);
+    TEST_ASSERT(m2);
+    delete m;
+    TEST_ASSERT(m2->getNumAtoms(false)==5);
+    MolOps::assignChiralTypesFrom3D(*m2);
+    MolOps::assignStereochemistry(*m2,true,true);
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    std::string cip;
+    m2->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

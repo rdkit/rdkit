@@ -191,13 +191,39 @@ namespace RDKit{
         // Three other neighbors:
         // --------------------------------------------------------------------------
         boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(heavyAtom);
-        while(nbrIdx!=endNbrs){
-          if(*nbrIdx != hydIdx){
-            if(!nbr1) nbr1 = mol->getAtomWithIdx(*nbrIdx);
-            else if(!nbr2) nbr2 = mol->getAtomWithIdx(*nbrIdx);
-            else nbr3 = mol->getAtomWithIdx(*nbrIdx);
+        if(heavyAtom->hasProp("_CIPCode")){
+          // if the central atom is chiral, we'll order the neighbors
+          // by CIP rank:
+          std::vector< std::pair<int,int> >  nbrs;
+          while(nbrIdx!=endNbrs){
+            if(*nbrIdx != hydIdx){
+              const Atom *tAtom=mol->getAtomWithIdx(*nbrIdx);
+              int cip=0;
+              if(tAtom->hasProp("_CIPRank")){
+                tAtom->getProp("_CIPRank",cip);
+              }
+              nbrs.push_back(std::make_pair(cip,*nbrIdx));
+            }
+            ++nbrIdx;
           }
-          nbrIdx++;
+          std::sort(nbrs.begin(),nbrs.end());
+          nbr1 = mol->getAtomWithIdx(nbrs[0].second);
+          nbr2 = mol->getAtomWithIdx(nbrs[1].second);
+          nbr3 = mol->getAtomWithIdx(nbrs[2].second);
+        } else {
+          // central atom isn't chiral, so the neighbor ordering isn't important:
+          while(nbrIdx!=endNbrs){
+            if(*nbrIdx != hydIdx){
+              if(!nbr1){
+                nbr1 = mol->getAtomWithIdx(*nbrIdx);
+              } else if(!nbr2) {
+                nbr2 = mol->getAtomWithIdx(*nbrIdx);
+              } else {
+                nbr3 = mol->getAtomWithIdx(*nbrIdx);
+              }
+            }
+            ++nbrIdx;
+          }
         }
         TEST_ASSERT(nbr1);
         TEST_ASSERT(nbr2);
@@ -210,11 +236,25 @@ namespace RDKit{
           nbr2Vect = (*cfi)->getAtomPos(nbr2->getIdx()).directionVector(heavyPos);
           nbr3Vect = (*cfi)->getAtomPos(nbr3->getIdx()).directionVector(heavyPos);
           // if three neighboring atoms are more or less planar, this
-          // is going to be in a quasi-random (but wrong) direction...
-          // correct for this case:
+          // is going to be in a quasi-random (but almost definitely bad) direction...
+          // correct for this (issue 2951221):
           if(fabs(nbr3Vect.dotProduct(nbr1Vect.crossProduct(nbr2Vect)))<0.1){
+            // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
-            // FIX: check chiral volume
+            if(heavyAtom->hasProp("_CIPCode")){
+              // the heavy atom is a chiral center, make sure
+              // that we went go the right direction to preserve
+              // its chirality. We use the chiral volume for this:
+              RDGeom::Point3D v1=dirVect-nbr3Vect;
+              RDGeom::Point3D v2=nbr1Vect-nbr3Vect;
+              RDGeom::Point3D v3=nbr2Vect-nbr3Vect;
+              double vol = v1.dotProduct(v2.crossProduct(v3));
+              std::string cipCode;
+              heavyAtom->getProp("_CIPCode", cipCode);
+              if( (cipCode=="S" && vol<0) || (cipCode=="R" && vol>0) ){
+                dirVect*=-1;
+              }
+            }
           } else {
             dirVect = nbr1Vect+nbr2Vect+nbr3Vect;
             dirVect.normalize();
