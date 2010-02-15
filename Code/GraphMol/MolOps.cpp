@@ -188,10 +188,14 @@ namespace RDKit{
           baseCount=2;
         }
 
-        int numRadicals = baseCount - (nOuter - chg) - totalValence;
-        if(numRadicals>0){
-          (*ai)->setNumRadicalElectrons(numRadicals);
+        // applies to later (more electronegative) elements:
+        int numRadicals = std::max(baseCount - nOuter - totalValence + chg,0);
+        // applies to earlier elements:
+        int numRadicals2 = nOuter - totalValence - chg;
+        if(numRadicals2>=0){
+          numRadicals = std::min(numRadicals,numRadicals2);
         }
+        (*ai)->setNumRadicalElectrons(numRadicals);
       }
     }
                 

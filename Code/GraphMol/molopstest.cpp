@@ -1959,7 +1959,7 @@ void testIssue252() {
   // lets check if we can sanitize C60
   std::string smi = "C12=C3C4=C5C6=C1C7=C8C9=C1C%10=C%11C(=C29)C3=C2C3=C4C4=C5C5=C9C6=C7C6=C7C8=C1C1=C8C%10=C%10C%11=C2C2=C3C3=C4C4=C5C5=C%11C%12=C(C6=C95)C7=C1C1=C%12C5=C%11C4=C3C3=C5C(=C81)C%10=C23";
   ROMol *mol = SmilesToMol(smi);
-  mol->debugMol(std::cerr);
+
   for(ROMol::BondIterator it=mol->beginBonds();
       it!=mol->endBonds();it++){
     TEST_ASSERT((*it)->getIsAromatic());
@@ -2001,7 +2001,6 @@ void testHsAndAromaticity() {
   smi = "[CH]1-[CH]-[CH]-[CH]-[CH]-[CH]-1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  mol->debugMol(std::cerr);
   //std::cerr << mol->getAtomWithIdx(0)->getHybridization() << std::endl;
   TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getImplicitValence()==0);
@@ -2741,7 +2740,7 @@ void testHybridization()
     std::string smi="C[CH+]C";
     m = SmilesToMol(smi);
     TEST_ASSERT(m);
-    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP2);
     TEST_ASSERT(m->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
     delete m;
   }
@@ -3118,6 +3117,144 @@ void testSFNetIssue2951221() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFNetIssue2952255() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 2952255 : bad assignment of radicals to early elements" << std::endl;
+  {
+    std::string smi="[C](C)(C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[C](C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==2);
+    delete m;
+  }
+  {
+    std::string smi="[CH](C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[CH+](C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smi="[C-](C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[C+](C)(C)(C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="C(C)(C)(C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smi="[N](C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[N+](C)(C)C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[Cl]";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[Cl-]";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smi="[Cl]C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smi="[Na]";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[Na+]";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smi="[Na]C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smi="[Mg+]C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  {
+    std::string smi="[Mg]C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[Mg+]";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m;
+  }
+  {
+    std::string smi="[Mg+2]";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==0);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 
 int main(){
@@ -3167,8 +3304,9 @@ int main(){
   testSFNetIssue2313979();
   testSFNetIssue2316677();
   testSanitizeNonringAromatics();  
-#endif
   testSFNetIssue2951221();
+#endif
+  testSFNetIssue2952255();
 
   return 0;
 }
