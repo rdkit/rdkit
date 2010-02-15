@@ -1315,8 +1315,6 @@ namespace RDKit{
         conf->set3D(true);
         mol->clearProp("_3DConf");
       }
-      mol->addConformer(conf, true);
-      conf=0;
     }
     void ParseV3000BondBlock(std::istream *inStream,unsigned int &line,
                              unsigned int nBonds,RWMol *mol,
@@ -1351,7 +1349,7 @@ namespace RDKit{
         case 1: bond = new Bond(Bond::SINGLE);break;
         case 2: bond = new Bond(Bond::DOUBLE);break;
         case 3: bond = new Bond(Bond::TRIPLE);break;
-        case 4: bond = new Bond(Bond::AROMATIC);break;
+        case 4: bond = new Bond(Bond::AROMATIC);bond->setIsAromatic(true);break;
         case 0:
           bond = new Bond(Bond::UNSPECIFIED);
           BOOST_LOG(rdWarningLog) << "bond with order 0 found. This is not part of the MDL specification."<<std::endl;
@@ -1453,6 +1451,10 @@ namespace RDKit{
         bond->setBeginAtomIdx(mol->getAtomWithBookmark(a1Idx)->getIdx());
         bond->setEndAtomIdx(mol->getAtomWithBookmark(a2Idx)->getIdx());
         mol->addBond(bond,true);
+        if(bond->getIsAromatic()){
+          mol->getAtomWithIdx(bond->getBeginAtomIdx())->setIsAromatic(true);
+          mol->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
+        }
         mol->setBondBookmark(bond,bondIdx);
       }
       tempStr = getV3000Line(inStream,line);
@@ -1531,16 +1533,29 @@ namespace RDKit{
       
       tempStr = getV3000Line(inStream,line);
       // do link nodes:
-      while(1){
-        if(tempStr.length()>8 && tempStr.substr(0,8)=="LINKNODE"){
-          tempStr = getV3000Line(inStream,line);
-        } else {
-          break;
-        }
+      while(tempStr.length()>8 && tempStr.substr(0,8)=="LINKNODE"){
+        tempStr = getV3000Line(inStream,line);
       }
+
+      while(tempStr.length()>5 && tempStr.substr(0,5)=="BEGIN"){
+        // skip blocks we don't know how to read
+        BOOST_LOG(rdWarningLog)<<"skipping block: "<<tempStr<<std::endl;
+        tempStr = getV3000Line(inStream,line);
+        //BOOST_LOG(rdWarningLog)<<"    >"<<tempStr<<std::endl;
+        
+        while(tempStr.length()<3 || tempStr.substr(0,3)!="END"){
+          tempStr = getV3000Line(inStream,line);
+          //BOOST_LOG(rdWarningLog)<<"    >"<<tempStr<<std::endl;
+        }
+        tempStr = getV3000Line(inStream,line);
+      }
+
       if(tempStr.length()<8 || tempStr.substr(0,8) != "END CTAB"){
         throw FileParseException("END CTAB line not found") ;
       }
+
+      mol->addConformer(conf, true);
+      conf=0;
 
       return true;
     }

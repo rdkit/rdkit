@@ -1938,6 +1938,17 @@ void test1V3K(){
     TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOANY);
     delete m;
   }
+
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.crash1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==7);
+    TEST_ASSERT(m->getNumBonds()==7);
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
