@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -13,11 +13,13 @@ namespace RDKit {
 
 Bond::Bond() {
   initBond();
+  dp_props = new Dict();
 };
 
 Bond::Bond(BondType bT) {
   initBond();
   d_bondType = bT;
+  dp_props = new Dict();
 };
 
 Bond::Bond(const Bond &other){
@@ -36,8 +38,6 @@ Bond::Bond(const Bond &other){
     dp_props = new Dict(*other.dp_props);
   } else {
     dp_props = new Dict();
-    //STR_VECT computed;
-    //dp_props->setVal("computedProps", computed);
   }
 }
 
@@ -47,9 +47,6 @@ Bond::~Bond()
 }
 
 Bond &Bond::operator=(const Bond &other){
-  // FIX: should we copy molecule ownership?  I don't think so.
-  // FIX: how to deal with atom indices?
-  initBond();
   dp_mol = other.dp_mol;
   d_bondType = other.d_bondType;
   d_beginAtomIdx = other.d_beginAtomIdx;
@@ -59,9 +56,13 @@ Bond &Bond::operator=(const Bond &other){
   df_isAromatic = other.df_isAromatic;
   df_isConjugated = other.df_isConjugated;
   d_index = other.d_index;
-  if(dp_props) delete dp_props;
-  if(other.dp_props)
+  if(other.dp_props){
     dp_props = new Dict(*other.dp_props);
+  }else{
+    dp_props = new Dict();
+  }
+
+    
   return *this;
 }
 
@@ -234,14 +235,6 @@ void Bond::initBond(){
   df_isAromatic = 0;
   d_index = 0;
   df_isConjugated = 0;
-  dp_props = new Dict();
-  // ok every bond contains a property entry called "computedProps" which provides
-  //  list of property keys that correspond to value that have been computed
-  // this can used to blow out all computed properties while leaving the rest along
-  // initialize this list to an empty vector of strings
-  //STR_VECT computed;
-  //dp_props->setVal("computedProps", computed);
-
 };
 
 }; // end o' namespace
