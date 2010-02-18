@@ -165,13 +165,27 @@ if tests[12]:
 if tests[13]:
     logger.info('Generate 3D coords')
     t1=time.time()
+    nBad=0
     for mol in mols:
-        AllChem.EmbedMolecule(mol)
+        cid=AllChem.EmbedMolecule(mol)
+        if cid<0: nBad+=1
+    t2 = time.time()
+    logger.info('Results13: %.2f seconds %d failures'%(t2-t1,nBad))
+    ts.append(t2-t1)
+
+if tests[14]:
+    logger.info('Optimizing those:')
+    t1=time.time()
+    for mol in mols:
+        if not mol.GetNumConformers(): continue
+        needMore=1
+        while needMore:
+            needMore=AllChem.UFFOptimizeMolecule(mol,maxIters=200)
     t2 = time.time()
     logger.info('Results13: %.2f seconds'%(t2-t1))
     ts.append(t2-t1)
 
-if tests[14]:
+if tests[15]:
     logger.info('Find unique subgraphs')
     t1=time.time()
     for mol in mols:
@@ -180,7 +194,7 @@ if tests[14]:
     logger.info('Results14: %.2f seconds'%(t2-t1))
     ts.append(t2-t1)
 
-if tests[15]:
+if tests[16]:
     logger.info('Generate topological fingerprints')
     t1=time.time()
     for mol in mols:
