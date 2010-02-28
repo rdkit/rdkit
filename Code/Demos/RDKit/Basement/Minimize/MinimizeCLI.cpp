@@ -20,8 +20,11 @@ using namespace RDKit;
 
 void runMol(ROMol *mol,int checkEvery=10,bool verbose=true){
   ForceFields::ForceField *field;
+
+  std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
+
   try{
-    field=UFF::constructForceField(mol,2.5);
+    field=UFF::constructForceField(*mol,2.5);
   } catch (...) {
     field=0;
   }
@@ -38,7 +41,7 @@ void runMol(ROMol *mol,int checkEvery=10,bool verbose=true){
       std::cout << MolToMolBlock(mol) << "$$$$" << std::endl;
 #endif
     }
-    std::cout << MolToMolBlock(mol) << "$$$$" << std::endl;
+    std::cout << MolToMolBlock(*mol) << "$$$$" << std::endl;
     delete field;
   } else {
     std::cerr << "failed";
@@ -51,7 +54,7 @@ void runMolFile(std::string fileName,int checkEvery=10){
   TEST_ASSERT(mol);
   MolOps::sanitizeMol(*mol);
 
-  ROMol *mol2=MolOps::addHs(mol,false,true);
+  ROMol *mol2=MolOps::addHs(*mol,false,true);
 
   runMol(mol2,checkEvery);
 
@@ -77,7 +80,7 @@ void runSDFile(std::string fileName,int checkEvery=10){
       mol = 0;
     }
     if(mol){
-      ROMol *mol2=MolOps::addHs(mol,false,true);
+      ROMol *mol2=MolOps::addHs(*mol,false,true);
       delete mol;
       runMol(mol2,checkEvery,false);
       delete mol2;
