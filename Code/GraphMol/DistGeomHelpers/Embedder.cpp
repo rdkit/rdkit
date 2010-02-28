@@ -44,26 +44,36 @@ namespace RDKit {
         maxIterations=10*nat;
       }
       RDNumeric::DoubleSymmMatrix distMat(nat, 0.0);
+
+      // The basin threshold just gets us into trouble when we're using
+      // random coordinates since it ends up ignoring 1-4 (and higher)
+      // interactions. This causes us to get folded-up (and self-penetrating)
+      // conformations for large flexible molecules
+      if(useRandomCoords) basinThresh=1e8;
       
       bool gotCoords = false;
       unsigned int iter = 0;
       double largestDistance=-1.0;
       while ((gotCoords == false) && (iter < maxIterations)) {
-        iter++;
-        if (seed > 0) {
-          largestDistance=DistGeom::pickRandomDistMat(*mmat, distMat, iter*seed);
-        } else {
-          largestDistance=DistGeom::pickRandomDistMat(*mmat, distMat);
-        }
+        ++iter;
         if(!useRandomCoords){
+          if (seed > 0) {
+            largestDistance=DistGeom::pickRandomDistMat(*mmat, distMat, iter*seed);
+          } else {
+            largestDistance=DistGeom::pickRandomDistMat(*mmat, distMat);
+          }
           gotCoords = DistGeom::computeInitialCoords(distMat, positions,
                                                      randNegEig, numZeroFail);
         } else {
           double boxSize;
           if(boxSizeMult>0){
-            boxSize=largestDistance*boxSizeMult;
+            boxSize=5.*boxSizeMult;
           } else {
             boxSize=-1*boxSizeMult;
+          }
+          if (seed > 0) {
+            RDKit::rng_type &generator = RDKit::getRandomGenerator();
+            generator.seed(seed*iter);
           }
           gotCoords = DistGeom::computeRandomCoords(positions,boxSize);
         }
@@ -75,13 +85,16 @@ namespace RDKit {
                                                                        0,basinThresh);
         unsigned int nPasses=0;
         field->initialize();
+        //std::cerr<<"FIELD E: "<<field->calcEnergy()<<std::endl;
         if(field->calcEnergy() > ERROR_TOL){
           int needMore = 1;
           while(needMore){
             needMore = field->minimize(200,optimizerForceTol);
+            //needMore = field->minimize(200,1e-6);
             ++nPasses;
           }
         }
+        //std::cerr<<"   "<<field->calcEnergy()<<" after npasses: "<<nPasses<<std::endl;
         // now redo the minimization if we have a chiral center, this
         // time removing the chiral constraints and
         // increasing the weight on the fourth dimension
@@ -91,11 +104,15 @@ namespace RDKit {
                                                                           0.1, 1.0, 0,
                                                                           basinThresh);
           field2->initialize();
+          //std::cerr<<"FIELD2 E: "<<field2->calcEnergy()<<std::endl;
           if(field2->calcEnergy() > ERROR_TOL){
             int needMore = 1;
+            int nPasses2=0;
             while(needMore){
               needMore = field2->minimize(200,optimizerForceTol);
+              ++nPasses2;
             }
+            //std::cerr<<"   "<<field2->calcEnergy()<<" after npasses: "<<nPasses2<<std::endl;
           }
           delete field2;
         }

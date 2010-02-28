@@ -22,7 +22,7 @@ namespace RDKit {
                     int seed, bool clearConfs,
 		    bool useRandomCoords,double boxSizeMult,
                     bool randNegEig, unsigned int numZeroFail,
-                    python::dict &coordMap){
+                    python::dict &coordMap,double forceTol){
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
     unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
@@ -40,7 +40,7 @@ namespace RDKit {
 					  useRandomCoords,boxSizeMult,
 					  randNegEig,
                                           numZeroFail,
-                                          pMapPtr);
+                                          pMapPtr,forceTol);
     return res;
   }
 
@@ -49,7 +49,8 @@ namespace RDKit {
                               int seed, bool clearConfs,
 			      bool useRandomCoords,double boxSizeMult,
                               bool randNegEig, unsigned int numZeroFail,
-			      double pruneRmsThresh,python::dict &coordMap ) {
+			      double pruneRmsThresh,python::dict &coordMap,
+                              double forceTol) {
 
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
@@ -67,7 +68,7 @@ namespace RDKit {
                                                     seed, clearConfs,
 						    useRandomCoords,boxSizeMult, 
                                                     randNegEig, numZeroFail,
-                                                    pruneRmsThresh,pMapPtr);
+                                                    pruneRmsThresh,pMapPtr,forceTol);
 
     return res;
   } 
@@ -133,7 +134,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("useRandomCoords")=false,
 	       python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
-               python::arg("coordMap")=python::dict() ),
+               python::arg("coordMap")=python::dict(),
+               python::arg("forceTol")=1e-3),
               docString.c_str());
 
   docString = "Use distance geometry to obtain multiple sets of \n\
@@ -180,7 +182,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
 	       python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
 	       python::arg("pruneRmsThresh")=-1.0,
-               python::arg("coordMap")=python::dict()),
+               python::arg("coordMap")=python::dict(),
+               python::arg("forceTol")=1e-3),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\

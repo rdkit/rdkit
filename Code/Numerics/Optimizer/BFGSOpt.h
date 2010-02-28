@@ -61,7 +61,7 @@ namespace BFGSOpt {
                unsigned int &numIters,
                double &funcVal,
                double (*func)(double *),
-               void (*gradFunc)(double *,double*),
+               double (*gradFunc)(double *,double*),
                double funcTol=TOLX,
                unsigned int maxIts=MAXITS);
 }

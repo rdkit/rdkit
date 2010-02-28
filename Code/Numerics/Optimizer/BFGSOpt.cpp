@@ -25,7 +25,7 @@ namespace BFGSOpt {
                 double gradTol,unsigned int &numIters,
                 double &funcVal,
                 double (*func)(double *),
-                void (*gradFunc)(double *,double*),
+                double (*gradFunc)(double *,double*),
                 double funcTol,unsigned int maxIts){
     PRECONDITION(pos,"bad input array");
     PRECONDITION(gradTol>0,"bad tolerance");
@@ -89,27 +89,25 @@ namespace BFGSOpt {
       }
 
       // update the gradient:
-      gradFunc(pos,grad);
-        
+      double gradScale=gradFunc(pos,grad);
+
       // is the gradient converged?
       test=0.0;
-      double term=std::max(funcVal,1.0);
+      double term=std::max(funcVal*gradScale,1.0);
       for(unsigned int i=0;i<dim;i++){
-        double temp=fabs(grad[i])*std::max(fabs(pos[i]),1.0)/term;
-        if(temp>test) test=temp;
+        double temp=fabs(grad[i])*std::max(fabs(pos[i]),1.0);
+        test=std::max(test,temp);
+        dGrad[i] = grad[i]-dGrad[i];
       }
-
-      //std::cout << "------->>>>>>> Iter: " << iter << " test: " << test << std::endl;
-      //if(test<gradTol && deltaFunc<funcTol){
+      test /= term;
       if(test<gradTol){
         CLEANUP();
         return 0;
       }
 
-      // figure out how much the gradient changed:
-      for(unsigned int i=0;i<dim;i++){
-        dGrad[i] = grad[i]-dGrad[i];
-      }
+      //for(unsigned int i=0;i<dim;i++){
+        // figure out how much the gradient changed:
+      //}
     
       // compute hessian*dGrad:
       double fac=0,fae=0,sumDGrad=0,sumXi=0;

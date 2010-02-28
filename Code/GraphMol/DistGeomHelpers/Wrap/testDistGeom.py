@@ -142,7 +142,7 @@ class TestCase(unittest.TestCase) :
         d4 = computeDist(conf.GetAtomPosition(1), conf.GetAtomPosition(2))
         self.failUnless(feq(d4, 1.29, 0.01))
         d5 = computeDist(conf.GetAtomPosition(1), conf.GetAtomPosition(3))
-        self.failUnless(feq(d5, 2.54, 0.05))
+        self.failUnless(feq(d5, 2.54, 0.1))
         d6 = computeDist(conf.GetAtomPosition(2), conf.GetAtomPosition(3))
         self.failUnless(feq(d6, 1.31, 0.01))
 
@@ -158,13 +158,15 @@ class TestCase(unittest.TestCase) :
     def test3MultiConf(self):
         mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
         cids = rdDistGeom.EmbedMultipleConfs(mol,10,maxAttempts=30,randomSeed=100)
-        energies = [90.05,77.35,91.45,81.82,81.60,75.65,86.50,80.35,80.55,73.73]
-        #[90.05,77.35,91.45,81.82,81.60,75.65,86.50,80.55,73.73,70.57]
+        energies = [90.05, 77.35, 91.45, 81.82, 81.60, 75.65, 86.50,
+                    80.35, 80.55, 73.73]
         nenergies = []
         for cid in cids:
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
             ee = ff.CalcEnergy()
             nenergies.append(ee)
+        #print ['%.2f'%x for x in nenergies]
+        #print nenergies
         self.failUnless(lstEq(energies, nenergies,tol=1e-2))
             
     def test4OrderDependence(self) :
@@ -203,6 +205,7 @@ class TestCase(unittest.TestCase) :
             nconfs.append(len(cids))
             
         d = [abs(x-y) for x,y in zip(expected,nconfs)]
+
         self.failUnless(max(d)<=1)
 
     def test6Chirality(self):
@@ -280,18 +283,18 @@ class TestCase(unittest.TestCase) :
         cids = rdDistGeom.EmbedMultipleConfs(mol, 10, maxAttempts=30,
                                              randomSeed=100)
         self.failUnless(len(cids)==10)
-        tgtVol=11
+        tgtVol=10.5
         for cid in cids:
             conf = mol.GetConformer(cid)
             vol = computeChiralVol(conf.GetAtomPosition(0),
                                    conf.GetAtomPosition(2),
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(4))
-            self.failUnless(abs(vol-tgtVol)<1.2)
+            self.failUnless(abs(vol-tgtVol)<2.)
         
         # let's try a little more complicated system
         expectedV1 = -2.0
-        expectedV2 = -2.5
+        expectedV2 = -2.9
         
         for i in range(5):
             smi = "C1=CC=C(C=C1)[C@H](OC1=C[NH]N=C1)C(=O)[NH]C[C@H](Cl)C1=CC=NC=C1"
@@ -305,8 +308,8 @@ class TestCase(unittest.TestCase) :
                                    conf.GetAtomPosition(3),
                                    conf.GetAtomPosition(7),
                                    conf.GetAtomPosition(13))
-            self.failUnless(abs(vol-tgtVol)<1 or abs(vol+tgtVol)<1)
-            if vol<0: nNeg+=1
+            self.failUnless(abs(vol1-expectedV1)<1 or abs(vol1+expectedV1)<1)
+            if vol1<0: nNeg+=1
             else: nPos+=1
 
 
@@ -314,7 +317,7 @@ class TestCase(unittest.TestCase) :
                                     conf.GetAtomPosition(16),
                                     conf.GetAtomPosition(18),
                                     conf.GetAtomPosition(19))
-            self.failUnless(abs(vol2-expectedV2)<1)
+            self.failUnless(abs(vol2-expectedV2)<1 or abs(vol2+expectedV2)<1)
 
         # remove the chiral specification and we should see other chiral
         # forms of the compound

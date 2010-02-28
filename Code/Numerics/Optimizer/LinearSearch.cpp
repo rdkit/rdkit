@@ -67,10 +67,6 @@ namespace BFGSOpt {
     lambdaMin = MOVETOL/test;
     lambda = 1.0;
     while(1){
-      for(unsigned int i=0;i<dim;i++){
-	newPt[i]=oldPt[i]+lambda*dir[i];
-      }
-      newVal = func(newPt);
       //std::cout << "\t" << lambda << " " << lambdaMin << std::endl;
       if(lambda<lambdaMin){
 	// the position change is too small... set the resCode and return
@@ -79,7 +75,13 @@ namespace BFGSOpt {
         }
 	resCode=1;
 	return;
-      } else if( newVal-oldVal <= FUNCTOL*lambda*slope ){
+      }
+      for(unsigned int i=0;i<dim;i++){
+	newPt[i]=oldPt[i]+lambda*dir[i];
+      }
+      newVal = func(newPt);
+
+      if( newVal-oldVal <= FUNCTOL*lambda*slope ){
 	// we're converged on the function:
 	return;
       } else {

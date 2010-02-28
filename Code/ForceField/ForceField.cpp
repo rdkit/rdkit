@@ -16,7 +16,8 @@ namespace ForceFieldsHelper {
     return _ffHolder->calcEnergy(pos);
   };
 
-  void calcGrad(double *pos,double *grad){
+  double calcGrad(double *pos,double *grad){
+    double res = 1.0;
     // the contribs to the gradient function use +=, so we need
     // to zero the grad out before moving on:
     for(unsigned int i=0;i<_ffHolder->numPoints()*_ffHolder->dimension();i++){
@@ -24,9 +25,10 @@ namespace ForceFieldsHelper {
     }
     _ffHolder->calcGrad(pos,grad);
 
-    double maxGrad=-1e8;
+#if 1
     // FIX: this hack reduces the gradients so that the
     // minimizer is more efficient.
+    double maxGrad=-1e8;
     double gradScale=0.1;
     for(unsigned int i=0;i<_ffHolder->numPoints()*_ffHolder->dimension();i++){
       grad[i] *= gradScale;
@@ -42,6 +44,9 @@ namespace ForceFieldsHelper {
        grad[i] *= gradScale;
      }
     }
+    res=gradScale;
+#endif
+    return res;
   }
 }
 

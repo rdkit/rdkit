@@ -59,7 +59,9 @@ namespace DistGeom {
     } else if (d < d_lb) {
       double d2 = d*d;
       double l2 = d_lb*d_lb;
-      preFactor = -8.*((l2-d2)/pow(l2+d2,3))*d*l2;
+      double l2d2 = d2+l2;
+      preFactor = 8.*l2*d * (1.-2*l2/l2d2) / (l2d2*l2d2);
+      //preFactor = -8.*((l2-d2)/pow(l2+d2,3))*d*l2;
     } else {
       return;
     }
@@ -78,5 +80,6 @@ namespace DistGeom {
       grad[dim*this->d_end1Idx+i] += dGrad;
       grad[dim*this->d_end2Idx+i] -= dGrad;
     }
+    //std::cerr<<"  "<<d_lb<<" "<<d<<" "<<d_ub<<": "<<d_weight<<" "<<preFactor<<std::endl;
   }
 }

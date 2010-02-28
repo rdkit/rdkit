@@ -17,11 +17,12 @@ double circ_0_0(double *v){
   return dx*dx+dy*dy;
 }
 
-void circ_0_0_grad(double *v,double *grad){
+double circ_0_0_grad(double *v,double *grad){
   double dx=v[0];
   double dy=v[1];
   grad[0] = 2*dx;
   grad[1] = 2*dy;
+  return 1.0;
 }
 
 double circ_1_0(double *v){
@@ -31,11 +32,12 @@ double circ_1_0(double *v){
   return dx*dx+dy*dy;
 }
 
-void circ_1_0_grad(double *v,double *grad){
+double circ_1_0_grad(double *v,double *grad){
   double dx=v[0]-1;
   double dy=v[1];
   grad[0] = 2*dx;
   grad[1] = 2*dy;
+  return 1.0;
 }
 
 
@@ -48,13 +50,14 @@ double func2(double *v){
   return term1*term1 + weight*term2;
 }
 
-void grad2(double *v,double *grad){
+double grad2(double *v,double *grad){
   double weight=.5;
   double dx=v[0]-1;
   double dy=v[1];
   double term1 = dx*dx-dy*dy;
   grad[0] = 4*dx*term1+2*weight*dx;
   grad[1] = -4*dy*term1+2*weight*dy;
+  return 1.0;
 }
 
 
@@ -70,7 +73,7 @@ void test1(){
   double nLoc[2],nVal;
   int resCode;
   double (*func)(double *);
-  void (*gradFunc)(double *,double *);
+  double (*gradFunc)(double *,double *);
 
   func = circ_0_0;
   gradFunc = circ_0_0_grad;
@@ -125,7 +128,7 @@ void test2(){
   double nVal;
   unsigned int nIters;
   double (*func)(double *);
-  void (*gradFunc)(double *,double *);
+  double (*gradFunc)(double *,double *);
 
   func = circ_0_0;
   gradFunc = circ_0_0_grad;
