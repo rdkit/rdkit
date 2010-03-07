@@ -2,7 +2,7 @@
 (Changes relative to Release_Q42009_1)
 !!!!!! IMPORTANT !!!!!!
 
-Acknowledgements
+Acknowledgements: Gianluca Sforna, Anna Vulpetti
    
 Bug Fixes
     
@@ -13,7 +13,11 @@ Other
    External source tree. It's still available in svn at rev1323 or via
    this tarball:
    http://rdkit.svn.sourceforge.net/viewvc/rdkit/trunk/External/vflib-2.0.tar.gz?view=tar&pathrev=1323
-
+ - the directory Contrib has been added to the RDKit distribution to
+   house contributions that don't necessarily fit anywhere else. The
+   first contribution here is a collection of scripts required to
+   implement local-environment fingerprints contributed by Anna
+   Vulpetti. 
 
 ******  Release_Q42009_1 *******
 (Changes relative to Release_Q32009_1)

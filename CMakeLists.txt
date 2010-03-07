@@ -34,7 +34,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   #------- 
   # pull in python:
   find_package(PythonLibs)
-  include_directories(${PYTHON_INCLUDE_DIR})
+
+  if(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
+    include_directories(${PYTHON_INCLUDE_PATH})
+  else(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
+    include_directories(${PYTHON_INCLUDE_DIR})
+  endif(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
   link_directories(${PYTHON_LIBRARIES})
   find_package(NumPy REQUIRED)
   include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
