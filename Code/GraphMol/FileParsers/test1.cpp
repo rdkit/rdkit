@@ -2067,6 +2067,110 @@ void test2V3K(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testIssue2963522(){
+  BOOST_LOG(rdInfoLog) << " Testing issue 2963522 "<< std::endl;
+
+  {
+    std::string smiles="CC=CC";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREONONE);
+
+    Conformer *conf=new Conformer(m->getNumAtoms());
+    conf->setAtomPos(0,RDGeom::Point3D(-1,1,0));
+    conf->setAtomPos(1,RDGeom::Point3D(0,1,0));
+    conf->setAtomPos(2,RDGeom::Point3D(0,-1,0));
+    conf->setAtomPos(3,RDGeom::Point3D(1,-1,0));
+    m->addConformer(conf,true);
+    
+    std::string molBlock = MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(molBlock);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREOANY);
+
+    delete m;
+  }
+
+  {
+    std::string smiles="C/C=C\\C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREOZ);
+
+    Conformer *conf=new Conformer(m->getNumAtoms());
+    conf->setAtomPos(0,RDGeom::Point3D(-1,1,0));
+    conf->setAtomPos(1,RDGeom::Point3D(0,1,0));
+    conf->setAtomPos(2,RDGeom::Point3D(0,-1,0));
+    conf->setAtomPos(3,RDGeom::Point3D(-1,-1,0));
+    m->addConformer(conf,true);
+    
+    std::string molBlock = MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(molBlock);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREOZ);
+
+    delete m;
+  }
+
+  {
+    std::string smiles="C/C=C/C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREOE);
+
+    Conformer *conf=new Conformer(m->getNumAtoms());
+    conf->setAtomPos(0,RDGeom::Point3D(-1,1,0));
+    conf->setAtomPos(1,RDGeom::Point3D(0,1,0));
+    conf->setAtomPos(2,RDGeom::Point3D(0,-1,0));
+    conf->setAtomPos(3,RDGeom::Point3D(1,-1,0));
+    m->addConformer(conf,true);
+    
+    std::string molBlock = MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(molBlock);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREOE);
+
+    delete m;
+  }
+
+  {
+    std::string smiles="C1C=CC1";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREONONE);
+
+    Conformer *conf=new Conformer(m->getNumAtoms());
+    conf->setAtomPos(0,RDGeom::Point3D(-1,1,0));
+    conf->setAtomPos(1,RDGeom::Point3D(0,1,0));
+    conf->setAtomPos(2,RDGeom::Point3D(0,-1,0));
+    conf->setAtomPos(3,RDGeom::Point3D(-1,-1,0));
+    m->addConformer(conf,true);
+    
+    std::string molBlock = MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(molBlock);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREONONE);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << " done"<< std::endl;
+}
+
+
+
 
 
 int main(int argc,char *argv[]){
@@ -2106,6 +2210,8 @@ int main(int argc,char *argv[]){
   //testCrash();
   test1V3K();
   test2V3K();
+  testIssue2963522();
+
 
   return 0;
 }

@@ -259,11 +259,18 @@ namespace RDKit{
         }
       }
     } else if (bond->getBondType()==Bond::DOUBLE) {
-      // double bond stereo chemistry - 
-      // we will worry about it only if it is  "any"
-      Bond::BondStereo stType = bond->getStereo();
-      if (stType == Bond::STEREOANY) { //"A") {
-        dirCode = 3; // can be either cis/trans
+      // double bond stereochemistry - 
+      // if the bond isn't specified, then it should go in the mol block
+      // as "any", this was sf.net issue 2963522.
+      // One caveat to this: if it's a ring bond, we'll only put the "any"
+      // in the mol block if the user specifically asked for it. 
+      // Constantly seeing crossed bonds in rings, though maybe technically
+      // correct, is irritating.
+      if (bond->getStereo() <= Bond::STEREOANY){
+        if(bond->getStereo()==Bond::STEREOANY ||
+           !(bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx()))){
+          dirCode = 3;
+        }
       }
     }
 
