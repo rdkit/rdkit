@@ -567,7 +567,10 @@ namespace RDKit{
         }
         QueryAtom qatom(*(mol->getAtomWithIdx(atIdx)));
         qatom.setProp("_MolFileRLabel",rLabel);
-        if(rLabel>0 && rLabel<10){
+        // the CTFile spec (June 2005 version) technically only allows
+        // R labels up to 32. Since there are three digits, we'll accept
+        // anything: so long as it's positive and less than 1000:
+        if(rLabel>0 && rLabel<999){
           qatom.setMass(double(rLabel));
         }
         qatom.setQuery(makeAtomNullQuery());

@@ -933,10 +933,14 @@ void testMolFileRGroups(){
   TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==2);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),2));
   
   TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),1));
   
   RWMol *m2;
   MatchVectType mv;
@@ -971,10 +975,14 @@ void testMolFileRGroups(){
   TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),1));
   
   TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),1));
 
   smi = "C1C(O)C1C";
   m2 = SmilesToMol(smi,false,false);
@@ -998,6 +1006,20 @@ void testMolFileRGroups(){
   TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
   delete m2;
 
+  delete m;
+  fName = rdbase + "/Code/GraphMol/FileParsers/test_data/rgroups3.mol";
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+  m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(idx==11);
+  TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),11));
+  TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+  m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+  TEST_ASSERT(idx==503);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),503));
   
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
