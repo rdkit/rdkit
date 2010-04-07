@@ -13,6 +13,7 @@
 #include <RDBoost/Exceptions.h>
 #include <cstdlib>
 #include "DistPicker.h"
+#include <boost/random.hpp>
 
 namespace RDPickers {
 
@@ -55,7 +56,8 @@ namespace RDPickers {
     template <typename T>
     RDKit::INT_VECT lazyPick(T &func, 
                              unsigned int poolSize, unsigned int pickSize,
-                             RDKit::INT_VECT firstpicks=RDKit::INT_VECT()) const;
+                             RDKit::INT_VECT firstpicks=RDKit::INT_VECT(),
+                             int seed=-1) const;
 
     /*! \brief Contains the implementation for the MaxMin diversity picker
      *
@@ -88,12 +90,13 @@ namespace RDPickers {
     */
     RDKit::INT_VECT pick(const double *distMat, 
                          unsigned int poolSize, unsigned int pickSize,
-                         RDKit::INT_VECT firstPicks) const {
+                         RDKit::INT_VECT firstPicks,
+                         int seed=-1) const {
       CHECK_INVARIANT(distMat, "Invalid Distance Matrix");
       if(poolSize<pickSize)
 	throw ValueErrorException("pickSize cannot be larger than the poolSize");
       distmatFunctor functor(distMat);
-      return this->lazyPick(functor,poolSize,pickSize,firstPicks);
+      return this->lazyPick(functor,poolSize,pickSize,firstPicks,seed);
     }
 
     /*! \overload */
@@ -110,7 +113,8 @@ namespace RDPickers {
   template <typename T>
   RDKit::INT_VECT MaxMinPicker::lazyPick(T &func,
                                          unsigned int poolSize, unsigned int pickSize,
-                                         RDKit::INT_VECT firstPicks) const {
+                                         RDKit::INT_VECT firstPicks,
+                                         int seed) const {
     if(poolSize<pickSize)
       throw ValueErrorException("pickSize cannot be larger than the poolSize");
 
@@ -125,9 +129,19 @@ namespace RDPickers {
       pool.push_back(i);
     }
 
+
+    // get a seeded random number generator:
+    typedef boost::mt19937 rng_type;
+    typedef boost::uniform_int<> distrib_type;
+    typedef boost::variate_generator<rng_type &,distrib_type> source_type;
+    rng_type generator(42u);
+    distrib_type dist(0,poolSize);
+    source_type randomSource(generator,dist);
+    if(seed>0) generator.seed(static_cast<rng_type::result_type>(seed));
+
     // pick the first entry
     if(!firstPicks.size()){
-      pick = rand()%poolSize;
+      pick = randomSource();
       // add the pick to the picks
       picks.push_back(pick);
       // and remove it from the pool

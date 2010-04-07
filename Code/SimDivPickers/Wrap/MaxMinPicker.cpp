@@ -25,7 +25,8 @@ namespace RDPickers {
                               python::object distMat,
                               int poolSize, 
                               int pickSize,
-                              python::object firstPicks) {
+                              python::object firstPicks,
+                              int seed) {
     if(pickSize>=poolSize){
       throw ValueErrorException("pickSize must be less than poolSize");
     }
@@ -43,7 +44,7 @@ namespace RDPickers {
     for(unsigned int i=0;i<python::extract<unsigned int>(firstPicks.attr("__len__")());++i){
       firstPickVect.push_back(python::extract<int>(firstPicks[i]));
     }
-    RDKit::INT_VECT res=picker->pick(dMat, poolSize, pickSize,firstPickVect);
+    RDKit::INT_VECT res=picker->pick(dMat, poolSize, pickSize,firstPickVect,seed);
     Py_DECREF(copy);
     return res;
   }
@@ -71,13 +72,14 @@ namespace RDPickers {
                                   python::object distFunc,
                                   int poolSize, 
                                   int pickSize,
-                                  python::object firstPicks) {
+                                  python::object firstPicks,
+                                  int seed) {
     pyobjFunctor functor(distFunc);
     RDKit::INT_VECT firstPickVect;
     for(unsigned int i=0;i<python::extract<unsigned int>(firstPicks.attr("__len__")());++i){
       firstPickVect.push_back(python::extract<int>(firstPicks[i]));
     }
-    RDKit::INT_VECT res=picker->lazyPick(functor, poolSize, pickSize,firstPickVect);
+    RDKit::INT_VECT res=picker->lazyPick(functor, poolSize, pickSize,firstPickVect,seed);
     return res;
   }
 
@@ -87,18 +89,22 @@ namespace RDPickers {
                                    "A class for diversity picking of items using the MaxMin Algorithm\n")
         .def("Pick", MaxMinPicks,
              (python::arg("self"),python::arg("distMat"),python::arg("poolSize"),
-              python::arg("pickSize"),python::arg("firstPicks")=python::tuple()),
+              python::arg("pickSize"),python::arg("firstPicks")=python::tuple(),
+              python::arg("seed")=-1),
              "Pick a subset of items from a pool of items using the MaxMin Algorithm\n"
              "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), 598-604 \n\n"
              "ARGUMENTS:\n"
              "  - distMat: 1D distance matrix (only the lower triangle elements)\n"
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n"
-             "  - firstPicks: (optional) the first items to be picked (seeds the list)\n")
+             "  - firstPicks: (optional) the first items to be picked (seeds the list)\n"
+             "  - seed: (optional) seed for the random number genrator\n"
+             )
 
         .def("LazyPick", LazyMaxMinPicks,
              (python::arg("self"),python::arg("distFunc"),python::arg("poolSize"),
-              python::arg("pickSize"),python::arg("firstPicks")=python::tuple()),
+              python::arg("pickSize"),python::arg("firstPicks")=python::tuple(),
+              python::arg("seed")=-1),
              "Pick a subset of items from a pool of items using the MaxMin Algorithm\n"
              "Ashton, M. et. al., Quant. Struct.-Act. Relat., 21 (2002), 598-604 \n"
              "ARGUMENTS:\n\n"
@@ -108,7 +114,9 @@ namespace RDPickers {
              "              client code does not need to do so; indeed, it should not.\n"
              "  - poolSize: number of items in the pool\n"
              "  - pickSize: number of items to pick from the pool\n"
-             "  - firstPicks: (optional) the first items to be picked (seeds the list)\n")
+             "  - firstPicks: (optional) the first items to be picked (seeds the list)\n"
+             "  - seed: (optional) seed for the random number genrator\n"
+             )
         ;
     };
   };
