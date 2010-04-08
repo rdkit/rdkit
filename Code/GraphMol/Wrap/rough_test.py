@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2010  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -1921,6 +1921,16 @@ CAS<~>
     Chem.AddRecursiveQuery(q1,q3,1,False)
     self.failUnless(m3.HasSubstructMatch(q1))
     self.failUnless(m3.GetSubstructMatch(q1)==(2,1))
+
+  def test58Issue2983794(self) :
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','Wrap',
+                                            'test_data','issue2983794.sdf')
+    m1 = Chem.MolFromMolFile(fileN)
+    self.failUnless(m1)
+    em = Chem.EditableMol(m1)
+    em.RemoveAtom(0)
+    m2 = em.GetMol()
+    self.failUnlessRaises(ValueError,lambda:Chem.Kekulize(m2))
     
 if __name__ == '__main__':
   unittest.main()

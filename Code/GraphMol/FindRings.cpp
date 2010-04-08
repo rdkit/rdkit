@@ -32,10 +32,15 @@ namespace RingUtils {
       unsigned int rsiz = ri->size();
       INT_VECT bring(rsiz);
       for (unsigned int i = 0; i < (rsiz-1); i++) {
-        bring[i]=mol.getBondBetweenAtoms((*ri)[i],(*ri)[i+1])->getIdx();
+        const Bond *bnd=mol.getBondBetweenAtoms((*ri)[i],(*ri)[i+1]);
+        if(!bnd) throw ValueErrorException("expected bond not found");
+        bring[i]=bnd->getIdx();
       }
       // bond from last to first atom
-      bring[rsiz-1]=mol.getBondBetweenAtoms((*ri)[rsiz-1], (*ri)[0])->getIdx();
+      const Bond *bnd=mol.getBondBetweenAtoms((*ri)[rsiz-1],(*ri)[0]);
+      if(!bnd) throw ValueErrorException("expected bond not found");
+
+      bring[rsiz-1]=bnd->getIdx();
       brings.push_back(bring);
     }
   }
