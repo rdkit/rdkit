@@ -680,11 +680,11 @@ namespace RDKit{
     - fpSize: (optional) number of bits in the fingerprint\n\
       Defaults to 2048.\n\
 \n\
-    - nBitsPerPath: (optional) number of bits to set per path\n\
+    - nBitsPerHash: (optional) number of bits to set per path\n\
       Defaults to 4.\n\
 \n\
-    - useHs: (optional) include information about number of Hs on each\n\
-      atom when calculating path hashes.\n\
+    - useHs: (optional) include paths involving Hs in the fingerprint if the molecule\n\
+      has explicit Hs.\n\
       Defaults to 1.\n\
 \n\
     - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
@@ -706,7 +706,7 @@ namespace RDKit{
 \n\
      2) The hash is used to seed a random-number generator\n\
 \n\
-     3) _nBitsPerPath_ random numbers are generated and used to set the corresponding\n\
+     3) _nBitsPerHash_ random numbers are generated and used to set the corresponding\n\
         bits in the fingerprint\n\
 \n\
 \n";
@@ -749,6 +749,18 @@ namespace RDKit{
     - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
       trying to reach tgtDensity\n\
       Defaults to 128.\n\
+\n\
+    - atomCounts: (optional) \n\
+        if provided, this should be a list at least as long as the number of atoms\n\
+        in the molecule. It will be used to provide the count of the number \n                      \
+        of paths that set bits each atom is involved in.\n\
+        NOTE: the list is not zeroed out here.\n\
+\n\
+    - setOnlyBits: (optional) \n\
+        if provided, only bits that are set in this bit vector will be set\n\
+        in the result. This is essentially the same as doing:\n\
+           res &= setOnlyBits\n\
+        but also has an impact on the atomCounts (if being used)\n\
 \n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\

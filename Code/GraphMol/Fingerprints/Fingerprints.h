@@ -19,8 +19,7 @@ namespace RDKit{
     \param maxPath:      the minimum path length (in bonds) to be included
     \param fpSize:       the size of the fingerprint
     \param nBitsPerHash: the number of bits to be set by each path
-    \param useHs:        toggles inclusion of Hs in distinguishing paths from
-                         each other.
+    \param useHs:        toggles inclusion of Hs in paths (if the molecule has explicit Hs)
     \param tgtDensity:   if the generated fingerprint is below this density, it will
                          be folded until the density is reached.
     \param minSize:      the minimum size to which the fingerprint will be
@@ -34,9 +33,9 @@ namespace RDKit{
   */
   const std::string RDKFingerprintMolVersion="1.0.0";
   ExplicitBitVect *RDKFingerprintMol(const ROMol &mol,
-                                    unsigned int minPath=1,unsigned int maxPath=7,
-                                    unsigned int fpSize=2048,unsigned int nBitsPerHash=4,
-                                    bool useHs=true,
+                                     unsigned int minPath=1,unsigned int maxPath=7,
+                                     unsigned int fpSize=2048,unsigned int nBitsPerHash=4,
+                                     bool useHs=true,
                                      double tgtDensity=0.0,unsigned int minSize=128);
 
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule
