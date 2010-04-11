@@ -84,20 +84,21 @@ namespace RDKit{
     // ------------------------------------------------------------------------------------
     //! initialize a molecule
     template <typename AtomType>
-    int startMol(std::vector<RWMol *> &molList,AtomType *firstAtom){
+    int startMol(std::vector<RWMol *> &molList,AtomType *firstAtom,bool doingQuery){
       PRECONDITION(firstAtom,"empty atom");
       RWMol *mp = new RWMol();
       mp->addAtom(firstAtom,true,true);
       bookmarkAtomID(mp,firstAtom);
 
-      // add any hydrogens that are set on the atom, otherwise getting the numbering right
-      // is just too hard:
-      for(unsigned int i=0;i<firstAtom->getNumExplicitHs();++i){
-        int hIdx=mp->addAtom(new Atom(1),false,true);
-        mp->addBond(0,hIdx,Bond::SINGLE);
+      if(!doingQuery){
+        // add any hydrogens that are set on the atom, otherwise getting the numbering right
+        // is just too hard:
+        for(unsigned int i=0;i<firstAtom->getNumExplicitHs();++i){
+          int hIdx=mp->addAtom(new Atom(1),false,true);
+          mp->addBond(0,hIdx,Bond::SINGLE);
+        }
+        firstAtom->setNumExplicitHs(0);
       }
-      firstAtom->setNumExplicitHs(0);
-
 
       int sz = molList.size();
       molList.push_back(mp);
@@ -108,7 +109,7 @@ namespace RDKit{
     //! adds an atom to a molecule
     template<typename AtomType,typename BondType>
     void addAtomToMol(std::vector<RWMol *> &molList,unsigned int idx,AtomType *atom,
-                      BondType *bond){
+                      BondType *bond,bool doingQuery){
       PRECONDITION(idx<molList.size(),"bad index");
       RWMol *mp=molList[idx];
       PRECONDITION(mp,"null molecule");
@@ -124,19 +125,20 @@ namespace RDKit{
       bond->setEndAtomIdx(atomIdx2);
       addBondToMol(mp,bond);
     
-      // add any hydrogens that are set on the atom, otherwise getting the numbering right
-      // is just too hard:
-      for(unsigned int i=0;i<atom->getNumExplicitHs();++i){
-        int hIdx=mp->addAtom(new Atom(1),false,true);
-        mp->addBond(atomIdx2,hIdx,Bond::SINGLE);
-      }
-      atom->setNumExplicitHs(0);
-      
+      if(!doingQuery){
+        // add any hydrogens that are set on the atom, otherwise getting the numbering right
+        // is just too hard:
+        for(unsigned int i=0;i<atom->getNumExplicitHs();++i){
+          int hIdx=mp->addAtom(new Atom(1),false,true);
+          mp->addBond(atomIdx2,hIdx,Bond::SINGLE);
+        }
+        atom->setNumExplicitHs(0);
+      }      
     }
     //! \overload
     template<typename AtomType>
-    void addAtomToMol(std::vector<RWMol *> &molList,unsigned int idx,AtomType *atom){
-      addAtomToMol(molList,idx,atom,new Bond(Bond::SINGLE));
+    void addAtomToMol(std::vector<RWMol *> &molList,unsigned int idx,AtomType *atom,bool doingQuery){
+      addAtomToMol(molList,idx,atom,new Bond(Bond::SINGLE),doingQuery);
     }
 
     // ------------------------------------------------------------------------------------

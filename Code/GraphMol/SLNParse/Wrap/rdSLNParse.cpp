@@ -50,12 +50,12 @@ void rdSLNParseExceptionTranslator(RDKit::SLNParseException const& x){
 }
 
 namespace RDKit {
-  ROMol *MolFromSLN(std::string sln,bool sanitize=1){
-    RWMol *newM = SLNToMol(sln,sanitize);
+  ROMol *MolFromSLN(std::string sln,bool sanitize=1,bool debugParser=false){
+    RWMol *newM = SLNToMol(sln,sanitize,debugParser);
     return static_cast<ROMol *>(newM);
   }
-  ROMol *MolFromQuerySLN(std::string sln,bool sanitize=1){
-    RWMol *newM = SLNQueryToMol(sln,sanitize);
+  ROMol *MolFromQuerySLN(std::string sln,bool mergeHs=1,bool debugParser=false){
+    RWMol *newM = SLNQueryToMol(sln,mergeHs,debugParser);
     return static_cast<ROMol *>(newM);
   }
 }
@@ -86,7 +86,8 @@ BOOST_PYTHON_MODULE(rdSLNParse) {
 \n";  
   python::def("MolFromSLN",RDKit::MolFromSLN,
         (python::arg("SLN"),
-         python::arg("sanitize")=true),
+         python::arg("sanitize")=true,
+         python::arg("debugParser")=false),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
   
@@ -104,7 +105,8 @@ BOOST_PYTHON_MODULE(rdSLNParse) {
 \n";  
   python::def("MolFromQuerySLN",RDKit::MolFromQuerySLN,
         (python::arg("SLN"),
-         python::arg("mergeHs")=true),
+         python::arg("mergeHs")=true,
+         python::arg("debugParser")=false),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
               

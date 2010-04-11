@@ -69,8 +69,6 @@ extern bool slnParserDoQueries;
 %s IN_RECURSE_STATE
 %%
 
-[\r\n\t ]       return 0;
-
 <IN_PROP_VAL_STATE>[^\;\]\>\&\|\!]* {
   yysln_lval.text_T=new std::string(yysln_text);
   return TEXT_BLOCK; 
@@ -214,7 +212,51 @@ extern bool slnParserDoQueries;
   yysln_lval.atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
+<INITIAL,IN_RECURSE_STATE>Hev {
+  if(slnParserDoQueries) {
+    yysln_lval.atom_T = new QueryAtom();
+    yysln_lval.atom_T->setQuery(makeAtomNumEqualsQuery(1));
+    // FIX: are 2H or 3H heavy atoms or Hs?
+    yysln_lval.atom_T->getQuery()->setNegation(true);
+  } else {
+    yysln_lval.atom_T = new Atom(0);
+  }
+  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
+  yysln_lval.atom_T->setNoImplicit(true);
+  return ATOM_TOKEN;
+}
+<INITIAL,IN_RECURSE_STATE>Hal {
+  if(slnParserDoQueries) {
+    yysln_lval.atom_T = new QueryAtom();
+    yysln_lval.atom_T->setQuery(makeAtomNumEqualsQuery(9));
+    yysln_lval.atom_T->expandQuery(makeAtomNumEqualsQuery(17),Queries::COMPOSITE_OR,true);
+    yysln_lval.atom_T->expandQuery(makeAtomNumEqualsQuery(35),Queries::COMPOSITE_OR,true);
+    yysln_lval.atom_T->expandQuery(makeAtomNumEqualsQuery(53),Queries::COMPOSITE_OR,true);
 
+  } else {
+    yysln_lval.atom_T = new Atom(0);
+  }
+  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
+  yysln_lval.atom_T->setNoImplicit(true);
+  return ATOM_TOKEN;
+}
+<INITIAL,IN_RECURSE_STATE>Het {
+  if(slnParserDoQueries) {
+    yysln_lval.atom_T = new QueryAtom();
+    yysln_lval.atom_T->setQuery(makeAtomNumEqualsQuery(6));
+    yysln_lval.atom_T->expandQuery(makeAtomNumEqualsQuery(1),Queries::COMPOSITE_OR,true);
+    yysln_lval.atom_T->getQuery()->setNegation(true);
+    
+  } else {
+    yysln_lval.atom_T = new Atom(0);
+  }
+  // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
+  yysln_lval.atom_T->setNoImplicit(true);
+  return ATOM_TOKEN;
+}
+
+<INITIAL,IN_RECURSE_STATE>H\[ { yy_push_state(IN_SLN_PARAM_STATE); return H_BRACKET_TOKEN; }
+<INITIAL,IN_RECURSE_STATE>H\* { return H_ASTERIX_TOKEN; }
 <INITIAL,IN_RECURSE_STATE>H { return H_TOKEN; }
 
 <IN_SLN_PARAM_STATE>is\= |
@@ -341,6 +383,7 @@ extern bool slnParserDoQueries;
 [0-9]+  { yysln_lval.ival_T = atoi( yytext ); return DIGIT_TOKEN; }
 
 
+\n		return 0;
 <<EOF>>         { return EOS_TOKEN; }
 .               return yytext[0];
 

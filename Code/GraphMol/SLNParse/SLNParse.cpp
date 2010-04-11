@@ -41,6 +41,8 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
+
 int yysln_parse (void);
 extern int yysln_debug; 
 
@@ -50,15 +52,13 @@ namespace RDKit {
   namespace SLNParse {
     std::vector<RDKit::RWMol *> molList_g;
 
-    RWMol *finalizeQueryMol(ROMol *mol,bool mergeHs){
+    void finalizeQueryMol(ROMol *mol,bool mergeHs){
       PRECONDITION(mol,"bad query molecule");
 
       // do we need to remove the Hs from the molecule?
       if(mergeHs){
-        mol = MolOps::removeHs(*mol,false,true,false);
         for(ROMol::AtomIterator atomIt=mol->beginAtoms();
             atomIt!=mol->endAtoms();++atomIt){
-          // if we did remove Hs from this atom (now present as explicit Hs), 
           // set a query for the H count:
           if((*atomIt)->getNumExplicitHs()){
             (*atomIt)->expandQuery(makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
@@ -70,16 +70,60 @@ namespace RDKit {
       // some ring info:
       VECT_INT_VECT sssr;
       MolOps::symmetrizeSSSR(*mol,sssr);
+      int rootIdx=-1;
       for(ROMol::AtomIterator atomIt=mol->beginAtoms();
           atomIt!=mol->endAtoms();++atomIt){
         SLNParse::parseFinalAtomAttribs(*atomIt,true);
+        if((*atomIt)->hasProp("_starred")){
+          if(rootIdx>-1){
+            BOOST_LOG(rdErrorLog)<<"SLN Error: mulitple starred atoms in a recursive query. Extra stars ignored" << std::endl;
+          } else {
+            rootIdx=(*atomIt)->getIdx();
+          }
+        }
       }
-      return static_cast<RWMol *>(mol);
+      if(rootIdx>-1){
+        mol->setProp("_queryRootAtom",rootIdx);
+      }
     }
 
+    std::string replaceSLNMacroAtoms(std::string inp,int debugParse){
+      const boost::regex defn("\\{(.+?):(.+?)\\}");
+      const char *empty="";
+
+      std::string res;
+      // remove any macro definitions:
+      res=boost::regex_replace(inp,defn,empty,boost::match_default|boost::format_all);
+
+      if(res!=inp){
+        // there are macro definitions, we're going to replace
+        // the macro atoms in the input:
+        std::string::const_iterator start, end;
+        start=inp.begin();
+        end=inp.end();
+        boost::match_results<std::string::const_iterator> what; 
+        boost::match_flag_type flags = boost::match_default; 
+        while(regex_search(start, end, what, defn, flags)){
+          std::string macroNm(what[1].first,what[1].second);
+          std::string macroVal(what[2].first,what[2].second);
+          res = boost::regex_replace(res,boost::regex(macroNm),macroVal.c_str(),
+                                     boost::match_default|boost::format_all);
+          // update search position: 
+          start = what[0].second; 
+          // update flags: 
+          flags |= boost::match_prev_avail; 
+          flags |= boost::match_not_bob;
+        }
+      }
+      return res;
+    }
     
-    RWMol *toMol(std::string inp,int func(void),bool doQueries=false){
-      RWMol *res; 
+    RWMol *toMol(std::string inp,int func(void),bool doQueries,int debugParse){
+      RWMol *res;
+      inp = replaceSLNMacroAtoms(inp,debugParse);
+      if(debugParse){
+        std::cerr<<"****** PARSING SLN: ->"<<inp<<"<-"<<std::endl;
+      }
       setInputCharPtr( (char *)inp.c_str());
       try {
         slnParserDoQueries=doQueries;
@@ -124,7 +168,7 @@ namespace RDKit {
     // strip any leading/trailing whitespace:
     boost::trim_if(sln,boost::is_any_of(" \t\r\n"));
 
-    RWMol *res = SLNParse::toMol(sln,yysln_parse,false);
+    RWMol *res = SLNParse::toMol(sln,yysln_parse,false,debugParse);
     if(res){
       for(ROMol::AtomIterator atomIt=res->beginAtoms();
           atomIt!=res->endAtoms();++atomIt){
@@ -147,11 +191,9 @@ namespace RDKit {
     yysln_debug = debugParse;
     // strip any leading/trailing whitespace:
     boost::trim_if(sln,boost::is_any_of(" \t\r\n"));
-    RWMol *res = SLNParse::toMol(sln,yysln_parse,true);
+    RWMol *res = SLNParse::toMol(sln,yysln_parse,true,debugParse);
     if(res){
-      RWMol *tmp = SLNParse::finalizeQueryMol(res,mergeHs);
-      delete res;
-      res=tmp;
+      SLNParse::finalizeQueryMol(res,mergeHs);
     }
     charPtrCleanup();
     return res;

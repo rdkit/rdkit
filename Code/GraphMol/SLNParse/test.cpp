@@ -138,6 +138,12 @@ void test1(){
   TEST_ASSERT(mol->getNumAtoms()==4);
   
   delete mol;
+  sln = "CH3C(=O)H";
+  mol=RDKit::SLNToMol(sln,false);//,1);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==7);
+  
+  delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -200,7 +206,7 @@ void test2(){
   TEST_ASSERT(mol->getBondBetweenAtoms(3,4)->getBondType()==RDKit::Bond::AROMATIC);
   TEST_ASSERT(mol->getBondBetweenAtoms(4,5)->getBondType()==RDKit::Bond::AROMATIC);
   TEST_ASSERT(mol->getBondBetweenAtoms(5,0)->getBondType()==RDKit::Bond::AROMATIC);
-  
+
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -300,7 +306,22 @@ void test3(){
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
 
+#if 1
+  // FIX: this should be accepted
+
   delete mol;
+  sln = "CH[I=2]";
+  mol=RDKit::SLNToMol(sln);//,true,1);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==2);
+#endif
+
+  // but this should not be accepted:
+  delete mol;
+  sln = "CH4[I=13]";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(!mol);
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -341,6 +362,7 @@ void test5(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Test5: basic queries " << std::endl;
 
+#if 1
   sln = "C[charge=+1]";
   patt=RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
@@ -423,6 +445,16 @@ void test5(){
   mol=RDKit::SmilesToMol(smi);
   TEST_ASSERT(mol);
   TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==2);
+  delete mol;
+  smi = "C[CH2+](C)[N+2]";
+  mol=RDKit::SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+  delete mol;
+  smi = "C[N+](C)[CH+2]";
+  mol=RDKit::SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
 
   delete patt;
   sln = "C[charge=+1;HC=2]";
@@ -448,7 +480,85 @@ void test5(){
   TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
   TEST_ASSERT(mV[0][0].second==4);
 
+
+  delete mol;
+  smi = "[H]CC[H]";
+  mol=RDKit::SmilesToMol(smi,0,false);
+  TEST_ASSERT(mol);
+  RDKit::MolOps::sanitizeMol(*mol);
+  TEST_ASSERT(mol->getNumAtoms()==4);
+  
   delete patt;
+  sln = "AnyAny";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==2);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==3);
+  delete patt;
+  sln = "HevHev";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==2);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+  delete patt;
+  sln = "AnyHev";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==2);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==3);
+  delete patt;
+
+  delete mol;
+  smi = "FC(Cl)(Br)CI";
+  mol=RDKit::SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  RDKit::MolOps::sanitizeMol(*mol);
+  TEST_ASSERT(mol->getNumAtoms()==6);
+  
+  sln = "HalC";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==2);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==4);
+  delete patt;
+#endif
+
+  delete mol;
+  smi = "CO[2H]";
+  mol=RDKit::SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  RDKit::MolOps::sanitizeMol(*mol);
+  TEST_ASSERT(mol->getNumAtoms()==3);
+  
+  sln = "H";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==1);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+  delete patt;
+
+  sln = "H[i=1]";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==1);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==0);
+  delete patt;
+
+  sln = "H[i=2]";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==1);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+  delete patt;
+  
+  sln = "Het";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==1);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+  delete patt;
+  
+  delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1087,9 +1197,43 @@ void test10(){
   TEST_ASSERT(mV.size()==1);
   TEST_ASSERT(mV[0].size()==1);
   TEST_ASSERT(mV[0][0].second==3);
-
   delete patt;
+
+
+  // move the anchor:
+  sln = "C[is=C=O]";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==1);
   delete mol;
+  smi = "C(=O)OC";
+  mol=RDKit::SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+  TEST_ASSERT(mV.size()==1);
+  TEST_ASSERT(mV[0].size()==1);
+  TEST_ASSERT(mV[0][0].second==0);
+  delete patt;
+
+  sln = "C[is=O=C*]";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==1);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+  TEST_ASSERT(mV.size()==1);
+  TEST_ASSERT(mV[0].size()==1);
+  TEST_ASSERT(mV[0][0].second==0);
+  delete patt;
+
+  sln = "C[is=O=C]";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==1);
+  TEST_ASSERT(!RDKit::SubstructMatch(*mol,*patt,mV));
+  delete patt;
+
+  delete mol;
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1369,6 +1513,62 @@ void test13(){
   mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(!mol);
 
+  delete mol;
+  sln = "C[1]H-CH2-C(@1)=O";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==4);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+  TEST_ASSERT(mol->getBondBetweenAtoms(0,1)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,0)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,3)->getBondType()==RDKit::Bond::DOUBLE);
+
+  delete mol;
+  sln = "C[1]H-CH2-CH(@1)O";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==4);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+  TEST_ASSERT(mol->getBondBetweenAtoms(0,1)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,0)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,3)->getBondType()==RDKit::Bond::SINGLE);
+
+  delete mol;
+  sln = "C[1]H-CH2-C(=@1)O";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==4);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+  TEST_ASSERT(mol->getBondBetweenAtoms(0,1)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,0)->getBondType()==RDKit::Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,3)->getBondType()==RDKit::Bond::SINGLE);
+
+  delete mol;
+  sln = "C[1]H-CH2-C(O)=@1";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==4);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+  TEST_ASSERT(mol->getBondBetweenAtoms(0,1)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,0)->getBondType()==RDKit::Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,3)->getBondType()==RDKit::Bond::SINGLE);
+
+  delete mol;
+  sln = "C[1]H-CH2-C(O)(=@1)";
+  mol=RDKit::SLNToMol(sln);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getNumAtoms()==4);
+  TEST_ASSERT(mol->getRingInfo()->numRings()==1);
+  TEST_ASSERT(mol->getBondBetweenAtoms(0,1)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(1,2)->getBondType()==RDKit::Bond::SINGLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,0)->getBondType()==RDKit::Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondBetweenAtoms(2,3)->getBondType()==RDKit::Bond::SINGLE);
+
+  delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1401,7 +1601,7 @@ void test15(){
     sln = "CH4<blah>";
     mol=RDKit::SLNToMol(sln);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->hasProp("blah"));;
+    TEST_ASSERT(mol->hasProp("blah"));
     delete mol;
   }
 
@@ -1409,7 +1609,7 @@ void test15(){
     sln = "CH4<name=methane>";
     mol=RDKit::SLNToMol(sln);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->hasProp("_Name"));;
+    TEST_ASSERT(mol->hasProp("_Name"));
     std::string sval;
     mol->getProp("_Name",sval);
     TEST_ASSERT(sval=="methane");
@@ -1420,8 +1620,8 @@ void test15(){
     sln = "CH4<blah;foo=\"1\">";
     mol=RDKit::SLNToMol(sln);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->hasProp("blah"));;
-    TEST_ASSERT(mol->hasProp("foo"));;
+    TEST_ASSERT(mol->hasProp("blah"));
+    TEST_ASSERT(mol->hasProp("foo"));
     std::string sval;
     mol->getProp("foo",sval);
     TEST_ASSERT(sval=="1");
@@ -1431,8 +1631,8 @@ void test15(){
     sln = "CH4<blah;foo=1>";
     mol=RDKit::SLNToMol(sln);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->hasProp("blah"));;
-    TEST_ASSERT(mol->hasProp("foo"));;
+    TEST_ASSERT(mol->hasProp("blah"));
+    TEST_ASSERT(mol->hasProp("foo"));
     std::string sval;
     mol->getProp("foo",sval);
     TEST_ASSERT(sval=="1");
@@ -1442,19 +1642,64 @@ void test15(){
     sln = "CH4<name=\"methane\";blah;coord2d=(1,0);too.small;test=lots and-lots of special,characters all at once.>";
     mol=RDKit::SLNToMol(sln);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->hasProp("blah"));;
+    TEST_ASSERT(mol->hasProp("blah"));
     std::string sval;
     mol->getProp("_Name",sval);
     TEST_ASSERT(sval=="methane");
     mol->getProp("coord2d",sval);
     TEST_ASSERT(sval=="(1,0)");
-    TEST_ASSERT(mol->hasProp("too.small"));;
-    TEST_ASSERT(mol->hasProp("test"));;
+    TEST_ASSERT(mol->hasProp("too.small"));
+    TEST_ASSERT(mol->hasProp("test"));
     mol->getProp("test",sval);
     TEST_ASSERT(sval=="lots and-lots of special,characters all at once.");
     delete mol;
   }
 
+  {
+    // Though it isn't part of the spec,
+    // sometimes we have multiple ctab property blocks:
+    sln = "CH4<foo=1><bar=2>";
+    mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->hasProp("foo"));
+    TEST_ASSERT(mol->hasProp("bar"));
+    std::string sval;
+    mol->getProp("foo",sval);
+    TEST_ASSERT(sval=="1");
+    mol->getProp("bar",sval);
+    TEST_ASSERT(sval=="2");
+    delete mol;
+  }
+
+  
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test16(){
+  RDKit::RWMol *mol;
+  std::string sln;
+
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test16: simple macro atoms " << std::endl;
+
+  {
+    sln = "CH3ZCH3{Z:O}";
+    mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==3);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getAtomicNum()==8);
+    delete mol;
+  }
+  {
+    sln = "CH3ZGCH3{Z:O}{G:N}";
+    mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==4);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getAtomicNum()==8);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getAtomicNum()==7);
+    delete mol;
+  }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1468,7 +1713,7 @@ main(int argc, char *argv[])
   // FIX: need a test for handling Hs in the SLN itself. This should be done for
   // both normal and query SLNs and must be done after the SLN parser handles
   // that case (errr, duh)
-#if 1  
+#if 1 
   test1();
   test2();
   test3();
@@ -1484,5 +1729,6 @@ main(int argc, char *argv[])
   test13();
   test14();
   test15();
+  test16();
 #endif
 }

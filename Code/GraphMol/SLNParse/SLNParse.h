@@ -42,7 +42,7 @@ namespace RDKit{
   class ROMol;
 
   namespace SLNParse {
-    RWMol *finalizeQueryMol(ROMol *mol,bool mergeHs);
+    void finalizeQueryMol(ROMol *mol,bool mergeHs);
   }
 
   RWMol *SLNToMol(std::string smi,bool sanitize=true,int debugParse=0);

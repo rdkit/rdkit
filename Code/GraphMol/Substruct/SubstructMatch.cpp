@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -480,7 +480,24 @@ namespace RDKit{
       matches.reserve(pms.size());
       for(std::list<detail::ssPairType>::const_iterator iter1=pms.begin();
           iter1!=pms.end();++iter1){
-        matches.push_back(iter1->begin()->second);
+        if(!query.hasProp("_queryRootAtom")){
+          matches.push_back(iter1->begin()->second);
+        } else {
+          int rootIdx;
+          query.getProp("_queryRootAtom",rootIdx);
+          bool found=false;
+          for(detail::ssPairType::const_iterator pairIter=iter1->begin();
+              pairIter!=iter1->end();++pairIter){
+            if(pairIter->first==rootIdx){
+              matches.push_back(pairIter->second);
+              found=true;
+              break;
+            }
+          }
+          if(!found){
+            BOOST_LOG(rdErrorLog)<<"no match found for queryRootAtom"<<std::endl;
+          }
+        }
       }
       res = matches.size();
     } 

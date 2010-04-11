@@ -1,6 +1,9 @@
 FIND_PACKAGE(BISON)
 FIND_PACKAGE(FLEX)
 
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
+
 if(MSVC)
 ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
 endif()
@@ -22,9 +25,10 @@ rdkit_library(SLNParse
 
 rdkit_test(testSLNParse test.cpp 
            LINK_LIBRARIES SLNParse SmilesParse SubstructMatch
-GraphMol RDGeometryLib RDGeneral
+GraphMol RDGeometryLib RDGeneral  ${Boost_REGEX_LIBRARY}
 )
 
+set(Boost_USE_STATIC_LIBS OFF)
 add_subdirectory(Wrap)
 
 

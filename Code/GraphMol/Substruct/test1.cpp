@@ -304,9 +304,54 @@ void test5(){
   QueryAtom *qA = new QueryAtom();
   RecursiveStructureQuery *rsq = new RecursiveStructureQuery(q1);
   qA->setQuery(rsq);
-  //std::cout << "post expand: " << qA->getQuery() << std::endl;
   q2->addAtom(qA,true,true);
-  //std::cout << "mol: " << q2->getAtomWithIdx(0)->getQuery() << std::endl;
+  q2->addAtom(new QueryAtom(6),true,true);
+  q2->addBond(0,1,Bond::UNSPECIFIED);
+
+  bool found = SubstructMatch(*m,*q2,matchV);
+  CHECK_INVARIANT(found,"");
+  CHECK_INVARIANT(matchV.size()==2,"");
+  n = SubstructMatch(*m,*q2,matches,true);
+  CHECK_INVARIANT(n==2,"");
+  CHECK_INVARIANT(matches[0].size()==2,"");
+
+
+  std::cout << "Done\n" << std::endl;
+}
+void test5QueryRoot(){
+  std::cout << " ----------------- Test 5 QueryRoot" << std::endl;
+  MatchVectType matchV;
+  std::vector< MatchVectType > matches;
+  int n;
+
+  RWMol *m,*q1,*q2;
+  Atom *a6 = new Atom(6);
+  Atom *a8 = new Atom(8);
+  // CC(OC)C
+  m = new RWMol();
+  m->addAtom(a6);
+  m->addAtom(a6);
+  m->addAtom(a8);
+  m->addAtom(a6);
+  m->addAtom(a6);
+  m->addBond(0,1,Bond::SINGLE);
+  m->addBond(1,2,Bond::SINGLE);
+  m->addBond(1,4,Bond::SINGLE);
+  m->addBond(2,3,Bond::SINGLE);
+
+  // this will be the recursive query
+  q1 = new RWMol();
+  q1->addAtom(new QueryAtom(8),true);
+  q1->addAtom(new QueryAtom(6),true);
+  q1->addBond(0,1,Bond::UNSPECIFIED);
+  q1->setProp("_queryRootAtom",1);
+  
+  // here's the main query
+  q2 = new RWMol();
+  QueryAtom *qA = new QueryAtom();
+  RecursiveStructureQuery *rsq = new RecursiveStructureQuery(q1);
+  qA->setQuery(rsq);
+  q2->addAtom(qA,true,true);
   q2->addAtom(new QueryAtom(6),true,true);
   q2->addBond(0,1,Bond::UNSPECIFIED);
 
@@ -501,9 +546,6 @@ void test9(){
   n = SubstructMatch(*q1,*q1,matches,true,true,true);
   TEST_ASSERT(n==1);
 
-
-
-  
   std::cout << "Done\n" << std::endl;
 }
 
@@ -516,6 +558,7 @@ int main(int argc,char *argv[])
   test3();  
   test4();  
   test5();  
+  test5QueryRoot();  
   test6();  
   if(argc>1 && !strcmp(argv[1],"-l"))
     test7();  
