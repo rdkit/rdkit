@@ -12,12 +12,25 @@ rdkit_python_extension(rdmolops
                        FileParsers SubstructMatch Fingerprints ChemTransforms
                        Catalogs Subgraphs GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
 
-rdkit_python_extension(rdmolfiles
-                       rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
+if(RDK_BUILD_COMPRESSED_SUPPLIERS)
+find_package(Boost 1.39.0 COMPONENTS iostreams REQUIRED)
+set(rdmolfiles_sources rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
-                       TDTWriter.cpp
+                       TDTWriter.cpp CompressedSDMolSupplier.cpp )
+else(RDK_BUILD_COMPRESSED_SUPPLIERS)
+set(rdmolfiles_sources rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
+                       SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
+                       TDTWriter.cpp)
+endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
+
+rdkit_python_extension(rdmolfiles
+                       ${rdmolfiles_sources}
                        DEST Chem 
-                       LINK_LIBRARIES SmilesParse FileParsers GraphMol RDGeometryLib RDGeneral RDBoost)
+                       LINK_LIBRARIES SmilesParse FileParsers GraphMol
+                                      RDGeometryLib RDGeneral RDBoost)
+if(RDK_BUILD_COMPRESSED_SUPPLIERS)
+  set_target_properties(rdmolfiles PROPERTIES DEFINE_SYMBOL SUPPORT_COMPRESSED_SUPPLIERS )
+endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
 
 add_pytest(pyGraphMolWrap
          ${CMAKE_CURRENT_SOURCE_DIR}/rough_test.py)

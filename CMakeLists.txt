@@ -14,6 +14,7 @@ set(CMAKE_MODULE_PATH
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the experimental SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
+option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 
 #------- 
 # Config variables:
@@ -30,11 +31,11 @@ include(RDKitUtils)
 if(MSVC)
 SET(Boost_ADDITIONAL_VERSIONS "1.41" "1.41.0" "1.40" "1.40.0")
 endif(MSVC)
+
 if(RDK_BUILD_PYTHON_WRAPPERS)
   #------- 
   # pull in python:
   find_package(PythonLibs)
-
   if(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
     include_directories(${PYTHON_INCLUDE_PATH})
   else(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
