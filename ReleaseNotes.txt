@@ -1,12 +1,27 @@
 ******  Release_Q12010_1 *******
 (Changes relative to Release_Q42009_1)
-!!!!!! IMPORTANT !!!!!!
 
-Acknowledgements: Gianluca Sforna, Anna Vulpetti
+Acknowledgements:
+ - Andrew Dalke, Jean-Marc Nuzillard, Noel O'Boyle, Gianluca Sforna, 
+   Nik Stiefl, Anna Vulpetti
    
 Bug Fixes
+ - Substantial improvements were made to the SLN parser
+ - A bad depiction case was fixed. (issue 2948402)
+ - Hs added to planar carbons are no longer in the same plane as the
+   other atoms. (issue 2951221)
+ - Elements early in the periodic table (e.g. Mg, Na, etc.) no longer
+   have their radical counts incorrectly assigned. (issue 2952255)
+ - Some improvements were made to the v3k mol file parser. (issue
+   2952272)
+ - Double bonds with unspecified stereochemistry are now correctly
+   flagged when output to mol files. (issue 2963522)
+ - A segmentation fault that occured when kekulizing modified
+   molecules has been fixed. (issue 2983794)
     
 New Features
+ - The MaxMin diversity picker can now be given a seed for the random
+   number generator to ensure reproducible results. 
 
 Other
  - the vflib source, which is no longer used, was removed from the
@@ -17,7 +32,10 @@ Other
    house contributions that don't necessarily fit anywhere else. The
    first contribution here is a collection of scripts required to
    implement local-environment fingerprints contributed by Anna
-   Vulpetti. 
+   Vulpetti.
+ - Some optimization work was done on the molecule initialization code:
+   reading in molecules is now somewhat faster.
+ - Some optimization work was done on the RDK and Layered fingerprinting code.
 
 ******  Release_Q42009_1 *******
 (Changes relative to Release_Q32009_1)

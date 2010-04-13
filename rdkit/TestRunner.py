@@ -1,6 +1,6 @@
 #  $Id$
 #
-#  Copyright (c) 2003-2008 Greg Landrum and Rational Discovery LLC
+#  Copyright (c) 2003-2010 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -24,18 +24,13 @@ def RunTest(exeName,args,extras):
     os.chdir(extras['dir'])
   expectedReturn = extras.get('returns',0)
   if not subprocess:
-    retVal = spawn(os.P_WAIT,exeName,[exeName]+args,os.environ)
-    if not os.path.exists(exeName):
-      print >>sys.stderr,"Could not find executable: %s."%exeName
-      return TEST_FAILED
+    raise NotImplementedError,'cannot run tests if the subprocess module is not available.'
   else:
     try:
       retVal = subprocess.call([exeName]+list(args))
     except OSError:
       print >>sys.stderr,"Could not find executable: %s."%exeName
       return TEST_FAILED
-      
-
   if extras.has_key('dir'):
     os.chdir(startDir)
   if retVal!=expectedReturn:

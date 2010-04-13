@@ -1,6 +1,6 @@
 #  $Id$
 #
-#  Copyright (C) 2000-2006 Rational Discovery LLC
+#  Copyright (C) 2000-2010 Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -74,11 +74,9 @@ class UnimplementedCodeError(exceptions.Exception):
 # the following block contains stuff used by the
 # testing infrastructure
 if sys.platform=='win32':
-  pythonExe=os.path.join(os.environ.get('PYTHONHOME','c:/python25'),'python.exe')
-  spawn = os.spawnve
+  pythonExe=sys.executable
 else:
   pythonExe="python"
-  spawn = os.spawnvpe
 
 # ---------------------
 # the following block contains stuff controlling database access:
