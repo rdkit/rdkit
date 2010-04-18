@@ -49,7 +49,7 @@ void test1() {
       token!=tokens.end();++token){
     std::string smi= *token;
     RWMol *m = SmilesToMol(smi, 0, 1); 
-    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1);
+    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1,true,false,2,true,1,0,1e-2);
     CHECK_INVARIANT(cid >= 0, "");
 
     ROMol *m2 = sdsup.next();
@@ -837,7 +837,7 @@ void testRandomCoords() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.random.sdf";
   SDMolSupplier sdsup(fname,true,false);
-  SDWriter writer(fname);
+  //SDWriter writer(fname);
 
   boost::char_separator<char> spaceSep(" ");
   tokenizer tokens(smiString,spaceSep);
@@ -848,10 +848,10 @@ void testRandomCoords() {
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m=m2;
-    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true);
+    int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true, 2,true,1,0,1e-2);
     CHECK_INVARIANT(cid >= 0, "");
-    writer.write(*m);
-#if 0
+    //writer.write(*m);
+#if 1
     m2 = static_cast<RWMol *>(sdsup.next());
     //ROMol *m2 = NULL;
     if(m2){

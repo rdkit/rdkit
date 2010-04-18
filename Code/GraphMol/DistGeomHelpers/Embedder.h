@@ -70,7 +70,7 @@ namespace RDKit {
                       bool randNegEig=true,
                       unsigned int numZeroFail=1,
                       const std::map<int,RDGeom::Point3D> *coordMap=0,
-                      double optimizerForceTol=1e-2,
+                      double optimizerForceTol=1e-3,
                       double basinThresh=5.0);
 
     //*! Embed multiple conformations for a molecule
@@ -131,7 +131,7 @@ namespace RDKit {
                                 bool randNegEig=true, unsigned int numZeroFail=1,
                                 double pruneRmsThresh=-1.0,
                                 const std::map<int,RDGeom::Point3D> *coordMap=0,
-                                double optimizerForceTol=1e-2,double basinThresh=5.0);
+                                double optimizerForceTol=1e-3,double basinThresh=5.0);
 
   }
 }
