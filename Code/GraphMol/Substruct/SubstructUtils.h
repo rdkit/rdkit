@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,10 +8,6 @@
 
 #include "SubstructMatch.h"
 #include <boost/smart_ptr.hpp>
-
-#ifdef USE_VFLIB
-class ARGEdit;
-#endif
 
 namespace RDKit{
   class ROMol;
@@ -22,19 +18,9 @@ namespace RDKit{
   
   double toPrime(const MatchVectType &v);
   void removeDuplicates(std::vector<MatchVectType> &v,unsigned int nAtoms);
-#ifdef USE_VFLIB
-  bool atomCompat(const Atom *a1,const Atom *a2);
-  bool chiralAtomCompat(const Atom *a1,const Atom *a2);
-  bool bondCompat(const Bond *b1,const Bond *b2);
-  void MolToVFGraph(const ROMol &mol,ARGEdit *vgEd);
-  bool substructVisitor(int n, node_id ni1[],node_id ni2[],void *mvp);
-  bool substructHeadVisitor(int n, node_id ni1[],node_id ni2[],void *mvp);
-#else
   bool atomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2);
   bool chiralAtomCompat(const ATOM_SPTR a1,const ATOM_SPTR a2);
   bool bondCompat(const BOND_SPTR b1,const BOND_SPTR b2);
-#endif
-
 }
 
 

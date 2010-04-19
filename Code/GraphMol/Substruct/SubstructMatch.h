@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -9,13 +9,6 @@
 // std bits
 #include <vector>
 
-#ifdef USE_VFLIB
-// vflib bits
-#include <argraph.h>
-#include <vf_mono_state.h>
-#include <vf2_mono_state.h>
-#endif
-
 namespace RDKit{
   class ROMol;
   class Atom;
@@ -24,21 +17,6 @@ namespace RDKit{
   //! \brief used to return matches from substructure searching,
   //!   The format is (queryAtomIdx, molAtomIdx)
   typedef std::vector< std::pair<int,int> > MatchVectType; 
-
-#ifdef USE_VFLIB
-  //typedef VFMonoState MatcherState;
-  typedef VF2MonoState MatcherState;
-
-  typedef ARGraph<const Atom, const Bond> AR_MOLGRAPH;
-  //! Internal Use Only
-  AR_MOLGRAPH *getMolGraph(const ROMol &mol,bool registerIt=false);
-
-#ifdef CACHE_ARMOLGRAPHS
-namespace SubstructLocal {
-  void clearMolGraphCache();
-}
-#endif  
-#endif
 
   //! Find a substructure match for a query in a molecule
   /*!
@@ -58,15 +36,6 @@ namespace SubstructLocal {
 		      bool recursionPossible=true,
 		      bool useChirality=false,
                       bool registerQuery=false);
-#ifdef USE_VFLIB
-  //! \overload
-  bool SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
-		      MatchVectType &matchVect,
-		      bool recursionPossible=true,
-		      bool useChirality=false,
-                      bool registerQuery=false);
-#endif
-
   //! Find all substructure matches for a query in a molecule
   /*!
       \param mol       The ROMol to be searched
@@ -86,14 +55,6 @@ namespace SubstructLocal {
 			      bool uniquify=true,bool recursionPossible=true,
 			      bool useChirality=false,
                               bool registerQuery=false);
-#ifdef USE_VFLIB
-  //! \overload
-  unsigned int SubstructMatch(AR_MOLGRAPH *molG,const ROMol &query,
-			      std::vector< MatchVectType > &matchVect,
-			      bool uniquify=true,bool recursionPossible=true,
-			      bool useChirality=false,
-                              bool registerQuery=false);
-#endif
 }
 
 #endif
