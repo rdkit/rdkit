@@ -80,6 +80,5 @@ namespace DistGeom {
       grad[dim*this->d_end1Idx+i] += dGrad;
       grad[dim*this->d_end2Idx+i] -= dGrad;
     }
-    //std::cerr<<"  "<<d_lb<<" "<<d<<" "<<d_ub<<": "<<d_weight<<" "<<preFactor<<std::endl;
   }
 }

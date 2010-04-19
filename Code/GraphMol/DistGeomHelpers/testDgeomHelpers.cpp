@@ -197,8 +197,6 @@ void test2() {
   TEST_ASSERT( (bm->getUpperBound(0,3) - bm->getLowerBound(0,3)) < .13);
   TEST_ASSERT( bm->getUpperBound(0,3) > dmat->getVal(0,3));
   // this is kinda goofy but this linear molecule doesn't satisfy the bounds completely
-  std::cerr<<bm->getLowerBound(0,3)<<std::endl;
-  std::cerr<<dmat->getVal(0,3)<<std::endl;
   TEST_ASSERT(fabs(bm->getLowerBound(0,3) - dmat->getVal(0,3)) < 0.2);
   
   delete mol;
