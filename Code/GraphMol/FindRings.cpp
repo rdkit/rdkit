@@ -59,11 +59,15 @@ namespace FindRings {
     INT_VECT_CI lastRai;
     for(INT_VECT_CI rai=ring.begin();rai != ring.end();rai++){
       if(rai!=ring.begin()){
-        bondIndices.push_back(mol.getBondBetweenAtoms(*rai,*lastRai)->getIdx());
+        const Bond *bnd=mol.getBondBetweenAtoms(*rai,*lastRai);
+        if(!bnd) throw ValueErrorException("expected bond not found");
+        bondIndices.push_back(bnd->getIdx());
       }
       lastRai = rai;
     }
-    bondIndices.push_back(mol.getBondBetweenAtoms(*lastRai,*(ring.begin()))->getIdx());
+    const Bond *bnd=mol.getBondBetweenAtoms(*lastRai,*(ring.begin()));
+    if(!bnd) throw ValueErrorException("expected bond not found");
+    bondIndices.push_back(bnd->getIdx());
     mol.getRingInfo()->addRing(ring,bondIndices);
   }
 
