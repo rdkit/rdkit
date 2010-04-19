@@ -1865,6 +1865,9 @@ CAS<~>
 
   def test56LazySDMolSupplier(self) :
     if not hasattr(Chem,'CompressedSDMolSupplier'): return
+
+    self.failUnlessRaises(ValueError,lambda : Chem.CompressedSDMolSupplier('nosuchfile.sdf.gz'))
+
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
     sdSup = Chem.CompressedSDMolSupplier(fileN)

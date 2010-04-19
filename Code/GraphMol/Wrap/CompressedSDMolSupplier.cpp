@@ -74,8 +74,12 @@ namespace RDKit {
       std::string errorTxt="Unrecognized extension: "+splitName.back();
       throw_value_error(errorTxt);
     }
-
-    strm->push(io::file_source(filename));
+    io::file_source fileSource(filename);
+    if(!fileSource.is_open()){
+      std::string errorTxt="could not open file: "+filename;
+      throw_value_error(errorTxt);
+    }      
+    strm->push(fileSource);
     
     ForwardSDMolSupplier *res=new ForwardSDMolSupplier(strm,true,sanitize,removeHs);
     return res;
