@@ -645,7 +645,7 @@ class Canvas:
 
             #use a flate filter and Ascii Base 85 to compress
             raw = myimage.tostring()
-            assert(len(raw) == imgwidth * imgheight, "Wrong amount of data for image")
+            assert len(raw) == imgwidth * imgheight, "Wrong amount of data for image"
             compressed = zlib.compress(raw)   #this bit is very fast...
             encoded = pdfutils._AsciiBase85Encode(compressed) #...sadly this isn't
 
@@ -1046,7 +1046,7 @@ class PDFTextObject:
         elif type(stuff) == TupleType:
             lines = stuff
         else:
-            assert 1==0, "argument to textlines must be string,, list or tuple"
+            raise ValueError, "argument to textlines must be string,, list or tuple"
         
         for line in lines:
             escaped_text = self._canvas._escape(line)

@@ -11,7 +11,7 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=
   import MolDrawing
   try:
     from aggdraw import Draw
-    from PIL import Image
+    import Image
     MolDrawing.registerCanvas('agg')
     Canvas = Draw
     useAGG=True
@@ -19,7 +19,7 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=
     useAGG=False
     try:
       import cairo
-      from PIL import Image
+      import Image
       MolDrawing.registerCanvas('cairo')
       from cairoCanvas import Canvas
       useCAIRO=True
@@ -55,8 +55,6 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=
 def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
               highlightAtoms=[]):
   # original contribution from Uwe Hoffmann
-  import cairo
-
   if not fileName:
     raise ValueError,'no fileName provided'
   if not mol:
@@ -111,7 +109,7 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
             title='RDKit Molecule'):
   global tkRoot,tkLabel,tkPI
   import Tkinter
-  from PIL import ImageTk
+  import ImageTk
 
   img = MolToImage(mol,size,kekulize,wedgeBonds)
 
