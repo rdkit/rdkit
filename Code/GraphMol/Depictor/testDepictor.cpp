@@ -527,7 +527,24 @@ void testIssue2948402() {
   }
 }
 
-
+void testIssue2995724() {
+  {
+    std::string smi = "OC(=O)[C@@H]1CCCN1";
+    RWMol *m1 = SmilesToMol(smi);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    
+    for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
+      const Conformer &conf = m1->getConformer(cid1);
+      RDGeom::Point3D loci = conf.getAtomPos(i);
+      // we're testing for NaNs here:
+      TEST_ASSERT(loci.x>-5.0);
+      TEST_ASSERT(loci.x<5.0);
+      TEST_ASSERT(loci.y>-5.0);
+      TEST_ASSERT(loci.y<5.0);
+    }
+    delete m1;
+  }
+}
 
 int main() { 
   RDLog::InitLogs();
@@ -602,11 +619,16 @@ int main() {
   testIssue2821647();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
-#endif
   
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Issue 2948402\n";
   testIssue2948402();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+#endif
+
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Issue 2995724\n";
+  testIssue2995724();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);

@@ -1109,11 +1109,13 @@ namespace RDDepict {
     RDGeom::Transform2D trans;
     eig1.x = 2*xy;
     eig1.y = (yy - xx) + d;
+    if(eig1.length()<=1e-4) return;
     double eVal1=(xx+yy+d)/2;
     eig1.normalize();
     
     eig2.x = 2*xy;
     eig2.y = (yy - xx) - d;
+    if(eig2.length()<=1e-4) return;
     double eVal2=(xx+yy-d)/2;
     eig2.normalize();
 
