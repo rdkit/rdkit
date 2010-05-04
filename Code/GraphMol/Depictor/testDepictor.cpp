@@ -546,7 +546,7 @@ void testIssue2995724() {
     delete m1;
   }
   {
-    // additional test cases from Kirk Clark:
+    // additional test cases from Kirk DeLisle:
     std::string smis[]={"CCC(N1CCN(CC1)C(CC)O)O.Cl[Pt](Cl)(Cl)(Cl)(Cl)Cl",
                         "CN(C)S(=O)(=O)N1CCN(CC1)S(=O)(=O)N(C)C",
                         "Cc1ccc(cc1C)Nc2nc(nc(n2)N)CN3CCN(CC3)C",
