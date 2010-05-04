@@ -529,12 +529,13 @@ void testIssue2948402() {
 
 void testIssue2995724() {
   {
+    // the original problem from Thomas Heller:
     std::string smi = "OC(=O)[C@@H]1CCCN1";
     RWMol *m1 = SmilesToMol(smi);
     unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
     
+    const Conformer &conf = m1->getConformer(cid1);
     for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
-      const Conformer &conf = m1->getConformer(cid1);
       RDGeom::Point3D loci = conf.getAtomPos(i);
       // we're testing for NaNs here:
       TEST_ASSERT(loci.x>-5.0);
@@ -543,6 +544,27 @@ void testIssue2995724() {
       TEST_ASSERT(loci.y<5.0);
     }
     delete m1;
+  }
+  {
+    // additional test cases from Kirk Clark:
+    std::string smis[]={"CCC(N1CCN(CC1)C(CC)O)O.Cl[Pt](Cl)(Cl)(Cl)(Cl)Cl",
+                        "CN(C)S(=O)(=O)N1CCN(CC1)S(=O)(=O)N(C)C",
+                        "Cc1ccc(cc1C)Nc2nc(nc(n2)N)CN3CCN(CC3)C",
+                        "CC1(OC(=C(C(=O)O1)C2=NCCC2)O)C"};
+    for(unsigned int j=0;j<4;j++){
+      RWMol *m1 = SmilesToMol(smis[j]);
+      unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    
+      const Conformer &conf = m1->getConformer(cid1);
+      for (unsigned int i = 0; i < m1->getNumAtoms(); i++) {
+        RDGeom::Point3D loci = conf.getAtomPos(i);
+        TEST_ASSERT(loci.x>-7.0);
+        TEST_ASSERT(loci.x<7.0);
+        TEST_ASSERT(loci.y>-6.0);
+        TEST_ASSERT(loci.y<6.0);
+      }
+      delete m1;
+    }
   }
 }
 
