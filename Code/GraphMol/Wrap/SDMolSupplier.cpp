@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008  Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010  Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -48,8 +48,14 @@ namespace RDKit {
        # mol3 and mol1 are the same: \
        >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n \
 \n \
-    3) Random Access:  all molecules are constructed as soon as we ask for the\n \
-       length:\n \
+    3) Random Access:\n \
+       >>> suppl = SDMolSupplier('in.sdf')\n \
+       >>> mol1 = suppl[0] \n \
+       >>> mol2 = suppl[1] \n \
+       NOTE: this will generate an IndexError if the supplier doesn't have that many\n \
+       molecules.\n \
+\n \
+    4) Random Access 2:  looping over all molecules \n \
        >>> suppl = SDMolSupplier('in.sdf')\n \
        >>> nMols = len(suppl)\n \
        >>> for i in range(nMols):\n \
