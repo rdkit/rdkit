@@ -2,6 +2,8 @@
 // Copyright (C) 2008 Greg Landrum
 //
 // @@  All Rights Reserved @@
+//package org.RDKit;
+
 import org.junit.*;
 import static org.junit.Assert.*;
 import org.RDKit.*;

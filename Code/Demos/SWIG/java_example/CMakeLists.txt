@@ -20,8 +20,8 @@ ADD_CUSTOM_COMMAND(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 ## 2. now that the *.class have been generated construct the jar file.
   COMMAND ${JAVA_ARCHIVE} ARGS cf 
-    ${CMAKE_CURRENT_SOURCE_DIR}/RDKit_Wrapper.jar 
-    org/RDKit/*.java
+    ${CMAKE_CURRENT_SOURCE_DIR}/RDKit_Wrapper.jar
+    org/RDKit/*.class WrapperTests.class
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS "${swig_generated_file_fullname}"
   COMMENT "javac *.java; jar cf -> .jar"
