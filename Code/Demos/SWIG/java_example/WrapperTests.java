@@ -1,5 +1,5 @@
 // $Id$
-// Copyright (C) 2008 Greg Landrum
+// Copyright (C) 2008-2010 Greg Landrum
 //
 // @@  All Rights Reserved @@
 //package org.RDKit;
@@ -7,6 +7,7 @@
 import org.junit.*;
 import static org.junit.Assert.*;
 import org.RDKit.*;
+
 
 public class WrapperTests {
     private ROMol mol1;
@@ -32,7 +33,7 @@ public class WrapperTests {
         String smi=RDKFuncs.MolToSmiles(mol1);
         assertEquals(smi,"c1ccccc1",smi);
     }
-    /*
+
     @Test public void testReactionBasics() {
 	ChemicalReaction rxn;
 	rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
@@ -58,7 +59,7 @@ public class WrapperTests {
 	assertTrue(r2.getNumAtoms()==3);
 
 	assertTrue(ps.get(0).get(0).getNumAtoms()==6);
-        }*/
+        }
     @Test public void testSubstruct1() {
 	ROMol p;
 	Match_Vect mv;
@@ -123,7 +124,40 @@ public class WrapperTests {
 	assertTrue(mvv.get(1).get(1).getFirst()==1);
 	assertTrue(mvv.get(1).get(1).getSecond()==3);
     }
-
+    @Test public void testFingerprints1() {
+	ROMol m1,m2;
+	m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
+	m2 = RDKFuncs.MolFromSmiles("C1=CC=CC=N1");
+	ExplicitBitVect fp1,fp2;
+	fp1=RDKFuncs.RDKFingerprintMol(m1);
+	fp2=RDKFuncs.RDKFingerprintMol(m1);
+	assertTrue(RDKFuncs.TanimotoSimilarityEBV(fp1,fp2)==1.0);
+	fp2=RDKFuncs.RDKFingerprintMol(m2);
+	assertTrue(RDKFuncs.TanimotoSimilarityEBV(fp1,fp2)<1.0);
+	assertTrue(RDKFuncs.TanimotoSimilarityEBV(fp1,fp2)>0.0);
+    }
+    @Test public void testFingerprints2() {
+	ROMol m1,m2;
+	m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
+	m2 = RDKFuncs.MolFromSmiles("C1=CC=CC=N1");
+	SparseIntVectu32 fp1,fp2;
+	fp1=RDKFuncs.MorganFingerprintMol(m1,2);
+	fp2=RDKFuncs.MorganFingerprintMol(m1,2);
+	assertTrue(RDKFuncs.DiceSimilaritySIVu32(fp1,fp2)==1.0);
+	fp2=RDKFuncs.MorganFingerprintMol(m2,2);
+	assertTrue(RDKFuncs.DiceSimilaritySIVu32(fp1,fp2)<1.0);
+	assertTrue(RDKFuncs.DiceSimilaritySIVu32(fp1,fp2)>0.0);
+	UInt_Pair_Vect v1=fp1.getNonzero();
+	assertTrue(v1.size()>0);
+	UInt_Pair_Vect v2=fp2.getNonzero();
+	assertTrue(v2.size()>0);
+	assertTrue(v2.size()>v1.size());
+    }
+    @Test public void testErrorHandling() {
+	ROMol m1;
+	m1 = RDKFuncs.MolFromSmiles("C1CC");
+	assertTrue(m1==null);
+    }
     static {
         try {
             System.loadLibrary("RDKFuncs");

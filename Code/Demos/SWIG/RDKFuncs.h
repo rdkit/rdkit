@@ -9,6 +9,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <RDGeneral/versions.h>
 
 RDKit::ROMOL_SPTR MolFromSmiles(std::string smi){
   return RDKit::ROMOL_SPTR(RDKit::SmilesToMol(smi));
@@ -49,5 +50,7 @@ std::string MolToMolBlock(RDKit::ROMOL_SPTR mol, bool includeStereo=true,
   return RDKit::MolToMolBlock(*mol,includeStereo,confId);
 }
 
-
+std::string rdkitVersion(){
+  return RDKit::rdkitVersion;
+}
 

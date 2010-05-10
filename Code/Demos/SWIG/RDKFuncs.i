@@ -1,10 +1,11 @@
 // $Id$
 //
-// Copyright (C) 2008-2009 Greg Landrum
+// Copyright (C) 2008-2010 Greg Landrum
 // All Rights Reserved
 //
 %include "std_string.i"
 %include "std_vector.i"
+%include "std_map.i"
 %include "std_pair.i"
 %include "boost_shared_ptr.i"
 
@@ -163,17 +164,34 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
 #include <DataStructs/SparseIntVect.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 %}
+
 #if SWIGCSHARP
-%csmethodmodifiers ExplicitBitVect::ToString() const "public override";
+SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair, std::pair<unsigned int,int> );
+SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsigned int,int> >);
 #endif
+%template(UInt_Pair) std::pair<unsigned int, int >;
+%template(UInt_Pair_Vect) std::vector<std::pair<unsigned int,int> >;
+
+%ignore RDKit::SparseIntVect<boost::uint32_t>::getNonzeroElements const;
 %include <DataStructs/SparseIntVect.h>
 %template(SparseIntVectu32) RDKit::SparseIntVect<boost::uint32_t>;
+%extend RDKit::SparseIntVect<boost::uint32_t> {
+  std::vector<std::pair<unsigned int, int> >
+  getNonzero() const{
+    std::vector<std::pair<unsigned int, int> > res;
+    for(std::map<boost::uint32_t,int>::const_iterator es=$self->getNonzeroElements().begin();
+        es!=$self->getNonzeroElements().end();++es){
+      res.push_back(std::make_pair((unsigned int)es->first,(int)es->second));
+    }
+    return res;
+  }
+}
 %rename(MorganFingerprintMol) RDKit::MorganFingerprints::getFingerprint;
 %include <GraphMol/Fingerprints/MorganFingerprints.h>
 
-
 %include <DataStructs/BitOps.h>
 %template(TanimotoSimilarityEBV) TanimotoSimilarity<ExplicitBitVect,ExplicitBitVect>;
+%template(DiceSimilarityEBV) DiceSimilarity<ExplicitBitVect,ExplicitBitVect>;
 %template(DiceSimilaritySIVu32) RDKit::DiceSimilarity<boost::uint32_t>;
 
 
