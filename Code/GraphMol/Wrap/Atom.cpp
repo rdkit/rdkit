@@ -120,6 +120,13 @@ struct atom_wrapper {
 	   "Returns the degree of the atom in the molecule.\n\n"
 	   "  The degree of an atom is defined to be its number of\n"
 	   "  directly-bonded neighbors.\n"
+	   "  The degree is independent of bond orders, but is dependent\n"
+	   "    on whether or not Hs are explicit in the graph.\n"
+           )
+      .def("GetTotalDegree",&Atom::getTotalDegree,
+	   "Returns the degree of the atom in the molecule including Hs.\n\n"
+	   "  The degree of an atom is defined to be its number of\n"
+	   "  directly-bonded neighbors.\n"
 	   "  The degree is independent of bond orders.\n")
 
       .def("GetTotalNumHs",&Atom::getTotalNumHs,
