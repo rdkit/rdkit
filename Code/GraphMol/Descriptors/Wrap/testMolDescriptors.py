@@ -136,6 +136,18 @@ class TestCase(unittest.TestCase) :
     fp = rdMD.GetMorganFingerprint(mol,0,fromAtoms=(0,))
     self.failUnless(len(fp.GetNonzeroElements())==1)
 
+    mol = Chem.MolFromSmiles('CC1CC1')
+    vs1 = rdMD.GetConnectivityInvariants(mol)
+    self.failUnlessEqual(len(vs1),mol.GetNumAtoms())
+    fp1 = rdMD.GetMorganFingerprint(mol,2,invariants=vs1)
+    fp2 = rdMD.GetMorganFingerprint(mol,2)
+    self.failUnlessEqual(fp1,fp2)
+    
+    vs2 = rdMD.GetConnectivityInvariants(mol,True)
+    self.failUnlessEqual(len(vs2),mol.GetNumAtoms())
+    self.failIfEqual(vs1,vs2)
+    fp1 = rdMD.GetMorganFingerprint(mol,2,invariants=vs2)
+    self.failIfEqual(fp1,fp2)
     
   def testCrippen(self):
     mol = Chem.MolFromSmiles("NCO");

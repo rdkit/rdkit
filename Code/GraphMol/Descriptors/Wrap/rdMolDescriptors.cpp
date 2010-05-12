@@ -157,6 +157,15 @@ namespace {
   }
 
 }
+python::list GetConnectivityInvariants(const RDKit::ROMol &mol,bool includeRingMembership){
+  std::vector<boost::uint32_t> invars(mol.getNumAtoms());
+  RDKit::MorganFingerprints::getConnectivityInvariants(mol,invars,includeRingMembership);
+  python::list res;
+  for(std::vector<boost::uint32_t>::const_iterator iv=invars.begin();iv!=invars.end();++iv){
+    res.append(python::long_(*iv));
+  }
+  return res;
+}
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("__doc__") =
@@ -231,6 +240,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   python::scope().attr("_MorganFingerprint_version")=
+    RDKit::MorganFingerprints::morganFingerprintVersion;
+  docString="Returns connectivity invariants (ECFP-like) for a molecule.";
+  python::def("GetConnectivityInvariants", GetConnectivityInvariants,
+              (python::arg("mol"),python::arg("includeRingMembership")=false),
+              docString.c_str());
+  python::scope().attr("_ConnectivityInvariants_version")=
     RDKit::MorganFingerprints::morganFingerprintVersion;
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
