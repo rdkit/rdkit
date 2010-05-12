@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -57,8 +57,8 @@ namespace RDKit{
   static int queryAtomAromatic(Atom const * at) { return at->getIsAromatic(); };
   static int queryAtomAliphatic(Atom const * at) { return !(at->getIsAromatic()); };
   static int queryAtomExplicitDegree(Atom const * at) { return at->getDegree(); };
-  static int queryAtomTotalDegree(Atom const * at) { return at->getDegree()+at->getImplicitValence(); };
-  static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getDegree(); };
+  static int queryAtomTotalDegree(Atom const * at) { return at->getTotalDegree(); };
+  static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getTotalDegree()-at->getTotalNumHs(true); };
   static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
   static int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
   static int queryAtomExplicitValence(Atom const * at) { return at->getExplicitValence() - at->getNumExplicitHs(); };

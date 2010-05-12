@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -1296,6 +1296,37 @@ void testIssue2884178_part2(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testIssue3000399(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 3000399: incorrect behavior of X queries" << std::endl;
+
+  {
+    std::vector< MatchVectType > mVV;
+    std::string sma ="[C;X4]";
+    RWMol *patt = SmartsToMol(sma);
+    TEST_ASSERT(patt);
+
+    sma ="C(N1C)(CCC1)C";
+    RWMol *mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    unsigned int count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==6);
+    TEST_ASSERT(mVV.size()==6);
+    delete mol;
+
+    sma ="[C@H](N1C)(CCC1)C";
+    mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==6);
+    TEST_ASSERT(mVV.size()==6);
+    delete mol;
+
+    delete patt;
+  }    
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 
 int
@@ -1325,9 +1356,10 @@ main(int argc, char *argv[])
 #endif
   testIssue1914154();
   testMiscSmartsWriting();
-  //testIssue1804420();
+  testIssue1804420();
   testSmartsStereochem();
   testIssue2884178_part1();
   testIssue2884178_part2();
+  testIssue3000399();
   return 0;
 }
