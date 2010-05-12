@@ -262,7 +262,8 @@ struct mol_wrapper {
 	   "  ARGUMENTS:\n"
 	   "    - query: a Molecule\n\n"
 	   "    - recursionPossible: (optional)\n\n"
-	   "    - useChirality: (optional)\n\n"
+	   "    - useChirality: (optional) NOTE: this should not be set to True,\n"
+           "                     chiral matching is not currently correctly handled.\n\n"
 	   "  RETURNS: 1 or 0\n")
       .def("GetSubstructMatch",GetSubstructMatch,
 	   (python::arg("self"),python::arg("query"),
@@ -270,7 +271,8 @@ struct mol_wrapper {
 	   "Returns the indices of the molecule's atoms that match a substructure query.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - query: a Molecule\n\n"
-	   "    - useChirality: (optional)\n\n"
+	   "    - useChirality: (optional) NOTE: this should not be set to True,\n"
+           "                     chiral matching is not currently correctly handled.\n\n"
 	   "  RETURNS: a tuple of integers\n\n"
 	   "  NOTES:\n"
 	   "     - only a single match is returned\n"
@@ -289,7 +291,8 @@ struct mol_wrapper {
 	   "    - query: a Molecule.\n"
 	   "    - uniquify: (optional) determines whether or not the matches are uniquified.\n"
 	   "                Defaults to 1.\n\n"
-	   "    - useChirality: (optional)\n\n"
+	   "    - useChirality: (optional) NOTE: this should not be set to True,\n"
+           "                     chiral matching is not currently correctly handled.\n\n"
 	   "  RETURNS: a tuple of tuples of integers\n\n"
 	   "  NOTE:\n"
 	   "     - the ordering of the indices corresponds to the atom ordering\n"
