@@ -1,3 +1,8 @@
+%option reentrant
+%option bison-bridge
+%option noyywrap
+%option extra-type="bool"
+
 %{
 
 // $Id$
@@ -44,20 +49,16 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SLNParse/SLNAttribs.h>
 
-#undef YY_INPUT
-
-#include "InputFiller.h"
-
-extern INPUT_FUNC_TYPE gp_myInput;
-
-#define YY_INPUT( b, r, ms) (r = gp_myInput( b, ms ))
-
 #include <string>
 #include <cstring>
 #include "sln.tab.hpp"
 
 using namespace RDKit;
-extern bool slnParserDoQueries;
+
+void setup_sln_string(const std::string &text,yyscan_t yyscanner){
+  YY_BUFFER_STATE buff=yysln__scan_string(text.c_str(),yyscanner);
+  POSTCONDITION(buff,"invalid buffer");
+}
 
 %}
 
@@ -70,22 +71,22 @@ extern bool slnParserDoQueries;
 %%
 
 <IN_PROP_VAL_STATE>[^\;\]\>\&\|\!]* {
-  yysln_lval.text_T=new std::string(yysln_text);
+  yylval->text_T=new std::string(yytext);
   return TEXT_BLOCK; 
 }
 
 <IN_SLN_PARAM_STATE>[a-zA-Z]+[a-zA-Z0-9_\-,]* { 
-  yysln_lval.text_T=new std::string(yysln_text);
+  yylval->text_T=new std::string(yytext);
   return TEXT_BLOCK; 
 }
 
 <IN_CTAB_PARAM_VAL_STATE>[\"]?[a-zA-Z0-9_\-,\ \.\(\)]+[\"]? { 
-  yysln_lval.text_T=new std::string(yysln_text);
+  yylval->text_T=new std::string(yytext);
   return TEXT_BLOCK; 
 }
 
 <IN_CTAB_PARAM_NAME_STATE>[a-zA-Z]+[a-zA-Z0-9_\.]* { 
-  yysln_lval.text_T=new std::string(yysln_text);
+  yylval->text_T=new std::string(yytext);
   return TEXT_BLOCK; 
 }
 
@@ -191,78 +192,78 @@ extern bool slnParserDoQueries;
 <INITIAL,IN_RECURSE_STATE>Cl |
 <INITIAL,IN_RECURSE_STATE>Br | 
 <INITIAL,IN_RECURSE_STATE>I  {
-  if(slnParserDoQueries){
-          yysln_lval.atom_T = new QueryAtom(PeriodicTable::getTable()->getAtomicNumber(yytext));
+  if(yyextra){
+          yylval->atom_T = new QueryAtom(PeriodicTable::getTable()->getAtomicNumber(yytext));
         } else {
-          yysln_lval.atom_T = new Atom(PeriodicTable::getTable()->getAtomicNumber(yytext));
+          yylval->atom_T = new Atom(PeriodicTable::getTable()->getAtomicNumber(yytext));
         }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
-  yysln_lval.atom_T->setNoImplicit(true);
+  yylval->atom_T->setNoImplicit(true);
         
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Any {
-  if(slnParserDoQueries) {
-    yysln_lval.atom_T = new QueryAtom();
-    yysln_lval.atom_T->setQuery(makeAtomNullQuery());
+  if(yyextra) {
+    yylval->atom_T = new QueryAtom();
+    yylval->atom_T->setQuery(makeAtomNullQuery());
   } else {
-    yysln_lval.atom_T = new Atom(0);
+    yylval->atom_T = new Atom(0);
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
-  yysln_lval.atom_T->setNoImplicit(true);
+  yylval->atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Hev {
-  if(slnParserDoQueries) {
-    yysln_lval.atom_T = new QueryAtom();
-    yysln_lval.atom_T->setQuery(makeAtomNumEqualsQuery(1));
+  if(yyextra) {
+    yylval->atom_T = new QueryAtom();
+    yylval->atom_T->setQuery(makeAtomNumEqualsQuery(1));
     // FIX: are 2H or 3H heavy atoms or Hs?
-    yysln_lval.atom_T->getQuery()->setNegation(true);
+    yylval->atom_T->getQuery()->setNegation(true);
   } else {
-    yysln_lval.atom_T = new Atom(0);
+    yylval->atom_T = new Atom(0);
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
-  yysln_lval.atom_T->setNoImplicit(true);
+  yylval->atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Hal {
-  if(slnParserDoQueries) {
-    yysln_lval.atom_T = new QueryAtom();
-    yysln_lval.atom_T->setQuery(makeAtomNumEqualsQuery(9));
-    yysln_lval.atom_T->expandQuery(makeAtomNumEqualsQuery(17),Queries::COMPOSITE_OR,true);
-    yysln_lval.atom_T->expandQuery(makeAtomNumEqualsQuery(35),Queries::COMPOSITE_OR,true);
-    yysln_lval.atom_T->expandQuery(makeAtomNumEqualsQuery(53),Queries::COMPOSITE_OR,true);
+  if(yyextra) {
+    yylval->atom_T = new QueryAtom();
+    yylval->atom_T->setQuery(makeAtomNumEqualsQuery(9));
+    yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(17),Queries::COMPOSITE_OR,true);
+    yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(35),Queries::COMPOSITE_OR,true);
+    yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(53),Queries::COMPOSITE_OR,true);
 
   } else {
-    yysln_lval.atom_T = new Atom(0);
+    yylval->atom_T = new Atom(0);
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
-  yysln_lval.atom_T->setNoImplicit(true);
+  yylval->atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Het {
-  if(slnParserDoQueries) {
-    yysln_lval.atom_T = new QueryAtom();
-    yysln_lval.atom_T->setQuery(makeAtomNumEqualsQuery(6));
-    yysln_lval.atom_T->expandQuery(makeAtomNumEqualsQuery(1),Queries::COMPOSITE_OR,true);
-    yysln_lval.atom_T->getQuery()->setNegation(true);
+  if(yyextra) {
+    yylval->atom_T = new QueryAtom();
+    yylval->atom_T->setQuery(makeAtomNumEqualsQuery(6));
+    yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(1),Queries::COMPOSITE_OR,true);
+    yylval->atom_T->getQuery()->setNegation(true);
     
   } else {
-    yysln_lval.atom_T = new Atom(0);
+    yylval->atom_T = new Atom(0);
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
-  yysln_lval.atom_T->setNoImplicit(true);
+  yylval->atom_T->setNoImplicit(true);
   return ATOM_TOKEN;
 }
 
-<INITIAL,IN_RECURSE_STATE>H\[ { yy_push_state(IN_SLN_PARAM_STATE); return H_BRACKET_TOKEN; }
+<INITIAL,IN_RECURSE_STATE>H\[ { yy_push_state(IN_SLN_PARAM_STATE,yyscanner); return H_BRACKET_TOKEN; }
 <INITIAL,IN_RECURSE_STATE>H\* { return H_ASTERIX_TOKEN; }
 <INITIAL,IN_RECURSE_STATE>H { return H_TOKEN; }
 
 <IN_SLN_PARAM_STATE>is\= |
 <IN_SLN_PARAM_STATE>Is\= |
 <IN_SLN_PARAM_STATE>iS\= |
-<IN_SLN_PARAM_STATE>IS\= { yy_push_state(IN_RECURSE_STATE); return RECURSE_TOKEN; }
+<IN_SLN_PARAM_STATE>IS\= { yy_push_state(IN_RECURSE_STATE,yyscanner); return RECURSE_TOKEN; }
 <IN_SLN_PARAM_STATE>not\= | 
 <IN_SLN_PARAM_STATE>Not\= |
 <IN_SLN_PARAM_STATE>nOt\= |
@@ -270,7 +271,7 @@ extern bool slnParserDoQueries;
 <IN_SLN_PARAM_STATE>NOt\= |
 <IN_SLN_PARAM_STATE>NoT\= |
 <IN_SLN_PARAM_STATE>nOT\= |
-<IN_SLN_PARAM_STATE>NOT\= { yy_push_state(IN_RECURSE_STATE); return NEG_RECURSE_TOKEN; }
+<IN_SLN_PARAM_STATE>NOT\= { yy_push_state(IN_RECURSE_STATE,yyscanner); return NEG_RECURSE_TOKEN; }
 
 
 \-                      { return MINUS_TOKEN; }
@@ -289,24 +290,24 @@ extern bool slnParserDoQueries;
 <IN_SLN_PARAM_STATE>\= |
 <IN_SLN_PARAM_STATE>\> |
 <IN_SLN_PARAM_STATE>\< {
-  yy_push_state(IN_PROP_VAL_STATE);
-  yysln_lval.text_T=new std::string(yytext);
+  yy_push_state(IN_PROP_VAL_STATE,yyscanner);
+  yylval->text_T=new std::string(yytext);
   return COMPARE_TOKEN; 
 }
 
 <IN_CTAB_PARAM_NAME_STATE>\= {
-  yy_pop_state();
-  yy_push_state(IN_CTAB_PARAM_VAL_STATE);
+  yy_pop_state(yyscanner);
+  yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
   return EQUALS_TOKEN; 
 }
 <IN_CTAB_PARAM_NAME_STATE>\:\= {
-  yy_pop_state();
-  yy_push_state(IN_CTAB_PARAM_VAL_STATE);
+  yy_pop_state(yyscanner);
+  yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
   return COLON_EQUALS_TOKEN; 
 }
 <IN_CTAB_PARAM_NAME_STATE>\^\= {
-  yy_pop_state();
-  yy_push_state(IN_CTAB_PARAM_VAL_STATE);
+  yy_pop_state(yyscanner);
+  yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
   return CARET_EQUALS_TOKEN; 
 }
 
@@ -317,56 +318,56 @@ extern bool slnParserDoQueries;
 
 
 <IN_RECURSE_STATE>\; { 
-  yy_pop_state(); 
+  yy_pop_state(yyscanner); 
   return SEMI_TOKEN; 
 }
 <IN_CTAB_PARAM_NAME_STATE>\; { return SEMI_TOKEN; }
 <IN_CTAB_PARAM_VAL_STATE>\; {
- yy_pop_state();
- yy_push_state(IN_CTAB_PARAM_NAME_STATE);
+ yy_pop_state(yyscanner);
+ yy_push_state(IN_CTAB_PARAM_NAME_STATE,yyscanner);
  return SEMI_TOKEN; 
 }
 
-<IN_PROP_VAL_STATE>\; { yy_pop_state(); return SEMI_TOKEN; }
+<IN_PROP_VAL_STATE>\; { yy_pop_state(yyscanner); return SEMI_TOKEN; }
 \; { return SEMI_TOKEN; }
-<IN_PROP_VAL_STATE>\& { yy_pop_state(); return AND_TOKEN; }
-<IN_PROP_VAL_STATE>\| { yy_pop_state(); return OR_TOKEN; }
+<IN_PROP_VAL_STATE>\& { yy_pop_state(yyscanner); return AND_TOKEN; }
+<IN_PROP_VAL_STATE>\| { yy_pop_state(yyscanner); return OR_TOKEN; }
 \! { return NOT_TOKEN; }
 
-\[                      { yy_push_state(IN_SLN_PARAM_STATE); return OPEN_BRACKET_TOKEN; }
+\[                      { yy_push_state(IN_SLN_PARAM_STATE,yyscanner); return OPEN_BRACKET_TOKEN; }
 
 <IN_RECURSE_STATE>\]           {
 	// we're closing a recursive definition, which means we should also be
 	//  closing a parameter block:
-  yy_pop_state();
+  yy_pop_state(yyscanner);
 	if(YY_START!=IN_SLN_PARAM_STATE){
 		std::cerr << " after closing a recursion, we were not in the appropriate state."  <<std::endl;
 	} else {
-    yy_pop_state();
+    yy_pop_state(yyscanner);
   }
 	return CLOSE_BRACKET_TOKEN;
 }
 <IN_PROP_VAL_STATE>\]           {
   // if we're currently in an SLN property block (e.g. in []'s), we need
   // to pop both the prop_val state and the property block state:
-  yy_pop_state();
+  yy_pop_state(yyscanner);
   if(YY_START==IN_SLN_PARAM_STATE) {
-    yy_pop_state();
+    yy_pop_state(yyscanner);
   } 
   return CLOSE_BRACKET_TOKEN;
 }
 
-<IN_SLN_PARAM_STATE>\]          { yy_pop_state(); return CLOSE_BRACKET_TOKEN; }
+<IN_SLN_PARAM_STATE>\]          { yy_pop_state(yyscanner); return CLOSE_BRACKET_TOKEN; }
 
-\<                      { yy_push_state(IN_CTAB_PARAM_NAME_STATE); return OPEN_ANGLE_TOKEN; }
-<IN_CTAB_PARAM_NAME_STATE>\> { yy_pop_state(); return CLOSE_ANGLE_TOKEN; }
-<IN_CTAB_PARAM_VAL_STATE>\> { yy_pop_state(); return CLOSE_ANGLE_TOKEN; }
+\<                      { yy_push_state(IN_CTAB_PARAM_NAME_STATE,yyscanner); return OPEN_ANGLE_TOKEN; }
+<IN_CTAB_PARAM_NAME_STATE>\> { yy_pop_state(yyscanner); return CLOSE_ANGLE_TOKEN; }
+<IN_CTAB_PARAM_VAL_STATE>\> { yy_pop_state(yyscanner); return CLOSE_ANGLE_TOKEN; }
 <IN_PROP_VAL_STATE>\>   { 
   // if we're currently in a CTAB property block (e.g. in <>'s), we need
   // to pop both the prop_val state and the property block state:
-  yy_pop_state();
+  yy_pop_state(yyscanner);
   if(YY_START==IN_CTAB_PARAM_VAL_STATE) {
-    yy_pop_state();
+    yy_pop_state(yyscanner);
   } 
   return CLOSE_ANGLE_TOKEN; 
 }
@@ -380,7 +381,7 @@ extern bool slnParserDoQueries;
 \@              { return AT_TOKEN; }
 \*              { return ASTERIX_TOKEN; }
 
-[0-9]+  { yysln_lval.ival_T = atoi( yytext ); return DIGIT_TOKEN; }
+[0-9]+  { yylval->ival_T = atoi( yytext ); return DIGIT_TOKEN; }
 
 
 \n		return 0;

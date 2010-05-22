@@ -23,7 +23,7 @@ ADD_FLEX_BISON_DEPENDENCY(SmilesL SmilesY)
 ADD_FLEX_BISON_DEPENDENCY(SmartsL SmartsY)
 
 rdkit_library(SmilesParse
-              InputFiller.cpp SmilesParse.cpp SmilesParseOps.cpp 
+              SmilesParse.cpp SmilesParseOps.cpp 
               SmilesWrite.cpp SmartsWrite.cpp
               ${BISON_SmilesY_OUTPUTS} ${BISON_SmartsY_OUTPUTS} 
               ${FLEX_SmilesL_OUTPUTS}  ${FLEX_SmartsL_OUTPUTS}

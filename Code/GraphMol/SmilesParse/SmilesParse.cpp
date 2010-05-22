@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -21,40 +21,55 @@
 #include <GraphMol/RDKitBase.h>
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
-#include "InputFiller.h"
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/algorithm/string.hpp>
-int yysmiles_parse (void);
+int yysmiles_parse (std::vector<RDKit::RWMol *>*,void *);
+int yysmiles_lex_init (void **);
+int yysmiles_lex_destroy (void *);
+void setup_smiles_string(const std::string &text,void *);
 extern int yysmiles_debug; 
 
-int yysmarts_parse (void);
+int yysmarts_parse (std::vector<RDKit::RWMol *>*,void *);
+int yysmarts_lex_init (void **);
+int yysmarts_lex_destroy (void *);
+struct YY_BUFFER_STATE;
+struct YY_BUFFER_STATE *yysmarts__scan_string(const char *);
+void setup_smarts_string(const std::string &text,void *);
 extern int yysmarts_debug; 
 
+int smiles_parse(const std::string &inp,
+		 std::vector<RDKit::RWMol *> &molVect){
+  void *scanner;
+  TEST_ASSERT(!yysmiles_lex_init(&scanner));
+  setup_smiles_string(inp,scanner);
+  int res=yysmiles_parse(&molVect,scanner);
+  yysmiles_lex_destroy(scanner);
+  return res;
+}
+
+int smarts_parse(const std::string &inp,
+		 std::vector<RDKit::RWMol *> &molVect){
+  void *scanner;
+  TEST_ASSERT(!yysmarts_lex_init(&scanner));
+  setup_smarts_string(inp,scanner);
+  int res=yysmarts_parse(&molVect,scanner);
+  yysmarts_lex_destroy(scanner);
+  return res;
+}
 
 namespace RDKit{
-  namespace SmilesParse{
-    std::vector<RDKit::RWMol *> molList_g;
-  }
-
-  RWMol *toMol(std::string inp,int func(void)){
+  RWMol *toMol(std::string inp,int func(const std::string &,
+					std::vector<RDKit::RWMol *> &)){
     RWMol *res; 
-    if(SmilesParse::molList_g.size()){
-      for(std::vector<RDKit::RWMol *>::iterator iter=SmilesParse::molList_g.begin();
-          iter!=SmilesParse::molList_g.end();++iter){
-        delete *iter;
-      }
-      SmilesParse::molList_g.clear();
-      SmilesParse::molList_g.resize(0);
-    }
-    setInputCharPtr( (char *)inp.c_str());
+    std::vector<RDKit::RWMol *> molVect;
     try {
-      func();
-      if(SmilesParse::molList_g.size()<=0){
+      func(inp,molVect);
+      if(molVect.size()<=0){
         res = 0;
       } else {
-        res = SmilesParse::molList_g[0];
-        SmilesParse::molList_g.resize(0);
+        res = molVect[0];
+	molVect[0]=0;
         SmilesParseOps::CloseMolRings(res,false);
         SmilesParseOps::AdjustAtomChiralityFlags(res);
         // No sense leaving this bookmark intact:
@@ -66,7 +81,10 @@ namespace RDKit{
       BOOST_LOG(rdErrorLog) << e.message() << std::endl;
       res = 0;
     }
-    charPtrCleanup();
+    for(std::vector<RDKit::RWMol *>::iterator iter=molVect.begin();
+	iter!=molVect.end();++iter){
+      if(*iter) delete *iter;
+    }
 
     return res;
   }
@@ -75,7 +93,7 @@ RWMol *SmilesToMol(std::string smi,int debugParse,bool sanitize){
   yysmiles_debug = debugParse;
   // strip any leading/trailing whitespace:
   boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
-  RWMol *res = toMol(smi,yysmiles_parse);
+  RWMol *res = toMol(smi,smiles_parse);
   if(sanitize && res){
     // we're going to remove explicit Hs from the graph,
     // this triggers a sanitization, so we do not need to
@@ -92,7 +110,7 @@ RWMol *SmilesToMol(std::string smi,int debugParse,bool sanitize){
 RWMol *SmartsToMol(std::string sma,int debugParse,bool mergeHs){
   yysmarts_debug = debugParse;
   boost::trim_if(sma,boost::is_any_of(" \t\r\n"));
-  RWMol *res = toMol(sma,yysmarts_parse);
+  RWMol *res = toMol(sma,smarts_parse);
   if(res && mergeHs){
     ROMol *tmp = MolOps::mergeQueryHs(*res);
     delete res;

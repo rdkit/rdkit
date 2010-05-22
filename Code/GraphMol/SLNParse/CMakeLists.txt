@@ -19,7 +19,7 @@ BISON_TARGET(SlnY sln.yy
 ADD_FLEX_BISON_DEPENDENCY(SlnL SlnY)
 
 rdkit_library(SLNParse
-              InputFiller.cpp SLNParse.cpp SLNAttribs.cpp 
+              SLNParse.cpp SLNAttribs.cpp 
               ${BISON_SlnY_OUTPUTS} ${FLEX_SlnL_OUTPUTS}
               LINK_LIBRARIES GraphMol)
 

@@ -1,8 +1,12 @@
+%option reentrant
+%option bison-bridge
+%option noyywrap
+
 %{
 
 // $Id$
 //
-//  Copyright (C) 2001-2008 Randal Henne, Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Randal Henne, Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -11,14 +15,6 @@
 #ifdef WIN32
 #include <io.h> 	 
 #endif
-
-#undef YY_INPUT
-
-#include <GraphMol/SmilesParse/InputFiller.h>
-
-extern INPUT_FUNC_TYPE gp_myInput;
-
-#define YY_INPUT( b, r, ms) (r = gp_myInput( b, ms ))
 
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Atom.h>
@@ -31,9 +27,17 @@ extern INPUT_FUNC_TYPE gp_myInput;
 
 using namespace RDKit;
 
-//static PeriodicTable * gl_ptab = PeriodicTable::getTable();
-
+void setup_smiles_string(const std::string &text,yyscan_t yyscanner){
+  size_t sz=text.size();
+  char txt[sz+2];
+  strcpy(txt,text.c_str());
+  txt[sz]=YY_END_OF_BUFFER_CHAR;
+  txt[sz+1]=YY_END_OF_BUFFER_CHAR;
+  YY_BUFFER_STATE buff=yysmiles__scan_buffer(txt,sz+2,yyscanner);
+  POSTCONDITION(buff,"invalid buffer");
+}
 %}
+
 %s IN_ATOM_STATE
 %%
 
@@ -137,7 +141,7 @@ using namespace RDKit;
 <IN_ATOM_STATE>Fm |
 <IN_ATOM_STATE>Md |
 <IN_ATOM_STATE>No |
-<IN_ATOM_STATE>Lr 	{   yysmiles_lval.atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
+<IN_ATOM_STATE>Lr 	{   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
 				return ATOM_TOKEN; 
 			}
 B  |
@@ -149,7 +153,7 @@ S  |
 F  |
 Cl |
 Br | 
-I			{	yysmiles_lval.atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
+I			{	yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
 				return ORGANIC_ATOM_TOKEN;
 			}
 
@@ -157,93 +161,93 @@ H			{
 				return H_TOKEN; 
 			}
 
-c		    {	yysmiles_lval.atom = new Atom ( 6 );
-			yysmiles_lval.atom->setIsAromatic(true);
+c		    {	yylval->atom = new Atom ( 6 );
+			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 
 			}
-n		    {	yysmiles_lval.atom = new Atom( 7 );
-			yysmiles_lval.atom->setIsAromatic(true);
+n		    {	yylval->atom = new Atom( 7 );
+			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 
 			}
-o		    {	yysmiles_lval.atom = new Atom( 8 );
-			yysmiles_lval.atom->setIsAromatic(true);
+o		    {	yylval->atom = new Atom( 8 );
+			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 
 			}
-p		    {	yysmiles_lval.atom = new Atom( 15 );
-			yysmiles_lval.atom->setIsAromatic(true);
+p		    {	yylval->atom = new Atom( 15 );
+			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 
 			}
-s		    {	yysmiles_lval.atom = new Atom( 16 );
-			yysmiles_lval.atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
-
-<IN_ATOM_STATE>se   {	yysmiles_lval.atom = new Atom( 34 );
-			yysmiles_lval.atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>te   {	yysmiles_lval.atom = new Atom( 52 );
-			yysmiles_lval.atom->setIsAromatic(true);
+s		    {	yylval->atom = new Atom( 16 );
+			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 
 			}
 
-\* 	            {   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>se   {	yylval->atom = new Atom( 34 );
+			yylval->atom->setIsAromatic(true);
+				return AROMATIC_ATOM_TOKEN; 
+			}
+<IN_ATOM_STATE>te   {	yylval->atom = new Atom( 52 );
+			yylval->atom->setIsAromatic(true);
+				return AROMATIC_ATOM_TOKEN; 
+			}
+
+\* 	            {   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
                                                         std::string("*"));
                                 // must be ORGANIC_ATOM_TOKEN because
                                 // we aren't in square brackets:
 				return ORGANIC_ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>X 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>X 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
                                                         std::string("X"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>Xa 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>Xa 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
 std::string("Xa"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>Xb 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>Xb 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
 std::string("Xb"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>Xc 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>Xc 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
 std::string("Xc"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>Xd 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>Xd 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
 std::string("Xd"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>Xf 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>Xf 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
 std::string("Xf"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>Xg 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>Xg 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
 std::string("Xg"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>Xh 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp("dummyLabel",
+<IN_ATOM_STATE>Xh 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp("dummyLabel",
 std::string("Xh"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>Xi 	{   yysmiles_lval.atom = new Atom( 0 );
-		            yysmiles_lval.atom->setProp((const char *)"dummyLabel",
+<IN_ATOM_STATE>Xi 	{   yylval->atom = new Atom( 0 );
+		            yylval->atom->setProp((const char *)"dummyLabel",
 std::string("Xi"));
   BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
 				return ATOM_TOKEN; 
@@ -253,7 +257,7 @@ std::string("Xi"));
 
 \+			{ return PLUS_TOKEN; }
 
-[\=\#\:]    { yysmiles_lval.bond = new Bond();
+[\=\#\:]    { yylval->bond = new Bond();
               Bond::BondType bt=Bond::UNSPECIFIED;
               switch(yytext[0]){
 	      case '=':
@@ -264,20 +268,20 @@ std::string("Xi"));
 		break;
 	      case ':':
 		bt = Bond::AROMATIC;
-                yysmiles_lval.bond->setIsAromatic(true);
+                yylval->bond->setIsAromatic(true);
 		break;
               default:
                 CHECK_INVARIANT(0,"cannot get here");
 	      }
-	      yysmiles_lval.bond->setBondType(bt);
+	      yylval->bond->setBondType(bt);
 	return BOND_TOKEN; }	
 
-[\\]    { yysmiles_lval.bond = new Bond(Bond::SINGLE);
-	yysmiles_lval.bond->setBondDir(Bond::ENDDOWNRIGHT);
+[\\]    { yylval->bond = new Bond(Bond::SINGLE);
+	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
 	return BOND_TOKEN;  }
 	
-[\/]    { yysmiles_lval.bond = new Bond(Bond::SINGLE);
-	yysmiles_lval.bond->setBondDir(Bond::ENDUPRIGHT);
+[\/]    { yylval->bond = new Bond(Bond::SINGLE);
+	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
 	return BOND_TOKEN;  }
 
 \(       	{ return GROUP_OPEN_TOKEN; }
@@ -291,8 +295,8 @@ std::string("Xi"));
 
 \%              { return PERCENT_TOKEN; }
 
-[0]		{ yysmiles_lval.ival = 0; return ZERO_TOKEN; }
-[1-9]		{ yysmiles_lval.ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
+[0]		{ yylval->ival = 0; return ZERO_TOKEN; }
+[1-9]		{ yylval->ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
 
 
 

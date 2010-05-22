@@ -37,16 +37,31 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SLNParse/SLNParse.h>
 #include <GraphMol/SLNParse/SLNAttribs.h>
-#include <GraphMol/SLNParse/InputFiller.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 
-int yysln_parse (void);
+
+int yysln_parse (std::vector<RDKit::RWMol *>*,bool,void *);
+int yysln_lex_init (void **);
+void yysln_set_extra (bool,void *);
+int yysln_lex_destroy (void *);
+void setup_sln_string(const std::string &text,void *);
 extern int yysln_debug; 
 
-bool slnParserDoQueries;
+int sln_parse(const std::string &inp,
+	      bool doQueries,
+	      std::vector<RDKit::RWMol *> &molVect){
+  void *scanner;
+  TEST_ASSERT(!yysln_lex_init(&scanner));
+  setup_sln_string(inp,scanner);
+  yysln_set_extra(doQueries,scanner);
+  int res=yysln_parse(&molVect,doQueries,scanner);
+  yysln_lex_destroy(scanner);
+  return res;
+}
+
 
 namespace RDKit {
   namespace SLNParse {
@@ -118,22 +133,20 @@ namespace RDKit {
       return res;
     }
     
-    RWMol *toMol(std::string inp,int func(void),bool doQueries,int debugParse){
+    RWMol *toMol(std::string inp,bool doQueries,int debugParse){
       RWMol *res;
       inp = replaceSLNMacroAtoms(inp,debugParse);
       if(debugParse){
         std::cerr<<"****** PARSING SLN: ->"<<inp<<"<-"<<std::endl;
       }
-      setInputCharPtr( (char *)inp.c_str());
+      std::vector<RDKit::RWMol *> molVect;
       try {
-        slnParserDoQueries=doQueries;
-        func();
-        if(SLNParse::molList_g.size()<=0){
+        sln_parse(inp,doQueries,molVect);
+        if(molVect.size()<=0){
           res = 0;
         } else {
-          res = SLNParse::molList_g[0];
-          SLNParse::molList_g.resize(0);
-
+          res = molVect[0];
+	  molVect[0]=0;
           for(ROMol::BOND_BOOKMARK_MAP::const_iterator bmIt=res->getBondBookmarks()->begin();
               bmIt != res->getBondBookmarks()->end();++bmIt){
             if(bmIt->first>0 && bmIt->first<static_cast<int>(res->getNumAtoms())){
@@ -156,7 +169,10 @@ namespace RDKit {
         // set up the chirality flags as soon as the molecule is finished
         // since we'll be removing Hs later and that will break things:
         adjustAtomChiralities(res);
-
+      }
+      for(std::vector<RDKit::RWMol *>::iterator iter=molVect.begin();
+	  iter!=molVect.end();++iter){
+	if(*iter) delete *iter;
       }
       return res;
     };
@@ -168,7 +184,7 @@ namespace RDKit {
     // strip any leading/trailing whitespace:
     boost::trim_if(sln,boost::is_any_of(" \t\r\n"));
 
-    RWMol *res = SLNParse::toMol(sln,yysln_parse,false,debugParse);
+    RWMol *res = SLNParse::toMol(sln,false,debugParse);
     if(res){
       for(ROMol::AtomIterator atomIt=res->beginAtoms();
           atomIt!=res->endAtoms();++atomIt){
@@ -183,7 +199,6 @@ namespace RDKit {
         res = static_cast<RWMol *>(tmp);
       }
     }
-    charPtrCleanup();
     return res;
   };
 
@@ -191,11 +206,10 @@ namespace RDKit {
     yysln_debug = debugParse;
     // strip any leading/trailing whitespace:
     boost::trim_if(sln,boost::is_any_of(" \t\r\n"));
-    RWMol *res = SLNParse::toMol(sln,yysln_parse,true,debugParse);
+    RWMol *res = SLNParse::toMol(sln,true,debugParse);
     if(res){
       SLNParse::finalizeQueryMol(res,mergeHs);
     }
-    charPtrCleanup();
     return res;
   };
 }
