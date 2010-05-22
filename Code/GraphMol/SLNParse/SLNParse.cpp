@@ -45,7 +45,7 @@
 
 int yysln_parse (std::vector<RDKit::RWMol *>*,bool,void *);
 int yysln_lex_init (void **);
-void yysln_set_extra (bool,void *);
+void yysln_set_extra (void *,void *);
 int yysln_lex_destroy (void *);
 void setup_sln_string(const std::string &text,void *);
 extern int yysln_debug; 
@@ -56,7 +56,7 @@ int sln_parse(const std::string &inp,
   void *scanner;
   TEST_ASSERT(!yysln_lex_init(&scanner));
   setup_sln_string(inp,scanner);
-  yysln_set_extra(doQueries,scanner);
+  yysln_set_extra((void *)doQueries,scanner);
   int res=yysln_parse(&molVect,doQueries,scanner);
   yysln_lex_destroy(scanner);
   return res;

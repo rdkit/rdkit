@@ -28,12 +28,7 @@
 using namespace RDKit;
 
 void setup_smiles_string(const std::string &text,yyscan_t yyscanner){
-  size_t sz=text.size();
-  char txt[sz+2];
-  strcpy(txt,text.c_str());
-  txt[sz]=YY_END_OF_BUFFER_CHAR;
-  txt[sz+1]=YY_END_OF_BUFFER_CHAR;
-  YY_BUFFER_STATE buff=yysmiles__scan_buffer(txt,sz+2,yyscanner);
+  YY_BUFFER_STATE buff=yysmiles__scan_string(text.c_str(),yyscanner);
   POSTCONDITION(buff,"invalid buffer");
 }
 %}

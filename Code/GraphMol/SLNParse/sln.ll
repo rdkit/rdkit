@@ -1,7 +1,6 @@
 %option reentrant
 %option bison-bridge
 %option noyywrap
-%option extra-type="bool"
 
 %{
 
@@ -192,7 +191,7 @@ void setup_sln_string(const std::string &text,yyscan_t yyscanner){
 <INITIAL,IN_RECURSE_STATE>Cl |
 <INITIAL,IN_RECURSE_STATE>Br | 
 <INITIAL,IN_RECURSE_STATE>I  {
-  if(yyextra){
+  if((bool)yyextra){
           yylval->atom_T = new QueryAtom(PeriodicTable::getTable()->getAtomicNumber(yytext));
         } else {
           yylval->atom_T = new Atom(PeriodicTable::getTable()->getAtomicNumber(yytext));
@@ -203,7 +202,7 @@ void setup_sln_string(const std::string &text,yyscan_t yyscanner){
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Any {
-  if(yyextra) {
+  if((bool)yyextra) {
     yylval->atom_T = new QueryAtom();
     yylval->atom_T->setQuery(makeAtomNullQuery());
   } else {
@@ -214,7 +213,7 @@ void setup_sln_string(const std::string &text,yyscan_t yyscanner){
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Hev {
-  if(yyextra) {
+  if((bool)yyextra) {
     yylval->atom_T = new QueryAtom();
     yylval->atom_T->setQuery(makeAtomNumEqualsQuery(1));
     // FIX: are 2H or 3H heavy atoms or Hs?
@@ -227,7 +226,7 @@ void setup_sln_string(const std::string &text,yyscan_t yyscanner){
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Hal {
-  if(yyextra) {
+  if((bool)yyextra) {
     yylval->atom_T = new QueryAtom();
     yylval->atom_T->setQuery(makeAtomNumEqualsQuery(9));
     yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(17),Queries::COMPOSITE_OR,true);
@@ -242,7 +241,7 @@ void setup_sln_string(const std::string &text,yyscan_t yyscanner){
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Het {
-  if(yyextra) {
+  if((bool)yyextra) {
     yylval->atom_T = new QueryAtom();
     yylval->atom_T->setQuery(makeAtomNumEqualsQuery(6));
     yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(1),Queries::COMPOSITE_OR,true);
