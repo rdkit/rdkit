@@ -71,6 +71,10 @@ struct bond_wrapper {
   static void wrap(){
     python::class_<Bond>("Bond",bondClassDoc.c_str(),python::no_init)
 
+      .def("GetOwningMol",&Bond::getOwningMol,
+	   "Returns the Mol that owns this bond.\n",
+	   python::return_value_policy<python::reference_existing_object>())
+
       .def("GetBondType",&Bond::getBondType,
 	   "Returns the type of the bond as a BondType\n")
       .def("SetBondType",&Bond::setBondType,

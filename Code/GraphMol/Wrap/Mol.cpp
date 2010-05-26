@@ -200,7 +200,8 @@ struct mol_wrapper {
 	   "    - onlyHeavy: (optional) include only heavy atoms (not Hs)\n"
 	   "                 defaults to 1.\n")
       .def("GetAtomWithIdx",(Atom * (ROMol::*)(unsigned int))&ROMol::getAtomWithIdx,
-	   python::return_value_policy<python::reference_existing_object>(),
+	   python::return_internal_reference<1,
+	   python::with_custodian_and_ward_postcall<0,1> >(),
 	   "Returns a particular Atom.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - idx: which Atom to return\n\n"
@@ -214,7 +215,8 @@ struct mol_wrapper {
 	   "                  defaults to 1.\n")
 
       .def("GetBondWithIdx",(Bond * (ROMol::*)(unsigned int))&ROMol::getBondWithIdx,
-	   python::return_value_policy<python::reference_existing_object>(),
+	   python::return_internal_reference<1,
+	   python::with_custodian_and_ward_postcall<0,1> >(),
 	   "Returns a particular Bond.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - idx: which Bond to return\n\n"

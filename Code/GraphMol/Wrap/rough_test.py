@@ -1935,6 +1935,17 @@ CAS<~>
     m2 = em.GetMol()
     self.failUnlessRaises(ValueError,lambda:Chem.Kekulize(m2))
     
+  def test59Issue3007178(self) :
+    m = Chem.MolFromSmiles('CCC')
+    a = m.GetAtomWithIdx(0)
+    m=None
+    self.failUnlessEqual(Chem.MolToSmiles(a.GetOwningMol()),'CCC')
+    a=None
+    m = Chem.MolFromSmiles('CCC')
+    b = m.GetBondWithIdx(0)
+    m=None
+    self.failUnlessEqual(Chem.MolToSmiles(b.GetOwningMol()),'CCC')
+
 if __name__ == '__main__':
   unittest.main()
 
