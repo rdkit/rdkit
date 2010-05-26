@@ -1,11 +1,12 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
 
 #include <iostream>
+#include <boost/foreach.hpp>
 
 // our stuff
 #include <RDGeneral/Invariant.h>
@@ -16,12 +17,6 @@
 #include "Bond.h"
 #include "QueryBond.h"
 #include "MolPickler.h"
-
-#if 0
-#include "AtomIterators.h"
-#include "BondIterators.h"
-#endif
-
 #include "Conformer.h"
 
 namespace RDKit{
@@ -33,21 +28,6 @@ namespace RDKit{
   const int ci_ATOM_HOLDER=-0xDEADD06;
 
   void ROMol::destroy(){
-
-#if 0
-    // blow out atoms and edges:
-    MolGraph::vertex_iterator begVerts,endVerts;
-    boost::tie(begVerts,endVerts)= boost::vertices(d_graph);
-    while(begVerts != endVerts){
-      MolGraph::vertex_descriptor u=*begVerts;
-      ++begVerts;
-      // first remove all connections to the atom:
-      boost::clear_vertex(u,d_graph);
-      // now remove the atom itself:
-      boost::remove_vertex(u,d_graph);
-    }
-#endif
-    
     d_atomBookmarks.clear();
     d_bondBookmarks.clear();
     d_graph.clear();
@@ -93,9 +73,8 @@ namespace RDKit{
     dp_props=0;
     if(!quickCopy){
       // copy conformations
-      ConstConformerIterator ci;
-    
-      for (ci = other.beginConformers(); ci != other.endConformers(); ci++) {
+      for (ConstConformerIterator ci = other.beginConformers();
+	   ci != other.endConformers(); ++ci) {
         Conformer *conf = new Conformer(*(*ci));
         this->addConformer(conf);
       }
@@ -105,21 +84,14 @@ namespace RDKit{
       }
   
       // Bookmarks should be copied as well:
-      ATOM_BOOKMARK_MAP::const_iterator abmI;
-      for(abmI=other.d_atomBookmarks.begin();abmI!=other.d_atomBookmarks.end();abmI++){
-        ATOM_PTR_LIST::const_iterator aplI;
-        for(aplI=abmI->second.begin();aplI!=abmI->second.end();aplI++){
-          int idx=(*aplI)->getIdx();
-          int first=abmI->first;
-          Atom *at=getAtomWithIdx(idx);
-          setAtomBookmark(at,first);
+      BOOST_FOREACH(ATOM_BOOKMARK_MAP::value_type abmI,other.d_atomBookmarks){
+	BOOST_FOREACH(const Atom *aptr,abmI.second){
+          setAtomBookmark(getAtomWithIdx(aptr->getIdx()),abmI.first);
         }
       }
-      BOND_BOOKMARK_MAP::const_iterator bbmI;
-      for(bbmI=other.d_bondBookmarks.begin();bbmI!=other.d_bondBookmarks.end();bbmI++){
-        BOND_PTR_LIST::const_iterator bplI;
-        for(bplI=bbmI->second.begin();bplI!=bbmI->second.end();bplI++){
-          setBondBookmark(getBondWithIdx((*bplI)->getIdx()),bbmI->first);
+      BOOST_FOREACH(BOND_BOOKMARK_MAP::value_type bbmI,other.d_bondBookmarks){
+	BOOST_FOREACH(const Bond *bptr,bbmI.second){
+          setBondBookmark(getBondWithIdx(bptr->getIdx()),bbmI.first);
         }
       }
     }
@@ -152,8 +124,8 @@ namespace RDKit{
     if (!onlyHeavy) {
       // if we are interested in hydrogens as well add them up from 
       // each heavy atom
-      ConstAtomIterator ai;
-      for (ai = beginAtoms(); ai != endAtoms(); ai++) {
+      for (ConstAtomIterator ai = beginAtoms();
+	   ai != endAtoms(); ++ai) {
         res += (*ai)->getTotalNumHs();
       }
     }
@@ -219,9 +191,9 @@ namespace RDKit{
   void ROMol::clearAtomBookmark(const int mark,const Atom *atom){
     if(d_atomBookmarks.count(mark) != 0){
       ATOM_PTR_LIST *entry=&d_atomBookmarks[mark];
-      ATOM_PTR_LIST::iterator i;
       unsigned int tgtIdx=atom->getIdx();
-      for(i=entry->begin();i!=entry->end();i++){
+      for(ATOM_PTR_LIST::iterator i=entry->begin();
+	  i!=entry->end();++i){
         if((*i)->getIdx()==tgtIdx){
           entry->erase(i);
           break;
@@ -240,9 +212,9 @@ namespace RDKit{
   void ROMol::clearBondBookmark(const int mark,const Bond *bond){
     if(d_bondBookmarks.count(mark) != 0){
       BOND_PTR_LIST *entry=&d_bondBookmarks[mark];
-      BOND_PTR_LIST::iterator i;    
       unsigned int tgtIdx=bond->getIdx();
-      for(i=entry->begin();i!=entry->end();i++){
+      for(BOND_PTR_LIST::iterator i=entry->begin();
+	  i!=entry->end();++i){
         if((*i)->getIdx()==tgtIdx){
           entry->erase(i);
           break;
@@ -260,8 +232,8 @@ namespace RDKit{
     int res = boost::num_edges(d_graph);
     if (!onlyHeavy) {
       // If we need hydrogen connecting bonds add them up
-      ConstAtomIterator ai;
-      for (ai = beginAtoms(); ai != endAtoms(); ai++) {
+      for (ConstAtomIterator ai = beginAtoms();
+	   ai != endAtoms(); ++ai) {
         res += (*ai)->getTotalNumHs();
       }
     }
@@ -359,10 +331,8 @@ namespace RDKit{
       if(hasAtomBookmark(ci_RIGHTMOST_ATOM)) clearAtomBookmark(ci_RIGHTMOST_ATOM);
       setAtomBookmark(atom_p,ci_RIGHTMOST_ATOM);
     }
-    ConformerIterator cfi;
-    // EFF: I think this is going to cause a lot of re-allocation when
-    // building molecules from SMILES
-    for (cfi = this->beginConformers(); cfi != this->endConformers(); cfi++) {
+    for (ConformerIterator cfi = this->beginConformers();
+	 cfi != this->endConformers(); ++cfi) {
       (*cfi)->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
     }
     return which;
@@ -495,15 +465,14 @@ namespace RDKit{
 
     STR_VECT compLst;
     getProp("computedProps", compLst);
-    STR_VECT_CI svi;
-    for (svi = compLst.begin(); svi != compLst.end(); svi++) {
-      dp_props->clearVal(*svi);
+    BOOST_FOREACH(std::string &sv,compLst){
+      dp_props->clearVal(sv);
     }
     compLst.clear();
     dp_props->setVal("computedProps", compLst);
     for(ConstAtomIterator atomIt=this->beginAtoms();
         atomIt!=this->endAtoms();
-        atomIt++){
+        ++atomIt){
       (*atomIt)->clearComputedProps();
     }
     for(ConstBondIterator bondIt=this->beginBonds();
@@ -516,12 +485,12 @@ namespace RDKit{
   void ROMol::updatePropertyCache(bool strict) {
     for(AtomIterator atomIt=this->beginAtoms();
         atomIt!=this->endAtoms();
-        atomIt++){
+        ++atomIt){
       (*atomIt)->updatePropertyCache(strict);
     }
     for(BondIterator bondIt=this->beginBonds();
         bondIt!=this->endBonds();
-        bondIt++){
+        ++bondIt){
       (*bondIt)->updatePropertyCache(strict);
     }
   }
@@ -532,12 +501,12 @@ namespace RDKit{
       throw ConformerException("No conformations available on the molecule");
     }
     
-    ConstConformerIterator ci;
     if (id < 0) {
       return *(d_confs.front());
     }
     unsigned int cid = (unsigned int)id;
-    for (ci = this->beginConformers(); ci != this->endConformers(); ci++) {
+    for (ConstConformerIterator ci = this->beginConformers();
+	 ci != this->endConformers(); ++ci) {
       if ((*ci)->getId() == cid) {
         return *(*ci);
       }
@@ -557,9 +526,9 @@ namespace RDKit{
     if (id < 0) {
       return *(d_confs.front());
     }
-    ConformerIterator ci;
     unsigned int cid = (unsigned int)id;
-    for (ci = this->beginConformers(); ci != this->endConformers(); ci++) {
+    for (ConformerIterator ci = this->beginConformers();
+	 ci != this->endConformers(); ++ci) {
       if ((*ci)->getId() == cid) {
         return *(*ci);
       }
@@ -571,8 +540,7 @@ namespace RDKit{
   }
 
   void ROMol::removeConformer(unsigned int id) {
-    CONF_SPTR_LIST_I ci;
-    for (ci = d_confs.begin(); ci != d_confs.end(); ci++) {
+    for (CONF_SPTR_LIST_I ci = d_confs.begin(); ci != d_confs.end(); ++ci) {
       if ((*ci)->getId() == id) {
         d_confs.erase(ci);
         return;
@@ -581,18 +549,15 @@ namespace RDKit{
   }
 
   unsigned int ROMol::addConformer(Conformer * conf, bool assignId) {
-    PRECONDITION(conf->getNumAtoms() == this->getNumAtoms(), "Number of atom mismatch")
-      if (assignId) {
-        int maxId = -1;
-        CONF_SPTR_LIST_I ci;
-        for (ci = d_confs.begin(); ci != d_confs.end(); ci++) {
-          if ((int)(*ci)->getId() > maxId) {
-            maxId = (int)(*ci)->getId();
-          }
-        }
-        maxId++;
-        conf->setId((unsigned int)maxId);
+    PRECONDITION(conf->getNumAtoms() == this->getNumAtoms(), "Number of atom mismatch");
+    if (assignId) {
+      int maxId = -1;
+      BOOST_FOREACH(CONFORMER_SPTR cptr,d_confs){
+	maxId=std::max((int)(cptr->getId()),maxId);
       }
+      maxId++;
+      conf->setId((unsigned int)maxId);
+    }
     conf->setOwningMol(this);
     CONFORMER_SPTR nConf(conf);
     d_confs.push_back(nConf);

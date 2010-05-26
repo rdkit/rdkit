@@ -64,6 +64,10 @@ void testBookmarks(ROMol m){
   boost::logging::enable_logs("rdApp.error");
   CHECK_INVARIANT(ok,"atom bookmark not properly cleared");    
 
+  // make sure clearAtomBookmark doesn't barf if there's no
+  // such bookmark:
+  m.clearAtomBookmark(777);
+  
   //----------------------------
   // now do bond bookmarks
   Bond * b1 = m.getBondWithIdx(0);
@@ -100,6 +104,9 @@ void testBookmarks(ROMol m){
   boost::logging::enable_logs("rdApp.error");
   CHECK_INVARIANT(ok,"bond bookmark not properly cleared");    
   
+  // make sure clearAtomBookmark doesn't barf if there's no
+  // such bookmark:
+  m.clearBondBookmark(777);
 }
 
 void testMolProps()

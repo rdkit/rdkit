@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -145,7 +145,7 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
     while(begin!=end){
       const Atom *at = parent->getAtomWithIdx(*begin);
       if(at->getAtomicNum()==1) res++;
-      begin++;
+      ++begin;
     }
   }
   return res;
@@ -280,7 +280,6 @@ int Atom::calcImplicitValence(bool strict) {
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
   const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
-  INT_VECT_CI vi;
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
   int chg = getFormalCharge();
@@ -334,7 +333,8 @@ int Atom::calcImplicitValence(bool strict) {
       // atom. The only diff I can think of is in the way we handle
       // formal charge here vs the explicit valence function.
       bool satis = false;
-      for (vi = valens.begin(); vi!=valens.end() && *vi>0; vi++) {
+      for (INT_VECT_CI vi = valens.begin();
+	   vi!=valens.end() && *vi>0; ++vi) {
         if (explicitPlusRadV == ((*vi) + chg)) {
           satis = true;
           break;
@@ -355,7 +355,8 @@ int Atom::calcImplicitValence(bool strict) {
     // non-aromatic case we are allowed to have non default valences
     // and be able to add hydrogens
     res = -1;
-    for (vi = valens.begin(); vi != valens.end() && *vi>=0; ++vi) {
+    for (INT_VECT_CI vi = valens.begin();
+	 vi != valens.end() && *vi>=0; ++vi) {
       int tot = (*vi) + chg;
       if (explicitPlusRadV <= tot) {
         res = tot - explicitPlusRadV;
@@ -389,7 +390,6 @@ void Atom::setQuery(Atom::QUERYATOM_QUERY *what) {
   PRECONDITION(0,"plain atoms have no Query");
 }
 Atom::QUERYATOM_QUERY *Atom::getQuery() const {
-  //PRECONDITION(0,"plain atoms have no Query");
   return NULL;
 };
 void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,

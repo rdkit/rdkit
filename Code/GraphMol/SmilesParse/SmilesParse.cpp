@@ -33,8 +33,6 @@ extern int yysmiles_debug;
 int yysmarts_parse (std::vector<RDKit::RWMol *>*,void *);
 int yysmarts_lex_init (void **);
 int yysmarts_lex_destroy (void *);
-struct YY_BUFFER_STATE;
-struct YY_BUFFER_STATE *yysmarts__scan_string(const char *);
 void setup_smarts_string(const std::string &text,void *);
 extern int yysmarts_debug; 
 

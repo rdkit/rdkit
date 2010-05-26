@@ -13,6 +13,7 @@
 
 // Std stuff
 #include <iostream>
+#include <boost/foreach.hpp>
 
 // ours
 #include <Query/QueryObjects.h>
@@ -371,9 +372,8 @@ namespace RDKit{
       if(!hasProp("computedProps")) return;
       STR_VECT compLst;
       getProp("computedProps", compLst);
-      STR_VECT_CI svi;
-      for (svi = compLst.begin(); svi != compLst.end(); svi++) {
-	dp_props->clearVal(*svi);
+      BOOST_FOREACH(const std::string &sv,compLst){
+	dp_props->clearVal(sv);
       }
       compLst.clear();
       dp_props->setVal("computedProps", compLst);

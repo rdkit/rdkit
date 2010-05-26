@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -134,8 +134,8 @@ namespace RDKit{
       //  sanitized, aromaticity has been perceived, and the implicit
       //  valence of everything has been calculated.
       //
-      ROMol::AtomIterator ai; 
-      for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
+      for (ROMol::AtomIterator ai = mol.beginAtoms();
+	   ai != mol.endAtoms(); ++ai) {
         int origImplicitV = (*ai)->getImplicitValence();
         (*ai)->calcExplicitValence();
         int origExplicitV = (*ai)->getNumExplicitHs();
@@ -369,7 +369,7 @@ namespace RDKit{
       int accum = 0;
       for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
           atomIt!=mol.endAtoms();
-          atomIt++){
+          ++atomIt){
         accum += (*atomIt)->getFormalCharge();
       }
       return accum;

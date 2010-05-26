@@ -1,9 +1,11 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
+
+#include <boost/foreach.hpp>
 
 // our stuff
 #include <RDGeneral/Invariant.h>
@@ -12,8 +14,6 @@
 #include "Atom.h"
 #include "Bond.h"
 #include "BondIterators.h"
-
-
 
 namespace RDKit{
   void RWMol::destroy() {
@@ -63,7 +63,7 @@ namespace RDKit{
     d_graph[which].reset(atom_p);
     atom_p->setIdx(which);
     if(updateLabel){
-      if(hasAtomBookmark(ci_RIGHTMOST_ATOM)) clearAtomBookmark(ci_RIGHTMOST_ATOM);
+      clearAtomBookmark(ci_RIGHTMOST_ATOM);
       setAtomBookmark(atom_p,ci_RIGHTMOST_ATOM);
     }
     return which;
@@ -86,7 +86,7 @@ namespace RDKit{
   };
 
   void RWMol::setActiveAtom(Atom *at) {
-    if(hasAtomBookmark(ci_RIGHTMOST_ATOM)) clearAtomBookmark(ci_RIGHTMOST_ATOM);
+    clearAtomBookmark(ci_RIGHTMOST_ATOM);
     setAtomBookmark(at,ci_RIGHTMOST_ATOM);
   };
   void RWMol::setActiveAtom(unsigned int idx) {
@@ -130,9 +130,8 @@ namespace RDKit{
     }
 
     // do the same with the coordinates in the conformations
-    CONF_SPTR_LIST_I ci;
-    for (ci = d_confs.begin(); ci != d_confs.end(); ci++) {
-      RDGeom::POINT3D_VECT &positions = (*ci)->getPositions();
+    BOOST_FOREACH(CONFORMER_SPTR conf,d_confs){
+      RDGeom::POINT3D_VECT &positions = conf->getPositions();
       RDGeom::POINT3D_VECT_I pi = positions.begin();
       for (unsigned int i = 0; i < getNumAtoms()-1;i++) {
         ++pi;
