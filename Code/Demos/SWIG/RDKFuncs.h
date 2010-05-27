@@ -1,9 +1,10 @@
 // $Id$
 //
-// Copyright (C) 2008-2009 Greg Landrum
+// Copyright (C) 2008-2010 Greg Landrum
 // All Rights Reserved
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
@@ -12,18 +13,42 @@
 #include <RDGeneral/versions.h>
 
 RDKit::ROMOL_SPTR MolFromSmiles(std::string smi){
-  return RDKit::ROMOL_SPTR(RDKit::SmilesToMol(smi));
+  RDKit::ROMol *mol=0;
+  try{
+    mol=static_cast<RDKit::ROMol *>(RDKit::SmilesToMol(smi));
+  } catch (...){
+    mol=0;
+  }
+  return RDKit::ROMOL_SPTR(mol);
 };
 RDKit::ROMOL_SPTR MolFromSmarts(std::string sma){
-  return RDKit::ROMOL_SPTR(RDKit::SmartsToMol(sma));
+  RDKit::ROMol *mol=0;
+  try{
+    mol=static_cast<RDKit::ROMol *>(RDKit::SmartsToMol(sma));
+  } catch (...){
+    mol=0;
+  }
+  return RDKit::ROMOL_SPTR(mol);
 };
 RDKit::ROMOL_SPTR MolFromMolBlock(std::string molB,
                                   bool sanitize=true,bool removeHs=true){
-  return RDKit::ROMOL_SPTR(RDKit::MolBlockToMol(molB,sanitize,removeHs));
+  RDKit::ROMol *mol=0;
+  try{
+    mol=static_cast<RDKit::ROMol *>(RDKit::MolBlockToMol(molB,sanitize,removeHs));
+  } catch (...){
+    mol=0;
+  }
+  return RDKit::ROMOL_SPTR(mol);
 };
 RDKit::ROMOL_SPTR MolFromMolFile(std::string filename,
                                  bool sanitize=true,bool removeHs=true){
-  return RDKit::ROMOL_SPTR(RDKit::MolFileToMol(filename,sanitize,removeHs));
+  RDKit::ROMol *mol=0;
+  try{
+    mol=static_cast<RDKit::ROMol *>(RDKit::MolFileToMol(filename,sanitize,removeHs));
+  } catch (...){
+    mol=0;
+  }
+  return RDKit::ROMOL_SPTR(mol);
 };
 RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma){
   RDKit::ChemicalReaction *res=RDKit::RxnSmartsToChemicalReaction(sma);
@@ -49,6 +74,13 @@ std::string MolToMolBlock(RDKit::ROMOL_SPTR mol, bool includeStereo=true,
                           int confId=-1) {
   return RDKit::MolToMolBlock(*mol,includeStereo,confId);
 }
+
+std::string MolToBinary(RDKit::ROMOL_SPTR mol){
+  std::string res;
+  RDKit::MolPickler::pickleMol(*mol,res);
+  return res;
+};
+
 
 std::string rdkitVersion(){
   return RDKit::rdkitVersion;

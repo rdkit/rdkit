@@ -158,6 +158,16 @@ public class WrapperTests {
 	m1 = RDKFuncs.MolFromSmiles("C1CC");
 	assertTrue(m1==null);
     }
+    /*    @Test public void testMemory() {
+	for(int i=0;i<1000000;i++){
+	    ROMol m1,m2;
+	    m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
+	    if((i%1000)==0){
+		System.err.println("done: "+i);
+	    }
+	    m1.delete();
+	}
+	}*/
     static {
         try {
             System.loadLibrary("RDKFuncs");

@@ -15,6 +15,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/Atom.h>
+#include <GraphMol/Bond.h>
 #include "RDKFuncs.h"
 %}
 
@@ -87,6 +88,7 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
     RDKit::MatchVectType mv;
     SubstructMatch(*($self),query,mv,true,useChirality,false);
     return mv;
+
   };
 
   std::vector< std::vector<std::pair<int, int> > >
