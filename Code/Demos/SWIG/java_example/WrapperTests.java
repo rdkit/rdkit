@@ -155,8 +155,13 @@ public class WrapperTests {
     }
     @Test public void testErrorHandling() {
 	ROMol m1;
+	System.err.println("go");
 	m1 = RDKFuncs.MolFromSmiles("C1CC");
 	assertTrue(m1==null);
+	System.err.println("go2");
+	m1 = RDKFuncs.MolFromSmiles("c1cc1");
+	assertTrue(m1==null);
+	System.err.println("ok!");
     }
     /*    @Test public void testMemory() {
 	for(int i=0;i<1000000;i++){
