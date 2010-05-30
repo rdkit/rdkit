@@ -4,65 +4,26 @@
 #
 #   @@ All Rights Reserved  @@
 #
-""" Configuration for Rational Discovery's Python code
+""" Configuration for the RDKit Python code
 
 """
 
 import os,sys
-try:
-  RDBaseDir=os.environ['RDBASE']
-except:
-  RDBaseDir='d:/RD'  
+if not os.environ.has_key('RDBASE'):
+  raise ImportError,'please set the RDBASE environment variable before using RDKit code'
+RDBaseDir=os.environ['RDBASE']
 RDCodeDir=os.path.join(RDBaseDir,'rdkit')
-RDImageDir=os.path.join(RDCodeDir,'qtGui','Images')  # images used within the GUI tools
 RDDataDir=os.path.join(RDBaseDir,'Data')
 RDDocsDir=os.path.join(RDBaseDir,'Docs')
 RDDemoDir=os.path.join(RDBaseDir,'Demo')
 RDBinDir=os.path.join(RDBaseDir,'bin')
 RDProjDir=os.path.join(RDBaseDir,'Projects')
-#if not os.environ.has_key('OE_DIR') or os.environ['OE_DIR']=='':
-#  os.environ['OE_DIR'] = RDDataDir
-
-
-if os.environ.has_key('RDDGEOM'):
-  dgeomLoc=os.environ['RDDGEOM']
-else:
-  if sys.platform=='win32':
-    binName = 'dgeom.exe'
-  else:
-    binName = 'dgeom'
-  dgeomLoc=os.path.join(RDBinDir,binName)
-
-if os.environ.has_key('RDTINKER'):
-  tinkerPath=os.environ['RDTINKER']
-else:
-  if sys.platform=='win32':
-    tinkerPath = ''
-  else:
-    tinkerPath = '/usr/local/src/tinker'
-tinkerBin = '%s/bin'%(tinkerPath)
-tinkerParams = '%s/params'%(tinkerPath)
-
-try:
-  doingDemo=os.environ['RDDEMO']
-  if doingDemo=='0': doingDemo=0
-except:
-  doingDemo=0
-
-try:
-  largeFont=os.environ['RDLARGEFONT']
-except:
-  largeFont=0
-
-RDFont=None
-logGui=0
 
 rpcTestPort=8423
 pythonTestCommand="python"
 
 defaultDBUser='sysdba'
 defaultDBPassword='masterkey'
-
 
 import exceptions
 class ObsoleteCodeError(exceptions.Exception):

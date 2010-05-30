@@ -1,3 +1,25 @@
+******  Release_Q22010_1 *******
+(Changes relative to Release_Q12010_1)
+
+Acknowledgements:
+   
+Bug Fixes: 
+    
+New Features:
+
+Deprecated modules (to be removed in next release):
+ - rdkit/qtGui
+ - Projects/SDView
+ 
+Removed modules:
+ - SVD code: External/svdlibc External/svdpackc rdkit/PySVD
+ 
+ 
+
+
+Other:
+
+
 ******  Release_Q12010_1 *******
 (Changes relative to Release_Q42009_1)
 

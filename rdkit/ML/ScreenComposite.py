@@ -866,10 +866,7 @@ def GetScreenImage(nGood,nBad,nRej,size=None):
   pctRej = float(nRej) / nTot
   
   if size is None:
-    if RDConfig.doingDemo:
-      size = (200,200)
-    else:
-      size = (100,100)
+    size = (100,100)
   img = Image.new('RGB',size,(255,255,255))
   draw = ImageDraw.Draw(img)
   box = (0,0,size[0]-1,size[1]-1)
@@ -926,10 +923,7 @@ def ScreenToHtml(nGood,nBad,nRej,avgGood,avgBad,avgSkip,voteTable,imgDir='.',
   else:
     outTxt = []
     
-  if RDConfig.doingDemo:
-    outTxt.append('<font size="+2">')
-  else:
-    outTxt.append('<font>')
+  outTxt.append('<font>')
 
   # Get the image
   if not skipImg:

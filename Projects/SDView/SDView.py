@@ -20,7 +20,10 @@ _usage="""
    Note: using "-" as the sd filename will cause the program to read the SD data from stdin
 
 """
-_welcomeMessage="This is SDView version %s"%(_version)
+_welcomeMessage="""This is SDView version %s
+
+WARNING: this program is deprecated and will be removed in the Q3 2010 RDKit release.
+"""%(_version)
 import sys,os,copy
 from rdkit.RDLogger import logger
 logger = logger()
