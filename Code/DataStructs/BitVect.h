@@ -21,21 +21,21 @@ class BitVect{
 public:
   virtual ~BitVect() = 0;
   //! sets a particular bit and returns its original value
-  virtual bool SetBit(const unsigned int which) = 0;
+  virtual bool setBit(const unsigned int which) = 0;
   //! unsets a particular bit and returns its original value
-  virtual bool UnSetBit(const unsigned int which) = 0;
+  virtual bool unsetBit(const unsigned int which) = 0;
   //! returns the value of a particular bit
-  virtual bool GetBit(const unsigned int which) const = 0;
+  virtual bool getBit(const unsigned int which) const = 0;
   //! returns the number of bits (the length of the BitVect)
-  virtual unsigned int GetNumBits() const = 0;
+  virtual unsigned int getNumBits() const = 0;
   //! returns the number of on bits
-  virtual unsigned int GetNumOnBits() const = 0;
+  virtual unsigned int getNumOnBits() const = 0;
   //! returns the number of off bits
-  virtual unsigned int GetNumOffBits() const =0;
+  virtual unsigned int getNumOffBits() const =0;
   //! replaces the contents of \c v with indices of our on bits
-  virtual void GetOnBits (IntVect& v) const = 0;
+  virtual void getOnBits (IntVect& v) const = 0;
   //! clears (sets to off) all of our bits
-  virtual void ClearBits() = 0;
+  virtual void clearBits() = 0;
 
   //! initializes this BitVect from a pickle
   /*!
@@ -48,16 +48,16 @@ public:
          amount of error checking and it is strongly suggested that it not
          be used in client code.
    */
-  void InitFromText(const char *data,const unsigned int dataLen,
+  void initFromText(const char *data,const unsigned int dataLen,
                     bool isBase64=false,bool allowOldFormat=false);
                     
   //! returns a serialized (pickled) version of this BitVect
-  virtual std::string ToString() const = 0;
+  virtual std::string toString() const = 0;
 
   virtual bool operator[] (const unsigned int which) const = 0;
 
 private:
-  virtual void _InitForSize(const unsigned int size) = 0;
+  virtual void _initForSize(const unsigned int size) = 0;
 };
 
 

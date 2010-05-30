@@ -252,7 +252,7 @@ static void blobToRDKitFingerprint(
     return;
   }
   ExplicitBitVect *fp=RDKit::DaylightFingerprintMol(*m,1,7,2048,4,true,0.3,128);
-  std::string text=fp->ToString();
+  std::string text=fp->toString();
   delete fp;
   delete m;
   sqlite3_result_text(context, text.c_str(), text.length(), SQLITE_TRANSIENT );

@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (c) 2002-2006  greg Landrum, Rational Discovery LLC
+// Copyright (c) 2002-20`0  greg Landrum, Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -11,11 +11,11 @@
 
 //! Convert a SparseBitVector to an ExplicitBitVector
 ExplicitBitVect *convertToExplicit(const SparseBitVect *sbv) {
-  unsigned int sl = sbv->GetNumBits();
+  unsigned int sl = sbv->getNumBits();
   ExplicitBitVect *ebv = new ExplicitBitVect(sl);
-  const IntSet *bset = sbv->GetBitSet();
+  const IntSet *bset = sbv->getBitSet();
   for (IntSetConstIter it = bset->begin(); it != bset->end(); it++) {
-    ebv->SetBit(*it);
+    ebv->setBit(*it);
   }
   return ebv;
 }
@@ -27,7 +27,7 @@ void a2b(const char *,char *);
 template <typename T>
 void FromDaylightString(T &sbv,std::string s)
 {
-  sbv.ClearBits();
+  sbv.clearBits();
   int length = s.length();
   int nBits;
 
@@ -52,7 +52,7 @@ void FromDaylightString(T &sbv,std::string s)
       unsigned char query=0x80;
       for(int k=0;k<8;k++) {
         if(bytes[j]&query){
-          sbv.SetBit(nBitsDone);
+          sbv.setBit(nBitsDone);
         }
         query >>= 1;
         nBitsDone++;
@@ -70,10 +70,10 @@ template void FromDaylightString(ExplicitBitVect &sbv,std::string s);
 template <typename T>
 void FromBitString(T &sbv,const std::string &s)
 {
-  PRECONDITION(s.length()<=sbv.GetNumBits(),"bad bitvect length");
-  sbv.ClearBits();
-  for(unsigned int i=0;i<sbv.GetNumBits();++i){
-    if(s[i]=='1') sbv.SetBit(i);
+  PRECONDITION(s.length()<=sbv.getNumBits(),"bad bitvect length");
+  sbv.clearBits();
+  for(unsigned int i=0;i<sbv.getNumBits();++i){
+    if(s[i]=='1') sbv.setBit(i);
   }
 }
 

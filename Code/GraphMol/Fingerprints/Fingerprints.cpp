@@ -168,7 +168,7 @@ namespace RDKit{
         for(unsigned int i=0;i<nBitsPerHash;i++){
           unsigned int bit = randomSource();
           bit %= fpSize;
-          res->SetBit(bit);
+          res->setBit(bit);
 #ifdef VERBOSE_FINGERPRINTING        
           std::cerr<<"   bit: "<<i<<" "<<bit<<std::endl;
 #endif
@@ -180,8 +180,8 @@ namespace RDKit{
     // of 2 each time, but we're not going to be spending much
     // time here anyway
     if(tgtDensity>0.0){
-      while( static_cast<double>(res->GetNumOnBits())/res->GetNumBits() < tgtDensity &&
-             res->GetNumBits() >= 2*minSize ){
+      while( static_cast<double>(res->getNumOnBits())/res->getNumBits() < tgtDensity &&
+             res->getNumBits() >= 2*minSize ){
         ExplicitBitVect *tmpV=FoldFingerprint(*res,2);
         delete res;
         res = tmpV;
@@ -204,7 +204,7 @@ namespace RDKit{
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
     PRECONDITION(!atomCounts || atomCounts->size()>=mol.getNumAtoms(),"bad atomCounts size");
-    PRECONDITION(!setOnlyBits || setOnlyBits->GetNumBits()==fpSize,"bad setOnlyBits size");
+    PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits()==fpSize,"bad setOnlyBits size");
 
     if(!mol.getRingInfo()->isInitialized()){
       MolOps::findSSSR(mol);
@@ -366,7 +366,7 @@ namespace RDKit{
           // hash the path to generate a seed:
           unsigned long seed = gboost::hash_range(layerIt->begin(),layerIt->end());
 #if 0
-          if(!res->GetBit(seed%fpSize)) {
+          if(!res->getBit(seed%fpSize)) {
             std::cerr<<"seed "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
           } else {
             std::cerr<<"         "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
@@ -391,7 +391,7 @@ namespace RDKit{
           //std::cerr<<"   bit "<<bitId<<std::endl;
 #endif
           if(!setOnlyBits || (*setOnlyBits)[bitId]){
-            res->SetBit(bitId);
+            res->setBit(bitId);
             if(atomCounts && !flaggedPath){
               for(unsigned int aIdx=0;aIdx<atomsInPath.size();++aIdx){
                 if(atomsInPath[aIdx]){
@@ -407,8 +407,8 @@ namespace RDKit{
       // of 2 each time, but we're not going to be spending much
       // time here anyway
       if(tgtDensity>0.0){
-        while( static_cast<double>(res->GetNumOnBits())/res->GetNumBits() < tgtDensity &&
-               res->GetNumBits() >= 2*minSize ){
+        while( static_cast<double>(res->getNumOnBits())/res->getNumBits() < tgtDensity &&
+               res->getNumBits() >= 2*minSize ){
           ExplicitBitVect *tmpV=FoldFingerprint(*res,2);
           delete res;
           res = tmpV;

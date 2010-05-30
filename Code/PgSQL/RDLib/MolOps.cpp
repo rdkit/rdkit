@@ -327,7 +327,7 @@ Datum rd_substructfp(PG_FUNCTION_ARGS)
     ereport(ERROR,(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 		   errmsg("missing or empty SMILES in rd_substructfp function call")));
   }
-  std::string pkl=bv->ToString();
+  std::string pkl=bv->toString();
   delete bv;
   pq_sendtext(&buf,pkl.c_str(),pkl.size());
   PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
@@ -392,12 +392,12 @@ Datum rd_similarityfp(PG_FUNCTION_ARGS)
     if(mol) {
       try{
 	bv = RDKFingerprintMol(*mol,1,7,fpSize);
-	double density=static_cast<double>(bv->GetNumOnBits())/bv->GetNumBits();
-	while(density<tgtDensity && bv->GetNumBits()>8){
+	double density=static_cast<double>(bv->getNumOnBits())/bv->getNumBits();
+	while(density<tgtDensity && bv->getNumBits()>8){
 	  ExplicitBitVect *tmp=FoldFingerprint(*bv,2);
 	  delete bv;
 	  bv = tmp;
-	  density=static_cast<double>(bv->GetNumOnBits())/bv->GetNumBits();
+	  density=static_cast<double>(bv->getNumOnBits())/bv->getNumBits();
 	}
       } catch (...) {
 	bv = new ExplicitBitVect(fpSize);
@@ -410,7 +410,7 @@ Datum rd_similarityfp(PG_FUNCTION_ARGS)
     ereport(ERROR,(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 		   errmsg("missing or empty SMILES in rd_similarityfp function call")));
   }
-  std::string pkl=bv->ToString();
+  std::string pkl=bv->toString();
   delete bv;
   pq_sendtext(&buf,pkl.c_str(),pkl.size());
   PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
@@ -437,12 +437,12 @@ Datum rd_similarityfp_bits(PG_FUNCTION_ARGS)
     if(mol) {
       try{
 	bv = RDKFingerprintMol(*mol,1,7,fpSize);
-	double density=static_cast<double>(bv->GetNumOnBits())/bv->GetNumBits();
-	while(density<tgtDensity && bv->GetNumBits()>8){
+	double density=static_cast<double>(bv->getNumOnBits())/bv->getNumBits();
+	while(density<tgtDensity && bv->getNumBits()>8){
 	  ExplicitBitVect *tmp=FoldFingerprint(*bv,2);
 	  delete bv;
 	  bv = tmp;
-	  density=static_cast<double>(bv->GetNumOnBits())/bv->GetNumBits();
+	  density=static_cast<double>(bv->getNumOnBits())/bv->getNumBits();
 	}
       } catch (...) {
 	bv = new ExplicitBitVect(fpSize);
@@ -457,7 +457,7 @@ Datum rd_similarityfp_bits(PG_FUNCTION_ARGS)
   }
   // BVToVarBits handles null pointers w/o problems so we can go ahead and
   // call it directly:
-  if(bv) fpSize=bv->GetNumBits();
+  if(bv) fpSize=bv->getNumBits();
   VarBit *result = BVToVarBits(bv,fpSize);
   if(bv){
     delete bv;

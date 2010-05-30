@@ -89,7 +89,7 @@ namespace RDInfoTheory {
       for (unsigned int i = 0; i < nd; i++) {
         bi = d_descs[i];
         if (fp[bi]) {
-          ebv.SetBit(i);
+          ebv.setBit(i);
         }
       }
       for (unsigned i = 1; i < nd; i++) {

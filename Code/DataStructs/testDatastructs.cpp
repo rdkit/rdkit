@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -33,97 +33,97 @@ bool feq(double v1,double v2,double tol=1e-4){
 
 template<typename T> void Test(T arg){
   T t1(20);
-  TXTMSG("Set 10:",t1.SetBit(10));
-  TXTMSG("Set 11:",t1.SetBit(11));
-  TXTMSG("Set 14:",t1.SetBit(14));
-  TXTMSG("Set 10:",t1.SetBit(10));
-  TXTMSG("Get 14:",t1.GetBit(14));
-  TXTMSG("Num:",t1.GetNumBits());
-  TXTMSG("NumOn:",t1.GetNumOnBits());
-  TXTMSG("NumOff:",t1.GetNumOffBits());
+  TXTMSG("Set 10:",t1.setBit(10));
+  TXTMSG("Set 11:",t1.setBit(11));
+  TXTMSG("Set 14:",t1.setBit(14));
+  TXTMSG("Set 10:",t1.setBit(10));
+  TXTMSG("Get 14:",t1.getBit(14));
+  TXTMSG("Num:",t1.getNumBits());
+  TXTMSG("NumOn:",t1.getNumOnBits());
+  TXTMSG("NumOff:",t1.getNumOffBits());
   TEST_ASSERT(t1==t1);
 
   IntVect onBits;
-  t1.GetOnBits(onBits);
+  t1.getOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
   T t2(t1);
-  //onBits = t2.GetOnBits();
+  //onBits = t2.getOnBits();
   TXTMSG("t2[19]:",t2[19]);
   TXTMSG("t2[14]:",t2[14]);
 
   TEST_ASSERT(t2==t1);
   
   t2 = t1;
-  //onBits = t2.GetOnBits();
+  //onBits = t2.getOnBits();
   TXTMSG("t2[19]:",t2[19]);
-  t2.UnSetBit(14);
+  t2.unsetBit(14);
   TXTMSG("t2[14]:",t2[14]);
-  t2.SetBit(15);
-  t2.SetBit(17);
+  t2.setBit(15);
+  t2.setBit(17);
   TEST_ASSERT(t2!=t1);
 
 
   std::cout << "t1: ";
-  t1.GetOnBits(onBits);
+  t1.getOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
   std::cout << "t2: ";
-  t2.GetOnBits(onBits);
+  t2.getOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
   std::cout << "t1|t2: ";
   T t3=t1|t2;
-  t3.GetOnBits(onBits);
+  t3.getOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
   std::cout << "t1&t2: ";
   t3=t1 & t2;
-  t3.GetOnBits(onBits);
+  t3.getOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
   
   std::cout << "t1^t2: ";
   t3=t1 ^ t2;
-  t3.GetOnBits(onBits);
+  t3.getOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
   std::cout << "~t1: ";
   t3= ~t1;
-  t3.GetOnBits(onBits);
+  t3.getOnBits(onBits);
   std::copy(onBits.begin(),onBits.end(),std::ostream_iterator<int>(std::cout,", "));
   std::cout << std::endl;
 
   try{
-    t3.GetBit(4000);
+    t3.getBit(4000);
   } catch (IndexErrorException) {
     std::cout << " except " << endl;
   } catch (...) {
     std::cout << " ERROR EXCEPT " << endl;
   }
 
-  T t4(t1.ToString());
+  T t4(t1.toString());
   TEST_ASSERT(t4==t1);
   TEST_ASSERT(feq(TanimotoSimilarity(t1,t4),1.0));
   
   T *t5 = FoldFingerprint(t1);
-  TEST_ASSERT(t5->GetNumBits() == t1.GetNumBits()/2);
-  TEST_ASSERT(t5->GetBit(0));
-  TEST_ASSERT(t5->GetBit(1));
-  TEST_ASSERT(t5->GetBit(4));
-  TEST_ASSERT(!t5->GetBit(2));
-  TEST_ASSERT(!t5->GetBit(3));
+  TEST_ASSERT(t5->getNumBits() == t1.getNumBits()/2);
+  TEST_ASSERT(t5->getBit(0));
+  TEST_ASSERT(t5->getBit(1));
+  TEST_ASSERT(t5->getBit(4));
+  TEST_ASSERT(!t5->getBit(2));
+  TEST_ASSERT(!t5->getBit(3));
   delete t5;
 
-  std::string pkl=t1.ToString();
+  std::string pkl=t1.toString();
   const char *pkl64=Base64Encode(pkl.c_str(),pkl.size());
-  T t6(t1.GetNumBits());
-  t6.InitFromText(pkl64,strlen(pkl64),true);
+  T t6(t1.getNumBits());
+  t6.initFromText(pkl64,strlen(pkl64),true);
   delete [] pkl64;
   TEST_ASSERT(t6==t1);
 }
@@ -171,23 +171,23 @@ template<typename T> void ProbeTest(T &arg){
   int sz=1000;
   T t1(sz),t2(sz);
   for(int i=0;i<sz;i+=2){
-    t1.SetBit(i);
-    if(i<3*sz/4) t2.SetBit(i);
+    t1.setBit(i);
+    if(i<3*sz/4) t2.setBit(i);
   }
-  std::string pkl=t1.ToString();
+  std::string pkl=t1.toString();
   TEST_ASSERT(AllProbeBitsMatch(t1,pkl));
   TEST_ASSERT(AllProbeBitsMatch(t2,pkl));
-  TEST_ASSERT(AllProbeBitsMatch(t1.ToString(),pkl));
-  TEST_ASSERT(AllProbeBitsMatch(t2.ToString(),pkl));
-  TEST_ASSERT(AllProbeBitsMatch(t1.ToString().c_str(),pkl.c_str()));
-  TEST_ASSERT(AllProbeBitsMatch(t2.ToString().c_str(),pkl.c_str()));
-  pkl = t2.ToString();
+  TEST_ASSERT(AllProbeBitsMatch(t1.toString(),pkl));
+  TEST_ASSERT(AllProbeBitsMatch(t2.toString(),pkl));
+  TEST_ASSERT(AllProbeBitsMatch(t1.toString().c_str(),pkl.c_str()));
+  TEST_ASSERT(AllProbeBitsMatch(t2.toString().c_str(),pkl.c_str()));
+  pkl = t2.toString();
   TEST_ASSERT(!AllProbeBitsMatch(t1,pkl));
   TEST_ASSERT(AllProbeBitsMatch(t2,pkl));
-  TEST_ASSERT(!AllProbeBitsMatch(t1.ToString(),pkl));
-  TEST_ASSERT(AllProbeBitsMatch(t2.ToString(),pkl));
-  TEST_ASSERT(!AllProbeBitsMatch(t1.ToString().c_str(),pkl.c_str()));
-  TEST_ASSERT(AllProbeBitsMatch(t2.ToString().c_str(),pkl.c_str()));
+  TEST_ASSERT(!AllProbeBitsMatch(t1.toString(),pkl));
+  TEST_ASSERT(AllProbeBitsMatch(t2.toString(),pkl));
+  TEST_ASSERT(!AllProbeBitsMatch(t1.toString().c_str(),pkl.c_str()));
+  TEST_ASSERT(AllProbeBitsMatch(t2.toString().c_str(),pkl.c_str()));
 }
 
 
@@ -948,9 +948,9 @@ void test8BitVectPickles() {
 
     ExplicitBitVect bv(32);
     for(int i=0;i<32;i+=2){
-      bv.SetBit(i);
+      bv.setBit(i);
     }
-    std::string pkl=bv.ToString();
+    std::string pkl=bv.toString();
     unsigned int sz=pkl.size();
     outS<<sz;
     outS<<pkl;
@@ -974,8 +974,8 @@ void test8BitVectPickles() {
     delete [] buff;
     ExplicitBitVect bv(pkl);
 
-    TEST_ASSERT(bv.GetNumBits()==32);
-    TEST_ASSERT(bv.GetNumOnBits()==16);
+    TEST_ASSERT(bv.getNumBits()==32);
+    TEST_ASSERT(bv.getNumOnBits()==16);
     TEST_ASSERT(bv[0]);
     TEST_ASSERT(!bv[1]);
   }

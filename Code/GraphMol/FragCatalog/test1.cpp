@@ -37,41 +37,41 @@ void testMols(std::vector<ROMol *> &mols,FragFPGenerator &fpGen,FragCatalog &fca
     ExplicitBitVect *fp = fpGen.getFPForMol(*(*mi), fcat);
     switch(nDone){
     case 0:
-      TEST_ASSERT(fp->GetNumOnBits()==3);
+      TEST_ASSERT(fp->getNumOnBits()==3);
       TEST_ASSERT((*fp)[0]);
       TEST_ASSERT((*fp)[1]);
       TEST_ASSERT((*fp)[2]);
       break;
     case 1:
-      TEST_ASSERT(fp->GetNumOnBits()==2);
+      TEST_ASSERT(fp->getNumOnBits()==2);
       TEST_ASSERT((*fp)[1]);
       TEST_ASSERT((*fp)[3]);
       break;
     case 2:
-      TEST_ASSERT(fp->GetNumOnBits()==3);
+      TEST_ASSERT(fp->getNumOnBits()==3);
       TEST_ASSERT((*fp)[1]);
       TEST_ASSERT((*fp)[4]);
       TEST_ASSERT((*fp)[5]);
       break;
     case 3:
-      TEST_ASSERT(fp->GetNumOnBits()==3);
+      TEST_ASSERT(fp->getNumOnBits()==3);
       TEST_ASSERT((*fp)[1]);
       TEST_ASSERT((*fp)[6]);
       TEST_ASSERT((*fp)[7]);
       break;
     case 4:
-      TEST_ASSERT(fp->GetNumOnBits()==2);
+      TEST_ASSERT(fp->getNumOnBits()==2);
       TEST_ASSERT((*fp)[0]);
       TEST_ASSERT((*fp)[8]);
       break;
     case 5:
-      TEST_ASSERT(fp->GetNumOnBits()==3);
+      TEST_ASSERT(fp->getNumOnBits()==3);
       TEST_ASSERT((*fp)[0]);
       TEST_ASSERT((*fp)[6]);
       TEST_ASSERT((*fp)[9]);
       break;
     case 6:
-      TEST_ASSERT(fp->GetNumOnBits()==5);
+      TEST_ASSERT(fp->getNumOnBits()==5);
       TEST_ASSERT((*fp)[0]);
       TEST_ASSERT((*fp)[1]);
       TEST_ASSERT((*fp)[2]);

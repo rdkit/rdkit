@@ -70,7 +70,7 @@ namespace RDInfoTheory {
     python::extract<SparseBitVect> sbvWorks(bitVect);
     if (sbvWorks.check()){
       SparseBitVect sv = python::extract<SparseBitVect>(bitVect);
-      std::cout << "Num of on bits: " << sv.GetNumOnBits() << "\n";
+      std::cout << "Num of on bits: " << sv.getNumOnBits() << "\n";
     }
   }
 

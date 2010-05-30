@@ -21,7 +21,7 @@ PyObject *runCMIM(python::list examples,unsigned int nToTake){
   const BV &tmpBV=python::extract<BV>(example[1]);
   unsigned int exSize=python::extract<int>(example.attr("__len__")());
   //std::cerr << "EXSIZE " << exSize << std::endl;std::cerr.flush();
-  unsigned int nBits=tmpBV.GetNumBits();
+  unsigned int nBits=tmpBV.getNumBits();
   //std::cerr << "nBits " << nBits << std::endl;std::cerr.flush();
 
   unsigned int sz=(nExamples+31)/32;
@@ -41,7 +41,7 @@ PyObject *runCMIM(python::list examples,unsigned int nToTake){
     const BV &bv=python::extract<BV>(example[1]);
     //std::cerr << BitVectToText(bv) << std::endl;
     for(unsigned int j=0;j<nBits;j++){
-      fe_set_bit(i,x[j],bv.GetBit(j));
+      fe_set_bit(i,x[j],bv.getBit(j));
     }
   }
 

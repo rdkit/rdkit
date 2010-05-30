@@ -17,14 +17,14 @@ namespace python = boost::python;
   template <typename T>
   void InitFromBase64(T& self,const std::string &inD)
   {
-    self.InitFromText(inD.c_str(),inD.length(),true);
+    self.initFromText(inD.c_str(),inD.length(),true);
   };
 
   template <typename T>
   std::string ToBase64(T& self)
   {
     std::string tmp;
-    tmp = self.ToString();
+    tmp = self.toString();
     const char *txt=Base64Encode(tmp.c_str(),tmp.length());
     std::string res(txt);
     delete[] txt;
@@ -35,7 +35,7 @@ namespace python = boost::python;
   void SetBitsFromList(T *bv, python::object onBitList) {
     PySequenceHolder<int> bitL(onBitList);
     for (unsigned int i = 0; i < bitL.size(); i++) {
-      bv->SetBit(bitL[i]);
+      bv->setBit(bitL[i]);
     }
   }
 
@@ -44,13 +44,13 @@ namespace python = boost::python;
   const int get_VectItem(const T& self,int which)
   {
     if(which<0){
-      if(which+self.GetNumBits()<0){
+      if(which+self.getNumBits()<0){
         throw IndexErrorException(which);
       } else {
-        which += self.GetNumBits();
+        which += self.getNumBits();
       }
     }
-    return self.GetBit(static_cast<unsigned int>(which));
+    return self.getBit(static_cast<unsigned int>(which));
   }
 
   // used to support __setitem__
@@ -58,25 +58,25 @@ namespace python = boost::python;
   const int set_VectItem(T& self, int which, const int val)
   {
     if(which<0){
-      if(which+self.GetNumBits()<0){
+      if(which+self.getNumBits()<0){
         throw IndexErrorException(which);
       } else {
-        which += self.GetNumBits();
+        which += self.getNumBits();
       }
     }
     if(val){
-      return self.SetBit(static_cast<unsigned int>(which));
+      return self.setBit(static_cast<unsigned int>(which));
     } else {
-      return self.UnSetBit(static_cast<unsigned int>(which));
+      return self.unsetBit(static_cast<unsigned int>(which));
     }
   }
 
-  // used to support GetOnBits()
+  // used to support getOnBits()
   template <typename T>
   IntVect GetOnBits(const T& self)
   {
     IntVect res;
-    self.GetOnBits(res);
+    self.getOnBits(res);
     return res;
   }
 

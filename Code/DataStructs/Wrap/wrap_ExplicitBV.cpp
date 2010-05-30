@@ -17,7 +17,7 @@ struct ebv_pickle_suite : python::pickle_suite
   static python::tuple
   getinitargs(const ExplicitBitVect& self)
   {
-    return python::make_tuple(self.ToString());
+    return python::make_tuple(self.toString());
   };
 };
 
@@ -45,20 +45,20 @@ struct EBV_wrapper {
   python::class_<ExplicitBitVect>("ExplicitBitVect",ebvClassDoc.c_str(),
                                   python::init<unsigned int>())
     .def(python::init<std::string>())
-    .def("SetBit",(bool (EBV::*)(unsigned int))&EBV::SetBit,
+    .def("SetBit",(bool (EBV::*)(unsigned int))&EBV::setBit,
          "Turns on a particular bit on.  Returns the original state of the bit.\n")
     .def("SetBitsFromList",(void (*)(EBV *,python::object))SetBitsFromList,
          "Turns on a set of bits.  The argument should be a tuple or list of bit ids.\n")
-    .def("UnSetBit",(bool (EBV::*)(unsigned int))&EBV::UnSetBit,
+    .def("UnSetBit",(bool (EBV::*)(unsigned int))&EBV::unsetBit,
          "Turns on a particular bit off.  Returns the original state of the bit.\n")
-    .def("GetBit",(bool (EBV::*)(unsigned int) const)&EBV::GetBit,
+    .def("GetBit",(bool (EBV::*)(unsigned int) const)&EBV::getBit,
          "Returns the value of a bit.\n")
-    .def("GetNumBits",&EBV::GetNumBits,
+    .def("GetNumBits",&EBV::getNumBits,
          "Returns the number of bits in the vector (the vector's size).\n")
-    .def("__len__",&EBV::GetNumBits)
-    .def("GetNumOnBits",&EBV::GetNumOnBits,
+    .def("__len__",&EBV::getNumBits)
+    .def("GetNumOnBits",&EBV::getNumOnBits,
          "Returns the number of on bits.\n")
-    .def("GetNumOffBits",&EBV::GetNumOffBits,
+    .def("GetNumOffBits",&EBV::getNumOffBits,
          "Returns the number of off bits.\n")
     .def("__getitem__",
          (const int (*)(const EBV&,int))get_VectItem)
@@ -67,7 +67,7 @@ struct EBV_wrapper {
     .def("GetOnBits",
          (IntVect (*)(const EBV&))GetOnBits,
          "Returns a tuple containing IDs of the on bits.\n")
-    .def("ToBinary",&EBV::ToString,
+    .def("ToBinary",&EBV::toString,
          "Returns a binary string representation of the vector.\n")
     .def("FromBase64",
          (void (*)(EBV &,const std::string &))InitFromBase64,

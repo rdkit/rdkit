@@ -50,7 +50,7 @@ namespace RDInfoTheory {
     dp_maskBits = new ExplicitBitVect(d_dims);
     for (RDKit::INT_VECT_CI bi = maskBits.begin();
          bi != maskBits.end(); ++bi) {
-      dp_maskBits->SetBit(*bi);
+      dp_maskBits->setBit(*bi);
     }
   }
 
@@ -115,12 +115,12 @@ namespace RDInfoTheory {
 
   void InfoBitRanker::accumulateVotes(const ExplicitBitVect &bv, unsigned int label) {
     RANGE_CHECK(0, label, d_classes-1);
-    CHECK_INVARIANT(bv.GetNumBits() == d_dims, "Incorrect bit vector size");
+    CHECK_INVARIANT(bv.getNumBits() == d_dims, "Incorrect bit vector size");
 
     d_nInst += 1;
     d_clsCount[label] += 1;
-    for (unsigned int i=0;i<bv.GetNumBits();i++){
-      if( (*bv.dp_bits)[i] && (!dp_maskBits || dp_maskBits->GetBit(i)) ){
+    for (unsigned int i=0;i<bv.getNumBits();i++){
+      if( (*bv.dp_bits)[i] && (!dp_maskBits || dp_maskBits->getBit(i)) ){
         d_counts[label][i] += 1;
       }
     }
@@ -128,14 +128,14 @@ namespace RDInfoTheory {
   
   void InfoBitRanker::accumulateVotes(const SparseBitVect &bv, unsigned int label) {
     RANGE_CHECK(0, label, d_classes-1);
-    CHECK_INVARIANT(bv.GetNumBits() == d_dims, "Incorrect bit vector size");
+    CHECK_INVARIANT(bv.getNumBits() == d_dims, "Incorrect bit vector size");
 
     d_nInst += 1;
     d_clsCount[label] += 1;
     for (IntSet::const_iterator obi = bv.dp_bits->begin();
          obi != bv.dp_bits->end();
         ++obi)  {
-      if(!dp_maskBits || dp_maskBits->GetBit(*obi)){
+      if(!dp_maskBits || dp_maskBits->getBit(*obi)){
         d_counts[label][(*obi)] += 1;
       }
     }
@@ -151,7 +151,7 @@ namespace RDInfoTheory {
     // d_classes
     if(num>d_dims) throw ValueErrorException("attempt to rank more bits than present in the bit vectors");
     if(dp_maskBits)
-      CHECK_INVARIANT(num <= dp_maskBits->GetNumOnBits(), "Can't rank more bits than the ensemble size"); 
+      CHECK_INVARIANT(num <= dp_maskBits->getNumOnBits(), "Can't rank more bits than the ensemble size"); 
     RDKit::USHORT *resMat = new RDKit::USHORT[2*d_classes];
     
     PR_QUEUE topN;
@@ -167,7 +167,7 @@ namespace RDInfoTheory {
         }*/
       
       
-      if (dp_maskBits && !dp_maskBits->GetBit(i)) {
+      if (dp_maskBits && !dp_maskBits->getBit(i)) {
            continue;
       }
 
@@ -230,7 +230,7 @@ namespace RDInfoTheory {
     
     RDKit::INT_VECT maskBits;
     if (dp_maskBits && topN.size() < num) {
-      dp_maskBits->GetOnBits(maskBits);
+      dp_maskBits->getOnBits(maskBits);
     }
 
     for (int i = num - 1; i >= 0; i--) {

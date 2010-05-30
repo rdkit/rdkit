@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -136,11 +136,11 @@ bool AllProbeBitsMatch(const T1 &probe,const std::string &pkl){
   currBit=getBitId(text,format,size,currBit);
   nOn--;
   std::vector<int> obl;
-  probe.GetOnBits(obl);
+  probe.getOnBits(obl);
   
 
-  //for(int i=0;i<probe.GetNumBits();i++){
-  //  if(probe.GetBit(i)){
+  //for(int i=0;i<probe.getNumBits();i++){
+  //  if(probe.getBit(i)){
   for(std::vector<int>::const_iterator i=obl.begin();i!=obl.end();i++){
     while(currBit<*i && nOn>0){
         if(format==2) currBit++;
@@ -156,8 +156,8 @@ template bool AllProbeBitsMatch(const SparseBitVect& bv1,const std::string &pkl)
 template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,const std::string &pkl);
 template <typename T1>
 bool AllProbeBitsMatch(const T1 &probe,const T1 &ref){
-  for(unsigned int i=0;i<probe.GetNumBits();++i){
-    if(probe.GetBit(i) && !ref.GetBit(i)){
+  for(unsigned int i=0;i<probe.getNumBits();++i){
+    if(probe.getBit(i) && !ref.getBit(i)){
       return false;
     }
   }
@@ -186,7 +186,7 @@ NumOnBitsInCommon(const ExplicitBitVect& bv1,
 {
   //std::cout << "nobic" << std::endl;
   int res = 0;
-  unsigned int _sz = bv1.GetNumBits()<bv2.GetNumBits()?bv1.GetNumBits():bv2.GetNumBits();
+  unsigned int _sz = bv1.getNumBits()<bv2.getNumBits()?bv1.getNumBits():bv2.getNumBits();
   for(unsigned int i=0;i<_sz;i++) {
     if((*bv1.dp_bits)[i] && (*bv2.dp_bits)[i]) res+=1;
   }
@@ -203,8 +203,8 @@ NumOnBitsInCommon(const ExplicitBitVect& bv1,
 //
 //  T1 and T2 should be the same length.
 //
-//  C++ Notes: T1 and T2 must support operator&, GetNumBits()
-//  and GetOnBits().
+//  C++ Notes: T1 and T2 must support operator&, getNumBits()
+//  and getOnBits().
 //
 //  Python Notes: T1 and T2 are BitVects.
 //
@@ -214,11 +214,11 @@ double
 TanimotoSimilarity(const T1& bv1,
                    const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
   if((y+z-x)==0.0) return 1.0;
   else return x / (y+z-x);
 }
@@ -233,11 +233,11 @@ TverskySimilarity(const T1& bv1,
 {
   RANGE_CHECK(0,a,1);
   RANGE_CHECK(0,b,1);
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
   double denom = a*y + b*z + (1-a-b)*x;
   if(denom==0.0) return 1.0;
   else return x / denom;
@@ -248,11 +248,11 @@ double
 CosineSimilarity(const T1& bv1,
                    const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
 
   if(y*z>0.0){
     return x / sqrt(y*z);
@@ -266,11 +266,11 @@ double
 KulczynskiSimilarity(const T1& bv1,
                    const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
 
   if(y*z>0.0){
     return x*(y+z)/(2*y*z);
@@ -285,11 +285,11 @@ double
 DiceSimilarity(const T1& bv1,
               const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
 
   if(y+z>0.0){
     return 2*x/(y+z);
@@ -303,11 +303,11 @@ double
 SokalSimilarity(const T1& bv1,
               const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
 
   return x/(2*y+2*z-3*x);
 }
@@ -317,11 +317,11 @@ double
 McConnaugheySimilarity(const T1& bv1,
                        const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
 
   if(y*z>0.0){
     return (x*(y+z)-(y*z))/(y*z);
@@ -347,11 +347,11 @@ double
 AsymmetricSimilarity(const T1& bv1,
                      const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
   
   if(tmin(y,z)>0){
     return x/tmin(y,z);
@@ -365,11 +365,11 @@ double
 BraunBlanquetSimilarity(const T1& bv1,
                      const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  double y = bv1.GetNumOnBits();
-  double z = bv2.GetNumOnBits();
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
 
   if(tmax(y,z)>0){
     return x/tmax(y,z);
@@ -383,10 +383,10 @@ double
 RusselSimilarity(const T1& bv1,
                      const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   double x = NumOnBitsInCommon(bv1,bv2);
-  return x/bv1.GetNumBits();
+  return x/bv1.getNumBits();
 }
 
 
@@ -399,7 +399,7 @@ RusselSimilarity(const T1& bv1,
 //  between T1 and T2 (a double)
 //
 //  C++ Notes: T1 and T2 must support operator|, operator&
-//  and GetOnBits().
+//  and getOnBits().
 //
 //  Python Notes: T1 and T2 are BitVects.
 //
@@ -409,11 +409,11 @@ double
 OnBitSimilarity(const T1& bv1,
                 const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
 
   double num = NumOnBitsInCommon(bv1,bv2);
-  double denom=(bv1|bv2).GetNumOnBits();
+  double denom=(bv1|bv2).getNumOnBits();
 
   if(denom>0){
     return num/denom;
@@ -430,7 +430,7 @@ OnBitSimilarity(const T1& bv1,
 //
 //  T1 and T2 should be the same length.
 //
-//  C++ Notes: T1 and T2 must support operator^, GetNumBits().
+//  C++ Notes: T1 and T2 must support operator^, getNumBits().
 //
 //  Python Notes: T1 and T2 are BitVects.
 //
@@ -440,10 +440,10 @@ int
 NumBitsInCommon(const T1& bv1,
                 const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
 
-  return bv1.GetNumBits() - (bv1^bv2).GetNumOnBits();
+  return bv1.getNumBits() - (bv1^bv2).getNumOnBits();
 }
 
 
@@ -455,8 +455,8 @@ NumBitsInCommon(const T1& bv1,
 //
 //  T1 and T2 should be the same length.
 //
-//  C++ Notes: T1 and T2 must support operator^, GetNumBits()
-//  and GetNumOnBits().
+//  C++ Notes: T1 and T2 must support operator^, getNumBits()
+//  and getNumOnBits().
 //
 //  Python Notes: T1 and T2 are BitVects.
 //
@@ -466,10 +466,10 @@ double
 AllBitSimilarity(const T1& bv1,
                 const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
 
-  return double(NumBitsInCommon(bv1,bv2))/bv1.GetNumBits();
+  return double(NumBitsInCommon(bv1,bv2))/bv1.getNumBits();
 }
 
 
@@ -482,8 +482,8 @@ AllBitSimilarity(const T1& bv1,
 //
 //  T1 and T2 should be the same length.
 //
-//  C++ Notes: T1 and T2 must support operator&, GetNumBits()
-//  and GetOnBits(), the return value is an IntVect.
+//  C++ Notes: T1 and T2 must support operator&, getNumBits()
+//  and getOnBits(), the return value is an IntVect.
 //
 //  Python Notes: T1 and T2 are BitVects, the return value
 //  is a tuple of ints.
@@ -494,10 +494,10 @@ IntVect
 OnBitsInCommon(const T1& bv1,
                 const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   IntVect res;
-  (bv1&bv2).GetOnBits(res);
+  (bv1&bv2).getOnBits(res);
   return res;
 }
 
@@ -509,7 +509,7 @@ OnBitsInCommon(const T1& bv1,
 //  T1 and T2 should be the same length.
 //
 //  C++ Notes: T1 and T2 must support operator|, operator~,
-// GetNumBits() and GetOnBits(), the return value is an IntVect.
+// getNumBits() and getOnBits(), the return value is an IntVect.
 //
 //  Python Notes: T1 and T2 are BitVects, the return value
 //  is a tuple of ints.
@@ -520,10 +520,10 @@ IntVect
 OffBitsInCommon(const T1& bv1,
                 const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   IntVect res;
-  (~(bv1|bv2)).GetOnBits(res);
+  (~(bv1|bv2)).getOnBits(res);
   return res;
 }
 
@@ -544,8 +544,8 @@ OffBitsInCommon(const T1& bv1,
 //
 //  T1 and T2 should be the same length.
 //
-//  C++ Notes: T1 and T2 must support operator&, GetNumBits()
-//  and GetNumOnBits(), the return value is an DoubleVect with
+//  C++ Notes: T1 and T2 must support operator&, getNumBits()
+//  and getNumOnBits(), the return value is an DoubleVect with
 //  two elements.
 //
 //  Python Notes: T1 and T2 are BitVects, the return value
@@ -557,13 +557,13 @@ DoubleVect
 OnBitProjSimilarity(const T1& bv1,
                      const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   DoubleVect res(2,0.0);
   double num=NumOnBitsInCommon(bv1,bv2);
   if(num){
-    res[0] = num/bv1.GetNumOnBits();
-    res[1] = num/bv2.GetNumOnBits();
+    res[0] = num/bv1.getNumOnBits();
+    res[1] = num/bv2.getNumOnBits();
   }
   return res;
 }
@@ -585,8 +585,8 @@ OnBitProjSimilarity(const T1& bv1,
 //
 //  T1 and T2 should be the same length.
 //
-//  C++ Notes: T1 and T2 must support operator|, GetNumBits()
-//  and GetNumOffBits(), the return value is an DoubleVect with
+//  C++ Notes: T1 and T2 must support operator|, getNumBits()
+//  and getNumOffBits(), the return value is an DoubleVect with
 //  two elements.
 //
 //  Python Notes: T1 and T2 are BitVects, the return value
@@ -598,13 +598,13 @@ DoubleVect
 OffBitProjSimilarity(const T1& bv1,
                      const T2& bv2)
 {
-  if(bv1.GetNumBits()!=bv2.GetNumBits())
+  if(bv1.getNumBits()!=bv2.getNumBits())
     throw ValueErrorException("BitVects must be same length");
   DoubleVect res(2,0.0);
-  double num=(bv1|bv2).GetNumOffBits();
+  double num=(bv1|bv2).getNumOffBits();
   if(num){
-    res[0] = num/bv1.GetNumOffBits();
-    res[1] = num/bv2.GetNumOffBits();
+    res[0] = num/bv1.getNumOffBits();
+    res[1] = num/bv2.getNumOffBits();
   }
   return res;
 }
@@ -616,18 +616,18 @@ template <typename T1>
 T1 *
 FoldFingerprint(const T1 &bv1,unsigned int factor)
 {
-  if(factor <=0 || factor >= bv1.GetNumBits())
+  if(factor <=0 || factor >= bv1.getNumBits())
     throw ValueErrorException("invalid fold factor");
 
-  int initSize = bv1.GetNumBits();
+  int initSize = bv1.getNumBits();
   int resSize = initSize/factor;
   T1 *res = new T1(resSize);
 
   IntVect onBits;
-  bv1.GetOnBits(onBits);
+  bv1.getOnBits(onBits);
   for(IntVectIter iv=onBits.begin();iv!=onBits.end();iv++){
     int pos = (*iv) % resSize;
-    res->SetBit(pos);
+    res->setBit(pos);
   }
   return res;
 }
@@ -635,9 +635,9 @@ FoldFingerprint(const T1 &bv1,unsigned int factor)
 template <typename T1>
 std::string
 BitVectToText(const T1& bv1){
-  std::string res(bv1.GetNumBits(),'0');
-  for(unsigned int i=0;i<bv1.GetNumBits();i++){
-    if(bv1.GetBit(i)) res[i] = '1';
+  std::string res(bv1.getNumBits(),'0');
+  for(unsigned int i=0;i<bv1.getNumBits();i++){
+    if(bv1.getBit(i)) res[i] = '1';
   }
   return res;
 }

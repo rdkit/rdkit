@@ -18,7 +18,7 @@ struct sbv_pickle_suite : python::pickle_suite
   static python::tuple
   getinitargs(const SparseBitVect& self)
   {
-    return python::make_tuple(self.ToString());
+    return python::make_tuple(self.toString());
   };
 };
 
@@ -47,20 +47,20 @@ struct SBV_wrapper {
                                   sbvClassDoc.c_str(),
                                   python::init<unsigned int>())
       .def(python::init<std::string>())
-      .def("SetBit",(bool (SBV::*)(unsigned int))&SBV::SetBit,
+      .def("SetBit",(bool (SBV::*)(unsigned int))&SBV::setBit,
          "Turns on a particular bit on.  Returns the original state of the bit.\n")
       .def("SetBitsFromList",(void (*)(SBV *,python::object))SetBitsFromList,
          "Turns on a set of bits.  The argument should be a tuple or list of bit ids.\n")
-      .def("UnSetBit",(bool (SBV::*)(unsigned int))&SBV::UnSetBit,
+      .def("UnSetBit",(bool (SBV::*)(unsigned int))&SBV::unsetBit,
          "Turns on a particular bit off.  Returns the original state of the bit.\n")
-      .def("GetBit",(bool (SBV::*)(unsigned int) const)&SBV::GetBit,
+      .def("GetBit",(bool (SBV::*)(unsigned int) const)&SBV::getBit,
          "Returns the value of a bit.\n")
-      .def("GetNumBits",&SBV::GetNumBits,
+      .def("GetNumBits",&SBV::getNumBits,
          "Returns the number of bits in the vector (the vector's size).\n")
-      .def("__len__",&SBV::GetNumBits)
-      .def("GetNumOnBits",&SBV::GetNumOnBits,
+      .def("__len__",&SBV::getNumBits)
+      .def("GetNumOnBits",&SBV::getNumOnBits,
          "Returns the number of on bits.\n")
-      .def("GetNumOffBits",&SBV::GetNumOffBits,
+      .def("GetNumOffBits",&SBV::getNumOffBits,
          "Returns the number of off bits.\n")
       .def("__getitem__",
            (const int (*)(const SBV&,int))get_VectItem)
@@ -69,7 +69,7 @@ struct SBV_wrapper {
       .def("GetOnBits",
            (IntVect (*)(const SBV&))GetOnBits,
            "Returns a tuple containing IDs of the on bits.\n")
-      .def("ToBinary",&SBV::ToString,
+      .def("ToBinary",&SBV::toString,
            "Returns a binary string representation of the vector.\n")
       .def("FromBase64",
            (void (*)(SBV &,const std::string &))InitFromBase64,

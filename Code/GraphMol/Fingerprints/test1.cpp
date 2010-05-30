@@ -96,16 +96,16 @@ void test3(){
   ExplicitBitVect *fp1,*fp2;
   fp2=RDKFingerprintMol(*m,1,4,2048,4,false,
 			     0.3,256);
-  TEST_ASSERT(fp2->GetNumBits()==256);
+  TEST_ASSERT(fp2->getNumBits()==256);
 
 
   delete m;
   delete fp2;
   m=SmilesToMol("CN(C)Cc1n-2c(nn1)CN=C(c1ccccc1)c1cc(Cl)ccc12");
   fp1=RDKFingerprintMol(*m,1,4,2048,4,false);
-  TEST_ASSERT(fp1->GetNumBits()==2048);
+  TEST_ASSERT(fp1->getNumBits()==2048);
   fp2=RDKFingerprintMol(*m,1,4,2048,4,false,0.3,256);  
-  TEST_ASSERT(fp2->GetNumBits()<fp1->GetNumBits());
+  TEST_ASSERT(fp2->getNumBits()<fp1->getNumBits());
   
   delete m;
   delete fp1;
@@ -262,7 +262,7 @@ void test5BackwardsCompatibility(){
   
   m = SmilesToMol("CC");
   fp1=RDKFingerprintMol(*m);
-  TEST_ASSERT(fp1->GetNumOnBits()==4);
+  TEST_ASSERT(fp1->getNumOnBits()==4);
 #if BOOST_VERSION/100 < 1040
   // bug fixes in the uniform_int<> distribution in version 1.40
   // necessitate this
@@ -539,7 +539,7 @@ void test3Layers(){
 
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
 #if 0
@@ -560,7 +560,7 @@ void test3Layers(){
 
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
@@ -575,7 +575,7 @@ void test3Layers(){
 
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3!=(*fp2));
@@ -590,7 +590,7 @@ void test3Layers(){
 
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
@@ -605,7 +605,7 @@ void test3Layers(){
 
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     
     // the query says "!C", but we still match in the fp...
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -629,7 +629,7 @@ void test3Layers(){
 
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
@@ -643,7 +643,7 @@ void test3Layers(){
     RWMol *m2 = SmartsToMol("cccc");
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
@@ -666,7 +666,7 @@ void test3Layers(){
     RWMol *m2 = SmartsToMol("c:c:c");
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
@@ -695,7 +695,7 @@ void test3Layers(){
     // but queries switch us back to generic types, so we match again:
     m2 = SmartsToMol("[C,N]:[C,N]:[C,N]");
     fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
-    TEST_ASSERT(fp2->GetNumOnBits());
+    TEST_ASSERT(fp2->getNumOnBits());
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
     
@@ -937,25 +937,25 @@ void testIssue2875658(){
 #if BOOST_VERSION/100 >= 1040
   // bug fixes in the uniform_int<> distribution in version 1.40
   // necessitate this
-  TEST_ASSERT(fp1->GetNumOnBits()==24);
+  TEST_ASSERT(fp1->getNumOnBits()==24);
   TEST_ASSERT((*fp1)[11]);
   TEST_ASSERT((*fp1)[857]);
   TEST_ASSERT((*fp1)[1786]);
   TEST_ASSERT((*fp1)[2020]);
 
-  TEST_ASSERT(fp2->GetNumOnBits()==64);
+  TEST_ASSERT(fp2->getNumOnBits()==64);
   TEST_ASSERT((*fp2)[11]);
   TEST_ASSERT((*fp2)[179]);
   TEST_ASSERT((*fp2)[1878]);
   TEST_ASSERT((*fp2)[2020]);
 #else
-  TEST_ASSERT(fp1->GetNumOnBits()==24);
+  TEST_ASSERT(fp1->getNumOnBits()==24);
   TEST_ASSERT((*fp1)[23]);
   TEST_ASSERT((*fp1)[434]);
   TEST_ASSERT((*fp1)[1445]);
   TEST_ASSERT((*fp1)[2031]);
 
-  TEST_ASSERT(fp2->GetNumOnBits()==62);
+  TEST_ASSERT(fp2->getNumOnBits()==62);
   TEST_ASSERT((*fp2)[23]);
   TEST_ASSERT((*fp2)[173]);
   TEST_ASSERT((*fp2)[1847]);

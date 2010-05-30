@@ -32,12 +32,12 @@ class SparseBitVect : public BitVect{
 public:
   SparseBitVect() : dp_bits(0), d_size(0) {};
   //! initialize with a particular size;
-  explicit SparseBitVect(unsigned int size): dp_bits(0), d_size(0) {_InitForSize(size); };
+  explicit SparseBitVect(unsigned int size): dp_bits(0), d_size(0) {_initForSize(size); };
 
   //! copy constructor
   SparseBitVect(const SparseBitVect& other){
     d_size=0;dp_bits = 0;
-    _InitForSize(other.GetNumBits());
+    _initForSize(other.getNumBits());
     IntSet *bv=other.dp_bits;
     std::copy(bv->begin(),bv->end(),std::inserter(*dp_bits,dp_bits->end()));
   }
@@ -56,23 +56,23 @@ public:
   SparseBitVect operator~ () const;
 
   //! returns a (const) pointer to our raw storage
-  const IntSet *GetBitSet() const { return dp_bits;}
+  const IntSet *getBitSet() const { return dp_bits;}
 
-  unsigned int GetNumBits() const { return d_size; };
-  bool SetBit(const unsigned int which);
-  bool SetBit(const IntSetIter which);
-  bool UnSetBit(const unsigned int which);
-  bool GetBit (const unsigned int which) const;
-  bool GetBit(const IntVectIter which) const;
-  bool GetBit(const IntSetIter which) const;
+  unsigned int getNumBits() const { return d_size; };
+  bool setBit(const unsigned int which);
+  bool setBit(const IntSetIter which);
+  bool unsetBit(const unsigned int which);
+  bool getBit (const unsigned int which) const;
+  bool getBit(const IntVectIter which) const;
+  bool getBit(const IntSetIter which) const;
 
-  unsigned int GetNumOnBits() const { return dp_bits->size(); };
-  unsigned int GetNumOffBits() const { return d_size - dp_bits->size(); };
+  unsigned int getNumOnBits() const { return dp_bits->size(); };
+  unsigned int getNumOffBits() const { return d_size - dp_bits->size(); };
 
-  std::string ToString() const;
+  std::string toString() const;
 
-  void GetOnBits (IntVect& v) const;
-  void ClearBits() { dp_bits->clear(); };
+  void getOnBits (IntVect& v) const;
+  void clearBits() { dp_bits->clear(); };
   IntSet *dp_bits; //!< our raw data, exposed for the sake of efficiency
 
   bool operator==(const SparseBitVect &o) const {
@@ -85,7 +85,7 @@ public:
 
 private:
   unsigned int d_size;
-  void _InitForSize(const unsigned int size);
+  void _initForSize(const unsigned int size);
 };
 
 #endif

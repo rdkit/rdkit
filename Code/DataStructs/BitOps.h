@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -27,12 +27,12 @@ double SimilarityWrapper(const T &bv1,const T &bv2,
                          double (*metric)(const T &,const T &),
                          bool returnDistance=false){
   double res=0.0;
-  if(bv1.GetNumBits()>bv2.GetNumBits()){
-    T *bv1tmp = FoldFingerprint(bv1,bv1.GetNumBits()/bv2.GetNumBits());
+  if(bv1.getNumBits()>bv2.getNumBits()){
+    T *bv1tmp = FoldFingerprint(bv1,bv1.getNumBits()/bv2.getNumBits());
     res = metric(*bv1tmp,bv2);
     delete bv1tmp;
-  } else if(bv2.GetNumBits()>bv1.GetNumBits()){
-    T *bv2tmp = FoldFingerprint(bv2,bv2.GetNumBits()/bv1.GetNumBits());
+  } else if(bv2.getNumBits()>bv1.getNumBits()){
+    T *bv2tmp = FoldFingerprint(bv2,bv2.getNumBits()/bv1.getNumBits());
     res = metric(bv1,*bv2tmp);
     delete bv2tmp;
   } else {
@@ -47,12 +47,12 @@ double SimilarityWrapper(const T &bv1,const T &bv2,double a,double b,
                          double (*metric)(const T &,const T &,double,double),
                          bool returnDistance=false){
   double res=0.0;
-  if(bv1.GetNumBits()>bv2.GetNumBits()){
-    T *bv1tmp = FoldFingerprint(bv1,bv1.GetNumBits()/bv2.GetNumBits());
+  if(bv1.getNumBits()>bv2.getNumBits()){
+    T *bv1tmp = FoldFingerprint(bv1,bv1.getNumBits()/bv2.getNumBits());
     res = metric(*bv1tmp,bv2,a,b);
     delete bv1tmp;
-  } else if(bv2.GetNumBits()>bv1.GetNumBits()){
-    T *bv2tmp = FoldFingerprint(bv2,bv2.GetNumBits()/bv1.GetNumBits());
+  } else if(bv2.getNumBits()>bv1.getNumBits()){
+    T *bv2tmp = FoldFingerprint(bv2,bv2.getNumBits()/bv1.getNumBits());
     res = metric(bv1,*bv2tmp,a,b);
     delete bv2tmp;
   } else {

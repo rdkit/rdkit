@@ -42,7 +42,7 @@ Datum rd_fpsize(PG_FUNCTION_ARGS)
     bytea *buf=PG_GETARG_BYTEA_P(0);
     try{
       ExplicitBitVect bv(VARDATA(buf),VARSIZE(buf)-VARHDRSZ);
-      res = bv.GetNumBits();
+      res = bv.getNumBits();
     } catch(...) {
       ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		     errmsg("Could not construct bit vector from argument")));
@@ -101,13 +101,13 @@ Datum rd_tanimoto_pkl(PG_FUNCTION_ARGS)
 
   double res=0.0;
   if(bv1 && bv2) {
-    if(bv1->GetNumBits() > bv2->GetNumBits()){
-      unsigned int foldFact = bv1->GetNumBits() / bv2->GetNumBits();
+    if(bv1->getNumBits() > bv2->getNumBits()){
+      unsigned int foldFact = bv1->getNumBits() / bv2->getNumBits();
       ExplicitBitVect *tmp = FoldFingerprint(*bv1,foldFact);
       delete bv1;
       bv1 = tmp;
-    } else if (bv2->GetNumBits() > bv1->GetNumBits()) {
-      unsigned int foldFact = bv2->GetNumBits() / bv1->GetNumBits();
+    } else if (bv2->getNumBits() > bv1->getNumBits()) {
+      unsigned int foldFact = bv2->getNumBits() / bv1->getNumBits();
       ExplicitBitVect *tmp = FoldFingerprint(*bv2,foldFact);
       delete bv2;
       bv2 = tmp;
@@ -145,13 +145,13 @@ Datum rd_dice_pkl(PG_FUNCTION_ARGS)
 
   double res=0.0;
   if(bv1 && bv2) {
-    if(bv1->GetNumBits() > bv2->GetNumBits()){
-      int foldFact = bv1->GetNumBits() / bv2->GetNumBits();
+    if(bv1->getNumBits() > bv2->getNumBits()){
+      int foldFact = bv1->getNumBits() / bv2->getNumBits();
       ExplicitBitVect *tmp = FoldFingerprint(*bv1,foldFact);
       delete bv1;
       bv1 = tmp;
-    } else if (bv2->GetNumBits() > bv1->GetNumBits()) {
-      int foldFact = bv2->GetNumBits() / bv1->GetNumBits();
+    } else if (bv2->getNumBits() > bv1->getNumBits()) {
+      int foldFact = bv2->getNumBits() / bv1->getNumBits();
       ExplicitBitVect *tmp = FoldFingerprint(*bv2,foldFact);
       delete bv2;
       bv2 = tmp;
@@ -189,13 +189,13 @@ Datum rd_cosine_pkl(PG_FUNCTION_ARGS)
 
   double res=0.0;
   if(bv1 && bv2) {
-    if(bv1->GetNumBits() > bv2->GetNumBits()){
-      int foldFact = bv1->GetNumBits() / bv2->GetNumBits();
+    if(bv1->getNumBits() > bv2->getNumBits()){
+      int foldFact = bv1->getNumBits() / bv2->getNumBits();
       ExplicitBitVect *tmp = FoldFingerprint(*bv1,foldFact);
       delete bv1;
       bv1 = tmp;
-    } else if (bv2->GetNumBits() > bv1->GetNumBits()) {
-      int foldFact = bv2->GetNumBits() / bv1->GetNumBits();
+    } else if (bv2->getNumBits() > bv1->getNumBits()) {
+      int foldFact = bv2->getNumBits() / bv1->getNumBits();
       ExplicitBitVect *tmp = FoldFingerprint(*bv2,foldFact);
       delete bv2;
       bv2 = tmp;

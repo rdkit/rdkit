@@ -74,7 +74,7 @@ namespace RDKit {
 	if (nent->match(entry, tol)) {
 	  bitId = entry->getBitId();
 	  if (bitId >= 0) {
-	    fp->SetBit(bitId);
+	    fp->setBit(bitId);
 	  }
 	  mapkm1[invar] = (*eti);
 	  delete nent;
@@ -160,7 +160,7 @@ namespace RDKit {
 	    mapk[invar] = (*iti);
 	    bitId = entry->getBitId();
 	    if (bitId >= 0) {
-	      fp->SetBit(bitId);
+	      fp->setBit(bitId);
 	    }
 	    delete nent;
 	    break;
@@ -212,7 +212,7 @@ namespace RDKit {
 	      if (nent->match(entry, tol) ) {
 		bitId = entry->getBitId();
 		if (bitId >= 0) {
-		  fp->SetBit(bitId);
+		  fp->setBit(bitId);
 		}
 		invar = computeIntVectPrimesProduct(oKpath);
 		kmatches.push_back(oKpath);

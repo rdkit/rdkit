@@ -22,7 +22,7 @@ class ExplicitBitVect : public BitVect {
 public:
   ExplicitBitVect() : dp_bits(0), d_size(0), d_numOnBits(0) {};
   //! initialize with a particular size;
-  explicit ExplicitBitVect(unsigned int size) : dp_bits(0), d_size(0), d_numOnBits(0) {_InitForSize(size);};
+  explicit ExplicitBitVect(unsigned int size) : dp_bits(0), d_size(0), d_numOnBits(0) {_initForSize(size);};
   ExplicitBitVect(const ExplicitBitVect& other);
   //! construct from a string pickle
   ExplicitBitVect(const std::string &);
@@ -33,23 +33,23 @@ public:
 
   ExplicitBitVect& operator=(const ExplicitBitVect& other);
   bool operator[] (const unsigned int which) const;
-  bool SetBit(const unsigned int which);
-  bool UnSetBit(const unsigned int which);
-  bool GetBit(const unsigned int which) const;
+  bool setBit(const unsigned int which);
+  bool unsetBit(const unsigned int which);
+  bool getBit(const unsigned int which) const;
 
   ExplicitBitVect operator^ (const ExplicitBitVect &other) const;
   ExplicitBitVect operator& (const ExplicitBitVect &other) const;
   ExplicitBitVect operator| (const ExplicitBitVect &other) const;
   ExplicitBitVect operator~ () const;
-  unsigned int GetNumBits() const;
-  unsigned int GetNumOnBits() const;
-  unsigned int GetNumOffBits() const;
+  unsigned int getNumBits() const;
+  unsigned int getNumOnBits() const;
+  unsigned int getNumOffBits() const;
 
-  void GetOnBits (IntVect& v) const;
+  void getOnBits (IntVect& v) const;
 
   // FIX: complete these
-  void ClearBits() { dp_bits->reset(); };
-  std::string ToString() const;
+  void clearBits() { dp_bits->reset(); };
+  std::string toString() const;
   
   boost::dynamic_bitset<> *dp_bits; //!< our raw storage
 
@@ -63,7 +63,7 @@ public:
 private:
   unsigned int d_size;
   unsigned int d_numOnBits;
-  void _InitForSize(const unsigned int size);
+  void _initForSize(const unsigned int size);
 };
 
 

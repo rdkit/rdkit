@@ -77,7 +77,7 @@ Datum substructfp(PG_FUNCTION_ARGS)
   } else {
     bv = new ExplicitBitVect(fpSize);
   }
-  std::string pkl=bv->ToString();
+  std::string pkl=bv->toString();
   delete bv;
 
   StringInfoData buf;
@@ -93,7 +93,7 @@ Datum fpsize(PG_FUNCTION_ARGS)
     bytea *buf=PG_GETARG_BYTEA_P(0);
     std::string pkl(VARDATA(buf),VARSIZE(buf)-VARHDRSZ);
     ExplicitBitVect bv(pkl);
-    res = bv.GetNumBits();
+    res = bv.getNumBits();
   }
   PG_RETURN_INT32(res);
 
