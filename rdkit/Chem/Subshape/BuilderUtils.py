@@ -8,9 +8,7 @@
 from rdkit import Geometry
 from rdkit.Chem.Subshape import SubshapeObjects
 import math
-import numpy.oldnumeric as Numeric
-import numpy.oldnumeric.linear_algebra as LinearAlgebra
-
+import numpy
 
 #-----------------------------------------------------------------------------
 def ComputeGridIndices(shapeGrid,winRad):
@@ -285,7 +283,7 @@ def CalculateDirectionsAtPoint(pt,shapeGrid,winRad):
   tmp = winRad/shapeGrid.GetSpacing()
   radInGrid=int(tmp)
   radInGrid2=int(tmp*tmp)
-  covMat = Numeric.zeros((3,3),Numeric.Float)
+  covMat = numpy.zeros((3,3),numpy.float64)
 
   dX = shapeGrid.GetNumX()
   dY = shapeGrid.GetNumY()
@@ -322,11 +320,10 @@ def CalculateDirectionsAtPoint(pt,shapeGrid,winRad):
   covMat[2][0] = covMat[0][2]
   covMat[2][1] = covMat[1][2]
 
-  eVals,eVects = LinearAlgebra.eigenvectors(covMat)
-  sv = [(x,y) for x,y in zip(eVals,eVects)]
+  eVals,eVects = numpy.linalg.eigh(covMat)
+  sv = zip(eVals,numpy.transpose(eVects))
   sv.sort(reverse=True)
-  eVals = [x for x,y in sv]
-  eVects = [y for x,y in sv]
+  eVals,eVects=zip(*sv)
   pt.shapeMoments=tuple(eVals)
   pt.shapeDirs = tuple([Geometry.Point3D(p[0],p[1],p[2]) for p in eVects])
 

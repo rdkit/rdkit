@@ -9,14 +9,12 @@
 """ constructs the list of available descriptors
 
 """
-import types
 from rdkit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen,Descriptors
 from rdkit.Chem.EState import EState_VSA
 mods = [GraphDescriptors,MolSurf,EState_VSA,Lipinski,Descriptors,Crippen,Fragments]
 
-import numpy.oldnumeric as Numeric
 from rdkit import Chem
-otherMods = [Numeric,Chem]
+otherMods = [Chem]
 
 others = []
 for mod in otherMods:
@@ -54,8 +52,6 @@ def Desensitize():
   
 
 if __name__ == '__main__':
-  from rdkit import Chem
-
   m = Chem.MolFromSmiles('CCOC')
   for name,fn in descs:
     print name,fn(m)

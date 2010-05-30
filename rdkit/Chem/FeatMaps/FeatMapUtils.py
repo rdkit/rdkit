@@ -6,11 +6,8 @@
 #
 #   @@ All Rights Reserved  @@
 #
-from rdkit import Geometry
-import numpy.oldnumeric as Numeric
 from rdkit.Chem.FeatMaps import FeatMaps
-from rdkit.Chem.FeatMaps.FeatMapPoint import FeatMapPoint
-import math,copy
+import copy
 
 class MergeMethod(object):
   WeightedAverage=0

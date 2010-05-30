@@ -1,15 +1,13 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
-# Copyright (C)2003-2006 greg Landrum and Rational Discovery LLC
+# Copyright (C)2003-2010 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 """ Hybrid EState-VSA descriptors (like the MOE VSA descriptors)
 
 """
-import numpy.oldnumeric as Numeric
+import numpy
 from rdkit.Chem.EState.EState import EStateIndices as EStateIndices_
 from rdkit.Chem.MolSurf import _LabuteHelper as VSAContribs_
 import bisect
@@ -33,7 +31,7 @@ def VSA_EState_(mol,bins=None,force=1):
   propContribs = EStateIndices_(mol,force=force)
   volContribs = VSAContribs_(mol)
 
-  ans = Numeric.zeros(len(bins)+1,Numeric.Float)
+  ans = numpy.zeros(len(bins)+1,numpy.float)
   for i,prop in enumerate(propContribs):
     if prop is not None:
       bin = bisect.bisect_right(bins,volContribs[i+1])
@@ -61,7 +59,7 @@ def EState_VSA_(mol,bins=None,force=1):
   propContribs = EStateIndices_(mol,force=force)
   volContribs = VSAContribs_(mol)
 
-  ans = Numeric.zeros(len(bins)+1,Numeric.Float)
+  ans = numpy.zeros(len(bins)+1,numpy.float)
   for i,prop in enumerate(propContribs):
     if prop is not None:
       bin = bisect.bisect_right(bins,prop)

@@ -49,7 +49,7 @@ class TestCase(unittest.TestCase):
       m1 = ms[i]
       alignments = aligner.GetSubshapeAlignments(ms[0],refShape,m1,s1,builder)
       algStore.append(alignments)
-    self.failUnless([len(x) for x in algStore] == [0,2,39,0])
+    self.failUnlessEqual([len(x) for x in algStore],[0,2,39,0])
 
     algStore = []
     for i,s1 in enumerate(shapes):

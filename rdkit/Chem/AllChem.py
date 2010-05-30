@@ -167,7 +167,7 @@ def ConstrainedEmbed(mol,core,useTethers,randomseed=2342):
 
   ci = EmbedMolecule(mol,coordMap=coordMap,randomSeed=randomseed)
   if ci<0:
-    logger.error('could not embed molecule %s, no coordinates generated.'%mol.GetProp('_Name'))
+    raise ValueError,'Could not embed molecule.'
   
   algMap=[]
   for i,itm in enumerate(match):
@@ -206,7 +206,7 @@ def ConstrainedEmbed(mol,core,useTethers,randomseed=2342):
       n-=1
     # realign
     rms = AlignMol(mol,core,atomMap=algMap)
-  print rms
+  mol.SetProp('EmbedRMS',str(rms))
   return mol
 
 
