@@ -13,6 +13,7 @@ Deprecated modules (to be removed in next release):
  
 Removed modules:
  - SVD code: External/svdlibc External/svdpackc rdkit/PySVD
+ - rdkit/Chem.CDXMLWriter.py
  
  
 
