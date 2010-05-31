@@ -57,7 +57,7 @@ class ReFile:
     self.inFile = open(fileName,mode)
     
 
-def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=Float):
+def ReadDataFile(fileName,comment=r'#',depVarCol=0,dataType=numpy.float):
   """ read in the data file and return a tuple of two Numeric arrays:
   (independant variables, dependant variables).
 

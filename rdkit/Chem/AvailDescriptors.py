@@ -53,5 +53,5 @@ def Desensitize():
 
 if __name__ == '__main__':
   m = Chem.MolFromSmiles('CCOC')
-  for name,fn in descs:
+  for name,fn in descList:
     print name,fn(m)

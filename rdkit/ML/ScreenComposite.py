@@ -746,15 +746,15 @@ def ScreenFromDetails(models,details,callback=None,setup=None,appendExamples=0,
     if (hasattr(details,'shuffleActivities') and details.shuffleActivities) or \
        (hasattr(details,'randomActivities') and details.randomActivities ):
       if hasattr(details,'shuffleActivities') and details.shuffleActivities:
-        shuffle = 1
+        shuffle = True
       else:
-        shuffle = 0
-      randomize=1
+        shuffle = False
+      randomize=True
       DataUtils.RandomizeActivities(data,shuffle=shuffle,
                                     runDetails=details)
     else:
-      randomize=0
-      shuffle=0
+      randomize=False
+      shuffle=False
 
     if hasattr(model,'_shuffleActivities') and \
        model._shuffleActivities and \
@@ -1364,12 +1364,12 @@ if __name__ == '__main__':
 
       if details.shuffleActivities or details.randomActivities:
         shuffle = details.shuffleActivities
-        random = 1
+        randomize = 1
         DataUtils.RandomizeActivities(tmpD,shuffle=details.shuffleActivities,
                                       runDetails=details)
       else:
-        random = 0
-        shuffle = 0
+        randomize = False
+        shuffle = False
 
       if hasattr(model,'_shuffleActivities') and \
          model._shuffleActivities and \

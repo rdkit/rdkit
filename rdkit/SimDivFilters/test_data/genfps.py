@@ -1,8 +1,8 @@
-import RDConfig
-from Dbase import DbModule
-from Dbase.DbConnection import DbConnect
+from rdkit import RDConfig
+from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
 import cPickle
-import Chem
+from rdkit import Chem
 
 if RDConfig.usePgSQL:
   dbName="::RDTests"

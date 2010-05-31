@@ -575,9 +575,6 @@ if __name__=='__main__':
         obls = cPickle.load(open(details.onBitsName,'rb'))
       except:
         obls = None
-      else:
-        if len(obls)<(inD.count('\n')-1):
-          obls = None
   scores = None
   if details.doScore:
     if not suppl:

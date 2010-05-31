@@ -300,10 +300,10 @@ def GetDonor2FeatVects(conf, featAtoms, scale=1.5) :
   elif len(nbrs) >= 4 :
     # in this case we should have two or more hydrogens we will simple use there directions
     res = []
-    for hid in hydrogenss:
-      bvec = numpy.array(coords[3*(hid):3*hid+3])
+    for hid in hydrogens:
+      bvec = conf.GetAtomPosition(hid)
       bvec -= cpt
-      bvec /= (numpy.sqrt(numpy.dot(bvec, bvec)))
+      bvec.Normalize()
       bvec *= scale
       bvec += cpt
       res.append((cpt, bvec))

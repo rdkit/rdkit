@@ -66,7 +66,7 @@ def HexColor(val):
 	into the corresponding color.  E.g., in "AABBCC" or 0xAABBCC,
 	AA is the red, BB is the green, and CC is the blue (00-FF)."""
 	if type(val) == StringType:
-		val = string.atoi(val,16)
+		val = int(val,16)
 	factor = 1.0 / 255
 	return Color(factor * ((val >> 16) & 0xFF), 
 			  factor * ((val >> 8) & 0xFF),

@@ -1,7 +1,7 @@
 # Run this with:
 #  python setup.py install --install-lib=.
 from distutils.core import setup,Extension
-import RDConfig
+from rdkit import RDConfig
 
 # force the use of g++ please
 from distutils import sysconfig
