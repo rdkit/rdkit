@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2010 Greg Landrum and Rational Discovery LLC
 //       All Rights Reserved
 //
 
@@ -421,7 +421,7 @@ void test7(){
   smi = MolToSmiles(*m,true);
   TEST_ASSERT(smi=="C[C@H](F)Cl");
   molBlock=MolToMolBlock(*m);
-  //BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  BOOST_LOG(rdInfoLog) << molBlock << std::endl;
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   MolOps::assignStereochemistry(*m2);

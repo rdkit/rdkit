@@ -939,7 +939,7 @@ void testIssue1804420(){
   BOOST_LOG(rdInfoLog) << "Testing issue 1804420, missing assignment of atoms maps" << std::endl;
 
   sma = "[N;D3:1]";
-  matcher1 = SmartsToMol(sma,true);
+  matcher1 = SmartsToMol(sma);
   TEST_ASSERT(matcher1);
   TEST_ASSERT(matcher1->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
   delete matcher1;

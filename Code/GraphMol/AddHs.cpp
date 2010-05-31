@@ -10,6 +10,7 @@
 #include "QueryOps.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
+#include <boost/foreach.hpp>
 
 namespace RDKit{
 
@@ -29,7 +30,7 @@ namespace RDKit{
           res = mol->getAtomWithIdx(*nbrIdx);
           break;
         }
-        nbrIdx++;
+        ++nbrIdx;
       }
 
       POSTCONDITION(res,"no neighbor found");
@@ -81,7 +82,7 @@ namespace RDKit{
         // --------------------------------------------------------------------------
         nbr1=getAtomNeighborNot(mol,heavyAtom,hydAtom);
         for (ROMol::ConformerIterator cfi = mol->beginConformers();
-             cfi != mol->endConformers(); cfi++) {
+             cfi != mol->endConformers(); ++cfi) {
           heavyPos = (*cfi)->getAtomPos(heavyIdx);
           RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
           // get a normalized vector pointing away from the neighbor:
@@ -145,12 +146,12 @@ namespace RDKit{
             if(!nbr1) nbr1 = mol->getAtomWithIdx(*nbrIdx);
             else nbr2 = mol->getAtomWithIdx(*nbrIdx);
           }
-          nbrIdx++;
+          ++nbrIdx;
         }
         TEST_ASSERT(nbr1);
         TEST_ASSERT(nbr2);
         for (ROMol::ConformerIterator cfi = mol->beginConformers();
-             cfi != mol->endConformers(); cfi++) {
+             cfi != mol->endConformers(); ++cfi) {
           // start along the average of the two vectors:
           heavyPos = (*cfi)->getAtomPos(heavyIdx);
           nbr1Vect = (*cfi)->getAtomPos(nbr1->getIdx()).directionVector(heavyPos);
@@ -229,7 +230,7 @@ namespace RDKit{
         TEST_ASSERT(nbr2);
         TEST_ASSERT(nbr3);
         for (ROMol::ConformerIterator cfi = mol->beginConformers();
-             cfi != mol->endConformers(); cfi++) {
+             cfi != mol->endConformers(); ++cfi) {
           // use the average of the three vectors:
           heavyPos = (*cfi)->getAtomPos(heavyIdx);
           nbr1Vect = (*cfi)->getAtomPos(nbr1->getIdx()).directionVector(heavyPos);
@@ -269,7 +270,7 @@ namespace RDKit{
         // --------------------------------------------------------------------------
         hydPos = heavyPos + dirVect*bondLength;
         for (ROMol::ConformerIterator cfi = mol->beginConformers();
-             cfi != mol->endConformers(); cfi++) {
+             cfi != mol->endConformers(); ++cfi) {
           (*cfi)->setAtomPos(hydIdx, hydPos);
         }
         break;
@@ -279,17 +280,6 @@ namespace RDKit{
 
 
   namespace MolOps {
-    // NOTE that in most cases we do not need to check for chiral
-    // atoms when adding Hs because the bond order goes from hydrogen
-    // implicitly first to hydrogen explicitly last. This is a cyclic
-    // permutation, so it doesn't affect the chirality.  (Of course
-    // there can only be one H on the atom... otherwise it wouldn't be
-    // chiral!)
-    // The exception to this rule is when the central atom has no
-    // preceding bond in the molecule; in that case the implicit H
-    // is the first bond and the permutation is no longer cyclic.
-    // This includes situations like [C@H](C)(Cl)F, which needs to
-    // go to [C@@](C)(Cl)(F)[H]
     ROMol *addHs(const ROMol &mol,bool explicitOnly,bool addCoords){
       RWMol *res = new RWMol(mol);
 
@@ -322,32 +312,6 @@ namespace RDKit{
       for(ROMol::ConstAtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
         unsigned int newIdx;
         Atom *newAt=res->getAtomWithIdx((*at)->getIdx());
-        // check the chirality special case:
-        unsigned int nHere=(*at)->getNumExplicitHs()+(*at)->getNumImplicitHs();
-        if(nHere==1 && ((*at)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
-                        (*at)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW )) {
-          bool hasTruePrecedingAtom=false;
-          ROMol::OEDGE_ITER beg,end;
-          boost::tie(beg,end) = mol.getAtomBonds(*at);
-          while(beg!=end){
-            unsigned int otherIdx=mol[*beg]->getOtherAtom(*at)->getIdx();
-            if( otherIdx < (*at)->getIdx() &&
-                mol[*beg]->getBeginAtomIdx()==otherIdx){
-              hasTruePrecedingAtom=true;
-              break;
-            }
-            ++beg;
-          }
-          if(!hasTruePrecedingAtom){
-            // this is the special case described above. switch the stereochem:
-            if((*at)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW){
-              newAt->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-            } else {
-              newAt->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-            }
-          }
-        }
-
         newAt->clearComputedProps();
         // always convert explicit Hs
         for(unsigned int i=0;i<(*at)->getNumExplicitHs();i++){
@@ -393,14 +357,13 @@ namespace RDKit{
     //     will not be removed.
     //
     ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
-      Atom *atom;
       unsigned int currIdx=0,origIdx=0;
       std::map<unsigned int,unsigned int> idxMap;
       RWMol *res = new RWMol(mol);
       while(currIdx < res->getNumAtoms()){
-        atom = res->getAtomWithIdx(currIdx);
+        Atom *atom = res->getAtomWithIdx(currIdx);
         idxMap[origIdx]=currIdx;
-        origIdx++;
+        ++origIdx;
         if(atom->getAtomicNum()==1){
           bool removeIt=false;
 
@@ -414,7 +377,7 @@ namespace RDKit{
                 removeIt=true;
                 break;
               }
-              begin++;
+              ++begin;
             }
           }
 
@@ -453,27 +416,17 @@ namespace RDKit{
             // atom.  We deal with that by explicitly checking here:
             if(heavyAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED){
               INT_LIST neighborIndices;
-              unsigned int atomsBeforeHeavy=0;
-
               boost::tie(beg,end) = res->getAtomBonds(heavyAtom);
               while(beg!=end){
                 if((*res)[*beg]->getIdx()!=bond->getIdx()){
                   neighborIndices.push_back((*res)[*beg]->getIdx());
-                  if((*res)[*beg]->getBeginAtomIdx()!=heavyAtom->getIdx() &&
-                     (*res)[*beg]->getOtherAtom(heavyAtom)->getIdx()<heavyAtom->getIdx() ){
-                    ++atomsBeforeHeavy;
-                  }
                 }
                 ++beg;
               }
-              if(atomsBeforeHeavy){
-                neighborIndices.insert(++neighborIndices.begin(),bond->getIdx());
-              } else {
-                neighborIndices.push_front(bond->getIdx());
-              }
+              neighborIndices.push_back(bond->getIdx());
               
               int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
-              //std::cerr << " swaps: " << nSwaps << " " << atomsBeforeHeavy << std::endl;
+              //std::cerr << "H: "<<atom->getIdx()<<" hvy: "<<heavyAtom->getIdx()<<" swaps: " << nSwaps<<std::endl;
               if(nSwaps%2){
                 heavyAtom->invertChirality();
               }
@@ -516,8 +469,8 @@ namespace RDKit{
             Bond *bond=*bondIt;
             if( bond->getBondType()==Bond::DOUBLE &&
                 bond->getStereo()!=Bond::STEREONONE){
-              for(INT_VECT_I it=bond->getStereoAtoms().begin();it!=bond->getStereoAtoms().end();++it){
-                *it = idxMap[*it];
+              BOOST_FOREACH(int &v,bond->getStereoAtoms()){
+                v = idxMap[v];
               }
             }
           }
@@ -552,7 +505,7 @@ namespace RDKit{
               removeIt=true;
               break;
             }
-            begin++;
+            ++begin;
           }
           if(removeIt){
             ROMol::ADJ_ITER begin,end;
@@ -579,22 +532,18 @@ namespace RDKit{
             //  First we'll search for an H query:
             bool hasHQuery=false;
             if(nbr->hasQuery()){
-              std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack;
-              QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
-              for(child1=nbr->getQuery()->beginChildren();
-                  child1!=nbr->getQuery()->endChildren();
-                  child1++){
-                childStack.push_back(*child1);
-              }
+              std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(nbr->getQuery()->beginChildren(),
+                  nbr->getQuery()->endChildren());
               while( !hasHQuery && childStack.size() ){
                 QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
                 childStack.pop_front();
                 if(query->getDescription()=="AtomHCount"){
                   hasHQuery=true;
                 } else {
+                  QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
                   for(child1=query->beginChildren();
                       child1!=query->endChildren();
-                      child1++){
+                      ++child1){
                     childStack.push_back(*child1);
                   }
                 }
@@ -617,7 +566,7 @@ namespace RDKit{
             res->removeAtom(atom);
           } else {
             // only increment the atom idx if we don't remove the atom
-            currIdx++;
+            ++currIdx;
           }
         } else {
           currIdx++;

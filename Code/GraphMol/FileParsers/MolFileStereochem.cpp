@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -75,7 +75,6 @@ namespace RDKit {
     if(bondAtom->getAtomicNum()==1) hSeen=true;
 
     bool allSingle=true;
-    bool hasTruePrecedingAtom=false;
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol.getAtomBonds(atom);
     while(beg!=end){
@@ -88,12 +87,7 @@ namespace RDKit {
         if(nbrBond->getOtherAtom(atom)->getAtomicNum()==1) hSeen=true;
         neighborBondIndices.push_back(nbrBond->getIdx());
       }
-
-      unsigned int oIdx=nbrBond->getOtherAtomIdx(atom->getIdx());
-      if(oIdx<atom->getIdx() && nbrBond->getBeginAtomIdx()==oIdx){
-        hasTruePrecedingAtom=true;
-      }
-      beg++;
+      ++beg;
     }
     int nNbrs = neighborBondIndices.size();
 
@@ -232,7 +226,6 @@ namespace RDKit {
       // 
       // ----------------
       int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
-      if(nNbrs==3 && !hasTruePrecedingAtom)++nSwaps;
       if(nSwaps%2) isCCW = !isCCW;
       if(isCCW) res = Atom::CHI_TETRAHEDRAL_CCW;
       else res = Atom::CHI_TETRAHEDRAL_CW;
@@ -352,7 +345,6 @@ namespace RDKit {
     neighborBondIndices.push_back(bond->getIdx());
     neighborBondAngles.push_back(0.0);
 
-    bool hasTruePrecedingAtom=false;
     ROMol::OEDGE_ITER beg,end;
     boost::tie(beg,end) = mol->getAtomBonds(atom);
     while(beg!=end){
@@ -375,11 +367,7 @@ namespace RDKit {
         neighborBondAngles.insert(angleIt,angle);
         neighborBondIndices.insert(nbrIt,nbrBond->getIdx());
       }
-      unsigned int oIdx=otherAtom->getIdx();
-      if(oIdx<atom->getIdx() && nbrBond->getBeginAtomIdx()==oIdx){
-        hasTruePrecedingAtom=true;
-      }
-      beg++;
+      ++beg;
     }
     
     // at this point, neighborBondIndices contains a list of bond
@@ -419,7 +407,6 @@ namespace RDKit {
               std::ostream_iterator<double>(BOOST_LOG(rdDebugLog)," "));
     BOOST_LOG(rdDebugLog) << std::endl;
 #endif
-    if(neighborBondIndices.size()==3 && !hasTruePrecedingAtom) ++nSwaps;
     if(chiralType==Atom::CHI_TETRAHEDRAL_CCW){
       if(nSwaps%2==1) {// ^ reverse) {
         res=Bond::BEGINDASH;

@@ -463,7 +463,6 @@ namespace RDKit{
           // ranks:
           bool legalCenter=true;
           bool hasDupes=false;
-          bool hasTruePrecedingAtom=false;
           Chirality::INT_PAIR_VECT nbrs;
           if(atom->getTotalDegree()>4){
             // we only know tetrahedral chirality
@@ -486,14 +485,6 @@ namespace RDKit{
               codesSeen[ranks[otherIdx]]=1;
               nbrs.push_back(std::make_pair(ranks[otherIdx],
                                             mol[*beg]->getIdx()));
-
-              // check to see if the neighbor is a "true preceder"
-              // (i.e. it occurs before the atom both in the atom
-              // ordering and the bond starts at the neighbor):
-              if(otherIdx<atom->getIdx() &&
-                 mol[*beg]->getBeginAtomIdx()==otherIdx){
-                hasTruePrecedingAtom=true;
-              }
               ++beg;
             }
 
@@ -528,13 +519,8 @@ namespace RDKit{
             int nSwaps = atom->getPerturbationOrder(nbrIndices);
 
             // if the atom has 3 neighbors and a hydrogen, add a swap:
-            // This is reasonable for: F[C@H](Cl)Br, where the H is "between"
-            // the heavy atoms, but it screws up for the same molecule if it's
-            // numbered like this: [C@H](Cl)(F)Br, here no swap is required.
             if(nbrIndices.size()==3 && atom->getTotalNumHs()==1){
-              // we recognize the second case above ([C@H](Cl)(F)Br) using the
-              // hasTruePrecedingAtom flag:
-              if(hasTruePrecedingAtom) ++nSwaps;
+              ++nSwaps;
             }
           
             // if that number is odd, we'll change our chirality:
@@ -964,15 +950,10 @@ namespace RDKit{
            ){
           continue;
         }
-        bool hasPreceder=false;
         const RDGeom::Point3D &p0=conf.getAtomPos(atom->getIdx());
         ROMol::ADJ_ITER nbrIdx,endNbrs;
         boost::tie(nbrIdx,endNbrs) = mol.getAtomNeighbors(atom);
         const RDGeom::Point3D &p1=conf.getAtomPos(*nbrIdx);
-        if(*nbrIdx<atom->getIdx() &&
-           mol.getBondBetweenAtoms(*nbrIdx,atom->getIdx())->getBeginAtomIdx()==*nbrIdx){
-          hasPreceder=true;
-        }
         ++nbrIdx;
         const RDGeom::Point3D &p2=conf.getAtomPos(*nbrIdx);
         ++nbrIdx;
@@ -989,15 +970,6 @@ namespace RDKit{
           atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
         } else {
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
-        }
-      
-        //BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" "<<chiralVol<<std::endl;
-        if(atom->getDegree()==3 && !hasPreceder){
-          // usual story: we'll need to flip the chiral tag
-          // if there's no preceding atom and we only have three
-          // neighbors:
-          //BOOST_LOG(rdErrorLog)<<"   Atom: "<<atom->getIdx()<<" invert"<<std::endl;
-          atom->invertChirality();
         }
       }
 

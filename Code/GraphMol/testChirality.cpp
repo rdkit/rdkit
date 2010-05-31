@@ -1,6 +1,6 @@
 //  $Id$
 // 
-//   Copyright (C) 2007, 2008 Greg Landrum
+//   Copyright (C) 2007-2010 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -529,7 +529,7 @@ void testSmiles1(){
   delete mol;
   smi = "[C@@]([H])(Br)(F)Cl";
   mol = SmilesToMol(smi);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
@@ -538,7 +538,7 @@ void testSmiles1(){
   delete mol;
   smi = "[C@@H](Br)(F)Cl";
   mol = SmilesToMol(smi);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
@@ -547,7 +547,7 @@ void testSmiles1(){
   delete mol;
   smi = "[H][C@@](Br)(F)Cl";
   mol = SmilesToMol(smi);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   MolOps::assignStereochemistry(*mol);
   TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
@@ -789,7 +789,7 @@ void testChiralityFrom3D(){
   MolOps::assignChiralTypesFrom3D(*m);
   MolOps::assignStereochemistry(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
   m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
 
@@ -803,7 +803,7 @@ void testChiralityFrom3D(){
   MolOps::assignChiralTypesFrom3D(*m);
   MolOps::assignStereochemistry(*m,true);
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
   m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
 
@@ -1447,7 +1447,7 @@ void testIssue2705543(){
     MolOps::assignStereochemistry(*m,true);
 
     TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
@@ -1491,12 +1491,12 @@ void testIssue2705543(){
     }
 #endif    
     TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("_CIPCode"));
-    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="R");
 
@@ -1506,7 +1506,7 @@ void testIssue2705543(){
     TEST_ASSERT(cip=="S");
 
     TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_CIPCode"));
-    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     m->getAtomWithIdx(3)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
 
@@ -1536,7 +1536,7 @@ void testIssue2762917(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
-    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
 
     MolOps::assignStereochemistry(*m,true);
 
@@ -1565,7 +1565,7 @@ void testIssue2762917(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
-    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
 
     MolOps::assignStereochemistry(*m,true);
 
@@ -1594,7 +1594,7 @@ void testIssue2762917(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
-    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
     TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
 
     MolOps::assignStereochemistry(*m,true);
@@ -1635,7 +1635,7 @@ void testIssue2762917(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
-    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
 
     MolOps::assignStereochemistry(*m,true);
 
