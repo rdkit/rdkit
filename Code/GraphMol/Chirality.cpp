@@ -465,7 +465,7 @@ namespace RDKit{
           bool hasDupes=false;
           bool hasTruePrecedingAtom=false;
           Chirality::INT_PAIR_VECT nbrs;
-          if(atom->getDegree()+atom->getTotalNumHs()>4){
+          if(atom->getTotalDegree()>4){
             // we only know tetrahedral chirality
             legalCenter=false;
           } else {
