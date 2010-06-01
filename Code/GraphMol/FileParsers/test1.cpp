@@ -813,10 +813,11 @@ void testDblBondStereochem(){
     delete m1;
   }
 
-  // the next two are for sf.net issue 3009836
+  // the next group for sf.net issue 3009836
+  BOOST_LOG(rdInfoLog) << "  sub-test for issue 3099836"<<std::endl;
   {
     RWMol *m1;
-    std::string fName=rdbase+"double_link2.mol";
+    std::string fName=rdbase+"Issue3009836.1.mol";
     m1 = MolFileToMol(fName);
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getBondBetweenAtoms(3,4)->getStereo()==Bond::STEREOZ);
@@ -826,10 +827,21 @@ void testDblBondStereochem(){
 
   {
     RWMol *m1;
-    std::string fName=rdbase+"double_link.mol";
+    std::string fName=rdbase+"Issue3009836.2.mol";
     m1 = MolFileToMol(fName);
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getBondBetweenAtoms(3,4)->getStereo()==Bond::STEREOZ);
+
+    delete m1;
+  }
+
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"Issue3009836.3.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondBetweenAtoms(6,7)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m1->getBondBetweenAtoms(10,11)->getStereo()==Bond::STEREOE);
 
     delete m1;
   }

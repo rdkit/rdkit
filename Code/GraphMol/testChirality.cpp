@@ -1657,11 +1657,73 @@ void testIssue2762917(){
     delete m2;
   }
 
-
-  
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testIssue3009911(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3009911: bad atom priorities" << std::endl;
+  
+  {
+    RWMol *m;
+    std::string smiles="F[C@](O)(c1ccccc1)C(=C)CO";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    int *ranks;
+    ranks = new int[m->getNumAtoms()];
+    MolOps::assignStereochemistry(*m,true);
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      int rank;
+      TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"))
+      m->getAtomWithIdx(i)->getProp("_CIPRank",rank);
+      ranks[i]=rank;
+    }
+    // basics:
+    TEST_ASSERT(ranks[0]>ranks[1]);
+    TEST_ASSERT(ranks[2]>ranks[1]);
+    TEST_ASSERT(ranks[0]>ranks[2]);
+    // now the key point:
+    TEST_ASSERT(ranks[3]<ranks[9]);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+    delete m;
+    delete [] ranks;
+  }
+  {
+    RWMol *m;
+    std::string smiles="COC(C)(OC)[C@](O)(F)C(C)=O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    int *ranks;
+    ranks = new int[m->getNumAtoms()];
+    MolOps::assignStereochemistry(*m,true);
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      int rank;
+      TEST_ASSERT(m->getAtomWithIdx(i)->hasProp("_CIPRank"))
+      m->getAtomWithIdx(i)->getProp("_CIPRank",rank);
+      ranks[i]=rank;
+    }
+    // basics:
+    TEST_ASSERT(ranks[8]>ranks[7]);
+    TEST_ASSERT(ranks[7]>ranks[9]);
+    TEST_ASSERT(ranks[7]>ranks[2]);
+    // FIX: these are the key points, but at the moment they are not handled correctly
+    // due to a weakness in the CIP-ranking algorithm.
+    //TEST_ASSERT(ranks[2]>ranks[9]);
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(6)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(6)->getProp("_CIPCode",cip);
+    //TEST_ASSERT(cip=="R");
+
+    delete m;
+    delete [] ranks;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -1674,13 +1736,13 @@ int main(){
   testRoundTrip();
   testChiralityCleanup();
   testChiralityFrom3D();
-#endif
   testRingStereochemistry();
   testIterativeChirality();
   testBondDirRemoval();
   testIssue2705543();
   testIssue2762917();
-  
+#endif
+  testIssue3009911();
   return 0;
 }
 

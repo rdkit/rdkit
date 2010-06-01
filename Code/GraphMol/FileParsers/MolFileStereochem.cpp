@@ -720,14 +720,18 @@ namespace RDKit {
     boost::dynamic_bitset<> needsDir(mol.getNumBonds());
 
     // find double bonds that should be considered for
-    // stereochemistry : 
+    // stereochemistry
+    // NOTE that we are explicitly excluding double bonds in rings
+    // with this test.
     for (RWMol::BondIterator bondIt = mol.beginBonds();
          bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::DOUBLE &&
           (*bondIt)->getStereo() != Bond::STEREOANY &&
           (*bondIt)->getBondDir() != Bond::EITHERDOUBLE &&
           (*bondIt)->getBeginAtom()->getDegree()>1 &&
-          (*bondIt)->getEndAtom()->getDegree()>1 ){
+          (*bondIt)->getEndAtom()->getDegree()>1 &&
+          !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))
+          ){
         bondsInPlay.push_back(*bondIt);
 
         const Atom *a1=(*bondIt)->getBeginAtom();

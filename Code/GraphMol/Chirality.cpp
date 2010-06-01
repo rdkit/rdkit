@@ -170,7 +170,11 @@ namespace RDKit{
           while(nbr != endNbrs){
             int rank=ranks[*nbr]+1;
             const Bond *bond=mol.getBondBetweenAtoms(*nbr,*it);
-            unsigned int count=static_cast<int>(ceil(bond->getBondTypeAsDouble()));
+            // put the neighbor in 2N times where N is the bond order as a double.
+            // this is to treat aromatic linkages on fair footing. i.e. at least in the
+            // first iteration --c(:c):c and --C(=C)-C should look the same.
+            // this was part of issue 3009911
+            unsigned int count=static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()+.1));
             localEntry.insert(localEntry.end(),count,rank);
             ++nbr;
           }
