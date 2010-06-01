@@ -239,7 +239,7 @@ namespace RDKit {
     INT_MAP_INT wedgeBonds=pickBondsToWedge(mol);
     for(ROMol::BondIterator bondIt=mol.beginBonds();
         bondIt!=mol.endBonds();
-        bondIt++){
+        ++bondIt){
       Bond *bond=*bondIt;
       if(bond->getBondType()==Bond::SINGLE) {
         Bond::BondDir dir=DetermineBondWedgeState(bond,wedgeBonds,conf);
@@ -265,7 +265,7 @@ namespace RDKit {
     RDKit::ROMol::OBOND_ITER_PAIR atomBonds;
     int bid;
     const Bond *bond;
-    for (cai = mol.beginAtoms(); cai != mol.endAtoms(); cai++) {
+    for (cai = mol.beginAtoms(); cai != mol.endAtoms(); ++cai) {
       type = (*cai)->getChiralTag();
       if ((type == Atom::CHI_TETRAHEDRAL_CW) || (type == Atom::CHI_TETRAHEDRAL_CCW)) {
         int pick = -1;
@@ -275,7 +275,7 @@ namespace RDKit {
           bid = bond->getIdx();
           if (res.find(bid) == res.end()) {
             if(bond->getBeginAtomIdx() == (*cai)->getIdx() &&
-               mol.getRingInfo()->numBondRings(bid)==0 ){
+                mol.getRingInfo()->numBondRings(bid)==0 ){
               // it's a non-ring bond starting at this atom, that's
               // enough to declare ourselves finished here.
               pick = bid;
@@ -361,8 +361,8 @@ namespace RDKit {
         // find the location of this neighbor in our angle-sorted list
         // of neighbors:
         while(angleIt!=neighborBondAngles.end() && angle>(*angleIt)){
-          angleIt++;
-          nbrIt++;
+          ++angleIt;
+          ++nbrIt;
         }
         neighborBondAngles.insert(angleIt,angle);
         neighborBondIndices.insert(nbrIt,nbrBond->getIdx());
@@ -388,9 +388,9 @@ namespace RDKit {
     if (neighborBondAngles.size() == 3) {
       // three coordinated
       DOUBLE_LIST::iterator angleIt = neighborBondAngles.begin(); 
-      angleIt++; // the first is the 0 (or reference bond - we will ignoire that
+      ++angleIt; // the first is the 0 (or reference bond - we will ignoire that
       double angle1 = (*angleIt);
-      angleIt++;
+      ++angleIt;
       double angle2 = (*angleIt);
       if(angle2 - angle1 >= (M_PI-1e-4)){
         // we have the above situation
@@ -508,7 +508,6 @@ namespace RDKit {
         nbrBond->setBondDir(nbrDir);
         needsDir[nbrBond->getIdx()]=0;
         //std::cerr<<"\t\t\t\t update bond "<<nbrBond->getIdx()<<" to dir "<< nbrDir<<std::endl;
-
       }
       ++beg;
     }
@@ -555,7 +554,7 @@ namespace RDKit {
           obond1=tBond;
         }
       }
-      beg++;
+      ++beg;
     }
     if(!bond1){
       // no single bonds from the beginning atom, mark
@@ -585,7 +584,7 @@ namespace RDKit {
           obond2=tBond;
         }
       }
-      beg++;
+      ++beg;
     }
     if(!bond2){
       dblBond->setBondDir(Bond::EITHERDOUBLE);
@@ -720,7 +719,6 @@ namespace RDKit {
     VECT_INT_VECT dblBondNbrs(mol.getNumBonds());
     boost::dynamic_bitset<> needsDir(mol.getNumBonds());
 
-
     // find double bonds that should be considered for
     // stereochemistry : 
     for (RWMol::BondIterator bondIt = mol.beginBonds();
@@ -744,7 +742,7 @@ namespace RDKit {
             needsDir[nbrBond->getIdx()]=1;
             dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
           }
-          beg++;
+          ++beg;
         }
         boost::tie(beg,end) = mol.getAtomBonds(a2);
         while(beg!=end){
@@ -754,7 +752,7 @@ namespace RDKit {
             needsDir[nbrBond->getIdx()]=1;
             dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
           }
-          beg++;
+          ++beg;
         }
       }
     }
@@ -767,12 +765,12 @@ namespace RDKit {
     std::vector< std::pair<unsigned int,Bond *> > orderedBondsInPlay;
     for(unsigned int i=0;i<bondsInPlay.size();++i){
       Bond *dblBond=bondsInPlay[i];
-      unsigned int maxHere=0;
-      for(INT_VECT::const_iterator iter=dblBondNbrs[dblBond->getIdx()].begin();
-          iter!=dblBondNbrs[dblBond->getIdx()].end();++iter){
-        maxHere = std::max(maxHere,singleBondCounts[*iter]);
-      }
-      orderedBondsInPlay.push_back(std::make_pair(maxHere,dblBond));
+      unsigned int countHere=std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),dblBondNbrs[dblBond->getIdx()].end(),0);
+      // and favor double bonds that are *not* in rings. The combination of using the sum
+      // above (instead of the max) and this ring-membershipt test seem to fix
+      // sf.net issue 3009836
+      if(!(mol.getRingInfo()->numBondRings(dblBond->getIdx()))) countHere *= 10;
+      orderedBondsInPlay.push_back(std::make_pair(countHere,dblBond));
     }
     std::sort(orderedBondsInPlay.begin(),orderedBondsInPlay.end());
 

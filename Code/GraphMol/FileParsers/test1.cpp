@@ -44,7 +44,6 @@ void test1(){
   // sanitize it, which will aromatize the bonds... we will not match:
   MolOps::sanitizeMol(*m2);
   TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
-  std::cerr<<"size: "<<mv.size()<<std::endl;
   TEST_ASSERT(mv.size()==0);
 
   delete m2;
@@ -421,7 +420,6 @@ void test7(){
   smi = MolToSmiles(*m,true);
   TEST_ASSERT(smi=="C[C@H](F)Cl");
   molBlock=MolToMolBlock(*m);
-  BOOST_LOG(rdInfoLog) << molBlock << std::endl;
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   MolOps::assignStereochemistry(*m2);
@@ -812,6 +810,27 @@ void testDblBondStereochem(){
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getBondWithIdx(0)->getStereo()==Bond::STEREOANY);
     TEST_ASSERT(m1->getBondWithIdx(0)->getBondDir()==Bond::EITHERDOUBLE);
+    delete m1;
+  }
+
+  // the next two are for sf.net issue 3009836
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"double_link2.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondBetweenAtoms(3,4)->getStereo()==Bond::STEREOZ);
+
+    delete m1;
+  }
+
+  {
+    RWMol *m1;
+    std::string fName=rdbase+"double_link.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getBondBetweenAtoms(3,4)->getStereo()==Bond::STEREOZ);
+
     delete m1;
   }
 
@@ -2069,7 +2088,6 @@ void test2V3K(){
 
 void testIssue2963522(){
   BOOST_LOG(rdInfoLog) << " Testing issue 2963522 "<< std::endl;
-
   {
     std::string smiles="CC=CC";
     RWMol *m = SmilesToMol(smiles);
@@ -2166,6 +2184,55 @@ void testIssue2963522(){
     delete m;
   }
 
+  {
+    // this was issue 3009756:
+    std::string smiles="CC(=O)C";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREONONE);
+
+    Conformer *conf=new Conformer(m->getNumAtoms());
+    conf->setAtomPos(0,RDGeom::Point3D(-1,0,0));
+    conf->setAtomPos(1,RDGeom::Point3D(0,0,0));
+    conf->setAtomPos(2,RDGeom::Point3D(0,1,0));
+    conf->setAtomPos(3,RDGeom::Point3D(1,0,0));
+    m->addConformer(conf,true);
+    
+    std::string molBlock = MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(molBlock);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREONONE);
+
+    delete m;
+  }
+  {
+    // this was issue 3009756:
+    std::string smiles="CC(=C)Cl";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREONONE);
+
+    Conformer *conf=new Conformer(m->getNumAtoms());
+    conf->setAtomPos(0,RDGeom::Point3D(-1,0,0));
+    conf->setAtomPos(1,RDGeom::Point3D(0,0,0));
+    conf->setAtomPos(2,RDGeom::Point3D(0,1,0));
+    conf->setAtomPos(3,RDGeom::Point3D(1,0,0));
+    m->addConformer(conf,true);
+    
+    std::string molBlock = MolToMolBlock(*m);
+    delete m;
+    m = MolBlockToMol(molBlock);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo()==Bond::STEREONONE);
+
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << " done"<< std::endl;
 }
 
@@ -2176,6 +2243,7 @@ void testIssue2963522(){
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 
+#if 1
   test1();
   test2();
   test4();
@@ -2211,6 +2279,8 @@ int main(int argc,char *argv[]){
   test1V3K();
   test2V3K();
   testIssue2963522();
+#endif
+
 
 
   return 0;

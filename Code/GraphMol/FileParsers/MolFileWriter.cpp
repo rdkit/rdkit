@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -262,13 +262,19 @@ namespace RDKit{
       // double bond stereochemistry - 
       // if the bond isn't specified, then it should go in the mol block
       // as "any", this was sf.net issue 2963522.
-      // One caveat to this: if it's a ring bond, we'll only put the "any"
-      // in the mol block if the user specifically asked for it. 
-      // Constantly seeing crossed bonds in rings, though maybe technically
-      // correct, is irritating.
+      // two caveats to this:
+      // 1) if it's a ring bond, we'll only put the "any"
+      //    in the mol block if the user specifically asked for it. 
+      //    Constantly seeing crossed bonds in rings, though maybe 
+      //    technically correct, is irritating.
+      // 2) if it's a terminal bond (where there's no chance of
+      //    stereochemistry anyway), we also skip the any.
+      //    this was sf.net issue 3009756
       if (bond->getStereo() <= Bond::STEREOANY){
-        if(bond->getStereo()==Bond::STEREOANY ||
-           !(bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx()))){
+        if(bond->getStereo()==Bond::STEREOANY){
+	  dirCode = 3;
+	} else if(!(bond->getOwningMol().getRingInfo()->numBondRings(bond->getIdx())) &&
+		  bond->getBeginAtom()->getDegree()>1 && bond->getEndAtom()->getDegree()>1){
           dirCode = 3;
         }
       }
