@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C)  2005-2008 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2005-2010 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //
@@ -11,11 +11,18 @@
 #include <string>
 #include <time.h>
 
+namespace {
+  // this is a "bit" of a hack to work around shared/static library problems
+  // on windows
+  boost::logging::rdLogger cerrLogger(&std::cerr);  
+  boost::logging::rdLogger coutLogger(&std::cout);  
+}
+
 boost::logging::rdLogger *rdAppLog=0;
 boost::logging::rdLogger *rdDebugLog=0;
-boost::logging::rdLogger *rdInfoLog=0;
-boost::logging::rdLogger *rdErrorLog=0;
-boost::logging::rdLogger *rdWarningLog=0;
+boost::logging::rdLogger *rdInfoLog=&coutLogger;
+boost::logging::rdLogger *rdErrorLog=&cerrLogger;
+boost::logging::rdLogger *rdWarningLog=&cerrLogger;
 boost::logging::rdLogger *rdStatusLog=0;
 
 namespace boost {
