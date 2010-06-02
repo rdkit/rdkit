@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -42,9 +42,8 @@ namespace RDKit{
           completeQueryAndChildren(query,*ai,magicVal);
         }
       }
-    
     }
-  
+    
     // it's kind of stinky that we have to do this, but as of g++3.2 and
     // boost 1.30, on linux calls to lexical_cast<int>(std::string)
     // crash if the string starts with spaces.
@@ -52,9 +51,9 @@ namespace RDKit{
     T stripSpacesAndCast(const std::string &input,bool acceptSpaces=false){
       std::string trimmed=boost::trim_copy(input);
       if(acceptSpaces && trimmed==""){
-        return 0;
+	return 0;
       } else {
-        return boost::lexical_cast<T>(trimmed);
+	return boost::lexical_cast<T>(trimmed);
       }
     }
 
@@ -62,8 +61,8 @@ namespace RDKit{
       // atoi returns zero on failure:
       int res=atoi(input.c_str());
       if(!res && !acceptSpaces && input[0]==' '){
-        std::string trimmed=boost::trim_copy(input);
-        if(trimmed.length()==0) throw boost::bad_lexical_cast();
+	std::string trimmed=boost::trim_copy(input);
+	if(trimmed.length()==0) throw boost::bad_lexical_cast();
       }
       return res;
     }
@@ -72,10 +71,28 @@ namespace RDKit{
       // atof returns zero on failure:
       double res=atof(input.c_str());
       if(res==0.0 && !acceptSpaces && input[0]==' '){
-        std::string trimmed=boost::trim_copy(input);
-        if(trimmed.length()==0) throw boost::bad_lexical_cast();
+	std::string trimmed=boost::trim_copy(input);
+	if(trimmed.length()==0) throw boost::bad_lexical_cast();
       }
       return res;
+    }
+
+    Atom *replaceAtomWithQueryAtom(RWMol *mol,Atom *atom){
+      PRECONDITION(mol,"bad molecule");
+      PRECONDITION(atom,"bad atom");
+      if(atom->hasQuery()) return atom;
+
+      QueryAtom qa(*atom);
+      unsigned int idx=atom->getIdx();
+
+      if(atom->getFormalCharge()!=0){
+	qa.expandQuery(makeAtomFormalChargeQuery(atom->getFormalCharge()));
+      }
+      if(atom->hasProp("_hasMassQuery")){
+	qa.expandQuery(makeAtomMassQuery(static_cast<int>(atom->getMass())));
+      }
+      mol->replaceAtom(idx,&qa);
+      return mol->getAtomWithIdx(idx);
     }
 
     //*************************************
@@ -84,7 +101,7 @@ namespace RDKit{
     // for mol files
     //  
     //*************************************
-  
+
     void ParseOldAtomList(RWMol *mol,const std::string &text){
       PRECONDITION(mol,"bad mol");
       unsigned int idx;
@@ -327,10 +344,7 @@ namespace RDKit{
               throw FileParseException(errout.str()) ;
             }
             if(!atom->hasQuery()){
-              QueryAtom a(*(mol->getAtomWithIdx(aid-1)));
-              a.setAtomicNum(mol->getAtomWithIdx(aid-1)->getAtomicNum());
-              mol->replaceAtom(aid-1,&a);           
-              atom = mol->getAtomWithIdx(aid-1);
+	      atom=replaceAtomWithQueryAtom(mol,atom);
             }
             atom->expandQuery(q,Queries::COMPOSITE_AND);
             spos += 4;
@@ -372,9 +386,7 @@ namespace RDKit{
             } else if(count==1){
               ATOM_EQUALS_QUERY *q=makeAtomUnsaturatedQuery();
               if(!atom->hasQuery()){
-                QueryAtom a(atom->getAtomicNum());
-                mol->replaceAtom(aid-1,&a);           
-                atom = mol->getAtomWithIdx(aid-1);
+		atom=replaceAtomWithQueryAtom(mol,atom);
               }
               atom->expandQuery(q,Queries::COMPOSITE_AND);
             } else {
@@ -441,9 +453,7 @@ namespace RDKit{
               throw FileParseException(errout.str()) ;
             }
             if(!atom->hasQuery()){
-              QueryAtom a(*(mol->getAtomWithIdx(aid-1)));
-              mol->replaceAtom(aid-1,&a);           
-              atom = mol->getAtomWithIdx(aid-1);
+	      atom=replaceAtomWithQueryAtom(mol,atom);
             }
             atom->expandQuery(q,Queries::COMPOSITE_AND);
             spos += 4;
@@ -730,6 +740,7 @@ namespace RDKit{
       if(massDiff!=0) {
         // FIX: this isn't precisely correct because we should be doing the difference w.r.t. most abundant species.
         res->setMass(res->getMass()+massDiff);
+	res->setProp("_hasMassQuery",true);
       }
     
       if(text.size()>=42 && text.substr(39,3)!="  0"){
@@ -830,7 +841,6 @@ namespace RDKit{
         errout << "Cannot convert " << text.substr(spos,3) << " to int";
         throw FileParseException(errout.str()) ;
       }
-    
     
       // adjust the numbering
       idx1--;idx2--;
@@ -1152,12 +1162,14 @@ namespace RDKit{
         return false;
       }
       prop = splitToken[0];
+      boost::to_upper(prop);
       val = splitToken[1];
       return true;
     }
 
     template <class T>
-    void ParseV3000AtomProps(RWMol *mol,Atom *atom,typename T::iterator &token,const T &tokens,
+    void ParseV3000AtomProps(RWMol *mol,Atom *& atom,
+			     typename T::iterator &token,const T &tokens,
                              unsigned int &line){
       PRECONDITION(mol,"bad molecule");
       PRECONDITION(atom,"bad atom");
@@ -1174,7 +1186,7 @@ namespace RDKit{
           if(!atom->hasQuery()) {
             atom->setFormalCharge(charge);
           } else {
-            atom->expandQuery(makeAtomFormalChargeQuery(charge),Queries::COMPOSITE_OR,true);
+            atom->expandQuery(makeAtomFormalChargeQuery(charge));
           }
         } else if(prop=="RAD"){
           // FIX handle queries here
@@ -1196,8 +1208,12 @@ namespace RDKit{
             errout << "Bad value for MASS :" << val << " for atom "<< atom->getIdx()+1 << std::endl;
             throw FileParseException(errout.str()) ;
           } else {
-            atom->setMass(v);
-          }
+	    if(!atom->hasQuery()) {
+	      atom->setMass(v);
+	    } else {
+	      atom->expandQuery(makeAtomMassQuery(static_cast<int>(v)));
+	    }
+	  }
         } else if(prop=="CFG"){
           int cfg=toInt(val);
           switch(cfg){
@@ -1211,7 +1227,38 @@ namespace RDKit{
             errout << "Unrecognized CFG value : " << val << " for atom "<< atom->getIdx()+1 << std::endl;
             throw FileParseException(errout.str()) ;
           }
+        } else if(prop=="HCOUNT"){
+	  if(val!="0"){
+	    int hcount=toInt(val);
+	    if(!atom->hasQuery()) {
+	      atom=replaceAtomWithQueryAtom(mol,atom);
+	    }
+	    if(hcount==-1) hcount=0;
+	    atom->expandQuery(makeAtomHCountQuery(hcount));
+	  }
+        } else if(prop=="UNSAT"){
+	  if(val=="1"){
+	    if(!atom->hasQuery()) {
+	      atom=replaceAtomWithQueryAtom(mol,atom);
+	    } 
+	    atom->expandQuery(makeAtomUnsaturatedQuery());
+	  }
+        } else if(prop=="RBCNT"){
+	  if(val!="0"){
+	    int rbcount=toInt(val);
+	    if(!atom->hasQuery()) {
+	      atom=replaceAtomWithQueryAtom(mol,atom);
+	    }
+	    if(rbcount==-1) rbcount=0;
+	    atom->expandQuery(makeAtomRingBondCountQuery(rbcount));
+	  }
+        } else if(prop=="AAMAP"){
+	  if(val!="0"){
+	    int mapno=toInt(val);
+	    atom->setProp("molAtomMapNumber",mapno);
+	  }
         }
+
         ++token;
       }
     }
@@ -1299,10 +1346,13 @@ namespace RDKit{
         atom->setProp("molAtomMapNumber",mapNum);
 
         ++token;
-        // additional properties:
-        ParseV3000AtomProps(mol,atom,token,tokens,line);
         
         unsigned int aid=mol->addAtom(atom,false,true);
+
+        // additional properties this may change the atom,
+	// so be careful with it:
+        ParseV3000AtomProps(mol,atom,token,tokens,line);
+
         mol->setAtomBookmark(atom,molIdx);
         conf->setAtomPos(aid,pos);
       }

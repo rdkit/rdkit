@@ -1161,6 +1161,27 @@ void testMolFileDegreeQueries(){
   TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
   delete m2;
 
+  {
+    delete m;
+    fName = rdbase + "/Code/GraphMol/FileParsers/test_data/combined.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+  
+    smi = "CC(=O)[CH-]C";
+    m2 = SmilesToMol(smi,false,false);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==4);
+    delete m2;
+    smi = "CC(=O)[C-](C)C";
+    m2 = SmilesToMol(smi,false,false);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+    delete m2;
+    smi = "CC(=O)CC";
+    m2 = SmilesToMol(smi,false,false);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+    delete m2;
+  }
+
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -2091,6 +2112,34 @@ void test2V3K(){
     smiles="COCC";
     m2 = SmilesToMol(smiles);
     TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/v3k.rbc.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getNumBonds()==2);
+
+    std::string smiles="C1CC1";
+    RWMol *m2 = SmilesToMol(smiles);
+    TEST_ASSERT(m2);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="CCC";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+
+    delete m2;
+    smiles="N1NC2NNC12";
+    m2 = SmilesToMol(smiles);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
 
     delete m2;
     delete m;
