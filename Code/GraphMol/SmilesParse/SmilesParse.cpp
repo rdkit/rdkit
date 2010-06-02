@@ -24,6 +24,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
 int yysmiles_parse (std::vector<RDKit::RWMol *>*,void *);
 int yysmiles_lex_init (void **);
 int yysmiles_lex_destroy (void *);
@@ -37,7 +38,7 @@ void setup_smarts_string(const std::string &text,void *);
 extern int yysmarts_debug; 
 
 int smiles_parse(const std::string &inp,
-		 std::vector<RDKit::RWMol *> &molVect){
+    std::vector<RDKit::RWMol *> &molVect){
   void *scanner;
   TEST_ASSERT(!yysmiles_lex_init(&scanner));
   setup_smiles_string(inp,scanner);
@@ -47,7 +48,7 @@ int smiles_parse(const std::string &inp,
 }
 
 int smarts_parse(const std::string &inp,
-		 std::vector<RDKit::RWMol *> &molVect){
+    std::vector<RDKit::RWMol *> &molVect){
   void *scanner;
   TEST_ASSERT(!yysmarts_lex_init(&scanner));
   setup_smarts_string(inp,scanner);
@@ -57,36 +58,35 @@ int smarts_parse(const std::string &inp,
 }
 
 namespace RDKit{
-  RWMol *toMol(std::string inp,int func(const std::string &,
-					std::vector<RDKit::RWMol *> &)){
-    RWMol *res; 
-    std::vector<RDKit::RWMol *> molVect;
-    try {
-      func(inp,molVect);
-      if(molVect.size()<=0){
-        res = 0;
-      } else {
-        res = molVect[0];
-	molVect[0]=0;
-        SmilesParseOps::CloseMolRings(res,false);
-        SmilesParseOps::AdjustAtomChiralityFlags(res);
-        // No sense leaving this bookmark intact:
-        if(res->hasAtomBookmark(ci_RIGHTMOST_ATOM)){
-          res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
-        }
-      }
-    } catch (SmilesParseException &e) {
-      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+RWMol *toMol(std::string inp,int func(const std::string &,
+    std::vector<RDKit::RWMol *> &)){
+  RWMol *res;
+  std::vector<RDKit::RWMol *> molVect;
+  try {
+    func(inp,molVect);
+    if(molVect.size()<=0){
       res = 0;
+    } else {
+      res = molVect[0];
+      molVect[0]=0;
+      SmilesParseOps::CloseMolRings(res,false);
+      SmilesParseOps::AdjustAtomChiralityFlags(res);
+      // No sense leaving this bookmark intact:
+      if(res->hasAtomBookmark(ci_RIGHTMOST_ATOM)){
+        res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
+      }
     }
-    for(std::vector<RDKit::RWMol *>::iterator iter=molVect.begin();
-	iter!=molVect.end();++iter){
-      if(*iter) delete *iter;
-    }
-
-    return res;
+  } catch (SmilesParseException &e) {
+    BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+    res = 0;
   }
-  
+  BOOST_FOREACH(RDKit::RWMol *molPtr,molVect){
+    if(molPtr) delete molPtr;
+  }
+
+  return res;
+}
+
 RWMol *SmilesToMol(std::string smi,int debugParse,bool sanitize){
   yysmiles_debug = debugParse;
   // strip any leading/trailing whitespace:

@@ -108,6 +108,7 @@ mol: atomd {
   molList->resize( sz + 1);
   (*molList)[ sz ] = new RWMol();
   RDKit::RWMol *curMol = (*molList)[ sz ];
+  $1->setProp("_SmilesStart",1);
   curMol->addAtom($1);
   delete $1;
   $$ = sz;
@@ -202,6 +203,7 @@ mol: atomd {
 
 | mol branch {
   RWMol *m1_p = (*molList)[$$],*m2_p=(*molList)[$2];
+  m2_p->getAtomWithIdx(0)->clearProp("_SmilesStart");
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE,false);
   delete m2_p;
   int sz = molList->size();
@@ -216,7 +218,6 @@ branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
   $$ = $3;
   int sz     = molList->size();
   RDKit::RWMol *curMol = (*molList)[ sz-1 ];
-
   Bond *partialBond = curMol->createPartialBond(0,$2->getBondType());
   partialBond->setBondDir($2->getBondDir());
   curMol->setBondBookmark(partialBond,

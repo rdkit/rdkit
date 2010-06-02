@@ -294,7 +294,6 @@ namespace RDKit{
           unsigned int nbrIdx=*lIter;
           Bond *connectingBond=newMol->getBondBetweenAtoms(i,nbrIdx);
           if(matchingIndices[nbrIdx]>-1){
-            bool removedPrecedingAtom=false;
             Atom *newAt=new Atom(0);
             ++nDummies;
             if(!labelByIndex){
@@ -307,10 +306,8 @@ namespace RDKit{
             Bond *bnd=connectingBond->copy();
             if(bnd->getBeginAtomIdx()==i){
               bnd->setEndAtomIdx(newAt->getIdx());
-              removedPrecedingAtom=false;
             } else {
               bnd->setBeginAtomIdx(newAt->getIdx());
-              if(nbrIdx<i) removedPrecedingAtom=true;
             }
             newBonds.push_back(bnd);
 
@@ -338,7 +335,7 @@ namespace RDKit{
                 //   [C@H](N)(F)C -> [C@H](F)(C)X   no
                 //   F[C@H](N)C -> F[C@@H](C)X      yes        
                 //   F[C@H](C)N -> F[C@H](C)X       no
-                if(whichNbr==1 || (whichNbr==0&&removedPrecedingAtom) ) switchIt=true;
+                if(whichNbr==1 ) switchIt=true;
                 break;  
               }
               if(switchIt){

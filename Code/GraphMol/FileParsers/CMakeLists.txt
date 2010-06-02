@@ -3,8 +3,8 @@ rdkit_library(FileParsers
               MolFileParser.cpp MolFileStereochem.cpp MolFileWriter.cpp 
               ForwardSDMolSupplier.cpp SDMolSupplier.cpp SmilesMolSupplier.cpp 
               SmilesWriter.cpp SDWriter.cpp TDTMolSupplier.cpp TDTWriter.cpp
-              TplFileParser.cpp TplFileWriter.cpp
-              LINK_LIBRARIES SmilesParse)
+              TplFileParser.cpp TplFileWriter.cpp)
+              
 
 rdkit_test(fileParsersTest1 test1.cpp 
            LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )

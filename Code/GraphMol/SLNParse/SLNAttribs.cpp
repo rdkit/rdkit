@@ -453,14 +453,12 @@ namespace RDKit{
           } else if(attribVal[0]=='i'){
             (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);  
           }
-          unsigned int numPrecedingAtoms=0;
           std::list< std::pair<int,int> > neighbors;
           RWMol::ADJ_ITER nbrIdx,endNbrs;
           boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(*atomIt);
           while(nbrIdx != endNbrs){
             Bond *nbrBond=mol->getBondBetweenAtoms((*atomIt)->getIdx(),*nbrIdx);
             neighbors.push_back(std::make_pair(*nbrIdx,nbrBond->getIdx()));
-            if(*nbrIdx<(*atomIt)->getIdx()) ++numPrecedingAtoms;
             ++nbrIdx;
           }          
 
@@ -480,11 +478,6 @@ namespace RDKit{
           // figure out the permutation order relative to the atom numbering
           // (sln chirality):
           int nSwaps=(*atomIt)->getPerturbationOrder(bondOrdering);
-          //nSwaps += numPrecedingAtoms;
-          
-          // if the atom has an explicit hydrogen, that means it was int
-          //std::cerr << " swaps: " << nSwaps << std::endl;
-          
           
           if(nSwaps%2){
             (*atomIt)->setChiralTag((*atomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ?
@@ -492,75 +485,6 @@ namespace RDKit{
                                     Atom::CHI_TETRAHEDRAL_CW);
           }
         }
-#if 0    
-        Atom::ChiralType chiralType=(*atomIt)->getChiralTag();
-        if(chiralType==Atom::CHI_TETRAHEDRAL_CW ||
-           chiralType==Atom::CHI_TETRAHEDRAL_CCW ){
-          //
-          // The atom is marked as chiral, set the SMILES-order of the
-          // atom's bonds.  This is easy for non-ring-closure bonds,
-          // because the SMILES order is determined solely by the atom
-          // indices.  Things are trickier for ring-closure bonds, which we
-          // need to insert into the list in a particular order
-          //
-          INT_VECT ringClosures;
-          if((*atomIt)->hasProp("_RingClosures"))
-            (*atomIt)->getProp("_RingClosures",ringClosures);
-          std::list<INT_PAIR> neighbors;
-          // push this atom onto the list of neighbors (we'll use this
-          // to find our place later):
-          neighbors.push_back(std::make_pair((*atomIt)->getIdx(),-1));
-          std::list<int> bondOrder;
-          RWMol::ADJ_ITER nbrIdx,endNbrs;
-          boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(*atomIt);
-          while(nbrIdx != endNbrs){
-            Bond *nbrBond=mol->getBondBetweenAtoms((*atomIt)->getIdx(),*nbrIdx);
-            if(std::find(ringClosures.begin(),
-                         ringClosures.end(),
-                         nbrBond->getIdx())== ringClosures.end()){
-              neighbors.push_back(std::make_pair(*nbrIdx,nbrBond->getIdx()));
-            }
-            nbrIdx++;
-          }
-          // sort the list of non-ring-closure bonds:
-          neighbors.sort();
-  
-  
-          // find the location of this atom.  it pretty much has to be
-          // first in the list, e.g for smiles like [C@](F)(Cl)(Br)I, or
-          // second (everything else).
-          std::list<INT_PAIR>::iterator selfPos=neighbors.begin();
-          if(selfPos->first != (*atomIt)->getIdx()){
-            selfPos++;
-          }
-          CHECK_INVARIANT(selfPos->first==(*atomIt)->getIdx(),"weird atom ordering");
-          
-          // copy over the bond ids:
-          INT_LIST bondOrdering;
-          for(std::list<INT_PAIR>::iterator neighborIt=neighbors.begin();
-              neighborIt != neighbors.end(); neighborIt++){
-            if(neighborIt != selfPos){
-              bondOrdering.push_back(neighborIt->second);
-            } else {
-              // we are not going to add the atom itself, but we will push on
-              // ring closure bonds at this point (if required):
-              for(INT_VECT::const_iterator closureIt=ringClosures.begin();
-                  closureIt != ringClosures.end();closureIt++){
-                bondOrdering.push_back(*closureIt);
-              }
-            }
-          }
-  
-          // ok, we now have the SMILES ordering of the bonds, figure out the
-          // permutation order:
-          int nSwaps=(*atomIt)->getPerturbationOrder(bondOrdering);
-          if(nSwaps%2){
-            (*atomIt)->setChiralTag(chiralType==Atom::CHI_TETRAHEDRAL_CW ?
-                                    Atom::CHI_TETRAHEDRAL_CCW :
-                                    Atom::CHI_TETRAHEDRAL_CW);
-          }
-        }
-#endif        
       }
     }
   } // end of SLNParse namespace

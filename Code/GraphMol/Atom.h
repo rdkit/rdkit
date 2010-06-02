@@ -46,13 +46,17 @@ namespace RDKit{
 
     The chirality of an Atom is determined by two things:
       - its \c chiralTag
-      - the input order of its bonds
+      - the input order of its bonds (see note below for handling of
+        implicit Hs)
 
     For tetrahedral coordination, the \c chiralTag tells you what
     direction you have to rotate to get from bond 2 to bond 3 while looking
-    down bond 1. This is pretty much identical to the SMILES represenation of
-    chirality
-      
+    down bond 1. This is pretty much identical to the SMILES representation of
+    chirality.
+
+    NOTE: if an atom has an implicit H, the bond to that H is considered to be
+    at the *end* of the list of other bonds.
+
   */
   class Atom {
     friend class MolPickler; //!< the pickler needs access to our privates

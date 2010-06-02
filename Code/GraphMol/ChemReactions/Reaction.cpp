@@ -463,16 +463,12 @@ namespace RDKit {
           // this will contain the indices of product bonds in the
           // reactant order:
           INT_LIST newOrder; 
-          bool hasPreceder=false;
+
           ROMol::OEDGE_ITER beg,end;
           boost::tie(beg,end) = reactantAtom->getOwningMol().getAtomBonds(reactantAtom);
           while(beg!=end){
             const BOND_SPTR reactantBond=reactantAtom->getOwningMol()[*beg];
             unsigned int oAtomIdx=reactantBond->getOtherAtomIdx(reactantAtom->getIdx());
-            if(oAtomIdx<reactantAtom->getIdx() &&
-               reactantBond->getBeginAtomIdx()==oAtomIdx) {
-              hasPreceder=true;
-            }
             CHECK_INVARIANT(reactProdAtomMap.find(oAtomIdx)!=reactProdAtomMap.end(),
                             "other atom from bond not mapped.");
             const Bond *productBond;
@@ -483,10 +479,6 @@ namespace RDKit {
             ++beg;
           }
           int nSwaps=productAtom->getPerturbationOrder(newOrder);
-          if(nSwaps && newOrder.size()==3){
-            // <sigh>, our old friend the implicit H
-            if(hasPreceder) ++nSwaps;            
-          }
           if(nSwaps%2){
             productAtom->invertChirality();
           }
