@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -799,7 +799,48 @@ void testMissingParams(){
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+void testSFIssue3009337(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing SFIssue3009337." << std::endl;
 
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/test_data";
+  {
+    RWMol *mol = MolFileToMol(pathName+"/Issue3009337.mol",true,false);
+    TEST_ASSERT(mol);
+    ForceFields::ForceField *field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    double e1 = field->calcEnergy();
+    TEST_ASSERT(e1>0.0 && e1<1e12);
+
+    int needMore = field->minimize(200,1e-6,1e-3);
+    TEST_ASSERT(!needMore);
+    double e2 = field->calcEnergy();
+    TEST_ASSERT(e2<e1);
+
+    delete mol;
+    delete field;
+  }
+  {
+    RWMol *mol = MolFileToMol(pathName+"/Issue3009337.2.mol",true,false);
+    TEST_ASSERT(mol);
+    ForceFields::ForceField *field=UFF::constructForceField(*mol);
+    TEST_ASSERT(field);
+    field->initialize();
+    double e1 = field->calcEnergy();
+    TEST_ASSERT(e1>0.0 && e1<1e12);
+
+    int needMore = field->minimize(200,1e-6,1e-3);
+    TEST_ASSERT(!needMore);
+    double e2 = field->calcEnergy();
+    TEST_ASSERT(e2<e1);
+
+    delete mol;
+    delete field;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -820,5 +861,6 @@ int main(){
   testSFIssue2378119();
 #endif
   testMissingParams();
+  testSFIssue3009337();
 
 }

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -199,17 +199,23 @@ namespace RDKit {
                 ax2 = bond2;
               }
             }
-            beg2++;
+            ++beg2;
           }
-          if(bond1!=ax1 && bond1!=ax2){
-            if(!eq1) eq1=bond1;
-            else if(!eq2) eq2=bond1;
-            else if(!eq3) eq3=bond1;
-          }
-          beg1++;
+          ++beg1;
         }
         CHECK_INVARIANT(ax1,"axial bond not found");
         CHECK_INVARIANT(ax2,"axial bond not found");
+	
+        boost::tie(beg1,end1) = mol.getAtomBonds(atom);
+        while(beg1!=end1){
+          const Bond *bond=mol[*beg1].get();
+	  ++beg1;
+	  if(bond==ax1 || bond==ax2) continue;
+	  if(!eq1) eq1=bond;
+	  else if(!eq2) eq2=bond;
+	  else if(!eq3) eq3=bond;
+	}
+
         CHECK_INVARIANT(eq1,"equatorial bond not found");
         CHECK_INVARIANT(eq2,"equatorial bond not found");
         CHECK_INVARIANT(eq3,"equatorial bond not found");
