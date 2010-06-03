@@ -618,6 +618,11 @@ namespace RDKit {
       if (descrip == ""){
         // we have simple atom - just generate the smiles and return
         res = SmilesWrite::GetAtomSmiles(qatom);
+	if(res[0]=='['){
+	  // chop the brackets off, we'll put them back on later:
+	  needParen=true;
+	  res = res.substr(1,res.size()-2);
+	}
       }
       else if ((descrip == "AtomOr") || (descrip == "AtomAnd")) {
         // we have a composite query 
@@ -637,6 +642,12 @@ namespace RDKit {
         if (tquery->getNegation()) {
           res = "!" + res;
         }
+      }
+      if(qatom->hasProp("molAtomMapNumber")){
+	needParen=true;
+	std::string mapNum;
+	qatom->getProp("molAtomMapNumber",mapNum);
+	res += ":"+mapNum;
       }
       if (needParen ) {
         res = "[" + res + "]";

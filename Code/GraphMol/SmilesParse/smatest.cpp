@@ -928,6 +928,22 @@ void testAtomMap(){
   sma = MolToSmiles(*matcher1);
   TEST_ASSERT(sma=="CC");
 
+  // test writing the atom map numbers:
+  delete matcher1;
+  sma="[C:4]";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  sma=MolToSmarts(*matcher1);
+  TEST_ASSERT(sma=="[C:4]");
+
+  delete matcher1;
+  sma="[C;$(C=O):2]-[O:3]";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+  sma=MolToSmarts(*matcher1);
+  std::cerr<<"sma: "<<sma<<std::endl;
+  TEST_ASSERT(sma=="[C&$(C=O):2]-[O:3]");
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1350,6 +1366,24 @@ void testRecursiveSerialNumbers(){
     delete patt;
   }    
 
+  {
+    std::vector< MatchVectType > mVV;
+    std::string sma ="[$(C(C)O)]O[$(C(C)O)]";
+    RWMol *patt = SmartsToMol(sma);
+    TEST_ASSERT(patt);
+
+    sma ="CCOCC";
+    RWMol *mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    unsigned int count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==2);
+    TEST_ASSERT(mVV.size()==2);
+    TEST_ASSERT(mVV[0].size()==3);
+    delete mol;
+
+    delete patt;
+  }    
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1378,7 +1412,6 @@ main(int argc, char *argv[])
   testAtomMap();
   testSmartsSmiles();
   testSmilesSmarts();
-#endif
   testIssue1914154();
   testMiscSmartsWriting();
   testIssue1804420();
@@ -1386,6 +1419,7 @@ main(int argc, char *argv[])
   testIssue2884178_part1();
   testIssue2884178_part2();
   testIssue3000399();
+#endif
   testRecursiveSerialNumbers();
   return 0;
 }
