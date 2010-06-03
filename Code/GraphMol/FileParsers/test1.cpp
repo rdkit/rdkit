@@ -16,6 +16,7 @@
 #include <RDGeneral/BadFileException.h>
 
 #include <string>
+#include <boost/lexical_cast.hpp>
 
 using namespace RDKit;
 
@@ -2303,7 +2304,6 @@ void testIssue2963522(){
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-
 #if 1
   test1();
   test2();

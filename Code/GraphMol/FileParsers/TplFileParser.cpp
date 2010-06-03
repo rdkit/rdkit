@@ -1,11 +1,12 @@
 // $Id$
 //
-//  Copyright (C) 2007-2008 Greg Landrum
+//  Copyright (C) 2007-2010 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
 
 #include "FileParsers.h"
+#include "FileParserUtils.h"
 #include "MolFileStereochem.h"
 #include <RDGeneral/StreamOps.h>
 
@@ -18,30 +19,6 @@
 #include <typeinfo>
 
 namespace RDKit{
-  // it's kind of stinky that we have to do this, but as of g++3.2 and
-  // boost 1.30, on linux calls to lexical_cast<int>(std::string)
-  // crash if the string starts with spaces.
-  template <typename T>
-  T stripSpacesAndCast(const std::string &input,bool acceptSpaces=false){
-    T res;
-    std::string trimmed=boost::trim_copy(input);
-    if(acceptSpaces && trimmed==""){
-      return 0;
-    } else {
-      return boost::lexical_cast<T>(trimmed);
-    }
-    try {
-      res = boost::lexical_cast<T>(trimmed);
-    }
-    catch (boost::bad_lexical_cast &) {
-      std::ostringstream errout;
-      errout << "Cannot convert " << input << " to " << typeid(T).name();
-      
-      throw FileParseException(errout.str()) ;
-    }
-    return res;
-  }
-
   void ParseTPLAtomLine(std::string text,unsigned int lineNum,RWMol *mol,
                         Conformer *conf){
     PRECONDITION(mol,"no molecule");
@@ -57,19 +34,19 @@ namespace RDKit{
     unsigned int atomId;
     atomId=mol->addAtom(atom,false,true);
     
-    atom->setFormalCharge(stripSpacesAndCast<int>(splitLine[2]));
-    double partialChg=stripSpacesAndCast<double>(splitLine[3]);
+    atom->setFormalCharge(FileParserUtils::stripSpacesAndCast<int>(splitLine[2]));
+    double partialChg=FileParserUtils::stripSpacesAndCast<double>(splitLine[3]);
     atom->setProp("TPLCharge",partialChg);
-    double xp=stripSpacesAndCast<double>(splitLine[4]);
-    double yp=stripSpacesAndCast<double>(splitLine[5]);
-    double zp=stripSpacesAndCast<double>(splitLine[6]);
+    double xp=FileParserUtils::stripSpacesAndCast<double>(splitLine[4]);
+    double yp=FileParserUtils::stripSpacesAndCast<double>(splitLine[5]);
+    double zp=FileParserUtils::stripSpacesAndCast<double>(splitLine[6]);
     // coords in TPL files are in picometers, adjust:
     xp/=100.;
     yp/=100.;
     zp/=100.;
     conf->setAtomPos(atomId,RDGeom::Point3D(xp,yp,zp));
 
-    unsigned int nBonds=stripSpacesAndCast<unsigned int>(splitLine[7]);
+    unsigned int nBonds=FileParserUtils::stripSpacesAndCast<unsigned int>(splitLine[7]);
     // the only remaining info we care about is stereochem, and then only if
     // the number of bonds is 4:
     if(nBonds==4 && splitLine.size()>8+nBonds){
@@ -105,8 +82,8 @@ namespace RDKit{
       throw FileParseException(errout.str()) ;
     }
     unsigned int idx1,idx2;
-    idx1 = stripSpacesAndCast<unsigned int>(splitLine[2])-1;
-    idx2 = stripSpacesAndCast<unsigned int>(splitLine[3])-1;
+    idx1 = FileParserUtils::stripSpacesAndCast<unsigned int>(splitLine[2])-1;
+    idx2 = FileParserUtils::stripSpacesAndCast<unsigned int>(splitLine[3])-1;
     
     unsigned int bondIdx=mol->addBond(idx1,idx2,bondOrder)-1;
     std::string stereoFlag1="";
@@ -158,9 +135,9 @@ namespace RDKit{
         errout << "Did not find enough fields on line " << line << " while reading conformer  " << confId << std::endl;
         throw FileParseException(errout.str()) ;
       }
-      double xp=stripSpacesAndCast<double>(splitLine[0]);
-      double yp=stripSpacesAndCast<double>(splitLine[1]);
-      double zp=stripSpacesAndCast<double>(splitLine[2]);
+      double xp=FileParserUtils::stripSpacesAndCast<double>(splitLine[0]);
+      double yp=FileParserUtils::stripSpacesAndCast<double>(splitLine[1]);
+      double zp=FileParserUtils::stripSpacesAndCast<double>(splitLine[2]);
       // coords in TPL files are in picometers, adjust:
       xp/=100.;
       yp/=100.;
@@ -221,8 +198,8 @@ namespace RDKit{
     // we're at the counts line:
     boost::split(splitText,tempStr,boost::is_any_of(" \t"),boost::token_compress_on);
     unsigned int nAtoms,nBonds;
-    nAtoms = stripSpacesAndCast<unsigned int>(splitText[0]);
-    nBonds = stripSpacesAndCast<unsigned int>(splitText[1]);
+    nAtoms = FileParserUtils::stripSpacesAndCast<unsigned int>(splitText[0]);
+    nBonds = FileParserUtils::stripSpacesAndCast<unsigned int>(splitText[1]);
 
     Conformer *conf = new Conformer(nAtoms);
     conf->setId(0);
@@ -253,7 +230,7 @@ namespace RDKit{
     unsigned int nConfs=0;
     if(tempStr.size()>=5 && tempStr.substr(0,5)=="CONFS"){
       boost::split(splitText,tempStr,boost::is_any_of(" \t"),boost::token_compress_on);
-      nConfs = stripSpacesAndCast<unsigned int>(splitText[1]);
+      nConfs = FileParserUtils::stripSpacesAndCast<unsigned int>(splitText[1]);
     }
     for(unsigned int i=0;i<nConfs;++i){
       Conformer *conf=ParseConfData(inStream,line,res,i+1);

@@ -2379,6 +2379,171 @@ void test25Conformers(){
 
 
 
+void test26V3000MDLParser(){
+  ROMol *mol=0;
+  ChemicalReaction *rxn;
+  MOL_SPTR_VECT reacts;
+  std::vector<MOL_SPTR_VECT> prods;
+  std::string smi;
+    
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing v3000 MDL parser" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName;
+  
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k.AmideBond.rxn";
+
+  rxn = RxnFileToChemicalReaction(fName); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+  smi = "C(=O)O";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+    
+  smi = "CN";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  rxn->initReactantMatchers();
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
+  TEST_ASSERT(prods[0][0]->getNumBonds()==3);
+
+
+  delete rxn;
+  reacts.clear();
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k.cyclization1.rxn";
+  rxn = RxnFileToChemicalReaction(fName); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+
+  smi = "OC(=O)CN";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+
+  smi = "OC(=O)CN";    
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  rxn->initReactantMatchers();
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  
+  delete rxn;
+  reacts.clear();
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k.cyclization1.rxn";
+  rxn = RxnFileToChemicalReaction(fName); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+
+  smi = "OC(=O)CN";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+
+  smi = "OC(=O)CN";    
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  rxn->initReactantMatchers();
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==1);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  
+  delete rxn;
+  reacts.clear();
+  fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k.cyclization2.rxn";
+  rxn = RxnFileToChemicalReaction(fName); 
+  TEST_ASSERT(rxn);
+  TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+  TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+  smi = "CC=C";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+    
+  smi = "C=CC=C";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  rxn->initReactantMatchers();
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==4);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==7);
+  TEST_ASSERT(MolToSmiles(*prods[0][0])==MolToSmiles(*prods[1][0]));
+  TEST_ASSERT(MolToSmiles(*prods[0][0])==MolToSmiles(*prods[2][0]));
+  TEST_ASSERT(MolToSmiles(*prods[0][0])==MolToSmiles(*prods[3][0]));
+  
+  reacts.clear();
+  smi = "CC=C[Cl]";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+    
+  smi = "[F]C=CC=C[Br]";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==4);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==10);
+  for(unsigned int i=0;i<prods.size();i++){
+    unsigned int nDifferent=0;
+    for(unsigned int j=0;j<prods.size();j++){
+      if(MolToSmiles(*prods[i][0])!=MolToSmiles(*prods[j][0])) nDifferent += 1;
+    }
+    TEST_ASSERT(nDifferent==2);
+  }
+
+  reacts.clear();
+  smi = "C1C=CCCC1";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+    
+  smi = "C=CC=C";
+  mol = SmartsToMol(smi);
+  TEST_ASSERT(mol);
+  reacts.push_back(ROMOL_SPTR(mol));
+  
+  prods = rxn->runReactants(reacts);
+  TEST_ASSERT(prods.size()==4);
+  TEST_ASSERT(prods[0].size()==1);
+  TEST_ASSERT(prods[0][0]->getNumAtoms()==10);
+  TEST_ASSERT(MolToSmiles(*prods[0][0])==MolToSmiles(*prods[1][0]));
+  TEST_ASSERT(MolToSmiles(*prods[0][0])==MolToSmiles(*prods[2][0]));
+  TEST_ASSERT(MolToSmiles(*prods[0][0])==MolToSmiles(*prods[3][0]));
+  
+  delete rxn;
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -2406,12 +2571,13 @@ int main() {
   test18PropertyTransfer();
   test19Issue2050085();
   test20BondQueriesInProduct();
-#endif
   test21Issue2540021();
   test22DotsToRemoveBonds();
   test23Pickling();
   test24AtomFlags();
   test25Conformers();
+#endif
+  test26V3000MDLParser();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

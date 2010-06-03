@@ -6,6 +6,7 @@
 //
 
 #include "FileParsers.h"
+#include "FileParserUtils.h"
 #include "MolFileStereochem.h"
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/StreamOps.h>
@@ -21,6 +22,58 @@
 #include <typeinfo>
 
 namespace RDKit{
+  namespace FileParserUtils {
+    int toInt(const std::string &input,bool acceptSpaces){
+      // atoi returns zero on failure:
+      int res=atoi(input.c_str());
+      if(!res && !acceptSpaces && input[0]==' '){
+	std::string trimmed=boost::trim_copy(input);
+	if(trimmed.length()==0) throw boost::bad_lexical_cast();
+      }
+      return res;
+    }
+
+    double toDouble(const std::string &input,bool acceptSpaces){
+      // atof returns zero on failure:
+      double res=atof(input.c_str());
+      if(res==0.0 && !acceptSpaces && input[0]==' '){
+	std::string trimmed=boost::trim_copy(input);
+	if(trimmed.length()==0) throw boost::bad_lexical_cast();
+      }
+      return res;
+    }
+
+    std::string getV3000Line(std::istream *inStream,unsigned int &line){
+      PRECONDITION(inStream,"bad stream");
+      std::string res,tempStr;
+
+      ++line;
+      tempStr = getLine(inStream);
+      if(tempStr.size()<7 || tempStr.substr(0,7) != "M  V30 "){
+        std::ostringstream errout;
+        errout << "Line "<<line<<" does not start with 'M  V30 '"<<std::endl;
+        throw FileParseException(errout.str()) ;
+      }
+      // FIX: do we need to handle trailing whitespace after a -?
+      while(tempStr[tempStr.length()-1]=='-'){
+        // continuation character, append what we read:
+        res += tempStr.substr(7,tempStr.length()-8);
+        // and then read another line: 
+        ++line;
+        tempStr = getLine(inStream);
+        if(tempStr.size()<7 || tempStr.substr(0,7) != "M  V30 "){
+          std::ostringstream errout;
+          errout << "Line "<<line<<" does not start with 'M  V30 '"<<std::endl;
+          throw FileParseException(errout.str()) ;
+        }
+      }
+      res += tempStr.substr(7,tempStr.length()-7);
+     
+      return res;
+    }
+  }
+  using RDKit::FileParserUtils::getV3000Line;
+
   namespace {
     void completeQueryAndChildren(ATOM_EQUALS_QUERY *query,Atom *tgt,int magicVal){
       PRECONDITION(query,"no query");
@@ -43,39 +96,7 @@ namespace RDKit{
         }
       }
     }
-    
-    // it's kind of stinky that we have to do this, but as of g++3.2 and
-    // boost 1.30, on linux calls to lexical_cast<int>(std::string)
-    // crash if the string starts with spaces.
-    template <typename T>
-    T stripSpacesAndCast(const std::string &input,bool acceptSpaces=false){
-      std::string trimmed=boost::trim_copy(input);
-      if(acceptSpaces && trimmed==""){
-	return 0;
-      } else {
-	return boost::lexical_cast<T>(trimmed);
-      }
-    }
-
-    int toInt(const std::string &input,bool acceptSpaces=false){
-      // atoi returns zero on failure:
-      int res=atoi(input.c_str());
-      if(!res && !acceptSpaces && input[0]==' '){
-	std::string trimmed=boost::trim_copy(input);
-	if(trimmed.length()==0) throw boost::bad_lexical_cast();
-      }
-      return res;
-    }
-
-    double toDouble(const std::string &input,bool acceptSpaces=true){
-      // atof returns zero on failure:
-      double res=atof(input.c_str());
-      if(res==0.0 && !acceptSpaces && input[0]==' '){
-	std::string trimmed=boost::trim_copy(input);
-	if(trimmed.length()==0) throw boost::bad_lexical_cast();
-      }
-      return res;
-    }
+  
 
     Atom *replaceAtomWithQueryAtom(RWMol *mol,Atom *atom){
       PRECONDITION(mol,"bad molecule");
@@ -106,7 +127,7 @@ namespace RDKit{
       PRECONDITION(mol,"bad mol");
       unsigned int idx;
       try {
-        idx = stripSpacesAndCast<unsigned int>(text.substr(0,3))-1;
+        idx = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(0,3))-1;
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -135,7 +156,7 @@ namespace RDKit{
     
       int nQueries;
       try {
-        nQueries = toInt(text.substr(9,1));
+        nQueries = FileParserUtils::toInt(text.substr(9,1));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -148,7 +169,7 @@ namespace RDKit{
         int pos = 11+i*4;
         int atNum;
         try {
-          atNum = toInt(text.substr(pos,3));
+          atNum = FileParserUtils::toInt(text.substr(pos,3));
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -180,7 +201,7 @@ namespace RDKit{
 
       int ie, nent;
       try {
-        nent = toInt(text.substr(6,3));
+        nent = FileParserUtils::toInt(text.substr(6,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -191,9 +212,9 @@ namespace RDKit{
       for (ie = 0; ie < nent; ie++) {
         int aid, chg;
         try {
-          aid = toInt(text.substr(spos,4));
+          aid = FileParserUtils::toInt(text.substr(spos,4));
           spos += 4;
-          chg = toInt(text.substr(spos,4));
+          chg = FileParserUtils::toInt(text.substr(spos,4));
           spos += 4;
           mol->getAtomWithIdx(aid-1)->setFormalCharge(chg);
         }
@@ -220,7 +241,7 @@ namespace RDKit{
 
       int ie, nent;
       try {
-        nent = toInt(text.substr(6,3));
+        nent = FileParserUtils::toInt(text.substr(6,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -233,9 +254,9 @@ namespace RDKit{
         std::ostringstream errout;
       
         try {
-          aid = toInt(text.substr(spos,4));
+          aid = FileParserUtils::toInt(text.substr(spos,4));
           spos += 4;
-          rad = toInt(text.substr(spos,4));
+          rad = FileParserUtils::toInt(text.substr(spos,4));
           spos += 4;
 
           switch(rad) {
@@ -267,7 +288,7 @@ namespace RDKit{
     
       unsigned int nent;
       try {
-        nent = stripSpacesAndCast<unsigned int>(text.substr(6,3));
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -279,11 +300,11 @@ namespace RDKit{
         unsigned int aid;
         int mass;
         try {
-          aid = stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
           spos += 4;
           Atom *atom=mol->getAtomWithIdx(aid-1); 
           if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-            mass = toInt(text.substr(spos,4));
+            mass = FileParserUtils::toInt(text.substr(spos,4));
             atom->setMass(static_cast<double>(mass));
             spos += 4;
           } else {
@@ -305,7 +326,7 @@ namespace RDKit{
     
       unsigned int nent;
       try {
-        nent = stripSpacesAndCast<unsigned int>(text.substr(6,3));
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -317,11 +338,11 @@ namespace RDKit{
         unsigned int aid;
         int count;
         try {
-          aid = stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
           spos += 4;
           Atom *atom=mol->getAtomWithIdx(aid-1); 
           if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-            count = toInt(text.substr(spos,4));
+            count = FileParserUtils::toInt(text.substr(spos,4));
             if(count==0) continue;
             ATOM_EQUALS_QUERY *q=makeAtomExplicitDegreeQuery(0);
             switch(count){
@@ -364,7 +385,7 @@ namespace RDKit{
     
       unsigned int nent;
       try {
-        nent = stripSpacesAndCast<unsigned int>(text.substr(6,3));
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -376,11 +397,11 @@ namespace RDKit{
         unsigned int aid;
         int count;
         try {
-          aid = stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
           spos += 4;
           Atom *atom=mol->getAtomWithIdx(aid-1); 
           if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-            count = toInt(text.substr(spos,4));
+            count = FileParserUtils::toInt(text.substr(spos,4));
             if(count==0){
               continue;
             } else if(count==1){
@@ -410,7 +431,7 @@ namespace RDKit{
     
       unsigned int nent;
       try {
-        nent = stripSpacesAndCast<unsigned int>(text.substr(6,3));
+        nent = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(6,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -422,11 +443,11 @@ namespace RDKit{
         unsigned int aid;
         int count;
         try {
-          aid = stripSpacesAndCast<unsigned int>(text.substr(spos,4));
+          aid = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(spos,4));
           spos += 4;
           Atom *atom=mol->getAtomWithIdx(aid-1); 
           if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-            count = toInt(text.substr(spos,4));
+            count = FileParserUtils::toInt(text.substr(spos,4));
             if(count==0) continue;
             ATOM_EQUALS_QUERY *q=makeAtomRingBondCountQuery(0);
             switch(count){
@@ -478,7 +499,7 @@ namespace RDKit{
     
       unsigned int idx;
       try {
-        idx = stripSpacesAndCast<unsigned int>(text.substr(7,3))-1;
+        idx = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(7,3))-1;
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -490,7 +511,7 @@ namespace RDKit{
     
       int nQueries;
       try {
-        nQueries = toInt(text.substr(10,3));
+        nQueries = FileParserUtils::toInt(text.substr(10,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -541,7 +562,7 @@ namespace RDKit{
     
       int nLabels;
       try {
-        nLabels = toInt(text.substr(6,3));
+        nLabels = FileParserUtils::toInt(text.substr(6,3));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -553,7 +574,7 @@ namespace RDKit{
         int pos = 10+i*8;
         unsigned int atIdx;
         try {
-          atIdx = stripSpacesAndCast<unsigned int>(text.substr(pos,3));
+          atIdx = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(pos,3));
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -562,7 +583,7 @@ namespace RDKit{
         }
         unsigned int rLabel;
         try {
-          rLabel = stripSpacesAndCast<unsigned int>(text.substr(pos+4,3));
+          rLabel = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(pos+4,3));
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -594,7 +615,7 @@ namespace RDKit{
       
       unsigned int idx;
       try {
-        idx = stripSpacesAndCast<unsigned int>(text.substr(3,3))-1;
+        idx = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(3,3))-1;
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -612,7 +633,7 @@ namespace RDKit{
       
       unsigned int idx;
       try {
-        idx = stripSpacesAndCast<unsigned int>(text.substr(3,3))-1;
+        idx = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(3,3))-1;
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -636,9 +657,9 @@ namespace RDKit{
       }
 
       try {
-        pos.x = toDouble(text.substr(0,10));
-        pos.y = toDouble(text.substr(10,10));
-        pos.z = toDouble(text.substr(20,10));
+        pos.x = FileParserUtils::toDouble(text.substr(0,10));
+        pos.y = FileParserUtils::toDouble(text.substr(10,10));
+        pos.z = FileParserUtils::toDouble(text.substr(20,10));
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -652,7 +673,7 @@ namespace RDKit{
       massDiff=0;
       if(text.size()>=36 && text.substr(34,2)!=" 0"){
         try {
-          massDiff = toInt(text.substr(34,2),true);
+          massDiff = FileParserUtils::toInt(text.substr(34,2),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -663,7 +684,7 @@ namespace RDKit{
       chg=0;
       if(text.size()>=39 && text.substr(36,3)!="  0"){
         try {
-          chg = toInt(text.substr(36,3),true);
+          chg = FileParserUtils::toInt(text.substr(36,3),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -674,7 +695,7 @@ namespace RDKit{
       hCount = 0;
       if(text.size()>=45 && text.substr(42,3)!="  0"){
         try {
-          hCount = toInt(text.substr(42,3),true);
+          hCount = FileParserUtils::toInt(text.substr(42,3),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -746,7 +767,7 @@ namespace RDKit{
       if(text.size()>=42 && text.substr(39,3)!="  0"){
         int parity=0;
         try {
-          parity = toInt(text.substr(39,3),true);
+          parity = FileParserUtils::toInt(text.substr(39,3),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -759,7 +780,7 @@ namespace RDKit{
       if(text.size()>=48 && text.substr(45,3)!="  0"){
         int stereoCare=0;
         try {
-          stereoCare = toInt(text.substr(45,3),true);
+          stereoCare = FileParserUtils::toInt(text.substr(45,3),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -771,7 +792,7 @@ namespace RDKit{
       if(text.size()>=51 && text.substr(48,3)!="  0"){
         int totValence=0;
         try {
-          totValence= toInt(text.substr(48,3),true);
+          totValence= FileParserUtils::toInt(text.substr(48,3),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -783,7 +804,7 @@ namespace RDKit{
       if(text.size()>=63 && text.substr(60,3)!="  0"){
         int atomMapNumber=0;
         try {
-          atomMapNumber = toInt(text.substr(60,3),true);
+          atomMapNumber = FileParserUtils::toInt(text.substr(60,3),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -795,7 +816,7 @@ namespace RDKit{
       if(text.size()>=66 && text.substr(63,3)!="  0"){
         int inversionFlag=0;
         try {
-          inversionFlag= toInt(text.substr(63,3),true);
+          inversionFlag= FileParserUtils::toInt(text.substr(63,3),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -807,7 +828,7 @@ namespace RDKit{
       if(text.size()>=69 && text.substr(66,3)!="  0"){
         int exactChangeFlag=0;
         try {
-          exactChangeFlag = toInt(text.substr(66,3),true);
+          exactChangeFlag = FileParserUtils::toInt(text.substr(66,3),true);
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
@@ -830,11 +851,11 @@ namespace RDKit{
       }
 
       try {
-        idx1 = toInt(text.substr(spos,3));
+        idx1 = FileParserUtils::toInt(text.substr(spos,3));
         spos += 3;
-        idx2 = toInt(text.substr(spos,3));
+        idx2 = FileParserUtils::toInt(text.substr(spos,3));
         spos += 3;
-        bType = toInt(text.substr(spos,3));  
+        bType = FileParserUtils::toInt(text.substr(spos,3));  
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
@@ -899,7 +920,7 @@ namespace RDKit{
 
       if( text.size() >= 12 && text.substr(9,3)!="  0"){
         try {
-          stereo = toInt(text.substr(9,3));
+          stereo = FileParserUtils::toInt(text.substr(9,3));
           //res->setProp("stereo",stereo);
           switch(stereo){
           case 0:
@@ -925,7 +946,7 @@ namespace RDKit{
       }
       if( text.size() >= 18 && text.substr(15,3)!="  0"){
         try {
-          int topology = toInt(text.substr(15,3));
+          int topology = FileParserUtils::toInt(text.substr(15,3));
           QueryBond *qBond=new QueryBond(*res);
           BOND_EQUALS_QUERY *q=makeBondIsInRingQuery();
           switch(topology){
@@ -948,7 +969,7 @@ namespace RDKit{
       }
       if( text.size() >= 21 && text.substr(18,3)!="  0"){
         try {
-          int reactStatus = toInt(text.substr(18,3));
+          int reactStatus = FileParserUtils::toInt(text.substr(18,3));
           res->setProp("molReactStatus",reactStatus);
         } catch (boost::bad_lexical_cast) {
           ;
@@ -1055,35 +1076,6 @@ namespace RDKit{
       return fileComplete;
     }
 
-    std::string getV3000Line(std::istream *inStream,unsigned int &line){
-      PRECONDITION(inStream,"bad stream");
-      std::string res,tempStr;
-
-      ++line;
-      tempStr = getLine(inStream);
-      if(tempStr.size()<7 || tempStr.substr(0,7) != "M  V30 "){
-        std::ostringstream errout;
-        errout << "Line "<<line<<" does not start with 'M  V30 '"<<std::endl;
-        throw FileParseException(errout.str()) ;
-      }
-      // FIX: do we need to handle trailing whitespace after a -?
-      while(tempStr[tempStr.length()-1]=='-'){
-        // continuation character, append what we read:
-        res += tempStr.substr(7,tempStr.length()-8);
-        // and then read another line: 
-        ++line;
-        tempStr = getLine(inStream);
-        if(tempStr.size()<7 || tempStr.substr(0,7) != "M  V30 "){
-          std::ostringstream errout;
-          errout << "Line "<<line<<" does not start with 'M  V30 '"<<std::endl;
-          throw FileParseException(errout.str()) ;
-        }
-      }
-      res += tempStr.substr(7,tempStr.length()-7);
-     
-      return res;
-    }
-
     Atom *ParseV3000AtomSymbol(std::string token,bool negate,unsigned int &line){
       Atom *res=0;
 
@@ -1182,7 +1174,7 @@ namespace RDKit{
         }
 
         if(prop=="CHG"){
-          int charge=toInt(val);
+          int charge=FileParserUtils::toInt(val);
           if(!atom->hasQuery()) {
             atom->setFormalCharge(charge);
           } else {
@@ -1190,7 +1182,7 @@ namespace RDKit{
           }
         } else if(prop=="RAD"){
           // FIX handle queries here
-          switch( toInt(val) ){
+          switch( FileParserUtils::toInt(val) ){
           case 0: break;
           case 1:
             atom->setNumRadicalElectrons(2);break;
@@ -1203,7 +1195,7 @@ namespace RDKit{
             throw FileParseException(errout.str()) ;
           }
         } else if(prop=="MASS"){
-          double v=toDouble(val);
+          double v=FileParserUtils::toDouble(val);
           if(v<=0){
             errout << "Bad value for MASS :" << val << " for atom "<< atom->getIdx()+1 << std::endl;
             throw FileParseException(errout.str()) ;
@@ -1215,7 +1207,7 @@ namespace RDKit{
 	    }
 	  }
         } else if(prop=="CFG"){
-          int cfg=toInt(val);
+          int cfg=FileParserUtils::toInt(val);
           switch(cfg){
           case 0: break;
           case 1:
@@ -1229,7 +1221,7 @@ namespace RDKit{
           }
         } else if(prop=="HCOUNT"){
 	  if(val!="0"){
-	    int hcount=toInt(val);
+	    int hcount=FileParserUtils::toInt(val);
 	    if(!atom->hasQuery()) {
 	      atom=replaceAtomWithQueryAtom(mol,atom);
 	    }
@@ -1245,17 +1237,12 @@ namespace RDKit{
 	  }
         } else if(prop=="RBCNT"){
 	  if(val!="0"){
-	    int rbcount=toInt(val);
+	    int rbcount=FileParserUtils::toInt(val);
 	    if(!atom->hasQuery()) {
 	      atom=replaceAtomWithQueryAtom(mol,atom);
 	    }
 	    if(rbcount==-1) rbcount=0;
 	    atom->expandQuery(makeAtomRingBondCountQuery(rbcount));
-	  }
-        } else if(prop=="AAMAP"){
-	  if(val!="0"){
-	    int mapno=toInt(val);
-	    atom->setProp("molAtomMapNumber",mapno);
 	  }
         }
 
@@ -1343,8 +1330,9 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         int mapNum=atoi(token->c_str());
-        atom->setProp("molAtomMapNumber",mapNum);
-
+	if(mapNum>0){
+	  atom->setProp("molAtomMapNumber",mapNum);
+	}
         ++token;
         
         unsigned int aid=mol->addAtom(atom,false,true);
@@ -1494,7 +1482,7 @@ namespace RDKit{
               bond->expandQuery(q);          
             }
           } else if(prop=="RXCTR"){
-            int reactStatus = toInt(val);
+            int reactStatus = FileParserUtils::toInt(val);
             bond->setProp("molReactStatus",reactStatus);
           } else if(prop=="STBOX"){
           }
@@ -1515,9 +1503,12 @@ namespace RDKit{
         throw FileParseException("END BOND line not found") ;
       }
     }
-    bool ParseV3000MolBlock(std::istream *inStream,unsigned int &line,
-                            RWMol *mol, Conformer *&conf,
-			    bool &chiralityPossible){
+  } // end of local namespace
+  namespace FileParserUtils {
+    bool ParseV3000CTAB(std::istream *inStream,unsigned int &line,
+			RWMol *mol, Conformer *&conf,
+			bool &chiralityPossible,unsigned int &nAtoms,
+			unsigned int &nBonds){
       PRECONDITION(inStream,"bad stream");
       PRECONDITION(mol,"bad molecule");
 
@@ -1525,11 +1516,13 @@ namespace RDKit{
       std::vector<std::string> splitLine;
 
       tempStr = getV3000Line(inStream,line);
+      boost::to_upper(tempStr);
       if(tempStr.length()<10 || tempStr.substr(0,10) != "BEGIN CTAB"){
         throw FileParseException("BEGIN CTAB line not found") ;
       }
       
       tempStr = getV3000Line(inStream,line);
+      boost::to_upper(tempStr);
       if(tempStr.size()<8 || tempStr.substr(0,7)!="COUNTS "){
         std::ostringstream errout;
         errout << "Bad counts line : '"<<tempStr<<"'";
@@ -1543,29 +1536,33 @@ namespace RDKit{
         throw FileParseException(errout.str()) ;
       }
 
-      unsigned int nAtoms=toInt(splitLine[0]);
-      unsigned int nBonds=toInt(splitLine[1]);
-      if(nAtoms<=0){
+      nAtoms=FileParserUtils::toInt(splitLine[0]);
+      nBonds=FileParserUtils::toInt(splitLine[1]);
+      if(!nAtoms){
         throw FileParseException("molecule has no atoms");
       }
       conf = new Conformer(nAtoms);
       
       unsigned int nSgroups,n3DConstraints,chiralFlag;
-      if(splitLine.size()>2) nSgroups = toInt(splitLine[2]);
-      if(splitLine.size()>3) n3DConstraints = toInt(splitLine[3]);
-      if(splitLine.size()>4) chiralFlag = toInt(splitLine[4]);
+      if(splitLine.size()>2) nSgroups = FileParserUtils::toInt(splitLine[2]);
+      if(splitLine.size()>3) n3DConstraints = FileParserUtils::toInt(splitLine[3]);
+      if(splitLine.size()>4) chiralFlag = FileParserUtils::toInt(splitLine[4]);
 
       ParseV3000AtomBlock(inStream,line,nAtoms,mol,conf);
-      ParseV3000BondBlock(inStream,line,nBonds,mol,chiralityPossible);
+      if(nBonds){
+	ParseV3000BondBlock(inStream,line,nBonds,mol,chiralityPossible);
+      }
 
       if(nSgroups){
         BOOST_LOG(rdWarningLog)<<"S group information in mol block igored"<<std::endl;
         tempStr = getV3000Line(inStream,line);
+	boost::to_upper(tempStr);
         if(tempStr.length()<12 || tempStr.substr(0,12) != "BEGIN SGROUP"){
           throw FileParseException("BEGIN SGROUP line not found") ;
         }
         while(1){
           tempStr = getV3000Line(inStream,line);
+	  boost::to_upper(tempStr);
           if(tempStr.length()>=10 && tempStr.substr(0,10) != "END SGROUP"){
             break;
           }
@@ -1574,11 +1571,13 @@ namespace RDKit{
       if(n3DConstraints){
         BOOST_LOG(rdWarningLog)<<"3d constraint information in mol block igored"<<std::endl;
         tempStr = getV3000Line(inStream,line);
+	boost::to_upper(tempStr);
         if(tempStr.length()<11 || tempStr.substr(0,11) != "BEGIN OBJ3D"){
           throw FileParseException("BEGIN OBJ3D line not found") ;
         }
         for(unsigned int i=0;i<n3DConstraints;++i) tempStr = getV3000Line(inStream,line);
         tempStr = getV3000Line(inStream,line);
+	boost::to_upper(tempStr);
         if(tempStr.length()<9 || tempStr.substr(0,9) != "END OBJ3D"){
           throw FileParseException("END OBJ3D line not found") ;
         }
@@ -1586,8 +1585,10 @@ namespace RDKit{
       
       tempStr = getV3000Line(inStream,line);
       // do link nodes:
+      boost::to_upper(tempStr);
       while(tempStr.length()>8 && tempStr.substr(0,8)=="LINKNODE"){
         tempStr = getV3000Line(inStream,line);
+	boost::to_upper(tempStr);
       }
 
       while(tempStr.length()>5 && tempStr.substr(0,5)=="BEGIN"){
@@ -1603,6 +1604,7 @@ namespace RDKit{
         tempStr = getV3000Line(inStream,line);
       }
 
+      boost::to_upper(tempStr);
       if(tempStr.length()<8 || tempStr.substr(0,8) != "END CTAB"){
         throw FileParseException("END CTAB line not found") ;
       }
@@ -1613,7 +1615,34 @@ namespace RDKit{
       return true;
     }
 
-  }  // end of local namespace 
+    bool ParseV2000CTAB(std::istream *inStream,unsigned int &line,
+			RWMol *mol, Conformer *&conf,
+			bool &chiralityPossible,unsigned int &nAtoms,
+			unsigned int &nBonds){
+        if(nAtoms<=0){
+          throw FileParseException("molecule has no atoms");
+        }
+        conf = new Conformer(nAtoms);
+
+        ParseMolBlockAtoms(inStream,line,nAtoms,mol,conf);
+
+        if(mol->hasProp("_2DConf")){
+          conf->set3D(false);
+          mol->clearProp("_2DConf");
+        } else if(mol->hasProp("_3DConf")){
+          conf->set3D(true);
+          mol->clearProp("_3DConf");
+        }
+        mol->addConformer(conf, true);
+        conf=0;
+
+        ParseMolBlockBonds(inStream,line,nBonds,mol,chiralityPossible);
+      
+        bool fileComplete=ParseMolBlockProperties(inStream,line,mol);
+	return fileComplete;
+    }
+
+  }  // end of FileParserUtils namespace
 
   //------------------------------------------------
   //
@@ -1653,7 +1682,7 @@ namespace RDKit{
     tempStr = getLine(inStream);
     res->setProp("_MolFileComments", tempStr);
         
-    int nAtoms=0,nBonds=0,nLists=0,chiralFlag=0,nsText=0,nRxnComponents=0;
+    unsigned int nAtoms=0,nBonds=0,nLists=0,chiralFlag=0,nsText=0,nRxnComponents=0;
     int nReactants=0,nProducts=0,nIntermediates=0;
     // counts line, this is where we really get started
     line++;
@@ -1669,9 +1698,9 @@ namespace RDKit{
     // this needs to go into a try block because if the lexical_cast throws an
     // exception we want to catch and delete mol before leaving this function
     try {
-      nAtoms = toInt(tempStr.substr(spos,3));
+      nAtoms = FileParserUtils::toInt(tempStr.substr(spos,3));
       spos = 3;
-      nBonds = toInt(tempStr.substr(spos,3));
+      nBonds = FileParserUtils::toInt(tempStr.substr(spos,3));
       spos = 6;
     } catch (boost::bad_lexical_cast &) {
       if (res) delete res;
@@ -1682,31 +1711,31 @@ namespace RDKit{
     try {
       spos = 6;
       if(tempStr.size()>=9)
-        nLists = toInt(tempStr.substr(spos,3));
+        nLists = FileParserUtils::toInt(tempStr.substr(spos,3));
 
       spos = 12;
       if(tempStr.size()>=spos+3)
-        chiralFlag = toInt(tempStr.substr(spos,3));
+        chiralFlag = FileParserUtils::toInt(tempStr.substr(spos,3));
 
       spos = 15;
       if(tempStr.size()>=spos+3)
-        nsText = toInt(tempStr.substr(spos,3));
+        nsText = FileParserUtils::toInt(tempStr.substr(spos,3));
 
       spos = 18;
       if(tempStr.size()>=spos+3)
-        nRxnComponents = toInt(tempStr.substr(spos,3));
+        nRxnComponents = FileParserUtils::toInt(tempStr.substr(spos,3));
 
       spos = 21;
       if(tempStr.size()>=spos+3)
-        nReactants   = toInt(tempStr.substr(spos,3));
+        nReactants   = FileParserUtils::toInt(tempStr.substr(spos,3));
 
       spos = 24;
       if(tempStr.size()>=spos+3)
-        nProducts   = toInt(tempStr.substr(spos,3));
+        nProducts   = FileParserUtils::toInt(tempStr.substr(spos,3));
 
       spos = 27;
       if(tempStr.size()>=spos+3)
-        nIntermediates = toInt(tempStr.substr(spos,3));
+        nIntermediates = FileParserUtils::toInt(tempStr.substr(spos,3));
 
     } catch (boost::bad_lexical_cast &) {
       // some SD files (such as some from NCI) lack all the extra information
@@ -1734,35 +1763,20 @@ namespace RDKit{
     Conformer *conf=0;
     try {
       if(ctabVersion==2000){
-        if(nAtoms<=0){
-          throw FileParseException("molecule has no atoms");
-        }
-        conf = new Conformer(nAtoms);
-
-        ParseMolBlockAtoms(inStream,line,nAtoms,res,conf);
-
-        if(res->hasProp("_2DConf")){
-          conf->set3D(false);
-          res->clearProp("_2DConf");
-        } else if(res->hasProp("_3DConf")){
-          conf->set3D(true);
-          res->clearProp("_3DConf");
-        }
-        res->addConformer(conf, true);
-        conf=0;
-
-        ParseMolBlockBonds(inStream,line,nBonds,res,chiralityPossible);
-      
-        fileComplete=ParseMolBlockProperties(inStream,line,res);
+        fileComplete=FileParserUtils::ParseV2000CTAB(inStream,line,
+						     res,conf,chiralityPossible,
+						     nAtoms,nBonds);
       } else {
         if(nAtoms!=0 || nBonds!=0){
           throw FileParseException("V3000 mol blocks should have 0s in the initial counts line.") ;
         }
-        fileComplete=ParseV3000MolBlock(inStream,line,res,conf,chiralityPossible);
+        fileComplete=FileParserUtils::ParseV3000CTAB(inStream,line,
+						     res,conf,chiralityPossible,
+						     nAtoms,nBonds);
       }
     }
-    catch (FileParseException &e) { // catch any exception because of lexical_casting etc
-      // and throw them back after cleanup
+    catch (FileParseException &e) { 
+      // catch our exceptions and throw them back after cleanup
       if(res) delete res;
       if(conf) delete conf;
       throw e;
