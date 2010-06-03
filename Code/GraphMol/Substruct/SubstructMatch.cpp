@@ -11,13 +11,19 @@
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
 #include <boost/smart_ptr.hpp>
+#include <map>
 
 #include "ullmann.hpp"
 #include "vf2.hpp"
 
 namespace RDKit{
-  void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,bool registerQuery);
   namespace detail {
+    typedef std::map<unsigned int,QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
+    
+    void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,
+			 bool registerQuery,
+			 SUBQUERY_MAP &subqueryMap );
+
     typedef std::list<std::pair<MolGraph::vertex_descriptor,MolGraph::vertex_descriptor> > ssPairType;
 
     class AtomLabelFunctor{
@@ -65,9 +71,11 @@ namespace RDKit{
     //std::cerr<<"begin match"<<std::endl;
     if(recursionPossible){
       ROMol::ConstAtomIterator atIt;
+      detail::SUBQUERY_MAP subqueryMap;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
-          MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery);
+	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery,
+				  subqueryMap);
         }
       }
     }
@@ -110,11 +118,12 @@ namespace RDKit{
 			      bool useChirality,bool registerQuery) {
 
     if(recursionPossible){
+      detail::SUBQUERY_MAP subqueryMap;
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
           //std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
-          MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery);
+	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery,subqueryMap);
         }
       }
     }
@@ -155,96 +164,118 @@ namespace RDKit{
     return res;
   }
 
-  // ----------------------------------------------
-  //
-  // Intended for internal use 
-  //
-  unsigned int RecursiveMatcher(const ROMol &mol,const ROMol &query,
-				std::vector< int > &matches,bool useChirality,
-                                bool registerQuery)
-  {
-    ROMol::ConstAtomIterator atIt;
-    for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
-      if((*atIt)->getQuery()){
-        MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery);
+  namespace detail {
+    unsigned int RecursiveMatcher(const ROMol &mol,const ROMol &query,
+				  std::vector< int > &matches,bool useChirality,
+				  bool registerQuery,SUBQUERY_MAP &subqueryMap)
+    {
+      ROMol::ConstAtomIterator atIt;
+      for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
+	if((*atIt)->getQuery()){
+	  MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery,subqueryMap);
+	}
       }
-    }
  
-    detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
-    detail::BondLabelFunctor bondLabeler(query,mol);
+      detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
+      detail::BondLabelFunctor bondLabeler(query,mol);
 
-    matches.clear();
-    matches.resize(0);
-    std::list<detail::ssPairType> pms;
+      matches.clear();
+      matches.resize(0);
+      std::list<detail::ssPairType> pms;
 #if 0
-    bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
-                            atomLabeler,bondLabeler,pms);
+      bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
+				    atomLabeler,bondLabeler,pms);
 #else
-    bool found=boost::vf2_all(query.getTopology(),mol.getTopology(),
-                              atomLabeler,bondLabeler,pms);
+      bool found=boost::vf2_all(query.getTopology(),mol.getTopology(),
+				atomLabeler,bondLabeler,pms);
 #endif
-    unsigned int res=0;
-    if(found){
-      matches.reserve(pms.size());
-      for(std::list<detail::ssPairType>::const_iterator iter1=pms.begin();
-          iter1!=pms.end();++iter1){
-        if(!query.hasProp("_queryRootAtom")){
-          matches.push_back(iter1->begin()->second);
-        } else {
-          int rootIdx;
-          query.getProp("_queryRootAtom",rootIdx);
-          bool found=false;
-          for(detail::ssPairType::const_iterator pairIter=iter1->begin();
-              pairIter!=iter1->end();++pairIter){
-            if(pairIter->first==rootIdx){
-              matches.push_back(pairIter->second);
-              found=true;
-              break;
-            }
-          }
-          if(!found){
-            BOOST_LOG(rdErrorLog)<<"no match found for queryRootAtom"<<std::endl;
-          }
-        }
-      }
-      res = matches.size();
-    } 
-    //std::cout << " <<< RecursiveMatcher: " << int(query) << std::endl;
-    return res;
-  }
+      unsigned int res=0;
+      if(found){
+	matches.reserve(pms.size());
+	for(std::list<detail::ssPairType>::const_iterator iter1=pms.begin();
+	    iter1!=pms.end();++iter1){
+	  if(!query.hasProp("_queryRootAtom")){
+	    matches.push_back(iter1->begin()->second);
+	  } else {
+	    int rootIdx;
+	    query.getProp("_queryRootAtom",rootIdx);
+	    bool found=false;
+	    for(detail::ssPairType::const_iterator pairIter=iter1->begin();
+		pairIter!=iter1->end();++pairIter){
+	      if(pairIter->first==rootIdx){
+		matches.push_back(pairIter->second);
+		found=true;
+		break;
+	      }
+	    }
+	    if(!found){
+	      BOOST_LOG(rdErrorLog)<<"no match found for queryRootAtom"<<std::endl;
+	    }
+	  }
+	}
+	res = matches.size();
+      } 
+      //std::cout << " <<< RecursiveMatcher: " << int(query) << std::endl;
+      return res;
+    }
 
-  void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *query,bool useChirality,
-                       bool registerQuery){
-    PRECONDITION(query,"bad query");
-    //std::cout << "*-*-* MS: " << (int)query << std::endl;
-    //std::cout << "\t\t" << typeid(*query).name() << std::endl;
-    if(query->getDescription()=="RecursiveStructure"){
-      RecursiveStructureQuery *rsq=(RecursiveStructureQuery *)query;
-      ROMol const *queryMol = rsq->getQueryMol();
-      // in case we are reusing this query, clear its contents now.
-      rsq->clear();
-      if(queryMol){
-        std::vector< int > matchStarts;
-        unsigned int res = RecursiveMatcher(mol,*queryMol,matchStarts,useChirality,registerQuery);
-        if(res){
-          for(std::vector<int>::iterator i=matchStarts.begin();
-              i!=matchStarts.end();
-              i++){
-            rsq->insert(*i);
-          }
-        }
+    void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *query,bool useChirality,
+			 bool registerQuery,SUBQUERY_MAP &subqueryMap){
+      PRECONDITION(query,"bad query");
+      //std::cout << "*-*-* MS: " << (int)query << std::endl;
+      //std::cout << "\t\t" << typeid(*query).name() << std::endl;
+      if(query->getDescription()=="RecursiveStructure"){
+	RecursiveStructureQuery *rsq=(RecursiveStructureQuery *)query;
+	rsq->clear();
+
+	bool matchDone=false;
+	if(rsq->getSerialNumber() &&
+	   subqueryMap.find(rsq->getSerialNumber()) != subqueryMap.end()){
+	  // we've matched an equivalent serial number before, just
+	  // copy in the matches:
+	  matchDone=true;
+	  const RecursiveStructureQuery *orsq=
+	    (const RecursiveStructureQuery *)subqueryMap[rsq->getSerialNumber()];
+	  for(RecursiveStructureQuery::CONTAINER_TYPE::const_iterator setIter=orsq->beginSet();
+	      setIter!=orsq->endSet();++setIter){
+	    rsq->insert(*setIter);
+	  }
+	  //std::cerr<<" copying results for query serial number: "<<rsq->getSerialNumber()<<std::endl;
+	}
+	
+	if(!matchDone){
+	  ROMol const *queryMol = rsq->getQueryMol();
+	  // in case we are reusing this query, clear its contents now.
+	  if(queryMol){
+	    std::vector< int > matchStarts;
+	    unsigned int res = RecursiveMatcher(mol,*queryMol,matchStarts,useChirality,
+						registerQuery,subqueryMap);
+	    if(res){
+	      for(std::vector<int>::iterator i=matchStarts.begin();
+		  i!=matchStarts.end();
+		  i++){
+		rsq->insert(*i);
+	      }
+	    }
+	  }
+	  if(rsq->getSerialNumber()){
+	    subqueryMap[rsq->getSerialNumber()]=query;
+	    //std::cerr<<" storing results for query serial number: "<<rsq->getSerialNumber()<<std::endl;
+	  }
+
+	}
+      } else {
+	//std::cout << "\tmsq1: "; 
       }
-    } else {
-      //std::cout << "\tmsq1: "; 
-    }
   
-    // now recurse over our children (these things can be nested)
-    Queries::Query<int,Atom const*,true>::CHILD_VECT_CI childIt;
-    //std::cout << query << " " << query->endChildren()-query->beginChildren() <<  std::endl;
-    for(childIt=query->beginChildren();childIt!=query->endChildren();childIt++){
-      MatchSubqueries(mol,childIt->get(),useChirality,registerQuery);
+      // now recurse over our children (these things can be nested)
+      Queries::Query<int,Atom const*,true>::CHILD_VECT_CI childIt;
+      //std::cout << query << " " << query->endChildren()-query->beginChildren() <<  std::endl;
+      for(childIt=query->beginChildren();childIt!=query->endChildren();childIt++){
+	MatchSubqueries(mol,childIt->get(),useChirality,registerQuery,subqueryMap);
+      }
+      //std::cout << "<<- back " << (int)query << std::endl;
     }
-    //std::cout << "<<- back " << (int)query << std::endl;
-  }
+  } // end of namespace detail
 }
 

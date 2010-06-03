@@ -245,7 +245,10 @@ namespace RDKit{
   //! allows use of recursive structure queries (e.g. recursive SMARTS)
   class RecursiveStructureQuery : public Queries::SetQuery<int,Atom const *,true> {
   public:
-    RecursiveStructureQuery() : Queries::SetQuery<int,Atom const *,true>() {
+    RecursiveStructureQuery() :
+      Queries::SetQuery<int,Atom const *,true>(),
+      d_serialNumber(0)
+    {
       setDataFunc(getAtIdx);
       setDescription("RecursiveStructure");
     };
@@ -254,7 +257,10 @@ namespace RDKit{
       <b>Notes</b>
         - this takes over ownership of the pointer
     */
-    RecursiveStructureQuery(ROMol const *query) : Queries::SetQuery<int,Atom const *,true>() {
+    RecursiveStructureQuery(ROMol const *query,unsigned int serialNumber=0) :
+      Queries::SetQuery<int,Atom const *,true>(),
+      d_serialNumber(serialNumber)
+    {
       setQueryMol(query);
       setDataFunc(getAtIdx);
       setDescription("RecursiveStructure");
@@ -286,12 +292,14 @@ namespace RDKit{
       }
       res->setNegation(getNegation());
       res->d_description = d_description;
+      res->d_serialNumber=d_serialNumber;
       return res;
     }
+    unsigned int getSerialNumber() const { return d_serialNumber; };
   
   private:
     boost::shared_ptr<const ROMol>dp_queryMol;
-  
+    unsigned int d_serialNumber;
   };
 
   template <typename T>

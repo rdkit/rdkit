@@ -1328,6 +1328,31 @@ void testIssue3000399(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testRecursiveSerialNumbers(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing serial numbers in recursive SMARTS queries" << std::endl;
+
+  {
+    std::vector< MatchVectType > mVV;
+    std::string sma ="[$(CO)_1]O[$(CO)_1]";
+    RWMol *patt = SmartsToMol(sma);
+    TEST_ASSERT(patt);
+
+    sma ="CCOCC";
+    RWMol *mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    unsigned int count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==2);
+    TEST_ASSERT(mVV.size()==2);
+    TEST_ASSERT(mVV[0].size()==3);
+    delete mol;
+
+    delete patt;
+  }    
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -1361,5 +1386,6 @@ main(int argc, char *argv[])
   testIssue2884178_part1();
   testIssue2884178_part2();
   testIssue3000399();
+  testRecursiveSerialNumbers();
   return 0;
 }

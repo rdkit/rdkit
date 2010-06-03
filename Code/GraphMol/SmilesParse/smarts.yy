@@ -64,7 +64,7 @@ using namespace RDKit;
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN 
 %token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN BEGIN_RECURSE END_RECURSE
-%token HYB_TOKEN COLON_TOKEN
+%token HYB_TOKEN COLON_TOKEN UNDERSCORE_TOKEN
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol branch
 %type <atom> atomd element simple_atom
@@ -319,6 +319,24 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
 
   //molP->debugMol(std::cout);
   qA->setQuery(new RecursiveStructureQuery(molP));
+  //std::cout << "qA: " << qA << " " << qA->getQuery() << std::endl;
+  int sz = molList->size();
+  if ( sz==$2+1) {
+    molList->resize( sz-1 );
+  }
+  $$ = qA;
+}
+| BEGIN_RECURSE mol END_RECURSE UNDERSCORE_TOKEN  nonzero_number{
+  // UNDOCUMENTED EXTENSION:
+  // this is a recursive SMARTS expression with a serial number
+  QueryAtom *qA = new QueryAtom();
+  //  FIX: there's maybe a leak here
+  RWMol *molP = (*molList)[$2];
+  // close any rings in the molecule:
+  SmilesParseOps::CloseMolRings(molP,0);
+
+  //molP->debugMol(std::cout);
+  qA->setQuery(new RecursiveStructureQuery(molP,$5));
   //std::cout << "qA: " << qA << " " << qA->getQuery() << std::endl;
   int sz = molList->size();
   if ( sz==$2+1) {

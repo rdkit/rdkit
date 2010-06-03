@@ -247,6 +247,8 @@ A			{
 
 \: 			{ return COLON_TOKEN; }
 
+\_ 			{ return UNDERSCORE_TOKEN; }
+
 \-			{ return MINUS_TOKEN; }
 
 \+			{ return PLUS_TOKEN; }

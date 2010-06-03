@@ -26,7 +26,7 @@ namespace RDKit{
                        (pre-existing contents will be deleted)
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
-      \param registerQuery cache the query (uses more memory but speeds up searches) 
+      \param registerQuery DEPRECATED ARGUMENT
 
       \return whether or not a match was found
     
@@ -45,7 +45,8 @@ namespace RDKit{
       \param uniquify  Toggles uniquification (by atom index) of the results
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
-      \param registerQuery cache the query (uses more memory but speeds up searches) 
+      \param registerQuery  DEPRECATED ARGUMENT
+
 
       \return the number of matches found
     

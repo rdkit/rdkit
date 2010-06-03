@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2006 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -550,6 +550,66 @@ void test9(){
 }
 
 
+void testRecursiveSerialNumbers(){
+  std::cout << " ----------------- Testing serial numbers on recursive queries" << std::endl;
+  MatchVectType matchV;
+  std::vector< MatchVectType > matches;
+  int n;
+
+  RWMol *m,*q1,*q2;
+  Atom *a6 = new Atom(6);
+  Atom *a8 = new Atom(8);
+  m = new RWMol();
+  m->addAtom(a6);
+  m->addAtom(a6);
+  m->addAtom(a8);
+  m->addAtom(a6);
+  m->addAtom(a6);
+  m->addBond(1,0,Bond::SINGLE);
+  m->addBond(1,2,Bond::SINGLE);
+  m->addBond(1,3,Bond::SINGLE);
+  m->addBond(2,4,Bond::SINGLE);
+
+  {
+    // this will be the recursive query
+    q1 = new RWMol();
+    q1->addAtom(new QueryAtom(6),true);
+    q1->addAtom(new QueryAtom(8),true);
+    q1->addBond(0,1,Bond::UNSPECIFIED);
+
+    // here's the main query
+    q2 = new RWMol();
+    QueryAtom *qA = new QueryAtom(6);
+    RecursiveStructureQuery *rsq = new RecursiveStructureQuery(new RWMol(*q1),1);
+    qA->expandQuery(rsq,Queries::COMPOSITE_AND);
+    //std::cout << "post expand: " << qA->getQuery() << std::endl;
+    q2->addAtom(qA,true,true);
+    //std::cout << "mol: " << q2->getAtomWithIdx(0)->getQuery() << std::endl;
+    q2->addAtom(new QueryAtom(8),true,true);
+    q2->addBond(0,1,Bond::UNSPECIFIED);
+
+    qA = new QueryAtom(6);
+    rsq = new RecursiveStructureQuery(new RWMol(*q1),1);
+    qA->expandQuery(rsq,Queries::COMPOSITE_AND);
+    q2->addAtom(qA,true,true);
+    q2->addBond(1,2,Bond::UNSPECIFIED);
+
+    bool found = SubstructMatch(*m,*q2,matchV);
+    CHECK_INVARIANT(found,"");
+    CHECK_INVARIANT(matchV.size()==3,"");
+    n = SubstructMatch(*m,*q2,matches,true);
+    TEST_ASSERT(n==1);
+    TEST_ASSERT(matches.size()==1);
+    TEST_ASSERT(matches[0].size()==3);
+
+    delete q1;
+    delete q2;
+  }
+  delete m;
+  std::cout << "Done\n" << std::endl;
+}
+
+
 int main(int argc,char *argv[])
 {
 #if 1
@@ -564,6 +624,7 @@ int main(int argc,char *argv[])
     test7();  
   test9();  
 #endif
+  testRecursiveSerialNumbers();  
   return 0;
 }
 
