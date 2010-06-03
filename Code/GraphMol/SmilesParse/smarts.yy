@@ -33,7 +33,7 @@ yysmarts_error( std::vector<RDKit::RWMol *> *ms,
 }
 
 using namespace RDKit;
-
+namespace {
  void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
   for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
       iter != molList->end(); ++iter){
@@ -42,7 +42,7 @@ using namespace RDKit;
   molList->clear();
   molList->resize(0);
  }
-
+}
 %}
  
 %parse-param {std::vector<RDKit::RWMol *> *molList}

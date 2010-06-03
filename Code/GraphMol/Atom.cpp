@@ -240,7 +240,7 @@ int Atom::calcExplicitValence(bool strict) {
       std::ostringstream errout;
       errout << "Explicit valence for atom # " << getIdx() 
              << " " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
-             << " greater than permitted";
+             << ", " << effectiveValence <<", is greater than permitted";
       std::string msg = errout.str();
       BOOST_LOG(rdErrorLog) << msg << std::endl;
       throw MolSanitizeException(msg);
@@ -453,9 +453,7 @@ int Atom::getPerturbationOrder(INT_LIST probe) const{
   INT_LIST ref;
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = getOwningMol().getAtomBonds(this);
-  //std::cerr<<"  gPO("<<getIdx()<<"):";
   while(beg!=end){
-    //std::cerr << " "<<pMap[*beg]->getIdx();
     ref.push_back(getOwningMol()[*beg]->getIdx());
     ++beg;
   }
