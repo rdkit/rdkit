@@ -1076,9 +1076,19 @@ namespace RDKit{
       return fileComplete;
     }
 
-    Atom *ParseV3000AtomSymbol(std::string token,bool negate,unsigned int &line){
-      Atom *res=0;
+    Atom *ParseV3000AtomSymbol(std::string token,unsigned int &line){
+      bool negate=false;
 
+      boost::trim(token);
+      std::string cpy=token;
+      boost::to_upper(cpy);
+      if(cpy.size()>3 && cpy.substr(0,3)=="NOT"){
+	negate=true;
+	token = token.substr(3,token.size()-3);
+	boost::trim(token);
+      }
+
+      Atom *res=0;
       if(token[0]=='['){
         // atom list:
         if(token[token.length()-1]!=']'){
@@ -1277,7 +1287,6 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         unsigned int molIdx=atoi(token->c_str());
-        bool negate=false;
         
         // start with the symbol:
         ++token;
@@ -1286,16 +1295,7 @@ namespace RDKit{
           errout << "Bad atom line : '"<<tempStr<<"'";
           throw FileParseException(errout.str()) ;
         }
-        if(*token=="NOT"){
-          negate=true;
-          ++token;
-          if(token==tokens.end()) {
-            std::ostringstream errout;
-            errout << "Bad atom line : '"<<tempStr<<"'";
-            throw FileParseException(errout.str()) ;
-          }
-        }
-        Atom *atom=ParseV3000AtomSymbol(*token,negate,line);
+        Atom *atom=ParseV3000AtomSymbol(*token,line);
 
         
         // now the position;
