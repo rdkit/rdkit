@@ -71,7 +71,15 @@ namespace RDKit {
     return python::tuple(res);
   }
 
-  
+  python::dict getFeatureDefs(const MolChemicalFeatureFactory &factory){
+    python::dict res;
+    MolChemicalFeatureDef::CollectionType::const_iterator iter;
+    for(iter=factory.beginFeatureDefs();iter!=factory.endFeatureDefs();++iter){
+      std::string key= (*iter)->getFamily()+"."+(*iter)->getType();
+      res[key]=(*iter)->getSmarts();
+    }
+    return res;
+  }
   
 
   struct featfactory_wrapper {
@@ -84,6 +92,8 @@ namespace RDKit {
              "Get the number of feature definitions")
         .def("GetFeatureFamilies", getFeatureFamilies,
              "Get a tuple of feature types")
+        .def("GetFeatureDefs", getFeatureDefs,
+             "Get a dictionary with SMARTS definitions for each feature type")
         .def("GetNumMolFeatures", getNumMolFeatures,
 	     (python::arg("mol"),python::arg("includeOnly")=std::string("")),
              "Get the number of features the molecule has")
