@@ -357,14 +357,14 @@ M  END
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]1[O:2][N:3]1>>[C:1][O:2].[N:3]')
     r1 = rxn.GetReactantTemplate(0)
     sma=Chem.MolToSmarts(r1)
-    self.failUnlessEqual(sma,'C1-,:O-,:N-,:1')
+    self.failUnlessEqual(sma,'[C:1]1-,:[O:2]-,:[N:3]-,:1')
     p1 = rxn.GetProductTemplate(0)
     sma=Chem.MolToSmarts(p1)
-    self.failUnlessEqual(sma,'C-,:O')
+    self.failUnlessEqual(sma,'[C:1]-,:[O:2]')
     
     p2 = rxn.GetProductTemplate(1)
     sma=Chem.MolToSmarts(p2)
-    self.failUnlessEqual(sma,'N')
+    self.failUnlessEqual(sma,'[N:3]')
 
     self.failUnlessRaises(ValueError,lambda :rxn.GetProductTemplate(2))
     self.failUnlessRaises(ValueError,lambda :rxn.GetReactantTemplate(1))
