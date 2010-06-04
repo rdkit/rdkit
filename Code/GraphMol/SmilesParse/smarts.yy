@@ -329,6 +329,9 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
 | BEGIN_RECURSE mol END_RECURSE UNDERSCORE_TOKEN  nonzero_number{
   // UNDOCUMENTED EXTENSION:
   // this is a recursive SMARTS expression with a serial number
+  // please don't write your own SMARTS that include this extension:
+  // the RDKit smarts parsing code will automatically insert serial
+  // numbers for recursive smarts patterns.
   QueryAtom *qA = new QueryAtom();
   //  FIX: there's maybe a leak here
   RWMol *molP = (*molList)[$2];
