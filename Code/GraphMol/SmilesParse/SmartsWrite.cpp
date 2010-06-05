@@ -611,7 +611,7 @@ namespace RDKit {
         return res;
       }  
       QueryAtom::QUERYATOM_QUERY *query = qatom->getQuery();
-      describeQuery(query);
+      //describeQuery(query);
 
       PRECONDITION(query,"atom has no query");
       std::string descrip = qatom->getQuery()->getDescription();
@@ -666,7 +666,7 @@ namespace RDKit {
         //BOOST_LOG(rdInfoLog)<<"\tno query:" <<res;
         return res;
       }
-      describeQuery(bond->getQuery());
+      //describeQuery(bond->getQuery());
       if ((typeid(*bond) == typeid(Bond)) && 
           ( (bond->getBondType() == Bond::SINGLE) || (bond->getBondType() == Bond::AROMATIC)) ) {
         return res;

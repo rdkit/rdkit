@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <boost/format.hpp>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 
 
 namespace RDKit{
@@ -74,15 +75,49 @@ namespace RDKit{
     }
     return res.str();
   }
+
+  bool hasComplexQuery(const Atom *atom){
+    PRECONDITION(atom,"bad atom");
+    bool res=false;
+    if(atom->hasQuery()){
+      res=true;
+      // counter examples:
+      //  1) atomic number
+      //  2) the smarts parser inserts AtomAnd queries
+      //     for "C" or "c":
+      //
+      std::string descr=atom->getQuery()->getDescription();
+      if(descr=="AtomAtomicNum"){
+	res=false;
+      } else if(descr=="AtomAnd"){
+	if((*atom->getQuery()->beginChildren())->getDescription()=="AtomAtomicNum"){
+	  res=false;
+	}
+      }
+    }
+    return res;
+  }
+
   const std::string GetMolFileQueryInfo(const RWMol &mol){
-    return "";
+    std::stringstream ss;
+
+    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+	atomIt!=mol.endAtoms();++atomIt){
+      if(hasComplexQuery(*atomIt)){
+	std::string sma=SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(*atomIt));
+	ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<sma<<std::endl;
+      }
+    }
+    return ss.str();
   }
 
   const std::string AtomGetMolFileSymbol(const Atom *atom){
     PRECONDITION(atom,"");
 
     std::string res;
-    if(atom->getAtomicNum()){
+    if(hasComplexQuery(atom)){
+      res="*";
+    } else if(atom->getAtomicNum()){
       res=atom->getSymbol();
     } else {
       if(!atom->hasProp("dummyLabel")){
@@ -168,8 +203,14 @@ namespace RDKit{
     inversionFlag=0;
     exactChangeFlag=0;
 
-    double atomMassDiff=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
-    massDiff = static_cast<int>(atomMassDiff+.1);
+    if(atom->hasProp("molAtomMapNumber")){
+      atom->getProp("molAtomMapNumber",atomMapNumber);
+    }
+    
+    if(!atom->hasQuery()){
+      double atomMassDiff=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
+      massDiff = static_cast<int>(atomMassDiff+.1);
+    }
     
     unsigned int parityFlag=0;
     double x, y, z;
@@ -387,15 +428,15 @@ namespace RDKit{
     ss<<std::setw(3)<<nIntermediates;
     ss<<"999 V2000\n";
     res += ss.str();
-    ROMol::ConstAtomIterator atomIt;
-    for(atomIt=tmol.beginAtoms();atomIt!=tmol.endAtoms();atomIt++){
+    for(ROMol::ConstAtomIterator atomIt=tmol.beginAtoms();
+	atomIt!=tmol.endAtoms();++atomIt){
       res += GetMolFileAtomLine(*atomIt, conf);
       res += "\n";
     }
 
     INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
-    ROMol::ConstBondIterator bondIt;
-    for(bondIt=tmol.beginBonds();bondIt!=tmol.endBonds();bondIt++){
+    for(ROMol::ConstBondIterator bondIt=tmol.beginBonds();
+	bondIt!=tmol.endBonds();++bondIt){
       res += GetMolFileBondLine(*bondIt, wedgeBonds, conf);
       res += "\n";
     }

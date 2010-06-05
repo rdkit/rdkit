@@ -3,7 +3,7 @@ rdkit_library(Depictor
               LINK_LIBRARIES GraphMol)
 
 rdkit_test(testDepictor testDepictor.cpp 
-           LINK_LIBRARIES Depictor SmilesParse FileParsers SubstructMatch GraphMol RDGeometryLib RDGeneral )
+           LINK_LIBRARIES Depictor FileParsers SmilesParse SubstructMatch GraphMol RDGeometryLib RDGeneral )
 
 add_subdirectory(Wrap)
 

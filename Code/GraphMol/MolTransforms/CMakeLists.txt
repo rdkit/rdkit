@@ -3,7 +3,7 @@ rdkit_library(MolTransforms MolTransforms.cpp
 
 rdkit_test(testMolTransforms test1.cpp 
            LINK_LIBRARIES MolTransforms 
-SmilesParse FileParsers
+FileParsers SmilesParse 
 EigenSolvers 
 GraphMol RDGeometryLib RDGeneral 
 )
