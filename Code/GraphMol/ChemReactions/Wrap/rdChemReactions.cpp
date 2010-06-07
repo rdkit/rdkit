@@ -199,9 +199,8 @@ Sample Usage:\n\
   def("ReactionFromRxnBlock",RDKit::RxnBlockToChemicalReaction,
       "construct a ChemicalReaction from an string in MDL rxn format",
       python::return_value_policy<python::manage_new_object>());
-  
- 
-
-              
+  def("ReactionToSmarts",RDKit::ChemicalReactionToRxnSmarts,
+      (python::arg("reaction")),
+      "construct a reaction SMARTS string for a ChemicalReaction");
 }
               

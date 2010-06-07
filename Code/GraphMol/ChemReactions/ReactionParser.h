@@ -58,7 +58,7 @@ namespace RDKit{
   ChemicalReaction * RxnBlockToChemicalReaction(const std::string &rxnBlock);
   //! Parse a file in MDL rxn format into a ChemicalReaction 
   ChemicalReaction * RxnFileToChemicalReaction(const std::string &fileName);
-//! Parse a text stream in MDL rxn format into a ChemicalReaction 
+  //! Parse a text stream in MDL rxn format into a ChemicalReaction 
   ChemicalReaction * RxnDataStreamToChemicalReaction(std::istream &rxnStream,
                                                      unsigned int &line);
   
@@ -70,8 +70,14 @@ namespace RDKit{
    */ 
   ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text);
 
+  //! returns the reaction SMARTS for a reaction
+  std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn);
 
-
+#if 0
+  //! returns an RXN block for a reaction
+  std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn);
+#endif
+  
 }; // end of RDKit namespace
 
 #endif

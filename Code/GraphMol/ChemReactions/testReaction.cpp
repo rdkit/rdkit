@@ -620,6 +620,7 @@ void test7MDLParser(){
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
+  std::cerr<<MolToSmiles(*prods[0][0])<<std::endl;
   TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
   
   delete rxn;
@@ -2544,6 +2545,86 @@ void test26V3000MDLParser(){
 
 
 
+void test27SmartsWriter(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing reaction SMARTS writer." << std::endl;
+
+  unsigned int nWarn,nError;
+
+  {
+    std::string smi;
+    smi="[C:1]=[O:2].[N:3]>>[O:2]=[C:1]~[N:3]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    smi = ChemicalReactionToRxnSmarts(*rxn);
+    TEST_ASSERT(smi=="[C:1]=[O:2].[N:3]>>[O:2]=[C:1]~[N:3]");
+
+    delete rxn;
+    rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+#if 0
+void test28RxnWriter(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing RXN file writer." << std::endl;
+
+  unsigned int nWarn,nError;
+
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+    std::string smi;
+  
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/AmideBond.rxn";
+    ChemicalReaction *rxn = RxnFileToChemicalReaction(fName); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    std::string mb;
+    mb=ChemicalReactionToRxnBlock(*rxn);
+    std::cerr<<"mb: "<<mb<<std::endl;
+
+    smi = ChemicalReactionToRxnSmarts(*rxn);
+    std::cerr<<"smi: "<<smi<<std::endl;
+    //TEST_ASSERT(smi=="[C:1]=[O:2].[N:3]>>[O:2]=[C:1]~[N:3]");
+
+    delete rxn;
+    rxn = RxnBlockToChemicalReaction(mb); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+#endif
+
 int main() { 
   RDLog::InitLogs();
     
@@ -2578,6 +2659,8 @@ int main() {
   test25Conformers();
 #endif
   test26V3000MDLParser();
+  test27SmartsWriter();
+  //test28RxnWriter();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
