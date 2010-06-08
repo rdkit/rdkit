@@ -458,7 +458,13 @@ namespace RDKit{
       //
       if(!implicitOnly){
         if(sanitize){
-          sanitizeMol(*res);
+          try{
+            sanitizeMol(*res);
+          } catch (MolSanitizeException &se){
+            if(res) delete res;
+            throw se;
+          }
+
         }
         if(mol.hasProp("_StereochemDone")){
           // stereochem had been perceived in the original molecule,
