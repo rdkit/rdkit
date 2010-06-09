@@ -71,6 +71,25 @@ namespace RDKit{
      
       return res;
     }
+
+    Atom *replaceAtomWithQueryAtom(RWMol *mol,Atom *atom){
+      PRECONDITION(mol,"bad molecule");
+      PRECONDITION(atom,"bad atom");
+      if(atom->hasQuery()) return atom;
+
+      QueryAtom qa(*atom);
+      unsigned int idx=atom->getIdx();
+
+      if(atom->getFormalCharge()!=0){
+	qa.expandQuery(makeAtomFormalChargeQuery(atom->getFormalCharge()));
+      }
+      if(atom->hasProp("_hasMassQuery")){
+	qa.expandQuery(makeAtomMassQuery(static_cast<int>(atom->getMass())));
+      }
+      mol->replaceAtom(idx,&qa);
+      return mol->getAtomWithIdx(idx);
+    }
+
   }
   using RDKit::FileParserUtils::getV3000Line;
 
@@ -96,25 +115,7 @@ namespace RDKit{
         }
       }
     }
-  
-
-    Atom *replaceAtomWithQueryAtom(RWMol *mol,Atom *atom){
-      PRECONDITION(mol,"bad molecule");
-      PRECONDITION(atom,"bad atom");
-      if(atom->hasQuery()) return atom;
-
-      QueryAtom qa(*atom);
-      unsigned int idx=atom->getIdx();
-
-      if(atom->getFormalCharge()!=0){
-	qa.expandQuery(makeAtomFormalChargeQuery(atom->getFormalCharge()));
-      }
-      if(atom->hasProp("_hasMassQuery")){
-	qa.expandQuery(makeAtomMassQuery(static_cast<int>(atom->getMass())));
-      }
-      mol->replaceAtom(idx,&qa);
-      return mol->getAtomWithIdx(idx);
-    }
+ 
 
     //*************************************
     //
@@ -365,7 +366,7 @@ namespace RDKit{
               throw FileParseException(errout.str()) ;
             }
             if(!atom->hasQuery()){
-	      atom=replaceAtomWithQueryAtom(mol,atom);
+	      atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
             }
             atom->expandQuery(q,Queries::COMPOSITE_AND);
             spos += 4;
@@ -407,7 +408,7 @@ namespace RDKit{
             } else if(count==1){
               ATOM_EQUALS_QUERY *q=makeAtomUnsaturatedQuery();
               if(!atom->hasQuery()){
-		atom=replaceAtomWithQueryAtom(mol,atom);
+		atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
               }
               atom->expandQuery(q,Queries::COMPOSITE_AND);
             } else {
@@ -474,7 +475,7 @@ namespace RDKit{
               throw FileParseException(errout.str()) ;
             }
             if(!atom->hasQuery()){
-	      atom=replaceAtomWithQueryAtom(mol,atom);
+	      atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
             }
             atom->expandQuery(q,Queries::COMPOSITE_AND);
             spos += 4;
@@ -1233,7 +1234,7 @@ namespace RDKit{
 	  if(val!="0"){
 	    int hcount=FileParserUtils::toInt(val);
 	    if(!atom->hasQuery()) {
-	      atom=replaceAtomWithQueryAtom(mol,atom);
+	      atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
 	    }
 	    if(hcount==-1) hcount=0;
 	    atom->expandQuery(makeAtomHCountQuery(hcount));
@@ -1241,7 +1242,7 @@ namespace RDKit{
         } else if(prop=="UNSAT"){
 	  if(val=="1"){
 	    if(!atom->hasQuery()) {
-	      atom=replaceAtomWithQueryAtom(mol,atom);
+	      atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
 	    } 
 	    atom->expandQuery(makeAtomUnsaturatedQuery());
 	  }
@@ -1249,7 +1250,7 @@ namespace RDKit{
 	  if(val!="0"){
 	    int rbcount=FileParserUtils::toInt(val);
 	    if(!atom->hasQuery()) {
-	      atom=replaceAtomWithQueryAtom(mol,atom);
+	      atom=FileParserUtils::replaceAtomWithQueryAtom(mol,atom);
 	    }
 	    if(rbcount==-1) rbcount=0;
 	    atom->expandQuery(makeAtomRingBondCountQuery(rbcount));
@@ -1689,6 +1690,10 @@ namespace RDKit{
     tempStr = getLine(inStream);
 
     if(tempStr.size()<6){
+      if(res){
+        delete res;
+        res = NULL;
+      }
       std::ostringstream errout;
       errout << "Counts line too short: '"<<tempStr<<"'";
       throw FileParseException(errout.str()) ;
@@ -1703,7 +1708,10 @@ namespace RDKit{
       nBonds = FileParserUtils::toInt(tempStr.substr(spos,3));
       spos = 6;
     } catch (boost::bad_lexical_cast &) {
-      if (res) delete res;
+      if(res){
+        delete res;
+        res = NULL;
+      }
       std::ostringstream errout;
       errout << "Cannot convert " << tempStr.substr(spos,3) << " to int";
       throw FileParseException(errout.str()) ;
@@ -1753,7 +1761,10 @@ namespace RDKit{
         //if(res) delete res;
         //throw FileParseException("V3000 CTABs not supported");
       } else if(tempStr.substr(34,5)!="V2000"){
-        if(res) delete res;
+        if(res){
+          delete res;
+          res = NULL;
+        }
         std::ostringstream errout;
         errout << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "'";
         throw FileParseException(errout.str()) ;
@@ -1768,6 +1779,10 @@ namespace RDKit{
 						     nAtoms,nBonds);
       } else {
         if(nAtoms!=0 || nBonds!=0){
+          if(res){
+            delete res;
+            res = NULL;
+          }
           throw FileParseException("V3000 mol blocks should have 0s in the initial counts line.") ;
         }
         fileComplete=FileParserUtils::ParseV3000CTAB(inStream,line,
@@ -1779,11 +1794,16 @@ namespace RDKit{
       // catch our exceptions and throw them back after cleanup
       if(res) delete res;
       if(conf) delete conf;
+      res=NULL;
+      conf=NULL;
       throw e;
     }
 
     if(!fileComplete){
       if(res) delete res;
+      if(conf) delete conf;
+      res=NULL;
+      conf=NULL;
       throw FileParseException("Problems encountered parsing Mol data, M  END ");
     }
 
@@ -1838,9 +1858,10 @@ namespace RDKit{
         const Conformer &conf = res->getConformer();
         DetectBondStereoChemistry(*res, &conf);
       }
-      catch (MolSanitizeException &se){
+      catch (...){
         if(res) delete res;
-        throw se;
+        res=NULL;
+        throw;
       }
       MolOps::assignStereochemistry(*res,true);
     }

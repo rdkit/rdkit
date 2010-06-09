@@ -44,6 +44,8 @@ namespace RDKit{
 			bool &chiralityPossible,
 			unsigned int &nAtoms,unsigned int &nBonds);
 
+    Atom *replaceAtomWithQueryAtom(RWMol *mol,Atom *atom);
+
   }
 }
 
