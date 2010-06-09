@@ -10,15 +10,19 @@ macro(rdkit_library)
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
   else(MSVC)
-    IF(RDKLIB_SHARED)
+    # we're going to always build in shared mode since we
+    # need exceptions to be (correctly) catchable across
+    # boundaries. As of now (June 2010), this doesn't work
+    # with g++ unless libraries are shared.
+    #IF(RDKLIB_SHARED)
       add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
       INSTALL(TARGETS ${RDKLIB_NAME} 
               DESTINATION ${RDKit_BinDir}/${RDKLIB_DEST})
-    ELSE(RDKLIB_SHARED)        
-      add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
-      INSTALL(TARGETS ${RDKLIB_NAME} 
-              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
-    ENDIF(RDKLIB_SHARED)        
+    #ELSE(RDKLIB_SHARED)        
+    #  add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
+    #  INSTALL(TARGETS ${RDKLIB_NAME} 
+    #          DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+    #ENDIF(RDKLIB_SHARED)        
     IF(RDKLIB_LINK_LIBRARIES)
       target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
     ENDIF(RDKLIB_LINK_LIBRARIES)
