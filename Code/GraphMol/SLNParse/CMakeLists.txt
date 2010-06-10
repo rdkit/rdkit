@@ -21,7 +21,7 @@ ADD_FLEX_BISON_DEPENDENCY(SlnL SlnY)
 rdkit_library(SLNParse
               SLNParse.cpp SLNAttribs.cpp 
               ${BISON_SlnY_OUTPUTS} ${FLEX_SlnL_OUTPUTS}
-              LINK_LIBRARIES GraphMol)
+              LINK_LIBRARIES GraphMol ${Boost_REGEX_LIBRARY} )
 
 rdkit_test(testSLNParse test.cpp 
            LINK_LIBRARIES SLNParse SmilesParse SubstructMatch
