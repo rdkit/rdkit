@@ -283,13 +283,21 @@ LabuteASA.version=rdMolDescriptors._CalcLabuteASA_version
 def _TPSAContribs(mol,verbose=False):
   """ calculates atomic contributions to a molecules TPSA
 
-   Algorithm in:
+   Algorithm described in:
     P. Ertl, B. Rohde, P. Selzer
      Fast Calculation of Molecular Polar Surface Area as a Sum of Fragment-based
      Contributions and Its Application to the Prediction of Drug Transport 
      Properties, J.Med.Chem. 43, 3714-3717, 2000
 
    Implementation based on the Daylight contrib program tpsa.c
+
+   NOTE: The JMC paper describing the TPSA algorithm includes
+   contributions from sulfur and phosphorus, however according to
+   Peter Ertl (personal communication, 2010) the correlation of TPSA
+   with various ADME properties is better if only contributions from
+   oxygen and nitrogen are used. This matches the daylight contrib
+   implementation.
+
   """  
   res = [0]*mol.GetNumAtoms()
   for i in range(mol.GetNumAtoms()):
