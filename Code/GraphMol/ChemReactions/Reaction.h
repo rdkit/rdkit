@@ -208,4 +208,26 @@ namespace RDKit{
 
 } // end of RDKit namespace
 
+namespace RDDepict {
+  //! \brief Generate 2D coordinates (a depiction) for a reaction
+  /*! 
+
+    \param rxn the reaction were are interested in
+
+    \param spacing the spacing between components of the reaction
+
+    \param canonOrient canonicalize the orientation so that the long
+    axes align with the x-axis etc.
+
+  */
+  void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn,
+                                  double spacing=0.5,
+                                  bool canonOrient=false,
+                                  unsigned int nFlipsPerSample=0,
+                                  unsigned int nSamples=0,
+                                  int sampleSeed=0,
+                                  bool permuteDeg4Nodes=false);
+
+} // end of RDDepict namespace
+
 #endif

@@ -54,7 +54,7 @@ namespace RDKit {
     }
     return res;
   };
-#if 0
+#if 1
   //! returns an RXN block for a reaction
   std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn){
     std::ostringstream res;

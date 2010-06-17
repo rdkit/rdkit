@@ -190,17 +190,44 @@ Sample Usage:\n\
 
   ;
 
-  def("ReactionFromSmarts",RDKit::RxnSmartsToChemicalReaction,
+  python::def("ReactionFromSmarts",RDKit::RxnSmartsToChemicalReaction,
       "construct a ChemicalReaction from a reaction SMARTS string",
       python::return_value_policy<python::manage_new_object>());
-  def("ReactionFromRxnFile",RDKit::RxnFileToChemicalReaction,
+  python::def("ReactionFromRxnFile",RDKit::RxnFileToChemicalReaction,
       "construct a ChemicalReaction from an MDL rxn file",
       python::return_value_policy<python::manage_new_object>());
-  def("ReactionFromRxnBlock",RDKit::RxnBlockToChemicalReaction,
+  python::def("ReactionFromRxnBlock",RDKit::RxnBlockToChemicalReaction,
       "construct a ChemicalReaction from an string in MDL rxn format",
       python::return_value_policy<python::manage_new_object>());
-  //def("ReactionToSmarts",RDKit::ChemicalReactionToRxnSmarts,
-  //    (python::arg("reaction")),
-  //    "construct a reaction SMARTS string for a ChemicalReaction");
+
+  python::def("ReactionToSmarts",RDKit::ChemicalReactionToRxnSmarts,
+      (python::arg("reaction")),
+      "construct a reaction SMARTS string for a ChemicalReaction");
+  python::def("ReactionToRxnBlock",RDKit::ChemicalReactionToRxnBlock,
+      (python::arg("reaction")),
+      "construct a string in MDL rxn format for a ChemicalReaction");
+
+  docString = "Compute 2D coordinates for a reaction. \n\
+  ARGUMENTS: \n\n\
+     reaction - the reaction of interest\n\
+     spacing - the amount of space left between reactants and products\n\
+     canonOrient - orient the reactants and products in a canonical way\n\
+     nFlipsPerSample - number of rotatable bonds that are\n\
+                flipped at random at a time.\n\
+     nSample - Number of random samplings of rotatable bonds.\n\
+     sampleSeed - seed for the random sampling process.\n\
+     permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
+                 node during the sampling process \n\n";
+  python::def("Compute2DCoordsForReaction",
+              RDDepict::compute2DCoordsForReaction,
+	      (python::arg("reaction"),
+	       python::arg("spacing")=0.5,
+	       python::arg("canonOrient")=true,
+               python::arg("nFlipsPerSample")=0,
+               python::arg("nSample")=0,
+               python::arg("sampleSeed")=0,
+               python::arg("permuteDeg4Nodes")=false),
+	      docString.c_str());
+
 }
               

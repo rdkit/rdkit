@@ -72,12 +72,12 @@ void test1Basics(){
   TEST_ASSERT(rxn.getNumProductTemplates()==1);
 
   smi = "C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
@@ -87,12 +87,12 @@ void test1Basics(){
   
   reacts.clear();
   smi = "CC(C(=O)O)C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
@@ -101,12 +101,12 @@ void test1Basics(){
   
   reacts.clear();
   smi = "CC(C(=O)O)C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "NCN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
@@ -146,12 +146,12 @@ void test2SimpleReactions(){
   TEST_ASSERT(rxn.getNumProductTemplates()==1);
 
   smi = "C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -164,12 +164,12 @@ void test2SimpleReactions(){
   
   reacts.clear();
   smi = "CC(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -181,12 +181,12 @@ void test2SimpleReactions(){
   
   reacts.clear();
   smi = "CC(C(=O)O)C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
@@ -200,12 +200,12 @@ void test2SimpleReactions(){
     
   reacts.clear();
   smi = "CC(C(=O)O)C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "NCN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   prods = rxn.runReactants(reacts);
@@ -257,12 +257,12 @@ void test3RingFormation(){
   TEST_ASSERT(rxn.getNumProductTemplates()==1);
 
   smi = "C=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "C=CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -278,12 +278,12 @@ void test3RingFormation(){
     
   reacts.clear();
   smi = "CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "C=CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -297,12 +297,12 @@ void test3RingFormation(){
 
   reacts.clear();
   smi = "CC=C[Cl]";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "[F]C=CC=C[Br]";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -320,12 +320,12 @@ void test3RingFormation(){
 
   reacts.clear();
   smi = "C1C=CCCC1";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "C=CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -376,12 +376,12 @@ void test4MultipleProducts(){
   TEST_ASSERT(rxn.getNumProductTemplates()==2);
 
   smi = "OC(=O)CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
   smi = "OC(=O)CN";    
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -396,12 +396,12 @@ void test4MultipleProducts(){
 
   reacts.clear();
   smi = "COC(=O)CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
   smi = "COC(=O)CN";    
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
@@ -452,12 +452,12 @@ void test5Salts(){
   TEST_ASSERT(rxn.getNumProductTemplates()==1);
 
   smi = "C(=O)O.[ClH]";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN.C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -488,12 +488,12 @@ void test6DaylightParser(){
   TEST_ASSERT(rxn->getNumProductTemplates()==1);
 
   smi = "C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -514,12 +514,12 @@ void test6DaylightParser(){
   TEST_ASSERT(rxn->getNumProductTemplates()==2);
 
   smi = "OC(=O)CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
   smi = "OC(=O)CN";    
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -579,12 +579,12 @@ void test7MDLParser(){
   TEST_ASSERT(rxn->getNumProductTemplates()==1);
 
   smi = "C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -606,12 +606,12 @@ void test7MDLParser(){
 
 
   smi = "OC(=O)CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
   smi = "OC(=O)CN";    
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -633,12 +633,12 @@ void test7MDLParser(){
 
 
   smi = "OC(=O)CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
   smi = "OC(=O)CN";    
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -658,12 +658,12 @@ void test7MDLParser(){
   TEST_ASSERT(rxn->getNumProductTemplates()==1);
 
   smi = "CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "C=CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -678,12 +678,12 @@ void test7MDLParser(){
   
   reacts.clear();
   smi = "CC=C[Cl]";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "[F]C=CC=C[Br]";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -701,12 +701,12 @@ void test7MDLParser(){
 
   reacts.clear();
   smi = "C1C=CCCC1";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "C=CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -786,12 +786,12 @@ void test9ProductQueries(){
   TEST_ASSERT(rxn);
 
   smi = "C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -842,7 +842,7 @@ void test9ProductQueries(){
 
   reacts.clear();
   smi = "c1ccccc1";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
@@ -2401,12 +2401,12 @@ void test26V3000MDLParser(){
   TEST_ASSERT(rxn->getNumProductTemplates()==1);
 
   smi = "C(=O)O";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -2428,12 +2428,12 @@ void test26V3000MDLParser(){
 
 
   smi = "OC(=O)CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
   smi = "OC(=O)CN";    
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -2454,12 +2454,12 @@ void test26V3000MDLParser(){
 
 
   smi = "OC(=O)CN";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
 
   smi = "OC(=O)CN";    
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -2479,12 +2479,12 @@ void test26V3000MDLParser(){
   TEST_ASSERT(rxn->getNumProductTemplates()==1);
 
   smi = "CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "C=CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -2499,12 +2499,12 @@ void test26V3000MDLParser(){
   
   reacts.clear();
   smi = "CC=C[Cl]";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "[F]C=CC=C[Br]";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -2522,12 +2522,12 @@ void test26V3000MDLParser(){
 
   reacts.clear();
   smi = "C1C=CCCC1";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
     
   smi = "C=CC=C";
-  mol = SmartsToMol(smi);
+  mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   reacts.push_back(ROMOL_SPTR(mol));
   
@@ -2580,8 +2580,55 @@ void test27SmartsWriter(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-#if 0
-void test28RxnWriter(){
+void test28RxnDepictor(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing reaction depictor." << std::endl;
+
+  unsigned int nWarn,nError;
+
+  {
+    std::string smi;
+    smi="[C:10]1[C:11][C:12]1[C:1]=[O:2].[N:3][C:20]([C:21])[C:22]>>[O:2]=[C:1]([C:10]1[C:11][C:12]1)[N:3][C:20]([C:21])[C:22]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    for(RDKit::MOL_SPTR_VECT::const_iterator templIt=rxn->beginReactantTemplates();
+        templIt!=rxn->endReactantTemplates();++templIt){
+      TEST_ASSERT((*templIt)->getNumConformers()==0);
+    }
+    for(RDKit::MOL_SPTR_VECT::const_iterator templIt=rxn->beginProductTemplates();
+        templIt!=rxn->endProductTemplates();++templIt){
+      TEST_ASSERT((*templIt)->getNumConformers()==0);
+    }
+
+    RDDepict::compute2DCoordsForReaction(*rxn);
+    for(RDKit::MOL_SPTR_VECT::const_iterator templIt=rxn->beginReactantTemplates();
+        templIt!=rxn->endReactantTemplates();++templIt){
+      TEST_ASSERT((*templIt)->getNumConformers()==1);
+      TEST_ASSERT(!(*templIt)->getConformer().is3D());
+    }
+    for(RDKit::MOL_SPTR_VECT::const_iterator templIt=rxn->beginProductTemplates();
+        templIt!=rxn->endProductTemplates();++templIt){
+      TEST_ASSERT((*templIt)->getNumConformers()==1);
+      TEST_ASSERT(!(*templIt)->getConformer().is3D());
+    }
+
+    //std::string mb;
+    //mb=ChemicalReactionToRxnBlock(*rxn);
+    //std::cerr<<"MB:\n"<<mb<<"---"<<std::endl;
+
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test29RxnWriter(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing RXN file writer." << std::endl;
 
@@ -2602,13 +2649,11 @@ void test28RxnWriter(){
     TEST_ASSERT(nWarn==0);
     TEST_ASSERT(nError==0);
 
+    smi = ChemicalReactionToRxnSmarts(*rxn);
+    TEST_ASSERT(smi=="[#6:2](-[#8])=[#8:1].[#7:3]>>[#7:3]-[#6:2]=[#8:1]")
+
     std::string mb;
     mb=ChemicalReactionToRxnBlock(*rxn);
-    std::cerr<<"mb: "<<mb<<std::endl;
-
-    smi = ChemicalReactionToRxnSmarts(*rxn);
-    std::cerr<<"smi: "<<smi<<std::endl;
-    //TEST_ASSERT(smi=="[C:1]=[O:2].[N:3]>>[O:2]=[C:1]~[N:3]");
 
     delete rxn;
     rxn = RxnBlockToChemicalReaction(mb); 
@@ -2620,10 +2665,9 @@ void test28RxnWriter(){
     TEST_ASSERT(nWarn==0);
     TEST_ASSERT(nError==0);
   }
-
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
-#endif
+
 
 int main() { 
   RDLog::InitLogs();
@@ -2657,10 +2701,11 @@ int main() {
   test23Pickling();
   test24AtomFlags();
   test25Conformers();
-#endif
   test26V3000MDLParser();
+#endif
   test27SmartsWriter();
-  //test28RxnWriter();
+  test28RxnDepictor();
+  test29RxnWriter();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

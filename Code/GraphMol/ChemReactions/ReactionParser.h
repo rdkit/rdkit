@@ -73,10 +73,8 @@ namespace RDKit{
   //! returns the reaction SMARTS for a reaction
   std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn);
 
-#if 0
   //! returns an RXN block for a reaction
   std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn);
-#endif
   
 }; // end of RDKit namespace
 
