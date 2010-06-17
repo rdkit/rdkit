@@ -566,7 +566,6 @@ void testQueries(){
   TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
   delete m2;
 
-
   smi="C=C";
   m1= SmartsToMol(smi);
   TEST_ASSERT(m1);
@@ -602,8 +601,55 @@ void testQueries(){
   BOOST_LOG(rdErrorLog)<<smi<<" "<<smi2<<std::endl;
   TEST_ASSERT(smi==smi2);
 
-  
-  
+  // more complex recursive queries:
+  smi="[$(C)]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==1);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="RecursiveStructure");
+  smi="C";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="N";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="c1ccccc1";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
+  delete m1;
+
+  // more complex recursive queries:
+  smi="[$(C=O);$(C-N)]";
+  m1= SmartsToMol(smi);
+  TEST_ASSERT(m1);
+  MolPickler::pickleMol(*m1,pickle);
+  delete m1;
+  m1 = new ROMol();
+  MolPickler::molFromPickle(pickle,*m1);
+  TEST_ASSERT(m1->getNumAtoms()==1);
+  TEST_ASSERT(m1->getAtomWithIdx(0)->hasQuery());
+  TEST_ASSERT(m1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
+  smi="NCO";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(!SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+  smi="CNC(=O)";
+  m2= SmilesToMol(smi);
+  TEST_ASSERT(m2);
+  TEST_ASSERT(SubstructMatch(*m2,*m1,matchV));
+  delete m2;
+
   delete m1;
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
