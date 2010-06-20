@@ -1,11 +1,46 @@
 ******  Release_Q22010_1 *******
 (Changes relative to Release_Q12010_1)
 
+!!!!!! IMPORTANT !!!!!!
+ - There are a couple of refactoring changes that affect people using
+   the RDKit from C++. Please look in the Other section below for a list.
+
 Acknowledgements:
+ - Andrew Dalke, James Davidson, Kirk DeLisle, Thomas Heller, Peter Gedeck,
+   Noel O'Boyle, Nik Stiefl,  
    
 Bug Fixes: 
+ - The depictor no longer generates NaNs for some molecules on
+   windows (issue 2995724)
+ - [X] query features work correctly with chiral atoms. (issue
+   3000399)
+ - mols will no longer be deleted by python when atoms/bonds returned
+   from mol.Get{Atom,Bond}WithIdx() are still active. (issue 3007178)
+ - a problem with force-field construction for five-coordinate atoms
+   was fixed. (issue 3009337)
+ - double bonds to terminal atoms are no longer marked as "any" bonds
+   when writing mol blocks. (issue 3009756)
+ - a problem with stereochemistry of double bonds linking rings was
+   fixed. (issue 3009836)
+ - a problem with R/S assignment was fixed. (issue 3009911)
+ - error and warning messages are now properly displayed when cmake
+   builds are used on windows.
+ - a canonicalization problem with double bonds incident onto aromatic
+   rings was fixed. (issue 3018558)
     
 New Features:
+ - RXN files can now be written. (issue 3011399)
+ - reaction smarts can now be written.
+ - v3000 RXN files can now be read. (issue 3009807)
+ - better support for query information in mol blocks is present.
+   (issue 2942501)
+ - Depictions of reactions can now be generated.
+ - Morgan fingerprints can now be calculated as bit vectors (as
+   opposed to count vectors.
+ - the method GetFeatureDefs() has been added to
+   MolChemicalFeatureFactory
+ - repeated recursive SMARTS queries in a single SMARTS will now be
+   recognized and matched much faster.
 
 Deprecated modules (to be removed in next release):
  - rdkit/qtGui
@@ -13,12 +48,18 @@ Deprecated modules (to be removed in next release):
  
 Removed modules:
  - SVD code: External/svdlibc External/svdpackc rdkit/PySVD
- - rdkit/Chem.CDXMLWriter.py
- 
- 
-
+ - rdkit/Chem/CDXMLWriter.py
 
 Other:
+ - The large scale changes in the handling of stereochemistry were
+   made for this release. These should make the code more robust.
+ - Changes only affecting C++ programmers:
+   - The code for calculating topological-torsion and atom-pair
+     fingerprints has been moved from $RDBASE/Code/GraphMol/Descriptors
+     to $RDBASE/Code/GraphMol/Fingerprints.
+   - The naming convention for methods of ExplicitBitVect and
+     SparseBitVect have been changed to make it more consistent with
+     the rest of the RDKit.
 
 
 ******  Release_Q12010_1 *******
