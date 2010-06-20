@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -8,7 +8,6 @@
 #define _RD_MOLDESCRIPTORS_H_
 
 #include <GraphMol/Descriptors/Crippen.h>
-#include <GraphMol/Descriptors/AtomPairs.h>
 #include <GraphMol/Descriptors/MolSurf.h>
 
 namespace RDKit{

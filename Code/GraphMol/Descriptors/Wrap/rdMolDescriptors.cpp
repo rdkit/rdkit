@@ -9,7 +9,7 @@
 #include <GraphMol/GraphMol.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
-#include <GraphMol/Descriptors/AtomPairs.h>
+#include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 
 #include <vector>
@@ -17,8 +17,8 @@
 namespace python = boost::python;
 
 namespace {
-  std::vector<unsigned int> atomPairTypes(RDKit::Descriptors::AtomPairs::atomNumberTypes,
-					  RDKit::Descriptors::AtomPairs::atomNumberTypes+sizeof(RDKit::Descriptors::AtomPairs::atomNumberTypes)/sizeof(unsigned int));
+  std::vector<unsigned int> atomPairTypes(RDKit::AtomPairs::atomNumberTypes,
+					  RDKit::AtomPairs::atomNumberTypes+sizeof(RDKit::AtomPairs::atomNumberTypes)/sizeof(unsigned int));
   python::tuple computeASAContribs(const RDKit::ROMol &mol,bool includeHs=true,
 				   bool force=false){
     std::vector<double> contribs(mol.getNumAtoms());
@@ -64,7 +64,7 @@ namespace {
     }
 
     RDKit::SparseIntVect<boost::int32_t> *res;
-    res = RDKit::Descriptors::AtomPairs::getAtomPairFingerprint(mol,minLength,maxLength,
+    res = RDKit::AtomPairs::getAtomPairFingerprint(mol,minLength,maxLength,
                                                                 vect);
     if(vect) delete vect;
     return res;
@@ -86,14 +86,14 @@ namespace {
       }
     }
 
-    if(targetSize*RDKit::Descriptors::AtomPairs::codeSize>64){
+    if(targetSize*RDKit::AtomPairs::codeSize>64){
       std::ostringstream errout;
-      errout << "Maximum supported topological torsion path length is " << 64/RDKit::Descriptors::AtomPairs::codeSize<<std::endl;
+      errout << "Maximum supported topological torsion path length is " << 64/RDKit::AtomPairs::codeSize<<std::endl;
       throw_value_error(errout.str());
     }
     
     RDKit::SparseIntVect<boost::int64_t> *res;
-    res = RDKit::Descriptors::AtomPairs::getTopologicalTorsionFingerprint(mol,targetSize,vect);
+    res = RDKit::AtomPairs::getTopologicalTorsionFingerprint(mol,targetSize,vect);
     if(vect) delete vect;
     return res;
   }
@@ -115,7 +115,7 @@ namespace {
       }
     }
     RDKit::SparseIntVect<boost::int64_t> *res;
-    res = RDKit::Descriptors::AtomPairs::getHashedTopologicalTorsionFingerprint(mol,nBits,targetSize,vect);
+    res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol,nBits,targetSize,vect);
     if(vect) delete vect;
     return res;
   }
@@ -179,41 +179,41 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   python::class_<python::object>("AtomPairsParameters")
     .setattr("version",
-		  RDKit::Descriptors::AtomPairs::atomPairsVersion)
+		  RDKit::AtomPairs::atomPairsVersion)
     .setattr("numTypeBits",
-		  RDKit::Descriptors::AtomPairs::numTypeBits)
+		  RDKit::AtomPairs::numTypeBits)
     .setattr("numPiBits",
-		  RDKit::Descriptors::AtomPairs::numPiBits)
+		  RDKit::AtomPairs::numPiBits)
     .setattr("numBranchBits",
-		  RDKit::Descriptors::AtomPairs::numBranchBits)
+		  RDKit::AtomPairs::numBranchBits)
     .setattr("codeSize",
-		  RDKit::Descriptors::AtomPairs::codeSize)
+		  RDKit::AtomPairs::codeSize)
     .setattr("atomTypes",
 		  atomPairTypes)
     .setattr("numPathBits",
-		  RDKit::Descriptors::AtomPairs::numPathBits)
+		  RDKit::AtomPairs::numPathBits)
     .setattr("numAtomPairFingerprintBits",
-		  RDKit::Descriptors::AtomPairs::numAtomPairFingerprintBits)
+		  RDKit::AtomPairs::numAtomPairFingerprintBits)
     ;
   docString="Returns the atom code (hash) for an atom";
-  python::def("GetAtomPairAtomCode", RDKit::Descriptors::AtomPairs::getAtomCode,
+  python::def("GetAtomPairAtomCode", RDKit::AtomPairs::getAtomCode,
               (python::arg("atom"), python::arg("branchSubtract")=0),
               docString.c_str());
   docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
               (python::arg("mol"),
                python::arg("minLength")=1,
-               python::arg("maxLength")=RDKit::Descriptors::AtomPairs::maxPathLen-1,
+               python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
                python::arg("fromAtoms")=python::list()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
   python::def("GetHashedAtomPairFingerprint",
-	      (RDKit::SparseIntVect<boost::int32_t> *(*)(const RDKit::ROMol&,unsigned int,unsigned int,unsigned int))RDKit::Descriptors::AtomPairs::getHashedAtomPairFingerprint,
+	      (RDKit::SparseIntVect<boost::int32_t> *(*)(const RDKit::ROMol&,unsigned int,unsigned int,unsigned int))RDKit::AtomPairs::getHashedAtomPairFingerprint,
 	      (python::arg("mol"),
                python::arg("nBits")=2048,
                python::arg("minLength")=1,
-               python::arg("maxLength")=RDKit::Descriptors::AtomPairs::maxPathLen-1),
+               python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   docString="Returns the topological-torsion fingerprint for a molecule as a LongIntSparseIntVect";
