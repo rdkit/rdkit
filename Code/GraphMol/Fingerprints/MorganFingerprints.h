@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (c) 2009, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2009-2010, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
 
 #include <vector>
 #include <DataStructs/SparseIntVect.h>
+#include <DataStructs/ExplicitBitVect.h>
 #include <boost/cstdint.hpp>
 
 namespace RDKit {
@@ -54,8 +55,11 @@ namespace RDKit {
       FCFP fingerprints, depending on which invariants are used.
         
       The algorithm used is described in the paper
+      Rogers, D. & Hahn, M. Extended-Connectivity Fingerprints. JCIM (2010) http://dx.doi.org/10.1021/ci100050t
+
+      The original implementation was done using this paper:
       D. Rogers, R.D. Brown, M. Hahn J. Biomol. Screen. 10:682-6 (2005)
-      and in more detail in an unpublished technical report:
+      and an unpublished technical report:
       http://www.ics.uci.edu/~welling/teaching/ICS274Bspring06/David%20Rogers%20-%20ECFP%20Manuscript.doc
 
       \param mol:    the molecule to be fingerprinted
@@ -73,6 +77,14 @@ namespace RDKit {
     SparseIntVect<boost::uint32_t> *
       getFingerprint(const ROMol &mol,
                      unsigned int radius,
+                     std::vector<boost::uint32_t> *invariants=0,
+                     const std::vector<boost::uint32_t> *fromAtoms=0);
+
+    //! \overload
+    ExplicitBitVect *
+      getFingerprint(const ROMol &mol,
+                     unsigned int radius,
+                     unsigned int nBits,
                      std::vector<boost::uint32_t> *invariants=0,
                      const std::vector<boost::uint32_t> *fromAtoms=0);
 

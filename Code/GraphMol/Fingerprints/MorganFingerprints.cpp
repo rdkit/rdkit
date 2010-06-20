@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (c) 2009, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2009-2010, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -73,12 +73,20 @@ namespace RDKit{
         invars[i]=vectHasher(components);
       }
     } // end of getConnectivityInvariants()
-      
-    SparseIntVect<uint32_t> *
-    getFingerprint(const ROMol &mol,
-                   unsigned int radius,
-                   std::vector<uint32_t> *invariants,
-                   const std::vector<uint32_t> *fromAtoms){
+
+    void updateElement(SparseIntVect<uint32_t> &v,unsigned int elem){
+      v.setVal(elem,v.getVal(elem)+1);
+    }
+    void updateElement(ExplicitBitVect &v,unsigned int elem){
+      v.setBit(elem%v.getNumBits());
+    }
+
+    template <typename T>
+    void calcFingerprint(const ROMol &mol,
+                         unsigned int radius,
+                         std::vector<uint32_t> *invariants,
+                         const std::vector<uint32_t> *fromAtoms,
+                         T &res){
       unsigned int nAtoms=mol.getNumAtoms();
       bool owner=false;
       if(!invariants){
@@ -86,14 +94,12 @@ namespace RDKit{
         owner=true;
         getConnectivityInvariants(mol,*invariants);
       }
-      SparseIntVect<uint32_t> *res;
-      res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
 
       // add the round 0 invariants to the result:
       for(unsigned int i=0;i<nAtoms;++i){
         if(!fromAtoms ||
            std::find(fromAtoms->begin(),fromAtoms->end(),i)!=fromAtoms->end()){
-          res->setVal((*invariants)[i],res->getVal((*invariants)[i])+1);
+          updateElement(res,(*invariants)[i]);
         }
       }
 
@@ -188,7 +194,7 @@ namespace RDKit{
           if(std::find(neighborhoods.begin(),neighborhoods.end(),
                        iter->get<0>())==neighborhoods.end()){
             if(includeAtoms[iter->get<2>()]){
-              res->setVal(iter->get<1>(),res->getVal(iter->get<1>())+1);
+              updateElement(res,iter->get<1>());
             }
             neighborhoods.push_back(iter->get<0>());
             //std::cerr<<" layer: "<<layer<<" atom: "<<iter->get<2>()<<" " <<iter->get<0>()<< " " << iter->get<1>() << " " << deadAtoms[iter->get<2>()]<<std::endl;
@@ -206,7 +212,30 @@ namespace RDKit{
       }
 
       if(owner) delete invariants;
+    }
+      
+    SparseIntVect<uint32_t> *
+    getFingerprint(const ROMol &mol,
+                   unsigned int radius,
+                   std::vector<uint32_t> *invariants,
+                   const std::vector<uint32_t> *fromAtoms){
+      SparseIntVect<uint32_t> *res;
+      res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
+      calcFingerprint(mol,radius,invariants,fromAtoms,*res);
       return res;
     }
+
+    ExplicitBitVect *
+    getFingerprint(const ROMol &mol,
+                   unsigned int radius,
+                   unsigned int nBits,
+                   std::vector<uint32_t> *invariants,
+                   const std::vector<uint32_t> *fromAtoms){
+      ExplicitBitVect *res=new ExplicitBitVect(nBits);
+      calcFingerprint(mol,radius,invariants,fromAtoms,*res);
+      return res;
+    }
+
+
   } // end of namespace MorganFingerprints
 } // end of namespace RDKit

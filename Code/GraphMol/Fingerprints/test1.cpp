@@ -859,15 +859,15 @@ void test2MorganFPsFromAtoms(){
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
 
-    fp = MorganFingerprints::getFingerprint(*mol,0,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,0,(std::vector<boost::uint32_t> *)NULL,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==1);
     delete fp;
   
-    fp = MorganFingerprints::getFingerprint(*mol,1,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,1,(std::vector<boost::uint32_t> *)NULL,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
   
-    fp = MorganFingerprints::getFingerprint(*mol,2,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,2,(std::vector<boost::uint32_t> *)NULL,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
   
@@ -880,11 +880,11 @@ void test2MorganFPsFromAtoms(){
     std::vector<boost::uint32_t> atoms;
     
     mol = SmilesToMol("CCCCC");
-    fp = MorganFingerprints::getFingerprint(*mol,0,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,0,(std::vector<boost::uint32_t> *)0,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==0);
     delete fp;
   
-    fp = MorganFingerprints::getFingerprint(*mol,1,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,1,(std::vector<boost::uint32_t> *)0,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==0);
     delete fp;
   
@@ -899,25 +899,54 @@ void test2MorganFPsFromAtoms(){
     
     mol = SmilesToMol("C(CC)CO");
 
-    fp = MorganFingerprints::getFingerprint(*mol,0,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,0,(std::vector<boost::uint32_t> *)0,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==1);
     delete fp;
   
-    fp = MorganFingerprints::getFingerprint(*mol,1,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,1,(std::vector<boost::uint32_t> *)0,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
   
-    fp = MorganFingerprints::getFingerprint(*mol,2,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,2,(std::vector<boost::uint32_t> *)0,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==3);
     delete fp;
   
-    fp = MorganFingerprints::getFingerprint(*mol,3,0,&atoms);
+    fp = MorganFingerprints::getFingerprint(*mol,3,(std::vector<boost::uint32_t> *)0,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==3);
     delete fp;
   
     delete mol;
   }
   
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+void test3MorganFPs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints as bit vects." << std::endl;
+
+  {
+    ROMol *mol;
+    ExplicitBitVect *fp;
+
+    mol = SmilesToMol("CCCCC");
+    fp = MorganFingerprints::getFingerprint(*mol,0,2048);
+    TEST_ASSERT(fp->getNumOnBits()==2);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,1,2048);
+    TEST_ASSERT(fp->getNumOnBits()==5);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,2,2048);
+    TEST_ASSERT(fp->getNumOnBits()==7);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,3,2048);
+    TEST_ASSERT(fp->getNumOnBits()==7);
+    delete fp;
+  
+  
+    delete mol;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -979,6 +1008,7 @@ int main(int argc,char *argv[]){
   test2Layers();
   test1MorganFPs();
   test2MorganFPsFromAtoms();
+  test3MorganFPs();
   test3Layers();
 #endif
   test5BackwardsCompatibility();
