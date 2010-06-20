@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2010 Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -81,6 +81,8 @@ void testPass(){
     "c1ccc[te]1",
     // test zeros as ring indices, issue 2690982:
     "C0CC0", 
+    // test canonization error, issue 3018558:
+    "C/C(/C=C2\\Sc1ccc(cc1N\\2C))=C5\\SC4=NccN4C\\5=O",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];

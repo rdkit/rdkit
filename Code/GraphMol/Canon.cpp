@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -20,7 +20,8 @@ namespace Canon {
 
   void switchBondDir(Bond *bond){
     PRECONDITION(bond,"bad bond");
-    PRECONDITION(bond->getBondType()==Bond::SINGLE,"bad bond type");
+    PRECONDITION(bond->getBondType()==Bond::SINGLE||bond->getIsAromatic(),
+                 "bad bond type");
     switch(bond->getBondDir()){
     case Bond::ENDUPRIGHT:
       bond->setBondDir(Bond::ENDDOWNRIGHT);
