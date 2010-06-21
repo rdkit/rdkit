@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007-2008 Greg Landrum
+//  Copyright (C) 2007-2010 Greg Landrum
 //
 //   @@ All Rights Reserved  @@
 //
@@ -156,15 +156,53 @@ namespace {
     return res;
   }
 
-}
-python::list GetConnectivityInvariants(const RDKit::ROMol &mol,bool includeRingMembership){
-  std::vector<boost::uint32_t> invars(mol.getNumAtoms());
-  RDKit::MorganFingerprints::getConnectivityInvariants(mol,invars,includeRingMembership);
-  python::list res;
-  for(std::vector<boost::uint32_t>::const_iterator iv=invars.begin();iv!=invars.end();++iv){
-    res.append(python::long_(*iv));
+  ExplicitBitVect *GetMorganFingerprintBV(const RDKit::ROMol &mol,
+                                             int radius,
+                                             unsigned int nBits,
+                                             python::object invariants,
+                                             python::object fromAtoms){
+    std::vector<boost::uint32_t> *invars=0;
+    if(invariants){
+      unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
+      if(nInvar){
+        if(nInvar!=mol.getNumAtoms()){
+          throw_value_error("length of invariant vector != number of atoms");
+        }
+        invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          (*invars)[i] = python::extract<boost::uint32_t>(invariants[i]);
+        }
+      }
+    }
+    std::vector<boost::uint32_t> *froms=0;
+    if(fromAtoms){
+      unsigned int nFrom=python::extract<unsigned int>(fromAtoms.attr("__len__")());
+      if(nFrom){
+        froms = new std::vector<boost::uint32_t>();
+        for(unsigned int i=0;i<nFrom;++i){
+          froms->push_back(python::extract<boost::uint32_t>(fromAtoms[i]));
+        }
+      }
+    }
+    ExplicitBitVect *res;
+    res = RDKit::MorganFingerprints::getFingerprint(mol,
+                                                    static_cast<unsigned int>(radius),
+                                                    nBits,
+                                                    invars,froms);
+    if(invars) delete invars;
+    if(froms) delete froms;
+    return res;
   }
-  return res;
+
+  python::list GetConnectivityInvariants(const RDKit::ROMol &mol,bool includeRingMembership){
+    std::vector<boost::uint32_t> invars(mol.getNumAtoms());
+    RDKit::MorganFingerprints::getConnectivityInvariants(mol,invars,includeRingMembership);
+    python::list res;
+    for(std::vector<boost::uint32_t>::const_iterator iv=invars.begin();iv!=invars.end();++iv){
+      res.append(python::long_(*iv));
+    }
+    return res;
+  }
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -235,6 +273,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString="Returns a Morgan fingerprint for a molecule";
   python::def("GetMorganFingerprint", GetMorganFingerprint,
               (python::arg("mol"),python::arg("radius"),
+               python::arg("invariants")=python::list(),
+               python::arg("fromAtoms")=python::list()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+  docString="Returns a Morgan fingerprint for a molecule as a bit vector";
+  python::def("GetMorganFingerprintAsBitVect", GetMorganFingerprintBV,
+              (python::arg("mol"),python::arg("radius"),python::arg("nBits")=2048,
                python::arg("invariants")=python::list(),
                python::arg("fromAtoms")=python::list()),
               docString.c_str(),
