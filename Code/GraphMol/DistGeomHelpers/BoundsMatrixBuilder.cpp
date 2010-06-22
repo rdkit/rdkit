@@ -151,7 +151,7 @@ namespace RDKit {
                           about the molecule
     */
     void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                     ComputedData &accumData);
+                     ComputedData &accumData,double *distMatrix);
 
     //! Set lower distance bounds based on VDW radii for atoms that are not covered by 
     //! other bounds (1-2, 1-3, 1-4, or 1-5)
@@ -231,14 +231,13 @@ namespace RDKit {
       }
     }
     
-    void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool useTopolScaling) {
+    void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool useTopolScaling,
+                          double *dmat) {
       unsigned int npt = mmat->numRows();
       PRECONDITION(npt == mol.getNumAtoms(), "Wrong size metric matrix");
       unsigned int i, j;
 
       double vw1, vw2;
-      double *dmat=0;
-      dmat = MolOps::getDistanceMat(mol);
 
       for (i = 1; i < npt; i++) {
         vw1 = PeriodicTable::getTable()->getRvdw(mol.getAtomWithIdx(i)->getAtomicNum());
@@ -340,8 +339,12 @@ namespace RDKit {
           } else {
             aid3 = (*rii)[i+1];
           }
-          bid1 = mol.getBondBetweenAtoms(aid1, aid2)->getIdx();
-          bid2 = mol.getBondBetweenAtoms(aid2, aid3)->getIdx();
+          const Bond *b1=mol.getBondBetweenAtoms(aid1, aid2);
+          const Bond *b2=mol.getBondBetweenAtoms(aid2, aid3);
+          CHECK_INVARIANT(b1,"no bond found");
+          CHECK_INVARIANT(b2,"no bond found");
+          bid1 = b1->getIdx();
+          bid2 = b2->getIdx();
           id1 = nb*bid1 + bid2;
           id2 = nb*bid2 + bid1;
 
@@ -488,7 +491,7 @@ namespace RDKit {
     }
 
     void _setInRing14Bounds(const ROMol &mol, const Bond* bnd1, const Bond* bnd2, const Bond* bnd3,
-                            ComputedData &accumData, DistGeom::BoundsMatPtr mmat) {
+                            ComputedData &accumData, DistGeom::BoundsMatPtr mmat,double *dmat) {
       PRECONDITION(bnd1, "");
       PRECONDITION(bnd2, "");
       PRECONDITION(bnd3, "");
@@ -505,6 +508,12 @@ namespace RDKit {
       
       unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
       unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+
+      // check that this actually is a 1-4 contact:
+      if(dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<2.9){
+        //std::cerr<<"skip: "<<aid1<<"-"<<aid4<<" because d="<<dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<<std::endl;
+        return;
+      }
       
       double bl1 = accumData.bondLengths[bid1];
       double bl2 = accumData.bondLengths[bid2];
@@ -540,6 +549,7 @@ namespace RDKit {
         path14.type = Path14Configuration::OTHER;
       }
       
+      //std::cerr<<"7: "<<aid1<<"-"<<aid4<<std::endl;
       _checkAndSetBounds(aid1, aid4, dl , du, mmat);
       accumData.paths14.push_back(path14);
       
@@ -547,7 +557,7 @@ namespace RDKit {
     
     void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2, 
                                    const Bond *bnd3, ComputedData &accumData,
-                                   DistGeom::BoundsMatPtr mmat) {
+                                   DistGeom::BoundsMatPtr mmat,double *dmat) {
       PRECONDITION(bnd1, "");
       PRECONDITION(bnd2, "");
       PRECONDITION(bnd3, "");
@@ -559,9 +569,15 @@ namespace RDKit {
       PRECONDITION(atm2, "");
       const Atom *atm3 = mol.getAtomWithIdx(accumData.bondAdj->getVal(bid2, bid3)); 
       PRECONDITION(atm3, "");
-      
+
       unsigned int aid1 = bnd1->getOtherAtomIdx(atm2->getIdx());
       unsigned int aid4 = bnd3->getOtherAtomIdx(atm3->getIdx());
+
+      // check that this actually is a 1-4 contact:
+      if(dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<2.9){
+        //std::cerr<<"skip: "<<aid1<<"-"<<aid4<<" because d="<<dmat[std::max(aid1,aid4)*mmat->numRows()+std::min(aid1,aid4)]<<std::endl;
+        return;
+      }
 
       // when we have fused rings, it can happen that this isn't actually a 1-4 contact,
       // (this was the cause of sf.net bug 2835784) check that now:
@@ -606,24 +622,25 @@ namespace RDKit {
         }
         path14.type = Path14Configuration::OTHER;
       }
+      //std::cerr<<"1: "<<aid1<<"-"<<aid4<<": "<<dl<<" -> "<<du<<std::endl;
       _checkAndSetBounds(aid1, aid4, dl ,du, mmat);
       accumData.paths14.push_back(path14);
     }
     
     void _setTwoInDiffRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2, 
                                    const Bond *bnd3, ComputedData &accumData,
-                                   DistGeom::BoundsMatPtr mmat) {
+                                   DistGeom::BoundsMatPtr mmat,double *dmat) {
       // this turns out to be very similar to all bonds in the same ring situation.
       // There is probably some fine tuning that can be done when the atoms a2 and a3 are not sp2 hybridized,
       // but we will not worry about that now; simple use 0-180 deg for non-sp2 cases.
-      _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat);
+      _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat,dmat);
     }
     
     void _setShareRingBond14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2, 
                                    const Bond *bnd3, ComputedData &accumData,
-                                   DistGeom::BoundsMatPtr mmat) {
+                                   DistGeom::BoundsMatPtr mmat,double *dmat) {
       // once this turns out to be similar to bonds in the same ring
-      _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat);
+      _setInRing14Bounds(mol, bnd1, bnd2, bnd3, accumData, mmat,dmat);
     }
     
     bool _checkH2NX3H1OX2(const Atom *atm) {
@@ -717,7 +734,7 @@ namespace RDKit {
 
     void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2, const Bond *bnd3, 
                            ComputedData &accumData,
-                           DistGeom::BoundsMatPtr mmat){
+                           DistGeom::BoundsMatPtr mmat,double *dmat){
 
       PRECONDITION(bnd1, "");
       PRECONDITION(bnd2, "");
@@ -929,6 +946,7 @@ namespace RDKit {
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
         }
+        //std::cerr<<"2: "<<aid1<<"-"<<aid4<<std::endl;
         _checkAndSetBounds(aid1, aid4, dl, du, mmat);
         accumData.paths14.push_back(path14);
       }
@@ -956,7 +974,7 @@ namespace RDKit {
     }
 
     void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat, 
-                     ComputedData &accumData) {
+                     ComputedData &accumData,double *distMatrix) {
       unsigned int npt = mmat->numRows();
       CHECK_INVARIANT(npt == mol.getNumAtoms(), "Wrong size metric matrix");
       
@@ -972,7 +990,7 @@ namespace RDKit {
       unsigned int nb = mol.getNumBonds();
       BIT_SET ringBondPairs(nb*nb), donePaths(nb*nb*nb);
       unsigned int id1, id2, pid1, pid2, pid3, pid4;
-      // first we will deal 14 atoms that belong to the same ring    
+      // first we will deal with 1-4 atoms that belong to the same ring    
       for (rii = bondRings.begin(); rii != bondRings.end(); rii++) {
         // we don't need deal with 3 membered rings
         unsigned int rSize = rii->size();
@@ -998,10 +1016,8 @@ namespace RDKit {
           if (rSize > 5) {
             _setInRing14Bounds(mol, mol.getBondWithIdx(bid1),
                                mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                               accumData, mmat);
-          }
-          
-          else {
+                               accumData, mmat, distMatrix);
+          } else {
             _record14Path(mol, bid1, bid2, bid3, accumData);
           }
          
@@ -1036,7 +1052,7 @@ namespace RDKit {
                     // either (bid1, bid2) or (bid2, bid3) are in the
 		    // same ring (note all three cannot be in the same
 		    // ring; we dealt with that before)
-                    _setTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat);
+                    _setTwoInSameRing14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat, distMatrix);
                   } else if ( ((rinfo->numBondRings(bid1) > 0) && (rinfo->numBondRings(bid2) > 0)) ||
                               ((rinfo->numBondRings(bid2) > 0) && (rinfo->numBondRings(bid3) > 0)) ) {
                     // (bid1, bid2) or (bid2, bid3) are ring bonds but
@@ -1047,15 +1063,15 @@ namespace RDKit {
                     // bid2 are ring bonds that belong to ring r1 and
                     // r2, then bid3 is either an external bond or
                     // belongs to a third ring r3.
-                    _setTwoInDiffRing14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat);
+                    _setTwoInDiffRing14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat, distMatrix);
                   } else if (rinfo->numBondRings(bid2) > 0) {
                     // the middle bond is a ring bond and the other
                     // two do not belong to the same ring or are
                     // non-ring bonds
-                    _setShareRingBond14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat);
+                    _setShareRingBond14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat, distMatrix);
                   } else { 
                     // middle bond not a ring
-                    _setChain14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat);
+                    _setChain14Bounds(mol, bnd1, (*bi), bnd3, accumData, mmat, distMatrix);
 
                   }
                 }
@@ -1090,15 +1106,19 @@ namespace RDKit {
       unsigned int nb = mol.getNumBonds();
       unsigned int na = mol.getNumAtoms();
       ComputedData accumData(na, nb);
+      double *distMatrix=0;
+      distMatrix = MolOps::getDistanceMat(mol);
+
       set12Bounds(mol, mmat, accumData);
       set13Bounds(mol, mmat, accumData);
 
-      set14Bounds(mol, mmat, accumData);
+      set14Bounds(mol, mmat, accumData,distMatrix);
 
       if (set15bounds) {
-        set15Bounds(mol, mmat, accumData);
+        set15Bounds(mol, mmat, accumData,distMatrix);
       }
-      setLowerBoundVDW(mol, mmat, scaleVDW);
+
+      setLowerBoundVDW(mol, mmat, scaleVDW,distMatrix);
     }
 
 
@@ -1264,7 +1284,7 @@ namespace RDKit {
 
     void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2, unsigned int bid3,
 			    unsigned int type, ComputedData &accumData,
-                            DistGeom::BoundsMatPtr mmat) {
+                            DistGeom::BoundsMatPtr mmat, double *dmat) {
       unsigned int i, aid1, aid2, aid3, aid4, aid5;
       double d1, d2, d3, d4, ang12, ang23, ang34, du, dl, vw1, vw5;
       unsigned int nb = mol.getNumBonds();
@@ -1286,6 +1306,12 @@ namespace RDKit {
           aid5 =  mol.getBondWithIdx(i)->getOtherAtomIdx(aid4);
           // make sure we did not com back to the first atom in the path - possible with 4 membered rings
           // this is a fix for Issue 244
+
+          // check that this actually is a 1-5 contact:
+          if(dmat[std::max(aid1,aid5)*mmat->numRows()+std::min(aid1,aid5)]<3.9){
+            //std::cerr<<"skip: "<<aid1<<"-"<<aid5<<" because d="<<dmat[std::max(aid1,aid5)*mmat->numRows()+std::min(aid1,aid5)]<<std::endl;
+            continue;
+          }
 
           if (aid1 != aid5) { //FIX: do we need this
             unsigned int pid1 = aid1*na + aid5;
@@ -1339,6 +1365,7 @@ namespace RDKit {
                 du = MAX_UPPER;
               }
             
+              //std::cerr<<"3: "<<aid1<<"-"<<aid5<<std::endl;
               _checkAndSetBounds(aid1, aid5, dl, du, mmat);
               accumData.set15Atoms[aid1*na + aid5] = 1;
               accumData.set15Atoms[aid5*na + aid1] = 1;
@@ -1350,7 +1377,7 @@ namespace RDKit {
 
     // set the 15 distance bounds
     void set15Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat, 
-                     ComputedData &accumData) {
+                     ComputedData &accumData,double *distMatrix) {
       PATH14_VECT_CI pti;
       unsigned int bid1, bid2, bid3, type;
       for (pti = accumData.paths14.begin(); pti != accumData.paths14.end(); pti++) {
@@ -1359,9 +1386,9 @@ namespace RDKit {
         bid3 = pti->bid3;
         type = pti->type;
         // 15 distances going one way with with 14 paths
-        _set15BoundsHelper(mol, bid1, bid2, bid3, type, accumData, mmat);
+        _set15BoundsHelper(mol, bid1, bid2, bid3, type, accumData, mmat, distMatrix);
         // goign the other way - reverse the 14 path
-        _set15BoundsHelper(mol, bid3, bid2, bid1, type, accumData, mmat);
+        _set15BoundsHelper(mol, bid3, bid2, bid1, type, accumData, mmat, distMatrix);
       }
     }
   }

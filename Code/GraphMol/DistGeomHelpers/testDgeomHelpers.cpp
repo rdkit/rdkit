@@ -134,6 +134,7 @@ void test2() {
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
   DGeomHelpers::setTopolBounds(*mol, bm);
 
+  std::cerr<<"go"<<std::endl;
   cid = DGeomHelpers::EmbedMolecule(*mol, 10, 1);
   TEST_ASSERT(cid>-1);
   dmat = new RDNumeric::DoubleSymmMatrix(nat, 0.0);
@@ -835,6 +836,7 @@ void testRandomCoords() {
   std::string rdbase = getenv("RDBASE");
   std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/initCoords.random.sdf";
   SDMolSupplier sdsup(fname,true,false);
+  //SDWriter writer("foo.sdf");
   //SDWriter writer(fname);
 
   boost::char_separator<char> spaceSep(" ");
@@ -849,6 +851,7 @@ void testRandomCoords() {
     int cid = DGeomHelpers::EmbedMolecule(*m, 10, 1, true, true, 2,true,1,0,1e-2);
     CHECK_INVARIANT(cid >= 0, "");
     //writer.write(*m);
+    //writer.flush();
 #if 1
     m2 = static_cast<RWMol *>(sdsup.next());
     //ROMol *m2 = NULL;
@@ -1072,7 +1075,18 @@ void testIssue2835784() {
   }
 }
 
-
+void testIssue3019283() {
+  {
+    std::string smi="C1=C2C1C1CC21";
+    RWMol *m = SmilesToMol(smi);
+    int cid = DGeomHelpers::EmbedMolecule(*m);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
+}
 
 int main() { 
   RDLog::InitLogs();
@@ -1148,6 +1162,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t testIssue355 \n\n";
   testIssue355();
+
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test1 \n\n";
   test1();
@@ -1172,13 +1187,16 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2091974 \n\n";
   testIssue2091974();
-  BOOST_LOG(rdInfoLog) << "*******************************************************\n";
-
-#endif
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2835784 \n\n";
   testIssue2835784();
+
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3019283 \n\n";
+  testIssue3019283();
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
 
   return(0);
