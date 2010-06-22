@@ -7,7 +7,7 @@
 
 Acknowledgements:
  - Andrew Dalke, James Davidson, Kirk DeLisle, Thomas Heller, Peter Gedeck,
-   Noel O'Boyle, Nik Stiefl,  
+   Greg Magoon, Noel O'Boyle, Nik Stiefl,  
    
 Bug Fixes: 
  - The depictor no longer generates NaNs for some molecules on
@@ -27,6 +27,8 @@ Bug Fixes:
    builds are used on windows.
  - a canonicalization problem with double bonds incident onto aromatic
    rings was fixed. (issue 3018558)
+ - a problem with embedding fused small ring systems was fixed.
+   (issue 3019283)
     
 New Features:
  - RXN files can now be written. (issue 3011399)
@@ -157,7 +159,7 @@ Other
     compatible with those from earlier versions.
 
 Acknowledgements
-  - Uwe Hoffmann, Nik Stiefl, George Magoon, Ari Gold-Parker,
+  - Uwe Hoffmann, Nik Stiefl, Greg Magoon, Ari Gold-Parker,
     Akihiro Yokota, Kei Taneishi, Riccardo Vianello, Markus Kossner
 
 Bug Fixes
@@ -344,7 +346,7 @@ Other
    centers should be fine.
 
 Acknowledgements:
- - Kirk DeLisle, Markus Kossner, George Magoon, Nik Stiefl 
+ - Kirk DeLisle, Markus Kossner, Greg Magoon, Nik Stiefl 
 
 Bug Fixes
  - core leaks in learning code (issue 2152622)
