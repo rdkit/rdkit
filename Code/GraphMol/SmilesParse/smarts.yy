@@ -142,6 +142,7 @@ mol: atomd {
   			    Queries::COMPOSITE_OR,
   			    true);
   }
+  newB->setProp("_unspecifiedOrder",1);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
