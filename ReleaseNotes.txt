@@ -62,6 +62,9 @@ Other:
    - The naming convention for methods of ExplicitBitVect and
      SparseBitVect have been changed to make it more consistent with
      the rest of the RDKit.
+   - the bjam-based build system should be considered
+     deprecated. This is the last release it will be actively
+     maintained. 
 
 
 ******  Release_Q12010_1 *******
