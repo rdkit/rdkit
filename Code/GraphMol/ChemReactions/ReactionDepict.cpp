@@ -37,41 +37,52 @@
 namespace RDDepict {
   void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn,
                                   double spacing,
+                                  bool updateProps,
                                   bool canonOrient,
                                   unsigned int nFlipsPerSample,
                                   unsigned int nSamples,
                                   int sampleSeed,
                                   bool permuteDeg4Nodes){
-    double xOffset=-spacing;
-    for(RDKit::MOL_SPTR_VECT::const_iterator templIt=rxn.beginReactantTemplates();
+    double xOffset=0.0;
+    for(RDKit::MOL_SPTR_VECT::iterator templIt=rxn.beginReactantTemplates();
         templIt!=rxn.endReactantTemplates();++templIt){
+      if(updateProps){
+        (*templIt)->updatePropertyCache(false);
+        RDKit::MolOps::setConjugation(**templIt);
+        RDKit::MolOps::setHybridization(**templIt);
+      }
       compute2DCoords(**templIt,0,canonOrient,true,nFlipsPerSample,
                       nSamples,sampleSeed,permuteDeg4Nodes);
       double minX=100.,maxX=-100.;
       BOOST_FOREACH(RDGeom::Point3D &pt,(*templIt)->getConformer().getPositions()){
         minX=std::min(pt.x,minX);
       }
-      xOffset += minX+spacing;
+      xOffset += minX;
       BOOST_FOREACH(RDGeom::Point3D &pt,(*templIt)->getConformer().getPositions()){
         pt.x += xOffset;
         maxX=std::max(pt.x,maxX);
       }
-      xOffset+=maxX-minX;
+      xOffset=maxX+spacing;
     }
-    for(RDKit::MOL_SPTR_VECT::const_iterator templIt=rxn.beginProductTemplates();
+    for(RDKit::MOL_SPTR_VECT::iterator templIt=rxn.beginProductTemplates();
         templIt!=rxn.endProductTemplates();++templIt){
+      if(updateProps){
+        (*templIt)->updatePropertyCache(false);
+        RDKit::MolOps::setConjugation(**templIt);
+        RDKit::MolOps::setHybridization(**templIt);
+      }
       compute2DCoords(**templIt,0,canonOrient,true,nFlipsPerSample,
                       nSamples,sampleSeed,permuteDeg4Nodes);
       double minX=100.,maxX=-100.;
       BOOST_FOREACH(RDGeom::Point3D &pt,(*templIt)->getConformer().getPositions()){
         minX=std::min(pt.x,minX);
       }
-      xOffset += minX+spacing;
+      xOffset += minX;
       BOOST_FOREACH(RDGeom::Point3D &pt,(*templIt)->getConformer().getPositions()){
         pt.x += xOffset;
         maxX=std::max(pt.x,maxX);
       }
-      xOffset+=maxX-minX;
+      xOffset=maxX+spacing;
     }
 
   }

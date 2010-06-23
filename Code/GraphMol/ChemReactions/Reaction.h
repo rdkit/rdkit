@@ -146,6 +146,20 @@ namespace RDKit{
     MOL_SPTR_VECT::const_iterator endProductTemplates() const {
         return this->m_productTemplates.end();    
     }
+
+    MOL_SPTR_VECT::iterator beginReactantTemplates() {
+        return this->m_reactantTemplates.begin();    
+    }
+    MOL_SPTR_VECT::iterator endReactantTemplates() {
+        return this->m_reactantTemplates.end();    
+    }
+
+    MOL_SPTR_VECT::iterator beginProductTemplates() {
+        return this->m_productTemplates.begin();    
+    }
+    MOL_SPTR_VECT::iterator endProductTemplates() {
+        return this->m_productTemplates.end();    
+    }
     unsigned int getNumReactantTemplates() const { return this->m_reactantTemplates.size(); };
     unsigned int getNumProductTemplates() const { return this->m_productTemplates.size(); };
 
@@ -216,12 +230,17 @@ namespace RDDepict {
 
     \param spacing the spacing between components of the reaction
 
-    \param canonOrient canonicalize the orientation so that the long
-    axes align with the x-axis etc.
+    \param updateProps if set, properties such as conjugation and
+        hybridization will be calculated for the reactant and product
+        templates before generating coordinates. This should result in
+        better depictions, but can lead to errors in some cases.
+
+    for the other parameters see the documentation for compute2DCoords()
 
   */
   void compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn,
-                                  double spacing=0.5,
+                                  double spacing=2.0,
+                                  bool updateProps=true,
                                   bool canonOrient=false,
                                   unsigned int nFlipsPerSample=0,
                                   unsigned int nSamples=0,

@@ -2618,13 +2618,76 @@ void test28RxnDepictor(){
       TEST_ASSERT((*templIt)->getNumConformers()==1);
       TEST_ASSERT(!(*templIt)->getConformer().is3D());
     }
+  }
+  { // make sure the depiction doesn't screw up the reaction itself
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+    std::string smi;
+    ChemicalReaction *rxn;
+    MOL_SPTR_VECT reacts;
+    std::vector<MOL_SPTR_VECT> prods;
 
-    //std::string mb;
-    //mb=ChemicalReactionToRxnBlock(*rxn);
-    //std::cerr<<"MB:\n"<<mb<<"---"<<std::endl;
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/cyclization1.rxn";
+    rxn = RxnFileToChemicalReaction(fName); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
 
+    RDDepict::compute2DCoordsForReaction(*rxn);
+
+    smi = "OC(=O)CN";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+
+    smi = "OC(=O)CN";    
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+  
+    rxn->initReactantMatchers();
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
+    TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
   }
 
+
+  {
+    std::string smi  = "[#7;!H0:1]>>[#7:1]C";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    smi = "C1=CNC=C1";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    RDDepict::compute2DCoordsForReaction(*rxn);
+
+    rxn->initReactantMatchers();
+
+    std::vector<MOL_SPTR_VECT> prods;
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+
+    ROMOL_SPTR prod = prods[0][0];
+    MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
+    TEST_ASSERT(prod->getNumAtoms()==6);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum()==7);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence()==0);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence()==3);
+    TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit()==false);
+
+    delete rxn;
+  }
+
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

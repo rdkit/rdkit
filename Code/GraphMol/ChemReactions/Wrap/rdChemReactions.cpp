@@ -210,8 +210,12 @@ Sample Usage:\n\
   docString = "Compute 2D coordinates for a reaction. \n\
   ARGUMENTS: \n\n\
      reaction - the reaction of interest\n\
-     spacing - the amount of space left between reactants and products\n\
+     spacing - the amount of space left between components of the reaction\n\
      canonOrient - orient the reactants and products in a canonical way\n\
+     updateProps - if set, properties such as conjugation and\n\
+        hybridization will be calculated for the reactant and product\n\
+        templates before generating coordinates. This should result in\n\
+        better depictions, but can lead to errors in some cases.\n\
      nFlipsPerSample - number of rotatable bonds that are\n\
                 flipped at random at a time.\n\
      nSample - Number of random samplings of rotatable bonds.\n\
@@ -221,7 +225,8 @@ Sample Usage:\n\
   python::def("Compute2DCoordsForReaction",
               RDDepict::compute2DCoordsForReaction,
 	      (python::arg("reaction"),
-	       python::arg("spacing")=0.5,
+	       python::arg("spacing")=2.0,
+	       python::arg("updateProps")=true,
 	       python::arg("canonOrient")=true,
                python::arg("nFlipsPerSample")=0,
                python::arg("nSample")=0,
