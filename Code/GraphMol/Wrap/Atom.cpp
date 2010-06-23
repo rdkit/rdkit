@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -22,6 +22,27 @@
 
 namespace python = boost::python;
 namespace RDKit{
+  namespace {
+    std::string qhelper(Atom::QUERYATOM_QUERY *q,int depth){
+      std::string res="";
+      if(q){
+	for (unsigned int i=0;i<depth;++i) res+="  ";
+	res += q->getDescription()+"\n";
+	for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci=q->beginChildren();
+	    ci!=q->endChildren();++ci){
+	  res +=  qhelper((*ci).get(),depth+1);
+	}
+      }
+      return res;
+    }
+  } // end of local namespace
+  std::string describeQuery(const Atom*atom){
+    std::string res="";
+    if(atom->hasQuery()){
+      res=qhelper(atom->getQuery(),0);
+    }
+    return res;
+  }
 
   void AtomSetProp(const Atom *atom, const char *key,std::string val) {
     //std::cerr<<"asp: "<<atom<<" " << key<<" - " << val << std::endl;
@@ -207,6 +228,9 @@ struct atom_wrapper {
 
       .def("HasQuery",&Atom::hasQuery,
      "Returns whether or not the atom has an associated query\n\n")
+
+      .def("DescribeQuery",describeQuery,
+	   "returns a text description of the query. Primarily intended for debugging purposes.\n\n")
 
       .def("GetSmarts",AtomGetSmarts,
               "returns the SMARTS (or SMILES) string for an Atom\n\n")

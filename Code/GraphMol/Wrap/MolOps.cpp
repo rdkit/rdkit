@@ -103,12 +103,21 @@ namespace RDKit{
     MolOps::setAromaticity(wmol);
   }
 
+  void setConjugationMol(ROMol &mol) {
+    RWMol &wmol = static_cast<RWMol &>(mol);
+    MolOps::setConjugation(wmol);
+  }
+
+  void setHybridizationMol(ROMol &mol) {
+    RWMol &wmol = static_cast<RWMol &>(mol);
+    MolOps::setHybridization(wmol);
+  }
+  
   VECT_INT_VECT getSymmSSSR(ROMol &mol) {
     VECT_INT_VECT rings;
     MolOps::symmetrizeSSSR(mol, rings);
     return rings;
   }
-  
   PyObject *getDistanceMatrix(ROMol &mol, bool useBO=false,
                               bool useAtomWts=false,bool force=false,
                               const char *prefix=0) {
@@ -487,6 +496,12 @@ namespace RDKit{
     - The molecule is modified in place.\n\
 \n";
       python::def("SetAromaticity", setAromaticityMol,
+                  (python::arg("mol")),
+                  docString.c_str());
+      python::def("SetConjugation", setConjugationMol,
+                  (python::arg("mol")),
+                  docString.c_str());
+      python::def("SetHybridization", setHybridizationMol,
                   (python::arg("mol")),
                   docString.c_str());
       
