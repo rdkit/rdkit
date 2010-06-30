@@ -6,6 +6,6 @@
 //
 #include <boost/version.hpp>
 namespace RDKit {
-  const char *rdkitVersion="2010Q2_1pre";
+  const char *rdkitVersion="2010Q2_1";
   const char *boostVersion=BOOST_LIB_VERSION;
 }  

@@ -4,6 +4,10 @@
 !!!!!! IMPORTANT !!!!!!
  - There are a couple of refactoring changes that affect people using
    the RDKit from C++. Please look in the Other section below for a list.
+ - If you are building the RDKit yourself, changes made in this
+   release require that you use a reasonably up-to-date version of
+   flex to build it. Please look in the Other section below for more
+   information.
 
 Acknowledgements:
  - Andrew Dalke, James Davidson, Kirk DeLisle, Thomas Heller, Peter Gedeck,
@@ -43,6 +47,8 @@ New Features:
    MolChemicalFeatureFactory
  - repeated recursive SMARTS queries in a single SMARTS will now be
    recognized and matched much faster.
+ - the SMILES and SMARTS parsers can now be run safely in
+   multi-threaded code. 
 
 Deprecated modules (to be removed in next release):
  - rdkit/qtGui
@@ -55,6 +61,14 @@ Removed modules:
 Other:
  - The large scale changes in the handling of stereochemistry were
    made for this release. These should make the code more robust.
+ - If you are building the RDKit yourself, changes made in this
+   release require that you use a reasonably up-to-date version of
+   flex to build it. This is likely to be a problem on Redhat, and
+   redhat-derived systems. Specifically: if your version of flex is
+   something like 2.5.4 (as opposed to something like 2.5.33, 2.5.34,
+   etc.), you will need to get a newer version from
+   http://flex.sourceforge.net in order to build the RDKit.
+
  - Changes only affecting C++ programmers:
    - The code for calculating topological-torsion and atom-pair
      fingerprints has been moved from $RDBASE/Code/GraphMol/Descriptors
