@@ -1,0 +1,64 @@
+SELECT dice_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol));
+ dice_sml 
+----------
+      0.4
+(1 row)
+
+SELECT dice_sml(atompair_fp('c1ccccc1'::mol),atompair_fp('c1ccncc1'::mol));
+     dice_sml      
+-------------------
+ 0.666666666666667
+(1 row)
+
+SELECT dice_sml(torsion_fp('c1ccccc1'::mol),torsion_fp('c1ccncc1'::mol));
+     dice_sml      
+-------------------
+ 0.333333333333333
+(1 row)
+
+SET rdkit.tanimoto_threshold = 0.4;
+SELECT
+    id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+pgavfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
+ORDER BY sml DESC, id LIMIT 10;
+   id    |        sml        
+---------+-------------------
+ 9550023 | 0.416666666666667
+ 1959267 | 0.412621359223301
+(2 rows)
+
+SET rdkit.tanimoto_threshold = 0.5;
+SET rdkit.dice_threshold = 0.5;
+SELECT
+    id, dice_sml(torsion_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+pgtorsfp
+WHERE torsion_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
+ORDER BY sml DESC, id;
+   id    | sml 
+---------+-----
+ 3790017 | 0.5
+(1 row)
+
+SELECT
+    id, dice_sml(atompair_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+pgpairfp
+WHERE atompair_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
+ORDER BY sml DESC, id LIMIT 10;
+    id    |        sml        
+----------+-------------------
+   659725 | 0.636678200692042
+   917183 | 0.595155709342561
+ 10713707 | 0.595092024539877
+  3790017 | 0.588555858310627
+   230488 | 0.576687116564417
+ 16193886 |  0.55012853470437
+  3236648 |         0.5390625
+  5359275 | 0.534201954397394
+  6213987 | 0.532871972318339
+   161167 |  0.52760736196319
+(10 rows)
+

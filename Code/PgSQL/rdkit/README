@@ -1,0 +1,79 @@
+contrib/rdkit is a PostgreSQL contribution module, which implements 
+*mol* datatype to describe molecules and *fp* datatype for fingerprints,  
+basic comparison operations, similarity operation (tanimoto, dice) and  index 
+support (using GiST indexing framework).
+
+Compatibility: PostgreSQL 8.4+
+
+Installation:
+
+ Module assumes that the RDKit is installed in $RDBASE
+ (check Makefile).
+
+ untar archive in postgresql contrib directory
+ 
+ cd rdkit
+ 
+ make && make install && make installcheck 
+
+ Install rdkit into database DB: 
+   psql DB < rdkit.sql
+
+ Uninstall rdkit from database DB:
+   psql DB < uninstall_rdkit.sql
+
+
+Data types:
+
+Input/output functions for *mol* datatype follow SMILES format.
+Input/output functions for *fp* datatype follow bytea format.
+
+It's possible to use implicit cast mol to fp, i.e., mol::fp
+
+Functions:
+
+double tanimoto_sml(mol,mol) - calculates tanimoto similarity
+double tanimoto_sml(fp,fp)
+
+double dice_sml(mol,mol)     - calculates dice similarity
+double dice_sml(fp,fp)     
+
+bool substruct(mol a, mol b)  - returns TRUE if second argument is a 
+                                substructure of the first argument.
+
+size(fp) - calculates length of fingerprint
+
+
+GUC variables rdkit.tanimoto_threshold, rdkit.dice_threshold should be
+defined, see shared_preload_libraries', 'custom_variable_classes' 
+instructions in postgresql.conf. Default value for both of them is 0.5. 
+We recommend to initialize them via  'shared_preload_libraries'.
+
+Operations:
+
+  mol % mol, fp % fp  - returns TRUE if tanimoto similarity between operands is 
+                        lower than rdkit.tanimoto_threshold
+  
+  mol # mol, fp # fp  - returns TRUE if dice similarity between operands is 
+                        lower than rdkit.dice_threshold
+ 
+  mol @> mol          - returns TRUE if left operand contains right one
+  mol <@ mol          - returns TRUE if left operand contained in right one
+ 
+  comparison operations ( <, <=, =, >=, > )  were implemented using memcpy()
+
+Indexes:
+
+  Btree and Hash indexes support comparison operations for mol and fp 
+  datatypes. 
+  Example:  CREATE INDEX molidx ON pgmol (mol);
+            CREATE INDEX molidx ON pgmol (fp);
+
+  GiST index over mol supports %,#, @>, <@ operations.
+  GiST index over fp supports %,# operations.
+  Example:  CREATE INDEX molidx ON pgmol USING gist (mol);
+
+
+Example:
+
+  See sql/* for examples.

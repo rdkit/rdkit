@@ -1,0 +1,191 @@
+--
+-- first, define the datatype.  Turn off echoing so that expected file
+-- does not depend on contents of rdkit.sql.
+--
+SET client_min_messages = warning;
+\set ECHO none
+RESET client_min_messages;
+CREATE TABLE pgmol (id int, m mol);
+\copy pgmol from 'data/data'
+CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
+SELECT count(*) FROM pgmol;
+ count 
+-------
+  1000
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1';
+ count 
+-------
+   901
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1';
+ count 
+-------
+   245
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE 'c1ccccc1' <@ m;
+ count 
+-------
+   901
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
+ count 
+-------
+   245
+(1 row)
+
+SELECT id, layered_fp(m) AS f INTO pgbfp FROM pgmol;
+CREATE UNIQUE INDEX bfp_ididx ON pgbfp (id);
+SELECT id, morgan_fp(m,1) AS f INTO pgsfp FROM pgmol;
+CREATE UNIQUE INDEX sfp_ididx ON pgsfp (id);
+SELECT id, rdkit_fp(m) AS f INTO pgavfp FROM pgmol;
+SELECT id, torsion_fp(m) AS f INTO pgtorsfp FROM pgmol;
+SELECT id, atompair_fp(m) AS f INTO pgpairfp FROM pgmol;
+set rdkit.tanimoto_threshold=0.5;
+set rdkit.dice_threshold=0.5;
+SELECT 
+	id, 
+	tanimoto_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+FROM
+	 (SELECT * FROM pgbfp ORDER BY id) AS t 
+WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+LIMIT 10;
+   id    |   tanimoto_sml    
+---------+-------------------
+   66722 | 0.507874015748031
+  689878 | 0.541850220264317
+  698576 | 0.633333333333333
+  840355 | 0.529411764705882
+  902176 | 0.638766519823789
+  979228 | 0.513888888888889
+ 1728272 |               0.5
+ 1959267 | 0.633440514469453
+ 2204903 | 0.507518796992481
+ 2210570 | 0.514388489208633
+(10 rows)
+
+SELECT 
+	id, 
+	dice_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+FROM
+	 (SELECT * FROM pgbfp ORDER BY id) AS t 
+WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+LIMIT 10;
+   id    |     dice_sml      
+---------+-------------------
+   66722 | 0.673629242819843
+  689878 | 0.702857142857143
+  698576 | 0.775510204081633
+  840355 | 0.692307692307692
+  902176 | 0.779569892473118
+  979228 | 0.678899082568807
+ 1728272 | 0.666666666666667
+ 1959267 | 0.775590551181102
+ 2204903 | 0.673316708229426
+ 2210570 | 0.679334916864608
+(10 rows)
+
+SELECT 
+	id, 
+	tanimoto_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+FROM
+	 (SELECT * FROM pgbfp ORDER BY id) AS t 
+WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+LIMIT 10;
+   id   |   tanimoto_sml    
+--------+-------------------
+   2722 | 0.334645669291339
+  11829 |           0.34375
+  63248 |  0.37125748502994
+  66722 | 0.507874015748031
+  68281 | 0.369811320754717
+  82533 | 0.349358974358974
+  83773 | 0.351535836177474
+  94464 | 0.333333333333333
+  98960 | 0.428070175438596
+ 161167 | 0.333333333333333
+(10 rows)
+
+SELECT 
+	id, 
+	dice_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f),
+	size(f)
+FROM
+	 (SELECT * FROM pgbfp ORDER BY id) AS t 
+WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+LIMIT 10;
+   id   |     dice_sml      | size 
+--------+-------------------+------
+   2722 | 0.501474926253687 | 1024
+  11829 | 0.511627906976744 | 1024
+  63248 | 0.541484716157205 | 1024
+  66722 | 0.673629242819843 | 1024
+  68281 | 0.539944903581267 | 1024
+  82533 | 0.517814726840855 | 1024
+  83773 |  0.52020202020202 | 1024
+  94464 |               0.5 | 1024
+  98960 | 0.599508599508599 | 1024
+ 161167 |               0.5 | 1024
+(10 rows)
+
+set rdkit.tanimoto_threshold=0.4;
+SELECT 
+	id, 
+	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f) 
+FROM
+	 (SELECT * FROM pgsfp ORDER BY id) AS t 
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f  
+LIMIT 10;
+   id    |   tanimoto_sml    
+---------+-------------------
+ 3761688 | 0.441860465116279
+(1 row)
+
+SELECT 
+	id, 
+	dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1), f) 
+FROM
+	 (SELECT * FROM pgsfp ORDER BY id) AS t 
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)))'::mol, 1) % f  
+LIMIT 10;
+   id    |     dice_sml      
+---------+-------------------
+ 3761688 | 0.612903225806452
+(1 row)
+
+SELECT 
+	id, 
+	tanimoto_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), f) 
+FROM
+	 (SELECT * FROM pgsfp ORDER BY id) AS t 
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f  
+LIMIT 10;
+    id    |   tanimoto_sml    
+----------+-------------------
+   902176 | 0.347826086956522
+  2952787 | 0.365853658536585
+  5281628 | 0.346153846153846
+ 10560368 | 0.435897435897436
+ 16196768 |             0.375
+(5 rows)
+
+SELECT 
+	id, 
+	dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), f)
+FROM
+	 (SELECT * FROM pgsfp ORDER BY id) AS t 
+WHERE morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1) # f  
+LIMIT 10;
+    id    |     dice_sml      
+----------+-------------------
+   902176 | 0.516129032258065
+  2952787 | 0.535714285714286
+  5281628 | 0.514285714285714
+ 10560368 | 0.607142857142857
+ 16196768 | 0.545454545454545
+(5 rows)
+

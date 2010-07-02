@@ -1,0 +1,95 @@
+CREATE INDEX fpidx ON pgfp USING gist (f);
+SET rdkit.tanimoto_threshold = 0.8;
+SET rdkit.dice_threshold = 0.8;
+SET enable_indexscan=off;
+SET enable_bitmapscan=off;
+SET enable_seqscan=on;
+SELECT
+    id, tanimoto_sml('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol::fp, f) AS sml
+FROM
+	pgfp
+WHERE 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol::fp % f
+ORDER BY sml DESC, id;
+   id    |        sml        
+---------+-------------------
+   11095 |                 1
+  238782 | 0.995867768595041
+ 3519901 | 0.906015037593985
+(3 rows)
+
+SELECT
+    id, dice_sml('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol::fp, f) AS sml
+FROM
+	pgfp
+WHERE 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol::fp # f
+ORDER BY sml DESC, id;
+    id    |        sml        
+----------+-------------------
+    11095 |                 1
+   238782 | 0.997929606625259
+  3519901 |  0.95069033530572
+ 16746398 | 0.877637130801688
+ 16376440 |             0.872
+ 16746514 | 0.867219917012448
+ 16746513 | 0.858823529411765
+ 10450920 | 0.853448275862069
+ 10560368 |  0.85140562248996
+ 14159747 | 0.848214285714286
+     4788 | 0.844868735083532
+  3129671 |  0.83370288248337
+ 16682040 | 0.824489795918367
+  6438503 | 0.818181818181818
+ 16746399 | 0.817582417582418
+ 16746488 | 0.817582417582418
+  1996694 | 0.816176470588235
+  5336233 | 0.805031446540881
+(18 rows)
+
+SET enable_indexscan=on;
+SET enable_bitmapscan=on;
+SET enable_seqscan=off;
+SELECT
+    id, tanimoto_sml('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol::fp, f) AS sml
+FROM
+	pgfp
+WHERE 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol::fp % f
+ORDER BY sml DESC, id;
+   id    |        sml        
+---------+-------------------
+   11095 |                 1
+  238782 | 0.995867768595041
+ 3519901 | 0.906015037593985
+(3 rows)
+
+SELECT
+    id, dice_sml('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol::fp, f) AS sml
+FROM
+	pgfp
+WHERE 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol::fp # f
+ORDER BY sml DESC, id;
+    id    |        sml        
+----------+-------------------
+    11095 |                 1
+   238782 | 0.997929606625259
+  3519901 |  0.95069033530572
+ 16746398 | 0.877637130801688
+ 16376440 |             0.872
+ 16746514 | 0.867219917012448
+ 16746513 | 0.858823529411765
+ 10450920 | 0.853448275862069
+ 10560368 |  0.85140562248996
+ 14159747 | 0.848214285714286
+     4788 | 0.844868735083532
+  3129671 |  0.83370288248337
+ 16682040 | 0.824489795918367
+  6438503 | 0.818181818181818
+ 16746399 | 0.817582417582418
+ 16746488 | 0.817582417582418
+  1996694 | 0.816176470588235
+  5336233 | 0.805031446540881
+(18 rows)
+
+SET enable_indexscan=on;
+SET enable_bitmapscan=on;
+SET enable_seqscan=on;
+DROP INDEX fpidx;
