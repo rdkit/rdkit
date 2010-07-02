@@ -9,6 +9,8 @@ macro(rdkit_library)
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
+    INSTALL(TARGETS ${RDKLIB_NAME} 
+            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
   else(MSVC)
     # we're going to always build in shared mode since we
     # need exceptions to be (correctly) catchable across
