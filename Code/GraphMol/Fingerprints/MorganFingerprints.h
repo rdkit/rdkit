@@ -81,14 +81,31 @@ namespace RDKit {
                      std::vector<boost::uint32_t> *invariants=0,
                      const std::vector<boost::uint32_t> *fromAtoms=0);
 
-    //! \overload
-    ExplicitBitVect *
-      getFingerprint(const ROMol &mol,
-                     unsigned int radius,
-                     unsigned int nBits,
-                     std::vector<boost::uint32_t> *invariants=0,
-                     const std::vector<boost::uint32_t> *fromAtoms=0);
 
+    //! returns the Morgan fingerprint for a molecule as a bit vector
+    /*!
+      see documentation for getFingerprint() for theory/references
+
+      \param mol:    the molecule to be fingerprinted
+      \param radius: the number of iterations to grow the fingerprint
+      \param nBits:  the number of bits in the final fingerprint
+      \param invariants : optional pointer to a set of atom invariants to
+            be used. By default ECFP-type invariants are used 
+            (calculated by getConnectivityInvariants())
+      \param fromAtoms : if this is provided, only the atoms in the vector will be
+                         used as centers in the fingerprint
+
+      \return a pointer to the fingerprint. The client is
+      responsible for calling delete on this.
+
+    */
+    ExplicitBitVect *
+      getFingerprintAsBitVect(const ROMol &mol,
+                              unsigned int radius,
+                              unsigned int nBits,
+                              std::vector<boost::uint32_t> *invariants=0,
+                              const std::vector<boost::uint32_t> *fromAtoms=0);
+    
       
     //! returns the connectivity invariants for a molecule
     /*!  

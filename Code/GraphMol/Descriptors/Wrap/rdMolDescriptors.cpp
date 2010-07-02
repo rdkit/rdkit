@@ -11,6 +11,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <DataStructs/BitVects.h>
 
 #include <vector>
 
@@ -120,6 +121,28 @@ namespace {
     return res;
   }
 
+  ExplicitBitVect *GetHashedTopologicalTorsionFingerprintAsBitVect(const RDKit::ROMol &mol,
+                                                                               unsigned int nBits,
+                                                                         unsigned int targetSize,
+                                                                         python::object fromAtoms){
+    std::vector<boost::uint32_t> *vect=0;
+    if(fromAtoms){
+      vect = new std::vector<boost::uint32_t>;
+      unsigned int nFrom=python::extract<unsigned int>(fromAtoms.attr("__len__")());
+      for(unsigned int i=0;i<nFrom;++i){
+        boost::uint32_t v=python::extract<boost::uint32_t>(fromAtoms[i]);
+        if(v>=mol.getNumAtoms()){
+          throw_value_error("atom index specified that is larger than the number of atoms");
+        }
+        vect->push_back(v);
+      }
+    }
+    ExplicitBitVect *res;
+    res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(mol,nBits,targetSize,vect);
+    if(vect) delete vect;
+    return res;
+  }
+
   RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(const RDKit::ROMol &mol,
                                                               int radius,
                                                               python::object invariants,
@@ -185,10 +208,10 @@ namespace {
       }
     }
     ExplicitBitVect *res;
-    res = RDKit::MorganFingerprints::getFingerprint(mol,
-                                                    static_cast<unsigned int>(radius),
-                                                    nBits,
-                                                    invars,froms);
+    res = RDKit::MorganFingerprints::getFingerprintAsBitVect(mol,
+                                                             static_cast<unsigned int>(radius),
+                                                             nBits,
+                                                             invars,froms);
     if(invars) delete invars;
     if(froms) delete froms;
     return res;
@@ -245,6 +268,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=python::list()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
+  python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
+              (python::arg("mol"),
+               python::arg("minLength")=1,
+               python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
+               python::arg("fromAtoms")=python::list()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   python::def("GetHashedAtomPairFingerprint",
 	      (RDKit::SparseIntVect<boost::int32_t> *(*)(const RDKit::ROMol&,unsigned int,unsigned int,unsigned int))RDKit::AtomPairs::getHashedAtomPairFingerprint,
@@ -254,6 +285,17 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+
+  docString="Returns the atom-pair fingerprint for a molecule as an ExplicitBitVect";
+  python::def("GetHashedAtomPairFingerprintAsBitBect",
+	      RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect,
+	      (python::arg("mol"),
+               python::arg("nBits")=2048,
+               python::arg("minLength")=1,
+               python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1),
+              docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+
   docString="Returns the topological-torsion fingerprint for a molecule as a LongIntSparseIntVect";
   python::def("GetTopologicalTorsionFingerprint",
 	      GetTopologicalTorsionFingerprint,
@@ -263,6 +305,15 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      python::return_value_policy<python::manage_new_object>());
   python::def("GetHashedTopologicalTorsionFingerprint",
 	      GetHashedTopologicalTorsionFingerprint,
+	      (python::arg("mol"),
+               python::arg("nBits")=2048,
+               python::arg("targetSize")=4,
+               python::arg("fromAtoms")=0),
+              docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the topological-torsion fingerprint for a molecule as an ExplicitBitVect";
+  python::def("GetHashedTopologicalTorsionFingerprintAsBitVect",
+	      GetHashedTopologicalTorsionFingerprintAsBitVect,
 	      (python::arg("mol"),
                python::arg("nBits")=2048,
                python::arg("targetSize")=4,

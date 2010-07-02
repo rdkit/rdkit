@@ -65,14 +65,26 @@ namespace RDKit{
       return res;
     }
 
+    template <typename T1,typename T2>
+    void updateElement(SparseIntVect<T1> &v,T2 elem){
+      v.setVal(elem,v.getVal(elem)+1);
+    }
+
+    template <typename T1>
+    void updateElement(ExplicitBitVect &v,T1 elem){
+      v.setBit(elem%v.getNumBits());
+    }
+
+
+    template <typename T>
     void setAtomPairBit(boost::uint32_t i, boost::uint32_t j,boost::uint32_t nAtoms,
                         const std::vector<boost::uint32_t> &atomCodes,
-                        const double *dm,SparseIntVect<boost::int32_t> *bv,
+                        const double *dm,T *bv,
                         unsigned int minLength,unsigned int maxLength){
       unsigned int dist=static_cast<unsigned int>(floor(dm[i*nAtoms+j]));
       if(dist>=minLength && dist<=maxLength){
         boost::uint32_t bitId=getAtomPairCode(atomCodes[i],atomCodes[j],dist);
-        bv->setVal(bitId,(*bv)[bitId]+1);
+        updateElement(*bv,static_cast<boost::uint32_t>(bitId));
       }
     }
 
@@ -140,13 +152,48 @@ namespace RDKit{
             gboost::hash_combine(bit,std::min(atomCodes[i],atomCodes[j]));
             gboost::hash_combine(bit,dist);
             gboost::hash_combine(bit,std::max(atomCodes[i],atomCodes[j]));
-            res->setVal(bit%nBits,(*res)[bit%nBits]+1);
+            updateElement(*res,static_cast<boost::int32_t>(bit%nBits));
           }
         }
       }
       return res;
     }
 
+    ExplicitBitVect *
+    getHashedAtomPairFingerprintAsBitVect(const ROMol &mol,unsigned int nBits,
+                                          unsigned int minLength,unsigned int maxLength){
+      PRECONDITION(minLength<=maxLength,"bad lengths provided");
+      ExplicitBitVect *res=new ExplicitBitVect(nBits);
+      const double *dm = MolOps::getDistanceMat(mol);
+      const unsigned int nAtoms=mol.getNumAtoms();
+
+      std::vector<boost::uint32_t> atomCodes;
+      for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
+          atomItI!=mol.endAtoms();++atomItI){
+        atomCodes.push_back(getAtomCode(*atomItI));
+      }
+      for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
+          atomItI!=mol.endAtoms();++atomItI){
+        unsigned int i=(*atomItI)->getIdx();
+        for(ROMol::ConstAtomIterator atomItJ=atomItI+1;
+            atomItJ!=mol.endAtoms();++atomItJ){
+          unsigned int j=(*atomItJ)->getIdx();
+          unsigned int dist=static_cast<unsigned int>(floor(dm[i*nAtoms+j]));
+          if(dist>=minLength && dist<=maxLength){
+            boost::uint32_t bit=0;
+            gboost::hash_combine(bit,std::min(atomCodes[i],atomCodes[j]));
+            gboost::hash_combine(bit,dist);
+            gboost::hash_combine(bit,std::max(atomCodes[i],atomCodes[j]));
+            updateElement(*res,bit%nBits);
+          }
+        }
+      }
+      return res;
+    }
+
+
+
+    
     boost::uint64_t 
     getTopologicalTorsionCode(const std::vector<boost::uint32_t> &pathCodes){
       bool reverseIt=false;
@@ -212,7 +259,6 @@ namespace RDKit{
       return res;
     }
 
-      
     SparseIntVect<boost::int64_t> *
     getTopologicalTorsionFingerprint(const ROMol &mol,unsigned int targetSize,
                                      const std::vector<boost::uint32_t> *fromAtoms){
@@ -261,58 +307,78 @@ namespace RDKit{
             pathCodes.push_back(code);
           }
           boost::int64_t code=getTopologicalTorsionCode(pathCodes);
-          res->setVal(code,res->getVal(code)+1);
+          updateElement(*res,code);
         }
       }
+
       return res;
     }
 
+    namespace {
+      template <typename T>
+      void TorsionFpCalc(T *res,
+                         const ROMol &mol,                    
+                         unsigned int nBits,
+                         unsigned int targetSize,
+                         const std::vector<boost::uint32_t> *fromAtoms){
+        std::vector<boost::uint32_t> atomCodes;
+        for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
+            atomItI!=mol.endAtoms();++atomItI){
+          atomCodes.push_back(getAtomCode(*atomItI));
+        }
+
+        PATH_LIST paths=findAllPathsOfLengthN(mol,targetSize,false);
+        for(PATH_LIST::const_iterator pathIt=paths.begin();
+            pathIt!=paths.end();++pathIt){
+          bool keepIt=true;
+          if(fromAtoms){
+            keepIt=false;
+          }
+          const PATH_TYPE &path=*pathIt;
+          if(fromAtoms){
+            if(std::find(fromAtoms->begin(),fromAtoms->end(),
+                         static_cast<boost::uint32_t>(path.front()))!=fromAtoms->end() ||
+               std::find(fromAtoms->begin(),fromAtoms->end(),
+                         static_cast<boost::uint32_t>(path.back()))!=fromAtoms->end()
+               ){
+              keepIt=true;
+            }
+          }
+          if(keepIt){
+            std::vector<boost::uint32_t> pathCodes(targetSize);
+            for(unsigned int i=0;i<targetSize;++i){
+              unsigned int code=atomCodes[path[i]];
+              // subtract off the branching number:
+              if(i==0 || i==targetSize-1){
+                code-=1;
+              } else {
+                code-=2;
+              }
+              pathCodes[i]=code;
+            }
+            size_t bit=getTopologicalTorsionHash(pathCodes);
+            updateElement(*res,bit%nBits);
+          }
+        }
+      }
+    } // end of local namespace
     SparseIntVect<boost::int64_t> *
     getHashedTopologicalTorsionFingerprint(const ROMol &mol,
                                            unsigned int nBits,
                                            unsigned int targetSize,
                                            const std::vector<boost::uint32_t> *fromAtoms){
       SparseIntVect<boost::int64_t> *res=new SparseIntVect<boost::int64_t>(nBits);
+      TorsionFpCalc(res,mol,nBits,targetSize,fromAtoms);
+      return res;
+    }
 
-      std::vector<boost::uint32_t> atomCodes;
-      for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
-          atomItI!=mol.endAtoms();++atomItI){
-        atomCodes.push_back(getAtomCode(*atomItI));
-      }
-
-      PATH_LIST paths=findAllPathsOfLengthN(mol,targetSize,false);
-      for(PATH_LIST::const_iterator pathIt=paths.begin();
-          pathIt!=paths.end();++pathIt){
-        bool keepIt=true;
-        if(fromAtoms){
-          keepIt=false;
-        }
-        const PATH_TYPE &path=*pathIt;
-        if(fromAtoms){
-          if(std::find(fromAtoms->begin(),fromAtoms->end(),
-                       static_cast<boost::uint32_t>(path.front()))!=fromAtoms->end() ||
-             std::find(fromAtoms->begin(),fromAtoms->end(),
-                       static_cast<boost::uint32_t>(path.back()))!=fromAtoms->end()
-             ){
-            keepIt=true;
-          }
-        }
-        if(keepIt){
-          std::vector<boost::uint32_t> pathCodes(targetSize);
-          for(unsigned int i=0;i<targetSize;++i){
-            unsigned int code=atomCodes[path[i]];
-            // subtract off the branching number:
-            if(i==0 || i==targetSize-1){
-              code-=1;
-            } else {
-              code-=2;
-            }
-            pathCodes[i]=code;
-          }
-          size_t bit=getTopologicalTorsionHash(pathCodes);
-          res->setVal(bit%nBits,res->getVal(bit%nBits)+1);
-        }
-      }
+    ExplicitBitVect *
+    getHashedTopologicalTorsionFingerprintAsBitVect(const ROMol &mol,
+                                                    unsigned int nBits,
+                                                    unsigned int targetSize,
+                                                    const std::vector<boost::uint32_t> *fromAtoms){
+      ExplicitBitVect *res=new ExplicitBitVect(nBits);
+      TorsionFpCalc(res,mol,nBits,targetSize,fromAtoms);
       return res;
     }
 

@@ -934,16 +934,16 @@ void test3MorganFPs(){
     ExplicitBitVect *fp;
 
     mol = SmilesToMol("CCCCC");
-    fp = MorganFingerprints::getFingerprint(*mol,0,2048);
+    fp = MorganFingerprints::getFingerprintAsBitVect(*mol,0,2048);
     TEST_ASSERT(fp->getNumOnBits()==2);
     delete fp;
-    fp = MorganFingerprints::getFingerprint(*mol,1,2048);
+    fp = MorganFingerprints::getFingerprintAsBitVect(*mol,1,2048);
     TEST_ASSERT(fp->getNumOnBits()==5);
     delete fp;
-    fp = MorganFingerprints::getFingerprint(*mol,2,2048);
+    fp = MorganFingerprints::getFingerprintAsBitVect(*mol,2,2048);
     TEST_ASSERT(fp->getNumOnBits()==7);
     delete fp;
-    fp = MorganFingerprints::getFingerprint(*mol,3,2048);
+    fp = MorganFingerprints::getFingerprintAsBitVect(*mol,3,2048);
     TEST_ASSERT(fp->getNumOnBits()==7);
     delete fp;
   

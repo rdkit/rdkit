@@ -226,11 +226,11 @@ namespace RDKit{
     }
 
     ExplicitBitVect *
-    getFingerprint(const ROMol &mol,
-                   unsigned int radius,
-                   unsigned int nBits,
-                   std::vector<uint32_t> *invariants,
-                   const std::vector<uint32_t> *fromAtoms){
+    getFingerprintAsBitVect(const ROMol &mol,
+                            unsigned int radius,
+                            unsigned int nBits,
+                            std::vector<uint32_t> *invariants,
+                            const std::vector<uint32_t> *fromAtoms){
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
       calcFingerprint(mol,radius,invariants,fromAtoms,*res);
       return res;

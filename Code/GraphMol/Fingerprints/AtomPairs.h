@@ -96,6 +96,24 @@ namespace RDKit {
                                  unsigned int nBits=2048,
                                  unsigned int minLength=1,
                                  unsigned int maxLength=maxPathLen-1);
+    //! returns the hashed atom-pair fingerprint for a molecule as a bit vector
+    /*!
+      \param mol:   the molecule to be fingerprinted
+      \param nBits:   the length of the fingerprint to generate
+      \param minLength:   minimum distance between atoms to be
+      considered in a pair. Default is 1 bond.
+      \param maxLength:   maximum distance between atoms to be
+      considered in a pair. Default is maxPathLen-1 bonds.
+
+      \return a pointer to the fingerprint. The client is
+      responsible for calling delete on this.
+
+    */
+    ExplicitBitVect *
+    getHashedAtomPairFingerprintAsBitVect(const ROMol &mol,
+                                          unsigned int nBits=2048,
+                                          unsigned int minLength=1,
+                                          unsigned int maxLength=maxPathLen-1);
 
     //! returns an topological torsion hash based on the atom hashes
     //! passed in
@@ -146,6 +164,23 @@ namespace RDKit {
                                            unsigned int nBits=2048,
                                            unsigned int targetSize=4,
                                            const std::vector<boost::uint32_t> *fromAtoms=0);
+    //! returns a hashed topological-torsion fingerprint for a molecule as a bit vector
+    /*!
+      \param mol:         the molecule to be fingerprinted
+      \param nBits:       number of bits to include in the fingerprint
+      \param targetSize:  the number of atoms to include in the "torsions"
+      \param fromAtoms:   if provided, only torsions that start or end at
+      the specified atoms will be included in the fingerprint
+
+      \return a pointer to the fingerprint. The client is
+      responsible for calling delete on this.
+
+    */
+    ExplicitBitVect *
+    getHashedTopologicalTorsionFingerprintAsBitVect(const ROMol &mol,
+                                                    unsigned int nBits=2048,
+                                                    unsigned int targetSize=4,
+                                                    const std::vector<boost::uint32_t> *fromAtoms=0);
   }    
 }
 
