@@ -71,8 +71,8 @@ initRDKitGUC()
 
 	DefineCustomRealVariable(
 		"rdkit.tanimoto_threshold",
-		"Lower threshold of Tanimoto's similarity",
-		"Moleculas with similarity lower than threshold are not similar by % operation",
+		"Lower threshold of Tanimoto similarity",
+		"Molecules with similarity lower than threshold are not similar by % operation",
 		&rdkit_tanimoto_smlar_limit,
 		0.5,
 		0.0,
@@ -85,8 +85,8 @@ initRDKitGUC()
 
 	DefineCustomRealVariable(
 		"rdkit.dice_threshold",
-		"Lower threshold of Tanimoto's similarity",
-		"Moleculas with similarity lower than threshold are not similar by # operation",
+		"Lower threshold of Dice similarity",
+		"Molecules with similarity lower than threshold are not similar by # operation",
 		&rdkit_dice_smlar_limit,
 		0.5,
 		0.0,
