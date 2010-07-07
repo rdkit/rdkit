@@ -4,22 +4,22 @@ basic comparison operations, similarity operation (tanimoto, dice) and  index
 support (using GiST indexing framework).
 
 Compatibility: PostgreSQL 8.4+
+ If using PostgreSQL packages from your linux distribution, be sure
+ that you have the -devel package installed.
 
 Installation:
 
  Module assumes that the RDKit is installed in $RDBASE
  (check Makefile).
 
- untar archive in postgresql contrib directory
- 
- cd rdkit
+ cd $RDBASE/Code/PgSQL rdkit
  
  make && make install && make installcheck 
 
- Install rdkit into database DB: 
+ To install rdkit cartridge into the database DB: 
    psql DB < rdkit.sql
 
- Uninstall rdkit from database DB:
+ Uninstall cartridge from database DB:
    psql DB < uninstall_rdkit.sql
 
 
