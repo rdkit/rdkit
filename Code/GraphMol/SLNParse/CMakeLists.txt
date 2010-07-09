@@ -1,7 +1,6 @@
 FIND_PACKAGE(BISON)
 FIND_PACKAGE(FLEX)
 
-set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
 
 if(MSVC)
