@@ -20,9 +20,8 @@ option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppli
 # Config variables:
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
-set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
-set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/lib")
-set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
+set(RDKit_BinDir "bin")
+set(RDKit_LibDir "lib${LIB_SUFFIX}")
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
@@ -45,6 +44,20 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(NumPy REQUIRED)
   include_directories(${PYTHON_NUMPY_INCLUDE_PATH})
   find_package(Boost 1.39.0 COMPONENTS python REQUIRED)
+
+# Determine correct installation directory for Python bindings
+# From http://plplot.svn.sourceforge.net/viewvc/plplot/trunk/cmake/modules/python.cmake?revision=11014
+  execute_process(
+    COMMAND
+    ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='${CMAKE_INSTALL_PREFIX}')"
+    OUTPUT_VARIABLE PYTHON_INSTDIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  message("Python Install directory ${PYTHON_INSTDIR}")
+
+  install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR})
+
+
 else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.39.0 REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)

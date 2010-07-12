@@ -1,4 +1,4 @@
-add_library(InfoTheory InfoBitRanker.cpp)
+add_library(InfoTheory STATIC InfoBitRanker.cpp)
 
 rdkit_python_extension(cEntropy cEntropy.cpp 
                        DEST ML/InfoTheory

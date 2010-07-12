@@ -19,7 +19,7 @@ macro(rdkit_library)
     #IF(RDKLIB_SHARED)
       add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
       INSTALL(TARGETS ${RDKLIB_NAME} 
-              DESTINATION ${RDKit_BinDir}/${RDKLIB_DEST})
+              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
     #ELSE(RDKLIB_SHARED)        
     #  add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     #  INSTALL(TARGETS ${RDKLIB_NAME} 
@@ -48,7 +48,7 @@ endif(MSVC)
                           ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 
     INSTALL(TARGETS ${RDKPY_NAME} 
-            LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST})
+            LIBRARY DESTINATION ${PYTHON_INSTDIR}/rdkit/${RDKPY_DEST})
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(rdkit_python_extension)
 
