@@ -22,6 +22,7 @@ set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
 set(RDKit_BinDir "bin")
 set(RDKit_LibDir "lib${LIB_SUFFIX}")
+set(RDKit_ShareDir "share/RDKit")
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
@@ -55,7 +56,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     )
   message("Python Install directory ${PYTHON_INSTDIR}")
 
-  install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR})
+  install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
+    PATTERN ".svn" EXCLUDE )
 
 
 else(RDK_BUILD_PYTHON_WRAPPERS)
@@ -71,6 +73,16 @@ include_directories(${RDKit_CodeDir})
 if(CMAKE_COMPILER_IS_GNUCXX)
 ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
 endif()
+
+install(DIRECTORY Data DESTINATION ${RDKit_ShareDir}/Data
+    PATTERN ".svn" EXCLUDE)
+install(DIRECTORY Docs DESTINATION ${RDKit_ShareDir}/Docs
+    PATTERN ".svn" EXCLUDE)
+install(DIRECTORY Projects DESTINATION ${RDKit_ShareDir}/Projects
+    PATTERN ".svn" EXCLUDE)
+install(DIRECTORY Contrib DESTINATION ${RDKit_ShareDir}/Contrib
+    PATTERN ".svn" EXCLUDE)
+install(FILES README license.txt DESTINATION ${RDKit_ShareDir})
 
 
 add_subdirectory(External)
