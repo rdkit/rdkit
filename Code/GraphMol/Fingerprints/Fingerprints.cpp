@@ -330,14 +330,14 @@ namespace RDKit{
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 3: include atom types:
             unsigned int a1Hash,a2Hash;
-            a1Hash = (bi->getBeginAtom()->getAtomicNum()%128)<<1 | bi->getBeginAtom()->getIsAromatic();
-            a2Hash = (bi->getEndAtom()->getAtomicNum()%128)<<1 | bi->getEndAtom()->getIsAromatic();
+            a1Hash = (bi->getBeginAtom()->getAtomicNum()%128);
+            a2Hash = (bi->getEndAtom()->getAtomicNum()%128);
             if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
-            ourHash = a1Hash<<nBitsInHash; // 8 bits
-            ourHash |= a2Hash<<(nBitsInHash+8); // 8 bits
+            ourHash = a1Hash<<nBitsInHash; // 7 bits
+            ourHash |= a2Hash<<(nBitsInHash+7); // 7 bits
             hashLayers[2].push_back(ourHash);
           }
-          nBitsInHash += 16;
+          nBitsInHash += 14;
           if(layerFlags & 0x8 && keepPath){
             // layer 4: include ring information
             ourHash = queryIsBondInRing(bi)<<nBitsInHash; // 1 bit
@@ -350,6 +350,18 @@ namespace RDKit{
             hashLayers[4].push_back(ourHash);
           }
           nBitsInHash+=3;
+          if(layerFlags & 0x20 && keepPath){
+            //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
+            // layer 6: aromaticity:
+            unsigned int a1Hash,a2Hash;
+            a1Hash = bi->getBeginAtom()->getIsAromatic();
+            a2Hash = bi->getEndAtom()->getIsAromatic();
+            if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
+            ourHash = a1Hash<<nBitsInHash; // 1 bits
+            ourHash |= a2Hash<<(nBitsInHash+7); // 1 bits
+            hashLayers[5].push_back(ourHash);
+          }
+          nBitsInHash += 2;
         }
         unsigned int l=0;
         bool flaggedPath=false;
