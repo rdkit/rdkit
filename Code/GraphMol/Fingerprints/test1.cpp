@@ -667,30 +667,26 @@ void test3Layers(){
   {
     RWMol *m1 = SmilesToMol("c1ccccc1");
     RWMol *m2 = SmartsToMol("c:c:c");
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,128);
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
     TEST_ASSERT(fp2->getNumOnBits());
-    
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
 
     delete fp1;delete m1;
     m1 = SmilesToMol("C1CCCCC1");
-    fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,128);
     fp3=(*fp1)&(*fp2);
-#if 0
-    std::cerr<<BitVectToText(*fp1)<<std::endl;
-    std::cerr<<"---"<<std::endl;
-    std::cerr<<BitVectToText(*fp2)<<std::endl;
-    std::cerr<<"---"<<std::endl;
-    std::cerr<<BitVectToText(fp3)<<std::endl;
-#endif
+    TEST_ASSERT(fp3==(*fp2));
+    delete fp2;
+    fp2=LayeredFingerprintMol(*m2,0x27,1,5,128);
+    fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3!=(*fp2));
 
     delete fp1;delete m1;
     // atom type information is factored in:
     m1 = SmilesToMol("c1ncncn1");
-    fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,128);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3!=(*fp2));
 
