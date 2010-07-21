@@ -74,13 +74,8 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
 endif()
 
-install(DIRECTORY Data DESTINATION ${RDKit_ShareDir}/Data
-    PATTERN ".svn" EXCLUDE)
-install(DIRECTORY Docs DESTINATION ${RDKit_ShareDir}/Docs
-    PATTERN ".svn" EXCLUDE)
-install(DIRECTORY Projects DESTINATION ${RDKit_ShareDir}/Projects
-    PATTERN ".svn" EXCLUDE)
-install(DIRECTORY Contrib DESTINATION ${RDKit_ShareDir}/Contrib
+install(DIRECTORY Data Docs Projects Contrib DESTINATION
+    ${RDKit_ShareDir}
     PATTERN ".svn" EXCLUDE)
 install(FILES README license.txt DESTINATION ${RDKit_ShareDir})
 
