@@ -557,6 +557,14 @@ class TestCase(unittest.TestCase):
     self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==4)
     self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==3)
     
+    l = Chem.FindAllSubgraphsOfLengthMToN(m,1,3)
+    self.failUnlessEqual(len(l),3)
+    self.failUnlessEqual(len(l[0]),5)
+    self.failUnlessEqual(len(l[1]),4)
+    self.failUnlessEqual(len(l[2]),3)
+    self.failUnlessRaises(ValueError,lambda :Chem.FindAllSubgraphsOfLengthMToN(m,4,3))
+
+    
     m = Chem.MolFromSmiles("CCC(C)CC")
     self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
     self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==5)

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -75,8 +75,6 @@ namespace RDKit{
     }
     
   }
-
-
 
   void sanitizeMol(ROMol &mol) {
     RWMol &wmol = static_cast<RWMol &>(mol);
@@ -223,6 +221,26 @@ namespace RDKit{
     
     return res;
   }
+
+
+  python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol, unsigned int lowerLen,
+                                                     unsigned int upperLen, bool useHs=false){
+    if(lowerLen>upperLen){
+      throw_value_error("lowerLen > upperLen");
+    }
+    
+    INT_PATH_LIST_MAP oMap=findAllSubgraphsOfLengthsMtoN(mol,lowerLen,upperLen,useHs);
+    python::list res;
+    for(unsigned int i=lowerLen;i<=upperLen;++i){
+      python::list tmp;
+      const PATH_LIST &pth=oMap[i];
+      for(PATH_LIST_CI pthit=pth.begin();pthit!=pth.end();++pthit){
+        tmp.append(python::tuple(*pthit));
+      }
+      res.append(tmp);
+    }
+    return python::tuple(res);
+  };
 
 
   struct molops_wrapper {
@@ -542,6 +560,14 @@ namespace RDKit{
 \n";
       python::def("FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN,
                   (python::arg("mol"),python::arg("length"),
+                   python::arg("useHs")=false),
+                  docString.c_str());
+      // ------------------------------------------------------------------------
+      docString="Finds all subgraphs of a particular length in a molecule\n\
+  See documentation for FindAllSubgraphsOfLengthN for definitions\n\
+\n";
+      python::def("FindAllSubgraphsOfLengthMToN", &findAllSubgraphsOfLengthsMtoNHelper,
+                  (python::arg("mol"),python::arg("min"),python::arg("max"),
                    python::arg("useHs")=false),
                   docString.c_str());
       // ------------------------------------------------------------------------
