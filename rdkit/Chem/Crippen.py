@@ -111,36 +111,8 @@ def _Init():
   if _smartsPatterns == {}:
     _patternOrder,_smartsPatterns = _ReadPatts(defaultPatternFileName)
 
-def pyMolLogP(inMol,patts=None,order=None,verbose=0,addHs=1):
-  """ Crippen LogP value
-
-  Definition From JCICS _39_ 868-873 (1999)
-
-  **Arguments**
-
-    - inMol: a molecule
-
-    - patts: (optional)  if provided this should be a dictionary of 4 tuples:
-
-       1)  smarts text
-
-       2)  SmartsPattern object
-
-       3)  logp contribution
-
-       4)  MR contribution
-       
-    - order: (optional) a list with the order in which the keys of the pattern dictionary
-      should be evaluated
-
-    - verbose: (optional) toggles verbose printing
-
-    - addHs: (optional) toggles adding of Hs to the molecule for the calculation.
-      If positive, explicit and implicit Hs will be used in the calculation.
-      If this negative, then only explicit hydrogens will be taken into account in the
-      calculation.  This is available to allow matching of results obtained with the old
-      backend code.
-
+def _pyMolLogP(inMol,patts=None,order=None,verbose=0,addHs=1):
+  """ DEPRECATED
   """
   if addHs < 0:
     mol = Chem.AddHs(inMol,1)
@@ -157,38 +129,10 @@ def pyMolLogP(inMol,patts=None,order=None,verbose=0,addHs=1):
     order = _patternOrder
   atomContribs = _pyGetAtomContribs(mol,patts,order,verbose=verbose)
   return numpy.sum(atomContribs,0)[0]
-pyMolLogP.version="1.1.0"
+_pyMolLogP.version="1.1.0"
 
-def pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
-  """ Crippen MR value
-
-  Definition From JCICS _39_ 868-873 (1999)
-
-  **Arguments**
-
-    - inMol: a molecule
-
-    - patts: (optional)  if provided this should be a dictionary of 4 tuples:
-
-       1)  smarts text
-
-       2)  SmartsPattern object
-
-       3)  logp contribution
-
-       4)  MR contribution
-       
-    - order: (optional) a list with the order in which the keys of the pattern dictionary
-      should be evaluated
-
-    - verbose: (optional) toggles verbose printing
-
-    - addHs: (optional) toggles adding of Hs to the molecule for the calculation.
-      If positive, explicit and implicit Hs will be used in the calculation.
-      If this negative, then only explicit hydrogens will be taken into account in the
-      calculation.  This is available to allow matching of results obtained with the old
-      backend code.
-
+def _pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
+  """ DEPRECATED
   """
   if addHs < 0:
     mol = Chem.AddHs(inMol,1)
@@ -206,7 +150,7 @@ def pyMolMR(inMol,patts=None,order=None,verbose=0,addHs=1):
 
   atomContribs = _pyGetAtomContribs(mol,patts,order,verbose=verbose)
   return numpy.sum(atomContribs,0)[1]
-pyMolMR.version="1.1.0"
+_pyMolMR.version="1.1.0"
 
 MolLogP=lambda *x,**y:rdMolDescriptors.CalcCrippenDescriptors(*x,**y)[0]
 MolLogP.version=rdMolDescriptors._CalcCrippenDescriptors_version
