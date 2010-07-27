@@ -58,7 +58,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
     PATTERN ".svn" EXCLUDE )
-
+  
+  set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
 
 else(RDK_BUILD_PYTHON_WRAPPERS)
   find_package(Boost 1.39.0 REQUIRED)
