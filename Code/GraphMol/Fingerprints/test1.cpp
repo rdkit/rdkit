@@ -540,8 +540,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("CC(C)C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -561,8 +561,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("C-C(-C)-C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -576,8 +576,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(=C)C");
     RWMol *m2 = SmartsToMol("C-C(-C)-C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -591,8 +591,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("CC([C,N])C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -606,8 +606,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("CC([!C])C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     // the query says "!C", but we still match in the fp...
@@ -618,7 +618,7 @@ void test3Layers(){
     // of course we better match if the thing really isn't a C:
     delete fp1;delete m1;
     m1 = SmilesToMol("CC(O)C");
-    fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
   
@@ -630,8 +630,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(O)C");
     RWMol *m2 = SmartsToMol("CC([C,N])C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -644,8 +644,8 @@ void test3Layers(){
   {
     RWMol *m1 = SmilesToMol("c1ccccc1");
     RWMol *m2 = SmartsToMol("cccc");
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -656,7 +656,7 @@ void test3Layers(){
     // because the aromaticity does not factor into the
     // calculation:
     m1 = SmilesToMol("C1CCCCC1");
-    fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
     
@@ -667,37 +667,43 @@ void test3Layers(){
   {
     RWMol *m1 = SmilesToMol("c1ccccc1");
     RWMol *m2 = SmartsToMol("c:c:c");
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x5,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
 
     delete fp1;delete m1;
     m1 = SmilesToMol("C1CCCCC1");
-    fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,256);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
     delete fp2;
-    fp2=LayeredFingerprintMol(*m2,0x27,1,5,128);
+    fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3!=(*fp2));
 
+    delete fp2;
+    fp2=LayeredFingerprintMol(*m2,0x25,1,5,256);
+    fp3=(*fp1)&(*fp2);
+    TEST_ASSERT(fp3!=(*fp2));
+
+    delete fp2;
+    fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     delete fp1;delete m1;
     // atom type information is factored in:
     m1 = SmilesToMol("c1ncncn1");
-    fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,256);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3!=(*fp2));
 
     delete fp2;delete m2;
     // but queries switch us back to generic types, so we match again:
     m2 = SmartsToMol("[C,N]:[C,N]:[C,N]");
-    fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
-    
     
     delete fp1;delete fp2;
     delete m1;delete m2;

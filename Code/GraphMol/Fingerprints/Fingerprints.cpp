@@ -19,6 +19,7 @@
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
+#define LAYEREDFP_USE_MT
 
 namespace RDKit{
   namespace {
@@ -138,8 +139,8 @@ namespace RDKit{
           } else {
             bondHash = bi->getBondType();
           }
-          unsigned int nBitsInHash=0;
-          unsigned int ourHash=bondNbrs[i]%8; // 3 bits here
+          boost::uint32_t nBitsInHash=0;
+          boost::uint32_t ourHash=bondNbrs[i]%8; // 3 bits here
           nBitsInHash+=3;
           ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
           nBitsInHash+=4;
@@ -353,12 +354,11 @@ namespace RDKit{
           if(layerFlags & 0x20 && keepPath){
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 6: aromaticity:
-            unsigned int a1Hash,a2Hash;
-            a1Hash = bi->getBeginAtom()->getIsAromatic();
-            a2Hash = bi->getEndAtom()->getIsAromatic();
-            if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
+            bool a1Hash = bi->getBeginAtom()->getIsAromatic();
+            bool a2Hash = bi->getEndAtom()->getIsAromatic();
+            if((!a1Hash) && a2Hash) std::swap(a1Hash,a2Hash);
             ourHash = a1Hash<<nBitsInHash; // 1 bits
-            ourHash |= a2Hash<<(nBitsInHash+7); // 1 bits
+            ourHash |= a2Hash<<(nBitsInHash+1); // 1 bits
             hashLayers[5].push_back(ourHash);
           }
           nBitsInHash += 2;
@@ -394,6 +394,8 @@ namespace RDKit{
           generator.seed(static_cast<rng_type::result_type>(seed));
           bitId=randomSource()%fpSize;
 #else
+          // NOTE: This doesn't actually seem to work very well and should not be used.
+
           // The other solution is to shift the seed so that we look at different
           // bits for the different layers:
           //std::cerr<<"layer: "<<l<<" seed: "<<seed<<std::endl;

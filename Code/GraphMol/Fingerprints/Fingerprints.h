@@ -77,7 +77,7 @@ namespace RDKit{
        - 0x20: aromaticity
   */
   const unsigned int maxFingerprintLayers=10;
-  const std::string LayeredFingerprintMolVersion="0.3.0";
+  const std::string LayeredFingerprintMolVersion="0.3.1";
   ExplicitBitVect *LayeredFingerprintMol(const ROMol &mol,
                                          unsigned int layerFlags=0xFFFFFFFF,
                                          unsigned int minPath=1,unsigned int maxPath=7,
