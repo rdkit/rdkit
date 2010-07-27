@@ -1,7 +1,11 @@
 RDKIT=$(RDBASE)
 
+
 SHLIB_LINK += -L${RDKIT}/bin -Wl,-rpath,'${RDKIT}/bin' -lGraphMol -lSmilesParse  -lFingerprints -lSubstructMatch -lDescriptors -lSubgraphs -lDataStructs -lRDGeometryLib -lRDGeneral 
-PG_CPPFLAGS = -I$(BOOSTHOME) -I${RDKIT}/Code -DRDKITVER='"001910"' 
+ifndef BOOSTHOME
+  BOOSTHOME=/usr/local/include
+endif
+PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"001920"' 
 
 MODULE_big = rdkit
 OBJS = rdkit_io.o mol_op.o bfp_op.o sfp_op.o rdkit_gist.o low_gist.o guc.o cache.o adapter.o 
