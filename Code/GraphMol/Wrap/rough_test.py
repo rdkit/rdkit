@@ -1954,6 +1954,24 @@ CAS<~>
     m=None
     self.failUnlessEqual(Chem.MolToSmiles(b.GetOwningMol()),'CCC')
 
+  def test60SmilesWriterClose(self) :
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','fewSmi.csv')
+    smiSup = Chem.SmilesMolSupplier(fileN, delimiter=",",
+                                      smilesColumn=1, nameColumn=0,
+                                      titleLine=0)
+    ms = [x for x in smiSup]
+    
+    ofile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','Wrap','test_data','outSmiles.txt')
+    writer = Chem.SmilesWriter(ofile)
+    for mol in ms:
+      writer.write(mol)
+    writer.close()
+
+    newsup=Chem.SmilesMolSupplier(ofile)
+    newms = [x for x  in newsup]
+    self.failUnlessEqual(len(ms),len(newms))
+
 if __name__ == '__main__':
   unittest.main()
 

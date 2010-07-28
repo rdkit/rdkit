@@ -30,10 +30,10 @@ namespace RDKit {
       }
 
       dp_ostream = static_cast<std::ostream *>(tmpStream);
-      d_owner = true;
+      df_owner = true;
     } else {
       dp_ostream = static_cast<std::ostream *>(&std::cout);
-      d_owner=false;
+      df_owner=false;
     }
     d_molid = 0;
     d_numDigits=4;
@@ -47,7 +47,7 @@ namespace RDKit {
       throw FileParseException("Bad output stream");
     }
     dp_ostream = outStream;
-    d_owner = takeOwnership;
+    df_owner = takeOwnership;
     d_molid = 0;
     d_numDigits=4;
     df_write2D=false;
@@ -61,7 +61,7 @@ namespace RDKit {
       (*dp_ostream) << "|\n";
     }
 
-    if (d_owner) {
+    if (df_owner) {
       delete dp_ostream;
     }
   }

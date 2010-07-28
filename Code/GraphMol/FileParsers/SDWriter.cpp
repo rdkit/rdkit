@@ -20,7 +20,7 @@ namespace RDKit {
   SDWriter::SDWriter(std::string fileName) {
     if(fileName!= "-"){
       std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
-      d_owner=true;
+      df_owner=true;
       if ( !tmpStream || !(*tmpStream) || (tmpStream->bad()) ) {
         std::ostringstream errout;
         errout << "Bad output file " << fileName;
@@ -29,7 +29,7 @@ namespace RDKit {
       dp_ostream = static_cast<std::ostream *>(tmpStream);
     } else {
       dp_ostream = static_cast<std::ostream *>(&std::cout);
-      d_owner=false;
+      df_owner=false;
     }
     d_molid = 0;
   }
@@ -40,7 +40,7 @@ namespace RDKit {
       throw FileParseException("Bad output stream");
     }
     dp_ostream = outStream;
-    d_owner = takeOwnership;
+    df_owner = takeOwnership;
     d_molid = 0;
   }
 
@@ -51,7 +51,7 @@ namespace RDKit {
       (*dp_ostream) << "$$$$\n";
     }
 
-    if (d_owner) {
+    if (df_owner) {
       delete dp_ostream;
     }
   }
