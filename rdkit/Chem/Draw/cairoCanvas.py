@@ -71,7 +71,7 @@ class Canvas(object):
       else:
         raise ValueError, "Unrecognized file type. Valid choices are pdf, svg, ps, and png"
       ctx = cairo.Context(surface)
-      ctx.set_source_rgb(255,255,255)
+      ctx.set_source_rgb(1,1,1)
       ctx.paint()
     else:
       surface=ctx.get_target()
@@ -91,8 +91,9 @@ class Canvas(object):
     if self.fileName and self.imageType=='png':
       self.surface.write_to_png(self.fileName)
     elif self.image is not None:
+      # on linux at least it seems like the PIL images are BGRA, not RGBA:
       self.image.fromstring(self.surface.get_data(),
-                            "raw","RGBA",0,1)
+                            "raw","BGRA",0,1)
       self.surface.finish()
     elif self.imageType == "png":
       buffer=self.surface.get_data()
@@ -100,7 +101,6 @@ class Canvas(object):
 
 
 def convertColor(color):
-  color = (int(color[0]*255),int(color[1]*255),int(color[2]*255))
   return color
 
 def _getLinePoints(p1,p2,dash):
