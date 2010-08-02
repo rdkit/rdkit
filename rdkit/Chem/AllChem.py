@@ -14,17 +14,17 @@ from rdkit import RDConfig
 from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
 from rdkit.Chem import *
-from rdPartialCharges import *
-from rdDepictor import *
-from rdForceFieldHelpers import *
+from rdkit.Chem.rdPartialCharges import *
+from rdkit.Chem.rdDepictor import *
+from rdkit.Chem.rdForceFieldHelpers import *
 from rdkit.Chem.ChemicalFeatures import *
-from rdDistGeom import *
-from rdMolAlign import *
-from rdMolTransforms import *
-from rdShapeHelpers import *
-from rdChemReactions import *
-from rdSLNParse import *
-from rdMolDescriptors import *
+from rdkit.Chem.rdDistGeom import *
+from rdkit.Chem.rdMolAlign import *
+from rdkit.Chem.rdMolTransforms import *
+from rdkit.Chem.rdShapeHelpers import *
+from rdkit.Chem.rdChemReactions import *
+from rdkit.Chem.rdSLNParse import *
+from rdkit.Chem.rdMolDescriptors import *
 from rdkit import ForceField
 Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
