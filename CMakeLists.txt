@@ -18,6 +18,11 @@ option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppli
 
 #------- 
 # Config variables:
+set(RDKit_Year "2010")
+set(RDKit_Quarter "3")
+set(RDKit_Revision "1pre")
+set(RDKit_ABI "1")
+
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
 set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
 set(RDKit_BinDir "bin")

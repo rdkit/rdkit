@@ -1,4 +1,12 @@
 include(BoostUtils)
+set(RDKit_VERSION "${RDKit_ABI}.${RDKit_Year}${RDKit_Quarter}")
+set(RDKit_RELEASENAME "${RDKit_Year}Q${RDKit_Quarter}")
+if (RDKit_Revision)
+  set(RDKit_RELEASENAME "${RDKit_RELEASENAME}_${RDKit_Revision}")
+  set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}")
+else(RDKit_Revision)
+  set(RDKit_VERSION "${RDKit_VERSION}.0")
+endif(RDKit_Revision)
 
 macro(rdkit_library)
   PARSE_ARGUMENTS(RDKLIB
@@ -29,6 +37,16 @@ macro(rdkit_library)
       target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
     ENDIF(RDKLIB_LINK_LIBRARIES)
   endif(MSVC)
+  if(WIN32)
+    set_target_properties(${RDKLIB_NAME} PROPERTIES 
+                          OUTPUT_NAME "${RDKLIB_NAME}-${RDKit_RELEASENAME}" 
+                          VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Quarter}")
+  else(WIN32)
+    set_target_properties(${RDKLIB_NAME} PROPERTIES 
+                          OUTPUT_NAME ${RDKLIB_NAME} 
+                          VERSION ${RDKit_VERSION} 
+                          SOVERSION ${RDKit_ABI} )
+  endif(WIN32)			  
 endmacro(rdkit_library)
   
 macro(rdkit_python_extension)
