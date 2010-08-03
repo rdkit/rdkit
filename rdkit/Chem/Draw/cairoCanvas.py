@@ -33,7 +33,7 @@ class Canvas(object):
     self.image=None
     self.imageType=imageType
     if image is not None:
-      imgd = image.tostring()
+      imgd = image.tostring("raw","BGRA")
       a = array.array('B',imgd)
       #if hasattr(cairo.ImageSurface,'format_stride_for_width'):
       #  stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_ARGB32,
@@ -50,22 +50,12 @@ class Canvas(object):
       size=image.size[0], image.size[1]
       self.image=image
     elif size is not None:
-      ##cairo.HAS_GLITZ_SURFACE
-      #cairo.HAS_IMAGE_SURFACE
-      ##cairo.HAS_QUARTZ_SURFACE
-      ##cairo.HAS_USER_FONT
-      #cairo.HAS_WIN32_SURFACE
-      #cairo.HAS_XCB_SURFACE
-      ##cairo.HAS_XLIB_SURFACE
-      #cairo.HAS_PNG_FUNCTIONS
-      #print imageType
       if cairo.HAS_PDF_SURFACE and imageType == "pdf":
         surface = cairo.PDFSurface (fileName, size[0], size[1])
       elif cairo.HAS_SVG_SURFACE and imageType == "svg":
         surface = cairo.SVGSurface (fileName, size[0], size[1])
       elif cairo.HAS_PS_SURFACE and imageType == "ps":
         surface = cairo.PSSurface (fileName, size[0], size[1])
-      #elif cairo.HAS_IMAGE_SURFACE and imageType == "png":
       elif imageType == "png":
         surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, size[0], size[1])
       else:
@@ -99,9 +89,6 @@ class Canvas(object):
       buffer=self.surface.get_data()
       return buffer
 
-
-def convertColor(color):
-  return color
 
 def _getLinePoints(p1,p2,dash):
   x1,y1=p1
@@ -151,22 +138,18 @@ def addCanvasLine(canvas,p1,p2,color=(0,0,0),color2=None,**kwargs):
   canvas.ctx.set_line_width(kwargs.get('linewidth',1))
   if color2 and color2!=color:
     mp = (p1[0]+p2[0])/2.,(p1[1]+p2[1])/2.
-    color = convertColor(color)
     canvas.ctx.set_source_rgb(*color)
     _doLine(canvas,p1,mp,**kwargs)
     canvas.ctx.stroke()
-    color2 = convertColor(color2)
     canvas.ctx.set_source_rgb(*color2)
     _doLine(canvas,mp,p2,**kwargs)
     canvas.ctx.stroke()
   else:
-    color = convertColor(color)
     canvas.ctx.set_source_rgb(*color)
     _doLine(canvas,p1,p2,**kwargs)
     canvas.ctx.stroke()
 
 def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
-  color = convertColor(color)
   canvas.ctx.select_font_face("Georgia",
                               cairo.FONT_SLANT_NORMAL,
                               cairo.FONT_WEIGHT_BOLD)
@@ -175,7 +158,6 @@ def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
   bw,bh=w*1.8,h*1.4
   dPos = pos[0]-bw/2.,pos[1]-bh/2.
   bgColor=kwargs.get('bgColor',(1,1,1))
-  bgColor = convertColor(bgColor)
   canvas.ctx.set_source_rgb(*bgColor)
   canvas.ctx.rectangle(dPos[0],dPos[1],bw,bh)
   canvas.ctx.fill()
@@ -186,7 +168,6 @@ def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
 
 def addCanvasPolygon(canvas,ps,color=(0,0,0),**kwargs):
   dps = []
-  color = convertColor(color)
   canvas.ctx.set_source_rgb(*color)
   canvas.ctx.move_to(ps[0][0],ps[0][1])
   for p in ps[1:]:
@@ -197,7 +178,6 @@ def addCanvasPolygon(canvas,ps,color=(0,0,0),**kwargs):
 def addCanvasDashedWedge(canvas,p1,p2,p3,dash=(2,2),color=(0,0,0),
                          color2=None,**kwargs):
   canvas.ctx.set_line_width(kwargs.get('linewidth',1))
-  color = convertColor(color)
   canvas.ctx.set_source_rgb(*color)
   dash = (3,3)
   pts1 = _getLinePoints(p1,p2,dash)
