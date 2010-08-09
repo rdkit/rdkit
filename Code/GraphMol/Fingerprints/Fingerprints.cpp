@@ -305,11 +305,23 @@ namespace RDKit{
             if(bi->getIsAromatic()){
               // makes sure aromatic bonds always hash the same:
               bondHash = Bond::AROMATIC;
+#if 0
             } else if(bi->getBondType()==Bond::SINGLE &&
                       bi->getBeginAtom()->getIsAromatic() &&
                       bi->getEndAtom()->getIsAromatic() &&
                       queryIsBondInRing(bi)
                       ){
+              // NOTE:
+              //  This special case is bogus. Query bonds don't
+              //  show up here at all. For non-query systems
+              //  this just ends up causing trouble because paths like
+              //     c:c-C
+              //  do not match things like:
+              //     c:c-c
+              //  at layer 0x02 if the single bond is in a ring
+              //  and they definitely should.
+              //  example of this is: c1cccc2c13.c1cccc2c13
+              // 
               // a special case that comes up if we're using these to filter
               // substructure matches:
               //   This molecule: 
@@ -320,6 +332,7 @@ namespace RDKit{
               //   because unspecified bonds in SMARTS are aromatic or single
               // We need to make sure to capture this case.  
               bondHash = Bond::AROMATIC;
+#endif
             } else {
               bondHash = bi->getBondType();
             }
