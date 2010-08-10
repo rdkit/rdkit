@@ -17,6 +17,13 @@ option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior" OFF )
 
+# At build time put runtime binaries in the bin subdirectory
+set(RDK_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+set(RDK_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
+set(RDK_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
+# Also place the python extension where the source tree would expect them
+set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
+ 
 #------- 
 # Config variables:
 set(RDKit_Year "2010")

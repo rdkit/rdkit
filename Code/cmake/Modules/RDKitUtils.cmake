@@ -47,6 +47,10 @@ macro(rdkit_library)
                           VERSION ${RDKit_VERSION} 
                           SOVERSION ${RDKit_ABI} )
   endif(WIN32)			  
+  set_target_properties(${RDKLIB_NAME} PROPERTIES 
+                        ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
+                        RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
+                        LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
 endmacro(rdkit_library)
   
 macro(rdkit_python_extension)
@@ -59,9 +63,15 @@ macro(rdkit_python_extension)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
-if(MSVC)
-    set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd")
-endif(MSVC)  
+if(WIN32)
+    set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd"
+                          RUNTIME_OUTPUT_DIRECTORY
+                          ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+else(WIN32)
+    set_target_properties(${RDKPY_NAME} PROPERTIES 
+                          LIBRARY_OUTPUT_DIRECTORY
+                          ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+endif(WIN32)  
     target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES} 
                           ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 
