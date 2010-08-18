@@ -671,6 +671,32 @@ calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b, unsigned
 }
 
 
+extern "C" MolSparseFingerPrint 
+addSFP(MolSparseFingerPrint a, MolSparseFingerPrint b) {
+	SparseFP	*res=NULL;
+	try {
+          SparseFP tmp=(*(SparseFP*)a+*(SparseFP*)b);
+          res=(SparseFP*)new SparseFP(tmp);
+	} catch (...) {
+		elog(ERROR, "addSFP: Unknown exception");
+	}
+	return (MolSparseFingerPrint)res;
+}
+
+extern "C" MolSparseFingerPrint 
+subtractSFP(MolSparseFingerPrint a, MolSparseFingerPrint b) {
+	SparseFP	*res=NULL;
+	try {
+          SparseFP tmp=(*(SparseFP*)a-*(SparseFP*)b);
+          res=(SparseFP*)new SparseFP(tmp);
+	} catch (...) {
+		elog(ERROR, "addSFP: Unknown exception");
+	}
+	return (MolSparseFingerPrint)res;
+}
+
+
+
 /*
  * Mol -> fp
  */
