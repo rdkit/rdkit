@@ -88,7 +88,7 @@ namespace RDKit {
   } // end of namespace DaylightParserUtils
   
   ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text) {
-    unsigned int pos=text.find(">>");
+    int pos=text.find(">>");
     if(pos==std::string::npos){
       throw ChemicalReactionParserException("a reaction requires at least one reactant and one product");
     }

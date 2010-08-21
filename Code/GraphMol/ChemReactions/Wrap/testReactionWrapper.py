@@ -369,5 +369,18 @@ M  END
     self.failUnlessRaises(ValueError,lambda :rxn.GetProductTemplate(2))
     self.failUnlessRaises(ValueError,lambda :rxn.GetReactantTemplate(1))
 
+  def test14Matchers(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C;!$(C(-O)-O):1](=[O:2])[O;H,-1].[N;!H0:3]>>[C:1](=[O:2])[N:3]')
+    self.failUnless(rxn)
+    rxn.Initialize()
+    self.failUnless(rxn.IsMoleculeReactant(Chem.MolFromSmiles('OC(=O)C')))
+    self.failIf(rxn.IsMoleculeReactant(Chem.MolFromSmiles('OC(=O)O')))
+    self.failUnless(rxn.IsMoleculeReactant(Chem.MolFromSmiles('CNC')))
+    self.failIf(rxn.IsMoleculeReactant(Chem.MolFromSmiles('CN(C)C')))
+    self.failUnless(rxn.IsMoleculeProduct(Chem.MolFromSmiles('NC(=O)C')))
+    self.failUnless(rxn.IsMoleculeProduct(Chem.MolFromSmiles('CNC(=O)C')))
+    self.failIf(rxn.IsMoleculeProduct(Chem.MolFromSmiles('COC(=O)C')))
+    
+
 if __name__ == '__main__':
   unittest.main()
