@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2010 Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -12,6 +12,7 @@
 
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/Depictor/EmbeddedFrag.h>
+#include <GraphMol/Depictor/DepictUtils.h>
 
 using namespace RDDepict;
 
@@ -24,7 +25,8 @@ namespace RDDepict {
                                unsigned int nFlipsPerSample=3,
 			       unsigned int nSamples=100,
                                int sampleSeed=100,
-			       bool permuteDeg4Nodes=false){
+			       bool permuteDeg4Nodes=false,
+			       double bondLength=-1.0){
     RDGeom::INT_POINT2D_MAP cMap;
     cMap.clear();
     python::list ks = coordMap.keys();
@@ -37,9 +39,18 @@ namespace RDDepict {
       }
       cMap[id] = python::extract<RDGeom::Point2D>(coordMap[id]);
     }
-    return RDDepict::compute2DCoords(mol,&cMap,canonOrient, clearConfs,
+    double oBondLen=RDDepict::BOND_LEN;
+    if(bondLength>0){
+      RDDepict::BOND_LEN=bondLength;
+    }
+    unsigned int res;
+    res=RDDepict::compute2DCoords(mol,&cMap,canonOrient, clearConfs,
 				     nFlipsPerSample,nSamples,
 				     sampleSeed, permuteDeg4Nodes);
+    if(bondLength>0){
+      RDDepict::BOND_LEN=oBondLen;
+    }
+    return res;
   }
   
   unsigned int Compute2DCoordsMimicDistmat(RDKit::ROMol &mol,
@@ -50,7 +61,8 @@ namespace RDDepict {
                                            unsigned int nFlipsPerSample,
 					   unsigned int nSamples,
                                            int sampleSeed,
-					   bool permuteDeg4Nodes) {
+					   bool permuteDeg4Nodes,
+					   double bondLength=-1.0) {
     PyObject *distMatPtr = distMat.ptr();
     if(!PyArray_Check(distMatPtr)){
       throw_value_error("Argument isn't an array");
@@ -71,11 +83,20 @@ namespace RDDepict {
            nitems*sizeof(double));
     
     DOUBLE_SMART_PTR dmat(cData);
-    return RDDepict::compute2DCoordsMimicDistMat(mol, &dmat,
-						 canonOrient, clearConfs,
-						 weightDistMat,
-                                                 nFlipsPerSample, nSamples,
-						 sampleSeed, permuteDeg4Nodes);
+    double oBondLen=RDDepict::BOND_LEN;
+    if(bondLength>0){
+      RDDepict::BOND_LEN=bondLength;
+    }
+    unsigned int res;
+    res=RDDepict::compute2DCoordsMimicDistMat(mol, &dmat,
+					      canonOrient, clearConfs,
+					      weightDistMat,
+					      nFlipsPerSample, nSamples,
+					      sampleSeed, permuteDeg4Nodes);
+    if(bondLength>0){
+      RDDepict::BOND_LEN=oBondLen;
+    }
+    return res;
   }
     
 }
@@ -107,7 +128,8 @@ BOOST_PYTHON_MODULE(rdDepictor)
      nSample - Number of random samplings of rotatable bonds.\n\
      sampleSeed - seed for the random sampling process.\n\
      permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
-                 node during the sampling process \n\n\
+                 node during the sampling process \n\
+     bondLength - change the default bond length for depiction \n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def("Compute2DCoords", RDDepict::Compute2DCoords,
@@ -118,7 +140,8 @@ BOOST_PYTHON_MODULE(rdDepictor)
                python::arg("nFlipsPerSample")=0,
                python::arg("nSample")=0,
                python::arg("sampleSeed")=0,
-               python::arg("permuteDeg4Nodes")=false),
+               python::arg("permuteDeg4Nodes")=false,
+               python::arg("bondLength")=-1.0),
 	      docString.c_str());
 
   docString = "Compute 2D coordinates for a molecule such \n\
@@ -142,7 +165,8 @@ BOOST_PYTHON_MODULE(rdDepictor)
      nSample - Number of random samplings of rotatable bonds.\n\
      sampleSeed - seed for the random sampling process.\n\
      permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
-                 node during the sampling process \n\n\
+                 node during the sampling process \n\
+     bondLength - change the default bond length for depiction \n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def("Compute2DCoordsMimicDistmat", RDDepict::Compute2DCoordsMimicDistmat,
@@ -154,6 +178,7 @@ BOOST_PYTHON_MODULE(rdDepictor)
                python::arg("nFlipsPerSample")=3,
                python::arg("nSample")=100,
                python::arg("sampleSeed")=100,
-               python::arg("permuteDeg4Nodes")=true),
+               python::arg("permuteDeg4Nodes")=true,
+               python::arg("bondLength")=-1.0),
 	      docString.c_str());
 }
