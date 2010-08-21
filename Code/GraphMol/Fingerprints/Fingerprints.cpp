@@ -57,10 +57,11 @@ namespace RDKit{
 
   // caller owns the result, it must be deleted
   ExplicitBitVect *RDKFingerprintMol(const ROMol &mol,unsigned int minPath,
-                                      unsigned int maxPath,
-                                      unsigned int fpSize,unsigned int nBitsPerHash,
-                                      bool useHs,
-                                      double tgtDensity,unsigned int minSize){
+                                     unsigned int maxPath,
+                                     unsigned int fpSize,unsigned int nBitsPerHash,
+                                     bool useHs,
+                                     double tgtDensity,unsigned int minSize,
+                                     bool branchedPaths){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
@@ -81,8 +82,15 @@ namespace RDKit{
     source_type randomSource(generator,dist);
 
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
-    INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
-							       useHs);
+
+    INT_PATH_LIST_MAP allPaths;
+    if(branchedPaths){
+     allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
+                                              useHs);
+    } else {
+      allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
+                                           useHs);
+    }
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
     ROMol::EDGE_ITER firstB,lastB;
@@ -200,7 +208,8 @@ namespace RDKit{
                                          unsigned int fpSize,
                                          double tgtDensity,unsigned int minSize,
                                          std::vector<unsigned int> *atomCounts,
-                                         ExplicitBitVect *setOnlyBits){
+                                         ExplicitBitVect *setOnlyBits,
+                                         bool branchedPaths){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
@@ -249,7 +258,12 @@ namespace RDKit{
       ++firstB;
     }
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
-    INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
+    INT_PATH_LIST_MAP allPaths;
+    if(branchedPaths){
+      allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
+    } else {
+      allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath);
+    }
 
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();++paths){
@@ -390,6 +404,8 @@ namespace RDKit{
           // finally, we will add the number of distinct atoms in the path at the end
           // of the vect. This allows us to distinguish C1CC1 from CC(C)C
           layerIt->push_back(atomsInPath.count());
+
+          layerIt->push_back(l+1);
 
           // hash the path to generate a seed:
           unsigned long seed = gboost::hash_range(layerIt->begin(),layerIt->end());

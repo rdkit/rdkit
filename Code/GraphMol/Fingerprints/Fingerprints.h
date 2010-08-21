@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -24,6 +24,7 @@ namespace RDKit{
                          be folded until the density is reached.
     \param minSize:      the minimum size to which the fingerprint will be
                          folded
+    \param branchedPaths: toggles generation of branched subgraphs, not just linear paths
 
     \return the molecular fingerprint, as an ExplicitBitVect
 
@@ -36,7 +37,8 @@ namespace RDKit{
                                      unsigned int minPath=1,unsigned int maxPath=7,
                                      unsigned int fpSize=2048,unsigned int nBitsPerHash=4,
                                      bool useHs=true,
-                                     double tgtDensity=0.0,unsigned int minSize=128);
+                                     double tgtDensity=0.0,unsigned int minSize=128,
+                                     bool branchedPaths=true);
 
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule
   //!        using an alternate (faster) hashing algorithm  
@@ -62,6 +64,7 @@ namespace RDKit{
                          in the result. This is essentially the same as doing:
                             (*res) &= (*setOnlyBits);
                          but also has an impact on the atomCounts (if being used)
+    \param branchedPaths: toggles generation of branched subgraphs, not just linear paths
 
     \return the molecular fingerprint, as an ExplicitBitVect
 
@@ -84,7 +87,8 @@ namespace RDKit{
                                          unsigned int fpSize=2048,
                                          double tgtDensity=0.0,unsigned int minSize=128,
                                          std::vector<unsigned int> *atomCounts=0,
-                                         ExplicitBitVect *setOnlyBits=0);
+                                         ExplicitBitVect *setOnlyBits=0,
+                                         bool branchedPaths=true);
 }
 
 #endif

@@ -195,7 +195,8 @@ namespace RDKit{
                                           double tgtDensity,
                                           unsigned int minSize,
                                           python::list atomCounts,
-                                          ExplicitBitVect *includeOnlyBits){
+                                          ExplicitBitVect *includeOnlyBits,
+                                          bool branchedPaths){
     std::vector<unsigned int> *atomCountsV=0;
     if(atomCounts){
       atomCountsV = new std::vector<unsigned int>;
@@ -210,7 +211,7 @@ namespace RDKit{
     }
 
     ExplicitBitVect *res;
-    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits);
+    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits,branchedPaths);
 
     if(atomCountsV){
       for(unsigned int i=0;i<atomCountsV->size();++i){
@@ -755,7 +756,8 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
-                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
+                   python::arg("branchedPaths")=true),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_RDKFingerprint_version")=RDKit::RDKFingerprintMolVersion;
 
@@ -820,7 +822,8 @@ namespace RDKit{
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
                    python::arg("atomCounts")=python::list(),
-                   python::arg("setOnlyBits")=(ExplicitBitVect *)0),
+                   python::arg("setOnlyBits")=(ExplicitBitVect *)0,
+                   python::arg("branchedPaths")=true),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_LayeredFingerprint_version")=RDKit::LayeredFingerprintMolVersion;
 

@@ -467,17 +467,6 @@ void test1Layers(){
     delete m1;delete m2;
   }
 
-  {
-    RWMol *m1 = SmilesToMol("c1cccc2c13.c1cccc2c13");
-    RWMol *m2 = SmilesToMol("C1CCC1");
-
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x3);
-    ExplicitBitVect fp3=(*fp1)&(*fp2);
-    TEST_ASSERT(fp3==(*fp2));
-    delete fp1;delete fp2;
-    delete m1;delete m2;
-  }
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 

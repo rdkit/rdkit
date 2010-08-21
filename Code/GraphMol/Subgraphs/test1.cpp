@@ -204,6 +204,7 @@ void testPaths()
   //  one (it takes two atoms to make one bond)
   //
   tmp = findAllPathsOfLengthN(mol,1,false);
+  std::cerr<<">>>"<<tmp.size()<<std::endl;
   CHECK_INVARIANT(tmp.size()==6,"");
   tmp = findAllPathsOfLengthN(mol,2,false);
   CHECK_INVARIANT(tmp.size()==5,"");
@@ -216,6 +217,29 @@ void testPaths()
   tmp = findAllPathsOfLengthN(mol,6,false);
   CHECK_INVARIANT(tmp.size()==0,"");
   
+
+  //
+  //  try m->n
+  //
+  INT_PATH_LIST_MAP pths;
+  pths = findAllPathsOfLengthsMtoN(mol,1,6);
+  CHECK_INVARIANT(pths[1].size()==5,"");
+  CHECK_INVARIANT(pths[2].size()==5,"");
+  CHECK_INVARIANT(pths[3].size()==4,"");
+  CHECK_INVARIANT(pths[4].size()==1,"");
+  CHECK_INVARIANT(pths[5].size()==0,"");
+  CHECK_INVARIANT(pths[6].size()==0,"");
+
+
+  pths = findAllPathsOfLengthsMtoN(mol,1,6,false);
+  CHECK_INVARIANT(pths[1].size()==6,"");
+  CHECK_INVARIANT(pths[2].size()==5,"");
+  CHECK_INVARIANT(pths[3].size()==5,"");
+  CHECK_INVARIANT(pths[4].size()==4,"");
+  CHECK_INVARIANT(pths[5].size()==1,"");
+  CHECK_INVARIANT(pths[6].size()==0,"");
+
+
   //
   //  add an atom, close the ring and re-check a couple indices:
   //   (leaves us with CC1CCCCC1)
