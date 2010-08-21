@@ -21,7 +21,6 @@ namespace RDKit{
     typedef std::map<unsigned int,QueryAtom::QUERYATOM_QUERY *> SUBQUERY_MAP;
     
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,
-			 bool registerQuery,
 			 SUBQUERY_MAP &subqueryMap );
 
     typedef std::list<std::pair<MolGraph::vertex_descriptor,MolGraph::vertex_descriptor> > ssPairType;
@@ -65,7 +64,7 @@ namespace RDKit{
   // find one match
   //
   bool SubstructMatch(const ROMol &mol,const ROMol &query,MatchVectType &matchVect,
-                      bool recursionPossible,bool useChirality,bool registerQuery)
+                      bool recursionPossible,bool useChirality)
   {
 
     //std::cerr<<"begin match"<<std::endl;
@@ -74,7 +73,7 @@ namespace RDKit{
       detail::SUBQUERY_MAP subqueryMap;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
-	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery,
+	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,
 				  subqueryMap);
         }
       }
@@ -115,7 +114,7 @@ namespace RDKit{
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
 			      std::vector< MatchVectType > &matches,
 			      bool uniquify,bool recursionPossible,
-			      bool useChirality,bool registerQuery) {
+			      bool useChirality){
 
     if(recursionPossible){
       detail::SUBQUERY_MAP subqueryMap;
@@ -123,7 +122,7 @@ namespace RDKit{
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
         if((*atIt)->getQuery()){
           //std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
-	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery,subqueryMap);
+	  detail::MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,subqueryMap);
         }
       }
     }
@@ -167,12 +166,12 @@ namespace RDKit{
   namespace detail {
     unsigned int RecursiveMatcher(const ROMol &mol,const ROMol &query,
 				  std::vector< int > &matches,bool useChirality,
-				  bool registerQuery,SUBQUERY_MAP &subqueryMap)
+				  SUBQUERY_MAP &subqueryMap)
     {
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
 	if((*atIt)->getQuery()){
-	  MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,registerQuery,subqueryMap);
+	  MatchSubqueries(mol,(*atIt)->getQuery(),useChirality,subqueryMap);
 	}
       }
  
@@ -220,7 +219,7 @@ namespace RDKit{
     }
 
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *query,bool useChirality,
-			 bool registerQuery,SUBQUERY_MAP &subqueryMap){
+			 SUBQUERY_MAP &subqueryMap){
       PRECONDITION(query,"bad query");
       //std::cout << "*-*-* MS: " << (int)query << std::endl;
       //std::cout << "\t\t" << typeid(*query).name() << std::endl;
@@ -249,7 +248,7 @@ namespace RDKit{
 	  if(queryMol){
 	    std::vector< int > matchStarts;
 	    unsigned int res = RecursiveMatcher(mol,*queryMol,matchStarts,useChirality,
-						registerQuery,subqueryMap);
+						subqueryMap);
 	    if(res){
 	      for(std::vector<int>::iterator i=matchStarts.begin();
 		  i!=matchStarts.end();
@@ -272,7 +271,7 @@ namespace RDKit{
       Queries::Query<int,Atom const*,true>::CHILD_VECT_CI childIt;
       //std::cout << query << " " << query->endChildren()-query->beginChildren() <<  std::endl;
       for(childIt=query->beginChildren();childIt!=query->endChildren();childIt++){
-	MatchSubqueries(mol,childIt->get(),useChirality,registerQuery,subqueryMap);
+	MatchSubqueries(mol,childIt->get(),useChirality,subqueryMap);
       }
       //std::cout << "<<- back " << (int)query << std::endl;
     }
