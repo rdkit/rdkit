@@ -19,6 +19,7 @@
 #include <GraphMol/Conformer.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
+#include <RDGeneral/utils.h>
 #include <stdlib.h>
 
 #include <boost/tokenizer.hpp>
@@ -576,8 +577,8 @@ void testBondLengthChange() {
     unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
     
     const Conformer &conf = m1->getConformer(cid1);
-    TEST_ASSERT(conf.getAtomPos(0).x==-0.75);
-    TEST_ASSERT(conf.getAtomPos(1).x==0.75);
+    TEST_ASSERT(feq(conf.getAtomPos(0).x,-0.75));
+    TEST_ASSERT(feq(conf.getAtomPos(1).x,0.75));
 
     delete m1;
   }
@@ -588,8 +589,8 @@ void testBondLengthChange() {
     unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
     
     const Conformer &conf = m1->getConformer(cid1);
-    TEST_ASSERT(conf.getAtomPos(0).x==-0.5);
-    TEST_ASSERT(conf.getAtomPos(1).x==0.5);
+    TEST_ASSERT(feq(conf.getAtomPos(0).x,-0.5));
+    TEST_ASSERT(feq(conf.getAtomPos(1).x,0.5));
 
     delete m1;
   }
