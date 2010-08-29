@@ -30,7 +30,7 @@ This requires Imaging to be installed as a package PIL
 ###	 6/22/99: updated drawString to handle non-integer x and y
 
 from rdkit.sping.pid import *
-import PIL.Image, PIL.ImageFont, PIL.ImageDraw
+import Image, ImageFont, ImageDraw
 import math
 
 import string
@@ -105,14 +105,14 @@ def _pilFont(font):
   size = _closestSize(font.size)
   if type(face) == StringType:
     try: 
-      pilfont = PIL.ImageFont.load_path(_pilFontPath(face,size,font.bold))
+      pilfont = ImageFont.load_path(_pilFontPath(face,size,font.bold))
     except:
       return 0		# font not found!
   else:
     for item in font.face:
       pilfont = None
       try:
-        pilfont = PIL.ImageFont.load_path(_pilFontPath(item,size,font.bold))
+        pilfont = ImageFont.load_path(_pilFontPath(item,size,font.bold))
         break
       except: pass
     if pilfont == None: return 0	# font not found!
@@ -120,9 +120,8 @@ def _pilFont(font):
 
 class PILCanvas( Canvas ):
   def __init__(self, size=(300,300), name='piddlePIL'):
-    self._image = PIL.Image.new('RGB',(int(size[0]),int(size[1])), (255,255,255))
-    self._pen = PIL.ImageDraw.ImageDraw(self._image)
-    self._pen.setink(0)
+    self._image = Image.new('RGB',(int(size[0]),int(size[1])), (255,255,255))
+    self._pen = ImageDraw.ImageDraw(self._image)
     self._setFont( Font() )
     Canvas.__init__(self, size, name)
 
@@ -134,10 +133,10 @@ class PILCanvas( Canvas ):
   # utility functions
   def _setColor(self,c):
     "Set the pen color from a piddle color."
-    self._pen.setink( (int(c.red*255), int(c.green*255), int(c.blue*255)) )
+    self._color=(int(c.red*255), int(c.green*255), int(c.blue*255))
 
   def _setFont(self,font):
-    self._pen.setfont( _pilFont(font) )
+    self._font=_pilFont(font)
 
   # public functions
 
@@ -221,63 +220,8 @@ class PILCanvas( Canvas ):
       self._setColor(color)
     elif self.defaultLineColor == transparent: return
 
-
-    if w > 1 and not dash:
-      # thick lines are not supported by PIL,
-      # so we'll have to implement them as polygons
-      self._pen.setfill(1)
-      hw = int((w-1)/2)
-      pts = []
-      if (x1<=x2 and y1<=y2):		# line down and to the right
-        pts.append( (x1-hw+w,y1-hw) )
-        pts.append( (x1-hw,  y1-hw) )
-        pts.append( (x1-hw,  y1-hw+w) )
-
-        pts.append( (x2-hw,  y2-hw+w) )
-        pts.append( (x2-hw+w,y2-hw+w) )
-        pts.append( (x2-hw+w,y2-hw) )
-
-      elif (x1<=x2):				# line up and to the right
-        pts.append( (x1-hw,  y1-hw) )
-        pts.append( (x1-hw,  y1-hw+w) )
-        pts.append( (x1-hw+w,y1-hw+w) )
-
-        pts.append( (x2-hw+w,y2-hw+w) )
-        pts.append( (x2-hw+w,y2-hw) )
-        pts.append( (x2-hw,  y2-hw) )
-
-      elif (y1<=y2):				# line down and to the left
-        pts.append( (x1-hw+w,y1-hw+w) )
-        pts.append( (x1-hw+w,y1-hw) )
-        pts.append( (x1-hw,  y1-hw) )
-
-        pts.append( (x2-hw,  y2-hw) )
-        pts.append( (x2-hw,  y2-hw+w) )
-        pts.append( (x2-hw+w,y2-hw+w) )
-
-      else:						# line up and to the left
-        pts.append( (x1-hw,  y1-hw+w) )
-        pts.append( (x1-hw+w,y1-hw+w) )
-        pts.append( (x1-hw+w,y1-hw) )
-
-        pts.append( (x2-hw+w,y2-hw) )
-        pts.append( (x2-hw,  y2-hw) )
-        pts.append( (x2-hw,  y2-hw+w) )
-      pts = [(int(x[0]),int(x[1])) for x in pts]
-      self._pen.polygon(pts)
-      self._pen.setfill(0)
-    elif not dash:
-      # for width <= 1, just use fast line method
-      # This switch is not good.Must be updated when PIL
-      # changes it version. Argh.
-      if PIL.Image.VERSION <= "1.0":
-        self._pen.line( (x1,y1,x2,y2) )
-      elif PIL.Image.VERSION <= "1.0b1":
-        self._pen.line( (x1,y1, x2,y2) )
-      elif PIL.Image.VERSION <= "1.1.6":
-        self._pen.line( (x1,y1, x2,y2) )
-      else:
-        self._pen.line(x1,y1,x2,y2)
+    if not dash:
+      self._pen.line( (x1,y1,x2,y2),fill=self._color,width=w )
     else:
       dx = x2-x1
       dy = y2-y1
@@ -328,17 +272,14 @@ class PILCanvas( Canvas ):
 
     # do the fill
     if filling:
-      self._pen.setfill(1)
       pts = [(int(x[0]),int(x[1])) for x in pts]
-      self._pen.polygon(pts)
-    self._pen.setfill(0)
+      self._pen.polygon(pts,fill=self._color)
 
     # set edge width...
     if edgeWidth is None:
       edgeWidth = self.defaultLineWidth
     elif not edgeWidth:
       return
-
 
     # set color for edge...
     if edgeColor:
@@ -350,7 +291,7 @@ class PILCanvas( Canvas ):
     # draw the outline
     if (closed or (pts[0][0]==pts[-1][0] and pts[0][1]==pts[-1][1])) \
                      and edgeWidth <= 1:
-      self._pen.polygon(pts)
+      self._pen.polygon(pts,outline=self._color)
     else:
       # ...since PIL's polygon routine insists on closing,
       # and does not support thick edges, we'll use our drawLine instead
@@ -382,27 +323,26 @@ class PILCanvas( Canvas ):
     sHeight = (self.fontAscent(font) + self.fontDescent(font))
     sWidth = self.stringWidth(s, font)
     tempsize = max(sWidth*1.2, sHeight*2.0)
-    tempimg = PIL.Image.new('RGB',(int(tempsize),int(tempsize)), (0,0,0))
+    tempimg = Image.new('RGB',(int(tempsize),int(tempsize)), (0,0,0))
 
-    temppen = PIL.ImageDraw.ImageDraw(tempimg)
-    temppen.setink( (255,255,255) )
+    temppen = ImageDraw.ImageDraw(tempimg)
+
     pilfont = _pilFont(font)
     if not pilfont: raise "bad font!", font
-    temppen.setfont( pilfont )
     pos = [4, int(tempsize/2 - self.fontAscent(font)) - self.fontDescent(font)]
-    temppen.text( pos, s )
+    temppen.text( pos, s,font=pilfont,fill=(255,255,255))
     pos[1] = int(tempsize/2)
 
     if font.underline:
       ydown = (0.5 * self.fontDescent(font) )
       # thickness = 0.08 * font.size # may need to ceil this
-      temppen.line([(pos[0], pos[1]+ydown), (pos[0]+sWidth,pos[1]+ydown)])
+      temppen.line((pos[0], pos[1]+ydown,pos[0]+sWidth,pos[1]+ydown))
 
     # rotate
     if angle:
       from math import pi, sin, cos
-      tempimg = tempimg.rotate( angle, PIL.Image.BILINEAR )
-      temppen = PIL.ImageDraw.ImageDraw(tempimg)
+      tempimg = tempimg.rotate( angle, Image.BILINEAR )
+      temppen = ImageDraw.ImageDraw(tempimg)
       radians = -angle * pi/180.0
       r = tempsize/2 - pos[0]
       pos[0] = int(tempsize/2 - r * cos(radians))
@@ -411,9 +351,8 @@ class PILCanvas( Canvas ):
     ###temppen.rectangle( (pos[0],pos[1],pos[0]+2,pos[1]+2) ) # PATCH for debugging
     # colorize, and copy it in
     mask = tempimg.convert('L').point(lambda c:c)
-    temppen.setink( (int(color.red*255), int(color.green*255), int(color.blue*255)) )
-    temppen.setfill(1)
-    temppen.rectangle( (0,0,tempsize,tempsize) )
+    clr=(int(color.red*255), int(color.green*255), int(color.blue*255))
+    temppen.rectangle( (0,0,tempsize,tempsize),fill=clr )
     self._image.paste( tempimg, (int(x)-pos[0],int(y)-pos[1]), mask )		
 
 
@@ -450,7 +389,7 @@ def test():
 	canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1), 
 			color=green, angle=-45)
 
-	canvas.drawString("This is a test!", 30,130, color=red, angle=-45)
+	canvas.drawString("This is a test!", 30,130, color=red, angle=45)
 	
 	polypoints = [ (160,120), (130,190), (210,145), (110,145), (190,190) ]
 	canvas.drawPolygon(polypoints, fillColor=lime, edgeColor=red, edgeWidth=3, closed=1)
