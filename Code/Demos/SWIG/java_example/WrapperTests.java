@@ -153,26 +153,68 @@ public class WrapperTests {
 	assertTrue(v2.size()>0);
 	assertTrue(v2.size()>v1.size());
     }
+    @Test public void testFingerprints3() {
+	ROMol m1,m2;
+	m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
+	m2 = RDKFuncs.MolFromSmiles("C1=CC=CC=N1");
+	SparseIntVecti32 fp1,fp2;
+	fp1=RDKFuncs.getAtomPairFingerprint(m1,2,6);
+	fp2=RDKFuncs.getAtomPairFingerprint(m1,2,6);
+	assertTrue(RDKFuncs.DiceSimilaritySIVi32(fp1,fp2)==1.0);
+	fp2=RDKFuncs.getAtomPairFingerprint(m2,2,6);
+        assertEquals(RDKFuncs.DiceSimilaritySIVi32(fp1,fp2),0.66667,.0001);
+    }
+    @Test public void testFingerprints4() {
+	ROMol m1,m2;
+	m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
+	m2 = RDKFuncs.MolFromSmiles("C1=CC=CC=N1");
+	SparseIntVecti64 fp1,fp2;
+	fp1=RDKFuncs.getTopologicalTorsionFingerprint(m1);
+	fp2=RDKFuncs.getTopologicalTorsionFingerprint(m1);
+	assertTrue(RDKFuncs.DiceSimilaritySIVi64(fp1,fp2)==1.0);
+	fp2=RDKFuncs.getTopologicalTorsionFingerprint(m2);
+        assertEquals(RDKFuncs.DiceSimilaritySIVi64(fp1,fp2),0.3333,.0001);
+    }
     @Test public void testErrorHandling() {
 	ROMol m1;
-	System.err.println("go");
 	m1 = RDKFuncs.MolFromSmiles("C1CC");
 	assertTrue(m1==null);
-	System.err.println("go2");
 	m1 = RDKFuncs.MolFromSmiles("c1cc1");
 	assertTrue(m1==null);
 	System.err.println("ok!");
     }
-    /*    @Test public void testMemory() {
+    /*@Test*/ public void testMemory() {
 	for(int i=0;i<1000000;i++){
-	    ROMol m1,m2;
+	    ROMol m1;
 	    m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
 	    if((i%1000)==0){
 		System.err.println("done: "+i);
 	    }
 	    m1.delete();
 	}
-	}*/
+    }
+    /*@Test*/ public void testMemory2() {
+	ChemicalReaction rxn;
+	rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
+	assertTrue(rxn.getNumReactantTemplates()==2);
+	assertTrue(rxn.getNumProductTemplates()==1);
+	ROMol r1,r2;
+	r1=RDKFuncs.MolFromSmiles("CC(=O)O");
+	r2=RDKFuncs.MolFromSmiles("ClCN");
+	assertTrue(r1.getNumAtoms()==4);
+	assertTrue(r2.getNumAtoms()==3);
+	for(int i=0;i<1000000;i++){
+            ROMol_Vect rs= new ROMol_Vect(2);
+            rs.set(0,r1);
+            rs.set(1,r2);
+            ROMol_Vect_Vect ps;
+            ps=rxn.runReactants(rs);
+	    if((i%1000)==0){
+		System.err.println("done: "+i);
+	    }
+            ps.delete();
+        }
+    }
     static {
         try {
             System.loadLibrary("RDKFuncs");

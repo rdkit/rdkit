@@ -80,13 +80,13 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
 %extend RDKit::ROMol {
   bool hasSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
-    return SubstructMatch(*($self),query,mv,true,useChirality,false);
+    return SubstructMatch(*($self),query,mv,true,useChirality);
   };
 
   std::vector<std::pair<int, int> >
   getSubstructMatch(RDKit::ROMol &query,bool useChirality=false){
     RDKit::MatchVectType mv;
-    SubstructMatch(*($self),query,mv,true,useChirality,false);
+    SubstructMatch(*($self),query,mv,true,useChirality);
     return mv;
 
   };
@@ -95,7 +95,7 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
   getSubstructMatches(RDKit::ROMol &query,bool uniquify=true,
                       bool useChirality=false){
     std::vector<RDKit::MatchVectType> mv;
-    SubstructMatch(*($self),query,mv,uniquify,true,useChirality,false);
+    SubstructMatch(*($self),query,mv,uniquify,true,useChirality);
     return mv;
   };
 
@@ -165,6 +165,7 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
 #include <boost/cstdint.hpp>
 #include <DataStructs/SparseIntVect.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/AtomPairs.h>
 %}
 
 #if SWIGCSHARP
@@ -191,10 +192,21 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
 %rename(MorganFingerprintMol) RDKit::MorganFingerprints::getFingerprint;
 %include <GraphMol/Fingerprints/MorganFingerprints.h>
 
+
+%template(SparseIntVecti32) RDKit::SparseIntVect<boost::int32_t>;
+%template(SparseIntVecti64) RDKit::SparseIntVect<boost::int64_t>;
+%include <GraphMol/Fingerprints/AtomPairs.h>
+
+
 %include <DataStructs/BitOps.h>
 %template(TanimotoSimilarityEBV) TanimotoSimilarity<ExplicitBitVect,ExplicitBitVect>;
 %template(DiceSimilarityEBV) DiceSimilarity<ExplicitBitVect,ExplicitBitVect>;
 %template(DiceSimilaritySIVu32) RDKit::DiceSimilarity<boost::uint32_t>;
+%template(DiceSimilaritySIVi32) RDKit::DiceSimilarity<boost::int32_t>;
+%template(DiceSimilaritySIVi64) RDKit::DiceSimilarity<boost::int64_t>;
+%template(TanimotoSimilaritySIVu32) RDKit::TanimotoSimilarity<boost::uint32_t>;
+%template(TanimotoSimilaritySIVi32) RDKit::TanimotoSimilarity<boost::int32_t>;
+%template(TanimotoSimilaritySIVi64) RDKit::TanimotoSimilarity<boost::int64_t>;
 
 
 
