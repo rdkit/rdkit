@@ -45,15 +45,8 @@ namespace RDKit {
   }
 
   SDWriter::~SDWriter() {
-    // if we've written any mols, finish with a "$$$$" line
-    if (d_molid > 0) {
-      CHECK_INVARIANT(dp_ostream,"null outstream even though molecules were written");
-      (*dp_ostream) << "$$$$\n";
-    }
-
-    if (df_owner) {
-      delete dp_ostream;
-    }
+    // close the writer if it's still open:
+    if(dp_ostream!=NULL) close();
   }
 
   void SDWriter::setProps(const STR_VECT &propNames) {

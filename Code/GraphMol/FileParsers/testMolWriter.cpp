@@ -230,6 +230,10 @@ void testSDWriter() {
   }
   writer->flush();
   CHECK_INVARIANT(writer->numMols() == 16, "");
+
+  // make sure we can close() the writer and delete it:
+  writer->close();
+  
   delete writer;
 
   // now read in the file we just finished writing
@@ -568,5 +572,4 @@ int main() {
   testSDMemoryCorruption();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-
 }
