@@ -215,6 +215,20 @@ public class WrapperTests {
             ps.delete();
         }
     }
+    /*@Test*/ public void testMemory3() {
+        ROMol m1;
+        m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1C2CCC(C(=O)OCCC)CC2");
+	for(int i=0;i<1000000;i++){
+            /*SparseIntVecti64 fp1;
+              fp1=RDKFuncs.getTopologicalTorsionFingerprint(m1);*/
+            SparseIntVectu32 fp1;
+            fp1=RDKFuncs.MorganFingerprintMol(m1,2);
+	    if((i%1000)==0){
+		System.err.println("done: "+i);
+	    }
+            fp1.delete();
+	}
+    }
     static {
         try {
             System.loadLibrary("RDKFuncs");

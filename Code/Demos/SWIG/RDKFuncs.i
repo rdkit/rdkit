@@ -158,6 +158,8 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
 #endif
 %ignore ExplicitBitVect::dp_bits;
 %include <DataStructs/ExplicitBitVect.h>
+%newobject RDKFingerprintMol;
+%newobject LayeredFingerprintMol;
 %include <GraphMol/Fingerprints/Fingerprints.h>
 
 // ------------------- SIV fingerprints
@@ -189,12 +191,20 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
     return res;
   }
 }
+
+%newobject RDKit::MorganFingerprints::getFingerprint;
 %rename(MorganFingerprintMol) RDKit::MorganFingerprints::getFingerprint;
 %include <GraphMol/Fingerprints/MorganFingerprints.h>
 
 
 %template(SparseIntVecti32) RDKit::SparseIntVect<boost::int32_t>;
 %template(SparseIntVecti64) RDKit::SparseIntVect<boost::int64_t>;
+%newobject getAtomPairFingerprint;
+%newobject getHashedAtomPairFingerprint;
+%newobject getHashedAtomPairFingerprintAsBitVect;
+%newobject getTopologicalTorsionFingerprint;
+%newobject getHashedTopologicalTorsionFingerprint;
+%newobject getHashedTopologicalTorsionFingerprintAsBitVect;
 %include <GraphMol/Fingerprints/AtomPairs.h>
 
 
