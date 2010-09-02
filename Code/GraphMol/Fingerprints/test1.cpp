@@ -956,6 +956,61 @@ void test3MorganFPs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void test4MorganFPs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints with feature invariants." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("Cc1ccccc1");
+    TEST_ASSERT(mol);
+    std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+    MorganFingerprints::getFeatureInvariants(*mol,invars);
+    TEST_ASSERT(invars[0]==0);
+    TEST_ASSERT(invars[1]!=0);
+    TEST_ASSERT(invars[1]==invars[2]);
+    TEST_ASSERT(invars[1]==invars[3]);
+    TEST_ASSERT(invars[1]==invars[4]);
+    TEST_ASSERT(invars[1]==invars[5]);
+    TEST_ASSERT(invars[1]==invars[6]);
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("FCCCl");
+    TEST_ASSERT(mol);
+    std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+    MorganFingerprints::getFeatureInvariants(*mol,invars);
+    TEST_ASSERT(invars[1]==invars[2]);
+    TEST_ASSERT(invars[1]==0);
+    TEST_ASSERT(invars[0]==invars[3]);
+    TEST_ASSERT(invars[0]!=0);
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("Cc1ncccc1O");
+    TEST_ASSERT(mol);
+    std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+
+    std::vector<ROMOL_SPTR> patterns(2);
+    RWMol *p;
+    p=SmartsToMol("[A]");
+    patterns[0]=ROMOL_SPTR(static_cast<ROMol *>(p));
+    p=SmartsToMol("[a]");
+    patterns[1]=ROMOL_SPTR(static_cast<ROMol *>(p));
+    
+    MorganFingerprints::getFeatureInvariants(*mol,invars,&patterns);
+    TEST_ASSERT(invars[0]!=0);
+    TEST_ASSERT(invars[1]!=0);
+    TEST_ASSERT(invars[0]!=invars[1]);
+    TEST_ASSERT(invars[1]==invars[2]);
+    TEST_ASSERT(invars[0]==invars[7]);
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testIssue2875658(){
   BOOST_LOG(rdInfoLog) <<"testing issue 2875658" << std::endl;
 
@@ -1358,6 +1413,7 @@ int main(int argc,char *argv[]){
   test1MorganFPs();
   test2MorganFPsFromAtoms();
   test3MorganFPs();
+  test4MorganFPs();
   test3Layers();
 #endif
   test5BackwardsCompatibility();

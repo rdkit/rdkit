@@ -148,6 +148,25 @@ class TestCase(unittest.TestCase) :
     self.failIfEqual(vs1,vs2)
     fp1 = rdMD.GetMorganFingerprint(mol,2,invariants=vs2)
     self.failIfEqual(fp1,fp2)
+
+    mol = Chem.MolFromSmiles('Cc1ccccc1')
+    vs1 = rdMD.GetFeatureInvariants(mol)
+    self.failUnlessEqual(len(vs1),mol.GetNumAtoms())
+    self.failUnlessEqual(vs1[0],0)
+    self.failIfEqual(vs1[1],0)
+    self.failUnlessEqual(vs1[1],vs1[2])
+    self.failUnlessEqual(vs1[1],vs1[3])
+    self.failUnlessEqual(vs1[1],vs1[4])
+
+    mol = Chem.MolFromSmiles('FCCCl')
+    vs1 = rdMD.GetFeatureInvariants(mol)
+    self.failUnlessEqual(len(vs1),mol.GetNumAtoms())
+    self.failUnlessEqual(vs1[1],0)
+    self.failUnlessEqual(vs1[2],0)
+    self.failIfEqual(vs1[0],0)
+    self.failUnlessEqual(vs1[0],vs1[3])
+    
+
     
   def testCrippen(self):
     mol = Chem.MolFromSmiles("NCO");

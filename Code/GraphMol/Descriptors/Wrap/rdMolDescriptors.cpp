@@ -226,6 +226,15 @@ namespace {
     }
     return res;
   }
+  python::list GetFeatureInvariants(const RDKit::ROMol &mol){
+    std::vector<boost::uint32_t> invars(mol.getNumAtoms());
+    RDKit::MorganFingerprints::getFeatureInvariants(mol,invars);
+    python::list res;
+    for(std::vector<boost::uint32_t>::const_iterator iv=invars.begin();iv!=invars.end();++iv){
+      res.append(python::long_(*iv));
+    }
+    return res;
+  }
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -342,7 +351,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"),python::arg("includeRingMembership")=false),
               docString.c_str());
   python::scope().attr("_ConnectivityInvariants_version")=
-    RDKit::MorganFingerprints::morganFingerprintVersion;
+    RDKit::MorganFingerprints::morganConnectivityInvariantVersion;
+
+  docString="Returns feature invariants (FCFP-like) for a molecule.";
+  python::def("GetFeatureInvariants", GetFeatureInvariants,
+              (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_FeatureInvariants_version")=
+    RDKit::MorganFingerprints::morganFeatureInvariantVersion;
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
     "the Wildman-Cripppen logp and mr value";
