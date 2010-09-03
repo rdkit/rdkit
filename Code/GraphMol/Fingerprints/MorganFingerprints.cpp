@@ -55,11 +55,21 @@ namespace RDKit{
     // Definitions for feature points adapted from:
     // Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
     const char *smartsPatterns[6]={
-      "[$([N;!H0;v3]),$([N;!H0;+1;v4]),$([O,S;H1;+0]),$([n;H1;+0])]", // Donor
-      "[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N&v3;H1,H2]-[!$(*=[O,N,P,S])]),$([N;v3;H0]),$([n,o,s;+0])]", // Acceptor (F removed)
+      "[$([N;!H0;v3,v4&+1]),\
+$([O,S;H1;+0]),\
+n&H1&+0]", // Donor
+      "[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
+$([O,S;H0;v2]),\
+$([O,S;-]),\
+$([N;v3;!$(N-*=[O,N,P,S])]),\
+n&H0&+0,\
+$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]", // Acceptor
       "[a]", //Aromatic
       "[F,Cl,Br,I]",//Halogen
-      "[#7;+,$([N;H2&+0][$([C,a]);!$([C,a](=O))]),$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))]),$([N,n;X2;+0])]", // Basic
+      "[#7;+,\
+$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
+$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
+$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       "[$([C,S](=[O,S,P])-[O;H1,-1])]" //Acidic
     };
     std::vector<std::string> defaultFeatureSmarts(smartsPatterns,smartsPatterns+6);
