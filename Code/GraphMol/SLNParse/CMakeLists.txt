@@ -22,6 +22,10 @@ rdkit_library(SLNParse
               ${BISON_SlnY_OUTPUTS} ${FLEX_SlnL_OUTPUTS}
               LINK_LIBRARIES GraphMol ${Boost_REGEX_LIBRARY} )
 
+rdkit_headers(SLNAttribs.h
+              SLNParse.h
+              SLNParseOps.h DEST GraphMol/SLNParse)
+
 rdkit_test(testSLNParse test.cpp 
            LINK_LIBRARIES SLNParse SmilesParse SubstructMatch
 GraphMol RDGeometryLib RDGeneral  ${Boost_REGEX_LIBRARY}

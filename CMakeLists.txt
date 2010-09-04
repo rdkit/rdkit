@@ -41,6 +41,7 @@ else(RDK_INSTALL_INTREE)
   set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
   set(RDKit_BinDir "bin")
   set(RDKit_LibDir "lib${LIB_SUFFIX}")
+  set(RDKit_HdrDir "include/rdkit")
   set(RDKit_ShareDir "share/RDKit")
 endif(RDK_INSTALL_INTREE)
 

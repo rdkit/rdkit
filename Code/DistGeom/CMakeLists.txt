@@ -5,6 +5,14 @@ rdkit_library(DistGeometry
               ChiralViolationContrib.cpp
               LINK_LIBRARIES EigenSolvers ForceField)
 
+rdkit_headers(BoundsMatrix.h
+              ChiralSet.h
+              ChiralViolationContrib.h
+              DistGeomUtils.h
+              DistViolationContrib.h
+              FourthDimContrib.h
+              TriangleSmooth.h DEST DistGeom)
+
 rdkit_test(testDistGeom testDistGeom.cpp 
 LINK_LIBRARIES DistGeometry EigenSolvers ForceField Optimizer RDGeneral RDGeometryLib )
 

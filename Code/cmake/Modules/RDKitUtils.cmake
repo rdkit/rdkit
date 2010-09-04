@@ -53,6 +53,17 @@ macro(rdkit_library)
                         LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
 endmacro(rdkit_library)
   
+macro(rdkit_headers)
+  if (NOT RDK_INSTALL_INTREE)
+    PARSE_ARGUMENTS(RDKHDR
+      "DEST"
+      ""
+      ${ARGN})
+    # RDKHDR_DEFAULT_ARGS -> RDKHDR_DEST
+    install(FILES ${RDKHDR_DEFAULT_ARGS} DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST})
+  endif(NOT RDK_INSTALL_INTREE)
+endmacro(rdkit_headers)
+
 macro(rdkit_python_extension)
   PARSE_ARGUMENTS(RDKPY
     "LINK_LIBRARIES;DEPENDS;DEST"

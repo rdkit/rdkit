@@ -7,6 +7,32 @@ rdkit_library(GraphMol
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               SHARED LINK_LIBRARIES RDGeometryLib RDGeneral)
 
+rdkit_headers(Atom.h
+              atomic_data.h
+              AtomIterators.h
+              AtomProps.h
+              Bond.h
+              BondIterators.h
+              BondProps.h
+              Canon.h
+              Chirality.h
+              Conformer.h
+              GraphMol.h
+              MolOps.h
+              MolPickler.h
+              PeriodicTable.h
+              QueryAtom.h
+              QueryBond.h
+              QueryOps.h
+              RankAtoms.h
+              RDKitBase.h
+              RDKitQueries.h
+              RingInfo.h
+              Rings.h
+              ROMol.h
+              RWMol.h
+              SanitException.h DEST GraphMol)
+
 add_subdirectory(Depictor)
 add_subdirectory(SmilesParse)
 add_subdirectory(FileParsers)
