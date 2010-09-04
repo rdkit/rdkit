@@ -81,7 +81,14 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     )
     message("Python Install directory ${PYTHON_INSTDIR}")
     install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
-      PATTERN ".svn" EXCLUDE )
+      PATTERN ".svn" EXCLUDE 
+      PATTERN "test_data" EXCLUDE 
+      PATTERN "testData" EXCLUDE 
+      PATTERN "test_list*" EXCLUDE 
+      PATTERN "CMake*" EXCLUDE 
+      PATTERN "Basement" EXCLUDE 
+      PATTERN "UnitTest*" EXCLUDE 
+)
     set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
   endif(RDK_INSTALL_INTREE)
 
