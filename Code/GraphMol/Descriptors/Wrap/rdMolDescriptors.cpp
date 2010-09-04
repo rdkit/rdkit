@@ -146,7 +146,9 @@ namespace {
   RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(const RDKit::ROMol &mol,
                                                               int radius,
                                                               python::object invariants,
-                                                              python::object fromAtoms){
+                                                              python::object fromAtoms,
+                                                              bool useChirality,
+                                                              bool useBondTypes){
     std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
@@ -173,17 +175,19 @@ namespace {
     RDKit::SparseIntVect<boost::uint32_t> *res;
     res = RDKit::MorganFingerprints::getFingerprint(mol,
                                                     static_cast<unsigned int>(radius),
-                                                    invars,froms);
+                                                    invars,froms,useChirality,useBondTypes);
     if(invars) delete invars;
     if(froms) delete froms;
     return res;
   }
 
   ExplicitBitVect *GetMorganFingerprintBV(const RDKit::ROMol &mol,
-                                             int radius,
-                                             unsigned int nBits,
-                                             python::object invariants,
-                                             python::object fromAtoms){
+                                          int radius,
+                                          unsigned int nBits,
+                                          python::object invariants,
+                                          python::object fromAtoms,
+                                          bool useChirality,
+                                          bool useBondTypes){
     std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
@@ -211,7 +215,8 @@ namespace {
     res = RDKit::MorganFingerprints::getFingerprintAsBitVect(mol,
                                                              static_cast<unsigned int>(radius),
                                                              nBits,
-                                                             invars,froms);
+                                                             invars,froms,useChirality,
+                                                             useBondTypes);
     if(invars) delete invars;
     if(froms) delete froms;
     return res;
@@ -334,14 +339,18 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetMorganFingerprint", GetMorganFingerprint,
               (python::arg("mol"),python::arg("radius"),
                python::arg("invariants")=python::list(),
-               python::arg("fromAtoms")=python::list()),
+               python::arg("fromAtoms")=python::list(),
+               python::arg("useChirality")=false,
+               python::arg("useBondTypes")=true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString="Returns a Morgan fingerprint for a molecule as a bit vector";
   python::def("GetMorganFingerprintAsBitVect", GetMorganFingerprintBV,
               (python::arg("mol"),python::arg("radius"),python::arg("nBits")=2048,
                python::arg("invariants")=python::list(),
-               python::arg("fromAtoms")=python::list()),
+               python::arg("fromAtoms")=python::list(),
+               python::arg("useChirality")=false,
+               python::arg("useBondTypes")=true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   python::scope().attr("_MorganFingerprint_version")=

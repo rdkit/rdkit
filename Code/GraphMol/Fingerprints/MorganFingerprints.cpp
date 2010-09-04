@@ -144,6 +144,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                          unsigned int radius,
                          std::vector<uint32_t> *invariants,
                          const std::vector<uint32_t> *fromAtoms,
+                         bool useChirality,
+                         bool useBondTypes,
                          T &res){
       unsigned int nAtoms=mol.getNumAtoms();
       bool owner=false;
@@ -198,8 +200,13 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
               unsigned int oIdx=bond->getOtherAtomIdx(atomIdx);
               roundAtomNeighborhoods[atomIdx] |= atomNeighborhoods[oIdx];
 
-              nbrs.push_back(std::make_pair(static_cast<int32_t>(bond->getBondType()),
-                                            (*invariants)[oIdx]));
+              if(useBondTypes){
+                nbrs.push_back(std::make_pair(static_cast<int32_t>(bond->getBondType()),
+                                              (*invariants)[oIdx]));
+              } else {
+                nbrs.push_back(std::make_pair(static_cast<int32_t>(1),
+                                              (*invariants)[oIdx]));
+              }
 
               ++beg;
             }
@@ -219,7 +226,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
               //std::cerr<<"     "<<atomIdx<<": "<<it->first<<" "<<it->second<<" -> "<<invar<<std::endl;
                 
               // update our "chirality":
-              if(looksChiral && chiralAtoms[atomIdx]){
+              if(useChirality && looksChiral && chiralAtoms[atomIdx]){
                 if(it->first != static_cast<int32_t>(Bond::SINGLE)){
                   looksChiral=false;
                 } else if(it!=nbrs.begin() && it->second == (it-1)->second) {
@@ -228,10 +235,21 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
               }
 
             }
-            if(looksChiral){
+            if(useChirality && looksChiral){
               chiralAtoms[atomIdx]=1;
               // add an extra value to the invariant to reflect chirality:
-              gboost::hash_combine(invar, 1);
+              Atom const *tAt=mol.getAtomWithIdx(atomIdx);
+              std::string cip="";
+              if(tAt->hasProp("_CIPCode")){
+                tAt->getProp("_CIPCode",cip);
+              }
+              if(cip=="R"){
+                gboost::hash_combine(invar, 3);
+              } else if(cip=="S"){
+                gboost::hash_combine(invar, 2);
+              } else {
+                gboost::hash_combine(invar, 1);
+              }
             }
             roundInvariants[atomIdx]=static_cast<uint32_t>(invar);
             neighborhoodsThisRound.push_back(boost::make_tuple(roundAtomNeighborhoods[atomIdx],
@@ -276,10 +294,11 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
     getFingerprint(const ROMol &mol,
                    unsigned int radius,
                    std::vector<uint32_t> *invariants,
-                   const std::vector<uint32_t> *fromAtoms){
+                   const std::vector<uint32_t> *fromAtoms,
+                   bool useChirality,bool useBondTypes){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
-      calcFingerprint(mol,radius,invariants,fromAtoms,*res);
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,*res);
       return res;
     }
 
@@ -288,9 +307,10 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                             unsigned int radius,
                             unsigned int nBits,
                             std::vector<uint32_t> *invariants,
-                            const std::vector<uint32_t> *fromAtoms){
+                            const std::vector<uint32_t> *fromAtoms,
+                            bool useChirality,bool useBondTypes){
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,*res);
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,*res);
       return res;
     }
 

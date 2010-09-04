@@ -70,6 +70,12 @@ namespace RDKit {
             (calculated by getConnectivityInvariants())
       \param fromAtoms : if this is provided, only the atoms in the vector will be
                          used as centers in the fingerprint
+      \param useChirality : if set, additional information will be added to the fingerprint
+                            when chiral atoms are discovered. This will cause C[C@H](F)Cl,
+                            C[C@@H](F)Cl, and CC(F)Cl to generate different fingerprints.
+      \param useBondTypes : if set, bond types will be included as part of the hash for
+                            calculating bits
+
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -79,7 +85,9 @@ namespace RDKit {
       getFingerprint(const ROMol &mol,
                      unsigned int radius,
                      std::vector<boost::uint32_t> *invariants=0,
-                     const std::vector<boost::uint32_t> *fromAtoms=0);
+                     const std::vector<boost::uint32_t> *fromAtoms=0,
+                     bool useChirality=false,
+                     bool useBondTypes=true);
 
 
     //! returns the Morgan fingerprint for a molecule as a bit vector
@@ -94,6 +102,11 @@ namespace RDKit {
             (calculated by getConnectivityInvariants())
       \param fromAtoms : if this is provided, only the atoms in the vector will be
                          used as centers in the fingerprint
+      \param useChirality : if set, additional information will be added to the fingerprint
+                            when chiral atoms are discovered. This will cause C[C@H](F)Cl,
+                            C[C@@H](F)Cl, and CC(F)Cl to generate different fingerprints.
+      \param useBondTypes : if set, bond types will be included as part of the hash for
+                            calculating bits
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -104,7 +117,9 @@ namespace RDKit {
                               unsigned int radius,
                               unsigned int nBits,
                               std::vector<boost::uint32_t> *invariants=0,
-                              const std::vector<boost::uint32_t> *fromAtoms=0);
+                              const std::vector<boost::uint32_t> *fromAtoms=0,
+                              bool useChirality=false,
+                              bool useBondTypes=true);
     
       
     //! returns the connectivity invariants for a molecule
