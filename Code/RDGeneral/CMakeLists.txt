@@ -18,6 +18,7 @@ rdkit_headers(BadFileException.h
               types.h
               utils.h
               versions.h DEST RDGeneral)
-
+install(DIRECTORY hash DESTINATION ${RDKit_HdrDir}/RDGeneral/hash
+        PATTERN ".svn" EXCLUDE)
 rdkit_test(testDict testDict.cpp LINK_LIBRARIES RDGeneral)
 
