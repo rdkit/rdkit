@@ -282,14 +282,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=python::list()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
-  docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
-  python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
-              (python::arg("mol"),
-               python::arg("minLength")=1,
-               python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
-               python::arg("fromAtoms")=python::list()),
-              docString.c_str(),
-              python::return_value_policy<python::manage_new_object>());
 
   python::def("GetHashedAtomPairFingerprint",
 	      (RDKit::SparseIntVect<boost::int32_t> *(*)(const RDKit::ROMol&,unsigned int,unsigned int,unsigned int))RDKit::AtomPairs::getHashedAtomPairFingerprint,
