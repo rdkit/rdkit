@@ -4,8 +4,12 @@ FIND_PACKAGE(FLEX)
 find_package(Boost 1.39.0 COMPONENTS regex REQUIRED)
 
 if(MSVC)
-ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
-endif()
+  ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
+  # as of cmake 2.8.0 and boost 1.43 we need to do this to avoid
+  # forcing the user to build both static and dynamic versions
+  # of the regex library:
+  ADD_DEFINITIONS("/D BOOST_ALL_DYN_LINK") 
+endif(MSVC)
 
 FLEX_TARGET(SlnL sln.ll 
             ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysln.cpp 
@@ -31,7 +35,6 @@ rdkit_test(testSLNParse test.cpp
 GraphMol RDGeometryLib RDGeneral  ${Boost_REGEX_LIBRARY}
 )
 
-set(Boost_USE_STATIC_LIBS OFF)
 add_subdirectory(Wrap)
 
 
