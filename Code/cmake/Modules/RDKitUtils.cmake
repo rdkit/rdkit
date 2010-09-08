@@ -39,7 +39,7 @@ macro(rdkit_library)
   endif(MSVC)
   if(WIN32)
     set_target_properties(${RDKLIB_NAME} PROPERTIES 
-                          OUTPUT_NAME "${RDKLIB_NAME}-${RDKit_RELEASENAME}" 
+                          OUTPUT_NAME "${RDKLIB_NAME}" 
                           VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Quarter}")
   else(WIN32)
     set_target_properties(${RDKLIB_NAME} PROPERTIES 
