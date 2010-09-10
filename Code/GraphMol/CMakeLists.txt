@@ -10,10 +10,8 @@ rdkit_library(GraphMol
 rdkit_headers(Atom.h
               atomic_data.h
               AtomIterators.h
-              AtomProps.h
               Bond.h
               BondIterators.h
-              BondProps.h
               Canon.h
               Chirality.h
               Conformer.h
