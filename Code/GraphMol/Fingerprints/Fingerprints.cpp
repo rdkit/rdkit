@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -19,6 +19,7 @@
 #include <RDGeneral/hash/hash.hpp>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
+//#define LAYEREDFP_USE_MT
 
 namespace RDKit{
   namespace {
@@ -56,10 +57,11 @@ namespace RDKit{
 
   // caller owns the result, it must be deleted
   ExplicitBitVect *RDKFingerprintMol(const ROMol &mol,unsigned int minPath,
-                                      unsigned int maxPath,
-                                      unsigned int fpSize,unsigned int nBitsPerHash,
-                                      bool useHs,
-                                      double tgtDensity,unsigned int minSize){
+                                     unsigned int maxPath,
+                                     unsigned int fpSize,unsigned int nBitsPerHash,
+                                     bool useHs,
+                                     double tgtDensity,unsigned int minSize,
+                                     bool branchedPaths){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
@@ -80,8 +82,15 @@ namespace RDKit{
     source_type randomSource(generator,dist);
 
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
-    INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
-							       useHs);
+
+    INT_PATH_LIST_MAP allPaths;
+    if(branchedPaths){
+     allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
+                                              useHs);
+    } else {
+      allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
+                                           useHs);
+    }
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
     ROMol::EDGE_ITER firstB,lastB;
@@ -138,8 +147,8 @@ namespace RDKit{
           } else {
             bondHash = bi->getBondType();
           }
-          unsigned int nBitsInHash=0;
-          unsigned int ourHash=bondNbrs[i]%8; // 3 bits here
+          boost::uint32_t nBitsInHash=0;
+          boost::uint32_t ourHash=bondNbrs[i]%8; // 3 bits here
           nBitsInHash+=3;
           ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
           nBitsInHash+=4;
@@ -199,7 +208,8 @@ namespace RDKit{
                                          unsigned int fpSize,
                                          double tgtDensity,unsigned int minSize,
                                          std::vector<unsigned int> *atomCounts,
-                                         ExplicitBitVect *setOnlyBits){
+                                         ExplicitBitVect *setOnlyBits,
+                                         bool branchedPaths){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
@@ -248,7 +258,12 @@ namespace RDKit{
       ++firstB;
     }
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
-    INT_PATH_LIST_MAP allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
+    INT_PATH_LIST_MAP allPaths;
+    if(branchedPaths){
+      allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
+    } else {
+      allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath);
+    }
 
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();++paths){
@@ -304,11 +319,26 @@ namespace RDKit{
             if(bi->getIsAromatic()){
               // makes sure aromatic bonds always hash the same:
               bondHash = Bond::AROMATIC;
+#if 0
             } else if(bi->getBondType()==Bond::SINGLE &&
                       bi->getBeginAtom()->getIsAromatic() &&
                       bi->getEndAtom()->getIsAromatic() &&
                       queryIsBondInRing(bi)
                       ){
+
+              // NOTE:
+              //  This special case is bogus. Query bonds don't
+              //  show up here at all. For non-query systems
+              //  this just ends up causing trouble because paths like
+              //     c:c-C
+              //  do not match things like:
+              //     c:c-c
+              //  at layer 0x02 if the single bond is in a ring
+              //  and they definitely should.
+              //  example of this is: c1cccc2c13.c1cccc2c13
+              // 
+
+
               // a special case that comes up if we're using these to filter
               // substructure matches:
               //   This molecule: 
@@ -319,10 +349,11 @@ namespace RDKit{
               //   because unspecified bonds in SMARTS are aromatic or single
               // We need to make sure to capture this case.  
               bondHash = Bond::AROMATIC;
+#endif
             } else {
               bondHash = bi->getBondType();
             }
-            ourHash = (bondHash%16)<<nBitsInHash; // 4 bits here
+            ourHash = (bondHash%16);
             hashLayers[1].push_back(ourHash);
           }
           nBitsInHash+=4;
@@ -330,26 +361,37 @@ namespace RDKit{
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 3: include atom types:
             unsigned int a1Hash,a2Hash;
-            a1Hash = (bi->getBeginAtom()->getAtomicNum()%128)<<1 | bi->getBeginAtom()->getIsAromatic();
-            a2Hash = (bi->getEndAtom()->getAtomicNum()%128)<<1 | bi->getEndAtom()->getIsAromatic();
+            a1Hash = (bi->getBeginAtom()->getAtomicNum()%128);
+            a2Hash = (bi->getEndAtom()->getAtomicNum()%128);
             if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
-            ourHash = a1Hash<<nBitsInHash; // 8 bits
-            ourHash |= a2Hash<<(nBitsInHash+8); // 8 bits
+            ourHash = a1Hash;
+            ourHash |= a2Hash<<7;
             hashLayers[2].push_back(ourHash);
           }
-          nBitsInHash += 16;
+          nBitsInHash += 14;
           if(layerFlags & 0x8 && keepPath){
             // layer 4: include ring information
-            ourHash = queryIsBondInRing(bi)<<nBitsInHash; // 1 bit
+            ourHash = queryIsBondInRing(bi);
             hashLayers[3].push_back(ourHash);
           }
           nBitsInHash++;
           if(layerFlags & 0x10 && keepPath){
             // layer 5: include ring size information
-            ourHash = (queryBondMinRingSize(bi)%8)<<nBitsInHash; // 3 bits here
+            ourHash = (queryBondMinRingSize(bi)%8);
             hashLayers[4].push_back(ourHash);
           }
           nBitsInHash+=3;
+          if(layerFlags & 0x20 && keepPath){
+            //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
+            // layer 6: aromaticity:
+            bool a1Hash = bi->getBeginAtom()->getIsAromatic();
+            bool a2Hash = bi->getEndAtom()->getIsAromatic();
+            if((!a1Hash) && a2Hash) std::swap(a1Hash,a2Hash);
+            ourHash = a1Hash;
+            ourHash |= a2Hash<<1;
+            hashLayers[5].push_back(ourHash);
+          }
+          nBitsInHash += 2;
         }
         unsigned int l=0;
         bool flaggedPath=false;
@@ -363,32 +405,16 @@ namespace RDKit{
           // of the vect. This allows us to distinguish C1CC1 from CC(C)C
           layerIt->push_back(atomsInPath.count());
 
+          layerIt->push_back(l+1);
+
           // hash the path to generate a seed:
           unsigned long seed = gboost::hash_range(layerIt->begin(),layerIt->end());
-#if 0
-          if(!res->getBit(seed%fpSize)) {
-            std::cerr<<"seed "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
-          } else {
-            std::cerr<<"         "<<l<<": "<<seed<<"->"<<(seed%fpSize)<<std::endl;
-          }
-#endif
-          // NOTE: since we're only generating a single number here, it seems like it
-          // might make sense to just use the hash itself. In early testing of these
-          // fingerprints, this led to a bunch of collisions between layers 3 and 4,
 
-          unsigned int bitId;
 #ifdef LAYEREDFP_USE_MT
-          // One solution to this problem is to go back to using a PRNG:
           generator.seed(static_cast<rng_type::result_type>(seed));
-          bitId=randomSource()%fpSize;
+          unsigned int bitId=randomSource()%fpSize;
 #else
-          // The other solution is to shift the seed so that we look at different
-          // bits for the different layers:
-          //std::cerr<<"layer: "<<l<<" seed: "<<seed<<std::endl;
-          seed = seed>>l;
-          //std::cerr<<"   >>> "<<seed<<std::endl;
-          bitId=seed%fpSize;
-          //std::cerr<<"   bit "<<bitId<<std::endl;
+          unsigned int bitId=seed%fpSize;
 #endif
           if(!setOnlyBits || (*setOnlyBits)[bitId]){
             res->setBit(bitId);

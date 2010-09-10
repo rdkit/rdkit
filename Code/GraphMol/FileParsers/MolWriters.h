@@ -21,6 +21,7 @@ namespace RDKit {
     virtual ~MolWriter() {}
     virtual void write(ROMol &mol,int confId=defaultConfId) = 0;
     virtual void flush() = 0;
+    virtual void close() = 0;
     virtual void setProps(const STR_VECT &propNames)=0;
     virtual unsigned int numMols() const =0;
   };
@@ -74,6 +75,17 @@ namespace RDKit {
     void flush() {
       PRECONDITION(dp_ostream,"no output stream");
       dp_ostream->flush();
+    };
+
+    //! \brief close our stream (the writer cannot be used again)
+    void close() {
+      PRECONDITION(dp_ostream,"no output stream");
+      dp_ostream->flush();
+      if(df_owner) {
+        delete dp_ostream;
+        df_owner=false;
+      }
+      dp_ostream=NULL;
     };
 
     //! \brief get the number of molecules written so far
@@ -131,6 +143,21 @@ namespace RDKit {
       dp_ostream->flush();
     } ;
 
+    //! \brief close our stream (the writer cannot be used again)
+    void close() {
+      PRECONDITION(dp_ostream,"no output stream");
+      // if we've written any mols, finish with a "$$$$" line
+      if (d_molid > 0) {
+        (*dp_ostream) << "$$$$\n";
+      }
+      dp_ostream->flush();
+      if(df_owner) {
+        delete dp_ostream;
+        df_owner=false;
+      }
+      dp_ostream=NULL;
+    };
+
     //! \brief get the number of molecules written so far
     unsigned int numMols() const { return d_molid; };
 
@@ -138,7 +165,7 @@ namespace RDKit {
     void writeProperty(const ROMol &mol, std::string name);
 
     std::ostream *dp_ostream;
-    bool d_owner;
+    bool df_owner;
     unsigned int d_molid; // the number of the molecules we wrote so far
     STR_VECT d_props; // list of property name that need to be written out
   };
@@ -171,6 +198,17 @@ namespace RDKit {
       dp_ostream->flush();
     };
 
+    //! \brief close our stream (the writer cannot be used again)
+    void close() {
+      PRECONDITION(dp_ostream,"no output stream");
+      dp_ostream->flush();
+      if(df_owner) {
+        delete dp_ostream;
+        df_owner=false;
+      }
+      dp_ostream=NULL;
+    };
+
     //! \brief get the number of molecules written so far
     unsigned int numMols() const { return d_molid; };
 
@@ -187,7 +225,7 @@ namespace RDKit {
     void writeProperty(const ROMol &mol, std::string name);
 
     std::ostream *dp_ostream;
-    bool d_owner;
+    bool df_owner;
     unsigned int d_molid; // the number of molecules we wrote so far
     STR_VECT d_props; // list of property name that need to be written out
     bool df_write2D; // write 2D coordinates instead of 3D

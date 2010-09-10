@@ -36,6 +36,9 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <RDGeneral/hash/hash.hpp>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+
 
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -48,6 +51,61 @@ namespace RDKit{
     using boost::uint32_t;
     using boost::int32_t;
     typedef boost::tuple<boost::dynamic_bitset<>,uint32_t,unsigned int> AccumTuple;
+
+    // Definitions for feature points adapted from:
+    // Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
+    const char *smartsPatterns[6]={
+      "[$([N;!H0;v3,v4&+1]),\
+$([O,S;H1;+0]),\
+n&H1&+0]", // Donor
+      "[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),\
+$([O,S;H0;v2]),\
+$([O,S;-]),\
+$([N;v3;!$(N-*=[O,N,P,S])]),\
+n&H0&+0,\
+$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]", // Acceptor
+      "[a]", //Aromatic
+      "[F,Cl,Br,I]",//Halogen
+      "[#7;+,\
+$([N;H2&+0][$([C,a]);!$([C,a](=O))]),\
+$([N;H1&+0]([$([C,a]);!$([C,a](=O))])[$([C,a]);!$([C,a](=O))]),\
+$([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
+      "[$([C,S](=[O,S,P])-[O;H1,-1])]" //Acidic
+    };
+    std::vector<std::string> defaultFeatureSmarts(smartsPatterns,smartsPatterns+6);
+    std::vector<ROMOL_SPTR> defaultFeatureMatchers;
+    void getFeatureInvariants(const ROMol &mol,
+                              std::vector<uint32_t> &invars,
+                              std::vector<ROMOL_SPTR> *patterns){
+      unsigned int nAtoms=mol.getNumAtoms();
+      PRECONDITION(invars.size()>=nAtoms,"vector too small");
+
+      if(!patterns){
+        if(defaultFeatureMatchers.size()==0){
+          defaultFeatureMatchers.reserve(defaultFeatureSmarts.size());
+          for(std::vector<std::string>::const_iterator smaIt=defaultFeatureSmarts.begin();
+              smaIt!=defaultFeatureSmarts.end();++smaIt){
+            ROMol *matcher=static_cast<ROMol *>(SmartsToMol(*smaIt));
+            CHECK_INVARIANT(matcher,"bad smarts");
+            defaultFeatureMatchers.push_back(ROMOL_SPTR(matcher));
+          }
+        }
+        patterns=&defaultFeatureMatchers;
+      }
+      std::fill(invars.begin(),invars.end(),0);
+      for(unsigned int i=0;i<patterns->size();++i){
+        unsigned int mask=1<<i;
+        std::vector<MatchVectType> matchVect;
+        SubstructMatch(mol,*(*patterns)[i],matchVect);
+        for(std::vector<MatchVectType>::const_iterator mvIt=matchVect.begin();
+            mvIt!=matchVect.end();++mvIt){
+          for(MatchVectType::const_iterator mIt=mvIt->begin();
+              mIt!=mvIt->end();++mIt){
+            invars[mIt->second]|=mask;
+          }
+        }
+      }
+    } // end of getFeatureInvariants()
 
     void getConnectivityInvariants(const ROMol &mol,
                                    std::vector<uint32_t> &invars,
@@ -86,6 +144,8 @@ namespace RDKit{
                          unsigned int radius,
                          std::vector<uint32_t> *invariants,
                          const std::vector<uint32_t> *fromAtoms,
+                         bool useChirality,
+                         bool useBondTypes,
                          T &res){
       unsigned int nAtoms=mol.getNumAtoms();
       bool owner=false;
@@ -140,8 +200,13 @@ namespace RDKit{
               unsigned int oIdx=bond->getOtherAtomIdx(atomIdx);
               roundAtomNeighborhoods[atomIdx] |= atomNeighborhoods[oIdx];
 
-              nbrs.push_back(std::make_pair(static_cast<int32_t>(bond->getBondType()),
-                                            (*invariants)[oIdx]));
+              if(useBondTypes){
+                nbrs.push_back(std::make_pair(static_cast<int32_t>(bond->getBondType()),
+                                              (*invariants)[oIdx]));
+              } else {
+                nbrs.push_back(std::make_pair(static_cast<int32_t>(1),
+                                              (*invariants)[oIdx]));
+              }
 
               ++beg;
             }
@@ -161,7 +226,7 @@ namespace RDKit{
               //std::cerr<<"     "<<atomIdx<<": "<<it->first<<" "<<it->second<<" -> "<<invar<<std::endl;
                 
               // update our "chirality":
-              if(looksChiral && chiralAtoms[atomIdx]){
+              if(useChirality && looksChiral && chiralAtoms[atomIdx]){
                 if(it->first != static_cast<int32_t>(Bond::SINGLE)){
                   looksChiral=false;
                 } else if(it!=nbrs.begin() && it->second == (it-1)->second) {
@@ -170,10 +235,21 @@ namespace RDKit{
               }
 
             }
-            if(looksChiral){
+            if(useChirality && looksChiral){
               chiralAtoms[atomIdx]=1;
               // add an extra value to the invariant to reflect chirality:
-              gboost::hash_combine(invar, 1);
+              Atom const *tAt=mol.getAtomWithIdx(atomIdx);
+              std::string cip="";
+              if(tAt->hasProp("_CIPCode")){
+                tAt->getProp("_CIPCode",cip);
+              }
+              if(cip=="R"){
+                gboost::hash_combine(invar, 3);
+              } else if(cip=="S"){
+                gboost::hash_combine(invar, 2);
+              } else {
+                gboost::hash_combine(invar, 1);
+              }
             }
             roundInvariants[atomIdx]=static_cast<uint32_t>(invar);
             neighborhoodsThisRound.push_back(boost::make_tuple(roundAtomNeighborhoods[atomIdx],
@@ -218,10 +294,11 @@ namespace RDKit{
     getFingerprint(const ROMol &mol,
                    unsigned int radius,
                    std::vector<uint32_t> *invariants,
-                   const std::vector<uint32_t> *fromAtoms){
+                   const std::vector<uint32_t> *fromAtoms,
+                   bool useChirality,bool useBondTypes){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
-      calcFingerprint(mol,radius,invariants,fromAtoms,*res);
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,*res);
       return res;
     }
 
@@ -230,9 +307,10 @@ namespace RDKit{
                             unsigned int radius,
                             unsigned int nBits,
                             std::vector<uint32_t> *invariants,
-                            const std::vector<uint32_t> *fromAtoms){
+                            const std::vector<uint32_t> *fromAtoms,
+                            bool useChirality,bool useBondTypes){
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,*res);
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,*res);
       return res;
     }
 

@@ -125,6 +125,9 @@ bytea * makeLowSparseFingerPrint(MolSparseFingerPrint data, int numInts);
 double calcSparseTanimotoSml(MolSparseFingerPrint a, MolSparseFingerPrint b);
 double calcSparseDiceSml(MolSparseFingerPrint a, MolSparseFingerPrint b);
 double calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b, unsigned int szb);
+MolSparseFingerPrint  addSFP(MolSparseFingerPrint a, MolSparseFingerPrint b);
+MolSparseFingerPrint  subtractSFP(MolSparseFingerPrint a, MolSparseFingerPrint b);
+
 
 void countOverlapValues(bytea * sign, MolSparseFingerPrint data, int numBits,
         int * sum, int * overlapSum, int * overlapN);

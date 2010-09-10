@@ -1,3 +1,64 @@
+******  Release_Q32010_1 *******
+(Changes relative to Release_Q22010_1)
+
+!!!!!! IMPORTANT !!!!!!
+ - Due to changes made to the layered fingerprinting code,
+   fingerprints generated with this release are not compatible with
+   fingerprints from earlier releases.
+ - The default arguments to the Morgan fingerprinting code will yield
+   fingerprints that are not backwards compatible.
+
+Acknowledgements:
+ - Andrew Dalke, Nik Stiefl, Peter Gedeck, Christian Kramer, TJ O'Donnell, Markus
+   Kossner 
+   
+Bug Fixes: 
+ - A typo in the parameters for the Crippen clogp calculator was
+   fixed. (issue 3057201)
+ - some problems in the layered fingerprinting code were fixed. (issue
+   3030388)
+ - a bug in the ring-finding code that could lead to incorrect results
+   or crashes in large molecules was fixed.  
+ - the Murtagh clustering code should now execute correctly on recent
+   versions of the MacOS.
+
+New Features:
+ - a PostgreSQL cartridge for similarity and substructure searching
+   has been added to the RDKit distribution.
+ - The Morgan fingerprinting code accepts additional arguments that
+   control whether or not bond order and chirality are taken into
+   account. By default chirality is ignored and the bond order is
+   used. 
+ - 2D coordinates can now be generated for chemical reactions.
+ - The functions IsMoleculeReactantOfReaction and
+   IsMoleculeProductOfReaction have been added to the C++
+   interface. From python these are methods of the ChemicalReaction class:
+   rxn.IsMoleculeReactant and rxn.IsMoleculeProduct
+ - The default bond length for depiction can now be changed.
+ - FCFP-like fingerprints can now be generated with the Morgan
+   fingerprinting code by starting with feature invariants.
+ - The close() method has been added to MolWriters.
+ - Atom-pair and topological-torsion fingerprints can now also be
+   calculated as bit vectors.
+ - RDKit and layered fingerprints can now be generated using only
+   linear paths.
+ - the function findAllPathsOfLengthMtoN() was added
+
+Deprecated modules (to be removed in next release):
+ 
+Removed modules:
+ - rdkit/qtGui
+ - rdkit/RDToDo
+ - Projects/SDView
+
+Other:
+ - The directory Contrib/M_Kossner contains two new contributions from
+   Markus Kossner.
+ - A change was made to the subgraph matching code that speeds up
+   substructure searches involving repeated recursive queries.
+ - the deprecated useChirality argument has been removed from the
+   substructure matching functions. 
+
 ******  Release_Q22010_1 *******
 (Changes relative to Release_Q12010_1)
 

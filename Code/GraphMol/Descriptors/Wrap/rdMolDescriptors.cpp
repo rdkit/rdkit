@@ -146,7 +146,9 @@ namespace {
   RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(const RDKit::ROMol &mol,
                                                               int radius,
                                                               python::object invariants,
-                                                              python::object fromAtoms){
+                                                              python::object fromAtoms,
+                                                              bool useChirality,
+                                                              bool useBondTypes){
     std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
@@ -173,17 +175,19 @@ namespace {
     RDKit::SparseIntVect<boost::uint32_t> *res;
     res = RDKit::MorganFingerprints::getFingerprint(mol,
                                                     static_cast<unsigned int>(radius),
-                                                    invars,froms);
+                                                    invars,froms,useChirality,useBondTypes);
     if(invars) delete invars;
     if(froms) delete froms;
     return res;
   }
 
   ExplicitBitVect *GetMorganFingerprintBV(const RDKit::ROMol &mol,
-                                             int radius,
-                                             unsigned int nBits,
-                                             python::object invariants,
-                                             python::object fromAtoms){
+                                          int radius,
+                                          unsigned int nBits,
+                                          python::object invariants,
+                                          python::object fromAtoms,
+                                          bool useChirality,
+                                          bool useBondTypes){
     std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
@@ -211,7 +215,8 @@ namespace {
     res = RDKit::MorganFingerprints::getFingerprintAsBitVect(mol,
                                                              static_cast<unsigned int>(radius),
                                                              nBits,
-                                                             invars,froms);
+                                                             invars,froms,useChirality,
+                                                             useBondTypes);
     if(invars) delete invars;
     if(froms) delete froms;
     return res;
@@ -220,6 +225,15 @@ namespace {
   python::list GetConnectivityInvariants(const RDKit::ROMol &mol,bool includeRingMembership){
     std::vector<boost::uint32_t> invars(mol.getNumAtoms());
     RDKit::MorganFingerprints::getConnectivityInvariants(mol,invars,includeRingMembership);
+    python::list res;
+    for(std::vector<boost::uint32_t>::const_iterator iv=invars.begin();iv!=invars.end();++iv){
+      res.append(python::long_(*iv));
+    }
+    return res;
+  }
+  python::list GetFeatureInvariants(const RDKit::ROMol &mol){
+    std::vector<boost::uint32_t> invars(mol.getNumAtoms());
+    RDKit::MorganFingerprints::getFeatureInvariants(mol,invars);
     python::list res;
     for(std::vector<boost::uint32_t>::const_iterator iv=invars.begin();iv!=invars.end();++iv){
       res.append(python::long_(*iv));
@@ -260,14 +274,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetAtomPairAtomCode", RDKit::AtomPairs::getAtomCode,
               (python::arg("atom"), python::arg("branchSubtract")=0),
               docString.c_str());
-  docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
-  python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
-              (python::arg("mol"),
-               python::arg("minLength")=1,
-               python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
-               python::arg("fromAtoms")=python::list()),
-              docString.c_str(),
-              python::return_value_policy<python::manage_new_object>());
   docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
               (python::arg("mol"),
@@ -325,14 +331,18 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetMorganFingerprint", GetMorganFingerprint,
               (python::arg("mol"),python::arg("radius"),
                python::arg("invariants")=python::list(),
-               python::arg("fromAtoms")=python::list()),
+               python::arg("fromAtoms")=python::list(),
+               python::arg("useChirality")=false,
+               python::arg("useBondTypes")=true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString="Returns a Morgan fingerprint for a molecule as a bit vector";
   python::def("GetMorganFingerprintAsBitVect", GetMorganFingerprintBV,
               (python::arg("mol"),python::arg("radius"),python::arg("nBits")=2048,
                python::arg("invariants")=python::list(),
-               python::arg("fromAtoms")=python::list()),
+               python::arg("fromAtoms")=python::list(),
+               python::arg("useChirality")=false,
+               python::arg("useBondTypes")=true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   python::scope().attr("_MorganFingerprint_version")=
@@ -342,7 +352,14 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"),python::arg("includeRingMembership")=false),
               docString.c_str());
   python::scope().attr("_ConnectivityInvariants_version")=
-    RDKit::MorganFingerprints::morganFingerprintVersion;
+    RDKit::MorganFingerprints::morganConnectivityInvariantVersion;
+
+  docString="Returns feature invariants (FCFP-like) for a molecule.";
+  python::def("GetFeatureInvariants", GetFeatureInvariants,
+              (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_FeatureInvariants_version")=
+    RDKit::MorganFingerprints::morganFeatureInvariantVersion;
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
     "the Wildman-Cripppen logp and mr value";

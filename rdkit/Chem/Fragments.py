@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2002-2006 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2002-2010 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
@@ -16,10 +16,8 @@ from rdkit import Chem
 
 defaultPatternFileName = os.path.join(RDConfig.RDDataDir,'FragmentDescriptors.csv')
 
-def _CountMatches(mol,patt,unique=1):
-  res = 0
-  res = len(mol.GetSubstructMatches(patt))
-  return res
+def _CountMatches(mol,patt,unique=True):
+  return len(mol.GetSubstructMatches(patt,uniquify=unique))
 
 fns = []
 def _LoadPatterns(fileName=None):
@@ -46,7 +44,7 @@ def _LoadPatterns(fileName=None):
           else:
             if not patt or patt.GetNumAtoms()==0: ok=0
           if not ok: raise ImportError,'Smarts %s could not be parsed'%(repr(sma))
-          fn = lambda x,y=1,z=patt:_CountMatches(x,z,unique=y)
+          fn = lambda mol,countUnique=True,pattern=patt:_CountMatches(mol,pattern,unique=countUnique)
           fn.__doc__ = descr
           name = name.replace('=','_')
           name = name.replace('-','_')

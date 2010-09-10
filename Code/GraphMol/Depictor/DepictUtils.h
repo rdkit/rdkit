@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -16,13 +16,13 @@
 #include <queue>
 
 namespace RDDepict {
-  const double BOND_LEN=1.5;
-  const double COLLISION_THRES=0.35;
-  const double BOND_THRES = 0.50;
-  const double ANGLE_OPEN=0.1222; // that is about 7 deg
-  const unsigned int MAX_COLL_ITERS=15;
-  const double HETEROATOM_COLL_SCALE=1.3;
-  const unsigned int NUM_BONDS_FLIPS=3;
+  extern double BOND_LEN;
+  extern double COLLISION_THRES;
+  extern double BOND_THRES;
+  extern double ANGLE_OPEN;
+  extern unsigned int MAX_COLL_ITERS;
+  extern double HETEROATOM_COLL_SCALE;
+  extern unsigned int NUM_BONDS_FLIPS;
 
   typedef std::vector<const RDGeom::Point2D *> VECT_C_POINT;
   

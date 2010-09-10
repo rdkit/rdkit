@@ -234,13 +234,15 @@ namespace Subgraphs {
     return res;
   }
 
-  PATH_LIST
-  pathFinderHelper(int *adjMat,unsigned int dim,unsigned int targetLen)
+  INT_PATH_LIST_MAP
+  pathFinderHelper(int *adjMat,unsigned int dim,unsigned int minLen,
+                   unsigned int maxLen)
   {
     PRECONDITION(adjMat,"no matrix");
+    PRECONDITION(minLen<=maxLen,"bad lengths provided");
     // finds all paths of length N using an adjacency matrix,
     //  which is constructed elsewhere
-    int startLength=0;
+    INT_PATH_LIST_MAP res;
     PATH_LIST paths;
     paths.clear();
 
@@ -250,30 +252,16 @@ namespace Subgraphs {
       tPath.push_back(i);
       paths.push_back(tPath);
     }
+
     // and build them up one index at a time:
-    startLength = 1;
-    for(unsigned int length=startLength;length<targetLen;length++){
+    for(unsigned int length=1;length<maxLen;length++){
       // extend each path:
-      paths = extendPaths(adjMat,dim,paths,targetLen);
+      if(length>=minLen) res[length]=paths;
+      paths = extendPaths(adjMat,dim,paths,maxLen);
     }
-
-    PATH_LIST newPaths;
-    // now loop through the paths to make sure that we don't
-    //  have any that are reverse duplicates:
-    for(PATH_LIST::iterator path=paths.begin(); path != paths.end(); path++ ){
-      if( std::find(newPaths.begin(),newPaths.end(),*path) == newPaths.end() ){
-        //PATH_TYPE revPath(*path);
-        //std::reverse(revPath.begin(),revPath.end());
-        PATH_TYPE revPath(path->size());
-        std::reverse_copy(path->begin(),path->end(),revPath.begin());
-        if( std::find(newPaths.begin(),newPaths.end(),revPath) == newPaths.end() ){
-          // this one is a keeper;
-          newPaths.push_back(*path);
-        }
-      }
-    }
-
-    return newPaths;
+    res[maxLen]=paths;
+    
+    return res;
   }
 } // end of Subgraphs namespace
 
@@ -331,7 +319,7 @@ namespace Subgraphs {
 
   INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
                                                   unsigned int upperLen, bool useHs){
-    CHECK_INVARIANT(lowerLen <= upperLen, "");
+    PRECONDITION(lowerLen <= upperLen, "");
     boost::dynamic_bitset<> forbidden(mol.getNumBonds());
 
 
@@ -413,9 +401,10 @@ namespace Subgraphs {
   //        point is a duplicate (closes rings).  In this case,
   //        allowRingClosures should equal the target path length.
   //
-  PATH_LIST
-  findAllPathsOfLengthN(const ROMol &mol,unsigned int targetLen,bool useBonds,
-                        bool useHs) {
+  INT_PATH_LIST_MAP 
+  findAllPathsOfLengthsMtoN(const ROMol &mol,unsigned int lowerLen,
+                           unsigned int upperLen,bool useBonds,
+                           bool useHs) {
     //
     //  We can't be clever here and just use the bond adjacency matrix
     //  to solve this problem when useBonds is true.  This is because
@@ -425,10 +414,9 @@ namespace Subgraphs {
     //  in with the paths.  So we have to construct paths of atoms and
     //  then convert them into bond paths.
     //
-    int *adjMat,dim;
-    PATH_LIST res;
-    res.clear();
+    PRECONDITION(lowerLen <= upperLen, "");
 
+    int *adjMat,dim;
     dim = mol.getNumAtoms();
     adjMat = new int[dim*dim];
     memset((void *)adjMat,0,dim*dim*sizeof(int));
@@ -447,44 +435,23 @@ namespace Subgraphs {
 
     // if we're using bonds, we'll need to find paths of length N+1,
     // then convert them
-    if(useBonds) targetLen+=1;
+    if(useBonds) {
+      ++lowerLen;
+      ++upperLen;
+    }
 
     // find the paths themselves
-    PATH_LIST atomPaths=Subgraphs::pathFinderHelper(adjMat,dim,targetLen);
+    INT_PATH_LIST_MAP atomPaths=Subgraphs::pathFinderHelper(adjMat,dim,lowerLen,upperLen);
 
     // clean up the adjacency matrix
     delete [] adjMat;
 
-    PATH_LIST bondPaths;
-    PATH_LIST::const_iterator vivI;
-    PATH_TYPE::const_iterator ivI;
+    INT_PATH_LIST_MAP res;
 
     //
-    // convert the atom paths into bond paths:
-    //  We need to do this to be able to uniquify paths in a
-    //  straightforward manner, see below.
-    //
-    //
-    if(useBonds || targetLen>1){
-      //bondPaths.reserve(atomPaths.size());
-      for(vivI=atomPaths.begin();vivI!=atomPaths.end();vivI++){
-        const PATH_TYPE &resi=*vivI;
-        PATH_TYPE locV;
-        locV.reserve(targetLen);
-        for(unsigned int j=0;j<targetLen-1;j++){
-          const Bond *bond=mol.getBondBetweenAtoms(resi[j],resi[j+1]);
-          locV.push_back(bond->getIdx());
-        }
-        bondPaths.push_back(locV);
-      }
-    }
-
     //--------------------------------------------------------
     // loop through all the paths we have and make sure that there are
     // no duplicates (duplicate = contains identical bond indices)
-    //
-    //  We'll use the standard product-of-primes trick to compute
-    //  invariants for each path in order to identify duples.
     //
     //  We need to use the bond paths for this duplicate finding
     //  because, in rings, there can be many paths which share atom
@@ -492,32 +459,44 @@ namespace Subgraphs {
     //  there is only one "atom unique" path of length 5 bonds (6 atoms)
     //  through a 6-ring, but there are six bond paths.
     //
-    std::vector<double> invars;
-    INT_VECT keepers;
-    if(useBonds || targetLen>1){
-      PATH_LIST::const_iterator bondPath,atomPath;
-      for(bondPath=bondPaths.begin(),atomPath=atomPaths.begin();
-          bondPath!=bondPaths.end();
-          bondPath++,atomPath++){
-        double invar=1.0;
-        for(ivI=bondPath->begin();ivI!=bondPath->end();ivI++){
-          invar *= firstThousandPrimes[*ivI];
+    if(!useBonds && lowerLen>=1){
+      res[1]=atomPaths[1];
+    }
+    if(useBonds || upperLen>1){
+      for(unsigned int i=lowerLen;i<=upperLen;++i){
+        if(i<=1){
+          continue;
         }
-        if(std::find(invars.begin(),invars.end(),invar)==invars.end()){
-          invars.push_back(invar);
-          // this is a new one:
-          if(useBonds){
-            res.push_back(*bondPath);
+
+        std::vector< boost::dynamic_bitset<> > invars;
+
+        for(PATH_LIST::const_iterator vivI=atomPaths[i].begin();
+            vivI!=atomPaths[i].end();++vivI){
+          boost::dynamic_bitset<> invar(mol.getNumBonds());
+          const PATH_TYPE &resi=*vivI;
+          PATH_TYPE locV;
+          locV.reserve(i);
+          for(unsigned int j=0;j<i-1;j++){
+            const Bond *bond=mol.getBondBetweenAtoms(resi[j],resi[j+1]);
+            locV.push_back(bond->getIdx());
+            invar.set(bond->getIdx());
           }
-          else{
-            res.push_back(*atomPath);
+          if(std::find(invars.begin(),invars.end(),invar)==invars.end()){
+            invars.push_back(invar);
+            if(useBonds){
+              res[i-1].push_back(locV);
+            } else {
+              res[i].push_back(resi);
+            }
           }
         }
       }
-    } else {
-      res = atomPaths;
     }
-  
     return res;
+  }
+  PATH_LIST
+  findAllPathsOfLengthN(const ROMol &mol,unsigned int targetLen,bool useBonds,
+                        bool useHs) {
+    return findAllPathsOfLengthsMtoN(mol,targetLen,targetLen,useBonds,useHs)[targetLen];
   }
 } // end of RDKit namespace

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -14,10 +14,12 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDGeneral/FileParseException.h>
 #include "RDDepictor.h"
+#include "DepictUtils.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Conformer.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
+#include <RDGeneral/utils.h>
 #include <stdlib.h>
 
 #include <boost/tokenizer.hpp>
@@ -568,6 +570,32 @@ void testIssue2995724() {
   }
 }
 
+void testBondLengthChange() {
+  {
+    std::string smi = "CC";
+    RWMol *m1 = SmilesToMol(smi);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    
+    const Conformer &conf = m1->getConformer(cid1);
+    TEST_ASSERT(feq(conf.getAtomPos(0).x,-0.75));
+    TEST_ASSERT(feq(conf.getAtomPos(1).x,0.75));
+
+    delete m1;
+  }
+  {
+    std::string smi = "CC";
+    RWMol *m1 = SmilesToMol(smi);
+    RDDepict::BOND_LEN=1.0;
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    
+    const Conformer &conf = m1->getConformer(cid1);
+    TEST_ASSERT(feq(conf.getAtomPos(0).x,-0.5));
+    TEST_ASSERT(feq(conf.getAtomPos(1).x,0.5));
+
+    delete m1;
+  }
+}
+
 int main() { 
   RDLog::InitLogs();
 #if 1
@@ -651,6 +679,11 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Issue 2995724\n";
   testIssue2995724();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Testing a change of the depictor bond length\n";
+  testBondLengthChange();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);

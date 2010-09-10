@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2010 Greg Landrum and Rational Discovery LLC
 //     All Rights Reserved
 //
 #ifdef WIN32
@@ -9,6 +9,8 @@
 #define PYTH_FILE_WITH_INIT
 #include "Clustering.h"
 #include <numpy/arrayobject.h>
+#include <boost/cstdint.hpp>
+#include <iostream>
 
 #ifdef WIN32
 BOOL APIENTRY DllMain( HANDLE hModule, 
@@ -33,10 +35,10 @@ typedef double real;
 
 
 extern "C"
-void distdriver_(long int *n,long int *len,
+void distdriver_(boost::int64_t *n,boost::int64_t *len,
 		 real *dists,
-		 long int *toggle,
-		 long int *ia,long int *ib,real *crit);
+		 boost::int64_t *toggle,
+		 boost::int64_t *ia,boost::int64_t *ib,real *crit);
 
 //
 // Rather than deal with any nonsense like trying to get
@@ -44,14 +46,13 @@ void distdriver_(long int *n,long int *len,
 // (thus drowning in the waves of f2c hate), we'll generate
 // the distance matrix on our own here and then call distdriver_
 //
-void clusterit(real *dataP,long int n,long int m,long int iopt,
-	       long int *ia,long int *ib,real *crit){
+void clusterit(real *dataP,boost::int64_t n,boost::int64_t m,boost::int64_t iopt,
+	       boost::int64_t *ia,boost::int64_t *ib,real *crit){
   real *dists;
-  long int len;
-  long int pos = 0;
-  long int i,j,k,iTab,jTab;
+  boost::int64_t len;
+  boost::int64_t pos = 0;
+  boost::int64_t i,j,k,iTab,jTab;
   double tmp;
-
   len = (n*(n-1))/2;
   dists = (real *)calloc(len,sizeof(real));
   for(i=1;i<n;i++){
@@ -75,7 +76,7 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
   PyArrayObject *dataContig;
   PyObject *data;
   int nPts,sz,option;
-  long int *ia,*ib;
+  boost::int64_t *ia,*ib;
   real *crit;
   PyObject *res;
   PyObject *tmp;
@@ -85,8 +86,8 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
     return NULL;
   dataContig = (PyArrayObject *)PyArray_ContiguousFromObject(data,PyArray_DOUBLE,2,2);
 
-  ia = (long int *)calloc(nPts,sizeof(long int));
-  ib = (long int *)calloc(nPts,sizeof(long int));
+  ia = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
+  ib = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
   crit = (real *)calloc(nPts,sizeof(real));
 
   clusterit((real *)dataContig->data,nPts,sz,option,ia,ib,crit);
@@ -113,9 +114,9 @@ Clustering_MurtaghCluster(PyObject *self,PyObject *args)
 
 
 
-void distclusterit(real *dists,long int n,long int iopt,
-		   long int *ia,long int *ib,real *crit){
-  long int len;
+void distclusterit(real *dists,boost::int64_t n,boost::int64_t iopt,
+		   boost::int64_t *ia,boost::int64_t *ib,real *crit){
+  boost::int64_t len;
 
   len = (n*(n-1))/2;
   distdriver_(&n,&len,dists,&iopt,ia,ib,crit);
@@ -127,8 +128,8 @@ Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
 {
   PyArrayObject *dataContig;
   PyObject *data;
-  long int nPts,option;
-  long int *ia,*ib;
+  int nPts,option;
+  boost::int64_t *ia,*ib;
   real *crit;
   PyObject *res=PyTuple_New(3);
   PyObject *tmp;
@@ -138,8 +139,8 @@ Clustering_MurtaghDistCluster(PyObject *self,PyObject *args)
     return NULL;
 
   dataContig = (PyArrayObject *)PyArray_ContiguousFromObject(data,PyArray_DOUBLE,1,1);
-  ia = (long int *)calloc(nPts,sizeof(long int));
-  ib = (long int *)calloc(nPts,sizeof(long int));
+  ia = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
+  ib = (boost::int64_t *)calloc(nPts,sizeof(boost::int64_t));
   crit = (real *)calloc(nPts,sizeof(real));
   distclusterit((real *)dataContig->data,nPts,option,ia,ib,crit);
 

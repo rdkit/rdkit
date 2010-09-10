@@ -47,30 +47,35 @@ namespace RDKit{
   //
   // --- --- --- --- --- --- --- --- --- --- --- --- --- 
 
-  //! \brief find all subgraphs in a range of sizes
+  //! \brief find all bond subgraphs in a range of sizes
   /*!
    *   \param mol - the molecule to be considered
-   *   \param lowerLen - the minimum subgraph size to find
+   *   \param lowerLen - the minimum subgraph size to find 
    *   \param upperLen - the maximum subgraph size to find
    *   \param useHs     - if set, hydrogens in the graph will be considered
    *                      eligible to be in paths. NOTE: this will not add
    *                      Hs to the graph. 
+   *
+   *   The result is a map from subgraph size -> list of paths
+   *               (i.e. list of list of bond indices)
   */
   INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
                                                   unsigned int upperLen, bool useHs=false);
 
-  //! \brief find all subgraphs of a particular size
+  //! \brief find all bond subgraphs of a particular size
   /*!
    *   \param mol - the molecule to be considered
    *   \param targetLen - the length of the subgraphs to be returned
    *   \param useHs     - if set, hydrogens in the graph will be considered
    *                      eligible to be in paths. NOTE: this will not add
    *                      Hs to the graph. 
+   *
+   *   The result is a list of paths (i.e. list of list of bond indices)
   */
   PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol,unsigned int targetLen,
                                       bool useHs=false);
 
-  //! \brief find unique subgraphs of a particular size
+  //! \brief find unique bond subgraphs of a particular size
   /*!
    *   \param mol - the molecule to be considered
    *   \param targetLen - the length of the subgraphs to be returned
@@ -79,6 +84,8 @@ namespace RDKit{
    *                      Hs to the graph. 
    *   \param useBO     - if set, bond orders will be considered when uniquifying
    *                      the paths
+   *
+   *   The result is a list of paths (i.e. list of list of bond indices)
   */
   PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol,unsigned int targetLen,
                                          bool useHs=false,bool useBO=true);
@@ -91,9 +98,14 @@ namespace RDKit{
    *   \param useHs     - if set, hydrogens in the graph will be considered
    *                      eligible to be in paths. NOTE: this will not add
    *                      Hs to the graph. 
+   *
+   *   The result is a list of paths (i.e. list of list of bond indices)
   */
   PATH_LIST findAllPathsOfLengthN(const ROMol &mol,unsigned int targetLen,
                                   bool useBonds=true,bool useHs=false);
+  INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(const ROMol &mol,unsigned int lowerLen,
+                                             unsigned int upperLen,
+                                             bool useBonds=true,bool useHs=false);
 }
 
   

@@ -13,14 +13,14 @@ SELECT
 FROM
 	pgbfp
 WHERE layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
-ORDER BY sml DESC, id;
+ORDER BY sml DESC, id limit 10;
 
 SELECT
     id, dice_sml(layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
 FROM
 	pgbfp
 WHERE layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
-ORDER BY sml DESC, id;
+ORDER BY sml DESC, id limit 10;
 
 SET enable_indexscan=on;
 SET enable_bitmapscan=on;
@@ -31,14 +31,14 @@ SELECT
 FROM
 	pgbfp
 WHERE layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
-ORDER BY sml DESC, id;
+ORDER BY sml DESC, id limit 10;
 
 SELECT
     id, dice_sml(layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
 FROM
 	pgbfp
 WHERE layered_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
-ORDER BY sml DESC, id;
+ORDER BY sml DESC, id limit 10;
 
 SET enable_indexscan=on;
 SET enable_bitmapscan=on;

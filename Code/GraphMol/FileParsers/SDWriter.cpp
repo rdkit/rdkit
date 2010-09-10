@@ -20,7 +20,7 @@ namespace RDKit {
   SDWriter::SDWriter(std::string fileName) {
     if(fileName!= "-"){
       std::ofstream *tmpStream = new std::ofstream(fileName.c_str());
-      d_owner=true;
+      df_owner=true;
       if ( !tmpStream || !(*tmpStream) || (tmpStream->bad()) ) {
         std::ostringstream errout;
         errout << "Bad output file " << fileName;
@@ -29,7 +29,7 @@ namespace RDKit {
       dp_ostream = static_cast<std::ostream *>(tmpStream);
     } else {
       dp_ostream = static_cast<std::ostream *>(&std::cout);
-      d_owner=false;
+      df_owner=false;
     }
     d_molid = 0;
   }
@@ -40,20 +40,13 @@ namespace RDKit {
       throw FileParseException("Bad output stream");
     }
     dp_ostream = outStream;
-    d_owner = takeOwnership;
+    df_owner = takeOwnership;
     d_molid = 0;
   }
 
   SDWriter::~SDWriter() {
-    // if we've written any mols, finish with a "$$$$" line
-    if (d_molid > 0) {
-      CHECK_INVARIANT(dp_ostream,"null outstream even though molecules were written");
-      (*dp_ostream) << "$$$$\n";
-    }
-
-    if (d_owner) {
-      delete dp_ostream;
-    }
+    // close the writer if it's still open:
+    if(dp_ostream!=NULL) close();
   }
 
   void SDWriter::setProps(const STR_VECT &propNames) {

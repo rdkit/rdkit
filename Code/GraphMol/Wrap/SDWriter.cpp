@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006  Rational Discovery LLC
+//  Copyright (C) 2003-2010  Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -48,6 +48,9 @@ namespace RDKit {
              "    - confId: (optional) ID of the conformation to write\n\n")
 	.def("flush", &SDWriter::flush,
 	     "Flushes the output file (forces the disk file to be updated).\n\n"
+	     )
+	.def("close", &SDWriter::close,
+	     "Flushes the output file and closes it. The Writer cannot be used after this.\n\n"
 	     )
 	.def("NumMols", &SDWriter::numMols,
 	     "Returns the number of molecules written so far.\n\n"

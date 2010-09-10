@@ -125,11 +125,12 @@ namespace RDKit{
       \param reactants: the reactants to be used. The length of this must be equal to
                         this->getNumReactantTemplates()
                          
-      \return a vector of vectors of products. Each subvector will be this->getNumProductTemplates()
-              long.          
+      \return a vector of vectors of products. Each subvector will be 
+              this->getNumProductTemplates() long.          
       
-      We return a vector of vectors of products because each individual template may map multiple times
-      onto its reactant. This leads to multiple possible result sets.
+      We return a vector of vectors of products because each individual template may 
+      map multiple times onto its reactant. This leads to multiple possible result
+      sets.
     */
     std::vector<MOL_SPTR_VECT> runReactants(const MOL_SPTR_VECT reactants) const;
 
@@ -174,8 +175,9 @@ namespace RDKit{
     
     //! validates the reactants and products to make sure the reaction seems "reasonable"
     /*! 
-        \return   true if the reaction validates without errors (warnings do not stop validation)
-        
+        \return   true if the reaction validates without errors (warnings do not stop
+                  validation)
+         
         \param numWarnings: used to return the number of validation warnings
         \param numErrors:   used to return the number of validation errors
         
@@ -217,9 +219,26 @@ namespace RDKit{
     bool df_implicitProperties;
     MOL_SPTR_VECT m_reactantTemplates,m_productTemplates;
     ChemicalReaction &operator=(const ChemicalReaction &); // disable assignment
-    MOL_SPTR_VECT generateOneProductSet(const MOL_SPTR_VECT &reactants,const std::vector<MatchVectType> &reactantsMatch) const;
+    MOL_SPTR_VECT generateOneProductSet(const MOL_SPTR_VECT &reactants,
+                                        const std::vector<MatchVectType> &reactantsMatch) const;
   };
 
+  //! tests whether or not the molecule has a substructure match
+  //! to any of the reaction's reactants
+  //! the \c which argument is used to return which of the reactants
+  //! the molecule matches. If there's no match, it is equal to the number
+  //! of reactants on return
+  bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
+                                      unsigned int &which);
+  //! tests whether or not the molecule has a substructure match
+  //! to any of the reaction's products
+  //! the \c which argument is used to return which of the products
+  //! the molecule matches. If there's no match, it is equal to the number
+  //! of products on return
+  bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
+                                   unsigned int &which);
+
+  
 } // end of RDKit namespace
 
 namespace RDDepict {

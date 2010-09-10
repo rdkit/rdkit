@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -75,8 +75,6 @@ namespace RDKit{
     }
     
   }
-
-
 
   void sanitizeMol(ROMol &mol) {
     RWMol &wmol = static_cast<RWMol &>(mol);
@@ -197,7 +195,8 @@ namespace RDKit{
                                           double tgtDensity,
                                           unsigned int minSize,
                                           python::list atomCounts,
-                                          ExplicitBitVect *includeOnlyBits){
+                                          ExplicitBitVect *includeOnlyBits,
+                                          bool branchedPaths){
     std::vector<unsigned int> *atomCountsV=0;
     if(atomCounts){
       atomCountsV = new std::vector<unsigned int>;
@@ -212,7 +211,7 @@ namespace RDKit{
     }
 
     ExplicitBitVect *res;
-    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits);
+    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits,branchedPaths);
 
     if(atomCountsV){
       for(unsigned int i=0;i<atomCountsV->size();++i){
@@ -223,6 +222,26 @@ namespace RDKit{
     
     return res;
   }
+
+
+  python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol, unsigned int lowerLen,
+                                                     unsigned int upperLen, bool useHs=false){
+    if(lowerLen>upperLen){
+      throw_value_error("lowerLen > upperLen");
+    }
+    
+    INT_PATH_LIST_MAP oMap=findAllSubgraphsOfLengthsMtoN(mol,lowerLen,upperLen,useHs);
+    python::list res;
+    for(unsigned int i=lowerLen;i<=upperLen;++i){
+      python::list tmp;
+      const PATH_LIST &pth=oMap[i];
+      for(PATH_LIST_CI pthit=pth.begin();pthit!=pth.end();++pthit){
+        tmp.append(python::tuple(*pthit));
+      }
+      res.append(tmp);
+    }
+    return python::tuple(res);
+  };
 
 
   struct molops_wrapper {
@@ -545,6 +564,14 @@ namespace RDKit{
                    python::arg("useHs")=false),
                   docString.c_str());
       // ------------------------------------------------------------------------
+      docString="Finds all subgraphs of a particular length in a molecule\n\
+  See documentation for FindAllSubgraphsOfLengthN for definitions\n\
+\n";
+      python::def("FindAllSubgraphsOfLengthMToN", &findAllSubgraphsOfLengthsMtoNHelper,
+                  (python::arg("mol"),python::arg("min"),python::arg("max"),
+                   python::arg("useHs")=false),
+                  docString.c_str());
+      // ------------------------------------------------------------------------
       docString="Finds unique subgraphs of a particular length in a molecule\n\
 \n\
   ARGUMENTS:\n\
@@ -729,7 +756,8 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
-                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128),
+                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
+                   python::arg("branchedPaths")=true),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_RDKFingerprint_version")=RDKit::RDKFingerprintMolVersion;
 
@@ -794,7 +822,8 @@ namespace RDKit{
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
                    python::arg("atomCounts")=python::list(),
-                   python::arg("setOnlyBits")=(ExplicitBitVect *)0),
+                   python::arg("setOnlyBits")=(ExplicitBitVect *)0,
+                   python::arg("branchedPaths")=true),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_LayeredFingerprint_version")=RDKit::LayeredFingerprintMolVersion;
 

@@ -13,5 +13,5 @@ Depictor SubstructMatch ChemReactions Fingerprints Subgraphs
 GraphMol DataStructs
 RDGeometryLib RDGeneral )
 
-add_subdirectory(python_example)
+#add_subdirectory(python_example)
 add_subdirectory(java_example)

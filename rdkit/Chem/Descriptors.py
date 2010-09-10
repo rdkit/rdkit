@@ -7,21 +7,8 @@
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 
-def pyMolWt(mol,heavyAtomsOnly=0):
-  """ The average molecular weight of the molecule
-
-  >>> '%.2f'%pyMolWt(Chem.MolFromSmiles('CC'))
-  '30.07'
-  >>> '%.2f'%pyMolWt(Chem.MolFromSmiles('CC'),1)
-  '24.02'
-  >>> '%.2f'%pyMolWt(Chem.MolFromSmiles('[NH4+].[Cl-]'))
-  '53.49'
-  >>> '%.2f'%MolWt(Chem.MolFromSmiles('CC'))
-  '30.07'
-  >>> '%.2f'%MolWt(Chem.MolFromSmiles('CC'),1)
-  '24.02'
-  >>> '%.2f'%MolWt(Chem.MolFromSmiles('[NH4+].[Cl-]'))
-  '53.49'
+def _pyMolWt(mol,heavyAtomsOnly=0):
+  """ DEPRECATED 
   """
   hMass = Chem.GetPeriodicTable().GetAtomicWeight(1)
   accum = 0.0
@@ -30,18 +17,26 @@ def pyMolWt(mol,heavyAtomsOnly=0):
     if not heavyAtomsOnly:
       accum += atom.GetTotalNumHs()*hMass
   return accum
-pyMolWt.version="1.0.0"
+_pyMolWt.version="1.0.0"
+
 MolWt = lambda *x,**y:rdMolDescriptors._CalcMolWt(*x,**y)
 MolWt.version=rdMolDescriptors._CalcMolWt_version
+MolWt.__doc__="""The average molecular weight of the molecule ignoring hydrogens
 
+  >>> MolWt(Chem.MolFromSmiles('CC'))
+  30.07...
+  >>> MolWt(Chem.MolFromSmiles('[NH4+].[Cl-]'))
+  53.49...
+
+"""
 
 HeavyAtomMolWt=lambda x:MolWt(x,1)
 HeavyAtomMolWt.__doc__="""The average molecular weight of the molecule ignoring hydrogens
 
-  >>> '%.2f'%HeavyAtomMolWt(Chem.MolFromSmiles('CC'))
-  '24.02'
-  >>> '%.2f'%HeavyAtomMolWt(Chem.MolFromSmiles('[NH4+].[Cl-]'))
-  '49.46'
+  >>> HeavyAtomMolWt(Chem.MolFromSmiles('CC'))
+  24.02...
+  >>> HeavyAtomMolWt(Chem.MolFromSmiles('[NH4+].[Cl-]'))
+  49.46...
 
 """
 HeavyAtomMolWt.version="1.0.0"
@@ -76,7 +71,7 @@ NumValenceElectrons.version="1.0.0"
 #
 def _test():
   import doctest,sys
-  return doctest.testmod(sys.modules["__main__"])
+  return doctest.testmod(sys.modules["__main__"],optionflags=doctest.ELLIPSIS)
 
 if __name__ == '__main__':
   import sys

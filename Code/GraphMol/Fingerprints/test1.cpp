@@ -288,6 +288,7 @@ void test5BackwardsCompatibility(){
 
 void test1Layers(){
   BOOST_LOG(rdInfoLog) <<"testing basics layered fps" << std::endl;
+#if 1
   {
     RWMol *m1 = SmilesToMol("C1=CC=CC=C1");
     RWMol *m2 = SmilesToMol("C1=CC=CC=N1");
@@ -320,7 +321,7 @@ void test1Layers(){
     delete fp1;delete fp2;delete fp3;delete fp4;
     delete m1;delete m2;delete m3;delete m4;
   }
-
+#endif
   {
     RWMol *m1 = SmilesToMol("C1=CC=CC=C1");
     RWMol *m2 = SmilesToMol("C1=CC=CC=N1");
@@ -531,7 +532,6 @@ void test2Layers(){
   }
 
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
-
 }
 
 void test3Layers(){
@@ -540,8 +540,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("CC(C)C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -561,8 +561,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("C-C(-C)-C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -576,12 +576,13 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(=C)C");
     RWMol *m2 = SmartsToMol("C-C(-C)-C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3!=(*fp2));
+    TEST_ASSERT(fp3!=(*fp1));
   
     delete fp1;delete fp2;
     delete m1;delete m2;
@@ -591,8 +592,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("CC([C,N])C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -606,8 +607,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(C)C");
     RWMol *m2 = SmartsToMol("CC([!C])C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     // the query says "!C", but we still match in the fp...
@@ -618,7 +619,7 @@ void test3Layers(){
     // of course we better match if the thing really isn't a C:
     delete fp1;delete m1;
     m1 = SmilesToMol("CC(O)C");
-    fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
   
@@ -630,8 +631,8 @@ void test3Layers(){
     RWMol *m1 = SmilesToMol("CC(O)C");
     RWMol *m2 = SmartsToMol("CC([C,N])C");
 
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -644,8 +645,8 @@ void test3Layers(){
   {
     RWMol *m1 = SmilesToMol("c1ccccc1");
     RWMol *m2 = SmartsToMol("cccc");
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,256);
     TEST_ASSERT(fp2->getNumOnBits());
     
     ExplicitBitVect fp3=(*fp1)&(*fp2);
@@ -656,7 +657,7 @@ void test3Layers(){
     // because the aromaticity does not factor into the
     // calculation:
     m1 = SmilesToMol("C1CCCCC1");
-    fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0x7,1,5,256);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
     
@@ -667,41 +668,43 @@ void test3Layers(){
   {
     RWMol *m1 = SmilesToMol("c1ccccc1");
     RWMol *m2 = SmartsToMol("c:c:c");
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
-    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,512);
+    ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,0x5,1,5,512);
     TEST_ASSERT(fp2->getNumOnBits());
-    
     ExplicitBitVect fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
 
     delete fp1;delete m1;
     m1 = SmilesToMol("C1CCCCC1");
-    fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,512);
     fp3=(*fp1)&(*fp2);
-#if 0
-    std::cerr<<BitVectToText(*fp1)<<std::endl;
-    std::cerr<<"---"<<std::endl;
-    std::cerr<<BitVectToText(*fp2)<<std::endl;
-    std::cerr<<"---"<<std::endl;
-    std::cerr<<BitVectToText(fp3)<<std::endl;
-#endif
+    TEST_ASSERT(fp3==(*fp2));
+    delete fp2;
+    fp2=LayeredFingerprintMol(*m2,0x7,1,5,512);
+    fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3!=(*fp2));
 
+    delete fp2;
+    fp2=LayeredFingerprintMol(*m2,0x25,1,5,512);
+    fp3=(*fp1)&(*fp2);
+    TEST_ASSERT(fp3!=(*fp2));
+
+    delete fp2;
+    fp2=LayeredFingerprintMol(*m2,0x7,1,5,512);
     delete fp1;delete m1;
     // atom type information is factored in:
     m1 = SmilesToMol("c1ncncn1");
-    fp1=LayeredFingerprintMol(*m1,0x7,1,5,128);
+    fp1=LayeredFingerprintMol(*m1,0xFFFF,1,5,512);
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3!=(*fp2));
 
     delete fp2;delete m2;
     // but queries switch us back to generic types, so we match again:
     m2 = SmartsToMol("[C,N]:[C,N]:[C,N]");
-    fp2=LayeredFingerprintMol(*m2,0x7,1,5,128);
+    fp2=LayeredFingerprintMol(*m2,0x7,1,5,512);
     TEST_ASSERT(fp2->getNumOnBits());
     fp3=(*fp1)&(*fp2);
     TEST_ASSERT(fp3==(*fp2));
-    
     
     delete fp1;delete fp2;
     delete m1;delete m2;
@@ -839,6 +842,12 @@ void test1MorganFPs(){
     TEST_ASSERT(fp->getNonzeroElements().size()==4);
     delete fp;
     fp = MorganFingerprints::getFingerprint(*mol,1);
+    TEST_ASSERT(fp->getNonzeroElements().size()==8);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,true);
+    TEST_ASSERT(fp->getNonzeroElements().size()==4);
+    delete fp;
+    fp = MorganFingerprints::getFingerprint(*mol,1,0,0,true);
     TEST_ASSERT(fp->getNonzeroElements().size()==9);
     delete fp;
     delete mol;
@@ -950,6 +959,141 @@ void test3MorganFPs(){
   
     delete mol;
   }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void test4MorganFPs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Morgan Fingerprints with feature invariants." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("Cc1ccccc1");
+    TEST_ASSERT(mol);
+    std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+    MorganFingerprints::getFeatureInvariants(*mol,invars);
+    TEST_ASSERT(invars[0]==0);
+    TEST_ASSERT(invars[1]!=0);
+    TEST_ASSERT(invars[1]==invars[2]);
+    TEST_ASSERT(invars[1]==invars[3]);
+    TEST_ASSERT(invars[1]==invars[4]);
+    TEST_ASSERT(invars[1]==invars[5]);
+    TEST_ASSERT(invars[1]==invars[6]);
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("FCCCl");
+    TEST_ASSERT(mol);
+    std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+    MorganFingerprints::getFeatureInvariants(*mol,invars);
+    TEST_ASSERT(invars[1]==invars[2]);
+    TEST_ASSERT(invars[1]==0);
+    TEST_ASSERT(invars[0]==invars[3]);
+    TEST_ASSERT(invars[0]!=0);
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("Cc1ncccc1O");
+    TEST_ASSERT(mol);
+    std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+
+    std::vector<ROMOL_SPTR> patterns(2);
+    RWMol *p;
+    p=SmartsToMol("[A]");
+    patterns[0]=ROMOL_SPTR(static_cast<ROMol *>(p));
+    p=SmartsToMol("[a]");
+    patterns[1]=ROMOL_SPTR(static_cast<ROMol *>(p));
+    
+    MorganFingerprints::getFeatureInvariants(*mol,invars,&patterns);
+    TEST_ASSERT(invars[0]!=0);
+    TEST_ASSERT(invars[1]!=0);
+    TEST_ASSERT(invars[0]!=invars[1]);
+    TEST_ASSERT(invars[1]==invars[2]);
+    TEST_ASSERT(invars[0]==invars[7]);
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void test5MorganFPs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test additional Morgan fingerprints options." << std::endl;
+
+  {
+    ROMol *m1,*m2;
+    ExplicitBitVect *fp1,*fp2;
+    std::vector<boost::uint32_t> invars(3);
+    invars[0]=1;
+    invars[1]=1;
+    invars[2]=1;
+
+    m1 = SmilesToMol("CCC");
+    TEST_ASSERT(m1);
+    m2 = SmilesToMol("CC=C");
+    TEST_ASSERT(m2);
+
+    fp1 = MorganFingerprints::getFingerprintAsBitVect(*m1,2,2048,&invars,0,false,true);
+    invars[0]=1;
+    invars[1]=1;
+    invars[2]=1;
+    fp2 = MorganFingerprints::getFingerprintAsBitVect(*m2,2,2048,&invars,0,false,true);
+    TEST_ASSERT((*fp1)!=(*fp2));
+    delete fp1;
+    delete fp2;
+
+    invars[0]=1;
+    invars[1]=1;
+    invars[2]=1;
+    fp1 = MorganFingerprints::getFingerprintAsBitVect(*m1,2,2048,&invars,0,false,false);
+    invars[0]=1;
+    invars[1]=1;
+    invars[2]=1;
+    fp2 = MorganFingerprints::getFingerprintAsBitVect(*m2,2,2048,&invars,0,false,false);
+    TEST_ASSERT((*fp1)==(*fp2));
+    delete fp1;
+    delete fp2;
+
+    delete m1;
+    delete m2;
+  }
+
+  {
+    ROMol *m1,*m2,*m3;
+    ExplicitBitVect *fp1,*fp2,*fp3;
+
+    m1 = SmilesToMol("C[C@H](F)Cl");
+    TEST_ASSERT(m1);
+    m2 = SmilesToMol("C[C@@H](F)Cl");
+    TEST_ASSERT(m2);
+    m3 = SmilesToMol("CC(F)Cl");
+    TEST_ASSERT(m3);
+
+    fp1 = MorganFingerprints::getFingerprintAsBitVect(*m1,2,2048,0,0,false,true);
+    fp2 = MorganFingerprints::getFingerprintAsBitVect(*m2,2,2048,0,0,false,true);
+    fp3 = MorganFingerprints::getFingerprintAsBitVect(*m3,2,2048,0,0,false,true);
+    TEST_ASSERT((*fp1)==(*fp2));
+    TEST_ASSERT((*fp1)==(*fp3));
+    TEST_ASSERT((*fp2)==(*fp3));
+    delete fp1;
+    delete fp2;
+    delete fp3;
+
+    fp1 = MorganFingerprints::getFingerprintAsBitVect(*m1,2,2048,0,0,true,true);
+    fp2 = MorganFingerprints::getFingerprintAsBitVect(*m2,2,2048,0,0,true,true);
+    fp3 = MorganFingerprints::getFingerprintAsBitVect(*m3,2,2048,0,0,true,true);
+    TEST_ASSERT((*fp1)!=(*fp2));
+    TEST_ASSERT((*fp1)!=(*fp3));
+    TEST_ASSERT((*fp2)!=(*fp3));
+    delete fp1;
+    delete fp2;
+    delete fp3;
+
+    delete m1;
+    delete m2;
+  }
+
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -1352,10 +1496,12 @@ int main(int argc,char *argv[]){
   test4Trends();
   test1Layers();
   test2Layers();
+  test3Layers();
   test1MorganFPs();
   test2MorganFPsFromAtoms();
   test3MorganFPs();
-  test3Layers();
+  test4MorganFPs();
+  test5MorganFPs();
 #endif
   test5BackwardsCompatibility();
   testIssue2875658();

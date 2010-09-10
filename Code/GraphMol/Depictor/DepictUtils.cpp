@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -14,7 +14,14 @@
 #include <algorithm>
 
 namespace RDDepict {
-    
+  double BOND_LEN=1.5;
+  double COLLISION_THRES=0.35;
+  double BOND_THRES = 0.50;
+  double ANGLE_OPEN=0.1222; // that is about 7 deg
+  unsigned int MAX_COLL_ITERS=15;
+  double HETEROATOM_COLL_SCALE=1.3;
+  unsigned int NUM_BONDS_FLIPS=3;
+  
   RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
     // The process here is very straight forward
     // we take the center of the ring to lies at the origin put the first 

@@ -175,5 +175,19 @@ class TestCase(unittest.TestCase) :
       #ofile.write(mb)
       #ofile.close()
       
+    def test6ChangeBondLength(self):
+      m =Chem.MolFromSmiles('CC')
+      rdDepictor.Compute2DCoords(m)
+      conf = m.GetConformer()
+      self.failUnlessAlmostEqual(conf.GetAtomPosition(0).x,-0.750,3)
+      self.failUnlessAlmostEqual(conf.GetAtomPosition(1).x,0.750,3)
+      rdDepictor.Compute2DCoords(m,bondLength=1.0)
+      conf = m.GetConformer()
+      self.failUnlessAlmostEqual(conf.GetAtomPosition(0).x,-0.500,3)
+      self.failUnlessAlmostEqual(conf.GetAtomPosition(1).x,0.500,3)
+      rdDepictor.Compute2DCoords(m)
+      conf = m.GetConformer()
+      self.failUnlessAlmostEqual(conf.GetAtomPosition(0).x,-0.750,3)
+      self.failUnlessAlmostEqual(conf.GetAtomPosition(1).x,0.750,3)
 if __name__ == '__main__':
   unittest.main()

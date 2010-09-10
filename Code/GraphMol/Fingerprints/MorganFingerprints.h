@@ -47,7 +47,7 @@
 namespace RDKit {
   class ROMol;
   namespace MorganFingerprints {
-    const std::string morganFingerprintVersion="0.1.0";
+    const std::string morganFingerprintVersion="1.0.0";
     
     //! returns the Morgan fingerprint for a molecule
     /*!  
@@ -70,6 +70,12 @@ namespace RDKit {
             (calculated by getConnectivityInvariants())
       \param fromAtoms : if this is provided, only the atoms in the vector will be
                          used as centers in the fingerprint
+      \param useChirality : if set, additional information will be added to the fingerprint
+                            when chiral atoms are discovered. This will cause C[C@H](F)Cl,
+                            C[C@@H](F)Cl, and CC(F)Cl to generate different fingerprints.
+      \param useBondTypes : if set, bond types will be included as part of the hash for
+                            calculating bits
+
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -79,7 +85,9 @@ namespace RDKit {
       getFingerprint(const ROMol &mol,
                      unsigned int radius,
                      std::vector<boost::uint32_t> *invariants=0,
-                     const std::vector<boost::uint32_t> *fromAtoms=0);
+                     const std::vector<boost::uint32_t> *fromAtoms=0,
+                     bool useChirality=false,
+                     bool useBondTypes=true);
 
 
     //! returns the Morgan fingerprint for a molecule as a bit vector
@@ -94,6 +102,11 @@ namespace RDKit {
             (calculated by getConnectivityInvariants())
       \param fromAtoms : if this is provided, only the atoms in the vector will be
                          used as centers in the fingerprint
+      \param useChirality : if set, additional information will be added to the fingerprint
+                            when chiral atoms are discovered. This will cause C[C@H](F)Cl,
+                            C[C@@H](F)Cl, and CC(F)Cl to generate different fingerprints.
+      \param useBondTypes : if set, bond types will be included as part of the hash for
+                            calculating bits
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -104,7 +117,9 @@ namespace RDKit {
                               unsigned int radius,
                               unsigned int nBits,
                               std::vector<boost::uint32_t> *invariants=0,
-                              const std::vector<boost::uint32_t> *fromAtoms=0);
+                              const std::vector<boost::uint32_t> *fromAtoms=0,
+                              bool useChirality=false,
+                              bool useBondTypes=true);
     
       
     //! returns the connectivity invariants for a molecule
@@ -118,6 +133,23 @@ namespace RDKit {
     void getConnectivityInvariants(const ROMol &mol,
                                    std::vector<boost::uint32_t> &invars,
                                    bool includeRingMembership=false);
+    const std::string morganConnectivityInvariantVersion="1.0.0";
+
+    //! returns the feature invariants for a molecule
+    /*!  
+
+      \param mol:    the molecule to be considered
+      \param invariants : used to return the results
+      \param patterns: if provided should contain the queries used to assign atom-types.
+                       if not provided, feature definitions adapted from reference:
+                       Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
+                       will be used for Donor, Acceptor, Aromatic, Halogen, Basic, Acidic
+
+    */
+    void getFeatureInvariants(const ROMol &mol,
+                              std::vector<boost::uint32_t> &invars,
+                              std::vector<ROMOL_SPTR> *patterns=0);
+    const std::string morganFeatureInvariantVersion="0.1.0";
 
   } // end of namespace MorganFingerprints
 }

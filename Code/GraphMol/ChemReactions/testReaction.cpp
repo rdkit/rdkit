@@ -2731,6 +2731,93 @@ void test29RxnWriter(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test30ReactProdQueries(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing reactand and product queries." << std::endl;
+
+  {
+    ROMol *mol;
+    unsigned int nWarn,nError,which;
+    std::string smi;
+    smi="[c;H:1]:[c:2](:[c;H:3])Br.[C:4](=[O:5])Cl>>[c:1]:[c:2]([c:3])-[C:4]=[O:5]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    smi = "c1ccccc1Br";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(isMoleculeReactantOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==0);
+    delete(mol);
+
+    smi = "c1ccccc1Cl";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!isMoleculeReactantOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==rxn->getNumReactantTemplates());
+    delete(mol);
+
+    smi = "c1ccncc1Br";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(isMoleculeReactantOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==0);
+    delete(mol);
+
+    smi = "c1cccnc1Br";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!isMoleculeReactantOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==rxn->getNumReactantTemplates());
+    delete(mol);
+
+    smi = "c1cccc(C)c1Br";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!isMoleculeReactantOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==rxn->getNumReactantTemplates());
+    delete(mol);
+
+    smi = "ClC(=O)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(isMoleculeReactantOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==1);
+    delete(mol);
+
+    smi = "C(=O)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!isMoleculeReactantOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==rxn->getNumReactantTemplates());
+    delete(mol);
+
+    smi = "c1ccccc1C(=O)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(isMoleculeProductOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==0);
+    delete(mol);
+
+    smi = "c1cccnc1C(=O)C";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(!isMoleculeProductOfReaction(*rxn,*mol,which));
+    TEST_ASSERT(which==rxn->getNumProductTemplates());
+    delete(mol);
+
+    delete(rxn);
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 int main() { 
   RDLog::InitLogs();
@@ -2769,6 +2856,7 @@ int main() {
   test27SmartsWriter();
   test28RxnDepictor();
   test29RxnWriter();
+  test30ReactProdQueries();
   
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

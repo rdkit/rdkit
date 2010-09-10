@@ -105,14 +105,14 @@ SELECT count(*) FROM pgbfp WHERE
 	f < layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   838
+   832
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
 	f <= layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   838
+   832
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
@@ -126,14 +126,14 @@ SELECT count(*) FROM pgbfp WHERE
 	f >= layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   162
+   168
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
 	f > layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   162
+   168
 (1 row)
 
 SET enable_indexscan=on;
@@ -149,14 +149,14 @@ SELECT count(*) FROM pgbfp WHERE
 	f < layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   838
+   832
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
 	f <= layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   838
+   832
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
@@ -170,14 +170,14 @@ SELECT count(*) FROM pgbfp WHERE
 	f >= layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   162
+   168
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
 	f > layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   162
+   168
 (1 row)
 
 SET enable_indexscan=on;

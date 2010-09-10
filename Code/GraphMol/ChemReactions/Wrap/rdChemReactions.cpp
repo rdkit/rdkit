@@ -33,6 +33,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/Depictor/DepictUtils.h>
 
 #include <RDBoost/Wrap.h>
 #include <RDBoost/Exceptions.h>
@@ -123,6 +124,36 @@ namespace RDKit {
     return res;
   }
 
+  void Compute2DCoordsForReaction(RDKit::ChemicalReaction &rxn,
+                                  double spacing=2.0,
+                                  bool updateProps=true,
+                                  bool canonOrient=false,
+                                  unsigned int nFlipsPerSample=0,
+                                  unsigned int nSamples=0,
+                                  int sampleSeed=0,
+                                  bool permuteDeg4Nodes=false,
+                                  double bondLength=-1){
+    double oBondLen=RDDepict::BOND_LEN;
+    if(bondLength>0){
+      RDDepict::BOND_LEN=bondLength;
+    }
+    RDDepict::compute2DCoordsForReaction(rxn,spacing,updateProps,canonOrient,
+                                         nFlipsPerSample,nSamples,sampleSeed,
+                                         permuteDeg4Nodes);
+    if(bondLength>0){
+      RDDepict::BOND_LEN=oBondLen;
+    }
+  }
+
+  bool IsMoleculeReactantOfReaction(const ChemicalReaction &rxn,const ROMol &mol){
+    unsigned int which;
+    return isMoleculeReactantOfReaction(rxn,mol,which);
+  }
+  bool IsMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol){
+    unsigned int which;
+    return isMoleculeProductOfReaction(rxn,mol,which);
+  }
+  
 }
 
 BOOST_PYTHON_MODULE(rdChemReactions) {
@@ -184,11 +215,15 @@ Sample Usage:\n\
          (python::arg("self")),
          "EXPERT USER: returns whether or not the reaction can have implicit properties")
     .def("ToBinary",RDKit::ReactionToBinary,
-         "Returns a binary string representation of the reaction.\n")
+         "Returns a binary string representation of the reaction.")
+    .def("IsMoleculeReactant",RDKit::IsMoleculeReactantOfReaction,
+         "returns whether or not the molecule has a substructure match to one of the reactants.")
+    .def("IsMoleculeProduct",RDKit::IsMoleculeProductOfReaction,
+         "returns whether or not the molecule has a substructure match to one of the products.")
     // enable pickle support
     .def_pickle(RDKit::reaction_pickle_suite())
-
   ;
+
 
   python::def("ReactionFromSmarts",RDKit::RxnSmartsToChemicalReaction,
       "construct a ChemicalReaction from a reaction SMARTS string",
@@ -221,9 +256,10 @@ Sample Usage:\n\
      nSample - Number of random samplings of rotatable bonds.\n\
      sampleSeed - seed for the random sampling process.\n\
      permuteDeg4Nodes - allow permutation of bonds at a degree 4\n\
-                 node during the sampling process \n\n";
+                 node during the sampling process \n\
+     bondLength - change the default bond length for depiction \n\n";
   python::def("Compute2DCoordsForReaction",
-              RDDepict::compute2DCoordsForReaction,
+              RDKit::Compute2DCoordsForReaction,
 	      (python::arg("reaction"),
 	       python::arg("spacing")=2.0,
 	       python::arg("updateProps")=true,
@@ -231,7 +267,8 @@ Sample Usage:\n\
                python::arg("nFlipsPerSample")=0,
                python::arg("nSample")=0,
                python::arg("sampleSeed")=0,
-               python::arg("permuteDeg4Nodes")=false),
+               python::arg("permuteDeg4Nodes")=false,
+               python::arg("bondLength")=-1.0),
 	      docString.c_str());
 
 }

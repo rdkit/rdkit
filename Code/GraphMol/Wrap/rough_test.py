@@ -557,6 +557,14 @@ class TestCase(unittest.TestCase):
     self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==4)
     self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,3))==3)
     
+    l = Chem.FindAllSubgraphsOfLengthMToN(m,1,3)
+    self.failUnlessEqual(len(l),3)
+    self.failUnlessEqual(len(l[0]),5)
+    self.failUnlessEqual(len(l[1]),4)
+    self.failUnlessEqual(len(l[2]),3)
+    self.failUnlessRaises(ValueError,lambda :Chem.FindAllSubgraphsOfLengthMToN(m,4,3))
+
+    
     m = Chem.MolFromSmiles("CCC(C)CC")
     self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,1))==5)
     self.failUnless(len(Chem.FindAllSubgraphsOfLengthN(m,2))==5)
@@ -1945,6 +1953,24 @@ CAS<~>
     b = m.GetBondWithIdx(0)
     m=None
     self.failUnlessEqual(Chem.MolToSmiles(b.GetOwningMol()),'CCC')
+
+  def test60SmilesWriterClose(self) :
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','fewSmi.csv')
+    smiSup = Chem.SmilesMolSupplier(fileN, delimiter=",",
+                                      smilesColumn=1, nameColumn=0,
+                                      titleLine=0)
+    ms = [x for x in smiSup]
+    
+    ofile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','Wrap','test_data','outSmiles.txt')
+    writer = Chem.SmilesWriter(ofile)
+    for mol in ms:
+      writer.write(mol)
+    writer.close()
+
+    newsup=Chem.SmilesMolSupplier(ofile)
+    newms = [x for x  in newsup]
+    self.failUnlessEqual(len(ms),len(newms))
 
 if __name__ == '__main__':
   unittest.main()

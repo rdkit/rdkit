@@ -28,31 +28,43 @@ SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
    245
 (1 row)
 
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1C(=O)N';
+ count 
+-------
+   141
+(1 row)
+
 SET enable_indexscan=on;
 SET enable_bitmapscan=on;
 SET enable_seqscan=off;
 SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1';
  count 
 -------
-   865
+   901
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1';
  count 
 -------
-   242
+   245
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE 'c1ccccc1' <@ m;
  count 
 -------
-   865
+   901
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
  count 
 -------
-   242
+   245
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1C(=O)N';
+ count 
+-------
+   141
 (1 row)
 
 SET enable_indexscan=on;

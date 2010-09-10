@@ -14,17 +14,20 @@
 #include <set>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/cstdint.hpp>
+#include <RDGeneral/hash/hash.hpp>
 
-typedef double RINGINVAR;
-typedef std::set< RINGINVAR > RINGINVAR_SET;
+typedef std::set< boost::uint32_t > RINGINVAR_SET;
 typedef RINGINVAR_SET::const_iterator RINGINVAR_SET_CI;
-typedef std::vector< RINGINVAR > RINGINVAR_VECT;
+typedef std::vector< boost::uint32_t > RINGINVAR_VECT;
 
 namespace RingUtils {
   using namespace RDKit;
 
-  RINGINVAR computeRingInvariant(const INT_VECT &ring,unsigned int nAtoms){
-    return computeIntVectPrimesProduct(ring);
+  boost::uint32_t computeRingInvariant(INT_VECT ring,unsigned int nAtoms){
+    std::sort(ring.begin(),ring.end());
+    boost::uint32_t res=gboost::hash_range(ring.begin(),ring.end());
+    return res;
   }
 
   void convertToBonds(const VECT_INT_VECT &res, VECT_INT_VECT &brings, const ROMol &mol) {
@@ -126,7 +129,7 @@ namespace FindRings {
   typedef DOUBLE_INT_VECT_MAP::iterator DOUBLE_INT_VECT_MAP_I;
   typedef DOUBLE_INT_VECT_MAP::const_iterator DOUBLE_INT_VECT_MAP_CI;
 #else
-  typedef std::map<RINGINVAR, INT_VECT> RINGINVAR_INT_VECT_MAP;
+  typedef std::map<boost::uint32_t, INT_VECT> RINGINVAR_INT_VECT_MAP;
   typedef RINGINVAR_INT_VECT_MAP::iterator RINGINVAR_INT_VECT_MAP_I;
   typedef RINGINVAR_INT_VECT_MAP::const_iterator RINGINVAR_INT_VECT_MAP_CI;
 #endif
@@ -167,7 +170,7 @@ namespace FindRings {
       
         for (VECT_INT_VECT_CI nri = nrings.begin(); nri != nrings.end(); ++nri) {
           if (nri->size() == minSiz) {
-            RINGINVAR invr = RingUtils::computeRingInvariant(*nri,mol.getNumAtoms());
+            boost::uint32_t invr = RingUtils::computeRingInvariant(*nri,mol.getNumAtoms());
             if (invars.find(invr) == invars.end()) {
               res.push_back((*nri));
               invars.insert(invr);
@@ -274,13 +277,12 @@ namespace FindRings {
     DOUBLE_VECT_CI ici;
     for (d2i = d2nodes.begin(); d2i != d2nodes.end(); ++d2i) {
       cand = (*d2i);
-    
       VECT_INT_VECT srings;
       // we have to find all non duplicate possible smallest rings for each node
       nsmall = smallestRingsBfs(tMol, cand, srings, activeBonds);
       for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
-        RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
+        boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
         if (invars.find(invr) == invars.end()) {
           res.push_back(nring);
           invars.insert(invr);
@@ -342,7 +344,7 @@ namespace FindRings {
   
     for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
       const INT_VECT &nring = (*sri);
-      RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
+      boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
       if (invars.find(invr) == invars.end()) {
         res.push_back(nring);
         invars.insert(invr);
@@ -395,7 +397,7 @@ namespace FindRings {
         smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
-          RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
+          boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
 
           if (invars.find(invr) == invars.end()) {
             res.push_back(nring);
@@ -428,7 +430,7 @@ namespace FindRings {
         int nrngs = smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
-          RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
+          boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
           if (invars.find(invr) == invars.end()) {
             res.push_back(nring);
             invars.insert(invr);
@@ -442,7 +444,7 @@ namespace FindRings {
         nrngs = smallestRingsBfs(tMol, cand, trings, activeBonds,&forb);
         for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
           const INT_VECT &nring = (*sri);
-          RINGINVAR invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
+          boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
           if (invars.find(invr) == invars.end()) {
             res.push_back(nring);
             invars.insert(invr);
@@ -705,7 +707,7 @@ namespace RDKit {
           // collect all the degree two nodes;
           INT_VECT d2nodes;
           FindRings::pickD2Nodes(mol, d2nodes, curFrag, atomDegrees, activeBonds);
-
+          
           if (d2nodes.size() > 0) { // deal with the current degree two nodes
             // place to record any duplicate rings discovered from the current d2 nodes
             FindRings::findRingsD2nodes(mol, res, invars, d2nodes, atomDegrees, activeBonds);
@@ -745,11 +747,11 @@ namespace RDKit {
       // calculate the Frere-Jacque number
       int nexpt = (nbnds - nats + nfrags);
       int ssiz = res.size();
-      // first check that we got more than or equal to the number of expected rings
+
+      // first check that we got at least the number of expected rings
       if(ssiz<nexpt){
         throw ValueErrorException("could not find number of expected rings.");
       }
-  
       // if we have more than expected we need to do some cleanup
       // otherwise do som clean up work
       if (ssiz > nexpt) {

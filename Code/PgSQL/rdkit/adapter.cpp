@@ -173,7 +173,7 @@ makeMolSign(CROMol data) {
 	bytea			*ret = NULL;
 
 	try {
-          res = RDKit::LayeredFingerprintMol(*mol,0xFFFFFFFF,1,7,SSS_FP_SIZE);
+          res = RDKit::LayeredFingerprintMol(*mol,0x07,1,7,SSS_FP_SIZE);
           ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)res);
           delete res;
           res=0;
@@ -669,6 +669,32 @@ calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b, unsigned
 
   return res;
 }
+
+
+extern "C" MolSparseFingerPrint 
+addSFP(MolSparseFingerPrint a, MolSparseFingerPrint b) {
+	SparseFP	*res=NULL;
+	try {
+          SparseFP tmp=(*(SparseFP*)a+*(SparseFP*)b);
+          res=(SparseFP*)new SparseFP(tmp);
+	} catch (...) {
+		elog(ERROR, "addSFP: Unknown exception");
+	}
+	return (MolSparseFingerPrint)res;
+}
+
+extern "C" MolSparseFingerPrint 
+subtractSFP(MolSparseFingerPrint a, MolSparseFingerPrint b) {
+	SparseFP	*res=NULL;
+	try {
+          SparseFP tmp=(*(SparseFP*)a-*(SparseFP*)b);
+          res=(SparseFP*)new SparseFP(tmp);
+	} catch (...) {
+		elog(ERROR, "addSFP: Unknown exception");
+	}
+	return (MolSparseFingerPrint)res;
+}
+
 
 
 /*

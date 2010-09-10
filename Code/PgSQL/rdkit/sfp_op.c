@@ -215,6 +215,62 @@ sfp_dice_sml_op(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(res >= getDiceLimit() );		
 }
 
+PG_FUNCTION_INFO_V1(sfp_add);
+Datum		sfp_add(PG_FUNCTION_ARGS);
+Datum
+sfp_add(PG_FUNCTION_ARGS) {
+	MolSparseFingerPrint 	asfp,
+					bsfp;
+	MolSparseFingerPrint    fp;
+	SparseFingerPrint       *sfp;
+
+	fcinfo->flinfo->fn_extra = SearchSparseFPCache(
+								fcinfo->flinfo->fn_extra,
+								fcinfo->flinfo->fn_mcxt,
+								PG_GETARG_DATUM(0), 
+								NULL, &asfp, NULL);
+	fcinfo->flinfo->fn_extra = SearchSparseFPCache(
+								fcinfo->flinfo->fn_extra,
+								fcinfo->flinfo->fn_mcxt,
+								PG_GETARG_DATUM(1), 
+								NULL, &bsfp, NULL);
+
+	fp = addSFP(asfp, bsfp); 
+	sfp = deconstructMolSparseFingerPrint(fp);
+	freeMolSparseFingerPrint(fp);
+
+	PG_RETURN_SPARSEFINGERPRINT_P(sfp);
+}
+
+PG_FUNCTION_INFO_V1(sfp_subtract);
+Datum		sfp_subtract(PG_FUNCTION_ARGS);
+Datum
+sfp_subtract(PG_FUNCTION_ARGS) {
+	MolSparseFingerPrint 	asfp,
+					bsfp;
+	MolSparseFingerPrint    fp;
+	SparseFingerPrint       *sfp;
+
+	fcinfo->flinfo->fn_extra = SearchSparseFPCache(
+								fcinfo->flinfo->fn_extra,
+								fcinfo->flinfo->fn_mcxt,
+								PG_GETARG_DATUM(0), 
+								NULL, &asfp, NULL);
+	fcinfo->flinfo->fn_extra = SearchSparseFPCache(
+								fcinfo->flinfo->fn_extra,
+								fcinfo->flinfo->fn_mcxt,
+								PG_GETARG_DATUM(1), 
+								NULL, &bsfp, NULL);
+
+	fp = subtractSFP(asfp, bsfp); 
+	sfp = deconstructMolSparseFingerPrint(fp);
+	freeMolSparseFingerPrint(fp);
+
+	PG_RETURN_SPARSEFINGERPRINT_P(sfp);
+}
+
+
+
 #endif
 
 

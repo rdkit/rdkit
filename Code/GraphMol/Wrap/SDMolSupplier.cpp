@@ -45,7 +45,7 @@ namespace RDKit {
        >>> mol2 = suppl.next()\n \
        >>> suppl.reset()\n \
        >>> mol3 = suppl.next()\n \
-       # mol3 and mol1 are the same: \
+       # mol3 and mol1 are the same: \n \
        >>> MolToSmiles(mol3)==MolToSmiles(mol1)\n \
 \n \
     3) Random Access:\n \

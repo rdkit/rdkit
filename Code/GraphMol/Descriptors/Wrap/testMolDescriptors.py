@@ -128,8 +128,14 @@ class TestCase(unittest.TestCase) :
     fp = rdMD.GetMorganFingerprint(mol,0)
     self.failUnless(len(fp.GetNonzeroElements())==4)
     fp = rdMD.GetMorganFingerprint(mol,1)
-    self.failUnless(len(fp.GetNonzeroElements())==9)
+    self.failUnless(len(fp.GetNonzeroElements())==8)
     fp = rdMD.GetMorganFingerprint(mol,2)
+    self.failUnless(len(fp.GetNonzeroElements())==9)
+    fp = rdMD.GetMorganFingerprint(mol,0,useChirality=True)
+    self.failUnless(len(fp.GetNonzeroElements())==4)
+    fp = rdMD.GetMorganFingerprint(mol,1,useChirality=True)
+    self.failUnless(len(fp.GetNonzeroElements())==9)
+    fp = rdMD.GetMorganFingerprint(mol,2,useChirality=True)
     self.failUnless(len(fp.GetNonzeroElements())==10)
 
     mol = Chem.MolFromSmiles('CCCCC')
@@ -148,6 +154,25 @@ class TestCase(unittest.TestCase) :
     self.failIfEqual(vs1,vs2)
     fp1 = rdMD.GetMorganFingerprint(mol,2,invariants=vs2)
     self.failIfEqual(fp1,fp2)
+
+    mol = Chem.MolFromSmiles('Cc1ccccc1')
+    vs1 = rdMD.GetFeatureInvariants(mol)
+    self.failUnlessEqual(len(vs1),mol.GetNumAtoms())
+    self.failUnlessEqual(vs1[0],0)
+    self.failIfEqual(vs1[1],0)
+    self.failUnlessEqual(vs1[1],vs1[2])
+    self.failUnlessEqual(vs1[1],vs1[3])
+    self.failUnlessEqual(vs1[1],vs1[4])
+
+    mol = Chem.MolFromSmiles('FCCCl')
+    vs1 = rdMD.GetFeatureInvariants(mol)
+    self.failUnlessEqual(len(vs1),mol.GetNumAtoms())
+    self.failUnlessEqual(vs1[1],0)
+    self.failUnlessEqual(vs1[2],0)
+    self.failIfEqual(vs1[0],0)
+    self.failUnlessEqual(vs1[0],vs1[3])
+    
+
     
   def testCrippen(self):
     mol = Chem.MolFromSmiles("NCO");

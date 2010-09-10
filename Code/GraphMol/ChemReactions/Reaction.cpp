@@ -775,4 +775,36 @@ namespace RDKit {
     return res;
   }
 
+  bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
+                                      unsigned int &which){
+    if(!rxn.isInitialized()){
+     throw ChemicalReactionException("initMatchers() must be called first");
+    }
+    which=0;
+    for(MOL_SPTR_VECT::const_iterator iter=rxn.beginReactantTemplates();
+        iter!=rxn.endReactantTemplates();++iter,++which){
+      MatchVectType tvect;
+      if(SubstructMatch(mol,**iter,tvect)){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
+                                      unsigned int &which){
+    if(!rxn.isInitialized()){
+     throw ChemicalReactionException("initMatchers() must be called first");
+    }
+    which=0;
+    for(MOL_SPTR_VECT::const_iterator iter=rxn.beginProductTemplates();
+        iter!=rxn.endProductTemplates();++iter,++which){
+      MatchVectType tvect;
+      if(SubstructMatch(mol,**iter,tvect)){
+        return true;
+      }
+    }
+    return false;
+  }
+
 }

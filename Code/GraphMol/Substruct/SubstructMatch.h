@@ -26,7 +26,6 @@ namespace RDKit{
                        (pre-existing contents will be deleted)
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
-      \param registerQuery DEPRECATED ARGUMENT
 
       \return whether or not a match was found
     
@@ -34,8 +33,8 @@ namespace RDKit{
   bool SubstructMatch(const ROMol &mol,const ROMol &query,
 		      MatchVectType &matchVect,
 		      bool recursionPossible=true,
-		      bool useChirality=false,
-                      bool registerQuery=false);
+		      bool useChirality=false);
+
   //! Find all substructure matches for a query in a molecule
   /*!
       \param mol       The ROMol to be searched
@@ -45,8 +44,6 @@ namespace RDKit{
       \param uniquify  Toggles uniquification (by atom index) of the results
       \param recursionPossible  flags whether or not recursive matches are allowed
       \param useChirality  use atomic CIP codes as part of the comparison
-      \param registerQuery  DEPRECATED ARGUMENT
-
 
       \return the number of matches found
     
@@ -54,8 +51,7 @@ namespace RDKit{
   unsigned int SubstructMatch(const ROMol &mol,const ROMol &query,
 			      std::vector< MatchVectType > &matchVect,
 			      bool uniquify=true,bool recursionPossible=true,
-			      bool useChirality=false,
-                              bool registerQuery=false);
+			      bool useChirality=false);
 }
 
 #endif
