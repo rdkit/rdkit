@@ -2,7 +2,8 @@ The most recent version of the build instructions can always be found
 linked from the RDKit wiki: 
 http://code.google.com/p/rdkit/wiki/GettingStarted
 
-The instructions below are for source distributions from Q4 2009 on. 
+The instructions below are for the Q32010 release and subsequent releases.
+
 = Building on Linux or the Mac =
 
 == Getting Ready ==
@@ -14,44 +15,66 @@ The instructions below are for source distributions from Q4 2009 on.
       * sqlite3. You also need the shared libraries. This may require that you install a sqlite3-dev package.
       * You need to have numpy (http://www.scipy.org/NumPy) installed.
 
-*Mac Note* : I have tested this under Leopard using the standard MacOS development tools and python 2.5 distribution.
+*Mac Note* : I have tested this under both Leopard and Snow Leopard using the standard MacOS development tools and python 2.5 (2.6 for Snow Leopard) distributions.
 
 == Installing Boost ==
-  * *NOTE*: if your linux distribution has a boost-devel package including the python libraries, you may be able to use that and save yourself the steps below. I haven't tested this. _Update: if you *do* have a version of the boost libraries pre-installed and you want to use your own version, be careful when you build the code. We've seen at least one example on a Fedora system where cmake compiled using a user-installed version of boost and then linked against the system version. This led to segmentation faults._
+  * *NOTE*: if your linux distribution has a boost-devel package including the python,thre and regex libraries, you may be able to use that and save yourself the steps below. I haven't tested this. _Update: if you *do* have a version of the boost libraries pre-installed and you want to use your own version, be careful when you build the code. We've seen at least one example on a Fedora system where cmake compiled using a user-installed version of boost and then linked against the system version. This led to segmentation faults._
   * download the boost source distribution from [http://www.boost.org the boost web site]
   * extract the source somewhere on your machine, you're going to need it to build the RDKit as well as boost. (e.g. `/usr/local/src/boost_1_40_0`)
   * The following are required if you are planning on using the Python wrappers:
     * build and install the required boost shared libraries: 
      * `cd $BOOST`
-     * Building on 32 bit systems: `bjam --with-python release install`
-     * Building on 64 bit systems: `bjam --with-python address-model=64 release install`
+     * `./bootstrap.sh --with-libraries=python,regex`
+     * Building on 32 bit systems: `./bjam install`
+     * Building on 64 bit systems: `./bjam address-model=64 cflags=-fPIC cxxflags=-fPIC install`
 
     If you have any problems with this step, check the boost [http://www.boost.org/more/getting_started/unix-variants.html installation instructions].
 
 == Building the Code ==
   * follow the Installing Boost instructions above.
   * environment variables:
-    * RDBASE: the root directory of the RDKit distribution (e.g. ~/RDKit)
-    * LD_LIBRARY_PATH: make sure it includes $RDBASE/bin and wherever the boost shared libraries were installed
+    * RDBASE: the root directory of the RDKit distribution (e.g. ~/RDKit). *Note* this environment variable is now optional.
+    * *Linux:* LD_LIBRARY_PATH: make sure it includes $RDBASE/lib and wherever the boost shared libraries were installed
+    * *Mac:* DYLD_LIBRARY_PATH: make sure it includes $RDBASE/lib and wherever the boost shared libraries were installed
     * The following are required if you are planning on using the Python wrappers:
       * PYTHONPATH: make sure it includes $RDBASE
-    * if you built your own version of boost and cmake complains about not being able to find it, define the environment variable BOOST_ROOT to point to the directory containing the boost source.
   * Building: 
     * cd to $RDBASE
     * `mkdir build`
     * `cd build`
-    * `cmake ..` : See the section below on configuring the build if you need to specify a non-default version of python
+    * `cmake ..` : See the section below on configuring the build if you need to specify a non-default version of python or if you have boost in a non-standard location
     * `make` : this builds all libraries, regression tests, and wrappers (by default).
     * `make install`
+  * If you would like to install the RDKit somewhere other than in its source directory, there is now support for this by invoking cmake with different parameters. The following will build the RDKit and install it in the directory tree /scratch/usr :
+    {{{
+% cmake -DRDK_INSTALL_INTREE=0 -DCMAKE_INSTALL_PREFIX=/scratch/usr .. 
+% make install
+    }}}
+  This form of the build and install commands copies:
+      * python files to `/scratch/usr/lib/python2.6/site-packages/rdkit`
+      * shared libraries to `/scratch/usr/lib`
+      * header files to `/scratch/usr/include`
+      * data files, documentation, and extras to `/scratch/usr/share/RDKit`
+  To use this type of installation it is sufficient to make sure that /scratch/usr/lib is in your LD_LIBRARY_PATH (DYLD_LIBRARY_PATH on the Mac) and that /scratch/usr/lib/python2.6/site-packages is in your PYTHONPATH.
+
+  If you do not include the `CMAKE_INSTALL_PREFIX` argument above, it defaults to `/usr/local`.
+
+
+See below for a list of [#Frequently_Encountered_Problems frequently encountered problems] and solutions.
 
 == Testing the Build (optional, but recommended) ==
-  * create the databases used by the Python tests, requires sqlite3 to be installed:
-    * `sqlite3 $RDBASE/Data/RDTests.sqlt < $RDBASE/rdkit/Dbase/test_data/RDTests.sqlite`
-    * `sqlite3 $RDBASE/Data/RDData.sqlt < $RDBASE/rdkit/Dbase/test_data/RDData.sqlite`
-  * cd to $RDBASE/build and do `ctest`
+  * cd to $RDBASE/build and run `ctest`
   * you're done!
 
 == Advanced : Configuring the Build ==
+
+=== Specifying an alternate Boost installation ===
+
+You need to tell cmake where to find the boost libraries and header files:
+
+If you have put boost in /opt/local, the cmake invocation would look like:
+
+{{{cmake -DBOOST_ROOT=/opt/local ..}}}
 
 === Specifying an alternate Python installation ===
 
@@ -68,6 +91,32 @@ The `PYTHON_EXECUTABLE` part is optional if the correct python is the first vers
 You can completely disable building of the python wrappers by setting the configuration variable RDK_BUILD_PYTHON_WRAPPERS to nil:
 
 {{{cmake -D RDK_BUILD_PYTHON_WRAPPERS= ..}}}
+
+
+== Frequently Encountered Problems ==
+
+In each case I've replaced specific pieces of the path with `...`.
+
+*Problem*
+
+{{{
+ .../Code/GraphMol/Wrap/EditableMol.cpp:114:   instantiated from here
+ .../boost/type_traits/detail/cv_traits_impl.hpp:37: internal compiler error: in make_rtl_for_nonlocal_decl, at cp/decl.c:5067
+Please submit a full bug report,
+with preprocessed source if appropriate.
+See <URL:http://bugzilla.redhat.com/bugzilla> for instructions.
+Preprocessed source stored into /tmp/ccgSaXge.out file, please attach this to your bugreport.
+make[2]: *** [Code/GraphMol/Wrap/CMakeFiles/rdchem.dir/EditableMol.cpp.o] Error 1
+make[1]: *** [Code/GraphMol/Wrap/CMakeFiles/rdchem.dir/all] Error 2
+make: *** [all] Error 2
+}}}
+
+*Solution:*
+
+Add `#define BOOST_PYTHON_NO_PY_SIGNATURES` at the top of `Code/GraphMol/Wrap/EditableMol.cpp`
+
+[http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01178.html more information here]
+
 
 
 
