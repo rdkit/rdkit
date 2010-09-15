@@ -9,15 +9,16 @@
 """
 
 import os,sys
-if not os.environ.has_key('RDBASE'):
-  raise ImportError,'please set the RDBASE environment variable before using RDKit code'
-RDBaseDir=os.environ['RDBASE']
-RDCodeDir=os.path.join(RDBaseDir,'rdkit')
-RDDataDir=os.path.join(RDBaseDir,'Data')
-RDDocsDir=os.path.join(RDBaseDir,'Docs')
-RDDemoDir=os.path.join(RDBaseDir,'Demo')
-RDBinDir=os.path.join(RDBaseDir,'bin')
-RDProjDir=os.path.join(RDBaseDir,'Projects')
+if os.environ.has_key('RDBASE'):
+  RDBaseDir=os.environ['RDBASE']
+  RDCodeDir=os.path.join(RDBaseDir,'rdkit')
+  RDDataDir=os.path.join(RDBaseDir,'Data')
+  RDDocsDir=os.path.join(RDBaseDir,'Docs')
+  RDDemoDir=os.path.join(RDBaseDir,'Demo')
+  RDBinDir=os.path.join(RDBaseDir,'bin')
+  RDProjDir=os.path.join(RDBaseDir,'Projects')
+else:
+  from RDPaths import *
 
 rpcTestPort=8423
 pythonTestCommand="python"

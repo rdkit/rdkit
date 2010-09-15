@@ -29,6 +29,12 @@ rdkit_library(SmilesParse
               ${FLEX_SmilesL_OUTPUTS}  ${FLEX_SmartsL_OUTPUTS}
               LINK_LIBRARIES GraphMol)
 
+rdkit_headers(primes.h
+              SmartsWrite.h
+              SmilesParse.h
+              SmilesParseOps.h
+              SmilesWrite.h DEST GraphMol/SmilesParse)
+
 rdkit_test(smiTest1 test.cpp LINK_LIBRARIES SmilesParse GraphMol RDGeneral RDGeometryLib )
 
 rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch GraphMol RDGeneral RDGeometryLib )

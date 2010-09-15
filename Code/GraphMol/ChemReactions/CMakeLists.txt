@@ -3,6 +3,10 @@ rdkit_library(ChemReactions
 	      ReactionWriter.cpp ReactionDepict.cpp
               LINK_LIBRARIES Depictor FileParsers SubstructMatch)
 
+rdkit_headers(Reaction.h
+              ReactionParser.h
+              ReactionPickler.h DEST GraphMol/ChemReactions)
+
 rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES ChemReactions Depictor FileParsers SmilesParse SubstructMatch 
 GraphMol RDGeneral RDGeometryLib )
 

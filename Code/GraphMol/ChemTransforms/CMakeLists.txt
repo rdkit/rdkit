@@ -1,5 +1,7 @@
 rdkit_library(ChemTransforms ChemTransforms.cpp LINK_LIBRARIES SubstructMatch)
 
+rdkit_headers(ChemTransforms.h DEST GraphMol/ChemTransforms)
+
 # there's no Wrap subdirectory on the main trunk (but in "minimal" there is)..
 #add_subdirectory(Wrap)
 

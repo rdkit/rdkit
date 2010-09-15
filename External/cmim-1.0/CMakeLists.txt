@@ -1,4 +1,4 @@
-add_library(fastentropy fastentropy.cc misc.cc)
+add_library(fastentropy STATIC fastentropy.cc misc.cc)
 
 
 

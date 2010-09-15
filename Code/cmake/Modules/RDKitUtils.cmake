@@ -1,4 +1,12 @@
 include(BoostUtils)
+set(RDKit_VERSION "${RDKit_ABI}.${RDKit_Year}${RDKit_Quarter}")
+set(RDKit_RELEASENAME "${RDKit_Year}Q${RDKit_Quarter}")
+if (RDKit_Revision)
+  set(RDKit_RELEASENAME "${RDKit_RELEASENAME}_${RDKit_Revision}")
+  set(RDKit_VERSION "${RDKit_VERSION}.${RDKit_Revision}")
+else(RDKit_Revision)
+  set(RDKit_VERSION "${RDKit_VERSION}.0")
+endif(RDKit_Revision)
 
 macro(rdkit_library)
   PARSE_ARGUMENTS(RDKLIB
@@ -19,7 +27,7 @@ macro(rdkit_library)
     #IF(RDKLIB_SHARED)
       add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
       INSTALL(TARGETS ${RDKLIB_NAME} 
-              DESTINATION ${RDKit_BinDir}/${RDKLIB_DEST})
+              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
     #ELSE(RDKLIB_SHARED)        
     #  add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     #  INSTALL(TARGETS ${RDKLIB_NAME} 
@@ -29,8 +37,33 @@ macro(rdkit_library)
       target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
     ENDIF(RDKLIB_LINK_LIBRARIES)
   endif(MSVC)
+  if(WIN32)
+    set_target_properties(${RDKLIB_NAME} PROPERTIES 
+                          OUTPUT_NAME "${RDKLIB_NAME}" 
+                          VERSION "${RDKit_ABI}.${RDKit_Year}.${RDKit_Quarter}")
+  else(WIN32)
+    set_target_properties(${RDKLIB_NAME} PROPERTIES 
+                          OUTPUT_NAME ${RDKLIB_NAME} 
+                          VERSION ${RDKit_VERSION} 
+                          SOVERSION ${RDKit_ABI} )
+  endif(WIN32)			  
+  set_target_properties(${RDKLIB_NAME} PROPERTIES 
+                        ARCHIVE_OUTPUT_DIRECTORY ${RDK_ARCHIVE_OUTPUT_DIRECTORY}
+                        RUNTIME_OUTPUT_DIRECTORY ${RDK_RUNTIME_OUTPUT_DIRECTORY}
+                        LIBRARY_OUTPUT_DIRECTORY ${RDK_LIBRARY_OUTPUT_DIRECTORY})
 endmacro(rdkit_library)
   
+macro(rdkit_headers)
+  if (NOT RDK_INSTALL_INTREE)
+    PARSE_ARGUMENTS(RDKHDR
+      "DEST"
+      ""
+      ${ARGN})
+    # RDKHDR_DEFAULT_ARGS -> RDKHDR_DEST
+    install(FILES ${RDKHDR_DEFAULT_ARGS} DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST})
+  endif(NOT RDK_INSTALL_INTREE)
+endmacro(rdkit_headers)
+
 macro(rdkit_python_extension)
   PARSE_ARGUMENTS(RDKPY
     "LINK_LIBRARIES;DEPENDS;DEST"
@@ -41,9 +74,15 @@ macro(rdkit_python_extension)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
-if(MSVC)
-    set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd")
-endif(MSVC)  
+if(WIN32)
+    set_target_properties(${RDKPY_NAME} PROPERTIES SUFFIX ".pyd"
+                          RUNTIME_OUTPUT_DIRECTORY
+                          ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+else(WIN32)
+    set_target_properties(${RDKPY_NAME} PROPERTIES 
+                          LIBRARY_OUTPUT_DIRECTORY
+                          ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
+endif(WIN32)  
     target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES} 
                           ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
 

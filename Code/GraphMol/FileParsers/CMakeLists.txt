@@ -5,6 +5,11 @@ rdkit_library(FileParsers
               SmilesWriter.cpp SDWriter.cpp TDTMolSupplier.cpp TDTWriter.cpp
               TplFileParser.cpp TplFileWriter.cpp LINK_LIBRARIES SmilesParse GraphMol)
               
+rdkit_headers(FileParsers.h
+              FileParserUtils.h
+              MolFileStereochem.h
+              MolSupplier.h
+              MolWriters.h DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp 
            LINK_LIBRARIES FileParsers SmilesParse Depictor SubstructMatch GraphMol RDGeneral RDGeometryLib )
