@@ -293,7 +293,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      python::return_value_policy<python::manage_new_object>());
 
   docString="Returns the atom-pair fingerprint for a molecule as an ExplicitBitVect";
-  python::def("GetHashedAtomPairFingerprintAsBitBect",
+  python::def("GetHashedAtomPairFingerprintAsBitVect",
 	      RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect,
 	      (python::arg("mol"),
                python::arg("nBits")=2048,
@@ -349,7 +349,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
     RDKit::MorganFingerprints::morganFingerprintVersion;
   docString="Returns connectivity invariants (ECFP-like) for a molecule.";
   python::def("GetConnectivityInvariants", GetConnectivityInvariants,
-              (python::arg("mol"),python::arg("includeRingMembership")=false),
+              (python::arg("mol"),python::arg("includeRingMembership")=true),
               docString.c_str());
   python::scope().attr("_ConnectivityInvariants_version")=
     RDKit::MorganFingerprints::morganConnectivityInvariantVersion;

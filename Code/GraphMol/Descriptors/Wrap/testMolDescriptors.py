@@ -149,7 +149,7 @@ class TestCase(unittest.TestCase) :
     fp2 = rdMD.GetMorganFingerprint(mol,2)
     self.failUnlessEqual(fp1,fp2)
     
-    vs2 = rdMD.GetConnectivityInvariants(mol,True)
+    vs2 = rdMD.GetConnectivityInvariants(mol,False)
     self.failUnlessEqual(len(vs2),mol.GetNumAtoms())
     self.failIfEqual(vs1,vs2)
     fp1 = rdMD.GetMorganFingerprint(mol,2,invariants=vs2)

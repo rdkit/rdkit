@@ -132,7 +132,7 @@ namespace RDKit {
     */
     void getConnectivityInvariants(const ROMol &mol,
                                    std::vector<boost::uint32_t> &invars,
-                                   bool includeRingMembership=false);
+                                   bool includeRingMembership=true);
     const std::string morganConnectivityInvariantVersion="1.0.0";
 
     //! returns the feature invariants for a molecule

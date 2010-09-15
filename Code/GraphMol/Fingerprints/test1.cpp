@@ -746,16 +746,16 @@ void test1MorganFPs(){
 
     mol = SmilesToMol("O=C(O)CC1CC1");
     fp = MorganFingerprints::getFingerprint(*mol,0);
-    TEST_ASSERT(fp->getNonzeroElements().size()==5);
+    TEST_ASSERT(fp->getNonzeroElements().size()==6);
     delete fp;
     fp = MorganFingerprints::getFingerprint(*mol,1);
-    TEST_ASSERT(fp->getNonzeroElements().size()==11);
+    TEST_ASSERT(fp->getNonzeroElements().size()==12);
     delete fp;
     fp = MorganFingerprints::getFingerprint(*mol,2);
-    TEST_ASSERT(fp->getNonzeroElements().size()==15);
+    TEST_ASSERT(fp->getNonzeroElements().size()==16);
     delete fp;
     fp = MorganFingerprints::getFingerprint(*mol,3);
-    TEST_ASSERT(fp->getNonzeroElements().size()==16);
+    TEST_ASSERT(fp->getNonzeroElements().size()==17);
     delete fp;
 
     delete mol;
@@ -771,32 +771,32 @@ void test1MorganFPs(){
     mol2 = SmilesToMol("OC(=O)CC1CC1");
     fp = MorganFingerprints::getFingerprint(*mol,0);
     fp2 = MorganFingerprints::getFingerprint(*mol2,0);
-    TEST_ASSERT(fp->getNonzeroElements().size()==5);
-    TEST_ASSERT(fp2->getNonzeroElements().size()==5);
+    TEST_ASSERT(fp->getNonzeroElements().size()==6);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==6);
     TEST_ASSERT(*fp==*fp2);
     delete fp;
     delete fp2;
 
     fp = MorganFingerprints::getFingerprint(*mol,1);
     fp2 = MorganFingerprints::getFingerprint(*mol2,1);
-    TEST_ASSERT(fp->getNonzeroElements().size()==11);
-    TEST_ASSERT(fp2->getNonzeroElements().size()==11);
+    TEST_ASSERT(fp->getNonzeroElements().size()==12);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==12);
     TEST_ASSERT(*fp==*fp2);
     delete fp;
     delete fp2;
 
     fp = MorganFingerprints::getFingerprint(*mol,2);
     fp2 = MorganFingerprints::getFingerprint(*mol2,2);
-    TEST_ASSERT(fp->getNonzeroElements().size()==15);
-    TEST_ASSERT(fp2->getNonzeroElements().size()==15);
+    TEST_ASSERT(fp->getNonzeroElements().size()==16);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==16);
     TEST_ASSERT(*fp==*fp2);
     delete fp;
     delete fp2;
 
     fp = MorganFingerprints::getFingerprint(*mol,3);
     fp2 = MorganFingerprints::getFingerprint(*mol2,3);
-    TEST_ASSERT(fp->getNonzeroElements().size()==16);
-    TEST_ASSERT(fp2->getNonzeroElements().size()==16);
+    TEST_ASSERT(fp->getNonzeroElements().size()==17);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==17);
     TEST_ASSERT(*fp==*fp2);
     delete fp;
     delete fp2;
