@@ -9,8 +9,8 @@
    fingerprints that are not backwards compatible.
 
 Acknowledgements:
- - Andrew Dalke, Nik Stiefl, Peter Gedeck, Christian Kramer, TJ O'Donnell, Markus
-   Kossner 
+ - Andrew Dalke, Paul Emsley, Peter Gedeck, Uwe Hoffmann, Christian Kramer, Markus
+   Kossner, TJ O'Donnell, Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
    
 Bug Fixes: 
  - A typo in the parameters for the Crippen clogp calculator was
@@ -21,6 +21,7 @@ Bug Fixes:
    or crashes in large molecules was fixed.  
  - the Murtagh clustering code should now execute correctly on recent
    versions of the MacOS.
+ - some problems with the cairo canvas were fixed
 
 New Features:
  - a PostgreSQL cartridge for similarity and substructure searching
@@ -28,18 +29,20 @@ New Features:
  - The Morgan fingerprinting code accepts additional arguments that
    control whether or not bond order and chirality are taken into
    account. By default chirality is ignored and the bond order is
-   used. 
+   used. Another change with the MorganFPs is that ring information is
+   now included by default. 
  - 2D coordinates can now be generated for chemical reactions.
  - The functions IsMoleculeReactantOfReaction and
    IsMoleculeProductOfReaction have been added to the C++
-   interface. From python these are methods of the ChemicalReaction class:
+   interface. From python these are methods of the ChemicalReaction
+   class: 
    rxn.IsMoleculeReactant and rxn.IsMoleculeProduct
  - The default bond length for depiction can now be changed.
  - FCFP-like fingerprints can now be generated with the Morgan
    fingerprinting code by starting with feature invariants.
  - The close() method has been added to MolWriters.
- - Atom-pair and topological-torsion fingerprints can now also be
-   calculated as bit vectors.
+ - Morgan, atom-pair, and topological-torsion fingerprints can now
+   also be calculated as bit vectors.
  - RDKit and layered fingerprints can now be generated using only
    linear paths.
  - the function findAllPathsOfLengthMtoN() was added
@@ -52,12 +55,24 @@ Removed modules:
  - Projects/SDView
 
 Other:
+ - the RDBASE environment variable is no longer required. It will be
+   used if set, but the code should work without it
  - The directory Contrib/M_Kossner contains two new contributions from
    Markus Kossner.
  - A change was made to the subgraph matching code that speeds up
    substructure searches involving repeated recursive queries.
- - the deprecated useChirality argument has been removed from the
-   substructure matching functions. 
+ - the deprecated registerQuery argument has been removed from the
+   substructure matching functions.
+ - the empty header files AtomProps.h and BondProps.h have been
+   removed.
+ - in order to simplify the build process the test databases are now
+   in svn
+ - some python functions to calculate descriptors (i.e. pyMolWt,
+   pyMolLogP, etc.) that have C++ equivalents have been removed to
+   clean up the interface
+ - the PIL canvas should no longer generate warnings
+ - Thanks to the help of Gianluca Sforna and Riccardo Vianello, it is
+   now much easier to package and distribute the RDKit.
 
 ******  Release_Q22010_1 *******
 (Changes relative to Release_Q12010_1)
