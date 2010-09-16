@@ -1,16 +1,18 @@
 # $Id$
 #
-# Copyright (C) 2006-2008 Greg Landrum
+# Copyright (C) 2006-2010 Greg Landrum
 #  All Rights Reserved
 #
 import os.path
 
 def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=[]):
+  """ returns a PIL image containing a drawing of the molecule
+  """
   if not mol:
     raise ValueError,'Null molecule provided'
   import MolDrawing
   try:
-    from aggdraw import Draw
+    from aggdraw import Draw2
     import Image
     MolDrawing.registerCanvas('agg')
     Canvas = Draw
@@ -18,7 +20,7 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=
   except:
     useAGG=False
     try:
-      import cairo
+      import cairo2
       import Image
       MolDrawing.registerCanvas('cairo')
       from cairoCanvas import Canvas
@@ -53,7 +55,9 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=
   return img
 
 def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
-              highlightAtoms=[]):
+              highlightAtoms=[],imageType=None):
+  """ Generates a drawing of a molecule and writes it to a file
+  """
   # original contribution from Uwe Hoffmann
   if not fileName:
     raise ValueError,'no fileName provided'
@@ -61,7 +65,8 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
     raise ValueError,'Null molecule provided'
 
   import MolDrawing
-  imageType=os.path.splitext(fileName)[1][1:]
+  if imageType is None:
+    imageType=os.path.splitext(fileName)[1][1:]
   try:
     import cairo
     MolDrawing.registerCanvas('cairo')
@@ -99,6 +104,9 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
 
 def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True,
                    highlightAtoms=[]):
+  """  DEPRECATED:  please use MolToFile instead
+
+  """
   img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds,highlightAtoms=highlightAtoms)
   img.save(filename)
     
@@ -107,6 +115,8 @@ tkLabel=None
 tkPI=None
 def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
             title='RDKit Molecule'):
+  """ Generates a picture of a molecule and displays it in a Tkinter window
+  """
   global tkRoot,tkLabel,tkPI
   import Tkinter
   import ImageTk
