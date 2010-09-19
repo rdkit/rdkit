@@ -1,11 +1,12 @@
 # $Id$
 #
-# Copyright (C) 2001-2006 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2001-2010 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved  @@
 #
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
+import collections
 
 def _pyMolWt(mol,heavyAtomsOnly=0):
   """ DEPRECATED 
@@ -64,6 +65,62 @@ def NumValenceElectrons(mol):
 
   return accum
 NumValenceElectrons.version="1.0.0"
+
+def MolecularFormula(mol):
+   """Return the molecular formula
+
+   contribution from Andrew Dalke
+   """
+
+   # Count the different atom types
+   counts = collections.defaultdict(int)
+   charge = 0
+   for atom in mol.GetAtoms():
+       symb = atom.GetSymbol()
+       counts[symb]+=1
+       # Also track the implicit hydrogen counts and total charge
+       num_hydrogens = atom.GetTotalNumHs()
+       # A counts key should only exist if an element is present.
+       # Do this test to prevent the creation of an "H": 0 for
+       # things like [C], which have no implicit hydrogens.
+       if num_hydrogens:
+           counts['H'] += num_hydrogens
+       charge += atom.GetFormalCharge()
+
+   # Alphabetize elements by name
+   elements = sorted(counts)
+
+   # Put into Hill system order:
+   # If there are carbons then they go first, followed by hydrogens,
+   # then followed alphabetically by the other elements.
+   # If there are no carbons then the elements are in alphabetical
+   # order (including hydrogens)
+   if "C" in elements:
+       elements.remove("C")
+       elements.insert(0, "C")
+       if "H" in elements:
+           elements.remove("H")
+           elements.insert(1, "H")
+
+   # Include the count, so {"C": 1, "H": 4} becomes ["C", "H4"]
+   formula_terms = []
+   for element in elements:
+       formula_terms.append(element)
+       if counts[element] > 1:
+           formula_terms.append(str(counts[element]))
+
+   # Handle the total charge. The result will be NH4+, Ca+2, etc.
+   if charge == 0:
+       pass
+   elif charge == 1:
+       formula_terms.append("+")
+   elif charge == -1:
+       formula_terms.append("-")
+   else:
+       formula_terms.append("%+d" % charge)
+
+   return "".join(formula_terms)
+MolecularFormula.version="1.0.0"
 
 #------------------------------------
 #
