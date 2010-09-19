@@ -1,5 +1,10 @@
 include(BoostUtils)
-set(RDKit_VERSION "${RDKit_ABI}.${RDKit_Year}${RDKit_Quarter}")
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+# Mac OS X specific code
+  set(RDKit_VERSION "${RDKit_Year}${RDKit_Quarter}")
+ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(RDKit_VERSION "${RDKit_ABI}.${RDKit_Year}${RDKit_Quarter}")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 set(RDKit_RELEASENAME "${RDKit_Year}Q${RDKit_Quarter}")
 if (RDKit_Revision)
   set(RDKit_RELEASENAME "${RDKit_RELEASENAME}_${RDKit_Revision}")
@@ -84,7 +89,7 @@ else(WIN32)
                           ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
 endif(WIN32)  
     target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES} 
-                          ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+                          ${PYTHON_LIBRARIES} ${Boost_LIBRARIES} )
 
     INSTALL(TARGETS ${RDKPY_NAME} 
             LIBRARY DESTINATION ${RDKit_PythonDir}/${RDKPY_DEST})
