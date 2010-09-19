@@ -33,9 +33,13 @@ namespace RDKit {
 
   struct sdwriter_wrap {
     static void wrap() {
+      std::string docStr="Constructor.\n\n"
+        "   ARGUMENTS:\n\n"
+        "     - fileName: name of the output file. ('-' to write to stdout)\n\n";
       python::class_<SDWriter>("SDWriter",
 			       "A class for writing molecules to SD files.\n",
-			       python::init<std::string>(python::args("fileName")))
+			       python::init<std::string>(python::args("fileName"),
+                                                         docStr.c_str()))
 	.def("SetProps", SetSDWriterProps,
 	     "Sets the properties to be written to the output file\n\n"
 	     "  ARGUMENTS:\n\n"

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -297,10 +297,10 @@ namespace RDKit{
     void setProp(const std::string key, T val, bool computed=false) const {
       if (computed) {
 	STR_VECT compLst;
-	if(hasProp("computedProps")) getProp("computedProps", compLst);
+	if(hasProp("__computedProps")) getProp("__computedProps", compLst);
 	if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
 	  compLst.push_back(key);
-	  dp_props->setVal("computedProps", compLst);
+	  dp_props->setVal("__computedProps", compLst);
 	}
       }
       //setProp(key.c_str(),val);
@@ -359,13 +359,13 @@ namespace RDKit{
     };
     //! \overload
     void clearProp(const std::string key) const {
-      if(hasProp("computedProps")){
+      if(hasProp("__computedProps")){
 	STR_VECT compLst;
-	getProp("computedProps", compLst);
+	getProp("__computedProps", compLst);
 	STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
 	if (svi != compLst.end()) {
 	  compLst.erase(svi);
-	  dp_props->setVal("computedProps", compLst);
+	  dp_props->setVal("__computedProps", compLst);
 	}
       }    
       dp_props->clearVal(key);
@@ -373,14 +373,14 @@ namespace RDKit{
 
     //! clears all of our \c computed \c properties
     void clearComputedProps() const {
-      if(!hasProp("computedProps")) return;
+      if(!hasProp("__computedProps")) return;
       STR_VECT compLst;
-      getProp("computedProps", compLst);
+      getProp("__computedProps", compLst);
       BOOST_FOREACH(const std::string &sv,compLst){
 	dp_props->clearVal(sv);
       }
       compLst.clear();
-      dp_props->setVal("computedProps", compLst);
+      dp_props->setVal("__computedProps", compLst);
     }
 
     //! returns the perturbation order for a list of integers

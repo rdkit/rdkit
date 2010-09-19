@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -482,9 +482,9 @@ namespace RDKit{
                          bool includeComputed=true) const {
       const STR_VECT &tmp=dp_props->keys();
       STR_VECT res,computed;
-      if(!includeComputed && hasProp("computedProps")){
-        getProp("computedProps",computed);
-        computed.push_back("computedProps");
+      if(!includeComputed && hasProp("__computedProps")){
+        getProp("__computedProps",computed);
+        computed.push_back("__computedProps");
       }
       
       STR_VECT::const_iterator pos = tmp.begin();
@@ -518,10 +518,10 @@ namespace RDKit{
     void setProp(const std::string key, T val, bool computed=false) const {
       if (computed) {
         STR_VECT compLst;
-        getProp("computedProps", compLst);
+        getProp("__computedProps", compLst);
         if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
           compLst.push_back(key);
-          dp_props->setVal("computedProps", compLst);
+          dp_props->setVal("__computedProps", compLst);
         }
       }
       dp_props->setVal(key, val);
@@ -579,11 +579,11 @@ namespace RDKit{
     //! \overload
     void clearProp(const std::string key) const {
       STR_VECT compLst;
-      getProp("computedProps", compLst);
+      getProp("__computedProps", compLst);
       STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
       if (svi != compLst.end()) {
         compLst.erase(svi);
-        dp_props->setVal("computedProps", compLst);
+        dp_props->setVal("__computedProps", compLst);
       }
     
       dp_props->clearVal(key);

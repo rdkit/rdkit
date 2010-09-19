@@ -29,9 +29,13 @@ namespace RDKit {
   }
   struct tdtwriter_wrap {
     static void wrap() {
+      std::string docStr="Constructor.\n\n"
+        "   ARGUMENTS:\n\n"
+        "     - fileName: name of the output file. ('-' to write to stdout)\n\n";
       python::class_<TDTWriter>("TDTWriter",
 				"A class for writing molecules to TDT files.\n",
-				python::init<std::string>(python::args("fileName")))
+				python::init<std::string>(python::args("fileName"),
+                                                          docStr.c_str()))
 	.def("SetProps", SetTDTWriterProps,
 	     "Sets the properties to be written to the output file\n\n"
 	     "  ARGUMENTS:\n\n"

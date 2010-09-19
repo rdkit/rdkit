@@ -29,7 +29,7 @@ namespace RDKit {
   }
   std::string swDocStr="Constructor.\n\n"
   "   ARGUMENTS:\n\n"
-  "     - fileName: name of the output file.\n"
+  "     - fileName: name of the output file. ('-' to write to stdout)\n"
   "     - delimiter: (optional) delimiter to be used to separate entries on each line.\n"
   "     - nameHeader: (optional) text to use for the name column in the header line.\n"
   "                   If this is blank, names will not be dumped.\n"

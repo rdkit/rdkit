@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2006 Rational Discovery LLC
+//  Copyright (C) 2002-2010 Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -38,7 +38,7 @@ namespace RDKit {
      ******************************************************************************/
   public:
     /*!
-      \param fileName       : filename to write to
+      \param fileName       : filename to write to ("-" to write to stdout)
       \param delimiter      : delimiter to use in the text file
       \param nameHeader     : used to label the name column in the output. If this
                               is provided as the empty string, no names will be written.
@@ -125,6 +125,9 @@ namespace RDKit {
      *  - then a call is made to the write function for each molecule that needs to be written out
      **********************************************************************************************/
   public:
+    /*!
+      \param fileName       : filename to write to ("-" to write to stdout)
+     */
     SDWriter(std::string fileName);
     SDWriter(std::ostream *outStream,bool takeOwnership=false);
 
@@ -180,6 +183,9 @@ namespace RDKit {
      *  - then a call is made to the write function for each molecule that needs to be written out
      **********************************************************************************************/
   public:
+    /*!
+      \param fileName       : filename to write to ("-" to write to stdout)
+     */
     TDTWriter(std::string fileName);
     TDTWriter(std::ostream *outStream,bool takeOwnership=false);
 

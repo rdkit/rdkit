@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2005-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -127,14 +127,14 @@ namespace RDKit {
       // out to the file
       STR_VECT properties = mol.getPropList();
       STR_VECT compLst;
-      if (mol.hasProp("computedProps")) {
-	mol.getProp("computedProps", compLst);
+      if (mol.hasProp("__computedProps")) {
+	mol.getProp("__computedProps", compLst);
       }
       STR_VECT_CI pi;
       for (pi = properties.begin(); pi != properties.end(); pi++) {
 
 	// ignore any of the following properties
-	if ( ((*pi) == "computedProps") || 
+	if ( ((*pi) == "__computedProps") || 
 	     ((*pi) == "_Name") ||
 	     ((*pi) == "_MolFileInfo") ||
 	     ((*pi) == "_MolFileComments")) {
