@@ -106,6 +106,11 @@ namespace RDKit{
     MolOps::setConjugation(wmol);
   }
 
+  void assignRadicalsMol(ROMol &mol) {
+    RWMol &wmol = static_cast<RWMol &>(mol);
+    MolOps::assignRadicals(wmol);
+  }
+
   void setHybridizationMol(ROMol &mol) {
     RWMol &wmol = static_cast<RWMol &>(mol);
     MolOps::setHybridization(wmol);
@@ -517,10 +522,43 @@ namespace RDKit{
       python::def("SetAromaticity", setAromaticityMol,
                   (python::arg("mol")),
                   docString.c_str());
+      docString="finds conjugated bonds\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
       python::def("SetConjugation", setConjugationMol,
                   (python::arg("mol")),
                   docString.c_str());
+      docString="Assigns hybridization states to atoms\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
       python::def("SetHybridization", setHybridizationMol,
+                  (python::arg("mol")),
+                  docString.c_str());
+      docString="Assigns radical counts to atoms\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+      python::def("AssignRadicals", assignRadicalsMol,
                   (python::arg("mol")),
                   docString.c_str());
       

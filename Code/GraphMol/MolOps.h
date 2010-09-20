@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -251,7 +251,9 @@ namespace RDKit{
     */
     void cleanUp(RWMol &mol);
 
-
+    //! Called by the sanitizer to assign radical counts to atoms
+    void assignRadicals(RWMol &mol);
+    
     //! adjust the number of implicit and explicit Hs for special cases
     /*!
 
