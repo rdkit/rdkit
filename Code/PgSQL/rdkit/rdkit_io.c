@@ -31,6 +31,9 @@
 //
 #include "rdkit.h"
 #include "fmgr.h"
+#if PG_VERSION_NUM>=90000
+#include "utils/bytea.h"
+#endif
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;

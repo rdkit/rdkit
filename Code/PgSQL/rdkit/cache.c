@@ -243,7 +243,11 @@ static void
 deleteCacheContext(MemoryContext context)
 {
 	cleanupRDKitCache(context);
+#if PG_VERSION_NUM>=90000
+	methodsOrig->delete_context(context);
+#else
 	methodsOrig->delete(context);
+#endif
 }
 
 static ValueCache*
@@ -271,7 +275,7 @@ createCache(void *cache, struct MemoryContextData * ctx)
 		methodsOrig = ctx->methods;
 		methodsCache = *methodsOrig;
 		methodsCache.reset = resetCacheContext;
-		methodsCache.delete = deleteCacheContext;
+		methodsCache.delete_context = deleteCacheContext;
 	}
 
 	/*
@@ -299,7 +303,7 @@ createCache(void *cache, struct MemoryContextData * ctx)
 
 		newholder = malloc(sizeof(*newholder));
 		if (!newholder)
-			elog(ERROR, "Could not allocate %d bytes", sizeof(*newholder)); 
+			elog(ERROR, "Could not allocate %ld bytes", sizeof(*newholder)); 
 
 		/* init holder */
 		newholder->ctx = ctx;
