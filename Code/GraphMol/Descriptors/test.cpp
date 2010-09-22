@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved  @@
 //
@@ -186,6 +186,11 @@ void test3(){
   amw = CalcAMW(*mol,true);
   TEST_ASSERT(feq(amw,12.011,.001));
   delete mol;
+
+  mol = SmilesToMol("C[2H]");
+  TEST_ASSERT(mol);
+  amw = CalcAMW(*mol);
+  TEST_ASSERT(feq(amw,17.0,.1));
 
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;

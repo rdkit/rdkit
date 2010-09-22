@@ -14,16 +14,16 @@ namespace RDKit{
     static std::string _amwVersion="1.0.0";
     double CalcAMW(const ROMol &mol,bool onlyHeavy){
       double res=0.0;
-      const PeriodicTable *table=PeriodicTable::getTable();
       for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	  atomIt != mol.endAtoms();++atomIt){
 	int atNum=(*atomIt)->getAtomicNum();
 	if(atNum!=1 || !onlyHeavy){
-	  res += table->getAtomicWeight(atNum);
+	  res += (*atomIt)->getMass();
 	}
 
 	// add our implicit Hs if we need to:
 	if(!onlyHeavy){
+          const PeriodicTable *table=PeriodicTable::getTable();
 	  res += (*atomIt)->getTotalNumHs()*table->getAtomicWeight(1);
 	}
       }

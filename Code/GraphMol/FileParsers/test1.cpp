@@ -2298,6 +2298,30 @@ void testIssue2963522(){
   BOOST_LOG(rdInfoLog) << " done"<< std::endl;
 }
 
+void testIssue3073163(){
+  BOOST_LOG(rdInfoLog) << " Testing issue 3073163 "<< std::endl;
+  {
+    std::string smiles="C[2H]";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles="[2#1]";
+    RWMol *p = SmartsToMol(smiles);
+    TEST_ASSERT(p);
+
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*p,mv));
+    RWMol *m2=MolBlockToMol(MolToMolBlock(*m));
+    TEST_ASSERT(m2);
+    TEST_ASSERT(SubstructMatch(*m2,*p,mv));
+
+    delete m2;
+
+    delete m;
+    delete p;
+  }
+
+  BOOST_LOG(rdInfoLog) << " done"<< std::endl;
+}
 
 
 
@@ -2340,6 +2364,7 @@ int main(int argc,char *argv[]){
   test1V3K();
   test2V3K();
   testIssue2963522();
+  testIssue3073163();
 #endif
 
 

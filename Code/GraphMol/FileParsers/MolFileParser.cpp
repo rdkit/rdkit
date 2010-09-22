@@ -761,7 +761,7 @@ namespace RDKit{
     
       if(massDiff!=0) {
         // FIX: this isn't precisely correct because we should be doing the difference w.r.t. most abundant species.
-        res->setMass(res->getMass()+massDiff);
+        res->setMass(floor(res->getMass()+.001)+massDiff);
 	res->setProp("_hasMassQuery",true);
       }
     
