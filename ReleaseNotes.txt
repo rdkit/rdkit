@@ -9,7 +9,7 @@
    fingerprints that are not backwards compatible.
 
 Acknowledgements:
- - Andrew Dalke, Paul Emsley, Peter Gedeck, Uwe Hoffmann, Christian Kramer, Markus
+ - Andrew Dalke, James Davidson, Paul Emsley, Peter Gedeck, Uwe Hoffmann, Christian Kramer, Markus
    Kossner, TJ O'Donnell, Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
    
 Bug Fixes: 
@@ -22,6 +22,10 @@ Bug Fixes:
  - the Murtagh clustering code should now execute correctly on recent
    versions of the MacOS.
  - some problems with the cairo canvas were fixed
+ - a problem with matching non-default isotope SSS queries for molecules
+   read in from CTABs was fixed (issue 3073163).
+ - a problem with calculating AMW for molecules with non-default isotopes
+   was fixed.
 
 New Features:
  - a PostgreSQL cartridge for similarity and substructure searching
