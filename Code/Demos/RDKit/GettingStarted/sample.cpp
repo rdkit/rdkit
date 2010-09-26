@@ -1,7 +1,11 @@
 // $Id$
 //
 //  Copyright (C) 2008-2010 Greg Landrum
-//   All Rights Reserved
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 //  Can be built with:
 //   g++ -o sample.exe sample.cpp -I$RDBASE/Code -I$RDBASE/Extern \ 

@@ -1,7 +1,10 @@
 // $Id: sample.cpp 793 2008-08-17 14:33:30Z glandrum $
 //
 //  Copyright (C) 2009 Greg Landrum
-//   All Rights Reserved
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 
 #include <GraphMol/RDKitBase.h>

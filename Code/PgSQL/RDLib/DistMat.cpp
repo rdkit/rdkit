@@ -2,7 +2,11 @@
 //
 //  Copyright (C) 2005-2006 Rational Discovery LLC
 //
-//   @@ All Rights Reserved  @@
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 char numByteOnBits[]={
   0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,

@@ -2,7 +2,11 @@
 //
 //  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
 //
-//   @@ All Rights Reserved  @@
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 #define PY_ARRAY_UNIQUE_SYMBOL rdmolalign_array_API
 #include <boost/python.hpp>

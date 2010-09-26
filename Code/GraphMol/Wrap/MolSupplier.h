@@ -1,7 +1,11 @@
 //
 //  Copyright (C) 2005-2008 Greg Landrumm and Rational Discovery LLC
 //
-//   @@ All Rights Reserved  @@
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 #ifndef _RD_WRAP_MOLSUPPLIER_H_
 #define _RD_WRAP_MOLSUPPLIER_H_

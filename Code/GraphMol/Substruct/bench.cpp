@@ -1,7 +1,11 @@
 //
 //  Copyright (C) 2001,2003 Greg Landrum and Rational Discovery LLC
 //
-//   @@ All Rights Reserved  @@
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 #ifdef WIN32
 #pragma warning (disable: 4786) // warning: long & complicated stl warning
