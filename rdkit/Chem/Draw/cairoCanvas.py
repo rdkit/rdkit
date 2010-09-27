@@ -3,7 +3,11 @@
 #  Copyright (C) 2008 Greg Landrum
 #  Copyright (C) 2009 Uwe Hoffmann
 #
-#   @@ All Rights Reserved  @@
+#   @@ All Rights Reserved @@
+#  This file is part of the RDKit.
+#  The contents are covered by the terms of the BSD license
+#  which is included in the file license.txt, found at the root
+#  of the RDKit source tree.
 #
 import cairo 
 import math

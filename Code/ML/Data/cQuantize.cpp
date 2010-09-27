@@ -1,7 +1,11 @@
 // $Id$
 //
 // Copyright 2003-2008 Rational Discovery LLC and Greg Landrum
-//  All Rights Reserved
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 #ifdef WIN32
 #define CQUANTIZE_EXPORTS

@@ -1,8 +1,0 @@
-project MetricMatrixCalc : : ;
-
-exe testMatCalc : testMatCalc.cpp ../../RDGeneral//RDGeneral ;
-
-install regrs : testMatCalc : <location>testExecs ;
-
-
-

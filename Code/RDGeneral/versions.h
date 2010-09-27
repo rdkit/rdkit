@@ -10,5 +10,5 @@ namespace RDKit {
   // The Boost version as detected at build time.
   // CMake's Boost_LIB_VERSION is defined by the FindBoost.cmake module
   // to be the same as the value from <boost/version.hpp>
-  const char *boostVersion="1_43";
+  const char *boostVersion="1_44";
 }  

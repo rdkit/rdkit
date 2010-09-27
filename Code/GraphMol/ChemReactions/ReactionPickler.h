@@ -1,7 +1,11 @@
 //
 //  Copyright (C) 2009 Greg Landrum
 //
-//   @@ All Rights Reserved  @@
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 //
 #ifndef _RD_RXNPICKLE_H_2JUNE2009_
 #define _RD_RXNPICKLE_H_2JUNE2009_
