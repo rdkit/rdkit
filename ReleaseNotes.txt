@@ -9,8 +9,9 @@
    fingerprints that are not backwards compatible.
 
 Acknowledgements:
- - Andrew Dalke, James Davidson, Paul Emsley, Peter Gedeck, Uwe Hoffmann, Christian Kramer, Markus
-   Kossner, TJ O'Donnell, Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
+ - Andrew Dalke, James Davidson, Paul Emsley, Peter Gedeck,
+   Uwe Hoffmann, Christian Kramer, Markus Kossner, TJ O'Donnell,
+   Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
    
 Bug Fixes: 
  - A typo in the parameters for the Crippen clogp calculator was
@@ -77,6 +78,7 @@ Other:
  - the PIL canvas should no longer generate warnings
  - Thanks to the help of Gianluca Sforna and Riccardo Vianello, it is
    now much easier to package and distribute the RDKit.
+ - the bjam-based build system has been removed.
 
 ******  Release_Q22010_1 *******
 (Changes relative to Release_Q12010_1)

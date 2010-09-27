@@ -141,8 +141,7 @@ This section assumes that python is installed in c:\Python25, that the boost lib
   * If you are planning on using a development version of the RDKit: get a copy of the current RDKit source using subversion. If you're using the command-line client the command is: `svn co http://rdkit.svn.sourceforge.net/svnroot/rdkit/trunk c:\RDKit` 
   * If you are planning on using a released version of the RDKit : get a copy of the most recent release and extract it into the directory c:\RDKit 
   * Set the required environment variables (you can set this in cygwin or in windows. If you set them in windows, be sure to restart your cygwin window):
-    * RDBASE = c:\RDKit
-    * BOOST_ROOT = c:\boost\boost_1_37_0
+    * RDBASE = c:\RDKit  *Note* this variable is optional for the Q3 2010 release and later releases.
   * Make sure that the directory c:\Python25 is in your PATH
   * Make sure that the directory c:\RDKit\bin is in your PATH
   * Make sure that the directory c:\boost\lib is in your PATH
@@ -151,7 +150,6 @@ This section assumes that python is installed in c:\Python25, that the boost lib
 == Building the Code ==
   * follow the Installing Boost instructions above.
   * environment variables:
-    * RDBASE: the root directory of the RDKit distribution (e.g. c:/RDKit)
     * if you built your own version of boost and cmake complains about not being able to find it, define the environment variable BOOST_ROOT to point to the directory containing the boost source.
   * Configure the build:
     * Start the cmake gui
@@ -165,9 +163,6 @@ This section assumes that python is installed in c:\Python25, that the boost lib
     * build the "INSTALL" target
 
 == Testing the Build (optional, but recommended) ==
-  * create the databases used by the Python tests, requires sqlite3 to be installed:
-    * `sqlite3 $RDBASE/Data/RDTests.sqlt < $RDBASE/rdkit/Dbase/test_data/RDTests.sqlite`
-    * `sqlite3 $RDBASE/Data/RDData.sqlt < $RDBASE/rdkit/Dbase/test_data/RDData.sqlite`
   * cd to $RDBASE/build and run `ctest`
   * you're done!
 
