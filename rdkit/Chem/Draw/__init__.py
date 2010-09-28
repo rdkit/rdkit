@@ -12,7 +12,7 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=
     raise ValueError,'Null molecule provided'
   import MolDrawing
   try:
-    from aggdraw import Draw2
+    from aggdraw import Draw
     import Image
     MolDrawing.registerCanvas('agg')
     Canvas = Draw
