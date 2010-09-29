@@ -107,9 +107,14 @@ ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC
 endif()
 
 if(NOT RDK_INSTALL_INTREE)
-  install(DIRECTORY Data Docs Projects Contrib DESTINATION
+  install(DIRECTORY Data Docs Contrib DESTINATION
       ${RDKit_ShareDir}
       PATTERN ".svn" EXCLUDE)
+  if(RDK_BUILD_PYTHON_WRAPPERS)
+    install(DIRECTORY Projects DESTINATION
+        ${RDKit_ShareDir}
+        PATTERN ".svn" EXCLUDE)
+  endif(RDK_BUILD_PYTHON_WRAPPERS)
   install(FILES README license.txt DESTINATION ${RDKit_ShareDir})
 endif(NOT RDK_INSTALL_INTREE)
 
