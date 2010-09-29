@@ -115,5 +115,8 @@ endif(NOT RDK_INSTALL_INTREE)
 
 add_subdirectory(External)
 add_subdirectory(Code)
-add_subdirectory(Projects)
-add_subdirectory(rdkit)
+
+if(RDK_BUILD_PYTHON_WRAPPERS)
+  add_subdirectory(Projects)
+  add_subdirectory(rdkit)
+endif(RDK_BUILD_PYTHON_WRAPPERS)
