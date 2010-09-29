@@ -5,7 +5,7 @@
 //   @@ All Rights Reserved  @@
 //
 namespace RDKit {
-  const char *rdkitVersion="2010Q3_1pre";
+  const char *rdkitVersion="2010.09_1pre";
 
   // The Boost version as detected at build time.
   // CMake's Boost_LIB_VERSION is defined by the FindBoost.cmake module

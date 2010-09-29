@@ -1,4 +1,4 @@
-******  Release_Q32010_1 *******
+******  Release_2010.09.1 *******
 (Changes relative to Release_Q22010_1)
 
 !!!!!! IMPORTANT !!!!!!
@@ -60,6 +60,9 @@ Removed modules:
  - Projects/SDView
 
 Other:
+ - As of this release a new version numbering scheme is being used:
+   YYYY.MM.minor. An example, this release was done in Sept. of 2010
+   so it's v2010.09.1.
  - the RDBASE environment variable is no longer required. It will be
    used if set, but the code should work without it
  - The directory Contrib/M_Kossner contains two new contributions from
