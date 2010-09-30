@@ -275,7 +275,11 @@ createCache(void *cache, struct MemoryContextData * ctx)
 		methodsOrig = ctx->methods;
 		methodsCache = *methodsOrig;
 		methodsCache.reset = resetCacheContext;
-		methodsCache.delete_context = deleteCacheContext;
+#if PG_VERSION_NUM>=90000
+                methodsCache.delete_context = deleteCacheContext;
+#else
+                methodsCache.delete = deleteCacheContext;
+#endif
 	}
 
 	/*
