@@ -127,22 +127,22 @@ Add `#define BOOST_PYTHON_NO_PY_SIGNATURES` at the top of `Code/GraphMol/Wrap/Ed
   * flex and bison : these are easily installed as part of a [http://www.cygwin.com cygwin] installation, but one can also find flex and bison binaries for windows elsewhere. Cygwin is not required to build the RDKit, but it's very useful to have (a minimal cygwin installation is fine). *Note* if you install flex and bison without cygwin, be sure to read [http://eli.thegreenplace.net/2007/07/27/bison-looking-for-bisonsimple-on-windows/ this web page] about environment variables and set the BISON_SIMPLE environment variable to the appropriate value.
   * python : [http://www.python.org/download python] should be installed
   * numpy : the [http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103 current version of numpy] should be installed. It's fine to use the binary installer. 
-  * boost : download a copy of the current versions of the [http://www.boost.org/users/download/ boost source distribution and boost-Jam]. Both are available from the same link, be sure to get the `.ntx86.zip` file for boost-Jam.  Extract the source distribution (to, for example, c:\boost\boost_1_37_0) and copy the bjam.exe executable from the boost jam zip file to the  same directory.
+  * boost : download a copy of the current versions of the [http://www.boost.org/users/download/ boost source distribution and boost-Jam]. Both are available from the same link, be sure to get the `.ntx86.zip` file for boost-Jam.  Extract the source distribution (to, for example, c:\boost\boost_1_43_0) and copy the bjam.exe executable from the boost jam zip file to the  same directory.
   * a subversion client : _This is only necessary if you are planning on building development versions of the RDKit_. A command line client for subversion can be installed as part of the cygwin installation, or a very nice graphical client that integrates well with windows explorer can be downloaded from the [http://tortoisesvn.tigris.org/ Tortoise SVN home page].
 
 == Setup and Preparation ==
-This section assumes that python is installed in c:\Python25, that the boost libraries have been extracted to c:\boost\boost_1_37_0, and that you will build the RDKit from a directory named c:\RDKit. If any of these conditions is not true, just change the corresponding paths. 
+This section assumes that python is installed in c:\Python26, that the boost libraries have been extracted to c:\boost\boost_1_43_0, and that you will build the RDKit from a directory named c:\RDKit. If any of these conditions is not true, just change the corresponding paths. 
 
  Notes : 
     # If you install things in paths that have spaces in their names, be sure to use quotes properly in your environment variable definitions.
-    # If you have more than one version of visual studio installed, the instructions below may not use the correct compiler. In this case you need to use a different `--toolset` argument to specify the version of the compiler used in all commands. Information for this situation is covered in [http://www.boost.org/doc/libs/1_37_0/more/getting_started/windows.html the boost.build documentation].
+    # If you have more than one version of visual studio installed, the instructions below may not use the correct compiler. In this case you need to use a different `--toolset` argument to specify the version of the compiler used in all commands. Information for this situation is covered in [http://www.boost.org/doc/libs/1_43_0/more/getting_started/windows.html the boost.build documentation].
 
-  * Make sure that boost builds properly by going to the directory c:\boost\boost_1_37_0 and executing the command: `.\bjam.exe --toolset=msvc --with-python release install`. This may take a while, but it should finish without errors. 
+  * Make sure that boost builds properly by going to the directory c:\boost\boost_1_43_0 and executing the command: `.\bjam.exe --toolset=msvc --with-python release install`. This may take a while, but it should finish without errors. 
   * If you are planning on using a development version of the RDKit: get a copy of the current RDKit source using subversion. If you're using the command-line client the command is: `svn co http://rdkit.svn.sourceforge.net/svnroot/rdkit/trunk c:\RDKit` 
   * If you are planning on using a released version of the RDKit : get a copy of the most recent release and extract it into the directory c:\RDKit 
   * Set the required environment variables (you can set this in cygwin or in windows. If you set them in windows, be sure to restart your cygwin window):
     * RDBASE = c:\RDKit  *Note* this variable is optional for the Q3 2010 release and later releases.
-  * Make sure that the directory c:\Python25 is in your PATH
+  * Make sure that the directory c:\Python26 is in your PATH
   * Make sure that the directory c:\RDKit\bin is in your PATH
   * Make sure that the directory c:\boost\lib is in your PATH
   * Make sure that the directory c:\RDKit is in your PYTHONPATH
@@ -165,12 +165,6 @@ This section assumes that python is installed in c:\Python25, that the boost lib
 == Testing the Build (optional, but recommended) ==
   * cd to $RDBASE/build and run `ctest`
   * you're done!
-
-
-
-Please see the file license.txt for details about the "New BSD"
-license which covers this software and its associated data and
-documents. 
 
 =======
 # $Id$
