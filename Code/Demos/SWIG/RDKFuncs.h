@@ -79,10 +79,19 @@ std::string MolToMolBlock(RDKit::ROMOL_SPTR mol, bool includeStereo=true,
   return RDKit::MolToMolBlock(*mol,includeStereo,confId);
 }
 
-std::string MolToBinary(RDKit::ROMOL_SPTR mol){
-  std::string res;
-  RDKit::MolPickler::pickleMol(*mol,res);
+std::vector<char> MolToBinary(RDKit::ROMOL_SPTR mol){
+  std::string sres;
+  RDKit::MolPickler::pickleMol(*mol,sres);
+  std::vector<char> res(sres.length());
+  std::copy(sres.begin(),sres.end(),res.begin());
   return res;
+};
+RDKit::ROMOL_SPTR MolFromBinary(std::vector<char> pkl){
+  std::string sres;
+  sres.resize(pkl.size());
+  std::copy(pkl.begin(),pkl.end(),sres.begin());
+  RDKit::ROMol *res=new RDKit::ROMol(sres);
+  return RDKit::ROMOL_SPTR(res);
 };
 
 

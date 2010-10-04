@@ -18,7 +18,7 @@ SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs} )
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar
 ## 1. run this custom command only after swig has been run.
-  COMMAND ${JAVA_COMPILE} ARGS "*.java" "org/RDKit/*.java" 
+  COMMAND ${JAVA_COMPILE} ARGS "org/RDKit/*.java" 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 ## 2. now that the *.class have been generated construct the jar file.
   COMMAND ${JAVA_ARCHIVE} ARGS cf 

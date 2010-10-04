@@ -36,6 +36,7 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Int_Vect_Vect) std::vector<std::vector<int> >;
 %template(Match_Vect_Vect) std::vector<std::vector<std::pair<int,int> > >;
+%template(Char_Vect) std::vector<char>;
 
 
 %ignore getAllAtomsWithBookmark;

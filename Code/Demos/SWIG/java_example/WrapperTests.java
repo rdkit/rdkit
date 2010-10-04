@@ -183,6 +183,12 @@ public class WrapperTests {
 	assertTrue(m1==null);
 	System.err.println("ok!");
     }
+    @Test public void testPickling() {
+	Char_Vect pkl=RDKFuncs.MolToBinary(mol1);
+	ROMol m1 = RDKFuncs.MolFromBinary(pkl);
+        assertTrue(m1.getNumAtoms()==6);
+        assertTrue(m1.getNumBonds()==6);
+    }
     /*@Test*/ public void testMemory() {
 	for(int i=0;i<1000000;i++){
 	    ROMol m1;
