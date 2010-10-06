@@ -189,6 +189,29 @@ public class WrapperTests {
         assertTrue(m1.getNumAtoms()==6);
         assertTrue(m1.getNumBonds()==6);
     }
+     @Test public void testReactionPickling() {
+         ChemicalReaction rxn;
+         rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
+         assertTrue(rxn.getNumReactantTemplates()==2);
+         assertTrue(rxn.getNumProductTemplates()==1);
+         Char_Vect pkl=RDKFuncs.RxnToBinary(rxn);
+         ChemicalReaction rxn2=RDKFuncs.RxnFromBinary(pkl);
+         assertTrue(rxn2.getNumReactantTemplates()==2);
+         assertTrue(rxn2.getNumProductTemplates()==1);
+    }
+    @Test public void testReactionToSmarts() {
+         ChemicalReaction rxn;
+         rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
+         assertTrue(rxn.getNumReactantTemplates()==2);
+         assertTrue(rxn.getNumProductTemplates()==1);
+         String sma=RDKFuncs.ReactionToSmarts(rxn);
+         ChemicalReaction rxn2;
+         rxn2=RDKFuncs.ReactionFromSmarts(sma);
+         assertTrue(rxn2.getNumReactantTemplates()==2);
+         assertTrue(rxn2.getNumProductTemplates()==1);
+    }
+
+
     /*@Test*/ public void testMemory() {
 	for(int i=0;i<1000000;i++){
 	    ROMol m1;

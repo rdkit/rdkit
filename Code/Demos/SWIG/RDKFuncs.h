@@ -12,6 +12,8 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <RDGeneral/versions.h>
@@ -92,6 +94,27 @@ RDKit::ROMOL_SPTR MolFromBinary(std::vector<char> pkl){
   std::copy(pkl.begin(),pkl.end(),sres.begin());
   RDKit::ROMol *res=new RDKit::ROMol(sres);
   return RDKit::ROMOL_SPTR(res);
+};
+
+
+std::vector<char> RxnToBinary(RDKit::ChemicalReaction *rxn){
+  std::string sres;
+  RDKit::ReactionPickler::pickleReaction(rxn,sres);
+  std::vector<char> res(sres.length());
+  std::copy(sres.begin(),sres.end(),res.begin());
+  return res;
+};
+RDKit::ChemicalReaction *RxnFromBinary(std::vector<char> pkl){
+  std::string sres;
+  sres.resize(pkl.size());
+  std::copy(pkl.begin(),pkl.end(),sres.begin());
+  RDKit::ChemicalReaction *res=new RDKit::ChemicalReaction(sres);
+  return res;
+};
+
+
+std::string ReactionToSmarts(RDKit::ChemicalReaction *rxn){
+  return RDKit::ChemicalReactionToRxnSmarts(*rxn);
 };
 
 
