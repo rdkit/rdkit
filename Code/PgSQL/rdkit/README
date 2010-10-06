@@ -9,7 +9,8 @@ Compatibility: PostgreSQL 8.4+
 
 Installation:
 
- Module assumes that the RDKit is installed in $RDBASE
+ Module assumes that the RDKit is installed in $RDBASE and that $BOOSTHOME
+ points to the directory where boost is installed.
  (check Makefile).
 
  cd $RDBASE/Code/PgSQL rdkit
