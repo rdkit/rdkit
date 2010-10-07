@@ -57,18 +57,33 @@ RDKit::ROMOL_SPTR MolFromMolFile(std::string filename,
   return RDKit::ROMOL_SPTR(mol);
 };
 RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma){
-  RDKit::ChemicalReaction *res=RDKit::RxnSmartsToChemicalReaction(sma);
-  if(res) res->initReactantMatchers();
+  RDKit::ChemicalReaction *res=0;
+  try {
+    res=RDKit::RxnSmartsToChemicalReaction(sma);
+    if(res) res->initReactantMatchers();
+  } catch (...){
+    res=0;
+  }
   return res;
 };
 RDKit::ChemicalReaction *ReactionFromRxnBlock(std::string block){
-  RDKit::ChemicalReaction *res=RDKit::RxnBlockToChemicalReaction(block);
-  if(res) res->initReactantMatchers();
+  RDKit::ChemicalReaction *res=0;
+  try {
+    res=RDKit::RxnBlockToChemicalReaction(block);
+    if(res) res->initReactantMatchers();
+  } catch (...){
+    res=0;
+  }
   return res;
 };
 RDKit::ChemicalReaction *ReactionFromRxnFile(std::string filename){
-  RDKit::ChemicalReaction *res=RDKit::RxnFileToChemicalReaction(filename);
-  if(res) res->initReactantMatchers();
+  RDKit::ChemicalReaction *res=0;
+  try {
+    res=RDKit::RxnFileToChemicalReaction(filename);
+    if(res) res->initReactantMatchers();
+  } catch (...){
+    res=0;
+  }
   return res;
 };
 
