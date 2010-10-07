@@ -182,6 +182,8 @@ public class WrapperTests {
 	m1 = RDKFuncs.MolFromSmiles("c1cc1");
 	assertTrue(m1==null);
 	System.err.println("ok!");
+        ChemicalReaction rxn=RDKFuncs.ReactionFromSmarts("OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
+        assertTrue(rxn==null);
     }
     @Test public void testPickling() {
 	Char_Vect pkl=RDKFuncs.MolToBinary(mol1);
