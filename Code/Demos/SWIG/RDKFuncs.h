@@ -16,6 +16,7 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 #include <RDGeneral/versions.h>
 
 RDKit::ROMOL_SPTR MolFromSmiles(std::string smi){
@@ -127,13 +128,15 @@ RDKit::ChemicalReaction *RxnFromBinary(std::vector<char> pkl){
   return res;
 };
 
-
 std::string ReactionToSmarts(RDKit::ChemicalReaction *rxn){
   return RDKit::ChemicalReactionToRxnSmarts(*rxn);
 };
-
 
 std::string rdkitVersion(){
   return RDKit::rdkitVersion;
 }
 
+unsigned int compute2DCoords(RDKit::ROMol &mol,bool canonOrient=false,
+                             bool clearConfs=true){
+  return RDDepict::compute2DCoords(mol,0,canonOrient,clearConfs);
+}

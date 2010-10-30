@@ -144,7 +144,15 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
 %include <GraphMol/RingInfo.h>
 
 %ignore RDKit::ChemicalReactionException::ChemicalReactionException(std::string const);
+%ignore RDKit::ChemicalReaction::validate;
 %include <GraphMol/ChemReactions/Reaction.h>
+%extend RDKit::ChemicalReaction {
+  bool validateReaction() const {
+    unsigned int nErr=0,nWarn=0;
+    bool res=$self->validate(nErr,nWarn);
+    return res;
+  }
+}
 
 %include "RDKFuncs.h"
 
