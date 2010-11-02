@@ -152,6 +152,25 @@ parseMolText(char *data) {
   return (CROMol)mol;
 }
 
+extern "C" bool
+isValidSmiles(char *data) {
+  ROMol   *mol = NULL;
+  bool res;
+  try {
+    StringData.assign(data);
+    mol = SmilesToMol(StringData);
+  } catch (...) {
+    mol=NULL;
+  }
+  if(mol==NULL){
+    res=false;
+  } else {
+    res=true;
+    delete mol;
+  }
+  return res;
+}
+
 extern "C" char *
 makeMolText(CROMol data, int *len) {
 	ROMol   *mol = (ROMol*)data;

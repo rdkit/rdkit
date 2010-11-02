@@ -5,6 +5,24 @@
 SET client_min_messages = warning;
 \set ECHO none
 RESET client_min_messages;
+SELECT is_valid_smiles('c1ccccc1');
+ is_valid_smiles 
+-----------------
+ t
+(1 row)
+
+SELECT is_valid_smiles('c1ccccc');
+ is_valid_smiles 
+-----------------
+ f
+(1 row)
+
+SELECT is_valid_smiles('c1cccn1');
+ is_valid_smiles 
+-----------------
+ f
+(1 row)
+
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
