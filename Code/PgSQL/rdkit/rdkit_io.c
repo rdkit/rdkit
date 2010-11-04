@@ -46,7 +46,7 @@ mol_in(PG_FUNCTION_ARGS) {
 	CROMol	mol;
 	Mol	*res;
 
-	mol = parseMolText(data);
+	mol = parseMolText(data,false);
 
 #ifdef REPACK
 	/*
@@ -82,10 +82,45 @@ mol_out(PG_FUNCTION_ARGS) {
 									fcinfo->flinfo->fn_mcxt,
 									PG_GETARG_DATUM(0),
 									NULL, &mol, NULL);
-	str = makeMolText(mol, &len);
+    str = makeMolText(mol, &len,false);
 
 	PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
+
+PG_FUNCTION_INFO_V1(qmol_in);
+Datum		qmol_in(PG_FUNCTION_ARGS);
+Datum
+qmol_in(PG_FUNCTION_ARGS) {
+	char 	*data = PG_GETARG_CSTRING(0);
+	CROMol	mol;
+	Mol	*res;
+
+	mol = parseMolText(data,true);
+	res = deconstructROMol(mol);
+	freeCROMol(mol);
+
+	PG_RETURN_MOL_P(res);		
+}
+
+
+PG_FUNCTION_INFO_V1(qmol_out);
+Datum		qmol_out(PG_FUNCTION_ARGS);
+Datum
+qmol_out(PG_FUNCTION_ARGS) {
+	CROMol	mol;
+	char	*str;
+	int	len;
+
+    fcinfo->flinfo->fn_extra = SearchMolCache(
+									fcinfo->flinfo->fn_extra,
+									fcinfo->flinfo->fn_mcxt,
+									PG_GETARG_DATUM(0),
+									NULL, &mol, NULL);
+    str = makeMolText(mol, &len,true);
+
+	PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
 
 PG_FUNCTION_INFO_V1(bfp_in);
 Datum		bfp_in(PG_FUNCTION_ARGS);

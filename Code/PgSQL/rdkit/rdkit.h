@@ -85,9 +85,10 @@ void	freeCROMol(CROMol data);
 CROMol constructROMol(Mol* data); 
 Mol * deconstructROMol(CROMol data); 
 
-CROMol parseMolText(char *data);
-char *makeMolText(CROMol data, int *len);
+CROMol parseMolText(char *data,bool asSmarts);
+char *makeMolText(CROMol data, int *len,bool asSmarts);
 bool isValidSmiles(char *data);
+bool isValidSmarts(char *data);
 
 int MolSubstruct(CROMol i, CROMol a);
 

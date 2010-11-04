@@ -11,6 +11,7 @@ RESET client_min_messages;
 SELECT is_valid_smiles('c1ccccc1');
 SELECT is_valid_smiles('c1ccccc');
 SELECT is_valid_smiles('c1cccn1');
+SELECT is_valid_smarts('c1ccc[n,c]1');
 
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
@@ -23,6 +24,13 @@ SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1';
 SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1';
 SELECT count(*) FROM pgmol WHERE 'c1ccccc1' <@ m;
 SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
+
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1'::qmol;
+SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1'::qmol;
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccc[n,c]c1'::qmol;
+SELECT count(*) FROM pgmol WHERE 'c1ccccc1'::qmol <@ m;
+SELECT count(*) FROM pgmol WHERE 'c1ccc[n,c]c1'::qmol <@ m;
+
 
 SELECT id, layered_fp(m) AS f INTO pgbfp FROM pgmol;
 CREATE UNIQUE INDEX bfp_ididx ON pgbfp (id);

@@ -23,6 +23,12 @@ SELECT is_valid_smiles('c1cccn1');
  f
 (1 row)
 
+SELECT is_valid_smarts('c1ccc[n,c]1');
+ is_valid_smarts 
+-----------------
+ t
+(1 row)
+
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
@@ -54,6 +60,36 @@ SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
  count 
 -------
    245
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1'::qmol;
+ count 
+-------
+   901
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1'::qmol;
+ count 
+-------
+   245
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccc[n,c]c1'::qmol;
+ count 
+-------
+   939
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE 'c1ccccc1'::qmol <@ m;
+ count 
+-------
+   901
+(1 row)
+
+SELECT count(*) FROM pgmol WHERE 'c1ccc[n,c]c1'::qmol <@ m;
+ count 
+-------
+   939
 (1 row)
 
 SELECT id, layered_fp(m) AS f INTO pgbfp FROM pgmol;
