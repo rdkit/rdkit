@@ -186,7 +186,7 @@ public class WrapperTests {
         assertTrue(rxn==null);
     }
     @Test public void testPickling() {
-	Char_Vect pkl=RDKFuncs.MolToBinary(mol1);
+	Int_Vect pkl=RDKFuncs.MolToBinary(mol1);
 	ROMol m1 = RDKFuncs.MolFromBinary(pkl);
         assertTrue(m1.getNumAtoms()==6);
         assertTrue(m1.getNumBonds()==6);
