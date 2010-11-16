@@ -17,7 +17,14 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/DistGeomHelpers/Embedder.h>
+#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <RDGeneral/versions.h>
+
+#include <ForceField/ForceField.h>
+#include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
+#include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
+
 
 RDKit::ROMOL_SPTR MolFromSmiles(std::string smi){
   RDKit::ROMol *mol=0;
@@ -140,3 +147,38 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,bool canonOrient=false,
                              bool clearConfs=true){
   return RDDepict::compute2DCoords(mol,0,canonOrient,clearConfs);
 }
+
+unsigned int compute2DCoords(RDKit::ROMol &mol,
+                             RDKit::ROMol &templ){
+  RDKit::MatchVectType matchVect;
+  if(SubstructMatch(mol,templ,matchVect)){
+    RDGeom::INT_POINT2D_MAP coordMap;
+    RDKit::Conformer conf=templ.getConformer();
+    for(RDKit::MatchVectType::const_iterator iter=matchVect.begin();
+        iter!=matchVect.end();++iter){
+      RDGeom::Point2D pt;
+      pt.x = conf.getAtomPos(iter->first).x;
+      pt.y = conf.getAtomPos(iter->first).y;
+      coordMap[iter->second]=pt;
+    }
+    return RDDepict::compute2DCoords(mol,&coordMap);
+  } else {
+    return RDDepict::compute2DCoords(mol,0);
+  }
+}
+
+
+unsigned int compute3DCoords(RDKit::ROMol &mol,int seed=23,
+                             bool clearConfs=true,bool minimize=true){
+  unsigned int res;
+  res= RDKit::DGeomHelpers::EmbedMolecule(mol,0,seed,clearConfs);
+  if(minimize){
+    ForceFields::ForceField *ff=RDKit::UFF::constructForceField(mol);
+    ff->initialize();
+    ff->minimize(200);
+    delete ff;
+  }
+
+  return res;
+}
+
