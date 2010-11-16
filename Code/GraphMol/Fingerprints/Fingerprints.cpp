@@ -247,17 +247,22 @@ namespace RDKit{
 
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
-    boost::dynamic_bitset<> isQueryBond(mol.getNumBonds());
+    std::vector<short> isQueryBond(mol.getNumBonds(),0);
 
     ROMol::EDGE_ITER firstB,lastB;
     boost::tie(firstB,lastB) = mol.getEdges();
     while(firstB!=lastB){
       const Bond *bond = mol[*firstB].get();
+      isQueryBond[bond->getIdx()] = 0x0;
       bondCache[bond->getIdx()]=bond;
-      if(isComplexQuery(bond) ||
-         isComplexQuery(bond->getBeginAtom()) ||
-         isComplexQuery(bond->getEndAtom())) {
-        isQueryBond.set(bond->getIdx());
+      if(isComplexQuery(bond)){
+        isQueryBond[bond->getIdx()] = 0x1;
+      }
+      if(isComplexQuery(bond->getBeginAtom())){
+        isQueryBond[bond->getIdx()] |= 0x2;
+      }
+      if(isComplexQuery(bond->getEndAtom())){
+        isQueryBond[bond->getIdx()] |= 0x4;
       }
       ++firstB;
     }
@@ -281,11 +286,15 @@ namespace RDKit{
           if(layerFlags & (0x1<<i)) hashLayers[i].reserve(maxPath);
         }
 
-        // should we keep this path?
-        bool keepPath=true;
+        // details about what kinds of query features appear on the path:
+        unsigned int pathQueries=0;
+        //std::cerr<<" path: ";
         for(PATH_TYPE::const_iterator pIt=path.begin();pIt!=path.end();++pIt){
-          if(isQueryBond[*pIt]) keepPath=false;
+          pathQueries |= isQueryBond[*pIt];
+          //std::cerr<< *pIt <<"("<<isQueryBond[*pIt]<<") ";
         }
+        //std::cerr<<" : "<<pathQueries<<std::endl;
+
 
         // calculate the number of neighbors each bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size(),0);
@@ -317,7 +326,7 @@ namespace RDKit{
             hashLayers[0].push_back(ourHash);
           }
           nBitsInHash+=3;
-          if(layerFlags & 0x2 && keepPath){
+          if(layerFlags & 0x2 && !(pathQueries&0x1) ){
             // layer 2: include bond orders:
             unsigned int bondHash;
             if(bi->getIsAromatic()){
@@ -361,7 +370,7 @@ namespace RDKit{
             hashLayers[1].push_back(ourHash);
           }
           nBitsInHash+=4;
-          if(layerFlags & 0x4 && keepPath){
+          if(layerFlags & 0x4 && !(pathQueries&0x6) ){
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 3: include atom types:
             unsigned int a1Hash,a2Hash;
@@ -373,19 +382,19 @@ namespace RDKit{
             hashLayers[2].push_back(ourHash);
           }
           nBitsInHash += 14;
-          if(layerFlags & 0x8 && keepPath){
+          if(layerFlags & 0x8){
             // layer 4: include ring information
             ourHash = queryIsBondInRing(bi);
             hashLayers[3].push_back(ourHash);
           }
           nBitsInHash++;
-          if(layerFlags & 0x10 && keepPath){
+          if(layerFlags & 0x10 ){
             // layer 5: include ring size information
             ourHash = (queryBondMinRingSize(bi)%8);
             hashLayers[4].push_back(ourHash);
           }
           nBitsInHash+=3;
-          if(layerFlags & 0x20 && keepPath){
+          if(layerFlags & 0x20 && !(pathQueries&0x6) ){
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 6: aromaticity:
             bool a1Hash = bi->getBeginAtom()->getIsAromatic();
@@ -413,6 +422,8 @@ namespace RDKit{
 
           // hash the path to generate a seed:
           unsigned long seed = gboost::hash_range(layerIt->begin(),layerIt->end());
+
+          //std::cerr<<"  "<<l+1<<" "<<seed%fpSize<<std::endl;
 
 #ifdef LAYEREDFP_USE_MT
           generator.seed(static_cast<rng_type::result_type>(seed));
