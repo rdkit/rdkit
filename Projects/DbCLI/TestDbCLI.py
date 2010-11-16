@@ -247,7 +247,7 @@ class TestCase(unittest.TestCase):
     inF = file('testData/bzr/search.out','r')
     lines=inF.readlines()
     inF=None
-    self.failUnless(len(lines)==114)
+    self.failUnlessEqual(len(lines),114)
     os.unlink('testData/bzr/search.out')
     
   def test2_6SearchBoth(self):
@@ -277,7 +277,7 @@ class TestCase(unittest.TestCase):
     inF = file('testData/bzr/search.out','r')
     lines=inF.readlines()
     inF=None
-    self.failUnless(len(lines)==25)
+    self.failUnlessEqual(len(lines),25)
     os.unlink('testData/bzr/search.out')
 
   def test2_7SearchGobbi(self):

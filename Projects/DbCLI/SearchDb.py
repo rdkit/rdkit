@@ -277,7 +277,7 @@ def RunSearch(options,queryFilename):
       join=''        
       doSubstructFPs=False
       fpDbName = os.path.join(options.dbDir,options.fpDbName)
-      if os.path.exists(fpDbName):
+      if os.path.exists(fpDbName) and not options.negateQuery :
         curs.execute("attach database '%s' as fpdb"%(fpDbName))
         try:
           curs.execute('select * from fpdb.%s limit 1'%options.layeredTableName)
