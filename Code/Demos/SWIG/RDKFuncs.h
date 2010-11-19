@@ -120,14 +120,14 @@ RDKit::ROMOL_SPTR MolFromBinary(std::vector<int> pkl){
 };
 
 
-std::vector<char> RxnToBinary(RDKit::ChemicalReaction *rxn){
+std::vector<int> RxnToBinary(RDKit::ChemicalReaction *rxn){
   std::string sres;
   RDKit::ReactionPickler::pickleReaction(rxn,sres);
-  std::vector<char> res(sres.length());
+  std::vector<int> res(sres.length());
   std::copy(sres.begin(),sres.end(),res.begin());
   return res;
 };
-RDKit::ChemicalReaction *RxnFromBinary(std::vector<char> pkl){
+RDKit::ChemicalReaction *RxnFromBinary(std::vector<int> pkl){
   std::string sres;
   sres.resize(pkl.size());
   std::copy(pkl.begin(),pkl.end(),sres.begin());
