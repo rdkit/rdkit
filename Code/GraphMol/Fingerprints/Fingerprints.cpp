@@ -33,7 +33,21 @@ namespace RDKit{
       if( b->getQuery()->getNegation()) return true;
       std::string descr=b->getQuery()->getDescription();
       if(descr=="BondOrder") return false;
-      if(descr=="BondAnd" || descr=="BondOr" || descr=="BondXor") return true;
+      if(descr=="BondAnd" || descr=="BondXor") return true;
+      if(descr=="BondOr") {
+        // detect the types of queries that appear for unspecified bonds in SMARTS:
+        if(b->getQuery()->endChildren()-b->getQuery()->beginChildren()==2){
+          for(Bond::QUERYBOND_QUERY::CHILD_VECT_CI child=b->getQuery()->beginChildren();
+              child!=b->getQuery()->endChildren();++child){
+            if((*child)->getDescription()!="BondOrder" || (*child)->getNegation())
+              return true;
+            if(static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::SINGLE &&
+               static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::AROMATIC)
+              return true;
+            return false;
+          }
+        }
+      }
       
       return true;
     }
@@ -329,42 +343,11 @@ namespace RDKit{
           if(layerFlags & 0x2 && !(pathQueries&0x1) ){
             // layer 2: include bond orders:
             unsigned int bondHash;
-            if(bi->getIsAromatic()){
-              // makes sure aromatic bonds always hash the same:
-              bondHash = Bond::AROMATIC;
-#if 0
-            } else if(bi->getBondType()==Bond::SINGLE &&
-                      bi->getBeginAtom()->getIsAromatic() &&
-                      bi->getEndAtom()->getIsAromatic() &&
-                      queryIsBondInRing(bi)
-                      ){
-
-              // NOTE:
-              //  This special case is bogus. Query bonds don't
-              //  show up here at all. For non-query systems
-              //  this just ends up causing trouble because paths like
-              //     c:c-C
-              //  do not match things like:
-              //     c:c-c
-              //  at layer 0x02 if the single bond is in a ring
-              //  and they definitely should.
-              //  example of this is: c1cccc2c13.c1cccc2c13
-              // 
-
-
-              // a special case that comes up if we're using these to filter
-              // substructure matches:
-              //   This molecule: 
-              //     Cn1ccc2nn(C)c(=O)c-2c1C
-              //   which has a non-aromatic bridging bond between aromatic
-              //   atoms, matches the SMARTS query:
-              //    Cc1ncccc1
-              //   because unspecified bonds in SMARTS are aromatic or single
-              // We need to make sure to capture this case.  
-              bondHash = Bond::AROMATIC;
-#endif
-            } else {
+            // makes sure aromatic bonds and single bonds  always hash the same:
+            if(!bi->getIsAromatic() && bi->getBondType()!=Bond::SINGLE && bi->getBondType()!=Bond::AROMATIC){
               bondHash = bi->getBondType();
+            } else {
+              bondHash = Bond::SINGLE;
             }
             ourHash = (bondHash%16);
             hashLayers[1].push_back(ourHash);
@@ -384,8 +367,9 @@ namespace RDKit{
           nBitsInHash += 14;
           if(layerFlags & 0x8){
             // layer 4: include ring information
-            ourHash = queryIsBondInRing(bi);
-            hashLayers[3].push_back(ourHash);
+            if(queryIsBondInRing(bi)){
+              if(hashLayers[3].size()==0) hashLayers[3].push_back(1);
+            }
           }
           nBitsInHash++;
           if(layerFlags & 0x10 ){
