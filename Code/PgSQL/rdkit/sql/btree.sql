@@ -47,34 +47,34 @@ SET enable_bitmapscan=off;
 SET enable_seqscan=on;
 
 SELECT * FROM pgbfp WHERE 
-	f = layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f = rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f < layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f < rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f <= layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f <= rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f = layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f = rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f >= layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f >= rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f > layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f > rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 
 SET enable_indexscan=on;
 SET enable_bitmapscan=on;
 SET enable_seqscan=off;
 
 SELECT * FROM pgbfp WHERE 
-	f = layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f = rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f < layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f < rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f <= layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f <= rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f = layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f = rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f >= layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f >= rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 SELECT count(*) FROM pgbfp WHERE 
-	f > layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
+	f > rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
 
 SET enable_indexscan=on;
 SET enable_bitmapscan=on;

@@ -6,7 +6,7 @@ SET rdkit.tanimoto_threshold = 0.4;
 SELECT
     id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
 FROM
-pgavfp
+pgbfp
 WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
 ORDER BY sml DESC, id LIMIT 10;
 

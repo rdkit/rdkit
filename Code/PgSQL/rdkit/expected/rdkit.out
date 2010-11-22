@@ -92,98 +92,85 @@ SELECT count(*) FROM pgmol WHERE 'c1ccc[n,c]c1'::qmol <@ m;
    939
 (1 row)
 
-SELECT id, layered_fp(m) AS f INTO pgbfp FROM pgmol;
+SELECT id, rdkit_fp(m) AS f INTO pgbfp FROM pgmol;
 CREATE UNIQUE INDEX bfp_ididx ON pgbfp (id);
 SELECT id, morgan_fp(m,1) AS f INTO pgsfp FROM pgmol;
 CREATE UNIQUE INDEX sfp_ididx ON pgsfp (id);
-SELECT id, rdkit_fp(m) AS f INTO pgavfp FROM pgmol;
 SELECT id, torsion_fp(m) AS f INTO pgtorsfp FROM pgmol;
 SELECT id, atompair_fp(m) AS f INTO pgpairfp FROM pgmol;
 set rdkit.tanimoto_threshold=0.5;
 set rdkit.dice_threshold=0.5;
 SELECT 
 	id, 
-	tanimoto_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
 FROM
 	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+LIMIT 10;
+    id    |   tanimoto_sml    
+----------+-------------------
+  1959267 | 0.514102564102564
+  5770966 | 0.502941176470588
+ 15945163 | 0.503937007874016
+ 24747640 | 0.530477759472817
+(4 rows)
+
+SELECT 
+	id, 
+	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+FROM
+	 (SELECT * FROM pgbfp ORDER BY id) AS t 
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+LIMIT 10;
+    id    |     dice_sml      
+----------+-------------------
+  1959267 | 0.679085520745131
+  5770966 | 0.669275929549902
+ 15945163 | 0.670157068062827
+ 24747640 | 0.693218514531755
+(4 rows)
+
+SELECT 
+	id, 
+	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+FROM
+	 (SELECT * FROM pgbfp ORDER BY id) AS t 
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
 LIMIT 10;
    id   |   tanimoto_sml    
 --------+-------------------
-   2722 |  0.51394422310757
-  11829 | 0.557377049180328
-  63248 | 0.606870229007634
-  66722 | 0.734939759036145
-  68281 |             0.604
-  98960 | 0.521311475409836
- 198995 | 0.611570247933884
- 230488 | 0.657142857142857
- 233331 | 0.534883720930233
- 246547 | 0.548951048951049
+  42640 | 0.364396654719235
+  63248 | 0.337209302325581
+  66722 | 0.358714043993232
+ 230488 | 0.391644908616188
+ 233331 | 0.403823178016726
+ 265605 | 0.383078730904818
+ 265940 | 0.415402567094516
+ 272367 | 0.335570469798658
+ 272568 | 0.352941176470588
+ 289688 | 0.357142857142857
 (10 rows)
 
 SELECT 
 	id, 
-	dice_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
-FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
-LIMIT 10;
-   id   |     dice_sml      
---------+-------------------
-   2722 | 0.678947368421053
-  11829 | 0.715789473684211
-  63248 | 0.755344418052256
-  66722 | 0.847222222222222
-  68281 | 0.753117206982544
-  98960 | 0.685344827586207
- 198995 | 0.758974358974359
- 230488 | 0.793103448275862
- 233331 | 0.696969696969697
- 246547 | 0.708803611738149
-(10 rows)
-
-SELECT 
-	id, 
-	tanimoto_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
-FROM
-	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
-LIMIT 10;
-  id   |   tanimoto_sml    
--------+-------------------
-  2722 |  0.51394422310757
-  2788 | 0.475836431226766
- 11829 | 0.557377049180328
- 42640 | 0.471810089020772
- 63248 | 0.606870229007634
- 66722 | 0.734939759036145
- 68281 |             0.604
- 75846 | 0.448132780082988
- 82533 | 0.496932515337423
- 83773 | 0.477341389728097
-(10 rows)
-
-SELECT 
-	id, 
-	dice_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f),
+	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f),
 	size(f)
 FROM
 	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
 LIMIT 10;
-  id   |     dice_sml      | size 
--------+-------------------+------
-  2722 | 0.678947368421053 | 1024
-  2788 | 0.644836272040302 | 1024
- 11829 | 0.715789473684211 | 1024
- 42640 | 0.641129032258065 | 1024
- 63248 | 0.755344418052256 | 1024
- 66722 | 0.847222222222222 | 1024
- 68281 | 0.753117206982544 | 1024
- 75846 |   0.6189111747851 | 1024
- 82533 | 0.663934426229508 | 1024
- 83773 | 0.646216768916155 | 1024
+   id   |     dice_sml      | size 
+--------+-------------------+------
+  42640 |  0.53415061295972 | 1024
+  63248 | 0.504347826086956 | 1024
+  66722 | 0.528019925280199 | 1024
+ 230488 | 0.562851782363977 | 1024
+ 233331 |  0.57531914893617 | 1024
+ 265605 | 0.553950722175021 | 1024
+ 265940 | 0.586974443528442 | 1024
+ 272367 |  0.50251256281407 | 1024
+ 272568 | 0.521739130434783 | 1024
+ 289688 | 0.526315789473684 | 1024
 (10 rows)
 
 set rdkit.tanimoto_threshold=0.4;
