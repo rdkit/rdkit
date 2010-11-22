@@ -24,7 +24,8 @@ CPLUSPLUSFLAGS = $(filter-out -Wmissing-prototypes -Wdeclaration-after-statement
 CPLUSPLUSFLAGS += -Wno-deprecated -Wno-unused-function
 CPLUSPLUSFLAGS += $(PG_CPPFLAGS)
 
-CC=$(CXX)
+# uncomment this under MacOS
+#CC=$(CXX)
 
 %.o : %.cpp
 	$(CC) $(CPLUSPLUSFLAGS) $(CPPFLAGS)  -c -o $@ $< 
