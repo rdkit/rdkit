@@ -17,13 +17,14 @@ PGXS := $(shell $(PG_CONFIG) --pgxs)
 DATA_built = rdkit.sql
 DATA = uninstall_rdkit.sql
 REGRESS = rdkit props btree molgist bfpgist sfpgist slfpgist fps 
-#REGRESS = rdkit
 
 include $(PGXS)
 
 CPLUSPLUSFLAGS = $(filter-out -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
 CPLUSPLUSFLAGS += -Wno-deprecated -Wno-unused-function
 CPLUSPLUSFLAGS += $(PG_CPPFLAGS)
+
+CC=$(CXX)
 
 %.o : %.cpp
 	$(CC) $(CPLUSPLUSFLAGS) $(CPPFLAGS)  -c -o $@ $< 

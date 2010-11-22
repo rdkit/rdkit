@@ -219,7 +219,7 @@ makeMolSign(CROMol data) {
 	bytea			*ret = NULL;
 
 	try {
-          res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,7,SSS_FP_SIZE);
+          res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,6,SSS_FP_SIZE);
           ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)res);
           delete res;
           res=0;
@@ -768,7 +768,7 @@ makeRDKitBFP(CROMol data) {
 	ExplicitBitVect	*res=NULL;
 
 	try {
-          res = RDKit::RDKFingerprintMol(*mol,1,5,LAYERED_FP_SIZE,1);
+          res = RDKit::RDKFingerprintMol(*mol,1,7,LAYERED_FP_SIZE,2);
 	} catch (...) {
 		elog(ERROR, "makeRDKitBFP: Unknown exception");
                 if(res) delete res;
