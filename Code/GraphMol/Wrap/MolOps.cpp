@@ -855,6 +855,7 @@ namespace RDKit{
      - 0x04: atom types\n\
      - 0x08: presence of rings\n\
      - 0x10: ring sizes\n\
+     - 0x20: aromaticity\n\
 \n\
 \n";
       python::def("LayeredFingerprint", wrapLayeredFingerprint,
@@ -868,6 +869,7 @@ namespace RDKit{
                    python::arg("branchedPaths")=true),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_LayeredFingerprint_version")=RDKit::LayeredFingerprintMolVersion;
+      python::scope().attr("LayeredFingerprint_substructLayers")=RDKit::substructLayers;
 
       docString="Set the wedging on single bonds in a molecule.\n \
    The wedging scheme used is that from Mol files.\n \

@@ -71,6 +71,36 @@ namespace RDKit{
       
       return true;
     }
+    bool isAtomAromatic(const Atom *a){
+      bool res=false;
+      if( !a->hasQuery()){
+        res=a->getIsAromatic();
+      } else {
+
+        std::string descr=a->getQuery()->getDescription();
+        if(descr=="AtomAtomicNum"){
+          res = a->getIsAromatic();
+        } else if(descr=="AtomIsAromatic") {
+          res=true;
+          if( a->getQuery()->getNegation()) res = !res;
+        } else if(descr=="AtomIsAliphatic") {
+          res=false;
+          if( a->getQuery()->getNegation()) res = !res;
+        } else if(descr=="AtomAnd"){
+          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
+          if( (*childIt)->getDescription()=="AtomAtomicNum"){
+            if( a->getQuery()->getNegation()){
+              res = false;
+            } else if((*(childIt+1))->getDescription()=="AtomIsAliphatic"){
+              res=false;
+            } else if((*(childIt+1))->getDescription()=="AtomIsAromatic") {
+              res=true;
+            }
+          }
+        }
+      }
+      return res;
+    }
   } // end of anonymous namespace
 
   // caller owns the result, it must be deleted
@@ -262,7 +292,6 @@ namespace RDKit{
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
     std::vector<short> isQueryBond(mol.getNumBonds(),0);
-
     ROMol::EDGE_ITER firstB,lastB;
     boost::tie(firstB,lastB) = mol.getEdges();
     while(firstB!=lastB){
@@ -280,6 +309,16 @@ namespace RDKit{
       }
       ++firstB;
     }
+
+    std::vector<bool> aromaticAtoms(mol.getNumAtoms(),false);
+    ROMol::VERTEX_ITER firstA,lastA;
+    boost::tie(firstA,lastA) = mol.getVertices();
+    while(firstA!=lastA){
+      const Atom *atom = mol[*firstA].get();
+      if(isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()]=true;
+      ++firstA;
+    }
+    
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths;
     if(branchedPaths){
@@ -332,14 +371,12 @@ namespace RDKit{
 #endif
           // we have the count of neighbors for bond bi, compute its hash layers:
           unsigned int ourHash=0;
-          unsigned int nBitsInHash=0;
 
           if(layerFlags & 0x1){
             // layer 1: straight topology
             ourHash = bondNbrs[i]%8; // 3 bits here
             hashLayers[0].push_back(ourHash);
           }
-          nBitsInHash+=3;
           if(layerFlags & 0x2 && !(pathQueries&0x1) ){
             // layer 2: include bond orders:
             unsigned int bondHash;
@@ -349,10 +386,11 @@ namespace RDKit{
             } else {
               bondHash = Bond::SINGLE;
             }
-            ourHash = (bondHash%16);
+            ourHash = bondHash%8;
+            ourHash |= (bondNbrs[i]%8)<<6;
+            
             hashLayers[1].push_back(ourHash);
           }
-          nBitsInHash+=4;
           if(layerFlags & 0x4 && !(pathQueries&0x6) ){
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 3: include atom types:
@@ -362,33 +400,32 @@ namespace RDKit{
             if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
             ourHash = a1Hash;
             ourHash |= a2Hash<<7;
+            ourHash |= (bondNbrs[i]%8)<<17;
             hashLayers[2].push_back(ourHash);
           }
-          nBitsInHash += 14;
-          if(layerFlags & 0x8){
+          if(layerFlags & 0x8 && !(pathQueries&0x6) ){
             // layer 4: include ring information
             if(queryIsBondInRing(bi)){
-              if(hashLayers[3].size()==0) hashLayers[3].push_back(1);
+              hashLayers[3].push_back(1);
             }
           }
-          nBitsInHash++;
-          if(layerFlags & 0x10 ){
+          if(layerFlags & 0x10 && !(pathQueries&0x6) ){
             // layer 5: include ring size information
             ourHash = (queryBondMinRingSize(bi)%8);
             hashLayers[4].push_back(ourHash);
           }
-          nBitsInHash+=3;
           if(layerFlags & 0x20 && !(pathQueries&0x6) ){
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 6: aromaticity:
-            bool a1Hash = bi->getBeginAtom()->getIsAromatic();
-            bool a2Hash = bi->getEndAtom()->getIsAromatic();
+            bool a1Hash = aromaticAtoms[bi->getBeginAtom()->getIdx()];
+            bool a2Hash = aromaticAtoms[bi->getEndAtom()->getIdx()];
+
             if((!a1Hash) && a2Hash) std::swap(a1Hash,a2Hash);
             ourHash = a1Hash;
             ourHash |= a2Hash<<1;
+            ourHash |= (bondNbrs[i]%8)<<5;
             hashLayers[5].push_back(ourHash);
           }
-          nBitsInHash += 2;
         }
         unsigned int l=0;
         bool flaggedPath=false;
