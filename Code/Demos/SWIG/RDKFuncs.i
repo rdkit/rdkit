@@ -227,5 +227,15 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
 %template(TanimotoSimilaritySIVi32) RDKit::TanimotoSimilarity<boost::int32_t>;
 %template(TanimotoSimilaritySIVi64) RDKit::TanimotoSimilarity<boost::int64_t>;
 
-
-
+%extend RDKit::ROMol {
+  double MolLogP(RDKit::ROMol &mol){
+    double logp,mr;
+    RDKit::Descriptors::CalcCrippenDescriptors(mol,logp,mr);
+    return logp;
+  }
+  double MolMR(RDKit::ROMol &mol){
+    double logp,mr;
+    RDKit::Descriptors::CalcCrippenDescriptors(mol,logp,mr);
+    return mr;
+  }
+}
