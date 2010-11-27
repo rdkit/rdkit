@@ -1,7 +1,7 @@
 SELECT dice_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol));
- dice_sml 
-----------
-      0.4
+     dice_sml      
+-------------------
+ 0.363636363636364
 (1 row)
 
 SELECT dice_sml(atompair_fp('c1ccccc1'::mol),atompair_fp('c1ccncc1'::mol));
@@ -20,14 +20,22 @@ SET rdkit.tanimoto_threshold = 0.4;
 SELECT
     id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
 FROM
-pgavfp
+pgbfp
 WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
 ORDER BY sml DESC, id LIMIT 10;
-   id    |        sml        
----------+-------------------
- 9550023 | 0.416666666666667
- 1959267 | 0.412621359223301
-(2 rows)
+    id    |        sml        
+----------+-------------------
+  1959267 | 0.539663461538462
+ 16746067 | 0.536187563710499
+ 16219722 | 0.535889872173058
+ 23581811 | 0.535819430814524
+  5464092 |  0.53481331987891
+ 16682422 |  0.53481331987891
+  2930149 | 0.534603811434303
+ 16759738 |  0.53281096963761
+  5485201 | 0.532323232323232
+ 16745674 | 0.531658291457286
+(10 rows)
 
 SET rdkit.tanimoto_threshold = 0.5;
 SET rdkit.dice_threshold = 0.5;

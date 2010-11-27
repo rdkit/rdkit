@@ -33,7 +33,21 @@ namespace RDKit{
       if( b->getQuery()->getNegation()) return true;
       std::string descr=b->getQuery()->getDescription();
       if(descr=="BondOrder") return false;
-      if(descr=="BondAnd" || descr=="BondOr" || descr=="BondXor") return true;
+      if(descr=="BondAnd" || descr=="BondXor") return true;
+      if(descr=="BondOr") {
+        // detect the types of queries that appear for unspecified bonds in SMARTS:
+        if(b->getQuery()->endChildren()-b->getQuery()->beginChildren()==2){
+          for(Bond::QUERYBOND_QUERY::CHILD_VECT_CI child=b->getQuery()->beginChildren();
+              child!=b->getQuery()->endChildren();++child){
+            if((*child)->getDescription()!="BondOrder" || (*child)->getNegation())
+              return true;
+            if(static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::SINGLE &&
+               static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::AROMATIC)
+              return true;
+            return false;
+          }
+        }
+      }
       
       return true;
     }
@@ -56,6 +70,36 @@ namespace RDKit{
       }
       
       return true;
+    }
+    bool isAtomAromatic(const Atom *a){
+      bool res=false;
+      if( !a->hasQuery()){
+        res=a->getIsAromatic();
+      } else {
+
+        std::string descr=a->getQuery()->getDescription();
+        if(descr=="AtomAtomicNum"){
+          res = a->getIsAromatic();
+        } else if(descr=="AtomIsAromatic") {
+          res=true;
+          if( a->getQuery()->getNegation()) res = !res;
+        } else if(descr=="AtomIsAliphatic") {
+          res=false;
+          if( a->getQuery()->getNegation()) res = !res;
+        } else if(descr=="AtomAnd"){
+          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
+          if( (*childIt)->getDescription()=="AtomAtomicNum"){
+            if( a->getQuery()->getNegation()){
+              res = false;
+            } else if((*(childIt+1))->getDescription()=="AtomIsAliphatic"){
+              res=false;
+            } else if((*(childIt+1))->getDescription()=="AtomIsAromatic") {
+              res=true;
+            }
+          }
+        }
+      }
+      return res;
     }
   } // end of anonymous namespace
 
@@ -247,20 +291,34 @@ namespace RDKit{
 
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
-    boost::dynamic_bitset<> isQueryBond(mol.getNumBonds());
-
+    std::vector<short> isQueryBond(mol.getNumBonds(),0);
     ROMol::EDGE_ITER firstB,lastB;
     boost::tie(firstB,lastB) = mol.getEdges();
     while(firstB!=lastB){
       const Bond *bond = mol[*firstB].get();
+      isQueryBond[bond->getIdx()] = 0x0;
       bondCache[bond->getIdx()]=bond;
-      if(isComplexQuery(bond) ||
-         isComplexQuery(bond->getBeginAtom()) ||
-         isComplexQuery(bond->getEndAtom())) {
-        isQueryBond.set(bond->getIdx());
+      if(isComplexQuery(bond)){
+        isQueryBond[bond->getIdx()] = 0x1;
+      }
+      if(isComplexQuery(bond->getBeginAtom())){
+        isQueryBond[bond->getIdx()] |= 0x2;
+      }
+      if(isComplexQuery(bond->getEndAtom())){
+        isQueryBond[bond->getIdx()] |= 0x4;
       }
       ++firstB;
     }
+
+    std::vector<bool> aromaticAtoms(mol.getNumAtoms(),false);
+    ROMol::VERTEX_ITER firstA,lastA;
+    boost::tie(firstA,lastA) = mol.getVertices();
+    while(firstA!=lastA){
+      const Atom *atom = mol[*firstA].get();
+      if(isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()]=true;
+      ++firstA;
+    }
+    
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     INT_PATH_LIST_MAP allPaths;
     if(branchedPaths){
@@ -281,11 +339,15 @@ namespace RDKit{
           if(layerFlags & (0x1<<i)) hashLayers[i].reserve(maxPath);
         }
 
-        // should we keep this path?
-        bool keepPath=true;
+        // details about what kinds of query features appear on the path:
+        unsigned int pathQueries=0;
+        //std::cerr<<" path: ";
         for(PATH_TYPE::const_iterator pIt=path.begin();pIt!=path.end();++pIt){
-          if(isQueryBond[*pIt]) keepPath=false;
+          pathQueries |= isQueryBond[*pIt];
+          //std::cerr<< *pIt <<"("<<isQueryBond[*pIt]<<") ";
         }
+        //std::cerr<<" : "<<pathQueries<<std::endl;
+
 
         // calculate the number of neighbors each bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size(),0);
@@ -309,59 +371,27 @@ namespace RDKit{
 #endif
           // we have the count of neighbors for bond bi, compute its hash layers:
           unsigned int ourHash=0;
-          unsigned int nBitsInHash=0;
 
           if(layerFlags & 0x1){
             // layer 1: straight topology
             ourHash = bondNbrs[i]%8; // 3 bits here
             hashLayers[0].push_back(ourHash);
           }
-          nBitsInHash+=3;
-          if(layerFlags & 0x2 && keepPath){
+          if(layerFlags & 0x2 && !(pathQueries&0x1) ){
             // layer 2: include bond orders:
             unsigned int bondHash;
-            if(bi->getIsAromatic()){
-              // makes sure aromatic bonds always hash the same:
-              bondHash = Bond::AROMATIC;
-#if 0
-            } else if(bi->getBondType()==Bond::SINGLE &&
-                      bi->getBeginAtom()->getIsAromatic() &&
-                      bi->getEndAtom()->getIsAromatic() &&
-                      queryIsBondInRing(bi)
-                      ){
-
-              // NOTE:
-              //  This special case is bogus. Query bonds don't
-              //  show up here at all. For non-query systems
-              //  this just ends up causing trouble because paths like
-              //     c:c-C
-              //  do not match things like:
-              //     c:c-c
-              //  at layer 0x02 if the single bond is in a ring
-              //  and they definitely should.
-              //  example of this is: c1cccc2c13.c1cccc2c13
-              // 
-
-
-              // a special case that comes up if we're using these to filter
-              // substructure matches:
-              //   This molecule: 
-              //     Cn1ccc2nn(C)c(=O)c-2c1C
-              //   which has a non-aromatic bridging bond between aromatic
-              //   atoms, matches the SMARTS query:
-              //    Cc1ncccc1
-              //   because unspecified bonds in SMARTS are aromatic or single
-              // We need to make sure to capture this case.  
-              bondHash = Bond::AROMATIC;
-#endif
-            } else {
+            // makes sure aromatic bonds and single bonds  always hash the same:
+            if(!bi->getIsAromatic() && bi->getBondType()!=Bond::SINGLE && bi->getBondType()!=Bond::AROMATIC){
               bondHash = bi->getBondType();
+            } else {
+              bondHash = Bond::SINGLE;
             }
-            ourHash = (bondHash%16);
+            ourHash = bondHash%8;
+            ourHash |= (bondNbrs[i]%8)<<6;
+            
             hashLayers[1].push_back(ourHash);
           }
-          nBitsInHash+=4;
-          if(layerFlags & 0x4 && keepPath){
+          if(layerFlags & 0x4 && !(pathQueries&0x6) ){
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 3: include atom types:
             unsigned int a1Hash,a2Hash;
@@ -370,32 +400,32 @@ namespace RDKit{
             if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
             ourHash = a1Hash;
             ourHash |= a2Hash<<7;
+            ourHash |= (bondNbrs[i]%8)<<17;
             hashLayers[2].push_back(ourHash);
           }
-          nBitsInHash += 14;
-          if(layerFlags & 0x8 && keepPath){
+          if(layerFlags & 0x8 && !(pathQueries&0x6) ){
             // layer 4: include ring information
-            ourHash = queryIsBondInRing(bi);
-            hashLayers[3].push_back(ourHash);
+            if(queryIsBondInRing(bi)){
+              hashLayers[3].push_back(1);
+            }
           }
-          nBitsInHash++;
-          if(layerFlags & 0x10 && keepPath){
+          if(layerFlags & 0x10 && !(pathQueries&0x6) ){
             // layer 5: include ring size information
             ourHash = (queryBondMinRingSize(bi)%8);
             hashLayers[4].push_back(ourHash);
           }
-          nBitsInHash+=3;
-          if(layerFlags & 0x20 && keepPath){
+          if(layerFlags & 0x20 && !(pathQueries&0x6) ){
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 6: aromaticity:
-            bool a1Hash = bi->getBeginAtom()->getIsAromatic();
-            bool a2Hash = bi->getEndAtom()->getIsAromatic();
+            bool a1Hash = aromaticAtoms[bi->getBeginAtom()->getIdx()];
+            bool a2Hash = aromaticAtoms[bi->getEndAtom()->getIdx()];
+
             if((!a1Hash) && a2Hash) std::swap(a1Hash,a2Hash);
             ourHash = a1Hash;
             ourHash |= a2Hash<<1;
+            ourHash |= (bondNbrs[i]%8)<<5;
             hashLayers[5].push_back(ourHash);
           }
-          nBitsInHash += 2;
         }
         unsigned int l=0;
         bool flaggedPath=false;
@@ -413,6 +443,8 @@ namespace RDKit{
 
           // hash the path to generate a seed:
           unsigned long seed = gboost::hash_range(layerIt->begin(),layerIt->end());
+
+          //std::cerr<<"  "<<l+1<<" "<<seed%fpSize<<std::endl;
 
 #ifdef LAYEREDFP_USE_MT
           generator.seed(static_cast<rng_type::result_type>(seed));

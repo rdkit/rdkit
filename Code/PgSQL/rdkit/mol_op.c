@@ -88,6 +88,14 @@ is_valid_smiles(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(isValidSmiles(data));
 }
 
+PG_FUNCTION_INFO_V1(is_valid_smarts);
+Datum		is_valid_smarts(PG_FUNCTION_ARGS);
+Datum
+is_valid_smarts(PG_FUNCTION_ARGS) {
+  char 	*data = PG_GETARG_CSTRING(0);
+  PG_RETURN_BOOL(isValidSmarts(data));
+}
+
 PG_FUNCTION_INFO_V1(mol_substruct);
 Datum		mol_substruct(PG_FUNCTION_ARGS);
 Datum

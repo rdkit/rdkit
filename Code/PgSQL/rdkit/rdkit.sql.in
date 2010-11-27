@@ -23,7 +23,30 @@ CREATE TYPE mol (
         STORAGE = extended
 );
 
+
+CREATE OR REPLACE FUNCTION qmol_in(cstring)
+RETURNS qmol
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION qmol_out(qmol)
+RETURNS cstring
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE qmol (
+        INTERNALLENGTH = -1,
+        INPUT = qmol_in,
+        OUTPUT = qmol_out,
+        STORAGE = extended
+);
+
 CREATE OR REPLACE FUNCTION is_valid_smiles(cstring)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION is_valid_smarts(cstring)
 RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
@@ -241,7 +264,26 @@ CREATE OPERATOR @> (
 	JOIN = contjoinsel
 );
 
+CREATE OR REPLACE FUNCTION substruct(mol, qmol)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'mol_substruct'
+LANGUAGE C STRICT IMMUTABLE;
+CREATE OPERATOR @> (
+	LEFTARG = mol,
+	RIGHTARG = qmol,
+	PROCEDURE = substruct(mol, qmol),
+	COMMUTATOR = '<@',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
+
 CREATE OR REPLACE FUNCTION rsubstruct(mol, mol)
+RETURNS bool
+AS 'MODULE_PATHNAME', 'mol_rsubstruct'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION rsubstruct(qmol, mol)
 RETURNS bool
 AS 'MODULE_PATHNAME', 'mol_rsubstruct'
 LANGUAGE C STRICT IMMUTABLE;
@@ -250,6 +292,14 @@ CREATE OPERATOR <@ (
 	LEFTARG = mol,
 	RIGHTARG = mol,
 	PROCEDURE = rsubstruct(mol, mol),
+	COMMUTATOR = '@>',
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+CREATE OPERATOR <@ (
+	LEFTARG = qmol,
+	RIGHTARG = mol,
+	PROCEDURE = rsubstruct(qmol, mol),
 	COMMUTATOR = '@>',
 	RESTRICT = contsel,
 	JOIN = contjoinsel

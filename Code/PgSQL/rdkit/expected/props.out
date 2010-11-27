@@ -1,53 +1,53 @@
-SELECT mol_amw('c1ccccc1'::mol);
- mol_amw
+SELECT mol_amw('c1ccccc1'::mol) mol_amw;
+ mol_amw 
 ---------
   78.114
 (1 row)
 
-SELECT mol_logp('c1ccccc1'::mol);
- mol_logp
+SELECT mol_logp('c1ccccc1'::mol) mol_logp;
+ mol_logp 
 ----------
    1.6866
 (1 row)
 
-SELECT mol_hba('c1ccccc1'::mol);
- mol_hba
+SELECT mol_hba('c1ccccc1'::mol) mol_hba;
+ mol_hba 
 ---------
        0
 (1 row)
 
-SELECT mol_hbd('c1ccccc1'::mol);
- mol_hbd
+SELECT mol_hbd('c1ccccc1'::mol) mol_hbd;
+ mol_hbd 
 ---------
        0
 (1 row)
 
-SELECT mol_hba('c1ccncc1'::mol);
- mol_hba
+SELECT mol_hba('c1ccncc1'::mol) mol_hba;
+ mol_hba 
 ---------
        1
 (1 row)
 
-SELECT mol_hbd('c1ccncc1'::mol);
- mol_hbd
+SELECT mol_hbd('c1ccncc1'::mol) mol_hbd;
+ mol_hbd 
 ---------
        0
 (1 row)
 
-SELECT mol_hbd('c1ccncc1O'::mol);
- mol_hbd
+SELECT mol_hbd('c1ccncc1O'::mol) mol_hbd;
+ mol_hbd 
 ---------
        1
 (1 row)
 
-SELECT mol_hba('c1ccncc1O'::mol);
- mol_hba
+SELECT mol_hba('c1ccncc1O'::mol) mol_hba;
+ mol_hba 
 ---------
        2
 (1 row)
 
-SELECT mol_logp('c1ccncc1O'::mol);
- mol_logp
+SELECT mol_logp('c1ccncc1O'::mol) mol_logp;
+ mol_logp 
 ----------
    0.7872
 (1 row)

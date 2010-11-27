@@ -359,8 +359,7 @@ void test1Layers(){
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
 
     ExplicitBitVect *fp3=LayeredFingerprintMol(*m3,layers,1,5);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)<1.0);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)>0.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)==1.0);
 
     ExplicitBitVect *fp4=LayeredFingerprintMol(*m4,layers,1,5);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp4)<=1.0);
@@ -384,14 +383,12 @@ void test1Layers(){
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
 
     ExplicitBitVect *fp3=LayeredFingerprintMol(*m3,layers,1,5);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)<1.0);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)>0.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)==1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp2,*fp3)<1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp2,*fp3)>0.0);
 
     ExplicitBitVect *fp4=LayeredFingerprintMol(*m4,layers,1,5);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp4)<1.0);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp4)>0.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp4)==1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp2,*fp4)<1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp2,*fp4)>0.0);
     TEST_ASSERT(TanimotoSimilarity(*fp3,*fp4)==1.0);
@@ -409,8 +406,8 @@ void test1Layers(){
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,layers,1,5);
 
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,layers,1,5);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
+
     ExplicitBitVect *fp3=LayeredFingerprintMol(*m3,layers,1,5);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)<1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)>0.0);
@@ -418,8 +415,7 @@ void test1Layers(){
     TEST_ASSERT(TanimotoSimilarity(*fp2,*fp3)>0.0);
 
     ExplicitBitVect *fp4=LayeredFingerprintMol(*m4,layers,1,5);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp4)<1.0);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp4)>0.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp4)==1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp2,*fp4)==1.0);
 
     delete fp1;delete fp2;delete fp3;delete fp4;
@@ -435,8 +431,7 @@ void test1Layers(){
     ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,layers,1,5);
 
     ExplicitBitVect *fp2=LayeredFingerprintMol(*m2,layers,1,5);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
 
     ExplicitBitVect *fp3=LayeredFingerprintMol(*m3,layers,1,5);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)<1.0);
@@ -686,7 +681,7 @@ void test3Layers(){
     delete fp2;
     fp2=LayeredFingerprintMol(*m2,0x7,1,5,512);
     fp3=(*fp1)&(*fp2);
-    TEST_ASSERT(fp3!=(*fp2));
+    TEST_ASSERT(fp3==(*fp2));
 
     delete fp2;
     fp2=LayeredFingerprintMol(*m2,0x25,1,5,512);

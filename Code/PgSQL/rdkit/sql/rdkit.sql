@@ -11,6 +11,7 @@ RESET client_min_messages;
 SELECT is_valid_smiles('c1ccccc1');
 SELECT is_valid_smiles('c1ccccc');
 SELECT is_valid_smiles('c1cccn1');
+SELECT is_valid_smarts('c1ccc[n,c]1');
 
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
@@ -24,13 +25,19 @@ SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1';
 SELECT count(*) FROM pgmol WHERE 'c1ccccc1' <@ m;
 SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
 
-SELECT id, layered_fp(m) AS f INTO pgbfp FROM pgmol;
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1'::qmol;
+SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1'::qmol;
+SELECT count(*) FROM pgmol WHERE m @> 'c1ccc[n,c]c1'::qmol;
+SELECT count(*) FROM pgmol WHERE 'c1ccccc1'::qmol <@ m;
+SELECT count(*) FROM pgmol WHERE 'c1ccc[n,c]c1'::qmol <@ m;
+
+
+SELECT id, rdkit_fp(m) AS f INTO pgbfp FROM pgmol;
 CREATE UNIQUE INDEX bfp_ididx ON pgbfp (id);
 
 SELECT id, morgan_fp(m,1) AS f INTO pgsfp FROM pgmol;
 CREATE UNIQUE INDEX sfp_ididx ON pgsfp (id);
 
-SELECT id, rdkit_fp(m) AS f INTO pgavfp FROM pgmol;
 SELECT id, torsion_fp(m) AS f INTO pgtorsfp FROM pgmol;
 SELECT id, atompair_fp(m) AS f INTO pgpairfp FROM pgmol;
 
@@ -39,35 +46,35 @@ set rdkit.dice_threshold=0.5;
 
 SELECT 
 	id, 
-	tanimoto_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
 FROM
 	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
 LIMIT 10;
 
 SELECT 
 	id, 
-	dice_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
 FROM
 	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) % f  
 LIMIT 10;
 
 SELECT 
 	id, 
-	tanimoto_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
+	tanimoto_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f) 
 FROM
 	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
 LIMIT 10;
 
 SELECT 
 	id, 
-	dice_sml(layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f),
+	dice_sml(rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol), f),
 	size(f)
 FROM
 	 (SELECT * FROM pgbfp ORDER BY id) AS t 
-WHERE layered_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
+WHERE rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol) # f  
 LIMIT 10;
 
 set rdkit.tanimoto_threshold=0.4;

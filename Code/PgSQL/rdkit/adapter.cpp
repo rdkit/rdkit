@@ -132,12 +132,16 @@ deconstructROMol(CROMol data) {
 }
 
 extern "C" CROMol 
-parseMolText(char *data) {
+parseMolText(char *data,bool asSmarts) {
   ROMol   *mol = NULL;
 
   try {
     StringData.assign(data);
-    mol = SmilesToMol(StringData);
+    if(!asSmarts){
+      mol = SmilesToMol(StringData);
+    } else {
+      mol = SmartsToMol(StringData);
+    }
   } catch (...) {
     ereport(ERROR,
             (errcode(ERRCODE_DATA_EXCEPTION),
@@ -171,12 +175,35 @@ isValidSmiles(char *data) {
   return res;
 }
 
+extern "C" bool
+isValidSmarts(char *data) {
+  ROMol   *mol = NULL;
+  bool res;
+  try {
+    StringData.assign(data);
+    mol = SmartsToMol(StringData);
+  } catch (...) {
+    mol=NULL;
+  }
+  if(mol==NULL){
+    res=false;
+  } else {
+    res=true;
+    delete mol;
+  }
+  return res;
+}
+
 extern "C" char *
-makeMolText(CROMol data, int *len) {
+makeMolText(CROMol data, int *len,bool asSmarts) {
 	ROMol   *mol = (ROMol*)data;
 
 	try {
-		StringData = MolToSmiles(*mol, true);
+          if(!asSmarts){
+            StringData = MolToSmiles(*mol, true);
+          } else {
+            StringData = MolToSmarts(*mol, false);
+          }
 	} catch (...) {
 		elog(ERROR, "makeMolText: Unknown exception");
 	}	
@@ -192,7 +219,7 @@ makeMolSign(CROMol data) {
 	bytea			*ret = NULL;
 
 	try {
-          res = RDKit::LayeredFingerprintMol(*mol,0x07,1,7,SSS_FP_SIZE);
+          res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,6,SSS_FP_SIZE);
           ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)res);
           delete res;
           res=0;
@@ -741,7 +768,7 @@ makeRDKitBFP(CROMol data) {
 	ExplicitBitVect	*res=NULL;
 
 	try {
-          res = RDKit::RDKFingerprintMol(*mol,1,5,LAYERED_FP_SIZE,1);
+          res = RDKit::RDKFingerprintMol(*mol,1,7,LAYERED_FP_SIZE,2);
 	} catch (...) {
 		elog(ERROR, "makeRDKitBFP: Unknown exception");
                 if(res) delete res;
