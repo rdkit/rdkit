@@ -180,7 +180,7 @@ namespace RDDepict {
     // user specfied coordinates exist
     bool preSpec = false;
     // first embed any atoms for which the coordinates have been specified.
-    if ((coordMap) && (coordMap->size() > 0) ) {
+    if ((coordMap) && (coordMap->size() > 1) ) {
       EmbeddedFrag efrag(&mol, *coordMap);
       // add this to the list of embedded fragments 
       efrags.push_back(efrag);
@@ -325,6 +325,24 @@ namespace RDDepict {
     DepictorLocal::_shiftCoords(efrags);
     // create a confomation on the moelcule and copy the coodinates
     unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
+
+    // special case for a single-atom coordMap template 
+    if ((coordMap) && (coordMap->size() == 1) ) {
+      RDKit::Conformer &conf=mol.getConformer(cid);
+      RDGeom::INT_POINT2D_MAP::const_iterator cRef=coordMap->begin();
+      RDGeom::Point3D confPos=conf.getAtomPos(cRef->first);
+      RDGeom::Point2D refPos=cRef->second;
+      refPos.x -= confPos.x;
+      refPos.y -= confPos.y;
+      for(unsigned int i=0;i<conf.getNumAtoms();++i){
+        confPos = conf.getAtomPos(i);
+        confPos.x += refPos.x;
+        confPos.y += refPos.y;
+        conf.setAtomPos(i,confPos);
+      }
+    }
+
+
     return cid;
   }
 

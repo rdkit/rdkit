@@ -879,7 +879,9 @@ namespace RDDepict {
         this->addNonRingAtom(otherAtom, commAid); //, mol);
       } else {
         otherAtom = d_eatoms[commAid].nbr1;
-        embObj.addNonRingAtom(otherAtom, commAid); //, mol);
+        if(otherAtom>=0){
+          embObj.addNonRingAtom(otherAtom, commAid); //, mol);
+        }
       }
       if (otherAtom >= 0) {
         commAtms.push_back(otherAtom);

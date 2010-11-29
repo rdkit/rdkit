@@ -600,6 +600,19 @@ void testBondLengthChange() {
   }
 }
 
+void testIssue3122141() {
+  {
+    std::string smi = "ClC1=C(Cl)C2(Cl)C3C(Cl)C=CC3C1(Cl)C2(Cl)Cl";
+    RWMol *m1 = SmilesToMol(smi);
+    RDGeom::INT_POINT2D_MAP crdMap;
+    crdMap[1]=RDGeom::Point2D(1.0,2.0);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
+    TEST_ASSERT(cid1>=0);
+    delete m1;
+  }
+}
+
+
 int main() { 
   RDLog::InitLogs();
 #if 1
@@ -688,6 +701,11 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Testing a change of the depictor bond length\n";
   testBondLengthChange();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Issue 3122141\n";
+  testIssue2995724();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);
