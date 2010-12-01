@@ -20,7 +20,7 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=
   except:
     useAGG=False
     try:
-      import cairo2
+      import cairo
       import Image
       MolDrawing.registerCanvas('cairo')
       from cairoCanvas import Canvas
