@@ -2137,6 +2137,32 @@ void testRingStereochem(){
 }
 
 
+void testBug3127883()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 3127883 (kekulization failing) " << std::endl;
+  {
+    ROMol *m;
+    std::string smi;
+    smi = "c(:c:c:1):c:c:c:1";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    delete m;
+  }
+
+  {
+    ROMol *m;
+    std::string smi;
+    smi = "c1(:c(:c(:c(-C(-c2:c(:c(:c(:c(:c:2)))))=C):c(:c:1))))";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    delete m;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -2145,6 +2171,7 @@ main(int argc, char *argv[])
 #if 1
   testPass();
   testFail();
+
   testDetails();
   testProblems();
   //testLeak();
@@ -2172,5 +2199,6 @@ main(int argc, char *argv[])
 #endif
   testBug1844617();
   testBug1942220();
+  testBug3127883();
   //testBug1719046();
 }

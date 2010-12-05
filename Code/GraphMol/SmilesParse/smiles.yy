@@ -220,6 +220,7 @@ branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
   RDKit::RWMol *curMol = (*molList)[ sz-1 ];
   Bond *partialBond = curMol->createPartialBond(0,$2->getBondType());
   partialBond->setBondDir($2->getBondDir());
+  partialBond->setIsAromatic($2->getIsAromatic());
   curMol->setBondBookmark(partialBond,
 			      ci_LEADING_BOND);
   delete $2;
