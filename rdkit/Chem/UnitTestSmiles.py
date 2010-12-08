@@ -23,7 +23,7 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles(smi)
       canSmi = Chem.MolToSmiles(m)
       for spelling in spellings:
-        m = Chem.MolFromSmiles(smi)
+        m = Chem.MolFromSmiles(spelling)
         trySmi = Chem.MolToSmiles(m)
         assert canSmi==trySmi,'Non-canonical: mol %s gave %s (should be %s)'%(spelling,trySmi,canSmi)
         m2 = Chem.MolFromSmiles(trySmi.strip())
@@ -87,8 +87,8 @@ class TestCase(unittest.TestCase):
                 ('C(=O)(Cl)c1ccc(C(=O)Cl)cc1',('O=C(Cl)c1ccc(cc1)C(Cl)=O','C(Cl)(=O)C1=CC=C(C=C1)C(Cl)=O',
                                                'ClC(=O)c1ccc(cc1)C(=O)Cl')),
                 ('[N+](=O)([O-])c1ccc([N+](=O)[O-])cc1',('[N+]([O-])(=O)C1=CC=C(C=C1)[N+](=O)[O-]',
-                                                         'O=[N+1]([O--1])c1ccc(cc1)[N+1]([O--1])=O',
-                                                         '[O--1][N+1](=O)c1ccc(cc1)[N+1]([O--1])=O')),
+                                                         'O=[N+1]([O-1])c1ccc(cc1)[N+1]([O-1])=O',
+                                                         '[O-1][N+1](=O)c1ccc(cc1)[N+1]([O-1])=O')),
                 ('Oc1c3c(cc(c1)S(=O)(=O)O)cc(NC(=O)c2ccccc2)cc3',
                  ('C1=C(C2=C(C=C1S(O)(=O)=O)C=C(C=C2)NC(C3=CC=CC=C3)=O)O',
                   'O=S(=O)(O)c1cc(O)c2ccc(NC(=O)c3ccccc3)cc2c1',
