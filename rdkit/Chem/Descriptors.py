@@ -9,23 +9,41 @@
 #  of the RDKit source tree.
 #
 from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
-import collections
 
-def _pyMolWt(mol,heavyAtomsOnly=0):
-  """ DEPRECATED 
-  """
-  hMass = Chem.GetPeriodicTable().GetAtomicWeight(1)
-  accum = 0.0
-  for atom in mol.GetAtoms():
-    accum += atom.GetMass()
-    if not heavyAtomsOnly:
-      accum += atom.GetTotalNumHs()*hMass
-  return accum
-_pyMolWt.version="1.0.0"
+def _setupDescriptors(namespace):
+  from rdkit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen
+  from rdkit.Chem.EState import EState_VSA
+  mods = [GraphDescriptors,MolSurf,EState_VSA,Lipinski,Crippen,Fragments]
 
-MolWt = lambda *x,**y:rdMolDescriptors._CalcMolWt(*x,**y)
-MolWt.version=rdMolDescriptors._CalcMolWt_version
+  otherMods = [Chem]
+
+  others = []
+  for mod in otherMods:
+    tmp = dir(mod)
+    for name in tmp:
+      if name[0] != '_':
+        thing = getattr(mod,name)
+        if hasattr(thing,'__call__'):
+          others.append(name)
+
+  for mod in mods:
+    tmp = dir(mod)
+
+    for name in tmp:
+      if name[0] != '_' and name[-1] != '_' and name not in others:
+        # filter out python reference implementations:
+        if name[:2]=='py' and name[2:] in tmp:
+          continue
+        thing = getattr(mod,name)
+        if hasattr(thing,'__call__'):
+          namespace[name]=thing
+          #descList.append((name,thing))
+_setupDescriptors(locals())
+
+
+from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
+MolWt = lambda *x,**y:_rdMolDescriptors._CalcMolWt(*x,**y)
+MolWt.version=_rdMolDescriptors._CalcMolWt_version
 MolWt.__doc__="""The average molecular weight of the molecule ignoring hydrogens
 
   >>> MolWt(Chem.MolFromSmiles('CC'))
@@ -35,7 +53,7 @@ MolWt.__doc__="""The average molecular weight of the molecule ignoring hydrogens
 
 """
 
-HeavyAtomMolWt=lambda x:MolWt(x,1)
+HeavyAtomMolWt=lambda x:MolWt(x,True)
 HeavyAtomMolWt.__doc__="""The average molecular weight of the molecule ignoring hydrogens
 
   >>> HeavyAtomMolWt(Chem.MolFromSmiles('CC'))
@@ -75,6 +93,7 @@ def MolecularFormula(mol):
 
    contribution from Andrew Dalke
    """
+   import collections
 
    # Count the different atom types
    counts = collections.defaultdict(int)

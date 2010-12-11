@@ -10,9 +10,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-""" constructs the list of available descriptors
+""" DEPRECATED
+constructs the list of available descriptors
 
 """
+from rdkit.RDLogger import logger
+logger().warning("The AvailDescriptors module is deprecated. Please switch to using the Descriptors module.")
+
 from rdkit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen,Descriptors
 from rdkit.Chem.EState import EState_VSA
 mods = [GraphDescriptors,MolSurf,EState_VSA,Lipinski,Descriptors,Crippen,Fragments]
