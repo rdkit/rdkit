@@ -90,6 +90,8 @@ char *makeMolText(CROMol data, int *len,bool asSmarts);
 bool isValidSmiles(char *data);
 bool isValidSmarts(char *data);
 
+int molcmp(CROMol i, CROMol a);
+
 int MolSubstruct(CROMol i, CROMol a);
 
 bytea *makeMolSign(CROMol data);

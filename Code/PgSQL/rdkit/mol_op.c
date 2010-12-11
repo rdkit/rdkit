@@ -33,19 +33,6 @@
 #include "fmgr.h"
 
 /***************** Mol operations ***********************/
-static int 
-molcmp(Mol *a, Mol *b) {
-	int res;
-
-	res = memcmp(VARDATA(a), VARDATA(b), Min(VARSIZE(a), VARSIZE(b)) - VARHDRSZ);
-	if ( res )
-		return res;
-
-	if (VARSIZE(a) == VARSIZE(b))
-		return 0;
-	return (VARSIZE(a) > VARSIZE(b)) ? 1 : -1; 
-}
-
 
 #define MOLCMPFUNC( type, action, ret )                 	\
 PG_FUNCTION_INFO_V1(mol_##type);                        	\
@@ -53,19 +40,19 @@ Datum		mol_##type(PG_FUNCTION_ARGS);           		\
 Datum                                                   	\
 mol_##type(PG_FUNCTION_ARGS)                       			\
 {                                                       	\
-    Mol    *a, *b;											\
+    CROMol    a, b;											\
 	int		res;											\
 															\
 	fcinfo->flinfo->fn_extra = SearchMolCache(				\
 								fcinfo->flinfo->fn_extra,	\
 								fcinfo->flinfo->fn_mcxt,	\
 								PG_GETARG_DATUM(0), 		\
-								&a, NULL, NULL);			\
+								NULL, &a, NULL); \
 	fcinfo->flinfo->fn_extra = SearchMolCache(				\
 								fcinfo->flinfo->fn_extra,	\
 								fcinfo->flinfo->fn_mcxt,	\
 								PG_GETARG_DATUM(1), 		\
-								&b, NULL, NULL);			\
+								NULL, &b, NULL); \
     res = molcmp(a, b);                         			\
     PG_RETURN_##ret( res action 0 );                    	\
 }   \
