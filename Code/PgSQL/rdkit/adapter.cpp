@@ -163,11 +163,14 @@ isValidSmiles(char *data) {
   try {
     StringData.assign(data);
     mol = SmilesToMol(StringData,0,0);
-    MolOps::cleanUp(*mol);
-    mol->updatePropertyCache();
-    MolOps::Kekulize(*mol);
-    MolOps::assignRadicals(*mol);
-    MolOps::setAromaticity(*mol);
+    if(mol){
+      MolOps::cleanUp(*mol);
+      mol->updatePropertyCache();
+      MolOps::Kekulize(*mol);
+      MolOps::assignRadicals(*mol);
+      MolOps::setAromaticity(*mol);
+      MolOps::adjustHs(*mol);
+    }
   } catch (...) {
     mol=NULL;
   }

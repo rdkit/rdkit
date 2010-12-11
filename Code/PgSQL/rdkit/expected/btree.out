@@ -3,23 +3,24 @@ SET enable_indexscan=off;
 SET enable_bitmapscan=off;
 SET enable_seqscan=on;
 SELECT * FROM pgmol WHERE 
-	m = 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
- id | m 
-----+---
-(0 rows)
+	m = 'Clc1nccnc1NN=Cc1ccc(Br)cc1';
+   id    |             m              
+---------+----------------------------
+ 2842150 | Clc1nccnc1NN=Cc1ccc(Br)cc1
+(1 row)
 
 SELECT count(*) FROM pgmol WHERE 
 	m < 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
  count 
 -------
-   275
+   258
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE 
 	m <= 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
  count 
 -------
-   275
+   258
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE 
@@ -33,37 +34,38 @@ SELECT count(*) FROM pgmol WHERE
 	m >= 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
  count 
 -------
-   725
+   742
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE 
 	m > 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
  count 
 -------
-   725
+   742
 (1 row)
 
 SET enable_indexscan=on;
 SET enable_bitmapscan=on;
 SET enable_seqscan=off;
 SELECT * FROM pgmol WHERE 
-	m = 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
- id | m 
-----+---
-(0 rows)
+	m = 'Clc1nccnc1NN=Cc1ccc(Br)cc1';
+   id    |             m              
+---------+----------------------------
+ 2842150 | Clc1nccnc1NN=Cc1ccc(Br)cc1
+(1 row)
 
 SELECT count(*) FROM pgmol WHERE 
 	m < 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
  count 
 -------
-   275
+   258
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE 
 	m <= 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
  count 
 -------
-   275
+   258
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE 
@@ -77,14 +79,14 @@ SELECT count(*) FROM pgmol WHERE
 	m >= 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
  count 
 -------
-   725
+   742
 (1 row)
 
 SELECT count(*) FROM pgmol WHERE 
 	m > 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
  count 
 -------
-   725
+   742
 (1 row)
 
 SET enable_indexscan=on;

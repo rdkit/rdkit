@@ -647,6 +647,23 @@ gmol_consistent(PG_FUNCTION_ARGS)
 						res = false;
 			}
 			break;
+		case RDKitEquals:
+			*recheck = true;
+
+			if (!ISALLTRUE(key))
+			{
+				int i;
+				unsigned char 	*k = (unsigned char*)VARDATA(key),
+								*q = (unsigned char*)VARDATA(query);
+
+				if (SIGLEN(key) != SIGLEN(query))
+					elog(ERROR, "All fingerprints should be the same length");
+
+				for(i=0; res && i<SIGLEN(key); i++)
+					if ( (k[i] & q[i]) != q[i])
+						res = false;
+			}
+			break;
 		default:
 			elog(ERROR,"Unknown strategy: %d", strategy);
 	}

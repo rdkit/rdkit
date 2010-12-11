@@ -5,7 +5,7 @@ SET enable_bitmapscan=off;
 SET enable_seqscan=on;
 
 SELECT * FROM pgmol WHERE 
-	m = 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
+	m = 'Clc1nccnc1NN=Cc1ccc(Br)cc1';
 SELECT count(*) FROM pgmol WHERE 
 	m < 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
 SELECT count(*) FROM pgmol WHERE 
@@ -22,7 +22,7 @@ SET enable_bitmapscan=on;
 SET enable_seqscan=off;
 
 SELECT * FROM pgmol WHERE 
-	m = 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
+	m = 'Clc1nccnc1NN=Cc1ccc(Br)cc1';
 SELECT count(*) FROM pgmol WHERE 
 	m < 'C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O';
 SELECT count(*) FROM pgmol WHERE 

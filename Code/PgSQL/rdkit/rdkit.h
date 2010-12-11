@@ -167,6 +167,7 @@ typedef struct IntRange {
 #define RDKitDiceStrategy       (2)
 #define	RDKitContains			(3)
 #define	RDKitContained			(4)
+#define	RDKitEquals			(6)
 
 bool calcConsistency(bool isLeaf, uint16 strategy, 
     double nCommonUp, double nCommonDown, double nKey, double nQuery);
