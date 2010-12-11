@@ -158,11 +158,16 @@ parseMolText(char *data,bool asSmarts) {
 
 extern "C" bool
 isValidSmiles(char *data) {
-  ROMol   *mol = NULL;
+  RWMol   *mol = NULL;
   bool res;
   try {
     StringData.assign(data);
-    mol = SmilesToMol(StringData);
+    mol = SmilesToMol(StringData,0,0);
+    MolOps::cleanUp(*mol);
+    mol->updatePropertyCache();
+    MolOps::Kekulize(*mol);
+    MolOps::assignRadicals(*mol);
+    MolOps::setAromaticity(*mol);
   } catch (...) {
     mol=NULL;
   }
@@ -229,6 +234,36 @@ makeMolSign(CROMol data) {
 	}
 	
 	return ret;
+}
+
+extern "C" int
+molcmp(CROMol i, CROMol a) {
+  ROMol *im = (ROMol*)i;
+  ROMol *am = (ROMol*)a;
+
+  if(!im){
+    if(!am) return 0;
+    return -1;
+  } if(!am) return 1;
+  
+  int res=im->getNumAtoms()-am->getNumAtoms();
+  if(res) return res;
+
+  res=im->getNumBonds()-am->getNumBonds();
+  if(res) return res;
+
+  res=int(RDKit::Descriptors::CalcAMW(*im,false))-
+    int(RDKit::Descriptors::CalcAMW(*am,false));
+  if(res) return res;
+
+  res=im->getRingInfo()->numRings()-am->getRingInfo()->numRings();
+  if(res) return res;
+
+  RDKit::MatchVectType matchVect;
+  if(RDKit::SubstructMatch(*im,*am,matchVect)){
+    return 0;
+  }
+  return -1;
 }
 
 extern "C" int
