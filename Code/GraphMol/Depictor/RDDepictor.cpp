@@ -234,7 +234,6 @@ namespace RDDepict {
       mri->markDone();
       mri->expandEfrag(nratms, efrags); 
       mri = DepictorLocal::_findLargestFrag(efrags);
-
     }
     // at this point any remaining efrags should belong individual fragments in the molecule
   }
@@ -292,9 +291,9 @@ namespace RDDepict {
     // storage for pieces of a molecule/s that are embedded in 2D
     std::list<EmbeddedFrag> efrags;
     computeInitialCoords(mol, coordMap, efrags);
-    
-    // perform random sampling here to improve the density
+
     std::list<EmbeddedFrag>::iterator eri;
+    // perform random sampling here to improve the density
     for (eri = efrags.begin(); eri != efrags.end(); eri++) {
       // either sample the 2D space by randomly flipping rotatable
       // bonds in the structure or flip onyl bonds along the shortest

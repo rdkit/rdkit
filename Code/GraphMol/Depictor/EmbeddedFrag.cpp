@@ -41,6 +41,8 @@ namespace RDDepict {
     eatm.angle = -1.0;
     eatm.ccw = true;
     eatm.neighs.clear();
+    d_eatoms.clear();
+    d_attachPts.clear();
     d_eatoms[aid] = eatm;
     d_done = false;
     dp_mol = mol;
@@ -50,6 +52,8 @@ namespace RDDepict {
   EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings) {
     PRECONDITION(mol,"");
     dp_mol = mol;
+    d_eatoms.clear();
+    d_attachPts.clear();
     this->embedFusedRings(fusedRings);
     d_done = false;
   }
@@ -67,6 +71,8 @@ namespace RDDepict {
     //   neighbors can be added to them
     PRECONDITION(mol,"");
     dp_mol = mol;
+    d_eatoms.clear();
+    d_attachPts.clear();
     RDGeom::INT_POINT2D_MAP_CI cri; 
     unsigned int na = mol->getNumAtoms();
     for (cri = coordMap.begin(); cri != coordMap.end(); cri++) {
@@ -300,7 +306,8 @@ namespace RDDepict {
     }
 
     if (d_eatoms[aid].neighs.size() > 0) {
-      if (std::find(d_attachPts.begin(), d_attachPts.end(), static_cast<int>(aid)) == d_attachPts.end()) {
+      if (std::find(d_attachPts.begin(), d_attachPts.end(),
+                    static_cast<int>(aid)) == d_attachPts.end()) {
         d_attachPts.push_back(aid);
       }
     }
@@ -425,7 +432,7 @@ namespace RDDepict {
     RDGeom::Point2D midPt = other.GetEmbeddedAtom(onb1).loc;
     midPt += other.GetEmbeddedAtom(onb2).loc;
     midPt *= 0.5;
-    
+
     // get the coordinates for the neighboring atoms
     int nb1 = d_eatoms[commAid].nbr1;
     int nb2 = d_eatoms[commAid].nbr2;
@@ -490,7 +497,13 @@ namespace RDDepict {
       // where the ring single bond in the cis/trans system should have gone
       p1norm = embFrag.d_eatoms[aid1].normal;
       ringAtm = embFrag.d_eatoms[aid1].CisTransNbr;
-      rAtmLoc = d_eatoms[ringAtm].loc;
+      if(d_eatoms.find(ringAtm)!=d_eatoms.end()){
+        rAtmLoc = d_eatoms[ringAtm].loc;
+      } else {
+        // FIX: this is a work-around arising from issue 3135833
+        BOOST_LOG(rdWarningLog)<<"Warning: stereochemistry around double bond may be incorrect in depiction."<<std::endl;
+        return;
+      }
     } else {
       // this is the cis/trans object
       p1norm = d_eatoms[aid1].normal;
@@ -845,6 +858,7 @@ namespace RDDepict {
     PRECONDITION(dp_mol == embObj.getMol(), "Molecule mismatch");
     PRECONDITION(commAtms.size() >= 1, "");
     
+
     // we already have one or more common atoms between this fragment  
     // One atom in common can happen (look at issue 173)
     // - for cases where a cis/trans double bond is being merged with a 
@@ -904,7 +918,7 @@ namespace RDDepict {
       // now compute the transform
       rtrans.SetTransform(ref1, ref2, oth1, oth2);
     }
-    
+
     // transform the second fragment
     embObj.Transform(rtrans);
 
@@ -939,8 +953,7 @@ namespace RDDepict {
             d_attachPts.push_back(aid);
           }
         }
-      }
-      else {
+      } else {
         if (ori->second.CisTransNbr >= 0) {
           d_eatoms[aid].CisTransNbr = ori->second.CisTransNbr;
           d_eatoms[aid].normal = ori->second.normal;
@@ -959,7 +972,6 @@ namespace RDDepict {
     for (cai = commAtms.begin(); cai != commAtms.end(); cai++) {
       this->updateNewNeighs((*cai)); //, mol);
     }
-
   }
 
   void EmbeddedFrag::mergeFragsWithComm(std::list<EmbeddedFrag> &efrags) { //, const RDKit::ROMol *mol) {
@@ -980,6 +992,7 @@ namespace RDDepict {
       if (commAtms.size() == 0) {
         break;
       }
+
       this->mergeWithCommon((*nfri), commAtms); //, mol);
       RDKit::INT_VECT_CI cai;
       for (cai = commAtms.begin(); cai != commAtms.end(); cai++) {
@@ -999,7 +1012,7 @@ namespace RDDepict {
     
     // first merge any fragments that share atoms in common
     std::list<EmbeddedFrag>::iterator efri, nfri;
-    
+
     this->mergeFragsWithComm(efrags); //, dp_mol);
 
     while (d_attachPts.size() > 0) {

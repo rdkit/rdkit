@@ -137,7 +137,10 @@ namespace RDDepict {
 
   public:
     //! Default constructor
-    EmbeddedFrag() : d_done(false), dp_mol(0){};
+    EmbeddedFrag() : d_done(false), dp_mol(0){
+      d_eatoms.clear();
+      d_attachPts.clear();
+    };
 
     //! Intializer from a single atom id 
     /*!

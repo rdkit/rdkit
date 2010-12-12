@@ -613,6 +613,33 @@ void testIssue3122141() {
 }
 
 
+void testIssue3135833() {
+  {
+    std::string smi = "N#CC(/C=[N+](/c1cccnc1)c1c2cc(C(=O)c3ncsc3-c3cccnc3)ccc2ccc1)=C(/[NH3+])[S-]";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDGeom::INT_POINT2D_MAP crdMap;
+    crdMap[32]=RDGeom::Point2D(-2.8518,1.0270);
+    crdMap[33]=RDGeom::Point2D(-2.7999,-0.4721);
+    crdMap[4]=RDGeom::Point2D(-1.4239,-2.6758);
+    crdMap[11]=RDGeom::Point2D(-1.4757,-1.1767);
+    crdMap[12]=RDGeom::Point2D(-0.2034,-0.3823);
+    crdMap[13]=RDGeom::Point2D(1.1208,-1.0869);
+    crdMap[14]=RDGeom::Point2D(2.3931,-0.2924);
+    crdMap[15]=RDGeom::Point2D(3.7173,-0.9971);
+    crdMap[28]=RDGeom::Point2D(2.3412,1.2067);
+    crdMap[29]=RDGeom::Point2D(1.0170,1.9113);
+    crdMap[30]=RDGeom::Point2D(-0.2553,1.1168);
+    crdMap[31]=RDGeom::Point2D(-1.5795,1.8215);
+
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1, &crdMap, false);
+    TEST_ASSERT(cid1>=0);
+    delete m1;
+  }
+}
+
+
 int main() { 
   RDLog::InitLogs();
 #if 1
@@ -691,7 +718,6 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "   Test Issue 2948402\n";
   testIssue2948402();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
-#endif
 
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Issue 2995724\n";
@@ -705,7 +731,13 @@ int main() {
 
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Issue 3122141\n";
-  testIssue2995724();
+  testIssue3122141();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+#endif
+
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Issue 3135833\n";
+  testIssue3135833();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);
