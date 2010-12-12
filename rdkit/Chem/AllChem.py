@@ -75,6 +75,18 @@ def ComputeMolVolume(mol,confId=-1,gridSpacing=0.1,boxMargin=2.0):
       vol+= voxelVol
   return vol
 
+def GenerateDepictionMatching2DStructure(mol,reference,confId=-1,
+                                         **kwargs):
+  mp={}
+  rconf=reference.GetConformer()
+  ss = mol.GetSubstructMatch(reference)
+  for i,aid in enumerate(ss):
+    pt=rconf.GetAtomPosition(i)
+    mp[aid]=rdGeometry.Point2D(pt.x,pt.y)
+  Compute2DCoords(mol,coordMap=mp)
+      
+
+
 def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
                                          **kwargs):
   nAts = mol.GetNumAtoms()
