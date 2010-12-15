@@ -1,0 +1,66 @@
+// $Id: Salts.txt 198 2006-12-15 18:06:48Z landrgr1 $
+// Created by Greg Landrum, December 2006
+//  Definitions from Thomas Zoller
+//
+//  Version history:
+//     15 Dec, 2006:     created (GL)
+
+// Notes:
+//  1) don't include charges
+//  2) The search for salts is a substructure search where the substructure
+//     must match the entire fragment, so we don't need to be choosy about bond 
+//     types
+//  3) The matching is done in order, so if you put the more complex stuff at the
+//     bottom the "don't remove the last fragment" algorithm has a chance of
+//     of returning something sensible
+
+// start with simple inorganics:
+[Cl,Br,I]
+[Li,Na,K,Ca,Mg]
+[O,N]
+
+// "complex" inorganics
+[N](=O)(O)O
+[P](=O)(O)(O)O
+[P](F)(F)(F)(F)(F)F
+[S](=O)(=O)(O)O
+[CH3][S](=O)(=O)(O)
+c1cc([CH3])ccc1[S](=O)(=O)(O)	p-Toluene sulfonate
+
+// organics
+[CH3]C(=O)O	  Acetic acid
+FC(F)(F)C(=O)O	  TFA
+OC(=O)C=CC(=O)O	  Fumarate/Maleate
+OC(=O)C(=O)O	  Oxalate
+OC(=O)C(O)C(O)C(=O)O	  Tartrate
+C1CCCCC1[NH]C1CCCCC1	  Dicylcohexylammonium
+
+//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met: 
+//
+//     * Redistributions of source code must retain the above copyright 
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following 
+//       disclaimer in the documentation and/or other materials provided 
+//       with the distribution.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
+//       nor the names of its contributors may be used to endorse or promote 
+//       products derived from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
