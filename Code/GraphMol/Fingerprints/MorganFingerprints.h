@@ -47,6 +47,9 @@
 namespace RDKit {
   class ROMol;
   namespace MorganFingerprints {
+    extern std::vector<std::string> defaultFeatureSmarts;
+    extern std::vector<ROMOL_SPTR> defaultFeatureMatchers;
+
     const std::string morganFingerprintVersion="1.0.0";
     
     //! returns the Morgan fingerprint for a molecule
@@ -75,7 +78,8 @@ namespace RDKit {
                             C[C@@H](F)Cl, and CC(F)Cl to generate different fingerprints.
       \param useBondTypes : if set, bond types will be included as part of the hash for
                             calculating bits
-
+      \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
+                                     have a nonzero invariant.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -87,7 +91,8 @@ namespace RDKit {
                      std::vector<boost::uint32_t> *invariants=0,
                      const std::vector<boost::uint32_t> *fromAtoms=0,
                      bool useChirality=false,
-                     bool useBondTypes=true);
+                     bool useBondTypes=true,
+                     bool onlyNonzeroInvariants=false);
 
 
     //! returns the Morgan fingerprint for a molecule as a bit vector
@@ -107,6 +112,8 @@ namespace RDKit {
                             C[C@@H](F)Cl, and CC(F)Cl to generate different fingerprints.
       \param useBondTypes : if set, bond types will be included as part of the hash for
                             calculating bits
+      \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
+                                     have a nonzero invariant.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -119,7 +126,8 @@ namespace RDKit {
                               std::vector<boost::uint32_t> *invariants=0,
                               const std::vector<boost::uint32_t> *fromAtoms=0,
                               bool useChirality=false,
-                              bool useBondTypes=true);
+                              bool useBondTypes=true,
+                              bool onlyNonzeroInvariants=false);
     
       
     //! returns the connectivity invariants for a molecule

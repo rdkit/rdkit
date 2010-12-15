@@ -146,6 +146,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                          const std::vector<uint32_t> *fromAtoms,
                          bool useChirality,
                          bool useBondTypes,
+                         bool onlyNonzeroInvariants,
                          T &res){
       unsigned int nAtoms=mol.getNumAtoms();
       bool owner=false;
@@ -154,12 +155,17 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
         owner=true;
         getConnectivityInvariants(mol,*invariants);
       }
+      // Make a copy of the invariants:
+      std::vector<uint32_t> invariantCpy(nAtoms);
+      std::copy(invariants->begin(),invariants->end(),invariantCpy.begin());
 
       // add the round 0 invariants to the result:
       for(unsigned int i=0;i<nAtoms;++i){
         if(!fromAtoms ||
            std::find(fromAtoms->begin(),fromAtoms->end(),i)!=fromAtoms->end()){
-          updateElement(res,(*invariants)[i]);
+          if( !onlyNonzeroInvariants || (*invariants)[i]){
+            updateElement(res,(*invariants)[i]);
+          }
         }
       }
 
@@ -182,13 +188,31 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
         includeAtoms.set();
       }
 
+      std::vector<unsigned int> atomOrder(nAtoms);
+      if( onlyNonzeroInvariants ){
+        std::vector< std::pair<int32_t,uint32_t> > ordering;
+        for(unsigned int i=0;i<nAtoms;++i){
+          if(!(*invariants)[i])
+            ordering.push_back(std::make_pair(1,i));
+          else 
+            ordering.push_back(std::make_pair(0,i));
+        }
+        std::sort(ordering.begin(),ordering.end());
+        for(unsigned int i=0;i<nAtoms;++i){
+          atomOrder[i]=ordering[i].second;
+        }
+      } else {
+        for(unsigned int i=0;i<nAtoms;++i){
+          atomOrder[i]=i;
+        }
+      }
       // now do our subsequent rounds:
       for(unsigned int layer=0;layer<radius;++layer){
         std::vector<uint32_t> roundInvariants(nAtoms);
         std::vector< boost::dynamic_bitset<> > roundAtomNeighborhoods=atomNeighborhoods;
         std::vector< AccumTuple > neighborhoodsThisRound;
           
-        for(unsigned int atomIdx=0;atomIdx<nAtoms;++atomIdx){
+        BOOST_FOREACH(unsigned int atomIdx,atomOrder){
           if(!deadAtoms[atomIdx]){
             std::vector< std::pair<int32_t,uint32_t> > nbrs;
             ROMol::OEDGE_ITER beg,end;
@@ -269,10 +293,12 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
           // if we haven't seen this exact environment before, update the fingerprint:
           if(std::find(neighborhoods.begin(),neighborhoods.end(),
                        iter->get<0>())==neighborhoods.end()){
-            if(includeAtoms[iter->get<2>()]){
-              updateElement(res,iter->get<1>());
+            if(!onlyNonzeroInvariants || invariantCpy[iter->get<2>()]){
+              if(includeAtoms[iter->get<2>()]){
+                updateElement(res,iter->get<1>());
+              }
+              neighborhoods.push_back(iter->get<0>());
             }
-            neighborhoods.push_back(iter->get<0>());
             //std::cerr<<" layer: "<<layer<<" atom: "<<iter->get<2>()<<" " <<iter->get<0>()<< " " << iter->get<1>() << " " << deadAtoms[iter->get<2>()]<<std::endl;
           } else {
             // we have seen this exact environment before, this atom
@@ -295,10 +321,12 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                    unsigned int radius,
                    std::vector<uint32_t> *invariants,
                    const std::vector<uint32_t> *fromAtoms,
-                   bool useChirality,bool useBondTypes){
+                   bool useChirality,bool useBondTypes,
+                   bool onlyNonzeroInvariants){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
-      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,*res);
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
+                      onlyNonzeroInvariants,*res);
       return res;
     }
 
@@ -308,9 +336,11 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                             unsigned int nBits,
                             std::vector<uint32_t> *invariants,
                             const std::vector<uint32_t> *fromAtoms,
-                            bool useChirality,bool useBondTypes){
+                            bool useChirality,bool useBondTypes,
+                            bool onlyNonzeroInvariants){
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
-      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,*res);
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
+                      onlyNonzeroInvariants,*res);
       return res;
     }
 
