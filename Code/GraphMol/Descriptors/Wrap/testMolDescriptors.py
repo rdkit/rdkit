@@ -172,6 +172,9 @@ class TestCase(unittest.TestCase) :
     self.failIfEqual(vs1[0],0)
     self.failUnlessEqual(vs1[0],vs1[3])
     
+    fp1 = rdMD.GetMorganFingerprint(mol,0,invariants=vs1)
+    fp2 = rdMD.GetMorganFingerprint(mol,0,useFeatures=True)
+    self.failUnlessEqual(fp1,fp2)
 
     
   def testCrippen(self):

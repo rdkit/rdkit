@@ -11,6 +11,8 @@
 #include <RDBoost/Wrap.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/GraphMol.h>
+#include <numpy/arrayobject.h>
+#include <boost/foreach.hpp>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
@@ -152,7 +154,8 @@ namespace {
                                                               python::object invariants,
                                                               python::object fromAtoms,
                                                               bool useChirality,
-                                                              bool useBondTypes){
+                                                              bool useBondTypes,
+                                                              bool useFeatures){
     std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
@@ -165,6 +168,9 @@ namespace {
           (*invars)[i] = python::extract<boost::uint32_t>(invariants[i]);
         }
       }
+    } else if(useFeatures){
+      invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+      RDKit::MorganFingerprints::getFeatureInvariants(mol,*invars);
     }
     std::vector<boost::uint32_t> *froms=0;
     if(fromAtoms){
@@ -191,7 +197,8 @@ namespace {
                                           python::object invariants,
                                           python::object fromAtoms,
                                           bool useChirality,
-                                          bool useBondTypes){
+                                          bool useBondTypes,
+                                          bool useFeatures){
     std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
@@ -204,7 +211,11 @@ namespace {
           (*invars)[i] = python::extract<boost::uint32_t>(invariants[i]);
         }
       }
+    } else if(useFeatures){
+      invars = new std::vector<boost::uint32_t>(mol.getNumAtoms());
+      RDKit::MorganFingerprints::getFeatureInvariants(mol,*invars);
     }
+    
     std::vector<boost::uint32_t> *froms=0;
     if(fromAtoms){
       unsigned int nFrom=python::extract<unsigned int>(fromAtoms.attr("__len__")());
@@ -337,7 +348,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("invariants")=python::list(),
                python::arg("fromAtoms")=python::list(),
                python::arg("useChirality")=false,
-               python::arg("useBondTypes")=true),
+               python::arg("useBondTypes")=true,
+               python::arg("useFeatures")=false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString="Returns a Morgan fingerprint for a molecule as a bit vector";
@@ -346,7 +358,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("invariants")=python::list(),
                python::arg("fromAtoms")=python::list(),
                python::arg("useChirality")=false,
-               python::arg("useBondTypes")=true),
+               python::arg("useBondTypes")=true,
+               python::arg("useFeatures")=false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   python::scope().attr("_MorganFingerprint_version")=
