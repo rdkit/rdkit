@@ -8,8 +8,8 @@ ifndef BOOSTHOME
 endif
 CPPFLAGS = -I${BOOSTHOME} -I${RDBASE}/Code -Wno-deprecated
 
-%.o : %.cpp
+%.o : %.cpp MolDrawing.h
 	$(CXX) $(CPPFLAGS)  -c -o $@ $< 
 
-demo.exe: demo.o
+demo.exe: demo.o 
 	$(CXX) -o $@ $< $(LDFLAGS)

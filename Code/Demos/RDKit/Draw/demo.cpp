@@ -15,6 +15,7 @@
 #include <RDGeneral/RDLog.h>
 #include <vector>
 #include <sstream>
+#include <fstream>
 
 
 using namespace RDKit;
@@ -27,7 +28,7 @@ std::string getColor(int atNum){
     colors[9]="#33CCCC";
     colors[15]="#FF7F00";
     colors[16]="#CCCC00";
-    colors[16]="#00CC00";
+    colors[17]="#00CC00";
     colors[35]="#7F4C19";
     colors[0]="#7F7F7F";
   }
@@ -36,14 +37,37 @@ std::string getColor(int atNum){
   return res;
 }
 void drawLine(std::vector<int>::const_iterator &pos,std::ostringstream &sstr){
-      pos+=4;
-      sstr<<"<svg:path ";
-      sstr<<"d='M "<<*pos<<","<<*(pos+1)<<" "<<*(pos+2)<<","<<*(pos+3)<<"' ";
-      pos+=4;
-      sstr<<"style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1'";
-      sstr<<" />\n";
+  int width=*pos++;
+  int dashed=*pos++;
+  int an1=*pos++;
+  int an2=*pos++;
+  std::string c1=getColor(an1);
+  std::string c2=getColor(an2);
+  if(c1==c2){
+    sstr<<"<svg:path ";
+    sstr<<"d='M "<<*pos<<","<<*(pos+1)<<" "<<*(pos+2)<<","<<*(pos+3)<<"' ";
+    pos+=4;
+    sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c1<<";stroke-width:4px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1'";
+    sstr<<" />\n";
+  } else {
+    int xp1 = *pos++;
+    int yp1 = *pos++;
+    int xp2 = *pos++;
+    int yp2 = *pos++;
+    int mx = xp1+(xp2-xp1)/2;
+    int my = yp1+(yp2-yp1)/2;
+    sstr<<"<svg:path ";
+    sstr<<"d='M "<<xp1<<","<<yp1<<" "<<mx<<","<<my<<"' ";
+    sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c1<<";stroke-width:4px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1'";
+    sstr<<" />\n";
+    sstr<<"<svg:path ";
+    sstr<<"d='M "<<mx<<","<<my<<" "<<xp2<<","<<yp2<<"' ";
+    sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c2<<";stroke-width:4px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1'";
+    sstr<<" />\n";
+  }
 }
 void drawAtom(std::vector<int>::const_iterator &pos,std::ostringstream &sstr){
+  int fontSz=50;
   int atNum=*pos++;
   int xp=*pos++;
   int yp=*pos++;
@@ -52,23 +76,34 @@ void drawAtom(std::vector<int>::const_iterator &pos,std::ostringstream &sstr){
   for(unsigned int i=0;i<slen;++i){
     label+=(char)*pos++;
   }
-  sstr<<"<svg:text x='"<<xp<<"' y='"<<yp<<"'";
-  sstr<<" style='font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans;text-anchor:middle;baseline-shift:sub"<<";fill:"<<getColor(atNum)<<"'";
-  sstr<<">";
-  sstr<<"<svg:tspan x='"<<xp<<"' y='"<<yp<<"'>";
+  int width=fontSz*label.length();
+  int height=fontSz;
+  sstr<<"<svg:g transform='translate("<<xp<<","<<yp<<")'><svg:rect ";
+  sstr<<"style='opacity:1.0;fill:#FFFFFF;stroke:none'";
+  sstr<<" width='"<<width<<"' height='"<<height<<"'";
+  sstr<<" x='-"<<width/2<<"' y='-"<<height/2<<"'";
+  sstr<<"> </svg:rect>\n";
+  sstr<<"<svg:text";
+  sstr<<" style='font-size:"<<fontSz<<"px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans;text-anchor:middle"<<";fill:"<<getColor(atNum)<<"'";
+  sstr<<" y='"<<.75*fontSz/2<<"'>";
+  sstr<<"<svg:tspan>";
   sstr<<label<<"</svg:tspan>";
-  sstr<<"</svg:text>\n";
+  sstr<<"</svg:text>";
+  sstr<<"</svg:g>\n";
 }
 
 std::string ToSVG(const std::vector<int> &drawing){
-  std::ostringstream sstr;
-  sstr<<"<?xml version='1.0' encoding='iso-8859-1'?>\n";
-  int width=300,height=300;
   std::vector<int>::const_iterator pos=drawing.begin()+2;
-  TEST_ASSERT(*pos==Drawing::BOUNDS);
+  if(*pos!=Drawing::BOUNDS){
+    std::cerr<<"no bounds token found"<<std::endl;
+    return "";
+  }
   pos+=3;
+  int width=300,height=300;
   width = *pos++;
   height = *pos++;
+  std::ostringstream sstr;
+  sstr<<"<?xml version='1.0' encoding='iso-8859-1'?>\n";
   sstr << "<svg:svg version='1.1' baseProfile='full'\n      \
         xmlns:svg='http://www.w3.org/2000/svg'\n                \
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
@@ -93,9 +128,18 @@ std::string ToSVG(const std::vector<int> &drawing){
   return sstr.str();
 }
 
+std::string MolToSVG(const ROMol &mol){
+  RWMol cp(mol);
+  RDKit::MolOps::Kekulize(cp);
+  RDDepict::compute2DCoords(cp);
+  std::vector<int> drawing=RDKit::Drawing::DrawMol(cp);
+  std::string svg=ToSVG(drawing);
+  return svg;
+}
 void DrawDemo(){
-  RWMol *mol=SmilesToMol("Clc1c(C#N)cc(C(=O)NCc2sccc2)cc1");
+  RWMol *mol=SmilesToMol("[Mg]c1c(C#N)cc(C(=O)NCc2sc([NH3+])c([NH3+])c2)cc1");
   //RWMol *mol=SmilesToMol("c1ncncn1");
+#if 0
   RDKit::MolOps::Kekulize(*mol);
 
   // generate the 2D coordinates:
@@ -107,7 +151,10 @@ void DrawDemo(){
   std::cerr<<"];"<<std::endl;
 
   std::string svg=ToSVG(drawing);
-  std::cout<<svg<<std::endl;
+#endif
+  std::string svg=MolToSVG(*mol);
+  std::ofstream ostr("blah.svg");
+  ostr<<svg<<std::endl;
 
   delete mol;
 }

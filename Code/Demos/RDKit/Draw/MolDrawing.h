@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <Geometry/point.h>
 
@@ -72,14 +73,15 @@ namespace RDKit {
         int a1Idx=mol[*bAts]->getIdx();
         RDGeom::Point2D a1(locs[a1Idx].x-minx,locs[a1Idx].y-miny);
         ROMol::OEDGE_ITER nbr,endNbrs;
+        RDGeom::Point2D nbrSum(0,0);
         boost::tie(nbr,endNbrs) = mol.getAtomBonds(mol[*bAts].get());
         while(nbr!=endNbrs){
           const BOND_SPTR bond=mol[*nbr];
           ++nbr;
           int a2Idx=bond->getOtherAtomIdx(a1Idx);
-          if(a2Idx>a1Idx) continue;
           RDGeom::Point2D a2(locs[a2Idx].x-minx,locs[a2Idx].y-miny);
-          
+          nbrSum+=a2-a1;
+          if(a2Idx<a1Idx) continue;
           res.push_back(LINE);
           res.push_back(1);
           res.push_back(0);
@@ -155,16 +157,47 @@ namespace RDKit {
             }
           }
         }
-        res.push_back(ATOM);
-        res.push_back(mol[*bAts]->getAtomicNum());
-        res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
-        res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.y));
-        std::string symbol=mol[*bAts]->getSymbol();
-        res.push_back(static_cast<ElementType>(symbol.length()));
-        BOOST_FOREACH(char c, symbol){
-          res.push_back(static_cast<ElementType>(c));
-        }
-        
+        if(mol[*bAts]->getAtomicNum()!=6 ||
+           mol[*bAts]->getFormalCharge()!=0 ){
+          res.push_back(ATOM);
+          res.push_back(mol[*bAts]->getAtomicNum());
+          res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
+          res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.y));
+          std::string symbol=mol[*bAts]->getSymbol();
+          bool leftToRight=true;
+          if(nbrSum.x>0){
+            leftToRight=false;
+          }
+          if(mol[*bAts]->getAtomicNum()!=6){
+            int nHs=mol[*bAts]->getTotalNumHs();
+            if(nHs>0){
+              std::string h="H";
+              if(nHs>1) {
+                h += boost::lexical_cast<std::string>(nHs);
+              }
+              if(leftToRight) symbol += h;
+              else symbol = h+symbol;
+            }
+          }
+          if( mol[*bAts]->getFormalCharge()!=0 ){
+            int chg=mol[*bAts]->getFormalCharge();
+            std::string sgn="+";
+            if(chg<0){
+              sgn="-";
+            }
+            chg=abs(chg);
+            if(chg>1){
+              sgn += boost::lexical_cast<std::string>(chg);
+            } 
+            if(leftToRight) symbol+=sgn;
+            else symbol = sgn+symbol;
+          }
+
+          res.push_back(static_cast<ElementType>(symbol.length()));
+          BOOST_FOREACH(char c, symbol){
+            res.push_back(static_cast<ElementType>(c));
+          }
+        }        
         ++bAts;
       }
       
