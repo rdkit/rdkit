@@ -154,6 +154,7 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
   }
 }
 
+%ignore ToSVG;
 %include "RDKFuncs.h"
 
 // ------------------- EBV fingerprints
