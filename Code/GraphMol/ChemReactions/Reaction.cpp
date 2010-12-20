@@ -154,6 +154,9 @@ namespace RDKit {
           int mapNum;
           newAtom->getProp("molAtomMapNumber",mapNum);
           res->setAtomBookmark(newAtom,mapNum);
+          // now clear the molAtomMapNumber property so that it doesn't
+          // end up in the products (this was bug 3140490):
+          newAtom->clearProp("molAtomMapNumber");
         }
 
         // check for properties we need to set:
