@@ -2162,6 +2162,24 @@ void testBug3127883()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testAtomMaps(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "test adding atom-map information" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="[*:1]CCC([C:200])C";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="[*:1]CCC([C:200])C");
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int
 main(int argc, char *argv[])
@@ -2200,5 +2218,6 @@ main(int argc, char *argv[])
   testBug1844617();
   testBug1942220();
   testBug3127883();
+  testAtomMaps();
   //testBug1719046();
 }

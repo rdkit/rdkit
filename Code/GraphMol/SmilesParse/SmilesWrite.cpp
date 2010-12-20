@@ -68,6 +68,7 @@ std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
     //   - the atom has a nonstandard valence
     //   - chirality present and writing isomeric smiles
     //   - non-default isotope and writing isomeric smiles
+    //   - atom-map information present
     const INT_VECT &defaultVs=PeriodicTable::getTable()->getValenceList(num);
     int totalValence= atom->getExplicitValence()+atom->getImplicitValence();
     bool nonStandard;
@@ -92,6 +93,9 @@ std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
       } else if(massDiff>0.1){
         needsBracket=true;
       }
+    }
+    if(atom->hasProp("molAtomMapNumber")){
+      needsBracket=true;
     }
   } else {
     needsBracket = true;
@@ -216,6 +220,12 @@ std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
     } else if(fc < 0) {
       res << "-";
       if(fc < -1) res << -fc;
+    }
+    
+    if(atom->hasProp("molAtomMapNumber")){
+      int mapNum;
+      atom->getProp("molAtomMapNumber",mapNum);
+      res<<":"<<mapNum;
     }
     res << "]";
   }
@@ -388,7 +398,7 @@ std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
 // decisions and I'm gonna want to smack myself for doing this,
 // but we'll try anyway.
 std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles,
-    bool doKekule,int rootedAtAtom){
+                        bool doKekule,int rootedAtAtom,bool canonical){
   PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
       "rootedAtomAtom must be less than the number of atoms");
   if(!mol.getNumAtoms()) return "";
@@ -423,7 +433,11 @@ std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles,
   if(doIsomericSmiles){
     MolOps::assignStereochemistry(mol,true);
   }
-  MolOps::rankAtoms(mol,ranks);
+  if(canonical){
+    MolOps::rankAtoms(mol,ranks);
+  } else {
+    for(unsigned int i=0;i<mol.getNumAtoms();++i) ranks[i]=i;
+  }
 
 #ifdef VERBOSE_CANON
   for(unsigned int tmpI=0;tmpI<ranks.size();tmpI++){

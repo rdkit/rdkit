@@ -248,6 +248,8 @@ std::string("Xi"));
 				return ATOM_TOKEN; 
 			}
 
+<IN_ATOM_STATE>\: 	{ return COLON_TOKEN; }
+
 \-			{ return MINUS_TOKEN; }
 
 \+			{ return PLUS_TOKEN; }

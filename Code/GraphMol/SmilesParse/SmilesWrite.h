@@ -53,8 +53,10 @@ namespace RDKit{
     \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
     \param rootedAtAtom : make sure the SMILES starts at the specified atom.
         The resulting SMILES is not, of course, canonical.
+    \param canonical : if false, no attempt will be made to canonicalize the SMILES
    */
   std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles=false,
-			  bool doKekule=false,int rootedAtAtom=-1);
+			  bool doKekule=false,int rootedAtAtom=-1,
+                          bool canonical=true);
 }
 #endif

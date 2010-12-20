@@ -382,6 +382,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
       to start at a particular atom. Defaults to -1.\n\
+    - canonical: (optional) if false no attempt will be made to canonicalize\n\
+      the molecule. Defaults to true.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -391,7 +393,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	      (python::arg("mol"),
 	       python::arg("isomericSmiles")=false,
 	       python::arg("kekuleSmiles")=false,
-	       python::arg("rootedAtAtom")=-1),
+	       python::arg("rootedAtAtom")=-1,
+	       python::arg("canonical")=true),
 	      docString.c_str());
 
   docString="Returns a SMARTS string for a molecule\n\

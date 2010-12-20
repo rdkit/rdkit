@@ -49,7 +49,7 @@ using namespace RDKit;
 %token <ival> NONZERO_DIGIT_TOKEN ZERO_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN LOOP_CONNECTOR_TOKEN
 %token MINUS_TOKEN PLUS_TOKEN CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
-%token H_TOKEN AT_TOKEN PERCENT_TOKEN
+%token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol branch
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
@@ -238,6 +238,13 @@ branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
 
 /* --------------------------------------------------------------- */
 atomd:	simple_atom
+| ATOM_OPEN_TOKEN charge_element COLON_TOKEN nonzero_number ATOM_CLOSE_TOKEN
+{
+  $$ = $2;
+  $$->setNoImplicit(true);
+  $$->setProp("molAtomMapNumber",$4);
+}
+
 | ATOM_OPEN_TOKEN charge_element ATOM_CLOSE_TOKEN
 {
   $$ = $2;
