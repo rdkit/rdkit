@@ -294,6 +294,26 @@ morgan_fp(PG_FUNCTION_ARGS) {
 
 	PG_RETURN_SPARSEFINGERPRINT_P(sfp);
 }
+PG_FUNCTION_INFO_V1(featmorgan_fp);
+Datum       featmorgan_fp(PG_FUNCTION_ARGS);
+Datum
+featmorgan_fp(PG_FUNCTION_ARGS) {
+    CROMol  mol;
+	MolSparseFingerPrint    fp;
+	SparseFingerPrint       *sfp;
+
+	fcinfo->flinfo->fn_extra = SearchMolCache(
+								fcinfo->flinfo->fn_extra,
+								fcinfo->flinfo->fn_mcxt,
+								PG_GETARG_DATUM(0),
+								NULL, &mol, NULL);
+
+	fp = makeFeatMorganSFP(mol, PG_GETARG_INT32(1) /* radius */ );
+	sfp = deconstructMolSparseFingerPrint(fp);
+	freeMolSparseFingerPrint(fp);
+
+	PG_RETURN_SPARSEFINGERPRINT_P(sfp);
+}
 PG_FUNCTION_INFO_V1(atompair_fp);
 Datum       atompair_fp(PG_FUNCTION_ARGS);
 Datum

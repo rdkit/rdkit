@@ -251,6 +251,26 @@ morganbv_fp(PG_FUNCTION_ARGS) {
 
 	PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
+PG_FUNCTION_INFO_V1(featmorganbv_fp);
+Datum       featmorganbv_fp(PG_FUNCTION_ARGS);
+Datum
+featmorganbv_fp(PG_FUNCTION_ARGS) {
+    CROMol  mol;
+	MolBitmapFingerPrint	fp;
+	BitmapFingerPrint		*sfp;
+
+	fcinfo->flinfo->fn_extra = SearchMolCache(
+										fcinfo->flinfo->fn_extra,
+										fcinfo->flinfo->fn_mcxt,
+										PG_GETARG_DATUM(0),
+										NULL, &mol, NULL);
+
+	fp = makeFeatMorganBFP(mol, PG_GETARG_INT32(1) /* radius */ );
+	sfp = deconstructMolBitmapFingerPrint(fp);
+	freeMolBitmapFingerPrint(fp);
+
+	PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+}
 PG_FUNCTION_INFO_V1(atompairbv_fp);
 Datum       atompairbv_fp(PG_FUNCTION_ARGS);
 Datum

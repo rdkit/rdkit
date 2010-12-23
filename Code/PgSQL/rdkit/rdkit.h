@@ -145,6 +145,8 @@ MolBitmapFingerPrint makeLayeredBFP(CROMol data);
 MolBitmapFingerPrint makeRDKitBFP(CROMol data);
 MolBitmapFingerPrint makeMorganBFP(CROMol data, int radius);
 MolSparseFingerPrint makeMorganSFP(CROMol data, int radius);
+MolBitmapFingerPrint makeFeatMorganBFP(CROMol data, int radius);
+MolSparseFingerPrint makeFeatMorganSFP(CROMol data, int radius);
 MolSparseFingerPrint makeAtomPairSFP(CROMol data);
 MolSparseFingerPrint makeTopologicalTorsionSFP(CROMol data);
 MolBitmapFingerPrint makeAtomPairBFP(CROMol data);

@@ -107,6 +107,16 @@ RETURNS sfp
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION featmorganbv_fp(mol,int)
+RETURNS bfp
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION featmorgan_fp(mol,int)
+RETURNS sfp
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION atompair_fp(mol)
 RETURNS sfp
 AS 'MODULE_PATHNAME'
@@ -402,7 +412,7 @@ CREATE OPERATOR <> (
     JOIN = neqjoinsel
 );
 
-CREATE OPERATOR == (
+CREATE OPERATOR @= (
     LEFTARG = mol,
     RIGHTARG = mol,
     PROCEDURE = mol_eq,
@@ -688,7 +698,7 @@ DEFAULT FOR TYPE mol USING gist
 AS
 	OPERATOR	3	@> (mol, mol),
 	OPERATOR	4	<@ (mol, mol),
-	OPERATOR	6	== (mol, mol),
+	OPERATOR	6	@= (mol, mol),
     FUNCTION    1   gmol_consistent (bytea, internal, int4),
     FUNCTION    2   gmol_union (bytea, internal),
     FUNCTION    3   gmol_compress (internal),

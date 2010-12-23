@@ -847,6 +847,39 @@ makeMorganBFP(CROMol data, int radius) {
 	return (MolBitmapFingerPrint)res;
 }
 
+extern "C" MolSparseFingerPrint 
+makeFeatMorganSFP(CROMol data, int radius) {
+	ROMol   *mol = (ROMol*)data;
+	SparseFP	*res=NULL;
+        std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+	try {
+          RDKit::MorganFingerprints::getFeatureInvariants(*mol,invars);
+          res = (SparseFP*)RDKit::MorganFingerprints::getFingerprint(*mol,radius,
+                                                                     &invars);
+	} catch (...) {
+		elog(ERROR, "makeMorganSFP: Unknown exception");
+	}
+	
+	return (MolSparseFingerPrint)res;
+}
+
+
+extern "C" MolBitmapFingerPrint
+makeFeatMorganBFP(CROMol data, int radius) {
+	ROMol   *mol = (ROMol*)data;
+	ExplicitBitVect	*res=NULL;
+        std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+	try {
+          RDKit::MorganFingerprints::getFeatureInvariants(*mol,invars);
+          res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius,
+                                                                   MORGAN_FP_SIZE,&invars);
+	} catch (...) {
+		elog(ERROR, "makeMorganBFP: Unknown exception");
+	}
+	
+	return (MolBitmapFingerPrint)res;
+}
+
 
 extern "C" MolSparseFingerPrint 
 makeAtomPairSFP(CROMol data){
