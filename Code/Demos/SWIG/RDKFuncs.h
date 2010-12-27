@@ -30,11 +30,13 @@
 
 RDKit::ROMOL_SPTR MolFromSmiles(std::string smi){
   RDKit::ROMol *mol=0;
+  //std::cerr<<"MolFromSmiles"<<std::endl;
   try{
     mol=static_cast<RDKit::ROMol *>(RDKit::SmilesToMol(smi));
   } catch (...){
     mol=0;
   }
+  //std::cerr<<" creating smart ptr and returning"<<std::endl;
   return RDKit::ROMOL_SPTR(mol);
 };
 RDKit::ROMOL_SPTR MolFromSmarts(std::string sma){
@@ -117,7 +119,9 @@ RDKit::ROMOL_SPTR MolFromBinary(std::vector<int> pkl){
   std::string sres;
   sres.resize(pkl.size());
   std::copy(pkl.begin(),pkl.end(),sres.begin());
+  //std::cerr<<"Depickle molecule"<<std::endl;
   RDKit::ROMol *res=new RDKit::ROMol(sres);
+  //std::cerr<<"  done"<<std::endl;
   return RDKit::ROMOL_SPTR(res);
 };
 

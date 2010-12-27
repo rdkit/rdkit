@@ -16,12 +16,38 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
+#include <RDGeneral/Invariant.h>  
+#include <RDBoost/Exceptions.h>  
 #include "RDKFuncs.h"
 %}
 
-SWIG_SHARED_PTR(ROMol, RDKit::ROMol)
-SWIG_SHARED_PTR(Atom, RDKit::Atom)
-SWIG_SHARED_PTR(Bond, RDKit::Bond)
+
+%include "exception.i"
+%exception {
+  try {
+    $action
+  } catch (RDKit::MolSanitizeException &e) {
+    std::string msg="Sanitization error: ";
+    msg += e.message();
+    SWIG_exception(SWIG_ValueError,msg.c_str());
+  } catch (Invar::Invariant &e) {
+    std::string msg="Invariant error: "+e.getMessage();
+    SWIG_exception(SWIG_RuntimeError,msg.c_str());
+  } catch (IndexErrorException &e) {
+    SWIG_exception(SWIG_IndexError,"bad index");
+  } catch (ValueErrorException &e) {
+    SWIG_exception(SWIG_ValueError,"bad value");
+  } catch (KeyErrorException &e) {
+    SWIG_exception(SWIG_ValueError,"bad key");
+  } catch (...) {
+    SWIG_exception(SWIG_RuntimeError,"Unknown exception");
+  }
+ }
+
+
+%shared_ptr(RDKit::ROMol)
+%shared_ptr(RDKit::Atom)
+%shared_ptr(RDKit::Bond)
 #if SWIGCSHARP
 SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(ROMol, boost::shared_ptr<RDKit::ROMol> )
 SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(ROMol_Vect, std::vector< boost::shared_ptr<RDKit::ROMol> >);
@@ -201,7 +227,7 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
     return res;
   }
 }
-
+%template(UInt32_Vect) std::vector<boost::uint32_t>;
 %newobject RDKit::MorganFingerprints::getFingerprint;
 %rename(MorganFingerprintMol) RDKit::MorganFingerprints::getFingerprint;
 %include <GraphMol/Fingerprints/MorganFingerprints.h>
