@@ -2162,6 +2162,90 @@ void testBug3127883()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testBug3139534(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3139534: stereochemistry in larger rings" << std::endl;
+
+  // the parsing part of this is in ../testChirality.cpp, here we look at
+  // smiles generation
+  
+  {
+    RWMol *m;
+    std::string smiles="C1COC/C=C\\CCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOZ);
+
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="C1/C=C\\COCCCC1");
+
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1COC/C=C/CCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
+
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="C1/C=C/COCCCC1");
+
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1CC/C=C/C=C/CCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true,false,-1,false);
+    std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
+
+    smiles = MolToSmiles(*m,true);
+    std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="C/1=C/C=C/CCCCCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true);
+    std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
+    delete m;
+  }
+
+  
+  {
+    RWMol *m;
+    std::string smiles="C1COC/C=C/C=C/C1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
+
+    smiles = MolToSmiles(*m,true);
+    std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="C1/C=C/COCCCC1");
+
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="C1=C/OCC/C=C\\CC\\1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void testAtomMaps(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "test adding atom-map information" << std::endl;
@@ -2175,8 +2259,67 @@ void testAtomMaps(){
 
     smiles = MolToSmiles(*m,true);
     TEST_ASSERT(smiles=="[*:1]CCC([C:200])C");
+
     delete m;
   }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
+void testBug3145697(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3145697 repeated ring labels in disconnected structures" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="C1.C11.C1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="CCC");
+    delete m;
+
+    smiles="C1.C11.C";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(!m);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1.C11.O1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="CCO");
+    delete m;
+
+    smiles="C1.C1=1.O1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="CC=O");
+    delete m;
+
+    smiles="C1.C=11.O1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="C=CO");
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1C.CC11CCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="CCC1(C)CCC1");
+    delete m;
+    smiles="C1C.CC11CCC";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(!m);
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -2218,6 +2361,8 @@ main(int argc, char *argv[])
   testBug1844617();
   testBug1942220();
   testBug3127883();
+  //testBug3139534();
   testAtomMaps();
+  testBug3145697();
   //testBug1719046();
 }

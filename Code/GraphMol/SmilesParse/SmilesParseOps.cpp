@@ -341,9 +341,15 @@ namespace SmilesParseOps{
           ++atomIt;
           if(!toleratePartials && atomIt==atomsEnd){
             ReportParseError("unclosed ring");
+          } else if(atomIt!=atomsEnd && *atomIt==atom1){
+            // make sure we don't try to connect an atom to itself,
+            // this was bug 3145697:
+            ++atomIt;
           } else if(atomIt!=atomsEnd) {
             // we actually found an atom, so connect it to the first
             Atom *atom2 = *atomIt;
+            ++atomIt;
+            
             int bondIdx=-1;
             // We're guaranteed two partial bonds, one for each time
             // the ring index was used.  We give the first specification
@@ -451,7 +457,6 @@ namespace SmilesParseOps{
             }
             bookmarkedAtomsToRemove.push_back(atom1);
             bookmarkedAtomsToRemove.push_back(atom2);
-            ++atomIt;
           }
         }
         //
