@@ -9,6 +9,7 @@
 #  of the RDKit source tree.
 #
 from rdkit import Chem
+import collections
 
 def _setupDescriptors(namespace):
   from rdkit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen
@@ -23,7 +24,7 @@ def _setupDescriptors(namespace):
     for name in tmp:
       if name[0] != '_':
         thing = getattr(mod,name)
-        if hasattr(thing,'__call__'):
+        if isinstance(thing,collections.Callable):
           others.append(name)
 
   for mod in mods:
@@ -35,7 +36,7 @@ def _setupDescriptors(namespace):
         if name[:2]=='py' and name[2:] in tmp:
           continue
         thing = getattr(mod,name)
-        if hasattr(thing,'__call__'):
+        if isinstance(thing,collections.Callable):
           namespace[name]=thing
           #descList.append((name,thing))
 _setupDescriptors(locals())
