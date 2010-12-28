@@ -571,7 +571,8 @@ namespace RDKit{
           dblBond->getStereoAtoms().clear();
 
           // at the moment we are ignoring stereochem on ring bonds.
-          if(!mol.getRingInfo()->numBondRings(dblBond->getIdx())){
+          if(!mol.getRingInfo()->numBondRings(dblBond->getIdx()) ||
+             mol.getRingInfo()->minBondRingSize(dblBond->getIdx())>7 ){
             const Atom *begAtom=dblBond->getBeginAtom();
             const Atom *endAtom=dblBond->getEndAtom();
             // we're only going to handle 2 or three coordinate atoms:

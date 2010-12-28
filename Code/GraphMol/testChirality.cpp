@@ -1729,6 +1729,102 @@ void testIssue3009911(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testIssue3139534(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3139534: stereochemistry in larger rings" << std::endl;
+
+  // the smiles generation part of this is in SmilesParse/test.cpp
+
+
+  // tests that the creation and assignment are correct:
+  {
+    RWMol *m;
+    std::string smiles="C1COCC/C=C\\CC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1COCC/C=C/CC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo()==Bond::STEREOE);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C/1=C/OCCC=CCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1=C/OCCC=CCC\\1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C\\1=C/OCCC=CCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1=C/OCCC=CCC/1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="C/1=C/OCC/C=C\\CC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C\\1=C/OCC/C=C\\CC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1=C/OCC/C=C\\CC\\1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C1=C/OCC/C=C\\CC/1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondWithIdx(5)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -1747,6 +1843,7 @@ int main(){
   testIssue2762917();
 #endif
   testIssue3009911();
+  testIssue3139534();
   return 0;
 }
 

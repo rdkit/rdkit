@@ -2204,7 +2204,7 @@ void testBug3139534(){
 
     smiles = MolToSmiles(*m,true);
     std::cerr<<smiles<<std::endl;
-    TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
+    TEST_ASSERT(smiles=="C1=C/C=C/CCCCCC/1");
     delete m;
   }
 
@@ -2213,12 +2213,12 @@ void testBug3139534(){
     std::string smiles="C/1=C/C=C/CCCCCC1";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
+    std::cerr<<"go"<<std::endl;
     smiles = MolToSmiles(*m,true);
     std::cerr<<smiles<<std::endl;
-    TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
+    TEST_ASSERT(smiles=="C1=C/CCCCCC\\C=C/1");
     delete m;
   }
-
   
   {
     RWMol *m;
@@ -2229,7 +2229,7 @@ void testBug3139534(){
 
     smiles = MolToSmiles(*m,true);
     std::cerr<<smiles<<std::endl;
-    TEST_ASSERT(smiles=="C1/C=C/COCCCC1");
+    TEST_ASSERT(smiles=="C1=C/C=C/COCCC/1");
 
     delete m;
   }
@@ -2361,7 +2361,7 @@ main(int argc, char *argv[])
   testBug1844617();
   testBug1942220();
   testBug3127883();
-  //testBug3139534();
+  testBug3139534();
   testAtomMaps();
   testBug3145697();
   //testBug1719046();
