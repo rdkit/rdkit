@@ -231,7 +231,7 @@ namespace Canon {
         atom1ControllingBond=secondFromAtom2;
       }
       //CHECK_INVARIANT(0,"ring stereochemistry not handled");
-    }
+    } // end of the ring stereochemistry if
 
     // now set the directionality on the other side:
     if(setFromBond1){
@@ -252,13 +252,24 @@ namespace Canon {
          == stereoAtoms.end() ){
         atom2Dir = (atom2Dir == Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT;
       }
+      //std::cerr<<" 0 set bond 2: "<<firstFromAtom2->getIdx()<<" "<<atom2Dir<<std::endl;
       if(atom2->getDegree()==3 &&
          std::find(stereoAtoms.begin(),stereoAtoms.end(),
                    static_cast<int>(firstFromAtom2->getOtherAtomIdx(atom2->getIdx()))) == stereoAtoms.end() ){
         atom2Dir = (atom2Dir == Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT;
       }
-        
+      //std::cerr<<" 1 set bond 2: "<<firstFromAtom2->getIdx()<<" "<<atom2Dir<<std::endl;
       firstFromAtom2->setBondDir(atom2Dir);
+      if(firstFromAtom2->hasProp("_TraversalRingClosureBond")){
+        // another nice one: we're traversing and come to a ring
+        // closure bond that has directionality set. This is going to
+        // have its direction swapped on writing so we need to
+        // pre-emptively swap it here.
+        // example situation for this is a non-canonical traversal of
+        //   C1CCCCN/C=C/1
+        // starting at atom 0, we hit it on encountering the final bond.
+        switchBondDir(firstFromAtom2);
+      }
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
     } else {
       // we come before a ring closure:
@@ -323,6 +334,7 @@ namespace Canon {
       otherDir = (firstFromAtom2->getBondDir()==Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT;
       secondFromAtom2->setBondDir(otherDir);
       bondDirCounts[secondFromAtom2->getIdx()] += 1;
+      //std::cerr<<"   other: "<<secondFromAtom2->getIdx()<<" "<<otherDir<<std::endl;
     }
 
     if(setFromBond1){
@@ -343,10 +355,12 @@ namespace Canon {
       if( bondVisitOrders[atom1ControllingBond->getIdx()] >
           atomVisitOrders[atom1->getIdx()]){
         if(bondDirCounts[atom1ControllingBond->getIdx()]==1){
+          //std::cerr<<"  switcheroo 1"<<std::endl;
           switchBondDir(atom1ControllingBond);
         } else if(bondDirCounts[firstFromAtom2->getIdx()]==1){
           // the controlling bond at atom1 is being set by someone else, flip the direction
           // on the atom2 bond instead:
+          //std::cerr<<"  switcheroo 2"<<std::endl;
           switchBondDir(firstFromAtom2);
         }
       }
@@ -625,7 +639,7 @@ namespace Canon {
           if(!bondDirCounts[oBond->getIdx()]){
             // no one is setting the direction here:
             oBond->setBondDir(Bond::NONE);
-            //std::cerr<<oBond->getIdx()<<" ";
+            //std::cerr<<"ob:"<<oBond->getIdx()<<" ";
           }
         }
       }
@@ -638,7 +652,7 @@ namespace Canon {
       bondDirCounts[refBond->getIdx()] -= 1;
       if(!bondDirCounts[refBond->getIdx()]){
         refBond->setBondDir(Bond::NONE);
-        //std::cerr<<refBond->getIdx()<<" ";
+        //std::cerr<<"rb:"<<refBond->getIdx()<<" ";
       }
     }
     //std::cerr<<std::endl;
@@ -751,7 +765,7 @@ namespace Canon {
         msI!=molStack.end(); ++msI){
 #if 0
       if(msI->type == MOL_STACK_ATOM) std::cerr<<" atom: "<<msI->obj.atom->getIdx()<<std::endl;
-      else if(msI->type == MOL_STACK_BOND) std::cerr<<" bond: "<<msI->obj.bond->getIdx()<<" "<<msI->number<<" "<<msI->obj.bond->getBeginAtomIdx()<<"-"<<msI->obj.bond->getEndAtomIdx()<<std::endl;
+      else if(msI->type == MOL_STACK_BOND) std::cerr<<" bond: "<<msI->obj.bond->getIdx()<<" "<<msI->number<<" "<<msI->obj.bond->getBeginAtomIdx()<<"-"<<msI->obj.bond->getEndAtomIdx()<<" order: "<<msI->obj.bond->getBondType()<<std::endl;
       else if(msI->type == MOL_STACK_RING) std::cerr<<" ring: "<<msI->number<<std::endl;
       else if(msI->type == MOL_STACK_BRANCH_OPEN) std::cerr<<" branch open"<<std::endl;
       else if(msI->type == MOL_STACK_BRANCH_CLOSE) std::cerr<<" branch close"<<std::endl;

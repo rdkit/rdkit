@@ -2213,7 +2213,7 @@ void testBug3139534(){
     std::string smiles="C/1=C/C=C/CCCCCC1";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    std::cerr<<"go"<<std::endl;
+
     smiles = MolToSmiles(*m,true);
     std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1=C/CCCCCC\\C=C/1");
@@ -2243,6 +2243,52 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(5)->getStereo()==Bond::STEREOZ);
     delete m;
   }
+
+  {
+    RWMol *m;
+    std::string smiles="C1CCCCN/C=C/1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    smiles = MolToSmiles(*m,true,false,7,false);
+    TEST_ASSERT(smiles=="C1=C/NCCCCC/1");
+
+    smiles = MolToSmiles(*m,true,false,0,false);
+    TEST_ASSERT(smiles=="C1CCCCN/C=C/1");
+
+    delete m;
+  }
+
+
+
+  {
+    // something of a torture test involving geldanmycin:
+    RWMol *m;
+    std::string smiles="NC(=O)O[C@H]1C(/C)=C/[C@H](C)[C@@H](O)[C@@H](OC)C[C@H](C)C\\C2=C(/OC)C(=O)\\C=C(\\NC(=O)C(\\C)=C\\C=C/[C@@H]1OC)C2=O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(30,32)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(33,34)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondBetweenAtoms(5,7)->getStereo()==Bond::STEREOE);
+
+    std::string csmiles=MolToSmiles(*m,true);
+    
+    RWMol *m2;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::string nsmiles=MolToSmiles(*m,true,false,i,false);
+      m2 = SmilesToMol(nsmiles);
+      TEST_ASSERT(m2);
+      std::string ncsmiles = MolToSmiles(*m2,true);
+      if(ncsmiles!=csmiles){
+        std::cerr<<" failed in iteration: "<<i<<"\n"<<csmiles<<"\n != \n"<<ncsmiles<<"\n starting from:\n"<<nsmiles<<"\n";
+        m2->debugMol(std::cerr);
+        TEST_ASSERT(ncsmiles==csmiles);
+      }
+      delete m2;
+    }
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -2262,6 +2308,7 @@ void testAtomMaps(){
 
     delete m;
   }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
