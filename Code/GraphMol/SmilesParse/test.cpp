@@ -2262,7 +2262,7 @@ void testBug3139534(){
 
 
   {
-    // something of a torture test involving geldanmycin:
+    // something of a torture test involving geldanamycin:
     RWMol *m;
     std::string smiles="NC(=O)O[C@H]1C(/C)=C/[C@H](C)[C@@H](O)[C@@H](OC)C[C@H](C)C\\C2=C(/OC)C(=O)\\C=C(\\NC(=O)C(\\C)=C\\C=C/[C@@H]1OC)C2=O";
     m = SmilesToMol(smiles);
