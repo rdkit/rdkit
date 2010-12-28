@@ -113,7 +113,10 @@ if(NOT RDK_INSTALL_INTREE)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     install(DIRECTORY Projects DESTINATION
         ${RDKit_ShareDir}
-        PATTERN ".svn" EXCLUDE)
+        PATTERN ".svn" EXCLUDE
+        PATTERN "test_list*" EXCLUDE
+        PATTERN "CMake*" EXCLUDE
+        )
   endif(RDK_BUILD_PYTHON_WRAPPERS)
   install(FILES README license.txt DESTINATION ${RDKit_ShareDir})
 endif(NOT RDK_INSTALL_INTREE)
