@@ -769,7 +769,7 @@ namespace RDKit{
 \n\
     - useHs: (optional) include paths involving Hs in the fingerprint if the molecule\n\
       has explicit Hs.\n\
-      Defaults to 1.\n\
+      Defaults to True.\n\
 \n\
     - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
       been reached\n\
@@ -779,12 +779,16 @@ namespace RDKit{
       trying to reach tgtDensity\n\
       Defaults to 128.\n\
 \n\
+    - branchedPaths: (optional) if set both branched and unbranched paths will be\n\
+      used in the fingerprint.\n\
+      Defaults to True.\n\
+\n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\
   ALGORITHM:\n\
 \n\
-   This algorithm functions by find all paths between minPath and maxPath in\n \
-   length.  For each path:\n\
+   This algorithm functions by find all subgraphs between minPath and maxPath in\n \
+   length.  For each subgraph:\n\
 \n\
      1) A hash is calculated.\n\
 \n\
@@ -846,6 +850,10 @@ namespace RDKit{
         in the result. This is essentially the same as doing:\n\
            res &= setOnlyBits\n\
         but also has an impact on the atomCounts (if being used)\n\
+\n\
+    - branchedPaths: (optional) if set both branched and unbranched paths will be\n\
+      used in the fingerprint.\n\
+      Defaults to True.\n\
 \n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\
