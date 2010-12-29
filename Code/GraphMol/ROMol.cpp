@@ -32,7 +32,6 @@ namespace RDKit{
   const int ci_ATOM_HOLDER=-0xDEADD06;
 
   void ROMol::destroy(){
-    //std::cerr<<"  destroy: "<<this<<std::endl;
     d_atomBookmarks.clear();
     d_bondBookmarks.clear();
     d_graph.clear();
@@ -108,7 +107,6 @@ namespace RDKit{
   }
 
   void ROMol::initMol() {
-    //std::cerr<<"  init: "<<this<<std::endl;
     dp_props = new Dict();
     dp_ringInfo = new RingInfo();
     // ok every molecule contains a property entry called "__computedProps" which provides
