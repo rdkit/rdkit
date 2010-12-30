@@ -1,8 +1,8 @@
 RDKIT=$(RDBASE)
 
 
-#SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' -lGraphMol_static -lSmilesParse_static  -lFingerprints_static -lSubstructMatch_static -lDescriptors_static -lSubgraphs_static -lDataStructs_static -lRDGeometryLib_static -lRDGeneral_static
-SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' -lGraphMol -lSmilesParse  -lFingerprints -lSubstructMatch -lDescriptors -lSubgraphs -lDataStructs -lRDGeometryLib -lRDGeneral
+SHLIB_LINK += -L${RDKIT}/lib -lSmilesParse_static  -lFingerprints_static -lSubstructMatch_static -lDescriptors_static -lSubgraphs_static -lGraphMol_static -lDataStructs_static -lRDGeometryLib_static -lRDGeneral_static
+#SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' -lGraphMol -lSmilesParse  -lFingerprints -lSubstructMatch -lDescriptors -lSubgraphs -lDataStructs -lRDGeometryLib -lRDGeneral
 
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
@@ -24,8 +24,13 @@ CPLUSPLUSFLAGS = $(filter-out -Wmissing-prototypes -Wdeclaration-after-statement
 CPLUSPLUSFLAGS += -Wno-deprecated -Wno-unused-function
 CPLUSPLUSFLAGS += $(PG_CPPFLAGS)
 
-# uncomment this under MacOS
-#CC=$(CXX)
+# save our current CC value:
+OCC := $(CC)
+# and then change the defn of CC so that we'll link with g++
+CC = $(CXX)
+# we build .c files using this original defn:
+%.o : %.c
+	$(OCC) $(CPPFLAGS) -fPIC -c -o $@ $< 
 
 %.o : %.cpp
-	$(CC) $(CPLUSPLUSFLAGS) $(CPPFLAGS)  -c -o $@ $< 
+	$(CXX) $(CPLUSPLUSFLAGS) $(CPPFLAGS)  -c -o $@ $< 
