@@ -2,7 +2,7 @@
 
 # $Id$
 #
-#  Copyright (C) 2006-2008  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2006-2010  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -51,13 +51,18 @@ def TransformMol(mol,tform):
   mol.AddConformer(newConf)
 
 def ComputeMolShape(mol,confId=-1,boxDim=(20,20,20),spacing=0.5,**kwargs):
+  """ returns a grid representation of the molecule's shape
+  """
   res = rdGeometry.UniformGrid3D(boxDim[0],boxDim[1],boxDim[2],spacing=spacing)
-  apply(EncodeShape,(mol,res,confId),kwargs)
+  EncodeShape(mol,res,confId,**kwargs)
   return res
   
-def ComputeMolVolume(mol,confId=-1,gridSpacing=0.1,boxMargin=2.0):
-  import copy
-  mol = copy.deepcopy(mol)
+def ComputeMolVolume(mol,confId=-1,gridSpacing=0.2,boxMargin=2.0):
+  """ Calculates the volume of a particular conformer of a molecule
+  based on a grid-encoding of the molecular shape.
+
+  """
+  mol = rdchem.Mol(mol.ToBinary())
   conf = mol.GetConformer(confId)
   CanonicalizeConformer(conf)
   box = ComputeConfBox(conf)
@@ -68,56 +73,123 @@ def ComputeMolVolume(mol,confId=-1,gridSpacing=0.1,boxMargin=2.0):
                                    spacing=gridSpacing)
   EncodeShape(mol,shape,confId,ignoreHs=False,vdwScale=1.0)
   voxelVol = gridSpacing**3
-  vol = 0.0
   occVect = shape.GetOccupancyVect()
-  for i in range(len(occVect)):
-    if occVect[i]==3: 
-      vol+= voxelVol
+  voxels = [1 for x in occVect if x==3]
+  vol = voxelVol*len(voxels)
   return vol
 
 def GenerateDepictionMatching2DStructure(mol,reference,confId=-1,
+                                         referencePattern=None,
+                                         acceptFailure=False,
                                          **kwargs):
-  mp={}
-  rconf=reference.GetConformer()
-  ss = mol.GetSubstructMatch(reference)
-  for i,aid in enumerate(ss):
-    pt=rconf.GetAtomPosition(i)
-    mp[aid]=rdGeometry.Point2D(pt.x,pt.y)
-  Compute2DCoords(mol,coordMap=mp)
-      
+  """ Generates a depiction for a molecule where a piece of the molecule
+     is constrained to have the same coordinates as a reference.
 
+     This is useful for, for example, generating depictions of SAR data
+     sets so that the cores of the molecules are all oriented the same
+     way.
+
+  Arguments:
+    - mol:          the molecule to be aligned, this will come back
+                    with a single conformer.
+    - reference:    a molecule with the reference atoms to align to;
+                    this should have a depiction.
+    - confId:       (optional) the id of the reference conformation to use
+    - referencePattern:  (optional) an optional molecule to be used to 
+                         generate the atom mapping between the molecule
+                         and the reference.
+    - acceptFailure: (optional) if True, standard depictions will be generated
+                     for molecules that don't have a substructure match to the
+                     reference; if False, a ValueError will be raised
+
+  """
+  if reference and referencePattern:
+    if not reference.GetNumAtoms(onlyHeavy=True)==referencePattern.GetNumAtoms(onlyHeavy=True):
+      raise ValueError,'When a pattern is provided, it must have the same number of atoms as the reference'
+    referenceMatch = reference.GetSubstructMatch(referencePattern)
+    if not referenceMatch:
+      raise ValueError,"Reference does not map to itself"
+  else:
+    referenceMatch = range(reference.GetNumAtoms(onlyHeavy=True))
+  if referencePattern:
+    match = mol.GetSubstructMatch(referencePattern)
+  else:
+    match = mol.GetSubstructMatch(reference)
+
+  if not match:
+    if not acceptFailure:
+      raise ValueError,'Substructure match with reference not found.'
+    else:
+      coordMap={}
+  else:
+    conf = reference.GetConformer()
+    coordMap={}
+    for i,idx in enumerate(match):
+      pt3 = conf.GetAtomPosition(referenceMatch[i])
+      pt2 = rdGeometry.Point2D(pt3.x,pt3.y)
+      coordMap[idx] = pt2
+  Compute2DCoords(mol,clearConfs=True,coordMap=coordMap,canonOrient=False)
 
 def GenerateDepictionMatching3DStructure(mol,reference,confId=-1,
                                          **kwargs):
+  """ Generates a depiction for a molecule where a piece of the molecule
+     is constrained to have coordinates similar to those of a 3D reference
+     structure.
+
+  Arguments:
+    - mol:          the molecule to be aligned, this will come back
+                    with a single conformer.
+    - reference:    a molecule with the reference atoms to align to;
+                    this should have a depiction.
+    - confId:       (optional) the id of the reference conformation to use
+
+  """
   nAts = mol.GetNumAtoms()
   dm = []
-  conf = mol.GetConformer(confId)
+  conf = reference.GetConformer(confId)
   for i in range(nAts):
     pi = conf.GetAtomPosition(i)
+    #npi.z=0
     for j in range(i+1,nAts):
       pj = conf.GetAtomPosition(j)
+      #pj.z=0
       dm.append((pi-pj).Length())
   dm = numpy.array(dm)
-  apply(Compute2DCoordsMimicDistmat,(mol,dm),kwargs)
+  Compute2DCoordsMimicDistmat(mol,dm,**kwargs)
       
 def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
+  """ Returns the optimal RMS for aligning two molecules, taking
+  symmetry into account. As a side-effect, the probe molecule is
+  left in the aligned state.
+
+  Arguments:
+    - ref: the reference molecule
+    - probe: the molecule to be aligned to the reference
+    - refConfId: (optional) reference conformation to use
+    - probeConfId: (optional) probe conformation to use
+    - maps: (optional) a list of lists of (probeAtomId,refAtomId)
+      tuples with the atom-atom mappings of the two molecules.
+      If not provided, these will be generated using a substructure
+      search.
+  
+  """
   if not maps:
     query = RemoveHs(probe)
-    matches = ref.GetSubstructMatches(query)
+    matches = ref.GetSubstructMatches(query,uniquify=False)
     if not matches:
       raise ValueError,'mol %s does not match mol %s'%(ref.GetProp('_Name'),
                                                        probe.GetProp('_Name'))
-    maps = []
-    for match in matches:
-      t=[]
-      for j,idx in enumerate(match):
-        t.append((j,idx))
-    maps.append(t)
+    maps = [list(enumerate(match)) for match in matches]
   bestRMS=1000.
   for amap in maps:
     rms=AlignMol(probe,ref,probeConfId,refConfId,atomMap=amap)
     if rms<bestRMS:
       bestRMS=rms
+      bestMap = amap
+
+  # finally repeate the best alignment :
+  if bestMap != amap:
+    AlignMol(probe,ref,probeConfId,refConfId,atomMap=bestMap)
   return bestRMS
 
 def EnumerateLibraryFromReaction(reaction,sidechainSets) :
@@ -169,14 +241,28 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
     for prods in prodSets:
       yield prods
 
+def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
+                     randomseed=2342):
+  """ generates an embedding of a molecule where part of the molecule
+  is constrained to have particular coordinates
 
-
-def ConstrainedEmbed(mol,core,useTethers,randomseed=2342):
+  Arguments
+    - mol: the molecule to embed
+    - core: the molecule to use as a source of constraints
+    - useTethers: (optional) if True, the final conformation will be
+        optimized subject to a series of extra forces that pull the
+        matching atoms to the positions of the core atoms. Otherwise
+        simple distance constraints based on the core atoms will be
+        used in the optimization.
+    - coreConfId: (optional) id of the core conformation to use
+    - randomSeed: (optional) seed for the random number generator
+  
+  """
   match = mol.GetSubstructMatch(core)
   if not match:
     raise ValueError,"molecule doesn't match the core"
   coordMap={}
-  coreConf = core.GetConformer()
+  coreConf = core.GetConformer(coreConfId)
   for i,idxI in enumerate(match):
     corePtI = coreConf.GetAtomPosition(i)
     coordMap[idxI]=corePtI
@@ -185,9 +271,7 @@ def ConstrainedEmbed(mol,core,useTethers,randomseed=2342):
   if ci<0:
     raise ValueError,'Could not embed molecule.'
   
-  algMap=[]
-  for i,itm in enumerate(match):
-    algMap.append((itm,i))
+  algMap=list(enumerate(match))
 
   if not useTethers:
     # clean up the conformation
