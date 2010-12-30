@@ -1,3 +1,84 @@
+******  Release_2010.12.1 *******
+(Changes relative to Release_2010.09.1)
+
+!!!!!! IMPORTANT !!!!!!
+ - Due to changes made to the fingerprinting code, RDKit and layered
+   fingerprints generated with this release are not compatible with
+   those from previous releases. For users of the database cartridge:
+   you will need to re-generate RDKit fingerprint columns and any
+   indices on molecule tables.
+
+Acknowledgements:
+ - Eddie Cao, Andrew Dalke, James Davidson, Kirk DeLisle, Peter Gedeck,
+   Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
+   
+Bug Fixes: 
+ - The depiction code no longer crashes with single-atom templates
+   (issue 3122141) 
+ - Aromatic bonds in the beginning of a SMILES branch are now
+   correctly parsed (issue 3127883)
+ - A crash when generating 2d constrained coordinates was fixed (issue
+   3135833) 
+ - Stereochemistry no longer removed from double bonds in large
+   rings. (issue 3139534) 
+ - Atom mapping information no longer in reaction products (issue
+   3140490)  
+ - Smiles parse failure with repeated ring labels and dot disconnects
+   fixed (issue 3145697)
+ - a bug causing the molecule drawing code to not use the cairo canvas
+   when it's installed was fixed
+
+New Features:
+ - All molecular descriptor calculators are now pulled in by the
+   rdkit.Chem.Descriptors module. So you can do things like:
+   Descriptors.MolLogP(mol) or Descriptors.fr_amide(mol)
+ - Atom-map numbers in SMILES are now supported. They can be accessed
+   as the atomic "molAtomMapNumber" property. (issue 3140494)
+ - It's now possible to tell the RDKit to generate non-canonical
+   SMILES via an optional argument to MolToSmiles. This is faster than
+   generating canonical SMILES, but is primarity intended for
+   debugging/testing. (issue 3140495)
+ - The function GenerateDepictionMatching2DStructure() has been added
+   to the rdkit.Chem.AllChem module to make generating
+   template-aligned depictions easier.
+ - Generating FCFP-like fingerprints is now more straightforward via
+   the useFeatures optional argument to GetMorganFingerprint()
+ - Extensive changes were made to the layere fingerprinting code to
+   allow better coverage of queries.
+ - Functionality for stripping common salts from molecules has been
+   added in rdkit.Chem.SaltRemover. The salts themselves are defined
+   in $RDBASE/Data/Salts.txt
+ - Functionality for recognizing common functional groups has been
+   added in rdkit.Chem.FunctionalGroups. The functional groups
+   themselves are defined in
+   $RDBASE/Data/Functional_Group_Hierarchy.txt 
+
+New Database Cartridge Features: 
+ - The cartridge now supports SMARTS queries.
+ - The functions is_valid_{smiles,smarts}() are now available
+   (issue 3097359).
+ - The operator @= is now supported for testing molecule equality.
+   (issue 3120707)
+ - The functions featmorgan_fp() and featmorganbv_fp() are now
+   available for generating FCFP-like fingerprints.
+
+Deprecated modules (to be removed in next release):
+ - rdkit.Chem.AvailDescriptors : the same functionality is now available
+   in a more useable manner from rdkit.Chem.Descriptors (see above).
+
+Removed modules:
+
+Other:
+ - RDKit support has been added to the Knime data mining and reporting
+   tool. More information is available from the knime.org community
+   site: http://tech.knime.org/community/rdkit
+   Thanks to Thorsten, Bernd, Michael, and the rest of the crew at
+   knime.com for making this possible.
+ - RPMs to allow easy installation of the RDKit on Fedora/CentOS/RHEL 
+   and similar systems are now available. Thanks to Gianluca Sforna
+   for doing this work.
+
+
 ******  Release_2010.09.1 *******
 (Changes relative to Release_Q22010_1)
 
