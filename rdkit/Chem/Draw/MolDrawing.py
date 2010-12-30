@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2008 Greg Landrum
+#  Copyright (C) 2008-2010 Greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #
 from rdkit import Chem
 from rdkit import RDConfig
+import numpy
 import math
 
 elemDict={
@@ -274,7 +275,7 @@ class MolDrawing(object):
     addCanvasText(canvas,label,(x1,y1),font,color)
     
   def AddMol(self,mol,canvas=None,centerIt=True,molTrans=None,drawingTrans=None,
-             highlightAtoms=[],confId=-1):
+             highlightAtoms=[],confId=-1,flagCloseContactsDist=2):
     """
 
     Notes:
@@ -400,6 +401,30 @@ class MolDrawing(object):
         color = elemDict.get(atom.GetAtomicNum(),(0,0,0))
         self._drawLabel(canvas,symbol,pos,font,color=color,
                         highlightIt=(highlightAtoms and idx in highlightAtoms))
+
+    if flagCloseContactsDist>0:
+      tol = flagCloseContactsDist*flagCloseContactsDist
+      for i,atomi in enumerate(mol.GetAtoms()):
+        pi = numpy.array(self.atomPs[mol][i])
+        for j in range(i+1,mol.GetNumAtoms()):
+          pj = numpy.array(self.atomPs[mol][j])
+          d = pj-pi
+          dist2 = d.dot(d)
+          if dist2<=tol:
+            addCanvasPolygon(canvas,((pi[0]-2*flagCloseContactsDist,
+                                      pi[1]-2*flagCloseContactsDist),
+                                     (pi[0]+2*flagCloseContactsDist,
+                                      pi[1]-2*flagCloseContactsDist),
+                                     (pi[0]+2*flagCloseContactsDist,
+                                      pi[1]+2*flagCloseContactsDist),
+                                     (pi[0]-2*flagCloseContactsDist,
+                                      pi[1]+2*flagCloseContactsDist)),
+                             color=(1.,0,0),
+                             fill=False,stroke=True)
+            
+          
+        
+
 
 def registerCanvas(canvasNm):
   g= globals()

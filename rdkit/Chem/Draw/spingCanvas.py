@@ -80,11 +80,21 @@ def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
   color = convertColor(color)
   canvas.drawString(text,labelP[0],labelP[1],font,color=color)
 
-def addCanvasPolygon(canvas,ps,color=(0,0,0),**kwargs):
-  edgeWidth=kwargs.get('lineWidth',0)
-  edgeColor=pid.transparent
+def addCanvasPolygon(canvas,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
+  if not fill and not stroke: return
   color = convertColor(color)
-  canvas.drawPolygon(ps,edgeColor=edgeColor,edgeWidth=int(edgeWidth),fillColor=color,closed=1)
+  if not stroke:
+    edgeWidth=0
+    edgeColor=pid.transparent
+  else:
+    edgeWidth=kwargs.get('lineWidth',1)
+    edgeColor=color
+  if not fill:
+    fillColor = pid.transparent
+  else:
+    fillColor = color
+  canvas.drawPolygon(ps,edgeColor=edgeColor,edgeWidth=int(edgeWidth),fillColor=fillColor,
+                     closed=1)
 
 def addCanvasDashedWedge(canvas,p1,p2,p3,dash=(2,2),color=(0,0,0),
                          color2=None,**kwargs):

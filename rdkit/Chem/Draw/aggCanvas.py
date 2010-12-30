@@ -87,12 +87,19 @@ def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
   dPos = pos[0]-w/2.,pos[1]-h/2.
   canvas.text(dPos,text,font)
 
-def addCanvasPolygon(canvas,ps,color=(0,0,0),**kwargs):
+def addCanvasPolygon(canvas,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
+  if not fill and not stroke: return
   dps = []
   for p in ps:
     dps.extend(p)
   color = convertColor(color)
-  canvas.polygon(dps,None,Brush(color));
+  brush=None
+  pen=None
+  if fill:
+    brush = Brush(color)
+  if stroke:
+    pen = Pen(color)
+  canvas.polygon(dps,pen,brush)
 
 def addCanvasDashedWedge(canvas,p1,p2,p3,dash=(2,2),color=(0,0,0),
                          color2=None,**kwargs):

@@ -170,14 +170,21 @@ def addCanvasText(canvas,text,pos,font,color=(0,0,0),**kwargs):
   canvas.ctx.move_to(*dPos)
   canvas.ctx.show_text(text)
 
-def addCanvasPolygon(canvas,ps,color=(0,0,0),**kwargs):
+def addCanvasPolygon(canvas,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
+  if not fill and not stroke: return
   dps = []
   canvas.ctx.set_source_rgb(*color)
   canvas.ctx.move_to(ps[0][0],ps[0][1])
   for p in ps[1:]:
     canvas.ctx.line_to(p[0],p[1])
   canvas.ctx.close_path()
-  canvas.ctx.fill()
+  if stroke:
+    if fill:
+      canvas.ctx.stroke_preserve()
+    else:
+      canvas.ctx.stroke()
+  if fill:
+    canvas.ctx.fill()
 
 def addCanvasDashedWedge(canvas,p1,p2,p3,dash=(2,2),color=(0,0,0),
                          color2=None,**kwargs):
