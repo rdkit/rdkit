@@ -230,3 +230,45 @@ LIMIT 10;
  16196768 | 0.545454545454545
 (5 rows)
 
+select dice_sml(morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), morgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)N)'::mol, 1)) sml;
+        sml        
+-------------------
+ 0.884615384615385
+(1 row)
+
+select dice_sml(featmorgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), featmorgan_fp('C1C(OC2=CC(=CC(=C2C1=O)O)N)'::mol, 1)) sml;
+        sml        
+-------------------
+ 0.884615384615385
+(1 row)
+
+select dice_sml(morganbv_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), morganbv_fp('C1C(OC2=CC(=CC(=C2C1=O)O)N)'::mol, 1)) sml;
+        sml        
+-------------------
+ 0.888888888888889
+(1 row)
+
+select dice_sml(featmorganbv_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)'::mol, 1), featmorganbv_fp('C1C(OC2=CC(=CC(=C2C1=O)O)N)'::mol, 1)) sml;
+        sml        
+-------------------
+ 0.903225806451613
+(1 row)
+
+select 'Cc1ccccc1'::mol@='c1ccccc1C'::mol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'Cc1ccccc1'::mol@='c1ccccc1CC'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'Cc1ccccc1'::mol@='c1cccnc1C'::mol;
+ ?column? 
+----------
+ f
+(1 row)
+
