@@ -77,7 +77,8 @@ Other:
  - RPMs to allow easy installation of the RDKit on Fedora/CentOS/RHEL 
    and similar systems are now available. Thanks to Gianluca Sforna
    for doing this work.
-
+ - The database cartridge now statically links the RDKit libraries.
+   This should make installation easier.
 
 ******  Release_2010.09.1 *******
 (Changes relative to Release_Q22010_1)
