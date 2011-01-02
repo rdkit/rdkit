@@ -38,10 +38,13 @@ namespace RDKit{
   */
   const std::string RDKFingerprintMolVersion="1.0.0";
   ExplicitBitVect *RDKFingerprintMol(const ROMol &mol,
-                                     unsigned int minPath=1,unsigned int maxPath=7,
-                                     unsigned int fpSize=2048,unsigned int nBitsPerHash=4,
+                                     unsigned int minPath=1,
+                                     unsigned int maxPath=7,
+                                     unsigned int fpSize=2048,
+                                     unsigned int nBitsPerHash=2,
                                      bool useHs=true,
-                                     double tgtDensity=0.0,unsigned int minSize=128,
+                                     double tgtDensity=0.0,
+                                     unsigned int minSize=128,
                                      bool branchedPaths=true);
 
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule

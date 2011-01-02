@@ -268,7 +268,7 @@ void test5BackwardsCompatibility(){
   ExplicitBitVect *fp1;
   
   m = SmilesToMol("CC");
-  fp1=RDKFingerprintMol(*m);
+  fp1=RDKFingerprintMol(*m,1,7,2048,4);
   TEST_ASSERT(fp1->getNumOnBits()==4);
 #if BOOST_VERSION/100 < 1040
   // bug fixes in the uniform_int<> distribution in version 1.40
@@ -1103,10 +1103,10 @@ void testIssue2875658(){
   ExplicitBitVect *fp1,*fp2;
   
   m = SmilesToMol("c1ccccc1");
-  fp1=RDKFingerprintMol(*m);
+  fp1=RDKFingerprintMol(*m,1,7,2048,4);
   delete m;
   m = SmilesToMol("c1cccnc1");
-  fp2=RDKFingerprintMol(*m);
+  fp2=RDKFingerprintMol(*m,1,7,2048,4);
   delete m;
 
 #if BOOST_VERSION/100 >= 1040

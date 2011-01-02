@@ -306,7 +306,7 @@ class FingerprinterDetails(object):
     self.discrimHash=0
     self.useHs=0
     self.useValence=0
-    self.bitsPerHash=4
+    self.bitsPerHash=2
     self.smilesName='SMILES'
     self.maxMols=-1
     self.outFileName=''
@@ -419,7 +419,7 @@ Usage: FingerprintMols.py [args] <fName>
       fragment-based fingerprints. Default is *7*.
       
     - --nBitsPerHash: number of bits to be set in the output
-      fingerprint for each fragment. Default is *4*.
+      fingerprint for each fragment. Default is *2*.
 
     - --discrim: use of path-based discriminators to hash bits.
       Default is *false*.

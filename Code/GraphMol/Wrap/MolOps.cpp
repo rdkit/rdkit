@@ -801,7 +801,7 @@ namespace RDKit{
       python::def("RDKFingerprint", RDKFingerprintMol,
                   (python::arg("mol"),python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
-                   python::arg("nBitsPerHash")=4,python::arg("useHs")=true,
+                   python::arg("nBitsPerHash")=2,python::arg("useHs")=true,
                    python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
                    python::arg("branchedPaths")=true),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
