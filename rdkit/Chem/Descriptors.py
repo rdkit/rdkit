@@ -11,7 +11,13 @@
 from rdkit import Chem
 import collections
 
+def _isCallable(thing):
+  return (hasattr(collections,'Callable') and isinstance(thing,collections.Callable)) or \
+              hasattr(thing,'__call__')   
+
+_descList=[]
 def _setupDescriptors(namespace):
+  global _descList
   from rdkit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen
   from rdkit.Chem.EState import EState_VSA
   mods = [GraphDescriptors,MolSurf,EState_VSA,Lipinski,Crippen,Fragments]
@@ -24,7 +30,7 @@ def _setupDescriptors(namespace):
     for name in tmp:
       if name[0] != '_':
         thing = getattr(mod,name)
-        if isinstance(thing,collections.Callable):
+        if _isCallable(thing):
           others.append(name)
 
   for mod in mods:
@@ -36,11 +42,9 @@ def _setupDescriptors(namespace):
         if name[:2]=='py' and name[2:] in tmp:
           continue
         thing = getattr(mod,name)
-        if isinstance(thing,collections.Callable):
+        if _isCallable(thing):
           namespace[name]=thing
-          #descList.append((name,thing))
-_setupDescriptors(locals())
-
+          _descList.append((name,thing))
 
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 MolWt = lambda *x,**y:_rdMolDescriptors._CalcMolWt(*x,**y)
@@ -145,6 +149,10 @@ def MolecularFormula(mol):
 
    return "".join(formula_terms)
 MolecularFormula.version="1.0.0"
+
+_setupDescriptors(locals())
+
+
 
 #------------------------------------
 #
