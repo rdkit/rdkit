@@ -667,10 +667,8 @@ void testStereochem(){
   mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="S");
   smi = MolToSmiles(*mol,true);
-  std::cerr<<"SMI 1: "<<smi<<std::endl;
   TEST_ASSERT(smi=="F[C@H]1CO1")
   smi = MolToSmiles(*mol,true,false,0);
-  std::cerr<<"SMI 2: "<<smi<<std::endl;
   TEST_ASSERT(smi=="[C@H]1(F)CO1")
 
   delete mol;
@@ -996,7 +994,6 @@ void testIssue153(){
   mol2 = SmilesToMol(refSmi);
   TEST_ASSERT(mol2);
   smi = MolToSmiles(*mol2,true);
-  std::cerr<<smi<<" " <<refSmi<<std::endl;
   TEST_ASSERT(refSmi==smi);
   delete mol;
   delete mol2;
@@ -2199,11 +2196,9 @@ void testBug3139534(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m,true,false,-1,false);
-    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1=C/C=C/CCCCCC/1");
     delete m;
   }
@@ -2215,7 +2210,6 @@ void testBug3139534(){
     TEST_ASSERT(m);
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1=C/CCCCCC\\C=C/1");
     delete m;
   }
@@ -2228,7 +2222,6 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1=C/C=C/COCCC/1");
 
     delete m;
@@ -2259,7 +2252,20 @@ void testBug3139534(){
     delete m;
   }
 
+  {
+    RWMol *m;
+    std::string smiles="CCC/[N+]/1=C/c2ccccc2OC(=O)/C=C1/O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
 
+    TEST_ASSERT(m->getBondWithIdx(3)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(14)->getStereo()==Bond::STEREOE);
+
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="CCC[N+]1=C/c2ccccc2OC(=O)/C=C\\1O");
+
+    delete m;
+  }
 
   {
     // something of a torture test involving geldanamycin:
