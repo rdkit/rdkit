@@ -168,7 +168,7 @@ class SaltRemover(object):
         modified=True
         if dontRemoveEverything and len(Chem.GetMolFrags(mol))<=1:
           break
-    if modified:
+    if modified and mol.GetNumAtoms()>0:
       Chem.SanitizeMol(mol)
     return mol
 
