@@ -72,7 +72,7 @@ namespace RDKit{
 
     
     if(!preserveExistingQuery){
-      // FIX: this leaks a query atom on oAt
+      if(oAt->getQuery()) delete oAt->getQuery();
       oAt->setQuery(q);
     } else {
       oAt->expandQuery(q,Queries::COMPOSITE_AND);
