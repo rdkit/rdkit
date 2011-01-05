@@ -44,6 +44,7 @@
 #include <io.h> 	 
 #endif
 
+#include <RDBoost/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SLNParse/SLNAttribs.h>
@@ -58,6 +59,13 @@ void setup_sln_string(const std::string &text,yyscan_t yyscanner){
   YY_BUFFER_STATE buff=yysln__scan_string(text.c_str(),yyscanner);
   POSTCONDITION(buff,"invalid buffer");
 }
+
+#define YY_FATAL_ERROR(msg) sln_lexer_error(msg)
+void sln_lexer_error(const char *msg) {
+     BOOST_LOG(rdErrorLog) << msg<<std::endl;
+     throw ValueErrorException(msg);
+}
+
 
 %}
 

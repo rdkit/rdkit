@@ -16,6 +16,7 @@
 #include <io.h> 	 
 #endif
 
+#include <RDBoost/Exceptions.h>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
@@ -31,6 +32,13 @@ void setup_smiles_string(const std::string &text,yyscan_t yyscanner){
   YY_BUFFER_STATE buff=yysmiles__scan_string(text.c_str(),yyscanner);
   POSTCONDITION(buff,"invalid buffer");
 }
+#define YY_FATAL_ERROR(msg) smiles_lexer_error(msg)
+
+void smiles_lexer_error(const char *msg) {
+     BOOST_LOG(rdErrorLog) << msg<<std::endl;
+     throw ValueErrorException(msg);
+}
+
 %}
 
 %s IN_ATOM_STATE

@@ -16,6 +16,7 @@
 #include <io.h> 	 
 #endif
 
+#include <RDBoost/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 
@@ -30,6 +31,13 @@ using namespace RDKit;
 void setup_smarts_string(const std::string &text,yyscan_t yyscanner){
   YY_BUFFER_STATE buff=yysmarts__scan_string(text.c_str(),yyscanner);
   POSTCONDITION(buff,"invalid buffer");
+}
+
+#define YY_FATAL_ERROR(msg) smarts_lexer_error(msg)
+
+void smarts_lexer_error(const char *msg) {
+     BOOST_LOG(rdErrorLog) << msg<<std::endl;
+     throw ValueErrorException(msg);
 }
 %}
 %option stack
