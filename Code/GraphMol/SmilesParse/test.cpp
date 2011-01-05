@@ -2267,8 +2267,8 @@ void testBug3139534(){
     delete m;
   }
 
+  // some torture tests with natural products (thanks to James Davidson for the examples)
   {
-    // something of a torture test involving geldanamycin:
     RWMol *m;
     std::string smiles="NC(=O)O[C@H]1C(/C)=C/[C@H](C)[C@@H](O)[C@@H](OC)C[C@H](C)C\\C2=C(/OC)C(=O)\\C=C(\\NC(=O)C(\\C)=C\\C=C/[C@@H]1OC)C2=O";
     m = SmilesToMol(smiles);
@@ -2294,6 +2294,83 @@ void testBug3139534(){
     }
     delete m;
   }
+
+  {
+    RWMol *m;
+    std::string smiles="CC(O[C@@H]1C=C(C)[C@H]2[C@H]([C@H]3O[C@@H]2C/C(C)=C\\CC[C@@]3(C)OC(C)=O)[C@H]1C(OC(C)=O)(C)C)=O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(13,15)->getStereo()==Bond::STEREOZ);
+
+    std::string csmiles=MolToSmiles(*m,true);
+    
+    RWMol *m2;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::string nsmiles=MolToSmiles(*m,true,false,i,false);
+      m2 = SmilesToMol(nsmiles);
+      TEST_ASSERT(m2);
+      std::string ncsmiles = MolToSmiles(*m2,true);
+      if(ncsmiles!=csmiles){
+        std::cerr<<" failed in iteration: "<<i<<"\n"<<csmiles<<"\n != \n"<<ncsmiles<<"\n starting from:\n"<<nsmiles<<"\n";
+        m2->debugMol(std::cerr);
+        TEST_ASSERT(ncsmiles==csmiles);
+      }
+      delete m2;
+    }
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="CC(O[C@@H]1C=C(C)[C@H]2[C@H]([C@H]3O[C@@H]2C/C(C)=C/CC[C@@]3(C)OC(C)=O)[C@H]1C(OC(C)=O)(C)C)=O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(13,15)->getStereo()==Bond::STEREOE);
+
+    std::string csmiles=MolToSmiles(*m,true);
+    
+    RWMol *m2;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::string nsmiles=MolToSmiles(*m,true,false,i,false);
+      m2 = SmilesToMol(nsmiles);
+      TEST_ASSERT(m2);
+      std::string ncsmiles = MolToSmiles(*m2,true);
+      if(ncsmiles!=csmiles){
+        std::cerr<<" failed in iteration: "<<i<<"\n"<<csmiles<<"\n != \n"<<ncsmiles<<"\n starting from:\n"<<nsmiles<<"\n";
+        m2->debugMol(std::cerr);
+        TEST_ASSERT(ncsmiles==csmiles);
+      }
+      delete m2;
+    }
+    delete m;
+  }
+
+  
+  {
+    RWMol *m;
+    std::string smiles="CC(=O)[C@@H]1CC=C(C)[C@@H]2[C@@H]3O[C@@H]([C@@H](O)C/C=C\\CC3)[C@@H]12";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(15,16 )->getStereo()==Bond::STEREOZ);
+
+    std::string csmiles=MolToSmiles(*m,true);
+    
+    RWMol *m2;
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      std::string nsmiles=MolToSmiles(*m,true,false,i,false);
+      m2 = SmilesToMol(nsmiles);
+      TEST_ASSERT(m2);
+      std::string ncsmiles = MolToSmiles(*m2,true);
+      if(ncsmiles!=csmiles){
+        std::cerr<<" failed in iteration: "<<i<<"\n"<<csmiles<<"\n != \n"<<ncsmiles<<"\n starting from:\n"<<nsmiles<<"\n";
+        m2->debugMol(std::cerr);
+        TEST_ASSERT(ncsmiles==csmiles);
+      }
+      delete m2;
+    }
+    delete m;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
