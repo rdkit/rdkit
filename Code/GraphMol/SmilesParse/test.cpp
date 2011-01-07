@@ -2453,6 +2453,71 @@ void testBug3145697(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testBug3152751(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3152751 cannot roundtrip charged aromatic Se and Te" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="c1cccc[te+]1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    smiles = MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="c1cccc[se+]1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    smiles = MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="c1ccc[te]1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    smiles = MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="c1ccc[se]1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    smiles = MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getIsAromatic());
+    delete m;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 
 int
 main(int argc, char *argv[])
@@ -2494,5 +2559,6 @@ main(int argc, char *argv[])
   testBug3139534();
   testAtomMaps();
   testBug3145697();
+  testBug3152751();
   //testBug1719046();
 }

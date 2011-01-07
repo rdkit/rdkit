@@ -59,7 +59,7 @@ std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
   symb = atom->getSymbol();
   if(inOrganicSubset(num)){
     // it's a member of the organic subset
-    if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -= ('A'-'a');
+    //if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -= ('A'-'a');
 
     // -----
     // figure out if we need to put a bracket around the atom,
@@ -105,6 +105,11 @@ std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
   if(massDiff>0.1 && atom->getOwningMol().hasProp("_doIsoSmiles")){
     int iMass=static_cast<int>(atom->getMass()+.1);
     res <<iMass;
+  }
+  // this was originally only done for the organic subset,
+  // applying it to other atom-types is a fix for Issue 3152751: 
+  if(!doKekule && atom->getIsAromatic() && symb[0]>='A' && symb[0] <= 'Z'){
+    symb[0] -= ('A'-'a');
   }
   res << symb;
 
