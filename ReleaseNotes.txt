@@ -10,7 +10,7 @@
 
 Acknowledgements:
  - Eddie Cao, Andrew Dalke, James Davidson, Kirk DeLisle, Peter Gedeck,
-   Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
+   TJ O'Donnell, Gianluca Sforna, Nik Stiefl, Riccardo Vianello 
    
 Bug Fixes: 
  - The depiction code no longer crashes with single-atom templates
@@ -27,6 +27,8 @@ Bug Fixes:
    fixed (issue 3145697)
  - a bug causing the molecule drawing code to not use the cairo canvas
    when it's installed was fixed
+ - the SMILES generated for charged, aromatic Se or Te has been fixed
+   (issue 3152751)
 
 New Features:
  - All molecular descriptor calculators are now pulled in by the
