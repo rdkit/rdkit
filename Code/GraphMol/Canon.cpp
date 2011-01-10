@@ -458,6 +458,7 @@ namespace Canon {
       Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
       INT_LIST otherTravList;
       unsigned int lowestRingIdx;
+      INT_VECT::const_iterator cAIt;
       switch(colors[possibleIdx]){
       case WHITE_NODE:
         // -----
@@ -482,9 +483,12 @@ namespace Canon {
         // we've seen this, but haven't finished it (we're finishing a ring)
         // -----
         cycleEndList.push_back(bond->getIdx());
-        lowestRingIdx = std::find(cyclesAvailable.begin(),
-                                  cyclesAvailable.end(),1) -
-          cyclesAvailable.begin();
+        cAIt=std::find(cyclesAvailable.begin(),
+                                                cyclesAvailable.end(),1);
+        if(cAIt==cyclesAvailable.end()){
+          throw ValueErrorException("Too many rings open at once. SMILES cannot be generated.");
+        }
+        lowestRingIdx =  cAIt-cyclesAvailable.begin();
         cyclesAvailable[lowestRingIdx] = 0;
         cycles[possibleIdx].push_back(lowestRingIdx);
         ++lowestRingIdx;

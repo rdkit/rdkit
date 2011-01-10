@@ -2327,6 +2327,52 @@ void testIssue3073163(){
   BOOST_LOG(rdInfoLog) << " done"<< std::endl;
 }
 
+void testIssue3154208(){
+  BOOST_LOG(rdInfoLog) << " Testing Issue3154208 (a large mol failure)"<< std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/largemol.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==476);
+    TEST_ASSERT(m->getNumBonds()==531);
+    std::cerr<<"generating smiles"<<std::endl;
+    std::string smiles=MolToSmiles(*m,false,false,-1,false);
+    std::cerr<<"smiles: "<<smiles<<std::endl;
+
+
+    std::cerr<<"converting back"<<std::endl;    
+    RWMol *m2 = SmilesToMol(smiles);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getNumAtoms()==476);
+    TEST_ASSERT(m2->getNumBonds()==531);
+    MatchVectType mv;
+    std::cerr<<"check isomorphism"<<std::endl;
+    TEST_ASSERT(SubstructMatch(*m,*m2,mv));
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+
+#if 0
+    std::cerr<<"generating canon smiles"<<std::endl;
+    std::string csmiles=MolToSmiles(*m);
+    std::cerr<<"smiles: "<<csmiles<<std::endl;
+    delete m;
+    std::cerr<<"and converting back"<<std::endl;
+    m = SmilesToMol(csmiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==476);
+    TEST_ASSERT(m->getNumBonds()==531);
+    std::cerr<<"second smiles generation"<<std::endl;
+    smiles=MolToSmiles(*m);
+    std::cerr<<"smiles: "<<smiles<<std::endl;
+    TEST_ASSERT(smiles==csmiles);
+#endif
+    delete m;
+
+  }
+
+  BOOST_LOG(rdInfoLog) << " done"<< std::endl;
+}
+
 
 
 
@@ -2370,7 +2416,7 @@ int main(int argc,char *argv[]){
   testIssue2963522();
   testIssue3073163();
 #endif
-
+  testIssue3154208();
 
 
   return 0;
