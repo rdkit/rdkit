@@ -39,6 +39,7 @@ class FGHierarchyNode(object):
   name=""
   label=""
   pattern=None
+  smarts=""
   rxnSmarts=""
   parent=None
   removalReaction=None
@@ -66,7 +67,7 @@ hierarchy=None
 lastData=None
 def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
   global groupDefns,hierarchy,lastData
-  if not force and hierarchy and data==lastData: 
+  if not force and hierarchy and (not data or data==lastData) and (not fileNm or fileNm==lastFileNm): 
     return hierarchy[:]
   lastData=data
   splitter = re.compile('\t+')

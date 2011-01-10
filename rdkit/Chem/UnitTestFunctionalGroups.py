@@ -129,7 +129,23 @@ Amine\tN\tAmine
     self.failUnless(len(hierarchy[0].children)==2)
     self.failUnless(hierarchy[0].rxnSmarts!='')
     self.failUnless(hierarchy[0].children[0].rxnSmarts!='')
-    
+
+
+  def test4Hs(self):
+    hierarchy = FunctionalGroups.BuildFuncGroupHierarchy()
+
+    inName = os.path.join(RDConfig.RDCodeDir,'Chem','tests','NCI_5K_TPSA.csv')
+    inF = open(inName,'r')
+    lines = inF.readlines()
+    ms = [Chem.MolFromSmiles(x.split(',')[0]) for x in lines if x[0]!='#']
+    for m in ms:
+      mh =Chem.AddHs(m)
+      fp = FunctionalGroups.CreateMolFingerprint(m,hierarchy)
+      fph = FunctionalGroups.CreateMolFingerprint(mh,hierarchy)
+      if fp!=fph:
+        print fp.ToBitString()
+        print fph.ToBitString()
+      self.failUnlessEqual(fp,fph)
 
 if __name__ == '__main__':
   import sys,getopt,re

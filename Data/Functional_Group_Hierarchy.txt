@@ -1,4 +1,4 @@
-// $Id: Functional_Group_Hierarchy.txt 3124 2010-02-03 11:34:17Z landrgr1 $
+// $Id: Functional_Group_Hierarchy.txt 4351 2011-01-10 08:54:31Z landrgr1 $
 // Created by Greg Landrum, October 2006
 //  Format: Name\tSmarts\tLabel\tRemovalReaction (optional)
 //
@@ -16,22 +16,22 @@ AcidChloride	C(=O)Cl	Acid Chloride
 CarboxylicAcid	C(=O)[O;H,-]	Carboxylic acid
   CarboxylicAcid.Aromatic	[$(C-!@[a])](=O)([O;H,-])	Aromatic
   CarboxylicAcid.Aliphatic	[$(C-!@[A;!O])](=O)([O;H,-])	Aliphatic
-  CarboxylicAcid.AlphaAmino	[$(C-[C;!$(C=[!#6])]-[N;!H0;!$(N-[!#6]);!$(N-C=[O,N,S])])](=O)([O;H,-])	alpha Amino Acid
+  CarboxylicAcid.AlphaAmino	[$(C-[C;!$(C=[!#6])]-[N;!H0;!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])](=O)([O;H,-])	alpha Amino Acid
 
 SulfonylChloride	[$(S-!@[#6])](=O)(=O)(Cl)	Sulfonyl Chloride
   SulfonylChloride.Aromatic	[$(S-!@c)](=O)(=O)(Cl)	 Aromatic
   SulfonylChloride.Aliphatic	[$(S-!@C)](=O)(=O)(Cl)	 Aliphatic
 
-Amine				[N;!H0;$(N-[#6]);!$(N-[!#6]);!$(N-C=[O,N,S])]	Amine
+Amine				[N;!H0;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]	Amine
   Amine.Primary			[N;H2;D1;$(N-!@[#6]);!$(N-C=[O,N,S])]		Primary
   Amine.Primary.Aromatic		[N;H2;D1;$(N-!@c);!$(N-C=[O,N,S])]		Primary aromatic
   Amine.Primary.Aliphatic	[N;H2;D1;$(N-!@C);!$(N-C=[O,N,S])]		Primary aliphatic
-  Amine.Secondary		[N;H1;D2;$(N(-[#6])-[#6]);!$(N-[!#6]);!$(N-C=[O,N,S])]	Secondary
-  Amine.Secondary.Aromatic	[N;H1;D2;$(N(-[c])-[#6]);!$(N-[!#6]);!$(N-C=[O,N,S])]	Secondary aromatic
-  Amine.Secondary.Aliphatic	[N;H1;D2;$(N(-C)-C);!$(N-[!#6]);!$(N-C=[O,N,S])]	Secondary aliphatic
-  Amine.Aromatic		[N;!H0;$(N-c);!$(N-[!#6]);!$(N-C=[O,N,S])]		Aromatic
-  Amine.Aliphatic		[N;!H0;!$(N-c);$(N-C);!$(N-[!#6]);!$(N-C=[O,N,S])]		Aliphatic
-  Amine.Cyclic			[N;!H0;R;$(N-[#6]);!$(N-[!#6]);!$(N-C=[O,N,S])]	Cyclic
+  Amine.Secondary		[N;H1;D2;$(N(-[#6])-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]	Secondary
+  Amine.Secondary.Aromatic	[N;H1;D2;$(N(-[c])-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]	Secondary aromatic
+  Amine.Secondary.Aliphatic	[N;H1;D2;$(N(-C)-C);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]	Secondary aliphatic
+  Amine.Aromatic		[N;!H0;$(N-c);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]		Aromatic
+  Amine.Aliphatic		[N;!H0;!$(N-c);$(N-C);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]		Aliphatic
+  Amine.Cyclic			[N;!H0;R;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])]	Cyclic
 
 BoronicAcid			[$(B-!@[#6])](O)(O)		Boronic Acid		[#6:1]-!@[B:2]([O:3])[O:4]>>[#6:1][X].[B:2]([O:3])[O:4]
   BoronicAcid.Aromatic		[$(B-!@c)](O)(O)	Aromatic	[c:1]-!@[B:2]([O:3])[O:4]>>[c:1][X].[B:2]([O:3])[O:4]
@@ -45,7 +45,7 @@ Alcohol				[O;H1;$(O-!@[#6;!$(C=!@[O,N,S])])]	Alcohol
   Alcohol.Aromatic		[O;H1;$(O-!@c)]	Aromatic
   Alcohol.Aliphatic		[O;H1;$(O-!@[C;!$(C=!@[O,N,S])])]	Aliphatic
 
-Aldehyde			[CH;D2;!$(C-[!#6])]=O	Aldehyde
+Aldehyde			[CH;D2;!$(C-[!#6;!#1])]=O	Aldehyde
   Aldehyde.Aromatic		[CH;D2;$(C-!@[a])](=O)	Aromatic
   Aldehyde.Aliphatic		[CH;D2;$(C-!@C)](=O)	Aliphatic
 
@@ -91,3 +91,5 @@ Azide				[N;H0;$(N-[#6]);D2]=[N;D2]=[N;D1]	Azide
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+
+
