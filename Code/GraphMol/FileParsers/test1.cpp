@@ -2351,20 +2351,23 @@ void testIssue3154208(){
     TEST_ASSERT(SubstructMatch(*m,*m2,mv));
     TEST_ASSERT(SubstructMatch(*m2,*m,mv));
 
-#if 0
-    std::cerr<<"generating canon smiles"<<std::endl;
+#if 1
+    BOOST_LOG(rdInfoLog)<<"Large molecule canonical smiles test"<<std::endl;
     std::string csmiles=MolToSmiles(*m);
-    std::cerr<<"smiles: "<<csmiles<<std::endl;
-    delete m;
-    std::cerr<<"and converting back"<<std::endl;
-    m = SmilesToMol(csmiles);
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms()==476);
-    TEST_ASSERT(m->getNumBonds()==531);
-    std::cerr<<"second smiles generation"<<std::endl;
-    smiles=MolToSmiles(*m);
-    std::cerr<<"smiles: "<<smiles<<std::endl;
-    TEST_ASSERT(smiles==csmiles);
+    for(unsigned int i=0;i<50;++i){
+      if(!(i%10)) BOOST_LOG(rdInfoLog)<<"Iteration: "<<i+1<<" of 50"<<std::endl;
+      std::string nsmiles = MolToSmiles(*m,false,false,2*i,false);
+      RWMol *nm=SmilesToMol(nsmiles);
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getNumAtoms()==476);
+      TEST_ASSERT(nm->getNumBonds()==531);
+      nsmiles=MolToSmiles(*m);
+      if(nsmiles!=csmiles){
+        std::cerr<<"MISMATCH:\n"<<nsmiles<<"\n"<<csmiles<<"\n";
+      }
+      TEST_ASSERT(nsmiles==csmiles);
+      delete nm;
+    }
 #endif
     delete m;
 
