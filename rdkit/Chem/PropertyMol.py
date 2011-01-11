@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2007-2009 Greg Landrum
+# Copyright (C) 2007-2010 Greg Landrum
 # All Rights Reserved
 #
 from rdkit import Chem
@@ -68,32 +68,43 @@ class PropertyMol(Chem.Mol):
    ...   os.unlink(fn)
    ... except:
    ...   pass
-   
+
+   The next level of that bug: does writing a *depickled* propertymol
+   to an SD file include properties:
+   >>> fn = tempfile.mktemp('.sdf')
+   >>> w = Chem.SDWriter(fn)
+   >>> pm = cPickle.loads(cPickle.dumps(pm))
+   >>> w.write(pm)
+   >>> w=None
+   >>> txt = file(fn,'r').read()
+   >>> '<IntVal>' in txt
+   True
+   >>> try:
+   ...   os.unlink(fn)
+   ... except:
+   ...   pass
+
+
    
   """
   __getstate_manages_dict__=True
   def __init__(self,mol):
     if not isinstance(mol,Chem.Mol): return
     Chem.Mol.__init__(self,mol.ToBinary())
-    self.__propDict={}
     for pn in mol.GetPropNames(includePrivate=True):
       self.SetProp(pn,mol.GetProp(pn))
-  def GetPropNames(self):
-    return self.__propDict.keys()
-  def GetProp(self,prop):
-    return self.__propDict[prop]
-  def SetProp(self,prop,val,**kwargs):
-    val=str(val)
-    Chem.Mol.SetProp(self,prop,val)
-    self.__propDict[prop]=val
-  def HasProp(self,prop):
-    return int(self.__propDict.has_key(prop))
+  def SetProp(self,nm,val):
+    Chem.Mol.SetProp(self,nm,str(val))
   def __getstate__(self):
+    pDict={}
+    for pn in self.GetPropNames(includePrivate=True):
+      pDict[pn] = self.GetProp(pn)
     return {'pkl':self.ToBinary(),
-            'propD':self.__propDict}
+            'propD':pDict}
   def __setstate__(self,stateD):
     Chem.Mol.__init__(self,stateD['pkl'])
-    self.__propDict=stateD['propD']
+    for prop,val in stateD['propD'].iteritems():
+      self.SetProp(prop,val)
 
     
 #------------------------------------
