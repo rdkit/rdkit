@@ -34,8 +34,10 @@ macro(rdkit_library)
       INSTALL(TARGETS ${RDKLIB_NAME} 
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
-      INSTALL(TARGETS ${RDKLIB_NAME}_static
-              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+      if(RDK_INSTALL_STATIC_LIBS)
+        INSTALL(TARGETS ${RDKLIB_NAME}_static
+                DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+      endif(RDK_INSTALL_STATIC_LIBS)
     #ELSE(RDKLIB_SHARED)        
     #  add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     #  INSTALL(TARGETS ${RDKLIB_NAME} 
