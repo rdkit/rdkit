@@ -1,7 +1,22 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/python
 # encoding: utf-8
-# $Id$
-# original author: Markus Kossner
+
+#	Jan 2011	(markus kossner)	Cleaned up the code, added some documentation
+#	somwhere around Aug 2008	(markus kossner)	created
+#    
+#    This script extracts the molecular framework for a database of molecules.
+#    You can use two modes (hard coded): 
+#    - Scaff:	The molecular frame is extracted
+#    - RedScaff:	All linking chains between rings are deleted. The rings are directly connected.
+#    
+#    You can comment in/out the code snippets indicated by the comments 
+#    to force each atom of the frame to be a Carbon.
+#    
+#    Usage: Frames.py <database.sdf>
+#    Output: 
+#    - sd files containing all molecules belonging to one frame (1.sdf, 2.sdf etc)
+#    - frames.smi containing the (caninical) smiles and count of occurrence
+#
 
 import os,sys
 from Chem import AllChem as Chem
@@ -23,51 +38,67 @@ def flatten(x):
             result.append(el)
     return result
 
-def GetFrame(mol,mode='RedScaff'):
-	'''return a ganeric molecule defining the reduced scaffold of the molecule.
-	mode can be 'RedScaff' and 'Scaff'. The second mode will turn every atom to a carbon and every bond to a single bond!'''
-	ring=mol.GetRingInfo()
-	RingAtoms= flatten(ring.AtomRings())
-	NonRingAtoms=[ atom.GetIdx() for atom in mol.GetAtoms() if atom.GetIdx() not in RingAtoms ]
-	RingNeighbors=[]
-	Paths=[]
+
+def GetFrame(mol, mode='Scaff'):
+	'''return a ganeric molecule defining the reduced scaffold of the input mol.
+	mode can be 'Scaff' or 'RedScaff':
+	
+	Scaff	->	chop off the side chains and return the scaffold
+	
+	RedScaff	->	remove all linking chains and connect the rings 
+	directly at the atoms where the linker was
+	'''
+	
+	ring = mol.GetRingInfo()
+	RingAtoms = flatten(ring.AtomRings())
+	NonRingAtoms = [ atom.GetIdx() for atom in mol.GetAtoms() if atom.GetIdx() not in RingAtoms ]
+	RingNeighbors = []
+	Paths = []
 	for NonRingAtom in NonRingAtoms:
 		for neighbor in mol.GetAtomWithIdx(NonRingAtom).GetNeighbors():
 			if neighbor.GetIdx() in RingAtoms:
 				RingNeighbors.append(NonRingAtom)
 				Paths.append([neighbor.GetIdx(),NonRingAtom]) #The ring Atoms having a non ring Nieghbor will be the start of a walk
 				break
-	PosLinkers=[x for x in NonRingAtoms if x not in RingNeighbors] #Only these Atoms are Possible Linkers of two rings
-	Framework=[ x for x in RingAtoms ]
-	Linkers=[]
+	PosConnectors = [x for x in NonRingAtoms if x not in RingNeighbors] #Only these Atoms are potential starting points of a Linker chain
+	#print 'PosConnectors:'
+	#print PosConnectors	
+	Framework = [ x for x in RingAtoms ]
+	#Start a list of pathways which we will have to walk 
+	#print 'Path atoms:'
+	#print Paths
+	Linkers = []
 	while len(Paths)>0:
-		NewPaths=[]
+		NewPaths = []
 		for P in Paths:
-			if P==None:
-				print 'ooh, there is still a bug somewere '
+			if P == None:
+				print 'ooh'
 			else:
 				for neighbor in mol.GetAtomWithIdx(P[-1]).GetNeighbors():
 					if neighbor.GetIdx() not in P:
 						if neighbor.GetIdx() in NonRingAtoms:
-							n=P[:]
+							n = P[:]
 							n.append(neighbor.GetIdx())
 							NewPaths.append(n[:])
 						elif neighbor.GetIdx() in RingAtoms:
-							n=P[:]
+							#print 'adding the following path to Framework:'
+							#print P
+							n = P[:]
 							n.append(neighbor.GetIdx())
 							Linkers.append(n)
 							Framework=Framework+P[:]
 
-		Paths=NewPaths[:]
+		Paths = NewPaths[:]
 	#print 'Linkers:',Linkers
 	#print 'RingAtoms:',RingAtoms
-	if mode=='Scaff':
-		Framework=list(set(Framework))
-		todel=[]
+	#em.AddBond(3,4,Chem.BondType.SINGLE)
+	if mode == 'RedScaff':
+		Framework = list(set(Framework))
+		todel = []
 		NonRingAtoms.sort(reverse=True)
-		em=Chem.EditableMol(mol)
-		BondsToAdd=[ sorted([i[0],i[-1]]) for i in Linkers ]
-		mem=[]
+		em = Chem.EditableMol(mol)
+		BondsToAdd = [ sorted([i[0],i[-1]]) for i in Linkers ]
+		mem = []
 		for i in BondsToAdd:
 			if i not in mem:
 				em.AddBond(i[0],i[1],Chem.BondType.SINGLE)
@@ -76,66 +107,72 @@ def GetFrame(mol,mode='RedScaff'):
 			todel.append(i)
 		for i in todel:
 			em.RemoveAtom(i)
-		m=em.GetMol()
+		m = em.GetMol()
+		#===================================#
+		#  Now do the flattening of atoms and bonds!
+		#  Any heavy atom will become a carbon and any bond will become a single bond!	#
+		#===================================#
+#		for atom in m.GetAtoms():                                                 #
+#			atom.SetAtomicNum(6)                                                    #
+#			atom.SetFormalCharge(0)                                                #
+#		for bond in m.GetBonds():                                                   #
+#			bond.SetBondType(Chem.BondType.SINGLE)                 #
+#		Chem.SanitizeMol(m)                                                          #
+		#===================================#
 		return m
 
-	if mode=='RedScaff':
-		Framework=list(set(Framework))
-		todel=[]
+	if mode == 'Scaff':
+		Framework = list(set(Framework))
+		todel = []
 		NonRingAtoms.sort(reverse=True)
 		for i in NonRingAtoms:
 			if i != None:
 				if i not in Framework:
 					todel.append(i)
-		em=Chem.EditableMol(mol)
+		em = Chem.EditableMol(mol)
 		for i in todel:
 			em.RemoveAtom(i)
-		m=em.GetMol()
+		m = em.GetMol()
 		#===================================#
-		#Now do the flattening of atoms and bonds! 
-		#Any heavy atom will become a carbon and any bond will become a single bond!!		#
+		#  Now do the flattening of atoms and bonds!
+		#  Any heavy atom will become a carbon and any bond will become a single bond!!		#
 		#===================================#
-		for atom in m.GetAtoms():                                                 #
-			atom.SetAtomicNum(6)                                                    #
-			atom.SetFormalCharge(0)                                                #
-		for bond in m.GetBonds():                                                   #
-			bond.SetBondType(Chem.BondType.SINGLE)                 #
-		Chem.SanitizeMol(m)                                                          #
+#		for atom in m.GetAtoms():                                                 #
+#			atom.SetAtomicNum(6)                                                    #
+#			atom.SetFormalCharge(0)                                                #
+#		for bond in m.GetBonds():                                                   #
+#			bond.SetBondType(Chem.BondType.SINGLE)                 #
+#		Chem.SanitizeMol(m)                                                          #
 		#===================================#
 		return m
 
-if len(sys.argv) < 2:
-	print "No input file provided: Frames.py <file-to-process.sdf>"
-	sys.exit(1)
+if __name__=='__main__':
+	if len(sys.argv) < 2:
+		print "No input file provided: Frames.py filetosprocess.ext"
+		sys.exit(1)
 
-suppl=Chem.SDMolSupplier(sys.argv[1])
 
-FrameDict={}
+	suppl = Chem.SDMolSupplier(sys.argv[1])
+	FrameDict = {}
 
-for mol in suppl:
-	if mol == 'None': continue
-	try:
-		m=GetFrame(mol,mode='RedScaff')
-		if FrameDict.has_key(Chem.MolToSmiles(m)):
-			FrameDict[Chem.MolToSmiles(m)].append(mol)
+	for mol in suppl:
+		m = GetFrame(mol)
+		cansmiles = Chem.MolToSmiles(m, isomericSmiles=True)
+		if FrameDict.has_key(cansmiles):
+			FrameDict[cansmiles].append(mol)
 		else:
-			FrameDict[Chem.MolToSmiles(m)]=[mol,]
-	except:
-		print '--------------------------------'
-		print 'could not process the molecule with the following name:'
-		print mol.GetProp('_Name')
+			FrameDict[cansmiles]=[mol,]
 
-counter=0
-w=open('frames.smi','w')
-d=Chem.SDWriter('frames.sdf')
-for key,item in FrameDict.items():
-	counter+=1
-	#d=Chem.SDWriter(str(counter)+'.sdf')
-	for i in item:
-		i.SetProp('Scaffold',key)
-		i.SetProp('Cluster',str(counter))
-		d.write(i)
-	print key,len(item)
-	w.write(key+'\n')
-w.close
-print 'number of Frames found: %d' %(counter)
+	counter=0
+	w=open('frames.smi','w')
+	for key,item in FrameDict.items():
+		counter+=1
+		d=Chem.SDWriter(str(counter)+'.sdf')
+		for i in item:
+			i.SetProp('Scaffold',key)
+			i.SetProp('Cluster',str(counter))
+			d.write(i)
+		print key,len(item)
+		w.write(key+'\t'+str(len(item))+'\n')
+	w.close
+	print 'number of Clusters: %d' %(counter)
