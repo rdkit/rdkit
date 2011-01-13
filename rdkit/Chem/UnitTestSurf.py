@@ -46,7 +46,7 @@ class TestCase(unittest.TestCase):
   def _testTPSALong(self):
     " Longer TPSA test "
     #inName = RDConfig.RDDataDir+'/NCI/first_5k.tpsa.csv'
-    inName = os.path.join(RDConfig.RDCodeDir,'Chem','tests','NCI_5K_TPSA.csv')
+    inName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','NCI_5K_TPSA.csv')
     inF = open(inName,'r')
     lines = inF.readlines()
     lineNo = 0
@@ -95,7 +95,7 @@ class TestCase(unittest.TestCase):
         calc = MolSurf.TPSA(mol)
         self.failUnless(feq(calc,ans),'bad TPSA for SMILES %s (%.2f != %.2f)'%(smi,calc,ans))
     if doLong:
-      inName = os.path.join(RDConfig.RDCodeDir,'Chem','tests','NCI_5K_TPSA.csv')
+      inName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','NCI_5K_TPSA.csv')
       inF = open(inName,'r')
       lines = inF.readlines()
       for line in lines:

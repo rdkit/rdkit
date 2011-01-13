@@ -20,7 +20,7 @@ from rdkit import Chem
 class TestCase(unittest.TestCase):
   def setUp(self):
     #print '\n%s: '%self.shortDescription(),
-    fName = os.path.join(RDConfig.RDCodeDir,'Chem','tests','quinone.mol')
+    fName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','quinone.mol')
     self.m = Chem.MolFromMolFile(fName)
     assert self.m.GetNumAtoms()==8,'bad nAtoms'
 

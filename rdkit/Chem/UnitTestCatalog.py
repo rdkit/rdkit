@@ -86,7 +86,7 @@ class TestCase(unittest.TestCase):
     
   def test3CatFilePickle(self):
     pklFile = open(os.path.join(RDConfig.RDCodeDir,'Chem',
-                                'tests','simple_catalog.pkl'),
+                                'test_data','simple_catalog.pkl'),
                    'rb')
     cat = cPickle.load(pklFile)
     assert cat.GetNumEntries()==21

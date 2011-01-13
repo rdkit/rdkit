@@ -51,7 +51,7 @@ class TestCase(unittest.TestCase):
      
    """
    col = 1
-   inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','tests','PP_descrs_regress.2.csv'),'r')
+   inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data','PP_descrs_regress.2.csv'),'r')
    lineNum=0
    for line in inF.xreadlines():
      lineNum+=1
@@ -78,7 +78,7 @@ class TestCase(unittest.TestCase):
          assert feq(val,tgtVal,1e-4),'line %d, mol %s (CT calc = %f) should have CT = %f'%(lineNum,smi,val,tgtVal)
 
   def __testDesc(self,fileN,col,func):
-   inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','tests',fileN),'r')
+   inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data',fileN),'r')
    lineNum=0
    for line in inF.xreadlines():
      lineNum+=1
@@ -283,7 +283,7 @@ class TestCase(unittest.TestCase):
   def _testTPSALongNCI(self):
     " Long TPSA test "
     fileN = 'tpsa_regr.csv'
-    inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','tests',fileN),'r')
+    inF = open(os.path.join(RDConfig.RDCodeDir,'Chem','test_data',fileN),'r')
     lines = inF.readlines()
     lineNo = 0
     for line in lines:

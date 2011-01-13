@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # 100 PhysProp compounds
     inFileName = os.path.join(RDConfig.RDDataDir,'PhysProp',
                               'Limits-pyridine100.smi')
-    outFileName = os.path.join(RDConfig.RDCodeDir,'Chem','tests',
+    outFileName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data',
                                'PP_descrs_regress.csv')
     runIt(inFileName,outFileName,smiCol=1,delim='\t')
 

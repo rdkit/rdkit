@@ -134,7 +134,7 @@ Amine\tN\tAmine
   def test4Hs(self):
     hierarchy = FunctionalGroups.BuildFuncGroupHierarchy()
 
-    inName = os.path.join(RDConfig.RDCodeDir,'Chem','tests','NCI_5K_TPSA.csv')
+    inName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','NCI_5K_TPSA.csv')
     inF = open(inName,'r')
     lines = inF.readlines()
     ms = [Chem.MolFromSmiles(x.split(',')[0]) for x in lines if x[0]!='#']

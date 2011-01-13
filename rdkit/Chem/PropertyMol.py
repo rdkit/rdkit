@@ -9,7 +9,7 @@ class PropertyMol(Chem.Mol):
   """ allows rdkit molecules to be pickled with their properties saved.
 
    >>> import cPickle
-   >>> m = Chem.MolFromMolFile('tests/benzene.mol')
+   >>> m = Chem.MolFromMolFile('test_data/benzene.mol')
    >>> m.GetProp('_Name')
    'benzene.mol'
 
