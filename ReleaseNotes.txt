@@ -29,6 +29,10 @@ Bug Fixes:
    when it's installed was fixed
  - the SMILES generated for charged, aromatic Se or Te has been fixed
    (issue 3152751)
+ - PropertyMols constructed from pickles and then written to SD files
+   will now include the properties in the SD file.
+ - SMILES can now be generated correctly for very large molecules
+   where more than 50 rings are open at once. (issue 3154028)
 
 New Features:
  - All molecular descriptor calculators are now pulled in by the
@@ -45,7 +49,7 @@ New Features:
    template-aligned depictions easier.
  - Generating FCFP-like fingerprints is now more straightforward via
    the useFeatures optional argument to GetMorganFingerprint()
- - Extensive changes were made to the layere fingerprinting code to
+ - Extensive changes were made to the layered fingerprinting code to
    allow better coverage of queries.
  - Functionality for stripping common salts from molecules has been
    added in rdkit.Chem.SaltRemover. The salts themselves are defined

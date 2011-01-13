@@ -122,6 +122,10 @@ Add `#define BOOST_PYTHON_NO_PY_SIGNATURES` at the top of `Code/GraphMol/Wrap/Ed
 
 = Building on Windows =
 
+#summary Building on Windows
+
+For source releases prior to Q4 2009, look at BuildingOnWindows_Old
+
 == Software to Install ==
   * Microsoft Visual C++ : The Express version has everything necessary and can be downloaded for free [http://www.microsoft.com/express/download/ from Microsoft]. This is a big installation and will take a while. The RDKit has been successfully built with all version of visual c++ since 6.0, so the current version of VC++ (2008 as of this writing) should be fine. 
   * flex and bison : these are easily installed as part of a [http://www.cygwin.com cygwin] installation, but one can also find flex and bison binaries for windows elsewhere. Cygwin is not required to build the RDKit, but it's very useful to have (a minimal cygwin installation is fine). *Note* if you install flex and bison without cygwin, be sure to read [http://eli.thegreenplace.net/2007/07/27/bison-looking-for-bisonsimple-on-windows/ this web page] about environment variables and set the BISON_SIMPLE environment variable to the appropriate value.
@@ -133,7 +137,7 @@ Add `#define BOOST_PYTHON_NO_PY_SIGNATURES` at the top of `Code/GraphMol/Wrap/Ed
 == Setup and Preparation ==
 This section assumes that python is installed in c:\Python26, that the boost libraries have been extracted to c:\boost\boost_1_43_0, and that you will build the RDKit from a directory named c:\RDKit. If any of these conditions is not true, just change the corresponding paths. 
 
- Notes : 
+_Notes_ :
     # If you install things in paths that have spaces in their names, be sure to use quotes properly in your environment variable definitions.
     # If you have more than one version of visual studio installed, the instructions below may not use the correct compiler. In this case you need to use a different `--toolset` argument to specify the version of the compiler used in all commands. Information for this situation is covered in [http://www.boost.org/doc/libs/1_43_0/more/getting_started/windows.html the boost.build documentation].
 
@@ -143,7 +147,7 @@ This section assumes that python is installed in c:\Python26, that the boost lib
   * Set the required environment variables (you can set this in cygwin or in windows. If you set them in windows, be sure to restart your cygwin window):
     * RDBASE = c:\RDKit  *Note* this variable is optional for the Q3 2010 release and later releases.
   * Make sure that the directory c:\Python26 is in your PATH
-  * Make sure that the directory c:\RDKit\bin is in your PATH
+  * Make sure that the directory c:\RDKit\lib is in your PATH
   * Make sure that the directory c:\boost\lib is in your PATH
   * Make sure that the directory c:\RDKit is in your PYTHONPATH
 
@@ -165,6 +169,9 @@ This section assumes that python is installed in c:\Python26, that the boost lib
 == Testing the Build (optional, but recommended) ==
   * cd to $RDBASE/build and run `ctest`
   * you're done!
+
+== Additional notes ==
+  * There is a bug in boost v1.44 that causes link errors related to boost-serialization on windows. To fix this you need to edit one of the boost header files. [https://groups.google.com/group/boost-list/msg/066897d43d9ca27a?hl=en This post] contains instructions on what needs to be done.
 
 =======
 # $Id$
