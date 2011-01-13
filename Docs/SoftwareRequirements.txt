@@ -3,7 +3,7 @@ Last update: $Date$
 By: Greg Landrum
 
 A. Required Python packages:
-   1) Python 2.3 or later (2.5 or 2.6 recommended)
+   1) Python 2.5 or later
 
    2) NumPy (http://numpy.scipy.org/)
       binary versions can be downloaded here:
@@ -11,11 +11,6 @@ A. Required Python packages:
 
    3) PIL: the python imaging library
       (http://www.pythonware.com/products/pil/index.htm)
-
-   4) [not required with Python2.5 and later] A database wrapper, one of:
-      - pyPgSQL (http://pypgsql.sourceforge.net/) 
-      - pysqlite2 (http://www.initd.org/tracker/pysqlite/wiki/pysqlite)
-
 
 B. Optional Python:
    1) aggdraw: a library for high-quality drawing in
@@ -31,16 +26,13 @@ B. Optional Python:
       http://ipython.scipy.org/dist/
 
 C. Other required stuff
-   1) The boost shared libraries v1.33 or later (tested with 1.33-1.41)
+   1) The boost shared libraries v1.33 or later (tested with 1.33-1.45)
 
-   2) PostgreSQL (only if you're using pyPgSQL)
-
-  
 D. Required environment variables:
    - RDBASE pointing to the root of the distribution
    - PYTHONPATH: should include $RDBASE/Python
-   - PATH: should include $RDBASE/bin
-   - On Linux: LD_LIBRARY_PATH should include $RDBASE/bin
+   - PATH: should include $RDBASE/lib
+   - On Linux: LD_LIBRARY_PATH should include $RDBASE/lib
 
 
 E. WINDOWS ONLY: Optional, but useful things to have:
