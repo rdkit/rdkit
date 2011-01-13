@@ -409,7 +409,7 @@ class MolDrawing(object):
         for j in range(i+1,mol.GetNumAtoms()):
           pj = numpy.array(self.atomPs[mol][j])
           d = pj-pi
-          dist2 = d.dot(d)
+          dist2 = d[0]*d[0]+d[1]*d[1]
           if dist2<=tol:
             addCanvasPolygon(canvas,((pi[0]-2*flagCloseContactsDist,
                                       pi[1]-2*flagCloseContactsDist),
