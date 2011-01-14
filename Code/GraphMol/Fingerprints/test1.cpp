@@ -1482,6 +1482,88 @@ void testRootedTorsions(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testMorganAtomInfo(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test atom info from morgan fingerprints." << std::endl;
+
+  {
+    ROMol *mol;
+    SparseIntVect<boost::uint32_t> *fp;
+    MorganFingerprints::BitInfoMap bitInfo;
+    SparseIntVect<boost::uint32_t>::StorageType nze;
+
+    mol = SmilesToMol("CCCCC");
+    fp = MorganFingerprints::getFingerprint(*mol,0,0,0,false,true,false,&bitInfo);
+    nze=fp->getNonzeroElements();
+    TEST_ASSERT(nze.size()==2);
+    TEST_ASSERT(bitInfo.size()==2);
+    for(SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter=nze.begin();
+        iter!=nze.end();++iter){
+      TEST_ASSERT(iter->second==bitInfo[iter->first].size());
+    }
+    for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
+        iter!=bitInfo.end();++iter){
+      TEST_ASSERT(iter->second.begin()->second==0);
+    }
+
+    delete fp;
+
+    bitInfo.clear();
+    fp = MorganFingerprints::getFingerprint(*mol,1,0,0,false,true,false,&bitInfo);
+    TEST_ASSERT(fp->getNonzeroElements().size()==5);
+    for(SparseIntVect<boost::uint32_t>::StorageType::const_iterator iter=nze.begin();
+        iter!=nze.end();++iter){
+      TEST_ASSERT(iter->second==bitInfo[iter->first].size());
+    }
+    for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
+        iter!=bitInfo.end();++iter){
+      TEST_ASSERT(iter->second.begin()->second==0 ||
+                  iter->second.begin()->second==1 );
+    }
+    delete fp;
+
+    delete mol;
+  }
+
+  {
+    ROMol *mol;
+    ExplicitBitVect *fp;
+    MorganFingerprints::BitInfoMap bitInfo;
+
+    mol = SmilesToMol("CCCCC");
+    fp = MorganFingerprints::getFingerprintAsBitVect(*mol,0,2048,0,0,false,true,false,&bitInfo);
+    TEST_ASSERT(fp->getNumOnBits()==2);
+    TEST_ASSERT(bitInfo.size()==2);
+    for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
+        iter!=bitInfo.end();++iter){
+      TEST_ASSERT(fp->getBit(iter->first));
+    }
+    for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
+        iter!=bitInfo.end();++iter){
+      TEST_ASSERT(iter->second.begin()->second==0);
+    }
+
+    delete fp;
+    bitInfo.clear();
+    fp = MorganFingerprints::getFingerprintAsBitVect(*mol,1,2048,0,0,false,true,false,&bitInfo);
+    TEST_ASSERT(fp->getNumOnBits()==5);
+    TEST_ASSERT(bitInfo.size()==5);
+    for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
+        iter!=bitInfo.end();++iter){
+      TEST_ASSERT(fp->getBit(iter->first));
+    }
+    for(MorganFingerprints::BitInfoMap::const_iterator iter=bitInfo.begin();
+        iter!=bitInfo.end();++iter){
+      TEST_ASSERT(iter->second.begin()->second==0 ||
+                  iter->second.begin()->second==1 );
+    }
+    delete fp;
+  
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 
 int main(int argc,char *argv[]){
@@ -1513,5 +1595,6 @@ int main(int argc,char *argv[]){
   testHashedTorsions();
   testRootedAtomPairs();
   testRootedTorsions();
+  testMorganAtomInfo();
   return 0;
 }

@@ -155,7 +155,8 @@ namespace {
                                                               python::object fromAtoms,
                                                               bool useChirality,
                                                               bool useBondTypes,
-                                                              bool useFeatures){
+                                                              bool useFeatures,
+                                                              python::object bitInfo){
     std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
@@ -182,10 +183,31 @@ namespace {
         }
       }
     }
+    RDKit::MorganFingerprints::BitInfoMap *bitInfoMap=0;
+    if(bitInfo!=python::object()){
+      // make sure the optional argument actually was a dictionary
+      python::dict typecheck=python::extract<python::dict>(bitInfo);
+      bitInfoMap=new RDKit::MorganFingerprints::BitInfoMap();
+    }
     RDKit::SparseIntVect<boost::uint32_t> *res;
     res = RDKit::MorganFingerprints::getFingerprint(mol,
                                                     static_cast<unsigned int>(radius),
-                                                    invars,froms,useChirality,useBondTypes);
+                                                    invars,froms,useChirality,useBondTypes,
+                                                    false,bitInfoMap);
+    if(bitInfoMap){
+      bitInfo.attr("clear")();
+      for(RDKit::MorganFingerprints::BitInfoMap::const_iterator iter=bitInfoMap->begin();
+          iter!=bitInfoMap->end();++iter){
+        const std::vector<std::pair<boost::uint32_t,boost::uint32_t> > &v=iter->second;
+        python::list localL;
+        for(std::vector<std::pair<boost::uint32_t,boost::uint32_t> >::const_iterator vIt=v.begin();
+            vIt!=v.end();++vIt){
+          localL.append(python::make_tuple(vIt->first,vIt->second));
+        }
+        bitInfo[iter->first]=python::tuple(localL);
+      }
+      delete bitInfoMap;
+    }
     if(invars) delete invars;
     if(froms) delete froms;
     return res;
@@ -198,7 +220,8 @@ namespace {
                                           python::object fromAtoms,
                                           bool useChirality,
                                           bool useBondTypes,
-                                          bool useFeatures){
+                                          bool useFeatures,
+                                          python::object bitInfo){
     std::vector<boost::uint32_t> *invars=0;
     if(invariants){
       unsigned int nInvar=python::extract<unsigned int>(invariants.attr("__len__")());
@@ -226,12 +249,33 @@ namespace {
         }
       }
     }
+    RDKit::MorganFingerprints::BitInfoMap *bitInfoMap=0;
+    if(bitInfo!=python::object()){
+      // make sure the optional argument actually was a dictionary
+      python::dict typecheck=python::extract<python::dict>(bitInfo);
+      bitInfoMap=new RDKit::MorganFingerprints::BitInfoMap();
+    }
     ExplicitBitVect *res;
     res = RDKit::MorganFingerprints::getFingerprintAsBitVect(mol,
                                                              static_cast<unsigned int>(radius),
                                                              nBits,
                                                              invars,froms,useChirality,
-                                                             useBondTypes);
+                                                             useBondTypes,
+                                                             false,bitInfoMap);
+    if(bitInfoMap){
+      bitInfo.attr("clear")();
+      for(RDKit::MorganFingerprints::BitInfoMap::const_iterator iter=bitInfoMap->begin();
+          iter!=bitInfoMap->end();++iter){
+        const std::vector<std::pair<boost::uint32_t,boost::uint32_t> > &v=iter->second;
+        python::list localL;
+        for(std::vector<std::pair<boost::uint32_t,boost::uint32_t> >::const_iterator vIt=v.begin();
+            vIt!=v.end();++vIt){
+          localL.append(python::make_tuple(vIt->first,vIt->second));
+        }
+        bitInfo[iter->first]=python::tuple(localL);
+      }
+      delete bitInfoMap;
+    }
     if(invars) delete invars;
     if(froms) delete froms;
     return res;
@@ -349,7 +393,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=python::list(),
                python::arg("useChirality")=false,
                python::arg("useBondTypes")=true,
-               python::arg("useFeatures")=false),
+               python::arg("useFeatures")=false,
+               python::arg("bitInfo")=python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   docString="Returns a Morgan fingerprint for a molecule as a bit vector";
@@ -359,7 +404,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=python::list(),
                python::arg("useChirality")=false,
                python::arg("useBondTypes")=true,
-               python::arg("useFeatures")=false),
+               python::arg("useFeatures")=false,
+               python::arg("bitInfo")=python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
   python::scope().attr("_MorganFingerprint_version")=

@@ -19,6 +19,7 @@
 #include <vector>
 #include <list>
 #include <algorithm>
+#include <boost/foreach.hpp>
 
 namespace RankAtoms {
   typedef std::vector<int> INT_VECT;
@@ -77,12 +78,12 @@ namespace RankAtoms {
 
     int currRank=0;
     T lastV = vect[indices[0]];
-    for(unsigned int i=0;i<nEntries;++i){
-      T v = vect[indices[i]];
+    BOOST_FOREACH(unsigned int idx,indices){
+      T v = vect[idx];
       if(v==lastV){
-        res[indices[i]] = currRank;
+        res[idx] = currRank;
       } else {
-        res[indices[i]] = ++currRank;
+        res[idx] = ++currRank;
         lastV = v;
       }
     }
@@ -108,8 +109,7 @@ namespace RankAtoms {
     // start by getting the internal ranking of the values passed in
     //
     // --------------
-    INT_VECT newRanks;
-    newRanks.resize(vals.size());
+    INT_VECT newRanks(vals.size());
     rankVect(vals,newRanks);
 
     // --------------
@@ -118,9 +118,8 @@ namespace RankAtoms {
     // of atoms that are no longer active (-1 for active atoms).
     //
     // --------------
-    for(INT_LIST::const_iterator ilCIt=indicesInPlay.begin();
-        ilCIt!=indicesInPlay.end();++ilCIt){
-      ranks[*ilCIt] = -1;
+    BOOST_FOREACH(int idx,indicesInPlay){
+      ranks[idx] = -1;
     }
 
 #ifdef VERYVERBOSE_CANON
@@ -139,7 +138,7 @@ namespace RankAtoms {
     //  when currNewRank > maxNewRank
     //
     // -------------
-    INT_VECT::iterator ivIt;
+
     int currNewRank= *(std::min_element(newRanks.begin(),newRanks.end()));
     int maxNewRank = *(std::max_element(newRanks.begin(),newRanks.end()));
     while(currNewRank<=maxNewRank){
@@ -148,11 +147,11 @@ namespace RankAtoms {
       //  this rank and all new ranks that are higher:
       //
       while(std::find(ranks.begin(),ranks.end(),currNewRank)!=ranks.end()){
-        for(ivIt=newRanks.begin();ivIt!=newRanks.end();++ivIt){
-          if(*ivIt>=currNewRank)
-            *ivIt += 1;
+        BOOST_FOREACH(int &rank,newRanks){
+          if(rank>=currNewRank)
+            ++rank;
         }
-        // increment both thie current rank *and* the maximum new rank
+        // increment both the current rank *and* the maximum new rank
         ++currNewRank;
         ++maxNewRank;
       }
@@ -161,12 +160,12 @@ namespace RankAtoms {
       //  now grab all entries with this new rank and copy them into
       //  the ranks list
       //
-      ivIt=std::find(newRanks.begin(),newRanks.end(),currNewRank);
+      INT_VECT::iterator ivIt=std::find(newRanks.begin(),newRanks.end(),currNewRank);
       while(ivIt!=newRanks.end()){
         int offset=ivIt-newRanks.begin();
         int idx = idxVect[offset];
         ranks[idx] = currNewRank;
-        ivIt++;
+        ++ivIt;
         ivIt=std::find(ivIt,newRanks.end(),currNewRank);
       }
       ++currNewRank;

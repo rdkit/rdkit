@@ -52,6 +52,7 @@ def _pyLabuteHelper(mol,includeHs=1,force=0):
   **Note:** Changes here affect the version numbers of all ASA descriptors
 
   """
+  import math
   if not force:
     try:
       res = mol._labuteContribs
@@ -98,7 +99,7 @@ def _pyLabuteHelper(mol,includeHs=1,force=0):
     
   for i in xrange(nAts+1):
     Ri = rads[i]
-    Vi[i] = 4*pi * Ri**2 - pi * Ri * Vi[i]
+    Vi[i] = 4*math.pi * Ri**2 - math.pi * Ri * Vi[i]
 
   mol._labuteContribs=Vi
   return Vi

@@ -29,7 +29,7 @@ namespace RDKit{
                              bool useBO=true);
 
     // Return the list of bond that connect a list of atoms
-    // ASSUMPTION: the atoms specified in the list are connexocted
+    // ASSUMPTION: the atoms specified in the list are connected
     PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE &atomIds);
 
     // create a new molecule object from a part of molecule "mol". The part of

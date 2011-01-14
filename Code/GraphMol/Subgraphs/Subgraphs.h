@@ -59,12 +59,15 @@ namespace RDKit{
    *   \param useHs     - if set, hydrogens in the graph will be considered
    *                      eligible to be in paths. NOTE: this will not add
    *                      Hs to the graph. 
+   *   \param rootedAtAtom - if non-negative, only subgraphs that start at
+   *                         this atom will be returned.
    *
    *   The result is a map from subgraph size -> list of paths
    *               (i.e. list of list of bond indices)
   */
   INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
-                                                  unsigned int upperLen, bool useHs=false);
+                                                  unsigned int upperLen, bool useHs=false,
+                                                  int rootedAtAtom=-1);
 
   //! \brief find all bond subgraphs of a particular size
   /*!
@@ -73,11 +76,14 @@ namespace RDKit{
    *   \param useHs     - if set, hydrogens in the graph will be considered
    *                      eligible to be in paths. NOTE: this will not add
    *                      Hs to the graph. 
+   *   \param rootedAtAtom - if non-negative, only subgraphs that start at
+   *                         this atom will be returned.
+   *
    *
    *   The result is a list of paths (i.e. list of list of bond indices)
   */
   PATH_LIST findAllSubgraphsOfLengthN(const ROMol &mol,unsigned int targetLen,
-                                      bool useHs=false);
+                                      bool useHs=false,int rootedAtAtom=-1);
 
   //! \brief find unique bond subgraphs of a particular size
   /*!
@@ -88,11 +94,14 @@ namespace RDKit{
    *                      Hs to the graph. 
    *   \param useBO     - if set, bond orders will be considered when uniquifying
    *                      the paths
+   *   \param rootedAtAtom - if non-negative, only subgraphs that start at
+   *                         this atom will be returned.
    *
    *   The result is a list of paths (i.e. list of list of bond indices)
   */
   PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol,unsigned int targetLen,
-                                         bool useHs=false,bool useBO=true);
+                                         bool useHs=false,bool useBO=true,
+                                         int rootedAtAtom=-1);
   //! \brief find all paths of a particular size
   /*!
    *   \param mol - the molecule to be considered
@@ -102,14 +111,33 @@ namespace RDKit{
    *   \param useHs     - if set, hydrogens in the graph will be considered
    *                      eligible to be in paths. NOTE: this will not add
    *                      Hs to the graph. 
+   *   \param rootedAtAtom - if non-negative, only subgraphs that start at
+   *                         this atom will be returned.
    *
    *   The result is a list of paths (i.e. list of list of bond indices)
   */
   PATH_LIST findAllPathsOfLengthN(const ROMol &mol,unsigned int targetLen,
-                                  bool useBonds=true,bool useHs=false);
+                                  bool useBonds=true,bool useHs=false,
+                                  int rootedAtAtom=-1);
   INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(const ROMol &mol,unsigned int lowerLen,
-                                             unsigned int upperLen,
-                                             bool useBonds=true,bool useHs=false);
+                                              unsigned int upperLen,
+                                              bool useBonds=true,bool useHs=false,
+                                              int rootedAtAtom=-1);
+
+  //! \brief find bond subgraphs of a particular radius around an atom
+  /*!
+   *   \param mol - the molecule to be considered
+   *   \param radius - the radius of the subgraphs to be considered
+   *   \param rootedAtAtom - the atom to consider
+   *   \param useHs     - if set, hydrogens in the graph will be considered
+   *                      eligible to be in paths. NOTE: this will not add
+   *                      Hs to the graph. 
+   *
+   *   The result is a path (a vector of bond indices)
+  */
+  PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol,unsigned int radius,
+                                         unsigned int rootedAtAtom,bool useHs=false);
+
 }
 
   

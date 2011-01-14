@@ -1972,6 +1972,21 @@ CAS<~>
     newms = [x for x  in newsup]
     self.failUnlessEqual(len(ms),len(newms))
 
+  def test61PathToSubmol(self):
+    m = Chem.MolFromSmiles('CCCCCC1C(O)CC(O)N1C=CCO')
+    env = Chem.FindAtomEnvironmentOfRadiusN(m,2,11)
+    self.failUnlessEqual(len(env),8)
+    amap={}
+    submol = Chem.PathToSubmol(m,env,atomMap=amap)
+    self.failUnlessEqual(submol.GetNumAtoms(),len(amap.keys()))
+    self.failUnlessEqual(submol.GetNumAtoms(),9)
+    smi=Chem.MolToSmiles(submol,rootedAtAtom=amap[11])
+    self.failUnlessEqual(smi[0],'N')
+    refsmi = Chem.MolToSmiles(Chem.MolFromSmiles('N(C=C)(C(C)C)C(O)C'))
+    csmi = Chem.MolToSmiles(Chem.MolFromSmiles(smi))
+    self.failUnlessEqual(refsmi,csmi)
+    
+
 if __name__ == '__main__':
   unittest.main()
 

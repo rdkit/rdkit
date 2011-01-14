@@ -149,15 +149,25 @@ namespace RDKit{
 
       // Loop until either:
       //   1) all classes are uniquified
-      //   2) we've gone through numAtoms/2 times
-      //      We only do numAtoms/2 because that's the maximum
-      //      number of steps required for two atoms to "feel" each
-      //      other (each influences one additional neighbor shell
-      //      per iteration). 
-      //      EFF: This number could be reduced further using the
-      //           distance matrix.  
+      //   2) we've gone through maxIts times
+      //      maxIts is calculated by dividing the maximum value
+      //      in the molecular distance matrix by two; that's the 
+      //      maximum number of steps required for two atoms to 
+      //      "feel" each other (each influences one additional 
+      //      neighbor shell per iteration). 
+      int maxIts=0;
+      double *dm = MolOps::getDistanceMat(mol);
+      for(int i=0;i<numAtoms;++i){
+        for(int j=i+i;j<numAtoms;++j){
+          int p=int(dm[i*numAtoms+j]);
+          if(p<numAtoms) maxIts = std::max(maxIts,p);
+        }
+      }
+      maxIts/=2;
+      ++maxIts;
+
       int numIts=0;
-      while( numIts<numAtoms/2 && !activeIndices.empty()){
+      while( numIts<maxIts && !activeIndices.empty()){
         unsigned int longestEntry=0;
         // ----------------------------------------------------
         //
@@ -167,6 +177,7 @@ namespace RDKit{
             it!=allIndices.end();
             ++it){
           CIP_ENTRY localEntry;
+          localEntry.reserve(16);
 
           // start by pushing on our neighbors' ranks:
           ROMol::ADJ_ITER nbr,endNbrs;
@@ -179,20 +190,20 @@ namespace RDKit{
             // first iteration --c(:c):c and --C(=C)-C should look the same.
             // this was part of issue 3009911
             unsigned int count=static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()+.1));
-            localEntry.insert(localEntry.end(),count,rank);
+            CIP_ENTRY::iterator ePos=std::lower_bound(localEntry.begin(),localEntry.end(),rank);
+            localEntry.insert(ePos,count,rank);
             ++nbr;
           }
           // add two zeroes for each coordinated H:
           // (as long as we're not a query atom)
           if(!mol.getAtomWithIdx(*it)->hasQuery()){
-            localEntry.insert(localEntry.end(),
+            localEntry.insert(localEntry.begin(),
                               mol.getAtomWithIdx(*it)->getTotalNumHs(),
                               0);
           }
 
-          // get a sorted list of our neighbors' ranks:
-          std::sort(localEntry.begin(),localEntry.end());
-          // and copy it on in reversed order:
+          // we now have a sorted list of our neighbors' ranks,
+          // copy it on in reversed order:
           cipEntries[*it].insert(cipEntries[*it].end(),
                                  localEntry.rbegin(),
                                  localEntry.rend());

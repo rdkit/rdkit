@@ -40,6 +40,7 @@
 #define __RD_MORGANFPS_H__
 
 #include <vector>
+#include <map>
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <boost/cstdint.hpp>
@@ -50,6 +51,8 @@ namespace RDKit {
     extern std::vector<std::string> defaultFeatureSmarts;
     extern std::vector<ROMOL_SPTR> defaultFeatureMatchers;
 
+    typedef std::map<boost::uint32_t,std::vector<std::pair<boost::uint32_t,boost::uint32_t> > > BitInfoMap;
+    
     const std::string morganFingerprintVersion="1.0.0";
     
     //! returns the Morgan fingerprint for a molecule
@@ -80,6 +83,10 @@ namespace RDKit {
                             calculating bits
       \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
                                      have a nonzero invariant.
+      \param atomsSettingBit : if nonzero, this will be used to return information
+                               about the atoms that set each particular bit.
+                               The keys are the map are bit ids, the values
+                               are lists of (atomId, radius) pairs.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -92,7 +99,8 @@ namespace RDKit {
                      const std::vector<boost::uint32_t> *fromAtoms=0,
                      bool useChirality=false,
                      bool useBondTypes=true,
-                     bool onlyNonzeroInvariants=false);
+                     bool onlyNonzeroInvariants=false,
+                     BitInfoMap *atomsSettingBits=0);
 
 
     //! returns the Morgan fingerprint for a molecule as a bit vector
@@ -114,6 +122,10 @@ namespace RDKit {
                             calculating bits
       \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
                                      have a nonzero invariant.
+      \param atomsSettingBit : if nonzero, this will be used to return information
+                               about the atoms that set each particular bit.
+                               The keys are the map are bit ids, the values
+                               are lists of (atomId, radius) pairs.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -127,8 +139,8 @@ namespace RDKit {
                               const std::vector<boost::uint32_t> *fromAtoms=0,
                               bool useChirality=false,
                               bool useBondTypes=true,
-                              bool onlyNonzeroInvariants=false);
-    
+                              bool onlyNonzeroInvariants=false,
+                              BitInfoMap *atomsSettingBits=0);
       
     //! returns the connectivity invariants for a molecule
     /*!  

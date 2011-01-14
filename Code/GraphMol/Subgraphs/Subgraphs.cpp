@@ -14,6 +14,7 @@
 #include "SubgraphUtils.h"
 
 #include <RDGeneral/utils.h>
+#include <RDBoost/Exceptions.h>
 
 #include <iostream>
 #include <cstring>
@@ -240,7 +241,7 @@ namespace Subgraphs {
 
   INT_PATH_LIST_MAP
   pathFinderHelper(int *adjMat,unsigned int dim,unsigned int minLen,
-                   unsigned int maxLen)
+                   unsigned int maxLen,int rootedAtAtom)
   {
     PRECONDITION(adjMat,"no matrix");
     PRECONDITION(minLen<=maxLen,"bad lengths provided");
@@ -250,11 +251,20 @@ namespace Subgraphs {
     PATH_LIST paths;
     paths.clear();
 
-    // start a path at each possible index
-    for(unsigned int i=0;i<dim;i++){
+    if(rootedAtAtom<0){
+      // start a path at each possible index
+      for(unsigned int i=0;i<dim;i++){
+        PATH_TYPE tPath;
+        tPath.push_back(i);
+        paths.push_back(tPath);
+      }
+    } else if(rootedAtAtom<dim) {
+      // only start a path at the atom of interest:
       PATH_TYPE tPath;
-      tPath.push_back(i);
+      tPath.push_back(rootedAtAtom);
       paths.push_back(tPath);
+    } else {
+      return res;
     }
 
     // and build them up one index at a time:
@@ -270,7 +280,7 @@ namespace Subgraphs {
 } // end of Subgraphs namespace
 
   PATH_LIST findAllSubgraphsOfLengthN (const ROMol &mol, unsigned int targetLen,
-                                       bool useHs){
+                                       bool useHs,int rootedAtAtom){
     /*********************************************
       FIX: Lots of issues here:
       - pathListType is defined as a container of "pathType", should it be a container
@@ -303,6 +313,13 @@ namespace Subgraphs {
       }
       forbidden[i]=1;
       
+      // if we're only returning paths rooted at a particular atom, check now
+      // that this bond involves that atom:
+      if(rootedAtAtom>=0 && mol.getBondWithIdx(i)->getBeginAtomIdx()!=rootedAtAtom &&
+         mol.getBondWithIdx(i)->getEndAtomIdx()!=rootedAtAtom ){
+        continue;
+      }
+
       // start the recursive path building with the current bond
       spath.clear();
       spath.push_back(i);
@@ -310,7 +327,7 @@ namespace Subgraphs {
       // neighbors of this bond are the next candidates
       cands = nbrs[i];
       
-      // now call teh recursive function
+      // now call the recursive function
       // little bit different from the python version 
       // the result list of paths is passed as a reference, instead of on the fly 
       // appending 
@@ -322,7 +339,7 @@ namespace Subgraphs {
 
 
   INT_PATH_LIST_MAP findAllSubgraphsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
-                                                  unsigned int upperLen, bool useHs){
+                                                  unsigned int upperLen, bool useHs,int rootedAtAtom){
     PRECONDITION(lowerLen <= upperLen, "");
     boost::dynamic_bitset<> forbidden(mol.getNumBonds());
 
@@ -350,6 +367,13 @@ namespace Subgraphs {
       }
       forbidden[i]=1;
       
+      // if we're only returning paths rooted at a particular atom, check now
+      // that this bond involves that atom:
+      if(rootedAtAtom>=0 && mol.getBondWithIdx(i)->getBeginAtomIdx()!=rootedAtAtom &&
+         mol.getBondWithIdx(i)->getEndAtomIdx()!=rootedAtAtom ){
+        continue;
+      }
+
       // start the recursive path building with the current bond
       spath.clear();
       spath.push_back(i);
@@ -368,10 +392,10 @@ namespace Subgraphs {
   }
   
   PATH_LIST findUniqueSubgraphsOfLengthN (const ROMol &mol, unsigned int targetLen,
-                                          bool useHs,bool useBO) 
+                                          bool useHs,bool useBO,int rootedAtAtom) 
   {
     // start by finding all subgraphs, then uniquify
-    PATH_LIST allSubgraphs=findAllSubgraphsOfLengthN(mol,targetLen,useHs);
+    PATH_LIST allSubgraphs=findAllSubgraphsOfLengthN(mol,targetLen,useHs,rootedAtAtom);
     PATH_LIST res = Subgraphs::uniquifyPaths(mol,allSubgraphs,useBO);
     return res;
   }
@@ -408,7 +432,7 @@ namespace Subgraphs {
   INT_PATH_LIST_MAP 
   findAllPathsOfLengthsMtoN(const ROMol &mol,unsigned int lowerLen,
                            unsigned int upperLen,bool useBonds,
-                           bool useHs) {
+                           bool useHs,int rootedAtAtom) {
     //
     //  We can't be clever here and just use the bond adjacency matrix
     //  to solve this problem when useBonds is true.  This is because
@@ -445,7 +469,8 @@ namespace Subgraphs {
     }
 
     // find the paths themselves
-    INT_PATH_LIST_MAP atomPaths=Subgraphs::pathFinderHelper(adjMat,dim,lowerLen,upperLen);
+    INT_PATH_LIST_MAP atomPaths=Subgraphs::pathFinderHelper(adjMat,dim,lowerLen,upperLen,
+                                                            rootedAtAtom);
 
     // clean up the adjacency matrix
     delete [] adjMat;
@@ -500,7 +525,65 @@ namespace Subgraphs {
   }
   PATH_LIST
   findAllPathsOfLengthN(const ROMol &mol,unsigned int targetLen,bool useBonds,
-                        bool useHs) {
-    return findAllPathsOfLengthsMtoN(mol,targetLen,targetLen,useBonds,useHs)[targetLen];
+                        bool useHs,int rootedAtAtom) {
+    return findAllPathsOfLengthsMtoN(mol,targetLen,targetLen,useBonds,useHs,rootedAtAtom)[targetLen];
   }
+
+  PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol,unsigned int radius,
+                                         unsigned int rootedAtAtom,bool useHs){
+    if(rootedAtAtom>=mol.getNumAtoms()) throw ValueErrorException("bad atom index");
+
+    PATH_TYPE res;
+    std::list< std::pair<int,int> > nbrStack;
+    ROMol::OEDGE_ITER beg,end;
+    boost::tie(beg,end) = mol.getAtomBonds(mol.getAtomWithIdx(rootedAtAtom));
+    while(beg!=end){
+      BOND_SPTR bond=mol[*beg];
+      if(useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))->getAtomicNum()!=1){
+        nbrStack.push_back(std::make_pair(rootedAtAtom,bond->getIdx()));
+      }
+      ++beg;
+    }
+    boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
+    unsigned int i;
+    for(i=0;i<radius;++i){
+      if(nbrStack.empty()){
+        break;
+      }
+
+      std::list< std::pair<int,int> > nextLayer;
+      while(!nbrStack.empty()){
+        int bondIdx,startAtom;
+        boost::tie(startAtom,bondIdx)=nbrStack.front();
+        nbrStack.pop_front();
+        if(!bondsIn.test(bondIdx)){
+          bondsIn.set(bondIdx);
+          res.push_back(bondIdx);
+
+          // add the next set of neighbors:
+          int oAtom=mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
+          boost::tie(beg,end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
+          while(beg!=end){
+            BOND_SPTR bond=mol[*beg];
+            if(!bondsIn.test(bond->getIdx())){
+              if(useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))->getAtomicNum()!=1){
+                nextLayer.push_back(std::make_pair(oAtom,bond->getIdx()));
+              }
+            }
+            ++beg;
+          }
+        }
+      }
+      nbrStack=nextLayer;
+    }
+    if(i!=radius){
+      // this happens when there are no paths with the requested radius.
+      // return nothing in this case:
+      res.clear();
+      res.resize(0);
+    }
+
+    return res;
+  }
+
 } // end of RDKit namespace

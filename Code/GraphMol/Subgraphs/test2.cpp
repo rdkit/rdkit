@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,87 +10,125 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
+#include <GraphMol/Subgraphs/SubgraphUtils.h>
+#include <boost/foreach.hpp>
 
 
 #include <iostream>
 using namespace std;
 using namespace RDKit;
 
-void dumpVIV(PATH_LIST v){
-  PATH_LIST::iterator i;
-  PATH_TYPE::iterator j;
-  for(i=v.begin();i!=v.end();i++){
-    for(j=i->begin();j!=i->end();j++){
-      std::cout << *j << " ";
-    }
-    std::cout << std::endl;
-  }
-
-}
-
-
 void test1()
 {
-  std::cout << "-----------------------\n Test1" << std::endl;
-  RWMol *mol=SmilesToMol("CCC(O)C(c1ccccc1)CC(C)N(C)C");
-  CHECK_INVARIANT(mol,"");
+  std::cout << "-----------------------\n Test1: pathToSubmol" << std::endl;
+  {
+    std::string smiles="CC1CC1";
+    RWMol *mol=SmilesToMol(smiles);
+    TEST_ASSERT(mol);
 
-  int nAll=0,nUnique=0;
-  for(int i=1;i<18;i++){
-    PATH_LIST tmp;
-    tmp = findAllSubgraphsOfLengthN(*mol,i);
-    nAll += tmp.size();
-    tmp = findUniqueSubgraphsOfLengthN(*mol,i);
-    nUnique += tmp.size();
+    PATH_LIST sgs;
+    sgs = findAllSubgraphsOfLengthN(*mol,3,false,0);
+    TEST_ASSERT(sgs.size()==3);
+    BOOST_FOREACH(PATH_TYPE tmp,sgs){
+      TEST_ASSERT(tmp[0]==0);
+      TEST_ASSERT(tmp.size()==3);
+      ROMol *frag=Subgraphs::pathToSubmol(*mol,tmp,false);
+      smiles = MolToSmiles(*frag,true,false,0,false);
+      if(tmp[1]==1){
+        if(tmp[2]==2){
+          TEST_ASSERT(smiles=="CCCC");
+        } else if(tmp[2]==3) {
+          TEST_ASSERT(smiles=="CC(C)C");
+        } else {
+          TEST_ASSERT(0);
+        }
+      } else if(tmp[1]==3){
+        if(tmp[2]==2){
+          TEST_ASSERT(smiles=="CCCC");
+        } else if(tmp[2]==1) {
+          TEST_ASSERT(smiles=="CC(C)C");
+        } else {
+          TEST_ASSERT(0);
+        }
+      } else {
+        TEST_ASSERT(0);
+      }
+      delete frag;
+    } 
+    delete mol;
   }
-  CHECK_INVARIANT(nAll==1990,"");
-  CHECK_INVARIANT(nUnique==907,"");
-
   std::cout << "Finished" << std::endl;
 }
 
 
 void test2()
 {
-  std::cout << "-----------------------\n Test2" << std::endl;
-  RWMol *mol=SmilesToMol("C12C3C4C1C1C2C3N41");
-  CHECK_INVARIANT(mol,"");
+  std::cout << "-----------------------\n Test2: Atom Environments" << std::endl;
+  {
+    std::string smiles="CC1CC1";
+    RWMol *mol=SmilesToMol(smiles);
+    TEST_ASSERT(mol);
 
-  int nAll=0,nUnique=0;
-  for(int i=1;i<13;i++){
-    PATH_LIST tmp;
-    tmp = findAllSubgraphsOfLengthN(*mol,i);
-    nAll += tmp.size();
-    tmp = findUniqueSubgraphsOfLengthN(*mol,i);
-    nUnique += tmp.size();
+    PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mol,1,0);
+    TEST_ASSERT(pth.size()==1);
+    TEST_ASSERT(pth[0]==0);
+
+    pth=findAtomEnvironmentOfRadiusN(*mol,2,0);
+    TEST_ASSERT(pth.size()==3);
+    TEST_ASSERT(pth[0]==0);
+    
+    pth=findAtomEnvironmentOfRadiusN(*mol,3,0);
+    TEST_ASSERT(pth.size()==4);
+    TEST_ASSERT(pth[0]==0);
+    
+    pth=findAtomEnvironmentOfRadiusN(*mol,4,0);
+    TEST_ASSERT(pth.size()==0);
+    
+    pth=findAtomEnvironmentOfRadiusN(*mol,1,1);
+    TEST_ASSERT(pth.size()==3);
+
+    pth=findAtomEnvironmentOfRadiusN(*mol,2,1);
+    TEST_ASSERT(pth.size()==4);
+
+    pth=findAtomEnvironmentOfRadiusN(*mol,3,1);
+    TEST_ASSERT(pth.size()==0);
+
+    delete mol;
   }
 
-  CHECK_INVARIANT(nAll==2433,"");
-  CHECK_INVARIANT(nUnique==300,"");
+  {
+    std::string smiles="CC1CC1";
+    RWMol *mol=SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    ROMol *mH=MolOps::addHs(*mol);
 
-  std::cout << "Finished" << std::endl;
-}
+    PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mH,1,0);
+    TEST_ASSERT(pth.size()==1);
+    TEST_ASSERT(pth[0]==0);
 
-void test3()
-{
-  std::cout << "-----------------------\n Test3" << std::endl;
-  RWMol *mol=SmilesToMol("O=C(O)CCCC=CC(C1C(O)CC(O)C1(C=CC(O)CCCCC))");
-  CHECK_INVARIANT(mol,"");
+    pth=findAtomEnvironmentOfRadiusN(*mH,1,0,true);
+    TEST_ASSERT(pth.size()==4);
 
-  int nAll=0,nUnique=0;
-  for(int i=1;i<26;i++){
-    PATH_LIST tmp;
-    tmp = findAllSubgraphsOfLengthN(*mol,i);
-    //std::cout << i << "\t" << tmp.size();
-    nAll += tmp.size();
-    tmp = findUniqueSubgraphsOfLengthN(*mol,i);
-    //std::cout << "\t" << tmp.size() << std::endl;;
-    nUnique += tmp.size();
+    delete mol;
+    delete mH;
   }
-  std::cout << nAll << " " << nUnique << std::endl;
-  CHECK_INVARIANT(nAll==6435,"");
-  CHECK_INVARIANT(nUnique==5618,"");
+
+  {
+    std::string smiles="O=C(O)CCCC=CC(C1C(O)CC(O)C1(C=CC(O)CCCCC))";
+    RWMol *mol=SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mol,2,9);
+    TEST_ASSERT(pth.size()==8);
+    ROMol *frag=Subgraphs::pathToSubmol(*mol,pth,false);
+    smiles = MolToSmiles(*frag,true,false,0,false);
+    TEST_ASSERT(smiles=="C(C(O)C)(CC)C(C)C");
+    delete frag;
+    delete mol;
+  }
+
 
   std::cout << "Finished" << std::endl;
 }
@@ -101,6 +139,5 @@ int main()
 {
   test1();
   test2();
-  test3();
   return 0;
 }

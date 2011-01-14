@@ -208,7 +208,6 @@ void testPaths()
   //  one (it takes two atoms to make one bond)
   //
   tmp = findAllPathsOfLengthN(mol,1,false);
-  std::cerr<<">>>"<<tmp.size()<<std::endl;
   CHECK_INVARIANT(tmp.size()==6,"");
   tmp = findAllPathsOfLengthN(mol,2,false);
   CHECK_INVARIANT(tmp.size()==5,"");
@@ -274,14 +273,10 @@ void testPaths2()
   mol.addBond(2,3,Bond::SINGLE);
   mol.addBond(2,0,Bond::SINGLE);
 
-
-
-  PATH_LIST tmp;
-
   //
   //  Retrieve using bonds
   //
-  tmp = findAllPathsOfLengthN(mol,3);
+  PATH_LIST tmp = findAllPathsOfLengthN(mol,3);
   //std::cout << "\n3:" << std::endl;
   //dumpVIV(tmp);
   CHECK_INVARIANT(tmp.size()==3,"");
@@ -421,6 +416,73 @@ void testLeak() {
   std::cout << "Finished" << std::endl;
 }
 
+void testRootedSubgraphs () {
+  std::cout << "-----------------------\n testRootedSubgraphs" << std::endl;
+  RWMol *mol=SmilesToMol("CC1CC1");
+  TEST_ASSERT(mol);
+
+  PATH_LIST tmp;
+  tmp = findAllSubgraphsOfLengthN(*mol,1,false,0);
+  TEST_ASSERT(tmp.size()==1);
+  tmp = findAllSubgraphsOfLengthN(*mol,2,false,0);
+  TEST_ASSERT(tmp.size()==2);
+  tmp = findAllSubgraphsOfLengthN(*mol,3,false,0);
+  TEST_ASSERT(tmp.size()==3);
+  tmp = findUniqueSubgraphsOfLengthN(*mol,2,false,false,0);
+  TEST_ASSERT(tmp.size()==1);
+  tmp = findUniqueSubgraphsOfLengthN(*mol,3,false,false,0);
+  TEST_ASSERT(tmp.size()==2);
+
+  INT_PATH_LIST_MAP tmpm;
+  tmpm = findAllSubgraphsOfLengthsMtoN(*mol,1,3,false,0);
+  TEST_ASSERT(tmpm[1].size()==1);
+  TEST_ASSERT(tmpm[2].size()==2);  
+  TEST_ASSERT(tmpm[3].size()==3);  
+  
+  // edge case:
+  tmp = findAllSubgraphsOfLengthN(*mol,1,false,10);
+  TEST_ASSERT(tmp.size()==0);
+
+  delete mol;
+
+  std::cout << "Finished" << std::endl;
+}
+
+void testRootedPaths () {
+  std::cout << "-----------------------\n testRootedPaths" << std::endl;
+  RWMol *mol=SmilesToMol("CC1CC1");
+  TEST_ASSERT(mol);
+
+  PATH_LIST tmp;
+
+  // bond paths:
+  tmp = findAllPathsOfLengthN(*mol,1,true,false,0);
+  TEST_ASSERT(tmp.size()==1);
+  tmp = findAllPathsOfLengthN(*mol,2,true,false,0);
+  TEST_ASSERT(tmp.size()==2);
+  tmp = findAllPathsOfLengthN(*mol,3,true,false,0);
+  TEST_ASSERT(tmp.size()==2);
+
+  // edge case:
+  tmp = findAllPathsOfLengthN(*mol,1,true,false,10);
+  TEST_ASSERT(tmp.size()==0);
+
+  // atom paths:
+  tmp = findAllPathsOfLengthN(*mol,1,false,false,0);
+  TEST_ASSERT(tmp.size()==1);
+  tmp = findAllPathsOfLengthN(*mol,2,false,false,0);
+  TEST_ASSERT(tmp.size()==1);
+  tmp = findAllPathsOfLengthN(*mol,3,false,false,0);
+  TEST_ASSERT(tmp.size()==2);
+  tmp = findAllPathsOfLengthN(*mol,4,false,false,0);
+  TEST_ASSERT(tmp.size()==2);
+  
+  delete mol;
+
+  std::cout << "Finished" << std::endl;
+}
+
+
 
 // -------------------------------------------------------------------
 int main()
@@ -433,6 +495,8 @@ int main()
   testPaths2();
   testUniqueSubgraphs();
   testUniqueSubgraphs2();
+  testRootedSubgraphs();
+  testRootedPaths();
 #endif
   //testLeak();
   return 0;

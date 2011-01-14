@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,6 +20,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
+#include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -234,12 +235,13 @@ namespace RDKit{
 
 
   python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol, unsigned int lowerLen,
-                                                     unsigned int upperLen, bool useHs=false){
+                                                     unsigned int upperLen, bool useHs=false,
+                                                     int rootedAtAtom=-1){
     if(lowerLen>upperLen){
       throw_value_error("lowerLen > upperLen");
     }
     
-    INT_PATH_LIST_MAP oMap=findAllSubgraphsOfLengthsMtoN(mol,lowerLen,upperLen,useHs);
+    INT_PATH_LIST_MAP oMap=findAllSubgraphsOfLengthsMtoN(mol,lowerLen,upperLen,useHs,rootedAtAtom);
     python::list res;
     for(unsigned int i=lowerLen;i<=upperLen;++i){
       python::list tmp;
@@ -251,6 +253,27 @@ namespace RDKit{
     }
     return python::tuple(res);
   };
+
+  ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, 
+                            bool useQuery,python::object atomMap){
+    ROMol *result;
+    PATH_TYPE pth;
+    for(unsigned int i=0;i<python::extract<unsigned int>(path.attr("__len__")());++i){
+      pth.push_back(python::extract<unsigned int>(path[i]));
+    }
+    std::map<int,int> mapping;
+    result = Subgraphs::pathToSubmol(mol,pth,useQuery,mapping);
+    if(atomMap!=python::object()){
+      // make sure the optional argument actually was a dictionary
+      python::dict typecheck=python::extract<python::dict>(atomMap);
+      atomMap.attr("clear")();
+      for(std::map<int,int>::const_iterator mIt=mapping.begin();
+          mIt!=mapping.end();++mIt){
+        atomMap[mIt->first]=mIt->second;
+      }
+    }
+    return result;
+  }
 
 
   struct molops_wrapper {
@@ -581,8 +604,8 @@ namespace RDKit{
       should be included in the results.\n\
       Defaults to 0.\n\
 \n\
-    - verbose: (optional, internal use) toggles verbosity in the search algorithm.\n\
-      Defaults to 0.\n\
+    - rootedAtAtom: (optional) if nonzero, only subgraphs from the specified\n\
+      atom will be returned.\n\
 \n\
   RETURNS: a tuple of 2-tuples with bond IDs\n\
 \n\
@@ -603,7 +626,8 @@ namespace RDKit{
 \n";
       python::def("FindAllSubgraphsOfLengthN", &findAllSubgraphsOfLengthN,
                   (python::arg("mol"),python::arg("length"),
-                   python::arg("useHs")=false),
+                   python::arg("useHs")=false,
+                   python::arg("rootedAtAtom")=-1),
                   docString.c_str());
       // ------------------------------------------------------------------------
       docString="Finds all subgraphs of a particular length in a molecule\n\
@@ -611,7 +635,8 @@ namespace RDKit{
 \n";
       python::def("FindAllSubgraphsOfLengthMToN", &findAllSubgraphsOfLengthsMtoNHelper,
                   (python::arg("mol"),python::arg("min"),python::arg("max"),
-                   python::arg("useHs")=false),
+                   python::arg("useHs")=false,
+                   python::arg("rootedAtAtom")=-1),
                   docString.c_str());
       // ------------------------------------------------------------------------
       docString="Finds unique subgraphs of a particular length in a molecule\n\
@@ -630,12 +655,16 @@ namespace RDKit{
       another.\n\
       Defaults to 1.\n\
 \n\
+    - rootedAtAtom: (optional) if nonzero, only subgraphs from the specified\n\
+      atom will be returned.\n\
+\n\
   RETURNS: a tuple of tuples with bond IDs\n\
 \n\
 \n";
       python::def("FindUniqueSubgraphsOfLengthN", &findUniqueSubgraphsOfLengthN, 
                   (python::arg("mol"),python::arg("length"),
-                   python::arg("useHs")=false,python::arg("useBO")=true),
+                   python::arg("useHs")=false,python::arg("useBO")=true,
+                   python::arg("rootedAtAtom")=-1),
                   docString.c_str());
                   
       // ------------------------------------------------------------------------
@@ -651,6 +680,9 @@ namespace RDKit{
       Otherwise atom indices are used.  *Note* this behavior is different\n\
       from that for subgraphs.\n\
       Defaults to 1.\n\
+\n\
+    - rootedAtAtom: (optional) if nonzero, only paths from the specified\n\
+      atom will be returned.\n\
 \n\
   RETURNS: a tuple of tuples with IDs for the bonds.\n\
 \n\
@@ -672,9 +704,40 @@ namespace RDKit{
 \n";
       python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN, 
                   (python::arg("mol"),python::arg("length"),
-                   python::arg("useBonds")=true,python::arg("useHs")=false),
+                   python::arg("useBonds")=true,python::arg("useHs")=false,
+                   python::arg("rootedAtAtom")=-1),
                   docString.c_str());
 
+      // ------------------------------------------------------------------------
+      docString="Finds the bonds within a certain radius of an atom in a molecule\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - radius: an integer with the target radius for the environment.\n\
+\n\
+    - rootedAtAtom: the atom to consider\n\
+\n\
+    - useHs: (optional) toggles whether or not bonds to Hs that are part of the graph\n\
+      should be included in the results.\n\
+      Defaults to 0.\n\
+\n\
+  RETURNS: a vector of bond IDs\n\
+\n\
+\n";
+      python::def("FindAtomEnvironmentOfRadiusN", &findAtomEnvironmentOfRadiusN,
+                  (python::arg("mol"),python::arg("radius"),
+                   python::arg("rootedAtAtom"),
+                   python::arg("useHs")=false),
+                  docString.c_str());
+
+      python::def("PathToSubmol",pathToSubmolHelper,
+                  (python::arg("mol"),python::arg("path"),
+                   python::arg("useQuery")=false,
+                   python::arg("atomMap")=python::object()),
+                  "",
+                  python::return_value_policy<python::manage_new_object>());
       
       // ------------------------------------------------------------------------
       docString="Finds the disconnected fragments from a molecule.\n\
