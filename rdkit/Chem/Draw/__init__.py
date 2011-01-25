@@ -5,7 +5,7 @@
 #
 import os.path
 
-def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=[]):
+def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,**kwargs):
   """ returns a PIL image containing a drawing of the molecule
   """
   if not mol:
@@ -49,13 +49,13 @@ def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,highlightAtoms=
     AllChem.Compute2DCoords(mol)
   
   drawer.wedgeDashedBonds=wedgeBonds
-  drawer.AddMol(mol,highlightAtoms=highlightAtoms)
+  drawer.AddMol(mol,**kwargs)
   canvas.flush()
 
   return img
 
 def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
-              highlightAtoms=[],imageType=None):
+              imageType=None,**kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
   # original contribution from Uwe Hoffmann
@@ -96,32 +96,32 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
     AllChem.Compute2DCoords(mol)
   
   drawer.wedgeDashedBonds=wedgeBonds
-  drawer.AddMol(mol,highlightAtoms=highlightAtoms)
+  drawer.AddMol(mol,**kwargs)
   if useCAIRO:
     canvas.flush()
   else:
     canvas.save()
 
 def MolToImageFile(mol,filename,size=(300,300),kekulize=True, wedgeBonds=True,
-                   highlightAtoms=[]):
+                   **kwargs):
   """  DEPRECATED:  please use MolToFile instead
 
   """
-  img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds,highlightAtoms=highlightAtoms)
+  img = MolToImage(mol,size=size,kekulize=kekulize,wedgeBonds=wedgeBonds,**kwargs)
   img.save(filename)
     
 tkRoot=None
 tkLabel=None
 tkPI=None
 def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
-            title='RDKit Molecule'):
+            title='RDKit Molecule',**kwargs):
   """ Generates a picture of a molecule and displays it in a Tkinter window
   """
   global tkRoot,tkLabel,tkPI
   import Tkinter
   import ImageTk
 
-  img = MolToImage(mol,size,kekulize,wedgeBonds)
+  img = MolToImage(mol,size,kekulize,wedgeBonds,**kwargs)
 
   if not tkRoot:
     tkRoot = Tkinter.Tk()

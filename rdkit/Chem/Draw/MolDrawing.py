@@ -213,7 +213,7 @@ class MolDrawing(object):
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf,dir=-1)
       addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
       
-  def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None):
+  def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None,ignoreHs=False):
     self.currDotsPerAngstrom=self.dotsPerAngstrom
     self.currAtomLabelFontSize=self.atomLabelFontSize
     if canvasSize is None:
@@ -227,6 +227,7 @@ class MolDrawing(object):
 
     nAts = mol.GetNumAtoms()
     for i in range(nAts):
+      if ignoreHs and mol.GetAtomWithIdx(i).GetAtomicNum()==1: continue
       pos = conf.GetAtomPosition(i)
       xAccum += pos[0]
       yAccum += pos[1]
@@ -275,7 +276,8 @@ class MolDrawing(object):
     addCanvasText(canvas,label,(x1,y1),font,color)
     
   def AddMol(self,mol,canvas=None,centerIt=True,molTrans=None,drawingTrans=None,
-             highlightAtoms=[],confId=-1,flagCloseContactsDist=2):
+             highlightAtoms=[],confId=-1,flagCloseContactsDist=2,
+             ignoreHs=False):
     """
 
     Notes:
@@ -295,7 +297,7 @@ class MolDrawing(object):
     conf = mol.GetConformer(confId)
 
     if centerIt:
-      self.scaleAndCenter(mol,conf)
+      self.scaleAndCenter(mol,conf,ignoreHs=ignoreHs)
     else:
       if molTrans is None:
         molTrans = (0,0)
@@ -314,18 +316,25 @@ class MolDrawing(object):
     self.activeMol = mol
     self.bondRings = mol.GetRingInfo().BondRings()
     for atom in mol.GetAtoms():
+      if ignoreHs and atom.GetAtomicNum()==1:
+        drawAtom=False
+      else:
+        drawAtom=True
       idx = atom.GetIdx()
       pos = self.atomPs[mol].get(idx,None)
       if pos is None:
         pos = self.transformPoint(conf.GetAtomPosition(idx))
         self.atomPs[mol][idx] = pos
-        self.boundingBoxes[mol][0]=min(self.boundingBoxes[mol][0],pos[0])
-        self.boundingBoxes[mol][1]=min(self.boundingBoxes[mol][1],pos[1])
-        self.boundingBoxes[mol][2]=max(self.boundingBoxes[mol][2],pos[0])
-        self.boundingBoxes[mol][3]=max(self.boundingBoxes[mol][3],pos[1])
+        if drawAtom:
+          self.boundingBoxes[mol][0]=min(self.boundingBoxes[mol][0],pos[0])
+          self.boundingBoxes[mol][1]=min(self.boundingBoxes[mol][1],pos[1])
+          self.boundingBoxes[mol][2]=max(self.boundingBoxes[mol][2],pos[0])
+          self.boundingBoxes[mol][3]=max(self.boundingBoxes[mol][3],pos[1])
+      if not drawAtom: continue
       nbrSum = [0,0]
       for bond in atom.GetBonds():
         nbr = bond.GetOtherAtom(atom)
+        if ignoreHs and nbr.GetAtomicNum()==1: continue
         nbrIdx = nbr.GetIdx()
         if nbrIdx > idx:
           nbrPos = self.atomPs[mol].get(nbrIdx,None)
