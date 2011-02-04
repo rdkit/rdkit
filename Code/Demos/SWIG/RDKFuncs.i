@@ -45,6 +45,11 @@
  }
 
 
+%apply int { boost::int32_t };
+%apply unsigned int { boost::uint32_t };
+%apply long long { boost::int64_t };
+%apply unsigned long long { boost::uint64_t };
+
 %shared_ptr(RDKit::ROMol)
 %shared_ptr(RDKit::Atom)
 %shared_ptr(RDKit::Bond)
