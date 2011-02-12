@@ -13,10 +13,9 @@
 #include <vector>
 #include <string>
 
-using std::vector;
-typedef vector<int> IntVect;
+typedef std::vector<int> IntVect;
 typedef IntVect::iterator IntVectIter;
-typedef vector<double> DoubleVect;
+typedef std::vector<double> DoubleVect;
 typedef DoubleVect::iterator DoubleVectIter;
 const int ci_BITVECT_VERSION=0x0020; //!< version number to use in pickles
 
