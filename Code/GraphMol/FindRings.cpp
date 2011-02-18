@@ -680,6 +680,7 @@ namespace RDKit {
       INT_VECT curFrag;
       int nfrags = getMolFrags(mol, frags);
       for (unsigned int fi = 0; fi < nfrags; fi++) { // loop over the fragments in a molecule
+        VECT_INT_VECT fragRes;
         curFrag = frags[fi];
     
         // the following is the list of atoms that are useful in the next round of trimming
@@ -714,7 +715,7 @@ namespace RDKit {
           
           if (d2nodes.size() > 0) { // deal with the current degree two nodes
             // place to record any duplicate rings discovered from the current d2 nodes
-            FindRings::findRingsD2nodes(mol, res, invars, d2nodes, atomDegrees, activeBonds);
+            FindRings::findRingsD2nodes(mol, fragRes, invars, d2nodes, atomDegrees, activeBonds);
 
             INT_VECT_CI d2i;
             // trim after we have dealt with all the current d2 nodes, 
@@ -740,30 +741,44 @@ namespace RDKit {
             if (cand == -1) {
               break;
             }
-            FindRings::findRingsD3Node(mol, res, invars, cand, atomDegrees, activeBonds);
+            FindRings::findRingsD3Node(mol, fragRes, invars, cand, atomDegrees, activeBonds);
             doneAts.set(cand);
             ++nAtomsDone;
             FindRings::trimBonds(cand, mol, changed, atomDegrees, activeBonds); 
           } // done with degree 3 node
         } // done finding rings in this fragement
+
+        // calculate the Frere-Jacque number for the fragment:
+        int nbnds=0;
+        for(ROMol::ConstBondIterator bndIt=mol.beginBonds();
+            bndIt!=mol.endBonds();++bndIt){
+          if(std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getBeginAtomIdx())!=curFrag.end() &&
+             std::find(curFrag.begin(),curFrag.end(),(*bndIt)->getEndAtomIdx())!=curFrag.end()) {
+            ++nbnds;
+          }
+        }
+        int nexpt = (nbnds - curFrag.size()+1);
+        int ssiz = fragRes.size();
+
+        // first check that we got at least the number of expected rings
+        if(ssiz<nexpt){
+          throw ValueErrorException("could not find number of expected rings.");
+        }
+        // if we have more than expected we need to do some cleanup
+        // otherwise do som clean up work
+        if (ssiz > nexpt) {
+          FindRings::removeExtraRings(fragRes, nexpt, mol);
+        }
+
+
+        res.reserve(res.size()+fragRes.size());
+        for(VECT_INT_VECT::const_iterator iter=fragRes.begin();
+            iter!=fragRes.end();++iter){
+          res.push_back(*iter);
+        }
       } // done with all fragments
   
-      // calculate the Frere-Jacque number
-      int nexpt = (nbnds - nats + nfrags);
-      int ssiz = res.size();
-
-      // first check that we got at least the number of expected rings
-      if(ssiz<nexpt){
-        throw ValueErrorException("could not find number of expected rings.");
-      }
-      // if we have more than expected we need to do some cleanup
-      // otherwise do som clean up work
-      if (ssiz > nexpt) {
-        FindRings::removeExtraRings(res, nexpt, mol);
-      }
-
       FindRings::storeRingsInfo(mol,res);
-
 
       // update the ring memberships of atoms and bonds in the molecule:
       // store the SSSR rings on the the molecule as a property

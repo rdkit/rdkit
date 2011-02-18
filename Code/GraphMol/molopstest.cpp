@@ -3258,6 +3258,22 @@ void testSFNetIssue2952255() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFNetIssue3185548() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 3185548 : problems with SSSR code" << std::endl;
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    BOOST_LOG(rdInfoLog) << "  Starting file read" << std::endl;
+    RWMol *m = MolFileToMol(pathName+"Issue3185548.mol");
+    BOOST_LOG(rdInfoLog) << "  finished" << std::endl;
+    TEST_ASSERT(m);
+  }
+
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 
 int main(){
@@ -3308,8 +3324,9 @@ int main(){
   testSFNetIssue2316677();
   testSanitizeNonringAromatics();  
   testSFNetIssue2951221();
-#endif
   testSFNetIssue2952255();
+#endif
+  testSFNetIssue3185548();
 
   return 0;
 }
