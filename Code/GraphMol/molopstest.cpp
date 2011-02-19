@@ -3264,10 +3264,28 @@ void testSFNetIssue3185548() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    BOOST_LOG(rdInfoLog) << "  Starting file read" << std::endl;
+    BOOST_LOG(rdInfoLog) << "  Starting file read 1" << std::endl;
     RWMol *m = MolFileToMol(pathName+"Issue3185548.mol");
     BOOST_LOG(rdInfoLog) << "  finished" << std::endl;
     TEST_ASSERT(m);
+  }
+
+  
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    BOOST_LOG(rdInfoLog) << "  Starting file read 2" << std::endl;
+    RWMol *m = MolFileToMol(pathName+"Issue3185548.2.mol");
+    BOOST_LOG(rdInfoLog) << "  finished" << std::endl;
+    TEST_ASSERT(m);
+
+    m->getRingInfo()->reset();
+    unsigned int nsssr;
+    VECT_INT_VECT sssrs;
+    nsssr=MolOps::findSSSR(*m,sssrs);
+    TEST_ASSERT(nsssr=48);
+    nsssr=MolOps::symmetrizeSSSR(*m,sssrs);
+    TEST_ASSERT(nsssr=56);    
   }
 
   

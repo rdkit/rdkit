@@ -190,69 +190,56 @@ namespace FindRings {
   }
 
   void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt, const ROMol &mol) {
-    // convert each ring in res from a list of atom ids to list of bonds id
-
     // sort on size
     std::sort(res.begin(), res.end(), compRingSize);
 
     // change the rings from atom IDs to bondIds
     VECT_INT_VECT brings;
     RingUtils::convertToBonds(res, brings, mol);
+    std::vector< boost::dynamic_bitset<> > bitBrings;
+    bitBrings.reserve(brings.size());
+    for(VECT_INT_VECT_CI vivi=brings.begin();vivi!=brings.end();++vivi){
+      boost::dynamic_bitset<> lring(mol.getNumBonds());
+      for(INT_VECT_CI ivi=vivi->begin();ivi!=vivi->end();++ivi){
+        lring.set(*ivi);
+      }
+      bitBrings.push_back(lring);
+    }
 
     unsigned int tot = res.size();
+    boost::dynamic_bitset<> availRings(res.size());
+    availRings.set();
+    boost::dynamic_bitset<> keepRings(res.size());
 
-    // the algorithm here is quite straightforward
-    // - take the union of bonds from all the rings
-    // - since we know how many SSSRs to expect, take the union of 
-    //   subsets of expected size.
-    // - if the union of bonds from the subset of rings give the entire union we
-    //   have the SSSR set
-  
-    // find the overall union
-    boost::dynamic_bitset<> munion(mol.getNumBonds());
-    for (VECT_INT_VECT_I ri = brings.begin(); ri != brings.end(); ++ri) {
-      for (INT_VECT_CI mi = ri->begin(); mi != ri->end(); ++mi) {
-        munion[*mi]=1;
-      }
-    }
-
-    INT_VECT comb(nexpt);
-    for (unsigned int i = 0; i < nexpt; i++) {
-      comb[i]=i;
-    }
-
-    bool found = false;
-    int pos;
-    while (!found) {
-      boost::dynamic_bitset<> cunion(mol.getNumBonds());
-      found = true;
-      for (unsigned int i = 0; i < nexpt; ++i) {
-        INT_VECT bring = brings[comb[i]];
-        for (unsigned int j = 0; j < bring.size(); ++j) {
-          cunion[bring[j]]=1;
+    for(unsigned int i=0;i<res.size();++i){
+      if(!availRings[i]) continue;
+      keepRings.set(i);
+      boost::dynamic_bitset<> munion(mol.getNumBonds());
+      munion = bitBrings[i];
+      for(unsigned int j=i+1;j<res.size();++j){
+        if(!availRings[j]) continue;
+        if(bitBrings[j].is_subset_of(munion)){
+          availRings.set(j,0);
+        } else {
+          keepRings.set(j);
+          availRings.set(j,0);
+          munion |= bitBrings[j];
         }
       }
-      if (cunion.count() < munion.count()) {
-        pos = nextCombination(comb, tot);
-        CHECK_INVARIANT(pos >= 0,""); // we couldn't have run through all the combinations without removing any rings
-        found = false;
-      }
     }
-
     // remove the extra rings from res and store them on the molecule in case we wish 
     // symmetrize the SSSRs later
     VECT_INT_VECT extras;
     VECT_INT_VECT temp = res;
     res.resize(0);
     for (unsigned int i = 0; i < temp.size(); i++) {
-      if (std::find(comb.begin(), comb.end(), static_cast<int>(i)) != comb.end()) {
+      if(keepRings[i]){
         res.push_back(temp[i]);
       } else {
         extras.push_back(temp[i]);
       }
     }
-    // store the extra rings on teh molecule for later use like
-    // symmetrizing the SSSRs
+  
     mol.setProp("extraRings", extras, true);
   }
 
