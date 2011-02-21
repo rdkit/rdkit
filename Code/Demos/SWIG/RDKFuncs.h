@@ -194,11 +194,20 @@ unsigned int compute3DCoords(RDKit::ROMol &mol,int seed=23,
   return static_cast<unsigned int>(res);
 }
 
-std::vector<int> MolToDrawing(const RDKit::ROMol &mol){
-  RDKit::RWMol cp(mol);
-  RDKit::MolOps::Kekulize(cp);
-  if(!mol.getNumConformers()) RDDepict::compute2DCoords(cp);
-  std::vector<int> drawing=RDKit::Drawing::DrawMol(cp);
+std::vector<int> MolToDrawing(const RDKit::ROMol &mol,
+                              const std::vector<int> *highlightAtoms){
+  RDKit::RWMol *cp = new RDKit::RWMol(mol);
+  try{
+    RDKit::MolOps::Kekulize(*cp);
+  } catch (...) {
+    delete cp;
+    cp = new RDKit::RWMol(mol);
+  }
+  if(!mol.getNumConformers()) {
+      RDDepict::compute2DCoords(*cp);
+  }
+  std::vector<int> drawing=RDKit::Drawing::DrawMol(*cp,-1,highlightAtoms);
+  delete cp;
   return drawing;
 }
 
@@ -221,7 +230,13 @@ namespace {
   }
   void drawLine(std::vector<int>::const_iterator &pos,std::ostringstream &sstr){
     int width=*pos++;
+    width*=4;
+
     int dashed=*pos++;
+    std::string dashString="";
+    if(dashed){
+      dashString=";stroke-dasharray:6, 6";
+    }
     int an1=*pos++;
     int an2=*pos++;
     std::string c1=getColor(an1);
@@ -230,7 +245,7 @@ namespace {
       sstr<<"<svg:path ";
       sstr<<"d='M "<<*pos<<","<<*(pos+1)<<" "<<*(pos+2)<<","<<*(pos+3)<<"' ";
       pos+=4;
-      sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c1<<";stroke-width:4px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1'";
+      sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c1<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
       sstr<<" />\n";
     } else {
       int xp1 = *pos++;
@@ -241,11 +256,11 @@ namespace {
       int my = yp1+(yp2-yp1)/2;
       sstr<<"<svg:path ";
       sstr<<"d='M "<<xp1<<","<<yp1<<" "<<mx<<","<<my<<"' ";
-      sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c1<<";stroke-width:4px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1'";
+      sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c1<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
       sstr<<" />\n";
       sstr<<"<svg:path ";
       sstr<<"d='M "<<mx<<","<<my<<" "<<xp2<<","<<yp2<<"' ";
-      sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c2<<";stroke-width:4px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1'";
+      sstr<<"style='fill:none;fill-rule:evenodd;stroke:"<<c2<<";stroke-width:"<<width<<"px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"<<dashString<<"'";
       sstr<<" />\n";
     }
   }
@@ -309,11 +324,18 @@ namespace {
     }
 
     sstr<<"</svg:g></svg:svg>";
+    //std::cerr<<"\n\n"<<sstr.str()<<"\n\n"<<std::endl;
     return sstr.str();
   }
 }
 std::string MolToSVG(const RDKit::ROMol &mol){
-  std::vector<int> drawing=MolToDrawing(mol);
+  std::vector<int> drawing=MolToDrawing(mol,0);
+  std::string svg=ToSVG(drawing);
+  return svg;
+}
+std::string MolToSVG(const RDKit::ROMol &mol,
+                     const std::vector<int> &highlightAtoms){
+  std::vector<int> drawing=MolToDrawing(mol,&highlightAtoms);
   std::string svg=ToSVG(drawing);
   return svg;
 }

@@ -5,12 +5,14 @@
 //
 %include "std_string.i"
 %include "std_vector.i"
+%include "std_list.i"
 %include "std_map.i"
 %include "std_pair.i"
 %include "boost_shared_ptr.i"
 
 %{
 #include <vector>
+#include <list>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemReactions/Reaction.h>
@@ -51,6 +53,7 @@
 %apply unsigned long long { boost::uint64_t };
 
 %shared_ptr(RDKit::ROMol)
+%shared_ptr(RDKit::RWMol)
 %shared_ptr(RDKit::Atom)
 %shared_ptr(RDKit::Bond)
 #if SWIGCSHARP
@@ -60,8 +63,14 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Int_Vect, std::vector<int>)
 SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Int_Pair, std::pair<int,int> );
 SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >);
 #endif
+
+typedef std::vector<int> INT_VECT;
+typedef std::vector<std::vector<int> > INT_VECT;
+typedef std::list<int > INT_LIST;
+
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
 %template(Int_Vect) std::vector<int>;
+%rename(equals) std::vector<int>::operator==;
 %template(Int_Pair) std::pair<int, int >;
 %template(Match_Vect) std::vector<std::pair<int,int> >;
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
@@ -132,6 +141,22 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(Match_Vect, std::vector< std::pair<int,int> >
   };
 
 }
+
+%{
+#include <GraphMol/RWMol.h>
+%}
+%ignore insertMol;
+%ignore addAtom;
+%ignore removeAtom;
+%ignore addBond;
+%ignore removeBond;
+%ignore createPartialBond;
+%ignore finishPartialBond;
+%ignore replaceAtom;
+%ignore getLastAtom;
+%ignore getActiveAtom;
+%include <GraphMol/RWMol.h>
+
 
 %ignore copy;
 %ignore setOwningMol;
@@ -271,3 +296,47 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
     return mr;
   }
 }
+
+%{
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
+%}
+%newobject deleteSubstructs;
+%newobject replaceSidechains;
+%newobject replaceCore;
+%newobject MurckoDecompose;
+%include <GraphMol/ChemTransforms/ChemTransforms.h>
+
+%{
+#include <GraphMol/MolOps.h>
+#include <RDGeneral/types.h>
+%}
+
+%include <RDGeneral/types.h>
+%include <GraphMol/MolOps.h>
+
+
+typedef std::vector<int> PATH_TYPE;
+typedef std::list<std::vector<int> > PATH_LIST;
+%template(Int_Vect_List) std::list<std::vector<int> >;
+%template(Int_Int_Vect_List_Map) std::map<int,std::list<std::vector<int> > >;
+
+%{
+#include <GraphMol/Subgraphs/Subgraphs.h>
+#include <GraphMol/Subgraphs/SubgraphUtils.h>
+%}
+%include <GraphMol/Subgraphs/Subgraphs.h>
+%inline %{
+  std::vector<int> calcPathDiscriminators(RDKit::ROMol &mol,RDKit::PATH_TYPE &path){
+    std::vector<int> res(3);
+    RDKit::Subgraphs::DiscrimTuple tpl=RDKit::Subgraphs::calcPathDiscriminators(mol,path);
+    res[0]=boost::get<0>(tpl);
+    res[1]=boost::get<1>(tpl);
+    res[2]=boost::get<2>(tpl);
+    return res;
+  }
+%}
+
+%ignore calcPathDiscriminators;
+%newobject pathToSubmol;
+%include <GraphMol/Subgraphs/SubgraphUtils.h>
+
