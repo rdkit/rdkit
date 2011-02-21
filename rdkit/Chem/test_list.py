@@ -34,6 +34,7 @@ tests=[
   ("python","test_list.py",{'dir':'Pharm3D'}),
   #("python","test_list.py",{'dir':'Subshape'}),
   ("python","test_list.py",{'dir':'Suppliers'}),
+  ("python","test_list.py",{'dir':'Scaffolds'}),
   ]
 
 

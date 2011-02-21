@@ -1,0 +1,130 @@
+# $Id: MurckoScaffold.py 3672 2010-06-14 17:10:00Z landrgr1 $
+#
+# Created by Peter Gedeck, September 2008
+#
+"""
+  Generation of Murcko scaffolds from a molecule
+"""
+
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
+murckoTransforms=[AllChem.ReactionFromSmarts('[*:1]-[!#1;D1]>>[*:1][H]'),
+                  AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]#[AD1]>>[*:1][H]'),
+                  AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]=[AD1]>>[*:1][H]'),
+                  AllChem.ReactionFromSmarts('[*:1]-[!#1;D3](=[AD1])=[AD1]>>[*:1][H]')]
+
+
+def MakeScaffoldGeneric(mol):
+  """ Makes a Murcko scaffold generic (i.e. all atom types->C and all bonds ->single
+
+  >>> Chem.MolToSmiles(MakeScaffoldGeneric(Chem.MolFromSmiles('c1ccccc1')))
+  'C1CCCCC1'
+  >>> Chem.MolToSmiles(MakeScaffoldGeneric(Chem.MolFromSmiles('c1ncccc1')))
+  'C1CCCCC1'
+
+  """
+  res = Chem.Mol(mol.ToBinary())
+  for atom in res.GetAtoms():
+    if atom.GetAtomicNum()!=1:
+      atom.SetAtomicNum(6)
+    atom.SetIsAromatic(False)
+  for bond in res.GetBonds():
+    bond.SetBondType(Chem.BondType.SINGLE)
+    bond.SetIsAromatic(False)
+  return Chem.RemoveHs(res)
+    
+
+murckoPatts = ['[!#1;D3;$([D3]-[!#1])](=[AD1])=[AD1]',
+         '[!#1;D2;$([D2]-[!#1])]=,#[AD1]',
+         '[!#1;D1;$([D1]-[!#1;!n])]']
+murckoQ = '['+','.join(['$(%s)'%x for x in murckoPatts])+']'
+murckoQ = Chem.MolFromSmarts(murckoQ)
+murckoPatts = [Chem.MolFromSmarts(x) for x in murckoPatts]
+aromaticNTransform = AllChem.ReactionFromSmarts('[n:1]-[D1]>>[nH:1]')
+def GetScaffoldForMol(mol):
+  """ Return molecule object containing scaffold of mol
+
+  >>> m = Chem.MolFromSmiles('Cc1ccccc1')
+  >>> GetScaffoldForMol(m)
+  <rdkit.Chem.rdchem.Mol object at 0x...>
+  >>> Chem.MolToSmiles(GetScaffoldForMol(m))
+  'c1ccccc1'
+
+  >>> m = Chem.MolFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')
+  >>> Chem.MolToSmiles(GetScaffoldForMol(m))
+  'c1ccc(Oc2ncccc2)cc1'
+
+  """
+  if 1:
+    res=Chem.MurckoDecompose(mol)
+    res.ClearComputedProps()
+    res.UpdatePropertyCache()
+    Chem.GetSymmSSSR(res)
+  else:
+    res=_pyGetScaffoldForMol(mol)
+  return res
+
+def _pyGetScaffoldForMol(mol):  
+  while mol.HasSubstructMatch(murckoQ):
+    for patt in murckoPatts:
+      mol = Chem.DeleteSubstructs(mol,patt)
+  for atom in mol.GetAtoms():
+    if atom.GetAtomicNum()==6 and atom.GetNoImplicit() and atom.GetExplicitValence()<4:
+      atom.SetNoImplicit(False)
+  h = Chem.MolFromSmiles('[H]')
+  mol = Chem.ReplaceSubstructs(mol,Chem.MolFromSmarts('[D1;$([D1]-n)]'),h,True)[0];
+  mol=Chem.RemoveHs(mol)
+  #while 1:
+  #  ps = aromaticNTransform.RunReactants([mol])
+  #  if ps: 
+  #    mol = ps[0][0]
+  #  else:
+  #    break
+  return mol 
+
+def MurckoScaffoldSmilesFromSmiles(smiles,includeChirality=False):
+  """ Returns MurckScaffold Smiles from smiles 
+
+  >>> MurckoScaffoldSmilesFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')
+  'c1ccc(Oc2ncccc2)cc1'
+
+  """
+  mol = Chem.MolFromSmiles(smiles)
+  scaffold = GetScaffoldForMol(mol)
+  if not scaffold: return None
+  return Chem.MolToSmiles(scaffold,includeChirality)
+  
+def MurckoScaffoldSmiles(smiles=None, mol=None, includeChirality=False):
+  """ Returns MurckScaffold Smiles from smiles
+
+  >>> MurckoScaffoldSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')
+  'c1ccc(Oc2ncccc2)cc1'
+
+  >>> MurckoScaffoldSmiles(mol=Chem.MolFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'))
+  'c1ccc(Oc2ncccc2)cc1'
+
+  """
+  if smiles:
+    mol = Chem.MolFromSmiles(smiles)
+  else:
+    mol = mol
+  if mol is None:
+    raise ValueError,'No molecule provided'
+  scaffold = GetScaffoldForMol(mol)
+  if not scaffold: return None
+  return Chem.MolToSmiles(scaffold,includeChirality)
+
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+  import doctest,sys
+  return doctest.testmod(sys.modules["__main__"],optionflags=doctest.ELLIPSIS)
+
+if __name__ == '__main__':
+  import sys
+  failed,tried = _test()
+  sys.exit(failed)
+  

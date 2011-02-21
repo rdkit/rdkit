@@ -275,7 +275,6 @@ namespace RDKit{
     return result;
   }
 
-
   struct molops_wrapper {
     static void wrap() {
       std::string docString;
@@ -418,6 +417,12 @@ namespace RDKit{
                    python::arg("onlyFrags")=false),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
+      docString="Do a Murcko decomposition and return the scaffold";
+      python::def("MurckoDecompose", MurckoDecompose,
+                  (python::arg("mol")),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());                  
+
 
       // ------------------------------------------------------------------------
       docString="Replaces atoms matching a substructure query in a molecule\n\
@@ -1042,7 +1047,6 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("query"),
                    python::arg("atomIdx"),python::arg("preserveExistingQuery")=true),
                   docString.c_str());
-
 
 
     };

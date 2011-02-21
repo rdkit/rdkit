@@ -104,7 +104,9 @@ namespace RDKit{
                      bool replaceDummies=true,bool labelByIndex=false);
         
 
+  ROMol *MurckoDecompose(const ROMol &mol);
 
+  
 }
 
 #endif

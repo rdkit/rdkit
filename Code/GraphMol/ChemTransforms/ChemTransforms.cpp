@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2006-2008 Greg Landrum
+//  Copyright (C) 2006-2010 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -376,5 +376,77 @@ namespace RDKit{
     
   }
 
+  ROMol *MurckoDecompose(const ROMol &mol){
+    RWMol *res=new RWMol(mol);
+    int nAtoms=res->getNumAtoms();
+    if(nAtoms==0) return res;
 
+    // start by getting the shortest paths matrix:
+    double *dmat=MolOps::getDistanceMat(mol,false,false,true);
+    boost::shared_array<int> pathMat;
+    mol.getProp("DistanceMatrix_Paths",pathMat);
+
+    boost::dynamic_bitset<> keepAtoms(nAtoms);
+    const RingInfo *ringInfo=res->getRingInfo();
+    for(unsigned int i=0;i<nAtoms;++i){
+      if(ringInfo->numAtomRings(i)) keepAtoms[i]=1;
+    }
+    const VECT_INT_VECT &rings=ringInfo->atomRings();
+    //std::cerr<<"  rings: "<<rings.size()<<std::endl;
+    // now find the shortest paths between each ring system and mark the atoms
+    // along each as being keepers:
+    for(VECT_INT_VECT::const_iterator ringsItI=rings.begin();
+        ringsItI!=rings.end();++ringsItI){
+      for(VECT_INT_VECT::const_iterator ringsItJ=ringsItI+1;
+          ringsItJ!=rings.end();++ringsItJ){
+        int atomI=(*ringsItI)[0];
+        int atomJ=(*ringsItJ)[0];
+        //std::cerr<<atomI<<" -> "<<atomJ<<": ";
+        while(atomI!=atomJ){
+          keepAtoms[atomI]=1;
+          atomI = pathMat[atomJ*nAtoms+atomI];
+          //std::cerr<<atomI<<" ";
+        }
+        //std::cerr<<std::endl;
+      }
+    }
+
+    std::vector<Atom *> atomsToRemove;
+    for(unsigned int i=0;i<nAtoms;++i){
+      if(!keepAtoms[i]){
+        Atom *atom=res->getAtomWithIdx(i);
+        bool removeIt=true;
+
+        // check if the atom has a neighboring keeper:
+        ROMol::ADJ_ITER nbrIdx,endNbrs;
+        boost::tie(nbrIdx,endNbrs) = res->getAtomNeighbors(atom);
+        while(nbrIdx!=endNbrs){
+          const ATOM_SPTR nbr=(*res)[*nbrIdx];
+          if(keepAtoms[nbr->getIdx()]){
+            if(res->getBondBetweenAtoms(atom->getIdx(),nbr->getIdx())->getBondType()==Bond::DOUBLE){
+              removeIt=false;
+              break;
+            } else if(nbr->getIsAromatic() && nbr->getAtomicNum()==7 ){
+              // fix aromatic nitrogens:
+              nbr->setNumExplicitHs(1);
+            } else if(nbr->getNoImplicit() || nbr->getChiralTag()!=Atom::CHI_UNSPECIFIED){
+              nbr->setNoImplicit(false);
+              nbr->setNumExplicitHs(0);
+              nbr->setChiralTag(Atom::CHI_UNSPECIFIED);
+            }
+          }
+          ++nbrIdx;
+        }
+        
+        if(removeIt) atomsToRemove.push_back(atom);
+      }
+    }
+
+    for(std::vector<Atom *>::const_iterator atomIt=atomsToRemove.begin();
+        atomIt!=atomsToRemove.end();++atomIt){
+      res->removeAtom(*atomIt);
+    }
+    
+    return (ROMol *)res;
+  }
 }  // end of namespace RDKit

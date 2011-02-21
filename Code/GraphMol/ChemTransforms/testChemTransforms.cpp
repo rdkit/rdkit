@@ -630,8 +630,69 @@ void testReplaceCoreCrash()
   smi = MolToSmiles(*mol2,true);
   // there's no way to guarantee the order here:
   TEST_ASSERT(smi=="[1*]CC.[2*]CC"||smi=="[2*]CC.[1*]CC");
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 
 }
+
+
+void testMurckoDecomp() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing murcko decomposition" << std::endl;
+
+
+  const char *testMolecules[][2]=
+    {
+      {"C1CC1CCC1CC(C)C1", "C1CC1CCC1CCC1"},
+      {"CC1CCC1", "C1CCC1"},
+      {"NCNCC2CC2C1CC1O", "C1CC1C1CC1"},
+      {"OC2C(C)C21C(N)C1C", "C2CC12CC1"}, // Spiro
+      {"C1CC1C(=O)OC", "C1CC1"},          // Carbonyl outside scaffold
+      {"C1CC1C=C", "C1CC1"},              // Double bond outside scaffold
+      {"C1CC1C=CC1CC1C=CNNCO", "C1CC1C=CC1CC1"},              // Double bond in scaffold
+      {"CC1CC1C(N)C1C(N)C1", "C1CC1CC1CC1"},
+      {"C1CC1S(=O)C1CC1C=CNNCO", "C1CC1S(=O)C1CC1"}, // S=O group in scaffold
+      {"O=SCNC1CC1S(=O)C1CC1C=CNNCO", "C1CC1S(=O)C1CC1"}, // S=O group outside scaffold
+      {"C1CC1S(=O)(=O)C1CC1C=CNNCO", "C1CC1S(=O)(=O)C1CC1"}, // SO2 group in scaffold
+      {"O=S(CNCNC)(=O)CNC1CC1S(=O)(=O)C1CC1C=CNNCO", "C1CC1S(=O)(=O)C1CC1"}, // SO2 group outside scaffold
+      {"C1CC1C=NO","C1CC1"}, //Hydroxamide
+      {"C1CC1C(C(C)C)=NC1CC1","C1CC1C=NC1CC1"}, //Hydroxamide
+      {"C1CC1C#N","C1CC1"}, //Cyano group
+      {"C1CC1C#CNC","C1CC1"}, //Acetylene group
+      {"O=C1N(C)C(=O)N1C#CNC","O=C1NC(=O)N1"}, //Acetylene group
+      {"[O-][N+](=O)c1cc(ccc1Cl)NS(=O)(=O)Cc2ccccc2","c1ccccc1NS(=O)(=O)Cc2ccccc2"},
+      {"Cn1cccc1", "c1ccc[nH]1"},
+      {"C1CC1[CH](C)C1CC1", "C1CC1CC1CC1"},
+      {"CC(C)c1c(Cl)cc(F)c(Nc2ccc(C)cc2CC(=O)O)c1F","c1ccc(Nc2ccccc2)cc1"},
+      {"C1CC1C[C@](Cl)(F)C1CCC1","C1CC1CCC1CCC1"},
+      {"EOS","EOS"}
+    };
+  unsigned int i=0;
+  while(1){
+    std::string smi=testMolecules[i][0];
+    std::string tgt=testMolecules[i][1];
+    ++i;
+    if(smi=="EOS") break;
+    ROMol *mol=SmilesToMol(smi);
+    ROMol *nMol=MurckoDecompose(*mol);
+    MolOps::sanitizeMol(static_cast<RWMol &>(*nMol));
+    TEST_ASSERT(nMol);
+    TEST_ASSERT(nMol->getNumAtoms());
+    delete mol;
+    smi = MolToSmiles(*nMol,true);
+    mol = SmilesToMol(tgt);
+    TEST_ASSERT(mol);
+    tgt=MolToSmiles(*mol,true);
+    delete mol;
+    std::cerr<<smi<<" "<<tgt<<std::endl;
+    TEST_ASSERT(smi==tgt);
+    delete nMol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -647,6 +708,8 @@ int main() {
   testReplaceCore();
   testReplaceCoreLabels();
   testReplaceCoreCrash();
+
+  testMurckoDecomp();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
