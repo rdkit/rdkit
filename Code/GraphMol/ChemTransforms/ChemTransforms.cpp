@@ -18,7 +18,28 @@
 #include <algorithm>
 
 namespace RDKit{
+  namespace {
+    void updateSubMolConfs(const ROMol &mol,RWMol &res,
+                           boost::dynamic_bitset<> &removedAtoms){
+      // update conformer information:
+      res.clearConformers();
+      for(ROMol::ConstConformerIterator citer=mol.beginConformers();
+          citer!=mol.endConformers();++citer){
+        Conformer *newConf=new Conformer(res.getNumAtoms());
+        newConf->setId((*citer)->getId());
+        int aIdx=0;
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          if(!removedAtoms[i]){
+            newConf->setAtomPos(aIdx,(*citer)->getAtomPos(i));
+            ++aIdx;
+          }
+        }
+        res.addConformer(newConf,false);
+      }
+    }
 
+  }
+  
   ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
                           bool onlyFrags) {
     RWMol *res = static_cast<RWMol*>(new ROMol(mol,false));
@@ -83,12 +104,16 @@ namespace RDKit{
     // the atom indices only atoms with indices >i )
     std::sort(delList.begin(), delList.end());
 
-    INT_VECT_RI dri;
-    for (dri = delList.rbegin(); dri != delList.rend(); dri++) {
+    boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
+    for (INT_VECT_RI dri = delList.rbegin(); dri != delList.rend(); dri++) {
+      removedAtoms.set(*dri);
       res->removeAtom(*dri);
     }
     // if we removed any atoms, clear the computed properties:
     if(delList.size()){
+
+      updateSubMolConfs(mol,*res,removedAtoms);
+
       res->clearComputedProps(true);
       // update our properties, but allow unhappiness:
       res->updatePropertyCache(false);
@@ -177,10 +202,11 @@ namespace RDKit{
       }
     }
 
-    // clear computed props and do basic updates on the
-    // the resulting molecules, but allow unhappiness:
+    // clear conformers and computed props and do basic updates 
+    // on the the resulting molecules, but allow unhappiness:
     for(std::vector<ROMOL_SPTR>::iterator resI=res.begin();
         resI!=res.end();resI++){
+      (*resI)->clearConformers();
       (*resI)->clearComputedProps(true);
       (*resI)->updatePropertyCache(false);
     }
@@ -232,16 +258,20 @@ namespace RDKit{
       }
     }
     std::vector<Atom *> delList;
+    boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
     for(RWMol::AtomIterator atIt=newMol->beginAtoms();atIt!=newMol->endAtoms();atIt++){
       Atom *tmp=*atIt;
       if(std::find(keepList.begin(),keepList.end(),tmp)==keepList.end()){
         delList.push_back(tmp);
+        removedAtoms.set(tmp->getIdx());
       } 
     }    
     for(std::vector<Atom *>::const_iterator delIt=delList.begin();delIt!=delList.end();delIt++){
       newMol->removeAtom(*delIt);
     }
 
+    updateSubMolConfs(mol,*newMol,removedAtoms);
+    
     // clear computed props and do basic updates on the
     // the resulting molecule, but allow unhappiness:
     newMol->clearComputedProps(true);
@@ -356,16 +386,20 @@ namespace RDKit{
       }
     }
     std::vector<Atom *> delList;
+    boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
     for(RWMol::AtomIterator atIt=newMol->beginAtoms();atIt!=newMol->endAtoms();atIt++){
       Atom *tmp=*atIt;
       if(std::find(keepList.begin(),keepList.end(),tmp)==keepList.end()){
         delList.push_back(tmp);
+        removedAtoms.set(tmp->getIdx());
       } 
     }    
     for(std::vector<Atom *>::const_iterator delIt=delList.begin();delIt!=delList.end();delIt++){
       newMol->removeAtom(*delIt);
     }
 
+    updateSubMolConfs(mol,*newMol,removedAtoms);
+    
     // clear computed props and do basic updates on
     // the resulting molecule, but allow unhappiness:
     newMol->clearComputedProps(true);
@@ -411,6 +445,7 @@ namespace RDKit{
       }
     }
 
+    boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
     std::vector<Atom *> atomsToRemove;
     for(unsigned int i=0;i<nAtoms;++i){
       if(!keepAtoms[i]){
@@ -438,7 +473,10 @@ namespace RDKit{
           ++nbrIdx;
         }
         
-        if(removeIt) atomsToRemove.push_back(atom);
+        if(removeIt){
+          atomsToRemove.push_back(atom);
+          removedAtoms.set(atom->getIdx());
+        }
       }
     }
 
@@ -446,7 +484,8 @@ namespace RDKit{
         atomIt!=atomsToRemove.end();++atomIt){
       res->removeAtom(*atomIt);
     }
-    
+
+    updateSubMolConfs(mol,*res,removedAtoms);
     return (ROMol *)res;
   }
 }  // end of namespace RDKit
