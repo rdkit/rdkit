@@ -57,7 +57,7 @@ namespace RDKit{
       \return the number of fragments found.	 
       
     */
-    unsigned int getMolFrags(const ROMol &mol,INT_VECT &mapping);
+    unsigned int getMolFrags(const ROMol &mol,std::vector<int> &mapping);
     //! find fragments (disconnected components of the molecular graph)
     /*!
 
@@ -69,7 +69,7 @@ namespace RDKit{
       \return the number of fragments found.	 
       
     */
-    unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags);
+    unsigned int getMolFrags(const ROMol &mol, std::vector<std::vector<int> > &frags);
 
     //! splits a molecule into its component fragments
     //  (disconnected components of the molecular graph)
@@ -87,7 +87,7 @@ namespace RDKit{
     */
     std::vector<boost::shared_ptr<ROMol> > getMolFrags(const ROMol &mol,
                                                        bool sanitizeFrags=true,
-                                                       INT_VECT *frags=0);
+                                                       std::vector<int> *frags=0);
 
 #if 0
     //! finds a molecule's minimium spanning tree (MST)
@@ -95,7 +95,7 @@ namespace RDKit{
       \param mol  the molecule of interest
       \param mst  used to return the MST as a vector of bond indices
     */
-    void findSpanningTree(const ROMol &mol,INT_VECT &mst);
+    void findSpanningTree(const ROMol &mol,std::vector<int> &mst);
 #endif
 
     //! calculates Balaban's J index for the molecule
@@ -347,9 +347,9 @@ namespace RDKit{
         - Since SSSR may not be unique, a post-SSSR step to symmetrize may be done.
           The extra rings this process adds can be quite useful.
     */
-    int findSSSR(const ROMol &mol, VECT_INT_VECT &res);
+    int findSSSR(const ROMol &mol, std::vector<std::vector<int> > &res);
     //! \overload
-    int findSSSR(const ROMol &mol, VECT_INT_VECT *res=0);
+    int findSSSR(const ROMol &mol, std::vector<std::vector<int> > *res=0);
 
     //! symmetrize the molecule's Smallest Set of Smallest Rings
     /*!
@@ -373,7 +373,7 @@ namespace RDKit{
       <b>Notes:</b>
        - if no SSSR rings are found on the molecule - MolOps::findSSSR() is called first
     */
-    int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res);
+    int symmetrizeSSSR(ROMol &mol, std::vector<std::vector<int> > &res);
     //! \overload
     int symmetrizeSSSR(ROMol &mol);
 
@@ -477,7 +477,7 @@ namespace RDKit{
        - if no path is found, an empty path is returned
 
     */
-    INT_LIST getShortestPath(const ROMol &mol, int aid1, int aid2);
+    std::list<int> getShortestPath(const ROMol &mol, int aid1, int aid2);
 
     //@}
     
@@ -503,8 +503,8 @@ namespace RDKit{
 	        individual atoms will be tracked.  The \c rankHistory pointer should be
 	        to a VECT_INT_VECT that has at least \c mol.getNumAtoms() elements.
     */
-    void rankAtoms(const ROMol &mol,INT_VECT &ranks,
-                   bool breakTies=true,VECT_INT_VECT *rankHistory=0);
+    void rankAtoms(const ROMol &mol,std::vector<int> &ranks,
+                   bool breakTies=true,std::vector<std::vector<int> > *rankHistory=0);
 
     // @}
 
@@ -533,13 +533,16 @@ namespace RDKit{
                      not have stereochemistry
       \param force   forces the calculation to be repeated even if it has 
                      already been done 
+      \param flagPossibleStereoCenters   set the _ChiralityPossible property on
+                                         atoms that are possible stereocenters
 
       <b>Notes:M</b>
         - Throughout we assume that we're working with a hydrogen-suppressed
           graph.
 
     */
-    void assignStereochemistry(ROMol &mol,bool cleanIt=false,bool force=false);
+    void assignStereochemistry(ROMol &mol,bool cleanIt=false,bool force=false,
+                               bool flagPossibleStereoCenters=false);
     //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds (i.e. Z/E)
     /*!
 

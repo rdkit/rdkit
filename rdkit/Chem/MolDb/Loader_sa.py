@@ -107,7 +107,11 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
       Compound.smiles = Column(Text,unique=True)
     if not skipProps:
       while numForPropScan>0:
-        m = sIter.next()
+        try:
+          m = sIter.next()
+        except StopIteration:
+          numForPropScan=0
+          break
         if not m: continue
         for pn in m.GetPropNames():
           if pn.lower()==nameCol.lower(): continue
@@ -153,9 +157,11 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
       except:
         session.rollback()
         for cmpd in cache:
-          if not session.query(Compound).filter(Compound.smiles==cmpd.smiles).first():
+          try:
             session.add(cmpd)
-        session.commit()
+            session.commit()
+          except:
+            session.rollback()
       cache=[]
 
 
@@ -164,9 +170,11 @@ def LoadDb(suppl,dbName,nameProp='_Name',nameCol='compound_id',silent=False,
   except:
     session.rollback()
     for cmpd in cache:
-      if not session.query(Compound).filter(Compound.smiles==cmpd.smiles).first():
+      try:
         session.add(cmpd)
-    session.commit()
+        session.commit()
+      except:
+        session.rollback()
 
 if __name__=='__main__':
   import sys

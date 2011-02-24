@@ -492,10 +492,4 @@ namespace RDKit{
 
     return res;
   } // end of MolToSmiles()
-
-  std::string GetFragmentSmiles(ROMol &mol,unsigned int rootedAtAtom,unsigned int radius,
-                                bool doIsomericSmiles){
-    
-  } // end of GetFragmentSmiles
-
 }

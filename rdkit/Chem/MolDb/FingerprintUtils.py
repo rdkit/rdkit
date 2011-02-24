@@ -80,7 +80,7 @@ def BuildTorsionsFP(mol):
   fp._sumCache = fp.GetTotalVal()
   return fp
 def BuildRDKitFP(mol):
-  fp=Chem.RDKFingerprint(mol)
+  fp=Chem.RDKFingerprint(mol,nBitsPerHash=1)
   return fp
 def BuildPharm2DFP(mol):
   global sigFactory
@@ -93,7 +93,7 @@ def BuildPharm2DFP(mol):
   return fp
 def BuildMorganFP(mol):
   from rdkit.Chem import rdMolDescriptors
-  fp = rdMolDescriptors.GetMorganFingerprint(mol,4)
+  fp = rdMolDescriptors.GetMorganFingerprint(mol,2)
   fp._sumCache = fp.GetTotalVal()
   return fp
 

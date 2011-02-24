@@ -58,19 +58,5 @@ namespace RDKit{
   std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles=false,
 			  bool doKekule=false,int rootedAtAtom=-1,
                           bool canonical=true);
-
-  //! \brief returns SMILES for a piece of a molecule
-  /*!
-    NOTE: the SMILES generated is, at the moment, not canonical
-    
-    \param mol : the molecule in question. 
-    \param rootedAtAtom : the atom at the center of the fragment
-    \param radius : number of atoms to move out from the central atom
-    \param doIsomericSmiles : include stereochemistry and isotope information
-        in the SMILES
-   */
-  std::string GetFragmentSmiles(ROMol &mol,unsigned int rootedAtAtom,unsigned int radius,
-                                bool doIsomericSmiles=false);
-
 }
 #endif

@@ -34,21 +34,20 @@ Mol.Compute2DCoords = Compute2DCoords
 Mol.ComputeGasteigerCharges = ComputeGasteigerCharges
 import numpy
 
-def TransformMol(mol,tform):
-  """  Applies the transformation to a molecule and sets it up with
-  a single conformer
+def TransformMol(mol,tform,confId=-1,keepConfs=False):
+  """  Applies the transformation (usually a 4x4 double matrix) to a molecule
+  if keepConfs is False then all but that conformer are removed
 
   """
-  newConf = Conformer()
-  newConf.SetId(0)
-  refConf = mol.GetConformer()
-  for i in range(refConf.GetNumAtoms()):
-    pos = list(refConf.GetAtomPosition(i))
-    pos.append(1.0)
-    newPos = numpy.dot(tform,numpy.array(pos))
-    newConf.SetAtomPosition(i,list(newPos)[:3])
-  mol.RemoveAllConformers()
-  mol.AddConformer(newConf)
+  refConf = mol.GetConformer(confId)
+  TransformConformer(refConf,tform)
+  if not keepConfs:
+    if confId==-1: confId=0
+    allConfIds = [c.GetId() for c in mol.GetConformers()]
+    for id in allConfIds:
+      if not id==confId: mol.RemoveConformer(id)
+    #reset the conf Id to zero since there is only one conformer left
+    mol.GetConformer(confId).SetId(0) 
 
 def ComputeMolShape(mol,confId=-1,boxDim=(20,20,20),spacing=0.5,**kwargs):
   """ returns a grid representation of the molecule's shape

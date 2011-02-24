@@ -111,7 +111,6 @@ namespace RDKit{
     }
     // if we removed any atoms, clear the computed properties:
     if(delList.size()){
-
       updateSubMolConfs(mol,*res,removedAtoms);
 
       res->clearComputedProps(true);
@@ -484,7 +483,6 @@ namespace RDKit{
         atomIt!=atomsToRemove.end();++atomIt){
       res->removeAtom(*atomIt);
     }
-
     updateSubMolConfs(mol,*res,removedAtoms);
     return (ROMol *)res;
   }

@@ -787,9 +787,12 @@ namespace RDKit{
       etc.) will have their chiral code set to CHI_UNSPECIFIED\n\
     - force: (optional) causes the calculation to be repeated, even if it has already\n\
       been done\n\
+    - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on\n\
+      atoms that are possible stereocenters\n\
 \n";
       python::def("AssignStereochemistry", MolOps::assignStereochemistry,
-                  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false),
+                  (python::arg("mol"),python::arg("cleanIt")=false,python::arg("force")=false,
+                   python::arg("flagPossibleStereoCenters")=false),
                   docString.c_str());
 
       // ------------------------------------------------------------------------

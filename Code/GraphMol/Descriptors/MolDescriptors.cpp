@@ -27,7 +27,7 @@ namespace RDKit{
 
 	// add our implicit Hs if we need to:
 	if(!onlyHeavy){
-          const PeriodicTable *table=PeriodicTable::getTable();
+      const PeriodicTable *table=PeriodicTable::getTable();
 	  res += (*atomIt)->getTotalNumHs()*table->getAtomicWeight(1);
 	}
       }

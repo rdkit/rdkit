@@ -1825,6 +1825,39 @@ void testIssue3139534(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testFindChiralAtoms(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test findChiralAtoms." << std::endl;
+
+  {
+    // by default the chirality possible flag is not assigned:
+    RWMol *m;
+    std::string smiles="F[C@H](Cl)C(Cl)(Br)C(F)(F)F";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(!(m->getAtomWithIdx(3)->hasProp("_CIPCode")));
+    TEST_ASSERT(!(m->getAtomWithIdx(6)->hasProp("_CIPCode")));
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_ChiralityPossible"));
+    TEST_ASSERT(!m->getAtomWithIdx(3)->hasProp("_ChiralityPossible"));
+    TEST_ASSERT(!(m->getAtomWithIdx(6)->hasProp("_ChiralityPossible")));
+
+    // but we can force it:
+    MolOps::assignStereochemistry(*m,true,true,true);
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    TEST_ASSERT(!(m->getAtomWithIdx(3)->hasProp("_CIPCode")));
+    TEST_ASSERT(!(m->getAtomWithIdx(6)->hasProp("_CIPCode")));
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_ChiralityPossible"));
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_ChiralityPossible"));
+    TEST_ASSERT(!(m->getAtomWithIdx(6)->hasProp("_ChiralityPossible")));
+    
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -1844,6 +1877,7 @@ int main(){
 #endif
   testIssue3009911();
   testIssue3139534();
+  testFindChiralAtoms();
   return 0;
 }
 

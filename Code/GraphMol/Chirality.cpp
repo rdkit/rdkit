@@ -449,10 +449,54 @@ namespace RDKit{
       return false;
     }
 
+    std::pair<bool,bool> isAtomPotentialChiralCenter(const Atom *atom,const ROMol &mol,const INT_VECT &ranks,
+                                     Chirality::INT_PAIR_VECT &nbrs){
+      // loop over all neighbors and form a decorated list of their
+      // ranks:
+      bool legalCenter=true;
+      bool hasDupes=false;
+
+      if(atom->getTotalDegree()>4){
+        // we only know tetrahedral chirality
+        legalCenter=false;
+      } else {
+        boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
+        ROMol::OEDGE_ITER beg,end;
+        boost::tie(beg,end) = mol.getAtomBonds(atom);
+        while(beg!=end){
+          unsigned int otherIdx=mol[*beg]->getOtherAtom(atom)->getIdx();
+          CHECK_INVARIANT(ranks[otherIdx]<static_cast<int>(mol.getNumAtoms()),
+                          "CIP rank higher than the number of atoms.");
+          // watch for neighbors with duplicate ranks, which would mean
+          // that we cannot be chiral:
+          if(codesSeen[ranks[otherIdx]]){
+            // we've already seen this code, it's a dupe
+            hasDupes = true;
+            break;
+          }
+          codesSeen[ranks[otherIdx]]=1;
+          nbrs.push_back(std::make_pair(ranks[otherIdx],
+                                        mol[*beg]->getIdx()));
+          ++beg;
+        }
+
+        // figure out if this is a legal chiral center or not:
+        if(!hasDupes){
+          if(nbrs.size()<3 ||
+             (nbrs.size()==3 && atom->getTotalNumHs()!=1 )){
+            // we only handle 3-coordinate atoms that have an implicit H
+            legalCenter=false;
+          }
+        }
+      }
+      return std::make_pair(legalCenter,hasDupes);
+    }
+    
     // returns a pair:
     //   1) are there unassigned stereoatoms
     //   2) did we assign any?
-    std::pair<bool,bool> assignAtomChiralCodes(ROMol &mol,INT_VECT &ranks){
+    std::pair<bool,bool> assignAtomChiralCodes(ROMol &mol,INT_VECT &ranks,
+                                               bool flagPossibleStereoCenters){
       PRECONDITION( (!ranks.size() || ranks.size()==mol.getNumAtoms()),
                     "bad rank vector size");
       bool atomChanged=false;
@@ -468,8 +512,8 @@ namespace RDKit{
 
         // only worry about this atom if it has a marked chirality
         // we understand:
-        if(tag != Atom::CHI_UNSPECIFIED &&
-           tag != Atom::CHI_OTHER){
+        if(flagPossibleStereoCenters || (tag != Atom::CHI_UNSPECIFIED &&
+                                         tag != Atom::CHI_OTHER) ){
           if(atom->hasProp("_CIPCode")){
             continue;
           }
@@ -478,48 +522,17 @@ namespace RDKit{
             //  if we need to, get the "CIP" ranking of each atom:
             assignAtomCIPRanks(mol,ranks);
           }
-          // loop over all neighbors and form a decorated list of their
-          // ranks:
-          bool legalCenter=true;
-          bool hasDupes=false;
           Chirality::INT_PAIR_VECT nbrs;
-          if(atom->getTotalDegree()>4){
-            // we only know tetrahedral chirality
-            legalCenter=false;
-          } else {
-            boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
-            ROMol::OEDGE_ITER beg,end;
-            boost::tie(beg,end) = mol.getAtomBonds(atom);
-            while(beg!=end){
-              unsigned int otherIdx=mol[*beg]->getOtherAtom(atom)->getIdx();
-              CHECK_INVARIANT(ranks[otherIdx]<static_cast<int>(mol.getNumAtoms()),
-                              "CIP rank higher than the number of atoms.");
-              // watch for neighbors with duplicate ranks, which would mean
-              // that we cannot be chiral:
-              if(codesSeen[ranks[otherIdx]]){
-                // we've already seen this code, it's a dupe
-                hasDupes = true;
-                break;
-              }
-              codesSeen[ranks[otherIdx]]=1;
-              nbrs.push_back(std::make_pair(ranks[otherIdx],
-                                            mol[*beg]->getIdx()));
-              ++beg;
-            }
-
-            // figure out if this is a legal chiral center or not:
-            if(!hasDupes){
-              if(nbrs.size()<3 ||
-                 (nbrs.size()==3 && atom->getTotalNumHs()!=1 )){
-                // we only handle 3-coordinate atoms that have an implicit H
-                legalCenter=false;
-              }
-            }
-          }        
+          bool legalCenter,hasDupes;
+          boost::tie(legalCenter,hasDupes)=isAtomPotentialChiralCenter(atom,mol,ranks,nbrs);
           if(legalCenter){
             ++unassignedAtoms;
           }
-          if( legalCenter && !hasDupes ) {
+          if(legalCenter && !hasDupes && flagPossibleStereoCenters) atom->setProp("_ChiralityPossible",1);
+
+          if( legalCenter && !hasDupes &&
+              tag != Atom::CHI_UNSPECIFIED &&
+              tag != Atom::CHI_OTHER ) {
             // stereochem is possible and we have no duplicate neighbors, assign
             // a CIP code:
             atomChanged=true;
@@ -718,7 +731,7 @@ namespace RDKit{
           3) if there are still unresolved atoms or bonds
              repeat the above steps as necessary
      */
-    void assignStereochemistry(ROMol &mol,bool cleanIt,bool force){
+    void assignStereochemistry(ROMol &mol,bool cleanIt,bool force,bool flagPossibleStereoCenters){
       if(!force && mol.hasProp("_StereochemDone")){
         return;
       }
@@ -759,7 +772,8 @@ namespace RDKit{
       bool hasStereoBonds=true,changedStereoBonds;
       while(keepGoing){
         if(hasStereoAtoms){
-          boost::tie(hasStereoAtoms,changedStereoAtoms) = Chirality::assignAtomChiralCodes(mol,atomRanks);
+          boost::tie(hasStereoAtoms,changedStereoAtoms) = Chirality::assignAtomChiralCodes(mol,atomRanks,
+                                                                                           flagPossibleStereoCenters);
         } else {
           changedStereoAtoms=false;
         }
