@@ -324,7 +324,6 @@ namespace {
     }
 
     sstr<<"</svg:g></svg:svg>";
-    //std::cerr<<"\n\n"<<sstr.str()<<"\n\n"<<std::endl;
     return sstr.str();
   }
 }

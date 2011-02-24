@@ -196,7 +196,7 @@ public class WrapperTests {
          rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
          assertTrue(rxn.getNumReactantTemplates()==2);
          assertTrue(rxn.getNumProductTemplates()==1);
-         Char_Vect pkl=RDKFuncs.RxnToBinary(rxn);
+         Int_Vect pkl=RDKFuncs.RxnToBinary(rxn);
          ChemicalReaction rxn2=RDKFuncs.RxnFromBinary(pkl);
          assertTrue(rxn2.getNumReactantTemplates()==2);
          assertTrue(rxn2.getNumProductTemplates()==1);
