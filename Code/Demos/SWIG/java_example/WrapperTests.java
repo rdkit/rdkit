@@ -141,10 +141,10 @@ public class WrapperTests {
 	m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
 	m2 = RDKFuncs.MolFromSmiles("C1=CC=CC=N1");
 	SparseIntVectu32 fp1,fp2;
-	fp1=RDKFuncs.MorganFingerprintMol(m1,2);
-	fp2=RDKFuncs.MorganFingerprintMol(m1,2);
+	fp1=RDKFuncs.getMorganFingerprint(m1,2);
+	fp2=RDKFuncs.getMorganFingerprint(m1,2);
 	assertTrue(RDKFuncs.DiceSimilaritySIVu32(fp1,fp2)==1.0);
-	fp2=RDKFuncs.MorganFingerprintMol(m2,2);
+	fp2=RDKFuncs.getMorganFingerprint(m2,2);
 	assertTrue(RDKFuncs.DiceSimilaritySIVu32(fp1,fp2)<1.0);
 	assertTrue(RDKFuncs.DiceSimilaritySIVu32(fp1,fp2)>0.0);
 	UInt_Pair_Vect v1=fp1.getNonzero();
@@ -253,7 +253,7 @@ public class WrapperTests {
             /*SparseIntVecti64 fp1;
               fp1=RDKFuncs.getTopologicalTorsionFingerprint(m1);*/
             SparseIntVectu32 fp1;
-            fp1=RDKFuncs.MorganFingerprintMol(m1,2);
+            fp1=RDKFuncs.getMorganFingerprint(m1,2);
 	    if((i%1000)==0){
 		System.err.println("done: "+i);
 	    }
