@@ -20,6 +20,8 @@
 #include <GraphMol/Bond.h>
 #include <RDGeneral/Invariant.h>  
 #include <RDBoost/Exceptions.h>  
+#include <RDGeneral/types.h>
+#include <GraphMol/MolOps.h>
 #include "RDKFuncs.h"
 %}
 
@@ -78,7 +80,6 @@ typedef std::list<int > INT_LIST;
 %template(Match_Vect_Vect) std::vector<std::vector<std::pair<int,int> > >;
 %template(Char_Vect) std::vector<char>;
 
-
 %ignore getAllAtomsWithBookmark;
 %ignore getAtomBookmarks;
 %ignore getAllBondsWithBookmark;
@@ -111,8 +112,6 @@ typedef std::list<int > INT_LIST;
 %ignore RDKit::ROMol::clearAtomBookmark(const int, const Atom *);
 %ignore RDKit::ROMol::setBondBookmark(Bond *,int);
 %ignore RDKit::ROMol::clearBondBookmark(int, const Bond *);
-%ignore RDKit::ROMol::hasProp(std::string const) const ;
-%ignore RDKit::ROMol::clearProp(std::string const) const ;
 %ignore RDKit::ROMol::getAtomWithIdx(unsigned int) const ;
 %ignore RDKit::ROMol::getBondWithIdx(unsigned int) const ;
 %ignore RDKit::ROMol::getBondBetweenAtoms(unsigned int,unsigned int) const ;
@@ -140,6 +139,15 @@ typedef std::list<int > INT_LIST;
     return mv;
   };
 
+  std::string getProp(const std::string &propName){
+    std::string res;
+    $self->getProp(propName,res);
+    return res;
+  }
+
+  void setProp(const std::string &propName,const std::string &propVal){
+    $self->setProp(propName,propVal);
+  }
 }
 
 %{
@@ -209,6 +217,12 @@ typedef std::list<int > INT_LIST;
     return res;
   }
 }
+
+%{
+#include <GraphMol/FileParsers/MolSupplier.h>
+%}
+
+%include <GraphMol/FileParsers/MolSupplier.h>
 
 %ignore ToSVG;
 %include "RDKFuncs.h"

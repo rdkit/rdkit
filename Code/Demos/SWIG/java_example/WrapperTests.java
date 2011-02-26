@@ -213,17 +213,30 @@ public class WrapperTests {
          assertTrue(rxn2.getNumProductTemplates()==1);
     }
 
-
-    /*@Test*/ public void testMemory() {
-	for(int i=0;i<1000000;i++){
-	    ROMol m1;
-	    m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
-	    if((i%1000)==0){
-		System.err.println("done: "+i);
+    @Test public void testSupplier() {
+	SDMolSupplier suppl=new SDMolSupplier("./test_data/NCI_aids_few.sdf");
+	int i=0;
+	while(! suppl.atEnd()){
+	    ROMol m1 = suppl.next();
+	    if(m1==null) continue;
+	    assertTrue(m1.hasProp("NSC"));
+	    assertFalse(m1.hasProp("monkey"));
+	    if(i==0){
+		assertEquals(m1.getProp("_Name"),"128");
+		assertEquals(m1.getProp("CAS_RN"),"5395-10-8");
 	    }
-	    m1.delete();
+
+	    String smi1=RDKFuncs.MolToSmiles(m1);
+	    String txt=suppl.getItemText(i);
+	    i++;
+	    
+	    ROMol m2 = RDKFuncs.MolFromMolBlock(txt);
+	    assertFalse(m2==null);
+	    String smi2=RDKFuncs.MolToSmiles(m2);
+	    assertEquals(smi1,smi2);
 	}
     }
+
     /*@Test*/ public void testMemory2() {
 	ChemicalReaction rxn;
 	rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");

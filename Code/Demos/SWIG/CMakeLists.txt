@@ -11,21 +11,18 @@ SET_SOURCE_FILES_PROPERTIES(RDKFuncs.i PROPERTIES SWIG_FLAGS "-module RDKFuncs")
 if(MSVC)
   set(RDKit_Wrapper_Libs FileParsers SmilesParse
   Depictor ChemTransforms Subgraphs
-  ForceFieldHelpers ForceField MolAlign
+  ForceFieldHelpers ForceField MolAlign  Optimizer Alignment EigenSolvers
   DistGeomHelpers DistGeometry
   SubstructMatch ChemReactions Fingerprints Descriptors
-  Subgraphs GraphMol 
- Optimizer Alignment EigenSolvers DataStructs
+  Subgraphs GraphMol DataStructs
   RDGeometryLib RDGeneral)
 else(MSVC)
   set(RDKit_Wrapper_Libs FileParsers_static SmilesParse_static
   Depictor_static ChemTransforms_static  Subgraphs_static
-  ForceFieldHelpers_static ForceField_static MolAlign_static
+  ForceFieldHelpers_static ForceField_static MolAlign_static  Optimizer_static Alignment_static EigenSolvers_static
   DistGeomHelpers_static DistGeometry_static
   SubstructMatch_static ChemReactions_static Fingerprints_static Descriptors_static
-  Subgraphs_static GraphMol_static 
-  Optimizer_static Alignment_static EigenSolvers_static
-  DataStructs_static
+  Subgraphs_static GraphMol_static DataStructs_static
   RDGeometryLib_static RDGeneral_static )
 endif(MSVC)
 #add_subdirectory(python_example)
