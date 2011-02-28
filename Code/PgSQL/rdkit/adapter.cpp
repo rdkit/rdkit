@@ -53,28 +53,28 @@ const unsigned int LAYERED_FP_SIZE=1024;
 const unsigned int MORGAN_FP_SIZE=1024;
 const unsigned int HASHED_PAIR_FP_SIZE=2048;
 class ByteA : public std::string {
-	public:
-		ByteA() : string() {};
-		ByteA(bytea *b) : string(VARDATA(b), VARSIZE(b)-VARHDRSZ) {};
-		ByteA(string& s) : string(s) {};
+public:
+  ByteA() : string() {};
+  ByteA(bytea *b) : string(VARDATA(b), VARSIZE(b)-VARHDRSZ) {};
+  ByteA(string& s) : string(s) {};
 
-		/*
- 		 * Convert string to bytea. Convertaion is in pgsql's memory
-		 */	
-		bytea*  toByteA() {
-			bytea *res;
-			int len;
+  /*
+   * Convert string to bytea. Convertaion is in pgsql's memory
+   */     
+  bytea*  toByteA() {
+    bytea *res;
+    int len;
 
-			len = this->size();
-     			res = (bytea*)palloc( VARHDRSZ + len );
-        		memcpy(VARDATA(res), this->data(), len);
-        		SET_VARSIZE(res, VARHDRSZ + len);
-			 
-			return res;
-		};
+    len = this->size();
+    res = (bytea*)palloc( VARHDRSZ + len );
+    memcpy(VARDATA(res), this->data(), len);
+    SET_VARSIZE(res, VARHDRSZ + len);
+                         
+    return res;
+  };
 
-		/* Just the copy of string's method */
-		ByteA& operator=(const string& __str) {return (ByteA&)this->assign(__str);};
+  /* Just the copy of string's method */
+  ByteA& operator=(const string& __str) {return (ByteA&)this->assign(__str);};
 };
 
 /*
@@ -95,40 +95,40 @@ typedef SparseIntVect<boost::uint32_t> SparseFP;
 
 extern "C"  void    
 freeCROMol(CROMol data) {
-	ROMol   *mol = (ROMol*)data;
-	delete mol;
+  ROMol   *mol = (ROMol*)data;
+  delete mol;
 }
 
 extern "C" CROMol 
 constructROMol(Mol *data) {
-	ROMol	*mol = new ROMol();
-	
-	try {
-		ByteA b(data);
-		MolPickler::molFromPickle(b, mol);
-	} catch (MolPicklerException& e) {
-		elog(ERROR, "molFromPickle: %s", e.message());
-	} catch (...) {
-		elog(ERROR, "constructROMol: Unknown exception");
-	}
-	
-	return (CROMol)mol;	
+  ROMol   *mol = new ROMol();
+        
+  try {
+    ByteA b(data);
+    MolPickler::molFromPickle(b, mol);
+  } catch (MolPicklerException& e) {
+    elog(ERROR, "molFromPickle: %s", e.message());
+  } catch (...) {
+    elog(ERROR, "constructROMol: Unknown exception");
+  }
+        
+  return (CROMol)mol;     
 }
 
 extern "C" Mol* 
 deconstructROMol(CROMol data) {
-	ROMol   *mol = (ROMol*)data;
-	ByteA	b;
+  ROMol   *mol = (ROMol*)data;
+  ByteA   b;
 
-	try {
-		MolPickler::pickleMol(mol, b);
-	} catch (MolPicklerException& e) {
-		elog(ERROR, "pickleMol: %s", e.message());
-	} catch (...) {
-		elog(ERROR, "deconstructROMol: Unknown exception");
-	}
+  try {
+    MolPickler::pickleMol(mol, b);
+  } catch (MolPicklerException& e) {
+    elog(ERROR, "pickleMol: %s", e.message());
+  } catch (...) {
+    elog(ERROR, "deconstructROMol: Unknown exception");
+  }
 
-	return (Mol*)b.toByteA();
+  return (Mol*)b.toByteA();
 }
 
 extern "C" CROMol 
@@ -151,6 +151,26 @@ parseMolText(char *data,bool asSmarts) {
     ereport(ERROR,
             (errcode(ERRCODE_DATA_EXCEPTION),
              errmsg("smiles '%s' could not be parsed",data)));
+  }
+
+  return (CROMol)mol;
+}
+extern "C" CROMol 
+parseMolBlob(char *data,int len) {
+  ROMol   *mol = NULL;
+
+  try {
+    StringData.assign(data,len);
+    mol = new ROMol(StringData);
+  } catch (...) {
+    ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("problem generating molecule from blob data")));
+  }
+  if(mol==NULL){
+    ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("blob data could not be parsed")));
   }
 
   return (CROMol)mol;
@@ -204,39 +224,52 @@ isValidSmarts(char *data) {
 
 extern "C" char *
 makeMolText(CROMol data, int *len,bool asSmarts) {
-	ROMol   *mol = (ROMol*)data;
+  ROMol   *mol = (ROMol*)data;
 
-	try {
-          if(!asSmarts){
-            StringData = MolToSmiles(*mol, true);
-          } else {
-            StringData = MolToSmarts(*mol, false);
-          }
-	} catch (...) {
-		elog(ERROR, "makeMolText: Unknown exception");
-	}	
+  try {
+    if(!asSmarts){
+      StringData = MolToSmiles(*mol, true);
+    } else {
+      StringData = MolToSmarts(*mol, false);
+    }
+  } catch (...) {
+    elog(ERROR, "makeMolText: Unknown exception");
+  }       
 
-	*len = StringData.size();
-	return (char*)StringData.c_str();		
+  *len = StringData.size();
+  return (char*)StringData.c_str();               
+}
+extern "C" char *
+makeMolBlob(CROMol data, int *len){
+  ROMol   *mol = (ROMol*)data;
+  StringData.clear();
+  try {
+    MolPickler::pickleMol(*mol,StringData);
+  } catch (...) {
+    elog(ERROR, "makeMolBlob: Unknown exception");
+  }       
+
+  *len = StringData.size();
+  return (char*)StringData.data();               
 }
 
 extern "C" bytea* 
 makeMolSign(CROMol data) {
-	ROMol   *mol = (ROMol*)data;
-	ExplicitBitVect	*res=NULL;
-	bytea			*ret = NULL;
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
+  bytea                   *ret = NULL;
 
-	try {
-          res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,6,SSS_FP_SIZE);
-          ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)res);
-          delete res;
-          res=0;
-	} catch (...) {
-          elog(ERROR, "makeMolSign: Unknown exception");
-          if(res) delete res;
-	}
-	
-	return ret;
+  try {
+    res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,6,SSS_FP_SIZE);
+    ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)res);
+    delete res;
+    res=0;
+  } catch (...) {
+    elog(ERROR, "makeMolSign: Unknown exception");
+    if(res) delete res;
+  }
+        
+  return ret;
 }
 
 extern "C" int
@@ -271,11 +304,11 @@ molcmp(CROMol i, CROMol a) {
 
 extern "C" int
 MolSubstruct(CROMol i, CROMol a) {
-	ROMol *im = (ROMol*)i;
-	ROMol *am = (ROMol*)a;
-	RDKit::MatchVectType matchVect;
+  ROMol *im = (ROMol*)i;
+  ROMol *am = (ROMol*)a;
+  RDKit::MatchVectType matchVect;
 
-	return RDKit::SubstructMatch(*im,*am,matchVect); 
+  return RDKit::SubstructMatch(*im,*am,matchVect); 
 }
 
 
@@ -331,103 +364,103 @@ MolNumHeavyAtoms(CROMol i){
 
 extern "C"  void    
 freeMolBitmapFingerPrint(MolBitmapFingerPrint data) {
-	ExplicitBitVect   *fp = (ExplicitBitVect*)data;
-	delete fp;
+  ExplicitBitVect   *fp = (ExplicitBitVect*)data;
+  delete fp;
 }
 
 extern "C" MolBitmapFingerPrint 
 constructMolBitmapFingerPrint(BitmapFingerPrint *data) {
-	ExplicitBitVect *ebv=NULL;
-	
-	try {
- 		ebv = new ExplicitBitVect(VARDATA(data), VARSIZE(data) - VARHDRSZ);
-	} catch (...) {
-		elog(ERROR, "constructMolFingerPrint: Unknown exception");
-	}
-	
-	return (MolBitmapFingerPrint)ebv;	
+  ExplicitBitVect *ebv=NULL;
+        
+  try {
+    ebv = new ExplicitBitVect(VARDATA(data), VARSIZE(data) - VARHDRSZ);
+  } catch (...) {
+    elog(ERROR, "constructMolFingerPrint: Unknown exception");
+  }
+        
+  return (MolBitmapFingerPrint)ebv;       
 }
 
 extern "C" BitmapFingerPrint * 
 deconstructMolBitmapFingerPrint(MolBitmapFingerPrint data) {
-	ExplicitBitVect *ebv = (ExplicitBitVect*)data;
-	ByteA		 b;
+  ExplicitBitVect *ebv = (ExplicitBitVect*)data;
+  ByteA            b;
 
-	try {
-		b = ebv->toString();
-	} catch (...) {
-		elog(ERROR, "deconstructMolFingerPrint: Unknown exception");
-	}
+  try {
+    b = ebv->toString();
+  } catch (...) {
+    elog(ERROR, "deconstructMolFingerPrint: Unknown exception");
+  }
 
-	return b.toByteA();
+  return b.toByteA();
 }
 
 extern "C" bytea *
 makeSignatureBitmapFingerPrint(MolBitmapFingerPrint data) {
-	ExplicitBitVect *ebv = (ExplicitBitVect*)data;
-	int	numBits = ebv->getNumBits(),
-		i,
-		numBytes;
-	bytea	*res;
-	unsigned char *s;
+  ExplicitBitVect *ebv = (ExplicitBitVect*)data;
+  int     numBits = ebv->getNumBits(),
+    i,
+    numBytes;
+  bytea   *res;
+  unsigned char *s;
 
-	numBytes = VARHDRSZ + (numBits/8);
-	if ( (numBits % 8) != 0 ) numBytes++;
-		
-	res = (bytea*)palloc0(numBytes);
-	SET_VARSIZE(res, numBytes);
-	s = (unsigned char *)VARDATA(res);
+  numBytes = VARHDRSZ + (numBits/8);
+  if ( (numBits % 8) != 0 ) numBytes++;
+                
+  res = (bytea*)palloc0(numBytes);
+  SET_VARSIZE(res, numBytes);
+  s = (unsigned char *)VARDATA(res);
 
-	for(i=0; i<numBits; i++)
-		if (ebv->getBit(i))
-			s[ i/8 ]  |= 1 << (i % 8); 
+  for(i=0; i<numBits; i++)
+    if (ebv->getBit(i))
+      s[ i/8 ]  |= 1 << (i % 8); 
 
-	return res;	
+  return res;     
 }
 
 extern "C" int
 MolBitmapFingerPrintSize(MolBitmapFingerPrint a) {
-	ExplicitBitVect	*f = (ExplicitBitVect*)a;
+  ExplicitBitVect *f = (ExplicitBitVect*)a;
 
-	return f->getNumBits();
+  return f->getNumBits();
 }
 
 extern "C" double
 calcBitmapTanimotoSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
-	double res=0.0;
+  double res=0.0;
 
-	/*
-     * Nsame / (Na + Nb - Nsame)
-     */
-	
-	try {
-		res = TanimotoSimilarity(*(ExplicitBitVect*)a, *(ExplicitBitVect*)b);
-	} catch (ValueErrorException& e) {
-		elog(ERROR, "TanimotoSimilarity: %s", e.message().c_str());
-	} catch (...) {
-		elog(ERROR, "calcBitmapTanimotoSml: Unknown exception");
-	}
+  /*
+   * Nsame / (Na + Nb - Nsame)
+   */
+        
+  try {
+    res = TanimotoSimilarity(*(ExplicitBitVect*)a, *(ExplicitBitVect*)b);
+  } catch (ValueErrorException& e) {
+    elog(ERROR, "TanimotoSimilarity: %s", e.message().c_str());
+  } catch (...) {
+    elog(ERROR, "calcBitmapTanimotoSml: Unknown exception");
+  }
 
-	return res;
+  return res;
 }
 
 extern "C" double
 calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
-	double res=0.0;
+  double res=0.0;
 
-	/*
-     * 2 * Nsame / (Na + Nb)
-     */
-	
-	try {
-		res = DiceSimilarity(*(ExplicitBitVect*)a, *(ExplicitBitVect*)b);
-	} catch (ValueErrorException& e) {
-		elog(ERROR, "DiceSimilarity: %s", e.message().c_str());
-	} catch (...) {
-		elog(ERROR, "calcTanimotoSml: Unknown exception");
-	}
+  /*
+   * 2 * Nsame / (Na + Nb)
+   */
+        
+  try {
+    res = DiceSimilarity(*(ExplicitBitVect*)a, *(ExplicitBitVect*)b);
+  } catch (ValueErrorException& e) {
+    elog(ERROR, "DiceSimilarity: %s", e.message().c_str());
+  } catch (...) {
+    elog(ERROR, "calcTanimotoSml: Unknown exception");
+  }
 
-	return res;
+  return res;
 }
 
 
@@ -437,210 +470,210 @@ calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
 
 extern "C"  void    
 freeMolSparseFingerPrint(MolSparseFingerPrint data) {
-	SparseFP   *fp = (SparseFP*)data;
-	delete fp;
+  SparseFP   *fp = (SparseFP*)data;
+  delete fp;
 }
 
 extern "C" MolSparseFingerPrint 
 constructMolSparseFingerPrint(SparseFingerPrint *data) {
-	SparseFP *ebv = NULL;
-	
-	try {
- 		ebv = new SparseFP(VARDATA(data), VARSIZE(data) - VARHDRSZ);
-	} catch (...) {
-		elog(ERROR, "constructMolFingerPrint: Unknown exception");
-	}
-	
-	return (MolSparseFingerPrint)ebv;	
+  SparseFP *ebv = NULL;
+        
+  try {
+    ebv = new SparseFP(VARDATA(data), VARSIZE(data) - VARHDRSZ);
+  } catch (...) {
+    elog(ERROR, "constructMolFingerPrint: Unknown exception");
+  }
+        
+  return (MolSparseFingerPrint)ebv;       
 }
 
 extern "C" SparseFingerPrint * 
 deconstructMolSparseFingerPrint(MolSparseFingerPrint data) {
-	SparseFP *ebv = (SparseFP*)data;
-	ByteA		 b;
+  SparseFP *ebv = (SparseFP*)data;
+  ByteA            b;
 
-	try {
-		b = ebv->toString();
-	} catch (...) {
-		elog(ERROR, "deconstructMolFingerPrint: Unknown exception");
-	}
+  try {
+    b = ebv->toString();
+  } catch (...) {
+    elog(ERROR, "deconstructMolFingerPrint: Unknown exception");
+  }
 
-	return b.toByteA();
+  return b.toByteA();
 }
 
 extern "C" bytea *
 makeSignatureSparseFingerPrint(MolSparseFingerPrint data, int numBits) {
-	SparseFP *v = (SparseFP*)data;
-	int	n,
-		numBytes;
-	bytea	*res;
-	unsigned char *s;
-	SparseFP::StorageType::const_iterator iter;
+  SparseFP *v = (SparseFP*)data;
+  int     n,
+    numBytes;
+  bytea   *res;
+  unsigned char *s;
+  SparseFP::StorageType::const_iterator iter;
 
-	numBytes = VARHDRSZ + (numBits/8);
-	if ( (numBits % 8) != 0 ) numBytes++;
-		
-	res = (bytea*)palloc0(numBytes);
-	SET_VARSIZE(res, numBytes);
-	s = (unsigned char *)VARDATA(res);
+  numBytes = VARHDRSZ + (numBits/8);
+  if ( (numBits % 8) != 0 ) numBytes++;
+                
+  res = (bytea*)palloc0(numBytes);
+  SET_VARSIZE(res, numBytes);
+  s = (unsigned char *)VARDATA(res);
 
 
-	for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
-	{
-		n = iter->first % numBits;
-		s[ n/8 ]  |= 1 << (n % 8);
-	}
+  for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
+    {
+      n = iter->first % numBits;
+      s[ n/8 ]  |= 1 << (n % 8);
+    }
 
-	return res;	
+  return res;     
 }
 
 extern "C" bytea * 
 makeLowSparseFingerPrint(MolSparseFingerPrint data, int numInts) {
-	SparseFP *v = (SparseFP*)data;
-	int		numBytes;
-	bytea	*res;
-	IntRange *s;
-	int		n;
-	SparseFP::StorageType::const_iterator iter;
+  SparseFP *v = (SparseFP*)data;
+  int             numBytes;
+  bytea   *res;
+  IntRange *s;
+  int             n;
+  SparseFP::StorageType::const_iterator iter;
 
-	numBytes = VARHDRSZ + (numInts * sizeof(IntRange));
-		
-	res = (bytea*)palloc0(numBytes);
-	SET_VARSIZE(res, numBytes);
-	s = (IntRange *)VARDATA(res);
-
-
-	for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
-	{
-                uint32 iterV=(uint32)iter->second;
-		n = iter->first % numInts;
-
-		if (iterV > INTRANGEMAX){
-#if 0
-			elog(ERROR, "sparse fingerprint is too big, increase INTRANGEMAX in rdkit.h");
-#else
-                        iterV=INTRANGEMAX;
-#endif
-                }
+  numBytes = VARHDRSZ + (numInts * sizeof(IntRange));
                 
-		if (s[ n ].low == 0 || s[ n ].low > iterV)
-                  s[ n ].low = iterV;
-		if (s[ n ].high < iterV)
-                  s[ n ].high = iterV;
-	}
+  res = (bytea*)palloc0(numBytes);
+  SET_VARSIZE(res, numBytes);
+  s = (IntRange *)VARDATA(res);
 
-	return res;	
+
+  for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
+    {
+      uint32 iterV=(uint32)iter->second;
+      n = iter->first % numInts;
+
+      if (iterV > INTRANGEMAX){
+#if 0
+        elog(ERROR, "sparse fingerprint is too big, increase INTRANGEMAX in rdkit.h");
+#else
+        iterV=INTRANGEMAX;
+#endif
+      }
+                
+      if (s[ n ].low == 0 || s[ n ].low > iterV)
+        s[ n ].low = iterV;
+      if (s[ n ].high < iterV)
+        s[ n ].high = iterV;
+    }
+
+  return res;     
 }
 
 extern "C" void
 countOverlapValues(bytea * sign, MolSparseFingerPrint data, int numBits, 
-		int * sum, int * overlapSum, int * overlapN) 
+                   int * sum, int * overlapSum, int * overlapN) 
 {
-	SparseFP *v = (SparseFP*)data;
-	SparseFP::StorageType::const_iterator iter;
+  SparseFP *v = (SparseFP*)data;
+  SparseFP::StorageType::const_iterator iter;
 
-	*sum = *overlapSum = *overlapN = 0;
+  *sum = *overlapSum = *overlapN = 0;
 
-	if (sign)
-	{
-		unsigned char *s = (unsigned char *)VARDATA(sign);
-		int		n;
+  if (sign)
+    {
+      unsigned char *s = (unsigned char *)VARDATA(sign);
+      int             n;
 
-		for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
-		{
-			*sum += iter->second;
-			n = iter->first % numBits;
-			if ( s[n/8] & (1 << (n % 8)) )
-			{
-				*overlapSum += iter->second;
-				*overlapN += 1;
-			}
-		}
-	}
-	else
-	{
-		/* Assume, sign has only true bits */
-		for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
-			*sum += iter->second;
+      for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
+        {
+          *sum += iter->second;
+          n = iter->first % numBits;
+          if ( s[n/8] & (1 << (n % 8)) )
+            {
+              *overlapSum += iter->second;
+              *overlapN += 1;
+            }
+        }
+    }
+  else
+    {
+      /* Assume, sign has only true bits */
+      for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
+        *sum += iter->second;
 
-		*overlapSum = *sum;
-		*overlapN = v->getNonzeroElements().size(); 
-	}
+      *overlapSum = *sum;
+      *overlapN = v->getNonzeroElements().size(); 
+    }
 }
 
 extern "C" void 
 countLowOverlapValues(bytea * sign, MolSparseFingerPrint data, int numInts,
-        int * querySum, int *keySum, int * overlapUp, int * overlapDown)
+                      int * querySum, int *keySum, int * overlapUp, int * overlapDown)
 {
-	SparseFP *v = (SparseFP*)data;
-	SparseFP::StorageType::const_iterator iter;
-	IntRange *s = (IntRange *)VARDATA(sign);
-	int		n;
+  SparseFP *v = (SparseFP*)data;
+  SparseFP::StorageType::const_iterator iter;
+  IntRange *s = (IntRange *)VARDATA(sign);
+  int             n;
 
-	*querySum = *keySum = *overlapUp = *overlapDown = 0;
+  *querySum = *keySum = *overlapUp = *overlapDown = 0;
 
-	for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
-	{
-		*querySum += iter->second;
-		n = iter->first % numInts;
-		if (s[n].low == 0) 
-		{
-			Assert(s[n].high == 0);
-			continue;
-		}
+  for(iter = v->getNonzeroElements().begin(); iter != v->getNonzeroElements().end(); iter++)
+    {
+      *querySum += iter->second;
+      n = iter->first % numInts;
+      if (s[n].low == 0) 
+        {
+          Assert(s[n].high == 0);
+          continue;
+        }
 
-		*overlapDown += Min(s[n].low, (uint32)iter->second);
-		*overlapUp += Min(s[n].high, (uint32)iter->second);
-	}
+      *overlapDown += Min(s[n].low, (uint32)iter->second);
+      *overlapUp += Min(s[n].high, (uint32)iter->second);
+    }
 
-	Assert(*overlapDown <= *overlapUp);
+  Assert(*overlapDown <= *overlapUp);
 
-	for(n=0;n<numInts;n++) 
-	{
-		*keySum += s[n].low;
-		if (s[n].low != s[n].high)
-			*keySum += s[n].high; /* there is at least two key mapped into current backet */
-	}
+  for(n=0;n<numInts;n++) 
+    {
+      *keySum += s[n].low;
+      if (s[n].low != s[n].high)
+        *keySum += s[n].high; /* there is at least two key mapped into current backet */
+    }
 
-	Assert(*overlapUp <= *keySum);
+  Assert(*overlapUp <= *keySum);
 }
 
 extern "C" double
 calcSparseTanimotoSml(MolSparseFingerPrint a, MolSparseFingerPrint b) {
-	double res = -1.0;
+  double res = -1.0;
 
-	/*
-     * Nsame / (Na + Nb - Nsame)
-     */
-	
-	try {
-		res = TanimotoSimilarity(*(SparseFP*)a, *(SparseFP*)b);
-	} catch (ValueErrorException& e) {
-		elog(ERROR, "TanimotoSimilarity: %s", e.message().c_str());
-	} catch (...) {
-		elog(ERROR, "calcSparseTanimotoSml: Unknown exception");
-	}
+  /*
+   * Nsame / (Na + Nb - Nsame)
+   */
+        
+  try {
+    res = TanimotoSimilarity(*(SparseFP*)a, *(SparseFP*)b);
+  } catch (ValueErrorException& e) {
+    elog(ERROR, "TanimotoSimilarity: %s", e.message().c_str());
+  } catch (...) {
+    elog(ERROR, "calcSparseTanimotoSml: Unknown exception");
+  }
 
-	return res;
+  return res;
 }
 
 extern "C" double
 calcSparseDiceSml(MolSparseFingerPrint a, MolSparseFingerPrint b) {
-	double res = -1.0;
+  double res = -1.0;
 
-	/*
-     * 2 * Nsame / (Na + Nb)
-     */
-	
-	try {
-		res = DiceSimilarity(*(SparseFP*)a, *(SparseFP*)b);
-	} catch (ValueErrorException& e) {
-		elog(ERROR, "DiceSimilarity: %s", e.message().c_str());
-	} catch (...) {
-		elog(ERROR, "calcSparseDiceSml: Unknown exception");
-	}
+  /*
+   * 2 * Nsame / (Na + Nb)
+   */
+        
+  try {
+    res = DiceSimilarity(*(SparseFP*)a, *(SparseFP*)b);
+  } catch (ValueErrorException& e) {
+    elog(ERROR, "DiceSimilarity: %s", e.message().c_str());
+  } catch (...) {
+    elog(ERROR, "calcSparseDiceSml: Unknown exception");
+  }
 
-	return res;
+  return res;
 }
 
 extern "C" double
@@ -757,26 +790,26 @@ calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b, unsigned
 
 extern "C" MolSparseFingerPrint 
 addSFP(MolSparseFingerPrint a, MolSparseFingerPrint b) {
-	SparseFP	*res=NULL;
-	try {
-          SparseFP tmp=(*(SparseFP*)a+*(SparseFP*)b);
-          res=(SparseFP*)new SparseFP(tmp);
-	} catch (...) {
-		elog(ERROR, "addSFP: Unknown exception");
-	}
-	return (MolSparseFingerPrint)res;
+  SparseFP        *res=NULL;
+  try {
+    SparseFP tmp=(*(SparseFP*)a+*(SparseFP*)b);
+    res=(SparseFP*)new SparseFP(tmp);
+  } catch (...) {
+    elog(ERROR, "addSFP: Unknown exception");
+  }
+  return (MolSparseFingerPrint)res;
 }
 
 extern "C" MolSparseFingerPrint 
 subtractSFP(MolSparseFingerPrint a, MolSparseFingerPrint b) {
-	SparseFP	*res=NULL;
-	try {
-          SparseFP tmp=(*(SparseFP*)a-*(SparseFP*)b);
-          res=(SparseFP*)new SparseFP(tmp);
-	} catch (...) {
-		elog(ERROR, "addSFP: Unknown exception");
-	}
-	return (MolSparseFingerPrint)res;
+  SparseFP        *res=NULL;
+  try {
+    SparseFP tmp=(*(SparseFP*)a-*(SparseFP*)b);
+    res=(SparseFP*)new SparseFP(tmp);
+  } catch (...) {
+    elog(ERROR, "addSFP: Unknown exception");
+  }
+  return (MolSparseFingerPrint)res;
 }
 
 
@@ -786,187 +819,187 @@ subtractSFP(MolSparseFingerPrint a, MolSparseFingerPrint b) {
  */
 extern "C" MolBitmapFingerPrint 
 makeLayeredBFP(CROMol data) {
-	ROMol   *mol = (ROMol*)data;
-	ExplicitBitVect	*res=NULL;
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
 
-	try {
-          res = RDKit::LayeredFingerprintMol(*mol,0xFFFFFFFF,1,7,LAYERED_FP_SIZE);
-	} catch (...) {
-		elog(ERROR, "makeLayeredBFP: Unknown exception");
-                if(res) delete res;
-                res=NULL;
-	}
-	
-	return (MolBitmapFingerPrint)res;
+  try {
+    res = RDKit::LayeredFingerprintMol(*mol,0xFFFFFFFF,1,7,LAYERED_FP_SIZE);
+  } catch (...) {
+    elog(ERROR, "makeLayeredBFP: Unknown exception");
+    if(res) delete res;
+    res=NULL;
+  }
+        
+  return (MolBitmapFingerPrint)res;
 }
 
 extern "C" MolBitmapFingerPrint 
 makeRDKitBFP(CROMol data) {
-	ROMol   *mol = (ROMol*)data;
-	ExplicitBitVect	*res=NULL;
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
 
-	try {
-          res = RDKit::RDKFingerprintMol(*mol,1,7,LAYERED_FP_SIZE,2);
-	} catch (...) {
-		elog(ERROR, "makeRDKitBFP: Unknown exception");
-                if(res) delete res;
-                res=NULL;
-	}
-	
-	return (MolBitmapFingerPrint)res;
+  try {
+    res = RDKit::RDKFingerprintMol(*mol,1,7,LAYERED_FP_SIZE,2);
+  } catch (...) {
+    elog(ERROR, "makeRDKitBFP: Unknown exception");
+    if(res) delete res;
+    res=NULL;
+  }
+        
+  return (MolBitmapFingerPrint)res;
 }
 
 extern "C" MolSparseFingerPrint 
 makeMorganSFP(CROMol data, int radius) {
-	ROMol   *mol = (ROMol*)data;
-	SparseFP	*res=NULL;
-        std::vector<boost::uint32_t> invars(mol->getNumAtoms());
-	try {
-          RDKit::MorganFingerprints::getConnectivityInvariants(*mol,invars,true);
-          res = (SparseFP*)RDKit::MorganFingerprints::getFingerprint(*mol, radius,&invars);
-	} catch (...) {
-		elog(ERROR, "makeMorganSFP: Unknown exception");
-	}
-	
-	return (MolSparseFingerPrint)res;
+  ROMol   *mol = (ROMol*)data;
+  SparseFP        *res=NULL;
+  std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+  try {
+    RDKit::MorganFingerprints::getConnectivityInvariants(*mol,invars,true);
+    res = (SparseFP*)RDKit::MorganFingerprints::getFingerprint(*mol, radius,&invars);
+  } catch (...) {
+    elog(ERROR, "makeMorganSFP: Unknown exception");
+  }
+        
+  return (MolSparseFingerPrint)res;
 }
 
 
 extern "C" MolBitmapFingerPrint
 makeMorganBFP(CROMol data, int radius) {
-	ROMol   *mol = (ROMol*)data;
-	ExplicitBitVect	*res=NULL;
-        std::vector<boost::uint32_t> invars(mol->getNumAtoms());
-	try {
-          RDKit::MorganFingerprints::getConnectivityInvariants(*mol,invars,true);
-          res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius,MORGAN_FP_SIZE,&invars);
-	} catch (...) {
-		elog(ERROR, "makeMorganBFP: Unknown exception");
-	}
-	
-	return (MolBitmapFingerPrint)res;
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
+  std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+  try {
+    RDKit::MorganFingerprints::getConnectivityInvariants(*mol,invars,true);
+    res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius,MORGAN_FP_SIZE,&invars);
+  } catch (...) {
+    elog(ERROR, "makeMorganBFP: Unknown exception");
+  }
+        
+  return (MolBitmapFingerPrint)res;
 }
 
 extern "C" MolSparseFingerPrint 
 makeFeatMorganSFP(CROMol data, int radius) {
-	ROMol   *mol = (ROMol*)data;
-	SparseFP	*res=NULL;
-        std::vector<boost::uint32_t> invars(mol->getNumAtoms());
-	try {
-          RDKit::MorganFingerprints::getFeatureInvariants(*mol,invars);
-          res = (SparseFP*)RDKit::MorganFingerprints::getFingerprint(*mol,radius,
-                                                                     &invars);
-	} catch (...) {
-		elog(ERROR, "makeMorganSFP: Unknown exception");
-	}
-	
-	return (MolSparseFingerPrint)res;
+  ROMol   *mol = (ROMol*)data;
+  SparseFP        *res=NULL;
+  std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+  try {
+    RDKit::MorganFingerprints::getFeatureInvariants(*mol,invars);
+    res = (SparseFP*)RDKit::MorganFingerprints::getFingerprint(*mol,radius,
+                                                               &invars);
+  } catch (...) {
+    elog(ERROR, "makeMorganSFP: Unknown exception");
+  }
+        
+  return (MolSparseFingerPrint)res;
 }
 
 
 extern "C" MolBitmapFingerPrint
 makeFeatMorganBFP(CROMol data, int radius) {
-	ROMol   *mol = (ROMol*)data;
-	ExplicitBitVect	*res=NULL;
-        std::vector<boost::uint32_t> invars(mol->getNumAtoms());
-	try {
-          RDKit::MorganFingerprints::getFeatureInvariants(*mol,invars);
-          res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius,
-                                                                   MORGAN_FP_SIZE,&invars);
-	} catch (...) {
-		elog(ERROR, "makeMorganBFP: Unknown exception");
-	}
-	
-	return (MolBitmapFingerPrint)res;
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
+  std::vector<boost::uint32_t> invars(mol->getNumAtoms());
+  try {
+    RDKit::MorganFingerprints::getFeatureInvariants(*mol,invars);
+    res = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, radius,
+                                                             MORGAN_FP_SIZE,&invars);
+  } catch (...) {
+    elog(ERROR, "makeMorganBFP: Unknown exception");
+  }
+        
+  return (MolBitmapFingerPrint)res;
 }
 
 
 extern "C" MolSparseFingerPrint 
 makeAtomPairSFP(CROMol data){
-	ROMol   *mol = (ROMol*)data;
-	SparseFP	*res=NULL;
+  ROMol   *mol = (ROMol*)data;
+  SparseFP        *res=NULL;
 #ifdef UNHASHED_PAIR_FPS
-	try {
-          SparseIntVect<boost::int32_t> *afp=RDKit::AtomPairs::getAtomPairFingerprint(*mol);
-          res = new SparseFP(1<<RDKit::AtomPairs::numAtomPairFingerprintBits);
-          for(SparseIntVect<boost::int32_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
-              iter!=afp->getNonzeroElements().end();++iter){
-            res->setVal(iter->first,iter->second);
-          }
-          delete afp;
-	} catch (...) {
-		elog(ERROR, "makeAtomPairSFP: Unknown exception");
-	}
+  try {
+    SparseIntVect<boost::int32_t> *afp=RDKit::AtomPairs::getAtomPairFingerprint(*mol);
+    res = new SparseFP(1<<RDKit::AtomPairs::numAtomPairFingerprintBits);
+    for(SparseIntVect<boost::int32_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
+        iter!=afp->getNonzeroElements().end();++iter){
+      res->setVal(iter->first,iter->second);
+    }
+    delete afp;
+  } catch (...) {
+    elog(ERROR, "makeAtomPairSFP: Unknown exception");
+  }
 #else
-	try {
-          SparseIntVect<boost::int32_t> *afp=RDKit::AtomPairs::getHashedAtomPairFingerprint(*mol,HASHED_PAIR_FP_SIZE);
-          res = new SparseFP(HASHED_PAIR_FP_SIZE);
-          for(SparseIntVect<boost::int32_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
-              iter!=afp->getNonzeroElements().end();++iter){
-            res->setVal(iter->first,iter->second);
-          }
-          delete afp;
-	} catch (...) {
-		elog(ERROR, "makeAtomPairSFP: Unknown exception");
-	}
-#endif	
-	return (MolSparseFingerPrint)res;
+  try {
+    SparseIntVect<boost::int32_t> *afp=RDKit::AtomPairs::getHashedAtomPairFingerprint(*mol,HASHED_PAIR_FP_SIZE);
+    res = new SparseFP(HASHED_PAIR_FP_SIZE);
+    for(SparseIntVect<boost::int32_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
+        iter!=afp->getNonzeroElements().end();++iter){
+      res->setVal(iter->first,iter->second);
+    }
+    delete afp;
+  } catch (...) {
+    elog(ERROR, "makeAtomPairSFP: Unknown exception");
+  }
+#endif  
+  return (MolSparseFingerPrint)res;
 }
 
 extern "C" MolSparseFingerPrint 
 makeTopologicalTorsionSFP(CROMol data){
-	ROMol   *mol = (ROMol*)data;
-	SparseFP	*res=NULL;
+  ROMol   *mol = (ROMol*)data;
+  SparseFP        *res=NULL;
 
 #ifdef UNHASHED_PAIR_FPS
-	try {
-          SparseIntVect<boost::int64_t> *afp=RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,boost::integer_traits<boost::uint32_t>::const_max);
-          res = new SparseFP(boost::integer_traits<boost::uint32_t>::const_max);
-          for(SparseIntVect<boost::int64_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
-              iter!=afp->getNonzeroElements().end();++iter){
-            res->setVal(iter->first,iter->second);
-          }
-          delete afp;
-	} catch (...) {
-		elog(ERROR, "makeTopologicalTorsionSFP: Unknown exception");
-	}
+  try {
+    SparseIntVect<boost::int64_t> *afp=RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,boost::integer_traits<boost::uint32_t>::const_max);
+    res = new SparseFP(boost::integer_traits<boost::uint32_t>::const_max);
+    for(SparseIntVect<boost::int64_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
+        iter!=afp->getNonzeroElements().end();++iter){
+      res->setVal(iter->first,iter->second);
+    }
+    delete afp;
+  } catch (...) {
+    elog(ERROR, "makeTopologicalTorsionSFP: Unknown exception");
+  }
 #else
-	try {
-          SparseIntVect<boost::int64_t> *afp=RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,HASHED_PAIR_FP_SIZE);
-          res = new SparseFP(HASHED_PAIR_FP_SIZE);
-          for(SparseIntVect<boost::int64_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
-              iter!=afp->getNonzeroElements().end();++iter){
-            res->setVal(iter->first,iter->second);
-          }
-          delete afp;
-	} catch (...) {
-		elog(ERROR, "makeTopologicalTorsionSFP: Unknown exception");
-	}
+  try {
+    SparseIntVect<boost::int64_t> *afp=RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,HASHED_PAIR_FP_SIZE);
+    res = new SparseFP(HASHED_PAIR_FP_SIZE);
+    for(SparseIntVect<boost::int64_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
+        iter!=afp->getNonzeroElements().end();++iter){
+      res->setVal(iter->first,iter->second);
+    }
+    delete afp;
+  } catch (...) {
+    elog(ERROR, "makeTopologicalTorsionSFP: Unknown exception");
+  }
 #endif
-	return (MolSparseFingerPrint)res;
+  return (MolSparseFingerPrint)res;
 }
 
 extern "C" MolBitmapFingerPrint 
 makeAtomPairBFP(CROMol data){
-	ROMol   *mol = (ROMol*)data;
-	ExplicitBitVect	*res=NULL;
-	try {
-          res=RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(*mol,HASHED_PAIR_FP_SIZE);
-	} catch (...) {
-		elog(ERROR, "makeAtomPairBFP: Unknown exception");
-	}
-	return (MolBitmapFingerPrint)res;
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
+  try {
+    res=RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(*mol,HASHED_PAIR_FP_SIZE);
+  } catch (...) {
+    elog(ERROR, "makeAtomPairBFP: Unknown exception");
+  }
+  return (MolBitmapFingerPrint)res;
 }
 
 extern "C" MolBitmapFingerPrint 
 makeTopologicalTorsionBFP(CROMol data){
-	ROMol   *mol = (ROMol*)data;
-	ExplicitBitVect	*res=NULL;
-	try {
-          res =RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(*mol,HASHED_PAIR_FP_SIZE);
-	} catch (...) {
-          elog(ERROR, "makeTopologicalTorsionBFP: Unknown exception");
-	}
-	return (MolBitmapFingerPrint)res;
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
+  try {
+    res =RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(*mol,HASHED_PAIR_FP_SIZE);
+  } catch (...) {
+    elog(ERROR, "makeTopologicalTorsionBFP: Unknown exception");
+  }
+  return (MolBitmapFingerPrint)res;
 }
 

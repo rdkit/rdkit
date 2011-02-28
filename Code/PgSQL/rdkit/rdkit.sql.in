@@ -16,10 +16,22 @@ RETURNS cstring
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION mol_recv(internal)
+RETURNS mol
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_send(mol)
+RETURNS bytea
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 CREATE TYPE mol (
         INTERNALLENGTH = -1,
         INPUT = mol_in,
         OUTPUT = mol_out,
+        RECEIVE = mol_recv,
+        SEND = mol_send,
         STORAGE = extended
 );
 
