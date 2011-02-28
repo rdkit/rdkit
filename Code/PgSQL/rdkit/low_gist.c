@@ -45,21 +45,21 @@ Datum gslfp_compress(PG_FUNCTION_ARGS);
 Datum
 gslfp_compress(PG_FUNCTION_ARGS)
 {
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY  *retval = entry;
+  GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+  GISTENTRY  *retval = entry;
 
-	if (entry->leafkey) {
-		MolSparseFingerPrint fp = constructMolSparseFingerPrint(DatumGetSparseFingerPrintP(entry->key));
+  if (entry->leafkey) {
+    MolSparseFingerPrint fp = constructMolSparseFingerPrint(DatumGetSparseFingerPrintP(entry->key));
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+    retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 
-		gistentryinit(*retval, PointerGetDatum(makeLowSparseFingerPrint(fp, NUMRANGE)),
-						entry->rel, entry->page,
-						entry->offset, FALSE);
-		freeMolSparseFingerPrint(fp);
-	}	
-		
-	PG_RETURN_POINTER(retval);
+    gistentryinit(*retval, PointerGetDatum(makeLowSparseFingerPrint(fp, NUMRANGE)),
+                  entry->rel, entry->page,
+                  entry->offset, FALSE);
+    freeMolSparseFingerPrint(fp);
+  }       
+                
+  PG_RETURN_POINTER(retval);
 }
 
 PG_FUNCTION_INFO_V1(gslfp_decompress);
@@ -67,37 +67,37 @@ Datum gslfp_decompress(PG_FUNCTION_ARGS);
 Datum
 gslfp_decompress(PG_FUNCTION_ARGS)
 {
-	GISTENTRY  	*entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	bytea 	*key =  (bytea*)DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+  GISTENTRY       *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+  bytea   *key =  (bytea*)DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 
-	if (key != (bytea *) DatumGetPointer(entry->key))
-	{
-		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+  if (key != (bytea *) DatumGetPointer(entry->key))
+    {
+      GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 
-		gistentryinit(*retval, PointerGetDatum(key),
-						entry->rel, entry->page,
-						entry->offset, FALSE);
+      gistentryinit(*retval, PointerGetDatum(key),
+                    entry->rel, entry->page,
+                    entry->offset, FALSE);
 
-		PG_RETURN_POINTER(retval);
-	}
+      PG_RETURN_POINTER(retval);
+    }
 
-	PG_RETURN_POINTER(entry);
+  PG_RETURN_POINTER(entry);
 }
 
 static void
 adjustKey(IntRange *s, IntRange *k)
 {
-	int j;
+  int j;
 
-	for(j=0;j<NUMRANGE;j++)
-	{
-		/* set minimal non-zero value */
-		if (k[j].low > 0 && (s[j].low == 0 || k[j].low < s[j].low))
-			s[j].low = k[j].low;
-		/* set maximum value */
-		if (k[j].high > s[j].high)
-			s[j].high = k[j].high;
-	}
+  for(j=0;j<NUMRANGE;j++)
+    {
+      /* set minimal non-zero value */
+      if (k[j].low > 0 && (s[j].low == 0 || k[j].low < s[j].low))
+        s[j].low = k[j].low;
+      /* set maximum value */
+      if (k[j].high > s[j].high)
+        s[j].high = k[j].high;
+    }
 }
 
 PG_FUNCTION_INFO_V1(gslfp_union);
@@ -105,28 +105,28 @@ Datum gslfp_union(PG_FUNCTION_ARGS);
 Datum
 gslfp_union(PG_FUNCTION_ARGS)
 {
-	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	int        *size = (int *) PG_GETARG_POINTER(1);
-	int4		i;
-	bytea	   	*result, *key;
-	IntRange 		*s, *k;
+  GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+  int        *size = (int *) PG_GETARG_POINTER(1);
+  int4            i;
+  bytea           *result, *key;
+  IntRange                *s, *k;
 
-	*size = VARHDRSZ + NUMRANGE * sizeof(IntRange);
-	result = palloc0(*size);
-	SET_VARSIZE(result, *size);
-	key = GETENTRY(entryvec, 0);
-	memcpy( VARDATA(result), VARDATA(key), NUMRANGE * sizeof(IntRange) );
+  *size = VARHDRSZ + NUMRANGE * sizeof(IntRange);
+  result = palloc0(*size);
+  SET_VARSIZE(result, *size);
+  key = GETENTRY(entryvec, 0);
+  memcpy( VARDATA(result), VARDATA(key), NUMRANGE * sizeof(IntRange) );
 
-	s = (IntRange *)VARDATA(result);
-	for (i = 1; i < entryvec->n; i++)
-	{
-		key = GETENTRY(entryvec, i);
-		k = (IntRange *)VARDATA(key);
+  s = (IntRange *)VARDATA(result);
+  for (i = 1; i < entryvec->n; i++)
+    {
+      key = GETENTRY(entryvec, i);
+      k = (IntRange *)VARDATA(key);
 
-		adjustKey(s, k);
-	}
+      adjustKey(s, k);
+    }
 
-	PG_RETURN_POINTER(result);
+  PG_RETURN_POINTER(result);
 }
 
 /*
@@ -138,66 +138,66 @@ Datum gslfp_same(PG_FUNCTION_ARGS);
 Datum
 gslfp_same(PG_FUNCTION_ARGS)
 {
-	bytea	*a = (bytea*)PG_GETARG_POINTER(0);
-	bytea 	*b = (bytea*)PG_GETARG_POINTER(1);
-	bool	*result = (bool *) PG_GETARG_POINTER(2);
+  bytea   *a = (bytea*)PG_GETARG_POINTER(0);
+  bytea   *b = (bytea*)PG_GETARG_POINTER(1);
+  bool    *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = (memcmp(VARDATA(a), VARDATA(b), VARSIZE(a) - VARHDRSZ) == 0) ? true : false;
+  *result = (memcmp(VARDATA(a), VARDATA(b), VARSIZE(a) - VARHDRSZ) == 0) ? true : false;
 
-	PG_RETURN_POINTER(result);
+  PG_RETURN_POINTER(result);
 }
 
 static uint32
 distance(bytea *a, bytea *b)
 {
-    int         i;
-	uint32		dist = 0;
-	IntRange 	*as = (IntRange *)VARDATA(a),
-			*bs = (IntRange *)VARDATA(b);
+  int         i;
+  uint32          dist = 0;
+  IntRange        *as = (IntRange *)VARDATA(a),
+    *bs = (IntRange *)VARDATA(b);
 
-	if (VARSIZE(a) != VARSIZE(b))
-		elog(ERROR, "All fingerprints should be the same length");
-	for(i=0;i<NUMRANGE;i++)
-	{
-		if (as[i].low > bs[i].low)
-			dist += as[i].low - bs[i].low; 
-		else if (as[i].low < bs[i].low)
-			dist += bs[i].low - as[i].low;
+  if (VARSIZE(a) != VARSIZE(b))
+    elog(ERROR, "All fingerprints should be the same length");
+  for(i=0;i<NUMRANGE;i++)
+    {
+      if (as[i].low > bs[i].low)
+        dist += as[i].low - bs[i].low; 
+      else if (as[i].low < bs[i].low)
+        dist += bs[i].low - as[i].low;
 
-		if (as[i].high > bs[i].high)
-			dist += as[i].high - bs[i].high; 
-		else if (as[i].high < bs[i].high)
-			dist += bs[i].high - as[i].high;
-	}
-	return dist;
+      if (as[i].high > bs[i].high)
+        dist += as[i].high - bs[i].high; 
+      else if (as[i].high < bs[i].high)
+        dist += bs[i].high - as[i].high;
+    }
+  return dist;
 }
 
 static uint32
 penalty(bytea *origval, bytea *newval)
 {
-    int         i;
-	uint32		dist = 0;
-	IntRange 	*as = (IntRange *)VARDATA(origval),
-			*bs = (IntRange *)VARDATA(newval);
+  int         i;
+  uint32          dist = 0;
+  IntRange        *as = (IntRange *)VARDATA(origval),
+    *bs = (IntRange *)VARDATA(newval);
 
-	if (VARSIZE(origval) != VARSIZE(newval))
-		elog(ERROR, "All fingerprints should be the same length");
+  if (VARSIZE(origval) != VARSIZE(newval))
+    elog(ERROR, "All fingerprints should be the same length");
 
-	for(i=0;i<NUMRANGE;i++) 
-	{
-		if ( bs[i].low > 0 )
-		{
-			if (as[i].low == 0)
-				dist += bs[i].low;
-			else if (bs[i].low < as[i].low) 
-				dist += as[i].low - bs[i].low;
-		}
+  for(i=0;i<NUMRANGE;i++) 
+    {
+      if ( bs[i].low > 0 )
+        {
+          if (as[i].low == 0)
+            dist += bs[i].low;
+          else if (bs[i].low < as[i].low) 
+            dist += as[i].low - bs[i].low;
+        }
 
-		if ( bs[i].high > as[i].high )
-			dist += bs[i].high - as[i].high;
-	}
+      if ( bs[i].high > as[i].high )
+        dist += bs[i].high - as[i].high;
+    }
 
-	return dist;
+  return dist;
 }
 
 PG_FUNCTION_INFO_V1(gslfp_penalty);
@@ -205,15 +205,15 @@ Datum gslfp_penalty(PG_FUNCTION_ARGS);
 Datum
 gslfp_penalty(PG_FUNCTION_ARGS)
 {
-    GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0); /* always ISSIGNKEY */
-	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
-	float      *p = (float *) PG_GETARG_POINTER(2);
-	bytea *origval = (bytea *) DatumGetPointer(origentry->key);
-	bytea *newval = (bytea *) DatumGetPointer(newentry->key);
+  GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0); /* always ISSIGNKEY */
+  GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+  float      *p = (float *) PG_GETARG_POINTER(2);
+  bytea *origval = (bytea *) DatumGetPointer(origentry->key);
+  bytea *newval = (bytea *) DatumGetPointer(newentry->key);
 
-	*p = (float)penalty(origval, newval);
+  *p = (float)penalty(origval, newval);
 
-	PG_RETURN_POINTER(p);
+  PG_RETURN_POINTER(p);
 }
 
 /*
@@ -224,20 +224,20 @@ gslfp_penalty(PG_FUNCTION_ARGS)
 
 typedef struct
 {
-	OffsetNumber pos;
-	uint32        cost;
+  OffsetNumber pos;
+  uint32        cost;
 } SPLITCOST;
 
 static int
 comparecost(const void *va, const void *vb)
 {
-	SPLITCOST  *a = (SPLITCOST *) va;
-	SPLITCOST  *b = (SPLITCOST *) vb;
+  SPLITCOST  *a = (SPLITCOST *) va;
+  SPLITCOST  *b = (SPLITCOST *) vb;
 
-	if (a->cost == b->cost)
-		return 0;
-	else
-		return (a->cost > b->cost) ? 1 : -1;
+  if (a->cost == b->cost)
+    return 0;
+  else
+    return (a->cost > b->cost) ? 1 : -1;
 }
 
 PG_FUNCTION_INFO_V1(gslfp_picksplit);
@@ -245,146 +245,146 @@ Datum gslfp_picksplit(PG_FUNCTION_ARGS);
 Datum
 gslfp_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
-	OffsetNumber k,
-				j;
-	bytea 			*datum_l,
-				*datum_r;
-	int4        size_alpha,
-				size_beta;
-	int4        size_waste,
-				waste = -1;
-	int4        nbytes;
-	OffsetNumber seed_1 = 0,
-				seed_2 = 0;
-	OffsetNumber *left,
-				*right;
-	OffsetNumber maxoff;
-	SPLITCOST  *costvector;
+  GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+  GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
+  OffsetNumber k,
+    j;
+  bytea                   *datum_l,
+    *datum_r;
+  int4        size_alpha,
+    size_beta;
+  int4        size_waste,
+    waste = -1;
+  int4        nbytes;
+  OffsetNumber seed_1 = 0,
+    seed_2 = 0;
+  OffsetNumber *left,
+    *right;
+  OffsetNumber maxoff;
+  SPLITCOST  *costvector;
 
-	maxoff = entryvec->n - 1;
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
-	v->spl_left = (OffsetNumber *) palloc(nbytes);
-	v->spl_right = (OffsetNumber *) palloc(nbytes);
+  maxoff = entryvec->n - 1;
+  nbytes = (maxoff + 2) * sizeof(OffsetNumber);
+  v->spl_left = (OffsetNumber *) palloc(nbytes);
+  v->spl_right = (OffsetNumber *) palloc(nbytes);
 
-   	for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k))
-	{
-		for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j))
-		{
-			size_waste = distance(GETENTRY(entryvec, j), GETENTRY(entryvec, k));
-			if (size_waste > waste)
-			{
-				waste = size_waste;
-				seed_1 = k;
-				seed_2 = j;
-			}
-		}
-	}
+  for (k = FirstOffsetNumber; k < maxoff; k = OffsetNumberNext(k))
+    {
+      for (j = OffsetNumberNext(k); j <= maxoff; j = OffsetNumberNext(j))
+        {
+          size_waste = distance(GETENTRY(entryvec, j), GETENTRY(entryvec, k));
+          if (size_waste > waste)
+            {
+              waste = size_waste;
+              seed_1 = k;
+              seed_2 = j;
+            }
+        }
+    }
 
-	left = v->spl_left;
-	v->spl_nleft = 0;
-	right = v->spl_right;
-	v->spl_nright = 0;
+  left = v->spl_left;
+  v->spl_nleft = 0;
+  right = v->spl_right;
+  v->spl_nright = 0;
 
-	if (waste == 0)
-	{
-		int len = VARHDRSZ + sizeof(IntRange)*NUMRANGE;
-		/* all entries are all the same */
+  if (waste == 0)
+    {
+      int len = VARHDRSZ + sizeof(IntRange)*NUMRANGE;
+      /* all entries are all the same */
 
-		for (k = FirstOffsetNumber; k <= maxoff; k = OffsetNumberNext(k))
-		{
-			if (k <= (maxoff - FirstOffsetNumber + 1) / 2)
-			{
-				v->spl_left[v->spl_nleft] = k;
-				v->spl_nleft++;
-			}
-			else
-			{
-				v->spl_right[v->spl_nright] = k;
-				v->spl_nright++;
-			}
-		}
+      for (k = FirstOffsetNumber; k <= maxoff; k = OffsetNumberNext(k))
+        {
+          if (k <= (maxoff - FirstOffsetNumber + 1) / 2)
+            {
+              v->spl_left[v->spl_nleft] = k;
+              v->spl_nleft++;
+            }
+          else
+            {
+              v->spl_right[v->spl_nright] = k;
+              v->spl_nright++;
+            }
+        }
 
-		datum_l = palloc(len);
-		memcpy(datum_l, GETENTRY(entryvec, FirstOffsetNumber), len);
-		v->spl_ldatum = PointerGetDatum(datum_l);
-		datum_r = palloc(len);
-		memcpy(datum_r, GETENTRY(entryvec, FirstOffsetNumber), len);
-		v->spl_rdatum = PointerGetDatum(datum_r);
+      datum_l = palloc(len);
+      memcpy(datum_l, GETENTRY(entryvec, FirstOffsetNumber), len);
+      v->spl_ldatum = PointerGetDatum(datum_l);
+      datum_r = palloc(len);
+      memcpy(datum_r, GETENTRY(entryvec, FirstOffsetNumber), len);
+      v->spl_rdatum = PointerGetDatum(datum_r);
 
-		Assert( v->spl_nleft + v->spl_nright == maxoff );
-		PG_RETURN_POINTER(v);
-	}
+      Assert( v->spl_nleft + v->spl_nright == maxoff );
+      PG_RETURN_POINTER(v);
+    }
 
-	if (seed_1 == 0 || seed_2 == 0)
-	{
-		seed_1 = 1;
-		seed_2 = 2;
-	}
+  if (seed_1 == 0 || seed_2 == 0)
+    {
+      seed_1 = 1;
+      seed_2 = 2;
+    }
 
-	/* form initial .. */
-	datum_l = palloc(sizeof(IntRange) * NUMRANGE + VARHDRSZ);
-	memcpy(datum_l , GETENTRY(entryvec, seed_1) , sizeof(IntRange) * NUMRANGE + VARHDRSZ);
-	datum_r = palloc(sizeof(IntRange) * NUMRANGE + VARHDRSZ);
-	memcpy(datum_r , GETENTRY(entryvec, seed_2) , sizeof(IntRange) * NUMRANGE + VARHDRSZ);
+  /* form initial .. */
+  datum_l = palloc(sizeof(IntRange) * NUMRANGE + VARHDRSZ);
+  memcpy(datum_l , GETENTRY(entryvec, seed_1) , sizeof(IntRange) * NUMRANGE + VARHDRSZ);
+  datum_r = palloc(sizeof(IntRange) * NUMRANGE + VARHDRSZ);
+  memcpy(datum_r , GETENTRY(entryvec, seed_2) , sizeof(IntRange) * NUMRANGE + VARHDRSZ);
 
-	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
-	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
-	{
-		costvector[j - 1].pos = j;
-		size_alpha = distance(datum_l, GETENTRY(entryvec, j));
-		size_beta  = distance(datum_r, GETENTRY(entryvec, j));
-		costvector[j - 1].cost = (size_alpha > size_beta) ? (size_alpha - size_beta) : (size_beta - size_alpha);
-	}
-	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
+  /* sort before ... */
+  costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+  for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
+    {
+      costvector[j - 1].pos = j;
+      size_alpha = distance(datum_l, GETENTRY(entryvec, j));
+      size_beta  = distance(datum_r, GETENTRY(entryvec, j));
+      costvector[j - 1].cost = (size_alpha > size_beta) ? (size_alpha - size_beta) : (size_beta - size_alpha);
+    }
+  qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
-	for (k = 0; k < maxoff; k++)
-	{
-		j = costvector[k].pos;
-		if (j == seed_1)
-		{
-			*left++ = j;
-			v->spl_nleft++;
-			continue;
-		}
-		else if (j == seed_2)
-		{
-			*right++ = j;
-			v->spl_nright++;
-			continue;
-		}
+  for (k = 0; k < maxoff; k++)
+    {
+      j = costvector[k].pos;
+      if (j == seed_1)
+        {
+          *left++ = j;
+          v->spl_nleft++;
+          continue;
+        }
+      else if (j == seed_2)
+        {
+          *right++ = j;
+          v->spl_nright++;
+          continue;
+        }
 
-		size_alpha = distance(GETENTRY(entryvec, j), datum_l);
-		size_beta =  distance(GETENTRY(entryvec, j), datum_r);
+      size_alpha = distance(GETENTRY(entryvec, j), datum_l);
+      size_beta =  distance(GETENTRY(entryvec, j), datum_r);
 
-		if (size_alpha < size_beta + WISH_F(v->spl_nleft, v->spl_nright, 0.01))
-		{
-			IntRange 	*as = (IntRange *)VARDATA(datum_l),
-					*bs = (IntRange *)VARDATA(GETENTRY(entryvec, j));
+      if (size_alpha < size_beta + WISH_F(v->spl_nleft, v->spl_nright, 0.01))
+        {
+          IntRange        *as = (IntRange *)VARDATA(datum_l),
+            *bs = (IntRange *)VARDATA(GETENTRY(entryvec, j));
 
-			adjustKey(as, bs);
-			*left++ = j;
-			v->spl_nleft++;
-		}
-		else
-		{
-			IntRange 	*as = (IntRange *)VARDATA(datum_r),
-					*bs = (IntRange *)VARDATA(GETENTRY(entryvec, j));
+          adjustKey(as, bs);
+          *left++ = j;
+          v->spl_nleft++;
+        }
+      else
+        {
+          IntRange        *as = (IntRange *)VARDATA(datum_r),
+            *bs = (IntRange *)VARDATA(GETENTRY(entryvec, j));
 
-			adjustKey(as, bs);
-			*right++ = j;
-			v->spl_nright++;
-		}
-	}
-	*right = *left = FirstOffsetNumber;
-	v->spl_ldatum = PointerGetDatum(datum_l);
-	v->spl_rdatum = PointerGetDatum(datum_r);
+          adjustKey(as, bs);
+          *right++ = j;
+          v->spl_nright++;
+        }
+    }
+  *right = *left = FirstOffsetNumber;
+  v->spl_ldatum = PointerGetDatum(datum_l);
+  v->spl_rdatum = PointerGetDatum(datum_r);
 
-	Assert( v->spl_nleft + v->spl_nright == maxoff );
+  Assert( v->spl_nleft + v->spl_nright == maxoff );
 
-	PG_RETURN_POINTER(v);
+  PG_RETURN_POINTER(v);
 }
 
 /*
@@ -397,38 +397,38 @@ Datum gslfp_consistent(PG_FUNCTION_ARGS);
 Datum
 gslfp_consistent(PG_FUNCTION_ARGS)
 {
-	GISTENTRY		*entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	StrategyNumber 	strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-	bool       		*recheck = (bool *) PG_GETARG_POINTER(4);
-	bytea			*key = (bytea*)DatumGetPointer(entry->key);
-	MolSparseFingerPrint data;
-	int querySum,
-		keySum,
-		overlapUp,
-		overlapDown;
+  GISTENTRY               *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+  StrategyNumber  strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+  bool                    *recheck = (bool *) PG_GETARG_POINTER(4);
+  bytea                   *key = (bytea*)DatumGetPointer(entry->key);
+  MolSparseFingerPrint data;
+  int querySum,
+    keySum,
+    overlapUp,
+    overlapDown;
 
-	fcinfo->flinfo->fn_extra = SearchSparseFPCache(
-									fcinfo->flinfo->fn_extra,
-									fcinfo->flinfo->fn_mcxt,
-									PG_GETARG_DATUM(1), 
-									NULL, &data, NULL);
+  fcinfo->flinfo->fn_extra = SearchSparseFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(1), 
+                                                 NULL, &data, NULL);
 
-	*recheck = true; /* we use signature, so it's needed to recheck */
+  *recheck = true; /* we use signature, so it's needed to recheck */
 
-	countLowOverlapValues(
-		key, data, NUMRANGE,
-		&querySum, &keySum, &overlapUp, &overlapDown
-	);
+  countLowOverlapValues(
+                        key, data, NUMRANGE,
+                        &querySum, &keySum, &overlapUp, &overlapDown
+                        );
 
-	PG_RETURN_BOOL(
-		calcConsistency(
-			GIST_LEAF(entry), strategy,
-			overlapUp, /* nCommonUp */
-			overlapDown, /* nCommonDown */
-			keySum,  /* nKey */
-			querySum /* nQuery */
-		)
-	);
+  PG_RETURN_BOOL(
+                 calcConsistency(
+                                 GIST_LEAF(entry), strategy,
+                                 overlapUp, /* nCommonUp */
+                                 overlapDown, /* nCommonDown */
+                                 keySum,  /* nKey */
+                                 querySum /* nQuery */
+                                 )
+                 );
 }
 
 

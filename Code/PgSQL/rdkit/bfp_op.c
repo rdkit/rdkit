@@ -34,42 +34,42 @@
 
 static int 
 bfpcmp(BitmapFingerPrint *a, BitmapFingerPrint *b) {
-	int res;
+  int res;
 
-	res = memcmp(VARDATA(a), VARDATA(b), Min(VARSIZE(a), VARSIZE(b)) - VARHDRSZ);
-	if ( res )
-		return res;
+  res = memcmp(VARDATA(a), VARDATA(b), Min(VARSIZE(a), VARSIZE(b)) - VARHDRSZ);
+  if ( res )
+    return res;
 
-	if (VARSIZE(a) == VARSIZE(b))
-		return 0;
-	return (VARSIZE(a) > VARSIZE(b)) ? 1 : -1; 
+  if (VARSIZE(a) == VARSIZE(b))
+    return 0;
+  return (VARSIZE(a) > VARSIZE(b)) ? 1 : -1; 
 }
 
 
-#define bfpCMPFUNC( type, action, ret )         	       	\
-PG_FUNCTION_INFO_V1(bfp_##type);                	       	\
-Datum		bfp_##type(PG_FUNCTION_ARGS); 	   		    	\
-Datum                                                   	\
-bfp_##type(PG_FUNCTION_ARGS)                       			\
-{                                                       	\
-    BitmapFingerPrint    *a, *b;							\
-	int		res;											\
-															\
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(		\
-								fcinfo->flinfo->fn_extra,	\
-								fcinfo->flinfo->fn_mcxt,	\
-								PG_GETARG_DATUM(0), 		\
-								&a, NULL, NULL);			\
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(		\
-								fcinfo->flinfo->fn_extra,	\
-								fcinfo->flinfo->fn_mcxt,	\
-								PG_GETARG_DATUM(1), 		\
-								&b, NULL, NULL);			\
-    res = bfpcmp(a, b); 		                       		\
-    PG_RETURN_##ret( res action 0 );                    	\
-}   \
-/* keep compiler quiet - no extra ; */                  	\
-extern int no_such_variable
+#define bfpCMPFUNC( type, action, ret )                                 \
+  PG_FUNCTION_INFO_V1(bfp_##type);                                      \
+  Datum           bfp_##type(PG_FUNCTION_ARGS);                         \
+  Datum                                                                 \
+  bfp_##type(PG_FUNCTION_ARGS)                                          \
+  {                                                                     \
+    BitmapFingerPrint    *a, *b;                                        \
+    int             res;                                                \
+                                                                        \
+    fcinfo->flinfo->fn_extra = SearchBitmapFPCache(                     \
+                                                   fcinfo->flinfo->fn_extra, \
+                                                   fcinfo->flinfo->fn_mcxt, \
+                                                   PG_GETARG_DATUM(0),  \
+                                                   &a, NULL, NULL);     \
+    fcinfo->flinfo->fn_extra = SearchBitmapFPCache(                     \
+                                                   fcinfo->flinfo->fn_extra, \
+                                                   fcinfo->flinfo->fn_mcxt, \
+                                                   PG_GETARG_DATUM(1),  \
+                                                   &b, NULL, NULL);     \
+    res = bfpcmp(a, b);                                                 \
+    PG_RETURN_##ret( res action 0 );                                    \
+  }                                                                     \
+  /* keep compiler quiet - no extra ; */                                \
+  extern int no_such_variable
 
 bfpCMPFUNC(lt, <, BOOL);
 bfpCMPFUNC(le, <=, BOOL);
@@ -80,154 +80,154 @@ bfpCMPFUNC(ne, !=, BOOL);
 bfpCMPFUNC(cmp, +, INT32);
 
 PG_FUNCTION_INFO_V1(bfp_tanimoto_sml);
-Datum		bfp_tanimoto_sml(PG_FUNCTION_ARGS);
+Datum           bfp_tanimoto_sml(PG_FUNCTION_ARGS);
 Datum
 bfp_tanimoto_sml(PG_FUNCTION_ARGS) {
-	MolBitmapFingerPrint 	abfp,
-					bbfp;
-	double 			res;
+  MolBitmapFingerPrint    abfp,
+    bbfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &abfp, NULL);
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &bbfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0), 
+                                                 NULL, &abfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(1), 
+                                                 NULL, &bbfp, NULL);
 
-	res = calcBitmapTanimotoSml(abfp, bbfp); 
+  res = calcBitmapTanimotoSml(abfp, bbfp); 
 
-	PG_RETURN_FLOAT8(res);		
+  PG_RETURN_FLOAT8(res);          
 }
 
 PG_FUNCTION_INFO_V1(bfp_tanimoto_sml_op);
-Datum		bfp_tanimoto_sml_op(PG_FUNCTION_ARGS);
+Datum           bfp_tanimoto_sml_op(PG_FUNCTION_ARGS);
 Datum
 bfp_tanimoto_sml_op(PG_FUNCTION_ARGS) {
-	MolBitmapFingerPrint 	abfp,
-					bbfp;
-	double 			res;
+  MolBitmapFingerPrint    abfp,
+    bbfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &abfp, NULL);
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &bbfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0), 
+                                                 NULL, &abfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(1), 
+                                                 NULL, &bbfp, NULL);
 
-	res = calcBitmapTanimotoSml(abfp, bbfp); 
-	PG_RETURN_BOOL( res >= getTanimotoLimit() );
+  res = calcBitmapTanimotoSml(abfp, bbfp); 
+  PG_RETURN_BOOL( res >= getTanimotoLimit() );
 }
 
 PG_FUNCTION_INFO_V1(bfp_dice_sml);
-Datum		bfp_dice_sml(PG_FUNCTION_ARGS);
+Datum           bfp_dice_sml(PG_FUNCTION_ARGS);
 Datum
 bfp_dice_sml(PG_FUNCTION_ARGS) {
-	MolBitmapFingerPrint 	abfp,
-					bbfp;
-	double 			res;
+  MolBitmapFingerPrint    abfp,
+    bbfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &abfp, NULL);
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &bbfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0), 
+                                                 NULL, &abfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(1), 
+                                                 NULL, &bbfp, NULL);
 
-	res = calcBitmapDiceSml(abfp, bbfp); 
+  res = calcBitmapDiceSml(abfp, bbfp); 
 
-	PG_RETURN_FLOAT8(res);		
+  PG_RETURN_FLOAT8(res);          
 }
 
 PG_FUNCTION_INFO_V1(bfp_dice_sml_op);
-Datum		bfp_dice_sml_op(PG_FUNCTION_ARGS);
+Datum           bfp_dice_sml_op(PG_FUNCTION_ARGS);
 Datum
 bfp_dice_sml_op(PG_FUNCTION_ARGS) {
-	MolBitmapFingerPrint 	abfp,
-					bbfp;
-	double 			res;
+  MolBitmapFingerPrint    abfp,
+    bbfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &abfp, NULL);
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &bbfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0), 
+                                                 NULL, &abfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(1), 
+                                                 NULL, &bbfp, NULL);
 
-	res = calcBitmapDiceSml(abfp, bbfp); 
-	PG_RETURN_BOOL( res >= getDiceLimit() );
+  res = calcBitmapDiceSml(abfp, bbfp); 
+  PG_RETURN_BOOL( res >= getDiceLimit() );
 }
 
 PG_FUNCTION_INFO_V1(bfp_size);
-Datum		bfp_size(PG_FUNCTION_ARGS);
+Datum           bfp_size(PG_FUNCTION_ARGS);
 Datum
 bfp_size(PG_FUNCTION_ARGS) {
-	MolBitmapFingerPrint	bfp;
+  MolBitmapFingerPrint    bfp;
 
-	fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0), 
+                                                 NULL, &bfp, NULL);
 
-	PG_RETURN_INT32(MolBitmapFingerPrintSize(bfp));
+  PG_RETURN_INT32(MolBitmapFingerPrintSize(bfp));
 }
 
 PG_FUNCTION_INFO_V1(layered_fp);
 Datum       layered_fp(PG_FUNCTION_ARGS);
 Datum
 layered_fp(PG_FUNCTION_ARGS) {
-    CROMol  mol;
-	MolBitmapFingerPrint	fp;
-	BitmapFingerPrint		*sfp;
+  CROMol  mol;
+  MolBitmapFingerPrint    fp;
+  BitmapFingerPrint               *sfp;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-										fcinfo->flinfo->fn_extra,
-										fcinfo->flinfo->fn_mcxt,
-										PG_GETARG_DATUM(0),
-										NULL, &mol, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
 
-	fp = makeLayeredBFP(mol);
-	sfp = deconstructMolBitmapFingerPrint(fp);
-	freeMolBitmapFingerPrint(fp);
+  fp = makeLayeredBFP(mol);
+  sfp = deconstructMolBitmapFingerPrint(fp);
+  freeMolBitmapFingerPrint(fp);
 
-	PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+  PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 
 PG_FUNCTION_INFO_V1(rdkit_fp);
 Datum       rdkit_fp(PG_FUNCTION_ARGS);
 Datum
 rdkit_fp(PG_FUNCTION_ARGS) {
-    CROMol  mol;
-	MolBitmapFingerPrint	fp;
-	BitmapFingerPrint		*sfp;
+  CROMol  mol;
+  MolBitmapFingerPrint    fp;
+  BitmapFingerPrint               *sfp;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-										fcinfo->flinfo->fn_extra,
-										fcinfo->flinfo->fn_mcxt,
-										PG_GETARG_DATUM(0),
-										NULL, &mol, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
 
-	fp = makeRDKitBFP(mol);
-	sfp = deconstructMolBitmapFingerPrint(fp);
-	freeMolBitmapFingerPrint(fp);
+  fp = makeRDKitBFP(mol);
+  sfp = deconstructMolBitmapFingerPrint(fp);
+  freeMolBitmapFingerPrint(fp);
 
-	PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+  PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 
 
@@ -235,80 +235,80 @@ PG_FUNCTION_INFO_V1(morganbv_fp);
 Datum       morganbv_fp(PG_FUNCTION_ARGS);
 Datum
 morganbv_fp(PG_FUNCTION_ARGS) {
-    CROMol  mol;
-	MolBitmapFingerPrint	fp;
-	BitmapFingerPrint		*sfp;
+  CROMol  mol;
+  MolBitmapFingerPrint    fp;
+  BitmapFingerPrint               *sfp;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-										fcinfo->flinfo->fn_extra,
-										fcinfo->flinfo->fn_mcxt,
-										PG_GETARG_DATUM(0),
-										NULL, &mol, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
 
-	fp = makeMorganBFP(mol, PG_GETARG_INT32(1) /* radius */ );
-	sfp = deconstructMolBitmapFingerPrint(fp);
-	freeMolBitmapFingerPrint(fp);
+  fp = makeMorganBFP(mol, PG_GETARG_INT32(1) /* radius */ );
+  sfp = deconstructMolBitmapFingerPrint(fp);
+  freeMolBitmapFingerPrint(fp);
 
-	PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+  PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 PG_FUNCTION_INFO_V1(featmorganbv_fp);
 Datum       featmorganbv_fp(PG_FUNCTION_ARGS);
 Datum
 featmorganbv_fp(PG_FUNCTION_ARGS) {
-    CROMol  mol;
-	MolBitmapFingerPrint	fp;
-	BitmapFingerPrint		*sfp;
+  CROMol  mol;
+  MolBitmapFingerPrint    fp;
+  BitmapFingerPrint               *sfp;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-										fcinfo->flinfo->fn_extra,
-										fcinfo->flinfo->fn_mcxt,
-										PG_GETARG_DATUM(0),
-										NULL, &mol, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
 
-	fp = makeFeatMorganBFP(mol, PG_GETARG_INT32(1) /* radius */ );
-	sfp = deconstructMolBitmapFingerPrint(fp);
-	freeMolBitmapFingerPrint(fp);
+  fp = makeFeatMorganBFP(mol, PG_GETARG_INT32(1) /* radius */ );
+  sfp = deconstructMolBitmapFingerPrint(fp);
+  freeMolBitmapFingerPrint(fp);
 
-	PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+  PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 PG_FUNCTION_INFO_V1(atompairbv_fp);
 Datum       atompairbv_fp(PG_FUNCTION_ARGS);
 Datum
 atompairbv_fp(PG_FUNCTION_ARGS) {
-    CROMol  mol;
-	MolBitmapFingerPrint	fp;
-	BitmapFingerPrint		*sfp;
+  CROMol  mol;
+  MolBitmapFingerPrint    fp;
+  BitmapFingerPrint               *sfp;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-										fcinfo->flinfo->fn_extra,
-										fcinfo->flinfo->fn_mcxt,
-										PG_GETARG_DATUM(0),
-										NULL, &mol, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
 
-	fp = makeAtomPairBFP(mol);
-	sfp = deconstructMolBitmapFingerPrint(fp);
-	freeMolBitmapFingerPrint(fp);
+  fp = makeAtomPairBFP(mol);
+  sfp = deconstructMolBitmapFingerPrint(fp);
+  freeMolBitmapFingerPrint(fp);
 
-	PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+  PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 PG_FUNCTION_INFO_V1(torsionbv_fp);
 Datum       torsionbv_fp(PG_FUNCTION_ARGS);
 Datum
 torsionbv_fp(PG_FUNCTION_ARGS) {
-    CROMol  mol;
-	MolBitmapFingerPrint	fp;
-	BitmapFingerPrint		*sfp;
+  CROMol  mol;
+  MolBitmapFingerPrint    fp;
+  BitmapFingerPrint               *sfp;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-										fcinfo->flinfo->fn_extra,
-										fcinfo->flinfo->fn_mcxt,
-										PG_GETARG_DATUM(0),
-										NULL, &mol, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
 
-	fp = makeTopologicalTorsionBFP(mol);
-	sfp = deconstructMolBitmapFingerPrint(fp);
-	freeMolBitmapFingerPrint(fp);
+  fp = makeTopologicalTorsionBFP(mol);
+  sfp = deconstructMolBitmapFingerPrint(fp);
+  freeMolBitmapFingerPrint(fp);
 
-	PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+  PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
 

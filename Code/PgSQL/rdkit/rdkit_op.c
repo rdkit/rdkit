@@ -35,42 +35,42 @@
 /***************** Mol operations ***********************/
 static int 
 molcmp(Mol *a, Mol *b) {
-	int res;
+  int res;
 
-	res = memcmp(VARDATA(a), VARDATA(b), Min(VARSIZE(a), VARSIZE(b)) - VARHDRSZ);
-	if ( res )
-		return res;
+  res = memcmp(VARDATA(a), VARDATA(b), Min(VARSIZE(a), VARSIZE(b)) - VARHDRSZ);
+  if ( res )
+    return res;
 
-	if (VARSIZE(a) == VARSIZE(b))
-		return 0;
-	return (VARSIZE(a) > VARSIZE(b)) ? 1 : -1; 
+  if (VARSIZE(a) == VARSIZE(b))
+    return 0;
+  return (VARSIZE(a) > VARSIZE(b)) ? 1 : -1; 
 }
 
 
-#define MOLCMPFUNC( type, action, ret )                 	\
-PG_FUNCTION_INFO_V1(mol_##type);                        	\
-Datum		mol_##type(PG_FUNCTION_ARGS);           		\
-Datum                                                   	\
-mol_##type(PG_FUNCTION_ARGS)                       			\
-{                                                       	\
-    Mol    *a, *b;											\
-	int		res;											\
-															\
-	fcinfo->flinfo->fn_extra = SearchMolCache(				\
-								fcinfo->flinfo->fn_extra,	\
-								fcinfo->flinfo->fn_mcxt,	\
-								PG_GETARG_DATUM(0), 		\
-								&a, NULL, NULL, NULL);		\
-	fcinfo->flinfo->fn_extra = SearchMolCache(				\
-								fcinfo->flinfo->fn_extra,	\
-								fcinfo->flinfo->fn_mcxt,	\
-								PG_GETARG_DATUM(1), 		\
-								&b, NULL, NULL, NULL);		\
-    res = molcmp(a, b);                         			\
-    PG_RETURN_##ret( res action 0 );                    	\
-}   \
-/* keep compiler quiet - no extra ; */                  	\
-extern int no_such_variable
+#define MOLCMPFUNC( type, action, ret )                                 \
+  PG_FUNCTION_INFO_V1(mol_##type);                                      \
+  Datum           mol_##type(PG_FUNCTION_ARGS);                         \
+  Datum                                                                 \
+  mol_##type(PG_FUNCTION_ARGS)                                          \
+  {                                                                     \
+    Mol    *a, *b;                                                      \
+    int             res;                                                \
+                                                                        \
+    fcinfo->flinfo->fn_extra = SearchMolCache(                          \
+                                              fcinfo->flinfo->fn_extra, \
+                                              fcinfo->flinfo->fn_mcxt,  \
+                                              PG_GETARG_DATUM(0),       \
+                                              &a, NULL, NULL, NULL);    \
+    fcinfo->flinfo->fn_extra = SearchMolCache(                          \
+                                              fcinfo->flinfo->fn_extra, \
+                                              fcinfo->flinfo->fn_mcxt,  \
+                                              PG_GETARG_DATUM(1),       \
+                                              &b, NULL, NULL, NULL);    \
+    res = molcmp(a, b);                                                 \
+    PG_RETURN_##ret( res action 0 );                                    \
+  }                                                                     \
+  /* keep compiler quiet - no extra ; */                                \
+  extern int no_such_variable
 
 MOLCMPFUNC(lt, <, BOOL);
 MOLCMPFUNC(le, <=, BOOL);
@@ -84,139 +84,139 @@ MOLCMPFUNC(cmp, +, INT32);
 
 
 PG_FUNCTION_INFO_V1(mol_tanimoto_sml);
-Datum		mol_tanimoto_sml(PG_FUNCTION_ARGS);
+Datum           mol_tanimoto_sml(PG_FUNCTION_ARGS);
 Datum
 mol_tanimoto_sml(PG_FUNCTION_ARGS) {
-	MolFingerPrint 	afp,
-					bfp;
-	double 			res;
+  MolFingerPrint  afp,
+    bfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, NULL, &afp, NULL);
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, NULL, &afp, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, NULL, &bfp, NULL);
 
-	res = calcTanimotoSml(afp, bfp); 
+  res = calcTanimotoSml(afp, bfp); 
 
-	PG_RETURN_FLOAT8(res);		
+  PG_RETURN_FLOAT8(res);          
 }
 
 PG_FUNCTION_INFO_V1(mol_tanimoto_sml_op);
-Datum		mol_tanimoto_sml_op(PG_FUNCTION_ARGS);
+Datum           mol_tanimoto_sml_op(PG_FUNCTION_ARGS);
 Datum
 mol_tanimoto_sml_op(PG_FUNCTION_ARGS) {
-	MolFingerPrint 	afp,
-					bfp;
-	double 			res;
+  MolFingerPrint  afp,
+    bfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, NULL, &afp, NULL);
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, NULL, &afp, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, NULL, &bfp, NULL);
 
-	res = calcTanimotoSml(afp, bfp); 
-	PG_RETURN_BOOL( res >= getTanimotoLimit() );
+  res = calcTanimotoSml(afp, bfp); 
+  PG_RETURN_BOOL( res >= getTanimotoLimit() );
 }
 
 PG_FUNCTION_INFO_V1(mol_dice_sml);
-Datum		mol_dice_sml(PG_FUNCTION_ARGS);
+Datum           mol_dice_sml(PG_FUNCTION_ARGS);
 Datum
 mol_dice_sml(PG_FUNCTION_ARGS) {
-	MolFingerPrint 	afp,
-					bfp;
-	double 			res;
+  MolFingerPrint  afp,
+    bfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, NULL, &afp, NULL);
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, NULL, &afp, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, NULL, &bfp, NULL);
 
-	res = calcDiceSml(afp, bfp); 
+  res = calcDiceSml(afp, bfp); 
 
-	PG_RETURN_FLOAT8(res);		
+  PG_RETURN_FLOAT8(res);          
 }
 
 PG_FUNCTION_INFO_V1(mol_dice_sml_op);
-Datum		mol_dice_sml_op(PG_FUNCTION_ARGS);
+Datum           mol_dice_sml_op(PG_FUNCTION_ARGS);
 Datum
 mol_dice_sml_op(PG_FUNCTION_ARGS) {
-	MolFingerPrint 	afp,
-					bfp;
-	double 			res;
+  MolFingerPrint  afp,
+    bfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, NULL, &afp, NULL);
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, NULL, &afp, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, NULL, &bfp, NULL);
 
-	res = calcDiceSml(afp, bfp); 
-	PG_RETURN_BOOL( res >= getDiceLimit() );
+  res = calcDiceSml(afp, bfp); 
+  PG_RETURN_BOOL( res >= getDiceLimit() );
 }
 
 /***************** Fingerprint operations ***********************/
 
 static int 
 fpcmp(FingerPrint *a, FingerPrint *b) {
-	int res;
+  int res;
 
-	res = memcmp(VARDATA(a), VARDATA(b), Min(VARSIZE(a), VARSIZE(b)) - VARHDRSZ);
-	if ( res )
-		return res;
+  res = memcmp(VARDATA(a), VARDATA(b), Min(VARSIZE(a), VARSIZE(b)) - VARHDRSZ);
+  if ( res )
+    return res;
 
-	if (VARSIZE(a) == VARSIZE(b))
-		return 0;
-	return (VARSIZE(a) > VARSIZE(b)) ? 1 : -1; 
+  if (VARSIZE(a) == VARSIZE(b))
+    return 0;
+  return (VARSIZE(a) > VARSIZE(b)) ? 1 : -1; 
 }
 
 
-#define FPCMPFUNC( type, action, ret )         	        	\
-PG_FUNCTION_INFO_V1(fp_##type);                	        	\
-Datum		fp_##type(PG_FUNCTION_ARGS); 	   		    	\
-Datum                                                   	\
-fp_##type(PG_FUNCTION_ARGS)                       			\
-{                                                       	\
-    FingerPrint    *a, *b;									\
-	int		res;											\
-															\
-	fcinfo->flinfo->fn_extra = SearchFPCache(				\
-								fcinfo->flinfo->fn_extra,	\
-								fcinfo->flinfo->fn_mcxt,	\
-								PG_GETARG_DATUM(0), 		\
-								&a, NULL, NULL);			\
-	fcinfo->flinfo->fn_extra = SearchFPCache(				\
-								fcinfo->flinfo->fn_extra,	\
-								fcinfo->flinfo->fn_mcxt,	\
-								PG_GETARG_DATUM(1), 		\
-								&b, NULL, NULL);			\
-    res = fpcmp(a, b); 		                        		\
-    PG_RETURN_##ret( res action 0 );                    	\
-}   \
-/* keep compiler quiet - no extra ; */                  	\
-extern int no_such_variable
+#define FPCMPFUNC( type, action, ret )                                  \
+  PG_FUNCTION_INFO_V1(fp_##type);                                       \
+  Datum           fp_##type(PG_FUNCTION_ARGS);                          \
+  Datum                                                                 \
+  fp_##type(PG_FUNCTION_ARGS)                                           \
+  {                                                                     \
+    FingerPrint    *a, *b;                                              \
+    int             res;                                                \
+                                                                        \
+    fcinfo->flinfo->fn_extra = SearchFPCache(                           \
+                                             fcinfo->flinfo->fn_extra,  \
+                                             fcinfo->flinfo->fn_mcxt,   \
+                                             PG_GETARG_DATUM(0),        \
+                                             &a, NULL, NULL);           \
+    fcinfo->flinfo->fn_extra = SearchFPCache(                           \
+                                             fcinfo->flinfo->fn_extra,  \
+                                             fcinfo->flinfo->fn_mcxt,   \
+                                             PG_GETARG_DATUM(1),        \
+                                             &b, NULL, NULL);           \
+    res = fpcmp(a, b);                                                  \
+    PG_RETURN_##ret( res action 0 );                                    \
+  }                                                                     \
+  /* keep compiler quiet - no extra ; */                                \
+  extern int no_such_variable
 
 FPCMPFUNC(lt, <, BOOL);
 FPCMPFUNC(le, <=, BOOL);
@@ -227,153 +227,153 @@ FPCMPFUNC(ne, !=, BOOL);
 FPCMPFUNC(cmp, +, INT32);
 
 PG_FUNCTION_INFO_V1(fp_tanimoto_sml);
-Datum		fp_tanimoto_sml(PG_FUNCTION_ARGS);
+Datum           fp_tanimoto_sml(PG_FUNCTION_ARGS);
 Datum
 fp_tanimoto_sml(PG_FUNCTION_ARGS) {
-	MolFingerPrint 	afp,
-					bfp;
-	double 			res;
+  MolFingerPrint  afp,
+    bfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &afp, NULL);
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(0), 
+                                           NULL, &afp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(1), 
+                                           NULL, &bfp, NULL);
 
-	res = calcTanimotoSml(afp, bfp); 
+  res = calcTanimotoSml(afp, bfp); 
 
-	PG_RETURN_FLOAT8(res);		
+  PG_RETURN_FLOAT8(res);          
 }
 
 PG_FUNCTION_INFO_V1(fp_tanimoto_sml_op);
-Datum		fp_tanimoto_sml_op(PG_FUNCTION_ARGS);
+Datum           fp_tanimoto_sml_op(PG_FUNCTION_ARGS);
 Datum
 fp_tanimoto_sml_op(PG_FUNCTION_ARGS) {
-	MolFingerPrint 	afp,
-					bfp;
-	double 			res;
+  MolFingerPrint  afp,
+    bfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &afp, NULL);
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(0), 
+                                           NULL, &afp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(1), 
+                                           NULL, &bfp, NULL);
 
-	res = calcTanimotoSml(afp, bfp); 
-	PG_RETURN_BOOL( res >= getTanimotoLimit() );
+  res = calcTanimotoSml(afp, bfp); 
+  PG_RETURN_BOOL( res >= getTanimotoLimit() );
 }
 
 PG_FUNCTION_INFO_V1(fp_dice_sml);
-Datum		fp_dice_sml(PG_FUNCTION_ARGS);
+Datum           fp_dice_sml(PG_FUNCTION_ARGS);
 Datum
 fp_dice_sml(PG_FUNCTION_ARGS) {
-	MolFingerPrint 	afp,
-					bfp;
-	double 			res;
+  MolFingerPrint  afp,
+    bfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &afp, NULL);
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(0), 
+                                           NULL, &afp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(1), 
+                                           NULL, &bfp, NULL);
 
-	res = calcDiceSml(afp, bfp); 
+  res = calcDiceSml(afp, bfp); 
 
-	PG_RETURN_FLOAT8(res);		
+  PG_RETURN_FLOAT8(res);          
 }
 
 PG_FUNCTION_INFO_V1(fp_dice_sml_op);
-Datum		fp_dice_sml_op(PG_FUNCTION_ARGS);
+Datum           fp_dice_sml_op(PG_FUNCTION_ARGS);
 Datum
 fp_dice_sml_op(PG_FUNCTION_ARGS) {
-	MolFingerPrint 	afp,
-					bfp;
-	double 			res;
+  MolFingerPrint  afp,
+    bfp;
+  double                  res;
 
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &afp, NULL);
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &bfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(0), 
+                                           NULL, &afp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(1), 
+                                           NULL, &bfp, NULL);
 
-	res = calcDiceSml(afp, bfp); 
-	PG_RETURN_BOOL( res >= getDiceLimit() );
+  res = calcDiceSml(afp, bfp); 
+  PG_RETURN_BOOL( res >= getDiceLimit() );
 }
 
 PG_FUNCTION_INFO_V1(fp_size);
-Datum		fp_size(PG_FUNCTION_ARGS);
+Datum           fp_size(PG_FUNCTION_ARGS);
 Datum
 fp_size(PG_FUNCTION_ARGS) {
-	MolFingerPrint	fp;
+  MolFingerPrint  fp;
 
-	fcinfo->flinfo->fn_extra = SearchFPCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &fp, NULL);
+  fcinfo->flinfo->fn_extra = SearchFPCache(
+                                           fcinfo->flinfo->fn_extra,
+                                           fcinfo->flinfo->fn_mcxt,
+                                           PG_GETARG_DATUM(0), 
+                                           NULL, &fp, NULL);
 
-	PG_RETURN_INT32(MolFingerPrintSize(fp));
+  PG_RETURN_INT32(MolFingerPrintSize(fp));
 }
 
 PG_FUNCTION_INFO_V1(mol_substruct);
-Datum		mol_substruct(PG_FUNCTION_ARGS);
+Datum           mol_substruct(PG_FUNCTION_ARGS);
 Datum
 mol_substruct(PG_FUNCTION_ARGS) {
-	CROMol 	i,
-			a;
+  CROMol  i,
+    a;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &i, NULL, NULL);
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &a, NULL, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &i, NULL, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, &a, NULL, NULL);
 
-	PG_RETURN_BOOL(MolSubstruct(i, a));		
+  PG_RETURN_BOOL(MolSubstruct(i, a));             
 }
 
 PG_FUNCTION_INFO_V1(mol_rsubstruct);
-Datum		mol_rsubstruct(PG_FUNCTION_ARGS);
+Datum           mol_rsubstruct(PG_FUNCTION_ARGS);
 Datum
 mol_rsubstruct(PG_FUNCTION_ARGS) {
-	CROMol 	i,
-			a;
+  CROMol  i,
+    a;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &a, NULL, NULL);
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &i, NULL, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &a, NULL, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, &i, NULL, NULL);
 
-	PG_RETURN_BOOL(MolSubstruct(i, a));		
+  PG_RETURN_BOOL(MolSubstruct(i, a));             
 }
 

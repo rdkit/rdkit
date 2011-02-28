@@ -42,82 +42,82 @@ static bool rdkit_guc_inited = false;
 static bool
 TanimotoLimitAssign(double nlimit, bool doit, GucSource source)
 {
-	if (nlimit < 0 || nlimit > 1.0)
-		return false;
+  if (nlimit < 0 || nlimit > 1.0)
+    return false;
 
-	if (doit)
-		rdkit_tanimoto_smlar_limit = nlimit;
+  if (doit)
+    rdkit_tanimoto_smlar_limit = nlimit;
 
-	return true;
+  return true;
 }
 
 static bool
 DiceLimitAssign(double nlimit, bool doit, GucSource source)                                                           
 {                                                                                                                      
-        if (nlimit < 0 || nlimit > 1.0)
-                return false;
+  if (nlimit < 0 || nlimit > 1.0)
+    return false;
 
-        if (doit)
-                rdkit_dice_smlar_limit = nlimit;
+  if (doit)
+    rdkit_dice_smlar_limit = nlimit;
 
-        return true;
+  return true;
 }                                        
 
 static void
 initRDKitGUC()
 {
-	if (rdkit_guc_inited)
-		return;
+  if (rdkit_guc_inited)
+    return;
 
-	DefineCustomRealVariable(
-		"rdkit.tanimoto_threshold",
-		"Lower threshold of Tanimoto similarity",
-		"Molecules with similarity lower than threshold are not similar by % operation",
-		&rdkit_tanimoto_smlar_limit,
-		0.5,
-		0.0,
-		1.0,
-		PGC_USERSET,
-		0,
-		TanimotoLimitAssign,
-		NULL
-	);
+  DefineCustomRealVariable(
+                           "rdkit.tanimoto_threshold",
+                           "Lower threshold of Tanimoto similarity",
+                           "Molecules with similarity lower than threshold are not similar by % operation",
+                           &rdkit_tanimoto_smlar_limit,
+                           0.5,
+                           0.0,
+                           1.0,
+                           PGC_USERSET,
+                           0,
+                           TanimotoLimitAssign,
+                           NULL
+                           );
 
-	DefineCustomRealVariable(
-		"rdkit.dice_threshold",
-		"Lower threshold of Dice similarity",
-		"Molecules with similarity lower than threshold are not similar by # operation",
-		&rdkit_dice_smlar_limit,
-		0.5,
-		0.0,
-		1.0,
-		PGC_USERSET,
-		0,
-		DiceLimitAssign,
-		NULL
-	);
+  DefineCustomRealVariable(
+                           "rdkit.dice_threshold",
+                           "Lower threshold of Dice similarity",
+                           "Molecules with similarity lower than threshold are not similar by # operation",
+                           &rdkit_dice_smlar_limit,
+                           0.5,
+                           0.0,
+                           1.0,
+                           PGC_USERSET,
+                           0,
+                           DiceLimitAssign,
+                           NULL
+                           );
 
-	rdkit_guc_inited = true;
+  rdkit_guc_inited = true;
 }
 
 double
 getTanimotoLimit(void) {
-	if (!rdkit_guc_inited)
-		initRDKitGUC();
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
 
-	return rdkit_tanimoto_smlar_limit;
+  return rdkit_tanimoto_smlar_limit;
 }
 
 double
 getDiceLimit(void) {
-	if (!rdkit_guc_inited)
-		initRDKitGUC();
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
 
-	return rdkit_dice_smlar_limit;
+  return rdkit_dice_smlar_limit;
 }
 
 void _PG_init(void);
 void
 _PG_init(void) {
-	initRDKitGUC();
+  initRDKitGUC();
 }

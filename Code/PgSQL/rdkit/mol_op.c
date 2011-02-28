@@ -34,30 +34,30 @@
 
 /***************** Mol operations ***********************/
 
-#define MOLCMPFUNC( type, action, ret )                 	\
-PG_FUNCTION_INFO_V1(mol_##type);                        	\
-Datum		mol_##type(PG_FUNCTION_ARGS);           		\
-Datum                                                   	\
-mol_##type(PG_FUNCTION_ARGS)                       			\
-{                                                       	\
-    CROMol    a, b;											\
-	int		res;											\
-															\
-	fcinfo->flinfo->fn_extra = SearchMolCache(				\
-								fcinfo->flinfo->fn_extra,	\
-								fcinfo->flinfo->fn_mcxt,	\
-								PG_GETARG_DATUM(0), 		\
-								NULL, &a, NULL); \
-	fcinfo->flinfo->fn_extra = SearchMolCache(				\
-								fcinfo->flinfo->fn_extra,	\
-								fcinfo->flinfo->fn_mcxt,	\
-								PG_GETARG_DATUM(1), 		\
-								NULL, &b, NULL); \
-    res = molcmp(a, b);                         			\
-    PG_RETURN_##ret( res action 0 );                    	\
-}   \
-/* keep compiler quiet - no extra ; */                  	\
-extern int no_such_variable
+#define MOLCMPFUNC( type, action, ret )                                 \
+  PG_FUNCTION_INFO_V1(mol_##type);                                      \
+  Datum           mol_##type(PG_FUNCTION_ARGS);                         \
+  Datum                                                                 \
+  mol_##type(PG_FUNCTION_ARGS)                                          \
+  {                                                                     \
+    CROMol    a, b;                                                     \
+    int             res;                                                \
+                                                                        \
+    fcinfo->flinfo->fn_extra = SearchMolCache(                          \
+                                              fcinfo->flinfo->fn_extra, \
+                                              fcinfo->flinfo->fn_mcxt,  \
+                                              PG_GETARG_DATUM(0),       \
+                                              NULL, &a, NULL);          \
+    fcinfo->flinfo->fn_extra = SearchMolCache(                          \
+                                              fcinfo->flinfo->fn_extra, \
+                                              fcinfo->flinfo->fn_mcxt,  \
+                                              PG_GETARG_DATUM(1),       \
+                                              NULL, &b, NULL);          \
+    res = molcmp(a, b);                                                 \
+    PG_RETURN_##ret( res action 0 );                                    \
+  }                                                                     \
+  /* keep compiler quiet - no extra ; */                                \
+  extern int no_such_variable
 
 MOLCMPFUNC(lt, <, BOOL);
 MOLCMPFUNC(le, <=, BOOL);
@@ -68,69 +68,69 @@ MOLCMPFUNC(ne, !=, BOOL);
 MOLCMPFUNC(cmp, +, INT32);
 
 PG_FUNCTION_INFO_V1(is_valid_smiles);
-Datum		is_valid_smiles(PG_FUNCTION_ARGS);
+Datum           is_valid_smiles(PG_FUNCTION_ARGS);
 Datum
 is_valid_smiles(PG_FUNCTION_ARGS) {
-  char 	*data = PG_GETARG_CSTRING(0);
+  char  *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidSmiles(data));
 }
 
 PG_FUNCTION_INFO_V1(is_valid_smarts);
-Datum		is_valid_smarts(PG_FUNCTION_ARGS);
+Datum           is_valid_smarts(PG_FUNCTION_ARGS);
 Datum
 is_valid_smarts(PG_FUNCTION_ARGS) {
-  char 	*data = PG_GETARG_CSTRING(0);
+  char  *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidSmarts(data));
 }
 
 PG_FUNCTION_INFO_V1(mol_substruct);
-Datum		mol_substruct(PG_FUNCTION_ARGS);
+Datum           mol_substruct(PG_FUNCTION_ARGS);
 Datum
 mol_substruct(PG_FUNCTION_ARGS) {
-	CROMol 	i,
-			a;
+  CROMol  i,
+    a;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &i, NULL);
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &a, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, &a, NULL);
 
-	PG_RETURN_BOOL(MolSubstruct(i, a));		
+  PG_RETURN_BOOL(MolSubstruct(i, a));             
 }
 
 PG_FUNCTION_INFO_V1(mol_rsubstruct);
-Datum		mol_rsubstruct(PG_FUNCTION_ARGS);
+Datum           mol_rsubstruct(PG_FUNCTION_ARGS);
 Datum
 mol_rsubstruct(PG_FUNCTION_ARGS) {
-	CROMol 	i,
-			a;
+  CROMol  i,
+    a;
 
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(0), 
-								NULL, &a, NULL);
-	fcinfo->flinfo->fn_extra = SearchMolCache(
-								fcinfo->flinfo->fn_extra,
-								fcinfo->flinfo->fn_mcxt,
-								PG_GETARG_DATUM(1), 
-								NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &a, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, &i, NULL);
 
-	PG_RETURN_BOOL(MolSubstruct(i, a));		
+  PG_RETURN_BOOL(MolSubstruct(i, a));             
 }
 
 
 PG_FUNCTION_INFO_V1(mol_amw);
-Datum		mol_amw(PG_FUNCTION_ARGS);
+Datum           mol_amw(PG_FUNCTION_ARGS);
 Datum
 mol_amw(PG_FUNCTION_ARGS) {
-  CROMol 	i;
+  CROMol        i;
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
@@ -139,10 +139,10 @@ mol_amw(PG_FUNCTION_ARGS) {
   PG_RETURN_FLOAT4(MolAMW(i));
 }
 PG_FUNCTION_INFO_V1(mol_logp);
-Datum		mol_logp(PG_FUNCTION_ARGS);
+Datum           mol_logp(PG_FUNCTION_ARGS);
 Datum
 mol_logp(PG_FUNCTION_ARGS) {
-  CROMol 	i;
+  CROMol        i;
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
@@ -151,10 +151,10 @@ mol_logp(PG_FUNCTION_ARGS) {
   PG_RETURN_FLOAT4(MolLogP(i));
 }
 PG_FUNCTION_INFO_V1(mol_hba);
-Datum		mol_hba(PG_FUNCTION_ARGS);
+Datum           mol_hba(PG_FUNCTION_ARGS);
 Datum
 mol_hba(PG_FUNCTION_ARGS) {
-  CROMol 	i;
+  CROMol        i;
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
@@ -163,10 +163,10 @@ mol_hba(PG_FUNCTION_ARGS) {
   PG_RETURN_INT32(MolHBA(i));
 }
 PG_FUNCTION_INFO_V1(mol_hbd);
-Datum		mol_hbd(PG_FUNCTION_ARGS);
+Datum           mol_hbd(PG_FUNCTION_ARGS);
 Datum
 mol_hbd(PG_FUNCTION_ARGS) {
-  CROMol 	i;
+  CROMol        i;
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
@@ -175,10 +175,10 @@ mol_hbd(PG_FUNCTION_ARGS) {
   PG_RETURN_INT32(MolHBD(i));
 }
 PG_FUNCTION_INFO_V1(mol_numatoms);
-Datum		mol_numatoms(PG_FUNCTION_ARGS);
+Datum           mol_numatoms(PG_FUNCTION_ARGS);
 Datum
 mol_numatoms(PG_FUNCTION_ARGS) {
-  CROMol 	i;
+  CROMol        i;
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
@@ -187,10 +187,10 @@ mol_numatoms(PG_FUNCTION_ARGS) {
   PG_RETURN_INT32(MolNumAtoms(i));
 }
 PG_FUNCTION_INFO_V1(mol_numheavyatoms);
-Datum		mol_numheavyatoms(PG_FUNCTION_ARGS);
+Datum           mol_numheavyatoms(PG_FUNCTION_ARGS);
 Datum
 mol_numheavyatoms(PG_FUNCTION_ARGS) {
-  CROMol 	i;
+  CROMol        i;
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
