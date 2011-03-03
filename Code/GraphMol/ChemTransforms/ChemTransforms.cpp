@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2006-2010 Greg Landrum
+//  Copyright (C) 2006-2011 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -302,6 +302,7 @@ namespace RDKit{
 
     RWMol *newMol = static_cast<RWMol *>(new ROMol(mol));
     std::vector<Atom *> keepList;
+    std::map< int,Atom *> dummyAtomMap;
     unsigned int nDummies=0;
     for(unsigned int i=0;i<origNumAtoms;++i){
       if(matchingIndices[i]==-1){
@@ -334,7 +335,8 @@ namespace RDKit{
             } else {
               newAt->setMass(matchingIndices[nbrIdx]);
             }
-            newMol->addAtom(newAt,false,true);
+            int idx=newMol->addAtom(newAt,false,true);
+            dummyAtomMap[nbrIdx]=newAt;
             keepList.push_back(newAt);
             Bond *bnd=connectingBond->copy();
             if(bnd->getBeginAtomIdx()==i){
@@ -398,7 +400,15 @@ namespace RDKit{
     }
 
     updateSubMolConfs(mol,*newMol,removedAtoms);
-    
+
+    // make a guess at the position of the dummy atoms showing the attachment point:
+    for(ROMol::ConstConformerIterator citer=mol.beginConformers();
+        citer!=mol.endConformers();++citer){
+      Conformer &newConf=newMol->getConformer((*citer)->getId());
+      for(std::map<int,Atom *>::const_iterator iter=dummyAtomMap.begin();iter!=dummyAtomMap.end();++iter){
+        newConf.setAtomPos(iter->second->getIdx(),(*citer)->getAtomPos(iter->first));
+      }
+    }
     // clear computed props and do basic updates on
     // the resulting molecule, but allow unhappiness:
     newMol->clearComputedProps(true);

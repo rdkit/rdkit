@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2006 Greg Landrum
+//  Copyright (C) 2006-2011 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/RDLog.h>
+#include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <iostream>
@@ -634,6 +635,54 @@ void testReplaceCoreCrash()
 
 }
 
+void testReplaceCorePositions() 
+{
+  ROMol *mol1=0,*mol2=0,*matcher1=0;
+  std::string smi,sma;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing that atom positions are correctly copied by replaceCore" << std::endl;
+
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ChemTransforms/testData/core_location.mol";
+  mol1 = MolFileToMol(pathName);
+  TEST_ASSERT(mol1);
+  TEST_ASSERT(mol1->getNumAtoms()==8);
+
+  sma = "c1ccccc1";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+
+  mol2 = replaceCore(*mol1,*matcher1);
+  TEST_ASSERT(mol2);
+  TEST_ASSERT(mol2->getNumAtoms()==4);
+
+  RDGeom::Point3D op,np;
+  op = mol1->getConformer().getAtomPos(6);
+  np = mol2->getConformer().getAtomPos(0);  
+  TEST_ASSERT(feq(op.x,np.x));
+  TEST_ASSERT(feq(op.y,np.y));
+  TEST_ASSERT(feq(op.z,np.z));
+  op = mol1->getConformer().getAtomPos(7);
+  np = mol2->getConformer().getAtomPos(1);  
+  TEST_ASSERT(feq(op.x,np.x));
+  TEST_ASSERT(feq(op.y,np.y));
+  TEST_ASSERT(feq(op.z,np.z));
+  op = mol1->getConformer().getAtomPos(0);
+  np = mol2->getConformer().getAtomPos(2);  
+  TEST_ASSERT(feq(op.x,np.x));
+  TEST_ASSERT(feq(op.y,np.y));
+  TEST_ASSERT(feq(op.z,np.z));
+  op = mol1->getConformer().getAtomPos(4);
+  np = mol2->getConformer().getAtomPos(3);  
+  TEST_ASSERT(feq(op.x,np.x));
+  TEST_ASSERT(feq(op.y,np.y));
+  TEST_ASSERT(feq(op.z,np.z));
+
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 void testMurckoDecomp() 
 {
@@ -708,6 +757,7 @@ int main() {
   testReplaceCore();
   testReplaceCoreLabels();
   testReplaceCoreCrash();
+  testReplaceCorePositions();
 
   testMurckoDecomp();
 
