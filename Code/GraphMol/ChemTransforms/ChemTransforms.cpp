@@ -448,6 +448,8 @@ namespace RDKit{
         while(atomI!=atomJ){
           keepAtoms[atomI]=1;
           atomI = pathMat[atomJ*nAtoms+atomI];
+		  // test for the disconnected case:
+		  if(atomI<0) break;
           //std::cerr<<atomI<<" ";
         }
         //std::cerr<<std::endl;

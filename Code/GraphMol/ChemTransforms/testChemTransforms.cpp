@@ -714,6 +714,8 @@ void testMurckoDecomp()
       {"C1CC1[CH](C)C1CC1", "C1CC1CC1CC1"},
       {"CC(C)c1c(Cl)cc(F)c(Nc2ccc(C)cc2CC(=O)O)c1F","c1ccc(Nc2ccccc2)cc1"},
       {"C1CC1C[C@](Cl)(F)C1CCC1","C1CC1CCC1CCC1"},
+      {"C1CC1.C1CC1", "C1CC1.C1CC1"}, // this was a crash at one point
+      {"CCC", ""},
       {"EOS","EOS"}
     };
   unsigned int i=0;
@@ -724,17 +726,21 @@ void testMurckoDecomp()
     if(smi=="EOS") break;
     ROMol *mol=SmilesToMol(smi);
     ROMol *nMol=MurckoDecompose(*mol);
-    MolOps::sanitizeMol(static_cast<RWMol &>(*nMol));
     TEST_ASSERT(nMol);
-    TEST_ASSERT(nMol->getNumAtoms());
     delete mol;
-    smi = MolToSmiles(*nMol,true);
-    mol = SmilesToMol(tgt);
-    TEST_ASSERT(mol);
-    tgt=MolToSmiles(*mol,true);
-    delete mol;
-    std::cerr<<smi<<" "<<tgt<<std::endl;
-    TEST_ASSERT(smi==tgt);
+    if(tgt!=""){
+     TEST_ASSERT(nMol->getNumAtoms());
+     MolOps::sanitizeMol(static_cast<RWMol &>(*nMol));
+     smi = MolToSmiles(*nMol,true);
+     mol = SmilesToMol(tgt);
+     TEST_ASSERT(mol);
+     tgt=MolToSmiles(*mol,true);
+     delete mol;
+     std::cerr<<smi<<" "<<tgt<<std::endl;
+     TEST_ASSERT(smi==tgt);
+    } else {
+      TEST_ASSERT(nMol->getNumAtoms()==0);
+    }
     delete nMol;
   }
 
