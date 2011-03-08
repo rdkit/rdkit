@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2011 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MolPickler.h>
@@ -707,6 +708,50 @@ void testIssue2788233(bool doLong=0){
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testIssue3202580(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3202580." << std::endl;
+
+  {
+    ROMol *m1 = SmilesToMol("C");
+    TEST_ASSERT(m1);
+    TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getMass(),12.011,.001));
+    std::string pickle;
+    MolPickler::pickleMol(*m1,pickle);
+    RWMol *m2 = new RWMol();
+    MolPickler::molFromPickle(pickle,*m2);
+    TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(),12.011,.001));
+    delete m1;
+    delete m2;
+  }
+  {
+    ROMol *m1 = SmilesToMol("[12CH4]");
+    TEST_ASSERT(m1);
+    TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getMass(),12.000,.001));
+    std::string pickle;
+    MolPickler::pickleMol(*m1,pickle);
+    RWMol *m2 = new RWMol();
+    MolPickler::molFromPickle(pickle,*m2);
+    TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(),12.000,.001));
+    delete m1;
+    delete m2;
+  }
+
+  {
+    ROMol *m1 = SmilesToMol("[13CH4]");
+    TEST_ASSERT(m1);
+    TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getMass(),13.000,.001));
+    std::string pickle;
+    MolPickler::pickleMol(*m1,pickle);
+    RWMol *m2 = new RWMol();
+    MolPickler::molFromPickle(pickle,*m2);
+    TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(),13.000,.001));
+    delete m1;
+    delete m2;
+  }
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
 
 
 int main(int argc, char *argv[]) {
@@ -732,6 +777,7 @@ int main(int argc, char *argv[]) {
   testRadicals();
 #endif
   testIssue2788233();
+  testIssue3202580();
   
   return 0;
 

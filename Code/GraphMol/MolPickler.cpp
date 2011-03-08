@@ -23,7 +23,7 @@ using boost::uint32_t;
 namespace RDKit{
 
   const int32_t MolPickler::versionMajor=6;
-  const int32_t MolPickler::versionMinor=2;
+  const int32_t MolPickler::versionMinor=3;
   const int32_t MolPickler::versionPatch=0;
   const int32_t MolPickler::endianId=0xDEADBEEF;
 
@@ -707,6 +707,7 @@ namespace RDKit{
     PRECONDITION(atom,"empty atom");
     char tmpChar;
     signed char tmpSchar;
+    float tmpFloat;
     char flags;
 
     tmpChar = atom->getAtomicNum()%128;
@@ -720,10 +721,8 @@ namespace RDKit{
     streamWrite(ss,flags);
     
     if(!atom->hasQuery()){
-      tmpSchar=static_cast<signed char>(atom->getMass() -
-                                        PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-
-      streamWrite(ss,tmpSchar);
+      tmpFloat=static_cast<float>(atom->getMass());
+      streamWrite(ss,tmpFloat);
       tmpSchar=static_cast<signed char>(atom->getFormalCharge());
       streamWrite(ss,tmpSchar);
       tmpChar = static_cast<char>(atom->getChiralTag());
@@ -851,9 +850,15 @@ namespace RDKit{
     }
     
     if(version<=5000 || !hasQuery){
-      streamRead(ss,tmpSchar);
-      atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
-                    static_cast<int>(tmpSchar));
+      if(version<6030){
+        streamRead(ss,tmpSchar);
+        atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum())+
+                      static_cast<int>(tmpSchar));
+      } else {
+        float tmpFloat;
+        streamRead(ss,tmpFloat);
+        atom->setMass(tmpFloat);
+      }
 
       streamRead(ss,tmpSchar);
       atom->setFormalCharge(static_cast<int>(tmpSchar));
