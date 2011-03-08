@@ -268,7 +268,7 @@ namespace RDKit {
           res->addConformer(conf,false);
         } else {
           endP=inLine.find_last_of(">");
-          if(endP==std::string::npos){
+          if(static_cast<int>(endP)==std::string::npos){
             std::ostringstream errout;
             errout << "no end tag found for property" << propName;
             throw FileParseException(errout.str());
