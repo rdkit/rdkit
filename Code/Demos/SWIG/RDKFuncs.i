@@ -169,36 +169,48 @@ typedef std::list<int > INT_LIST;
 %ignore copy;
 %ignore setOwningMol;
 %ignore setIdx;
-%ignore setFormalCharge;
-%ignore setNoImplicit;
-%ignore setNumExplicitHs;
-%ignore setIsAromatic;
-%ignore setMass;
 %ignore setDativeFlag;
 %ignore clearDativeFlag;
-%ignore setChiralTag;
-%ignore setHybridizationType;
-%ignore hasQuery;
-%ignore setQuery;
-%ignore getQuery;
-%ignore expandQuery;
+//%ignore hasQuery;
+//%ignore setQuery;
+//%ignore getQuery;
+//%ignore expandQuery;
 %ignore getPropList;
 %ignore getPerturbationOrder;
 %ignore RDKit::Atom::Match(const Atom *) const;
-%ignore clearProp(std::string const) const;
-%ignore hasProp(std::string const) const;
 %include <GraphMol/Atom.h>
+%extend RDKit::Atom {
+  std::string getProp(const std::string &propName){
+    std::string res;
+    $self->getProp(propName,res);
+    return res;
+  }
+
+  void setProp(const std::string &propName,const std::string &propVal){
+    $self->setProp(propName,propVal);
+  }
+}
+
 
 %ignore setIsConjugated;
 %ignore setOwningMol;
 %ignore setBeginAtom;
 %ignore setEndAtom;
-%ignore setBondDir;
-%ignore setStereo;
 %ignore getStereoAtoms;
 %ignore RDKit::Bond::getValenceContrib(const Atom *) const;
 %ignore RDKit::Bond::Match(const Bond *) const;
 %include <GraphMol/Bond.h>
+%extend RDKit::Bond {
+  std::string getProp(const std::string &propName){
+    std::string res;
+    $self->getProp(propName,res);
+    return res;
+  }
+
+  void setProp(const std::string &propName,const std::string &propVal){
+    $self->setProp(propName,propVal);
+  }
+}
 
 %ignore initialize;
 %ignore RDKit::RingInfo::isInitialized;
