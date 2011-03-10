@@ -26,6 +26,16 @@ RETURNS bytea
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION qmol_recv(internal)
+RETURNS qmol
+AS 'MODULE_PATHNAME', 'mol_recv'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION qmol_send(qmol)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'mol_send'
+LANGUAGE C STRICT IMMUTABLE;
+
 CREATE TYPE mol (
         INTERNALLENGTH = -1,
         INPUT = mol_in,
@@ -50,6 +60,8 @@ CREATE TYPE qmol (
         INTERNALLENGTH = -1,
         INPUT = qmol_in,
         OUTPUT = qmol_out,
+        RECEIVE = qmol_recv,
+        SEND = qmol_send,
         STORAGE = extended
 );
 
