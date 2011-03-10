@@ -52,3 +52,21 @@ SELECT mol_logp('c1ccncc1O'::mol) mol_logp;
    0.7872
 (1 row)
 
+SELECT mol_numrotatablebonds('CCC'::mol) mol_numrotatablebonds;
+ mol_numrotatablebonds 
+-----------------------
+                     0
+(1 row)
+
+SELECT mol_numrotatablebonds('CCCC'::mol) mol_numrotatablebonds;
+ mol_numrotatablebonds 
+-----------------------
+                     1
+(1 row)
+
+SELECT mol_numrotatablebonds('c1ccccc1c1ccc(CCC)cc1'::mol) mol_numrotatablebonds;
+ mol_numrotatablebonds 
+-----------------------
+                     3
+(1 row)
+

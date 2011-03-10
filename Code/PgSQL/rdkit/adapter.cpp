@@ -355,6 +355,20 @@ MolNumHeavyAtoms(CROMol i){
   const ROMol *im = (ROMol*)i;
   return im->getNumAtoms(true);
 }
+extern "C" int
+MolNumRotatableBonds(CROMol i){
+  static ROMol *pt=NULL;
+  if(!pt){
+    pt = SmartsToMol("[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]");
+    if(!pt){
+      elog(ERROR, "cannot parse rotatable bond smarts");
+    }
+  }
+  const ROMol *im = (ROMol*)i;
+  std::vector< MatchVectType > matches;
+  int res=SubstructMatch(*im,*pt,matches);
+  return res;
+}
 
 
 

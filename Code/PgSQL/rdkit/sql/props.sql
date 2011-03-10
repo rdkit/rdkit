@@ -7,6 +7,6 @@ SELECT mol_hbd('c1ccncc1'::mol) mol_hbd;
 SELECT mol_hbd('c1ccncc1O'::mol) mol_hbd;
 SELECT mol_hba('c1ccncc1O'::mol) mol_hba;
 SELECT mol_logp('c1ccncc1O'::mol) mol_logp;
-
-
-
+SELECT mol_numrotatablebonds('CCC'::mol) mol_numrotatablebonds;
+SELECT mol_numrotatablebonds('CCCC'::mol) mol_numrotatablebonds;
+SELECT mol_numrotatablebonds('c1ccccc1c1ccc(CCC)cc1'::mol) mol_numrotatablebonds;

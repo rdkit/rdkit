@@ -198,3 +198,15 @@ mol_numheavyatoms(PG_FUNCTION_ARGS) {
                                             NULL, &i, NULL);
   PG_RETURN_INT32(MolNumHeavyAtoms(i));
 }
+PG_FUNCTION_INFO_V1(mol_numrotatablebonds);
+Datum           mol_numrotatablebonds(PG_FUNCTION_ARGS);
+Datum
+mol_numrotatablebonds(PG_FUNCTION_ARGS) {
+  CROMol        i;
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &i, NULL);
+  PG_RETURN_INT32(MolNumRotatableBonds(i));
+}
