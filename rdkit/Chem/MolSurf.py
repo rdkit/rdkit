@@ -286,7 +286,8 @@ LabuteASA.version=rdMolDescriptors._CalcLabuteASA_version
 
 
 def _TPSAContribs(mol,verbose=False):
-  """ calculates atomic contributions to a molecules TPSA
+  """ DEPRECATED: this has been reimplmented in C++
+  calculates atomic contributions to a molecules TPSA
 
    Algorithm described in:
     P. Ertl, B. Rohde, P. Selzer
@@ -395,8 +396,9 @@ def _TPSAContribs(mol,verbose=False):
       res[atom.GetIdx()] = tmp
   return res
 
-def TPSA(mol,verbose=False):
-  """ calculates the polar surface area of a molecule based upon fragments
+def _TPSA(mol,verbose=False):
+  """ DEPRECATED: this has been reimplmented in C++
+   calculates the polar surface area of a molecule based upon fragments
 
    Algorithm in:
     P. Ertl, B. Rohde, P. Selzer
@@ -411,8 +413,10 @@ def TPSA(mol,verbose=False):
   for contrib in contribs:
     res += contrib
   return res
-TPSA.version="1.0.1"
+_TPSA.version="1.0.1"
 
+TPSA=lambda *x,**y:rdMolDescriptors.CalcTPSA(*x,**y)
+TPSA.version=rdMolDescriptors._CalcTPSA_version
 
 
 if __name__ == '__main__':

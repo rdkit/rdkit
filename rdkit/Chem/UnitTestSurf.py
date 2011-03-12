@@ -80,7 +80,16 @@ class TestCase(unittest.TestCase):
     molH = Chem.AddHs(mol)
     psa = MolSurf.TPSA(mol)
     psaH = MolSurf.TPSA(molH)
-    self.failUnless(psa==psaH)
+
+    if(psa!=psaH):
+      psac = MolSurf.rdMolDescriptors._CalcTPSAContribs(mol)
+      psaHc = MolSurf.rdMolDescriptors._CalcTPSAContribs(molH)
+      for i,v in enumerate(psac):
+        print '\t',i,'\t',v,'\t',psaHc[i]
+      while i<len(psaHc):
+        print '\t\t\t',psaHc[i]
+        i+=1
+    self.failUnlessEqual(psa,psaH)
 
     inName = RDConfig.RDDataDir+'/NCI/first_200.tpsa.csv'
     inF = open(inName,'r')

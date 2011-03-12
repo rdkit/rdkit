@@ -14,7 +14,7 @@
 from rdkit import RDConfig
 import unittest,os.path
 from rdkit import Chem
-from rdkit.Chem import Descriptors,AvailDescriptors
+from rdkit.Chem import Descriptors
 
 def feq(n1,n2,tol=1e-4):
   return abs(n1-n2)<=tol
@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.failUnless(m)
-      for nm,fn in AvailDescriptors.descList:
+      for nm,fn in Descriptors._descList:
         try:
           v = fn(m)
         except:
