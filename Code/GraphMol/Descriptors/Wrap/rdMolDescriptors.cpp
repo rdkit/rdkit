@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007-2010 Greg Landrum
+//  Copyright (C) 2007-2011 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -34,6 +34,14 @@ namespace {
     python::tuple pycontribs(contribs);
     return python::make_tuple(contribs,hContrib);
   }
+  python::tuple computeTPSAContribs(const RDKit::ROMol &mol,
+				   bool force=false){
+    std::vector<double> contribs(mol.getNumAtoms());
+    RDKit::Descriptors::getTPSAAtomContribs(mol,contribs,force);
+    python::tuple pycontribs(contribs);
+    return pycontribs;
+  }
+
   python::list computeCrippenContribs(const RDKit::ROMol &mol,
 				       bool force=false){
     std::vector<double> logpContribs(mol.getNumAtoms());
@@ -454,6 +462,23 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol"),python::arg("includeHs")=true,
 	       python::arg("force")=false),
               docString.c_str());
+
+
+  docString="returns the TPSA value for a molecule";
+  python::def("CalcTPSA",
+	      RDKit::Descriptors::calcTPSA,
+	      (python::arg("mol"),
+	       python::arg("force")=false),
+              docString.c_str());
+  python::scope().attr("_CalcTPSA_version")=RDKit::Descriptors::tpsaVersion;
+
+  docString="returns a list of atomic contributions to the TPSA";
+  python::def("_CalcTPSAContribs",
+	      computeTPSAContribs,
+	      (python::arg("mol"),
+	       python::arg("force")=false),
+              docString.c_str());
+
 
   docString="returns the molecule's molecular weight";
   python::def("_CalcMolWt",

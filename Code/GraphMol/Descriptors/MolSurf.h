@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007 Greg Landrum
+//  Copyright (C) 2007-2011 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,6 +33,8 @@ namespace RDKit{
           the contribution of H atoms to the ASA will be included.
       \param force      (optional) calculate the values even if they are cached.
 
+      \return the sum of the atomic contributions
+
     */
     double getLabuteAtomContribs(const ROMol &mol,
 				 std::vector<double> &Vi,
@@ -54,6 +56,42 @@ namespace RDKit{
     */
     double calcLabuteASA(const ROMol &mol,bool includeHs=true,
 			 bool force=false);
+
+    const std::string tpsaVersion="1.1.0";
+    //! calculates atomic contributions to the TPSA value
+    /*!  
+      The TPSA definition is from:
+      P. Ertl, B. Rohde, P. Selzer
+       Fast Calculation of Molecular Polar Surface Area as a Sum of Fragment-based
+       Contributions and Its Application to the Prediction of Drug Transport 
+       Properties, J.Med.Chem. 43, 3714-3717, 2000
+
+      \param mol        the molecule of interest
+      \param Vi         used to return the atom contribs
+      \param force      (optional) calculate the values even if they are cached.
+
+      \return the sum of the atomic contributions
+
+    */
+    double getTPSAAtomContribs(const ROMol &mol,
+                               std::vector<double> &Vi,
+                               bool force=false);
+
+    //! calculates the TPSA value for a molecule
+    /*!  
+      The TPSA definition is from:
+      P. Ertl, B. Rohde, P. Selzer
+       Fast Calculation of Molecular Polar Surface Area as a Sum of Fragment-based
+       Contributions and Its Application to the Prediction of Drug Transport 
+       Properties, J.Med.Chem. 43, 3714-3717, 2000
+
+      \param mol        the molecule of interest
+      \param force      (optional) calculate the value even if it's cached.
+	  
+    */
+    double calcTPSA(const ROMol &mol,
+                    bool force=false);
+
 
   } // end of namespace Descriptors
 } //end of namespace RDKit

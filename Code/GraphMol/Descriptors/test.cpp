@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2011 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,9 +10,15 @@
 //
 
 #include <iostream>
+#include <fstream>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
+#include <RDGeneral/StreamOps.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -228,6 +234,44 @@ void testLabute(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+
+void testTPSA(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test TPSA descriptors." << std::endl;
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/NCI/first_200.tpsa.csv";
+  std::ifstream inf(fName.c_str());
+  TEST_ASSERT(inf && !inf.bad());
+
+  while(!inf.eof()){
+    std::string inl=getLine(inf);
+    boost::trim(inl);
+    if(inl.size()==0 || inl[0]=='#') continue;
+    std::vector<std::string> tokens;
+    boost::split(tokens,inl,boost::is_any_of(","));
+    if(tokens.size()!=2) continue;
+    std::string smiles=tokens[0];
+    double oTPSA=boost::lexical_cast<double>(tokens[1]);
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    double nTPSA = calcTPSA(*mol);
+    if(!feq(nTPSA,oTPSA,.0001)){
+      std::cerr<<" TPSA ERR: "<<smiles<<" "<<oTPSA<<" "<<nTPSA<<std::endl;
+      std::vector<double> contribs(mol->getNumAtoms());
+      getTPSAAtomContribs(*mol,contribs);
+      for(unsigned int i=0;i<mol->getNumAtoms();++i){
+        std::cerr<<"\t"<<i<<"\t"<<contribs[i]<<std::endl;
+      }
+        
+    }
+    TEST_ASSERT(feq(nTPSA,oTPSA,.0001));
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -239,5 +283,6 @@ int main(){
   testIssue262();
   test3();
   testLabute();
+  testTPSA();
 #endif
 }
