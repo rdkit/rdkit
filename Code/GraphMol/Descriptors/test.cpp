@@ -263,14 +263,20 @@ void testTPSA(){
       for(unsigned int i=0;i<mol->getNumAtoms();++i){
         std::cerr<<"\t"<<i<<"\t"<<contribs[i]<<std::endl;
       }
-        
     }
     TEST_ASSERT(feq(nTPSA,oTPSA,.0001));
+
+    // make sure that adding Hs doesn't affect the value
+    // (this was issue 1969745)
+    ROMol *mol2 = MolOps::addHs(*mol);
+    double hTPSA=calcTPSA(*mol2);
+    TEST_ASSERT(feq(nTPSA,hTPSA,.0001));
+    
+    delete mol2;
     delete mol;
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
-
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
