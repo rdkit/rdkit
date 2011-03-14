@@ -16,7 +16,7 @@ namespace RDKit{
   namespace Descriptors {
 
     static std::string _amwVersion="1.0.0";
-    double CalcAMW(const ROMol &mol,bool onlyHeavy){
+    double calcAMW(const ROMol &mol,bool onlyHeavy){
       double res=0.0;
       for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	  atomIt != mol.endAtoms();++atomIt){

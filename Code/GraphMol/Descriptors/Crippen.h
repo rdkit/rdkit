@@ -62,7 +62,7 @@ namespace RDKit {
                         pulled from the cache
 	  
     */
-    void CalcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,
+    void calcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,
 				bool includeHs=true,bool force=false);
     
     //! a class used to store Crippen parameters

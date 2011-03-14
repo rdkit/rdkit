@@ -315,12 +315,12 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
 %extend RDKit::ROMol {
   double MolLogP(RDKit::ROMol &mol){
     double logp,mr;
-    RDKit::Descriptors::CalcCrippenDescriptors(mol,logp,mr);
+    RDKit::Descriptors::calcCrippenDescriptors(mol,logp,mr);
     return logp;
   }
   double MolMR(RDKit::ROMol &mol){
     double logp,mr;
-    RDKit::Descriptors::CalcCrippenDescriptors(mol,logp,mr);
+    RDKit::Descriptors::calcCrippenDescriptors(mol,logp,mr);
     return mr;
   }
 }

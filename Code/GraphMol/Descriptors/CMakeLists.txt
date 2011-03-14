@@ -1,8 +1,8 @@
 rdkit_library(Descriptors
-              Crippen.cpp MolDescriptors.cpp MolSurf.cpp
-              LINK_LIBRARIES FileParsers Subgraphs SubstructMatch)
+              Crippen.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp
+              LINK_LIBRARIES SmilesParse FileParsers Subgraphs SubstructMatch)
 
-rdkit_headers(Crippen.h
+rdkit_headers(Crippen.h Lipinski.h
               MolDescriptors.h
               MolSurf.h DEST GraphMol/Descriptors)
 

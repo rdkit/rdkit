@@ -77,7 +77,7 @@ class TestCase(unittest.TestCase):
       del lines[-1]
     self.failUnless(len(lines)==201,'bad num lines: %d'%len(lines))
     line0 = lines[0].split(',')
-    self.failUnless(len(line0)==16,'%d'%len(line0))
+    self.failUnlessEqual(len(line0),19)
     self.failUnless(line0[0]=='SMILES')
   def test2(self):
     import os
@@ -97,7 +97,7 @@ class TestCase(unittest.TestCase):
       del lines[-1]
     self.failUnless(len(lines)==6,'bad num lines: %d'%len(lines))
     line0 = lines[0].split(',')
-    self.failUnless(len(line0)==16,'%d'%len(line0))
+    self.failUnlessEqual(len(line0),19)
     self.failUnless(line0[0]=='AMW')
     self.failUnless(line0[1]=='SMILES')
     

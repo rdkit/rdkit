@@ -288,8 +288,8 @@ molcmp(CROMol i, CROMol a) {
   res=im->getNumBonds()-am->getNumBonds();
   if(res) return res;
 
-  res=int(RDKit::Descriptors::CalcAMW(*im,false))-
-    int(RDKit::Descriptors::CalcAMW(*am,false));
+  res=int(RDKit::Descriptors::calcAMW(*im,false))-
+    int(RDKit::Descriptors::calcAMW(*am,false));
   if(res) return res;
 
   res=im->getRingInfo()->numRings()-am->getRingInfo()->numRings();
@@ -317,12 +317,12 @@ MolSubstruct(CROMol i, CROMol a) {
  *******************************************/
 extern "C" double
 MolAMW(CROMol i){
-  return RDKit::Descriptors::CalcAMW(*(ROMol*)i,false);
+  return RDKit::Descriptors::calcAMW(*(ROMol*)i,false);
 }
 extern "C" double
 MolLogP(CROMol i){
   double logp,mr;
-  RDKit::Descriptors::CalcCrippenDescriptors(*(ROMol*)i,logp,mr);
+  RDKit::Descriptors::calcCrippenDescriptors(*(ROMol*)i,logp,mr);
   return logp;
 }
 extern "C" int

@@ -13,6 +13,7 @@
 """
 #from Chem import rdchem
 from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
 
 #-----------------------------------
 # on import build the SMARTS patterns so we only have to do it once
@@ -44,40 +45,37 @@ HeteroatomSmarts = Chem.MolFromSmarts('[!#6;!#1]')
 #  from the graph). So the bond in [2H]C([2H])([2H])C([2H])([2H])[2H] *is* considered
 #  rotatable.
 RotatableBondSmarts = Chem.MolFromSmarts('[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]')
-NHOHSmarts = Chem.MolFromSmarts('[#8H1,#7H1,#7H2,#7H3]')
+sNHOHSmarts = Chem.MolFromSmarts('[#8H1,#7H1,#7H2,#7H3]')
 NOCountSmarts = Chem.MolFromSmarts('[#7,#8]')
 
 # this little trick saves duplicated code
 def _NumMatches(mol,smarts):
   return len(mol.GetSubstructMatches(smarts,uniquify=1))
 
-NumHDonors = lambda x,y=HDonorSmarts:_NumMatches(x,y)
+NumHDonors = lambda x:rdMolDescriptors.CalcNumHBD(x)
 NumHDonors.__doc__="Number of Hydrogen Bond Donors"
 NumHDonors.version="1.0.0"
 _HDonors = lambda x,y=HDonorSmarts:x.GetSubstructMatches(y,uniquify=1)
-NumHAcceptors = lambda x,y=HAcceptorSmarts:_NumMatches(x,y)
+NumHAcceptors = lambda x:rdMolDescriptors.CalcNumHBA(x)
 NumHAcceptors.__doc__="Number of Hydrogen Bond Acceptors"
 NumHAcceptors.version="2.0.0"
 _HAcceptors = lambda x,y=HAcceptorSmarts:x.GetSubstructMatches(y,uniquify=1)
-NumHeteroatoms = lambda x,y=HeteroatomSmarts:_NumMatches(x,y)
+NumHeteroatoms = lambda x:rdMolDescriptors.CalcNumHeteroatoms(x)
 NumHeteroatoms.__doc__="Number of Heteroatoms"
 NumHeteroatoms.version="1.0.0"
 _Heteroatoms = lambda x,y=HeteroatomSmarts:x.GetSubstructMatches(y,uniquify=1)
-NumRotatableBonds = lambda x,y=RotatableBondSmarts:_NumMatches(x,y)
+NumRotatableBonds = lambda x:rdMolDescriptors.CalcNumRotatableBonds(x)
 NumRotatableBonds.__doc__="Number of Rotatable Bonds"
 NumRotatableBonds.version="1.0.0"
 _RotatableBonds = lambda x,y=RotatableBondSmarts:x.GetSubstructMatches(y,uniquify=1)
-NOCount = lambda x,y=NOCountSmarts:_NumMatches(x,y)
+NOCount = lambda x:rdMolDescriptors.CalcNumLipinskiHBA(x)
 NOCount.__doc__="Number of Nitrogens and Oxygens"
 NOCount.version="1.0.0"
-NHOHCount = lambda x,y=NHOHSmarts:_NumMatches(x,y)
+NHOHCount = lambda x:rdMolDescriptors.CalcNumLipinskiHBD(x)
 NHOHCount.__doc__="Number of NHs or OHs"
 NHOHCount.version="1.0.0"
 
-  
-def RingCount(mol):
-  " Number of rings a molecule has."
-  return mol.GetRingInfo().NumRings()
+RingCount=lambda x:rdMolDescriptors.CalcNumRings(x)
 RingCount.version = "1.0.0"
 
 def HeavyAtomCount(mol):

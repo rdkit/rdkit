@@ -32,11 +32,19 @@ class TestCase(unittest.TestCase):
     OldAcceptorCount = lambda x,y=oldAcceptorSmarts:Lipinski._NumMatches(x,y)
     for m in suppl:
       if m:
-        calc = OldDonorCount(m)
+        calc = Lipinski.NHOHCount(m)
+        orig = int(m.GetProp('NUM_LIPINSKIHDONORS'))
+        assert calc==orig,'bad num h donors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
+
+        calc = Lipinski.NOCount(m)
+        orig = int(m.GetProp('NUM_LIPINSKIHACCEPTORS'))
+        assert calc==orig,'bad num h acceptors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
+
+        calc = Lipinski.NumHDonors(m)
         orig = int(m.GetProp('NUM_HDONORS'))
         assert calc==orig,'bad num h donors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
 
-        calc = OldAcceptorCount(m)
+        calc = Lipinski.NumHAcceptors(m)
         orig = int(m.GetProp('NUM_HACCEPTORS'))
         assert calc==orig,'bad num h acceptors for mol %d (%s): %d != %d'%(idx,m.GetProp('SMILES'),calc,orig)
 

@@ -69,7 +69,7 @@ namespace RDKit{
       mol.setProp("_crippenLogPContribs",logpContribs,true);
       mol.setProp("_crippenMRContribs",mrContribs,true);
     }
-    void CalcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,bool includeHs,
+    void calcCrippenDescriptors(const ROMol &mol,double &logp,double &mr,bool includeHs,
 				bool force){
       if(!force && mol.hasProp("_crippenLogP")){
 	mol.getProp("_crippenLogP",logp);

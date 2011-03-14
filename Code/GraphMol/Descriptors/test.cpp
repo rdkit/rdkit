@@ -59,68 +59,68 @@ void test2(){
 
   mol = SmilesToMol("C");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,logp,mr);
+  calcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,0.6361));
   TEST_ASSERT(feq(mr,6.7310));
   // check that caching works:
-  CalcCrippenDescriptors(*mol,logp,mr);
+  calcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,0.6361));
   TEST_ASSERT(feq(mr,6.7310));
-  CalcCrippenDescriptors(*mol,logp,mr,true,true);
+  calcCrippenDescriptors(*mol,logp,mr,true,true);
   TEST_ASSERT(feq(logp,0.6361));
   TEST_ASSERT(feq(mr,6.7310));
 
   // check that things work when we don't add Hs:
-  CalcCrippenDescriptors(*mol,logp,mr,false,true);
+  calcCrippenDescriptors(*mol,logp,mr,false,true);
   TEST_ASSERT(feq(logp,0.1441));
   TEST_ASSERT(feq(mr,2.503));
   delete mol;
 
   mol = SmilesToMol("C=C");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,logp,mr,true);
+  calcCrippenDescriptors(*mol,logp,mr,true);
   TEST_ASSERT(feq(logp,0.8022));
   TEST_ASSERT(feq(mr,11.2540));
   delete mol;
 
   mol = SmilesToMol("C#C");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,logp,mr);
+  calcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,0.2494));
   TEST_ASSERT(feq(mr,9.8900));
   delete mol;
 
   mol = SmilesToMol("CO");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,logp,mr);
+  calcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,-0.3915));
   TEST_ASSERT(feq(mr,8.1428));
   delete mol;
 
   mol = SmilesToMol("C=O");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,logp,mr);
+  calcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,-0.1849));
   TEST_ASSERT(feq(mr,7.121));
   delete mol;
 
   mol = SmilesToMol("C#[O+]");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,logp,mr);
+  calcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,0.0059));
   TEST_ASSERT(feq(mr,5.6315));
   delete mol;
 
   mol = SmilesToMol("C(C)(C)C");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,logp,mr);
+  calcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,1.6623));
   TEST_ASSERT(feq(mr,20.512));
   delete mol;
 
   mol = SmilesToMol("C(C)(C)(C)O");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,logp,mr);
+  calcCrippenDescriptors(*mol,logp,mr);
   TEST_ASSERT(feq(logp,0.7772));
   TEST_ASSERT(feq(mr,21.9718));
   delete mol;
@@ -142,13 +142,13 @@ void testIssue262(){
 
   mol = SmilesToMol("c1ncccc1");
   TEST_ASSERT(mol);
-  CalcCrippenDescriptors(*mol,rlogp,rmr);
+  calcCrippenDescriptors(*mol,rlogp,rmr);
   
   MolPickler::pickleMol(*mol,pkl);
 
   mol2=new ROMol(pkl);
   TEST_ASSERT(mol2);
-  CalcCrippenDescriptors(*mol2,logp,mr);
+  calcCrippenDescriptors(*mol2,logp,mr);
   TEST_ASSERT(feq(logp,rlogp));
   TEST_ASSERT(feq(mr,rmr));
 
@@ -156,7 +156,7 @@ void testIssue262(){
   TEST_ASSERT(mol3);
   MolPickler::molFromPickle(pkl,mol3);
   
-  CalcCrippenDescriptors(*mol3,logp,mr);
+  calcCrippenDescriptors(*mol3,logp,mr);
   TEST_ASSERT(feq(logp,rlogp));
   TEST_ASSERT(feq(mr,rmr));
   
@@ -177,29 +177,29 @@ void test3(){
 
   mol = SmilesToMol("C");
   TEST_ASSERT(mol);
-  amw = CalcAMW(*mol);
+  amw = calcAMW(*mol);
   TEST_ASSERT(feq(amw,16.043,.001));
-  amw = CalcAMW(*mol,true);
+  amw = calcAMW(*mol,true);
   TEST_ASSERT(feq(amw,12.011,.001));
   mol2 = MolOps::addHs(*mol);
-  amw = CalcAMW(*mol2);
+  amw = calcAMW(*mol2);
   TEST_ASSERT(feq(amw,16.043,.001));
-  amw = CalcAMW(*mol2,true);
+  amw = calcAMW(*mol2,true);
   TEST_ASSERT(feq(amw,12.011,.001));
   delete mol;
   delete mol2;
 
   mol = SmilesToMol("[CH4]");
   TEST_ASSERT(mol);
-  amw = CalcAMW(*mol);
+  amw = calcAMW(*mol);
   TEST_ASSERT(feq(amw,16.043,.001));
-  amw = CalcAMW(*mol,true);
+  amw = calcAMW(*mol,true);
   TEST_ASSERT(feq(amw,12.011,.001));
   delete mol;
 
   mol = SmilesToMol("C[2H]");
   TEST_ASSERT(mol);
-  amw = CalcAMW(*mol);
+  amw = calcAMW(*mol);
   TEST_ASSERT(feq(amw,17.0,.1));
 
 
@@ -278,6 +278,92 @@ void testTPSA(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testLipinski1(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Lipinski parameters." << std::endl;
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/NCI/first_200.props.sdf";
+  SDMolSupplier suppl(fName);
+  int idx=-1;
+  while(!suppl.atEnd()){
+    ROMol *mol=0;
+    ++idx;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+
+    unsigned int oVal,nVal;
+    std::string foo;
+
+    mol->getProp("NUM_HACCEPTORS",foo);
+    oVal=boost::lexical_cast<unsigned int>(foo);
+    nVal = calcNumHBA(*mol);
+    if(oVal!=nVal){
+      std::cerr<<"  failed: "<<idx<<" "<<oVal<<" "<<nVal<<std::endl;
+    }
+    TEST_ASSERT(oVal==nVal);
+
+    mol->getProp("NUM_HDONORS",foo);
+    oVal=boost::lexical_cast<unsigned int>(foo);
+    nVal = calcNumHBD(*mol);
+    if(oVal!=nVal){
+      std::cerr<<"  failed: "<<idx<<" "<<oVal<<" "<<nVal<<std::endl;
+    }
+    TEST_ASSERT(oVal==nVal);
+
+    mol->getProp("NUM_LIPINSKIHDONORS",foo);
+    oVal=boost::lexical_cast<unsigned int>(foo);
+    nVal = calcLipinskiHBD(*mol);
+    if(oVal!=nVal){
+      std::cerr<<"  failed: "<<idx<<" "<<oVal<<" "<<nVal<<std::endl;
+    }
+    TEST_ASSERT(oVal==nVal);
+
+    mol->getProp("NUM_LIPINSKIHACCEPTORS",foo);
+    oVal=boost::lexical_cast<unsigned int>(foo);
+    nVal = calcLipinskiHBA(*mol);
+    if(oVal!=nVal){
+      std::cerr<<"  failed: "<<idx<<" "<<oVal<<" "<<nVal<<std::endl;
+    }
+    TEST_ASSERT(oVal==nVal);
+
+    mol->getProp("NUM_RINGS",foo);
+    oVal=boost::lexical_cast<unsigned int>(foo);
+    nVal = calcNumRings(*mol);
+    if(oVal!=nVal){
+      std::cerr<<"  failed: "<<idx<<" "<<oVal<<" "<<nVal<<std::endl;
+    }
+    TEST_ASSERT(oVal==nVal);
+
+
+    mol->getProp("NUM_HETEROATOMS",foo);
+    oVal=boost::lexical_cast<unsigned int>(foo);
+    nVal = calcNumHeteroatoms(*mol);
+    if(oVal!=nVal){
+      std::cerr<<"  failed: "<<idx<<" "<<oVal<<" "<<nVal<<std::endl;
+    }
+    TEST_ASSERT(oVal==nVal);
+
+    mol->getProp("NUM_ROTATABLEBONDS",foo);
+    oVal=boost::lexical_cast<unsigned int>(foo);
+    nVal = calcNumRotatableBonds(*mol);
+    if(oVal!=nVal){
+      std::cerr<<"  failed: "<<idx<<" "<<oVal<<" "<<nVal<<std::endl;
+    }
+    TEST_ASSERT(oVal==nVal);
+
+    
+    
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -290,5 +376,6 @@ int main(){
   test3();
   testLabute();
   testTPSA();
+  testLipinski1();
 #endif
 }
