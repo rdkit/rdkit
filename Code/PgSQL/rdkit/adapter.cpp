@@ -328,22 +328,32 @@ MolLogP(CROMol i){
 extern "C" int
 MolHBA(CROMol i){
   const ROMol *im = (ROMol*)i;
+#if 0
   int res=0;
   for(ROMol::ConstAtomIterator iter=im->beginAtoms();
       iter!=im->endAtoms();++iter){
     if((*iter)->getAtomicNum()==7 || (*iter)->getAtomicNum()==8) ++res;
   }
   return res;
+#else
+  return RDKit::Descriptors::calcLipinskiHBA(*im);
+#endif  
+
 }
 extern "C" int
 MolHBD(CROMol i){
   const ROMol *im = (ROMol*)i;
+#if 1
   int res=0;
   for(ROMol::ConstAtomIterator iter=im->beginAtoms();
       iter!=im->endAtoms();++iter){
     if(((*iter)->getAtomicNum()==7 || (*iter)->getAtomicNum()==8) && (*iter)->getTotalNumHs()>0) ++res;
   }
   return res;
+#else
+  return RDKit::Descriptors::calcLipinskiHBD(*im);
+#endif  
+
 }
 extern "C" int
 MolNumAtoms(CROMol i){
@@ -357,6 +367,8 @@ MolNumHeavyAtoms(CROMol i){
 }
 extern "C" int
 MolNumRotatableBonds(CROMol i){
+  const ROMol *im = (ROMol*)i;
+#if 1
   static ROMol *pt=NULL;
   if(!pt){
     pt = SmartsToMol("[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]");
@@ -364,10 +376,12 @@ MolNumRotatableBonds(CROMol i){
       elog(ERROR, "cannot parse rotatable bond smarts");
     }
   }
-  const ROMol *im = (ROMol*)i;
   std::vector< MatchVectType > matches;
   int res=SubstructMatch(*im,*pt,matches);
   return res;
+#else
+  return RDKit::Descriptors::calcNumRotatableBonds(*im);
+#endif  
 }
 
 

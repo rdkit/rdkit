@@ -1,8 +1,8 @@
 RDKIT=$(RDBASE)
 
 
-SHLIB_LINK += -L${RDKIT}/lib -lSmilesParse_static  -lFingerprints_static -lSubstructMatch_static -lDescriptors_static -lSubgraphs_static -lGraphMol_static -lDataStructs_static -lRDGeometryLib_static -lRDGeneral_static
-#SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' -lGraphMol -lSmilesParse  -lFingerprints -lSubstructMatch -lDescriptors -lSubgraphs -lDataStructs -lRDGeometryLib -lRDGeneral
+SHLIB_LINK += -L${RDKIT}/lib -lFileParsers_static -lSmilesParse_static -lFingerprints_static -lSubgraphs_static -lSubstructMatch_static  -lDescriptors_static -lGraphMol_static -lDataStructs_static -lRDGeometryLib_static -lRDGeneral_static
+#SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' -lDescriptors -lGraphMol -lSmilesParse  -lFingerprints -lSubstructMatch -lDescriptors -lSubgraphs -lDataStructs -lRDGeometryLib -lRDGeneral
 
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
