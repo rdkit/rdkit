@@ -343,7 +343,7 @@ MolHBA(CROMol i){
 extern "C" int
 MolHBD(CROMol i){
   const ROMol *im = (ROMol*)i;
-#if 1
+#if 0
   int res=0;
   for(ROMol::ConstAtomIterator iter=im->beginAtoms();
       iter!=im->endAtoms();++iter){
@@ -368,7 +368,7 @@ MolNumHeavyAtoms(CROMol i){
 extern "C" int
 MolNumRotatableBonds(CROMol i){
   const ROMol *im = (ROMol*)i;
-#if 1
+#if 0
   static ROMol *pt=NULL;
   if(!pt){
     pt = SmartsToMol("[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]");
