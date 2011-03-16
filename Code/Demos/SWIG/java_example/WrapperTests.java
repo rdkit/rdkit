@@ -284,6 +284,19 @@ public class WrapperTests {
         assertEquals(tmp,24.237,0.001);
 
     }
+    @Test public void testDescriptors3() {
+	ROMol m1,m2,m3;
+	m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
+	m2 = RDKFuncs.MolFromSmiles("C1=CC=CC=N1");
+	m3 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1CC(=O)O");
+        double tmp;
+        tmp=RDKFuncs.calcTPSA(m1);
+        assertEquals(tmp,0,0.01);
+        tmp=RDKFuncs.calcTPSA(m2);
+        assertEquals(tmp,12.89,0.01);
+        tmp=RDKFuncs.calcTPSA(m3);
+        assertEquals(tmp,37.30,0.01);
+    }
     /*@Test*/ public void testMemory2() {
 	ChemicalReaction rxn;
 	rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
