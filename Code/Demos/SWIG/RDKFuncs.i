@@ -312,19 +312,6 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
 %template(TanimotoSimilaritySIVi32) RDKit::TanimotoSimilarity<boost::int32_t>;
 %template(TanimotoSimilaritySIVi64) RDKit::TanimotoSimilarity<boost::int64_t>;
 
-%extend RDKit::ROMol {
-  double MolLogP(RDKit::ROMol &mol){
-    double logp,mr;
-    RDKit::Descriptors::calcCrippenDescriptors(mol,logp,mr);
-    return logp;
-  }
-  double MolMR(RDKit::ROMol &mol){
-    double logp,mr;
-    RDKit::Descriptors::calcCrippenDescriptors(mol,logp,mr);
-    return mr;
-  }
-}
-
 %{
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 %}
@@ -368,3 +355,22 @@ typedef std::list<std::vector<int> > PATH_LIST;
 %newobject pathToSubmol;
 %include <GraphMol/Subgraphs/SubgraphUtils.h>
 
+%{
+#include <GraphMol/Descriptors/MolDescriptors.h>
+%}
+
+%include <GraphMol/Descriptors/Lipinski.h>
+%include <GraphMol/Descriptors/Crippen.h>
+%include <GraphMol/Descriptors/MolSurf.h>
+%inline %{
+  double calcMolLogP(RDKit::ROMol &mol){
+    double logp,mr;
+    RDKit::Descriptors::calcCrippenDescriptors(mol,logp,mr);
+    return logp;
+  }
+  double calcMolMR(RDKit::ROMol &mol){
+    double logp,mr;
+    RDKit::Descriptors::calcCrippenDescriptors(mol,logp,mr);
+    return mr;
+  }
+%}

@@ -237,6 +237,53 @@ public class WrapperTests {
 	}
     }
 
+
+    @Test public void testDescriptors1() {
+	ROMol m1,m2,m3;
+	m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
+	m2 = RDKFuncs.MolFromSmiles("C1=CC=CC=N1");
+	m3 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1CC(=O)O");
+        long tmp;
+        tmp=RDKFuncs.calcNumHBA(m1);
+        assertEquals(tmp,0);
+        tmp=RDKFuncs.calcNumHBA(m2);
+        assertEquals(tmp,1);
+        tmp=RDKFuncs.calcNumHBA(m3);
+        assertEquals(tmp,1);
+        tmp=RDKFuncs.calcNumHBD(m1);
+        assertEquals(tmp,0);
+        tmp=RDKFuncs.calcNumHBD(m2);
+        assertEquals(tmp,0);
+        tmp=RDKFuncs.calcNumHBD(m3);
+        assertEquals(tmp,1);
+        tmp=RDKFuncs.calcLipinskiHBA(m1);
+        assertEquals(tmp,0);
+        tmp=RDKFuncs.calcLipinskiHBA(m2);
+        assertEquals(tmp,1);
+        tmp=RDKFuncs.calcLipinskiHBA(m3);
+        assertEquals(tmp,2);
+        tmp=RDKFuncs.calcLipinskiHBD(m1);
+        assertEquals(tmp,0);
+        tmp=RDKFuncs.calcLipinskiHBD(m2);
+        assertEquals(tmp,0);
+        tmp=RDKFuncs.calcLipinskiHBD(m3);
+        assertEquals(tmp,1);
+    }
+    @Test public void testDescriptors2() {
+	ROMol m1,m2;
+	m1 = RDKFuncs.MolFromSmiles("C1=CC=CC=C1");
+	m2 = RDKFuncs.MolFromSmiles("C1=CC=CC=N1");
+        double tmp;
+        tmp=RDKFuncs.calcMolLogP(m1);
+        assertEquals(tmp,1.687,0.001);
+        tmp=RDKFuncs.calcMolLogP(m2);
+        assertEquals(tmp,1.082,0.001);
+        tmp=RDKFuncs.calcMolMR(m1);
+        assertEquals(tmp,26.442,0.001);
+        tmp=RDKFuncs.calcMolMR(m2);
+        assertEquals(tmp,24.237,0.001);
+
+    }
     /*@Test*/ public void testMemory2() {
 	ChemicalReaction rxn;
 	rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
