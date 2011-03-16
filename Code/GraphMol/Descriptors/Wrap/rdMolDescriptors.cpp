@@ -488,43 +488,43 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   docString="returns the number of Lipinski H-bond donors for a molecule";
   python::def("CalcNumLipinskiHBD",
-	      (unsigned int (*)(const RDKit::ROMol &))RDKit::Descriptors::calcLipinskiHBD,
+	      RDKit::Descriptors::calcLipinskiHBD,
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumLipinskiHBD_version")=RDKit::Descriptors::lipinskiHBDVersion;
   docString="returns the number of Lipinski H-bond acceptors for a molecule";
   python::def("CalcNumLipinskiHBA",
-	      (unsigned int (*)(const RDKit::ROMol &))RDKit::Descriptors::calcLipinskiHBA,
+	      RDKit::Descriptors::calcLipinskiHBA,
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumLipinskiHBA_version")=RDKit::Descriptors::lipinskiHBAVersion;
   docString="returns the number of H-bond donors for a molecule";
   python::def("CalcNumHBD",
-	      (unsigned int (*)(const RDKit::ROMol &))RDKit::Descriptors::calcNumHBD,
+	      RDKit::Descriptors::calcNumHBD,
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumHBD_version")=RDKit::Descriptors::NumHBDVersion;
   docString="returns the number of H-bond acceptors for a molecule";
   python::def("CalcNumHBA",
-	      (unsigned int (*)(const RDKit::ROMol &))RDKit::Descriptors::calcNumHBA,
+	      RDKit::Descriptors::calcNumHBA,
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumHBA_version")=RDKit::Descriptors::NumHBAVersion;
   docString="returns the number of rotatable bonds for a molecule";
   python::def("CalcNumRotatableBonds",
-	      (unsigned int (*)(const RDKit::ROMol &))RDKit::Descriptors::calcNumRotatableBonds,
+	      RDKit::Descriptors::calcNumRotatableBonds,
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumRotatableBondsA_version")=RDKit::Descriptors::NumRotatableBondsVersion;
   docString="returns the number of rings for a molecule";
   python::def("CalcNumRings",
-	      (unsigned int (*)(const RDKit::ROMol &))RDKit::Descriptors::calcNumRings,
+	      RDKit::Descriptors::calcNumRings,
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumRings_version")=RDKit::Descriptors::NumRingsVersion;
   docString="returns the number of heteroatoms for a molecule";
   python::def("CalcNumHeteroatoms",
-	      (unsigned int (*)(const RDKit::ROMol &))RDKit::Descriptors::calcNumHeteroatoms,
+	      RDKit::Descriptors::calcNumHeteroatoms,
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumHeteroatoms_version")=RDKit::Descriptors::NumHeteroatomsVersion;
