@@ -70,3 +70,51 @@ SELECT mol_numrotatablebonds('c1ccccc1c1ccc(CCC)cc1'::mol) mol_numrotatablebonds
                      3
 (1 row)
 
+SELECT mol_numheavyatoms('CCC'::mol) val;
+ val 
+-----
+   3
+(1 row)
+
+SELECT mol_numatoms('CCC'::mol) val;
+ val 
+-----
+  11
+(1 row)
+
+SELECT mol_numheteroatoms('CCC'::mol) val;
+ val 
+-----
+   0
+(1 row)
+
+SELECT mol_numheteroatoms('CCO'::mol) val;
+ val 
+-----
+   1
+(1 row)
+
+SELECT mol_tpsa('CCC'::mol) val;
+ val 
+-----
+   0
+(1 row)
+
+SELECT mol_tpsa('CCO'::mol) val;
+  val  
+-------
+ 20.23
+(1 row)
+
+SELECT mol_numrings('CCC'::mol) val;
+ val 
+-----
+   0
+(1 row)
+
+SELECT mol_numrings('C1CC1'::mol) val;
+ val 
+-----
+   1
+(1 row)
+

@@ -105,6 +105,9 @@ extern "C" {
   int MolNumAtoms(CROMol i);
   int MolNumHeavyAtoms(CROMol i);
   int MolNumRotatableBonds(CROMol i);
+  int MolNumHeteroatoms(CROMol i);
+  int MolNumRings(CROMol i);
+  double MolTPSA(CROMol i);
 
 
   /* ExplicitBitVect */

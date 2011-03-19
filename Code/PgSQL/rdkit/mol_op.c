@@ -210,3 +210,39 @@ mol_numrotatablebonds(PG_FUNCTION_ARGS) {
                                             NULL, &i, NULL);
   PG_RETURN_INT32(MolNumRotatableBonds(i));
 }
+PG_FUNCTION_INFO_V1(mol_numheteroatoms);
+Datum           mol_numheteroatoms(PG_FUNCTION_ARGS);
+Datum
+mol_numheteroatoms(PG_FUNCTION_ARGS) {
+  CROMol        i;
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &i, NULL);
+  PG_RETURN_INT32(MolNumHeteroatoms(i));
+}
+PG_FUNCTION_INFO_V1(mol_numrings);
+Datum           mol_numrings(PG_FUNCTION_ARGS);
+Datum
+mol_numrings(PG_FUNCTION_ARGS) {
+  CROMol        i;
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &i, NULL);
+  PG_RETURN_INT32(MolNumRings(i));
+}
+PG_FUNCTION_INFO_V1(mol_tpsa);
+Datum           mol_tpsa(PG_FUNCTION_ARGS);
+Datum
+mol_tpsa(PG_FUNCTION_ARGS) {
+  CROMol        i;
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &i, NULL);
+  PG_RETURN_FLOAT4(MolTPSA(i));
+}
