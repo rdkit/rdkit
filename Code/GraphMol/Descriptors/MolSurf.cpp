@@ -11,7 +11,9 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/PartialCharges/GasteigerCharges.h>
 #include <vector>
+#include <algorithm>
 
 namespace RDKit{
   namespace Descriptors {
@@ -229,5 +231,95 @@ namespace RDKit{
       return res;
     }
     
+    namespace {
+      void assignContribsToBins(const std::vector<double> &contribs,
+                                const std::vector<double> &binProp,
+                                std::vector<double> &bins,
+                                std::vector<double> &res){
+        PRECONDITION(contribs.size()==binProp.size(),"mismatched array sizes");
+        PRECONDITION(res.size()>=bins.size()+1,"mismatched array sizes");
+        for(unsigned int i=0;i<contribs.size();++i){
+          double cVal = contribs[i];
+          double bVal = binProp[i];
+          unsigned int idx=std::upper_bound(bins.begin(),bins.end(),bVal)-bins.begin();
+          res[idx]+=cVal;
+        }
+      }
+    }
+
+    std::vector<double> calcSlogP_VSA(const ROMol &mol,std::vector<double> *bins,
+                                      bool force){
+      // FIX: use force value to include caching
+      std::vector<double> lbins;
+      if(!bins){
+        double blist[11]={-0.4,-0.2,0,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.6};
+        lbins.resize(11);
+        std::copy(blist,blist+11,lbins.begin());
+      } else {
+        lbins.resize(bins->size());
+        std::copy(bins->begin(),bins->end(),lbins.begin());
+      }
+      std::vector<double> res(lbins.size()+1,0);
+
+      std::vector<double> vsaContribs(mol.getNumAtoms());
+      double tmp;
+      getLabuteAtomContribs(mol,vsaContribs,tmp,true,force);
+      std::vector<double> logpContribs(mol.getNumAtoms());
+      std::vector<double> mrContribs(mol.getNumAtoms());
+      getCrippenAtomContribs(mol,logpContribs,mrContribs,force);
+
+      assignContribsToBins(vsaContribs,logpContribs,lbins,res);
+
+      return res;
+    }
+
+    std::vector<double> calcSMR_VSA(const ROMol &mol,std::vector<double> *bins,
+                                      bool force){
+      std::vector<double> lbins;
+      if(!bins){
+        double blist[9]={1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63,3.8,4.0};
+        lbins.resize(9);
+        std::copy(blist,blist+9,lbins.begin());
+      } else {
+        lbins.resize(bins->size());
+        std::copy(bins->begin(),bins->end(),lbins.begin());
+      }
+      std::vector<double> res(lbins.size()+1,0);
+
+      std::vector<double> vsaContribs(mol.getNumAtoms());
+      double tmp;
+      getLabuteAtomContribs(mol,vsaContribs,tmp,true,force);
+      std::vector<double> logpContribs(mol.getNumAtoms());
+      std::vector<double> mrContribs(mol.getNumAtoms());
+      getCrippenAtomContribs(mol,logpContribs,mrContribs,force);
+
+      assignContribsToBins(vsaContribs,mrContribs,lbins,res);
+
+      return res;
+    }
+
+    std::vector<double> calcPEOE_VSA(const ROMol &mol,std::vector<double> *bins,
+                                      bool force){
+      std::vector<double> lbins;
+      if(!bins){
+        double blist[13]={-.3,-.25,-.20,-.15,-.10,-.05,0,.05,.10,.15,.20,.25,.30};
+        lbins.resize(13);
+        std::copy(blist,blist+13,lbins.begin());
+      } else {
+        lbins.resize(bins->size());
+        std::copy(bins->begin(),bins->end(),lbins.begin());
+      }
+      std::vector<double> res(lbins.size()+1,0);
+
+      std::vector<double> vsaContribs(mol.getNumAtoms());
+      double tmp;
+      getLabuteAtomContribs(mol,vsaContribs,tmp,true,force);
+
+      std::vector<double> chgs(mol.getNumAtoms(),0.0);
+      computeGasteigerCharges(mol,chgs);
+      assignContribsToBins(vsaContribs,chgs,lbins,res);
+
+      return res;
+    }
   } // end of namespace Descriptors
 } // end of namespace RDKit

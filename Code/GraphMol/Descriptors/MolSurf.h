@@ -15,6 +15,9 @@
 */
 #ifndef __RD_MOLSURF_H__
 #define __RD_MOLSURF_H__
+
+#include<vector>
+
 namespace RDKit{
   class ROMol;
   namespace Descriptors {
@@ -92,7 +95,13 @@ namespace RDKit{
     double calcTPSA(const ROMol &mol,
                     bool force=false);
 
-
+    std::vector<double> calcSlogP_VSA(const ROMol &mol,std::vector<double> *bins=0,
+                                      bool force=false);
+    std::vector<double> calcSMR_VSA(const ROMol &mol,std::vector<double> *bins=0,
+                                      bool force=false);
+    std::vector<double> calcPEOE_VSA(const ROMol &mol,std::vector<double> *bins=0,
+                                      bool force=false);
+    
   } // end of namespace Descriptors
 } //end of namespace RDKit
 

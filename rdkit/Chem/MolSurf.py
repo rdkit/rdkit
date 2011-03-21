@@ -108,7 +108,7 @@ def _pyLabuteHelper(mol,includeHs=1,force=0):
 # original default bins from assuming Labute values are logs
 # mrBins=[1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63]
 mrBins=[1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63,3.8,4.0]
-def SMR_VSA_(mol,bins=None,force=1):
+def pySMR_VSA_(mol,bins=None,force=1):
   """ *Internal Use Only*
   """
   if not force:
@@ -135,13 +135,14 @@ def SMR_VSA_(mol,bins=None,force=1):
 
   mol._smrVSA=ans
   return ans    
+SMR_VSA_ = rdMolDescriptors.SMR_VSA_
 
 #
 # Original bins (from Labute paper) are:
 #  [-0.4,-0.2,0,0.1,0.15,0.2,0.25,0.3,0.4]
 #
 logpBins=[-0.4,-0.2,0,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.6]
-def SlogP_VSA_(mol,bins=None,force=1):
+def pySlogP_VSA_(mol,bins=None,force=1):
   """ *Internal Use Only*
   """
   if not force:
@@ -168,9 +169,10 @@ def SlogP_VSA_(mol,bins=None,force=1):
 
   mol._slogpVSA=ans
   return ans    
+SlogP_VSA_ = rdMolDescriptors.SlogP_VSA_
 
 chgBins=[-.3,-.25,-.20,-.15,-.10,-.05,0,.05,.10,.15,.20,.25,.30]
-def PEOE_VSA_(mol,bins=None,force=1):
+def pyPEOE_VSA_(mol,bins=None,force=1):
   """ *Internal Use Only*
   """
   if not force:
@@ -210,6 +212,7 @@ def PEOE_VSA_(mol,bins=None,force=1):
 
   mol._peoeVSA=ans
   return ans    
+PEOE_VSA_=rdMolDescriptors.PEOE_VSA_
 
 #-------------------------------------------------
 # install the various VSA descriptors in the namespace
@@ -285,7 +288,7 @@ LabuteASA=lambda *x,**y:rdMolDescriptors.CalcLabuteASA(*x,**y)
 LabuteASA.version=rdMolDescriptors._CalcLabuteASA_version
 
 
-def _TPSAContribs(mol,verbose=False):
+def _pyTPSAContribs(mol,verbose=False):
   """ DEPRECATED: this has been reimplmented in C++
   calculates atomic contributions to a molecules TPSA
 
@@ -396,7 +399,7 @@ def _TPSAContribs(mol,verbose=False):
       res[atom.GetIdx()] = tmp
   return res
 
-def _TPSA(mol,verbose=False):
+def _pyTPSA(mol,verbose=False):
   """ DEPRECATED: this has been reimplmented in C++
    calculates the polar surface area of a molecule based upon fragments
 
@@ -408,12 +411,12 @@ def _TPSA(mol,verbose=False):
 
    Implementation based on the Daylight contrib program tpsa.c
   """  
-  contribs = _TPSAContribs(mol,verbose=verbose)
+  contribs = _pyTPSAContribs(mol,verbose=verbose)
   res = 0.0
   for contrib in contribs:
     res += contrib
   return res
-_TPSA.version="1.0.1"
+_pyTPSA.version="1.0.1"
 
 TPSA=lambda *x,**y:rdMolDescriptors.CalcTPSA(*x,**y)
 TPSA.version=rdMolDescriptors._CalcTPSA_version
