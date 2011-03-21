@@ -37,13 +37,6 @@ class Canvas(CanvasBase):
     if image is not None:
       imgd = image.tostring("raw","BGRA")
       a = array.array('B',imgd)
-      #if hasattr(cairo.ImageSurface,'format_stride_for_width'):
-      #  stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_ARGB32,
-      #                                                      image.size[0])
-      #else:
-      #  stride=image.size[0]*4
-      #if stride != image.size[0] * 4:
-      #  raise Exception ,"invalid stride"
       stride=image.size[0]*4
       surface = cairo.ImageSurface.create_for_data (
         a, cairo.FORMAT_ARGB32,
@@ -76,10 +69,9 @@ class Canvas(CanvasBase):
     self.surface=surface
     self.fileName=fileName
 
-
   def flush(self):
     """temporary interface, must be splitted to different methods,
-       (elif self.imageType == "png":)"""
+    """
     if self.fileName and self.imageType=='png':
       self.surface.write_to_png(self.fileName)
     elif self.image is not None:
@@ -90,7 +82,6 @@ class Canvas(CanvasBase):
     elif self.imageType == "png":
       buffer=self.surface.get_data()
       return buffer
-
 
   def _doLine(self, p1, p2, **kwargs):
     if kwargs.get('dashes',(0,0)) == (0,0):

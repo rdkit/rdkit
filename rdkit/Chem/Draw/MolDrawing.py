@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2008-2010 Greg Landrum
+#  Copyright (C) 2008-2011 Greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -12,7 +12,6 @@ from rdkit import Chem
 from rdkit import RDConfig
 import numpy
 import math
-
 
 
 class Font(object):
@@ -454,20 +453,6 @@ if __name__=='__main__':
     drawer.AddMol(mol)
     canvas.flush()
     img.save("foo.png")
-  elif 0:
-    from matplotlib.figure import Figure
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
-    fig = Figure(figsize=(3,3))
-    ax = fig.add_axes((0,0,1,1),xticks=[],yticks=[],frame_on=False)
-    xd = ax.get_xlim()
-    xd = xd[1]-xd[0]
-    yd = ax.get_ylim()
-    yd = yd[1]-yd[0]
-    ax.size=(xd,yd)
-    drawer = MolDrawing(ax)
-    drawer.AddMol(mol)
-    canv = FigureCanvasAgg(fig)
-    canv.print_figure("foo.png",dpi=80)
   else:
     from rdkit.sping.PDF.pidPDF import PDFCanvas as Canvas
     canvas = Canvas(size=(300,300),name='test.pdf')
