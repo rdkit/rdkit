@@ -846,7 +846,7 @@ void testDblBondStereochem(){
     m1 = MolFileToMol(fName);
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getBondBetweenAtoms(6,7)->getStereo()==Bond::STEREOE);
-    TEST_ASSERT(m1->getBondBetweenAtoms(10,11)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m1->getBondBetweenAtoms(10,11)->getStereo()==Bond::STEREOZ);
 
     delete m1;
   }
@@ -2376,6 +2376,45 @@ void testIssue3154208(){
   BOOST_LOG(rdInfoLog) << " done"<< std::endl;
 }
 
+void testIssue3228150(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3228150: round-trip stereochemistry failure" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName;
+    RWMol *m;
+    fName = rdbase+"/Code/GraphMol/FileParsers/test_data/Issue3228150.sdf";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+#if 0
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(4)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(6)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(6)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(8)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(8)->getStereo()==Bond::STEREOZ);
+#else
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo()==Bond::STEREOZ);
+#endif
+    std::string smi1=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<std::endl;
+    m->clearComputedProps();
+    m->updatePropertyCache();
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 
 
@@ -2420,6 +2459,7 @@ int main(int argc,char *argv[]){
   testIssue3073163();
 #endif
   testIssue3154208();
+  testIssue3228150();
 
 
   return 0;
