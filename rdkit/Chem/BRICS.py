@@ -450,6 +450,10 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
             prodSeq = [(prod.GetNumAtoms(onlyHeavy=True),prod) for prod in prodSeq]
             prodSeq.sort()
             for nats,prod in prodSeq:
+              try:
+                Chem.SanitizeMol(prod)
+              except:
+                continue
               pSmi = Chem.MolToSmiles(prod,1)
               if minFragmentSize>0:
                 nDummies = pSmi.count('*')
