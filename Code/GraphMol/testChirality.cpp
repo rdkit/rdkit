@@ -1353,16 +1353,26 @@ void testBondDirRemoval(){
     TEST_ASSERT(m->getBondBetweenAtoms(5,6)->getBondDir()==m->getBondBetweenAtoms(1,4)->getBondDir());
 
     std::string smi1=MolToSmiles(*m,true);
-    // generating smiles removes redundant bond direction information:
+
+    // check removal of redundant bond direction information:
+    std::vector<int> ranks(m->getNumAtoms(),0);
+    MolOps::rankAtoms(*m,ranks);
+    std::vector<Canon::AtomColors> colors(m->getNumAtoms());
+    Canon::MolStack stack;
+    Canon::canonicalizeFragment(*m,0,colors,ranks,stack);
+
     TEST_ASSERT(m->getBondBetweenAtoms(0,1)->getBondDir()==Bond::NONE);
-    // but leaves the others intact:
     TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondDir()==m->getBondBetweenAtoms(1,4)->getBondDir());
     TEST_ASSERT(m->getBondBetweenAtoms(5,6)->getBondDir()==m->getBondBetweenAtoms(1,4)->getBondDir());
+
+    std::string smi2=MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
+    TEST_ASSERT(smi1==smi2);
 
     delete m;
     m = SmilesToMol(smi1);
     TEST_ASSERT(m);
-    std::string smi2=MolToSmiles(*m,true);
+    smi2=MolToSmiles(*m,true);
     BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
     TEST_ASSERT(smi1==smi2);
     
