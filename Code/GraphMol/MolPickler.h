@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2011 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -104,14 +104,26 @@ namespace RDKit{
     //! pickles a molecule and adds the results to string \c res
     static void pickleMol(const ROMol *mol,std::string &res);
     static void pickleMol(const ROMol &mol,std::string &res) {MolPickler::pickleMol(&mol,res);};
-
+    
     //! constructs a molecule from a pickle stored in a string
     static void molFromPickle(const std::string &pickle,ROMol *mol);
     static void molFromPickle(const std::string &pickle,ROMol &mol) {MolPickler::molFromPickle(pickle,&mol);};
 
     //! constructs a molecule from a pickle stored in a stream
     static void molFromPickle(std::istream &ss,ROMol *mol);
-    static void molFromPickle(std::istream &ss,ROMol &mol) { MolPickler::molFromPickle(ss,&mol); };
+    static void molFromPickle(std::istream &ss,ROMol &mol) { MolPickler::molFromPickle(ss,&mol);};
+
+#ifdef RDK_USE_PROTO_BUFFERS
+    static void molToProtoBuff(const ROMol *mol,std::ostream &ss);
+    static void molToProtoBuff(const ROMol &mol,std::ostream &ss){MolPickler::molToProtoBuff(&mol,ss);};
+    static void molToProtoBuff(const ROMol *mol,std::string &res);
+    static void molToProtoBuff(const ROMol &mol,std::string &res){MolPickler::molToProtoBuff(&mol,res);};
+
+    static void molFromProtoBuff(std::istream &ss,ROMol *mol);
+    static void molFromProtoBuff(std::istream &ss,ROMol &mol){MolPickler::molFromProtoBuff(ss,&mol);};
+    static void molFromProtoBuff(const std::string &res,ROMol *mol);
+    static void molFromProtoBuff(const std::string &res,ROMol &mol){MolPickler::molFromProtoBuff(res,&mol);};
+#endif
   private:
     //! do the actual work of pickling a molecule
     template <typename T>
@@ -163,7 +175,7 @@ namespace RDKit{
       static Conformer *_conformerFromPickle(std::istream &ss,int version);
 
     //! backwards compatibility
-    static void _pickleV1(const ROMol *mol,std::ostream &ss);
+     static void _pickleV1(const ROMol *mol,std::ostream &ss);
     //! backwards compatibility
     static void _depickleV1(std::istream &ss,ROMol *mol);
     //! backwards compatibility

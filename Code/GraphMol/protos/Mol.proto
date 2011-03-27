@@ -1,0 +1,82 @@
+package RDKit;
+
+message pbAtom {
+    optional uint32 atomicNum=1 [default=6];
+
+    optional bool aromatic=20 ;
+    optional bool noimplicit=21;
+
+    optional float mass=100;
+    optional sint32 charge=101;
+    optional int32 chiraltag=102;
+    optional int32 hybridization=103 [default=4];
+    optional int32 numexpliciths=104;
+    optional int32 explicitvalence=105;
+    optional int32 implicitvalence=106;
+    optional int32 numradicalelectrons=107;
+    optional bool  hasatommapnumber=108;
+    optional int32 molatommapnumber=109;
+
+    optional bool hasquery=200;
+    optional pbQuery query=201;
+}
+
+message pbBond {
+    required uint32 beginatom=1;
+    required uint32 endatom=2;
+
+    optional bool aromatic=20 ;
+    optional bool conjugated=21;
+
+    optional uint32 type=102 [default=1];
+    optional uint32 dir=103;
+    optional uint32 stereo=104;
+    repeated uint32 stereoatom=105;
+
+    optional bool hasquery=200;
+    optional pbQuery query=201;
+}
+
+message pbUIntVect {
+  repeated uint32 val=1;
+}
+
+message pbRingInfo {
+  repeated pbUIntVect bondring=1;
+  repeated pbUIntVect atomring=2;
+}
+
+message pbPoint3D {
+  optional float x=1;
+  optional float y=2;
+  optional float z=3;
+}
+message pbConformer {
+  required uint32 id=1;
+  optional bool is3d=2;
+  repeated pbPoint3D position=3;
+}
+
+
+message pbQuery {
+  required uint32 type=1;
+  required string description=2; 
+  optional bool negation=3;
+
+  repeated sint32 intvalue=20;
+  optional sint32 inttol=21;
+  optional sint32 intbegin=22;
+  optional sint32 intend=23;
+  optional bool openbegin=24;
+  optional bool openend=25;
+  optional pbMol molvalue=26;
+
+  repeated pbQuery child=5;
+}
+
+message pbMol {
+  repeated pbAtom atom=1;
+  repeated pbBond bond=2;
+  optional pbRingInfo  rings=100;
+  repeated pbConformer conformer=15;  
+}

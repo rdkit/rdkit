@@ -1,3 +1,4 @@
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRDK_USE_PROTO_BUFFERS=1")
 rdkit_library(GraphMol 
               Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp 
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp 
@@ -5,7 +6,8 @@ rdkit_library(GraphMol
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp 
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp RankAtoms.cpp 
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
-              SHARED LINK_LIBRARIES RDGeometryLib RDGeneral)
+              protos/Mol.pb.cc
+              SHARED LINK_LIBRARIES RDGeometryLib RDGeneral protobuf )
 
 rdkit_headers(Atom.h
               atomic_data.h

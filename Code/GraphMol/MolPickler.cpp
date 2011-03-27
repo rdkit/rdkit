@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2011 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,6 +18,11 @@
 #include <Query/QueryObjects.h>
 #include <map>
 #include <boost/cstdint.hpp>
+
+#ifdef RDK_USE_PROTO_BUFFERS
+#include <GraphMol/protos/Mol.pb.h>
+#endif
+
 using boost::int32_t;
 using boost::uint32_t;
 namespace RDKit{
@@ -1290,5 +1295,220 @@ namespace RDKit{
     mol->addBond(bond,true);
   }
 
+#ifdef RDK_USE_PROTO_BUFFERS
+  // ------------------------------------------------------------------------
+  //
+  //  Support for protocol buffers
+  //
+  // ------------------------------------------------------------------------
 
+
+  void addMolToProtoBuff(const ROMol *mol,RDKit::pbMol *pbmol);
+  
+  template <class T>
+  void queryToProtoBuff(const Query<int,T const *,true> *query,
+                        RDKit::pbQuery *pbquery){
+    PRECONDITION(query,"no query");
+    PRECONDITION(pbquery,"no pbquery");
+
+    pbquery->set_description(query->getDescription());
+    if(query->getNegation()) pbquery->set_negation(true);
+
+    int32_t queryVal;
+    if (typeid(*query)==typeid(AndQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_AND);
+    } else if (typeid(*query)==typeid(OrQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_OR);
+    } else if (typeid(*query)==typeid(XOrQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_XOR);
+    } else if (typeid(*query)==typeid(EqualityQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_EQUALS);
+      pbquery->add_intvalue(static_cast<const EqualityQuery<int,T const *,true>*>(query)->getVal());
+      pbquery->set_inttol(static_cast<const EqualityQuery<int,T const *,true>*>(query)->getTol());
+    }
+    else if (typeid(*query)==typeid(GreaterQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_GREATER);
+      pbquery->add_intvalue(static_cast<const GreaterQuery<int,T const *,true>*>(query)->getVal());
+      pbquery->set_inttol(static_cast<const GreaterQuery<int,T const *,true>*>(query)->getTol());
+    } else if (typeid(*query)==typeid(GreaterEqualQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_GREATEREQUAL);
+      pbquery->add_intvalue(static_cast<const GreaterEqualQuery<int,T const *,true>*>(query)->getVal());
+      pbquery->set_inttol(static_cast<const GreaterEqualQuery<int,T const *,true>*>(query)->getTol());
+    } else if (typeid(*query)==typeid(LessQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_LESS);
+      pbquery->add_intvalue(static_cast<const LessQuery<int,T const *,true>*>(query)->getVal());
+      pbquery->set_inttol(static_cast<const LessQuery<int,T const *,true>*>(query)->getTol());
+    } else if (typeid(*query)==typeid(LessEqualQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_LESSEQUAL);
+      pbquery->add_intvalue(static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getVal());
+      pbquery->set_inttol(static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getTol());
+    } else if (typeid(*query)==typeid(RangeQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_RANGE);
+      pbquery->set_intbegin(static_cast<const RangeQuery<int,T const *,true>*>(query)->getLower());
+      pbquery->set_intend(static_cast<const RangeQuery<int,T const *,true>*>(query)->getUpper());
+      pbquery->set_inttol(static_cast<const LessEqualQuery<int,T const *,true>*>(query)->getTol());
+      bool lowerOpen,upperOpen;
+      boost::tie(lowerOpen,upperOpen)=static_cast<const RangeQuery<int,T const *,true>*>(query)->getEndsOpen();
+      if(lowerOpen) pbquery->set_openbegin(true);
+      if(upperOpen) pbquery->set_openend(true);
+    } else if (typeid(*query)==typeid(SetQuery<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_SET);
+      typename SetQuery<int,T const *,true>::CONTAINER_TYPE::const_iterator cit;
+      for(cit=static_cast<const SetQuery<int,T const *,true>*>(query)->beginSet();
+          cit!=static_cast<const SetQuery<int,T const *,true>*>(query)->endSet();
+          ++cit){
+        pbquery->add_intvalue((int)*cit);
+      }
+    } else if (typeid(*query)==typeid(AtomRingQuery)){
+      pbquery->set_type((int)MolPickler::QUERY_ATOMRING);
+      pbquery->add_intvalue(static_cast<const EqualityQuery<int,T const *,true>*>(query)->getVal());
+      pbquery->set_inttol(static_cast<const EqualityQuery<int,T const *,true>*>(query)->getTol());
+    } else if (typeid(*query)==typeid(RecursiveStructureQuery)){
+      pbquery->set_type((int)MolPickler::QUERY_RECURSIVE);
+      
+      addMolToProtoBuff(((const RecursiveStructureQuery *)query)->getQueryMol(),
+                        pbquery->mutable_molvalue());
+    } else if (typeid(*query)==typeid(Query<int,T const *,true>)){
+      pbquery->set_type((int)MolPickler::QUERY_NULL);
+    } else {
+      throw MolPicklerException("do not know how to pickle part of the query.");
+    }
+
+    // now the children:
+    typename Query<int,T const *,true>::CHILD_VECT_CI cit;
+    for(cit=query->beginChildren();cit!=query->endChildren();++cit){
+      queryToProtoBuff(cit->get(),pbquery->add_child());
+    }
+  }
+
+  void atomToProtoBuff(const Atom *atom,
+                        RDKit::pbAtom *pbatom){
+    PRECONDITION(atom,"no atom");
+    PRECONDITION(pbatom,"no pbatom");
+    if(atom->getAtomicNum()!=6) pbatom->set_atomicnum(atom->getAtomicNum());
+    if(atom->getIsAromatic()) pbatom->set_aromatic(true);
+    if(atom->getNoImplicit()) pbatom->set_noimplicit(true);
+    double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()) -
+                         atom->getMass());
+    if(abs(massDiff)>.1)
+      pbatom->set_mass(atom->getMass());
+    if(atom->getFormalCharge()) pbatom->set_charge(atom->getFormalCharge());
+    if(atom->getChiralTag()!=Atom::CHI_UNSPECIFIED) pbatom->set_chiraltag((int)atom->getChiralTag());
+    if(atom->getHybridization()!=Atom::SP3) pbatom->set_hybridization((int)atom->getHybridization());
+    if(atom->getNumExplicitHs()) pbatom->set_numexpliciths(atom->getNumExplicitHs());
+    //if(atom->getExplicitValence()) pbatom->set_explicitvalence(atom->getExplicitValence());
+    if(atom->getImplicitValence()) pbatom->set_implicitvalence(atom->getImplicitValence());
+    if(atom->getNumRadicalElectrons()) pbatom->set_numradicalelectrons(atom->getNumRadicalElectrons());
+    if(atom->hasProp("molAtomMapNumber")){
+      pbatom->set_hasatommapnumber(true);
+      int tmpInt;
+      atom->getProp("molAtomMapNumber",tmpInt);
+      pbatom->set_molatommapnumber(tmpInt);    
+    }
+    if(atom->hasQuery()){
+      pbatom->set_hasquery(true);
+      queryToProtoBuff(static_cast<const QueryAtom*>(atom)->getQuery(),
+                       pbatom->mutable_query());
+    }
+    
+  }
+  void bondToProtoBuff(const Bond *bond,RDKit::pbBond *pbbond,
+                       std::map<int,int> &atomIdxMap){
+    PRECONDITION(bond,"no bond");
+    PRECONDITION(pbbond,"no pbbond");
+    pbbond->set_beginatom(atomIdxMap[bond->getBeginAtomIdx()]);
+    pbbond->set_endatom(atomIdxMap[bond->getEndAtomIdx()]);
+    if(bond->getIsAromatic()) pbbond->set_aromatic(true);
+    if(bond->getIsConjugated()) pbbond->set_conjugated(true);
+    if(bond->getBondType()!=Bond::SINGLE) pbbond->set_type((int)bond->getBondType());
+    if(bond->getBondDir()!=Bond::NONE) pbbond->set_dir((int)bond->getBondDir());
+    if(bond->getStereo()!=Bond::STEREONONE) pbbond->set_stereo((int)bond->getStereo());
+    if(bond->getStereoAtoms().size()){
+      for(INT_VECT::const_iterator idxIt=bond->getStereoAtoms().begin();
+          idxIt!=bond->getStereoAtoms().end();++idxIt){
+        pbbond->add_stereoatom(atomIdxMap[*idxIt]);
+      }
+    }
+    if(bond->hasQuery()){
+      pbbond->set_hasquery(true);
+      queryToProtoBuff(static_cast<const QueryBond*>(bond)->getQuery(),
+                       pbbond->mutable_query());
+    }
+      
+  }
+  void confToProtoBuff(const Conformer *conf,RDKit::pbConformer *pbconf){
+    PRECONDITION(conf,"no conf");
+    PRECONDITION(pbconf,"no pbconf");
+    pbconf->set_id(conf->getId());
+    pbconf->set_is3d(conf->is3D());
+    for(RDGeom::POINT3D_VECT::const_iterator pIt=conf->getPositions().begin();
+        pIt!=conf->getPositions().end();++pIt){
+      RDKit::pbPoint3D *pbpt= pbconf->add_position();
+      if(abs(pIt->x)>1e-4) pbpt->set_x(pIt->x);
+      if(abs(pIt->y)>1e-4) pbpt->set_y(pIt->y);
+      if(abs(pIt->z)>1e-4) pbpt->set_z(pIt->z);
+    }
+  }
+  void addMolToProtoBuff(const ROMol *mol,RDKit::pbMol *pbmol){
+    PRECONDITION(mol,"no mol");
+    PRECONDITION(pbmol,"no pbmol");
+    std::map<int,int> atomIdxMap;
+    int nWritten=0;
+    for(ROMol::ConstAtomIterator atIt=mol->beginAtoms();
+        atIt!=mol->endAtoms();++atIt){
+      const Atom *atom = *atIt;
+      atomIdxMap[atom->getIdx()]=nWritten;
+      atomToProtoBuff(atom,pbmol->add_atom());
+      ++nWritten;
+    }
+    for(ROMol::ConstBondIterator bondIt=mol->beginBonds();
+        bondIt!=mol->endBonds();++bondIt){
+      bondToProtoBuff(*bondIt,pbmol->add_bond(),atomIdxMap);
+    }
+
+    const RingInfo *ringInfo=mol->getRingInfo();
+    if(ringInfo && ringInfo->isInitialized() && ringInfo->numRings()>0){
+      RDKit::pbRingInfo *pbri=pbmol->mutable_rings();
+      for(unsigned int i=0;i<ringInfo->numRings();++i){
+        RDKit::pbUIntVect *v;
+        //const INT_VECT &ar=ringInfo->atomRings()[i];
+        //v=pbri->add_atomring();
+        //for(INT_VECT::const_iterator vIt=ar.begin();
+        //    vIt!=ar.end();++vIt){
+        //  v->add_val(*vIt);
+        //}
+        const INT_VECT &br=ringInfo->bondRings()[i];
+        v=pbri->add_bondring();
+        for(INT_VECT::const_iterator vIt=br.begin();
+            vIt!=br.end();++vIt){
+          v->add_val(*vIt);
+        }
+      }
+    }
+
+    for(ROMol::ConstConformerIterator confIt=mol->beginConformers();
+        confIt!=mol->endConformers();++confIt){
+      confToProtoBuff(confIt->get(),pbmol->add_conformer());
+    }
+  }
+
+  void MolPickler::molToProtoBuff(const ROMol *mol,std::ostream &ss){
+    PRECONDITION(mol,"empty molecule");
+    RDKit::pbMol pbmol;
+    addMolToProtoBuff(mol,&pbmol);
+
+    //std::cerr<<" PBUFF:\n"<<pbmol.DebugString()<<"\n----\n";
+    
+    if(!pbmol.SerializeToOstream(&ss)){
+      
+    }
+  }
+  void MolPickler::molToProtoBuff(const ROMol *mol,std::string &res){
+    PRECONDITION(mol,"empty molecule");
+    std::stringstream ss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
+    //MolPickler::pickleMol(mol,ss);
+    MolPickler::molToProtoBuff(mol,ss);
+    res = ss.str();
+  }
+#endif 
 };

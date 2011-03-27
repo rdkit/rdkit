@@ -711,7 +711,6 @@ void testIssue2788233(bool doLong=0){
 void testIssue3202580(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3202580." << std::endl;
-
   {
     ROMol *m1 = SmilesToMol("C");
     TEST_ASSERT(m1);
@@ -753,6 +752,84 @@ void testIssue3202580(){
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+#ifdef RDK_USE_PROTO_BUFFERS
+void testProtoBuffers(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing serialization using protocol buffers." << std::endl;
+  {
+
+    /*-------------------
+      Notes from experiments with this code
+- runtimes with pickles and protobuffs are about the same.
+- protobuffs are a bit smaller:
+  without confs:
+    pickle size: 2839069
+    buff size: 2661660
+  with confs:
+    pickle size: 4338661
+    buff size: 3837047
+
+    */
+    std::string fName = getenv("RDBASE");
+    fName += "/Code/GraphMol/test_data/PubChemBackground.sdf";
+    SDMolSupplier suppl(fName);
+    
+    int buffSize=0;
+    int pklSize=0;
+    double pklSecs=0.0;
+
+    std::cerr<<"building mols"<<std::endl;
+    std::vector<ROMol *> mols;
+    for(int i=0;i<5000;++i){
+      ROMol *m = suppl.next();
+      m->clearConformers();
+      mols.push_back(m);
+    }
+
+    clock_t t1,t2;
+    std::cerr<<"old style pickle"<<std::endl;    
+    t1=clock();
+    for(int i=0;i<5000;++i){
+      ROMol *m = mols[i];
+      std::string pickle="";
+      MolPickler::pickleMol(m,pickle);
+      pklSize+=pickle.size();
+    }
+    t2=clock();
+    std::cerr<<" >>> "<<((double)(t2-t1))/CLOCKS_PER_SEC<<std::endl;
+
+    std::cerr<<"protobuff pickle"<<std::endl;    
+    t1=clock();
+    for(int i=0;i<5000;++i){
+      ROMol *m = mols[i];
+      std::string pickle="";
+      MolPickler::molToProtoBuff(m,pickle);
+      buffSize += pickle.size();
+    }
+    t2=clock();
+    std::cerr<<" >>> "<<((double)(t2-t1))/CLOCKS_PER_SEC<<std::endl;
+
+    std::cerr<<" pickle size: "<<pklSize<<std::endl;
+    std::cerr<<" buff size: "<<buffSize<<std::endl;
+#if 0
+    ROMol *m1 = SmilesToMol("C/C=C/C[C@H](Cl)Br");
+    TEST_ASSERT(m1);
+
+    std::string pickle;
+    MolPickler::molToProtoBuff(*m1,pickle);
+    std::cerr<<" SIZE: "<<pickle.size()<<std::endl;
+    RWMol *m2 = new RWMol();
+    // MolPickler::molFromPickle(pickle,*m2);
+    //TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(),12.011,.001));
+    delete m1;
+    delete m2;
+#endif
+  }
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+#endif
+
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
@@ -778,7 +855,9 @@ int main(int argc, char *argv[]) {
 #endif
   testIssue2788233();
   testIssue3202580();
-  
+#ifdef RDK_USE_PROTO_BUFFERS
+  testProtoBuffers();
+#endif  
   return 0;
 
 }
