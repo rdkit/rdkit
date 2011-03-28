@@ -1003,6 +1003,9 @@ namespace RDKit{
 \n\
     - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
 \n\
+    - requireDummyMatch: if the molecule has side chains that attach at points not\n\
+                         flagged with a dummy, it will be rejected (None is returned)\n\
+\n\
   RETURNS: a new molecule with the core removed\n\
 \n\
   NOTES:\n\
@@ -1014,20 +1017,22 @@ namespace RDKit{
    The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
    to actually use molecules:\n\
 \n\
-    - ReplaceCore('CCC1CCC1','C1CCC1') -> 'CC[Xa]'\n\
+    - ReplaceCore('CCC1CCC1','C1CCC1') -> 'CC[1*]'\n\
 \n\
     - ReplaceCore('CCC1CC1','C1CCC1') -> ''\n\
 \n\
-    - ReplaceCore('C1CC2C1CCC2','C1CCC1') -> '[Xa]C1CCC1[Xb]'\n\
+    - ReplaceCore('C1CC2C1CCC2','C1CCC1') -> '[1*]C1CCC1[2*]'\n\
 \n\
-    - ReplaceCore('C1CNCC1','N') -> '[Xa]CCCC[Xb]'\n\
+    - ReplaceCore('C1CNCC1','N') -> '[1*]CCCC[2*]'\n\
 \n\
-    - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[Xa]CN'\n\
+    - ReplaceCore('C1CCC1CN','C1CCC1[*]',False) -> '[1*]CN'\n\
 \n";
       python::def("ReplaceCore", replaceCore,
                   (python::arg("mol"),python::arg("coreQuery"),
                    python::arg("replaceDummies")=true,
-                   python::arg("labelByIndex")=false),
+                   python::arg("labelByIndex")=false,
+                   python::arg("requireDummyMatch")=false
+                   ),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
 

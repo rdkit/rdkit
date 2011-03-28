@@ -279,12 +279,12 @@ namespace RDKit{
   }
 
   ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery, bool replaceDummies,
-                     bool labelByIndex){
+                     bool labelByIndex,bool requireDummyMatch){
     MatchVectType matchV;
 
     // do the substructure matching and get the atoms that match the query
     bool matchFound=SubstructMatch(mol, coreQuery, matchV);
-
+    
     // if we didn't find any matches, there's nothing to be done here
     // simply return null to indicate the problem
     if (!matchFound || matchV.size()==0){
@@ -328,8 +328,15 @@ namespace RDKit{
           unsigned int nbrIdx=*lIter;
           Bond *connectingBond=newMol->getBondBetweenAtoms(i,nbrIdx);
           if(matchingIndices[nbrIdx]>-1){
+            // we've matched an atom in the core.
+            if(requireDummyMatch &&
+               coreQuery.getAtomWithIdx(matchingIndices[nbrIdx])->getAtomicNum()!=0){
+              delete newMol;
+              return NULL;
+            }
             Atom *newAt=new Atom(0);
             ++nDummies;
+            
             if(!labelByIndex){
               newAt->setMass(double(nDummies));
             } else {

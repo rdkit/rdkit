@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2008 Greg Landrum
+//  Copyright (C) 2006-2011 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -95,13 +95,18 @@ namespace RDKit{
       \param replaceDummies - if set, atoms matching dummies in the core will also be replaced
       \param labelByIndex  - if set, the dummy atoms at attachment points are labelled with the
                              index+1 of the corresponding atom in the core
+      \param requireDummyMatch - if set, only side chains that are connected to atoms in
+                                 the core that have attached dummies will be considered.
+                                 Molecules that have sidechains that are attached
+                                 at other points will be rejected (NULL returned).
 
       \return a copy of \c mol with the non-matching atoms and bonds (if any)
               removed and dummies at the connection points. The client is responsible
-              for deleting this molecule
+              for deleting this molecule. If the core query is not matched, NULL is returned.
   */
   ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
-                     bool replaceDummies=true,bool labelByIndex=false);
+                     bool replaceDummies=true,bool labelByIndex=false,
+                     bool requireDummyMatch=false);
         
 
   ROMol *MurckoDecompose(const ROMol &mol);
