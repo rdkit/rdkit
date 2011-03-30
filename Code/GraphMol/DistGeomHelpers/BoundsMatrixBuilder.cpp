@@ -620,6 +620,13 @@ namespace RDKit {
         // here we will assume anything is possible
         dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23); 
         du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
+
+        // in highly-strained situations these can get mixed up:
+        if(du<dl){
+          double tmpD=dl;
+          dl=du;
+          du=tmpD;
+        }
         if (fabs(du-dl) < DIST12_DELTA) {
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
