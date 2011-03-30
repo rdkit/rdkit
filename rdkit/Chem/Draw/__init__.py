@@ -1,11 +1,37 @@
 # $Id$
 #
-# Copyright (C) 2006-2010 Greg Landrum
+# Copyright (C) 2006-2011 Greg Landrum
 #  All Rights Reserved
 #
-import os.path
+import os
 
 from MolDrawing import MolDrawing
+
+def _getCanvas():
+  useAGG=False
+  useCairo=False
+  Canvas=None
+  if not os.environ.get('RDKIT_CANVAS',''):
+    try:
+      from cairoCanvas import Canvas
+      useCairo=True
+    except ImportError:
+      try:
+        from aggCanvas import Canvas
+        useAGG=True
+      except ImportError:
+        from spingCanvas import Canvas
+  else:
+    canv=os.environ['RDKIT_CANVAS'].lower()
+    if canv =='cairo':
+      from cairoCanvas import Canvas
+      useCairo=True
+    elif canv =='agg':
+      from aggCanvas import Canvas
+      useAGG=True
+    else:
+      from spingCanvas import Canvas      
+  return useAGG,useCairo,Canvas
 
 def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
                canvas=None, **kwargs):
@@ -21,23 +47,15 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
   if not mol:
     raise ValueError,'Null molecule provided'
   if canvas is None:
-    import Image
-    useAGG=False
-    useCAIRO=False
-    try:
-      from cairoCanvas import Canvas
-      useCAIRO=True
-    except ImportError:
-      try:
-        from aggCanvas import Canvas
-        useAGG=True
-      except ImportError:
-        from spingCanvas import Canvas
-        canvas = Canvas(size=size,name='MolToImageFile')
-        img = canvas._image
-    if useAGG or useCAIRO:
+    useAGG,useCairo,Canvas=_getCanvas()
+    if useAGG or useCairo:
+      import Image
       img = Image.new("RGBA",size,"white")
       canvas = Canvas(img)
+    else:
+      from spingCanvas import Canvas
+      canvas = Canvas(size=size,name='MolToImageFile')
+      img = canvas._image
   drawer = MolDrawing(canvas)
 
   if kekulize:
@@ -65,16 +83,15 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   if not mol:
     raise ValueError,'Null molecule provided'
 
+  
   if imageType is None:
     imageType=os.path.splitext(fileName)[1][1:]
-  try:
-    from cairoCanvas import Canvas
+
+  useAGG,useCairo,Canvas = _getCanvas()
+  if useCairo or useAGG:
     canvas = Canvas(size=size,imageType=imageType,
                               fileName=fileName)
-    useCAIRO=True
-  except ImportError:
-    useCAIRO=False
-    from spingCanvas import Canvas
+  else:
     canvas = Canvas(size=size,name=fileName,imageType=imageType)
   drawer = MolDrawing(canvas)
   if kekulize:
@@ -88,7 +105,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   
   drawer.wedgeDashedBonds=wedgeBonds
   drawer.AddMol(mol,**kwargs)
-  if useCAIRO:
+  if useCAIRO or useAgg:
     canvas.flush()
   else:
     canvas.save()

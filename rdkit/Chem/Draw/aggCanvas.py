@@ -24,11 +24,17 @@ def convertColor(color):
   return color
 
 class Canvas(CanvasBase):
-
-  def __init__(self, img):
+  def __init__(self, img,
+               imageType=None, # determines file type
+               fileName=None,  # if set determines output file name
+               ):
     self.image = Draw(img)
     self.image.setantialias(True)
     self.size = self.image.size
+    if imageType and imageType not in ('png','jpg'):
+      raise ValueError,'unsupported image type for agg canvas'
+    self.imageType=imageType
+    self.fileName=fileName
     
   def _doLine(self, p1, p2, pen, **kwargs):
     if kwargs.get('dashes',(0,0)) == (0,0):
@@ -100,3 +106,6 @@ class Canvas(CanvasBase):
 
   def flush(self):
     self.image.flush()
+    if self.fileName:
+      self.image.save(self.fileName)
+    
