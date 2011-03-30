@@ -1,43 +1,62 @@
 # $Id$
 #
-# Copyright (C) 2006-2010 Greg Landrum
+# Copyright (C) 2006-2011 Greg Landrum
 #  All Rights Reserved
 #
-import os.path
+import os
 
-def MolToImage(mol,size=(300,300),kekulize=True, wedgeBonds=True,**kwargs):
+from MolDrawing import MolDrawing
+
+def _getCanvas():
+  useAGG=False
+  useCairo=False
+  Canvas=None
+  if not os.environ.get('RDKIT_CANVAS',''):
+    try:
+      from cairoCanvas import Canvas
+      useCairo=True
+    except ImportError:
+      try:
+        from aggCanvas import Canvas
+        useAGG=True
+      except ImportError:
+        from spingCanvas import Canvas
+  else:
+    canv=os.environ['RDKIT_CANVAS'].lower()
+    if canv =='cairo':
+      from cairoCanvas import Canvas
+      useCairo=True
+    elif canv =='agg':
+      from aggCanvas import Canvas
+      useAGG=True
+    else:
+      from spingCanvas import Canvas      
+  return useAGG,useCairo,Canvas
+
+def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
+               canvas=None, **kwargs):
   """ returns a PIL image containing a drawing of the molecule
+
+    Keyword arguments:
+    kekulize -- run kekulization routine on input `mol` (default True)
+    size -- final image size, in pixel (default (300,300))
+    wedgeBonds -- draw wedge (stereo) bonds (default True)
+    highlightAtoms -- list of atoms to highlight (default [])
+    highlightMap -- dictionary of (atom, color) pairs (default None)
   """
   if not mol:
     raise ValueError,'Null molecule provided'
-  import MolDrawing
-  try:
-    from aggdraw import Draw
-    import Image
-    MolDrawing.registerCanvas('agg')
-    Canvas = Draw
-    useAGG=True
-  except:
-    useAGG=False
-    try:
-      import cairo
+  if canvas is None:
+    useAGG,useCairo,Canvas=_getCanvas()
+    if useAGG or useCairo:
       import Image
-      MolDrawing.registerCanvas('cairo')
-      from cairoCanvas import Canvas
-      useCAIRO=True
-    except:
-      useCAIRO=False
-      from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
+      img = Image.new("RGBA",size,"white")
+      canvas = Canvas(img)
+    else:
+      from spingCanvas import Canvas
       canvas = Canvas(size=size,name='MolToImageFile')
       img = canvas._image
-      MolDrawing.registerCanvas('sping')
-      drawer = MolDrawing.MolDrawing(canvas)
-  if useAGG or useCAIRO:
-    img = Image.new("RGBA",size,"white")
-    canvas = Canvas(img)
-    if useAGG:
-      canvas.setantialias(True)
-    drawer = MolDrawing.MolDrawing(canvas)
+  drawer = MolDrawing(canvas)
 
   if kekulize:
     from rdkit import Chem
@@ -64,28 +83,17 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   if not mol:
     raise ValueError,'Null molecule provided'
 
-  import MolDrawing
+  
   if imageType is None:
     imageType=os.path.splitext(fileName)[1][1:]
-  try:
-    import cairo
-    MolDrawing.registerCanvas('cairo')
-    canvas=cairoCanvas.Canvas(size=size,imageType=imageType,
+
+  useAGG,useCairo,Canvas = _getCanvas()
+  if useCairo or useAGG:
+    canvas = Canvas(size=size,imageType=imageType,
                               fileName=fileName)
-    useCAIRO=True
-  except ImportError:
-    useCAIRO=False
-    MolDrawing.registerCanvas('sping')
-    if imageType=="pdf":
-      from rdkit.sping.PDF.pidPDF import PDFCanvas as Canvas
-    elif imageType=="ps":
-      from rdkit.sping.PS.pidPS import PSCanvas as Canvas
-    elif imageType=="svg":
-      from rdkit.sping.SVG.pidSVG import SVGCanvas as Canvas
-    elif imageType=="png":
-      from rdkit.sping.PIL.pidPIL import PILCanvas as Canvas
-    canvas = Canvas(size=size,name=fileName)
-  drawer = MolDrawing.MolDrawing(canvas)
+  else:
+    canvas = Canvas(size=size,name=fileName,imageType=imageType)
+  drawer = MolDrawing(canvas)
   if kekulize:
     from rdkit import Chem
     mol = Chem.Mol(mol.ToBinary())
@@ -97,7 +105,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   
   drawer.wedgeDashedBonds=wedgeBonds
   drawer.AddMol(mol,**kwargs)
-  if useCAIRO:
+  if useCAIRO or useAgg:
     canvas.flush()
   else:
     canvas.save()

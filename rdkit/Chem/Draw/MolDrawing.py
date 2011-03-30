@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2008-2010 Greg Landrum
+#  Copyright (C) 2008-2011 Greg Landrum
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -13,16 +13,6 @@ from rdkit import RDConfig
 import numpy
 import math
 
-elemDict={
-  7:(0,0,1),
-  8:(1,0,0),
-  9:(.2,.8,.8),
-  15:(1,.5,0),
-  16:(.8,.8,0),
-  17:(0,.8,0),
-  35:(.5,.3,.1),
-  0:(.5,.5,.5),
-  }
 
 class Font(object):
   face='sans'
@@ -60,6 +50,17 @@ class MolDrawing(object):
   canvasSize=None
 
   wedgeDashedBonds=True
+
+  elemDict={
+    7:(0,0,1),
+    8:(1,0,0),
+    9:(.2,.8,.8),
+    15:(1,.5,0),
+    16:(.8,.8,0),
+    17:(0,.8,0),
+    35:(.5,.3,.1),
+    0:(.5,.5,.5),
+    }
 
   def __init__(self,canvas=None):
     self.canvas = canvas
@@ -152,7 +153,7 @@ class MolDrawing(object):
                                            lenFrac=lenFrac)
     return fracP1,fracP2
     
-  def _drawWedgedBond(self,canvas,bond,pos,nbrPos,
+  def _drawWedgedBond(self,bond,pos,nbrPos,
                       width=bondLineWidth,color=defaultColor,
                       dash=None):
     perp,offsetX,offsetY = self._getBondOffset(pos,nbrPos)
@@ -163,14 +164,14 @@ class MolDrawing(object):
             (nbrPos[0]-offsetX,nbrPos[1]-offsetY))
     #canvas.drawPolygon(poly,edgeColor=color,edgeWidth=1,fillColor=color,closed=1)
     if not dash:
-      addCanvasPolygon(canvas,poly,color=color)
-    elif self.wedgeDashedBonds and addCanvasDashedWedge:
-      addCanvasDashedWedge(canvas,poly[0],poly[1],poly[2],color=color)
+      self.canvas.addCanvasPolygon(poly,color=color)
+    elif self.wedgeDashedBonds and self.canvas.addCanvasDashedWedge:
+      self.canvas.addCanvasDashedWedge(poly[0],poly[1],poly[2],color=color)
     else:
-      addCanvasLine(canvas,pos,nbrPos,linewidth=width*2,color=color,
+      self.canvas.addCanvasLine(pos,nbrPos,linewidth=width*2,color=color,
                     dashes=dash)
     
-  def _drawBond(self,canvas,bond,atom,nbr,pos,nbrPos,conf,
+  def _drawBond(self,bond,atom,nbr,pos,nbrPos,conf,
                 width=bondLineWidth,color=defaultColor,color2=None):
     bType=bond.GetBondType()
     if bType == Chem.BondType.SINGLE:
@@ -183,35 +184,35 @@ class MolDrawing(object):
         else:
           p2,p1 = pos,nbrPos
         if bDir==Chem.BondDir.BEGINWEDGE:
-          self._drawWedgedBond(canvas,bond,p1,p2,color=(0,0,0),width=width)
+          self._drawWedgedBond(bond,p1,p2,color=(0,0,0),width=width)
         elif bDir==Chem.BondDir.BEGINDASH:
-          self._drawWedgedBond(canvas,bond,p1,p2,color=(0,0,0),width=width,
+          self._drawWedgedBond(bond,p1,p2,color=(0,0,0),width=width,
                                dash=self.dash)
       else:
-        addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
+        self.canvas.addCanvasLine(pos, nbrPos, linewidth=width, color=color, color2=color2)
     elif bType == Chem.BondType.DOUBLE:
       if bond.IsInRing() or (atom.GetDegree()!=1 and bond.GetOtherAtom(atom).GetDegree()!=1):
-        addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
+        self.canvas.addCanvasLine(pos,nbrPos,linewidth=width,color=color,color2=color2)
         fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
-        addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
+        self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
       else:
         fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf,dir=.5,
                                       lenFrac=1.0)
-        addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
+        self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
         fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf,dir=-.5,
                                       lenFrac=1.0)
-        addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
+        self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
     elif bType == Chem.BondType.AROMATIC:
-      addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
+      self.canvas.addCanvasLine(pos,nbrPos,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
-      addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2,
+      self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2,
                     dash=self.dash)
     elif bType == Chem.BondType.TRIPLE:
-      addCanvasLine(canvas,pos,nbrPos,linewidth=width,color=color,color2=color2)
+      self.canvas.addCanvasLine(pos,nbrPos,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf)
-      addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
+      self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf,dir=-1)
-      addCanvasLine(canvas,fp1,fp2,linewidth=width,color=color,color2=color2)
+      self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
       
   def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None,ignoreHs=False):
     self.currDotsPerAngstrom=self.dotsPerAngstrom
@@ -264,36 +265,26 @@ class MolDrawing(object):
     drawingTrans = canvasSize[0]/2,canvasSize[1]/2
     self.drawingTrans = drawingTrans
 
-  def _drawLabel(self,canvas,label,pos,font,color=None,
-                 highlightIt=False):
-    if highlightIt:
-      color = self.selectColor
-    elif not color:
+  def _drawLabel(self,label,pos,font,color=None):
+    if color is None:
       color = self.defaultColor
     x1 = pos[0]
     y1 = pos[1]
     labelP = x1,y1
-    addCanvasText(canvas,label,(x1,y1),font,color)
+    self.canvas.addCanvasText(label,(x1,y1),font,color)
     
-  def AddMol(self,mol,canvas=None,centerIt=True,molTrans=None,drawingTrans=None,
+  def AddMol(self,mol,centerIt=True,molTrans=None,drawingTrans=None,
              highlightAtoms=[],confId=-1,flagCloseContactsDist=2,
-             ignoreHs=False):
-    """
+             highlightMap=None, ignoreHs=False):
+    """Set the molecule to be drawn.
+
+    Parameters:
+      hightlightAtoms -- list of atoms to highlight (default [])
+      highlightMap -- dictionary of (atom, color) pairs (default None)
 
     Notes:
       - specifying centerIt will cause molTrans and drawingTrans to be ignored
-      
     """
-    try:
-      dl = addCanvasLine
-    except NameError:
-      registerCanvas('sping')
-    if canvas is None:
-      canvas = self.canvas
-    else:
-      self.canvas = canvas
-    self.canvasSize=canvas.size
-      
     conf = mol.GetConformer(confId)
 
     if centerIt:
@@ -350,11 +341,15 @@ class MolDrawing(object):
             width=2.0*self.bondLineWidth
             color = self.selectColor
             color2 = self.selectColor
+          elif highlightMap is not None and idx in highlightMap and nbrIdx in highlightMap:
+            width=2.0*self.bondLineWidth
+            color = highlightMap[idx]
+            color2 = highlightMap[nbrIdx]
           else:
             width=self.bondLineWidth
             if self.colorBonds:
-              color = elemDict.get(atom.GetAtomicNum(),(0,0,0))
-              color2 = elemDict.get(nbr.GetAtomicNum(),(0,0,0))
+              color = self.elemDict.get(atom.GetAtomicNum(),(0,0,0))
+              color2 = self.elemDict.get(nbr.GetAtomicNum(),(0,0,0))
             else:
               color = self.defaultColor
               color2= color
@@ -362,10 +357,10 @@ class MolDrawing(object):
           # make sure we draw from the beginning to the end
           # (this was Issue400)
           if idx==bond.GetBeginAtomIdx():
-            self._drawBond(canvas,bond,atom,nbr,pos,nbrPos,conf,
+            self._drawBond(bond,atom,nbr,pos,nbrPos,conf,
                            color=color,width=width,color2=color2)
           else:
-            self._drawBond(canvas,bond,nbr,atom,nbrPos,pos,conf,
+            self._drawBond(bond,nbr,atom,nbrPos,pos,conf,
                            color=color2,width=width,color2=color)
         else:
           nbrPos = self.atomPs[mol][nbrIdx]
@@ -407,9 +402,13 @@ class MolDrawing(object):
           else:
             symbol = '%s%s%s'%(chg,hs,base)
 
-        color = elemDict.get(atom.GetAtomicNum(),(0,0,0))
-        self._drawLabel(canvas,symbol,pos,font,color=color,
-                        highlightIt=(highlightAtoms and idx in highlightAtoms))
+        if highlightMap and idx in highlightMap:
+          color = highlightMap[idx]
+        elif highlightAtoms and idx in highlightAtoms:
+          color = self.selectColor
+        else:
+          color = self.elemDict.get(atom.GetAtomicNum(),(0,0,0))
+        self._drawLabel(symbol, pos, font, color=color)
 
     if flagCloseContactsDist>0:
       tol = flagCloseContactsDist*flagCloseContactsDist
@@ -432,27 +431,6 @@ class MolDrawing(object):
                              fill=False,stroke=True)
             
           
-        
-
-
-def registerCanvas(canvasNm):
-  g= globals()
-  if canvasNm in ('sping','SPING'):
-    from spingCanvas import addCanvasLine,addCanvasText,addCanvasPolygon,addCanvasDashedWedge
-  elif canvasNm in ('agg','AGG'):
-    from aggCanvas import addCanvasLine,addCanvasText,addCanvasPolygon,addCanvasDashedWedge
-  elif canvasNm in ('mpl','MPL'):
-    from mplCanvas import addCanvasLine,addCanvasText,addCanvasPolygon
-    addCanvasDashedWedge=None
-  elif canvasNm in ('cairo','CAIRO'):
-    from cairoCanvas import addCanvasLine,addCanvasText,addCanvasPolygon,addCanvasDashedWedge
-  else:
-    raise ValueError,'unrecognized canvas type'
-  g['addCanvasLine']=addCanvasLine
-  g['addCanvasText']=addCanvasText
-  g['addCanvasPolygon']=addCanvasPolygon
-  g['addCanvasDashedWedge']=addCanvasDashedWedge
-        
 if __name__=='__main__':
   import sys
   if len(sys.argv)<2:
@@ -467,7 +445,6 @@ if __name__=='__main__':
 
   if 1:
     from aggdraw import Draw
-    registerCanvas('agg')
     from PIL import Image
     img = Image.new("RGBA",(300,300),"white")
     canvas=Draw(img)
@@ -476,25 +453,9 @@ if __name__=='__main__':
     drawer.AddMol(mol)
     canvas.flush()
     img.save("foo.png")
-  elif 0:
-    from matplotlib.figure import Figure
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
-    registerCanvas('mpl')
-    fig = Figure(figsize=(3,3))
-    ax = fig.add_axes((0,0,1,1),xticks=[],yticks=[],frame_on=False)
-    xd = ax.get_xlim()
-    xd = xd[1]-xd[0]
-    yd = ax.get_ylim()
-    yd = yd[1]-yd[0]
-    ax.size=(xd,yd)
-    drawer = MolDrawing(ax)
-    drawer.AddMol(mol)
-    canv = FigureCanvasAgg(fig)
-    canv.print_figure("foo.png",dpi=80)
   else:
     from rdkit.sping.PDF.pidPDF import PDFCanvas as Canvas
     canvas = Canvas(size=(300,300),name='test.pdf')
-    registerCanvas('sping')
     drawer = MolDrawing(canvas)
     drawer.AddMol(mol)
     canvas.save()
