@@ -9,7 +9,7 @@ SET(CMAKE_SWIG_FLAGS "")
 SET_SOURCE_FILES_PROPERTIES(RDKFuncs.i PROPERTIES CPLUSPLUS ON)
 SET_SOURCE_FILES_PROPERTIES(RDKFuncs.i PROPERTIES SWIG_FLAGS "-module RDKFuncs")
 if(MSVC)
-  set(RDKit_Wrapper_Libs FileParsers SmilesParse
+  set(RDKit_Wrapper_Libs PartialCharges FileParsers SmilesParse
   Depictor ChemTransforms Subgraphs
   ForceFieldHelpers ForceField MolAlign  Optimizer Alignment EigenSolvers
   DistGeomHelpers DistGeometry
@@ -17,7 +17,7 @@ if(MSVC)
   Subgraphs GraphMol DataStructs
   RDGeometryLib RDGeneral)
 else(MSVC)
-  set(RDKit_Wrapper_Libs FileParsers_static SmilesParse_static
+  set(RDKit_Wrapper_Libs PartialCharges_static FileParsers_static SmilesParse_static
   Depictor_static ChemTransforms_static  Subgraphs_static
   ForceFieldHelpers_static ForceField_static MolAlign_static  Optimizer_static Alignment_static EigenSolvers_static
   DistGeomHelpers_static DistGeometry_static

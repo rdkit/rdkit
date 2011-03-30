@@ -7,7 +7,7 @@ SHLIB_LINK += -L${RDKIT}/lib -lFileParsers_static -lSmilesParse_static -lFingerp
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
-PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"002000"' 
+PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"003000"' 
 
 MODULE_big = rdkit
 OBJS = rdkit_io.o mol_op.o bfp_op.o sfp_op.o rdkit_gist.o low_gist.o guc.o cache.o adapter.o 

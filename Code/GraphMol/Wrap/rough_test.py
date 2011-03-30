@@ -697,6 +697,7 @@ class TestCase(unittest.TestCase):
     query = Chem.MolFromMolFile(fileN,sanitize=False)
     smi = Chem.MolToSmiles(query)
     self.failUnless(smi=='C1=CC=CC=C1')
+    query.UpdatePropertyCache()
     smi = Chem.MolToSmarts(query)
     self.failUnless(smi=='[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
     smi = "C1=CC=CC=C1"

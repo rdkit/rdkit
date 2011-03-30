@@ -45,7 +45,7 @@ HeteroatomSmarts = Chem.MolFromSmarts('[!#6;!#1]')
 #  from the graph). So the bond in [2H]C([2H])([2H])C([2H])([2H])[2H] *is* considered
 #  rotatable.
 RotatableBondSmarts = Chem.MolFromSmarts('[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]')
-sNHOHSmarts = Chem.MolFromSmarts('[#8H1,#7H1,#7H2,#7H3]')
+NHOHSmarts = Chem.MolFromSmarts('[#8H1,#7H1,#7H2,#7H3]')
 NOCountSmarts = Chem.MolFromSmarts('[#7,#8]')
 
 # this little trick saves duplicated code

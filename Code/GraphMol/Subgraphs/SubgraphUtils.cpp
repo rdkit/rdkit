@@ -92,14 +92,17 @@ namespace RDKit {
       }
       if(mol.getNumConformers()){
         // copy coordinates over:
-        Conformer *conf=new Conformer(subMol->getNumAtoms());
-        const Conformer &oconf=mol.getConformer();
-        conf->set3D(oconf.is3D());
-        for(INT_MAP_INT::const_iterator mapIt=atomIdxMap.begin();
-            mapIt!=atomIdxMap.end();++mapIt){
-          conf->setAtomPos(mapIt->second,oconf.getAtomPos(mapIt->first));
+        for(ROMol::ConstConformerIterator confIt=mol.beginConformers();
+            confIt!=mol.endConformers();++confIt){
+          Conformer *conf=new Conformer(subMol->getNumAtoms());
+          conf->set3D((*confIt)->is3D());
+          for(INT_MAP_INT::const_iterator mapIt=atomIdxMap.begin();
+              mapIt!=atomIdxMap.end();++mapIt){
+            conf->setAtomPos(mapIt->second,(*confIt)->getAtomPos(mapIt->first));
+          }
+          conf->setId((*confIt)->getId());
+          subMol->addConformer(conf,false);
         }
-        subMol->addConformer(conf,true);
       }
       
       return subMol;

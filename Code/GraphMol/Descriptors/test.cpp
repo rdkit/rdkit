@@ -355,14 +355,162 @@ void testLipinski1(){
       std::cerr<<"  failed: "<<idx<<" "<<oVal<<" "<<nVal<<std::endl;
     }
     TEST_ASSERT(oVal==nVal);
-
-    
     
     delete mol;
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testVSADescriptors(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test VSA descriptors." << std::endl;
+
+  {
+    ROMol *mol;
+    std::vector<double> vals;
+  
+    mol = SmilesToMol("CO");
+    vals = calcSlogP_VSA(*mol);
+    TEST_ASSERT(vals.size()==12);
+    for(unsigned int i=0;i<vals.size();++i){
+      switch(i){
+      case 1:
+        TEST_ASSERT(feq(vals[i],12.216,.001));
+        break;
+      default:
+        TEST_ASSERT(feq(vals[i],0,.001));
+      }
+    }
+    delete mol;
+
+    mol = SmilesToMol("CCO");
+    vals = calcSlogP_VSA(*mol);
+    TEST_ASSERT(vals.size()==12);
+    for(unsigned int i=0;i<vals.size();++i){
+      switch(i){
+      case 1:
+        TEST_ASSERT(feq(vals[i],11.713,.001));
+        break;
+      case 4:
+        TEST_ASSERT(feq(vals[i],6.924,.001));
+        break;
+      default:
+        TEST_ASSERT(feq(vals[i],0,.001));
+      }
+    }
+    delete mol;
+
+    mol = SmilesToMol("Fc1ccccc1");
+    vals = calcSlogP_VSA(*mol);
+    TEST_ASSERT(vals.size()==12);
+    for(unsigned int i=0;i<vals.size();++i){
+      switch(i){
+      case 3:
+        TEST_ASSERT(feq(vals[i],5.817,.001));
+        break;
+      case 5:
+        TEST_ASSERT(feq(vals[i],30.332,.001));
+        break;
+      case 9:
+        TEST_ASSERT(feq(vals[i],4.390,.001));
+        break;
+      default:
+        TEST_ASSERT(feq(vals[i],0,.001));
+      }
+    }
+    delete mol;
+  }
+
+
+  {
+    ROMol *mol;
+    std::vector<double> vals;
+  
+    mol = SmilesToMol("CO");
+    vals = calcSMR_VSA(*mol);
+    TEST_ASSERT(vals.size()==10);
+    for(unsigned int i=0;i<vals.size();++i){
+      switch(i){
+      case 0:
+        TEST_ASSERT(feq(vals[i],5.106,.001));
+        break;
+      case 5:
+        TEST_ASSERT(feq(vals[i],7.110,.001));
+        break;
+      default:
+        TEST_ASSERT(feq(vals[i],0,.001));
+      }
+    }
+    delete mol;
+
+    mol = SmilesToMol("CCO");
+    vals = calcSMR_VSA(*mol);
+    TEST_ASSERT(vals.size()==10);
+    for(unsigned int i=0;i<vals.size();++i){
+      switch(i){
+      case 0:
+        TEST_ASSERT(feq(vals[i],5.106,.001));
+        break;
+      case 4:
+        TEST_ASSERT(feq(vals[i],6.924,.001));
+        break;
+      case 5:
+        TEST_ASSERT(feq(vals[i],6.607,.001));
+        break;
+      default:
+        TEST_ASSERT(feq(vals[i],0,.001));
+      }
+    }
+    delete mol;
+  }
+
+  {
+    ROMol *mol;
+    std::vector<double> vals;
+  
+    mol = SmilesToMol("CO");
+    vals = calcPEOE_VSA(*mol);
+    TEST_ASSERT(vals.size()==14);
+    for(unsigned int i=0;i<vals.size();++i){
+      switch(i){
+      case 0:
+        TEST_ASSERT(feq(vals[i],5.106,.001));
+        break;
+      case 7:
+        TEST_ASSERT(feq(vals[i],7.110,.001));
+        break;
+      default:
+        TEST_ASSERT(feq(vals[i],0,.001));
+      }
+    }
+    delete mol;
+
+    mol = SmilesToMol("CCO");
+    vals = calcPEOE_VSA(*mol);
+    TEST_ASSERT(vals.size()==14);
+    for(unsigned int i=0;i<vals.size();++i){
+      switch(i){
+      case 0:
+        TEST_ASSERT(feq(vals[i],5.106,.001));
+        break;
+      case 6:
+        TEST_ASSERT(feq(vals[i],6.924,.001));
+        break;
+      case 7:
+        TEST_ASSERT(feq(vals[i],6.607,.001));
+        break;
+      default:
+        TEST_ASSERT(feq(vals[i],0,.001));
+      }
+    }
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -377,5 +525,6 @@ int main(){
   testLabute();
   testTPSA();
   testLipinski1();
+  testVSADescriptors();
 #endif
 }

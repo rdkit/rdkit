@@ -72,7 +72,9 @@ typedef std::list<int > INT_LIST;
 
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
 %template(Int_Vect) std::vector<int>;
+%template(Double_Vect) std::vector<double>;
 %rename(equals) std::vector<int>::operator==;
+%rename(equals) std::vector<double>::operator==;
 %template(Int_Pair) std::pair<int, int >;
 %template(Match_Vect) std::vector<std::pair<int,int> >;
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;

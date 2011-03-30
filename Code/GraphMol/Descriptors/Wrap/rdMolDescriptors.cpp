@@ -307,6 +307,73 @@ namespace {
     }
     return res;
   }
+
+  python::list CalcSlogPVSA(const RDKit::ROMol &mol,
+                            python::object bins,
+                            bool force){
+    std::vector<double> *lbins=0;
+    if(bins){
+      unsigned int nBins=python::extract<unsigned int>(bins.attr("__len__")());
+      if(nBins){
+        lbins = new std::vector<double>(nBins,0.0);
+        for(unsigned int i=0;i<nBins;++i){
+          (*lbins)[i] = python::extract<double>(bins[i]);
+        }
+      }
+    }
+    std::vector<double> res;
+    res=RDKit::Descriptors::calcSlogP_VSA(mol,lbins,force);
+
+    python::list pyres;
+    for(std::vector<double>::const_iterator iv=res.begin();iv!=res.end();++iv){
+      pyres.append(*iv);
+    }
+    return pyres;
+  }
+  python::list CalcSMRVSA(const RDKit::ROMol &mol,
+                            python::object bins,
+                            bool force){
+    std::vector<double> *lbins=0;
+    if(bins){
+      unsigned int nBins=python::extract<unsigned int>(bins.attr("__len__")());
+      if(nBins){
+        lbins = new std::vector<double>(nBins,0.0);
+        for(unsigned int i=0;i<nBins;++i){
+          (*lbins)[i] = python::extract<double>(bins[i]);
+        }
+      }
+    }
+    std::vector<double> res;
+    res=RDKit::Descriptors::calcSMR_VSA(mol,lbins,force);
+
+    python::list pyres;
+    for(std::vector<double>::const_iterator iv=res.begin();iv!=res.end();++iv){
+      pyres.append(*iv);
+    }
+    return pyres;
+  }
+  python::list CalcPEOEVSA(const RDKit::ROMol &mol,
+                            python::object bins,
+                            bool force){
+    std::vector<double> *lbins=0;
+    if(bins){
+      unsigned int nBins=python::extract<unsigned int>(bins.attr("__len__")());
+      if(nBins){
+        lbins = new std::vector<double>(nBins,0.0);
+        for(unsigned int i=0;i<nBins;++i){
+          (*lbins)[i] = python::extract<double>(bins[i]);
+        }
+      }
+    }
+    std::vector<double> res;
+    res=RDKit::Descriptors::calcPEOE_VSA(mol,lbins,force);
+
+    python::list pyres;
+    for(std::vector<double>::const_iterator iv=res.begin();iv!=res.end();++iv){
+      pyres.append(*iv);
+    }
+    return pyres;
+  }
 }
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -463,7 +530,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	       python::arg("force")=false),
               docString.c_str());
 
-
   docString="returns the TPSA value for a molecule";
   python::def("CalcTPSA",
 	      RDKit::Descriptors::calcTPSA,
@@ -529,6 +595,23 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("_CalcNumHeteroatoms_version")=RDKit::Descriptors::NumHeteroatomsVersion;
 
-
+  docString="returns the SlogP VSA contributions for a molecule";
+  python::def("SlogP_VSA_",
+              CalcSlogPVSA,
+              (python::arg("mol"),
+               python::arg("bins")=python::list(),
+               python::arg("force")=false));
+  docString="returns the SMR VSA contributions for a molecule";
+  python::def("SMR_VSA_",
+              CalcSMRVSA,
+              (python::arg("mol"),
+               python::arg("bins")=python::list(),
+               python::arg("force")=false));
+  docString="returns the PEOE VSA contributions for a molecule";
+  python::def("PEOE_VSA_",
+              CalcPEOEVSA,
+              (python::arg("mol"),
+               python::arg("bins")=python::list(),
+               python::arg("force")=false));
   
 }

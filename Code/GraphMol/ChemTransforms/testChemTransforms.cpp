@@ -743,10 +743,55 @@ void testMurckoDecomp()
     }
     delete nMol;
   }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testReplaceCoreRequireDummies() 
+{
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing replaceCore requiring dummy atoms" << std::endl;
+
+  {
+    std::string sma = "n1c(*)oc(*)c1";
+    ROMol *matcher = SmartsToMol(sma);
+    TEST_ASSERT(matcher);
+
+    std::string smi = "n1c(CC)oc(C)c1";
+    ROMol *mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    ROMol *mol2 = replaceCore(*mol1,*matcher,false,true,false);
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(mol2->getNumAtoms()==5);
+    smi = MolToSmiles(*mol2,true);
+    TEST_ASSERT(smi=="[1*]CC.[4*]C");
+
+    delete mol1;
+    delete mol2;
+
+    smi = "n1c(CC)oc(C)c1C";
+    mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    mol2 = replaceCore(*mol1,*matcher,false,true,true);
+    TEST_ASSERT(!mol2);
+    delete mol1;
+
+    smi = "n1c(CC)occ1C";
+    mol1 = SmilesToMol(smi);
+    TEST_ASSERT(mol1);
+
+    mol2 = replaceCore(*mol1,*matcher,false,true,true);
+    TEST_ASSERT(!mol2);
+    delete mol1;
+
+    delete matcher;
+  }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-  
 }
+
 
 
 int main() { 
@@ -766,6 +811,7 @@ int main() {
   testReplaceCorePositions();
 
   testMurckoDecomp();
+  testReplaceCoreRequireDummies();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

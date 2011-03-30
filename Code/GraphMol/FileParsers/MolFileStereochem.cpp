@@ -551,11 +551,9 @@ namespace RDKit {
           } else {
             obond1 = tBond;
           }
-        } else if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond1->getIdx()]){
+        } else{
           obond1=bond1;
           bond1=tBond;
-        } else if(!obond1){
-          obond1=tBond;
         }
       }
       ++beg;
@@ -581,11 +579,11 @@ namespace RDKit {
           } else {
             obond2 = tBond;
           }
-        } else if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond2->getIdx()]){
+        } else {
+          // we already had a bond2 and we don't need to set the direction
+          // on the new one, so swap.
           obond2=bond2;
           bond2=tBond;
-        } else if(!obond2){
-          obond2=tBond;
         }
       }
       ++beg;
@@ -716,7 +714,7 @@ namespace RDKit {
     std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
     std::cerr << ">>>>>>>>>>>>>>>>>>>>>*\n";
 #endif
-    // used to store the number of double bonds a given
+    // used to store the number of single bonds a given
     // single bond is adjacent to
     std::vector<unsigned int> singleBondCounts(mol.getNumBonds(),0);
     std::vector<Bond *> bondsInPlay;
@@ -773,7 +771,8 @@ namespace RDKit {
     std::vector< std::pair<unsigned int,Bond *> > orderedBondsInPlay;
     for(unsigned int i=0;i<bondsInPlay.size();++i){
       Bond *dblBond=bondsInPlay[i];
-      unsigned int countHere=std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),dblBondNbrs[dblBond->getIdx()].end(),0);
+      unsigned int countHere=std::accumulate(dblBondNbrs[dblBond->getIdx()].begin(),
+                                             dblBondNbrs[dblBond->getIdx()].end(),0);
       // and favor double bonds that are *not* in rings. The combination of using the sum
       // above (instead of the max) and this ring-membershipt test seem to fix
       // sf.net issue 3009836

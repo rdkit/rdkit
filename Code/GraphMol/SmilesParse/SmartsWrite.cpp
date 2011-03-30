@@ -695,11 +695,12 @@ namespace RDKit {
     }
   } // end of namespace SmartsWrite
   
-  std::string MolToSmarts(ROMol &mol, bool doIsomericSmiles) {
+  std::string MolToSmarts(ROMol &inmol, bool doIsomericSmiles) {
     std::string res;
-    unsigned int nAtoms = mol.getNumAtoms();
+    unsigned int nAtoms = inmol.getNumAtoms();
     if(!nAtoms) return "";
 
+    ROMol mol(inmol);
     INT_VECT ranks;
     ranks.resize(nAtoms);
     // For smiles writing we would be canonicalizing but we will not do that here.

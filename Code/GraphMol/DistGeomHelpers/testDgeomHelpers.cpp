@@ -1092,6 +1092,74 @@ void testIssue3019283() {
   }
 }
 
+void testIssue3238580() {
+  {
+    std::string smi="C1CCC2=CC12";
+    RWMol *m = SmilesToMol(smi);
+
+    DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(m->getNumAtoms());
+    DistGeom::BoundsMatPtr bm(mat);
+    DGeomHelpers::initBoundsMat(bm);
+    DGeomHelpers::setTopolBounds(*m, bm);
+    // if we get here it indicates everything was fine.
+    // do bounds smoothing just to be sure:
+    bool ok = DistGeom::triangleSmoothBounds(bm);
+    TEST_ASSERT(ok);
+    
+    delete m;
+  }
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string molfile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/Issue3238580.1.mol";
+    RWMol *m = MolFileToMol(molfile);
+
+    DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(m->getNumAtoms());
+    DistGeom::BoundsMatPtr bm(mat);
+    DGeomHelpers::initBoundsMat(bm);
+    DGeomHelpers::setTopolBounds(*m, bm);
+    // if we get here it indicates everything was fine.
+    // do bounds smoothing just to be sure:
+    bool ok = DistGeom::triangleSmoothBounds(bm);
+    TEST_ASSERT(ok);
+    
+    delete m;
+  }
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string molfile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/Issue3238580.2.mol";
+    RWMol *m = MolFileToMol(molfile);
+
+    DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(m->getNumAtoms());
+    DistGeom::BoundsMatPtr bm(mat);
+    DGeomHelpers::initBoundsMat(bm);
+    DGeomHelpers::setTopolBounds(*m, bm);
+    // if we get here it indicates everything was fine.
+    // do bounds smoothing just to be sure:
+    bool ok = DistGeom::triangleSmoothBounds(bm);
+    TEST_ASSERT(ok);
+    
+    delete m;
+  }
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string molfile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/Issue3238580.3.mol";
+    RWMol *m = MolFileToMol(molfile);
+
+    DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(m->getNumAtoms());
+    DistGeom::BoundsMatPtr bm(mat);
+    DGeomHelpers::initBoundsMat(bm);
+    DGeomHelpers::setTopolBounds(*m, bm);
+    // if we get here it indicates everything was fine.
+    // do bounds smoothing just to be sure:
+    bool ok = DistGeom::triangleSmoothBounds(bm);
+    TEST_ASSERT(ok);
+    
+    delete m;
+  }
+
+
+}
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1201,6 +1269,11 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3019283 \n\n";
   testIssue3019283();
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3238580 \n\n";
+  testIssue3238580();
+
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
 
   return(0);

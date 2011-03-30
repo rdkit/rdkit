@@ -372,6 +372,9 @@ namespace Canon {
                              MolStack &molStack,
                              INT_VECT &atomOrders,
                              INT_VECT &bondVisitOrders){
+    PRECONDITION(colors.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(ranks.size()>=mol.getNumAtoms(),"vector too small");
+
     //ROMol *mol = molProps.getMol();
     int nAttached=0;
 
@@ -715,6 +718,8 @@ namespace Canon {
                             std::vector<AtomColors> &colors,
                             INT_VECT &ranks,
                             MolStack &molStack){
+    PRECONDITION(colors.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(ranks.size()>=mol.getNumAtoms(),"vector too small");
     int nAtoms=mol.getNumAtoms();
     
     INT_VECT atomVisitOrders(nAtoms,0);

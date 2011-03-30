@@ -28,11 +28,8 @@
 #include <boost/property_map.hpp>
 #endif
 
-
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/graphviz.hpp>
-
 
 const int ci_LOCAL_INF=static_cast<int>(1e8);
 

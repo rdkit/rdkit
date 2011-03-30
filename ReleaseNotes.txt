@@ -1,3 +1,69 @@
+******  Release_2011.03.1 *******
+(Changes relative to Release_2010.12.1)
+
+Acknowledgements:
+ - Eddie Cao, James Davidson, Kirk DeLisle, Peter Gedeck, George
+   Magoon, TJ O'Donnell, Gianluca Sforna, Nik Stiefl, Bernd Wiswedel
+
+Bug Fixes: 
+ - The performance of SSSR finding for molecules with multiple highly-fused
+   ring systems has been improved. (Issue 3185548)
+ - Isotope information is now correctly saved when molecules are
+   serialized (pickled). (Issue 3205280)
+ - Generating SMILES for a molecule no longer changes the
+   molecule. This fixes a round-trip bug with certain highly symmetric
+   molecules read from SD files. (Issue 3228150)
+ - Another bounds-matrix generation bug for highly (con)strained
+   systems was fixed. (Issue 3238580)
+ - Conformation information is now better handled by deleteSubstructs(),
+   replaceSubstructs(), and replaceCore().
+
+New Features:
+ - the rdkit.Chem.Draw package has been significantly refactored.
+ - Code for doing Murcko decomposition of molecules has been
+   added. From Python this is in the module:
+   rdkit.Chem.Scaffolds.MurckoScaffold
+   It's available in C++ in the GraphMol/ChemTransforms area.
+ - rdkit.Chem.AllChem.TransformMol() now takes optional arguments
+   allowing the conformation to be transformed to be specified and
+   other existing conformations to be preserved.
+ - Calculations for most of the descriptors in rdkit.Chem.Lipinski and
+   rdkit.Chem.MolSurf have been moved into C++. The python API is the
+   same, but the calculations should be somewhat faster.
+ - Extensive feature additions to the SWIG-based java wrapper.
+ - The Chem.ReplaceCore() function is now better suited for use
+   in R-group decomposition.
+ - The Morgan fingerprinting code can now return information about
+   which atoms set particular bits.
+ - The function pathToSubmol() now copies coordinate information
+   from conformations (if present). The function is also now available
+   from Python
+ - The path and subgraph finding code now takes an optional
+   rootedAtAtom argument to allow only paths/subgraphs that start at a
+   particular atom to be generated.
+ - The function findAtomEnvironmentOfRadiusN has been added to allow
+   circular atom environments to be located in molecules.
+ - MolOps::assignStereochemistry now can also flag potential
+   stereocenters that are not specified.
+
+New Database Cartridge Features: 
+ - the descriptor-calculation functions mol_numrotatablebonds(),
+   mol_numheteroatoms(), mol_numrings(), and mol_tpsa() have been
+   added.
+ 
+Deprecated modules (to be removed in next release):
+
+Removed modules:
+
+Other:
+ - In C++, the functions CalcCrippenDescriptors and CalcAMW have been
+   renamed calcCrippenDescriptors and calcAMW to make them consistent
+   with the other descriptor calculators.
+ - The molecule serialization (pickling) format has been changed. The
+   new format is more compact.
+ 
+
+
 ******  Release_2010.12.1 *******
 (Changes relative to Release_2010.09.1)
 

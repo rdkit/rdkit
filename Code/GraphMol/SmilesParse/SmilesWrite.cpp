@@ -415,45 +415,45 @@ namespace RDKit{
                  "rootedAtomAtom must be less than the number of atoms");
     if(!mol.getNumAtoms()) return "";
 
+    ROMol tmol(mol);
     if(doIsomericSmiles){
-      mol.setProp("_doIsoSmiles",1);
-    } else if(mol.hasProp("_doIsoSmiles")){
-      mol.clearProp("_doIsoSmiles");
+      tmol.setProp("_doIsoSmiles",1);
+    } else if(tmol.hasProp("_doIsoSmiles")){
+      tmol.clearProp("_doIsoSmiles");
     }
 
-    if(mol.hasProp("_ringStereoWarning")){
-      mol.clearProp("_ringStereoWarning");
+    if(tmol.hasProp("_ringStereoWarning")){
+      tmol.clearProp("_ringStereoWarning");
     }
 
 #if 0
     std::cout << "----------------------------" << std::endl;
     std::cout << "MolToSmiles:"<< std::endl;
-    mol.debugMol(std::cout);
+    tmol.debugMol(std::cout);
     std::cout << "----------------------------" << std::endl;
 #endif  
     std::string res;
 
-    for(ROMol::AtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
+    for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
       (*atIt)->updatePropertyCache();
     }
 
-    unsigned int nAtoms=mol.getNumAtoms();
+    unsigned int nAtoms=tmol.getNumAtoms();
     INT_VECT ranks(nAtoms,-1);
 
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
-      MolOps::assignStereochemistry(mol,true);
+      MolOps::assignStereochemistry(tmol,true);
     }
     if(canonical){
-      MolOps::rankAtoms(mol,ranks);
+      MolOps::rankAtoms(tmol,ranks);
     } else {
-      for(unsigned int i=0;i<mol.getNumAtoms();++i) ranks[i]=i;
+      for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
     }
-
 #ifdef VERBOSE_CANON
     for(unsigned int tmpI=0;tmpI<ranks.size();tmpI++){
-      std::cout << tmpI << " " << ranks[tmpI] << " " << *(mol.getAtomWithIdx(tmpI)) << std::endl;
+      std::cout << tmpI << " " << ranks[tmpI] << " " << *(tmol.getAtomWithIdx(tmpI)) << std::endl;
     }
 #endif
 
@@ -480,7 +480,7 @@ namespace RDKit{
       }
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
-      subSmi = SmilesWrite::FragmentSmilesConstruct(mol, nextAtomIdx, colors,
+      subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
                                                     ranks,doKekule);
 
       res += subSmi;

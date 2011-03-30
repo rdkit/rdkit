@@ -1060,6 +1060,7 @@ void test12DoubleBondStereochem(){
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==6);
   TEST_ASSERT(prods[0][0]->getNumBonds()==5);
+  prods[0][0]->updatePropertyCache();
   BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
   MolOps::assignStereochemistry(*(prods[0][0]));
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
@@ -1091,6 +1092,7 @@ void test12DoubleBondStereochem(){
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
   TEST_ASSERT(prods[0][0]->getNumBonds()==3);
+  prods[0][0]->updatePropertyCache();
   BOOST_LOG(rdInfoLog)<<MolToSmiles(*prods[0][0],true)<<std::endl;
   MolOps::assignStereochemistry(*(prods[0][0]));
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo()==Bond::STEREOZ);

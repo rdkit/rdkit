@@ -297,6 +297,40 @@ public class WrapperTests {
         tmp=RDKFuncs.calcTPSA(m3);
         assertEquals(tmp,37.30,0.01);
     }
+    @Test public void testVSADescriptors() {
+	ROMol m1,m2,m3;
+	m1 = RDKFuncs.MolFromSmiles("CO");
+	m2 = RDKFuncs.MolFromSmiles("CCO");
+        Double_Vect v;
+
+        v = RDKFuncs.calcSlogP_VSA(m1);
+        assertEquals(v.get(0),0.0,0.001);
+        assertEquals(v.get(1),12.216,0.001);
+        v = RDKFuncs.calcSlogP_VSA(m2);
+        assertEquals(v.get(0),0.0,0.001);
+        assertEquals(v.get(1),11.713,0.001);
+        assertEquals(v.get(4),6.924,0.001);
+
+        v = RDKFuncs.calcSMR_VSA(m1);
+        assertEquals(v.get(0),5.106,0.001);
+        assertEquals(v.get(1),0.0,0.001);
+        assertEquals(v.get(5),7.110,0.001);
+        v = RDKFuncs.calcSMR_VSA(m2);
+        assertEquals(v.get(0),5.106,0.001);
+        assertEquals(v.get(4),6.924,0.001);
+        assertEquals(v.get(5),6.607,0.001);
+
+        v = RDKFuncs.calcPEOE_VSA(m1);
+        assertEquals(v.get(0),5.106,0.001);
+        assertEquals(v.get(7),7.110,0.001);
+        assertEquals(v.get(5),0.000,0.001);
+        v = RDKFuncs.calcPEOE_VSA(m2);
+        assertEquals(v.get(0),5.106,0.001);
+        assertEquals(v.get(6),6.924,0.001);
+        assertEquals(v.get(7),6.607,0.001);
+
+
+    }
     /*@Test*/ public void testMemory2() {
 	ChemicalReaction rxn;
 	rxn=RDKFuncs.ReactionFromSmarts("[OH][C:1]=[O:2].[N!H0:3]>>[N:3][C:1]=[O:2]");
