@@ -551,12 +551,10 @@ namespace RDKit {
           } else {
             obond1 = tBond;
           }
-        } else{ //if(singleBondCounts[tBond->getIdx()]>singleBondCounts[bond1->getIdx()]){
+        } else{
           obond1=bond1;
           bond1=tBond;
-        } //else if(!obond1){
-        //  obond1=tBond;
-        //}
+        }
       }
       ++beg;
     }
