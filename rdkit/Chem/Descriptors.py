@@ -17,13 +17,17 @@ def _isCallable(thing):
 
 _descList=[]
 def _setupDescriptors(namespace):
-  global _descList
+  global _descList,descList
   from rdkit.Chem import GraphDescriptors,MolSurf,Lipinski,Fragments,Crippen
   from rdkit.Chem.EState import EState_VSA
   mods = [GraphDescriptors,MolSurf,EState_VSA,Lipinski,Crippen,Fragments]
 
   otherMods = [Chem]
 
+  for nm,thing in namespace.iteritems():
+    if nm[0]!='_' and _isCallable(thing):
+      _descList.append((nm,thing))
+  
   others = []
   for mod in otherMods:
     tmp = dir(mod)
@@ -45,6 +49,7 @@ def _setupDescriptors(namespace):
         if _isCallable(thing):
           namespace[name]=thing
           _descList.append((name,thing))
+  descList=_descList
 
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 MolWt = lambda *x,**y:_rdMolDescriptors._CalcMolWt(*x,**y)
