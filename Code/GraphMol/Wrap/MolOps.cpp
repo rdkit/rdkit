@@ -836,7 +836,7 @@ namespace RDKit{
       Defaults to 2048.\n\
 \n\
     - nBitsPerHash: (optional) number of bits to set per path\n\
-      Defaults to 4.\n\
+      Defaults to 2.\n\
 \n\
     - useHs: (optional) include paths involving Hs in the fingerprint if the molecule\n\
       has explicit Hs.\n\
@@ -1002,6 +1002,9 @@ namespace RDKit{
     - coreQuery: the molecule to be used as a substructure query for recognizing the core\n\
 \n\
     - replaceDummies: toggles replacement of atoms that match dummies in the query\n\
+\n\
+    - labelByIndex: toggles labeling the attachment point dummy atoms with \n\
+                    the index of the core atom they're attached to.\n\
 \n\
     - requireDummyMatch: if the molecule has side chains that attach at points not\n\
                          flagged with a dummy, it will be rejected (None is returned)\n\
