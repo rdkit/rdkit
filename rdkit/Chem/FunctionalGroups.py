@@ -65,9 +65,11 @@ class FuncGroupFileParseError(ValueError):
 groupDefns = {}
 hierarchy=None
 lastData=None
+lastFilename=None
 def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
-  global groupDefns,hierarchy,lastData
-  if not force and hierarchy and (not data or data==lastData) and (not fileNm or fileNm==lastFileNm): 
+  global groupDefns,hierarchy,lastData,lastFilename
+  if not force and hierarchy and (not data or data==lastData) and \
+        (not fileNm or fileNm==lastFilename): 
     return hierarchy[:]
   lastData=data
   splitter = re.compile('\t+')
@@ -78,6 +80,7 @@ def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
 
   if fileNm:
     inF = file(fileNm,'r')
+    lastFilename = fileNm
   elif data:
     inF = cStringIO.StringIO(data)
   else:
