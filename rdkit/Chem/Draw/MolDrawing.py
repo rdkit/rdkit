@@ -419,7 +419,7 @@ class MolDrawing(object):
           d = pj-pi
           dist2 = d[0]*d[0]+d[1]*d[1]
           if dist2<=tol:
-            addCanvasPolygon(canvas,((pi[0]-2*flagCloseContactsDist,
+            self.canvas.addCanvasPolygon(((pi[0]-2*flagCloseContactsDist,
                                       pi[1]-2*flagCloseContactsDist),
                                      (pi[0]+2*flagCloseContactsDist,
                                       pi[1]-2*flagCloseContactsDist),
