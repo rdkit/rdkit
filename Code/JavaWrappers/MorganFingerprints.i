@@ -48,6 +48,8 @@ SWIG_STD_VECTOR_SPECIALIZE_MINIMUM(UInt_Pair_Vect, std::vector< std::pair<unsign
 
 %newobject RDKit::MorganFingerprints::getFingerprint;
 %rename(MorganFingerprintMol) RDKit::MorganFingerprints::getFingerprint;
+%newobject RDKit::MorganFingerprints::getFingerprintAsBitVect;
+%rename(getMorganFingerprintAsBitVect) RDKit::MorganFingerprints::getFingerprintAsBitVect;
 %include <GraphMol/Fingerprints/MorganFingerprints.h>
 
 %include <DataStructs/BitOps.h>

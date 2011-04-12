@@ -43,7 +43,8 @@
 
 %include <GraphMol/ChemReactions/Reaction.h>
 %include <GraphMol/ChemReactions/ReactionParser.h>
-%ignore RDKit::ChemicalReaction::validate;
+%ignore RDKit::ChemicalReaction::validate(unsigned int &,unsigned int &,bool);
+%ignore RDKit::ChemicalReaction::validate(unsigned int &,unsigned int &);
 
 %extend RDKit::ChemicalReaction {
 static RDKit::ChemicalReaction *ReactionFromSmarts(std::string sma){
@@ -100,7 +101,7 @@ static RDKit::ChemicalReaction *RxnFromBinary(std::vector<int> pkl){
 };
 
 /* A Java-accessible validation function */
-    std::pair<int,int> *Validate(bool silent=false) {
+    std::pair<int,int> *validateReaction(bool silent=false) {
 	std::pair<int,int> *res = new std::pair<int,int>();
 	// Use some local unsigned ints so that we don't create a new and useless type at the Java
 	// level.
@@ -110,6 +111,12 @@ static RDKit::ChemicalReaction *RxnFromBinary(std::vector<int> pkl){
 	res->first = (int) first;
 	res->second = (int) second;
         return res;
-   }
+    };
+
+  bool validate() {
+    unsigned int nErr=0,nWarn=0;
+    bool res=$self->validate(nErr,nWarn);
+    return res;
+  };
 
 }

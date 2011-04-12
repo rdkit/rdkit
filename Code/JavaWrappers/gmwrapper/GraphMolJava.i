@@ -46,6 +46,7 @@
 /* Include the base types before anything that will utilize them */
 %include "stdint.i"
 %include "std_string.i"
+%include "std_list.i"
 %include "std_vector.i"
 %include "std_map.i"
 %include "std_pair.i"
@@ -173,6 +174,8 @@ typedef unsigned long long int	uintmax_t;
 %include "../transforms.i"
 %include "../DistGeom.i"
 %include "../ForceField.i"
+%include "../ChemTransforms.i"
+%include "../Subgraphs.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR
@@ -207,6 +210,7 @@ typedef unsigned long long int	uintmax_t;
 %template(Int_Int_Map) std::map<int,int>;
 %template(Int_Point2D_Map) std::map<int, RDGeom::Point2D>;
 %template(Int_Point3D_Map) std::map<int, RDGeom::Point3D>;
+%template(Int_Int_Vect_List_Map) std::map<int,std::list<std::vector<int> > >;
 
 /* vector pair */
 %template(UInt_Pair_Vect) std::vector<std::pair<boost::uint32_t,int> >;
@@ -215,6 +219,10 @@ typedef unsigned long long int	uintmax_t;
 
 /* vector vector */
 %template(Int_Vect_Vect) std::vector<std::vector<int> >;
+
+/* list */
+%template(Int_Vect_List) std::list<std::vector<int> >;
+
 
 /* other */
 %template(Match_Vect_Vect) std::vector<std::vector<std::pair<int,int> > >;

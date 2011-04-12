@@ -291,13 +291,13 @@ public class ChemReactionTests extends GraphMolTest {
 	public void test5Validation() {
 		ChemicalReaction rxn = ChemicalReaction.ReactionFromSmarts("[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]");
 		assertNotNull(rxn);
-		Int_Pair validationResults = rxn.Validate();
+		Int_Pair validationResults = rxn.validateReaction();
 		assertEquals(0, validationResults.getFirst());
 		assertEquals(0, validationResults.getSecond());
 
 		rxn = ChemicalReaction.ReactionFromSmarts("[C:1](=[O:1])O.[N:3]>>[C:1](=[O:2])[N:3]");
 		assertNotNull(rxn);
-		validationResults = rxn.Validate();
+		validationResults = rxn.validateReaction();
 		assertEquals(0, validationResults.getFirst());
 		assertEquals(2, validationResults.getSecond());
 

@@ -56,6 +56,7 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
+#include "Depict.h"
 %}
 
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
@@ -212,6 +213,25 @@
                                permuteDeg4Nodes);
   }
 
+  unsigned int compute2DCoords(RDKit::ROMol &templ){
+    RDKit::MatchVectType matchVect;
+    if(templ.getNumConformers() && SubstructMatch(*($self),templ,matchVect)){
+      RDGeom::INT_POINT2D_MAP coordMap;
+      RDKit::Conformer conf=templ.getConformer();
+      for(RDKit::MatchVectType::const_iterator iter=matchVect.begin();
+          iter!=matchVect.end();++iter){
+        RDGeom::Point2D pt;
+        pt.x = conf.getAtomPos(iter->first).x;
+        pt.y = conf.getAtomPos(iter->first).y;
+        coordMap[iter->second]=pt;
+      }
+      return RDDepict::compute2DCoords(*($self),&coordMap);
+    } else {
+      return RDDepict::compute2DCoords(*($self),0);
+    }
+  }
+
+  
   unsigned int compute2DCoordsMimicDistMat(const RDDepict::DOUBLE_SMART_PTR *dmat=0,
                                            bool canonOrient=true,
                                            bool clearConfs=true,
@@ -336,3 +356,23 @@
   }
 }
 
+
+
+
+%extend RDKit::ROMol {
+  std::string ToSVG(int lineWidthMult=2,int fontSize=50){
+    if(lineWidthMult<0) lineWidthMult *=2;
+    if(fontSize<0) fontSize*=2;
+    std::vector<int> drawing=MolToDrawing(*($self),0);
+    std::string svg=DrawingToSVG(drawing,lineWidthMult,fontSize);
+    return svg;
+  }
+  std::string ToSVG(const std::vector<int> &highlightAtoms,
+                    int lineWidthMult=2,int fontSize=50){
+    if(lineWidthMult<0) lineWidthMult *=2;
+    if(fontSize<0) fontSize*=2;
+    std::vector<int> drawing=MolToDrawing(*($self),&highlightAtoms);
+    std::string svg=DrawingToSVG(drawing,lineWidthMult,fontSize);
+    return svg;
+  }
+}
