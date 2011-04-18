@@ -24,21 +24,31 @@ def convertColor(color):
   return color
 
 class Canvas(CanvasBase):
-  def __init__(self, img,
+  def __init__(self, img=None,
                imageType=None, # determines file type
                fileName=None,  # if set determines output file name
+               size=None,
                ):
-    self.image = Draw(img)
-    self.image.setantialias(True)
-    self.size = self.image.size
+    if img is None:
+      import Image
+      if size is None:
+        raise ValueError,'please provide either an image or a size'
+      img = Image.new('RGBA',size,"white")
+    self.image = img
+    self.draw = Draw(img)
+    self.draw.setantialias(True)
+    if size is None:
+      self.size = self.draw.size
+    else:
+      self.size = size
     if imageType and imageType not in ('png','jpg'):
       raise ValueError,'unsupported image type for agg canvas'
-    self.imageType=imageType
+    self.drawType=imageType
     self.fileName=fileName
     
   def _doLine(self, p1, p2, pen, **kwargs):
     if kwargs.get('dashes',(0,0)) == (0,0):
-      self.image.line((p1[0],p1[1],p2[0],p2[1]),pen)
+      self.draw.line((p1[0],p1[1],p2[0],p2[1]),pen)
     else:
       # the antialiasing makes the dashes appear too small
       dash = [x*4 for x in kwargs['dashes']]
@@ -50,7 +60,7 @@ class Canvas(CanvasBase):
         if dashOn:
           p1 = pts[currDash]
           p2 = pts[currDash+1]
-          self.image.line((p1[0],p1[1],p2[0],p2[1]),pen)
+          self.draw.line((p1[0],p1[1],p2[0],p2[1]),pen)
         currDash+=1
         dashOn = not dashOn
 
@@ -68,15 +78,15 @@ class Canvas(CanvasBase):
   def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
     color = convertColor(color)
     font = Font(color,faceMap[font.face],size=font.size)
-    w,h=self.image.textsize(text,font)
+    w,h=self.draw.textsize(text,font)
     bw,bh=w*1.1,h*1.1
     dPos = pos[0]-bw/2.,pos[1]-bh/2.
     bgColor=kwargs.get('bgColor',(1,1,1))
     bgColor = convertColor(bgColor)
-    self.image.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
+    self.draw.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
                      None,Brush(bgColor))
     dPos = pos[0]-w/2.,pos[1]-h/2.
-    self.image.text(dPos,text,font)
+    self.draw.text(dPos,text,font)
 
   def addCanvasPolygon(self,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
     if not fill and not stroke: return
@@ -90,7 +100,7 @@ class Canvas(CanvasBase):
       brush = Brush(color)
     if stroke:
       pen = Pen(color)
-    self.image.polygon(dps,pen,brush)
+    self.draw.polygon(dps,pen,brush)
  
   def addCanvasDashedWedge(self,p1,p2,p3,dash=(2,2),color=(0,0,0),
                            color2=None,**kwargs):
@@ -102,10 +112,10 @@ class Canvas(CanvasBase):
     if len(pts2)<len(pts1): pts2,pts1=pts1,pts2
 
     for i in range(len(pts1)):
-      self.image.line((pts1[i][0],pts1[i][1],pts2[i][0],pts2[i][1]),pen)
+      self.draw.line((pts1[i][0],pts1[i][1],pts2[i][0],pts2[i][1]),pen)
 
   def flush(self):
-    self.image.flush()
+    self.draw.flush()
     if self.fileName:
       self.image.save(self.fileName)
     
