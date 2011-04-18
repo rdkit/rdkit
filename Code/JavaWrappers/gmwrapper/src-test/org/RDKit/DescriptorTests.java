@@ -217,6 +217,19 @@ public class DescriptorTests extends GraphMolTest {
         assertEquals(v.get(7),6.607,0.001);
     }
 
+    @Test public void testMW() {
+	ROMol m1;
+	m1 = RWMol.MolFromSmiles("C");
+        assertEquals(16.043,RDKFuncs.calcAMW(m1),0.001);
+        assertEquals(16.031,RDKFuncs.calcExactMW(m1),0.001);
+    }
+    @Test public void testMolFormula() {
+	ROMol m1;
+	m1 = RWMol.MolFromSmiles("C");
+        assertEquals("CH4",RDKFuncs.calcMolFormula(m1));
+    }
+
+
     public static void main(String args[]) {
 	org.junit.runner.JUnitCore.main("org.RDKit.DescriptorTests");
     }

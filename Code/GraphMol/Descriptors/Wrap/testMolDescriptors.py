@@ -193,6 +193,11 @@ class TestCase(unittest.TestCase) :
     amw = rdMD._CalcMolWt(mol2,True);
     self.failUnless(feq(amw,12.011,.001));
 
+    mol = Chem.MolFromSmiles("C");
+    amw = rdMD.CalcExactMolWt(mol);
+    self.failUnless(feq(amw,16.031,.001));
+
+    
   def testPairValues(self):
     import base64
     testD=(('CCCO','AQAAAAQAAAAAAIAABgAAACGECAABAAAAIoQIAAEAAABBhAgAAQAAACNEGAABAAAAQUQYAAEAAABC\nRBgAAQAAAA==\n'),

@@ -180,6 +180,37 @@ namespace RDKit {
       return getNouterElecs(std::string(elementSymbol));
     }
 
+    //! returns the number of the most common isotope
+    int getMostCommonIsotope( UINT atomicNumber ) const {
+      PRECONDITION(atomicNumber<byanum.size(),"Atomic number not found");
+      return byanum[atomicNumber].MostCommonIsotope();
+    }
+    //! \overload
+    int getMostCommonIsotope( const std::string &elementSymbol) const {
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
+      return getMostCommonIsotope(byname.find(elementSymbol)->second);
+    }
+    //! \overload
+    int getMostCommonIsotope(char *elementSymbol ) const {
+      return getMostCommonIsotope(std::string(elementSymbol));
+    }
+
+    //! returns the mass of the most common isotope
+    double getMostCommonIsotopeMass( UINT atomicNumber ) const {
+      PRECONDITION(atomicNumber<byanum.size(),"Atomic number not found");
+      return byanum[atomicNumber].MostCommonIsotopeMass();
+    }
+    //! \overload
+    double getMostCommonIsotopeMass( const std::string &elementSymbol) const {
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
+      return getMostCommonIsotopeMass(byname.find(elementSymbol)->second);
+    }
+    //! \overload
+    double getMostCommonIsotopeMass(char *elementSymbol ) const {
+      return getMostCommonIsotopeMass(std::string(elementSymbol));
+    }
+
+    
     //! convenience function to determine which atom is more electronegative
     /*!
 

@@ -812,6 +812,19 @@ void test1(){
   m.replaceAtom(newIdx,repA);
 }
 
+void testPeriodicTable()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing properties from periodic table" << std::endl;
+
+  TEST_ASSERT(PeriodicTable::getTable()->getDefaultValence(6)==4);
+  TEST_ASSERT(PeriodicTable::getTable()->getNouterElecs(6)==4);
+  TEST_ASSERT(PeriodicTable::getTable()->getMostCommonIsotope(6)==12);
+  TEST_ASSERT(PeriodicTable::getTable()->getMostCommonIsotopeMass(6)==12.0);
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
 // -------------------------------------------------------------------
 int main()
 {
@@ -830,6 +843,7 @@ int main()
   testIssue2381580();
 #endif
   testIssue2840217();
+  testPeriodicTable();
 
   return 0;
 }

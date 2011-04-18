@@ -552,6 +552,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("_CalcMolWt_version")="1.0.0";
 
+  docString="returns the molecule's exact molecular weight";
+  python::def("CalcExactMolWt",
+	      RDKit::Descriptors::calcExactMW,
+	      (python::arg("mol"),python::arg("onlyHeavy")=false),
+              docString.c_str());
+  python::scope().attr("_CalcExactMolWt_version")="1.0.0";
+
   docString="returns the number of Lipinski H-bond donors for a molecule";
   python::def("CalcNumLipinskiHBD",
 	      RDKit::Descriptors::calcLipinskiHBD,

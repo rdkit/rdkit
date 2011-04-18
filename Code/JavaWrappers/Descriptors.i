@@ -35,6 +35,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 %}
 
+%include <GraphMol/Descriptors/MolDescriptors.h>
 %include <GraphMol/Descriptors/Lipinski.h>
 %include <GraphMol/Descriptors/MolSurf.h>
 %inline %{

@@ -206,6 +206,46 @@ void test3(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void test3a(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Exact MW calculation." << std::endl;
+
+  ROMol *mol,*mol2;
+  double mw;
+
+  mol = SmilesToMol("C");
+  TEST_ASSERT(mol);
+  mw = calcExactMW(*mol);
+  TEST_ASSERT(feq(mw,16.031,.001));
+  mw = calcExactMW(*mol,true);
+  TEST_ASSERT(feq(mw,12.000,.001));
+  mol2 = MolOps::addHs(*mol);
+  mw = calcExactMW(*mol2);
+  TEST_ASSERT(feq(mw,16.031,.001));
+  mw = calcExactMW(*mol2,true);
+  TEST_ASSERT(feq(mw,12.000,.001));
+  delete mol;
+  delete mol2;
+
+  mol = SmilesToMol("[CH4]");
+  TEST_ASSERT(mol);
+  mw = calcExactMW(*mol);
+  TEST_ASSERT(feq(mw,16.031,.001));
+  mw = calcExactMW(*mol,true);
+  TEST_ASSERT(feq(mw,12.000,.001));
+  delete mol;
+
+  mol = SmilesToMol("C[2H]");
+  TEST_ASSERT(mol);
+  mw = calcExactMW(*mol);
+  TEST_ASSERT(feq(mw,17.023,.001));
+  mw = calcExactMW(*mol,true);
+  TEST_ASSERT(feq(mw,12.000,.001));
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testLabute(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test Labute ASA descriptors." << std::endl;
@@ -510,6 +550,89 @@ void testVSADescriptors(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testMolFormula(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test molecular formula calculation." << std::endl;
+
+  ROMol *mol,*mol2;
+  std::string formula;
+
+  mol = SmilesToMol("C");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH4");
+  mol2 = MolOps::addHs(*mol);
+  formula = calcMolFormula(*mol2);
+  TEST_ASSERT(formula=="CH4");
+  delete mol;
+  delete mol2;
+
+  mol = SmilesToMol("[CH4]");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH4");
+  delete mol;
+
+  mol = SmilesToMol("CO");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH4O");
+  mol2 = MolOps::addHs(*mol);
+  formula = calcMolFormula(*mol2);
+  TEST_ASSERT(formula=="CH4O");
+  delete mol;
+  delete mol2;
+
+  mol = SmilesToMol("C(=O)N");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH3NO");
+  mol2 = MolOps::addHs(*mol);
+  formula = calcMolFormula(*mol2);
+  TEST_ASSERT(formula=="CH3NO");
+  delete mol;
+  delete mol2;
+
+  mol = SmilesToMol("C(=O)=O");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CO2");
+  delete mol;
+
+  mol = SmilesToMol("C(=O)[O-]");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CHO2-");
+  delete mol;
+
+  mol = SmilesToMol("C([O-])[O-]");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH2O2-2");
+  delete mol;
+
+  mol = SmilesToMol("C([NH3+])[O-]");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH5NO");
+  delete mol;
+
+  mol = SmilesToMol("C([NH3+])O");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH6NO+");
+  delete mol;
+
+  mol = SmilesToMol("C([NH3+])[NH3+]");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH8N2+2");
+  delete mol;
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -522,9 +645,11 @@ int main(){
   test2();
   testIssue262();
   test3();
+  test3a();
   testLabute();
   testTPSA();
   testLipinski1();
   testVSADescriptors();
+  testMolFormula();
 #endif
 }
