@@ -1,3 +1,11 @@
+******  Release_2011.03.2 *******
+(Changes relative to Release_2011.03.1)
+
+Bug Fixes:
+ - A problem in the refactored drawing code that caused the
+   rdkit.Chem.Draw functionality to not work at all was fixed.
+
+
 ******  Release_2011.03.1 *******
 (Changes relative to Release_2010.12.1)
 
