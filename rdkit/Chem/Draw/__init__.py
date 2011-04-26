@@ -105,7 +105,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   
   drawer.wedgeDashedBonds=wedgeBonds
   drawer.AddMol(mol,**kwargs)
-  if useCAIRO or useAgg:
+  if useCairo or useAGG:
     canvas.flush()
   else:
     canvas.save()
