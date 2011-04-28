@@ -21,6 +21,7 @@ add_subdirectory(ML)
 add_subdirectory(ChemicalFeatures)
 
 if(RDK_BUILD_SWIG_WRAPPERS)
-  add_subdirectory(Demos/SWIG)
+  #add_subdirectory(Demos/SWIG)
+  add_subdirectory(JavaWrappers)
 endif()
 

@@ -19,7 +19,7 @@ namespace RDKit{
   class ROMol;
   namespace Descriptors {
     /*!
-      Calculates a molecule's molecular weight
+      Calculates a molecule's average molecular weight
 
       \param mol        the molecule of interest
       \param onlyHeavy  (optional) if this is true (the default is false),
@@ -28,6 +28,24 @@ namespace RDKit{
       \return the AMW
     */
     double calcAMW(const ROMol &mol,bool onlyHeavy=false);
+    /*!
+      Calculates a molecule's exact molecular weight
+
+      \param mol        the molecule of interest
+      \param onlyHeavy  (optional) if this is true (the default is false),
+          only heavy atoms will be included in the MW calculation
+
+      \return the exact MW
+    */
+    double calcExactMW(const ROMol &mol,bool onlyHeavy=false);
+    /*!
+      Calculates a molecule's formula
+
+      \param mol        the molecule of interest
+
+      \return the formula as a string
+    */
+    std::string calcMolFormula(const ROMol &mol);
 
   } // end of namespace Descriptors
 } //end of namespace RDKit

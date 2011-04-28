@@ -11,6 +11,10 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include "MolDescriptors.h"
+#include <map>
+#include <list>
+#include <algorithm>
+#include <sstream>
 
 namespace RDKit{
   namespace Descriptors {
@@ -27,11 +31,100 @@ namespace RDKit{
 
 	// add our implicit Hs if we need to:
 	if(!onlyHeavy){
-      const PeriodicTable *table=PeriodicTable::getTable();
+          const PeriodicTable *table=PeriodicTable::getTable();
 	  res += (*atomIt)->getTotalNumHs()*table->getAtomicWeight(1);
 	}
       }
       return res;
     }
+
+    static std::string _exactmwVersion="1.0.0";
+    double calcExactMW(const ROMol &mol,bool onlyHeavy){
+      double res=0.0;
+      int nHsToCount=0;
+      const PeriodicTable *table=PeriodicTable::getTable();
+      for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+	  atomIt != mol.endAtoms();++atomIt){
+	int atNum=(*atomIt)->getAtomicNum();
+	if(atNum!=1 || !onlyHeavy){
+          if(atNum==1) --nHsToCount;
+          if(fabs((*atomIt)->getMass()-table->getAtomicWeight(atNum))<.001){
+            res += table->getMostCommonIsotopeMass(atNum);
+          } else {
+            res += (*atomIt)->getMass();
+          }
+	}
+
+	// add our implicit Hs if we need to:
+	if(!onlyHeavy){
+          nHsToCount += (*atomIt)->getTotalNumHs(true);
+	}
+
+      }
+      if(!onlyHeavy){
+        res += nHsToCount*table->getMostCommonIsotopeMass(1);
+      }
+      return res;
+    }
+
+    static std::string _molFormulaVersion="1.1.0";
+    std::string calcMolFormula(const ROMol &mol){
+      std::ostringstream res;
+      std::map<std::string,unsigned int> counts;
+      int charge=0;
+      unsigned int nHs=0;
+      const PeriodicTable *table=PeriodicTable::getTable();
+      for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+	  atomIt != mol.endAtoms();++atomIt){
+	int atNum=(*atomIt)->getAtomicNum();
+        std::string symb=table->getElementSymbol(atNum);
+        if(counts.find(symb)!=counts.end()){
+          counts[symb]+=1;
+        } else {
+          counts[symb]=1;
+        }
+        nHs += (*atomIt)->getTotalNumHs();
+        charge += (*atomIt)->getFormalCharge();
+      }
+
+      if(nHs){
+        if(counts.find(std::string("H"))!=counts.end()){
+          counts["H"]+=nHs;
+        } else {
+          counts["H"]=nHs;
+        }
+      }
+      std::list<std::string> ks;
+      for(std::map<std::string,unsigned int>::const_iterator countIt=counts.begin();
+          countIt!=counts.end();++countIt){
+        ks.push_back(countIt->first);
+      }
+      ks.sort();
+      // put in Hill order:
+      if(counts.find(std::string("C"))!=counts.end()){
+        ks.remove(std::string("C"));
+        if(counts.find(std::string("H"))!=counts.end()){
+          ks.remove(std::string("H"));
+          ks.push_front(std::string("H"));
+        }
+        ks.push_front(std::string("C"));
+      }
+
+      for(std::list<std::string>::const_iterator kIter=ks.begin();
+          kIter!=ks.end();++kIter){
+        res << *kIter;
+        if(counts[*kIter]>1) res<<counts[*kIter];
+      }
+      if(charge>0){
+        res<<"+";
+        if(charge>1) res<<charge;
+      } else if(charge<0){
+        res<<"-";
+        if(charge<-1) res<<-1*charge;
+      }
+      return res.str();
+    }
+
+    
   } // end of namespace Descriptors
 } // end of namespace RDKit

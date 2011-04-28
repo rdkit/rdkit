@@ -32,19 +32,23 @@ set(RDKit_Month "06")
 set(RDKit_Revision "1pre")
 set(RDKit_ABI "1")
 
+set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
+set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
+
 if(RDK_INSTALL_INTREE)
-  set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
-  set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
   set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/lib")
 else(RDK_INSTALL_INTREE)
-  set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
-  set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
   set(RDKit_BinDir "bin")
   set(RDKit_LibDir "lib${LIB_SUFFIX}")
   set(RDKit_HdrDir "include/rdkit")
   set(RDKit_ShareDir "share/RDKit")
 endif(RDK_INSTALL_INTREE)
+
+if(RDK_BUILD_SWIG_WRAPPERS)
+  set(RDKit_JavaLibDir "${RDKit_ExternalDir}/java_lib")
+endif(RDK_BUILD_SWIG_WRAPPERS)
+
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)

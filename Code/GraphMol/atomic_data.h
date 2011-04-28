@@ -51,6 +51,10 @@ namespace RDKit {
     double Rvdw() const { return rVdw;}
     
     int NumOuterShellElec() const { return nVal;}
+
+    int MostCommonIsotope() const {return commonIsotope;}
+
+    double MostCommonIsotopeMass() const { return commonIsotopeMass;}
     
   private:
     int anum; //atomic number
@@ -59,6 +63,8 @@ namespace RDKit {
     INT_VECT valence; //list of all valences, the first one is the default valence, -1 at the end signifies that any upper valence is tolerated
     double mass;  // atomic mass
     int nVal; // number of outer shell electrons
+    int commonIsotope; // most comon isotope
+    double commonIsotopeMass; // most comon isotope
   };
   
 };
