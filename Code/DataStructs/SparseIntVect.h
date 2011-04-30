@@ -80,11 +80,13 @@ namespace RDKit{
     IndexType getLength() const { return d_length; };
 
     //! returns the sum of all the elements in the vect
-    int getTotalVal() const {
+    //! the doAbs argument toggles summing the absolute values of the elements
+    int getTotalVal(bool doAbs=false) const {
       int res=0;
       typename StorageType::const_iterator iter;
       for(iter=d_data.begin();iter!=d_data.end();++iter){
-        res+=iter->second;
+        if(!doAbs) res+=iter->second;
+        else res+=abs(iter->second);
       }
       return res;
     };
@@ -357,26 +359,26 @@ namespace RDKit{
       // the other vector:
       typename SparseIntVect<IndexType>::StorageType::const_iterator iter1,iter2;
       iter1=v1.getNonzeroElements().begin();
-      if(iter1!=v1.getNonzeroElements().end()) v1Sum+=iter1->second; 
+      if(iter1!=v1.getNonzeroElements().end()) v1Sum+=abs(iter1->second); 
       iter2=v2.getNonzeroElements().begin();
-      if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
+      if(iter2!=v2.getNonzeroElements().end()) v2Sum+=abs(iter2->second); 
       while(iter1 != v1.getNonzeroElements().end()){
         while(iter2!=v2.getNonzeroElements().end() && iter2->first < iter1->first){
           ++iter2;
-          if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
+          if(iter2!=v2.getNonzeroElements().end()) v2Sum+=abs(iter2->second); 
         }
         if(iter2!=v2.getNonzeroElements().end()){
           if(iter2->first == iter1->first){
-            if(iter2->second<iter1->second){
-              andSum += iter2->second;
+            if(abs(iter2->second)<abs(iter1->second)){
+              andSum += abs(iter2->second);
             } else {
-              andSum += iter1->second;
+              andSum += abs(iter1->second);
             }
             ++iter2;
-            if(iter2!=v2.getNonzeroElements().end()) v2Sum+=iter2->second; 
+            if(iter2!=v2.getNonzeroElements().end()) v2Sum+=abs(iter2->second); 
           }
           ++iter1;
-          if(iter1!=v1.getNonzeroElements().end()) v1Sum+=iter1->second; 
+          if(iter1!=v1.getNonzeroElements().end()) v1Sum+=abs(iter1->second); 
         } else {
           break;
         }
@@ -384,14 +386,14 @@ namespace RDKit{
       if(iter1 != v1.getNonzeroElements().end()){
         ++iter1;
         while(iter1!=v1.getNonzeroElements().end()){
-          v1Sum+=iter1->second;
+          v1Sum+=abs(iter1->second);
           ++iter1;
         }
       }
       if(iter2!=v2.getNonzeroElements().end()){
         ++iter2;
         while(iter2!=v2.getNonzeroElements().end()){
-          v2Sum+=iter2->second;
+          v2Sum+=abs(iter2->second);
           ++iter2;
         }
       }
@@ -409,8 +411,8 @@ namespace RDKit{
     double v1Sum=0.0;
     double v2Sum=0.0;
     if(!returnDistance && bounds>0.0){
-      v1Sum=v1.getTotalVal();
-      v2Sum=v2.getTotalVal();
+      v1Sum=v1.getTotalVal(true);
+      v2Sum=v2.getTotalVal(true);
       double denom=v1Sum+v2Sum;
       if(fabs(denom)<1e-6){
         if(returnDistance){

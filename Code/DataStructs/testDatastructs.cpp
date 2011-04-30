@@ -886,6 +886,21 @@ void test6SparseIntVect() {
     TEST_ASSERT(iV1!=iV3);
   }
 
+  { //test negative values (was sf.net Issue 3295215)
+    SparseIntVect<int> iV1(5),iV2(5);
+    iV1.setVal(0,-2);
+    iV1.setVal(2,1);
+    iV1.setVal(3,-4);
+    iV1.setVal(4,4);
+
+    iV2.setVal(1,-2);
+    iV2.setVal(2,3);
+    iV2.setVal(3,-4);
+    iV2.setVal(4,6);
+
+    TEST_ASSERT(feq(DiceSimilarity(iV1,iV2),18./26.));
+  }
+
 }
 
 void test7SparseIntVectPickles() {
