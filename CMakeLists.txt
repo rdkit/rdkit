@@ -86,13 +86,14 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     )
     message("Python Install directory ${PYTHON_INSTDIR}")
     install(DIRECTORY rdkit DESTINATION ${PYTHON_INSTDIR}
+      COMPONENT python
       PATTERN ".svn" EXCLUDE 
       PATTERN "test_data" EXCLUDE 
       PATTERN "testData" EXCLUDE 
       PATTERN "test_list*" EXCLUDE 
       PATTERN "CMake*" EXCLUDE 
       PATTERN "Basement" EXCLUDE 
-      PATTERN "UnitTest*" EXCLUDE 
+      PATTERN "UnitTest*" EXCLUDE
       )
     set(RDKit_PythonDir "${PYTHON_INSTDIR}/rdkit")
   endif(RDK_INSTALL_INTREE)
@@ -112,19 +113,34 @@ ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC
 endif()
 
 if(NOT RDK_INSTALL_INTREE)
-  install(DIRECTORY Data Docs Contrib DESTINATION
+  install(DIRECTORY Data DESTINATION
       ${RDKit_ShareDir}
+      COMPONENT data
+      PATTERN ".svn" EXCLUDE 
+      )
+  install(DIRECTORY Docs DESTINATION
+      ${RDKit_ShareDir}
+      COMPONENT docs
+      PATTERN ".svn" EXCLUDE 
+      )
+  install(DIRECTORY Contrib DESTINATION
+      ${RDKit_ShareDir}
+      COMPONENT extras
       PATTERN ".svn" EXCLUDE 
       )
   if(RDK_BUILD_PYTHON_WRAPPERS)
     install(DIRECTORY Projects DESTINATION
         ${RDKit_ShareDir}
+        COMPONENT extras
         PATTERN ".svn" EXCLUDE
         PATTERN "test_list*" EXCLUDE
         PATTERN "CMake*" EXCLUDE
         )
   endif(RDK_BUILD_PYTHON_WRAPPERS)
-  install(FILES README license.txt DESTINATION ${RDKit_ShareDir})
+  install(FILES README license.txt
+          DESTINATION ${RDKit_ShareDir}
+          COMPONENT base
+          )
 endif(NOT RDK_INSTALL_INTREE)
 
 add_subdirectory(External)
@@ -135,3 +151,48 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   add_subdirectory(rdkit)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
+# Packaging
+SET(CPACK_GENERATOR "TGZ;DEB;RPM")
+SET(CPACK_RPM_COMPONENT_INSTALL ON)
+SET(CPACK_DEB_COMPONENT_INSTALL ON)
+SET(CPACK_MONOLITHIC_INSTALL OFF)
+
+SET(CPACK_COMPONENTS_ALL headers static_libs dynamic_libs python data docs extras base)
+set(CPACK_COMPONENT_DYNAMIC_LIBS_GROUP "Runtime")
+set(CPACK_COMPONENT_BASE_GROUP "Runtime")
+set(CPACK_COMPONENT_DATA_GROUP "Runtime")
+set(CPACK_COMPONENT_DOCS_GROUP "Runtime")
+set(CPACK_COMPONENT_HEADERS_GROUP "Development")
+set(CPACK_COMPONENT_STATIC_LIBS_GROUP "Development")
+set(CPACK_COMPONENT_PYTHON_GROUP "Python")
+set(CPACK_COMPONENT_EXTRAS_GROUP "Extras")
+
+
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "RDKit")
+SET(CPACK_PACKAGE_VENDOR "rdkit.org")
+SET(CPACK_PACKAGE_CONTACT "greg.landrum@gmail.com")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/license.txt")
+SET(CPACK_PACKAGE_VERSION_MAJOR "2011")
+SET(CPACK_PACKAGE_VERSION_MINOR "6")
+SET(CPACK_PACKAGE_VERSION_PATCH "1")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
+#IF(WIN32 AND NOT UNIX)
+#  # There is a bug in NSI that does not handle full unix paths properly. Make
+#  # sure there is at least one set of four (4) backlasshes.
+#  SET(CPACK_PACKAGE_ICON "${CMake_SOURCE_DIR}/Utilities/Release\\\\InstallIcon.bmp")
+#  SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\MyExecutable.exe")
+#  SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} My Famous Project")
+#  SET(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.my-project-home-page.org")
+#  SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.my-personal-home-page.com")
+#  SET(CPACK_NSIS_CONTACT "me@my-personal-home-page.com")
+#  SET(CPACK_NSIS_MODIFY_PATH ON)
+#ELSE(WIN32 AND NOT UNIX)
+#  SET(CPACK_STRIP_FILES "bin/MyExecutable")
+#  SET(CPACK_SOURCE_STRIP_FILES "")
+#ENDIF(WIN32 AND NOT UNIX)
+#SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable")
+
+SET(CPACK_SET_DESTDIR ON)
+
+INCLUDE(CPack)

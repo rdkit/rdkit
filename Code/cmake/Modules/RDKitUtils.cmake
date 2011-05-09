@@ -23,26 +23,23 @@ macro(rdkit_library)
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     INSTALL(TARGETS ${RDKLIB_NAME} 
-            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+            DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+            COMPONENT dev )
   else(MSVC)
     # we're going to always build in shared mode since we
     # need exceptions to be (correctly) catchable across
     # boundaries. As of now (June 2010), this doesn't work
     # with g++ unless libraries are shared.
-    #IF(RDKLIB_SHARED)
       add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
       INSTALL(TARGETS ${RDKLIB_NAME} 
-              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+              DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+              COMPONENT runtime )
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
       if(RDK_INSTALL_STATIC_LIBS)
         INSTALL(TARGETS ${RDKLIB_NAME}_static
-                DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
+                DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+                COMPONENT dev )
       endif(RDK_INSTALL_STATIC_LIBS)
-    #ELSE(RDKLIB_SHARED)        
-    #  add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
-    #  INSTALL(TARGETS ${RDKLIB_NAME} 
-    #          DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST})
-    #ENDIF(RDKLIB_SHARED)        
     IF(RDKLIB_LINK_LIBRARIES)
       target_link_libraries(${RDKLIB_NAME} ${RDKLIB_LINK_LIBRARIES})
     ENDIF(RDKLIB_LINK_LIBRARIES)
@@ -70,7 +67,9 @@ macro(rdkit_headers)
       ""
       ${ARGN})
     # RDKHDR_DEFAULT_ARGS -> RDKHDR_DEST
-    install(FILES ${RDKHDR_DEFAULT_ARGS} DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST})
+    install(FILES ${RDKHDR_DEFAULT_ARGS}
+            DESTINATION ${RDKit_HdrDir}/${RDKHDR_DEST}
+            COMPONENT dev )
   endif(NOT RDK_INSTALL_INTREE)
 endmacro(rdkit_headers)
 
