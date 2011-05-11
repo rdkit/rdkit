@@ -335,6 +335,7 @@ namespace RDKit {
     unsigned int holder=d_last;
     moveTo(idx);
     unsigned int begP=d_molpos[idx];
+    bool endHolder=df_end;
     unsigned int endP;
     try {
       moveTo(idx+1);
@@ -345,6 +346,7 @@ namespace RDKit {
       endP=dp_inStream->tellg();
     }
     d_last=holder;
+    df_end=endHolder;
     char *buff=new char[endP-begP];
     dp_inStream->seekg(begP);
     dp_inStream->read(buff,endP-begP);

@@ -1514,6 +1514,23 @@ void testGetItemText() {
     TEST_ASSERT(molB=="10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
   }
 
+  {
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/fewSmi.csv";
+    SmilesMolSupplier smisup(fname,",",1,0,false);
+
+    // make sure getItemText() flags EOF
+    // (this was sf.net issue 3299878)
+    molB = smisup.getItemText(0);
+    TEST_ASSERT(molB=="1, CC1=CC(=O)C=CC1=O, 34.14");
+
+    ROMol *m=smisup[9];
+    TEST_ASSERT(m);
+    delete m;
+    TEST_ASSERT(smisup.atEnd());
+    molB = smisup.getItemText(9);
+    TEST_ASSERT(molB=="10, C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=CC=CC=C3, 0.00");
+    TEST_ASSERT(smisup.atEnd());
+  }
 
   {
     fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
@@ -1556,6 +1573,24 @@ void testGetItemText() {
     TEST_ASSERT(molB!="");
     TEST_ASSERT(molB.substr(0,12)=="$SMI<Cc1n[nH");
   }
+
+  {
+    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/acd_few.tdt";
+    TDTMolSupplier tdtsup(fname);
+    TEST_ASSERT(tdtsup.length()==10);
+  
+      ROMol *mol=tdtsup[9];
+    TEST_ASSERT(mol);
+    delete mol;
+    TEST_ASSERT(tdtsup.atEnd());
+
+    // (this was sf.net issue 3299878
+    molB = tdtsup.getItemText(9);
+    TEST_ASSERT(molB!="");
+    TEST_ASSERT(molB.substr(0,12)=="$SMI<Cc1n[nH");
+    TEST_ASSERT(tdtsup.atEnd());
+  }
+
 }
 
 

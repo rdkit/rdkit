@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2011 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -346,10 +346,12 @@ namespace RDKit {
   std::string SmilesMolSupplier::getItemText(unsigned int idx){
     PRECONDITION(dp_inStream,"no stream");
     unsigned int holder=d_next;
+    bool endHolder=df_end;
     // this throws the relevant exception if we go too far:
     moveTo(idx);
     std::string res=getLine(dp_inStream);
     d_next=holder;
+    df_end=endHolder;
     return res;
   }
 
