@@ -26,10 +26,11 @@ extern int yysmarts_lex(YYSTYPE *,void *);
 #define YYLEX_PARAM scanner
 
 void
-yysmarts_error( std::vector<RDKit::RWMol *> *ms,
+yysmarts_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
 		void *scanner,const char * msg )
 {
-
+  BOOST_LOG(rdErrorLog)<<"SMARTS Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
 }
 
 using namespace RDKit;
@@ -45,6 +46,7 @@ namespace {
 }
 %}
  
+%parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {void *scanner}
  
@@ -94,7 +96,6 @@ cmpd: mol
 | cmpd error EOS_TOKEN{
   yyclearin;
   yyerrok;
-  BOOST_LOG(rdErrorLog) << "SMARTS Parse Error" << std::endl;
   yyErrorCleanup(molList);
   YYABORT;
 }
@@ -104,7 +105,6 @@ cmpd: mol
 | error EOS_TOKEN{
   yyclearin;
   yyerrok;
-  BOOST_LOG(rdErrorLog) << "SMARTS Parse Error" << std::endl;
   
   yyErrorCleanup(molList);
   YYABORT;

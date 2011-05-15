@@ -22,11 +22,8 @@ namespace SmilesParseOps{
   using namespace RDKit;
 
   void ReportParseError(const char *message,bool throwIt){
-    std::string msg = "Smiles parser error: ";
-    msg += message;
-    if(!throwIt) BOOST_LOG(rdErrorLog) << msg << std::endl;
-
-    else throw SmilesParseException(msg);
+    if(!throwIt) BOOST_LOG(rdErrorLog) <<"SMILES Parse Error: "<< message << std::endl;
+    else throw SmilesParseException(message);
   }
 
   void CleanupAfterParseError(RWMol *mol){

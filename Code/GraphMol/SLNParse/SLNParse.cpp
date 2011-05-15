@@ -43,7 +43,7 @@
 #include <boost/regex.hpp>
 
 
-int yysln_parse (std::vector<RDKit::RWMol *>*,bool,void *);
+int yysln_parse (const char *,std::vector<RDKit::RWMol *>*,bool,void *);
 int yysln_lex_init (void **);
 void yysln_set_extra (void *,void *);
 int yysln_lex_destroy (void *);
@@ -57,7 +57,7 @@ int sln_parse(const std::string &inp,
   TEST_ASSERT(!yysln_lex_init(&scanner));
   setup_sln_string(inp,scanner);
   yysln_set_extra((void *)doQueries,scanner);
-  int res=yysln_parse(&molVect,doQueries,scanner);
+  int res=yysln_parse(inp.c_str(),&molVect,doQueries,scanner);
   yysln_lex_destroy(scanner);
   return res;
 }

@@ -55,16 +55,18 @@ int yysln_lex(YYSTYPE *,void *);
 #define YYDEBUG 1
 
 void
-yysln_error( std::vector<RDKit::RWMol *> *ms,bool doQ,
-		void *scanner,const char * msg )
+yysln_error( const char *input,
+             std::vector<RDKit::RWMol *> *ms,bool doQ,
+	     void *scanner,const char * msg )
 {
-
+  BOOST_LOG(rdErrorLog)<<"SLN Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
 }
 
  namespace SLNParse = RDKit::SLNParse;
 
 %}
  
+%parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {bool doQueries}
 %parse-param {void *scanner}
@@ -129,7 +131,6 @@ cmpd: mol
 | cmpd error EOS_TOKEN {
   yyclearin;
   yyerrok;
-  BOOST_LOG(rdErrorLog) << "SLN Parse Error" << std::endl;
   for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
       iter!=molList->end();++iter){
     SLNParse::CleanupAfterParseError(*iter);
@@ -145,7 +146,6 @@ cmpd: mol
 | error EOS_TOKEN {
   yyclearin;
   yyerrok;
-  BOOST_LOG(rdErrorLog) << "SLN Parse Error" << std::endl;
   for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
       iter!=molList->end();++iter){
     SLNParse::CleanupAfterParseError(*iter);
@@ -395,7 +395,7 @@ bond: primbond
 primbond: onebond
 | primbond onebond {
 	if(!doQueries){
-    BOOST_LOG(rdErrorLog) << "SLN Parse Error: sequential bonds not allowed in non-queries" << std::endl;
+        yysln_error(input,molList,doQueries,0,"sequential bonds not allowed in non-queries");
     molList->clear();
     molList->resize(0);
     YYABORT;

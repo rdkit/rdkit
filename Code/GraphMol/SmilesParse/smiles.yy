@@ -24,17 +24,28 @@ extern int yysmiles_lex(YYSTYPE *,void *);
 #define YYLEX_PARAM scanner
 
 void
-yysmiles_error( std::vector<RDKit::RWMol *> *ms,
+yysmiles_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
 		void *scanner,const char * msg )
 {
-
+  BOOST_LOG(rdErrorLog)<<"SMILES Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
 }
 
-
 using namespace RDKit;
+namespace {
+ void yyErrorCleanup(std::vector<RDKit::RWMol *> *molList){
+  for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
+      iter != molList->end(); ++iter){
+     delete *iter;
+  }
+  molList->clear();
+  molList->resize(0);
+ }
+}
 
 %}
 
+%parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {void *scanner}
  
@@ -73,14 +84,7 @@ cmpd: mol
 | cmpd error EOS_TOKEN{
   yyclearin;
   yyerrok;
-  BOOST_LOG(rdErrorLog) << "SMILES Parse Error" << std::endl;
-  for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
-      iter!=molList->end();++iter){
-    SmilesParseOps::CleanupAfterParseError(*iter);
-    delete *iter;
-  }
-  molList->clear();
-  molList->resize(0);
+  yyErrorCleanup(molList);
   YYABORT;
 }
 | cmpd EOS_TOKEN {
@@ -89,14 +93,7 @@ cmpd: mol
 | error EOS_TOKEN {
   yyclearin;
   yyerrok;
-  BOOST_LOG(rdErrorLog) << "SMILES Parse Error" << std::endl;
-  for(std::vector<RDKit::RWMol *>::iterator iter=molList->begin();
-      iter!=molList->end();++iter){
-    SmilesParseOps::CleanupAfterParseError(*iter);
-    delete *iter;
-  }
-  molList->clear();
-  molList->resize(0);
+  yyErrorCleanup(molList);
   YYABORT;
 }
 ;

@@ -31,13 +31,13 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
-int yysmiles_parse (std::vector<RDKit::RWMol *>*,void *);
+int yysmiles_parse (const char *,std::vector<RDKit::RWMol *>*,void *);
 int yysmiles_lex_init (void **);
 int yysmiles_lex_destroy (void *);
 void setup_smiles_string(const std::string &text,void *);
 extern int yysmiles_debug; 
 
-int yysmarts_parse (std::vector<RDKit::RWMol *>*,void *);
+int yysmarts_parse (const char *,std::vector<RDKit::RWMol *>*,void *);
 int yysmarts_lex_init (void **);
 int yysmarts_lex_destroy (void *);
 void setup_smarts_string(const std::string &text,void *);
@@ -49,7 +49,7 @@ namespace RDKit{
       void *scanner;
       TEST_ASSERT(!yysmiles_lex_init(&scanner));
       setup_smiles_string(inp,scanner);
-      int res=yysmiles_parse(&molVect,scanner);
+      int res=yysmiles_parse(inp.c_str(),&molVect,scanner);
       yysmiles_lex_destroy(scanner);
       return res;
     }
@@ -58,7 +58,7 @@ namespace RDKit{
       void *scanner;
       TEST_ASSERT(!yysmarts_lex_init(&scanner));
       setup_smarts_string(inp,scanner);
-      int res=yysmarts_parse(&molVect,scanner);
+      int res=yysmarts_parse(inp.c_str(),&molVect,scanner);
       yysmarts_lex_destroy(scanner);
       return res;
     }
@@ -139,7 +139,9 @@ namespace RDKit{
 	}
       }
     } catch (SmilesParseException &e) {
-      BOOST_LOG(rdErrorLog) << e.message() << std::endl;
+      std::string nm="SMILES";
+      if(func==smarts_parse) nm="SMARTS";
+      BOOST_LOG(rdErrorLog) << nm<<" Parse Error: "<< e.message() << " for input: "<< inp << std::endl;
       res = 0;
     }
     BOOST_FOREACH(RDKit::RWMol *molPtr,molVect){
