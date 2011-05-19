@@ -84,13 +84,13 @@ class Canvas(CanvasBase):
       return buffer
 
   def _doLine(self, p1, p2, **kwargs):
-    if kwargs.get('dashes',(0,0)) == (0,0):
+    if kwargs.get('dash',(0,0)) == (0,0):
       self.ctx.move_to(p1[0],p1[1])
       self.ctx.line_to(p2[0],p2[1])
     else:
       # the antialiasing makes the dashes appear too small
-      dash = [x*4 for x in kwargs['dashes']]
-      pts = _getLinePoints(p1,p2,dash)
+      dash = [x*4 for x in kwargs['dash']]
+      pts = self._getLinePoints(p1,p2,dash)
 
       currDash = 0
       dashOn = True

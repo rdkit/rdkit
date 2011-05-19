@@ -47,12 +47,12 @@ class Canvas(CanvasBase):
     self.fileName=fileName
     
   def _doLine(self, p1, p2, pen, **kwargs):
-    if kwargs.get('dashes',(0,0)) == (0,0):
+    if kwargs.get('dash',(0,0)) == (0,0):
       self.draw.line((p1[0],p1[1],p2[0],p2[1]),pen)
     else:
       # the antialiasing makes the dashes appear too small
-      dash = [x*4 for x in kwargs['dashes']]
-      pts = _getLinePoints(p1,p2,dash)
+      dash = [x*4 for x in kwargs['dash']]
+      pts = self._getLinePoints(p1,p2,dash)
 
       currDash = 0
       dashOn = True
