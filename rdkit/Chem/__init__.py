@@ -58,8 +58,9 @@ def SupplierFromFilename(fileN,delim='',**kwargs):
     
   return suppl
 
-def FindMolChiralCenters(mol,force=True):
+def FindMolChiralCenters(mol,force=True,includeUnassigned=False):
   """
+    >>> from rdkit import Chem
     >>> mol = Chem.MolFromSmiles('[C@H](Cl)(F)Br')
     >>> FindMolChiralCenters(mol)
     [(0, 'R')]
@@ -69,11 +70,38 @@ def FindMolChiralCenters(mol,force=True):
   
     >>> FindMolChiralCenters(Chem.MolFromSmiles('CCC'))
     []
-  
+
+    By default unassigned stereo centers are not reported:
+    >>> mol = Chem.MolFromSmiles('C[C@H](F)C(F)(Cl)Br')
+    >>> FindMolChiralCenters(mol)
+    [(1, 'S')]
+
+    but this can be changed:
+    >>> FindMolChiralCenters(mol,includeUnassigned=True)
+    [(1, 'S'), (3, '?')]
+
+
+    
   """
-  AssignStereochemistry(mol,force=force)
+  AssignStereochemistry(mol,force=force, flagPossibleStereoCenters=includeUnassigned)
   centers = []
   for atom in mol.GetAtoms():
     if atom.HasProp('_CIPCode'):
       centers.append((atom.GetIdx(),atom.GetProp('_CIPCode')))
+    elif includeUnassigned and atom.HasProp('_ChiralityPossible'):
+      centers.append((atom.GetIdx(),'?'))
   return centers
+
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+  import doctest,sys
+  return doctest.testmod(sys.modules["__main__"])
+
+
+if __name__ == '__main__':
+  import sys
+  failed,tried = _test()
+  sys.exit(failed)
