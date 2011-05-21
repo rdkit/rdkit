@@ -1,8 +1,6 @@
-## Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
-
 # $Id$
 #
-#  Copyright (C) 2006-2010  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2006-2011  greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -255,7 +253,32 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
         used in the optimization.
     - coreConfId: (optional) id of the core conformation to use
     - randomSeed: (optional) seed for the random number generator
-  
+
+
+    An example, start by generating a template with a 3D structure:
+    >>> from rdkit.Chem import AllChem
+    >>> template = AllChem.MolFromSmiles("c1nn(Cc2ccccc2)cc1")
+    >>> AllChem.EmbedMolecule(template)
+    0
+    >>> AllChem.UFFOptimizeMolecule(template)
+    0
+
+    Here's a molecule:
+    >>> mol = AllChem.MolFromSmiles("c1nn(Cc2ccccc2)cc1-c3ccccc3")
+
+    Now do the constrained embedding
+    >>> newmol=AllChem.ConstrainedEmbed(mol, template)
+
+    Demonstrate that the positions are the same:
+    >>> newp=newmol.GetConformer().GetAtomPosition(0)
+    >>> molp=mol.GetConformer().GetAtomPosition(0)
+    >>> list(newp-molp)==[0.0,0.0,0.0]
+    True
+    >>> newp=newmol.GetConformer().GetAtomPosition(1)
+    >>> molp=mol.GetConformer().GetAtomPosition(1)
+    >>> list(newp-molp)==[0.0,0.0,0.0]
+    True
+
   """
   match = mol.GetSubstructMatch(core)
   if not match:
@@ -270,7 +293,7 @@ def ConstrainedEmbed(mol,core,useTethers=True,coreConfId=-1,
   if ci<0:
     raise ValueError,'Could not embed molecule.'
   
-  algMap=list(enumerate(match))
+  algMap=[(j,i) for i,j in enumerate(match)]
 
   if not useTethers:
     # clean up the conformation
