@@ -381,6 +381,18 @@ M  END
     self.failUnless(rxn.IsMoleculeProduct(Chem.MolFromSmiles('CNC(=O)C')))
     self.failIf(rxn.IsMoleculeProduct(Chem.MolFromSmiles('COC(=O)C')))
     
+  def test15Replacements(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[{amine}:1]>>[*:1]-C',
+                                             replacements={'{amine}':'$([N;!H0;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])'})
+    self.failUnless(rxn)
+    rxn.Initialize()
+    reactants = (Chem.MolFromSmiles('CCN'),)
+    ps = rxn.RunReactants(reactants)
+    self.failUnlessEqual(len(ps),1)
+    self.failUnlessEqual(len(ps[0]),1)
+    self.failUnlessEqual(ps[0][0].GetNumAtoms(),4)
+    
+    
 
 if __name__ == '__main__':
   unittest.main()

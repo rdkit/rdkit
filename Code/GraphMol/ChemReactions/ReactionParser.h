@@ -64,11 +64,16 @@ namespace RDKit{
   
   //! Parse a string containing "Reaction SMARTS" into a ChemicalReaction
   /*!
-   *  Our definition of Reaction SMARTS is something that looks a lot like
-   *  reaction SMILES, except that SMARTS queries are allowed on the reactant
-   *  side and that atom-map numbers are required (at least for now)
+     Our definition of Reaction SMARTS is something that looks a lot like
+     reaction SMILES, except that SMARTS queries are allowed on the reactant
+     side and that atom-map numbers are required (at least for now)
+
+     \param sma           the SMARTS to convert
+     \param replacements  a string->string map of replacement strings.
+                          \see SmilesToMol for more information about replacements
    */ 
-  ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text);
+  ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text,
+                                                 std::map<std::string,std::string> *replacements=0);
 
   //! returns the reaction SMARTS for a reaction
   std::string ChemicalReactionToRxnSmarts(ChemicalReaction &rxn);

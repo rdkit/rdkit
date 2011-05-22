@@ -40,21 +40,30 @@ void rdBadFileExceptionTranslator(RDKit::BadFileException const& x){
 
 
 namespace RDKit{
-  ROMol *MolFromSmiles(std::string smiles,bool sanitize=1){
+  ROMol *MolFromSmiles(std::string smiles,bool sanitize,
+                       python::dict replDict){
+    std::map<std::string,std::string> replacements;
+    for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
+      replacements[python::extract<std::string>(replDict.keys()[i])]=python::extract<std::string>(replDict.values()[i]);
+    }
     RWMol *newM;
     try {
-      newM = SmilesToMol(smiles,0,sanitize);
+      newM = SmilesToMol(smiles,0,sanitize,&replacements);
     } catch (...) {
       newM=0;
     }
     return static_cast<ROMol *>(newM);
-    if(!newM) return 0;
   }
 
-  ROMol *MolFromSmarts(const char *smarts,bool mergeHs=false){
+  ROMol *MolFromSmarts(const char *smarts,bool mergeHs,
+                       python::dict replDict){
+    std::map<std::string,std::string> replacements;
+    for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
+      replacements[python::extract<std::string>(replDict.keys()[i])]=python::extract<std::string>(replDict.values()[i]);
+    }
     RWMol *newM; 
     try {
-      newM = SmartsToMol(smarts,0,mergeHs);
+      newM = SmartsToMol(smarts,0,mergeHs,&replacements);
     } catch (...) {
       newM=0;
     }
@@ -343,13 +352,28 @@ BOOST_PYTHON_MODULE(rdmolfiles)
     - sanitize: (optional) toggles sanitization of the molecule.\n\
       Defaults to 1.\n\
 \n\
+    - replacements: (optional) a dictionary of replacement strings (see below)\n\
+      Defaults to {}.\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
+\n\
+   The optional replacements dict can be used to do string substitution of abbreviations \n\
+   in the input SMILES. The set of substitutions is repeatedly looped through until \n\
+   the string no longer changes. It is the responsiblity of the caller to make sure \n\
+   that substitutions results in legal and sensible SMILES. \n\
+ \n\ 
+   Examples of replacements: \n\
+ \n\
+     CC{Q}C with {'{Q}':'OCCO'} -> CCOCCOC  \n\
+     C{A}C{Q}C with {'{Q}':'OCCO', '{A}':'C1(CC1)'} -> CC1(CC1)COCCOC  \n\
+     C{A}C{Q}C with {'{Q}':'{X}CC{X}', '{A}':'C1CC1', '{X}':'N'} -> CC1CC1CCNCCNC  \n\
 \n";  
   python::def("MolFromSmiles",RDKit::MolFromSmiles,
 	      (python::arg("SMILES"),
-	       python::arg("sanitize")=true),
+	       python::arg("sanitize")=true,
+               python::arg("replacements")=python::dict()),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -362,13 +386,17 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       atoms.  So, for example, 'C[H]' becomes '[C;!H0]'.\n\
       Defaults to 0.\n\
 \n\
+    - replacements: (optional) a dictionary of replacement strings (see below)\n\
+      Defaults to {}. See the documentation for MolFromSmiles for an explanation.\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";  
   python::def("MolFromSmarts",RDKit::MolFromSmarts,
 	      (python::arg("SMARTS"),
-	       python::arg("mergeHs")=false),
+	       python::arg("mergeHs")=false,
+               python::arg("replacements")=python::dict()),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 

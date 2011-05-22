@@ -151,10 +151,26 @@ namespace RDKit{
     return res;
   }
 
-  RWMol *SmilesToMol(std::string smi,int debugParse,bool sanitize){
+  RWMol *SmilesToMol(std::string smi,int debugParse,bool sanitize,
+                     std::map<std::string,std::string> *replacements){
     yysmiles_debug = debugParse;
     // strip any leading/trailing whitespace:
     boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
+
+    if(replacements){
+      bool loopAgain=true;
+      while(loopAgain){
+        loopAgain=false;
+        for(std::map<std::string, std::string>::const_iterator replIt=replacements->begin();
+            replIt!=replacements->end();++replIt){
+          if(boost::find_first(smi,replIt->first)){
+            loopAgain=true;
+            boost::replace_all(smi,replIt->first,replIt->second);
+          }
+        }
+      }
+    }
+
     RWMol *res = toMol(smi,smiles_parse);
     if(sanitize && res){
       // we're going to remove explicit Hs from the graph,
@@ -169,10 +185,26 @@ namespace RDKit{
 
     return res;
   };
-  RWMol *SmartsToMol(std::string sma,int debugParse,bool mergeHs){
+  RWMol *SmartsToMol(std::string sma,int debugParse,bool mergeHs,
+                     std::map<std::string, std::string> *replacements){
     yysmarts_debug = debugParse;
     boost::trim_if(sma,boost::is_any_of(" \t\r\n"));
+
+    if(replacements){
+      bool loopAgain=true;
+      while(loopAgain){
+        loopAgain=false;
+        for(std::map<std::string, std::string>::const_iterator replIt=replacements->begin();
+            replIt!=replacements->end();++replIt){
+          if(boost::find_first(sma,replIt->first)){
+            loopAgain=true;
+            boost::replace_all(sma,replIt->first,replIt->second);
+          }
+        }
+      }
+    }
     sma=labelRecursivePatterns(sma);
+
     RWMol *res = toMol(sma,smarts_parse);
     if(res && mergeHs){
       ROMol *tmp = MolOps::mergeQueryHs(*res);

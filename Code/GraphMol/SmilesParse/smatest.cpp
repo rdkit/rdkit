@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1392,6 +1392,74 @@ void testRecursiveSerialNumbers(){
 }
 
 
+void testReplacementPatterns(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing use of replacement patterns in input" << std::endl;
+
+  {
+    std::vector< MatchVectType > mVV;
+    std::string sma ="[{CO}]O[{CO}]";
+    std::map<std::string,std::string> repls;
+    repls["{CO}"]="$(CO)";
+    RWMol *patt = SmartsToMol(sma,0,true,&repls);
+    TEST_ASSERT(patt);
+
+    sma ="CCOCC";
+    RWMol *mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    unsigned int count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==2);
+    TEST_ASSERT(mVV.size()==2);
+    TEST_ASSERT(mVV[0].size()==3);
+    delete mol;
+    delete patt;
+  }    
+
+  {
+    std::vector< MatchVectType > mVV;
+    std::string sma ="[{Q}]O[{Q}]";
+    std::map<std::string,std::string> repls;
+    repls["{Q}"]="$(C(C)O)";
+    RWMol *patt = SmartsToMol(sma,0,true,&repls);
+    TEST_ASSERT(patt);
+
+    sma ="CCOCC";
+    RWMol *mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    unsigned int count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==2);
+    TEST_ASSERT(mVV.size()==2);
+    TEST_ASSERT(mVV[0].size()==3);
+    delete mol;
+    delete patt;
+  }    
+
+  {
+    std::vector< MatchVectType > mVV;
+    std::string sma ="[{MyC}]O";
+    std::map<std::string,std::string> repls;
+    repls["{CO}"]="$(CO)";
+    repls["{C.4}"]="$([C;D4])";
+    repls["{MyC}"]="$([{C.4};{CO}])";
+    RWMol *patt = SmartsToMol(sma,0,true,&repls);
+    TEST_ASSERT(patt);
+
+    sma ="COC(C)(F)(Cl)";
+    RWMol *mol = SmilesToMol(sma);
+    TEST_ASSERT(mol);
+    unsigned int count=SubstructMatch(*mol,*patt,mVV,false);
+    TEST_ASSERT(count==1);
+    TEST_ASSERT(mVV.size()==1);
+    TEST_ASSERT(mVV[0].size()==2);
+    delete mol;
+    delete patt;
+  }    
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1425,5 +1493,6 @@ main(int argc, char *argv[])
   testIssue3000399();
 #endif
   testRecursiveSerialNumbers();
+  testReplacementPatterns();
   return 0;
 }

@@ -154,6 +154,18 @@ namespace RDKit {
     return isMoleculeProductOfReaction(rxn,mol,which);
   }
   
+
+  ChemicalReaction *ReactionFromSmarts(const char *smarts,
+                                  python::dict replDict){
+    std::map<std::string,std::string> replacements;
+    for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
+      replacements[python::extract<std::string>(replDict.keys()[i])]=python::extract<std::string>(replDict.values()[i]);
+    }
+    ChemicalReaction *res; 
+    res = RxnSmartsToChemicalReaction(smarts,&replacements);
+    return res;
+  }
+
 }
 
 BOOST_PYTHON_MODULE(rdChemReactions) {
@@ -225,9 +237,13 @@ Sample Usage:\n\
   ;
 
 
-  python::def("ReactionFromSmarts",RDKit::RxnSmartsToChemicalReaction,
-      "construct a ChemicalReaction from a reaction SMARTS string",
-      python::return_value_policy<python::manage_new_object>());
+  python::def("ReactionFromSmarts",RDKit::ReactionFromSmarts,
+              (python::arg("SMARTS"),
+               python::arg("replacements")=python::dict()),
+              "construct a ChemicalReaction from a reaction SMARTS string. \n\ 
+see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
+of the replacements argument.",
+              python::return_value_policy<python::manage_new_object>());
   python::def("ReactionFromRxnFile",RDKit::RxnFileToChemicalReaction,
       "construct a ChemicalReaction from an MDL rxn file",
       python::return_value_policy<python::manage_new_object>());

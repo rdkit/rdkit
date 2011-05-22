@@ -2517,7 +2517,35 @@ void testBug3152751(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testReplacementPatterns(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing use of replacement patterns in input" << std::endl;
 
+  {
+    std::string smi ="C{cycloprop}C";
+    std::map<std::string,std::string> repls;
+    repls["{cycloprop}"]="C1(CC1)";
+    RWMol *mol = SmilesToMol(smi,0,true,&repls);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getDegree()==4);
+    delete mol;
+  }    
+
+  {
+    std::string smi ="C{cycloprop}C";
+    std::map<std::string,std::string> repls;
+    repls["{cycloprop}"]="C1(C({acid})C1)";
+    repls["{acid}"]="C(=O)O";
+    RWMol *mol = SmilesToMol(smi,0,true,&repls);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==8);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getDegree()==4);
+    delete mol;
+  }    
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 int
 main(int argc, char *argv[])
@@ -2560,5 +2588,6 @@ main(int argc, char *argv[])
   testAtomMaps();
   testBug3145697();
   testBug3152751();
+  testReplacementPatterns();
   //testBug1719046();
 }

@@ -1987,7 +1987,17 @@ CAS<~>
     csmi = Chem.MolToSmiles(Chem.MolFromSmiles(smi))
     self.failUnlessEqual(refsmi,csmi)
     
+  def test62SmilesAndSmartsReplacements(self):
+    mol = Chem.MolFromSmiles('C{branch}C',replacements={'{branch}':'C1(CC1)'})
+    self.failUnlessEqual(mol.GetNumAtoms(),5)
+    mol = Chem.MolFromSmarts('C{branch}C',replacements={'{branch}':'C1(CC1)'})
+    self.failUnlessEqual(mol.GetNumAtoms(),5)
+    mol = Chem.MolFromSmiles('C{branch}C{acid}',replacements={'{branch}':'C1(CC1)',
+                                                              '{acid}':"C(=O)O"})
+    self.failUnlessEqual(mol.GetNumAtoms(),8)
 
+
+    
 if __name__ == '__main__':
   unittest.main()
 

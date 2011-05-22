@@ -87,7 +87,8 @@ namespace RDKit {
     
   } // end of namespace DaylightParserUtils
   
-  ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text) {
+  ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text,
+                                                 std::map<std::string,std::string> *replacements) {
     int pos=text.find(">>");
     if(pos==std::string::npos){
       throw ChemicalReactionParserException("a reaction requires at least one reactant and one product");
@@ -106,7 +107,7 @@ namespace RDKit {
    
     for(std::vector<std::string>::const_iterator txtIt=reactSmarts.begin();
         txtIt!=reactSmarts.end();++txtIt){
-      ROMol *mol=SmartsToMol(*txtIt);
+      ROMol *mol=SmartsToMol(*txtIt,0,false,replacements);
       if(!mol){
         std::string errMsg="Problems constructing reactant from SMARTS: ";
         errMsg += *txtIt;
@@ -115,7 +116,7 @@ namespace RDKit {
       rxn->addReactantTemplate(ROMOL_SPTR(mol));        
     }
     //std::cerr << " ---------------------------------------------------------" << std::endl;    
-    ROMol *prodMol=SmartsToMol(productText);
+    ROMol *prodMol=SmartsToMol(productText,0,false,replacements);
     if(!prodMol){
       std::string errMsg="Problems constructing product from SMARTS: ";
       errMsg += productText;
