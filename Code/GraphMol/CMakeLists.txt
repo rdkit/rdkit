@@ -53,7 +53,11 @@ add_subdirectory(MolAlign)
 add_subdirectory(MolChemicalFeatures)
 add_subdirectory(ShapeHelpers)
 add_subdirectory(MolCatalog)
+
+if(NOT CMAKE_COMPILER_IS_CLANG)
+# SLNParse requires regex and that has been problematic with clang
 add_subdirectory(SLNParse)
+endif()
 
 add_subdirectory(Wrap)
 

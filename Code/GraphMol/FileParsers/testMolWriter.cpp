@@ -365,56 +365,57 @@ void testSmilesWriterStrm() {
 
 void testSDWriterStrm() {
   std::string rdbase = getenv("RDBASE");
-  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
-  SDMolSupplier sdsup(fname);
+  {
+    std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+    SDMolSupplier sdsup(fname);
   
-  std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
-  std::ofstream *oStream=new std::ofstream(ofile.c_str());
+    std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_few.sdf";
+    std::ofstream *oStream=new std::ofstream(ofile.c_str());
 
-  SDWriter *writer = new SDWriter(oStream);
+    SDWriter *writer = new SDWriter(oStream);
 
-  STR_VECT names;
+    STR_VECT names;
  
-  while (!sdsup.atEnd()) {
-    ROMol *mol = sdsup.next();
-    std::string mname;
-    mol->getProp("_Name", mname);
-    names.push_back(mname);
+    while (!sdsup.atEnd()) {
+      ROMol *mol = sdsup.next();
+      std::string mname;
+      mol->getProp("_Name", mname);
+      names.push_back(mname);
 
-    writer->write(*mol);
-    delete mol;
-  }
-  writer->flush();
-  CHECK_INVARIANT(writer->numMols() == 16, "");
-  delete writer;
+      writer->write(*mol);
+      delete mol;
+    }
+    writer->flush();
+    CHECK_INVARIANT(writer->numMols() == 16, "");
+    delete writer;
 
-  // now read in the file we just finished writing
-  SDMolSupplier reader(ofile);
-  int i = 0;
-  while (!reader.atEnd()) {
-    ROMol *mol = reader.next();
-    std::string mname;
-    mol->getProp("_Name", mname);
-    CHECK_INVARIANT(mname == names[i], "");
+    // now read in the file we just finished writing
+    SDMolSupplier reader(ofile);
+    int i = 0;
+    while (!reader.atEnd()) {
+      ROMol *mol = reader.next();
+      std::string mname;
+      mol->getProp("_Name", mname);
+      CHECK_INVARIANT(mname == names[i], "");
     
-    delete mol;
-    i++;
+      delete mol;
+      i++;
+    }
   }
 
-  // now read in a file with aromatic information on the bonds
-  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_arom.sdf";
-  SDMolSupplier nreader(infile);
-  i = 0;
-  while (!nreader.atEnd()) {
-    ROMol *mol = nreader.next();
-    std::string mname;
-    mol->getProp("_Name", mname);
-    CHECK_INVARIANT(mname == names[i], "");
-    i++;
-    
-    delete mol;
+  {
+    // now read in a file with aromatic information on the bonds
+    std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/outNCI_arom.sdf";
+    SDMolSupplier nreader(infile);
+    unsigned int i = 0;
+    while (!nreader.atEnd()) {
+      ROMol *mol = nreader.next();
+      TEST_ASSERT(mol);
+      ++i;
+      delete mol;
+    }
+    TEST_ASSERT(i==16);
   }
-
 }
 
 void testTDTWriterStrm() {
@@ -576,4 +577,5 @@ int main() {
   testSDMemoryCorruption();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
 }

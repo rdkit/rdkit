@@ -39,7 +39,7 @@ namespace Queries{
     }
 
     bool Match(const DataFuncArgType what) const {
-      MatchFuncArgType mfArg = TypeConvert(what,Int2Type<needsConversion>());
+      MatchFuncArgType mfArg = this->TypeConvert(what,Int2Type<needsConversion>());
       //std::cerr << "SET QUERY SEARCH: " << mfArg << ": "  << (d_set.find(mfArg)==d_set.end()) << std::endl;
       return ( this->d_set.find(mfArg) != this->d_set.end() ) ^ this->getNegation();
     };

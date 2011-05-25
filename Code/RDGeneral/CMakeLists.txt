@@ -1,10 +1,10 @@
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake 
                ${CMAKE_CURRENT_SOURCE_DIR}/versions.h )
 
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 # Dict.cpp behaves badly if compiled with optimization under g++
 SET_SOURCE_FILES_PROPERTIES(Dict.cpp PROPERTIES COMPILE_FLAGS -O0)
-endif(CMAKE_COMPILER_IS_GNUCXX)
+endif()
 
 rdkit_library(RDGeneral 
               Invariant.cpp types.cpp utils.cpp RDLog.cpp Dict.cpp SHARED)

@@ -48,7 +48,7 @@ namespace Queries {
     const MatchFuncArgType getTol() const { return this->d_tol; };
   
     virtual bool Match(const DataFuncArgType what) const {
-      MatchFuncArgType mfArg = TypeConvert(what,Int2Type<needsConversion>());
+      MatchFuncArgType mfArg = this->TypeConvert(what,Int2Type<needsConversion>());
       if( queryCmp(this->d_val,mfArg,this->d_tol) == 0 ){
 	if( this->getNegation() ){
 	  return false;

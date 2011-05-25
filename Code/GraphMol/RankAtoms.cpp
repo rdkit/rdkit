@@ -122,7 +122,7 @@ namespace RankAtoms{
     unsigned int lastNumClasses = 0;
     unsigned int nCycles = 0;
     unsigned int nStagnant=0;
-    if(stagnantTol<0){
+    if(stagnantTol==0){
       stagnantTol = nAtoms;
     }
     //

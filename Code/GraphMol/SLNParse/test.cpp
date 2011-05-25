@@ -1685,7 +1685,7 @@ void test16(){
 
   {
     sln = "CH3ZCH3{Z:O}";
-    mol=RDKit::SLNToMol(sln);
+    mol=RDKit::SLNToMol(sln,true,1);
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms()==3);
     TEST_ASSERT(mol->getAtomWithIdx(1)->getAtomicNum()==8);

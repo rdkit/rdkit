@@ -153,7 +153,7 @@ namespace RDGeom {
       PRECONDITION(compareParams(other),"mismatched params");
       UniformGrid3D res(d_numX*d_spacing,d_numY*d_spacing,d_numZ*d_spacing,
 			d_spacing,dp_storage->getValueType(),&d_offSet);
-      
+      return res;
     };
     
   private:

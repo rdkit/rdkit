@@ -238,7 +238,7 @@ namespace RDKit{
             ++iter;
           }
         } else {
-          d_data[oIter->first]=-oIter->second;
+          d_data[oIter->first] = -oIter->second;
         }
         ++oIter;
       }

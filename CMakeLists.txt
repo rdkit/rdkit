@@ -58,6 +58,9 @@ if(MSVC)
   SET(Boost_ADDITIONAL_VERSIONS "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
 endif(MSVC)
 
+#set(BOOST_ROOT /usr/local/src/boost)
+
+
 if(RDK_BUILD_PYTHON_WRAPPERS)
   #------- 
   # pull in python:
@@ -107,8 +110,14 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 include_directories(${RDKit_CodeDir})
 
+
+# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
+# detect it.
+string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+
+
 # setup our compiler flags:
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
 endif()
 

@@ -60,7 +60,7 @@ namespace Queries {
     const MatchFuncArgType getTol() const { return this->d_tol; };
   
     bool Match(const DataFuncArgType what) const {
-      MatchFuncArgType mfArg = TypeConvert(what,Int2Type<needsConversion>());
+      MatchFuncArgType mfArg = this->TypeConvert(what,Int2Type<needsConversion>());
       int lCmp = queryCmp(this->d_lower,mfArg,this->d_tol);
       int uCmp = queryCmp(this->d_upper,mfArg,this->d_tol);
       bool lowerRes,upperRes;
