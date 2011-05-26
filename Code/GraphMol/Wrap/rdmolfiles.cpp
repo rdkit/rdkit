@@ -363,7 +363,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
    in the input SMILES. The set of substitutions is repeatedly looped through until \n\
    the string no longer changes. It is the responsiblity of the caller to make sure \n\
    that substitutions results in legal and sensible SMILES. \n\
- \n\ 
+ \n\
    Examples of replacements: \n\
  \n\
      CC{Q}C with {'{Q}':'OCCO'} -> CCOCCOC  \n\

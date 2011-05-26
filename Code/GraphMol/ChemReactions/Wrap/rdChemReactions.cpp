@@ -240,7 +240,7 @@ Sample Usage:\n\
   python::def("ReactionFromSmarts",RDKit::ReactionFromSmarts,
               (python::arg("SMARTS"),
                python::arg("replacements")=python::dict()),
-              "construct a ChemicalReaction from a reaction SMARTS string. \n\ 
+              "construct a ChemicalReaction from a reaction SMARTS string. \n\
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",
               python::return_value_policy<python::manage_new_object>());

@@ -28,7 +28,7 @@ void ForceFieldAddDistanceConstraint(PyForceField *self,unsigned int idx1,unsign
 }
 
 PyObject *ForceFieldGetExtraPointLoc(PyForceField *self,unsigned int idx){
-  if(idx < 0 || idx >= self->extraPoints.size()){
+  if(idx >= self->extraPoints.size()){
     throw IndexErrorException(idx);
   }
   PyObject *res = PyTuple_New(3);

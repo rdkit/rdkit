@@ -135,6 +135,8 @@ namespace RDKit{
             nTrip[bnd->getBeginAtomIdx()]+=1;
             nTrip[bnd->getEndAtomIdx()]+=1;
             break;
+          default:
+            break;
           }
         }
       }

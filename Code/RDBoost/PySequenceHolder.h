@@ -61,7 +61,7 @@ public:
   //!   - if the element cannot be converted to type \c T, we raise a
   //!     \c ValueError
   T operator[](unsigned int which) const {
-    if(which > size() || which < 0){
+    if(which > size()){
       throw_index_error(which);
     }
 
