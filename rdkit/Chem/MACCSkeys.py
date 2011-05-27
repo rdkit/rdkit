@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2001-2008 greg Landrum and Rational Discovery LLC
+# Copyright (C) 2001-2011 greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -25,19 +25,23 @@ definition. It's not clear to me what the correct behavior is.
 4) Two keys, 125 and 166, have to be done outside of SMARTS.
 5) Key 1 (ISOTOPE) isn't defined
 
+Rev history:
+2006 (gl): Original open-source release
+May 2011 (gl): Update some definitions based on feedback from Andrew Dalke
+
 """
 from rdkit import Chem
 from rdkit import DataStructs
 # these are SMARTS patterns corresponding to the MDL MACCS keys
 smartsPatts={
   1:('?',0), # ISOTOPE
-  #2:('[#103,#104,#105,#106,#107,#106,#109,#110,#111,#112]',0),  # ISOTOPE Not complete
-  2:('[#103,#104]',0),  # ISOTOPE Not complete
-  3:('[Ge,As,Se,Sn,Sb,Te,Tl,Pb,Bi]',0), # Group IVa,Va,VIa Periods 4-6 (Ge...)  *NOTE* spec wrong
+  #2:('[#104,#105,#106,#107,#106,#109,#110,#111,#112]',0),  # atomic num >103 Not complete
+  2:('[#104]',0),  # limit the above def'n since the RDKit only accepts up to #104
+  3:('[#32,#33,#34,#50,#51,#52,#82,#83,#84]',0), # Group IVa,Va,VIa Rows 4-6 
   4:('[Ac,Th,Pa,U,Np,Pu,Am,Cm,Bk,Cf,Es,Fm,Md,No,Lr]',0), # actinide
-  5:('[Sc,Ti,Y,Zr,Hf]',0), # Group IIIB,IVB (Sc...)  *NOTE* spec wrong
+  5:('[Sc,Ti,Y,Zr,Hf]',0), # Group IIIB,IVB (Sc...)  
   6:('[La,Ce,Pr,Nd,Pm,Sm,Eu,Gd,Tb,Dy,Ho,Er,Tm,Yb,Lu]',0), # Lanthanide
-  7:('[V,Cr,Mn,Nb,Mo,Tc,Ta,W,Re]',0), # Group VB,VIB,VIIB (V...) *NOTE* spec wrong
+  7:('[V,Cr,Mn,Nb,Mo,Tc,Ta,W,Re]',0), # Group VB,VIB,VIIB
   8:('[!#6;!#1]1~*~*~*~1',0), # QAAA@1
   9:('[Fe,Co,Ni,Ru,Rh,Pd,Os,Ir,Pt]',0), # Group VIII (Fe...)
   10:('[Be,Mg,Ca,Sr,Ba,Ra]',0), # Group IIa (Alkaline earth)
@@ -48,7 +52,7 @@ smartsPatts={
   15:('[#8]~[#6](~[#8])~[#8]',0), # OC(O)O
   16:('[!#6;!#1]1~*~*~1',0), # QAA@1
   17:('[#6]#[#6]',0), #CTC
-  18:('[B,Al,Ga,In,Tl]',0), # Group IIIA (B...) *NOTE* spec wrong
+  18:('[#5,#13,#31,#49,#81]',0), # Group IIIA (B...) 
   19:('*1~*~*~*~*~*~*~1',0), # 7M Ring
   20:('[Si]',0), #Si
   21:('[#6]=[#6](~[!#6;!#1])~[!#6;!#1]',0), # C=C(Q)Q
@@ -73,7 +77,7 @@ smartsPatts={
   40:('[#16]-[#8]',0), # S-O
   41:('[#6]#[#7]',0), # CTN
   42:('F',0), # F
-  43:('[!C;!c;!#1;!H0]~*~[!C;!c;!#1;!H0]',0), # QHAQH
+  43:('[!#6;!#1;!H0]~*~[!#6;!#1;!H0]',0), # QHAQH
   44:('?',0), # OTHER
   45:('[#6]=[#6]~[#7]',0), # C=CN
   46:('Br',0), # BR
@@ -98,7 +102,7 @@ smartsPatts={
   65:('c:n',0), # C%N
   66:('[#6]~[#6](~[#6])(~[#6])~*',0), # CC(C)(C)A
   67:('[!#6;!#1]~[#16]',0), # QS
-  68:('[!#6;!#1;!H0]~[!#6;!#1;!H0]',0), # QHQH (&...) FIX: incomplete definition
+  68:('[!#6;!#1;!H0]~[!#6;!#1;!H0]',0), # QHQH (&...) SPEC Incomplete
   69:('[!#6;!#1]~[!#6;!#1;!H0]',0), # QQH
   70:('[!#6;!#1]~[#7]~[!#6;!#1]',0), # QNQ
   71:('[#7]~[#8]',0), # NO
@@ -150,17 +154,17 @@ smartsPatts={
   117:('[#7]~*~[#8]',0), # NAO
   118:('[$(*~[CH2]~[CH2]~*),$(*1~[CH2]~[CH2]1)]',1), # ACH2CH2A > 1
   119:('[#7]=*',0), # N=A
-  120:('[!#6;R]',1), # Heterocyclic atom > 1 (&...) FIX: incomplete definition
+  120:('[!#6;R]',1), # Heterocyclic atom > 1 (&...) Spec Incomplete
   121:('[#7;R]',0), # N Heterocycle
   122:('*~[#7](~*)~*',0), # AN(A)A
   123:('[#8]~[#6]~[#8]',0), # OCO
   124:('[!#6;!#1]~[!#6;!#1]',0), # QQ
   125:('?',0), # Aromatic Ring > 1
   126:('*!@[#8]!@*',0), # A!O!A
-  127:('*@*!@[#8]',1), # A$A!O > 1 (&...) FIX: incomplete definition
+  127:('*@*!@[#8]',1), # A$A!O > 1 (&...) Spec Incomplete
   128:('[$(*~[CH2]~*~*~*~[CH2]~*),$([R]1@[CH2;R]@[R]@[R]@[R]@[CH2;R]1),$(*~[CH2]~[R]1@[R]@[R]@[CH2;R]1),$(*~[CH2]~*~[R]1@[R]@[CH2;R]1)]',0), # ACH2AAACH2A
   129:('[$(*~[CH2]~*~*~[CH2]~*),$([R]1@[CH2]@[R]@[R]@[CH2;R]1),$(*~[CH2]~[R]1@[R]@[CH2;R]1)]',0), # ACH2AACH2A
-  130:('[!#6;!#1]~[!#6;!#1]',1), # QQ > 1 (&...)  FIX: incomplete definition
+  130:('[!#6;!#1]~[!#6;!#1]',1), # QQ > 1 (&...)  Spec Incomplete
   131:('[!#6;!#1;!H0]',1), # QH > 1
   132:('[#8]~*~[CH2]~*',0), # OACH2A
   133:('*@*!@[#7]',0), # A$A!N
@@ -168,10 +172,10 @@ smartsPatts={
   135:('[#7]!:*:*',0), # Nnot%A%A
   136:('[#8]=*',1), # O=A>1 
   137:('[!C;!c;R]',0), # Heterocycle
-  138:('[!#6;!#1]~[CH2]~*',1), # QCH2A>1 (&...) FIX: incomplete definition
+  138:('[!#6;!#1]~[CH2]~*',1), # QCH2A>1 (&...) Spec Incomplete
   139:('[O;!H0]',0), # OH
-  140:('[#8]',3), # O > 3 (&...) FIX: incomplete definition
-  141:('[CH3]',2), # CH3 > 2  (&...) FIX: incomplete definition
+  140:('[#8]',3), # O > 3 (&...) Spec Incomplete
+  141:('[CH3]',2), # CH3 > 2  (&...) Spec Incomplete
   142:('[#7]',1), # N > 1
   143:('*@*!@[#8]',0), # A$A!O
   144:('*!:*:*!:*',0), # Anot%A%Anot%A
