@@ -48,7 +48,7 @@ namespace python = boost::python;
   const int get_VectItem(const T& self,int which)
   {
     if(which<0){
-      if(which+self.getNumBits()<0){
+      if(which+static_cast<int>(self.getNumBits())<0){
         throw IndexErrorException(which);
       } else {
         which += self.getNumBits();
@@ -62,7 +62,7 @@ namespace python = boost::python;
   const int set_VectItem(T& self, int which, const int val)
   {
     if(which<0){
-      if(which+self.getNumBits()<0){
+      if(which+static_cast<int>(self.getNumBits())<0){
         throw IndexErrorException(which);
       } else {
         which += self.getNumBits();

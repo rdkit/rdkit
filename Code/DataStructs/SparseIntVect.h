@@ -51,6 +51,10 @@ namespace RDKit{
     //! destructor (doesn't need to do anything)
     ~SparseIntVect() {}
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
+#endif
     //! return the value at an index
     int getVal(IndexType idx) const {
       if(idx<0||idx>=d_length){
@@ -63,7 +67,6 @@ namespace RDKit{
       }
       return res;
     };
-    int operator[] (IndexType idx) const { return getVal(idx); };
 
     //! set the value at an index
     void setVal(IndexType idx, int val){
@@ -76,6 +79,12 @@ namespace RDKit{
         d_data.erase(idx);
       }
     };
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+    //! support indexing using []
+    int operator[] (IndexType idx) const { return getVal(idx); };
+
     //! returns the length
     IndexType getLength() const { return d_length; };
 

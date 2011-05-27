@@ -117,8 +117,11 @@ string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
 
 # setup our compiler flags:
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
+if(CMAKE_COMPILER_IS_GNUCXX)
 ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+endif()
+if(CMAKE_COMPILER_IS_CLANG)
+ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
 endif()
 
 if(NOT RDK_INSTALL_INTREE)
