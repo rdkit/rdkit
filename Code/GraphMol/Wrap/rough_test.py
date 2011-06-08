@@ -1,6 +1,6 @@
 # $Id$
 #
-#  Copyright (C) 2003-2010  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2011  Greg Landrum and Rational Discovery LLC
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -1996,6 +1996,22 @@ CAS<~>
                                                               '{acid}':"C(=O)O"})
     self.failUnlessEqual(mol.GetNumAtoms(),8)
 
+  def test63Issue3313539(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','rgroups1.mol')
+    m = Chem.MolFromMolFile(fileN)
+    self.failUnless(m is not None)
+    at = m.GetAtomWithIdx(3)
+    self.failUnless(at is not None)
+    p = at.GetProp('_MolFileRLabel')
+    self.failUnlessEqual(p,'2')
+
+    at = m.GetAtomWithIdx(4)
+    self.failUnless(at is not None)
+    p = at.GetProp('_MolFileRLabel')
+    self.failUnlessEqual(p,'1')
+    
+    
 
     
 if __name__ == '__main__':

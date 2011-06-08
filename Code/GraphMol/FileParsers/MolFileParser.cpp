@@ -586,9 +586,9 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(pos,3) << " to int";
           throw FileParseException(errout.str()) ;
         }
-        unsigned int rLabel;
+        int rLabel;
         try {
-          rLabel = FileParserUtils::stripSpacesAndCast<unsigned int>(text.substr(pos+4,3));
+          rLabel = FileParserUtils::stripSpacesAndCast<int>(text.substr(pos+4,3));
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
