@@ -966,7 +966,7 @@ void testMolFileRGroups(){
   std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/rgroups1.mol";
   RWMol *m = MolFileToMol(fName);
   TEST_ASSERT(m);
-  int idx;
+  unsigned int idx;
   
   TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
