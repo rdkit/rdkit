@@ -34,8 +34,12 @@ namespace RDKit{
     } catch (const boost::bad_any_cast &) {
       if(val.type()==typeid(int)){
         res = boost::lexical_cast<std::string>(boost::any_cast<int>(val));
+      } else if(val.type()==typeid(unsigned int)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<unsigned int>(val));
       } else if(val.type()==typeid(long)){
         res = boost::lexical_cast<std::string>(boost::any_cast<long>(val));
+      } else if(val.type()==typeid(unsigned long)){
+        res = boost::lexical_cast<std::string>(boost::any_cast<unsigned long>(val));
       } else if(val.type()==typeid(float)){
         res = boost::lexical_cast<std::string>(boost::any_cast<float>(val));
       } else if(val.type()==typeid(double)){
@@ -78,8 +82,6 @@ namespace RDKit{
 
     std::string fooString = tD.fromany<std::string>(boost::any(std::string("1")));
     tD.toany<std::string>(std::string("1"));
-
-
 
     ANY_FORCE(std::vector<int>);
     ANY_FORCE(std::vector<unsigned int>);
