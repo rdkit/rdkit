@@ -2003,11 +2003,13 @@ CAS<~>
     self.failUnless(m is not None)
     at = m.GetAtomWithIdx(3)
     self.failUnless(at is not None)
+    self.failUnless(at.HasProp('_MolFileRLabel'))
     p = at.GetProp('_MolFileRLabel')
     self.failUnlessEqual(p,'2')
 
     at = m.GetAtomWithIdx(4)
     self.failUnless(at is not None)
+    self.failUnless(at.HasProp('_MolFileRLabel'))
     p = at.GetProp('_MolFileRLabel')
     self.failUnlessEqual(p,'1')
     
