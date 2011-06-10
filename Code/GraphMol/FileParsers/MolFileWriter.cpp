@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -115,11 +115,31 @@ namespace RDKit{
     return ss.str();
   }
 
+  const std::string GetMolFileRGroupInfo(const RWMol &mol){
+    std::stringstream ss;
+    unsigned int nEntries=0;
+    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+	atomIt!=mol.endAtoms();++atomIt){
+      if((*atomIt)->hasProp("_MolFileRLabel")){
+        unsigned int lbl;
+        (*atomIt)->getProp("_MolFileRLabel",lbl);
+        ss<<" "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<std::setw(3)<<lbl;
+        ++nEntries;
+      }
+    }
+    std::stringstream ss2;
+    if(nEntries) ss2<<"M  RGP"<<std::setw(3)<<nEntries<<ss.str()<<std::endl;
+    return ss2.str();
+  }
+
+  
   const std::string AtomGetMolFileSymbol(const Atom *atom){
     PRECONDITION(atom,"");
 
     std::string res;
-    if(hasComplexQuery(atom)){
+    if(atom->hasProp("_MolFileRLabel")){
+      res="R#";
+    } else if(hasComplexQuery(atom)){
       res="*";
     } else if(atom->getAtomicNum()){
       res=atom->getSymbol();
@@ -127,7 +147,7 @@ namespace RDKit{
       if(!atom->hasProp("dummyLabel")){
       	res = "R";
       } else {
-	      std::string symb;
+        std::string symb;
         atom->getProp("dummyLabel",symb);
         if(symb=="*") res="R";
         else if(symb=="X") res="R";
@@ -446,8 +466,8 @@ namespace RDKit{
     }
 
     res += GetMolFileChargeInfo(tmol);
+    res += GetMolFileRGroupInfo(tmol);
     res += GetMolFileQueryInfo(tmol);
-    
     
     // FIX: aliases, atom lists, etc.
     res += "M  END\n";

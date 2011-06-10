@@ -2443,6 +2443,42 @@ void testIssue3228150(){
 }
 
 
+void testIssue3313540(){
+  BOOST_LOG(rdInfoLog) << "testing writing mol file R-groups (issue 3313540)" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/rgroups1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    unsigned int idx;
+  
+    TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==2);
+  
+    TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+    m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==1);
+
+    std::string mb=MolToMolBlock(*m);
+    RWMol *m2=MolBlockToMol(mb);
+    TEST_ASSERT(m2);
+    
+    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp("_MolFileRLabel"));
+    m2->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==2);
+  
+    TEST_ASSERT(m2->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
+    m2->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
+    TEST_ASSERT(idx==1);
+    
+    delete m;
+    delete m2;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2484,8 +2520,9 @@ int main(int argc,char *argv[]){
   testIssue2963522();
   testIssue3073163();
   testIssue3154208();
-#endif
   testIssue3228150();
+#endif
+  testIssue3313540();
 
 
   return 0;
