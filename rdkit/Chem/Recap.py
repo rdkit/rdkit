@@ -186,7 +186,7 @@ def RecapDecompose(mol,allNodes=None,minFragmentSize=0,onlyUseReactions=None):
               Chem.SanitizeMol(prod)
             except:
               continue
-	    pSmi = Chem.MolToSmiles(prod,1)
+            pSmi = Chem.MolToSmiles(prod,1)
             if minFragmentSize>0:
               nDummies = pSmi.count('*')
               if nats-nDummies<minFragmentSize:
