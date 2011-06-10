@@ -101,8 +101,8 @@ class Canvas(CanvasBase):
                            color2=None,**kwargs):
     color = convertColor(color)
     dash = (4,4)
-    pts1 = _getLinePoints(p1,p2,dash)
-    pts2 = _getLinePoints(p1,p3,dash)
+    pts1 = self._getLinePoints(p1,p2,dash)
+    pts2 = self._getLinePoints(p1,p3,dash)
 
     if len(pts2)<len(pts1): pts2,pts1=pts1,pts2
 

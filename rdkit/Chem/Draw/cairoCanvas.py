@@ -88,8 +88,7 @@ class Canvas(CanvasBase):
       self.ctx.move_to(p1[0],p1[1])
       self.ctx.line_to(p2[0],p2[1])
     else:
-      # the antialiasing makes the dashes appear too small
-      dash = [x*4 for x in kwargs['dash']]
+      dash = kwargs['dash']
       pts = self._getLinePoints(p1,p2,dash)
 
       currDash = 0

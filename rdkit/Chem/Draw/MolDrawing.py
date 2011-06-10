@@ -44,7 +44,7 @@ class MolDrawing(object):
   includeAtomNumbers=False
   atomNumberOffset=0
 
-  dash = (1,1)
+  dash = (4,4)
   atomPs = None
   canvas = None
   canvasSize=None

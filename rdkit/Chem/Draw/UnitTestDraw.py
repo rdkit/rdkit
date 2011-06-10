@@ -17,7 +17,7 @@ from rdkit.Chem import Draw
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    self.mol = Chem.MolFromSmiles('c1ccccn1')
+    self.mol = Chem.MolFromSmiles('c1cccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
 
   def testCairoFile(self):
     try:
@@ -109,6 +109,76 @@ class TestCase(unittest.TestCase):
     self.failUnless(img)
     self.failUnlessEqual(img.size[0],300)
     self.failUnlessEqual(img.size[1],300)
+
+  def testCairoImage(self):
+    try:
+      from rdkit.Chem.Draw.cairoCanvas import Canvas
+    except ImportError:
+      return
+    os.environ['RDKIT_CANVAS']='cairo'
+
+    img=Draw.MolToImage(self.mol,size=(300,300))
+    self.failUnless(img)
+    self.failUnlessEqual(img.size[0],300)
+    self.failUnlessEqual(img.size[1],300)
+    
+  def testAggImage(self):
+    try:
+      from rdkit.Chem.Draw.aggCanvas import Canvas
+    except ImportError:
+      return
+    os.environ['RDKIT_CANVAS']='agg'
+    img=Draw.MolToImage(self.mol,size=(300,300))
+    self.failUnless(img)
+    self.failUnlessEqual(img.size[0],300)
+    self.failUnlessEqual(img.size[1],300)
+
+  def testSpingImage(self):
+    try:
+      from rdkit.Chem.Draw.aggCanvas import Canvas
+    except ImportError:
+      return
+    os.environ['RDKIT_CANVAS']='sping'
+    img=Draw.MolToImage(self.mol,size=(300,300))
+    self.failUnless(img)
+    self.failUnlessEqual(img.size[0],300)
+    self.failUnlessEqual(img.size[1],300)
+
+  def testCairoImageDash(self):
+    try:
+      from rdkit.Chem.Draw.cairoCanvas import Canvas
+    except ImportError:
+      return
+    os.environ['RDKIT_CANVAS']='cairo'
+
+    img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
+    self.failUnless(img)
+    self.failUnlessEqual(img.size[0],300)
+    self.failUnlessEqual(img.size[1],300)
+    
+  def testAggImageDash(self):
+    try:
+      from rdkit.Chem.Draw.aggCanvas import Canvas
+    except ImportError:
+      return
+    os.environ['RDKIT_CANVAS']='agg'
+    img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
+    self.failUnless(img)
+    self.failUnlessEqual(img.size[0],300)
+    self.failUnlessEqual(img.size[1],300)
+
+  def testSpingImageDash(self):
+    try:
+      from rdkit.Chem.Draw.aggCanvas import Canvas
+    except ImportError:
+      return
+    os.environ['RDKIT_CANVAS']='sping'
+    img=Draw.MolToImage(self.mol,size=(300,300),kekulize=False)
+    self.failUnless(img)
+    self.failUnlessEqual(img.size[0],300)
+    self.failUnlessEqual(img.size[1],300)
+
+
 
     
 if __name__ == '__main__':
