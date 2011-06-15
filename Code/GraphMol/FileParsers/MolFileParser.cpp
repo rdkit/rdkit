@@ -603,6 +603,13 @@ namespace RDKit{
         }
         QueryAtom qatom(*(mol->getAtomWithIdx(atIdx)));
         qatom.setProp("_MolFileRLabel",rLabel);
+
+        // set the dummy label so that this is shown correctly
+        // in other pieces of the code :
+        // (this was sf.net issue 3316600)
+        std::string dLabel="R"+boost::lexical_cast<std::string>(rLabel);
+        qatom.setProp("dummyLabel",dLabel);
+        
         // the CTFile spec (June 2005 version) technically only allows
         // R labels up to 32. Since there are three digits, we'll accept
         // anything: so long as it's positive and less than 1000:
