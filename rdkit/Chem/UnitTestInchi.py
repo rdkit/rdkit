@@ -272,5 +272,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(InchiToInchiKey(inchi), 'ODLMAHJVESYWTB-UHFFFAOYSA-N')
 
 if __name__ == '__main__':
-    unittest.main()
+    # only run the test if InChI is available
+    if inchi.INCHI_AVAILABLE:
+        unittest.main()
 

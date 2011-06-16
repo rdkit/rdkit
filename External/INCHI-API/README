@@ -1,5 +1,5 @@
-To build InChI support, you have to download the official InChI software
-distribution from the IUPAC website, and place the source code in this
+To build the optional InChI support, you have to download the official InChI
+software distribution from the IUPAC website, and place the source code in this
 directory. Please follow these instructions.
 
 1. Download the zip file from

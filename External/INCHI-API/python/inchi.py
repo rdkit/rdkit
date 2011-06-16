@@ -9,6 +9,8 @@
 #  of the RDKit source tree.
 #
 
+INCHI_AVAILABLE = True
+
 import rdinchi
 import logging
 from rdkit import RDLogger
