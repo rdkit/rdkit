@@ -26,6 +26,7 @@ _HasSubstructMatchStr=rdchem._HasSubstructMatchStr
 from rdchem import *
 from rdmolfiles import *
 from rdmolops import *
+from inchi import *
 
 def QuickSmartsMatch(smi,sma,unique=True,display=False):
   m = MolFromSmiles(smi)

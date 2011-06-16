@@ -1,0 +1,17 @@
+To build InChI support, you have to download the official InChI software
+distribution from the IUPAC website, and place the source code in this
+directory. Please follow these instructions.
+
+1. Download the zip file from
+   http://www.iupac.org/inchi/download/version1.03/INCHI-1-API.zip
+
+2. Unzip the package. 
+
+3. In the unzipped folder, find INCHI-1-API/INCHI_API/inchi_dll, under which
+   there are 73 files including things like ichi.h and ikey_dll.c. Copy all
+   these 73 files to this directory that contains this README file.
+
+Alternatively, if you are on a UNIX variant system (Linux, Mac OS X, Cygwin,
+etc), you may invoke the included script `download.sh`:
+	
+	$ bash download.sh

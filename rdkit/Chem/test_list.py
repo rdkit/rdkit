@@ -23,6 +23,7 @@ tests=[
   ("python","UnitTestDescriptors.py",{}),
   ("python","AllChem.py",{}),
   ("python","PropertyMol.py",{}),
+  ("python","UnitTestInchi.py",{}),
   ("python","SaltRemover.py",{}),
   ("python","UnitTestFunctionalGroups.py",{}),
   ("python","__init__.py",{}),
