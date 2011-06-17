@@ -10,7 +10,7 @@
 #
 from rdkit.sping import pid
 
-import math
+import math,re
 
 from rdkit.sping.PIL.pidPIL import PILCanvas
 from canvasbase import CanvasBase
@@ -63,6 +63,7 @@ class Canvas(CanvasBase):
                       dash=kwargs.get('dash',None))
 
   def addCanvasText(self, text,pos,font,color=(0,0,0),**kwargs):
+    text = re.sub(r'\<.+?\>','',text)
     font = pid.Font(face=faceMap[font.face],size=font.size)
     txtWidth,txtHeight=self.canvas.stringBox(text,font)
     labelP = pos[0]-txtWidth/2,pos[1]+txtHeight/2
