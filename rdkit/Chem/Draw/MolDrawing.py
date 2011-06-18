@@ -400,26 +400,29 @@ class MolDrawing(object):
             chg = '<sup>%s</sup>'%chg
           else:
             chg = ''
-          if nbrSum[0]<=0:
+          deg = atom.GetDegree()
+          if deg>1 or nbrSum[0]<1:
             symbol = '%s%s%s'%(base,hs,chg)
           else:
             symbol = '%s%s%s'%(chg,hs,base)
 
-          if abs(nbrSum[1])>1:
-            islope=nbrSum[0]/abs(nbrSum[1])
-          else:
-            islope=nbrSum[0]
-          if abs(islope)>.1:
-            if islope>0:
-              orient='W'
+          if deg==1:
+            if abs(nbrSum[1])>1:
+              islope=nbrSum[0]/abs(nbrSum[1])
             else:
-              orient='E'
-          elif abs(nbrSum[1])>10:
-            if nbrSum[1]>0:
-              orient='N'
-            else :
-              orient='S'
-              
+              islope=nbrSum[0]
+            if abs(islope)>.3:
+              if islope>0:
+                orient='W'
+              else:
+                orient='E'
+            elif abs(nbrSum[1])>10:
+              if nbrSum[1]>0:
+                orient='N'
+              else :
+                orient='S'
+          else:
+            orient = 'C'
         if highlightMap and idx in highlightMap:
           color = highlightMap[idx]
         elif highlightAtoms and idx in highlightAtoms:

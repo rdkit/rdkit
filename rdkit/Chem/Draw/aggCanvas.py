@@ -24,6 +24,9 @@ def convertColor(color):
   return color
 
 class Canvas(CanvasBase):
+  # fonts appear smaller in aggdraw than with cairo
+  # fix that here:
+  fontScale=1.2
   def __init__(self, img=None,
                imageType=None, # determines file type
                fileName=None,  # if set determines output file name
@@ -74,24 +77,10 @@ class Canvas(CanvasBase):
       color = convertColor(color)
       self._doLine(p1,p2,Pen(color,kwargs.get('linewidth',1)),**kwargs)
 
-  def _addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
-    text = re.sub(r'\<.+?\>','',text)
-    color = convertColor(color)
-    font = Font(color,faceMap[font.face],size=font.size)
-    w,h=self.draw.textsize(text,font)
-    bw,bh=w*1.1,h*1.1
-    dPos = pos[0]-bw/2.,pos[1]-bh/2.
-    bgColor=kwargs.get('bgColor',(1,1,1))
-    bgColor = convertColor(bgColor)
-    self.draw.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
-                     None,Brush(bgColor))
-    dPos = pos[0]-w/2.,pos[1]-h/2.
-    self.draw.text(dPos,text,font)
-
   def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
     orientation=kwargs.get('orientation','E')
     color = convertColor(color)
-    font = Font(color,faceMap[font.face],size=font.size)
+    font = Font(color,faceMap[font.face],size=font.size*self.fontScale)
 
     blocks = list(re.finditer(r'\<(.+?)\>(.+?)\</\1\>',text))
     w,h = 0,0
