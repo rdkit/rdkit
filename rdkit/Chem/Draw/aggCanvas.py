@@ -75,7 +75,6 @@ class Canvas(CanvasBase):
       self._doLine(p1,p2,Pen(color,kwargs.get('linewidth',1)),**kwargs)
 
   def _addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
-    print '>>',text
     text = re.sub(r'\<.+?\>','',text)
     color = convertColor(color)
     font = Font(color,faceMap[font.face],size=font.size)

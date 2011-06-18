@@ -17,7 +17,7 @@ from rdkit.Chem import Draw
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    self.mol = Chem.MolFromSmiles('c1cccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
+    self.mol = Chem.MolFromSmiles('c1c(C[15NH3+])ccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
 
   def testCairoFile(self):
     try:

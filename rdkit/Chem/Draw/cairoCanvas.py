@@ -159,7 +159,6 @@ class Canvas(CanvasBase):
     w=lext[2]-lext[0]
     h=lext[3]-lext[1]
     #bw,bh=w*1.8,h*1.4
-    print orientation,text
     if orientation=='W':
       dPos = pos[0]-w,pos[1]-h/2.
     elif orientation=='E':
