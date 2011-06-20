@@ -6,10 +6,10 @@ LDFLAGS = -L${RDBASE}/lib  -lSmilesParse_static  \
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
-CPPFLAGS = -I${BOOSTHOME} -I${RDBASE}/Code -Wno-deprecated
+CPPFLAGS = -I${BOOSTHOME} -I${RDBASE}/Code -Wno-deprecated $(shell pkg-config --cflags cairo)
 
 %.o : %.cpp MolDrawing.h
 	$(CXX) $(CPPFLAGS)  -c -o $@ $< 
 
 demo.exe: demo.o 
-	$(CXX) -o $@ $< $(LDFLAGS)
+	$(CXX)  -o $@ $< $(LDFLAGS) $(shell pkg-config --libs cairo)

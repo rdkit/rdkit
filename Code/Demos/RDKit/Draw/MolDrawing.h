@@ -24,7 +24,9 @@
   BOUNDS x1 y1 x2 y2
   LINE width dashed atom1_atnum atom2_atnum x1 y1 x2 y2
   WEDGE dashed atom1_atnum atom2_atnum x1 y1 x2 y2 x3 y3 
-  ATOM idx atnum x y num_chars char1-char x 
+  ATOM idx atnum x y num_chars char1-charx orient
+
+
 
 *************/
 
@@ -39,11 +41,18 @@ namespace RDKit {
       BOUNDS,
       RESOLUTION
     } PrimType;
+    typedef enum {
+      C=0,
+      N,
+      E,
+      S,
+      W
+    } OrientType;
 
     std::vector<ElementType> DrawMol(const ROMol &mol,int confId=-1,
                                      const std::vector<int> *highlightAtoms=0,
                                      unsigned int dotsPerAngstrom=100,
-                                     double dblBondOffset=0.2,
+                                     double dblBondOffset=0.3,
                                      double dblBondLengthFrac=0.8){
       std::vector<ElementType> res;
       res.push_back(RESOLUTION);
@@ -186,7 +195,7 @@ namespace RDKit {
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.y));
           std::string symbol=mol[*bAts]->getSymbol();
           bool leftToRight=true;
-          if(nbrSum.x>0){
+          if(mol[*bAts]->getDegree()==1 && nbrSum.x>0){
             leftToRight=false;
           }
           if(mol[*bAts]->getAtomicNum()!=6){
@@ -218,6 +227,31 @@ namespace RDKit {
           BOOST_FOREACH(char c, symbol){
             res.push_back(static_cast<ElementType>(c));
           }
+
+          OrientType orient=C;
+          if(mol[*bAts]->getDegree()==1){
+            double islope=0;
+            if(fabs(nbrSum.y)>1){
+              islope=nbrSum.x/fabs(nbrSum.y);
+            } else {
+              islope=nbrSum.x;
+            }
+            std::cerr<<" slope: "<<symbol<<" "<<islope<<std::endl;
+            if(fabs(islope)>.85){
+              if(islope>0){
+                orient=W;
+              } else {
+                orient=E;
+              }
+            } else {
+              if(nbrSum.y>0){
+                orient=N;
+              } else {
+                orient=S;
+              }
+            }
+          }
+          res.push_back(static_cast<ElementType>(orient));
         }        
         ++bAts;
       }
