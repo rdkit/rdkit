@@ -450,37 +450,3 @@ class MolDrawing(object):
                                       pi[1]+2*flagCloseContactsDist)),
                              color=(1.,0,0),
                              fill=False,stroke=True)
-            
-          
-if __name__=='__main__':
-  import sys
-  if len(sys.argv)<2:
-    mol = Chem.MolFromSmiles('O=C1C([C@@H](F)C=CN[C@H](Cl)Br)C(c2c(O)c(NN)ccc2)=C1C#N')
-  else:
-    mol = Chem.MolFromSmiles(sys.argv[1])
-    
-  #mol = Chem.MolFromSmiles('OC1C(O)CC1')
-  Chem.Kekulize(mol)
-  from rdkit.Chem import rdDepictor
-  rdDepictor.Compute2DCoords(mol)
-
-  if 1:
-    from aggdraw import Draw
-    from PIL import Image
-    img = Image.new("RGBA",(300,300),"white")
-    canvas=Draw(img)
-    canvas.setantialias(True)
-    drawer = MolDrawing(canvas)
-    drawer.AddMol(mol)
-    canvas.flush()
-    img.save("foo.png")
-  else:
-    from rdkit.sping.PDF.pidPDF import PDFCanvas as Canvas
-    canvas = Canvas(size=(300,300),name='test.pdf')
-    drawer = MolDrawing(canvas)
-    drawer.AddMol(mol)
-    canvas.save()
-  
-  
-  
-    

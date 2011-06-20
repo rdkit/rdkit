@@ -126,9 +126,13 @@ class Canvas(CanvasBase):
       self.ctx.stroke()
 
   def _addCanvasText1(self,text,pos,font,color=(0,0,0),**kwargs):
+    if font.weight=='bold':
+      weight=cairo.FONT_WEIGHT_BOLD
+    else:
+      weight=cairo.FONT_WEIGHT_NORMAL
     self.ctx.select_font_face(font.face,
                                 cairo.FONT_SLANT_NORMAL,
-                                cairo.FONT_WEIGHT_BOLD)
+                                weight)
     text = re.sub(r'\<.+?\>','',text)
     self.ctx.set_font_size(font.size)
     w,h=self.ctx.text_extents(text)[2:4]
@@ -143,9 +147,13 @@ class Canvas(CanvasBase):
     self.ctx.move_to(*dPos)
     self.ctx.show_text(text)
   def _addCanvasText2(self,text,pos,font,color=(0,0,0),**kwargs):
+    if font.weight=='bold':
+      weight=cairo.FONT_WEIGHT_BOLD
+    else:
+      weight=cairo.FONT_WEIGHT_NORMAL
     self.ctx.select_font_face(font.face,
                                 cairo.FONT_SLANT_NORMAL,
-                                cairo.FONT_WEIGHT_BOLD)
+                                weight)
     orientation=kwargs.get('orientation','E')
     cctx=pangocairo.CairoContext(self.ctx)
     lout = cctx.create_layout()
