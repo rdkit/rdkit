@@ -14,6 +14,8 @@ from rdkit import RDConfig
 import unittest,os,tempfile
 from rdkit import Chem
 from rdkit.Chem import Draw
+from rdkit.RDLogger import logger
+logger = logger()
 
 class TestCase(unittest.TestCase):
   def setUp(self):
@@ -23,6 +25,7 @@ class TestCase(unittest.TestCase):
     try:
       from rdkit.Chem.Draw.cairoCanvas import Canvas
     except ImportError:
+      logger.info("Skipping cairo test")
       return
     os.environ['RDKIT_CANVAS']='cairo'
 
@@ -42,6 +45,7 @@ class TestCase(unittest.TestCase):
     try:
       from rdkit.Chem.Draw.aggCanvas import Canvas
     except ImportError:
+      logger.info("Skipping agg test")
       return
     os.environ['RDKIT_CANVAS']='agg'
 
@@ -61,6 +65,7 @@ class TestCase(unittest.TestCase):
     try:
       from rdkit.Chem.Draw.aggCanvas import Canvas
     except ImportError:
+      logger.info("Skipping sping test")
       return
     os.environ['RDKIT_CANVAS']='sping'
 
@@ -75,40 +80,6 @@ class TestCase(unittest.TestCase):
       os.unlink(fn)
     except:
       pass
-
-  def testCairoImage(self):
-    try:
-      from rdkit.Chem.Draw.cairoCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='cairo'
-
-    img=Draw.MolToImage(self.mol,size=(300,300))
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
-    
-  def testAggImage(self):
-    try:
-      from rdkit.Chem.Draw.aggCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='agg'
-    img=Draw.MolToImage(self.mol,size=(300,300))
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
-
-  def testSpingImage(self):
-    try:
-      from rdkit.Chem.Draw.aggCanvas import Canvas
-    except ImportError:
-      return
-    os.environ['RDKIT_CANVAS']='sping'
-    img=Draw.MolToImage(self.mol,size=(300,300))
-    self.failUnless(img)
-    self.failUnlessEqual(img.size[0],300)
-    self.failUnlessEqual(img.size[1],300)
 
   def testCairoImage(self):
     try:
