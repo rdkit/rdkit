@@ -96,6 +96,7 @@ namespace {
     for(unsigned int i=0;i<slen;++i){
       label+=(char)*pos++;
     }
+    int orient=*pos++;
     int width=fontSz*label.length();
     int height=fontSz;
     sstr<<"<svg:g transform='translate("<<xp<<","<<yp<<")'><svg:rect ";
