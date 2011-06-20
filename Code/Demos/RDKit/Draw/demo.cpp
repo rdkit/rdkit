@@ -261,6 +261,10 @@ void MolToCairo(const ROMol &mol,cairo_t *cr,int width,int height,
   RDDepict::compute2DCoords(cp);
   std::vector<int> drawing=RDKit::Drawing::DrawMol(cp);
 
+  cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+  cairo_rectangle(cr,0,0,width,height);
+  cairo_fill(cr);
+
   cairo_select_font_face (cr, "sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 
   std::vector<int>::const_iterator pos=drawing.begin();
