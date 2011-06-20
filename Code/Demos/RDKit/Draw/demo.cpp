@@ -238,7 +238,6 @@ void drawAtomCairo(std::vector<int>::const_iterator &pos,
     xp -= twidth/2;
     yp += theight/2;
   }
-  std::cerr<<" label: "<<label<<" "<<orient<<std::endl;
   cairo_set_source_rgb (cr, 1.0, 1., 1.);
   cairo_rectangle(cr,
                   xp-10,yp-theight-10,
@@ -262,7 +261,7 @@ void MolToCairo(const ROMol &mol,cairo_t *cr,int width,int height,
   RDDepict::compute2DCoords(cp);
   std::vector<int> drawing=RDKit::Drawing::DrawMol(cp);
 
-  cairo_select_font_face (cr, "sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  cairo_select_font_face (cr, "sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
 
   std::vector<int>::const_iterator pos=drawing.begin();
   int resolution=0;
@@ -307,15 +306,15 @@ void MolToCairo(const ROMol &mol,cairo_t *cr,int width,int height,
     }
   }
   
-  std::cerr<<" sz: "<<width<<" "<<height<<" : "<<dwidth<<" "<<dheight<<std::endl;
-  std::cerr<<" scale: "<<scale<<std::endl;
   scale*=0.80;
   cairo_translate(cr,
                   .5*(width-dwidth*scale),
                   .5*(height-dheight*scale));
   cairo_scale(cr,scale,scale);
 
-  cairo_set_font_size (cr, static_cast<double>(fontSize)/scale);
+  // scaling factors here are empirically determined
+  double dFontSize=2.5*maxDotsPerAngstrom*fontSize/14;
+  cairo_set_font_size (cr, dFontSize);
 
 
   while(pos!=drawing.end()){
@@ -345,9 +344,9 @@ void DrawDemo(){
   {
     RWMol *mol=SmilesToMol("[Mg]c1c(C#N)cc(C(=O)NCc2sc([NH3+])c([NH3+])c2)cc1");
     cairo_surface_t *surface =
-      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 200, 200);
     cairo_t *cr = cairo_create (surface);
-    MolToCairo(*mol,cr,300,300);
+    MolToCairo(*mol,cr,200,200);
 
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "mol1.png");

@@ -236,7 +236,6 @@ namespace RDKit {
             } else {
               islope=nbrSum.x;
             }
-            std::cerr<<" slope: "<<symbol<<" "<<islope<<std::endl;
             if(fabs(islope)>.85){
               if(islope>0){
                 orient=W;
