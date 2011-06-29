@@ -37,17 +37,8 @@ namespace RDKit{
 
     std::string GetAtomSmiles(const Atom *atom,bool doKekule,const Bond *bondIn){
       PRECONDITION(atom,"bad atom");
-      int i;
-      static bool firstCall=true;
-      static INT_VECT atomicSmilesVect;
-      if(firstCall){
-        i = 0;
-        while(atomicSmiles[i] != -1){
-          atomicSmilesVect.push_back(atomicSmiles[i]);
-          i++;
-        }
-        firstCall = false;
-      }
+      INT_VECT atomicSmilesVect(atomicSmiles,
+                                atomicSmiles+(sizeof(atomicSmiles)-1)/sizeof(atomicSmiles[0]));
       std::stringstream res;
       int fc = atom->getFormalCharge();
       int num = atom->getAtomicNum();
