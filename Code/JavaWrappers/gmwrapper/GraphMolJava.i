@@ -249,4 +249,6 @@ typedef unsigned long long int	uintmax_t;
 }
 
 %include "../Descriptors.i"
-
+#ifdef BUILD_INCHI_SUPPORT
+%include "../Inchi.i"
+#endif
