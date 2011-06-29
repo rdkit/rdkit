@@ -32,7 +32,8 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 		      RDGeneral Depictor SubstructMatch)
 
 	add_subdirectory(Wrap)
-
+        set(RDK_BUILDING_INCHI_SUPPORT ON)
+        add_definitions(-DBUILD_INCHI_SUPPORT)
 else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
 	message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
@@ -41,7 +42,7 @@ else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 	add_custom_command(
 		TARGET inchi_support
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py inchi.py)
-
+        set(RDK_BUILDING_INCHI_SUPPORT OFF)
 endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/inchi.py DESTINATION ${RDKit_PythonDir}/Chem)

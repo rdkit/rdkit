@@ -12,7 +12,7 @@ from aggdraw import Brush, Pen
 from aggdraw import Font
 import math
 from rdkit import RDConfig
-import os
+import os,re
 
 from aggdraw import Draw
 from canvasbase import CanvasBase
@@ -24,6 +24,9 @@ def convertColor(color):
   return color
 
 class Canvas(CanvasBase):
+  # fonts appear smaller in aggdraw than with cairo
+  # fix that here:
+  fontScale=1.2
   def __init__(self, img=None,
                imageType=None, # determines file type
                fileName=None,  # if set determines output file name
@@ -75,17 +78,83 @@ class Canvas(CanvasBase):
       self._doLine(p1,p2,Pen(color,kwargs.get('linewidth',1)),**kwargs)
 
   def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
+    orientation=kwargs.get('orientation','E')
     color = convertColor(color)
-    font = Font(color,faceMap[font.face],size=font.size)
-    w,h=self.draw.textsize(text,font)
-    bw,bh=w*1.1,h*1.1
-    dPos = pos[0]-bw/2.,pos[1]-bh/2.
-    bgColor=kwargs.get('bgColor',(1,1,1))
-    bgColor = convertColor(bgColor)
-    self.draw.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
-                     None,Brush(bgColor))
-    dPos = pos[0]-w/2.,pos[1]-h/2.
-    self.draw.text(dPos,text,font)
+    font = Font(color,faceMap[font.face],size=font.size*self.fontScale)
+
+    blocks = list(re.finditer(r'\<(.+?)\>(.+?)\</\1\>',text))
+    w,h = 0,0
+    supH=0
+    subH=0
+    if not len(blocks):
+      w,h=self.draw.textsize(text,font)
+      bw,bh=w*1.1,h*1.1
+      dPos = pos[0]-bw/2.,pos[1]-bh/2.
+      bgColor=kwargs.get('bgColor',(1,1,1))
+      bgColor = convertColor(bgColor)
+      self.draw.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
+                       None,Brush(bgColor))
+      dPos = pos[0]-w/2.,pos[1]-h/2.
+      self.draw.text(dPos,text,font)
+    else:
+      dblocks=[]
+      idx=0
+      for block in blocks:
+        blockStart,blockEnd=block.span(0)
+        if blockStart != idx:
+          # untagged text:
+          tblock = text[idx:blockStart]
+          tw,th=self.draw.textsize(tblock,font)
+          w+=tw
+          h = max(h,th)
+          dblocks.append((tblock,'',tw,th))
+        fmt = block.groups()[0]
+        tblock = block.groups()[1]
+        tw,th=self.draw.textsize(tblock,font)
+        w+=tw
+        if fmt == 'sub':
+          subH = max(subH,th)
+        elif fmt=='sup':
+          supH = max(supH,th)
+        else:
+          h = max(h,th)
+        dblocks.append((tblock,fmt,tw,th))
+        idx = blockEnd
+      if idx!=len(text):
+        # untagged text:
+        tblock = text[idx:]
+        tw,th=self.draw.textsize(tblock,font)
+        w+=tw
+        h = max(h,th)
+        dblocks.append((tblock,'',tw,th))
+        
+      supH *= 0.25
+      subH *= 0.25
+      h += supH + subH
+      bw,bh=w*1.1,h
+      #dPos = pos[0]-bw/2.,pos[1]-bh/2.
+      dPos = [pos[0]-w/2.,pos[1]-h/2.]
+      if orientation=='W':
+        dPos = [pos[0]-w,pos[1]-h/2.]
+      elif orientation=='E':
+        dPos = [pos[0],pos[1]-h/2.]
+      else:
+        dPos = [pos[0]-w/2,pos[1]-h/2.]
+
+      bgColor=kwargs.get('bgColor',(1,1,1))
+      bgColor = convertColor(bgColor)
+      self.draw.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
+                          None,Brush(bgColor))
+      if supH: dPos[1]+=supH
+      for txt,fmt,tw,th in dblocks:
+        tPos = dPos[:]
+        if fmt=='sub':
+          tPos[1]+=subH
+        elif fmt=='sup':
+          tPos[1]-=supH
+        self.draw.text(tPos,txt,font)
+        dPos[0]+=tw
+
 
   def addCanvasPolygon(self,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
     if not fill and not stroke: return

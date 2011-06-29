@@ -27,13 +27,14 @@ class Font(object):
 
 class MolDrawing(object):
   dotsPerAngstrom = 30
-
+  useFraction=0.85
+  
   atomLabelFontFace = "sans"
   atomLabelFontSize = 12
-  atomLabelMinFontSize = 10
+  atomLabelMinFontSize = 7
 
   bondLineWidth = 1.2
-  dblBondOffset = .2
+  dblBondOffset = .3
   dblBondLengthFrac = .8
 
   defaultColor = (1,0,0)
@@ -71,8 +72,8 @@ class MolDrawing(object):
 
   def transformPoint(self,pos):
     res = [0,0]
-    res[0] = (pos[0] + self.molTrans[0])*self.currDotsPerAngstrom + self.drawingTrans[0]
-    res[1] = self.canvasSize[1]-((pos[1] + self.molTrans[1])*self.currDotsPerAngstrom + \
+    res[0] = (pos[0] + self.molTrans[0])*self.currDotsPerAngstrom*self.useFraction + self.drawingTrans[0]
+    res[1] = self.canvasSize[1]-((pos[1] + self.molTrans[1])*self.currDotsPerAngstrom*self.useFraction + \
                                  self.drawingTrans[1])
     return res
   
@@ -265,13 +266,13 @@ class MolDrawing(object):
     drawingTrans = canvasSize[0]/2,canvasSize[1]/2
     self.drawingTrans = drawingTrans
 
-  def _drawLabel(self,label,pos,font,color=None):
+  def _drawLabel(self,label,pos,font,color=None,**kwargs):
     if color is None:
       color = self.defaultColor
     x1 = pos[0]
     y1 = pos[1]
     labelP = x1,y1
-    self.canvas.addCanvasText(label,(x1,y1),font,color)
+    self.canvas.addCanvasText(label,(x1,y1),font,color,**kwargs)
     
   def AddMol(self,mol,centerIt=True,molTrans=None,drawingTrans=None,
              highlightAtoms=[],confId=-1,flagCloseContactsDist=2,
@@ -371,7 +372,8 @@ class MolDrawing(object):
       labelIt= not self.noCarbonSymbols or \
                atom.GetAtomicNum()!=6 or \
                atom.GetFormalCharge()!=0 or \
-               self.includeAtomNumbers 
+               self.includeAtomNumbers
+      orient=''
       if labelIt:
         if self.includeAtomNumbers:
           symbol = str(atom.GetIdx())
@@ -380,7 +382,7 @@ class MolDrawing(object):
           nHs = atom.GetTotalNumHs()
           if nHs>0:
             if nHs>1:
-              hs='H%d'%nHs
+              hs='H<sub>%d</sub>'%nHs
             else:
               hs ='H'
           else:
@@ -395,20 +397,39 @@ class MolDrawing(object):
               chg = '+%d'%chg
             elif chg<-1:
               chg = '-%d'%chg
+            chg = '<sup>%s</sup>'%chg
           else:
             chg = ''
-          if nbrSum[0]<=0:
+          deg = atom.GetDegree()
+          if deg>1 or nbrSum[0]<1:
             symbol = '%s%s%s'%(base,hs,chg)
           else:
             symbol = '%s%s%s'%(chg,hs,base)
 
+          if deg==1:
+            if abs(nbrSum[1])>1:
+              islope=nbrSum[0]/abs(nbrSum[1])
+            else:
+              islope=nbrSum[0]
+            if abs(islope)>.3:
+              if islope>0:
+                orient='W'
+              else:
+                orient='E'
+            elif abs(nbrSum[1])>10:
+              if nbrSum[1]>0:
+                orient='N'
+              else :
+                orient='S'
+          else:
+            orient = 'C'
         if highlightMap and idx in highlightMap:
           color = highlightMap[idx]
         elif highlightAtoms and idx in highlightAtoms:
           color = self.selectColor
         else:
           color = self.elemDict.get(atom.GetAtomicNum(),(0,0,0))
-        self._drawLabel(symbol, pos, font, color=color)
+        self._drawLabel(symbol, pos, font, color=color,orientation=orient)
 
     if flagCloseContactsDist>0:
       tol = flagCloseContactsDist*flagCloseContactsDist
@@ -429,37 +450,3 @@ class MolDrawing(object):
                                       pi[1]+2*flagCloseContactsDist)),
                              color=(1.,0,0),
                              fill=False,stroke=True)
-            
-          
-if __name__=='__main__':
-  import sys
-  if len(sys.argv)<2:
-    mol = Chem.MolFromSmiles('O=C1C([C@@H](F)C=CN[C@H](Cl)Br)C(c2c(O)c(NN)ccc2)=C1C#N')
-  else:
-    mol = Chem.MolFromSmiles(sys.argv[1])
-    
-  #mol = Chem.MolFromSmiles('OC1C(O)CC1')
-  Chem.Kekulize(mol)
-  from rdkit.Chem import rdDepictor
-  rdDepictor.Compute2DCoords(mol)
-
-  if 1:
-    from aggdraw import Draw
-    from PIL import Image
-    img = Image.new("RGBA",(300,300),"white")
-    canvas=Draw(img)
-    canvas.setantialias(True)
-    drawer = MolDrawing(canvas)
-    drawer.AddMol(mol)
-    canvas.flush()
-    img.save("foo.png")
-  else:
-    from rdkit.sping.PDF.pidPDF import PDFCanvas as Canvas
-    canvas = Canvas(size=(300,300),name='test.pdf')
-    drawer = MolDrawing(canvas)
-    drawer.AddMol(mol)
-    canvas.save()
-  
-  
-  
-    

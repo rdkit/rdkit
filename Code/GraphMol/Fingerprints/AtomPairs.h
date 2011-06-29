@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007-2010 Greg Landrum
+//  Copyright (C) 2007-2011 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -65,11 +65,17 @@ namespace RDKit {
       
       \param mol:   the molecule to be fingerprinted
       \param minLength:   minimum distance between atoms to be
-      considered in a pair. Default is 1 bond.
+                          considered in a pair. Default is 1 bond.
       \param maxLength:   maximum distance between atoms to be
-      considered in a pair. Default is maxPathLen-1 bonds.
+                          considered in a pair.
+                          Default is maxPathLen-1 bonds.
       \param fromAtoms:   if provided, only atom pairs that involve
-      the specified atoms will be included in the fingerprint
+                          the specified atoms will be included in the
+                          fingerprint
+      \param ignoreAtoms: if provided, any atom pairs that include 
+                          the specified atoms will not be included in the
+                          fingerprint
+
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
 
@@ -77,20 +83,31 @@ namespace RDKit {
     SparseIntVect<boost::int32_t> *
     getAtomPairFingerprint(const ROMol &mol,
                            unsigned int minLength,unsigned int maxLength,
-                           const std::vector<boost::uint32_t> *fromAtoms=0);
+                           const std::vector<boost::uint32_t> *fromAtoms=0,
+                           const std::vector<boost::uint32_t> *ignoreAtoms=0);
     //! \overload
     SparseIntVect<boost::int32_t> *
     getAtomPairFingerprint(const ROMol &mol,
-                           const std::vector<boost::uint32_t> *fromAtoms=0);
+                           const std::vector<boost::uint32_t> *fromAtoms=0,
+                           const std::vector<boost::uint32_t> *ignoreAtoms=0);
+
 
     //! returns the hashed atom-pair fingerprint for a molecule
     /*!
       \param mol:   the molecule to be fingerprinted
       \param nBits:   the length of the fingerprint to generate
       \param minLength:   minimum distance between atoms to be
-      considered in a pair. Default is 1 bond.
+                          considered in a pair. Default is 1 bond.
       \param maxLength:   maximum distance between atoms to be
-      considered in a pair. Default is maxPathLen-1 bonds.
+                          considered in a pair.
+                          Default is maxPathLen-1 bonds.
+      \param fromAtoms:   if provided, only atom pairs that involve
+                          the specified atoms will be included in the
+                          fingerprint
+      \param ignoreAtoms: if provided, any atom pairs that include 
+                          the specified atoms will not be included in the
+                          fingerprint
+
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
 
@@ -99,15 +116,24 @@ namespace RDKit {
     getHashedAtomPairFingerprint(const ROMol &mol,
                                  unsigned int nBits=2048,
                                  unsigned int minLength=1,
-                                 unsigned int maxLength=maxPathLen-1);
+                                 unsigned int maxLength=maxPathLen-1,
+                                 const std::vector<boost::uint32_t> *fromAtoms=0,
+                                 const std::vector<boost::uint32_t> *ignoreAtoms=0);
     //! returns the hashed atom-pair fingerprint for a molecule as a bit vector
     /*!
       \param mol:   the molecule to be fingerprinted
       \param nBits:   the length of the fingerprint to generate
       \param minLength:   minimum distance between atoms to be
-      considered in a pair. Default is 1 bond.
+                          considered in a pair. Default is 1 bond.
       \param maxLength:   maximum distance between atoms to be
-      considered in a pair. Default is maxPathLen-1 bonds.
+                          considered in a pair.
+                          Default is maxPathLen-1 bonds.
+      \param fromAtoms:   if provided, only atom pairs that involve
+                          the specified atoms will be included in the
+                          fingerprint
+      \param ignoreAtoms: if provided, any atom pairs that include 
+                          the specified atoms will not be included in the
+                          fingerprint
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -117,7 +143,10 @@ namespace RDKit {
     getHashedAtomPairFingerprintAsBitVect(const ROMol &mol,
                                           unsigned int nBits=2048,
                                           unsigned int minLength=1,
-                                          unsigned int maxLength=maxPathLen-1);
+                                          unsigned int maxLength=maxPathLen-1,
+                                          const std::vector<boost::uint32_t> *fromAtoms=0,
+                                          const std::vector<boost::uint32_t> *ignoreAtoms=0);
+
 
     //! returns an topological torsion hash based on the atom hashes
     //! passed in
@@ -136,7 +165,11 @@ namespace RDKit {
       \param mol:         the molecule to be fingerprinted
       \param targetSize:  the number of atoms to include in the "torsions"
       \param fromAtoms:   if provided, only torsions that start or end at
-      the specified atoms will be included in the fingerprint
+                          the specified atoms will be included in the
+                          fingerprint
+      \param ignoreAtoms: if provided, any torsions that include 
+                          the specified atoms will not be included in the
+                          fingerprint
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -145,7 +178,8 @@ namespace RDKit {
     SparseIntVect<boost::int64_t > *
     getTopologicalTorsionFingerprint(const ROMol &mol,
                                      unsigned int targetSize=4,
-                                     const std::vector<boost::uint32_t> *fromAtoms=0);
+                                     const std::vector<boost::uint32_t> *fromAtoms=0,
+                                     const std::vector<boost::uint32_t> *ignoreAtoms=0);
     //! returns a hashed topological-torsion fingerprint for a molecule
     /*!
       The algorithm used is described here:
@@ -157,7 +191,11 @@ namespace RDKit {
       \param nBits:       number of bits to include in the fingerprint
       \param targetSize:  the number of atoms to include in the "torsions"
       \param fromAtoms:   if provided, only torsions that start or end at
-      the specified atoms will be included in the fingerprint
+                          the specified atoms will be included in the
+                          fingerprint
+      \param ignoreAtoms: if provided, any torsions that include 
+                          the specified atoms will not be included in the
+                          fingerprint
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -167,14 +205,19 @@ namespace RDKit {
     getHashedTopologicalTorsionFingerprint(const ROMol &mol,
                                            unsigned int nBits=2048,
                                            unsigned int targetSize=4,
-                                           const std::vector<boost::uint32_t> *fromAtoms=0);
+                                           const std::vector<boost::uint32_t> *fromAtoms=0,
+                                           const std::vector<boost::uint32_t> *ignoreAtoms=0);
     //! returns a hashed topological-torsion fingerprint for a molecule as a bit vector
     /*!
       \param mol:         the molecule to be fingerprinted
       \param nBits:       number of bits to include in the fingerprint
       \param targetSize:  the number of atoms to include in the "torsions"
       \param fromAtoms:   if provided, only torsions that start or end at
-      the specified atoms will be included in the fingerprint
+                          the specified atoms will be included in the
+                          fingerprint
+      \param ignoreAtoms: if provided, any torsions that include 
+                          the specified atoms will not be included in the
+                          fingerprint
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -184,7 +227,8 @@ namespace RDKit {
     getHashedTopologicalTorsionFingerprintAsBitVect(const ROMol &mol,
                                                     unsigned int nBits=2048,
                                                     unsigned int targetSize=4,
-                                                    const std::vector<boost::uint32_t> *fromAtoms=0);
+                                                    const std::vector<boost::uint32_t> *fromAtoms=0,
+                                                    const std::vector<boost::uint32_t> *ignoreAtoms=0);
   }    
 }
 

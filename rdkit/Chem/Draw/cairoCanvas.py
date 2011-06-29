@@ -9,12 +9,20 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import cairo 
+import cairo
 import math
 import rdkit.RDConfig
-import os
+import os,re
 import array
-
+try:
+  import pangocairo
+except ImportError:
+  pangocairo=None
+try:
+  import pango
+except ImportError:
+  pango=None
+  
 from canvasbase import CanvasBase
 
 class Canvas(CanvasBase):
@@ -117,10 +125,15 @@ class Canvas(CanvasBase):
       self._doLine(p1,p2,**kwargs)
       self.ctx.stroke()
 
-  def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
+  def _addCanvasText1(self,text,pos,font,color=(0,0,0),**kwargs):
+    if font.weight=='bold':
+      weight=cairo.FONT_WEIGHT_BOLD
+    else:
+      weight=cairo.FONT_WEIGHT_NORMAL
     self.ctx.select_font_face(font.face,
                                 cairo.FONT_SLANT_NORMAL,
-                                cairo.FONT_WEIGHT_BOLD)
+                                weight)
+    text = re.sub(r'\<.+?\>','',text)
     self.ctx.set_font_size(font.size)
     w,h=self.ctx.text_extents(text)[2:4]
     bw,bh=w*1.8,h*1.4
@@ -133,7 +146,50 @@ class Canvas(CanvasBase):
     self.ctx.set_source_rgb(*color)
     self.ctx.move_to(*dPos)
     self.ctx.show_text(text)
+  def _addCanvasText2(self,text,pos,font,color=(0,0,0),**kwargs):
+    if font.weight=='bold':
+      weight=cairo.FONT_WEIGHT_BOLD
+    else:
+      weight=cairo.FONT_WEIGHT_NORMAL
+    self.ctx.select_font_face(font.face,
+                                cairo.FONT_SLANT_NORMAL,
+                                weight)
+    orientation=kwargs.get('orientation','E')
+    cctx=pangocairo.CairoContext(self.ctx)
+    lout = cctx.create_layout()
+    lout.set_alignment(pango.ALIGN_LEFT)
+    lout.set_markup(text)
 
+    fnt = pango.FontDescription('%s %d'%(font.face,font.size))
+    lout.set_font_description(fnt)
+
+    iext,lext=lout.get_pixel_extents()
+    w=lext[2]-lext[0]
+    h=lext[3]-lext[1]
+    #bw,bh=w*1.8,h*1.4
+    if orientation=='W':
+      dPos = pos[0]-w,pos[1]-h/2.
+    elif orientation=='E':
+      dPos = pos[0],pos[1]-h/2.
+    else:
+      dPos = pos[0]-w/2,pos[1]-h/2.
+    bgColor=kwargs.get('bgColor',(1,1,1))
+    self.ctx.set_source_rgb(*bgColor)
+    self.ctx.rectangle(dPos[0],dPos[1],w,h)
+    self.ctx.fill()
+    self.ctx.move_to(dPos[0],dPos[1])
+
+    self.ctx.set_source_rgb(*color)
+    cctx.update_layout(lout)
+    cctx.show_layout(lout)
+    
+
+  def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
+    if pango is not None and pangocairo is not None:
+      self._addCanvasText2(text,pos,font,color,**kwargs)
+    else:
+      self._addCanvasText1(text,pos,font,color,**kwargs)
+    
   def addCanvasPolygon(self,ps,color=(0,0,0),fill=True,stroke=False,**kwargs):
     if not fill and not stroke: return
     dps = []

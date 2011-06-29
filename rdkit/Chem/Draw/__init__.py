@@ -5,8 +5,6 @@
 #
 import os
 
-from MolDrawing import MolDrawing
-
 def _getCanvas():
   useAGG=False
   useCairo=False
@@ -44,6 +42,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     highlightAtoms -- list of atoms to highlight (default [])
     highlightMap -- dictionary of (atom, color) pairs (default None)
   """
+  from MolDrawing import MolDrawing
   if not mol:
     raise ValueError,'Null molecule provided'
   if canvas is None:
@@ -77,6 +76,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
               imageType=None,**kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
+  from MolDrawing import MolDrawing
   # original contribution from Uwe Hoffmann
   if not fileName:
     raise ValueError,'no fileName provided'
