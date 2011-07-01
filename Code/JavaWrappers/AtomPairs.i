@@ -1,5 +1,5 @@
 /* 
-* $Id: AtomPairs.i 142 2011-01-31 17:49:28Z ebakke $
+* $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.

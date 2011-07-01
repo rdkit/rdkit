@@ -1,5 +1,5 @@
 /* 
-* $Id: ROMol.i 133 2011-01-20 22:51:47Z ebakke $
+* $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.

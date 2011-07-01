@@ -1,5 +1,5 @@
 /* 
-* $Id: MorganFingerprints.i 137 2011-01-27 05:18:15Z ebakke $
+* $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.

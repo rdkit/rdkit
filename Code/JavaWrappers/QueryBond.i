@@ -1,5 +1,5 @@
 /* 
-* $Id: QueryBond.i 122 2011-01-18 07:22:46Z bill.smith $
+* $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.

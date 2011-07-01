@@ -1,5 +1,5 @@
 /* 
-* $Id: point.i 105 2010-12-10 22:14:48Z ebakke $
+* $Id$
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
