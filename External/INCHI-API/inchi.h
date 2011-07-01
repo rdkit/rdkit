@@ -30,7 +30,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-
+#ifndef __RDKIT_INCHI_30JUNE2011__
+#define __RDKIT_INCHI_30JUNE2011__
 #include <GraphMol/RDKitBase.h>
 namespace RDKit {
   struct ExtraInchiReturnValues {
@@ -66,3 +67,4 @@ namespace RDKit {
    */
   std::string InchiToInchiKey(const std::string &inchi);
 }
+#endif
