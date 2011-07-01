@@ -187,8 +187,12 @@ namespace RDKit {
             }
           }
         }
+        double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(mol[*bAts]->getAtomicNum()) -
+                           mol[*bAts]->getMass());
+        static double massTol=0.001;
         if(mol[*bAts]->getAtomicNum()!=6 ||
-           mol[*bAts]->getFormalCharge()!=0 ){
+           mol[*bAts]->getFormalCharge()!=0 ||
+           massDiff>massTol ){
           res.push_back(ATOM);
           res.push_back(mol[*bAts]->getAtomicNum());
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
@@ -197,6 +201,10 @@ namespace RDKit {
           bool leftToRight=true;
           if(mol[*bAts]->getDegree()==1 && nbrSum.x>0){
             leftToRight=false;
+          }
+
+          if(massDiff>massTol){
+            symbol = boost::lexical_cast<std::string>(int(mol[*bAts]->getMass()+.1))+symbol;
           }
           if(mol[*bAts]->getAtomicNum()!=6){
             int nHs=mol[*bAts]->getTotalNumHs();

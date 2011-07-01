@@ -358,7 +358,7 @@ void DrawDemo(){
     delete mol;
   }
   {
-    RWMol *mol=SmilesToMol("c1ccccn1");
+    RWMol *mol=SmilesToMol("c1c[12cH]ccn1");
     cairo_surface_t *surface =
       cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
     cairo_t *cr = cairo_create (surface);
