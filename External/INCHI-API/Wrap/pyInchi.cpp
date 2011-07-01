@@ -36,33 +36,26 @@
 namespace {
   boost::python::tuple MolToInchi(const RDKit::ROMol &mol, std::string options)
   {
-    std::string message, log, auxInfo;
     RDKit::ExtraInchiReturnValues rv;
-    rv.messagePtr = &message;
-    rv.logPtr = &log;
-    rv.auxInfoPtr = &auxInfo;
     const char* _options = NULL;
     if (options.size())
       _options = options.c_str();
     std::string inchi = RDKit::MolToInchi(mol, rv, _options);
-    return boost::python::make_tuple(inchi, rv.returnCode, message, log,
-                                     auxInfo);
+    return boost::python::make_tuple(inchi, rv.returnCode, rv.messagePtr, rv.logPtr,
+                                     rv.auxInfoPtr);
   }
 
   boost::python::tuple InchiToMol(const std::string &inchi, bool sanitize,
                                   bool removeHs)
   {
-    std::string message, log;
     RDKit::ExtraInchiReturnValues rv;
-    rv.messagePtr = &message;
-    rv.logPtr = &log;
     RDKit::ROMol* mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
     if (mol == NULL)
       return boost::python::make_tuple(boost::python::object(), rv.returnCode,
-                                       message, log);
+                                       rv.messagePtr, rv.logPtr);
     else {
       return boost::python::make_tuple(RDKit::ROMOL_SPTR(mol), rv.returnCode,
-                                       message, log);
+                                       rv.messagePtr, rv.logPtr);
     }
   }
 }

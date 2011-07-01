@@ -33,12 +33,13 @@
 #ifndef __RDKIT_INCHI_30JUNE2011__
 #define __RDKIT_INCHI_30JUNE2011__
 #include <GraphMol/RDKitBase.h>
+#include <string>
 namespace RDKit {
   struct ExtraInchiReturnValues {
     int returnCode;
-    std::string* messagePtr;
-    std::string* logPtr;
-    std::string* auxInfoPtr;  // not used for InchiToMol
+    std::string messagePtr;
+    std::string logPtr;
+    std::string auxInfoPtr;  // not used for InchiToMol
   };
   /*! Get a RWMol molecule instance for a InChI string.
    * \param inchi The input InChI string, which can be standard or not

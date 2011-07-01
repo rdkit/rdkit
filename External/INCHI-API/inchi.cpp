@@ -1201,10 +1201,10 @@ namespace RDKit {
 
     // prepare output
     rv.returnCode = retcode;
-    if (rv.messagePtr && inchiOutput.szMessage) 
-      *(rv.messagePtr) = std::string(inchiOutput.szMessage);
-    if (rv.logPtr && inchiOutput.szLog)
-      *(rv.logPtr) = std::string(inchiOutput.szLog);
+    if (inchiOutput.szMessage) 
+      rv.messagePtr = std::string(inchiOutput.szMessage);
+    if (inchiOutput.szLog)
+      rv.logPtr = std::string(inchiOutput.szLog);
 
     // creating RWMol for return
     RWMol *m = NULL;
@@ -1829,12 +1829,12 @@ namespace RDKit {
     std::string inchi;
     if (output.szInChI)
       inchi = std::string(output.szInChI);
-    if (rv.messagePtr && output.szMessage)
-      *(rv.messagePtr) = std::string(output.szMessage);
-    if (rv.logPtr && output.szLog)
-      *(rv.logPtr) = std::string(output.szLog);
-    if (rv.auxInfoPtr && output.szAuxInfo)
-      *(rv.auxInfoPtr) = std::string(output.szAuxInfo);
+    if (output.szMessage)
+      rv.messagePtr = std::string(output.szMessage);
+    if (output.szLog)
+      rv.logPtr = std::string(output.szLog);
+    if (output.szAuxInfo)
+      rv.auxInfoPtr = std::string(output.szAuxInfo);
 
     // clean up
     FreeINCHI(&output);

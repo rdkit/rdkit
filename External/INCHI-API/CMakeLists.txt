@@ -31,7 +31,10 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 	rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES Inchi GraphMol
 		      RDGeneral Depictor SubstructMatch)
 
+if(RDK_BUILD_PYTHON_WRAPPERS)
 	add_subdirectory(Wrap)
+endif(RDK_BUILD_PYTHON_WRAPPERS)
+
         set(RDK_BUILDING_INCHI_SUPPORT ON)
         add_definitions(-DBUILD_INCHI_SUPPORT)
 else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
@@ -45,4 +48,6 @@ else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
         set(RDK_BUILDING_INCHI_SUPPORT OFF)
 endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/inchi.py DESTINATION ${RDKit_PythonDir}/Chem)
+if(RDK_BUILD_PYTHON_WRAPPERS)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/inchi.py DESTINATION ${RDKit_PythonDir}/Chem)
+endif(RDK_BUILD_PYTHON_WRAPPERS)
