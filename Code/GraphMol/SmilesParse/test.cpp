@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Rational Discovery LLC
+//  Copyright (C) 2003-2011 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1584,21 +1584,52 @@ void testRootedAt(){
 }
 
 void testIsotopes(){
-  RWMol *mol;
-  std::string smi;
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing isotope handling" << std::endl;
 
-  smi ="C[13C](C)(C)C";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getAtomWithIdx(1)->getMass()==13.0);
-  smi = MolToSmiles(*mol,false);
-  TEST_ASSERT(smi=="CC(C)(C)C");
-  smi = MolToSmiles(*mol,true);
-  TEST_ASSERT(smi=="C[13C](C)(C)C");
-  
+  {
+    std::string smi ="C[13C](C)(C)C";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getMass()==13.0);
+    smi = MolToSmiles(*mol,false);
+    TEST_ASSERT(smi=="CC(C)(C)C");
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="C[13C](C)(C)C");
+    delete mol;
+  }  
+  {
+    std::string smi ="C[12C](C)(C)C";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getMass()==12.0);
+    smi = MolToSmiles(*mol,false);
+    TEST_ASSERT(smi=="CC(C)(C)C");
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="C[12C](C)(C)C");
+    delete mol;
+  }  
+  {
+    std::string smi ="CC[U]";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol,false);
+    TEST_ASSERT(smi=="CC[U]");
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="CC[U]");
+    delete mol;
+  }  
+  {
+    std::string smi ="CC[238U]";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol,false);
+    TEST_ASSERT(smi=="CC[U]");
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="CC[238U]");
+    delete mol;
+  }  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

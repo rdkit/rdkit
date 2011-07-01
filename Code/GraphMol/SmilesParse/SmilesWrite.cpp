@@ -44,6 +44,7 @@ namespace RDKit{
       int num = atom->getAtomicNum();
       double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(num) -
                            atom->getMass());
+      static double massTol=0.001;
 
       bool needsBracket=false;
       std::string symb;
@@ -81,7 +82,7 @@ namespace RDKit{
         if(atom->getOwningMol().hasProp("_doIsoSmiles")){
           if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
             needsBracket = true;
-          } else if(massDiff>0.1){
+          } else if(massDiff>massTol){
             needsBracket=true;
           }
         }
@@ -93,7 +94,7 @@ namespace RDKit{
       }
       if( needsBracket ) res << "[";
 
-      if(massDiff>0.1 && atom->getOwningMol().hasProp("_doIsoSmiles")){
+      if(massDiff>massTol && atom->getOwningMol().hasProp("_doIsoSmiles")){
         int iMass=static_cast<int>(atom->getMass()+.1);
         res <<iMass;
       }
