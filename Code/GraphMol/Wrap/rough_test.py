@@ -690,16 +690,16 @@ class TestCase(unittest.TestCase):
                                             'test_data','list-query.mol')
     query = Chem.MolFromMolFile(fileN)
     smi = Chem.MolToSmiles(query)
-    self.failUnless(smi=='c1ccccc1')
+    self.failUnlessEqual(smi,'c1ccccc1')
     smi = Chem.MolToSmarts(query)
-    self.failUnless(smi=='[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1',smi)
+    self.failUnlessEqual(smi,'[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1',smi)
 
     query = Chem.MolFromMolFile(fileN,sanitize=False)
     smi = Chem.MolToSmiles(query)
-    self.failUnless(smi=='C1=CC=CC=C1')
+    self.failUnlessEqual(smi,'C1=CC=CC=C1')
     query.UpdatePropertyCache()
     smi = Chem.MolToSmarts(query)
-    self.failUnless(smi=='[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
+    self.failUnlessEqual(smi,'[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
     smi = "C1=CC=CC=C1"
     mol = Chem.MolFromSmiles(smi,0)
     self.failUnless(mol.HasSubstructMatch(query))
@@ -718,10 +718,10 @@ class TestCase(unittest.TestCase):
                                             'test_data','issue123.mol')
     mol = Chem.MolFromMolFile(fileN)
     self.failUnless(mol)
-    self.failUnless(mol.GetNumAtoms()==23)
+    self.failUnlessEqual(mol.GetNumAtoms(),23)
     mol = Chem.MolFromMolFile(fileN,removeHs=False)
     self.failUnless(mol)
-    self.failUnless(mol.GetNumAtoms()==39)
+    self.failUnlessEqual(mol.GetNumAtoms(),39)
 
   # test23 was for Chem.DaylightFingerprint, which is deprecated
     
