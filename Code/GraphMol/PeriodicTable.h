@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2011 Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

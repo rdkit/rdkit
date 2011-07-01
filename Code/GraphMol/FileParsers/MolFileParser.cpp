@@ -771,8 +771,7 @@ namespace RDKit{
       }
     
       if(massDiff!=0) {
-        // FIX: this isn't precisely correct because we should be doing the difference w.r.t. most abundant species.
-        res->setMass(floor(res->getMass()+.1)+massDiff);
+        res->setMass(PeriodicTable::getTable()->getMostCommonIsotope(res->getAtomicNum())+massDiff);
 	res->setProp("_hasMassQuery",true);
       }
     
