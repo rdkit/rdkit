@@ -13,7 +13,6 @@ from rdkit import RDConfig
 import numpy
 import math
 
-
 class Font(object):
   face='sans'
   size='12'
@@ -368,11 +367,13 @@ class MolDrawing(object):
         nbrSum[0] += nbrPos[0]-pos[0]
         nbrSum[1] += nbrPos[1]-pos[1]
   
+      md = abs(Chem.GetPeriodicTable().GetAtomicWeight(atom.GetAtomicNum())-atom.GetMass())
 
       labelIt= not self.noCarbonSymbols or \
                atom.GetAtomicNum()!=6 or \
                atom.GetFormalCharge()!=0 or \
-               self.includeAtomNumbers
+               self.includeAtomNumbers or \
+               md>.001
       orient=''
       if labelIt:
         if self.includeAtomNumbers:
@@ -400,11 +401,15 @@ class MolDrawing(object):
             chg = '<sup>%s</sup>'%chg
           else:
             chg = ''
+          isotope=''
+          if md>.001:
+            isotope='<sup>%d</sup>'%int(atom.GetMass()+.01)
+                   
           deg = atom.GetDegree()
           if deg>1 or nbrSum[0]<1:
-            symbol = '%s%s%s'%(base,hs,chg)
+            symbol = '%s%s%s%s'%(isotope,base,hs,chg)
           else:
-            symbol = '%s%s%s'%(chg,hs,base)
+            symbol = '%s%s%s%s'%(chg,hs,isotope,base)
 
           if deg==1:
             if abs(nbrSum[1])>1:
