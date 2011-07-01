@@ -1,3 +1,58 @@
+******  Release_2011.06.1 *******
+(Changes relative to Release_2011.03.2)
+
+Acknowledgements:
+ - Eddie Cao, Andrew Dalke, James Davidson, JP Ebejer, Bernd Wiswedel
+
+Bug Fixes: 
+ - A problem with similarity values between SparseIntVects that
+   contain negative values was fixed. (Issue 3295215)
+ - An edge case in SmilesMolSupplier.GetItemText() was fixed. (Issue
+   3299878)
+ - The drawing code now uses dashed lines for aromatic bonds without
+   kekulization. (Issue 3305420)
+ - AllChem.ConstrainedEmbed works again. (Issue 3305420)  
+ - atomic RGP values from mol files are accessible from python (Issue
+   331353(9
+ - M RGP blocks are now written to mol files. (Issue 3313540)
+ - Atom.GetSymbol() for R atoms read from mol files is now
+   correct. (Issue 3316600)
+ - The handling of isotope specifications is more robust.
+ - A thread-safety problem in SmilesWrite::GetAtomSmiles() was fixed.
+ - some of the MACCS keys definitions have been corrected
+
+New Features:
+ - The smiles, smarts, and reaction smarts parsers all now take an additional
+   argument, "replacements", that carries out string substitutions pre-parsing.
+ - There is now optional support for generating InChI codes and keys
+   for molecules.
+ - the atom pair and topological torsion fingerprint generators now
+   take an optional "ignoreAtoms" argument
+ - a function to calculate exact molecular weight was added.
+ - new java wrappers are now available in $RDBASE/Code/JavaWrappers
+ - the methods getMostCommonIsotope() and getMostCommonIsotopeMass()
+   have been added to the PeriodicTable class.
+
+New Database Cartridge Features: 
+ 
+Deprecated modules (to be removed in next release):
+ - The original SWIG wrappers in $RDBASE/Code/Demos/SWIG are deprecated
+
+Removed modules:
+
+Other:
+ - The quality of the drawings produced by both the python molecule drawing
+   code and $RDBASE/Code/Demos/RDKit/Draw is better.
+ - the python molecule drawing code will now use superscripts and
+   subscripts appropriately when using the aggdraw or cairo canvases
+   (cairo canvas requires pango for this to work). 
+ - $RDBASE/Code/Demos/RDKit/Draw now includes an example using cairo
+ - A lot of compiler warnings were cleaned up.
+ - The error reporting in the SMILES, SMARTS, and SLN parsers was improved.
+ - the code for calculating molecular formula is now in C++
+   (Descriptors::calcMolFormula()) 
+
+ 
 ******  Release_2011.03.2 *******
 (Changes relative to Release_2011.03.1)
 
