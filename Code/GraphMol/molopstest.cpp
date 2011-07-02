@@ -3292,6 +3292,24 @@ void testSFNetIssue3185548() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFNetIssue3349243(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 3349243" << std::endl;
+  {
+    std::string smi="c1cccc[n+]1";
+    RWMol *m=SmilesToMol(smi);
+    TEST_ASSERT(m);
+    std::cerr<<"go:"<<std::endl;
+    m->debugMol(std::cerr);
+    MolOps::Kekulize(*m);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 
 int main(){
@@ -3343,8 +3361,9 @@ int main(){
   testSanitizeNonringAromatics();  
   testSFNetIssue2951221();
   testSFNetIssue2952255();
-#endif
   testSFNetIssue3185548();
+#endif
+  testSFNetIssue3349243();
 
   return 0;
 }

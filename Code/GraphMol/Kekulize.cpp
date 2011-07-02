@@ -167,13 +167,17 @@ namespace RDKit {
             ++vi;
           }
 
+          //std::cerr<<"  kek: "<<at->getIdx()<<" tbo:"<<tbo<<" sbo:"<<sbo<<" dv:"<<dv<<" totalDegree:"<<totalDegree<<" nRadicals:"<<nRadicals<<std::endl;
           if(totalDegree+nRadicals>=dv){
             // if our degree + nRadicals exceeds the default valence, 
             // there's no way we can take a double bond, just continue.
             continue;
           }
-        
-          if( dv==(sbo+1) ){
+
+          // we're a candidate if our total current bond order + nRadicals + 1
+          // matches the valence state
+          // (including nRadicals here was SF.net issue 3349243)
+          if( dv==(sbo+1+nRadicals) ){
             dBndCands[*adx]=1;
           } else if( !nRadicals && at->getNoImplicit() && dv==(sbo+2) ){
             // special case: there is currently no radical on the atom, but if
