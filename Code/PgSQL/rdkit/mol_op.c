@@ -246,3 +246,41 @@ mol_tpsa(PG_FUNCTION_ARGS) {
                                             NULL, &i, NULL);
   PG_RETURN_FLOAT4(MolTPSA(i));
 }
+
+PG_FUNCTION_INFO_V1(mol_inchi);
+Datum           mol_inchi(PG_FUNCTION_ARGS);
+Datum
+mol_inchi(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  const char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = MolInchi(mol);
+  char *res=pnstrdup(str, strlen(str));
+  free((void *)str);
+  PG_RETURN_CSTRING( res );
+}
+
+PG_FUNCTION_INFO_V1(mol_inchikey);
+Datum           mol_inchikey(PG_FUNCTION_ARGS);
+Datum
+mol_inchikey(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  const char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = MolInchiKey(mol);
+  char *res=pnstrdup(str, strlen(str));
+  free((void *)str);
+  PG_RETURN_CSTRING( res );
+}

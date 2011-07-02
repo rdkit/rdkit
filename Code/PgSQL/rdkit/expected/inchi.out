@@ -1,0 +1,24 @@
+select mol_inchi('c1ccccc1'::mol);
+             mol_inchi              
+------------------------------------
+ InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
+(1 row)
+
+select mol_inchikey('c1ccccc1'::mol);
+        mol_inchikey         
+-----------------------------
+ UHOVQNZJYSORNB-UHFFFAOYSA-N
+(1 row)
+
+select mol_inchi('Cc1cc(C)[n+]c(C)c1'::mol);
+                      mol_inchi                       
+------------------------------------------------------
+ InChI=1S/C8H11N/c1-6-4-7(2)9-8(3)5-6/h4-5H,1-3H3/q+1
+(1 row)
+
+select mol_inchikey('Cc1cc(C)[n+]c(C)c1'::mol);
+        mol_inchikey         
+-----------------------------
+ WDQXTFQYHUZLPX-UHFFFAOYSA-N
+(1 row)
+

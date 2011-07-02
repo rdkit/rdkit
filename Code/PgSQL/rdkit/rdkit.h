@@ -108,6 +108,8 @@ extern "C" {
   int MolNumHeteroatoms(CROMol i);
   int MolNumRings(CROMol i);
   double MolTPSA(CROMol i);
+  const char *MolInchi(CROMol i);
+  const char *MolInchiKey(CROMol i);
 
 
   /* ExplicitBitVect */

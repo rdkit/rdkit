@@ -42,7 +42,9 @@
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
 #include <boost/integer_traits.hpp>
-
+#ifdef BUILD_INCHI_SUPPORT
+#include <INCHI-API/inchi.h>
+#endif
 #include "rdkit.h"
 
 using namespace std;
@@ -364,6 +366,43 @@ extern "C" double
 MolTPSA(CROMol i){
   const ROMol *im = (ROMol*)i;
   return RDKit::Descriptors::calcTPSA(*im);
+}
+extern "C" const char *
+MolInchi(CROMol i){
+  std::string inchi="InChI not available";
+#ifdef BUILD_INCHI_SUPPORT
+  const ROMol *im = (ROMol*)i;
+  ExtraInchiReturnValues rv;
+  try {
+    inchi = MolToInchi(*im,rv);
+  } catch (MolSanitizeException &e){
+    inchi="";
+    elog(ERROR, "MolInchi: cannot kekulize molecule");
+  } catch (...){
+    inchi="";
+    elog(ERROR, "MolInchi: Unknown exception");
+  }
+#endif
+  return strdup(inchi.c_str());
+}
+extern "C" const char *
+MolInchiKey(CROMol i){
+  std::string key="InChI not available";
+#ifdef BUILD_INCHI_SUPPORT
+  const ROMol *im = (ROMol*)i;
+  ExtraInchiReturnValues rv;
+  try {
+    std::string inchi=MolToInchi(*im,rv);
+    key = InchiToInchiKey(inchi);
+  } catch (MolSanitizeException &e){
+    key="";
+    elog(ERROR, "MolInchiKey: cannot kekulize molecule");
+  } catch (...){
+    key="";
+    elog(ERROR, "MolInchiKey: Unknown exception");
+  }
+#endif
+  return strdup(key.c_str());
 }
 
 
