@@ -53,13 +53,14 @@
 %include <GraphMol/RWMol.h>
 
 %extend RDKit::RWMol {  
-static RDKit::RWMOL_SPTR MolFromSmiles(std::string smi,int debugParse=0,bool sanitize=1){
-  return RDKit::RWMOL_SPTR(RDKit::SmilesToMol(smi, debugParse, sanitize));
-}
-static RDKit::RWMOL_SPTR MolFromSmarts(std::string sma,int debugParse=0,bool mergeHs=false){
-  return RDKit::RWMOL_SPTR(RDKit::SmartsToMol(sma, debugParse, mergeHs));
-
-}
+  static RDKit::RWMOL_SPTR MolFromSmiles(std::string smi,int debugParse=0,bool sanitize=1,
+                                         std::map<std::string,std::string> *replacements=0){
+    return RDKit::RWMOL_SPTR(RDKit::SmilesToMol(smi, debugParse, sanitize,replacements));
+  }
+  static RDKit::RWMOL_SPTR MolFromSmarts(std::string sma,int debugParse=0,bool mergeHs=false,
+                                         std::map<std::string,std::string> *replacements=0){
+    return RDKit::RWMOL_SPTR(RDKit::SmartsToMol(sma, debugParse, mergeHs,replacements));
+  }
 static RDKit::RWMOL_SPTR MolFromMolBlock(std::string molB,
                                   bool sanitize=true,bool removeHs=true){
   RDKit::RWMol *mol=0;

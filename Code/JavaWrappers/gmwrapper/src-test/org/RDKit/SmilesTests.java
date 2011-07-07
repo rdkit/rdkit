@@ -126,6 +126,17 @@ public class SmilesTests extends GraphMolTest {
 				new String[] { "C45C1C6C3C6C5C4C2C3C12","C45C2C6C3C6C5C4C1C3C12"});
 	}
 
+	@Test
+	public void testReplacements() {
+            String_String_Map repls=new String_String_Map();
+            repls.set("{X}","OC1CC1");
+            RWMol nmol = RWMol.MolFromSmiles("c1ccccc1{X}",0,true,repls); 
+            String nsmi = RDKFuncs.MolToSmiles(nmol, true);
+            String expected="c1ccc(OC2CC2)cc1";
+            assertEquals("bad smiles: "+nsmi+"!="+expected,nsmi,expected);
+	}
+
+    
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.SmilesTests");
 	}

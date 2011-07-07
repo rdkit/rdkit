@@ -159,7 +159,6 @@ typedef unsigned long long int	uintmax_t;
 %include "../SanitException.i"
 %include "../SmilesParse.i"
 %include "../SmilesWrite.i"
-%include "../SmilesParseOps.i"
 %include "../SmartsWrite.i"
 %include "../MolOps.i"
 %include "../MolSupplier.i"
@@ -207,6 +206,7 @@ typedef unsigned long long int	uintmax_t;
 %template(Long_Pair) std::pair<boost::int64_t,int>;
 
 /* map */
+%template(String_String_Map) std::map<std::string,std::string>;
 %template(Int_Int_Map) std::map<int,int>;
 %template(Int_Point2D_Map) std::map<int, RDGeom::Point2D>;
 %template(Int_Point3D_Map) std::map<int, RDGeom::Point3D>;
