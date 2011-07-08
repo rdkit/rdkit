@@ -3,7 +3,7 @@ add_custom_target(inchi_support ALL)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 	add_custom_command(
 		TARGET inchi_support
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py inchi.py)
+                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py ${CMAKE_BINARY_DIR}/rdkit/Chem/inchi.py)
 	rdkit_library(Inchi src/ichican2.c       src/ichicano.c 
 			 src/ichicans.c       src/ichiisot.c 
 			 src/ichilnct.c       src/ichimak2.c
@@ -44,7 +44,7 @@ else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
 	add_custom_command(
 		TARGET inchi_support
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py inchi.py)
+                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py ${CMAKE_BINARY_DIR}/rdkit/Chem/inchi.py)
         set(RDK_BUILDING_INCHI_SUPPORT OFF)
 endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
