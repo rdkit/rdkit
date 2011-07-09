@@ -2,7 +2,8 @@
 (Changes relative to Release_2011.03.2)
 
 Acknowledgements:
- - Eddie Cao, Andrew Dalke, James Davidson, JP Ebejer, Bernd Wiswedel
+ - Eddie Cao, Andrew Dalke, James Davidson, JP Ebejer, Gianluca
+   Sforna, Riccardo Vianello, Bernd Wiswedel
 
 Bug Fixes: 
  - A problem with similarity values between SparseIntVects that
@@ -10,10 +11,10 @@ Bug Fixes:
  - An edge case in SmilesMolSupplier.GetItemText() was fixed. (Issue
    3299878)
  - The drawing code now uses dashed lines for aromatic bonds without
-   kekulization. (Issue 3305420)
+   kekulization. (Issue 3304375)
  - AllChem.ConstrainedEmbed works again. (Issue 3305420)  
  - atomic RGP values from mol files are accessible from python (Issue
-   331353(9
+   3313539)
  - M RGP blocks are now written to mol files. (Issue 3313540)
  - Atom.GetSymbol() for R atoms read from mol files is now
    correct. (Issue 3316600)
@@ -34,7 +35,9 @@ New Features:
    have been added to the PeriodicTable class.
 
 New Database Cartridge Features: 
- 
+ - Support for generating InChIs and InChI keys
+   (if the RDKit InChI support is enabled). 
+
 Deprecated modules (to be removed in next release):
  - The original SWIG wrappers in $RDBASE/Code/Demos/SWIG are deprecated
 
