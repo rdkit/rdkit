@@ -60,7 +60,7 @@ namespace RDKit{
           nRadEs=3; // we use triplets, not singlets:
           break;
         default:
-          BOOST_LOG(rdWarningLog)<<" unsupported radical count: "<<nRadEs<<" set to 3."<<std::endl;
+          BOOST_LOG(rdWarningLog)<<" unsupported radical count: "<<nRadEs<<" RAD set to 3 in CTAB."<<std::endl;
           nRadEs=3;
         }
         radss << boost::format(" %3d %3d") % (atom->getIdx()+1) % nRadEs;
