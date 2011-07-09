@@ -52,16 +52,10 @@ namespace RDKit{
       unsigned int nRadEs=atom->getNumRadicalElectrons();
       if(nRadEs!=0){
         ++nRads;
-        switch(nRadEs){
-        case 1:
+        if(nRadEs%2){
           nRadEs=2;
-          break;
-        case 2:
+        } else {
           nRadEs=3; // we use triplets, not singlets:
-          break;
-        default:
-          BOOST_LOG(rdWarningLog)<<" unsupported radical count: "<<nRadEs<<" RAD set to 3 in CTAB."<<std::endl;
-          nRadEs=3;
         }
         radss << boost::format(" %3d %3d") % (atom->getIdx()+1) % nRadEs;
         if(nRads==8){

@@ -2492,6 +2492,28 @@ void testIssue3313540(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testIssue3359739(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3359739 "<< std::endl;
+
+  std::string smi="[C]C";
+  RWMol *m=SmilesToMol(smi);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==3);
+  
+  std::string molBlock = MolToMolBlock(*m);
+  delete m;
+  m = MolBlockToMol(molBlock);
+  TEST_ASSERT(m);
+  // NOTE: the following is correct according to the current
+  // state of the code and what the CTAB format supports,
+  // but it's definitely not chemically correct
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
+
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2536,6 +2558,7 @@ int main(int argc,char *argv[]){
   testIssue3228150();
 #endif
   testIssue3313540();
+  testIssue3359739();
 
 
   return 0;
