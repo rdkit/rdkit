@@ -5,7 +5,7 @@ add_custom_target(inchi_support ALL)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
         add_custom_command(
                 TARGET inchi_support
-                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py ${CMAKE_CURRENT_BINARY_DIR}/rdkit/Chem/inchi.py)
+                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py  ${RDKit_PythonDir}/Chem/inchi.py)
 
         if(NOT INCHI_FOUND)
           rdkit_library(Inchi src/ichican2.c       src/ichicano.c 
@@ -51,10 +51,8 @@ else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
 	add_custom_command(
 		TARGET inchi_support
-                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py ${CMAKE_CURRENT_BINARY_DIR}/rdkit/Chem/inchi.py)
+                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py ${RDKit_PythonDir}/Chem/inchi.py)
         set(RDK_BUILD_INCHI_SUPPORT OFF)
 endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rdkit/Chem/inchi.py DESTINATION ${RDKit_PythonDir}/Chem)
-endif(RDK_BUILD_PYTHON_WRAPPERS)
+
