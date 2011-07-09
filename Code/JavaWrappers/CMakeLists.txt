@@ -18,9 +18,9 @@ if(WIN32)
 	MolAlign
 	Alignment
 	RDGeometryLib RDGeneral )
-        if(RDK_BUILDING_INCHI_SUPPORT)
-          set(RDKit_Wrapper_Libs RDInchiLib Inchi ${RDKit_Wrapper_Libs})
-        endif(RDK_BUILDING_INCHI_SUPPORT)
+        if(RDK_BUILD_INCHI_SUPPORT)
+          set(RDKit_Wrapper_Libs RDInchiLib ${INCHI_LIBRARIES} ${RDKit_Wrapper_Libs})
+        endif(RDK_BUILD_INCHI_SUPPORT)
 else()
 	set(RDKit_Wrapper_Libs 
         FileParsers_static SmilesParse_static
@@ -32,9 +32,9 @@ else()
 	MolAlign_static
 	Alignment_static
 	RDGeometryLib_static RDGeneral_static )
-        if(RDK_BUILDING_INCHI_SUPPORT)
+        if(RDK_BUILD_INCHI_SUPPORT)
           set(RDKit_Wrapper_Libs RDInchiLib_static Inchi_static ${RDKit_Wrapper_Libs})
-        endif(RDK_BUILDING_INCHI_SUPPORT)
+        endif(RDK_BUILD_INCHI_SUPPORT)
 
 
 endif()

@@ -15,6 +15,7 @@ set(CMAKE_MODULE_PATH
 option(RDK_BUILD_SWIG_WRAPPERS "build the experimental SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
+option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
 
@@ -57,9 +58,6 @@ include(RDKitUtils)
 if(MSVC)
   SET(Boost_ADDITIONAL_VERSIONS "1.45" "1.45.0" "1.44" "1.44.0" "1.43" "1.43.0" "1.42" "1.42.0" "1.41" "1.41.0" "1.40" "1.40.0")
 endif(MSVC)
-
-#set(BOOST_ROOT /usr/local/src/boost)
-
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
   #------- 
