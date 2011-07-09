@@ -49,16 +49,16 @@ if(RDK_BUILD_INCHI_SUPPORT)
   endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 endif(RDK_BUILD_INCHI_SUPPORT)
 
-# we need an inchi.py... copy in the appropriate one
-if(RDK_BUILD_INCHI_SUPPORT)
-
- add_custom_command(TARGET inchi_support
-                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py
-                   ${RDKit_PythonDir}/Chem/inchi.py)
-else(RDK_BUILD_INCHI_SUPPORT)
-  add_custom_command(TARGET inchi_support
-     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
-     ${RDKit_PythonDir}/Chem/inchi.py)
-endif(RDK_BUILD_INCHI_SUPPORT)
-
+if(RDK_BUILD_PYTHON_WRAPPERS)
+  # we need an inchi.py... copy in the appropriate one
+  if(RDK_BUILD_INCHI_SUPPORT)
+   add_custom_command(TARGET inchi_support
+                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py
+                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
+  else(RDK_BUILD_INCHI_SUPPORT)
+    add_custom_command(TARGET inchi_support
+                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
+                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
+  endif(RDK_BUILD_INCHI_SUPPORT)
+endif(RDK_BUILD_PYTHON_WRAPPERS)
 
