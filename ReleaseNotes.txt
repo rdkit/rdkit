@@ -22,7 +22,7 @@ Bug Fixes:
  - A thread-safety problem in SmilesWrite::GetAtomSmiles() was fixed.
  - some of the MACCS keys definitions have been corrected
  - Atoms with radical counts > 2 are no longer always written to CTABs
-   with a RAD value of 3.
+   with a RAD value of 3. (Issue 3359739)
 
 New Features:
  - The smiles, smarts, and reaction smarts parsers all now take an additional
