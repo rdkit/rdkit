@@ -1,12 +1,7 @@
-find_package(Inchi)
-
 add_custom_target(inchi_support ALL)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-        add_custom_command(
-                TARGET inchi_support
-                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py  ${RDKit_PythonDir}/Chem/inchi.py)
-
+if(RDK_BUILD_INCHI_SUPPORT)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
         if(NOT INCHI_FOUND)
           rdkit_library(Inchi src/ichican2.c       src/ichicano.c 
                          src/ichicans.c       src/ichiisot.c 
@@ -36,23 +31,34 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
           include_directories(${INCHI_INCLUDE_DIR})
         endif(NOT INCHI_FOUND)
 
-	rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES} GraphMol
-		      RDGeneral Depictor SubstructMatch)
+        rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES} GraphMol
+                      RDGeneral Depictor SubstructMatch)
 
         if(RDK_BUILD_PYTHON_WRAPPERS)
-	   add_subdirectory(Wrap)
+           add_subdirectory(Wrap)
         endif(RDK_BUILD_PYTHON_WRAPPERS)
 
         add_definitions(-DBUILD_INCHI_SUPPORT)
-else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+        find_package(Inchi)
+        if(NOT INCHI_FOUND)
+           message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
+                "InChI support will be turned off. If you want to add InChI support, please follow the instructions inside $RDBASE/External/INCHI-API/README to download a copy of InChI software and then rerun cmake.")
+           set(RDK_BUILD_INCHI_SUPPORT OFF)
+        endif(NOT INCHI_FOUND)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+endif(RDK_BUILD_INCHI_SUPPORT)
 
-	message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
-	       	"InChI support will be turned off. If you want to add InChI support, please follow instructions inside External/INCHI-API/README to download a copy of InChI software and then rerun cmake.")
+# we need an inchi.py... copy in the appropriate one
+if(RDK_BUILD_INCHI_SUPPORT)
 
-	add_custom_command(
-		TARGET inchi_support
-                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py ${RDKit_PythonDir}/Chem/inchi.py)
-        set(RDK_BUILD_INCHI_SUPPORT OFF)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+ add_custom_command(TARGET inchi_support
+                COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py
+                   ${RDKit_PythonDir}/Chem/inchi.py)
+else(RDK_BUILD_INCHI_SUPPORT)
+  add_custom_command(TARGET inchi_support
+     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
+     ${RDKit_PythonDir}/Chem/inchi.py)
+endif(RDK_BUILD_INCHI_SUPPORT)
 
 
