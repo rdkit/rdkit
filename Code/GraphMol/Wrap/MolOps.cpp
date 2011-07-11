@@ -101,6 +101,11 @@ namespace RDKit{
     MolOps::Kekulize(wmol,clearAromaticFlags);
   }
 
+  void cleanupMol(ROMol &mol){
+    RWMol &rwmol = static_cast<RWMol &>(mol);
+    MolOps::cleanUp(rwmol);
+  }
+
   void setAromaticityMol(ROMol &mol){
     RWMol &wmol = static_cast<RWMol &>(mol);
     MolOps::setAromaticity(wmol);
@@ -540,6 +545,22 @@ namespace RDKit{
                   docString.c_str());
       
 
+      // ------------------------------------------------------------------------
+      docString="cleans up certain common bad functionalities in the molecule\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+      python::def("Cleanup", cleanupMol,
+                  (python::arg("mol")),
+                  docString.c_str());
+      
+      
       // ------------------------------------------------------------------------
       docString="does aromaticity perception\n\
 \n\

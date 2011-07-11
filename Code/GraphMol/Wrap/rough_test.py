@@ -2013,7 +2013,21 @@ CAS<~>
     p = at.GetProp('_MolFileRLabel')
     self.failUnlessEqual(p,'1')
     
-    
+  def test64MoleculeCleanup(self):
+    m = Chem.MolFromSmiles('CN(=O)=O',False)
+    self.failUnless(m)
+    self.failUnless(m.GetAtomWithIdx(1).GetFormalCharge()==0 and \
+                      m.GetAtomWithIdx(2).GetFormalCharge()==0 and \
+                      m.GetAtomWithIdx(3).GetFormalCharge()==0)
+    self.failUnless(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.DOUBLE and \
+                      m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.DOUBLE )
+    Chem.Cleanup(m)
+    m.UpdatePropertyCache()
+    self.failUnless(m.GetAtomWithIdx(1).GetFormalCharge()==1 and \
+                      (m.GetAtomWithIdx(2).GetFormalCharge()==-1 or \
+                         m.GetAtomWithIdx(3).GetFormalCharge()==-1))
+    self.failUnless(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.SINGLE or \
+                      m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.SINGLE )
 
     
 if __name__ == '__main__':
