@@ -1,9 +1,19 @@
 add_custom_target(inchi_support ALL)
 
 if(RDK_BUILD_INCHI_SUPPORT)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-        if(NOT INCHI_FOUND)
-          rdkit_library(Inchi src/ichican2.c       src/ichicano.c 
+  # system InChI will always have higher priority, so we search for it first
+  find_package(Inchi)
+
+  if (INCHI_FOUND)
+    include_directories(${INCHI_INCLUDE_DIR})
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+      message(WARNING "** System InChI software takes precedence when both system InChI and local InChI are found")
+    endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+  else (INCHI_FOUND)
+    # system InChI is missing
+    # check whether we have custom InChI source
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+      rdkit_library(Inchi src/ichican2.c       src/ichicano.c 
                          src/ichicans.c       src/ichiisot.c 
                          src/ichilnct.c       src/ichimak2.c
                          src/ichimake.c       src/ichimap1.c 
@@ -24,29 +34,30 @@ if(RDK_BUILD_INCHI_SUPPORT)
                          src/ichi_io.c  
                          src/sha2.c           src/strutil.c  
                          src/util.c SHARED)
-          install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
-          set(INCHI_LIBRARIES Inchi)
-          include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-        else(NOT INCHI_FOUND)
-          include_directories(${INCHI_INCLUDE_DIR})
-        endif(NOT INCHI_FOUND)
+      message(STATUS  "Found InChI software locally!")
+      install(TARGETS Inchi DESTINATION ${RDKit_LibDir})
+      set(INCHI_LIBRARIES Inchi)
+      include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-        rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES} GraphMol
-                      RDGeneral Depictor SubstructMatch)
+    else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+      message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
+              "InChI support will be turned off. If you want to add InChI support, please follow the instructions inside $RDBASE/External/INCHI-API/README to download a copy of InChI software and then rerun cmake.")
+      set(RDK_BUILD_INCHI_SUPPORT OFF)
+    endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
 
-        if(RDK_BUILD_PYTHON_WRAPPERS)
-           add_subdirectory(Wrap)
-        endif(RDK_BUILD_PYTHON_WRAPPERS)
+  endif(INCHI_FOUND)
+endif(RDK_BUILD_INCHI_SUPPORT)
 
-        add_definitions(-DBUILD_INCHI_SUPPORT)
-  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
-        find_package(Inchi)
-        if(NOT INCHI_FOUND)
-           message(WARNING  "** NO INCHI SOFTWARE FOUND\n"
-                "InChI support will be turned off. If you want to add InChI support, please follow the instructions inside $RDBASE/External/INCHI-API/README to download a copy of InChI software and then rerun cmake.")
-           set(RDK_BUILD_INCHI_SUPPORT OFF)
-        endif(NOT INCHI_FOUND)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/ichican2.c)
+# check whether InChI support is ON after the search
+if(RDK_BUILD_INCHI_SUPPORT)
+  rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES} 
+	  GraphMol RDGeneral Depictor SubstructMatch)
+
+  if(RDK_BUILD_PYTHON_WRAPPERS)
+    add_subdirectory(Wrap)
+  endif(RDK_BUILD_PYTHON_WRAPPERS)
+
+  add_definitions(-DBUILD_INCHI_SUPPORT)
 endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

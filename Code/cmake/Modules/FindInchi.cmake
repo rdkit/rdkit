@@ -18,7 +18,10 @@ else()
   find_path(INCHI_INCLUDE_DIR NAMES inchi_api.h PATHS /usr/include/inchi )
   find_library(INCHI_LIBRARY NAMES inchi Inchi)
   include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(INCHI DEFAULT_MSG INCHI_LIBRARY
-    INCHI_INCLUDE_DIR)
-  mark_as_advanced(INCHI_INCLUDE_DIR INCHI_LIBRARIES)
+  find_package_handle_standard_args(INCHI
+	  "Could NOT find InChI in system locations" INCHI_LIBRARY
+	  INCHI_INCLUDE_DIR)
+  set(INCHI_INCLUDE_DIRS ${INCHI_INCLUDE_DIR} )
+  set(INCHI_LIBRARIES ${INCHI_LIBRARY} )
+  mark_as_advanced(INCHI_INCLUDE_DIR INCHI_LIBRARY)
 endif()
