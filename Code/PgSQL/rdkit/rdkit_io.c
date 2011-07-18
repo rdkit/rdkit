@@ -110,6 +110,21 @@ mol_send(PG_FUNCTION_ARGS) {
   PG_RETURN_BYTEA_P( res );
 }
 
+PG_FUNCTION_INFO_V1(mol_from_ctab);
+Datum           mol_from_ctab(PG_FUNCTION_ARGS);
+Datum
+mol_from_ctab(PG_FUNCTION_ARGS) {
+  char    *data = PG_GETARG_CSTRING(0);
+  CROMol  mol;
+  Mol     *res;
+
+  mol = parseMolCTAB(data,false);
+  res = deconstructROMol(mol);
+  freeCROMol(mol);
+
+  PG_RETURN_MOL_P(res);           
+}
+
 PG_FUNCTION_INFO_V1(qmol_in);
 Datum           qmol_in(PG_FUNCTION_ARGS);
 Datum

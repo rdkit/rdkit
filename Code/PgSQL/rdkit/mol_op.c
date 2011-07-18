@@ -82,6 +82,14 @@ is_valid_smarts(PG_FUNCTION_ARGS) {
   char  *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidSmarts(data));
 }
+PG_FUNCTION_INFO_V1(is_valid_ctab);
+Datum           is_valid_ctab(PG_FUNCTION_ARGS);
+Datum
+is_valid_ctab(PG_FUNCTION_ARGS) {
+  char  *data = PG_GETARG_CSTRING(0);
+  PG_RETURN_BOOL(isValidCTAB(data));
+}
+
 
 PG_FUNCTION_INFO_V1(mol_substruct);
 Datum           mol_substruct(PG_FUNCTION_ARGS);

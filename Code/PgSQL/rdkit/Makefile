@@ -9,7 +9,7 @@ ifeq ($(USE_INCHI),1)
 endif
 
 RDKSTATICLIBS=-lFileParsers_static -lSmilesParse_static -lFingerprints_static -lSubgraphs_static -lSubstructMatch_static  -lDescriptors_static -lPartialCharges_static -lGraphMol_static -lDataStructs_static -lRDGeometryLib_static -lRDGeneral_static
-RDKLIBS=-lDescriptors -lGraphMol -lSmilesParse  -lFingerprints -lSubstructMatch -lDescriptors -lPartialCharges -lSubgraphs -lDataStructs -lRDGeometryLib -lRDGeneral
+RDKLIBS=-lFileParsers -lDescriptors -lGraphMol -lSmilesParse  -lFingerprints -lSubstructMatch -lDescriptors -lPartialCharges -lSubgraphs -lDataStructs -lRDGeometryLib -lRDGeneral
 
 SHLIB_LINK += -L${RDKIT}/lib ${INCHISTATICLIBS} ${RDKSTATICLIBS}
 #SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${INCHILIBS} ${RDKLIBS} 

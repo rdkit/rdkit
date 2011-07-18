@@ -35,6 +35,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -177,6 +178,28 @@ parseMolBlob(char *data,int len) {
 
   return (CROMol)mol;
 }
+extern "C" CROMol 
+parseMolCTAB(char *data,bool keepConformer) {
+  ROMol   *mol = NULL;
+
+  try {
+    StringData.assign(data);
+    mol = MolBlockToMol(StringData);
+  } catch (...) {
+    ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("problem generating molecule from CTAB '%s'",data)));
+  }
+  if(mol==NULL){
+    ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("CTAB '%s' could not be parsed",data)));
+  } else {
+    if(!keepConformer) mol->clearConformers();
+  }
+
+  return (CROMol)mol;
+}
 
 extern "C" bool
 isValidSmiles(char *data) {
@@ -212,6 +235,33 @@ isValidSmarts(char *data) {
   try {
     StringData.assign(data);
     mol = SmartsToMol(StringData);
+  } catch (...) {
+    mol=NULL;
+  }
+  if(mol==NULL){
+    res=false;
+  } else {
+    res=true;
+    delete mol;
+  }
+  return res;
+}
+
+
+extern "C" bool
+isValidCTAB(char *data) {
+  RWMol   *mol = NULL;
+  bool res;
+  try {
+    mol = MolBlockToMol(std::string(data),false,false);
+    if(mol){
+      MolOps::cleanUp(*mol);
+      mol->updatePropertyCache();
+      MolOps::Kekulize(*mol);
+      MolOps::assignRadicals(*mol);
+      MolOps::setAromaticity(*mol);
+      MolOps::adjustHs(*mol);
+    }
   } catch (...) {
     mol=NULL;
   }

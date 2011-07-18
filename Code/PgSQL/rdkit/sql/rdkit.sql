@@ -130,3 +130,32 @@ select add(torsion_fp('CCC1CCNCC1'),torsion_fp('OCC1CCNCC1'))=add(torsion_fp('CC
 select add(torsion_fp('CCC1CCNCC1'),torsion_fp('OCC1CCNCC1'))=subtract(torsion_fp('CCC1CCNCC1'),torsion_fp('OCC1CCNCC1'));
 select add(torsion_fp('CCC1CCNCC1'),torsion_fp('OCC1CCNCC1'))=subtract(torsion_fp('CCC1CCOCC1'),torsion_fp('OCC1CCOCC1'));
 
+select is_valid_ctab('chiral1.mol
+  ChemDraw04200416412D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+   -0.0141    0.0553    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8109    0.0553    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0      
+  1  3  1  0      
+  1  4  1  1      
+  1  5  1  0      
+M  END');
+select is_valid_ctab('invalid');
+select mol_from_ctab('chiral1.mol
+  ChemDraw04200416412D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+   -0.0141    0.0553    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8109    0.0553    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4266    0.7697    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0141   -0.7697    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8109   -0.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0      
+  1  3  1  0      
+  1  4  1  1      
+  1  5  1  0      
+M  END');

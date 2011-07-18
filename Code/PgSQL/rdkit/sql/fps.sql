@@ -1,6 +1,14 @@
 SELECT dice_sml(rdkit_fp('c1ccccc1'::mol),rdkit_fp('c1ccncc1'::mol));
 SELECT dice_sml(atompair_fp('c1ccccc1'::mol),atompair_fp('c1ccncc1'::mol));
 SELECT dice_sml(torsion_fp('c1ccccc1'::mol),torsion_fp('c1ccncc1'::mol));
+SELECT dice_sml(morgan_fp('c1ccccc1'::mol,2),morgan_fp('c1ccncc1'::mol,2));
+SELECT dice_sml(morgan_fp('c1ccccc1'::mol),morgan_fp('c1ccncc1'::mol));
+SELECT dice_sml(morganbv_fp('c1ccccc1'::mol,2),morganbv_fp('c1ccncc1'::mol,2));
+SELECT dice_sml(morganbv_fp('c1ccccc1'::mol),morganbv_fp('c1ccncc1'::mol));
+SELECT dice_sml(featmorgan_fp('c1ccccc1'::mol,2),featmorgan_fp('c1ccncc1'::mol,2));
+SELECT dice_sml(featmorgan_fp('c1ccccc1'::mol),featmorgan_fp('c1ccncc1'::mol));
+SELECT dice_sml(featmorganbv_fp('c1ccccc1'::mol,2),featmorganbv_fp('c1ccncc1'::mol,2));
+SELECT dice_sml(featmorganbv_fp('c1ccccc1'::mol),featmorganbv_fp('c1ccncc1'::mol));
 
 SET rdkit.tanimoto_threshold = 0.4;
 SELECT
