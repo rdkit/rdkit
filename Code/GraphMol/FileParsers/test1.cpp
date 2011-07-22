@@ -2610,6 +2610,30 @@ void testThreeCoordinateChirality(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3375647(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3375647 "<< std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3375647.1.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getBondDir()!=Bond::EITHERDOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getStereo()==Bond::STEREOZ);
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3375647.2.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getBondDir()!=Bond::EITHERDOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getStereo()==Bond::STEREOE);
+  }
+  
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2654,9 +2678,10 @@ int main(int argc,char *argv[]){
   testIssue3228150();
   testIssue3313540();
   testIssue3359739();
-#endif
   testIssue3374639();
   testThreeCoordinateChirality();
+#endif
+  testIssue3375647();
 
 
   return 0;

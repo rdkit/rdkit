@@ -632,7 +632,8 @@ namespace RDKit {
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getBeginAtom());
     while(beg!=end){
       Bond *tBond=mol[*beg].get();
-      if(tBond->getBondType()==Bond::SINGLE){
+      if(tBond->getBondType()==Bond::SINGLE ||
+         tBond->getBondType()==Bond::AROMATIC ){
         // prefer bonds that already have their directionality set
         // or that are adjacent to more double bonds:
         if(!bond1){
@@ -662,7 +663,8 @@ namespace RDKit {
     boost::tie(beg,end) = mol.getAtomBonds(dblBond->getEndAtom());
     while(beg!=end ){
       Bond *tBond=mol[*beg].get();
-      if(tBond->getBondType()==Bond::SINGLE){
+      if(tBond->getBondType()==Bond::SINGLE ||
+         tBond->getBondType()==Bond::AROMATIC ){
         if(!bond2){
           bond2=tBond;
         } else if(needsDir[tBond->getIdx()]){
@@ -836,7 +838,9 @@ namespace RDKit {
         boost::tie(beg,end) = mol.getAtomBonds(a1);
         while(beg!=end){
           const Bond *nbrBond=mol[*beg].get();
-          if(nbrBond->getBondType()==Bond::SINGLE){
+          if(nbrBond->getBondType()==Bond::SINGLE ||
+             nbrBond->getBondType()==Bond::AROMATIC
+             ){
             singleBondCounts[nbrBond->getIdx()] += 1;
             needsDir[nbrBond->getIdx()]=1;
             dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
@@ -846,7 +850,8 @@ namespace RDKit {
         boost::tie(beg,end) = mol.getAtomBonds(a2);
         while(beg!=end){
           const Bond *nbrBond=mol[*beg].get();
-          if(nbrBond->getBondType()==Bond::SINGLE){
+          if(nbrBond->getBondType()==Bond::SINGLE ||
+             nbrBond->getBondType()==Bond::AROMATIC ){
             singleBondCounts[nbrBond->getIdx()] += 1;
             needsDir[nbrBond->getIdx()]=1;
             dblBondNbrs[(*bondIt)->getIdx()].push_back(nbrBond->getIdx());
