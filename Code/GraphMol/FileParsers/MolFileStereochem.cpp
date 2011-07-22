@@ -120,20 +120,25 @@ namespace RDKit {
       //------------------------------------------------------------
       bool isCCW=true;
       double angle0,angle1,angle2;
-      RDGeom::Point3D atomVect;
+      const Bond *bond1,*bond2,*bond3;
+      RDGeom::Point3D atomVect0,atomVect1,atomVect2;
       INT_LIST::const_iterator bondIter=neighborBondIndices.begin();
-      bondIter++;
-      int oaid = mol.getBondWithIdx(*bondIter)->getOtherAtom(atom)->getIdx();
+      ++bondIter;
+      bond1=mol.getBondWithIdx(*bondIter);
+      int oaid = bond1->getOtherAtom(atom)->getIdx();
       tmpPt = conf->getAtomPos(oaid);
-      atomVect = centerLoc.directionVector(tmpPt);
-      angle0 = refVect.signedAngleTo(atomVect);
+      tmpPt.z=0;
+      atomVect0 = centerLoc.directionVector(tmpPt);
+      angle0 = refVect.signedAngleTo(atomVect0);
       if(angle0<0) angle0 += 2.*M_PI;
 
-      bondIter++;
-      oaid = mol.getBondWithIdx(*bondIter)->getOtherAtom(atom)->getIdx();
+      ++bondIter;
+      bond2=mol.getBondWithIdx(*bondIter);
+      oaid = bond2->getOtherAtom(atom)->getIdx();
       tmpPt = conf->getAtomPos(oaid);
-      atomVect = centerLoc.directionVector(tmpPt);
-      angle1 = refVect.signedAngleTo(atomVect);
+      tmpPt.z=0;
+      atomVect1 = centerLoc.directionVector(tmpPt);
+      angle1 = refVect.signedAngleTo(atomVect1);
       if(angle1<0) angle1 += 2.*M_PI;
 
       // We proceed differently for 3 and 4 coordinate atoms:
@@ -141,11 +146,13 @@ namespace RDKit {
       if(nNbrs==4){
         bool flipIt=false;
         // grab the angle to the last neighbor:
-        bondIter++;
-        oaid = mol.getBondWithIdx(*bondIter)->getOtherAtom(atom)->getIdx();
+        ++bondIter;
+        bond3=mol.getBondWithIdx(*bondIter);
+        oaid = bond3->getOtherAtom(atom)->getIdx();
         tmpPt = conf->getAtomPos(oaid);
-        atomVect = centerLoc.directionVector(tmpPt);
-        angle2 = refVect.signedAngleTo(atomVect);
+        tmpPt.z=0;
+        atomVect2 = centerLoc.directionVector(tmpPt);
+        angle2 = refVect.signedAngleTo(atomVect2);
         if(angle2<0) angle2 += 2.*M_PI;
 
         // find the lowest and second-lowest angle and keep track of
@@ -194,7 +201,93 @@ namespace RDKit {
       } else {
         // it's three coordinate.  Things are a bit different here
         // because we have to at least kind of figure out where the
-        // hydrogen might be:
+        // hydrogen might be.
+
+        // before getting started with that, use some of the inchi rules
+        // for contradictory stereochemistry
+        // (Table 10 in the InChi v1 technical manual)
+
+        angle2 = atomVect0.signedAngleTo(atomVect1);
+        if(angle2<0) angle2 += 2.*M_PI;
+
+        //  this one is never allowed:                     
+        //     0   2
+        //      \ /
+        //       C
+        //       *
+        //       1
+        if( angle0<(M_PI-1e-3) &&
+            angle1<(M_PI-1e-3) &&
+            angle2<(M_PI-1e-3) ){
+          if( ( bond1->getBondDir()!=Bond::NONE &&
+                bond1->getBeginAtomIdx()==bond->getBeginAtomIdx() &&
+                ( bond1->getBondDir()!=bond->getBondDir() ||
+                  ( bond2->getBondDir()!=Bond::NONE &&
+                    bond2->getBeginAtomIdx()==bond->getBeginAtomIdx() &&
+                    bond2->getBondDir()!=bond1->getBondDir()
+                    )
+                  )
+                ) ||
+              ( bond2->getBondDir()!=Bond::NONE &&
+                bond2->getBeginAtomIdx()==bond->getBeginAtomIdx() &&
+                bond2->getBondDir()!=bond->getBondDir()
+                )
+              ){
+            BOOST_LOG(rdWarningLog) << "Warning: conflicting stereochemistry at atom " << bond->getBeginAtomIdx() << " ignored." << std::endl;// by rule 1." << std::endl;
+            return Atom::CHI_UNSPECIFIED;
+          }
+        }
+        if(bond1->getBondDir()!=Bond::NONE &&
+           bond1->getBeginAtomIdx()==bond->getBeginAtomIdx()) {
+          if(! (bond2->getBondDir()!=Bond::NONE &&
+                bond2->getBeginAtomIdx()==bond->getBeginAtomIdx()) ){
+            BOOST_LOG(rdWarningLog) << "Warning: conflicting stereochemistry at atom " << bond->getBeginAtomIdx() << " ignored." << std::endl;// by rule 2a." << std::endl;
+          }
+          if(bond1->getBondDir()!=bond->getBondDir()){
+            // bond1 has a spec and does not match the bond0 spec.
+            // the only cases this is allowed are:
+            //      1        0 1 2  
+            //      *         \*/   
+            //  0 - C - 2      C    
+            //    and
+            //      1        2 1 0  
+            //      *         \*/   
+            //  2 - C - 0      C    
+            //                      
+            if((angle0>M_PI && angle0<angle1) ||
+               (angle0<M_PI && angle0>angle1)
+               ){
+              BOOST_LOG(rdWarningLog) << "Warning: conflicting stereochemistry at atom " << bond->getBeginAtomIdx() << " ignored." << std::endl;// by rule 2b." << std::endl;
+              return Atom::CHI_UNSPECIFIED;
+            }
+          } else {
+            // bond1 matches, what about bond2 ?
+            if(bond2->getBondDir()!=bond->getBondDir()){
+              // the only cases this is allowed are:
+              //      2        0 2 1
+              //      *         \*/
+              //  0 - C - 1      C
+              //    and
+              //      2        1 2 0  
+              //      *         \*/   
+              //  1 - C - 0      C
+              //
+              if((angle1>M_PI && angle1<angle0) ||
+                 (angle1<M_PI && angle1>angle0) ){
+                BOOST_LOG(rdWarningLog) << "Warning: conflicting stereochemistry at atom " << bond->getBeginAtomIdx() << " ignored." << std::endl;// by rule 2c." << std::endl;
+                return Atom::CHI_UNSPECIFIED;
+              } 
+            }
+          }
+        } else if(bond2->getBondDir()!=Bond::NONE &&
+                  bond2->getBeginAtomIdx()==bond->getBeginAtomIdx() &&
+                  bond2->getBondDir()!=bond->getBondDir()){
+          // bond2 has a spec and does not match the bond0 spec, but bond1
+          // is not set: this is never allowed.
+          BOOST_LOG(rdWarningLog) << "Warning: conflicting stereochemistry at atom " << bond->getBeginAtomIdx() << " ignored." << std::endl;// by rule 3." << std::endl;
+          return Atom::CHI_UNSPECIFIED;
+        }
+
         if(angle0<angle1){
           firstAngle = angle0;
           secondAngle = angle1;

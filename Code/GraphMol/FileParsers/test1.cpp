@@ -2549,6 +2549,68 @@ void testIssue3374639(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testThreeCoordinateChirality(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " ----------> Test three-coordinate chirality "<< std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.1.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+  }
+  
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.2.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+  }
+  
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.3.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  }
+  
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.4.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+  }
+  
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.5.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.6.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+  }
+  
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -2594,6 +2656,7 @@ int main(int argc,char *argv[]){
   testIssue3359739();
 #endif
   testIssue3374639();
+  testThreeCoordinateChirality();
 
 
   return 0;
