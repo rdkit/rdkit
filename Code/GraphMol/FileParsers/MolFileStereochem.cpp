@@ -118,7 +118,7 @@ namespace RDKit {
       //  the neighbor bonds and the wedged bond:
       //
       //------------------------------------------------------------
-      bool isCCW;
+      bool isCCW=true;
       double angle0,angle1,angle2;
       RDGeom::Point3D atomVect;
       INT_LIST::const_iterator bondIter=neighborBondIndices.begin();
@@ -183,11 +183,11 @@ namespace RDKit {
             flipIt=true;
           }
         }
-        if(secondAngle - firstAngle < M_PI){
-          isCCW = true;
-        } else {
-          isCCW = false;
-        }
+        // if(secondAngle - firstAngle < M_PI){
+        //   isCCW = true;
+        // } else {
+        //   isCCW = false;
+        // }
         if(flipIt){
           isCCW = !isCCW;
         }

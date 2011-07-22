@@ -2513,7 +2513,41 @@ void testIssue3359739(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3374639(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3374639 "<< std::endl;
 
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3374639.2.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3374639.1.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3374639.full.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getAtomWithIdx(16)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(16)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");  
+  }
+  
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2556,9 +2590,10 @@ int main(int argc,char *argv[]){
   testIssue3073163();
   testIssue3154208();
   testIssue3228150();
-#endif
   testIssue3313540();
   testIssue3359739();
+#endif
+  testIssue3374639();
 
 
   return 0;
