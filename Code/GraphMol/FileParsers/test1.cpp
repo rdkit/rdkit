@@ -2509,6 +2509,7 @@ void testIssue3359739(){
   // state of the code and what the CTAB format supports,
   // but it's definitely not chemically correct
   TEST_ASSERT(m->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+  delete m;
 
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
@@ -2526,6 +2527,7 @@ void testIssue3374639(){
     std::string cip;
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  
+    delete m;
   }
   {
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3374639.1.mol";
@@ -2535,6 +2537,7 @@ void testIssue3374639(){
     std::string cip;
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  
+    delete m;
   }
   {
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3374639.full.mol";
@@ -2544,6 +2547,7 @@ void testIssue3374639(){
     std::string cip;
     m->getAtomWithIdx(16)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  
+    delete m;
   }
   
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
@@ -2562,6 +2566,7 @@ void testThreeCoordinateChirality(){
     std::string cip;
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  
+    delete m;
   }
   
   {
@@ -2572,6 +2577,7 @@ void testThreeCoordinateChirality(){
     std::string cip;
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  
+    delete m;
   }
   
   {
@@ -2579,6 +2585,7 @@ void testThreeCoordinateChirality(){
     RWMol *m = MolFileToMol(fName);
 
     TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    delete m;
   }
   
   {
@@ -2586,6 +2593,7 @@ void testThreeCoordinateChirality(){
     RWMol *m = MolFileToMol(fName);
 
     TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    delete m;
   }
   
   {
@@ -2596,6 +2604,7 @@ void testThreeCoordinateChirality(){
     std::string cip;
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  
+    delete m;
   }
   {
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/three_coordinate_chirality.6.mol";
@@ -2605,6 +2614,7 @@ void testThreeCoordinateChirality(){
     std::string cip;
     m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");  
+    delete m;
   }
   
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
@@ -2622,6 +2632,7 @@ void testIssue3375647(){
     TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getBondType()==Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getBondDir()!=Bond::EITHERDOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getStereo()==Bond::STEREOZ);
+    delete m;
   }
   {
     std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3375647.2.mol";
@@ -2630,6 +2641,7 @@ void testIssue3375647(){
     TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getBondType()==Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getBondDir()!=Bond::EITHERDOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(2,11)->getStereo()==Bond::STEREOE);
+    delete m;
   }
   
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
@@ -2646,11 +2658,21 @@ void testIssue3375684(){
 
     TEST_ASSERT(m->getBondBetweenAtoms(6,7)->getBondType()==Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(6,7)->getBondDir()==Bond::EITHERDOUBLE);
+    delete m;
   }
-  
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3375684.2.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(3,9)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,9)->getBondDir()!=Bond::EITHERDOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,9)->getStereo()==Bond::STEREOE);
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+  
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1

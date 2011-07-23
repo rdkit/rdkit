@@ -610,6 +610,12 @@ namespace RDKit {
     }
   }
 
+  bool isLinearArrangement(const RDGeom::Point3D &v1,
+                          const RDGeom::Point3D &v2,
+                          double tol=0.035){ // tolerance of 2 degrees
+    return fabs(v2.angleTo(v1)-M_PI)<tol;
+  }
+  
   void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond,
                                  const Conformer *conf,
                                  boost::dynamic_bitset<> &needsDir,
@@ -655,7 +661,6 @@ namespace RDKit {
     if(!bond1){
       // no single bonds from the beginning atom, mark
       // the double bond as directionless and return:
-      std::cerr<<" rulea: "<<std::endl;
       dblBond->setBondDir(Bond::EITHERDOUBLE);
       return;
     }
@@ -685,7 +690,6 @@ namespace RDKit {
       ++beg;
     }
     if(!bond2){
-      std::cerr<<" ruleb: "<<std::endl;
       dblBond->setBondDir(Bond::EITHERDOUBLE);
       return;
     }
@@ -696,21 +700,48 @@ namespace RDKit {
     RDGeom::Point3D bond1P=conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
     RDGeom::Point3D bond2P=conf->getAtomPos(bond2->getOtherAtomIdx(dblBond->getEndAtomIdx()));
     // check for a linear arrangement of atoms on either end:
+    bool linear=false;
     RDGeom::Point3D p1;
     RDGeom::Point3D p2;
     p1=bond1P-beginP;
     p2=endP-beginP;
-    if(fabs(p2.angleTo(p1)-M_PI)<0.035){  // tolerance of 2 degrees
+    if(isLinearArrangement(p1,p2)){  
+      if(!obond1){
+        linear=true;
+      } else {
+        // one of the bonds was linear; what about the other one?
+        Bond *tBond=bond1;
+        bond1=obond1;
+        obond1=tBond;
+        bond1P=conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
+        p1=bond1P-beginP;
+        if(isLinearArrangement(p1,p2)){
+          linear=true;
+        }
+      }
+    }
+    if(!linear){
+      p1=bond2P-endP;
+      p2=beginP-endP;
+      if(isLinearArrangement(p1,p2)){
+        if(!obond2){
+          linear=true;
+        } else {
+          Bond *tBond=bond2;
+          bond2=obond2;
+          obond2=tBond;
+          bond2P=conf->getAtomPos(bond2->getOtherAtomIdx(dblBond->getEndAtomIdx()));
+          p1=bond2P-beginP;
+          if(isLinearArrangement(p1,p2)){
+            linear=true;
+          }
+        }
+      }
+    }
+    if(linear){
       dblBond->setBondDir(Bond::EITHERDOUBLE);
       return;
     }
-    p1=bond2P-endP;
-    p2=beginP-endP;
-    if(fabs(p2.angleTo(p1)-M_PI)<0.035){ // tolerance of 2 degrees
-      dblBond->setBondDir(Bond::EITHERDOUBLE);
-      return;
-    }
-    
 
     double ang=RDGeom::computeDihedralAngle(bond1P,beginP,endP,bond2P);
     bool sameTorsionDir;
