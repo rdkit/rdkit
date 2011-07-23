@@ -54,6 +54,11 @@ namespace RDKit {
     // to the atom at the point of the wedge, (atom 1 in the bond).
     const Atom *atom = bond->getBeginAtom();
     PRECONDITION(atom,"no atom");
+
+    // we can't do anything with atoms that have more than 4 neighbors:
+    if(atom->getDegree()>4){
+      return Atom::CHI_UNSPECIFIED;
+    }
     const Atom *bondAtom = bond->getEndAtom();
 
     Atom::ChiralType res=Atom::CHI_UNSPECIFIED;
@@ -85,7 +90,7 @@ namespace RDKit {
       Bond *nbrBond=mol[*beg].get();
       if(nbrBond->getBondType() != Bond::SINGLE){
         allSingle=false;
-        break;
+        //break;
       }
       if(nbrBond != bond){
         if(nbrBond->getOtherAtom(atom)->getAtomicNum()==1) hSeen=true;
@@ -108,10 +113,11 @@ namespace RDKit {
 
     //----------------------------------------------------------
     //
-    //  Continue if there are all single bonds:
+    //  Continue if there are all single bonds or if we're considering
+    //  4-coordinate P or S
     //
     //----------------------------------------------------------
-    if(allSingle){
+    if(allSingle || atom->getAtomicNum()==15 || atom->getAtomicNum()==16 ){
       //------------------------------------------------------------
       //
       //  Here we need to figure out the rotation direction between
@@ -190,11 +196,6 @@ namespace RDKit {
             flipIt=true;
           }
         }
-        // if(secondAngle - firstAngle < M_PI){
-        //   isCCW = true;
-        // } else {
-        //   isCCW = false;
-        // }
         if(flipIt){
           isCCW = !isCCW;
         }

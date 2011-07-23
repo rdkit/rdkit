@@ -2672,6 +2672,53 @@ void testIssue3375684(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testChiralPhosphorous(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " ----------> Test handling of chiral phosphorous "<< std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chiral_phosphorous.1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
+    // FIX: this isn't right according to chemdraw and marvin
+    TEST_ASSERT(cip=="S");  
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chiral_phosphorous.2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    std::string cip;
+    m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");  
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chiral_phosphorous.3.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(!m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    delete m;
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/chiral_phosphorous.4.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+
+    TEST_ASSERT(!m->getAtomWithIdx(5)->hasProp("_CIPCode"));
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
+
   
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2721,6 +2768,7 @@ int main(int argc,char *argv[]){
 #endif
   testIssue3375647();
   testIssue3375684();
+  testChiralPhosphorous();
 
 
   return 0;
