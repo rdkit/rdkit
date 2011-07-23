@@ -655,6 +655,7 @@ namespace RDKit {
     if(!bond1){
       // no single bonds from the beginning atom, mark
       // the double bond as directionless and return:
+      std::cerr<<" rulea: "<<std::endl;
       dblBond->setBondDir(Bond::EITHERDOUBLE);
       return;
     }
@@ -684,6 +685,7 @@ namespace RDKit {
       ++beg;
     }
     if(!bond2){
+      std::cerr<<" ruleb: "<<std::endl;
       dblBond->setBondDir(Bond::EITHERDOUBLE);
       return;
     }
@@ -693,6 +695,23 @@ namespace RDKit {
     RDGeom::Point3D endP=conf->getAtomPos(dblBond->getEndAtomIdx());
     RDGeom::Point3D bond1P=conf->getAtomPos(bond1->getOtherAtomIdx(dblBond->getBeginAtomIdx()));
     RDGeom::Point3D bond2P=conf->getAtomPos(bond2->getOtherAtomIdx(dblBond->getEndAtomIdx()));
+    // check for a linear arrangement of atoms on either end:
+    RDGeom::Point3D p1;
+    RDGeom::Point3D p2;
+    p1=bond1P-beginP;
+    p2=endP-beginP;
+    if(fabs(p2.angleTo(p1)-M_PI)<0.035){  // tolerance of 2 degrees
+      dblBond->setBondDir(Bond::EITHERDOUBLE);
+      return;
+    }
+    p1=bond2P-endP;
+    p2=beginP-endP;
+    if(fabs(p2.angleTo(p1)-M_PI)<0.035){ // tolerance of 2 degrees
+      dblBond->setBondDir(Bond::EITHERDOUBLE);
+      return;
+    }
+    
+
     double ang=RDGeom::computeDihedralAngle(bond1P,beginP,endP,bond2P);
     bool sameTorsionDir;
     if(ang < RDKit::PI/2){

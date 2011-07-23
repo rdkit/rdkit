@@ -701,8 +701,8 @@ void testIssue264(){
   
   smi1 = MolToSmiles(*m1,true);
   smi2 = MolToSmiles(*m2,true);
-  //BOOST_LOG(rdInfoLog) << smi1 << std::endl;
-  //BOOST_LOG(rdInfoLog) << smi2 << std::endl;
+  BOOST_LOG(rdInfoLog) << smi1 << std::endl;
+  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi1!=smi2);
   
   delete m1;
@@ -2635,6 +2635,22 @@ void testIssue3375647(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3375684(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3375684 "<< std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3375684.1.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    TEST_ASSERT(m->getBondBetweenAtoms(6,7)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(6,7)->getBondDir()==Bond::EITHERDOUBLE);
+  }
+  
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -2682,6 +2698,7 @@ int main(int argc,char *argv[]){
   testThreeCoordinateChirality();
 #endif
   testIssue3375647();
+  testIssue3375684();
 
 
   return 0;
