@@ -584,6 +584,13 @@ namespace RDKit {
     if(reverse){
       dir = (dir==Bond::ENDUPRIGHT ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT);
     }
+    // to ensure maximum compatibility, even when a bond has unknown stereo (set
+    // explicitly and recorded in _UnknownStereo property), I will still let a
+    // direction to be computed. You must check the _UnknownStereo property to
+    // make sure whether this bond is explictly set to have no direction info.
+    // This makes sense because the direction info are all derived from
+    // coordinates, the _UnknownStereo property is like extra metadata to be
+    // used with the direction info.
     bond->setBondDir(dir);
     //std::cerr<<"\t\t\t\t -> dir "<<dir<<std::endl;
 
@@ -844,6 +851,8 @@ namespace RDKit {
     for (RWMol::BondIterator bondIt = mol.beginBonds();
          bondIt != mol.endBonds(); ++bondIt) {
       if ((*bondIt)->getBondType() == Bond::SINGLE) {
+        if ((*bondIt)->getBondDir() == Bond::UNKNOWN)
+          (*bondIt)->setProp("_UnknownStereo", 1);
         (*bondIt)->setBondDir(Bond::NONE);
       }
     }

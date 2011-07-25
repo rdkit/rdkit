@@ -265,7 +265,8 @@ namespace RDKit{
     void findAtomNeighborDirHelper(const ROMol &mol,const Atom *atom,
                                    const Bond *refBond,
                                    INT_VECT &ranks,
-                                   INT_PAIR_VECT &neighbors){
+                                   INT_PAIR_VECT &neighbors,
+                                   bool& hasExplicitUnknownStereo){
       PRECONDITION(atom,"bad atom");
       PRECONDITION(refBond,"bad bond");
 
@@ -274,6 +275,16 @@ namespace RDKit{
       boost::tie(beg,end) = mol.getAtomBonds(atom);
       while(beg!=end){
         const BOND_SPTR bond = mol[*beg];
+        // check whether this bond is explictly set to have unknown stereo
+        if (!hasExplicitUnknownStereo) {
+          if (bond->hasProp("_UnknownStereo")) {
+            int unknownStereo = 0;
+            bond->getProp("_UnknownStereo", unknownStereo);
+            if (unknownStereo)
+              hasExplicitUnknownStereo = true;
+          }
+        }
+
         Bond::BondDir dir=bond->getBondDir();
         if( bond->getIdx() != refBond->getIdx()){
           if(dir == Bond::ENDDOWNRIGHT || dir == Bond::ENDUPRIGHT){
@@ -609,10 +620,13 @@ namespace RDKit{
           
               // the pairs here are: atomrank,bonddir
               Chirality::INT_PAIR_VECT begAtomNeighbors,endAtomNeighbors;
+              bool hasExplicitUnknownStereo = false;
               Chirality::findAtomNeighborDirHelper(mol,begAtom,dblBond,
-                                                   ranks,begAtomNeighbors);
+                                                   ranks,begAtomNeighbors,
+                                                   hasExplicitUnknownStereo);
               Chirality::findAtomNeighborDirHelper(mol,endAtom,dblBond,
-                                                   ranks,endAtomNeighbors);
+                                                   ranks,endAtomNeighbors,
+                                                   hasExplicitUnknownStereo);
 
               if(begAtomNeighbors.size() && endAtomNeighbors.size()){
                 // Each atom has at least one neighboring bond with marked
@@ -640,7 +654,11 @@ namespace RDKit{
                 }
                 dblBond->getStereoAtoms().push_back(begNbrAid);
                 dblBond->getStereoAtoms().push_back(endNbrAid);
-                if( begDir == endDir ){
+                if (hasExplicitUnknownStereo) {
+                  dblBond->setStereo(Bond::STEREOANY);
+                  assignedABond=true;
+                }
+                else if( begDir == endDir ){
                   // In findAtomNeighborDirHelper, we've set up the
                   // bond directions here so that they correspond to
                   // having both single bonds START at the double bond.

@@ -59,6 +59,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <inchi_api.h>
 #include <cstring>
 #include <vector>
@@ -1588,6 +1589,53 @@ namespace RDKit {
     out[i] = '\0';
   }
 
+  /*! "reverse" clean up: prepare a molecule to be used with InChI sdk */
+  void rCleanUp(RWMol& mol)
+  {
+    RWMol* q = SmilesToMol("[O-][Cl+3]([O-])([O-])O");
+    std::vector<MatchVectType> fgpMatches;
+    SubstructMatch(mol, *q, fgpMatches);
+    delete q;
+    // no action if none or more than one match was found
+    if (fgpMatches.size() != 1) {
+      return;
+    }
+
+    // collect matching atoms
+    int map[5];
+    MatchVectType match = fgpMatches[0];
+    for (MatchVectType::const_iterator mi = match.begin(); mi != match.end();
+         mi ++) {
+      map[mi->first] = mi->second;
+    }
+    // check charges
+    if (mol.getAtomWithIdx(map[1])->getFormalCharge() != 3)
+      return;
+    int unchargedFound = -1;
+    for (int i = 0; i < 5; i ++) {
+      if (i == 1) continue;
+      Atom* o = mol.getAtomWithIdx(map[i]);
+      if (o->getFormalCharge() == 0) {
+        if (unchargedFound != -1)
+          return; // too many uncharged oxygen
+        else
+          unchargedFound = i;
+      }
+    }
+
+    // flip bonds and remove charges
+    for (int i = 0; i < 5; i ++) {
+      if (i == 1) continue;
+      if (i == unchargedFound) continue;
+      if (unchargedFound == -1 && i == 0) continue;
+      mol.getBondBetweenAtoms(map[1], map[i])->setBondType(Bond::DOUBLE);
+      mol.getAtomWithIdx(map[i])->setFormalCharge(0);
+    }
+    mol.getAtomWithIdx(map[1])->setFormalCharge(0);
+
+    return;
+  }
+
   std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
                          const char* options)
   {
@@ -1595,6 +1643,9 @@ namespace RDKit {
 
     // kekulize
     MolOps::Kekulize(*m, false);
+
+    // "reverse" cleanup: undo some clean up done by RDKit
+    rCleanUp(*m);
 
     unsigned int nAtoms = m->getNumAtoms();
     unsigned int nBonds = m->getNumBonds();
@@ -1639,8 +1690,15 @@ namespace RDKit {
         offset = static_cast<int>(_offset + 0.5);
       if (offset) 
         inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + offset;
-      else
-        inchiAtoms[i].isotopic_mass = 0;
+      else {
+        // check explicit iso property. If this is set, we have a 0 offset
+        // Example: CHEMBL220875
+        if (atom->hasProp("_MolISOProp")) {
+          inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + 0;
+        } else {
+          inchiAtoms[i].isotopic_mass = 0;
+        }
+      }
 
       // charge
       inchiAtoms[i].charge = atom->getFormalCharge();
@@ -1660,6 +1718,10 @@ namespace RDKit {
       // convert tetrahedral chirality info to Stereo0D
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED ||
           atom->hasProp("molParity")) {
+        // we ignore the molParity if the number of neighbors are below 3
+        atom->calcImplicitValence();
+        if (atom->getNumImplicitHs() + atom->getDegree() < 3)
+          continue;
         inchi_Stereo0D stereo0D;
         stereo0D.central_atom = i;
         stereo0D.type = INCHI_StereoType_Tetrahedral;
@@ -1685,7 +1747,8 @@ namespace RDKit {
             stereo0D.neighbor[nid] = stereo0D.neighbor[nid - 1];
           stereo0D.neighbor[0] = i;
         }
-        if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+        Atom::ChiralType chiralTag;
+        if ((chiralTag = atom->getChiralTag()) != Atom::CHI_UNSPECIFIED) {
           std::string cipCode("");
           if (atom->hasProp("_CIPCode"))
             atom->getProp("_CIPCode", cipCode);
@@ -1695,29 +1758,42 @@ namespace RDKit {
           } else if (cipCode == "S") {
             stereo0D.parity = INCHI_PARITY_ODD;
             stereo0DEntries.push_back(stereo0D);
+          } else if (cipCode == "") {
+            // empty cipCode. try read tag directly
+            if (chiralTag == Atom::CHI_TETRAHEDRAL_CW) {
+              stereo0D.parity = INCHI_PARITY_EVEN;
+              stereo0DEntries.push_back(stereo0D);
+            } else if (chiralTag == Atom::CHI_TETRAHEDRAL_CCW) {
+              stereo0D.parity = INCHI_PARITY_ODD;
+              stereo0DEntries.push_back(stereo0D);
+            } else {
+              BOOST_LOG(rdWarningLog) << "unrecognized chirality tag ("
+                << chiralTag << ") on atom " << i << " is ignored."
+                << std::endl;
+            }
           } else {
-            BOOST_LOG(rdWarningLog) << "unrecognized chirality on atom "
-              << i << " is ignored." << std::endl;
+            BOOST_LOG(rdWarningLog) << "unrecognized chirality (" << cipCode <<
+              ") on atom " << i << " is ignored." << std::endl;
           }
         } else {
-          std::string molParity;
-          atom->getProp("molParity", molParity);
-          if (molParity == "2") {
-            stereo0D.parity = INCHI_PARITY_EVEN;
-            stereo0DEntries.push_back(stereo0D);
-          } else if (molParity == "1") {
-            stereo0D.parity = INCHI_PARITY_ODD;
-            stereo0DEntries.push_back(stereo0D);
-          } else if (molParity == "0") {
-            stereo0D.parity = INCHI_PARITY_NONE;
-            stereo0DEntries.push_back(stereo0D);
-          } else if (molParity == "3") {
-            stereo0D.parity = INCHI_PARITY_UNKNOWN;
-            stereo0DEntries.push_back(stereo0D);
-          } else {
-            BOOST_LOG(rdWarningLog) << "unrecognized parity on atom "
-              << molParity << " is ignored." << std::endl;
-          }
+          //std::string molParity;
+          //atom->getProp("molParity", molParity);
+          //if (molParity == "2") {
+          //  stereo0D.parity = INCHI_PARITY_EVEN;
+          //  stereo0DEntries.push_back(stereo0D);
+          //} else if (molParity == "1") {
+          //  stereo0D.parity = INCHI_PARITY_ODD;
+          //  stereo0DEntries.push_back(stereo0D);
+          //} else if (molParity == "0") {
+          //  stereo0D.parity = INCHI_PARITY_NONE;
+          //  stereo0DEntries.push_back(stereo0D);
+          //} else if (molParity == "3") {
+          //  stereo0D.parity = INCHI_PARITY_UNKNOWN;
+          //  stereo0DEntries.push_back(stereo0D);
+          //} else {
+          //  BOOST_LOG(rdWarningLog) << "unrecognized parity on atom "
+          //    << molParity << " is ignored." << std::endl;
+          //}
         }
       }
     }
@@ -1787,6 +1863,15 @@ namespace RDKit {
         stereo0D.central_atom = NO_ATOM;
         stereo0D.type = INCHI_StereoType_DoubleBond;
         stereo0DEntries.push_back(stereo0D);
+      } else if (bond->getStereo() == Bond::STEREOANY) {
+        // have to treat STEREOANY separately because RDKit will clear out
+        // StereoAtoms information.
+        // Here we just change the coordiates of the two end atoms - to bring
+        // them really close - so that InChI will not try to infer stereobond
+        // info from coordinates.
+        inchiAtoms[atomIndex1].x = inchiAtoms[atomIndex2].x;
+        inchiAtoms[atomIndex1].y = inchiAtoms[atomIndex2].y;
+        inchiAtoms[atomIndex1].z = inchiAtoms[atomIndex2].z;
       }
       
       // number of bonds

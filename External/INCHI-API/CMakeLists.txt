@@ -51,7 +51,7 @@ endif(RDK_BUILD_INCHI_SUPPORT)
 # check whether InChI support is ON after the search
 if(RDK_BUILD_INCHI_SUPPORT)
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES} 
-	  GraphMol RDGeneral Depictor SubstructMatch)
+	  GraphMol RDGeneral Depictor SubstructMatch SmilesParse)
 
   if(RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)

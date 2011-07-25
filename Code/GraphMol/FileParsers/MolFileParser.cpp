@@ -311,6 +311,7 @@ namespace RDKit{
           if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
             mass = FileParserUtils::toInt(text.substr(spos,4));
             atom->setMass(static_cast<double>(mass));
+            atom->setProp("_MolISOProp", mass);
             spos += 4;
           } else {
             atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
