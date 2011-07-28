@@ -2685,8 +2685,7 @@ void testChiralPhosphorous(){
     TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
     std::string cip;
     m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
-    // FIX: this isn't right according to chemdraw and marvin
-    TEST_ASSERT(cip=="S");  
+    TEST_ASSERT(cip=="R");  
     delete m;
   }
   {
@@ -2697,7 +2696,7 @@ void testChiralPhosphorous(){
     TEST_ASSERT(m->getAtomWithIdx(5)->hasProp("_CIPCode"));
     std::string cip;
     m->getAtomWithIdx(5)->getProp("_CIPCode",cip);
-    TEST_ASSERT(cip=="R");  
+    TEST_ASSERT(cip=="S");  
     delete m;
   }
   {

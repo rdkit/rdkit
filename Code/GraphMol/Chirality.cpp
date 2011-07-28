@@ -189,7 +189,27 @@ namespace RDKit{
             // this is to treat aromatic linkages on fair footing. i.e. at least in the
             // first iteration --c(:c):c and --C(=C)-C should look the same.
             // this was part of issue 3009911
-            unsigned int count=static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()+.1));
+
+            unsigned int count;
+            if(bond->getBondType()==Bond::DOUBLE &&
+               mol.getAtomWithIdx(*nbr)->getAtomicNum()==15 &&
+               (mol.getAtomWithIdx(*nbr)->getDegree()==4 ||
+                mol.getAtomWithIdx(*nbr)->getDegree()==3) ) {
+              // a special case for chiral phophorous compounds
+              // (this was leading to incorrect assignment of
+              // R/S labels ):
+              count=1;
+
+              // general justification of this is:
+              // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
+              // Multiple-Bond Unsaturation and Aromaticity". It contains several
+              // conventions of which convention (b) is the one applying here:
+              // "(b) Contibutions by d orbitals to bonds of quadriligant atoms are
+              // neglected."
+              // FIX: this applies to more than just P
+            } else {
+              count=static_cast<unsigned int>(floor(2.*bond->getBondTypeAsDouble()+.1));
+            }
             CIP_ENTRY::iterator ePos=std::lower_bound(localEntry.begin(),localEntry.end(),rank);
             localEntry.insert(ePos,count,rank);
             ++nbr;
