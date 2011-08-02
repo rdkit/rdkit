@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2008-2010 Greg Landrum
+//  Copyright (C) 2008-2011 Greg Landrum
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -9,7 +9,7 @@
 //
 //  Can be built with:
 //   g++ -o sample.exe sample.cpp -I$RDBASE/Code -I$RDBASE/Extern \ 
-//       -L$RDBASE/lib -L$RDBASE/bin -lFileParsers -lSmilesParse -lDepictor \ 
+//       -L$RDBASE/lib -lChemReactions -lFileParsers -lSmilesParse -lDepictor \ 
 //       -lSubstructMatch -lGraphMol -lDataStructs -lRDGeometryLib -lRDGeneral
 //
 
@@ -20,6 +20,10 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/ReactionPickler.h>
+
 #include <RDGeneral/RDLog.h>
 #include <vector>
 #include <algorithm>
@@ -250,7 +254,40 @@ void CleanupMolecule(){
   BOOST_LOG(rdInfoLog)<<" fixed SMILES: " <<smiles<<std::endl;
 }
 
+void ReactionDemo(){
+  // reaction smarts for a crude amide-bond formation definition:
+  std::string sma="[C:1](=[O:2])[OH].[N:3]>>[O:2]=[C:1][N:3]";
+  // construct the reaction:
+  ChemicalReaction *rxn = RxnSmartsToChemicalReaction(sma); 
+  // now initialize it and check for errors:
+  rxn->initReactantMatchers();
+  unsigned int nWarn,nError;
+  rxn->validate(nWarn,nError);
+  
+  ROMol *mol;
+  MOL_SPTR_VECT reacts;
 
+  // build the list of reactants:
+  ROMOL_SPTR react1(SmilesToMol("CC(=O)O"));
+  ROMOL_SPTR react2(SmilesToMol("CCNCC1NC1"));
+  reacts.push_back(react1);
+  reacts.push_back(react2);
+
+  // run the reaction, it returns a vector of vectors of product molecules:
+  std::vector<MOL_SPTR_VECT> prods;
+  prods = rxn->runReactants(reacts);
+
+  // for each of the possible applications of the reaction to the reactants:
+  for(unsigned int i=0;i<prods.size();++i){
+    BOOST_LOG(rdInfoLog)<<" product set: " <<i<<std::endl;
+    // for each product of that application:
+    for(unsigned int j=0;j<prods[i].size();++j){
+      std::string psmiles=MolToSmiles(*prods[i][j],true); 
+      BOOST_LOG(rdInfoLog)<<"   product : " <<j<<" "<<psmiles<<std::endl;
+     }
+  }
+  
+}
 
 int
 main(int argc, char *argv[])
@@ -261,4 +298,5 @@ main(int argc, char *argv[])
   WorkWithSmarts();
   DepictDemo();
   CleanupMolecule();
+  ReactionDemo();
 }
