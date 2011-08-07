@@ -39,6 +39,7 @@ set(RDKit_ExternalDir "${CMAKE_SOURCE_DIR}/External")
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
   set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/lib")
+  set(RDKit_HdrDir "Code") # used in rdkit-config.cmake, path prefix not needed.
 else(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "bin")
   set(RDKit_LibDir "lib${LIB_SUFFIX}")
@@ -53,6 +54,21 @@ endif(RDK_BUILD_SWIG_WRAPPERS)
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)
+install(EXPORT ${RDKit_EXPORTED_TARGETS} DESTINATION ${RDKit_LibDir})
+
+# create and install package configuration and version files
+configure_file (
+    ${RDKit_SOURCE_DIR}/rdkit-config.cmake.in
+    ${RDKit_BINARY_DIR}/rdkit-config.cmake @ONLY)
+
+configure_file (
+    ${RDKit_SOURCE_DIR}/rdkit-config-version.cmake.in
+    ${RDKit_BINARY_DIR}/rdkit-config-version.cmake @ONLY)
+
+install(FILES 
+    ${RDKit_BINARY_DIR}/rdkit-config.cmake
+    ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
+    DESTINATION ${RDKit_LibDir})
 
 # extra boost versions
 if(MSVC)

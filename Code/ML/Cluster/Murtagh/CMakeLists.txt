@@ -1,4 +1,5 @@
-add_library(hc STATIC hc.c hcdriver.c)
+# add_library(hc STATIC hc.c hcdriver.c)
+rdkit_library(hc hc.c hcdriver.c)
 
 rdkit_python_extension(Clustering Clustering.cpp
                        DEST ML/Cluster

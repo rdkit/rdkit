@@ -13,6 +13,8 @@ else(RDKit_Revision)
   set(RDKit_VERSION "${RDKit_VERSION}.0")
 endif(RDKit_Revision)
 
+set(RDKit_EXPORTED_TARGETS rdkit-targets)
+
 macro(rdkit_library)
   PARSE_ARGUMENTS(RDKLIB
     "LINK_LIBRARIES;DEST"
@@ -22,7 +24,7 @@ macro(rdkit_library)
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
-    INSTALL(TARGETS ${RDKLIB_NAME} 
+    INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
             COMPONENT dev )
   else(MSVC)
@@ -31,12 +33,12 @@ macro(rdkit_library)
     # boundaries. As of now (June 2010), this doesn't work
     # with g++ unless libraries are shared.
       add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
-      INSTALL(TARGETS ${RDKLIB_NAME} 
+      INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
               COMPONENT runtime )
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
       if(RDK_INSTALL_STATIC_LIBS)
-        INSTALL(TARGETS ${RDKLIB_NAME}_static
+        INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
                 DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
                 COMPONENT dev )
       endif(RDK_INSTALL_STATIC_LIBS)
