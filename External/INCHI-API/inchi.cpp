@@ -1596,43 +1596,44 @@ namespace RDKit {
     std::vector<MatchVectType> fgpMatches;
     SubstructMatch(mol, *q, fgpMatches);
     delete q;
-    // no action if none or more than one match was found
-    if (fgpMatches.size() != 1) {
-      return;
-    }
-
-    // collect matching atoms
-    int map[5];
-    MatchVectType match = fgpMatches[0];
-    for (MatchVectType::const_iterator mi = match.begin(); mi != match.end();
-         mi ++) {
-      map[mi->first] = mi->second;
-    }
-    // check charges
-    if (mol.getAtomWithIdx(map[1])->getFormalCharge() != 3)
-      return;
-    int unchargedFound = -1;
-    for (int i = 0; i < 5; i ++) {
-      if (i == 1) continue;
-      Atom* o = mol.getAtomWithIdx(map[i]);
-      if (o->getFormalCharge() == 0) {
-        if (unchargedFound != -1)
-          return; // too many uncharged oxygen
-        else
-          unchargedFound = i;
+    // replace all matches
+    for (int match_id = 0; match_id < fgpMatches.size(); match_id ++) {
+      // collect matching atoms
+      int map[5];
+      MatchVectType match = fgpMatches[match_id];
+      for (MatchVectType::const_iterator mi = match.begin(); mi != match.end();
+           mi ++) {
+        map[mi->first] = mi->second;
       }
-    }
+      // check charges
+      if (mol.getAtomWithIdx(map[1])->getFormalCharge() != 3)
+        return;
+      int unchargedFound = -1;
+      for (int i = 0; i < 5; i ++) {
+        if (i == 1) continue;
+        Atom* o = mol.getAtomWithIdx(map[i]);
+        if (o->getFormalCharge() == 0) {
+          if (unchargedFound != -1)
+            return; // too many uncharged oxygen
+          else
+            unchargedFound = i;
+        }
+      }
 
-    // flip bonds and remove charges
-    for (int i = 0; i < 5; i ++) {
-      if (i == 1) continue;
-      if (i == unchargedFound) continue;
-      if (unchargedFound == -1 && i == 0) continue;
-      mol.getBondBetweenAtoms(map[1], map[i])->setBondType(Bond::DOUBLE);
-      mol.getAtomWithIdx(map[i])->setFormalCharge(0);
+      // flip bonds and remove charges
+      for (int i = 0; i < 5; i ++) {
+        if (i == 1) continue;
+        if (i == unchargedFound) continue;
+        if (unchargedFound == -1 && i == 0) {
+          mol.getBondBetweenAtoms(map[1], map[i])->setBondType(Bond::SINGLE);
+          mol.getAtomWithIdx(map[i])->setFormalCharge(-1);
+          continue;
+        }
+        mol.getBondBetweenAtoms(map[1], map[i])->setBondType(Bond::DOUBLE);
+        mol.getAtomWithIdx(map[i])->setFormalCharge(0);
+      }
+      mol.getAtomWithIdx(map[1])->setFormalCharge(0);
     }
-    mol.getAtomWithIdx(map[1])->setFormalCharge(0);
-
     return;
   }
 
