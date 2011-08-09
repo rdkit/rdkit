@@ -59,10 +59,10 @@ Some examples:
 +----------+------------------------+
 | N=c(a)a  | 0                      |
 +----------+------------------------+
-| *(a)a    | 0, 1, or 2             |
+| \*(a)a   | 0, 1, or 2             |
 +----------+------------------------+
 
-**Notation** a: any aromatic atom; A: any atom, include H; *: a dummy atom
+**Notation** a: any aromatic atom; A: any atom, include H; \*: a dummy atom
 
 Notice that exocyclic bonds to electronegative atoms “steal” the valence electron from the ring atom and that dummy atoms contribute whatever count is necessary to make the ring aromatic.
 
@@ -107,14 +107,16 @@ Reaction SMARTS
 Not SMIRKS [#smirks]_ , not reaction SMILES [#smiles]_, derived from SMARTS [#smarts]_.
 
 
-The general grammar for a reaction SMARTS is ::
+The general grammar for a reaction SMARTS is :
 
-  reaction:reactants '>>' products
-  reactants:molecules
-  products:molecules
-  molecules:molecule|molecules '.' molecule
+.. productionlist::
+  reaction: reactants ">>" products
+  reactants: molecules
+  products: molecules
+  molecules: molecule
+           : molecules "." molecule
+  molecule: a valid SMARTS string without "." characters
 
-and a molecule is a valid SMARTS string (without '.' characters).
 
 Some features
 -------------
