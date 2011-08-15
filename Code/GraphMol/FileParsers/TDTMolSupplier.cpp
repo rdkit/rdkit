@@ -359,9 +359,12 @@ namespace RDKit {
     PRECONDITION(dp_inStream,"no stream");
     CHECK_INVARIANT(idx >= 0, "");
 
+    // dp_inStream->seekg() is called for all idx values
+    // and earlier calls to next() may have put the stream into a bad state
+    dp_inStream->clear();
+
     // move until we hit the desired idx
     if (idx < d_molpos.size() ) {
-      dp_inStream->clear();
       dp_inStream->seekg(d_molpos[idx]);
       d_last = idx;
     }

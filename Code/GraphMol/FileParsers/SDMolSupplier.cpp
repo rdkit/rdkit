@@ -177,15 +177,18 @@ namespace RDKit {
   void SDMolSupplier::moveTo(unsigned int idx) {
     PRECONDITION(dp_inStream,"no stream");
 
+    // dp_inStream->seekg() is called for all idx values
+    // and earlier calls to next() may have put the stream into a bad state
+    dp_inStream->clear();
+
     // move until we hit the desired idx
     if (idx < d_molpos.size() ) {
-      dp_inStream->clear();
       dp_inStream->seekg(d_molpos[idx]);
       d_last = idx;
     } else {
       std::string tempStr;
-      d_last = d_molpos.size() - 1;
       dp_inStream->seekg(d_molpos.back());
+      d_last = d_molpos.size() - 1;
       while ((d_last < static_cast<int>(idx)) && (!dp_inStream->eof()) ) {
         d_line++;
         tempStr = getLine(dp_inStream);

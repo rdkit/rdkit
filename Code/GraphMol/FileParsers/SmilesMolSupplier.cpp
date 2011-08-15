@@ -374,6 +374,10 @@ namespace RDKit {
       throw FileParseException(errout.str());
     }
 
+    // dp_inStream->seekg() is called for all idx values
+    // and earlier calls to next() may have put the stream into a bad state
+    dp_inStream->clear();
+
     // -----------
     // Case 1: we have already read the particular entry:
     //
