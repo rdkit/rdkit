@@ -18,6 +18,7 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/format.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 
@@ -96,15 +97,91 @@ namespace RDKit{
     return res;
   }
 
+  bool isListQuery(const Atom::QUERYATOM_QUERY *q){
+    // list queries are series of nested ors of AtomAtomicNum queries
+    PRECONDITION(q,"bad query");
+    bool res=false;
+    std::string descr=q->getDescription();
+    if(descr=="AtomOr"){
+      res=true;
+      for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI cIt=q->beginChildren();
+          cIt!=q->endChildren() && res;++cIt){
+        std::string descr=(*cIt)->getDescription();
+        // we don't allow negation of any children of the query:
+        if((*cIt)->getNegation()){
+          res=false;
+        } else if(descr=="AtomOr"){
+          res = isListQuery((*cIt).get());
+        } else if(descr!="AtomAtomicNum"){
+          res=false;
+        }
+      }
+    }
+    return res;
+  }
+
+  void getListQueryVals(const Atom::QUERYATOM_QUERY *q,INT_VECT &vals){
+    // list queries are series of nested ors of AtomAtomicNum queries
+    PRECONDITION(q,"bad query");
+    std::string descr=q->getDescription();
+    PRECONDITION(descr=="AtomOr","bad query");
+    if(descr=="AtomOr"){
+      for(Atom::QUERYATOM_QUERY::CHILD_VECT_CI cIt=q->beginChildren();
+          cIt!=q->endChildren();++cIt){
+        std::string descr=(*cIt)->getDescription();
+        CHECK_INVARIANT((descr=="AtomOr"||descr=="AtomAtomicNum"),"bad query");
+        // we don't allow negation of any children of the query:
+        if(descr=="AtomOr"){
+          getListQueryVals((*cIt).get(),vals);
+        } else if(descr=="AtomAtomicNum"){
+          vals.push_back(static_cast<ATOM_EQUALS_QUERY *>((*cIt).get())->getVal());
+        }
+      }
+    }
+  }
+
+  bool hasListQuery(const Atom *atom){
+    PRECONDITION(atom,"bad atom");
+    bool res=false;
+    if(atom->hasQuery()){
+      res=isListQuery(atom->getQuery());
+    }
+    return res;
+  }
+
   const std::string GetMolFileQueryInfo(const RWMol &mol){
     std::stringstream ss;
-
+    boost::dynamic_bitset<> listQs(mol.getNumAtoms());
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	atomIt!=mol.endAtoms();++atomIt){
-      if(hasComplexQuery(*atomIt)){
+      if(hasListQuery(*atomIt)) listQs.set((*atomIt)->getIdx());
+    }    
+    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+	atomIt!=mol.endAtoms();++atomIt){
+      if(!listQs[(*atomIt)->getIdx()] && hasComplexQuery(*atomIt)){
 	std::string sma=SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(*atomIt));
 	ss<< "V  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" "<<sma<<std::endl;
       }
+    }
+
+    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+	atomIt!=mol.endAtoms();++atomIt){
+      if(listQs[(*atomIt)->getIdx()]){
+        INT_VECT vals;
+        getListQueryVals((*atomIt)->getQuery(),vals);
+        ss<<"M  ALS "<<std::setw(3)<<(*atomIt)->getIdx()+1<<" ";
+        ss<<std::setw(2)<<vals.size();
+        if((*atomIt)->getQuery()->getNegation()){
+          ss<<" T";
+        } else {
+          ss<<" F";
+        }
+        BOOST_FOREACH(int val,vals){
+          ss<<" "<<std::setw(3)<<std::left<<(PeriodicTable::getTable()->getElementSymbol(val));
+        }
+        ss<<"\n";
+      }
+
     }
     return ss.str();
   }
@@ -134,7 +211,11 @@ namespace RDKit{
     if(atom->hasProp("_MolFileRLabel")){
       res="R#";
     } else if(hasComplexQuery(atom)){
-      res="*";
+      if(hasListQuery(atom)){
+        res="L";
+      } else {
+        res="*";
+      }
     } else if(atom->getAtomicNum()){
       res=atom->getSymbol();
     } else {
@@ -463,7 +544,7 @@ namespace RDKit{
     res += GetMolFileRGroupInfo(tmol);
     res += GetMolFileQueryInfo(tmol);
     
-    // FIX: aliases, atom lists, etc.
+    // FIX: aliases, etc.
     res += "M  END\n";
     return res;
   }

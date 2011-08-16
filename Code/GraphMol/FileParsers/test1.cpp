@@ -2718,6 +2718,54 @@ void testChiralPhosphorous(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3392107(){
+  // basic writing test
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3392107 "<< std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3392107.1.mol";
+    RWMol *m = MolFileToMol(fName);
+
+    std::string smi;
+    MatchVectType mv;
+    RWMol *m2;
+
+    smi = "C1CCCCC1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==6);
+    delete m2;
+
+    smi = "C1CCCCN1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==6);
+    delete m2;
+
+    smi = "C1CCNCN1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(SubstructMatch(*m2,*m,mv));
+    TEST_ASSERT(mv.size()==6);
+    delete m2;
+
+    smi = "C1NCNCN1";
+    m2 = SmilesToMol(smi);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!SubstructMatch(*m2,*m,mv));
+    delete m2;
+
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
+
+
+
   
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2764,10 +2812,11 @@ int main(int argc,char *argv[]){
   testIssue3359739();
   testIssue3374639();
   testThreeCoordinateChirality();
-#endif
   testIssue3375647();
   testIssue3375684();
   testChiralPhosphorous();
+#endif
+  testIssue3392107();
 
 
   return 0;

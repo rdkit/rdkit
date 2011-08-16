@@ -539,7 +539,11 @@ namespace RDKit{
         int atNum = PeriodicTable::getTable()->getAtomicNumber(atSymb);
         if(!i){
           a = new QueryAtom(*(mol->getAtomWithIdx(idx)));
+          // replace the query:
+          Atom::QUERYATOM_QUERY *oq=a->getQuery();
           a->setAtomicNum(atNum);
+          a->setQuery(makeAtomNumEqualsQuery(atNum));
+          delete oq;
         } else {
           a->expandQuery(makeAtomNumEqualsQuery(atNum),Queries::COMPOSITE_OR,true);
         }
