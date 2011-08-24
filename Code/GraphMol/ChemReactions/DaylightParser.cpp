@@ -47,34 +47,56 @@ namespace RDKit {
           prodIt!=rxn->endProductTemplates();++prodIt){
         for(ROMol::AtomIterator prodAtomIt=(*prodIt)->beginAtoms();
             prodAtomIt!=(*prodIt)->endAtoms();++prodAtomIt){
-          if((*prodAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-             (*prodAtomIt)->getChiralTag()!=Atom::CHI_OTHER &&
-             (*prodAtomIt)->hasProp("molAtomMapNumber")) {
+
+          if ( (*prodAtomIt)->hasProp("molAtomMapNumber") ) {
             int mapNum;
             (*prodAtomIt)->getProp("molAtomMapNumber",mapNum);
 
             for(MOL_SPTR_VECT::const_iterator reactIt=rxn->beginReactantTemplates();
                 reactIt!=rxn->endReactantTemplates();++reactIt){
+
               for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
                   reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
-                if((*reactAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-                   (*reactAtomIt)->getChiralTag()!=Atom::CHI_OTHER &&
-                   (*reactAtomIt)->hasProp("molAtomMapNumber")) {
+
+                if((*reactAtomIt)->hasProp("molAtomMapNumber")) {
                   int reactMapNum;
                   (*reactAtomIt)->getProp("molAtomMapNumber",reactMapNum);
                   if(reactMapNum==mapNum){
                     // finally, in the bowels of the nesting, we get to some actual
                     // work:
-                    if((*reactAtomIt)->getChiralTag()==(*prodAtomIt)->getChiralTag()){
-                      (*prodAtomIt)->setProp("molInversionFlag",2);
-                      //BOOST_LOG(rdInfoLog) << "preserve at " << (*prodAtomIt)->getIdx() << std::endl;   
+                    if( (*reactAtomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ) {
+                      if( (*prodAtomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ) {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::KEEP);                 // Keep
+                      } else if ( (*prodAtomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ) {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::INVERT);                 // Invert
+                      } else {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::RACEMIZE);                 // Racemize
+                      }
+                    } else if ((*reactAtomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ) {
+                      if( (*prodAtomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ) {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::INVERT);                 // Invert
+                      } else if ( (*prodAtomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ) {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::KEEP);                 // Keep
+                      } else {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::RACEMIZE);                 // Racemize
+                      }
                     } else {
-                      // FIX: this is technically fragile: it should be checking
-                      // if the atoms both have tetrahedral chirality. However,
-                      // at the moment that's the only chirality available, so there's
-                      // no need to go monkeying around.
-                      (*prodAtomIt)->setProp("molInversionFlag",1);  
-                      //BOOST_LOG(rdInfoLog) << "invert at " << (*prodAtomIt)->getIdx() << std::endl;   
+                      if( (*prodAtomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ) {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::ADD_CW);                 // Add CW
+                      } else if ( (*prodAtomIt)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ) {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::ADD_CCW);                 // Add CCW
+                      } else {
+                        (*prodAtomIt)->setProp("molInversionFlag",
+                                               (int)ChemicalReaction::KEEP);                 // Implicit keep
+                      }
                     }
                   }
                 }

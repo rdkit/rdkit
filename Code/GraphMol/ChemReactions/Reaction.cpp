@@ -232,6 +232,31 @@ namespace RDKit {
       return RWMOL_SPTR(res);  
     } // end of initProduct()
     
+    //! determine whether the bond ordering around the product atom
+    //! is the same as that around the reactant atom
+    bool invertedBonding(const Atom *reactantAtom, RWMOL_SPTR product,
+                         std::map<unsigned int,unsigned int> reactProdAtomMap) {
+      PRECONDITION(reactantAtom,"Bad atom");
+      Atom *productAtom = product->getAtomWithIdx(reactProdAtomMap[reactantAtom->getIdx()]);
+
+      if ( productAtom->getDegree() < 3 ) {
+        return false;
+      }
+      INT_LIST newOrder; 
+      ROMol::OEDGE_ITER beg,end;
+      boost::tie(beg,end) = reactantAtom->getOwningMol().getAtomBonds(reactantAtom);
+      while(beg!=end){
+        const BOND_SPTR reactantBond=reactantAtom->getOwningMol()[*beg];
+        unsigned int oAtomIdx=reactantBond->getOtherAtomIdx(reactantAtom->getIdx());
+        const Bond *productBond;
+        productBond=product->getBondBetweenAtoms(productAtom->getIdx(),
+                                                 reactProdAtomMap[oAtomIdx]);
+        newOrder.push_back(productBond->getIdx());
+        ++beg;
+      }
+      return ( productAtom->getPerturbationOrder(newOrder)%2 != 0 )  ;
+    }
+
     void addReactantAtomsAndBonds(const ChemicalReaction *rxn,
                                   RWMOL_SPTR product,const ROMOL_SPTR reactantSptr,
                                   const MatchVectType &match,
@@ -249,6 +274,7 @@ namespace RDKit {
       std::map<unsigned int,unsigned int> reactProdAtomMap; // this maps atom indices from reactant->product
       std::vector<int> prodReactAtomMap(product->getNumAtoms(),-1); // this maps atom indices from product->reactant
       std::vector<const Atom *> chiralAtomsToCheck; 
+      std::vector<const Atom *> chiralTemplateAtomsToCheck; 
       for(unsigned int i=0;i<match.size();i++){
         const Atom *templateAtom=reactantTemplate->getAtomWithIdx(match[i].first);
         if(templateAtom->hasProp("molAtomMapNumber")){
@@ -336,34 +362,35 @@ namespace RDKit {
           // --------- --------- --------- --------- --------- --------- 
           // While we're here, set the stereochemistry 
           // FIX: this should be free-standing, not in this function.
-          if(reactantAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-             reactantAtom->getChiralTag()!=Atom::CHI_OTHER &&
-             productAtom->hasProp("molInversionFlag")){
-            int flagVal;
-            productAtom->getProp("molInversionFlag",flagVal);
-            productAtom->setChiralTag(reactantAtom->getChiralTag());
-            switch(flagVal){
-            case 0:
-              // FIX: should we clear the chirality or leave it alone? for now we leave it alone 
-              //productAtom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
-              break;
-            case 1:
-              // inversion
-              if(reactantAtom->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CW &&
-                 reactantAtom->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CCW){
-                BOOST_LOG(rdWarningLog) << "unsupported chiral type on reactant atom ignored\n";
-              } else {
-                productAtom->invertChirality();
-              }
-              break;
-            case 2:
-              // retention: do nothing
-              break;
-            default:
-              BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag on product atom ignored\n";
-            } 
+          // NB - RIC: Moved stereochemistry checks to after building of product, otherwise sometimes required bonds are not present.
+
+          // Chiral atoms in the product template have possibly different behaviour to those outside the template.
+          // 1a. [C@:1]>>[C@:1] keep stereochemistry of reactant atom
+          // 1b. [C@@:1]>>[C@@:1] keep stereochemistry of reactant atom
+          // 1c.  [C:1]>>[C:1] implilcitly keep stereochemistry of reactant atom (unless bond degree changes)
+          // 2.  [C@:1]>>[C@@:1] invert stereochemistry
+          // 3.  [C@:1]>>[C:1] explicitly remove stereochemistry (racemization)
+          // 4.  [C:1]>>[C@:1] explicitly add or replace stereochemistry (chiral catalyst) - requires 4 connected atoms (or 3+H).
+
+          if ((reactantAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED )||(productAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED )) {
+               chiralTemplateAtomsToCheck.push_back(reactantAtom);       //deals later with cases 1a&b, and 2 (excludes case 3&4)
           }
-          
+
+        //If the reaction transformed atom is specified chiral, but the reactant atom is unspecified, then set the product atom to unspecified.
+        // /e.g./  
+        // >>> rxn = AllChem.ReactionFromSmarts( '[O:2][C@:1]>>[Cl:2][C@:1]') # replace OH with Cl. Keep chirality of C, if present.
+        // >>> print Chem.MolToSmiles(rxn.RunReactants((Chem.MolFromSmiles('C[C@](O)(Br)I'),))[0][0],True)
+        // C[C@](Cl)(Br)I
+        //
+        // >>> rxn = AllChem.ReactionFromSmarts( '[O:2][C@:1]>>[Cl:2][C@:1]') # replace OH with Cl. Keep chirality of C, if present.
+        // >>> print Chem.MolToSmiles(rxn.RunReactants((Chem.MolFromSmiles('CC(O)(Br)I'),))[0][0],True)
+        // CC(Cl)(Br)I
+        //Could cause problems with reactions that form chiral products?
+          if(productAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+             (reactantAtom->getChiralTag()==Atom::CHI_UNSPECIFIED || reactantAtom->getChiralTag()==Atom::CHI_UNSPECIFIED)){
+              productAtom->setChiralTag(reactantAtom->getChiralTag());
+          }
+
           // now traverse:
           std::list< const Atom * > atomStack;
           atomStack.push_back(reactantAtom);
@@ -491,6 +518,81 @@ namespace RDKit {
       } // end of loop over chiralAtomsToCheck
 
       // ---------- ---------- ---------- ---------- ---------- ---------- 
+      // now we need to loop over atoms from the reactants that were chiral and 
+      // directly involved in the reaction in order to make sure their chirality has
+      // been correctly set
+      for(std::vector<const Atom *>::const_iterator atomIt=chiralTemplateAtomsToCheck.begin();
+          atomIt!=chiralTemplateAtomsToCheck.end();++atomIt){
+        const Atom *reactantAtom=*atomIt;
+        Atom *productAtom=product->getAtomWithIdx(reactProdAtomMap[reactantAtom->getIdx()]);
+//        CHECK_INVARIANT(reactantAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED,
+//                        "missing atom chirality.");
+//        CHECK_INVARIANT(reactantAtom->getChiralTag()==productAtom->getChiralTag(),
+//                        "invalid product chirality.");
+        
+        if( reactantAtom->getOwningMol().getAtomDegree(reactantAtom) !=
+            product->getAtomDegree(productAtom) ){
+          // If the number of bonds to the atom has changed in the course of the
+          // reaction we're lost, so remove chirality.
+          //  A word of explanation here: the atoms in the chiralTemplateAtomsToCheck set are
+          //  not explicitly mapped atoms of the reaction, so we really have no idea what
+          //  to do with this case. At the moment I'm not even really sure how this
+          //  could happen, but better safe than sorry.
+          productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        } else if( ( reactantAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
+                     reactantAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ) ) {
+            int flagVal=2;
+            if ( productAtom->hasProp("molInversionFlag") ) {
+                productAtom->getProp("molInversionFlag",flagVal);
+            }
+            productAtom->setChiralTag(reactantAtom->getChiralTag());
+            switch((ChemicalReaction::AtomInversionFlag)flagVal){
+            case ChemicalReaction::INVERT:
+              if ( ! invertedBonding(reactantAtom, product, reactProdAtomMap) ) {
+                productAtom->invertChirality();
+              }
+              break;
+            case ChemicalReaction::KEEP:
+              if ( invertedBonding(reactantAtom, product, reactProdAtomMap) ) {
+                productAtom->invertChirality();
+              }
+              break;
+            case ChemicalReaction::RACEMIZE:     //Racemize
+              productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
+              break;
+            case ChemicalReaction::ADD_CW:     //Force CW
+              productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+              break;
+            case ChemicalReaction::ADD_CCW:     //Force CCW
+              productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+              break;
+            default:
+              BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag on product atom ignored\n";
+            }
+        } else if( reactantAtom->hasProp("_CIPCode") ) {  // Reactant has no assigned chirality, but it chiral
+            int flagVal=0;
+            if ( productAtom->hasProp("molInversionFlag") ) {
+                productAtom->getProp("molInversionFlag",flagVal);
+            }
+            switch(flagVal){
+            case 0: 
+                 //No relevant flag set. Ignore.
+              break;
+            case 4:     //Force CW
+                productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+              break;
+            case 5:     //Force CCW
+                productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+              break;
+            default:
+              BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag on product atom ignored\n";
+            }
+        } 
+      } // end of loop over chiralTemplateAtomsToCheck
+      
+
+
+      // ---------- ---------- ---------- ---------- ---------- ---------- 
       // finally we may need to set the coordinates in the product conformer:
       if(productConf){
         productConf->resize(product->getNumAtoms());
@@ -568,13 +670,15 @@ namespace RDKit {
       return productMols;
     }
     
+
     // find the matches for each reactant:
     VectVectMatchVectType matchesByReactant;
     if(!ReactionUtils::getReactantMatches(reactants,this->m_reactantTemplates,matchesByReactant)){
       // some reactants didn't find a match, return an empty product list:
       return productMols;
     }
-    
+
+   
     // -------------------------------------------------------
     // we now have matches for each reactant, so we can start creating products:
     

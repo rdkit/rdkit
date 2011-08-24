@@ -87,6 +87,13 @@ namespace RDKit{
   */
   class ChemicalReaction {
   public:
+    typedef enum {
+      INVERT=1,
+      KEEP,
+      RACEMIZE,
+      ADD_CW,
+      ADD_CCW
+    } AtomInversionFlag;
     ChemicalReaction() : df_needsInit(true), df_implicitProperties(false) {};
     ChemicalReaction(const ChemicalReaction &other){
         df_needsInit=true;
