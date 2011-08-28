@@ -215,7 +215,8 @@ namespace RDKit {
     
     //! determine whether the bond ordering around the product atom
     //! is the same as that around the reactant atom
-    bool invertedBonding(const Atom *reactantAtom, RWMOL_SPTR product,
+    //! returns 0 if so, 1 if not, and -1 if the question can't be answered
+    int invertedBonding(const Atom *reactantAtom, RWMOL_SPTR product,
                          std::map<unsigned int,unsigned int> reactProdAtomMap) {
       PRECONDITION(reactantAtom,"Bad atom");
       Atom *productAtom = product->getAtomWithIdx(reactProdAtomMap[reactantAtom->getIdx()]);
@@ -233,7 +234,9 @@ namespace RDKit {
         const Bond *productBond;
         productBond=product->getBondBetweenAtoms(productAtom->getIdx(),
                                                  reactProdAtomMap[oAtomIdx]);
-        CHECK_INVARIANT(productBond,"bond not found");
+        if(!productBond) {
+          return -1;
+        }
         newOrder.push_back(productBond->getIdx());
         ++beg;
       }
@@ -529,15 +532,24 @@ namespace RDKit {
             productAtom->getProp("molInversionFlag",flagVal);
           }
           productAtom->setChiralTag(reactantAtom->getChiralTag());
+          int inverted=0;
+          if((ChemicalReaction::AtomInversionFlag)flagVal==ChemicalReaction::INVERT ||
+             (ChemicalReaction::AtomInversionFlag)flagVal==ChemicalReaction::KEEP ){
+            inverted=invertedBonding(reactantAtom, product, reactProdAtomMap);
+          }
           switch((ChemicalReaction::AtomInversionFlag)flagVal){
           case ChemicalReaction::INVERT:
-            if ( ! invertedBonding(reactantAtom, product, reactProdAtomMap) ) {
+            if (  inverted==0 ) {
               productAtom->invertChirality();
+            } else if(inverted<0){
+              productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
             }
             break;
           case ChemicalReaction::KEEP:
-            if ( invertedBonding(reactantAtom, product, reactProdAtomMap) ) {
+            if ( inverted>0 ) {
               productAtom->invertChirality();
+            } else if (inverted<0) {
+              productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
             }
             break;
           case ChemicalReaction::RACEMIZE:     //Racemize
