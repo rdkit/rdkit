@@ -1024,6 +1024,7 @@ void test11ChiralityRxn(){
   TEST_ASSERT(prods[0][0]->getNumBonds()==4);
   TEST_ASSERT(prods[0][1]->getNumAtoms()==1);
   TEST_ASSERT(prods[0][1]->getNumBonds()==0);
+  BOOST_LOG(rdInfoLog)<<" >>>"<<MolToSmiles(*prods[0][0],true)<<std::endl;
   TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="OC(F)(Cl)I");
   TEST_ASSERT(MolToSmiles(*prods[0][1],true)=="[Br-]");
   

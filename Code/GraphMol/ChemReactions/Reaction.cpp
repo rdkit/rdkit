@@ -185,19 +185,13 @@ namespace RDKit {
         // make sure we don't lose the bond dir information:
         Bond *newB=res->getBondWithIdx(bondIdx);
         newB->setBondDir(oldB->getBondDir());
-        // Special case/hack:
-        //  The product has been processed by the SMARTS parser.
-        //  The SMARTS parser tags unspecified bonds as single, but then adds
-        //  a query so that they match single or double
-        //  This caused Issue 1748846
-        //   http://sourceforge.net/tracker/index.php?func=detail&aid=1748846&group_id=160139&atid=814650
-        //  We need to fix that little problem now:
-#if 1
         if( oldB->hasQuery()){
           //  remember that the product has been processed by the SMARTS parser.
           std::string queryDescription=oldB->getQuery()->getDescription();
           if(queryDescription=="BondOr" &&
              oldB->getBondType()==Bond::SINGLE){
+            // Special case/hack:
+            //  The product has been processed by the SMARTS parser.
             //  The SMARTS parser tags unspecified bonds as single, but then adds
             //  a query so that they match single or double
             //  This caused Issue 1748846
@@ -214,19 +208,6 @@ namespace RDKit {
             newB->setProp("NullBond",1);
           }
         }
-#else
-        if( oldB->hasQuery() &&
-            oldB->getQuery()->getDescription()=="BondOr" &&
-            oldB->getBondType()==Bond::SINGLE){
-          if(newB->getBeginAtom()->getIsAromatic() && newB->getEndAtom()->getIsAromatic()){
-            newB->setBondType(Bond::AROMATIC);
-            newB->setIsAromatic(true);
-          } else {
-            newB->setBondType(Bond::SINGLE);
-            newB->setIsAromatic(false);
-          }
-        }
-#endif
       }
       
       return RWMOL_SPTR(res);  
@@ -238,6 +219,7 @@ namespace RDKit {
                          std::map<unsigned int,unsigned int> reactProdAtomMap) {
       PRECONDITION(reactantAtom,"Bad atom");
       Atom *productAtom = product->getAtomWithIdx(reactProdAtomMap[reactantAtom->getIdx()]);
+      CHECK_INVARIANT(productAtom,"Bad atom");
 
       if ( productAtom->getDegree() < 3 ) {
         return false;
@@ -251,6 +233,7 @@ namespace RDKit {
         const Bond *productBond;
         productBond=product->getBondBetweenAtoms(productAtom->getIdx(),
                                                  reactProdAtomMap[oAtomIdx]);
+        CHECK_INVARIANT(productBond,"bond not found");
         newOrder.push_back(productBond->getIdx());
         ++beg;
       }
@@ -541,34 +524,34 @@ namespace RDKit {
           productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
         } else if( ( reactantAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
                      reactantAtom->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW ) ) {
-            int flagVal=2;
-            if ( productAtom->hasProp("molInversionFlag") ) {
-                productAtom->getProp("molInversionFlag",flagVal);
+          int flagVal=ChemicalReaction::RACEMIZE;
+          if ( productAtom->hasProp("molInversionFlag") ) {
+            productAtom->getProp("molInversionFlag",flagVal);
+          }
+          productAtom->setChiralTag(reactantAtom->getChiralTag());
+          switch((ChemicalReaction::AtomInversionFlag)flagVal){
+          case ChemicalReaction::INVERT:
+            if ( ! invertedBonding(reactantAtom, product, reactProdAtomMap) ) {
+              productAtom->invertChirality();
             }
-            productAtom->setChiralTag(reactantAtom->getChiralTag());
-            switch((ChemicalReaction::AtomInversionFlag)flagVal){
-            case ChemicalReaction::INVERT:
-              if ( ! invertedBonding(reactantAtom, product, reactProdAtomMap) ) {
-                productAtom->invertChirality();
-              }
-              break;
-            case ChemicalReaction::KEEP:
-              if ( invertedBonding(reactantAtom, product, reactProdAtomMap) ) {
-                productAtom->invertChirality();
-              }
-              break;
-            case ChemicalReaction::RACEMIZE:     //Racemize
-              productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
-              break;
-            case ChemicalReaction::ADD_CW:     //Force CW
-              productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-              break;
-            case ChemicalReaction::ADD_CCW:     //Force CCW
-              productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-              break;
-            default:
-              BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag on product atom ignored\n";
+            break;
+          case ChemicalReaction::KEEP:
+            if ( invertedBonding(reactantAtom, product, reactProdAtomMap) ) {
+              productAtom->invertChirality();
             }
+            break;
+          case ChemicalReaction::RACEMIZE:     //Racemize
+            productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
+            break;
+          case ChemicalReaction::ADD_CW:     //Force CW
+            productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+            break;
+          case ChemicalReaction::ADD_CCW:     //Force CCW
+            productAtom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+            break;
+          default:
+            BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag on product atom ignored\n";
+          }
         } else if( reactantAtom->hasProp("_CIPCode") ) {  // Reactant has no assigned chirality, but it chiral
             int flagVal=0;
             if ( productAtom->hasProp("molInversionFlag") ) {
