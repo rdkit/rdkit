@@ -257,6 +257,37 @@ void testAromaticChargedFail(std::string rdbase){
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
 }
 
+void testIssue3399798(std::string rdbase){
+
+  BOOST_LOG(rdInfoLog) << "---------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- testing issue 3399798             --" << std::endl;
+  BOOST_LOG(rdInfoLog) << "---------------------------------------" << std::endl;
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3399798.mol2";
+    RWMol *m = Mol2FileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+
+    delete m;
+  }
+
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3399798.2.mol2";
+    RWMol *m = Mol2FileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "-- DONE                           --" << std::endl;
+  BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
+}
+
   //FIX still missing chirality by 3D structure  
   //  still missing input std::string
 
@@ -267,6 +298,7 @@ int main(int argc,char *argv[]){
 
   testGeneral(rdbase);
   testAromaticChargedFail(rdbase);
+  testIssue3399798(rdbase);
 
   return 0;
 }

@@ -871,24 +871,27 @@ namespace RDKit{
     MolOps::assignChiralTypesFrom3D(*res);
 
     if (res && sanitize ) {
-     try {
-       if(removeHs){
-         ROMol *tmp=MolOps::removeHs(*res,false,false);
-         delete res;
-         res = static_cast<RWMol *>(tmp);
-       } else {
-         MolOps::sanitizeMol(*res);
-       }
-     }
-     catch (MolSanitizeException &se){
-       BOOST_LOG(rdWarningLog)<<"sanitise ";
-       std::string molName;
-       res->getProp("_Name",molName);
-       BOOST_LOG(rdWarningLog)<<molName<<": ";
-       delete res;
-       throw se;
-     }
-   }
+      MolOps::cleanUp(*res);
+      res->updatePropertyCache(false);
+      MolOps::assignStereochemistry(*res,true,true);
+      try {
+        if(removeHs){
+          ROMol *tmp=MolOps::removeHs(*res,false,false);
+          delete res;
+          res = static_cast<RWMol *>(tmp);
+        } else {
+          MolOps::sanitizeMol(*res);
+        }
+      }
+      catch (MolSanitizeException &se){
+        BOOST_LOG(rdWarningLog)<<"sanitise ";
+        std::string molName;
+        res->getProp("_Name",molName);
+        BOOST_LOG(rdWarningLog)<<molName<<": ";
+        delete res;
+        throw se;
+      }
+    }
 
     return res;
   };

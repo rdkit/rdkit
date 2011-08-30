@@ -1635,10 +1635,13 @@ namespace RDKit{
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,unsigned int &nAtoms,
 			unsigned int &nBonds){
-        if(nAtoms<=0){
-          throw FileParseException("molecule has no atoms");
-        }
         conf = new Conformer(nAtoms);
+        if(nAtoms==0){
+          conf->set3D(false);
+          mol->addConformer(conf, true);
+          conf=0;
+          return true;
+        }
 
         ParseMolBlockAtoms(inStream,line,nAtoms,mol,conf);
 
