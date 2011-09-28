@@ -502,32 +502,31 @@ namespace RDKit{
     //     all atoms removed.
     //
     ROMol *mergeQueryHs(const ROMol &mol){
-      unsigned int currIdx=0;
       RWMol *res = new RWMol(mol);
+      std::vector<unsigned int> atomsToRemove;
+      
+      unsigned int currIdx=0;
       while(currIdx < res->getNumAtoms()){
         Atom *atom = res->getAtomWithIdx(currIdx);
-        if(atom->getAtomicNum()==1){
-          bool removeIt=false;
+        if(atom->getAtomicNum()!=1){
+          unsigned int numHsToRemove=0;
           ROMol::ADJ_ITER begin,end;
           boost::tie(begin,end) = res->getAtomNeighbors(atom);
           while(begin!=end){
-            if(res->getAtomWithIdx(*begin)->getAtomicNum() > 1){
-              removeIt=true;
-              break;
+            if(res->getAtomWithIdx(*begin)->getAtomicNum() == 1 &&
+               res->getAtomWithIdx(*begin)->getDegree() == 1 ){
+              atomsToRemove.push_back(*begin);
+              ++numHsToRemove;
             }
             ++begin;
           }
-          if(removeIt){
-            ROMol::ADJ_ITER begin,end;
-            boost::tie(begin,end) = res->getAtomNeighbors(atom);
-            Atom *nbr = res->getAtomWithIdx(*begin);
+          if(numHsToRemove){
             //
-            //  We've found the neighbor.
-            //   1) If the neighbor has no H query already:
+            //  We have H neighbors:
+            //   If we have no H query already:
             //        - add a generic H query
             //      else:
             //        - do nothing
-            //   2) Remove the atom from the molecular graph
             //
             //  Examples:
             //    C[H] -> [C;!H0]
@@ -541,9 +540,9 @@ namespace RDKit{
             //
             //  First we'll search for an H query:
             bool hasHQuery=false;
-            if(nbr->hasQuery()){
-              std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(nbr->getQuery()->beginChildren(),
-                  nbr->getQuery()->endChildren());
+            if(atom->hasQuery()){
+              std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(atom->getQuery()->beginChildren(),
+                                                                           atom->getQuery()->endChildren());
               while( !hasHQuery && childStack.size() ){
                 QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
                 childStack.pop_front();
@@ -558,30 +557,33 @@ namespace RDKit{
                   }
                 }
               }
-
-              if(!hasHQuery){
-                ATOM_EQUALS_QUERY *tmp=makeAtomHCountQuery(0);
-                tmp->setNegation(true);
-                nbr->expandQuery(tmp);
-              }
             } else {
-              // it wasn't a query atom, we need to replace it:
-              ATOM_EQUALS_QUERY *tmp=makeAtomHCountQuery(0);
-              tmp->setNegation(true);
+              // it wasn't a query atom, we need to replace it so that we can add a query:
+              ATOM_EQUALS_QUERY *tmp=makeAtomNumEqualsQuery(atom->getAtomicNum());
               QueryAtom *newAt = new QueryAtom;
               newAt->setQuery(tmp);
-              res->replaceAtom(nbr->getIdx(),newAt);
+              res->replaceAtom(atom->getIdx(),newAt);
               delete newAt;
+              atom = res->getAtomWithIdx(currIdx);
             }
-            res->removeAtom(atom);
-          } else {
-            // only increment the atom idx if we don't remove the atom
-            ++currIdx;
+            if(!hasHQuery){
+              for(unsigned int i=0;i<numHsToRemove;++i){
+                ATOM_EQUALS_QUERY *tmp=makeAtomHCountQuery(i);
+                tmp->setNegation(true);
+                atom->expandQuery(tmp);
+              }
+            }
           }
-        } else {
-          currIdx++;
         }
+        ++currIdx;
       }
+      std::sort(atomsToRemove.begin(),atomsToRemove.end());
+      for(std::vector<unsigned int>::const_reverse_iterator aiter=atomsToRemove.rbegin();
+          aiter!=atomsToRemove.rend();++aiter){
+        Atom *atom = res->getAtomWithIdx(*aiter);
+        res->removeAtom(atom);
+      }
+
       return static_cast<ROMol *>(res);
     };
   }; // end of namespace MolOps

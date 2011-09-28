@@ -647,9 +647,8 @@ void test8()
   m = MolOps::mergeQueryHs(*m2);
   TEST_ASSERT(m->getNumAtoms()==2);
   sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(m->getAtomWithIdx(0)));
-  TEST_ASSERT(sma=="[C&!H0]");
-  
-
+  //BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
+  TEST_ASSERT(sma=="[C&!H0&!H1&!H2]");
 
   // RDTrack Issue 1228:
   delete m;
