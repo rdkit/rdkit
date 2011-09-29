@@ -648,6 +648,7 @@ void test8()
   TEST_ASSERT(m->getNumAtoms()==2);
   sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(m->getAtomWithIdx(0)));
   //BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
+  // this was sf.net issue 3415204:
   TEST_ASSERT(sma=="[C&!H0&!H1&!H2]");
 
   // RDTrack Issue 1228:
@@ -700,6 +701,31 @@ void test8()
   TEST_ASSERT(m2->getNumAtoms()==2);
   TEST_ASSERT(!m->getAtomWithIdx(1)->hasQuery());
   TEST_ASSERT(m2->getAtomWithIdx(1)->hasQuery());
+  delete m;
+  delete m2;
+
+  // sf.net issue 3415206
+  smi = "CO[H]";
+  m = SmilesToMol(smi,false,false);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==3);
+  m2 = MolOps::mergeQueryHs(*m);
+  TEST_ASSERT(m2->getNumAtoms()==2);
+  sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(m2->getAtomWithIdx(1)));
+  //BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
+  TEST_ASSERT(sma=="[#8&!H0]");
+  delete m;
+  delete m2;
+
+  smi = "CN([H])[H]";
+  m = SmilesToMol(smi,false,false);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==4);
+  m2 = MolOps::mergeQueryHs(*m);
+  TEST_ASSERT(m2->getNumAtoms()==2);
+  sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(m2->getAtomWithIdx(1)));
+  //BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
+  TEST_ASSERT(sma=="[#7&!H0&!H1]");
   delete m;
   delete m2;
 
