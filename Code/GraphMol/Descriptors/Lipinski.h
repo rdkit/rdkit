@@ -29,12 +29,12 @@ namespace RDKit{
     */
     unsigned int calcLipinskiHBA(const ROMol &mol);
 
-    const std::string lipinskiHBDVersion="1.0.0";
+    const std::string lipinskiHBDVersion="2.0.0";
     //! calculates the standard Lipinski HBA definition
     /*!  
       \param mol        the molecule of interest
 
-      \return the number of Ns and Os with at least one H in the molecule
+      \return the number of N-H and O-H bonds in the molecule
 
     */
     unsigned int calcLipinskiHBD(const ROMol &mol);

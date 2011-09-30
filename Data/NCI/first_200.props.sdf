@@ -419,7 +419,7 @@ Nc1ccc2C(=O)c3ccccc3C(=O)c2c1
 3
 
 >  <NUM_LIPINSKIHDONORS>  (5) 
-1
+2
 
 >  <NUM_RINGS>  (5) 
 3
@@ -1150,7 +1150,7 @@ Nc1ccnc2cc(Cl)ccc12
 2
 
 >  <NUM_LIPINSKIHDONORS>  (13) 
-1
+2
 
 >  <NUM_RINGS>  (13) 
 2
@@ -1501,7 +1501,7 @@ CCCCCCCCCCCCCCCc1cc(O)ccc1N
 2
 
 >  <NUM_LIPINSKIHDONORS>  (17) 
-2
+3
 
 >  <NUM_RINGS>  (17) 
 1
@@ -1859,7 +1859,7 @@ Cc1cc(O)nc2nc(N)ccc12
 4
 
 >  <NUM_LIPINSKIHDONORS>  (21) 
-2
+3
 
 >  <NUM_RINGS>  (21) 
 2
@@ -1951,7 +1951,7 @@ CCOC(=O)c1cnc2nc(N)ccc2c1O
 6
 
 >  <NUM_LIPINSKIHDONORS>  (22) 
-2
+3
 
 >  <NUM_RINGS>  (22) 
 2
@@ -2724,7 +2724,7 @@ Cc1cc(C)c(N)c(C)c1
 1
 
 >  <NUM_LIPINSKIHDONORS>  (31) 
-1
+2
 
 >  <NUM_RINGS>  (31) 
 1
@@ -3264,7 +3264,7 @@ CCC(CC)(C(OC(=O)N)c1ccccc1)c2ccccc2
 3
 
 >  <NUM_LIPINSKIHDONORS>  (37) 
-1
+2
 
 >  <NUM_RINGS>  (37) 
 2
@@ -3720,7 +3720,7 @@ COc1cc([N+](=O)[O-])c(N)c(c1)[N+](=O)[O-]
 8
 
 >  <NUM_LIPINSKIHDONORS>  (42) 
-1
+2
 
 >  <NUM_RINGS>  (42) 
 1
@@ -3808,7 +3808,7 @@ NN=C(c1ccccc1)c2ccccc2
 2
 
 >  <NUM_LIPINSKIHDONORS>  (43) 
-1
+2
 
 >  <NUM_RINGS>  (43) 
 2
@@ -4464,7 +4464,7 @@ CCc1cnc(C)cc1N
 2
 
 >  <NUM_LIPINSKIHDONORS>  (50) 
-1
+2
 
 >  <NUM_RINGS>  (50) 
 1
@@ -5386,7 +5386,7 @@ CC(C)(C(=O)N)c1ccccc1
 2
 
 >  <NUM_LIPINSKIHDONORS>  (60) 
-1
+2
 
 >  <NUM_RINGS>  (60) 
 1
@@ -7409,7 +7409,7 @@ Nc1ccc(Cl)nc1
 2
 
 >  <NUM_LIPINSKIHDONORS>  (81) 
-1
+2
 
 >  <NUM_RINGS>  (81) 
 1
@@ -13029,7 +13029,7 @@ Nc1ccccc1C(=O)O
 3
 
 >  <NUM_LIPINSKIHDONORS>  (144) 
-2
+3
 
 >  <NUM_RINGS>  (144) 
 1
@@ -13268,7 +13268,7 @@ Nc1ccccc1S(=O)(=O)O
 4
 
 >  <NUM_LIPINSKIHDONORS>  (147) 
-2
+3
 
 >  <NUM_RINGS>  (147) 
 1
@@ -14778,7 +14778,7 @@ Nc1ccc(C=Cc2ccc(N)cc2S(=O)(=O)O)c(c1)S(=O)(=O)O
 8
 
 >  <NUM_LIPINSKIHDONORS>  (163) 
-4
+6
 
 >  <NUM_RINGS>  (163) 
 2
@@ -15169,7 +15169,7 @@ Nc1ccc(c2ccccc12)S(=O)(=O)O
 4
 
 >  <NUM_LIPINSKIHDONORS>  (168) 
-2
+3
 
 >  <NUM_RINGS>  (168) 
 2
@@ -16714,7 +16714,7 @@ CCCCOC(=O)N
 3
 
 >  <NUM_LIPINSKIHDONORS>  (187) 
-1
+2
 
 >  <NUM_RINGS>  (187) 
 0
@@ -17411,7 +17411,7 @@ CNCC(=O)N
 3
 
 >  <NUM_LIPINSKIHDONORS>  (195) 
-2
+3
 
 >  <NUM_RINGS>  (195) 
 0

@@ -634,6 +634,55 @@ void testMolFormula(){
 }
 
 
+void testIssue3415534(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Issue 3415534." << std::endl;
+
+  {
+    ROMol *mol= SmilesToMol("CN");
+    TEST_ASSERT(mol);
+    int nHBD=calcLipinskiHBD(*mol);
+    TEST_ASSERT(nHBD==2);
+    delete mol;
+  }
+  {
+    ROMol *mol= SmilesToMol("CNC");
+    TEST_ASSERT(mol);
+    int nHBD=calcLipinskiHBD(*mol);
+    TEST_ASSERT(nHBD==1);
+    delete mol;
+  }
+  {
+    ROMol *mol= SmilesToMol("C[NH3+]");
+    TEST_ASSERT(mol);
+    int nHBD=calcLipinskiHBD(*mol);
+    TEST_ASSERT(nHBD==3);
+    delete mol;
+  }
+  {
+    ROMol *mol= SmilesToMol("CO");
+    TEST_ASSERT(mol);
+    int nHBD=calcLipinskiHBD(*mol);
+    TEST_ASSERT(nHBD==1);
+    delete mol;
+  }
+  {
+    ROMol *mol= SmilesToMol("C[OH2+]");
+    TEST_ASSERT(mol);
+    int nHBD=calcLipinskiHBD(*mol);
+    TEST_ASSERT(nHBD==2);
+    delete mol;
+  }
+  {
+    ROMol *mol= SmilesToMol("COC");
+    TEST_ASSERT(mol);
+    int nHBD=calcLipinskiHBD(*mol);
+    TEST_ASSERT(nHBD==0);
+    delete mol;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -651,5 +700,6 @@ int main(){
   testLipinski1();
   testVSADescriptors();
   testMolFormula();
+  testIssue3415534();
 #endif
 }
