@@ -878,8 +878,9 @@ void test2MorganFPsFromAtoms(){
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
   
+    // tests issue 3415636
     fp = MorganFingerprints::getFingerprint(*mol,2,(std::vector<boost::uint32_t> *)NULL,&atoms);
-    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    TEST_ASSERT(fp->getNonzeroElements().size()==3);
     delete fp;
   
     delete mol;
@@ -922,6 +923,7 @@ void test2MorganFPsFromAtoms(){
     TEST_ASSERT(fp->getNonzeroElements().size()==3);
     delete fp;
   
+    // tests issue 3415636
     fp = MorganFingerprints::getFingerprint(*mol,3,(std::vector<boost::uint32_t> *)0,&atoms);
     TEST_ASSERT(fp->getNonzeroElements().size()==3);
     delete fp;

@@ -289,6 +289,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
               // we have seen this exact environment before, this atom
               // is now out of consideration:
               deadAtoms[atomIdx]=1;
+              //std::cerr<<"   atom: "<< atomIdx <<" is dead."<<std::endl;
             }
           }
         }
@@ -304,12 +305,16 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                 if(atomsSettingBits) (*atomsSettingBits)[bit].push_back(std::make_pair(iter->get<2>(),
                                                                                        layer+1));
               }
-              neighborhoods.push_back(iter->get<0>());
+              if(!fromAtoms || std::find(fromAtoms->begin(),fromAtoms->end(),
+                                         iter->get<2>())!=fromAtoms->end()){
+                neighborhoods.push_back(iter->get<0>());
+              }
             }
             //std::cerr<<" layer: "<<layer<<" atom: "<<iter->get<2>()<<" " <<iter->get<0>()<< " " << iter->get<1>() << " " << deadAtoms[iter->get<2>()]<<std::endl;
           } else {
             // we have seen this exact environment before, this atom
             // is now out of consideration:
+            //std::cerr<<"   atom: "<< iter->get<2>()<<" is dead."<<std::endl;
             deadAtoms[iter->get<2>()]=1;
           }
         }
