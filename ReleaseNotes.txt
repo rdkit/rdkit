@@ -1,19 +1,63 @@
 ******  Release_2011.09.1 *******
 (Changes relative to Release_2011.06.1)
 
+!!!!!! IMPORTANT !!!!!!
+ - A bug in the definition of the Lipinski HBD descriptor was fixed in
+   this release. The descriptor Lipinski.NHOHCount will return
+   different values for molecules containing Ns or Os with more than
+   one attached H.
+
 Acknowledgements:
+Eddie Cao, Richard Cooper, Paul Czodrowski, James Davidson, George
+Papadatos, Riccardo Vianello  
 
 Bug Fixes: 
+ - A problem with interpretation of stereochemistry from mol files was
+   fixed (Issue 3374639)
+ - Sterochemistry information for exocyclic double bonds in mol blocks
+   is no longer lost. (Issue 3375647)
+ - linear double bonds from mol files now have their stereochemistry
+   set correctly(Issue 3375684)
+ - Chirality for phosphates and sulfates is not longer automatically
+   removed. (Issue 3376319)
+ - A bug with the reading of query information from mol files was
+   fixed. (Issue 3392107)
+ - Sterochemistry is now cleaned up after processing mol2
+   files. (Issue 3399798) 
+ - mergeQueryHs now correctly handles atoms with multiple Hs (Issue
+   3415204) 
+ - mergeQueryHs now correctly handles atoms without initial query
+   information (Issue 3415206)
+ - the calcLipinskiHBD() (equivalent to Lipinski.NHOHCount) descriptor
+   now correctly handles Ns or Os with multiple Hs. (Issue 3415534)
+ - Morgan fingerprints generated using the fromAtoms argument now have
+   all bits from those atoms set.(Issue 3415636)
+ - A problem with the way MolSuppliers handle the EOF condition when
+   built with the most recent versions of g++ was fixed.
+ - Translation of RDKit stereochemistry information into InChI
+   stereochemistry information is improved.
 
 New Features:
 
 New Database Cartridge Features: 
+ - molecules can now be built from mol blocks using the function
+   mol_from_ctab(). The corresponding is_valid_ctab() function was
+   also added.
+ - the radius argument is now optional for the functions morganbv_fp,
+   morgan_fp, featmorganbv_fp, and featmorgan_fp. The default radius
+   for all four functions is 2.
 
 Deprecated modules (to be removed in next release):
 
 Removed modules:
 
 Other:
+ - The documentation in $RDBASE/Docs/Book has been migrated to use
+   Sphinx instead of OpenOffice.
+ - The optional InChI support can now be built using a system
+   installation of the InChI library.
+
+ 
 
 ******  Release_2011.06.1 *******
 (Changes relative to Release_2011.03.2)
