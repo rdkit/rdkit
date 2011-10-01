@@ -73,7 +73,7 @@ NOCount.__doc__="Number of Nitrogens and Oxygens"
 NOCount.version="1.0.0"
 NHOHCount = lambda x:rdMolDescriptors.CalcNumLipinskiHBD(x)
 NHOHCount.__doc__="Number of NHs or OHs"
-NHOHCount.version="1.0.0"
+NHOHCount.version="2.0.0"
 
 RingCount=lambda x:rdMolDescriptors.CalcNumRings(x)
 RingCount.version = "1.0.0"
