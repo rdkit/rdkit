@@ -252,3 +252,5 @@ typedef unsigned long long int	uintmax_t;
 #ifdef BUILD_INCHI_SUPPORT
 %include "../Inchi.i"
 #endif
+
+%include "../DiversityPick.i"

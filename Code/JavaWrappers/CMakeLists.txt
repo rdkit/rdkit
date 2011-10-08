@@ -17,6 +17,7 @@ if(WIN32)
 	Optimizer
 	MolAlign
 	Alignment
+        SimDivPickers
 	RDGeometryLib RDGeneral )
         if(RDK_BUILD_INCHI_SUPPORT)
           set(RDKit_Wrapper_Libs RDInchiLib ${INCHI_LIBRARIES} ${RDKit_Wrapper_Libs})
@@ -31,6 +32,7 @@ else()
 	Optimizer_static
 	MolAlign_static
 	Alignment_static
+        SimDivPickers_static
 	RDGeometryLib_static RDGeneral_static )
         if(RDK_BUILD_INCHI_SUPPORT)
           set(RDKit_Wrapper_Libs RDInchiLib_static Inchi_static ${RDKit_Wrapper_Libs})
