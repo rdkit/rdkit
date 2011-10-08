@@ -6,6 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+APIDOCSHOME   = $(RDBASE)/rdkit/docs
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -36,7 +37,11 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-html:
+apidocs:
+	mkdir -p $(BUILDDIR)/html/api
+	cp $(APIDOCSHOME)/*  $(BUILDDIR)/html/api
+
+html: apidocs
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
