@@ -27,7 +27,7 @@ PGXS := $(shell $(PG_CONFIG) --pgxs)
 
 DATA_built = rdkit.sql
 DATA = uninstall_rdkit.sql
-REGRESS = rdkit props btree molgist bfpgist sfpgist slfpgist fps ${INCHIREGRESS}
+REGRESS = rdkit-pre91 props btree molgist bfpgist sfpgist slfpgist fps ${INCHIREGRESS}
 
 include $(PGXS)
 

@@ -1,0 +1,4 @@
+comment = 'Cheminformatics functionality for PostgreSQL.'
+default_version = '3.1'
+module_pathname = '$libdir/rdkit'
+relocatable = true

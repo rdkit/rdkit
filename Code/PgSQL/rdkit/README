@@ -13,9 +13,10 @@ Installation:
  points to the directory where boost is installed.
  (check Makefile).
 
- cd $RDBASE/Code/PgSQL rdkit
+ cd $RDBASE/Code/PgSQL/rdkit
  
- make && make install && make installcheck 
+For versions of PostgreSQL < 9.1:
+ make -f Makefile-pre91 && make -f Makefile-pre91 install && make -f Makefile-pre91 installcheck 
 
  To install rdkit cartridge into the database DB: 
    psql DB < rdkit.sql
@@ -23,6 +24,14 @@ Installation:
  Uninstall cartridge from database DB:
    psql DB < uninstall_rdkit.sql
 
+For versions of PostgreSQL >= 9.1:
+ make -f Makefile-91 && make -f Makefile-91 install && make -f Makefile-91 installcheck 
+
+ To install rdkit cartridge into the database DB: 
+   psql -c 'CREATE EXTENSION rdkit' DB
+
+ Uninstall cartridge from database DB:
+   psql -c 'DROP EXTENSION rdkit CASCADE' DB < uninstall_rdkit.sql
 
 Data types:
 
