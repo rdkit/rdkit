@@ -31,7 +31,7 @@ For versions of PostgreSQL >= 9.1:
    psql -c 'CREATE EXTENSION rdkit' DB
 
  Uninstall cartridge from database DB:
-   psql -c 'DROP EXTENSION rdkit CASCADE' DB < uninstall_rdkit.sql
+   psql -c 'DROP EXTENSION rdkit CASCADE' DB
 
 Data types:
 
