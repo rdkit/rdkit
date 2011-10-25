@@ -14,10 +14,9 @@ Installation:
  (check Makefile).
 
  cd $RDBASE/Code/PgSQL/rdkit
+ make && make install && make installcheck 
  
 For versions of PostgreSQL < 9.1:
- make -f Makefile-pre91 && make -f Makefile-pre91 install && make -f Makefile-pre91 installcheck 
-
  To install rdkit cartridge into the database DB: 
    psql DB < rdkit.sql
 
@@ -25,8 +24,6 @@ For versions of PostgreSQL < 9.1:
    psql DB < uninstall_rdkit.sql
 
 For versions of PostgreSQL >= 9.1:
- make -f Makefile-91 && make -f Makefile-91 install && make -f Makefile-91 installcheck 
-
  To install rdkit cartridge into the database DB: 
    psql -c 'CREATE EXTENSION rdkit' DB
 

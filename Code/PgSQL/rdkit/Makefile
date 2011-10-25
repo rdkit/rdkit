@@ -27,13 +27,27 @@ CPLUSPLUSFLAGS += $(PG_CPPFLAGS)
 
 EXTENSION  = rdkit
 EXTVERSION = $(shell grep default_version $(EXTENSION).control | sed -e "s/default_version[[:space:]]*=[[:space:]]*'\([^']*\)'/\1/")
-DATA       = $(EXTENSION)--$(EXTVERSION).sql
 PG_CONFIG  = pg_config
 MODULE_big = rdkit
-REGRESS    = rdkit-91 props btree molgist bfpgist sfpgist slfpgist fps ${INCHIREGRESS}
 OBJS       = rdkit_io.o mol_op.o bfp_op.o sfp_op.o rdkit_gist.o low_gist.o guc.o cache.o adapter.o
 PGXS       := $(shell $(PG_CONFIG) --pgxs)
+PG91 = $(shell $(PG_CONFIG) --version | grep -qE " 8\.| 9\.0" && echo no || echo yes)
 
+ifeq ($(PG91),yes)
+all: $(EXTENSION)--$(EXTVERSION).sql
+
+$(EXTENSION)--$(EXTVERSION).sql: $(EXTENSION).sql91.in
+	cp $< $@
+
+REGRESS    = rdkit-91 props btree molgist bfpgist-91 sfpgist slfpgist fps ${INCHIREGRESS}
+DATA = $(EXTENSION)--$(EXTVERSION).sql
+EXTRA_CLEAN = $(EXTENSION)--$(EXTVERSION).sql
+else
+DATA_built = rdkit.sql
+DATA = uninstall_rdkit.sql
+REGRESS = rdkit-pre91 props btree molgist bfpgist-pre91 sfpgist slfpgist fps ${INCHIREGRESS}
+EXTRA_CLEAN = rdkit.sql
+endif
 include $(PGXS)
 
 # save our current CC value:

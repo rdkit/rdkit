@@ -1,0 +1,93 @@
+CREATE INDEX fpidx ON pgbfp USING gist (f);
+SET rdkit.tanimoto_threshold = 0.5;
+SET rdkit.dice_threshold = 0.6;
+SET enable_indexscan=off;
+SET enable_bitmapscan=off;
+SET enable_seqscan=on;
+SELECT
+    id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
+ORDER BY sml DESC, id limit 10;
+    id    |        sml        
+----------+-------------------
+  1959267 | 0.539663461538462
+ 16746067 | 0.536187563710499
+ 16219722 | 0.535889872173058
+ 23581811 | 0.535819430814524
+  5464092 |  0.53481331987891
+ 16682422 |  0.53481331987891
+  2930149 | 0.534603811434303
+ 16759738 |  0.53281096963761
+  5485201 | 0.532323232323232
+ 16745674 | 0.531658291457286
+(10 rows)
+
+SELECT
+    id, dice_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
+ORDER BY sml DESC, id limit 10;
+    id    |        sml        
+----------+-------------------
+  1959267 | 0.701014832162373
+ 16746067 | 0.698075646980756
+ 16219722 | 0.697823303457106
+ 23581811 |  0.69776357827476
+  5464092 | 0.696909927679158
+ 16682422 | 0.696909927679158
+  2930149 | 0.696732026143791
+ 16759738 | 0.695207667731629
+  5485201 | 0.694792353328939
+ 16745674 | 0.694225721784777
+(10 rows)
+
+SET enable_indexscan=on;
+SET enable_bitmapscan=on;
+SET enable_seqscan=off;
+SELECT
+    id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
+ORDER BY sml DESC, id limit 10;
+    id    |        sml        
+----------+-------------------
+  1959267 | 0.539663461538462
+ 16746067 | 0.536187563710499
+ 16219722 | 0.535889872173058
+ 23581811 | 0.535819430814524
+  5464092 |  0.53481331987891
+ 16682422 |  0.53481331987891
+  2930149 | 0.534603811434303
+ 16759738 |  0.53281096963761
+  5485201 | 0.532323232323232
+ 16745674 | 0.531658291457286
+(10 rows)
+
+SELECT
+    id, dice_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) # f
+ORDER BY sml DESC, id limit 10;
+    id    |        sml        
+----------+-------------------
+  1959267 | 0.701014832162373
+ 16746067 | 0.698075646980756
+ 16219722 | 0.697823303457106
+ 23581811 |  0.69776357827476
+  5464092 | 0.696909927679158
+ 16682422 | 0.696909927679158
+  2930149 | 0.696732026143791
+ 16759738 | 0.695207667731629
+  5485201 | 0.694792353328939
+ 16745674 | 0.694225721784777
+(10 rows)
+
+SET enable_indexscan=on;
+SET enable_bitmapscan=on;
+SET enable_seqscan=on;
+DROP INDEX fpidx;
