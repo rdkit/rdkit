@@ -177,6 +177,10 @@ extern "C" {
 
 #define RDKitTanimotoStrategy   (1)
 #define RDKitDiceStrategy       (2)
+#if PG_VERSION_NUM >= 90100
+#define RDKitOrderByTanimotoStrategy   (3)
+#define RDKitOrderByDiceStrategy       (4)
+#endif
 #define RDKitContains                   (3)
 #define RDKitContained                  (4)
 #define RDKitEquals                     (6)

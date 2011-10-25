@@ -44,4 +44,11 @@ SET enable_indexscan=on;
 SET enable_bitmapscan=on;
 SET enable_seqscan=on;
 
+SELECT
+    id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml
+FROM
+	pgbfp
+WHERE rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) % f
+ORDER BY rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol) <%> f limit 10;
+
 DROP INDEX fpidx;

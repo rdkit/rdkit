@@ -79,7 +79,7 @@ initRDKitGUC()
                            1.0,
                            PGC_USERSET,
                            0,
-#if PG_VERSION_NUM >= 91000
+#if PG_VERSION_NUM >= 90100
                            (GucRealCheckHook)TanimotoLimitAssign,
                            NULL,
 #else
@@ -98,7 +98,7 @@ initRDKitGUC()
                            1.0,
                            PGC_USERSET,
                            0,
-#if PG_VERSION_NUM >= 91000
+#if PG_VERSION_NUM >= 90100
                            (GucRealCheckHook)DiceLimitAssign,
                            NULL,
 #else

@@ -776,6 +776,104 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
   return calcConsistency(GIST_LEAF(entry), strategy, nCommon, nCommon, nKey, nQuery);
 }
 
+#if PG_VERSION_NUM >= 90100
+Datum  gbfp_distance(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(gbfp_distance);
+
+Datum
+gbfp_distance(PG_FUNCTION_ARGS)
+{
+    GISTENTRY      *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    // bytea          *query = PG_GETARG_DATA_TYPE_P(1);
+    StrategyNumber  strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+    bytea          *key = (bytea*)DatumGetPointer(entry->key);
+
+    bytea          *query;
+    double          nCommon, nCommonUp, nCommonDown, nQuery, distance;
+    double          nKey = 0.0;
+
+    fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                   fcinfo->flinfo->fn_extra,
+                                                   fcinfo->flinfo->fn_mcxt,
+                                                   PG_GETARG_DATUM(1),
+                                                   NULL, NULL,&query);
+
+    if (ISALLTRUE(query))
+        elog(ERROR, "Query malformed");
+
+    /*
+    * Counts basic numbers, but don't count nKey on inner
+    * page (see comments below)
+    */
+    nQuery = (double)sizebitvec(query);
+    if (ISALLTRUE(key))
+        {
+
+        if (GIST_LEAF(entry)) nKey = (double)SIGLENBIT(query);
+
+        nCommon = nQuery;
+        }
+    else
+        {
+        int i, cnt = 0;
+        unsigned char *pk = (unsigned char*)VARDATA(key),
+            *pq = (unsigned char*)VARDATA(query);
+
+        if (SIGLEN(key) != SIGLEN(query))
+            elog(ERROR, "All fingerprints should be the same length");
+
+        for(i=0;i<SIGLEN(key);i++)
+            cnt += number_of_ones[ pk[i] & pq[i] ];
+
+        nCommon = (double)cnt;
+        if (GIST_LEAF(entry))
+            nKey = (double)sizebitvec(key);
+        }
+
+    nCommonUp = nCommon;
+    nCommonDown = nCommon;
+
+    switch(strategy)
+    {
+        case RDKitOrderByTanimotoStrategy:
+        /*
+        * Nsame / (Na + Nb - Nsame)
+        */
+        if (GIST_LEAF(entry))
+        {
+            distance = nCommonUp / (nKey + nQuery - nCommonUp);
+        }
+
+        else
+        {
+            distance = nCommonUp / nQuery;
+        }
+
+        break;
+
+        case RDKitOrderByDiceStrategy:
+        /*
+        * 2 * Nsame / (Na + Nb)
+        */
+        if (GIST_LEAF(entry))
+        {
+            distance = 2.0 * nCommonUp / (nKey + nQuery);
+        }
+
+        else
+        {
+            distance =  2.0 * nCommonUp / (nCommonDown + nQuery);
+        }
+
+        break;
+
+        default:
+        elog(ERROR,"Unknown strategy: %d", strategy);
+    }
+
+    PG_RETURN_FLOAT8(1.0 - distance);
+}
+#endif
 
 PG_FUNCTION_INFO_V1(gbfp_consistent);
 Datum gbfp_consistent(PG_FUNCTION_ARGS);

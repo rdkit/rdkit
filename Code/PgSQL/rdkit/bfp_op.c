@@ -102,6 +102,31 @@ bfp_tanimoto_sml(PG_FUNCTION_ARGS) {
 
   PG_RETURN_FLOAT8(res);          
 }
+#if PG_VERSION_NUM >= 90100
+PG_FUNCTION_INFO_V1(bfp_tanimoto_dist);
+Datum           bfp_tanimoto_dist(PG_FUNCTION_ARGS);
+Datum
+bfp_tanimoto_dist(PG_FUNCTION_ARGS) {
+  MolBitmapFingerPrint    abfp,
+    bbfp;
+  double                  res;
+
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0),
+                                                 NULL, &abfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(1),
+                                                 NULL, &bbfp, NULL);
+
+  res = 1.0 - calcBitmapTanimotoSml(abfp, bbfp);
+
+  PG_RETURN_FLOAT8(res);
+}
+#endif
 
 PG_FUNCTION_INFO_V1(bfp_tanimoto_sml_op);
 Datum           bfp_tanimoto_sml_op(PG_FUNCTION_ARGS);
@@ -149,6 +174,32 @@ bfp_dice_sml(PG_FUNCTION_ARGS) {
 
   PG_RETURN_FLOAT8(res);          
 }
+
+#if PG_VERSION_NUM >= 90100
+PG_FUNCTION_INFO_V1(bfp_dice_dist);
+Datum           bfp_dice_dist(PG_FUNCTION_ARGS);
+Datum
+bfp_dice_dist(PG_FUNCTION_ARGS) {
+  MolBitmapFingerPrint    abfp,
+    bbfp;
+  double                  res;
+
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0),
+                                                 NULL, &abfp, NULL);
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(1),
+                                                 NULL, &bbfp, NULL);
+
+  res = 1.0 - calcBitmapDiceSml(abfp, bbfp);
+
+  PG_RETURN_FLOAT8(res);
+}
+#endif
 
 PG_FUNCTION_INFO_V1(bfp_dice_sml_op);
 Datum           bfp_dice_sml_op(PG_FUNCTION_ARGS);

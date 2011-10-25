@@ -176,6 +176,16 @@ RETURNS float8
 AS 'MODULE_PATHNAME', 'bfp_dice_sml'
 LANGUAGE C STRICT IMMUTABLE COST 10;
 
+CREATE OR REPLACE FUNCTION tanimoto_dist(bfp, bfp)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'bfp_tanimoto_dist'
+LANGUAGE C STRICT IMMUTABLE COST 10;
+
+CREATE OR REPLACE FUNCTION dice_dist(bfp, bfp)
+RETURNS float8
+AS 'MODULE_PATHNAME', 'bfp_dice_dist'
+LANGUAGE C STRICT IMMUTABLE COST 10;
+
 CREATE OR REPLACE FUNCTION tanimoto_sml_op(bfp, bfp)
 RETURNS bool 
 AS 'MODULE_PATHNAME', 'bfp_tanimoto_sml_op'
@@ -772,16 +782,37 @@ CREATE OR REPLACE FUNCTION gbfp_consistent(bytea,internal,int4)
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION gbfp_distance(internal, bytea, smallint, oid)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
 CREATE OR REPLACE FUNCTION gbfp_compress(internal)
     RETURNS internal
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
+
+CREATE OPERATOR <%> (
+    LEFTARG = bfp,
+    RIGHTARG = bfp,
+    PROCEDURE = tanimoto_dist(bfp, bfp),
+    COMMUTATOR = '<%>'
+);
+
+CREATE OPERATOR <#> (
+    LEFTARG = bfp,
+    RIGHTARG = bfp,
+    PROCEDURE = dice_dist(bfp, bfp),
+    COMMUTATOR = '<#>'
+);
 
 CREATE OPERATOR CLASS bfp_ops
 DEFAULT FOR TYPE bfp USING gist
 AS
     OPERATOR    1   % (bfp, bfp),
     OPERATOR    2   # (bfp, bfp),
+    OPERATOR    3   <%> FOR ORDER BY pg_catalog.float_ops,
+    OPERATOR    4   <#> FOR ORDER BY pg_catalog.float_ops,
     FUNCTION    1   gbfp_consistent (bytea, internal, int4),
     FUNCTION    2   gmol_union (bytea, internal),
     FUNCTION    3   gbfp_compress (internal),
@@ -789,6 +820,7 @@ AS
     FUNCTION    5   gmol_penalty (internal, internal, internal),
     FUNCTION    6   gmol_picksplit (internal, internal),
     FUNCTION    7   gmol_same (bytea, bytea, internal),
+    FUNCTION    8   (bfp, bfp) gbfp_distance(internal, bytea, smallint, oid),
 STORAGE         bytea;
 
 CREATE OR REPLACE FUNCTION gsfp_consistent(bytea,internal,int4)
