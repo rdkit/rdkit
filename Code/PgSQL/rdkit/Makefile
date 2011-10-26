@@ -46,7 +46,6 @@ else
 DATA_built = rdkit.sql
 DATA = uninstall_rdkit.sql
 REGRESS = rdkit-pre91 props btree molgist bfpgist-pre91 sfpgist slfpgist fps ${INCHIREGRESS}
-EXTRA_CLEAN = rdkit.sql
 endif
 include $(PGXS)
 
