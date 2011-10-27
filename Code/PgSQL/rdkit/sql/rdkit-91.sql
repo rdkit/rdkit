@@ -159,3 +159,8 @@ select mol_from_ctab('chiral1.mol
   1  4  1  1      
   1  5  1  0      
 M  END');
+
+select all_values_lt(torsion_fp('c1ccccc1C'::mol),2);
+select all_values_lt(torsion_fp('c1ccccc1C'::mol),3);
+select all_values_gt(torsion_fp('c1ccccc1C'::mol),1);
+select all_values_gt(torsion_fp('c1ccccc1C'::mol),2);

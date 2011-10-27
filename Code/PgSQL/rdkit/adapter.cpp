@@ -886,6 +886,78 @@ calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b, unsigned
   return res;
 }
 
+extern "C" bool
+calcSparseStringAllValsGT(const char *a, unsigned int sza, int tgt) {
+  const unsigned char *t1=(const unsigned char *)a;
+
+  boost::uint32_t tmp;
+  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  if(tmp!=(boost::uint32_t)ci_SPARSEINTVECT_VERSION){
+    elog(ERROR, "calcSparseStringAllValsGT: could not convert argument 1");
+  }
+  // check the element size:
+  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  if(tmp!=sizeof(boost::uint32_t)){
+    elog(ERROR, "calcSparseStringAllValsGT: could not convert argument 1 -> uint32_t");
+  }
+ 
+  boost::uint32_t len1;
+  len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+
+  boost::uint32_t nElem1;
+  nElem1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+
+  while(nElem1){
+    --nElem1;
+    // skip the index:
+    t1+=sizeof(boost::uint32_t);
+    boost::int32_t v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
+    t1+=sizeof(boost::int32_t);
+
+    if(v1<=tgt) return false;
+  }
+  return true;
+}
+extern "C" bool
+calcSparseStringAllValsLT(const char *a, unsigned int sza, int tgt) {
+  const unsigned char *t1=(const unsigned char *)a;
+
+  boost::uint32_t tmp;
+  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  if(tmp!=(boost::uint32_t)ci_SPARSEINTVECT_VERSION){
+    elog(ERROR, "calcSparseStringAllValsGT: could not convert argument 1");
+  }
+  // check the element size:
+  tmp = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+  if(tmp!=sizeof(boost::uint32_t)){
+    elog(ERROR, "calcSparseStringAllValsGT: could not convert argument 1 -> uint32_t");
+  }
+ 
+  boost::uint32_t len1;
+  len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+
+  boost::uint32_t nElem1;
+  nElem1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  t1+=sizeof(boost::uint32_t);
+
+  while(nElem1){
+    --nElem1;
+    // skip the index:
+    t1+=sizeof(boost::uint32_t);
+    boost::int32_t v1 = *(reinterpret_cast<const boost::int32_t *>(t1));
+    t1+=sizeof(boost::int32_t);
+
+    if(v1>=tgt) return false;
+  }
+  return true;
+}
 
 extern "C" MolSparseFingerPrint 
 addSFP(MolSparseFingerPrint a, MolSparseFingerPrint b) {

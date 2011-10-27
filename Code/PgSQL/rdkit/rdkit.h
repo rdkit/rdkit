@@ -139,6 +139,8 @@ extern "C" {
   double calcSparseTanimotoSml(MolSparseFingerPrint a, MolSparseFingerPrint b);
   double calcSparseDiceSml(MolSparseFingerPrint a, MolSparseFingerPrint b);
   double calcSparseStringDiceSml(const char *a, unsigned int sza, const char *b, unsigned int szb);
+  bool calcSparseStringAllValsGT(const char *a, unsigned int sza, int tgt);
+  bool calcSparseStringAllValsLT(const char *a, unsigned int sza, int tgt);
   MolSparseFingerPrint  addSFP(MolSparseFingerPrint a, MolSparseFingerPrint b);
   MolSparseFingerPrint  subtractSFP(MolSparseFingerPrint a, MolSparseFingerPrint b);
 

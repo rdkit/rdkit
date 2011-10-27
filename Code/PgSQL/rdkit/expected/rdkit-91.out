@@ -352,3 +352,27 @@ M  END');
  C[C@](F)(Cl)Br
 (1 row)
 
+select all_values_lt(torsion_fp('c1ccccc1C'::mol),2);
+ all_values_lt 
+---------------
+ f
+(1 row)
+
+select all_values_lt(torsion_fp('c1ccccc1C'::mol),3);
+ all_values_lt 
+---------------
+ t
+(1 row)
+
+select all_values_gt(torsion_fp('c1ccccc1C'::mol),1);
+ all_values_gt 
+---------------
+ t
+(1 row)
+
+select all_values_gt(torsion_fp('c1ccccc1C'::mol),2);
+ all_values_gt 
+---------------
+ f
+(1 row)
+

@@ -127,7 +127,7 @@ sfp_tanimoto_sml_op(PG_FUNCTION_ARGS) {
 }
 
 
-#if USE_SFP_OBJECTS
+#ifdef USE_SFP_OBJECTS
 PG_FUNCTION_INFO_V1(sfp_dice_sml);
 Datum           sfp_dice_sml(PG_FUNCTION_ARGS);
 Datum
@@ -215,6 +215,44 @@ sfp_dice_sml_op(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(res >= getDiceLimit() );               
 }
 
+PG_FUNCTION_INFO_V1(sfp_allvals_gt);
+Datum           sfp_allvals_gt(PG_FUNCTION_ARGS);
+Datum
+sfp_allvals_gt(PG_FUNCTION_ARGS) {
+  const char *a;
+  unsigned int sza;
+  bool res;
+
+  bytea *ba=PG_GETARG_BYTEA_P(0);
+  int tgt=PG_GETARG_INT32(1);
+  a = VARDATA(ba);
+  sza=VARSIZE(ba)-VARHDRSZ;
+
+  res = calcSparseStringAllValsGT(a,sza,tgt);
+
+  PG_RETURN_BOOL(res);
+}
+PG_FUNCTION_INFO_V1(sfp_allvals_lt);
+Datum           sfp_allvals_lt(PG_FUNCTION_ARGS);
+Datum
+sfp_allvals_lt(PG_FUNCTION_ARGS) {
+  const char *a;
+  unsigned int sza;
+  bool res;
+
+  bytea *ba=PG_GETARG_BYTEA_P(0);
+  int tgt=PG_GETARG_INT32(1);
+  a = VARDATA(ba);
+  sza=VARSIZE(ba)-VARHDRSZ;
+
+  res = calcSparseStringAllValsLT(a,sza,tgt);
+
+  PG_RETURN_BOOL(res);
+}
+#endif // USE_SFP_OBJECTS
+
+
+
 PG_FUNCTION_INFO_V1(sfp_add);
 Datum           sfp_add(PG_FUNCTION_ARGS);
 Datum
@@ -268,10 +306,6 @@ sfp_subtract(PG_FUNCTION_ARGS) {
 
   PG_RETURN_SPARSEFINGERPRINT_P(sfp);
 }
-
-
-
-#endif
 
 
 PG_FUNCTION_INFO_V1(morgan_fp);
