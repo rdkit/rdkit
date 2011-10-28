@@ -154,84 +154,80 @@ void smarts_lexer_error(const char *msg) {
 	yylval->atom->setQuery(makeAtomExplicitDegreeQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
+
 <IN_ATOM_STATE>X {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomTotalDegreeQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
+
 <IN_ATOM_STATE>x {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomRingBondCountQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
+
 <IN_ATOM_STATE>v {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomTotalValenceQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
+
 <IN_ATOM_STATE>h {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomImplicitValenceQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
+
 <IN_ATOM_STATE>R {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(new AtomRingQuery(-1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
+
 <IN_ATOM_STATE>r {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomInRingQuery());
 	return RINGSIZE_ATOM_QUERY_TOKEN;
 }
 
-H			{
-				return H_TOKEN; 
-			}
+H			{  return H_TOKEN;  }
 
 
-B  |
-C  |
-N  |
-O  |
-P  |
-S  |
-F  |
-Cl |
-Br | 
-I			{	yylval->atom = new QueryAtom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
-				return ORGANIC_ATOM_TOKEN;
-			}
+B			{  yylval->ival = 5;  return ORGANIC_ATOM_TOKEN;  }
 
-c		    {	yylval->atom = new QueryAtom ( 6 );
-			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
-n		    {	yylval->atom = new QueryAtom( 7 );
-			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
-o		    {	yylval->atom = new QueryAtom( 8 );
-			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
-p		    {	yylval->atom = new QueryAtom( 15 );
-			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
-s		    {	yylval->atom = new QueryAtom( 16 );
-			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>se   {	yylval->atom = new QueryAtom( 34 );
-			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>te   {	yylval->atom = new QueryAtom( 52 );
-			yylval->atom->setIsAromatic(true);
-				return AROMATIC_ATOM_TOKEN; 
-			}
+C			{  yylval->ival = 6;  return ORGANIC_ATOM_TOKEN;  }
 
+N			{  yylval->ival = 7;  return ORGANIC_ATOM_TOKEN;  }
+
+O			{  yylval->ival = 8;  return ORGANIC_ATOM_TOKEN;  }
+
+F			{  yylval->ival = 9;  return ORGANIC_ATOM_TOKEN;  }
+
+P			{  yylval->ival = 15;  return ORGANIC_ATOM_TOKEN;  }
+
+S			{  yylval->ival = 16;  return ORGANIC_ATOM_TOKEN;  }
+
+Cl			{  yylval->ival = 17;  return ORGANIC_ATOM_TOKEN;  }
+
+Br			{  yylval->ival = 35;  return ORGANIC_ATOM_TOKEN;  }
+
+I			{  yylval->ival = 53;  return ORGANIC_ATOM_TOKEN;  }
+
+
+c			{  yylval->ival = 6;  return AROMATIC_ATOM_TOKEN;  }
+
+n			{  yylval->ival = 7;  return AROMATIC_ATOM_TOKEN;  }
+
+o			{  yylval->ival = 8;  return AROMATIC_ATOM_TOKEN;  }
+
+p			{  yylval->ival = 15;  return AROMATIC_ATOM_TOKEN;  }
+
+s			{  yylval->ival = 16;  return AROMATIC_ATOM_TOKEN;  }
+
+<IN_ATOM_STATE>se	{  yylval->ival = 34;  return AROMATIC_ATOM_TOKEN;  }
+
+<IN_ATOM_STATE>te	{  yylval->ival = 52;  return AROMATIC_ATOM_TOKEN;  }
 
 
 \*			{
@@ -246,6 +242,7 @@ a			{
 	yylval->atom->setIsAromatic(true);
 	return SIMPLE_ATOM_QUERY_TOKEN;
 }
+
 A			{
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomAliphaticQuery());
@@ -263,17 +260,13 @@ A			{
 
 \#			{ return HASH_TOKEN; }
 
-[\=\~]    { yylval->bond = new QueryBond();
-              switch(yytext[0]){
-	      case '=':
-		yylval->bond->setBondType(Bond::DOUBLE);
-                yylval->bond->setQuery(makeBondOrderEqualsQuery(Bond::DOUBLE));
-		break;
-	      case '~':
-		yylval->bond->setQuery(makeBondNullQuery());
-		break;
-	      }
-	return BOND_TOKEN; }
+\=	{ yylval->bond = new QueryBond(Bond::DOUBLE);
+	yylval->bond->setQuery(makeBondOrderEqualsQuery(Bond::DOUBLE));
+	return BOND_TOKEN;  }
+
+\~	{ yylval->bond = new QueryBond();
+	yylval->bond->setQuery(makeBondNullQuery());
+	return BOND_TOKEN;  }
 
 [\\]    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
@@ -306,8 +299,8 @@ A			{
 
 \%              { return PERCENT_TOKEN; }
 
-[0]		{ yylval->ival =0; return ZERO_TOKEN; }
-[1-9]		{ yylval->ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
+[0]		{ yylval->ival = 0;  return ZERO_TOKEN; }
+[1-9]		{ yylval->ival = yytext[0]-'0';  return NONZERO_DIGIT_TOKEN; }
 
 \!			{ return NOT_TOKEN; }
 
@@ -317,7 +310,29 @@ A			{
 
 \,			{ return OR_TOKEN; }
 
-\^			{ return HYB_TOKEN; }
+\^0		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::S));
+	return HYB_TOKEN;
+}
+
+\^1		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP));
+	return HYB_TOKEN;
+}
+
+\^2		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP2));
+	return HYB_TOKEN;
+}
+
+\^3		{
+	yylval->atom = new QueryAtom();
+	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3));
+	return HYB_TOKEN;
+}
 
 \n		return EOS_TOKEN;
 

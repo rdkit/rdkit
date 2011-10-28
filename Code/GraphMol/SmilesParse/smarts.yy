@@ -57,8 +57,10 @@ namespace {
   int                      ival;
 }
 
-%token <atom> AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
-%token <atom> SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN RINGSIZE_ATOM_QUERY_TOKEN
+%token <ival> AROMATIC_ATOM_TOKEN ORGANIC_ATOM_TOKEN
+%token <atom> ATOM_TOKEN
+%token <atom> SIMPLE_ATOM_QUERY_TOKEN COMPLEX_ATOM_QUERY_TOKEN
+%token <atom> RINGSIZE_ATOM_QUERY_TOKEN HYB_TOKEN
 %token <ival> ZERO_TOKEN NONZERO_DIGIT_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN
 %token HASH_TOKEN MINUS_TOKEN PLUS_TOKEN 
@@ -66,10 +68,10 @@ namespace {
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN 
 %token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN BEGIN_RECURSE END_RECURSE
-%token HYB_TOKEN COLON_TOKEN UNDERSCORE_TOKEN
+%token COLON_TOKEN UNDERSCORE_TOKEN
 %token <bond> BOND_TOKEN
 %type <moli> cmpd mol branch
-%type <atom> atomd element simple_atom
+%type <atom> atomd simple_atom
 %type <atom> atom_expr point_query atom_query recursive_query
 %type <ival> ring_number nonzero_number number charge_spec digit
 %type <bond> bondd bond_expr bond_query
@@ -273,40 +275,33 @@ atomd:	simple_atom
 /* --------------------------------------------------------------- */
 atom_expr: atom_expr AND_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
   delete $3;
 }
 | atom_expr OR_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_OR,true);
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
   delete $3;
 }
 | atom_expr SEMI_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
   delete $3;
 }
-| NOT_TOKEN atom_expr {
-  $2->getQuery()->setNegation(!($2->getQuery()->getNegation()));
-  $$ = $2;
-}
-| atom_expr NOT_TOKEN point_query {
-  // FIX: this stuff (formerly element NOT_TOKEN atom_expr_piece) is making us shift-reduce-a-riffic
-  $3->getQuery()->setNegation(!($3->getQuery()->getNegation()));
-  $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  delete $3;
-  }
 | atom_expr point_query {
-  // FIX: this stuff (formerly element atom_expr_piece) is making us shift-reduce-a-riffic
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($2->getChiralTag());
   delete $2;
 }
 | point_query
-| element AT_TOKEN AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); $$=$1;}
-| element AT_TOKEN { $1->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); $$=$1;}
-| element
 ;
 
-/* --------------------------------------------------------------- */
-point_query: atom_query
+point_query: NOT_TOKEN point_query {
+  $2->getQuery()->setNegation(!($2->getQuery()->getNegation()));
+  $$ = $2;
+}
 | recursive_query
+| atom_query
 ;
 
 /* --------------------------------------------------------------- */
@@ -351,7 +346,10 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
 ;
 
 /* --------------------------------------------------------------- */
-atom_query: COMPLEX_ATOM_QUERY_TOKEN
+atom_query:	simple_atom
+| ATOM_TOKEN
+| HASH_TOKEN number { $$ = new QueryAtom($2); }
+| COMPLEX_ATOM_QUERY_TOKEN
 | COMPLEX_ATOM_QUERY_TOKEN number {
   static_cast<ATOM_EQUALS_QUERY *>($1->getQuery())->setVal($2);
 }
@@ -360,9 +358,9 @@ atom_query: COMPLEX_ATOM_QUERY_TOKEN
   delete $1->getQuery();
   $1->setQuery(makeAtomMinRingSizeQuery($2));
 }
-| charge_spec {
+| H_TOKEN number {
   QueryAtom *newQ = new QueryAtom();
-  newQ->setQuery(makeAtomFormalChargeQuery($1));
+  newQ->setQuery(makeAtomHCountQuery($2));
   $$=newQ;
 }
 | H_TOKEN {
@@ -370,42 +368,27 @@ atom_query: COMPLEX_ATOM_QUERY_TOKEN
   newQ->setQuery(makeAtomHCountQuery(1));
   $$=newQ;
 }
-| H_TOKEN number {
+| charge_spec {
   QueryAtom *newQ = new QueryAtom();
-  newQ->setQuery(makeAtomHCountQuery($2));
+  newQ->setQuery(makeAtomFormalChargeQuery($1));
   $$=newQ;
 }
-| HYB_TOKEN NONZERO_DIGIT_TOKEN {
+| AT_TOKEN AT_TOKEN {
   QueryAtom *newQ = new QueryAtom();
-  Atom::HybridizationType hyb=Atom::UNSPECIFIED;
-  // we're following the oelib "standard", where:
-  // ^n implies that the atom is sp^n hybridized
-  switch($2){
-  case 0: hyb=Atom::S;break;
-  case 1: hyb=Atom::SP;break;
-  case 2: hyb=Atom::SP2;break;
-  case 3: hyb=Atom::SP3;break;
-  }
-  newQ->setQuery(makeAtomHybridizationQuery(hyb));
+  newQ->setQuery(makeAtomNullQuery());
+  newQ->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
   $$=newQ;
 }
-;
-
-/* --------------------------------------------------------------- */
-element: simple_atom
-| ATOM_TOKEN
-| HASH_TOKEN number { $$ = new QueryAtom($2); }
-| number simple_atom {
-  $2->expandQuery(makeAtomMassQuery($1),Queries::COMPOSITE_AND);
-  $$ = $2;
+| AT_TOKEN {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomNullQuery());
+  newQ->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+  $$=newQ;
 }
-| number ATOM_TOKEN {
-  $2->expandQuery(makeAtomMassQuery($1),Queries::COMPOSITE_AND);
-  $$ = $2;
-}
-| number HASH_TOKEN number {
-  $$ = new QueryAtom($3);
-  $$->expandQuery(makeAtomMassQuery($1),Queries::COMPOSITE_AND);
+| HYB_TOKEN 
+| number atom_query {
+  $2->expandQuery(makeAtomMassQuery($1),Queries::COMPOSITE_AND,false);
+  $$=$2;
 }
 ;
 
@@ -419,10 +402,13 @@ simple_atom: 	ORGANIC_ATOM_TOKEN {
   //
   // The following rule applies a similar logic to aromatic atoms.
   //
-  $1->expandQuery(makeAtomAliphaticQuery(),Queries::COMPOSITE_AND);
+  $$ = new QueryAtom($1);
+  $$->expandQuery(makeAtomAliphaticQuery(),Queries::COMPOSITE_AND);
 }
-| AROMATIC_ATOM_TOKEN{
-  $1->expandQuery(makeAtomAromaticQuery(),Queries::COMPOSITE_AND);
+| AROMATIC_ATOM_TOKEN {
+  $$ = new QueryAtom($1);
+  $$->setIsAromatic(true);
+  $$->expandQuery(makeAtomAromaticQuery(),Queries::COMPOSITE_AND);
 }
 | SIMPLE_ATOM_QUERY_TOKEN
 ;
@@ -491,12 +477,6 @@ charge_spec: PLUS_TOKEN PLUS_TOKEN { $$=2; }
 | MINUS_TOKEN { $$=-1; }
 ;
 
-/* --------------------------------------------------------------- */
-/*
-chival:	CHI_CLASS_TOKEN nonzero_number
-	| AT_TOKEN
-        ;
-*/
 /* --------------------------------------------------------------- */
 ring_number:  digit
 | PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit { $$ = $2*10+$3; }

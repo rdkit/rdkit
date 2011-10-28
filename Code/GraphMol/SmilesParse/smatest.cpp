@@ -74,6 +74,8 @@ void testPass(){
     "[te]",
     // test zeros as ring indices, issue 2690982:
     "C0CC0", 
+    // this one used to fail before Roger Sayle's SMARTS patch:
+    "[HO]",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
@@ -113,6 +115,8 @@ void testFail(){
     "C-0", // part of sf.net issue 2525792
     "C1CC1",
     "C+0", // part of sf.net issue 2525792
+    "C1CC1",
+    "[HQ]",
     "C1CC1",
     "EOS"};
   while( smis[i] != "EOS" ){
@@ -1149,7 +1153,7 @@ void testMiscSmartsWriting(){
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[C&13*]");
+  TEST_ASSERT(sma=="[13*&C]");
   delete mol;
 
   sma ="[C]";

@@ -121,7 +121,7 @@ EndFeature\r
 
   def testParseErrorHandling(self):
     fdefBlock = \
-"""DefineFeature HDonor1 [N,O;!HO]
+"""DefineFeature HDonor1 [N,O;!HQ]
     Family HBondDonor
     Weights 1.0
 EndFeature
