@@ -4,7 +4,7 @@
 
   // $Id$
   //
-  //  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+  //  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
   //
   //   @@ All Rights Reserved  @@
   //
@@ -386,9 +386,10 @@ atom_query:	simple_atom
   $$=newQ;
 }
 | HYB_TOKEN 
-| number atom_query {
-  $2->expandQuery(makeAtomMassQuery($1),Queries::COMPOSITE_AND,false);
-  $$=$2;
+| number {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomMassQuery($1));
+  $$=newQ;
 }
 ;
 

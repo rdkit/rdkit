@@ -320,10 +320,6 @@ namespace RDKit {
             if(productAtom->getAtomicNum()<=0){
               // If the product atom is a dummy, set everything
               productAtom->setAtomicNum(reactantAtom->getAtomicNum());
-              productAtom->setFormalCharge(reactantAtom->getFormalCharge());
-              productAtom->setNoImplicit(reactantAtom->getNoImplicit());
-              productAtom->setNumExplicitHs(reactantAtom->getNumExplicitHs());
-              productAtom->setMass(reactantAtom->getMass());
               productAtom->setIsAromatic(reactantAtom->getIsAromatic());
             }
             updateImplicitAtomProperties(productAtom,reactantAtom);

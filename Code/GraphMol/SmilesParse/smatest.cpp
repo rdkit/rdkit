@@ -74,8 +74,10 @@ void testPass(){
     "[te]",
     // test zeros as ring indices, issue 2690982:
     "C0CC0", 
-    // this one used to fail before Roger Sayle's SMARTS patch:
+    // these used to fail before Roger Sayle's SMARTS patch:
     "[HO]",
+    "[13]",
+    "[+]",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];

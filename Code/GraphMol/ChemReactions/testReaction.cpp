@@ -1287,6 +1287,7 @@ void test15Issue1882749(){
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getAtomicNum()==7);
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getMass()==15);
 
   delete rxn;
