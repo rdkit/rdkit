@@ -21,7 +21,7 @@ def _toPNG(mol):
 
 def _GetSubstructMatch(mol,query):
     res = mol.__GetSubstructMatch(query)
-    if higlightSubstructs:
+    if highlightSubstructs:
         mol.__sssAtoms=list(res)
     else:
         mol.__sssAtoms=[]
@@ -51,9 +51,9 @@ def UninstallIPythonRenderer():
     del rdchem.Mol._repr_png_
     if hasattr(rdchem.Mol,'__GetSubstructMatch'):
         rdchem.Mol.GetSubstructMatch=rdchem.Mol.__GetSubstructMatch
-    del rdchem.Mol.__GetSubstructMatch
-    if not hasattr(rdchem.Mol,'__GetSubstructMatches'):
+        del rdchem.Mol.__GetSubstructMatch
+    if hasattr(rdchem.Mol,'__GetSubstructMatches'):
         rdchem.Mol.GetSubstructMatches=rdchem.Mol.__GetSubstructMatches
-    del rdchem.Mol.__GetSubstructMatches
+        del rdchem.Mol.__GetSubstructMatches
     
 
