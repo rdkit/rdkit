@@ -35,15 +35,8 @@ def _GetSubstructMatches(mol,query):
             mol.__sssAtoms.extend(list(entry))
     return res
 
-__firstCall__=True
-def _InstallIPythonRenderer():
-    global __firstCall__
-
+def InstallIPythonRenderer():
     rdchem.Mol._repr_png_=_toPNG
-
-    if not __firstCall__:
-        return
-    __firstCall__==True
 
     if not hasattr(rdchem.Mol,'__GetSubstructMatch'):
         rdchem.Mol.__GetSubstructMatch=rdchem.Mol.GetSubstructMatch
@@ -52,4 +45,15 @@ def _InstallIPythonRenderer():
         rdchem.Mol.__GetSubstructMatches=rdchem.Mol.GetSubstructMatches
     rdchem.Mol.GetSubstructMatches=_GetSubstructMatches
     
-_InstallIPythonRenderer()
+InstallIPythonRenderer()
+
+def UninstallIPythonRenderer():
+    del rdchem.Mol._repr_png_
+    if hasattr(rdchem.Mol,'__GetSubstructMatch'):
+        rdchem.Mol.GetSubstructMatch=rdchem.Mol.__GetSubstructMatch
+    del rdchem.Mol.__GetSubstructMatch
+    if not hasattr(rdchem.Mol,'__GetSubstructMatches'):
+        rdchem.Mol.GetSubstructMatches=rdchem.Mol.__GetSubstructMatches
+    del rdchem.Mol.__GetSubstructMatches
+    
+
