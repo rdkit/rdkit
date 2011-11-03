@@ -2764,6 +2764,32 @@ void testIssue3392107(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3432136(){
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3432136 "<< std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3432136_1.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(!m);
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3432136_1.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(!m);
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3432136_2.v3k.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3432136_2.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+  }
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
 
 
   
@@ -2815,9 +2841,9 @@ int main(int argc,char *argv[]){
   testIssue3375647();
   testIssue3375684();
   testChiralPhosphorous();
-#endif
   testIssue3392107();
-
+#endif
+  testIssue3432136();
 
   return 0;
 }

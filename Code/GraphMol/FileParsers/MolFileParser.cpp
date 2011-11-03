@@ -24,8 +24,23 @@
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <typeinfo>
+#include <exception>
+
 
 namespace RDKit{
+  class MolFileUnhandledFeatureException : public std::exception {
+  public:
+    //! construct with an error message
+    explicit MolFileUnhandledFeatureException(const char *msg) : _msg(msg) {};
+    //! construct with an error message
+    explicit MolFileUnhandledFeatureException(const std::string msg) : _msg(msg) {};
+    //! get the error message
+    const char *message () const { return _msg.c_str(); };
+    ~MolFileUnhandledFeatureException () throw () {};
+  private:
+    std::string _msg;
+  };
+
   namespace FileParserUtils {
     int toInt(const std::string &input,bool acceptSpaces){
       // atoi returns zero on failure:
@@ -228,6 +243,60 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(spos,4) << " to int";
           throw FileParseException(errout.str()) ;
         }
+      }
+    }
+
+    bool SGroupOK(std::string typ){
+      const char *cfailTyps[11] = {
+        // polymer sgroups:
+        "SRU","MON","COP","CRO","GRA","MOD","MER","ANY",
+        // formulations/mixtures:
+        "COM","MIX","FOR"
+      };
+      std::vector<std::string> failTyps(cfailTyps,cfailTyps+11);
+      return std::find(failTyps.begin(),failTyps.end(),typ)==failTyps.end();
+    }
+    
+    void ParseSGroup2000STYLine(RWMol *mol, const std::string &text){
+      PRECONDITION(mol,"bad mol");
+      PRECONDITION(text.substr(0,6)==std::string("M  STY"),"bad STY line");
+
+      int nent;
+      try {
+        nent = FileParserUtils::toInt(text.substr(6,3));
+      }
+      catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        throw FileParseException(errout.str()) ;
+      }
+
+      int spos = 9;
+      for (int ie = 0; ie < nent; ie++) {
+        if(text.size()<spos+8){
+          std::ostringstream errout;
+          errout << "SGroup line too short: " << text;
+          throw FileParseException(errout.str()) ;
+        }
+        int nbr;
+        try {
+          nbr = FileParserUtils::toInt(text.substr(spos,4));
+          spos += 4;
+        } 
+        catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Cannot convert " << text.substr(spos,3) << " to int";
+          throw FileParseException(errout.str()) ;
+        }
+        std::string typ = text.substr(spos+1,3);
+        if(!SGroupOK(typ)){
+          std::ostringstream errout;
+          errout << "S group "<<typ;
+          throw MolFileUnhandledFeatureException(errout.str()) ;
+        } else {
+          BOOST_LOG(rdWarningLog) << " S group " << typ <<" ignored."<<std::endl;
+        }
+        spos += 4;
       }
     }
 
@@ -1067,7 +1136,6 @@ namespace RDKit{
         } else if(lineBeg=="S  SKP") {
           // pass
         }
-
         else if(lineBeg=="M  ALS") ParseNewAtomList(mol,tempStr);
         else if(lineBeg=="M  ISO") ParseIsotopeLine(mol,tempStr);
         else if(lineBeg=="M  RGP") ParseRGroupLabels(mol,tempStr);
@@ -1081,6 +1149,9 @@ namespace RDKit{
         else if(lineBeg=="M  RAD") {
           ParseRadicalLine(mol, tempStr,firstChargeLine);
           firstChargeLine=false;
+        }
+        else if(lineBeg=="M  STY") {
+          ParseSGroup2000STYLine(mol, tempStr);
         }
         line++;
         tempStr = getLine(inStream);
@@ -1570,18 +1641,30 @@ namespace RDKit{
       }
 
       if(nSgroups){
-        BOOST_LOG(rdWarningLog)<<"S group information in mol block igored"<<std::endl;
+        //BOOST_LOG(rdWarningLog)<<"S group information in mol block igored"<<std::endl;
         tempStr = getV3000Line(inStream,line);
-	boost::to_upper(tempStr);
+        boost::to_upper(tempStr);
         if(tempStr.length()<12 || tempStr.substr(0,12) != "BEGIN SGROUP"){
           throw FileParseException("BEGIN SGROUP line not found") ;
         }
-        while(1){
+        for(unsigned int si=0;si<nSgroups;++si){
           tempStr = getV3000Line(inStream,line);
 	  boost::to_upper(tempStr);
-          if(tempStr.length()>=10 && tempStr.substr(0,10) != "END SGROUP"){
-            break;
+          std::vector<std::string> localSplitLine;
+          boost::split(localSplitLine,tempStr,boost::is_any_of(" \t"),boost::token_compress_on);
+          std::string typ = localSplitLine[1];
+          if(!SGroupOK(typ)){
+            std::ostringstream errout;
+            errout << "S group "<<typ;
+            throw MolFileUnhandledFeatureException(errout.str()) ;
+          } else {
+            BOOST_LOG(rdWarningLog) << " S group " << typ <<" ignored."<<std::endl;
           }
+        }
+        tempStr = getV3000Line(inStream,line);
+        boost::to_upper(tempStr);
+        if(tempStr.length()<10 || tempStr.substr(0,10) != "END SGROUP"){
+          throw FileParseException("END SGROUP line not found") ;
         }
       }
       if(n3DConstraints){
@@ -1807,8 +1890,16 @@ namespace RDKit{
 						     res,conf,chiralityPossible,
 						     nAtoms,nBonds);
       }
-    }
-    catch (FileParseException &e) { 
+    } catch (MolFileUnhandledFeatureException &e) { 
+      // unhandled mol file feature, just delete the result 
+      if(res) delete res;
+      if(conf) delete conf;
+      res=NULL;
+      conf=NULL;
+      BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message() <<". Molecule skipped."<<std::endl;
+
+      fileComplete=true;
+    } catch (FileParseException &e) { 
       // catch our exceptions and throw them back after cleanup
       if(res) delete res;
       if(conf) delete conf;
@@ -1825,70 +1916,71 @@ namespace RDKit{
       throw FileParseException("Problems encountered parsing Mol data, M  END ");
     }
 
-    // calculate explicit valence on each atom:
-    for(RWMol::AtomIterator atomIt=res->beginAtoms();
-        atomIt!=res->endAtoms();
-        ++atomIt) {
-      (*atomIt)->calcExplicitValence(false);
-    }
-
-    if (res && sanitize ) {
-      // update the chirality and stereo-chemistry and stuff:
-      //
-      // NOTE: we detect the stereochemistry before sanitizing/removing
-      // hydrogens because the removal of H atoms may actually remove
-      // the wedged bond from the molecule.  This wipes out the only
-      // sign that chirality ever existed and makes us sad... so first
-      // perceive chirality, then remove the Hs and sanitize.
-      //
-      // One exception to this (of course, there's always an exception):
-      // DetectAtomStereoChemistry() needs to check the number of
-      // implicit hydrogens on atoms to detect if things can be
-      // chiral. However, if we ask for the number of implicit Hs before
-      // we've called MolOps::cleanUp() on the molecule, we'll get
-      // exceptions for common "weird" cases like a nitro group
-      // mis-represented as -N(=O)=O.  *SO*... we need to call
-      // cleanUp(), then detect the stereochemistry.
-      // (this was Issue 148)
-      //
-      if(chiralityPossible){
-        MolOps::cleanUp(*res);
-        const Conformer &conf = res->getConformer();
-        DetectAtomStereoChemistry(*res, &conf);
+    if (res ) {
+      // calculate explicit valence on each atom:
+      for(RWMol::AtomIterator atomIt=res->beginAtoms();
+          atomIt!=res->endAtoms();
+          ++atomIt) {
+        (*atomIt)->calcExplicitValence(false);
       }
 
-      try {
-        if(removeHs){
-          ROMol *tmp=MolOps::removeHs(*res,false,false);
-          delete res;
-          res = static_cast<RWMol *>(tmp);
-        } else {
-          MolOps::sanitizeMol(*res);
+      if ( sanitize ) {
+        // update the chirality and stereo-chemistry and stuff:
+        //
+        // NOTE: we detect the stereochemistry before sanitizing/removing
+        // hydrogens because the removal of H atoms may actually remove
+        // the wedged bond from the molecule.  This wipes out the only
+        // sign that chirality ever existed and makes us sad... so first
+        // perceive chirality, then remove the Hs and sanitize.
+        //
+        // One exception to this (of course, there's always an exception):
+        // DetectAtomStereoChemistry() needs to check the number of
+        // implicit hydrogens on atoms to detect if things can be
+        // chiral. However, if we ask for the number of implicit Hs before
+        // we've called MolOps::cleanUp() on the molecule, we'll get
+        // exceptions for common "weird" cases like a nitro group
+        // mis-represented as -N(=O)=O.  *SO*... we need to call
+        // cleanUp(), then detect the stereochemistry.
+        // (this was Issue 148)
+        //
+        if(chiralityPossible){
+          MolOps::cleanUp(*res);
+          const Conformer &conf = res->getConformer();
+          DetectAtomStereoChemistry(*res, &conf);
         }
 
-        // now that atom stereochem has been perceived, the wedging
-        // information is no longer needed, so we clear
-        // single bond dir flags:
-        ClearSingleBondDirFlags(*res);
+        try {
+          if(removeHs){
+            ROMol *tmp=MolOps::removeHs(*res,false,false);
+            delete res;
+            res = static_cast<RWMol *>(tmp);
+          } else {
+            MolOps::sanitizeMol(*res);
+          }
+
+          // now that atom stereochem has been perceived, the wedging
+          // information is no longer needed, so we clear
+          // single bond dir flags:
+          ClearSingleBondDirFlags(*res);
       
-        // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry 
-        // here after sanitization because we need the ring information:
-        const Conformer &conf = res->getConformer();
-        DetectBondStereoChemistry(*res, &conf);
+          // unlike DetectAtomStereoChemistry we call DetectBondStereoChemistry 
+          // here after sanitization because we need the ring information:
+          const Conformer &conf = res->getConformer();
+          DetectBondStereoChemistry(*res, &conf);
+        }
+        catch (...){
+          if(res) delete res;
+          res=NULL;
+          throw;
+        }
+        MolOps::assignStereochemistry(*res,true);
       }
-      catch (...){
-        if(res) delete res;
-        res=NULL;
-        throw;
+
+      if(res->hasProp("_NeedsQueryScan")){
+        res->clearProp("_NeedsQueryScan");
+        CompleteMolQueries(res);
       }
-      MolOps::assignStereochemistry(*res,true);
     }
-
-    if(res->hasProp("_NeedsQueryScan")){
-      res->clearProp("_NeedsQueryScan");
-      CompleteMolQueries(res);
-    }
-
     return res;
   };
   
