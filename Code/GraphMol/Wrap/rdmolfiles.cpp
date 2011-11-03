@@ -18,6 +18,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/BadFileException.h>
+#include <RDGeneral/FileParseException.h>
 
 #include <RDBoost/Wrap.h>
 #include <RDBoost/Exceptions.h>
@@ -98,14 +99,16 @@ namespace RDKit{
   }
 
   ROMol *MolFromMolFile(const char *molFilename, bool sanitize=true, bool removeHs=true) {
-    RWMol *newM;
+    RWMol *newM=0;
     try {
       newM = MolFileToMol(molFilename, sanitize,removeHs);
     } catch (RDKit::BadFileException &e) {
       PyErr_SetString(PyExc_IOError,e.message());
       throw python::error_already_set();
+    } catch (RDKit::FileParseException &e) {
+      BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
     } catch (...) {
-      newM=0;
+
     }
     return static_cast<ROMol *>(newM);
   }
@@ -113,11 +116,12 @@ namespace RDKit{
   ROMol *MolFromMolBlock(std::string molBlock, bool sanitize=true, bool removeHs=true) {
     std::istringstream inStream(molBlock);
     unsigned int line = 0;
-    RWMol *newM;
+    RWMol *newM=0;
     try {
       newM = MolDataStreamToMol(inStream, line, sanitize, removeHs);
+    }  catch (RDKit::FileParseException &e) {
+      BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
     } catch (...) {
-      newM=0;
     }
     return static_cast<ROMol *>(newM);
   }
