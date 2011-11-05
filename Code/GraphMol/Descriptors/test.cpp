@@ -683,6 +683,28 @@ void testIssue3415534(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testIssue3433771(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Issue3433771: Bad definition for Crippen atom type O11." << std::endl;
+
+  ROMol *mol;
+  double logp,mr;
+
+  mol = SmilesToMol("O=C(NC)n1cccc1");
+  TEST_ASSERT(mol);
+  calcCrippenDescriptors(*mol,logp,mr);
+  TEST_ASSERT(feq(logp,0.6756,.001));
+  
+  delete mol;
+  mol = SmilesToMol("O=C(n1cccc1)n1cccc1");
+  TEST_ASSERT(mol);
+  calcCrippenDescriptors(*mol,logp,mr);
+  TEST_ASSERT(feq(logp,1.806,.001));
+  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -702,4 +724,5 @@ int main(){
   testMolFormula();
   testIssue3415534();
 #endif
+  testIssue3433771();
 }
