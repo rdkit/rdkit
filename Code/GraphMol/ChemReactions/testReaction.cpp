@@ -749,20 +749,20 @@ void test8Validation(){
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
   TEST_ASSERT(!rxn->validate(nWarn,nError,true));
-  TEST_ASSERT(nWarn==0);
-  TEST_ASSERT(nError==2);
+  TEST_ASSERT(nWarn==1);
+  TEST_ASSERT(nError==1);
   
   smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:5]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
-  TEST_ASSERT(!rxn->validate(nWarn,nError,true));
-  TEST_ASSERT(nWarn==1);
-  TEST_ASSERT(nError==1);
-  
+  TEST_ASSERT(rxn->validate(nWarn,nError,true));
+  TEST_ASSERT(nWarn==2);
+  TEST_ASSERT(nError==0);
+
   smi = "[C:1](=[O:2])O.[N:3][C:4]>>[C:1](=[O:2])[N:3][C:1]";
   rxn = RxnSmartsToChemicalReaction(smi); 
   TEST_ASSERT(rxn);
-  TEST_ASSERT(!rxn->validate(nWarn,nError,true));
+  TEST_ASSERT(!rxn->validate(nWarn,nError,false));
   TEST_ASSERT(nWarn==1);
   TEST_ASSERT(nError==1);
 

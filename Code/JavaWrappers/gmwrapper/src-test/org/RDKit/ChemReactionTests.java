@@ -298,8 +298,8 @@ public class ChemReactionTests extends GraphMolTest {
 		rxn = ChemicalReaction.ReactionFromSmarts("[C:1](=[O:1])O.[N:3]>>[C:1](=[O:2])[N:3]");
 		assertNotNull(rxn);
 		validationResults = rxn.validateReaction();
-		assertEquals(0, validationResults.getFirst());
-		assertEquals(2, validationResults.getSecond());
+		assertEquals(1, validationResults.getFirst());
+		assertEquals(1, validationResults.getSecond());
 
 		rxn = ChemicalReaction.ReactionFromSmarts("[C:1](=[O:2])[O:4].[N:3]>>[C:1](=[O:2])[N:3]");
 		assertNotNull(rxn);

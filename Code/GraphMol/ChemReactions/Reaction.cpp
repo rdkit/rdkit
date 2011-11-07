@@ -668,22 +668,27 @@ namespace RDKit {
           thisMolMapped=true;
           int mapNum;
           (*atomIt)->getProp("molAtomMapNumber",mapNum);
-          if(std::find(productNumbersSeen.begin(),
-                       productNumbersSeen.end(),mapNum)!=productNumbersSeen.end()){
+          bool seenAlready=std::find(productNumbersSeen.begin(),
+                                     productNumbersSeen.end(),mapNum)!=productNumbersSeen.end();
+          if(seenAlready){
             if(!silent){
               BOOST_LOG(rdErrorLog)<<"product atom-mapping number "<<mapNum<<" found multiple times.\n";
             }
             numErrors++;
             res=false;
+          } else {
+            productNumbersSeen.push_back(mapNum);
           }
           std::vector<int>::iterator ivIt=std::find(mapNumbersSeen.begin(),
                                                     mapNumbersSeen.end(),mapNum);
           if(ivIt==mapNumbersSeen.end()){
-            if(!silent){
-              BOOST_LOG(rdErrorLog)<<"product atom-mapping number "<<mapNum<<" not found in reactants.\n";
+            if(!seenAlready){
+              if(!silent){
+                BOOST_LOG(rdWarningLog)<<"product atom-mapping number "<<mapNum<<" not found in reactants.\n";
+              }
+              numWarnings++;
+              //res=false;
             }
-            numErrors++;
-            res=false;
           } else {
             mapNumbersSeen.erase(ivIt); 
 

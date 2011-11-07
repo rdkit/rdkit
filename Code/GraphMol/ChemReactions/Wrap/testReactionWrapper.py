@@ -247,7 +247,7 @@ M  END
 
     rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:1])O.[N:3]>>[C:1](=[O:2])[N:3]')
     self.failUnless(rxn)
-    self.failUnless(rxn.Validate()==(0,2))
+    self.failUnless(rxn.Validate()==(1,1))
 
     rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])[O:4].[N:3]>>[C:1](=[O:2])[N:3]')
     self.failUnless(rxn)
@@ -255,7 +255,7 @@ M  END
 
     rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3][C:5]')
     self.failUnless(rxn)
-    self.failUnless(rxn.Validate()==(0,1))
+    self.failUnless(rxn.Validate()==(1,0))
 
   def test6Exceptions(self):
     rxn = rdChemReactions.ReactionFromSmarts('[C:1]Cl>>[C:1]')
