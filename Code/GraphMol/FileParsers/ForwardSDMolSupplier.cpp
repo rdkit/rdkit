@@ -108,6 +108,10 @@ namespace RDKit {
                 }
                 prop += tempStr;
                 d_line++;
+                // erase tempStr in case the file does not end with a carrier
+                // return (we will end up in an infinite loop if we don't do
+                // this and we do not check for EOF in this while loop body)
+                tempStr.erase();
                 std::getline(*dp_inStream,tempStr);
                 stmp = strip(tempStr);
               }

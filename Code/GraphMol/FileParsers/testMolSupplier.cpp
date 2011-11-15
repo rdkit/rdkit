@@ -1667,6 +1667,13 @@ int testForwardSDSupplier() {
   return 1;
 }
 
+void testMissingCRSDSupplier() {
+  std::string rdbase = getenv("RDBASE");
+  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/missingCR.sdf";
+  SDMolSupplier reader(infile);
+  reader.next();
+  TEST_ASSERT(reader.atEnd());
+}
 
 int main() {
   RDLog::InitLogs();
@@ -1791,5 +1798,10 @@ int main() {
   BOOST_LOG(rdErrorLog) <<"Finished: testForwardSDSupplier()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  BOOST_LOG(rdErrorLog) <<"testing bad-formed SD file without CR on the last line\n";
+  testMissingCRSDSupplier();
+  BOOST_LOG(rdErrorLog) <<"Finished: testForwardSDSupplier()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
   return 0;
 }
