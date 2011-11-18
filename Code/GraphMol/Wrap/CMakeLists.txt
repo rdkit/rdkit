@@ -14,11 +14,15 @@ rdkit_python_extension(rdmolops
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
 find_package(Boost 1.39.0 COMPONENTS iostreams REQUIRED)
-set(rdmolfiles_sources rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
+set(rdmolfiles_sources rdmolfiles.cpp 
+                       ForwardSDMolSupplier.cpp
+                       SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp CompressedSDMolSupplier.cpp )
 else(RDK_BUILD_COMPRESSED_SUPPLIERS)
-set(rdmolfiles_sources rdmolfiles.cpp SDMolSupplier.cpp TDTMolSupplier.cpp
+set(rdmolfiles_sources rdmolfiles.cpp
+                       ForwardSDMolSupplier.cpp
+                       SDMolSupplier.cpp TDTMolSupplier.cpp
                        SmilesMolSupplier.cpp SmilesWriter.cpp SDWriter.cpp
                        TDTWriter.cpp)
 endif(RDK_BUILD_COMPRESSED_SUPPLIERS)
