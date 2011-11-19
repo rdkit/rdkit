@@ -13,6 +13,8 @@
 #include <RDGeneral/types.h>
 
 #include <string>
+#include <list>
+#include <vector>
 #include <iostream>
 #include <GraphMol/ROMol.h>
 
@@ -91,6 +93,8 @@ namespace RDKit {
     virtual bool atEnd(); 
 
   protected:
+    virtual void checkForEnd();
+    ROMol *_next();
     virtual void readMolProps(ROMol *);
     bool df_end; 
     int d_line; // line number we are currently on

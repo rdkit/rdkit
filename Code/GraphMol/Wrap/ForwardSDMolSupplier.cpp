@@ -25,12 +25,12 @@ namespace python = boost::python;
 
 namespace {
   using boost_adaptbx::python::streambuf;
+
   RDKit::ForwardSDMolSupplier *createForwardMolSupplier(streambuf& input,
                                                  bool sanitize, bool removeHs){
     streambuf::istream *is = new streambuf::istream(input);
     return new RDKit::ForwardSDMolSupplier(is,true,sanitize,removeHs);
   }
-
   struct python_streambuf_wrapper
   {
     typedef boost_adaptbx::python::streambuf wt;
@@ -42,7 +42,7 @@ namespace {
       class_<wt, boost::noncopyable>("streambuf", no_init)
         .def(init<object&, std::size_t>((
           arg("python_file_obj"),
-          arg("buffer_size")=0),"documentation")[with_custodian_and_ward<1,2>()])
+          arg("buffer_size")=0),"documentation")[with_custodian_and_ward_postcall<0,2>()])
         .def_readwrite(
           "default_buffer_size", wt::default_buffer_size,
           "The default size of the buffer sitting "
@@ -117,6 +117,8 @@ namespace RDKit {
 	.def("next", (ROMol *(*)(ForwardSDMolSupplier *))&MolSupplNext,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
+	.def("atEnd", &ForwardSDMolSupplier::atEnd,
+	     "Returns whether or not we have hit EOF.\n")
 	.def("__iter__", &FwdMolSupplIter,
 	     python::return_internal_reference<1>() )
 	;
@@ -124,9 +126,9 @@ namespace RDKit {
                   (python::arg("stream"),
                    python::arg("sanitize")=true,
                    python::arg("removeHs")=true),
-                  "",
-                  python::return_value_policy<python::manage_new_object>());
-
+                  python::return_value_policy<python::manage_new_object>(),
+                  python::with_custodian_and_ward_postcall<0,2>()
+                  );
       python_streambuf_wrapper::wrap();
       python_ostream_wrapper::wrap();
     };
