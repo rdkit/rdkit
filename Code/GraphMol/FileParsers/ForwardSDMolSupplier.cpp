@@ -140,11 +140,7 @@ namespace RDKit {
       return res;
     }
 
-    std::cerr<<" next! "<<std::endl;
     res=_next();
-    std::cerr<<"   res: "<<res<<std::endl;
-    std::cerr<<"   eof? "<<dp_inStream->eof()<<" at end? "<<df_end<<std::endl;
-
     return res;
   }
 

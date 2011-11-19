@@ -2033,11 +2033,15 @@ CAS<~>
     import gzip
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
-    inf = gzip.open(fileN)
-    sb = Chem.streambuf(inf)
-    suppl = Chem.CreateForwardSDMolSupplier(sb)
     molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
                 "192", "203", "210", "211", "213", "220", "229", "256"]
+    inf = gzip.open(fileN)
+    if 0:
+      sb = Chem.streambuf(inf)
+      suppl = Chem.ForwardSDMolSupplier(sb)
+    else:
+      suppl = Chem.ForwardSDMolSupplier(inf)
+      
     i = 0
     while not suppl.atEnd():
       mol = suppl.next()
@@ -2047,13 +2051,31 @@ CAS<~>
       i += 1
     self.failUnlessEqual(i,16)
 
+    # make sure we have object ownership preserved
+    inf = gzip.open(fileN)
+    suppl = Chem.ForwardSDMolSupplier(inf)
+    inf=None
+    i = 0
+    while not suppl.atEnd():
+      mol = suppl.next()
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      print mol.GetProp('_Name')
+      i += 1
+    self.failUnlessEqual(i,16)
+
+    
   def test66StreamSupplierIter(self):
     import gzip
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
     inf = gzip.open(fileN)
-    sb = Chem.streambuf(inf)
-    suppl = Chem.CreateForwardSDMolSupplier(sb)
+    if 0:
+      sb = Chem.streambuf(inf)
+      suppl = Chem.ForwardSDMolSupplier(sb)
+    else:
+      suppl = Chem.ForwardSDMolSupplier(inf)
+      
     molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
                 "192", "203", "210", "211", "213", "220", "229", "256"]
     i = 0
@@ -2064,6 +2086,23 @@ CAS<~>
       i += 1
     self.failUnlessEqual(i,16)
 
+  def test67StreamSupplierStringIO(self):
+    import gzip,StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    sio = StringIO.StringIO(gzip.open(fileN).read())
+    suppl = Chem.ForwardSDMolSupplier(sio)
+      
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    while not suppl.atEnd():
+      mol = suppl.next()
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      print mol.GetProp('_Name')
+      i += 1
+    self.failUnlessEqual(i,16)
 
 
     
