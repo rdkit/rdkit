@@ -1,3 +1,17 @@
+//
+//  This file is part of the CCTBX distribution:
+//     http://cctbx.sourceforge.net/
+//  Downloaded from here: 
+//    http://cctbx.svn.sourceforge.net/viewvc/cctbx/trunk/boost_adaptbx/python_streambuf.h?revision=13619
+//
+//  Copyright (c) 2006, The Regents of the University of
+//  California, through Lawrence Berkeley National Laboratory (subject to
+//  receipt of any required approvals from the U.S. Dept. of Energy).  All
+//  rights reserved.
+//
+//  The license is here:
+//    http://cctbx.svn.sourceforge.net/viewvc/cctbx/trunk/boost_adaptbx/LICENSE_2_0.txt?revision=5148
+//
 #ifndef BOOST_ADAPTBX_PYTHON_STREAMBUF_H
 #define BOOST_ADAPTBX_PYTHON_STREAMBUF_H
 
