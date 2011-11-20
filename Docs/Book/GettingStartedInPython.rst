@@ -97,6 +97,26 @@ A good practice is to test each molecule to see if it was correctly read before 
 24
 26
 
+An alternate type of Supplier, the :api:`rdkit.Chem.rdmolfiles.ForwardSDMolSupplier` can be used to read from file-like objects:
+
+>>> inf = file('data/5ht3ligs.sdf')
+>>> fsuppl = Chem.ForwardSDMolSupplier(inf)
+>>> for mol in fsuppl:
+...   if mol is None: continue
+...   print mol.GetNumAtoms()
+...
+20
+24
+24
+26
+
+Note that ForwardSDMolSuppliers cannot be used as random-access objects:
+
+>>> fsuppl[0]
+Traceback (most recent call last):
+  ...
+TypeError: 'ForwardSDMolSupplier' object does not support indexing
+
 
 Writing molecules
 =================
@@ -231,6 +251,30 @@ Multiple molecules can be written to a file using an :api:`rdkit.Chem.rdmolfiles
 >>> for m in mols: w.write(m)
 ...
 >>>
+
+An SDWriter can also be initialized using a file-like object:
+
+>>> from StringIO import StringIO
+>>> sio = StringIO()
+>>> w = Chem.SDWriter(sio)
+>>> for m in mols: w.write(m)
+...
+>>> w.flush()
+>>> print sio.getvalue()
+mol-295
+     RDKit          3D
+<BLANKLINE>
+ 20 22  0  0  0  0  0  0  0  0999 V2000
+    2.3200    0.0800   -0.1000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8400   -1.2200    0.1200 C   0  0  0  0  0  0  0  0  0  0  0  0
+...
+  1  3  1  0
+  1  4  1  0
+  2  5  1  0
+M  END
+<BLANKLINE>
+
+
 
 Other available Writers include the :api:`rdkit.Chem.rdmolfiles.SmilesWriter` and the :api:`rdkit.Chem.rdmolfiles.TDTWriter`.
 
