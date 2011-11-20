@@ -2047,7 +2047,6 @@ CAS<~>
       mol = suppl.next()
       self.failUnless(mol)
       self.failUnless(mol.GetProp("_Name") == molNames[i])
-      print mol.GetProp('_Name')
       i += 1
     self.failUnlessEqual(i,16)
 
@@ -2060,11 +2059,9 @@ CAS<~>
       mol = suppl.next()
       self.failUnless(mol)
       self.failUnless(mol.GetProp("_Name") == molNames[i])
-      print mol.GetProp('_Name')
       i += 1
     self.failUnlessEqual(i,16)
 
-    
   def test66StreamSupplierIter(self):
     import gzip
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
@@ -2082,7 +2079,6 @@ CAS<~>
     for mol in suppl :
       self.failUnless(mol)
       self.failUnless(mol.GetProp("_Name") == molNames[i])
-      print mol.GetProp('_Name')
       i += 1
     self.failUnlessEqual(i,16)
 
@@ -2100,11 +2096,56 @@ CAS<~>
       mol = suppl.next()
       self.failUnless(mol)
       self.failUnless(mol.GetProp("_Name") == molNames[i])
-      print mol.GetProp('_Name')
       i += 1
     self.failUnlessEqual(i,16)
 
+  def test68ForwardSupplierUsingFilename(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf')
+    suppl = Chem.ForwardSDMolSupplier(fileN)
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    for mol in suppl:
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
 
+    self.failUnlessRaises(IOError,lambda : Chem.ForwardSDMolSupplier('nosuchfile.sdf'))
+
+    
+  def test69StreamSDWriter(self):
+    import gzip,StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    inf = gzip.open(fileN)
+    suppl = Chem.ForwardSDMolSupplier(inf)
+    osio=StringIO.StringIO()
+    w = Chem.SDWriter(osio)
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    for mol in suppl :
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      w.write(mol)
+      i += 1
+    self.failUnlessEqual(i,16)
+    w.flush()
+    w=None
+
+    isio=StringIO.StringIO(osio.getvalue())
+    suppl = Chem.ForwardSDMolSupplier(isio)
+    i = 0
+    for mol in suppl :
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
+    
+
+    
     
     
 if __name__ == '__main__':

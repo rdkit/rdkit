@@ -1,6 +1,6 @@
-// $Id: SDMolSupplier.cpp 1625 2011-01-13 04:22:56Z glandrum $
+// $Id$
 //
-//  Copyright (C) 2003-2010  Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2011  Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,11 +12,12 @@
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
 #include <string>
+#include <fstream>
 
 //ours
+#include <RDGeneral/BadFileException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
-#include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/python_streambuf.h>
 
 #include "MolSupplier.h"
@@ -34,6 +35,21 @@ namespace {
       // FIX: minor leak here
       streambuf *sb=new streambuf(input);
       dp_inStream=new streambuf::istream(*sb);
+      df_owner=true;
+      df_sanitize=sanitize;
+      df_removeHs=removeHs;
+      POSTCONDITION(dp_inStream,"bad instream");
+    }
+    LocalForwardSDMolSupplier(std::string filename,
+                              bool sanitize,bool removeHs){
+      std::istream *tmpStream=0;
+      tmpStream = static_cast<std::istream *>(new std::ifstream(filename.c_str(), std::ios_base::binary));
+      if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad()) ) {
+        std::ostringstream errout;
+        errout << "Bad input file " << filename;
+        throw RDKit::BadFileException(errout.str());
+      }
+      dp_inStream=tmpStream;
       df_owner=true;
       df_sanitize=sanitize;
       df_removeHs=removeHs;
@@ -71,11 +87,16 @@ namespace RDKit {
       python::class_<LocalForwardSDMolSupplier,
         boost::noncopyable>("ForwardSDMolSupplier",
                             fsdMolSupplierClassDoc.c_str(),
-                            python::init<python::object &,bool,bool>
-                            ((python::arg("fileobj"),
-                              python::arg("sanitize")=true,
-                              python::arg("removeHs")=true))
-                            [python::with_custodian_and_ward_postcall<0,2>()])
+                            python::no_init)
+        .def(python::init<python::object &,bool,bool>
+             ((python::arg("fileobj"),
+               python::arg("sanitize")=true,
+               python::arg("removeHs")=true))
+             [python::with_custodian_and_ward_postcall<0,2>()])
+        .def(python::init<std::string,bool,bool>
+             ((python::arg("filename"),
+               python::arg("sanitize")=true,
+               python::arg("removeHs")=true)))
         .def("next", (ROMol *(*)(LocalForwardSDMolSupplier *))&MolSupplNext,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
