@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (c) 2004-2010 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2004-2011 greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/python_streambuf.h>
 #include <RDGeneral/versions.h>
 
 #include <RDGeneral/RDLog.h>
@@ -76,6 +77,40 @@ void LogMessage(std::string spec,std::string msg){
 #endif
 }
 
+namespace {
+  struct python_streambuf_wrapper
+  {
+    typedef boost_adaptbx::python::streambuf wt;
+
+    static void
+    wrap()
+    {
+      using namespace boost::python;
+      class_<wt, boost::noncopyable>("streambuf", no_init)
+        .def(init<object&, std::size_t>((
+          arg("python_file_obj"),
+          arg("buffer_size")=0),"documentation")[with_custodian_and_ward_postcall<0,2>()])
+      ;
+    }
+  };
+
+  struct python_ostream_wrapper
+  {
+    typedef boost_adaptbx::python::ostream wt;
+
+    static void
+    wrap()
+    {
+      using namespace boost::python;
+      class_<std::ostream, boost::noncopyable>("std_ostream", no_init);
+      class_<wt, boost::noncopyable, bases<std::ostream> >("ostream", no_init)
+        .def(init<object&, std::size_t>((
+          arg("python_file_obj"),
+          arg("buffer_size")=0)))
+      ;
+    }
+  };
+}
 
 
 BOOST_PYTHON_MODULE(rdBase)
@@ -109,4 +144,7 @@ BOOST_PYTHON_MODULE(rdBase)
   python::def("AttachFileToLog",AttachFileToLog,"Causes the log to write to a file",
 	      (python::arg("spec"),python::arg("filename"),python::arg("delay")=100));
   python::def("LogMessage",LogMessage);
+
+  python_streambuf_wrapper::wrap();
+  python_ostream_wrapper::wrap();
 }

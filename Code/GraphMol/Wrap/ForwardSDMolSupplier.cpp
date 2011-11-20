@@ -40,6 +40,14 @@ namespace {
       df_removeHs=removeHs;
       POSTCONDITION(dp_inStream,"bad instream");
     }
+    LocalForwardSDMolSupplier(streambuf &input,
+                              bool sanitize,bool removeHs){
+      dp_inStream=new streambuf::istream(input);
+      df_owner=true;
+      df_sanitize=sanitize;
+      df_removeHs=removeHs;
+      POSTCONDITION(dp_inStream,"bad instream");
+    }
     LocalForwardSDMolSupplier(std::string filename,
                               bool sanitize,bool removeHs){
       std::istream *tmpStream=0;
@@ -90,6 +98,11 @@ namespace RDKit {
                             python::no_init)
         .def(python::init<python::object &,bool,bool>
              ((python::arg("fileobj"),
+               python::arg("sanitize")=true,
+               python::arg("removeHs")=true))
+             [python::with_custodian_and_ward_postcall<0,2>()])
+        .def(python::init<streambuf &,bool,bool>
+             ((python::arg("streambuf"),
                python::arg("sanitize")=true,
                python::arg("removeHs")=true))
              [python::with_custodian_and_ward_postcall<0,2>()])

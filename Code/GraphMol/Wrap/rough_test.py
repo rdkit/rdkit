@@ -8,7 +8,7 @@
 it's intended to be shallow, but broad
 
 """
-from rdkit import RDConfig
+from rdkit import RDConfig,rdBase
 import os,sys,tempfile
 import unittest
 from rdkit import DataStructs
@@ -2092,8 +2092,7 @@ CAS<~>
     molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
                 "192", "203", "210", "211", "213", "220", "229", "256"]
     i = 0
-    while not suppl.atEnd():
-      mol = suppl.next()
+    for mol in suppl:
       self.failUnless(mol)
       self.failUnless(mol.GetProp("_Name") == molNames[i])
       i += 1
@@ -2114,8 +2113,23 @@ CAS<~>
 
     self.failUnlessRaises(IOError,lambda : Chem.ForwardSDMolSupplier('nosuchfile.sdf'))
 
+  def test69StreamSupplierStreambuf(self):
+    import gzip,StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    sb = rdBase.streambuf(gzip.open(fileN))
+    suppl = Chem.ForwardSDMolSupplier(sb)
+      
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    for mol in suppl:
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
     
-  def test69StreamSDWriter(self):
+  def test70StreamSDWriter(self):
     import gzip,StringIO
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf.gz')
@@ -2143,8 +2157,6 @@ CAS<~>
       self.failUnless(mol.GetProp("_Name") == molNames[i])
       i += 1
     self.failUnlessEqual(i,16)
-    
-
     
     
     
