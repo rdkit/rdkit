@@ -2157,7 +2157,28 @@ CAS<~>
       self.failUnless(mol.GetProp("_Name") == molNames[i])
       i += 1
     self.failUnlessEqual(i,16)
-    
+
+  def test71StreamSmilesWriter(self):
+    import StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','esters.sdf')
+    suppl = Chem.ForwardSDMolSupplier(fileN)
+    osio=StringIO.StringIO()
+    w = Chem.SmilesWriter(osio)
+    ms = [x for x in suppl]
+    w.SetProps(ms[0].GetPropNames())
+    i=0
+    for mol in ms:
+      self.failUnless(mol)
+      w.write(mol)
+      i+=1
+    self.failUnlessEqual(i,6)
+    w.flush()
+    w=None
+    txt = osio.getvalue()
+    self.failUnlessEqual(txt.count('ID'),1)
+    self.failUnlessEqual(txt.count('\n'),7)
+
     
     
 if __name__ == '__main__':
