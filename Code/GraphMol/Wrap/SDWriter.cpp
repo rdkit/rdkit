@@ -47,8 +47,8 @@ namespace RDKit {
   struct sdwriter_wrap {
     static void wrap() {
       std::string docStr="Constructor.\n\n"
-        "   ARGUMENTS:\n\n"
-        "     - fileName: name of the output file. ('-' to write to stdout)\n\n";
+        "   If a string argument is provided, it will be treated as the name of the output file.\n"
+        "   If a file-like object is provided, output will be sent there.\n\n";
       python::class_<SDWriter,
         boost::noncopyable>("SDWriter",
                             "A class for writing molecules to SD files.\n",

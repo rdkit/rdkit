@@ -17,10 +17,24 @@
 #include <GraphMol/RDKitBase.h>
 #include "rdchem.h"
 #include <RDBoost/PySequenceHolder.h>
+#include <RDBoost/python_streambuf.h>
 
 namespace python = boost::python;
 
 namespace RDKit {
+  using boost_adaptbx::python::streambuf;
+  SmilesWriter *getSmilesWriter(python::object &fileobj,
+                                std::string delimiter=" ",
+                                std::string nameHeader="Name",
+                                bool includeHeader=true,
+                                bool isomericSmiles=false,
+                                bool kekuleSmiles=false){
+    // FIX: minor leak here
+    streambuf *sb=new streambuf(fileobj);
+    streambuf::ostream *ost=new streambuf::ostream(*sb);
+    return new SmilesWriter(ost,delimiter,nameHeader,includeHeader,true,isomericSmiles,kekuleSmiles);
+  }
+
   void SetSmiWriterProps(SmilesWriter &writer, python::object props) {
     // convert the python list to a STR_VECT
     STR_VECT propNames;
@@ -44,13 +58,21 @@ namespace RDKit {
     static void wrap() {
       python::class_<SmilesWriter>("SmilesWriter",
 				   "A class for writing molecules to text files.",
-				   python::init<std::string,std::string,std::string,bool,bool,bool>((python::arg("fileName"),
-											   python::arg("delimiter")=" ",
-											   python::arg("nameHeader")="Name",
-											   python::arg("includeHeader")=true,
-                                                                                           python::arg("isomericSmiles")=false,
-                                                                                           python::arg("kekuleSmiles")=false),
-											  swDocStr.c_str()))
+                                   python::no_init)
+        .def("__init__",python::make_constructor(&getSmilesWriter,python::default_call_policies(),
+                                                 (python::arg("fileObj"),
+                                                  python::arg("delimiter")=" ",
+                                                  python::arg("nameHeader")="Name",
+                                                  python::arg("includeHeader")=true,
+                                                  python::arg("isomericSmiles")=false,
+                                                  python::arg("kekuleSmiles")=false)))
+        .def(python::init<std::string,std::string,std::string,bool,bool,bool>((python::arg("fileName"),
+                                                                               python::arg("delimiter")=" ",
+                                                                               python::arg("nameHeader")="Name",
+                                                                               python::arg("includeHeader")=true,
+                                                                               python::arg("isomericSmiles")=false,
+                                                                               python::arg("kekuleSmiles")=false),
+                                                                              swDocStr.c_str()))
 	.def("SetProps", SetSmiWriterProps,
 	     "Sets the properties to be written to the output file\n\n"
 	     "  ARGUMENTS:\n\n"
