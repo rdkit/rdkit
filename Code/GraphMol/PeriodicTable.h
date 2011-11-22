@@ -77,8 +77,14 @@ namespace RDKit {
     }
     //! overload
     int getAtomicNumber( const std::string &elementSymbol ) const {
-      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
-      int anum = byname.find(elementSymbol)->second;
+      // this little optimization actually makes a measurable difference
+      // in molecule-construction time
+      int anum=-1;
+      if(elementSymbol=="C") anum=6;
+      else if(elementSymbol=="N") anum=7;
+      else if(elementSymbol=="O") anum=8;
+      else anum = byname.find(elementSymbol)->second;
+      POSTCONDITION(anum>-1,"Element '" + elementSymbol +"' not found");
       return anum;
     }
 
