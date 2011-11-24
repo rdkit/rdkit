@@ -60,6 +60,15 @@ class TestCase(unittest.TestCase) :
     fp2 = rdMD.GetHashedAtomPairFingerprint(m,2048)
     sim= DataStructs.DiceSimilarity(fp1,fp2)
     self.failUnless(sim>0.0 and sim<1.0)
+
+
+    m = Chem.MolFromSmiles('c1ccccc1')
+    fp1 = rdMD.GetHashedAtomPairFingerprintAsBitVect(m,2048)
+    m = Chem.MolFromSmiles('c1ccccn1')
+    fp2 = rdMD.GetHashedAtomPairFingerprintAsBitVect(m,2048)
+    sim= DataStructs.DiceSimilarity(fp1,fp2)
+    self.failUnless(sim>0.0 and sim<1.0)
+
     
   def testRootedAtomPairs(self):
     m = Chem.MolFromSmiles('Oc1ccccc1')

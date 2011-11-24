@@ -157,6 +157,25 @@ namespace {
     return res;
   }
 
+  ExplicitBitVect *GetHashedAtomPairFingerprintAsBitVect(const RDKit::ROMol &mol,
+                                                         unsigned int nBits,
+                                                         unsigned int minLength,
+                                                         unsigned int maxLength,
+                                                         python::object fromAtoms,
+                                                         python::object ignoreAtoms
+                                                         ){
+    std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
+    ExplicitBitVect *res;
+    res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(mol,nBits,
+                                                                  minLength,maxLength,
+                                                                  fvect,ivect);
+    if(fvect) delete fvect;
+    if(ivect) delete ivect;
+    return res;
+  }
+
+  
   RDKit::SparseIntVect<boost::uint32_t> *GetMorganFingerprint(const RDKit::ROMol &mol,
                                                               int radius,
                                                               python::object invariants,
@@ -431,11 +450,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   docString="Returns the atom-pair fingerprint for a molecule as an ExplicitBitVect";
   python::def("GetHashedAtomPairFingerprintAsBitVect",
-	      RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect,
+	      GetHashedAtomPairFingerprintAsBitVect,
 	      (python::arg("mol"),
                python::arg("nBits")=2048,
                python::arg("minLength")=1,
-               python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1),
+               python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
+               python::arg("fromAtoms")=0,
+               python::arg("ignoreAtoms")=0),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
