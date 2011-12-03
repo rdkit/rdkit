@@ -1,18 +1,20 @@
 RDKIT=$(RDBASE)
 USE_INCHI=0
+STATIC_LINK=1
 
 ifeq ($(USE_INCHI),1)
-  INCHISTATICLIBS=-lRDInchiLib_static -lInchi_static 
   INCHILIBS=-lRDInchiLib -lInchi
   INCHIFLAGS=-I${RDKIT}/External -DBUILD_INCHI_SUPPORT  
   INCHIREGRESS=inchi
 endif
 
-RDKSTATICLIBS=-lFileParsers_static -lSmilesParse_static -lFingerprints_static -lSubgraphs_static -lSubstructMatch_static  -lDescriptors_static -lPartialCharges_static -lGraphMol_static -lDataStructs_static -lRDGeometryLib_static -lRDGeneral_static
-RDKLIBS       = -lDescriptors -lGraphMol -lSmilesParse  -lFingerprints -lSubstructMatch -lDescriptors -lPartialCharges -lSubgraphs -lDataStructs -lRDGeometryLib -lRDGeneral
+RDKLIBS       = ${INCHILIBS} -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lSubstructMatch  -lDescriptors -lPartialCharges -lGraphMol -lDataStructs -lRDGeometryLib -lRDGeneral
 
-SHLIB_LINK += -L${RDKIT}/lib ${INCHISTATICLIBS} ${RDKSTATICLIBS}
-#SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${INCHILIBS} ${RDKLIBS} 
+ifeq ($(STATIC_LINK),1)
+  SHLIB_LINK += -L${RDKIT}/lib $(addsuffix _static,${RDKLIBS})
+else
+  SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${RDKLIBS}
+endif
 
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
