@@ -18,10 +18,20 @@
 #include <GraphMol/RDKitBase.h>
 #include "rdchem.h"
 #include <RDBoost/PySequenceHolder.h>
+#include <RDBoost/python_streambuf.h>
 
 namespace python = boost::python;
 
 namespace RDKit {
+  using boost_adaptbx::python::streambuf;
+  TDTWriter *getTDTWriter(python::object &fileobj){
+    // FIX: minor leak here
+    streambuf *sb=new streambuf(fileobj);
+    streambuf::ostream *ost=new streambuf::ostream(*sb);
+    return new TDTWriter(ost,true);
+  }
+
+
   void SetTDTWriterProps(TDTWriter &writer, python::object props) {
     // convert the python list to a STR_VECT
     STR_VECT propNames;
@@ -34,12 +44,15 @@ namespace RDKit {
   struct tdtwriter_wrap {
     static void wrap() {
       std::string docStr="Constructor.\n\n"
-        "   ARGUMENTS:\n\n"
-        "     - fileName: name of the output file. ('-' to write to stdout)\n\n";
-      python::class_<TDTWriter>("TDTWriter",
-				"A class for writing molecules to TDT files.\n",
-				python::init<std::string>(python::args("fileName"),
-                                                          docStr.c_str()))
+        "   If a string argument is provided, it will be treated as the name of the output file.\n"
+        "   If a file-like object is provided, output will be sent there.\n\n";
+      python::class_<TDTWriter,
+        boost::noncopyable>("TDTWriter",
+                            "A class for writing molecules to TDT files.\n",
+                            python::no_init)
+        .def("__init__", python::make_constructor(&getTDTWriter))
+        .def(python::init<std::string>(python::args("fileName"),
+                                       docStr.c_str()))
 	.def("SetProps", SetTDTWriterProps,
 	     "Sets the properties to be written to the output file\n\n"
 	     "  ARGUMENTS:\n\n"
