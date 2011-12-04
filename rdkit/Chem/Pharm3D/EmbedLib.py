@@ -978,10 +978,11 @@ def Check2DBounds(atomMatch,mol,pcophore):
     for j in range(i+1,nFeats):
       lowerB = pcophore._boundsMat2D[j,i] #lowerB = pcophore.getLowerBound2D(i,j)
       upperB = pcophore._boundsMat2D[i,j] #upperB = pcophore.getUpperBound2D(i,j)
+      dij=10000
       for atomI in atomMatch[i]:
         for atomJ in atomMatch[j]:
           try:
-            dij = dm[atomI,atomJ]
+            dij = min(dij,dm[atomI,atomJ])
           except IndexError:
             print 'bad indices:',atomI,atomJ
             print '  shape:',dm.shape
@@ -989,9 +990,8 @@ def Check2DBounds(atomMatch,mol,pcophore):
             print '    mol:'
             print Chem.MolToMolBlock(mol)
             raise IndexError
-
-          if dij<lowerB or dij>upperB:
-            return False
+      if dij<lowerB or dij>upperB:
+        return False
   return True
 
 def _checkMatch(match,mol,bounds,pcophore,use2DLimits):

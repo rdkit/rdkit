@@ -205,7 +205,7 @@ class TestCase(unittest.TestCase):
     self.failUnlessEqual(nDone,100)
     self.failUnlessEqual(nMatches,93)
     #print 'nhits:',nHits
-    self.failUnlessEqual(nHits,19)
+    self.failUnlessEqual(nHits,68)
 
   def testIssue268(self):
     from rdkit import RDLogger
