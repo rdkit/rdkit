@@ -1,3 +1,26 @@
+******  Release_2011.12.1 *******
+(Changes relative to Release_2011.09.1)
+
+Acknowledgements:
+Roger Sayle, Adrian Schreyer
+
+Bug Fixes: 
+
+New Features:
+- Integration with the new IPython graphical canvas has been added. For details see this wiki page:
+http://code.google.com/p/rdkit/wiki/IPythonIntegration
+
+New Database Cartridge Features: 
+- Integration with PostgreSQL's KNN-GIST functionality. (Thanks to Adrian Schreyer)
+- the functions all_values_gt(sfp,N) and all_values_lt(sfp,N) were added.
+
+Deprecated modules (to be removed in next release):
+
+Removed modules:
+
+Other:
+- Improvements to the SMARTS parser (Roger Sayle)
+
 ******  Release_2011.09.1 *******
 (Changes relative to Release_2011.06.1)
 
