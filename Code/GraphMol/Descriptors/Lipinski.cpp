@@ -55,6 +55,7 @@ namespace RDKit{
     SMARTSCOUNTFUNC(NumHBD, "[$([N;!H0;v3]),$([N;!H0;+1;v4]),$([O,S;H1;+0]),$([n;H1;+0])]","2.0.1" ) ;
     SMARTSCOUNTFUNC(NumHBA, "[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N;v3;!$(N-*=!@[O,N,P,S])]),$([nH0,o,s;+0])]","2.0.1") ;
     SMARTSCOUNTFUNC(NumHeteroatoms,"[!#6;!#1]","1.0.1") ;
+    SMARTSCOUNTFUNC(NumAmideBonds,"C(=[O;!R])N","1.0.0") ;
     
     const std::string NumRingsVersion="1.0.1";
     unsigned int calcNumRings(const ROMol &mol){
