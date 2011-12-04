@@ -319,7 +319,7 @@ namespace RDKit{
 
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
-                                        INT_VECT &ranks,bool doKekule){
+                                        INT_VECT &ranks,bool doKekule,bool canonical){
 
       Canon::MolStack molStack;
       // try to prevent excessive reallocation
@@ -329,8 +329,10 @@ namespace RDKit{
 
       std::map<int,int> ringClosureMap;
       int ringIdx,closureVal;
+      if(!canonical) mol.setProp("_StereochemDone",1);
+
       Canon::canonicalizeFragment(mol,atomIdx,colors,ranks,
-                                  molStack);
+                                    molStack);
       Bond *bond=0;
       BOOST_FOREACH(Canon::MolStackElem mSE,molStack){
         switch(mSE.type){
@@ -473,7 +475,7 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule);
+                                                    ranks,doKekule,canonical);
 
       res += subSmi;
       colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
