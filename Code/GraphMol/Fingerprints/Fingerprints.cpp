@@ -16,6 +16,8 @@
 #include "Fingerprints.h"
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/Invariant.h>
 #include <boost/random.hpp>
 #include <limits.h>
@@ -133,8 +135,8 @@ namespace RDKit{
 
     INT_PATH_LIST_MAP allPaths;
     if(branchedPaths){
-     allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
-                                              useHs);
+      allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
+                                               useHs);
     } else {
       allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
                                            useHs);
@@ -482,4 +484,110 @@ namespace RDKit{
 
 
 
+  const char *pqs[]={ "[*]~[*]",
+                      "[*]~[*]~[*]",
+                      "[R]~1~[R]~[R]~1",
+                      "[*]~[*]~[*]~[*]",
+                      "[*]~[*](~[*])~[*]",
+                      "[*]~[R]~1[R]~[R]~1",
+                      "[*]~1[R]~[R]~[R]~1",
+                      "[*]~[*]~[*]~[*]~[*]",
+                      "[*]~[*]~[*](~[*])~[*]",
+                      "[*]~[R]~1[R]~[R]~1[*]",
+                      "[*]~[R]~1[R]~[R]~[R]~1",
+                      "[*]~[*](~[*])(~[*])~[*]",
+                      "[*]~[R]~1(~[*])~[R]~[R]~1",
+                      "[R]~1[R]~[R]~[R]~[R]~1",
+                      "[*]~[*]~[*]~[*]~[*]~[*]",
+                      "[*]~[*]~[*]~[*](~[*])~[*]",
+                      "[*]~[*]~[*](~[*])~[*]~[*]",
+                      "[*]~[*]~[*](~[*])(~[*])~[*]",
+                      "[*]~[*](~[*])~[*](~[*])~[*]",
+                      "[*]~[R]~1[R]~[R]~1(~[*])~[*]",
+                      "[*]~[R]~1[R](~[*])~[R]~1[*]",
+                      "[*]~[R]~1[R]~[R](~[*])~[R]~1",
+                      "[*]~[R]~1[R]~[R]~[R]~1[*]",
+                      "[*]~[R]~1[R]~[R]~[R]~[R]~1",
+                      "[*]~[R]~1(~[*])~[R]~[R]~[R]~1",
+                      "[R]~1[R]~[R]~[R]~[R]~[R]~1",
+                      "[*]~[*]~[*]~[*]~[*]~[*]~[*]",
+                      "[*]~[*]~[*]~[*]~[*](~[*])~[*]",
+                      "[*]~[*]~[*]~[*](~[*])~[*]~[*]",
+                      "[*]~[*]~[*]~[*](~[*])(~[*])~[*]",
+                      "[*]~[*]~[*](~[*])~[*](~[*])~[*]",
+                      "[*]~[*](~[*])~[*]~[*](~[*])~[*]",
+                      "[*]~[*](~[*])~[*](~[*])(~[*])~[*]",
+                      ""};
+    
+  // caller owns the result, it must be deleted
+  ExplicitBitVect *LayeredFingerprintMol2(const ROMol &mol,
+                                          unsigned int layerFlags,
+                                          unsigned int minPath,
+                                          unsigned int maxPath,
+                                          unsigned int fpSize,
+                                          std::vector<unsigned int> *atomCounts,
+                                          ExplicitBitVect *setOnlyBits,
+                                          bool branchedPaths){
+    PRECONDITION(minPath!=0,"minPath==0");
+    PRECONDITION(maxPath>=minPath,"maxPath<minPath");
+    PRECONDITION(fpSize!=0,"fpSize==0");
+    PRECONDITION(!atomCounts || atomCounts->size()>=mol.getNumAtoms(),"bad atomCounts size");
+    PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits()==fpSize,"bad setOnlyBits size");
+
+    static std::vector<ROMOL_SPTR> patts;
+    // FIX: need a mutex here to be threadsafe
+    if(patts.size()==0){
+      unsigned int idx=0;
+      while(1){
+        std::string pq=pqs[idx];
+        if(pq=="") break;
+        idx++;
+        RWMol *tm;
+        try {
+          tm = SmartsToMol(pq);
+        }catch (...) {
+          tm=NULL;
+        }
+        if(!tm) continue;
+        patts.push_back(ROMOL_SPTR(static_cast<ROMol *>(tm)));
+      }
+    }
+    if(!mol.getRingInfo()->isInitialized()){
+      MolOps::findSSSR(mol);
+    }
+    ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+    unsigned int pIdx=0;
+    BOOST_FOREACH(ROMOL_SPTR patt,patts){
+      ++pIdx;
+      if(patt->getNumBonds()<minPath || patt->getNumBonds()>maxPath){
+        continue;
+      }
+      std::vector<MatchVectType> matches;
+      SubstructMatch(mol,*(patt.get()),matches,false);
+      boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
+      BOOST_FOREACH(MatchVectType &mv,matches){
+        boost::uint32_t bitId=pIdx;
+        std::vector<unsigned int> amap(mv.size(),0);
+        BOOST_FOREACH(MatchVectType::value_type &p,mv){
+          gboost::hash_combine(bitId,mol.getAtomWithIdx(p.second)->getAtomicNum());
+          amap[p.first]=p.second;
+        }
+        ROMol::EDGE_ITER firstB,lastB;
+        boost::tie(firstB,lastB) = patt->getEdges();
+        while(firstB!=lastB){
+          BOND_SPTR pbond = (*patt.get())[*firstB];
+          ++firstB;
+          const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
+                                                    amap[pbond->getEndAtomIdx()]);
+          gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
+        }
+        res->setBit(bitId%fpSize);
+
+        // collect bits counting the number of occurances of the pattern:
+        gboost::hash_combine(mIdx,0xBEEF);
+        res->setBit(mIdx%fpSize);
+      }
+    }
+    return res;
+  }
 }

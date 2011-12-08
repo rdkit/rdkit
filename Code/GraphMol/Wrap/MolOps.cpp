@@ -237,6 +237,38 @@ namespace RDKit{
     
     return res;
   }
+  ExplicitBitVect *wrapLayeredFingerprint2(const ROMol &mol,unsigned int layerFlags,
+                                          unsigned int minPath,unsigned int maxPath,
+                                          unsigned int fpSize,
+                                          python::list atomCounts,
+                                          ExplicitBitVect *includeOnlyBits,
+                                          bool branchedPaths){
+    std::vector<unsigned int> *atomCountsV=0;
+    if(atomCounts){
+      atomCountsV = new std::vector<unsigned int>;
+      unsigned int nAts=python::extract<unsigned int>(atomCounts.attr("__len__")());
+      if(nAts<mol.getNumAtoms()){
+        throw_value_error("atomCounts shorter than the number of atoms");
+      }
+      atomCountsV->resize(nAts);
+      for(unsigned int i=0;i<nAts;++i){
+        (*atomCountsV)[i] = python::extract<unsigned int>(atomCounts[i]);
+      }
+    }
+
+    ExplicitBitVect *res;
+    res = RDKit::LayeredFingerprintMol2(mol,layerFlags,minPath,maxPath,fpSize,
+                                        atomCountsV,includeOnlyBits,branchedPaths);
+
+    if(atomCountsV){
+      for(unsigned int i=0;i<atomCountsV->size();++i){
+        atomCounts[i] = (*atomCountsV)[i];
+      }
+      delete atomCountsV;
+    }
+    
+    return res;
+  }
 
 
   python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol, unsigned int lowerLen,
@@ -970,6 +1002,16 @@ namespace RDKit{
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_LayeredFingerprint_version")=RDKit::LayeredFingerprintMolVersion;
       python::scope().attr("LayeredFingerprint_substructLayers")=RDKit::substructLayers;
+
+      python::def("LayeredFingerprint2", wrapLayeredFingerprint2,
+                  (python::arg("mol"),
+                   python::arg("layerFlags")=0xFFFFFFFF,
+                   python::arg("minPath")=1,
+                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
+                   python::arg("atomCounts")=python::list(),
+                   python::arg("setOnlyBits")=(ExplicitBitVect *)0,
+                   python::arg("branchedPaths")=true),
+                  docString.c_str(),python::return_value_policy<python::manage_new_object>());
 
       docString="Set the wedging on single bonds in a molecule.\n \
    The wedging scheme used is that from Mol files.\n \
