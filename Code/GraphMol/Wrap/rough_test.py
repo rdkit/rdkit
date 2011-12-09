@@ -8,7 +8,7 @@
 it's intended to be shallow, but broad
 
 """
-from rdkit import RDConfig
+from rdkit import RDConfig,rdBase
 import os,sys,tempfile
 import unittest
 from rdkit import DataStructs
@@ -1687,22 +1687,22 @@ CAS<~>
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf')
     ms = [x for x in Chem.SDMolSupplier(fileN)]
-    self.failUnless(len(ms)==16)
+    self.failUnlessEqual(len(ms),16)
     count=0
     for m in Chem.SDMolSupplier(fileN): count+=1
-    self.failUnless(count==16)
+    self.failUnlessEqual(count,16)
 
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','fewSmi.csv')
     count=0
-    for m in Chem.SmilesMolSupplier(fileN,titleLine=False,smilesColumn=1): count+=1
-    self.failUnless(count==10)
+    for m in Chem.SmilesMolSupplier(fileN,titleLine=False,smilesColumn=1,delimiter=','): count+=1
+    self.failUnlessEqual(count,10)
     
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','acd_few.tdt')
     count=0
     for m in Chem.TDTMolSupplier(fileN): count+=1
-    self.failUnless(count==10)
+    self.failUnlessEqual(count,10)
 
   def test49Issue1932365(self):
     """ test aromatic Se and Te from smiles/smarts
@@ -2029,6 +2029,179 @@ CAS<~>
     self.failUnless(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.SINGLE or \
                       m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.SINGLE )
 
+  def test65StreamSupplier(self):
+    import gzip
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    inf = gzip.open(fileN)
+    if 0:
+      sb = Chem.streambuf(inf)
+      suppl = Chem.ForwardSDMolSupplier(sb)
+    else:
+      suppl = Chem.ForwardSDMolSupplier(inf)
+      
+    i = 0
+    while not suppl.atEnd():
+      mol = suppl.next()
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
+
+    # make sure we have object ownership preserved
+    inf = gzip.open(fileN)
+    suppl = Chem.ForwardSDMolSupplier(inf)
+    inf=None
+    i = 0
+    while not suppl.atEnd():
+      mol = suppl.next()
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
+
+  def test66StreamSupplierIter(self):
+    import gzip
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    inf = gzip.open(fileN)
+    if 0:
+      sb = Chem.streambuf(inf)
+      suppl = Chem.ForwardSDMolSupplier(sb)
+    else:
+      suppl = Chem.ForwardSDMolSupplier(inf)
+      
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    for mol in suppl :
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
+
+  def test67StreamSupplierStringIO(self):
+    import gzip,StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    sio = StringIO.StringIO(gzip.open(fileN).read())
+    suppl = Chem.ForwardSDMolSupplier(sio)
+      
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    for mol in suppl:
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
+
+  def test68ForwardSupplierUsingFilename(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf')
+    suppl = Chem.ForwardSDMolSupplier(fileN)
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    for mol in suppl:
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
+
+    self.failUnlessRaises(IOError,lambda : Chem.ForwardSDMolSupplier('nosuchfile.sdf'))
+
+  def test69StreamSupplierStreambuf(self):
+    import gzip,StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    sb = rdBase.streambuf(gzip.open(fileN))
+    suppl = Chem.ForwardSDMolSupplier(sb)
+      
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    for mol in suppl:
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
+    
+  def test70StreamSDWriter(self):
+    import gzip,StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf.gz')
+    inf = gzip.open(fileN)
+    suppl = Chem.ForwardSDMolSupplier(inf)
+    osio=StringIO.StringIO()
+    w = Chem.SDWriter(osio)
+    molNames = ["48", "78", "128", "163", "164", "170", "180", "186",
+                "192", "203", "210", "211", "213", "220", "229", "256"]
+    i = 0
+    for mol in suppl :
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      w.write(mol)
+      i += 1
+    self.failUnlessEqual(i,16)
+    w.flush()
+    w=None
+
+    isio=StringIO.StringIO(osio.getvalue())
+    suppl = Chem.ForwardSDMolSupplier(isio)
+    i = 0
+    for mol in suppl :
+      self.failUnless(mol)
+      self.failUnless(mol.GetProp("_Name") == molNames[i])
+      i += 1
+    self.failUnlessEqual(i,16)
+
+  def test71StreamSmilesWriter(self):
+    import StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','esters.sdf')
+    suppl = Chem.ForwardSDMolSupplier(fileN)
+    osio=StringIO.StringIO()
+    w = Chem.SmilesWriter(osio)
+    ms = [x for x in suppl]
+    w.SetProps(ms[0].GetPropNames())
+    i=0
+    for mol in ms:
+      self.failUnless(mol)
+      w.write(mol)
+      i+=1
+    self.failUnlessEqual(i,6)
+    w.flush()
+    w=None
+    txt = osio.getvalue()
+    self.failUnlessEqual(txt.count('ID'),1)
+    self.failUnlessEqual(txt.count('\n'),7)
+
+  def test72StreamTDTWriter(self):
+    import StringIO
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','esters.sdf')
+    suppl = Chem.ForwardSDMolSupplier(fileN)
+    osio=StringIO.StringIO()
+    w = Chem.TDTWriter(osio)
+    ms = [x for x in suppl]
+    w.SetProps(ms[0].GetPropNames())
+    i=0
+    for mol in ms:
+      self.failUnless(mol)
+      w.write(mol)
+      i+=1
+    self.failUnlessEqual(i,6)
+    w.flush()
+    w=None
+    txt = osio.getvalue()
+    self.failUnlessEqual(txt.count('ID'),6)
+    self.failUnlessEqual(txt.count('NAME'),6)
+
+    
+    
     
 if __name__ == '__main__':
   unittest.main()

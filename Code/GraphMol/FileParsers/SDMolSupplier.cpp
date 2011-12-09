@@ -139,7 +139,7 @@ namespace RDKit {
       return res;
     }
 
-    res = ForwardSDMolSupplier::next();
+    res = _next();
 
     ++d_last;
     unsigned int posHold=dp_inStream->tellg();

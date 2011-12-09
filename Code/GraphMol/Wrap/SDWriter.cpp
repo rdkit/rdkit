@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010  Rational Discovery LLC
+//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,10 +18,19 @@
 #include <GraphMol/RDKitBase.h>
 #include "rdchem.h"
 #include <RDBoost/PySequenceHolder.h>
+#include <RDBoost/python_streambuf.h>
 
 namespace python = boost::python;
+using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
+  SDWriter *getSDWriter(python::object &fileobj){
+    // FIX: minor leak here
+    streambuf *sb=new streambuf(fileobj);
+    streambuf::ostream *ost=new streambuf::ostream(*sb);
+    return new SDWriter(ost,true);
+  }
+  
   void SetSDWriterProps(SDWriter &writer, python::object props) {
     // convert the python list to a STR_VECT
     STR_VECT propNames;
@@ -38,12 +47,15 @@ namespace RDKit {
   struct sdwriter_wrap {
     static void wrap() {
       std::string docStr="Constructor.\n\n"
-        "   ARGUMENTS:\n\n"
-        "     - fileName: name of the output file. ('-' to write to stdout)\n\n";
-      python::class_<SDWriter>("SDWriter",
-			       "A class for writing molecules to SD files.\n",
-			       python::init<std::string>(python::args("fileName"),
-                                                         docStr.c_str()))
+        "   If a string argument is provided, it will be treated as the name of the output file.\n"
+        "   If a file-like object is provided, output will be sent there.\n\n";
+      python::class_<SDWriter,
+        boost::noncopyable>("SDWriter",
+                            "A class for writing molecules to SD files.\n",
+                            python::no_init)
+        .def("__init__", python::make_constructor(&getSDWriter))
+        .def(python::init<std::string>(python::args("fileName"),
+                                       docStr.c_str()))
 	.def("SetProps", SetSDWriterProps,
 	     "Sets the properties to be written to the output file\n\n"
 	     "  ARGUMENTS:\n\n"

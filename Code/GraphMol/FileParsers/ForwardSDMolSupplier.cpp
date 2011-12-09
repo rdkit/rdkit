@@ -132,12 +132,24 @@ namespace RDKit {
   
   ROMol *ForwardSDMolSupplier::next() {
     PRECONDITION(dp_inStream,"no stream");
+    ROMol *res = NULL;
+
+    if (dp_inStream->eof()) {
+      //FIX: we should probably be throwing an exception here
+      df_end = true;
+      return res;
+    }
+
+    res=_next();
+    return res;
+  }
+
+  ROMol *ForwardSDMolSupplier::_next() {
+    PRECONDITION(dp_inStream,"no stream");
 
     std::string tempStr;
     ROMol *res = NULL;
-    // finally if we reached the end of the file set end to be true
     if (dp_inStream->eof()) {
-      //FIX: we should probably be throwing an exception here
       df_end = true;
       return res;
     }
@@ -146,7 +158,7 @@ namespace RDKit {
     try {
       res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs);
       d_line=line;
-      this->readMolProps(res);  
+      if(res) this->readMolProps(res);  
     }
     catch (FileParseException &fe) {
       if(d_line<static_cast<int>(line)) d_line=line;
@@ -183,9 +195,40 @@ namespace RDKit {
         std::getline(*dp_inStream,tempStr);
       }
     }
-
+    if (dp_inStream->eof()) {
+      //FIX: we should probably be throwing an exception here
+      df_end = true;
+    }
     return res;
   }
+
+
+  void ForwardSDMolSupplier::checkForEnd() {
+    PRECONDITION(dp_inStream,"no stream");
+    // we will call it end of file if we have more than 4 contiguous empty lines
+    // or we reach end of file in the meantime
+    if (dp_inStream->eof()) {
+      df_end = true;
+      return;
+    }
+    // we are not at the end of file, check for blank lines
+    unsigned int nempty = 0;
+    std::string tempStr;
+    for (unsigned int i = 0; i < 4 ; i++) {
+      tempStr = getLine(dp_inStream);
+      if (dp_inStream->eof()) {
+        df_end = true;
+        return;
+      }
+      if(tempStr.find_first_not_of(" \t\r\n")==std::string::npos){
+        ++nempty;
+      }
+    }
+    if (nempty == 4) {
+      df_end = true;
+    }
+  }
+
 
   bool ForwardSDMolSupplier::atEnd() {
     PRECONDITION(dp_inStream,"no stream");

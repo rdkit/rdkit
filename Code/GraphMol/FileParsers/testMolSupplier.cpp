@@ -1606,6 +1606,7 @@ int testForwardSDSupplier() {
     unsigned int i = 0;
     while (!sdsup.atEnd()) {
       ROMol *nmol = sdsup.next();
+      TEST_ASSERT(nmol || sdsup.atEnd());
       if (nmol) {
         TEST_ASSERT(nmol->hasProp("_Name"));
         TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
@@ -1799,9 +1800,8 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  BOOST_LOG(rdErrorLog) <<"testing bad-formed SD file without CR on the last line\n";
   testMissingCRSDSupplier();
-  BOOST_LOG(rdErrorLog) <<"Finished: testForwardSDSupplier()\n";
+  BOOST_LOG(rdErrorLog) <<"Finished: testMissingCRSDSupplier()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
   return 0;
 }
