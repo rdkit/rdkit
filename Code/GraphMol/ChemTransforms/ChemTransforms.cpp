@@ -126,6 +126,8 @@ namespace RDKit{
     std::vector<ROMOL_SPTR> res;
     std::vector<MatchVectType> fgpMatches;
 
+    boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
+
     // do the substructure matching and get the atoms that match the query
     SubstructMatch(mol, query, fgpMatches);
 
@@ -187,29 +189,32 @@ namespace RDKit{
       } else {
         // just delete the atoms now:
         for (INT_VECT_RI dri = sortMatch.rbegin(); dri != sortMatch.rend(); dri++) {
+          removedAtoms.set(*dri);
           newMol->removeAtom(*dri);
         }
       }
     }
 
-    if(replaceAll){
-      // remove the atoms from the delList:
-      std::sort(delList.begin(),delList.end());
-      RWMol *newMol = static_cast<RWMol *>(res[0].get());
-      for (INT_VECT_RI dri = delList.rbegin(); dri != delList.rend(); dri++) {
-        newMol->removeAtom(*dri);
+    if(delList.size()){
+      if(replaceAll){
+        // remove the atoms from the delList:
+        std::sort(delList.begin(),delList.end());
+        RWMol *newMol = static_cast<RWMol *>(res[0].get());
+        for (INT_VECT_RI dri = delList.rbegin(); dri != delList.rend(); dri++) {
+          removedAtoms.set(*dri);
+          newMol->removeAtom(*dri);
+        }
+      }
+        
+      // clear conformers and computed props and do basic updates 
+      // on the the resulting molecules, but allow unhappiness:
+      for(std::vector<ROMOL_SPTR>::iterator resI=res.begin();
+          resI!=res.end();resI++){
+        updateSubMolConfs(mol,*(RWMol *)(*resI).get(),removedAtoms);
+        (*resI)->clearComputedProps(true);
+        (*resI)->updatePropertyCache(false);
       }
     }
-
-    // clear conformers and computed props and do basic updates 
-    // on the the resulting molecules, but allow unhappiness:
-    for(std::vector<ROMOL_SPTR>::iterator resI=res.begin();
-        resI!=res.end();resI++){
-      (*resI)->clearConformers();
-      (*resI)->clearComputedProps(true);
-      (*resI)->updatePropertyCache(false);
-    }
-
     return res;
   }
 

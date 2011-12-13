@@ -736,7 +736,6 @@ void testMurckoDecomp()
      TEST_ASSERT(mol);
      tgt=MolToSmiles(*mol,true);
      delete mol;
-     std::cerr<<smi<<" "<<tgt<<std::endl;
      TEST_ASSERT(smi==tgt);
     } else {
       TEST_ASSERT(nMol->getNumAtoms()==0);
@@ -794,6 +793,53 @@ void testReplaceCoreRequireDummies()
 
 
 
+void testIssue3453144() 
+{
+  ROMol *mol1=0,*matcher1=0,*replacement=0;
+  std::string smi,sma;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing that atom positions are correctly copied by replaceSubstructs" << std::endl;
+
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ChemTransforms/testData/ethanol.mol";
+  mol1 = MolFileToMol(pathName);
+  TEST_ASSERT(mol1);
+  TEST_ASSERT(mol1->getNumAtoms()==3);
+
+  sma = "O";
+  matcher1 = SmartsToMol(sma);
+  TEST_ASSERT(matcher1);
+
+  smi="N";
+  replacement = SmilesToMol(smi);
+  TEST_ASSERT(replacement);
+
+  std::vector<ROMOL_SPTR> rs;
+  rs = replaceSubstructs(*mol1,*matcher1,*replacement);
+  TEST_ASSERT(rs.size()==1);
+
+  TEST_ASSERT(rs[0]->getNumAtoms()==3);
+  TEST_ASSERT(rs[0]->getAtomWithIdx(2)->getAtomicNum()==7);
+
+  TEST_ASSERT(rs[0]->getNumConformers()==mol1->getNumConformers());
+
+  RDGeom::Point3D op,np;
+  op = mol1->getConformer().getAtomPos(0);
+  np = rs[0]->getConformer().getAtomPos(0);  
+  TEST_ASSERT(feq(op.x,np.x));
+  TEST_ASSERT(feq(op.y,np.y));
+  TEST_ASSERT(feq(op.z,np.z));
+  op = mol1->getConformer().getAtomPos(1);
+  np = rs[0]->getConformer().getAtomPos(1);  
+  TEST_ASSERT(feq(op.x,np.x));
+  TEST_ASSERT(feq(op.y,np.y));
+  TEST_ASSERT(feq(op.z,np.z));
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -812,6 +858,8 @@ int main() {
 
   testMurckoDecomp();
   testReplaceCoreRequireDummies();
+
+  testIssue3453144();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
