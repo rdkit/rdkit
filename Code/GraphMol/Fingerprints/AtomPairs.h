@@ -134,6 +134,7 @@ namespace RDKit {
       \param ignoreAtoms: if provided, any atom pairs that include 
                           the specified atoms will not be included in the
                           fingerprint
+      \param nBitsPerEntry: number of bits to use in simulating counts
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -141,11 +142,12 @@ namespace RDKit {
     */
     ExplicitBitVect *
     getHashedAtomPairFingerprintAsBitVect(const ROMol &mol,
-                                          unsigned int nBits=2048,
+                                          unsigned int nBits=512,
                                           unsigned int minLength=1,
                                           unsigned int maxLength=maxPathLen-1,
                                           const std::vector<boost::uint32_t> *fromAtoms=0,
-                                          const std::vector<boost::uint32_t> *ignoreAtoms=0);
+                                          const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                                          unsigned int nBitsPerEntry=4);
 
 
     //! returns an topological torsion hash based on the atom hashes
@@ -218,6 +220,7 @@ namespace RDKit {
       \param ignoreAtoms: if provided, any torsions that include 
                           the specified atoms will not be included in the
                           fingerprint
+      \param nBitsPerEntry: number of bits to use in simulating counts
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -225,10 +228,11 @@ namespace RDKit {
     */
     ExplicitBitVect *
     getHashedTopologicalTorsionFingerprintAsBitVect(const ROMol &mol,
-                                                    unsigned int nBits=2048,
+                                                    unsigned int nBits=512,
                                                     unsigned int targetSize=4,
                                                     const std::vector<boost::uint32_t> *fromAtoms=0,
-                                                    const std::vector<boost::uint32_t> *ignoreAtoms=0);
+                                                    const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                                                    unsigned int nBitsPerEntry=4);
   }    
 }
 

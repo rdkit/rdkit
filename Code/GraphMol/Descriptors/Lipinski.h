@@ -47,6 +47,8 @@ namespace RDKit{
     unsigned int calcNumHBA(const ROMol &mol);
     extern const std::string NumHeteroatomsVersion;
     unsigned int calcNumHeteroatoms(const ROMol &mol);
+    extern const std::string NumAmideBondsVersion;
+    unsigned int calcNumAmideBonds(const ROMol &mol);
 
     extern const std::string NumRingsVersion;
     unsigned int calcNumRings(const ROMol &mol);

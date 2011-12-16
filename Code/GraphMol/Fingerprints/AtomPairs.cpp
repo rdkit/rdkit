@@ -81,7 +81,6 @@ namespace RDKit{
       v.setBit(elem%v.getNumBits());
     }
 
-
     template <typename T>
     void setAtomPairBit(boost::uint32_t i, boost::uint32_t j,boost::uint32_t nAtoms,
                         const std::vector<boost::uint32_t> &atomCodes,
@@ -214,65 +213,33 @@ namespace RDKit{
     getHashedAtomPairFingerprintAsBitVect(const ROMol &mol,unsigned int nBits,
                                           unsigned int minLength,unsigned int maxLength,
                                           const std::vector<boost::uint32_t> *fromAtoms,
-                                          const std::vector<boost::uint32_t> *ignoreAtoms
+                                           const std::vector<boost::uint32_t> *ignoreAtoms,
+                                           unsigned int nBitsPerEntry
                                           ){
       PRECONDITION(minLength<=maxLength,"bad lengths provided");
-      ExplicitBitVect *res=new ExplicitBitVect(nBits);
-      const double *dm = MolOps::getDistanceMat(mol);
-      const unsigned int nAtoms=mol.getNumAtoms();
+      static int bounds[4] = {1,2,4,8};
+      SparseIntVect<boost::int32_t> *sres=getHashedAtomPairFingerprint(mol,nBits,minLength,maxLength,
+                                                                       fromAtoms,ignoreAtoms);
+      ExplicitBitVect *res=new ExplicitBitVect(nBits*nBitsPerEntry);
 
-      std::vector<boost::uint32_t> atomCodes;
-      for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
-          atomItI!=mol.endAtoms();++atomItI){
-        atomCodes.push_back(getAtomCode(*atomItI));
-      }
-      for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
-          atomItI!=mol.endAtoms();++atomItI){
-        unsigned int i=(*atomItI)->getIdx();
-        if(ignoreAtoms &&
-           std::find(ignoreAtoms->begin(),ignoreAtoms->end(),i)!=ignoreAtoms->end()){
-          continue;
+      if(nBitsPerEntry!=4){
+        BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
+          for(unsigned int i=0;i<nBitsPerEntry;++i){
+            if(val.second>i) res->setBit(val.first*nBitsPerEntry+i);
+          }        
         }
-        if(!fromAtoms){
-          for(ROMol::ConstAtomIterator atomItJ=atomItI+1;
-              atomItJ!=mol.endAtoms();++atomItJ){
-            unsigned int j=(*atomItJ)->getIdx();
-            if(ignoreAtoms &&
-               std::find(ignoreAtoms->begin(),ignoreAtoms->end(),j)!=ignoreAtoms->end()){
-              continue;
+      } else {
+        BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
+          for(unsigned int i=0;i<nBitsPerEntry;++i){
+            if(val.second>=bounds[i]){
+              res->setBit(val.first*nBitsPerEntry+i);
             }
-            unsigned int dist=static_cast<unsigned int>(floor(dm[i*nAtoms+j]));
-            if(dist>=minLength && dist<=maxLength){
-              boost::uint32_t bit=0;
-              gboost::hash_combine(bit,std::min(atomCodes[i],atomCodes[j]));
-              gboost::hash_combine(bit,dist);
-              gboost::hash_combine(bit,std::max(atomCodes[i],atomCodes[j]));
-              updateElement(*res,bit%nBits);
-            }
-          }
-        } else {
-          BOOST_FOREACH(boost::uint32_t j,*fromAtoms){
-            if(j!=i){
-              if(ignoreAtoms &&
-                 std::find(ignoreAtoms->begin(),ignoreAtoms->end(),j)!=ignoreAtoms->end()){
-                continue;
-              }
-              unsigned int dist=static_cast<unsigned int>(floor(dm[i*nAtoms+j]));
-              if(dist>=minLength && dist<=maxLength){
-                boost::uint32_t bit=0;
-                gboost::hash_combine(bit,std::min(atomCodes[i],atomCodes[j]));
-                gboost::hash_combine(bit,dist);
-                gboost::hash_combine(bit,std::max(atomCodes[i],atomCodes[j]));
-                updateElement(*res,bit%nBits);
-              }
-            }
-          }
+          }        
         }
       }
+      delete sres;
       return res;
-    }
-
-
+    }      
 
     
     boost::uint64_t 
@@ -427,6 +394,7 @@ namespace RDKit{
                          unsigned int targetSize,
                          const std::vector<boost::uint32_t> *fromAtoms,
                          const std::vector<boost::uint32_t> *ignoreAtoms){
+
         std::vector<boost::uint32_t> atomCodes;
         for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
             atomItI!=mol.endAtoms();++atomItI){
@@ -507,12 +475,33 @@ namespace RDKit{
                                                     unsigned int nBits,
                                                     unsigned int targetSize,
                                                     const std::vector<boost::uint32_t> *fromAtoms,
-                                                    const std::vector<boost::uint32_t> *ignoreAtoms){
+                                                    const std::vector<boost::uint32_t> *ignoreAtoms,
+                                                    unsigned int nBitsPerEntry){
+      static int bounds[4] = {1,2,4,8};
+      SparseIntVect<boost::int64_t> *sres=new SparseIntVect<boost::int64_t>(nBits);
+      TorsionFpCalc(sres,mol,nBits,targetSize,fromAtoms,ignoreAtoms);
+      ExplicitBitVect *res=new ExplicitBitVect(nBits*nBitsPerEntry);
 
-      ExplicitBitVect *res=new ExplicitBitVect(nBits);
-      TorsionFpCalc(res,mol,nBits,targetSize,fromAtoms,ignoreAtoms);
+      if(nBitsPerEntry!=4){
+        BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
+          for(unsigned int i=0;i<nBitsPerEntry;++i){
+            if(val.second>i) res->setBit(val.first*nBitsPerEntry+i);
+          }        
+        }
+      } else {
+        BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
+          //std::cerr<<" "<<val.first<<"("<<val.second<<"):";
+          for(unsigned int i=0;i<nBitsPerEntry;++i){
+            if(val.second>=bounds[i]){
+              res->setBit(val.first*nBitsPerEntry+i);
+              //std::cerr<<" "<<i;
+            }
+          }        
+          //std::cerr<<std::endl;
+        }
+      }
+      delete sres;
       return res;
     }
-
   } // end of namespace AtomPairs
 } // end of namespace RDKit

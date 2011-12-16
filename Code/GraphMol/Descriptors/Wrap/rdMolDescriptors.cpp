@@ -146,12 +146,14 @@ namespace {
                                                                    unsigned int nBits,
                                                                    unsigned int targetSize,
                                                                    python::object fromAtoms,
-                                                                   python::object ignoreAtoms
+                                                                    python::object ignoreAtoms,
+                                                                    unsigned int nBitsPerEntry
                                                                    ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     ExplicitBitVect *res;
-    res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(mol,nBits,targetSize,fvect,ivect);
+    res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(mol,nBits,targetSize,fvect,ivect,
+                                                                             nBitsPerEntry);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     return res;
@@ -162,14 +164,15 @@ namespace {
                                                          unsigned int minLength,
                                                          unsigned int maxLength,
                                                          python::object fromAtoms,
-                                                         python::object ignoreAtoms
+                                                          python::object ignoreAtoms,
+                                                          unsigned int nBitsPerEntry
                                                          ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     ExplicitBitVect *res;
     res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(mol,nBits,
                                                                   minLength,maxLength,
-                                                                  fvect,ivect);
+                                                                  fvect,ivect,nBitsPerEntry);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     return res;
@@ -452,11 +455,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetHashedAtomPairFingerprintAsBitVect",
 	      GetHashedAtomPairFingerprintAsBitVect,
 	      (python::arg("mol"),
-               python::arg("nBits")=2048,
+               python::arg("nBits")=512,
                python::arg("minLength")=1,
                python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
                python::arg("fromAtoms")=0,
-               python::arg("ignoreAtoms")=0),
+               python::arg("ignoreAtoms")=0,
+               python::arg("nBitsPerEntry")=4),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -481,10 +485,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetHashedTopologicalTorsionFingerprintAsBitVect",
 	      GetHashedTopologicalTorsionFingerprintAsBitVect,
 	      (python::arg("mol"),
-               python::arg("nBits")=2048,
+               python::arg("nBits")=512,
                python::arg("targetSize")=4,
                python::arg("fromAtoms")=0,
-               python::arg("ignoreAtoms")=0),
+               python::arg("ignoreAtoms")=0,
+               python::arg("nBitsPerEntry")=4),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -586,6 +591,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("_CalcExactMolWt_version")="1.0.0";
 
+  docString="returns the molecule's formula";
+  python::def("CalcMolFormula",
+	      RDKit::Descriptors::calcMolFormula,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcMolFormula_version")="1.0.0";
+
   docString="returns the number of Lipinski H-bond donors for a molecule";
   python::def("CalcNumLipinskiHBD",
 	      RDKit::Descriptors::calcLipinskiHBD,
@@ -615,7 +627,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      RDKit::Descriptors::calcNumRotatableBonds,
 	      (python::arg("mol")),
               docString.c_str());
-  python::scope().attr("_CalcNumRotatableBondsA_version")=RDKit::Descriptors::NumRotatableBondsVersion;
+  python::scope().attr("_CalcNumRotatableBonds_version")=RDKit::Descriptors::NumRotatableBondsVersion;
   docString="returns the number of rings for a molecule";
   python::def("CalcNumRings",
 	      RDKit::Descriptors::calcNumRings,
@@ -628,6 +640,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumHeteroatoms_version")=RDKit::Descriptors::NumHeteroatomsVersion;
+  docString="returns the number of amide bonds in a molecule";
+  python::def("CalcNumAmideBonds",
+	      RDKit::Descriptors::calcNumAmideBonds,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumAmideBonds_version")=RDKit::Descriptors::NumAmideBondsVersion;
 
   docString="returns the SlogP VSA contributions for a molecule";
   python::def("SlogP_VSA_",
