@@ -142,7 +142,7 @@ namespace RDKit {
     */
     ExplicitBitVect *
     getHashedAtomPairFingerprintAsBitVect(const ROMol &mol,
-                                          unsigned int nBits=512,
+                                          unsigned int nBits=2048,
                                           unsigned int minLength=1,
                                           unsigned int maxLength=maxPathLen-1,
                                           const std::vector<boost::uint32_t> *fromAtoms=0,
@@ -228,7 +228,7 @@ namespace RDKit {
     */
     ExplicitBitVect *
     getHashedTopologicalTorsionFingerprintAsBitVect(const ROMol &mol,
-                                                    unsigned int nBits=512,
+                                                    unsigned int nBits=2048,
                                                     unsigned int targetSize=4,
                                                     const std::vector<boost::uint32_t> *fromAtoms=0,
                                                     const std::vector<boost::uint32_t> *ignoreAtoms=0,

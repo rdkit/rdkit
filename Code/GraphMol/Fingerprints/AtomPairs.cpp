@@ -213,15 +213,16 @@ namespace RDKit{
     getHashedAtomPairFingerprintAsBitVect(const ROMol &mol,unsigned int nBits,
                                           unsigned int minLength,unsigned int maxLength,
                                           const std::vector<boost::uint32_t> *fromAtoms,
-                                           const std::vector<boost::uint32_t> *ignoreAtoms,
-                                           unsigned int nBitsPerEntry
+                                          const std::vector<boost::uint32_t> *ignoreAtoms,
+                                          unsigned int nBitsPerEntry
                                           ){
       PRECONDITION(minLength<=maxLength,"bad lengths provided");
       static int bounds[4] = {1,2,4,8};
-      SparseIntVect<boost::int32_t> *sres=getHashedAtomPairFingerprint(mol,nBits,minLength,maxLength,
-                                                                       fromAtoms,ignoreAtoms);
-      ExplicitBitVect *res=new ExplicitBitVect(nBits*nBitsPerEntry);
 
+      unsigned int blockLength=nBits/nBitsPerEntry;
+      SparseIntVect<boost::int32_t> *sres=getHashedAtomPairFingerprint(mol,blockLength,minLength,maxLength,
+                                                                       fromAtoms,ignoreAtoms);
+      ExplicitBitVect *res=new ExplicitBitVect(nBits);
       if(nBitsPerEntry!=4){
         BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
           for(unsigned int i=0;i<nBitsPerEntry;++i){
@@ -260,20 +261,14 @@ namespace RDKit{
 
       boost::uint64_t res=0;
       if(reverseIt){
-        //std::cerr<<"r";
         for(unsigned int i=0;i<pathCodes.size();++i){
           res |= static_cast<boost::uint64_t>(pathCodes[pathCodes.size()-i-1])<<(codeSize*i);
         }
       }else{
-        //std::cerr<<" ";
         for(unsigned int i=0;i<pathCodes.size();++i){
           res |= static_cast<boost::uint64_t>(pathCodes[i])<<(codeSize*i);
         }
       }
-      //for(unsigned int i=0;i<pathCodes.size();++i){
-      //  std::cerr<<atomCodes[i]<<" ";
-      //}
-      //std::cerr<<res<<std::endl;
         
       return res;
     }
@@ -478,9 +473,10 @@ namespace RDKit{
                                                     const std::vector<boost::uint32_t> *ignoreAtoms,
                                                     unsigned int nBitsPerEntry){
       static int bounds[4] = {1,2,4,8};
-      SparseIntVect<boost::int64_t> *sres=new SparseIntVect<boost::int64_t>(nBits);
-      TorsionFpCalc(sres,mol,nBits,targetSize,fromAtoms,ignoreAtoms);
-      ExplicitBitVect *res=new ExplicitBitVect(nBits*nBitsPerEntry);
+      unsigned int blockLength=nBits/nBitsPerEntry;
+      SparseIntVect<boost::int64_t> *sres=new SparseIntVect<boost::int64_t>(blockLength);
+      TorsionFpCalc(sres,mol,blockLength,targetSize,fromAtoms,ignoreAtoms);
+      ExplicitBitVect *res=new ExplicitBitVect(nBits);
 
       if(nBitsPerEntry!=4){
         BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
@@ -490,14 +486,11 @@ namespace RDKit{
         }
       } else {
         BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
-          //std::cerr<<" "<<val.first<<"("<<val.second<<"):";
           for(unsigned int i=0;i<nBitsPerEntry;++i){
             if(val.second>=bounds[i]){
               res->setBit(val.first*nBitsPerEntry+i);
-              //std::cerr<<" "<<i;
             }
           }        
-          //std::cerr<<std::endl;
         }
       }
       delete sres;
