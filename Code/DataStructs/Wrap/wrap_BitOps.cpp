@@ -346,6 +346,12 @@ struct BitOps_wrapper {
                 (std::string (*)(const EBV&))BitVectToText,
                 "Returns a string of zeros and ones representing the bit vector."
                 );
+    python::def("BitVectToFPSText",
+                (std::string (*)(const SBV&))BitVectToFPSText);
+    python::def("BitVectToFPSText",
+                (std::string (*)(const EBV&))BitVectToFPSText,
+                "Returns an FPS string representing the bit vector."
+                );
   }
 };
 

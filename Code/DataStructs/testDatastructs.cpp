@@ -999,6 +999,26 @@ void test8BitVectPickles() {
     TEST_ASSERT(!bv[1]);
   }
 }
+
+void test9BitVectToFPS() {
+  {
+    ExplicitBitVect bv(32);
+    std::string fps;
+
+    fps = BitVectToFPSText(bv);
+    TEST_ASSERT(fps=="00000000");
+    
+    bv.setBit(0);
+    bv.setBit(1);
+    bv.setBit(17);
+    bv.setBit(23);
+    bv.setBit(31);
+
+    fps = BitVectToFPSText(bv);
+    TEST_ASSERT(fps=="03008280");
+  }
+}
+
 int main(){
   RDLog::InitLogs();
   try{
@@ -1056,6 +1076,9 @@ int main(){
 
   BOOST_LOG(rdInfoLog) << " Test BitVect Serialization  -------------------------------" << std::endl;
   test8BitVectPickles();
+  
+  BOOST_LOG(rdInfoLog) << " Test BitVect to FPS  -------------------------------" << std::endl;
+  test9BitVectToFPS();
   
   return 0;
   

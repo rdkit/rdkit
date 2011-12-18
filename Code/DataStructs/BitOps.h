@@ -263,7 +263,7 @@ FoldFingerprint(const T1& bv1,unsigned int factor=2);
 
 //! returns a text representation of a bit vector (a string of 0s and 1s)
 /*!
-  \param bv1    the vector to be folded
+  \param bv1    the vector to use
   
   \return an std::string
 
@@ -271,6 +271,17 @@ FoldFingerprint(const T1& bv1,unsigned int factor=2);
 template <typename T1>
 std::string
 BitVectToText(const T1& bv1);
+
+//! returns a hex representation of a bit vector compatible with Andrew Dalke's FPS format
+/*!
+  \param bv1    the vector to use
+  
+  \return an std::string
+
+ */
+template <typename T1>
+std::string
+BitVectToFPSText(const T1& bv1);
 
 
 

@@ -16,6 +16,10 @@
 #include <iostream>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
+#include <sstream>
+
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/karma.hpp>
 
 int getBitId(const char *&text,int format,int size,int curr){
   PRECONDITION(text,"no text");
@@ -646,6 +650,27 @@ BitVectToText(const T1& bv1){
   return res;
 }
 
+const char bin2Hex[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+template <typename T1>
+std::string
+BitVectToFPSText(const T1& bv1){
+  std::stringstream res;
+  unsigned char c=0;
+  for(unsigned int i=0;i<bv1.getNumBits();i++){
+    if(bv1.getBit(i)) {
+      c |= 1<<(i%8);
+    }
+    if(!((i+1)%8)){
+      res<<bin2Hex[(c>>4)%16]<<bin2Hex[c%16];
+      c=0;
+    }
+  }
+  if(bv1.getNumBits()%8){
+    res<<bin2Hex[(c>>4)%16]<<bin2Hex[c%16];
+  }
+  return res.str();
+}
+
 
 
 template double TanimotoSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
@@ -690,6 +715,9 @@ template ExplicitBitVect *FoldFingerprint(const ExplicitBitVect &,unsigned int);
 
 template std::string BitVectToText(const SparseBitVect &);
 template std::string BitVectToText(const ExplicitBitVect &);
+
+template std::string BitVectToFPSText(const SparseBitVect &);
+template std::string BitVectToFPSText(const ExplicitBitVect &);
 
 
 
