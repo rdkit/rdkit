@@ -283,6 +283,17 @@ template <typename T1>
 std::string
 BitVectToFPSText(const T1& bv1);
 
+//! updates a bit vector from Andrew Dalke's FPS format
+/*!
+  \param bv1    the vector to use
+  \param fps    the FPS hex string
+
+
+ */
+template <typename T1>
+void
+UpdateBitVectFromFPSText(T1& bv1,const std::string &fps);
+
 
 
 #endif

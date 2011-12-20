@@ -16,10 +16,10 @@
 #include <iostream>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/types.h>
+#include <RDBoost/Exceptions.h>
 #include <sstream>
 
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/karma.hpp>
+#include <boost/lexical_cast.hpp>
 
 int getBitId(const char *&text,int format,int size,int curr){
   PRECONDITION(text,"no text");
@@ -671,6 +671,28 @@ BitVectToFPSText(const T1& bv1){
   return res.str();
 }
 
+template <typename T1>
+void
+UpdateBitVectFromFPSText(T1& bv1,const std::string &fps){
+  PRECONDITION(fps.length()*4<=bv1.getNumBits(),"bad FPS length");
+  PRECONDITION(fps.length()%2==0,"bad FPS length");  
+  for(unsigned int i=0;i<fps.size();i+=2){
+    unsigned short c=0;
+    try {
+      std::istringstream in(fps.substr(i,2));
+      in >> std::hex >> c;
+    } catch (...) {
+      std::ostringstream errout;
+      errout << "Cannot convert FPS word: " << fps.substr(i,2) << " to int";
+      std::cerr<<errout.str()<<std::endl;
+      throw ValueErrorException(errout.str()) ;
+    }
+    for(unsigned int bit=0;bit<8;++bit){
+      if(c&(1<<bit)) bv1.setBit(i*4+bit);
+    }
+  }
+}
+
 
 
 template double TanimotoSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
@@ -718,6 +740,9 @@ template std::string BitVectToText(const ExplicitBitVect &);
 
 template std::string BitVectToFPSText(const SparseBitVect &);
 template std::string BitVectToFPSText(const ExplicitBitVect &);
+
+template void UpdateBitVectFromFPSText(SparseBitVect &,const std::string &);
+template void UpdateBitVectFromFPSText(ExplicitBitVect &,const std::string &);
 
 
 

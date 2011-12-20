@@ -11,6 +11,7 @@
 #include <RDBoost/Wrap.h>
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitVectUtils.h>
+#include <DataStructs/BitOps.h>
 namespace python = boost::python;
 
 ExplicitBitVect *createFromBitString(const std::string &bits){
@@ -18,6 +19,13 @@ ExplicitBitVect *createFromBitString(const std::string &bits){
     FromBitString(*res,bits);
     return res;
 }
+
+ExplicitBitVect *createFromFPSText(const std::string &fps){
+    ExplicitBitVect *res=new ExplicitBitVect(fps.length()*4);
+    UpdateBitVectFromFPSText(*res,fps);
+    return res;
+}
+
 
 struct Utils_wrapper {
   static void wrap(){
@@ -27,6 +35,9 @@ struct Utils_wrapper {
     python::def("CreateFromBitString",createFromBitString,
                 python::return_value_policy<python::manage_new_object>(),
                 "Creates an ExplicitBitVect from a bit string (string of 0s and 1s).");  
+    python::def("CreateFromFPSText",createFromFPSText,
+                python::return_value_policy<python::manage_new_object>(),
+                "Creates an ExplicitBitVect from an FPS string.");  
 
     python::def("InitFromDaylightString",
                 (void (*)(SparseBitVect &,std::string))FromDaylightString);

@@ -142,5 +142,17 @@ class TestCase(unittest.TestCase):
         sim = DataStructs.DiceSimilarity(bvs[0],bvs[i])
         self.failUnless(feq(sim,sims[i]))
 
+   def test7FPS(self):
+      bv = DataStructs.ExplicitBitVect(32)
+      bv.SetBit(0)
+      bv.SetBit(1)
+      bv.SetBit(17)
+      bv.SetBit(23)
+      bv.SetBit(31)
+
+      self.failUnlessEqual(DataStructs.BitVectToFPSText(bv),"03008280")
+      bv2 = DataStructs.CreateFromFPSText("03008280")
+      self.failUnlessEqual(bv,bv2)
+        
 if __name__ == '__main__':
    unittest.main()
