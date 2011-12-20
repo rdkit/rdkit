@@ -98,10 +98,12 @@ def NumValenceElectrons(mol):
   return accum
 NumValenceElectrons.version="1.0.0"
 
-def MolecularFormula(mol):
-   """Return the molecular formula
+def _oyMolecularFormula(mol):
+   """ DEPRECATED: this is now implemented in C++
+   Return the molecular formula
 
    contribution from Andrew Dalke
+   
    """
    import collections
 
@@ -153,7 +155,8 @@ def MolecularFormula(mol):
        formula_terms.append("%+d" % charge)
 
    return "".join(formula_terms)
-MolecularFormula.version="1.0.0"
+MolecularFormula=lambda x:_rdMolDescriptors.CalcMolFormula(x)
+MolecularFormula.version=_rdMolDescriptors._CalcMolFormula_version
 
 _setupDescriptors(locals())
 
