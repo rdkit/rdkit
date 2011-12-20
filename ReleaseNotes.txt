@@ -1,18 +1,44 @@
 ******  Release_2011.12.1 *******
 (Changes relative to Release_2011.09.1)
 
+!!!!!! IMPORTANT !!!!!!
+ - The functions for creating bit vector fingerprints using atom pairs
+   and topological torsions have been changed. The new default
+   behavior will return different fingerprints than previous RDKit
+   versions. This affects usage from c++, python, and within the
+   postgresql cartridge. See the "Other" section below for more
+   details. 
+   
+
+
 Acknowledgements:
 Roger Sayle, Adrian Schreyer
 
 Bug Fixes: 
+- molecules with polymeric S group information are now rejected by the
+  Mol file parser. (Issue 3432136)
+- A bad atom type definition and a bad smarts definition were fixed in
+  $RDBASE/Data/Crippen.txt. This affects the values returned by the
+  logp and MR calculators. (Issue 3433771)
+- Unused atom-map numbers in reaction products now produce warnings
+  instead of errors. (Issue 3434271)
+- rdMolDescriptors.GetHashedAtomPairFingerprint() now works. (Issue
+  3441641)
+- ReplaceSubstructs() now copies input molecule conformations to the
+  output molecule. (Issue 3453144)
 
 New Features:
-- Integration with the new IPython graphical canvas has been added. For details see this wiki page:
+- Integration with the new IPython graphical canvas has been
+  added. For details see this wiki page: 
 http://code.google.com/p/rdkit/wiki/IPythonIntegration
+- Input and output from Andrew Dalke's FPS format for fingerprints.
+- The descriptor CalcNumAmideBonds() was added.
 
 New Database Cartridge Features: 
-- Integration with PostgreSQL's KNN-GIST functionality. (Thanks to Adrian Schreyer)
-- the functions all_values_gt(sfp,N) and all_values_lt(sfp,N) were added.
+- Integration with PostgreSQL's KNN-GIST functionality. (Thanks to
+  Adrian Schreyer) 
+- the functions all_values_gt(sfp,N) and all_values_lt(sfp,N) were
+  added. 
 
 Deprecated modules (to be removed in next release):
 
@@ -20,6 +46,15 @@ Removed modules:
 
 Other:
 - Improvements to the SMARTS parser (Roger Sayle)
+- The atom-pair and topological-torsion fingerprinting functions that
+  return bit vectors now simulate counts by setting multiple bits in
+  the fingerprint per atom-pair/torsion. The number of bits used is
+  controlled by the nBitsPerEntry argument, which now defaults to 4.
+  The new default behavior does a much better job of reproducing the
+  similarities calculated using count-based fingerprints: 95% of
+  calculated similarities are within 0.09 of the count-based value
+  compared with 0.22 or 0.17 for torsions and atom-pairs previously.
+  To get the old behavior, set nBitsPerEntry to 1. 
 
 ******  Release_2011.09.1 *******
 (Changes relative to Release_2011.06.1)
