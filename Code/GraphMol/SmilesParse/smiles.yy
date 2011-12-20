@@ -262,6 +262,8 @@ charge_element:	h_element
 /* --------------------------------------------------------------- */
 h_element:      H_TOKEN { $$ = new Atom(1); }
                 | number H_TOKEN { $$ = new Atom(1); $$->setMass($1); }
+                | H_TOKEN H_TOKEN { $$ = new Atom(1); $$->setNumExplicitHs(1); }
+                | number H_TOKEN H_TOKEN { $$ = new Atom(1); $$->setMass($1); $$->setNumExplicitHs(1);}
                 | chiral_element
 		| chiral_element H_TOKEN		{ $$ = $1; $1->setNumExplicitHs(1);}
 		| chiral_element H_TOKEN number	{ $$ = $1; $1->setNumExplicitHs($3);}

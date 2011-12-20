@@ -87,6 +87,10 @@ void testPass(){
     "C0CC0", 
     // test canonization error, issue 3018558:
     "C/C(/C=C2\\Sc1ccc(cc1N\\2C))=C5\\SC4=NccN4C\\5=O",
+    // "the most common molecule in the universe",
+    // expressed in an ugly way:
+    "[HH]",
+    "[2HH]",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
@@ -135,6 +139,10 @@ void testFail(){
     "C-0", // part of sf.net issue 2525792
     "C1CC1",
     "C+0", // part of sf.net issue 2525792
+    "C1CC1",
+    "[H2H]",
+    "C1CC1",
+    "[HH2]",
     "C1CC1",
     "EOS"};
 
