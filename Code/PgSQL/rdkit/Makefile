@@ -24,7 +24,7 @@ PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"003100"' ${INCHIFLAGS}
 
 CPLUSPLUSFLAGS = $(filter-out -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
 CPLUSPLUSFLAGS += -Wno-deprecated -Wno-unused-function
-CPLUSPLUSFLAGS += -march=native
+#CPLUSPLUSFLAGS += -march=native
 CPLUSPLUSFLAGS += $(PG_CPPFLAGS)
 
 EXTENSION  = rdkit
@@ -57,7 +57,7 @@ OCC := $(CC)
 CC = $(CXX)
 # we build .c files using this original defn:
 %.o : %.c
-	$(OCC) $(CPPFLAGS) -march=native -fPIC -c -o $@ $< 
+	$(OCC) $(CPPFLAGS) -fPIC -c -o $@ $< 
 
 %.o : %.cpp
 	$(CXX) $(CPLUSPLUSFLAGS) $(CPPFLAGS)  -c -o $@ $< 
