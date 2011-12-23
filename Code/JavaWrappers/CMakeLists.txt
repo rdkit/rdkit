@@ -22,6 +22,9 @@ if(WIN32)
         if(RDK_BUILD_INCHI_SUPPORT)
           set(RDKit_Wrapper_Libs RDInchiLib ${INCHI_LIBRARIES} ${RDKit_Wrapper_Libs})
         endif(RDK_BUILD_INCHI_SUPPORT)
+        if(RDK_BUILD_AVALON_SUPPORT)
+          set(RDKit_Wrapper_Libs AvalonLib  avalon_clib ${RDKit_Wrapper_Libs})
+        endif(RDK_BUILD_AVALON_SUPPORT)
 else()
 	set(RDKit_Wrapper_Libs 
         FileParsers_static SmilesParse_static
@@ -37,8 +40,9 @@ else()
         if(RDK_BUILD_INCHI_SUPPORT)
           set(RDKit_Wrapper_Libs RDInchiLib_static Inchi_static ${RDKit_Wrapper_Libs})
         endif(RDK_BUILD_INCHI_SUPPORT)
-
-
+        if(RDK_BUILD_AVALON_SUPPORT)
+          set(RDKit_Wrapper_Libs AvalonLib_static  avalon_clib_static ${RDKit_Wrapper_Libs})
+        endif(RDK_BUILD_AVALON_SUPPORT)
 endif()
 
 add_subdirectory(gmwrapper)

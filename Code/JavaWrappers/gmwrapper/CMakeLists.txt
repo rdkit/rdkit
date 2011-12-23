@@ -1,5 +1,7 @@
 project (jGraphMolJava Java)
 
+include_directories( ${RDKit_ExternalDir} )
+
 find_package(Java REQUIRED)
 find_package(JNI REQUIRED)
 
@@ -20,7 +22,6 @@ endif (NOT JAVADOC_EXE)
 INCLUDE_DIRECTORIES(${JNI_INCLUDE_DIRS})
 
 SET_SOURCE_FILES_PROPERTIES(GraphMolJava.i PROPERTIES CPLUSPLUS ON )
-
 
 FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../*.java COPY_SOURCE)
 FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit COPY_DEST)
@@ -47,13 +48,20 @@ else()
 endif()
 SET(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit )
 
+if(RDK_BUILD_INCHI_SUPPORT)
+  SET(CMAKE_SWIG_FLAGS "-DBUILD_INCHI_SUPPORT" ${CMAKE_SWIG_FLAGS} )
+endif()
+if(RDK_BUILD_AVALON_SUPPORT)
+  SET(CMAKE_SWIG_FLAGS "-DBUILD_AVALON_SUPPORT" ${CMAKE_SWIG_FLAGS} )
+endif()
+
+
 # enable this line to build the ErrorGenerator class for testing handling of C++ errors in the JNI layer
 #SET(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-D INCLUDE_ERROR_GENERATOR" )
 
 SWIG_ADD_MODULE(GraphMolWrap "java" GraphMolJava.i)
 
 SET(SWIG_MODULE_GraphMolWrap_EXTRA_DEPS ../*.i)
-
 
 SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs} )
 
@@ -97,9 +105,20 @@ ADD_CUSTOM_TARGET(GraphMolWrapJar ALL
 ## Tests -- note that building/rebuilding them keys on the file WrapperTests.class
 
 SET(CMAKE_JAVA_TEST_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/build-test )
+FILE(GLOB JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/*.java")
+
+# we added all source files, now remove the ones that we're not supporting in this build:
+if(NOT RDK_BUILD_AVALON_SUPPORT)
+LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/AvalonLibTests.java")
+endif()
+
+if(NOT RDK_BUILD_INCHI_SUPPORT)
+LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/InchiTests.java")
+endif()
+
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class
-  COMMAND ${JAVA_COMPILE} -d ${CMAKE_JAVA_TEST_OUTDIR} -cp "${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar${PATH_SEP}${JUNIT_JAR}" "src-test/org/RDKit/*.java"
+  COMMAND ${JAVA_COMPILE} -d ${CMAKE_JAVA_TEST_OUTDIR} -cp "${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar${PATH_SEP}${JUNIT_JAR}" ${JAVA_TEST_FILES}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar 
 )
@@ -208,7 +227,21 @@ ADD_TEST(JavaWrapperTests
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
 	org.RDKit.WrapperTests)
-       
+
+if(RDK_BUILD_AVALON_SUPPORT)
+   ADD_TEST(JavaAvalonTests 
+      java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
+  	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+	org.RDKit.AvalonLibTests)
+endif(RDK_BUILD_AVALON_SUPPORT)       
+
+if (RDK_BUILD_INCHI_SUPPORT)
+   ADD_TEST(JavaInchiTests 
+       java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+       	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
+		org.RDKit.InchiTests)
+endif (RDK_BUILD_INCHI_SUPPORT)
+
 #ADD_TEST(JavaMemoryTests 
 #    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR} 
 #	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar" 
