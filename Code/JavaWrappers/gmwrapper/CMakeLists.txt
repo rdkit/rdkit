@@ -59,9 +59,20 @@ endif()
 # enable this line to build the ErrorGenerator class for testing handling of C++ errors in the JNI layer
 #SET(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} "-D INCLUDE_ERROR_GENERATOR" )
 
-SWIG_ADD_MODULE(GraphMolWrap "java" GraphMolJava.i)
+FILE(GLOB SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../*.i")
 
-SET(SWIG_MODULE_GraphMolWrap_EXTRA_DEPS ../*.i)
+# we added all source files, now remove the ones that we're not supporting in this build:
+if(NOT RDK_BUILD_AVALON_SUPPORT)
+LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../AvalonLib.i")
+endif()
+
+if(NOT RDK_BUILD_INCHI_SUPPORT)
+LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../Inchi.i")
+endif()
+
+SET(SWIG_MODULE_GraphMolWrap_EXTRA_DEPS ${SWIG_SRC_FILES} )
+
+SWIG_ADD_MODULE(GraphMolWrap "java" GraphMolJava.i )
 
 SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs} )
 
@@ -120,7 +131,7 @@ ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class
   COMMAND ${JAVA_COMPILE} -d ${CMAKE_JAVA_TEST_OUTDIR} -cp "${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar${PATH_SEP}${JUNIT_JAR}" ${JAVA_TEST_FILES}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar 
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar ${JAVA_TEST_FILES}
 )
 ADD_CUSTOM_TARGET(BuildJavaWrapperTests ALL
   DEPENDS ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class GraphMolWrap 
