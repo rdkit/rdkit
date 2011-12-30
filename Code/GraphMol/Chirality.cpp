@@ -513,10 +513,22 @@ namespace RDKit{
 
         // figure out if this is a legal chiral center or not:
         if(!hasDupes){
-          if(nbrs.size()<3 ||
-             (nbrs.size()==3 && atom->getTotalNumHs()!=1 )){
-            // we only handle 3-coordinate atoms that have an implicit H
+          if(nbrs.size()<3){
+            // less than three neighbors is never stereogenic
             legalCenter=false;
+          } else if(nbrs.size()==3){
+            // three-coordinate with a single H we'll accept automatically:
+            if(atom->getTotalNumHs()!=1){
+              // otherwise we default to not being a legal center
+              legalCenter=false;
+              // but there are a few special cases we'll accept
+              // sulfur or selenium with either a positive charge or a double bond:
+              if((atom->getAtomicNum()==16||atom->getAtomicNum()==34) &&
+                 (atom->getExplicitValence()==4 ||
+                  (atom->getExplicitValence()==3 && atom->getFormalCharge()==1))) {
+                legalCenter=true;
+              }
+            }
           }
         }
       }

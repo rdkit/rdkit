@@ -159,7 +159,7 @@ namespace RDKit{
     */
     unsigned int getNumImplicitHs() const;
 
-    //! returns the number of explicit Hs this Atom is bound to
+    //! returns the explicit valence (including Hs) of this atom
     int getExplicitValence() const;
 
     //! returns the implicit valence for this Atom

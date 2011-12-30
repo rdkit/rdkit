@@ -1865,8 +1865,79 @@ void testFindChiralAtoms(){
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
-
 }
+
+void testIssue3453172(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3453172: stereochemistry at three-coordinate S and Se" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="C=[S@](F)Br";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C[S@+](F)Br";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C=[Se@](F)Br";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C[Se@+](F)Br";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C=[S@](Br)Br";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C[S@+](Br)Br";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C=[Se@](Br)Br";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="C[Se@+](Br)Br";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -1888,6 +1959,7 @@ int main(){
   testIssue3009911();
   testIssue3139534();
   testFindChiralAtoms();
+  testIssue3453172();
   return 0;
 }
 
