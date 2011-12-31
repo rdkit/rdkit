@@ -489,7 +489,6 @@ namespace RDKit{
   // will be blown out by the end of this process.
   void MolPickler::molFromPickle(std::istream &ss,ROMol *mol){
     PRECONDITION(mol,"empty molecule");
-    Tags tag;
     int32_t tmpInt;
 
     mol->clearAllAtomBookmarks();

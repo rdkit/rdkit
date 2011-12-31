@@ -2825,7 +2825,7 @@ void test31Issue3140490(){
   BOOST_LOG(rdInfoLog) << "Testing Issue 3140490." << std::endl;
 
   {
-    unsigned int nWarn,nError,which;
+    unsigned int nWarn,nError;
     std::string smi;
     smi="[O:1]>>[N:1]";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
@@ -2862,7 +2862,7 @@ void test32Replacements(){
   {
     std::map<std::string,std::string> repls;
     repls["{amine}"]="$([N;!H0;$(N-[#6]);!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])";
-    unsigned int nWarn,nError,which;
+    unsigned int nWarn,nError;
     std::string smi;
     smi="[{amine}:1]>>[*:1]-C";
     ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi,&repls); 

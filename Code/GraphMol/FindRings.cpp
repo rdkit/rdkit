@@ -206,7 +206,6 @@ namespace FindRings {
       bitBrings.push_back(lring);
     }
 
-    unsigned int tot = res.size();
     boost::dynamic_bitset<> availRings(res.size());
     availRings.set();
     boost::dynamic_bitset<> keepRings(res.size());

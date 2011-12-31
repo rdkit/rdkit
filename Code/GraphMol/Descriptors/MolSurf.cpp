@@ -147,7 +147,6 @@ namespace RDKit{
         if(atNum!=7 && atNum!=8) continue;
         nHs[i] += atom->getTotalNumHs();
         int chg=atom->getFormalCharge();
-        bool isArom=atom->getIsAromatic();
         bool in3Ring = mol.getRingInfo()->isAtomInRingOfSize(i,3);
         nNbrs[i]+=atom->getDegree();
 

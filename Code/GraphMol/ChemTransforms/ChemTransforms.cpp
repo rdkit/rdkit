@@ -347,7 +347,7 @@ namespace RDKit{
             } else {
               newAt->setMass(matchingIndices[nbrIdx]);
             }
-            int idx=newMol->addAtom(newAt,false,true);
+            newMol->addAtom(newAt,false,true);
             dummyAtomMap[nbrIdx]=newAt;
             keepList.push_back(newAt);
             Bond *bnd=connectingBond->copy();
@@ -437,7 +437,7 @@ namespace RDKit{
     if(nAtoms==0) return res;
 
     // start by getting the shortest paths matrix:
-    double *dmat=MolOps::getDistanceMat(mol,false,false,true);
+    MolOps::getDistanceMat(mol,false,false,true);
     boost::shared_array<int> pathMat;
     mol.getProp("DistanceMatrix_Paths",pathMat);
 

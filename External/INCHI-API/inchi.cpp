@@ -280,14 +280,14 @@ namespace RDKit {
             // try recursive call limited to one level down to see whether
             // this can serve as the last leg of the path. This is done only if
             // the desiredEndingBondType is not part of the alternating bonds
-            if (temp = findAlternatingBonds(mol, mol.getAtomWithIdx(*nid),
+            if ((temp = findAlternatingBonds(mol, mol.getAtomWithIdx(*nid),
                                             desiredAtomicNumber,
                                             desiredAtomCharge,
                                             Bond::UNSPECIFIED, /* no next */
                                             desiredEndingBondType,
                                             currentPathLength + 1,
                                             0, /* this limits the recursion */
-                                            bond, path))
+                                            bond, path)))
             target = temp;
         }
       }
@@ -1076,7 +1076,6 @@ namespace RDKit {
 
     void cleanUp(RWMol& mol) {
       ROMol::AtomIterator ai; 
-      int aid;
       bool aromHolder;
       for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
         switch( (*ai)->getAtomicNum() ){
@@ -1261,7 +1260,6 @@ namespace RDKit {
 
       // adding bonds
       std::set<std::pair<unsigned int, unsigned int> > bondRegister;
-      unsigned int _nBonds = 0;
       for (unsigned int i = 0; i < nAtoms; i ++) {
         inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
         unsigned int nBonds = inchiAtom->num_bonds;

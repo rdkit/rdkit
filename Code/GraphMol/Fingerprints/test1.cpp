@@ -1481,7 +1481,7 @@ void testIgnoreAtomPairs(){
   }
   {
     ROMol *mol;
-    SparseIntVect<boost::int32_t> *fp1,*fp2;
+    SparseIntVect<boost::int32_t> *fp2;
     std::vector<boost::uint32_t> roots;
 
     mol = SmilesToMol("OCCCCC");
@@ -1589,7 +1589,7 @@ void testIgnoreTorsions(){
   }
   {
     ROMol *mol;
-    SparseIntVect<boost::int64_t> *fp1,*fp2;
+    SparseIntVect<boost::int64_t> *fp2;
     std::vector<boost::uint32_t> roots;
 
     mol = SmilesToMol("OCCCC");
@@ -1605,7 +1605,7 @@ void testIgnoreTorsions(){
 
   {
     ROMol *mol;
-    SparseIntVect<boost::int64_t> *fp1,*fp2;
+    SparseIntVect<boost::int64_t> *fp2;
     std::vector<boost::uint32_t> roots;
 
     mol = SmilesToMol("OCCCC");

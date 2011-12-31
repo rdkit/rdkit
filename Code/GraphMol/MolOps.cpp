@@ -238,7 +238,7 @@ namespace RDKit{
 
       // adjust Hydrogen counts:
       adjustHs(mol);
-
+        
     }
 
     std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol,bool sanitizeFrags,

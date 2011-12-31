@@ -520,7 +520,6 @@ void testIssue2892580(){
   Mol m;
 
   Atom *a = new Atom(6);
-  Atom *d = new Atom(0);
 
   int massVal;
   massVal=queryAtomMass(a);
