@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -361,6 +361,19 @@ namespace RDKit{
       python::def("GetSymmSSSR", getSymmSSSR,
                   docString.c_str());
 
+      // ------------------------------------------------------------------------
+      docString="Does a non-SSSR ring finding for a molecule.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use.\n\
+\n\
+  RETURNS: Nothing\n\
+\n";
+      python::def("FastFindRings", MolOps::fastFindRings, 
+                  docString.c_str());
+
+      
       // ------------------------------------------------------------------------
       docString="Adds hydrogens to the graph of a molecule.\n\
 \n\

@@ -3334,6 +3334,64 @@ void testSFNetIssue3349243(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testFastFindRings(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing fast find rings" << std::endl;
+  {
+    std::string smi="CCC";
+    RWMol *m=SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::fastFindRings(*m);
+    TEST_ASSERT(m->getRingInfo());
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->numRings()==0);
+    delete m;
+  }
+  {
+    std::string smi="C1CC1";
+    RWMol *m=SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::fastFindRings(*m);
+    TEST_ASSERT(m->getRingInfo());
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->numRings()==1);
+    delete m;
+  }
+
+  {
+    std::string smi="CC1CC1";
+    RWMol *m=SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::fastFindRings(*m);
+    TEST_ASSERT(m->getRingInfo());
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->numRings()==1);
+    delete m;
+  }
+
+  {
+    std::string smi="C1CC1.C1CC1";
+    RWMol *m=SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::fastFindRings(*m);
+    TEST_ASSERT(m->getRingInfo());
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->numRings()==2);
+    delete m;
+  }
+  {
+    std::string smi="C1C(C)C1";
+    RWMol *m=SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::fastFindRings(*m);
+    TEST_ASSERT(m->getRingInfo());
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->numRings()==1);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 
@@ -3389,6 +3447,7 @@ int main(){
   testSFNetIssue3185548();
 #endif
   testSFNetIssue3349243();
+  testFastFindRings();
 
   return 0;
 }
