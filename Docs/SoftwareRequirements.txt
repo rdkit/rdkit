@@ -25,14 +25,18 @@ B. Optional Python:
    3) ipython : a very useful interactive shell (and much more) for python:
       http://ipython.scipy.org/dist/
 
+   4) cairo: alternative (and supported) high-quality drawing library
+      http://www.cairographics.org/
+      
 C. Other required stuff
-   1) The boost shared libraries v1.33 or later (tested with 1.33-1.45)
+   1) The boost shared libraries v1.39 or later (tested with 1.39-1.48)
 
 D. Required environment variables:
    - RDBASE pointing to the root of the distribution
-   - PYTHONPATH: should include $RDBASE/Python
-   - PATH: should include $RDBASE/lib
+   - PYTHONPATH: should include $RDBASE
+   - On Windows: PATH should include $RDBASE/lib
    - On Linux: LD_LIBRARY_PATH should include $RDBASE/lib
+   - On the Mac: DYLD_LIBRARY_PATH should include $RDBASE/lib
 
 
 E. WINDOWS ONLY: Optional, but useful things to have:

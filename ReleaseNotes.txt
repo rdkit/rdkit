@@ -41,8 +41,12 @@ New Database Cartridge Features:
   added. 
 
 Deprecated modules (to be removed in next release):
+- $RDBASE/rdkit/Excel
 
 Removed modules:
+- $RDBASE/rdkit/WebUtils
+- $RDBASE/rdkit/Reports
+- $RDBASE/rdkit/mixins
 
 Other:
 - Improvements to the SMARTS parser (Roger Sayle)
