@@ -8,6 +8,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+// there's a compiler bug in some versions of g++ that causes this file to not compile unless
+// we skip the docstrings:
+//#define BOOST_PYTHON_NO_PY_SIGNATURES
+
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
 #include <string>

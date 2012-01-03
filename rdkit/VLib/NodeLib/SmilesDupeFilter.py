@@ -5,7 +5,7 @@
 #
 from rdkit import RDConfig
 import sys,os
-import Chem
+from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
 
 class DupeFilter(FilterNode):

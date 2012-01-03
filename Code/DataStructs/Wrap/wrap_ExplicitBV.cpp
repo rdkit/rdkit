@@ -46,7 +46,8 @@ or by indexing (i.e. bv[i] = 1 or if bv[i]).\n\
 
 struct EBV_wrapper {
   static void wrap(){
-  python::class_<ExplicitBitVect>("ExplicitBitVect",ebvClassDoc.c_str(),
+  python::class_<ExplicitBitVect,
+    boost::shared_ptr<ExplicitBitVect> >("ExplicitBitVect",ebvClassDoc.c_str(),
                                   python::init<unsigned int>())
     .def(python::init<std::string>())
     .def("SetBit",(bool (EBV::*)(unsigned int))&EBV::setBit,

@@ -43,6 +43,11 @@ def RunTest(exeName,args,extras):
     return TEST_PASSED
 
 def RunScript(script,doLongTests,verbose):
+  # support python 2.7 style -f argument for failfast
+  if sys.argv[-1] == '-f':
+    # setting environment allows this setting to recursively pass to all child
+    # processes
+    os.environ['PYTHON_TEST_FAILFAST'] = '1'
   if len(sys.argv)==3 and sys.argv[1]=='--testDir':
     os.chdir(sys.argv[2])
   # -------------------------------------------------------
@@ -68,7 +73,7 @@ def RunScript(script,doLongTests,verbose):
       pass
 
   failed = []
-  for entry in tests:
+  for i, entry in enumerate(tests):
     try:
       exeName,args,extras  = entry
     except ValueError:
@@ -80,12 +85,21 @@ def RunScript(script,doLongTests,verbose):
       import traceback
       traceback.print_exc()
       res = TEST_FAILED
-    if res != TEST_PASSED:
       failed.append((exeName,args,extras))
-  for exeName,args,extras in longTests:
+    if res != TEST_PASSED:
+      # check failfast setting
+      if os.environ.get('PYTHON_TEST_FAILFAST', '') == '1':
+        # return immediately
+        sys.stderr.write("Exitng from %s\n" % str([exeName]+list(args)))
+        return failed, i + 1
+  for i, (exeName,args,extras) in enumerate(longTests):
     res = RunTest(exeName,args,extras)
     if res != TEST_PASSED:
       failed.append((exeName,args,extras))
+      if os.environ.get('PYTHON_TEST_FAILFAST', '') == '1':
+        # return immediately
+        sys.stderr.write("Exitng from %s\n" % str([exeName]+list(args)))
+        return failed, len(tests) + i + 1
   
   nTests = len(tests)+len(longTests)
   del sys.modules[script]

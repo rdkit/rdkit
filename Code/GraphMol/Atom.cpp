@@ -409,6 +409,7 @@ bool Atom::Match(Atom const *what) const {
   //   [*] matches [*],[1*],[2*],etc.
   //   [1*] only matches [*] and [1*]
   if(res && !getAtomicNum()){
+#if 0
     // this is the deprecated old behavior, based on the dummy labels:
     // this will go away in the Q3 2008 release
     std::string l1;
@@ -425,6 +426,7 @@ bool Atom::Match(Atom const *what) const {
         res = false;
       }
     }
+#endif
     if( res ){
       // this is the new behavior, based on the isotopes:
       double tgt=this->getMass();

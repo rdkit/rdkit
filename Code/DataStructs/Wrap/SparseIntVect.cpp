@@ -112,7 +112,8 @@ Elements can be set and read using indexing (i.e. siv[i] = 4 or val=siv[i])\n\
 struct sparseIntVec_wrapper {
   template <typename IndexType>
   static void wrapOne(const char *className){
-    python::class_<SparseIntVect<IndexType> >(className, 
+    python::class_<SparseIntVect<IndexType>,
+      boost::shared_ptr<SparseIntVect<IndexType> > >(className, 
 					      sparseIntVectDoc.c_str(),
 					      python::init<IndexType>("Constructor"))
       .def(python::init<std::string>())
