@@ -19,7 +19,7 @@ if(WIN32)
         SimDivPickers
 	RDGeometryLib RDGeneral )
         if(RDK_BUILD_INCHI_SUPPORT)
-          set(RDKit_Wrapper_Libs RDInchiLib ${INCHI_LIBRARIES} ${RDKit_Wrapper_Libs})
+          set(RDKit_Wrapper_Libs RDInchiLib Inchi ${RDKit_Wrapper_Libs})
         endif(RDK_BUILD_INCHI_SUPPORT)
         if(RDK_BUILD_AVALON_SUPPORT)
           set(RDKit_Wrapper_Libs AvalonLib  avalon_clib ${RDKit_Wrapper_Libs})

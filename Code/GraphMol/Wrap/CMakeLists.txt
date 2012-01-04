@@ -10,7 +10,7 @@ rdkit_python_extension(rdmolops
                        DEST Chem 
                        LINK_LIBRARIES 
                        FileParsers SubstructMatch Fingerprints ChemTransforms
-                       Catalogs Subgraphs GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
+                       Catalogs Subgraphs SmilesParse GraphMol RDGeometryLib DataStructs RDGeneral RDBoost  )
 
 if(RDK_BUILD_COMPRESSED_SUPPLIERS)
 find_package(Boost 1.39.0 COMPONENTS iostreams REQUIRED)
