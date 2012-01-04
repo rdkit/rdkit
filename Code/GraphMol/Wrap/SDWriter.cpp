@@ -46,16 +46,36 @@ namespace RDKit {
 
   struct sdwriter_wrap {
     static void wrap() {
-      std::string docStr="Constructor.\n\n"
-        "   If a string argument is provided, it will be treated as the name of the output file.\n"
-        "   If a file-like object is provided, output will be sent there.\n\n";
+      std::string docStr="A class for writing molecules to SD files.\n\
+\n\
+  Usage examples:\n\
+\n\
+    1) writing to a named file:\n\
+       >>> writer = SDWriter('out.sdf')\n\
+       >>> for mol in list_of_mols:\n\
+       ...    writer.write(mol)\n\
+\n\
+    2) writing to a file-like object: \n\
+       >>> import gzip\n\
+       >>> outf=gzip.open('out.sdf.gz','w+')\n\
+       >>> writer = ForwardSDMolSupplier(outf)\n\
+       >>> for mol in list_of_mols:\n \
+       ...   writer.write(mol)\n\
+\n\
+  By default all non-private molecular properties are written to the SD file.\n\
+  This can be changed using the SetProps method:\n\
+       >>> writer = SDWriter('out.sdf')\n\
+       >>> writer.SetProps(['prop1','prop2'])\n\
+\n";
       python::class_<SDWriter,
-        boost::noncopyable>("SDWriter",
-                            "A class for writing molecules to SD files.\n",
-                            python::no_init)
+		     boost::noncopyable>("SDWriter",
+					 docStr.c_str(),
+					 python::no_init)
         .def("__init__", python::make_constructor(&getSDWriter))
-        .def(python::init<std::string>(python::args("fileName"),
-                                       docStr.c_str()))
+	.def(python::init<std::string>(python::args("fileName"),
+				       "Constructor.\n\n"
+				       "   If a string argument is provided, it will be treated as the name of the output file.\n"
+				       "   If a file-like object is provided, output will be sent there.\n\n"))
 	.def("SetProps", SetSDWriterProps,
 	     "Sets the properties to be written to the output file\n\n"
 	     "  ARGUMENTS:\n\n"
