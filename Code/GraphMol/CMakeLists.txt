@@ -54,8 +54,7 @@ add_subdirectory(MolChemicalFeatures)
 add_subdirectory(ShapeHelpers)
 add_subdirectory(MolCatalog)
 
-if(NOT CMAKE_COMPILER_IS_CLANG)
-# SLNParse requires regex and that has been problematic with clang
+if(RDK_BUILD_SLN_SUPPORT AND NOT CMAKE_COMPILER_IS_CLANG)
 add_subdirectory(SLNParse)
 endif()
 
