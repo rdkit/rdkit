@@ -10,7 +10,6 @@
    details. 
    
 
-
 Acknowledgements:
 Roger Sayle, Adrian Schreyer
 
@@ -58,7 +57,11 @@ Other:
   similarities calculated using count-based fingerprints: 95% of
   calculated similarities are within 0.09 of the count-based value
   compared with 0.22 or 0.17 for torsions and atom-pairs previously.
-  To get the old behavior, set nBitsPerEntry to 1. 
+  To get the old behavior, set nBitsPerEntry to 1.
+- Optional support has been added for the Avalon Toolkit
+(https://sourceforge.net/projects/avalontoolkit/) to provide an
+alternate smiles canonicalization, fingerprint, and 2D coordination
+generation algorithm.
 
 ******  Release_2011.09.1 *******
 (Changes relative to Release_2011.06.1)
