@@ -3,10 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-The RDKit
-=========
-
-Contents:
+The RDKit Documentation
+=======================
 
 .. toctree::
   :maxdepth: 2
@@ -14,4 +12,9 @@ Contents:
   GettingStartedInPython
   RDKit_Book
 
+Additional Information
+======================
+
+  * `Python API Documentation <api/index.html>`_
+  * `C++ API Documentation <cppapi/index.html>`_
 
