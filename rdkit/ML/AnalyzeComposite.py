@@ -38,10 +38,14 @@ from rdkit.ML.DecTree import TreeUtils,Tree
 from rdkit.ML.Data import Stats
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import ScreenComposite
-try:
-  from rdkit.Excel.ExcelWrapper import ExcelWrapper as Excel
-except ImportError:
-  Excel = None
+Excel=None
+def _importExcel():
+  global Excel
+  try:
+    from rdkit.Excel.ExcelWrapper import ExcelWrapper as _Excel
+    Excel=_Excel
+  except ImportError:
+    Excel = None
 
 __VERSION_STRING="2.2.0"
 
@@ -315,6 +319,7 @@ if __name__ == "__main__":
     elif arg == '-v':
       verbose = 1
     elif arg == '-X':
+      _importExcel()
       if Excel is not None:
         reportToExcel = 1
       else:

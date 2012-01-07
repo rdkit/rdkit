@@ -14,13 +14,6 @@
 
 """
 from rdkit import RDConfig
-try:
-  from rdkit.Excel import ExcelWrapper
-except:
-  haveExcel = 0
-else:
-  haveExcel = 1
-
 from rdkit.Dbase.DbResultSet import DbResultSet,RandomAccessDbResultSet
 def _take(fromL,what):
   return map(lambda x,y=fromL:y[x],what)
@@ -160,8 +153,11 @@ def DatabaseToExcel(dBase,table,fields='*',join='',where='',wrapper=None,
       - password: the password to be used for DB access
 
   """
-  if not haveExcel:
+  try:
+    from rdkit.Excel import ExcelWrapper
+  except ImportError:
     return
+
   if wrapper is None:
     wrapper = ExcelWrapper.ExcelWrapper()
     wrapper.Visible = 1
@@ -500,8 +496,11 @@ def ExcelToDatabase(dBase,table,wrapper=None,user='sysdba',password='masterkey',
         the new data
 
   """
-  if not haveExcel:
+  try:
+    from rdkit.Excel import ExcelWrapper
+  except ImportError:
     return
+
   table.replace('-','_')
   table.replace(' ','_')
   if not force:

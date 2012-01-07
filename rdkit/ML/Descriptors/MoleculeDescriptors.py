@@ -7,8 +7,8 @@
 """
 from rdkit import RDConfig
 from rdkit.ML.Descriptors import Descriptors
-from rdkit.Chem import AvailDescriptors
-AvailDescriptors.Desensitize()
+from rdkit.Chem import Descriptors as DescriptorsMod
+
 from rdkit.RDLogger import logger
 logger = logger()
 import re
@@ -29,7 +29,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
 
         - format of simpleList:
 
-           a list of strings which are keys into _AvailDescriptors.descDict_
+           a list of strings which are functions in the rdkit.Chem.Descriptors module
 
     """
     self.simpleList = tuple(simpleList)
@@ -44,8 +44,8 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     self.descriptorVersions=[]
     for nm in self.simpleList:
       vers='N/A'
-      if AvailDescriptors.descDict.has_key(nm):
-        fn = AvailDescriptors.descDict[nm]
+      if hasattr(DescriptorsMod,nm):
+        fn = getattr(DescriptorsMod,nm)
         if hasattr(fn,'version'):
           vers = fn.version
       self.descriptorVersions.append(vers)
@@ -80,7 +80,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     res = [-666]*len(self.simpleList)
     for i,nm in enumerate(self.simpleList):
-      fn = AvailDescriptors.descDict.get(nm,lambda x:777)
+      fn = getattr(DescriptorsMod,nm,lambda x:777)
       try:
         res[i] = fn(mol)
       except:
@@ -100,7 +100,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     res = []
     for nm in self.simpleList:
-      fn = AvailDescriptors.descDict.get(nm,lambda x:777)
+      fn = getattr(DescriptorsMod,nm,lambda x:777)
       if hasattr(fn,'__doc__') and fn.__doc__:
         doc = fn.__doc__.split('\n\n')[0].strip()
         doc = re.sub('\ *\n\ *',' ',doc)
@@ -115,7 +115,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     res = []
     for nm in self.simpleList:
-      fn = AvailDescriptors.descDict.get(nm,lambda x:777)
+      fn = getattr(DescriptorsMod,nm,lambda x:777)
       res.append(fn)
     return tuple(res)  
     

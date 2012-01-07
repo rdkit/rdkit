@@ -92,32 +92,3 @@ def GetMolsMatchingBit(mols,bit,fps):
       res.append(mol)
   return res
 
-xl = None
-def ShowMolsMatchingBit(mols,bit,fps,actName="",wrapper=None,col=1,row=1):
-  global xl
-  from rdkit.Excel import Molecules
-  if wrapper is not None:
-    xl = wrapper
-  if xl is None:
-    xl = Molecules.ExcelWrapper()
-    xl.Workbooks.Add()
-    xl.ChemdrawNewWorksheet()
-  mols = GetMolsMatchingBit(mols,bit,fps)
-  i = row
-  for mol in mols:
-    xl[i,col] = Chem.MolToSmiles(mol)
-    if actName and mol.HasProp(actName):
-      xl[i,col+1] = mol.GetProp(actName)
-    i+=1
-  i = row
-  for mol in mols:
-    try:
-      xl.ChemdrawConvertCellsToMols(i,col)
-      xl.ChemdrawShowPictures(i,col)
-    except:
-      pass
-    i+=1
-  return mols
-        
-    
-

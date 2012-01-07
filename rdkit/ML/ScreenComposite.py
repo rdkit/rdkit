@@ -128,10 +128,15 @@ from rdkit.ML import CompositeRun
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.Dbase import DbModule
 _details = CompositeRun.CompositeRun()
-try:
-  from rdkit.Excel.ExcelWrapper import ExcelWrapper as Excel
-except ImportError:
-  Excel = None
+
+Excel=None
+def _importExcel():
+  global Excel
+  try:
+    from rdkit.Excel.ExcelWrapper import ExcelWrapper as _Excel
+    Excel=_Excel
+  except ImportError:
+    Excel = None
   
 __VERSION_STRING="3.3.0"
 
@@ -1273,6 +1278,7 @@ def ParseArgs(details):
     elif arg == '-V':
       verbose=1
     elif arg == '-X':
+      _importExcel()
       if Excel is not None:
         details.reportToExcel = 1
         details.detailedScreen=1

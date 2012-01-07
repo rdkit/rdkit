@@ -69,7 +69,7 @@ class TestCase(unittest.TestCase):
   
   def testPerm1(self):
     """ tests the descriptor remapping stuff in a packager """
-    from rdkit.Chem import AvailDescriptors
+    from rdkit.Chem import Descriptors
     pkg = cPickle.load(open(os.path.join(self.dataDir,'Jan9_build3_pkg.pkl'),'rb'))
     calc = pkg.GetCalculator()
     names = calc.GetDescriptorNames()
@@ -77,7 +77,7 @@ class TestCase(unittest.TestCase):
     DataUtils.InitRandomNumbers((23,42))
     for smi,pred,conf in self.testD:
       for desc in names:
-        fn = AvailDescriptors.descDict.get(desc,lambda x:777)
+        fn = getattr(Descriptors,desc,lambda x:777)
         m = Chem.MolFromSmiles(smi)
         ref[desc] = fn(m)
 
@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase):
 
         m = Chem.MolFromSmiles(smi)
         for desc in perm:
-          fn = AvailDescriptors.descDict.get(desc,lambda x:777)
+          fn = getattr(Descriptors,desc,lambda x:777)
           val = fn(m)
           assert feq(val,ref[desc],1e-4),'%s: %s(%s): %f!=%f'%(str(perm),
                                                                smi,

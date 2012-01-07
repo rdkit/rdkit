@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
     DbUtils.TextFileToDatabase(self.dbName,tblName,inF)
     self._confirm(tblName)
 
-  def test2Excel(self):
+  def _test2Excel(self):
     """ test the Excel functionality """
     import sys
     if sys.platform!='win32':
@@ -67,7 +67,7 @@ class TestCase(unittest.TestCase):
     DbUtils.TextFileToDatabase(self.dbName,tblName,inF,nullMarker='NA')
     self._confirm(tblName)
 
-  def test4Excel(self):
+  def _test4Excel(self):
     """ test the Excel functionality including nulls """
     import sys
     if sys.platform!='win32':
