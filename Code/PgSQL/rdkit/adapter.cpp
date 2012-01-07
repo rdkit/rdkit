@@ -312,8 +312,8 @@ makeMolSign(CROMol data) {
   bytea                   *ret = NULL;
 
   try {
-    res = RDKit::LayeredFingerprintMol2(*mol,RDKit::substructLayers,1,4,SSS_FP_SIZE);
-    //res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,5,SSS_FP_SIZE);
+    //res = RDKit::LayeredFingerprintMol2(*mol,RDKit::substructLayers,1,4,SSS_FP_SIZE);
+    res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,5,SSS_FP_SIZE);
     ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)res);
     delete res;
     res=0;
