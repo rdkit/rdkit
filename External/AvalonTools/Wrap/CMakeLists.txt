@@ -4,5 +4,5 @@ rdkit_python_extension(pyAvalonTools
                        DEST Avalon
                        LINK_LIBRARIES 
                        AvalonLib avalon_clib SmilesParse FileParsers GraphMol DataStructs RDGeometryLib RDGeneral RDBoost)
-add_pytest(pyAvalonTools ${PYTHON_EXECUTABLE} 
+add_pytest(pyAvalonTools
          ${CMAKE_CURRENT_SOURCE_DIR}/testAvalonTools.py)
