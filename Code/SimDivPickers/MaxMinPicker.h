@@ -53,14 +53,15 @@ namespace RDPickers {
      *              and returning the distance (as a double) between those two elements.   
      *   \param poolSize - the size of the pool to pick the items from. It is assumed that the
      *              distance matrix above contains the right number of elements; i.e.
-     *              poolSize*(poolSize-1) \n
+     *              poolSize*(poolSize-1) 
      *   \param pickSize - the number items to pick from pool (<= poolSize)
      *   \param firstPicks - (optional)the first items in the pick list
+     *   \param seed - (optional) seed for the random number generator
      */
     template <typename T>
     RDKit::INT_VECT lazyPick(T &func, 
                              unsigned int poolSize, unsigned int pickSize,
-                             RDKit::INT_VECT firstpicks=RDKit::INT_VECT(),
+                             RDKit::INT_VECT firstPicks=RDKit::INT_VECT(),
                              int seed=-1) const;
 
     /*! \brief Contains the implementation for the MaxMin diversity picker
@@ -91,6 +92,7 @@ namespace RDPickers {
      *              poolSize*(poolSize-1) \n
      *   \param pickSize - the number items to pick from pool (<= poolSize)
      *   \param firstPicks - indices of the items used to seed the pick set.
+     *   \param seed - (optional) seed for the random number generator
     */
     RDKit::INT_VECT pick(const double *distMat, 
                          unsigned int poolSize, unsigned int pickSize,

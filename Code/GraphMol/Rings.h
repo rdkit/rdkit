@@ -39,6 +39,7 @@ namespace RingUtils {
      \param done      a bit vector recording the rings that are already dealt with
              this also can be used to avoid any rings that should not be included in
              the fused system
+     \param depth used to track recursion depth       
    
   */
   void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,

@@ -36,7 +36,6 @@ namespace RDKit{
       - the caller is responsible for <tt>delete</tt>ing the result
     
   */
-  const std::string RDKFingerprintMolVersion="1.0.0";
   ExplicitBitVect *RDKFingerprintMol(const ROMol &mol,
                                      unsigned int minPath=1,
                                      unsigned int maxPath=7,
@@ -46,16 +45,18 @@ namespace RDKit{
                                      double tgtDensity=0.0,
                                      unsigned int minSize=128,
                                      bool branchedPaths=true);
+  const std::string RDKFingerprintMolVersion="1.0.0";
+
 
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule
-  //!        using an alternate (faster) hashing algorithm  
+  //!        using a layer-based hashing algorithm  
   /*!
 
     <b>Experimental:</b> This function is experimental. The API or results may change from
     release to release.
     
     \param mol:          the molecule to be fingerprinted
-    \param layers:       the layers to be included (see below)
+    \param layerFlags:   the layers to be included (see below)
     \param minPath:      the minimum path length (in bonds) to be included
     \param maxPath:      the minimum path length (in bonds) to be included
     \param fpSize:       the size of the fingerprint
@@ -86,9 +87,6 @@ namespace RDKit{
        - 0x10: ring sizes
        - 0x20: aromaticity
   */
-  const unsigned int maxFingerprintLayers=10;
-  const std::string LayeredFingerprintMolVersion="0.5.0";
-  const unsigned int substructLayers=0x07;
   ExplicitBitVect *LayeredFingerprintMol(const ROMol &mol,
                                          unsigned int layerFlags=0xFFFFFFFF,
                                          unsigned int minPath=1,unsigned int maxPath=7,
@@ -97,6 +95,10 @@ namespace RDKit{
                                          std::vector<unsigned int> *atomCounts=0,
                                          ExplicitBitVect *setOnlyBits=0,
                                          bool branchedPaths=true);
+  const unsigned int maxFingerprintLayers=10;
+  const std::string LayeredFingerprintMolVersion="0.5.0";
+  const unsigned int substructLayers=0x07; 
+
   //! \brief Generates a topological fingerprint for a molecule
   //!        using a series of pre-defined structural patterns
   /*!
@@ -105,7 +107,7 @@ namespace RDKit{
     release to release.
     
     \param mol:          the molecule to be fingerprinted
-    \param layers:       the layers to be included [not used in this release] (see below)
+    \param layerFlags:   the layers to be included [not used in this release] (see below)
     \param minPath:      the minimum path length (in bonds) to be included
     \param maxPath:      the minimum path length (in bonds) to be included
     \param fpSize:       the size of the fingerprint

@@ -39,6 +39,16 @@ namespace RDDepict {
     before adding the 2D coordinates instead of simply adding to the
     list
                           
+    \param nFlipsPerSample - the number of rotatable bonds that are
+    flipped at random for each sample
+
+    \param nSamples - the number of samples
+
+    \param sampleSeed - seed for the random sampling process
+
+    \param permuteDeg4Nodes - try permuting the drawing order of bonds around
+          atoms with four neighbors in order to improve the depiction
+
     \return ID of the conformation added to the molecule cotaining the
     2D coordinates
 
@@ -89,9 +99,12 @@ namespace RDDepict {
     \param nFlipsPerSample - the number of rotatable bonds that are
     flipped at random for each sample
 
-    \param nSample - the number of samples
+    \param nSamples - the number of samples
 
     \param sampleSeed - seed for the random sampling process
+
+    \param permuteDeg4Nodes - try permuting the drawing order of bonds around
+          atoms with four neighbors in order to improve the depiction
 
     \return ID of the conformation added to the molecule cotaining the
     2D coordinates

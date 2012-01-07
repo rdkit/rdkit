@@ -351,6 +351,13 @@ namespace RDKit{
     //! \overload
     int findSSSR(const ROMol &mol, std::vector<std::vector<int> > *res=0);
 
+    //! use a DFS algorithm to identify ring bonds and atoms in a molecule
+    /*!
+      \b NOTE: though the RingInfo structure is populated by this function,
+      the only really reliable calls that can be made are to check if
+      mol.getRingInfo().numAtomRings(idx) or mol.getRingInfo().numBondRings(idx)
+      return values >0
+    */  
     void fastFindRings(const ROMol &mol);
 
 

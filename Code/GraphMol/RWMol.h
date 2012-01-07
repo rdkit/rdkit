@@ -148,7 +148,7 @@ namespace RDKit{
     };
     //! adds a Bond to our collection
     /*!
-      \param bond          pointer to the Bond to add
+      \param bsp        smart pointer to the Bond to add
 
       \return the new number of bonds
 

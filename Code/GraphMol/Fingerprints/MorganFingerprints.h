@@ -77,13 +77,13 @@ namespace RDKit {
       \param fromAtoms : if this is provided, only the atoms in the vector will be
                          used as centers in the fingerprint
       \param useChirality : if set, additional information will be added to the fingerprint
-                            when chiral atoms are discovered. This will cause C[C@H](F)Cl,
-                            C[C@@H](F)Cl, and CC(F)Cl to generate different fingerprints.
+                            when chiral atoms are discovered. This will cause \verbatim C[C@H](F)Cl,
+                            C[C@@H](F)Cl, and CC(F)Cl \endverbatim to generate different fingerprints.
       \param useBondTypes : if set, bond types will be included as part of the hash for
                             calculating bits
       \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
                                      have a nonzero invariant.
-      \param atomsSettingBit : if nonzero, this will be used to return information
+      \param atomsSettingBits : if nonzero, this will be used to return information
                                about the atoms that set each particular bit.
                                The keys are the map are bit ids, the values
                                are lists of (atomId, radius) pairs.
@@ -116,13 +116,13 @@ namespace RDKit {
       \param fromAtoms : if this is provided, only the atoms in the vector will be
                          used as centers in the fingerprint
       \param useChirality : if set, additional information will be added to the fingerprint
-                            when chiral atoms are discovered. This will cause C[C@H](F)Cl,
-                            C[C@@H](F)Cl, and CC(F)Cl to generate different fingerprints.
+                            when chiral atoms are discovered. This will cause \verbatim C[C@H](F)Cl,
+                            C[C@@H](F)Cl, and CC(F)Cl \endverbatim to generate different fingerprints.
       \param useBondTypes : if set, bond types will be included as part of the hash for
                             calculating bits
       \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
                                      have a nonzero invariant.
-      \param atomsSettingBit : if nonzero, this will be used to return information
+      \param atomsSettingBits : if nonzero, this will be used to return information
                                about the atoms that set each particular bit.
                                The keys are the map are bit ids, the values
                                are lists of (atomId, radius) pairs.
@@ -145,8 +145,8 @@ namespace RDKit {
     //! returns the connectivity invariants for a molecule
     /*!  
 
-      \param mol:    the molecule to be considered
-      \param invariants : used to return the results
+      \param mol :    the molecule to be considered
+      \param invars : used to return the results
       \param includeRingMembership : if set, whether or not the atom is in
                  a ring will be used in the invariant list.
     */
@@ -159,7 +159,7 @@ namespace RDKit {
     /*!  
 
       \param mol:    the molecule to be considered
-      \param invariants : used to return the results
+      \param invars : used to return the results
       \param patterns: if provided should contain the queries used to assign atom-types.
                        if not provided, feature definitions adapted from reference:
                        Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)

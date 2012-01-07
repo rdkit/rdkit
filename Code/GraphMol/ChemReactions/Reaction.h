@@ -254,6 +254,19 @@ namespace RDDepict {
         templates before generating coordinates. This should result in
         better depictions, but can lead to errors in some cases.
 
+    \param canonOrient canonicalize the orientation so that the long
+    axes align with the x-axis etc.
+
+    \param nFlipsPerSample - the number of rotatable bonds that are
+    flipped at random for each sample
+
+    \param nSamples - the number of samples
+
+    \param sampleSeed - seed for the random sampling process
+
+    \param permuteDeg4Nodes - try permuting the drawing order of bonds around
+          atoms with four neighbors in order to improve the depiction
+
     for the other parameters see the documentation for compute2DCoords()
 
   */

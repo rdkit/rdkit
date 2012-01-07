@@ -68,7 +68,7 @@ namespace RDKit{
      reaction SMILES, except that SMARTS queries are allowed on the reactant
      side and that atom-map numbers are required (at least for now)
 
-     \param sma           the SMARTS to convert
+     \param text          the SMARTS to convert
      \param replacements  a string->string map of replacement strings.
                           \see SmilesToMol for more information about replacements
    */ 

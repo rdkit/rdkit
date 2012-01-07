@@ -207,10 +207,9 @@ namespace RDDepict {
       \param  embObj  another EmbeddedFrag object to be merged with this object
       \param  toAid   the atom in this embedded fragment to which the new object will be attached
       \param  nbrAid  the atom in the other fragment to attach to
-      \param  mol     the molecule of interest
     */
     void mergeNoCommon(EmbeddedFrag &embObj, unsigned int toAid, 
-                       unsigned int nbrAid); //, const RDKit::ROMol *mol);
+                       unsigned int nbrAid);
 
     //! Merge this embedded object with another embedded fragment
     /*!
@@ -224,13 +223,11 @@ namespace RDDepict {
       ARGUMENTS:
       \param embObj    another EmbeddedFrag object to be merged with this object
       \param commAtms  a vector of ids of the common atoms
-      \param mol       the molecule of interest
 
     */
     void mergeWithCommon(EmbeddedFrag &embObj, RDKit::INT_VECT &commAtms);
-    //const RDKit::ROMol *mol);
 
-    void mergeFragsWithComm(std::list<EmbeddedFrag> &efrags); //, const RDKit::ROMol *mol);
+    void mergeFragsWithComm(std::list<EmbeddedFrag> &efrags);
 
     //! Mark this fragment to be done for final embedding
     void markDone() {
@@ -252,7 +249,6 @@ namespace RDDepict {
     /*!
       ARGUMENTS:
       \param aid  the atom id of interest
-      \param mol  molecule object
      
       RETURNS:
       \return the id of the atom if we found a neighbor
@@ -260,7 +256,7 @@ namespace RDDepict {
                    
       NOTE: by definition we can have only one neighbor in the embdded system. 
     */
-    int findNeighbor(unsigned int aid); //, const RDKit::ROMol *mol);
+    int findNeighbor(unsigned int aid);
 
     //! Tranform this object to a new coordinates system
     /*!
@@ -302,10 +298,9 @@ namespace RDDepict {
     //! \brief Flip atoms on one side of a bond - used in removing colissions
     /*!
       ARGUMENTS:
-      \param mol - molecule involved in the frgament
       \param bondId - the bond used as the mirror to flip
     */
-    void flipAboutBond(unsigned int bondId); //const RDKit::ROMol *mol, unsigned int bondId);
+    void flipAboutBond(unsigned int bondId);
 
     void openAngles(const double *dmat, unsigned int aid1, unsigned int aid2);
 
@@ -339,10 +334,10 @@ namespace RDDepict {
 
     //! \brief make list of neighbors for each atom in the embedded system that
     //!  still need to be embedded
-    void setupNewNeighs(); //const RDKit::ROMol *mol);
+    void setupNewNeighs(); 
 
     //! update the  unembedded neighbor atom list for a specified atom
-    void updateNewNeighs(unsigned int aid); //, const RDKit::ROMol *mol);
+    void updateNewNeighs(unsigned int aid); 
 
     //! \brief Find all atoms in this embedded system that are
     //!  within a specified distant of a point
