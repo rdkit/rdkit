@@ -98,7 +98,7 @@ def NumValenceElectrons(mol):
   return accum
 NumValenceElectrons.version="1.0.0"
 
-def _oyMolecularFormula(mol):
+def _pyMolecularFormula(mol):
    """ DEPRECATED: this is now implemented in C++
    Return the molecular formula
 
