@@ -1016,6 +1016,11 @@ namespace RDKit{
       python::scope().attr("_LayeredFingerprint_version")=RDKit::LayeredFingerprintMolVersion;
       python::scope().attr("LayeredFingerprint_substructLayers")=RDKit::substructLayers;
 
+      // ------------------------------------------------------------------------
+      docString="Another layered fingerprint implementation\n\
+\n\
+  NOTE: This function is experimental. The API or results may change from\n\
+    release to release.\n";
       python::def("LayeredFingerprint2", wrapLayeredFingerprint2,
                   (python::arg("mol"),
                    python::arg("layerFlags")=0xFFFFFFFF,

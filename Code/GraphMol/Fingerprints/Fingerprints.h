@@ -97,15 +97,15 @@ namespace RDKit{
                                          std::vector<unsigned int> *atomCounts=0,
                                          ExplicitBitVect *setOnlyBits=0,
                                          bool branchedPaths=true);
-  //! \brief Generates a topological (Daylight like) fingerprint for a molecule
-  //!        using an alternate (faster) hashing algorithm  
+  //! \brief Generates a topological fingerprint for a molecule
+  //!        using a series of pre-defined structural patterns
   /*!
 
     <b>Experimental:</b> This function is experimental. The API or results may change from
     release to release.
     
     \param mol:          the molecule to be fingerprinted
-    \param layers:       the layers to be included (see below)
+    \param layers:       the layers to be included [not used in this release] (see below)
     \param minPath:      the minimum path length (in bonds) to be included
     \param maxPath:      the minimum path length (in bonds) to be included
     \param fpSize:       the size of the fingerprint

@@ -8,6 +8,9 @@
    versions. This affects usage from c++, python, and within the
    postgresql cartridge. See the "Other" section below for more
    details. 
+ - Due to a bug fix in the parameter set, the MolLogP and MolMR
+   descriptor calculators now return different values for some
+   molecules. See the "Bug Fixes" section below for more details.
    
 
 Acknowledgements:
@@ -25,27 +28,38 @@ Bug Fixes:
   3441641)
 - ReplaceSubstructs() now copies input molecule conformations to the
   output molecule. (Issue 3453144)
+- three-coordinate S and Se are now stereogenic (i.e. the
+  stereochemistry of O=[S@](C)F is no longer ignored). (Issue 3453172) 
 
 New Features:
 - Integration with the new IPython graphical canvas has been
   added. For details see this wiki page: 
 http://code.google.com/p/rdkit/wiki/IPythonIntegration
-- Input and output from Andrew Dalke's FPS format for fingerprints.
+- Input and output from Andrew Dalke's FPS format
+  (http://code.google.com/p/chem-fingerprints/wiki/FPS) for
+  fingerprints. 
 - The descriptor CalcNumAmideBonds() was added.
 
 New Database Cartridge Features: 
+- Support for PostgreSQL v9.1
 - Integration with PostgreSQL's KNN-GIST functionality. (Thanks to
   Adrian Schreyer) 
 - the functions all_values_gt(sfp,N) and all_values_lt(sfp,N) were
-  added. 
+  added.
+
+New Java Wrapper Features:
+- A function for doing diversity picking using fingerprint similarity.
+- support for the Avalon Toolkit (see below)
 
 Deprecated modules (to be removed in next release):
-- $RDBASE/rdkit/Excel
+- rdkit.Excel
+- rdkit.ML.Descriptors.DescriptorsCOM
+- rdkit.ML.Composite.CompositeCOM
 
 Removed modules:
-- $RDBASE/rdkit/WebUtils
-- $RDBASE/rdkit/Reports
-- $RDBASE/rdkit/mixins
+- rdkit.WebUtils
+- rdkit.Reports
+- rdkit.mixins
 
 Other:
 - Improvements to the SMARTS parser (Roger Sayle)
@@ -62,6 +76,8 @@ Other:
 (https://sourceforge.net/projects/avalontoolkit/) to provide an
 alternate smiles canonicalization, fingerprint, and 2D coordination
 generation algorithm.
+- The SLN support can now be switched off using the cmake variable
+RDK_BUILD_SLN_SUPPORT. 
 
 ******  Release_2011.09.1 *******
 (Changes relative to Release_2011.06.1)
