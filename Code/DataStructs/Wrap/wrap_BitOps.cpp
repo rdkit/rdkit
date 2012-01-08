@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2008 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2012 greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -351,6 +351,12 @@ struct BitOps_wrapper {
     python::def("BitVectToFPSText",
                 (std::string (*)(const EBV&))BitVectToFPSText,
                 "Returns an FPS string representing the bit vector."
+                );
+    python::def("BitVectToBinaryText",
+                (std::string (*)(const SBV&))BitVectToBinaryText);
+    python::def("BitVectToBinaryText",
+                (std::string (*)(const EBV&))BitVectToBinaryText,
+                "Returns a binary string (byte array) representing the bit vector."
                 );
   }
 };

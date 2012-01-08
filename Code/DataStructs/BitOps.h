@@ -283,6 +283,17 @@ template <typename T1>
 std::string
 BitVectToFPSText(const T1& bv1);
 
+//! returns a binary string representation of a bit vector (an array of bytes)
+/*!
+  \param bv1    the vector to use
+  
+  \return an std::string
+
+ */
+template <typename T1>
+std::string
+BitVectToBinaryText(const T1& bv1);
+
 //! updates a bit vector from Andrew Dalke's FPS format
 /*!
   \param bv1    the vector to use
@@ -293,6 +304,17 @@ BitVectToFPSText(const T1& bv1);
 template <typename T1>
 void
 UpdateBitVectFromFPSText(T1& bv1,const std::string &fps);
+
+//! updates a bit vector from a binary string representation of a bit vector (an array of bytes)
+/*!
+  \param bv1    the vector to use
+  \param fps    the binary string
+
+
+ */
+template <typename T1>
+void
+UpdateBitVectFromBinaryText(T1& bv1,const std::string &fps);
 
 
 

@@ -1039,6 +1039,54 @@ void test9BitVectFPS() {
   }
 }
 
+void test10BitVectBinaryText() {
+  {
+    ExplicitBitVect bv(32);
+    std::string fps;
+
+    fps = BitVectToBinaryText(bv);
+    TEST_ASSERT(fps.size()==4);
+    for(unsigned int i=0;i<fps.size();++i){
+      TEST_ASSERT(fps[i]==0);
+    }
+    
+    bv.setBit(0);
+    bv.setBit(9);
+    bv.setBit(17);
+    bv.setBit(26);
+
+    fps = BitVectToBinaryText(bv);
+    TEST_ASSERT(fps.size()==4);
+    for(unsigned int i=0;i<fps.size();++i){
+      TEST_ASSERT(fps[i]!=0);
+    }
+  }
+  {
+    ExplicitBitVect bv(32),bv2(32);
+    std::string fps;
+
+    fps = BitVectToBinaryText(bv);
+    TEST_ASSERT(fps.size()==4);
+    for(unsigned int i=0;i<fps.size();++i){
+      TEST_ASSERT(fps[i]==0);
+    }
+    UpdateBitVectFromBinaryText(bv2,fps);
+    TEST_ASSERT(bv==bv2);
+    
+    bv.setBit(0);
+    bv.setBit(1);
+    bv.setBit(4);
+    bv.setBit(17);
+    bv.setBit(23);
+    bv.setBit(31);
+
+    fps = BitVectToBinaryText(bv);
+    UpdateBitVectFromBinaryText(bv2,fps);
+    TEST_ASSERT(bv==bv2);
+  }
+}
+
+
 int main(){
   RDLog::InitLogs();
   try{
@@ -1099,6 +1147,9 @@ int main(){
   
   BOOST_LOG(rdInfoLog) << " Test BitVect to FPS  -------------------------------" << std::endl;
   test9BitVectFPS();
+  
+  BOOST_LOG(rdInfoLog) << " Test BitVect to binary string  -------------------------------" << std::endl;
+  test10BitVectBinaryText();
   
   return 0;
   

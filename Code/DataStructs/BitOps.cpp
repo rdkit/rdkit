@@ -654,22 +654,47 @@ const char bin2Hex[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d',
 template <typename T1>
 std::string
 BitVectToFPSText(const T1& bv1){
-  std::stringstream res;
+  std::string res(bv1.getNumBits()/4 + (bv1.getNumBits()%4?1:0),0);
   unsigned char c=0;
+  unsigned int byte=0;
   for(unsigned int i=0;i<bv1.getNumBits();i++){
     if(bv1.getBit(i)) {
       c |= 1<<(i%8);
     }
     if(!((i+1)%8)){
-      res<<bin2Hex[(c>>4)%16]<<bin2Hex[c%16];
+      res[byte++]=bin2Hex[(c>>4)%16];
+      res[byte++]=bin2Hex[c%16];
       c=0;
     }
   }
   if(bv1.getNumBits()%8){
-    res<<bin2Hex[(c>>4)%16]<<bin2Hex[c%16];
+    res[byte++]=bin2Hex[(c>>4)%16];
+    res[byte++]=bin2Hex[c%16];
   }
-  return res.str();
+  return res;
 }
+
+template <typename T1>
+std::string
+BitVectToBinaryText(const T1& bv1){
+  std::string res(bv1.getNumBits()/8 + (bv1.getNumBits()%8?1:0),0);
+  unsigned char c=0;
+  unsigned int byte=0;
+  for(unsigned int i=0;i<bv1.getNumBits();i++){
+    if(bv1.getBit(i)) {
+      c |= 1<<(i%8);
+    }
+    if(!((i+1)%8)){
+      res[byte++]=c;
+      c=0;
+    }
+  }
+  if(bv1.getNumBits()%8){
+    res[byte]=c;
+  }
+  return res;
+}
+
 
 template <typename T1>
 void
@@ -693,6 +718,18 @@ UpdateBitVectFromFPSText(T1& bv1,const std::string &fps){
   }
 }
 
+template <typename T1>
+void
+UpdateBitVectFromBinaryText(T1& bv1,const std::string &fps){
+  PRECONDITION(fps.length()*8<=bv1.getNumBits(),"bad FPS length");
+  PRECONDITION(fps.length()%2==0,"bad FPS length");  
+  for(unsigned int i=0;i<fps.size();i++){
+    unsigned short c=fps[i];
+    for(unsigned int bit=0;bit<8;++bit){
+      if(c&(1<<bit)) bv1.setBit(i*8+bit);
+    }
+  }
+}
 
 
 template double TanimotoSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
@@ -740,9 +777,13 @@ template std::string BitVectToText(const ExplicitBitVect &);
 
 template std::string BitVectToFPSText(const SparseBitVect &);
 template std::string BitVectToFPSText(const ExplicitBitVect &);
-
 template void UpdateBitVectFromFPSText(SparseBitVect &,const std::string &);
 template void UpdateBitVectFromFPSText(ExplicitBitVect &,const std::string &);
+
+template std::string BitVectToBinaryText(const SparseBitVect &);
+template std::string BitVectToBinaryText(const ExplicitBitVect &);
+template void UpdateBitVectFromBinaryText(SparseBitVect &,const std::string &);
+template void UpdateBitVectFromBinaryText(ExplicitBitVect &,const std::string &);
 
 
 

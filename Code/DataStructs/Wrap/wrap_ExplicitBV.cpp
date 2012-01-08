@@ -73,7 +73,7 @@ struct EBV_wrapper {
          (IntVect (*)(const EBV&))GetOnBits,
          "Returns a tuple containing IDs of the on bits.\n")
     .def("ToBinary",&EBV::toString,
-         "Returns a binary string representation of the vector.\n")
+         "Returns an internal binary representation of the vector.\n")
     .def("FromBase64",
          (void (*)(EBV &,const std::string &))InitFromBase64,
          "Initializes the vector from a base64 encoded binary string.\n")

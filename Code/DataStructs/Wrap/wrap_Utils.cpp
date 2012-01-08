@@ -26,6 +26,12 @@ ExplicitBitVect *createFromFPSText(const std::string &fps){
     return res;
 }
 
+ExplicitBitVect *createFromBinaryText(const std::string &fps){
+    ExplicitBitVect *res=new ExplicitBitVect(fps.length()*8);
+    UpdateBitVectFromBinaryText(*res,fps);
+    return res;
+}
+
 
 struct Utils_wrapper {
   static void wrap(){
@@ -38,6 +44,9 @@ struct Utils_wrapper {
     python::def("CreateFromFPSText",createFromFPSText,
                 python::return_value_policy<python::manage_new_object>(),
                 "Creates an ExplicitBitVect from an FPS string.");  
+    python::def("CreateFromBinaryText",createFromBinaryText,
+                python::return_value_policy<python::manage_new_object>(),
+                "Creates an ExplicitBitVect from a binary string (byte array).");  
 
     python::def("InitFromDaylightString",
                 (void (*)(SparseBitVect &,std::string))FromDaylightString);
