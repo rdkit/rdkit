@@ -156,6 +156,10 @@ class TestCase(unittest.TestCase):
 
       self.failUnlessRaises(ValueError,lambda : DataStructs.CreateFromFPSText("030082801"))
       
+      bv2 = DataStructs.CreateFromFPSText("")
+      self.failUnlessEqual(bv2.GetNumBits(),0)
+
+
    def test8BinText(self):
       bv = DataStructs.ExplicitBitVect(32)
       bv.SetBit(0)
@@ -166,6 +170,9 @@ class TestCase(unittest.TestCase):
 
       bv2 = DataStructs.CreateFromBinaryText(DataStructs.BitVectToBinaryText(bv))
       self.failUnlessEqual(bv,bv2)
-        
+
+      bv2 = DataStructs.CreateFromBinaryText("")
+      self.failUnlessEqual(bv2.GetNumBits(),0)
+
 if __name__ == '__main__':
    unittest.main()
