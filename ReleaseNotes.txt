@@ -11,7 +11,11 @@
  - Due to a bug fix in the parameter set, the MolLogP and MolMR
    descriptor calculators now return different values for some
    molecules. See the "Bug Fixes" section below for more details.
-   
+ - To make storage more efficient, the size of the fingerprint
+   used to store morgan fingerprints in the database cartridge
+   has been changed from 1024 bits to 512 bits. If you update
+   the cartridge version all morgan and featmorgan fingerprints
+   and indices will need to be re-generated.
 
 Acknowledgements:
 Andrew Dalke, JP Ebejer, Roger Sayle, Adrian Schreyer, Gianluca
