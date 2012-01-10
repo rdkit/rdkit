@@ -54,6 +54,7 @@ using namespace RDKit;
 const unsigned int SSS_FP_SIZE=1024;
 const unsigned int LAYERED_FP_SIZE=1024;
 const unsigned int MORGAN_FP_SIZE=1024;
+const unsigned int HASHED_TORSION_FP_SIZE=2048;
 const unsigned int HASHED_PAIR_FP_SIZE=2048;
 class ByteA : public std::string {
 public:
@@ -1137,8 +1138,8 @@ makeTopologicalTorsionSFP(CROMol data){
   }
 #else
   try {
-    SparseIntVect<boost::int64_t> *afp=RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,HASHED_PAIR_FP_SIZE);
-    res = new SparseFP(HASHED_PAIR_FP_SIZE);
+    SparseIntVect<boost::int64_t> *afp=RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(*mol,HASHED_TORSION_FP_SIZE);
+    res = new SparseFP(HASHED_TORSION_FP_SIZE);
     for(SparseIntVect<boost::int64_t>::StorageType::const_iterator iter=afp->getNonzeroElements().begin();
         iter!=afp->getNonzeroElements().end();++iter){
       res->setVal(iter->first,iter->second);
@@ -1168,7 +1169,7 @@ makeTopologicalTorsionBFP(CROMol data){
   ROMol   *mol = (ROMol*)data;
   ExplicitBitVect *res=NULL;
   try {
-    res =RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(*mol,HASHED_PAIR_FP_SIZE);
+    res =RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(*mol,HASHED_TORSION_FP_SIZE);
   } catch (...) {
     elog(ERROR, "makeTopologicalTorsionBFP: Unknown exception");
   }
