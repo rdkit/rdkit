@@ -1037,6 +1037,39 @@ void test9BitVectFPS() {
     UpdateBitVectFromFPSText(bv2,fps);
     TEST_ASSERT(bv==bv2);
   }
+  {
+    ExplicitBitVect bv(33);
+    std::string fps;
+
+    fps = BitVectToFPSText(bv);
+    TEST_ASSERT(fps=="0000000000");
+    
+    bv.setBit(0);
+    bv.setBit(32);
+
+    fps = BitVectToFPSText(bv);
+    TEST_ASSERT(fps=="0100000001");
+  }
+  {
+    ExplicitBitVect bv(33),bv2(33);
+    std::string fps;
+
+    fps = BitVectToFPSText(bv);
+    TEST_ASSERT(fps=="0000000000");
+    UpdateBitVectFromFPSText(bv2,fps);
+    TEST_ASSERT(bv==bv2);
+    
+    bv.setBit(0);
+    bv.setBit(1);
+    bv.setBit(4);
+    bv.setBit(17);
+    bv.setBit(23);
+    bv.setBit(32);
+
+    fps = BitVectToFPSText(bv);
+    UpdateBitVectFromFPSText(bv2,fps);
+    TEST_ASSERT(bv==bv2);
+  }
 }
 
 void test10BitVectBinaryText() {
@@ -1079,6 +1112,47 @@ void test10BitVectBinaryText() {
     bv.setBit(17);
     bv.setBit(23);
     bv.setBit(31);
+
+    fps = BitVectToBinaryText(bv);
+    UpdateBitVectFromBinaryText(bv2,fps);
+    TEST_ASSERT(bv==bv2);
+  }
+  {
+    ExplicitBitVect bv(33);
+    std::string fps;
+
+    fps = BitVectToBinaryText(bv);
+    TEST_ASSERT(fps.size()==5);
+    for(unsigned int i=0;i<fps.size();++i){
+      TEST_ASSERT(fps[i]==0);
+    }
+    
+    bv.setBit(0);
+    bv.setBit(32);
+
+    fps = BitVectToBinaryText(bv);
+    TEST_ASSERT(fps.size()==5);
+    TEST_ASSERT(fps[0]!=0);
+    for(unsigned int i=1;i<fps.size()-1;++i){
+      TEST_ASSERT(fps[i]==0);
+    }
+    TEST_ASSERT(fps[fps.size()-1]!=0);
+  }
+  {
+    ExplicitBitVect bv(33),bv2(33);
+    std::string fps;
+
+    fps = BitVectToBinaryText(bv);
+    TEST_ASSERT(fps.size()==5);
+    UpdateBitVectFromBinaryText(bv2,fps);
+    TEST_ASSERT(bv==bv2);
+    
+    bv.setBit(0);
+    bv.setBit(1);
+    bv.setBit(4);
+    bv.setBit(17);
+    bv.setBit(23);
+    bv.setBit(32);
 
     fps = BitVectToBinaryText(bv);
     UpdateBitVectFromBinaryText(bv2,fps);

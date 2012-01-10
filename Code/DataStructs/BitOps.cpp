@@ -654,7 +654,8 @@ const char bin2Hex[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d',
 template <typename T1>
 std::string
 BitVectToFPSText(const T1& bv1){
-  std::string res(bv1.getNumBits()/4 + (bv1.getNumBits()%4?1:0),0);
+  unsigned int size=2*(bv1.getNumBits()/8 + (bv1.getNumBits()%8?1:0));
+  std::string res(size,0);
   unsigned char c=0;
   unsigned int byte=0;
   for(unsigned int i=0;i<bv1.getNumBits();i++){
@@ -667,7 +668,7 @@ BitVectToFPSText(const T1& bv1){
       c=0;
     }
   }
-  if(bv1.getNumBits()%8){
+  if(byte<size){
     res[byte++]=bin2Hex[(c>>4)%16];
     res[byte++]=bin2Hex[c%16];
   }
@@ -699,9 +700,12 @@ BitVectToBinaryText(const T1& bv1){
 template <typename T1>
 void
 UpdateBitVectFromFPSText(T1& bv1,const std::string &fps){
-  PRECONDITION(fps.length()*4<=bv1.getNumBits(),"bad FPS length");
-  PRECONDITION(fps.length()%2==0,"bad FPS length");  
-  for(unsigned int i=0;i<fps.size();i+=2){
+  PRECONDITION(fps.length()*4>=bv1.getNumBits(),"bad FPS length");
+  PRECONDITION(fps.length()%2==0,"bad FPS length");
+  unsigned int bitIdx=0;
+  for(unsigned int i=0;
+      i<fps.size() && bitIdx<bv1.getNumBits();
+      i+=2){
     unsigned short c=0;
     try {
       std::istringstream in(fps.substr(i,2));
@@ -712,8 +716,10 @@ UpdateBitVectFromFPSText(T1& bv1,const std::string &fps){
       std::cerr<<errout.str()<<std::endl;
       throw ValueErrorException(errout.str()) ;
     }
-    for(unsigned int bit=0;bit<8;++bit){
-      if(c&(1<<bit)) bv1.setBit(i*4+bit);
+    for(unsigned int bit=0;
+        bit<8 && bitIdx<bv1.getNumBits();
+        ++bit, ++bitIdx){
+      if(c&(1<<bit)) bv1.setBit(bitIdx);
     }
   }
 }
@@ -721,12 +727,14 @@ UpdateBitVectFromFPSText(T1& bv1,const std::string &fps){
 template <typename T1>
 void
 UpdateBitVectFromBinaryText(T1& bv1,const std::string &fps){
-  PRECONDITION(fps.length()*8<=bv1.getNumBits(),"bad FPS length");
-  PRECONDITION(fps.length()%2==0,"bad FPS length");  
-  for(unsigned int i=0;i<fps.size();i++){
+  PRECONDITION(fps.length()*8>=bv1.getNumBits(),"bad FPS length");
+  unsigned int bitIdx=0;
+  for(unsigned int i=0;i<fps.size()  && bitIdx<bv1.getNumBits();i++){
     unsigned short c=fps[i];
-    for(unsigned int bit=0;bit<8;++bit){
-      if(c&(1<<bit)) bv1.setBit(i*8+bit);
+    for(unsigned int bit=0;
+        bit<8 && bitIdx<bv1.getNumBits();
+        ++bit, ++bitIdx){
+      if(c&(1<<bit)) bv1.setBit(bitIdx);
     }
   }
 }
