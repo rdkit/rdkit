@@ -53,8 +53,8 @@ using namespace RDKit;
 
 const unsigned int SSS_FP_SIZE=1024;
 const unsigned int LAYERED_FP_SIZE=1024;
-const unsigned int MORGAN_FP_SIZE=1024;
-const unsigned int HASHED_TORSION_FP_SIZE=2048;
+const unsigned int MORGAN_FP_SIZE=512;
+const unsigned int HASHED_TORSION_FP_SIZE=1024;
 const unsigned int HASHED_PAIR_FP_SIZE=2048;
 class ByteA : public std::string {
 public:
