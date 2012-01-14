@@ -35,4 +35,8 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 %}
 
+%newobject deleteSubstructs;
+%newobject replaceSidechains;
+%newobject replaceCores;
+%newobject MurckoDecompose;
 %include <GraphMol/ChemTransforms/ChemTransforms.h>
