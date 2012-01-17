@@ -214,7 +214,7 @@ namespace RDKit{
             localEntry.insert(ePos,count,rank);
             ++nbr;
           }
-          // add two zeroes for each coordinated H:
+          // add a zero for each coordinated H:
           // (as long as we're not a query atom)
           if(!mol.getAtomWithIdx(*it)->hasQuery()){
             localEntry.insert(localEntry.begin(),
@@ -571,7 +571,9 @@ namespace RDKit{
           if(legalCenter){
             ++unassignedAtoms;
           }
-          if(legalCenter && !hasDupes && flagPossibleStereoCenters) atom->setProp("_ChiralityPossible",1);
+          if(legalCenter && !hasDupes && flagPossibleStereoCenters){
+            atom->setProp("_ChiralityPossible",1);
+          }
 
           if( legalCenter && !hasDupes &&
               tag != Atom::CHI_UNSPECIFIED &&

@@ -592,7 +592,6 @@ namespace FindRings {
             if (id == root){ // we found a ring     
               // make the ring
               INT_VECT ring = cpath;
-              // FIX: we can set the reserve on ring here to minimize reallocs
 
               // remove the root node and attach the other half of the ring from npath 
               // reverse this piece so that the ring is traversed correctly
