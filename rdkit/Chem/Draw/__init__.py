@@ -67,10 +67,27 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     AllChem.Compute2DCoords(mol)
   
   drawer.wedgeDashedBonds=wedgeBonds
-  drawer.AddMol(mol,**kwargs)
-  canvas.flush()
 
-  return img
+  if kwargs.has_key('legend'):
+    legend = kwargs['legend']
+    del kwargs['legend']
+  else:
+    legend=''
+
+  drawer.AddMol(mol,**kwargs)
+
+  if legend:
+    from rdkit.Chem.Draw.MolDrawing import Font
+    bbox = drawer.boundingBoxes[mol]
+    pos = (bbox[2]-bbox[0])/2,bbox[3]
+    font=Font(face='sans',size=12)
+    canvas.addCanvasText(legend,pos,font)
+
+  if kwargs.get('returnCanvas',False):
+    return img,canvas,drawer
+  else:
+    canvas.flush()
+    return img
 
 def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
               imageType=None,**kwargs):

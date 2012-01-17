@@ -220,3 +220,19 @@ class Canvas(CanvasBase):
       self.ctx.move_to(pts1[i][0],pts1[i][1])
       self.ctx.line_to(pts2[i][0],pts2[i][1])
     self.ctx.stroke()
+
+  def addCircle(self,center,radius,color=(0,0,0),fill=True,stroke=False,alpha=1.0,
+                **kwargs):
+    if not fill and not stroke: return
+    dps = []
+    #import pdb; pdb.set_trace();
+    self.ctx.set_source_rgba(color[0],color[1],color[2],alpha)
+    self.ctx.arc(center[0],center[1],radius,0,2.*math.pi)
+    self.ctx.close_path()
+    if stroke:
+      if fill:
+        self.ctx.stroke_preserve()
+      else:
+        self.ctx.stroke()
+    if fill:
+      self.ctx.fill()

@@ -275,7 +275,7 @@ class MolDrawing(object):
     
   def AddMol(self,mol,centerIt=True,molTrans=None,drawingTrans=None,
              highlightAtoms=[],confId=-1,flagCloseContactsDist=2,
-             highlightMap=None, ignoreHs=False):
+             highlightMap=None, ignoreHs=False,**kwargs):
     """Set the molecule to be drawn.
 
     Parameters:
