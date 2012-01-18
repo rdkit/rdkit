@@ -232,6 +232,8 @@ Sample Usage:\n\
          "returns whether or not the molecule has a substructure match to one of the reactants.")
     .def("IsMoleculeProduct",RDKit::IsMoleculeProductOfReaction,
          "returns whether or not the molecule has a substructure match to one of the products.")
+    .def("GetReactingAtoms",RDKit::getReactingAtoms,
+         "returns a sequence of sequences with the atoms that change in the reaction")
     // enable pickle support
     .def_pickle(RDKit::reaction_pickle_suite())
   ;

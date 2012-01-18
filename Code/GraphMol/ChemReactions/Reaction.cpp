@@ -192,16 +192,11 @@ namespace RDKit {
         //  This caused Issue 1748846
         //   http://sourceforge.net/tracker/index.php?func=detail&aid=1748846&group_id=160139&atid=814650
         //  We need to fix that little problem now:
-#if 1
         if( oldB->hasQuery()){
           //  remember that the product has been processed by the SMARTS parser.
           std::string queryDescription=oldB->getQuery()->getDescription();
           if(queryDescription=="BondOr" &&
              oldB->getBondType()==Bond::SINGLE){
-            //  The SMARTS parser tags unspecified bonds as single, but then adds
-            //  a query so that they match single or double
-            //  This caused Issue 1748846
-            //   http://sourceforge.net/tracker/index.php?func=detail&aid=1748846&group_id=160139&atid=814650
             //  We need to fix that little problem now:
             if(newB->getBeginAtom()->getIsAromatic() && newB->getEndAtom()->getIsAromatic()){
               newB->setBondType(Bond::AROMATIC);
@@ -214,19 +209,6 @@ namespace RDKit {
             newB->setProp("NullBond",1);
           }
         }
-#else
-        if( oldB->hasQuery() &&
-            oldB->getQuery()->getDescription()=="BondOr" &&
-            oldB->getBondType()==Bond::SINGLE){
-          if(newB->getBeginAtom()->getIsAromatic() && newB->getEndAtom()->getIsAromatic()){
-            newB->setBondType(Bond::AROMATIC);
-            newB->setIsAromatic(true);
-          } else {
-            newB->setBondType(Bond::SINGLE);
-            newB->setIsAromatic(false);
-          }
-        }
-#endif
       }
       
       return RWMOL_SPTR(res);  
@@ -811,4 +793,202 @@ namespace RDKit {
     return false;
   }
 
+  namespace {
+    // recursively looks for atomic number queries anywhere in this set of children
+    // or its children
+    bool findComplexQuery(Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt,
+                          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI endChildren){
+      while(childIt!=endChildren){
+        std::string descr=(*childIt)->getDescription();
+        if(descr=="AtomAtomicNum"){
+          return true;
+        } else if(findComplexQuery((*childIt)->beginChildren(),
+                                   (*childIt)->endChildren())){
+          return true;
+        }
+        ++childIt;
+      }
+      return false;
+    }
+    // FIX: this is adapted from Fingerprints.cpp and we really should have code
+    // like this centralized
+    bool isComplexQuery(const Atom &a){
+      if( !a.hasQuery()) return false;
+      // negated things are always complex:
+      if( a.getQuery()->getNegation()) return true;
+      std::string descr=a.getQuery()->getDescription();
+      if(descr=="AtomAtomicNum") return false;
+      if(descr=="AtomOr" || descr=="AtomXor") return true;
+      if(descr=="AtomAnd"){
+        Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a.getQuery()->beginChildren();
+        if((*childIt)->getDescription()=="AtomAtomicNum" ||
+           (*childIt)->getDescription()=="AtomNull" ){
+          return findComplexQuery(++childIt,a.getQuery()->endChildren());
+        }
+        return true;
+      }
+      return true;
+    }
+
+
+    bool isChangedAtom(const Atom &rAtom,const Atom &pAtom,int mapNum,
+                       const std::map<int,const Atom *> &mappedProductAtoms) {
+      PRECONDITION(mappedProductAtoms.find(mapNum)!=mappedProductAtoms.end(),"atom not mapped in products");
+      if(rAtom.getAtomicNum()!=pAtom.getAtomicNum() &&
+         pAtom.getAtomicNum()>0 ){
+        // the atomic number changed and the product wasn't a dummy
+        return true;
+      } else if(rAtom.getDegree() != pAtom.getDegree()){
+        // the degree changed
+        return true;
+      } else if(pAtom.getAtomicNum()>0 && isComplexQuery(rAtom)){
+        // more than a simple query
+        return true;
+      }
+
+      // now check bond layout:
+      std::map<unsigned int,const Bond *> reactantBonds;
+      ROMol::ADJ_ITER nbrIdx,endNbrs;
+      boost::tie(nbrIdx,endNbrs) = rAtom.getOwningMol().getAtomNeighbors(&rAtom);
+      while(nbrIdx!=endNbrs){
+        const ATOM_SPTR nbr=rAtom.getOwningMol()[*nbrIdx];
+        if(nbr->hasProp("molAtomMapNumber")){
+          int mapNum;
+          nbr->getProp("molAtomMapNumber",mapNum);
+          reactantBonds[mapNum]=rAtom.getOwningMol().getBondBetweenAtoms(rAtom.getIdx(),
+                                                                         nbr->getIdx());
+        } else {
+          // if we have an un-mapped neighbor, we are automatically a reacting atom:
+          return true;
+        }
+        ++nbrIdx;
+      }
+      boost::tie(nbrIdx,endNbrs) = pAtom.getOwningMol().getAtomNeighbors(&pAtom);
+      while(nbrIdx!=endNbrs){
+        const ATOM_SPTR nbr=pAtom.getOwningMol()[*nbrIdx];
+        if(nbr->hasProp("molAtomMapNumber")){
+          int mapNum;
+          nbr->getProp("molAtomMapNumber",mapNum);
+          // if we don't have a bond to a similarly mapped atom in the reactant,
+          // we're done:
+          if(reactantBonds.find(mapNum)==reactantBonds.end()){
+            return true;
+          }
+          const Bond *rBond=reactantBonds[mapNum];
+          const Bond *pBond=pAtom.getOwningMol().getBondBetweenAtoms(pAtom.getIdx(),
+                                                                     nbr->getIdx());
+
+          // bond comparison logic:
+          if(rBond->hasQuery()){
+            if(!pBond->hasQuery()) {
+              // reactant query, product not query: always a change
+              return true;
+            } else {
+              if( pBond->getQuery()->getDescription()=="BondNull" ){
+                // null queries are trump, they match everything
+              } else if( rBond->getBondType()==Bond::SINGLE && pBond->getBondType()==Bond::SINGLE &&
+                  rBond->getQuery()->getDescription()=="BondOr" &&
+                  pBond->getQuery()->getDescription()=="BondOr" ) {
+                // The SMARTS parser tags unspecified bonds as single, but then adds
+                // a query so that they match single or double.
+                // these cases match
+              } else {
+                if(  rBond->getBondType()==pBond->getBondType() &&
+                     rBond->getQuery()->getDescription()=="BondOrder" &&
+                     pBond->getQuery()->getDescription()=="BondOrder" &&
+                     static_cast<BOND_EQUALS_QUERY *>(rBond->getQuery())->getVal()==
+                     static_cast<BOND_EQUALS_QUERY *>(pBond->getQuery())->getVal()
+                     ) {
+                  // bond order queries with equal orders also match
+                } else {
+                  // anything else does not match
+                  return true;
+                }
+              }
+            }
+          } else if(pBond->hasQuery()) {
+            // reactant not query, product query
+            // if product is anything other than the null query
+            // it's a change:
+            if(pBond->getQuery()->getDescription()!="BondNull"){
+              return true;
+            }
+            
+          } else {
+            // neither has a query, just compare the types
+            if(rBond->getBondType()!=pBond->getBondType()){
+              return true;
+            }
+          }
+        }
+        ++nbrIdx;
+      }
+
+      // haven't found anything to say that we are changed, so we must
+      // not be
+      return false;
+    }
+
+    template <class T>
+    bool getMappedAtoms(T &rIt,
+                        std::map<int,const Atom *> &mappedAtoms){
+      ROMol::ATOM_ITER_PAIR atItP = rIt->getVertices();
+      while(atItP.first != atItP.second ){
+        const Atom *oAtom=(*rIt)[*(atItP.first++)].get();
+        // we only worry about mapped atoms:
+        if(oAtom->hasProp("molAtomMapNumber")){
+          int mapNum;
+          oAtom->getProp("molAtomMapNumber",mapNum);
+          mappedAtoms[mapNum]=oAtom;
+        } else {
+          // unmapped atom, return it
+          return false;
+        }
+      }
+      return true;
+    }
+  } // end of anonymous namespace
+  
+  VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn){
+    if(!rxn.isInitialized()){
+     throw ChemicalReactionException("initMatchers() must be called first");
+    }
+    VECT_INT_VECT res;
+    res.resize(rxn.getNumReactantTemplates());
+
+    // find mapped atoms in the products :
+    std::map<int,const Atom *> mappedProductAtoms;
+    for(MOL_SPTR_VECT::const_iterator rIt=rxn.beginProductTemplates();
+        rIt!=rxn.endProductTemplates();++rIt){
+      getMappedAtoms(*rIt,mappedProductAtoms);
+    }
+
+    // now loop over mapped atoms in the reactants, keeping track of
+    // which reactant they are associated with, and check for changes.
+    VECT_INT_VECT::iterator resIt=res.begin();
+    for(MOL_SPTR_VECT::const_iterator rIt=rxn.beginReactantTemplates();
+        rIt!=rxn.endReactantTemplates();++rIt,++resIt){
+      ROMol::ATOM_ITER_PAIR atItP = (*rIt)->getVertices();
+      while(atItP.first != atItP.second ){
+        const Atom *oAtom=(**rIt)[*(atItP.first++)].get();
+        // unmapped atoms are definitely changing:
+        if(!oAtom->hasProp("molAtomMapNumber")){
+          resIt->push_back(oAtom->getIdx());
+        } else {
+          // but mapped ones require more careful consideration
+          int mapNum;
+          oAtom->getProp("molAtomMapNumber",mapNum);
+          // if this is found in a reactant:
+          if(mappedProductAtoms.find(mapNum)!=mappedProductAtoms.end()){
+            if( isChangedAtom(*oAtom,*(mappedProductAtoms[mapNum]),
+                              mapNum,mappedProductAtoms) ){
+              resIt->push_back(oAtom->getIdx());
+            }
+          }
+        }
+      }
+    }
+    return res;
+  }
+  
 }

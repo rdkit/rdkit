@@ -238,7 +238,10 @@ namespace RDKit{
   bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,const ROMol &mol,
                                    unsigned int &which);
 
-  
+  //! returns indices of the atoms in each reactant that are changed
+  //! in the reaction
+  VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn);
+
 } // end of RDKit namespace
 
 namespace RDDepict {

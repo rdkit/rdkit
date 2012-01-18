@@ -2891,6 +2891,318 @@ void test32Replacements(){
 }
 
 
+void test33ReactingAtoms1(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing getReactingAtoms() ." << std::endl;
+
+  { // basics
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O:1][C:2]>>[N:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==1);
+  }
+  { // no changes
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O:1][C:2]>>[O:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==0);
+  }
+  { // query in the reactants
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O,N:1][C:2]>>[O:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==1);
+  }
+  { // query in the reactants, dummy in product
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O,N:1][C:2]>>[*:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==0);
+  }
+  { // recursive query in the reactants
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[$(O):1][C:2]>>[O:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==1);
+  }
+  { // and query in the reactants
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O;$(O):1][C:2]>>[O:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==1);
+  }
+  { // recursive query in the reactants, dummy in products
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[$(O):1][C:2]>>[*:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==0);
+  }
+  { // dummy in the reactants, dummy in products
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[*:1][C:2]>>[*:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==0);
+  }
+  { // two reactants, one changes
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O:1][C:2].[N:3]>>[N:1][C:2].[N:3]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==2);
+    TEST_ASSERT(ratoms[0].size()==1);
+    TEST_ASSERT(ratoms[1].size()==0);
+  }
+  { // two reactants, one changes, reordered
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O:1][C:2].[N:3]>>[N:3].[N:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==2);
+    TEST_ASSERT(ratoms[0].size()==1);
+    TEST_ASSERT(ratoms[1].size()==0);
+  }
+  { // dummies for duplicating atom properties
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O:1][C:2].[N:3]>>[N:1][C:2].[*:3]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==2);
+    TEST_ASSERT(ratoms[0].size()==1);
+    TEST_ASSERT(ratoms[1].size()==0);
+  }
+  { // query in the reactants, dummy in products
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O,N:1][C:2]>>[*:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==0);
+  }
+  { // changed degree
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O:1][C:2].[N:3]>>[N:1][C:2].[*:3]C";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==2);
+    TEST_ASSERT(ratoms[0].size()==1);
+    TEST_ASSERT(ratoms[1].size()==1);
+  }
+  { // unmapped atoms in reactants:
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[O:1]C>>[O:1]C";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==2);
+  }
+  { // changing atom order
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[C:1]-[C:2]>>[C:2]-[C:1]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==0);
+  }
+  { // changing bond order
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[C:1]-[C:2]>>[C:1]=[C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==2);
+  }
+  { // changing bond orders
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[C:1]-[C:2]=[C:3]>>[C:1]=[C:2]-[C:3]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==3);
+  }
+  { // query bond order
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[C:1]-[C:2]>>[C:1]~[C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==0);
+  }
+  { // changing connectivity
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[C:1]-[C:2]-[C:3]>>[C:1]~[C:3]~[C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==3);
+  }
+  { // changing connectivity 2
+    unsigned int nWarn,nError;
+    std::string smi;
+    smi="[C:1]1[C:2][C:3]1>>[C:1][C:2][C:3]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+    VECT_INT_VECT ratoms=getReactingAtoms(*rxn);
+    TEST_ASSERT(ratoms.size()==1);
+    TEST_ASSERT(ratoms[0].size()==2);
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 
 int main() { 
@@ -2933,7 +3245,9 @@ int main() {
   test30ReactProdQueries();
   test31Issue3140490();
   test32Replacements();
-  
+
+  test33ReactingAtoms1();
+
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
