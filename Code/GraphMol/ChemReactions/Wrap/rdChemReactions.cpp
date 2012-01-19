@@ -166,6 +166,14 @@ namespace RDKit {
     return res;
   }
 
+  python::object GetReactingAtoms(const ChemicalReaction &self,bool mappedAtomsOnly){
+    python::list res;
+    VECT_INT_VECT rAs=getReactingAtoms(self,mappedAtomsOnly);
+    for(VECT_INT_VECT_I rIt=rAs.begin();rIt!=rAs.end();++rIt){
+      res.append(python::tuple(*rIt));
+    }
+    return python::tuple(res);
+  }
 }
 
 BOOST_PYTHON_MODULE(rdChemReactions) {
@@ -232,7 +240,8 @@ Sample Usage:\n\
          "returns whether or not the molecule has a substructure match to one of the reactants.")
     .def("IsMoleculeProduct",RDKit::IsMoleculeProductOfReaction,
          "returns whether or not the molecule has a substructure match to one of the products.")
-    .def("GetReactingAtoms",RDKit::getReactingAtoms,
+    .def("GetReactingAtoms",&RDKit::GetReactingAtoms,
+         (python::arg("self"),python::arg("mappedAtomsOnly")=false),
          "returns a sequence of sequences with the atoms that change in the reaction")
     // enable pickle support
     .def_pickle(RDKit::reaction_pickle_suite())

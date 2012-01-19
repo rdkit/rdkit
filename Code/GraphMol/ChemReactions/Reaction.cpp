@@ -796,23 +796,25 @@ namespace RDKit {
   namespace {
     // recursively looks for atomic number queries anywhere in this set of children
     // or its children
-    bool findComplexQuery(Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt,
+    int numComplexQueries(Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt,
                           Queries::Query<int,Atom const *,true>::CHILD_VECT_CI endChildren){
+      int res=0;
       while(childIt!=endChildren){
         std::string descr=(*childIt)->getDescription();
-        if(descr=="AtomAtomicNum"){
-          return true;
-        } else if(findComplexQuery((*childIt)->beginChildren(),
-                                   (*childIt)->endChildren())){
-          return true;
+        if(descr=="AtomAtomicNum"||descr=="AtomNull"){
+          ++res;
+        } else {
+          res += numComplexQueries((*childIt)->beginChildren(),
+                                   (*childIt)->endChildren());
         }
         ++childIt;
       }
-      return false;
+      return res;
     }
     // FIX: this is adapted from Fingerprints.cpp and we really should have code
     // like this centralized
     bool isComplexQuery(const Atom &a){
+      std::cerr<<"icc("<<a.getIdx()<<")"<<std::endl;
       if( !a.hasQuery()) return false;
       // negated things are always complex:
       if( a.getQuery()->getNegation()) return true;
@@ -821,12 +823,13 @@ namespace RDKit {
       if(descr=="AtomOr" || descr=="AtomXor") return true;
       if(descr=="AtomAnd"){
         Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a.getQuery()->beginChildren();
-        if((*childIt)->getDescription()=="AtomAtomicNum" ||
-           (*childIt)->getDescription()=="AtomNull" ){
-          return findComplexQuery(++childIt,a.getQuery()->endChildren());
+        int ncq=numComplexQueries(childIt,a.getQuery()->endChildren());
+        std::cerr<<"  ncq: "<<ncq<<std::endl;
+        if(ncq==1){
+          return false;
         }
-        return true;
       }
+      std::cerr<<"icc 3"<<std::endl;
       return true;
     }
 
@@ -834,15 +837,20 @@ namespace RDKit {
     bool isChangedAtom(const Atom &rAtom,const Atom &pAtom,int mapNum,
                        const std::map<int,const Atom *> &mappedProductAtoms) {
       PRECONDITION(mappedProductAtoms.find(mapNum)!=mappedProductAtoms.end(),"atom not mapped in products");
+      std::cerr<<"ica("<<rAtom.getIdx()<<")"<<std::endl;
+
       if(rAtom.getAtomicNum()!=pAtom.getAtomicNum() &&
          pAtom.getAtomicNum()>0 ){
         // the atomic number changed and the product wasn't a dummy
+        std::cerr<<"ica 1"<<std::endl;
         return true;
       } else if(rAtom.getDegree() != pAtom.getDegree()){
         // the degree changed
+        std::cerr<<"ica 2"<<std::endl;
         return true;
       } else if(pAtom.getAtomicNum()>0 && isComplexQuery(rAtom)){
         // more than a simple query
+        std::cerr<<"ica 3"<<std::endl;
         return true;
       }
 
@@ -859,6 +867,7 @@ namespace RDKit {
                                                                          nbr->getIdx());
         } else {
           // if we have an un-mapped neighbor, we are automatically a reacting atom:
+          std::cerr<<"ica 4"<<std::endl;
           return true;
         }
         ++nbrIdx;
@@ -872,6 +881,7 @@ namespace RDKit {
           // if we don't have a bond to a similarly mapped atom in the reactant,
           // we're done:
           if(reactantBonds.find(mapNum)==reactantBonds.end()){
+            std::cerr<<"ica 5"<<std::endl;
             return true;
           }
           const Bond *rBond=reactantBonds[mapNum];
@@ -882,6 +892,7 @@ namespace RDKit {
           if(rBond->hasQuery()){
             if(!pBond->hasQuery()) {
               // reactant query, product not query: always a change
+              std::cerr<<"ica 6"<<std::endl;
               return true;
             } else {
               if( pBond->getQuery()->getDescription()=="BondNull" ){
@@ -902,6 +913,7 @@ namespace RDKit {
                   // bond order queries with equal orders also match
                 } else {
                   // anything else does not match
+                  std::cerr<<"ica 7"<<std::endl;
                   return true;
                 }
               }
@@ -911,12 +923,14 @@ namespace RDKit {
             // if product is anything other than the null query
             // it's a change:
             if(pBond->getQuery()->getDescription()!="BondNull"){
+              std::cerr<<"ica 8"<<std::endl;
               return true;
             }
             
           } else {
             // neither has a query, just compare the types
             if(rBond->getBondType()!=pBond->getBondType()){
+              std::cerr<<"ica 9"<<std::endl;
               return true;
             }
           }
@@ -926,6 +940,7 @@ namespace RDKit {
 
       // haven't found anything to say that we are changed, so we must
       // not be
+      std::cerr<<"ica 10"<<std::endl;
       return false;
     }
 
@@ -949,7 +964,7 @@ namespace RDKit {
     }
   } // end of anonymous namespace
   
-  VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn){
+  VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,bool mappedAtomsOnly){
     if(!rxn.isInitialized()){
      throw ChemicalReactionException("initMatchers() must be called first");
     }
@@ -973,7 +988,9 @@ namespace RDKit {
         const Atom *oAtom=(**rIt)[*(atItP.first++)].get();
         // unmapped atoms are definitely changing:
         if(!oAtom->hasProp("molAtomMapNumber")){
-          resIt->push_back(oAtom->getIdx());
+          if(!mappedAtomsOnly){
+            resIt->push_back(oAtom->getIdx());
+          }
         } else {
           // but mapped ones require more careful consideration
           int mapNum;

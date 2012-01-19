@@ -392,7 +392,26 @@ M  END
     self.failUnlessEqual(len(ps[0]),1)
     self.failUnlessEqual(ps[0][0].GetNumAtoms(),4)
     
-    
+  def test16GetReactingAtoms(self):
+    rxn = rdChemReactions.ReactionFromSmarts("[O:1][C:2].[N:3]>>[N:1][C:2].[N:3]")
+    self.failUnless(rxn)
+    rxn.Initialize()
+    rAs = rxn.GetReactingAtoms()
+    self.failUnlessEqual(len(rAs),2)
+    self.failUnlessEqual(len(rAs[0]),1)    
+    self.failUnlessEqual(len(rAs[1]),0)    
+
+    rxn = rdChemReactions.ReactionFromSmarts("[O:1]C>>[O:1]C")
+    self.failUnless(rxn)
+    rxn.Initialize()
+    rAs = rxn.GetReactingAtoms()
+    self.failUnlessEqual(len(rAs),1)
+    self.failUnlessEqual(len(rAs[0]),2)    
+    rAs = rxn.GetReactingAtoms(True)
+    self.failUnlessEqual(len(rAs),1)
+    self.failUnlessEqual(len(rAs[0]),1)    
+
+
 
 if __name__ == '__main__':
   unittest.main()

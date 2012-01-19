@@ -240,7 +240,31 @@ namespace RDKit{
 
   //! returns indices of the atoms in each reactant that are changed
   //! in the reaction
-  VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn);
+  /*!
+    \param rxn the reaction were are interested in
+
+    \param mappedAtomsOnly if set, atoms that are not mapped will not be included in
+         the list of changed atoms (otherwise they are automatically included)
+
+     How are changed atoms recognized?
+         1) Atoms whose degree changes 
+         2) Atoms whose bonding pattern changes
+         3) unmapped atoms (unless the mappedAtomsOnly flag is set)
+         4) Atoms connected to unmapped atoms
+         5) Atoms whose atomic number changes (unless the
+            corresponding product atom is a dummy)
+         6) Atoms with more than one atomic number query (unless the
+            corresponding product atom is a dummy)
+
+     Note that the atomic number of a query atom depends on how it's constructed.
+       When coming from SMARTS: if the first query is an atomic label/number that
+          sets the atomic number, otherwise it's zero.
+          For example [O;$(OC)] is atomic number 8 while [$(OC);O] is atomic
+          number 0.
+       When coming from RXN: the atomic number of the atom in the rxn file sets
+          the value.
+   */
+  VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,bool mappedAtomsOnly=false);
 
 } // end of RDKit namespace
 
