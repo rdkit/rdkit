@@ -37,4 +37,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 %}
 
+%template(UIntPair) std::pair<boost::uint32_t,boost::uint32_t>;
+%template(UIntPairVect) std::vector<std::pair<boost::uint32_t,boost::uint32_t> >;
+%template(BitInfoMap) std::map<boost::uint32_t,std::vector<std::pair<boost::uint32_t,boost::uint32_t> > >;
 %include <GraphMol/Fingerprints/Fingerprints.h>
