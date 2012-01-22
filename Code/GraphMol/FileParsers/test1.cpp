@@ -2791,6 +2791,19 @@ void testIssue3432136(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3477283(){
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3477283 "<< std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3477283.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+  }
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
+
+
 
   
 int main(int argc,char *argv[]){
@@ -2844,6 +2857,7 @@ int main(int argc,char *argv[]){
   testIssue3392107();
 #endif
   testIssue3432136();
+  testIssue3477283();
 
   return 0;
 }

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2009 Greg Landrum
+//  Copyright (C) 2009-2012 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,13 +33,14 @@ namespace RDKit {
   }
     
   ForwardSDMolSupplier::ForwardSDMolSupplier(std::istream *inStream, bool takeOwnership,
-                                             bool sanitize, bool removeHs){
+                                             bool sanitize, bool removeHs,bool strictParsing){
     PRECONDITION(inStream,"bad stream");
     init();
     dp_inStream = inStream;
     df_owner=takeOwnership;
     df_sanitize = sanitize;
     df_removeHs = removeHs;
+    df_strictParsing = strictParsing;
     POSTCONDITION(dp_inStream,"bad instream");
   }
 
@@ -156,7 +157,7 @@ namespace RDKit {
 
     unsigned int line=d_line;
     try {
-      res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs);
+      res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs,df_strictParsing);
       d_line=line;
       if(res) this->readMolProps(res);  
     }

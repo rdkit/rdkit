@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,7 +27,8 @@
 namespace RDKit {
   
 
-  SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize, bool removeHs){
+  SDMolSupplier::SDMolSupplier(const std::string &fileName, bool sanitize, bool removeHs,
+                               bool strictParsing){
     init();
     // FIX: this binary mode of opening file is here because of a bug in VC++ 6.0
     // the function "tellg" does not work correctly if we do not open it this way
@@ -46,13 +47,14 @@ namespace RDKit {
     d_molpos.push_back(dp_inStream->tellg());
     df_sanitize = sanitize;
     df_removeHs = removeHs;
+    df_strictParsing = strictParsing;
     this->checkForEnd();
     POSTCONDITION(dp_inStream,"bad instream");
   }
 
 
   SDMolSupplier::SDMolSupplier(std::istream *inStream, bool takeOwnership,
-                               bool sanitize, bool removeHs){
+                               bool sanitize, bool removeHs,bool strictParsing){
     PRECONDITION(inStream,"bad stream");
     init();
     dp_inStream = inStream;
@@ -60,6 +62,7 @@ namespace RDKit {
     d_molpos.push_back(dp_inStream->tellg());
     df_sanitize = sanitize;
     df_removeHs = removeHs;
+    df_strictParsing = strictParsing;
     this->checkForEnd();
     POSTCONDITION(dp_inStream,"bad instream");
   }

@@ -40,13 +40,15 @@ namespace RDKit{
     bool ParseV3000CTAB(std::istream *inStream,unsigned int &line,
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,
-			unsigned int &nAtoms,unsigned int &nBonds);
+			unsigned int &nAtoms,unsigned int &nBonds,
+                        bool strictParsing=true);
 
     // nAtoms and nBonds are used
     bool ParseV2000CTAB(std::istream *inStream,unsigned int &line,
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,
-			unsigned int &nAtoms,unsigned int &nBonds);
+			unsigned int &nAtoms,unsigned int &nBonds,
+                        bool strictParsing=true);
 
     Atom *replaceAtomWithQueryAtom(RWMol *mol,Atom *atom);
 
@@ -54,3 +56,21 @@ namespace RDKit{
 }
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

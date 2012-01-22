@@ -31,25 +31,27 @@ namespace {
   {
   public:
     LocalForwardSDMolSupplier(python::object &input,
-                              bool sanitize,bool removeHs){
+                              bool sanitize,bool removeHs,bool strictParsing){
       // FIX: minor leak here
       streambuf *sb=new streambuf(input);
       dp_inStream=new streambuf::istream(*sb);
       df_owner=true;
       df_sanitize=sanitize;
       df_removeHs=removeHs;
+      df_strictParsing=strictParsing;
       POSTCONDITION(dp_inStream,"bad instream");
     }
     LocalForwardSDMolSupplier(streambuf &input,
-                              bool sanitize,bool removeHs){
+                              bool sanitize,bool removeHs,bool strictParsing){
       dp_inStream=new streambuf::istream(input);
       df_owner=true;
       df_sanitize=sanitize;
       df_removeHs=removeHs;
+      df_strictParsing=strictParsing;
       POSTCONDITION(dp_inStream,"bad instream");
     }
     LocalForwardSDMolSupplier(std::string filename,
-                              bool sanitize,bool removeHs){
+                              bool sanitize,bool removeHs,bool strictParsing){
       std::istream *tmpStream=0;
       tmpStream = static_cast<std::istream *>(new std::ifstream(filename.c_str(), std::ios_base::binary));
       if (!tmpStream || (!(*tmpStream)) || (tmpStream->bad()) ) {
@@ -61,6 +63,7 @@ namespace {
       df_owner=true;
       df_sanitize=sanitize;
       df_removeHs=removeHs;
+      df_strictParsing=strictParsing;
       POSTCONDITION(dp_inStream,"bad instream");
     }
   };
@@ -96,20 +99,23 @@ namespace RDKit {
         boost::noncopyable>("ForwardSDMolSupplier",
                             fsdMolSupplierClassDoc.c_str(),
                             python::no_init)
-        .def(python::init<python::object &,bool,bool>
+        .def(python::init<python::object &,bool,bool,bool>
              ((python::arg("fileobj"),
                python::arg("sanitize")=true,
-               python::arg("removeHs")=true))
+               python::arg("removeHs")=true,
+               python::arg("strictParsing")=true))
              [python::with_custodian_and_ward_postcall<0,2>()])
-        .def(python::init<streambuf &,bool,bool>
+        .def(python::init<streambuf &,bool,bool,bool>
              ((python::arg("streambuf"),
                python::arg("sanitize")=true,
-               python::arg("removeHs")=true))
+               python::arg("removeHs")=true,
+               python::arg("strictParsing")=true))
              [python::with_custodian_and_ward_postcall<0,2>()])
-        .def(python::init<std::string,bool,bool>
+        .def(python::init<std::string,bool,bool,bool>
              ((python::arg("filename"),
                python::arg("sanitize")=true,
-               python::arg("removeHs")=true)))
+               python::arg("removeHs")=true,
+               python::arg("strictParsing")=true)))
         .def("next", (ROMol *(*)(LocalForwardSDMolSupplier *))&MolSupplNext,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())

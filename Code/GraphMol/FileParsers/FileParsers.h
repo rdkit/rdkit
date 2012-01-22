@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -36,12 +36,18 @@ namespace RDKit{
    *                     perception of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
+   *   \param line     - current line number (used for error reporting)
+   *   \param strictParsing - if not set, the parser is more lax about correctness
+   *                          of the contents.
+   *                          
    */
   RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
-			    bool sanitize=true,bool removeHs=true);
+			    bool sanitize=true,bool removeHs=true,
+                            bool strictParsing=true);
   // \overload
   RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-			    bool sanitize=true,bool removeHs=true);
+			    bool sanitize=true,bool removeHs=true,
+                            bool strictParsing=true);
   // \brief construct a molecule from an MDL mol block
   /*! 
    *   \param molBlock - string containing the mol block
@@ -49,9 +55,11 @@ namespace RDKit{
    *                     perception of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
+   *   \param strictParsing - if set, the parser is more lax about correctness
+   *                          of the contents.
    */
   RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize=true,
-                       bool removeHs=true);
+                       bool removeHs=true,bool strictParsing=true);
   
   // \brief construct a molecule from an MDL mol file
   /*! 
@@ -60,9 +68,11 @@ namespace RDKit{
    *                     perception of the molecule
    *   \param removeHs - toggles removal of Hs from the molecule. H removal
    *                     is only done if the molecule is sanitized
+   *   \param strictParsing - if set, the parser is more lax about correctness
+   *                          of the contents.
    */
   RWMol *MolFileToMol(std::string fName, bool sanitize=true,
-                      bool removeHs=true);
+                      bool removeHs=true,bool strictParsing=true);
 
   // \brief generates an MDL mol block for a molecule
   /*! 

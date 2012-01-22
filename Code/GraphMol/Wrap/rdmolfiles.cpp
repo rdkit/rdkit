@@ -98,10 +98,10 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
 
-  ROMol *MolFromMolFile(const char *molFilename, bool sanitize=true, bool removeHs=true) {
+  ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,bool strictParsing) {
     RWMol *newM=0;
     try {
-      newM = MolFileToMol(molFilename, sanitize,removeHs);
+      newM = MolFileToMol(molFilename, sanitize,removeHs,strictParsing);
     } catch (RDKit::BadFileException &e) {
       PyErr_SetString(PyExc_IOError,e.message());
       throw python::error_already_set();
@@ -113,12 +113,12 @@ namespace RDKit{
     return static_cast<ROMol *>(newM);
   }
 
-  ROMol *MolFromMolBlock(std::string molBlock, bool sanitize=true, bool removeHs=true) {
+  ROMol *MolFromMolBlock(std::string molBlock, bool sanitize, bool removeHs, bool strictParsing) {
     std::istringstream inStream(molBlock);
     unsigned int line = 0;
     RWMol *newM=0;
     try {
-      newM = MolDataStreamToMol(inStream, line, sanitize, removeHs);
+      newM = MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
     }  catch (RDKit::FileParseException &e) {
       BOOST_LOG(rdWarningLog) << e.message() <<std::endl;
     } catch (...) {
@@ -239,6 +239,10 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       This only make sense when sanitization is done.\n\
       Defaults to true.\n\
 \n\
+    - strictParsing: (optional) if this is false, the parser is more lax about.\n\
+      correctness of the content.\n\
+      Defaults to true.\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
@@ -246,7 +250,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::def("MolFromMolFile", RDKit::MolFromMolFile,
 	      (python::arg("molFileName"),
 	       python::arg("sanitize")=true,
-               python::arg("removeHs")=true),
+               python::arg("removeHs")=true,
+               python::arg("strictParsing")=true),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -262,6 +267,10 @@ BOOST_PYTHON_MODULE(rdmolfiles)
       This only make sense when sanitization is done.\n\
       Defaults to true.\n\
 \n\
+    - strictParsing: (optional) if this is false, the parser is more lax about.\n\
+      correctness of the content.\n\
+      Defaults to true.\n\
+\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
@@ -269,7 +278,8 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   python::def("MolFromMolBlock", RDKit::MolFromMolBlock,
 	      (python::arg("molBlock"),
 	       python::arg("sanitize")=true,
-	       python::arg("removeHs")=true),
+	       python::arg("removeHs")=true,
+               python::arg("strictParsing")=true),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 

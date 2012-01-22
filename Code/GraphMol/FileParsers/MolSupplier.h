@@ -77,7 +77,8 @@ namespace RDKit {
     ForwardSDMolSupplier() { init(); };
 
     explicit ForwardSDMolSupplier(std::istream *inStream, bool takeOwnership=true,
-                                  bool sanitize=true,bool removeHs=true);
+                                  bool sanitize=true,bool removeHs=true,
+                                  bool strictParsing=false);
 
     virtual ~ForwardSDMolSupplier() {
       if (df_owner && dp_inStream) {
@@ -98,7 +99,7 @@ namespace RDKit {
     virtual void readMolProps(ROMol *);
     bool df_end; 
     int d_line; // line number we are currently on
-    bool df_sanitize,df_removeHs;
+    bool df_sanitize,df_removeHs,df_strictParsing;
   };
 
 
@@ -121,12 +122,14 @@ namespace RDKit {
      *   \param sanitize - if true sanitize the molecule before returning it
      *   \param removeHs - if true remove Hs from the molecule before returning it
      *                     (triggers sanitization)
+     *   \param strictParsing - if not set, the parser is more lax about correctness
+     *                          of the contents.
      */
     explicit SDMolSupplier(const std::string &fileName, bool sanitize=true,
-                           bool removeHs=true);
+                           bool removeHs=true,bool strictParsing=true);
     
     explicit SDMolSupplier(std::istream *inStream, bool takeOwnership=true,
-                           bool sanitize=true,bool removeHs=true);
+                           bool sanitize=true,bool removeHs=true,bool strictParsing=true);
 
     
     ~SDMolSupplier() {};

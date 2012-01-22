@@ -73,9 +73,10 @@ namespace RDKit {
       python::class_<SDMolSupplier,boost::noncopyable>("SDMolSupplier",
 						       sdMolSupplierClassDoc.c_str(),
 						       python::init<>())
-	.def(python::init<std::string,bool,bool>((python::arg("fileName"),
-						  python::arg("sanitize")=true,
-						  python::arg("removeHs")=true)))
+	.def(python::init<std::string,bool,bool,bool>((python::arg("fileName"),
+                                                       python::arg("sanitize")=true,
+                                                       python::arg("removeHs")=true,
+                                                       python::arg("strictParsing")=true)))
 	.def("__iter__", (SDMolSupplier *(*)(SDMolSupplier *))&MolSupplIter,
 	     python::return_internal_reference<1>() )
 	.def("next", (ROMol *(*)(SDMolSupplier *))&MolSupplNext,

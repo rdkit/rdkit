@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1131,6 +1131,9 @@ namespace RDKit{
           }
         } else if(tempStr[0]=='G'){
           BOOST_LOG(rdWarningLog)<<" deprecated group abbreviation ignored"<<std::endl;
+          // we need to skip the next line, which holds the abbreviation:
+          line++;
+          tempStr = getLine(inStream);
         } else if(tempStr[0]=='V'){
           ParseAtomValue(mol,tempStr);
         } else if(lineBeg=="S  SKP") {
@@ -1595,7 +1598,8 @@ namespace RDKit{
     bool ParseV3000CTAB(std::istream *inStream,unsigned int &line,
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,unsigned int &nAtoms,
-			unsigned int &nBonds){
+			unsigned int &nBonds,
+                        bool strictParsing){
       PRECONDITION(inStream,"bad stream");
       PRECONDITION(mol,"bad molecule");
 
@@ -1653,7 +1657,7 @@ namespace RDKit{
           std::vector<std::string> localSplitLine;
           boost::split(localSplitLine,tempStr,boost::is_any_of(" \t"),boost::token_compress_on);
           std::string typ = localSplitLine[1];
-          if(!SGroupOK(typ)){
+          if(strictParsing && !SGroupOK(typ)){
             std::ostringstream errout;
             errout << "S group "<<typ;
             throw MolFileUnhandledFeatureException(errout.str()) ;
@@ -1717,7 +1721,7 @@ namespace RDKit{
     bool ParseV2000CTAB(std::istream *inStream,unsigned int &line,
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,unsigned int &nAtoms,
-			unsigned int &nBonds){
+			unsigned int &nBonds,bool strictParsing){
         conf = new Conformer(nAtoms);
         if(nAtoms==0){
           conf->set3D(false);
@@ -1752,7 +1756,7 @@ namespace RDKit{
   //
   //------------------------------------------------
   RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line, bool sanitize,
-                            bool removeHs){
+                            bool removeHs,bool strictParsing){
     PRECONDITION(inStream,"no stream");
     std::string tempStr;
     bool fileComplete=false;
@@ -1853,22 +1857,29 @@ namespace RDKit{
 
     unsigned int ctabVersion=2000;
     if(tempStr.size()>35){
-      if(tempStr.size()<39 || tempStr[34]!='V'){
-        if(res) delete res;
-        throw FileParseException("CTAB version string invalid");
-      }
-      if(tempStr.substr(34,5)=="V3000"){
+      if(tempStr.size()<39 || tempStr[34]!='V' ){
+        if(strictParsing){
+          if(res) delete res;
+          throw FileParseException("CTAB version string invalid");
+        } else {
+          BOOST_LOG(rdWarningLog) << "CTAB version string invalid" << std::endl;
+        }
+      } else if(tempStr.substr(34,5)=="V3000"){
         ctabVersion=3000;
         //if(res) delete res;
         //throw FileParseException("V3000 CTABs not supported");
       } else if(tempStr.substr(34,5)!="V2000"){
-        if(res){
-          delete res;
-          res = NULL;
+        if(strictParsing){
+          if(res){
+            delete res;
+            res = NULL;
+          }
+          std::ostringstream errout;
+          errout << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "'";
+          throw FileParseException(errout.str()) ;
+        } else {
+          BOOST_LOG(rdWarningLog) << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "'" <<std::endl;
         }
-        std::ostringstream errout;
-        errout << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "'";
-        throw FileParseException(errout.str()) ;
       }
     }
     
@@ -1877,18 +1888,22 @@ namespace RDKit{
       if(ctabVersion==2000){
         fileComplete=FileParserUtils::ParseV2000CTAB(inStream,line,
 						     res,conf,chiralityPossible,
-						     nAtoms,nBonds);
+						     nAtoms,nBonds,strictParsing);
       } else {
         if(nAtoms!=0 || nBonds!=0){
-          if(res){
-            delete res;
-            res = NULL;
+          if(strictParsing){
+            if(res){
+              delete res;
+              res = NULL;
+            }
+            throw FileParseException("V3000 mol blocks should have 0s in the initial counts line.") ;
+          } else {
+            BOOST_LOG(rdWarningLog)<<"V3000 mol blocks should have 0s in the initial counts line."<<std::endl ;
           }
-          throw FileParseException("V3000 mol blocks should have 0s in the initial counts line.") ;
         }
         fileComplete=FileParserUtils::ParseV3000CTAB(inStream,line,
 						     res,conf,chiralityPossible,
-						     nAtoms,nBonds);
+						     nAtoms,nBonds,strictParsing);
       }
     } catch (MolFileUnhandledFeatureException &e) { 
       // unhandled mol file feature, just delete the result 
@@ -1986,18 +2001,18 @@ namespace RDKit{
   
 
   RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,
-                            bool sanitize, bool removeHs){
-    return MolDataStreamToMol(&inStream,line,sanitize,removeHs);
+                            bool sanitize, bool removeHs,bool strictParsing){
+    return MolDataStreamToMol(&inStream,line,sanitize,removeHs,strictParsing);
   };
   //------------------------------------------------
   //
   //  Read a molecule from a string
   //
   //------------------------------------------------
-  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize, bool removeHs){
+  RWMol *MolBlockToMol(const std::string &molBlock, bool sanitize, bool removeHs,bool strictParsing){
     std::istringstream inStream(molBlock);
     unsigned int line = 0;
-    return MolDataStreamToMol(inStream, line, sanitize, removeHs);
+    return MolDataStreamToMol(inStream, line, sanitize, removeHs,strictParsing);
   }    
 
 
@@ -2006,7 +2021,7 @@ namespace RDKit{
   //  Read a molecule from a file
   //
   //------------------------------------------------
-  RWMol *MolFileToMol(std::string fName, bool sanitize, bool removeHs){
+  RWMol *MolFileToMol(std::string fName, bool sanitize, bool removeHs,bool strictParsing){
     std::ifstream inStream(fName.c_str());
     if (!inStream || (inStream.bad()) ) {
       std::ostringstream errout;
@@ -2016,7 +2031,7 @@ namespace RDKit{
     RWMol *res=NULL;
     if(!inStream.eof()){
       unsigned int line = 0;
-      res=MolDataStreamToMol(inStream, line, sanitize, removeHs);
+      res=MolDataStreamToMol(inStream, line, sanitize, removeHs,strictParsing);
     }
     return res;
   }    
