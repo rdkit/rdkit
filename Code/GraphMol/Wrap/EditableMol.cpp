@@ -43,17 +43,17 @@ namespace {
       PRECONDITION(dp_mol,"no molecule");
       dp_mol->removeBond(idx1,idx2);
     };
-    void AddBond(unsigned int begAtomIdx,
+    int AddBond(unsigned int begAtomIdx,
                  unsigned int endAtomIdx,
                  Bond::BondType order=Bond::UNSPECIFIED)
     {
       PRECONDITION(dp_mol,"no molecule");
-      dp_mol->addBond(begAtomIdx,endAtomIdx,order);
+      return dp_mol->addBond(begAtomIdx,endAtomIdx,order);
     };
-    void AddAtom(Atom *atom){
+    int AddAtom(Atom *atom){
       PRECONDITION(dp_mol,"no molecule");
       PRECONDITION(atom,"bad atom");
-      dp_mol->addAtom(atom,true,false);
+      return dp_mol->addAtom(atom,true,false);
     };
     void ReplaceAtom(unsigned int idx,Atom *atom){
       PRECONDITION(dp_mol,"no molecule");
@@ -101,11 +101,11 @@ struct EditableMol_wrapper {
       .def("AddBond",&EditableMol::AddBond,
                      (python::arg("mol"),python::arg("beginAtomIdx"),python::arg("endAtomIdx"),
                       python::arg("order")=Bond::UNSPECIFIED),
-      "add a bond")
+      "add a bond, returns the index of the newly added bond")
       
       .def("AddAtom",&EditableMol::AddAtom,
                      (python::arg("mol"),python::arg("atom")),
-      "add an atom")
+      "add an atom, returns the index of the newly added atom")
       .def("ReplaceAtom",&EditableMol::ReplaceAtom,
                      (python::arg("mol"),python::arg("index"),python::arg("newAtom")),
       "replaces the specified atom with the provided one")

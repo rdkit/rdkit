@@ -1620,9 +1620,13 @@ CAS<~>
     rwmol.RemoveBond(0,1)
     self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='CCCO')
     a = Chem.Atom(7)
-    rwmol.AddAtom(a)
-    self.failUnless(rwmol.GetMol().GetNumAtoms()==5)
-    rwmol.AddBond(0,4,order=Chem.BondType.SINGLE)
+    idx=rwmol.AddAtom(a)
+    self.failUnlessEqual(rwmol.GetMol().GetNumAtoms(),5)
+    self.failUnlessEqual(idx,4)
+
+    idx=rwmol.AddBond(0,4,order=Chem.BondType.SINGLE)
+    self.failUnlessEqual(idx,4)
+
     self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='CCCON')
     rwmol.AddBond(4,1,order=Chem.BondType.SINGLE)
     self.failUnless(Chem.MolToSmiles(rwmol.GetMol())=='C1CNOC1')
