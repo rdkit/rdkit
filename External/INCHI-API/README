@@ -13,7 +13,13 @@ directory. Please follow these instructions.
    directory that contains this README file you are reading. The actual path is
    '$RDKIT_SOURCE_TREE_ROOT/External/INCHI-API/src'.
 
+4. Rerun `cmake` with `-DRDK_BUILD_INCHI_SUPPORT=ON` as an additional argument
+
 Alternatively, if you are on a UNIX variant system (Linux, Mac OS X, Cygwin,
 etc), you may invoke the included script `download-inchi.sh`:
 	
 	$ bash download-inchi.sh
+
+When the download is successful, rerun`cmake` with
+`-DRDK_BUILD_INCHI_SUPPORT=ON` as an additional argument
+ 

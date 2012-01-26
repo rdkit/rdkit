@@ -41,7 +41,7 @@ then
 fi
 
 DIR=`pwd`
-TEMPDIR=`mktemp -d -t rdkit-inchi`
+TEMPDIR=`mktemp -d -t rdkit-inchi-XXX`
 if [[ $DIR =~ External/INCHI-API$ ]]
 then
 	mkdir -p src
@@ -52,11 +52,11 @@ then
 	echo "  $TEMPDIR"
 	echo "================================================================"
 	cd $TEMPDIR
-	wget http://www.iupac.org/inchi/download/version1.03/INCHI-1-API.zip
+	wget http://www.inchi-trust.org/sites/default/files/inchi-1.04/INCHI-1-API.ZIP # transfered to a new url from 1.03
 	echo "================================================================"
 	echo "Unarchiving"
 	echo "================================================================"
-	unzip INCHI-1-API.zip
+	unzip INCHI-1-API
 	echo "================================================================"
 	echo "Copying files"
 	echo "================================================================"
