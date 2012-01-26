@@ -46,8 +46,8 @@ if [[ $DIR =~ External/INCHI-API$ ]]
 then
 	mkdir -p src
 	echo "================================================================"
-	echo "Downloading InChI software distribution version 1.03"
-	echo "  http://www.iupac.org/inchi/download/version1.03/INCHI-1-API.zip"
+	echo "Downloading InChI software distribution version 1.04"
+	echo "  http://www.inchi-trust.org/sites/default/files/inchi-1.04/INCHI-1-API.ZIP"
 	echo "  ====>"
 	echo "  $TEMPDIR"
 	echo "================================================================"
