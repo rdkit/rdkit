@@ -89,7 +89,7 @@ namespace RDKit {
     return res;
   }
   
-  std::string fsdMolSupplierClassDoc="A class which supplies molecules from an SD file.\n \
+  std::string csdMolSupplierClassDoc="A class which supplies molecules from an SD file.\n \
 \n \
   Usage examples:\n \
 \n \
@@ -103,8 +103,8 @@ namespace RDKit {
 \n";
   struct compressedsdmolsup_wrap {
     static void wrap() {
-      python::class_<ForwardSDMolSupplier,boost::noncopyable>("ForwardSDMolSupplier",
-                                                              fsdMolSupplierClassDoc.c_str(),
+      python::class_<ForwardSDMolSupplier,boost::noncopyable>("_CompressedSDMolSupplier",
+                                                              csdMolSupplierClassDoc.c_str(),
                                                               python::no_init)
 	.def("__iter__", (ForwardSDMolSupplier *(*)(ForwardSDMolSupplier *))&MolSupplIter,
 	     python::return_internal_reference<1>() )
