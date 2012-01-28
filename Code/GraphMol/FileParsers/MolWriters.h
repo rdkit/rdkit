@@ -153,10 +153,6 @@ namespace RDKit {
     //! \brief close our stream (the writer cannot be used again)
     void close() {
       PRECONDITION(dp_ostream,"no output stream");
-      // if we've written any mols, finish with a "$$$$" line
-      if (d_molid > 0) {
-        (*dp_ostream) << "$$$$\n";
-      }
       dp_ostream->flush();
       if(df_owner) {
         delete dp_ostream;

@@ -63,10 +63,6 @@ namespace RDKit {
 
   void SDWriter::write(ROMol &mol, int confId) {
     PRECONDITION(dp_ostream,"no output stream");
-    //start by writing a "$$$$" line unless this is the first line
-    if (d_molid > 0) {
-      (*dp_ostream) << "$$$$\n";
-    }
 
     // write the molecule 
     (*dp_ostream) << MolToMolBlock(mol, true, confId);
@@ -107,8 +103,10 @@ namespace RDKit {
 	}
       }
     }
+    // add the $$$$ that marks the end of a molecule
+    (*dp_ostream) << "$$$$\n";
 
-    d_molid++;
+    ++d_molid;
   }
 
   void SDWriter::writeProperty(const ROMol &mol, std::string name) {
