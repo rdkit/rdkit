@@ -143,7 +143,7 @@ namespace RDKit{
     //  
     //*************************************
 
-    void ParseOldAtomList(RWMol *mol,const std::string &text){
+    void ParseOldAtomList(RWMol *mol,const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       unsigned int idx;
       try {
@@ -151,7 +151,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(0,3) << " to int";
+        errout << "Cannot convert " << text.substr(0,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
 
@@ -170,7 +170,7 @@ namespace RDKit{
         break;
       default:
         std::ostringstream errout;
-        errout << "Unrecognized atom-list query modifier: " << text[14];
+        errout << "Unrecognized atom-list query modifier: " << text[14]<<" on line "<<line;
         throw FileParseException(errout.str()) ;
       }          
     
@@ -180,7 +180,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(9,1) << " to int";
+        errout << "Cannot convert " << text.substr(9,1) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
 
@@ -193,7 +193,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(pos,3) << " to int";
+          errout << "Cannot convert " << text.substr(pos,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         RANGE_CHECK(0,atNum,200);  // goofy!
@@ -205,7 +205,7 @@ namespace RDKit{
       mol->replaceAtom(idx,&a); 
     };
   
-    void ParseChargeLine(RWMol *mol, const std::string &text,bool firstCall) {
+    void ParseChargeLine(RWMol *mol, const std::string &text,bool firstCall,unsigned int line) {
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  CHG"),"bad charge line");
     
@@ -225,7 +225,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       int spos = 9;
@@ -240,7 +240,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(spos,4) << " to int";
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
       }
@@ -257,7 +257,7 @@ namespace RDKit{
       return std::find(failTyps.begin(),failTyps.end(),typ)==failTyps.end();
     }
     
-    void ParseSGroup2000STYLine(RWMol *mol, const std::string &text){
+    void ParseSGroup2000STYLine(RWMol *mol, const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  STY"),"bad STY line");
 
@@ -267,7 +267,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
 
@@ -275,7 +275,7 @@ namespace RDKit{
       for (int ie = 0; ie < nent; ie++) {
         if(text.size()<spos+8){
           std::ostringstream errout;
-          errout << "SGroup line too short: " << text;
+          errout << "SGroup line too short: '" << text<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         int nbr;
@@ -285,7 +285,7 @@ namespace RDKit{
         } 
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(spos,3) << " to int";
+          errout << "Cannot convert " << text.substr(spos,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         std::string typ = text.substr(spos+1,3);
@@ -294,13 +294,13 @@ namespace RDKit{
           errout << "S group "<<typ;
           throw MolFileUnhandledFeatureException(errout.str()) ;
         } else {
-          BOOST_LOG(rdWarningLog) << " S group " << typ <<" ignored."<<std::endl;
+          BOOST_LOG(rdWarningLog) << " S group " << typ <<" ignored on line "<<line<<std::endl;
         }
         spos += 4;
       }
     }
 
-    void ParseRadicalLine(RWMol *mol, const std::string &text,bool firstCall) {
+    void ParseRadicalLine(RWMol *mol, const std::string &text,bool firstCall,unsigned int line) {
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  RAD"),"bad charge line");
 
@@ -319,7 +319,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       int spos = 9;
@@ -344,19 +344,19 @@ namespace RDKit{
             mol->getAtomWithIdx(aid-1)->setNumRadicalElectrons(2);
             break;
           default:
-            errout << "Unrecognized radical value " << rad << " for atom "<< aid-1 << std::endl;
+            errout << "Unrecognized radical value " << rad << " for atom "<< aid-1 << " on line "<<line<<std::endl;
             throw FileParseException(errout.str()) ;
           }
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(spos,4) << " to int";
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
       }
     }
 
-    void ParseIsotopeLine(RWMol *mol, const std::string &text){
+    void ParseIsotopeLine(RWMol *mol, const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  ISO"),"bad isotope line");
     
@@ -366,7 +366,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       unsigned int spos = 9;
@@ -388,14 +388,14 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(spos,4) << " to int";
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
       }
     
     }
 
-    void ParseSubstitutionCountLine(RWMol *mol, const std::string &text){
+    void ParseSubstitutionCountLine(RWMol *mol, const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  SUB"),"bad SUB line");
     
@@ -405,7 +405,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       unsigned int spos = 9;
@@ -432,11 +432,11 @@ namespace RDKit{
             case 5:
               q->setVal(count);break;
             case 6:
-              BOOST_LOG(rdWarningLog) << " atom degree query with value 6 found. This will not match degree >6. The MDL spec says it should.";
+              BOOST_LOG(rdWarningLog) << " atom degree query with value 6 found. This will not match degree >6. The MDL spec says it should.  line: "<<line;
               q->setVal(6);break;
             default:
               std::ostringstream errout;
-              errout << "Value " << count << " is not supported as a degree query.";
+              errout << "Value " << count << " is not supported as a degree query. line: "<<line;
               throw FileParseException(errout.str()) ;
             }
             if(!atom->hasQuery()){
@@ -448,13 +448,13 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(spos,4) << " to int";
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
       }
     }
 
-    void ParseUnsaturationLine(RWMol *mol, const std::string &text){
+    void ParseUnsaturationLine(RWMol *mol, const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  UNS"),"bad UNS line");
     
@@ -464,7 +464,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       unsigned int spos = 9;
@@ -487,20 +487,20 @@ namespace RDKit{
               atom->expandQuery(q,Queries::COMPOSITE_AND);
             } else {
               std::ostringstream errout;
-              errout << "Value " << count << " is not supported as an unsaturation query (only 0 and 1 are allowed).";
+              errout << "Value " << count << " is not supported as an unsaturation query (only 0 and 1 are allowed). line: "<<line;
               throw FileParseException(errout.str()) ;
             }
           }
         }catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(spos,4) << " to int";
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
 
       }
     }
 
-    void ParseRingBondCountLine(RWMol *mol, const std::string &text){
+    void ParseRingBondCountLine(RWMol *mol, const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  RBC"),"bad RBC line");
     
@@ -510,7 +510,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       unsigned int spos = 9;
@@ -545,7 +545,7 @@ namespace RDKit{
               break;
             default:
               std::ostringstream errout;
-              errout << "Value " << count << " is not supported as a ring-bond count query.";
+              errout << "Value " << count << " is not supported as a ring-bond count query. line: "<<line;
               throw FileParseException(errout.str()) ;
             }
             if(!atom->hasQuery()){
@@ -557,13 +557,13 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(spos,4) << " to int";
+          errout << "Cannot convert " << text.substr(spos,4) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
       }
     }
 
-    void ParseNewAtomList(RWMol *mol,const std::string &text){
+    void ParseNewAtomList(RWMol *mol,const std::string &text,unsigned int line){
       if(text.size()<15){
         std::ostringstream errout;
         errout << "Atom list line too short: '"<<text<<"'";
@@ -578,7 +578,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(7,3) << " to int";
+        errout << "Cannot convert " << text.substr(7,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
@@ -590,7 +590,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(10,3) << " to int";
+        errout << "Cannot convert " << text.substr(10,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
 
@@ -599,7 +599,7 @@ namespace RDKit{
         unsigned int pos = 16+i*4;
         if(text.size()<pos+4){
           std::ostringstream errout;
-          errout << "Atom list line too short: '"<<text<<"'";
+          errout << "Atom list line too short: '"<<text<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
 
@@ -628,14 +628,14 @@ namespace RDKit{
         break;
       default:
         std::ostringstream errout;
-        errout << "Unrecognized atom-list query modifier: " << text[14];
+        errout << "Unrecognized atom-list query modifier: " << text[14]<<" on line "<<line;
         throw FileParseException(errout.str()) ;
       }          
 
       mol->replaceAtom(idx,a); 
     };
   
-    void ParseRGroupLabels(RWMol *mol,const std::string &text){
+    void ParseRGroupLabels(RWMol *mol,const std::string &text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,6)==std::string("M  RGP"),"bad R group label line");
     
@@ -645,7 +645,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(6,3) << " to int";
+        errout << "Cannot convert " << text.substr(6,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
 
@@ -657,7 +657,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(pos,3) << " to int";
+          errout << "Cannot convert " << text.substr(pos,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         unsigned int rLabel;
@@ -666,13 +666,13 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(pos+4,3) << " to int";
+          errout << "Cannot convert " << text.substr(pos+4,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         atIdx-=1;
         if(atIdx>mol->getNumAtoms()){
           std::ostringstream errout;
-          errout << "Attempt to set R group label on nonexistent atom " << atIdx;
+          errout << "Attempt to set R group label on nonexistent atom " << atIdx<< " on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         QueryAtom qatom(*(mol->getAtomWithIdx(atIdx)));
@@ -695,7 +695,7 @@ namespace RDKit{
       }
     };
   
-    void ParseAtomAlias(RWMol *mol,std::string text,const std::string &nextLine){
+    void ParseAtomAlias(RWMol *mol,std::string text,const std::string &nextLine,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,2)==std::string("A "),"bad atom alias line");
       
@@ -705,7 +705,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(3,3) << " to int";
+        errout << "Cannot convert " << text.substr(3,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
@@ -713,7 +713,7 @@ namespace RDKit{
       at->setProp("molFileAlias",nextLine);
     };
   
-    void ParseAtomValue(RWMol *mol,std::string text){
+    void ParseAtomValue(RWMol *mol,std::string text,unsigned int line){
       PRECONDITION(mol,"bad mol");
       PRECONDITION(text.substr(0,2)==std::string("V "),"bad atom value line");
       
@@ -723,7 +723,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(3,3) << " to int";
+        errout << "Cannot convert " << text.substr(3,3) << " to int on line"<<line;
         throw FileParseException(errout.str()) ;
       }
       RANGE_CHECK(0,idx,mol->getNumAtoms()-1);
@@ -731,14 +731,14 @@ namespace RDKit{
       at->setProp("molFileValue",text.substr(7,text.length()-7));
     };
 
-    Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos) {
+    Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,unsigned int line) {
       Atom *res = new Atom;
       std::string symb;
       int massDiff,chg,hCount;
 
       if(text.size()<34){
         std::ostringstream errout;
-        errout << "Atom line too short: '"<<text<<"'";
+        errout << "Atom line too short: '"<<text<<"' on line "<<line;
         throw FileParseException(errout.str()) ;
       }
 
@@ -749,7 +749,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot process coordinates.";
+        errout << "Cannot process coordinates on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       symb = text.substr(31,3);
@@ -763,7 +763,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(34,2) << " to int";
+          errout << "Cannot convert " << text.substr(34,2) << " to into on line "<<line;
           throw FileParseException(errout.str()) ;
         }
       }    
@@ -774,7 +774,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(36,3) << " to int";
+          errout << "Cannot convert " << text.substr(36,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
       }
@@ -785,7 +785,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(42,3) << " to int";
+          errout << "Cannot convert " << text.substr(42,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
       }
@@ -856,7 +856,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(39,3) << " to int";
+          errout << "Cannot convert " << text.substr(39,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         res->setProp("molParity",parity);
@@ -869,7 +869,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(45,3) << " to int";
+          errout << "Cannot convert " << text.substr(45,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         res->setProp("molStereoCare",stereoCare);
@@ -881,7 +881,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(48,3) << " to int";
+          errout << "Cannot convert " << text.substr(48,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         res->setProp("molTotValence",totValence);
@@ -893,7 +893,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(60,3) << " to int";
+          errout << "Cannot convert " << text.substr(60,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         res->setProp("molAtomMapNumber",atomMapNumber);
@@ -905,7 +905,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(63,3) << " to int";
+          errout << "Cannot convert " << text.substr(63,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         res->setProp("molInversionFlag",inversionFlag);
@@ -917,7 +917,7 @@ namespace RDKit{
         }
         catch (boost::bad_lexical_cast &) {
           std::ostringstream errout;
-          errout << "Cannot convert " << text.substr(66,3) << " to int";
+          errout << "Cannot convert " << text.substr(66,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         res->setProp("molExactChangeFlag",exactChangeFlag);
@@ -925,13 +925,13 @@ namespace RDKit{
       return res;
     };
   
-    Bond *ParseMolFileBondLine(const std::string &text){
+    Bond *ParseMolFileBondLine(const std::string &text,unsigned int line){
       int idx1,idx2,bType,stereo;
       int spos = 0;
 
       if(text.size()<9){
         std::ostringstream errout;
-        errout << "Bond line too short: '"<<text<<"'";
+        errout << "Bond line too short: '"<<text<<"' on line "<<line;
         throw FileParseException(errout.str()) ;
       }
 
@@ -944,7 +944,7 @@ namespace RDKit{
       }
       catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert " << text.substr(spos,3) << " to int";
+        errout << "Cannot convert " << text.substr(spos,3) << " to int on line "<<line;
         throw FileParseException(errout.str()) ;
       }
     
@@ -961,7 +961,7 @@ namespace RDKit{
       case 0:
         type = Bond::UNSPECIFIED;
         res = new Bond;
-        BOOST_LOG(rdWarningLog) << "bond with order 0 found. This is not part of the MDL specification."<<std::endl;
+        BOOST_LOG(rdWarningLog) << "bond with order 0 found on line "<<line<<". This is not part of the MDL specification."<<std::endl;
         break;
       default:
         type = Bond::UNSPECIFIED;
@@ -995,7 +995,7 @@ namespace RDKit{
           BOND_NULL_QUERY *q;
           q = makeBondNullQuery();
           res->setQuery(q);
-          BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType <<", found. Using an \"any\" query."<<std::endl;          
+          BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType <<", found on line "<<line<<". Using an \"any\" query."<<std::endl;          
         }
         break;
       }
@@ -1006,7 +1006,6 @@ namespace RDKit{
       if( text.size() >= 12 && text.substr(9,3)!="  0"){
         try {
           stereo = FileParserUtils::toInt(text.substr(9,3));
-          //res->setProp("stereo",stereo);
           switch(stereo){
           case 0:
             res->setBondDir(Bond::NONE);
@@ -1042,7 +1041,7 @@ namespace RDKit{
             break;
           default:
             std::ostringstream errout;
-            errout << "Unrecognized bond topology specifier: " << topology;
+            errout << "Unrecognized bond topology specifier: " << topology<<" on line "<<line;
             throw FileParseException(errout.str()) ;
           }
           qBond->expandQuery(q);          
@@ -1075,7 +1074,7 @@ namespace RDKit{
           throw FileParseException("EOF hit while reading atoms");
         }
         RDGeom::Point3D pos;
-        Atom *atom = ParseMolFileAtomLine(tempStr, pos);
+        Atom *atom = ParseMolFileAtomLine(tempStr, pos, line);
         unsigned int aid = mol->addAtom(atom,false,true);
         conf->setAtomPos(aid, pos);
       }
@@ -1092,7 +1091,7 @@ namespace RDKit{
         if(inStream->eof()){
           throw FileParseException("EOF hit while reading bonds");
         }
-        Bond *bond = ParseMolFileBondLine(tempStr);
+        Bond *bond = ParseMolFileBondLine(tempStr,line);
         // if we got an aromatic bond set the flag on the bond and the connected atoms
         if (bond->getBondType() == Bond::AROMATIC) {
           bond->setIsAromatic(true);
@@ -1116,7 +1115,7 @@ namespace RDKit{
       ++line;
       if( tempStr[0] != 'M' && tempStr[0] != 'A'
           && tempStr[0] != 'V' && tempStr[0] != 'G'){
-        ParseOldAtomList(mol,tempStr);
+        ParseOldAtomList(mol,tempStr,line);
       }
 
       bool fileComplete=false;
@@ -1127,34 +1126,34 @@ namespace RDKit{
           line++;
           std::string nextLine = getLine(inStream);
           if(tempStr.substr(0,6)!="M  END"){
-            ParseAtomAlias(mol,tempStr,nextLine);
+            ParseAtomAlias(mol,tempStr,nextLine,line);
           }
         } else if(tempStr[0]=='G'){
-          BOOST_LOG(rdWarningLog)<<" deprecated group abbreviation ignored"<<std::endl;
+          BOOST_LOG(rdWarningLog)<<" deprecated group abbreviation ignored on line "<<line<<std::endl;
           // we need to skip the next line, which holds the abbreviation:
           line++;
           tempStr = getLine(inStream);
         } else if(tempStr[0]=='V'){
-          ParseAtomValue(mol,tempStr);
+          ParseAtomValue(mol,tempStr,line);
         } else if(lineBeg=="S  SKP") {
           // pass
         }
-        else if(lineBeg=="M  ALS") ParseNewAtomList(mol,tempStr);
-        else if(lineBeg=="M  ISO") ParseIsotopeLine(mol,tempStr);
-        else if(lineBeg=="M  RGP") ParseRGroupLabels(mol,tempStr);
-        else if(lineBeg=="M  RBC") ParseRingBondCountLine(mol,tempStr);
-        else if(lineBeg=="M  SUB") ParseSubstitutionCountLine(mol,tempStr);
-        else if(lineBeg=="M  UNS") ParseUnsaturationLine(mol,tempStr);
+        else if(lineBeg=="M  ALS") ParseNewAtomList(mol,tempStr,line);
+        else if(lineBeg=="M  ISO") ParseIsotopeLine(mol,tempStr,line);
+        else if(lineBeg=="M  RGP") ParseRGroupLabels(mol,tempStr,line);
+        else if(lineBeg=="M  RBC") ParseRingBondCountLine(mol,tempStr,line);
+        else if(lineBeg=="M  SUB") ParseSubstitutionCountLine(mol,tempStr,line);
+        else if(lineBeg=="M  UNS") ParseUnsaturationLine(mol,tempStr,line);
         else if(lineBeg=="M  CHG") {
-          ParseChargeLine(mol, tempStr,firstChargeLine);
+          ParseChargeLine(mol, tempStr,firstChargeLine,line);
           firstChargeLine=false;
         }
         else if(lineBeg=="M  RAD") {
-          ParseRadicalLine(mol, tempStr,firstChargeLine);
+          ParseRadicalLine(mol, tempStr,firstChargeLine,line);
           firstChargeLine=false;
         }
         else if(lineBeg=="M  STY") {
-          ParseSGroup2000STYLine(mol, tempStr);
+          ParseSGroup2000STYLine(mol, tempStr,line);
         }
         line++;
         tempStr = getLine(inStream);
@@ -1205,7 +1204,9 @@ namespace RDKit{
         res->getQuery()->setNegation(negate);
       } else {
         if(negate) {
-          throw FileParseException("NOT tokens only supported for atom lists") ;
+          std::ostringstream errout;
+          errout << "NOT tokens only supported for atom lists. line "<<line;
+          throw FileParseException(errout.str()) ;
         }
         // it's a normal CTAB atom symbol:
         if(token=="R#" || token=="A" || token=="Q" || token=="*"){
@@ -1269,7 +1270,7 @@ namespace RDKit{
       while(token!=tokens.end()){
         std::string prop,val;
         if(!splitAssignToken(*token,prop,val)){
-          errout << "Invalid atom property: " << *token << " for atom "<< atom->getIdx()+1 << std::endl;
+          errout << "Invalid atom property: " << *token << " for atom "<< atom->getIdx()+1 <<" on line "<<line<< std::endl;
           throw FileParseException(errout.str()) ;
         }
 
@@ -1291,13 +1292,13 @@ namespace RDKit{
           case 3:
             atom->setNumRadicalElectrons(2);break;
           default:
-            errout << "Unrecognized RAD value " << val << " for atom "<< atom->getIdx()+1 << std::endl;
+            errout << "Unrecognized RAD value " << val << " for atom "<< atom->getIdx()+1 <<" on line "<<line<< std::endl;
             throw FileParseException(errout.str()) ;
           }
         } else if(prop=="MASS"){
           double v=FileParserUtils::toDouble(val);
           if(v<=0){
-            errout << "Bad value for MASS :" << val << " for atom "<< atom->getIdx()+1 << std::endl;
+            errout << "Bad value for MASS :" << val << " for atom "<< atom->getIdx()+1 <<" on line "<<line << std::endl;
             throw FileParseException(errout.str()) ;
           } else {
 	    if(!atom->hasQuery()) {
@@ -1316,7 +1317,7 @@ namespace RDKit{
             atom->setProp("molParity",cfg);
             break;
           default:
-            errout << "Unrecognized CFG value : " << val << " for atom "<< atom->getIdx()+1 << std::endl;
+            errout << "Unrecognized CFG value : " << val << " for atom "<< atom->getIdx()+1 <<" on line " << line<< std::endl;
             throw FileParseException(errout.str()) ;
           }
         } else if(prop=="HCOUNT"){
@@ -1360,7 +1361,9 @@ namespace RDKit{
 
       tempStr = getV3000Line(inStream,line);
       if(tempStr.length()<10 || tempStr.substr(0,10) != "BEGIN ATOM"){
-        throw FileParseException("BEGIN ATOM line not found") ;
+        std::ostringstream errout;
+        errout<<"BEGIN ATOM line not found on line "<<line;
+        throw FileParseException(errout.str()) ;
       }
       for(unsigned int i=0;i<nAtoms;++i){
 
@@ -1373,7 +1376,7 @@ namespace RDKit{
 
         if(token==tokens.end()) {
           std::ostringstream errout;
-          errout << "Bad atom line : '"<<tempStr<<"'";
+          errout << "Bad atom line : '"<<tempStr<<"' on line"<<line;
           throw FileParseException(errout.str()) ;
         }
         unsigned int molIdx=atoi(token->c_str());
@@ -1382,32 +1385,31 @@ namespace RDKit{
         ++token;
         if(token==tokens.end()) {
           std::ostringstream errout;
-          errout << "Bad atom line : '"<<tempStr<<"'";
+          errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         Atom *atom=ParseV3000AtomSymbol(*token,line);
 
-        
         // now the position;
         RDGeom::Point3D pos;
         ++token;
         if(token==tokens.end()) {
           std::ostringstream errout;
-          errout << "Bad atom line : '"<<tempStr<<"'";
+          errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         pos.x = atof(token->c_str());
         ++token;
         if(token==tokens.end()) {
           std::ostringstream errout;
-          errout << "Bad atom line : '"<<tempStr<<"'";
+          errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         pos.y = atof(token->c_str());
         ++token;
         if(token==tokens.end()) {
           std::ostringstream errout;
-          errout << "Bad atom line : '"<<tempStr<<"'";
+          errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         pos.z = atof(token->c_str());
@@ -1416,7 +1418,7 @@ namespace RDKit{
         ++token;
         if(token==tokens.end()) {
           std::ostringstream errout;
-          errout << "Bad atom line : '"<<tempStr<<"'";
+          errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
         int mapNum=atoi(token->c_str());
@@ -1436,7 +1438,9 @@ namespace RDKit{
       }
       tempStr = getV3000Line(inStream,line);
       if(tempStr.length()<8 || tempStr.substr(0,8) != "END ATOM"){
-        throw FileParseException("END ATOM line not found") ;
+        std::ostringstream errout;
+        errout<<"END ATOM line not found on line "<<line;
+        throw FileParseException(errout.str()) ;
       }
 
       if(mol->hasProp("_2DConf")){
@@ -1467,7 +1471,7 @@ namespace RDKit{
                      boost::is_any_of(" \t"),boost::token_compress_on);
         if(splitLine.size()<4){
           std::ostringstream errout;
-          errout << "bond line : "<<line<<" is too short";
+          errout << "bond line "<<line<<" is too short";
           throw FileParseException(errout.str()) ;
         }
         Bond *bond;
@@ -1483,7 +1487,7 @@ namespace RDKit{
         case 4: bond = new Bond(Bond::AROMATIC);bond->setIsAromatic(true);break;
         case 0:
           bond = new Bond(Bond::UNSPECIFIED);
-          BOOST_LOG(rdWarningLog) << "bond with order 0 found. This is not part of the MDL specification."<<std::endl;
+          BOOST_LOG(rdWarningLog) << "bond with order 0 found on line "<<line<<". This is not part of the MDL specification."<<std::endl;
           break;
         default:
           // it's a query bond of some type
@@ -1516,7 +1520,7 @@ namespace RDKit{
             BOND_NULL_QUERY *q;
             q = makeBondNullQuery();
             bond->setQuery(q);
-            BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType <<", found. Using an \"any\" query."<<std::endl;          
+            BOOST_LOG(rdWarningLog) << "unrecognized query bond type, " << bType <<", found on line"<<line<<". Using an \"any\" query."<<std::endl;          
           }
           break;
         }
@@ -1590,7 +1594,9 @@ namespace RDKit{
       }
       tempStr = getV3000Line(inStream,line);
       if(tempStr.length()<8 || tempStr.substr(0,8) != "END BOND"){
-        throw FileParseException("END BOND line not found") ;
+        std::ostringstream errout;
+        errout<<"END BOND line not found at line "<<line;
+        throw FileParseException(errout.str());
       }
     }
   } // end of local namespace
@@ -1609,21 +1615,23 @@ namespace RDKit{
       tempStr = getV3000Line(inStream,line);
       boost::to_upper(tempStr);
       if(tempStr.length()<10 || tempStr.substr(0,10) != "BEGIN CTAB"){
-        throw FileParseException("BEGIN CTAB line not found") ;
+        std::ostringstream errout;
+        errout << "BEGIN CTAB line not found on line "<<line;
+        throw FileParseException(errout.str()) ;
       }
       
       tempStr = getV3000Line(inStream,line);
       boost::to_upper(tempStr);
       if(tempStr.size()<8 || tempStr.substr(0,7)!="COUNTS "){
         std::ostringstream errout;
-        errout << "Bad counts line : '"<<tempStr<<"'";
+        errout << "Bad counts line : '"<<tempStr<<"' on line "<<line;
         throw FileParseException(errout.str()) ;
       }
       std::string trimmed=boost::trim_copy(tempStr.substr(7,tempStr.length()-7));
       boost::split(splitLine,trimmed,boost::is_any_of(" \t"),boost::token_compress_on);
       if(splitLine.size()<2){
         std::ostringstream errout;
-        errout << "Bad counts line : '"<<tempStr<<"'";
+        errout << "Bad counts line : '"<<tempStr<<"' on line "<<line;
         throw FileParseException(errout.str()) ;
       }
 
@@ -1645,11 +1653,12 @@ namespace RDKit{
       }
 
       if(nSgroups){
-        //BOOST_LOG(rdWarningLog)<<"S group information in mol block igored"<<std::endl;
         tempStr = getV3000Line(inStream,line);
         boost::to_upper(tempStr);
         if(tempStr.length()<12 || tempStr.substr(0,12) != "BEGIN SGROUP"){
-          throw FileParseException("BEGIN SGROUP line not found") ;
+          std::ostringstream errout;
+          errout<<"BEGIN SGROUP line not found on line "<<line;
+          throw FileParseException(errout.str());
         }
         for(unsigned int si=0;si<nSgroups;++si){
           tempStr = getV3000Line(inStream,line);
@@ -1659,30 +1668,36 @@ namespace RDKit{
           std::string typ = localSplitLine[1];
           if(strictParsing && !SGroupOK(typ)){
             std::ostringstream errout;
-            errout << "S group "<<typ;
+            errout << "S group "<<typ<<" on line "<<line;
             throw MolFileUnhandledFeatureException(errout.str()) ;
           } else {
-            BOOST_LOG(rdWarningLog) << " S group " << typ <<" ignored."<<std::endl;
+            BOOST_LOG(rdWarningLog) << " S group " << typ <<" ignored on line "<<line<<"."<<std::endl;
           }
         }
         tempStr = getV3000Line(inStream,line);
         boost::to_upper(tempStr);
         if(tempStr.length()<10 || tempStr.substr(0,10) != "END SGROUP"){
-          throw FileParseException("END SGROUP line not found") ;
+          std::ostringstream errout;
+          errout<<"END SGROUP line not found on line "<<line;
+          throw FileParseException(errout.str()) ;
         }
       }
       if(n3DConstraints){
-        BOOST_LOG(rdWarningLog)<<"3d constraint information in mol block igored"<<std::endl;
+        BOOST_LOG(rdWarningLog)<<"3d constraint information in mol block igored at line "<<line<<std::endl;
         tempStr = getV3000Line(inStream,line);
 	boost::to_upper(tempStr);
         if(tempStr.length()<11 || tempStr.substr(0,11) != "BEGIN OBJ3D"){
-          throw FileParseException("BEGIN OBJ3D line not found") ;
+          std::ostringstream errout;
+          errout << "BEGIN OBJ3D line not found on line "<<line;
+          throw FileParseException(errout.str()) ;
         }
         for(unsigned int i=0;i<n3DConstraints;++i) tempStr = getV3000Line(inStream,line);
         tempStr = getV3000Line(inStream,line);
 	boost::to_upper(tempStr);
         if(tempStr.length()<9 || tempStr.substr(0,9) != "END OBJ3D"){
-          throw FileParseException("END OBJ3D line not found") ;
+          std::ostringstream errout;
+          errout << "END OBJ3D line not found on line "<<line;
+          throw FileParseException(errout.str()) ;
         }
       }
       
@@ -1696,13 +1711,11 @@ namespace RDKit{
 
       while(tempStr.length()>5 && tempStr.substr(0,5)=="BEGIN"){
         // skip blocks we don't know how to read
-        BOOST_LOG(rdWarningLog)<<"skipping block: "<<tempStr<<std::endl;
+        BOOST_LOG(rdWarningLog)<<"skipping block at line "<<line<<": "<<tempStr<<std::endl;
         tempStr = getV3000Line(inStream,line);
-        //BOOST_LOG(rdWarningLog)<<"    >"<<tempStr<<std::endl;
         
         while(tempStr.length()<3 || tempStr.substr(0,3)!="END"){
           tempStr = getV3000Line(inStream,line);
-          //BOOST_LOG(rdWarningLog)<<"    >"<<tempStr<<std::endl;
         }
         tempStr = getV3000Line(inStream,line);
       }
@@ -1800,7 +1813,7 @@ namespace RDKit{
         res = NULL;
       }
       std::ostringstream errout;
-      errout << "Counts line too short: '"<<tempStr<<"'";
+      errout << "Counts line too short: '"<<tempStr<<"' on line"<<line;
       throw FileParseException(errout.str()) ;
     }
 
@@ -1818,7 +1831,7 @@ namespace RDKit{
         res = NULL;
       }
       std::ostringstream errout;
-      errout << "Cannot convert " << tempStr.substr(spos,3) << " to int";
+      errout << "Cannot convert " << tempStr.substr(spos,3) << " to int on line "<<line;
       throw FileParseException(errout.str()) ;
     }
     try {
@@ -1858,27 +1871,27 @@ namespace RDKit{
     unsigned int ctabVersion=2000;
     if(tempStr.size()>35){
       if(tempStr.size()<39 || tempStr[34]!='V' ){
+        std::ostringstream errout;
+        errout<<"CTAB version string invalid at line "<<line;
         if(strictParsing){
           if(res) delete res;
-          throw FileParseException("CTAB version string invalid");
+          throw FileParseException(errout.str());
         } else {
-          BOOST_LOG(rdWarningLog) << "CTAB version string invalid" << std::endl;
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         }
       } else if(tempStr.substr(34,5)=="V3000"){
         ctabVersion=3000;
-        //if(res) delete res;
-        //throw FileParseException("V3000 CTABs not supported");
       } else if(tempStr.substr(34,5)!="V2000"){
+        std::ostringstream errout;
+        errout << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "' at line " << line;
         if(strictParsing){
           if(res){
             delete res;
             res = NULL;
           }
-          std::ostringstream errout;
-          errout << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "'";
           throw FileParseException(errout.str()) ;
         } else {
-          BOOST_LOG(rdWarningLog) << "Unsupported CTAB version: '"<< tempStr.substr(34,5) << "'" <<std::endl;
+          BOOST_LOG(rdWarningLog) << errout.str() <<std::endl;
         }
       }
     }
@@ -1891,14 +1904,16 @@ namespace RDKit{
 						     nAtoms,nBonds,strictParsing);
       } else {
         if(nAtoms!=0 || nBonds!=0){
+          std::ostringstream errout;
+          errout << "V3000 mol blocks should have 0s in the initial counts line. (line: "<<line<<")";
           if(strictParsing){
             if(res){
               delete res;
               res = NULL;
             }
-            throw FileParseException("V3000 mol blocks should have 0s in the initial counts line.") ;
+            throw FileParseException(errout.str()) ;
           } else {
-            BOOST_LOG(rdWarningLog)<<"V3000 mol blocks should have 0s in the initial counts line."<<std::endl ;
+            BOOST_LOG(rdWarningLog)<<errout.str()<<std::endl ;
           }
         }
         fileComplete=FileParserUtils::ParseV3000CTAB(inStream,line,
@@ -1911,7 +1926,7 @@ namespace RDKit{
       if(conf) delete conf;
       res=NULL;
       conf=NULL;
-      BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message() <<". Molecule skipped."<<std::endl;
+      BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message() <<" on line: "<<line<<". Molecule skipped."<<std::endl;
 
       fileComplete=true;
     } catch (FileParseException &e) { 
@@ -1928,7 +1943,9 @@ namespace RDKit{
       if(conf) delete conf;
       res=NULL;
       conf=NULL;
-      throw FileParseException("Problems encountered parsing Mol data, M  END ");
+      std::ostringstream errout;
+      errout << "Problems encountered parsing Mol data, M  END missing around line "<< line;
+      throw FileParseException(errout.str());
     }
 
     if (res ) {
