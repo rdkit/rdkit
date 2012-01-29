@@ -166,7 +166,7 @@ namespace RDKit {
       // we couldn't read a mol block or the data for the molecule. In this case
       // advance forward in the stream until we hit the next record and then rethrow
       // the exception. This should allow us to read the next molecule.
-      BOOST_LOG(rdErrorLog) << "ERROR: on line " << d_line << " " << fe.message() << std::endl;
+      BOOST_LOG(rdErrorLog) << "ERROR: " << fe.message() << std::endl;
       BOOST_LOG(rdErrorLog) << "ERROR: moving to the begining of the next molecule\n";
       
       // FIX: report files missing the $$$$ marker
