@@ -1738,23 +1738,20 @@ namespace RDKit{
         conf = new Conformer(nAtoms);
         if(nAtoms==0){
           conf->set3D(false);
-          mol->addConformer(conf, true);
-          conf=0;
-          return true;
-        }
+        } else {
+          ParseMolBlockAtoms(inStream,line,nAtoms,mol,conf);
 
-        ParseMolBlockAtoms(inStream,line,nAtoms,mol,conf);
-
-        if(mol->hasProp("_2DConf")){
-          conf->set3D(false);
-          mol->clearProp("_2DConf");
-        } else if(mol->hasProp("_3DConf")){
-          conf->set3D(true);
-          mol->clearProp("_3DConf");
+          if(mol->hasProp("_2DConf")){
+            conf->set3D(false);
+            mol->clearProp("_2DConf");
+          } else if(mol->hasProp("_3DConf")){
+            conf->set3D(true);
+            mol->clearProp("_3DConf");
+          }
         }
         mol->addConformer(conf, true);
         conf=0;
-
+        
         ParseMolBlockBonds(inStream,line,nBonds,mol,chiralityPossible);
       
         bool fileComplete=ParseMolBlockProperties(inStream,line,mol);

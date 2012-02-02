@@ -1676,6 +1676,18 @@ void testMissingCRSDSupplier() {
   TEST_ASSERT(reader.atEnd());
 }
 
+
+void testIssue3482695() {
+  std::string rdbase = getenv("RDBASE");
+  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3482695.sdf";
+  SDMolSupplier reader(infile);
+  ROMol *nmol = reader.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==0);
+  TEST_ASSERT(nmol->hasProp("test"));
+  delete nmol;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1803,5 +1815,11 @@ int main() {
   testMissingCRSDSupplier();
   BOOST_LOG(rdErrorLog) <<"Finished: testMissingCRSDSupplier()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testIssue3482695();
+  BOOST_LOG(rdErrorLog) <<"Finished: testIssue3482695()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
   return 0;
 }
