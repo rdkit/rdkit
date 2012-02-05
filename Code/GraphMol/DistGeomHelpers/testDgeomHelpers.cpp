@@ -1114,6 +1114,7 @@ void testIssue3238580() {
     RWMol *m = MolFileToMol(molfile);
 
     DistGeom::BoundsMatrix *mat = new DistGeom::BoundsMatrix(m->getNumAtoms());
+
     DistGeom::BoundsMatPtr bm(mat);
     DGeomHelpers::initBoundsMat(bm);
     DGeomHelpers::setTopolBounds(*m, bm);
@@ -1156,8 +1157,24 @@ void testIssue3238580() {
     
     delete m;
   }
+}
 
-
+void testIssue3483968() {
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string molfile = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/Issue3483968.mol";
+    RWMol *m = MolFileToMol(molfile);
+    TEST_ASSERT(m);
+    
+    int cid = DGeomHelpers::EmbedMolecule(*m,0,-1,true,false,2.0,true,1,0,1e-3,true);
+    TEST_ASSERT(cid >= 0);
+    std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*m,10,30,
+                                                           1,true,false,2.0,true,1,-1.0,0,
+                                                           1e-3,true);
+    TEST_ASSERT(cids.size() == 10);
+    TEST_ASSERT(std::find(cids.begin(),cids.end(),-1)==cids.end());
+    delete m;
+  }
 }
 
 int main() { 
@@ -1264,8 +1281,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 2835784 \n\n";
   testIssue2835784();
 
-#endif
-
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3019283 \n\n";
   testIssue3019283();
@@ -1273,6 +1288,12 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3238580 \n\n";
   testIssue3238580();
+
+#endif
+
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3483968 \n\n";
+  testIssue3483968();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
 

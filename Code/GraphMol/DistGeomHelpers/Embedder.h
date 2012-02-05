@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -62,9 +62,10 @@ namespace RDKit {
                        is required to actually reproduce the provided coordinates.
       \param optimizerForceTol set the tolerance on forces in the distgeom optimizer
                                (this shouldn't normally be altered in client code).
+      \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
+                                      smoothing fails
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
-
 
       \return ID of the conformations added to the molecule, -1 if the emdedding failed
     */
@@ -75,7 +76,9 @@ namespace RDKit {
                       unsigned int numZeroFail=1,
                       const std::map<int,RDGeom::Point3D> *coordMap=0,
                       double optimizerForceTol=1e-3,
-                      double basinThresh=5.0);
+                      bool ignoreSmoothingFailures=false,
+                      double basinThresh=5.0
+                      );
 
     //*! Embed multiple conformations for a molecule
     /*!
@@ -122,8 +125,13 @@ namespace RDKit {
 
       \param optimizerForceTol set the tolerance on forces in the DGeom optimizer
                                (this shouldn't normally be altered in client code).
+
+      \param ignoreSmoothingFailures  try to embed the molecule even if triangle bounds
+                                      smoothing fails
+
       \param basinThresh    set the basin threshold for the DGeom force field,
                             (this shouldn't normally be altered in client code).
+
 
       \return an INT_VECT of conformer ids
 
@@ -135,7 +143,9 @@ namespace RDKit {
                                 bool randNegEig=true, unsigned int numZeroFail=1,
                                 double pruneRmsThresh=-1.0,
                                 const std::map<int,RDGeom::Point3D> *coordMap=0,
-                                double optimizerForceTol=1e-3,double basinThresh=5.0);
+                                double optimizerForceTol=1e-3,
+                                bool ignoreSmoothingFailures=false,
+                                double basinThresh=5.0);
 
   }
 }

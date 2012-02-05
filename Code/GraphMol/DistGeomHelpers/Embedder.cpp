@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -233,11 +233,15 @@ namespace RDKit {
                       bool useRandomCoords,double boxSizeMult,
                       bool randNegEig, unsigned int numZeroFail,
                       const std::map<int,RDGeom::Point3D> *coordMap,
-                      double optimizerForceTol,double basinThresh){
+                      double optimizerForceTol,
+                      bool ignoreSmoothingFailures,
+                      double basinThresh){
+
       INT_VECT confIds;
       confIds=EmbedMultipleConfs(mol,1,maxIterations,seed,clearConfs,
                                  useRandomCoords,boxSizeMult,randNegEig,
-                                 numZeroFail,-1.0,coordMap,optimizerForceTol,basinThresh);
+                                 numZeroFail,-1.0,coordMap,optimizerForceTol,
+                                 ignoreSmoothingFailures,basinThresh);
 
       int res;
       if(confIds.size()){
@@ -274,7 +278,9 @@ namespace RDKit {
                                 bool randNegEig, unsigned int numZeroFail,
                                 double pruneRmsThresh,
                                 const std::map<int,RDGeom::Point3D>  *coordMap,
-                                double optimizerForceTol,double basinThresh){
+                                double optimizerForceTol,
+                                bool ignoreSmoothingFailures,
+                                double basinThresh){
       INT_VECT fragMapping;
       std::vector<ROMOL_SPTR> molFrags=MolOps::getMolFrags(mol,true,&fragMapping);
       if(molFrags.size()>1 && coordMap){
@@ -316,9 +322,21 @@ namespace RDKit {
             adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
           }
 
-          // try triangle smoothing again - give up if we fail
+          // try triangle smoothing again 
           if (!DistGeom::triangleSmoothBounds(mmat)) {
-            return res;
+            // ok, we're not going to be able to smooth this,
+            if(ignoreSmoothingFailures){
+              // proceed anyway with the more relaxed bounds matrix
+              initBoundsMat(mmat);
+              setTopolBounds(*piece, mmat, false, true);
+
+              if(coordMap){
+                adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
+              }
+            } else {
+              BOOST_LOG(rdWarningLog)<<"Could not triangle bounds smooth molecule."<<std::endl;
+              return res;
+            }
           }
         }
 #if 0

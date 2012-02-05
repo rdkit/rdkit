@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -26,7 +26,8 @@ namespace RDKit {
                     int seed, bool clearConfs,
 		    bool useRandomCoords,double boxSizeMult,
                     bool randNegEig, unsigned int numZeroFail,
-                    python::dict &coordMap,double forceTol){
+                    python::dict &coordMap,double forceTol,
+                    bool ignoreSmoothingFailures){
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
     unsigned int nKeys=python::extract<unsigned int>(ks.attr("__len__")());
@@ -44,7 +45,8 @@ namespace RDKit {
 					  useRandomCoords,boxSizeMult,
 					  randNegEig,
                                           numZeroFail,
-                                          pMapPtr,forceTol);
+                                          pMapPtr,forceTol,
+                                          ignoreSmoothingFailures);
     return res;
   }
 
@@ -54,7 +56,8 @@ namespace RDKit {
 			      bool useRandomCoords,double boxSizeMult,
                               bool randNegEig, unsigned int numZeroFail,
 			      double pruneRmsThresh,python::dict &coordMap,
-                              double forceTol) {
+                              double forceTol,
+                              bool ignoreSmoothingFailures) {
 
     std::map<int,RDGeom::Point3D> pMap;
     python::list ks = coordMap.keys();
@@ -72,7 +75,8 @@ namespace RDKit {
                                                     seed, clearConfs,
 						    useRandomCoords,boxSizeMult, 
                                                     randNegEig, numZeroFail,
-                                                    pruneRmsThresh,pMapPtr,forceTol);
+                                                    pruneRmsThresh,pMapPtr,forceTol,
+                                                    ignoreSmoothingFailures);
 
     return res;
   } 
@@ -128,6 +132,13 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                    pick coordinates that correspond \n\
                    to this component at random \n\
     - numZeroFail : fail embedding is we have this more zero eigenvalues \n\
+    - coordMap : a dictionary mapping atom IDs->coordinates. Use this to \n\
+                 require some atoms to have fixed coordinates in the resulting \n\
+                 conformation.\n\
+    - forceTol : tolerance to be used during the force-field minimization with \n\
+                 the distance geometry force field.\n\
+    - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
+                 of the bounds matrix fails.\n\
 \n\
  RETURNS:\n\n\
     ID of the new conformation added to the molecule \n\
@@ -139,7 +150,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
 	       python::arg("boxSizeMult")=2.0,
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
                python::arg("coordMap")=python::dict(),
-               python::arg("forceTol")=1e-3),
+               python::arg("forceTol")=1e-3,
+               python::arg("ignoreSmoothingFailures")=false),
               docString.c_str());
 
   docString = "Use distance geometry to obtain multiple sets of \n\
@@ -175,6 +187,13 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           least pruneRmsThresh away from all retained conformations\n\
           are kept. The pruning is done after embedding and \n\
           bounds violation minimization. No pruning by default.\n\
+    - coordMap : a dictionary mapping atom IDs->coordinates. Use this to \n\
+                 require some atoms to have fixed coordinates in the resulting \n\
+                 conformation.\n\
+    - forceTol : tolerance to be used during the force-field minimization with \n\
+                 the distance geometry force field.\n\
+    - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
+                 of the bounds matrix fails.\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";
@@ -187,7 +206,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                python::arg("randNegEig")=true, python::arg("numZeroFail")=1,
 	       python::arg("pruneRmsThresh")=-1.0,
                python::arg("coordMap")=python::dict(),
-               python::arg("forceTol")=1e-3),
+               python::arg("forceTol")=1e-3,
+               python::arg("ignoreSmoothingFailures")=false),
               docString.c_str());
 
   docString = "Returns the distance bounds matrix for a molecule\n\
