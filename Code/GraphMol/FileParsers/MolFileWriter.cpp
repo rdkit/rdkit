@@ -36,8 +36,10 @@ namespace RDKit{
     std::stringstream res;
     std::stringstream chgss;
     std::stringstream radss;
+    std::stringstream massdiffss;
     unsigned int nChgs=0;
     unsigned int nRads=0;
+    unsigned int nMassDiffs=0;
     for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
         atomIt!=mol.endAtoms();++atomIt){
       const Atom *atom=*atomIt;
@@ -65,12 +67,28 @@ namespace RDKit{
           nRads=0;
         }
       }
+      if(!atom->hasQuery()){
+        double atomMassDiff=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
+        int massDiff = static_cast<int>(atomMassDiff+.1);
+        if(massDiff!=0){
+          ++nMassDiffs;
+          massdiffss << boost::format(" %3d %3d") % (atom->getIdx()+1) % static_cast<int>(atom->getMass()+.001);
+          if(nMassDiffs==8){
+            res << boost::format("M  ISO%3d")%nMassDiffs << massdiffss.str()<<std::endl;
+            massdiffss.str("");
+            nMassDiffs=0;
+          }
+        }
+      }
     }
     if(nChgs){
       res << boost::format("M  CHG%3d")%nChgs << chgss.str()<<std::endl;
     }
     if(nRads){
       res << boost::format("M  RAD%3d")%nRads << radss.str()<<std::endl;
+    }
+    if(nMassDiffs){
+      res << boost::format("M  ISO%3d")%nMassDiffs << massdiffss.str()<<std::endl;
     }
     return res.str();
   }
@@ -304,11 +322,6 @@ namespace RDKit{
 
     if(atom->hasProp("molAtomMapNumber")){
       atom->getProp("molAtomMapNumber",atomMapNumber);
-    }
-    
-    if(!atom->hasQuery()){
-      double atomMassDiff=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
-      massDiff = static_cast<int>(atomMassDiff+.1);
     }
     
     unsigned int parityFlag=0;

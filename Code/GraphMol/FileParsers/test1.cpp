@@ -2803,6 +2803,26 @@ void testIssue3477283(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3484552(){
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3484552 "<< std::endl;
+
+  {
+    std::string smi = "C[13CH3]";
+    RWMol *m  = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getMass()>12.999);
+    std::string molBlock = MolToMolBlock(*m);
+    TEST_ASSERT(molBlock.find("M  ISO")!=std::string::npos);
+    delete m;
+    m = MolBlockToMol(molBlock);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getMass()>12.999);
+
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
+
 
 
   
@@ -2858,6 +2878,7 @@ int main(int argc,char *argv[]){
 #endif
   testIssue3432136();
   testIssue3477283();
+  testIssue3484552();
 
   return 0;
 }
