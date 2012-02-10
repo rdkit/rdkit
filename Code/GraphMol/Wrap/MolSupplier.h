@@ -34,7 +34,6 @@ namespace RDKit {
         res=0;
       }
     }
-
     // FIX: there is an edge case here that we ought to catch:
     //    suppliers where the last molecule has a chemistry problem
     //    With the current behavior, those empty molecules will not
@@ -45,6 +44,23 @@ namespace RDKit {
     }
     return res;
   }
+
+  template<typename T>
+  ROMol *MolSupplNextAcceptNullLastMolecule(T *suppl){
+    ROMol *res=0;
+    if (!suppl->atEnd()) {
+      try {
+        res=suppl->next();
+      } catch(...){
+        res=0;
+      }
+    } else {
+      PyErr_SetString(PyExc_StopIteration,"End of supplier hit");
+      throw boost::python::error_already_set();
+    }
+    return res;
+  }
+
   template<typename T>
   ROMol *MolSupplGetItem(T *suppl,int idx){
     ROMol *res = 0;

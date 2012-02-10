@@ -79,7 +79,7 @@ namespace RDKit {
                                                        python::arg("strictParsing")=true)))
 	.def("__iter__", (SDMolSupplier *(*)(SDMolSupplier *))&MolSupplIter,
 	     python::return_internal_reference<1>() )
-	.def("next", (ROMol *(*)(SDMolSupplier *))&MolSupplNext,
+	.def("next", (ROMol *(*)(SDMolSupplier *))&MolSupplNextAcceptNullLastMolecule,
 	     "Returns the next molecule in the file.  Raises _StopIteration_ on EOF.\n",
 	     python::return_value_policy<python::manage_new_object>())
 	.def("__getitem__", (ROMol *(*)(SDMolSupplier *,int))&MolSupplGetItem,
