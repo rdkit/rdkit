@@ -190,6 +190,20 @@ namespace RDKit{
     //! \name Sanitization
     //@{
 
+    typedef enum {
+      SANITIZE_CLEANUP=0x1,
+      SANITIZE_PROPERTIES=0x2,
+      SANITIZE_SYMMRINGS=0x4,
+      SANITIZE_KEKULIZE=0x8,
+      SANITIZE_FINDRADICALS=0x10,
+      SANITIZE_SETAROMATICITY=0x20,
+      SANITIZE_SETCONJUGATION=0x40,
+      SANITIZE_SETHYBRIDIZATION=0x80,
+      SANITIZE_CLEANUPCHIRALITY=0x100,
+      SANITIZE_ADJUSTHS=0x200,
+      SANITIZE_ALL=0xFFFFFFFF
+    } SanitizeFlags;
+
     //! \brief carries out a collection of tasks for cleaning up a molecule and ensuring
     //! that it makes "chemical sense"
     /*!
@@ -211,7 +225,10 @@ namespace RDKit{
           function to a ROMol, so that new atoms and bonds cannot be added to the 
           molecule and screw up the sanitizing that has been done here
     */
-    void sanitizeMol(RWMol &mol);
+    void sanitizeMol(RWMol &mol,unsigned int &operationThatFailed,
+                     unsigned int sanitizeOps=SANITIZE_ALL);
+    //! \overload
+    void sanitizeMol(RWMol &mol,unsigned int sanitizeOps=SANITIZE_ALL);
 
     //! Sets up the aromaticity for a molecule
     /*!
