@@ -7,7 +7,7 @@ rdkit_headers(Reaction.h
               ReactionParser.h
               ReactionPickler.h DEST GraphMol/ChemReactions)
 
-rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES ChemReactions_static Depictor_static FileParsers_static SmilesParse_static SubstructMatch_static
-GraphMol_static RDGeneral_static RDGeometryLib_static )
+rdkit_test(testReaction testReaction.cpp LINK_LIBRARIES ChemReactions Depictor FileParsers SmilesParse SubstructMatch
+GraphMol RDGeneral RDGeometryLib )
 
 add_subdirectory(Wrap)
