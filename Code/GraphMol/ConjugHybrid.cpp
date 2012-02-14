@@ -135,46 +135,50 @@ namespace RDKit {
       ROMol::AtomIterator ai;
       int norbs;
       for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ai++) {
-	norbs = numBondsPlusLonePairs(*ai);
-	switch(norbs) {
-	case 0:
-	  // This occurs for things like Na+
-	  (*ai)->setHybridization(Atom::S);
-	  break;
-	case 1:
-	  (*ai)->setHybridization(Atom::S);
-	  break;
-	case 2:
-	  (*ai)->setHybridization(Atom::SP);
-	  break;
-	case 3:
-	  (*ai)->setHybridization(Atom::SP2);
-	  break;
-	case 4:
-	  // potentially SP3, but we'll set it down to SP2
-	  // if we have a conjugated bond (like the second O
-	  // in O=CO)
-	  // we'll also avoid setting the hybridization down to
-	  // SP2 in the case of an atom with degree higher than 3
-	  // (e.g. things like CP1(C)=CC=CN=C1C, where the P
-	  //   has norbs = 4, and a conjugated bond, but clearly should
-	  //   not be SP2)
-	  // This is Issue276
-	  if((*ai)->getDegree()>3 || !MolOps::atomHasConjugatedBond(*ai)){
-	    (*ai)->setHybridization(Atom::SP3);
-	  } else {
-	    (*ai)->setHybridization(Atom::SP2);
-	  }
-	  break;
-	case 5:
-	  (*ai)->setHybridization(Atom::SP3D);
-	  break;
-	case 6:
-	  (*ai)->setHybridization(Atom::SP3D2);
-	  break;
-	default :
+        if((*ai)->getAtomicNum()==0){
 	  (*ai)->setHybridization(Atom::UNSPECIFIED);
-	}
+        } else {
+          norbs = numBondsPlusLonePairs(*ai);
+          switch(norbs) {
+          case 0:
+            // This occurs for things like Na+
+            (*ai)->setHybridization(Atom::S);
+            break;
+          case 1:
+            (*ai)->setHybridization(Atom::S);
+            break;
+          case 2:
+            (*ai)->setHybridization(Atom::SP);
+            break;
+          case 3:
+            (*ai)->setHybridization(Atom::SP2);
+            break;
+          case 4:
+            // potentially SP3, but we'll set it down to SP2
+            // if we have a conjugated bond (like the second O
+            // in O=CO)
+            // we'll also avoid setting the hybridization down to
+            // SP2 in the case of an atom with degree higher than 3
+            // (e.g. things like CP1(C)=CC=CN=C1C, where the P
+            //   has norbs = 4, and a conjugated bond, but clearly should
+            //   not be SP2)
+            // This is Issue276
+            if((*ai)->getDegree()>3 || !MolOps::atomHasConjugatedBond(*ai)){
+              (*ai)->setHybridization(Atom::SP3);
+            } else {
+              (*ai)->setHybridization(Atom::SP2);
+            }
+            break;
+          case 5:
+            (*ai)->setHybridization(Atom::SP3D);
+            break;
+          case 6:
+            (*ai)->setHybridization(Atom::SP3D2);
+            break;
+          default :
+            (*ai)->setHybridization(Atom::UNSPECIFIED);
+          }
+        }
       }
     }
   } // end of namespace MolOps

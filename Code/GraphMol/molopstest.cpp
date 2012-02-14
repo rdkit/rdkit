@@ -3393,6 +3393,31 @@ void testFastFindRings(){
 }
 
 
+void testSFNetIssue3487473(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 3487473" << std::endl;
+  {
+    std::string smi="C*C";
+    RWMol *m=SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::UNSPECIFIED);
+    delete m;
+  }
+
+  {
+    std::string smi="C*C";
+    RWMol *m = SmartsToMol(smi);
+    TEST_ASSERT(m);
+    m->updatePropertyCache(false);
+    MolOps::setConjugation(*m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::UNSPECIFIED);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 
 int main(){
@@ -3448,6 +3473,7 @@ int main(){
 #endif
   testSFNetIssue3349243();
   testFastFindRings();
+  testSFNetIssue3487473();
 
   return 0;
 }
