@@ -91,6 +91,8 @@ void testPass(){
     // expressed in an ugly way:
     "[HH]",
     "[2HH]",
+    // problems handling aromatic boron, issue 3480481
+    "b1ccccc1",
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
