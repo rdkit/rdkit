@@ -39,7 +39,7 @@ void test1(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test Crippen parameter acquisition." << std::endl;
 
-  CrippenParamCollection *params=CrippenParamCollection::getParams();
+  const CrippenParamCollection *params=CrippenParamCollection::getParams();
   TEST_ASSERT(params);
   
   CrippenParams p=*(params->begin());
@@ -704,6 +704,62 @@ void testIssue3433771(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+namespace {
+  void runblock(const std::vector<ROMol *> &mols,unsigned int count,unsigned int idx){
+    for(unsigned int j=0;j<1000;j++){
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        ROMol *mol = mols[i];
+        int nHBD=calcNumHBD(*mol);
+        int nHBA=calcNumHBA(*mol);
+        int nAmide=calcNumAmideBonds(*mol);
+        double logp,mr;
+        calcCrippenDescriptors(*mol,logp,mr);
+      }
+    }
+  };
+}
+
+#include <boost/thread.hpp>  
+void testMultiThread(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Code/GraphMol/Descriptors/vendor.simpairs.20k.txt";
+  SmilesMolSupplier suppl(fName," \t",1,0);
+  std::cerr<<"reading molecules"<<std::endl;
+  std::vector<ROMol *> mols;
+  while(!suppl.atEnd()&&mols.size()<100){
+    ROMol *mol=0;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+    mols.push_back(mol);
+  }
+  boost::thread_group tg;
+
+  std::cerr<<"processing"<<std::endl;
+  unsigned int count=4;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,count,i));
+  }
+  tg.join_all();
+
+  for(unsigned int i=0;i<mols.size();++i) delete mols[i];
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+#else
+void testMultiThread(){
+}
+#endif
 
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -725,4 +781,5 @@ int main(){
   testIssue3415534();
 #endif
   testIssue3433771();
+  testMultiThread();
 }

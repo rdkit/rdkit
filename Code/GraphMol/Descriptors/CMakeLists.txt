@@ -1,5 +1,4 @@
 find_package (Threads)
-find_package(Boost 1.39.0 COMPONENTS thread REQUIRED)
 
 rdkit_library(Descriptors
               Crippen.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp
@@ -10,8 +9,9 @@ rdkit_headers(Crippen.h Lipinski.h
               MolDescriptors.h
               MolSurf.h DEST GraphMol/Descriptors)
 
-rdkit_test(testDescriptors test.mt.cpp 
+rdkit_test(testDescriptors test.cpp 
 LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs SubstructMatch GraphMol DataStructs RDGeneral RDGeometryLib ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
+
 
 add_subdirectory(Wrap)
 

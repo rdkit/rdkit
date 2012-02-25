@@ -24,7 +24,7 @@ option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
 option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
-
+option(RDK_TEST_MULTITHREADED "run some tests of multithreading" OFF )
 
 # At build time put runtime binaries in the bin subdirectory
 set(RDK_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
@@ -136,13 +136,20 @@ include_directories(${RDKit_CodeDir})
 # detect it.
 string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
+if(RDK_TEST_MULTITHREADED)
+  ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED")
+  find_package(Boost 1.39.0 COMPONENTS thread REQUIRED)
+else()
+  set(Boost_THREAD_LIBRARY )
+endif()
+
 
 # setup our compiler flags:
 if(CMAKE_COMPILER_IS_GNUCXX)
-ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
+  ADD_DEFINITIONS("-Wno-deprecated -Wno-unused-function -fno-strict-aliasing -fPIC")
 endif()
 if(CMAKE_COMPILER_IS_CLANG)
-ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
+  ADD_DEFINITIONS("-Wno-array-bounds -fPIC")
 endif()
 
 if(NOT RDK_INSTALL_INTREE)
