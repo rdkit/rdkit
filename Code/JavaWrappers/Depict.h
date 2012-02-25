@@ -34,19 +34,18 @@
 
 namespace {
   std::string getColor(int atNum){
-    static std::map<int,std::string> colors;
-    if(colors.empty()){
-      colors[7]="#0000FF";
-      colors[8]="#FF0000";
-      colors[9]="#33CCCC";
-      colors[15]="#FF7F00";
-      colors[16]="#CCCC00";
-      colors[17]="#00CC00";
-      colors[35]="#7F4C19";
-      colors[0]="#7F7F7F";
-    }
     std::string res="#000000";
-    if(colors.find(atNum)!=colors.end()) res= colors[atNum];
+    switch(atNum){
+    case 7: res="#0000FF";break;
+    case 8: res="#FF0000";break;
+    case 9: res="#33CCCC";break;
+    case 15: res="#FF7F00";break;
+    case 16: res="#CCCC00";break;
+    case 17: res="#00CC00";break;
+    case 35: res="#7F4C19";break;
+    case 0: res="#7F7F7F";break;
+    default: res="#000000";
+    }
     return res;
   }
   void drawLine(std::vector<int>::const_iterator &pos,std::ostringstream &sstr,
