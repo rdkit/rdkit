@@ -95,14 +95,12 @@ namespace RDKit {
     class CrippenParamCollection {
     public:
       typedef std::vector<CrippenParams> ParamsVect;
-      static CrippenParamCollection *getParams(const std::string &paramData="");
+      static const CrippenParamCollection *getParams(const std::string &paramData="");
       ParamsVect::const_iterator begin() const { return d_params.begin(); };
       ParamsVect::const_iterator end() const { return d_params.end(); };
       
-    private:
-      //! to force this to be a singleton, the constructor must be private
       CrippenParamCollection(const std::string &paramData);
-      static class CrippenParamCollection *ds_instance;    //!< the singleton
+    private:
       ParamsVect d_params;                                 //!< the parameters
     };
   } // end of namespace Descriptors

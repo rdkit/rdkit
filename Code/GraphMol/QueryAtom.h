@@ -30,8 +30,10 @@ namespace RDKit{
     QueryAtom() : Atom(), dp_query(NULL) {};
     explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumEqualsQuery(num)) {};
     explicit QueryAtom(const Atom &other) : Atom(other), dp_query(makeAtomNumEqualsQuery(other.getAtomicNum())) {};
-    QueryAtom( const QueryAtom & other) : Atom(other),dp_query(other.dp_query->copy()){
-      //std::cerr<<" query atom copy : " << this <<" "<<dp_query<<" from "<<&other<<" "<<other.dp_query<<std::endl;
+    QueryAtom( const QueryAtom & other) : Atom(other){
+      //std::cerr<<"             query atom copy : " << this <<" "<<dp_query<<" from "<<&other<<" "<<other.dp_query<<std::endl;
+      dp_query  = other.dp_query->copy();
+      //std::cerr<<"------             done query atom copy : " << this <<" "<<dp_query<<" from "<<&other<<" "<<other.dp_query<<std::endl;
     };
     ~QueryAtom();
 

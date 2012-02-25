@@ -22,6 +22,9 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
 
 namespace RDKit{
   namespace Descriptors {
@@ -48,7 +51,7 @@ namespace RDKit{
       
       boost::dynamic_bitset<> atomNeeded(mol.getNumAtoms());
       atomNeeded.set();
-      CrippenParamCollection *params=CrippenParamCollection::getParams();
+      const CrippenParamCollection *params=CrippenParamCollection::getParams();
       for(CrippenParamCollection::ParamsVect::const_iterator it=params->begin();
 	  it!=params->end(); ++it){
 	std::vector<MatchVectType> matches;
@@ -105,16 +108,12 @@ namespace RDKit{
       mol.setProp("_crippenMR",mr,true);
     };
 
-    class CrippenParamCollection * CrippenParamCollection::ds_instance = 0;
-    CrippenParamCollection *CrippenParamCollection::getParams(const std::string &paramData){
-      if ( ds_instance == 0 ) {
-	ds_instance = new CrippenParamCollection(paramData);
-      } else if( paramData != ""){
-	delete ds_instance;
-	ds_instance = 0;
-	ds_instance = new CrippenParamCollection(paramData);
-      }
-      return ds_instance;
+    typedef boost::flyweight<boost::flyweights::key_value<std::string,CrippenParamCollection>,
+                             boost::flyweights::no_tracking > param_flyweight;
+
+    const CrippenParamCollection *CrippenParamCollection::getParams(const std::string &paramData){
+      const CrippenParamCollection *res = &(param_flyweight(paramData).get());
+      return res;
     }
     CrippenParamCollection::CrippenParamCollection(const std::string &paramData){
       std::string params;

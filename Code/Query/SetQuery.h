@@ -46,6 +46,7 @@ namespace Queries{
 
     Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
+      //std::cerr<<"   set query copy "<<this<<" "<<this->d_description<<std::endl;
       SetQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
 	new SetQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
       res->setDataFunc(this->d_dataFunc);

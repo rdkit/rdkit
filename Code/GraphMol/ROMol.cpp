@@ -51,6 +51,7 @@ namespace RDKit{
   }
   
   void ROMol::initFromOther(const ROMol &other,bool quickCopy){
+    //std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
     // copy over the atoms
     const MolGraph &oGraph=other.d_graph;
     ROMol::ATOM_ITER_PAIR atItP = other.getVertices();
@@ -104,6 +105,7 @@ namespace RDKit{
       STR_VECT computed;
       dp_props->setVal("__computedProps", computed);
     }
+    //std::cerr<<"---------    done init from other: "<<this<<" "<<&other<<std::endl;
   }
 
   void ROMol::initMol() {

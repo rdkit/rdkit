@@ -33,7 +33,6 @@
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
 
-#include <boost/thread.hpp>  
 
 using namespace RDKit;
 using namespace RDKit::Descriptors;
@@ -42,7 +41,7 @@ void test1(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test Crippen parameter acquisition." << std::endl;
 
-  CrippenParamCollection *params=CrippenParamCollection::getParams();
+  const CrippenParamCollection *params=CrippenParamCollection::getParams();
   TEST_ASSERT(params);
   
   CrippenParams p=*(params->begin());
@@ -715,10 +714,15 @@ namespace {
         ROMol *mol = mols[i];
         int nHBD=calcNumHBD(*mol);
         int nHBA=calcNumHBA(*mol);
+        int nAmide=calcNumAmideBonds(*mol);
+        double logp,mr;
+        calcCrippenDescriptors(*mol,logp,mr);
       }
     }
   };
 }
+
+#include <boost/thread.hpp>  
 void testMultiThread(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
@@ -728,7 +732,7 @@ void testMultiThread(){
   SmilesMolSupplier suppl(fName," \t",1,0);
   std::cerr<<"reading molecules"<<std::endl;
   std::vector<ROMol *> mols;
-  while(!suppl.atEnd()&&mols.size()<1000){
+  while(!suppl.atEnd()&&mols.size()<100){
     ROMol *mol=0;
     try{
       mol=suppl.next();
@@ -761,7 +765,7 @@ void testMultiThread(){
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main(){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   testIssue262();

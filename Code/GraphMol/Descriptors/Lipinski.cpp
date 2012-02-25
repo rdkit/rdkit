@@ -39,22 +39,25 @@
     };
   }
 
-using namespace ::boost;
-using namespace ::boost::flyweights;
 
-typedef flyweight<key_value<std::string,ss_matcher>,no_tracking > pattern_flyweight;
+typedef boost::flyweight<boost::flyweights::key_value<std::string,ss_matcher>,boost::flyweights::no_tracking > pattern_flyweight;
 #define SMARTSCOUNTFUNC(nm,pattern,vers)                             \
 const std::string nm ## Version  =vers; \
 unsigned int calc##nm(const RDKit::ROMol &mol){        \
-  pattern_flyweight m(pattern);                      \
-  const ROMol *matcher=m.get().getMatcher();   \
-  TEST_ASSERT(matcher);    \
-  std::vector< MatchVectType > matches; \
-  const ROMol nm(*(matcher),true);             \
-  /*const ROMol &nm=*matcher;*/            \
-  int res=SubstructMatch(mol,nm,matches);  \
-  return static_cast<unsigned int>(res);\
-}\
+  pattern_flyweight m(pattern);                        \
+  const ROMol *matcher=m.get().getMatcher();           \
+  TEST_ASSERT(matcher);                                \
+  std::vector< MatchVectType > matches;                \
+  int res=0;                                           \
+  if(std::string(pattern).find_first_of("$")!=std::string::npos){       \
+    const ROMol nm(*(matcher),true);                   \
+    res=SubstructMatch(mol,nm,matches);                \
+  } else {                                             \
+    const ROMol &nm=*matcher;                          \
+    res=SubstructMatch(mol,nm,matches);                \
+  }                                                    \
+  return static_cast<unsigned int>(res);               \
+}                                                      \
 extern int no_such_variable
 
 namespace RDKit{
@@ -80,9 +83,8 @@ namespace RDKit{
 
     SMARTSCOUNTFUNC(NumRotatableBonds, "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]", "1.0.1" ) ;
     //SMARTSCOUNTFUNC(NumHBD, "[$([N;!H0;v3]),$([N;!H0;+1;v4]),$([O,S;H1;+0]),$([n;H1;+0])]","2.0.1" ) ;
-    //SMARTSCOUNTFUNC(NumHBA, "[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N;v3;!$(N-*=!@[O,N,P,S])]),$([nH0,o,s;+0])]","2.0.1") ;
-    SMARTSCOUNTFUNC(NumHBD, "[$([N;!H0;v3])]","2.0.1" ) ;
-    SMARTSCOUNTFUNC(NumHBA, "[$([O,S;H1;v2]-[$(*)])]","2.0.1" ) ;
+    SMARTSCOUNTFUNC(NumHBD, "[N&!H0&v3,N&!H0&+1&v4,O&H1&+0,S&H1&+0,n&H1&+0]","2.0.1" ) ;
+    SMARTSCOUNTFUNC(NumHBA, "[$([O,S;H1;v2]-[!$(*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),$([N;v3;!$(N-*=!@[O,N,P,S])]),$([nH0,o,s;+0])]","2.0.1") ;
     SMARTSCOUNTFUNC(NumHeteroatoms,"[!#6;!#1]","1.0.1") ;
     SMARTSCOUNTFUNC(NumAmideBonds,"C(=[O;!R])N","1.0.0") ;
     
