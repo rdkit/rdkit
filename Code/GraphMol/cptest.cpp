@@ -10,6 +10,7 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 
 #include <iostream>
@@ -49,10 +50,33 @@ void test2(){
 
 }
 
+void testQueryCopying()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing behavior of copied queries" << std::endl;
+
+  {
+    std::string smi="[$([O,S;H1;v2]-[$(*)])]";
+    ROMol *m=static_cast<ROMol *>(SmartsToMol(smi));
+    TEST_ASSERT(m);
+    ROMol *m2 = new ROMol(*m,true);
+    
+    delete m;
+    delete m2;
+  }
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
+
 // -------------------------------------------------------------------
 int main()
 {
+#if 0
   test1();
   test2();
+#endif
+  testQueryCopying();
   return 0;
 }
