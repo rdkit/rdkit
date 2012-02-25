@@ -28,7 +28,7 @@ FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit COPY_DEST)
 
 # Setup a few variables for environment-specific things
 if(WIN32)
-  ADD_DEFINITIONS("/W3 /wd4716")
+  ADD_DEFINITIONS("/W3 /wd4716 /bigobj")
   SET(PATH_SEP ";")
   SET(COPY_CMD xcopy ${COPY_SOURCE} ${COPY_DEST} /Y /I)
 else()
