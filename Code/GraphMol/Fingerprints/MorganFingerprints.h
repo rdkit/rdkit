@@ -49,7 +49,6 @@ namespace RDKit {
   class ROMol;
   namespace MorganFingerprints {
     extern std::vector<std::string> defaultFeatureSmarts;
-    extern std::vector<ROMOL_SPTR> defaultFeatureMatchers;
 
     typedef std::map<boost::uint32_t,std::vector<std::pair<boost::uint32_t,boost::uint32_t> > > BitInfoMap;
     
@@ -168,7 +167,7 @@ namespace RDKit {
     */
     void getFeatureInvariants(const ROMol &mol,
                               std::vector<boost::uint32_t> &invars,
-                              std::vector<ROMOL_SPTR> *patterns=0);
+                              std::vector<const ROMol *> *patterns=0);
     const std::string morganFeatureInvariantVersion="0.1.0";
 
   } // end of namespace MorganFingerprints

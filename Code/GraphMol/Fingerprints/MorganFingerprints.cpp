@@ -46,6 +46,28 @@
 #include <boost/foreach.hpp>
 #include <algorithm>
 
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+
+  namespace {
+    class ss_matcher {
+    public:
+      ss_matcher() {};
+      ss_matcher(const std::string &pattern){
+        RDKit::RWMol *p=RDKit::SmartsToMol(pattern);
+        TEST_ASSERT(p);
+        m_matcher.reset(p);
+      };
+
+      //const RDKit::ROMOL_SPTR &getMatcher() const { return m_matcher; };
+      const RDKit::ROMol *getMatcher() const { return m_matcher.get(); };
+    private:
+      RDKit::ROMOL_SPTR m_matcher;
+    };
+  }
+
+
 namespace RDKit{
   namespace MorganFingerprints {
     using boost::uint32_t;
@@ -73,30 +95,29 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       "[$([C,S](=[O,S,P])-[O;H1,-1])]" //Acidic
     };
     std::vector<std::string> defaultFeatureSmarts(smartsPatterns,smartsPatterns+6);
-    std::vector<ROMOL_SPTR> defaultFeatureMatchers;
+    typedef boost::flyweight<boost::flyweights::key_value<std::string,ss_matcher>,boost::flyweights::no_tracking > pattern_flyweight;
     void getFeatureInvariants(const ROMol &mol,
                               std::vector<uint32_t> &invars,
-                              std::vector<ROMOL_SPTR> *patterns){
+                              std::vector<const ROMol *> *patterns){
       unsigned int nAtoms=mol.getNumAtoms();
       PRECONDITION(invars.size()>=nAtoms,"vector too small");
 
+      std::vector<const ROMol *> featureMatchers;
       if(!patterns){
-        if(defaultFeatureMatchers.size()==0){
-          defaultFeatureMatchers.reserve(defaultFeatureSmarts.size());
-          for(std::vector<std::string>::const_iterator smaIt=defaultFeatureSmarts.begin();
-              smaIt!=defaultFeatureSmarts.end();++smaIt){
-            ROMol *matcher=static_cast<ROMol *>(SmartsToMol(*smaIt));
-            CHECK_INVARIANT(matcher,"bad smarts");
-            defaultFeatureMatchers.push_back(ROMOL_SPTR(matcher));
-          }
+        featureMatchers.reserve(defaultFeatureSmarts.size());
+        for(std::vector<std::string>::const_iterator smaIt=defaultFeatureSmarts.begin();
+            smaIt!=defaultFeatureSmarts.end();++smaIt){
+          const ROMol *matcher=pattern_flyweight(*smaIt).get().getMatcher();
+          CHECK_INVARIANT(matcher,"bad smarts");
+          featureMatchers.push_back(matcher);
         }
-        patterns=&defaultFeatureMatchers;
+        patterns=&featureMatchers;
       }
       std::fill(invars.begin(),invars.end(),0);
       for(unsigned int i=0;i<patterns->size();++i){
         unsigned int mask=1<<i;
         std::vector<MatchVectType> matchVect;
-        SubstructMatch(mol,*(*patterns)[i],matchVect);
+        SubstructMatch(mol,ROMol(*(*patterns)[i],true),matchVect);
         for(std::vector<MatchVectType>::const_iterator mvIt=matchVect.begin();
             mvIt!=matchVect.end();++mvIt){
           for(MatchVectType::const_iterator mIt=mvIt->begin();

@@ -11,12 +11,15 @@
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 #include "GasteigerParams.h"
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
 
 namespace RDKit {
   
   /*! \brief Gasteiger partial charge parameters
    */
-  std::string paramData = 
+  std::string defaultParamData = 
 "H       *      7.17    6.24    -0.56 \n \
 C       sp3     7.98    9.18    1.88 \n \
 C       sp2     8.79    9.32    1.51 \n \
@@ -38,11 +41,13 @@ P       sp3     8.90    8.24    0.96 \n \
 X       *       0.00    0.00    0.00 \n \
 ";
 
-  class GasteigerParams *GasteigerParams::ds_instance = 0;
+  typedef boost::flyweight<boost::flyweights::key_value<std::string,GasteigerParams>,
+                           boost::flyweights::no_tracking > gparam_flyweight;
 
-  GasteigerParams::GasteigerParams() {
+  GasteigerParams::GasteigerParams(std::string paramData) {
     boost::char_separator<char> eolSep("\n");
     boost::char_separator<char> spaceSep(" \t");
+    if(paramData=="") paramData=defaultParamData;
     tokenizer lines(paramData,eolSep);
     d_paramMap.clear();
     for(tokenizer::iterator lineIter=lines.begin();
@@ -73,11 +78,9 @@ X       *       0.00    0.00    0.00 \n \
     }
   }
 
-  GasteigerParams *GasteigerParams::getParams() {
-    if ( ds_instance == 0 ) {
-      ds_instance = new GasteigerParams();
-    }
-    return ds_instance;
+  const GasteigerParams *GasteigerParams::getParams(const std::string &paramData) {
+    const GasteigerParams *res = &(gparam_flyweight(paramData).get());
+    return res;
   }
 
 } 
