@@ -10,8 +10,8 @@
 #ifndef _RD_MOL_OPS_H_
 #define _RD_MOL_OPS_H_
 
-#include <RDGeneral/types.h>
-#include <boost/tuple/tuple.hpp>
+#include <vector>
+#include <list>
 #include <boost/smart_ptr.hpp>
 
 extern const int ci_LOCAL_INF;
@@ -210,15 +210,25 @@ namespace RDKit{
     /*!
        This functions calls the following in sequence
          -# MolOps::cleanUp()
+         -# mol.updatPropertyCache()
+         -# MolOps::symmetrizeSSSR()
          -# MolOps::Kekulize()
+         -# MolOps::assignRadicals()
          -# MolOps::setAromaticity()
          -# MolOps::setConjugation()
          -# MolOps::setHybridization()
          -# MolOps::cleanupChirality()
          -# MolOps::adjustHs()
 	 
-       \param mol the RWMol to be cleaned
+       \param mol : the RWMol to be cleaned
 
+       \param operationThatFailed : the first (if any) sanitization operation that fails is set here.
+                                    The values are taken from the \c SanitizeFlags enum.
+                                    On success, the value is  \c SanitizeFlags::SANITIZE_NONE
+
+       \param sanitizeOps : the bits here are used to set which sanitization operations are carried
+                            out. The elements of the \c SanitizeFlags enum define the operations.
+       
        <b>Notes:</b>
         - If there is a failure in the sanitization, a \c SanitException
 	  will be thrown.

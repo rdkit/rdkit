@@ -355,7 +355,7 @@ namespace RDKit{
                    operations in rdkit.Chem.SanitizeFlags\n\
     - catchErrors: (optional) if provided, instead of raising an exception\n\
                    when sanitization fails (the default behavior), the \n\
-                   operations that failed (as defined in rdkit.Chem.SanitizeFlags)\n\
+                   first operation that failed (as defined in rdkit.Chem.SanitizeFlags)\n\
                    is returned. Zero is returned on success.\n\
 \n";
       python::def("SanitizeMol", sanitizeMol,
