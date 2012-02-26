@@ -25,17 +25,35 @@
   namespace {
     class ss_matcher {
     public:
-      ss_matcher() {};
-      ss_matcher(const std::string &pattern){
+      ss_matcher(const std::string &pattern) : m_pattern(pattern){
+        bool m_needCopies=(pattern.find_first_of("$")!=std::string::npos);
         RDKit::RWMol *p=RDKit::SmartsToMol(pattern);
-        TEST_ASSERT(p);
-        m_matcher.reset(p);
+        m_matcher=p;
+        POSTCONDITION(m_matcher,"no matcher");
       };
-
-      //const RDKit::ROMOL_SPTR &getMatcher() const { return m_matcher; };
-      const RDKit::ROMol *getMatcher() const { return m_matcher.get(); };
+      const RDKit::ROMol *getMatcher() const { return m_matcher; };
+      unsigned int countMatches(const RDKit::ROMol &mol) const {
+        PRECONDITION(m_matcher,"no matcher");
+        std::vector<RDKit::MatchVectType> matches;
+        unsigned int res=0;
+        // This is an ugly one. Recursive queries aren't thread safe.
+        // Unfortunately we have to take a performance hit here in order
+        // to guarantee thread safety
+        if(m_needCopies){
+          const RDKit::ROMol nm(*(m_matcher),true);
+          res=RDKit::SubstructMatch(mol,nm,matches);
+        } else {
+          const RDKit::ROMol &nm=*m_matcher;
+          res=RDKit::SubstructMatch(mol,nm,matches);
+        }
+        return matches.size();
+      }
+      ~ss_matcher() { delete m_matcher; };
     private:
-      RDKit::ROMOL_SPTR m_matcher;
+      ss_matcher() : m_pattern(""), m_needCopies(false), m_matcher(0) {};
+      std::string m_pattern;
+      bool m_needCopies;
+      const RDKit::ROMol *m_matcher;
     };
   }
 
@@ -45,18 +63,7 @@ typedef boost::flyweight<boost::flyweights::key_value<std::string,ss_matcher>,bo
 const std::string nm ## Version  =vers; \
 unsigned int calc##nm(const RDKit::ROMol &mol){        \
   pattern_flyweight m(pattern);                        \
-  const ROMol *matcher=m.get().getMatcher();           \
-  TEST_ASSERT(matcher);                                \
-  std::vector< MatchVectType > matches;                \
-  int res=0;                                           \
-  if(std::string(pattern).find_first_of("$")!=std::string::npos){       \
-    const ROMol nm(*(matcher),true);                   \
-    res=SubstructMatch(mol,nm,matches);                \
-  } else {                                             \
-    const ROMol &nm=*matcher;                          \
-    res=SubstructMatch(mol,nm,matches);                \
-  }                                                    \
-  return static_cast<unsigned int>(res);               \
+  return m.get().countMatches(mol);                    \
 }                                                      \
 extern int no_such_variable
 

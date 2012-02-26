@@ -713,6 +713,16 @@ namespace {
         ROMol *mol = mols[i];
         int nHBD=calcNumHBD(*mol);
         int nHBA=calcNumHBA(*mol);
+
+        unsigned int oVal;
+        std::string foo;
+        mol->getProp("NUM_HACCEPTORS",foo);
+        oVal=boost::lexical_cast<unsigned int>(foo);
+        TEST_ASSERT(oVal==nHBA);
+        mol->getProp("NUM_HDONORS",foo);
+        oVal=boost::lexical_cast<unsigned int>(foo);
+        TEST_ASSERT(oVal==nHBD);
+
         int nAmide=calcNumAmideBonds(*mol);
         double logp,mr;
         calcCrippenDescriptors(*mol,logp,mr);
@@ -727,8 +737,8 @@ void testMultiThread(){
   BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
 
   std::string fName = getenv("RDBASE");
-  fName += "/Code/GraphMol/Descriptors/vendor.simpairs.20k.txt";
-  SmilesMolSupplier suppl(fName," \t",1,0);
+  fName += "/Data/NCI/first_200.props.sdf";
+  SDMolSupplier suppl(fName);
   std::cerr<<"reading molecules"<<std::endl;
   std::vector<ROMol *> mols;
   while(!suppl.atEnd()&&mols.size()<100){
