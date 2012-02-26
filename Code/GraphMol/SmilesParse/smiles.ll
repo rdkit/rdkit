@@ -164,6 +164,10 @@ H			{
 				return H_TOKEN; 
 			}
 
+b		    {	yylval->atom = new Atom ( 5 );
+			yylval->atom->setIsAromatic(true);
+				return AROMATIC_ATOM_TOKEN; 
+			}
 c		    {	yylval->atom = new Atom ( 6 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 

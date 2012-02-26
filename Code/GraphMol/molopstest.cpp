@@ -3343,10 +3343,9 @@ void testSFNetIssue3349243(){
     std::string smi="c1cccc[n+]1";
     RWMol *m=SmilesToMol(smi);
     TEST_ASSERT(m);
-    std::cerr<<"go:"<<std::endl;
-    m->debugMol(std::cerr);
     MolOps::Kekulize(*m);
-
+    // just finishing is good
+    TEST_ASSERT(m->getBondWithIdx(0)->getBondType()!=Bond::AROMATIC);
     delete m;
   }
 
@@ -3408,6 +3407,49 @@ void testFastFindRings(){
     TEST_ASSERT(m->getRingInfo()->numRings()==1);
     delete m;
   }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+void testSFNetIssue3487473(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 3487473" << std::endl;
+  {
+    std::string smi="C*C";
+    RWMol *m=SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::UNSPECIFIED);
+    delete m;
+  }
+
+  {
+    std::string smi="C*C";
+    RWMol *m = SmartsToMol(smi);
+    TEST_ASSERT(m);
+    m->updatePropertyCache(false);
+    MolOps::setConjugation(*m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::UNSPECIFIED);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testSFNetIssue3480481(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 3480481" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue3480481.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic()==true);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getImplicitValence()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==-1);
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

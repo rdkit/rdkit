@@ -674,9 +674,6 @@ namespace RDKit{
       if(!directMap){
         mol->setBondBookmark(bond,i);
       }
-      if(bond->hasQuery()){
-        haveQuery=true;
-      }
     }
 
 
@@ -706,6 +703,18 @@ namespace RDKit{
       throw MolPicklerException("Bad pickle format: ENDMOL tag not found.");
     }
 
+    if(haveQuery){
+      // we didn't read any property info for atoms with associated
+      // queries. update their property caches
+      // (was sf.net Issue 3316407)
+      for(ROMol::AtomIterator atIt=mol->beginAtoms();
+          atIt!=mol->endAtoms();atIt++){
+        Atom *atom = *atIt;
+        if(atom->hasQuery()){
+          atom->updatePropertyCache(false);
+        }
+      }
+    }
   }
 
 

@@ -639,6 +639,27 @@ void testIssue3135833() {
   }
 }
 
+void testIssue3487469() {
+  {
+    std::string smi = "C*C";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getAtomWithIdx(1)->getHybridization()==Atom::UNSPECIFIED);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1,0,true);
+    const Conformer &conf = m1->getConformer(cid1);
+    RDGeom::Point3D p0 = conf.getAtomPos(0);
+    RDGeom::Point3D p1 = conf.getAtomPos(1);
+    RDGeom::Point3D p2 = conf.getAtomPos(2);
+
+    RDGeom::Point3D v1=p0-p1,v2=p2-p1;
+    v1.normalize();
+    v2.normalize();
+    TEST_ASSERT(feq(v1.dotProduct(v2),-0.5,.01))
+    delete m1;
+  }
+}
+
+
 
 int main() { 
   RDLog::InitLogs();
@@ -738,6 +759,11 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test Issue 3135833\n";
   testIssue3135833();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test Issue 3487469\n";
+  testIssue3487469();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
   return(0);

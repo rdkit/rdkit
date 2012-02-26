@@ -19,7 +19,12 @@
 #include <RDGeneral/types.h>
 
 namespace RDKit {
-
+  namespace {
+    // Determine whether or not a molecule is to the left of Carbon
+    bool isEarlyAtom(int atomicNum){
+      return (4 - PeriodicTable::getTable()->getNouterElecs(atomicNum)) > 0;
+    }
+  }
 Atom::Atom(){
   d_atomicNum=0;
   initAtom();
@@ -187,6 +192,7 @@ int Atom::calcExplicitValence(bool strict) {
   // check accum is greater than the default valence
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
+  if(isEarlyAtom(d_atomicNum)) chr*=-1;  // <- the usual correction for early atoms
   if (accum > (dv + chr) && this->getIsAromatic()){
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
@@ -317,7 +323,7 @@ int Atom::calcImplicitValence(bool strict) {
   //
   // So assuming you read all the above stuff - you know why we are
   // changing signs for "chg" here
-  if ( (4 - PeriodicTable::getTable()->getNouterElecs(d_atomicNum)) > 0) {
+  if ( isEarlyAtom(d_atomicNum) ) {
     chg *= -1;
   }
 

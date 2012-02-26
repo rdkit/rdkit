@@ -172,6 +172,7 @@ namespace RDDepict {
   inline double computeSubAngle(unsigned int degree, RDKit::Atom::HybridizationType htype) {
     double angle = M_PI;
     switch (htype) {
+    case RDKit::Atom::UNSPECIFIED :
     case RDKit::Atom::SP3 :
       if (degree == 4) {
         angle = M_PI/2;

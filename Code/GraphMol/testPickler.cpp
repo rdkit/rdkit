@@ -753,6 +753,35 @@ void testIssue3202580(){
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testIssue3316407(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3316407." << std::endl;
+
+  {
+    std::string fName = getenv("RDBASE");
+    fName += "/Code/GraphMol/FileParsers/test_data/rgroups1.mol";
+  
+    RWMol *m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==5);
+
+    std::string pickle;
+    MolPickler::pickleMol(*m,pickle);
+    RWMol *m2 = new RWMol();
+    MolPickler::molFromPickle(pickle,*m2);
+    TEST_ASSERT(m2->getNumAtoms()==5);
+    for(unsigned int i=0;i<m->getNumAtoms();++i){
+      TEST_ASSERT(m->getAtomWithIdx(i)->getExplicitValence()==m2->getAtomWithIdx(i)->getExplicitValence());
+      TEST_ASSERT(m->getAtomWithIdx(i)->getImplicitValence()==m2->getAtomWithIdx(i)->getImplicitValence());
+    }
+    delete m;
+    delete m2;
+  }
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
@@ -778,6 +807,7 @@ int main(int argc, char *argv[]) {
 #endif
   testIssue2788233();
   testIssue3202580();
+  testIssue3316407();
   
   return 0;
 
