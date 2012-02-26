@@ -117,6 +117,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
       for(unsigned int i=0;i<patterns->size();++i){
         unsigned int mask=1<<i;
         std::vector<MatchVectType> matchVect;
+        // to maintain thread safety, we have to copy the pattern
+        // molecules:
         SubstructMatch(mol,ROMol(*(*patterns)[i],true),matchVect);
         for(std::vector<MatchVectType>::const_iterator mvIt=matchVect.begin();
             mvIt!=matchVect.end();++mvIt){
