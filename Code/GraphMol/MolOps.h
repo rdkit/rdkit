@@ -191,6 +191,7 @@ namespace RDKit{
     //@{
 
     typedef enum {
+      SANITIZE_NONE=0x0,
       SANITIZE_CLEANUP=0x1,
       SANITIZE_PROPERTIES=0x2,
       SANITIZE_SYMMRINGS=0x4,
@@ -228,7 +229,7 @@ namespace RDKit{
     void sanitizeMol(RWMol &mol,unsigned int &operationThatFailed,
                      unsigned int sanitizeOps=SANITIZE_ALL);
     //! \overload
-    void sanitizeMol(RWMol &mol,unsigned int sanitizeOps=SANITIZE_ALL);
+    void sanitizeMol(RWMol &mol);
 
     //! Sets up the aromaticity for a molecule
     /*!

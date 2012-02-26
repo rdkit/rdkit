@@ -200,42 +200,39 @@ namespace RDKit{
       }
     }
                 
-    void sanitizeMol(RWMol &mol,
-                     unsigned int sanitizeOps ){
+    void sanitizeMol(RWMol &mol){
       unsigned int failedOp=0;
-      sanitizeMol(mol,failedOp,sanitizeOps);
+      sanitizeMol(mol,failedOp,SANITIZE_ALL);
     }
     void sanitizeMol(RWMol &mol,
                      unsigned int &operationThatFailed,
-                     unsigned int sanitizeOps) {
-      SanitizeFlags op;
-      
+                     unsigned int sanitizeOps){
       // clear out any cached properties
       mol.clearComputedProps();
 
-      op=SANITIZE_CLEANUP;
-      if(sanitizeOps & op){
+      operationThatFailed=SANITIZE_CLEANUP;
+      if(sanitizeOps & operationThatFailed){
         // clean up things like nitro groups
         cleanUp(mol);
       }
 
       // update computed properties on atoms and bonds:
-      op = SANITIZE_PROPERTIES;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_PROPERTIES;
+      if(sanitizeOps & operationThatFailed){
         mol.updatePropertyCache(true);
       } else {
         mol.updatePropertyCache(false);
       }
                
-      op = SANITIZE_SYMMRINGS;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_SYMMRINGS;
+      if(sanitizeOps & operationThatFailed){
         VECT_INT_VECT arings;
         MolOps::symmetrizeSSSR(mol, arings);
       }
 
       // kekulizations
-      op = SANITIZE_KEKULIZE;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_KEKULIZE;
+      if(sanitizeOps & operationThatFailed){
         Kekulize(mol);
       }
 
@@ -247,40 +244,42 @@ namespace RDKit{
       // because there's no way of telling what to do 
       // with the same molecule if it's in the form
       // [n]1cccc1
-      op = SANITIZE_FINDRADICALS;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_FINDRADICALS;
+      if(sanitizeOps & operationThatFailed){
         assignRadicals(mol);
       }
       
       // then do aromaticity perception
-      op = SANITIZE_SETAROMATICITY;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_SETAROMATICITY;
+      if(sanitizeOps & operationThatFailed){
         setAromaticity(mol);
       }
     
       // set conjugation
-      op = SANITIZE_SETCONJUGATION;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_SETCONJUGATION;
+      if(sanitizeOps & operationThatFailed){
         setConjugation(mol);
       }
     
       // set hybridization
-      op = SANITIZE_SETHYBRIDIZATION;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_SETHYBRIDIZATION;
+      if(sanitizeOps & operationThatFailed){
         setHybridization(mol);
       }
 
       // remove bogus chirality specs:
-      op = SANITIZE_CLEANUPCHIRALITY;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_CLEANUPCHIRALITY;
+      if(sanitizeOps & operationThatFailed){
         cleanupChirality(mol);
       }
 
       // adjust Hydrogen counts:
-      op = SANITIZE_ADJUSTHS;
-      if(sanitizeOps & op){
+      operationThatFailed = SANITIZE_ADJUSTHS;
+      if(sanitizeOps & operationThatFailed){
         adjustHs(mol);
       }
+
+      operationThatFailed = 0;
     }
 
     std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol,bool sanitizeFrags,
