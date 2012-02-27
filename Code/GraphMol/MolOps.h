@@ -10,8 +10,8 @@
 #ifndef _RD_MOL_OPS_H_
 #define _RD_MOL_OPS_H_
 
-#include <RDGeneral/types.h>
-#include <boost/tuple/tuple.hpp>
+#include <vector>
+#include <list>
 #include <boost/smart_ptr.hpp>
 
 extern const int ci_LOCAL_INF;
@@ -190,20 +190,45 @@ namespace RDKit{
     //! \name Sanitization
     //@{
 
+    typedef enum {
+      SANITIZE_NONE=0x0,
+      SANITIZE_CLEANUP=0x1,
+      SANITIZE_PROPERTIES=0x2,
+      SANITIZE_SYMMRINGS=0x4,
+      SANITIZE_KEKULIZE=0x8,
+      SANITIZE_FINDRADICALS=0x10,
+      SANITIZE_SETAROMATICITY=0x20,
+      SANITIZE_SETCONJUGATION=0x40,
+      SANITIZE_SETHYBRIDIZATION=0x80,
+      SANITIZE_CLEANUPCHIRALITY=0x100,
+      SANITIZE_ADJUSTHS=0x200,
+      SANITIZE_ALL=0xFFFFFFFF
+    } SanitizeFlags;
+
     //! \brief carries out a collection of tasks for cleaning up a molecule and ensuring
     //! that it makes "chemical sense"
     /*!
        This functions calls the following in sequence
          -# MolOps::cleanUp()
+         -# mol.updatPropertyCache()
+         -# MolOps::symmetrizeSSSR()
          -# MolOps::Kekulize()
+         -# MolOps::assignRadicals()
          -# MolOps::setAromaticity()
          -# MolOps::setConjugation()
          -# MolOps::setHybridization()
          -# MolOps::cleanupChirality()
          -# MolOps::adjustHs()
 	 
-       \param mol the RWMol to be cleaned
+       \param mol : the RWMol to be cleaned
 
+       \param operationThatFailed : the first (if any) sanitization operation that fails is set here.
+                                    The values are taken from the \c SanitizeFlags enum.
+                                    On success, the value is  \c SanitizeFlags::SANITIZE_NONE
+
+       \param sanitizeOps : the bits here are used to set which sanitization operations are carried
+                            out. The elements of the \c SanitizeFlags enum define the operations.
+       
        <b>Notes:</b>
         - If there is a failure in the sanitization, a \c SanitException
 	  will be thrown.
@@ -211,6 +236,9 @@ namespace RDKit{
           function to a ROMol, so that new atoms and bonds cannot be added to the 
           molecule and screw up the sanitizing that has been done here
     */
+    void sanitizeMol(RWMol &mol,unsigned int &operationThatFailed,
+                     unsigned int sanitizeOps=SANITIZE_ALL);
+    //! \overload
     void sanitizeMol(RWMol &mol);
 
     //! Sets up the aromaticity for a molecule

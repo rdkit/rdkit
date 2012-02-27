@@ -487,7 +487,7 @@ namespace RDKit {
 
       // first find the all the simple rings in the molecule
       VECT_INT_VECT arings;
-      MolOps::symmetrizeSSSR(mol, arings);
+      MolOps::findSSSR(mol, arings);
 
       // convert the rings to bonds ids
       VECT_INT_VECT brings;

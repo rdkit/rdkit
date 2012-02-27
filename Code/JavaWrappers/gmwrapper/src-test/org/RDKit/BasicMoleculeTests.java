@@ -189,6 +189,21 @@ public class BasicMoleculeTests extends GraphMolTest {
 	public void testErrorHandling_BadKekulize() {
 		RWMol.MolFromSmiles("c1cc1");
 	}
+	@Test(expected=MolSanitizeException.class)
+	public void testErrorHandling_BadKekulize2() {
+            RWMol mol=RWMol.MolFromSmiles("c1cc1",0,false);
+            RDKFuncs.sanitizeMol(mol);
+	}
+	@Test public void testErrorHandling_BadKekulize3() {
+            RWMol mol=RWMol.MolFromSmiles("c1cc1",0,false);
+            int ops=SanitizeFlags.SANITIZE_ALL.swigValue();
+            int failedAt=RDKFuncs.sanitizeMol(mol,ops);
+            assertEquals(failedAt,SanitizeFlags.SANITIZE_KEKULIZE.swigValue());
+            ops ^= SanitizeFlags.SANITIZE_KEKULIZE.swigValue();
+            failedAt=RDKFuncs.sanitizeMol(mol,ops);
+            assertEquals(failedAt,0);            
+	}
+
 /*	@Test -- the contents of this test now in UnitTestPickling, testIssue219
 	public void testConformer(){
 	}

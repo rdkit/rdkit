@@ -37,3 +37,17 @@
 
 
 %include <GraphMol/MolOps.h>
+%ignore RDKit::MolOps::sanitizeMol(RWMol &,unsigned int &,unsigned int &);
+
+%inline %{
+  int sanitizeMol(RDKit::RWMol &mol,int sanitizeOps){
+    unsigned int opThatFailed;
+    try{
+      RDKit::MolOps::sanitizeMol(mol,opThatFailed,
+                                 static_cast<unsigned int>(sanitizeOps));
+    } catch(...) {
+    
+    }
+    return static_cast<int>(opThatFailed);
+  };
+%}

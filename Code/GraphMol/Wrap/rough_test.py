@@ -2204,7 +2204,23 @@ CAS<~>
     self.failUnlessEqual(txt.count('ID'),6)
     self.failUnlessEqual(txt.count('NAME'),6)
 
+  def test73SanitizationOptions(self):
+    m = Chem.MolFromSmiles('c1ccccc1',sanitize=False)
+    res = Chem.SanitizeMol(m,catchErrors=True)
+    self.failUnlessEqual(res,0)
+
+    m = Chem.MolFromSmiles('c1cccc1',sanitize=False)
+    res = Chem.SanitizeMol(m,catchErrors=True)
+    self.failUnlessEqual(res,Chem.SanitizeFlags.SANITIZE_KEKULIZE)
+
+    m = Chem.MolFromSmiles('CC(C)(C)(C)C',sanitize=False)
+    res = Chem.SanitizeMol(m,catchErrors=True)
+    self.failUnlessEqual(res,Chem.SanitizeFlags.SANITIZE_PROPERTIES)
     
+    m = Chem.MolFromSmiles('c1cccc1',sanitize=False)
+    res = Chem.SanitizeMol(m,sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL^Chem.SanitizeFlags.SANITIZE_KEKULIZE,
+                           catchErrors=True)
+    self.failUnlessEqual(res,Chem.SanitizeFlags.SANITIZE_NONE)
     
     
 if __name__ == '__main__':

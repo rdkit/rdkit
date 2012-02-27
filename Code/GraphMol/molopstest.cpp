@@ -2254,27 +2254,31 @@ void testSFIssue1836576()
   smi = "[BH]123[BH]45[BH]167[BH]289[BH]312[BH]838[BH]966[Co]74479%10%11%12[CH]633[BH]811[CH]345[BH]21[BH]1234[BH]75[BH]911[BH]226[BH]%1011[BH]227[BH]633[BH]44[BH]322[CH]%1145[CH]%12271";
   m = SmilesToMol(smi,false,false);
   TEST_ASSERT(m);
-  
+
+  unsigned int opThatFailed;
   ok=false;
   try {
-    MolOps::sanitizeMol(*m);
+    MolOps::sanitizeMol(*m,opThatFailed);
   } catch (MolSanitizeException &vee){
     ok=true;
   }
   TEST_ASSERT(ok);
+  TEST_ASSERT(opThatFailed==MolOps::SANITIZE_PROPERTIES);
 
-  // this version throws the original error:
+  // this molecule shows a known bug related to ring
+  // ring finding in a molecule where all atoms are 4 connected.
   smi = "C123C45C11C44C55C22C33C14C523";
   m = SmilesToMol(smi,false,false);
   TEST_ASSERT(m);
   
   ok=false;
   try {
-    MolOps::sanitizeMol(*m);
+    MolOps::sanitizeMol(*m,opThatFailed);
   } catch (ValueErrorException &vee){
     ok=true;
   }
   TEST_ASSERT(ok);
+  TEST_ASSERT(opThatFailed==MolOps::SANITIZE_SYMMRINGS);
 
   delete m;
 
@@ -3084,6 +3088,21 @@ void testSanitizeNonringAromatics() {
     TEST_ASSERT(ok);
     delete m;
   }
+  {
+    std::string smi="c-C";
+    
+    RWMol *m = SmilesToMol(smi,0,false);
+    bool ok=false;
+    unsigned int opThatFailed;
+    try {
+      MolOps::sanitizeMol(*m,opThatFailed);
+    } catch (MolSanitizeException &vee){
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opThatFailed==MolOps::SANITIZE_KEKULIZE);
+    delete m;
+  }
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -3483,15 +3502,13 @@ int main(){
   testSFNetIssue2208994();
   testSFNetIssue2313979();
   testSFNetIssue2316677();
-  testSanitizeNonringAromatics();  
   testSFNetIssue2951221();
   testSFNetIssue2952255();
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
-  testSFNetIssue3487473();
 #endif
-  testSFNetIssue3480481();
+  testSanitizeNonringAromatics();  
 
   return 0;
 }
