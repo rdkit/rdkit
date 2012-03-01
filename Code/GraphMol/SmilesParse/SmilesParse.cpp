@@ -121,7 +121,8 @@ namespace RDKit{
   } // end of local namespace
 
   RWMol *toMol(std::string inp,int func(const std::string &,
-					std::vector<RDKit::RWMol *> &)){
+					std::vector<RDKit::RWMol *> &),
+               std::string origInp){
     RWMol *res;
     std::vector<RDKit::RWMol *> molVect;
     try {
@@ -140,8 +141,11 @@ namespace RDKit{
       }
     } catch (SmilesParseException &e) {
       std::string nm="SMILES";
-      if(func==smarts_parse) nm="SMARTS";
-      BOOST_LOG(rdErrorLog) << nm<<" Parse Error: "<< e.message() << " for input: "<< inp << std::endl;
+      if(func==smarts_parse){
+        nm="SMARTS";
+        
+      }
+      BOOST_LOG(rdErrorLog) << nm<<" Parse Error: "<< e.message() << " for input: "<< origInp << std::endl;
       res = 0;
     }
     BOOST_FOREACH(RDKit::RWMol *molPtr,molVect){
@@ -171,7 +175,7 @@ namespace RDKit{
       }
     }
 
-    RWMol *res = toMol(smi,smiles_parse);
+    RWMol *res = toMol(smi,smiles_parse,smi);
     if(sanitize && res){
       // we're going to remove explicit Hs from the graph,
       // this triggers a sanitization, so we do not need to
@@ -189,7 +193,6 @@ namespace RDKit{
                      std::map<std::string, std::string> *replacements){
     yysmarts_debug = debugParse;
     boost::trim_if(sma,boost::is_any_of(" \t\r\n"));
-
     if(replacements){
       bool loopAgain=true;
       while(loopAgain){
@@ -203,9 +206,10 @@ namespace RDKit{
         }
       }
     }
+    std::string oInput=sma;
     sma=labelRecursivePatterns(sma);
 
-    RWMol *res = toMol(sma,smarts_parse);
+    RWMol *res = toMol(sma,smarts_parse,oInput);
     if(res && mergeHs){
       ROMol *tmp = MolOps::mergeQueryHs(*res);
       delete res;

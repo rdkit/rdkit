@@ -14,6 +14,7 @@
 #include <vector>
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>  
 #include <GraphMol/SmilesParse/SmilesParseOps.h>  
 #include <RDGeneral/RDLog.h>
 #include "smiles.tab.hpp"
@@ -28,7 +29,7 @@ yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
 		void *scanner,const char * msg )
 {
-  BOOST_LOG(rdErrorLog)<<"SMILES Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
+  throw RDKit::SmilesParseException(msg);
 }
 
 using namespace RDKit;
