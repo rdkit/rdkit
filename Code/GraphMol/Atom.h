@@ -262,7 +262,25 @@ namespace RDKit{
     //! returns whether or not we match the argument
     /*!
         <b>Notes:</b>
-	  - for Atom objects, "match" means that atomic numbers are the same.
+          Here are the rules for atom-atom matching:
+          | This    | Other   | Match |
+          | CCO     | CCO     | Yes   |
+          | CCO     | CC[O-]  | Yes   |
+          | CC[O-]  | CCO     | No    |
+          | CC[O-]  | CC[O-]  | Yes   |
+          | CC[OH]  | CC[O-]  | No    |
+          | CC[OH]  | CCOC    | No    |
+          | CCO     | CCOC    | Yes   |
+          | CCC     | CCC     | Yes   |
+          | CCC     | CC[14C] | Yes   |
+          | CC[14C] | CCC     | No    |
+          | CC[14C] | CC[14C] | Yes   |
+          | C       | OCO     | Yes   |
+          | [CH]    | OCO     | Yes   |
+          | [CH2]   | OCO     | Yes   |
+          | [CH3]   | OCO     | No    |
+          | C       | O[CH2]O | Yes   |
+          | [CH2]   | O[CH2]O | Yes   |
     */
     virtual bool Match(Atom const *what) const;
     //! \overload

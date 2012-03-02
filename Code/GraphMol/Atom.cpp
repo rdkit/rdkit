@@ -414,33 +414,34 @@ bool Atom::Match(Atom const *what) const {
   // special dummy--dummy match case:
   //   [*] matches [*],[1*],[2*],etc.
   //   [1*] only matches [*] and [1*]
-  if(res && !getAtomicNum()){
-#if 0
-    // this is the deprecated old behavior, based on the dummy labels:
-    // this will go away in the Q3 2008 release
-    std::string l1;
-    if(this->hasProp("dummyLabel")){
-      this->getProp("dummyLabel",l1);
-    } else{
-      l1="X";
-    }
-    if(l1!="X"){
-      std::string l2;
-      if(what->hasProp("dummyLabel")) what->getProp("dummyLabel",l2);
-      else l2="X";
-      if(l2!="X" && l1!=l2){
-        res = false;
-      }
-    }
-#endif
-    if( res ){
+  if(res){
+    if(!getAtomicNum()){
       // this is the new behavior, based on the isotopes:
       double tgt=this->getMass();
       double test=what->getMass();
       if(fabs(tgt)>1e-4 && fabs(test)>1e-4 && fabs(tgt-test)>1e-4 ){
         res = false;
       }
+    } else {
+      // standard atom-atom match: The general rule here is that if this atom has a property that
+      // deviates from the default, then the other atom should match that value.
+
+      // start by checking charge:
+      if( (this->getFormalCharge() && this->getFormalCharge()!=what->getFormalCharge()) ||
+          (this->getNumExplicitHs() && this->getNumExplicitHs()>what->getTotalNumHs())  // <- potential problem here with sanitization
+          ){  
+        res=false;
+      } else {
+        double massDiff1=fabs(PeriodicTable::getTable()->getAtomicWeight(this->getAtomicNum()) -
+                             this->getMass());
+        if(massDiff1>0.001){
+          double massDiff2=fabs(PeriodicTable::getTable()->getAtomicWeight(what->getAtomicNum()) -
+                                what->getMass());
+          if(fabs(massDiff1-massDiff2)>0.001) res=false;
+        }
+      }
     }
+    
   }
   return res;
 }
