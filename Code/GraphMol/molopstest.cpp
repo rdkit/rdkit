@@ -2254,27 +2254,31 @@ void testSFIssue1836576()
   smi = "[BH]123[BH]45[BH]167[BH]289[BH]312[BH]838[BH]966[Co]74479%10%11%12[CH]633[BH]811[CH]345[BH]21[BH]1234[BH]75[BH]911[BH]226[BH]%1011[BH]227[BH]633[BH]44[BH]322[CH]%1145[CH]%12271";
   m = SmilesToMol(smi,false,false);
   TEST_ASSERT(m);
-  
+
+  unsigned int opThatFailed;
   ok=false;
   try {
-    MolOps::sanitizeMol(*m);
+    MolOps::sanitizeMol(*m,opThatFailed);
   } catch (MolSanitizeException &vee){
     ok=true;
   }
   TEST_ASSERT(ok);
+  TEST_ASSERT(opThatFailed==MolOps::SANITIZE_PROPERTIES);
 
-  // this version throws the original error:
+  // this molecule shows a known bug related to ring
+  // ring finding in a molecule where all atoms are 4 connected.
   smi = "C123C45C11C44C55C22C33C14C523";
   m = SmilesToMol(smi,false,false);
   TEST_ASSERT(m);
   
   ok=false;
   try {
-    MolOps::sanitizeMol(*m);
+    MolOps::sanitizeMol(*m,opThatFailed);
   } catch (ValueErrorException &vee){
     ok=true;
   }
   TEST_ASSERT(ok);
+  TEST_ASSERT(opThatFailed==MolOps::SANITIZE_SYMMRINGS);
 
   delete m;
 
@@ -3084,6 +3088,21 @@ void testSanitizeNonringAromatics() {
     TEST_ASSERT(ok);
     delete m;
   }
+  {
+    std::string smi="c-C";
+    
+    RWMol *m = SmilesToMol(smi,0,false);
+    bool ok=false;
+    unsigned int opThatFailed;
+    try {
+      MolOps::sanitizeMol(*m,opThatFailed);
+    } catch (MolSanitizeException &vee){
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    TEST_ASSERT(opThatFailed==MolOps::SANITIZE_KEKULIZE);
+    delete m;
+  }
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -3435,6 +3454,75 @@ void testSFNetIssue3480481(){
 }
 
 
+void aamatchtest(std::string smi1,std::string smi2,bool shouldMatch,int idx1,int idx2){
+  RWMol *m1=SmilesToMol(smi1);
+  RWMol *m2=SmilesToMol(smi2);
+  TEST_ASSERT(m1);
+  TEST_ASSERT(m2);
+  //std::cerr<<"   "<<smi1<<" "<<smi2<<std::endl;
+  TEST_ASSERT(m2->getAtomWithIdx(idx2)->Match(m1->getAtomWithIdx(idx1))==shouldMatch);
+  delete m1;
+  delete m2;
+}
+
+void testAtomAtomMatch(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Atom-Atom matching behavior" << std::endl;
+  /* Here's what we're testing:
+
+| Molecule | Query   | Match |
+| CCO      | CCO     | Yes   |
+| CC[O-]   | CCO     | Yes   |
+| CCO      | CC[O-]  | No    |
+| CC[O-]   | CC[O-]  | Yes   |
+| CC[O-]   | CC[OH]  | No    |
+| CCOC     | CC[OH]  | No    |
+| CCOC     | CCO     | Yes   |
+| CCC      | CCC     | Yes   |
+| CC[14C]  | CCC     | Yes   |
+| CCC      | CC[14C] | No    |
+| CC[14C]  | CC[14C] | Yes   |
+| OCO      | C       | Yes   |
+| OCO      | [CH2]   | Yes   |
+| OCO      | [CH3]   | No    |
+| O[CH2]O  | C       | Yes   |
+| O[CH2]O  | [CH2]   | Yes   |
+| OCO      | [CH]    | Yes   |
+
+This is a large superset of issue 3495370
+
+   */
+
+  aamatchtest("CCO","O",true,2,0);
+  aamatchtest("CC[O-]","O",true,2,0);
+  aamatchtest("CCO","[O-]",false,2,0);
+  aamatchtest("CC[O-]","[O-]",true,2,0);
+  aamatchtest("CC[O-]","[OH]",false,2,0);
+  aamatchtest("CCOC","[OH]",false,2,0);
+  aamatchtest("CCOC","O",true,2,0);
+  aamatchtest("CCC","C",true,2,0);
+  aamatchtest("CC[14C]","C",true,2,0);
+  aamatchtest("CCC","[14C]",false,2,0);
+  aamatchtest("CC[14C]","[14C]",true,2,0);
+  aamatchtest("CC[13C]","[14C]",false,2,0);
+  aamatchtest("OCO","C",true,1,0);
+  aamatchtest("OCO","[CH]",true,1,0);
+  aamatchtest("OCO","[CH2]",true,1,0);
+  aamatchtest("OCO","[CH3]",false,1,0);
+  aamatchtest("O[CH2]O","C",true,1,0);
+  aamatchtest("O[CH2]O","[CH]",true,1,0);
+  aamatchtest("O[CH2]O","[CH2]",true,1,0);
+  aamatchtest("O[CH2]O","[CH3]",false,1,0);
+  aamatchtest("CC","*",false,1,0);
+  aamatchtest("C*","*",true,1,0);
+  aamatchtest("C[1*]","*",true,1,0);
+  aamatchtest("C[1*]","[1*]",true,1,0);
+  aamatchtest("C*","[1*]",true,1,0);
+  aamatchtest("C[2*]","[1*]",false,1,0);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 int main(){
@@ -3483,16 +3571,15 @@ int main(){
   testSFNetIssue2208994();
   testSFNetIssue2313979();
   testSFNetIssue2316677();
-  testSanitizeNonringAromatics();  
   testSFNetIssue2951221();
   testSFNetIssue2952255();
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
-  testSFNetIssue3487473();
 #endif
-  testSFNetIssue3480481();
-
+  testSanitizeNonringAromatics();  
+  testAtomAtomMatch();
+  
   return 0;
 }
 

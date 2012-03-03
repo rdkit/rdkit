@@ -136,7 +136,7 @@ struct atom_wrapper {
 	   "Sets the atomic number, takes an integer value as an argument")
 
       .def("GetSymbol",&Atom::getSymbol,
-	   "Returns the atomic number (a string)\n")
+	   "Returns the atomic symbol (a string)\n")
 
       .def("GetIdx",&Atom::getIdx,
 	   "Returns the atom's index (ordering in the molecule)\n")

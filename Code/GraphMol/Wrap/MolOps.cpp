@@ -81,9 +81,19 @@ namespace RDKit{
     
   }
 
-  void sanitizeMol(ROMol &mol) {
+  MolOps::SanitizeFlags sanitizeMol(ROMol &mol,unsigned int sanitizeOps,
+                                    bool catchErrors) {
     RWMol &wmol = static_cast<RWMol &>(mol);
-    MolOps::sanitizeMol(wmol);
+    unsigned int operationThatFailed;
+    if(catchErrors){
+      try{
+        MolOps::sanitizeMol(wmol,operationThatFailed,sanitizeOps);
+      } catch (...){
+      }
+    } else {
+      MolOps::sanitizeMol(wmol,operationThatFailed,sanitizeOps);
+    }
+    return static_cast<MolOps::SanitizeFlags>(operationThatFailed);
   }
 
   RWMol *getEditable(const ROMol &mol) {
@@ -315,21 +325,43 @@ namespace RDKit{
   struct molops_wrapper {
     static void wrap() {
       std::string docString;
+      python::enum_<MolOps::SanitizeFlags>("SanitizeFlags")
+        .value("SANITIZE_NONE",MolOps::SANITIZE_NONE)
+        .value("SANITIZE_CLEANUP",MolOps::SANITIZE_CLEANUP)
+        .value("SANITIZE_PROPERTIES",MolOps::SANITIZE_PROPERTIES)
+        .value("SANITIZE_SYMMRINGS",MolOps::SANITIZE_SYMMRINGS)
+        .value("SANITIZE_KEKULIZE",MolOps::SANITIZE_KEKULIZE)
+        .value("SANITIZE_FINDRADICALS",MolOps::SANITIZE_FINDRADICALS)
+        .value("SANITIZE_SETAROMATICITY",MolOps::SANITIZE_SETAROMATICITY)
+        .value("SANITIZE_SETCONJUGATION",MolOps::SANITIZE_SETCONJUGATION)
+        .value("SANITIZE_SETHYBRIDIZATION",MolOps::SANITIZE_SETHYBRIDIZATION)
+        .value("SANITIZE_CLEANUPCHIRALITY",MolOps::SANITIZE_CLEANUPCHIRALITY)
+        .value("SANITIZE_ADJUSTHS",MolOps::SANITIZE_ADJUSTHS)
+        .value("SANITIZE_ALL",MolOps::SANITIZE_ALL)
+        ;
 
       // ------------------------------------------------------------------------
       docString="Kekulize, check valencies, set aromaticity, conjugation and hybridization\n\
 \n\
     - The molecule is modified in place.\n\
 \n\
-    - If sanitization fails, an exception will be thrown\n\
+    - If sanitization fails, an exception will be thrown unless catchErrors is set\n\
 \n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to be modified\n\
-\n\
-  NOTES:\n\
+    - sanitizeOps: (optional) sanitization operations to be carried out\n\
+                   these should be constructed by or'ing together the\n\
+                   operations in rdkit.Chem.SanitizeFlags\n\
+    - catchErrors: (optional) if provided, instead of raising an exception\n\
+                   when sanitization fails (the default behavior), the \n\
+                   first operation that failed (as defined in rdkit.Chem.SanitizeFlags)\n\
+                   is returned. Zero is returned on success.\n\
 \n";
       python::def("SanitizeMol", sanitizeMol,
+                  (python::arg("mol"),
+                   python::arg("sanitizeOps")=MolOps::SANITIZE_ALL,
+                   python::arg("catchErrors")=false),
                   docString.c_str());
 
       // ------------------------------------------------------------------------

@@ -30,7 +30,7 @@ yysmarts_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
 		void *scanner,const char * msg )
 {
-  BOOST_LOG(rdErrorLog)<<"SMARTS Parse Error: "<<msg<<" while parsing: "<<input<<std::endl;
+  throw RDKit::SmilesParseException(msg);
 }
 
 using namespace RDKit;
