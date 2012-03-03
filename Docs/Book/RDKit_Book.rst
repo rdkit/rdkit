@@ -323,6 +323,58 @@ An illustration for 2D pharmacophores is shown in :ref:`ph4_figure`.
 
   Figure 1:   Bit numbering in pharmacophore fingerprints
 
+Atom-Atom Matching in Substructure Queries
+******************************************
+
+When doing substructure matches for queries derived from SMARTS the
+rules for which atoms in the molecule should match which atoms in the
+query are well defined.[#smarts]_  The same is not necessarily the
+case when the query molecule is derived from a mol block or SMILES.
+
+The general rule used in the RDKit is that if you
+don't specify a property in the query, then it's not used as part of
+the matching criteria. This leads to the following behavior:
+
++----------+---------+-------+
+| Molecule | Query   | Match |
++==========+=========+=======+
+| CCO      | CCO     | Yes   |
++----------+---------+-------+
+| CC[O-]   | CCO     | Yes   |
++----------+---------+-------+
+| CCO      | CC[O-]  | No    |
++----------+---------+-------+
+| CC[O-]   | CC[O-]  | Yes   |
++----------+---------+-------+
+| CC[O-]   | CC[OH]  | No    |
++----------+---------+-------+
+| CCOC     | CC[OH]  | No    |
++----------+---------+-------+
+| CCOC     | CCO     | Yes   |
++----------+---------+-------+
+| CCC      | CCC     | Yes   |
++----------+---------+-------+
+| CC[14C]  | CCC     | Yes   |
++----------+---------+-------+
+| CCC      | CC[14C] | No    |
++----------+---------+-------+
+| CC[14C]  | CC[14C] | Yes   |
++----------+---------+-------+
+| OCO      | C       | Yes   |
++----------+---------+-------+
+| OCO      | [CH]    | Yes   |
++----------+---------+-------+
+| OCO      | [CH2]   | Yes   |
++----------+---------+-------+
+| OCO      | [CH3]   | No    |
++----------+---------+-------+
+| O[CH2]O  | C       | Yes   |
++----------+---------+-------+
+| O[CH2]O  | [CH2]   | Yes   |
++----------+---------+-------+
+
+
+
 
 .. rubric:: Footnotes
 
