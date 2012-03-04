@@ -27,6 +27,8 @@ namespace RDKit {
 
     bool _checkForOrAndLowAnd(std::string smarts) {
       int orLoc, andLoc;
+      // if we're a pure recursive smarts, we don't need to worry about this
+      if(smarts[0]=='$' && smarts[smarts.size()-1]==')') return false;
       orLoc = smarts.find(",");
       andLoc = smarts.find(";");
       if ( (orLoc > 0) && (andLoc > 0)) {
@@ -154,7 +156,7 @@ namespace RDKit {
       } else if (descrip == "AtomInRing") {
         res << "R";
         needParen = true;
-      } else if (descrip == "AtomInRingSize") {
+      } else if (descrip == "AtomMinRingSize") {
         res << "r" << query->getVal();
         needParen = true;
       } else if (descrip == "AtomInNRings") {

@@ -23,7 +23,7 @@ using boost::uint32_t;
 namespace RDKit{
 
   const int32_t MolPickler::versionMajor=7;
-  const int32_t MolPickler::versionMinor=0;
+  const int32_t MolPickler::versionMinor=1;
   const int32_t MolPickler::versionPatch=0;
   const int32_t MolPickler::endianId=0xDEADBEEF;
 
@@ -1003,6 +1003,10 @@ namespace RDKit{
       if(tag != ENDQUERY){
         throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
       }
+    
+      atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
+      atom->setNumExplicitHs(0);
+
     }
 
     if(version>5000){
@@ -1063,29 +1067,28 @@ namespace RDKit{
     if(bond->getStereo()!=Bond::STEREONONE) flags |= 0x1<<1;
     streamWrite(ss,flags);
     
-    if(!bond->hasQuery()){
-      if(bond->getBondType()!=Bond::SINGLE){
-        tmpChar = static_cast<char>(bond->getBondType());
-        streamWrite(ss,tmpChar);
-      }
-      if(bond->getBondDir()!=Bond::NONE){
-        tmpChar = static_cast<char>(bond->getBondDir());
-        streamWrite(ss,tmpChar);
-      }
+    if(bond->getBondType()!=Bond::SINGLE){
+      tmpChar = static_cast<char>(bond->getBondType());
+      streamWrite(ss,tmpChar);
+    }
+    if(bond->getBondDir()!=Bond::NONE){
+      tmpChar = static_cast<char>(bond->getBondDir());
+      streamWrite(ss,tmpChar);
+    }
 
-      // write info about the stereochemistry:
-      if(bond->getStereo()!=Bond::STEREONONE){
-        tmpChar = static_cast<char>(bond->getStereo());
-        streamWrite(ss,tmpChar);
-        const INT_VECT &stereoAts=bond->getStereoAtoms();
-        tmpChar = stereoAts.size();
-        streamWrite(ss,tmpChar);
-        for(INT_VECT_CI idxIt=stereoAts.begin();idxIt!=stereoAts.end();++idxIt){
-          tmpT = static_cast<T>(*idxIt);
-          streamWrite(ss,tmpT);
-        }
+    // write info about the stereochemistry:
+    if(bond->getStereo()!=Bond::STEREONONE){
+      tmpChar = static_cast<char>(bond->getStereo());
+      streamWrite(ss,tmpChar);
+      const INT_VECT &stereoAts=bond->getStereoAtoms();
+      tmpChar = stereoAts.size();
+      streamWrite(ss,tmpChar);
+      for(INT_VECT_CI idxIt=stereoAts.begin();idxIt!=stereoAts.end();++idxIt){
+        tmpT = static_cast<T>(*idxIt);
+        streamWrite(ss,tmpT);
       }
-    } else {
+    }
+    if(bond->hasQuery()){
       streamWrite(ss,BEGINQUERY);
       pickleQuery(ss,static_cast<const QueryBond*>(bond)->getQuery());
       streamWrite(ss,ENDQUERY);
@@ -1118,7 +1121,7 @@ namespace RDKit{
     streamRead(ss,flags,version);
     bool hasQuery=flags&0x1<<4;
 
-    if(version<=5000 || !hasQuery){
+    if(version<=5000 || (version<=7000 && !hasQuery) || version>7000){
       bond = new Bond();
       bond->setIsAromatic(flags & 0x1<<6);
       bond->setIsConjugated(flags & 0x1<<5);
@@ -1169,9 +1172,10 @@ namespace RDKit{
           bond->setStereo(Bond::STEREONONE);
         }
       }
-    } else if(version>5000) {
+    }
+    if(version>5000 && hasQuery) {
       Tags tag;
-      bond = new QueryBond();
+      bond = new QueryBond(*bond);
       // we have a query:
       streamRead(ss,tag,version);
       if(tag != BEGINQUERY){

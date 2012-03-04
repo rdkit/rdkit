@@ -429,7 +429,7 @@ namespace RDKit{
     std::string res;
 
     for(ROMol::AtomIterator atIt=tmol.beginAtoms();atIt!=tmol.endAtoms();atIt++){
-      (*atIt)->updatePropertyCache();
+      (*atIt)->updatePropertyCache(false);
     }
 
     unsigned int nAtoms=tmol.getNumAtoms();
