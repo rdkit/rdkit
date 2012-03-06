@@ -12,12 +12,19 @@ FLEX_TARGET(SmilesL smiles.ll
 FLEX_TARGET(SmartsL smarts.ll 
             ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp 
             COMPILE_FLAGS "-Pyysmarts_" )
+FILE(GLOB FLEX_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lex.*.cpp")
+
 BISON_TARGET(SmilesY smiles.yy 
              ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp 
              COMPILE_FLAGS "-pyysmiles_" )
 BISON_TARGET(SmartsY smarts.yy 
              ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp 
              COMPILE_FLAGS "-pyysmarts_" )
+FILE(GLOB BISON_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.tab.?pp")
+
+get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+        "${extra_clean_files};${FLEX_OUTPUT_FILES};${BISON_OUTPUT_FILES}")
 
 ADD_FLEX_BISON_DEPENDENCY(SmilesL SmilesY)
 ADD_FLEX_BISON_DEPENDENCY(SmartsL SmartsY)

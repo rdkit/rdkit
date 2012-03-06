@@ -82,7 +82,7 @@ void test1() {
                            C2(C=C(C=C5)NC5=C4)=CC(C=C2)=CC1=CC=C(C=C3C=CC4=N3)N1";
     */
   std::string rdbase = getenv("RDBASE");
-  std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/test1out.sd";
+  std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/test1.out.sdf";
   SDWriter writer(ofile);
 
   boost::char_separator<char> spaceSep(" ");
@@ -110,7 +110,7 @@ void testCollisions() {
     CN2C3CC(OC(=O)C(CO)c1ccccc1)CC2CC3";
   
   std::string rdbase = getenv("RDBASE");
-  std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/collisions.sdf";
+  std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/collisions.out.sdf";
   SDWriter writer(ofile);
 
   boost::char_separator<char> spaceSep(" ");
@@ -168,7 +168,7 @@ void test2() {
   std::string smifile = rdbase + "/Code/GraphMol/Depictor/test_data/first_200.tpsa.csv";
   SmilesMolSupplier smiSup(smifile, ",", 0, -1);
   
-  std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/first_200.sdf";
+  std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/first_200.out.sdf";
   SDWriter writer(ofile);
   ROMol *mol;
   while (1) {
@@ -189,7 +189,7 @@ void test3() {
   std::string smifile = rdbase + "/Code/GraphMol/Depictor/test_data/cis_trans_cases.csv";
   SmilesMolSupplier smiSup(smifile, ",", 0, 1);
   
-  std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/cis_trans_cpp.sdf";
+  std::string ofile = rdbase + "/Code/GraphMol/Depictor/test_data/cis_trans_cpp.out.sdf";
   SDWriter writer(ofile);
   ROMol *mol;
   while (1) {
