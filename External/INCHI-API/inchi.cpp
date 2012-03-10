@@ -69,6 +69,11 @@
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <algorithm>
+
+#if RDK_TEST_MULTITHREADED
+#include <boost/thread.hpp>
+#endif
+
 namespace RDKit {
   namespace {
     /* assignBondDirs
@@ -200,16 +205,11 @@ namespace RDKit {
                               int currentPathLength,
                               int maxPathLength,
                               Bond* lastBond,
-                              /*OUT*/ std::stack<Bond*>& path) {
+                               /*OUT*/ std::stack<Bond*>& path,
+                               std::set<int> &_visited) {
       // memory for what has been visited
-      static std::set<int> _visited;
-      static bool _inUse = false;
       if (lastBond == NULL) {
-        if (_inUse) {
-          throw "findAlternatingBonds is not threadsafe!";
-        }
         _visited.clear();
-        _inUse = true;
         while (! path.empty())
           path.pop();
       }
@@ -231,19 +231,16 @@ namespace RDKit {
           while (! path.empty()) path.pop();
           // add myself to the path
           path.push(lastBond);
-          if (lastBond == NULL) _inUse = false;
           return current;
         } else {
           // I am no better than the exisiting one. This will also cause the
           // path search to not continue down
-          if (lastBond == NULL) _inUse = false;
           return NULL;
         }
       }
 
       // searching too far?
       if (maxPathLength <= currentPathLength) {
-        if (lastBond == NULL) _inUse = false;
         return NULL;
       }
 
@@ -271,7 +268,7 @@ namespace RDKit {
                                            desiredAtomCharge, nextBondType,
                                            desiredEndingBondType,
                                            currentPathLength + 1, maxPathLength,
-                                           bond, path)) != NULL) {
+                                           bond, path,_visited)) != NULL) {
             target = temp;
           }
         } else if (desiredEndingBondType != Bond::SINGLE && 
@@ -287,13 +284,12 @@ namespace RDKit {
                                             desiredEndingBondType,
                                             currentPathLength + 1,
                                             0, /* this limits the recursion */
-                                            bond, path)))
+                                             bond, path,_visited)))
             target = temp;
         }
       }
 
       // about the return
-      if (lastBond == NULL) _inUse = false;
       if (target != NULL) {
         if (lastBond) 
           path.push(lastBond);
@@ -375,8 +371,10 @@ namespace RDKit {
     // directly to a N via double bond
     bool _Valence4NCleanUp2(RWMol& mol, Atom* atom) {
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE,
-                                          Bond::DOUBLE, 0, 1, NULL, stack);
+                                          Bond::DOUBLE, 0, 1, NULL, stack,
+                                          _visited);
       if (target == NULL)
         return false;
 
@@ -389,8 +387,10 @@ namespace RDKit {
     // try search for valence-5 N connected to a N+ 
     bool _Valence5NCleanUp1(RWMol& mol, Atom* atom) {
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 7, 1, Bond::DOUBLE,
-                                          Bond::DOUBLE, 0, 5, NULL, stack);
+                                          Bond::DOUBLE, 0, 5, NULL, stack,
+                                          _visited);
       if (target == NULL)
         return false;
       target->setFormalCharge(0);
@@ -409,8 +409,10 @@ namespace RDKit {
     // N connected to N- through a tiple then single bond
     bool _Valence5NCleanUp2(RWMol& mol, Atom* atom) {
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 7, -1, Bond::TRIPLE,
-                                          Bond::SINGLE, 0, 2, NULL, stack);
+                                          Bond::SINGLE, 0, 2, NULL, stack,
+                                          _visited);
       if (target == NULL)
         return false;
 
@@ -432,8 +434,10 @@ namespace RDKit {
     // directly to a N via double bond
     bool _Valence5NCleanUp3(RWMol& mol, Atom* atom) {
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE,
-                                          Bond::DOUBLE, 0, 1, NULL, stack);
+                                          Bond::DOUBLE, 0, 1, NULL, stack,
+                                          _visited);
       if (target == NULL)
         return false;
 
@@ -525,14 +529,17 @@ namespace RDKit {
       // is converted into 
       //   COC(O)=C1[n+]2ccccc2C(C)CC1=O
       Atom *unchargedOxygen, *chargedOxygen;
+      std::set<int> _visited;
       unchargedOxygen = findAlternatingBonds(mol, atom, atomicNum, 0,
                                              Bond::DOUBLE, Bond::DOUBLE,
                                              0, 7, NULL,
-                                             stackUncharged);
+                                             stackUncharged,
+                                             _visited);
       chargedOxygen = findAlternatingBonds(mol, atom, atomicNum, 1,
                                            Bond::DOUBLE, Bond::DOUBLE,
                                            0, 7, NULL,
-                                           stackCharged);
+                                           stackCharged,
+                                           _visited);
       if (unchargedOxygen == NULL && chargedOxygen == NULL) 
         return false;
 
@@ -641,8 +648,9 @@ namespace RDKit {
     bool _Valence5NCleanUp7(RWMol& mol, Atom* atom) {
       // is it connected to O via alternating bonds?
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 8, 0, Bond::DOUBLE,
-                                          Bond::DOUBLE, 0, 5, NULL, stack);
+                                          Bond::DOUBLE, 0, 5, NULL, stack,_visited);
       if (target == NULL)
         return false;
       // replace the N with Sn
@@ -836,8 +844,9 @@ namespace RDKit {
         mol.getAtomWithIdx(match[1].second)->setAtomicNum(50);
         // now search the path from current atom to these atoms
         std::stack<Bond*> stack;
+        std::set<int> _visited;
         Atom* target = findAlternatingBonds(mol, atom, 50, 0, Bond::DOUBLE,
-                                            Bond::DOUBLE, 0, 9, NULL, stack);
+                                            Bond::DOUBLE, 0, 9, NULL, stack,_visited);
         if (target && (bestPath.empty() || stack.size() < bestPath.size())) 
           bestPath = stack;
         mol.getAtomWithIdx(match[0].second)->setAtomicNum(7);
@@ -863,8 +872,10 @@ namespace RDKit {
     // directly to a C via double bond; this is last resort
     bool _Valence5NCleanUpB(RWMol& mol, Atom* atom) {
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 6, 0, Bond::DOUBLE,
-                                          Bond::DOUBLE, 0, 1, NULL, stack);
+                                          Bond::DOUBLE, 0, 1, NULL, stack,
+                                          _visited);
       if (target == NULL)
         return false;
 
@@ -936,8 +947,10 @@ namespace RDKit {
         return false;
 
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE,
-                                          Bond::TRIPLE, 0, 3, NULL, stack);
+                                          Bond::TRIPLE, 0, 3, NULL, stack,
+                                          _visited);
       if (target) {
         while (! stack.empty()) {
           Bond* bond = stack.top();
@@ -964,8 +977,10 @@ namespace RDKit {
         return false;
 
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE,
-                                          Bond::DOUBLE, 0, 1, NULL, stack);
+                                          Bond::DOUBLE, 0, 1, NULL, stack,
+                                          _visited);
       if (target) {
         stack.top()->setBondType(Bond::SINGLE);
         target->setFormalCharge(-1);
@@ -984,8 +999,10 @@ namespace RDKit {
         return false;
 
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 7, 0, Bond::DOUBLE,
-                                          Bond::DOUBLE, 0, 9, NULL, stack);
+                                          Bond::DOUBLE, 0, 9, NULL, stack,
+                                          _visited);
 
       if (! target)
         return false;
@@ -1048,8 +1065,10 @@ namespace RDKit {
           atom->getFormalCharge() != 1)
         return false;
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 8, -1, Bond::SINGLE,
-                                          Bond::SINGLE, 0, 1, NULL, stack);
+                                          Bond::SINGLE, 0, 1, NULL, stack,
+                                          _visited);
       if (! target)
         return false;
       stack.top()->setBondType(Bond::DOUBLE);
@@ -1065,8 +1084,10 @@ namespace RDKit {
           atom->getFormalCharge() != 0)
         return false;
       std::stack<Bond*> stack;
+      std::set<int> _visited;
       Atom* target = findAlternatingBonds(mol, atom, 16, 0, Bond::TRIPLE,
-                                          Bond::TRIPLE, 0, 1, NULL, stack);
+                                          Bond::TRIPLE, 0, 1, NULL, stack,
+                                          _visited);
       if (! target)
         return false;
       stack.top()->setBondType(Bond::SINGLE);
@@ -1182,6 +1203,12 @@ namespace RDKit {
     } // end cleanUp
   } // end inner namespace
 
+#if RDK_TEST_MULTITHREADED
+  boost::mutex inchiMutex;
+#endif
+
+
+
   RWMol* InchiToMol(const std::string &inchi, ExtraInchiReturnValues& rv, bool
                     sanitize, bool removeHs)
   {
@@ -1193,361 +1220,365 @@ namespace RDKit {
     inchiInput.szInChI = _inchi;
     inchiInput.szOptions = options;
 
-    // output structure
-    inchi_OutputStruct inchiOutput;
-
-    // DLL call
-    int retcode = GetStructFromINCHI(&inchiInput, &inchiOutput);
-
-    // prepare output
-    rv.returnCode = retcode;
-    if (inchiOutput.szMessage) 
-      rv.messagePtr = std::string(inchiOutput.szMessage);
-    if (inchiOutput.szLog)
-      rv.logPtr = std::string(inchiOutput.szLog);
-
     // creating RWMol for return
     RWMol *m = NULL;
-    // for isotopes of H
-    typedef std::vector<boost::tuple<unsigned int, unsigned int, unsigned int> > ISOTOPES_t;
-    ISOTOPES_t isotopes;
-    if (retcode == inchi_Ret_OKAY || retcode == inchi_Ret_WARNING) {
-      m = new RWMol;
-      std::vector<unsigned int> indexToAtomIndexMapping;
-      PeriodicTable* periodicTable = PeriodicTable::getTable();
-      unsigned int nAtoms = inchiOutput.num_atoms;
-      for (unsigned int i = 0; i < nAtoms; i ++) {
-        inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
-        Atom *atom = new Atom;
-        // use element name to set atomic number
-        atom->setAtomicNum(periodicTable->getAtomicNumber(inchiAtom->elname));
-        // set mass
-        double mass = periodicTable->getAtomicWeight(atom->getAtomicNum());
-        if (inchiAtom->isotopic_mass) {
-          mass += inchiAtom->isotopic_mass - ISOTOPIC_SHIFT_FLAG;
-        }
-        atom->setMass(mass);
-        // set charge
-        atom->setFormalCharge(inchiAtom->charge);
-        // set radical
-        if (inchiAtom->radical) {
-          if (inchiAtom->radical != 3 && inchiAtom->radical != 2) {
-            BOOST_LOG(rdWarningLog)
-              << "expect radical to be either 2 or 3 while getting "
-              << inchiAtom->radical <<". Ignore radical."
-              << std::endl;
-          } else {
-            atom->setNumRadicalElectrons(inchiAtom->radical - 1);
-          }
-        }
-        // number of hydrogens
-        atom->setNumExplicitHs(inchiAtom->num_iso_H[0]);
-        if (inchiAtom->num_iso_H[1]) {
-          isotopes.push_back(boost::make_tuple(1, i, inchiAtom->num_iso_H[1]));
-        } else if (inchiAtom->num_iso_H[2]) {
-          isotopes.push_back(boost::make_tuple(2, i, inchiAtom->num_iso_H[2]));
-        } else if (inchiAtom->num_iso_H[3]) {
-          isotopes.push_back(boost::make_tuple(3, i, inchiAtom->num_iso_H[3]));
-        }
-        //atom->setNoImplicit(true);
-        // add atom to molecule
-        unsigned int aid = m->addAtom(atom, false, true);
-        indexToAtomIndexMapping.push_back(aid);
-#ifdef DEBUG
-        BOOST_LOG(rdWarningLog) << "adding " << aid << ":" << atom->getAtomicNum() << ":" << (int) inchiAtom->num_iso_H[0]<< std::endl ;
+    {
+      // output structure
+      inchi_OutputStruct inchiOutput;
+#if RDK_TEST_MULTITHREADED
+      boost::lock_guard<boost::mutex> lock(inchiMutex);
 #endif
-      }
+      // DLL call
+      int retcode = GetStructFromINCHI(&inchiInput, &inchiOutput);
 
-      // adding bonds
-      std::set<std::pair<unsigned int, unsigned int> > bondRegister;
-      for (unsigned int i = 0; i < nAtoms; i ++) {
-        inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
-        unsigned int nBonds = inchiAtom->num_bonds;
-        for (unsigned int b = 0; b < nBonds; b++) {
-          unsigned int nbr = inchiAtom->neighbor[b];
-          // check register to avoid duplication
-          if (bondRegister.find(std::make_pair(i, nbr)) != bondRegister.end() ||
-              bondRegister.find(std::make_pair(nbr, i)) != bondRegister.end()) {
-            continue;
-          }
-          bondRegister.insert(std::make_pair(i, nbr));
-          Bond* bond = NULL;
-          // bond type
-          if (inchiAtom->bond_type[b] <= INCHI_BOND_TYPE_TRIPLE)
-            bond = new Bond(
-              (Bond::BondType) inchiAtom->bond_type[b]);
-          else {
-            BOOST_LOG(rdWarningLog)
-              << "receive ALTERN bond type which should be avoided. "
-              << "This is treated as aromatic." << std::endl;
-            bond = new Bond(Bond::AROMATIC);
-            bond->setIsAromatic(true);
-          }
-          // bond ends
-          bond->setBeginAtomIdx(indexToAtomIndexMapping[i]);
-          bond->setEndAtomIdx(indexToAtomIndexMapping[nbr]);
-          // bond stereo
-          switch (inchiAtom->bond_stereo[b]) {
-          case INCHI_BOND_STEREO_NONE: break;
-          case INCHI_BOND_STEREO_SINGLE_1UP: 
-          case INCHI_BOND_STEREO_SINGLE_2DOWN: 
-            bond->setBondDir(Bond::BEGINWEDGE);
-            break;
-          case INCHI_BOND_STEREO_SINGLE_1DOWN: 
-          case INCHI_BOND_STEREO_SINGLE_2UP: 
-            bond->setBondDir(Bond::BEGINDASH);
-            break;
-          case INCHI_BOND_STEREO_SINGLE_1EITHER:
-            bond->setBondDir(Bond::UNKNOWN);
-            break;
-          case INCHI_BOND_STEREO_DOUBLE_EITHER:
-            bond->setBondDir(Bond::EITHERDOUBLE);
-            break;
-          }
-          // add bond
-          m->addBond(bond, true);
-#ifdef DEBUG
-          BOOST_LOG(rdWarningLog) << "adding " << (int) bond->getBeginAtomIdx()
-            << "("
-            << m->getAtomWithIdx(bond->getBeginAtomIdx())->getAtomicNum()
-            << ")"
-            << "-" << (int) bond->getEndAtomIdx()
-            << "("
-            << m->getAtomWithIdx(bond->getEndAtomIdx())->getAtomicNum()
-            << ")"
-            << "[" << (int) bond->getBondType() << "]"<< std::endl ;
-#endif
-        }
-      }
+      // prepare output
+      rv.returnCode = retcode;
+      if (inchiOutput.szMessage) 
+        rv.messagePtr = std::string(inchiOutput.szMessage);
+      if (inchiOutput.szLog)
+        rv.logPtr = std::string(inchiOutput.szLog);
 
-      // adding isotopes at the end
-      for (ISOTOPES_t::iterator ii = isotopes.begin(); ii != isotopes.end();
-           ii++) {
-        unsigned int isotope, aid, repeat;
-        boost::tie(isotope, aid, repeat) = *ii;
-        aid = indexToAtomIndexMapping[aid];
-        for (unsigned int i = 0; i < repeat; i ++) {
-          // create atom
+      // for isotopes of H
+      typedef std::vector<boost::tuple<unsigned int, unsigned int, unsigned int> > ISOTOPES_t;
+      ISOTOPES_t isotopes;
+      if (retcode == inchi_Ret_OKAY || retcode == inchi_Ret_WARNING) {
+        m = new RWMol;
+        std::vector<unsigned int> indexToAtomIndexMapping;
+        PeriodicTable* periodicTable = PeriodicTable::getTable();
+        unsigned int nAtoms = inchiOutput.num_atoms;
+        for (unsigned int i = 0; i < nAtoms; i ++) {
+          inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
           Atom *atom = new Atom;
-          atom->setAtomicNum(1);
+          // use element name to set atomic number
+          atom->setAtomicNum(periodicTable->getAtomicNumber(inchiAtom->elname));
           // set mass
-          atom->setMass(periodicTable->getAtomicWeight(atom->getAtomicNum()) +
-                        isotope - 1);
-          int j = m->addAtom(atom, false, true);
-          // add bond
-          Bond* bond = new Bond(Bond::SINGLE);
-          bond->setEndAtomIdx(aid);
-          bond->setBeginAtomIdx(j);
-          m->addBond(bond, true);
-        }
-      }
-
-      // basic topological structure is ready. calculate valence
-      for (unsigned int i = 0; i < m->getNumAtoms(); i ++) {
-        m->getAtomWithIdx(i)->calcImplicitValence(false);
-      }
-
-      // 0Dstereo
-      unsigned int numStereo0D = inchiOutput.num_stereo0D;
-      INT_PAIR_VECT zBondPairs, eBondPairs;
-      if (numStereo0D) {
-        // calculate CIPCode as they might be used
-        INT_VECT ranks;
-        Chirality::assignAtomCIPRanks(*m, ranks);
-        for (int i = 0; i < numStereo0D; i ++) {
-          inchi_Stereo0D* stereo0DPtr = inchiOutput.stereo0D + i;
-          if (stereo0DPtr->parity == INCHI_PARITY_NONE ||
-              stereo0DPtr->parity == INCHI_PARITY_UNDEFINED)
-            continue;
-          switch (stereo0DPtr->type) {
-          case INCHI_StereoType_None:
-            break;
-          case INCHI_StereoType_DoubleBond:
-            {
-            // find the bond
-            int left, right, leftNbr, originalLeftNbr, rightNbr,
-                         originalRightNbr, extraLeftNbr, extraRightNbr;
-            left = indexToAtomIndexMapping[stereo0DPtr->neighbor[1]];
-            right = indexToAtomIndexMapping[stereo0DPtr->neighbor[2]];
-            originalLeftNbr = indexToAtomIndexMapping[stereo0DPtr->neighbor[0]];
-            originalRightNbr = indexToAtomIndexMapping[stereo0DPtr->neighbor[3]];
-            leftNbr = extraLeftNbr = rightNbr = extraRightNbr = -1;
-            Bond* bond = m->getBondBetweenAtoms(left, right);
-            // also find neighboring atoms. Note we cannot use what InChI returned
-            // in stereo0DPtr->neighbor as there can be hydrogen in it, which is
-            // later removed and is therefore not reliable. Plus, InChI seems to
-            // use lower CIPRank-neighbors rather than higher-CIPRank ones (hence
-            // the use of hydrogen neighbor). However, if the neighbors we
-            // selected differ from what are in stereo0DPtr->neighbor, we might
-            // also need to switch E and Z
-            ROMol::ADJ_ITER begin, end;
-            boost::tie(begin,
-                       end) = m->getAtomNeighbors(m->getAtomWithIdx(left));
-            int cip = -1, _cip;
-            while (begin != end) {
-              if (*begin != right) {
-                if ((_cip = ranks[*begin]) > cip) {
-                  if (leftNbr >= 0)
-                    extraLeftNbr = leftNbr;
-                  leftNbr = *begin;
-                  cip = _cip;
-                } else {
-                  extraLeftNbr = *begin;
-                }
-              }
-              begin ++;
-            }
-            boost::tie(begin,
-                       end) = m->getAtomNeighbors(m->getAtomWithIdx(right));
-            cip = -1;
-            while (begin != end) {
-              if (*begin != left) {
-                if ((_cip = ranks[*begin]) > cip) {
-                  if (rightNbr >= 0)
-                    extraRightNbr = rightNbr;
-                  rightNbr = *begin;
-                  cip = _cip;
-                } else {
-                  extraRightNbr = *begin;
-                }
-              }
-              begin ++;
-            }
-            bool switchEZ = false;
-            if ((originalLeftNbr == leftNbr && originalRightNbr != rightNbr)
-                || (originalLeftNbr != leftNbr && originalRightNbr == rightNbr))
-              switchEZ = true;
-
-            char parity = stereo0DPtr->parity;
-            if (parity == INCHI_PARITY_ODD && switchEZ)
-              parity = INCHI_PARITY_EVEN;
-            else if (parity == INCHI_PARITY_EVEN && switchEZ)
-              parity = INCHI_PARITY_ODD;
-
-            Bond* leftBond = m->getBondBetweenAtoms(left, leftNbr);
-            Bond* rightBond = m->getBondBetweenAtoms(right, rightNbr);
-            if (extraLeftNbr >= 0) {
-              int modifier = -1;  // modifier to track whether bond is reversed
-              if (leftBond->getBeginAtomIdx() != left)
-                modifier *= -1;
-              Bond* extraLeftBond = m->getBondBetweenAtoms(left, extraLeftNbr);
-              if (extraLeftBond->getBeginAtomIdx() != left)
-                modifier *= -1;
-              if (modifier == 1)
-                zBondPairs.push_back(std::make_pair(leftBond->getIdx(),
-                                                    extraLeftBond->getIdx()));
-              else
-                eBondPairs.push_back(std::make_pair(leftBond->getIdx(),
-                                                    extraLeftBond->getIdx()));
-            }
-            if (extraRightNbr >= 0) {
-              int modifier = -1;  // modifier to track whether bond is reversed
-              Bond* extraRightBond = m->getBondBetweenAtoms(right, extraRightNbr);
-              if (rightBond->getBeginAtomIdx() != right)
-                modifier *= -1;
-              if (extraRightBond->getBeginAtomIdx() != right)
-                modifier *= -1;
-              if (modifier == 1)
-                zBondPairs.push_back(std::make_pair(rightBond->getIdx(),
-                                                    extraRightBond->getIdx()));
-              else
-                eBondPairs.push_back(std::make_pair(rightBond->getIdx(),
-                                                    extraRightBond->getIdx()));
-            }
-            int modifier = -1;  // modifier to track whether bond is reversed
-            if (leftBond->getBeginAtomIdx() != left)
-              modifier *= -1;
-            if (rightBond->getBeginAtomIdx() != right)
-              modifier *= -1;
-
-            if (parity == INCHI_PARITY_ODD) {
-              bond->setStereo(Bond::STEREOZ);
-              if (modifier == 1)
-                eBondPairs.push_back(std::make_pair(leftBond->getIdx(),
-                                                    rightBond->getIdx()));
-              else
-                zBondPairs.push_back(std::make_pair(leftBond->getIdx(),
-                                                    rightBond->getIdx()));
-            } else if (parity == INCHI_PARITY_EVEN) {
-              bond->setStereo(Bond::STEREOE);
-              if (modifier == 1)
-                zBondPairs.push_back(std::make_pair(leftBond->getIdx(),
-                                                    rightBond->getIdx()));
-              else
-                eBondPairs.push_back(std::make_pair(leftBond->getIdx(),
-                                                    rightBond->getIdx()));
-            } else if (parity == INCHI_PARITY_NONE) {
-              bond->setStereo(Bond::STEREONONE);
+          double mass = periodicTable->getAtomicWeight(atom->getAtomicNum());
+          if (inchiAtom->isotopic_mass) {
+            mass += inchiAtom->isotopic_mass - ISOTOPIC_SHIFT_FLAG;
+          }
+          atom->setMass(mass);
+          // set charge
+          atom->setFormalCharge(inchiAtom->charge);
+          // set radical
+          if (inchiAtom->radical) {
+            if (inchiAtom->radical != 3 && inchiAtom->radical != 2) {
+              BOOST_LOG(rdWarningLog)
+                << "expect radical to be either 2 or 3 while getting "
+                << inchiAtom->radical <<". Ignore radical."
+                << std::endl;
             } else {
-              bond->setStereo(Bond::STEREOANY);
+              atom->setNumRadicalElectrons(inchiAtom->radical - 1);
             }
-            // set the stereo atoms for the double bond
-            bond->getStereoAtoms().push_back(leftNbr);
-            bond->getStereoAtoms().push_back(rightNbr);
-            break;
-            }
-          case INCHI_StereoType_Tetrahedral:
-            {
-            unsigned int c = indexToAtomIndexMapping[stereo0DPtr->central_atom];
-            Atom* atom = m->getAtomWithIdx(c);
-            // find number of swaps for the members
-            int nSwaps = 0;
-            unsigned int nid = 0;
-            if (stereo0DPtr->neighbor[0] == stereo0DPtr->central_atom) {
-              // 3-neighbor case
-              nid = 1;
-              if (atom->getTotalNumHs() == 1)
-                nSwaps = 1;
-            } 
-            std::list<int> neighbors;
-            for (; nid < 4; nid ++) {
-              unsigned end = indexToAtomIndexMapping[stereo0DPtr->neighbor[nid]];
-              Bond* bond = m->getBondBetweenAtoms(c, end);
-              neighbors.push_back(bond->getIdx());
-            }
-            nSwaps += atom->getPerturbationOrder(neighbors);
-
-            if (stereo0DPtr->parity == INCHI_PARITY_ODD) {
-              atom->setProp("_CIPCode", "R", true);
-              if (nSwaps % 2) {
-                atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-              } else {
-                atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-              }
-            } else {
-              atom->setProp("_CIPCode", "S", true);
-              if (nSwaps % 2) {
-                atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-              } else {
-                atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-              }
-            }
-            break;
-            }
-          case INCHI_StereoType_Allene:
-            BOOST_LOG(rdWarningLog) 
-              << "Allene-style stereochemistry is not supported yet and will be ignored." 
-              << std::endl;
-            break;
-          default:
-            BOOST_LOG(rdWarningLog) 
-              << "Unrecognized stereo0D type ("
-              << (int) stereo0DPtr->type
-              << ") is ignored!"
-              << std::endl;
-          } // end switch stereotype
-        } // end for loop over all stereo0D entries
-        // set the bond directions
-        if (! assignBondDirs(*m, zBondPairs, eBondPairs)) {
-          BOOST_LOG(rdWarningLog) << "Cannot assign bond directions!"
-            << std::endl;;
+          }
+          // number of hydrogens
+          atom->setNumExplicitHs(inchiAtom->num_iso_H[0]);
+          if (inchiAtom->num_iso_H[1]) {
+            isotopes.push_back(boost::make_tuple(1, i, inchiAtom->num_iso_H[1]));
+          } else if (inchiAtom->num_iso_H[2]) {
+            isotopes.push_back(boost::make_tuple(2, i, inchiAtom->num_iso_H[2]));
+          } else if (inchiAtom->num_iso_H[3]) {
+            isotopes.push_back(boost::make_tuple(3, i, inchiAtom->num_iso_H[3]));
+          }
+          //atom->setNoImplicit(true);
+          // add atom to molecule
+          unsigned int aid = m->addAtom(atom, false, true);
+          indexToAtomIndexMapping.push_back(aid);
+#ifdef DEBUG
+          BOOST_LOG(rdWarningLog) << "adding " << aid << ":" << atom->getAtomicNum() << ":" << (int) inchiAtom->num_iso_H[0]<< std::endl ;
+#endif
         }
-      } // end if (if stereo0D presents)
-    } // end if (if return code is success)     
 
-    // clean up
-    delete[] _inchi;
-    FreeStructFromINCHI(&inchiOutput);
+        // adding bonds
+        std::set<std::pair<unsigned int, unsigned int> > bondRegister;
+        for (unsigned int i = 0; i < nAtoms; i ++) {
+          inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
+          unsigned int nBonds = inchiAtom->num_bonds;
+          for (unsigned int b = 0; b < nBonds; b++) {
+            unsigned int nbr = inchiAtom->neighbor[b];
+            // check register to avoid duplication
+            if (bondRegister.find(std::make_pair(i, nbr)) != bondRegister.end() ||
+                bondRegister.find(std::make_pair(nbr, i)) != bondRegister.end()) {
+              continue;
+            }
+            bondRegister.insert(std::make_pair(i, nbr));
+            Bond* bond = NULL;
+            // bond type
+            if (inchiAtom->bond_type[b] <= INCHI_BOND_TYPE_TRIPLE)
+              bond = new Bond(
+                              (Bond::BondType) inchiAtom->bond_type[b]);
+            else {
+              BOOST_LOG(rdWarningLog)
+                << "receive ALTERN bond type which should be avoided. "
+                << "This is treated as aromatic." << std::endl;
+              bond = new Bond(Bond::AROMATIC);
+              bond->setIsAromatic(true);
+            }
+            // bond ends
+            bond->setBeginAtomIdx(indexToAtomIndexMapping[i]);
+            bond->setEndAtomIdx(indexToAtomIndexMapping[nbr]);
+            // bond stereo
+            switch (inchiAtom->bond_stereo[b]) {
+            case INCHI_BOND_STEREO_NONE: break;
+            case INCHI_BOND_STEREO_SINGLE_1UP: 
+            case INCHI_BOND_STEREO_SINGLE_2DOWN: 
+              bond->setBondDir(Bond::BEGINWEDGE);
+              break;
+            case INCHI_BOND_STEREO_SINGLE_1DOWN: 
+            case INCHI_BOND_STEREO_SINGLE_2UP: 
+              bond->setBondDir(Bond::BEGINDASH);
+              break;
+            case INCHI_BOND_STEREO_SINGLE_1EITHER:
+              bond->setBondDir(Bond::UNKNOWN);
+              break;
+            case INCHI_BOND_STEREO_DOUBLE_EITHER:
+              bond->setBondDir(Bond::EITHERDOUBLE);
+              break;
+            }
+            // add bond
+            m->addBond(bond, true);
+#ifdef DEBUG
+            BOOST_LOG(rdWarningLog) << "adding " << (int) bond->getBeginAtomIdx()
+                                    << "("
+                                    << m->getAtomWithIdx(bond->getBeginAtomIdx())->getAtomicNum()
+                                    << ")"
+                                    << "-" << (int) bond->getEndAtomIdx()
+                                    << "("
+                                    << m->getAtomWithIdx(bond->getEndAtomIdx())->getAtomicNum()
+                                    << ")"
+                                    << "[" << (int) bond->getBondType() << "]"<< std::endl ;
+#endif
+          }
+        }
+
+        // adding isotopes at the end
+        for (ISOTOPES_t::iterator ii = isotopes.begin(); ii != isotopes.end();
+             ii++) {
+          unsigned int isotope, aid, repeat;
+          boost::tie(isotope, aid, repeat) = *ii;
+          aid = indexToAtomIndexMapping[aid];
+          for (unsigned int i = 0; i < repeat; i ++) {
+            // create atom
+            Atom *atom = new Atom;
+            atom->setAtomicNum(1);
+            // set mass
+            atom->setMass(periodicTable->getAtomicWeight(atom->getAtomicNum()) +
+                          isotope - 1);
+            int j = m->addAtom(atom, false, true);
+            // add bond
+            Bond* bond = new Bond(Bond::SINGLE);
+            bond->setEndAtomIdx(aid);
+            bond->setBeginAtomIdx(j);
+            m->addBond(bond, true);
+          }
+        }
+
+        // basic topological structure is ready. calculate valence
+        for (unsigned int i = 0; i < m->getNumAtoms(); i ++) {
+          m->getAtomWithIdx(i)->calcImplicitValence(false);
+        }
+
+        // 0Dstereo
+        unsigned int numStereo0D = inchiOutput.num_stereo0D;
+        INT_PAIR_VECT zBondPairs, eBondPairs;
+        if (numStereo0D) {
+          // calculate CIPCode as they might be used
+          INT_VECT ranks;
+          Chirality::assignAtomCIPRanks(*m, ranks);
+          for (int i = 0; i < numStereo0D; i ++) {
+            inchi_Stereo0D* stereo0DPtr = inchiOutput.stereo0D + i;
+            if (stereo0DPtr->parity == INCHI_PARITY_NONE ||
+                stereo0DPtr->parity == INCHI_PARITY_UNDEFINED)
+              continue;
+            switch (stereo0DPtr->type) {
+            case INCHI_StereoType_None:
+              break;
+            case INCHI_StereoType_DoubleBond:
+              {
+                // find the bond
+                int left, right, leftNbr, originalLeftNbr, rightNbr,
+                  originalRightNbr, extraLeftNbr, extraRightNbr;
+                left = indexToAtomIndexMapping[stereo0DPtr->neighbor[1]];
+                right = indexToAtomIndexMapping[stereo0DPtr->neighbor[2]];
+                originalLeftNbr = indexToAtomIndexMapping[stereo0DPtr->neighbor[0]];
+                originalRightNbr = indexToAtomIndexMapping[stereo0DPtr->neighbor[3]];
+                leftNbr = extraLeftNbr = rightNbr = extraRightNbr = -1;
+                Bond* bond = m->getBondBetweenAtoms(left, right);
+                // also find neighboring atoms. Note we cannot use what InChI returned
+                // in stereo0DPtr->neighbor as there can be hydrogen in it, which is
+                // later removed and is therefore not reliable. Plus, InChI seems to
+                // use lower CIPRank-neighbors rather than higher-CIPRank ones (hence
+                // the use of hydrogen neighbor). However, if the neighbors we
+                // selected differ from what are in stereo0DPtr->neighbor, we might
+                // also need to switch E and Z
+                ROMol::ADJ_ITER begin, end;
+                boost::tie(begin,
+                           end) = m->getAtomNeighbors(m->getAtomWithIdx(left));
+                int cip = -1, _cip;
+                while (begin != end) {
+                  if (*begin != right) {
+                    if ((_cip = ranks[*begin]) > cip) {
+                      if (leftNbr >= 0)
+                        extraLeftNbr = leftNbr;
+                      leftNbr = *begin;
+                      cip = _cip;
+                    } else {
+                      extraLeftNbr = *begin;
+                    }
+                  }
+                  begin ++;
+                }
+                boost::tie(begin,
+                           end) = m->getAtomNeighbors(m->getAtomWithIdx(right));
+                cip = -1;
+                while (begin != end) {
+                  if (*begin != left) {
+                    if ((_cip = ranks[*begin]) > cip) {
+                      if (rightNbr >= 0)
+                        extraRightNbr = rightNbr;
+                      rightNbr = *begin;
+                      cip = _cip;
+                    } else {
+                      extraRightNbr = *begin;
+                    }
+                  }
+                  begin ++;
+                }
+                bool switchEZ = false;
+                if ((originalLeftNbr == leftNbr && originalRightNbr != rightNbr)
+                    || (originalLeftNbr != leftNbr && originalRightNbr == rightNbr))
+                  switchEZ = true;
+
+                char parity = stereo0DPtr->parity;
+                if (parity == INCHI_PARITY_ODD && switchEZ)
+                  parity = INCHI_PARITY_EVEN;
+                else if (parity == INCHI_PARITY_EVEN && switchEZ)
+                  parity = INCHI_PARITY_ODD;
+
+                Bond* leftBond = m->getBondBetweenAtoms(left, leftNbr);
+                Bond* rightBond = m->getBondBetweenAtoms(right, rightNbr);
+                if (extraLeftNbr >= 0) {
+                  int modifier = -1;  // modifier to track whether bond is reversed
+                  if (leftBond->getBeginAtomIdx() != left)
+                    modifier *= -1;
+                  Bond* extraLeftBond = m->getBondBetweenAtoms(left, extraLeftNbr);
+                  if (extraLeftBond->getBeginAtomIdx() != left)
+                    modifier *= -1;
+                  if (modifier == 1)
+                    zBondPairs.push_back(std::make_pair(leftBond->getIdx(),
+                                                        extraLeftBond->getIdx()));
+                  else
+                    eBondPairs.push_back(std::make_pair(leftBond->getIdx(),
+                                                        extraLeftBond->getIdx()));
+                }
+                if (extraRightNbr >= 0) {
+                  int modifier = -1;  // modifier to track whether bond is reversed
+                  Bond* extraRightBond = m->getBondBetweenAtoms(right, extraRightNbr);
+                  if (rightBond->getBeginAtomIdx() != right)
+                    modifier *= -1;
+                  if (extraRightBond->getBeginAtomIdx() != right)
+                    modifier *= -1;
+                  if (modifier == 1)
+                    zBondPairs.push_back(std::make_pair(rightBond->getIdx(),
+                                                        extraRightBond->getIdx()));
+                  else
+                    eBondPairs.push_back(std::make_pair(rightBond->getIdx(),
+                                                        extraRightBond->getIdx()));
+                }
+                int modifier = -1;  // modifier to track whether bond is reversed
+                if (leftBond->getBeginAtomIdx() != left)
+                  modifier *= -1;
+                if (rightBond->getBeginAtomIdx() != right)
+                  modifier *= -1;
+
+                if (parity == INCHI_PARITY_ODD) {
+                  bond->setStereo(Bond::STEREOZ);
+                  if (modifier == 1)
+                    eBondPairs.push_back(std::make_pair(leftBond->getIdx(),
+                                                        rightBond->getIdx()));
+                  else
+                    zBondPairs.push_back(std::make_pair(leftBond->getIdx(),
+                                                        rightBond->getIdx()));
+                } else if (parity == INCHI_PARITY_EVEN) {
+                  bond->setStereo(Bond::STEREOE);
+                  if (modifier == 1)
+                    zBondPairs.push_back(std::make_pair(leftBond->getIdx(),
+                                                        rightBond->getIdx()));
+                  else
+                    eBondPairs.push_back(std::make_pair(leftBond->getIdx(),
+                                                        rightBond->getIdx()));
+                } else if (parity == INCHI_PARITY_NONE) {
+                  bond->setStereo(Bond::STEREONONE);
+                } else {
+                  bond->setStereo(Bond::STEREOANY);
+                }
+                // set the stereo atoms for the double bond
+                bond->getStereoAtoms().push_back(leftNbr);
+                bond->getStereoAtoms().push_back(rightNbr);
+                break;
+              }
+            case INCHI_StereoType_Tetrahedral:
+              {
+                unsigned int c = indexToAtomIndexMapping[stereo0DPtr->central_atom];
+                Atom* atom = m->getAtomWithIdx(c);
+                // find number of swaps for the members
+                int nSwaps = 0;
+                unsigned int nid = 0;
+                if (stereo0DPtr->neighbor[0] == stereo0DPtr->central_atom) {
+                  // 3-neighbor case
+                  nid = 1;
+                  if (atom->getTotalNumHs() == 1)
+                    nSwaps = 1;
+                } 
+                std::list<int> neighbors;
+                for (; nid < 4; nid ++) {
+                  unsigned end = indexToAtomIndexMapping[stereo0DPtr->neighbor[nid]];
+                  Bond* bond = m->getBondBetweenAtoms(c, end);
+                  neighbors.push_back(bond->getIdx());
+                }
+                nSwaps += atom->getPerturbationOrder(neighbors);
+
+                if (stereo0DPtr->parity == INCHI_PARITY_ODD) {
+                  atom->setProp("_CIPCode", "R", true);
+                  if (nSwaps % 2) {
+                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+                  } else {
+                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+                  }
+                } else {
+                  atom->setProp("_CIPCode", "S", true);
+                  if (nSwaps % 2) {
+                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+                  } else {
+                    atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+                  }
+                }
+                break;
+              }
+            case INCHI_StereoType_Allene:
+              BOOST_LOG(rdWarningLog) 
+                << "Allene-style stereochemistry is not supported yet and will be ignored." 
+                << std::endl;
+              break;
+            default:
+              BOOST_LOG(rdWarningLog) 
+                << "Unrecognized stereo0D type ("
+                << (int) stereo0DPtr->type
+                << ") is ignored!"
+                << std::endl;
+            } // end switch stereotype
+          } // end for loop over all stereo0D entries
+          // set the bond directions
+          if (! assignBondDirs(*m, zBondPairs, eBondPairs)) {
+            BOOST_LOG(rdWarningLog) << "Cannot assign bond directions!"
+                                    << std::endl;;
+          }
+        } // end if (if stereo0D presents)
+      } // end if (if return code is success)     
+
+      // clean up
+      delete[] _inchi;
+      FreeStructFromINCHI(&inchiOutput);
+    }
 
     // clean up the molecule to be acceptable to RDKit
     if (m) {
@@ -1906,22 +1937,27 @@ namespace RDKit {
     inchi_Output output;
 
     // call DLL
-    int retcode = GetINCHI(&input, &output);
-
-    // generate output
-    rv.returnCode = retcode;
     std::string inchi;
-    if (output.szInChI)
-      inchi = std::string(output.szInChI);
-    if (output.szMessage)
-      rv.messagePtr = std::string(output.szMessage);
-    if (output.szLog)
-      rv.logPtr = std::string(output.szLog);
-    if (output.szAuxInfo)
-      rv.auxInfoPtr = std::string(output.szAuxInfo);
+    {
+#if RDK_TEST_MULTITHREADED
+      boost::lock_guard<boost::mutex> lock(inchiMutex);
+#endif
+      int retcode = GetINCHI(&input, &output);
 
-    // clean up
-    FreeINCHI(&output);
+      // generate output
+      rv.returnCode = retcode;
+      if (output.szInChI)
+        inchi = std::string(output.szInChI);
+      if (output.szMessage)
+        rv.messagePtr = std::string(output.szMessage);
+      if (output.szLog)
+        rv.logPtr = std::string(output.szLog);
+      if (output.szAuxInfo)
+        rv.auxInfoPtr = std::string(output.szAuxInfo);
+
+      // clean up
+      FreeINCHI(&output);
+    }
     if (input.szOptions)
       delete[] input.szOptions;
 
@@ -1934,7 +1970,13 @@ namespace RDKit {
   std::string InchiToInchiKey(const std::string &inchi) {
     char inchiKey[29];
     char xtra1[65], xtra2[65];
-    int ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
+    int ret=0;
+    {
+#if RDK_TEST_MULTITHREADED
+      boost::lock_guard<boost::mutex> lock(inchiMutex);
+#endif
+      ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
+    }
     std::string error;
     switch (ret) {
     case INCHIKEY_OK:
