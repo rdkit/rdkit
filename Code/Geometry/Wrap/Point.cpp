@@ -245,7 +245,8 @@ The x, y, and z coordinates can be read and written using either attributes\n\
         .def_pickle(PointND_pickle_suite())
         ;
 
-
+      python::def("ComputeDihedralAngle",computeDihedralAngle,"calculates the dihedral angle determined by four Point3D objects");
+      python::def("ComputeSignedDihedralAngle",computeSignedDihedralAngle,"calculates the signed dihedral angle determined by four Point3D objects");
     }
   };
 }

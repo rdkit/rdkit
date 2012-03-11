@@ -246,6 +246,13 @@ namespace RDGeom {
   double computeDihedralAngle(const Point3D &pt1, const Point3D &pt2,
                               const Point3D &pt3, const Point3D &pt4);
 
+  // given a  set of four pts in 3D compute the signed dihedral angle between the
+  // plane of the first three points (pt1, pt2, pt3) and the plane of the 
+  // last three points (pt2, pt3, pt4)
+  // the computed angle is between -PI and PI
+  double computeSignedDihedralAngle(const Point3D &pt1, const Point3D &pt2,
+                                    const Point3D &pt3, const Point3D &pt4);
+
   class Point2D : public Point {
   public:
     double x,
