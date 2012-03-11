@@ -639,6 +639,8 @@ void testSmartsWrite() {
     "c1nnnn1",
     "O1CC1",
     "[C^3]",
+    "[$([NH2][CX4]),$([$([NH]([CX4])[CX4]);!$([NH]([CX4])[CX4][O,N]);!$([NH]([CX4])[CX4][O,N])]),$([ND3]([CX4])([CX4])[CX4])]", // this was sf.net issue 3496800
+    "[r6][r6]", // this was sf.net issue 3496799
     "EOS"};
   
   std::vector<std::string> diffSmi;

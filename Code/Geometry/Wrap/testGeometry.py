@@ -341,6 +341,59 @@ class TestCase(unittest.TestCase):
         self.failUnless(feq(geom.TanimotoDistance(grd4,grd2),.5))
         
 
+    def test6Dihedrals(self):
+        p1 = geom.Point3D(1,0,0)
+        p2 = geom.Point3D(0,0,0)
+        p3 = geom.Point3D(0,1,0)
+
+        p4 = geom.Point3D(.5,1,.5)
+        ang = geom.ComputeDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,math.pi/4,4)
+        ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,-math.pi/4,4)
+
+        p4 = geom.Point3D(-.5,1,.5)
+        ang = geom.ComputeDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,3*math.pi/4,4)
+        ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,-3*math.pi/4,4)
+
+        p4 = geom.Point3D(.5,1,-.5)
+        ang = geom.ComputeDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,math.pi/4,4)
+        ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,math.pi/4,4)
+        
+        p4 = geom.Point3D(-.5,1,-.5)
+        ang = geom.ComputeDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,3*math.pi/4,4)
+        ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,3*math.pi/4,4)
+
+        p4 = geom.Point3D(0,1,1)
+        ang = geom.ComputeDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,math.pi/2,4)
+        ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,-math.pi/2,4)
+
+        p4 = geom.Point3D(0,1,-1)
+        ang = geom.ComputeDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,math.pi/2,4)
+        ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,math.pi/2,4)
+
+        p4 = geom.Point3D(1,1,0)
+        ang = geom.ComputeDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,0,4)
+        ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,0,4)
+
+        p4 = geom.Point3D(-1,1,0)
+        ang = geom.ComputeDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,math.pi,4)
+        ang = geom.ComputeSignedDihedralAngle(p1,p2,p3,p4)
+        self.failUnlessAlmostEqual(ang,math.pi,4)
+
         
         
 if __name__=='__main__':

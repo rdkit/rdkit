@@ -20,7 +20,7 @@ ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
   
-PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"004000"' ${INCHIFLAGS}
+PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"004100"' ${INCHIFLAGS}
 
 CPLUSPLUSFLAGS = $(filter-out -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
 CPLUSPLUSFLAGS += -Wno-deprecated -Wno-unused-function

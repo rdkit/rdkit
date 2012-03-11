@@ -12,15 +12,32 @@
 //#include <Numerics/Vector.h>
 
 namespace RDGeom {
+  double computeSignedDihedralAngle(const Point3D &pt1, const Point3D &pt2,
+                              const Point3D &pt3, const Point3D &pt4) {
+    Point3D begEndVec = pt3 - pt2;
+    Point3D begNbrVec = pt1 - pt2;
+    Point3D crs1 = begNbrVec.crossProduct(begEndVec);
+    
+    Point3D endNbrVec = pt4 - pt3;
+    Point3D crs2 = endNbrVec.crossProduct(begEndVec);
+
+    double ang = crs1.angleTo(crs2);
+
+    // now calculate the sign:
+    Point3D crs3 = crs1.crossProduct(crs2);
+    double dot = crs3.dotProduct(begEndVec);
+    if(dot<0.0) ang*=-1;
+    
+    return ang;
+  }
   double computeDihedralAngle(const Point3D &pt1, const Point3D &pt2,
                               const Point3D &pt3, const Point3D &pt4) {
     Point3D begEndVec = pt3 - pt2;
     Point3D begNbrVec = pt1 - pt2;
     Point3D crs1 = begNbrVec.crossProduct(begEndVec);
     
-    begEndVec *= -1.0;
     Point3D endNbrVec = pt4 - pt3;
-    Point3D crs2 = begEndVec.crossProduct(endNbrVec);
+    Point3D crs2 = endNbrVec.crossProduct(begEndVec);
 
     double ang = crs1.angleTo(crs2);
     return ang;

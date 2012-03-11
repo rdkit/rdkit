@@ -62,31 +62,31 @@ SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
    245
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1'::qmol;
+SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccccc1');
  count 
 -------
    901
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1'::qmol;
+SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1cccnc1');
  count 
 -------
    245
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> 'c1ccc[n,c]c1'::qmol;
+SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccc[n,c]c1');
  count 
 -------
    939
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE 'c1ccccc1'::qmol <@ m;
+SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccccc1') <@ m;
  count 
 -------
    901
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE 'c1ccc[n,c]c1'::qmol <@ m;
+SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccc[n,c]c1') <@ m;
  count 
 -------
    939

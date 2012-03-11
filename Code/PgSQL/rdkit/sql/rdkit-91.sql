@@ -25,11 +25,11 @@ SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1';
 SELECT count(*) FROM pgmol WHERE 'c1ccccc1' <@ m;
 SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
 
-SELECT count(*) FROM pgmol WHERE m @> 'c1ccccc1'::qmol;
-SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1'::qmol;
-SELECT count(*) FROM pgmol WHERE m @> 'c1ccc[n,c]c1'::qmol;
-SELECT count(*) FROM pgmol WHERE 'c1ccccc1'::qmol <@ m;
-SELECT count(*) FROM pgmol WHERE 'c1ccc[n,c]c1'::qmol <@ m;
+SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccccc1');
+SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1cccnc1');
+SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccc[n,c]c1');
+SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccccc1') <@ m;
+SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccc[n,c]c1') <@ m;
 
 
 SELECT id, rdkit_fp(m) AS f INTO pgbfp FROM pgmol;

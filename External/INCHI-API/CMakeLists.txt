@@ -76,5 +76,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
                      ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
   endif(RDK_BUILD_INCHI_SUPPORT)
+  get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
+  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+          "${extra_clean_files};${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py")
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 

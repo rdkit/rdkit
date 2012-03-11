@@ -144,7 +144,7 @@ parseMolText(char *data,bool asSmarts) {
     if(!asSmarts){
       mol = SmilesToMol(StringData);
     } else {
-      mol = SmartsToMol(StringData);
+      mol = SmartsToMol(StringData,0,false);
     }
   } catch (...) {
     ereport(ERROR,
@@ -156,7 +156,7 @@ parseMolText(char *data,bool asSmarts) {
             (errcode(ERRCODE_DATA_EXCEPTION),
              errmsg("smiles '%s' could not be parsed",data)));
   }
-
+    
   return (CROMol)mol;
 }
 extern "C" CROMol 

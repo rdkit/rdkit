@@ -25,6 +25,7 @@
 #include <ctime>
 #include <iostream>
 #include <fstream>
+#include <boost/algorithm/string.hpp>
 
 
 using namespace RDKit;
@@ -781,6 +782,66 @@ void testIssue3316407(){
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testIssue3496759(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3496759." << std::endl;
+
+  {
+    ROMol *m1 = SmartsToMol("c1ncncn1");
+    TEST_ASSERT(m1);
+    std::string smi1=MolToSmiles(*m1,1);
+    TEST_ASSERT(smi1=="c1ncncn1");
+    
+    std::string pickle;
+    MolPickler::pickleMol(*m1,pickle);
+    RWMol *m2 = new RWMol(pickle);
+    TEST_ASSERT(m2);
+
+    std::string smi2=MolToSmiles(*m2,1);
+    TEST_ASSERT(smi2=="c1ncncn1");
+    
+    delete m1;
+    delete m2;
+  }
+
+  {
+    std::string fName = getenv("RDBASE");
+    fName += "/Data/SmartsLib/RLewis_smarts.txt";
+    std::ifstream inf(fName.c_str());
+    while(!inf.eof()){
+      std::string inl;
+      std::getline(inf,inl);
+      if(inl[0]=='#'||inl.size()<2) continue;
+      std::vector<std::string> tokens;
+      boost::split(tokens,inl,boost::is_any_of(" \t"));
+      //std::cerr<<"smarts: "<<tokens[0]<<std::endl;
+      ROMol *m1 = SmartsToMol(tokens[0]);
+      TEST_ASSERT(m1);
+      std::string smi1=MolToSmiles(*m1,1);
+      std::string sma1=MolToSmarts(*m1);
+
+      std::string pickle;
+      MolPickler::pickleMol(*m1,pickle);
+      RWMol *m2 = new RWMol(pickle);
+      TEST_ASSERT(m2);
+
+      std::string smi2=MolToSmiles(*m2,1);
+      std::string sma2=MolToSmarts(*m2);
+
+      //std::cerr<<"smi match: "<<smi1<<" "<<smi2<<std::endl;
+      TEST_ASSERT(smi1==smi2);
+      //std::cerr<<"sma match: "<<sma1<<" "<<sma2<<std::endl;
+      TEST_ASSERT(sma1==sma2);
+
+      delete m1;
+      delete m2;
+    }
+
+  }
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 
 
 int main(int argc, char *argv[]) {
@@ -808,6 +869,7 @@ int main(int argc, char *argv[]) {
   testIssue2788233();
   testIssue3202580();
   testIssue3316407();
+  testIssue3496759();
   
   return 0;
 
