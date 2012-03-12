@@ -26,7 +26,7 @@
     class ss_matcher {
     public:
       ss_matcher(const std::string &pattern) : m_pattern(pattern){
-        bool m_needCopies=(pattern.find_first_of("$")!=std::string::npos);
+        m_needCopies=(pattern.find_first_of("$")!=std::string::npos);
         RDKit::RWMol *p=RDKit::SmartsToMol(pattern);
         m_matcher=p;
         POSTCONDITION(m_matcher,"no matcher");
@@ -40,7 +40,7 @@
         // Unfortunately we have to take a performance hit here in order
         // to guarantee thread safety
         if(m_needCopies){
-          const RDKit::ROMol nm(*(m_matcher),true);
+	  const RDKit::ROMol nm(*(m_matcher),true);
           res=RDKit::SubstructMatch(mol,nm,matches);
         } else {
           const RDKit::ROMol &nm=*m_matcher;
