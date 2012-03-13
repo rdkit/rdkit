@@ -97,7 +97,7 @@ namespace RDKit {
     PRECONDITION(charges.size()>=mol.getNumAtoms(),"bad array size");
     
     PeriodicTable *table = PeriodicTable::getTable();
-    GasteigerParams *params = GasteigerParams::getParams();
+    const GasteigerParams *params = GasteigerParams::getParams();
 
     double damp = DAMP;
     int natms = mol.getNumAtoms();

@@ -51,13 +51,18 @@ endif(RDK_BUILD_INCHI_SUPPORT)
 # check whether InChI support is ON after the search
 if(RDK_BUILD_INCHI_SUPPORT)
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES} 
-	  GraphMol RDGeneral Depictor SubstructMatch SmilesParse)
-
+                GraphMol RDGeneral Depictor SubstructMatch SmilesParse 
+                ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})           
   if(RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 
   add_definitions(-DBUILD_INCHI_SUPPORT)
+
+rdkit_test(testInchi test.cpp 
+LINK_LIBRARIES 
+${INCHI_LIBRARIES} 
+	   RDInchiLib ${INCHI_LIBRARIES} FileParsers SmilesParse Depictor SubstructMatch  GraphMol RDGeneral DataStructs RDGeneral RDGeometryLib ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

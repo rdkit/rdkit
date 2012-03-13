@@ -35,16 +35,18 @@ namespace RDKit {
 
   public:
 
-    static GasteigerParams *getParams();
+    static const GasteigerParams *getParams(const std::string &paramData="");
     
     ~GasteigerParams() {
       d_paramMap.clear();
     }
 
-    DOUBLE_VECT getParams(std::string elem, std::string mode,bool throwOnFailure=false) {
+    DOUBLE_VECT getParams(std::string elem, std::string mode,bool throwOnFailure=false) const {
       std::pair<std::string, std::string> query(elem, mode);
-      if (d_paramMap.find(query) != d_paramMap.end()) {
-        return d_paramMap[query];
+      std::map<std::pair<std::string, std::string>, DOUBLE_VECT>::const_iterator iter;
+      iter=d_paramMap.find(query);
+      if (iter != d_paramMap.end()) {
+        return iter->second;
       }
       else {
 	if(throwOnFailure){
@@ -54,13 +56,19 @@ namespace RDKit {
 	  message += mode;
 	  throw message.c_str();
 	} else {
-	  return d_paramMap[std::make_pair<std::string,std::string>("X","*")];
+          iter=d_paramMap.find(std::make_pair<std::string,std::string>("X","*"));
+          if (iter != d_paramMap.end()) {
+            return iter->second;
+          } else {
+            std::string message = "ERROR: Default Gasteiger Partial Charge parameters are missing";
+            throw message.c_str();
+          }
 	}
       }
     }
 
+    GasteigerParams(std::string paramData="");
   private:
-    GasteigerParams();
     std::map<std::pair<std::string, std::string>, DOUBLE_VECT> d_paramMap;
 
     static class GasteigerParams *ds_instance;

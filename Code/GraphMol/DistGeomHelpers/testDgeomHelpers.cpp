@@ -1177,6 +1177,52 @@ void testIssue3483968() {
   }
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+namespace {
+  void runblock(const std::vector<ROMol *> &mols,unsigned int count,unsigned int idx){
+    for(unsigned int j=0;j<10;j++){
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        ROMol *mol = mols[i];
+        std::vector<int> cids=DGeomHelpers::EmbedMultipleConfs(*mol,10);
+        TEST_ASSERT(cids.size() == 10);
+      }
+    }
+  };
+}
+
+
+#include <boost/thread.hpp>  
+void testMultiThread(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+
+  std::cerr<<"building molecules"<<std::endl;
+  std::string smi="c1ccc2c(c1)C1C3C2C13";
+  std::vector<ROMol *> mols;
+  for(unsigned int i=0;i<100;++i){
+    RWMol *m = SmilesToMol(smi);
+    mols.push_back(m);
+  }
+  boost::thread_group tg;
+
+  std::cerr<<"processing"<<std::endl;
+  unsigned int count=4;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,count,i));
+  }
+  tg.join_all();
+
+  for(unsigned int i=0;i<mols.size();++i) delete mols[i];
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+#else
+void testMultiThread(){
+}
+#endif
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1295,6 +1341,9 @@ int main() {
   BOOST_LOG(rdInfoLog) << "\t test sf.net issue 3483968 \n\n";
   testIssue3483968();
 
+  BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "\t test multi-threading \n\n";
+  testMultiThread();
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
 
   return(0);

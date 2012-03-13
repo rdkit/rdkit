@@ -62,7 +62,7 @@ add_subdirectory(Wrap)
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
 
-rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
+rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol RDGeometryLib RDGeneral)
 
 rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES GraphMol RDGeometryLib RDGeneral)
 

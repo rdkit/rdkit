@@ -1000,12 +1000,12 @@ void test4MorganFPs(){
     TEST_ASSERT(mol);
     std::vector<boost::uint32_t> invars(mol->getNumAtoms());
 
-    std::vector<ROMOL_SPTR> patterns(2);
+    std::vector<const ROMol *> patterns(2);
     RWMol *p;
     p=SmartsToMol("[A]");
-    patterns[0]=ROMOL_SPTR(static_cast<ROMol *>(p));
+    patterns[0]=static_cast<const ROMol *>(p);
     p=SmartsToMol("[a]");
-    patterns[1]=ROMOL_SPTR(static_cast<ROMol *>(p));
+    patterns[1]=static_cast<const ROMol *>(p);
     
     MorganFingerprints::getFeatureInvariants(*mol,invars,&patterns);
     TEST_ASSERT(invars[0]!=0);

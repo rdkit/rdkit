@@ -1,12 +1,15 @@
+find_package (Threads)
+
 rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp
-              LINK_LIBRARIES ForceFieldHelpers DistGeometry Alignment)
+              LINK_LIBRARIES ForceFieldHelpers DistGeometry Alignment
+${CMAKE_THREAD_LIBS_INIT})
 
 rdkit_headers(BoundsMatrixBuilder.h
               Embedder.h DEST GraphMol/DistGeomHelpers)
 
 rdkit_test(testDistGeomHelpers testDgeomHelpers.cpp
            LINK_LIBRARIES
-           DistGeomHelpers DistGeometry ForceFieldHelpers ForceField MolAlign MolTransforms  FileParsers SmilesParse SubstructMatch Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral )
+           DistGeomHelpers DistGeometry ForceFieldHelpers ForceField MolAlign MolTransforms  FileParsers SmilesParse SubstructMatch Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
 
 add_subdirectory(Wrap)
 

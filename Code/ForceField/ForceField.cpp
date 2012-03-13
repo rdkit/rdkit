@@ -15,43 +15,57 @@
 #include <Numerics/Optimizer/BFGSOpt.h>
 
 namespace ForceFieldsHelper {
-  ForceFields::ForceField *_ffHolder;
-  double calcEnergy(double *pos){
-    return _ffHolder->calcEnergy(pos);
+  class calcEnergy {
+  public:
+    calcEnergy(ForceFields::ForceField *ffHolder) :
+      mp_ffHolder(ffHolder) {} ;
+    double operator() (double *pos) const {
+      return mp_ffHolder->calcEnergy(pos);
+    }
+  private:
+    ForceFields::ForceField *mp_ffHolder;    
   };
 
-  double calcGrad(double *pos,double *grad){
-    double res = 1.0;
-    // the contribs to the gradient function use +=, so we need
-    // to zero the grad out before moving on:
-    for(unsigned int i=0;i<_ffHolder->numPoints()*_ffHolder->dimension();i++){
-      grad[i] = 0.0;
-    }
-    _ffHolder->calcGrad(pos,grad);
+  class calcGradient {
+  public:
+    calcGradient(ForceFields::ForceField *ffHolder) :
+      mp_ffHolder(ffHolder) {} ;
+    double operator() (double *pos,double *grad) const {
+      double res = 1.0;
+      // the contribs to the gradient function use +=, so we need
+      // to zero the grad out before moving on:
+      for(unsigned int i=0;i<mp_ffHolder->numPoints()*mp_ffHolder->dimension();i++){
+        grad[i] = 0.0;
+      }
+      mp_ffHolder->calcGrad(pos,grad);
 
 #if 1
-    // FIX: this hack reduces the gradients so that the
-    // minimizer is more efficient.
-    double maxGrad=-1e8;
-    double gradScale=0.1;
-    for(unsigned int i=0;i<_ffHolder->numPoints()*_ffHolder->dimension();i++){
-      grad[i] *= gradScale;
-      if(grad[i]>maxGrad) maxGrad=grad[i];
-    }
-    // this is a continuation of the same hack to avoid
-    // some potential numeric instabilities:
-    if(maxGrad>10.0){
-     while(maxGrad*gradScale>10.0){
-       gradScale*=.5;
-     }
-     for(unsigned int i=0;i<_ffHolder->numPoints()*_ffHolder->dimension();i++){
-       grad[i] *= gradScale;
-     }
-    }
-    res=gradScale;
+      // FIX: this hack reduces the gradients so that the
+      // minimizer is more efficient.
+      double maxGrad=-1e8;
+      double gradScale=0.1;
+      for(unsigned int i=0;i<mp_ffHolder->numPoints()*mp_ffHolder->dimension();i++){
+        grad[i] *= gradScale;
+        if(grad[i]>maxGrad) maxGrad=grad[i];
+      }
+      // this is a continuation of the same hack to avoid
+      // some potential numeric instabilities:
+      if(maxGrad>10.0){
+        while(maxGrad*gradScale>10.0){
+          gradScale*=.5;
+        }
+        for(unsigned int i=0;i<mp_ffHolder->numPoints()*mp_ffHolder->dimension();i++){
+          grad[i] *= gradScale;
+        }
+      }
+      res=gradScale;
 #endif
-    return res;
-  }
+      return res;
+
+    }
+  private:
+    ForceFields::ForceField *mp_ffHolder;    
+  };
 }
 
 namespace ForceFields {
@@ -147,10 +161,12 @@ namespace ForceFields {
     double *points=new double[dim];
 
     this->scatter(points);
-    ForceFieldsHelper::_ffHolder=this;
+    ForceFieldsHelper::calcEnergy eCalc(this);
+    ForceFieldsHelper::calcGradient gCalc(this);
+    
     int res = BFGSOpt::minimize(dim,points,forceTol,numIters,finalForce,
-                                ForceFieldsHelper::calcEnergy,
-                                ForceFieldsHelper::calcGrad,energyTol,maxIts);
+                                eCalc,gCalc,
+                                energyTol,maxIts);
     this->gather(points);
 
     delete [] points;
