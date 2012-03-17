@@ -22,7 +22,7 @@ endif
   
 PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"004100"' ${INCHIFLAGS}
 
-CPLUSPLUSFLAGS = $(filter-out -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
+CPLUSPLUSFLAGS = $(filter-out -fexcess-precision=standard -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
 CPLUSPLUSFLAGS += -Wno-deprecated -Wno-unused-function
 #CPLUSPLUSFLAGS += -march=native
 CPLUSPLUSFLAGS += $(PG_CPPFLAGS)
