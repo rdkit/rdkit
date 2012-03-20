@@ -30,6 +30,16 @@ set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c
 	${AVALON_SRC_PATH}/reaccsio.c 
 	${AVALON_SRC_PATH}/hashcode.c
   )
+
+# we need this to ensure that builds continue
+# to work on linux systems with older versions
+# of glibc when we're building with gcc-4.1.
+# Without this flag, we'll endup requiring
+# glibc 2.7.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_definitions(-D_GNU_SOURCE=1)
+endif()  
+
 rdkit_library(avalon_clib ${avalon_clib_srcs})
 
 
