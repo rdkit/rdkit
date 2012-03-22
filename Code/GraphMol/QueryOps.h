@@ -289,7 +289,6 @@ namespace RDKit{
     //! returns a copy of this query
     Queries::Query<int,Atom const *,true> *
     copy() const {
-      //std::cerr<<" recursive structure copy : " << this<<std::endl;
       RecursiveStructureQuery *res =
 	new RecursiveStructureQuery();
       res->dp_queryMol.reset(new ROMol(*dp_queryMol,true));
@@ -301,7 +300,6 @@ namespace RDKit{
       res->setNegation(getNegation());
       res->d_description = d_description;
       res->d_serialNumber=d_serialNumber;
-      //std::cerr<<"----------- done : " << this<<std::endl;
       return res;
     }
     unsigned int getSerialNumber() const { return d_serialNumber; };
