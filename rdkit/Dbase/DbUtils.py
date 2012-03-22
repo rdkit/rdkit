@@ -127,95 +127,7 @@ def GetData(dBase,table,fieldString='*',whereString='',user='sysdba',password='m
 
   return data
 
-
-def DatabaseToExcel(dBase,table,fields='*',join='',where='',wrapper=None,
-                    user='sysdba',password='masterkey',lowMemory=False,cn=None):
-  """ Pulls the contents of a database and puts them in an Excel worksheet
-
-    **Arguments**
-      - dBase: the name of the DB file to be used
-
-      - table: the name of the table to query
-
-      - fields: the fields to select with the SQL query
-
-      - join: the join clause of the SQL query
-        (e.g. 'join foo on foo.bar=base.bar')
-
-      - where: the where clause of the SQL query
-        (e.g. 'where foo = 2' or 'where bar > 17.6')
-
-      - wrapper: an _Excel.ExcelWrapper.ExcelWrapper_ to be used
-        in interacting with Excel
-        
-      - user: the username for DB access
-
-      - password: the password to be used for DB access
-
-  """
-  try:
-    from rdkit.Excel import ExcelWrapper
-  except ImportError:
-    return
-
-  if wrapper is None:
-    wrapper = ExcelWrapper.ExcelWrapper()
-    wrapper.Visible = 1
-  if len(where) and where.strip().find('where') != 0:
-    where = 'where %s'%(where)
-  if len(join) and join.strip().find('join') != 0:
-    join = 'join %s'%(join)
-    
-  sqlCommand = 'select %s from %s %s %s'%(fields,table,join,where)
-  if not cn:
-    cn = DbModule.connect(dBase,user,password)
-  c = cn.cursor()
-  try:
-    c.execute(sqlCommand)
-  except:
-    print 'problems executing SQL statement %s'%(repr(sqlCommand))
-    import sys,traceback
-    traceback.print_exc()
-    return
-  headers = []
-  colsToTake = []
-  strCols = []
-  # the description field of the cursor carries around info about the columns
-  #  of the table
-  for i in range(len(c.description)):
-    item = c.description[i]
-    if item[1] not in DbInfo.sqlBinTypes:
-      colsToTake.append(i)
-      headers.append(item[0])
-      if item[1] in DbInfo.sqlTextTypes:
-        strCols.append(len(colsToTake)-1)
-  wrapper.Workbooks.Add()
-
-  r = wrapper.GetRange(1,1,1,len(headers))
-  # add the headers
-  r.Value = headers
-  # and make them bold
-  r.Font.Bold = 1
-
-  # now just insert the data... easy as pie
-  results = c.fetchall()
-  row = 2
-  fullData = []
-  for res in results:
-    vs = [res[x] for x in colsToTake]
-    for col in strCols:
-      vs[col] = "'%s"%vs[col]
-    if not lowMemory:
-      fullData.append(vs)
-    else:
-      wrapper[row,1:len(headers)]=vs
-      row+=1
-  if not lowMemory:
-    wrapper[row:row+len(fullData),1:len(headers)] = fullData
-
-
-
-def DatabaseToText(dBase,table,fields='*',join='',where='',wrapper=None,
+def DatabaseToText(dBase,table,fields='*',join='',where='',
                   user='sysdba',password='masterkey',delim=',',cn=None):
   """ Pulls the contents of a database and makes a deliminted text file from them
 
@@ -232,9 +144,6 @@ def DatabaseToText(dBase,table,fields='*',join='',where='',wrapper=None,
       - where: the where clause of the SQL query
         (e.g. 'where foo = 2' or 'where bar > 17.6')
 
-      - wrapper: an _Excel.ExcelWrapper.ExcelWrapper_ to be used
-        in interacting with Excel
-        
       - user: the username for DB access
 
       - password: the password to be used for DB access
@@ -320,35 +229,6 @@ def TypeFinder(data,nRows,nCols,nullMarker=None):
             typeHere[0] = locType
     res[col] = typeHere
   return res
-
-def DetermineColTypes(wrapper,nullMarker=None):
-  """This is kind of crude hack to automagically determine the types
-     of columns in the active Excel sheet
-
-   **Arguments**
-
-     - wrapper: the _ExcelWrapper_ to be used in interacting with Excel
-
-     - nullMarker: (optional) if this is not None, elements of the
-       data table which are equal to nullMarker will not count towards
-       setting the type of their columns.
-
-   **Returns**
-
-     - a list of the types of each column
-
-   **Note**
-
-     - we make the assumption that there are only three possible types: int,
-       float and string.
-
-  """
-  nCols = wrapper.FindLastCol(1,1)
-  nRows = wrapper.FindLastRow(1,1)
-  dList = wrapper[2:nRows,1:nCols]
-  res = TypeFinder(dList,nRows-1,nCols,nullMarker=nullMarker)
-  return res
-
 
 def _AdjustColHeadings(colHeadings,maxColLabelLen):
   """ *For Internal Use*
@@ -464,67 +344,6 @@ def _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,
     nDone += _insertBlock(cn,sqlStr,block)
   if not hasattr(cn,'autocommit') or not cn.autocommit:
     cn.commit()
-    
-
-
-def ExcelToDatabase(dBase,table,wrapper=None,user='sysdba',password='masterkey',
-                    maxColLabelLen=31,keyCol=None,nullMarker=None,force=0):
-  """convert the active excel worksheet into a database.
-
-   this isn't as smooth or slick as the conversion the other way... sad.
-   
-    **Arguments**
-
-      - dBase: the name of the DB to use
-
-      - table: the name of the table to create/overwrite
-
-      - wrapper: the _ExcelWrapper_ to use
-
-      - user: the user name to use in connecting to the DB
-
-      - password: the password to use in connecting to the DB
-
-      - maxColLabelLen: the maximum length a column label should be
-        allowed to have (truncation otherwise)
-
-      - keyCol: the column to be used as an index for the db
-      
-    **Notes**
-
-      - if _table_ already exists, it is destroyed before we write
-        the new data
-
-  """
-  try:
-    from rdkit.Excel import ExcelWrapper
-  except ImportError:
-    return
-
-  table.replace('-','_')
-  table.replace(' ','_')
-  if not force:
-    tblNames = [x.strip() for x in DbInfo.GetTableNames(dBase)]
-    tmp = table.upper()
-    if tmp in tblNames:
-      resp = raw_input('Table %s already exists, overwrite it? '%(table))
-      if not resp or resp[0] not in ['Y','y']:
-        print 'cancelled'
-        return
-
-  if wrapper is None:
-    wrapper = ExcelWrapper.ExcelWrapper()
-  colHeadings = wrapper.GetHeadings()
-  _AdjustColHeadings(colHeadings,maxColLabelLen)
-  nCols = len(colHeadings)
-  nRows = wrapper.FindLastRow(1,1)
-  data = wrapper[2:nRows,1:nCols]
-  # determine the types of each column
-  colTypes = TypeFinder(data,nRows-1,nCols,nullMarker=nullMarker)
-  typeStrs = GetTypeStrings(colHeadings,colTypes,keyCol=keyCol)
-  colDefs=','.join(typeStrs)
-
-  _AddDataToDb(dBase,table,user,password,colDefs,colTypes,data,nullMarker=nullMarker)
  
 def TextFileToDatabase(dBase,table,inF,delim=',',
                        user='sysdba',password='masterkey',

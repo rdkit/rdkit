@@ -69,9 +69,6 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
   - -h: show this message and exit
 
-  - -X: send a summary of the results to Excel (NOTE: this will alter the
-     contents of the currently active workbook)
-
   - --OOB: Do out an "out-of-bag" generalization error estimate.  This only
       makes sense when applied to the original data set.
 
@@ -129,15 +126,6 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.Dbase import DbModule
 _details = CompositeRun.CompositeRun()
 
-Excel=None
-def _importExcel():
-  global Excel
-  try:
-    from rdkit.Excel.ExcelWrapper import ExcelWrapper as _Excel
-    Excel=_Excel
-  except ImportError:
-    Excel = None
-  
 __VERSION_STRING="3.3.0"
 
 def message(msg,noRet=0):
@@ -1227,7 +1215,6 @@ def ParseArgs(details):
     Usage()
 
   fName = ''
-  details.reportToExcel=0
   details.predPlot=''
   details.predActCol=''
   details.predActTable=''
@@ -1276,14 +1263,6 @@ def ParseArgs(details):
     elif arg == '-v':
       details.filterVal=float(val)
     elif arg == '-V':
-      verbose=1
-    elif arg == '-X':
-      _importExcel()
-      if Excel is not None:
-        details.reportToExcel = 1
-        details.detailedScreen=1
-      else:
-        message('NOTE: Excel support not enabled, -X option ignored.')
       verbose=1
     elif arg == '--predPlot':
       details.detailedScreen=1
@@ -1398,65 +1377,10 @@ if __name__ == '__main__':
       screenResults[modelIdx] = CollectResults(testIdx,tmpD,model,
                                                errorEstimate=details.errorEstimate)
       dataSets[modelIdx] = testIdx
-    if details.reportToExcel and Excel is not None:
-      xl = Excel()
-      xlCol = 1
-      xlRow = xl.FindLastRow(1,xlCol)
-      if xl[xlRow,xlCol] is not None and str(xl[xlRow,xlCol]):
-        xlRow += 1
-      heads=['Tolerance']
-      if details.note:
-        heads.append('Note')
-      if nModels > 1:
-        heads += [
-          'Mean(MisClass)','Dev(MisClass)',
-          'Mean(Correct Conf)','Dev(Correct Conf)',
-          'Mean(Incorrect Conf)','Dev(Incorrect Conf)',
-          ]
-      else:
-        heads += [
-          'MisClass',
-          'Correct Conf',
-          'Incorrect Conf',
-          ]
-      if models[0].GetActivityQuantBounds():
-        nRes = len(models[0].GetActivityQuantBounds())+1
-      else:
-        nRes = models[0].GetQuantBounds()[1][-1]
-      if nModels>1:
-        for i in range(nRes):
-          heads.append('Mean(Class %d %% pure)'%(i))
-        for i in range(nRes):
-          heads.append('Mean(Class %d %% correct)'%(i))
-      else:
-        for i in range(nRes):
-          heads.append('Class %d %% pure'%(i))
-        for i in range(nRes):
-          heads.append('Class %d %% correct'%(i))
-
-      if nModels > 1:
-        heads += [
-          'Best(MisClass)',
-          'Best(Correct Conf)',
-          'Best(Incorrect Conf)',
-          ]
-      for i in range(len(heads)):
-        xl[xlRow,xlCol+i] = heads[i]
-        xl.Columns(xlCol+i).AutoFit()
-    else:
-      xl = None
     for tol in details.screenVoteTol:
       if len(details.screenVoteTol)>1:
         message('\n-----*****-----*****-----*****-----*****-----*****-----*****-----\n')
         message('Tolerance: %f'%tol)
-      if xl:
-        xlRow+=1  
-        xlCol = 1
-        xl[xlRow,xlCol]=tol
-        xlCol += 1
-        if details.note:
-          xl[xlRow,xlCol]=details.note
-          xlCol += 1
       nGood = numpy.zeros(nModels,numpy.float)
       nBad = numpy.zeros(nModels,numpy.float)
       nSkip = numpy.zeros(nModels,numpy.float)
@@ -1605,20 +1529,6 @@ if __name__ == '__main__':
         if avgNSkip>0:
           print '\tSkipped: \t%4.2f(%4.2f)'%(100*avgConfSkip,100*devConfSkip)
 
-        if xl:
-          xl[xlRow,xlCol]=100.*avgNBad/nExamples
-          xlCol+=1
-          xl[xlRow,xlCol]=100.*devNBad/nExamples
-          xlCol+=1
-          xl[xlRow,xlCol]=100.*avgConfGood
-          xlCol+=1
-          xl[xlRow,xlCol]=100.*devConfGood
-          xlCol += 1
-          xl[xlRow,xlCol]=100.*avgConfBad
-          xlCol+=1
-          xl[xlRow,xlCol]=100.*devConfBad
-          xlCol += 1
-
         if details.detailedScreen:
           message('Results Table:')
           voteTab = numpy.transpose(voteTab)/nModels
@@ -1643,14 +1553,6 @@ if __name__ == '__main__':
             if colCounts[i]==0: colCounts[i]=1
             message(' % 6.2f'%(100.*voteTab[i,i]/colCounts[i]),noRet=1)
           message('')
-          if xl:
-            for i in range(nResultCodes):
-              xl[xlRow,xlCol]=100.*voteTab[i,i]/rowCounts[i]
-              xlCol += 1
-            for i in range(nResultCodes):
-              xl[xlRow,xlCol]=100.*voteTab[i,i]/colCounts[i]
-              xlCol += 1
-
           if details.enrichTgt >-1:
             mean = sum(enrichments)/nModels
             enrichments -= mean
@@ -1680,14 +1582,6 @@ if __name__ == '__main__':
       print '\tIncorrect: \t%4.2f'%(100*confBad[bestIdx])
       if bestSkip>0:
         print '\tSkipped: \t%4.2f'%(100*confSkip[bestIdx])
-      if xl:
-        xl[xlRow,xlCol]=100.*bestBad/nExamples
-        xlCol+=1
-        xl[xlRow,xlCol]=100.*confGood[bestIdx]
-        xlCol+=1
-        xl[xlRow,xlCol]=100.*confBad[bestIdx]
-        xlCol+=1
-
 
       if nModels == 1 and details.detailedScreen:
         message('')
@@ -1714,63 +1608,22 @@ if __name__ == '__main__':
           if colCounts[i]==0: colCounts[i]=1
           message(' % 6.2f'%(100.*voteTab[i,i]/colCounts[i]),noRet=1)
         message('')
-        if xl:
-          for i in range(nResultCodes):
-            xl[xlRow,xlCol]=100.*voteTab[i,i]/rowCounts[i]
-            xlCol += 1
-          for i in range(nResultCodes):
-            xl[xlRow,xlCol]=100.*voteTab[i,i]/colCounts[i]
-            xlCol += 1
       if details.errorAnalysis:
         message('\n*-*-*-*-*-*-*-*- ERROR ANALYSIS -*-*-*-*-*-*-*-*\n')
         ks = badVoteDict.keys()
         if len(ks):
           message(' ---> Bad Vote Counts')
-          if xl:
-            xlRow += 1
-            xl[xlRow,1] = 'Misclassification Counts:'
-            xlRow += 1
-            xl[xlRow,1] = 'ID'
-            xl[xlRow,2] = 'Num_Misses'
-            xlRow += 1
-          for k in ks:
-            pt = data[k]
-            message('%s,%d'%(str(pt[0]),badVoteDict[k]))
-            if xl:
-              xl[xlRow,1] = "'%s"%str(pt[0])
-              xl[xlRow,2] = badVoteDict[k]
-              xlRow += 1
-
         ks = noVoteDict.keys()
         if len(ks):
           message(' ---> Skipped Compound Counts')
-          if xl:
-            xl[xlRow,1] = 'Skipped Compound Counts:'
-            xlRow += 1
           for k in ks:
             pt = data[k]
             message('%s,%d'%(str(pt[0]),noVoteDict[k]))
-            if xl:
-              xl[xlRow,1] = "'%s"%str(pt[0])
-              xl[xlRow,2] = noVoteDict[k]
-              xlRow += 1
 
       if hasattr(details,'showAll') and details.showAll:
         ks = goodVoteDict.keys()
         if len(ks):
           message(' ---> Good Vote Counts')
-          if xl:
-            xlRow += 1
-            xl[xlRow,1] = 'Correct Classification Counts:'
-            xlRow += 1
-            xl[xlRow,1] = 'ID'
-            xl[xlRow,2] = 'Num_Picks'
-            xlRow += 1
           for k in ks:
             pt = data[k]
             message('%s,%d'%(str(pt[0]),goodVoteDict[k]))
-            if xl:
-              xl[xlRow,1] = "'%s"%str(pt[0])
-              xl[xlRow,2] = goodVoteDict[k]
-              xlRow += 1
-

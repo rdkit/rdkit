@@ -24,11 +24,6 @@ Usage:  AnalyzeComposite [optional args] <models>
 
       -N Note: the note string to search for to pull models from the database
 
-      -X: Send the results to Excel.  Note: will alter the current
-          worksheet (by adding data to the end) and only works on
-          systems with Excel installed.  It *is* safe to call this
-          multiple times with a single worksheet.
-
       -v: be verbose whilst screening
 """
 
@@ -38,18 +33,10 @@ from rdkit.ML.DecTree import TreeUtils,Tree
 from rdkit.ML.Data import Stats
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import ScreenComposite
-Excel=None
-def _importExcel():
-  global Excel
-  try:
-    from rdkit.Excel.ExcelWrapper import ExcelWrapper as _Excel
-    Excel=_Excel
-  except ImportError:
-    Excel = None
 
 __VERSION_STRING="2.2.0"
 
-def ProcessIt(composites,nToConsider=3,verbose=0,reportToExcel=0):
+def ProcessIt(composites,nToConsider=3,verbose=0):
   composite=composites[0]
   nComposites =len(composites)
   ns = composite.GetDescriptorNames()
@@ -91,29 +78,11 @@ def ProcessIt(composites,nToConsider=3,verbose=0,reportToExcel=0):
     if verbose >= 0:
       print '# Average Descriptor Positions'
     retVal = []
-    if reportToExcel and Excel is not None:
-      xl = Excel()
-      xlCol = 1
-      xlRow = xl.FindLastRow(1,xlCol)
-      xlRow+=1
-      xl[xlRow,xlCol]=' '.join(sys.argv)
-      xlRow+=1
-    else:
-      xl = None
     for k in globalRes.keys():
       name = descNames[k]
       if verbose >= 0:
         strRes = ', '.join(['%4.2f'%x for x in globalRes[k]])
         print '%s,%s,%5.4f'%(name,strRes,sum(globalRes[k]))
-      if xl:
-        xlCol=1
-        xl[xlRow,xlCol]=name
-        xlCol += 1
-        for v in globalRes[k]:
-          xl[xlRow,xlCol]=v
-          xlCol+=1
-        xl[xlRow,xlCol]=sum(globalRes[k])
-        xlRow += 1
       tmp = [name]
       tmp.extend(globalRes[k])
       tmp.append(sum(globalRes[k]))
@@ -308,7 +277,6 @@ if __name__ == "__main__":
   verbose = 0
   skip = 0
   enrich = 1
-  reportToExcel=0
   for arg,val in args:
     if arg == '-n':
       count = int(val)+1
@@ -318,13 +286,6 @@ if __name__ == "__main__":
       note = val
     elif arg == '-v':
       verbose = 1
-    elif arg == '-X':
-      _importExcel()
-      if Excel is not None:
-        reportToExcel = 1
-      else:
-        ScreenComposite.message('NOTE: Excel support not enabled, -X option ignored.')
-
     elif arg == '--skip':
       skip = 1
     elif arg == '--enrich':
@@ -350,7 +311,7 @@ if __name__ == "__main__":
         composites.append(comp)
       
   if len(composites):
-    ProcessIt(composites,count,verbose=verbose,reportToExcel=reportToExcel)
+    ProcessIt(composites,count,verbose=verbose)
   elif not skip:
     print 'ERROR: no composite models found'
     sys.exit(-1)

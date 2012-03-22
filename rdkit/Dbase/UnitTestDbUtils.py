@@ -45,43 +45,12 @@ class TestCase(unittest.TestCase):
     DbUtils.TextFileToDatabase(self.dbName,tblName,inF)
     self._confirm(tblName)
 
-  def _test2Excel(self):
-    """ test the Excel functionality """
-    import sys
-    if sys.platform!='win32':
-      return
-    from rdkit.Excel import ExcelWrapper
-    w = ExcelWrapper.ExcelWrapper()
-    xlFile = os.path.join(self.baseDir,'dbtest.xls')
-    w.Workbooks.Open(xlFile)
-    tblName = 'fromxl'
-    DbUtils.ExcelToDatabase(self.dbName,tblName,wrapper=w,force=1)
-    w.ActiveWorkbook.Close()
-    if len(w.Workbooks)==0: w.Quit()
-    self._confirm(tblName)
-
   def test3Txt(self):
     """ test reading from a text file including null markers"""
     inF = open(os.path.join(self.baseDir,'dbtest.nulls.csv'),'r')
     tblName = 'fromtext2'
     DbUtils.TextFileToDatabase(self.dbName,tblName,inF,nullMarker='NA')
     self._confirm(tblName)
-
-  def _test4Excel(self):
-    """ test the Excel functionality including nulls """
-    import sys
-    if sys.platform!='win32':
-      return
-    from rdkit.Excel import ExcelWrapper
-    w = ExcelWrapper.ExcelWrapper()
-    xlFile = os.path.join(self.baseDir,'dbtest.nulls.xls')
-    w.Workbooks.Open(xlFile)
-    tblName = 'fromxl2'
-    DbUtils.ExcelToDatabase(self.dbName,tblName,wrapper=w,nullMarker='NA',force=1)
-    w.ActiveWorkbook.Close()
-    if len(w.Workbooks)==0: w.Quit()
-    self._confirm(tblName)
-
 
   def testGetData1(self):
     """ basic functionality
