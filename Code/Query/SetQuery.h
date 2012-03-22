@@ -28,25 +28,21 @@ namespace Queries{
 
     //! insert an entry into our \c set
     void insert(const MatchFuncArgType what){
-      //std::cout << "SET QUERY INSERT: " << what << std::endl;
       if(d_set.find(what) == this->d_set.end()) this->d_set.insert(what);
     }
 
     //! clears our \c set
     void clear(){
-      //std::cout << "SET QUERY CLEAR " << std::endl;
       this->d_set.clear();
     }
 
     bool Match(const DataFuncArgType what) const {
       MatchFuncArgType mfArg = this->TypeConvert(what,Int2Type<needsConversion>());
-      //std::cerr << "SET QUERY SEARCH: " << mfArg << ": "  << (d_set.find(mfArg)==d_set.end()) << std::endl;
       return ( this->d_set.find(mfArg) != this->d_set.end() ) ^ this->getNegation();
     };
 
     Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
-      //std::cerr<<"   set query copy "<<this<<" "<<this->d_description<<std::endl;
       SetQuery<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
 	new SetQuery<MatchFuncArgType,DataFuncArgType,needsConversion>();
       res->setDataFunc(this->d_dataFunc);

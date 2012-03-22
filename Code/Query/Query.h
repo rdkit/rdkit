@@ -100,14 +100,13 @@ namespace Queries {
      */
     virtual Query<MatchFuncArgType,DataFuncArgType,needsConversion> *
     copy( ) const {
-      //std::cerr<<"   query copy "<<this<<" "<<this->d_description<<std::endl;
       Query<MatchFuncArgType,DataFuncArgType,needsConversion> *res =
 	new Query<MatchFuncArgType,DataFuncArgType,needsConversion>();
       typename Query<MatchFuncArgType,DataFuncArgType,needsConversion>::CHILD_VECT_CI iter;
       for(iter=this->beginChildren();
 	  iter!=this->endChildren();
 	  ++iter){
-	res->addChild(CHILD_TYPE(iter->get()->copy()));
+        res->addChild(CHILD_TYPE(iter->get()->copy()));
       }
       res->df_negate = this->df_negate;
       res->d_matchFunc = this->d_matchFunc;

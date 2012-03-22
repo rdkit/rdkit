@@ -49,7 +49,7 @@ namespace Queries {
       for(i=this->beginChildren();
 	  i!=this->endChildren();
 	  ++i){
-	res->addChild(typename BASE::CHILD_TYPE(i->get()->copy()));
+        res->addChild(typename BASE::CHILD_TYPE(i->get()->copy()));
       }
       res->setNegation(this->getNegation());
       res->d_description = this->d_description;
