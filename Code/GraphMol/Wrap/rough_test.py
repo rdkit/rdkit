@@ -2222,6 +2222,36 @@ CAS<~>
                            catchErrors=True)
     self.failUnlessEqual(res,Chem.SanitizeFlags.SANITIZE_NONE)
     
+  def test74Issue3510149(self):
+    mol = Chem.MolFromSmiles("CCC1CNCC1CC")
+    atoms = mol.GetAtoms()
+    mol=None
+    for atom in atoms:
+      idx=atom.GetIdx()
+      p= atom.GetOwningMol().GetNumAtoms()
+
+    mol = Chem.MolFromSmiles("CCC1CNCC1CC")
+    bonds = mol.GetBonds()
+    mol=None
+    for bond in bonds:
+      idx=bond.GetIdx()
+      p= atom.GetOwningMol().GetNumAtoms()
+
+    mol = Chem.MolFromSmiles("CCC1CNCC1CC")
+    bond = mol.GetBondBetweenAtoms(0,1)
+    mol=None
+    idx=bond.GetBeginAtomIdx()
+    p= bond.GetOwningMol().GetNumAtoms()
+      
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','NCI_aids_few.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    mol = sdSup.next()
+    nats = mol.GetNumAtoms()
+    conf = mol.GetConformer()
+    mol=None
+    self.failUnlessEqual(nats,conf.GetNumAtoms())
+    conf.GetOwningMol().GetProp("_Name")
     
 if __name__ == '__main__':
   unittest.main()

@@ -237,7 +237,8 @@ struct mol_wrapper {
       .def("GetConformer", GetMolConformer,
 	   (python::arg("self"),python::arg("id")=-1),
 	   "Get the conformer with a specified ID",
-	   python::return_value_policy<python::reference_existing_object>())
+	   python::return_internal_reference<1,
+	   python::with_custodian_and_ward_postcall<0,1> >())
 
       .def("GetConformers", GetMolConformers,
            "Get all the conformers as a tuple")
@@ -249,7 +250,8 @@ struct mol_wrapper {
            "Remove the conformer with the specified ID")
       .def("GetBondBetweenAtoms", 
 	   (Bond *(ROMol::*)(unsigned int,unsigned int))&ROMol::getBondBetweenAtoms,
-	   python::return_value_policy<python::reference_existing_object>(),
+	   python::return_internal_reference<1,
+	   python::with_custodian_and_ward_postcall<0,1> >(),
 	   "Returns the bond between two atoms, if there is one.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - idx1,idx2: the Atom indices\n\n"
@@ -355,83 +357,14 @@ struct mol_wrapper {
 	   "                      Defaults to 0.\n\n"
 	   "  RETURNS: a tuple of strings\n")
 
-#if 0
-      .def("SetAtomBookmark",
-	   (void (ROMol::*)(Atom *,int))&ROMol::setAtomBookmark,
-	   "Sets an atom bookmark.\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - atom: the Atom to bookmark\n"
-	   "    - mark: an integer bookmark\n")
-
-      .def("GetAtomWithBookmark",&ROMol::getAtomWithBookmark,
-	   "Returns the Atom with a particular bookmark (if there is one).\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - mark: an integer with the bookmark to be retrieved\n\n"
-	   "  RETURNS:\n"
-	   "    an Atom, if the bookmark exists. None otherwise.\n",
-	   python::return_value_policy<python::reference_existing_object>())
-      // This one makes g++ barf (internal compiler error), so skip it for now
-      //.def("GetAllAtomsWithBookmark",&(ROMol::getAllAtomsWithBookmark))
-      .def("ClearAtomBookmark",(void (ROMol::*)(int))&ROMol::clearAtomBookmark)
-      .def("ClearAtomBookmark",(void (ROMol::*)(int,const Atom *))&ROMol::clearAtomBookmark,
-	   "Clears an atom bookmark.\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - mark: an integer with the bookmark to clear\n"
-	   "    - atom: (optional) an Atom. If this argument is provided, the\n"
-	   "            bookmark is only cleared on that particular atom.\n")
-      .def("ClearAllAtomBookmarks",&ROMol::clearAllAtomBookmarks,
-	   "Removes all atom bookmarks.\n\n")
-      .def("HasAtomBookmark",&ROMol::hasAtomBookmark,
-	   "Queries whether or not a particular atom bookmark is set.\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - mark: an integer with the bookmark to look for\n\n"
-	   "  RETURNS: 1 or 0\n")
-
-	   
-      .def("SetBondBookmark",(void (ROMol::*)(Bond *,int))&ROMol::setBondBookmark,
-	   "Sets a bond bookmark.\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - bond: the Bond to bookmark\n"
-	   "    - mark: an integer bookmark\n")
-
-      .def("GetBondWithBookmark",&ROMol::getBondWithBookmark,
-	   "Returns the Bond with a particular bookmark (if there is one).\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - mark: an integer with the bookmark to be retrieved\n\n"
-	   "  RETURNS:\n"
-	   "    a Bond, if the bookmark exists. None otherwise.\n",
-	   python::return_value_policy<python::reference_existing_object>())
-      .def("ClearBondBookmark",(void (ROMol::*)(int))&ROMol::clearBondBookmark)
-      .def("ClearBondBookmark",(void (ROMol::*)(int, const Bond *))&ROMol::clearBondBookmark,
-	   "Clears a bond bookmark.\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - mark: an integer with the bookmark to clear\n"
-	   "    - bond: (optional) an Bond. If this argument is provided, the\n"
-	   "            bookmark is only cleared on that particular bond.\n")
-      .def("ClearAllBondBookmarks",&ROMol::clearAllBondBookmarks,
-	   "Removes all bond bookmarks.\n\n")
-
-      .def("HasBondBookmark",&ROMol::hasBondBookmark,
-	   "Queries whether or not a particular bond bookmark is set.\n\n"
-	   "  ARGUMENTS:\n"
-	   "    - mark: an integer with the bookmark to look for\n\n"
-	   "  RETURNS: 1 or 0\n")
-
-      // Iterators
-      .def("GetAromaticAtoms",MolGetAromaticAtoms,
-	   "Returns a read-only sequence containing all of the molecule's aromatic atoms.\n",
-      	   python::return_value_policy<python::manage_new_object>())
-      .def("GetHeteros",MolGetHeteros,
-	   "Returns a read-only sequence containing all of the molecule's heteroatoms.\n",
-      	   python::return_value_policy<python::manage_new_object>())
-#endif
       .def("GetAtoms",MolGetAtoms,
-	   "Returns a read-only sequence containing all of the molecule's Atoms.\n",
-	   python::return_value_policy<python::manage_new_object>())
+           python::return_value_policy<python::manage_new_object,
+           python::with_custodian_and_ward_postcall<0,1> >(),
+	   "Returns a read-only sequence containing all of the molecule's Atoms.\n")
       .def("GetBonds",MolGetBonds,
-	   "Returns a read-only sequence containing all of the molecule's Bonds.\n",
-	   python::return_value_policy<python::manage_new_object>())
-
+           python::return_value_policy<python::manage_new_object,
+           python::with_custodian_and_ward_postcall<0,1> >(),
+	   "Returns a read-only sequence containing all of the molecule's Bonds.\n")
 
       // enable pickle support
       .def_pickle(mol_pickle_suite())

@@ -89,7 +89,6 @@ struct EditableMol_wrapper {
    *Note*: It is very, very easy to shoot yourself in the foot with\n\
            this class by constructing an unreasonable molecule.\n\
 ";
-    //python::class_<RWMol,boost::noncopyable,python::bases<ROMol> >("RWMol",
     python::class_<EditableMol,boost::noncopyable >("EditableMol",
         "an editable molecule class",
         python::init<const ROMol &>("Construct from a Mol"))
