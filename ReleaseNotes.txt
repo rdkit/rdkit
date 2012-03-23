@@ -1,3 +1,73 @@
+******  Release_2012.03.1 *******
+(Changes relative to Release_2011.12.1)
+
+!!!!!! IMPORTANT !!!!!!
+ - The atom-atom match behavior for non-query atoms has been changed.
+   This affects the results of doing substructure matches using
+   query molecules that are not constructed from SMARTS.
+
+Acknowledgements:
+JP Ebejer, Paul Emsley, Roger Sayle, Adrian Schreyer, Gianluca Sforna,
+Riccardo Vianello 
+
+Bug Fixes: 
+- the older form of group evaluations in Mol blocks is now correctly
+  parsed. (Issue 3477283)
+- some problems with handling aromatic boron were fixed. (Issue 3480481)
+- the SD writer no longer adds an extra $$$$ when molecule parsing
+  fails (Issue 3480790)
+- molecules in SD files that don't contain atoms are now parsed
+  without warnings and their properties are read in. (Issue 3482695)
+- it's now possible to embed molecules despite failures in the triangle
+  bounds checking (Issue 3483968)
+- Isotope information in Mol blocks is now written to M ISO lines
+  instead of going in the atom block. (Issue 3494552)
+- Better 2D coordinates are now generated for neighbors of atoms with 
+  unspecified hybridization. (Issue 3487469)
+- Dummy atoms and query atoms are now assigned UNSPECIFIED hybridization
+  instead of SP. (Issue 3487473)
+- Error reporting for SMARTS involving recursion has been improved.
+  (Issue 3495296)
+- Some problems of queries and generating SMARTS for queries were resolved.
+  (Issues 3496759, 3496799, 3496800)
+- It's now possible to do database queries with SMARTS that use the index.
+  (Issue 3493156).
+- A series of problems related to thread safety were fixed.
+- Tracking the lifetime of owning molecules across the C++/Python
+border is now being handled better (Issue 3510149)
+
+New Features:
+- The molecular sanitization is now configurable using an optional
+  command-line argument.
+- It's now possible to get information from the sanitization routine
+  about which operation failed.
+- Suppliers support GetLastItemText()
+- ComputeDihedralAngle() and ComputeSignedDihedralAngle() were added
+  to the rdkit.Geometry module.
+- computeSignedDihedralAngle() was added to the C++ API
+- ChemicalReactions now support a GetReactingAtoms() method
+- the Mol file and Mol block parsers, as well as the SD suppliers,
+  now support an optional "strictParsing" argument.
+  When this is set to False, problems in the structure of the
+  input file are ignored when possible 
+- EditableMols return the index of the atom/bond added by AddAtom/AddBond
+- rdkit.Chem.Draw.MolToImage() now supports an optional "legend" argument
+
+New Database Cartridge Features: 
+- the functions mol_from_smiles() and mol_from_smarts() were added
+
+New Java Wrapper Features:
+- the diversity picker now supports an optional random-number seed
+
+Deprecated modules (to be removed in next release):
+- rdkit.Excel
+
+Removed modules:
+- rdkit.ML.Descriptors.DescriptorsCOM 
+- rdkit.ML.Composite.CompositeCOM
+
+Other:
+
 ******  Release_2011.12.1 *******
 (Changes relative to Release_2011.09.1)
 
@@ -58,7 +128,7 @@ New Java Wrapper Features:
 
 Deprecated modules (to be removed in next release):
 - rdkit.Excel
-- rdkit.ML.Descriptors.DescriptorsCOM
+- rdkit.ML.Descriptors.DescriptorsCOM 
 - rdkit.ML.Composite.CompositeCOM
 
 Removed modules:
