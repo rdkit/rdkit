@@ -23,6 +23,7 @@
 #include <limits.h>
 #include <boost/cstdint.hpp>
 #include <RDGeneral/hash/hash.hpp>
+#include <RDGeneral/types.h>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 //#define LAYEREDFP_USE_MT
@@ -111,11 +112,14 @@ namespace RDKit{
                                      unsigned int fpSize,unsigned int nBitsPerHash,
                                      bool useHs,
                                      double tgtDensity,unsigned int minSize,
-                                     bool branchedPaths){
+                                     bool branchedPaths,
+                                     bool useBondOrder,
+                                     std::vector<boost::uint32_t> *atomInvariants){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
     PRECONDITION(nBitsPerHash!=0,"nBitsPerHash==0");
+    PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
 
     typedef boost::mt19937 rng_type;
     typedef boost::uniform_int<> distrib_type;
@@ -130,6 +134,19 @@ namespace RDKit{
     //
     distrib_type dist(0,INT_MAX);
     source_type randomSource(generator,dist);
+
+    // build default aotm invariants if need be:
+    std::vector<boost::uint32_t> lAtomInvariants;
+    if(!atomInvariants){
+      lAtomInvariants.reserve(mol.getNumAtoms());
+      for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+          atomIt!=mol.endAtoms();
+          ++atomIt){
+        unsigned int aHash = ((*atomIt)->getAtomicNum()%128)<<1 | (*atomIt)->getIsAromatic();
+        lAtomInvariants.push_back(aHash);
+      }
+      atomInvariants=&lAtomInvariants;
+    } 
 
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
 
@@ -187,15 +204,17 @@ namespace RDKit{
 #endif
           // we have the count of neighbors for bond bi, compute its hash:
           unsigned int a1Hash,a2Hash;
-          a1Hash = (bi->getBeginAtom()->getAtomicNum()%128)<<1 | bi->getBeginAtom()->getIsAromatic();
-          a2Hash = (bi->getEndAtom()->getAtomicNum()%128)<<1 | bi->getEndAtom()->getIsAromatic();
+          a1Hash = (*atomInvariants)[bi->getBeginAtomIdx()];
+          a2Hash = (*atomInvariants)[bi->getEndAtomIdx()];
           if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
-          unsigned int bondHash;
-          if(bi->getIsAromatic()){
-            // makes sure aromatic bonds always hash the same:
-            bondHash = Bond::AROMATIC;
-          } else {
-            bondHash = bi->getBondType();
+          unsigned int bondHash=1;
+          if(useBondOrder){
+            if(bi->getIsAromatic()){
+              // makes sure aromatic bonds always hash the same:
+              bondHash = Bond::AROMATIC;
+            } else {
+              bondHash = bi->getBondType();
+            }
           }
           boost::uint32_t nBitsInHash=0;
           boost::uint32_t ourHash=bondNbrs[i]%8; // 3 bits here

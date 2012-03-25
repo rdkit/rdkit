@@ -281,6 +281,43 @@ namespace RDKit{
   }
 
 
+  ExplicitBitVect *wrapRDKFingerprintMol(const ROMol &mol,
+                                      unsigned int minPath,
+                                      unsigned int maxPath,
+                                      unsigned int fpSize,
+                                      unsigned int nBitsPerHash,
+                                      bool useHs,
+                                      double tgtDensity,
+                                      unsigned int minSize,
+                                      bool branchedPaths,
+                                      bool useBondOrder,
+                                      python::list atomInvariants){
+    std::vector<unsigned int> *lAtomInvariants=0;
+    if(atomInvariants){
+      lAtomInvariants = new std::vector<unsigned int>;
+      unsigned int nAts=python::extract<unsigned int>(atomInvariants.attr("__len__")());
+      if(nAts<mol.getNumAtoms()){
+        throw_value_error("atomInvariants shorter than the number of atoms");
+      }
+      lAtomInvariants->resize(nAts);
+      for(unsigned int i=0;i<nAts;++i){
+        (*lAtomInvariants)[i] = python::extract<unsigned int>(atomInvariants[i]);
+      }
+    }
+
+    ExplicitBitVect *res;
+    res = RDKit::RDKFingerprintMol(mol,minPath,maxPath,fpSize,nBitsPerHash,
+                                   useHs,tgtDensity,minSize,branchedPaths,
+                                   useBondOrder,lAtomInvariants);
+
+    if(lAtomInvariants){
+      delete lAtomInvariants;
+    }
+    
+    return res;
+  }
+
+
   python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol, unsigned int lowerLen,
                                                      unsigned int upperLen, bool useHs=false,
                                                      int rootedAtAtom=-1){
@@ -952,6 +989,12 @@ namespace RDKit{
       used in the fingerprint.\n\
       Defaults to True.\n\
 \n\
+    - useBondOrder: (optional) if set both bond orders will be used in the path hashes\n\
+      Defaults to True.\n\
+\n\
+    - atomInvariants: (optional) a sequence of atom invariants to use in the path hashes\n\
+      Defaults to empty.\n\
+\n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\
   ALGORITHM:\n\
@@ -967,12 +1010,14 @@ namespace RDKit{
         bits in the fingerprint\n\
 \n\
 \n";
-      python::def("RDKFingerprint", RDKFingerprintMol,
+      python::def("RDKFingerprint", wrapRDKFingerprintMol,
                   (python::arg("mol"),python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
                    python::arg("nBitsPerHash")=2,python::arg("useHs")=true,
                    python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
-                   python::arg("branchedPaths")=true),
+                   python::arg("branchedPaths")=true,
+                   python::arg("useBondOrder")=true,
+                   python::arg("atomInvariants")=python::list()),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_RDKFingerprint_version")=RDKit::RDKFingerprintMolVersion;
 

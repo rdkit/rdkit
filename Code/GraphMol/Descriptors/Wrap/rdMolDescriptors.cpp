@@ -81,15 +81,17 @@ namespace {
                                                                unsigned int minLength,
                                                                unsigned int maxLength,
                                                                python::object fromAtoms,
-                                                               python::object ignoreAtoms){
-
+                                                               python::object ignoreAtoms,
+                                                               python::object atomInvariants){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getAtomPairFingerprint(mol,minLength,maxLength,
-                                                   fvect,ivect);
+                                                   fvect,ivect,invvect);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
+    if(invvect) delete invvect;
     return res;
   }
   RDKit::SparseIntVect<boost::int32_t> *GetHashedAtomPairFingerprint(const RDKit::ROMol &mol,
@@ -97,24 +99,29 @@ namespace {
                                                                      unsigned int minLength,
                                                                      unsigned int maxLength,
                                                                      python::object fromAtoms,
-                                                                     python::object ignoreAtoms){
+                                                                     python::object ignoreAtoms,
+                                                                     python::object atomInvariants){
 
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getHashedAtomPairFingerprint(mol,nBits,minLength,maxLength,
-                                                         fvect,ivect);
+                                                         fvect,ivect,invvect);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
+    if(invvect) delete invvect;
     return res;
   }
 
   RDKit::SparseIntVect<boost::int64_t> *GetTopologicalTorsionFingerprint(const RDKit::ROMol &mol,
                                                                          unsigned int targetSize,
                                                                          python::object fromAtoms,
-                                                                         python::object ignoreAtoms){
+                                                                         python::object ignoreAtoms,
+                                                                         python::object atomInvariants){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     if(targetSize*RDKit::AtomPairs::codeSize>64){
       std::ostringstream errout;
       errout << "Maximum supported topological torsion path length is " << 64/RDKit::AtomPairs::codeSize<<std::endl;
@@ -122,9 +129,10 @@ namespace {
     }
     
     RDKit::SparseIntVect<boost::int64_t> *res;
-    res = RDKit::AtomPairs::getTopologicalTorsionFingerprint(mol,targetSize,fvect,ivect);
+    res = RDKit::AtomPairs::getTopologicalTorsionFingerprint(mol,targetSize,fvect,ivect,invvect);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
+    if(invvect) delete invvect;
     return res;
   }
 
@@ -132,13 +140,17 @@ namespace {
                                                                                unsigned int nBits,
                                                                                unsigned int targetSize,
                                                                                python::object fromAtoms,
-                                                                               python::object ignoreAtoms){
+                                                                               python::object ignoreAtoms,
+                                                                               python::object atomInvariants){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     RDKit::SparseIntVect<boost::int64_t> *res;
-    res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol,nBits,targetSize,fvect,ivect);
+    res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol,nBits,targetSize,fvect,ivect,
+                                                                   invvect);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
+    if(invvect) delete invvect;
     return res;
   }
 
@@ -147,15 +159,19 @@ namespace {
                                                                    unsigned int targetSize,
                                                                    python::object fromAtoms,
                                                                    python::object ignoreAtoms,
+                                                                   python::object atomInvariants,
                                                                    unsigned int nBitsPerEntry
                                                                    ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     ExplicitBitVect *res;
     res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(mol,nBits,targetSize,fvect,ivect,
+                                                                            invvect,
                                                                             nBitsPerEntry);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
+    if(invvect) delete invvect;
     return res;
   }
 
@@ -165,16 +181,20 @@ namespace {
                                                          unsigned int maxLength,
                                                          python::object fromAtoms,
                                                          python::object ignoreAtoms,
+                                                         python::object atomInvariants,
                                                          unsigned int nBitsPerEntry
                                                          ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     ExplicitBitVect *res;
     res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(mol,nBits,
                                                                   minLength,maxLength,
-                                                                  fvect,ivect,nBitsPerEntry);
+                                                                  fvect,ivect,invvect,
+                                                                  nBitsPerEntry);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
+    if(invvect) delete invvect;
     return res;
   }
 
@@ -436,7 +456,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("minLength")=1,
                python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
                python::arg("fromAtoms")=0,
-               python::arg("ignoreAtoms")=0),
+               python::arg("ignoreAtoms")=0,
+               python::arg("atomInvariants")=0),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
@@ -447,7 +468,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("minLength")=1,
                python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
                python::arg("fromAtoms")=0,
-               python::arg("ignoreAtoms")=0),
+               python::arg("ignoreAtoms")=0,
+               python::arg("atomInvariants")=0),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -460,6 +482,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
+               python::arg("atomInvariants")=0,
                python::arg("nBitsPerEntry")=4),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
@@ -469,7 +492,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      GetTopologicalTorsionFingerprint,
 	      (python::arg("mol"),python::arg("targetSize")=4,
                python::arg("fromAtoms")=0,
-               python::arg("ignoreAtoms")=0),
+               python::arg("ignoreAtoms")=0,
+               python::arg("atomInvariants")=0),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   python::def("GetHashedTopologicalTorsionFingerprint",
@@ -478,7 +502,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("nBits")=2048,
                python::arg("targetSize")=4,
                python::arg("fromAtoms")=0,
-               python::arg("ignoreAtoms")=0),
+               python::arg("ignoreAtoms")=0,
+               python::arg("atomInvariants")=0),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   docString="Returns the topological-torsion fingerprint for a molecule as an ExplicitBitVect";
@@ -489,6 +514,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("targetSize")=4,
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
+               python::arg("atomInvariants")=0,
                python::arg("nBitsPerEntry")=4),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());

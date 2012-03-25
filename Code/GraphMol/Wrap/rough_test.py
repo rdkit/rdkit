@@ -746,6 +746,24 @@ class TestCase(unittest.TestCase):
     fp3 = Chem.RDKFingerprint(m1,tgtDensity=0.3)
     self.failUnless(len(fp3)<2048)
     
+    m1 = Chem.MolFromSmiles('C1=CC=CC=C1')
+    fp1 = Chem.RDKFingerprint(m1)
+    m2 = Chem.MolFromSmiles('C1=CC=CC=N1')
+    fp2 = Chem.RDKFingerprint(m2)
+    self.failIfEqual(fp1,fp2)
+
+    atomInvariants=[1]*6
+    fp1 = Chem.RDKFingerprint(m1,atomInvariants=atomInvariants)
+    fp2 = Chem.RDKFingerprint(m2,atomInvariants=atomInvariants)
+    self.failUnlessEqual(fp1,fp2)    
+
+    m2 = Chem.MolFromSmiles('C1CCCCN1')
+    fp1 = Chem.RDKFingerprint(m1,atomInvariants=atomInvariants,useBondOrder=False)
+    fp2 = Chem.RDKFingerprint(m2,atomInvariants=atomInvariants,useBondOrder=False)
+    self.failUnlessEqual(fp1,fp2)    
+    
+
+
 
   def test25SDMolSupplier(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',

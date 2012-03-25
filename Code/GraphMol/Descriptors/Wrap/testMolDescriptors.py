@@ -230,8 +230,61 @@ class TestCase(unittest.TestCase) :
       fp2 = DataStructs.LongSparseIntVect(pkl)
       self.failUnlessEqual(DataStructs.DiceSimilarity(fp,fp2),1.0)
       self.failUnlessEqual(fp,fp2)
-           
+
+  def testAtomPairOptions(self):
+    m1 = Chem.MolFromSmiles('c1ccccc1')
+    m2 = Chem.MolFromSmiles('c1ccccn1')
+
+    fp1 = rdMD.GetAtomPairFingerprint(m1)
+    fp2 = rdMD.GetAtomPairFingerprint(m2)
+    self.failIfEqual(fp1,fp2)
     
+    fp1 = rdMD.GetAtomPairFingerprint(m1,atomInvariants=[1]*6)
+    fp2 = rdMD.GetAtomPairFingerprint(m2,atomInvariants=[1]*6)
+    self.failUnlessEqual(fp1,fp2)
+
+    fp1 = rdMD.GetAtomPairFingerprint(m1,atomInvariants=[1]*6)
+    fp2 = rdMD.GetAtomPairFingerprint(m2,atomInvariants=[2]*6)
+    self.failIfEqual(fp1,fp2)
+
+    fp1 = rdMD.GetHashedAtomPairFingerprintAsBitVect(m1)
+    fp2 = rdMD.GetHashedAtomPairFingerprintAsBitVect(m2)
+    self.failIfEqual(fp1,fp2)
+    
+    fp1 = rdMD.GetHashedAtomPairFingerprintAsBitVect(m1,atomInvariants=[1]*6)
+    fp2 = rdMD.GetHashedAtomPairFingerprintAsBitVect(m2,atomInvariants=[1]*6)
+    self.failUnlessEqual(fp1,fp2)
+
+    fp1 = rdMD.GetHashedAtomPairFingerprintAsBitVect(m1,atomInvariants=[1]*6)
+    fp2 = rdMD.GetHashedAtomPairFingerprintAsBitVect(m2,atomInvariants=[2]*6)
+    self.failIfEqual(fp1,fp2)
+
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m1)
+    fp2 = rdMD.GetTopologicalTorsionFingerprint(m2)
+    self.failIfEqual(fp1,fp2)
+    
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m1,atomInvariants=[1]*6)
+    fp2 = rdMD.GetTopologicalTorsionFingerprint(m2,atomInvariants=[1]*6)
+    self.failUnlessEqual(fp1,fp2)
+
+    fp1 = rdMD.GetTopologicalTorsionFingerprint(m1,atomInvariants=[1]*6)
+    fp2 = rdMD.GetTopologicalTorsionFingerprint(m2,atomInvariants=[2]*6)
+    self.failIfEqual(fp1,fp2)
+
+    fp1 = rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m1)
+    fp2 = rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m2)
+    self.failIfEqual(fp1,fp2)
+    
+    fp1 = rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m1,atomInvariants=[1]*6)
+    fp2 = rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m2,atomInvariants=[1]*6)
+    self.failUnlessEqual(fp1,fp2)
+
+    fp1 = rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m1,atomInvariants=[1]*6)
+    fp2 = rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m2,atomInvariants=[2]*6)
+    self.failIfEqual(fp1,fp2)
+
+
+
 
 if __name__ == '__main__':
   unittest.main()

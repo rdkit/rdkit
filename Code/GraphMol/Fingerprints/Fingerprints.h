@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,6 +9,9 @@
 //
 #ifndef _RD_FINGERPRINTS_H_
 #define _RD_FINGERPRINTS_H_
+
+#include <vector>
+#include <boost/cstdint.hpp>
 
 class ExplicitBitVect;
 namespace RDKit{
@@ -29,6 +32,8 @@ namespace RDKit{
     \param minSize:      the minimum size to which the fingerprint will be
                          folded
     \param branchedPaths: toggles generation of branched subgraphs, not just linear paths
+    \param useBondOrders: toggles inclusion of bond orders in the path hashes
+    \param atomInvariants: a vector of atom invariants to use while hashing the paths
 
     \return the molecular fingerprint, as an ExplicitBitVect
 
@@ -44,8 +49,11 @@ namespace RDKit{
                                      bool useHs=true,
                                      double tgtDensity=0.0,
                                      unsigned int minSize=128,
-                                     bool branchedPaths=true);
-  const std::string RDKFingerprintMolVersion="1.0.0";
+                                     bool branchedPaths=true,
+                                     bool useBondOrder=true,
+                                     std::vector<boost::uint32_t> *atomInvariants=0
+                                     );
+  const std::string RDKFingerprintMolVersion="1.1.0";
 
 
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule

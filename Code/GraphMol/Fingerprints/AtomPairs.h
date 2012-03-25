@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007-2011 Greg Landrum
+//  Copyright (C) 2007-2012 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -75,6 +75,9 @@ namespace RDKit {
       \param ignoreAtoms: if provided, any atom pairs that include 
                           the specified atoms will not be included in the
                           fingerprint
+      \param atomInvariants: a list of invariants to use for the atom hashes
+                             note: only the first \c codeSize bits of each
+                             invariant are used.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -84,12 +87,14 @@ namespace RDKit {
     getAtomPairFingerprint(const ROMol &mol,
                            unsigned int minLength,unsigned int maxLength,
                            const std::vector<boost::uint32_t> *fromAtoms=0,
-                           const std::vector<boost::uint32_t> *ignoreAtoms=0);
+                           const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                           const std::vector<boost::uint32_t> *atomInvariants=0);
     //! \overload
     SparseIntVect<boost::int32_t> *
     getAtomPairFingerprint(const ROMol &mol,
                            const std::vector<boost::uint32_t> *fromAtoms=0,
-                           const std::vector<boost::uint32_t> *ignoreAtoms=0);
+                           const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                           const std::vector<boost::uint32_t> *atomInvariants=0);
 
 
     //! returns the hashed atom-pair fingerprint for a molecule
@@ -107,6 +112,9 @@ namespace RDKit {
       \param ignoreAtoms: if provided, any atom pairs that include 
                           the specified atoms will not be included in the
                           fingerprint
+      \param atomInvariants: a list of invariants to use for the atom hashes
+                             note: only the first \c codeSize bits of each
+                             invariant are used.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -118,7 +126,8 @@ namespace RDKit {
                                  unsigned int minLength=1,
                                  unsigned int maxLength=maxPathLen-1,
                                  const std::vector<boost::uint32_t> *fromAtoms=0,
-                                 const std::vector<boost::uint32_t> *ignoreAtoms=0);
+                                 const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                                 const std::vector<boost::uint32_t> *atomInvariants=0);
     //! returns the hashed atom-pair fingerprint for a molecule as a bit vector
     /*!
       \param mol:   the molecule to be fingerprinted
@@ -134,6 +143,9 @@ namespace RDKit {
       \param ignoreAtoms: if provided, any atom pairs that include 
                           the specified atoms will not be included in the
                           fingerprint
+      \param atomInvariants: a list of invariants to use for the atom hashes
+                             note: only the first \c codeSize bits of each
+                             invariant are used.
       \param nBitsPerEntry: number of bits to use in simulating counts
 
       \return a pointer to the fingerprint. The client is
@@ -147,7 +159,9 @@ namespace RDKit {
                                           unsigned int maxLength=maxPathLen-1,
                                           const std::vector<boost::uint32_t> *fromAtoms=0,
                                           const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                                          const std::vector<boost::uint32_t> *atomInvariants=0,
                                           unsigned int nBitsPerEntry=4);
+                                          
 
 
     //! returns an topological torsion hash based on the atom hashes
@@ -172,6 +186,9 @@ namespace RDKit {
       \param ignoreAtoms: if provided, any torsions that include 
                           the specified atoms will not be included in the
                           fingerprint
+      \param atomInvariants: a list of invariants to use for the atom hashes
+                             note: only the first \c codeSize bits of each
+                             invariant are used.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -181,7 +198,9 @@ namespace RDKit {
     getTopologicalTorsionFingerprint(const ROMol &mol,
                                      unsigned int targetSize=4,
                                      const std::vector<boost::uint32_t> *fromAtoms=0,
-                                     const std::vector<boost::uint32_t> *ignoreAtoms=0);
+                                     const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                                     const std::vector<boost::uint32_t> *atomInvariants=0
+                                     );
     //! returns a hashed topological-torsion fingerprint for a molecule
     /*!
       The algorithm used is described here:
@@ -198,6 +217,9 @@ namespace RDKit {
       \param ignoreAtoms: if provided, any torsions that include 
                           the specified atoms will not be included in the
                           fingerprint
+      \param atomInvariants: a list of invariants to use for the atom hashes
+                             note: only the first \c codeSize bits of each
+                             invariant are used.
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -208,7 +230,8 @@ namespace RDKit {
                                            unsigned int nBits=2048,
                                            unsigned int targetSize=4,
                                            const std::vector<boost::uint32_t> *fromAtoms=0,
-                                           const std::vector<boost::uint32_t> *ignoreAtoms=0);
+                                           const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                                           const std::vector<boost::uint32_t> *atomInvariants=0);
     //! returns a hashed topological-torsion fingerprint for a molecule as a bit vector
     /*!
       \param mol:         the molecule to be fingerprinted
@@ -220,6 +243,9 @@ namespace RDKit {
       \param ignoreAtoms: if provided, any torsions that include 
                           the specified atoms will not be included in the
                           fingerprint
+      \param atomInvariants: a list of invariants to use for the atom hashes
+                             note: only the first \c codeSize bits of each
+                             invariant are used.
       \param nBitsPerEntry: number of bits to use in simulating counts
 
       \return a pointer to the fingerprint. The client is
@@ -232,6 +258,7 @@ namespace RDKit {
                                                     unsigned int targetSize=4,
                                                     const std::vector<boost::uint32_t> *fromAtoms=0,
                                                     const std::vector<boost::uint32_t> *ignoreAtoms=0,
+                                                    const std::vector<boost::uint32_t> *atomInvariants=0,
                                                     unsigned int nBitsPerEntry=4);
   }    
 }
