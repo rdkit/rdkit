@@ -2588,6 +2588,63 @@ void testReplacementPatterns(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testAllBondsExplicit(){
+  BOOST_LOG(rdInfoLog)<< "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing forcing explicit bonds in the output SMILES" << std::endl;
+
+  {
+    std::string smi ="CCC";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==3);
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="CCC");
+    smi = MolToSmiles(*mol,true,false,-1,true,true);
+    TEST_ASSERT(smi=="C-C-C");
+    
+    delete mol;
+  }    
+  {
+    std::string smi ="C1CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==3);
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="C1CC1");
+    smi = MolToSmiles(*mol,true,false,-1,true,true);
+    TEST_ASSERT(smi=="C1-C-C-1");
+    
+    delete mol;
+  }    
+  {
+    std::string smi ="c1ccccc1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==6);
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="c1ccccc1");
+    smi = MolToSmiles(*mol,true,false,-1,true,true);
+    TEST_ASSERT(smi=="c1:c:c:c:c:c:1");
+    
+    delete mol;
+  }    
+  {
+    std::string smi ="c1ccccc1c1ccccc1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==12);
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="c1ccc(-c2ccccc2)cc1");
+    smi = MolToSmiles(*mol,true,false,-1,true,true);
+    TEST_ASSERT(smi=="c1:c:c:c(-c2:c:c:c:c:c:2):c:c:1");
+    
+    delete mol;
+  }    
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -2630,5 +2687,6 @@ main(int argc, char *argv[])
   testBug3145697();
   testBug3152751();
   testReplacementPatterns();
+  testAllBondsExplicit();
   //testBug1719046();
 }

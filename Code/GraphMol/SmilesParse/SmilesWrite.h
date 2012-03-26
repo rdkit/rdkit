@@ -39,9 +39,10 @@ namespace RDKit{
         in the SMILES
       \param doKekule : we're doing kekulized smiles (e.g. write out
         bond orders for aromatic bonds)
+      \param allBondsExplicit : if true, symbols will be included for all bonds.
     */
     std::string GetBondSmiles(const Bond *bond,int atomToLeftIdx=-1,
-                              bool doKekule=false);
+                              bool doKekule=false,bool allBondsExplicit=false);
   } 
   
   //! \brief returns canonical SMILES for a molecule
@@ -54,9 +55,11 @@ namespace RDKit{
     \param rootedAtAtom : make sure the SMILES starts at the specified atom.
         The resulting SMILES is not, of course, canonical.
     \param canonical : if false, no attempt will be made to canonicalize the SMILES
+    \param allBondsExplicit : if true, symbols will be included for all bonds.
    */
   std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles=false,
 			  bool doKekule=false,int rootedAtAtom=-1,
-                          bool canonical=true);
+                          bool canonical=true,
+                          bool allBondsExplicit=false);
 }
 #endif

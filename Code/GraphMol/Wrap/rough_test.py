@@ -2270,6 +2270,20 @@ CAS<~>
     mol=None
     self.failUnlessEqual(nats,conf.GetNumAtoms())
     conf.GetOwningMol().GetProp("_Name")
+
+  def test75AllBondsExplicit(self):
+    m = Chem.MolFromSmiles("CCC")
+    smi = Chem.MolToSmiles(m)
+    self.failUnlessEqual(smi,"CCC")
+    smi = Chem.MolToSmiles(m,allBondsExplicit=True)
+    self.failUnlessEqual(smi,"C-C-C")
+
+    m = Chem.MolFromSmiles("c1ccccc1")
+    smi = Chem.MolToSmiles(m)
+    self.failUnlessEqual(smi,"c1ccccc1")
+    smi = Chem.MolToSmiles(m,allBondsExplicit=True)
+    self.failUnlessEqual(smi,"c1:c:c:c:c:c:1")
+    
     
 if __name__ == '__main__':
   unittest.main()

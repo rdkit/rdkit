@@ -238,7 +238,7 @@ namespace RDKit{
       return res.str();
     }
 
-    std::string GetBondSmiles(const Bond *bond,int atomToLeftIdx,bool doKekule){
+    std::string GetBondSmiles(const Bond *bond,int atomToLeftIdx,bool doKekule,bool allBondsExplicit){
       PRECONDITION(bond,"bad bond");
       if(atomToLeftIdx<0) atomToLeftIdx=bond->getBeginAtomIdx();
 
@@ -283,7 +283,8 @@ namespace RDKit{
           // FIX: we should be able to dump kekulized smiles
           //   currently this is possible by removing all
           //   isAromatic flags, but there should maybe be another way
-          if( aromatic && !bond->getIsAromatic() ) res << "-";
+          if(allBondsExplicit) res<<"-";
+          else if( aromatic && !bond->getIsAromatic() ) res << "-";
         }
         break;
       case Bond::DOUBLE:
@@ -304,7 +305,8 @@ namespace RDKit{
             break;
           }
         }
-        if(!aromatic) res << ":";
+        if(allBondsExplicit) res << ":";
+        else if(!aromatic) res << ":";
         break;
       case Bond::DATIVE:
         if(atomToLeftIdx>=0 &&
@@ -319,7 +321,8 @@ namespace RDKit{
 
     std::string FragmentSmilesConstruct(ROMol &mol,int atomIdx,
                                         std::vector<Canon::AtomColors> &colors,
-                                        INT_VECT &ranks,bool doKekule,bool canonical){
+                                        INT_VECT &ranks,bool doKekule,bool canonical,
+                                        bool allBondsExplicit){
 
       Canon::MolStack molStack;
       // try to prevent excessive reallocation
@@ -343,7 +346,7 @@ namespace RDKit{
         case Canon::MOL_STACK_BOND:
           bond = mSE.obj.bond;
           //std::cout<<"\t\tBond: "<<bond->getIdx()<<std::endl;
-          res << GetBondSmiles(bond,mSE.number,doKekule);
+          res << GetBondSmiles(bond,mSE.number,doKekule,allBondsExplicit);
           break;
         case Canon::MOL_STACK_RING:
           ringIdx = mSE.number;
@@ -404,7 +407,8 @@ namespace RDKit{
   // decisions and I'm gonna want to smack myself for doing this,
   // but we'll try anyway.
   std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles,
-                          bool doKekule,int rootedAtAtom,bool canonical){
+                          bool doKekule,int rootedAtAtom,bool canonical,
+                          bool allBondsExplicit){
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
     if(!mol.getNumAtoms()) return "";
@@ -475,7 +479,7 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical);
+                                                    ranks,doKekule,canonical,allBondsExplicit);
 
       res += subSmi;
       colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
