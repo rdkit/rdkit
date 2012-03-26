@@ -291,20 +291,8 @@ namespace RDKit{
                                       unsigned int minSize,
                                       bool branchedPaths,
                                       bool useBondOrder,
-                                      python::list atomInvariants){
-    std::vector<unsigned int> *lAtomInvariants=0;
-    if(atomInvariants){
-      lAtomInvariants = new std::vector<unsigned int>;
-      unsigned int nAts=python::extract<unsigned int>(atomInvariants.attr("__len__")());
-      if(nAts<mol.getNumAtoms()){
-        throw_value_error("atomInvariants shorter than the number of atoms");
-      }
-      lAtomInvariants->resize(nAts);
-      for(unsigned int i=0;i<nAts;++i){
-        (*lAtomInvariants)[i] = python::extract<unsigned int>(atomInvariants[i]);
-      }
-    }
-
+                                      python::object atomInvariants){
+    std::vector<unsigned int> *lAtomInvariants=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     ExplicitBitVect *res;
     res = RDKit::RDKFingerprintMol(mol,minPath,maxPath,fpSize,nBitsPerHash,
                                    useHs,tgtDensity,minSize,branchedPaths,
@@ -1017,7 +1005,7 @@ namespace RDKit{
                    python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
                    python::arg("branchedPaths")=true,
                    python::arg("useBondOrder")=true,
-                   python::arg("atomInvariants")=python::list()),
+                   python::arg("atomInvariants")=0),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_RDKFingerprint_version")=RDKit::RDKFingerprintMolVersion;
 

@@ -97,4 +97,22 @@ void RegisterListConverter(bool noproxy=false){
 
   }
 }
+
+template <typename T>
+std::vector<T> *pythonObjectToVect(python::object obj,T maxV){
+  std::vector<T> *res=0;
+  if(obj){
+    res=new std::vector<T>;
+    unsigned int nFrom=python::extract<unsigned int>(obj.attr("__len__")());
+    for(unsigned int i=0;i<nFrom;++i){
+      boost::uint32_t v=python::extract<T>(obj[i]);
+      if(v>=maxV){
+        throw_value_error("list element larger than allowed value");
+      }
+      res->push_back(v);
+    }
+  }
+  return res;
+}
+
 #endif

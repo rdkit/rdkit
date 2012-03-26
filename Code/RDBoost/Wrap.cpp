@@ -39,3 +39,4 @@ RDKIT_WRAP_DECL void translate_index_error(IndexErrorException const&e){
 RDKIT_WRAP_DECL void translate_value_error(ValueErrorException const&e){
   throw_value_error(e.message());
 }
+

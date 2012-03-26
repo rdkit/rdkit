@@ -61,22 +61,6 @@ namespace {
     return python::make_tuple(logp,mr);
   }
 
-  template <typename T>
-  std::vector<T> *pythonObjectToVect(python::object obj,T maxV){
-    std::vector<T> *res=0;
-    if(obj){
-      res=new std::vector<T>;
-      unsigned int nFrom=python::extract<unsigned int>(obj.attr("__len__")());
-      for(unsigned int i=0;i<nFrom;++i){
-        boost::uint32_t v=python::extract<T>(obj[i]);
-        if(v>=maxV){
-          throw_value_error("list element larger than allowed value");
-        }
-        res->push_back(v);
-      }
-    }
-    return res;
-  }
   RDKit::SparseIntVect<boost::int32_t> *GetAtomPairFingerprint(const RDKit::ROMol &mol,
                                                                unsigned int minLength,
                                                                unsigned int maxLength,
@@ -461,6 +445,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
+  docString="Returns the hashed atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetHashedAtomPairFingerprint",
 	      GetHashedAtomPairFingerprint,
 	      (python::arg("mol"),
@@ -496,6 +481,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("atomInvariants")=0),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+  docString="Returns the hashed topological-torsion fingerprint for a molecule as a LongIntSparseIntVect";
   python::def("GetHashedTopologicalTorsionFingerprint",
 	      GetHashedTopologicalTorsionFingerprint,
 	      (python::arg("mol"),
