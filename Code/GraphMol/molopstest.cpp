@@ -888,8 +888,6 @@ void test11()
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
 
-
-  
   delete m;
   smi = "F[C@@](C)(Cl)Br";
   m = SmilesToMol(smi);
@@ -1201,9 +1199,6 @@ void test11()
   m->getAtomWithIdx(0)->getProp("_CIPCode",cip);
   TEST_ASSERT(cip=="R");
 
-
-
-  
   smi = "[H][C@@]12C[C@@](NC1)(OC2)[H]";
 #ifdef VERBOSE_CANON
   BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
@@ -1237,8 +1232,10 @@ void test11()
   TEST_ASSERT(cip=="S");
 
   smi = "[H][C@@]12O[C@@](CC1)(C3C2C(NC3=O)=O)[H]";
+#ifdef VERBOSE_CANON
   BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
   BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+#endif
   delete m;
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -1251,8 +1248,10 @@ void test11()
   TEST_ASSERT(cip=="S");
 
   smi = "[H][C@@]12O[C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
+#ifdef VERBOSE_CANON
   BOOST_LOG(rdDebugLog) << " ----------------- ------------- ----------------" << std::endl;
   BOOST_LOG(rdDebugLog) << "\t>" << smi << std::endl;
+#endif
   delete m;
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
@@ -3561,7 +3560,6 @@ int main(){
   testSFIssue1811276();
   testSFIssue1836576();
   testChiralityAndRemoveHs();
-  test11();
   testSFIssue1894348();
   testSFIssue1942657();
   testSFIssue1968608();
@@ -3576,9 +3574,10 @@ int main(){
   testSFNetIssue3185548();
   testSFNetIssue3349243();
   testFastFindRings();
-#endif
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
+#endif
+  test11();
   
   return 0;
 }

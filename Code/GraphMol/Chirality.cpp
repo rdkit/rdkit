@@ -12,6 +12,7 @@
 #include <GraphMol/RankAtoms.h>
 #include <RDGeneral/types.h>
 #include <sstream>
+#include <algorithm>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -149,25 +150,19 @@ namespace RDKit{
 
       // Loop until either:
       //   1) all classes are uniquified
-      //   2) we've gone through maxIts times
-      //      maxIts is calculated by dividing the maximum value
-      //      in the molecular distance matrix by two; that's the 
+      //   2) the number of ranks doesn't change from one iteration to
+      //      the next
+      //   3) we've gone through maxIts times
+      //      maxIts is calculated by dividing the number of atoms
+      //      by 2. That's a pessimal version of the
       //      maximum number of steps required for two atoms to 
       //      "feel" each other (each influences one additional 
       //      neighbor shell per iteration). 
-      int maxIts=0;
-      double *dm = MolOps::getDistanceMat(mol);
-      for(int i=0;i<numAtoms;++i){
-        for(int j=i+i;j<numAtoms;++j){
-          int p=int(dm[i*numAtoms+j]);
-          if(p<numAtoms) maxIts = std::max(maxIts,p);
-        }
-      }
-      maxIts/=2;
-      ++maxIts;
-
+      int maxIts=numAtoms/2+1;
       int numIts=0;
-      while( numIts<maxIts && !activeIndices.empty()){
+      int lastNumRanks=-1;
+      int numRanks=*std::max_element(ranks.begin(),ranks.end())+1;
+      while( !activeIndices.empty() && numIts<maxIts && (lastNumRanks==-1 || lastNumRanks<numRanks) ){
         unsigned int longestEntry=0;
         // ----------------------------------------------------
         //
@@ -248,8 +243,10 @@ namespace RDKit{
         //
         // sort the new ranks and update the list of active indices:
         // 
+        lastNumRanks=numRanks;
         RankAtoms::sortAndRankVect(numAtoms,cipEntries,allIndices,ranks);
         RankAtoms::updateInPlayIndices(ranks,activeIndices);
+        numRanks = *std::max_element(ranks.begin(),ranks.end())+1;
         ++numIts;
 #ifdef VERBOSE_CANON
         BOOST_LOG(rdDebugLog) << "strings and ranks:" << std::endl;
