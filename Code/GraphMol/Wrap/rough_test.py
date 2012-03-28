@@ -1697,6 +1697,7 @@ CAS<~>
     self.failUnless(m.GetAtomWithIdx(0).GetSmarts()=='C')
     self.failUnless(m.GetAtomWithIdx(1).GetSmarts()=='O')
     self.failUnless(m.GetBondBetweenAtoms(0,1).GetSmarts()=='')
+    self.failUnless(m.GetBondBetweenAtoms(0,1).GetSmarts(allBondsExplicit=True)=='-')
 
     m =Chem.MolFromSmiles("C=O")
     self.failUnless(m.GetAtomWithIdx(0).GetSmarts()=='C')

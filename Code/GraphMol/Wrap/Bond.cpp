@@ -57,12 +57,12 @@ namespace RDKit{
     return bond->getStereoAtoms();
   }
 
-  std::string BondGetSmarts(const Bond *bond){
+  std::string BondGetSmarts(const Bond *bond,bool allBondsExplicit){
     std::string res;
     if(bond->hasQuery()){      
       res=SmartsWrite::GetBondSmarts(static_cast<const QueryBond *>(bond));
     } else {
-      res=SmilesWrite::GetBondSmiles(bond);
+      res=SmilesWrite::GetBondSmiles(bond,-1,false,allBondsExplicit);
     }
     return res;
   }
@@ -150,7 +150,8 @@ struct bond_wrapper {
      "Returns whether or not the bond has an associated query\n\n")
 
       .def("GetSmarts",BondGetSmarts,
-              (python::arg("bond")),
+           (python::arg("bond"),
+            python::arg("allBondsExplicit")=false),
               "returns the SMARTS (or SMILES) string for a Bond")
 
       .def("GetProp", BondGetProp,

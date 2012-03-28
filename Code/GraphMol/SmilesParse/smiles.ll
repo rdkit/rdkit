@@ -147,18 +147,16 @@ void smiles_lexer_error(const char *msg) {
 <IN_ATOM_STATE>Lr 	{   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
 				return ATOM_TOKEN; 
 			}
-B  |
-C  |
-N  |
-O  |
-P  |
-S  |
-F  |
-Cl |
-Br | 
-I			{	yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
-				return ORGANIC_ATOM_TOKEN;
-			}
+B  { yylval->atom = new Atom(5);return ORGANIC_ATOM_TOKEN; }
+C  { yylval->atom = new Atom(6);return ORGANIC_ATOM_TOKEN; }
+N  { yylval->atom = new Atom(7);return ORGANIC_ATOM_TOKEN; }
+O  { yylval->atom = new Atom(8);return ORGANIC_ATOM_TOKEN; }
+P  { yylval->atom = new Atom(15);return ORGANIC_ATOM_TOKEN; }
+S  { yylval->atom = new Atom(16);return ORGANIC_ATOM_TOKEN; }
+F  { yylval->atom = new Atom(9);return ORGANIC_ATOM_TOKEN; }
+Cl { yylval->atom = new Atom(17);return ORGANIC_ATOM_TOKEN; }
+Br { yylval->atom = new Atom(35);return ORGANIC_ATOM_TOKEN; }
+I  { yylval->atom = new Atom(53);return ORGANIC_ATOM_TOKEN; }
 
 H			{
 				return H_TOKEN; 
