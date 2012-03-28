@@ -272,6 +272,7 @@ mol-295
   1  4  1  0
   2  5  1  0
 M  END
+$$$$
 <BLANKLINE>
 
 
@@ -419,6 +420,7 @@ True
 and can be restored to the aromatic bond type using the :api:`rdkit.Chem.rdmolops.SanitizeMol` function:
 
 >>> Chem.SanitizeMol(m)
+rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
 >>> m.GetBondWithIdx(0).GetBondType()
 rdkit.Chem.rdchem.BondType.AROMATIC
 
@@ -1062,6 +1064,7 @@ demonstrates:
 'C1=CC=CC=C1'
 >>> p0 = ps[0][0]
 >>> Chem.SanitizeMol(p0)
+rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
 >>> Chem.MolToSmiles(p0)
 'c1ccccc1'
 
@@ -1485,6 +1488,7 @@ Some of the functionality provided allows molecules to be edited “in place”:
 >>> m = Chem.MolFromSmiles('c1ccccc1')
 >>> m.GetAtomWithIdx(0).SetAtomicNum(7)
 >>> Chem.SanitizeMol(m)
+rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
 >>> Chem.MolToSmiles(m)
 'c1ccncc1'
 
@@ -1513,9 +1517,13 @@ More complex transformations can be carried out using the
 >>> em = Chem.EditableMol(m) 
 >>> em.ReplaceAtom(3,Chem.Atom(7)) 
 >>> em.AddAtom(Chem.Atom(6)) 
+4
 >>> em.AddAtom(Chem.Atom(6)) 
+5
 >>> em.AddBond(3,4,Chem.BondType.SINGLE) 
+4
 >>> em.AddBond(4,5,Chem.BondType.DOUBLE) 
+5
 >>> em.RemoveAtom(0) 
 
 Note that the :api:`rdkit.Chem.rdchem.EditableMol` must be converted
@@ -1541,6 +1549,7 @@ did not match C++ signature:
     MolToSmiles(RDKit::ROMol {lvalue} mol, bool isomericSmiles=False, bool kekuleSmiles=False, int rootedAtAtom=-1, bool canonical=True)
 >>> m2 = em.GetMol()
 >>> Chem.SanitizeMol(m2)
+rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
 >>> Chem.MolToSmiles(m2)
 'C=CNC=O'
 
