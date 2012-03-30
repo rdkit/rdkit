@@ -415,6 +415,19 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
   >>> sorted(res)
   ['CCCOCc1cc(-c2ncccc2)ccc1', '[14*]c1ncccc1', '[16*]c1cc(-c2ncccc2)ccc1', '[16*]c1cccc(COCCC)c1', '[3*]OCCC', '[3*]OCc1cc(-c2ncccc2)ccc1', '[4*]CCC', '[4*]Cc1cc(-c2ncccc2)ccc1', '[8*]COCCC']
 
+  setting a minimum size for the fragments:
+  >>> m = Chem.MolFromSmiles('CCCOCC')
+  >>> res = list(BRICSDecompose(m,keepNonLeafNodes=True,minFragmentSize=2))
+  >>> sorted(res)
+  ['CCCOCC', '[3*]OCC', '[3*]OCCC', '[4*]CC', '[4*]CCC']
+  >>> m = Chem.MolFromSmiles('CCCOCC')
+  >>> res = list(BRICSDecompose(m,keepNonLeafNodes=True,minFragmentSize=3))
+  >>> sorted(res)
+  ['CCCOCC', '[3*]OCC', '[4*]CCC']
+  >>> res = list(BRICSDecompose(m,minFragmentSize=2))
+  >>> sorted(res)
+  ['[3*]OCC', '[3*]OCCC', '[4*]CC', '[4*]CCC']
+
 
   """
   global reactions
