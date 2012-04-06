@@ -1782,7 +1782,7 @@ void testPairsAndTorsionsOptions(){
                                           (const std::vector<boost::uint32_t> *)0,
                                           (const std::vector<boost::uint32_t> *)0,
                                           &invars);
-    fp1=AtomPairs::getAtomPairFingerprint(*m1,
+    fp2=AtomPairs::getAtomPairFingerprint(*m1,
                                           (const std::vector<boost::uint32_t> *)0,
                                           (const std::vector<boost::uint32_t> *)0,
                                           &invars);
