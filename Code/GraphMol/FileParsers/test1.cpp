@@ -2823,9 +2823,35 @@ void testIssue3484552(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3514824(){
+  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3514824 "<< std::endl;
 
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3514824.2.mol";
+    RWMol *m = MolFileToMol(fName,false);
+    TEST_ASSERT(m);
+    m->updatePropertyCache();
+    MolOps::findSSSR(*m);
+    TEST_ASSERT(m->getRingInfo());
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->numRings()==6);
+      
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3514824.mol";
+    RWMol *m = MolFileToMol(fName,false);
+    TEST_ASSERT(m);
+    m->updatePropertyCache();
+    MolOps::findSSSR(*m);
+    TEST_ASSERT(m->getRingInfo());
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->numRings()==8);
+      
+  }
+  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
+}
 
-  
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -2875,10 +2901,11 @@ int main(int argc,char *argv[]){
   testIssue3375684();
   testChiralPhosphorous();
   testIssue3392107();
-#endif
   testIssue3432136();
   testIssue3477283();
   testIssue3484552();
+#endif
+  testIssue3514824();
 
   return 0;
 }
