@@ -34,7 +34,9 @@ Bug Fixes:
   (Issue 3493156).
 - A series of problems related to thread safety were fixed.
 - Tracking the lifetime of owning molecules across the C++/Python
-border is now being handled better (Issue 3510149)
+  border is now being handled better (Issue 3510149)
+- A bug with ring-finding in some complex fused ring systems was fixed.
+  (Issue 3514824)
 
 New Features:
 - The molecular sanitization is now configurable using an optional
