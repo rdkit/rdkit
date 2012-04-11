@@ -36,6 +36,8 @@
 %}
 
 
+%newobject RDKit::MolOps::RemoveHs;
+%newobject RDKit::MolOps::AddHs;
 %include <GraphMol/MolOps.h>
 %ignore RDKit::MolOps::sanitizeMol(RWMol &,unsigned int &,unsigned int &);
 
