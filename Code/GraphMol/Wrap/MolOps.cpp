@@ -81,7 +81,7 @@ namespace RDKit{
     
   }
 
-  MolOps::SanitizeFlags sanitizeMol(ROMol &mol,unsigned int sanitizeOps,
+  MolOps::SanitizeFlags sanitizeMol(ROMol &mol,int sanitizeOps,
                                     bool catchErrors) {
     RWMol &wmol = static_cast<RWMol &>(mol);
     unsigned int operationThatFailed;
