@@ -58,6 +58,11 @@ if(RDK_BUILD_SWIG_WRAPPERS)
   set(RDKit_JavaLibDir "${RDKit_ExternalDir}/java_lib")
 endif(RDK_BUILD_SWIG_WRAPPERS)
 
+if(CMAKE_SIZEOF_VOID_P MATCHES 4)
+  ADD_DEFINITIONS("-DRDK_32BIT_BUILD")
+else()
+  ADD_DEFINITIONS("-DRDK_64BIT_BUILD")
+endif()
 
 # defines macros: rdkit_python_extension, rdkit_test
 include(RDKitUtils)

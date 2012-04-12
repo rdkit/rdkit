@@ -80,9 +80,7 @@ namespace RDKit{
     }
     
   }
-#ifdef WIN32
-  // MSVC++ and g++ seem to disagree about how enums should pass the
-  // c++/python boundary
+#ifdef RDK_32BIT_BUILD
   MolOps::SanitizeFlags sanitizeMol(ROMol &mol,int sanitizeOps,
                                     bool catchErrors) {
 #else
