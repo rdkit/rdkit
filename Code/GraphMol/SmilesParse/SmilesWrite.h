@@ -47,8 +47,7 @@ namespace RDKit{
   
   //! \brief returns canonical SMILES for a molecule
   /*!
-    \param mol : the molecule in question. NOTE that the molecule may
-        be modified as part of the canonicalization process.
+    \param mol : the molecule in question. 
     \param doIsomericSmiles : include stereochemistry and isotope information
         in the SMILES
     \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
@@ -57,7 +56,7 @@ namespace RDKit{
     \param canonical : if false, no attempt will be made to canonicalize the SMILES
     \param allBondsExplicit : if true, symbols will be included for all bonds.
    */
-  std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles=false,
+  std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles=false,
 			  bool doKekule=false,int rootedAtAtom=-1,
                           bool canonical=true,
                           bool allBondsExplicit=false);

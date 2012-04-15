@@ -115,16 +115,14 @@ namespace RankAtoms{
                             INT_LIST &indicesInPlay,
                             double *adjMat,
                             INT_VECT &ranks,
-                            VECT_INT_VECT *rankHistory=0,unsigned int stagnantTol=1){
+                            VECT_INT_VECT *rankHistory,unsigned int stagnantTol){
     PRECONDITION(!rankHistory||rankHistory->size()>=nAtoms,"bad rankHistory size");
     bool done = false;
     unsigned int numClasses = countClasses(ranks);
     unsigned int lastNumClasses = 0;
     unsigned int nCycles = 0;
     unsigned int nStagnant=0;
-    if(stagnantTol==0){
-      stagnantTol = nAtoms;
-    }
+
     //
     // loop until either we finish or no improvement is seen
     //

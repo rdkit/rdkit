@@ -391,7 +391,9 @@ void test4MultipleProducts(){
   TEST_ASSERT(prods[0].size()==2);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
   TEST_ASSERT(prods[0][1]->getNumAtoms()==2);
-  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  smi=MolToSmiles(*prods[0][0]);
+  std::cerr<<"smi: "<<smi<<std::endl;
+  TEST_ASSERT(smi=="C1NC(=O)CNC1=O");
   TEST_ASSERT(MolToSmiles(*prods[0][1])=="OO");
 
   reacts.clear();

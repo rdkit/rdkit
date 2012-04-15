@@ -10,6 +10,8 @@
 #ifndef _RD_CANON_H_
 #define _RD_CANON_H_
 
+#include <boost/tuple/tuple.hpp>
+
 namespace RDKit {
   class ROMol;
   class Atom;
@@ -89,7 +91,7 @@ namespace Canon {
 
 
   //! used to represent possible branches from an atom
-  typedef std::pair< int, std::pair< int, RDKit::Bond * > > PossibleType;
+  typedef boost::tuple<int,int,RDKit::Bond *> PossibleType;
   //! returns a PossibleType
   PossibleType makePossible(int rank,int atomIdx,RDKit::Bond *bond);
   //! compare two PossibleTypes

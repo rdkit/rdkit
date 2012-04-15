@@ -408,7 +408,7 @@ namespace {
     narom += aromRings.size();
   }
 
-  bool isAtomCandForArom(const Atom *at, VECT_EDON_TYPE &edon) {
+  bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon) {
     PRECONDITION(at,"bad atom");
     // limit aromaticity to:
     //   - the first two rows of the periodic table
@@ -418,7 +418,7 @@ namespace {
         at->getAtomicNum()!=52 ) {
       return false;
     }
-    switch (edon[at->getIdx()]) {
+    switch (edon) {
     case VacantElectronDonorType:
     case OneElectronDonorType:
     case TwoElectronDonorType:
@@ -601,8 +601,12 @@ namespace RDKit {
     
       // first find the all the simple rings in the molecule
       VECT_INT_VECT srings;
-    
-      symmetrizeSSSR(mol, srings);
+      if(mol.getRingInfo()->isInitialized()){
+        srings = mol.getRingInfo()->atomRings();
+      } else {
+        MolOps::symmetrizeSSSR(mol, srings);
+      }
+
       int narom = 0;
       // loop over all the atoms in the rings that can be candidates
       // for aromaticity
@@ -611,13 +615,20 @@ namespace RDKit {
       //   - has one or more electron to donate or has empty p-orbitals
       int natoms = mol.getNumAtoms();
       boost::dynamic_bitset<> acands(natoms);
+      boost::dynamic_bitset<> aseen(natoms);
       VECT_EDON_TYPE edon(natoms);
 
-      int ncands = 0;
+      VECT_INT_VECT cRings; // holder for rings that are candidates for aromaticity
       for (VECT_INT_VECT_I vivi = srings.begin();
            vivi != srings.end(); ++vivi) {
+        bool allAromatic=true;
         for (INT_VECT_I ivi = (*vivi).begin();
              ivi!=(*vivi).end(); ++ivi) {
+          if(aseen[*ivi]){
+            if(!acands[*ivi]) allAromatic=false;
+            continue;
+          }
+          aseen[*ivi]=1;
           Atom *at = mol.getAtomWithIdx(*ivi);
         
           // now that the atom is part of ring check if it can donate
@@ -625,38 +636,14 @@ namespace RDKit {
           // information in 'edon' - we will need it when we get to
           // the Huckel rule later
           edon[*ivi] = getAtomDonorTypeArom(at);
-          if (isAtomCandForArom(at, edon)) { 
-            ncands++;
-            acands[*ivi]=1;
-          } else {
-            acands[*ivi]=0;
-          }
+          acands[*ivi]=isAtomCandForArom(at, edon[*ivi]);
+          if(!acands[*ivi]) allAromatic=false;
+        }
+        if(allAromatic){
+          cRings.push_back((*vivi));
         }
       }
 
-      // mark rings in the SSSR list that cannot be candidates for
-      // aromaticity 
-      // For a ring to be ac andidate for aromaticity: all the atoms
-      // in the ring need to be aromatic 
-      // Assume here that the SSSR
-      // function above will return a continuous list of rings
-      VECT_INT_VECT cRings; // holder for the candidate rings
-      INT_VECT cring;
-      for (VECT_INT_VECT_CI vivi = srings.begin();
-           vivi != srings.end(); ++vivi) {
-        bool rcand = true;
-        for (INT_VECT_CI ivi = vivi->begin();
-             ivi != vivi->end(); ++ivi) {
-          if (!acands[*ivi]) { // if an atom in the ring is not a candidate
-            rcand = false; // mark teh entire ring not a candidate
-            break;
-          }
-        }
-        if (rcand) {
-          cring = (*vivi);
-          cRings.push_back(cring);
-        }
-      }
       // first convert all rings to bonds ids
       VECT_INT_VECT brings;
       RingUtils::convertToBonds(cRings, brings, mol);
@@ -667,8 +654,6 @@ namespace RDKit {
       // useful to figure out fused systems 
       INT_INT_VECT_MAP neighMap;
       RingUtils::makeRingNeighborMap(brings, neighMap);
-
-      
       
       // now loop over all the candidate rings and check the
       // huckel rule - of course paying attention to fused systems.

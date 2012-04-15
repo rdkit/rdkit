@@ -14,12 +14,8 @@
 
 namespace Canon {
   using namespace RDKit;
-  PossibleType makePossible(int rank,int atomIdx,Bond *bond) {
-    return std::make_pair(rank,std::make_pair(atomIdx,bond));
-  };
-
   int _possibleComp(const PossibleType &arg1,const PossibleType &arg2) {
-    return (arg1.first < arg2.first);
+    return (arg1.get<0>() < arg2.get<0>());
   };
 
   void switchBondDir(Bond *bond){
@@ -433,7 +429,7 @@ namespace Canon {
           rank += static_cast<int>(Bond::OTHER - theBond->getBondType()) *
             MAX_NATOMS*MAX_NATOMS;
         }
-        possibles.push_back(makePossible(rank,otherIdx,theBond.get()));
+        possibles.push_back(PossibleType(rank,otherIdx,theBond.get()));
       }
       bondsPair.first++;
     }
@@ -456,8 +452,12 @@ namespace Canon {
         possiblesIt!=possibles.end();
         possiblesIt++){
       MolStack subStack;
+#if 0
       int possibleIdx = possiblesIt->second.first;
       Bond *bond = possiblesIt->second.second;
+#endif
+      int possibleIdx = possiblesIt->get<1>();
+      Bond *bond = possiblesIt->get<2>();
       Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
       INT_LIST otherTravList;
       unsigned int lowestRingIdx;
@@ -487,7 +487,7 @@ namespace Canon {
         // -----
         cycleEndList.push_back(bond->getIdx());
         cAIt=std::find(cyclesAvailable.begin(),
-                                                cyclesAvailable.end(),1);
+                       cyclesAvailable.end(),1);
         if(cAIt==cyclesAvailable.end()){
           throw ValueErrorException("Too many rings open at once. SMILES cannot be generated.");
         }
@@ -737,9 +737,11 @@ namespace Canon {
     for(vviIt=cycles.begin();vviIt!=cycles.end();++vviIt) vviIt->resize(0);
 
     // make sure that we've done the stereo perception:
-    MolOps::assignStereochemistry(mol,false);
+    if(!mol.hasProp("_StereochemDone")){
+      MolOps::assignStereochemistry(mol,false);
+    }
 
-    // we need ring information make sure findSSSR has been called before
+    // we need ring information; make sure findSSSR has been called before
     // if not call now
     if ( !mol.getRingInfo()->isInitialized() ) {
       MolOps::findSSSR(mol);

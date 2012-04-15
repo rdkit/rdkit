@@ -399,31 +399,17 @@ namespace RDKit{
   } // end of namespace SmilesWrite
 
 
-  // NOTE: I did not forget the const here... Producing SMILES for
-  // a molecule actually can change the molecule.  Specifically,
-  // things like the directionality of bonds may be changed when
-  // the molecule is canonicalized.
-  // Odds are good that this may be one of those foot-shooting
-  // decisions and I'm gonna want to smack myself for doing this,
-  // but we'll try anyway.
-  std::string MolToSmiles(ROMol &mol,bool doIsomericSmiles,
+  std::string MolToSmiles(const ROMol &mol,bool doIsomericSmiles,
                           bool doKekule,int rootedAtAtom,bool canonical,
                           bool allBondsExplicit){
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
     if(!mol.getNumAtoms()) return "";
 
-    ROMol tmol(mol);
+    ROMol tmol(mol,true);
     if(doIsomericSmiles){
       tmol.setProp("_doIsoSmiles",1);
-    } else if(tmol.hasProp("_doIsoSmiles")){
-      tmol.clearProp("_doIsoSmiles");
     }
-
-    if(tmol.hasProp("_ringStereoWarning")){
-      tmol.clearProp("_ringStereoWarning");
-    }
-
 #if 0
     std::cout << "----------------------------" << std::endl;
     std::cout << "MolToSmiles:"<< std::endl;
@@ -442,7 +428,20 @@ namespace RDKit{
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
-      MolOps::assignStereochemistry(tmol,true);
+      if(!mol.hasProp("_StereochemDone")){
+        MolOps::assignStereochemistry(tmol,true);
+      } else {
+        tmol.setProp("_StereochemDone",1);
+        // we need the CIP codes:
+        for(unsigned int aidx=0;aidx<tmol.getNumAtoms();++aidx){
+          const Atom *oAt=mol.getAtomWithIdx(aidx);
+          if(oAt->hasProp("_CIPCode")){
+            std::string cipCode;
+            oAt->getProp("_CIPCode",cipCode);
+            tmol.getAtomWithIdx(aidx)->setProp("_CIPCode",cipCode);
+          }
+        }
+      }
     }
     if(canonical){
       MolOps::rankAtoms(tmol,ranks);

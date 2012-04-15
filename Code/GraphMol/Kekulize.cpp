@@ -487,11 +487,15 @@ namespace RDKit {
 
       // first find the all the simple rings in the molecule
       VECT_INT_VECT arings;
-      MolOps::findSSSR(mol, arings);
+      if(mol.getRingInfo()->isInitialized()){
+        arings = mol.getRingInfo()->atomRings();
+      } else {
+        MolOps::findSSSR(mol, arings);
+      }
 
-      // convert the rings to bonds ids
       VECT_INT_VECT brings;
-      RingUtils::convertToBonds(arings, brings, mol);
+      brings = mol.getRingInfo()->bondRings();
+      //RingUtils::convertToBonds(arings, brings, mol);
 
       // make a the neighbor map for the rings i.e. a ring is a
       // neighbor to another candidate ring if it shares at least
@@ -543,18 +547,6 @@ namespace RDKit {
         for (ROMol::BondIterator bi = mol.beginBonds();
              bi != mol.endBonds(); ++bi) {
           (*bi)->setIsAromatic(false);
-        }
-      }
-    
-      for (ROMol::BondIterator bi=mol.beginBonds();
-           bi != mol.endBonds(); ++bi) {
-        // by now the bondtype should have already changed from aromatic
-        if (markAtomsBonds && (*bi)->getBondType() == Bond::AROMATIC) {
-          std::ostringstream errout;
-          errout << "Kekulization somehow did not convert bond " << (*bi)->getIdx();
-          std::string msg = errout.str();
-          BOOST_LOG(rdErrorLog) << msg<< std::endl;
-          throw MolSanitizeException(msg);
         }
       }
 
