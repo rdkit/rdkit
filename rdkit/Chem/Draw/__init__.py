@@ -52,6 +52,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
       img = Image.new("RGBA",size,"white")
       canvas = Canvas(img)
     else:
+      MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
       from spingCanvas import Canvas
       canvas = Canvas(size=size,name='MolToImageFile')
       img = canvas._image
@@ -109,6 +110,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
     canvas = Canvas(size=size,imageType=imageType,
                               fileName=fileName)
   else:
+    MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
     canvas = Canvas(size=size,name=fileName,imageType=imageType)
   drawer = MolDrawing(canvas)
   if kekulize:

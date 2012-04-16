@@ -43,6 +43,7 @@ class MolDrawing(object):
   noCarbonSymbols=True
   includeAtomNumbers=False
   atomNumberOffset=0
+  radicalSymbol=u'\u2219'
 
   dash = (4,4)
   atomPs = None
@@ -372,6 +373,7 @@ class MolDrawing(object):
       labelIt= not self.noCarbonSymbols or \
                atom.GetAtomicNum()!=6 or \
                atom.GetFormalCharge()!=0 or \
+               atom.GetNumRadicalElectrons() or \
                self.includeAtomNumbers or \
                md>.001
       orient=''
@@ -398,18 +400,26 @@ class MolDrawing(object):
               chg = '+%d'%chg
             elif chg<-1:
               chg = '-%d'%chg
-            chg = '<sup>%s</sup>'%chg
           else:
             chg = ''
+          if chg:
+            chg = '<sup>%s</sup>'%chg
+
+          if atom.GetNumRadicalElectrons():
+            rad = self.radicalSymbol*atom.GetNumRadicalElectrons()
+            rad = '<sup>%s</sup>'%rad
+          else:
+            rad = ''
+
           isotope=''
           if md>.001:
             isotope='<sup>%d</sup>'%int(atom.GetMass()+.01)
                    
           deg = atom.GetDegree()
           if deg>1 or nbrSum[0]<1:
-            symbol = '%s%s%s%s'%(isotope,base,hs,chg)
+            symbol = '%s%s%s%s%s'%(isotope,base,hs,chg,rad)
           else:
-            symbol = '%s%s%s%s'%(chg,hs,isotope,base)
+            symbol = '%s%s%s%s%s'%(rad,chg,hs,isotope,base)
 
           if deg==1:
             if abs(nbrSum[1])>1:
