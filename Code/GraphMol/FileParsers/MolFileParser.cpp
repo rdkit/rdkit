@@ -379,9 +379,22 @@ namespace RDKit{
           Atom *atom=mol->getAtomWithIdx(aid-1); 
           if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
             mass = FileParserUtils::toInt(text.substr(spos,4));
-            atom->setMass(static_cast<double>(mass));
-            atom->setProp("_MolISOProp", mass);
-            spos += 4;
+            int dmass = mass-round(PeriodicTable::getTable()->getMostCommonIsotopeMass(atom->getAtomicNum()));
+            int isotope=dmass+PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum());
+            if(isotope<0){
+              BOOST_LOG(rdWarningLog) << " atom "<<aid<<" has a negative isotope offset. line:  "<<line<<std::endl;
+            } else {
+              atom->setIsotope(isotope);
+              double dblmass=PeriodicTable::getTable()->getMassForIsotope(atom->getAtomicNum(),
+                                                                          isotope);
+              if(dblmass<=0.0 && atom->getAtomicNum()>0){
+                BOOST_LOG(rdWarningLog) << " isotope specified for atom "<<aid<<", "<<mass<<", not found in internal list. line:  "<<line<<std::endl;
+                dmass=mass;
+              }
+              atom->setMass(static_cast<double>(dmass));
+              atom->setProp("_MolISOProp", mass);
+              spos += 4;
+            }
           } else {
             atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
           }
@@ -845,7 +858,14 @@ namespace RDKit{
       }
     
       if(massDiff!=0) {
-        res->setMass(PeriodicTable::getTable()->getMostCommonIsotope(res->getAtomicNum())+massDiff);
+        int defIso=PeriodicTable::getTable()->getMostCommonIsotope(res->getAtomicNum());
+        int dIso=defIso+massDiff;
+        if(dIso<0){
+          BOOST_LOG(rdWarningLog) << " atom "<<res->getIdx()<<" has a negative isotope offset. line:  "<<line<<std::endl;
+        }
+        res->setIsotope(dIso);
+        res->setMass(PeriodicTable::getTable()->getMassForIsotope(res->getAtomicNum(),
+                                                                  dIso));
 	res->setProp("_hasMassQuery",true);
       }
     

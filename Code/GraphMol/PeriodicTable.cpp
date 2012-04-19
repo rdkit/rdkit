@@ -35,6 +35,27 @@ PeriodicTable::PeriodicTable() {
       byname[enam] = adata.AtomicNum();
     }
   }
+
+  tokenizer lines(isotopesAtomData,eolSep);
+  boost::char_separator<char> spaceSep(" \t");
+  for(tokenizer::iterator line=lines.begin();
+      line!=lines.end();++line){
+    if(*line!=" "){
+      tokenizer tokens(*line,spaceSep);
+      tokenizer::iterator token=tokens.begin();
+      int anum = atoi(token->c_str());
+      atomicData &adata=byanum[anum];
+      ++token;if(token==tokens.end()) continue;
+      ++token;if(token==tokens.end()) continue;
+      unsigned int isotope=static_cast<unsigned int>(atoi(token->c_str()));
+      ++token;if(token==tokens.end()) continue;
+      double mass=atof(token->c_str());
+      ++token;if(token==tokens.end()) continue;
+      double abundance=atof(token->c_str());
+      adata.d_isotopeInfoMap[isotope]=std::make_pair(mass,abundance);
+    }
+  }
+
 }
 
 

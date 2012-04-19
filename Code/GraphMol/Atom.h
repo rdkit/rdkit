@@ -199,10 +199,15 @@ namespace RDKit{
     //! returns our \c isAromatic flag
     bool getIsAromatic() const { return df_isAromatic; };
 
-    //! sets our mass (for isotopes)
+    //! sets our mass (should no longer be used)
     void setMass( double what) { d_mass = what; };
     //! returns our mass
     double getMass() const {return d_mass; };
+
+    //! sets our isotope number
+    void setIsotope( double what) { d_isotope = what; };
+    //! returns our isotope number
+    double getIsotope() const {return d_isotope; };
 
     //! sets our \c dativeFlag
     // intended to be used only in construction.
@@ -474,6 +479,7 @@ namespace RDKit{
     ChiralType d_chiralTag;
     HybridizationType d_hybrid;
     double d_mass;
+    double d_isotope;
     ROMol *dp_mol;
     Dict *dp_props;
     void initAtom();

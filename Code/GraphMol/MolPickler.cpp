@@ -24,7 +24,7 @@ namespace RDKit{
 
   const int32_t MolPickler::versionMajor=7;
   const int32_t MolPickler::versionMinor=1;
-  const int32_t MolPickler::versionPatch=0;
+  const int32_t MolPickler::versionPatch=1;
   const int32_t MolPickler::endianId=0xDEADBEEF;
 
   void streamWrite(std::ostream &ss,MolPickler::Tags tag){
@@ -790,6 +790,13 @@ namespace RDKit{
         propFlags |= 1<<7;
         streamWrite(tss,tmpChar);
       }
+
+      unsigned int tmpuint=atom->getIsotope();
+      if(tmpuint>0){
+        propFlags |= 1<<8;
+        streamWrite(tss,tmpuint);
+      }
+
       streamWrite(ss,propFlags);
       ss.write(tss.str().c_str(),tss.str().size());
     } else {
@@ -990,6 +997,13 @@ namespace RDKit{
           tmpChar=0;
         }          
         atom->d_numRadicalElectrons=static_cast<unsigned int>(tmpChar);
+
+        atom->d_isotope=0;
+        if(propFlags&(1<<8)){
+          unsigned int tmpuint;
+          streamRead(ss,tmpuint,version);
+          atom->d_isotope=tmpuint;
+        }
       }
       
     } else if(version>5000){
