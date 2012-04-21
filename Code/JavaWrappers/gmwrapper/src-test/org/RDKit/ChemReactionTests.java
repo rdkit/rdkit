@@ -341,7 +341,7 @@ public class ChemReactionTests extends GraphMolTest {
 		// Can sanitize only RWMol objects
 		RWMol p00 = new RWMol(ps.get(0).get(0));
 		RDKFuncs.sanitizeMol(p00);
-		assertEquals( 3.0,p00.getAtomWithIdx(1).getMass(), 0.0 );
+		assertEquals( 3,p00.getAtomWithIdx(1).getIsotope());
 	}
 	@Test
 	public void test9AromaticityTransfer () {

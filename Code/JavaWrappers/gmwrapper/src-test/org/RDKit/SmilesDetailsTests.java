@@ -1228,7 +1228,8 @@ public class SmilesDetailsTests extends GraphMolTest {
 		smi = "C[13C](C)(C)C";
 		mol = RWMol.MolFromSmiles(smi);
 		assertNotNull(mol);
-		assertEquals(0.0, mol.getAtomWithIdx(1).getMass(), 13.0);
+		assertEquals(0.001, mol.getAtomWithIdx(1).getMass(), 13.0034);
+                assertEquals(mol.getAtomWithIdx(1).getIsotope(), 13);
 		smi = mol.MolToSmiles(false);
 		assertEquals("CC(C)(C)C", smi);
 		smi = mol.MolToSmiles(true);
