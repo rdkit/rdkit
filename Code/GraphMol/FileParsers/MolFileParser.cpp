@@ -378,21 +378,11 @@ namespace RDKit{
           spos += 4;
           Atom *atom=mol->getAtomWithIdx(aid-1); 
           if(text.size()>=spos+4 && text.substr(spos,4)!="    "){
-            mass = FileParserUtils::toInt(text.substr(spos,4));
-            int dmass = mass-round(PeriodicTable::getTable()->getMostCommonIsotopeMass(atom->getAtomicNum()));
-            int isotope=dmass+PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum());
+            int isotope = FileParserUtils::toInt(text.substr(spos,4));
             if(isotope<0){
-              BOOST_LOG(rdWarningLog) << " atom "<<aid<<" has a negative isotope offset. line:  "<<line<<std::endl;
+              BOOST_LOG(rdErrorLog) << " atom "<<aid<<" has a negative isotope value. line:  "<<line<<std::endl;
             } else {
               atom->setIsotope(isotope);
-              double dblmass=PeriodicTable::getTable()->getMassForIsotope(atom->getAtomicNum(),
-                                                                          isotope);
-              if(dblmass<=0.0 && atom->getAtomicNum()>0){
-                BOOST_LOG(rdWarningLog) << " isotope specified for atom "<<aid<<", "<<mass<<", not found in internal list. line:  "<<line<<std::endl;
-                dmass=mass;
-              }
-              atom->setMass(static_cast<double>(dmass));
-              atom->setProp("_MolISOProp", mass);
               spos += 4;
             }
           } else {

@@ -388,7 +388,7 @@ atom_query:	simple_atom
 | HYB_TOKEN 
 | number {
   QueryAtom *newQ = new QueryAtom();
-  newQ->setQuery(makeAtomMassQuery($1));
+  newQ->setQuery(makeAtomIsotopeQuery($1));
   $$=newQ;
 }
 ;

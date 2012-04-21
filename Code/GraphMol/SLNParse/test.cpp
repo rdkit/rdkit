@@ -293,8 +293,8 @@ void test3(){
   mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms()==5);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getMass()==2.0);
-  TEST_ASSERT(mol->getAtomWithIdx(2)->getMass()==2.0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getIsotope()==2);
+  TEST_ASSERT(mol->getAtomWithIdx(2)->getIsotope()==2);
 
   delete mol;
   sln = "C[*]H3";

@@ -205,9 +205,9 @@ namespace RDKit{
     double getMass() const {return d_mass; };
 
     //! sets our isotope number
-    void setIsotope( double what) { d_isotope = what; };
+    void setIsotope(unsigned int what);
     //! returns our isotope number
-    double getIsotope() const {return d_isotope; };
+    unsigned int getIsotope() const {return d_isotope; };
 
     //! sets our \c dativeFlag
     // intended to be used only in construction.
@@ -479,7 +479,7 @@ namespace RDKit{
     ChiralType d_chiralTag;
     HybridizationType d_hybrid;
     double d_mass;
-    double d_isotope;
+    unsigned int d_isotope;
     ROMol *dp_mol;
     Dict *dp_props;
     void initAtom();

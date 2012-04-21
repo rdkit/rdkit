@@ -189,6 +189,9 @@ namespace RDKit {
       } else if (descrip == "AtomMass") {
         res << query->getVal()/massIntegerConversionFactor <<"*";
         needParen = true;
+      } else if (descrip == "AtomIsotope") {
+        res << query->getVal()<<"*";
+        needParen = true;
       } else if (descrip == "AtomRingBondCount") {
         int count=query->getVal();
         if(count==0){

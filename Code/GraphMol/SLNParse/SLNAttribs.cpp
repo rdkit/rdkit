@@ -153,12 +153,12 @@ namespace RDKit{
         } else if(attribName=="i"){
           int val=parseIntAttribVal(attribName,attribVal);
           if(!doingQuery){
-            atom->setMass(static_cast<double>(val));
+            atom->setIsotope(static_cast<unsigned int>(val));
           } else {
             query=makeQueryFromOp(attribPtr->op,
-                                  massIntegerConversionFactor*val,
-                                  queryAtomMass,
-                                  "AtomMass");
+                                  val,
+                                  queryAtomIsotope,
+                                  "AtomIsotope");
           }
         } else if(attribName=="r"){
           if(attribVal!=""){

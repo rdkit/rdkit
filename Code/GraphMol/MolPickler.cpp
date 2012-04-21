@@ -198,6 +198,8 @@ namespace RDKit{
         query->setDataFunc(queryAtomUnsaturated);
       } else if(descr=="AtomMass"){
         query->setDataFunc(queryAtomMass);
+      } else if(descr=="AtomIsotope"){
+        query->setDataFunc(queryAtomIsotope);
       } else if(descr=="AtomFormalCharge"){
         query->setDataFunc(queryAtomFormalCharge);
       } else if(descr=="AtomHybridization"){
@@ -746,11 +748,11 @@ namespace RDKit{
     if(!atom->hasQuery()){
       std::stringstream tss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
       int32_t propFlags=0;
-      tmpFloat=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
-      if(fabs(tmpFloat)>.0001){
-        propFlags |= 1;
-        streamWrite(tss,tmpFloat);
-      }
+      // tmpFloat=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
+      // if(fabs(tmpFloat)>.0001){
+      //   propFlags |= 1;
+      //   streamWrite(tss,tmpFloat);
+      // }
       tmpSchar=static_cast<signed char>(atom->getFormalCharge());
       if(tmpSchar!=0){
         propFlags |= 1<<1;
@@ -947,7 +949,8 @@ namespace RDKit{
         if(propFlags&1){
           float tmpFloat;
           streamRead(ss,tmpFloat,version);
-          atom->setMass(tmpFloat+atom->getMass());
+          int iso=static_cast<int>(floor(tmpFloat+atom->getMass()+.0001));
+          atom->setIsotope(iso);
         }
 
         if(propFlags&(1<<1)){
@@ -1002,7 +1005,7 @@ namespace RDKit{
         if(propFlags&(1<<8)){
           unsigned int tmpuint;
           streamRead(ss,tmpuint,version);
-          atom->d_isotope=tmpuint;
+          atom->setIsotope(tmpuint);
         }
       }
       

@@ -1290,7 +1290,9 @@ void test15Issue1882749(){
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getAtomicNum()==7);
-  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getMass()==15);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getIsotope()==15);
+  std::cerr<<" mass: "<<prods[0][0]->getAtomWithIdx(0)->getMass()<<std::endl;
+  TEST_ASSERT(feq(prods[0][0]->getAtomWithIdx(0)->getMass(),15.0001));
 
   delete rxn;
   smi = "[N;D3:1]-!@[*]>>[15N;-1:1]";
@@ -1306,8 +1308,9 @@ void test15Issue1882749(){
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==4);
-  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getMass()==15);
   TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getFormalCharge()==-1);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(0)->getIsotope()==15);
+  TEST_ASSERT(feq(prods[0][0]->getAtomWithIdx(0)->getMass(),15.0001));
 
   reacts.clear();
   smi = "CS(=O)C";
@@ -1352,7 +1355,8 @@ void test15Issue1882749(){
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==3);
-  TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getMass()==13);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getIsotope()==13);
+  TEST_ASSERT(feq(prods[0][0]->getAtomWithIdx(1)->getMass(),13.00335));
   
   reacts.clear();
   smi = "CO";
@@ -1376,7 +1380,8 @@ void test15Issue1882749(){
   TEST_ASSERT(prods[0][0]->getNumAtoms()==3);
   
   MolOps::sanitizeMol(*(static_cast<RWMol *>(prods[0][0].get())));
-  TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getMass()==3);
+  TEST_ASSERT(prods[0][0]->getAtomWithIdx(1)->getIsotope()==3);
+  TEST_ASSERT(feq(prods[0][0]->getAtomWithIdx(1)->getMass(),3.016));
   TEST_ASSERT(MolToSmiles(*prods[0][0],true)=="[3*]OC");
 
   delete rxn;

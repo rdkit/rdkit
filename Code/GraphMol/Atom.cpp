@@ -52,6 +52,7 @@ Atom::Atom( const Atom & other){
   d_numExplicitHs = other.d_numExplicitHs;
   d_numRadicalElectrons = other.d_numRadicalElectrons;
   d_mass = other.d_mass;
+  d_isotope = other.d_isotope;
   //d_pos = other.d_pos;
   d_chiralTag=other.d_chiralTag;
   d_hybrid = other.d_hybrid;
@@ -78,6 +79,7 @@ void Atom::initAtom(){
   } else{
     d_mass = 0.0;
   }
+  d_isotope=0;
   d_chiralTag=CHI_UNSPECIFIED;
   d_hybrid = UNSPECIFIED;
   dp_mol = 0;
@@ -395,6 +397,15 @@ int Atom::calcImplicitValence(bool strict) {
   return res;
 }
 
+void Atom::setIsotope(unsigned int what){
+  d_isotope=what;
+  if(d_isotope){
+    d_mass=PeriodicTable::getTable()->getMassForIsotope(d_atomicNum,d_isotope);
+  } else {
+    d_mass = PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
+  }
+}
+
 void Atom::setQuery(Atom::QUERYATOM_QUERY *what) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0,"plain atoms have no Query");
@@ -417,9 +428,9 @@ bool Atom::Match(Atom const *what) const {
   if(res){
     if(!getAtomicNum()){
       // this is the new behavior, based on the isotopes:
-      double tgt=this->getMass();
-      double test=what->getMass();
-      if(fabs(tgt)>1e-4 && fabs(test)>1e-4 && fabs(tgt-test)>1e-4 ){
+      int tgt=this->getIsotope();
+      int test=what->getIsotope();
+      if(tgt && test && tgt!=test){
         res = false;
       }
     } else {
@@ -432,12 +443,18 @@ bool Atom::Match(Atom const *what) const {
           ){  
         res=false;
       } else {
-        double massDiff1=fabs(PeriodicTable::getTable()->getAtomicWeight(this->getAtomicNum()) -
+        if(this->getIsotope()){
+          if(this->getIsotope()!=what->getIsotope()){
+            res=false;
+          }
+        } else {
+          int massDiff1=fabs(PeriodicTable::getTable()->getAtomicWeight(this->getAtomicNum()) -
                              this->getMass());
-        if(massDiff1>0.001){
-          double massDiff2=fabs(PeriodicTable::getTable()->getAtomicWeight(what->getAtomicNum()) -
-                                what->getMass());
-          if(fabs(massDiff1-massDiff2)>0.001) res=false;
+          if(massDiff1>0.001){
+            double massDiff2=fabs(PeriodicTable::getTable()->getAtomicWeight(what->getAtomicNum()) -
+                                  what->getMass());
+            if(fabs(massDiff1-massDiff2)>0.001) res=false;
+          }
         }
       }
     }

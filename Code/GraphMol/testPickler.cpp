@@ -741,12 +741,14 @@ void testIssue3202580(){
   {
     ROMol *m1 = SmilesToMol("[13CH4]");
     TEST_ASSERT(m1);
-    TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getMass(),13.000,.001));
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getIsotope()==13);
+    std::cerr<<"  mass! "<<m1->getAtomWithIdx(0)->getMass()<<std::endl;
+    TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getMass(),13.003,.001));
     std::string pickle;
     MolPickler::pickleMol(*m1,pickle);
     RWMol *m2 = new RWMol();
     MolPickler::molFromPickle(pickle,*m2);
-    TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(),13.000,.001));
+    TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getMass(),13.003,.001));
     delete m1;
     delete m2;
   }

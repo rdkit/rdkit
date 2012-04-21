@@ -254,7 +254,7 @@ namespace RDKit{
             Atom *at=newMol->getAtomWithIdx(*nbrIdx);
             at->setAtomicNum(0);
             ++nDummies;
-            at->setMass(double(nDummies));
+            at->setIsotope(nDummies);
             keepList.push_back(at);
           }
           nbrIdx++;
@@ -343,9 +343,9 @@ namespace RDKit{
             ++nDummies;
             
             if(!labelByIndex){
-              newAt->setMass(double(nDummies));
+              newAt->setIsotope(nDummies);
             } else {
-              newAt->setMass(matchingIndices[nbrIdx]);
+              newAt->setIsotope(matchingIndices[nbrIdx]);
             }
             newMol->addAtom(newAt,false,true);
             dummyAtomMap[nbrIdx]=newAt;

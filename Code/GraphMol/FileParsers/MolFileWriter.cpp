@@ -70,9 +70,8 @@ namespace RDKit{
       if(!atom->hasQuery()){
         int isotope=atom->getIsotope();
         if(isotope!=0){
-          int md=PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum())-isotope;
           ++nMassDiffs;
-          massdiffss << boost::format(" %3d %3d") % (atom->getIdx()+1) % md;
+          massdiffss << boost::format(" %3d %3d") % (atom->getIdx()+1) % isotope;
           if(nMassDiffs==8){
             res << boost::format("M  ISO%3d")%nMassDiffs << massdiffss.str()<<std::endl;
             massdiffss.str("");

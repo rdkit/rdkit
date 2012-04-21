@@ -114,8 +114,8 @@ namespace RDKit {
       if(!prodAtom->hasProp("_QueryFormalCharge")){
         prodAtom->setFormalCharge(reactAtom->getFormalCharge());
       }
-      if(!prodAtom->hasProp("_QueryMass")){
-        prodAtom->setMass(reactAtom->getMass());
+      if(!prodAtom->hasProp("_QueryIsotope")){
+        prodAtom->setIsotope(reactAtom->getIsotope());
       }
       if(!prodAtom->hasProp("_ReactionDegreeChanged")){
         if(!prodAtom->hasProp("_QueryHCount")){
@@ -174,6 +174,11 @@ namespace RDKit {
           int val;
           newAtom->getProp("_QueryMass",val);
           newAtom->setMass(val);
+        }
+        if(newAtom->hasProp("_QueryIsotope")){
+          int val;
+          newAtom->getProp("_QueryIsotope",val);
+          newAtom->setIsotope(val);
         }
       }
       // and the bonds:
@@ -303,9 +308,15 @@ namespace RDKit {
               // If the product atom is a dummy, set everything
               productAtom->setAtomicNum(reactantAtom->getAtomicNum());
               productAtom->setIsAromatic(reactantAtom->getIsAromatic());
-            }
+              // now that the atomic number is set, we need
+              // to reset the isotope so that the mass is also correct:
+              if(productAtom->getIsotope())
+                productAtom->setIsotope(productAtom->getIsotope());              
+              std::cerr<<"pAtom2:"<<productAtom->getIdx()<<" "<<productAtom->getMass()<<" "<<productAtom->getIsotope()<<std::endl;            }
             updateImplicitAtomProperties(productAtom,reactantAtom);
+            std::cerr<<"pAtom1:"<<productAtom->getIdx()<<" "<<productAtom->getMass()<<" "<<productAtom->getIsotope()<<std::endl;
           }
+          std::cerr<<"pAtom:"<<productAtom->getIdx()<<" "<<productAtom->getMass()<<" "<<productAtom->getIsotope()<<std::endl;
           // One might be tempted to copy over the reactant atom's chirality into the
           // product atom if chirality is not specified on the product. This would be a
           // very bad idea because the order of bonds will almost certainly change on the
@@ -724,12 +735,23 @@ namespace RDKit {
               if((*atomIt)->hasProp("_QueryMass")){
                 if(!silent) {
                   BOOST_LOG(rdWarningLog)<<"atom "<<(*atomIt)->getIdx()<<" in product " 
-                                         << molIdx << " has multiple isotope specifications.\n";
+                                         << molIdx << " has multiple mass specifications.\n";
                 }
                 numWarnings++;
               } else {
                 (*atomIt)->setProp("_QueryMass",
                                    ((const ATOM_EQUALS_QUERY *)query)->getVal()/massIntegerConversionFactor);
+              }
+            } else if(query->getDescription()=="AtomIsotope"){
+              if((*atomIt)->hasProp("_QueryIsotope")){
+                if(!silent) {
+                  BOOST_LOG(rdWarningLog)<<"atom "<<(*atomIt)->getIdx()<<" in product " 
+                                         << molIdx << " has multiple isotope specifications.\n";
+                }
+                numWarnings++;
+              } else {
+                (*atomIt)->setProp("_QueryIsotope",
+                                   ((const ATOM_EQUALS_QUERY *)query)->getVal());
               }
             }
           }
