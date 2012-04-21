@@ -31,7 +31,7 @@ namespace RDKit {
     return res;
   }
 
-  std::string featClassDoc="Class to represent a chemical  feature.\n\
+  std::string featClassDoc="Class to represent a chemical feature.\n\
     These chemical features may or may not have been derived from molecule object;\n\
     i.e. it is possible to have a chemical feature that was created just from its type\n\
     and location.\n";
@@ -39,6 +39,9 @@ namespace RDKit {
     static void wrap() {
       python::class_<MolChemicalFeature,FeatSPtr>("MolChemicalFeature", featClassDoc.c_str(),
 						  python::no_init)
+						  
+        .def("GetId", &MolChemicalFeature::getId,
+	         "Returns the identifier of the feature\n")
         .def("GetFamily", &MolChemicalFeature::getFamily,
              "Get the family to which the feature belongs; donor, acceptor, etc.",
              python::return_value_policy<python::copy_const_reference>())

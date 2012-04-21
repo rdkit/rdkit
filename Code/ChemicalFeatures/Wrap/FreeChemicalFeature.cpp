@@ -38,16 +38,23 @@ namespace ChemicalFeatures {
       python::class_<FreeChemicalFeature>("FreeChemicalFeature", featClassDoc.c_str(),
 					  python::init<const std::string &>())
         .def(python::init<>("Default Constructor"))
-        .def(python::init<std::string, std::string, const RDGeom::Point3D &>
-             (python::args("family", "type", "loc"),
+        .def(python::init<std::string, std::string, const RDGeom::Point3D &,int>
+             ((python::arg("family"),
+               python::arg("type"),
+               python::arg("loc"),
+               python::arg("id")=-1),
               "Constructor with family, type and location specified"))
         .def(python::init<std::string, const RDGeom::Point3D &>
              (python::args("family", "loc"), 
-              "constructor with family and location specified, empty type"))
+              "constructor with family and location specified, empty type and id"))
+        .def("SetId", &FreeChemicalFeature::setId,
+             "Set the id of the feature")
         .def("SetFamily", &FreeChemicalFeature::setFamily,
              "Set the family of the feature")
         .def("SetType", &FreeChemicalFeature::setType,
              "Set the sepcific type for the feature")
+        .def("GetId", &FreeChemicalFeature::getId,
+             "Get the id of the feature")
         .def("GetFamily", &FreeChemicalFeature::getFamily,
              "Get the family of the feature",
              python::return_value_policy<python::copy_const_reference>())

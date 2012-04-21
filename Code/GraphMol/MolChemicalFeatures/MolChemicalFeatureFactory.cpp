@@ -33,6 +33,7 @@ namespace RDKit {
     AR_MOLGRAPH *molG=getMolGraph(mol);
 #endif
     FeatSPtrList res;
+    int idx = 1;
     typedef std::vector< std::pair< std::string,std::set<int> > > MatchSetCollection;
     MatchSetCollection matchSets;
     for(MolChemicalFeatureDef::CollectionType::const_iterator featDefIt=beginFeatureDefs();
@@ -71,7 +72,7 @@ namespace RDKit {
             matchSets.push_back(std::make_pair(featDef->getFamily(),matchSet));
     
             // Set up the feature:
-            MolChemicalFeature *newFeat=new MolChemicalFeature(&mol,this,featDef.get());
+            MolChemicalFeature *newFeat=new MolChemicalFeature(&mol,this,featDef.get(),idx++);
             MolChemicalFeature::AtomPtrContainer &atoms=newFeat->d_atoms;
             atoms.resize(match.size());
     

@@ -34,42 +34,66 @@ class TestCase(unittest.TestCase):
 
     def testBasic(self):
       ffeat = ChemicalFeatures.FreeChemicalFeature()
+      ffeat.SetId(123)
+      pos = ffeat.GetId()
+      self.failUnless(pos == 123)      
       ffeat.SetFamily("HBondDonor")
       self.failUnless(ffeat.GetFamily() == "HBondDonor")
       ffeat.SetPos(geom.Point3D(1.0, 2.0, 3.0))
       pos = ffeat.GetPos()
-      self.failUnless(ptFeq(pos, geom.Point3D(1.0, 2.0, 3.0)))
-      
+      self.failUnless(ptFeq(pos, geom.Point3D(1.0, 2.0, 3.0)))      
       ffeat.SetType("HBondDonor1")
       self.failUnless(ffeat.GetType() == "HBondDonor1")
 
       ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0))
+      self.failUnless(ffeat.GetId() == -1)      
       self.failUnless(ffeat.GetFamily() == "HBondDonor")
       self.failUnless(ffeat.GetType() == "HBondDonor1")
+
+      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0),id=123)
+      self.failUnless(ffeat.GetId() == 123)      
+      self.failUnless(ffeat.GetFamily() == "HBondDonor")
+      self.failUnless(ffeat.GetType() == "HBondDonor1")
+
       pos = ffeat.GetPos()
       self.failUnless(ptFeq(pos, geom.Point3D(1.0, 2.0, 3.0)))
 
-      ffeat = ChemicalFeatures.FreeChemicalFeature(type="HBondDonor1", family="HBondDonor",
-                                       loc=geom.Point3D(1.0, 2.0, 3.0))
+      ffeat = ChemicalFeatures.FreeChemicalFeature(id = 123, type="HBondDonor1", family="HBondDonor", loc=geom.Point3D(1.0, 2.0, 3.0))
+      self.failUnless(ffeat.GetId() == 123)      
       self.failUnless(ffeat.GetFamily() == "HBondDonor")
       self.failUnless(ffeat.GetType() == "HBondDonor1")
       pos = ffeat.GetPos()
       self.failUnless(ptFeq(pos, geom.Point3D(1.0, 2.0, 3.0)))
       
     def testPickle(self):
-      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0))
+      ffeat = ChemicalFeatures.FreeChemicalFeature("HBondDonor", "HBondDonor1", geom.Point3D(1.0, 2.0, 3.0),123)
       pkl = cPickle.dumps(ffeat)
       ffeat2 = cPickle.loads(pkl)
-      self.failUnless(ffeat2.GetFamily()==ffeat.GetFamily());
-      self.failUnless(ffeat2.GetType()==ffeat.GetType());
+      self.failUnless(ffeat2.GetId()==ffeat.GetId());      
+      self.failUnless(ffeat2.GetFamily()==ffeat.GetFamily())
+      self.failUnless(ffeat2.GetType()==ffeat.GetType())
       self.failUnless(ptFeq(ffeat2.GetPos(),ffeat.GetPos()))
 
-      #cPickle.dump(ffeat,file('feat.pkl','wb+'))
+      # Check that the old pickled versions have not been broken        
       inF = file(os.path.join(RDConfig.RDBaseDir,
                               'Code/ChemicalFeatures/Wrap/testData/feat.pkl'),'rb')
       ffeat2=cPickle.load(inF)
-      self.failUnless(ffeat2.GetFamily()==ffeat.GetFamily());
-      self.failUnless(ffeat2.GetType()==ffeat.GetType());
+      # this version (1.0) does not have an id in the byte stream 
+      self.failUnless(ffeat2.GetFamily()==ffeat.GetFamily())
+      self.failUnless(ffeat2.GetType()==ffeat.GetType())
+      self.failUnless(ptFeq(ffeat2.GetPos(),ffeat.GetPos()))
+        
+      # Test the new version also has the id and works as expected
+      
+      # uncomment the following to generate (overrwrite) new version of pickled
+      # data file
+      #cPickle.dump(ffeat,file(os.path.join(RDConfig.RDBaseDir, 'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'wb+'))
+      inF = file(os.path.join(RDConfig.RDBaseDir,
+                              'Code/ChemicalFeatures/Wrap/testData/featv2.pkl'),'rb')
+      ffeat2=cPickle.load(inF)
+      self.failUnless(ffeat2.GetId()==ffeat.GetId());
+      self.failUnless(ffeat2.GetFamily()==ffeat.GetFamily())
+      self.failUnless(ffeat2.GetType()==ffeat.GetType())
       self.failUnless(ptFeq(ffeat2.GetPos(),ffeat.GetPos()))
 
       

@@ -20,6 +20,9 @@ namespace ChemicalFeatures {
     ChemicalFeature() {};
     virtual ~ChemicalFeature() {};
     
+    // returns the feature id
+    virtual const int getId() const = 0;    
+    
     // returns the type of the feature
     virtual const std::string& getType() const = 0;
     

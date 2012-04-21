@@ -32,9 +32,10 @@ namespace RDKit {
 
     //! Constructor
     MolChemicalFeature(const ROMol *mol,
-		       const MolChemicalFeatureFactory *factory,
-                       const MolChemicalFeatureDef *fdef) :
-      dp_mol(mol), dp_factory(factory), dp_def(fdef), d_activeConf(-1) {};
+                       const MolChemicalFeatureFactory *factory,
+                       const MolChemicalFeatureDef *fdef,
+                       int id=-1) :
+      dp_mol(mol), dp_factory(factory), dp_def(fdef), d_id(id), d_activeConf(-1) {};
 
     ~MolChemicalFeature() {}
 
@@ -55,6 +56,9 @@ namespace RDKit {
     const ROMol *getMol() const { return dp_mol; };
     //! \brief return a pointer to our feature definition
     const MolChemicalFeatureDef *getFeatDef() const { return dp_def; };
+
+    //! \brief returns the active conformer (in the associated molecule)
+    const int getId() const { return d_id;};
     
     //! \brief returns the number of atoms defining the feature
     inline unsigned int getNumAtoms() const {
@@ -79,12 +83,11 @@ namespace RDKit {
 
   private:
     typedef std::map<int,RDGeom::Point3D> PointCacheType;
+    
     const ROMol *dp_mol;
     const MolChemicalFeatureFactory *dp_factory;
     const MolChemicalFeatureDef *dp_def;
-    //std::string d_type;
-    //std::string d_family;
-
+    int d_id;
     int d_activeConf;
     AtomPtrContainer d_atoms;
     mutable PointCacheType d_locs;
