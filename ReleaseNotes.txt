@@ -1,3 +1,26 @@
+******  Release_2012.06.1 *******
+(Changes relative to Release_2012.03.1)
+
+!!!!!! IMPORTANT !!!!!!
+
+Acknowledgements:
+JP Ebejer
+
+Bug Fixes: 
+
+New Features:
+ - ChemicalFeatures now support an optional id
+
+New Database Cartridge Features: 
+
+New Java Wrapper Features:
+
+Deprecated modules (to be removed in next release):
+
+Removed modules:
+
+Other:
+
 ******  Release_2012.03.1 *******
 (Changes relative to Release_2011.12.1)
 

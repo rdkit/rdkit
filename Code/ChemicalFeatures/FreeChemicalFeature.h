@@ -22,18 +22,18 @@ namespace ChemicalFeatures {
     public:
     //! start with everything specified
     FreeChemicalFeature(std::string family, std::string type,
-                        const RDGeom::Point3D &loc) :
-      d_family(family), d_type(type), d_position(loc) {
+                        const RDGeom::Point3D &loc,int id=-1) :
+      d_id(id), d_family(family), d_type(type), d_position(loc) {
     }
 
     //! start with family and location specified, leave the type blank
     FreeChemicalFeature(std::string family, const RDGeom::Point3D &loc) :
-      d_family(family), d_type(""), d_position(loc) {
+      d_id(-1), d_family(family), d_type(""), d_position(loc) {
     }
 
     //! start with everything blank
     FreeChemicalFeature() :
-      d_family(""), d_type(""), d_position(RDGeom::Point3D(0.0, 0.0, 0.0)) {
+      d_id(-1), d_family(""), d_type(""), d_position(RDGeom::Point3D(0.0, 0.0, 0.0)) {
     }
 
     explicit FreeChemicalFeature(const std::string &pickle) {
@@ -41,10 +41,15 @@ namespace ChemicalFeatures {
     }
 
     FreeChemicalFeature(const FreeChemicalFeature &other) : 
-      d_family(other.getFamily()), d_type(other.getType()), d_position(other.getPos())  {
+      d_id(other.getId()), d_family(other.getFamily()), d_type(other.getType()), d_position(other.getPos())  {
     }
 
     ~FreeChemicalFeature() {}
+
+    //! return our id
+    const int getId() const {
+      return d_id;
+    }
 
     //! return our family
     const std::string& getFamily() const {
@@ -59,6 +64,11 @@ namespace ChemicalFeatures {
     //! return our position
     RDGeom::Point3D getPos() const {
       return d_position;
+    }
+
+    //! set our id
+    void setId(const int id) {
+      d_id = id;
     }
 
     //! set our family
@@ -84,6 +94,7 @@ namespace ChemicalFeatures {
     void initFromString(const std::string &pickle);
     
   private:
+    int d_id;
     std::string d_family;
     std::string d_type;
     RDGeom::Point3D d_position;

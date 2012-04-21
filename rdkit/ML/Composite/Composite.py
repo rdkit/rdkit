@@ -52,7 +52,6 @@ class Composite(object):
        it can be indicated whether or not they require quantization.
 
     - Composites are also capable of extracting relevant variables from longer lists.
-      This functionality was added to ease interactions with Excel and COM applications.
       This is accessible using _SetDescriptorNames()_ to register the descriptors about
       which the composite cares and _SetInputOrder()_ to tell the composite what the
       ordering of input vectors will be.  **Note** there is a limitation on this: each

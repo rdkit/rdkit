@@ -23,17 +23,25 @@ void test1() {
   std::cout << "Test1" << std::endl;
 
   FreeChemicalFeature f1("foo","bar",RDGeom::Point3D(0,0,0));
+  TEST_ASSERT(f1.getId()==-1);  
   TEST_ASSERT(f1.getFamily()=="foo");
   TEST_ASSERT(f1.getType()=="bar");
 
-  FreeChemicalFeature f2;
-  f2.initFromString(f1.toString());
+  FreeChemicalFeature f2("foo","bar",RDGeom::Point3D(0,0,0),123);
+  TEST_ASSERT(f2.getId()==123);  
   TEST_ASSERT(f2.getFamily()=="foo");
   TEST_ASSERT(f2.getType()=="bar");
 
-  FreeChemicalFeature f3(f1.toString());
+  FreeChemicalFeature f3;
+  f3.initFromString(f2.toString());
+  TEST_ASSERT(f3.getId()==123);  
   TEST_ASSERT(f3.getFamily()=="foo");
   TEST_ASSERT(f3.getType()=="bar");
+
+  FreeChemicalFeature f4(f2.toString());
+  TEST_ASSERT(f4.getId()==123);  
+  TEST_ASSERT(f4.getFamily()=="foo");
+  TEST_ASSERT(f4.getType()=="bar");
 
   
   std::cout << "Done" << std::endl;
