@@ -312,11 +312,9 @@ namespace RDKit {
               // to reset the isotope so that the mass is also correct:
               if(productAtom->getIsotope())
                 productAtom->setIsotope(productAtom->getIsotope());              
-              std::cerr<<"pAtom2:"<<productAtom->getIdx()<<" "<<productAtom->getMass()<<" "<<productAtom->getIsotope()<<std::endl;            }
+            }
             updateImplicitAtomProperties(productAtom,reactantAtom);
-            std::cerr<<"pAtom1:"<<productAtom->getIdx()<<" "<<productAtom->getMass()<<" "<<productAtom->getIsotope()<<std::endl;
           }
-          std::cerr<<"pAtom:"<<productAtom->getIdx()<<" "<<productAtom->getMass()<<" "<<productAtom->getIsotope()<<std::endl;
           // One might be tempted to copy over the reactant atom's chirality into the
           // product atom if chirality is not specified on the product. This would be a
           // very bad idea because the order of bonds will almost certainly change on the
@@ -654,6 +652,20 @@ namespace RDKit {
     molIdx=0;
     for(MOL_SPTR_VECT::const_iterator molIter=this->beginProductTemplates();
         molIter!=this->endProductTemplates();++molIter){
+
+      // clear out some possible cached properties to prevent
+      // misleading warnings
+      for(ROMol::AtomIterator atomIt=(*molIter)->beginAtoms();
+          atomIt!=(*molIter)->endAtoms();++atomIt){
+        if((*atomIt)->hasProp("_QueryFormalCharge"))
+          (*atomIt)->clearProp("_QueryFormalCharge");
+        if((*atomIt)->hasProp("_QueryHCount"))
+          (*atomIt)->clearProp("_QueryHCount");
+        if((*atomIt)->hasProp("_QueryMass"))
+          (*atomIt)->clearProp("_QueryMass");
+        if((*atomIt)->hasProp("_QueryIsotope"))
+          (*atomIt)->clearProp("_QueryIsotope");
+      }
       bool thisMolMapped=false;
       for(ROMol::AtomIterator atomIt=(*molIter)->beginAtoms();
           atomIt!=(*molIter)->endAtoms();++atomIt){

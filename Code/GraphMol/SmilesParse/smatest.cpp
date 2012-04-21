@@ -1157,7 +1157,7 @@ void testMiscSmartsWriting(){
   mol = SmartsToMol(sma);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[13*&C]");
+  TEST_ASSERT(sma=="[C&13*]");
   delete mol;
 
   sma ="[C]";

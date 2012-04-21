@@ -186,6 +186,8 @@ struct atom_wrapper {
       .def("GetIsAromatic",&Atom::getIsAromatic)
       .def("SetMass",&Atom::setMass)
       .def("GetMass",&Atom::getMass)
+      .def("SetIsotope",&Atom::setIsotope)
+      .def("GetIsotope",&Atom::getIsotope)
       .def("SetNumRadicalElectrons",&Atom::setNumRadicalElectrons)
       .def("GetNumRadicalElectrons",&Atom::getNumRadicalElectrons)
 

@@ -347,8 +347,20 @@ recursive_query: BEGIN_RECURSE mol END_RECURSE {
 
 /* --------------------------------------------------------------- */
 atom_query:	simple_atom
+| number simple_atom {
+  $2->expandQuery(makeAtomIsotopeQuery($1),Queries::COMPOSITE_AND,true);
+  $$=$2;
+}
 | ATOM_TOKEN
+| number ATOM_TOKEN {
+  $2->expandQuery(makeAtomIsotopeQuery($1),Queries::COMPOSITE_AND,true);
+  $$=$2;
+}
 | HASH_TOKEN number { $$ = new QueryAtom($2); }
+| number HASH_TOKEN number {
+  $$ = new QueryAtom($3);
+  $$->expandQuery(makeAtomIsotopeQuery($1),Queries::COMPOSITE_AND,true);
+}
 | COMPLEX_ATOM_QUERY_TOKEN
 | COMPLEX_ATOM_QUERY_TOKEN number {
   static_cast<ATOM_EQUALS_QUERY *>($1->getQuery())->setVal($2);

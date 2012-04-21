@@ -283,7 +283,7 @@ M  END
     self.failUnless(len(ps)==1)
     self.failUnless(len(ps[0])==1)
     Chem.SanitizeMol(ps[0][0])
-    self.failUnless(ps[0][0].GetAtomWithIdx(1).GetMass()==3);
+    self.failUnlessEqual(ps[0][0].GetAtomWithIdx(1).GetIsotope(),3);
 
   def test9AromaticityTransfer(self):
     # this was issue 2664121
