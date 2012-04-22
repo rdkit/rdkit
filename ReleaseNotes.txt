@@ -18,6 +18,7 @@ New Java Wrapper Features:
 Deprecated modules (to be removed in next release):
 
 Removed modules:
+ - rdkit.Excel
 
 Other:
 
