@@ -8,7 +8,7 @@ ifeq ($(USE_INCHI),1)
   INCHIREGRESS=inchi
 endif
 
-RDKLIBS       = ${INCHILIBS} -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lSubstructMatch  -lDescriptors -lPartialCharges -lGraphMol -lDataStructs -lRDGeometryLib -lRDGeneral
+RDKLIBS       = ${INCHILIBS} -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lSubstructMatch  -lDescriptors -lPartialCharges -lGraphMol -lDataStructs -lRDGeometryLib -lRDGeneral 
 
 ifeq ($(STATIC_LINK),1)
   SHLIB_LINK += -L${RDKIT}/lib $(addsuffix _static,${RDKLIBS})
@@ -16,6 +16,7 @@ else
   SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${RDKLIBS}
 endif
 
+SHLIB_LINK += -pthread
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
