@@ -192,13 +192,7 @@ int
 NumOnBitsInCommon(const ExplicitBitVect& bv1,
                   const ExplicitBitVect& bv2)
 {
-  //std::cout << "nobic" << std::endl;
-  int res = 0;
-  unsigned int _sz = bv1.getNumBits()<bv2.getNumBits()?bv1.getNumBits():bv2.getNumBits();
-  for(unsigned int i=0;i<_sz;i++) {
-    if((*bv1.dp_bits)[i] && (*bv2.dp_bits)[i]) res+=1;
-  }
-  return res;
+  return ((*bv1.dp_bits) & (*bv2.dp_bits)).count();
 }
 
 
