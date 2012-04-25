@@ -18,8 +18,11 @@ New Java Wrapper Features:
 Deprecated modules (to be removed in next release):
 
 Removed modules:
+ - rdkit.Excel
+ - the code in $RDBASE/Code/PgSQL/RDLib
 
 Other:
+ - Similarity calculations on ExplicitBitVectors should now be much faster
 
 ******  Release_2012.03.1 *******
 (Changes relative to Release_2011.12.1)
