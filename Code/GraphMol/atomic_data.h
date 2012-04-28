@@ -19,9 +19,11 @@
 #define __RD_ATOMIC_DATA_H
 
 #include <RDGeneral/types.h>
+#include <map>
 
 namespace RDKit {
   extern const std::string periodicTableAtomData;
+  extern const std::string isotopesAtomData[];
   
   class atomicData {
   public :
@@ -55,7 +57,9 @@ namespace RDKit {
     int MostCommonIsotope() const {return commonIsotope;}
 
     double MostCommonIsotopeMass() const { return commonIsotopeMass;}
-    
+
+    // maps isotope number -> mass
+    std::map<unsigned int,std::pair<double,double> > d_isotopeInfoMap; // available isotopes
   private:
     int anum; //atomic number
     std::string symb; // atomic symbol

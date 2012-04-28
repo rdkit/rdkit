@@ -1252,11 +1252,11 @@ namespace RDKit {
           // use element name to set atomic number
           atom->setAtomicNum(periodicTable->getAtomicNumber(inchiAtom->elname));
           // set mass
-          double mass = periodicTable->getAtomicWeight(atom->getAtomicNum());
+          int isotope=0;
           if (inchiAtom->isotopic_mass) {
-            mass += inchiAtom->isotopic_mass - ISOTOPIC_SHIFT_FLAG;
+            isotope=inchiAtom->isotopic_mass - ISOTOPIC_SHIFT_FLAG;
           }
-          atom->setMass(mass);
+          atom->setIsotope(isotope);
           // set charge
           atom->setFormalCharge(inchiAtom->charge);
           // set radical
@@ -1710,24 +1710,17 @@ namespace RDKit {
       strcpy(inchiAtoms[i].elname, elementName.c_str());
 
       // isotopes
-      double averageWeight = periodicTable->getAtomicWeight(atomicNumber);
-      double weight = atom->getMass();
-      double _offset = weight - averageWeight;
-      int offset;
-      if (_offset < 0) 
-        offset = static_cast<int>(_offset - 0.5);
-      else
-        offset = static_cast<int>(_offset + 0.5);
-      if (offset) 
-        inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + offset;
+      int isotope=atom->getIsotope();
+      if (isotope) 
+        inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + isotope;
       else {
         // check explicit iso property. If this is set, we have a 0 offset
         // Example: CHEMBL220875
-        if (atom->hasProp("_MolISOProp")) {
-          inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + 0;
-        } else {
-          inchiAtoms[i].isotopic_mass = 0;
-        }
+        //if (atom->getIsotope()){
+        //  inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + 0;
+        //} else {
+        inchiAtoms[i].isotopic_mass = 0;
+          //}
       }
 
       // charge

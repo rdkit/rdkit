@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -42,9 +42,7 @@ namespace RDKit{
       std::stringstream res;
       int fc = atom->getFormalCharge();
       int num = atom->getAtomicNum();
-      double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(num) -
-                           atom->getMass());
-      static double massTol=0.001;
+      int isotope = atom->getIsotope();
 
       bool needsBracket=false;
       std::string symb;
@@ -82,7 +80,7 @@ namespace RDKit{
         if(atom->getOwningMol().hasProp("_doIsoSmiles")){
           if( atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
             needsBracket = true;
-          } else if(massDiff>massTol){
+          } else if(isotope){
             needsBracket=true;
           }
         }
@@ -94,9 +92,8 @@ namespace RDKit{
       }
       if( needsBracket ) res << "[";
 
-      if(massDiff>massTol && atom->getOwningMol().hasProp("_doIsoSmiles")){
-        int iMass=static_cast<int>(atom->getMass()+.1);
-        res <<iMass;
+      if(isotope && atom->getOwningMol().hasProp("_doIsoSmiles")){
+        res <<isotope;
       }
       // this was originally only done for the organic subset,
       // applying it to other atom-types is a fix for Issue 3152751: 

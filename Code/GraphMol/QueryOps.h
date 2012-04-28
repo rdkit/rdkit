@@ -73,6 +73,9 @@ namespace RDKit{
   static int queryAtomMass(Atom const * at) {
     return static_cast<int>(round(massIntegerConversionFactor*at->getMass()));
   };
+  static int queryAtomIsotope(Atom const * at) {
+    return static_cast<int>(at->getIsotope());
+  };
   static int queryAtomFormalCharge(Atom const * at) { 
       return static_cast<int>(at->getFormalCharge()); 
   };
@@ -159,8 +162,10 @@ namespace RDKit{
   ATOM_EQUALS_QUERY *makeAtomAromaticQuery();
   //! returns a Query for matching aliphatic atoms
   ATOM_EQUALS_QUERY *makeAtomAliphaticQuery();
-  //! returns a Query for matching atoms with a particular mass (for isotopes)
+  //! returns a Query for matching atoms with a particular mass
   ATOM_EQUALS_QUERY *makeAtomMassQuery(int what);
+  //! returns a Query for matching atoms with a particular isotope
+  ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what);
   //! returns a Query for matching formal charge
   ATOM_EQUALS_QUERY *makeAtomFormalChargeQuery(int what);
   //! returns a Query for matching hybridization

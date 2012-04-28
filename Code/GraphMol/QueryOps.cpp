@@ -236,6 +236,13 @@ ATOM_EQUALS_QUERY *makeAtomMassQuery(int what){
   return res;
 }
 
+ATOM_EQUALS_QUERY *makeAtomIsotopeQuery(int what){
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,
+                                             queryAtomIsotope);
+  res->setDescription("AtomIsotope");
+  return res;
+}
+
 ATOM_EQUALS_QUERY *makeAtomFormalChargeQuery(int what){
   ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomFormalCharge);
   res->setDescription("AtomFormalCharge");

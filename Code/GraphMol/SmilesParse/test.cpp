@@ -1602,7 +1602,7 @@ void testIsotopes(){
     std::string smi ="C[13C](C)(C)C";
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
-    TEST_ASSERT(mol->getAtomWithIdx(1)->getMass()==13.0);
+    TEST_ASSERT(feq(mol->getAtomWithIdx(1)->getMass(),13.0034));
     smi = MolToSmiles(*mol,false);
     TEST_ASSERT(smi=="CC(C)(C)C");
     smi = MolToSmiles(*mol,true);

@@ -2329,8 +2329,12 @@ void testIssue3073163(){
 
     MatchVectType mv;
     TEST_ASSERT(SubstructMatch(*m,*p,mv));
-    RWMol *m2=MolBlockToMol(MolToMolBlock(*m));
+    std::string mb=MolToMolBlock(*m);
+    std::cerr<<"mb:\n"<<mb<<"----\n";
+    RWMol *m2=MolBlockToMol(mb);
     TEST_ASSERT(m2);
+    std::cerr<<"  mol: "<<MolToSmiles(*m,true)<<std::endl;
+    std::cerr<<"  mol2: "<<MolToSmiles(*m2,true)<<std::endl;
     TEST_ASSERT(SubstructMatch(*m2,*p,mv));
 
     delete m2;
@@ -2903,8 +2907,8 @@ int main(int argc,char *argv[]){
   testIssue3392107();
   testIssue3432136();
   testIssue3477283();
-  testIssue3484552();
 #endif
+  testIssue3484552();
   testIssue3514824();
 
   return 0;

@@ -24,7 +24,7 @@ namespace RDKit{
 
   const int32_t MolPickler::versionMajor=7;
   const int32_t MolPickler::versionMinor=1;
-  const int32_t MolPickler::versionPatch=0;
+  const int32_t MolPickler::versionPatch=1;
   const int32_t MolPickler::endianId=0xDEADBEEF;
 
   void streamWrite(std::ostream &ss,MolPickler::Tags tag){
@@ -198,6 +198,8 @@ namespace RDKit{
         query->setDataFunc(queryAtomUnsaturated);
       } else if(descr=="AtomMass"){
         query->setDataFunc(queryAtomMass);
+      } else if(descr=="AtomIsotope"){
+        query->setDataFunc(queryAtomIsotope);
       } else if(descr=="AtomFormalCharge"){
         query->setDataFunc(queryAtomFormalCharge);
       } else if(descr=="AtomHybridization"){
@@ -746,11 +748,11 @@ namespace RDKit{
     if(!atom->hasQuery()){
       std::stringstream tss(std::ios_base::binary|std::ios_base::out|std::ios_base::in);
       int32_t propFlags=0;
-      tmpFloat=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
-      if(fabs(tmpFloat)>.0001){
-        propFlags |= 1;
-        streamWrite(tss,tmpFloat);
-      }
+      // tmpFloat=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
+      // if(fabs(tmpFloat)>.0001){
+      //   propFlags |= 1;
+      //   streamWrite(tss,tmpFloat);
+      // }
       tmpSchar=static_cast<signed char>(atom->getFormalCharge());
       if(tmpSchar!=0){
         propFlags |= 1<<1;
@@ -790,6 +792,13 @@ namespace RDKit{
         propFlags |= 1<<7;
         streamWrite(tss,tmpChar);
       }
+
+      unsigned int tmpuint=atom->getIsotope();
+      if(tmpuint>0){
+        propFlags |= 1<<8;
+        streamWrite(tss,tmpuint);
+      }
+
       streamWrite(ss,propFlags);
       ss.write(tss.str().c_str(),tss.str().size());
     } else {
@@ -940,7 +949,8 @@ namespace RDKit{
         if(propFlags&1){
           float tmpFloat;
           streamRead(ss,tmpFloat,version);
-          atom->setMass(tmpFloat+atom->getMass());
+          int iso=static_cast<int>(floor(tmpFloat+atom->getMass()+.0001));
+          atom->setIsotope(iso);
         }
 
         if(propFlags&(1<<1)){
@@ -990,6 +1000,13 @@ namespace RDKit{
           tmpChar=0;
         }          
         atom->d_numRadicalElectrons=static_cast<unsigned int>(tmpChar);
+
+        atom->d_isotope=0;
+        if(propFlags&(1<<8)){
+          unsigned int tmpuint;
+          streamRead(ss,tmpuint,version);
+          atom->setIsotope(tmpuint);
+        }
       }
       
     } else if(version>5000){

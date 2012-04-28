@@ -357,7 +357,7 @@ namespace RDKit{
     //   - Hydrogens which aren't connected to a heavy atom will not be
     //     removed.  This prevents molecules like "[H][H]" from having
     //     all atoms removed.
-    //   - Labelled hydrogen (e.g. atoms with atomic number=1, but mass > 1),
+    //   - Labelled hydrogen (e.g. atoms with atomic number=1, but isotope > 1),
     //     will not be removed.
     //
     ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
@@ -373,7 +373,7 @@ namespace RDKit{
 
           if(atom->hasProp("isImplicit")){
             removeIt=true;
-          } else if(!implicitOnly && atom->getMass()<1.1){
+          } else if(!implicitOnly && !atom->getIsotope()){
             ROMol::ADJ_ITER begin,end;
             boost::tie(begin,end) = res->getAtomNeighbors(atom);
             while(begin!=end){

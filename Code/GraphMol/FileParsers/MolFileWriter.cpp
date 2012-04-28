@@ -68,11 +68,10 @@ namespace RDKit{
         }
       }
       if(!atom->hasQuery()){
-        double atomMassDiff=atom->getMass()-PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum());
-        int massDiff = static_cast<int>(atomMassDiff+.1);
-        if(massDiff!=0){
+        int isotope=atom->getIsotope();
+        if(isotope!=0){
           ++nMassDiffs;
-          massdiffss << boost::format(" %3d %3d") % (atom->getIdx()+1) % static_cast<int>(atom->getMass()+.001);
+          massdiffss << boost::format(" %3d %3d") % (atom->getIdx()+1) % isotope;
           if(nMassDiffs==8){
             res << boost::format("M  ISO%3d")%nMassDiffs << massdiffss.str()<<std::endl;
             massdiffss.str("");

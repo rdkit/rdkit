@@ -216,6 +216,50 @@ namespace RDKit {
       return getMostCommonIsotopeMass(std::string(elementSymbol));
     }
 
+
+    //! returns the mass of a particular isotope; zero if that
+    //! isotope is unknown.
+    double getMassForIsotope( UINT atomicNumber, UINT isotope ) const {
+      PRECONDITION(atomicNumber<byanum.size(),"Atomic number not found");
+      const std::map<unsigned int,std::pair<double,double> > &m=byanum[atomicNumber].d_isotopeInfoMap;
+      std::map<unsigned int,std::pair<double,double> >::const_iterator item=m.find(isotope);
+      if(item==m.end()) {
+        return 0.0;
+      } else {
+        return item->second.first;
+      }
+    }
+    //! \overload
+    double getMassForIsotope( const std::string &elementSymbol, UINT isotope) const {
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
+      return getMassForIsotope(byname.find(elementSymbol)->second,isotope);
+    }
+    //! \overload
+    double getMassForIsotope(char *elementSymbol, UINT isotope ) const {
+      return getMassForIsotope(std::string(elementSymbol),isotope);
+    }
+    //! returns the abundance of a particular isotope; zero if that
+    //! isotope is unknown.
+    double getAbundanceForIsotope( UINT atomicNumber, UINT isotope ) const {
+      PRECONDITION(atomicNumber<byanum.size(),"Atomic number not found");
+      const std::map<unsigned int,std::pair<double,double> > &m=byanum[atomicNumber].d_isotopeInfoMap;
+      std::map<unsigned int,std::pair<double,double> >::const_iterator item=m.find(isotope);
+      if(item==m.end()) {
+        return 0.0;
+      } else {
+        return item->second.second;
+      }
+    }
+    //! \overload
+    double getAbundanceForIsotope( const std::string &elementSymbol, UINT isotope) const {
+      PRECONDITION(byname.count(elementSymbol),"Element '" + elementSymbol +"' not found");
+      return getAbundanceForIsotope(byname.find(elementSymbol)->second,isotope);
+    }
+    //! \overload
+    double getAbundanceForIsotope(char *elementSymbol, UINT isotope ) const {
+      return getAbundanceForIsotope(std::string(elementSymbol),isotope);
+    }
+
     
     //! convenience function to determine which atom is more electronegative
     /*!

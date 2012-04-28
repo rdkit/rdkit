@@ -228,11 +228,14 @@ namespace RankAtoms{
       int chgSign = atom->getFormalCharge() > 0;
       int num =    atom->getAtomicNum() % 128;
       int nConns = atom->getDegree() % 8;
-      int deltaMass = static_cast<int>(atom->getMass() -
-                                       PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-      deltaMass += 8;
-      if(deltaMass < 0) deltaMass = 0;
-      else deltaMass = deltaMass % 16;
+      int deltaMass=0;
+      if(atom->getIsotope()){
+        deltaMass = static_cast<int>(atom->getIsotope() -
+                                     PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum()));
+        deltaMass += 8;
+        if(deltaMass < 0) deltaMass = 0;
+        else deltaMass = deltaMass % 16;
+      }
 
       
       // figure out the minimum-sized ring we're involved in

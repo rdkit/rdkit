@@ -238,7 +238,7 @@ void test3a(){
   mol = SmilesToMol("C[2H]");
   TEST_ASSERT(mol);
   mw = calcExactMW(*mol);
-  TEST_ASSERT(feq(mw,17.023,.001));
+  TEST_ASSERT(feq(mw,17.037,.001));
   mw = calcExactMW(*mol,true);
   TEST_ASSERT(feq(mw,12.000,.001));
 

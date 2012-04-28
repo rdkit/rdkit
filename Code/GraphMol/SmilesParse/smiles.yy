@@ -262,9 +262,9 @@ charge_element:	h_element
 
 /* --------------------------------------------------------------- */
 h_element:      H_TOKEN { $$ = new Atom(1); }
-                | number H_TOKEN { $$ = new Atom(1); $$->setMass($1); }
+                | number H_TOKEN { $$ = new Atom(1); $$->setIsotope($1); }
                 | H_TOKEN H_TOKEN { $$ = new Atom(1); $$->setNumExplicitHs(1); }
-                | number H_TOKEN H_TOKEN { $$ = new Atom(1); $$->setMass($1); $$->setNumExplicitHs(1);}
+                | number H_TOKEN H_TOKEN { $$ = new Atom(1); $$->setIsotope($1); $$->setNumExplicitHs(1);}
                 | chiral_element
 		| chiral_element H_TOKEN		{ $$ = $1; $1->setNumExplicitHs(1);}
 		| chiral_element H_TOKEN number	{ $$ = $1; $1->setNumExplicitHs($3);}
@@ -278,9 +278,9 @@ chiral_element:	 element
 
 /* --------------------------------------------------------------- */
 element:	simple_atom
-		|	number simple_atom { $2->setMass( $1 ); $$ = $2; }
+		|	number simple_atom { $2->setIsotope( $1 ); $$ = $2; }
 		|	ATOM_TOKEN
-		|	number ATOM_TOKEN	   { $2->setMass( $1 ); $$ = $2; }
+		|	number ATOM_TOKEN	   { $2->setIsotope( $1 ); $$ = $2; }
 		;
 
 /* --------------------------------------------------------------- */
