@@ -515,6 +515,70 @@ void testSDMemoryCorruption() {
 #endif
 }
 
+
+void testIssue3525000() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525000.sdf";
+  RWMol *mol = MolFileToMol(fname);
+  TEST_ASSERT(mol);
+  std::string cip;
+  TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(6)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(8)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(9)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(10)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(14)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(15)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+
+  std::string mb=MolToMolBlock(*mol);
+  delete mol;
+  mol = MolBlockToMol(mb);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(0)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(3)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(3)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(6)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(8)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(8)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(9)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(9)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(10)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(10)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="S");
+  TEST_ASSERT(mol->getAtomWithIdx(14)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(14)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp("_CIPCode"));
+  mol->getAtomWithIdx(15)->getProp("_CIPCode",cip);
+  TEST_ASSERT(cip=="R");
+  
+}
+
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -575,6 +639,12 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testSDMemoryCorruption()\n";
   testSDMemoryCorruption();
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
+  testIssue3525000();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 

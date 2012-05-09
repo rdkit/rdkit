@@ -107,7 +107,7 @@ public class Chemv2Tests extends GraphMolTest {
 
 	@Test
 	public void testIssue399() {
-		ROMol m = RWMol.MolFromSmiles("C[C@H]1CO1");
+		ROMol m = RWMol.MolFromSmiles("[C@H]1(C)CO1");
 		m.compute2DCoords();
 		Conformer c = m.getConformer();
 		m.WedgeMolBonds(c);

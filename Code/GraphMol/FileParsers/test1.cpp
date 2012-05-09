@@ -481,9 +481,9 @@ void test7(){
   }
   TEST_ASSERT(smi==smi2);
   delete m2;
-  //BOOST_LOG(rdInfoLog) << "SMI: "<< smi << std::endl;
+  BOOST_LOG(rdInfoLog) << "SMI: "<< smi << std::endl;
   molBlock=MolToMolBlock(*m);
-  //BOOST_LOG(rdInfoLog) << molBlock << std::endl;
+  BOOST_LOG(rdInfoLog) << molBlock << std::endl;
   m2=MolBlockToMol(molBlock);
   TEST_ASSERT(m2)
   smi2 = MolToSmiles(*m2,true);
