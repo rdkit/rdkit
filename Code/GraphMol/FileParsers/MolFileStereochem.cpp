@@ -421,6 +421,13 @@ namespace RDKit {
         }
         atomBonds.first++;
       }
+      // There's still one situation where this whole thing can fail: an unlucky
+      // situation where all neighbors of all neighbors of an atom are chiral and
+      // that atom ends up being the last one picked for stereochem assignment.
+      // 
+      // We'll catch that as an error here and hope that it's as unlikely to occur
+      // as it seems like it is. (I'm going into this knowing that it's bound to 
+      // happen; I'll kick myself and do the hard solution at that point.)
       CHECK_INVARIANT(nbrScores.size(),"no eligible neighbors for chiral center");
       std::sort(nbrScores.begin(),nbrScores.end(),RankAtoms::pairLess<int>);
       res[nbrScores[0].second] = idx;
