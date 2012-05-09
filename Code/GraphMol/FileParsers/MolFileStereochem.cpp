@@ -408,12 +408,7 @@ namespace RDKit {
         const Bond *bond = mol[*atomBonds.first].get();
         int bid = bond->getIdx();
         if (res.find(bid) == res.end()) {
-          int nbrScore;
-          if(bond->getBeginAtomIdx() == idx){
-            nbrScore=0;
-          } else {
-            nbrScore=1000;
-          }
+          int nbrScore=0;
           // prefer neighbors that are nonchiral or have as few chiral neighbors as possible:
           int oIdx=bond->getOtherAtomIdx(idx);
           if(nChiralNbrs[oIdx]!=noNbrs){
