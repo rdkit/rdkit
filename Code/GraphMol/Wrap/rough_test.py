@@ -2285,6 +2285,15 @@ CAS<~>
     smi = Chem.MolToSmiles(m,allBondsExplicit=True)
     self.failUnlessEqual(smi,"c1:c:c:c:c:c:1")
     
+  def test76VeryLargeMolecule(self):
+    # this is sf.net issue 3524984
+    smi = '[C@H](F)(Cl)'+'c1cc[nH]c1'*500+'[C@H](F)(Cl)'
+    m = Chem.MolFromSmiles(smi)
+    self.failUnless(m)
+    self.failUnlessEqual(m.GetNumAtoms(),2506)
+    scs = Chem.FindMolChiralCenters(m)
+    self.failUnlessEqual(len(scs),2)
+    
     
 if __name__ == '__main__':
   unittest.main()

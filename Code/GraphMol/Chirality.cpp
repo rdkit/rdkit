@@ -714,7 +714,6 @@ namespace RDKit{
     // with information about known chirality
     void rerankAtoms(const ROMol &mol, INT_VECT &ranks) {
       PRECONDITION(ranks.size()==mol.getNumAtoms(),"bad rank vector size");
-      PRECONDITION(mol.getNumAtoms()<1000,"cannot deal with more than 1000 atoms");
       unsigned int factor=100;
       while(factor<mol.getNumAtoms()) factor*=10;
 
