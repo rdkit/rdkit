@@ -91,15 +91,16 @@ public class SuppliersTests extends GraphMolTest {
 		assertEquals("78",m.getProp("_Name"));
 		assertEquals("78",m.getProp("NSC"));
 		assertEquals("6290-84-2",m.getProp("CAS_RN"));
-
-		/* The C++ code does not throw an error when iterating
-		 * past the end, just returns null.
-		 * So test for that */
-		suppl.reset();
+	}
+    @Test(expected=org.RDKit.GenericRDKitException.class)
+	public void test1SDSupplierEOF() {
+		File fileN = new File(baseTestPath, "NCI_aids.10.sdf");
+		SDMolSupplier suppl = new SDMolSupplier(fileN.getPath());
+		ROMol m;
 		for (int i = 0; i < 10; i++)
 			m = suppl.next();
+		assertEquals( true,suppl.atEnd() );
 		m = suppl.next();
-		assertNull("Iterate past end of list returns null", m);
 	}
 
 	@Test

@@ -53,6 +53,26 @@ int testMolSup() {
     TEST_ASSERT(i==16);
   }
   {
+    SDMolSupplier sdsup(fname);
+    for(unsigned int i=0;i<16;++i){
+      ROMol *nmol = sdsup.next();
+      if (nmol) {
+        TEST_ASSERT(nmol->hasProp("_Name"));
+        TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
+        delete nmol;
+      }
+    }
+    // test issue 3524949:
+    TEST_ASSERT(sdsup.atEnd());
+    bool ok=false; 
+    try{
+      ROMol *mol = sdsup.next();
+    } catch (FileParseException &) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
     std::ifstream strm(fname.c_str());
     SDMolSupplier sdsup(&strm,false);
     unsigned int i = 0;

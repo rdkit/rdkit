@@ -129,6 +129,10 @@ namespace RDKit {
     
   ROMol *SDMolSupplier::next() {
     PRECONDITION(dp_inStream,"no stream");
+    if(df_end && d_last>=d_len){
+      throw FileParseException("EOF hit.");
+    }
+
     // set the stream to the current position
     dp_inStream->seekg(d_molpos[d_last]);
 

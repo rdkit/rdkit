@@ -783,7 +783,7 @@ class TestCase(unittest.TestCase):
         # test parsed charges on one of the molecules
         for id in chgs192.keys() :
           self.failUnless(mol.GetAtomWithIdx(id).GetFormalCharge() == chgs192[id])
-          
+    self.failUnlessRaises(StopIteration,lambda:sdSup.next())
     sdSup.reset()
     
     ns = [mol.GetProp("_Name") for mol in sdSup]
