@@ -1250,13 +1250,16 @@ namespace RDKit {
           inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
           Atom *atom = new Atom;
           // use element name to set atomic number
-          atom->setAtomicNum(periodicTable->getAtomicNumber(inchiAtom->elname));
-          // set mass
+          int atomicNumber=periodicTable->getAtomicNumber(inchiAtom->elname);
+          atom->setAtomicNum(atomicNumber);
+          double averageWeight = periodicTable->getAtomicWeight(atomicNumber);
+          int refWeight=static_cast<int>(averageWeight+0.5);
           int isotope=0;
           if (inchiAtom->isotopic_mass) {
             isotope=inchiAtom->isotopic_mass - ISOTOPIC_SHIFT_FLAG;
           }
-          atom->setIsotope(isotope);
+          if(isotope)
+            atom->setIsotope(isotope+refWeight);
           // set charge
           atom->setFormalCharge(inchiAtom->charge);
           // set radical
@@ -1361,8 +1364,7 @@ namespace RDKit {
             Atom *atom = new Atom;
             atom->setAtomicNum(1);
             // set mass
-            atom->setMass(periodicTable->getAtomicWeight(atom->getAtomicNum()) +
-                          isotope - 1);
+            atom->setIsotope(isotope);
             int j = m->addAtom(atom, false, true);
             // add bond
             Bond* bond = new Bond(Bond::SINGLE);
@@ -1712,14 +1714,15 @@ namespace RDKit {
       // isotopes
       int isotope=atom->getIsotope();
       if (isotope) 
-        inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + isotope;
+        inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + isotope -
+          static_cast<int>(periodicTable->getAtomicWeight(atomicNumber)+0.5);
       else {
         // check explicit iso property. If this is set, we have a 0 offset
         // Example: CHEMBL220875
         //if (atom->getIsotope()){
         //  inchiAtoms[i].isotopic_mass = ISOTOPIC_SHIFT_FLAG + 0;
         //} else {
-        inchiAtoms[i].isotopic_mass = 0;
+          inchiAtoms[i].isotopic_mass = 0;
           //}
       }
 
