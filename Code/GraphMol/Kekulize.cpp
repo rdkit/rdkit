@@ -277,7 +277,19 @@ namespace RDKit {
             }
           
             // check if the neighbor is also a candidate for a double bond
-            if (cCand && dBndCands[*nbrIdx] ){
+            // the refinement that we'll make to the candidate check we've already
+            // done is to make sure that the bond is either flagged as aromatic
+            // or involves a dummy atom. This was Issue 3525076.
+            // This fix is not really 100% of the way there: a situation like
+            // that for Issue 3525076 but involving a dummy atom in the cage
+            // could lead to the same failure. The full fix would require
+            // a fairly detailed analysis of all bonds in the molecule to determine
+            // which of them is eligible to be converted.
+            if (cCand && dBndCands[*nbrIdx] &&
+                (mol.getBondBetweenAtoms(curr,*nbrIdx)->getIsAromatic() ||
+                 mol.getAtomWithIdx(curr)->getAtomicNum()==0 ||
+                 mol.getAtomWithIdx(*nbrIdx)->getAtomicNum()==0)
+                 ){
               opts.push_back(*nbrIdx);
             } // end of curr atoms can have a double bond
             ++nbrIdx;

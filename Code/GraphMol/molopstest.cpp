@@ -3523,6 +3523,29 @@ This is a large superset of issue 3495370
 }
 
 
+void testSFNetIssue3525076(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Issue 3525076" << std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue3525076.sdf");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(18)->getIsAromatic()==false);
+    TEST_ASSERT(m->getBondWithIdx(18)->getBondType()==Bond::SINGLE);
+    MolOps::Kekulize(*m);
+    TEST_ASSERT(m->getBondWithIdx(18)->getIsAromatic()==false);
+    TEST_ASSERT(m->getBondWithIdx(18)->getBondType()==Bond::SINGLE);
+    MolOps::sanitizeMol(*m);
+    TEST_ASSERT(m->getBondWithIdx(18)->getIsAromatic()==false);
+    TEST_ASSERT(m->getBondWithIdx(18)->getBondType()==Bond::SINGLE);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 int main(){
   RDLog::InitLogs();
@@ -3577,7 +3600,7 @@ int main(){
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
 #endif
-  test11();
+  testSFNetIssue3349243();
   
   return 0;
 }
