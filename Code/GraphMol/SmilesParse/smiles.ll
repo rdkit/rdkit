@@ -144,7 +144,8 @@ void smiles_lexer_error(const char *msg) {
 <IN_ATOM_STATE>Fm |
 <IN_ATOM_STATE>Md |
 <IN_ATOM_STATE>No |
-<IN_ATOM_STATE>Lr 	{   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
+<IN_ATOM_STATE>Lr |
+<IN_ATOM_STATE>Rf {   yylval->atom = new Atom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
 				return ATOM_TOKEN; 
 			}
 B  { yylval->atom = new Atom(5);return ORGANIC_ATOM_TOKEN; }
