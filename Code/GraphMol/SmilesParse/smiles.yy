@@ -265,6 +265,8 @@ h_element:      H_TOKEN { $$ = new Atom(1); }
                 | number H_TOKEN { $$ = new Atom(1); $$->setIsotope($1); }
                 | H_TOKEN H_TOKEN { $$ = new Atom(1); $$->setNumExplicitHs(1); }
                 | number H_TOKEN H_TOKEN { $$ = new Atom(1); $$->setIsotope($1); $$->setNumExplicitHs(1);}
+                | H_TOKEN H_TOKEN number { $$ = new Atom(1); $$->setNumExplicitHs($3); }
+                | number H_TOKEN H_TOKEN number { $$ = new Atom(1); $$->setIsotope($1); $$->setNumExplicitHs($4);}
                 | chiral_element
 		| chiral_element H_TOKEN		{ $$ = $1; $1->setNumExplicitHs(1);}
 		| chiral_element H_TOKEN number	{ $$ = $1; $1->setNumExplicitHs($3);}

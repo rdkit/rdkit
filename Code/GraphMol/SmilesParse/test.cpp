@@ -91,6 +91,8 @@ void testPass(){
     // expressed in an ugly way:
     "[HH]",
     "[2HH]",
+    "[HH2-]",// issue 3535669
+    "[2HH2-]",// issue 3535669
     // problems handling aromatic boron, issue 3480481
     "b1ccccc1",
     "C[Rf]C", // issue 3535668
