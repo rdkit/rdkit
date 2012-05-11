@@ -78,6 +78,8 @@ void testPass(){
     "[HO]",
     "[13]",
     "[+]",
+    "[C:1]",
+    "[C:0]",  // issue 3525776   
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];

@@ -96,6 +96,8 @@ void testPass(){
     // problems handling aromatic boron, issue 3480481
     "b1ccccc1",
     "C[Rf]C", // issue 3535668
+    "[C:1]",
+    "[C:0]",  // issue 3525776   
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];

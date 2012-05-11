@@ -256,7 +256,7 @@ atomd:	simple_atom
 {
   $$ = new QueryAtom(1);
 }
-| ATOM_OPEN_TOKEN H_TOKEN COLON_TOKEN nonzero_number ATOM_CLOSE_TOKEN
+| ATOM_OPEN_TOKEN H_TOKEN COLON_TOKEN number ATOM_CLOSE_TOKEN
 {
   $$ = new QueryAtom(1);
   $$->setProp("molAtomMapNumber",$4);
@@ -265,7 +265,7 @@ atomd:	simple_atom
 {
   $$ = $2;
 }
-| ATOM_OPEN_TOKEN atom_expr COLON_TOKEN nonzero_number ATOM_CLOSE_TOKEN
+| ATOM_OPEN_TOKEN atom_expr COLON_TOKEN number ATOM_CLOSE_TOKEN
 {
   $$ = $2;
   $$->setProp("molAtomMapNumber",$4);

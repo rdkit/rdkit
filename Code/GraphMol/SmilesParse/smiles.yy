@@ -236,7 +236,7 @@ branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
 
 /* --------------------------------------------------------------- */
 atomd:	simple_atom
-| ATOM_OPEN_TOKEN charge_element COLON_TOKEN nonzero_number ATOM_CLOSE_TOKEN
+| ATOM_OPEN_TOKEN charge_element COLON_TOKEN number ATOM_CLOSE_TOKEN
 {
   $$ = $2;
   $$->setNoImplicit(true);
