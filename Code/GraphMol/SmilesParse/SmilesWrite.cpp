@@ -64,9 +64,9 @@ namespace RDKit{
         bool nonStandard;
         nonStandard = std::find(defaultVs.begin(),defaultVs.end(),
                                 totalValence)==defaultVs.end();
-        // another type of "nonstandard" valence is an aromatic N with
+        // another type of "nonstandard" valence is an aromatic N or P with
         // explicit Hs indicated:
-        if(num==7 && atom->getIsAromatic() && atom->getNumExplicitHs()){
+        if((num==7||num==15) && atom->getIsAromatic() && atom->getNumExplicitHs()){
           nonStandard=true;
         }
 

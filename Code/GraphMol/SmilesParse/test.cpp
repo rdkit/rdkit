@@ -1727,7 +1727,16 @@ void testBug1719046(){
   TEST_ASSERT(smi=="c1cc[nH]c1");
 
   delete mol;
+  // this was Issue 35525671
+  smi="P1C=CC=C1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  smi = MolToSmiles(*mol,false,false,-1);
+  TEST_ASSERT(smi=="c1cc[pH]c1");
+
+  delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+
 }
 
 void testBug1842174(){
