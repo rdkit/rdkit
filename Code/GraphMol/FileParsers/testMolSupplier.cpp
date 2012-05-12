@@ -1708,10 +1708,53 @@ void testIssue3482695() {
   delete nmol;
 }
 
+void testIssue3525673() {
+  std::string rdbase = getenv("RDBASE");
+  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525673.sdf";
+  std::ifstream ins(infile.c_str());
+  ForwardSDMolSupplier reader(&ins,false);
+  ROMol *nmol;
+
+  nmol = reader.next();
+  TEST_ASSERT(!nmol);
+
+  nmol = reader.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==37);
+  delete nmol;
+
+  nmol = reader.next();
+  TEST_ASSERT(!nmol);
+
+  nmol = reader.next();
+  TEST_ASSERT(!nmol);
+
+  nmol = reader.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==58);
+  delete nmol;
+
+  nmol = reader.next();
+  TEST_ASSERT(!nmol);
+
+  nmol = reader.next();
+  TEST_ASSERT(!nmol);
+
+  nmol = reader.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==58);
+  delete nmol;
+
+  nmol = reader.next();
+  TEST_ASSERT(!nmol);
+
+}
+
+
 int main() {
   RDLog::InitLogs();
 
-#if 1
+#if 0
   BOOST_LOG(rdErrorLog) <<"\n-----------------------------------------\n";
   testMolSup();
   BOOST_LOG(rdErrorLog) <<"Finished: testMolSup()\n";
@@ -1825,7 +1868,6 @@ int main() {
   BOOST_LOG(rdErrorLog) <<"Finished: testGetItemText()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-#endif
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testForwardSDSupplier();
   BOOST_LOG(rdErrorLog) <<"Finished: testForwardSDSupplier()\n";
@@ -1839,6 +1881,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testIssue3482695();
   BOOST_LOG(rdErrorLog) <<"Finished: testIssue3482695()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+#endif
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testIssue3525673();
+  BOOST_LOG(rdErrorLog) <<"Finished: testIssue3525673()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

@@ -159,7 +159,17 @@ namespace RDKit {
     try {
       res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs,df_strictParsing);
       d_line=line;
-      if(res) this->readMolProps(res);  
+      if(res){
+        this->readMolProps(res);
+      } else if(!dp_inStream->eof()) {
+        // FIX: report files missing the $$$$ marker
+        std::getline(*dp_inStream,tempStr);
+        ++d_line;
+        while(!(dp_inStream->eof()) && (tempStr[0]!='$'||tempStr.substr(0,4)!="$$$$") ){
+          std::getline(*dp_inStream,tempStr);
+          ++d_line;
+        }
+      }
     }
     catch (FileParseException &fe) {
       if(d_line<static_cast<int>(line)) d_line=line;

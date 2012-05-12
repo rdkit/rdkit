@@ -1934,8 +1934,16 @@ namespace RDKit{
       res=NULL;
       conf=NULL;
       BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message() <<" on line: "<<line<<". Molecule skipped."<<std::endl;
-
-      fileComplete=true;
+      if(!inStream->eof()) tempStr = getLine(inStream);
+      ++line;
+      while(!inStream->eof() && tempStr.substr(0,6)!="M  END" && tempStr.substr(0,4)!="$$$$"){
+        tempStr = getLine(inStream);
+        ++line;
+      }
+      if(!inStream->eof() || tempStr.substr(0,6)=="M  END" || tempStr.substr(0,4)=="$$$$")
+        fileComplete=true;
+      else
+        fileComplete=false;        
     } catch (FileParseException &e) { 
       // catch our exceptions and throw them back after cleanup
       if(res) delete res;
