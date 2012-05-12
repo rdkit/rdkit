@@ -1754,7 +1754,7 @@ void testIssue3525673() {
 int main() {
   RDLog::InitLogs();
 
-#if 0
+#if 1
   BOOST_LOG(rdErrorLog) <<"\n-----------------------------------------\n";
   testMolSup();
   BOOST_LOG(rdErrorLog) <<"Finished: testMolSup()\n";
