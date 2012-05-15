@@ -2857,22 +2857,6 @@ void testIssue3514824(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
-void testIssue3525673() {
-  BOOST_LOG(rdInfoLog) << " ----------> Test issue 3525673 "<< std::endl;
-
-  std::string rdbase = getenv("RDBASE");
-  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525673.sdf";
-  std::ifstream ins(infile.c_str());
-  unsigned int line=0;
-  RWMol *nmol;
-  nmol=MolDataStreamToMol(&ins,line);
-  TEST_ASSERT(!nmol);
-  std::cerr<<"line: "<<line<<std::endl;
-  TEST_ASSERT(line==91);
-
-  BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
-}
-
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
