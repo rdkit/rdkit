@@ -348,7 +348,7 @@ def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
 
     da,db = dummyTypes
     atoma = Chem.Atom(0)
-    atoma.SetMass(int(da))
+    atoma.SetIsotope(int(da))
     atoma.SetNoImplicit(True)
     idxa = nAts
     nAts+=1
@@ -356,7 +356,7 @@ def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
     eMol.AddBond(ia,idxa,bondType)
     
     atomb = Chem.Atom(0)
-    atomb.SetMass(int(db))
+    atomb.SetIsotope(int(db))
     atomb.SetNoImplicit(True)
     idxb = nAts
     nAts+=1
