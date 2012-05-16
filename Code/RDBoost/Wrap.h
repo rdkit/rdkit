@@ -41,6 +41,7 @@
 #define RDKIT_WRAP_DECL
 #endif
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include <boost/cstdint.hpp>
 #include "list_indexing_suite.hpp"
 #include <vector>
 #include <list>
