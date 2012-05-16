@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/utils.h>
 #include <GraphMol/RankAtoms.h>
+#include <boost/cstdint.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <list>
 #include <algorithm>
@@ -222,7 +223,7 @@ namespace RankAtoms{
     for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
       Atom const *atom = *atIt;
       // FIX: this is just for debugging purposes:
-      unsigned long invariant = atom->getIdx();
+      boost::uint64_t invariant = atom->getIdx();
       int nHs = atom->getTotalNumHs() % 8;
       int chg = abs(atom->getFormalCharge()) % 8;
       int chgSign = atom->getFormalCharge() > 0;
@@ -232,9 +233,9 @@ namespace RankAtoms{
       if(atom->getIsotope()){
         deltaMass = static_cast<int>(atom->getIsotope() -
                                      PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum()));
-        deltaMass += 8;
+        deltaMass += 128;
         if(deltaMass < 0) deltaMass = 0;
-        else deltaMass = deltaMass % 16;
+        else deltaMass = deltaMass % 256;
       }
 
       
@@ -261,7 +262,7 @@ namespace RankAtoms{
       // redundant with nCons, num, and nHs.
       // invariant = (invariant << 4) | totalVal; 
       invariant = (invariant << 7) | num;  
-      invariant = (invariant << 4) | deltaMass;
+      invariant = (invariant << 8) | deltaMass;
       invariant = (invariant << 3) | nHs;
       invariant = (invariant << 4) | inRing;
       invariant = (invariant << 3) | chg;

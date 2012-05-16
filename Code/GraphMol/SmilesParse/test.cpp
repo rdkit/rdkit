@@ -1644,7 +1644,42 @@ void testIsotopes(){
     smi = MolToSmiles(*mol,true);
     TEST_ASSERT(smi=="CC[238U]");
     delete mol;
-  }  
+  }
+  {
+    // issue 3526814
+    std::string smi ="CCCCS(=[18O])(=O)CCCCl";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol,false);
+    TEST_ASSERT(smi=="CCCCS(=O)(=O)CCCCl");
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="CCCCS(=O)(=[18O])CCCCl");
+    delete mol;
+  }
+  {
+    // issue 3526814
+    std::string smi ="CCCCS(=[24O])(=O)CCCCl";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol,false);
+    TEST_ASSERT(smi=="CCCCS(=O)(=O)CCCCl");
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="CCCCS(=O)(=[24O])CCCCl");
+    delete mol;
+  }
+  {
+    // issue 3526814
+    std::string smi ="CCCCS(=O)(=[24O])CCCCl";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    smi = MolToSmiles(*mol,false);
+    TEST_ASSERT(smi=="CCCCS(=O)(=O)CCCCl");
+    smi = MolToSmiles(*mol,true);
+    TEST_ASSERT(smi=="CCCCS(=O)(=[24O])CCCCl");
+    delete mol;
+  }
+
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
