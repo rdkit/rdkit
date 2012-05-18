@@ -2264,7 +2264,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOZ);
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1/C=C\\COCCCC1");
     TEST_ASSERT(smiles=="C1CCCCOC/C=C\\1");
     delete m;
@@ -2277,7 +2277,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1/C=C/COCCCC1");
     TEST_ASSERT(smiles=="C1CCCCOC/C=C/1");
 
@@ -2289,12 +2289,12 @@ void testBug3139534(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m,true,false,-1,false);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
     TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1=C/C=C/CCCCCC/1");
     TEST_ASSERT(smiles=="C1CCCC/C=C/C=C/C1");
     delete m;
@@ -2307,7 +2307,7 @@ void testBug3139534(){
     TEST_ASSERT(m);
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1=C/CCCCCC\\C=C/1");
     TEST_ASSERT(smiles=="C1/C=C/C=C\\CCCCC1");
     delete m;
@@ -2321,7 +2321,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1=C/C=C/COCCC/1");
     TEST_ASSERT(smiles=="C1/C=C/C=C/COCC1");
 
@@ -2345,11 +2345,11 @@ void testBug3139534(){
     TEST_ASSERT(m);
 
     smiles = MolToSmiles(*m,true,false,7,false);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1=C/NCCCCC/1");
 
     smiles = MolToSmiles(*m,true,false,0,false);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1CCCCN/C=C/1");
 
     delete m;
@@ -2365,7 +2365,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(14)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    std::cerr<<smiles<<std::endl;
+    //std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="CCC[N+]1=C/c2ccccc2OC(=O)/C=C\\1O");
 
     delete m;
@@ -2757,8 +2757,8 @@ void testBug3526810(){
     std::string csmiles2 = MolToSmiles(*m,true);
     delete m;
 
-    std::cerr<<"csmi1: "<<csmiles1<<std::endl;
-    std::cerr<<"csmi2: "<<csmiles2<<std::endl;
+    //std::cerr<<"csmi1: "<<csmiles1<<std::endl;
+    //std::cerr<<"csmi2: "<<csmiles2<<std::endl;
     TEST_ASSERT(csmiles1==csmiles2);
   }
 
@@ -2775,8 +2775,8 @@ void testBug3526810(){
     std::string csmiles2 = MolToSmiles(*m,true);
     delete m;
 
-    std::cerr<<"csmi1: "<<csmiles1<<std::endl;
-    std::cerr<<"csmi2: "<<csmiles2<<std::endl;
+    //std::cerr<<"csmi1: "<<csmiles1<<std::endl;
+    //std::cerr<<"csmi2: "<<csmiles2<<std::endl;
     TEST_ASSERT(csmiles1==csmiles2);
   }
 
@@ -2793,8 +2793,34 @@ void testBug3526810(){
     std::string csmiles2 = MolToSmiles(*m,true);
     delete m;
 
-    std::cerr<<"csmi1: "<<csmiles1<<std::endl;
-    std::cerr<<"csmi2: "<<csmiles2<<std::endl;
+    //std::cerr<<"csmi1: "<<csmiles1<<std::endl;
+    //std::cerr<<"csmi2: "<<csmiles2<<std::endl;
+    TEST_ASSERT(csmiles1==csmiles2);
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testBug3526815(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3526815: canonical smiles failure in many symmetric fragments" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="O.O.O.O.O.O.O.O.O.[Pd].[Na+].[Na+].[Na+].[Na+].[Na+].[Na+].[Na+].[Na+].[Na+].[O-]S(=O)(=O)c1cccc(c1)P(c1cccc(c1)S(=O)(=O)[O-])c1cccc(c1)S(=O)(=O)[O-].[O-]S(=O)(=O)c1cccc(c1)P(c1cccc(c1)S(=O)(=O)[O-])c1cccc(c1)S(=O)(=O)[O-].[O-]S(=O)(=O)c1cccc(c1)P(c1cccc(c1)S(=O)(=O)[O-])c1cccc(c1)S(=O)(=O)[O-]";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles1 = MolToSmiles(*m,true);
+    delete m;
+    std::string smiles2="O.O.O.O.O.O.O.O.O.[Na+].[Na+].[Na+].[Na+].[Na+].[Na+].[Na+].[Na+].[Na+].[O-]S(c1cccc(P(c2cccc(S([O-])(=O)=O)c2)c2cccc(S([O-])(=O)=O)c2)c1)(=O)=O.[Pd].[O-]S(=O)(=O)c1cccc(P(c2cccc(S([O-])(=O)=O)c2)c2cccc(S([O-])(=O)=O)c2)c1.[O-]S(=O)(=O)c1cccc(P(c2cccc(S([O-])(=O)=O)c2)c2cccc(S([O-])(=O)=O)c2)c1";
+    m = SmilesToMol(smiles2);
+    TEST_ASSERT(m);
+    std::string csmiles2 = MolToSmiles(*m,true);
+    delete m;
+
+    //std::cerr<<"csmi1: "<<csmiles1<<std::endl;
+    //std::cerr<<"csmi2: "<<csmiles2<<std::endl;
     TEST_ASSERT(csmiles1==csmiles2);
   }
 
@@ -2847,7 +2873,8 @@ main(int argc, char *argv[])
   testAllBondsExplicit();
   testBug3525799();
   testBug3526810();
-#endif
   testBug3139534();
+#endif
+  testBug3526815();
   //testBug1719046();
 }

@@ -112,21 +112,6 @@ namespace RDKit{
          atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
         INT_LIST trueOrder;
         atom->getProp("_TraversalBondIndexOrder",trueOrder);
-#ifdef VERBOSE_CANON
-        std::cout << "\tatom: " << atom->getIdx() << " | ";
-        std::copy(trueOrder.begin(),trueOrder.end(),
-                  std::ostream_iterator<int>(std::cout,", "));
-        std::cout << std::endl;
-        std::cout << "\t ---- | " ;
-        ROMol::OEDGE_ITER beg,end;
-        boost::tie(beg,end) = atom->getOwningMol().getAtomBonds(atom);
-        ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
-        while(beg!=end){
-          std::cout <<pMap[*beg]->getIdx()<<", ";
-          ++beg;
-        }
-        std::cout << std::endl;
-#endif    
         int nSwaps;
 #if 0
         if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") ) {
