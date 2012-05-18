@@ -46,7 +46,12 @@ namespace RDKit{
 
       bool needsBracket=false;
       std::string symb;
-      symb = atom->getSymbol();
+      if(atom->hasProp("smilesSymbol")){
+        atom->getProp("smilesSymbol",symb);
+      } else {
+        symb=PeriodicTable::getTable()->getElementSymbol(num);
+      }
+      //symb = atom->getSymbol();
       if(inOrganicSubset(num)){
         // it's a member of the organic subset
         //if(!doKekule && atom->getIsAromatic() && symb[0] < 'a') symb[0] -= ('A'-'a');

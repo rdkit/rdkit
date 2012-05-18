@@ -2857,6 +2857,23 @@ void testIssue3514824(){
   BOOST_LOG(rdInfoLog) << " Finished <---------- "<< std::endl;
 }
 
+void testIssue3525799(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3525799: bad smiles for r groups" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue3525799.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    std::string smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="[*]c1oc2c([*])c([*])c([*])c([*])c2c(=O)c1-c1c([*])c([*])c([*])c([*])c1[*]");
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -2911,6 +2928,7 @@ int main(int argc,char *argv[]){
 #endif
   testIssue3484552();
   testIssue3514824();
+  testIssue3525799();
 
   return 0;
 }

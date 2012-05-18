@@ -204,60 +204,6 @@ s		    {	yylval->atom = new Atom( 16 );
                                 // we aren't in square brackets:
 				return ORGANIC_ATOM_TOKEN; 
 			}
-<IN_ATOM_STATE>X 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
-                                                        std::string("X"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>Xa 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
-std::string("Xa"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>Xb 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
-std::string("Xb"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>Xc 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
-std::string("Xc"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>Xd 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
-std::string("Xd"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>Xf 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
-std::string("Xf"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>Xg 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
-std::string("Xg"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>Xh 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp("dummyLabel",
-std::string("Xh"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
-<IN_ATOM_STATE>Xi 	{   yylval->atom = new Atom( 0 );
-		            yylval->atom->setProp((const char *)"dummyLabel",
-std::string("Xi"));
-  BOOST_LOG(rdWarningLog)<<"Deprecation Warning: using X as a dummy-atom symbol is deprecated."<<std::endl;
-				return ATOM_TOKEN; 
-			}
 
 <IN_ATOM_STATE>\: 	{ return COLON_TOKEN; }
 

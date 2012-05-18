@@ -2264,8 +2264,9 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOZ);
 
     smiles = MolToSmiles(*m,true);
-    TEST_ASSERT(smiles=="C1/C=C\\COCCCC1");
-
+    std::cerr<<smiles<<std::endl;
+    //TEST_ASSERT(smiles=="C1/C=C\\COCCCC1");
+    TEST_ASSERT(smiles=="C1CCCCOC/C=C\\1");
     delete m;
   }
   {
@@ -2276,7 +2277,9 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    TEST_ASSERT(smiles=="C1/C=C/COCCCC1");
+    std::cerr<<smiles<<std::endl;
+    //TEST_ASSERT(smiles=="C1/C=C/COCCCC1");
+    TEST_ASSERT(smiles=="C1CCCCOC/C=C/1");
 
     delete m;
   }
@@ -2286,10 +2289,14 @@ void testBug3139534(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m,true,false,-1,false);
+    std::cerr<<smiles<<std::endl;
+    //TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
     TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
 
     smiles = MolToSmiles(*m,true);
-    TEST_ASSERT(smiles=="C1=C/C=C/CCCCCC/1");
+    std::cerr<<smiles<<std::endl;
+    //TEST_ASSERT(smiles=="C1=C/C=C/CCCCCC/1");
+    TEST_ASSERT(smiles=="C1CCCC/C=C/C=C/C1");
     delete m;
   }
 
@@ -2300,7 +2307,9 @@ void testBug3139534(){
     TEST_ASSERT(m);
 
     smiles = MolToSmiles(*m,true);
-    TEST_ASSERT(smiles=="C1=C/CCCCCC\\C=C/1");
+    std::cerr<<smiles<<std::endl;
+    //TEST_ASSERT(smiles=="C1=C/CCCCCC\\C=C/1");
+    TEST_ASSERT(smiles=="C1/C=C/C=C\\CCCCC1");
     delete m;
   }
   
@@ -2312,7 +2321,9 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    TEST_ASSERT(smiles=="C1=C/C=C/COCCC/1");
+    std::cerr<<smiles<<std::endl;
+    //TEST_ASSERT(smiles=="C1=C/C=C/COCCC/1");
+    TEST_ASSERT(smiles=="C1/C=C/C=C/COCC1");
 
     delete m;
   }
@@ -2334,9 +2345,11 @@ void testBug3139534(){
     TEST_ASSERT(m);
 
     smiles = MolToSmiles(*m,true,false,7,false);
+    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1=C/NCCCCC/1");
 
     smiles = MolToSmiles(*m,true,false,0,false);
+    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1CCCCN/C=C/1");
 
     delete m;
@@ -2352,6 +2365,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(14)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
+    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="CCC[N+]1=C/c2ccccc2OC(=O)/C=C\\1O");
 
     delete m;
@@ -2693,6 +2707,102 @@ void testAllBondsExplicit(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testBug3525799(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3525799: bad smiles for r groups" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="CC*";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="[*]CC");
+    m->getAtomWithIdx(2)->setProp("dummyLabel","foo");
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="[*]CC");
+    delete m;
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="CC*";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="[*]CC");
+    m->getAtomWithIdx(2)->setProp("smilesSymbol","Xa");
+    smiles = MolToSmiles(*m,true);
+    TEST_ASSERT(smiles=="[Xa]CC");
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testBug3526810(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3526810: canonical smiles failure in symmetric heterocycles" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="C1SCCSCCCSCCSCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles1 = MolToSmiles(*m,true);
+    delete m;
+    std::string smiles2="C1CSCCSCCCSCCSC1";
+    m = SmilesToMol(smiles2);
+    TEST_ASSERT(m);
+    std::string csmiles2 = MolToSmiles(*m,true);
+    delete m;
+
+    std::cerr<<"csmi1: "<<csmiles1<<std::endl;
+    std::cerr<<"csmi2: "<<csmiles2<<std::endl;
+    TEST_ASSERT(csmiles1==csmiles2);
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="C1NCCNCCCNCCNCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles1 = MolToSmiles(*m,true);
+    delete m;
+    std::string smiles2="C1CNCCNCCCNCCNC1";
+    m = SmilesToMol(smiles2);
+    TEST_ASSERT(m);
+    std::string csmiles2 = MolToSmiles(*m,true);
+    delete m;
+
+    std::cerr<<"csmi1: "<<csmiles1<<std::endl;
+    std::cerr<<"csmi2: "<<csmiles2<<std::endl;
+    TEST_ASSERT(csmiles1==csmiles2);
+  }
+
+  {
+    RWMol *m;
+    std::string smiles="C1CNCCCNCCNCCCNC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles1 = MolToSmiles(*m,true);
+    delete m;
+    std::string smiles2="C1CCNCCCNCCNCCCN1";
+    m = SmilesToMol(smiles2);
+    TEST_ASSERT(m);
+    std::string csmiles2 = MolToSmiles(*m,true);
+    delete m;
+
+    std::cerr<<"csmi1: "<<csmiles1<<std::endl;
+    std::cerr<<"csmi2: "<<csmiles2<<std::endl;
+    TEST_ASSERT(csmiles1==csmiles2);
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 
 int
 main(int argc, char *argv[])
@@ -2727,15 +2837,17 @@ main(int argc, char *argv[])
   testBug1844959();
   testIssue157();
   testStereochem();
-#endif
   testBug1844617();
   testBug1942220();
   testBug3127883();
-  testBug3139534();
   testAtomMaps();
   testBug3145697();
   testBug3152751();
   testReplacementPatterns();
   testAllBondsExplicit();
+  testBug3525799();
+  testBug3526810();
+#endif
+  testBug3139534();
   //testBug1719046();
 }

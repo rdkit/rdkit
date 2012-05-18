@@ -17,6 +17,7 @@
 #include <list>
 #include <algorithm>
 using namespace boost::lambda;
+
 namespace RankAtoms{
   using namespace RDKit;
   // --------------------------------------------------
@@ -159,7 +160,7 @@ namespace RankAtoms{
       primeVect.resize(0);
       getPrimes(ranks,primeVect);
       atomicVect.resize(0);
-      calcAdjacentProducts(nAtoms,primeVect,adjMat,indicesInPlay,atomicVect);
+      calcAdjacentProducts(nAtoms,primeVect,adjMat,indicesInPlay,atomicVect,false);
 #ifdef VERYVERBOSE_CANON
       BOOST_LOG(rdDebugLog)<< "primes: ";
       debugVect(primeVect);
