@@ -3128,7 +3128,7 @@ main(int argc, char *argv[])
 {
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
-#if 0
+#if 1
   testPass();
   testFail();
 
