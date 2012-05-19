@@ -2285,7 +2285,7 @@ CAS<~>
     smi = Chem.MolToSmiles(m,allBondsExplicit=True)
     self.failUnlessEqual(smi,"c1:c:c:c:c:c:1")
     
-  def test76VeryLargeMolecule(self):
+  def _test76VeryLargeMolecule(self):
     # this is sf.net issue 3524984
     smi = '[C@H](F)(Cl)'+'c1cc[nH]c1'*500+'[C@H](F)(Cl)'
     m = Chem.MolFromSmiles(smi)
@@ -2293,7 +2293,30 @@ CAS<~>
     self.failUnlessEqual(m.GetNumAtoms(),2506)
     scs = Chem.FindMolChiralCenters(m)
     self.failUnlessEqual(len(scs),2)
+
+  def test77MolFragmentToSmiles(self):
+    smi="OC1CC1CC"
+    m = Chem.MolFromSmiles(smi)
+    fsmi = Chem.MolFragmentToSmiles(m,[1,2,3])
+    self.failUnlessEqual(fsmi,"C1CC1")
+    fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondsToUse=[1,2,5])
+    self.failUnlessEqual(fsmi,"C1CC1")
+    fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondsToUse=[1,2])
+    self.failUnlessEqual(fsmi,"CCC")
+    fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],atomSymbols=["","[A]","[C]","[B]","",""])
+    self.failUnlessEqual(fsmi,"[C]1[B][A]1")
+    fsmi = Chem.MolFragmentToSmiles(m,[1,2,3],bondSymbols=["","%","%","","","%"])
+    self.failUnlessEqual(fsmi,"C1%C%C%1")
     
+    smi="c1ccccc1C"
+    m = Chem.MolFromSmiles(smi)
+    fsmi = Chem.MolFragmentToSmiles(m,range(6))
+    self.failUnlessEqual(fsmi,"c1ccccc1")
+    Chem.Kekulize(m)
+    fsmi = Chem.MolFragmentToSmiles(m,range(6),kekuleSmiles=True)
+    self.failUnlessEqual(fsmi,"C1=CC=CC=C1")    
+    fsmi = Chem.MolFragmentToSmiles(m,range(6),atomSymbols=["[C]"]*7,kekuleSmiles=True)
+    self.failUnlessEqual(fsmi,"[C]1=[C][C]=[C][C]=[C]1")    
     
 if __name__ == '__main__':
   unittest.main()

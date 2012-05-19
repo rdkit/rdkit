@@ -149,6 +149,39 @@ namespace RDKit{
     }
     return static_cast<ROMol *>(newM);
   }
+
+  std::string MolFragmentToSmilesHelper(const ROMol &mol,
+                                        python::object atomsToUse,
+                                        python::object bondsToUse,
+                                        python::object atomSymbols,
+                                        python::object bondSymbols,
+                                        bool doIsomericSmiles,
+                                        bool doKekule,
+                                        int rootedAtAtom,
+                                        bool canonical,
+                                        bool allBondsExplicit
+                                        ){
+    std::vector<int> *avect=pythonObjectToVect(atomsToUse,static_cast<int>(mol.getNumAtoms()));
+    std::vector<int> *bvect=pythonObjectToVect(bondsToUse,static_cast<int>(mol.getNumBonds()));
+    std::vector<std::string> *asymbols=pythonObjectToVect<std::string>(atomSymbols);
+    std::vector<std::string> *bsymbols=pythonObjectToVect<std::string>(bondSymbols);
+    if(asymbols && asymbols->size()!=mol.getNumAtoms()){
+      throw_value_error("length of atom symbol list != number of atoms");
+    }
+    if(bsymbols && bsymbols->size()!=mol.getNumBonds()){
+      throw_value_error("length of bond symbol list != number of bonds");
+    }
+    
+    std::string res=MolFragmentToSmiles(mol,*avect,bvect,asymbols,bsymbols,
+                                        doIsomericSmiles,doKekule,rootedAtAtom,
+                                        canonical,allBondsExplicit);
+    if(avect) delete avect;
+    if(bvect) delete bvect;
+    if(asymbols) delete asymbols;
+    if(bsymbols) delete bsymbols;
+    return res;
+  }
+
 }
 
 // MolSupplier stuff
@@ -443,6 +476,47 @@ BOOST_PYTHON_MODULE(rdmolfiles)
                python::arg("allBondsExplicit")=false),
 	      docString.c_str());
 
+  docString="Returns the canonical SMILES string for a fragment of a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - atomsToUse : a list of atoms to include in the fragment\n\
+    - bondsToUse : (optional) a list of bonds to include in the fragment\n\
+                   if not provided, all bonds between the atoms provided\n\
+                   will be included.\n\
+    - atomSymbols : (optional) a list with the symbols to use for the atoms\n\
+                    in the SMILES. This should have be mol.GetNumAtoms() long.\n\
+    - bondSymbols : (optional) a list with the symbols to use for the bonds\n\
+                    in the SMILES. This should have be mol.GetNumBonds() long.\n\
+    - isomericSmiles: (optional) include information about stereochemistry in\n\
+      the SMILES.  Defaults to false.\n\
+    - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
+      the SMILES.  Defaults to false.\n\
+    - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
+      to start at a particular atom. Defaults to -1.\n\
+    - canonical: (optional) if false no attempt will be made to canonicalize\n\
+      the molecule. Defaults to true.\n\
+    - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
+      in the output SMILES. Defaults to false.\n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolFragmentToSmiles",MolFragmentToSmilesHelper,
+	      (python::arg("mol"),
+               python::arg("atomsToUse"),
+               python::arg("bondsToUse")=0,
+               python::arg("atomSymbols")=0,
+               python::arg("bondSymbols")=0,
+	       python::arg("isomericSmiles")=false,
+	       python::arg("kekuleSmiles")=false,
+	       python::arg("rootedAtAtom")=-1,
+	       python::arg("canonical")=true,
+               python::arg("allBondsExplicit")=false),
+	      docString.c_str());
+
+  
   docString="Returns a SMARTS string for a molecule\n\
   ARGUMENTS:\n\
 \n\

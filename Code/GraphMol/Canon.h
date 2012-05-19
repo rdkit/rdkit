@@ -11,6 +11,7 @@
 #define _RD_CANON_H_
 
 #include <boost/tuple/tuple.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
   class ROMol;
@@ -112,7 +113,10 @@ namespace Canon {
   void canonicalizeFragment(RDKit::ROMol &mol,int atomIdx,
 			    std::vector<AtomColors> &colors,
 			    std::vector<int> &ranks,
-			    MolStack &molStack);
+			    MolStack &molStack,
+                            const boost::dynamic_bitset<> *bondsInPlay=0,
+                            const std::vector<std::string> *bondSymbols=0
+                            );
 
 };
 

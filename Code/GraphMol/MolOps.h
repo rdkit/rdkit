@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 #include <vector>
 #include <list>
 #include <boost/smart_ptr.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 extern const int ci_LOCAL_INF;
 namespace RDKit{
@@ -437,10 +438,12 @@ namespace RDKit{
 	  
     */
     double * getAdjacencyMatrix(const ROMol &mol,
-				       bool useBO=false,
-				       int emptyVal=0,
-				       bool force=false,
-				       const char *propNamePrefix=0);
+                                bool useBO=false,
+                                int emptyVal=0,
+                                bool force=false,
+                                const char *propNamePrefix=0,
+                                const boost::dynamic_bitset<> *bondsToUse=0
+                                );
 
     //! Computes the molecule's topological distance matrix
     /*!
@@ -543,6 +546,36 @@ namespace RDKit{
     */
     void rankAtoms(const ROMol &mol,std::vector<int> &ranks,
                    bool breakTies=true,std::vector<std::vector<int> > *rankHistory=0);
+    //! assign a canonical ordering to a sub-molecule's atoms
+    /*!
+      The algorithm used here is a modification of the published Daylight canonical
+      smiles algorithm (i.e. it uses atom invariants and products of primes).
+      
+      \param mol               the molecule of interest
+      \param atomsToUse        atoms to be included
+      \param bondsToUse        bonds to be included
+      \param atomSymbols       symbols to use for the atoms in the output (these are
+                               used in place of atomic number and isotope information)
+      \param ranks             used to return the ranks
+      \param breakTies         toggles breaking of ties (see below)
+      \param rankHistory       used to return the rank history (see below)
+
+      <b>Notes:</b>
+        - Tie breaking should be done when it's important to have a full ordering
+          of the atoms (e.g. when generating canonical traversal trees). If it's
+	        acceptable to have ties between symmetry-equivalent atoms (e.g. when
+	        generating CIP codes), tie breaking can/should be skipped.
+	      - if the \c rankHistory argument is provided, the evolution of the ranks of
+	        individual atoms will be tracked.  The \c rankHistory pointer should be
+	        to a VECT_INT_VECT that has at least \c mol.getNumAtoms() elements.
+    */
+    void rankAtomsInFragment(const ROMol &mol,std::vector<int> &ranks,
+                             const boost::dynamic_bitset<> &atomsToUse,
+                             const boost::dynamic_bitset<> &bondsToUse,
+                             const std::vector<std::string> *atomSymbols=0,
+                             const std::vector<std::string> *bondSymbols=0,
+                             bool breakTies=true,
+                             std::vector<std::vector<int> > *rankHistory=0);
 
     // @}
 

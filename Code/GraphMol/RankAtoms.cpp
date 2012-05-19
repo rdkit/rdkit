@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,10 +13,16 @@
 #include <RDGeneral/utils.h>
 #include <GraphMol/RankAtoms.h>
 #include <boost/cstdint.hpp>
+#include <boost/foreach.hpp>
+#include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/hash/hash.hpp>
+
 #include <boost/lambda/lambda.hpp>
 #include <list>
 #include <algorithm>
 using namespace boost::lambda;
+
+//#define VERBOSE_CANON 1
 
 namespace RankAtoms{
   using namespace RDKit;
@@ -223,8 +229,6 @@ namespace RankAtoms{
 
     for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
       Atom const *atom = *atIt;
-      // FIX: this is just for debugging purposes:
-      boost::uint64_t invariant = atom->getIdx();
       int nHs = atom->getTotalNumHs() % 8;
       int chg = abs(atom->getFormalCharge()) % 8;
       int chgSign = atom->getFormalCharge() > 0;
@@ -255,7 +259,7 @@ namespace RankAtoms{
       }
       inRing = inRing % 16;
 
-      invariant = 0;
+      boost::uint64_t invariant = 0;
       invariant = (invariant << 3) | nConns;
       // we used to include the number of explicitHs, but that
       // didn't make much sense. TotalValence is another possible
@@ -307,6 +311,103 @@ namespace RankAtoms{
     }
   }
 
+  void buildFragmentAtomInvariants(const ROMol &mol,INVAR_VECT &res,
+                                   bool includeChirality,
+                                   const boost::dynamic_bitset<> &atomsToUse,
+                                   const boost::dynamic_bitset<> &bondsToUse,
+                                   const std::vector<std::string> *atomSymbols
+                                   ){
+    PRECONDITION(res.size()>=mol.getNumAtoms(),"res vect too small");
+
+    std::vector<int> degrees(mol.getNumAtoms(),0);
+    for(unsigned int i=0;i<bondsToUse.size();++i){
+      if(bondsToUse[i]){
+        const Bond *bnd=mol.getBondWithIdx(i);
+        degrees[bnd->getBeginAtomIdx()]++;
+        degrees[bnd->getEndAtomIdx()]++;
+      }
+    }
+    
+    for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();++atIt){
+      Atom const *atom = *atIt;
+      int aIdx=atom->getIdx();
+      if(!atomsToUse[aIdx]){
+        res[aIdx] = 0;
+        continue;
+      }
+      boost::uint64_t invariant = 0;
+
+      int nConns = degrees[aIdx]% 8;
+      invariant = (invariant << 3) | nConns;
+
+      if(!atomSymbols){
+        int chg = abs(atom->getFormalCharge()) % 8;
+        int chgSign = atom->getFormalCharge() > 0;
+        int num =    atom->getAtomicNum() % 128;
+        int deltaMass=0;
+        if(atom->getIsotope()){
+          deltaMass = static_cast<int>(atom->getIsotope() -
+                                       PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum()));
+          deltaMass += 128;
+          if(deltaMass < 0) deltaMass = 0;
+          else deltaMass = deltaMass % 256;
+        }
+        invariant = (invariant << 7) | num;  
+        invariant = (invariant << 8) | deltaMass;
+        invariant = (invariant << 3) | chg;
+        invariant = (invariant << 1) | chgSign;
+      } else {
+        const std::string &symb=(*atomSymbols)[aIdx];
+        boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
+        invariant = (invariant << 20) | (hsh%(1<<20));
+      }
+
+      // figure out the minimum-sized ring we're involved in
+      int inRing = mol.getRingInfo()->minAtomRingSize(aIdx);
+      inRing = inRing % 16;
+      invariant = (invariant << 4) | inRing;
+
+      if(includeChirality ){
+        int isR=0;
+        if( atom->hasProp("_CIPCode")){
+          std::string cipCode;
+          atom->getProp("_CIPCode",cipCode);
+          if(cipCode=="R"){
+            isR=1;
+          } else {
+            isR=2;
+          }
+        }
+        invariant = (invariant << 2) | isR;
+      }
+
+      // now deal with cis/trans - this is meant to address issue 174
+      // loop over the bonds on this atom and check if we have a double bond with
+      // a chiral code marking 
+      if (includeChirality) {
+        ROMol::OBOND_ITER_PAIR atomBonds = mol.getAtomBonds(atom);
+        int isT=0;
+        while (atomBonds.first != atomBonds.second){
+          BOND_SPTR tBond = mol[*(atomBonds.first)];
+          atomBonds.first++;
+          if(!bondsToUse[tBond->getIdx()]) continue;
+          if( (tBond->getBondType() == Bond::DOUBLE) &&
+              (tBond->getStereo()>Bond::STEREOANY )) {
+            if (tBond->getStereo()==Bond::STEREOE) {
+              isT = 1;
+            } else if(tBond->getStereo()==Bond::STEREOZ) {
+              isT=2;
+            }
+            break;
+          }
+        }
+        invariant = (invariant << 2) | isT;
+      }
+      res[aIdx] = invariant;
+    }
+  }
+
+  
 }// end of RankAtoms namespace
 
 namespace RDKit{
@@ -460,6 +561,234 @@ namespace RDKit{
           }
         }
       }
-    }
+    } // end of function rankAtoms
+
+    void rankAtomsInFragment(const ROMol &mol,INT_VECT &ranks,
+                             const boost::dynamic_bitset<> &atomsToUse,
+                             const boost::dynamic_bitset<> &bondsToUse,
+                             const std::vector<std::string> *atomSymbols,
+                             const std::vector<std::string> *bondSymbols,
+                             bool breakTies,
+                             VECT_INT_VECT *rankHistory){
+      unsigned int nAtoms = mol.getNumAtoms();
+      unsigned int nActiveAtoms = atomsToUse.count();
+      PRECONDITION(ranks.size()>=nAtoms,"");
+      PRECONDITION(!atomSymbols||atomSymbols->size()>=nAtoms,"bad atomSymbols");
+      PRECONDITION(!rankHistory||rankHistory->size()>=nAtoms,"bad rankHistory size");
+      PRECONDITION(mol.getRingInfo()->isInitialized(),"no ring information present");
+      PRECONDITION(!rankHistory,"rankHistory not currently supported.");
+      unsigned int stagnantTol=1;
+
+      if(nActiveAtoms > 1){
+
+        // ----------------------
+        // generate atomic invariants, Step (1)
+        // ----------------------
+        INVAR_VECT invariants;
+        invariants.resize(nAtoms);
+        RankAtoms::buildFragmentAtomInvariants(mol,invariants,true,
+                                               atomsToUse,bondsToUse,
+                                               atomSymbols);
+        INVAR_VECT tinvariants;
+        tinvariants.resize(nActiveAtoms);
+        unsigned int activeIdx=0;
+        for(unsigned int aidx=0;aidx<nAtoms;++aidx){
+          if(atomsToUse[aidx]){
+            tinvariants[activeIdx++]=invariants[aidx];
+          }
+        }
+      
+#ifdef VERBOSE_CANON
+        BOOST_LOG(rdDebugLog)<< "invariants:" << std::endl;
+        for(unsigned int i=0;i<nActiveAtoms;i++){
+          BOOST_LOG(rdDebugLog)<< i << " " << (long)tinvariants[i]<< std::endl;
+        }
+
+#endif
+        // ----------------------
+        // iteration 1: Steps (3) and (4)
+        // ----------------------
+
+        // start by ranking the atoms using the invariants
+        INT_VECT tranks(nActiveAtoms,0);
+        RankAtoms::rankVect(tinvariants,tranks);
+#if 0
+        if(rankHistory){
+          for(unsigned int i=0;i<nAtoms;i++){
+            (*rankHistory)[i].push_back(ranks[i]);
+          }
+        }
+#endif
+        // how many classes are present?
+        unsigned int numClasses = RankAtoms::countClasses(tranks);
+        if(numClasses != nActiveAtoms){
+          double *tadjMat = new double[nActiveAtoms*nActiveAtoms];
+          if(!bondSymbols){
+            double *adjMat = MolOps::getAdjacencyMatrix(mol,true,0,true,0,&bondsToUse);
+            activeIdx=0;
+            for(unsigned int aidx=0;aidx<nAtoms;++aidx){
+              if(atomsToUse[aidx]){
+                unsigned int activeIdx2=activeIdx+1;
+                for(unsigned int aidx2=aidx+1;aidx2<nAtoms;++aidx2){
+                  if(atomsToUse[aidx2]){
+                    tadjMat[activeIdx*nActiveAtoms+activeIdx2]=adjMat[aidx*nAtoms+aidx2];
+                    tadjMat[activeIdx2*nActiveAtoms+activeIdx]=adjMat[aidx2*nAtoms+aidx];
+                    ++activeIdx2;
+                  }
+                }
+                ++activeIdx;
+              }
+            }
+          } else {
+            // rank the bond symbols we have:
+            std::vector<boost::uint32_t> tbranks(bondsToUse.size(),
+                                                 0);
+            for(unsigned int bidx=0;bidx<bondsToUse.size();++bidx){
+              if(!bondsToUse[bidx]) continue;
+              const Bond *bond=mol.getBondWithIdx(bidx);
+              const std::string &symb=(*bondSymbols)[bidx];
+              boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
+              tbranks[bidx]=hsh;
+            }
+            INT_VECT branks(bondsToUse.size(),1000000);
+#ifdef VERBOSE_CANON
+            std::cerr<<"  tbranks:";
+            std::copy(tbranks.begin(),tbranks.end(),std::ostream_iterator<boost::uint32_t>(std::cerr," "));
+            std::cerr<<std::endl;
+#endif            
+            RankAtoms::rankVect(tbranks,branks);
+#ifdef VERBOSE_CANON
+            std::cerr<<"  branks:";
+            std::copy(branks.begin(),branks.end(),std::ostream_iterator<int>(std::cerr," "));
+            std::cerr<<std::endl;
+#endif            
+            for(unsigned int bidx=0;bidx<bondsToUse.size();++bidx){
+              if(!bondsToUse[bidx]) continue;
+              const Bond *bond=mol.getBondWithIdx(bidx);
+              unsigned int aidx1=bond->getBeginAtomIdx();
+              unsigned int aidx2=bond->getEndAtomIdx();
+              unsigned int tidx1=0;
+              for(unsigned int iidx=0;iidx<aidx1;++iidx){
+                if(atomsToUse[iidx]) ++tidx1;
+              }
+              unsigned int tidx2=0;
+              for(unsigned int iidx=0;iidx<aidx2;++iidx){
+                if(atomsToUse[iidx]) ++tidx2;
+              }
+              const std::string &symb=(*bondSymbols)[bidx];
+              boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
+              //std::cerr<<" ::: "<<bidx<<"->"<<branks[bidx]<<std::endl;
+              tadjMat[tidx1*nActiveAtoms+tidx2]=branks[bidx];
+              tadjMat[tidx2*nActiveAtoms+tidx1]=branks[bidx];
+            }
+          }
+          INT_VECT primeVect;
+          primeVect.reserve(nActiveAtoms);
+
+          DOUBLE_VECT atomicVect;
+          atomicVect.reserve(nActiveAtoms);
+
+#ifdef VERBOSE_CANON
+          for(unsigned int aidx1=0;aidx1<nActiveAtoms;++aidx1){
+            std::cerr<<aidx1<<" : ";
+            for(unsigned int aidx2=aidx1+1;aidx2<nActiveAtoms;++aidx2){
+              std::cerr<< tadjMat[aidx1*nActiveAtoms+aidx2]<<" ";
+            }
+            std::cerr<<std::endl;
+          }
+#endif
+      
+          // indicesInPlay is used to track the atoms with non-unique ranks
+          //  (we'll be modifying these in each step)
+          INT_LIST indicesInPlay;
+          for(unsigned int i=0;i<nActiveAtoms;i++) indicesInPlay.push_back(i);
+
+          // if we aren't breaking ties here, allow the rank iteration to
+          // go the full number of atoms:
+          if(!breakTies) stagnantTol=nActiveAtoms;
+
+          bool done=indicesInPlay.empty();
+          while(!done){
+            //
+            // do one round of iterations
+            //
+            numClasses = RankAtoms::iterateRanks(nActiveAtoms,primeVect,atomicVect,
+                                                 indicesInPlay,tadjMat,tranks,
+                                                 rankHistory,stagnantTol);
+
+#ifdef VERBOSE_CANON
+            BOOST_LOG(rdDebugLog)<< "************************ done outer iteration" << std::endl;
+#endif  
+#ifdef VERBOSE_CANON
+            BOOST_LOG(rdDebugLog)<< "RANKS:" << std::endl;
+            for(unsigned int tmpI=0;tmpI<tranks.size();tmpI++){
+              BOOST_LOG(rdDebugLog)<< "\t\t" << tmpI << " " << tranks[tmpI] << std::endl;
+            }
+            BOOST_LOG(rdDebugLog)<< std::endl;
+#endif    
+            //
+            // This is the tiebreaker stage of things
+            //
+            if( breakTies && !indicesInPlay.empty() && numClasses<nActiveAtoms){
+              INT_VECT newRanks = tranks;
+
+              // Add one to all ranks and multiply by two
+              std::for_each(newRanks.begin(),newRanks.end(),_1=(_1+1)*2);
+#ifdef VERBOSE_CANON
+              BOOST_LOG(rdDebugLog)<< "postmult:" << std::endl;
+              for(unsigned tmpI=0;tmpI<newRanks.size();tmpI++){
+                BOOST_LOG(rdDebugLog)<< "\t\t" << newRanks[tmpI] << std::endl;
+              }
+              BOOST_LOG(rdDebugLog)<< std::endl;
+#endif    
+
+              //
+              // find lowest duplicate rank with lowest invariant:
+              //
+              int lowestIdx=indicesInPlay.front();
+              double lowestInvariant = tinvariants[lowestIdx];
+              int lowestRank=newRanks[lowestIdx];
+              for(INT_LIST_I ilIt=indicesInPlay.begin();
+                  ilIt!=indicesInPlay.end();
+                  ++ilIt){
+                if(newRanks[*ilIt]<=lowestRank){
+                  if(newRanks[*ilIt]<lowestRank ||
+                     tinvariants[*ilIt] <= lowestInvariant){
+                    lowestRank = newRanks[*ilIt];
+                    lowestIdx = *ilIt;
+                    lowestInvariant = tinvariants[*ilIt];
+                  }
+                }
+              }
+
+              //
+              // subtract one from the lowest index, rerank and proceed
+              //
+              newRanks[lowestIdx] -= 1;
+              RankAtoms::rankVect(newRanks,tranks);
+#ifdef VERBOSE_CANON
+              BOOST_LOG(rdDebugLog)<< "RE-RANKED ON:" << lowestIdx << std::endl;
+              for(unsigned int tmpI=0;tmpI<newRanks.size();tmpI++){
+                BOOST_LOG(rdDebugLog)<< "\t\t" << newRanks[tmpI] << " " << tranks[tmpI] << std::endl;
+              }
+              BOOST_LOG(rdDebugLog)<< std::endl;
+#endif    
+            } else {
+              done = true;
+            }
+          }
+          delete [] tadjMat;
+        }
+        unsigned int tidx=0;
+        for(unsigned int aidx=0;aidx<nAtoms;++aidx){
+          ranks[aidx]=0;
+          if(atomsToUse[aidx]){
+            ranks[aidx]=tranks[tidx++];
+          }
+        }
+      }
+    } // end of function rankAtomsInFragment
+
+    
   } // end of namespace MolOps  
 } // End Of RDKit namespace

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,7 +11,7 @@
 #define _RD_SMILESWRITE_H
 
 #include <string>
-
+#include <vector>
 
 namespace RDKit{
   class Atom;
@@ -60,5 +60,32 @@ namespace RDKit{
 			  bool doKekule=false,int rootedAtAtom=-1,
                           bool canonical=true,
                           bool allBondsExplicit=false);
+
+  //! \brief returns canonical SMILES for part of a molecule
+  /*!
+    \param mol : the molecule in question.
+    \param atomsToUse : indices of the atoms in the fragment
+    \param bondsToUse : indices of the bonds in the fragment. If this is not provided,
+                        all bonds between the atoms in atomsToUse will be included
+    \param atomSymbols : symbols to use for the atoms in the output SMILES
+    \param bondSymbols : sybmols to use for the bonds in the output SMILES
+    \param doIsomericSmiles : include stereochemistry and isotope information
+        in the SMILES
+    \param doKekule : do Kekule smiles (i.e. don't use aromatic bonds)
+    \param rootedAtAtom : make sure the SMILES starts at the specified atom.
+        The resulting SMILES is not, of course, canonical.
+    \param canonical : if false, no attempt will be made to canonicalize the SMILES
+    \param allBondsExplicit : if true, symbols will be included for all bonds.
+   */
+  std::string MolFragmentToSmiles(const ROMol &mol,
+                                  const std::vector<int> &atomsToUse,
+                                  const std::vector<int> *bondsToUse=0,
+                                  const std::vector<std::string> *atomSymbols=0,
+                                  const std::vector<std::string> *bondSymbols=0,
+                                  bool doIsomericSmiles=false,
+                                  bool doKekule=false,int rootedAtAtom=-1,
+                                  bool canonical=true,
+                                  bool allBondsExplicit=false);
+
 }
 #endif

@@ -286,10 +286,12 @@ namespace RDKit{
 
     // NOTE: do *not* delete results
     double *getAdjacencyMatrix(const ROMol &mol,
-				       bool useBO,
-				       int emptyVal,
-				       bool force,
-				       const char *propNamePrefix)
+                               bool useBO,
+                               int emptyVal,
+                               bool force,
+                               const char *propNamePrefix,
+                               const boost::dynamic_bitset<> *bondsToUse
+                               )
     {
       std::string propName;
       boost::shared_array<double> sptr;
@@ -308,22 +310,25 @@ namespace RDKit{
       double *res = new double[nAts*nAts];
       memset(static_cast<void *>(res),emptyVal,nAts*nAts*sizeof(double));
 
-      ROMol::ConstBondIterator bondIt;
-      for(bondIt=mol.beginBonds();bondIt!=mol.endBonds();bondIt++){
-	if(!useBO){
-	  int beg=(*bondIt)->getBeginAtomIdx();
-	  int end=(*bondIt)->getEndAtomIdx();
-	  res[beg*nAts+end] = 1;
-	  res[end*nAts+beg] = 1;
-	}
-	else {
-	  int begIdx=(*bondIt)->getBeginAtomIdx();
-	  int endIdx=(*bondIt)->getEndAtomIdx();
-	  Atom const *beg=mol.getAtomWithIdx(begIdx);
-	  Atom const *end=mol.getAtomWithIdx(endIdx);
-	  res[begIdx*nAts+endIdx] = (*bondIt)->getValenceContrib(beg);
-	  res[endIdx*nAts+begIdx] = (*bondIt)->getValenceContrib(end);
-	}
+      for(ROMol::ConstBondIterator bondIt=mol.beginBonds();
+          bondIt!=mol.endBonds();bondIt++){
+        if(bondsToUse && !(*bondsToUse)[(*bondIt)->getIdx()]){
+          continue;
+        }
+        if(!useBO){
+          int beg=(*bondIt)->getBeginAtomIdx();
+          int end=(*bondIt)->getEndAtomIdx();
+          res[beg*nAts+end] = 1;
+          res[end*nAts+beg] = 1;
+        }
+        else {
+          int begIdx=(*bondIt)->getBeginAtomIdx();
+          int endIdx=(*bondIt)->getEndAtomIdx();
+          Atom const *beg=mol.getAtomWithIdx(begIdx);
+          Atom const *end=mol.getAtomWithIdx(endIdx);
+          res[begIdx*nAts+endIdx] = (*bondIt)->getValenceContrib(beg);
+          res[endIdx*nAts+begIdx] = (*bondIt)->getValenceContrib(end);
+        }
       }
       sptr.reset(res);
       mol.setProp(propName,sptr,true);

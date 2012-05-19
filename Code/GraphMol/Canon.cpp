@@ -11,6 +11,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
 #include <RDBoost/Exceptions.h>
+#include <RDGeneral/hash/hash.hpp>
 
 namespace Canon {
   using namespace RDKit;
@@ -367,11 +368,15 @@ namespace Canon {
                              INT_VECT &cyclesAvailable,
                              MolStack &molStack,
                              INT_VECT &atomOrders,
-                             INT_VECT &bondVisitOrders){
+                             INT_VECT &bondVisitOrders,
+                             const boost::dynamic_bitset<> *bondsInPlay,
+                             const std::vector<std::string> *bondSymbols
+                             ){
     PRECONDITION(colors.size()>=mol.getNumAtoms(),"vector too small");
     PRECONDITION(ranks.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(!bondsInPlay || bondsInPlay->size()>=mol.getNumBonds(),"bondsInPlay too small");
+    PRECONDITION(!bondSymbols || bondSymbols->size()>=mol.getNumBonds(),"bondSymbols too small");
 
-    //ROMol *mol = molProps.getMol();
     int nAttached=0;
 
     Atom *atom = mol.getAtomWithIdx(atomIdx);
@@ -398,6 +403,8 @@ namespace Canon {
 
     while(bondsPair.first != bondsPair.second){
       BOND_SPTR theBond = mol[*(bondsPair.first)];
+      bondsPair.first++;
+      if(bondsInPlay && !(*bondsInPlay)[theBond->getIdx()]) continue;
       if(inBondIdx<0 || theBond->getIdx() != static_cast<unsigned int>(inBondIdx)){
         int otherIdx = theBond->getOtherAtomIdx(atomIdx);
         long rank=ranks[otherIdx];
@@ -423,15 +430,26 @@ namespace Canon {
         if( colors[otherIdx] == GREY_NODE ) {
           rank -= static_cast<int>(Bond::OTHER+1) *
             MAX_NATOMS*MAX_NATOMS;
-          rank += static_cast<int>(Bond::OTHER - theBond->getBondType()) *
-            MAX_NATOMS;
+          if(!bondSymbols){
+            rank += static_cast<int>(Bond::OTHER - theBond->getBondType()) *
+              MAX_NATOMS;
+          } else {
+            const std::string &symb=(*bondSymbols)[theBond->getIdx()];
+            boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
+            rank += (hsh%MAX_NATOMS) *  MAX_NATOMS;
+          }
         } else if( theBond->getOwningMol().getRingInfo()->numBondRings(theBond->getIdx()) ){
-          rank += static_cast<int>(Bond::OTHER - theBond->getBondType()) *
-            MAX_NATOMS*MAX_NATOMS;
+          if(!bondSymbols){
+            rank += static_cast<int>(Bond::OTHER - theBond->getBondType()) *
+              MAX_NATOMS*MAX_NATOMS;
+          } else {
+            const std::string &symb=(*bondSymbols)[theBond->getIdx()];
+            boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
+            rank += (hsh%MAX_NATOMS)*MAX_NATOMS*MAX_NATOMS;
+          }
         }
         possibles.push_back(PossibleType(rank,otherIdx,theBond.get()));
       }
-      bondsPair.first++;
     }
 
     // ---------------------
@@ -477,7 +495,7 @@ namespace Canon {
         subStack.push_back(MolStackElem(bond,atomIdx));
         canonicalDFSTraversal(mol,possibleIdx,bond->getIdx(),colors,
                               cycles,ranks,cyclesAvailable,subStack,
-                              atomOrders,bondVisitOrders);
+                              atomOrders,bondVisitOrders,bondsInPlay,bondSymbols);
         subStacks.push_back(subStack);
         nAttached += 1;
         break;
@@ -717,9 +735,13 @@ namespace Canon {
   void canonicalizeFragment(ROMol &mol,int atomIdx,
                             std::vector<AtomColors> &colors,
                             INT_VECT &ranks,
-                            MolStack &molStack){
+                            MolStack &molStack,
+                            const boost::dynamic_bitset<> *bondsInPlay,
+                            const std::vector<std::string> *bondSymbols){
     PRECONDITION(colors.size()>=mol.getNumAtoms(),"vector too small");
     PRECONDITION(ranks.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(!bondsInPlay || bondsInPlay->size()>=mol.getNumBonds(),"bondsInPlay too small");
+    PRECONDITION(!bondSymbols || bondSymbols->size()>=mol.getNumBonds(),"bondSymbols too small");
     int nAtoms=mol.getNumAtoms();
     
     INT_VECT atomVisitOrders(nAtoms,0);
@@ -752,7 +774,8 @@ namespace Canon {
     }
     Canon::canonicalDFSTraversal(mol,atomIdx,-1,colors,cycles,
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
-                                 bondVisitOrders);
+                                 bondVisitOrders,
+                                 bondsInPlay,bondSymbols);
 
     // FIX: here's where we would adjust non-chiral ring stereochemistry
     // There was some broken code here up through rev656.
