@@ -56,7 +56,7 @@ namespace RDKit {
 	  message += mode;
 	  throw message.c_str();
 	} else {
-          iter=d_paramMap.find(std::make_pair<std::string,std::string>("X","*"));
+          iter=d_paramMap.find(std::make_pair(std::string("X"),std::string("*")));
           if (iter != d_paramMap.end()) {
             return iter->second;
           } else {

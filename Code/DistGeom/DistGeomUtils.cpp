@@ -174,7 +174,7 @@ namespace DistGeom {
         bool includeIt=false;
         if(extraWeights){
           std::map< std::pair<int,int>,double>::const_iterator mapIt;
-          mapIt = extraWeights->find(std::make_pair<int,int>(i,j));
+          mapIt = extraWeights->find(std::make_pair(i,j));
           if(mapIt != extraWeights->end()){
             w = mapIt->second;
             includeIt=true;

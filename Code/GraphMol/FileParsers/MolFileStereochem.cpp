@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -417,7 +417,7 @@ namespace RDKit {
           }
           // prefer non-ring bonds;
           nbrScore += mol.getRingInfo()->numBondRings(bid);
-          nbrScores.push_back(std::make_pair<int,int>(nbrScore,bid));
+          nbrScores.push_back(std::make_pair(nbrScore,bid));
         }
         atomBonds.first++;
       }

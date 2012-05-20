@@ -129,7 +129,7 @@ namespace RDKit {
         int idx1=PyInt_AsLong(PySequence_GetItem(entry,0));
         int idx2=PyInt_AsLong(PySequence_GetItem(entry,1));
         double w=PyFloat_AsDouble(PySequence_GetItem(entry,2));
-        weightMap[std::make_pair<int,int>(idx1,idx2)]=w;
+        weightMap[std::make_pair(idx1,idx2)]=w;
       }
       DistGeom::VECT_CHIRALSET csets;
       ForceFields::ForceField *field = DistGeom::constructForceField(bm,posPtrs,csets,0.0, 0.0,
