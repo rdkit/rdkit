@@ -2831,7 +2831,6 @@ void testBug3526815(){
 void testFragmentSmiles(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Fragment Smiles" << std::endl;
-
   {
     RWMol *m;
     std::string smiles="OCCCC";
@@ -2906,7 +2905,6 @@ void testFragmentSmiles(){
     TEST_ASSERT(m);
     int as[]={1,2,3,4,5,6};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
-    std::cerr<<"\n\n\n\n\n\n-------------------------------"<<std::endl;
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
     std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="C1CCCCC1");
@@ -2919,7 +2917,6 @@ void testFragmentSmiles(){
     TEST_ASSERT(m);
     int as[]={1,2,3,4,5,6};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
-    std::cerr<<"\n\n\n\n\n\n-------------------------------"<<std::endl;
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
     std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CCCCCC");
@@ -2934,7 +2931,6 @@ void testFragmentSmiles(){
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     int bs[]={1,2,3,4,5};
     std::vector<int> bondsToUse(bs,bs+sizeof(bs)/sizeof(int));
-    std::cerr<<"\n\n\n\n\n\n-------------------------------"<<std::endl;
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,&bondsToUse);
     std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CCCCCC");
@@ -2949,7 +2945,6 @@ void testFragmentSmiles(){
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     int bs[]={1,2,3,4,5};
     std::vector<int> bondsToUse(bs,bs+sizeof(bs)/sizeof(int));
-    std::cerr<<"\n\n\n\n\n\n-------------------------------"<<std::endl;
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,&bondsToUse);
     std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CCCCCC");
@@ -3117,7 +3112,6 @@ void testFragmentSmiles(){
     TEST_ASSERT(csmiles=="CaC(bC)bC");
     delete m;
   }
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 

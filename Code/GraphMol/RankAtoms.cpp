@@ -23,6 +23,7 @@
 using namespace boost::lambda;
 
 //#define VERBOSE_CANON 1
+//#define VERYVERBOSE_CANON 1
 
 namespace RankAtoms{
   using namespace RDKit;
@@ -623,6 +624,7 @@ namespace RDKit{
         unsigned int numClasses = RankAtoms::countClasses(tranks);
         if(numClasses != nActiveAtoms){
           double *tadjMat = new double[nActiveAtoms*nActiveAtoms];
+          memset(static_cast<void *>(tadjMat),0,nActiveAtoms*nActiveAtoms*sizeof(double));
           if(!bondSymbols){
             double *adjMat = MolOps::getAdjacencyMatrix(mol,true,0,true,0,&bondsToUse);
             activeIdx=0;

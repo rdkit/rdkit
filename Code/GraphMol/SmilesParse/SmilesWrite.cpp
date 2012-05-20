@@ -19,6 +19,8 @@
 #include <map>
 #include <list>
 
+//#define VERBOSE_CANON 1
+
 namespace RDKit{
 
   namespace SmilesWrite{
