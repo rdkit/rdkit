@@ -309,13 +309,13 @@ def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
   >>> m = Chem.MolFromSmiles('CCCOCC')
   >>> m2=BreakBRICSBonds(m)
   >>> Chem.MolToSmiles(m2,True)
-  '[4*]CC.[4*]CCC.[3*]O[3*]'
+  '[4*]CC.[4*]CCC.O([3*])[3*]'
 
   a more complicated case:
   >>> m = Chem.MolFromSmiles('CCCOCCC(=O)c1ccccc1')
   >>> m2=BreakBRICSBonds(m)
   >>> Chem.MolToSmiles(m2,True)
-  '[3*]O[3*].[4*]CCC.[6*]C(=O)CC[4*].[16*]c1ccccc1'
+  '[4*]CCC.[3*]O[3*].[6*]C(=O)CC[4*].[16*]c1ccccc1'
 
 
   can also specify a limited set of bonds to work with:
@@ -408,14 +408,13 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
   >>> m = Chem.MolFromSmiles('CCCOCc1cc(c2ncccc2)ccc1')
   >>> res = list(BRICSDecompose(m,keepNonLeafNodes=True))
   >>> sorted(res)
-  ['CCCOCc1cc(-c2ncccc2)ccc1', '[14*]c1ncccc1', '[16*]c1cc(-c2ncccc2)ccc1', '[16*]c1cccc(COCCC)c1', '[16*]c1cccc([16*])c1', '[3*]OCCC', '[3*]OC[8*]', '[3*]OCc1cc(-c2ncccc2)ccc1', '[3*]OCc1cc([16*])ccc1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]', '[4*]Cc1cc(-c2ncccc2)ccc1', '[4*]Cc1cc([16*])ccc1', '[8*]COCCC']
-
+  ['CCCOCc1cc(-c2ncccc2)ccc1', '[14*]c1ncccc1', '[16*]c1cccc(-c2ncccc2)c1', '[16*]c1cccc(COCCC)c1', '[16*]c1cccc([16*])c1', '[3*]OCCC', '[3*]OC[8*]', '[3*]OCc1cc(-c2ncccc2)ccc1', '[3*]OCc1cc([16*])ccc1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]', '[4*]Cc1cc(-c2ncccc2)ccc1', '[4*]Cc1cc([16*])ccc1', '[8*]COCCC']
 
   or to only do a single pass of decomposition:
   >>> m = Chem.MolFromSmiles('CCCOCc1cc(c2ncccc2)ccc1')
   >>> res = list(BRICSDecompose(m,singlePass=True))
   >>> sorted(res)
-  ['CCCOCc1cc(-c2ncccc2)ccc1', '[14*]c1ncccc1', '[16*]c1cc(-c2ncccc2)ccc1', '[16*]c1cccc(COCCC)c1', '[3*]OCCC', '[3*]OCc1cc(-c2ncccc2)ccc1', '[4*]CCC', '[4*]Cc1cc(-c2ncccc2)ccc1', '[8*]COCCC']
+  ['CCCOCc1cc(-c2ncccc2)ccc1', '[14*]c1ncccc1', '[16*]c1cccc(-c2ncccc2)c1', '[16*]c1cccc(COCCC)c1', '[3*]OCCC', '[3*]OCc1cc(-c2ncccc2)ccc1', '[4*]CCC', '[4*]Cc1cc(-c2ncccc2)ccc1', '[8*]COCCC']
 
   setting a minimum size for the fragments:
   >>> m = Chem.MolFromSmiles('CCCOCC')

@@ -265,7 +265,7 @@ if __name__=='__main__':
       ks = res.GetLeaves().keys()
       self.failIf('[*]C([*])[*]' in ks)
       self.failUnless('[*]c1ccccc1' in ks)
-      self.failUnless('[*]C([*])Oc1ccccc1' in ks)
+      self.failUnless('c1ccc(OC([*])[*])cc1' in ks)
       
     def testSFNetIssue1804418(self):
       m = Chem.MolFromSmiles('C1CCCCN1CCCC')
