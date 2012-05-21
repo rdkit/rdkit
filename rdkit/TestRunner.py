@@ -90,7 +90,7 @@ def RunScript(script,doLongTests,verbose):
       # check failfast setting
       if os.environ.get('PYTHON_TEST_FAILFAST', '') == '1':
         # return immediately
-        sys.stderr.write("Exitng from %s\n" % str([exeName]+list(args)))
+        sys.stderr.write("Exiting from %s\n" % str([exeName]+list(args)))
         return failed, i + 1
   for i, (exeName,args,extras) in enumerate(longTests):
     res = RunTest(exeName,args,extras)
@@ -168,7 +168,7 @@ if __name__=='__main__':
         if len(failed):
           failures.append(script)
 
-  if len(extras)>1:
+  if totNumRun>1:
     sys.stderr.write('\n\n-*-*-*-*-*-*- Test Results Summary -*-*-*-*-*-*-\n')
     sys.stderr.write('\t\tTotal run time: %.2f seconds\n'%(timeAccum))
     if totNumFailed:
@@ -178,6 +178,7 @@ if __name__=='__main__':
         sys.stderr.write('\t\t%s\n'%failure)
     else:
       sys.stderr.write('  All %d tests (in %d modules) passed\n'%(totNumRun,len(extras)))
+  sys.exit(totNumFailed)
       
         
     
