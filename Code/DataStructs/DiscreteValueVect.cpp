@@ -133,8 +133,9 @@ namespace RDKit {
 
     boost::int32_t tVers=ci_DISCRETEVALUEVECTPICKLE_VERSION*-1;
     streamWrite(ss,tVers);
-    streamWrite(ss,d_type);
     boost::uint32_t tInt;
+    tInt=d_type;
+    streamWrite(ss,tInt);
     tInt=d_bitsPerVal;
     streamWrite(ss,tInt);
     tInt=d_mask;
@@ -160,9 +161,10 @@ namespace RDKit {
     } else {
       throw ValueErrorException("bad version in DiscreteValueVect pickle");
     }
-    
-    streamRead(ss,d_type);
     boost::uint32_t tInt;
+    streamRead(ss,tInt);
+    d_type=static_cast<DiscreteValueType>(tInt);
+
     
     streamRead(ss,tInt);
     d_bitsPerVal=tInt;
