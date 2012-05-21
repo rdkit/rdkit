@@ -85,8 +85,8 @@ def RunScript(script,doLongTests,verbose):
       import traceback
       traceback.print_exc()
       res = TEST_FAILED
-      failed.append((exeName,args,extras))
     if res != TEST_PASSED:
+      failed.append((exeName,args,extras))
       # check failfast setting
       if os.environ.get('PYTHON_TEST_FAILFAST', '') == '1':
         # return immediately
