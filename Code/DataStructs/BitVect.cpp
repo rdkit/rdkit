@@ -40,7 +40,7 @@ void BitVect::initFromText(const char *data,const unsigned int dataLen,
   
   // earlier versions of the code did not have the version number encoded, so
   //  we'll use that to distinguish version 0
-  ss.read((char *)&size,sizeof(size));
+  RDKit::streamRead(ss,size);
   if(size<0){
     version = -1*size;
     if (version == 16) {
@@ -52,12 +52,11 @@ void BitVect::initFromText(const char *data,const unsigned int dataLen,
     else {
       throw ValueErrorException("bad version in BitVect pickle");
     }
-
-    ss.read((char *)&size,sizeof(size));
+    RDKit::streamRead(ss,size);
   } else if( !allowOldFormat ) {
     throw ValueErrorException("invalid BitVect pickle");
   }
-  ss.read((char *)&nOn,sizeof(nOn));
+  RDKit::streamRead(ss,nOn);
   _initForSize(static_cast<int>(size));
 
   // if the either have older version or or version 16 with ints for on bits
@@ -65,13 +64,13 @@ void BitVect::initFromText(const char *data,const unsigned int dataLen,
       ( (format == 1) && (size >= std::numeric_limits<unsigned short>::max()) ) ) {
     boost::uint32_t tmp;
     for(unsigned int i=0; i<nOn; i++){
-      ss.read((char *)&tmp,sizeof(tmp));
+      RDKit::streamRead(ss,tmp);
       setBit(tmp);
     }
   } else if (format == 1) { // version 16 and on bits stored as short ints
     boost::uint16_t tmp;
     for(unsigned int i=0; i<nOn; i++){
-      ss.read((char *)&tmp,sizeof(tmp));
+      RDKit::streamRead(ss,tmp);
       setBit(tmp);
     }
   } else if (format == 2) { // run length encoded format

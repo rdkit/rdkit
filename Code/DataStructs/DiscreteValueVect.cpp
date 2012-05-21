@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -144,8 +144,15 @@ namespace RDKit {
     streamWrite(ss,tInt);
     tInt=d_numInts;
     streamWrite(ss,tInt);
+
+#if defined(BOOST_BIG_ENDIAN)
+    boost::uint32_t *td = new boost::uint32_t[d_numInts];
+    for(unsigned int i=0;i<d_numInts;++i) td[i]=EndianSwapBytes<HOST_ENDIAN_ORDER,LITTLE_ENDIAN_ORDER>(d_data.get()[i]);
+    ss.write((const char *)td,d_numInts*sizeof(tInt));
+    delete [] td;
+#else    
     ss.write((const char *)d_data.get(),d_numInts*sizeof(tInt));
-    
+#endif    
     std::string res(ss.str());
     return res;
   };
@@ -177,7 +184,15 @@ namespace RDKit {
     d_numInts=tInt;
     boost::uint32_t *data = new boost::uint32_t[d_numInts];
     ss.read((char *)data,d_numInts*sizeof(boost::uint32_t));
+
+#if defined(BOOST_BIG_ENDIAN)
+    boost::uint32_t *td = new boost::uint32_t[d_numInts];
+    for(unsigned int i=0;i<d_numInts;++i) td[i]=EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(data[i]);
+    d_data.reset(td);
+    delete [] data;
+#else    
     d_data.reset(data);
+#endif    
 
   };
 

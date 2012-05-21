@@ -1174,15 +1174,9 @@ int main(){
 
   ss.write((const char *)&v1,sizeof(v1));
   ss.write((const char *)&v2,sizeof(v2));
-#if 0
-  ss.close();
-  fstream ss2("blah.bin",ios_base::binary|ios_base::in);
-  ss2.read((char *)&v3,sizeof(v3));
-  ss2.read((char *)&v4,sizeof(v4));
-#endif
   ss.seekp(0,ios_base::beg);
-  ss.read((char *)&v3,sizeof(v3));
-  ss.read((char *)&v4,sizeof(v4));
+  RDKit::streamRead(ss,v3);
+  RDKit::streamRead(ss,v4);
   
   TXTMSG("v3",v3);
   TXTMSG("v4",v4);

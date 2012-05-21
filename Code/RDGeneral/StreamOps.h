@@ -16,10 +16,72 @@
 #include <sstream>
 #include <iostream>
 #include <boost/cstdint.hpp>
-
+#include <boost/detail/endian.hpp>
 
 namespace RDKit{
-    
+  // this code block for handling endian problems is from :
+  // http://stackoverflow.com/questions/105252/how-do-i-convert-between-big-endian-and-little-endian-values-in-c
+  enum EEndian
+    {
+      LITTLE_ENDIAN_ORDER,
+      BIG_ENDIAN_ORDER,
+#if defined(BOOST_LITTLE_ENDIAN)
+      HOST_ENDIAN_ORDER = LITTLE_ENDIAN_ORDER
+#elif defined(BOOST_BIG_ENDIAN)
+      HOST_ENDIAN_ORDER = BIG_ENDIAN_ORDER
+#else
+#error "Failed to determine the system endian value"
+#endif
+    };
+
+  // this function swap the bytes of values given it's size as a template
+  // parameter (could sizeof be used?).
+  template <class T, unsigned int size>
+  inline T SwapBytes(T value)
+  {
+    union
+    {
+      T value;
+      char bytes[size];
+    } in, out;
+
+    in.value = value;
+
+    for (unsigned int i = 0; i < size / 2; ++i)
+      {
+        out.bytes[i] = in.bytes[size - 1 - i];
+        out.bytes[size - 1 - i] = in.bytes[i];
+      }
+
+    return out.value;
+  }
+
+  // Here is the function you will use. Again there is two compile-time assertion
+  // that use the boost librarie. You could probably comment them out, but if you
+  // do be cautious not to use this function for anything else than integers
+  // types. This function need to be calles like this :
+  //
+  //     int x = someValue;
+  //     int i = EndianSwapBytes<HOST_ENDIAN_ORDER, BIG_ENDIAN_ORDER>(x);
+  //
+  template<EEndian from, EEndian to, class T>
+  inline T EndianSwapBytes(T value)
+  {
+    // A : La donnée à swapper à une taille de 2, 4 ou 8 octets
+    BOOST_STATIC_ASSERT(sizeof(T)==1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8);
+    if(sizeof(T)==1) return value;
+
+    // A : La donnée à swapper est d'un type arithmetic
+    //BOOST_STATIC_ASSERT(boost::is_arithmetic<T>::value);
+
+    // Si from et to sont du même type on ne swap pas.
+    if (from == to)
+      return value;
+
+    return SwapBytes<T, sizeof(T)>(value);
+  }
+  // --------------------------------------
+  
   //! Packs an integer and outputs it to a stream
   inline void appendPackedIntToStream(std::stringstream &ss, boost::uint32_t num) {
     int nbytes, bix;
@@ -27,7 +89,7 @@ namespace RDKit{
     char tc;
     
     CHECK_INVARIANT(num >= 0, "");
-    res = num;
+    res = EndianSwapBytes<HOST_ENDIAN_ORDER,LITTLE_ENDIAN_ORDER>(num);
     while (1) {
       if (res < (1<<7)) {
         val = (res<<1);
@@ -100,6 +162,7 @@ namespace RDKit{
       offset = (1<<7) + (1<<14) + (1<<21);
     }
     num = (val >> shift) + offset;
+    num = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(num);
     return num;
   }
 
@@ -147,18 +210,22 @@ namespace RDKit{
       offset = (1<<7) + (1<<14) + (1<<21);
     }
     num = (val >> shift) + offset;
+    num = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(num);
     return num;
   }
   
   //! does a binary write of an object to a stream
   template <typename T>
     void streamWrite(std::ostream &ss,const T &val){
-    ss.write((const char *)&val,sizeof(T));
+    T tval=EndianSwapBytes<HOST_ENDIAN_ORDER,LITTLE_ENDIAN_ORDER>(val);
+    ss.write((const char *)&tval,sizeof(T));
   }
   //! does a binary read of an object from a stream
   template <typename T>
     void streamRead(std::istream &ss,T &loc){
-    ss.read((char *)&loc,sizeof(T));
+    T tloc;
+    ss.read((char *)&tloc,sizeof(T));
+    loc = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(tloc);
   }
  
   //! grabs the next line from an instream and returns it.
