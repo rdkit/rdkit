@@ -507,6 +507,8 @@ namespace RDKit{
                                   bool allBondsExplicit){
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
+    PRECONDITION(rootedAtAtom<0||std::find(atomsToUse.begin(),atomsToUse.end(),rootedAtAtom)!=atomsToUse.end(),
+                 "rootedAtomAtom not found in atomsToUse");
     PRECONDITION(!atomSymbols || atomSymbols->size()>=mol.getNumAtoms(),
                  "bad atomSymbols vector");
     PRECONDITION(!bondSymbols || bondSymbols->size()>=mol.getNumBonds(),
@@ -621,7 +623,7 @@ namespace RDKit{
         nextAtomIdx=rootedAtAtom;
         rootedAtAtom=-1;
       } else {
-        int nextRank = nAtoms+1;
+        int nextRank = tmol.getNumAtoms()+1;
         BOOST_FOREACH(int i,atomsToUse){
           if( colors[i] == Canon::WHITE_NODE && ranks[i] < nextRank ){
             nextRank = ranks[i];
