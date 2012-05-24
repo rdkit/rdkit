@@ -14,7 +14,7 @@
 
 namespace RDKit{
   bool RingInfo::isAtomInRingOfSize(unsigned int idx,unsigned int size) const {
-    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(df_init,"RingInfo not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_atomMembers.size() ){
       return std::find(d_atomMembers[idx].begin(),d_atomMembers[idx].end(),
@@ -24,7 +24,7 @@ namespace RDKit{
     }
   }
   unsigned int RingInfo::minAtomRingSize(unsigned int idx) const {
-    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(df_init,"RingInfo not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_atomMembers.size() && d_atomMembers[idx].size() ){
       return *std::min_element(d_atomMembers[idx].begin(),d_atomMembers[idx].end());
@@ -33,7 +33,7 @@ namespace RDKit{
     }
   }
   unsigned int RingInfo::numAtomRings(unsigned int idx) const {
-    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(df_init,"RingInfo not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_atomMembers.size() ){
       return d_atomMembers[idx].size();
@@ -42,7 +42,7 @@ namespace RDKit{
     }
   }
   bool RingInfo::isBondInRingOfSize(unsigned int idx,unsigned int size) const {
-    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(df_init,"RingInfo not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_bondMembers.size() ){
       return std::find(d_bondMembers[idx].begin(),
@@ -54,7 +54,7 @@ namespace RDKit{
 
   }
   unsigned int RingInfo::minBondRingSize(unsigned int idx) const {
-    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(df_init,"RingInfo not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_bondMembers.size() && d_bondMembers[idx].size() ){
       return *std::min_element(d_bondMembers[idx].begin(),d_bondMembers[idx].end());
@@ -64,7 +64,7 @@ namespace RDKit{
 
   }
   unsigned int RingInfo::numBondRings(unsigned int idx) const {
-    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(df_init,"RingInfo not initialized");
     PRECONDITION(idx>=0,"bad index");
     if( idx < d_bondMembers.size() ){
       return d_bondMembers[idx].size();
@@ -74,13 +74,13 @@ namespace RDKit{
   }
 
   unsigned int RingInfo::numRings() const {
-    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(df_init,"RingInfo not initialized");
     PRECONDITION(d_atomRings.size()==d_bondRings.size(),"length mismatch");
     return d_atomRings.size();
   }
 
   unsigned int RingInfo::addRing(const INT_VECT &atomIndices,const INT_VECT &bondIndices){
-    PRECONDITION(df_init,"not initialized");
+    PRECONDITION(df_init,"RingInfo not initialized");
     PRECONDITION(atomIndices.size()==bondIndices.size(),"length mismatch");
     int sz = atomIndices.size();
     for(INT_VECT::const_iterator i=atomIndices.begin();
