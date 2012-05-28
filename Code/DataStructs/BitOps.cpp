@@ -21,18 +21,20 @@
 
 #include <boost/lexical_cast.hpp>
 
+using namespace RDKit;
+
 int getBitId(const char *&text,int format,int size,int curr){
   PRECONDITION(text,"no text");
   int res=-1;
   if( (format==0) || 
       ( (format == 1) && (size >= std::numeric_limits<unsigned short>::max()) ) ) {
     int tmp;
-    tmp = *(int *)text;
+    tmp = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)text);
     text += sizeof(tmp);
     res=tmp;
   } else if (format == 1) { // version 16 and on bits sotred as short ints
     unsigned short tmp;
-    tmp = *(unsigned short *)text;
+    tmp = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(unsigned short *)text);
     text += sizeof(tmp);
     res=tmp;
   } else if (format == 2) { // run length encoded format
@@ -54,7 +56,7 @@ bool AllProbeBitsMatch(const char *probe,const char *ref){
   int refFormat=0;
   int version=0;
 
-  int probeSize = *(int *)probe;
+  int probeSize = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)probe);
   probe+=sizeof(probeSize);
   if(probeSize<0){
     version = -1*probeSize;
@@ -67,11 +69,11 @@ bool AllProbeBitsMatch(const char *probe,const char *ref){
     else {
       throw("Unknown version type for the encode bit vect");
     }
-    probeSize = *(int *)probe;
+    probeSize = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)probe);
     probe+=sizeof(probeSize);
   }
 
-  int refSize = *(int *)ref;
+  int refSize = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)ref);
   ref+=sizeof(refSize);
   if(refSize<0){
     version = -1*refSize;
@@ -84,14 +86,14 @@ bool AllProbeBitsMatch(const char *probe,const char *ref){
     else {
       throw("Unknown version type for the encode bit vect");
     }
-    refSize = *(int *)ref;
+    refSize = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)ref);
     ref+=sizeof(refSize);
   }
 
 
-  int nProbeOn = *(int *)probe;
+  int nProbeOn = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)probe);
   probe+=sizeof(nProbeOn);
-  int nRefOn = *(int *)ref;
+  int nRefOn = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)ref);
   ref+=sizeof(nRefOn);
 
   int currProbeBit=0;
@@ -121,7 +123,7 @@ bool AllProbeBitsMatch(const T1 &probe,const std::string &pkl){
   const char *text=pkl.c_str();
   int format=0;
   int nOn=0,size,version=0;
-  size = *(int *)text;
+  size = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)text);
   text+=sizeof(size);
   if(size<0){
     version = -1*size;
@@ -134,10 +136,10 @@ bool AllProbeBitsMatch(const T1 &probe,const std::string &pkl){
     else {
       throw("Unknown version type for the encode bit vect");
     }
-    size = *(int *)text;
+    size = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)text);
     text+=sizeof(size);
   }
-  nOn = *(int *)text;
+  nOn = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(*(int *)text);
   text+=sizeof(nOn);
 
   int currBit=0;
