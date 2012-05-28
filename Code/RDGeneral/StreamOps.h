@@ -89,7 +89,7 @@ namespace RDKit{
     char tc;
     
     CHECK_INVARIANT(num >= 0, "");
-    res = EndianSwapBytes<HOST_ENDIAN_ORDER,LITTLE_ENDIAN_ORDER>(num);
+    res=num;
     while (1) {
       if (res < (1<<7)) {
         val = (res<<1);
@@ -115,9 +115,10 @@ namespace RDKit{
         break;
       }
       else {
-        CHECK_INVARIANT(0, "ERROR: Integer to big to pack\n");
+        CHECK_INVARIANT(0, "ERROR: Integer too big to pack\n");
       }
     }
+    val = EndianSwapBytes<HOST_ENDIAN_ORDER,LITTLE_ENDIAN_ORDER>(val);
     
     for (bix = 0; bix < nbytes; bix++) {
       tc = (char) (val & 255);
