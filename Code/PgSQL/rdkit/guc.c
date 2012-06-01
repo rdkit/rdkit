@@ -39,30 +39,8 @@ static double rdkit_tanimoto_smlar_limit = 0.5;
 static double rdkit_dice_smlar_limit = 0.5;
 static bool rdkit_guc_inited = false;
 
-#if PG_VERSION_NUM < 90000
-static bool
-TanimotoLimitAssign(double nlimit, bool doit, GucSource source)
-{
-  if (nlimit < 0 || nlimit > 1.0)
-    return false;
-
-  if (doit)
-    rdkit_tanimoto_smlar_limit = nlimit;
-
-  return true;
-}
-
-static bool
-DiceLimitAssign(double nlimit, bool doit, GucSource source)                                                           
-{                                                                                                                      
-  if (nlimit < 0 || nlimit > 1.0)
-    return false;
-
-  if (doit)
-    rdkit_dice_smlar_limit = nlimit;
-
-  return true;
-}                                        
+#if PG_VERSION_NUM < 80400
+#error The earliest supported postgresql version is 8.4
 #endif
 
 static void
@@ -71,62 +49,38 @@ initRDKitGUC()
   if (rdkit_guc_inited)
     return;
 
+  DefineCustomRealVariable(
+                           "rdkit.tanimoto_threshold",
+                           "Lower threshold of Tanimoto similarity",
+                           "Molecules with similarity lower than threshold are not similar by % operation",
+                           &rdkit_tanimoto_smlar_limit,
+                           0.5,
+                           0.0,
+                           1.0,
+                           PGC_USERSET,
+                           0,
+			   NULL,
 #if PG_VERSION_NUM >= 90000
-  DefineCustomRealVariable(
-                           "rdkit.tanimoto_threshold",
-                           "Lower threshold of Tanimoto similarity",
-                           "Molecules with similarity lower than threshold are not similar by % operation",
-                           &rdkit_tanimoto_smlar_limit,
-                           0.5,
-                           0.0,
-                           1.0,
-                           PGC_USERSET,
-                           0,
-			   NULL,
                            NULL,
-                           NULL
-                           );
-  DefineCustomRealVariable(
-                           "rdkit.dice_threshold",
-                           "Lower threshold of Dice similarity",
-                           "Molecules with similarity lower than threshold are not similar by # operation",
-                           &rdkit_dice_smlar_limit,
-                           0.5,
-                           0.0,
-                           1.0,
-                           PGC_USERSET,
-                           0,
-			   NULL,
-                           NULL,
-                           NULL
-                           );
-
-#else
-  DefineCustomRealVariable(
-                           "rdkit.tanimoto_threshold",
-                           "Lower threshold of Tanimoto similarity",
-                           "Molecules with similarity lower than threshold are not similar by % operation",
-                           &rdkit_tanimoto_smlar_limit,
-                           0.0,
-                           1.0,
-                           PGC_USERSET,
-                           TanimotoLimitAssign,
-                           NULL
-                           );
-
-  DefineCustomRealVariable(
-                           "rdkit.dice_threshold",
-                           "Lower threshold of Dice similarity",
-                           "Molecules with similarity lower than threshold are not similar by # operation",
-                           &rdkit_dice_smlar_limit,
-                           0.0,
-                           1.0,
-                           PGC_USERSET,
-                           DiceLimitAssign,
-                           NULL
-                           );
 #endif
-
+                           NULL
+                           );
+  DefineCustomRealVariable(
+                           "rdkit.dice_threshold",
+                           "Lower threshold of Dice similarity",
+                           "Molecules with similarity lower than threshold are not similar by # operation",
+                           &rdkit_dice_smlar_limit,
+                           0.5,
+                           0.0,
+                           1.0,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
   rdkit_guc_inited = true;
 }
 
