@@ -125,9 +125,13 @@ template<typename T> void Test(T arg){
   delete t5;
 
   std::string pkl=t1.toString();
+  BOOST_LOG(rdInfoLog) << " a" << std::endl;
   const char *pkl64=Base64Encode(pkl.c_str(),pkl.size());
+  BOOST_LOG(rdInfoLog) << " b" << std::endl;
   T t6(t1.getNumBits());
+  BOOST_LOG(rdInfoLog) << " c" << std::endl;
   t6.initFromText(pkl64,strlen(pkl64),true);
+  BOOST_LOG(rdInfoLog) << " d" << std::endl;
   delete [] pkl64;
   TEST_ASSERT(t6==t1);
 }
@@ -149,10 +153,14 @@ template<typename T> void TaniTest(T &arg){
   int idx=0;
   for(int i=0;i<4;i++){
     T v1(256);
+    BOOST_LOG(rdInfoLog) << " a "<<i << std::endl;
     FromDaylightString(v1,fps[i]);
+    BOOST_LOG(rdInfoLog) << " b"<<i << std::endl;
     for(int j=i;j<4;j++){
       T v2(256);
+      BOOST_LOG(rdInfoLog) << "     c " << j << std::endl;
       FromDaylightString(v2,fps[j]);
+      BOOST_LOG(rdInfoLog) << "     d " << j << std::endl;
       double tani=TanimotoSimilarity(v1,v2);
       TEST_ASSERT(feq(tani,dists[idx]));
       tani = TverskySimilarity(v1,v2,1.,1.);
@@ -1184,12 +1192,16 @@ int main(){
   BOOST_LOG(rdInfoLog) << " SPARSE -----------------------------------" << std::endl;
   SparseBitVect sparseFoo(10);
   Test(sparseFoo);
+  BOOST_LOG(rdInfoLog) << " 1" << std::endl;
   TaniTest(sparseFoo);
+  BOOST_LOG(rdInfoLog) << " 2" << std::endl;
   ProbeTest(sparseFoo);
   BOOST_LOG(rdInfoLog) << " Explicit ----------------------------------" << std::endl;
   ExplicitBitVect explicitFoo(10);
   Test(explicitFoo);
+  BOOST_LOG(rdInfoLog) << " 1" << std::endl;
   TaniTest(explicitFoo);
+  BOOST_LOG(rdInfoLog) << " 2" << std::endl;
   BOOST_LOG(rdInfoLog) << " Done" << std::endl;
   
   BOOST_LOG(rdInfoLog) << " Test DiscreteValue Vectors 1 ----------------------------" << endl;

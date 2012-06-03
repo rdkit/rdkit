@@ -39,29 +39,9 @@ static double rdkit_tanimoto_smlar_limit = 0.5;
 static double rdkit_dice_smlar_limit = 0.5;
 static bool rdkit_guc_inited = false;
 
-static bool
-TanimotoLimitAssign(double nlimit, bool doit, GucSource source)
-{
-  if (nlimit < 0 || nlimit > 1.0)
-    return false;
-
-  if (doit)
-    rdkit_tanimoto_smlar_limit = nlimit;
-
-  return true;
-}
-
-static bool
-DiceLimitAssign(double nlimit, bool doit, GucSource source)                                                           
-{                                                                                                                      
-  if (nlimit < 0 || nlimit > 1.0)
-    return false;
-
-  if (doit)
-    rdkit_dice_smlar_limit = nlimit;
-
-  return true;
-}                                        
+#if PG_VERSION_NUM < 80400
+#error The earliest supported postgresql version is 8.4
+#endif
 
 static void
 initRDKitGUC()
@@ -79,15 +59,12 @@ initRDKitGUC()
                            1.0,
                            PGC_USERSET,
                            0,
-#if PG_VERSION_NUM >= 90100
-                           (GucRealCheckHook)TanimotoLimitAssign,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
                            NULL,
-#else
-                           TanimotoLimitAssign,
 #endif
                            NULL
                            );
-
   DefineCustomRealVariable(
                            "rdkit.dice_threshold",
                            "Lower threshold of Dice similarity",
@@ -98,15 +75,12 @@ initRDKitGUC()
                            1.0,
                            PGC_USERSET,
                            0,
-#if PG_VERSION_NUM >= 90100
-                           (GucRealCheckHook)DiceLimitAssign,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
                            NULL,
-#else
-                           DiceLimitAssign,
 #endif
                            NULL
                            );
-
   rdkit_guc_inited = true;
 }
 

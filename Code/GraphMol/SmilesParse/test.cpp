@@ -3112,6 +3112,18 @@ void testFragmentSmiles(){
     TEST_ASSERT(csmiles=="CaC(bC)bC");
     delete m;
   }
+  {
+    RWMol *m;
+    std::string smiles="OC1CC1CC";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    int as[]={0,4};
+    std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
+    std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,0,false,false,-1,false);
+    std::cerr<<"csmiles: "<<csmiles<<std::endl;
+    TEST_ASSERT(csmiles=="O.C");
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 

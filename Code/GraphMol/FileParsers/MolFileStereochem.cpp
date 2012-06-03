@@ -353,6 +353,12 @@ namespace RDKit {
   
   
   INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
+    // we need ring information; make sure findSSSR has been called before
+    // if not call now
+    if ( !mol.getRingInfo()->isInitialized() ) {
+      MolOps::findSSSR(mol);
+    }
+
     // start by ranking atoms by the number of chiral neighbors they have:
     static int noNbrs=100;
     INT_VECT nChiralNbrs(mol.getNumAtoms(),noNbrs);
