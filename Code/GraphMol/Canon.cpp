@@ -369,26 +369,27 @@ namespace Canon {
                              MolStack &molStack,
                              INT_VECT &atomOrders,
                              INT_VECT &bondVisitOrders,
+                             VECT_INT_VECT &atomRingClosures,
+                             std::vector<INT_LIST> &atomTraversalBondOrder,
                              const boost::dynamic_bitset<> *bondsInPlay,
                              const std::vector<std::string> *bondSymbols
                              ){
     PRECONDITION(colors.size()>=mol.getNumAtoms(),"vector too small");
     PRECONDITION(ranks.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(atomOrders.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(bondVisitOrders.size()>=mol.getNumBonds(),"vector too small");
+    PRECONDITION(atomRingClosures.size()>=mol.getNumAtoms(),"vector too small");
+    PRECONDITION(atomTraversalBondOrder.size()>=mol.getNumAtoms(),"vector too small");
     PRECONDITION(!bondsInPlay || bondsInPlay->size()>=mol.getNumBonds(),"bondsInPlay too small");
     PRECONDITION(!bondSymbols || bondSymbols->size()>=mol.getNumBonds(),"bondSymbols too small");
 
     int nAttached=0;
 
     Atom *atom = mol.getAtomWithIdx(atomIdx);
-    // the atom will keep track of the order in which it sees bonds
-    // using its _TraversalBondIndexOrder list:
     INT_LIST directTravList,cycleEndList;
-    INT_VECT ringClosures(0);
-    atom->setProp("_CanonRingClosureBondIndices",ringClosures,true);
 
     molStack.push_back(MolStackElem(atom));
     atomOrders[atom->getIdx()] = molStack.size();
-    //atom->setProp("_CanonTravOrder",molStack.size(),1);
     colors[atomIdx] = GREY_NODE;
 
     // ---------------------
@@ -477,7 +478,6 @@ namespace Canon {
       int possibleIdx = possiblesIt->get<1>();
       Bond *bond = possiblesIt->get<2>();
       Atom *otherAtom=mol.getAtomWithIdx(possibleIdx);
-      INT_LIST otherTravList;
       unsigned int lowestRingIdx;
       INT_VECT::const_iterator cAIt;
       switch(colors[possibleIdx]){
@@ -495,7 +495,8 @@ namespace Canon {
         subStack.push_back(MolStackElem(bond,atomIdx));
         canonicalDFSTraversal(mol,possibleIdx,bond->getIdx(),colors,
                               cycles,ranks,cyclesAvailable,subStack,
-                              atomOrders,bondVisitOrders,bondsInPlay,bondSymbols);
+                              atomOrders,bondVisitOrders,atomRingClosures,atomTraversalBondOrder,
+                              bondsInPlay,bondSymbols);
         subStacks.push_back(subStack);
         nAttached += 1;
         break;
@@ -521,17 +522,8 @@ namespace Canon {
 
         // we need to add this bond (which closes the ring) to the traversal list for the
         // other atom as well:
-        if(otherAtom->hasProp("_TraversalBondIndexOrder")){
-          otherAtom->getProp("_TraversalBondIndexOrder",otherTravList);
-        } else {
-          otherTravList.clear();
-        }
-        otherTravList.push_back(bond->getIdx());
-        otherAtom->setProp("_TraversalBondIndexOrder",otherTravList,true);
-
-        otherAtom->getProp("_CanonRingClosureBondIndices",ringClosures);
-        ringClosures.push_back(bond->getIdx());
-        otherAtom->setProp("_CanonRingClosureBondIndices",ringClosures,true);
+        atomTraversalBondOrder[otherAtom->getIdx()].push_back(bond->getIdx());
+        atomRingClosures[otherAtom->getIdx()].push_back(bond->getIdx());
 
         break;
       default:
@@ -543,7 +535,8 @@ namespace Canon {
     }
     
 
-    atom->getProp("_CanonRingClosureBondIndices",ringClosures);
+    INT_VECT &ringClosures=atomRingClosures[atom->getIdx()];
+    //atom->getProp("_CanonRingClosureBondIndices",ringClosures);
     
     CHECK_INVARIANT(ringClosures.size()==cycles[atomIdx].size(),
                     "ring closure mismatch");
@@ -589,7 +582,6 @@ namespace Canon {
             break;
           case MOL_STACK_BOND:
             bondVisitOrders[ciMS->obj.bond->getIdx()] = molStack.size();
-            //ciMS->obj.bond->setProp("_CanonTravOrder",molStack.size(),1);
             break;
           default:
             break;
@@ -614,21 +606,25 @@ namespace Canon {
 
 
     // ... ring closures that start here:
-    if(atom->hasProp("_TraversalBondIndexOrder")){
-      INT_LIST indirectTravList;
-      atom->getProp("_TraversalBondIndexOrder",indirectTravList);
-      for(INT_LIST_CI ilci=indirectTravList.begin();ilci!=indirectTravList.end();++ilci){
-        //std::cerr<<" ("<<*ilci<<")";
-        travList.push_back(*ilci);
-      }
+    // if(atom->hasProp("_TraversalBondIndexOrder")){
+    //   INT_LIST indirectTravList;
+    //   atom->getProp("_TraversalBondIndexOrder",indirectTravList);
+    //   for(INT_LIST_CI ilci=indirectTravList.begin();ilci!=indirectTravList.end();++ilci){
+    //     //std::cerr<<" ("<<*ilci<<")";
+    //     travList.push_back(*ilci);
+    //   }
+    // }
+    BOOST_FOREACH(int ili,atomTraversalBondOrder[atom->getIdx()]){
+      travList.push_back(ili);
     }
+
     // and finally the bonds we directly traverse:
     for(INT_LIST_CI ilci=directTravList.begin();ilci!=directTravList.end();++ilci){
       //std::cerr<<" "<<*ilci;
       travList.push_back(*ilci);
     }
     //std::cerr<<"\n";
-    atom->setProp("_TraversalBondIndexOrder",travList);
+    atomTraversalBondOrder[atom->getIdx()]=travList;
     colors[atomIdx] = BLACK_NODE;
   }
 
@@ -769,13 +765,20 @@ namespace Canon {
       MolOps::findSSSR(mol);
     }
     mol.getAtomWithIdx(atomIdx)->setProp("_TraversalStartPoint",true);
-    if(mol.getAtomWithIdx(atomIdx)->hasProp("_TraversalBondIndexOrder")){
-      mol.getAtomWithIdx(atomIdx)->clearProp("_TraversalBondIndexOrder");
-    }
+
+    VECT_INT_VECT atomRingClosures(mol.getNumAtoms());
+    std::vector<INT_LIST> atomTraversalBondOrder(mol.getNumAtoms());
     Canon::canonicalDFSTraversal(mol,atomIdx,-1,colors,cycles,
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
-                                 bondVisitOrders,
+                                 bondVisitOrders,atomRingClosures,atomTraversalBondOrder,
                                  bondsInPlay,bondSymbols);
+    // collect some information about traversal order on chiral atoms that may be
+    // used later in SMILES generation:
+    for(ROMol::AtomIterator atomIt=mol.beginAtoms();atomIt!=mol.endAtoms();++atomIt){
+      if((*atomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED){
+        (*atomIt)->setProp("_TraversalBondIndexOrder",atomTraversalBondOrder[(*atomIt)->getIdx()]);
+      }
+    }
 
     // FIX: here's where we would adjust non-chiral ring stereochemistry
     // There was some broken code here up through rev656.
