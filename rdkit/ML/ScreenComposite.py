@@ -426,7 +426,6 @@ def ShowVoteResults(indices,data,composite,nResultCodes,threshold,verbose=1,
     print '\tResults Table:'
     vTab=voteTab.transpose()
     colCounts = numpy.sum(vTab,0)
-    print colCounts
     rowCounts = numpy.sum(vTab,1)
     message('')
     for i in range(nResultCodes):
