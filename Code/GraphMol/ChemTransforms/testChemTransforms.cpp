@@ -494,7 +494,7 @@ void testReplaceCore()
   TEST_ASSERT(mol2);
   TEST_ASSERT(mol2->getNumAtoms()==6);
   smi = MolToSmiles(*mol2,true);
-  TEST_ASSERT(smi=="[1*][C@@H]1OCCC1");
+  TEST_ASSERT(smi=="[1*][C@H]1CCCO1");
 
   delete mol1;
   smi = "ClC1CC(F)C1";

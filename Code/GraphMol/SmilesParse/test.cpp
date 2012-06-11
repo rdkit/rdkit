@@ -885,7 +885,7 @@ void testIssue143(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   refSmi = MolToSmiles(*mol,true);
-  TEST_ASSERT(refSmi=="CCC(C=O)(C)C");
+  TEST_ASSERT(refSmi=="CCC(C)(C)C=O");
   delete mol;
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1803,7 +1803,7 @@ void testBug1842174(){
 
   smi = MolToSmiles(*mol,true,false,0);
   BOOST_LOG(rdInfoLog) << smi << std::endl;
-  TEST_ASSERT(smi=="C(=C(/Cl)Br)\\C=C\\F");
+  TEST_ASSERT(smi=="C(/C=C/F)=C(\\Cl)Br");
   delete mol;
 
   smi ="O=NC1=NOC(=N\\O)/C1=N\\O";
@@ -1823,7 +1823,7 @@ void testBug1842174(){
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol,true,false,-1);
   BOOST_LOG(rdInfoLog) << smi << std::endl;
-  TEST_ASSERT(smi=="O/N=C1\\C(=N\\O)COC1");
+  TEST_ASSERT(smi=="O/N=C1/COC\\C1=N/O");
 
   // this time the algorithm is forced to set 
   // the directionality on the ring closure bond:
@@ -2264,9 +2264,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOZ);
 
     smiles = MolToSmiles(*m,true);
-    //std::cerr<<smiles<<std::endl;
-    //TEST_ASSERT(smiles=="C1/C=C\\COCCCC1");
-    TEST_ASSERT(smiles=="C1CCCCOC/C=C\\1");
+    TEST_ASSERT(smiles=="C1=C\\COCCCCC/1");
     delete m;
   }
   {
@@ -2277,9 +2275,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    //std::cerr<<smiles<<std::endl;
-    //TEST_ASSERT(smiles=="C1/C=C/COCCCC1");
-    TEST_ASSERT(smiles=="C1CCCCOC/C=C/1");
+    TEST_ASSERT(smiles=="C1=C/COCCCCC/1");
 
     delete m;
   }
@@ -2294,9 +2290,7 @@ void testBug3139534(){
     TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
 
     smiles = MolToSmiles(*m,true);
-    //std::cerr<<smiles<<std::endl;
-    //TEST_ASSERT(smiles=="C1=C/C=C/CCCCCC/1");
-    TEST_ASSERT(smiles=="C1CCCC/C=C/C=C/C1");
+    TEST_ASSERT(smiles=="C1=C/CCCCCC/C=C/1");
     delete m;
   }
 
@@ -2307,9 +2301,7 @@ void testBug3139534(){
     TEST_ASSERT(m);
 
     smiles = MolToSmiles(*m,true);
-    //std::cerr<<smiles<<std::endl;
-    //TEST_ASSERT(smiles=="C1=C/CCCCCC\\C=C/1");
-    TEST_ASSERT(smiles=="C1/C=C/C=C\\CCCCC1");
+    TEST_ASSERT(smiles=="C1=C/CCCCCC\\C=C/1");
     delete m;
   }
   
@@ -2323,7 +2315,7 @@ void testBug3139534(){
     smiles = MolToSmiles(*m,true);
     //std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1=C/C=C/COCCC/1");
-    TEST_ASSERT(smiles=="C1/C=C/C=C/COCC1");
+    TEST_ASSERT(smiles=="C1=C/CCCOC/C=C/1");
 
     delete m;
   }
@@ -2839,7 +2831,6 @@ void testFragmentSmiles(){
     int as[]={0,1,2};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CCO");
     delete m;
   }
@@ -2852,7 +2843,6 @@ void testFragmentSmiles(){
     int as[]={0,1,2,3};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CCCO");
     delete m;
   }
@@ -2865,7 +2855,6 @@ void testFragmentSmiles(){
     int as[]={1,2,3};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="C1CC1");
     delete m;
   }
@@ -2880,7 +2869,6 @@ void testFragmentSmiles(){
     int bs[]={1,2,6};
     std::vector<int> bondsToUse(bs,bs+sizeof(bs)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,&bondsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="C1CC1");
     delete m;
   }
@@ -2894,7 +2882,6 @@ void testFragmentSmiles(){
     int bs[]={1,2};
     std::vector<int> bondsToUse(bs,bs+sizeof(bs)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,&bondsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CCC");
     delete m;
   }
@@ -2906,7 +2893,6 @@ void testFragmentSmiles(){
     int as[]={1,2,3,4,5,6};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="C1CCCCC1");
     delete m;
   }
@@ -2918,7 +2904,6 @@ void testFragmentSmiles(){
     int as[]={1,2,3,4,5,6};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CCCCCC");
     delete m;
   }
@@ -2932,7 +2917,7 @@ void testFragmentSmiles(){
     int bs[]={1,2,3,4,5};
     std::vector<int> bondsToUse(bs,bs+sizeof(bs)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,&bondsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
+
     TEST_ASSERT(csmiles=="CCCCCC");
     delete m;
   }
@@ -2946,7 +2931,6 @@ void testFragmentSmiles(){
     int bs[]={1,2,3,4,5};
     std::vector<int> bondsToUse(bs,bs+sizeof(bs)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,&bondsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CCCCCC");
     delete m;
   }
@@ -2958,7 +2942,6 @@ void testFragmentSmiles(){
     int as[]={1,2,3,4,5,6};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="c1ccccc1");
     delete m;
   }
@@ -2972,7 +2955,6 @@ void testFragmentSmiles(){
     int bs[]={1,2,3,4,5};
     std::vector<int> bondsToUse(bs,bs+sizeof(bs)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,&bondsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="cccccc");
     delete m;
   }
@@ -2986,7 +2968,6 @@ void testFragmentSmiles(){
     std::string labels[5]={"[A]","[B]","[B]","",""};
     std::vector<std::string> atomLabels(labels,labels+5);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,&atomLabels);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="[B][B][A]");
     delete m;
   }
@@ -3000,7 +2981,6 @@ void testFragmentSmiles(){
     std::string labels[5]={"","","[B]","[B]","[A]"};
     std::vector<std::string> atomLabels(labels,labels+5);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,&atomLabels);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="[B][B][A]");
     delete m;
   }
@@ -3014,7 +2994,6 @@ void testFragmentSmiles(){
     std::string labels[5]={"","","[B]","[A]","[B]"};
     std::vector<std::string> atomLabels(labels,labels+5);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,&atomLabels);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="[B][A][B]");
     delete m;
   }
@@ -3026,7 +3005,6 @@ void testFragmentSmiles(){
     int as[]={0,1,2,3};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,0);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CC(O)=O");
     delete m;
   }
@@ -3040,7 +3018,6 @@ void testFragmentSmiles(){
     std::string labels[5]={"-","=","-","",""};
     std::vector<std::string> bondLabels(labels,labels+5);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="C-C(-O)=O");
     delete m;
   }
@@ -3054,7 +3031,6 @@ void testFragmentSmiles(){
     std::string labels[5]={"a","b","a","",""};
     std::vector<std::string> bondLabels(labels,labels+5);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CaC(aO)bO");
     delete m;
   }
@@ -3066,7 +3042,6 @@ void testFragmentSmiles(){
     int as[]={0,1,2,4};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CC(C)=C");
     delete m;
   }
@@ -3080,7 +3055,6 @@ void testFragmentSmiles(){
     std::string labels[6]={"a","","b","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CaC(aC)bC");
     delete m;
   }
@@ -3094,7 +3068,6 @@ void testFragmentSmiles(){
     std::string labels[6]={"b","","a","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CaC(aC)bC");
     delete m;
   }
@@ -3108,7 +3081,6 @@ void testFragmentSmiles(){
     std::string labels[6]={"b","","b","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="CaC(bC)bC");
     delete m;
   }
@@ -3120,7 +3092,6 @@ void testFragmentSmiles(){
     int as[]={0,4};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,0,false,false,-1,false);
-    std::cerr<<"csmiles: "<<csmiles<<std::endl;
     TEST_ASSERT(csmiles=="O.C");
     delete m;
   }

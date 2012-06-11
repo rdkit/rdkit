@@ -1410,12 +1410,13 @@ void testIssue183()
   TEST_ASSERT(m2->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
   TEST_ASSERT(m2->getBondWithIdx(10)->getStereo()==Bond::STEREOZ);
 
+  m2->debugMol(std::cerr);  
   refSmi = MolToSmiles(*m2,1);
-  //BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
+  BOOST_LOG(rdInfoLog) << "ref: " << refSmi << std::endl;
   m = SmilesToMol(refSmi);
   TEST_ASSERT(m);
   smi = MolToSmiles(*m,1);
-  //BOOST_LOG(rdInfoLog) << "smi: " << smi << std::endl;
+  BOOST_LOG(rdInfoLog) << "smi: " << smi << std::endl;
   TEST_ASSERT(refSmi==smi);
 
   int nEs=0,nZs=0,nDbl=0;
@@ -2925,7 +2926,7 @@ void testSFNetIssue2196817() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     smi=MolToSmiles(*m);
-    TEST_ASSERT(smi=="c1c[*][nH][*]1");
+    TEST_ASSERT(smi=="[*]1cc[*][nH]1");
     delete m;
     smi="c1***c1";
     m = SmilesToMol(smi);
@@ -3066,7 +3067,7 @@ void testSFNetIssue2316677() {
     RWMol *m = MolFileToMol(pathName+"Issue2316677.mol");
     TEST_ASSERT(m);
     std::string smi=MolToSmiles(*m,true);
-    TEST_ASSERT(smi=="Cc1ccc(S(/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)(=O)=O)cc1");
+    TEST_ASSERT(smi=="Cc1ccc(S(=O)(=O)/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)cc1");
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -3545,6 +3546,120 @@ void testSFNetIssue3525076(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testBasicCanon(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing canonicalization basics" << std::endl;
+  {
+    std::string smi="CC1(C)C2CCC1(C)C(=O)/C2=C\\C(N=N/c1ccccc1)=N/Nc1ccccc1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(csmi1);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m);
+    //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+
+
+  {
+    std::string smi="COc1ccc(OC)c2[nH]c(=O)cc(C)c21";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(csmi1);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m);
+    //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+  {
+    std::string smi="COc1cc(C)c(C(=O)[O-])cc1OC";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(csmi1);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m);
+    //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+  {
+    std::string smi="COc1ccc(C(=O)OC(c2ccc(OC)cc2)C(C)O)cc1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(csmi1);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m);
+    //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+  {
+    std::string smi="CC(C)C1CCC(C)=CC1=NNC(N)=O";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(csmi1);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m);
+    //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+  {
+    std::string smi="COCCNC(=O)c1ccccc1N1C(=O)C2(C)c3[nH]c4ccccc4c3CCN2C1=O";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(csmi1);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m);
+    //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+  {
+    std::string smi="Cc1c(Br)cc(Br)cc1C(F)(F)F";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m);
+    delete m;
+    m = SmilesToMol(csmi1);
+    TEST_ASSERT(m);
+    //std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m);
+    //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 int main(){
@@ -3599,9 +3714,10 @@ int main(){
   testFastFindRings();
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
-#endif
   testSFNetIssue3349243();
-  
+#endif
+  testBasicCanon();
+
   return 0;
 }
 

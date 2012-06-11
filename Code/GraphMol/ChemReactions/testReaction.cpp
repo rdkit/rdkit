@@ -393,7 +393,7 @@ void test4MultipleProducts(){
   TEST_ASSERT(prods[0][1]->getNumAtoms()==2);
   smi=MolToSmiles(*prods[0][0]);
   std::cerr<<"smi: "<<smi<<std::endl;
-  TEST_ASSERT(smi=="C1NC(=O)CNC1=O");
+  TEST_ASSERT(smi=="O=C1CNC(=O)CN1");
   TEST_ASSERT(MolToSmiles(*prods[0][1])=="OO");
 
   reacts.clear();
@@ -417,7 +417,7 @@ void test4MultipleProducts(){
   std::cerr<<"2: "<<MolToSmiles(*prods[0][1])<<std::endl;
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
   TEST_ASSERT(prods[0][1]->getNumAtoms()==4);
-  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
   TEST_ASSERT(MolToSmiles(*prods[0][1])=="COOC");
 
 
@@ -531,7 +531,7 @@ void test6DaylightParser(){
   TEST_ASSERT(prods[0].size()==2);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
   TEST_ASSERT(prods[0][1]->getNumAtoms()==2);
-  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
   TEST_ASSERT(MolToSmiles(*prods[0][1])=="OO");
 
 
@@ -623,7 +623,7 @@ void test7MDLParser(){
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
   std::cerr<<MolToSmiles(*prods[0][0])<<std::endl;
-  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
   
   delete rxn;
   reacts.clear();
@@ -649,7 +649,7 @@ void test7MDLParser(){
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
-  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
   
   delete rxn;
   reacts.clear();
@@ -1825,7 +1825,8 @@ void test18PropertyTransfer(){
   prod = prods[0][0];
   TEST_ASSERT(prod->getNumAtoms()==7);
   smi=MolToSmiles(*prod);
-  TEST_ASSERT(smi=="Oc1ncccc1");
+  std::cerr<<smi<<std::endl;
+  TEST_ASSERT(smi=="Oc1ccccn1");
 
   reacts.clear();
   smi = "c1ccc[nH]1";
@@ -1837,7 +1838,8 @@ void test18PropertyTransfer(){
   prod = prods[0][0];
   TEST_ASSERT(prod->getNumAtoms()==6);
   smi=MolToSmiles(*prod);
-  TEST_ASSERT(smi=="Oc1[nH]ccc1");
+  std::cerr<<smi<<std::endl;
+  TEST_ASSERT(smi=="Oc1ccc[nH]1");
   
   delete rxn;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2191,7 +2193,7 @@ void test23Pickling(){
     TEST_ASSERT(prods.size()==1);
     TEST_ASSERT(prods[0].size()==1);
     TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
-    TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+    TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
   }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -2456,7 +2458,7 @@ void test26V3000MDLParser(){
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
-  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
   
   delete rxn;
   reacts.clear();
@@ -2482,7 +2484,7 @@ void test26V3000MDLParser(){
   TEST_ASSERT(prods.size()==1);
   TEST_ASSERT(prods[0].size()==1);
   TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
-  TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+  TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
   
   delete rxn;
   reacts.clear();
@@ -2664,7 +2666,7 @@ void test28RxnDepictor(){
     TEST_ASSERT(prods.size()==1);
     TEST_ASSERT(prods[0].size()==1);
     TEST_ASSERT(prods[0][0]->getNumAtoms()==8);
-    TEST_ASSERT(MolToSmiles(*prods[0][0])=="C1NC(=O)CNC1=O");
+    TEST_ASSERT(MolToSmiles(*prods[0][0])=="O=C1CNC(=O)CN1");
   }
 
 
