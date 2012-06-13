@@ -657,6 +657,8 @@ namespace Canon {
 #if 0
     std::copy(bondDirCounts.begin(),bondDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
     std::cerr<<"\n";
+    std::copy(atomDirCounts.begin(),atomDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
+    std::cerr<<"\n";
     std::cerr<<"cBD: bond: "<<refBond->getIdx()<<" atom: "<<fromAtom->getIdx()<<": ";
 #endif
     ROMol::OEDGE_ITER beg,end;
@@ -666,15 +668,15 @@ namespace Canon {
       Bond *oBond=mol[*beg].get();
       if( oBond != refBond && canHaveDirection(oBond) ){
         nbrPossible=true;
-        if(bondDirCounts[oBond->getIdx()] <= bondDirCounts[refBond->getIdx()] &&
+        if(bondDirCounts[oBond->getIdx()] >= bondDirCounts[refBond->getIdx()] &&
            atomDirCounts[oBond->getBeginAtomIdx()]!=1 && atomDirCounts[oBond->getEndAtomIdx()]!=1){
           adjusted=true;
           bondDirCounts[oBond->getIdx()] -= 1;
-          atomDirCounts[oBond->getBeginAtomIdx()]-=1;
-          atomDirCounts[oBond->getEndAtomIdx()]-=1;
           if(!bondDirCounts[oBond->getIdx()]){
             // no one is setting the direction here:
             oBond->setBondDir(Bond::NONE);
+            atomDirCounts[oBond->getBeginAtomIdx()]-=1;
+            atomDirCounts[oBond->getEndAtomIdx()]-=1;
             //std::cerr<<"ob:"<<oBond->getIdx()<<" ";
           }
         }
@@ -684,13 +686,13 @@ namespace Canon {
     if(nbrPossible && !adjusted &&
        atomDirCounts[refBond->getBeginAtomIdx()]!=1 && atomDirCounts[refBond->getEndAtomIdx()]!=1){
       // we found a neighbor that could have directionality set,
-      // but it had a higher bondDirCount that us, so we must
+      // but it had a lower bondDirCount that us, so we must
       // need to be adjusted:
       bondDirCounts[refBond->getIdx()] -= 1;
-      atomDirCounts[refBond->getBeginAtomIdx()]-=1;
-      atomDirCounts[refBond->getEndAtomIdx()]-=1;
       if(!bondDirCounts[refBond->getIdx()]){
         refBond->setBondDir(Bond::NONE);
+        atomDirCounts[refBond->getBeginAtomIdx()]-=1;
+        atomDirCounts[refBond->getEndAtomIdx()]-=1;
         //std::cerr<<"rb:"<<refBond->getIdx()<<" ";
       }
     }
@@ -835,7 +837,13 @@ namespace Canon {
     }
     //std::cerr<<"<-----"<<std::endl;
 
+    //std::cerr<<"----------------------------------------->"<<std::endl;
+    //mol.debugMol(std::cerr);
     Canon::removeRedundantBondDirSpecs(mol,molStack,bondDirCounts,atomDirCounts,bondVisitOrders);
+    //std::cerr<<"----------------------------------------->"<<std::endl;
+    //mol.debugMol(std::cerr);
+    //std::cerr<<"----------------------------------------->"<<std::endl;
+
 
   }
 };
