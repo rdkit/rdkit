@@ -12,7 +12,7 @@ from rdkit import RDLogger
 logger=RDLogger.logger()
 
 def EuclideanDist(pi,pj):
-  dv = array(pi)- array(pj)
+  dv = numpy.array(pi)- numpy.array(pj)
   return numpy.sqrt(dv*dv)
   
   
