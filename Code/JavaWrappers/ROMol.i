@@ -100,6 +100,15 @@
 /* For the time being, assume all properties will be strings */
 %template(setProp)  RDKit::ROMol::setProp<std::string>;
 
+
+%newobject removeHs;
+%newobject addHs;
+%newobject mergeQueryHs;
+%newobject replaceCore;
+%newobject replaceSidechains;
+%newobject deleteSubstructs;
+
+
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
     std::string res;
