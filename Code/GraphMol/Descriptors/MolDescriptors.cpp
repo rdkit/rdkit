@@ -38,7 +38,7 @@ namespace RDKit{
       return res;
     }
 
-    static std::string _exactmwVersion="1.0.0";
+    static std::string _exactmwVersion="1.1.0";
     double calcExactMW(const ROMol &mol,bool onlyHeavy){
       double res=0.0;
       int nHsToCount=0;
@@ -48,7 +48,7 @@ namespace RDKit{
 	int atNum=(*atomIt)->getAtomicNum();
 	if(atNum!=1 || !onlyHeavy){
           if(atNum==1) --nHsToCount;
-          if(fabs((*atomIt)->getMass()-table->getAtomicWeight(atNum))<.001){
+          if(!(*atomIt)->getIsotope()){
             res += table->getMostCommonIsotopeMass(atNum);
           } else {
             res += (*atomIt)->getMass();
