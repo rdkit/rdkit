@@ -3556,19 +3556,73 @@ void testBasicCanon(){
   // the canonicalization rewrite.
 #if 1
   {
+    std::string smi="FC1C(=C/Cl)\\C1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(2,3)->getStereo()==Bond::STEREOZ);
+
+    std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m,true);
+    std::cerr<<csmi1<<std::endl;
+    RWMol *m2 = SmilesToMol(csmi1);
+    TEST_ASSERT(m2);
+
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*m2,mv));
+    std::map<int,int> mmap;
+    for(MatchVectType::const_iterator mvit=mv.begin();mvit!=mv.end();++mvit){
+      mmap[mvit->second]=mvit->first;
+    }
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[2],mmap[3])->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[2],mmap[3])->getStereo()==Bond::STEREOZ);
+
+    
+    //std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m2,true);
+    std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+    delete m2;
+  }
+
+
+
+  {
     std::string smi="CC1(C)C2CCC1(C)C(=O)/C2=C\\C(N=N/c1ccccc1)=N/Nc1ccccc1";
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(10,11)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(10,11)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondBetweenAtoms(12,21)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(12,21)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(13,14)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(13,14)->getStereo()==Bond::STEREONONE);
     //std::cerr<<"-------------\n";
-    std::string csmi1=MolToSmiles(*m);
-    delete m;
-    m = SmilesToMol(csmi1);
-    TEST_ASSERT(m);
+    std::string csmi1=MolToSmiles(*m,true);
+
+    RWMol *m2 = SmilesToMol(csmi1);
+    TEST_ASSERT(m2);
+
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*m2,mv));
+    std::map<int,int> mmap;
+    for(MatchVectType::const_iterator mvit=mv.begin();mvit!=mv.end();++mvit){
+      mmap[mvit->second]=mvit->first;
+    }
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[10],mmap[11])->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[10],mmap[11])->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[12],mmap[21])->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[12],mmap[21])->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[13],mmap[14])->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[13],mmap[14])->getStereo()==Bond::STEREONONE);
+    
     //std::cerr<<"-------------\n";
-    std::string csmi2=MolToSmiles(*m);
-    //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    std::string csmi2=MolToSmiles(*m2,true);
+    std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1==csmi2);
     delete m;
+    delete m2;
   }
 
 
@@ -3577,12 +3631,12 @@ void testBasicCanon(){
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi1=MolToSmiles(*m);
+    std::string csmi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(csmi1);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi2=MolToSmiles(*m);
+    std::string csmi2=MolToSmiles(*m,true);
     //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1==csmi2);
     delete m;
@@ -3592,12 +3646,12 @@ void testBasicCanon(){
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi1=MolToSmiles(*m);
+    std::string csmi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(csmi1);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi2=MolToSmiles(*m);
+    std::string csmi2=MolToSmiles(*m,true);
     //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1==csmi2);
     delete m;
@@ -3607,12 +3661,12 @@ void testBasicCanon(){
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi1=MolToSmiles(*m);
+    std::string csmi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(csmi1);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi2=MolToSmiles(*m);
+    std::string csmi2=MolToSmiles(*m,true);
     //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1==csmi2);
     delete m;
@@ -3622,12 +3676,12 @@ void testBasicCanon(){
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi1=MolToSmiles(*m);
+    std::string csmi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(csmi1);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi2=MolToSmiles(*m);
+    std::string csmi2=MolToSmiles(*m,true);
     //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1==csmi2);
     delete m;
@@ -3637,12 +3691,12 @@ void testBasicCanon(){
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi1=MolToSmiles(*m);
+    std::string csmi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(csmi1);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi2=MolToSmiles(*m);
+    std::string csmi2=MolToSmiles(*m,true);
     //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1==csmi2);
     delete m;
@@ -3652,17 +3706,16 @@ void testBasicCanon(){
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi1=MolToSmiles(*m);
+    std::string csmi1=MolToSmiles(*m,true);
     delete m;
     m = SmilesToMol(csmi1);
     TEST_ASSERT(m);
     //std::cerr<<"-------------\n";
-    std::string csmi2=MolToSmiles(*m);
+    std::string csmi2=MolToSmiles(*m,true);
     //std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
     TEST_ASSERT(csmi1==csmi2);
     delete m;
   }
-#endif
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
@@ -3673,6 +3726,7 @@ void testBasicCanon(){
     TEST_ASSERT(m->getBondBetweenAtoms(7,8)->getBondType()==Bond::DOUBLE);
     TEST_ASSERT(m->getBondBetweenAtoms(7,8)->getStereo()==Bond::STEREOZ);
     std::string smi=MolToSmiles(*m,true);
+    std::cerr<<"SMILES: "<<smi<<std::endl;
     RWMol *m2 = SmilesToMol(smi);
     MatchVectType mv;
     TEST_ASSERT(SubstructMatch(*m,*m2,mv));
@@ -3707,6 +3761,72 @@ void testBasicCanon(){
     TEST_ASSERT(m2->getBondBetweenAtoms(mmap[4],mmap[5])->getStereo()==Bond::STEREOZ);
     TEST_ASSERT(m2->getBondBetweenAtoms(mmap[14],mmap[15])->getStereo()==Bond::STEREOZ);
   }
+#endif
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"zinc3850436piece.mol");
+    TEST_ASSERT(m);
+    std::string csmi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(csmi1);
+    std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m,true);
+    std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"zinc13403961piece.mol");
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(1,2)->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,7)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(3,7)->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m->getBondBetweenAtoms(4,5)->getStereo()==Bond::STEREOE);
+    std::string csmi1=MolToSmiles(*m,true);
+    std::cerr<<"SMI1: "<<csmi1<<std::endl;
+    RWMol *m2 = SmilesToMol(csmi1);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*m,*m2,mv));
+    std::map<int,int> mmap;
+    for(MatchVectType::const_iterator mvit=mv.begin();mvit!=mv.end();++mvit){
+      mmap[mvit->second]=mvit->first;
+    }
+
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[1],mmap[2])->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[1],mmap[2])->getStereo()==Bond::STEREOZ);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[3],mmap[7])->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[3],mmap[7])->getStereo()==Bond::STEREOE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[4],mmap[5])->getBondType()==Bond::DOUBLE);
+    TEST_ASSERT(m2->getBondBetweenAtoms(mmap[4],mmap[5])->getStereo()==Bond::STEREOE);
+
+    std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m2,true);
+    std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+  {
+    std::string smi="Cc1ccc(S(=O)(=O)/N=c2sc(=N\\C(C)(C)C)/c\\2=N/C(C)(C)C)cc1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    std::cerr<<"-------------\n";
+    std::string csmi1=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(csmi1);
+    TEST_ASSERT(m);
+    std::cerr<<"-------------\n";
+    std::string csmi2=MolToSmiles(*m,true);
+    std::cerr<<csmi1<<"\n"<<csmi2<<"\n-------------\n"<<std::endl;
+    TEST_ASSERT(csmi1==csmi2);
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -3716,7 +3836,7 @@ int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();

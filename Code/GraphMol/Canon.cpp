@@ -304,6 +304,7 @@ namespace Canon {
       atomDirCounts[atom1->getIdx()]+=1;
 
     }
+
     // -----------------------------------
     //
     // Check if there are other bonds from atoms 1 and 2 that need
@@ -367,6 +368,38 @@ namespace Canon {
           //std::cerr<<"  switcheroo 2"<<std::endl;
           switchBondDir(firstFromAtom2);
         }
+      }
+    }
+
+    // something to watch out for here. For this molecule and traversal order:
+    //   0 1 2 3  4 5 6  7 8  <- atom numbers
+    //   C/C=C/C(/N=C/C)=C/C
+    //        ^  ^
+    //        |--|-- these two bonds must match in direction or the SMILES
+    //               is inconsistent (according to Daylight, Marvin does ok with it)
+    // That means that the direction of the bond from atom 3->4 needs to be set
+    // when the bond from 2->3 is set.
+    // 
+    // I believe we only need to worry about this for the bonds from atom2.
+    const Atom *atom3=firstFromAtom2->getOtherAtom(atom2);
+    if(atom3->getDegree()==3){
+      Bond *otherAtom3Bond=NULL;
+      bool dblBondPresent=false;
+      atomBonds = mol.getAtomBonds(atom3);
+      while( atomBonds.first != atomBonds.second ){
+        Bond *tbond=mol[*atomBonds.first].get();
+        if(tbond->getBondType()==Bond::DOUBLE){
+          dblBondPresent=true;
+        } else if((tbond->getBondType()==Bond::SINGLE) && (tbond!=firstFromAtom2)) {
+          otherAtom3Bond=tbond;
+        }
+        atomBonds.first++;
+      }
+      if(dblBondPresent && otherAtom3Bond){
+        std::cerr<<"set!"<<std::endl;
+        otherAtom3Bond->setBondDir(firstFromAtom2->getBondDir());
+        bondDirCounts[otherAtom3Bond->getIdx()]+=1;
+        atomDirCounts[atom3->getIdx()]+=1;
       }
     }
   }
@@ -644,7 +677,7 @@ namespace Canon {
     return (bondType==Bond::SINGLE || bondType==Bond::AROMATIC);
   }
 
-  void clearBondDirs(ROMol &mol,Bond *refBond,Atom *fromAtom,
+  void clearBondDirs(ROMol &mol,Bond *refBond,const Atom *fromAtom,
                      INT_VECT &bondDirCounts,
                      INT_VECT &atomDirCounts,
                      const INT_VECT &bondVisitOrders){
@@ -654,7 +687,7 @@ namespace Canon {
     PRECONDITION(fromAtom,"bad atom");
     PRECONDITION(&fromAtom->getOwningMol()==&mol,"bad bond");
 
-#if 0
+#if 1
     std::copy(bondDirCounts.begin(),bondDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
     std::cerr<<"\n";
     std::copy(atomDirCounts.begin(),atomDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
@@ -666,9 +699,11 @@ namespace Canon {
     bool nbrPossible=false,adjusted=false;
     while(beg!=end){
       Bond *oBond=mol[*beg].get();
+      std::cerr<<"  >>"<<oBond->getIdx()<<" "<<canHaveDirection(oBond)<<" "<<bondDirCounts[oBond->getIdx()]<<"-"<<bondDirCounts[refBond->getIdx()]<<" "<<atomDirCounts[oBond->getBeginAtomIdx()]<<"-"<<atomDirCounts[oBond->getEndAtomIdx()]<<std::endl;
       if( oBond != refBond && canHaveDirection(oBond) ){
         nbrPossible=true;
-        if(bondDirCounts[oBond->getIdx()] >= bondDirCounts[refBond->getIdx()] &&
+        if((bondDirCounts[oBond->getIdx()] >= bondDirCounts[refBond->getIdx()])
+           &&
            atomDirCounts[oBond->getBeginAtomIdx()]!=1 && atomDirCounts[oBond->getEndAtomIdx()]!=1){
           adjusted=true;
           bondDirCounts[oBond->getIdx()] -= 1;
@@ -677,7 +712,7 @@ namespace Canon {
             oBond->setBondDir(Bond::NONE);
             atomDirCounts[oBond->getBeginAtomIdx()]-=1;
             atomDirCounts[oBond->getEndAtomIdx()]-=1;
-            //std::cerr<<"ob:"<<oBond->getIdx()<<" ";
+            std::cerr<<"ob:"<<oBond->getIdx()<<" ";
           }
         }
       }
@@ -686,17 +721,17 @@ namespace Canon {
     if(nbrPossible && !adjusted &&
        atomDirCounts[refBond->getBeginAtomIdx()]!=1 && atomDirCounts[refBond->getEndAtomIdx()]!=1){
       // we found a neighbor that could have directionality set,
-      // but it had a lower bondDirCount that us, so we must
+      // but it had a lower bondDirCount than us, so we must
       // need to be adjusted:
       bondDirCounts[refBond->getIdx()] -= 1;
       if(!bondDirCounts[refBond->getIdx()]){
         refBond->setBondDir(Bond::NONE);
         atomDirCounts[refBond->getBeginAtomIdx()]-=1;
         atomDirCounts[refBond->getEndAtomIdx()]-=1;
-        //std::cerr<<"rb:"<<refBond->getIdx()<<" ";
+        std::cerr<<"rb:"<<refBond->getIdx()<<" ";
       }
     }
-    //std::cerr<<std::endl;
+    std::cerr<<std::endl;
   }
 
   void removeRedundantBondDirSpecs(ROMol &mol,MolStack &molStack,INT_VECT &bondDirCounts,INT_VECT &atomDirCounts,
@@ -713,16 +748,18 @@ namespace Canon {
         msI!=molStack.end(); msI++) {
       if( msI->type == MOL_STACK_BOND ){
         Bond *tBond = msI->obj.bond;
+        const Atom *canonBeginAtom=mol.getAtomWithIdx(msI->number);
+        const Atom *canonEndAtom=mol.getAtomWithIdx(tBond->getOtherAtomIdx(msI->number));
         if(canHaveDirection(tBond) &&
            bondDirCounts[tBond->getIdx()]>=1 ) {
           // start by finding the double bond that sets tBond's direction:
-          Atom *dblBondAtom=NULL;
+          const Atom *dblBondAtom=NULL;
           ROMol::OEDGE_ITER beg,end;
-          boost::tie(beg,end) = mol.getAtomBonds(tBond->getBeginAtom());
+          boost::tie(beg,end) = mol.getAtomBonds(canonBeginAtom);
           while(beg!=end){
             if( mol[*beg].get() != tBond && mol[*beg]->getBondType()==Bond::DOUBLE &&
                 mol[*beg]->getStereo() > Bond::STEREOANY ){
-              dblBondAtom = tBond->getBeginAtom();
+              dblBondAtom = canonBeginAtom;//tBond->getOtherAtom(canonBeginAtom);
               break;
             }
             beg++;
@@ -731,11 +768,11 @@ namespace Canon {
             clearBondDirs(mol,tBond,dblBondAtom,bondDirCounts,atomDirCounts,bondVisitOrders);
           }
           dblBondAtom = NULL;
-          boost::tie(beg,end) = mol.getAtomBonds(tBond->getEndAtom());
+          boost::tie(beg,end) = mol.getAtomBonds(canonEndAtom);
           while(beg!=end){
             if( mol[*beg].get() != tBond && mol[*beg]->getBondType()==Bond::DOUBLE &&
                 mol[*beg]->getStereo() > Bond::STEREOANY ){
-              dblBondAtom = tBond->getEndAtom();
+              dblBondAtom = canonEndAtom;//tBond->getOtherAtom(canonEndAtom);
               break;
             }
             beg++;
@@ -821,7 +858,7 @@ namespace Canon {
     // traverse the stack and clean up double bonds
     for(MolStack::iterator msI=molStack.begin();
         msI!=molStack.end(); ++msI){
-#if 0
+#if 1
       if(msI->type == MOL_STACK_ATOM) std::cerr<<" atom: "<<msI->obj.atom->getIdx()<<std::endl;
       else if(msI->type == MOL_STACK_BOND) std::cerr<<" bond: "<<msI->obj.bond->getIdx()<<" "<<msI->number<<" "<<msI->obj.bond->getBeginAtomIdx()<<"-"<<msI->obj.bond->getEndAtomIdx()<<" order: "<<msI->obj.bond->getBondType()<<std::endl;
       else if(msI->type == MOL_STACK_RING) std::cerr<<" ring: "<<msI->number<<std::endl;
@@ -835,14 +872,14 @@ namespace Canon {
                                       bondDirCounts,atomDirCounts);
       }
     }
-    //std::cerr<<"<-----"<<std::endl;
+    std::cerr<<"<-----"<<std::endl;
 
-    //std::cerr<<"----------------------------------------->"<<std::endl;
-    //mol.debugMol(std::cerr);
+    std::cerr<<"----------------------------------------->"<<std::endl;
+    mol.debugMol(std::cerr);
     Canon::removeRedundantBondDirSpecs(mol,molStack,bondDirCounts,atomDirCounts,bondVisitOrders);
-    //std::cerr<<"----------------------------------------->"<<std::endl;
-    //mol.debugMol(std::cerr);
-    //std::cerr<<"----------------------------------------->"<<std::endl;
+    std::cerr<<"----------------------------------------->"<<std::endl;
+    mol.debugMol(std::cerr);
+    std::cerr<<"----------------------------------------->"<<std::endl;
 
 
   }

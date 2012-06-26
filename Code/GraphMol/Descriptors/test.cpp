@@ -241,7 +241,31 @@ void test3a(){
   TEST_ASSERT(feq(mw,17.037,.001));
   mw = calcExactMW(*mol,true);
   TEST_ASSERT(feq(mw,12.000,.001));
+  delete mol;
 
+  mol = SmilesToMol("Cl");
+  TEST_ASSERT(mol);
+  mw = calcAMW(*mol);
+  TEST_ASSERT(feq(mw,35.453+1.008,.001));
+  mw = calcExactMW(*mol);
+  TEST_ASSERT(feq(mw,34.9688+1.0078,.001));
+  delete mol;
+
+  mol = SmilesToMol("[35ClH]");
+  TEST_ASSERT(mol);
+  mw = calcAMW(*mol);
+  TEST_ASSERT(feq(mw,34.9688+1.008,.001));
+  mw = calcExactMW(*mol);
+  TEST_ASSERT(feq(mw,34.9688+1.0078,.001));
+  delete mol;
+
+  mol = SmilesToMol("[36ClH]");
+  TEST_ASSERT(mol);
+  mw = calcAMW(*mol);
+  TEST_ASSERT(feq(mw,35.9683+1.008,.001));
+  mw = calcExactMW(*mol);
+  TEST_ASSERT(feq(mw,35.9683+1.0078,.001));
+  delete mol;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

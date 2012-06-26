@@ -1243,6 +1243,18 @@ void testIssue159(){
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
 
+  delete mol;
+  smi = "C(/C=C/C)";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  delete mol;
+  smi = "C(/C)=C/C";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+
+  
   // ---------
   // These next few molecules test propagation of bond flips:
   // ---------
@@ -1303,6 +1315,11 @@ void testIssue175(){
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
 
+  smi = "C/1=C/F.F1";
+  mol = SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
+  
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1386,8 +1403,6 @@ void testIssue184(){
   delete mol;
   mol = SmilesToMol(refSmi);
   TEST_ASSERT(mol);
-  smi = MolToSmiles(*mol,1);
-  TEST_ASSERT(refSmi==smi);
 
   for(RWMol::BondIterator bondIt=mol->beginBonds();
       bondIt!=mol->endBonds();
@@ -1396,6 +1411,10 @@ void testIssue184(){
       TEST_ASSERT((*bondIt)->getStereo()==Bond::STEREOZ);
     }
   }
+
+  smi = MolToSmiles(*mol,1);
+  std::cerr<<"  "<<refSmi<<"\n"<<"  "<<smi<<std::endl;
+  TEST_ASSERT(refSmi==smi);
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
