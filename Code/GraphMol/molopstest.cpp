@@ -3070,7 +3070,7 @@ void testSFNetIssue2316677() {
     TEST_ASSERT(m);
     std::string smi=MolToSmiles(*m,true);
     std::cerr<<"smi: "<<smi<<std::endl;
-    TEST_ASSERT(smi=="Cc1ccc(S(=O)(=O)/N=C2CC(=N\\C(C)(C)C)/C\\2=N\\C(C)(C)C)cc1");
+    TEST_ASSERT(smi=="Cc1ccc(S(=O)(=O)/N=C2\\CC(=N\\C(C)(C)C)/C2=N\\C(C)(C)C)cc1");
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
