@@ -424,9 +424,9 @@ def ShowVoteResults(indices,data,composite,nResultCodes,threshold,verbose=1,
   if verbose:
     print
     print '\tResults Table:'
-    vTab=numpy.transpose(voteTab)
-    colCounts = sum(vTab)
-    rowCounts = sum(vTab,1)
+    vTab=voteTab.transpose()
+    colCounts = numpy.sum(vTab,0)
+    rowCounts = numpy.sum(vTab,1)
     message('')
     for i in range(nResultCodes):
       if rowCounts[i]==0: rowCounts[i]=1
@@ -934,8 +934,8 @@ def ScreenToHtml(nGood,nBad,nRej,avgGood,avgBad,avgSkip,voteTable,imgDir='.',
       outTxt.append('<center><img src="%s"></center>'%(imgFileName))
 
   nPoss = len(voteTable)
-  pureCounts = sum(voteTable,1)
-  accCounts = sum(voteTable,0)
+  pureCounts = numpy.sum(voteTable,1)
+  accCounts = numpy.sum(voteTable,0)
   pureVect = numpy.zeros(nPoss,numpy.float)
   accVect = numpy.zeros(nPoss,numpy.float)
   for i in range(nPoss):
@@ -1533,8 +1533,8 @@ if __name__ == '__main__':
           message('Results Table:')
           voteTab = numpy.transpose(voteTab)/nModels
           nResultCodes = len(voteTab)
-          colCounts = sum(voteTab)
-          rowCounts = sum(voteTab,1)
+          colCounts = numpy.sum(voteTab,0)
+          rowCounts = numpy.sum(voteTab,1)
           print 
           for i in range(nResultCodes):
             if rowCounts[i]==0: rowCounts[i]=1
@@ -1588,8 +1588,8 @@ if __name__ == '__main__':
         message('Results Table:')
         voteTab = numpy.transpose(vT)
         nResultCodes = len(vT)
-        colCounts = sum(voteTab)
-        rowCounts = sum(voteTab,1)
+        colCounts = numpy.sum(voteTab,0)
+        rowCounts = numpy.sum(voteTab,1)
         message('')
         for i in range(nResultCodes):
           if rowCounts[i]==0: rowCounts[i]=1
