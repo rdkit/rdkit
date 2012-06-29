@@ -2363,7 +2363,7 @@ void testBug3139534(){
     TEST_ASSERT(smiles=="C1=C/NCCCCC/1");
 
     smiles = MolToSmiles(*m,true,false,0,false);
-    //std::cerr<<smiles<<std::endl;
+    std::cerr<<smiles<<std::endl;
     TEST_ASSERT(smiles=="C1CCCCN/C=C/1");
 
     delete m;
@@ -2379,8 +2379,8 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(14)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
-    //std::cerr<<smiles<<std::endl;
-    TEST_ASSERT(smiles=="CCC[N+]1=C/c2ccccc2OC(=O)/C=C\\1O");
+    std::cerr<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="CCC/[N+]1=C/c2ccccc2OC(=O)\\C=C/1O");
 
     delete m;
   }

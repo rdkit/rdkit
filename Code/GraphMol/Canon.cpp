@@ -257,16 +257,19 @@ namespace Canon {
       }
       //std::cerr<<" 1 set bond 2: "<<firstFromAtom2->getIdx()<<" "<<atom2Dir<<std::endl;
       firstFromAtom2->setBondDir(atom2Dir);
-      if(firstFromAtom2->hasProp("_TraversalRingClosureBond")){
-        // another nice one: we're traversing and come to a ring
-        // closure bond that has directionality set. This is going to
-        // have its direction swapped on writing so we need to
-        // pre-emptively swap it here.
-        // example situation for this is a non-canonical traversal of
-        //   C1CCCCN/C=C/1
-        // starting at atom 0, we hit it on encountering the final bond.
-        switchBondDir(firstFromAtom2);
-      }
+
+      // this block of code is no longer needed
+      // if(firstFromAtom2->hasProp("_TraversalRingClosureBond")){
+      //   // another nice one: we're traversing and come to a ring
+      //   // closure bond that has directionality set. This is going to
+      //   // have its direction swapped on writing so we need to
+      //   // pre-emptively swap it here.
+      //   // example situation for this is a non-canonical traversal of
+      //   //   C1CCCCN/C=C/1
+      //   // starting at atom 0, we hit it on encountering the final bond.
+      //   switchBondDir(firstFromAtom2);
+      // }
+
       bondDirCounts[firstFromAtom2->getIdx()] += 1;
       atomDirCounts[atom2->getIdx()]+=1;
     } else {
@@ -278,7 +281,6 @@ namespace Canon {
         atom1Dir = (atom2Dir==Bond::ENDUPRIGHT) ? Bond::ENDDOWNRIGHT : Bond::ENDUPRIGHT;
       }
       CHECK_INVARIANT(atom1Dir != Bond::NONE,"stereo not set");
-
       // If we're not looking at the bonds used to determine the
       // stereochemistry, we need to flip the setting on the other bond:
       const INT_VECT &stereoAtoms=dblBond->getStereoAtoms();
@@ -298,6 +300,7 @@ namespace Canon {
       }
         
       firstFromAtom1->setBondDir(atom1Dir);
+      switchBondDir(firstFromAtom1);
       bondDirCounts[firstFromAtom1->getIdx()] += 1;
       atomDirCounts[atom1->getIdx()]+=1;
 
@@ -368,8 +371,10 @@ namespace Canon {
       if( bondVisitOrders[atom1ControllingBond->getIdx()] >
           atomVisitOrders[atom1->getIdx()]){
         if(bondDirCounts[atom1ControllingBond->getIdx()]==1){
-          //std::cerr<<"  switcheroo 1"<<std::endl;
-          switchBondDir(atom1ControllingBond);
+          if(!atom1ControllingBond->hasProp("_TraversalRingClosureBond") ){
+            //std::cerr<<"  switcheroo 1"<<std::endl;
+            switchBondDir(atom1ControllingBond);
+          }
         } else if(bondDirCounts[firstFromAtom2->getIdx()]==1){
           // the controlling bond at atom1 is being set by someone else, flip the direction
           // on the atom2 bond instead:
