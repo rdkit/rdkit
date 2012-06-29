@@ -1247,7 +1247,7 @@ void testIssue159(){
   smi = "C(/C=C/C)";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOE);
   delete mol;
   smi = "C(/C)=C/C";
   mol = SmilesToMol(smi);
@@ -1842,7 +1842,7 @@ void testBug1842174(){
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol,true,false,-1);
   BOOST_LOG(rdInfoLog) << smi << std::endl;
-  TEST_ASSERT(smi=="O/N=C1/COC\\C1=N/O");
+  TEST_ASSERT(smi=="O/N=C1/COC/C1=N\\O");
 
   // this time the algorithm is forced to set 
   // the directionality on the ring closure bond:
@@ -1852,7 +1852,7 @@ void testBug1842174(){
   TEST_ASSERT(mol);
   smi = MolToSmiles(*mol,true,false,-1);
   BOOST_LOG(rdInfoLog) << smi << std::endl;
-  TEST_ASSERT(smi=="O/N=C1\\COC/[N+]1=N/O");
+  TEST_ASSERT(smi=="O/N=C1\\COC\\[N+]1=N\\O");
   // ^^^^^^^^^^^^^^^^^^^^^^
   // end of the pair
   // ----------------------
@@ -2283,6 +2283,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOZ);
 
     smiles = MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles<< std::endl;
     TEST_ASSERT(smiles=="C1=C\\COCCCCC/1");
     delete m;
   }
@@ -2294,6 +2295,7 @@ void testBug3139534(){
     TEST_ASSERT(m->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
 
     smiles = MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles<< std::endl;
     TEST_ASSERT(smiles=="C1=C/COCCCCC/1");
 
     delete m;
@@ -2304,11 +2306,12 @@ void testBug3139534(){
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     smiles = MolToSmiles(*m,true,false,-1,false);
-    //std::cerr<<smiles<<std::endl;
+    std::cerr<<smiles<<std::endl;
     //TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
     TEST_ASSERT(smiles=="C1CC/C=C/C=C/CCC1");
 
     smiles = MolToSmiles(*m,true);
+    BOOST_LOG(rdInfoLog) << "smiles: " << smiles<< std::endl;
     TEST_ASSERT(smiles=="C1=C/CCCCCC/C=C/1");
     delete m;
   }
@@ -3117,6 +3120,35 @@ void testFragmentSmiles(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testBug3528556(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 3528556: canonical smiles failure in cycle" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="N12.N13.C24.C35.C46.C56";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::cerr<<"\n\n\n\n---------------------------------------\n";
+    std::string csmiles1 = MolToSmiles(*m,true);
+    delete m;
+    std::string smiles2="N1NCCCC1";
+    m = SmilesToMol(smiles2);
+    TEST_ASSERT(m);
+    std::cerr<<"\n\n\n\n---------------------------------------\n";
+    std::string csmiles2 = MolToSmiles(*m,true);
+    delete m;
+
+    std::cerr<<"csmi1: "<<csmiles1<<std::endl;
+    std::cerr<<"csmi2: "<<csmiles2<<std::endl;
+    TEST_ASSERT(csmiles1==csmiles2);
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 
 
 int
@@ -3160,11 +3192,12 @@ main(int argc, char *argv[])
   testBug3152751();
   testReplacementPatterns();
   testAllBondsExplicit();
-  testBug3525799();
-  testBug3526810();
   testBug3139534();
   testBug3526815();
 #endif
   testFragmentSmiles();
+  testBug3525799();
+  testBug3526810();
+  testBug3528556();
   //testBug1719046();
 }
