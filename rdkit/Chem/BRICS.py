@@ -309,13 +309,13 @@ def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
   >>> m = Chem.MolFromSmiles('CCCOCC')
   >>> m2=BreakBRICSBonds(m)
   >>> Chem.MolToSmiles(m2,True)
-  '[4*]CC.[4*]CCC.O([3*])[3*]'
+  '[3*]O[3*].[4*]CC.[4*]CCC'
 
   a more complicated case:
   >>> m = Chem.MolFromSmiles('CCCOCCC(=O)c1ccccc1')
   >>> m2=BreakBRICSBonds(m)
   >>> Chem.MolToSmiles(m2,True)
-  '[4*]CCC.[3*]O[3*].[6*]C(=O)CC[4*].[16*]c1ccccc1'
+  '[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O.[16*]c1ccccc1'
 
 
   can also specify a limited set of bonds to work with:
@@ -384,20 +384,20 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
   >>> m = Chem.MolFromSmiles('CCCOCc1cc(c2ncccc2)ccc1')
   >>> res = list(BRICSDecompose(m))
   >>> sorted(res)
-  ['[14*]c1ncccc1', '[16*]c1cccc([16*])c1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]']
+  ['[14*]c1ccccn1', '[16*]c1cccc([16*])c1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]']
 
   >>> res = BRICSDecompose(m,returnMols=True)
   >>> res[0]
   <rdkit.Chem.rdchem.Mol object ...>
   >>> smis = [Chem.MolToSmiles(x,True) for x in res]
   >>> sorted(smis)
-  ['[14*]c1ncccc1', '[16*]c1cccc([16*])c1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]']
+  ['[14*]c1ccccn1', '[16*]c1cccc([16*])c1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]']
 
   nexavar, an example from the paper (corrected):
   >>> m = Chem.MolFromSmiles('CNC(=O)C1=NC=CC(OC2=CC=C(NC(=O)NC3=CC(=C(Cl)C=C3)C(F)(F)F)C=C2)=C1')
   >>> res = list(BRICSDecompose(m))
   >>> sorted(res)
-  ['[1*]C([1*])=O', '[1*]C([6*])=O', '[14*]c1nccc([16*])c1', '[16*]c1cc([16*])c(Cl)cc1', '[16*]c1ccc([16*])cc1', '[3*]O[3*]', '[5*]NC', '[5*]N[5*]', '[8*]C(F)(F)F']
+  ['[1*]C([1*])=O', '[1*]C([6*])=O', '[14*]c1cc([16*])ccn1', '[16*]c1ccc(Cl)c([16*])c1', '[16*]c1ccc([16*])cc1', '[3*]O[3*]', '[5*]NC', '[5*]N[5*]', '[8*]C(F)(F)F']
 
   it's also possible to keep pieces that haven't been fully decomposed:
   >>> m = Chem.MolFromSmiles('CCCOCC')
@@ -408,13 +408,13 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
   >>> m = Chem.MolFromSmiles('CCCOCc1cc(c2ncccc2)ccc1')
   >>> res = list(BRICSDecompose(m,keepNonLeafNodes=True))
   >>> sorted(res)
-  ['CCCOCc1cc(-c2ncccc2)ccc1', '[14*]c1ncccc1', '[16*]c1cccc(-c2ncccc2)c1', '[16*]c1cccc(COCCC)c1', '[16*]c1cccc([16*])c1', '[3*]OCCC', '[3*]OC[8*]', '[3*]OCc1cc(-c2ncccc2)ccc1', '[3*]OCc1cc([16*])ccc1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]', '[4*]Cc1cc(-c2ncccc2)ccc1', '[4*]Cc1cc([16*])ccc1', '[8*]COCCC']
+  ['CCCOCc1cccc(-c2ccccn2)c1', '[14*]c1ccccn1', '[16*]c1cccc(-c2ccccn2)c1', '[16*]c1cccc(COCCC)c1', '[16*]c1cccc([16*])c1', '[3*]OCCC', '[3*]OC[8*]', '[3*]OCc1cccc(-c2ccccn2)c1', '[3*]OCc1cccc([16*])c1', '[3*]O[3*]', '[4*]CCC', '[4*]C[8*]', '[4*]Cc1cccc(-c2ccccn2)c1', '[4*]Cc1cccc([16*])c1', '[8*]COCCC']
 
   or to only do a single pass of decomposition:
   >>> m = Chem.MolFromSmiles('CCCOCc1cc(c2ncccc2)ccc1')
   >>> res = list(BRICSDecompose(m,singlePass=True))
   >>> sorted(res)
-  ['CCCOCc1cc(-c2ncccc2)ccc1', '[14*]c1ncccc1', '[16*]c1cccc(-c2ncccc2)c1', '[16*]c1cccc(COCCC)c1', '[3*]OCCC', '[3*]OCc1cc(-c2ncccc2)ccc1', '[4*]CCC', '[4*]Cc1cc(-c2ncccc2)ccc1', '[8*]COCCC']
+  ['CCCOCc1cccc(-c2ccccn2)c1', '[14*]c1ccccn1', '[16*]c1cccc(-c2ccccn2)c1', '[16*]c1cccc(COCCC)c1', '[3*]OCCC', '[3*]OCc1cccc(-c2ccccn2)c1', '[4*]CCC', '[4*]Cc1cccc(-c2ccccn2)c1', '[8*]COCCC']
 
   setting a minimum size for the fragments:
   >>> m = Chem.MolFromSmiles('CCCOCC')
@@ -688,7 +688,7 @@ if __name__=='__main__':
       self.failUnless(len(res)==6)
       smis = [Chem.MolToSmiles(x,True) for x in res]
       self.failUnless('c1ccc(-c2ccccc2)cc1' in smis)
-      self.failUnless('c1ccc(-c2ncccc2)cc1' in smis)
+      self.failUnless('c1ccc(-c2ccccn2)cc1' in smis)
 
     def test5a(self):
       allNodes = set()
@@ -722,7 +722,7 @@ if __name__=='__main__':
       smis = [Chem.MolToSmiles(x,True) for x in res]
       self.failUnless('c1ccc(-c2ccccc2)cc1' in smis)
       self.failUnless('COc1ccccc1' in smis)
-      self.failUnless('c1ccc(-n2cccc2)cc1' in smis)
+      self.failUnless('c1ccn(-c2ccccc2)c1' in smis)
 
     def test7(self):
       allNodes = set()

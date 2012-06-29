@@ -203,7 +203,7 @@ def EnumerateLibraryFromReaction(reaction,sidechainSets) :
   >>> rxn = AllChem.ReactionFromSmarts('[O:2]=[C:1][OH].[N:3]>>[O:2]=[C:1][N:3]')
   >>> r = AllChem.EnumerateLibraryFromReaction(rxn,[s2,s1])
   >>> [Chem.MolToSmiles(x[0]) for x in list(r)]
-  ['CNC=O', 'CCNC=O', 'CNC(=O)C', 'CCNC(=O)C']
+  ['CNC=O', 'CCNC=O', 'CNC(C)=O', 'CCNC(C)=O']
 
   Note that this is all done in a lazy manner, so "infinitely" large libraries can
   be done without worrying about running out of memory. Your patience will run out first:
