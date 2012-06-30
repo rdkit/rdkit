@@ -2,6 +2,9 @@
 (Changes relative to Release_2012.03.1)
 
 !!!!!! IMPORTANT !!!!!!
+ - Some of the bug fixes affect the generation of SMILES. Canonical
+   SMILES generated with this version of the RDKit will be different
+   from previous versions.
 
 Acknowledgements:
 JP Ebejer
@@ -23,6 +26,9 @@ Removed modules:
 
 Other:
  - Similarity calculations on ExplicitBitVectors should now be much faster
+ - Use of [Xa], [Xb], etc. for dummy atoms in SMILES is no longer
+   possible. Use the "*" notation and either isotopes (i.e. [1*],
+   [2*]) or atom maps (i.e. [*:1], [*:2]) instead.   
 
 ******  Release_2012.03.1 *******
 (Changes relative to Release_2011.12.1)
