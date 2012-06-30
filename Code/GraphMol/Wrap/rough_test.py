@@ -2285,7 +2285,7 @@ CAS<~>
     smi = Chem.MolToSmiles(m,allBondsExplicit=True)
     self.failUnlessEqual(smi,"c1:c:c:c:c:c:1")
     
-  def _test76VeryLargeMolecule(self):
+  def test76VeryLargeMolecule(self):
     # this is sf.net issue 3524984
     smi = '[C@H](F)(Cl)'+'c1cc[nH]c1'*500+'[C@H](F)(Cl)'
     m = Chem.MolFromSmiles(smi)
