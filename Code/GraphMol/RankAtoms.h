@@ -114,7 +114,7 @@ namespace RankAtoms {
 
     // --------------
     //  
-    // At the end of this operation, fixedRanks will contain the ranks
+    // At the end of this operation, ranks will contain the ranks
     // of atoms that are no longer active (-1 for active atoms).
     //
     // --------------
@@ -122,12 +122,70 @@ namespace RankAtoms {
       ranks[idx] = -1;
     }
 
-#ifdef VERYVERBOSE_CANON
-    std::cout << "new: ";
-    debugVect(newRanks);
-    std::cout << "fixed: ";
-    debugVect(ranks);
-#endif
+    INT_VECT idxVect;
+    idxVect.assign(indicesInPlay.begin(),indicesInPlay.end());
+
+    // -------------
+    //
+    //  Loop over all the new ranks.  We'll know that we're done
+    //  when currNewRank > maxNewRank
+    //
+    // -------------
+
+    int currNewRank= *(std::min_element(newRanks.begin(),newRanks.end()));
+    int maxNewRank = *(std::max_element(newRanks.begin(),newRanks.end()));
+    while(currNewRank<=maxNewRank){
+      //
+      // If this rank is already present in ranks, increment
+      //  this rank and all new ranks that are higher:
+      //
+      while(std::find(ranks.begin(),ranks.end(),currNewRank)!=ranks.end()){
+        BOOST_FOREACH(int &rank,newRanks){
+          if(rank>=currNewRank)
+            ++rank;
+        }
+        // increment both the current rank *and* the maximum new rank
+        ++currNewRank;
+        ++maxNewRank;
+      }
+
+      //
+      //  now grab all entries with this new rank and copy them into
+      //  the ranks list
+      //
+      INT_VECT::iterator ivIt=std::find(newRanks.begin(),newRanks.end(),currNewRank);
+      while(ivIt!=newRanks.end()){
+        int offset=ivIt-newRanks.begin();
+        int idx = idxVect[offset];
+        ranks[idx] = currNewRank;
+        ++ivIt;
+        ivIt=std::find(ivIt,newRanks.end(),currNewRank);
+      }
+      ++currNewRank;
+    }
+  }
+  template <typename T>
+  void sortAndRankVect2(const std::vector<std::vector<T> > &vals,
+                        const INT_LIST &indicesInPlay,
+                        INT_VECT &ranks) {
+    // --------------
+    //
+    // start by getting the internal ranking of the values passed in
+    //
+    // --------------
+    INT_VECT newRanks(vals.size());
+    rankVect(vals,newRanks);
+
+    // --------------
+    //  
+    // At the end of this operation, ranks will contain the ranks
+    // of atoms that are no longer active (-1 for active atoms).
+    //
+    // --------------
+    BOOST_FOREACH(int idx,indicesInPlay){
+      ranks[idx] = newRanks[idx];
+    }
+    return;
 
     INT_VECT idxVect;
     idxVect.assign(indicesInPlay.begin(),indicesInPlay.end());

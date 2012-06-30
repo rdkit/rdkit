@@ -265,7 +265,7 @@ if __name__=='__main__':
       ks = res.GetLeaves().keys()
       self.failIf('[*]C([*])[*]' in ks)
       self.failUnless('[*]c1ccccc1' in ks)
-      self.failUnless('c1ccc(OC([*])[*])cc1' in ks)
+      self.failUnless('[*]C([*])Oc1ccccc1' in ks)
       
     def testSFNetIssue1804418(self):
       m = Chem.MolFromSmiles('C1CCCCN1CCCC')
@@ -407,7 +407,7 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[*]n1c(C)ccc1' in ks)
+      self.failUnless('[*]n1cccc1C' in ks)
 
     def testAmineRxn(self):
       m = Chem.MolFromSmiles('C1CC1N(C1NC1)C1OC1')
@@ -434,7 +434,7 @@ if __name__=='__main__':
       self.failUnless(len(res.GetLeaves())==3)
       ks = res.GetLeaves().keys()
       self.failUnless('[*]c1ccccc1' in ks)
-      self.failUnless('[*]c1ncccc1' in ks)
+      self.failUnless('[*]c1ccccn1' in ks)
       self.failUnless('[*]C1CO1' in ks)
       
       m = Chem.MolFromSmiles('c1ccccc1N(c1ncccc1)c1ccco1')
@@ -443,8 +443,8 @@ if __name__=='__main__':
       self.failUnless(len(res.GetLeaves())==3)
       ks = res.GetLeaves().keys()
       self.failUnless('[*]c1ccccc1' in ks)
-      self.failUnless('[*]c1ncccc1' in ks)
-      self.failUnless('[*]c1occc1' in ks)
+      self.failUnless('[*]c1ccccn1' in ks)
+      self.failUnless('[*]c1ccco1' in ks)
 
       m = Chem.MolFromSmiles('C1CCCCN1C1CC1')
       res = RecapDecompose(m)
@@ -487,7 +487,7 @@ if __name__=='__main__':
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
       self.failUnless('[*]c1ccccc1' in ks)
-      self.failUnless('[*]c1ncccc1' in ks)
+      self.failUnless('[*]c1ccccn1' in ks)
       
     def testOlefinRxn(self):
       m = Chem.MolFromSmiles('ClC=CBr')
@@ -523,7 +523,7 @@ if __name__=='__main__':
       self.failUnless(res)
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
-      self.failUnless('[*]N1C(=O)CC1' in ks)
+      self.failUnless('[*]N1CCC1=O' in ks)
       self.failUnless('[*]CCCC' in ks)
       
       m = Chem.MolFromSmiles('O=C1CC2N1CCCC2')
@@ -538,7 +538,7 @@ if __name__=='__main__':
       self.failUnless(len(res.GetLeaves())==2)
       ks = res.GetLeaves().keys()
       self.failUnless('[*]c1ccccc1' in ks)
-      self.failUnless('[*]c1ncccc1' in ks)
+      self.failUnless('[*]c1ccccn1' in ks)
       
       m = Chem.MolFromSmiles('c1ccccc1C1CC1')
       res = RecapDecompose(m)

@@ -215,6 +215,115 @@ namespace RankAtoms{
 #endif
     return numClasses;
   }
+  unsigned int iterateRanks2(unsigned int nAtoms,INT_VECT &primeVect,
+                            DOUBLE_VECT &atomicVect,
+                            INT_LIST &indicesInPlay,
+                            double *adjMat,
+                             INT_VECT &ranks,VECT_DOUBLE_VECT &nRanks,
+                            VECT_INT_VECT *rankHistory,unsigned int stagnantTol){
+    PRECONDITION(!rankHistory||rankHistory->size()>=nAtoms,"bad rankHistory size");
+    bool done = false;
+    unsigned int numClasses = countClasses(ranks);
+    unsigned int lastNumClasses = 0;
+    unsigned int nCycles = 0;
+    unsigned int nStagnant=0;
+
+    //
+    // loop until either we finish or no improvement is seen
+    //
+#ifdef VERBOSE_CANON
+    for(unsigned int i=0;i<nAtoms;i++) {
+      BOOST_LOG(rdDebugLog)<< "\t\t>:" << i << " " << ranks[i] << std::endl;
+    }
+    BOOST_LOG(rdDebugLog)<< "\t\t-*-*-*-*-" << std::endl;
+#endif
+    while(!done && nCycles < nAtoms){
+      // determine which atomic indices are in play (which have duplicate ranks)
+      if(rankHistory){
+        BOOST_FOREACH(int idx,indicesInPlay){
+          (*rankHistory)[idx].push_back(ranks[idx]);
+        }
+      }
+      updateInPlayIndices(ranks,indicesInPlay);
+      if(indicesInPlay.empty()) break;
+        
+#ifdef VERYVERBOSE_CANON
+      BOOST_LOG(rdDebugLog)<< "IN PLAY:" << std::endl;
+      BOOST_LOG(rdDebugLog)<< "\t\t->";
+      for(INT_LIST::const_iterator tmpI=indicesInPlay.begin();tmpI != indicesInPlay.end();tmpI++){
+        BOOST_LOG(rdDebugLog)<< " " << *tmpI;
+      }
+      BOOST_LOG(rdDebugLog)<< std::endl;
+      BOOST_LOG(rdDebugLog)<< "\t\t---------" << std::endl;
+#endif
+      //-------------------------
+      // Step (2):
+      //    Get the products of adjacent primes
+      //-------------------------
+      primeVect.resize(0);
+      getPrimes(ranks,primeVect);
+      atomicVect.resize(0);
+      calcAdjacentProducts(nAtoms,primeVect,adjMat,indicesInPlay,atomicVect,false);
+#ifdef VERYVERBOSE_CANON
+      BOOST_LOG(rdDebugLog)<< "primes: ";
+      debugVect(primeVect);
+      BOOST_LOG(rdDebugLog)<< "products: ";
+      debugVect(atomicVect);
+#endif
+
+      unsigned int p=0;
+      BOOST_FOREACH(int idx,indicesInPlay){
+        nRanks[idx].push_back(atomicVect[p++]);
+      }
+#ifdef VERYVERBOSE_CANON
+      for(int idx=0;idx<nAtoms;++idx){
+        std::cerr<<"  nranks["<<idx<<"]: ";
+        std::copy(nRanks[idx].begin(),nRanks[idx].end(),std::ostream_iterator<double>(std::cerr," "));
+        std::cerr<<"\n";
+      }
+#endif
+
+      
+      //-------------------------
+      // Steps (3) and (4)
+      //   sort the products and count classes
+      //-------------------------
+      rankVect(nRanks,ranks);
+      //sortAndRankVect2(nRanks,indicesInPlay,ranks);
+      lastNumClasses = numClasses;
+      numClasses = countClasses(ranks);
+      if(numClasses == lastNumClasses) nStagnant++;
+#ifdef VERYVERBOSE_CANON
+      int tmpOff=0;
+      for(unsigned int i=0;i<nAtoms;i++){
+        //for(INT_LIST::const_iterator tmpI=indicesInPlay.begin();tmpI != indicesInPlay.end();tmpI++){
+        BOOST_LOG(rdDebugLog)<< "\t\ti:" << i << "\t" << ranks[i] << "\t" << primeVect[i];
+        if(std::find(indicesInPlay.begin(),indicesInPlay.end(),i)!=indicesInPlay.end()){
+          BOOST_LOG(rdDebugLog)<< "\t" << atomicVect[tmpOff];
+          tmpOff++;
+        }
+        BOOST_LOG(rdDebugLog)<< std::endl;    }
+      BOOST_LOG(rdDebugLog)<< "\t\t---------" << std::endl;
+#endif
+        
+      // terminal condition, we'll allow a single round of stagnancy
+      if(numClasses == nAtoms || nStagnant > stagnantTol) done = 1;
+      nCycles++;
+    }
+#ifdef VERBOSE_CANON
+    BOOST_LOG(rdDebugLog)<< ">>>>>> done inner iteration. static: "<< nStagnant << " ";
+    BOOST_LOG(rdDebugLog)<< nCycles << " " << nAtoms << " " << numClasses << std::endl;
+#ifdef VERYVERBOSE_CANON
+    for(unsigned int i=0;i<nAtoms;i++) {
+      BOOST_LOG(rdDebugLog)<< "\t" << i << " " << ranks[i] << std::endl;
+    }
+#endif    
+    if(nCycles == nAtoms){
+      BOOST_LOG(rdWarningLog) << "WARNING: ranking bottomed out" << std::endl;
+    }
+#endif
+    return numClasses;
+  }
 
   // --------------------------------------------------
   //
@@ -415,7 +524,7 @@ namespace RDKit{
   namespace MolOps {
     // --------------------------------------------------
     //
-    //  Daylight canonicalization, based up on algorithm described in
+    //  Daylight canonicalization, loosely based up on algorithm described in
     //     JCICS 29, 97-101, (1989)
     //  When appropriate, specific references are made to the algorithm
     //  description in that paper.  Steps refer to Table III of the paper
@@ -460,9 +569,17 @@ namespace RDKit{
         // iteration 1: Steps (3) and (4)
         // ----------------------
 
+        // Unlike the original paper, we're going to keep track of the
+        // ranks at each iteration and use those vectors to rank
+        // atoms. This seems to lead to more stable evolution of the
+        // ranks by avoiding ranks oscillating back and forth across
+        // iterations. 
+        VECT_DOUBLE_VECT nRanks(nAtoms);
+        for(i=0;i<nAtoms;i++) nRanks[i].push_back(invariants[i]);
+
         // start by ranking the atoms using the invariants
         ranks.resize(nAtoms);
-        RankAtoms::rankVect(invariants,ranks);
+        RankAtoms::rankVect(nRanks,ranks);
 
         if(rankHistory){
           for(i=0;i<nAtoms;i++){
@@ -494,9 +611,9 @@ namespace RDKit{
             //
             // do one round of iterations
             //
-            numClasses = RankAtoms::iterateRanks(nAtoms,primeVect,atomicVect,
-                                                 indicesInPlay,adjMat,ranks,
-                                                 rankHistory,stagnantTol);
+            numClasses = RankAtoms::iterateRanks2(nAtoms,primeVect,atomicVect,
+                                                  indicesInPlay,adjMat,ranks,nRanks,
+                                                  rankHistory,stagnantTol);
 
 #ifdef VERBOSE_CANON
             BOOST_LOG(rdDebugLog)<< "************************ done outer iteration" << std::endl;
@@ -516,7 +633,9 @@ namespace RDKit{
               INT_VECT newRanks = ranks;
 
               // Add one to all ranks and multiply by two
-              std::for_each(newRanks.begin(),newRanks.end(),_1=(_1+1)*2);
+              BOOST_FOREACH(int &nr,newRanks) {
+                nr=(nr+1)*2;
+              }
 #ifdef VERBOSE_CANON
               BOOST_LOG(rdDebugLog)<< "postmult:" << std::endl;
               for(tmpI=0;tmpI<newRanks.size();tmpI++){
@@ -531,15 +650,13 @@ namespace RDKit{
               int lowestIdx=indicesInPlay.front();
               double lowestInvariant = invariants[lowestIdx];
               int lowestRank=newRanks[lowestIdx];
-              for(INT_LIST_I ilIt=indicesInPlay.begin();
-                  ilIt!=indicesInPlay.end();
-                  ++ilIt){
-                if(newRanks[*ilIt]<=lowestRank){
-                  if(newRanks[*ilIt]<lowestRank ||
-                     invariants[*ilIt] <= lowestInvariant){
-                    lowestRank = newRanks[*ilIt];
-                    lowestIdx = *ilIt;
-                    lowestInvariant = invariants[*ilIt];
+              BOOST_FOREACH(int ilidx,indicesInPlay){
+                if(newRanks[ilidx]<=lowestRank){
+                  if(newRanks[ilidx]<lowestRank ||
+                     invariants[ilidx] <= lowestInvariant){
+                    lowestRank = newRanks[ilidx];
+                    lowestIdx = ilidx;
+                    lowestInvariant = invariants[ilidx];
                   }
                 }
               }
@@ -549,6 +666,9 @@ namespace RDKit{
               //
               newRanks[lowestIdx] -= 1;
               RankAtoms::rankVect(newRanks,ranks);
+              BOOST_FOREACH(int ilidx,indicesInPlay){
+                nRanks[ilidx].push_back(ranks[ilidx]);
+              }
 #ifdef VERBOSE_CANON
               BOOST_LOG(rdDebugLog)<< "RE-RANKED ON:" << lowestIdx << std::endl;
               for(tmpI=0;tmpI<newRanks.size();tmpI++){
@@ -611,8 +731,10 @@ namespace RDKit{
         // ----------------------
 
         // start by ranking the atoms using the invariants
+        VECT_DOUBLE_VECT nRanks(nActiveAtoms);
+        for(int i=0;i<nActiveAtoms;i++) nRanks[i].push_back(tinvariants[i]);
         INT_VECT tranks(nActiveAtoms,0);
-        RankAtoms::rankVect(tinvariants,tranks);
+        RankAtoms::rankVect(nRanks,tranks);
 #if 0
         if(rankHistory){
           for(unsigned int i=0;i<nAtoms;i++){
@@ -714,9 +836,9 @@ namespace RDKit{
             //
             // do one round of iterations
             //
-            numClasses = RankAtoms::iterateRanks(nActiveAtoms,primeVect,atomicVect,
-                                                 indicesInPlay,tadjMat,tranks,
-                                                 rankHistory,stagnantTol);
+            numClasses = RankAtoms::iterateRanks2(nActiveAtoms,primeVect,atomicVect,
+                                                  indicesInPlay,tadjMat,tranks,nRanks,
+                                                  rankHistory,stagnantTol);
 
 #ifdef VERBOSE_CANON
             BOOST_LOG(rdDebugLog)<< "************************ done outer iteration" << std::endl;
@@ -768,6 +890,9 @@ namespace RDKit{
               //
               newRanks[lowestIdx] -= 1;
               RankAtoms::rankVect(newRanks,tranks);
+              BOOST_FOREACH(int ilidx,indicesInPlay){
+                nRanks[ilidx].push_back(ranks[ilidx]);
+              }
 #ifdef VERBOSE_CANON
               BOOST_LOG(rdDebugLog)<< "RE-RANKED ON:" << lowestIdx << std::endl;
               for(unsigned int tmpI=0;tmpI<newRanks.size();tmpI++){

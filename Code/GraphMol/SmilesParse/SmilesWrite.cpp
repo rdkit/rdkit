@@ -248,8 +248,9 @@ namespace RDKit{
       Bond::BondDir dir= bond->getBondDir();
 
       if(bond->hasProp("_TraversalRingClosureBond")){
-        if(dir==Bond::ENDDOWNRIGHT) dir=Bond::ENDUPRIGHT;
-        else if(dir==Bond::ENDUPRIGHT) dir=Bond::ENDDOWNRIGHT;
+        //std::cerr<<"FLIP: "<<bond->getIdx()<<" "<<bond->getBeginAtomIdx()<<"-"<<bond->getEndAtomIdx()<<std::endl;
+        //if(dir==Bond::ENDDOWNRIGHT) dir=Bond::ENDUPRIGHT;
+        //else if(dir==Bond::ENDUPRIGHT) dir=Bond::ENDDOWNRIGHT;
         bond->clearProp("_TraversalRingClosureBond");
       }
   

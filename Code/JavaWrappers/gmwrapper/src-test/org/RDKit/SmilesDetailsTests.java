@@ -632,7 +632,7 @@ public class SmilesDetailsTests extends GraphMolTest {
 		mol = RWMol.MolFromSmiles(smi);
 		assertNotNull(mol);
 		refSmi = mol.MolToSmiles(true);
-		assertEquals("CCC(C=O)(C)C", refSmi);
+		assertEquals("CCC(C)(C)C=O", refSmi);
 
 	}
 
@@ -1278,7 +1278,7 @@ public class SmilesDetailsTests extends GraphMolTest {
 		mol = RWMol.MolFromSmiles(smi);
 		assertNotNull(mol);
 		smi = mol.MolToSmiles(false, false, -1);
-		assertEquals("ClC1C(Br)CCCC1", smi);
+		assertEquals("ClC1CCCCC1Br", smi);
 
 		smi = "[CH]1=[CH][CH]=[CH][CH]=[CH]1";
 		mol = RWMol.MolFromSmiles(smi);
@@ -1329,41 +1329,6 @@ public class SmilesDetailsTests extends GraphMolTest {
 		smi = mol.MolToSmiles(true, false, -1);
 
 		assertEquals("F/C=C/C=C(/Cl)Br", smi);
-
-		smi = mol.MolToSmiles(true, false, 0);
-
-		assertEquals("C(=C(/Cl)Br)\\C=C\\F", smi);
-
-		smi = "O=NC1=NOC(=N\\O)/C1=N\\O";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		smi = mol.MolToSmiles(true, false, -1);
-
-		assertEquals("O=NC1=NOC(=N\\O)/C1=N\\O", smi);
-
-		// ----------------------
-		// the next two examples are a pair:
-		// vvvvvvvvvvvvvvvvvvvvvv
-
-		smi = "O/N=C/1COCC1=N\\O";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		smi = mol.MolToSmiles(true, false, -1);
-
-		assertEquals("O/N=C1\\C(=N\\O)COC1", smi);
-
-		// this time the algorithm is forced to set
-		// the directionality on the ring closure bond:
-
-		smi = "O/N=C/1COC[N+]1=N\\O";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		smi = mol.MolToSmiles(true, false, -1);
-
-		assertEquals("O/N=C1\\COC/[N+]1=N/O", smi);
-		// ^^^^^^^^^^^^^^^^^^^^^^
-		// end of the pair
-		// ----------------------
 
 	}
 
