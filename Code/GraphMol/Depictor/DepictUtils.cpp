@@ -19,7 +19,7 @@
 
 namespace RDDepict {
   double BOND_LEN=1.5;
-  double COLLISION_THRES=0.35;
+  double COLLISION_THRES=0.70;
   double BOND_THRES = 0.50;
   double ANGLE_OPEN=0.1222; // that is about 7 deg
   unsigned int MAX_COLL_ITERS=15;
@@ -293,7 +293,7 @@ namespace RDDepict {
     return res;
   }
 
-  RDKit::INT_VECT getAllRotatbleBonds(const RDKit::ROMol &mol) {
+  RDKit::INT_VECT getAllRotatableBonds(const RDKit::ROMol &mol) {
     RDKit::INT_VECT res;
     RDKit::ROMol::ConstBondIterator bondIt;
     for(bondIt=mol.beginBonds();bondIt!=mol.endBonds();bondIt++){

@@ -296,7 +296,7 @@ namespace RDDepict {
     
     \return a set of the indices of the rotatable bonds
   */
-  RDKit::INT_VECT getAllRotatbleBonds(const RDKit::ROMol &mol);
+  RDKit::INT_VECT getAllRotatableBonds(const RDKit::ROMol &mol);
 
   //! Get the ids of the atoms and bonds that are connected to aid
   void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,

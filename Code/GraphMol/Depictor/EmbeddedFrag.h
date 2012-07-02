@@ -299,8 +299,10 @@ namespace RDDepict {
     /*!
       ARGUMENTS:
       \param bondId - the bond used as the mirror to flip
+      \param flipEnd - flip the atoms at the end of the bond
+
     */
-    void flipAboutBond(unsigned int bondId);
+    void flipAboutBond(unsigned int bondId,bool flipEnd=true);
 
     void openAngles(const double *dmat, unsigned int aid1, unsigned int aid2);
 

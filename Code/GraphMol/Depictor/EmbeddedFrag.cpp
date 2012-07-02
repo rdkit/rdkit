@@ -1277,6 +1277,7 @@ namespace RDDepict {
   // 4. Reflect Fb and Fa through "l"
   void EmbeddedFrag::permuteBonds(unsigned int aid, unsigned int aid1, unsigned int aid2) {
     PRECONDITION(dp_mol, "");
+    //std::cerr<<"permute "<<aid<<" "<<aid1<<" "<<aid2<<std::endl;
     RDGeom::Point2D rl1 = d_eatoms[aid].loc;
     RDGeom::Point2D rl2 = d_eatoms[aid1].loc + d_eatoms[aid2].loc;
     rl2 *= 0.5;
@@ -1311,7 +1312,7 @@ namespace RDDepict {
       generator.seed(seed);
     }
 
-    RDKit::INT_VECT rotBonds = getAllRotatbleBonds(*dp_mol);
+    RDKit::INT_VECT rotBonds = getAllRotatableBonds(*dp_mol);
 
     unsigned int nb = rotBonds.size(); // number of rotatable bonds that can be flipped
 
@@ -1449,6 +1450,7 @@ namespace RDDepict {
           efj->second.d_density += 1000.0;
         }
         d2 /= (atomTypeFactor1*atomTypeFactor2);
+        //std::cerr<<" "<<efi->first<<"-"<<efj->first<<": "<<d2<<" "<<colThres2<<std::endl;
         if (d2 < colThres2) {
           PAIR_I_I cAids(efi->first, efj->first);
           res.push_back(cAids);
@@ -1563,9 +1565,10 @@ namespace RDDepict {
     return nOpen;
   }
 
-  void EmbeddedFrag::flipAboutBond(unsigned int bondId) {
+  void EmbeddedFrag::flipAboutBond(unsigned int bondId,bool flipEnd) {
     PRECONDITION(dp_mol, "");
     PRECONDITION(bondId < dp_mol->getNumBonds(), "");
+    //std::cerr<<"  flip about: "<<bondId<<" "<<flipEnd<<std::endl;
     // reflect all the atoms on one side of a bond using the bond as the mirror
     const RDKit::Bond *bond = dp_mol->getBondWithIdx(bondId);
     
@@ -1574,6 +1577,12 @@ namespace RDDepict {
       
     int begAid = bond->getBeginAtomIdx();
     int endAid = bond->getEndAtomIdx();
+
+    if(!flipEnd){
+      int tmp=begAid;
+      begAid=endAid;
+      endAid=tmp;
+    }
     
     RDGeom::Point2D begLoc = d_eatoms[begAid].loc;
     RDGeom::Point2D endLoc = d_eatoms[endAid].loc;
@@ -1610,6 +1619,8 @@ namespace RDDepict {
     unsigned int res=0;
     RDKit::ROMol::ADJ_ITER nbrIdx,endNbrs;
     boost::tie(nbrIdx,endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
+    res = (*nbrIdx);
+#if 0      
     while (nbrIdx != endNbrs) {
       if(mol->getAtomWithIdx(*nbrIdx)->getDegree()==1){
         res = (*nbrIdx);
@@ -1617,6 +1628,7 @@ namespace RDDepict {
       }
       ++nbrIdx;
     }
+#endif
     return res;
   }
 
@@ -1659,7 +1671,6 @@ namespace RDDepict {
     if ((deg1 > 1) && (deg2 > 1) ) {
       return;
     }
-
     unsigned int aidA;
     unsigned int aidB;
     RDKit::ROMol::ADJ_ITER nbrIdx,endNbrs;
@@ -1678,6 +1689,9 @@ namespace RDDepict {
       type = 3;
     }
 
+    //std::cerr<<" openAngles: "<<aid1<<"-"<<aidA<<"-"<<aidB<<"-"<<aid2<<"  type: "<<type<<std::endl;
+    //std::cerr<<"             len: "<<(d_eatoms[aid1].loc - d_eatoms[aid2].loc).length()<<std::endl;
+    
     RDGeom::Point2D v2 = d_eatoms[aid1].loc - d_eatoms[aidA].loc;
     RDGeom::Point2D v1 = d_eatoms[aidB].loc - d_eatoms[aidA].loc;
     double cross = (v1.x)*(v2.y) - (v1.y)*(v2.x);
@@ -1713,6 +1727,7 @@ namespace RDDepict {
     default:
       break;
     }
+    //std::cerr<<"             post len: "<<(d_eatoms[aid1].loc - d_eatoms[aid2].loc).length()<<std::endl;
   }
   
   void EmbeddedFrag::removeCollisionsBondFlip() {
@@ -1726,10 +1741,11 @@ namespace RDDepict {
     double *dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
     colls = this->findCollisions(dmat);
     unsigned int ncols;
-    
+    //std::cerr<<"removeCollisionsBondFlip(): "<<colls.size()<<std::endl;
     std::map<int,unsigned int> doneBonds;
     while (iter < MAX_COLL_ITERS && colls.size()) {
       ncols = colls.size();
+      //std::cerr<<"iter: "<<iter<<" "<<ncols<<std::endl;
       if (ncols > 0) {
         // we have a collision
         PAIR_I_I cAids = colls[0];
@@ -1737,6 +1753,7 @@ namespace RDDepict {
                                                      cAids.second);
         RDKit::INT_VECT_CI ri;
         double prevDensity = this->totalDensity();
+        //std::cerr<<"   density: "<<prevDensity<<std::endl;
         for (ri = rotBonds.begin(); ri != rotBonds.end(); ri++) {
           if ((doneBonds.find(*ri) == doneBonds.end()) ||
               (doneBonds[*ri] < NUM_BONDS_FLIPS)) { 
@@ -1749,6 +1766,7 @@ namespace RDDepict {
             flipAboutBond((*ri));
             colls = this->findCollisions(dmat);
             double newDensity = this->totalDensity();
+            //std::cerr<<"  newcolls: "<<colls.size()<<" "<<newDensity<<std::endl;
             if (colls.size() < ncols) {
               doneBonds[*ri] = NUM_BONDS_FLIPS; // lock this rotatable bond
               break;
@@ -1757,9 +1775,22 @@ namespace RDDepict {
               break;
             } else  {
               // we made the wrong move earlier - reject the flip move it back
-
               flipAboutBond((*ri));
               colls = this->findCollisions(dmat);
+              // and try the other end:
+              flipAboutBond((*ri),false);
+              colls = this->findCollisions(dmat);
+              newDensity = this->totalDensity();
+              //std::cerr<<"  newcolls2: "<<colls.size()<<" "<<newDensity<<std::endl;
+              if (colls.size() < ncols) {
+                doneBonds[*ri] = NUM_BONDS_FLIPS; // lock this rotatable bond
+                break;
+              } else if (colls.size()==ncols && newDensity<prevDensity) {
+                break;
+              } else {
+                flipAboutBond((*ri),false);
+                colls = this->findCollisions(dmat);
+              }
             }
           }
         }
@@ -1809,9 +1840,13 @@ namespace RDDepict {
         int temp = aid1;
         aid1 = aid2;
         aid2 = temp;
+        temp=deg1;
+        deg1=deg2;
+        deg2=temp;
       }
       // now find the path between the two ends
       RDKit::INT_LIST path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
+      //std::cerr<<" collide! "<<aid1<<" "<<aid2<<" "<<path.size()<<std::endl;
       if(!path.size()){
         // there's no path between the ends, so there's nothing
         // we can really do about this collision.
@@ -1822,23 +1857,29 @@ namespace RDDepict {
        path.pop_front();
 
        int nOpen = _anyNonRingBonds(aid1, path, dp_mol);
+       //std::cerr<<"     nOpen: "<<nOpen<<std::endl;
        if (nOpen > 0) {
-         // depending on how long the path is we will shorten the bonds
-         // by an increasing amount/ i.e. the first bond in the path gets
-         // shortened less than the next one and so on
-         unsigned int npts = path.size();
-         double factor = COLLISION_THRES/(npts*BOND_LEN);
-         int prev = aid1;
-         RDKit::INT_LIST_CI pi;
-         int cnt = 1;
-         for (pi = path.begin(); pi != path.end(); pi++) {
-           RDGeom::Point2D loc = d_eatoms[*pi].loc;
-           loc -= d_eatoms[prev].loc;
-           loc *= (1 - factor*cnt);
-           loc += d_eatoms[prev].loc;
-           d_eatoms[*pi].loc = loc;
-           cnt++;
-           prev = (*pi);
+         if(deg1==1){
+           RDGeom::Point2D loc = d_eatoms[aid1].loc;
+           int aidA=_findDeg1Neighbor(dp_mol,aid1);
+           loc -= d_eatoms[aidA].loc;
+           loc *= .9;
+           //std::cerr<<"  >>> "<<aid1<<" "<<loc.length()<<std::endl;
+           if(loc.length()>.75){
+             loc += d_eatoms[aidA].loc;
+             d_eatoms[aid1].loc=loc;
+           }
+         }
+         if(deg2==1){
+           RDGeom::Point2D loc = d_eatoms[aid2].loc;
+           int aidA=_findDeg1Neighbor(dp_mol,aid2);
+           loc -= d_eatoms[aidA].loc;
+           loc *= .9;
+           //std::cerr<<"  >>> "<<aid2<<" "<<loc.length()<<std::endl;
+           if(loc.length()>.75){
+             loc += d_eatoms[aidA].loc;
+             d_eatoms[aid2].loc=loc;
+           }
          }
        } else {
          // we probably have a bridged system

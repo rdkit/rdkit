@@ -72,10 +72,33 @@ def compareWithOld(smilesFile, sdFile) :
         print >>sys.stderr,'> <Failed>\n%d\n'%i
         print >>sys.stderr,"$$$$"
         return 0
-      
     im += 1
   return 1
-        
+
+def stereoCompare(smilesFile):
+  smiSup = Chem.SmilesMolSupplier(smilesFile, ",", 0, -1)
+  im = 0
+  for mol in smiSup :
+    rdDepictor.Compute2DCoords(mol,canonOrient=False)
+    mb = Chem.MolToMolBlock(mol)
+    nmol = Chem.MolFromMolBlock(mb)
+    matches = nmol.GetSubstructMatches(mol,False)
+    dbnds = [x for x in mol.GetBonds() if (x.GetBondType()==Chem.BondType.DOUBLE and \
+                                            x.GetStereo()>Chem.BondStereo.STEREOANY) ]
+    ok=True
+    for match in matches:
+      for bnd in dbnds:
+        obnd = nmol.GetBondBetweenAtoms(match[bnd.GetBeginAtomIdx()],match[bnd.GetEndAtomIdx()])
+        assert(obnd.GetBondType()==Chem.BondType.DOUBLE)
+      if ok: break;
+    if not ok:
+        print >>sys.stderr,Chem.MolToMolBlock(mol)
+        print >>sys.stderr,"$$$$"
+        return 0
+    im += 1
+  return 1
+
+
 class TestCase(unittest.TestCase) :
     def setUp(self):
         pass
@@ -94,10 +117,7 @@ class TestCase(unittest.TestCase) :
     def test1CisTrans(self) :
         fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','Depictor',
                              'test_data', "cis_trans_cases.csv")
-        ofile = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','Depictor',
-                             'test_data', 'cis_trans_cases.sdf')
-        
-        self.failUnless(compareWithOld(fileN, ofile))
+        self.failUnless(stereoCompare(fileN))
         
     def test2Coords(self) :
         m1 = Chem.MolFromSmiles('C1CCC1CC')
