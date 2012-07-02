@@ -3939,7 +3939,18 @@ void testBasicCanon(){
     delete m;
   }
 
-
+  {
+    // this was issue 3528556
+    std::string smi="N12.N13.C24.C35.C46.C56";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    std::string csmi=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(csmi);
+    TEST_ASSERT(m);
+    smi=MolToSmiles(*m,true);
+    TEST_ASSERT(csmi==smi);
+  }
 
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
