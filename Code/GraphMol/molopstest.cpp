@@ -3951,6 +3951,18 @@ void testBasicCanon(){
     smi=MolToSmiles(*m,true);
     TEST_ASSERT(csmi==smi);
   }
+  {
+    // this was issue 3526831
+    std::string smi="CO/N=C/C(=C(\\O)/c1ccc(Cl)cc1)/C=N\\OC";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    std::string csmi=MolToSmiles(*m,true);
+    delete m;
+    m = SmilesToMol(csmi);
+    TEST_ASSERT(m);
+    smi=MolToSmiles(*m,true);
+    TEST_ASSERT(csmi==smi);
+  }
 
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
