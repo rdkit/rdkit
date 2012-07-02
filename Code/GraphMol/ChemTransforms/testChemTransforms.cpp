@@ -839,6 +839,36 @@ void testIssue3453144()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testIssue3537675() 
+{
+  ROMol *mol1=0,*matcher1=0,*replacement=0;
+  std::string smi,sma;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing handling of substituted non-carbon aromatic atoms" << std::endl;
+
+  {
+    std::string smi = "c1cccp1C";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    ROMol *nMol=MurckoDecompose(*mol);
+    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumExplicitHs());
+    delete mol;
+    delete nMol;
+  }
+  {
+    std::string smi = "c1cccn1C";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    ROMol *nMol=MurckoDecompose(*mol);
+    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumExplicitHs());
+    delete mol;
+    delete nMol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -860,6 +890,7 @@ int main() {
   testReplaceCoreRequireDummies();
 
   testIssue3453144();
+  testIssue3537675();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
