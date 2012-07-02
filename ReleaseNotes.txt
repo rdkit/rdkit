@@ -7,12 +7,68 @@
    from previous versions.
 
 Acknowledgements:
-JP Ebejer
+Andrew Dalke, JP Ebejer, Igor Filippov, Peter Gedeck, Jan Holst
+Jensen, Adrian Jasiński, George Papadatos, Andrey Paramonov, Adrian
+Schreyer, James Swetnam
 
 Bug Fixes: 
+ - Radicals are now indicated in molecular depictions. (Issue 3516995)
+ - Calling .next() on an SDMolSupplier at eof no longer results in an
+   infinite loop. (Issue 3524949)
+ - Chirality perception no longer fails in large molecules.
+   (Issue 3524984)
+ - problem creating molblock for atom with four chiral nbrs
+   (Issue 3525000)
+ - A second sanitization leads to a different molecule.
+   (Issue 3525076)
+ - can't parse Rf atom in SMILES
+   (Issue 3525668)
+ - generates [HH2-] but can't parse it
+   (Issue 3525669)
+ - improper (re)perception of 1H-phosphole
+   (Issue 3525671)
+ - ForwardSDMolSupplier not skipping forward on some errors
+   (Issue 3525673)
+ - SMILES/SMARTS parsers don't recognize 0 atom maps
+   (Issue 3525776)
+ - R group handling in SMILES
+   (Issue 3525799)
+ - Canonical smiles failure in symmetric heterocycles
+   (Issue 3526810)
+ - Canonical smiles failure with "extreme" isotopes
+   (Issue 3526814)
+ - Canonical smiles failure with many symmetric fragments
+   (Issue 3526815)
+ - Canonical smiles failure with dependent double bonds
+   (Issue 3526831)
+ - Build Fails Due to Missing include in Code/RDBoost/Wrap.h
+   (Issue 3527061)
+ - Incorrect template parameter use in std::make_pair
+   (Issue 3528136)
+ - Canonicalization failure in cycle
+   (Issue 3528556)
+ - incorrect values reported in ML analysis
+   (Issue 3528817)
+ - Cartridge does not work on 32bit ubuntu 12.04
+   (Issue 3531232)
+ - Murcko Decomposition generates unuseable molecule.
+   (Issue 3537675)
+ - A few memory leaks were fixed in the Java Wrappers
+ - The exact mass of molecules with non-standard isotopes is now
+   calculated correctly.
+ - The default (Euclidean) distance metric should now work with Butina
+   clustering.
+ - Some bugs in the depictor were fixed.
 
 New Features:
  - ChemicalFeatures now support an optional id
+ - Isotope handling has been greatly improved. Atoms now have a
+   getIsotope() (GetIsotope() in Python) method that returns zero if
+   no isotope has been set, the isotope number otherwise.
+ - The function MolFragmentToSmiles can be used to generate canonical
+   SMILES for pieces of molecules.
+ - The function getHashedMorganFingerprint (GetHashedMorganFingerprint
+   in Python) has been added.
 
 New Database Cartridge Features: 
 
@@ -28,7 +84,10 @@ Other:
  - Similarity calculations on ExplicitBitVectors should now be much faster
  - Use of [Xa], [Xb], etc. for dummy atoms in SMILES is no longer
    possible. Use the "*" notation and either isotopes (i.e. [1*],
-   [2*]) or atom maps (i.e. [*:1], [*:2]) instead.   
+   [2*]) or atom maps (i.e. [*:1], [*:2]) instead.
+ - Initial work was done towards make the RDKit work on big endian
+   hardware (mainly changes to the way pickles are handled)
+ - Canonical SMILES generation is now substantially faster.
 
 ******  Release_2012.03.1 *******
 (Changes relative to Release_2011.12.1)
