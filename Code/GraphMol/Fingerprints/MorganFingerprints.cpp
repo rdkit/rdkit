@@ -156,7 +156,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
     } // end of getConnectivityInvariants()
 
     uint32_t updateElement(SparseIntVect<uint32_t> &v,unsigned int elem){
-      v.setVal(elem,v.getVal(elem)+1);
+      uint32_t bit=elem%v.getLength();
+      v.setVal(bit,v.getVal(bit)+1);
       return elem;
     }
     uint32_t updateElement(ExplicitBitVect &v,unsigned int elem){
@@ -361,6 +362,21 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
                    BitInfoMap *atomsSettingBits){
       SparseIntVect<uint32_t> *res;
       res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
+      calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
+                      onlyNonzeroInvariants,atomsSettingBits,*res);
+      return res;
+    }
+    SparseIntVect<uint32_t> *
+    getHashedFingerprint(const ROMol &mol,
+                         unsigned int radius,
+                         unsigned int nBits,
+                         std::vector<uint32_t> *invariants,
+                         const std::vector<uint32_t> *fromAtoms,
+                         bool useChirality,bool useBondTypes,
+                         bool onlyNonzeroInvariants,
+                         BitInfoMap *atomsSettingBits){
+      SparseIntVect<uint32_t> *res;
+      res = new SparseIntVect<uint32_t>(nBits);
       calcFingerprint(mol,radius,invariants,fromAtoms,useChirality,useBondTypes,
                       onlyNonzeroInvariants,atomsSettingBits,*res);
       return res;

@@ -726,16 +726,26 @@ void test1MorganFPs(){
     fp = MorganFingerprints::getFingerprint(*mol,0);
     TEST_ASSERT(fp->getNonzeroElements().size()==2);
     delete fp;
+
+    fp = MorganFingerprints::getHashedFingerprint(*mol,0);
+    TEST_ASSERT(fp->getNonzeroElements().size()==2);
+    delete fp;
+
     fp = MorganFingerprints::getFingerprint(*mol,1);
     TEST_ASSERT(fp->getNonzeroElements().size()==5);
     delete fp;
+    fp = MorganFingerprints::getHashedFingerprint(*mol,1);
+    TEST_ASSERT(fp->getNonzeroElements().size()==5);
+    delete fp;
+
     fp = MorganFingerprints::getFingerprint(*mol,2);
     TEST_ASSERT(fp->getNonzeroElements().size()==7);
     delete fp;
+
     fp = MorganFingerprints::getFingerprint(*mol,3);
     TEST_ASSERT(fp->getNonzeroElements().size()==7);
     delete fp;
-  
+
   
     delete mol;
   }

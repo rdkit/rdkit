@@ -101,6 +101,54 @@ namespace RDKit {
                      bool onlyNonzeroInvariants=false,
                      BitInfoMap *atomsSettingBits=0);
 
+    //! returns the Morgan fingerprint for a molecule
+    /*!  
+      These fingerprints are similar to the well-known ECFP or
+      FCFP fingerprints, depending on which invariants are used.
+        
+      The algorithm used is described in the paper
+      Rogers, D. & Hahn, M. Extended-Connectivity Fingerprints. JCIM 50:742-54 (2010) 
+      http://dx.doi.org/10.1021/ci100050t
+
+      The original implementation was done using this paper:
+      D. Rogers, R.D. Brown, M. Hahn J. Biomol. Screen. 10:682-6 (2005)
+      and an unpublished technical report:
+      http://www.ics.uci.edu/~welling/teaching/ICS274Bspring06/David%20Rogers%20-%20ECFP%20Manuscript.doc
+
+      \param mol:    the molecule to be fingerprinted
+      \param radius: the number of iterations to grow the fingerprint
+      \param invariants : optional pointer to a set of atom invariants to
+            be used. By default ECFP-type invariants are used 
+            (calculated by getConnectivityInvariants())
+      \param fromAtoms : if this is provided, only the atoms in the vector will be
+                         used as centers in the fingerprint
+      \param useChirality : if set, additional information will be added to the fingerprint
+                            when chiral atoms are discovered. This will cause \verbatim C[C@H](F)Cl,
+                            C[C@@H](F)Cl, and CC(F)Cl \endverbatim to generate different fingerprints.
+      \param useBondTypes : if set, bond types will be included as part of the hash for
+                            calculating bits
+      \param onlyNonzeroInvariants : if set, bits will only be set from atoms that
+                                     have a nonzero invariant.
+      \param atomsSettingBits : if nonzero, this will be used to return information
+                               about the atoms that set each particular bit.
+                               The keys are the map are bit ids, the values
+                               are lists of (atomId, radius) pairs.
+
+      \return a pointer to the fingerprint. The client is
+      responsible for calling delete on this.
+
+    */
+    SparseIntVect<boost::uint32_t> *
+      getHashedFingerprint(const ROMol &mol,
+                           unsigned int radius,
+                           unsigned int nBits=2048,
+                           std::vector<boost::uint32_t> *invariants=0,
+                           const std::vector<boost::uint32_t> *fromAtoms=0,
+                           bool useChirality=false,
+                           bool useBondTypes=true,
+                           bool onlyNonzeroInvariants=false,
+                           BitInfoMap *atomsSettingBits=0);
+
 
     //! returns the Morgan fingerprint for a molecule as a bit vector
     /*!
