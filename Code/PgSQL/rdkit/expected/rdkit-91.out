@@ -24,9 +24,19 @@ SELECT is_valid_smiles('c1ccccc');
 (1 row)
 
 SELECT mol_from_smiles('c1ccccc');
-ERROR:  smiles 'c1ccccc' could not be parsed
+WARNING:  could not create molecule from SMILES 'c1ccccc'
+ mol_from_smiles 
+-----------------
+ 
+(1 row)
+
 SELECT mol_from_smiles('cccccc');
-ERROR:  smiles 'cccccc' could not be parsed
+WARNING:  could not create molecule from SMILES 'cccccc'
+ mol_from_smiles 
+-----------------
+ 
+(1 row)
+
 SELECT is_valid_smiles('c1cccn1');
  is_valid_smiles 
 -----------------
@@ -52,7 +62,12 @@ SELECT is_valid_smarts('c1ccc');
 (1 row)
 
 SELECT mol_from_smarts('c1ccc');
-ERROR:  smiles 'c1ccc' could not be parsed
+WARNING:  could not create molecule from SMILES 'c1ccc'
+ mol_from_smarts 
+-----------------
+ 
+(1 row)
+
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);

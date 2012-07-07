@@ -150,14 +150,14 @@ parseMolText(char *data,bool asSmarts,bool warnOnFail) {
     mol=NULL;
   }
   if(mol==NULL){
-    if(!warnOnFail){
+    if(warnOnFail){
       ereport(WARNING,
               (errcode(ERRCODE_WARNING),
-               errmsg("smiles '%s' could not be parsed",data)));
+               errmsg("could not create molecule from SMILES '%s'",data)));
     } else {
       ereport(ERROR,
               (errcode(ERRCODE_DATA_EXCEPTION),
-               errmsg("smiles '%s' could not be parsed",data)));
+               errmsg("could not create molecule from SMILESe '%s'",data)));
     }
   }
     
@@ -194,14 +194,15 @@ parseMolCTAB(char *data,bool keepConformer,bool warnOnFail) {
     mol=NULL;
   }
   if(mol==NULL){
-    if(!warnOnFail){
+    if(warnOnFail){
       ereport(WARNING,
               (errcode(ERRCODE_WARNING),
-               errmsg("CTAB '%s' could not be parsed",data)));
+               errmsg("could not create molecule from CTAB '%s'",data)));
+
     } else {
       ereport(ERROR,
               (errcode(ERRCODE_DATA_EXCEPTION),
-               errmsg("CTAB '%s' could not be parsed",data)));
+               errmsg("could not create molecule from CTAB '%s'",data)));
     }
   } else {
     if(!keepConformer) mol->clearConformers();
