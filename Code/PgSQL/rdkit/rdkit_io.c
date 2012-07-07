@@ -123,7 +123,7 @@ mol_from_ctab(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolCTAB(data,false);
+  mol = parseMolCTAB(data,false,true);
   if(!mol) PG_RETURN_NULL();
   res = deconstructROMol(mol);
   freeCROMol(mol);

@@ -151,7 +151,7 @@ parseMolText(char *data,bool asSmarts,bool warnOnFail) {
             (errcode(ERRCODE_DATA_EXCEPTION),
              errmsg("problem generating molecule from smiles '%s'",data)));
   }
-  if(mol==NULL && warnOnFail){
+  if(mol==NULL && !warnOnFail){
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
              errmsg("smiles '%s' could not be parsed",data)));
@@ -180,7 +180,7 @@ parseMolBlob(char *data,int len) {
   return (CROMol)mol;
 }
 extern "C" CROMol 
-parseMolCTAB(char *data,bool keepConformer) {
+parseMolCTAB(char *data,bool keepConformer,bool warnOnFail) {
   ROMol   *mol = NULL;
 
   try {
@@ -192,9 +192,11 @@ parseMolCTAB(char *data,bool keepConformer) {
              errmsg("problem generating molecule from CTAB '%s'",data)));
   }
   if(mol==NULL){
-    ereport(WARNING,
-            (errcode(ERRCODE_WARNING),
-             errmsg("CTAB '%s' could not be parsed",data)));
+    if(!warnOnFail){
+      ereport(WARNING,
+              (errcode(ERRCODE_WARNING),
+               errmsg("CTAB '%s' could not be parsed",data)));
+    }
   } else {
     if(!keepConformer) mol->clearConformers();
   }

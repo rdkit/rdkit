@@ -11,10 +11,22 @@ SELECT is_valid_smiles('c1ccccc1');
  t
 (1 row)
 
+SELECT mol_from_smiles('c1ccccc1');
+ mol_from_smiles 
+-----------------
+ c1ccccc1
+(1 row)
+
 SELECT is_valid_smiles('c1ccccc');
  is_valid_smiles 
 -----------------
  f
+(1 row)
+
+SELECT mol_from_smiles('c1ccccc');
+ mol_from_smiles 
+-----------------
+ 
 (1 row)
 
 SELECT is_valid_smiles('c1cccn1');
@@ -27,6 +39,24 @@ SELECT is_valid_smarts('c1ccc[n,c]1');
  is_valid_smarts 
 -----------------
  t
+(1 row)
+
+SELECT mol_from_smarts('c1ccc[n,c]1');
+ mol_from_smarts 
+-----------------
+ c1ccnc1
+(1 row)
+
+SELECT is_valid_smarts('c1ccc');
+ is_valid_smarts 
+-----------------
+ f
+(1 row)
+
+SELECT mol_from_smarts('c1ccc');
+ mol_from_smarts 
+-----------------
+ 
 (1 row)
 
 CREATE TABLE pgmol (id int, m mol);
