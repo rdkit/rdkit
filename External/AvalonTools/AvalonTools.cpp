@@ -97,23 +97,8 @@ namespace AvalonTools {
       return res;
     };
 
-    struct reaccs_molecule_t *molToReaccs(ROMol &mol,bool viaSmiles=false){
-      struct reaccs_molecule_t *res;
-      if(viaSmiles || !mol.getNumConformers() ){
-        std::string smiles=MolToSmiles(mol,true);
-        res = SMIToMOL(smiles.c_str(),DY_AROMATICITY|ISOMERIC_SMILES);
-      } else {
-        std::string molB=MolToMolBlock(mol,true);
-        res= MolStr2Mol((char *)molB.c_str());
-      }
-      POSTCONDITION(res,"could not build a molecule");
-      return res;
-    }
     struct reaccs_molecule_t *molToReaccs(const ROMol &mol){
-      if(!mol.getNumConformers()){
-        return molToReaccs(const_cast<ROMol &>(mol),true);
-      }
-      std::string molB=MolToMolBlock(mol);
+      std::string molB=MolToMolBlock(mol,true);
       struct reaccs_molecule_t *res= MolStr2Mol((char *)molB.c_str());
       POSTCONDITION(res,"could not build a molecule");
       return res;
@@ -180,7 +165,7 @@ namespace AvalonTools {
   }
 
   unsigned int set2DCoords(ROMol &mol,bool clearConfs){
-    struct reaccs_molecule_t *mp=molToReaccs(mol,false);
+    struct reaccs_molecule_t *mp=molToReaccs(mol);
     struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
     //std::cerr<<"----\n"<<MolToMolStr(mp2)<<"--------\n";
 
@@ -206,6 +191,19 @@ namespace AvalonTools {
     FreeMolecule(mp);
     FreeMolecule(mp2);
 
+    return res;
+  }
+  std::string set2DCoords(const std::string &data,bool isSmiles){
+    struct reaccs_molecule_t *mp=stringToReaccs(data,isSmiles);
+    std::string res="";
+    if(mp){
+      struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
+      FreeMolecule(mp);
+      char *molB = MolToMolStr(mp2);
+      res=molB;
+      FreeMolecule(mp2);
+      MyFree(molB);
+    } 
     return res;
   }
 
@@ -268,19 +266,6 @@ namespace AvalonTools {
       BOOST_LOG(rdErrorLog)<<"ERROR: no fingeprint generated for molecule."<<std::endl;
     }
   }
-  std::string set2DCoords(const std::string &data,bool isSmiles){
-    struct reaccs_molecule_t *mp=stringToReaccs(data,isSmiles);
-    std::string res="";
-    if(mp){
-      struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
-      FreeMolecule(mp);
-      char *molB = MolToMolStr(mp2);
-      res=molB;
-      FreeMolecule(mp2);
-      MyFree(molB);
-    } 
-    return res;
-  }
 
   int _checkMolWrapper(struct reaccs_molecule_t **mpp){
     if(!*mpp) return BAD_MOLECULE;
@@ -322,10 +307,9 @@ namespace AvalonTools {
   }
 
   RDKit::ROMOL_SPTR checkMol(int &errs, RDKit::ROMol& inMol) {
-    bool viaSmiles = false;
     struct reaccs_molecule_t *mp;
     RDKit::ROMol *rMol = 0;
-    mp = molToReaccs(inMol, viaSmiles);
+    mp = molToReaccs(inMol);
     errs = _checkMolWrapper(&mp);
     if(mp){
       char *molStr = MolToMolStr(mp);
