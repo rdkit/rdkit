@@ -147,14 +147,18 @@ parseMolText(char *data,bool asSmarts,bool warnOnFail) {
       mol = SmartsToMol(StringData,0,false);
     }
   } catch (...) {
-    ereport(ERROR,
-            (errcode(ERRCODE_DATA_EXCEPTION),
-             errmsg("problem generating molecule from smiles '%s'",data)));
+    mol=NULL;
   }
-  if(mol==NULL && !warnOnFail){
-    ereport(WARNING,
-            (errcode(ERRCODE_WARNING),
-             errmsg("smiles '%s' could not be parsed",data)));
+  if(mol==NULL){
+    if(!warnOnFail){
+      ereport(WARNING,
+              (errcode(ERRCODE_WARNING),
+               errmsg("smiles '%s' could not be parsed",data)));
+    } else {
+      ereport(ERROR,
+              (errcode(ERRCODE_DATA_EXCEPTION),
+               errmsg("smiles '%s' could not be parsed",data)));
+    }
   }
     
   return (CROMol)mol;
@@ -187,14 +191,16 @@ parseMolCTAB(char *data,bool keepConformer,bool warnOnFail) {
     StringData.assign(data);
     mol = MolBlockToMol(StringData);
   } catch (...) {
-    ereport(ERROR,
-            (errcode(ERRCODE_DATA_EXCEPTION),
-             errmsg("problem generating molecule from CTAB '%s'",data)));
+    mol=NULL;
   }
   if(mol==NULL){
     if(!warnOnFail){
       ereport(WARNING,
               (errcode(ERRCODE_WARNING),
+               errmsg("CTAB '%s' could not be parsed",data)));
+    } else {
+      ereport(ERROR,
+              (errcode(ERRCODE_DATA_EXCEPTION),
                errmsg("CTAB '%s' could not be parsed",data)));
     }
   } else {

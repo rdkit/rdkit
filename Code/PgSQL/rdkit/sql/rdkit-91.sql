@@ -12,12 +12,12 @@ SELECT is_valid_smiles('c1ccccc1');
 SELECT mol_from_smiles('c1ccccc1');
 SELECT is_valid_smiles('c1ccccc');
 SELECT mol_from_smiles('c1ccccc');
+SELECT mol_from_smiles('cccccc');
 SELECT is_valid_smiles('c1cccn1');
 SELECT is_valid_smarts('c1ccc[n,c]1');
 SELECT mol_from_smarts('c1ccc[n,c]1');
 SELECT is_valid_smarts('c1ccc');
 SELECT mol_from_smarts('c1ccc');
-
 
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
