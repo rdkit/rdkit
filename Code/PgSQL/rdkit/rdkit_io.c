@@ -46,7 +46,12 @@ mol_in(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,false);
+  mol = parseMolText(data,false,false);
+  if(!mol){
+    ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("could not construct molecule")));
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -119,6 +124,7 @@ mol_from_ctab(PG_FUNCTION_ARGS) {
   Mol     *res;
 
   mol = parseMolCTAB(data,false);
+  if(!mol) PG_RETURN_NULL();
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -134,7 +140,8 @@ mol_from_smarts(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,true);
+  mol = parseMolText(data,true,true);
+  if(!mol) PG_RETURN_NULL();
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -149,7 +156,8 @@ mol_from_smiles(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,false);
+  mol = parseMolText(data,false,true);
+  if(!mol) PG_RETURN_NULL();
   res = deconstructROMol(mol);
   freeCROMol(mol);
 
@@ -165,7 +173,12 @@ qmol_in(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,true);
+  mol = parseMolText(data,true,false);
+  if(!mol){
+    ereport(ERROR,
+            (errcode(ERRCODE_DATA_EXCEPTION),
+             errmsg("could not construct molecule")));
+  }
   res = deconstructROMol(mol);
   freeCROMol(mol);
 

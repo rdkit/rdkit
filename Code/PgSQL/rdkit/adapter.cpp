@@ -136,7 +136,7 @@ deconstructROMol(CROMol data) {
 }
 
 extern "C" CROMol 
-parseMolText(char *data,bool asSmarts) {
+parseMolText(char *data,bool asSmarts,bool warnOnFail) {
   ROMol   *mol = NULL;
 
   try {
@@ -151,9 +151,9 @@ parseMolText(char *data,bool asSmarts) {
             (errcode(ERRCODE_DATA_EXCEPTION),
              errmsg("problem generating molecule from smiles '%s'",data)));
   }
-  if(mol==NULL){
-    ereport(ERROR,
-            (errcode(ERRCODE_DATA_EXCEPTION),
+  if(mol==NULL && warnOnFail){
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
              errmsg("smiles '%s' could not be parsed",data)));
   }
     
@@ -192,8 +192,8 @@ parseMolCTAB(char *data,bool keepConformer) {
              errmsg("problem generating molecule from CTAB '%s'",data)));
   }
   if(mol==NULL){
-    ereport(ERROR,
-            (errcode(ERRCODE_DATA_EXCEPTION),
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
              errmsg("CTAB '%s' could not be parsed",data)));
   } else {
     if(!keepConformer) mol->clearConformers();
@@ -313,8 +313,8 @@ makeMolSign(CROMol data) {
   bytea                   *ret = NULL;
 
   try {
-    //res = RDKit::LayeredFingerprintMol2(*mol,RDKit::substructLayers,1,4,SSS_FP_SIZE);
-    res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,5,SSS_FP_SIZE);
+    res = RDKit::LayeredFingerprintMol2(*mol,RDKit::substructLayers,1,4,SSS_FP_SIZE);
+    //res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,5,SSS_FP_SIZE);
     ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)res);
     delete res;
     res=0;
