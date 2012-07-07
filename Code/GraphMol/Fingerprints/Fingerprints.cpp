@@ -509,14 +509,14 @@ namespace RDKit{
                       "[*]~[*]~[*]~[*]",
                       "[*]~[*](~[*])~[*]",
                       "[*]~[R]~1[R]~[R]~1",
-                      "[*]~1[R]~[R]~[R]~1",
+                      "[R]~1[R]~[R]~[R]~1",
                       "[*]~[*]~[*]~[*]~[*]",
                       "[*]~[*]~[*](~[*])~[*]",
                       "[*]~[R]~1[R]~[R]~1[*]",
-                      "[*]~[R]~1[R]~[R]~[R]~1",
-                      "[*]~[*](~[*])(~[*])~[*]",
-                      "[*]~[R]~1(~[*])~[R]~[R]~1",
                       "[R]~1[R]~[R]~[R]~[R]~1",
+                      "[R]~1[R]~[R]~[R]~[R]~[R]~1",
+#if 0
+                      "[*]~[*](~[*])(~[*])~[*]",
                       "[*]~[*]~[*]~[*]~[*]~[*]",
                       "[*]~[*]~[*]~[*](~[*])~[*]",
                       "[*]~[*]~[*](~[*])~[*]~[*]",
@@ -528,7 +528,6 @@ namespace RDKit{
                       "[*]~[R]~1[R]~[R]~[R]~1[*]",
                       "[*]~[R]~1[R]~[R]~[R]~[R]~1",
                       "[*]~[R]~1(~[*])~[R]~[R]~[R]~1",
-                      "[R]~1[R]~[R]~[R]~[R]~[R]~1",
                       "[*]~[*]~[*]~[*]~[*]~[*]~[*]",
                       "[*]~[*]~[*]~[*]~[*](~[*])~[*]",
                       "[*]~[*]~[*]~[*](~[*])~[*]~[*]",
@@ -536,6 +535,7 @@ namespace RDKit{
                       "[*]~[*]~[*](~[*])~[*](~[*])~[*]",
                       "[*]~[*](~[*])~[*]~[*](~[*])~[*]",
                       "[*]~[*](~[*])~[*](~[*])(~[*])~[*]",
+#endif
                       ""};
     
   // caller owns the result, it must be deleted
@@ -574,33 +574,64 @@ namespace RDKit{
     if(!mol.getRingInfo()->isInitialized()){
       MolOps::findSSSR(mol);
     }
+
+    boost::dynamic_bitset<> isQueryAtom(mol.getNumAtoms()),isQueryBond(mol.getNumBonds());
+    ROMol::VERTEX_ITER firstA,lastA;
+    boost::tie(firstA,lastA) = mol.getVertices();  
+    while(firstA!=lastA){
+      const Atom *at=mol[*firstA].get();
+      if(isComplexQuery(at)) isQueryAtom.set(at->getIdx());
+      ++firstA;
+    }
+    ROMol::EDGE_ITER firstB,lastB;
+    boost::tie(firstB,lastB) = mol.getEdges();
+    while(firstB!=lastB){
+      const Bond *bond = mol[*firstB].get();
+      if(isQueryAtom[bond->getBeginAtomIdx()]
+         || isQueryAtom[bond->getEndAtomIdx()]
+         || isComplexQuery(bond) ){
+        isQueryBond.set(bond->getIdx());
+      }
+      ++firstB;
+    }
+    
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
     unsigned int pIdx=0;
     BOOST_FOREACH(ROMOL_SPTR patt,patts){
       ++pIdx;
-      if(patt->getNumBonds()<minPath || patt->getNumBonds()>maxPath){
-        continue;
-      }
+      //if(patt->getNumBonds()<minPath || patt->getNumBonds()>maxPath){
+      //  continue;
+      //}
       std::vector<MatchVectType> matches;
       SubstructMatch(mol,*(patt.get()),matches,false);
       boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
       BOOST_FOREACH(MatchVectType &mv,matches){
+        bool isQuery=false;
         boost::uint32_t bitId=pIdx;
         std::vector<unsigned int> amap(mv.size(),0);
         BOOST_FOREACH(MatchVectType::value_type &p,mv){
+          if(isQueryAtom[p.second]){
+            isQuery=true;
+            break;
+          }
           gboost::hash_combine(bitId,mol.getAtomWithIdx(p.second)->getAtomicNum());
           amap[p.first]=p.second;
         }
+        if(isQuery) continue;
         ROMol::EDGE_ITER firstB,lastB;
         boost::tie(firstB,lastB) = patt->getEdges();
         while(firstB!=lastB){
           BOND_SPTR pbond = (*patt.get())[*firstB];
           ++firstB;
+          if(isQueryBond[pbond->getIdx()]){
+            isQuery=true;
+            break;
+          }
           const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
                                                     amap[pbond->getEndAtomIdx()]);
           gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
         }
-        res->setBit(bitId%fpSize);
+        if(!isQuery) res->setBit(bitId%fpSize);
 
         // collect bits counting the number of occurances of the pattern:
         gboost::hash_combine(mIdx,0xBEEF);
