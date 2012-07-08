@@ -324,9 +324,13 @@ makeMolSign(CROMol data) {
   try {
     res = RDKit::LayeredFingerprintMol2(*mol,RDKit::substructLayers,1,4,SSS_FP_SIZE);
     //res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,5,SSS_FP_SIZE);
-    ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)res);
-    delete res;
-    res=0;
+
+    if(res){
+      std::string sres=BitVectToBinaryText(*res);
+      ret = makeSignatureBitmapFingerPrint((MolBitmapFingerPrint)&sres);
+      delete res;
+      res=0;
+    }
   } catch (...) {
     elog(ERROR, "makeMolSign: Unknown exception");
     if(res) delete res;
@@ -474,16 +478,16 @@ MolInchiKey(CROMol i){
 
 extern "C"  void    
 freeMolBitmapFingerPrint(MolBitmapFingerPrint data) {
-  ExplicitBitVect   *fp = (ExplicitBitVect*)data;
+  std::string   *fp = (std::string *)data;
   delete fp;
 }
 
 extern "C" MolBitmapFingerPrint 
 constructMolBitmapFingerPrint(BitmapFingerPrint *data) {
-  ExplicitBitVect *ebv=NULL;
+  std::string *ebv=NULL;
         
   try {
-    ebv = new ExplicitBitVect(VARDATA(data), VARSIZE(data) - VARHDRSZ);
+    ebv = new std::string(VARDATA(data), VARSIZE(data) - VARHDRSZ);
   } catch (...) {
     elog(ERROR, "constructMolFingerPrint: Unknown exception");
   }
@@ -493,11 +497,11 @@ constructMolBitmapFingerPrint(BitmapFingerPrint *data) {
 
 extern "C" BitmapFingerPrint * 
 deconstructMolBitmapFingerPrint(MolBitmapFingerPrint data) {
-  ExplicitBitVect *ebv = (ExplicitBitVect*)data;
+  std::string *ebv = (std::string *)data;
   ByteA            b;
 
   try {
-    b = ebv->toString();
+    b = *ebv;
   } catch (...) {
     elog(ERROR, "deconstructMolFingerPrint: Unknown exception");
   }
@@ -507,70 +511,71 @@ deconstructMolBitmapFingerPrint(MolBitmapFingerPrint data) {
 
 extern "C" bytea *
 makeSignatureBitmapFingerPrint(MolBitmapFingerPrint data) {
-  ExplicitBitVect *ebv = (ExplicitBitVect*)data;
-  int     numBits = ebv->getNumBits(),
-    i,
-    numBytes;
+  std::string *ebv = (std::string *)data;
+  unsigned int numBytes;
   bytea   *res;
   unsigned char *s;
 
-  numBytes = VARHDRSZ + (numBits/8);
-  if ( (numBits % 8) != 0 ) numBytes++;
+  numBytes = VARHDRSZ + ebv->size();
                 
   res = (bytea*)palloc0(numBytes);
   SET_VARSIZE(res, numBytes);
   s = (unsigned char *)VARDATA(res);
-
-  for(i=0; i<numBits; i++)
-    if (ebv->getBit(i))
-      s[ i/8 ]  |= 1 << (i % 8); 
-
+  for(unsigned int i=0; i<ebv->size(); i++){
+    s[i]=ebv->c_str()[i];
+  }
   return res;     
 }
 
 extern "C" int
 MolBitmapFingerPrintSize(MolBitmapFingerPrint a) {
-  ExplicitBitVect *f = (ExplicitBitVect*)a;
-
-  return f->getNumBits();
+  std::string *ebv = (std::string *)a;
+  int     numBits = ebv->size()*8;
+  return numBits;
 }
 
+static int byte_popcounts[] = {
+  0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,
+  1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+  1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+  2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+  1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+  2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+  2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,
+  3,4,4,5,4,5,5,6,4,5,5,6,5,6,6,7,4,5,5,6,5,6,6,7,5,6,6,7,6,7,7,8  };
 extern "C" double
 calcBitmapTanimotoSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
-  double res=0.0;
-
-  /*
-   * Nsame / (Na + Nb - Nsame)
-   */
-        
-  try {
-    res = TanimotoSimilarity(*(ExplicitBitVect*)a, *(ExplicitBitVect*)b);
-  } catch (ValueErrorException& e) {
-    elog(ERROR, "TanimotoSimilarity: %s", e.message().c_str());
-  } catch (...) {
-    elog(ERROR, "calcBitmapTanimotoSml: Unknown exception");
+  std::string *abv = (std::string *)a;
+  std::string *bbv = (std::string *)b;
+  const unsigned char *afp=(const unsigned char *)abv->c_str();
+  const unsigned char *bfp=(const unsigned char *)bbv->c_str();
+  int union_popcount=0,intersect_popcount=0;
+  for (unsigned int i=0; i<abv->size(); i++) {
+    union_popcount += byte_popcounts[afp[i] | bfp[i]];
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
-
-  return res;
+  if (union_popcount == 0) {
+    return 0.0;
+  }
+  return (intersect_popcount + 0.0) / union_popcount;  /* +0.0 to coerce to double */
 }
 
 extern "C" double
 calcBitmapDiceSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
-  double res=0.0;
-
-  /*
-   * 2 * Nsame / (Na + Nb)
-   */
-        
-  try {
-    res = DiceSimilarity(*(ExplicitBitVect*)a, *(ExplicitBitVect*)b);
-  } catch (ValueErrorException& e) {
-    elog(ERROR, "DiceSimilarity: %s", e.message().c_str());
-  } catch (...) {
-    elog(ERROR, "calcTanimotoSml: Unknown exception");
+  std::string *abv = (std::string *)a;
+  std::string *bbv = (std::string *)b;
+  const unsigned char *afp=(const unsigned char *)abv->c_str();
+  const unsigned char *bfp=(const unsigned char *)bbv->c_str();
+  int intersect_popcount=0,a_popcount=0,b_popcount=0;
+  for (unsigned int i=0; i<abv->size(); i++) {
+    a_popcount += byte_popcounts[afp[i]];
+    b_popcount += byte_popcounts[bfp[i]];
+    intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
-
-  return res;
+  if (a_popcount+b_popcount == 0) {
+    return 0.0;
+  }
+  return (2.0*intersect_popcount) / (a_popcount+b_popcount);
 }
 
 
@@ -1011,8 +1016,13 @@ makeLayeredBFP(CROMol data) {
     if(res) delete res;
     res=NULL;
   }
-        
-  return (MolBitmapFingerPrint)res;
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
 }
 
 extern "C" MolBitmapFingerPrint 
@@ -1028,7 +1038,13 @@ makeRDKitBFP(CROMol data) {
     res=NULL;
   }
         
-  return (MolBitmapFingerPrint)res;
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
 }
 
 extern "C" MolSparseFingerPrint 
@@ -1059,7 +1075,13 @@ makeMorganBFP(CROMol data, int radius) {
     elog(ERROR, "makeMorganBFP: Unknown exception");
   }
         
-  return (MolBitmapFingerPrint)res;
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
 }
 
 extern "C" MolSparseFingerPrint 
@@ -1092,7 +1114,13 @@ makeFeatMorganBFP(CROMol data, int radius) {
     elog(ERROR, "makeMorganBFP: Unknown exception");
   }
         
-  return (MolBitmapFingerPrint)res;
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
 }
 
 
@@ -1170,7 +1198,13 @@ makeAtomPairBFP(CROMol data){
   } catch (...) {
     elog(ERROR, "makeAtomPairBFP: Unknown exception");
   }
-  return (MolBitmapFingerPrint)res;
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
 }
 
 extern "C" MolBitmapFingerPrint 
@@ -1182,6 +1216,12 @@ makeTopologicalTorsionBFP(CROMol data){
   } catch (...) {
     elog(ERROR, "makeTopologicalTorsionBFP: Unknown exception");
   }
-  return (MolBitmapFingerPrint)res;
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
 }
 
