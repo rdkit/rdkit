@@ -202,10 +202,6 @@ extern "C" {
   void* SearchSparseFPCache( void *cache, struct MemoryContextData * ctx, Datum a, 
                              SparseFingerPrint **f, MolSparseFingerPrint *fp, bytea **val);
 
-  /*
-    void* SearchMolCache( void *cache, struct MemoryContextData * ctx, Datum a, Mol **m, CROMol *mol, MolFingerPrint *fp, bytea **val);
-    void* SearchFPCache( void *cache, struct MemoryContextData * ctx, Datum a, FingerPrint **f, MolFingerPrint *fp, bytea **val);
-  */
 #ifdef __cplusplus
 }
 #endif
