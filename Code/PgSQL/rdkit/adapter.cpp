@@ -914,8 +914,8 @@ calcSparseStringAllValsGT(const char *a, unsigned int sza, int tgt) {
     elog(ERROR, "calcSparseStringAllValsGT: could not convert argument 1 -> uint32_t");
   }
  
-  boost::uint32_t len1;
-  len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  //boost::uint32_t len1;
+  //len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
   t1+=sizeof(boost::uint32_t);
 
   boost::uint32_t nElem1;
@@ -950,8 +950,8 @@ calcSparseStringAllValsLT(const char *a, unsigned int sza, int tgt) {
     elog(ERROR, "calcSparseStringAllValsGT: could not convert argument 1 -> uint32_t");
   }
  
-  boost::uint32_t len1;
-  len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
+  //boost::uint32_t len1;
+  //len1 = *(reinterpret_cast<const boost::uint32_t *>(t1));
   t1+=sizeof(boost::uint32_t);
 
   boost::uint32_t nElem1;
