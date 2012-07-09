@@ -537,7 +537,56 @@ namespace RDKit{
                       "[*]~[*](~[*])~[*](~[*])(~[*])~[*]",
 #endif
                       ""};
-    
+
+  namespace detail {
+    void getAtomNumbers(const Atom *a,std::vector<int> &atomNums){
+      atomNums.clear();
+      if( !a->hasQuery()){
+        atomNums.push_back(a->getAtomicNum());
+        return;
+      }
+      // negated things are always complex:
+      if( a->getQuery()->getNegation()) return;
+      std::string descr=a->getQuery()->getDescription();
+      if(descr=="AtomAtomicNum"){
+        atomNums.push_back(static_cast<ATOM_EQUALS_QUERY *>(a->getQuery())->getVal());
+      } else if(descr=="AtomXor"){
+        return;
+      } else if(descr=="AtomAnd"){
+        Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
+        if( (*childIt)->getDescription()=="AtomAtomicNum" &&
+            ((*(childIt+1))->getDescription()=="AtomIsAliphatic" ||
+             (*(childIt+1))->getDescription()=="AtomIsAromatic") &&
+            (childIt+2)==a->getQuery()->endChildren()){
+          atomNums.push_back(static_cast<ATOM_EQUALS_QUERY *>((*childIt).get())->getVal());
+          return;
+        }
+      } else if(descr=="AtomOr"){
+        Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
+        while(childIt !=a->getQuery()->endChildren()){
+          if( (*childIt)->getDescription()=="AtomAtomicNum" ){
+            atomNums.push_back(static_cast<ATOM_EQUALS_QUERY *>((*childIt).get())->getVal());
+          } else if((*childIt)->getDescription()=="AtomAnd"){
+            Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt2=(*childIt)->beginChildren();
+            if( (*childIt2)->getDescription()=="AtomAtomicNum" &&
+                ((*(childIt2+1))->getDescription()=="AtomIsAliphatic" ||
+                 (*(childIt2+1))->getDescription()=="AtomIsAromatic") &&
+                (childIt2+2)==(*childIt)->endChildren()){
+              atomNums.push_back(static_cast<ATOM_EQUALS_QUERY *>((*childIt2).get())->getVal());
+            } else {
+              atomNums.clear();
+              return;
+            }
+          } else {
+            atomNums.clear();
+            return;
+          }
+          ++childIt;
+        }
+      }
+      return;
+    }
+  }    
   // caller owns the result, it must be deleted
   ExplicitBitVect *LayeredFingerprintMol2(const ROMol &mol,
                                           unsigned int layerFlags,
@@ -587,9 +636,7 @@ namespace RDKit{
     boost::tie(firstB,lastB) = mol.getEdges();
     while(firstB!=lastB){
       const Bond *bond = mol[*firstB].get();
-      if(isQueryAtom[bond->getBeginAtomIdx()]
-         || isQueryAtom[bond->getEndAtomIdx()]
-         || isComplexQuery(bond) ){
+      if( isComplexQuery(bond) ){
         isQueryBond.set(bond->getIdx());
       }
       ++firstB;
@@ -606,6 +653,10 @@ namespace RDKit{
       SubstructMatch(mol,*(patt.get()),matches,false);
       boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
       BOOST_FOREACH(MatchVectType &mv,matches){
+        // collect bits counting the number of occurances of the pattern:
+        gboost::hash_combine(mIdx,0xBEEF);
+        res->setBit(mIdx%fpSize);
+
         bool isQuery=false;
         boost::uint32_t bitId=pIdx;
         std::vector<unsigned int> amap(mv.size(),0);
@@ -633,9 +684,6 @@ namespace RDKit{
         }
         if(!isQuery) res->setBit(bitId%fpSize);
 
-        // collect bits counting the number of occurances of the pattern:
-        gboost::hash_combine(mIdx,0xBEEF);
-        res->setBit(mIdx%fpSize);
       }
     }
     return res;

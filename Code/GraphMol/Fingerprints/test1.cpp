@@ -1952,8 +1952,6 @@ void testPairsAndTorsionsOptions(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
-
-
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
