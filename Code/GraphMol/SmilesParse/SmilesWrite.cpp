@@ -295,9 +295,9 @@ namespace RDKit{
           default:
             break;
           }
+        } else if(allBondsExplicit || !aromatic ){
+          res << ":";
         }
-        if(allBondsExplicit) res << ":";
-        else if(!aromatic) res << ":";
         break;
       case Bond::DATIVE:
         if(atomToLeftIdx>=0 &&
