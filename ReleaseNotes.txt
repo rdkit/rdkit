@@ -59,6 +59,8 @@ Bug Fixes:
  - The default (Euclidean) distance metric should now work with Butina
    clustering.
  - Some bugs in the depictor were fixed.
+ - AvalonTools bug with coordinate generation for mols with no
+   conformers fixed. 
 
 New Features:
  - ChemicalFeatures now support an optional id
@@ -71,10 +73,21 @@ New Features:
    in Python) has been added.
 
 New Database Cartridge Features: 
+ - The functions mol_from_smiles(), mol_from_smarts(), and
+   mol_from_ctab() now return a null value instead of generating an
+   error when the molecule processing fails. This allows molecule
+   tables to be constructed faster.
+ - The functions mol_to_smiles() and mol_to_smarts() have been added.
+ - Creating gist indices on bit-vector fingerprint columns is faster.
+ - The indexing fingerprint for molecular substructures has been changed.
+   The new fingerprint is a bit slower to generate, but is
+   considerably better at screening. More information here:
+   http://code.google.com/p/rdkit/wiki/ImprovingTheSubstructureFingerprint
 
 New Java Wrapper Features:
 
 Deprecated modules (to be removed in next release):
+ - Support for older (pre9.1) postgresql versions.
 
 Removed modules:
  - rdkit.Excel
