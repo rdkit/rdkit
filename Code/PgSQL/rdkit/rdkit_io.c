@@ -164,6 +164,41 @@ mol_from_smiles(PG_FUNCTION_ARGS) {
   PG_RETURN_MOL_P(res);           
 }
 
+PG_FUNCTION_INFO_V1(mol_to_smiles);
+Datum           mol_to_smiles(PG_FUNCTION_ARGS);
+Datum
+mol_to_smiles(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = makeMolText(mol, &len,false);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
+PG_FUNCTION_INFO_V1(mol_to_smarts);
+Datum           mol_to_smarts(PG_FUNCTION_ARGS);
+Datum
+mol_to_smarts(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = makeMolText(mol, &len,true);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
 
 PG_FUNCTION_INFO_V1(qmol_in);
 Datum           qmol_in(PG_FUNCTION_ARGS);

@@ -18,6 +18,11 @@ SELECT is_valid_smarts('c1ccc[n,c]1');
 SELECT mol_from_smarts('c1ccc[n,c]1');
 SELECT is_valid_smarts('c1ccc');
 SELECT mol_from_smarts('c1ccc');
+SELECT mol_to_smiles(mol_from_smiles('c1ccccc1'));
+SELECT mol_to_smarts(mol_from_smiles('c1ccccc1'));
+SELECT mol_to_smarts('c1cccc[n,c]1'::qmol);
+SELECT mol_to_smiles('c1cccc[n,c]1'::qmol);
+
 
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
