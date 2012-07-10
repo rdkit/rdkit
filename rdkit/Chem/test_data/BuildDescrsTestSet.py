@@ -1,7 +1,7 @@
 import RDConfig
 import os.path,cPickle
 import Chem
-from Chem import AvailDescriptors
+from Chem import Descriptors
 
 descrs=['BertzCT','Chi0','HallKierAlpha','Ipc','Kappa3','LabuteASA','SMR_VSA1',
         'SMR_VSA10','SMR_VSA2','SMR_VSA3','SMR_VSA4','SMR_VSA5','SMR_VSA6','SMR_VSA7',
@@ -26,7 +26,7 @@ def runIt(inFileName,outFileName,smiCol=0,maxMols=-1,delim=','):
       if mol:
         vals = []
         for descr in descrs:
-          fn = AvailDescriptors.descDict[descr]
+          fn = getattr(Descriptors,descr)
           try:
             v = fn(mol)
           except:

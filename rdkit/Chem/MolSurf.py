@@ -216,7 +216,6 @@ PEOE_VSA_=rdMolDescriptors.PEOE_VSA_
 
 #-------------------------------------------------
 # install the various VSA descriptors in the namespace
-#  (this is used by AvailDescriptors)
 def _InstallDescriptors():
   for i in range(len(mrBins)):
     fn = lambda x,y=i:SMR_VSA_(x,force=0)[y]
