@@ -619,7 +619,7 @@ replacing substructures:
 >>> rms
 (<rdkit.Chem.rdchem.Mol object at 0x...>,)
 >>> Chem.MolToSmiles(rms[0])
-'COC(=O)C'
+'COC(C)=O'
 
 as well as simple SAR-table transformations like removing side chains:
 
@@ -709,7 +709,7 @@ The default similarity metric used by
 similarity.  One can use different similarity metrics:
 
 >>> DataStructs.FingerprintSimilarity(fps[0],fps[1], metric=DataStructs.DiceSimilarity)
-0.800...
+0.8
 
 Available similarity metrics include Tanimoto, Dice, Cosine, Sokal, Russel, Kulczynski, McConnaughey, and Tversky.
 
@@ -766,7 +766,7 @@ The usual metric for similarity between atom-pair fingerprints is Dice similarit
 >>> DataStructs.DiceSimilarity(pairFps[0],pairFps[2])
 0.258...
 >>> DataStructs.DiceSimilarity(pairFps[1],pairFps[2])
-0.560...
+0.56
 
 It's also possible to get atom-pair descriptors encoded as a standard
 bit vector fingerprint (ignoring the count information):
@@ -778,7 +778,7 @@ module can be used for similarity:
 
 >>> from rdkit import DataStructs
 >>> DataStructs.DiceSimilarity(pairFps[0],pairFps[1])
-0.479...
+0.48
 >>> DataStructs.DiceSimilarity(pairFps[0],pairFps[2])
 0.380...
 >>> DataStructs.DiceSimilarity(pairFps[1],pairFps[2])
@@ -977,7 +977,7 @@ centralized :api:`rdkit.Chem.Descriptors` module :
 >>> from rdkit.Chem import Descriptors
 >>> m = Chem.MolFromSmiles('c1ccccc1C(=O)O')
 >>> Descriptors.TPSA(m)
-37.299...
+37.3
 >>> Descriptors.MolLogP(m)
 1.3848
 
@@ -1008,14 +1008,14 @@ SMARTS-based language similar to Daylight's Reaction SMILES
 >>> len(ps[0]) # each entry contains one molecule for each product
 1
 >>> Chem.MolToSmiles(ps[0][0])
-'CNC(=O)C'
+'CNC(C)=O'
 >>> ps = rxn.RunReactants((Chem.MolFromSmiles('C(COC(=O)O)C(=O)O'),Chem.MolFromSmiles('NC')))
 >>> len(ps)
 2
 >>> Chem.MolToSmiles(ps[0][0])
-'CNC(OCCC(O)=O)=O'
+'CNC(=O)OCCC(=O)O'
 >>> Chem.MolToSmiles(ps[1][0])
-'CNC(CCOC(O)=O)=O'
+'CNC(=O)CCOC(=O)O'
 
 Reactions can also be built from MDL rxn files:
 
@@ -1028,7 +1028,7 @@ Reactions can also be built from MDL rxn files:
 >>> len(ps)
 1
 >>> Chem.MolToSmiles(ps[0][0])
-'CNC(=O)C'
+'CNC(C)=O'
 
 It is, of course, possible to do reactions more complex than amide
 bond formation:
@@ -1372,7 +1372,7 @@ intersection of their fingerprints:
 >>> andfp = fp&fp2
 >>> obl = list(andfp.GetOnBits())
 >>> fcat.GetEntryDescription(obl[-1])
-'ccc(NC<=O>)cc'
+'ccc(cc)NC<=O>'
 >>> fcat.GetEntryDescription(obl[-5])
 'c<-X>ccc(N)cc'
 
