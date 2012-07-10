@@ -926,6 +926,17 @@ This is more useful when the SMILES is rooted at the central atom:
 >>> Chem.MolToSmiles(submol,rootedAtAtom=amap[5],canonical=False) 
 'c(nc)(C)cc' 
 
+An alternate (and faster, particularly for large numbers of molecules) 
+approach to do the same thing, using the function :api:`rdkit.Chem.MolFragmentToSmiles` :
+
+>>> atoms=set()
+>>> for bidx in env:
+...     atoms.add(m.GetBondWithIdx(bidx).GetBeginAtomIdx())
+...     atoms.add(m.GetBondWithIdx(bidx).GetEndAtomIdx())
+...     
+>>> Chem.MolFragmentToSmiles(m,atomsToUse=list(atoms),bondsToUse=env,rootedAtAtom=5)
+'c(C)(cc)nc'
+
 
 Picking Diverse Molecules Using Fingerprints
 ============================================
