@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2011 Greg Landrum
+//  Copyright (C) 2006-2012 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -107,10 +107,34 @@ namespace RDKit{
   ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
                      bool replaceDummies=true,bool labelByIndex=false,
                      bool requireDummyMatch=false);
-        
 
+  //! \brief Carries out a Murcko decomposition on the molecule provided
+  //!
+  /*!
+
+      \param mol    - the ROMol of interest
+
+      \return a new ROMol with the Murcko scaffold
+              The client is responsible for deleting this molecule.
+  */
   ROMol *MurckoDecompose(const ROMol &mol);
 
+  //! \brief Combined two molecules to create a new one
+  //!
+  /*!
+
+      \param mol1           - the first ROMol to be combined
+      \param mol2           - the second ROMol to be combined
+      \param offset         - a constant offset to be added to every
+                              atom position in mol2 
+
+      \return a new ROMol with the two molecules combined.
+              The new molecule has not been sanitized.
+              The client is responsible for deleting this molecule.
+  */
+  ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
+                     RDGeom::Point3D offset=RDGeom::Point3D(0,0,0));
+  
   
 }
 

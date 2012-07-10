@@ -533,7 +533,14 @@ namespace RDKit{
                   (python::arg("mol")),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());                  
+      docString="Combine the atoms from two molecules to produce a third";
+      python::def("CombineMols", combineMols,
+                  (python::arg("mol1"),python::arg("mol2"),
+                   python::arg("offset")=RDGeom::Point3D(0,0,0)),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());                  
 
+      
 
       // ------------------------------------------------------------------------
       docString="Replaces atoms matching a substructure query in a molecule\n\

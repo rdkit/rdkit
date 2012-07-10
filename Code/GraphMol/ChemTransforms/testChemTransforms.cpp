@@ -870,6 +870,60 @@ void testIssue3537675()
 }
 
 
+void testCombineMols() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing combination of molecules" << std::endl;
+
+  {
+    std::string smi1="C1CCC1";
+    std::string smi2="C1CC1";
+    ROMol *mol1=SmilesToMol(smi1);
+    ROMol *mol2=SmilesToMol(smi2);
+
+    ROMol *mol3=combineMols(*mol1,*mol2);
+    TEST_ASSERT(mol3->getNumAtoms()==(mol1->getNumAtoms()+mol2->getNumAtoms()));
+    MolOps::findSSSR(*mol3);
+    TEST_ASSERT(mol3->getRingInfo()->numRings()==2);
+  }
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/ChemTransforms/testData/ethanol.mol";
+    ROMol *mol1 = MolFileToMol(pathName);
+    TEST_ASSERT(mol1);
+    ROMol *mol2 = MolFileToMol(pathName);
+    TEST_ASSERT(mol2);
+    TEST_ASSERT(mol1->getNumAtoms()==3);
+    TEST_ASSERT(mol2->getNumAtoms()==3);
+    ROMol *mol3=combineMols(*mol1,*mol2);
+    TEST_ASSERT(mol3->getNumAtoms()==(mol1->getNumAtoms()+mol2->getNumAtoms()));
+    TEST_ASSERT(mol3->getNumConformers()==1);
+    TEST_ASSERT(feq(mol3->getConformer().getAtomPos(0).x,
+                    mol3->getConformer().getAtomPos(3).x));
+    TEST_ASSERT(feq(mol3->getConformer().getAtomPos(0).y,
+                    mol3->getConformer().getAtomPos(3).y));
+    TEST_ASSERT(feq(mol3->getConformer().getAtomPos(0).z,
+                    mol3->getConformer().getAtomPos(3).z));
+
+    delete mol3;
+    mol3=combineMols(*mol1,*mol2,RDGeom::Point3D(1,0,0));
+    TEST_ASSERT(mol3->getNumAtoms()==(mol1->getNumAtoms()+mol2->getNumAtoms()));
+    TEST_ASSERT(mol3->getNumConformers()==1);
+    TEST_ASSERT(!feq(mol3->getConformer().getAtomPos(0).x,
+                    mol3->getConformer().getAtomPos(3).x));
+    TEST_ASSERT(feq(mol3->getConformer().getAtomPos(0).y,
+                    mol3->getConformer().getAtomPos(3).y));
+    TEST_ASSERT(feq(mol3->getConformer().getAtomPos(0).z,
+                    mol3->getConformer().getAtomPos(3).z));
+  }
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -891,6 +945,8 @@ int main() {
 
   testIssue3453144();
   testIssue3537675();
+
+  testCombineMols();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

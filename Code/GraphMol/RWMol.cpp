@@ -28,7 +28,6 @@ namespace RDKit{
 
   void RWMol::insertMol(const ROMol &other)
   {
-
     VERTEX_ITER firstA,lastA;
     boost::tie(firstA,lastA) = boost::vertices(other.d_graph);
     while(firstA!=lastA){
@@ -38,7 +37,7 @@ namespace RDKit{
       setAtomBookmark(newAt,ci_ATOM_HOLDER + other.d_graph[*firstA]->getIdx());
       ++firstA;
     }
-
+   
     EDGE_ITER firstB,lastB;
     boost::tie(firstB,lastB) = boost::edges(other.d_graph);
     while(firstB != lastB){
@@ -58,6 +57,9 @@ namespace RDKit{
       clearAtomBookmark(ci_ATOM_HOLDER + *firstA);
       ++firstA;
     }
+
+    // and clear our computed properties since they are no longer accurate:
+    clearComputedProps(true);
   }
 
   unsigned int RWMol::addAtom(bool updateLabel){

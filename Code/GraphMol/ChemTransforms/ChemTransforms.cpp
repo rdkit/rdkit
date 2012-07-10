@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2006-2011 Greg Landrum
+//  Copyright (C) 2006-2012 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -460,8 +460,8 @@ namespace RDKit{
         while(atomI!=atomJ){
           keepAtoms[atomI]=1;
           atomI = pathMat[atomJ*nAtoms+atomI];
-		  // test for the disconnected case:
-		  if(atomI<0) break;
+          // test for the disconnected case:
+          if(atomI<0) break;
           //std::cerr<<atomI<<" ";
         }
         //std::cerr<<std::endl;
@@ -510,4 +510,33 @@ namespace RDKit{
     updateSubMolConfs(mol,*res,removedAtoms);
     return (ROMol *)res;
   }
+
+  ROMol *combineMols(const ROMol &mol1,const ROMol &mol2,
+                     RDGeom::Point3D offset){
+    RWMol *res=new RWMol(mol1);
+    int nAtoms1=res->getNumAtoms();
+    res->insertMol(mol2);
+
+    // copy over coordinates
+    if(mol1.getNumConformers() && mol2.getNumConformers()){
+      if(mol1.getNumConformers() != mol2.getNumConformers()){
+        BOOST_LOG(rdWarningLog)<<"combineMols: molecules have unequal numbers of conformers"<<std::endl;
+      }
+      for(ROMol::ConformerIterator conf1It=res->beginConformers();
+          conf1It!=res->endConformers();++conf1It){
+        Conformer *conf1=(*conf1It).get();
+        try{
+          const Conformer *conf2=&mol2.getConformer(conf1->getId());
+          for(unsigned int i=0;i<mol2.getNumAtoms();++i){
+            conf1->setAtomPos(i+nAtoms1,conf2->getAtomPos(i)+offset);
+          }
+        } catch (ConformerException &ce) {
+          BOOST_LOG(rdWarningLog)<<"combineMols: conformer id "<<conf1->getId()<<" not found in mol2";
+        }
+      }
+    }
+
+    return (ROMol *)res;
+  }    
+
 }  // end of namespace RDKit
