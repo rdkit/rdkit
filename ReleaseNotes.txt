@@ -92,6 +92,8 @@ Deprecated modules (to be removed in next release):
 Removed modules:
  - rdkit.Excel
  - the code in $RDBASE/Code/PgSQL/RDLib
+ - rdkit.Chem.AvailDescriptors : the same functionality is now available
+   in a more useable manner from rdkit.Chem.Descriptors
 
 Other:
  - Similarity calculations on ExplicitBitVectors should now be much faster
