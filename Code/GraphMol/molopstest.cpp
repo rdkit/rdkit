@@ -3969,6 +3969,60 @@ void testBasicCanon(){
 }
 
 
+void testSFNetIssue3549146() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 3549146: problems after mergeQueryHs" << std::endl;
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue3549146.mol",true,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==16);
+    ROMol *m2 = MolOps::mergeQueryHs(*m);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getNumAtoms()==13);
+    TEST_ASSERT(!(m2->getRingInfo()->isInitialized()));
+    delete m;
+    delete m2;
+  }
+  {
+    std::string smi="CCC.C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT((m->getRingInfo()->isInitialized()));
+    m->addBond(1,3,Bond::SINGLE);
+    TEST_ASSERT((m->getRingInfo()->isInitialized()));
+    m->addBond(0,2,Bond::SINGLE);
+    TEST_ASSERT(!(m->getRingInfo()->isInitialized()));
+
+    delete m;
+  }
+  {
+    std::string smi="C1CC1C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT((m->getRingInfo()->isInitialized()));
+    m->removeBond(2,3);
+    TEST_ASSERT(!(m->getRingInfo()->isInitialized()));
+    delete m;
+  }
+  {
+    std::string smi="C1CC1C";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT((m->getRingInfo()->isInitialized()));
+    m->removeAtom(3);
+    TEST_ASSERT(!(m->getRingInfo()->isInitialized()));
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
 
 int main(){
   RDLog::InitLogs();
@@ -4023,9 +4077,9 @@ int main(){
   testSanitizeNonringAromatics();  
   testAtomAtomMatch();
   testSFNetIssue3349243();
-#endif
   testBasicCanon();
-
+#endif
+  testSFNetIssue3549146();
   return 0;
 }
 

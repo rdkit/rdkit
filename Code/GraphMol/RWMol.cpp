@@ -18,6 +18,7 @@
 #include "Atom.h"
 #include "Bond.h"
 #include "BondIterators.h"
+#include "RingInfo.h"
 
 namespace RDKit{
   void RWMol::destroy() {
@@ -162,6 +163,11 @@ namespace RDKit{
       bond->setIdx(nBonds++);
     }
 
+    // reset our ring info structure, because it is pretty likely
+    // to be wrong now:
+    dp_ringInfo->reset();
+    
+    
     // remove all connections to the atom:
     MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
     boost::clear_vertex(vd,d_graph);
@@ -200,6 +206,12 @@ namespace RDKit{
     b->setIdx(res-1);
     b->setBeginAtomIdx(atomIdx1);
     b->setEndAtomIdx(atomIdx2);
+
+    // if both atoms have a degree>1, reset our ring info structure,
+    // because there's a non-trivial chance that it's now wrong.
+    if(boost::out_degree(atomIdx1,d_graph)>1 && boost::out_degree(atomIdx2,d_graph)>1){
+      dp_ringInfo->reset();      
+    }
     
     return res;
   }
@@ -235,6 +247,11 @@ namespace RDKit{
         clearBondBookmark(tmpI->first,bnd);
       }
     }
+
+    // reset our ring info structure, because it is pretty likely
+    // to be wrong now:
+    dp_ringInfo->reset();
+
     MolGraph::vertex_descriptor vd1 = boost::vertex(aid1,d_graph);
     MolGraph::vertex_descriptor vd2 = boost::vertex(aid2,d_graph);
     boost::remove_edge(vd1, vd2, d_graph);

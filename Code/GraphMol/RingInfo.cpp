@@ -104,6 +104,7 @@ namespace RDKit{
     df_init=true;
   };
   void RingInfo::reset(){
+    if(!df_init) return;
     df_init=false;
     d_atomMembers.clear();
     d_bondMembers.clear();

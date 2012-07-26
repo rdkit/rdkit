@@ -1965,7 +1965,7 @@ CAS<~>
     em = Chem.EditableMol(m1)
     em.RemoveAtom(0)
     m2 = em.GetMol()
-    self.failUnlessRaises(ValueError,lambda:Chem.Kekulize(m2))
+    Chem.Kekulize(m2)
     
   def test59Issue3007178(self) :
     m = Chem.MolFromSmiles('CCC')
