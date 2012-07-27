@@ -67,8 +67,8 @@ namespace RDKit{
       return res;
     }
 
-    static std::string _molFormulaVersion="1.1.0";
-    std::string calcMolFormula(const ROMol &mol){
+    static std::string _molFormulaVersion="1.2.0";
+    std::string calcMolFormula(const ROMol &mol,bool separateHIsotopes){
       std::ostringstream res;
       std::map<std::string,unsigned int> counts;
       int charge=0;
@@ -77,7 +77,12 @@ namespace RDKit{
       for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	  atomIt != mol.endAtoms();++atomIt){
 	int atNum=(*atomIt)->getAtomicNum();
-        std::string symb=table->getElementSymbol(atNum);
+        std::string symb;
+        symb=table->getElementSymbol(atNum);
+        if(atNum == 1 && separateHIsotopes){
+          if((*atomIt)->getIsotope()==2) symb="D";
+          else if((*atomIt)->getIsotope()==3) symb="T";
+        }
         if(counts.find(symb)!=counts.end()){
           counts[symb]+=1;
         } else {
@@ -103,6 +108,16 @@ namespace RDKit{
       // put in Hill order:
       if(counts.find(std::string("C"))!=counts.end()){
         ks.remove(std::string("C"));
+        if(separateHIsotopes){
+          if(counts.find(std::string("T"))!=counts.end()){
+            ks.remove(std::string("T"));
+            ks.push_front(std::string("T"));
+          }
+          if(counts.find(std::string("D"))!=counts.end()){
+            ks.remove(std::string("D"));
+            ks.push_front(std::string("D"));
+          }
+        }
         if(counts.find(std::string("H"))!=counts.end()){
           ks.remove(std::string("H"));
           ks.push_front(std::string("H"));

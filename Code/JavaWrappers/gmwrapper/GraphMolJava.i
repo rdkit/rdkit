@@ -258,3 +258,8 @@ typedef unsigned long long int	uintmax_t;
 #endif
 
 %include "../DiversityPick.i"
+
+%{
+#include <RDGeneral/versions.h>
+%}
+%include <RDGeneral/versions.h>

@@ -155,8 +155,41 @@ def _pyMolecularFormula(mol):
        formula_terms.append("%+d" % charge)
 
    return "".join(formula_terms)
-MolecularFormula=lambda x:_rdMolDescriptors.CalcMolFormula(x)
+MolecularFormula = lambda *x,**y:_rdMolDescriptors.CalcMolFormula(*x,**y)
 MolecularFormula.version=_rdMolDescriptors._CalcMolFormula_version
+MolecularFormula.__doc__="""Return the molecular formula
+
+   original contribution from Andrew Dalke
+
+  >>> MolecularFormula(Chem.MolFromSmiles('CC'))
+  'C2H6'
+  >>> MolecularFormula(Chem.MolFromSmiles('CC(=O)O'))
+  'C2H4O2'
+
+"""
+
+def NumRadicalElectrons(mol):
+  """ The number of radical electrons the molecule has
+    (says nothing about spin state)
+
+  >>> NumRadicalElectrons(Chem.MolFromSmiles('CC'))
+  0.0
+  >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH3]'))
+  0.0
+  >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH2]'))
+  1.0
+  >>> NumRadicalElectrons(Chem.MolFromSmiles('C[CH]'))
+  2.0
+  >>> NumRadicalElectrons(Chem.MolFromSmiles('C[C]'))
+  3.0
+  
+
+  """
+  accum = 0.0
+  for atom in mol.GetAtoms():
+    accum += atom.GetNumRadicalElectrons()
+  return accum
+NumRadicalElectrons.version="1.0.0"
 
 _setupDescriptors(locals())
 

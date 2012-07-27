@@ -225,8 +225,9 @@ public class DescriptorTests extends GraphMolTest {
     }
     @Test public void testMolFormula() {
 	ROMol m1;
-	m1 = RWMol.MolFromSmiles("C");
-        assertEquals("CH4",RDKFuncs.calcMolFormula(m1));
+	m1 = RWMol.MolFromSmiles("C([2H])([3H])O");
+        assertEquals("CH4O",RDKFuncs.calcMolFormula(m1));
+        assertEquals("CH2DTO",RDKFuncs.calcMolFormula(m1,true));
     }
 
 

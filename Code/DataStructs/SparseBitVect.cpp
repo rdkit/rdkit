@@ -317,15 +317,10 @@ std::string SparseBitVect::toString() const {
 
   boost::int32_t tInt = ci_BITVECT_VERSION*-1;
   RDKit::streamWrite(ss,tInt);
-std::cerr<<"version: "<<tInt<<std::endl;
   tInt=d_size;
   RDKit::streamWrite(ss,tInt);
-std::cerr<<"size: "<<tInt<<std::endl;
-
   tInt=getNumOnBits();
   RDKit::streamWrite(ss,tInt);
-std::cerr<<"nOn: "<<tInt<<std::endl;
-
 
   int prev = -1;
   unsigned int zeroes;

@@ -1952,7 +1952,7 @@ int main(){
   testChiralityFrom3D();
   testRingStereochemistry();
   testIterativeChirality();
-  //testBondDirRemoval();
+  testBondDirRemoval();
   testIssue2705543();
   testIssue2762917();
 #endif

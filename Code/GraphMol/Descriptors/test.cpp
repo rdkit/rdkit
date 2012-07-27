@@ -653,6 +653,15 @@ void testMolFormula(){
   TEST_ASSERT(formula=="CH8N2+2");
   delete mol;
 
+  // H isotope tests
+  mol = SmilesToMol("[2H]C([3H])O");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="CH4O");
+  formula = calcMolFormula(*mol,true);
+  TEST_ASSERT(formula=="CH2DTO");
+  delete mol;
+
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

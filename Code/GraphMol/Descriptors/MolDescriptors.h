@@ -42,10 +42,12 @@ namespace RDKit{
       Calculates a molecule's formula
 
       \param mol        the molecule of interest
+      \param separateHIsotopes  if true, 2H and 3H will show up separately in the 
+         formula. So [2H]C will give the formula: CH3D
 
       \return the formula as a string
     */
-    std::string calcMolFormula(const ROMol &mol);
+    std::string calcMolFormula(const ROMol &mol,bool separateHIsotopes=false);
 
   } // end of namespace Descriptors
 } //end of namespace RDKit
