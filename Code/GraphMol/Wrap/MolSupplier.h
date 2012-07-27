@@ -33,11 +33,7 @@ namespace RDKit {
       } catch(...){
         res=0;
       }
-    } else {
-      PyErr_SetString(PyExc_StopIteration,"End of supplier hit");
-      throw boost::python::error_already_set();
     }
-#if 0
     // FIX: there is an edge case here that we ought to catch:
     //    suppliers where the last molecule has a chemistry problem
     //    With the current behavior, those empty molecules will not
@@ -46,7 +42,6 @@ namespace RDKit {
       PyErr_SetString(PyExc_StopIteration,"End of supplier hit");
       throw boost::python::error_already_set();
     }
-#endif
     return res;
   }
 
