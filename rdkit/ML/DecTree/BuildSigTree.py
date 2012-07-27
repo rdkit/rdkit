@@ -12,7 +12,10 @@
 import numpy
 from rdkit.ML.DecTree import SigTree
 from rdkit.ML import InfoTheory
-from rdkit.ML.FeatureSelect import CMIM
+try:
+  from rdkit.ML.FeatureSelect import CMIM
+except ImportError:
+  CMIM=None
 from rdkit.DataStructs.VectCollection import VectCollection
 import copy
 import random
@@ -136,7 +139,7 @@ def BuildSigTree(examples,nPossibleRes,ensemble=None,random=0,
     nBits = fp.GetNumBits()
     ranker = InfoTheory.InfoBitRanker(nBits,nPossibleRes,metric)
     if biasList: ranker.SetBiasList(biasList)
-    if useCMIM > 0 and not ensemble:
+    if CMIM is not None and useCMIM > 0 and not ensemble:
       ensemble = CMIM.SelectFeatures(examples,useCMIM,bvCol=1)
     if random:
       if ensemble:

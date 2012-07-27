@@ -118,7 +118,7 @@ namespace RDKit{
         CHECK_INVARIANT(0, "ERROR: Integer too big to pack\n");
       }
     }
-    val = EndianSwapBytes<HOST_ENDIAN_ORDER,LITTLE_ENDIAN_ORDER>(val);
+    //val = EndianSwapBytes<HOST_ENDIAN_ORDER,LITTLE_ENDIAN_ORDER>(val);
     
     for (bix = 0; bix < nbytes; bix++) {
       tc = (char) (val & 255);
@@ -163,7 +163,7 @@ namespace RDKit{
       offset = (1<<7) + (1<<14) + (1<<21);
     }
     num = (val >> shift) + offset;
-    num = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(num);
+    //num = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(num);
     return num;
   }
 
@@ -211,7 +211,7 @@ namespace RDKit{
       offset = (1<<7) + (1<<14) + (1<<21);
     }
     num = (val >> shift) + offset;
-    num = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(num);
+    //num = EndianSwapBytes<LITTLE_ENDIAN_ORDER,HOST_ENDIAN_ORDER>(num);
     return num;
   }
   

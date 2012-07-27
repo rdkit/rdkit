@@ -26,6 +26,9 @@ option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
 option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
 option(RDK_TEST_MULTITHREADED "run some tests of multithreading" OFF )
 
+include(TestBigEndian)
+TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
+
 # At build time put runtime binaries in the bin subdirectory
 set(RDK_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 set(RDK_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")

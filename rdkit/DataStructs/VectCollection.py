@@ -230,12 +230,13 @@ class VectCollection(object):
   # set up our support for pickling:
   #
   def __getstate__(self):
-    pkl = struct.pack('I',len(self.__vects))
+    pkl = struct.pack('<I',len(self.__vects))
     for k,v in self.__vects.iteritems():
-      pkl += struct.pack('I',k)
+      pkl += struct.pack('<I',k)
       p = v.ToBinary()
       l = len(p)
-      pkl += struct.pack('I%ds'%(l),l,p)
+      pkl += struct.pack('<I',l)
+      pkl += struct.pack('%ds'%(l),p)
     return pkl
 
   def __setstate__(self,pkl):
@@ -245,12 +246,12 @@ class VectCollection(object):
     self.__needReset=True
     szI = struct.calcsize('I')
     offset = 0
-    nToRead = struct.unpack('I',pkl[offset:offset+szI])[0]
+    nToRead = struct.unpack('<I',pkl[offset:offset+szI])[0]
     offset += szI
     for i in range(nToRead):
-      k = struct.unpack('I',pkl[offset:offset+szI])[0]
+      k = struct.unpack('<I',pkl[offset:offset+szI])[0]
       offset += szI
-      l = struct.unpack('I',pkl[offset:offset+szI])[0]
+      l = struct.unpack('<I',pkl[offset:offset+szI])[0]
       offset += szI
       sz = struct.calcsize('%ds'%l)
       bv = DataStructs.ExplicitBitVect(struct.unpack('%ds'%l,pkl[offset:offset+sz])[0])

@@ -15,7 +15,11 @@ add_subdirectory(GraphMol)
 add_subdirectory(Query)
 
 add_subdirectory(DataManip)
-add_subdirectory(SimDivPickers)
+if(RDK_BIG_ENDIAN)
+  message("Skipping build of SimDivPickers on big endian system")
+else(RDK_BIG_ENDIAN)
+  add_subdirectory(SimDivPickers)
+endif(RDK_BIG_ENDIAN)
 
 add_subdirectory(ML)
 add_subdirectory(ChemicalFeatures)

@@ -3,6 +3,8 @@
 #
 
 from rdkit.SimDivFilters import rdSimDivPickers as rdsimdiv
+if rdsimdiv is None:
+   raise ImportError,'rdSimDivPickers not built'
 from rdkit import DataStructs
 import numpy
 

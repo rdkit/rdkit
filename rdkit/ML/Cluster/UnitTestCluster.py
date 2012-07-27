@@ -14,7 +14,11 @@
 from rdkit import RDConfig
 import unittest
 from rdkit.ML.Cluster import Standardize,ClusterUtils
-from rdkit.ML.Cluster import Clusters,Murtagh
+from rdkit.ML.Cluster import Clusters
+try:
+  from rdkit.ML.Cluster import Murtagh
+except ImportError:
+  Murtagh=None
 import numpy
 import cPickle
 
@@ -57,6 +61,7 @@ class TestCase(unittest.TestCase):
     assert indices==[8,7,5,6],'bad index order'
 
   def testMurtaghUPGMA(self):
+    if Murtagh is None: return
     nPts = 5
     sz = 5
     dataP = numpy.random.random((nPts,sz))

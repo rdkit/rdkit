@@ -9,14 +9,17 @@ and evaluation of individual models
 """
 from rdkit.ML.NaiveBayes.ClassificationModel import NaiveBayesClassifier
 from rdkit.ML.Data import SplitData
-from rdkit.ML.FeatureSelect import CMIM
+try:
+  from rdkit.ML.FeatureSelect import CMIM
+except ImportError:
+  CMIM=None
 
 def makeNBClassificationModel(trainExamples, attrs, nPossibleValues, nQuantBounds,
                               mEstimateVal=-1.0,
                               useSigs=False,
                               ensemble=None,useCMIM=0,
                               **kwargs) :
-  if useCMIM > 0 and useSigs and not ensemble:
+  if CMIM is not None and useCMIM > 0 and useSigs and not ensemble:
     ensemble = CMIM.SelectFeatures(trainExamples,useCMIM,bvCol=1)
   if ensemble:
     attrs = ensemble

@@ -56,6 +56,7 @@ void BitVect::initFromText(const char *data,const unsigned int dataLen,
   } else if( !allowOldFormat ) {
     throw ValueErrorException("invalid BitVect pickle");
   }
+
   RDKit::streamRead(ss,nOn);
   _initForSize(static_cast<int>(size));
 

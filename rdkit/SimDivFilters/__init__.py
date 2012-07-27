@@ -3,4 +3,8 @@
 #    All Rights Reserved
 #
 from rdkit import rdBase
-from rdSimDivPickers import *
+try:
+  import rdSimDivPickers
+  from rdSimDivPickers import *
+except ImportError:
+  rdSimDivPickers=None

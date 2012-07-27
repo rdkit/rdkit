@@ -1,4 +1,7 @@
-from rdkit.ML.FeatureSelect import CMIM
+try:
+  from rdkit.ML.FeatureSelect import CMIM
+except ImportError:
+  CMIM = None
 from rdkit import DataStructs as DS
 from rdkit import RDConfig
 import unittest
@@ -8,6 +11,8 @@ class TestCase(unittest.TestCase):
       pass
 
    def test0FromList(self) :
+     if CMIM is None:
+       return
      examples = []
 
      bv = DS.ExplicitBitVect(5)

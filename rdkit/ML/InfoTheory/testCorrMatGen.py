@@ -2,7 +2,11 @@
 
 from rdkit import RDConfig
 import unittest
-from rdkit.ML.InfoTheory import rdInfoTheory, BitClusterer
+from rdkit.ML.InfoTheory import rdInfoTheory
+try:
+  from rdkit.ML.InfoTheory import BitClusterer
+except ImportError:
+  BitClusterer=None
 from rdkit.ML.Data import DataUtils
 from rdkit import DataStructs
 import random
@@ -64,6 +68,8 @@ class TestCase(unittest.TestCase):
         assert 2*navr/self.nbits == 158.3,2*navr/self.nbits
 
     def test1Cluster(self) :
+        if BitClusterer is None:
+            return
         cmg = rdInfoTheory.BitCorrMatGenerator()
         cmg.SetBitList(self.blist)
         for fp in self.fps:

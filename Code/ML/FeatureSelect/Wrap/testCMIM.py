@@ -31,13 +31,13 @@ class TestCase(unittest.TestCase):
      examples.append([0,bv,1])
 
      r = FS.selectCMIM(examples,2)
-     self.failUnless(r==(2,4))
+     self.failUnlessEqual(r,(2,4))
 
      r = FS.selectCMIM(examples,1)
-     self.failUnless(r==(2,))
+     self.failUnlessEqual(r,(2,))
 
      r = FS.selectCMIM(examples,3)
-     self.failUnless(r==(2,4,-1))
+     self.failUnlessEqual(r,(2,4,-1))
 
    def test1FromList(self) :
      examples = []
@@ -63,13 +63,13 @@ class TestCase(unittest.TestCase):
      examples.append([0,bv,1])
 
      r = FS.selectCMIM(examples,2)
-     self.failUnless(r==(2,4))
+     self.failUnlessEqual(r,(2,4))
 
      r = FS.selectCMIM(examples,1)
-     self.failUnless(r==(2,))
+     self.failUnlessEqual(r,(2,))
 
      r = FS.selectCMIM(examples,3)
-     self.failUnless(r==(2,4,-1))
+     self.failUnlessEqual(r,(2,4,-1))
 
 
 if __name__ == '__main__':
