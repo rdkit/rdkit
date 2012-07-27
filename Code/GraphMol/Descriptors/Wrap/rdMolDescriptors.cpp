@@ -650,9 +650,10 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   docString="returns the molecule's formula";
   python::def("CalcMolFormula",
 	      RDKit::Descriptors::calcMolFormula,
-	      (python::arg("mol")),
+	      (python::arg("mol"),
+               python::arg("separateHIsotopes")=false),
               docString.c_str());
-  python::scope().attr("_CalcMolFormula_version")="1.0.0";
+  python::scope().attr("_CalcMolFormula_version")="1.2.0";
 
   docString="returns the number of Lipinski H-bond donors for a molecule";
   python::def("CalcNumLipinskiHBD",
