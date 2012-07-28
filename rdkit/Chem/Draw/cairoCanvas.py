@@ -10,6 +10,9 @@
 #  of the RDKit source tree.
 #
 import cairo
+if not hasattr(cairo.ImageSurface,'get_data'):
+  raise ImportError,'cairo version too old'
+
 import math
 import rdkit.RDConfig
 import os,re
