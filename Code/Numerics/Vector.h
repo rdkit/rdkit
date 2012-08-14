@@ -82,23 +82,23 @@ namespace RDNumeric {
 
     //! returns the value at a particular index
     inline TYPE getVal(unsigned int i) const {
-      RANGE_CHECK(0, i, d_size-1);
+      PRECONDITION(i<d_size,"bad index");
       return d_data[i];
     }
 
     //! sets the index at a particular value
     inline void setVal(unsigned int i, TYPE val) {
-      RANGE_CHECK(0, i, d_size-1);
+      PRECONDITION(i<d_size,"bad index");
       d_data[i] = val;
     }
 
     inline TYPE operator[](unsigned int i) const {
-      RANGE_CHECK(0, i, d_size-1);
+      PRECONDITION(i<d_size,"bad index");
       return d_data[i];
     }
 
     inline TYPE& operator[](unsigned int i) {
-      RANGE_CHECK(0, i, d_size-1);
+      PRECONDITION(i<d_size,"bad index");
       return d_data[i];
     }
 
@@ -118,7 +118,7 @@ namespace RDNumeric {
      */
     
     Vector<TYPE>& assign(const Vector<TYPE> &other) {
-      CHECK_INVARIANT(d_size == other.size(), "Size mismatch in vector copying");
+      PRECONDITION(d_size == other.size(), "Size mismatch in vector copying");
       const TYPE *otherData = other.getData();
       memcpy(static_cast<void *>(d_data.get()), static_cast<const void *>(otherData), d_size*sizeof(TYPE));
       return *this;
@@ -126,7 +126,7 @@ namespace RDNumeric {
 
     //! elementwise addition, vectors must be the same size.
     Vector<TYPE>& operator+=(const Vector<TYPE> &other) {
-      CHECK_INVARIANT(d_size == other.size(), "Size mismatch in vector addition");
+      PRECONDITION(d_size == other.size(), "Size mismatch in vector addition");
       const TYPE *otherData = other.getData();
       TYPE *data = d_data.get();
       unsigned int i;
@@ -138,7 +138,7 @@ namespace RDNumeric {
 
     //! elementwise subtraction, vectors must be the same size.
     Vector<TYPE>& operator-=(const Vector<TYPE> &other) {
-      CHECK_INVARIANT(d_size == other.size(), "Size mismatch in vector subtraction");
+      PRECONDITION(d_size == other.size(), "Size mismatch in vector subtraction");
       const TYPE *otherData = other.getData();
       TYPE *data = d_data.get();
       unsigned int i;
@@ -237,7 +237,7 @@ namespace RDNumeric {
 
     //! returns the dot product between two Vectors
     inline TYPE dotProduct(const Vector<TYPE> other) {
-      CHECK_INVARIANT(d_size == other.size(), "Size mismatch in vector doct product");
+      PRECONDITION(d_size == other.size(), "Size mismatch in vector doct product");
       const TYPE *oData = other.getData();
       unsigned int i;
       TYPE res = (TYPE)(0.0);

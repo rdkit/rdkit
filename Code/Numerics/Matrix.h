@@ -89,16 +89,16 @@ namespace RDNumeric {
 
     //! returns a particular element of the matrix
     inline virtual TYPE getVal(unsigned int i, unsigned int j) const {
-      RANGE_CHECK(0, i, d_nRows-1);
-      RANGE_CHECK(0, j, d_nCols-1);
+      PRECONDITION(i<d_nRows,"bad index");
+      PRECONDITION(j<d_nCols,"bad index");
       unsigned int id = i*d_nCols + j;
       return d_data[id];
     }
 
     //! sets a particular element of the matrix
     inline virtual void setVal(unsigned int i, unsigned int j, TYPE val) {
-      RANGE_CHECK(0, i, d_nRows-1);
-      RANGE_CHECK(0, j, d_nCols-1);
+      PRECONDITION(i<d_nRows,"bad index");
+      PRECONDITION(j<d_nCols,"bad index");
       unsigned int id = i*d_nCols + j;
       
       d_data[id] = val;
@@ -106,8 +106,8 @@ namespace RDNumeric {
 
     //! returns a copy of a row of the matrix
     inline virtual void getRow(unsigned int i, Vector<TYPE> &row) const { 
-      CHECK_INVARIANT(d_nCols == row.size(), "");
-      RANGE_CHECK(0, i, d_nRows-1);
+      PRECONDITION(i<d_nRows,"bad index");
+      PRECONDITION(d_nCols == row.size(), "");
       unsigned int id = i*d_nCols;
       TYPE *rData  = row.getData(); 
       TYPE *data = d_data.get();
@@ -117,7 +117,8 @@ namespace RDNumeric {
      
     //! returns a copy of a column of the matrix
     inline virtual void getCol(unsigned int i, Vector<TYPE> &col) const { 
-      CHECK_INVARIANT(d_nRows == col.size(), "");
+      PRECONDITION(i<d_nCols,"bad index");
+      PRECONDITION(d_nRows == col.size(), "");
       unsigned int j,id;
       TYPE *rData  = col.getData(); 
       TYPE *data = d_data.get();
@@ -143,8 +144,8 @@ namespace RDNumeric {
      */
     
     Matrix<TYPE>& assign(const Matrix<TYPE> &other) {
-      CHECK_INVARIANT(d_nRows == other.numRows(), "Num rows mismatch in matrix copying");
-      CHECK_INVARIANT(d_nCols == other.numCols(), "Num cols mismatch in matrix copying");
+      PRECONDITION(d_nRows == other.numRows(), "Num rows mismatch in matrix copying");
+      PRECONDITION(d_nCols == other.numCols(), "Num cols mismatch in matrix copying");
       const TYPE *otherData = other.getData();
       TYPE *data = d_data.get();
       memcpy(static_cast<void *>(data), static_cast<const void *>(otherData), d_dataSize*sizeof(TYPE));
@@ -155,8 +156,8 @@ namespace RDNumeric {
     /*! Perform a element by element addition of other Matrix to this Matrix
      */
     virtual Matrix<TYPE>& operator+=(const Matrix<TYPE> &other) {
-      CHECK_INVARIANT(d_nRows == other.numRows(), "Num rows mismatch in matrix addition");
-      CHECK_INVARIANT(d_nCols == other.numCols(), "Num cols mismatch in matrix addition");
+      PRECONDITION(d_nRows == other.numRows(), "Num rows mismatch in matrix addition");
+      PRECONDITION(d_nCols == other.numCols(), "Num cols mismatch in matrix addition");
       const TYPE *oData = other.getData();
       unsigned int i;
       TYPE *data = d_data.get();
@@ -170,8 +171,8 @@ namespace RDNumeric {
     /*! Perform a element by element subtraction of other Matrix from this Matrix
      */
     virtual Matrix<TYPE>& operator-=(const Matrix<TYPE> &other) {
-      CHECK_INVARIANT(d_nRows == other.numRows(), "Num rows mismatch in matrix addition");
-      CHECK_INVARIANT(d_nCols == other.numCols(), "Num cols mismatch in matrix addition");
+      PRECONDITION(d_nRows == other.numRows(), "Num rows mismatch in matrix addition");
+      PRECONDITION(d_nCols == other.numCols(), "Num cols mismatch in matrix addition");
       const TYPE *oData = other.getData();
       unsigned int i;
       TYPE *data = d_data.get();
@@ -212,8 +213,8 @@ namespace RDNumeric {
     virtual Matrix<TYPE>& transpose(Matrix<TYPE> &transpose) const {
       unsigned int tRows = transpose.numRows();
       unsigned int tCols = transpose.numCols();
-      CHECK_INVARIANT(d_nCols == tRows, "Size mismatch during transposing");
-      CHECK_INVARIANT(d_nRows == tCols, "Size mismatch during transposing");
+      PRECONDITION(d_nCols == tRows, "Size mismatch during transposing");
+      PRECONDITION(d_nRows == tCols, "Size mismatch during transposing");
       unsigned int i, j;
       unsigned int idA, idAt, idT;
       TYPE *tData = transpose.getData(); 
