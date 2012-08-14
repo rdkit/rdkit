@@ -1,12 +1,14 @@
 // $Id$
 //
-//  Copyright (C) 2009-2010 Greg Landrum
+//  Copyright (C) 2009-2012 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
+//
+//  Includes contributions from Dave Cosgrove (davidacosgroveaz@gmail.com)
 //
 #ifndef _RD_MOLDRAWING_H_
 #define _RD_MOLDRAWING_H_
@@ -49,6 +51,29 @@ namespace RDKit {
       W
     } OrientType;
 
+  // **************************************************************************
+  void DrawLine( std::vector<ElementType> &res ,
+                 int atnum1 , int atnum2 , int lineWidth , bool aromatic ,
+                 double x1 , double y1 ,
+                 double x2 , double y2 ) {
+
+    res.push_back( LINE );
+    res.push_back( static_cast<ElementType>(lineWidth) );
+    if( aromatic ) {
+      res.push_back( 1 );
+    } else {
+      res.push_back( 0 );
+    }
+    res.push_back( static_cast<ElementType>(atnum1) );
+    res.push_back( static_cast<ElementType>(atnum2) );
+    res.push_back( static_cast<ElementType>(x1) );
+    res.push_back( static_cast<ElementType>(y1) );
+    res.push_back( static_cast<ElementType>(x2) );
+    res.push_back( static_cast<ElementType>(y2) );
+
+  }
+
+  // **************************************************************************
     std::vector<ElementType> DrawMol(const ROMol &mol,int confId=-1,
                                      const std::vector<int> *highlightAtoms=0,
                                      unsigned int dotsPerAngstrom=100,
@@ -104,91 +129,106 @@ namespace RDKit {
           RDGeom::Point2D a2(locs[a2Idx].x-minx,locs[a2Idx].y-miny);
           nbrSum+=a2-a1;
           if(a2Idx<a1Idx) continue;
-          res.push_back(LINE);
-          res.push_back(lineWidth);
-          res.push_back(0);
-          res.push_back(mol[*bAts]->getAtomicNum());
-          res.push_back(mol.getAtomWithIdx(a2Idx)->getAtomicNum());
-          res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
-          res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.y));
-          res.push_back(static_cast<ElementType>(dotsPerAngstrom*a2.x));
-          res.push_back(static_cast<ElementType>(dotsPerAngstrom*a2.y));
 
-          if(bond->getBondType()==Bond::DOUBLE ||
-             bond->getBondType()==Bond::AROMATIC ||
-             bond->getBondType()==Bond::TRIPLE ){
+          // draw bond from a1 to a2.
+          int atnum1 = mol[*bAts]->getAtomicNum();
+          int atnum2 = mol.getAtomWithIdx(a2Idx)->getAtomicNum();
+
+          if( !mol.getRingInfo()->numBondRings(bond->getIdx() ) ) {
+            // acyclic bonds
             RDGeom::Point2D obv=a2-a1;
             RDGeom::Point2D perp=obv;
             perp.rotate90();
             perp.normalize();
 
-            if( (bond->getBondType()==Bond::DOUBLE ||
-                 bond->getBondType()==Bond::AROMATIC) &&
-                mol.getRingInfo()->numBondRings(bond->getIdx())){
-              // we're in a ring... we might need to flip sides:
-              ROMol::OEDGE_ITER nbr2,endNbrs2;
-              boost::tie(nbr2,endNbrs2) = mol.getAtomBonds(mol[*bAts].get());
-              while(nbr2!=endNbrs2){
-                const BOND_SPTR bond2=mol[*nbr2];
-                ++nbr2;
-                if(bond2->getIdx()==bond->getIdx() ||
-                   !mol.getRingInfo()->numBondRings(bond2->getIdx())) continue;
-                bool sharedRing=false;
-                BOOST_FOREACH(const INT_VECT &ring,mol.getRingInfo()->bondRings()){
-                  if(std::find(ring.begin(),ring.end(),bond->getIdx())!=ring.end() &&
-                     std::find(ring.begin(),ring.end(),bond2->getIdx())!=ring.end()){
-                    sharedRing=true;
-                    break;
+            if( bond->getBondType()==Bond::DOUBLE || bond->getBondType()==Bond::TRIPLE ) {
+              if( bond->getBondType()==Bond::DOUBLE ){
+                perp *= 0.5 * dblBondOffset;
+              } else {
+                perp *= dblBondOffset;
+              }
+              DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+                        dotsPerAngstrom*(a1.x+perp.x) ,
+                        dotsPerAngstrom*(a1.y+perp.y) ,
+                        dotsPerAngstrom*(a2.x+perp.x) ,
+                        dotsPerAngstrom*(a2.y+perp.y) );
+              DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+                        dotsPerAngstrom*(a1.x-perp.x) ,
+                        dotsPerAngstrom*(a1.y-perp.y) ,
+                        dotsPerAngstrom*(a2.x-perp.x) ,
+                        dotsPerAngstrom*(a2.y-perp.y) );
+            }
+            if( bond->getBondType()==Bond::SINGLE || bond->getBondType()==Bond::TRIPLE ) {
+              DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+                        dotsPerAngstrom*(a1.x) ,
+                        dotsPerAngstrom*(a1.y) ,
+                        dotsPerAngstrom*(a2.x) ,
+                        dotsPerAngstrom*(a2.y) );
+            }
+          } else {
+            // cyclic bonds
+            DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+                      dotsPerAngstrom*a1.x ,
+                      dotsPerAngstrom*a1.y ,
+                      dotsPerAngstrom*a2.x ,
+                      dotsPerAngstrom*a2.y );
+
+            if(bond->getBondType()==Bond::DOUBLE ||
+               bond->getBondType()==Bond::AROMATIC ||
+               bond->getBondType()==Bond::TRIPLE ){
+              RDGeom::Point2D obv=a2-a1;
+              RDGeom::Point2D perp=obv;
+              perp.rotate90();
+              perp.normalize();
+
+              if( (bond->getBondType()==Bond::DOUBLE ||
+                   bond->getBondType()==Bond::AROMATIC) &&
+                  mol.getRingInfo()->numBondRings(bond->getIdx())){
+                // we're in a ring... we might need to flip sides:
+                ROMol::OEDGE_ITER nbr2,endNbrs2;
+                boost::tie(nbr2,endNbrs2) = mol.getAtomBonds(mol[*bAts].get());
+                while(nbr2!=endNbrs2){
+                  const BOND_SPTR bond2=mol[*nbr2];
+                  ++nbr2;
+                  if(bond2->getIdx()==bond->getIdx() ||
+                     !mol.getRingInfo()->numBondRings(bond2->getIdx())) continue;
+                  bool sharedRing=false;
+                  BOOST_FOREACH(const INT_VECT &ring,mol.getRingInfo()->bondRings()){
+                    if(std::find(ring.begin(),ring.end(),bond->getIdx())!=ring.end() &&
+                       std::find(ring.begin(),ring.end(),bond2->getIdx())!=ring.end()){
+                      sharedRing=true;
+                      break;
+                    }
                   }
-                }
-                if(sharedRing){
-                  // these two bonds share a ring.
-                  int a3Idx=bond2->getOtherAtomIdx(a1Idx);
-                  if(a3Idx!=a2Idx){
-                    RDGeom::Point2D a3(locs[a3Idx].x-minx,locs[a3Idx].y-miny);
-                    RDGeom::Point2D obv2=a3-a1;
-                    if(obv2.dotProduct(perp)<0){
-                      perp*=-1;
+                  if(sharedRing){
+                    // these two bonds share a ring.
+                    int a3Idx=bond2->getOtherAtomIdx(a1Idx);
+                    if(a3Idx!=a2Idx){
+                      RDGeom::Point2D a3(locs[a3Idx].x-minx,locs[a3Idx].y-miny);
+                      RDGeom::Point2D obv2=a3-a1;
+                      if(obv2.dotProduct(perp)<0){
+                        perp*=-1;
+                      }
                     }
                   }
                 }
               }
-            }
-            perp *= dblBondOffset;
+              perp *= dblBondOffset;
 
-            RDGeom::Point2D offsetStart=a1 + obv*(.5*(1.-dblBondLengthFrac));
+              RDGeom::Point2D offsetStart=a1 + obv*(.5*(1.-dblBondLengthFrac));
 
-            obv *= dblBondLengthFrac;
+              obv *= dblBondLengthFrac;
 
-            res.push_back(LINE);
-            res.push_back(lineWidth);
-            if( bond->getBondType()==Bond::AROMATIC ){
-              res.push_back(1);
-            } else {
-              res.push_back(0);
-            }
-            res.push_back(mol[*bAts]->getAtomicNum());
-            res.push_back(mol.getAtomWithIdx(a2Idx)->getAtomicNum());
-            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x+perp.x)));
-            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y+perp.y)));
-            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x+obv.x+perp.x)));
-            res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y+obv.y+perp.y)));
-            
-            if(bond->getBondType()==Bond::TRIPLE){
-              res.push_back(LINE);
-              res.push_back(lineWidth);
-              res.push_back(0);
-              res.push_back(mol[*bAts]->getAtomicNum());
-              res.push_back(mol.getAtomWithIdx(a2Idx)->getAtomicNum());
-              res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x-perp.x)));
-              res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y-perp.y)));
-              res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.x+obv.x-perp.x)));
-              res.push_back(static_cast<ElementType>(dotsPerAngstrom*(offsetStart.y+obv.y-perp.y)));
+              DrawLine( res , atnum1 , atnum2 , lineWidth , true ,
+                        dotsPerAngstrom*(offsetStart.x+perp.x) ,
+                        dotsPerAngstrom*(offsetStart.y+perp.y) ,
+                        dotsPerAngstrom*(offsetStart.x+obv.x+perp.x) ,
+                        dotsPerAngstrom*(offsetStart.y+obv.y+perp.y) );
             }
           }
         }
         double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(mol[*bAts]->getAtomicNum()) -
-                           mol[*bAts]->getMass());
+                             mol[*bAts]->getMass());
         static double massTol=0.001;
         if(mol[*bAts]->getAtomicNum()!=6 ||
            mol[*bAts]->getFormalCharge()!=0 ||
@@ -262,7 +302,7 @@ namespace RDKit {
         }        
         ++bAts;
       }
-      
+
       return res;
     }
   }   // end of namespace Drawing

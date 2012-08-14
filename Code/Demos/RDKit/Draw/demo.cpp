@@ -369,6 +369,18 @@ void DrawDemo(){
     cairo_surface_destroy (surface);
     delete mol;
   }
+  {
+    RWMol *mol=SmilesToMol("Nc1ccc(cc1)S(=O)(=O)c1ccc(N)cc1");
+    cairo_surface_t *surface =
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+    cairo_t *cr = cairo_create (surface);
+    MolToCairo(*mol,cr,300,300);
+
+    cairo_destroy (cr);
+    cairo_surface_write_to_png (surface, "mol3.png");
+    cairo_surface_destroy (surface);
+    delete mol;
+  }
 #endif
 }
 
