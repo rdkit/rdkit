@@ -2873,6 +2873,31 @@ void testIssue3525799(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void   testIssue3557675(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Bad issue 3557676: handling of D and T in CTABs" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/D_in_CTAB.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==2);
+  }
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/T_in_CTAB.mol";
+    RWMol *m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getAtomicNum()==1);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsotope()==3);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2929,6 +2954,7 @@ int main(int argc,char *argv[]){
   testIssue3484552();
   testIssue3514824();
   testIssue3525799();
+  testIssue3557675();
 
   return 0;
 }

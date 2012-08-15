@@ -830,10 +830,10 @@ namespace RDKit{
         }
       } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
         res->setAtomicNum(1); 
-        res->setMass(2.014);
+        res->setIsotope(2);
       } else if( symb=="T" ){  // mol blocks support "D" and "T" as shorthand... handle that.
         res->setAtomicNum(1);
-        res->setMass(3.016);
+        res->setIsotope(3);
       } else {
         res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
         res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
@@ -1243,10 +1243,10 @@ namespace RDKit{
           }
         } else if( token=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
           res = new Atom(1);
-          res->setMass(2.014);
+          res->setIsotope(2);
         } else if( token=="T" ){  // mol blocks support "D" and "T" as shorthand... handle that.
           res = new Atom(1);
-          res->setMass(3.016);
+          res->setIsotope(3);
         } else {
           res = new Atom(PeriodicTable::getTable()->getAtomicNumber(token));
           res->setMass(PeriodicTable::getTable()->getAtomicWeight(res->getAtomicNum()));
@@ -1934,6 +1934,7 @@ namespace RDKit{
       res=NULL;
       conf=NULL;
       BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: " << e.message() <<" on line: "<<line<<". Molecule skipped."<<std::endl;
+
       if(!inStream->eof()) tempStr = getLine(inStream);
       ++line;
       while(!inStream->eof() && tempStr.substr(0,6)!="M  END" && tempStr.substr(0,4)!="$$$$"){
@@ -1941,7 +1942,7 @@ namespace RDKit{
         ++line;
       }
       if(!inStream->eof() || tempStr.substr(0,6)=="M  END" || tempStr.substr(0,4)=="$$$$")
-        fileComplete=true;
+      fileComplete=true;
       else
         fileComplete=false;        
     } catch (FileParseException &e) { 
