@@ -23,12 +23,24 @@ def MakeScaffoldGeneric(mol):
   >>> Chem.MolToSmiles(MakeScaffoldGeneric(Chem.MolFromSmiles('c1ncccc1')))
   'C1CCCCC1'
 
+  The following were associated with sf.net issue 246
+  >>> Chem.MolToSmiles(MakeScaffoldGeneric(Chem.MolFromSmiles('c1[nH]ccc1'))) 
+  'C1CCCC1'
+  >>> Chem.MolToSmiles(MakeScaffoldGeneric(Chem.MolFromSmiles('C1[NH2+]C1'))) 
+  'C1CC1'
+  >>> Chem.MolToSmiles(MakeScaffoldGeneric(Chem.MolFromSmiles('C1[C@](Cl)(F)O1'))) 
+  'CC1(C)CC1'
+
   """
   res = Chem.Mol(mol.ToBinary())
   for atom in res.GetAtoms():
     if atom.GetAtomicNum()!=1:
       atom.SetAtomicNum(6)
     atom.SetIsAromatic(False)
+    atom.SetFormalCharge(0)
+    atom.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
+    atom.SetNoImplicit(0)
+    atom.SetNumExplicitHs(0)
   for bond in res.GetBonds():
     bond.SetBondType(Chem.BondType.SINGLE)
     bond.SetIsAromatic(False)
@@ -53,7 +65,7 @@ def GetScaffoldForMol(mol):
 
   >>> m = Chem.MolFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')
   >>> Chem.MolToSmiles(GetScaffoldForMol(m))
-  'c1ccc(Oc2ncccc2)cc1'
+  'c1ccc(Oc2ccccn2)cc1'
 
   """
   if 1:
@@ -87,7 +99,7 @@ def MurckoScaffoldSmilesFromSmiles(smiles,includeChirality=False):
   """ Returns MurckScaffold Smiles from smiles 
 
   >>> MurckoScaffoldSmilesFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')
-  'c1ccc(Oc2ncccc2)cc1'
+  'c1ccc(Oc2ccccn2)cc1'
 
   """
   mol = Chem.MolFromSmiles(smiles)
@@ -99,10 +111,10 @@ def MurckoScaffoldSmiles(smiles=None, mol=None, includeChirality=False):
   """ Returns MurckScaffold Smiles from smiles
 
   >>> MurckoScaffoldSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1')
-  'c1ccc(Oc2ncccc2)cc1'
+  'c1ccc(Oc2ccccn2)cc1'
 
   >>> MurckoScaffoldSmiles(mol=Chem.MolFromSmiles('Cc1cc(Oc2nccc(CCC)c2)ccc1'))
-  'c1ccc(Oc2ncccc2)cc1'
+  'c1ccc(Oc2ccccn2)cc1'
 
   """
   if smiles:

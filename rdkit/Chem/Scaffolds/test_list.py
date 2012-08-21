@@ -1,6 +1,7 @@
 
 tests=[
   ("python","test_MurckoScaffold.py",{}),
+  ("python","MurckoScaffold.py",{}),
   ]
 
 
