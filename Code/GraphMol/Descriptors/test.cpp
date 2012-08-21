@@ -660,6 +660,41 @@ void testMolFormula(){
   TEST_ASSERT(formula=="CH4O");
   formula = calcMolFormula(*mol,true);
   TEST_ASSERT(formula=="CH2DTO");
+  formula = calcMolFormula(*mol,true,false);
+  TEST_ASSERT(formula=="CH2[2H][3H]O");
+  delete mol;
+
+  // isotope test
+  mol = SmilesToMol("[13CH3]C([2H])O");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="C2H6O");
+  formula = calcMolFormula(*mol,true);
+  TEST_ASSERT(formula=="C[13C]H5DO");
+  formula = calcMolFormula(*mol,true,false);
+  TEST_ASSERT(formula=="C[13C]H5[2H]O");
+  delete mol;
+
+  // isotope test
+  mol = SmilesToMol("[13CH3]C[13CH2]C");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="C4H10");
+  formula = calcMolFormula(*mol,true);
+  TEST_ASSERT(formula=="C2[13C]2H10");
+  formula = calcMolFormula(*mol,true,false);
+  TEST_ASSERT(formula=="C2[13C]2H10");
+  delete mol;
+
+  // order test
+  mol = SmilesToMol("[13CH3]C[13CH2]CB(O)O[2H]");
+  TEST_ASSERT(mol);
+  formula = calcMolFormula(*mol);
+  TEST_ASSERT(formula=="C4H11BO2");
+  formula = calcMolFormula(*mol,true);
+  TEST_ASSERT(formula=="C2[13C]2H10DBO2");
+  formula = calcMolFormula(*mol,true,false);
+  TEST_ASSERT(formula=="C2[13C]2H10[2H]BO2");
   delete mol;
 
 

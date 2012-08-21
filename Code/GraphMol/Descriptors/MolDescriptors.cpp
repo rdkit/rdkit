@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2005-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2005-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <list>
 #include <algorithm>
 #include <sstream>
+
 
 namespace RDKit{
   namespace Descriptors {
@@ -67,68 +68,89 @@ namespace RDKit{
       return res;
     }
 
-    static std::string _molFormulaVersion="1.2.0";
-    std::string calcMolFormula(const ROMol &mol,bool separateHIsotopes){
+    namespace {
+      bool HillCompare(const std::pair<unsigned int,std::string> &v1,
+                       const std::pair<unsigned int,std::string> &v2){
+
+        bool nCompare=(v1.first<v2.first);
+
+        // special cases: Cs, Hs, Ds, and Ts go at the beginning
+        if(v1.second=="C"){
+          if(v2.second!="C") return true;
+          return nCompare;
+        } else if(v2.second=="C") return false;
+
+        if(v1.second=="H"){
+          if(v2.second!="H") return true;
+          return nCompare;
+        } else if(v2.second=="H") return false;        
+
+        if(v1.second=="D") return true;
+        else if(v2.second=="D") return false;
+
+        if(v1.second=="T") return true;
+        else if(v2.second=="T") return false;
+
+        // finally, just compare the symbols and the isotopes:
+        if(v1!=v2) return v1<v2;
+        else return nCompare;
+      }
+
+    }
+
+    static std::string _molFormulaVersion="1.3.0";
+    std::string calcMolFormula(const ROMol &mol,bool separateIsotopes,bool abbreviateHIsotopes){
       std::ostringstream res;
-      std::map<std::string,unsigned int> counts;
+      std::map<std::pair<unsigned int,std::string>,unsigned int> counts;
       int charge=0;
       unsigned int nHs=0;
       const PeriodicTable *table=PeriodicTable::getTable();
       for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
 	  atomIt != mol.endAtoms();++atomIt){
 	int atNum=(*atomIt)->getAtomicNum();
-        std::string symb;
-        symb=table->getElementSymbol(atNum);
-        if(atNum == 1 && separateHIsotopes){
-          if((*atomIt)->getIsotope()==2) symb="D";
-          else if((*atomIt)->getIsotope()==3) symb="T";
+        std::pair<unsigned int,std::string> key=std::make_pair(0,table->getElementSymbol(atNum));
+        if(separateIsotopes){
+          unsigned int isotope = (*atomIt)->getIsotope();
+          if(abbreviateHIsotopes && atNum==1 && (isotope==2 || isotope==3) ){
+            if(isotope==2) key.second="D";
+            else key.second="T";
+          } else {
+            key.first=isotope;
+          }
         }
-        if(counts.find(symb)!=counts.end()){
-          counts[symb]+=1;
+        if(counts.find(key)!=counts.end()){
+          counts[key]+=1;
         } else {
-          counts[symb]=1;
+          counts[key]=1;
         }
         nHs += (*atomIt)->getTotalNumHs();
         charge += (*atomIt)->getFormalCharge();
       }
 
       if(nHs){
-        if(counts.find(std::string("H"))!=counts.end()){
-          counts["H"]+=nHs;
+        std::pair<unsigned int,std::string> key=std::make_pair(0,"H");
+        if(counts.find(key)!=counts.end()){
+          counts[key]+=nHs;
         } else {
-          counts["H"]=nHs;
+          counts[key]=nHs;
         }
       }
-      std::list<std::string> ks;
-      for(std::map<std::string,unsigned int>::const_iterator countIt=counts.begin();
+      std::list<std::pair<unsigned int,std::string> > ks;
+      for(std::map<std::pair<unsigned int,std::string>,unsigned int>::const_iterator countIt=counts.begin();
           countIt!=counts.end();++countIt){
         ks.push_back(countIt->first);
       }
-      ks.sort();
-      // put in Hill order:
-      if(counts.find(std::string("C"))!=counts.end()){
-        ks.remove(std::string("C"));
-        if(separateHIsotopes){
-          if(counts.find(std::string("T"))!=counts.end()){
-            ks.remove(std::string("T"));
-            ks.push_front(std::string("T"));
-          }
-          if(counts.find(std::string("D"))!=counts.end()){
-            ks.remove(std::string("D"));
-            ks.push_front(std::string("D"));
-          }
-        }
-        if(counts.find(std::string("H"))!=counts.end()){
-          ks.remove(std::string("H"));
-          ks.push_front(std::string("H"));
-        }
-        ks.push_front(std::string("C"));
-      }
-
-      for(std::list<std::string>::const_iterator kIter=ks.begin();
+      ks.sort(HillCompare);
+      
+      for(std::list<std::pair<unsigned int,std::string> >::const_iterator kIter=ks.begin();
           kIter!=ks.end();++kIter){
-        res << *kIter;
-        if(counts[*kIter]>1) res<<counts[*kIter];
+        const std::pair<unsigned int,std::string> &key=*kIter;
+        if(key.first>0){
+          res<<"["<<key.first<<key.second<<"]";
+        } else {
+          res<<key.second;
+        }
+        if(counts[key]>1) res<<counts[key];
       }
       if(charge>0){
         res<<"+";
