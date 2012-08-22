@@ -200,6 +200,44 @@ mol_to_smarts(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
 
+PG_FUNCTION_INFO_V1(mol_from_pkl);
+Datum           mol_from_pkl(PG_FUNCTION_ARGS);
+Datum
+mol_from_pkl(PG_FUNCTION_ARGS) {
+  bytea    *data = PG_GETARG_BYTEA_P(0);
+  int len=VARSIZE(data)-VARHDRSZ;
+  CROMol  mol;
+  Mol     *res;
+  mol = parseMolBlob(VARDATA(data),len);
+  res = deconstructROMol(mol);
+  freeCROMol(mol);
+
+  PG_FREE_IF_COPY(data, 0);
+
+  PG_RETURN_MOL_P(res);           
+}
+
+PG_FUNCTION_INFO_V1(mol_to_pkl);
+Datum           mol_to_pkl(PG_FUNCTION_ARGS);
+Datum
+mol_to_pkl(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  bytea    *res;
+  char *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = makeMolBlob(mol, &len);
+  res=(bytea *)palloc(len+VARHDRSZ);
+  SET_VARSIZE(res,len+VARHDRSZ);
+  memcpy(VARDATA(res),str,len);
+  PG_RETURN_BYTEA_P( res );
+}
+
 PG_FUNCTION_INFO_V1(qmol_in);
 Datum           qmol_in(PG_FUNCTION_ARGS);
 Datum

@@ -93,6 +93,7 @@ extern "C" {
   bool isValidSmiles(char *data);
   bool isValidSmarts(char *data);
   bool isValidCTAB(char *data);
+  bool isValidMolBlob(char *data,int len);
 
   int molcmp(CROMol i, CROMol a);
 

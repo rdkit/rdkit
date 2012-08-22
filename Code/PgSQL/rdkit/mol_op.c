@@ -82,12 +82,24 @@ is_valid_smarts(PG_FUNCTION_ARGS) {
   char  *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidSmarts(data));
 }
+
 PG_FUNCTION_INFO_V1(is_valid_ctab);
 Datum           is_valid_ctab(PG_FUNCTION_ARGS);
 Datum
 is_valid_ctab(PG_FUNCTION_ARGS) {
   char  *data = PG_GETARG_CSTRING(0);
   PG_RETURN_BOOL(isValidCTAB(data));
+}
+
+PG_FUNCTION_INFO_V1(is_valid_pkl);
+Datum           is_valid_pkl(PG_FUNCTION_ARGS);
+Datum
+is_valid_pkl(PG_FUNCTION_ARGS) {
+  bytea    *data = PG_GETARG_BYTEA_P(0);
+  int len=VARSIZE(data)-VARHDRSZ;
+  bool res=isValidMolBlob(VARDATA(data),len);
+  PG_FREE_IF_COPY(data, 0);
+  PG_RETURN_BOOL(res);           
 }
 
 

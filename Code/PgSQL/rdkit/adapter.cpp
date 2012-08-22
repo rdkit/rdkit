@@ -284,6 +284,26 @@ isValidCTAB(char *data) {
   return res;
 }
 
+extern "C" bool
+isValidMolBlob(char *data,int len) {
+  ROMol   *mol = NULL;
+  bool res=false;
+  try {
+    StringData.assign(data,len);
+    mol = new ROMol(StringData);
+  } catch (...) {
+    mol=NULL;
+  }
+  if(mol==NULL){
+    res=false;
+  } else {
+    delete mol;
+    res=true;
+  }
+  return res;
+}
+
+
 extern "C" char *
 makeMolText(CROMol data, int *len,bool asSmarts) {
   ROMol   *mol = (ROMol*)data;
