@@ -68,6 +68,30 @@ WARNING:  could not create molecule from SMILES 'c1ccc'
  
 (1 row)
 
+SELECT mol_to_smiles(mol_from_smiles('c1ccccc1'));
+ mol_to_smiles 
+---------------
+ c1ccccc1
+(1 row)
+
+SELECT mol_to_smarts(mol_from_smiles('c1ccccc1'));
+          mol_to_smarts           
+----------------------------------
+ [#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1
+(1 row)
+
+SELECT mol_to_smarts('c1cccc[n,c]1'::qmol);
+         mol_to_smarts          
+--------------------------------
+ c1:,-c:,-c:,-c:,-c:,-[n,c]:,-1
+(1 row)
+
+SELECT mol_to_smiles('c1cccc[n,c]1'::qmol);
+ mol_to_smiles 
+---------------
+ c1ccncc1
+(1 row)
+
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
@@ -413,5 +437,23 @@ select all_values_gt(torsion_fp('c1ccccc1C'::mol),2);
  all_values_gt 
 ---------------
  f
+(1 row)
+
+select is_valid_mol_pkl('foo'::bytea);
+ is_valid_mol_pkl 
+------------------
+ f
+(1 row)
+
+select is_valid_mol_pkl(mol_to_pkl('c1ccccc1'::mol));
+ is_valid_mol_pkl 
+------------------
+ t
+(1 row)
+
+select mol_from_pkl(mol_to_pkl('c1ccccc1'::mol));
+ mol_from_pkl 
+--------------
+ c1ccccc1
 (1 row)
 

@@ -175,3 +175,7 @@ select all_values_lt(torsion_fp('c1ccccc1C'::mol),2);
 select all_values_lt(torsion_fp('c1ccccc1C'::mol),3);
 select all_values_gt(torsion_fp('c1ccccc1C'::mol),1);
 select all_values_gt(torsion_fp('c1ccccc1C'::mol),2);
+
+select is_valid_mol_pkl('foo'::bytea);
+select is_valid_mol_pkl(mol_to_pkl('c1ccccc1'::mol));
+select mol_from_pkl(mol_to_pkl('c1ccccc1'::mol));

@@ -91,10 +91,10 @@ is_valid_ctab(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(isValidCTAB(data));
 }
 
-PG_FUNCTION_INFO_V1(is_valid_pkl);
-Datum           is_valid_pkl(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(is_valid_mol_pkl);
+Datum           is_valid_mol_pkl(PG_FUNCTION_ARGS);
 Datum
-is_valid_pkl(PG_FUNCTION_ARGS) {
+is_valid_mol_pkl(PG_FUNCTION_ARGS) {
   bytea    *data = PG_GETARG_BYTEA_P(0);
   int len=VARSIZE(data)-VARHDRSZ;
   bool res=isValidMolBlob(VARDATA(data),len);
