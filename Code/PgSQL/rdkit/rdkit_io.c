@@ -302,6 +302,44 @@ bfp_out(PG_FUNCTION_ARGS) {
   PG_RETURN_DATUM( DirectFunctionCall1( byteaout, PG_GETARG_DATUM(0) ) );
 }
 
+
+PG_FUNCTION_INFO_V1(bfp_from_binary_text);
+Datum           bfp_from_binary_text(PG_FUNCTION_ARGS);
+Datum
+bfp_from_binary_text(PG_FUNCTION_ARGS) {
+  MolBitmapFingerPrint    fp;
+  BitmapFingerPrint       *b = DatumGetBitmapFingerPrintP(DirectFunctionCall1(
+                                                                              byteain,
+                                                                              PG_GETARG_DATUM(0)
+                                                                              ));
+
+  /* check correctness */
+  fp = constructMolBitmapFingerPrint(b);
+  freeMolBitmapFingerPrint(fp);
+
+  PG_RETURN_BITMAPFINGERPRINT_P(b);
+}
+
+PG_FUNCTION_INFO_V1(bfp_to_binary_text);
+Datum           bfp_to_binary_text(PG_FUNCTION_ARGS);
+Datum
+bfp_to_binary_text(PG_FUNCTION_ARGS) {
+  MolBitmapFingerPrint    abfp;
+  fcinfo->flinfo->fn_extra = SearchBitmapFPCache(
+                                                 fcinfo->flinfo->fn_extra,
+                                                 fcinfo->flinfo->fn_mcxt,
+                                                 PG_GETARG_DATUM(0), 
+                                                 NULL, &abfp, NULL);
+  
+  BitmapFingerPrint *b=deconstructMolBitmapFingerPrint(abfp);
+  freeMolBitmapFingerPrint(abfp);
+  ereport(WARNING,
+          (errcode(ERRCODE_WARNING),
+           errmsg("size: %d, len: %d",VARSIZE(b),VARSIZE(b)-VARHDRSZ)));
+  PG_RETURN_BYTEA_P( b );
+}
+
+
 PG_FUNCTION_INFO_V1(sfp_in);
 Datum           sfp_in(PG_FUNCTION_ARGS);
 Datum
