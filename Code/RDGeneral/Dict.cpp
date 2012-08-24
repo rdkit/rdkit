@@ -61,54 +61,32 @@ namespace RDKit{
     return boost::any(arg);
   };
 
-  
-#define ANY_FORCE(T) {tD.fromany< T >(boost::any(1));tD.toany< T >( T() );}
+#define ANY_FORCE(T) template T Dict::fromany<T>(const boost::any& arg) const; \
+                     template boost::any Dict::toany<T>(T arg) const;
+  ANY_FORCE(bool);
+  ANY_FORCE(boost::shared_array<double>);
+  ANY_FORCE(boost::shared_array<int>);
+  ANY_FORCE(double);
+  ANY_FORCE(int);
+  ANY_FORCE(std::list<int>);
+  ANY_FORCE(std::string);
+  ANY_FORCE(std::vector<boost::shared_array<double> >);
+  ANY_FORCE(std::vector<boost::shared_array<int> >);
+  ANY_FORCE(std::vector<double>);
+  ANY_FORCE(std::vector<int>);
+  ANY_FORCE(std::vector<std::list<int> >);
+  ANY_FORCE(std::vector<std::string>);
+  ANY_FORCE(std::vector<std::vector<double> >);
+  ANY_FORCE(std::vector<std::vector<int> >);
+  ANY_FORCE(std::vector<unsigned int>);
+  ANY_FORCE(std::vector<unsigned long long>);
+  ANY_FORCE(unsigned int);
 
-  void force_types(){
-    Dict tD;
-    bool fooBool = tD.fromany<bool>(boost::any(1));
-    tD.toany<bool>(false);
+  typedef boost::tuples::tuple<boost::uint32_t, boost::uint32_t, boost::uint32_t> uint32_t_tuple ;
+  typedef boost::tuples::tuple<double, double, double> double_tuple;
 
-    int fooInt = tD.fromany<int>(boost::any(1));
-    fooInt += 1;
-    tD.toany<int>(1);
-
-    unsigned int fooUnsigned = tD.fromany<unsigned int>(boost::any(1));
-    fooUnsigned += 1;
-    tD.toany<unsigned int>(1);
-
-    double fooDouble = tD.fromany<double>(boost::any(1));
-    tD.toany<double>(1.0);
-
-    std::string fooString = tD.fromany<std::string>(boost::any(std::string("1")));
-    tD.toany<std::string>(std::string("1"));
-
-    ANY_FORCE(std::vector<int>);
-    ANY_FORCE(std::vector<unsigned int>);
-    ANY_FORCE(std::vector<unsigned long long>);
-    ANY_FORCE(std::vector<double>);
-    ANY_FORCE(std::vector<std::string>);
-
-    ANY_FORCE(std::vector< std::vector<int> >);
-    ANY_FORCE(std::vector< std::vector<double> >);
-
-    ANY_FORCE(boost::shared_array<double>);
-    ANY_FORCE(boost::shared_array<int>);
-
-    ANY_FORCE(std::list<int>);
-
-    
-    // FIX: it's UGLY that we have to include things like this:
-    //ANY_FORCE( boost::tuples::tuple<double,double,double> );
-    tD.fromany< boost::tuples::tuple<double,double,double> >(boost::any(1));
-    tD.toany< boost::tuples::tuple<double,double,double> >(boost::tuples::tuple<double,double,double>());
-    tD.fromany< boost::tuples::tuple<boost::uint32_t,boost::uint32_t,boost::uint32_t> >(boost::any(1));
-    tD.toany< boost::tuples::tuple<boost::uint32_t,boost::uint32_t,boost::uint32_t> >(boost::tuples::tuple<boost::uint32_t,boost::uint32_t,boost::uint32_t>());
-
-  }
-
-
-
-
-
+  template uint32_t_tuple Dict::fromany<uint32_t_tuple>(const boost::any& arg) const;
+  template boost::any Dict::toany<uint32_t_tuple>(uint32_t_tuple arg) const;
+  template double_tuple Dict::fromany<double_tuple>(const boost::any& arg) const;
+  template boost::any Dict::toany<double_tuple>(double_tuple arg) const;
 }

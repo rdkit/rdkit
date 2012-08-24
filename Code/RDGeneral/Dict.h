@@ -31,10 +31,6 @@ namespace RDKit{
   //!  The actual storage is done using \c boost::any objects.
   //!
   class Dict {
-    //! \brief this function is used solely to force the instantiation of particular
-    //!    types of the \c Dict.toAny() and \c Dict.fromAny() methods in order to
-    //!    avoid link errors.
-    friend void force_types();
   public:
     typedef std::map<const std::string, boost::any> DataType;
     Dict(){
