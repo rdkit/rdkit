@@ -288,6 +288,21 @@ class TestCase(unittest.TestCase) :
     fp2 = rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m2,atomInvariants=[2]*6)
     self.failIfEqual(fp1,fp2)
 
+  def testMolFormula(self):
+    m = Chem.MolFromSmiles("[2H]C([3H])O")
+    formula = rdMD.CalcMolFormula(m)
+    self.failUnlessEqual(formula,'CH4O')
+    formula = rdMD.CalcMolFormula(m,separateIsotopes=True)
+    self.failUnlessEqual(formula,'CH2DTO')
+    formula = rdMD.CalcMolFormula(m,separateIsotopes=True,abbreviateHIsotopes=False)
+    self.failUnlessEqual(formula,'CH2[2H][3H]O')
+
+    m = Chem.MolFromSmiles("[2H][13CH2]CO")
+    formula = rdMD.CalcMolFormula(m)
+    self.failUnlessEqual(formula,'C2H6O')
+    formula = rdMD.CalcMolFormula(m,separateIsotopes=True)
+    self.failUnlessEqual(formula,'C[13C]H5DO')
+
 
 
 
