@@ -308,12 +308,8 @@ Datum           bfp_from_binary_text(PG_FUNCTION_ARGS);
 Datum
 bfp_from_binary_text(PG_FUNCTION_ARGS) {
   MolBitmapFingerPrint    fp;
-  BitmapFingerPrint       *b = DatumGetBitmapFingerPrintP(DirectFunctionCall1(
-                                                                              byteain,
-                                                                              PG_GETARG_DATUM(0)
-                                                                              ));
+  BitmapFingerPrint       *b =PG_GETARG_BYTEA_P(0);
 
-  /* check correctness */
   fp = constructMolBitmapFingerPrint(b);
   freeMolBitmapFingerPrint(fp);
 
@@ -332,10 +328,6 @@ bfp_to_binary_text(PG_FUNCTION_ARGS) {
                                                  NULL, &abfp, NULL);
   
   BitmapFingerPrint *b=deconstructMolBitmapFingerPrint(abfp);
-  freeMolBitmapFingerPrint(abfp);
-  ereport(WARNING,
-          (errcode(ERRCODE_WARNING),
-           errmsg("size: %d, len: %d",VARSIZE(b),VARSIZE(b)-VARHDRSZ)));
   PG_RETURN_BYTEA_P( b );
 }
 

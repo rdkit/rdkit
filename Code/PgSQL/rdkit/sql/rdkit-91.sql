@@ -179,3 +179,7 @@ select all_values_gt(torsion_fp('c1ccccc1C'::mol),2);
 select is_valid_mol_pkl('foo'::bytea);
 select is_valid_mol_pkl(mol_to_pkl('c1ccccc1'::mol));
 select mol_from_pkl(mol_to_pkl('c1ccccc1'::mol));
+
+select tanimoto_sml(morganbv_fp('c1ccccn1'::mol),morganbv_fp('c1ccccc1'::mol));
+select tanimoto_sml(bfp_from_binary_text(bfp_to_binary_text(morganbv_fp('c1ccccn1'::mol))),
+                    bfp_from_binary_text(bfp_to_binary_text(morganbv_fp('c1ccccc1'::mol))));

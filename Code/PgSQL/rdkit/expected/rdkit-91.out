@@ -457,3 +457,16 @@ select mol_from_pkl(mol_to_pkl('c1ccccc1'::mol));
  c1ccccc1
 (1 row)
 
+select tanimoto_sml(morganbv_fp('c1ccccn1'::mol),morganbv_fp('c1ccccc1'::mol));
+   tanimoto_sml    
+-------------------
+ 0.333333333333333
+(1 row)
+
+select tanimoto_sml(bfp_from_binary_text(bfp_to_binary_text(morganbv_fp('c1ccccn1'::mol))),
+                    bfp_from_binary_text(bfp_to_binary_text(morganbv_fp('c1ccccc1'::mol))));
+   tanimoto_sml    
+-------------------
+ 0.333333333333333
+(1 row)
+
