@@ -29,13 +29,13 @@ namespace RDKit{
 
   void RWMol::insertMol(const ROMol &other)
   {
+    std::vector<unsigned int> newAtomIds(other.getNumAtoms());
     VERTEX_ITER firstA,lastA;
     boost::tie(firstA,lastA) = boost::vertices(other.d_graph);
     while(firstA!=lastA){
       Atom *newAt = other.d_graph[*firstA]->copy();
-      addAtom(newAt,false,true);
-      // set a bookmark for this atom's original index so we can update bonds
-      setAtomBookmark(newAt,ci_ATOM_HOLDER + other.d_graph[*firstA]->getIdx());
+      unsigned int idx=addAtom(newAt,false,true);
+      newAtomIds[other.d_graph[*firstA]->getIdx()]=idx;
       ++firstA;
     }
    
@@ -44,23 +44,17 @@ namespace RDKit{
     while(firstB != lastB){
       Bond *bond_p = other.d_graph[*firstB]->copy();
       unsigned int idx1,idx2;
-      idx1 = getAtomWithBookmark(ci_ATOM_HOLDER + bond_p->getBeginAtomIdx())->getIdx();
-      idx2 = getAtomWithBookmark(ci_ATOM_HOLDER + bond_p->getEndAtomIdx())->getIdx();
+      idx1 = newAtomIds[bond_p->getBeginAtomIdx()];
+      idx2 = newAtomIds[bond_p->getEndAtomIdx()];
       bond_p->setOwningMol(this);
       bond_p->setBeginAtomIdx(idx1);
       bond_p->setEndAtomIdx(idx2);
       addBond(bond_p,true);
       ++firstB;
     }
-    // blow out those bookmarks we set
-    boost::tie(firstA,lastA) = boost::vertices(other.d_graph);
-    while(firstA!=lastA){
-      clearAtomBookmark(ci_ATOM_HOLDER + *firstA);
-      ++firstA;
-    }
 
     // and clear our computed properties since they are no longer accurate:
-    clearComputedProps(true);
+    //clearComputedProps(true);
   }
 
   unsigned int RWMol::addAtom(bool updateLabel){

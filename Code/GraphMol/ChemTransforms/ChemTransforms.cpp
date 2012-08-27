@@ -535,7 +535,7 @@ namespace RDKit{
         }
       }
     }
-
+    res->clearComputedProps(true);
     return (ROMol *)res;
   }    
 
