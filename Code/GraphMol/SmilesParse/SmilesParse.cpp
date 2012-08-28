@@ -30,8 +30,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <list>
 
-int yysmiles_parse (const char *,std::vector<RDKit::RWMol *>*,void *);
+int yysmiles_parse (const char *,std::vector<RDKit::RWMol *>*,std::list<unsigned int> *,void *);
 int yysmiles_lex_init (void **);
 int yysmiles_lex_destroy (void *);
 void setup_smiles_string(const std::string &text,void *);
@@ -49,8 +50,12 @@ namespace RDKit{
       void *scanner;
       TEST_ASSERT(!yysmiles_lex_init(&scanner));
       setup_smiles_string(inp,scanner);
-      int res=yysmiles_parse(inp.c_str(),&molVect,scanner);
+      std::list<unsigned int> branchPoints;
+      int res=yysmiles_parse(inp.c_str(),&molVect,&branchPoints,scanner);
       yysmiles_lex_destroy(scanner);
+      if(!branchPoints.empty()){
+        throw SmilesParseException("extra open parentheses");
+      }
       return res;
     }
     int smarts_parse(const std::string &inp,

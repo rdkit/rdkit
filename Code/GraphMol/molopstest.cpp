@@ -1409,7 +1409,7 @@ void testIssue183()
   m2 = SmilesToMol(smi);
   TEST_ASSERT(m2);
   TEST_ASSERT(m2->getBondWithIdx(2)->getStereo()==Bond::STEREOE);
-  TEST_ASSERT(m2->getBondWithIdx(4)->getStereo()==Bond::STEREOE);
+  TEST_ASSERT(m2->getBondWithIdx(5)->getStereo()==Bond::STEREOE);
   TEST_ASSERT(m2->getBondWithIdx(10)->getStereo()==Bond::STEREOZ);
 
   m2->debugMol(std::cerr);  

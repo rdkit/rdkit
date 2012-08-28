@@ -849,117 +849,6 @@ public class SmilesDetailsTests extends GraphMolTest {
 		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(1).getStereo());
 		smi = mol.MolToSmiles(true);
 		assertEquals(smi, refSmi);
-
-		smi = "C(=C/O)\\C";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(1).getStereo());
-		smi = mol.MolToSmiles(true);
-		assertEquals(smi, refSmi);
-
-		smi = "C(\\C/C=C/Cl)=C/O";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(4).getStereo());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(1).getStereo());
-
-		smi = "O=C\\C=C/F";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondType.DOUBLE, mol.getBondWithIdx(0).getBondType());
-		assertEquals(Bond.BondStereo.STEREONONE, mol.getBondWithIdx(0).getStereo());
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(2).getStereo());
-
-		smi = "C(/C=O)=C/F";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondType.DOUBLE, mol.getBondWithIdx(0).getBondType());
-		assertEquals(Bond.BondStereo.STEREONONE, mol.getBondWithIdx(0).getStereo());
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(2).getStereo());
-
-		smi = "C(=C/F)/C=O";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(1).getStereo());
-		assertEquals(Bond.BondStereo.STEREONONE, mol.getBondWithIdx(3).getStereo());
-
-		smi = "C(=O)\\C=C/Br";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(2).getStereo());
-		assertEquals(Bond.BondStereo.STEREONONE, mol.getBondWithIdx(0).getStereo());
-
-		smi = "CC(=O)\\C=C/Br";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(3).getStereo());
-		assertEquals(Bond.BondStereo.STEREONONE, mol.getBondWithIdx(1).getStereo());
-
-		smi = "C(=O)\\N=C\\Br";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(2).getStereo());
-		assertEquals(Bond.BondStereo.STEREONONE, mol.getBondWithIdx(0).getStereo());
-
-		smi = "CC(=O)\\N=C\\Br";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(3).getStereo());
-		assertEquals(Bond.BondStereo.STEREONONE, mol.getBondWithIdx(1).getStereo());
-
-		smi = "C(/Br)(=C/Cl)Cl";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(2).getStereo());
-
-		smi = "C(=C/Cl)(/Br)Cl";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(1).getStereo());
-
-		smi = "Cl\\C=C(\\Br)";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(1).getStereo());
-
-		smi = "Cl\\C(=C\\Br)";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(2).getStereo());
-
-		// ---------
-		// These next few molecules test propagation of bond flips:
-		// ---------
-
-		smi = "Cl/C=C(/C=C/C)\\C=C\\Br";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(1).getStereo());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(2).getStereo());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(6).getStereo());
-
-		smi = "C(/C=C/C)(\\C=C\\Br)=C\\Cl";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(0).getStereo());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(3).getStereo());
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(6).getStereo());
-
-		smi = "Br/C=C/C(/C=C/C)=C\\Cl";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(1).getStereo());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(3).getStereo());
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(6).getStereo());
-
-		smi = "Cl/C=C(/C=C/C=C\\F)\\C=C\\Br";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(1).getStereo());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(2).getStereo());
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(4).getStereo());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(8).getStereo());
-
 	}
 
 	@Test
@@ -1003,28 +892,6 @@ public class SmilesDetailsTests extends GraphMolTest {
 		assertEquals(7, mol.getNumBonds());
 	}
 
-	@Test
-	public void testIssue180() {
-		ROMol mol;
-		String smi, refSmi;
-
-		smi = "Cl/C(=N\\O)/C(=N\\O)Br";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(2).getStereo());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(5).getStereo());
-		refSmi = mol.MolToSmiles(true);
-
-		smi = "Cl/C(/C(Br)=N\\O)=N\\O";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(2).getStereo());
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(5).getStereo());
-		smi = mol.MolToSmiles(true);
-		assertEquals(smi, refSmi);
-
-	}
-
 	// Keep this -- first test of BondIterator
 	@Test
 	public void testIssue184() {
@@ -1034,8 +901,8 @@ public class SmilesDetailsTests extends GraphMolTest {
 		smi = "C1NC(Cl)C(=N\\O)/C1=N\\O";
 		mol = RWMol.MolFromSmiles(smi);
 		assertNotNull(mol);
-		assertEquals(Bond.BondType.DOUBLE, mol.getBondWithIdx(5).getBondType());
-		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(5).getStereo());
+		assertEquals(Bond.BondType.DOUBLE, mol.getBondWithIdx(4).getBondType());
+		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(4).getStereo());
 		assertEquals(Bond.BondType.DOUBLE, mol.getBondWithIdx(7).getBondType());
 		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(7).getStereo());
 		refSmi = mol.MolToSmiles(true);
@@ -1074,47 +941,6 @@ public class SmilesDetailsTests extends GraphMolTest {
 		assertNotNull(mol);
 		assertEquals(Bond.BondType.DOUBLE, mol.getBondWithIdx(1).getBondType());
 		assertEquals(Bond.BondStereo.STEREOZ, mol.getBondWithIdx(1).getStereo());
-
-		// now make it more complex
-		smi = "CC(=N\\O)/C=P/N";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		assertEquals(Bond.BondType.DOUBLE, mol.getBondWithIdx(2).getBondType());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(2).getStereo());
-		assertEquals(Bond.BondType.DOUBLE, mol.getBondWithIdx(4).getBondType());
-		assertEquals(Bond.BondStereo.STEREOE, mol.getBondWithIdx(4).getStereo());
-		refSmi = mol.MolToSmiles(true);
-
-		mol = RWMol.MolFromSmiles(refSmi);
-		assertNotNull(mol);
-
-		for (BondIterator bondIt = mol.beginBonds(); bondIt.ne(mol.endBonds()); bondIt.next()) {
-			Bond b = bondIt.getBond();
-			if (b.getBondType() == Bond.BondType.DOUBLE) {
-				assertEquals(Bond.BondStereo.STEREOE, b.getStereo());
-			}
-		}
-		smi = mol.MolToSmiles(true);
-		assertEquals(smi, refSmi);
-
-		// now repeat that experiment, but this time root the SMILES so that
-		// we go in a "sensible" order:
-
-		smi = "CC(=N\\O)/C=P/N";
-		mol = RWMol.MolFromSmiles(smi);
-		assertNotNull(mol);
-		refSmi = mol.MolToSmiles(true, false, 6);
-
-		assertEquals("N/P=C/C(C)=N/O", refSmi);
-
-		mol = RWMol.MolFromSmiles(refSmi);
-		assertNotNull(mol);
-		for (BondIterator bondIt = mol.beginBonds(); bondIt.ne(mol.endBonds()); bondIt.next()) {
-			Bond b = bondIt.getBond();
-			if (b.getBondType() == Bond.BondType.DOUBLE) {
-				assertEquals(Bond.BondStereo.STEREOE, b.getStereo());
-			}
-		}
 
 	}
 

@@ -1414,9 +1414,9 @@ that distinguish actives from inactives:
 ...   print int(id),'%.3f'%gain,int(n0),int(n1)
 ...
 702 0.081 20 17 
-329 0.073 23 25 
-160 0.073 30 43 
-315 0.073 30 43 
+328 0.073 23 25 
+341 0.073 30 43 
+173 0.073 30 43 
 1034 0.069 5 53
 
 The columns above are: bitId, infoGain, nInactive, nActive. Note that

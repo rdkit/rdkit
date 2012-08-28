@@ -119,12 +119,13 @@ void test2()
     std::string smiles="O=C(O)CCCC=CC(C1C(O)CC(O)C1(C=CC(O)CCCCC))";
     RWMol *mol=SmilesToMol(smiles);
     TEST_ASSERT(mol);
+    smiles = MolToSmiles(*mol);
 
     PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mol,2,9);
     TEST_ASSERT(pth.size()==8);
     ROMol *frag=Subgraphs::pathToSubmol(*mol,pth,false);
     smiles = MolToSmiles(*frag,true,false,0,false);
-    TEST_ASSERT(smiles=="C(C(O)C)(CC)C(C)C");
+    TEST_ASSERT(smiles=="C(C(C(O)C)C(C)C)C");
     delete frag;
     delete mol;
   }

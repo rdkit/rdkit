@@ -1155,7 +1155,7 @@ void testIssue159(){
   smi = "C(=C/O)\\C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOE);
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(refSmi==smi);
 
@@ -1165,7 +1165,7 @@ void testIssue159(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
 
   
   delete mol;
@@ -1180,15 +1180,15 @@ void testIssue159(){
   smi = "C(/C=O)=C/F";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(0)->getBondType()==Bond::DOUBLE);
-  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType()==Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
   TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
 
   delete mol;
   smi = "C(=C/F)/C=O";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
   TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREONONE);
 
   delete mol;
@@ -1223,13 +1223,13 @@ void testIssue159(){
   smi = "C(/Br)(=C/Cl)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
 
   delete mol;
   smi = "C(=C/Cl)(/Br)Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOZ);
 
   delete mol;
   smi = "Cl\\C=C(\\Br)";
@@ -1241,13 +1241,13 @@ void testIssue159(){
   smi = "Cl\\C(=C\\Br)";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
 
   delete mol;
   smi = "C(/C=C/C)";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
   delete mol;
   smi = "C(/C)=C/C";
   mol = SmilesToMol(smi);
@@ -1263,7 +1263,7 @@ void testIssue159(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
   TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
 
 
@@ -1271,8 +1271,8 @@ void testIssue159(){
   smi = "C(/C=C/C)(\\C=C\\Br)=C\\Cl";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(0)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
   TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
 
   delete mol;
@@ -1280,7 +1280,7 @@ void testIssue159(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
   TEST_ASSERT(mol->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
   
   delete mol;
@@ -1288,8 +1288,8 @@ void testIssue159(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
   TEST_ASSERT(mol->getBondWithIdx(8)->getStereo() == Bond::STEREOE);
   
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1368,15 +1368,15 @@ void testIssue180(){
   smi = "Cl/C(=N\\O)/C(=N\\O)Br";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
   refSmi = MolToSmiles(*mol,1);
   
   delete mol;
   smi="Cl/C(/C(Br)=N\\O)=N\\O";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(3)->getStereo() == Bond::STEREOE);
   TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
   smi = MolToSmiles(*mol,1);
   TEST_ASSERT(refSmi==smi);
@@ -1395,8 +1395,8 @@ void testIssue184(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   //mol->debugMol(std::cout);
-  TEST_ASSERT(mol->getBondWithIdx(5)->getBondType() == Bond::DOUBLE);
-  TEST_ASSERT(mol->getBondWithIdx(5)->getStereo() == Bond::STEREOZ);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOZ);
   TEST_ASSERT(mol->getBondWithIdx(7)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(7)->getStereo() == Bond::STEREOZ);
   refSmi = MolToSmiles(*mol,1);
@@ -1447,8 +1447,8 @@ void testIssue185(){
   smi ="CC(=N\\O)/C=P/N";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getBondType() == Bond::DOUBLE);
-  TEST_ASSERT(mol->getBondWithIdx(2)->getStereo() == Bond::STEREOE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getBondType() == Bond::DOUBLE);
+  TEST_ASSERT(mol->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
   TEST_ASSERT(mol->getBondWithIdx(4)->getBondType() == Bond::DOUBLE);
   TEST_ASSERT(mol->getBondWithIdx(4)->getStereo() == Bond::STEREOE);
   refSmi = MolToSmiles(*mol,1);
@@ -3074,7 +3074,21 @@ void testFragmentSmiles(){
     TEST_ASSERT(m);
     int as[]={0,1,2,4};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
-    std::string labels[6]={"a","","b","a","",""};
+    std::string labels[6]={"a","b","","a","",""};
+    std::vector<std::string> bondLabels(labels,labels+6);
+    std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
+    std::cerr<<csmiles<<std::endl;
+    TEST_ASSERT(csmiles=="CaC(aC)bC");
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="CC(=CC)CCC";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    int as[]={0,1,2,4};
+    std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
+    std::string labels[6]={"b","a","","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
     TEST_ASSERT(csmiles=="CaC(aC)bC");
@@ -3087,20 +3101,7 @@ void testFragmentSmiles(){
     TEST_ASSERT(m);
     int as[]={0,1,2,4};
     std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
-    std::string labels[6]={"b","","a","a","",""};
-    std::vector<std::string> bondLabels(labels,labels+6);
-    std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
-    TEST_ASSERT(csmiles=="CaC(aC)bC");
-    delete m;
-  }
-  {
-    RWMol *m;
-    std::string smiles="CC(=CC)CCC";
-    m = SmilesToMol(smiles);
-    TEST_ASSERT(m);
-    int as[]={0,1,2,4};
-    std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
-    std::string labels[6]={"b","","b","a","",""};
+    std::string labels[6]={"b","b","","a","",""};
     std::vector<std::string> bondLabels(labels,labels+6);
     std::string csmiles = MolFragmentToSmiles(*m,atomsToUse,0,0,&bondLabels);
     TEST_ASSERT(csmiles=="CaC(bC)bC");
@@ -3129,18 +3130,13 @@ void testBug3528556(){
     std::string smiles="N12.N13.C24.C35.C46.C56";
     m = SmilesToMol(smiles);
     TEST_ASSERT(m);
-    std::cerr<<"\n\n\n\n---------------------------------------\n";
     std::string csmiles1 = MolToSmiles(*m,true);
     delete m;
     std::string smiles2="N1NCCCC1";
     m = SmilesToMol(smiles2);
     TEST_ASSERT(m);
-    std::cerr<<"\n\n\n\n---------------------------------------\n";
     std::string csmiles2 = MolToSmiles(*m,true);
     delete m;
-
-    std::cerr<<"csmi1: "<<csmiles1<<std::endl;
-    std::cerr<<"csmi2: "<<csmiles2<<std::endl;
     TEST_ASSERT(csmiles1==csmiles2);
   }
 
