@@ -1013,7 +1013,7 @@ namespace RDKit {
     }
 
     namespace {
-      void _DFS(const ROMol &mol,const Atom *atom,INT_VECT &atomColors,std::vector<const Atom *> traversalOrder,
+      void _DFS(const ROMol &mol,const Atom *atom,INT_VECT &atomColors,std::vector<const Atom *> &traversalOrder,
                 VECT_INT_VECT &res,const Atom *fromAtom=0){
         //std::cerr<<"  dfs: "<<atom->getIdx()<<" from "<<(fromAtom?fromAtom->getIdx():-1)<<std::endl;
         PRECONDITION(atom,"bad atom");
@@ -1021,11 +1021,13 @@ namespace RDKit {
         atomColors[atom->getIdx()]=1;
         traversalOrder.push_back(atom);
 
+
         ROMol::ADJ_ITER nbrIter,endNbrs;
         boost::tie(nbrIter,endNbrs) = mol.getAtomNeighbors(atom);
         while(nbrIter!=endNbrs){
           const Atom *nbr=mol[*nbrIter].get();
           unsigned int nbrIdx=nbr->getIdx();
+          //std::cerr<<"   "<<atom->getIdx()<<"       consider: "<<nbrIdx<<"  "<<atomColors[nbrIdx]<<std::endl;
           if(atomColors[nbrIdx]==0){
             if(nbr->getDegree()<2){
               atomColors[nbr->getIdx()]=2;
@@ -1035,7 +1037,8 @@ namespace RDKit {
           } else if(atomColors[nbrIdx]==1){
             if(fromAtom && nbrIdx!=fromAtom->getIdx()){
               INT_VECT cycle;
-              for(std::vector<const Atom *>::reverse_iterator rIt=traversalOrder.rbegin();
+              std::vector<const Atom *>::reverse_iterator lastElem=std::find(traversalOrder.rbegin(),traversalOrder.rend(),atom);
+              for(std::vector<const Atom *>::reverse_iterator rIt=lastElem;//traversalOrder.rbegin();
                   rIt!=traversalOrder.rend() && (*rIt)->getIdx()!=nbrIdx;
                   ++rIt){
                 cycle.push_back((*rIt)->getIdx());
@@ -1044,12 +1047,13 @@ namespace RDKit {
               res.push_back(cycle);
               //std::cerr<<"    cycle from "<<atom->getIdx()<<" :";
               //std::copy(cycle.begin(),cycle.end(),std::ostream_iterator<int>(std::cerr," "));
-
+              //std::cerr<<std::endl;
             }
           }
           ++nbrIter;
         }
         atomColors[atom->getIdx()]=2;
+        traversalOrder.pop_back();
         //std::cerr<<"  done "<<atom->getIdx()<<std::endl;
       }
     } // end of anonymous namespace

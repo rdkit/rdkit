@@ -3410,6 +3410,16 @@ void testFastFindRings(){
     TEST_ASSERT(m->getRingInfo()->numRings()==1);
     delete m;
   }
+  {
+    std::string smi="c1c(=O)nc2[nH]cnn2c1O";
+    RWMol *m=SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    MolOps::fastFindRings(*m);
+    TEST_ASSERT(m->getRingInfo());
+    TEST_ASSERT(m->getRingInfo()->isInitialized());
+    TEST_ASSERT(m->getRingInfo()->numRings()==2);
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
