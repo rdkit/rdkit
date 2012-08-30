@@ -668,7 +668,8 @@ namespace FindRings {
           } else {
             // ignore this one
           }
-        } else if(ringAtoms[*nbrIdx]){
+        } else if(ringAtoms[*nbrIdx] && std::find(tv.begin(),tv.end(),*nbrIdx)==tv.end()){
+          //} else if(ringAtoms[*nbrIdx]){
           INT_VECT nv(tv);
           nv.push_back(*nbrIdx);
           bfsq.push_back(nv);

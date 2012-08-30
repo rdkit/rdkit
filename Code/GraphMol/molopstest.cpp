@@ -4033,6 +4033,39 @@ void testSFNetIssue3549146() {
 }
 
 
+void testSFNetIssue249() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 249: finding rings consumes all memory" << std::endl;
+
+  {
+    std::string smi="Cc1cc2cc(c1)C(=O)NCc1cc-3cc(CNC(=O)c4cc(C)cc(c4)C(=O)NCc4cc(cc(CNC2=O)c4O)-c2cc4CNC(=O)c5cc(C)cc(c5)C(=O)NCc5cc-3cc(CNC(=O)c3cc(C)cc(c3)C(=O)NCc(c2)c4O)c5O)c1O";
+    ROMol *m = SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==88);
+    m->updatePropertyCache(false);
+    std::cerr<<"starting ring finding"<<std::endl;
+    MolOps::findSSSR(*m);
+    std::cerr<<"done"<<std::endl;    
+    
+    delete m;
+  }
+
+
+  {
+    std::string smi="CCCOc1c2CNC(=O)c3cc(cc(c3)C(=O)NCc3cc4cc(CNC(=O)c5cc(C(=O)NCc1cc(c2)c1cc2CNC(=O)c6cc(cc(c6)C(=O)NCc6cc4cc(CNC(=O)c4cc(C(=O)NCc(c1)c2OCCC)cc(c4)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O)c6OCCC)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O)cc(c5)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O)c3OCCC)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O";
+    ROMol *m = SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==196);
+    m->updatePropertyCache(false);
+    std::cerr<<"starting ring finding"<<std::endl;
+    MolOps::findSSSR(*m);
+    std::cerr<<"done"<<std::endl;    
+    
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -4088,8 +4121,9 @@ int main(){
   testAtomAtomMatch();
   testSFNetIssue3349243();
   testBasicCanon();
-#endif
   testSFNetIssue3549146();
+#endif
+  testSFNetIssue249();
   return 0;
 }
 
