@@ -4063,6 +4063,19 @@ void testSFNetIssue249() {
     delete m;
   }
 
+  {
+    std::string smi="CCn1nnc(c1)CN=C(C1CC2C3CCC4C5C3C3C6C2C2C1C1CCC7C(C1)C1C8C9C7C(C(=O)O)C(C(=O)O)C7C9C(C9C8C8C%10C1C1C(C2C2C6C6C%11C3C(C5)C3C(C(=O)O)C5C%12CC9C9C8C8C(C%10)C%10C%13C(C%14C(C2C1C(=O)O)C6C1C2C%11C3C3C5C(C5C%12C9C(C8CC%10)CC5)C(CC3C2C(C(C1C%14CC%13C(=NCc1nnn(c1)CC)O)C(=O)O)C(=O)O)C(=NCc1nnn(c1)CC)O)C(=O)O)C(=O)O)CC1C(C4C(CC71)C(=NCc1nnn(c1)CC)O)C(=O)O)O";
+    ROMol *m = SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==167);
+    m->updatePropertyCache(false);
+    std::cerr<<"starting ring finding"<<std::endl;
+    MolOps::findSSSR(*m);
+    std::cerr<<"done"<<std::endl;    
+    
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 

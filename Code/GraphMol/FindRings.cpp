@@ -643,7 +643,8 @@ namespace FindRings {
                       unsigned int startAtomIdx,
                       unsigned int endAtomIdx,
                       boost::dynamic_bitset<> &ringAtoms,
-                      INT_VECT &res){
+                      INT_VECT &res,
+                      RINGINVAR_SET &invars){
     res.clear();
     std::deque<INT_VECT> bfsq;
 
@@ -660,11 +661,16 @@ namespace FindRings {
       while(nbrIdx!=endNbrs){
         if(*nbrIdx==endAtomIdx) {
           if(currAtomIdx!=startAtomIdx){
-            // we're done
             tv.push_back(*nbrIdx);
-            res.resize(tv.size());
-            std::copy(tv.begin(),tv.end(),res.begin());
-            return true;
+            // make sure the ring we just found isn't already in our set
+            // of rings (this was an extension of sf.net issue 249)
+            boost::uint32_t invr = RingUtils::computeRingInvariant(tv,tMol.getNumAtoms());
+            if (invars.find(invr) == invars.end()) {
+              // we're done!
+              res.resize(tv.size());
+              std::copy(tv.begin(),tv.end(),res.begin());
+              return true;
+            }
           } else {
             // ignore this one
           }
@@ -693,7 +699,7 @@ namespace FindRings {
 
     INT_VECT nring;
     if(_atomSearchBFS(tMol,bond->getBeginAtomIdx(),bond->getEndAtomIdx(),
-                      ringAtoms,nring)){
+                      ringAtoms,nring,invars)){
       boost::uint32_t invr = RingUtils::computeRingInvariant(nring,tMol.getNumAtoms());
       if (invars.find(invr) == invars.end()) {
         res.push_back(nring);
@@ -880,6 +886,7 @@ namespace RDKit {
               if(ringAtoms[bnd->getBeginAtomIdx()] &&
                  ringAtoms[bnd->getEndAtomIdx()]){
                 possibleBonds.push_back(bnd);
+                break;
               }
             }
           }
@@ -895,6 +902,7 @@ namespace RDKit {
                 if(ringAtoms[bnd->getBeginAtomIdx()] &&
                    ringAtoms[bnd->getEndAtomIdx()]){
                   possibleBonds.push_back(bnd);
+                  break;
                 }
               }
             }
