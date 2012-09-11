@@ -38,26 +38,21 @@ namespace Subgraphs {
       const Atom *atom = mol.getAtomWithIdx(i);
       // if are at a hydrogen and we are not interested in bonds connecting to them
       // move on
-      if( atom->getAtomicNum()!=1 || useHs ){
+      if( useHs || atom->getAtomicNum()!=1 ){
         ROMol::OEDGE_ITER bIt1,end;
         boost::tie(bIt1,end) = mol.getAtomBonds(atom);
         while(bIt1!=end){
           const BOND_SPTR bond1 = mol[*bIt1];
           // if this bond connect to a hydrogen and we are not interested
           // in it ignore 
-          if( bond1->getOtherAtom(atom)->getAtomicNum() != 1 || useHs ){
+          if( useHs || bond1->getOtherAtom(atom)->getAtomicNum() != 1 ){
             int bid1 = bond1->getIdx();
-            if (nbrs.find(bid1) == nbrs.end()) {
-              INT_VECT nlst;
-              nbrs[bid1] = nlst;
-            }
-            ROMol::OEDGE_ITER bIt2;
-            bIt2 = mol.getAtomBonds(atom).first;
+            ROMol::OEDGE_ITER bIt2= mol.getAtomBonds(atom).first;
             while(bIt2 != end){
               const BOND_SPTR bond2 = mol[*bIt2];
               int bid2 = bond2->getIdx();
               if (bid1 != bid2 &&
-                  (bond2->getOtherAtom(atom)->getAtomicNum() != 1 || useHs ) ){
+                  (useHs || bond2->getOtherAtom(atom)->getAtomicNum() != 1 ) ){
                 nbrs[bid1].push_back(bid2); //FIX: pathListType should probably be container of pointers ??
               }
               ++bIt2;
@@ -300,19 +295,13 @@ namespace Subgraphs {
   
     // Start path at each bond
     PATH_LIST res;
-    INT_VECT cands;
-    PATH_TYPE spath;
 
     // start paths at each bond:
-    INT_INT_VECT_MAP::iterator nbi;
-    for (nbi = nbrs.begin(); nbi != nbrs.end(); nbi++) {
+    for (INT_INT_VECT_MAP::iterator nbi = nbrs.begin();
+         nbi != nbrs.end(); ++nbi) {
       // don't come back to this bond in the later subgraphs
       int i = (*nbi).first;
-      if (forbidden[i]){
-        continue;
-      }
-      forbidden[i]=1;
-      
+
       // if we're only returning paths rooted at a particular atom, check now
       // that this bond involves that atom:
       if(rootedAtAtom>=0 && mol.getBondWithIdx(i)->getBeginAtomIdx()!=rootedAtAtom &&
@@ -320,12 +309,18 @@ namespace Subgraphs {
         continue;
       }
 
+      if (forbidden[i]){
+        continue;
+      }
+      forbidden[i]=1;
+      
       // start the recursive path building with the current bond
+      PATH_TYPE spath;
       spath.clear();
       spath.push_back(i);
       
       // neighbors of this bond are the next candidates
-      cands = nbrs[i];
+      INT_VECT cands = nbrs[i];
       
       // now call the recursive function
       // little bit different from the python version 
@@ -354,19 +349,12 @@ namespace Subgraphs {
       res[idx] = ordern;
     }
 
-    INT_VECT cands;
-    PATH_TYPE spath;
-
     // start paths at each bond:
-    INT_INT_VECT_MAP::iterator nbi;
-    for (nbi = nbrs.begin(); nbi != nbrs.end(); nbi++) {
+    for (INT_INT_VECT_MAP::iterator nbi = nbrs.begin();
+         nbi != nbrs.end(); nbi++) {
       // don't come back to this bond in the later subgraphs
       int i = (*nbi).first;
-      if (forbidden[i]){
-        continue;
-      }
-      forbidden[i]=1;
-      
+
       // if we're only returning paths rooted at a particular atom, check now
       // that this bond involves that atom:
       if(rootedAtAtom>=0 && mol.getBondWithIdx(i)->getBeginAtomIdx()!=rootedAtAtom &&
@@ -374,14 +362,20 @@ namespace Subgraphs {
         continue;
       }
 
+      if (forbidden[i]){
+        continue;
+      }
+      forbidden[i]=1;
+      
       // start the recursive path building with the current bond
+      PATH_TYPE spath;
       spath.clear();
       spath.push_back(i);
 
       // neighbors of this bond are the next candidates
-      cands = nbrs[i];
+      INT_VECT cands = nbrs[i];
       
-      // now call teh recursive function
+      // now call the recursive function
       // little bit different from the python version 
       // the result list of paths is passed as a reference, instead of on the fly 
       // appending 
