@@ -47,6 +47,10 @@ namespace Subgraphs {
           // in it ignore 
           if( useHs || bond1->getOtherAtom(atom)->getAtomicNum() != 1 ){
             int bid1 = bond1->getIdx();
+            if (nbrs.find(bid1) == nbrs.end()) {
+              INT_VECT nlst;
+              nbrs[bid1] = nlst;
+            }
             ROMol::OEDGE_ITER bIt2= mol.getAtomBonds(atom).first;
             while(bIt2 != end){
               const BOND_SPTR bond2 = mol[*bIt2];
@@ -352,7 +356,6 @@ namespace Subgraphs {
     // start paths at each bond:
     for (INT_INT_VECT_MAP::iterator nbi = nbrs.begin();
          nbi != nbrs.end(); nbi++) {
-      // don't come back to this bond in the later subgraphs
       int i = (*nbi).first;
 
       // if we're only returning paths rooted at a particular atom, check now
@@ -362,6 +365,7 @@ namespace Subgraphs {
         continue;
       }
 
+      // don't come back to this bond in the later subgraphs
       if (forbidden[i]){
         continue;
       }
