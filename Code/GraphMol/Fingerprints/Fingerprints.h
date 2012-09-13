@@ -51,9 +51,10 @@ namespace RDKit{
                                      unsigned int minSize=128,
                                      bool branchedPaths=true,
                                      bool useBondOrder=true,
-                                     std::vector<boost::uint32_t> *atomInvariants=0
+                                     std::vector<boost::uint32_t> *atomInvariants=0,
+                                     const std::vector<boost::uint32_t> *fromAtoms=0
                                      );
-  const std::string RDKFingerprintMolVersion="1.1.0";
+  const std::string RDKFingerprintMolVersion="1.2.0";
 
 
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule
@@ -102,9 +103,11 @@ namespace RDKit{
                                          double tgtDensity=0.0,unsigned int minSize=128,
                                          std::vector<unsigned int> *atomCounts=0,
                                          ExplicitBitVect *setOnlyBits=0,
-                                         bool branchedPaths=true);
+                                         bool branchedPaths=true,
+                                         const std::vector<boost::uint32_t> *fromAtoms=0
+                                         );
   const unsigned int maxFingerprintLayers=10;
-  const std::string LayeredFingerprintMolVersion="0.5.0";
+  const std::string LayeredFingerprintMolVersion="0.6.0";
   const unsigned int substructLayers=0x07; 
 
   //! \brief Generates a topological fingerprint for a molecule

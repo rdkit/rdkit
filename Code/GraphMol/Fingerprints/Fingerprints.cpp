@@ -28,6 +28,8 @@
 #include <boost/dynamic_bitset.hpp>
 //#define LAYEREDFP_USE_MT
 
+//#define VERBOSE_FINGERPRINTING 1
+
 namespace RDKit{
   namespace {
     bool isComplexQuery(const Bond *b){
@@ -114,7 +116,9 @@ namespace RDKit{
                                      double tgtDensity,unsigned int minSize,
                                      bool branchedPaths,
                                      bool useBondOrder,
-                                     std::vector<boost::uint32_t> *atomInvariants){
+                                     std::vector<boost::uint32_t> *atomInvariants,
+                                     const std::vector<boost::uint32_t> *fromAtoms
+                                     ){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
@@ -151,12 +155,40 @@ namespace RDKit{
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
 
     INT_PATH_LIST_MAP allPaths;
-    if(branchedPaths){
-      allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
-                                               useHs);
+    if(!fromAtoms){
+      if(branchedPaths){
+        allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
+                                                 useHs);
+      } else {
+        allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
+                                             useHs);
+      }
     } else {
-      allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
-                                           useHs);
+      BOOST_FOREACH(boost::uint32_t aidx,*fromAtoms){
+        INT_PATH_LIST_MAP tPaths;
+        if(branchedPaths){
+          tPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
+                                                 useHs,aidx);
+        } else {
+          tPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
+                                             true,useHs,aidx);
+        }
+        for(INT_PATH_LIST_MAP::const_iterator tpit=tPaths.begin();
+            tpit!=tPaths.end();++tpit){
+          
+#ifdef VERBOSE_FINGERPRINTING
+          std::cerr<<"paths from "<<aidx<<" size: "<<tpit->first<<std::endl;
+          BOOST_FOREACH(PATH_TYPE path,tpit->second){
+            std::cerr<<" path: ";
+            std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
+            std::cerr<<std::endl;
+          }
+#endif
+
+          allPaths[tpit->first].insert(allPaths[tpit->first].begin(),
+                                       tpit->second.begin(),tpit->second.end());
+        }
+      }
     }
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
@@ -167,13 +199,17 @@ namespace RDKit{
       bondCache[bond->getIdx()]=bond.get();
       ++firstB;
     }
+
+#ifdef VERBOSE_FINGERPRINTING
+    std::cerr<<" n path sets: "<<allPaths.size()<<std::endl;
+    for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
+      std::cerr<<"  "<<paths->first<<" "<<paths->second.size()<<std::endl;
+    }
+#endif
     
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
-      for( PATH_LIST_CI pathIt=paths->second.begin();
-	   pathIt!=paths->second.end();
-	   pathIt++ ){
-	const PATH_TYPE &path=*pathIt;
+      BOOST_FOREACH(const PATH_TYPE &path,paths->second){
 #ifdef VERBOSE_FINGERPRINTING        
         std::cerr<<"Path: ";
         std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
@@ -278,7 +314,9 @@ namespace RDKit{
                                          double tgtDensity,unsigned int minSize,
                                          std::vector<unsigned int> *atomCounts,
                                          ExplicitBitVect *setOnlyBits,
-                                         bool branchedPaths){
+                                         bool branchedPaths,
+                                         const std::vector<boost::uint32_t> *fromAtoms
+                                         ){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
@@ -341,12 +379,32 @@ namespace RDKit{
     }
     
     ExplicitBitVect *res = new ExplicitBitVect(fpSize);
+
     INT_PATH_LIST_MAP allPaths;
-    if(branchedPaths){
-      allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath);
+    if(!fromAtoms){
+      if(branchedPaths){
+        allPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,false);
+      } else {
+        allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,false);
+      }
     } else {
-      allPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath);
+      BOOST_FOREACH(boost::uint32_t aidx,*fromAtoms){
+        INT_PATH_LIST_MAP tPaths;
+        if(branchedPaths){
+          tPaths = findAllSubgraphsOfLengthsMtoN(mol,minPath,maxPath,
+                                                 false,aidx);
+        } else {
+          tPaths = findAllPathsOfLengthsMtoN(mol,minPath,maxPath,
+                                             true,false,aidx);
+        }
+        for(INT_PATH_LIST_MAP::const_iterator tpit=tPaths.begin();
+            tpit!=tPaths.end();++tpit){
+          allPaths[tpit->first].insert(allPaths[tpit->first].begin(),
+                                       tpit->second.begin(),tpit->second.end());
+        }
+      }
     }
+
 
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();++paths){
@@ -354,6 +412,11 @@ namespace RDKit{
 	   pathIt!=paths->second.end();
 	   ++pathIt ){
 	const PATH_TYPE &path=*pathIt;
+#ifdef VERBOSE_FINGERPRINTING        
+        std::cerr<<"Path: ";
+        std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
+        std::cerr<<std::endl;
+#endif
 
         std::vector< std::vector<unsigned int> > hashLayers(maxFingerprintLayers);
         for(unsigned int i=0;i<maxFingerprintLayers;++i){
@@ -465,6 +528,9 @@ namespace RDKit{
           // hash the path to generate a seed:
           unsigned long seed = gboost::hash_range(layerIt->begin(),layerIt->end());
 
+#ifdef VERBOSE_FINGERPRINTING        
+          std::cerr<<" hash: "<<seed<<std::endl;
+#endif
           //std::cerr<<"  "<<l+1<<" "<<seed%fpSize<<std::endl;
 
 #ifdef LAYEREDFP_USE_MT
@@ -472,6 +538,9 @@ namespace RDKit{
           unsigned int bitId=randomSource()%fpSize;
 #else
           unsigned int bitId=seed%fpSize;
+#endif
+#ifdef VERBOSE_FINGERPRINTING        
+          std::cerr<<"   bit: "<<bitId<<std::endl;
 #endif
           if(!setOnlyBits || (*setOnlyBits)[bitId]){
             res->setBit(bitId);
@@ -652,6 +721,43 @@ namespace RDKit{
       std::vector<MatchVectType> matches;
       SubstructMatch(mol,*(patt.get()),matches,false);
       boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
+#if 1
+      BOOST_FOREACH(MatchVectType &mv,matches){
+        // collect bits counting the number of occurances of the pattern:
+        gboost::hash_combine(mIdx,0xBEEF);
+        res->setBit(mIdx%fpSize);
+
+        bool isQuery=false;
+        boost::uint32_t bitId=pIdx;
+        std::vector<unsigned int> amap(mv.size(),0);
+        BOOST_FOREACH(MatchVectType::value_type &p,mv){
+          if(isQueryAtom[p.second]){
+            isQuery=true;
+            break;
+          }
+          gboost::hash_combine(bitId,mol.getAtomWithIdx(p.second)->getAtomicNum());
+          amap[p.first]=p.second;
+        }
+        if(!isQuery) res->setBit(bitId%((1*fpSize)/4));
+
+        isQuery=false;
+        bitId=pIdx;
+        ROMol::EDGE_ITER firstB,lastB;
+        boost::tie(firstB,lastB) = patt->getEdges();
+        while(firstB!=lastB){
+          BOND_SPTR pbond = (*patt.get())[*firstB];
+          ++firstB;
+          if(isQueryBond[pbond->getIdx()]){
+            isQuery=true;
+            break;
+          }
+          const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
+                                                    amap[pbond->getEndAtomIdx()]);
+          gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
+        }
+        if(!isQuery) res->setBit((1*fpSize/4) + bitId%((3*fpSize)/4));
+      }
+#else
       BOOST_FOREACH(MatchVectType &mv,matches){
         // collect bits counting the number of occurances of the pattern:
         gboost::hash_combine(mIdx,0xBEEF);
@@ -683,8 +789,8 @@ namespace RDKit{
           gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
         }
         if(!isQuery) res->setBit(bitId%fpSize);
-
       }
+#endif      
     }
     return res;
   }

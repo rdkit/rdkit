@@ -1952,6 +1952,83 @@ void testPairsAndTorsionsOptions(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testRDKitFromAtoms(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing RDKit fingerprints rooted at particular atoms" << std::endl;
+  {
+    std::string smi = "CCCCCC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    std::vector<boost::uint32_t> fromAtoms;
+    fromAtoms.push_back(0);
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,true,true,0,&fromAtoms);
+    TEST_ASSERT(fp1->getNumOnBits()==4);
+    delete m1;
+    delete fp1;
+  }
+  {
+    std::string smi = "CCCCCO";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    std::vector<boost::uint32_t> fromAtoms;
+    fromAtoms.push_back(0);
+    fromAtoms.push_back(5);
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,true,true,0,&fromAtoms);
+    TEST_ASSERT(fp1->getNumOnBits()==8);
+    delete m1;
+    delete fp1;
+  }
+  {
+    std::string smi = "CCCCCO";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    std::vector<boost::uint32_t> fromAtoms;
+    fromAtoms.push_back(0);
+    fromAtoms.push_back(5);
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,false,true,0,&fromAtoms);
+    TEST_ASSERT(fp1->getNumOnBits()==8);
+    delete m1;
+    delete fp1;
+  }
+  {
+    std::string smi = "CCCCCO";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    std::vector<boost::uint32_t> fromAtoms;
+    fromAtoms.push_back(0);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,128,0,0,true,&fromAtoms);
+    TEST_ASSERT(fp1->getNumOnBits()==20);
+    delete m1;
+    delete fp1;
+  }
+  {
+    std::string smi = "CCCCCO";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    std::vector<boost::uint32_t> fromAtoms;
+    fromAtoms.push_back(0);
+    fromAtoms.push_back(5);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,128,0,0,true,&fromAtoms);
+    TEST_ASSERT(fp1->getNumOnBits()==24);
+    delete m1;
+    delete fp1;
+  }
+  {
+    std::string smi = "CCCCCO";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    std::vector<boost::uint32_t> fromAtoms;
+    fromAtoms.push_back(0);
+    fromAtoms.push_back(5);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,128,0,0,false,&fromAtoms);
+    TEST_ASSERT(fp1->getNumOnBits()==24);
+    delete m1;
+    delete fp1;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -1969,7 +2046,6 @@ int main(int argc,char *argv[]){
   test3MorganFPs();
   test4MorganFPs();
   test5MorganFPs();
-#endif
   test5BackwardsCompatibility();
   testIssue2875658();
   testAtomCodes();
@@ -1986,5 +2062,7 @@ int main(int argc,char *argv[]){
   testMorganAtomInfo();
   testRDKitFPOptions();
   testPairsAndTorsionsOptions();
+#endif
+  testRDKitFromAtoms();
   return 0;
 }
