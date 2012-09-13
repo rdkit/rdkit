@@ -8,8 +8,8 @@ rdkit_headers(AtomPairs.h
               MorganFingerprints.h DEST GraphMol/Fingerprints)
 
 rdkit_test(testFingerprints test1.cpp LINK_LIBRARIES 
-           Fingerprints_static FileParsers SubstructMatch SmilesParse
-           Subgraphs_static GraphMol DataStructs RDGeometryLib
+           Fingerprints FileParsers SubstructMatch SmilesParse
+           Subgraphs GraphMol DataStructs RDGeometryLib
            RDGeneral  )
 
 
