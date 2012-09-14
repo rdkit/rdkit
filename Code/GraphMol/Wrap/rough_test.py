@@ -761,7 +761,15 @@ class TestCase(unittest.TestCase):
     fp1 = Chem.RDKFingerprint(m1,atomInvariants=atomInvariants,useBondOrder=False)
     fp2 = Chem.RDKFingerprint(m2,atomInvariants=atomInvariants,useBondOrder=False)
     self.failUnlessEqual(fp1,fp2)    
-    
+
+    # rooted at atom
+    m1 = Chem.MolFromSmiles('CCCCCO')
+    fp1 = Chem.RDKFingerprint(m1,1,4,nBitsPerHash=1,fromAtoms=[0])
+    self.failUnlessEqual(fp1.GetNumOnBits(),4)    
+    m1 = Chem.MolFromSmiles('CCCCCO')
+    fp1 = Chem.RDKFingerprint(m1,1,4,nBitsPerHash=1,fromAtoms=[0,5])
+    self.failUnlessEqual(fp1.GetNumOnBits(),8)    
+
 
 
 
@@ -2317,7 +2325,25 @@ CAS<~>
     self.failUnlessEqual(fsmi,"C1=CC=CC=C1")    
     fsmi = Chem.MolFragmentToSmiles(m,range(6),atomSymbols=["[C]"]*7,kekuleSmiles=True)
     self.failUnlessEqual(fsmi,"[C]1=[C][C]=[C][C]=[C]1")    
+
+  def test78AtomAndBondProps(self):
+    m = Chem.MolFromSmiles('c1ccccc1')
+    at = m.GetAtomWithIdx(0)
+    self.failIf(at.HasProp('foo'))
+    at.SetProp('foo','bar')
+    self.failUnless(at.HasProp('foo'))
+    self.failUnlessEqual(at.GetProp('foo'),'bar')
+    bond = m.GetBondWithIdx(0)
+    self.failIf(bond.HasProp('foo'))    
+    bond.SetProp('foo','bar')
+    self.failUnless(bond.HasProp('foo'))
+    self.failUnlessEqual(bond.GetProp('foo'),'bar')
     
+
+
+
+
+
 if __name__ == '__main__':
   unittest.main()
 

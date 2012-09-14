@@ -27,6 +27,11 @@ namespace RDKit{
     return res;
   }
 
+  void BondSetProp(const Bond *bond, const char *key,std::string val) {
+    bond->setProp(key, val);
+  }
+
+
   std::string BondGetProp(const Bond *bond, const char *key) {
     if (!bond->hasProp(key)) {
       PyErr_SetString(PyExc_KeyError,key);
@@ -153,6 +158,16 @@ struct bond_wrapper {
            (python::arg("bond"),
             python::arg("allBondsExplicit")=false),
               "returns the SMARTS (or SMILES) string for a Bond")
+
+      // properties
+      .def("SetProp",BondSetProp,
+	   (python::arg("self"), python::arg("key"),
+	    python::arg("val")),
+	   "Sets a bond property\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to be set (a string).\n"
+	   "    - value: the property value (a string).\n\n"
+           )
 
       .def("GetProp", BondGetProp,
            "Returns the value of the property.\n\n"
