@@ -11,19 +11,20 @@
 #define _RD_FILEPARSEEXCEPTION_H
 
 #include <string>
-#include <exception>
+#include <stdexcept>
 
 namespace RDKit {
   //! used by various file parsing classes to indicate a parse error
-  class FileParseException : public std::exception {
+  class FileParseException : public std::runtime_error {
   public:
     //! construct with an error message
-    explicit FileParseException(const char *msg) : _msg(msg) {};
+    explicit FileParseException(const char *msg) : _msg(msg), std::runtime_error("FileParseException") {};
     //! construct with an error message
-    explicit FileParseException(const std::string msg) : _msg(msg) {};
+    explicit FileParseException(const std::string msg) : _msg(msg), std::runtime_error("FileParseException") {};
     //! get the error message
     const char *message () const { return _msg.c_str(); };
     ~FileParseException () throw () {};
+    
   private:
     std::string _msg;
   };

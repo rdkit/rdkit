@@ -12,17 +12,17 @@
 
 #include <string>
 #include <vector>
-#include <exception>
+#include <stdexcept>
 
 namespace RDKit {
   
   //! used by various file parsing classes to indicate a bad file
-  class BadFileException : public std::exception {
+  class BadFileException : public std::runtime_error {
   public :
     //! construct with an error message
-    explicit BadFileException(const char *msg) : _msg(msg) {};
+    explicit BadFileException(const char *msg) : _msg(msg), std::runtime_error("BadFileException") {};
     //! construct with an error message
-    explicit BadFileException(const std::string msg) : _msg(msg) {};
+    explicit BadFileException(const std::string msg) : _msg(msg), std::runtime_error("BadFileException") {};
     //! get the error message
     const char *message () const { return _msg.c_str(); };
     ~BadFileException () throw () {};

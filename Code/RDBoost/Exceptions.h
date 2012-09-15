@@ -9,16 +9,16 @@
 //
 #ifndef _RD_EXCEPTIONS_H
 #define _RD_EXCEPTIONS_H
-#include <exception>
+#include <stdexcept>
 #include <string>
 
 //! \brief Class to allow us to throw an \c IndexError from C++ and have
 //!         it make it back to Python
 //!
-class IndexErrorException : public std::exception
+class IndexErrorException : public std::runtime_error
 {
 public:
-  IndexErrorException(int i) : _idx(i) {};
+  IndexErrorException(int i) : _idx(i), std::runtime_error("IndexErrorException") {};
   int index () const { return _idx; };
   ~IndexErrorException () throw () {};
 private:
@@ -28,11 +28,11 @@ private:
 //! \brief Class to allow us to throw a \c ValueError from C++ and have
 //!         it make it back to Python
 //!
-class ValueErrorException : public std::exception
+class ValueErrorException : public std::runtime_error
 {
 public:
-  ValueErrorException(const std::string i) : _value(i) {};
-  ValueErrorException(const char *msg) : _value(msg) {};
+  ValueErrorException(const std::string i) : _value(i), std::runtime_error("ValueErrorException") {};
+  ValueErrorException(const char *msg) : _value(msg), std::runtime_error("ValueErrorException") {};
   std::string message () const { return _value; };
   ~ValueErrorException () throw () {};
 private:
@@ -43,10 +43,10 @@ private:
 //! \brief Class to allow us to throw a \c KeyError from C++ and have
 //!         it make it back to Python
 //!
-class KeyErrorException : public std::exception
+class KeyErrorException : public std::runtime_error
 {
 public:
-  KeyErrorException(std::string key) : _key(key) {};
+  KeyErrorException(std::string key) : _key(key), std::runtime_error("KeyErrorException") {};
   std::string key() const { return _key; };
   ~KeyErrorException () throw () {};
 private:
