@@ -83,6 +83,8 @@ True
 >>> m.GetBondBetweenAtoms(6,7).GetIsAromatic()
 False
 
+**Note:** For reasons of computation expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
+
 
 Ring Finding and SSSR
 =====================
