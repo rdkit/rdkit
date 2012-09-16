@@ -4049,7 +4049,6 @@ void testSFNetIssue249() {
     delete m;
   }
 
-
   {
     std::string smi="CCCOc1c2CNC(=O)c3cc(cc(c3)C(=O)NCc3cc4cc(CNC(=O)c5cc(C(=O)NCc1cc(c2)c1cc2CNC(=O)c6cc(cc(c6)C(=O)NCc6cc4cc(CNC(=O)c4cc(C(=O)NCc(c1)c2OCCC)cc(c4)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O)c6OCCC)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O)cc(c5)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O)c3OCCC)C(=O)NC(COCCC(=O)O)(COCCC(=O)O)COCCC(=O)O";
     ROMol *m = SmilesToMol(smi,0,0);
@@ -4072,9 +4071,31 @@ void testSFNetIssue249() {
     std::cerr<<"starting ring finding"<<std::endl;
     MolOps::findSSSR(*m);
     std::cerr<<"done"<<std::endl;    
-    
     delete m;
   }
+
+  {
+    std::string smi="C/C=N/c1ccc(cc1)c1cc2cc(c1)c1ccc(cc1)N=Cc1ccc(cc1)c1cc(cc(c1)c1ccc(cc1)C)c1ccc(cc1)C=Nc1ccc(cc1)c1cc(cc(c1)c1ccc(cc1)/N=C/C)c1ccc(cc1)N=Cc1ccc(cc1)c1cc(c3ccc(C=Nc4ccc(c5cc6c7ccc(N=Cc8ccc(c9cc(c%10ccc(C=Nc%11ccc2cc%11)cc%10)cc(c9)c2ccc(cc2)C=Nc2ccc(cc2)c2cc(cc(c2)c2ccc(cc2)N=Cc2ccc(cc2)c2cc(cc(c2)c2ccc(cc2)C)c2ccc(cc2)C=Nc2ccc(cc2)c2cc(c9ccc(N=Cc%10ccc(c%11cc(c%12ccc(C=Nc%13ccc(c(c6)c5)cc%13)cc%12)cc(c%11)c5ccc(cc5)C)cc%10)cc9)cc(c2)c2ccc(cc2)/N=C/C)c2ccc(cc2)/N=C/C)cc8)cc7)cc4)cc3)cc(c1)c1ccc(cc1)C";
+    RWMol *m = SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==278);
+    std::cerr<<"starting sanitization"<<std::endl;
+    MolOps::sanitizeMol(*m);
+    std::cerr<<"done"<<std::endl;    
+    delete m;
+  }
+
+  {
+    std::string smi="COc1cc2ccc1n1c(=O)n(c3ccc(cc3OC)c3ccc(c(c3)OC)n3c(=O)n(c4ccc(cc4OC)c4ccc(c(c4)OC)n4c(=O)n(c5ccc(cc5OC)c5ccc(n6c(=O)n(c7ccc(c8ccc(n9c(=O)n(c%10ccc(c%11ccc(n%12c(=O)n(c%13ccc2cc%13OC)c(=O)n(c%12=O)c2ccc(cc2OC)C)c(OC)c%11)cc%10OC)c(=O)n(c9=O)c2ccc(cc2OC)C)c(OC)c8)cc7OC)c(=O)n(c6=O)c2ccc(cc2OC)C)c(c5)OC)c(=O)n(c4=O)c2ccc(cc2OC)C)c(=O)n(c3=O)c2ccc(cc2OC)C)c(=O)n(c1=O)c1ccc(cc1OC)C";
+    RWMol *m = SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==204);
+    std::cerr<<"starting sanitization"<<std::endl;
+    MolOps::sanitizeMol(*m);
+    std::cerr<<"done"<<std::endl;    
+    delete m;
+  }
+
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

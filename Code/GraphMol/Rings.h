@@ -54,9 +54,12 @@ namespace RingUtils {
     \param neighMap an STL map into which the results are stored. Each entry in the 
                 map is indexed by the ring ID and the conents are the list
                 rings (rather their IDs) that are fused with this ring
+    \param maxSize if this is >0, rings that are larger than the threshold
+                   will not be considered as candidates to be neighbors
 		
   */
-  void makeRingNeighborMap(const VECT_INT_VECT &brings, INT_INT_VECT_MAP &neighMap);
+  void makeRingNeighborMap(const VECT_INT_VECT &brings, INT_INT_VECT_MAP &neighMap,
+                           unsigned int maxSize=0);
 
 
   //! converts a list of atom indices into a list of bond indices

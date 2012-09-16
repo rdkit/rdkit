@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +14,12 @@
 #include <boost/dynamic_bitset.hpp>
 #include <set>
 
+// introduced for the sake of efficiency
+// this is the maximum ring size that will be considered
+// as a candiate for fused-ring aromaticity. This is picked to
+// be a bit bigger than the outer ring in a porphyrin
+// This came up while fixing sf.net issue249
+const unsigned int maxFusedAromaticRingSize=24;
 
 /****************************************************************
 Here are some molecule that have trouble us aromaticity wise
@@ -81,7 +87,8 @@ namespace RingUtils {
   }
 
   void makeRingNeighborMap(const VECT_INT_VECT &brings,
-                           INT_INT_VECT_MAP &neighMap) {
+                           INT_INT_VECT_MAP &neighMap,
+                           unsigned int maxSize) {
     int nrings = brings.size();
     int i, j;
     INT_VECT ring1;
@@ -91,8 +98,10 @@ namespace RingUtils {
     }
 
     for (i = 0; i < nrings; i++) {
+      if(maxSize && brings[i].size()>maxSize) continue;
       ring1 = brings[i];
       for (j = i + 1; j < nrings; j++) {
+        if(maxSize && brings[j].size()>maxSize) continue;
         INT_VECT inter;
         Intersect(ring1, brings[j], inter);
         if (inter.size() > 0) {
@@ -653,7 +662,7 @@ namespace RDKit {
       // shares at least one bond
       // useful to figure out fused systems 
       INT_INT_VECT_MAP neighMap;
-      RingUtils::makeRingNeighborMap(brings, neighMap);
+      RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize);
       
       // now loop over all the candidate rings and check the
       // huckel rule - of course paying attention to fused systems.
