@@ -79,6 +79,9 @@ namespace RDKit {
                                      unsigned int dotsPerAngstrom=100,
                                      double dblBondOffset=0.3,
                                      double dblBondLengthFrac=0.8){
+      if(!mol.getRingInfo()->isInitialized()){
+        MolOps::findSSSR(mol);
+      }
       std::vector<ElementType> res;
       res.push_back(RESOLUTION);
       res.push_back(static_cast<ElementType>(dotsPerAngstrom));
@@ -134,31 +137,39 @@ namespace RDKit {
           int atnum1 = mol[*bAts]->getAtomicNum();
           int atnum2 = mol.getAtomWithIdx(a2Idx)->getAtomicNum();
 
-          if( !mol.getRingInfo()->numBondRings(bond->getIdx() ) ) {
+          if( !mol.getRingInfo()->numBondRings(bond->getIdx()) && !bond->getBondType()==Bond::AROMATIC ) {
             // acyclic bonds
             RDGeom::Point2D obv=a2-a1;
             RDGeom::Point2D perp=obv;
             perp.rotate90();
             perp.normalize();
 
-            if( bond->getBondType()==Bond::DOUBLE || bond->getBondType()==Bond::TRIPLE ) {
-              if( bond->getBondType()==Bond::DOUBLE ){
-                perp *= 0.5 * dblBondOffset;
-              } else {
+            if( bond->getBondType()==Bond::DOUBLE || bond->getBondType()==Bond::TRIPLE)  {
+              if( bond->getBondType()==Bond::TRIPLE){
                 perp *= dblBondOffset;
+              } else {
+                perp *= 0.5 * dblBondOffset;
               }
               DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
                         dotsPerAngstrom*(a1.x+perp.x) ,
                         dotsPerAngstrom*(a1.y+perp.y) ,
                         dotsPerAngstrom*(a2.x+perp.x) ,
                         dotsPerAngstrom*(a2.y+perp.y) );
-              DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
-                        dotsPerAngstrom*(a1.x-perp.x) ,
-                        dotsPerAngstrom*(a1.y-perp.y) ,
-                        dotsPerAngstrom*(a2.x-perp.x) ,
-                        dotsPerAngstrom*(a2.y-perp.y) );
-            }
-            if( bond->getBondType()==Bond::SINGLE || bond->getBondType()==Bond::TRIPLE ) {
+              if(bond->getBondType() != Bond::AROMATIC){
+                DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+                          dotsPerAngstrom*(a1.x-perp.x) ,
+                          dotsPerAngstrom*(a1.y-perp.y) ,
+                          dotsPerAngstrom*(a2.x-perp.x) ,
+                          dotsPerAngstrom*(a2.y-perp.y) );
+              } else {
+                DrawLine( res , atnum1 , atnum2 , lineWidth , true ,
+                          dotsPerAngstrom*(a1.x-perp.x) ,
+                          dotsPerAngstrom*(a1.y-perp.y) ,
+                          dotsPerAngstrom*(a2.x-perp.x) ,
+                          dotsPerAngstrom*(a2.y-perp.y) );
+
+              }
+            } else if( bond->getBondType()==Bond::SINGLE || bond->getBondType()==Bond::TRIPLE ) {
               DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
                         dotsPerAngstrom*(a1.x) ,
                         dotsPerAngstrom*(a1.y) ,
@@ -219,7 +230,7 @@ namespace RDKit {
 
               obv *= dblBondLengthFrac;
 
-              DrawLine( res , atnum1 , atnum2 , lineWidth , true ,
+              DrawLine( res , atnum1 , atnum2 , lineWidth , (bond->getBondType()==Bond::AROMATIC),
                         dotsPerAngstrom*(offsetStart.x+perp.x) ,
                         dotsPerAngstrom*(offsetStart.y+perp.y) ,
                         dotsPerAngstrom*(offsetStart.x+obv.x+perp.x) ,

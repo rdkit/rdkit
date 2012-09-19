@@ -130,7 +130,7 @@ namespace {
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
         xml:space='preserve'\n";
     sstr<<"width='"<<width<<"px' height='"<<height<<"px' >\n";
-    sstr<<"<svg:g transform='translate("<<width*.05<<","<<height*.05<<") scale(.9,.9)'>";
+    sstr<<"<svg:g transform='translate("<<width*.05<<","<<height*.05<<") scale(.85,.85)'>";
     while(pos!=drawing.end()){
       int token=*pos++;
       switch(token){
