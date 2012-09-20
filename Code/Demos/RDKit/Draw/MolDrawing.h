@@ -137,7 +137,7 @@ namespace RDKit {
           int atnum1 = mol[*bAts]->getAtomicNum();
           int atnum2 = mol.getAtomWithIdx(a2Idx)->getAtomicNum();
 
-          if( !mol.getRingInfo()->numBondRings(bond->getIdx()) && !bond->getBondType()==Bond::AROMATIC ) {
+          if( !mol.getRingInfo()->numBondRings(bond->getIdx()) && bond->getBondType()!=Bond::AROMATIC ) {
             // acyclic bonds
             RDGeom::Point2D obv=a2-a1;
             RDGeom::Point2D perp=obv;
@@ -169,7 +169,8 @@ namespace RDKit {
                           dotsPerAngstrom*(a2.y-perp.y) );
 
               }
-            } else if( bond->getBondType()==Bond::SINGLE || bond->getBondType()==Bond::TRIPLE ) {
+            }
+            if( bond->getBondType()==Bond::SINGLE || bond->getBondType()==Bond::TRIPLE ) {
               DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
                         dotsPerAngstrom*(a1.x) ,
                         dotsPerAngstrom*(a1.y) ,
@@ -238,12 +239,10 @@ namespace RDKit {
             }
           }
         }
-        double massDiff=fabs(PeriodicTable::getTable()->getAtomicWeight(mol[*bAts]->getAtomicNum()) -
-                             mol[*bAts]->getMass());
-        static double massTol=0.001;
+        int isotope = mol[*bAts]->getIsotope();
         if(mol[*bAts]->getAtomicNum()!=6 ||
            mol[*bAts]->getFormalCharge()!=0 ||
-           massDiff>massTol ){
+           isotope ){
           res.push_back(ATOM);
           res.push_back(mol[*bAts]->getAtomicNum());
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
@@ -254,8 +253,8 @@ namespace RDKit {
             leftToRight=false;
           }
 
-          if(massDiff>massTol){
-            symbol = boost::lexical_cast<std::string>(int(mol[*bAts]->getMass()+.1))+symbol;
+          if(isotope){
+            symbol = boost::lexical_cast<std::string>(isotope)+symbol;
           }
           if(mol[*bAts]->getAtomicNum()!=6){
             int nHs=mol[*bAts]->getTotalNumHs();

@@ -1,6 +1,6 @@
-// $Id: sample.cpp 793 2008-08-17 14:33:30Z glandrum $
+// $Id$
 //
-//  Copyright (C) 2009 Greg Landrum
+//  Copyright (C) 2009-2012 Greg Landrum
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
@@ -176,6 +176,12 @@ void drawLineCairo(std::vector<int>::const_iterator &pos,
   int width=*pos++;
   cairo_set_line_width(cr,width*10);
   int dashed=*pos++;
+  if(dashed){
+    double dashes[]={20.0,20.0};
+    cairo_set_dash(cr,dashes,sizeof(dashes)/sizeof(dashes[0]),0);    
+  } else {
+    cairo_set_dash(cr,0,0,0);
+  }
   int an1=*pos++;
   int an2=*pos++;
   int xp1 = *pos++;
@@ -256,10 +262,16 @@ void MolToCairo(const ROMol &mol,cairo_t *cr,int width,int height,
                 int fontSize=14,int maxDotsPerAngstrom=30){
   PRECONDITION(cr,"no context");
   PRECONDITION(width>0 && height>0,"bad dimensions");
-  RWMol cp(mol);
-  RDKit::MolOps::Kekulize(cp);
-  RDDepict::compute2DCoords(cp);
-  std::vector<int> drawing=RDKit::Drawing::DrawMol(cp);
+  RWMol *cp = new RWMol(mol);
+  try{
+    RDKit::MolOps::Kekulize(*cp);
+  } catch (...) {
+    delete cp;
+    cp = new RDKit::RWMol(mol);
+  }
+  RDDepict::compute2DCoords(*cp);
+  std::vector<int> drawing=RDKit::Drawing::DrawMol(*cp);
+  delete cp;
 
   cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
   cairo_rectangle(cr,0,0,width,height);
@@ -378,6 +390,19 @@ void DrawDemo(){
 
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "mol3.png");
+    cairo_surface_destroy (surface);
+    delete mol;
+  }
+  {
+    RWMol *mol=SmilesToMol("Nccc(CCO)n",0,false);
+    mol->updatePropertyCache();
+    cairo_surface_t *surface =
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+    cairo_t *cr = cairo_create (surface);
+    MolToCairo(*mol,cr,300,300);
+
+    cairo_destroy (cr);
+    cairo_surface_write_to_png (surface, "mol4.png");
     cairo_surface_destroy (surface);
     delete mol;
   }
