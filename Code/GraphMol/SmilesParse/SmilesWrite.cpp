@@ -330,6 +330,7 @@ namespace RDKit{
       std::map<int,int> ringClosureMap;
       int ringIdx,closureVal;
       if(!canonical) mol.setProp("_StereochemDone",1);
+      std::list<unsigned int> ringClosuresToErase;
 
       Canon::canonicalizeFragment(mol,atomIdx,colors,ranks,
                                   molStack,bondsInPlay,bondSymbols);
@@ -337,6 +338,12 @@ namespace RDKit{
       BOOST_FOREACH(Canon::MolStackElem mSE,molStack){
         switch(mSE.type){
         case Canon::MOL_STACK_ATOM:
+          if(!ringClosuresToErase.empty()){
+            BOOST_FOREACH(unsigned int rclosure,ringClosuresToErase){
+              ringClosureMap.erase(rclosure);
+            }
+            ringClosuresToErase.clear();
+          }
           //std::cout<<"\t\tAtom: "<<mSE.obj.atom->getIdx()<<std::endl;
           if(!atomSymbols){
             res << GetAtomSmiles(mSE.obj.atom,doKekule,bond);
@@ -362,7 +369,8 @@ namespace RDKit{
             //   we're closing a ring, so grab
             //   the index and then delete the value:
             closureVal = ringClosureMap[ringIdx];
-            ringClosureMap.erase(ringIdx);
+            //ringClosureMap.erase(ringIdx);
+            ringClosuresToErase.push_back(ringIdx);
           } else {
             // we're opening a new ring, find the index for it:
             closureVal = 1;
@@ -506,7 +514,6 @@ namespace RDKit{
                                   int rootedAtAtom,
                                   bool canonical,
                                   bool allBondsExplicit){
-    PRECONDITION(atomsToUse.size()>0,"at least one atom should be in the input list");
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
     PRECONDITION(rootedAtAtom<0||std::find(atomsToUse.begin(),atomsToUse.end(),rootedAtAtom)!=atomsToUse.end(),

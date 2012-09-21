@@ -3144,6 +3144,23 @@ void testBug3528556(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testBug253(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "do not repeat ring closure digits on the same atom" << std::endl;
+
+  {
+    RWMol *m;
+    std::string smiles="C1CCCC1CCC1CCCCC11CCCCC1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles1 = MolToSmiles(*m,true);
+    TEST_ASSERT(csmiles1=="C(CC1CCCCC12CCCCC2)C1CCCC1");
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 
@@ -3195,5 +3212,6 @@ main(int argc, char *argv[])
   testBug3525799();
   testBug3526810();
   testBug3528556();
+  testBug253();
   //testBug1719046();
 }
