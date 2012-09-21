@@ -839,6 +839,128 @@ void testMultiThread(){
 }
 #endif
 
+void testIssue252(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Issue252: Bad definitions for Crippen atom types." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("O=[N+]([O-])C");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],0.0335,.001));
+    TEST_ASSERT(feq(logp[1],-0.3396,.001));
+    TEST_ASSERT(feq(logp[2],0.0335,.001));
+    TEST_ASSERT(feq(logp[3],-0.2035,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("CP");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.2035,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(C)P");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.2035,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(C)(C)P");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.2051,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(C)(C)(C)P");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.2051,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(=C)c1ccccc1");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],0.264,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(=C)(C)c1ccccc1");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],0.264,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C=C");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],0.1551,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("O=S");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.3339,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("S=O");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.0024,.001));
+    delete mol;
+  }  
+  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -860,4 +982,5 @@ int main(){
 #endif
   testIssue3433771();
   testMultiThread();
+  testIssue252();
 }
