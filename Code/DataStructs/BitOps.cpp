@@ -174,7 +174,12 @@ bool AllProbeBitsMatch(const T1 &probe,const T1 &ref){
   return true;
 }
 template bool AllProbeBitsMatch(const SparseBitVect& bv1,const SparseBitVect& bv2);
-template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,const ExplicitBitVect &bv2);
+//template bool AllProbeBitsMatch(const ExplicitBitVect& bv1,const ExplicitBitVect &bv2);
+
+bool AllProbeBitsMatch(const ExplicitBitVect& probe,const ExplicitBitVect &ref){
+  return probe.dp_bits->is_subset_of(*(ref.dp_bits));
+}
+
 
 // """ -------------------------------------------------------
 //

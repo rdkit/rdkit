@@ -69,6 +69,7 @@ double SimilarityWrapper(const T &bv1,const T &bv2,double a,double b,
 
 bool AllProbeBitsMatch(const char *probe,const char *ref);
 bool AllProbeBitsMatch(const std::string &probe,const std::string &ref);
+bool AllProbeBitsMatch(const ExplicitBitVect& probe,const ExplicitBitVect &ref);
 
   
 template <typename T1>
