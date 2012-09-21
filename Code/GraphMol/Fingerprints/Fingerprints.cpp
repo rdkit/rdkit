@@ -370,11 +370,13 @@ namespace RDKit{
     }
 
     std::vector<bool> aromaticAtoms(mol.getNumAtoms(),false);
+    std::vector<int> anums(mol.getNumAtoms(),0);
     ROMol::VERTEX_ITER firstA,lastA;
     boost::tie(firstA,lastA) = mol.getVertices();
     while(firstA!=lastA){
       const Atom *atom = mol[*firstA].get();
       if(isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()]=true;
+      anums[atom->getIdx()]=atom->getAtomicNum();
       ++firstA;
     }
     
@@ -407,6 +409,7 @@ namespace RDKit{
 
 
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
+    boost::dynamic_bitset<> bondsInPath(mol.getNumBonds());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();++paths){
       for( PATH_LIST_CI pathIt=paths->second.begin();
 	   pathIt!=paths->second.end();
@@ -479,8 +482,8 @@ namespace RDKit{
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 3: include atom types:
             unsigned int a1Hash,a2Hash;
-            a1Hash = (bi->getBeginAtom()->getAtomicNum()%128);
-            a2Hash = (bi->getEndAtom()->getAtomicNum()%128);
+            a1Hash = (anums[bi->getBeginAtomIdx()]%128);
+            a2Hash = (anums[bi->getEndAtomIdx()]%128);
             if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
             ourHash = a1Hash;
             ourHash |= a2Hash<<7;
@@ -501,8 +504,8 @@ namespace RDKit{
           if(layerFlags & 0x20 && !(pathQueries&0x6) ){
             //std::cerr<<" consider: "<<bi->getBeginAtomIdx()<<" - " <<bi->getEndAtomIdx()<<std::endl;
             // layer 6: aromaticity:
-            bool a1Hash = aromaticAtoms[bi->getBeginAtom()->getIdx()];
-            bool a2Hash = aromaticAtoms[bi->getEndAtom()->getIdx()];
+            bool a1Hash = aromaticAtoms[bi->getBeginAtomIdx()];
+            bool a2Hash = aromaticAtoms[bi->getEndAtomIdx()];
 
             if((!a1Hash) && a2Hash) std::swap(a1Hash,a2Hash);
             ourHash = a1Hash;
