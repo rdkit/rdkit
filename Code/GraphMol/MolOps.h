@@ -211,7 +211,7 @@ namespace RDKit{
     /*!
        This functions calls the following in sequence
          -# MolOps::cleanUp()
-         -# mol.updatPropertyCache()
+         -# mol.updatePropertyCache()
          -# MolOps::symmetrizeSSSR()
          -# MolOps::Kekulize()
          -# MolOps::assignRadicals()
