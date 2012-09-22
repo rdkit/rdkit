@@ -8,12 +8,13 @@ from cStringIO import StringIO
 
 molSize=(450,150)
 highlightSubstructs=True
+kekulizeStructures=True
 def _toPNG(mol):
     if hasattr(mol,'__sssAtoms'):
         highlightAtoms=mol.__sssAtoms
     else:
         highlightAtoms=[]
-    img = Draw.MolToImage(mol,size=molSize,
+    img = Draw.MolToImage(mol,size=molSize,kekulize=kekulizeStructures,
                           highlightAtoms=highlightAtoms)
     sio = StringIO()
     img.save(sio,format='PNG')
@@ -29,7 +30,7 @@ def _GetSubstructMatch(mol,query):
 
 def _GetSubstructMatches(mol,query):
     res = mol.__GetSubstructMatches(query)
-    mol.__sssAtoms=[]
+
     if highlightSubstructs:
         for entry in res:
             mol.__sssAtoms.extend(list(entry))
