@@ -5,6 +5,7 @@ if IPython.release.version<'0.11':
 from rdkit.Chem import rdchem
 from rdkit.Chem import Draw
 from cStringIO import StringIO
+import copy
 
 molSize=(450,150)
 highlightSubstructs=True
@@ -14,8 +15,20 @@ def _toPNG(mol):
         highlightAtoms=mol.__sssAtoms
     else:
         highlightAtoms=[]
-    img = Draw.MolToImage(mol,size=molSize,kekulize=kekulizeStructures,
-                          highlightAtoms=highlightAtoms)
+    try:
+        mol.GetAtomWithIdx(0).GetExplicitValence()
+    except RuntimeError:
+        mol.UpdatePropertyCache(False)
+    
+    mc = copy.deepcopy(mol)
+    try:
+        img = Draw.MolToImage(mc,size=molSize,kekulize=kekulizeStructures,
+                            highlightAtoms=highlightAtoms)
+    except ValueError:  # <- can happen on a kekulization failure
+        mc = copy.deepcopy(mol)
+        img = Draw.MolToImage(mc,size=molSize,kekulize=False,
+                            highlightAtoms=highlightAtoms)
+        
     sio = StringIO()
     img.save(sio,format='PNG')
     return sio.getvalue()
