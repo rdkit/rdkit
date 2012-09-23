@@ -244,6 +244,8 @@ import itertools
 import re
 import weakref
 import heapq
+heappush = heapq.heappush
+heappop = heapq.heappop
 from itertools import chain, combinations, product
 import collections
 from collections import defaultdict
@@ -283,7 +285,9 @@ _atom_smarts_no_aromaticity = _AtomSmartsNoAromaticity()
 # RDKit supports b, c, n, o, p, s, se, and te.
 # Daylight and OpenSMILES don't 'te' but do support 'as'
 # For better portability, I use the '#' notation for all of them.
-for eleno in (5, 6, 7, 8, 15, 16, 33, 34, 52):
+# H is also here because they need to always appear as [#1]
+#  ([H] in SMARTS means "an atom with an H", not "an H")
+for eleno in (1, 5, 6, 7, 8, 15, 16, 33, 34, 52):
     _atom_smarts_no_aromaticity[eleno] = "#" + str(eleno)
 assert _atom_smarts_no_aromaticity[6] == "#6"
 assert _atom_smarts_no_aromaticity[2] == "He"
@@ -1646,8 +1650,6 @@ def _enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_t
         end_time = None
     else:
         end_time = time.time() + timeout
-    heappush = heapq.heappush
-    heappop = heapq.heappop
 
     seeds = []
         
