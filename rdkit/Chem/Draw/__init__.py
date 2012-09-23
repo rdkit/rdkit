@@ -41,6 +41,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     wedgeBonds -- draw wedge (stereo) bonds (default True)
     highlightAtoms -- list of atoms to highlight (default [])
     highlightMap -- dictionary of (atom, color) pairs (default None)
+    highlightBonds -- list of bonds to highlight (default [])
   """
   from MolDrawing import MolDrawing
   if not mol:

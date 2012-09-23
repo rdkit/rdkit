@@ -276,7 +276,7 @@ class MolDrawing(object):
     
   def AddMol(self,mol,centerIt=True,molTrans=None,drawingTrans=None,
              highlightAtoms=[],confId=-1,flagCloseContactsDist=2,
-             highlightMap=None, ignoreHs=False,**kwargs):
+             highlightMap=None, ignoreHs=False,highlightBonds=[],**kwargs):
     """Set the molecule to be drawn.
 
     Parameters:
@@ -338,7 +338,11 @@ class MolDrawing(object):
             self.boundingBoxes[mol][2]=max(self.boundingBoxes[mol][2],nbrPos[0])
             self.boundingBoxes[mol][3]=max(self.boundingBoxes[mol][3],nbrPos[1])
             
-          if highlightAtoms and idx in highlightAtoms and nbrIdx in highlightAtoms:
+          if highlightBonds and bond.GetIdx() in highlightBonds:
+            width=2.0*self.bondLineWidth
+            color = self.selectColor
+            color2 = self.selectColor
+          elif highlightAtoms and idx in highlightAtoms and nbrIdx in highlightAtoms:
             width=2.0*self.bondLineWidth
             color = self.selectColor
             color2 = self.selectColor
