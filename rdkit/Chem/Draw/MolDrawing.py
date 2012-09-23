@@ -303,6 +303,8 @@ class MolDrawing(object):
     if not mol.HasProp('_drawingBondsWedged'):
       Chem.WedgeMolBonds(mol,conf)
       
+
+    includeAtomNumbers = kwargs.get('includeAtomNumbers',self.includeAtomNumbers)
     self.atomPs[mol] = {}
     self.boundingBoxes[mol] = [0]*4
     self.activeMol = mol
@@ -378,11 +380,11 @@ class MolDrawing(object):
                atom.GetAtomicNum()!=6 or \
                atom.GetFormalCharge()!=0 or \
                atom.GetNumRadicalElectrons() or \
-               self.includeAtomNumbers or \
+               includeAtomNumbers or \
                md>.001
       orient=''
       if labelIt:
-        if self.includeAtomNumbers:
+        if includeAtomNumbers:
           symbol = str(atom.GetIdx())
         else:
           base = atom.GetSymbol()
