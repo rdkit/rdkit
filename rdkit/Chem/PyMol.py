@@ -1,6 +1,6 @@
 # $Id$
 #
-# Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+# Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -12,7 +12,7 @@
 
 """
 from rdkit import Chem
-import xmlrpclib,os
+import xmlrpclib,os,tempfile
 
 
 _server=None
@@ -201,3 +201,33 @@ class MolViewer(object):
     cmd = cmd%locals()
     self.server.do(cmd)
 
+  def GetPNG(self,h=None,w=None):
+    import Image,time
+    fd = tempfile.NamedTemporaryFile(suffix='.png',delete=False)
+    fd.close()
+    self.server.do('png %s'%fd.name)
+    for i in range(10):
+      try:
+        img = Image.open(fd.name)
+        break
+      except IOError:
+        time.sleep(0.1)
+    os.unlink(fd.name)
+    fd=None
+    if h is not None or w is not None:
+      sz = img.size
+      if h is None:
+        h=sz[1]
+      if w is None:
+        w=sz[0]
+      if h<sz[1]:
+        frac = float(h)/sz[1]
+        w *= frac
+        w = int(w)
+        img=img.resize((w,h),True)
+      elif w<sz[0]:
+        frac = float(w)/sz[0]
+        h *= frac
+        h = int(h)
+        img=img.resize((w,h),True)        
+    return img
