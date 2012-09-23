@@ -175,11 +175,15 @@ namespace RDKit{
           localEntry.reserve(16);
 
           // start by pushing on our neighbors' ranks:
-          ROMol::ADJ_ITER nbr,endNbrs;
-          boost::tie(nbr,endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(*it));
-          while(nbr != endNbrs){
-            int rank=ranks[*nbr]+1;
-            const Bond *bond=mol.getBondBetweenAtoms(*nbr,*it);
+          ROMol::OEDGE_ITER beg,end;
+          boost::tie(beg,end) = mol.getAtomBonds(mol.getAtomWithIdx(*it));
+          while(beg!=end){
+            const Bond *bond=mol[*beg].get();
+            ++beg;
+            unsigned int nbrIdx=bond->getOtherAtomIdx(*it);
+            const Atom *nbr=mol.getAtomWithIdx(nbrIdx);
+            
+            int rank=ranks[nbrIdx]+1;
             // put the neighbor in 2N times where N is the bond order as a double.
             // this is to treat aromatic linkages on fair footing. i.e. at least in the
             // first iteration --c(:c):c and --C(=C)-C should look the same.
@@ -187,9 +191,9 @@ namespace RDKit{
 
             unsigned int count;
             if(bond->getBondType()==Bond::DOUBLE &&
-               mol.getAtomWithIdx(*nbr)->getAtomicNum()==15 &&
-               (mol.getAtomWithIdx(*nbr)->getDegree()==4 ||
-                mol.getAtomWithIdx(*nbr)->getDegree()==3) ) {
+               nbr->getAtomicNum()==15 &&
+               (nbr->getDegree()==4 ||
+                nbr->getDegree()==3) ) {
               // a special case for chiral phophorous compounds
               // (this was leading to incorrect assignment of
               // R/S labels ):

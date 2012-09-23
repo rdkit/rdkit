@@ -61,14 +61,14 @@ class TestCase(unittest.TestCase):
             rdPartialCharges.ComputeGasteigerCharges(rdmol)
             
             nat = rdmol.GetNumAtoms()
-            
+            failed=False
             for ai in range(nat) :
                 rdch = float(rdmol.GetAtomWithIdx(ai).GetProp('_GasteigerCharge'))
                 if not feq(rdch, combiCharges[smi][ai], 1.e-2) :
-                    print smi, ai
-                    rdmol.debug()
-                    break
-                #self.failUnless(feq(rdch, combiCharges[smi][ai], 1.e-2))
+                    failed=True
+                    print smi, ai, rdch, combiCharges[smi][ai]
+            if failed: rdmol.Debug()
+            self.failIf(failed)
                 
     def test2Params(self):
         """ tests handling of Issue187 """

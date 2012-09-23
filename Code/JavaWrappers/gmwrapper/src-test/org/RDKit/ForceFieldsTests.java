@@ -158,9 +158,9 @@ public class ForceFieldsTests extends GraphMolTest {
 		mol = RWMol.MolFromSmiles("C(=O)S");
 		assertNotNull(mol);
 
-		assertEquals("C_R", ForceField.UFFGetAtomLabel(mol.getAtomWithIdx(0)));
-		assertEquals("O_R", ForceField.UFFGetAtomLabel(mol.getAtomWithIdx(1)));
-		assertEquals("S_R", ForceField.UFFGetAtomLabel(mol.getAtomWithIdx(2)));
+		assertEquals("C_2", ForceField.UFFGetAtomLabel(mol.getAtomWithIdx(0)));
+		assertEquals("O_2", ForceField.UFFGetAtomLabel(mol.getAtomWithIdx(1)));
+		assertEquals("S_3+2", ForceField.UFFGetAtomLabel(mol.getAtomWithIdx(2)));
 
 
 		mol = RWMol.MolFromSmiles("SCS(=O)S(=O)(=O)O");

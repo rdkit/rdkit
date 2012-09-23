@@ -67,11 +67,11 @@ void testUFFTyper1(){
   TEST_ASSERT(mol);
 
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(0));
-  TEST_ASSERT(key=="C_R");
+  TEST_ASSERT(key=="C_2");
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(1));
-  TEST_ASSERT(key=="O_R");
+  TEST_ASSERT(key=="O_2");
   key = UFF::Tools::getAtomLabel(mol->getAtomWithIdx(2));
-  TEST_ASSERT(key=="S_R");
+  TEST_ASSERT(key=="S_3+2");
 
   delete mol;
   mol = SmilesToMol("SCS(=O)S(=O)(=O)O");

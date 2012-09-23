@@ -21,7 +21,24 @@
 namespace RDKit {
   // local utility namespace:
   namespace {
+    bool isAtomConjugCand(const Atom *at){
+      // the second check here is for Issue211, where the c-P bonds in
+      // Pc1ccccc1 were being marked as conjugated.  This caused the P atom
+      // itself to be SP2 hybridized.  This is wrong.  For now we'll do a quick
+      // hack and forbid this check from adding conjugation to anything out of
+      // the first row of the periodic table.  (Conjugation in aromatic rings
+      // has already been attended to, so this is safe.)
+      int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
+      if (((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6)) &&
+          (MolOps::countAtomElec(at) > 0)
+          ) {
+        return true;
+      }
+      return false;
+    }
+
     void markConjAtomBonds(Atom *at) {
+      if(!isAtomConjugCand(at)) return;
       ROMol &mol = at->getOwningMol();
       Atom* at2;
 
@@ -51,15 +68,7 @@ namespace RDKit {
 	    bnd2++;
 	    continue;
 	  }
-	  // the second check here is for Issue211, where the c-P bonds in
-	  // Pc1ccccc1 were being marked as conjugated.  This caused the P atom
-	  // itself to be SP2 hybridized.  This is wrong.  For now we'll do a quick
-	  // hack and forbid this check from adding conjugation to anything out of
-	  // the first row of the periodic table.  (Conjugation in aromatic rings
-	  // has already been attended to, so this is safe.)
-	  int nouter = PeriodicTable::getTable()->getNouterElecs(at2->getAtomicNum());
-	  if ((MolOps::countAtomElec(at2) > 0) && 
-	      ((at2->getAtomicNum() <= 10) || (nouter != 5)) ) {
+	  if (isAtomConjugCand(at2)) {
 	    mol[*bnd1]->setIsConjugated(true);
 	    mol[*bnd2]->setIsConjugated(true);
 	  }

@@ -1935,6 +1935,18 @@ void testIssue3453172(){
     TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
     delete m;
   }
+
+  {
+    // this was issue 254
+    RWMol *m;
+    std::string smiles="O=[S@](c1ccccc1)C";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization()==Atom::SP3);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -1955,10 +1967,10 @@ int main(){
   testBondDirRemoval();
   testIssue2705543();
   testIssue2762917();
-#endif
   testIssue3009911();
   testIssue3139534();
   testFindChiralAtoms();
+#endif
   testIssue3453172();
   return 0;
 }
