@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2008 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2004-2012 Greg Landrum and  Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -167,9 +167,9 @@ const std::string defaultParamData=
 "C2	[CH](C)(C)C	0	2.433	\n"
 "C2	[C](C)(C)(C)C	0	2.433	\n"
 "C3	[CH3][N,O,P,S,F,Cl,Br,I]	-0.2035	2.753	\n"
-"C3	[CH2X4][N,O,P,S,F,Cl,Br,I]	-0.2035	2.753	\n"
-"C4	[CH1X4][N,O,P,S,F,Cl,Br,I]	-0.2051	2.731	\n"
-"C4	[CH0X4][N,O,P,S,F,Cl,Br,I]	-0.2051	2.731	\n"
+"C3	[CH2X4]([N,O,P,S,F,Cl,Br,I])[A]	-0.2035	2.753	\n"
+"C4	[CH1X4]([N,O,P,S,F,Cl,Br,I])([A])[A]	-0.2051	2.731	\n"
+"C4	[CH0X4]([N,O,P,S,F,Cl,Br,I])([A])([A])[A]	-0.2051	2.731	\n"
 "C5	[C]=[!C;A;!#1]	-0.2783	5.007	\n"
 "C6	[CH2]=C	0.1551	3.513	\n"
 "C6	[CH1](=C)A	0.1551	3.513	\n"

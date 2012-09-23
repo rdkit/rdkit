@@ -21,7 +21,7 @@ class TestCase(unittest.TestCase):
     self.dataDir =os.path.join(RDConfig.RDCodeDir,'ML/ModelPackage/test_data')
     self.testD = [
       # NOTE: the confidences here can be twitchy due to changes in descriptors:
-      ('Fc1ccc(NC(=O)c2cccnc2Oc3cccc(c3)C(F)(F)F)c(F)c1',0,0.9 ),
+      ('Fc1ccc(NC(=O)c2cccnc2Oc3cccc(c3)C(F)(F)F)c(F)c1',0,0.8 ),
       #(r'CN/1(=C\C=C(/C=C1)\C\2=C\C=N(C)(Cl)\C=C2)Cl',0,0.70),
       (r'NS(=O)(=O)c1cc(ccc1Cl)C2(O)NC(=O)c3ccccc32',1,0.70),
       ]

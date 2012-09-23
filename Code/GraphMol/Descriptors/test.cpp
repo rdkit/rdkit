@@ -956,6 +956,72 @@ void testIssue252(){
     TEST_ASSERT(feq(logp[0],-0.0024,.001));
     delete mol;
   }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(Cl)C");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.2035,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(Cl)(Cl)C");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.2051,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(Cl)(Cl)(Cl)C");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.2051,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(Cl)c1ccccc1");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.0516,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(Cl)(Cl)c1ccccc1");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],0.1193,.001));
+    delete mol;
+  }  
+  {
+    ROMol *mol;
+    mol = SmilesToMol("C(Cl)(Cl)(Cl)c1ccccc1");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[0],-0.0967,.001));
+    delete mol;
+  }  
   
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
