@@ -6,6 +6,8 @@ from rdkit.Chem import rdchem
 from rdkit.Chem import Draw
 from cStringIO import StringIO
 import copy
+import numpy
+import Image
 
 molSize=(450,150)
 highlightSubstructs=True
@@ -49,16 +51,22 @@ def _GetSubstructMatches(mol,query):
             mol.__sssAtoms.extend(list(entry))
     return res
 
+# code for displaying PIL images directly,
+def display_pil_image(img):
+    """displayhook function for PIL Images, rendered as PNG"""
+    sio = StringIO()
+    img.save(sio,format='PNG')
+    return sio.getvalue()
+
 def InstallIPythonRenderer():
     rdchem.Mol._repr_png_=_toPNG
-
     if not hasattr(rdchem.Mol,'__GetSubstructMatch'):
         rdchem.Mol.__GetSubstructMatch=rdchem.Mol.GetSubstructMatch
     rdchem.Mol.GetSubstructMatch=_GetSubstructMatch
     if not hasattr(rdchem.Mol,'__GetSubstructMatches'):
         rdchem.Mol.__GetSubstructMatches=rdchem.Mol.GetSubstructMatches
     rdchem.Mol.GetSubstructMatches=_GetSubstructMatches
-    
+    Image.Image._repr_png_=display_pil_image
 InstallIPythonRenderer()
 
 def UninstallIPythonRenderer():
@@ -69,5 +77,5 @@ def UninstallIPythonRenderer():
     if hasattr(rdchem.Mol,'__GetSubstructMatches'):
         rdchem.Mol.GetSubstructMatches=rdchem.Mol.__GetSubstructMatches
         del rdchem.Mol.__GetSubstructMatches
-    
+    del Image.Image._repr_png_
 
