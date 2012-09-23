@@ -45,7 +45,7 @@ def _GetSubstructMatch(mol,query):
 
 def _GetSubstructMatches(mol,query):
     res = mol.__GetSubstructMatches(query)
-
+    mol.__sssAtoms=[]
     if highlightSubstructs:
         for entry in res:
             mol.__sssAtoms.extend(list(entry))
