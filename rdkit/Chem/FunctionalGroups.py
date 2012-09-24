@@ -98,7 +98,7 @@ def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
     splitL = splitter.split(line)
     if len(splitL)<3:
       raise FuncGroupFileParseError,"Input line %d (%s) is not long enough."%(lineNo,repr(line))
-    label = splitL[0]
+    label = splitL[0].strip()
     if groupDefns.has_key(label):
       raise FuncGroupFileParseError,"Duplicate label on line %d."%lineNo
     labelHierarchy = label.split('.')
@@ -120,7 +120,7 @@ def BuildFuncGroupHierarchy(fileNm=None,data=None,force=False):
     if not patt:
       raise FuncGroupFileParseError,'Smarts "%s" (line %d) could not be parsed.'%(smarts,lineNo)
       
-    name = splitL[2]
+    name = splitL[2].strip()
     
     rxnSmarts=''
     if len(splitL)>3:
