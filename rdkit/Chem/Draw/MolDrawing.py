@@ -52,6 +52,10 @@ class MolDrawing(object):
 
   wedgeDashedBonds=True
 
+  # used to adjust overall scaling for molecules that have been laid out with non-standard
+  # bond lengths
+  coordScale=1.0
+
   elemDict={
     7:(0,0,1),
     8:(1,0,0),
@@ -140,7 +144,7 @@ class MolDrawing(object):
             continue
           a3 = otherBond.GetOtherAtom(a1)
           if a3.GetIdx() != a2Idx:
-            p3 = self.transformPoint(conf.GetAtomPosition(a3.GetIdx()))
+            p3 = self.transformPoint(conf.GetAtomPosition(a3.GetIdx())*self.coordScale)
             dx2 = p3[0] - p1[0]
             dy2 = p3[1] - p1[1]
             dotP = dx2*offsetX + dy2*offsetY
@@ -230,7 +234,7 @@ class MolDrawing(object):
     nAts = mol.GetNumAtoms()
     for i in range(nAts):
       if ignoreHs and mol.GetAtomWithIdx(i).GetAtomicNum()==1: continue
-      pos = conf.GetAtomPosition(i)
+      pos = conf.GetAtomPosition(i)*self.coordScale
       xAccum += pos[0]
       yAccum += pos[1]
       minX = min(minX,pos[0])
@@ -287,6 +291,8 @@ class MolDrawing(object):
       - specifying centerIt will cause molTrans and drawingTrans to be ignored
     """
     conf = mol.GetConformer(confId)
+    if kwargs.has_key('coordScale'):
+      self.coordScale=kwargs['coordScale']
 
     if centerIt:
       self.scaleAndCenter(mol,conf,ignoreHs=ignoreHs)
@@ -317,7 +323,7 @@ class MolDrawing(object):
       idx = atom.GetIdx()
       pos = self.atomPs[mol].get(idx,None)
       if pos is None:
-        pos = self.transformPoint(conf.GetAtomPosition(idx))
+        pos = self.transformPoint(conf.GetAtomPosition(idx)*self.coordScale)
         self.atomPs[mol][idx] = pos
         if drawAtom:
           self.boundingBoxes[mol][0]=min(self.boundingBoxes[mol][0],pos[0])
@@ -333,7 +339,7 @@ class MolDrawing(object):
         if nbrIdx > idx:
           nbrPos = self.atomPs[mol].get(nbrIdx,None)
           if nbrPos is None:
-            nbrPos = self.transformPoint(conf.GetAtomPosition(nbrIdx))
+            nbrPos = self.transformPoint(conf.GetAtomPosition(nbrIdx)*self.coordScale)
             self.atomPs[mol][nbrIdx] = nbrPos
             self.boundingBoxes[mol][0]=min(self.boundingBoxes[mol][0],nbrPos[0])
             self.boundingBoxes[mol][1]=min(self.boundingBoxes[mol][1],nbrPos[1])
@@ -374,14 +380,15 @@ class MolDrawing(object):
         nbrSum[0] += nbrPos[0]-pos[0]
         nbrSum[1] += nbrPos[1]-pos[1]
   
-      md = abs(Chem.GetPeriodicTable().GetAtomicWeight(atom.GetAtomicNum())-atom.GetMass())
+      iso = atom.GetIsotope()
 
       labelIt= not self.noCarbonSymbols or \
                atom.GetAtomicNum()!=6 or \
                atom.GetFormalCharge()!=0 or \
                atom.GetNumRadicalElectrons() or \
                includeAtomNumbers or \
-               md>.001
+               iso or \
+               atom.HasProp('molAtomMapNumber')
       orient=''
       if labelIt:
         if includeAtomNumbers:
@@ -418,14 +425,17 @@ class MolDrawing(object):
             rad = ''
 
           isotope=''
-          if md>.001:
+          if iso:
             isotope='<sup>%d</sup>'%int(atom.GetMass()+.01)
                    
+          mapNum=''
+          if atom.HasProp('molAtomMapNumber'):
+            mapNum=':'+atom.GetProp('molAtomMapNumber')
           deg = atom.GetDegree()
           if deg>1 or nbrSum[0]<1:
-            symbol = '%s%s%s%s%s'%(isotope,base,hs,chg,rad)
+            symbol = '%s%s%s%s%s%s'%(isotope,base,mapNum,hs,chg,rad)
           else:
-            symbol = '%s%s%s%s%s'%(rad,chg,hs,isotope,base)
+            symbol = '%s%s%s%s%s%s'%(rad,chg,hs,isotope,base,mapNum)
 
           if deg==1:
             if abs(nbrSum[1])>1:

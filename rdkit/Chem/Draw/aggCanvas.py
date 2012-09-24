@@ -80,14 +80,14 @@ class Canvas(CanvasBase):
   def addCanvasText(self,text,pos,font,color=(0,0,0),**kwargs):
     orientation=kwargs.get('orientation','E')
     color = convertColor(color)
-    font = Font(color,faceMap[font.face],size=font.size*self.fontScale)
+    aggFont = Font(color,faceMap[font.face],size=font.size*self.fontScale)
 
     blocks = list(re.finditer(r'\<(.+?)\>(.+?)\</\1\>',text))
     w,h = 0,0
     supH=0
     subH=0
     if not len(blocks):
-      w,h=self.draw.textsize(text,font)
+      w,h=self.draw.textsize(text,aggFont)
       bw,bh=w*1.1,h*1.1
       dPos = pos[0]-bw/2.,pos[1]-bh/2.
       bgColor=kwargs.get('bgColor',(1,1,1))
@@ -95,7 +95,7 @@ class Canvas(CanvasBase):
       self.draw.rectangle((dPos[0],dPos[1],dPos[0]+bw,dPos[1]+bh),
                        None,Brush(bgColor))
       dPos = pos[0]-w/2.,pos[1]-h/2.
-      self.draw.text(dPos,text,font)
+      self.draw.text(dPos,text,aggFont)
     else:
       dblocks=[]
       idx=0
@@ -104,13 +104,17 @@ class Canvas(CanvasBase):
         if blockStart != idx:
           # untagged text:
           tblock = text[idx:blockStart]
-          tw,th=self.draw.textsize(tblock,font)
+          tw,th=self.draw.textsize(tblock,aggFont)
           w+=tw
           h = max(h,th)
           dblocks.append((tblock,'',tw,th))
         fmt = block.groups()[0]
         tblock = block.groups()[1]
-        tw,th=self.draw.textsize(tblock,font)
+        if fmt in ('sub','sup'):
+          lFont = Font(color,faceMap[font.face],size=0.8*font.size*self.fontScale)
+        else:
+          lFont = aggFont
+        tw,th=self.draw.textsize(tblock,lFont)
         w+=tw
         if fmt == 'sub':
           subH = max(subH,th)
@@ -123,7 +127,7 @@ class Canvas(CanvasBase):
       if idx!=len(text):
         # untagged text:
         tblock = text[idx:]
-        tw,th=self.draw.textsize(tblock,font)
+        tw,th=self.draw.textsize(tblock,aggFont)
         w+=tw
         h = max(h,th)
         dblocks.append((tblock,'',tw,th))
@@ -152,7 +156,11 @@ class Canvas(CanvasBase):
           tPos[1]+=subH
         elif fmt=='sup':
           tPos[1]-=supH
-        self.draw.text(tPos,txt,font)
+        if fmt in ('sub','sup'):
+          lFont = Font(color,faceMap[font.face],size=0.8*font.size*self.fontScale)
+        else:
+          lFont = aggFont
+        self.draw.text(tPos,txt,lFont)
         dPos[0]+=tw
 
 
