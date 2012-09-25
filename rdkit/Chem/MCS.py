@@ -259,7 +259,6 @@ __all__ = ["FindMCS"]
 
 class Default(object):
     timeout = None
-    timeout_string = "none"
     maximize = "bonds"
     atom_compare = "elements"
     bond_compare = "bondtypes"
@@ -1813,39 +1812,88 @@ def FindMCS(mols, minNumAtoms=2,
             ):
     """Find the maximum common substructure of a set of molecules
 
-    @type  mols: molecule iterator
-    @param mols: find the MCS of these molecules
-    @type minNumAtoms: integer
-    @param minNumAtoms: The minimum number of atoms which must be in the MCS.
-              The minimim value is 2.
-    @type maximize: "atoms" or "bonds"
-    @param maximize: The default "atoms" maximizes the number of atoms in
-              the MCS. Use "bonds" to maximize the number of bonds instead.
-    @type atomCompare: "any", "elements", or "isotopes"
-    @param atomCompare: Specify the atom comparison function. The default "elements"
-              says that two atoms are the same if and only if they have the same
-              element number. Use "isotopes" if you are using isotope labels to
-              define your own atom classs. With "any", all atoms match each other.
-    @type bondCompare: "any" or "bondtypes"
-    @param bondCompare: Specify the bond comparison function. The default
-              "bondtypes" says that two bonds are the same if and only if they
-              have the same bond type. With "any", all bonds match each other.
-    @type matchValences: boolean
-    @param matchValences: If True, atoms must also have matching valences
-              to match. By default this is False.
-    @type ringMatchesRingOnly: boolean
-    @param ringMatchesRingOnly: If True, then both bonds must either be in
-              a ring or not in a ring in order to match. By default this is False.
-    @type completeRingsOnly: boolean
-    @param completeRingsOnly: If True, then if a ring bond of a molecule
-              is in the MCS then the corresponding MCS bond is also in a ring.
-    @type timeout: float
-    @param timeout: stop search after 'timeout' seconds and report the current
-              best MCS.
+    In the simplest case, pass in a list of molecules and get back
+    an MCSResult object which describes the MCS:
 
-    @rtype: MCSResult
-    @return: Information about the MCS search results. Attributes are 'completed'
-        (0 if timeout reached, otherwise 1), 'num_atoms', 'num_bonds', and 'smarts'.
+    >>> from rdkit import Chem
+    >>> mols = [Chem.MolFromSmiles("C#CCP"), Chem.MolFromSmiles("C=CCO")]
+    >>> from rdkit.Chem import MCS
+    >>> MCS.FindMCS(mols)
+    MCSResult(num_atoms=2, num_bonds=1, smarts='[#6]-[#6]', completed=1)
+
+    The SMARTS '[#6]-[#6]' matches the largest common substructure of
+    the input structures. It has 2 atoms and 1 bond. If there is no
+    MCS which is at least `minNumAtoms` in size then the result will set
+    num_atoms and num_bonds to -1 and set smarts to None.
+
+    By default, two atoms match if they are the same element and two
+    bonds match if they have the same bond type. Specify `atomCompare`
+    and `bondCompare` to use different comparison functions, as in:
+    
+    >>> MCS.FindMCS(mols, atomCompare="any")
+    MCSResult(num_atoms=3, num_bonds=2, smarts='[*]-[*]-[*]', completed=1)
+    >>> MCS.FindMCS(mols, bondCompare="any")
+    MCSResult(num_atoms=3, num_bonds=2, smarts='[#6]~[#6]~[#6]', completed=1)
+
+    An atomCompare of "any" says that any atom matches any other atom,
+    "elements" compares by element type, and "isotopes" matches based on
+    the isotope label. Isotope labels can be used to implement user-defined
+    atom types. A bondCompare of "any" says that any bond matches any
+    other bond, and "bondtypes" says bonds are equivalent if and only if
+    they have the same bond type.
+
+    A substructure has both atoms and bonds. The default `maximize` 
+    setting of "atoms" finds a common substructure with the most number
+    of atoms. Use maximize="bonds" to maximize the number of bonds.
+    Maximizing the number of bonds tends to maximize the number of rings,
+    although two small rings may have fewer bonds than one large ring.
+
+    You might not want a 3-valent nitrogen to match one which is 5-valent.
+    The default `matchValences` value of False ignores valence information.
+    When True, the atomCompare setting is modified to also require that
+    the two atoms have the same valency.
+
+    >>> MCS.FindMCS(mols, matchValences=True)
+    MCSResult(num_atoms=2, num_bonds=1, smarts='[#6v4]-[#6v4]', completed=1)
+
+    It can be strange to see a linear carbon chain match a carbon ring,
+    which is what the `ringMatchesRingOnly` default of False does. If
+    you set it to True then ring bonds will only match ring bonds.
+
+    >>> mols = [Chem.MolFromSmiles("C1CCC1CCC"), Chem.MolFromSmiles("C1CCCCCC1")]
+    >>> MCS.FindMCS(mols)
+    MCSResult(num_atoms=7, num_bonds=6, smarts='[#6]-[#6]-[#6]-[#6]-[#6]-[#6]-[#6]', completed=1)
+    >>> MCS.FindMCS(mols, ringMatchesRingOnly=True)
+    MCSResult(num_atoms=4, num_bonds=3, smarts='[#6](-@[#6])-@[#6]-@[#6]', completed=1)
+
+    You can further restrict things and require that partial rings
+    (as in this case) are not allowed. That is, if an atom is part of
+    the MCS and the atom is in a ring of the entire molecule then
+    that atom is also in a ring of the MCS. Set `completeRingsOnly`
+    to True to toggle this requirement and also sets ringMatchesRingOnly
+    to True.
+
+    >>> mols = [Chem.MolFromSmiles("CCC1CC2C1CN2"), Chem.MolFromSmiles("C1CC2C1CC2")]
+    >>> MCS.FindMCS(mols)
+    MCSResult(num_atoms=6, num_bonds=6, smarts='[#6]-1-[#6]-[#6](-[#6])-[#6]-1-[#6]', completed=1)
+    >>> MCS.FindMCS(mols, ringMatchesRingOnly=True)
+    MCSResult(num_atoms=5, num_bonds=5, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1-@[#6]', completed=1)
+    >>> MCS.FindMCS(mols, completeRingsOnly=True)
+    MCSResult(num_atoms=4, num_bonds=4, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1', completed=1)
+
+    The MCS algorithm will exhaustively search for a maximum common substructure.
+    Typically this takes a fraction of a second, but for some comparisons this
+    can take minutes or longer. Use the `timeout` parameter to stop the search
+    after the given number of seconds (wall-clock seconds, not CPU seconds) and
+    return the best match found in that time. If timeout is reached then the
+    `completed` property of the MCSResult will be 0 instead of 1.
+
+    >>> mols = [Chem.MolFromSmiles("Nc1ccccc1"*100), Chem.MolFromSmiles("Nc1ccccccccc1"*100)]
+    >>> MCS.FindMCS(mols, timeout=0.1)
+    MCSResult(num_atoms=16, num_bonds=15, smarts='[#7]-[#6](:[#6](-[#7]-[#6](:[#6](
+    -[#7]-[#6]):[#6]):[#6]:[#6]:[#6]):[#6]):[#6]:[#6]:[#6]', completed=0)
+
+    (The MCS after 50 seconds contained 511 atoms.)
     """
 
     if minNumAtoms < 2:
