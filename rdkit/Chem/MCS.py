@@ -1845,7 +1845,8 @@ def FindMCS(mols, min_num_atoms=2,
               best MCS.
 
     @rtype: MCSResult
-    @return: Information about the MCS search results.
+    @return: Information about the MCS search results. Attributes are 'completed'
+        (0 if timeout reached, otherwise 1), 'num_atoms', 'num_bonds', and 'smarts'.
     """
 
     if min_num_atoms < 2:
