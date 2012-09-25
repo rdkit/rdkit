@@ -1802,45 +1802,42 @@ def EnumerationMCS(enumeration_mols, targets, maximize = Default.maximize,
 ########## Main driver for the MCS code
 
 
-def FindMCS(mols, min_num_atoms=2,
+def FindMCS(mols, minNumAtoms=2,
             maximize = Default.maximize,
-            atom_compare = Default.atom_compare,
-            bond_compare = Default.bond_compare,
-            match_valences = Default.match_valences,
-            ring_matches_ring_only = False,
-            complete_rings_only = False,
+            atomCompare = Default.atom_compare,
+            bondCompare = Default.bond_compare,
+            matchValences = Default.match_valences,
+            ringMatchesRingOnly = False,
+            completeRingsOnly = False,
             timeout=Default.timeout,
             ):
     """Find the maximum common substructure of a set of molecules
 
     @type  mols: molecule iterator
     @param mols: find the MCS of these molecules
-    @type min_num_atoms: integer
-    @param min_num_atoms: The minimum number of atoms which must be in the MCS.
+    @type minNumAtoms: integer
+    @param minNumAtoms: The minimum number of atoms which must be in the MCS.
               The minimim value is 2.
     @type maximize: "atoms" or "bonds"
     @param maximize: The default "atoms" maximizes the number of atoms in
               the MCS. Use "bonds" to maximize the number of bonds instead.
-    @type atom_compare: "any", "elements", or "isotopes"
-    @param atom_compare: Specify the atom comparison function. The default "elements"
+    @type atomCompare: "any", "elements", or "isotopes"
+    @param atomCompare: Specify the atom comparison function. The default "elements"
               says that two atoms are the same if and only if they have the same
               element number. Use "isotopes" if you are using isotope labels to
               define your own atom classs. With "any", all atoms match each other.
-    @type bond_compare: "any" or "bondtypes"
-    @param bond_compare: Specify the bond comparison function. The default
+    @type bondCompare: "any" or "bondtypes"
+    @param bondCompare: Specify the bond comparison function. The default
               "bondtypes" says that two bonds are the same if and only if they
               have the same bond type. With "any", all bonds match each other.
-    @type match_valences: boolean
-    @param match_valences: If True, atoms must also have matching valences
+    @type matchValences: boolean
+    @param matchValences: If True, atoms must also have matching valences
               to match. By default this is False.
-    @type ring_matches_ring_only: boolean
-    @param ring_matches_ring_only: If True, then both bonds must either be in
+    @type ringMatchesRingOnly: boolean
+    @param ringMatchesRingOnly: If True, then both bonds must either be in
               a ring or not in a ring in order to match. By default this is False.
-    @type ring_matches_ring_only: boolean
-    @param ring_matches_ring_only: If True, then both bonds must either be in
-              a ring or not in a ring in order to match. By default this is False.
-    @type complete_rings_only: boolean
-    @param complete_rings_only: If True, then if a ring bond of a molecule
+    @type completeRingsOnly: boolean
+    @param completeRingsOnly: If True, then if a ring bond of a molecule
               is in the MCS then the corresponding MCS bond is also in a ring.
     @type timeout: float
     @param timeout: stop search after 'timeout' seconds and report the current
@@ -1851,29 +1848,29 @@ def FindMCS(mols, min_num_atoms=2,
         (0 if timeout reached, otherwise 1), 'num_atoms', 'num_bonds', and 'smarts'.
     """
 
-    if min_num_atoms < 2:
-        raise ValueError("min_num_atoms must be at least 2")
+    if minNumAtoms < 2:
+        raise ValueError("minNumAtoms must be at least 2")
     if timeout is not None:
         if timeout <= 0.0:
             raise ValueError("timeout must be None or a positive value")
 
-    if complete_rings_only:
-        ring_matches_ring_only = True
+    if completeRingsOnly:
+        ringMatchesRingOnly = True
 
     try:
-        atom_typer = _atom_typers[atom_compare]
+        atom_typer = _atom_typers[atomCompare]
     except KeyError:
-        raise ValueError("Unknown atom_compare option %r" % (atom_compare,))
+        raise ValueError("Unknown atomCompare option %r" % (atomCompare,))
     try:
-        bond_typer = _bond_typers[bond_compare]
+        bond_typer = _bond_typers[bondCompare]
     except KeyError:
-        raise ValueError("Unknown bond_compare option %r" % (bond_compare,))
+        raise ValueError("Unknown bondCompare option %r" % (bondCompare,))
 
 
     # Make copies of all of the molecules so I can edit without worrying about the original
     typed_mols = _convert_input_to_typed_molecules(mols, atom_typer, bond_typer,
-                                                   match_valences = match_valences,
-                                                   ring_matches_ring_only = ring_matches_ring_only)
+                                                   match_valences = matchValences,
+                                                   ring_matches_ring_only = ringMatchesRingOnly)
     bondtype_counts = _get_canonical_bondtype_counts(typed_mols)
     fragmented_mols = [_remove_unknown_bondtypes(typed_mol, bondtype_counts) for typed_mol in typed_mols]
 
@@ -1883,7 +1880,7 @@ def FindMCS(mols, min_num_atoms=2,
     for tiebreaker, (typed_mol, fragmented_mol) in enumerate(zip(typed_mols, fragmented_mols)):
         num_atoms, num_bonds = _find_upper_fragment_size_limits(fragmented_mol.rdmol,
                                                                 fragmented_mol.rdmol_atoms)
-        if num_atoms < min_num_atoms:
+        if num_atoms < minNumAtoms:
             return MCSResult(-1, -1, None, True)
         if num_atoms < max_num_atoms:
             max_num_atoms = num_atoms
@@ -1894,7 +1891,7 @@ def FindMCS(mols, min_num_atoms=2,
     if sizes is None:
         # There was a short-cut exit because one of the molecules didn't have a large enough fragment
         return MCSResult(-1, -1, None, True)
-    assert min(size[1] for size in sizes) >= min_num_atoms
+    assert min(size[1] for size in sizes) >= minNumAtoms
 
     # Sort so the molecule with the smallest largest fragment (by bonds) comes first.
     # Break ties with the smallest number of atoms.
@@ -1903,12 +1900,12 @@ def FindMCS(mols, min_num_atoms=2,
     #print "Using", Chem.MolToSmiles(sizes[0][4].rdmol)
 
     # Use the first as the query, the rest as the targets
-    query_fragments = _fragmented_mol_to_enumeration_mols(sizes[0][4], min_num_atoms)
+    query_fragments = _fragmented_mol_to_enumeration_mols(sizes[0][4], minNumAtoms)
 
     targets = [size[3].rdmol for size in sizes[1:]]
 
     mcs_result = EnumerationMCS(query_fragments, targets, maximize=maximize,
-                                complete_rings_only=complete_rings_only, timeout=timeout)
+                                complete_rings_only=completeRingsOnly, timeout=timeout)
     return mcs_result
 
 if __name__ == "__main__":
