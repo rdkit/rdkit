@@ -252,6 +252,8 @@ from collections import defaultdict
 import time
 
 
+__all__ = ["FindMCS"]
+
 ### A place to set global options
 # (Is this really useful?)
 
