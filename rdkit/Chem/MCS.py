@@ -672,14 +672,14 @@ def _get_typed_fragment(typed_mol, atom_indices):
                          atom_smarts_types, bond_smarts_types, new_canonical_bondtypes)
 
 
-def _fragmented_mol_to_enumeration_mols(typed_mol, min_num_atoms=2):
-    if min_num_atoms < 2:
-        raise ValueError("min_num_atoms must be at least 2")
+def _fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
+    if minNumAtoms < 2:
+        raise ValueError("minNumAtoms must be at least 2")
 
     fragments = []
     for atom_indices in Chem.GetMolFrags(typed_mol.rdmol):
         # No need to even look at fragments which are too small.
-        if len(atom_indices) < min_num_atoms:
+        if len(atom_indices) < minNumAtoms:
             continue
 
         # Convert a fragment from the TypedMolecule into a new
@@ -1435,23 +1435,23 @@ class MCSResult(object):
     """MCS Search results
 
     Attributes are:
-      num_atoms - the number of atoms in the MCS
-      num_bonds - the number of bonds in the MCS
+      numAtoms - the number of atoms in the MCS
+      numBonds - the number of bonds in the MCS
       smarts - the SMARTS pattern which defines the MCS
       completed - True if the MCS search went to completion. Otherwise False.
     """
-    def __init__(self, num_atoms, num_bonds, smarts, completed):
-        self.num_atoms = num_atoms
-        self.num_bonds = num_bonds
+    def __init__(self, numAtoms, numBonds, smarts, completed):
+        self.numAtoms = numAtoms
+        self.numBonds = numBonds
         self.smarts = smarts
         self.completed = completed
     def __nonzero__(self):
         return self.smarts is not None
     def __repr__(self):
-        return "MCSResult(num_atoms=%d, num_bonds=%d, smarts=%r, completed=%d)" % (
-            self.num_atoms, self.num_bonds, self.smarts, self.completed)
+        return "MCSResult(numAtoms=%d, numBonds=%d, smarts=%r, completed=%d)" % (
+            self.numAtoms, self.numBonds, self.smarts, self.completed)
     def __str__(self):
-        msg = "MCS %r has %d atoms and %d bonds" % (self.smarts, self.num_atoms, self.num_bonds)
+        msg = "MCS %r has %d atoms and %d bonds" % (self.smarts, self.numAtoms, self.numBonds)
         if not self.completed:
             msg += " (timed out)"
         return msg
@@ -1819,21 +1819,21 @@ def FindMCS(mols, minNumAtoms=2,
     >>> mols = [Chem.MolFromSmiles("C#CCP"), Chem.MolFromSmiles("C=CCO")]
     >>> from rdkit.Chem import MCS
     >>> MCS.FindMCS(mols)
-    MCSResult(num_atoms=2, num_bonds=1, smarts='[#6]-[#6]', completed=1)
+    MCSResult(numAtoms=2, numBonds=1, smarts='[#6]-[#6]', completed=1)
 
     The SMARTS '[#6]-[#6]' matches the largest common substructure of
     the input structures. It has 2 atoms and 1 bond. If there is no
     MCS which is at least `minNumAtoms` in size then the result will set
-    num_atoms and num_bonds to -1 and set smarts to None.
+    numAtoms and numBonds to -1 and set smarts to None.
 
     By default, two atoms match if they are the same element and two
     bonds match if they have the same bond type. Specify `atomCompare`
     and `bondCompare` to use different comparison functions, as in:
     
     >>> MCS.FindMCS(mols, atomCompare="any")
-    MCSResult(num_atoms=3, num_bonds=2, smarts='[*]-[*]-[*]', completed=1)
+    MCSResult(numAtoms=3, numBonds=2, smarts='[*]-[*]-[*]', completed=1)
     >>> MCS.FindMCS(mols, bondCompare="any")
-    MCSResult(num_atoms=3, num_bonds=2, smarts='[#6]~[#6]~[#6]', completed=1)
+    MCSResult(numAtoms=3, numBonds=2, smarts='[#6]~[#6]~[#6]', completed=1)
 
     An atomCompare of "any" says that any atom matches any other atom,
     "elements" compares by element type, and "isotopes" matches based on
@@ -1854,7 +1854,7 @@ def FindMCS(mols, minNumAtoms=2,
     the two atoms have the same valency.
 
     >>> MCS.FindMCS(mols, matchValences=True)
-    MCSResult(num_atoms=2, num_bonds=1, smarts='[#6v4]-[#6v4]', completed=1)
+    MCSResult(numAtoms=2, numBonds=1, smarts='[#6v4]-[#6v4]', completed=1)
 
     It can be strange to see a linear carbon chain match a carbon ring,
     which is what the `ringMatchesRingOnly` default of False does. If
@@ -1862,9 +1862,9 @@ def FindMCS(mols, minNumAtoms=2,
 
     >>> mols = [Chem.MolFromSmiles("C1CCC1CCC"), Chem.MolFromSmiles("C1CCCCCC1")]
     >>> MCS.FindMCS(mols)
-    MCSResult(num_atoms=7, num_bonds=6, smarts='[#6]-[#6]-[#6]-[#6]-[#6]-[#6]-[#6]', completed=1)
+    MCSResult(numAtoms=7, numBonds=6, smarts='[#6]-[#6]-[#6]-[#6]-[#6]-[#6]-[#6]', completed=1)
     >>> MCS.FindMCS(mols, ringMatchesRingOnly=True)
-    MCSResult(num_atoms=4, num_bonds=3, smarts='[#6](-@[#6])-@[#6]-@[#6]', completed=1)
+    MCSResult(numAtoms=4, numBonds=3, smarts='[#6](-@[#6])-@[#6]-@[#6]', completed=1)
 
     You can further restrict things and require that partial rings
     (as in this case) are not allowed. That is, if an atom is part of
@@ -1875,11 +1875,11 @@ def FindMCS(mols, minNumAtoms=2,
 
     >>> mols = [Chem.MolFromSmiles("CCC1CC2C1CN2"), Chem.MolFromSmiles("C1CC2C1CC2")]
     >>> MCS.FindMCS(mols)
-    MCSResult(num_atoms=6, num_bonds=6, smarts='[#6]-1-[#6]-[#6](-[#6])-[#6]-1-[#6]', completed=1)
+    MCSResult(numAtoms=6, numBonds=6, smarts='[#6]-1-[#6]-[#6](-[#6])-[#6]-1-[#6]', completed=1)
     >>> MCS.FindMCS(mols, ringMatchesRingOnly=True)
-    MCSResult(num_atoms=5, num_bonds=5, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1-@[#6]', completed=1)
+    MCSResult(numAtoms=5, numBonds=5, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1-@[#6]', completed=1)
     >>> MCS.FindMCS(mols, completeRingsOnly=True)
-    MCSResult(num_atoms=4, num_bonds=4, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1', completed=1)
+    MCSResult(numAtoms=4, numBonds=4, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1', completed=1)
 
     The MCS algorithm will exhaustively search for a maximum common substructure.
     Typically this takes a fraction of a second, but for some comparisons this
@@ -1890,7 +1890,7 @@ def FindMCS(mols, minNumAtoms=2,
 
     >>> mols = [Chem.MolFromSmiles("Nc1ccccc1"*100), Chem.MolFromSmiles("Nc1ccccccccc1"*100)]
     >>> MCS.FindMCS(mols, timeout=0.1)
-    MCSResult(num_atoms=16, num_bonds=15, smarts='[#7]-[#6](:[#6](-[#7]-[#6](:[#6](
+    MCSResult(numAtoms=16, numBonds=15, smarts='[#7]-[#6](:[#6](-[#7]-[#6](:[#6](
     -[#7]-[#6]):[#6]):[#6]:[#6]:[#6]):[#6]):[#6]:[#6]:[#6]', completed=0)
 
     (The MCS after 50 seconds contained 511 atoms.)

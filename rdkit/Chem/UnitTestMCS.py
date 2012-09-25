@@ -15,19 +15,19 @@ def load_smiles(text):
 
 _ignore = object()
 class MCSTestCase(unittest.TestCase):
-    def assert_search(self, smiles, num_atoms, num_bonds, smarts=_ignore, **kwargs):
+    def assert_search(self, smiles, numAtoms, numBonds, smarts=_ignore, **kwargs):
         result = MCS.FindMCS(smiles, **kwargs)
-        self.assert_result(result, completed=1, num_atoms=num_atoms, num_bonds=num_bonds,
+        self.assert_result(result, completed=1, numAtoms=numAtoms, numBonds=numBonds,
                            smarts=smarts)
         
-    def assert_result(self, result, completed=_ignore, num_atoms=_ignore,
-                      num_bonds=_ignore, smarts=_ignore):
+    def assert_result(self, result, completed=_ignore, numAtoms=_ignore,
+                      numBonds=_ignore, smarts=_ignore):
         if completed is not _ignore:
             self.assertEquals(result.completed, completed)
-        if num_atoms is not _ignore:
-            self.assertEquals(result.num_atoms, num_atoms)
-        if num_bonds is not _ignore:
-            self.assertEquals(result.num_bonds, num_bonds)
+        if numAtoms is not _ignore:
+            self.assertEquals(result.numAtoms, numAtoms)
+        if numBonds is not _ignore:
+            self.assertEquals(result.numBonds, numBonds)
         if smarts is not _ignore:
             self.assertEquals(result.smarts, smarts)
 
@@ -104,7 +104,7 @@ class TestIsotopes(MCSTestCase):
     # C1CPCC[4C]1[2C][2C][1C][3C] C2213
     def test_without_isotope(self):
         # The entire system, except the N/P in the ring
-        self.assert_search(isotope_mols, num_atoms=9, num_bonds=8)
+        self.assert_search(isotope_mols, numAtoms=9, numBonds=8)
 
     def test_isotopes(self):
         # 5 atoms of class '0' in the ring
@@ -257,8 +257,8 @@ class TestTimeout(MCSTestCase):
         t1 = time.time()
         result = MCS.FindMCS(lengthy_mols, timeout=0.1)
         self.assert_result(result, completed=0)
-        self.assertTrue(result.num_atoms > 1)
-        self.assertTrue(result.num_bonds >= result.num_atoms-1, (result.num_atoms, result.num_bonds))
+        self.assertTrue(result.numAtoms > 1)
+        self.assertTrue(result.numBonds >= result.numAtoms-1, (result.numAtoms, result.numBonds))
         t2 = time.time()
         self.assertTrue(t2-t1 < 0.5, t2-t1)
 
