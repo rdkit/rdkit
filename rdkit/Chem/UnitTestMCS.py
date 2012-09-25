@@ -248,20 +248,19 @@ class TestCompleteRingsOnly(MCSTestCase):
         # Should allow the cO in phenol to match the CO in the other structure
         self.assert_search(atomtype_mols, 2, 1, completeRingsOnly=True)
 
-lengthy_mols = load_smiles("""
-N1(C(c2c(cc3c(c2)OCO3)CC1)c4cc(c(c(c4)OC)O)OC)C(=O)OC CHEMBL311765
-N1(C(c2c(cc(cc2)O)CC1)c3ccc(cc3)OCCN4CCCC4)C(=O)OCC CHEMBL94080
-""")
+lengthy_mols = [Chem.MolFromSmiles("Nc1ccccc1"*20),
+                Chem.MolFromSmiles("Nc1ccccccccc1"*20)]
 
 class TestTimeout(MCSTestCase):
-    ## ### This test not longer times out. Need to find a new test case.
-    ## # this should take 12+ seconds to process. Give it 0.1 seconds.
-    ## def test_timeout(self):
-    ##     t1 = time.time()
-    ##     result = MCS.FindMCS(lengthy_mols, timeout=0.1)
-    ##     self.assert_result(result, completed=0, num_atoms=-1, num_bonds=-1)
-    ##     t2 = time.time()
-    ##     self.assertTrue(t2-t1 < 0.5, t2-t1)
+    # This should take over two minutes to process. Give it 0.1 seconds.
+    def test_timeout(self):
+        t1 = time.time()
+        result = MCS.FindMCS(lengthy_mols, timeout=0.1)
+        self.assert_result(result, completed=0)
+        self.assertTrue(result.num_atoms > 1)
+        self.assertTrue(result.num_bonds >= result.num_atoms-1, (result.num_atoms, result.num_bonds))
+        t2 = time.time()
+        self.assertTrue(t2-t1 < 0.5, t2-t1)
 
     # Check for non-negative values
     def test_timeout_negative(self):
