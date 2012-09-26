@@ -238,15 +238,12 @@ import sys
 
 from rdkit import Chem
 
-import argparse
 import copy
 import itertools
-import re
-import weakref
 import heapq
 heappush = heapq.heappush
 heappop = heapq.heappop
-from itertools import chain, combinations, product
+from itertools import chain, combinations
 import collections
 from collections import defaultdict
 import time
