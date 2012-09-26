@@ -724,7 +724,9 @@ namespace RDKit{
       std::vector<MatchVectType> matches;
       SubstructMatch(mol,*(patt.get()),matches,false);
       boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
-#if 1
+#if 0
+      // this was an effort to tune the composition of the fingerprint,
+      // particularly when queries are used. It hasn't proved successful
       BOOST_FOREACH(MatchVectType &mv,matches){
         // collect bits counting the number of occurances of the pattern:
         gboost::hash_combine(mIdx,0xBEEF);
@@ -741,7 +743,7 @@ namespace RDKit{
           gboost::hash_combine(bitId,mol.getAtomWithIdx(p.second)->getAtomicNum());
           amap[p.first]=p.second;
         }
-        if(!isQuery) res->setBit(bitId%((1*fpSize)/4));
+        if(!isQuery) res->setBit(bitId%(fpSize/2));
 
         isQuery=false;
         bitId=pIdx;
@@ -758,7 +760,7 @@ namespace RDKit{
                                                     amap[pbond->getEndAtomIdx()]);
           gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
         }
-        if(!isQuery) res->setBit((1*fpSize/4) + bitId%((3*fpSize)/4));
+        if(!isQuery) res->setBit((fpSize/2) + bitId%(fpSize/2));
       }
 #else
       BOOST_FOREACH(MatchVectType &mv,matches){
