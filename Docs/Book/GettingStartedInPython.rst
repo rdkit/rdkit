@@ -673,7 +673,8 @@ or more molecules:
 >>> mol1 = Chem.MolFromSmiles("O=C(NCc1cc(OC)c(O)cc1)CCCC/C=C/C(C)C")
 >>> mol2 = Chem.MolFromSmiles("CC(C)CCCCCC(=O)NCC1=CC(=C(C=C1)O)OC")
 >>> mol3 = Chem.MolFromSmiles("c1(C=O)cc(OC)c(O)cc1")
->>> MCS.FindMCS([mol1, mol2, mol3])
+>>> mols = [mol1,mol2,mol3]
+>>> MCS.FindMCS(mols)
 MCSResult(numAtoms=10, numBonds=10, smarts='[#6]-[#6]:1:[#6]:[#6](:[#6](:[#6]:[#6]:1)-[#8])-[#8]-[#6]', completed=1)
 
 It returns an MCSResult instance with information about the number of
@@ -688,10 +689,13 @@ By default, two atoms match if they are the same element and two bonds
 match if they have the same bond type. Specify ``atomCompare`` and
 ``bondCompare`` to use different comparison functions, as in:
     
+>>> mols = (Chem.MolFromSmiles('NCC'),Chem.MolFromSmiles('OC=C'))
+>>> MCS.FindMCS(mols)
+MCSResult(numAtoms=-1, numBonds=-1, smarts=None, completed=1)
 >>> MCS.FindMCS(mols, atomCompare="any")
-MCSResult(numAtoms=3, numBonds=2, smarts='[*]-[*]-[*]', completed=1)
+MCSResult(numAtoms=2, numBonds=1, smarts='[*]-[*]', completed=1)
 >>> MCS.FindMCS(mols, bondCompare="any")
-MCSResult(numAtoms=3, numBonds=2, smarts='[#6]~[#6]~[#6]', completed=1)
+MCSResult(numAtoms=2, numBonds=1, smarts='[#6]~[#6]', completed=1)
 
 An atomCompare of "any" says that any atom matches any other atom,
 "elements" compares by element type, and "isotopes" matches based on
@@ -711,8 +715,11 @@ The default ``matchValences`` value of False ignores valence
 information.  When True, the atomCompare setting is modified to also
 require that the two atoms have the same valency.
 
+>>> mols = (Chem.MolFromSmiles('NC1OC1'),Chem.MolFromSmiles('C1OC1[N+](=O)[O-]'))
+>>> MCS.FindMCS(mols)
+MCSResult(numAtoms=4, numBonds=4, smarts='[#7]-[#6]-1-[#8]-[#6]-1', completed=1)
 >>> MCS.FindMCS(mols, matchValences=True)
-MCSResult(numAtoms=2, numBonds=1, smarts='[#6v4]-[#6v4]', completed=1)
+MCSResult(numAtoms=3, numBonds=3, smarts='[#6v4]-1-[#8v2]-[#6v4]-1', completed=1)
 
 It can be strange to see a linear carbon chain match a carbon ring,
 which is what the ``ringMatchesRingOnly`` default of False does. If
@@ -747,8 +754,7 @@ return the best match found in that time. If timeout is reached then the
 
 >>> mols = [Chem.MolFromSmiles("Nc1ccccc1"*100), Chem.MolFromSmiles("Nc1ccccccccc1"*100)]
 >>> MCS.FindMCS(mols, timeout=0.1)
-MCSResult(numAtoms=16, numBonds=15, smarts='[#7]-[#6](:[#6](-[#7]-[#6](:[#6](
--[#7]-[#6]):[#6]):[#6]:[#6]:[#6]):[#6]):[#6]:[#6]:[#6]', completed=0)
+MCSResult(numAtoms=..., numBonds=..., smarts='[#7]-[#6]...', completed=0)
 
 (The MCS after 50 seconds contained 511 atoms.)
 
