@@ -206,6 +206,7 @@ class MolViewer(object):
     fd = tempfile.NamedTemporaryFile(suffix='.png',delete=False)
     fd.close()
     self.server.do('png %s'%fd.name)
+    time.sleep(0.2)  # <- wait a short period so that PyMol can finish
     for i in range(10):
       try:
         img = Image.open(fd.name)
