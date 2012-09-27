@@ -2324,7 +2324,9 @@ CAS<~>
     fsmi = Chem.MolFragmentToSmiles(m,range(6),kekuleSmiles=True)
     self.failUnlessEqual(fsmi,"C1=CC=CC=C1")    
     fsmi = Chem.MolFragmentToSmiles(m,range(6),atomSymbols=["[C]"]*7,kekuleSmiles=True)
-    self.failUnlessEqual(fsmi,"[C]1=[C][C]=[C][C]=[C]1")    
+    self.failUnlessEqual(fsmi,"[C]1=[C][C]=[C][C]=[C]1")
+
+    self.assertRaises(ValueError,lambda : Chem.MolFragmentToSmiles(m,[]))
 
   def test78AtomAndBondProps(self):
     m = Chem.MolFromSmiles('c1ccccc1')

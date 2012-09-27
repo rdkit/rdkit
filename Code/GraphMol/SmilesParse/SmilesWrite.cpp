@@ -514,6 +514,8 @@ namespace RDKit{
                                   int rootedAtAtom,
                                   bool canonical,
                                   bool allBondsExplicit){
+    PRECONDITION(atomsToUse.size(),
+                 "no atoms provided");
     PRECONDITION(rootedAtAtom<0||static_cast<unsigned int>(rootedAtAtom)<mol.getNumAtoms(),
                  "rootedAtomAtom must be less than the number of atoms");
     PRECONDITION(rootedAtAtom<0||std::find(atomsToUse.begin(),atomsToUse.end(),rootedAtAtom)!=atomsToUse.end(),

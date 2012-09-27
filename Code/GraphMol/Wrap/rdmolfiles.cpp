@@ -162,6 +162,9 @@ namespace RDKit{
                                         bool allBondsExplicit
                                         ){
     std::vector<int> *avect=pythonObjectToVect(atomsToUse,static_cast<int>(mol.getNumAtoms()));
+    if(!avect || !(avect->size())){
+      throw_value_error("atomsToUse must not be empty");
+    }
     std::vector<int> *bvect=pythonObjectToVect(bondsToUse,static_cast<int>(mol.getNumBonds()));
     std::vector<std::string> *asymbols=pythonObjectToVect<std::string>(atomSymbols);
     std::vector<std::string> *bsymbols=pythonObjectToVect<std::string>(bondSymbols);
