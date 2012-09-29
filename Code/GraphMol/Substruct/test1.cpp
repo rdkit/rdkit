@@ -19,6 +19,10 @@
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
 
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
+
 using namespace RDKit;
 
 void test1(){
@@ -613,6 +617,107 @@ void testRecursiveSerialNumbers(){
   std::cout << "Done\n" << std::endl;
 }
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <boost/thread.hpp>  
+#include <boost/dynamic_bitset.hpp>
+namespace {
+  void runblock(const std::vector<ROMol *> &mols,const ROMol *query,
+                const boost::dynamic_bitset<> &hits,unsigned int count,unsigned int idx){
+    for(unsigned int j=0;j<100;j++){
+      for(unsigned int i=0;i<mols.size();++i){
+        if(i%count != idx) continue;
+        ROMol *mol = mols[i];
+
+        MatchVectType matchV;
+        bool found=SubstructMatch(*mols[i],*query,matchV);
+        
+        TEST_ASSERT(found==hits[i]);
+      }
+    }
+  };
+}
+void testMultiThread(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test multithreading" << std::endl;
+
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/NCI/first_200.props.sdf";
+  SDMolSupplier suppl(fName);
+  std::cerr<<"reading molecules"<<std::endl;
+  std::vector<ROMol *> mols;
+  while(!suppl.atEnd()&&mols.size()<100){
+    ROMol *mol=0;
+    try{
+      mol=suppl.next();
+    } catch(...){
+      continue;
+    }
+    if(!mol) continue;
+    mols.push_back(mol);
+  }
+  boost::thread_group tg;
+
+  ROMol *query=SmartsToMol("[#6;$([#6]([#6])[!#6])]");
+  boost::dynamic_bitset<> hits(mols.size());
+  for(unsigned int i=0;i<mols.size();++i){
+    MatchVectType matchV;
+    hits[i]=SubstructMatch(*mols[i],*query,matchV);
+  }
+  unsigned int count=4;
+#if 1 
+  std::cerr<<" hits: "<<hits<<std::endl;
+  std::cerr<<"processing"<<std::endl;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,query,hits,count,i));
+  }
+  tg.join_all();
+  std::cerr<<" done"<<std::endl;
+  delete query;
+
+  query=SmartsToMol("[#6]([#6])[!#6]");
+  for(unsigned int i=0;i<mols.size();++i){
+    MatchVectType matchV;
+    hits[i]=SubstructMatch(*mols[i],*query,matchV);
+  }
+  std::cerr<<" hits2: "<<hits<<std::endl;
+  std::cerr<<"processing2"<<std::endl;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch2 :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,query,hits,count,i));
+  }
+  tg.join_all();
+  std::cerr<<" done"<<std::endl;
+  delete query;
+#endif
+  
+  std::cerr<<" preprocessing 3"<<std::endl;
+  query=SmartsToMol("[$([O,S]-[!$(*=O)])]");
+  for(unsigned int i=0;i<mols.size();++i){
+    MatchVectType matchV;
+    hits[i]=SubstructMatch(*mols[i],*query,matchV);
+  }
+  std::cerr<<" hits3: "<<hits<<std::endl;
+  std::cerr<<"processing3"<<std::endl;
+  for(unsigned int i=0;i<count;++i){
+    std::cerr<<" launch3 :"<<i<<std::endl;std::cerr.flush();
+    tg.add_thread(new boost::thread(runblock,mols,query,hits,count,i));
+  }
+  tg.join_all();
+  std::cerr<<" done"<<std::endl;
+  delete query;
+
+
+  for(unsigned int i=0;i<mols.size();++i) delete mols[i];
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+#else
+void testMultiThread(){
+}
+#endif
+
+
 
 int main(int argc,char *argv[])
 {
@@ -629,6 +734,7 @@ int main(int argc,char *argv[])
   test9();  
 #endif
   testRecursiveSerialNumbers();  
+  testMultiThread();
   return 0;
 }
 

@@ -15,6 +15,7 @@
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
 #include <boost/smart_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 #include <map>
 
 #include "ullmann.hpp"
@@ -26,6 +27,7 @@ namespace RDKit{
     
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,
 			 SUBQUERY_MAP &subqueryMap );
+    void ClearSubqueryLocks(QueryAtom::QUERYATOM_QUERY *q);
 
     typedef std::list<std::pair<MolGraph::vertex_descriptor,MolGraph::vertex_descriptor> > ssPairType;
 
@@ -105,6 +107,15 @@ namespace RDKit{
      }
     }    
 
+    if(recursionPossible){
+      ROMol::ConstAtomIterator atIt;
+      for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
+        if((*atIt)->getQuery()){
+	  detail::ClearSubqueryLocks((*atIt)->getQuery());
+        }
+      }
+    }
+
     return res;
   }
 
@@ -164,6 +175,16 @@ namespace RDKit{
       }
       res = matches.size();
     } 
+
+    if(recursionPossible){
+      ROMol::ConstAtomIterator atIt;
+      for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
+        if((*atIt)->getQuery()){
+	  detail::ClearSubqueryLocks((*atIt)->getQuery());
+        }
+      }
+    }
+
     return res;
   }
 
@@ -229,8 +250,9 @@ namespace RDKit{
       //std::cout << "\t\t" << typeid(*query).name() << std::endl;
       if(query->getDescription()=="RecursiveStructure"){
 	RecursiveStructureQuery *rsq=(RecursiveStructureQuery *)query;
+        //std::cerr<<"lock: "<<rsq<<std::endl;
+        rsq->d_mutex.lock();
 	rsq->clear();
-
 	bool matchDone=false;
 	if(rsq->getSerialNumber() &&
 	   subqueryMap.find(rsq->getSerialNumber()) != subqueryMap.end()){
@@ -279,6 +301,29 @@ namespace RDKit{
       }
       //std::cout << "<<- back " << (int)query << std::endl;
     }
+
+    void ClearSubqueryLocks(QueryAtom::QUERYATOM_QUERY *query){
+      PRECONDITION(query,"bad query");
+      if(query->getDescription()=="RecursiveStructure"){
+	RecursiveStructureQuery *rsq=(RecursiveStructureQuery *)query;
+        //std::cerr<<"unlock: "<<rsq<<std::endl;
+        rsq->d_mutex.unlock();
+
+        for(ROMol::ConstAtomIterator atIt=rsq->getQueryMol()->beginAtoms();
+            atIt!=rsq->getQueryMol()->endAtoms();atIt++){
+          if((*atIt)->getQuery()){
+            ClearSubqueryLocks((*atIt)->getQuery());
+          }
+        }
+      }
+
+      // now recurse over our children (these things can be nested)
+      for(Queries::Query<int,Atom const*,true>::CHILD_VECT_CI childIt=query->beginChildren();
+          childIt!=query->endChildren();childIt++){
+	ClearSubqueryLocks(childIt->get());
+      }
+    }
+
   } // end of namespace detail
 }
 

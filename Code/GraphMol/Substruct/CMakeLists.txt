@@ -1,10 +1,11 @@
 rdkit_library(SubstructMatch 
               SubstructMatch.cpp SubstructUtils.cpp
-              LINK_LIBRARIES GraphMol)
+              LINK_LIBRARIES GraphMol
+              ${CMAKE_THREAD_LIBS_INIT})
 
 rdkit_headers(SubstructMatch.h
               SubstructUtils.h DEST GraphMol/Substruct)
 
-rdkit_test(testSubstructMatch test1.cpp LINK_LIBRARIES SubstructMatch
-GraphMol RDGeometryLib RDGeneral )
+rdkit_test(testSubstructMatch test1.cpp LINK_LIBRARIES  FileParsers SmilesParse SubstructMatch
+GraphMol RDGeometryLib RDGeneral ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 

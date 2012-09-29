@@ -363,16 +363,20 @@ class TestCase(unittest.TestCase):
 
     query = Chem.MolFromSmarts('[Cl,$(O)]')
     mol = Chem.MolFromSmiles('C(=O)O')
+    print "q1"
     self.failUnless(len(mol.GetSubstructMatches(query))==2)
     mol = Chem.MolFromSmiles('C(=N)N')
+    print "q2"
     self.failUnless(len(mol.GetSubstructMatches(query))==0)
     
     query = Chem.MolFromSmarts('[$([O,S]-[!$(*=O)])]')
     mol = Chem.MolFromSmiles('CC(S)C(=O)O')
+    print "q3"
     self.failUnless(len(mol.GetSubstructMatches(query))==1)
     mol = Chem.MolFromSmiles('C(=O)O')
+    print "q4"
     self.failUnless(len(mol.GetSubstructMatches(query))==0)
-    
+    print "done"
     
   def test14Hs(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
