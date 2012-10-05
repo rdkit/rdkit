@@ -1,5 +1,5 @@
-from Numeric import *
-from sping import pid
+from numpy import *
+from rdkit.sping import pid
 import math
 
 def DrawSpiral(canvas,startColor,endColor,startRadius,endRadius,nLoops,degsPerSlice=70,degsPerStep=1,
@@ -10,12 +10,12 @@ def DrawSpiral(canvas,startColor,endColor,startRadius,endRadius,nLoops,degsPerSl
   radPerStep = math.pi*degsPerStep/180.
   stepsPerSlice = degsPerSlice/degsPerStep
   radiusStep = float(endRadius-startRadius)/(stepsPerSlice*nSlices)
-  colorStep = (array(endColor,Float)-array(startColor,Float))/nSlices
+  colorStep = (array(endColor,float)-array(startColor,float))/nSlices
   print 'INFO:',nSlices,radPerStep,stepsPerSlice,radiusStep,colorStep
   
   angle = math.pi*startAngle/180.
   radius = startRadius
-  color = array(startColor,Float)
+  color = array(startColor,float)
 
 
   for i in range(nSlices):
@@ -40,11 +40,11 @@ def DrawSpiral(canvas,startColor,endColor,startRadius,endRadius,nLoops,degsPerSl
 if __name__ == '__main__':
   #from sping.PIL.pidPIL import PILCanvas
   #canv = PILCanvas(size=(600,600),name='test.png')
-  #from sping.SVG.pidSVG import SVGCanvas
-  #canv = SVGCanvas(size=(600,600),name='test.svg')
-  from sping.PDF.pidPDF import PDFCanvas
-  canv = PDFCanvas(size=(600,600),name='test.pdf')
-  DrawSpiral(canv,(.2,.2,1),(.9,.9,1.),250,5,10,startAngle=-45,degsPerSlice=50,dir=-1)
+  from rdkit.sping.SVG.pidSVG import SVGCanvas
+  #from rdkit.sping.PDF.pidPDf import PDFCanvas
+  canv = SVGCanvas(size=(600,600),name='test.svg')
+  #canv = PDFCanvas(size=(600,600),name='test.pdf')
+  DrawSpiral(canv,(.2,.2,1),(.9,.9,1.),200,10,10,startAngle=-45,degsPerSlice=50,dir=-1)
   canv.save()
   
     
