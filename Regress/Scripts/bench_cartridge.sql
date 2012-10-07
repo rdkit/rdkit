@@ -16,6 +16,7 @@ select count(*) from mols cross join zinc_frags qt where mols.m@>qt.m;
 select count(*) from mols cross join zinc_leads qt where mols.m@>qt.m;
 select count(*) from mols cross join pubchem_pieces qt where mols.m@>qt.m;
 
+drop table if exists fps,zinc_frags_fps,zinc_leads_fps;
 select id,morganbv_fp(m) mfp2 into fps from mols;
 create index mfp2_idx on fps using gist(mfp2);
 select id,morganbv_fp(m) mfp2 into zinc_leads_fps from zinc_leads;
