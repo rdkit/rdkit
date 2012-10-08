@@ -1564,18 +1564,19 @@ These are accessible using Python's help command:
 Help on method GetNumAtoms:
 <BLANKLINE>
 GetNumAtoms(...) method of rdkit.Chem.rdchem.Mol instance
-    GetNumAtoms( (Mol)arg1 [, (bool)onlyHeavy=True]) -> int :
-        Returns the number of Atoms in the molecule.
+    GetNumAtoms( (Mol)arg1 [, (int)onlyHeavy=-1 [, (bool)onlyExplicit=True]]) -> int :
+        Returns the number of atoms in the molecule.
 <BLANKLINE>
           ARGUMENTS:
-            - onlyHeavy: (optional) include only heavy atoms (not Hs)
-                         defaults to 1.
+            - onlyExplicit: (optional) include only explicit atoms (atoms in the molecular graph)
+                            defaults to 1.
+          NOTE: the onlyHeavy argument is deprecated
 <BLANKLINE>
 <BLANKLINE>
         C++ signature :
-            unsigned int GetNumAtoms(RDKit::ROMol {lvalue} [,bool=True])
+            int GetNumAtoms(RDKit::ROMol [,int=-1 [,bool=True]])
 <BLANKLINE>
->>> m.GetNumAtoms(onlyHeavy=False)
+>>> m.GetNumAtoms(onlyExplicit=False)
 15
 
 When working in an environment that does command completion or tooltips, one can see the available methods quite easily.
