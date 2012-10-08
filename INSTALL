@@ -15,14 +15,6 @@ The instructions below are for the Q2 2011 release and subsequent releases.
      v2.6. It might be worth compiling your own copy of v2.8 even if
      v2.6 is already installed._
 
-   * flex and bison. These are frequently already installed if you
-     have the various pieces of the development environment
-     installed. Note that some Redhat-based systems have an extremely
-     ancient version of flex (v2.5.4, from 1997) installed; in order
-     to build the RDKit on these systems you need to compile and
-     install a more recent version. The source is available at
-     http://flex.sourceforge.net.
-
    * The following are required if you are planning on using the Python wrappers:
 
       * The python headers. This probably means that you need to
@@ -262,18 +254,8 @@ cmake -D BOOST_ROOT=/usr/local -D Boost_NO_SYSTEM_PATHS=ON ..
     [http://www.microsoft.com/express/download/ from Microsoft]. This
     is a big installation and will take a while. The RDKit has been
     successfully built with all version of visual c++ since 6.0, so
-    the current version of VC++ (2008 as of this writing) should be
+    the current version of VC++ (2010 as of this writing) should be
     fine.
-
-  * flex and bison : these are easily installed as part of a
-    [http://www.cygwin.com cygwin] installation, but one can also find
-    flex and bison binaries for windows elsewhere. Cygwin is not
-    required to build the RDKit, but it's very useful to have (a
-    minimal cygwin installation is fine). *Note* if you install flex
-    and bison without cygwin, be sure to read
-    [http://eli.thegreenplace.net/2007/07/27/bison-looking-for-bisonsimple-on-windows/
-    this web page] about environment variables and set the
-    BISON_SIMPLE environment variable to the appropriate value.
 
   * cmake : [http://www.cmake.org/cmake/resources/software.html cmake] should be installed.
 

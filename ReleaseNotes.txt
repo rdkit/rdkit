@@ -95,7 +95,9 @@ Other:
 - The directory $RDBASE/Regress now contains sample data and
   scripts for benchmarking the database cartridge.
 - Fused-ring aromaticity is now only considered in rings of up to size
-  24.   
+  24.
+- It is no longer necessary to have flex and bison installed in order
+  to build the RDKit.
 
 
 ******  Release_2012.06.1 *******
