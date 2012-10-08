@@ -430,7 +430,7 @@ MolNumAtoms(CROMol i){
 extern "C" int
 MolNumHeavyAtoms(CROMol i){
   const ROMol *im = (ROMol*)i;
-  return im->getNumAtoms(true);
+  return im->getNumHeavyAtoms();
 }
 extern "C" int
 MolNumHeteroatoms(CROMol i){
