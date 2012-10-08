@@ -20,13 +20,13 @@ def AlignDepict(mol,core,corePattern=None,acceptFailure=False):
                     and the core.
   """
   if core and corePattern:
-    if not core.GetNumAtoms(onlyHeavy=True)==corePattern.GetNumAtoms(onlyHeavy=True):
+    if not core.GetNumAtoms(onlyExplicit=True)==corePattern.GetNumAtoms(onlyExplicit=True):
       raise ValueError,'When a pattern is provided, it must have the same number of atoms as the core'
     coreMatch = core.GetSubstructMatch(corePattern)
     if not coreMatch:
       raise ValueError,"Core does not map to itself"
   else:
-    coreMatch = range(core.GetNumAtoms(onlyHeavy=True))
+    coreMatch = range(core.GetNumAtoms(onlyExplicit=True))
   if corePattern:
     match = mol.GetSubstructMatch(corePattern)
   else:

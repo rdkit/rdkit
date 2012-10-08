@@ -80,7 +80,7 @@ RingCount.version = "1.0.0"
 
 def HeavyAtomCount(mol):
   " Number of heavy atoms a molecule."
-  return mol.GetNumAtoms(onlyHeavy=True)
-HeavyAtomCount.version = "1.0.0"
+  return mol.GetNumHeavyAtoms()
+HeavyAtomCount.version = "1.0.1"
 
 

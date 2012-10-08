@@ -179,7 +179,7 @@ def RecapDecompose(mol,allNodes=None,minFragmentSize=0,onlyUseReactions=None):
 	  seqOk=True
 	  # we want to disqualify small fragments, so sort the product sequence by size
 	  # and then look for "forbidden" fragments
-	  prodSeq = [(prod.GetNumAtoms(onlyHeavy=True),prod) for prod in prodSeq]
+	  prodSeq = [(prod.GetNumAtoms(onlyExplicit=True),prod) for prod in prodSeq]
 	  prodSeq.sort()
 	  for nats,prod in prodSeq:
             try:

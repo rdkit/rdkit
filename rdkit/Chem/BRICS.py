@@ -461,7 +461,7 @@ def BRICSDecompose(mol,allNodes=None,minFragmentSize=1,onlyUseReactions=None,
           for prodSeq in ps:
             seqOk=True
             # we want to disqualify small fragments, so sort the product sequence by size
-            prodSeq = [(prod.GetNumAtoms(onlyHeavy=True),prod) for prod in prodSeq]
+            prodSeq = [(prod.GetNumAtoms(onlyExplicit=True),prod) for prod in prodSeq]
             prodSeq.sort()
             for nats,prod in prodSeq:
               try:

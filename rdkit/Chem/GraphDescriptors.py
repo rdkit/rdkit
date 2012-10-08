@@ -122,7 +122,7 @@ def Kappa1(mol):
    
   """
   P1 = mol.GetNumBonds(1)
-  A = mol.GetNumAtoms(onlyHeavy=1)
+  A = mol.GetNumAtoms(onlyExplicit=1)
   alpha = HallKierAlpha(mol)
   denom = P1 + alpha
   if denom:
@@ -140,7 +140,7 @@ def Kappa2(mol):
    
   """
   P2 = len(Chem.FindAllPathsOfLengthN(mol,2))
-  A = mol.GetNumAtoms(onlyHeavy=1)
+  A = mol.GetNumAtoms(onlyExplicit=1)
   alpha = HallKierAlpha(mol)
   denom = (P2 + alpha)**2
   if denom:

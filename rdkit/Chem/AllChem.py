@@ -104,13 +104,13 @@ def GenerateDepictionMatching2DStructure(mol,reference,confId=-1,
 
   """
   if reference and referencePattern:
-    if not reference.GetNumAtoms(onlyHeavy=True)==referencePattern.GetNumAtoms(onlyHeavy=True):
+    if not reference.GetNumAtoms(onlyExplicit=True)==referencePattern.GetNumAtoms(onlyExplicit=True):
       raise ValueError,'When a pattern is provided, it must have the same number of atoms as the reference'
     referenceMatch = reference.GetSubstructMatch(referencePattern)
     if not referenceMatch:
       raise ValueError,"Reference does not map to itself"
   else:
-    referenceMatch = range(reference.GetNumAtoms(onlyHeavy=True))
+    referenceMatch = range(reference.GetNumAtoms(onlyExplicit=True))
   if referencePattern:
     match = mol.GetSubstructMatch(referencePattern)
   else:
