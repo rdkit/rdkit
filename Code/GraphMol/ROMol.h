@@ -188,8 +188,10 @@ namespace RDKit{
     //! \name Atoms
     //@{
 
-    //! returns our number of Atoms
-    unsigned int getNumAtoms(bool onlyHeavy=1) const;
+    //! returns our number of atoms
+    unsigned int getNumAtoms(bool onlyExplicit=1) const;
+    //! returns our number of heavy atoms (atomic number > 1)
+    unsigned int getNumHeavyAtoms() const;
     //! returns a pointer to a particular Atom
     Atom *getAtomWithIdx(unsigned int idx);
     //! \overload

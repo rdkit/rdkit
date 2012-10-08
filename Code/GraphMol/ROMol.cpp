@@ -125,15 +125,23 @@ namespace RDKit{
   unsigned int ROMol::getAtomDegree(Atom::ATOM_SPTR at) const {
     return getAtomDegree(at.get());
   };
-  unsigned int ROMol::getNumAtoms(bool onlyHeavy) const {
+  unsigned int ROMol::getNumAtoms(bool onlyExplicit) const {
     int res = boost::num_vertices(d_graph);
-    if (!onlyHeavy) {
+    if (!onlyExplicit) {
       // if we are interested in hydrogens as well add them up from 
-      // each heavy atom
+      // each 
       for (ConstAtomIterator ai = beginAtoms();
 	   ai != endAtoms(); ++ai) {
         res += (*ai)->getTotalNumHs();
       }
+    }
+    return res;
+  };
+  unsigned int ROMol::getNumHeavyAtoms() const {
+    unsigned int res = 0;
+    for (ConstAtomIterator ai = beginAtoms();
+         ai != endAtoms(); ++ai) {
+      if((*ai)->getAtomicNum()>1) ++res;
     }
     return res;
   };

@@ -4100,6 +4100,33 @@ void testSFNetIssue249() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFNetIssue256() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 256: bad atom counts" << std::endl;
+
+  {
+    std::string smi="*CC[H]";
+    ROMol *m = SmilesToMol(smi,0,0);
+    TEST_ASSERT(m);
+    m->updatePropertyCache(false);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getNumAtoms(false)==8);
+    TEST_ASSERT(m->getNumHeavyAtoms()==2);    
+    delete m;
+  }
+  {
+    std::string smi="*CC[2H]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getNumAtoms(false)==8);
+    TEST_ASSERT(m->getNumHeavyAtoms()==2);    
+    delete m;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -4158,6 +4185,7 @@ int main(){
   testSFNetIssue3549146();
 #endif
   testSFNetIssue249();
+  testSFNetIssue256();
   return 0;
 }
 

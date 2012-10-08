@@ -177,6 +177,16 @@ namespace RDKit {
   }
 #endif
 
+  int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit){
+    if(onlyHeavy>-1){
+      BOOST_LOG(rdWarningLog)<<"WARNING: the onlyHeavy argument to mol.GetNumAtoms() has been deprecated. Please use the onlyExplicit argument instead or mol.GetNumHeavyAtoms() if you want the heavy atom count."<<std::endl;
+      return mol.getNumAtoms(onlyHeavy);
+    }
+    return mol.getNumAtoms(onlyExplicit);
+  }
+
+
+
   std::string molClassDoc = "The Molecule class.\n\n\
   In addition to the expected Atoms and Bonds, molecules contain:\n\
     - a collection of Atom and Bond bookmarks indexed with integers\n\
@@ -197,12 +207,19 @@ struct mol_wrapper {
 			  molClassDoc.c_str(),
 			  python::init<>("Constructor, takes no arguments"))
       .def(python::init<const std::string &>())
-      .def("GetNumAtoms",&ROMol::getNumAtoms,
-	   (python::arg("onlyHeavy")=true),
-	   "Returns the number of Atoms in the molecule.\n\n"
+      .def("GetNumAtoms",getMolNumAtoms,
+	   (python::arg("onlyHeavy")=-1,
+            python::arg("onlyExplicit")=true),
+	   "Returns the number of atoms in the molecule.\n\n"
 	   "  ARGUMENTS:\n"
-	   "    - onlyHeavy: (optional) include only heavy atoms (not Hs)\n"
-	   "                 defaults to 1.\n")
+	   "    - onlyExplicit: (optional) include only explicit atoms (atoms in the molecular graph)\n"
+	   "                    defaults to 1.\n"
+	   "  NOTE: the onlyHeavy argument is deprecated\n"
+
+)
+      .def("GetNumHeavyAtoms",&ROMol::getNumHeavyAtoms,
+	   "Returns the number of heavy atoms (atomic number >1) in the molecule.\n\n"
+           )
       .def("GetAtomWithIdx",(Atom * (ROMol::*)(unsigned int))&ROMol::getAtomWithIdx,
 	   python::return_internal_reference<1,
 	   python::with_custodian_and_ward_postcall<0,1> >(),
