@@ -23,15 +23,13 @@ if(BISON_EXECUTABLE)
                COMPILE_FLAGS "-pyysmarts_" )
   ADD_FLEX_BISON_DEPENDENCY(SmilesL SmilesY)
   ADD_FLEX_BISON_DEPENDENCY(SmartsL SmartsY)
+  get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
+  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
+         "${extra_clean_files};${FLEX_OUTPUT_FILES};${BISON_OUTPUT_FILES}")
 endif(BISON_EXECUTABLE)
 
 FILE(GLOB FLEX_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lex.*.cpp")
 FILE(GLOB BISON_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.tab.?pp")
-
-get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
-        "${extra_clean_files};${FLEX_OUTPUT_FILES};${BISON_OUTPUT_FILES}")
-
 
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp 

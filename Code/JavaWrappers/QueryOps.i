@@ -35,6 +35,7 @@
 #include <GraphMol/QueryOps.h>
 %}
 
+%ignore RDKit::RecursiveStructureQuery::d_mutex;
 %include <Query/QueryObjects.h>
 %include <Query/EqualityQuery.h>
 %include <GraphMol/QueryOps.h>
