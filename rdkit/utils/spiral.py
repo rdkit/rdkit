@@ -44,7 +44,7 @@ if __name__ == '__main__':
   #from rdkit.sping.PDF.pidPDf import PDFCanvas
   canv = SVGCanvas(size=(600,600),name='test.svg')
   #canv = PDFCanvas(size=(600,600),name='test.pdf')
-  DrawSpiral(canv,(.2,.2,1),(.9,.9,1.),200,10,10,startAngle=-45,degsPerSlice=50,dir=-1)
+  DrawSpiral(canv,(.2,.2,1),(.9,.9,1.),200,50,8,startAngle=-45,degsPerSlice=50,dir=-1)
   canv.save()
   
     
