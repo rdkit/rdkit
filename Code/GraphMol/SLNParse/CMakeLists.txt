@@ -11,19 +11,25 @@ if(MSVC)
   ADD_DEFINITIONS("/D BOOST_ALL_DYN_LINK") 
 endif(MSVC)
 
-FLEX_TARGET(SlnL sln.ll 
-            ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysln.cpp 
-            COMPILE_FLAGS "-Pyysln_")
+if(FLEX_EXECUTABLE)
+  FLEX_TARGET(SlnL sln.ll 
+              ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysln.cpp 
+              COMPILE_FLAGS "-Pyysln_")
+endif(FLEX_EXECUTABLE)
 
-BISON_TARGET(SlnY sln.yy 
-             ${CMAKE_CURRENT_SOURCE_DIR}/sln.tab.cpp 
-             COMPILE_FLAGS "-pyysln_")
+if(BISON_EXECUTABLE)
+  BISON_TARGET(SlnY sln.yy 
+               ${CMAKE_CURRENT_SOURCE_DIR}/sln.tab.cpp 
+               COMPILE_FLAGS "-pyysln_")
+  ADD_FLEX_BISON_DEPENDENCY(SlnL SlnY)
+endif(BISON_EXECUTABLE)
 
-ADD_FLEX_BISON_DEPENDENCY(SlnL SlnY)
+FILE(GLOB FLEX_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lex.*.cpp")
+FILE(GLOB BISON_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.tab.?pp")
 
 rdkit_library(SLNParse
               SLNParse.cpp SLNAttribs.cpp 
-              ${BISON_SlnY_OUTPUTS} ${FLEX_SlnL_OUTPUTS}
+              ${BISON_OUTPUT_FILES} ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol ${Boost_REGEX_LIBRARY} )
 
 rdkit_headers(SLNAttribs.h
