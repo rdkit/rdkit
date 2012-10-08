@@ -9,6 +9,11 @@
    logP and MR values for some compounds.
  - The fix to Issue 254 (see below) will lead to changes in some
    descriptors and geometries for sulfur-containing compounds.
+ - The fix to Issue 256 (see below) has changed the name of the
+   optional argument to mol.GetNumAtoms from onlyHeavy to
+   onlyExplicit. For compatibility reasons, Python code that uses
+   explicitly uses onlyHeavy will still work, but it will generate
+   warnings. This compatibility will be removed in a future release.
 
 Acknowledgements:
 Gianpaolo Bravi, David Cosgrove, Andrew Dalke, Fabian Dey, James
@@ -39,6 +44,12 @@ Bug Fixes:
   hardware were fixed.
 - The molecule drawing code now uses isotope information
 - Superscript/Subscript handling in the agg canvas has been improved.
+- The name of the optional argument to mol.GetNumAtoms has been
+  changed from onlyHeavy to onlyExplicit. The method counts the number
+  of atoms in the molecular graph, not the number of heavy
+  atoms. These numbers happen to usually be the same (which is why
+  this has taken so long to show up), but there are exceptions if Hs
+  or dummy atoms are in the graph. (Issue 256)
 
 New Features:
 - The RDKit now has a maximum common substructure (MCS) implementation
@@ -57,6 +68,8 @@ New Features:
 - The descriptor NumRadicalElectrons is now available.
 - The PyMol interface now supports a GetPNG() method which returns the
   current contents of the viewer window as an PIL Image object.
+- Molecules (ROMol in C++, rdkit.Chem.Mol in Python) now have a
+  getNumHeavyAtoms() method.
 
 New Database Cartridge Features: 
 - support for molecule <-> pickle conversion via the functions
