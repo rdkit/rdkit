@@ -36,7 +36,7 @@
 """MCS - find a Maximum Common Substructure
 
 This software finds the maximum common substructure of a set of
-structures and reports it as a SMARTS strings.
+structures and reports it as a SMARTS string.
 
 The SMARTS string depends on the desired match properties. For
 example, if ring atoms are only allowed to match ring atoms then an
