@@ -15,6 +15,7 @@ from rdkit import RDConfig
 import unittest,os.path
 from rdkit import Chem
 from rdkit.Chem import Descriptors
+from rdkit.Chem import AllChem
 
 def feq(n1,n2,tol=1e-4):
   return abs(n1-n2)<=tol
@@ -50,7 +51,7 @@ class TestCase(unittest.TestCase):
                                  ("[U+3]", "U+3"),
                                  ):
       mol = Chem.MolFromSmiles(smiles)
-      actual = Descriptors.MolecularFormula(mol)
+      actual = AllChem.CalcMolFormula(mol)
       self.failUnlessEqual(actual,expected)
       
 # - - - - - 
