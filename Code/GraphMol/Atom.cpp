@@ -281,6 +281,14 @@ int Atom::calcImplicitValence(bool strict) {
   // 
   int res;
 
+  // The d-block and f-block of the periodic table (i.e. transition metals,
+  // lanthanoids and actinoids) have no default valence.
+  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
+  if (dv==-1) {
+    d_implicitValence = 0;
+    return 0;
+  }
+
   // here is how we are going to deal with the possibility of
   // multiple valences
   // - check the explicit valence "ev"
@@ -292,7 +300,6 @@ int Atom::calcImplicitValence(bool strict) {
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
   const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
-  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
   int chg = getFormalCharge();
 
