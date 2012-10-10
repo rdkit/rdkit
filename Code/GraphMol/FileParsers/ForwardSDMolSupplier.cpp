@@ -94,11 +94,11 @@ namespace RDKit {
               // until we hit a blank line
               d_line++;
               std::getline(*dp_inStream,tempStr);
-            
+
               std::string prop="";
               std::string stmp = strip(tempStr);
               int nplines = 0; // number of lines for this property
-              while (stmp.length() != 0) {
+              while (stmp.length() != 0 || tempStr[0]==' ' || tempStr[0]=='\t') {
                 nplines++;
                 if (nplines > 1) {
                   prop += "\n";

@@ -1750,6 +1750,43 @@ void testIssue3525673() {
 
 }
 
+void testBlankLinesInProps() {
+  std::string rdbase = getenv("RDBASE");
+  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/BlankPropLines.sdf";
+  std::ifstream ins(infile.c_str());
+  ForwardSDMolSupplier reader(&ins,false);
+  ROMol *nmol;
+  std::string pval;
+
+  nmol = reader.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==19);
+  TEST_ASSERT(nmol->hasProp("MultiLineProperty1"));
+  nmol->getProp("MultiLineProperty1",pval);
+  TEST_ASSERT(pval=="foo\nbar\n \nbaz");
+  TEST_ASSERT(nmol->hasProp("MultiLineProperty2"));
+  TEST_ASSERT(!(nmol->hasProp("fooprop")));
+  nmol->getProp("MultiLineProperty2",pval);
+  TEST_ASSERT(pval=="foo\n>  <fooprop>\nbaz\n ");
+  delete nmol;
+
+}
+
+void testSkipLines() {
+  std::string rdbase = getenv("RDBASE");
+  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/SkipLines.sdf";
+  std::ifstream ins(infile.c_str());
+  ForwardSDMolSupplier reader(&ins,false);
+  ROMol *nmol;
+  std::string pval;
+
+  nmol = reader.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==1);
+  TEST_ASSERT(nmol->hasProp("prop1"));
+  delete nmol;
+}
+
 
 int main() {
   RDLog::InitLogs();
@@ -1886,6 +1923,16 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testIssue3525673();
   BOOST_LOG(rdErrorLog) <<"Finished: testIssue3525673()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testBlankLinesInProps();
+  BOOST_LOG(rdErrorLog) <<"Finished: testBlankLinesInProps()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testSkipLines();
+  BOOST_LOG(rdErrorLog) <<"Finished: testSkipLines()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

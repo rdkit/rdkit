@@ -2899,6 +2899,21 @@ void   testIssue3557675(){
 }
 
 
+void testSkipLines() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing skip lines in CTABs" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/SkipLines.sdf";
+  RWMol *m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms()==1);
+  delete m;
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -2950,11 +2965,12 @@ int main(int argc,char *argv[]){
   testIssue3392107();
   testIssue3432136();
   testIssue3477283();
-#endif
   testIssue3484552();
   testIssue3514824();
   testIssue3525799();
   testIssue3557675();
+#endif
+  testSkipLines();
 
   return 0;
 }
