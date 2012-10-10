@@ -85,6 +85,48 @@ namespace RDKit {
       }
     }
     
+    std::vector<std::string> splitSmartsIntoComponents(const std::string &reactText){
+      std::vector<std::string> res;
+      unsigned int pos=0;
+      unsigned int blockStart=0;
+      unsigned int level=0;
+      unsigned int inBlock=0;
+      while(pos<reactText.size()){
+        if(reactText[pos]=='('){
+          if(pos==blockStart){
+            inBlock=1;
+          }
+          ++level;
+        } else if(reactText[pos]==')'){
+          if(level==1 && inBlock){
+            // this closes a block
+            inBlock=2;
+          }
+          --level;
+        } else if(level==0 && reactText[pos]=='.'){
+          if(inBlock==2){
+            std::string element=reactText.substr(blockStart+1,pos-blockStart-2);
+            res.push_back(element);
+          } else {
+            std::string element=reactText.substr(blockStart,pos-blockStart);
+            res.push_back(element);
+          }
+          blockStart = pos+1;
+          inBlock=0;
+        }
+        ++pos;
+      }
+      if(blockStart<pos){
+        if(inBlock==2){
+          std::string element=reactText.substr(blockStart+1,pos-blockStart-2);
+          res.push_back(element);
+        } else {
+          std::string element=reactText.substr(blockStart,pos-blockStart);
+          res.push_back(element);
+        }
+      }
+      return res;
+    }
   } // end of namespace DaylightParserUtils
   
   ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text,
@@ -98,8 +140,7 @@ namespace RDKit {
     }
     
     std::string reactText=text.substr(0,pos);
-    std::vector<std::string> reactSmarts;
-    boost::split(reactSmarts,reactText,boost::is_any_of("."));
+    std::vector<std::string> reactSmarts=DaylightParserUtils::splitSmartsIntoComponents(reactText);
 
     std::string productText=text.substr(pos+2);
     
