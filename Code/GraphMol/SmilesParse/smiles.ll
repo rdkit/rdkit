@@ -21,6 +21,7 @@
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
 #include <GraphMol/PeriodicTable.h>
+#include <GraphMol/RDKitQueries.h>
 
 #include <string>
 #include <cstring>
@@ -229,6 +230,10 @@ s		    {	yylval->atom = new Atom( 16 );
 	      }
 	      yylval->bond->setBondType(bt);
 	return BOND_TOKEN; }	
+
+\~	{ yylval->bond = new QueryBond();
+	yylval->bond->setQuery(makeBondNullQuery());
+	return BOND_TOKEN;  }
 
 [\\]    { yylval->bond = new Bond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);

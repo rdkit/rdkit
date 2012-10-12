@@ -3161,8 +3161,26 @@ void testBug253(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testBug257(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Issue 257: unrecognized bonds are in SMILES as ?s" << std::endl;
 
+  {
+    RWMol *m;
+    std::string smiles="CCO";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    m->getBondWithIdx(1)->setBondType(Bond::UNSPECIFIED);
+    std::string csmiles = MolToSmiles(*m);
+    TEST_ASSERT(csmiles=="CC~O");
+    delete m;
+    m = SmilesToMol(csmiles);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getBondType()==Bond::UNSPECIFIED);
+  }
 
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 int
 main(int argc, char *argv[])
@@ -3213,5 +3231,6 @@ main(int argc, char *argv[])
   testBug3526810();
   testBug3528556();
   testBug253();
+  testBug257();
   //testBug1719046();
 }
