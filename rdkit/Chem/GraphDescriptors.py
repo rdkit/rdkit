@@ -201,6 +201,8 @@ def _nVal(atom):
 def _hkDeltas(mol,skipHs=1):
   global periodicTable
   res = []
+  if hasattr(mol,'_hkDeltas') and mol._hkDeltas is not None:
+    return mol._hkDeltas
   for atom in mol.GetAtoms():
     n = atom.GetAtomicNum()
     if n>1:
@@ -212,8 +214,12 @@ def _hkDeltas(mol,skipHs=1):
       else:
         # second row and up
         res.append(float(nV-nHs)/float(n-nV-1))
-    elif not skipHs:
+    elif n==1:
+      if not skipHs:
+        res.append(0.0)
+    else:
       res.append(0.0)
+  mol._hkDeltas = res
   return res
 
 def Chi0v(mol):
@@ -223,6 +229,7 @@ def Chi0v(mol):
   deltas = _hkDeltas(mol)
   while 0 in deltas:
     deltas.remove(0)
+  mol._hkDeltas=None
   res = sum(numpy.sqrt(1./numpy.array(deltas)))
   return res
 Chi0v.version="1.0.0"
@@ -250,17 +257,10 @@ def ChiNv_(mol,order=2):
   size 3.
   
   """
-  deltas = numpy.array(_hkDeltas(mol,skipHs=0))
+  deltas = numpy.array([(1. / numpy.sqrt(hkd) if hkd!=0.0 else 0.0) for hkd in _hkDeltas(mol, skipHs=0)])
   accum = 0.0
-  #print 'DELTAS',deltas
-  for path in Chem.FindAllPathsOfLengthN(mol,order+1,useBonds=0):
-    ats = []
-    cAccum = 1.0
-    #print 'PATH:',path
-    for idx in path:
-      cAccum *= deltas[idx]
-    if cAccum:  
-      accum += 1./numpy.sqrt(cAccum)
+  for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
+    accum += numpy.prod(deltas[numpy.array(path)])
   return accum
 
 def Chi2v(mol):
@@ -325,14 +325,11 @@ def ChiNn_(mol,order=2):
   size 3.
   
   """
-  deltas = numpy.array([_nVal(x) for x in mol.GetAtoms()],'d')
+  nval = [_nVal(x) for x in mol.GetAtoms()]
+  deltas = numpy.array([(1. / numpy.sqrt(x) if x else 0.0) for x in nval])
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol,order+1,useBonds=0):
-    cAccum = 1.0
-    for idx in path:
-      cAccum *= deltas[idx]
-    if cAccum:
-      accum += 1./numpy.sqrt(cAccum)
+    accum += numpy.prod(deltas[numpy.array(path)])
   return accum
 
 def Chi2n(mol):
