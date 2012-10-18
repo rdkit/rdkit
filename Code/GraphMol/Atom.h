@@ -108,7 +108,7 @@ namespace RDKit{
     virtual Atom *copy() const;
 
     //! returns our atomic number
-    const int getAtomicNum() const { return d_atomicNum; };
+    int getAtomicNum() const { return d_atomicNum; };
     //! sets our atomic number
     void setAtomicNum(int newNum) { d_atomicNum = newNum; };
 
@@ -119,7 +119,7 @@ namespace RDKit{
     ROMol &getOwningMol() const { return *dp_mol; };
   
     //! returns our index within the ROMol
-    const unsigned int getIdx() const {return d_index;};
+    unsigned int getIdx() const {return d_index;};
     //! sets our index within the ROMol
     /*!
       <b>Notes:</b>
@@ -179,7 +179,7 @@ namespace RDKit{
 
 
     //! returns the formal charge of this atom
-    const int getFormalCharge() const { return d_formalCharge; };
+    int getFormalCharge() const { return d_formalCharge; };
     //! set's the formal charge of this atom
     void setFormalCharge(int what) { d_formalCharge = what;} ;
 

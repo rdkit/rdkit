@@ -67,7 +67,7 @@ namespace Invar {
     getMessage()
     { return mess_d; }
 
-    const char * const
+    const char *
     getFile()
     { return file_dp; }
 
