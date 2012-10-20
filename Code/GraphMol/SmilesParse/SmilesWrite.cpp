@@ -305,7 +305,7 @@ namespace RDKit{
         else res << "<";
         break;
       default:
-        res << "?";
+        res << "~";
       }
       return res.str();
     }

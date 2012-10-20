@@ -1124,7 +1124,7 @@ namespace RDKit{
       std::string tempStr = getLine(inStream);
       ++line;
       if( tempStr[0] != 'M' && tempStr[0] != 'A'
-          && tempStr[0] != 'V' && tempStr[0] != 'G'){
+          && tempStr[0] != 'V' && tempStr[0] != 'G' && tempStr[0] != 'S'){
         ParseOldAtomList(mol,tempStr,line);
       }
 
@@ -1135,7 +1135,7 @@ namespace RDKit{
         if(tempStr[0]=='A'){
           line++;
           std::string nextLine = getLine(inStream);
-          if(tempStr.substr(0,6)!="M  END"){
+          if(lineBeg!="M  END"){
             ParseAtomAlias(mol,tempStr,nextLine,line);
           }
         } else if(tempStr[0]=='G'){
@@ -1146,7 +1146,16 @@ namespace RDKit{
         } else if(tempStr[0]=='V'){
           ParseAtomValue(mol,tempStr,line);
         } else if(lineBeg=="S  SKP") {
-          // pass
+          int nToSkip=FileParserUtils::toInt(tempStr.substr(6,3));
+          if(nToSkip<0) {
+            std::ostringstream errout;
+            errout << "negative skip value "<<nToSkip<<" on line "<<line;
+            throw FileParseException(errout.str()) ;
+          }
+          for(unsigned int i=0;i<nToSkip;++i){
+            ++line;
+            tempStr=getLine(inStream);
+          }
         }
         else if(lineBeg=="M  ALS") ParseNewAtomList(mol,tempStr,line);
         else if(lineBeg=="M  ISO") ParseIsotopeLine(mol,tempStr,line);

@@ -426,7 +426,7 @@ class MolDrawing(object):
 
           isotope=''
           if iso:
-            isotope='<sup>%d</sup>'%int(atom.GetMass()+.01)
+            isotope='<sup>%d</sup>'%atom.GetIsotope()
                    
           mapNum=''
           if atom.HasProp('molAtomMapNumber'):

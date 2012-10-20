@@ -3228,6 +3228,136 @@ void test34ReactingAtoms2(){
 }
 
 
+void test35ParensInReactants1(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing grouping parens in reactants1" << std::endl;
+
+  { 
+    std::string smi="[C:1].[C:2]>>[C:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    delete rxn;
+  }
+
+  { 
+    std::string smi="([C:1].[C:2])>>[C:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    delete rxn;
+  }
+  { 
+    std::string smi="([C:1].C(=O)O).[C:2]>>[C:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    delete rxn;
+  }
+
+  { 
+    std::string smi="[C:1](=O)O.[C:2]>>[C:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    delete rxn;
+  }
+
+  { 
+    std::string smi="[C:1](=O)O.([C:2])>>[C:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    delete rxn;
+  }
+  { 
+    std::string smi="[C:1](=O)O.([C:2].N)>>[C:1][C:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==2);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    delete rxn;
+  }
+  { 
+    std::string smi="([C:1](=O)O.[C:2]>>[C:1][C:2]";
+    ChemicalReaction *rxn=0;
+    try{
+      rxn = RxnSmartsToChemicalReaction(smi);
+    } catch (const ChemicalReactionParserException &e){
+      rxn=0;
+    }
+    TEST_ASSERT(!rxn);
+  }
+  { 
+    std::string smi="[C:1](=O)O.([C:2]>>[C:1][C:2]";
+    ChemicalReaction *rxn=0;
+    try{
+      rxn = RxnSmartsToChemicalReaction(smi);
+    } catch (const ChemicalReactionParserException &e){
+      rxn=0;
+    }
+    TEST_ASSERT(!rxn);
+  }
+  { 
+    std::string smi="[C:1](=O)O).[C:2]>>[C:1][C:2]";
+    ChemicalReaction *rxn=0;
+    try{
+      rxn = RxnSmartsToChemicalReaction(smi);
+    } catch (const ChemicalReactionParserException &e){
+      rxn=0;
+    }
+    TEST_ASSERT(!rxn);
+  }
+  { 
+    std::string smi="[C:1](=O)O.[C:2])>>[C:1][C:2]";
+    ChemicalReaction *rxn=0;
+    try{
+      rxn = RxnSmartsToChemicalReaction(smi);
+    } catch (const ChemicalReactionParserException &e){
+      rxn=0;
+    }
+    TEST_ASSERT(!rxn);
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void test36ParensInReactants2(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing grouping parens in reactants2" << std::endl;
+
+  { 
+    std::string smi="([C:1].[O:2])>>[C:1][O:2]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    smi = "CNO";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    std::vector<MOL_SPTR_VECT> prods;
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[0][0]->getNumAtoms()==3);
+    TEST_ASSERT(prods[0][0]->getNumBonds()==3);
+
+    delete rxn;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -3271,6 +3401,8 @@ int main() {
 
   test33ReactingAtoms1();
   test34ReactingAtoms2();
+  test35ParensInReactants1();
+  test36ParensInReactants2();
 
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

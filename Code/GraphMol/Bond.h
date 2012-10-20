@@ -111,7 +111,7 @@ namespace RDKit{
     virtual Bond *copy() const;
 
     //! returns our \c bondType
-    const BondType getBondType() const { return d_bondType; };
+    BondType getBondType() const { return d_bondType; };
     //! sets our \c bondType
     void setBondType(BondType bT) { d_bondType = bT; };
     //! \brief returns our \c bondType as a double
@@ -396,7 +396,7 @@ namespace RDKit{
       <b>Notes:</b>
         - requires an owning molecule
     */
-    void updatePropertyCache(bool strict=true) {;};
+    void updatePropertyCache(bool strict=true) { (void)strict; }
 
   protected:
     //! sets our owning molecule
