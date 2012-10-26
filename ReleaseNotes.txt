@@ -17,7 +17,8 @@
 
 Acknowledgements:
 Gianpaolo Bravi, David Cosgrove, Andrew Dalke, Fabian Dey, James
-Davidson, JP Ebejer, Gabriele Menna, Stephan Reiling, James Swetnam 
+Davidson, JP Ebejer, Gabriele Menna, Stephan Reiling, Roger Sayle,
+James Swetnam 
 
 Bug Fixes: 
 - The molecules that come from mergeQueryHs() now reset the RingInfo
@@ -44,12 +45,19 @@ Bug Fixes:
   hardware were fixed.
 - The molecule drawing code now uses isotope information
 - Superscript/Subscript handling in the agg canvas has been improved.
+- SKP lines in CTABS are now propertly handled. (Issue 255)
 - The name of the optional argument to mol.GetNumAtoms has been
   changed from onlyHeavy to onlyExplicit. The method counts the number
   of atoms in the molecular graph, not the number of heavy
   atoms. These numbers happen to usually be the same (which is why
   this has taken so long to show up), but there are exceptions if Hs
   or dummy atoms are in the graph. (Issue 256)
+- Unknown bonds in SMILES are now output using '~' instead of '?'. The
+  SMILES parser now recognizes '~' as an "any bond" query. (Issue 257)
+- Lines containing only white space in SDF property blocks are no
+  longer treated as field separators.
+- Transition metals and lanthanides no longer have default valences
+  assigned. 
 
 New Features:
 - The RDKit now has a maximum common substructure (MCS) implementation
@@ -70,6 +78,8 @@ New Features:
   current contents of the viewer window as an PIL Image object.
 - Molecules (ROMol in C++, rdkit.Chem.Mol in Python) now have a
   getNumHeavyAtoms() method.
+- Component-level grouping (parens) can be used in reaction SMARTS.
+
 
 New Database Cartridge Features: 
 - support for molecule <-> pickle conversion via the functions
