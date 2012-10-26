@@ -5,7 +5,9 @@ rdkit_library(GraphMol
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp 
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp RankAtoms.cpp 
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
-              SHARED LINK_LIBRARIES RDGeometryLib RDGeneral)
+              SHARED 
+              LINK_LIBRARIES RDGeometryLib RDGeneral 
+                 ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 
 rdkit_headers(Atom.h
               atomic_data.h

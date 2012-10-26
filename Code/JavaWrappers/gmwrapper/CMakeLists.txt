@@ -74,7 +74,11 @@ SET(SWIG_MODULE_GraphMolWrap_EXTRA_DEPS ${SWIG_SRC_FILES} )
 
 SWIG_ADD_MODULE(GraphMolWrap "java" GraphMolJava.i )
 
-SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs} )
+# it doesnt seem like the threading libs should need to be here, but
+# as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
+# link error if they aren't there.
+SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
+      ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
 
 # code adapted from the wrapper code for
 # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup

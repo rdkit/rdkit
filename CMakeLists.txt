@@ -39,8 +39,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #------- 
 # Config variables:
 set(RDKit_Year "2012")
-set(RDKit_Month "09")
-set(RDKit_Revision "1beta")
+set(RDKit_Month "12")
+set(RDKit_Revision "1pre")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
@@ -146,11 +146,10 @@ string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
 if(RDK_TEST_MULTITHREADED)
   ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED")
-  find_package(Boost 1.39.0 COMPONENTS thread REQUIRED)
-else()
-  set(Boost_THREAD_LIBRARY )
 endif()
 
+find_package(Boost 1.39.0 COMPONENTS thread system REQUIRED)
+find_package (Threads)
 
 # setup our compiler flags:
 if(CMAKE_COMPILER_IS_GNUCXX)
