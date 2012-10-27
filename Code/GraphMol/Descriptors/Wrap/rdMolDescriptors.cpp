@@ -723,5 +723,55 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"),
                python::arg("bins")=python::list(),
                python::arg("force")=false));
+  docString="";
+  python::def("CalcChi0v",
+              RDKit::Descriptors::calcChi0v,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi1v",
+              RDKit::Descriptors::calcChi1v,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi2v",
+              RDKit::Descriptors::calcChi2v,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi3v",
+              RDKit::Descriptors::calcChi3v,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi4v",
+              RDKit::Descriptors::calcChi4v,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi0n",
+              RDKit::Descriptors::calcChi0n,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi1n",
+              RDKit::Descriptors::calcChi1n,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi2n",
+              RDKit::Descriptors::calcChi2n,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi3n",
+              RDKit::Descriptors::calcChi3n,
+              (python::arg("mol"),
+               python::arg("force")=false));
+  docString="";
+  python::def("CalcChi4n",
+              RDKit::Descriptors::calcChi4n,
+              (python::arg("mol"),
+               python::arg("force")=false));
   
 }

@@ -1026,6 +1026,262 @@ void testIssue252(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testChiVs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test calculation of ChiVs." << std::endl;
+
+  {
+    std::string sdata[] = {"CCCCCC",
+                           "CCC(C)CC",
+                           "CC(C)CCC",
+                           "CC(C)C(C)C",
+                           "CC(C)(C)CC",
+                           "CCCCCO",
+                           "CCC(O)CC",
+                           "CC(O)(C)CC",
+                           "c1ccccc1O",
+                           "CCCl",
+                           "CCBr",
+                           "CCI",
+                           "EOS"};
+    double ddata[] = {4.828,
+                      4.992,
+                      4.992,
+                      5.155,
+                      5.207,
+                      4.276,
+                      4.439,
+                      4.654,
+                      3.834,
+                      2.841,
+                      3.671,
+                      4.242};
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi0v(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  {
+    std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
+                          "CC(C)C(C)C","CC(C)(C)CC",
+                          "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "EOS"};
+
+    double ddata[] = {2.914,2.808,2.770,
+                      2.643,2.561,
+                      2.523,2.489,2.284,2.134};
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi1v(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  {
+    std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
+                          "CC(C)C(C)C","CC(C)(C)CC",
+                          "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "EOS"};
+
+    double ddata[] = {1.707,1.922,2.183,
+                      2.488,2.914,
+                      1.431,1.470,2.166,1.336};
+    
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi2v(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  
+  {
+    std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
+                          "CC(C)C(C)C","CC(C)(C)CC",
+                          "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "EOS"};
+
+    double ddata[] = {0.957,1.394,0.866,1.333,1.061,
+                      0.762,0.943,0.865,0.756};
+    
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi3v(*mol);
+      ++idx;
+      delete mol;
+    }
+  }  
+  
+  {
+    std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
+                          "CC(C)C(C)C","CC(C)(C)CC",
+                          "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "EOS"};
+
+    double ddata[] = {0.500,0.289,0.577,
+                      0.000,0.000,0.362,0.289,0.000,0.428};
+
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi4v(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testChiNs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test calculation of ChiNs." << std::endl;
+
+  {
+    std::string sdata[] = {"CCCCCC",
+                           "CCC(C)CC",
+                           "CC(C)CCC",
+                           "CC(C)C(C)C",
+                           "CC(C)(C)CC",
+                           "CCCCCO",
+                           "CCC(O)CC",
+                           "CC(O)(C)CC",
+                           "c1ccccc1O",
+                           "CCCl",
+                           "CCBr",
+                           "CCI",
+                           "EOS"};
+    double ddata[] = {4.828,
+                      4.992,
+                      4.992,
+                      5.155,
+                      5.207,
+                      4.276,
+                      4.439,
+                      4.654,
+                      3.834,
+                      2.085,
+                      2.085,
+                      2.085};
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi0n(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  {
+    std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
+                          "CC(C)C(C)C","CC(C)(C)CC",
+                          "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "EOS"};
+
+    double ddata[] = {2.914,2.808,2.770,
+                      2.643,2.561,
+                      2.523,2.489,2.284,2.134};
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi1n(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  {
+    std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
+                          "CC(C)C(C)C","CC(C)(C)CC",
+                          "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "EOS"};
+
+    double ddata[] = {1.707,1.922,2.183,
+                      2.488,2.914,
+                      1.431,1.470,2.166,1.336};
+    
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi2n(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  
+  {
+    std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
+                          "CC(C)C(C)C","CC(C)(C)CC",
+                          "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "EOS"};
+
+    double ddata[] = {0.957,1.394,0.866,1.333,1.061,
+                      0.762,0.943,0.865,0.756};
+    
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi3n(*mol);
+      ++idx;
+      delete mol;
+    }
+  }  
+  
+  {
+    std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
+                          "CC(C)C(C)C","CC(C)(C)CC",
+                          "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "EOS"};
+
+    double ddata[] = {0.500,0.289,0.577,
+                      0.000,0.000,0.362,0.289,0.000,0.428};
+
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcChi4n(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+
 
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1049,4 +1305,6 @@ int main(){
   testIssue3433771();
   testMultiThread();
   testIssue252();
+  testChiVs();
+  testChiNs();
 }
