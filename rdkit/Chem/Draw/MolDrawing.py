@@ -189,9 +189,9 @@ class MolDrawing(object):
         else:
           p2,p1 = pos,nbrPos
         if bDir==Chem.BondDir.BEGINWEDGE:
-          self._drawWedgedBond(bond,p1,p2,color=(0,0,0),width=width)
+          self._drawWedgedBond(bond,p1,p2,color=color,width=width)
         elif bDir==Chem.BondDir.BEGINDASH:
-          self._drawWedgedBond(bond,p1,p2,color=(0,0,0),width=width,
+          self._drawWedgedBond(bond,p1,p2,color=color,width=width,
                                dash=self.dash)
       else:
         self.canvas.addCanvasLine(pos, nbrPos, linewidth=width, color=color, color2=color2)
