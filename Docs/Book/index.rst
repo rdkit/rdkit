@@ -7,10 +7,11 @@ The RDKit Documentation
 =======================
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 3
 
   GettingStartedInPython
   RDKit_Book
+  Cookbook
 
 Additional Information
 ======================
