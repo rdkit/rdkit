@@ -723,55 +723,85 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"),
                python::arg("bins")=python::list(),
                python::arg("force")=false));
-  docString="";
+
+  docString="From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
+  python::def("CalcChiNv",
+              RDKit::Descriptors::calcChiNv,
+              (python::arg("mol"),
+               python::arg("n"),
+               python::arg("force")=false));
+  python::scope().attr("_CalcChiNv_version")=RDKit::Descriptors::chiNvVersion;
+  docString="From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
   python::def("CalcChi0v",
               RDKit::Descriptors::calcChi0v,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi0v_version")=RDKit::Descriptors::chi0vVersion;
+  docString="From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
   python::def("CalcChi1v",
               RDKit::Descriptors::calcChi1v,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi1v_version")=RDKit::Descriptors::chi1vVersion;
+  docString="From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
   python::def("CalcChi2v",
               RDKit::Descriptors::calcChi2v,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi2v_version")=RDKit::Descriptors::chi2vVersion;
+  docString="From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
   python::def("CalcChi3v",
               RDKit::Descriptors::calcChi3v,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi3v_version")=RDKit::Descriptors::chi3vVersion;
+  docString="From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
   python::def("CalcChi4v",
               RDKit::Descriptors::calcChi4v,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi4v_version")=RDKit::Descriptors::chi4vVersion;
+  docString="Similar to ChiXv, but uses uses nVal instead of valence. This makes a big difference after we get out of the first row.";
+  python::def("CalcChiNn",
+              RDKit::Descriptors::calcChiNn,
+              (python::arg("mol"),
+               python::arg("n"),
+               python::arg("force")=false));
+  python::scope().attr("_CalcChiNn_version")=RDKit::Descriptors::chiNnVersion;
+
+  docString="Similar to ChiXv, but uses uses nVal instead of valence. This makes a big difference after we get out of the first row.";
   python::def("CalcChi0n",
               RDKit::Descriptors::calcChi0n,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi0n_version")=RDKit::Descriptors::chi0nVersion;
+
+  docString="Similar to ChiXv, but uses uses nVal instead of valence. This makes a big difference after we get out of the first row.";
   python::def("CalcChi1n",
               RDKit::Descriptors::calcChi1n,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi1n_version")=RDKit::Descriptors::chi1nVersion;
+
+  docString="Similar to ChiXv, but uses uses nVal instead of valence. This makes a big difference after we get out of the first row.";
   python::def("CalcChi2n",
               RDKit::Descriptors::calcChi2n,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi2n_version")=RDKit::Descriptors::chi2nVersion;
+
+  docString="Similar to ChiXv, but uses uses nVal instead of valence. This makes a big difference after we get out of the first row.";
   python::def("CalcChi3n",
               RDKit::Descriptors::calcChi3n,
               (python::arg("mol"),
                python::arg("force")=false));
-  docString="";
+  python::scope().attr("_CalcChi3n_version")=RDKit::Descriptors::chi3nVersion;
+
+  docString="Similar to ChiXv, but uses uses nVal instead of valence. This makes a big difference after we get out of the first row.";
   python::def("CalcChi4n",
               RDKit::Descriptors::calcChi4n,
               (python::arg("mol"),
                python::arg("force")=false));
+  python::scope().attr("_CalcChi4n_version")=RDKit::Descriptors::chi4nVersion;
   
 }

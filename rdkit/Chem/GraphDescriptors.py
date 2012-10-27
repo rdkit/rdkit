@@ -16,6 +16,7 @@
 from rdkit import Chem
 from rdkit.Chem import Graphs
 from rdkit.Chem import rdchem
+from rdkit.Chem import rdMolDescriptors
 # FIX: remove this dependency here and below
 from rdkit.Chem import pyPeriodicTable as PeriodicTable
 import numpy
@@ -222,7 +223,7 @@ def _hkDeltas(mol,skipHs=1):
   mol._hkDeltas = res
   return res
 
-def Chi0v(mol):
+def _pyChi0v(mol):
   """  From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
    
   """
@@ -232,9 +233,8 @@ def Chi0v(mol):
   mol._hkDeltas=None
   res = sum(numpy.sqrt(1./numpy.array(deltas)))
   return res
-Chi0v.version="1.0.0"
 
-def Chi1v(mol):
+def _pyChi1v(mol):
   """  From equations (5),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
    
   """
@@ -245,9 +245,8 @@ def Chi1v(mol):
     if v != 0.0:
       res += numpy.sqrt(1./v)
   return res
-Chi1v.version="1.0.0"
   
-def ChiNv_(mol,order=2):
+def _pyChiNv_(mol,order=2):
   """  From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
    
   **NOTE**: because the current path finding code does, by design,
@@ -263,21 +262,19 @@ def ChiNv_(mol,order=2):
     accum += numpy.prod(deltas[numpy.array(path)])
   return accum
 
-def Chi2v(mol):
+def _pyChi2v(mol):
   """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
    
   """
-  return ChiNv_(mol,2)
-Chi2v.version="1.0.0"
+  return _pyChiNv_(mol,2)
 
-def Chi3v(mol):
+def _pyChi3v(mol):
   """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
    
   """
-  return ChiNv_(mol,3)
-Chi3v.version="1.0.0"
+  return _pyChiNv_(mol,3)
 
-def Chi4v(mol):
+def _pyChi4v(mol):
   """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
    
   **NOTE**: because the current path finding code does, by design,
@@ -286,10 +283,9 @@ def Chi4v(mol):
   provided by the old code in molecules that have 3 rings.
   
   """
-  return ChiNv_(mol,4)
-Chi4v.version="1.0.0"
+  return _pyChiNv_(mol,4)
 
-def Chi0n(mol):
+def _pyChi0n(mol):
   """  Similar to Hall Kier Chi0v, but uses nVal instead of valence
   This makes a big difference after we get out of the first row.
    
@@ -300,9 +296,8 @@ def Chi0n(mol):
   deltas = numpy.array(deltas,'d')
   res = sum(numpy.sqrt(1./deltas))
   return res
-Chi0n.version="1.0.0"
 
-def Chi1n(mol):
+def _pyChi1n(mol):
   """  Similar to Hall Kier Chi1v, but uses nVal instead of valence
    
   """
@@ -313,8 +308,8 @@ def Chi1n(mol):
     if v != 0.0:
       res += numpy.sqrt(1./v)
   return res
-Chi1n.version="1.0.0"
-def ChiNn_(mol,order=2):
+
+def _pyChiNn_(mol,order=2):
   """  Similar to Hall Kier ChiNv, but uses nVal instead of valence
   This makes a big difference after we get out of the first row.
    
@@ -332,23 +327,21 @@ def ChiNn_(mol,order=2):
     accum += numpy.prod(deltas[numpy.array(path)])
   return accum
 
-def Chi2n(mol):
+def _pyChi2n(mol):
   """  Similar to Hall Kier Chi2v, but uses nVal instead of valence
   This makes a big difference after we get out of the first row.
    
   """
-  return ChiNn_(mol,2)
-Chi2n.version="1.0.0"
+  return _pyChiNn_(mol,2)
 
-def Chi3n(mol):
+def _pyChi3n(mol):
   """  Similar to Hall Kier Chi3v, but uses nVal instead of valence
   This makes a big difference after we get out of the first row.
    
   """
-  return ChiNn_(mol,3)
-Chi3n.version="1.0.0"
+  return _pyChiNn_(mol,3)
 
-def Chi4n(mol):
+def _pyChi4n(mol):
   """  Similar to Hall Kier Chi4v, but uses nVal instead of valence
   This makes a big difference after we get out of the first row.
    
@@ -359,9 +352,33 @@ def Chi4n(mol):
   provided by the old code in molecules that have 3 rings.
   
   """
-  return ChiNn_(mol,4)
-Chi4n.version="1.0.0"
+  return _pyChiNn_(mol,4)
 
+Chi0v = lambda x:rdMolDescriptors.CalcChi0v(x)
+Chi0v.version=rdMolDescriptors._CalcChi0v_version
+Chi1v = lambda x:rdMolDescriptors.CalcChi1v(x)
+Chi1v.version=rdMolDescriptors._CalcChi1v_version
+Chi2v = lambda x:rdMolDescriptors.CalcChi2v(x)
+Chi2v.version=rdMolDescriptors._CalcChi2v_version
+Chi3v = lambda x:rdMolDescriptors.CalcChi3v(x)
+Chi3v.version=rdMolDescriptors._CalcChi3v_version
+Chi4v = lambda x:rdMolDescriptors.CalcChi4v(x)
+Chi4v.version=rdMolDescriptors._CalcChi4v_version
+ChiNv_ = lambda x,y:rdMolDescriptors.CalcChiNv(x,y)
+ChiNv_.version=rdMolDescriptors._CalcChiNv_version
+
+Chi0n = lambda x:rdMolDescriptors.CalcChi0n(x)
+Chi0n.version=rdMolDescriptors._CalcChi0n_version
+Chi1n = lambda x:rdMolDescriptors.CalcChi1n(x)
+Chi1n.version=rdMolDescriptors._CalcChi1n_version
+Chi2n = lambda x:rdMolDescriptors.CalcChi2n(x)
+Chi2n.version=rdMolDescriptors._CalcChi2n_version
+Chi3n = lambda x:rdMolDescriptors.CalcChi3n(x)
+Chi3n.version=rdMolDescriptors._CalcChi3n_version
+Chi4n = lambda x:rdMolDescriptors.CalcChi4n(x)
+Chi4n.version=rdMolDescriptors._CalcChi4n_version
+ChiNn_ = lambda x,y:rdMolDescriptors.CalcChiNn(x,y)
+ChiNn_.version=rdMolDescriptors._CalcChiNn_version
 
 def BalabanJ(mol,dMat=None,forceDMat=0):
   """ Calculate Balaban's J value for a molecule

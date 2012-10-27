@@ -65,37 +65,6 @@ namespace RDKit{
         }
         mol.setProp("_connectivityNVals",nVs);
       }
-
-
-      double chiNv(const ROMol &mol,int n,bool force){
-        std::vector<double> hkDs(mol.getNumAtoms());
-        detail::hkDeltas(mol,hkDs,force);
-        PATH_LIST ps=findAllPathsOfLengthN(mol,n+1,false);
-        double res=0.0;
-        BOOST_FOREACH(PATH_TYPE p,ps){
-          double accum=1.0;
-          BOOST_FOREACH(int aidx,p){
-            accum*=hkDs[aidx];
-          }
-          res+=accum;
-        }
-        return res;
-      }
-      double chiNn(const ROMol &mol,int n,bool force){
-        std::vector<double> nVs(mol.getNumAtoms());
-        detail::nVals(mol,nVs,force);
-        PATH_LIST ps=findAllPathsOfLengthN(mol,n+1,false);
-        double res=0.0;
-        BOOST_FOREACH(PATH_TYPE p,ps){
-          double accum=1.0;
-          BOOST_FOREACH(int aidx,p){
-            accum*=nVs[aidx];
-          }
-          res+=accum;
-        }
-        return res;
-      }
-
 #if 0
       double getAlpha(const Atom &atom,bool &found){
         double res=0.0;
@@ -223,6 +192,36 @@ namespace RDKit{
 #endif
     } // end of detail namespace
 
+
+    double calcChiNv(const ROMol &mol,unsigned int n,bool force){
+      std::vector<double> hkDs(mol.getNumAtoms());
+      detail::hkDeltas(mol,hkDs,force);
+      PATH_LIST ps=findAllPathsOfLengthN(mol,n+1,false);
+      double res=0.0;
+      BOOST_FOREACH(PATH_TYPE p,ps){
+        double accum=1.0;
+        BOOST_FOREACH(int aidx,p){
+          accum*=hkDs[aidx];
+        }
+        res+=accum;
+      }
+      return res;
+    }
+    double calcChiNn(const ROMol &mol,unsigned int n,bool force){
+      std::vector<double> nVs(mol.getNumAtoms());
+      detail::nVals(mol,nVs,force);
+      PATH_LIST ps=findAllPathsOfLengthN(mol,n+1,false);
+      double res=0.0;
+      BOOST_FOREACH(PATH_TYPE p,ps){
+        double accum=1.0;
+        BOOST_FOREACH(int aidx,p){
+          accum*=nVs[aidx];
+        }
+        res+=accum;
+      }
+      return res;
+    }
+    
     double calcChi0v(const ROMol &mol,bool force){
       std::vector<double> hkDs(mol.getNumAtoms());
       detail::hkDeltas(mol,hkDs,force);
@@ -243,13 +242,13 @@ namespace RDKit{
       return res;
     };
     double calcChi2v(const ROMol &mol,bool force){
-      return detail::chiNv(mol,2,force);
+      return calcChiNv(mol,2,force);
     };
     double calcChi3v(const ROMol &mol,bool force){
-      return detail::chiNv(mol,3,force);
+      return calcChiNv(mol,3,force);
     };
     double calcChi4v(const ROMol &mol,bool force){
-      return detail::chiNv(mol,4,force);
+      return calcChiNv(mol,4,force);
     };
 
     double calcChi0n(const ROMol &mol,bool force){
@@ -272,13 +271,13 @@ namespace RDKit{
       return res;
     };
     double calcChi2n(const ROMol &mol,bool force){
-      return detail::chiNn(mol,2,force);
+      return calcChiNn(mol,2,force);
     };
     double calcChi3n(const ROMol &mol,bool force){
-      return detail::chiNn(mol,3,force);
+      return calcChiNn(mol,3,force);
     };
     double calcChi4n(const ROMol &mol,bool force){
-      return detail::chiNn(mol,4,force);
+      return calcChiNn(mol,4,force);
     };
 
 #if 0
