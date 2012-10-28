@@ -65,13 +65,13 @@ namespace RDKit{
         }
         mol.setProp("_connectivityNVals",nVs);
       }
-#if 0
+
       double getAlpha(const Atom &atom,bool &found){
         double res=0.0;
         found=false;
         switch(atom.getAtomicNum()){
         case 1:
-          res=1.0;
+          res=0.0;
           found=true;break;
         case 6:
           switch(atom.getHybridization()){
@@ -81,11 +81,9 @@ namespace RDKit{
           case Atom::SP2:
             res=-0.13;
             found=true;break;
-          case Atom::SP3:
-            res=0.00;
-            found=true;break;
           default:
-            break;
+            res=0.00;
+            found=true;
           };
           break;
         case 7:
@@ -96,11 +94,9 @@ namespace RDKit{
           case Atom::SP2:
             res=-0.20;
             found=true;break;
-          case Atom::SP3:
+          default:
             res=-0.04;
             found=true;break;
-          default:
-            break;
           };
           break;
         case 8:
@@ -108,23 +104,16 @@ namespace RDKit{
           case Atom::SP2:
             res=-0.20;
             found=true;break;
-          case Atom::SP3:
+          default:
             res=-0.04;
             found=true;break;
-          default:
-            break;
           };
           break;
-        default:
-          break;
-        }
         case 9:
           switch(atom.getHybridization()){
-          case Atom::SP3:
+          default:
             res=-0.07;
             found=true;break;
-          default:
-            break;
           };
           break;
         case 15:
@@ -132,56 +121,40 @@ namespace RDKit{
           case Atom::SP2:
             res=0.30;
             found=true;break;
-          case Atom::SP3:
+          default:
             res=0.43;
             found=true;break;
-          default:
-            break;
           };
           break;
-        default:
-          break;
-        }
         case 16:
           switch(atom.getHybridization()){
           case Atom::SP2:
             res=0.22;
             found=true;break;
-          case Atom::SP3:
+          default:
             res=0.35;
             found=true;break;
-          default:
-            break;
           };
           break;
-        default:
-          break;
-        }
         case 17:
           switch(atom.getHybridization()){
-          case Atom::SP3:
+          default:
             res=0.29;
             found=true;break;
-          default:
-            break;
           };
           break;
         case 35:
           switch(atom.getHybridization()){
-          case Atom::SP3:
+          default:
             res=0.48;
             found=true;break;
-          default:
-            break;
           };
           break;
         case 53:
           switch(atom.getHybridization()){
-          case Atom::SP3:
+          default:
             res=0.73;
             found=true;break;
-          default:
-            break;
           };
           break;
         default:
@@ -189,7 +162,6 @@ namespace RDKit{
         }
         return res;
       }
-#endif
     } // end of detail namespace
 
 
@@ -258,7 +230,7 @@ namespace RDKit{
     };
     double calcChi1n(const ROMol &mol,bool force){
       std::vector<double> nVs(mol.getNumAtoms());
-      detail::hkDeltas(mol,nVs,force);
+      detail::nVals(mol,nVs,force);
       
       double res=0.0;
       ROMol::EDGE_ITER firstB,lastB;
@@ -280,52 +252,64 @@ namespace RDKit{
       return calcChiNn(mol,4,force);
     };
 
-#if 0
     double calcHallKierAlpha(const ROMol &mol){
       const PeriodicTable *tbl = PeriodicTable::getTable();
       double alphaSum=0.0;
       double rC=tbl->getRb0(6);
-
-        ROMol::VERTEX_ITER atBegin,atEnd;
-        boost::tie(atBegin,atEnd) = mol.getVertices();  
-        while(atBegin!=atEnd){
-          ATOM_SPTR at=mol[*atBegin];
-          ++atBegin;
-          unsigned int n = at->getAtomicNum();
-          if(!n) continue;
-          bool found;
-          double alpha=detail::getAlpha(*(at.get()),found);
-          if(!found){
-            double rA=tbl->getRb0(n);
-            alpha = rA/rC-1.0;
-          }
-          
+      ROMol::VERTEX_ITER atBegin,atEnd;
+      boost::tie(atBegin,atEnd) = mol.getVertices();  
+      while(atBegin!=atEnd){
+        ATOM_SPTR at=mol[*atBegin];
+        ++atBegin;
+        unsigned int n = at->getAtomicNum();
+        if(!n) continue;
+        bool found;
+        double alpha=detail::getAlpha(*(at.get()),found);
+        if(!found){
+          double rA=tbl->getRb0(n);
+          alpha = rA/rC-1.0;
         }
-
-
-      /*
-  for atom in m.GetAtoms():
-    atNum=atom.GetAtomicNum()
-    if not atNum: continue
-    symb = atom.GetSymbol()
-    alphaV = PeriodicTable.hallKierAlphas.get(symb,None)
-    if alphaV is not None:
-      hyb = atom.GetHybridization()-2
-      if(hyb<len(alphaV)):
-        alpha = alphaV[hyb]
-        if alpha is None:
-          alpha = alphaV[-1]
-      else:
-        alpha = alphaV[-1]
-    else:
-      rA = PeriodicTable.nameTable[symb][5]
-      alpha = rA/rC - 1
-    alphaSum += alpha  
-  return alphaSum    
-      */      
+        alphaSum+=alpha;
+      }
+      return alphaSum;
     };
-
-#endif
     
+    double calcKappa1(const ROMol &mol){
+      double P1 = mol.getNumBonds();
+      double A = mol.getNumHeavyAtoms();
+      double alpha = calcHallKierAlpha(mol);
+      double denom=P1+alpha;
+      double kappa=0.0;
+      if(denom){
+        kappa = (A+alpha)*(A+alpha-1)*(A+alpha-1)/(denom*denom);
+      }
+      return kappa;
+    }
+    double calcKappa2(const ROMol &mol){
+      double P2 = findAllPathsOfLengthN(mol,2).size();
+      double A = mol.getNumHeavyAtoms();
+      double alpha = calcHallKierAlpha(mol);
+      double denom=(P2+alpha)*(P2+alpha);
+      double kappa=0.0;
+      if(denom){
+        kappa = (A+alpha-1)*(A+alpha-2)*(A+alpha-2)/denom;
+      }
+      return kappa;
+    }
+    double calcKappa3(const ROMol &mol){
+      double P3 = findAllPathsOfLengthN(mol,3).size();
+      int A = mol.getNumHeavyAtoms();
+      double alpha = calcHallKierAlpha(mol);
+      double denom=(P3+alpha)*(P3+alpha);
+      double kappa=0.0;
+      if(denom){
+        if(A%2){
+          kappa = (A+alpha-1)*(A+alpha-3)*(A+alpha-3)/denom;
+        } else {
+          kappa = (A+alpha-2)*(A+alpha-3)*(A+alpha-3)/denom;
+        }
+      }
+      return kappa;
+    }
   } // end of namespace Descriptors
 }

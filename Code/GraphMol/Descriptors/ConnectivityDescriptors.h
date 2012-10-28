@@ -130,7 +130,37 @@ namespace RDKit {
     double calcChiNn(const ROMol &mol,unsigned int n,bool force=false);    
     const std::string chiNnVersion="1.1.0";
 
+    //! calculate the Hall-Kier alpha value for a molecule
+    //! From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+    /*!
+      \param mol           the molecule of interest
+    */
     double calcHallKierAlpha(const ROMol &mol);
+    const std::string hallKierAlphaVersion="1.2.0";
+
+    //! calculate the Hall-Kier kappa1 value for a molecule
+    //! From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+    /*!
+      \param mol           the molecule of interest
+    */
+    double calcKappa1(const ROMol &mol);
+    const std::string kappa1Version="1.1.0";
+
+    //! calculate the Hall-Kier kappa2 value for a molecule
+    //! From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+    /*!
+      \param mol           the molecule of interest
+    */
+    double calcKappa2(const ROMol &mol);
+    const std::string kappa2Version="1.1.0";
+
+    //! calculate the Hall-Kier kappa3 value for a molecule
+    //! From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+    /*!
+      \param mol           the molecule of interest
+    */
+    double calcKappa3(const ROMol &mol);
+    const std::string kappa3Version="1.1.0";
 
   } // end of namespace Descriptors
 }

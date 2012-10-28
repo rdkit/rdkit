@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2004-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1198,11 +1198,14 @@ void testChiNs(){
     std::string sdata[] ={"CCCCCC","CCC(C)CC","CC(C)CCC",
                           "CC(C)C(C)C","CC(C)(C)CC",
                           "CCCCCO","CCC(O)CC","CC(O)(C)CC","c1ccccc1O",
+                          "C=S",
                           "EOS"};
 
     double ddata[] = {2.914,2.808,2.770,
                       2.643,2.561,
-                      2.523,2.489,2.284,2.134};
+                      2.523,2.489,2.284,2.134,
+                      0.289
+    };
     unsigned int idx=0;
     while(sdata[idx]!="EOS"){
       ROMol *mol;
@@ -1281,6 +1284,197 @@ void testChiNs(){
 }
 
 
+void testHallKierAlpha(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test calculation of HallKierAlpha." << std::endl;
+
+  {
+    std::string sdata[] = {
+      "C=O",
+      "CCC1(CC)C(=O)NC(=O)N(C)C1=O",
+      "OCC(O)C(O)C(O)C(O)CO",
+      "OCC1OC(O)C(O)C(O)C1O",
+      "Fc1c[nH]c(=O)[nH]c1=O",
+      "OC1CNC(C(=O)O)C1",
+      "CCCc1[nH]c(=S)[nH]c(=O)c1",
+      "CN(CCCl)CCCl",
+      "CBr",
+      "CI",
+      "EOS"
+    };
+    double ddata[] = {
+      -0.3300,
+      -1.3900,
+      -0.2400,
+      -0.2400,
+      -1.3900,
+      -0.6100,
+      -0.9000,
+      0.5400,
+      0.480,
+      0.730,
+    };
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcHallKierAlpha(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testKappa1(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa1." << std::endl;
+
+  {
+    std::string sdata[] = {
+      "C12CC2C3CC13",
+      "C1CCC12CC2",
+      "C1CCCCC1",
+      "CCCCCC",
+      "CCC(C)C1CCC(C)CC1",
+      "CC(C)CC1CCC(C)CC1",
+      "CC(C)C1CCC(C)CCC1",
+      "EOS"
+    };
+    double ddata[] = {
+      2.344,
+      3.061,
+      4.167,
+      6.000,
+      9.091,
+      9.091,
+      9.091
+    };
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcKappa1(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testKappa2(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa2." << std::endl;
+
+  {
+    std::string sdata[] = {
+      "[C+2](C)(C)(C)(C)(C)C",
+      "[C+](C)(C)(C)(C)(CC)",
+      "C(C)(C)(C)(CCC)",
+      "CC(C)CCCC",
+      "CCCCCCC",
+      "CCCCCC",
+      "CCCCCCC",
+      "C1CCCC1",
+      "C1CCCC1C",
+      "C1CCCCC1",
+      "C1CCCCCC1",
+      "CCCCC",
+      "CC=CCCC",
+      "C1=CN=CN1",
+      "c1ccccc1",
+      "c1cnccc1",
+      "n1ccncc1",
+      "CCCCF",
+      "CCCCCl",
+      "CCCCBr",
+      "CCC(C)C1CCC(C)CC1",
+      "CC(C)CC1CCC(C)CC1",
+      "CC(C)C1CCC(C)CCC1",
+      "EOS"
+    };
+    double ddata[] = {
+      0.667000,
+      1.240000,
+      2.344400,
+      4.167000,
+      6.000000,
+      5.000000,
+      6.000000,
+      1.440000,
+      1.633000,
+      2.222000,
+      3.061000,
+      4.000000,
+      4.740000,
+      0.884000,
+      1.606000,
+      1.552000,
+      1.500000,
+      3.930000,
+      4.290000,
+      4.480000,
+      4.133000,
+      4.133000,
+      4.133000
+    };
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcKappa2(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+void testKappa3(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test calculation of Kappa3." << std::endl;
+
+  {
+    std::string sdata[] = {
+      "C[C+](C)(C)(C)C(C)(C)C",
+      "CCC(C)C(C)(C)(CC)",
+      "CCC(C)CC(C)CC",
+      "CC(C)CCC(C)CC",
+      "CC(C)CCCC(C)C",
+      "CCC(C)C1CCC(C)CC1",
+      "CC(C)CC1CCC(C)CC1",
+      "CC(C)C1CCC(C)CCC1",
+      "EOS"
+    };
+    double ddata[] = {
+      2.000000,
+      2.380000,
+      4.500000,
+      5.878000,
+      8.000000,
+      2.500000,
+      3.265000,
+      2.844000
+    };
+    unsigned int idx=0;
+    while(sdata[idx]!="EOS"){
+      ROMol *mol;
+      mol = SmilesToMol(sdata[idx]);
+      TEST_ASSERT(mol);
+      double v=calcKappa3(*mol);
+      TEST_ASSERT(feq(v,ddata[idx],0.002));
+      ++idx;
+      delete mol;
+    }
+  }  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 
 
@@ -1307,4 +1501,8 @@ int main(){
   testIssue252();
   testChiVs();
   testChiNs();
+  testHallKierAlpha();
+  testKappa1();
+  testKappa2();
+  testKappa3();
 }
