@@ -48,7 +48,9 @@
 
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
+#if swifjava
 %javaconst(1);
+#endif
 %include <GraphMol/FileParsers/FileParsers.h>
 %include <GraphMol/RWMol.h>
 

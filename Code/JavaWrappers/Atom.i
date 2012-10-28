@@ -53,7 +53,9 @@
 %template(Bond_Vect) std::vector<RDKit::Bond*>;
 
 %include "enums.swg"
+#if swifjava
 %javaconst(1);
+#endif
 %include <GraphMol/Atom.h>
 
 %newobject RDKit::Atom::getProp;
