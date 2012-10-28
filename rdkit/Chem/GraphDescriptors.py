@@ -58,7 +58,7 @@ def _GetCountDict(arr):
   return res    
 
 
-def HallKierAlpha(m):
+def _pyHallKierAlpha(m):
   """ calculate the Hall-Kier alpha value for a molecule
 
    From equations (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)
@@ -82,9 +82,10 @@ def HallKierAlpha(m):
     else:
       rA = PeriodicTable.nameTable[symb][5]
       alpha = rA/rC - 1
+    print atom.GetIdx(),atom.GetSymbol(),alpha
     alphaSum += alpha  
   return alphaSum    
-HallKierAlpha.version="1.0.2"  
+#HallKierAlpha.version="1.0.2"  
 
 def Ipc(mol, avg = 0, dMat = None, forceDMat = 0):
   """This returns the information content of the coefficients of the characteristic
@@ -116,7 +117,7 @@ Ipc.version="1.0.0"
 
 
 
-def Kappa1(mol):
+def _pyKappa1(mol):
   """ Hall-Kier Kappa1 value
 
    From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)
@@ -131,10 +132,10 @@ def Kappa1(mol):
   else:
     kappa = 0.0
   return kappa
-Kappa1.version="1.0.0"  
+#Kappa1.version="1.0.0"  
   
 
-def Kappa2(mol):
+def _pyKappa2(mol):
   """  Hall-Kier Kappa2 value
 
    From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991)
@@ -149,9 +150,9 @@ def Kappa2(mol):
   else:
     kappa = 0
   return kappa
-Kappa2.version="1.0.0"  
+#Kappa2.version="1.0.0"  
 
-def Kappa3(mol):
+def _pyKappa3(mol):
   """  Hall-Kier Kappa3 value
 
    From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422, (1991)
@@ -169,7 +170,17 @@ def Kappa3(mol):
   else:
     kappa = 0
   return kappa
-Kappa3.version="1.0.0"  
+#Kappa3.version="1.0.0"  
+
+HallKierAlpha = lambda x:rdMolDescriptors.CalcHallKierAlpha(x)
+HallKierAlpha.version=rdMolDescriptors._CalcHallKierAlpha_version
+Kappa1 = lambda x:rdMolDescriptors.CalcKappa1(x)
+Kappa1.version=rdMolDescriptors._CalcKappa1_version
+Kappa2 = lambda x:rdMolDescriptors.CalcKappa2(x)
+Kappa2.version=rdMolDescriptors._CalcKappa2_version
+Kappa3 = lambda x:rdMolDescriptors.CalcKappa3(x)
+Kappa3.version=rdMolDescriptors._CalcKappa3_version
+
 
 def Chi0(mol):
   """ From equations (1),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)

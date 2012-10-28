@@ -3,16 +3,12 @@ import os.path,cPickle
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 
-descrs=['BertzCT','Chi0','HallKierAlpha','Ipc','Kappa3','LabuteASA','SMR_VSA1',
-        'SMR_VSA10','SMR_VSA2','SMR_VSA3','SMR_VSA4','SMR_VSA5','SMR_VSA6','SMR_VSA7',
-        'SMR_VSA8','SMR_VSA9','SlogP_VSA1','SlogP_VSA10','SlogP_VSA11','SlogP_VSA12',
-        'SlogP_VSA2','SlogP_VSA3','SlogP_VSA5','SlogP_VSA6','SlogP_VSA7','SlogP_VSA8',
-        'SlogP_VSA9','TPSA','NumHAcceptors','NumHDonors','NumHeteroatoms',
-        'NumRotatableBonds','MolLogP']
+
+descrs=['SMR_VSA1','SMR_VSA10','SMR_VSA2','SMR_VSA3','SMR_VSA4','SMR_VSA5','SMR_VSA6','SMR_VSA7','SMR_VSA8','SMR_VSA9','SlogP_VSA1','SlogP_VSA10','SlogP_VSA11','SlogP_VSA12','SlogP_VSA2','SlogP_VSA3','SlogP_VSA5','SlogP_VSA6','SlogP_VSA7','SlogP_VSA8','SlogP_VSA9']
 
 def runIt(inFileName,outFileName,smiCol=0,maxMols=-1,delim=','):
   outF = open(outFileName,'w+')
-  outF.write(','.join(['SMILES']+descrs))
+  outF.write('#'+','.join(['SMILES']+descrs))
   outF.write('\n')
   mols = []
   nDone = 0
@@ -41,11 +37,10 @@ def runIt(inFileName,outFileName,smiCol=0,maxMols=-1,delim=','):
     
 if __name__ == '__main__':
   if 1:
-    # 100 PhysProp compounds
     inD = file(os.path.join(RDConfig.RDCodeDir,'Chem','test_data',
-                               'PP_descrs_regress.2.csv'),'r').readlines()
+                               'PP_descrs_regress.VSA.csv'),'r').readlines()
     outFileName = os.path.join(RDConfig.RDCodeDir,'Chem','test_data',
-                               'PP_descrs_regress.2.csv')
+                               'PP_descrs_regress.VSA.csv')
     runIt(inD,outFileName,smiCol=0,delim=',')
 
     
