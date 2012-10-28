@@ -203,7 +203,7 @@ namespace RDKit{
       SANITIZE_SETHYBRIDIZATION=0x80,
       SANITIZE_CLEANUPCHIRALITY=0x100,
       SANITIZE_ADJUSTHS=0x200,
-      SANITIZE_ALL=0xFFFFFFFF
+      SANITIZE_ALL=0xFFFFFFF
     } SanitizeFlags;
 
     //! \brief carries out a collection of tasks for cleaning up a molecule and ensuring
