@@ -44,4 +44,10 @@ else()
         endif(RDK_BUILD_AVALON_SUPPORT)
 endif()
 
+if(RDK_BUILD_SWIG_JAVA_WRAPPER)
 add_subdirectory(gmwrapper)
+endif()
+
+if(RDK_BUILD_SWIG_CSHARP_WRAPPER)
+add_subdirectory(csharp_wrapper)
+endif()

@@ -16,7 +16,7 @@ enable_testing()
 set(CMAKE_MODULE_PATH 
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
-option(RDK_BUILD_SWIG_WRAPPERS "build the experimental SWIG wrappers" OFF )
+option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
@@ -25,6 +25,13 @@ option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
 option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
 option(RDK_TEST_MULTITHREADED "run some tests of multithreading" OFF )
+option(RDK_BUILD_SWIG_JAVA_WRAPPER "build the SWIG JAVA wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" ON )
+option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" OFF )
+
+if(RDK_BUILD_SWIG_WRAPPERS!=ON)
+  set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
+  set(RDK_BUILD_SWIG_CSHARP_WRAPPER OFF)
+endif()
 
 include(TestBigEndian)
 TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
