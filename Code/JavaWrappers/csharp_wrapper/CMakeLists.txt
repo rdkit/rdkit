@@ -44,15 +44,15 @@ if(NOT RDK_BUILD_INCHI_SUPPORT)
 LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../Inchi.i")
 endif()
 
-SET(SWIG_MODULE_GraphMolCSWrap_EXTRA_DEPS ${SWIG_SRC_FILES} )
+SET(SWIG_MODULE_RDKFuncs_EXTRA_DEPS ${SWIG_SRC_FILES} )
 
-SWIG_ADD_MODULE(GraphMolCSWrap "CSharp" GraphMolCSharp.i )
+SWIG_ADD_MODULE(RDKFuncs "CSharp" GraphMolCSharp.i )
 
 # it doesnt seem like the threading libs should need to be here, but
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
-SWIG_LINK_LIBRARIES(GraphMolCSWrap ${RDKit_Wrapper_Libs}
+SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
       ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
 
-INSTALL(TARGETS GraphMolCSWrap 
+INSTALL(TARGETS RDKFuncs 
               DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
