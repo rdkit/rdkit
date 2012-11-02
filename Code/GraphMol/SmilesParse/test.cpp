@@ -2219,7 +2219,7 @@ void testBug1942220(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void testRingStereochem(){
+void testRingStereochemReporting(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing error reporting with ring stereochem" << std::endl;
 
@@ -3182,6 +3182,76 @@ void testBug257(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+
+void testRingStereochem(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing handling of ring stereochemistry" << std::endl;
+
+  {
+    // examples from TJ O'Donnell
+    std::string inSmiles[]={
+      "N#Cc1ccc2[nH]cc([C@H]3CC[C@@H](N4CCN(c5cccc6nccnc65)CC4)CC3)c2c1",
+      "N#Cc1ccc2[nH]cc([C@@H]3CC[C@H](N4CCN(c5cccc6nccnc65)CC4)CC3)c2c1",
+      "N#Cc1ccc2[nH]cc([C@@H]3CC[C@@H](N4CCN(c5cccc6nccnc65)CC4)CC3)c2c1",
+      "N#Cc1ccc2[nH]cc([C@H]3CC[C@H](N4CCN(c5cccc6nccnc65)CC4)CC3)c2c1",
+      "N#Cc1ccc2[nH]cc([C@@H]3CC[C@@H](N4CCN(c5cccc6nccnc65)CC4)CC3)c2c1",
+      "N#Cc1ccc2[nH]cc([C@H]3CC[C@H](N4CCN(c5cccc6nccnc65)CC4)CC3)c2c1",
+      "O=C(N[C@@H]1CC[C@@H](CCN2CCN(c3cccc(Cl)c3Cl)CC2)CC1)c1cccs1",
+      "O=C(N[C@H]1CC[C@H](CCN2CCN(c3cccc(Cl)c3Cl)CC2)CC1)c1cccs1",
+      "Cn1ccc2ccc3c4[nH]c5c(cccc5CCN[C@H]5CC[C@H](O)CC5)c4c4c(c3c21)C(=O)NC4=O",
+      "Cn1ccc2ccc3c4[nH]c5c(cccc5CCN[C@@H]5CC[C@@H](O)CC5)c4c4c(c3c21)C(=O)NC4=O",
+      "N=C(N)Nc1ccc(CNC(=O)N2CCN(C(=O)O[C@@H]3CCC[C@H](OC(=O)N4CCN(C(=O)CCCCn5ccnc5)CC4)CCC3)CC2)cc1",
+      "N=C(N)Nc1ccc(CNC(=O)N2CCN(C(=O)O[C@H]3CCC[C@@H](OC(=O)N4CCN(C(=O)CCCCn5ccnc5)CC4)CCC3)CC2)cc1",
+      "CC(C)c1cc(C(C)C)c(S(=O)(=O)NC[C@H]2CC[C@H](C(=O)NNC(=O)c3cc4ccccc4s3)CC2)c(C(C)C)c1",
+      "CC(C)c1cc(C(C)C)c(S(=O)(=O)NC[C@@H]2CC[C@@H](C(=O)NNC(=O)c3cc4ccccc4s3)CC2)c(C(C)C)c1",
+      "O=C(CCC[C@@H]1OO[C@H](CCCC(=O)c2ccccc2)OO1)c1ccccc1",
+      "O=C(CCC[C@@H]1OO[C@H](CCCC(=O)c2ccccc2)OO1)c1ccccc1",
+      "O=C(CCC[C@@H]1OO[C@@H](CCCC(=O)c2ccccc2)OO1)c1ccccc1",
+      "O=C(CCC[C@H]1OO[C@H](CCCC(=O)c2ccccc2)OO1)c1ccccc1",
+      "CCCn1c2[nH]c([C@@H]3CC[C@@H](CNC(C)=O)CC3)nc2c(=O)n(CCC)c1=O",
+      "CCCn1c2[nH]c([C@H]3CC[C@H](CNC(C)=O)CC3)nc2c(=O)n(CCC)c1=O",
+      "c1cc2c(cccc2N2CCN([C@H]3CC[C@@H](c4c[nH]c5ccccc54)CC3)CC2)[nH]1",
+      "c1cc2c(cccc2N2CCN([C@@H]3CC[C@H](c4c[nH]c5ccccc54)CC3)CC2)[nH]1",
+      "c1cc2c(cccc2N2CCN([C@H]3CC[C@@H](c4c[nH]c5ccccc54)CC3)CC2)[nH]1",
+      "c1cc2c(cccc2N2CCN([C@@H]3CC[C@H](c4c[nH]c5ccccc54)CC3)CC2)[nH]1",
+      "c1cc2c(cccc2N2CCN([C@@H]3CC[C@@H](c4c[nH]c5ccccc54)CC3)CC2)[nH]1",
+      "c1cc2c(cccc2N2CCN([C@H]3CC[C@H](c4c[nH]c5ccccc54)CC3)CC2)[nH]1",
+      "c1cc2c(cccc2N2CCN([C@@H]3CC[C@@H](c4c[nH]c5ccccc54)CC3)CC2)[nH]1",
+      "c1cc2c(cccc2N2CCN([C@H]3CC[C@H](c4c[nH]c5ccccc54)CC3)CC2)[nH]1",
+      "CCCCC(=O)N[C@@]1(C(=O)N[C@H](Cc2ccccc2)C(=O)N[C@@H](CCCN=C(N)N)C(=O)N[C@@H](Cc2c[nH]c3ccccc23)C(=O)NCC(N)=O)CC[C@@H](c2ccc(C)cc2)CC1",
+      "CCCCC(=O)N[C@]1(C(=O)N[C@H](Cc2ccccc2)C(=O)N[C@@H](CCCN=C(N)N)C(=O)N[C@@H](Cc2c[nH]c3ccccc23)C(=O)NCC(N)=O)CC[C@H](c2ccc(C)cc2)CC1",
+      "CC(C)Oc1ccccc1N1CCN([C@H]2CC[C@@H](NS(=O)(=O)c3cnc(Cl)c(Br)c3)CC2)CC1",
+      "CC(C)Oc1ccccc1N1CCN([C@@H]2CC[C@H](NS(=O)(=O)c3cnc(Cl)c(Br)c3)CC2)CC1",
+      "CC(C)Oc1ccccc1N1CCN([C@H]2CC[C@@H](NS(=O)(=O)c3cnc(Cl)c(Br)c3)CC2)CC1",
+      "CC(C)Oc1ccccc1N1CCN([C@@H]2CC[C@H](NS(=O)(=O)c3cnc(Cl)c(Br)c3)CC2)CC1",
+      "EOS"
+    };
+    unsigned int idx=0;
+    while(inSmiles[idx]!="EOS"){
+      std::string smi1=inSmiles[idx++];
+      std::string smi2=inSmiles[idx++];
+
+      RWMol *m1= SmilesToMol(smi1);;
+      TEST_ASSERT(m1);
+      RWMol *m2= SmilesToMol(smi2);;
+      TEST_ASSERT(m2);
+      TEST_ASSERT(m1->getNumAtoms()==m2->getNumAtoms());
+      TEST_ASSERT(m1->getNumBonds()==m2->getNumBonds());      
+
+      std::string csmiles1 = MolToSmiles(*m1,true);
+      std::string csmiles2 = MolToSmiles(*m2,true);
+      if(csmiles1!=csmiles2){
+        std::cerr<<"---------\n"<<csmiles1<<"\n"<<csmiles2<<std::endl;
+      }
+      TEST_ASSERT(csmiles1==csmiles2);
+      delete m1;
+      delete m2;
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -3225,12 +3295,13 @@ main(int argc, char *argv[])
   testAllBondsExplicit();
   testBug3139534();
   testBug3526815();
-#endif
-  testFragmentSmiles();
   testBug3525799();
   testBug3526810();
   testBug3528556();
   testBug253();
   testBug257();
+  testFragmentSmiles();
+#endif
+  testRingStereochem();
   //testBug1719046();
 }

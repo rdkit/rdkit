@@ -819,18 +819,14 @@ namespace Canon {
     INT_VECT atomVisitOrders(nAtoms,0);
     INT_VECT bondVisitOrders(mol.getNumBonds(),0);
     INT_VECT bondDirCounts(mol.getNumBonds(),0);
-    INT_VECT atomDirCounts(mol.getNumAtoms(),0);
+    INT_VECT atomDirCounts(nAtoms,0);
+    INT_VECT cyclesAvailable(MAX_CYCLES,1);
 
-    INT_VECT cyclesAvailable;
-    INT_VECT_I viIt;
-    cyclesAvailable.resize(MAX_CYCLES);
-    for(viIt=cyclesAvailable.begin();viIt!=cyclesAvailable.end();++viIt) *viIt=1;
+    VECT_INT_VECT cycles(nAtoms);
+    for(VECT_INT_VECT_I vviIt=cycles.begin();vviIt!=cycles.end();++vviIt) vviIt->resize(0);
 
-    VECT_INT_VECT  cycles;
-    cycles.resize(nAtoms);
-    VECT_INT_VECT_I vviIt;
-    for(vviIt=cycles.begin();vviIt!=cycles.end();++vviIt) vviIt->resize(0);
-
+    boost::dynamic_bitset<> ringStereoChemAdjusted(nAtoms);
+    
     // make sure that we've done the stereo perception:
     if(!mol.hasProp("_StereochemDone")){
       MolOps::assignStereochemistry(mol,false);
@@ -843,8 +839,8 @@ namespace Canon {
     }
     mol.getAtomWithIdx(atomIdx)->setProp("_TraversalStartPoint",true);
 
-    VECT_INT_VECT atomRingClosures(mol.getNumAtoms());
-    std::vector<INT_LIST> atomTraversalBondOrder(mol.getNumAtoms());
+    VECT_INT_VECT atomRingClosures(nAtoms);
+    std::vector<INT_LIST> atomTraversalBondOrder(nAtoms);
     Canon::canonicalDFSTraversal(mol,atomIdx,-1,colors,cycles,
                                  ranks,cyclesAvailable,molStack,atomVisitOrders,
                                  bondVisitOrders,atomRingClosures,atomTraversalBondOrder,
@@ -856,9 +852,6 @@ namespace Canon {
         (*atomIt)->setProp("_TraversalBondIndexOrder",atomTraversalBondOrder[(*atomIt)->getIdx()]);
       }
     }
-
-    // FIX: here's where we would adjust non-chiral ring stereochemistry
-    // There was some broken code here up through rev656.
 
     // remove the current directions on single bonds around double bonds:
     for(ROMol::BondIterator bondIt=mol.beginBonds();
@@ -879,7 +872,7 @@ namespace Canon {
 
 
     //std::cerr<<"----->\ntraversal stack:"<<std::endl;
-    // traverse the stack and clean up double bonds
+    // traverse the stack and canonicalize double bonds and atoms with ring stereochemistry
     for(MolStack::iterator msI=molStack.begin();
         msI!=molStack.end(); ++msI){
 #if 0
@@ -894,6 +887,24 @@ namespace Canon {
          msI->obj.bond->getStereo() > Bond::STEREOANY){
         Canon::canonicalizeDoubleBond(msI->obj.bond,bondVisitOrders,atomVisitOrders,
                                       bondDirCounts,atomDirCounts);
+      }
+      if(msI->type == MOL_STACK_ATOM &&
+         msI->obj.atom->hasProp("_ringStereoAtoms")){
+        if(!ringStereoChemAdjusted[msI->obj.atom->getIdx()]){
+          msI->obj.atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+          ringStereoChemAdjusted.set(msI->obj.atom->getIdx());
+        }
+        INT_VECT ringStereoAtoms;
+        msI->obj.atom->getProp("_ringStereoAtoms",ringStereoAtoms);
+        BOOST_FOREACH(int nbrV,ringStereoAtoms){
+          int nbrIdx=abs(nbrV)-1;
+          if(!ringStereoChemAdjusted[nbrIdx] &&
+             atomVisitOrders[nbrIdx]>atomVisitOrders[msI->obj.atom->getIdx()]){
+            mol.getAtomWithIdx(nbrIdx)->setChiralTag(msI->obj.atom->getChiralTag());
+            if(nbrV<0) mol.getAtomWithIdx(nbrIdx)->invertChirality();
+            ringStereoChemAdjusted.set(nbrIdx);
+          }
+        }
       }
     }
 #if 0

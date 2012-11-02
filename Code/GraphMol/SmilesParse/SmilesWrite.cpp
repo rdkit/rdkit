@@ -115,55 +115,13 @@ namespace RDKit{
          atom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
         INT_LIST trueOrder;
         atom->getProp("_TraversalBondIndexOrder",trueOrder);
-        int nSwaps;
-#if 0
-        if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") ) {
-          // this is a special case where the atom has stereochem indicated
-          // but isn't a chiral center. This can happen in ring stereochem
-          // situations. Instead of using the bond indices to collect
-          // perturbation order (as is normal), we use the priorities of the
-          // atoms at the end of the bonds
-          INT_LIST ref;
-          ROMol::OEDGE_ITER beg,end;
-          boost::tie(beg,end) = atom->getOwningMol().getAtomBonds(atom);
-          ROMol::GRAPH_MOL_BOND_PMAP::type pMap = atom->getOwningMol().getBondPMap();
-          while(beg!=end){
-            const Atom *endAtom=pMap[*beg]->getOtherAtom(atom);
-            int cipRank=0;
-            if(endAtom->hasProp("_CIPRank")){
-              endAtom->getProp("_CIPRank",cipRank);
-            }
-            ref.push_back(cipRank);
-            ++beg;
-          }
-          BOOST_FOREACH(int &oIdx,trueOrder){
-            const Atom *endAtom=atom->getOwningMol().getBondWithIdx(oIdx)->getOtherAtom(atom);
-            int cipRank=0;
-            if(endAtom->hasProp("_CIPRank")){
-              endAtom->getProp("_CIPRank",cipRank);
-            }
-            oIdx=cipRank;
-          }
-#if 0
-          BOOST_LOG(rdErrorLog)<<" ****"<<std::endl;
-          std::copy(ref.begin(),ref.end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
-          std::copy(trueOrder.begin(),trueOrder.end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
-          BOOST_LOG(rdErrorLog)<<" ****"<<std::endl;
-#endif
-          nSwaps=static_cast<int>(countSwapsToInterconvert(ref,trueOrder));
-        } else {
-          nSwaps =  atom->getPerturbationOrder(trueOrder);
-        }
-#else
-        if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") &&
-            !atom->getOwningMol().hasProp("_ringSteroWarning") ){
-          BOOST_LOG(rdWarningLog)<<"Warning: ring stereochemistry detected. The output SMILES is not canonical."<<std::endl;
-          atom->getOwningMol().setProp("_ringStereoWarning",true,true);
-        }
-        nSwaps =  atom->getPerturbationOrder(trueOrder);
-#endif
+        int nSwaps=  atom->getPerturbationOrder(trueOrder);
+        // if( !atom->hasProp("_CIPCode") && atom->hasProp("_CIPRank") &&
+        //     !atom->getOwningMol().hasProp("_ringSteroWarning") ){
+        //   BOOST_LOG(rdWarningLog)<<"Warning: ring stereochemistry detected. The output SMILES is not canonical."<<std::endl;
+        //   atom->getOwningMol().setProp("_ringStereoWarning",true,true);
+        // }
+
         if(atom->getDegree()==3 && !bondIn){
           // This is a special case. Here's an example:
           //   Our internal representation of a chiral center is equivalent to:

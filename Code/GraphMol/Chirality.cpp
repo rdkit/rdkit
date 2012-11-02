@@ -442,7 +442,7 @@ namespace RDKit{
 
         // check for another chiral tagged
         // atom without stereochem in this atom's rings:
-        INT_VECT ringStereoAtoms;
+        INT_VECT ringStereoAtoms(0);
         if(atom->hasProp("_ringStereoAtoms")){
           atom->getProp("_ringStereoAtoms",ringStereoAtoms);
         }
@@ -463,18 +463,18 @@ namespace RDKit{
                   same=-1;
                 }
                 ringStereoAtoms.push_back(same*(*idxIt+1));
-                INT_VECT oAtoms;
+                INT_VECT oAtoms(0);
                 if(mol.getAtomWithIdx(*idxIt)->hasProp("_ringStereoAtoms")){
                   mol.getAtomWithIdx(*idxIt)->getProp("_ringStereoAtoms",oAtoms);
                 }
-                oAtoms.push_back(same*(atom->getIdx()));
+                oAtoms.push_back(same*(atom->getIdx()+1));
                 mol.getAtomWithIdx(*idxIt)->setProp("_ringStereoAtoms",oAtoms);
               }
             }
           }
         }
-        atom->setProp("_ringStereoAtoms",ringStereoAtoms);
         if(ringStereoAtoms.size()){
+          atom->setProp("_ringStereoAtoms",ringStereoAtoms);
           return true;
         }
       }
@@ -848,6 +848,11 @@ namespace RDKit{
       }
 
       if(cleanIt){
+        for(ROMol::AtomIterator atIt=mol.beginAtoms();
+            atIt!=mol.endAtoms();++atIt){
+          if((*atIt)->hasProp("_ringStereochemCand")) (*atIt)->clearProp("_ringStereochemCand");
+          if((*atIt)->hasProp("_ringStereoAtoms")) (*atIt)->clearProp("_ringStereoAtoms");
+        }
         for(ROMol::AtomIterator atIt=mol.beginAtoms();
             atIt!=mol.endAtoms();++atIt){
           Atom *atom=*atIt;
