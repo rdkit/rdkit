@@ -828,6 +828,46 @@ void testPeriodicTable()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testAddAtomWithConf()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing issue 264: adding atoms to molecules that already have conformers" << std::endl;
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+
+    Conformer *conf = new Conformer(m.getNumAtoms());
+    m.addConformer(conf);
+
+    m.addAtom(new Atom(6));
+    TEST_ASSERT(m.getConformer().getNumAtoms()==m.getNumAtoms());
+  }
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+
+    Conformer *conf = new Conformer(m.getNumAtoms());
+    m.addConformer(conf);
+
+    m.addAtom();
+    TEST_ASSERT(m.getConformer().getNumAtoms()==m.getNumAtoms());
+  }
+  { // make sure things are ok even if there is no conformer
+    RWMol m;
+
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+    TEST_ASSERT(m.getNumConformers()==0);
+  }
+  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 // -------------------------------------------------------------------
 int main()
@@ -846,8 +886,8 @@ int main()
   testIssue2381580();
   testIssue2840217();
 #endif
-
   testPeriodicTable();
-
+  testAddAtomWithConf();
+  
   return 0;
 }

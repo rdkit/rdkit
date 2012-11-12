@@ -67,6 +67,11 @@ namespace RDKit{
       clearAtomBookmark(ci_RIGHTMOST_ATOM);
       setAtomBookmark(atom_p,ci_RIGHTMOST_ATOM);
     }
+    // add atom to any conformers as well, if we have any
+    for (ConformerIterator cfi = this->beginConformers();
+	 cfi != this->endConformers(); ++cfi) {
+      (*cfi)->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
+    }
     return which;
   }
   
