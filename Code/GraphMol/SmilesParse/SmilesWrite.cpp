@@ -272,6 +272,7 @@ namespace RDKit{
                                         std::vector<Canon::AtomColors> &colors,
                                         INT_VECT &ranks,bool doKekule,bool canonical,
                                         bool allBondsExplicit,
+                                        std::vector<unsigned int> &atomOrdering,
                                         const boost::dynamic_bitset<> *bondsInPlay=0,
                                         const std::vector<std::string> *atomSymbols=0,
                                         const std::vector<std::string> *bondSymbols=0
@@ -308,6 +309,7 @@ namespace RDKit{
           } else {
             res << (*atomSymbols)[mSE.obj.atom->getIdx()];
           }
+          atomOrdering.push_back(mSE.obj.atom->getIdx());
           
           break;
         case Canon::MOL_STACK_BOND:
@@ -397,6 +399,8 @@ namespace RDKit{
     unsigned int nAtoms=tmol.getNumAtoms();
     INT_VECT ranks(nAtoms,-1);
 
+    std::vector<unsigned int> atomOrdering;
+
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
@@ -450,7 +454,8 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,allBondsExplicit);
+                                                    ranks,doKekule,canonical,allBondsExplicit,
+                                                    atomOrdering);
 
       res += subSmi;
       colorIt = std::find(colors.begin(),colors.end(),Canon::WHITE_NODE);
@@ -458,7 +463,7 @@ namespace RDKit{
         res += ".";
       }
     }
-
+    mol.setProp("_smilesAtomOutputOrder",atomOrdering,true);
     return res;
   } // end of MolToSmiles()
 
@@ -547,6 +552,8 @@ namespace RDKit{
     unsigned int nAtoms=atomsToUse.size();
     INT_VECT ranks(tmol.getNumAtoms(),-1);
 
+    std::vector<unsigned int> atomOrdering;
+
     // clean up the chirality on any atom that is marked as chiral,
     // but that should not be:
     if(doIsomericSmiles){
@@ -603,7 +610,9 @@ namespace RDKit{
       CHECK_INVARIANT(nextAtomIdx>=0,"no start atom found");
 
       subSmi = SmilesWrite::FragmentSmilesConstruct(tmol, nextAtomIdx, colors,
-                                                    ranks,doKekule,canonical,allBondsExplicit,&bondsInPlay,
+                                                    ranks,doKekule,canonical,allBondsExplicit,
+                                                    atomOrdering,
+                                                    &bondsInPlay,
                                                     atomSymbols,bondSymbols);
 
       res += subSmi;
@@ -612,7 +621,7 @@ namespace RDKit{
         res += ".";
       }
     }
-
+    mol.setProp("_smilesAtomOutputOrder",atomOrdering,true);
     return res;
   } // end of MolFragmentToSmiles()
 }

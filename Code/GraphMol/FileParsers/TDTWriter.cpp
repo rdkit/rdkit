@@ -87,7 +87,7 @@ namespace RDKit {
 
     // write the molecule 
     (*dp_ostream) << "$SMI<" << MolToSmiles(mol) << ">\n";
-
+    
     if(df_writeNames && mol.hasProp("_Name")){
       std::string name;
       mol.getProp("_Name",name);
@@ -96,6 +96,10 @@ namespace RDKit {
     
     // do we need to write coordinates?
     if(mol.getNumConformers()){
+      // get the ordering of the atoms in the output SMILES:
+      std::vector<unsigned int> atomOrdering;
+      mol.getProp("_smilesAtomOutputOrder",atomOrdering);
+      
       const Conformer &conf = mol.getConformer(confId);
       if(df_write2D){
 	(*dp_ostream) << "2D<";
@@ -103,12 +107,12 @@ namespace RDKit {
 	(*dp_ostream) << "3D<";
       }
       const RDGeom::POINT3D_VECT &coords=conf.getPositions();
-      int nAts=conf.getNumAtoms();
+      int nAts=atomOrdering.size();
       for(int i=0;i<nAts;i++){
-	(*dp_ostream) << std::setprecision(d_numDigits) << coords[i].x << ",";
-	(*dp_ostream) << std::setprecision(d_numDigits) << coords[i].y;
+	(*dp_ostream) << std::setprecision(d_numDigits) << coords[atomOrdering[i]].x << ",";
+	(*dp_ostream) << std::setprecision(d_numDigits) << coords[atomOrdering[i]].y;
 	if(!df_write2D){
-	  (*dp_ostream) << "," << std::setprecision(d_numDigits) << coords[i].z;
+	  (*dp_ostream) << "," << std::setprecision(d_numDigits) << coords[atomOrdering[i]].z;
 	}
 	if(i!=nAts-1) (*dp_ostream) << ",";
       }

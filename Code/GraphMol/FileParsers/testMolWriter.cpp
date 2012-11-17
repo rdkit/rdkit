@@ -602,7 +602,6 @@ void testIssue3525000() {
     TEST_ASSERT(cip=="S");
 
     std::string mb=MolToMolBlock(*mol);
-    std::cerr<<"MB:\n"<<mb<<std::endl;
     delete mol;
     mol = MolBlockToMol(mb);
     TEST_ASSERT(mol);
@@ -622,6 +621,29 @@ void testIssue3525000() {
     mol->getAtomWithIdx(4)->getProp("_CIPCode",cip);
     TEST_ASSERT(cip=="S");
   }  
+}
+
+void testIssue265() {
+
+  {
+    ROMol *m1=SmilesToMol("C1ON1");
+    TEST_ASSERT(m1);
+    Conformer *conf=new Conformer(m1->getNumAtoms());
+    RDGeom::Point3D p1(0,0,0);
+    RDGeom::Point3D p2(1,0,0);
+    RDGeom::Point3D p3(0,1,0);
+    conf->setAtomPos(0,p1);
+    conf->setAtomPos(1,p2);
+    conf->setAtomPos(2,p3);
+    m1->addConformer(conf);
+
+    std::stringstream sstream;
+    TDTWriter writer(&sstream);
+    writer.write(*m1);
+    writer.flush();
+    std::string otext=sstream.str();
+    TEST_ASSERT(otext=="$SMI<C1NO1>\n3D<0,0,0,0,1,0,1,0,0;>\n");
+  }
 }
 
 
@@ -691,6 +713,12 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";
   testIssue3525000();
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testIssue265()\n";
+  testIssue265();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 
