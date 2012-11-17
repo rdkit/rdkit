@@ -4127,6 +4127,26 @@ void testSFNetIssue256() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFNetIssue266() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 266: ring finding error" << std::endl;
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/";
+    RWMol *m = MolFileToMol(pathName+"Issue266.mol",false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==19);
+    TEST_ASSERT(m->getNumBonds()==25);
+    std::cerr<<"starting ring finding"<<std::endl;
+    MolOps::findSSSR(*m);
+    std::cerr<<"done"<<std::endl;    
+    TEST_ASSERT(m->getRingInfo()->numRings()==(m->getNumBonds()-m->getNumAtoms()+1));
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -4183,9 +4203,10 @@ int main(){
   testSFNetIssue3349243();
   testBasicCanon();
   testSFNetIssue3549146();
-#endif
   testSFNetIssue249();
   testSFNetIssue256();
+#endif
+  testSFNetIssue266();
   return 0;
 }
 

@@ -686,7 +686,7 @@ namespace FindRings {
     return false;
   }
                       
-  void findRingConnectingAtoms(const ROMol &tMol,
+  bool findRingConnectingAtoms(const ROMol &tMol,
                                const Bond *bond,
                                VECT_INT_VECT &res,
                                RINGINVAR_SET &invars,
@@ -718,8 +718,9 @@ namespace FindRings {
         ringAtoms.set(nring[nring.size()-1]);
       }
     } else {
-      BOOST_LOG(rdWarningLog)<<"could not find a ring for the bond between atoms "<<bond->getBeginAtomIdx()<<" and "<<bond->getEndAtomIdx()<<std::endl;
+      return false;
     }
+    return true;
   }
 
 
@@ -852,7 +853,7 @@ namespace RDKit {
           } // done with degree 3 node
         } // done finding rings in this fragement
 
-        // calculate the Frere-Jacque number for the fragment:
+        // calculate the cyclomatic number for the fragment:
         int nbnds=0;
         for(ROMol::ConstBondIterator bndIt=mol.beginBonds();
             bndIt!=mol.endBonds();++bndIt){
@@ -890,17 +891,20 @@ namespace RDKit {
               }
             }
           }
-
+          boost::dynamic_bitset<> deadBonds(mol.getNumBonds());
           while(possibleBonds.size()){
-            FindRings::findRingConnectingAtoms(mol,possibleBonds[0],
-                                               fragRes,invars,ringBonds,ringAtoms);
+            bool ringFound=FindRings::findRingConnectingAtoms(mol,possibleBonds[0],
+                                                              fragRes,invars,ringBonds,ringAtoms);
+            if(!ringFound) deadBonds.set(possibleBonds[0]->getIdx(),1);
             possibleBonds.clear();
             // check if we need to repeat the process:
             for(unsigned int i=0;i<nbnds;++i){
               if(!ringBonds[i]){
                 const Bond *bnd=mol.getBondWithIdx(i);
-                if(ringAtoms[bnd->getBeginAtomIdx()] &&
-                   ringAtoms[bnd->getEndAtomIdx()]){
+                if(!deadBonds[bnd->getIdx()] &&
+                   ringAtoms[bnd->getBeginAtomIdx()] &&
+                   ringAtoms[bnd->getEndAtomIdx()]
+                   ){
                   possibleBonds.push_back(bnd);
                   break;
                 }
