@@ -81,7 +81,7 @@ void test3(){
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP(*m,bv,512,false,true,0x00006FFF);
     BOOST_LOG(rdInfoLog) << "c1ccccn1 " << bv.getNumOnBits() << std::endl;
-    TEST_ASSERT(bv.getNumOnBits()==19);
+    TEST_ASSERT(bv.getNumOnBits()==18);
     delete m;
   }
   {
@@ -99,7 +99,7 @@ void test3(){
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP(*m,bv,512,false,true,0x006FFF);
     BOOST_LOG(rdInfoLog) << "c1nnccc1 " << bv.getNumOnBits() << std::endl;
-    TEST_ASSERT(bv.getNumOnBits()==27);
+    TEST_ASSERT(bv.getNumOnBits()==28);
     delete m;
   }
   {
@@ -108,14 +108,14 @@ void test3(){
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP(*m,bv,512,false,true,0x006FFF);
     BOOST_LOG(rdInfoLog) << "c1ncncc1 " << bv.getNumOnBits() << std::endl;
-    TEST_ASSERT(bv.getNumOnBits()==27);
+    TEST_ASSERT(bv.getNumOnBits()==25);
     delete m;
   }
   {
     ExplicitBitVect bv(512);
     AvalonTools::getAvalonFP("c1cccnc1",true,bv,512,false,true,0x006FFF);
     BOOST_LOG(rdInfoLog) << "c1cccnc1 " << bv.getNumOnBits() << std::endl;
-    TEST_ASSERT(bv.getNumOnBits()==19);
+    TEST_ASSERT(bv.getNumOnBits()==18);
   }
   {
     ExplicitBitVect bv(512);
@@ -130,7 +130,7 @@ void test3(){
     ExplicitBitVect bv(1024);
     AvalonTools::getAvalonFP(*m,bv,1024,false,true,0x006FFF);
     BOOST_LOG(rdInfoLog) << "c1cccnc1 " << bv.getNumOnBits() << std::endl;
-    TEST_ASSERT(bv.getNumOnBits()==20);
+    TEST_ASSERT(bv.getNumOnBits()==19);
     delete m;
   }
   {
