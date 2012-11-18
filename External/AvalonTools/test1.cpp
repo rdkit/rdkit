@@ -3,6 +3,11 @@
 //  Created by Greg Landrum, July 2008
 //
 
+//
+//  Expected test results here correspond to v1.0 of the open-source avalontoolkit
+//
+
+
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h> 
 #include <GraphMol/SmilesParse/SmilesParse.h>
