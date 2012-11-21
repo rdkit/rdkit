@@ -150,7 +150,7 @@ class PILCanvas( Canvas ):
     In general, I just specify an extension and let format default to None"""
     file = file or self.name
     if hasattr(file, 'write'):
-      raise 'fileobj not implemented for piddlePIL'
+      raise ValueError('fileobj not implemented for piddlePIL')
     # below here, file is guaranteed to be a string
     if format == None:
       if '.' not in file:
@@ -328,7 +328,7 @@ class PILCanvas( Canvas ):
     temppen = ImageDraw.ImageDraw(tempimg)
 
     pilfont = _pilFont(font)
-    if not pilfont: raise "bad font!", font
+    if not pilfont: raise ValueError("bad font: %s"%font)
     pos = [4, int(tempsize/2 - self.fontAscent(font)) - self.fontDescent(font)]
     temppen.text( pos, s,font=pilfont,fill=(255,255,255))
     pos[1] = int(tempsize/2)
