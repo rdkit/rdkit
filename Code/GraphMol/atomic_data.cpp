@@ -16,7 +16,7 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 namespace RDKit {
 
 const std::string periodicTableAtomData = 
-"0	*	0	0	0	0	0	0	0	1	2	3	4	5	6	-1 \n \
+"0	*	0	0	0	0	0	0	0	-1 \n \
 1	H 	0.23	0.33	1.2	1.008	1	1	1.007825032	1 \n \
 2	He	0.93	0.7	1.4	4.003	2	4	4.002603254	0  \n \
 3	Li	0.68	1.23	1.82	6.941	1	7	7.01600455	1  \n \

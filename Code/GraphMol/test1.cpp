@@ -868,6 +868,31 @@ void testAddAtomWithConf()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testIssue267()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing issue 267: default valence of *" << std::endl;
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(0));
+    m.updatePropertyCache();
+
+    TEST_ASSERT(m.getAtomWithIdx(0)->getImplicitValence()==0);
+  }
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(0));
+    for(unsigned int i=0;i<8;++i){
+      m.addAtom(new Atom(1));
+      m.addBond(0,i+1,Bond::SINGLE);
+    }
+    m.updatePropertyCache();
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 // -------------------------------------------------------------------
 int main()
@@ -888,6 +913,7 @@ int main()
 #endif
   testPeriodicTable();
   testAddAtomWithConf();
+  testIssue267();
   
   return 0;
 }
