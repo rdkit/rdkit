@@ -107,6 +107,7 @@
 %newobject replaceCore;
 %newobject replaceSidechains;
 %newobject deleteSubstructs;
+%newobject getAtoms;
 
 
 %extend RDKit::ROMol {
