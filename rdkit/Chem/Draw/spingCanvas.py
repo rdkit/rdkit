@@ -15,7 +15,8 @@ import math,re
 from rdkit.sping.PIL.pidPIL import PILCanvas
 from canvasbase import CanvasBase
 
-faceMap={'sans':'helvetica'}
+faceMap={'sans':'helvetica',
+         'serif':'times'}
 
 def convertColor(color):
   color = pid.Color(color[0],color[1],color[2])
