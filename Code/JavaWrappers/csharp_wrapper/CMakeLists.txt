@@ -2,6 +2,17 @@ project (GraphMolCSharp)
 
 include_directories( ${RDKit_ExternalDir} )
 
+
+# find the gmcs executables on non-windows systems:
+if(NOT WIN32)
+  find_program(GMCS_EXE gmcs)
+  if (NOT GMCS_EXE)
+	MESSAGE ("gmcs (executable) is not found. Please add it to PATH and rerun cmake.")
+	MESSAGE(FATAL_ERROR "Cannot find required executable gmcs")
+  endif (NOT GMCS_EXE)
+endif(NOT WIN32)
+
+
 SET_SOURCE_FILES_PROPERTIES(GraphMolCSharp.i PROPERTIES CPLUSPLUS ON )
 
 # Setup a few variables for environment-specific things
@@ -55,4 +66,21 @@ SWIG_LINK_LIBRARIES(RDKFuncs ${RDKit_Wrapper_Libs}
       ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
 
 INSTALL(TARGETS RDKFuncs 
-              DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
+
+
+if(NOT WIN32)
+   # code adapted from the wrapper code for
+   # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
+   ADD_CUSTOM_COMMAND(
+     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
+     ## 1. run this custom command only after swig has been run.
+     COMMAND ${GMCS_EXE} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
+       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+     DEPENDS "${swig_generated_file_fullname}"
+   )
+   ADD_CUSTOM_TARGET(RDKFuncsDLL ALL
+     DEPENDS RDKFuncs ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
+     COMMENT "building mono dll"
+   )
+endif(NOT WIN32)
