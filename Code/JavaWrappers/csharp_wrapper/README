@@ -1,7 +1,8 @@
 To build on Windows:
 ====================
 
-Since cmake doesn't know anything about C#, there's an unfortunate manual step involved in this.
+Since cmake doesn't know anything about C#, there's an unfortunate
+manual step involved in this. 
 
   - Make sure that the cmake configuration variable
     RDK_BUILD_SWIG_CSHARP_WRAPPER is set to ON. 
