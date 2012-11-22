@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -39,13 +39,14 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <CSFile Include="swig_csharp\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="swig_csharp\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="RDKFuncs.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="readme.txt" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -56,9 +57,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Target Name="Compile" DependsOnTargets="PreBuild">
-        <Csc Sources="@(CSFile)"
-            References="@(Reference)"
-            TargetType="dll" />
-  </Target>
 </Project>
