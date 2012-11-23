@@ -824,6 +824,17 @@ void testPeriodicTable()
 
   TEST_ASSERT(PeriodicTable::getTable()->getDefaultValence(26)==-1);
   TEST_ASSERT(PeriodicTable::getTable()->getDefaultValence(57)==-1);
+
+  // this was sf.net issue 269
+  int anum;
+  anum =   PeriodicTable::getTable()->getAtomicNumber("C");
+  TEST_ASSERT(anum==6);
+  try {
+    anum =   PeriodicTable::getTable()->getAtomicNumber("Xx");
+  } catch (...) {
+    anum=-1;
+  }
+  TEST_ASSERT(anum==-1);
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

@@ -46,8 +46,8 @@
 /* Include the base types before anything that will utilize them */
 %include "stdint.i"
 %include "std_string.i"
-%include "../gmwrapper/std_list.i"
-%include "../gmwrapper/std_vector.i"
+%include "std_list.i"
+%include "extend_std_vector.i"
 %include "std_map.i"
 %include "std_pair.i"
 %include "carrays.i"
