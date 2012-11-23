@@ -83,7 +83,11 @@ namespace RDKit {
       if(elementSymbol=="C") anum=6;
       else if(elementSymbol=="N") anum=7;
       else if(elementSymbol=="O") anum=8;
-      else anum = byname.find(elementSymbol)->second;
+      else{
+        STR_UINT_MAP::const_iterator iter=byname.find(elementSymbol);
+        if(iter!=byname.end())
+          anum = iter->second;
+      }
       POSTCONDITION(anum>-1,"Element '" + elementSymbol +"' not found");
       return anum;
     }
