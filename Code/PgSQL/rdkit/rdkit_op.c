@@ -60,12 +60,12 @@ molcmp(Mol *a, Mol *b) {
                                               fcinfo->flinfo->fn_extra, \
                                               fcinfo->flinfo->fn_mcxt,  \
                                               PG_GETARG_DATUM(0),       \
-                                              &a, NULL, NULL, NULL);    \
+                                              &a, NULL, NULL);          \
     fcinfo->flinfo->fn_extra = SearchMolCache(                          \
                                               fcinfo->flinfo->fn_extra, \
                                               fcinfo->flinfo->fn_mcxt,  \
                                               PG_GETARG_DATUM(1),       \
-                                              &b, NULL, NULL, NULL);    \
+                                              &b, NULL, NULL);    \
     res = molcmp(a, b);                                                 \
     PG_RETURN_##ret( res action 0 );                                    \
   }                                                                     \
@@ -91,12 +91,12 @@ mol_substruct(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL, NULL);
+                                            NULL, &i, NULL);
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(1), 
-                                            NULL, &a, NULL, NULL);
+                                            NULL, &a, NULL);
 
   PG_RETURN_BOOL(MolSubstruct(i, a));             
 }
@@ -112,12 +112,12 @@ mol_rsubstruct(PG_FUNCTION_ARGS) {
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(0), 
-                                            NULL, &a, NULL, NULL);
+                                            NULL, &a, NULL);
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
                                             fcinfo->flinfo->fn_mcxt,
                                             PG_GETARG_DATUM(1), 
-                                            NULL, &i, NULL, NULL);
+                                            NULL, &i, NULL);
 
   PG_RETURN_BOOL(MolSubstruct(i, a));             
 }

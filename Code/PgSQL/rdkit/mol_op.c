@@ -273,7 +273,6 @@ Datum
 mol_inchi(PG_FUNCTION_ARGS) {
   CROMol  mol;
   const char    *str;
-  int     len;
 
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
@@ -292,7 +291,6 @@ Datum
 mol_inchikey(PG_FUNCTION_ARGS) {
   CROMol  mol;
   const char    *str;
-  int     len;
 
   fcinfo->flinfo->fn_extra = SearchMolCache(
                                             fcinfo->flinfo->fn_extra,
