@@ -324,6 +324,9 @@ namespace RDKit{
     */
     void Kekulize(RWMol &mol, bool markAtomsBonds=true, unsigned int maxBackTracks=100);
 
+    //! checks for invalid valences. Throws MolSanitizeException on failure.
+    void checkAtomicProperties(const ROMol &mol);
+
     //! flags the molecule's conjugated bonds
     void setConjugation(ROMol &mol);
 

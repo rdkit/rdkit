@@ -215,6 +215,35 @@ int Atom::calcExplicitValence(bool strict) {
   }
   res += arom;
 
+
+  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
+  int chr = getFormalCharge();
+  if(isEarlyAtom(d_atomicNum)) chr*=-1;  // <- the usual correction for early atoms
+  if (res > (dv + chr) && this->getIsAromatic()){
+    // this needs some explanation : if the atom is aromatic and
+    // res > (dv + chr) we assume that no hydrogen can be added
+    // to this atom.  We set x = (v + chr) such that x is the
+    // closest possible integer to "res" but less than
+    // "res".
+    //
+    // "v" here is one of the allowed valences. For example:
+    //    sulfur here : O=c1ccs(=O)cc1
+    //    nitrogen here : c1cccn1C
+    //    nitrogen here : c1cc[nH]c1
+    
+    int pval = dv + chr;
+    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
+    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi!=-1; ++vi) {
+      int val = (*vi) + chr;
+      if (val > res) {
+        break;
+      } else {
+        pval = val;
+      }
+    }
+    res = pval;
+  }
+
   d_explicitValence = res;
   return res;
 }
@@ -230,7 +259,7 @@ int Atom::getImplicitValence() const {
 int Atom::calcImplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   if(df_noImplicit) return 0;
-  if(d_explicitValence==-1) this->calcExplicitValence(strict);
+  if(d_explicitValence==-1) this->calcExplicitValence();
 
   int chg = getFormalCharge();
   int explicitPlusRadV = d_explicitValence + getNumRadicalElectrons();
@@ -309,8 +338,8 @@ bool Atom::Match(const Atom::ATOM_SPTR what) const {
 }
 
 void Atom::updatePropertyCache(bool strict) {
-  calcExplicitValence(strict);
-  calcImplicitValence(strict);
+  calcExplicitValence();
+  calcImplicitValence();
 }
 
 // returns the number of swaps required to convert the ordering

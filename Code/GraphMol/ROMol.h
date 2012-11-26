@@ -599,6 +599,8 @@ namespace RDKit{
     void clearComputedProps(bool includeRings=true) const;
     //! calculates any of our lazy \c properties
     /*!
+      \param strict ignored, this is included for compatibility purposes
+
       <b>Notes:</b>
          - this calls \c updatePropertyCache() on each of our Atoms and Bonds
     */

@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2001-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2012 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +14,7 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
+#include <GraphMol/SanitException.h>
 
 #include <vector>
 #include <algorithm> 
@@ -199,7 +200,36 @@ namespace RDKit{
         (*ai)->setNumRadicalElectrons(numRadicals);
       }
     }
-                
+
+    void checkAtomicProperties(const ROMol &mol){
+      for (ROMol::ConstAtomIterator ai = mol.beginAtoms();
+           ai != mol.endAtoms(); ++ai) {
+        int valence = (*ai)->getExplicitValence();
+        int effectiveValence;
+        if(PeriodicTable::getTable()->getNouterElecs((*ai)->getAtomicNum())>=4){
+            effectiveValence=valence-(*ai)->getFormalCharge();
+        } else {
+          // for boron and co, we move to the right in the PT, so adding
+          // extra valences means adding negative charge
+          effectiveValence=valence+(*ai)->getFormalCharge();
+        }
+        const INT_VECT &valens = PeriodicTable::getTable()->getValenceList((*ai)->getAtomicNum());
+        int maxValence=*(valens.rbegin());
+        // maxValence == -1 signifies that we'll take anything at the high end
+        if( maxValence>0 &&effectiveValence>maxValence){
+          // the explicit valence is greater than any
+          // allowed valence for the atoms - raise an error
+          std::ostringstream errout;
+          errout << "Explicit valence for atom # " << (*ai)->getIdx() 
+                 << " " << PeriodicTable::getTable()->getElementSymbol((*ai)->getAtomicNum())
+                 << ", " << effectiveValence <<", is greater than permitted";
+          std::string msg = errout.str();
+          BOOST_LOG(rdErrorLog) << msg << std::endl;
+          throw MolSanitizeException(msg);
+        }
+      }
+    }
+    
     void sanitizeMol(RWMol &mol){
       unsigned int failedOp=0;
       sanitizeMol(mol,failedOp,SANITIZE_ALL);
@@ -217,11 +247,10 @@ namespace RDKit{
       }
 
       // update computed properties on atoms and bonds:
+      mol.updatePropertyCache();
       operationThatFailed = SANITIZE_PROPERTIES;
       if(sanitizeOps & operationThatFailed){
-        mol.updatePropertyCache(true);
-      } else {
-        mol.updatePropertyCache(false);
+        checkAtomicProperties(mol);
       }
                
       operationThatFailed = SANITIZE_SYMMRINGS;

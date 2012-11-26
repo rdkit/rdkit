@@ -438,6 +438,9 @@ namespace RDKit{
 
     //! calculates any of our lazy \c properties
     /*!
+
+      \param strict ignored, this is included for compatibility purposes
+
       <b>Notes:</b>
         - requires an owning molecule
 	- the current lazy \c properties are implicit and explicit valence
@@ -446,6 +449,8 @@ namespace RDKit{
 
     //! calculates and returns our explicit valence
     /*!
+      \param strict ignored, this is included for compatibility purposes
+
       <b>Notes:</b>
         - requires an owning molecule
     */
@@ -453,6 +458,8 @@ namespace RDKit{
 
     //! calculates and returns our implicit valence
     /*!
+      \param strict ignored, this is included for compatibility purposes
+
       <b>Notes:</b>
         - requires an owning molecule
     */
