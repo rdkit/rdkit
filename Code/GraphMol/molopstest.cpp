@@ -4147,12 +4147,26 @@ void testSFNetIssue266() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testNewValences() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing new valence calculation" << std::endl;
+
+  {
+    std::string smi = "N1C=CC=C1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==5);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -4205,8 +4219,10 @@ int main(){
   testSFNetIssue3549146();
   testSFNetIssue249();
   testSFNetIssue256();
-#endif
   testSFNetIssue266();
+#endif
+  testNewValences();
+  
   return 0;
 }
 

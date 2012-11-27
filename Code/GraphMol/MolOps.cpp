@@ -248,6 +248,8 @@ namespace RDKit{
 
       // update computed properties on atoms and bonds:
       mol.updatePropertyCache();
+      std::cerr<<" post update "<<std::endl;
+      mol.debugMol(std::cerr);
       operationThatFailed = SANITIZE_PROPERTIES;
       if(sanitizeOps & operationThatFailed){
         checkAtomicProperties(mol);
@@ -264,6 +266,8 @@ namespace RDKit{
       if(sanitizeOps & operationThatFailed){
         Kekulize(mol);
       }
+      std::cerr<<" post kekulize "<<std::endl;
+      mol.debugMol(std::cerr);
 
       // look for radicals:
       // We do this now because we need to know
@@ -283,6 +287,8 @@ namespace RDKit{
       if(sanitizeOps & operationThatFailed){
         setAromaticity(mol);
       }
+      std::cerr<<" post aromaticity "<<std::endl;
+      mol.debugMol(std::cerr);
     
       // set conjugation
       operationThatFailed = SANITIZE_SETCONJUGATION;
@@ -307,6 +313,8 @@ namespace RDKit{
       if(sanitizeOps & operationThatFailed){
         adjustHs(mol);
       }
+      std::cerr<<" post adjust "<<std::endl;
+      mol.debugMol(std::cerr);
 
       operationThatFailed = 0;
     }

@@ -215,7 +215,7 @@ int Atom::calcExplicitValence(bool strict) {
   }
   res += arom;
 
-
+#if 0
   unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
   if(isEarlyAtom(d_atomicNum)) chr*=-1;  // <- the usual correction for early atoms
@@ -243,7 +243,7 @@ int Atom::calcExplicitValence(bool strict) {
     }
     res = pval;
   }
-
+#endif
   d_explicitValence = res;
   return res;
 }
@@ -394,6 +394,18 @@ std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   try {
     int implicitValence = at.getImplicitValence();
     target << implicitValence;
+  } catch (...){
+    target << "N/A";
+  }
+  target << " expH: ";
+  try {
+    target << at.getNumExplicitHs();
+  } catch (...){
+    target << "N/A";
+  }
+  target << " impH: ";
+  try {
+    target << at.getNumImplicitHs();
   } catch (...){
     target << "N/A";
   }
