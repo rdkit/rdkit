@@ -84,6 +84,31 @@ namespace RDKit{
      }
      \endverbatim     
 
+     NOTES:
+       - to allow more control over the reaction, it is possible to flag reactant
+         atoms as being protected by setting the "_protected" property on those
+         atoms. Here's an example:
+         \verbatim
+            std::string smi="[O:1]>>[N:1]";
+            ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+            rxn->initReactantMatchers();
+        
+            MOL_SPTR_VECT reacts;
+            reacts.clear();
+            smi = "OCO";
+            ROMol *mol = SmilesToMol(smi);
+            reacts.push_back(ROMOL_SPTR(mol));
+            std::vector<MOL_SPTR_VECT> prods;
+            prods = rxn->runReactants(reacts);
+            // here prods has two entries, because there are two Os in the
+            // reactant. 
+
+            reacts[0]->getAtomWithIdx(0)->setProp("_protected",1);
+            prods = rxn->runReactants(reacts);
+            // here prods only has one entry, the reaction at atom 0
+            // has been blocked by the _protected property
+         \endverbatim
+
   */
   class ChemicalReaction {
   public:
