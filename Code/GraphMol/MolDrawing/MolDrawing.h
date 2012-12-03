@@ -53,17 +53,13 @@ namespace RDKit {
 
   // **************************************************************************
   void DrawLine( std::vector<ElementType> &res ,
-                 int atnum1 , int atnum2 , int lineWidth , bool aromatic ,
+                 int atnum1 , int atnum2 , int lineWidth , int dashed ,
                  double x1 , double y1 ,
                  double x2 , double y2 ) {
 
     res.push_back( LINE );
     res.push_back( static_cast<ElementType>(lineWidth) );
-    if( aromatic ) {
-      res.push_back( 1 );
-    } else {
-      res.push_back( 0 );
-    }
+    res.push_back(dashed);
     res.push_back( static_cast<ElementType>(atnum1) );
     res.push_back( static_cast<ElementType>(atnum2) );
     res.push_back( static_cast<ElementType>(x1) );
@@ -150,19 +146,19 @@ namespace RDKit {
               } else {
                 perp *= 0.5 * dblBondOffset;
               }
-              DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+              DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
                         dotsPerAngstrom*(a1.x+perp.x) ,
                         dotsPerAngstrom*(a1.y+perp.y) ,
                         dotsPerAngstrom*(a2.x+perp.x) ,
                         dotsPerAngstrom*(a2.y+perp.y) );
               if(bond->getBondType() != Bond::AROMATIC){
-                DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+                DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
                           dotsPerAngstrom*(a1.x-perp.x) ,
                           dotsPerAngstrom*(a1.y-perp.y) ,
                           dotsPerAngstrom*(a2.x-perp.x) ,
                           dotsPerAngstrom*(a2.y-perp.y) );
               } else {
-                DrawLine( res , atnum1 , atnum2 , lineWidth , true ,
+                DrawLine( res , atnum1 , atnum2 , lineWidth , 1 ,
                           dotsPerAngstrom*(a1.x-perp.x) ,
                           dotsPerAngstrom*(a1.y-perp.y) ,
                           dotsPerAngstrom*(a2.x-perp.x) ,
@@ -171,7 +167,13 @@ namespace RDKit {
               }
             }
             if( bond->getBondType()==Bond::SINGLE || bond->getBondType()==Bond::TRIPLE ) {
-              DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+              DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
+                        dotsPerAngstrom*(a1.x) ,
+                        dotsPerAngstrom*(a1.y) ,
+                        dotsPerAngstrom*(a2.x) ,
+                        dotsPerAngstrom*(a2.y) );
+            } else {
+              DrawLine( res , atnum1 , atnum2 , lineWidth , 2 ,
                         dotsPerAngstrom*(a1.x) ,
                         dotsPerAngstrom*(a1.y) ,
                         dotsPerAngstrom*(a2.x) ,
@@ -179,7 +181,7 @@ namespace RDKit {
             }
           } else {
             // cyclic bonds
-            DrawLine( res , atnum1 , atnum2 , lineWidth , false ,
+            DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
                       dotsPerAngstrom*a1.x ,
                       dotsPerAngstrom*a1.y ,
                       dotsPerAngstrom*a2.x ,
@@ -315,6 +317,26 @@ namespace RDKit {
 
       return res;
     }
+
+    std::vector<int> MolToDrawing(const RDKit::ROMol &mol,const std::vector<int> *highlightAtoms=0,
+                                  bool kekulize=true){
+      RDKit::RWMol *cp = new RDKit::RWMol(mol);
+      if(kekulize){
+        try{
+          RDKit::MolOps::Kekulize(*cp);
+        } catch (...) {
+          delete cp;
+          cp = new RDKit::RWMol(mol);
+        }
+      }
+      if(!mol.getNumConformers()) {
+        RDDepict::compute2DCoords(*cp);
+      }
+      std::vector<int> drawing=DrawMol(*cp,-1,highlightAtoms);
+      delete cp;
+      return drawing;
+    }
+
   }   // end of namespace Drawing
 } // end of namespace RDKit
 
