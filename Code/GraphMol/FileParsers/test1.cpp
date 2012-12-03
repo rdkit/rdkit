@@ -2933,7 +2933,7 @@ void  testIssue269(){
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
   test2();
   test4();
