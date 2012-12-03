@@ -99,6 +99,8 @@ namespace RDKit{
       }
       return res;
     };
+    //! returns the length
+    unsigned int size() const { return getLength(); };
 
 
     //! returns our nonzero elements as a map(IndexType->int)
