@@ -1,7 +1,7 @@
 
 
 LDFLAGS = -L${RDBASE}/lib  -lSmilesParse_static  \
--lDepictor_static -lSubstructMatch_static -lSubgraphs_static -lGraphMol_static -lDataStructs_static -lRDGeometryLib_static -lRDGeneral_static
+-lDepictor_static -lSubstructMatch_static -lSubgraphs_static -lGraphMol_static -lDataStructs_static -lRDGeometryLib_static -lRDGeneral_static -lboost_system
 
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include

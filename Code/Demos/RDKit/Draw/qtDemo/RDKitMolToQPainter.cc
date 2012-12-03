@@ -1,3 +1,4 @@
+
 //
 // file RDKitMolToQPainter.cc
 //
@@ -19,7 +20,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <../MolDrawing.h> // this is what does the 2D drawing!
+#include <GraphMol/MolDrawing/MolDrawing.h> // this is what does the 2D drawing!
 
 #include <QFont>
 #include <QPainter>

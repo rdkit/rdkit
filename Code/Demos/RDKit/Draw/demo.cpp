@@ -10,7 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Depictor/RDDepictor.h>
-#include <Demos/RDKit/Draw/MolDrawing.h>
+#include <GraphMol/MolDrawing/MolDrawing.h>
 
 #include <RDGeneral/RDLog.h>
 #include <vector>
