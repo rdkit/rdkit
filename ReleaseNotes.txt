@@ -4,6 +4,7 @@
 !!!!!! IMPORTANT !!!!!!
 
 Acknowledgements:
+Andrew Dalke, James Davidson, Robert Feinstein, Roger Sayle
 
 Bug Fixes: 
 
@@ -16,8 +17,13 @@ New Java Wrapper Features:
 Deprecated modules (to be removed in next release):
 
 Removed modules:
+- The old SWIG wrapper code in $RDBASE/Code/Demos/SWIG has been
+  removed. The SWIG wrappers are now in $RDBASE/Code/JavaWrappers
 
 Other:
+- The C++ code for drawing molecules previously found in
+  $RDBASE/Code/Demos/RDKit/Draw has been moved to
+  $RDBASE/Code/GraphMol/MolDrawing
 
 
 ******  Release_2012.09.1 *******
