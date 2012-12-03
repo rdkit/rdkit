@@ -30,7 +30,7 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <Demos/RDKit/Draw/MolDrawing.h>
+#include <GraphMol/MolDrawing/MolDrawing.h>
 
 namespace {
   std::string getColor(int atNum){
