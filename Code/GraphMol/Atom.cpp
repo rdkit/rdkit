@@ -539,5 +539,8 @@ std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   if(at.getNumRadicalElectrons()){
     target << " rad: " << at.getNumRadicalElectrons();
   }
+  if(at.getIsotope()){
+    target << " iso: " << at.getIsotope();
+  }
   return target;
 };
