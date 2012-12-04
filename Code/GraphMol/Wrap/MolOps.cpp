@@ -303,7 +303,7 @@ namespace RDKit{
                                          python::object atomInvariants,
                                          python::object fromAtoms
                                          ){
-    std::vector<unsigned int> *lAtomInvariants=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
+    std::vector<unsigned int> *lAtomInvariants=pythonObjectToVect<unsigned int>(atomInvariants);
     std::vector<unsigned int> *lFromAtoms=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     ExplicitBitVect *res;
     res = RDKit::RDKFingerprintMol(mol,minPath,maxPath,fpSize,nBitsPerHash,

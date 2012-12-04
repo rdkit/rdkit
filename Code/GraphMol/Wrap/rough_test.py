@@ -774,7 +774,8 @@ class TestCase(unittest.TestCase):
     fp1 = Chem.RDKFingerprint(m1,1,4,nBitsPerHash=1,fromAtoms=[0,5])
     self.failUnlessEqual(fp1.GetNumOnBits(),8)    
 
-
+    # test sf.net issue 270:
+    fp1 = Chem.RDKFingerprint(m1,atomInvariants=[x.GetAtomicNum()+10 for x in m1.GetAtoms()])
 
 
   def test25SDMolSupplier(self) :
