@@ -141,28 +141,31 @@ namespace RDKit {
             perp.normalize();
 
             if( bond->getBondType()==Bond::DOUBLE || bond->getBondType()==Bond::TRIPLE)  {
+              RDGeom::Point2D startP=a1,endP=a2;              
               if( bond->getBondType()==Bond::TRIPLE){
                 perp *= dblBondOffset;
+                startP+=(obv*(1.-dblBondLengthFrac)/2);
+              endP-=(obv*(1.-dblBondLengthFrac)/2);
               } else {
                 perp *= 0.5 * dblBondOffset;
               }
               DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
-                        dotsPerAngstrom*(a1.x+perp.x) ,
-                        dotsPerAngstrom*(a1.y+perp.y) ,
-                        dotsPerAngstrom*(a2.x+perp.x) ,
-                        dotsPerAngstrom*(a2.y+perp.y) );
+                        dotsPerAngstrom*(startP.x+perp.x) ,
+                        dotsPerAngstrom*(startP.y+perp.y) ,
+                        dotsPerAngstrom*(endP.x+perp.x) ,
+                        dotsPerAngstrom*(endP.y+perp.y) );
               if(bond->getBondType() != Bond::AROMATIC){
                 DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
-                          dotsPerAngstrom*(a1.x-perp.x) ,
-                          dotsPerAngstrom*(a1.y-perp.y) ,
-                          dotsPerAngstrom*(a2.x-perp.x) ,
-                          dotsPerAngstrom*(a2.y-perp.y) );
+                          dotsPerAngstrom*(startP.x-perp.x) ,
+                          dotsPerAngstrom*(startP.y-perp.y) ,
+                          dotsPerAngstrom*(endP.x-perp.x) ,
+                          dotsPerAngstrom*(endP.y-perp.y) );
               } else {
                 DrawLine( res , atnum1 , atnum2 , lineWidth , 1 ,
-                          dotsPerAngstrom*(a1.x-perp.x) ,
-                          dotsPerAngstrom*(a1.y-perp.y) ,
-                          dotsPerAngstrom*(a2.x-perp.x) ,
-                          dotsPerAngstrom*(a2.y-perp.y) );
+                          dotsPerAngstrom*(startP.x-perp.x) ,
+                          dotsPerAngstrom*(startP.y-perp.y) ,
+                          dotsPerAngstrom*(endP.x-perp.x) ,
+                          dotsPerAngstrom*(endP.y-perp.y) );
 
               }
             }
@@ -172,7 +175,7 @@ namespace RDKit {
                         dotsPerAngstrom*(a1.y) ,
                         dotsPerAngstrom*(a2.x) ,
                         dotsPerAngstrom*(a2.y) );
-            } else {
+            } else if( bond->getBondType()!=Bond::DOUBLE ) {
               DrawLine( res , atnum1 , atnum2 , lineWidth , 2 ,
                         dotsPerAngstrom*(a1.x) ,
                         dotsPerAngstrom*(a1.y) ,
