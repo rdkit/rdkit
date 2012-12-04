@@ -1,3 +1,4 @@
+// $Id$
 /* 
 *
 *  Copyright (c) 2011, Novartis Institutes for BioMedical Research Inc.
@@ -29,6 +30,9 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+#ifndef _RD_DRAWING_TO_SVG_H_
+#define _RD_DRAWING_TO_SVG_H_
 
 #include <GraphMol/MolDrawing/MolDrawing.h>
 
@@ -163,3 +167,4 @@ namespace RDKit {
     }
   } // end of namespace Drawing
 } // end of namespace RDKit
+#endif
