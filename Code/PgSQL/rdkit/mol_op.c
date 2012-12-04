@@ -302,3 +302,20 @@ mol_inchikey(PG_FUNCTION_ARGS) {
   free((void *)str);
   PG_RETURN_CSTRING( res );
 }
+PG_FUNCTION_INFO_V1(mol_murckoscaffold);
+Datum           mol_murckoscaffold(PG_FUNCTION_ARGS);
+Datum
+mol_murckoscaffold(PG_FUNCTION_ARGS) {
+  CROMol        mol;
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &mol, NULL);
+  CROMol scaffold=MolMurckoScaffold(mol);
+  if(!scaffold) PG_RETURN_NULL();
+  Mol *res = deconstructROMol(scaffold);
+  freeCROMol(scaffold);
+
+  PG_RETURN_MOL_P(res);           
+}

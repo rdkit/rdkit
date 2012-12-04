@@ -8,7 +8,7 @@ ifeq ($(USE_INCHI),1)
   INCHIREGRESS=inchi
 endif
 
-RDKLIBS       = ${INCHILIBS} -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lSubstructMatch  -lDescriptors -lPartialCharges -lGraphMol -lDataStructs -lRDGeometryLib -lRDGeneral 
+RDKLIBS       = ${INCHILIBS} -lChemTransforms -lFileParsers -lSmilesParse -lFingerprints -lSubgraphs -lSubstructMatch  -lDescriptors -lPartialCharges -lGraphMol -lDataStructs -lRDGeometryLib -lRDGeneral 
 
 ifeq ($(STATIC_LINK),1)
   SHLIB_LINK += -L${RDKIT}/lib $(addsuffix _static,${RDKLIBS})
