@@ -19,3 +19,4 @@ SELECT mol_tpsa('CCO'::mol) val;
 SELECT mol_numrings('CCC'::mol) val;
 SELECT mol_numrings('C1CC1'::mol) val;
 SELECT mol_murckoscaffold('c1ccccc1CCC'::mol) val;
+SELECT mol_murckoscaffold('CSC(C)=O'::mol) is NULL;

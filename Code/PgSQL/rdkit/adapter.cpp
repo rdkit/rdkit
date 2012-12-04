@@ -495,6 +495,17 @@ extern "C" CROMol
 MolMurckoScaffold(CROMol i){
   const ROMol *im = (ROMol*)i;
   ROMol *mol=MurckoDecompose(*im);
+  if(mol && !mol->getNumAtoms()){
+    delete mol;
+    mol=0;
+  } else {
+    try{
+      MolOps::sanitizeMol(*(RWMol *)mol);
+    } catch(...) {
+      delete mol;
+      mol = 0;
+    }
+  }
   return (CROMol)mol;
 }
 
