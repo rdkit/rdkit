@@ -113,6 +113,7 @@ extern "C" {
   double MolTPSA(CROMol i);
   const char *MolInchi(CROMol i);
   const char *MolInchiKey(CROMol i);
+  CROMol MolMurckoScaffold(CROMol i);
 
 
   /* ExplicitBitVect */

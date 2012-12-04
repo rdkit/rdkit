@@ -262,7 +262,7 @@ int Atom::calcImplicitValence(bool strict) {
   if(d_explicitValence==-1) this->calcExplicitValence();
 
   int chg = getFormalCharge();
-  int explicitPlusRadV = d_explicitValence + getNumRadicalElectrons();
+  int explicitPlusRadV = d_explicitValence + getNumRadicalElectrons()-d_numExplicitHs;
   unsigned int mdlvalence = MDLValence(d_atomicNum,chg,explicitPlusRadV);
   d_implicitValence = mdlvalence - explicitPlusRadV;
   return d_implicitValence;
@@ -414,6 +414,9 @@ std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   target << " chi: " << at.getChiralTag();
   if(at.getNumRadicalElectrons()){
     target << " rad: " << at.getNumRadicalElectrons();
+  }
+  if(at.getIsotope()){
+    target << " iso: " << at.getIsotope();
   }
   return target;
 };

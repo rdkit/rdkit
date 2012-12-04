@@ -233,5 +233,20 @@ class TestCase(unittest.TestCase):
       self.failUnless(l1[i]==v)
     self.failUnlessRaises(IndexError,lambda :v1[40])
 
+  def test9ToNumpy(self):
+      import numpy
+      bv = ds.DiscreteValueVect(ds.DiscreteValueType.FOURBITVALUE,32)
+      bv[0]=1
+      bv[1]=4
+      bv[17]=1
+      bv[23]=8
+      bv[31]=12
+      arr = numpy.zeros((3,),'i')
+      ds.ConvertToNumpyArray(bv,arr)
+      for i in range(len(bv)):
+        self.failUnlessEqual(bv[i],arr[i])
+
+
+    
 if __name__ == '__main__':
     unittest.main()

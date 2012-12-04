@@ -174,5 +174,20 @@ class TestCase(unittest.TestCase):
       bv2 = DataStructs.CreateFromBinaryText("")
       self.failUnlessEqual(bv2.GetNumBits(),0)
 
+   def test9ToNumpy(self):
+      import numpy
+      bv = DataStructs.ExplicitBitVect(32)
+      bv.SetBit(0)
+      bv.SetBit(1)
+      bv.SetBit(17)
+      bv.SetBit(23)
+      bv.SetBit(31)
+      arr = numpy.zeros((3,),'i')
+      DataStructs.ConvertToNumpyArray(bv,arr)
+      for i in range(bv.GetNumBits()):
+        self.failUnlessEqual(bv[i],arr[i])
+
+
+      
 if __name__ == '__main__':
    unittest.main()

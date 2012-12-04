@@ -118,3 +118,15 @@ SELECT mol_numrings('C1CC1'::mol) val;
    1
 (1 row)
 
+SELECT mol_murckoscaffold('c1ccccc1CCC'::mol) val;
+   val    
+----------
+ c1ccccc1
+(1 row)
+
+SELECT mol_murckoscaffold('CSC(C)=O'::mol) is NULL;
+ ?column? 
+----------
+ t
+(1 row)
+

@@ -4152,10 +4152,87 @@ void testNewValences() {
 
   {
     std::string smi = "N1C=CC=C1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==5);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+    delete m;
+  }
+  {
+    std::string smi = "[nH]1cccc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+    delete m;
+  }
+  {
+    std::string smi = "n1(C)cccc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==6);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==0);
+    std::cerr<<"out: "<<MolToSmiles(*m,true);
+    delete m;
+  }
+  {
+    std::string smi = "o1cccc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==5);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    delete m;
+  }
+  {
+    std::string smi = "c1ccccc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==6);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    delete m;
+  }
+  {
+    std::string smi = "c1(C)ccccc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==7);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==4);
+    delete m;
+  }
+  {
+    std::string smi = "n1ccccc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==6);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    delete m;
+  }
+  {
+    std::string smi = "[nH+]1ccccc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==6);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==4);
+    delete m;
+  }
+  {
+    std::string smi = "c1(=O)occcc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==7);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==4);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

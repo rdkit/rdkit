@@ -56,7 +56,9 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
-#include "Depict.h"
+#include <GraphMol/MolDrawing/MolDrawing.h>
+#include <GraphMol/MolDrawing/DrawingToSVG.h>
+
 %}
 
 %template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
@@ -373,16 +375,16 @@
   std::string ToSVG(int lineWidthMult=2,int fontSize=50){
     if(lineWidthMult<0) lineWidthMult *=2;
     if(fontSize<0) fontSize*=2;
-    std::vector<int> drawing=MolToDrawing(*($self),0);
-    std::string svg=DrawingToSVG(drawing,lineWidthMult,fontSize);
+    std::vector<int> drawing=RDKit::Drawing::MolToDrawing(*($self),0);
+    std::string svg=RDKit::Drawing::DrawingToSVG(drawing,lineWidthMult,fontSize);
     return svg;
   }
   std::string ToSVG(const std::vector<int> &highlightAtoms,
                     int lineWidthMult=2,int fontSize=50){
     if(lineWidthMult<0) lineWidthMult *=2;
     if(fontSize<0) fontSize*=2;
-    std::vector<int> drawing=MolToDrawing(*($self),&highlightAtoms);
-    std::string svg=DrawingToSVG(drawing,lineWidthMult,fontSize);
+    std::vector<int> drawing=RDKit::Drawing::MolToDrawing(*($self),&highlightAtoms);
+    std::string svg=RDKit::Drawing::DrawingToSVG(drawing,lineWidthMult,fontSize);
     return svg;
   }
 }

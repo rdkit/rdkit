@@ -138,6 +138,17 @@ namespace RDKit{
       //
       for (ROMol::AtomIterator ai = mol.beginAtoms();
 	   ai != mol.endAtoms(); ++ai) {
+        if((*ai)->getIsAromatic() && (*ai)->getAtomicNum()!=6 
+           ){
+          if((*ai)->getNumImplicitHs())
+            (*ai)->setNumExplicitHs((*ai)->getNumImplicitHs());
+          if((*ai)->getNumExplicitHs()){
+            (*ai)->calcImplicitValence(false);
+            (*ai)->setNoImplicit(true);
+          }
+          (*ai)->calcExplicitValence(false);
+        }
+#if 0
         int origImplicitV = (*ai)->getImplicitValence();
         (*ai)->calcExplicitValence();
         int origExplicitV = (*ai)->getNumExplicitHs();
@@ -163,6 +174,7 @@ namespace RDKit{
           (*ai)->setNumExplicitHs(origExplicitV+(origImplicitV-newImplicitV));
           (*ai)->calcExplicitValence();
         }
+#endif
       }
     }
 
@@ -248,12 +260,8 @@ namespace RDKit{
 
       // update computed properties on atoms and bonds:
       mol.updatePropertyCache();
-      std::cerr<<" post update "<<std::endl;
-      mol.debugMol(std::cerr);
-      operationThatFailed = SANITIZE_PROPERTIES;
-      if(sanitizeOps & operationThatFailed){
-        checkAtomicProperties(mol);
-      }
+      //std::cerr<<" post update1 "<<std::endl;
+      //mol.debugMol(std::cerr);
                
       operationThatFailed = SANITIZE_SYMMRINGS;
       if(sanitizeOps & operationThatFailed){
@@ -266,8 +274,19 @@ namespace RDKit{
       if(sanitizeOps & operationThatFailed){
         Kekulize(mol);
       }
-      std::cerr<<" post kekulize "<<std::endl;
-      mol.debugMol(std::cerr);
+      //std::cerr<<" post kekulize "<<std::endl;
+      //mol.debugMol(std::cerr);
+
+
+      // update computed properties on atoms and bonds:
+      mol.updatePropertyCache();
+      //std::cerr<<" post update "<<std::endl;
+      //mol.debugMol(std::cerr);
+      operationThatFailed = SANITIZE_PROPERTIES;
+      if(sanitizeOps & operationThatFailed){
+        checkAtomicProperties(mol);
+      }
+
 
       // look for radicals:
       // We do this now because we need to know
@@ -287,8 +306,8 @@ namespace RDKit{
       if(sanitizeOps & operationThatFailed){
         setAromaticity(mol);
       }
-      std::cerr<<" post aromaticity "<<std::endl;
-      mol.debugMol(std::cerr);
+      //std::cerr<<" post aromaticity "<<std::endl;
+      //mol.debugMol(std::cerr);
     
       // set conjugation
       operationThatFailed = SANITIZE_SETCONJUGATION;
@@ -313,7 +332,7 @@ namespace RDKit{
       if(sanitizeOps & operationThatFailed){
         adjustHs(mol);
       }
-      std::cerr<<" post adjust "<<std::endl;
+      std::cerr<<" finished "<<std::endl;
       mol.debugMol(std::cerr);
 
       operationThatFailed = 0;

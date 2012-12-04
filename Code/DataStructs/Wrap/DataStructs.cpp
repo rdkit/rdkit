@@ -8,10 +8,17 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#define PY_ARRAY_UNIQUE_SYMBOL rddatastructs_array_API
 
 #include <boost/python.hpp>
 #include <RDBoost/Wrap.h>
+#include <DataStructs/BitVects.h>
+#include <DataStructs/DiscreteValueVect.h>
 #include "DataStructs.h"
+#include <boost/python/numeric.hpp>
+#include <numpy/npy_common.h>
+#include <numpy/arrayobject.h>
+
 
 namespace python = boost::python;
 
@@ -22,9 +29,29 @@ void wrap_Utils();
 void wrap_discreteValVect();
 void wrap_sparseIntVect();
 
+template <typename T>
+void convertToNumpyArray(const T &v,python::object destArray){
+  if (!PyArray_Check(destArray.ptr())) {
+    throw_value_error("Expecting a Numeric array object");
+  }
+  PyArrayObject *destP=(PyArrayObject *)destArray.ptr();
+  npy_intp ndims[1];
+  ndims[0]=v.size();
+  PyArray_Dims dims;
+  dims.ptr=ndims;
+  dims.len=1;
+  PyArray_Resize(destP,&dims,0,NPY_ANYORDER);
+  for(unsigned int i=0;i<v.size();++i){
+    PyObject *iItem = PyInt_FromLong(v[i]);
+    PyArray_SETITEM(destP,PyArray_GETPTR1(destP,i),iItem);
+  }
+}
+
+
 
 BOOST_PYTHON_MODULE(cDataStructs)
 {
+  import_array();
   python::scope().attr("__doc__") =
     "Module containing an assortment of functionality for basic data structures.\n"
     "\n"
@@ -39,10 +66,17 @@ BOOST_PYTHON_MODULE(cDataStructs)
   
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
+
   wrap_Utils();
   wrap_SBV();
   wrap_EBV();
   wrap_BitOps();
   wrap_discreteValVect();
   wrap_sparseIntVect();
+
+  python::def("ConvertToNumpyArray", (void (*)(const ExplicitBitVect &,python::object))convertToNumpyArray,
+              (python::arg("bv"),python::arg("destArray")));
+  python::def("ConvertToNumpyArray", (void (*)(const RDKit::DiscreteValueVect &,python::object))convertToNumpyArray,
+              (python::arg("bv"),python::arg("destArray")));
+
 }

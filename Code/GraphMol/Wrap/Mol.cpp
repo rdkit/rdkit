@@ -133,6 +133,9 @@ namespace RDKit {
   }
 
   void MolClearProp(const ROMol &mol,const char *key) {
+    if(!mol.hasProp(key)){
+      return;
+    }
     mol.clearProp(key);
   }
 
@@ -351,9 +354,7 @@ struct mol_wrapper {
       .def("ClearProp", MolClearProp,
 	   "Removes a property from the molecule.\n\n"
 	   "  ARGUMENTS:\n"
-	   "    - key: the name of the property to clear (a string).\n\n"
-	   "  NOTE:\n"
-	   "    - If the property has not been set, a KeyError exception will be raised.\n")
+	   "    - key: the name of the property to clear (a string).\n")
 
       .def("ClearComputedProps", MolClearComputedProps,
 	   "Removes all computed properties from the molecule.\n\n")

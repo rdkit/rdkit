@@ -150,6 +150,7 @@ namespace RDKit {
           // for non dummies, it's a bit more work to figure out if they
           // can take a double bond:
 
+#if 0          
           sbo +=  at->getTotalNumHs();
           int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
           int chrg = at->getFormalCharge();
@@ -184,6 +185,36 @@ namespace RDKit {
             // if we allow one then this is a candidate:
             dBndCands[*adx]=1;
           }
+#endif
+          int nRadicals=at->getNumRadicalElectrons();
+          int nConnections = sbo+at->getNumExplicitHs()+nRadicals;
+          int chrg = at->getFormalCharge();
+          const INT_VECT &valList =
+            PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
+          unsigned int vi = 0;
+          int dv = valList[0]+chrg;
+          while (nConnections >(valList[vi]+chrg) && vi<valList.size() && valList[vi]>0 ) {
+            dv = valList[vi] + chrg;
+            ++vi;
+          }
+          std::cerr<<"  kek: "<<at->getIdx()<<" sbo:"<<sbo<<" dv:"<<dv<<" nConn:"<<nConnections<<" nRadicals:"<<nRadicals<<std::endl;
+          if(nConnections>=dv){
+            // if our degree + nRadicals exceeds the default valence, 
+            // there's no way we can take a double bond, just continue.
+            continue;
+          }
+
+          // we're a candidate if our total current bond order + nRadicals + 1
+          // matches the valence state
+          // (including nRadicals here was SF.net issue 3349243)
+          if( dv>=(sbo+1+nRadicals) ){
+            dBndCands[*adx]=1;
+          } else if( !nRadicals && at->getNoImplicit() && dv==(sbo+2) ){
+            // special case: there is currently no radical on the atom, but if
+            // if we allow one then this is a candidate:
+            dBndCands[*adx]=1;
+          }
+          
         }
       }// loop over all atoms in the fused system
 
