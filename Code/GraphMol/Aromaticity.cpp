@@ -560,7 +560,7 @@ namespace RDKit {
       }
 
       // total atom degree:
-      int degree=at->getDegree() + at->getTotalNumHs(); 
+      int degree=at->getDegree() + at->getNumImplicitHs(); 
       // if we are more than 3 coordinated we should not be aromatic
       if (degree > 3) {
         return -1;

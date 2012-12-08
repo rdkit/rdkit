@@ -34,9 +34,9 @@ namespace RDKit{
           if(n<=1){
             deltas[at->getIdx()]=0;
           } else if(n<=10){
-            deltas[at->getIdx()]=tbl->getNouterElecs(n)-at->getTotalNumHs();
+            deltas[at->getIdx()]=tbl->getNouterElecs(n)-at->getNumImplicitHs();
           } else {
-            deltas[at->getIdx()]=double(tbl->getNouterElecs(n)-at->getTotalNumHs())/(n-tbl->getNouterElecs(n)-1);            
+            deltas[at->getIdx()]=double(tbl->getNouterElecs(n)-at->getNumImplicitHs())/(n-tbl->getNouterElecs(n)-1);            
           }
           if(deltas[at->getIdx()]!=0.0) deltas[at->getIdx()]=1./sqrt(deltas[at->getIdx()]);
           ++atBegin;
@@ -56,7 +56,7 @@ namespace RDKit{
         boost::tie(atBegin,atEnd) = mol.getVertices();  
         while(atBegin!=atEnd){
           ATOM_SPTR at=mol[*atBegin];
-          double v=tbl->getNouterElecs(at->getAtomicNum())-at->getTotalNumHs();
+          double v=tbl->getNouterElecs(at->getAtomicNum())-at->getNumImplicitHs();
           if(v!=0.0){
             v = 1./sqrt(v);
           }

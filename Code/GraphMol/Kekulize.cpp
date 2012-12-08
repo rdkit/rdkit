@@ -151,7 +151,7 @@ namespace RDKit {
           // can take a double bond:
 
 #if 0          
-          sbo +=  at->getTotalNumHs();
+          sbo +=  at->getNumImplicitHs();
           int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
           int chrg = at->getFormalCharge();
           dv += chrg;
@@ -187,7 +187,7 @@ namespace RDKit {
           }
 #endif
           int nRadicals=at->getNumRadicalElectrons();
-          int nConnections = sbo+at->getNumExplicitHs()+nRadicals;
+          int nConnections = sbo+at->getNumImplicitHs()+nRadicals;
           int chrg = at->getFormalCharge();
           const INT_VECT &valList =
             PeriodicTable::getTable()->getValenceList(at->getAtomicNum());

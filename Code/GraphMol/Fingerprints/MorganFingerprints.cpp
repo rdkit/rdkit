@@ -141,7 +141,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Basic
         std::vector<uint32_t> components;
         components.push_back(atom->getAtomicNum());
         components.push_back(atom->getTotalDegree());
-        components.push_back(atom->getTotalNumHs());
+        components.push_back(atom->getNumImplicitHs());
         components.push_back(atom->getFormalCharge());
         int deltaMass = static_cast<int>(atom->getMass() -
                                          PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));

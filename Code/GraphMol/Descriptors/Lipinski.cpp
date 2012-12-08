@@ -82,7 +82,7 @@ namespace RDKit{
       for(ROMol::ConstAtomIterator iter=mol.beginAtoms();
           iter!=mol.endAtoms();++iter){
         if( ((*iter)->getAtomicNum()==7 || (*iter)->getAtomicNum()==8) ) {
-          res += (*iter)->getTotalNumHs(true);
+          res += (*iter)->getTotalNumHs();
         }
       }
       return res;

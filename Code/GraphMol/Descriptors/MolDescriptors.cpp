@@ -33,7 +33,7 @@ namespace RDKit{
 	// add our implicit Hs if we need to:
 	if(!onlyHeavy){
           const PeriodicTable *table=PeriodicTable::getTable();
-	  res += (*atomIt)->getTotalNumHs()*table->getAtomicWeight(1);
+	  res += (*atomIt)->getNumImplicitHs()*table->getAtomicWeight(1);
 	}
       }
       return res;
@@ -58,7 +58,7 @@ namespace RDKit{
 
 	// add our implicit Hs if we need to:
 	if(!onlyHeavy){
-          nHsToCount += (*atomIt)->getTotalNumHs(true);
+          nHsToCount += (*atomIt)->getTotalNumHs();
 	}
 
       }
@@ -123,7 +123,7 @@ namespace RDKit{
         } else {
           counts[key]=1;
         }
-        nHs += (*atomIt)->getTotalNumHs();
+        nHs += (*atomIt)->getNumImplicitHs();
         charge += (*atomIt)->getFormalCharge();
       }
 

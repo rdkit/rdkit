@@ -154,7 +154,7 @@ namespace RDKit{
       }
 
       if(needsBracket){
-        unsigned int totNumHs=atom->getTotalNumHs();
+        unsigned int totNumHs=atom->getNumImplicitHs();
         if(totNumHs > 0){
           res << "H";
           if(totNumHs > 1) res << totNumHs;

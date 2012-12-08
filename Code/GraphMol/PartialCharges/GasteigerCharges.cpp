@@ -213,7 +213,7 @@ namespace RDKit {
         }
         // now loop over the implicit hydrogens and get their contributions
         // since hydrogens don't connect to anything else, update their charges at the same time
-        niHs = mol.getAtomWithIdx(aix)->getTotalNumHs();
+        niHs = mol.getAtomWithIdx(aix)->getNumImplicitHs();
         if (niHs > 0) {
           qHs = hChrg[aix]/niHs;
           enr = hParams[0] + qHs*(hParams[1] + hParams[2]*qHs);

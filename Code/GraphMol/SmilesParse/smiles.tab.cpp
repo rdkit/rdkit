@@ -77,7 +77,7 @@
 #line 3 "smiles.yy"
 
 
-  // $Id: smiles.yy 2159 2012-08-28 04:01:49Z glandrum $
+  // $Id: smiles.yy 2312 2012-12-08 06:06:53Z glandrum $
   //
   //  Copyright (C) 2001-2010 Randal Henne, Greg Landrum and Rational Discovery LLC
   //

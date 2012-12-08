@@ -339,7 +339,7 @@ namespace RankAtoms{
     std::vector<boost::uint64_t> tres(mol.getNumAtoms());
     for(ROMol::ConstAtomIterator atIt=mol.beginAtoms();atIt!=mol.endAtoms();atIt++){
       Atom const *atom = *atIt;
-      int nHs = atom->getTotalNumHs() % 8;
+      int nHs = atom->getNumImplicitHs() % 8;
       int chg = abs(atom->getFormalCharge()) % 8;
       int chgSign = atom->getFormalCharge() > 0;
       int num =    atom->getAtomicNum() % 128;

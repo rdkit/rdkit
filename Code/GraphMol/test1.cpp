@@ -412,7 +412,7 @@ void testMisc()
   CHECK_INVARIANT(!cbnd,"");
 
 
-  CHECK_INVARIANT(m2.getAtomWithIdx(0)->getTotalNumHs()==2,"");
+  CHECK_INVARIANT(m2.getAtomWithIdx(0)->getNumImplicitHs()==2,"");
 
   // we'll check atom deletion and handling of bookmarks on deletion
   // simultaneously:
@@ -425,16 +425,16 @@ void testMisc()
   CHECK_INVARIANT(m2.getNumAtoms()==3,"");
   CHECK_INVARIANT(m2.getNumBonds()==2,"");
   MolOps::sanitizeMol(m2);
-  CHECK_INVARIANT(m2.getAtomWithIdx(0)->getTotalNumHs()==3,"");
+  CHECK_INVARIANT(m2.getAtomWithIdx(0)->getNumImplicitHs()==3,"");
 
   m2.addAtom(new Atom(1));
   m2.addBond(2,3,Bond::SINGLE);
   MolOps::sanitizeMol(m2);
 
+  CHECK_INVARIANT(m2.getAtomWithIdx(0)->getNumImplicitHs()==3,"");
   CHECK_INVARIANT(m2.getAtomWithIdx(0)->getTotalNumHs()==3,"");
-  CHECK_INVARIANT(m2.getAtomWithIdx(0)->getTotalNumHs(true)==3,"");
-  CHECK_INVARIANT(m2.getAtomWithIdx(2)->getTotalNumHs()==2,"");
-  CHECK_INVARIANT(m2.getAtomWithIdx(2)->getTotalNumHs(true)==3,"");
+  CHECK_INVARIANT(m2.getAtomWithIdx(2)->getNumImplicitHs()==2,"");
+  CHECK_INVARIANT(m2.getAtomWithIdx(2)->getTotalNumHs()==3,"");
 
   Atom *other=m2.getBondWithIdx(1)->getOtherAtom(m2.getAtomWithIdx(1));
   CHECK_INVARIANT(other,"");
@@ -478,10 +478,10 @@ void testDegree()
 
   MolOps::sanitizeMol(*m);
   TEST_ASSERT(m->getAtomWithIdx(0)->getDegree()==2);
-  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==2);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==2);
   TEST_ASSERT(m->getAtomWithIdx(0)->getTotalDegree()==4);
   TEST_ASSERT(m->getAtomWithIdx(2)->getDegree()==3);
-  TEST_ASSERT(m->getAtomWithIdx(2)->getTotalNumHs()==1);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getNumImplicitHs()==1);
   TEST_ASSERT(m->getAtomWithIdx(2)->getTotalDegree()==4);
 
   delete m;
@@ -499,11 +499,11 @@ void testDegree()
 
   MolOps::sanitizeMol(*m);
   TEST_ASSERT(m->getAtomWithIdx(0)->getDegree()==3);
-  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
-  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs(true)==2);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1);
+  TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==2);
   TEST_ASSERT(m->getAtomWithIdx(0)->getTotalDegree()==4);
   TEST_ASSERT(m->getAtomWithIdx(2)->getDegree()==3);
-  TEST_ASSERT(m->getAtomWithIdx(2)->getTotalNumHs()==1);
+  TEST_ASSERT(m->getAtomWithIdx(2)->getNumImplicitHs()==1);
   TEST_ASSERT(m->getAtomWithIdx(2)->getTotalDegree()==4);
   
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;

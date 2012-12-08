@@ -50,7 +50,6 @@ Atom::Atom( const Atom & other){
   df_noImplicit = other.df_noImplicit;
   df_isAromatic = other.df_isAromatic;
   d_dativeFlag = other.d_dativeFlag;
-  d_numExplicitHs = other.d_numExplicitHs;
   d_numRadicalElectrons = other.d_numRadicalElectrons;
   d_mass = other.d_mass;
   d_isotope = other.d_isotope;
@@ -71,7 +70,6 @@ void Atom::initAtom(){
   df_isAromatic = false;
   df_noImplicit = false;
   d_dativeFlag=0;
-  d_numExplicitHs = 0;
   d_numRadicalElectrons=0;
   d_formalCharge = 0;
   d_index = 0;
@@ -139,7 +137,7 @@ unsigned int Atom::getDegree() const {
 
 unsigned int Atom::getTotalDegree() const {
   PRECONDITION(dp_mol,"degree not defined for atoms not associated with molecules");
-  unsigned int res=this->getTotalNumHs(false)+this->getDegree();
+  unsigned int res=this->getNumImplicitHs()+this->getDegree();
   return res;
 }
 
@@ -147,18 +145,16 @@ unsigned int Atom::getTotalDegree() const {
 //  If includeNeighbors is set, we'll loop over our neighbors
 //   and include any of them that are Hs in the count here
 //
-unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
+unsigned int Atom::getTotalNumHs() const {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules")
   int res = getNumImplicitHs();
-  if(includeNeighbors){
-    ROMol::ADJ_ITER begin,end;
-    const ROMol *parent = &getOwningMol();
-    boost::tie(begin,end) = parent->getAtomNeighbors(this);
-    while(begin!=end){
-      const Atom *at = parent->getAtomWithIdx(*begin);
-      if(at->getAtomicNum()==1) res++;
-      ++begin;
-    }
+  ROMol::ADJ_ITER begin,end;
+  const ROMol *parent = &getOwningMol();
+  boost::tie(begin,end) = parent->getAtomNeighbors(this);
+  while(begin!=end){
+    const Atom *at = parent->getAtomWithIdx(*begin);
+    if(at->getAtomicNum()==1) res++;
+    ++begin;
   }
   return res;
 }
@@ -178,7 +174,7 @@ int Atom::getExplicitValence() const {
 
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
-  unsigned int res=0;//getNumExplicitHs();
+  unsigned int res=0;
   unsigned int arom=0;
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = getOwningMol().getAtomBonds(this);
@@ -247,7 +243,7 @@ int Atom::calcImplicitValence(bool strict) {
     if(d_explicitValence==-1) this->calcExplicitValence();
 
     int chg = getFormalCharge();
-    int explicitPlusRadV = d_explicitValence + getNumRadicalElectrons()-d_numExplicitHs;
+    int explicitPlusRadV = d_explicitValence + getNumRadicalElectrons();
     unsigned int mdlvalence = MDLValence(d_atomicNum,chg,explicitPlusRadV);
     d_implicitValence = mdlvalence - explicitPlusRadV;
   }
@@ -296,7 +292,7 @@ bool Atom::Match(Atom const *what) const {
 
       // start by checking charge:
       if( (this->getFormalCharge() && this->getFormalCharge()!=what->getFormalCharge()) ||
-          (this->getNumExplicitHs() && this->getNumExplicitHs()>what->getTotalNumHs())  // <- potential problem here with sanitization
+          (this->getNumImplicitHs() && this->getNumImplicitHs()>what->getNumImplicitHs())  // <- potential problem here with sanitization
           ){  
         res=false;
       } else {
@@ -380,12 +376,6 @@ std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   try {
     int implicitValence = at.getImplicitValence();
     target << implicitValence;
-  } catch (...){
-    target << "N/A";
-  }
-  target << " impH: ";
-  try {
-    target << at.getNumImplicitHs();
   } catch (...){
     target << "N/A";
   }

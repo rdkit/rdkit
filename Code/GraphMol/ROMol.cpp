@@ -132,7 +132,7 @@ namespace RDKit{
       // each 
       for (ConstAtomIterator ai = beginAtoms();
 	   ai != endAtoms(); ++ai) {
-        res += (*ai)->getTotalNumHs();
+        res += (*ai)->getNumImplicitHs();
       }
     }
     return res;
@@ -248,7 +248,7 @@ namespace RDKit{
       // If we need hydrogen connecting bonds add them up
       for (ConstAtomIterator ai = beginAtoms();
 	   ai != endAtoms(); ++ai) {
-        res += (*ai)->getTotalNumHs();
+        res += (*ai)->getNumImplicitHs();
       }
     }
     return res;

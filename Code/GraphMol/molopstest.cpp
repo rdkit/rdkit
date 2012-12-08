@@ -4137,11 +4137,11 @@ void testNewValences() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1);
 
     m->updatePropertyCache();
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1);
 
     delete m;
   }
@@ -4152,11 +4152,11 @@ void testNewValences() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1);
 
     m->updatePropertyCache();
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1);
 
     delete m;
   }
@@ -4167,7 +4167,7 @@ void testNewValences() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==6);
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==0);
     std::cerr<<"out: "<<MolToSmiles(*m,true);
     delete m;
   }

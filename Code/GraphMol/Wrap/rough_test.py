@@ -149,13 +149,11 @@ class TestCase(unittest.TestCase):
     self.failUnless(a7.GetDegree()==1)
     self.failUnless([x.GetDegree() for x in aList]==[2,2,2,1])
 
-    self.failUnless([x.GetTotalNumHs() for x in aList]==[0,1,2,2])
-    self.failUnless([x.GetNumImplicitHs() for x in aList]==[0,1,2,0])
+    self.failUnless([x.GetNumImplicitHs() for x in aList]==[0,1,2,2])
     self.failUnless([x.GetExplicitValence() for x in aList]==[3,3,2,3])
     self.failUnless([x.GetImplicitValence() for x in aList]==[0,1,2,0])
     self.failUnless([x.GetFormalCharge() for x in aList]==[0,0,0,-1])
     self.failUnless([x.GetNoImplicit() for x in aList]==[0,0,0,1])
-    self.failUnless([x.GetNumExplicitHs() for x in aList]==[0,0,0,2])
     self.failUnless([x.GetIsAromatic() for x in aList]==[1,1,0,0])
     self.failUnless([x.GetHybridization() for x in aList]==[Chem.HybridizationType.SP2,Chem.HybridizationType.SP2,
                                                    Chem.HybridizationType.SP3,Chem.HybridizationType.SP3],\
@@ -1066,10 +1064,10 @@ mol-4,CCOC
 
     m1 = Chem.MolFromSmiles('[H]CCl')
     self.failUnless(m1.GetNumAtoms()==2)
-    self.failUnless(m1.GetAtomWithIdx(0).GetNumExplicitHs()==0)
+    self.failUnless(m1.GetAtomWithIdx(0).GetNumImplicitHs()==3)
     m1 = Chem.MolFromSmiles('[H][CH2]Cl')
     self.failUnless(m1.GetNumAtoms()==2)
-    self.failUnless(m1.GetAtomWithIdx(0).GetNumExplicitHs()==3)
+    self.failUnless(m1.GetAtomWithIdx(0).GetNumImplicitHs()==3)
     m2 = Chem.AddHs(m1)
     self.failUnless(m2.GetNumAtoms()==5)
     m2 = Chem.RemoveHs(m2)

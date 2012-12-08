@@ -63,10 +63,10 @@ namespace RDKit{
   static int queryAtomAliphatic(Atom const * at) { return !(at->getIsAromatic()); };
   static int queryAtomExplicitDegree(Atom const * at) { return at->getDegree(); };
   static int queryAtomTotalDegree(Atom const * at) { return at->getTotalDegree(); };
-  static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getTotalDegree()-at->getTotalNumHs(true); };
-  static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
+  static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getTotalDegree()-at->getTotalNumHs(); };
+  static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(); };
   static int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
-  static int queryAtomExplicitValence(Atom const * at) { return at->getExplicitValence() - at->getNumExplicitHs(); };
+  static int queryAtomExplicitValence(Atom const * at) { return at->getExplicitValence();} ;
   static int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
   static int queryAtomUnsaturated(Atom const * at) { return static_cast<int>(at->getDegree())<at->getExplicitValence(); };
   static int queryAtomNum(Atom const * at) { return at->getAtomicNum(); };

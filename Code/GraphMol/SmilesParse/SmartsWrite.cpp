@@ -551,7 +551,7 @@ namespace RDKit {
       } else {
         res<<qatom->getSymbol();
       }
-      int hs=qatom->getNumExplicitHs();
+      int hs=qatom->getNumImplicitHs();
       // FIX: probably should be smarter about Hs:
       if(hs){
         res<<"H";

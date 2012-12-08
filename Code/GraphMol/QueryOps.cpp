@@ -162,7 +162,7 @@ unsigned int queryAtomAllBondProduct(Atom const * at) {
     prod *= static_cast<unsigned int>(firstThousandPrimes[at->getOwningMol()[*beg]->getBondType()]);
     ++beg;
   }
-  for(unsigned int i=0;i<at->getTotalNumHs();i++){
+  for(unsigned int i=0;i<at->getNumImplicitHs();i++){
     prod *= static_cast<unsigned int>(firstThousandPrimes[Bond::SINGLE]);
   }
   return prod;

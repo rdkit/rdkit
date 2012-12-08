@@ -852,7 +852,7 @@ void testIssue3537675()
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     ROMol *nMol=MurckoDecompose(*mol);
-    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumExplicitHs());
+    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumImplicitHs());
     delete mol;
     delete nMol;
   }
@@ -861,7 +861,7 @@ void testIssue3537675()
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     ROMol *nMol=MurckoDecompose(*mol);
-    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumExplicitHs());
+    TEST_ASSERT(nMol->getAtomWithIdx(4)->getNumImplicitHs());
     delete mol;
     delete nMol;
   }

@@ -602,9 +602,9 @@ namespace RDKit {
           atom->setChiralTag(code);
           // within the RD representation, if a three-coordinate atom
           // is chiral and has an implicit H, that H needs to be made explicit:
-          if(atom->getDegree()==3 && !atom->getNumExplicitHs() &&
+          if(atom->getDegree()==3 && !atom->getNumImplicitHs() &&
              atom->getNumImplicitHs()==1){
-            atom->setNumExplicitHs(1);
+            atom->setNumImplicitHs(1);
             // recalculated number of implicit Hs:
             atom->updatePropertyCache();
           }

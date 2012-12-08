@@ -315,7 +315,7 @@ namespace RDKit{
         Atom *newAt=res->getAtomWithIdx((*at)->getIdx());
         newAt->clearComputedProps();
         // always convert explicit Hs
-        for(unsigned int i=0;i<(*at)->getNumExplicitHs();i++){
+        for(unsigned int i=0;i<(*at)->getNumImplicitHs();i++){
           newIdx=res->addAtom(new Atom(1),false,true);
           res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
           res->getAtomWithIdx(newIdx)->updatePropertyCache();
@@ -375,13 +375,13 @@ namespace RDKit{
             const BOND_SPTR bond = (*res)[*beg];
             Atom *heavyAtom =bond->getOtherAtom(atom);
 
-            // we'll update the atom's explicit H count if we were told to
+            // we'll update the atom's implicit H count if we were told to
             // *or* if the atom is chiral, in which case the H is needed
             // in order to complete the coordination
             // *or* if the atom has the noImplicit flag set:
             if( updateExplicitCount || heavyAtom->getNoImplicit() || 
                 heavyAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED ){
-              heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs()+1);
+              heavyAtom->setNumImplicitHs(heavyAtom->getNumImplicitHs()+1);
             } else {
               // this is a special case related to Issue 228 and the
               // "disappearing Hydrogen" problem discussed in MolOps::adjustHs

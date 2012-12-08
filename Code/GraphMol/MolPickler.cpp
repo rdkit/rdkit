@@ -769,7 +769,7 @@ namespace RDKit{
         streamWrite(tss,tmpChar);
       }
 
-      tmpChar = static_cast<char>(atom->getNumExplicitHs());
+      tmpChar = static_cast<char>(atom->getNumImplicitHs());
       if(tmpChar!=0){
         propFlags |= 1<<4;
         streamWrite(tss,tmpChar);
@@ -933,7 +933,7 @@ namespace RDKit{
         streamRead(ss,tmpChar,version);
         atom->setHybridization(static_cast<Atom::HybridizationType>(tmpChar));
         streamRead(ss,tmpChar,version);
-        atom->setNumExplicitHs(static_cast<int>(tmpChar));
+        atom->setNumImplicitHs(static_cast<int>(tmpChar));
         streamRead(ss,tmpChar,version);
         atom->d_explicitValence = tmpChar;
         streamRead(ss,tmpChar,version);
@@ -979,7 +979,7 @@ namespace RDKit{
         } else {
           tmpChar=0;
         }
-        atom->setNumExplicitHs(tmpChar);
+        atom->setNumImplicitHs(tmpChar);
 
         if(propFlags&(1<<5)){
           streamRead(ss,tmpChar,version);
@@ -1022,7 +1022,7 @@ namespace RDKit{
       }
     
       atom->setMass(PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
-      atom->setNumExplicitHs(0);
+      atom->setNumImplicitHs(0);
 
     }
 
@@ -1329,8 +1329,8 @@ namespace RDKit{
       if(atom->getFormalCharge() != 0){
 	streamWrite(ss,ATOM_CHARGE,atom->getFormalCharge());
       }
-      if(atom->getNumExplicitHs() != 0){
-	streamWrite(ss,ATOM_NEXPLICIT,atom->getNumExplicitHs());
+      if(atom->getNumImplicitHs() != 0){
+	streamWrite(ss,ATOM_NEXPLICIT,atom->getNumImplicitHs());
       }
       if(atom->getChiralTag() != 0){
 	streamWrite(ss,ATOM_CHIRALTAG,atom->getChiralTag());
@@ -1416,7 +1416,7 @@ namespace RDKit{
 	break;
       case ATOM_NEXPLICIT:
 	streamRead(ss,intVar,version);
-	atom->setNumExplicitHs(intVar);
+	atom->setNumImplicitHs(intVar);
 	break;
       case ATOM_CHIRALTAG:
 	streamRead(ss,intVar,version);

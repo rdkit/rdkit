@@ -44,7 +44,7 @@ namespace RDKit {
 
       int atx = at->getIdx();
       // make sure that have either 2 or 3 subtitutions on this atom
-      int sbo = at->getDegree() + at->getTotalNumHs();
+      int sbo = at->getDegree() + at->getNumImplicitHs();
       if ( (sbo < 2) || (sbo > 3) ) {
 	return;
       }
@@ -63,7 +63,7 @@ namespace RDKit {
 	    continue;
 	  }
 	  at2 = mol.getAtomWithIdx(mol[*bnd2]->getOtherAtomIdx(atx));
-	  sbo = at2->getDegree() + at2->getTotalNumHs();
+	  sbo = at2->getDegree() + at2->getNumImplicitHs();
 	  if (sbo > 3) {
 	    bnd2++;
 	    continue;

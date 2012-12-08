@@ -301,8 +301,7 @@ void test3(){
   mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms()==1);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs()==3);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==3);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
 
@@ -336,8 +335,7 @@ void test4(){
   mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms()==1);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs()==4);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==4);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
 
   delete mol;
@@ -345,8 +343,7 @@ void test4(){
   mol=RDKit::SLNToMol(sln);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms()==1);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumExplicitHs()==3);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==3);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
   
   delete mol;
@@ -367,9 +364,8 @@ void test5(){
   patt=RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
   TEST_ASSERT(patt->getNumAtoms()==1);
-  TEST_ASSERT(patt->getAtomWithIdx(0)->getNumExplicitHs()==0);
-  TEST_ASSERT(patt->getAtomWithIdx(0)->getNoImplicit());
   TEST_ASSERT(patt->getAtomWithIdx(0)->getNumImplicitHs()==0);
+  TEST_ASSERT(patt->getAtomWithIdx(0)->getNoImplicit());
 
   smi = "C[CH2+](C)C";
   mol=RDKit::SmilesToMol(smi);

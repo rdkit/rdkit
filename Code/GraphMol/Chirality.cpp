@@ -217,7 +217,7 @@ namespace RDKit{
           // (as long as we're not a query atom)
           if(!mol.getAtomWithIdx(*it)->hasQuery()){
             localEntry.insert(localEntry.begin(),
-                              mol.getAtomWithIdx(*it)->getTotalNumHs(),
+                              mol.getAtomWithIdx(*it)->getNumImplicitHs(),
                               0);
           }
 
@@ -519,7 +519,7 @@ namespace RDKit{
             legalCenter=false;
           } else if(nbrs.size()==3){
             // three-coordinate with a single H we'll accept automatically:
-            if(atom->getTotalNumHs()!=1){
+            if(atom->getNumImplicitHs()!=1){
               // otherwise we default to not being a legal center
               legalCenter=false;
               // but there are a few special cases we'll accept
@@ -597,7 +597,7 @@ namespace RDKit{
             int nSwaps = atom->getPerturbationOrder(nbrIndices);
 
             // if the atom has 3 neighbors and a hydrogen, add a swap:
-            if(nbrIndices.size()==3 && atom->getTotalNumHs()==1){
+            if(nbrIndices.size()==3 && atom->getNumImplicitHs()==1){
               ++nSwaps;
             }
           
@@ -865,10 +865,10 @@ namespace RDKit{
             // was probably put there solely because of the chirality.
             // So we'll go ahead and remove it.
             // This was Issue 194
-            if(atom->getNumExplicitHs()==1 &&
+            if(atom->getNumImplicitHs()==1 &&
                atom->getFormalCharge()==0 &&
                !atom->getIsAromatic() ){
-              atom->setNumExplicitHs(0);
+              atom->setNumImplicitHs(0);
               atom->setNoImplicit(false);
               atom->calcExplicitValence(false);
               atom->calcImplicitValence(false);
@@ -1037,7 +1037,7 @@ namespace RDKit{
         // additional reasons to skip the atom:
         if(atom->getDegree()<3 || // not enough explicit neighbors
            atom->getTotalDegree()!=4 ||  // not enough total neighbors
-           atom->getTotalNumHs(true)>1 // more than two Hs
+           atom->getTotalNumHs()>1 // more than two Hs
            ){
           continue;
         }

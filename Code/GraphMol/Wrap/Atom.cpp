@@ -163,20 +163,14 @@ struct atom_wrapper {
 	   "  The degree is independent of bond orders.\n")
 
       .def("GetTotalNumHs",&Atom::getTotalNumHs,
-           (python::arg("self"),python::arg("includeNeighbors")=false),
-           "Returns the total number of Hs (explicit and implicit) on the atom.\n\n"
-           "  ARGUMENTS:\n\n"
-           "    - includeNeighbors: (optional) toggles inclusion of neighboring H atoms in the sum.\n"
-           "      Defaults to 0.\n")
-
-      .def("GetNumImplicitHs",&Atom::getNumImplicitHs,
-	   "Returns the total number of implicit Hs on the atom.\n")
+           (python::arg("self"),),
+           "Returns the total number of Hs (implicit and neighboring) connected to the atom.")
 
       .def("GetExplicitValence",&Atom::getExplicitValence,
-           "Returns the number of explicit Hs on the atom.\n")
+           "Returns the atom's explicit valence.\n")
 
       .def("GetImplicitValence",&Atom::getImplicitValence,
-           "Returns the number of implicit Hs on the atom.\n")
+           "Returns the atom's implicit valence.\n")
 
       .def("GetFormalCharge",&Atom::getFormalCharge)
       .def("SetFormalCharge",&Atom::setFormalCharge)
@@ -188,8 +182,8 @@ struct atom_wrapper {
       .def("GetNoImplicit",&Atom::getNoImplicit,
 	   "Returns whether or not the atom is *allowed* to have implicit Hs.\n")
 
-      .def("SetNumExplicitHs",&Atom::setNumExplicitHs)
-      .def("GetNumExplicitHs",&Atom::getNumExplicitHs)
+      .def("SetNumImplicitHs",&Atom::setNumImplicitHs)
+      .def("GetNumImplicitHs",&Atom::getNumImplicitHs)
       .def("SetIsAromatic",&Atom::setIsAromatic)
       .def("GetIsAromatic",&Atom::getIsAromatic)
       .def("SetMass",&Atom::setMass)

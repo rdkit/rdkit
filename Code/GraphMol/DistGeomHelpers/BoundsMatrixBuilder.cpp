@@ -882,7 +882,7 @@ namespace RDKit {
           accumData.transPaths[bid3*nb*nb + bid2*nb + bid1] = 1;
 #else
           if(atm2->getAtomicNum()==7 && atm2->getDegree()==3 &&
-             atm1->getAtomicNum()==1 && atm2->getTotalNumHs(true)==1){
+             atm1->getAtomicNum()==1 && atm2->getTotalNumHs()==1){
             // secondary amide, this is the H
             setTheBound=false;
           } else {
@@ -925,7 +925,7 @@ namespace RDKit {
 #else
 	  // amide is cis, we're trans:
           if(atm2->getAtomicNum()==7 && atm2->getDegree()==3 &&
-             atm1->getAtomicNum()==1 && atm2->getTotalNumHs(true)==1){
+             atm1->getAtomicNum()==1 && atm2->getTotalNumHs()==1){
             // secondary amide, this is the H
             setTheBound=false;
           } else {

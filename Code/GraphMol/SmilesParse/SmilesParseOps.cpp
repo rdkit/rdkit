@@ -201,7 +201,7 @@ namespace SmilesParseOps{
     PRECONDITION(atom,"bad atom");
     // we will assume that this function is called on a ring atom with a 
     // ring closure bond 
-    if (atom->getNumExplicitHs() == 1) {
+    if (atom->getNumImplicitHs() == 1) {
       atom->invertChirality();
     }
   }

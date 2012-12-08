@@ -486,10 +486,10 @@ namespace RDKit{
               break;
             } else if(nbr->getIsAromatic() && nbr->getAtomicNum()!=6 ){
               // fix aromatic heteroatoms:
-              nbr->setNumExplicitHs(1);
+              nbr->setNumImplicitHs(1);
             } else if(nbr->getNoImplicit() || nbr->getChiralTag()!=Atom::CHI_UNSPECIFIED){
               nbr->setNoImplicit(false);
-              nbr->setNumExplicitHs(0);
+              nbr->setNumImplicitHs(0);
               nbr->setChiralTag(Atom::CHI_UNSPECIFIED);
             }
           }

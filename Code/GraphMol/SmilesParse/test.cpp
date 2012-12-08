@@ -1715,7 +1715,7 @@ void testBug1670149(){
   smi = MolToSmiles(*mol,false,false,-1);
   TEST_ASSERT(smi=="C1CC[NH2+]C1");
 
-  mol->getAtomWithIdx(1)->setNumExplicitHs(0);
+  mol->getAtomWithIdx(1)->setNumImplicitHs(0);
   mol->getAtomWithIdx(1)->setNoImplicit(false);
   mol->getAtomWithIdx(1)->updatePropertyCache();
   TEST_ASSERT(mol->getAtomWithIdx(1)->getNumImplicitHs()==2);

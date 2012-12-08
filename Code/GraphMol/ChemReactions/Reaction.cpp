@@ -132,7 +132,7 @@ namespace RDKit {
       }
       if(!prodAtom->hasProp("_ReactionDegreeChanged")){
         if(!prodAtom->hasProp("_QueryHCount")){
-          prodAtom->setNumExplicitHs(reactAtom->getNumExplicitHs());
+          prodAtom->setNumImplicitHs(reactAtom->getNumImplicitHs());
         }
         prodAtom->setNoImplicit(reactAtom->getNoImplicit());
       }
@@ -181,7 +181,7 @@ namespace RDKit {
         if(newAtom->hasProp("_QueryHCount")){
           int val;
           newAtom->getProp("_QueryHCount",val);
-          newAtom->setNumExplicitHs(val);
+          newAtom->setNumImplicitHs(val);
         }
         if(newAtom->hasProp("_QueryMass")){
           int val;

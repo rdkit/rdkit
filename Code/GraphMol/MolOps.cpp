@@ -140,9 +140,7 @@ namespace RDKit{
 	   ai != mol.endAtoms(); ++ai) {
         if((*ai)->getIsAromatic() && (*ai)->getAtomicNum()!=6 
            ){
-          if((*ai)->getNumImplicitHs())
-            (*ai)->setNumExplicitHs((*ai)->getNumImplicitHs());
-          if((*ai)->getNumExplicitHs()){
+          if((*ai)->getNumImplicitHs()){
             (*ai)->calcImplicitValence(false);
             (*ai)->setNoImplicit(true);
           }
@@ -151,7 +149,7 @@ namespace RDKit{
 #if 0
         int origImplicitV = (*ai)->getImplicitValence();
         (*ai)->calcExplicitValence();
-        int origExplicitV = (*ai)->getNumExplicitHs();
+        int origExplicitV = (*ai)->getNumImplicitHs();
         
         int newImplicitV = (*ai)->calcImplicitValence();
         //
@@ -171,7 +169,7 @@ namespace RDKit{
         //    <phew> that takes way longer to comment than it does to
         //    write:
         if(newImplicitV < origImplicitV){
-          (*ai)->setNumExplicitHs(origExplicitV+(origImplicitV-newImplicitV));
+          (*ai)->setNumImplicitHs(origExplicitV+(origImplicitV-newImplicitV));
           (*ai)->calcExplicitValence();
         }
 #endif
@@ -193,7 +191,7 @@ namespace RDKit{
           accum += mol[*beg]->getValenceContrib(*ai);
           ++beg;
         }
-        accum += (*ai)->getNumExplicitHs();
+        accum += (*ai)->getNumImplicitHs();
         int totalValence = static_cast<int>(accum+0.1);
         int chg = (*ai)->getFormalCharge();
         int nOuter = PeriodicTable::getTable()->getNouterElecs((*ai)->getAtomicNum());

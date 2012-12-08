@@ -145,7 +145,7 @@ namespace RDKit{
         const Atom *atom=mol.getAtomWithIdx(i);
         int atNum=atom->getAtomicNum();
         if(atNum!=7 && atNum!=8) continue;
-        nHs[i] += atom->getTotalNumHs();
+        nHs[i] += atom->getNumImplicitHs();
         int chg=atom->getFormalCharge();
         bool in3Ring = mol.getRingInfo()->isAtomInRingOfSize(i,3);
         nNbrs[i]+=atom->getDegree();

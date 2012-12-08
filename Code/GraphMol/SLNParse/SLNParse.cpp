@@ -75,8 +75,8 @@ namespace RDKit {
         for(ROMol::AtomIterator atomIt=mol->beginAtoms();
             atomIt!=mol->endAtoms();++atomIt){
           // set a query for the H count:
-          if((*atomIt)->getNumExplicitHs()){
-            (*atomIt)->expandQuery(makeAtomHCountQuery((*atomIt)->getNumExplicitHs()));
+          if((*atomIt)->getNumImplicitHs()){
+            (*atomIt)->expandQuery(makeAtomHCountQuery((*atomIt)->getNumImplicitHs()));
           }
         }
       }

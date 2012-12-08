@@ -262,7 +262,7 @@ namespace RDKit {
             symbol = boost::lexical_cast<std::string>(isotope)+symbol;
           }
           if(mol[*bAts]->getAtomicNum()!=6){
-            int nHs=mol[*bAts]->getTotalNumHs();
+            int nHs=mol[*bAts]->getNumImplicitHs();
             if(nHs>0){
               std::string h="H";
               if(nHs>1) {

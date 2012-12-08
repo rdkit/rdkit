@@ -150,7 +150,7 @@ namespace RDKit{
       <b>Notes:</b>
         - requires an owning molecule
     */
-    unsigned int getTotalNumHs(bool includeNeighbors=false) const;
+    unsigned int getTotalNumHs() const;
 
     //! returns the number of implicit Hs this Atom is bound to
     /*!
@@ -159,7 +159,7 @@ namespace RDKit{
     */
     unsigned int getNumImplicitHs() const;
 
-    //! returns the explicit valence (including Hs) of this atom
+    //! returns the explicit valence of this atom
     int getExplicitValence() const;
 
     //! returns the implicit valence for this Atom
@@ -191,10 +191,6 @@ namespace RDKit{
     
     //! sets our number of implict Hs
     void setNumImplicitHs(unsigned int what) { d_implicitValence = what; };
-    //! sets our number of explict Hs
-    void setNumExplicitHs(unsigned int what) { setNumImplicitHs(what); };
-    //! returns our number of explict Hs
-    unsigned int getNumExplicitHs() const { return getNumImplicitHs(); };
   
     //! sets our \c isAromatic flag, indicating whether or not we are aromatic
     void setIsAromatic( bool what ) { df_isAromatic = what; };
@@ -476,7 +472,6 @@ namespace RDKit{
     bool df_isAromatic; 
     bool df_noImplicit;
     int d_dativeFlag;
-    unsigned int d_numExplicitHs;
     int d_formalCharge;
     unsigned int d_atomicNum;
     unsigned int d_index;
