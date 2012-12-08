@@ -65,12 +65,12 @@ namespace RDKit {
       return mass;
     }
     //! \overload
-    double getAtomicWeight( char * elementSymbol ) const {
+    double getAtomicWeight( const char * elementSymbol ) const {
       return getAtomicWeight(std::string(elementSymbol));
     }
 
     //! returns the atomic number
-    int getAtomicNumber( char *elementSymbol ) const {
+    int getAtomicNumber( const char *elementSymbol ) const {
       std::string symb(elementSymbol);
       
       return getAtomicNumber(symb);
@@ -109,7 +109,7 @@ namespace RDKit {
       return getRvdw(byname.find(elementSymbol)->second);
     }
     //! \overload
-    double getRvdw(char *elementSymbol ) const {
+    double getRvdw(const char *elementSymbol ) const {
       return getRvdw(std::string(elementSymbol));
     }
 
@@ -124,7 +124,7 @@ namespace RDKit {
       return getRcovalent(byname.find(elementSymbol)->second);
     }
     //! \overload
-    double getRcovalent(char *elementSymbol ) const {
+    double getRcovalent(const char *elementSymbol ) const {
       return getRcovalent(std::string(elementSymbol));
     }
 
@@ -139,7 +139,7 @@ namespace RDKit {
       return getRb0(byname.find(elementSymbol)->second);
     }
     //! \overload
-    double getRb0(char *elementSymbol ) const {
+    double getRb0(const char *elementSymbol ) const {
       return getRb0(std::string(elementSymbol));
     }
 
@@ -154,7 +154,7 @@ namespace RDKit {
       return getDefaultValence(byname.find(elementSymbol)->second);
     }
     //! \overload
-    int getDefaultValence(char *elementSymbol ) const {
+    int getDefaultValence(const char *elementSymbol ) const {
       return getDefaultValence(std::string(elementSymbol));
     }
 
@@ -171,7 +171,7 @@ namespace RDKit {
       return getValenceList(byname.find(elementSymbol)->second);
     }
     //! \overload
-    const INT_VECT &getValenceList(char *elementSymbol ) const {
+    const INT_VECT &getValenceList(const char *elementSymbol ) const {
       return getValenceList(std::string(elementSymbol));
     }
 
@@ -186,7 +186,7 @@ namespace RDKit {
       return getNouterElecs(byname.find(elementSymbol)->second);
     }
     //! \overload
-    int getNouterElecs(char *elementSymbol ) const {
+    int getNouterElecs(const char *elementSymbol ) const {
       return getNouterElecs(std::string(elementSymbol));
     }
 
@@ -201,7 +201,7 @@ namespace RDKit {
       return getMostCommonIsotope(byname.find(elementSymbol)->second);
     }
     //! \overload
-    int getMostCommonIsotope(char *elementSymbol ) const {
+    int getMostCommonIsotope(const char *elementSymbol ) const {
       return getMostCommonIsotope(std::string(elementSymbol));
     }
 
@@ -216,7 +216,7 @@ namespace RDKit {
       return getMostCommonIsotopeMass(byname.find(elementSymbol)->second);
     }
     //! \overload
-    double getMostCommonIsotopeMass(char *elementSymbol ) const {
+    double getMostCommonIsotopeMass(const char *elementSymbol ) const {
       return getMostCommonIsotopeMass(std::string(elementSymbol));
     }
 
@@ -239,7 +239,7 @@ namespace RDKit {
       return getMassForIsotope(byname.find(elementSymbol)->second,isotope);
     }
     //! \overload
-    double getMassForIsotope(char *elementSymbol, UINT isotope ) const {
+    double getMassForIsotope(const char *elementSymbol, UINT isotope ) const {
       return getMassForIsotope(std::string(elementSymbol),isotope);
     }
     //! returns the abundance of a particular isotope; zero if that
@@ -260,7 +260,7 @@ namespace RDKit {
       return getAbundanceForIsotope(byname.find(elementSymbol)->second,isotope);
     }
     //! \overload
-    double getAbundanceForIsotope(char *elementSymbol, UINT isotope ) const {
+    double getAbundanceForIsotope(const char *elementSymbol, UINT isotope ) const {
       return getAbundanceForIsotope(std::string(elementSymbol),isotope);
     }
 
