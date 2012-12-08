@@ -86,7 +86,7 @@ def SATISTypes(mol,neighborsToInclude=4):
       if _debug: print otherIndices[j],
     if _debug: print  
     otherNums = [atomicNums[x] for x in otherIndices] + \
-                [1]*atom.GetTotalNumHs()
+                [1]*atom.GetNumImplicitHs()
     otherNums.sort()
 
     nOthers = len(otherNums)

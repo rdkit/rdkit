@@ -313,7 +313,7 @@ def _pyTPSAContribs(mol,verbose=False):
     atNum = atom.GetAtomicNum()
     if atNum in [7,8]:
       #nHs = atom.GetImplicitValence()-atom.GetHvyValence()
-      nHs = atom.GetTotalNumHs()
+      nHs = atom.GetNumImplicitHs()
       chg = atom.GetFormalCharge()
       isArom = atom.GetIsAromatic()
       in3Ring = atom.IsInRingSize(3)

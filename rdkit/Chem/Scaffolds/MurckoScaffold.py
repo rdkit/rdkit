@@ -40,7 +40,7 @@ def MakeScaffoldGeneric(mol):
     atom.SetFormalCharge(0)
     atom.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
     atom.SetNoImplicit(0)
-    atom.SetNumExplicitHs(0)
+    atom.SetNumImplicitHs(0)
   for bond in res.GetBonds():
     bond.SetBondType(Chem.BondType.SINGLE)
     bond.SetIsAromatic(False)

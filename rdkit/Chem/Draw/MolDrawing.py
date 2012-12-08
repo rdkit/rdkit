@@ -395,7 +395,7 @@ class MolDrawing(object):
           symbol = str(atom.GetIdx())
         else:
           base = atom.GetSymbol()
-          nHs = atom.GetTotalNumHs()
+          nHs = atom.GetNumImplicitHs()
           if nHs>0:
             if nHs>1:
               hs='H<sub>%d</sub>'%nHs

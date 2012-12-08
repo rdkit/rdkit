@@ -41,7 +41,7 @@ def EStateIndices(mol,force=1):
     atNum = at.GetAtomicNum()
     d = at.GetDegree()
     if d>0:
-      h = at.GetTotalNumHs()
+      h = at.GetNumImplicitHs()
       dv = tbl.GetNOuterElecs(atNum)-h
       N = GetPrincipleQuantumNumber(atNum)
       Is[i] = (4./(N*N) * dv + 1)/d

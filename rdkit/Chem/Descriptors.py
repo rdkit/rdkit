@@ -93,7 +93,7 @@ def NumValenceElectrons(mol):
   for atom in mol.GetAtoms():
     accum += tbl.GetNOuterElecs(atom.GetAtomicNum())
     accum -= atom.GetFormalCharge()
-    accum += atom.GetTotalNumHs()
+    accum += atom.GetNumImplicitHs()
 
   return accum
 NumValenceElectrons.version="1.0.0"
