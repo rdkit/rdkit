@@ -74,7 +74,7 @@ namespace RDKit{
                                 totalValence)==defaultVs.end();
         // another type of "nonstandard" valence is an aromatic N or P with
         // explicit Hs indicated:
-        if((num==7||num==15) && atom->getIsAromatic() && atom->getNumExplicitHs()){
+        if((num==7||num==15) && atom->getIsAromatic() && atom->getNumImplicitHs()){
           nonStandard=true;
         }
 

@@ -876,7 +876,7 @@ namespace RDKit{
       MolOps::assignStereochemistry(*res,true,true);
       try {
         if(removeHs){
-          ROMol *tmp=MolOps::removeHs(*res,false,false);
+          ROMol *tmp=MolOps::removeHs(*res);
           delete res;
           res = static_cast<RWMol *>(tmp);
         } else {

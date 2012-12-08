@@ -84,7 +84,7 @@ namespace RDKit{
       // to harm the molecule in any way!
       ROMol *workMol=const_cast<ROMol *>(&mol);
       if(includeHs){
-	workMol = MolOps::addHs(mol,false,false);
+	workMol = MolOps::addHs(mol,false);
       }
       std::vector<double> logpContribs(workMol->getNumAtoms());
       std::vector<double> mrContribs(workMol->getNumAtoms());

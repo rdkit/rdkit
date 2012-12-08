@@ -29,11 +29,11 @@
 namespace python = boost::python;
 
 namespace RDKit{
-  ROMol *addHs(const ROMol &orig,bool explicitOnly=false,bool addCoords=false){
-    return MolOps::addHs(orig,explicitOnly,addCoords);
+  ROMol *addHs(const ROMol &orig,bool addCoords=false){
+    return MolOps::addHs(orig,addCoords);
   }
-  ROMol *removeHs(const ROMol &orig,bool implicitOnly=false){
-    return MolOps::removeHs(orig,implicitOnly);
+  ROMol *removeHs(const ROMol &orig){
+    return MolOps::removeHs(orig);
   }
   int getSSSR(ROMol &mol) {
     VECT_INT_VECT rings;
@@ -453,9 +453,6 @@ namespace RDKit{
 \n\
     - mol: the molecule to be modified\n\
 \n\
-    - explicitOnly: (optional) if this toggle is set, only explicit Hs will\n\
-      be added to the molecule.  Default value is 0 (add implicit and explicit Hs).\n\
-\n\
     - addCoords: (optional) if this toggle is set, The Hs will have 3D coordinates\n\
       set.  Default value is 0 (no 3D coords).\n\
 \n\
@@ -470,7 +467,7 @@ namespace RDKit{
       this function.\n\
 \n";
       python::def("AddHs", addHs,
-                  (python::arg("mol"),python::arg("explicitOnly")=false,
+                  (python::arg("mol"),
                    python::arg("addCoords")=false),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
@@ -482,9 +479,6 @@ namespace RDKit{
 \n\
     - mol: the molecule to be modified\n\
 \n\
-    - implicitOnly: (optional) if this toggle is set, only implicit Hs will\n\
-      be removed from the graph.  Default value is 0 (remove implicit and explicit Hs).\n\
-\n\
   RETURNS: a new molecule with the Hs removed\n\
 \n\
   NOTES:\n\
@@ -492,7 +486,7 @@ namespace RDKit{
     - The original molecule is *not* modified.\n\
 \n";
       python::def("RemoveHs", removeHs,
-                  (python::arg("mol"),python::arg("implicitOnly")=false),
+                  (python::arg("mol")),
                   docString.c_str(),
                   python::return_value_policy<python::manage_new_object>());
 

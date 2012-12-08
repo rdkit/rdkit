@@ -527,35 +527,15 @@ void test8()
   CHECK_INVARIANT(m,"");
   CHECK_INVARIANT(m->getNumAtoms()==4,"");
 
-  //BOOST_LOG(rdInfoLog) << "2" << std::endl;
-  delete m2;
-  m2 = MolOps::addHs(*m,true);
-  CHECK_INVARIANT(m2->getNumAtoms()==5,"");
-
-  
   //BOOST_LOG(rdInfoLog) << "3" << std::endl;
-  m3 = MolOps::addHs(*m2,false);
+  m3 = MolOps::addHs(*m);
   CHECK_INVARIANT(m3->getNumAtoms()==8,"");
 
-  //BOOST_LOG(rdInfoLog) << "4" << std::endl;
-  delete m2;
-  m2 = MolOps::addHs(*m,false);
-  CHECK_INVARIANT(m2->getNumAtoms()==8,"");
-  delete m3;
   // remove all
-  //BOOST_LOG(rdInfoLog) << "5" << std::endl;
-  m3 = MolOps::removeHs(*m2,false);
-  CHECK_INVARIANT(m3->getNumAtoms()==4,"");
-  delete m3;
-  // remove only implicit
-  //BOOST_LOG(rdInfoLog) << "6" << std::endl;
-  m3 = MolOps::removeHs(*m2,true);
-  CHECK_INVARIANT(m3->getNumAtoms()==5,"");
   delete m2;
-  //BOOST_LOG(rdInfoLog) << "7" << std::endl;
-  // remove all after removing only implicit
-  m2 = MolOps::removeHs(*m3,false);
+  m2 = MolOps::removeHs(*m3);
   CHECK_INVARIANT(m2->getNumAtoms()==4,"");
+
 
   // this test is also done in the same order in the python tests:
   delete m;
@@ -564,28 +544,13 @@ void test8()
   CHECK_INVARIANT(m->getNumAtoms()==4,"");
 
   delete m2;
-  m2 = MolOps::addHs(*m,true);
-  CHECK_INVARIANT(m2->getNumAtoms()==5,"");
+  m2 = MolOps::addHs(*m);
+  CHECK_INVARIANT(m2->getNumAtoms()==8,"");
   //BOOST_LOG(rdInfoLog) << "8" << std::endl;
-  m3 = MolOps::removeHs(*m2,true);
-  CHECK_INVARIANT(m3->getNumAtoms()==5,"");
   delete m3;
-  //BOOST_LOG(rdInfoLog) << "9" << std::endl;
-  m3 = MolOps::removeHs(*m2,false);
+  m3 = MolOps::removeHs(*m2);
   CHECK_INVARIANT(m3->getNumAtoms()==4,"");
 
-  delete m2;
-  //BOOST_LOG(rdInfoLog) << "10" << std::endl;
-  m2 = MolOps::addHs(*m,false);
-  CHECK_INVARIANT(m2->getNumAtoms()==8,"");
-  delete m3;
-  //BOOST_LOG(rdInfoLog) << "11" << std::endl;
-  m3 = MolOps::removeHs(*m2,true);
-  CHECK_INVARIANT(m3->getNumAtoms()==5,"");
-  delete m3;
-  //BOOST_LOG(rdInfoLog) << "12" << std::endl;
-  m3 = MolOps::removeHs(*m2,false);
-  CHECK_INVARIANT(m3->getNumAtoms()==4,"");
 
 
   // related to RDTrack Issues 109 and 110:
@@ -596,7 +561,7 @@ void test8()
   CHECK_INVARIANT(m->getNumAtoms()==24,"");
   delete m3;
   //BOOST_LOG(rdInfoLog) << "13" << std::endl;
-  m3 = MolOps::removeHs(*m,false);
+  m3 = MolOps::removeHs(*m);
   CHECK_INVARIANT(m3->getNumAtoms()==24,"");
 
 
@@ -608,7 +573,7 @@ void test8()
   CHECK_INVARIANT(m->getNumAtoms()==5,"");
   delete m2;
   //BOOST_LOG(rdInfoLog) << "14" << std::endl;
-  m2 = MolOps::removeHs(*m,0,false);
+  m2 = MolOps::removeHs(*m);
   CHECK_INVARIANT(m2->getNumAtoms()==1,"");
   delete m;
   smi = "[H][N+]([H])([H])[H]";
@@ -624,7 +589,7 @@ void test8()
   CHECK_INVARIANT(m->getNumAtoms()==2,"");
   delete m2;
   //BOOST_LOG(rdInfoLog) << "15" << std::endl;
-  m2 = MolOps::removeHs(*m,0,false);
+  m2 = MolOps::removeHs(*m,false);
   CHECK_INVARIANT(m2->getNumAtoms()==2,"");
 
   std::string sma;
@@ -661,7 +626,7 @@ void test8()
   CHECK_INVARIANT(m->getNumAtoms()==5,"");
   delete m2;
   //BOOST_LOG(rdInfoLog) << "18" << std::endl;
-  m2 = MolOps::addHs(*m,false,false);
+  m2 = MolOps::addHs(*m);
   CHECK_INVARIANT(m2->getNumAtoms()==10,"");
   delete m;
   //BOOST_LOG(rdInfoLog) << "19" << std::endl;
@@ -871,7 +836,8 @@ void test11()
   TEST_ASSERT(!(m->getAtomWithIdx(1)->hasProp("_CIPCode")));
   TEST_ASSERT(!(m->getAtomWithIdx(2)->hasProp("_CIPCode")));
   // test Issue 194:
-  TEST_ASSERT(m->getAtomWithIdx(1)->getNumExplicitHs()==0);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getNoImplicit()==false);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getNumImplicitHs()==1);
 
 
   delete m;
@@ -1496,6 +1462,9 @@ void testIssue189()
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
 
+  std::cerr<<"\n\n\n\nPiece 1:\n";
+  m->debugMol(std::cerr);
+  
   TEST_ASSERT(m->getBondWithIdx(2)->getBondType()==Bond::DOUBLE);
   TEST_ASSERT(m->getBondWithIdx(2)->getStereo()==Bond::STEREOZ);
 
@@ -1515,6 +1484,9 @@ void testIssue189()
     }
   }
   TEST_ASSERT(count==2);
+  std::cerr<<"\n\n\n\nPiece 2:\n";
+  m->debugMol(std::cerr);
+  std::cerr<<"SMILES: "<<refSmi<<std::endl;
 
   delete m;
   m = SmilesToMol(refSmi);
@@ -1525,6 +1497,9 @@ void testIssue189()
       count++;
     }
   }
+  std::cerr<<"\n\n\n\nPiece 3:\n";
+  m->debugMol(std::cerr);
+
   TEST_ASSERT(count==2);
   smi = MolToSmiles(*m,1);
   count = 0;
@@ -1533,6 +1508,10 @@ void testIssue189()
       count++;
     }
   }
+  std::cerr<<"\n\n\n\nPiece 4:\n";
+  m->debugMol(std::cerr);
+  std::cerr<<"SMILES: "<<smi<<std::endl;
+
   TEST_ASSERT(count==2);
   TEST_ASSERT(smi==refSmi);
 
@@ -1758,7 +1737,7 @@ void testIssue212()
   Conformer *conf = new Conformer(1);
   m->addConformer(conf);
   conf->setAtomPos(0,RDGeom::Point3D(0,0,0));
-  m2 = MolOps::addHs(*m,false,true);
+  m2 = MolOps::addHs(*m,true);
   TEST_ASSERT(m2->getNumAtoms()==5);
 
   try{
@@ -1792,7 +1771,7 @@ void testAddHsCoords()
   m->addConformer(conf);
   conf->setAtomPos(0,RDGeom::Point3D(0,0,0));
 
-  m2 = MolOps::addHs(*m,false,true);
+  m2 = MolOps::addHs(*m,true);
   const Conformer *conf2 = &(m2->getConformer());
   TEST_ASSERT(m2->getNumAtoms()==5);
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(1)).length(),
@@ -1827,7 +1806,7 @@ void testAddHsCoords()
   conf->setAtomPos(0,RDGeom::Point3D(0,0,0));
   conf->setAtomPos(1,RDGeom::Point3D(1.54,0,0));
 
-  m2 = MolOps::addHs(*m,false,true);
+  m2 = MolOps::addHs(*m,true);
   conf2 = &(m2->getConformer());
   TEST_ASSERT(m2->getNumAtoms()==8);
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(2)).length(),
@@ -1867,7 +1846,7 @@ void testAddHsCoords()
   conf->setAtomPos(0,RDGeom::Point3D(0,0,0));
   conf->setAtomPos(1,RDGeom::Point3D(1.3,0,0));
 
-  m2 = MolOps::addHs(*m,false,true);
+  m2 = MolOps::addHs(*m,true);
   
   conf2 = &(m2->getConformer());
   
@@ -1897,7 +1876,7 @@ void testAddHsCoords()
   conf->setAtomPos(0,RDGeom::Point3D(0,0,0));
   conf->setAtomPos(1,RDGeom::Point3D(1.2,0,0));
 
-  m2 = MolOps::addHs(*m,false,true);
+  m2 = MolOps::addHs(*m,true);
   conf2 = &(m2->getConformer());
   TEST_ASSERT(m2->getNumAtoms()==4);
   TEST_ASSERT(feq((conf2->getAtomPos(0) - conf2->getAtomPos(2)).length(),
@@ -1967,7 +1946,7 @@ void testAddConformers() {
   }
   CHECK_INVARIANT(m->getNumConformers() == 5, "");
   
-  ROMol *m2 = MolOps::addHs(*m,false,true);
+  ROMol *m2 = MolOps::addHs(*m,true);
   CHECK_INVARIANT(m2->getNumConformers() == 5, "");
   //const ROMol::CONF_SPTR_LIST &confs = m2->getConformers();
   ROMol::ConstConformerIterator ci;
@@ -2033,8 +2012,8 @@ void testHsAndAromaticity() {
   TEST_ASSERT(mol);
   //std::cerr << mol->getAtomWithIdx(0)->getHybridization() << std::endl;
   TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization()==Atom::SP3);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getImplicitValence()==0);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getImplicitValence()==1);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs()==1);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
   TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
   TEST_ASSERT(!mol->getBondBetweenAtoms(0,1)->getIsAromatic());
@@ -2251,8 +2230,9 @@ void testSFIssue1836576()
   std::string smi;
   bool ok;
   
-  // the original form of the test runs foul of the rules for explicit
-  // valence on B:
+  // the original form of the test used to run afoul of the rules for explicit
+  // valence on B, now generates a ValueError (same as the others) now that
+  // the sanitization order has been changed
   smi = "[BH]123[BH]45[BH]167[BH]289[BH]312[BH]838[BH]966[Co]74479%10%11%12[CH]633[BH]811[CH]345[BH]21[BH]1234[BH]75[BH]911[BH]226[BH]%1011[BH]227[BH]633[BH]44[BH]322[CH]%1145[CH]%12271";
   m = SmilesToMol(smi,false,false);
   TEST_ASSERT(m);
@@ -2261,11 +2241,11 @@ void testSFIssue1836576()
   ok=false;
   try {
     MolOps::sanitizeMol(*m,opThatFailed);
-  } catch (MolSanitizeException &vee){
+  } catch (ValueErrorException &vee){
     ok=true;
   }
   TEST_ASSERT(ok);
-  TEST_ASSERT(opThatFailed==MolOps::SANITIZE_PROPERTIES);
+  TEST_ASSERT(opThatFailed==MolOps::SANITIZE_SYMMRINGS);
 
   // this molecule shows a known bug related to ring
   // ring finding in a molecule where all atoms are 4 connected.
@@ -3118,7 +3098,7 @@ void testSFNetIssue2951221() {
     pathName += "/Code/GraphMol/test_data/";
     RWMol *m = MolFileToMol(pathName+"Issue2951221.1.mol");
     TEST_ASSERT(m);
-    ROMol *m2 = MolOps::addHs(*m,false,true);
+    ROMol *m2 = MolOps::addHs(*m,true);
     TEST_ASSERT(m2);
     delete m;
     TEST_ASSERT(m2->getNumAtoms(false)==12);
@@ -3136,7 +3116,7 @@ void testSFNetIssue2951221() {
     pathName += "/Code/GraphMol/test_data/";
     RWMol *m = MolFileToMol(pathName+"Issue2951221.2.mol");
     TEST_ASSERT(m);
-    ROMol *m2 = MolOps::addHs(*m,false,true);
+    ROMol *m2 = MolOps::addHs(*m,true);
     TEST_ASSERT(m2);
     delete m;
     TEST_ASSERT(m2->getNumAtoms(false)==5);
@@ -3152,7 +3132,7 @@ void testSFNetIssue2951221() {
     pathName += "/Code/GraphMol/test_data/";
     RWMol *m = MolFileToMol(pathName+"Issue2951221.3.mol");
     TEST_ASSERT(m);
-    ROMol *m2 = MolOps::addHs(*m,false,true);
+    ROMol *m2 = MolOps::addHs(*m,true);
     TEST_ASSERT(m2);
     delete m;
     TEST_ASSERT(m2->getNumAtoms(false)==5);
@@ -4158,6 +4138,11 @@ void testNewValences() {
     TEST_ASSERT(m->getNumAtoms()==5);
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
     TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+
+    m->updatePropertyCache();
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+
     delete m;
   }
   {
@@ -4166,8 +4151,13 @@ void testNewValences() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==5);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
     TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+
+    m->updatePropertyCache();
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getTotalNumHs()==1);
+
     delete m;
   }
   {
@@ -4187,7 +4177,7 @@ void testNewValences() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==5);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==2);
     delete m;
   }
   {
@@ -4223,7 +4213,7 @@ void testNewValences() {
     RWMol *m = SmilesToMol(smi);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==6);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
     delete m;
   }
   {
@@ -4235,6 +4225,23 @@ void testNewValences() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==4);
     delete m;
   }
+  {
+    std::string smi = "N=c(n1C)scc1";
+    std::cerr<<"\n\n\n\nDOING SMILES: "<<smi<<std::endl;
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==7);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getIsAromatic());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getExplicitValence()==4);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getIsAromatic());
+    TEST_ASSERT(m->getAtomWithIdx(2)->getExplicitValence()==3);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getNumImplicitHs()==0);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getIsAromatic());
+    TEST_ASSERT(m->getAtomWithIdx(4)->getExplicitValence()==2);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getNumImplicitHs()==0);
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -4243,7 +4250,8 @@ int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
-#if 0
+  testNewValences();
+#if 1
   test1();
   test2();
   test3();
@@ -4298,7 +4306,6 @@ int main(){
   testSFNetIssue256();
   testSFNetIssue266();
 #endif
-  testNewValences();
   
   return 0;
 }

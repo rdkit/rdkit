@@ -260,8 +260,8 @@ namespace RDKit{
 
       // update computed properties on atoms and bonds:
       mol.updatePropertyCache();
-      //std::cerr<<" post update1 "<<std::endl;
-      //mol.debugMol(std::cerr);
+      std::cerr<<" post update1 "<<std::endl;
+      mol.debugMol(std::cerr);
                
       operationThatFailed = SANITIZE_SYMMRINGS;
       if(sanitizeOps & operationThatFailed){
@@ -330,7 +330,7 @@ namespace RDKit{
       // adjust Hydrogen counts:
       operationThatFailed = SANITIZE_ADJUSTHS;
       if(sanitizeOps & operationThatFailed){
-        adjustHs(mol);
+        //adjustHs(mol);
       }
       std::cerr<<" finished "<<std::endl;
       mol.debugMol(std::cerr);

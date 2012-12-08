@@ -126,7 +126,6 @@ namespace RDKit{
     //! returns a copy of a molecule with hydrogens added in as explicit Atoms
     /*!
         \param mol          the molecule to add Hs to
-        \param explicitOnly (optional) if this \c true, only explicit Hs will be added
         \param addCoords    (optional) If this is true, estimates for the atomic coordinates
                     of the added Hs will be used.
      
@@ -137,13 +136,12 @@ namespace RDKit{
 	     atoms don't already have coordinates.
 	   - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
      */
-    ROMol *addHs(const ROMol &mol,bool explicitOnly=false,bool addCoords=false);
+    ROMol *addHs(const ROMol &mol,bool addCoords=false);
 
 
     //! returns a copy of a molecule with hydrogens removed
     /*!
         \param mol          the molecule to remove Hs from
-        \param implicitOnly (optional) if this \c true, only implicit Hs will be removed
         \param updateExplicitCount  (optional) If this is \c true, when explicit Hs are removed
 	     from the graph, the heavy atom to which they are bound will have its counter of
 	     explicit Hs increased.
@@ -161,7 +159,7 @@ namespace RDKit{
 
 	   - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
     */
-    ROMol *removeHs(const ROMol &mol,bool implicitOnly=false,
+    ROMol *removeHs(const ROMol &mol,
 			   bool updateExplicitCount=false,bool sanitize=true);
 
     //! returns a copy of a molecule with hydrogens removed and added as queries

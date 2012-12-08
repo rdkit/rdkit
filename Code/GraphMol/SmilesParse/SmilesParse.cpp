@@ -185,7 +185,7 @@ namespace RDKit{
       // we're going to remove explicit Hs from the graph,
       // this triggers a sanitization, so we do not need to
       // worry about doing one here:
-      ROMol *tmp = MolOps::removeHs(*res,false,false);
+      ROMol *tmp = MolOps::removeHs(*res);
       delete res;
       res = static_cast<RWMol *>(tmp);
       // figure out stereochemistry:

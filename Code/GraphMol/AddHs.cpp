@@ -284,7 +284,7 @@ namespace RDKit{
 
 
   namespace MolOps {
-    ROMol *addHs(const ROMol &mol,bool explicitOnly,bool addCoords){
+    ROMol *addHs(const ROMol &mol,bool addCoords){
       RWMol *res = new RWMol(mol);
 
       // when we hit each atom, clear its computed properties
@@ -298,10 +298,7 @@ namespace RDKit{
       // for their coordinates
       unsigned int numAddHyds = 0;
       for(ROMol::ConstAtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
-        numAddHyds += (*at)->getNumExplicitHs();
-        if (!explicitOnly) {
-          numAddHyds += (*at)->getNumImplicitHs();
-        }
+        numAddHyds += (*at)->getNumImplicitHs();
       }
       unsigned int nSize = mol.getNumAtoms() + numAddHyds;
 
@@ -325,23 +322,9 @@ namespace RDKit{
           if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
         }
         // clear the local property
-        newAt->setNumExplicitHs(0);
-
-        if(!explicitOnly){
-          // take care of implicits
-          for(unsigned int i=0;i<(*at)->getNumImplicitHs();i++){
-            newIdx=res->addAtom(new Atom(1),false,true);
-            res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
-            // set the isImplicit label so that we can strip these back
-            // off later if need be.
-            res->getAtomWithIdx(newIdx)->setProp("isImplicit",1, true);
-            res->getAtomWithIdx(newIdx)->updatePropertyCache();
-            if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
-          }
-          // be very clear about implicits not being allowed in this representation
-          newAt->setProp("origNoImplicit",(*at)->getNoImplicit(), true);
-          newAt->setNoImplicit(true);
-        }
+        newAt->setProp("origNoImplicit",(*at)->getNoImplicit(), true);
+        newAt->setNoImplicit(true);
+        newAt->setNumImplicitHs(0);
         // update the atom's derived properties (valence count, etc.)
         newAt->updatePropertyCache();
       }
@@ -360,7 +343,7 @@ namespace RDKit{
     //   - Labelled hydrogen (e.g. atoms with atomic number=1, but isotope > 1),
     //     will not be removed.
     //
-    ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
+    ROMol *removeHs(const ROMol &mol,bool updateExplicitCount,bool sanitize){
       unsigned int currIdx=0,origIdx=0;
       std::map<unsigned int,unsigned int> idxMap;
       RWMol *res = new RWMol(mol);
@@ -371,9 +354,7 @@ namespace RDKit{
         if(atom->getAtomicNum()==1){
           bool removeIt=false;
 
-          if(atom->hasProp("isImplicit")){
-            removeIt=true;
-          } else if(!implicitOnly && !atom->getIsotope()){
+          if(!atom->getIsotope()){
             ROMol::ADJ_ITER begin,end;
             boost::tie(begin,end) = res->getAtomNeighbors(atom);
             while(begin!=end){
@@ -410,7 +391,8 @@ namespace RDKit{
               // H itself isn't marked as explicit
               if(heavyAtom->getAtomicNum()==7 && heavyAtom->getIsAromatic()
                  && heavyAtom->getFormalCharge()==0){
-                heavyAtom->setNumExplicitHs(heavyAtom->getNumExplicitHs()+1);
+                heavyAtom->setNumImplicitHs(1);
+                heavyAtom->setNoImplicit(true);
               }
             }
 
@@ -454,34 +436,32 @@ namespace RDKit{
           }
         }
       }
+
       //
-      //  If we didn't only remove implicit Hs, which are guaranteed to
-      //  be the highest numbered atoms, we may have altered atom indices.
+      //  We may have altered atom indices.
       //  This can screw up derived properties (such as ring members), so
       //  do some checks:
       //
-      if(!implicitOnly){
-        if(sanitize){
-          try{
-            sanitizeMol(*res);
-          } catch (MolSanitizeException &se){
-            if(res) delete res;
-            throw se;
-          }
-
+      if(sanitize){
+        try{
+          sanitizeMol(*res);
+        } catch (MolSanitizeException &se){
+          if(res) delete res;
+          throw se;
         }
-        if(mol.hasProp("_StereochemDone")){
-          // stereochem had been perceived in the original molecule,
-          // loop over the bonds and fix their stereoAtoms fields:
-          for(ROMol::BondIterator bondIt=res->beginBonds();
-              bondIt!=res->endBonds();
-              ++bondIt){
-            Bond *bond=*bondIt;
-            if( bond->getBondType()==Bond::DOUBLE &&
-                bond->getStereo()!=Bond::STEREONONE){
-              BOOST_FOREACH(int &v,bond->getStereoAtoms()){
-                v = idxMap[v];
-              }
+
+      }
+      if(mol.hasProp("_StereochemDone")){
+        // stereochem had been perceived in the original molecule,
+        // loop over the bonds and fix their stereoAtoms fields:
+        for(ROMol::BondIterator bondIt=res->beginBonds();
+            bondIt!=res->endBonds();
+            ++bondIt){
+          Bond *bond=*bondIt;
+          if( bond->getBondType()==Bond::DOUBLE &&
+              bond->getStereo()!=Bond::STEREONONE){
+            BOOST_FOREACH(int &v,bond->getStereoAtoms()){
+              v = idxMap[v];
             }
           }
         }

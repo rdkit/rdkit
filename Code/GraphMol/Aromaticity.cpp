@@ -289,7 +289,7 @@ namespace {
 
   bool incidentMultipleBond(const Atom *at) {
     PRECONDITION(at,"bad atom");
-    return at->getExplicitValence()!=static_cast<int>(at->getDegree()+at->getNumExplicitHs());
+    return at->getExplicitValence()!=static_cast<int>(at->getDegree());
   }
 
   bool applyHuckel(ROMol &mol, const INT_VECT &ring,

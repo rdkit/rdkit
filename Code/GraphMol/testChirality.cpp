@@ -571,7 +571,7 @@ void testChiralityCleanup(){
 
   smi = "F[C@H+](Cl)(Br)I";
   mol = SmilesToMol(smi,false,false);
-  mol2 = MolOps::removeHs(*mol,false,false);
+  mol2 = MolOps::removeHs(*mol);
   delete mol;
   mol=mol2;
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);
@@ -582,7 +582,7 @@ void testChiralityCleanup(){
 
   smi = "F[C@+](C)(Cl)(Br)I";
   mol = SmilesToMol(smi,false,false);
-  mol2 = MolOps::removeHs(*mol,false,false);
+  mol2 = MolOps::removeHs(*mol);
   delete mol;
   mol=mol2;
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW);

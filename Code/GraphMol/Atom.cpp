@@ -149,7 +149,7 @@ unsigned int Atom::getTotalDegree() const {
 //
 unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules")
-  int res = getNumExplicitHs() + getNumImplicitHs();
+  int res = getNumImplicitHs();
   if(includeNeighbors){
     ROMol::ADJ_ITER begin,end;
     const ROMol *parent = &getOwningMol();
@@ -164,8 +164,6 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
 }
 
 unsigned int Atom::getNumImplicitHs() const {
-  if(df_noImplicit) return 0;
-  
   PRECONDITION(d_implicitValence>-1,
                "getNumImplicitHs() called without preceding call to calcImplicitValence()");
   return getImplicitValence();
@@ -180,7 +178,7 @@ int Atom::getExplicitValence() const {
 
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
-  unsigned int res=getNumExplicitHs();
+  unsigned int res=0;//getNumExplicitHs();
   unsigned int arom=0;
   ROMol::OEDGE_ITER beg,end;
   boost::tie(beg,end) = getOwningMol().getAtomBonds(this);
@@ -215,42 +213,27 @@ int Atom::calcExplicitValence(bool strict) {
   }
   res += arom;
 
-#if 0
-  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
-  int chr = getFormalCharge();
-  if(isEarlyAtom(d_atomicNum)) chr*=-1;  // <- the usual correction for early atoms
-  if (res > (dv + chr) && this->getIsAromatic()){
-    // this needs some explanation : if the atom is aromatic and
-    // res > (dv + chr) we assume that no hydrogen can be added
-    // to this atom.  We set x = (v + chr) such that x is the
-    // closest possible integer to "res" but less than
-    // "res".
-    //
-    // "v" here is one of the allowed valences. For example:
-    //    sulfur here : O=c1ccs(=O)cc1
-    //    nitrogen here : c1cccn1C
-    //    nitrogen here : c1cc[nH]c1
-    
-    int pval = dv + chr;
-    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi!=-1; ++vi) {
-      int val = (*vi) + chr;
-      if (val > res) {
-        break;
-      } else {
-        pval = val;
-      }
+  // special case for when we call this on an aromatic atom
+  // which could kekulize to having no double bonds to it (we're not
+  // doing the actual kekulization step here, just checking that
+  // it could happen):
+  if(getIsAromatic()&&d_implicitValence>-1){
+    int explicitPlusRadV = res + d_numRadicalElectrons;
+    explicitPlusRadV+=d_implicitValence;
+    unsigned int mdlvalence1 = MDLValence(d_atomicNum,d_formalCharge,explicitPlusRadV);
+    unsigned int mdlvalence2 = MDLValence(d_atomicNum,d_formalCharge,explicitPlusRadV-1);
+    if((mdlvalence1==explicitPlusRadV+1) ||
+       (mdlvalence1==explicitPlusRadV && mdlvalence2==explicitPlusRadV-1)
+       ){
+      --res;
     }
-    res = pval;
   }
-#endif
+  
   d_explicitValence = res;
   return res;
 }
 
 int Atom::getImplicitValence() const {
-  PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
-  if(df_noImplicit) return 0;
   return d_implicitValence;
 }
 
@@ -258,13 +241,16 @@ int Atom::getImplicitValence() const {
 // calcExplicitValence() if it hasn't already been called
 int Atom::calcImplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
-  if(df_noImplicit) return 0;
-  if(d_explicitValence==-1) this->calcExplicitValence();
+  if(df_noImplicit) {
+    if(d_implicitValence<0) d_implicitValence=0;
+  } else {
+    if(d_explicitValence==-1) this->calcExplicitValence();
 
-  int chg = getFormalCharge();
-  int explicitPlusRadV = d_explicitValence + getNumRadicalElectrons()-d_numExplicitHs;
-  unsigned int mdlvalence = MDLValence(d_atomicNum,chg,explicitPlusRadV);
-  d_implicitValence = mdlvalence - explicitPlusRadV;
+    int chg = getFormalCharge();
+    int explicitPlusRadV = d_explicitValence + getNumRadicalElectrons()-d_numExplicitHs;
+    unsigned int mdlvalence = MDLValence(d_atomicNum,chg,explicitPlusRadV);
+    d_implicitValence = mdlvalence - explicitPlusRadV;
+  }
   return d_implicitValence;
 }
 
@@ -394,12 +380,6 @@ std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   try {
     int implicitValence = at.getImplicitValence();
     target << implicitValence;
-  } catch (...){
-    target << "N/A";
-  }
-  target << " expH: ";
-  try {
-    target << at.getNumExplicitHs();
   } catch (...){
     target << "N/A";
   }

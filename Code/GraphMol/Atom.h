@@ -189,10 +189,12 @@ namespace RDKit{
     //! returns the \c noImplicit flag
     bool getNoImplicit() const { return df_noImplicit; };
     
+    //! sets our number of implict Hs
+    void setNumImplicitHs(unsigned int what) { d_implicitValence = what; };
     //! sets our number of explict Hs
-    void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; };
+    void setNumExplicitHs(unsigned int what) { setNumImplicitHs(what); };
     //! returns our number of explict Hs
-    unsigned int getNumExplicitHs() const { return d_numExplicitHs; };
+    unsigned int getNumExplicitHs() const { return getNumImplicitHs(); };
   
     //! sets our \c isAromatic flag, indicating whether or not we are aromatic
     void setIsAromatic( bool what ) { df_isAromatic = what; };
