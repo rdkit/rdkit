@@ -359,6 +359,7 @@ namespace RDKit{
     //     all atoms removed.
     //   - Labelled hydrogen (e.g. atoms with atomic number=1, but isotope > 1),
     //     will not be removed.
+    //   - two coordinate Hs, like the central H in C[H-]C, will not be removed
     //
     ROMol *removeHs(const ROMol &mol,bool implicitOnly,bool updateExplicitCount,bool sanitize){
       unsigned int currIdx=0,origIdx=0;
@@ -373,15 +374,11 @@ namespace RDKit{
 
           if(atom->hasProp("isImplicit")){
             removeIt=true;
-          } else if(!implicitOnly && !atom->getIsotope()){
+          } else if(!implicitOnly && !atom->getIsotope() && atom->getDegree()==1){
             ROMol::ADJ_ITER begin,end;
             boost::tie(begin,end) = res->getAtomNeighbors(atom);
-            while(begin!=end){
-              if(res->getAtomWithIdx(*begin)->getAtomicNum() != 1){
-                removeIt=true;
-                break;
-              }
-              ++begin;
+            if(res->getAtomWithIdx(*begin)->getAtomicNum() != 1){
+              removeIt=true;
             }
           }
 

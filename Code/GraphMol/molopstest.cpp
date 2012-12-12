@@ -4147,6 +4147,27 @@ void testSFNetIssue266() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testSFNetIssue272() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 272: removing two-coordinate Hs" << std::endl;
+
+  {
+    std::string smi="C[H-]C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==3);
+    delete m;
+  }
+  {
+    std::string smi="C[H].C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==2);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 int main(){
   RDLog::InitLogs();
@@ -4207,6 +4228,8 @@ int main(){
   testSFNetIssue256();
 #endif
   testSFNetIssue266();
+  testSFNetIssue266();
+  testSFNetIssue272();
   return 0;
 }
 
