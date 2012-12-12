@@ -701,7 +701,7 @@ namespace RDKit{
         // R labels up to 32. Since there are three digits, we'll accept
         // anything: so long as it's positive and less than 1000:
         if(rLabel>0 && rLabel<999){
-          qatom.setMass(double(rLabel));
+          qatom.setIsotope(rLabel);
         }
         qatom.setQuery(makeAtomNullQuery());
         mol->replaceAtom(atIdx,&qatom); 
@@ -828,15 +828,15 @@ namespace RDKit{
           res->setAtomicNum(0);
         }
         if(massDiff==0&&symb[0]=='R'){
-          if(symb=="R1") res->setMass(1);
-          else if(symb=="R2") res->setMass(2);
-          else if(symb=="R3") res->setMass(3);
-          else if(symb=="R4") res->setMass(4);
-          else if(symb=="R5") res->setMass(5);
-          else if(symb=="R6") res->setMass(6);
-          else if(symb=="R7") res->setMass(7);
-          else if(symb=="R8") res->setMass(8);
-          else if(symb=="R9") res->setMass(9);
+          if(symb=="R1") res->setIsotope(1);
+          else if(symb=="R2") res->setIsotope(2);
+          else if(symb=="R3") res->setIsotope(3);
+          else if(symb=="R4") res->setIsotope(4);
+          else if(symb=="R5") res->setIsotope(5);
+          else if(symb=="R6") res->setIsotope(6);
+          else if(symb=="R7") res->setIsotope(7);
+          else if(symb=="R8") res->setIsotope(8);
+          else if(symb=="R9") res->setIsotope(9);
         }
       } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
         res->setAtomicNum(1); 
