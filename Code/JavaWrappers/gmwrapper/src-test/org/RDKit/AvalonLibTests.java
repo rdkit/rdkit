@@ -93,6 +93,23 @@ public class AvalonLibTests extends GraphMolTest {
 	assertEquals(RDKFuncs.NumOnBitsInCommon(bv1,bv2),bv1.getNumOnBits());
 
     }
+    @Test public void testAvalonTools4() {
+	ROMol m1,m2;
+	m1 = RWMol.MolFromSmiles("c1ccccc1");
+	m2 = RWMol.MolFromSmiles("c1ccccc1C");
+	ExplicitBitVect bv1,bv2;
+	bv1 = new ExplicitBitVect(1024);
+	bv2 = new ExplicitBitVect(1024);
+	RDKFuncs.getAvalonFP(m1,bv1,1024,false,false,RDKFuncs.getAvalonSimilarityBits());
+	RDKFuncs.getAvalonFP(m2,bv2,1024,false,false,RDKFuncs.getAvalonSimilarityBits()
+);
+	assertEquals(RDKFuncs.TanimotoSimilarity(bv1,bv1),1.0,0.001);
+	assertEquals(RDKFuncs.TanimotoSimilarity(bv2,bv2),1.0,0.001);
+	assertTrue(RDKFuncs.TanimotoSimilarity(bv1,bv2)<1.0);
+	assertTrue(bv1.getNumOnBits()>0);
+	assertTrue(bv2.getNumOnBits()>0);
+	assertTrue(bv1.getNumOnBits()<bv2.getNumOnBits());
+    }
 
     public static void main(String args[]) {
         org.junit.runner.JUnitCore.main("org.RDKit.AvalonLibTests");
