@@ -335,7 +335,8 @@ case when the query molecule is derived from a mol block or SMILES.
 
 The general rule used in the RDKit is that if you
 don't specify a property in the query, then it's not used as part of
-the matching criteria. This leads to the following behavior:
+the matching criteria and that Hs are ignored. 
+This leads to the following behavior:
 
 +----------+---------+-------+
 | Molecule | Query   | Match |
@@ -348,9 +349,9 @@ the matching criteria. This leads to the following behavior:
 +----------+---------+-------+
 | CC[O-]   | CC[O-]  | Yes   |
 +----------+---------+-------+
-| CC[O-]   | CC[OH]  | No    |
+| CC[O-]   | CC[OH]  | Yes   |
 +----------+---------+-------+
-| CCOC     | CC[OH]  | No    |
+| CCOC     | CC[OH]  | Yes   |
 +----------+---------+-------+
 | CCOC     | CCO     | Yes   |
 +----------+---------+-------+
@@ -368,7 +369,7 @@ the matching criteria. This leads to the following behavior:
 +----------+---------+-------+
 | OCO      | [CH2]   | Yes   |
 +----------+---------+-------+
-| OCO      | [CH3]   | No    |
+| OCO      | [CH3]   | Yes   |
 +----------+---------+-------+
 | O[CH2]O  | C       | Yes   |
 +----------+---------+-------+

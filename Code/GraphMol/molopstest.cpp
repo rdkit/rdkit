@@ -3488,8 +3488,8 @@ void testAtomAtomMatch(){
      | CC[O-]   | CCO     | Yes   |
      | CCO      | CC[O-]  | No    |
      | CC[O-]   | CC[O-]  | Yes   |
-     | CC[O-]   | CC[OH]  | No    |
-     | CCOC     | CC[OH]  | No    |
+     | CC[O-]   | CC[OH]  | Yes   |
+     | CCOC     | CC[OH]  | Yes   |
      | CCOC     | CCO     | Yes   |
      | CCC      | CCC     | Yes   |
      | CC[14C]  | CCC     | Yes   |
@@ -3497,7 +3497,7 @@ void testAtomAtomMatch(){
      | CC[14C]  | CC[14C] | Yes   |
      | OCO      | C       | Yes   |
      | OCO      | [CH2]   | Yes   |
-     | OCO      | [CH3]   | No    |
+     | OCO      | [CH3]   | Yes   |
      | O[CH2]O  | C       | Yes   |
      | O[CH2]O  | [CH2]   | Yes   |
      | OCO      | [CH]    | Yes   |
@@ -3510,8 +3510,8 @@ void testAtomAtomMatch(){
   aamatchtest("CC[O-]","O",true,2,0);
   aamatchtest("CCO","[O-]",false,2,0);
   aamatchtest("CC[O-]","[O-]",true,2,0);
-  aamatchtest("CC[O-]","[OH]",false,2,0);
-  aamatchtest("CCOC","[OH]",false,2,0);
+  aamatchtest("CC[O-]","[OH]",true,2,0);
+  aamatchtest("CCOC","[OH]",true,2,0);
   aamatchtest("CCOC","O",true,2,0);
   aamatchtest("CCC","C",true,2,0);
   aamatchtest("CC[14C]","C",true,2,0);
@@ -3521,11 +3521,11 @@ void testAtomAtomMatch(){
   aamatchtest("OCO","C",true,1,0);
   aamatchtest("OCO","[CH]",true,1,0);
   aamatchtest("OCO","[CH2]",true,1,0);
-  aamatchtest("OCO","[CH3]",false,1,0);
+  aamatchtest("OCO","[CH3]",true,1,0);
   aamatchtest("O[CH2]O","C",true,1,0);
   aamatchtest("O[CH2]O","[CH]",true,1,0);
   aamatchtest("O[CH2]O","[CH2]",true,1,0);
-  aamatchtest("O[CH2]O","[CH3]",false,1,0);
+  aamatchtest("O[CH2]O","[CH3]",true,1,0);
   aamatchtest("CC","*",false,1,0);
   aamatchtest("C*","*",true,1,0);
   aamatchtest("C[1*]","*",true,1,0);
