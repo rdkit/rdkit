@@ -16,7 +16,7 @@ else
   SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${RDKLIBS}
 endif
 
-SHLIB_LINK += -pthread -lboost_system
+SHLIB_LINK += -pthread
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
