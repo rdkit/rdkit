@@ -12,6 +12,8 @@
 #include <string>
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+#include <sstream>
+#include <locale>
 
 namespace RDKit {
 
@@ -37,6 +39,8 @@ PeriodicTable::PeriodicTable() {
   }
 
   unsigned int lidx=0;
+  std::istringstream istr;
+  istr.imbue(std::locale("C"));
   while(isotopesAtomData[lidx]!="" && isotopesAtomData[lidx]!="EOS"){
    tokenizer lines(isotopesAtomData[lidx++],eolSep);
    boost::char_separator<char> spaceSep(" \t");
@@ -45,15 +49,27 @@ PeriodicTable::PeriodicTable() {
      if(*line!=" "){
        tokenizer tokens(*line,spaceSep);
        tokenizer::iterator token=tokens.begin();
-       int anum = atoi(token->c_str());
+       int anum;
+       istr.clear();
+       istr.str(*token);
+       istr>>anum;
        atomicData &adata=byanum[anum];
        ++token;if(token==tokens.end()) continue;
        ++token;if(token==tokens.end()) continue;
-       unsigned int isotope=static_cast<unsigned int>(atoi(token->c_str()));
+       unsigned int isotope;
+       istr.clear();
+       istr.str(*token);
+       istr>>isotope;
        ++token;if(token==tokens.end()) continue;
-       double mass=atof(token->c_str());
+       double mass;
+       istr.clear();
+       istr.str(*token);
+       istr>>mass;
        ++token;if(token==tokens.end()) continue;
-       double abundance=atof(token->c_str());
+       double abundance;
+       istr.clear();
+       istr.str(*token);
+       istr>>abundance;
        adata.d_isotopeInfoMap[isotope]=std::make_pair(mass,abundance);
      }
    }

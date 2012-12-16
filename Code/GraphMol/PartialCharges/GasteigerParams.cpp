@@ -14,6 +14,8 @@ typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
+#include <sstream>
+#include <locale>
 
 namespace RDKit {
   
@@ -50,6 +52,8 @@ X       *       0.00    0.00    0.00 \n \
     if(paramData=="") paramData=defaultParamData;
     tokenizer lines(paramData,eolSep);
     d_paramMap.clear();
+    std::istringstream istr;
+    istr.imbue(std::locale("C"));
     for(tokenizer::iterator lineIter=lines.begin();
 	lineIter!=lines.end();++lineIter){
       std::string dataLine = *lineIter;
@@ -64,14 +68,21 @@ X       *       0.00    0.00    0.00 \n \
 	++tokIter;
 
 	// read in the parameters
-	DOUBLE_VECT params;
-	params.reserve(3);
-	params.push_back(atof(tokIter->c_str()));
-	++tokIter;
-	params.push_back(atof(tokIter->c_str()));
-	++tokIter;
-	params.push_back(atof(tokIter->c_str()));
-	++tokIter;
+	DOUBLE_VECT params(3);
+
+        istr.clear();
+        istr.str(*tokIter);
+        istr>>params[0];
+        ++tokIter;
+        istr.clear();
+        istr.str(*tokIter);
+        istr>>params[1];
+        ++tokIter;
+        istr.clear();
+        istr.str(*tokIter);
+        istr>>params[2];
+        ++tokIter;
+
 	std::pair<std::string, std::string> key(elem, mode);
 	d_paramMap[key] = params;
       }

@@ -974,14 +974,14 @@ void testMolFileRGroups(){
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==2);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),2));
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
 
  
   TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),1));
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
 
   //  test sf.net issue 3316600:
   TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
@@ -1028,13 +1028,13 @@ void testMolFileRGroups(){
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),1));
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),1));
   
   TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),1));
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
 
   smi = "C1C(O)C1C";
   m2 = SmilesToMol(smi,false,false);
@@ -1066,12 +1066,12 @@ void testMolFileRGroups(){
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==11);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),11));
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),11));
   TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==503);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),503));
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),503));
   
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -2867,7 +2867,8 @@ void testIssue3525799(){
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
     std::string smiles = MolToSmiles(*m,true);
-    TEST_ASSERT(smiles=="[*]c1oc2c([*])c([*])c([*])c([*])c2c(=O)c1-c1c([*])c([*])c([*])c([*])c1[*]");
+    std::cerr<<"smiles: "<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="[1*]c1c([2*])c([3*])c([4*])c(-c2c([9*])oc3c([8*])c([7*])c([6*])c([5*])c3c2=O)c1[10*]");
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

@@ -821,6 +821,9 @@ void testPeriodicTable()
   TEST_ASSERT(PeriodicTable::getTable()->getNouterElecs(6)==4);
   TEST_ASSERT(PeriodicTable::getTable()->getMostCommonIsotope(6)==12);
   TEST_ASSERT(PeriodicTable::getTable()->getMostCommonIsotopeMass(6)==12.0);
+  TEST_ASSERT(PeriodicTable::getTable()->getMostCommonIsotopeMass(6)==12.0);
+  TEST_ASSERT(feq(PeriodicTable::getTable()->getMostCommonIsotopeMass(4),9.0122,1e-4));
+  TEST_ASSERT(feq(PeriodicTable::getTable()->getRb0(6),0.77,1e-2));
 
   TEST_ASSERT(PeriodicTable::getTable()->getDefaultValence(26)==-1);
   TEST_ASSERT(PeriodicTable::getTable()->getDefaultValence(57)==-1);

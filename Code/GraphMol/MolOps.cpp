@@ -215,13 +215,16 @@ namespace RDKit{
       for (ROMol::ConstAtomIterator ai = mol.beginAtoms();
            ai != mol.endAtoms(); ++ai) {
         int valence = (*ai)->getExplicitValence();
-        int effectiveValence;
+        int effectiveValence=valence;
+        if((*ai)->getNoImplicit()){
+          effectiveValence += (*ai)->getNumImplicitHs();
+        }
         if(PeriodicTable::getTable()->getNouterElecs((*ai)->getAtomicNum())>=4){
-            effectiveValence=valence-(*ai)->getFormalCharge();
+            effectiveValence-=(*ai)->getFormalCharge();
         } else {
           // for boron and co, we move to the right in the PT, so adding
           // extra valences means adding negative charge
-          effectiveValence=valence+(*ai)->getFormalCharge();
+          effectiveValence+=(*ai)->getFormalCharge();
         }
         const INT_VECT &valens = PeriodicTable::getTable()->getValenceList((*ai)->getAtomicNum());
         int maxValence=*(valens.rbegin());
@@ -300,6 +303,8 @@ namespace RDKit{
       }
       
       // then do aromaticity perception
+      std::cerr<<" pre aromaticity "<<std::endl;
+      mol.debugMol(std::cerr);
       operationThatFailed = SANITIZE_SETAROMATICITY;
       if(sanitizeOps & operationThatFailed){
         setAromaticity(mol);

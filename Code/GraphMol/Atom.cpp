@@ -15,6 +15,7 @@
 #include "PeriodicTable.h"
 #include "SanitException.h"
 #include "MDLValence.h"
+#include "QueryOps.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/types.h>
@@ -289,29 +290,11 @@ bool Atom::Match(Atom const *what) const {
     } else {
       // standard atom-atom match: The general rule here is that if this atom has a property that
       // deviates from the default, then the other atom should match that value.
-
-      // start by checking charge:
       if( (this->getFormalCharge() && this->getFormalCharge()!=what->getFormalCharge()) ||
-          (this->getNumImplicitHs() && this->getNumImplicitHs()>what->getNumImplicitHs())  // <- potential problem here with sanitization
-          ){  
+          (this->getIsotope() && this->getIsotope()!=what->getIsotope()) ){
         res=false;
-      } else {
-        if(this->getIsotope()){
-          if(this->getIsotope()!=what->getIsotope()){
-            res=false;
-          }
-        } else {
-          int massDiff1=fabs(PeriodicTable::getTable()->getAtomicWeight(this->getAtomicNum()) -
-                             this->getMass());
-          if(massDiff1>0.001){
-            double massDiff2=fabs(PeriodicTable::getTable()->getAtomicWeight(what->getAtomicNum()) -
-                                  what->getMass());
-            if(fabs(massDiff1-massDiff2)>0.001) res=false;
-          }
-        }
       }
     }
-    
   }
   return res;
 }
