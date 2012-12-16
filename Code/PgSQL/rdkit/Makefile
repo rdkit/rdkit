@@ -46,9 +46,7 @@ REGRESS    = rdkit-91 props btree molgist bfpgist-91 sfpgist slfpgist fps ${INCH
 DATA = $(EXTENSION)--$(EXTVERSION).sql
 EXTRA_CLEAN = $(EXTENSION)--$(EXTVERSION).sql
 else
-DATA_built = rdkit.sql
-DATA = uninstall_rdkit.sql
-REGRESS = rdkit-pre91 props btree molgist bfpgist-pre91 sfpgist slfpgist fps ${INCHIREGRESS}
+$(error Pre v9.1 versions of postgresql are no longer supported)
 endif
 include $(PGXS)
 
