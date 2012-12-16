@@ -208,7 +208,7 @@ def Chi1(mol):
 Chi1.version="1.0.0"
   
 def _nVal(atom):
-  return periodicTable.GetNOuterElecs(atom.GetAtomicNum())-atom.GetTotalNumHs()
+  return periodicTable.GetNOuterElecs(atom.GetAtomicNum())-atom.GetNumImplicitHs()
 
 def _hkDeltas(mol,skipHs=1):
   global periodicTable

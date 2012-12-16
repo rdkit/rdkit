@@ -83,11 +83,11 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles(smi)
     at = mol.GetAtomWithIdx(5)
     assert at.GetHybridization()==Chem.HybridizationType.SP2,'bad hyb'
-    assert at.GetTotalNumHs()==1,'bad H count'
+    assert at.GetNumImplicitHs()==1,'bad H count'
 
     mol = Chem.MolFromSmiles(smi)
     at = mol.GetAtomWithIdx(5)
-    assert at.GetTotalNumHs()==1,'bad H count'
+    assert at.GetNumImplicitHs()==1,'bad H count'
     assert at.GetHybridization()==Chem.HybridizationType.SP2,'bad hyb'
 
 
