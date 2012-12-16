@@ -20,11 +20,11 @@ SHLIB_LINK += -pthread
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
-  
-PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"006000"' ${INCHIFLAGS} -Wall
+
+PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"006000"' ${INCHIFLAGS} -Wall -DUSE_BUILTIN_POPCOUNT -msse4.2
 
 CPLUSPLUSFLAGS = $(filter-out -fexcess-precision=standard -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
-CPLUSPLUSFLAGS += -Wno-unused-function
+CPLUSPLUSFLAGS += -Wno-unused-function 
 #CPLUSPLUSFLAGS += -march=native
 CPLUSPLUSFLAGS += $(PG_CPPFLAGS)
 

@@ -306,11 +306,17 @@ hemdistsign(bytea *a, bytea *b)
 
   if (SIGLEN(a) != SIGLEN(b))
     elog(ERROR, "All fingerprints should be the same length");
+#ifndef USE_BUILTIN_POPCOUNT
   for(i=0;i<SIGLEN(a);i++)
     {
       diff = as[i] ^ bs[i];
       dist += number_of_ones[diff];
     }
+#else
+  for(i=0;i<SIGLEN(a)/sizeof(unsigned int);++i){
+    dist += __builtin_popcount(((unsigned int *)as)[i] ^ ((unsigned int *)bs)[i]);
+  }
+#endif
   return dist;
 }
                                                                                                                                          
@@ -765,8 +771,14 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
       if (SIGLEN(key) != SIGLEN(query))
         elog(ERROR, "All fingerprints should be the same length");
 
+#ifndef USE_BUILTIN_POPCOUNT
       for(i=0;i<SIGLEN(key);i++)
-        cnt += number_of_ones[ pk[i] & pq[i] ]; 
+        cnt += number_of_ones[ pk[i] & pq[i] ];
+#else
+      for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
+        cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+      }
+#endif      
 
       nCommon = (double)cnt;
       if (GIST_LEAF(entry))
@@ -822,8 +834,14 @@ gbfp_distance(PG_FUNCTION_ARGS)
         if (SIGLEN(key) != SIGLEN(query))
             elog(ERROR, "All fingerprints should be the same length");
 
+#ifndef USE_BUILTIN_POPCOUNT
         for(i=0;i<SIGLEN(key);i++)
             cnt += number_of_ones[ pk[i] & pq[i] ];
+#else
+        for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
+          cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+        }
+#endif        
 
         nCommon = (double)cnt;
         if (GIST_LEAF(entry))
