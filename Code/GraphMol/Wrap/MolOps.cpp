@@ -400,7 +400,7 @@ namespace RDKit{
 \n";
       python::def("SanitizeMol", sanitizeMol,
                   (python::arg("mol"),
-                   python::arg("sanitizeOps")=MolOps::SANITIZE_ALL,
+                   python::arg("sanitizeOps")=static_cast<unsigned int>(MolOps::SANITIZE_ALL),
                    python::arg("catchErrors")=false),
                   docString.c_str());
 
