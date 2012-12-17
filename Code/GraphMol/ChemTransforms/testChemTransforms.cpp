@@ -1028,6 +1028,43 @@ void testAddRecursiveQueries()
 }
 
 
+void testParseQueryDefFile() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing parsing query definition file" << std::endl;
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/ChemTransforms/testData/query_file1.txt";
+    std::map<std::string,ROMOL_SPTR> qdefs;
+    parseQueryDefFile(pathName,qdefs);
+    TEST_ASSERT(!qdefs.empty());
+    TEST_ASSERT(qdefs.size()==7);
+    TEST_ASSERT(qdefs.find("AcidChloride")!=qdefs.end());    
+    TEST_ASSERT(qdefs.find("AcideChloride")==qdefs.end());    
+    TEST_ASSERT(qdefs.find("AcidChloride.Aliphatic")!=qdefs.end());    
+    TEST_ASSERT(qdefs.find("CarboxylicAcid.AlphaAmino")!=qdefs.end());    
+
+    std::string msmi="CCC(=O)Cl";
+    ROMol *mmol=SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*mmol,*(qdefs["AcidChloride"]),mv));
+    delete mmol;    
+
+  }
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/ChemTransforms/testData/query_file2.txt";
+    std::map<std::string,ROMOL_SPTR> qdefs;
+    parseQueryDefFile(pathName,qdefs);
+    TEST_ASSERT(qdefs.empty());
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
+
 
 
 int main() { 
@@ -1054,6 +1091,7 @@ int main() {
   testCombineMols();
 #endif
   testAddRecursiveQueries();
+  testParseQueryDefFile();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

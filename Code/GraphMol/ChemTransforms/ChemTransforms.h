@@ -12,6 +12,9 @@
 
 #include <boost/smart_ptr.hpp>
 #include <vector>
+#include <iostream>
+
+
 
 namespace RDKit{
   class ROMol;
@@ -155,6 +158,14 @@ namespace RDKit{
       
   */
   void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName);
+
+  void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         std::string delimiter="\t",std::string comment="//",int nameColumn=0,int smartsColumn=1);
+  void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         std::string delimiter="\t",std::string comment="//",int nameColumn=0,int smartsColumn=1);
+  
+  
+  
 
 }
 

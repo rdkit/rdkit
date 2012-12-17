@@ -1,4 +1,5 @@
-rdkit_library(ChemTransforms ChemTransforms.cpp LINK_LIBRARIES SubstructMatch)
+rdkit_library(ChemTransforms ChemTransforms.cpp LINK_LIBRARIES
+SubstructMatch SmilesParse )
 
 rdkit_headers(ChemTransforms.h DEST GraphMol/ChemTransforms)
 
