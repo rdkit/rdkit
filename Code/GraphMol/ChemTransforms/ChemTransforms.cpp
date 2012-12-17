@@ -11,9 +11,13 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/RDKitQueries.h>
+#include <RDBoost/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <vector>
 #include <algorithm>
 
@@ -538,5 +542,51 @@ namespace RDKit{
     res->clearComputedProps(true);
     return (ROMol *)res;
   }    
+
+
+  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName){
+    std::string delim=",";
+    boost::char_separator<char> sep(delim.c_str());
+
+    ROMol::VERTEX_ITER atBegin,atEnd;
+    boost::tie(atBegin,atEnd) = mol.getVertices();
+    while(atBegin!=atEnd){
+      Atom *at=mol[*atBegin].get();
+      ++atBegin;
+      if(!at->hasProp(propName)) continue;
+      std::string pval;
+      at->getProp(propName,pval);
+
+      QueryAtom::QUERYATOM_QUERY *qToAdd;
+      if(pval.find(delim)!=std::string::npos){
+        boost::tokenizer<boost::char_separator<char> > tokens(pval,sep);
+        boost::tokenizer<boost::char_separator<char> >::iterator token;
+        qToAdd = new ATOM_OR_QUERY();
+        for(token=tokens.begin();token!=tokens.end();++token){
+          std::map<std::string,ROMOL_SPTR>::const_iterator iter=queries.find(*token);
+          if(iter==queries.end()) {
+            throw KeyErrorException(pval);
+          }
+          RecursiveStructureQuery *tqp= new RecursiveStructureQuery(new ROMol(*(iter->second)));
+          boost::shared_ptr<RecursiveStructureQuery> nq(tqp);
+          qToAdd->addChild(nq);
+        }
+      } else {
+        std::map<std::string,ROMOL_SPTR>::const_iterator iter=queries.find(pval);
+        if(iter==queries.end()) {
+          throw KeyErrorException(pval);
+        }
+        qToAdd= new RecursiveStructureQuery(new ROMol(*(iter->second)));
+      }
+      if(!at->hasQuery()){
+        QueryAtom qAt(*at);
+        static_cast<RWMol &>(mol).replaceAtom(at->getIdx(),&qAt);
+        at = mol.getAtomWithIdx(at->getIdx());
+      }
+      at->expandQuery(qToAdd,Queries::COMPOSITE_AND);
+    }
+    
+  }
+
 
 }  // end of namespace RDKit

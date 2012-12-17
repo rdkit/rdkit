@@ -29,6 +29,18 @@
 namespace python = boost::python;
 
 namespace RDKit{
+  void addRecursiveQueriesHelper(ROMol &mol,python::dict replDict,std::string propName){
+    std::map<std::string,ROMOL_SPTR> replacements;
+    for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
+      ROMol *m=python::extract<ROMol *>(replDict.values()[i]);
+      ROMOL_SPTR nm(new ROMol(*m));
+      std::string k=python::extract<std::string>(replDict.keys()[i]);
+      replacements[k]=nm;
+    }
+    addRecursiveQueries(mol,replacements,propName);
+    
+  }
+
   ROMol *addHs(const ROMol &orig,bool explicitOnly=false,bool addCoords=false){
     return MolOps::addHs(orig,explicitOnly,addCoords);
   }
@@ -590,6 +602,13 @@ namespace RDKit{
                   (python::arg("mol"),python::arg("query"),
                    python::arg("replacement"),
                    python::arg("replaceAll")=false),
+                  docString.c_str());
+
+      // ------------------------------------------------------------------------
+      docString="Adds named recursive queries to atoms\n";
+      python::def("MolAddRecursiveQueries",addRecursiveQueriesHelper,
+                  (python::arg("mol"),python::arg("queries"),
+                   python::arg("propName")),
                   docString.c_str());
 
       // ------------------------------------------------------------------------

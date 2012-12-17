@@ -17,6 +17,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDBoost/Exceptions.h>
 
 using namespace RDKit;
 
@@ -921,6 +923,110 @@ void testCombineMols()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testAddRecursiveQueries() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing adding recursive queries to a molecule" << std::endl;
+
+  {
+    std::string smi1="CC";
+    ROMol *mol1=SmilesToMol(smi1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    TEST_ASSERT(!mol1->getAtomWithIdx(0)->hasQuery());
+    addRecursiveQueries(*mol1,mp,"replaceme");
+    TEST_ASSERT(!mol1->getAtomWithIdx(0)->hasQuery());
+    mol1->getAtomWithIdx(0)->setProp("replaceme","foo");
+    addRecursiveQueries(*mol1,mp,"replaceme");
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
+    TEST_ASSERT(!mol1->getAtomWithIdx(1)->hasQuery());
+
+    mol1->getAtomWithIdx(0)->setProp("replaceme","bar");
+    bool ok=false;
+    try{
+      addRecursiveQueries(*mol1,mp,"replaceme");
+    } catch (KeyErrorException) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    delete mol1;
+
+  }
+
+  {
+    std::string smi1="CC";
+    ROMol *mol1=SmilesToMol(smi1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    smi2="OC";
+    ROMOL_SPTR q2(SmilesToMol(smi2));
+    mp["bar"]=q2;
+
+    mol1->getAtomWithIdx(0)->setProp("replaceme","foo");
+    mol1->getAtomWithIdx(1)->setProp("replaceme","bar");
+    addRecursiveQueries(*mol1,mp,"replaceme");
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
+    TEST_ASSERT(mol1->getAtomWithIdx(1)->getQuery()->getDescription()=="AtomAnd");
+
+    delete mol1;
+  }
+
+  {
+    std::string smi1="CC";
+    ROMol *mol1=SmilesToMol(smi1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    smi2="CN";
+    ROMOL_SPTR q2(SmilesToMol(smi2));
+    mp["bar"]=q2;
+
+    mol1->getAtomWithIdx(0)->setProp("replaceme","foo,bar");
+    addRecursiveQueries(*mol1,mp,"replaceme");
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(!mol1->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
+
+    MatchVectType mv;
+    std::string msmi="CCC";
+    ROMol *mmol=SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    TEST_ASSERT(!SubstructMatch(*mmol,*mol1,mv));
+    delete mmol;
+
+    msmi="CCO";
+    mmol=SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    TEST_ASSERT(SubstructMatch(*mmol,*mol1,mv));
+    delete mmol;    
+
+    msmi="CCN";
+    mmol=SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    TEST_ASSERT(SubstructMatch(*mmol,*mol1,mv));
+    delete mmol;    
+
+    delete mol1;
+  }
+
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 
@@ -934,7 +1040,6 @@ int main() {
   testDeleteSubstruct();
   testReplaceSubstructs();
   testReplaceSidechains();
-#endif
   testReplaceCore();
   testReplaceCoreLabels();
   testReplaceCoreCrash();
@@ -947,6 +1052,8 @@ int main() {
   testIssue3537675();
 
   testCombineMols();
+#endif
+  testAddRecursiveQueries();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

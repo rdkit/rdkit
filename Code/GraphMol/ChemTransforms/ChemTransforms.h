@@ -135,7 +135,27 @@ namespace RDKit{
   ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
                      RDGeom::Point3D offset=RDGeom::Point3D(0,0,0));
   
-  
+  //! \brief Adds named recursive queries to a molecule's atoms based on atom labels
+  //!
+  /*!
+
+      \param mol            - the molecule to be modified
+      \param queries        - the dictionary of named queries to add
+      \param propName       - the atom property to use to get query names
+
+
+      NOTES:
+        - existing query information, if present, will be supplemented (AND logic)
+        - non-query atoms will be replaced with query atoms using only the query
+          logic
+        - query names can be present as comma separated lists, they will then
+          be combined using OR logic.
+        - throws a KeyErrorException if a particular query name is not present
+          in \c queries
+      
+  */
+  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName);
+
 }
 
 #endif
