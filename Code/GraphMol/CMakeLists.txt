@@ -7,7 +7,7 @@ rdkit_library(GraphMol
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               SHARED 
               LINK_LIBRARIES RDGeometryLib RDGeneral 
-                 ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+                 ${RDKit_THREAD_LIBS})
 
 rdkit_headers(Atom.h
               atomic_data.h

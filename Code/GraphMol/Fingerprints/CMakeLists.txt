@@ -1,7 +1,7 @@
 rdkit_library(Fingerprints
               Fingerprints.cpp MorganFingerprints.cpp AtomPairs.cpp
               LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse GraphMol
-                ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+                ${RDKit_THREAD_LIBS} )
 
 rdkit_headers(AtomPairs.h
               Fingerprints.h
