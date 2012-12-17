@@ -16,15 +16,23 @@ enable_testing()
 set(CMAKE_MODULE_PATH 
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
-option(RDK_BUILD_SWIG_WRAPPERS "build the experimental SWIG wrappers" OFF )
+option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "build the standard python wrappers" ON )
 option(RDK_BUILD_COMPRESSED_SUPPLIERS "build in support for compressed MolSuppliers" OFF )
 option(RDK_BUILD_INCHI_SUPPORT "build the rdkit inchi wrapper" OFF )
 option(RDK_BUILD_AVALON_SUPPORT "install support for the avalon toolkit. Use the variable AVALONTOOLS_DIR to set the location of the source." OFF )
 option(RDK_INSTALL_INTREE "install the rdkit in the source tree (former behavior)" ON )
 option(RDK_INSTALL_STATIC_LIBS "install the rdkit static libraries" ON )
+option(RDK_BUILD_THREADSAFE_SSS "enable thread-safe substructure searching (requires boost.thread)" OFF )
 option(RDK_BUILD_SLN_SUPPORT "include support for the SLN format" ON )
 option(RDK_TEST_MULTITHREADED "run some tests of multithreading" OFF )
+option(RDK_BUILD_SWIG_JAVA_WRAPPER "build the SWIG JAVA wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" ON )
+option(RDK_BUILD_SWIG_CSHARP_WRAPPER "build the experimental SWIG C# wrappers (does nothing if RDK_BUILD_SWIG_WRAPPERS is not set)" OFF )
+
+if(RDK_BUILD_SWIG_WRAPPERS!=ON)
+  set(RDK_BUILD_SWIG_JAVA_WRAPPER OFF)
+  set(RDK_BUILD_SWIG_CSHARP_WRAPPER OFF)
+endif()
 
 include(TestBigEndian)
 TEST_BIG_ENDIAN(RDK_BIG_ENDIAN)
@@ -40,7 +48,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 # Config variables:
 set(RDKit_Year "2012")
 set(RDKit_Month "09")
-set(RDKit_Revision "1")
+set(RDKit_Revision "2")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
@@ -146,9 +154,15 @@ string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
 
 if(RDK_TEST_MULTITHREADED)
   ADD_DEFINITIONS("-DRDK_TEST_MULTITHREADED")
-  find_package(Boost 1.39.0 COMPONENTS thread REQUIRED)
+endif()
+
+find_package (Threads)
+if(RDK_BUILD_THREADSAFE_SSS)
+  find_package(Boost 1.39.0 COMPONENTS thread system REQUIRED)
+  ADD_DEFINITIONS("-DRDK_THREADSAFE_SSS")
+  set(RDKit_THREAD_LIBS ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 else()
-  set(Boost_THREAD_LIBRARY )
+  set(RDKit_THREAD_LIBS ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 

@@ -17,7 +17,10 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <Query/QueryObjects.h>
+
+#ifdef RDK_THREADSAFE_SSS
 #include <boost/thread/mutex.hpp>
+#endif
 
 namespace RDKit{
   typedef Queries::Query<bool,Atom const *,true> ATOM_BOOL_QUERY;
@@ -310,7 +313,9 @@ namespace RDKit{
     }
     unsigned int getSerialNumber() const { return d_serialNumber; };
   
+#ifdef RDK_THREADSAFE_SSS
     boost::mutex d_mutex;
+#endif
   private:
     boost::shared_ptr<const ROMol>dp_queryMol;
     unsigned int d_serialNumber;
