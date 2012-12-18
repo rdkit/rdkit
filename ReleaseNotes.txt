@@ -1,3 +1,10 @@
+******  Release_2012.09.2 *******
+(Changes relative to Release_2012.09.2)
+
+This release contains neither new functionality nor bug fixes. It is
+focused on making the RDKit easier to build for most users and adding
+support for 64bit windows builds.
+
 ******  Release_2012.09.1 *******
 (Changes relative to Release_2012.06.1)
 
