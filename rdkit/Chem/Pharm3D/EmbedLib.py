@@ -67,17 +67,16 @@ def ReplaceGroup(match,bounds,slop=0.01,useDirs=False,dirLength=defaultFeatLengt
    >>> bm,idx = ReplaceGroup(match,boundsMat,slop=0.0)
 
    the index is at the end:
-   >>> idx
-   3
+   >>> idx==3
+   True
 
    and the matrix is one bigger:
-   >>> bm.shape
-   (4, 4)
+   >>> bm.shape[0]==bm.shape[1]==4
+   True
 
    but the original bounds mat is not altered:
-   >>> boundsMat.shape
-   (3, 3)
-
+   >>> boundsMat.shape[0]==boundsMat.shape[1]==3
+   True
    
    We make the assumption that the points of the
    feature form a regular polygon, are listed in order
@@ -155,8 +154,8 @@ def EmbedMol(mol,bm,atomMatch=None,weight=2.0,randomSeed=-1,
 
   >>> m = Chem.MolFromSmiles('c1ccccc1C')
   >>> bounds = MolDG.GetMoleculeBoundsMatrix(m)
-  >>> bounds.shape
-  (7, 7)
+  >>> bounds.shape[0]==bounds.shape[1]==7
+  True
   >>> m.GetNumConformers()
   0
   >>> EmbedMol(m,bounds,randomSeed=23)
@@ -204,12 +203,12 @@ def AddExcludedVolumes(bm,excludedVolumes,smoothIt=True):
    >>> bm = AddExcludedVolumes(boundsMat,(ev1,))
 
    the results matrix is one bigger:
-   >>> bm.shape
-   (4, 4)
+   >>> bm.shape[0]==bm.shape[1]==4
+   True
 
    and the original bounds mat is not altered:
-   >>> boundsMat.shape
-   (3, 3)
+   >>> boundsMat.shape[0]==boundsMat.shape[1]==3
+   True
 
    >>> print ', '.join(['%.3f'%x for x in bm[-1]])
    0.500, 1.500, 1.500, 0.000
@@ -829,13 +828,12 @@ def DownsampleBoundsMatrix(bm,indices,maxThresh=4.0):
 
    >>> boundsMat = numpy.array([[0.0,3.0,4.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,),3.5)
-   >>> bm.shape
-   (2, 2)
+   >>> bm.shape[0]==bm.shape[1]==2
+   True
 
    we don't touch the input matrix:
-   >>> boundsMat.shape
-   (3, 3)
-   
+   >>> boundsMat.shape[0]==boundsMat.shape[1]==3
+   True
    >>> print ', '.join(['%.3f'%x for x in bm[0]])
    0.000, 3.000
    >>> print ', '.join(['%.3f'%x for x in bm[1]])
@@ -844,15 +842,15 @@ def DownsampleBoundsMatrix(bm,indices,maxThresh=4.0):
    if the threshold is high enough, we don't do anything:
    >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,),5.0)
-   >>> bm.shape
-   (3, 3)
+   >>> bm.shape[0]==bm.shape[1]==3
+   True
 
    If there's a max value that's close enough to *any* of the indices
    we pass in, we'll keep it:
    >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
    >>> bm = DownsampleBoundsMatrix(boundsMat,(0,1),3.5)
-   >>> bm.shape
-   (3, 3)
+   >>> bm.shape[0]==bm.shape[1]==3
+   True
   
   """
   nPts = bm.shape[0]
