@@ -1063,9 +1063,27 @@ void testParseQueryDefFile()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testIssue275() 
+{
+  ROMol *mol1=0,*matcher1=0,*replacement=0;
+  std::string smi,sma;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sf.net issue 275: Murcko decomposition with chiral atoms"<< std::endl;
 
+  {
+    std::string smi = "CCCCC[C@H]1CC[C@H](C(=O)O)CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    ROMol *nMol=MurckoDecompose(*mol);
+    smi = MolToSmiles(*nMol,true);
+    TEST_ASSERT(smi=="C1CCCCC1");
+    delete mol;
+    delete nMol;
+  }
 
-
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 int main() { 
   RDLog::InitLogs();
@@ -1089,9 +1107,10 @@ int main() {
   testIssue3537675();
 
   testCombineMols();
-#endif
   testAddRecursiveQueries();
   testParseQueryDefFile();
+#endif
+  testIssue275();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

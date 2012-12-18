@@ -518,6 +518,8 @@ namespace RDKit{
       res->removeAtom(*atomIt);
     }
     updateSubMolConfs(mol,*res,removedAtoms);
+    res->clearComputedProps();
+    
     return (ROMol *)res;
   }
 
