@@ -80,11 +80,11 @@ namespace RDKit{
     }
     
   }
-#ifdef RDK_32BIT_BUILD
-  MolOps::SanitizeFlags sanitizeMol(ROMol &mol,int sanitizeOps,
+#if defined(RDK_32BIT_BUILD)
+  MolOps::SanitizeFlags sanitizeMol(ROMol &mol,boost::uint32_t sanitizeOps,
                                     bool catchErrors) {
 #else
-  MolOps::SanitizeFlags sanitizeMol(ROMol &mol,unsigned int sanitizeOps,
+    MolOps::SanitizeFlags sanitizeMol(ROMol &mol,boost::int64_t sanitizeOps,
                                     bool catchErrors) {
 #endif    
     RWMol &wmol = static_cast<RWMol &>(mol);
