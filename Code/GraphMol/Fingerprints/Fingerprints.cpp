@@ -299,6 +299,126 @@ namespace RDKit{
       }
     } // end of canonicalizePath
 
+
+    void getPathBondHashes(const PATH_TYPE &path,
+                           const ROMol &mol,
+                           const std::vector<const Bond *> &bondCache,
+                           const std::vector<uint32_t> &atomInvariants,
+                           bool useBondOrder,
+                           std::vector< uint64_t > & res){
+      PRECONDITION(atomInvariants.size()>=mol.getNumAtoms(),"bad invariant vector");
+      res.resize(0);
+
+      if(path.size()==1){
+        uint64_t bondHash=1;
+        const Bond *bi=bondCache[path[0]];
+        if(useBondOrder){
+          if(bi->getIsAromatic()){
+            // makes sure aromatic bonds always hash the same:
+            bondHash = Bond::AROMATIC;
+          } else {
+            bondHash = bi->getBondType();
+          }
+        }
+        res.push_back(bondHash*atomInvariants[bi->getBeginAtomIdx()]*atomInvariants[bi->getEndAtomIdx()]);
+        return;
+      }
+
+      // set up the bond adjacency matrix:
+#ifndef RDK_USE_EIGEN3
+      RDNumeric::SquareMatrix<uint64_t> adjMat(path.size(),0);
+#else
+      typedef Eigen::Matrix<uint64_t,Eigen::Dynamic,Eigen::Dynamic> AdjMatType;
+      AdjMatType adjMat=AdjMatType::Zero(path.size(),path.size());
+#endif      
+#ifdef VERBOSE_FINGERPRINTING
+      BOOST_FOREACH(unsigned int i,path){
+        const Bond *bi = bondCache[i];
+        std::cerr<<"      "<<i<<" "<<bi->getBeginAtomIdx()<<"-"<<bi->getEndAtomIdx()<<std::endl;
+      }
+#endif
+      std::map<unsigned int,unsigned int> bondsInPath;
+      BOOST_FOREACH(unsigned int i,path){
+        bondsInPath[i]=bondsInPath.size()-1;
+      }
+
+      for(PATH_TYPE::const_iterator ii=path.begin();ii!=path.end();++ii){
+        unsigned int i=*ii;
+        const Bond *bi = bondCache[i];
+        uint64_t bondHash=1;
+        if(useBondOrder){
+          if(bi->getIsAromatic()){
+            // makes sure aromatic bonds always hash the same:
+            bondHash = Bond::AROMATIC;
+          } else {
+            bondHash = bi->getBondType();
+          }
+        }
+        
+#ifndef RDK_USE_EIGEN3
+        adjMat.setVal(bondsInPath[i],bondsInPath[i],bondHash);
+#else
+        adjMat(bondsInPath[i],bondsInPath[i])=bondHash;
+#endif
+        for(PATH_TYPE::const_iterator ji=(ii+1);ji!=path.end();++ji){
+          unsigned int j=*ji;
+          const Bond *bj = bondCache[j];
+          unsigned int a1=bi->getBeginAtomIdx();
+          bool found=false;
+          if(a1==bj->getBeginAtomIdx() || a1==bj->getEndAtomIdx()){
+            found=true;
+          } else {
+            a1 = bi->getEndAtomIdx();
+            if(a1==bj->getBeginAtomIdx() || a1==bj->getEndAtomIdx()){
+              found=true;
+            }
+          }
+          if(found){
+#ifndef RDK_USE_EIGEN3
+            adjMat.setVal(bondsInPath[i],bondsInPath[j],atomInvariants[a1]);
+            adjMat.setVal(bondsInPath[j],bondsInPath[i],atomInvariants[a1]);
+#else
+            adjMat(bondsInPath[i],bondsInPath[j])=atomInvariants[a1];
+            adjMat(bondsInPath[j],bondsInPath[i])=atomInvariants[a1];
+#endif
+          }
+        }
+      }  
+      // now do a series of "morgan iterations" by repeatedly multiplying the
+      // adjacency matrix by itself.
+#ifndef RDK_USE_EIGEN3
+      // RDNumeric::SquareMatrix<uint64_t> adjMat2(adjMat);
+      // adjMat2*=adjMat;
+      // RDNumeric::SquareMatrix<uint64_t> accumMat(adjMat);
+      // unsigned int iter=1;
+      // while(iter<path.size()/2+1){
+      //   if(iter*2<=path.size()/2+1){
+      //     accumMat *= accumMat;
+      //     iter*=2;
+      //   } else {
+      //     accumMat *= adjMat2;
+      //     iter+=2;
+      //   }
+      // }
+      RDNumeric::SquareMatrix<uint64_t> accumMat(adjMat);
+      unsigned int iter=1;
+      while(iter<path.size()){
+        accumMat *= adjMat;
+        ++iter;
+      }
+#else
+      AdjMatType accumMat=adjMat;
+      for(unsigned int i=0;i<path.size();++i){
+        accumMat *= adjMat;
+      }
+#endif
+      for(unsigned int i=0;i<path.size();++i){
+        res.push_back(accumMat.getVal(i,i));
+      }
+
+    } // end of getPathBondHashes
+
+    
   } // end of anonymous namespace
 
   // caller owns the result, it must be deleted
@@ -410,42 +530,16 @@ namespace RDKit{
         std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
         std::cerr<<std::endl;
 #endif
-        std::vector<std::pair<unsigned int,bool> > canonOrder;
-        canonicalizePath(path,mol,bondCache,*atomInvariants,useBondOrder,canonOrder);
-
+        std::vector<uint64_t> bondHashes;
+        getPathBondHashes(path,mol,bondCache,*atomInvariants,useBondOrder,bondHashes);
 #ifdef VERBOSE_FINGERPRINTING        
-        std::cerr<<"Canonical Path: ";
-        for(std::vector<std::pair<unsigned int,bool> >::const_iterator bIt=canonOrder.begin();
-            bIt!=canonOrder.end();++bIt){
-          std::cerr<<bIt->first<<"("<<bIt->second<<"),";
-        }
+        std::cerr<<"bond hashes: ";
+        std::copy(bondHashes.begin(),bondHashes.end(),std::ostream_iterator<int>(std::cerr,", "));
         std::cerr<<std::endl;
 #endif
-        std::vector<uint32_t> bondHashes;
-        for(std::vector<std::pair<unsigned int,bool> >::const_iterator bIt=canonOrder.begin();
-            bIt!=canonOrder.end();++bIt){
-          const Bond *bond=bondCache[bIt->first];
-          boost::uint32_t bondHash=1;
-          if(useBondOrder){
-            if(bond->getIsAromatic()){
-              // makes sure aromatic bonds always hash the same:
-              bondHash = Bond::AROMATIC;
-            } else {
-              bondHash = bond->getBondType();
-            }
-          }
-          unsigned int a1Hash,a2Hash;
-          if(!(bIt->second)){
-            a1Hash = (*atomInvariants)[bond->getBeginAtomIdx()];
-            a2Hash = (*atomInvariants)[bond->getEndAtomIdx()];
-          } else {
-            a1Hash = (*atomInvariants)[bond->getEndAtomIdx()];
-            a2Hash = (*atomInvariants)[bond->getBeginAtomIdx()];
-          }
-          gboost::hash_combine(bondHash,a1Hash);
-          gboost::hash_combine(bondHash,a2Hash);
-          bondHashes.push_back(bondHash);
-        }
+        std::sort(bondHashes.begin(),bondHashes.end());
+
+
         // hash the path to generate a seed:
 	unsigned long seed = gboost::hash_range(bondHashes.begin(),bondHashes.end());
 

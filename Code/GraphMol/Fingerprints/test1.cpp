@@ -119,19 +119,20 @@ void test2(){
   }
   {
     RWMol *p = SmilesToMol("CS(=O)C");
+    std::cerr<<"\n\n\n         FP1:\n";
     ExplicitBitVect *pfp=RDKFingerprintMol(*p,1,4,1024,1,false);
 
-    RWMol *m = SmilesToMol("CS(=O)(=O)c1ccccc1OCC(=O)[O-]");
+    RWMol *m = SmilesToMol("CS(C)=O");
     TEST_ASSERT(m);
+    std::cerr<<"\n\n\n         FP2:\n";
     ExplicitBitVect *mfp=RDKFingerprintMol(*m,1,4,1024,1,false);
-    TEST_ASSERT(AllProbeBitsMatch(*pfp,*mfp));
+    TEST_ASSERT((*pfp)==(*mfp));
 
     delete m;
     delete mfp;
     delete p;
     delete pfp;
   }
-
   {
     RWMol *p = SmilesToMol("CS(=O)C");
     ExplicitBitVect *pfp=RDKFingerprintMol(*p,1,4,1024,1,false);
@@ -146,6 +147,37 @@ void test2(){
     delete p;
     delete pfp;
   }
+
+  {
+    RWMol *p = SmilesToMol("CS(C)=O");
+    ExplicitBitVect *pfp=RDKFingerprintMol(*p,1,4,1024,1,false);
+
+    RWMol *m = SmilesToMol("CS(=O)(=O)c1ccccc1OCC(=O)[O-]");
+    TEST_ASSERT(m);
+    std::cerr<<"\n\n\n         FP2:\n";
+    ExplicitBitVect *mfp=RDKFingerprintMol(*m,1,4,1024,1,false);
+    TEST_ASSERT(AllProbeBitsMatch(*pfp,*mfp));
+
+    delete m;
+    delete mfp;
+    delete p;
+    delete pfp;
+  }
+  {
+    RWMol *p = SmilesToMol("CS(C)=O");
+    ExplicitBitVect *pfp=RDKFingerprintMol(*p,1,4,1024,1,false);
+
+    RWMol *m = SmilesToMol("COc1ccc(S(=O)(=O)CC#N)cc1F");
+    TEST_ASSERT(m);
+    ExplicitBitVect *mfp=RDKFingerprintMol(*m,1,4,1024,1,false);
+    TEST_ASSERT(AllProbeBitsMatch(*pfp,*mfp));
+
+    delete m;
+    delete mfp;
+    delete p;
+    delete pfp;
+  }
+
 
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
