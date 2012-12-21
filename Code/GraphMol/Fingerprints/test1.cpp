@@ -28,24 +28,60 @@ using namespace RDKit;
 void test1(){
   BOOST_LOG(rdInfoLog) <<"testing basics" << std::endl;
 
+  std::string smi = "C1=CC=CC=C1";
+  RWMol *m1 = SmilesToMol(smi);
+  TEST_ASSERT(m1->getNumAtoms()==6);
+  ExplicitBitVect *fp1=RDKFingerprintMol(*m1);
+  ExplicitBitVect *fp2=RDKFingerprintMol(*m1);
+  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
+  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>=0.0);
+  
+  smi = "C1=CC=CC=N1";
+  RWMol *m2 = SmilesToMol(smi);
+  delete fp2;
+  fp2=RDKFingerprintMol(*m2);
+  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
+  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+
+
+  delete m1;
+  delete m2;
+  delete fp1;
+  delete fp2;
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+void test2(){
+  BOOST_LOG(rdInfoLog) <<"testing subgraph invariants" << std::endl;
   {
-    std::string smi = "C1=CC=CC=C1";
+    std::string smi = "CC(=O)COC";
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1->getNumAtoms()==6);
-    BOOST_LOG(rdInfoLog) <<"--------------------  fp " << std::endl;
-    ExplicitBitVect *fp1=RDKFingerprintMol(*m1);
-    BOOST_LOG(rdInfoLog) <<"--------------------  fp " << std::endl;
-    ExplicitBitVect *fp2=RDKFingerprintMol(*m1);
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,4,false);
+    ExplicitBitVect *fp2=RDKFingerprintMol(*m1,1,4,2048,4,false);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
-    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>=0.0);
   
-    smi = "C1=CC=CC=N1";
-    RWMol *m2 = SmilesToMol(smi);
+    RWMol *m2 = SmilesToMol("CC");
     delete fp2;
-    BOOST_LOG(rdInfoLog) <<"--------------------  fp " << std::endl;
-    fp2=RDKFingerprintMol(*m2);
+    fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+    TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
+
+    delete m2;
+    m2 = SmilesToMol("CC=O");
+    delete fp2;
+    fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+    TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
+
+    delete m2;
+    m2 = SmilesToMol("CCCOC");
+    delete fp2;
+    fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+    TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
 
 
     delete m1;
@@ -53,54 +89,63 @@ void test1(){
     delete fp1;
     delete fp2;
   }
-  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
-}
-void test2(){
-  BOOST_LOG(rdInfoLog) <<"testing subgraph invariants" << std::endl;
+  {
+    RWMol *p = SmilesToMol("CS(=O)C");
+    ExplicitBitVect *pfp=RDKFingerprintMol(*p,1,4,1024,1,false);
 
-  std::string smi = "CC(=O)COC";
-  RWMol *m1 = SmilesToMol(smi);
-  TEST_ASSERT(m1->getNumAtoms()==6);
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp1 " << std::endl;
-  ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,4,false);
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp2 " << std::endl;
-  ExplicitBitVect *fp2=RDKFingerprintMol(*m1,1,4,2048,4,false);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
-  
-  RWMol *m2 = SmilesToMol("CC");
-  delete fp2;
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp2 " << std::endl;
-  fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
-  TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
+    RWMol *m = SmilesToMol("c1ccccc1CS(=O)(=O)C");
+    TEST_ASSERT(m);
+    ExplicitBitVect *mfp=RDKFingerprintMol(*m,1,4,1024,1,false);
+    TEST_ASSERT(AllProbeBitsMatch(*pfp,*mfp));
 
-  delete m2;
-  m2 = SmilesToMol("CC=O");
-  delete fp2;
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp " << std::endl;
-  fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
-  TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
+    delete m;
+    delete mfp;
+    delete p;
+    delete pfp;
+  }
+  {
+    RWMol *p = SmilesToMol("CS(=O)C");
+    ExplicitBitVect *pfp=RDKFingerprintMol(*p,1,4,1024,1,false);
 
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp1 " << std::endl;
-  fp1=RDKFingerprintMol(*m1,1,4,2048,4,false);
+    RWMol *m = SmilesToMol("c1ccccc1S(=O)(=O)C");
+    TEST_ASSERT(m);
+    ExplicitBitVect *mfp=RDKFingerprintMol(*m,1,4,1024,1,false);
+    TEST_ASSERT(AllProbeBitsMatch(*pfp,*mfp));
 
-  delete m2;
-  m2 = SmilesToMol("CCCOC");
-  delete fp2;
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp " << std::endl;
-  fp2=RDKFingerprintMol(*m2,1,4,2048,4,false);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
-  TEST_ASSERT(OnBitProjSimilarity(*fp2,*fp1)[0]==1.0);
+    delete m;
+    delete mfp;
+    delete p;
+    delete pfp;
+  }
+  {
+    RWMol *p = SmilesToMol("CS(=O)C");
+    ExplicitBitVect *pfp=RDKFingerprintMol(*p,1,4,1024,1,false);
 
+    RWMol *m = SmilesToMol("CS(=O)(=O)c1ccccc1OCC(=O)[O-]");
+    TEST_ASSERT(m);
+    ExplicitBitVect *mfp=RDKFingerprintMol(*m,1,4,1024,1,false);
+    TEST_ASSERT(AllProbeBitsMatch(*pfp,*mfp));
 
-  delete m1;
-  delete m2;
-  delete fp1;
-  delete fp2;
+    delete m;
+    delete mfp;
+    delete p;
+    delete pfp;
+  }
+
+  {
+    RWMol *p = SmilesToMol("CS(=O)C");
+    ExplicitBitVect *pfp=RDKFingerprintMol(*p,1,4,1024,1,false);
+
+    RWMol *m = SmilesToMol("CS(=O)(=O)c1ccccc1OCC(=O)[O-]");
+    TEST_ASSERT(m);
+    ExplicitBitVect *mfp=RDKFingerprintMol(*m,1,4,1024,1,false);
+    TEST_ASSERT(AllProbeBitsMatch(*pfp,*mfp));
+
+    delete m;
+    delete mfp;
+    delete p;
+    delete pfp;
+  }
 
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
@@ -208,23 +253,19 @@ void test4Trends(){
   ExplicitBitVect *fp1,*fp2;
   
   m = SmilesToMol("CCC");
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp1 " << std::endl;
   fp1=RDKFingerprintMol(*m);
   delete m;
   m = SmilesToMol("C1CC1");
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp2 " << std::endl;
   fp2=RDKFingerprintMol(*m);
   sim1=TanimotoSimilarity(*fp1,*fp2);
 
   delete m;
   m = SmilesToMol("CCCC");
   delete fp1;
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp3 " << std::endl;
   fp1=RDKFingerprintMol(*m);
   delete m;
   m = SmilesToMol("C1CCC1");
   delete fp2;
-  BOOST_LOG(rdInfoLog) <<"--------------------  fp4 " << std::endl;
   fp2=RDKFingerprintMol(*m);
   sim2=TanimotoSimilarity(*fp1,*fp2);
   TEST_ASSERT(sim2>sim1);
@@ -283,7 +324,6 @@ void test5BackwardsCompatibility(){
   
   m = SmilesToMol("CC");
   fp1=RDKFingerprintMol(*m,1,7,2048,4);
-  std::cerr<<"nbits: "<<fp1->getNumOnBits()<<std::endl;
   TEST_ASSERT(fp1->getNumOnBits()==4);
 #if BOOST_VERSION/100 < 1040
   // bug fixes in the uniform_int<> distribution in version 1.40
@@ -1976,7 +2016,6 @@ void testRDKitFromAtoms(){
     TEST_ASSERT(m1);
     std::vector<boost::uint32_t> fromAtoms;
     fromAtoms.push_back(0);
-    std::cerr<<"---------------- fp: "<<std::endl;
     ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,true,true,0,&fromAtoms);
     TEST_ASSERT(fp1->getNumOnBits()==4);
     delete m1;
@@ -1989,7 +2028,6 @@ void testRDKitFromAtoms(){
     std::vector<boost::uint32_t> fromAtoms;
     fromAtoms.push_back(0);
     fromAtoms.push_back(5);
-    std::cerr<<"---------------- fp: "<<std::endl;
     ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,true,true,0,&fromAtoms);
     TEST_ASSERT(fp1->getNumOnBits()==8);
     delete m1;
@@ -2002,21 +2040,8 @@ void testRDKitFromAtoms(){
     std::vector<boost::uint32_t> fromAtoms;
     fromAtoms.push_back(0);
     fromAtoms.push_back(5);
-    std::cerr<<"---------------- fp: "<<std::endl;
     ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,false,true,0,&fromAtoms);
     TEST_ASSERT(fp1->getNumOnBits()==8);
-    delete m1;
-    delete fp1;
-  }
-  {
-    std::string smi = "CCCCCO";
-    RWMol *m1 = SmilesToMol(smi);
-    TEST_ASSERT(m1);
-    std::vector<boost::uint32_t> fromAtoms;
-    fromAtoms.push_back(0);
-    std::cerr<<"---------------- fp: "<<std::endl;
-    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,false,true,0,&fromAtoms);
-    TEST_ASSERT(fp1->getNumOnBits()==4);
     delete m1;
     delete fp1;
   }
@@ -2061,14 +2086,12 @@ void testRDKitFromAtoms(){
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 1
+#if 0
   test1();
-  test2();
   test3();
   test1alg2();
   test2alg2();
   test4Trends();
-  testRDKitFromAtoms();
   test1Layers();
   test2Layers();
   test3Layers();
@@ -2077,6 +2100,8 @@ int main(int argc,char *argv[]){
   test3MorganFPs();
   test4MorganFPs();
   test5MorganFPs();
+  test5BackwardsCompatibility();
+  testIssue2875658();
   testAtomCodes();
   testAtomPairs();
   testAtomPairs2();
@@ -2091,8 +2116,8 @@ int main(int argc,char *argv[]){
   testMorganAtomInfo();
   testRDKitFPOptions();
   testPairsAndTorsionsOptions();
+  testRDKitFromAtoms();
 #endif
-  test5BackwardsCompatibility();
-  testIssue2875658();
+  test2();
   return 0;
 }

@@ -341,7 +341,7 @@ namespace RDKit{
       for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
           atomIt!=mol.endAtoms();
           ++atomIt){
-        unsigned int aHash = ((*atomIt)->getAtomicNum()%128)<<1 | (*atomIt)->getIsAromatic();
+        unsigned int aHash = ((*atomIt)->getAtomicNum()%128)<<1 ;// | (*atomIt)->getIsAromatic();
         lAtomInvariants.push_back(aHash);
       }
       atomInvariants=&lAtomInvariants;
