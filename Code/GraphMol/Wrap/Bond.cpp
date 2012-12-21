@@ -30,6 +30,12 @@ namespace RDKit{
   void BondSetProp(const Bond *bond, const char *key,std::string val) {
     bond->setProp(key, val);
   }
+  void BondClearProp(const Bond *bond, const char *key){
+    if (!bond->hasProp(key)) {
+      return;
+    }
+    bond->clearProp(key);
+  }
 
 
   std::string BondGetProp(const Bond *bond, const char *key) {
@@ -181,6 +187,11 @@ struct bond_wrapper {
            "Queries a Bond to see if a particular property has been assigned.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - key: the name of the property to check for (a string).\n")
+
+      .def("ClearProp", BondClearProp,
+           "Removes a particular property from an Bond (does nothing if not already set).\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to be removed.\n")
 
       .def("GetPropNames",&Bond::getPropList,
 	   (python::arg("self")),

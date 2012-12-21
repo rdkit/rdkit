@@ -821,9 +821,23 @@ void testPeriodicTable()
   TEST_ASSERT(PeriodicTable::getTable()->getNouterElecs(6)==4);
   TEST_ASSERT(PeriodicTable::getTable()->getMostCommonIsotope(6)==12);
   TEST_ASSERT(PeriodicTable::getTable()->getMostCommonIsotopeMass(6)==12.0);
+  TEST_ASSERT(PeriodicTable::getTable()->getMostCommonIsotopeMass(6)==12.0);
+  TEST_ASSERT(feq(PeriodicTable::getTable()->getMostCommonIsotopeMass(4),9.0122,1e-4));
+  TEST_ASSERT(feq(PeriodicTable::getTable()->getRb0(6),0.77,1e-2));
 
   TEST_ASSERT(PeriodicTable::getTable()->getDefaultValence(26)==-1);
   TEST_ASSERT(PeriodicTable::getTable()->getDefaultValence(57)==-1);
+
+  // this was sf.net issue 269
+  int anum;
+  anum =   PeriodicTable::getTable()->getAtomicNumber("C");
+  TEST_ASSERT(anum==6);
+  try {
+    anum =   PeriodicTable::getTable()->getAtomicNumber("Xx");
+  } catch (...) {
+    anum=-1;
+  }
+  TEST_ASSERT(anum==-1);
   
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -868,6 +882,31 @@ void testAddAtomWithConf()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testIssue267()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing issue 267: default valence of *" << std::endl;
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(0));
+    m.updatePropertyCache();
+
+    TEST_ASSERT(m.getAtomWithIdx(0)->getImplicitValence()==0);
+  }
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(0));
+    for(unsigned int i=0;i<8;++i){
+      m.addAtom(new Atom(1));
+      m.addBond(0,i+1,Bond::SINGLE);
+    }
+    m.updatePropertyCache();
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 // -------------------------------------------------------------------
 int main()
@@ -888,6 +927,7 @@ int main()
 #endif
   testPeriodicTable();
   testAddAtomWithConf();
+  testIssue267();
   
   return 0;
 }

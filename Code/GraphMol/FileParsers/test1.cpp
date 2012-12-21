@@ -974,14 +974,14 @@ void testMolFileRGroups(){
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==2);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),2));
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),2));
 
  
   TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),1));
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
 
   //  test sf.net issue 3316600:
   TEST_ASSERT(m->getAtomWithIdx(3)->hasProp("dummyLabel"));
@@ -1028,13 +1028,13 @@ void testMolFileRGroups(){
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),1));
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),1));
   
   TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==1);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),1));
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),1));
 
   smi = "C1C(O)C1C";
   m2 = SmilesToMol(smi,false,false);
@@ -1066,12 +1066,12 @@ void testMolFileRGroups(){
   m->getAtomWithIdx(3)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==11);
   TEST_ASSERT(m->getAtomWithIdx(3)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getMass(),11));
+  TEST_ASSERT(feq(m->getAtomWithIdx(3)->getIsotope(),11));
   TEST_ASSERT(m->getAtomWithIdx(4)->hasProp("_MolFileRLabel"));
   m->getAtomWithIdx(4)->getProp("_MolFileRLabel",idx);
   TEST_ASSERT(idx==503);
   TEST_ASSERT(m->getAtomWithIdx(4)->getAtomicNum()==0);
-  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getMass(),503));
+  TEST_ASSERT(feq(m->getAtomWithIdx(4)->getIsotope(),503));
   
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -2867,7 +2867,8 @@ void testIssue3525799(){
     RWMol *m = MolFileToMol(fName);
     TEST_ASSERT(m);
     std::string smiles = MolToSmiles(*m,true);
-    TEST_ASSERT(smiles=="[*]c1oc2c([*])c([*])c([*])c([*])c2c(=O)c1-c1c([*])c([*])c([*])c([*])c1[*]");
+    std::cerr<<"smiles: "<<smiles<<std::endl;
+    TEST_ASSERT(smiles=="[1*]c1c([2*])c([3*])c([4*])c(-c2c([9*])oc3c([8*])c([7*])c([6*])c([5*])c3c2=O)c1[10*]");
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -2898,7 +2899,6 @@ void   testIssue3557675(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-
 void testSkipLines() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing skip lines in CTABs" << std::endl;
@@ -2912,6 +2912,24 @@ void testSkipLines() {
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
+
+void  testIssue269(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Bad issue 269: handling of bad atom symbols in CTABs" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Issue269.mol";
+    RWMol *m = 0;
+    try{
+      m = MolFileToMol(fName);
+    } catch (...){
+    }
+    TEST_ASSERT(!m);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 int main(int argc,char *argv[]){
@@ -2969,8 +2987,9 @@ int main(int argc,char *argv[]){
   testIssue3514824();
   testIssue3525799();
   testIssue3557675();
-#endif
   testSkipLines();
+#endif
+  testIssue269();
 
   return 0;
 }

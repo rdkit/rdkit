@@ -68,6 +68,14 @@ namespace RDKit{
     atom->getProp(key, res);
     return res;
   }
+
+  void AtomClearProp(const Atom *atom, const char *key) {
+    if (!atom->hasProp(key)) {
+      return;
+    }
+    atom->clearProp(key);
+  }
+
   python::tuple AtomGetNeighbors(Atom *atom){
     python::list res;
     const ROMol *parent = &atom->getOwningMol();
@@ -263,6 +271,11 @@ struct atom_wrapper {
            "Queries a Atom to see if a particular property has been assigned.\n\n"
 	   "  ARGUMENTS:\n"
 	   "    - key: the name of the property to check for (a string).\n")
+
+      .def("ClearProp", AtomClearProp,
+           "Removes a particular property from an Atom (does nothing if not already set).\n\n"
+	   "  ARGUMENTS:\n"
+	   "    - key: the name of the property to be removed.\n")
 
       .def("GetPropNames",&Atom::getPropList,
 	   (python::arg("self")),

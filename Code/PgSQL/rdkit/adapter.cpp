@@ -40,6 +40,7 @@
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/SparseIntVect.h>
 #include <boost/integer_traits.hpp>
@@ -490,6 +491,24 @@ MolInchiKey(CROMol i){
   return strdup(key.c_str());
 }
 
+extern "C" CROMol
+MolMurckoScaffold(CROMol i){
+  const ROMol *im = (ROMol*)i;
+  ROMol *mol=MurckoDecompose(*im);
+  if(mol && !mol->getNumAtoms()){
+    delete mol;
+    mol=0;
+  } else {
+    try{
+      MolOps::sanitizeMol(*(RWMol *)mol);
+    } catch(...) {
+      delete mol;
+      mol = 0;
+    }
+  }
+  return (CROMol)mol;
+}
+
 
 
 /*******************************************
@@ -573,10 +592,17 @@ calcBitmapTanimotoSml(MolBitmapFingerPrint a, MolBitmapFingerPrint b) {
   const unsigned char *afp=(const unsigned char *)abv->c_str();
   const unsigned char *bfp=(const unsigned char *)bbv->c_str();
   int union_popcount=0,intersect_popcount=0;
+#ifndef USE_BUILTIN_POPCOUNT
   for (unsigned int i=0; i<abv->size(); i++) {
     union_popcount += byte_popcounts[afp[i] | bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
+#else
+  for(unsigned int i=0;i<abv->size()/sizeof(unsigned int);++i){
+    union_popcount += __builtin_popcount(((unsigned int *)afp)[i] | ((unsigned int *)bfp)[i]);
+    intersect_popcount += __builtin_popcount(((unsigned int *)afp)[i] & ((unsigned int *)bfp)[i]);
+  }
+#endif
   if (union_popcount == 0) {
     return 0.0;
   }

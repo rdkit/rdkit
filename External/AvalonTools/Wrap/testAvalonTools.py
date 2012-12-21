@@ -49,13 +49,13 @@ class TestCase(unittest.TestCase):
   def test3(self):
     bv = pyAvalonTools.GetAvalonFP(Chem.MolFromSmiles('c1ccccn1'))
     self.failUnlessEqual(len(bv),512)
-    self.failUnlessEqual(bv.GetNumOnBits(),21)
+    self.failUnlessEqual(bv.GetNumOnBits(),20)
     bv = pyAvalonTools.GetAvalonFP(Chem.MolFromSmiles('c1ccccc1'))
     self.failUnlessEqual(bv.GetNumOnBits(),8)
     bv = pyAvalonTools.GetAvalonFP(Chem.MolFromSmiles('c1nnccc1'))
-    self.failUnlessEqual(bv.GetNumOnBits(),29)
+    self.failUnlessEqual(bv.GetNumOnBits(),30)
     bv = pyAvalonTools.GetAvalonFP(Chem.MolFromSmiles('c1ncncc1'))
-    self.failUnlessEqual(bv.GetNumOnBits(),29)
+    self.failUnlessEqual(bv.GetNumOnBits(),27)
 
     bv = pyAvalonTools.GetAvalonFP(Chem.MolFromSmiles('c1ncncc1'),nBits=1024)
     self.failUnlessEqual(len(bv),1024)
@@ -63,20 +63,20 @@ class TestCase(unittest.TestCase):
 
   def test4(self):
     bv = pyAvalonTools.GetAvalonFP('c1ccccn1',True)
-    self.failUnlessEqual(bv.GetNumOnBits(),21)
+    self.failUnlessEqual(bv.GetNumOnBits(),20)
     bv = pyAvalonTools.GetAvalonFP('c1ccccc1',True)
     self.failUnlessEqual(bv.GetNumOnBits(),8)
     bv = pyAvalonTools.GetAvalonFP('c1nnccc1',True)
-    self.failUnlessEqual(bv.GetNumOnBits(),29)
+    self.failUnlessEqual(bv.GetNumOnBits(),30)
     bv = pyAvalonTools.GetAvalonFP('c1ncncc1',True)
-    self.failUnlessEqual(bv.GetNumOnBits(),29)
+    self.failUnlessEqual(bv.GetNumOnBits(),27)
     bv = pyAvalonTools.GetAvalonFP('c1ncncc1',True,nBits=1024)
     self.failUnlessEqual(len(bv),1024)
     self.failUnless(bv.GetNumOnBits()>27)
 
     bv = pyAvalonTools.GetAvalonFP(Chem.MolToMolBlock(Chem.MolFromSmiles('c1ccccn1')),False)
     self.failUnlessEqual(len(bv),512)
-    self.failUnlessEqual(bv.GetNumOnBits(),21)
+    self.failUnlessEqual(bv.GetNumOnBits(),20)
     bv = pyAvalonTools.GetAvalonFP(Chem.MolToMolBlock(Chem.MolFromSmiles('c1ccccc1')),False)
     self.failUnlessEqual(bv.GetNumOnBits(),8)
 

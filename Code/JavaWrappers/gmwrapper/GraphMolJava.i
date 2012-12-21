@@ -47,7 +47,7 @@
 %include "stdint.i"
 %include "std_string.i"
 %include "std_list.i"
-%include "std_vector.i"
+%include "extend_std_vector.i"
 %include "std_map.i"
 %include "std_pair.i"
 %include "carrays.i"

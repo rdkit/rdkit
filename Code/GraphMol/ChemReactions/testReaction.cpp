@@ -3357,6 +3357,46 @@ void test36ParensInReactants2(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test37ProtectOption(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing use of _protected property on atoms." << std::endl;
+
+  {
+    unsigned int nWarn,nError;
+    std::string smi="[O:1]>>[N:1]";
+    ChemicalReaction *rxn = RxnSmartsToChemicalReaction(smi); 
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates()==1);
+    TEST_ASSERT(rxn->getNumProductTemplates()==1);
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+
+
+    MOL_SPTR_VECT reacts;
+    reacts.clear();
+    smi = "OCO";
+    ROMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    reacts.push_back(ROMOL_SPTR(mol));
+    std::vector<MOL_SPTR_VECT> prods;
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==2);
+    TEST_ASSERT(prods[0].size()==1);
+    TEST_ASSERT(prods[1].size()==1);
+
+    reacts[0]->getAtomWithIdx(0)->setProp("_protected",1);
+    prods = rxn->runReactants(reacts);
+    TEST_ASSERT(prods.size()==1);
+    TEST_ASSERT(prods[0].size()==1);
+    
+    delete(rxn);
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 
 int main() { 
   RDLog::InitLogs();
@@ -3403,6 +3443,7 @@ int main() {
   test34ReactingAtoms2();
   test35ParensInReactants1();
   test36ParensInReactants2();
+  test37ProtectOption();
 
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

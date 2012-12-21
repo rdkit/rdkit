@@ -68,9 +68,6 @@ public class rdktest
         //smiTest();
         morganTest();
 
-        ROMol m3=RWMol.MolFromSmiles("c1cccc1");
-
-
         Console.WriteLine( "Goodbye" );
     }
 }

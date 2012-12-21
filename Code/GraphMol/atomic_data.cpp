@@ -11,12 +11,15 @@
 //  Automatically generated from elements.txt
 #include "atomic_data.h"
 #include <boost/tokenizer.hpp>
+#include <sstream>
+#include <locale>
+
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 namespace RDKit {
 
 const std::string periodicTableAtomData = 
-"0	*	0	0	0	0	0	0	0	1	2	3	4	5	6	-1 \n \
+"0	*	0	0	0	0	0	0	0	-1 \n \
 1	H 	0.23	0.33	1.2	1.008	1	1	1.007825032	1 \n \
 2	He	0.93	0.7	1.4	4.003	2	4	4.002603254	0  \n \
 3	Li	0.68	1.23	1.82	6.941	1	7	7.01600455	1  \n \
@@ -134,9 +137,13 @@ const std::string periodicTableAtomData =
     boost::char_separator<char> spaceSep(" \t");
     tokenizer tokens(dataLine,spaceSep);
     tokenizer::iterator token=tokens.begin();
+    std::istringstream istr;
+    istr.imbue(std::locale("C"));
     
     // atomic number first
-    anum = atoi(token->c_str());
+    istr.clear();
+    istr.str(*token);
+    istr>>anum;
     ++token;
     
     // element symbol
@@ -144,37 +151,55 @@ const std::string periodicTableAtomData =
     ++token;
 
     // covalent radius
-    rCov = atof(token->c_str());
+    istr.clear();
+    istr.str(*token);
+    istr>>rCov;
     ++token;
     
     // rB0
-    rB0 = atof(token->c_str());
+    istr.clear();
+    istr.str(*token);
+    istr>>rB0;
     ++token;
     
     //  Van derWaal radius
-    rVdw = atof(token->c_str());
+    istr.clear();
+    istr.str(*token);
+    istr>>rVdw;
     ++token;
     
     // atomic mass
-    mass = atof(token->c_str());
+    istr.clear();
+    istr.str(*token);
+    istr>>mass;
     ++token;
 
     // number of outshell electrons
-    nVal = atoi(token->c_str());
+    istr.clear();
+    istr.str(*token);
+    istr>>nVal;
     ++token;
 
     // most common isotope
-    commonIsotope = atoi(token->c_str());
+    istr.clear();
+    istr.str(*token);
+    istr>>commonIsotope;
     ++token;
 
     // most common isotopic mass
-    commonIsotopeMass = atof(token->c_str());
+    istr.clear();
+    istr.str(*token);
+    istr>>commonIsotopeMass;
     ++token;
     
     // now the valences
     valence.clear();
     while (token != tokens.end()) {
-      valence.push_back(atoi(token->c_str()));
+      istr.clear();
+      istr.str(*token);
+      int tval;
+      istr>>tval;
+      valence.push_back(tval);
       ++token;
     }
   }

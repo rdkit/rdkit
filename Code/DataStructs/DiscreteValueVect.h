@@ -60,6 +60,10 @@ namespace RDKit{
 
     //! return the value at an index
     unsigned int getVal(unsigned int i) const;
+
+    //! support indexing using []
+    int operator[] (unsigned int idx) const { return getVal(idx); };
+
     //! set the value at an index
     /*!
       NOTE: it is an error to have val > the max value this
@@ -72,6 +76,8 @@ namespace RDKit{
 
     //! returns the length
     unsigned int getLength() const;
+    //! returns the length
+    unsigned int size() const { return getLength(); };
 
     //! return a pointer to our raw data storage
     const boost::uint32_t *getData() const;
@@ -118,6 +124,7 @@ namespace RDKit{
 
     //! returns a binary string representation (pickle)
     std::string toString() const;
+
   private:
     DiscreteValueType d_type;
     unsigned int d_bitsPerVal;

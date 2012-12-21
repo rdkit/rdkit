@@ -1,6 +1,6 @@
-#line 2 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 2 "/scratch/RDKit_fps/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
-#line 4 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 4 "/scratch/RDKit_fps/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -762,7 +762,7 @@ void sln_lexer_error(const char *msg) {
 
 
 
-#line 766 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 766 "/scratch/RDKit_fps/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
 #define INITIAL 0
 #define IN_SLN_PARAM_STATE 1
@@ -1014,7 +1014,7 @@ YY_DECL
 #line 78 "sln.ll"
 
 
-#line 1018 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 1018 "/scratch/RDKit_fps/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
     yylval = yylval_param;
 
@@ -1716,7 +1716,7 @@ YY_RULE_SETUP
 #line 398 "sln.ll"
 ECHO;
 	YY_BREAK
-#line 1720 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 1720 "/scratch/RDKit_fps/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
 	case YY_END_OF_BUFFER:
 		{

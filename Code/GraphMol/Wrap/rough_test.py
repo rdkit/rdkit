@@ -774,7 +774,8 @@ class TestCase(unittest.TestCase):
     fp1 = Chem.RDKFingerprint(m1,1,4,nBitsPerHash=1,fromAtoms=[0,5])
     self.failUnlessEqual(fp1.GetNumOnBits(),8)    
 
-
+    # test sf.net issue 270:
+    fp1 = Chem.RDKFingerprint(m1,atomInvariants=[x.GetAtomicNum()+10 for x in m1.GetAtoms()])
 
 
   def test25SDMolSupplier(self) :
@@ -2345,10 +2346,18 @@ CAS<~>
     self.failUnless(bond.HasProp('foo'))
     self.failUnlessEqual(bond.GetProp('foo'),'bar')
     
-
-
-
-
+  def test79AddRecursiveStructureQueries(self):
+    qs = {'CO':Chem.MolFromSmiles('CO'),
+          'CN':Chem.MolFromSmiles('CN')}
+    q = Chem.MolFromSmiles('CCC')
+    q.GetAtomWithIdx(0).SetProp('query','CO,CN')
+    Chem.MolAddRecursiveQueries(q,qs,'query')
+    m = Chem.MolFromSmiles('CCCO')
+    self.failUnless(m.HasSubstructMatch(q));
+    m = Chem.MolFromSmiles('CCCN')
+    self.failUnless(m.HasSubstructMatch(q));
+    m = Chem.MolFromSmiles('CCCC')
+    self.failIf(m.HasSubstructMatch(q));
 
 if __name__ == '__main__':
   unittest.main()

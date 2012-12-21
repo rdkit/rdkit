@@ -58,6 +58,7 @@ public:
   virtual std::string toString() const = 0;
 
   virtual bool operator[] (const unsigned int which) const = 0;
+  unsigned int size() const { return getNumBits(); }
 
 private:
   virtual void _initForSize(const unsigned int size) = 0;

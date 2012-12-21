@@ -73,12 +73,25 @@ namespace RDKit {
         //   where we should give all matches and cases where we shouldn't; it's safer to just
         //   produce everything and let the client deal with uniquifying their results.
         int matchCount=SubstructMatch(*(reactants[i]),*(reactantTemplates[i]),matchesHere,false,true,false);
+        BOOST_FOREACH(const MatchVectType &match,matchesHere){
+          bool keep=true;
+          int pIdx,mIdx;
+          BOOST_FOREACH(boost::tie(pIdx,mIdx),match){
+            if(reactants[i]->getAtomWithIdx(mIdx)->hasProp("_protected")){
+              keep=false;
+              break;
+            }
+          }
+          if(keep){
+            matchesByReactant[i].push_back(match);
+          } else {
+            --matchCount;
+          }
+        }
         if(!matchCount){
           // no point continuing if we don't match one of the reactants:
           res=false;
           break;
-        } else {
-          matchesByReactant[i]=matchesHere;  
         }
       }
       return res;  

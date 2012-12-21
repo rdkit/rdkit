@@ -17,6 +17,8 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDBoost/Exceptions.h>
 
 using namespace RDKit;
 
@@ -921,8 +923,167 @@ void testCombineMols()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testAddRecursiveQueries() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing adding recursive queries to a molecule" << std::endl;
+
+  {
+    std::string smi1="CC";
+    ROMol *mol1=SmilesToMol(smi1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    TEST_ASSERT(!mol1->getAtomWithIdx(0)->hasQuery());
+    addRecursiveQueries(*mol1,mp,"replaceme");
+    TEST_ASSERT(!mol1->getAtomWithIdx(0)->hasQuery());
+    mol1->getAtomWithIdx(0)->setProp("replaceme","foo");
+    addRecursiveQueries(*mol1,mp,"replaceme");
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
+    TEST_ASSERT(!mol1->getAtomWithIdx(1)->hasQuery());
+
+    mol1->getAtomWithIdx(0)->setProp("replaceme","bar");
+    bool ok=false;
+    try{
+      addRecursiveQueries(*mol1,mp,"replaceme");
+    } catch (KeyErrorException) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+    delete mol1;
+
+  }
+
+  {
+    std::string smi1="CC";
+    ROMol *mol1=SmilesToMol(smi1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    smi2="OC";
+    ROMOL_SPTR q2(SmilesToMol(smi2));
+    mp["bar"]=q2;
+
+    mol1->getAtomWithIdx(0)->setProp("replaceme","foo");
+    mol1->getAtomWithIdx(1)->setProp("replaceme","bar");
+    addRecursiveQueries(*mol1,mp,"replaceme");
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
+    TEST_ASSERT(mol1->getAtomWithIdx(1)->getQuery()->getDescription()=="AtomAnd");
+
+    delete mol1;
+  }
+
+  {
+    std::string smi1="CC";
+    ROMol *mol1=SmilesToMol(smi1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    smi2="CN";
+    ROMOL_SPTR q2(SmilesToMol(smi2));
+    mp["bar"]=q2;
+
+    mol1->getAtomWithIdx(0)->setProp("replaceme","foo,bar");
+    addRecursiveQueries(*mol1,mp,"replaceme");
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(!mol1->getAtomWithIdx(1)->hasQuery());
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
+
+    MatchVectType mv;
+    std::string msmi="CCC";
+    ROMol *mmol=SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    TEST_ASSERT(!SubstructMatch(*mmol,*mol1,mv));
+    delete mmol;
+
+    msmi="CCO";
+    mmol=SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    TEST_ASSERT(SubstructMatch(*mmol,*mol1,mv));
+    delete mmol;    
+
+    msmi="CCN";
+    mmol=SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    TEST_ASSERT(SubstructMatch(*mmol,*mol1,mv));
+    delete mmol;    
+
+    delete mol1;
+  }
+
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 
+void testParseQueryDefFile() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing parsing query definition file" << std::endl;
+
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/ChemTransforms/testData/query_file1.txt";
+    std::map<std::string,ROMOL_SPTR> qdefs;
+    parseQueryDefFile(pathName,qdefs);
+    TEST_ASSERT(!qdefs.empty());
+    TEST_ASSERT(qdefs.size()==7);
+    TEST_ASSERT(qdefs.find("AcidChloride")!=qdefs.end());    
+    TEST_ASSERT(qdefs.find("AcideChloride")==qdefs.end());    
+    TEST_ASSERT(qdefs.find("AcidChloride.Aliphatic")!=qdefs.end());    
+    TEST_ASSERT(qdefs.find("CarboxylicAcid.AlphaAmino")!=qdefs.end());    
+
+    std::string msmi="CCC(=O)Cl";
+    ROMol *mmol=SmilesToMol(msmi);
+    TEST_ASSERT(mmol);
+    MatchVectType mv;
+    TEST_ASSERT(SubstructMatch(*mmol,*(qdefs["AcidChloride"]),mv));
+    delete mmol;    
+
+  }
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Code/GraphMol/ChemTransforms/testData/query_file2.txt";
+    std::map<std::string,ROMOL_SPTR> qdefs;
+    parseQueryDefFile(pathName,qdefs);
+    TEST_ASSERT(qdefs.empty());
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testIssue275() 
+{
+  ROMol *mol1=0,*matcher1=0,*replacement=0;
+  std::string smi,sma;
+  
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing sf.net issue 275: Murcko decomposition with chiral atoms"<< std::endl;
+
+  {
+    std::string smi = "CCCCC[C@H]1CC[C@H](C(=O)O)CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    ROMol *nMol=MurckoDecompose(*mol);
+    smi = MolToSmiles(*nMol,true);
+    TEST_ASSERT(smi=="C1CCCCC1");
+    delete mol;
+    delete nMol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
 
 int main() { 
   RDLog::InitLogs();
@@ -934,7 +1095,6 @@ int main() {
   testDeleteSubstruct();
   testReplaceSubstructs();
   testReplaceSidechains();
-#endif
   testReplaceCore();
   testReplaceCoreLabels();
   testReplaceCoreCrash();
@@ -947,6 +1107,10 @@ int main() {
   testIssue3537675();
 
   testCombineMols();
+  testAddRecursiveQueries();
+  testParseQueryDefFile();
+#endif
+  testIssue275();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
