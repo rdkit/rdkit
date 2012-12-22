@@ -2118,8 +2118,9 @@ void testRDKitFromAtoms(){
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 0
+#if 1
   test1();
+  test2();
   test3();
   test1alg2();
   test2alg2();
@@ -2132,8 +2133,8 @@ int main(int argc,char *argv[]){
   test3MorganFPs();
   test4MorganFPs();
   test5MorganFPs();
-  test5BackwardsCompatibility();
-  testIssue2875658();
+  //test5BackwardsCompatibility();
+  //testIssue2875658();
   testAtomCodes();
   testAtomPairs();
   testAtomPairs2();
@@ -2150,6 +2151,5 @@ int main(int argc,char *argv[]){
   testPairsAndTorsionsOptions();
   testRDKitFromAtoms();
 #endif
-  test2();
   return 0;
 }

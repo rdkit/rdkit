@@ -118,188 +118,6 @@ namespace RDKit{
       return res;
     }
 
-#if 0
-    bool diagonalElementsDistinct(const RDNumeric::SquareMatrix<uint64_t> &mat){
-      std::set<uint64_t> diag;
-      for(unsigned int i=0;i<mat.numRows();++i){
-        uint64_t v=mat.getVal(i,i);
-        if(!(diag.insert(mat.getVal(i,i)).second)) return false;
-
-      }
-      return true;
-    }
-#endif
-
-    void canonicalizePath(const PATH_TYPE &path,
-                          const ROMol &mol,
-                          const std::vector<const Bond *> &bondCache,
-                          const std::vector<uint32_t> &atomInvariants,
-                          bool useBondOrder,
-                          std::vector< std::pair<unsigned int,bool> >& res){
-      PRECONDITION(atomInvariants.size()>=mol.getNumAtoms(),"bad invariant vector");
-      res.resize(0);
-
-      if(path.size()==1){
-        if(atomInvariants[bondCache[path[0]]->getBeginAtomIdx()]<=
-           atomInvariants[bondCache[path[0]]->getEndAtomIdx()]){
-          res.push_back(std::make_pair(path[0],true));
-        } else {
-          res.push_back(std::make_pair(path[0],false));
-        }
-        return;
-      }
-      
-      std::vector<unsigned int> atomsNbrsInPath(mol.getNumAtoms(),0);
-      std::map<unsigned int,unsigned int> atomsInPath;
-      std::vector<uint32_t> invarsInPlay;
-      BOOST_FOREACH(unsigned int i,path){
-        const Bond *bi = bondCache[i];
-        if(atomsInPath.find(bi->getBeginAtomIdx())==atomsInPath.end()){
-          unsigned int idx=atomsInPath.size();
-          atomsInPath[bi->getBeginAtomIdx()]=idx;
-          invarsInPlay.push_back(atomInvariants[bi->getBeginAtomIdx()]);
-        }
-        if(atomsInPath.find(bi->getEndAtomIdx())==atomsInPath.end()){
-          unsigned int idx=atomsInPath.size();
-          atomsInPath[bi->getEndAtomIdx()]=idx;
-          invarsInPlay.push_back(atomInvariants[bi->getEndAtomIdx()]);
-        }
-        atomsNbrsInPath[bi->getBeginAtomIdx()]+=1;
-        atomsNbrsInPath[bi->getEndAtomIdx()]+=1;
-      }
-
-
-      // start by getting the indices of atoms in the path and
-      // setting up the adjacency matrix:
-#ifndef RDK_USE_EIGEN3
-      RDNumeric::SquareMatrix<uint64_t> adjMat(path.size()+1,0);
-      RDNumeric::SquareMatrix<int> bondMat(path.size()+1,-1);
-#else
-      typedef Eigen::Matrix<uint64_t,Eigen::Dynamic,Eigen::Dynamic> AdjMatType;
-      AdjMatType adjMat=AdjMatType::Zero(path.size()+1,path.size()+1);
-      typedef Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> BondMatType;
-      BondMatType bondMat=BondMatType::Constant(path.size()+1,path.size()+1,-1);
-#endif      
-#ifdef VERBOSE_FINGERPRINTING
-      BOOST_FOREACH(unsigned int i,path){
-        const Bond *bi = bondCache[i];
-        std::cerr<<"      "<<i<<" "<<bi->getBeginAtomIdx()<<"-"<<bi->getEndAtomIdx()<<std::endl;
-      }
-#endif
-      BOOST_FOREACH(unsigned int i,path){
-        const Bond *bi = bondCache[i];
-        uint64_t bondHash=1;
-        if(useBondOrder){
-          if(bi->getIsAromatic()){
-            // makes sure aromatic bonds always hash the same:
-            bondHash = Bond::AROMATIC;
-          } else {
-            bondHash = bi->getBondType();
-          }
-        }
-#ifndef RDK_USE_EIGEN3
-        adjMat.setVal(atomsInPath[bi->getBeginAtomIdx()],
-                      atomsInPath[bi->getEndAtomIdx()],
-                      bondHash);
-        bondMat.setVal(atomsInPath[bi->getBeginAtomIdx()],
-                       atomsInPath[bi->getEndAtomIdx()],
-                       i);
-        adjMat.setVal(atomsInPath[bi->getEndAtomIdx()],
-                      atomsInPath[bi->getBeginAtomIdx()],
-                      bondHash);
-        bondMat.setVal(atomsInPath[bi->getEndAtomIdx()],
-                       atomsInPath[bi->getBeginAtomIdx()],
-                       i);
-#else
-        adjMat(atomsInPath[bi->getBeginAtomIdx()],
-               atomsInPath[bi->getEndAtomIdx()])= bondHash;
-        bondMat(atomsInPath[bi->getBeginAtomIdx()],
-                atomsInPath[bi->getEndAtomIdx()])=i;
-        adjMat(atomsInPath[bi->getEndAtomIdx()],
-               atomsInPath[bi->getBeginAtomIdx()])= bondHash;
-        bondMat(atomsInPath[bi->getEndAtomIdx()],
-                atomsInPath[bi->getBeginAtomIdx()])=i;
-#endif
-      }
-      unsigned int numAtomsInPath=invarsInPlay.size();
-
-      // rank the atom invariants and set the diagonal values of the atom
-      // invariants to the atom ranks:
-      INT_VECT atomInvarRanks(numAtomsInPath);
-      RankAtoms::rankVect(invarsInPlay,atomInvarRanks);
-      for(unsigned int i=0;i<numAtomsInPath;++i){
-#ifndef RDK_USE_EIGEN3
-        adjMat.setVal(i,i,atomInvarRanks[i]+1);
-#else
-        adjMat(i,i)=atomInvarRanks[i]+1;
-#endif
-      }
-
-  
-      // now do a series of "morgan iterations" by repeatedly multiplying the
-      // adjacency matrix by itself.
-#ifndef RDK_USE_EIGEN3
-      RDNumeric::SquareMatrix<uint64_t> adjMat2(adjMat);
-      adjMat2*=adjMat;
-      RDNumeric::SquareMatrix<uint64_t> accumMat(adjMat2);
-      unsigned int iter=2;
-      while(iter<numAtomsInPath/2+1){
-        if(iter*2<=numAtomsInPath/2+1){
-          accumMat *= accumMat;
-          iter*=2;
-        } else {
-          accumMat *= adjMat2;
-          iter+=2;
-        }
-      }
-#else
-      AdjMatType accumMat=adjMat;
-      for(unsigned int i=0;i<numAtomsInPath/2+1;++i){
-        accumMat *= adjMat;
-      }
-#endif
-      // re-rank:
-      for(unsigned int i=0;i<numAtomsInPath;++i){
-#ifndef RDK_USE_EIGEN3
-        invarsInPlay[i]=accumMat.getVal(i,i);
-#else
-        invarsInPlay[i]=accumMat(i,i);
-#endif
-      }
-      RankAtoms::rankVect(invarsInPlay,atomInvarRanks);
-
-      // now order the bonds:
-      boost::dynamic_bitset<> usedBonds(mol.getNumBonds());
-      INT_VECT_CI cidx=std::find(atomInvarRanks.begin(),atomInvarRanks.end(),0);
-      TEST_ASSERT(cidx!=atomInvarRanks.end());
-      unsigned int currAtomIdx=cidx-atomInvarRanks.begin();
-      std::deque<unsigned int> stack;
-      stack.push_back(currAtomIdx);
-      while(!stack.empty()){
-        currAtomIdx=stack.front();
-        stack.pop_front();
-        std::vector<std::pair<unsigned int,int> > nbrs;
-        for(unsigned int i=0;i<numAtomsInPath;++i){
-#ifndef RDK_USE_EIGEN3
-          int bIdx=bondMat.getVal(currAtomIdx,i);
-#else
-          int bIdx=bondMat(currAtomIdx,i);
-#endif
-          if(bIdx>=0 && !usedBonds[bIdx]){
-            usedBonds.set(bIdx,1);
-            nbrs.push_back(std::make_pair(atomInvarRanks[i],i));
-            res.push_back(std::make_pair(bIdx,atomsInPath[bondCache[bIdx]->getBeginAtomIdx()]==currAtomIdx));
-          }
-        }
-        std::sort(nbrs.begin(),nbrs.end(),RankAtoms::pairLess<unsigned int>);
-        for(std::vector<std::pair<unsigned int,int> >::const_iterator nbr=nbrs.begin();
-            nbr!=nbrs.end();++nbr){
-          stack.push_back(nbr->second);
-        }
-      }
-    } // end of canonicalizePath
-
-
     void getPathBondHashes(const PATH_TYPE &path,
                            const ROMol &mol,
                            const std::vector<const Bond *> &bondCache,
@@ -341,7 +159,7 @@ namespace RDKit{
       BOOST_FOREACH(unsigned int i,path){
         bondsInPath[i]=bondsInPath.size()-1;
       }
-
+      std::vector<unsigned int> nnbrs(path.size(),0);
       for(PATH_TYPE::const_iterator ii=path.begin();ii!=path.end();++ii){
         unsigned int i=*ii;
         const Bond *bi = bondCache[i];
@@ -354,7 +172,7 @@ namespace RDKit{
             bondHash = bi->getBondType();
           }
         }
-        
+        bondHash*=atomInvariants[bi->getBeginAtomIdx()]*atomInvariants[bi->getEndAtomIdx()];        
 #ifndef RDK_USE_EIGEN3
         adjMat.setVal(bondsInPath[i],bondsInPath[i],bondHash);
 #else
@@ -362,6 +180,8 @@ namespace RDKit{
 #endif
         for(PATH_TYPE::const_iterator ji=(ii+1);ji!=path.end();++ji){
           unsigned int j=*ji;
+          nnbrs[i]+=1;
+          nnbrs[j]+=1;
           const Bond *bj = bondCache[j];
           unsigned int a1=bi->getBeginAtomIdx();
           bool found=false;
@@ -383,38 +203,52 @@ namespace RDKit{
 #endif
           }
         }
-      }  
-      // now do a series of "morgan iterations" by repeatedly multiplying the
-      // adjacency matrix by itself.
+      }
+      
+      if(*(std::max_element(nnbrs.begin(),nnbrs.end()))>2 || *(std::min_element(nnbrs.begin(),nnbrs.end()))>1){
+        // for branched paths we do a series of "morgan iterations" by repeatedly
+        //  multiplying the adjacency matrix by itself.
 #ifndef RDK_USE_EIGEN3
-      // RDNumeric::SquareMatrix<uint64_t> adjMat2(adjMat);
-      // adjMat2*=adjMat;
-      // RDNumeric::SquareMatrix<uint64_t> accumMat(adjMat);
-      // unsigned int iter=1;
-      // while(iter<path.size()/2+1){
-      //   if(iter*2<=path.size()/2+1){
-      //     accumMat *= accumMat;
-      //     iter*=2;
-      //   } else {
-      //     accumMat *= adjMat2;
-      //     iter+=2;
-      //   }
-      // }
-      RDNumeric::SquareMatrix<uint64_t> accumMat(adjMat);
-      unsigned int iter=1;
-      while(iter<path.size()){
-        accumMat *= adjMat;
-        ++iter;
-      }
+        RDNumeric::SquareMatrix<uint64_t> accumMat(adjMat);
+        RDNumeric::SquareMatrix<uint64_t> adjMat2(adjMat);
+        adjMat2*=adjMat;
+        unsigned int iter=1;
+        unsigned int endp=path.size()/2+1;
+        while(iter<endp){
+          if(iter*2<=endp){
+            accumMat *= accumMat;
+            iter *=2;
+          } else {
+            accumMat *= adjMat2;
+            iter+=2;
+          }
+        }
 #else
-      AdjMatType accumMat=adjMat;
-      for(unsigned int i=0;i<path.size();++i){
-        accumMat *= adjMat;
-      }
+        AdjMatType accumMat=adjMat;
+        for(unsigned int i=0;i<path.size();++i){
+          accumMat *= adjMat;
+        }
 #endif
-      for(unsigned int i=0;i<path.size();++i){
-        res.push_back(accumMat.getVal(i,i));
-      }
+        //std::cerr<<"  accum: "<<accumMat<<std::endl;
+        for(unsigned int i=0;i<path.size();++i){
+          res.push_back(accumMat.getVal(i,i));
+        }
+        std::sort(res.begin(),res.end());
+      } // else {
+      //   // it's linear, this is pretty easy:
+      //   bool reverseIt=false;
+      //   unsigned int r=path.size()-1;
+      //   for(unsigned int i=0;i<path.size();++i){
+      //     if(i<r){
+      //       if(adjMat.getVal(i,i)>adjMat.getVal(r,r)){
+      //         reverseIt=true;
+      //       }
+      //       --r;
+      //     }
+      //     res.push_back(adjMat.getVal(i,i));
+      //   }
+      //   if(reverseIt) std::reverse(res.begin(),res.end());
+      // }
 
     } // end of getPathBondHashes
 
@@ -537,7 +371,6 @@ namespace RDKit{
         std::copy(bondHashes.begin(),bondHashes.end(),std::ostream_iterator<int>(std::cerr,", "));
         std::cerr<<std::endl;
 #endif
-        std::sort(bondHashes.begin(),bondHashes.end());
 
 
         // hash the path to generate a seed:
