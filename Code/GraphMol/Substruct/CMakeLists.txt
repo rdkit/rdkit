@@ -1,7 +1,7 @@
 rdkit_library(SubstructMatch 
               SubstructMatch.cpp SubstructUtils.cpp
               LINK_LIBRARIES GraphMol
-                ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+                ${RDKit_THREAD_LIBS} )
 
 rdkit_headers(SubstructMatch.h
               SubstructUtils.h DEST GraphMol/Substruct)

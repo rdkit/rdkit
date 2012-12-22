@@ -16,15 +16,15 @@ else
   SHLIB_LINK += -L${RDKIT}/lib -Wl,-rpath,'${RDKIT}/lib' ${RDKLIBS}
 endif
 
-SHLIB_LINK += -pthread -lboost_system
+SHLIB_LINK += -pthread
 ifndef BOOSTHOME
   BOOSTHOME=/usr/local/include
 endif
-  
-PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"006000"' ${INCHIFLAGS} -Wall
+
+PG_CPPFLAGS = -I${BOOSTHOME} -I${RDKIT}/Code -DRDKITVER='"006000"' ${INCHIFLAGS} -Wall -DUSE_BUILTIN_POPCOUNT -msse4.2
 
 CPLUSPLUSFLAGS = $(filter-out -fexcess-precision=standard -Wmissing-prototypes -Wdeclaration-after-statement, $(CFLAGS))
-CPLUSPLUSFLAGS += -Wno-unused-function
+CPLUSPLUSFLAGS += -Wno-unused-function 
 #CPLUSPLUSFLAGS += -march=native
 CPLUSPLUSFLAGS += $(PG_CPPFLAGS)
 
@@ -46,9 +46,7 @@ REGRESS    = rdkit-91 props btree molgist bfpgist-91 sfpgist slfpgist fps ${INCH
 DATA = $(EXTENSION)--$(EXTVERSION).sql
 EXTRA_CLEAN = $(EXTENSION)--$(EXTVERSION).sql
 else
-DATA_built = rdkit.sql
-DATA = uninstall_rdkit.sql
-REGRESS = rdkit-pre91 props btree molgist bfpgist-pre91 sfpgist slfpgist fps ${INCHIREGRESS}
+$(error Pre v9.1 versions of postgresql are no longer supported)
 endif
 include $(PGXS)
 

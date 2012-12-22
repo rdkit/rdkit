@@ -2344,10 +2344,18 @@ CAS<~>
     self.failUnless(bond.HasProp('foo'))
     self.failUnlessEqual(bond.GetProp('foo'),'bar')
     
-
-
-
-
+  def test79AddRecursiveStructureQueries(self):
+    qs = {'CO':Chem.MolFromSmiles('CO'),
+          'CN':Chem.MolFromSmiles('CN')}
+    q = Chem.MolFromSmiles('CCC')
+    q.GetAtomWithIdx(0).SetProp('query','CO,CN')
+    Chem.MolAddRecursiveQueries(q,qs,'query')
+    m = Chem.MolFromSmiles('CCCO')
+    self.failUnless(m.HasSubstructMatch(q));
+    m = Chem.MolFromSmiles('CCCN')
+    self.failUnless(m.HasSubstructMatch(q));
+    m = Chem.MolFromSmiles('CCCC')
+    self.failIf(m.HasSubstructMatch(q));
 
 if __name__ == '__main__':
   unittest.main()

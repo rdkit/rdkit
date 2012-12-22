@@ -39,4 +39,5 @@
 %newobject replaceSidechains;
 %newobject replaceCores;
 %newobject MurckoDecompose;
+%template(StringMolMap) std::map<std::string,boost::shared_ptr<RDKit::ROMol> >;
 %include <GraphMol/ChemTransforms/ChemTransforms.h>

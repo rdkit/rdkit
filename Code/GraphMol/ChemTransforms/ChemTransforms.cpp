@@ -11,11 +11,21 @@
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/RDKitQueries.h>
+#include <RDBoost/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <vector>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <RDGeneral/StreamOps.h>
+#include <RDGeneral/FileParseException.h>
+#include <RDGeneral/BadFileException.h>
 
 namespace RDKit{
   namespace {
@@ -508,6 +518,8 @@ namespace RDKit{
       res->removeAtom(*atomIt);
     }
     updateSubMolConfs(mol,*res,removedAtoms);
+    res->clearComputedProps();
+    
     return (ROMol *)res;
   }
 
@@ -538,5 +550,103 @@ namespace RDKit{
     res->clearComputedProps(true);
     return (ROMol *)res;
   }    
+
+
+  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName){
+    std::string delim=",";
+    boost::char_separator<char> sep(delim.c_str());
+
+    ROMol::VERTEX_ITER atBegin,atEnd;
+    boost::tie(atBegin,atEnd) = mol.getVertices();
+    while(atBegin!=atEnd){
+      Atom *at=mol[*atBegin].get();
+      ++atBegin;
+      if(!at->hasProp(propName)) continue;
+      std::string pval;
+      at->getProp(propName,pval);
+
+      QueryAtom::QUERYATOM_QUERY *qToAdd;
+      if(pval.find(delim)!=std::string::npos){
+        boost::tokenizer<boost::char_separator<char> > tokens(pval,sep);
+        boost::tokenizer<boost::char_separator<char> >::iterator token;
+        qToAdd = new ATOM_OR_QUERY();
+        for(token=tokens.begin();token!=tokens.end();++token){
+          std::map<std::string,ROMOL_SPTR>::const_iterator iter=queries.find(*token);
+          if(iter==queries.end()) {
+            throw KeyErrorException(pval);
+          }
+          RecursiveStructureQuery *tqp= new RecursiveStructureQuery(new ROMol(*(iter->second)));
+          boost::shared_ptr<RecursiveStructureQuery> nq(tqp);
+          qToAdd->addChild(nq);
+        }
+      } else {
+        std::map<std::string,ROMOL_SPTR>::const_iterator iter=queries.find(pval);
+        if(iter==queries.end()) {
+          throw KeyErrorException(pval);
+        }
+        qToAdd= new RecursiveStructureQuery(new ROMol(*(iter->second)));
+      }
+      if(!at->hasQuery()){
+        QueryAtom qAt(*at);
+        static_cast<RWMol &>(mol).replaceAtom(at->getIdx(),&qAt);
+        at = mol.getAtomWithIdx(at->getIdx());
+      }
+      at->expandQuery(qToAdd,Queries::COMPOSITE_AND);
+    }
+  }
+
+  void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         std::string delimiter,std::string comment,int nameColumn,int smartsColumn){
+    PRECONDITION(inStream,"no stream");
+    queryDefs.clear();
+
+    boost::char_separator<char> sep(delimiter.c_str());
+    unsigned int line=0;
+    std::string tempStr;
+    while(!inStream->eof()){
+      line++;
+      tempStr=getLine(inStream);
+      if(tempStr=="" || tempStr.find(comment)==0 ) continue;
+      boost::tokenizer<boost::char_separator<char> > tokens(tempStr,sep);
+      unsigned int tpos;
+      boost::tokenizer<boost::char_separator<char> >::iterator token;
+      std::string qname="";
+      std::string qval="";
+      for(token=tokens.begin(),tpos=0;token!=tokens.end();++token,++tpos){
+        if(tpos==nameColumn){
+          qname=*token;
+        } else if(tpos==smartsColumn){
+          qval=*token;
+        }
+      }
+      boost::trim_if(qname,boost::is_any_of(" \t"));
+      boost::trim_if(qval,boost::is_any_of(" \t"));
+      if(qname=="" || qval==""){
+        continue;
+      }
+      RWMol *m=0;
+      try{
+        m = SmartsToMol(qval);
+      } catch (...) {
+        m=0;
+      }
+      if(!m){
+        BOOST_LOG(rdWarningLog)<<"cannot convert SMARTS "<<qval<<" to molecule at line "<<line<<std::endl;
+        continue;
+      }
+      ROMOL_SPTR msptr(m);
+      queryDefs[qname]=msptr;
+    }
+  }
+  void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
+                         std::string delimiter,std::string comment,int nameColumn,int smartsColumn){
+    std::ifstream inStream(filename.c_str());
+    if (!inStream || (inStream.bad()) ) {
+      std::ostringstream errout;
+      errout << "Bad input file " << filename;
+      throw BadFileException(errout.str());
+    }
+    parseQueryDefFile(&inStream,queryDefs,delimiter,comment,nameColumn,smartsColumn);
+  }
 
 }  // end of namespace RDKit

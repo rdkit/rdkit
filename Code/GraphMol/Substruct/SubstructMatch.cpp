@@ -15,8 +15,10 @@
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
 #include <boost/smart_ptr.hpp>
-#include <boost/thread/mutex.hpp>
 #include <map>
+#ifdef RDK_THREADSAFE_SSS
+#include <boost/thread/mutex.hpp>
+#endif
 
 #include "ullmann.hpp"
 #include "vf2.hpp"
@@ -27,8 +29,9 @@ namespace RDKit{
     
     void MatchSubqueries(const ROMol &mol,QueryAtom::QUERYATOM_QUERY *q,bool useChirality,
 			 SUBQUERY_MAP &subqueryMap );
+#ifdef RDK_THREADSAFE_SSS
     void ClearSubqueryLocks(QueryAtom::QUERYATOM_QUERY *q);
-
+#endif
     typedef std::list<std::pair<MolGraph::vertex_descriptor,MolGraph::vertex_descriptor> > ssPairType;
 
     class AtomLabelFunctor{
@@ -107,6 +110,7 @@ namespace RDKit{
      }
     }    
 
+#ifdef RDK_THREADSAFE_SSS
     if(recursionPossible){
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
@@ -115,7 +119,7 @@ namespace RDKit{
         }
       }
     }
-
+#endif
     return res;
   }
 
@@ -176,6 +180,7 @@ namespace RDKit{
       res = matches.size();
     } 
 
+#ifdef RDK_THREADSAFE_SSS
     if(recursionPossible){
       ROMol::ConstAtomIterator atIt;
       for(atIt=query.beginAtoms();atIt!=query.endAtoms();atIt++){
@@ -184,7 +189,7 @@ namespace RDKit{
         }
       }
     }
-
+#endif
     return res;
   }
 
@@ -251,7 +256,9 @@ namespace RDKit{
       if(query->getDescription()=="RecursiveStructure"){
 	RecursiveStructureQuery *rsq=(RecursiveStructureQuery *)query;
         //std::cerr<<"lock: "<<rsq<<std::endl;
+#ifdef RDK_THREADSAFE_SSS
         rsq->d_mutex.lock();
+#endif
 	rsq->clear();
 	bool matchDone=false;
 	if(rsq->getSerialNumber() &&
@@ -302,13 +309,13 @@ namespace RDKit{
       //std::cout << "<<- back " << (int)query << std::endl;
     }
 
+#ifdef RDK_THREADSAFE_SSS
     void ClearSubqueryLocks(QueryAtom::QUERYATOM_QUERY *query){
       PRECONDITION(query,"bad query");
       if(query->getDescription()=="RecursiveStructure"){
 	RecursiveStructureQuery *rsq=(RecursiveStructureQuery *)query;
         //std::cerr<<"unlock: "<<rsq<<std::endl;
         rsq->d_mutex.unlock();
-
         for(ROMol::ConstAtomIterator atIt=rsq->getQueryMol()->beginAtoms();
             atIt!=rsq->getQueryMol()->endAtoms();atIt++){
           if((*atIt)->getQuery()){
@@ -323,7 +330,7 @@ namespace RDKit{
 	ClearSubqueryLocks(childIt->get());
       }
     }
-
+#endif
   } // end of namespace detail
 }
 

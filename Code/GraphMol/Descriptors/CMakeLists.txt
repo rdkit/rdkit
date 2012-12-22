@@ -1,9 +1,7 @@
-find_package (Threads)
-
 rdkit_library(Descriptors
               Crippen.cpp MolDescriptors.cpp MolSurf.cpp Lipinski.cpp ConnectivityDescriptors.cpp
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch 
-                ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+                ${RDKit_THREAD_LIBS})
 
 rdkit_headers(Crippen.h Lipinski.h
               MolDescriptors.h
