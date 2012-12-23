@@ -4306,7 +4306,6 @@ int main(){
   testSFIssue1968608();
   testHybridization();
   testAromaticityEdges();
-  testSFNetIssue2196817();
   testSFNetIssue2208994();
   testSFNetIssue2313979();
   testSFNetIssue2316677();
@@ -4324,6 +4323,7 @@ int main(){
   testSFNetIssue256();
   testSFNetIssue266();
 #endif
+  testSFNetIssue2196817();
   
   testSFNetIssue266();
   testSFNetIssue272();

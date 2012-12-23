@@ -275,19 +275,18 @@ namespace RDKit{
       if(sanitizeOps & operationThatFailed){
         Kekulize(mol);
       }
-      //std::cerr<<" post kekulize "<<std::endl;
-      //mol.debugMol(std::cerr);
+      std::cerr<<" post kekulize "<<std::endl;
+      mol.debugMol(std::cerr);
 
 
       // update computed properties on atoms and bonds:
       mol.updatePropertyCache();
-      //std::cerr<<" post update "<<std::endl;
-      //mol.debugMol(std::cerr);
+      std::cerr<<" post update "<<std::endl;
+      mol.debugMol(std::cerr);
       operationThatFailed = SANITIZE_PROPERTIES;
       if(sanitizeOps & operationThatFailed){
         checkAtomicProperties(mol);
       }
-
 
       // look for radicals:
       // We do this now because we need to know

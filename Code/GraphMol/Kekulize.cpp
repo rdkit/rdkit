@@ -149,43 +149,6 @@ namespace RDKit {
         } else {
           // for non dummies, it's a bit more work to figure out if they
           // can take a double bond:
-
-#if 0          
-          sbo +=  at->getNumImplicitHs();
-          int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
-          int chrg = at->getFormalCharge();
-          dv += chrg;
-          int tbo = at->getExplicitValence() + at->getImplicitValence();
-          int nRadicals=at->getNumRadicalElectrons();
-          int totalDegree=at->getDegree()+at->getImplicitValence();
-        
-          const INT_VECT &valList =
-            PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
-          unsigned int vi = 1;
-      
-          while ( tbo>dv && vi<valList.size() && valList[vi]>0 ) {
-            dv = valList[vi] + chrg;
-            ++vi;
-          }
-
-          //std::cerr<<"  kek: "<<at->getIdx()<<" tbo:"<<tbo<<" sbo:"<<sbo<<" dv:"<<dv<<" totalDegree:"<<totalDegree<<" nRadicals:"<<nRadicals<<std::endl;
-          if(totalDegree+nRadicals>=dv){
-            // if our degree + nRadicals exceeds the default valence, 
-            // there's no way we can take a double bond, just continue.
-            continue;
-          }
-
-          // we're a candidate if our total current bond order + nRadicals + 1
-          // matches the valence state
-          // (including nRadicals here was SF.net issue 3349243)
-          if( dv==(sbo+1+nRadicals) ){
-            dBndCands[*adx]=1;
-          } else if( !nRadicals && at->getNoImplicit() && dv==(sbo+2) ){
-            // special case: there is currently no radical on the atom, but if
-            // if we allow one then this is a candidate:
-            dBndCands[*adx]=1;
-          }
-#endif
           int nRadicals=at->getNumRadicalElectrons();
           int nConnections = sbo+at->getNumImplicitHs()+nRadicals;
           int chrg = at->getFormalCharge();
@@ -253,6 +216,10 @@ namespace RDKit {
       int curr;
       INT_DEQUE btmoves;
       unsigned int numBT = 0; // number of back tracks so far
+
+      //std::cerr<<"   kw:"<<std::endl;
+      //mol.debugMol(std::cerr);
+
       while ( (done.size() < allAtms.size()) || (astack.size() > 0) ) {
         // pick a curr atom to work with
         if (astack.size() > 0) {
@@ -332,6 +299,7 @@ namespace RDKit {
             ncnd = opts.front();
             opts.pop_front();
             Bond *bnd = mol.getBondBetweenAtoms(curr, ncnd);
+            //std::cerr<<"     SET: "<<curr<<"="<<ncnd<<std::endl;
             bnd->setBondType(Bond::DOUBLE);
         
             // remove current and the neighbor from the dBndCands list
@@ -428,16 +396,20 @@ namespace RDKit {
       while(!kekulized && questions.size()){
         boost::dynamic_bitset<> dBndAdds(mol.getNumBonds());
         INT_VECT done;
-#if 1
-        // reset the state: all aromatic bonds are remarked to single:
+        // reset the state: all aromatic bonds or double bonds to dummies
+        // are remarked to single:
         for(RWMol::BondIterator bi=mol.beginBonds();bi!=mol.endBonds();++bi){
-          if((*bi)->getIsAromatic() && (*bi)->getBondType()!=Bond::SINGLE &&
+          if((*bi)->getBondType()!=Bond::SINGLE &&
              atomsInPlay[(*bi)->getBeginAtomIdx()] &&
-             atomsInPlay[(*bi)->getEndAtomIdx()] ){
+             atomsInPlay[(*bi)->getEndAtomIdx()] && 
+             ((*bi)->getIsAromatic() ||
+              ( (*bi)->getBondType()==Bond::DOUBLE &&
+                ((*bi)->getBeginAtom()->getAtomicNum()==0 ||
+                 (*bi)->getEndAtom()->getAtomicNum()==0)))
+              ){
             (*bi)->setBondType(Bond::SINGLE);
           }
         }
-#endif
         // pick a new permutation of the questionable atoms:
         const INT_VECT &switchOff=qEnum.next();
         if(!switchOff.size()) break;
@@ -454,6 +426,8 @@ namespace RDKit {
 #endif
         // try kekulizing again:
         kekulized=kekulizeWorker(mol,allAtms,tCands,dBndAdds,done,maxBackTracks);
+        //std::cerr<<" post kw: "<<std::endl;
+        //mol.debugMol(std::cerr);
       }
       return kekulized;
     }
@@ -485,6 +459,11 @@ namespace RDKit {
 
       bool kekulized;
       kekulized=kekulizeWorker(mol,allAtms,dBndCands,dBndAdds,done,maxBackTracks);
+
+      //std::cerr << " post kekulizeWorker: " << kekulized<<" "<<questions.size()<<std::endl;
+      //mol.debugMol(std::cerr);
+
+
       if(!kekulized && questions.size()){
         // we failed, but there are some dummy atoms we can try permuting.
         kekulized=permuteDummiesAndKekulize(mol,allAtms,dBndCands,questions,maxBackTracks);

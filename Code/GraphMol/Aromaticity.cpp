@@ -647,6 +647,7 @@ namespace RDKit {
           edon[*ivi] = getAtomDonorTypeArom(at);
           acands[*ivi]=isAtomCandForArom(at, edon[*ivi]);
           if(!acands[*ivi]) allAromatic=false;
+          //std::cerr<<"   "<<*ivi<<": "<<" edon: "<<edon[*ivi]<<" acand: "<<acands[*ivi]<<std::endl;
         }
         if(allAromatic){
           cRings.push_back((*vivi));
