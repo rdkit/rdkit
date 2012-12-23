@@ -605,10 +605,13 @@ void test8()
   delete m2;
   //BOOST_LOG(rdInfoLog) << "16" << std::endl;
   m2 = MolOps::addHs(*m);
-  TEST_ASSERT(m2->getNumAtoms()==8);
+  // this is a change with the new valence handling, Hs are no longer
+  // added to query atoms:
+  TEST_ASSERT(m2->getNumAtoms()==2);
   sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(m2->getAtomWithIdx(0)));
   TEST_ASSERT(sma=="C");
 
+#if 0 // no longer relevant with the new valence code
   delete m;
   //BOOST_LOG(rdInfoLog) << "17" << std::endl;
   m = MolOps::mergeQueryHs(*m2);
@@ -617,6 +620,7 @@ void test8()
   //BOOST_LOG(rdInfoLog) << "sma: " << sma<<std::endl;
   // this was sf.net issue 3415204:
   TEST_ASSERT(sma=="[C&!H0&!H1&!H2]");
+#endif
 
   // RDTrack Issue 1228:
   delete m;

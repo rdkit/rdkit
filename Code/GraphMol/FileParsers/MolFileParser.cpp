@@ -822,8 +822,6 @@ namespace RDKit{
           }
           delete res;
           res=query;  
-          // queries have no implicit Hs:
-          res->setNoImplicit(true);
         } else {
           res->setAtomicNum(0);
         }
@@ -838,6 +836,9 @@ namespace RDKit{
           else if(symb=="R8") res->setIsotope(8);
           else if(symb=="R9") res->setIsotope(9);
         }
+	// queries have no implicit Hs:
+	res->setNumImplicitHs(0);
+	res->setNoImplicit(true);
       } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
         res->setAtomicNum(1); 
         res->setIsotope(2);

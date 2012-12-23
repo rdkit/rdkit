@@ -718,7 +718,7 @@ namespace RDKit{
           atIt!=mol->endAtoms();atIt++){
         Atom *atom = *atIt;
         if(atom->hasQuery()){
-          atom->updatePropertyCache(false);
+          atom->updatePropertyCache();
         }
       }
     }
@@ -938,15 +938,12 @@ namespace RDKit{
         streamRead(ss,tmpChar,version);
         atom->setHybridization(static_cast<Atom::HybridizationType>(tmpChar));
         streamRead(ss,tmpChar,version);
-        atom->setNumImplicitHs(static_cast<int>(tmpChar));
+	unsigned int nExplicit=static_cast<int>(tmpChar);
         streamRead(ss,tmpChar,version);
         atom->d_explicitValence = tmpChar;
         streamRead(ss,tmpChar,version);
-        if(tmpChar && atom->d_implicitValence>0){
-          atom->setNoImplicit(true);
-        } else {
-          atom->d_implicitValence = tmpChar;
-        }
+	unsigned int nImplicit = static_cast<int>(tmpChar);
+	atom->d_implicitValence = nExplicit+nImplicit;
         if(version>6000){
           streamRead(ss,tmpChar,version);
           atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);

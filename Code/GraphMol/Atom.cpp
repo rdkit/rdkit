@@ -304,7 +304,11 @@ bool Atom::Match(const Atom::ATOM_SPTR what) const {
 
 void Atom::updatePropertyCache(bool strict) {
   calcExplicitValence();
-  calcImplicitValence();
+  if(!hasQuery()){
+    calcImplicitValence();
+  } else {
+    d_implicitValence=0;
+  }
 }
 
 // returns the number of swaps required to convert the ordering
@@ -362,6 +366,7 @@ std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   } catch (...){
     target << "N/A";
   }
+  target << " no_imp: "<<at.getNoImplicit();
   target << " hyb: " << at.getHybridization();
   target << " arom?: " << at.getIsAromatic();
   target << " chi: " << at.getChiralTag();

@@ -70,8 +70,12 @@ namespace RDKit{
         const INT_VECT &defaultVs=PeriodicTable::getTable()->getValenceList(num);
         int totalValence= atom->getExplicitValence()+atom->getImplicitValence();
         bool nonStandard;
-        nonStandard = std::find(defaultVs.begin(),defaultVs.end(),
-                                totalValence)==defaultVs.end();
+	if(!atom->hasQuery()){
+	  // if we don't have a query, we qualify as nonstandard by having a
+	  // valence that lies outside the "norm"
+	  nonStandard = std::find(defaultVs.begin(),defaultVs.end(),
+				  totalValence)==defaultVs.end();
+	} 
         // another type of "nonstandard" valence is an aromatic N or P with
         // explicit Hs indicated:
         if((num==7||num==15) && atom->getIsAromatic() && atom->getNumImplicitHs()){
