@@ -193,8 +193,8 @@ void testDetails(){
   CHECK_INVARIANT(a->getNoImplicit()==0,"");
   CHECK_INVARIANT(a->getFormalCharge()==0,"");
   a = mol->getAtomWithIdx(2);
-  CHECK_INVARIANT(a->getImplicitValence()==0,"");
-  CHECK_INVARIANT(a->getExplicitValence()==2,"");
+  CHECK_INVARIANT(a->getImplicitValence()==1,"");
+  CHECK_INVARIANT(a->getExplicitValence()==1,"");
   CHECK_INVARIANT(a->getNoImplicit()==1,"");
   CHECK_INVARIANT(a->getFormalCharge()==0,"");
   a = mol->getAtomWithIdx(4);
