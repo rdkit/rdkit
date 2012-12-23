@@ -142,13 +142,22 @@ void test3(bool doLong=0){
     ROMol *m1 = suppl.next();
     TEST_ASSERT(m1);
     ROMol m2;
+    int sp=inStream.tellg();
     MolPickler::molFromPickle(inStream,m2);
     
     std::string smi1=MolToSmiles(*m1,1);
     std::string smi2=MolToSmiles(m2,1);
 
     if(smi1!=smi2){
+      std::cerr<<"--------------------  from smiles"<<std::endl;
+      m1->debugMol(std::cerr);
+      std::cerr<<"--------------------  from pkl"<<std::endl;
+      m2.debugMol(std::cerr);
       BOOST_LOG(rdInfoLog) << "Line: " << count << "\n  " << smi1 << "\n != \n  " << smi2 << std::endl;
+
+      inStream.seekg(sp);
+      ROMol m3;
+      MolPickler::molFromPickle(inStream,m3);
     }
     TEST_ASSERT(smi1==smi2);
     delete m1;

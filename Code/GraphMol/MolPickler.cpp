@@ -526,10 +526,15 @@ namespace RDKit{
     }
     mol->clearAllAtomBookmarks();
     mol->clearAllBondBookmarks();
+
+    std::cerr<<" pre assign stereochem"<<std::endl;
+    mol->debugMol(std::cerr);
     if(majorVersion<4000){
       // FIX for issue 220 - probably better to change the pickle format later
       MolOps::assignStereochemistry(*mol,true);
     }
+    std::cerr<<" post assign stereochem"<<std::endl;
+    mol->debugMol(std::cerr);
   }
   void MolPickler::molFromPickle(const std::string &pickle,ROMol *mol){
     PRECONDITION(mol,"empty molecule");
@@ -937,7 +942,11 @@ namespace RDKit{
         streamRead(ss,tmpChar,version);
         atom->d_explicitValence = tmpChar;
         streamRead(ss,tmpChar,version);
-        atom->d_implicitValence = tmpChar;
+        if(tmpChar && atom->d_implicitValence>0){
+          atom->setNoImplicit(true);
+        } else {
+          atom->d_implicitValence = tmpChar;
+        }
         if(version>6000){
           streamRead(ss,tmpChar,version);
           atom->d_numRadicalElectrons = static_cast<unsigned int>(tmpChar);
