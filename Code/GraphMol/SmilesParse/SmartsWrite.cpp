@@ -551,12 +551,15 @@ namespace RDKit {
       } else {
         res<<qatom->getSymbol();
       }
+#if 0
+      // FIX: probably should be smarter about Hs
+      // for now we're doing nothing
       int hs=qatom->getNumImplicitHs();
-      // FIX: probably should be smarter about Hs:
       if(hs){
         res<<"H";
         if(hs>1) res<<hs;
       }
+#endif
       int chg=qatom->getFormalCharge();
       if(chg){
         if(chg==-1){

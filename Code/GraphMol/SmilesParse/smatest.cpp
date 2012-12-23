@@ -1033,6 +1033,7 @@ void testSmilesSmarts(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
+  std::cerr<<"sma: "<<sma<<std::endl;
   TEST_ASSERT(sma=="[#6]-[#6]");
   delete mol;
 
@@ -1047,28 +1048,28 @@ void testSmilesSmarts(){
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[#6H2-]-[#6]");
+  TEST_ASSERT(sma=="[#6-]-[#6]");
   delete mol;
 
   smi ="[CH-2]C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[#6H-2]-[#6]");
+  TEST_ASSERT(sma=="[#6-2]-[#6]");
   delete mol;
 
   smi ="[CH4+]C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[#6H4+]-[#6]");
+  TEST_ASSERT(sma=="[#6+]-[#6]");
   delete mol;
 
   smi ="[CH5+2]C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[#6H5+2]-[#6]");
+  TEST_ASSERT(sma=="[#6+2]-[#6]");
   delete mol;
 
   smi ="c1ccccc1";
@@ -1474,7 +1475,7 @@ int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
-#if 1
+#if 0
   testPass();
   testFail();
   testMatches();
@@ -1493,7 +1494,6 @@ main(int argc, char *argv[])
   testIssue351();
   testAtomMap();
   testSmartsSmiles();
-  testSmilesSmarts();
   testIssue1914154();
   testMiscSmartsWriting();
   testIssue1804420();
@@ -1502,6 +1502,7 @@ main(int argc, char *argv[])
   testIssue2884178_part2();
   testIssue3000399();
 #endif
+  testSmilesSmarts();
   testRecursiveSerialNumbers();
   testReplacementPatterns();
   return 0;
