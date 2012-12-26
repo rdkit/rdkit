@@ -694,6 +694,7 @@ void testMurckoDecomp()
 
   const char *testMolecules[][2]=
     {
+      {"[O-][N+](=O)c1cc(ccc1Cl)NS(=O)(=O)Cc2ccccc2","c1ccccc1NS(=O)(=O)Cc2ccccc2"},
       {"C1CC1CCC1CC(C)C1", "C1CC1CCC1CCC1"},
       {"CC1CCC1", "C1CCC1"},
       {"NCNCC2CC2C1CC1O", "C1CC1C1CC1"},
@@ -711,7 +712,6 @@ void testMurckoDecomp()
       {"C1CC1C#N","C1CC1"}, //Cyano group
       {"C1CC1C#CNC","C1CC1"}, //Acetylene group
       {"O=C1N(C)C(=O)N1C#CNC","O=C1NC(=O)N1"}, //Acetylene group
-      {"[O-][N+](=O)c1cc(ccc1Cl)NS(=O)(=O)Cc2ccccc2","c1ccccc1NS(=O)(=O)Cc2ccccc2"},
       {"Cn1cccc1", "c1ccc[nH]1"},
       {"C1CC1[CH](C)C1CC1", "C1CC1CC1CC1"},
       {"CC(C)c1c(Cl)cc(F)c(Nc2ccc(C)cc2CC(=O)O)c1F","c1ccc(Nc2ccccc2)cc1"},
@@ -732,6 +732,7 @@ void testMurckoDecomp()
     delete mol;
     if(tgt!=""){
      TEST_ASSERT(nMol->getNumAtoms());
+
      MolOps::sanitizeMol(static_cast<RWMol &>(*nMol));
      smi = MolToSmiles(*nMol,true);
      mol = SmilesToMol(tgt);
@@ -1100,7 +1101,6 @@ int main() {
   testReplaceCoreCrash();
   testReplaceCorePositions();
 
-  testMurckoDecomp();
   testReplaceCoreRequireDummies();
 
   testIssue3453144();
@@ -1109,8 +1109,9 @@ int main() {
   testCombineMols();
   testAddRecursiveQueries();
   testParseQueryDefFile();
-#endif
   testIssue275();
+#endif
+  testMurckoDecomp();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

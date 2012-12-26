@@ -494,8 +494,8 @@ namespace RDKit{
             if(res->getBondBetweenAtoms(atom->getIdx(),nbr->getIdx())->getBondType()==Bond::DOUBLE){
               removeIt=false;
               break;
-            } else if(nbr->getIsAromatic() && nbr->getAtomicNum()!=6 ){
-              // fix aromatic heteroatoms:
+            } else if(nbr->getIsAromatic()){
+              // fix aromatic atoms:
               nbr->setNumImplicitHs(1);
             } else if(nbr->getNoImplicit() || nbr->getChiralTag()!=Atom::CHI_UNSPECIFIED){
               nbr->setNoImplicit(false);
