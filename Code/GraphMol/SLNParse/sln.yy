@@ -170,6 +170,8 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
+  newAtom->setNoImplicit(true);
+  newAtom->setNumImplicitHs(0);
   
   $$=SLNParse::startMol(*molList,newAtom,doQueries);
 }
@@ -218,6 +220,8 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
+  newAtom->setNoImplicit(true);
+  newAtom->setNumImplicitHs(0);
   
   SLNParse::addAtomToMol(*molList,$$,newAtom,$2,doQueries);
   $$=$1;
@@ -230,6 +234,8 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
+  newAtom->setNoImplicit(true);
+  newAtom->setNumImplicitHs(0);
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
 
   $$=$1;
@@ -243,6 +249,8 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
+  newAtom->setNoImplicit(true);
+  newAtom->setNumImplicitHs(0);
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
   
   $$=$1;
@@ -255,6 +263,8 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
+  newAtom->setNoImplicit(true);
+  newAtom->setNumImplicitHs(0);
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
   
   $$=$1;
@@ -269,6 +279,8 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
+  newAtom->setNoImplicit(true);
+  newAtom->setNumImplicitHs(0);
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
   
   $$=$1;
@@ -281,6 +293,8 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
+  newAtom->setNoImplicit(true);
+  newAtom->setNumImplicitHs(0);
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
   
   $$=$1;
@@ -293,6 +307,8 @@ primmol: H_TOKEN {
   } else {
     newAtom = new RDKit::QueryAtom(1);
   }
+  newAtom->setNoImplicit(true);
+  newAtom->setNumImplicitHs(0);
   SLNParse::addAtomToMol(*molList,$$,newAtom,doQueries);
   
   $$=$1;
@@ -317,6 +333,8 @@ hatom: H_ASTERIX_TOKEN {
   } else {
     $$ = new RDKit::QueryAtom(1);
   }
+  $$->setNoImplicit(true);
+  $$->setNumImplicitHs(0);
   $$->setProp("_starred",1,true);
 }
 | H_BRACKET_TOKEN  number CLOSE_BRACKET_TOKEN {
@@ -325,6 +343,8 @@ hatom: H_ASTERIX_TOKEN {
   } else {
     $$ = new RDKit::QueryAtom(1);
   }
+  $$->setNoImplicit(true);
+  $$->setNumImplicitHs(0);
   $$->setProp("_AtomID",static_cast<unsigned int>($2));
 }
 | H_BRACKET_TOKEN number COLON_TOKEN attriblist CLOSE_BRACKET_TOKEN {
@@ -333,6 +353,8 @@ hatom: H_ASTERIX_TOKEN {
   } else {
     $$ = new RDKit::QueryAtom(1);
   }
+  $$->setNoImplicit(true);
+  $$->setNumImplicitHs(0);
   $$->setProp("_AtomID",static_cast<unsigned int>($2));
   SLNParse::parseAtomAttribs($$,*$4,doQueries);
   delete $4;
@@ -343,6 +365,8 @@ hatom: H_ASTERIX_TOKEN {
   } else {
     $$ = new RDKit::QueryAtom(1);
   }
+  $$->setNoImplicit(true);
+  $$->setNumImplicitHs(0);
   SLNParse::parseAtomAttribs($$,*$2,doQueries);
   delete $2;
 }

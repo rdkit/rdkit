@@ -206,6 +206,7 @@ void sln_lexer_error(const char *msg) {
         }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
         
   return ATOM_TOKEN;
 }
@@ -218,6 +219,7 @@ void sln_lexer_error(const char *msg) {
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Hev {
@@ -231,6 +233,7 @@ void sln_lexer_error(const char *msg) {
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Hal {
@@ -246,6 +249,7 @@ void sln_lexer_error(const char *msg) {
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Het {
@@ -260,6 +264,7 @@ void sln_lexer_error(const char *msg) {
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 

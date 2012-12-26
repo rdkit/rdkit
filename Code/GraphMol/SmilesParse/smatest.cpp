@@ -1475,7 +1475,7 @@ int
 main(int argc, char *argv[])
 {
   RDLog::InitLogs();
-#if 0
+#if 1
   testPass();
   testFail();
   testMatches();

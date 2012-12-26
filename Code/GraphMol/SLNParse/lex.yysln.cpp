@@ -1,6 +1,6 @@
-#line 2 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 2 "/home/landrgr1/RDKit_alternatevalence/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
-#line 4 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 4 "/home/landrgr1/RDKit_alternatevalence/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -762,7 +762,7 @@ void sln_lexer_error(const char *msg) {
 
 
 
-#line 766 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 766 "/home/landrgr1/RDKit_alternatevalence/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
 #define INITIAL 0
 #define IN_SLN_PARAM_STATE 1
@@ -1014,7 +1014,7 @@ YY_DECL
 #line 78 "sln.ll"
 
 
-#line 1018 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 1018 "/home/landrgr1/RDKit_alternatevalence/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
     yylval = yylval_param;
 
@@ -1345,13 +1345,14 @@ YY_RULE_SETUP
         }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
         
   return ATOM_TOKEN;
 }
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 212 "sln.ll"
+#line 213 "sln.ll"
 {
   if((bool)yyextra) {
     yylval->atom_T = new QueryAtom();
@@ -1361,12 +1362,13 @@ YY_RULE_SETUP
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 223 "sln.ll"
+#line 225 "sln.ll"
 {
   if((bool)yyextra) {
     yylval->atom_T = new QueryAtom();
@@ -1378,12 +1380,13 @@ YY_RULE_SETUP
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 236 "sln.ll"
+#line 239 "sln.ll"
 {
   if((bool)yyextra) {
     yylval->atom_T = new QueryAtom();
@@ -1397,12 +1400,13 @@ YY_RULE_SETUP
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 251 "sln.ll"
+#line 255 "sln.ll"
 {
   if((bool)yyextra) {
     yylval->atom_T = new QueryAtom();
@@ -1415,102 +1419,103 @@ YY_RULE_SETUP
   }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
+  yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 266 "sln.ll"
+#line 271 "sln.ll"
 { yy_push_state(IN_SLN_PARAM_STATE,yyscanner); return H_BRACKET_TOKEN; }
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 267 "sln.ll"
+#line 272 "sln.ll"
 { return H_ASTERIX_TOKEN; }
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 268 "sln.ll"
+#line 273 "sln.ll"
 { return H_TOKEN; }
 	YY_BREAK
 case 114:
-#line 271 "sln.ll"
+#line 276 "sln.ll"
 case 115:
-#line 272 "sln.ll"
+#line 277 "sln.ll"
 case 116:
-#line 273 "sln.ll"
+#line 278 "sln.ll"
 case 117:
 YY_RULE_SETUP
-#line 273 "sln.ll"
+#line 278 "sln.ll"
 { yy_push_state(IN_RECURSE_STATE,yyscanner); return RECURSE_TOKEN; }
 	YY_BREAK
 case 118:
-#line 275 "sln.ll"
-case 119:
-#line 276 "sln.ll"
-case 120:
-#line 277 "sln.ll"
-case 121:
-#line 278 "sln.ll"
-case 122:
-#line 279 "sln.ll"
-case 123:
 #line 280 "sln.ll"
-case 124:
+case 119:
 #line 281 "sln.ll"
+case 120:
+#line 282 "sln.ll"
+case 121:
+#line 283 "sln.ll"
+case 122:
+#line 284 "sln.ll"
+case 123:
+#line 285 "sln.ll"
+case 124:
+#line 286 "sln.ll"
 case 125:
 YY_RULE_SETUP
-#line 281 "sln.ll"
+#line 286 "sln.ll"
 { yy_push_state(IN_RECURSE_STATE,yyscanner); return NEG_RECURSE_TOKEN; }
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 284 "sln.ll"
+#line 289 "sln.ll"
 { return MINUS_TOKEN; }
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 286 "sln.ll"
+#line 291 "sln.ll"
 { return PLUS_TOKEN; }
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 287 "sln.ll"
+#line 292 "sln.ll"
 { return HASH_TOKEN; }  
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 288 "sln.ll"
+#line 293 "sln.ll"
 { return TILDE_TOKEN; } 
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 289 "sln.ll"
+#line 294 "sln.ll"
 { return COLON_TOKEN; } 
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 291 "sln.ll"
+#line 296 "sln.ll"
 { return OPEN_PAREN_TOKEN; }
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 292 "sln.ll"
+#line 297 "sln.ll"
 { return CLOSE_PAREN_TOKEN; }
 	YY_BREAK
 case 133:
-#line 295 "sln.ll"
+#line 300 "sln.ll"
 case 134:
-#line 296 "sln.ll"
+#line 301 "sln.ll"
 case 135:
-#line 297 "sln.ll"
+#line 302 "sln.ll"
 case 136:
-#line 298 "sln.ll"
+#line 303 "sln.ll"
 case 137:
-#line 299 "sln.ll"
+#line 304 "sln.ll"
 case 138:
 YY_RULE_SETUP
-#line 299 "sln.ll"
+#line 304 "sln.ll"
 {
   yy_push_state(IN_PROP_VAL_STATE,yyscanner);
   yylval->text_T=new std::string(yytext);
@@ -1519,7 +1524,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 305 "sln.ll"
+#line 310 "sln.ll"
 {
   yy_pop_state(yyscanner);
   yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
@@ -1528,7 +1533,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 310 "sln.ll"
+#line 315 "sln.ll"
 {
   yy_pop_state(yyscanner);
   yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
@@ -1537,7 +1542,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 315 "sln.ll"
+#line 320 "sln.ll"
 {
   yy_pop_state(yyscanner);
   yy_push_state(IN_CTAB_PARAM_VAL_STATE,yyscanner);
@@ -1546,14 +1551,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 321 "sln.ll"
+#line 326 "sln.ll"
 {
  return EQUALS_TOKEN; 
 }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 327 "sln.ll"
+#line 332 "sln.ll"
 { 
   yy_pop_state(yyscanner); 
   return SEMI_TOKEN; 
@@ -1561,12 +1566,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 331 "sln.ll"
+#line 336 "sln.ll"
 { return SEMI_TOKEN; }
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 332 "sln.ll"
+#line 337 "sln.ll"
 {
  yy_pop_state(yyscanner);
  yy_push_state(IN_CTAB_PARAM_NAME_STATE,yyscanner);
@@ -1575,37 +1580,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 338 "sln.ll"
+#line 343 "sln.ll"
 { yy_pop_state(yyscanner); return SEMI_TOKEN; }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 339 "sln.ll"
+#line 344 "sln.ll"
 { return SEMI_TOKEN; }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 340 "sln.ll"
+#line 345 "sln.ll"
 { yy_pop_state(yyscanner); return AND_TOKEN; }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 341 "sln.ll"
+#line 346 "sln.ll"
 { yy_pop_state(yyscanner); return OR_TOKEN; }
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 342 "sln.ll"
+#line 347 "sln.ll"
 { return NOT_TOKEN; }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 344 "sln.ll"
+#line 349 "sln.ll"
 { yy_push_state(IN_SLN_PARAM_STATE,yyscanner); return OPEN_BRACKET_TOKEN; }
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 346 "sln.ll"
+#line 351 "sln.ll"
 {
 	// we're closing a recursive definition, which means we should also be
 	//  closing a parameter block:
@@ -1620,7 +1625,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 357 "sln.ll"
+#line 362 "sln.ll"
 {
   // if we're currently in an SLN property block (e.g. in []'s), we need
   // to pop both the prop_val state and the property block state:
@@ -1633,27 +1638,27 @@ YY_RULE_SETUP
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 367 "sln.ll"
+#line 372 "sln.ll"
 { yy_pop_state(yyscanner); return CLOSE_BRACKET_TOKEN; }
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 369 "sln.ll"
+#line 374 "sln.ll"
 { yy_push_state(IN_CTAB_PARAM_NAME_STATE,yyscanner); return OPEN_ANGLE_TOKEN; }
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 370 "sln.ll"
+#line 375 "sln.ll"
 { yy_pop_state(yyscanner); return CLOSE_ANGLE_TOKEN; }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 371 "sln.ll"
+#line 376 "sln.ll"
 { yy_pop_state(yyscanner); return CLOSE_ANGLE_TOKEN; }
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 372 "sln.ll"
+#line 377 "sln.ll"
 { 
   // if we're currently in a CTAB property block (e.g. in <>'s), we need
   // to pop both the prop_val state and the property block state:
@@ -1666,35 +1671,35 @@ YY_RULE_SETUP
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 383 "sln.ll"
+#line 388 "sln.ll"
 { return SEPARATOR_TOKEN; }
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 384 "sln.ll"
+#line 389 "sln.ll"
 { 
   return COMMA_TOKEN; 
 }
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 388 "sln.ll"
+#line 393 "sln.ll"
 { return AT_TOKEN; }
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 389 "sln.ll"
+#line 394 "sln.ll"
 { return ASTERIX_TOKEN; }
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 391 "sln.ll"
+#line 396 "sln.ll"
 { yylval->ival_T = atoi( yytext ); return DIGIT_TOKEN; }
 	YY_BREAK
 case 164:
 /* rule 164 can match eol */
 YY_RULE_SETUP
-#line 394 "sln.ll"
+#line 399 "sln.ll"
 return 0;
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
@@ -1703,20 +1708,20 @@ case YY_STATE_EOF(IN_CTAB_PARAM_NAME_STATE):
 case YY_STATE_EOF(IN_CTAB_PARAM_VAL_STATE):
 case YY_STATE_EOF(IN_PROP_VAL_STATE):
 case YY_STATE_EOF(IN_RECURSE_STATE):
-#line 395 "sln.ll"
+#line 400 "sln.ll"
 { return EOS_TOKEN; }
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 396 "sln.ll"
+#line 401 "sln.ll"
 return yytext[0];
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 398 "sln.ll"
+#line 403 "sln.ll"
 ECHO;
 	YY_BREAK
-#line 1720 "/scratch/RDKit_trunk/Code/GraphMol/SLNParse/lex.yysln.cpp"
+#line 1725 "/home/landrgr1/RDKit_alternatevalence/Code/GraphMol/SLNParse/lex.yysln.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2921,7 +2926,7 @@ void yysln_free (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 398 "sln.ll"
+#line 403 "sln.ll"
 
 
 

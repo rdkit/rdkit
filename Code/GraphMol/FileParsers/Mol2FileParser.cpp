@@ -549,6 +549,7 @@ namespace RDKit{
       res->setProp("_TriposAtomType",tAT);
       //no implicit hydrogens for mol2 files
       res->setNoImplicit(true);
+      res->setNumImplicitHs(0);
 
       //up to here the fields must be written - check if we have more
       //next comes the subst_id, subst_name - skip those
