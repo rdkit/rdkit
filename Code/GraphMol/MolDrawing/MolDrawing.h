@@ -247,7 +247,10 @@ namespace RDKit {
         int isotope = mol[*bAts]->getIsotope();
         if(mol[*bAts]->getAtomicNum()!=6 ||
            mol[*bAts]->getFormalCharge()!=0 ||
-           isotope ){
+           isotope ||
+           mol[*bAts]->getNumRadicalElectrons()!=0 ||
+           mol[*bAts]->hasProp("molAtomMapNumber") ||
+           mol[*bAts]->getDegree()==0 ){
           res.push_back(ATOM);
           res.push_back(mol[*bAts]->getAtomicNum());
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
@@ -257,20 +260,22 @@ namespace RDKit {
           if(mol[*bAts]->getDegree()==1 && nbrSum.x>0){
             leftToRight=false;
           }
-
           if(isotope){
             symbol = boost::lexical_cast<std::string>(isotope)+symbol;
           }
-          if(mol[*bAts]->getAtomicNum()!=6){
-            int nHs=mol[*bAts]->getTotalNumHs();
-            if(nHs>0){
-              std::string h="H";
-              if(nHs>1) {
-                h += boost::lexical_cast<std::string>(nHs);
-              }
-              if(leftToRight) symbol += h;
-              else symbol = h+symbol;
+          if(mol[*bAts]->hasProp("molAtomMapNumber")){
+            std::string mapNum;
+            mol[*bAts]->getProp("molAtomMapNumber",mapNum);
+            symbol += ":" + mapNum;
+          }
+          int nHs=mol[*bAts]->getTotalNumHs();
+          if(nHs>0){
+            std::string h="H";
+            if(nHs>1) {
+              h += boost::lexical_cast<std::string>(nHs);
             }
+            if(leftToRight) symbol += h;
+            else symbol = h+symbol;
           }
           if( mol[*bAts]->getFormalCharge()!=0 ){
             int chg=mol[*bAts]->getFormalCharge();

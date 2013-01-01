@@ -388,7 +388,8 @@ class MolDrawing(object):
                atom.GetNumRadicalElectrons() or \
                includeAtomNumbers or \
                iso or \
-               atom.HasProp('molAtomMapNumber')
+               atom.HasProp('molAtomMapNumber') or \
+               atom.GetDegree()==0
       orient=''
       if labelIt:
         if includeAtomNumbers:
