@@ -162,10 +162,10 @@ namespace RDKit{
           }
         } else if(attribName=="r"){
           if(attribVal!=""){
-            BOOST_LOG(rdWarningLog) << "Query value " << attribVal <<" ignored for r query\n";
+            BOOST_LOG(rdWarningLog) << "Query value '" << attribVal <<"' ignored for r query\n";
           }
           if(!doingQuery){
-            BOOST_LOG(rdWarningLog) << "Query property " << attribName <<" ignored on non-query atom\n";
+            BOOST_LOG(rdWarningLog) << "Query property '" << attribName <<"' ignored on non-query atom\n";
           } else {
             query=makeAtomInRingQuery();
           }
@@ -199,7 +199,7 @@ namespace RDKit{
           } else if(attribVal=="sm"){
 #endif
           } else {
-            BOOST_LOG(rdWarningLog) << "Unsupported stereochemistry specifier " << attribVal <<" ignored.\n";
+            BOOST_LOG(rdWarningLog) << "Unsupported stereochemistry specifier '" << attribVal <<"' ignored.\n";
           }              
         } else {
           // a block of properties that can have "f" values, and so need special handling:
@@ -245,7 +245,7 @@ namespace RDKit{
         // atomQuery:
         if(query){
           if(!doingQuery){
-            BOOST_LOG(rdWarningLog) << "Query property " << attribName <<" ignored on non-query atom\n";
+            BOOST_LOG(rdWarningLog) << "Query property '" << attribName <<"' ignored on non-query atom\n";
             delete query;
           } else {
             if(attribPtr->negated) query->setNegation(!query->getNegation());
@@ -393,10 +393,10 @@ namespace RDKit{
           }
         } else if(attribName=="r"){
           if(attribVal!=""){
-            BOOST_LOG(rdWarningLog) << "Query value " << attribVal <<" ignored for r query\n";
+            BOOST_LOG(rdWarningLog) << "Query value '" << attribVal <<"' ignored for r query\n";
           }
           if(!doingQuery){
-            BOOST_LOG(rdWarningLog) << "Query property " << attribName <<" ignored on non-query bond\n";
+            BOOST_LOG(rdWarningLog) << "Query property '" << attribName <<"' ignored on non-query bond\n";
           } else {
             QueryBond::QUERYBOND_QUERY *query=makeBondIsInRingQuery();
             if(attribPtr->negated) query->setNegation(true);

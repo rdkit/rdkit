@@ -38,6 +38,7 @@
   //
 
 #include <cstring>
+#include <cstdio>
 #include <iostream>
 #include <vector>
 #include <boost/algorithm/string.hpp>
@@ -63,6 +64,17 @@ yysln_error( const char *input,
 }
 
  namespace SLNParse = RDKit::SLNParse;
+
+#define YYPRINT(file, type, value)   yyprint (file, type, value)
+
+static void
+yyprint (FILE *file, int type, YYSTYPE value)
+{
+  if (type == TEXT_BLOCK)
+    fprintf (file, " %s", value.text_T->c_str());
+  else fprintf (file, " %d", type);
+}
+
 
 %}
  
@@ -114,7 +126,6 @@ yysln_error( const char *input,
 %left OR_TOKEN
 %left AND_TOKEN
 %right NOT_TOKEN
-
 
 %%
 
