@@ -18,6 +18,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string.hpp>
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -551,10 +552,13 @@ namespace RDKit{
     return (ROMol *)res;
   }    
 
-
-  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName){
+  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName,
+                             std::vector<std::pair<unsigned int, std::string> > *reactantLabels){
     std::string delim=",";
     boost::char_separator<char> sep(delim.c_str());
+    if (reactantLabels!=NULL) {
+      (*reactantLabels).resize(0);
+    }
 
     ROMol::VERTEX_ITER atBegin,atEnd;
     boost::tie(atBegin,atEnd) = mol.getVertices();
@@ -564,6 +568,11 @@ namespace RDKit{
       if(!at->hasProp(propName)) continue;
       std::string pval;
       at->getProp(propName,pval);
+      boost::algorithm::to_lower(pval);
+      if (reactantLabels!=NULL) {
+        std::pair<unsigned int, std::string> label (at->getIdx(), pval);
+        (*reactantLabels).push_back(label);
+      }
 
       QueryAtom::QUERYATOM_QUERY *qToAdd;
       if(pval.find(delim)!=std::string::npos){
@@ -596,7 +605,8 @@ namespace RDKit{
   }
 
   void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         std::string delimiter,std::string comment,int nameColumn,int smartsColumn){
+                         bool standardize,std::string delimiter,std::string comment,
+                         int nameColumn,int smartsColumn){
     PRECONDITION(inStream,"no stream");
     queryDefs.clear();
 
@@ -635,18 +645,22 @@ namespace RDKit{
         continue;
       }
       ROMOL_SPTR msptr(m);
+      if (standardize) {
+          boost::algorithm::to_lower(qname);
+      }
       queryDefs[qname]=msptr;
     }
   }
   void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         std::string delimiter,std::string comment,int nameColumn,int smartsColumn){
+                         bool standardize,std::string delimiter,std::string comment,
+                         int nameColumn,int smartsColumn){
     std::ifstream inStream(filename.c_str());
     if (!inStream || (inStream.bad()) ) {
       std::ostringstream errout;
       errout << "Bad input file " << filename;
       throw BadFileException(errout.str());
     }
-    parseQueryDefFile(&inStream,queryDefs,delimiter,comment,nameColumn,smartsColumn);
+    parseQueryDefFile(&inStream,queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);
   }
 
 }  // end of namespace RDKit

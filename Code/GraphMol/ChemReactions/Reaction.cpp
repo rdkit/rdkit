@@ -38,6 +38,7 @@
 #include <boost/foreach.hpp>
 #include <map>
 #include <algorithm>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 namespace RDKit {
   typedef std::vector<MatchVectType> VectMatchVectType;
@@ -840,6 +841,30 @@ namespace RDKit {
     return false;
   }
 
+  void addRecursiveQueriesToReaction(ChemicalReaction &rxn,
+                  const std::map<std::string,ROMOL_SPTR> &queries,
+                  std::string propName,
+                  std::vector<std::vector<std::pair<unsigned int,std::string> > > *reactantLabels) {
+    if(!rxn.isInitialized()){
+      throw ChemicalReactionException("initMatchers() must be called first");
+    }
+
+    if (reactantLabels!=NULL) {
+        (*reactantLabels).resize(0);
+    }
+
+    for(MOL_SPTR_VECT::const_iterator rIt=rxn.beginReactantTemplates();
+            rIt!=rxn.endReactantTemplates();++rIt){
+        if (reactantLabels!=NULL) {
+          std::vector<std::pair<unsigned int, std::string> > labels;
+          addRecursiveQueries(**rIt, queries, propName, &labels);
+          (*reactantLabels).push_back(labels);
+        } else {
+          addRecursiveQueries(**rIt, queries, propName);
+        }
+    }
+  }
+
   namespace {
     // recursively looks for atomic number queries anywhere in this set of children
     // or its children
@@ -1040,5 +1065,5 @@ namespace RDKit {
     }
     return res;
   }
-  
-}
+
+} // end of RDKit namespace

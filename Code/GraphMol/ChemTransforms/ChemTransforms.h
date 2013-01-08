@@ -145,6 +145,8 @@ namespace RDKit{
       \param mol            - the molecule to be modified
       \param queries        - the dictionary of named queries to add
       \param propName       - the atom property to use to get query names
+      optional:
+      \param reactantLabels - to store pairs of (atom index, query string)
 
 
       NOTES:
@@ -157,12 +159,16 @@ namespace RDKit{
           in \c queries
       
   */
-  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName);
+
+  void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName,
+                           std::vector<std::pair<unsigned int, std::string> > *reactantLabels=NULL);
 
   void parseQueryDefFile(std::string filename,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         std::string delimiter="\t",std::string comment="//",int nameColumn=0,int smartsColumn=1);
+                         bool standardize=true,std::string delimiter="\t",std::string comment="//",
+                         int nameColumn=0,int smartsColumn=1);
   void parseQueryDefFile(std::istream *inStream,std::map<std::string,ROMOL_SPTR> &queryDefs,
-                         std::string delimiter="\t",std::string comment="//",int nameColumn=0,int smartsColumn=1);
+                         bool standardize=true,std::string delimiter="\t",std::string comment="//",
+                         int nameColumn=0,int smartsColumn=1);
   
   
   

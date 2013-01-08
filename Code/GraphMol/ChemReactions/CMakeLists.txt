@@ -1,7 +1,7 @@
 rdkit_library(ChemReactions
               Reaction.cpp MDLParser.cpp DaylightParser.cpp ReactionPickler.cpp
 	      ReactionWriter.cpp ReactionDepict.cpp
-              LINK_LIBRARIES Depictor FileParsers SubstructMatch)
+              LINK_LIBRARIES Depictor FileParsers SubstructMatch ChemTransforms)
 
 rdkit_headers(Reaction.h
               ReactionParser.h
