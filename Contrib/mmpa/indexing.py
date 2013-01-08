@@ -1,4 +1,4 @@
-# Copyright (c) 2013, GlaxoSmithKline Research & Development Ltd.
+# Copyright (c) 2012, GlaxoSmithKline Research & Development Ltd.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -503,17 +503,8 @@ if __name__=='__main__':
                     #make sure pairs are not same molecule
                     if(id_a != id_b):
 
-                        #make sure LHS and RHS are not the same
-                        temp_lhs = re.sub(r'\[\*\:1\]', '[*]' , core_a)
-                        temp_lhs = re.sub(r'\[\*\:2\]', '[*]' , temp_lhs)
-                        temp_lhs = re.sub(r'\[\*\:3\]', '[*]' , temp_lhs)
-
-                        temp_rhs = re.sub(r'\[\*\:1\]', '[*]' , core_b)
-                        temp_rhs = re.sub(r'\[\*\:2\]', '[*]' , temp_rhs)
-                        temp_rhs = re.sub(r'\[\*\:3\]', '[*]' , temp_rhs)
-
-                        #print temp_lhs,temp_rhs
-                        if(temp_lhs != temp_rhs):
+                        #make sure LHS and RHS of SMIRKS are not the same
+                        if(core_a != core_b):
 
                             smirks,context = cansmirk(core_a,core_b,key)
                             print "%s,%s,%s,%s,%s,%s" % ( id_to_smi[id_a], id_to_smi[id_b], id_a, id_b, smirks, context )

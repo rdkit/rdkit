@@ -22,15 +22,21 @@ Before running the programs, make sure your input set of SMILES:
     - does not contain "*" atoms
     - has been canonicalised using RDKit.
 
-If your smiles set doesn't satisfy the conditions above the program is likely to fail or in the case of 
+If your smiles set doesn't satisfy the conditions above the programs are likely to fail or in the case of 
 canonicalisation result in not identifying MMPs involving H atom substitution.
 
 1) Fragmentation command:
 
 python rfrag.py <SMILES_FILE >FRAGMENT_OUTPUT
 
+Example command: 
+python rfrag.py <sample.smi >sample_fragmented.txt
+
 Format of SMILES_FILE is: SMILES ID <space or comma separated>
+See sample.smi for an example input file
+
 Format of output: WHOLE_MOL_SMILES,ID,SMILES_OF_CORE,SMILES_OF_CONTEXT
+See sample_fragmented.txt for an example output file 
 
 2) Index command:
 
@@ -61,6 +67,23 @@ Options:
                         Note: If this option is used with the maxsize option,
                         the maxsize option will be used.
 
+Example commands (with sample outputs):
+
+Default settings:
+python indexing.py <sample_fragmented.txt >sample_mmps_default.csv
+
+Output symmetrically equivalent MMPs (ie forward and reverse transforms):
+python indexing.py -s <sample_fragmented.txt >sample_mmps_sym.csv
+
+Output MMPs where maximum size of change is 3 heavy atoms:
+python indexing.py -m 3 <sample_fragmented.txt >sample_mmps_maxheavy.csv
+
+Output MMPs where no more that 10% of the compound has changed:
+python indexing.py -r 0.1 <sample_fragmented.txt >sample_mmps_maxratio.csv
+
+Output symmetrically equivalent MMPs where maximum size of change is 3 heavy atoms:
+python indexing.py -s -m 3 <sample_fragmented.txt >sample_mmps_sym_maxheavy.csv
+ 
 SMIRKS canonicalisation
 -----------------------
 
@@ -70,16 +93,23 @@ To canonicalise a SMIRKS (generated elsewhere) so it is in the same format as MM
 
 python cansmirks.py <SMIRKS_FILE >SMIRKS_OUTPUT_FILE
 
-Format of SMIRKS_FILE: SMIRKS ID <space or comma separated>  
+Example command:
+python cansmirk.py <sample_smirks.txt >sample_cansmirks.txt
+
+Format of SMIRKS_FILE: SMIRKS ID <space or comma separated>
+See sample_smirks.txt for an example input file
+  
 Format of output: CANONICALISED_SMIRKS ID
+See sample_cansmirks.txt for an example output file
 
 Note: The script will NOT deal with SMARTS characters, so the SMIRKS must contain valid SMILES for left and right hand sides.
 
 The algorithm used to canonicalise SMIRKS is as follows:
 1) Canonicalise the LHS.
-2) For the LHS the 1st star (attachment point) in the SMILES will have label 1, 2nd star will have label 2 and so on
+2) For the LHS the 1st asterisk (attachment point) in the SMILES will have label 1, 2nd asterisk will have label 2 and so on
 3) For the RHS, if you have a choice (ie. two attachement points are symmetrically equivalent), always put the label 
-with lower numerical value on the earlier attachement point on the canonicalised SMILES
+with lower numerical value on the earlier attachement point in the canonicalised SMILES
+
   
 In the event you use the scripts for publication please reference the original publication:
 

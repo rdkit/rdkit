@@ -1,4 +1,4 @@
-# Copyright (c) 2013, GlaxoSmithKline Research & Development Ltd.
+# Copyright (c) 2012, GlaxoSmithKline Research & Development Ltd.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -182,7 +182,7 @@ if __name__=='__main__':
     if (len(sys.argv) >= 2):
 	print "Program that fragments a user input set of smiles.";
 	print "The program enumerates every single,double and triple acyclic single bond cuts in a molecule.\n";
-	print "USAGE: ./fragment.pl <file_of_smiles";
+	print "USAGE: ./rfrag.py <file_of_smiles";
 	print "Format of smiles file: SMILES ID (space separated)";
 	print "Output: whole mol smiles,ID,core,context\n";
 	sys.exit(1)
