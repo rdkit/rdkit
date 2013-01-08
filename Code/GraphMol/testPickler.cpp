@@ -844,6 +844,52 @@ void testIssue3496759(){
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testIssue280(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 280." << std::endl;
+
+  {
+    ROMol *m1 = SmilesToMol("CCC");
+    TEST_ASSERT(m1);
+    std::string v="1";
+    m1->getAtomWithIdx(0)->setProp("molAtomMapNumber",v);
+    // ints still work
+    m1->getAtomWithIdx(1)->setProp("molAtomMapNumber",2);
+    
+    std::string pickle;
+    MolPickler::pickleMol(*m1,pickle);
+    RWMol *m2 = new RWMol(pickle);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+    TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp("molAtomMapNumber"));
+    int iv;
+    m2->getAtomWithIdx(0)->getProp("molAtomMapNumber",iv);
+    TEST_ASSERT(iv==1);
+    m2->getAtomWithIdx(1)->getProp("molAtomMapNumber",iv);
+    TEST_ASSERT(iv==2);
+    delete m1;
+    delete m2;
+  }
+
+  { // but bogus values are not propagated:
+    ROMol *m1 = SmilesToMol("CC");
+    TEST_ASSERT(m1);
+    std::string v="foo";
+    m1->getAtomWithIdx(0)->setProp("molAtomMapNumber",v);
+
+    std::string pickle;
+    MolPickler::pickleMol(*m1,pickle);
+    RWMol *m2 = new RWMol(pickle);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp("molAtomMapNumber"));
+    delete m1;
+    delete m2;
+  }
+
+
+
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
 
 
 int main(int argc, char *argv[]) {
@@ -872,6 +918,7 @@ int main(int argc, char *argv[]) {
   testIssue3202580();
   testIssue3316407();
   testIssue3496759();
+  testIssue280();
   
   return 0;
 

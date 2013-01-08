@@ -726,6 +726,28 @@ namespace RDKit{
   //
   //--------------------------------------
 
+  namespace {
+    bool getAtomMapNumber(const Atom *atom,int &mapNum){
+      PRECONDITION(atom,"bad atom");
+      if(!atom->hasProp("molAtomMapNumber")) return false;
+      bool res=true;
+      int tmpInt;
+      try{
+        atom->getProp("molAtomMapNumber",tmpInt);
+      } catch (boost::bad_any_cast &exc) {
+        std::string tmpSVal;
+        atom->getProp("molAtomMapNumber",tmpSVal);
+        try{
+          tmpInt = boost::lexical_cast<int>(tmpSVal);
+        } catch(boost::bad_lexical_cast &lexc) {
+          res=false;
+        }
+      }
+      if(res) mapNum=tmpInt;
+      return res;
+    }
+  }
+  
   // T refers to the type of the atom indices written
   template <typename T>
   void MolPickler::_pickleAtom(std::ostream &ss,const Atom *atom) {
@@ -733,6 +755,7 @@ namespace RDKit{
     char tmpChar;
     signed char tmpSchar;
     float tmpFloat;
+    int tmpInt;
     char flags;
 
     tmpChar = atom->getAtomicNum()%128;
@@ -742,7 +765,7 @@ namespace RDKit{
     if(atom->getIsAromatic()) flags |= 0x1<<6;
     if(atom->getNoImplicit()) flags |= 0x1<<5;
     if(atom->hasQuery()) flags |= 0x1<<4;
-    if(atom->hasProp("molAtomMapNumber")) flags |= 0x1<<3;
+    if(getAtomMapNumber(atom,tmpInt)) flags |= 0x1<<3;
     streamWrite(ss,flags);
     
     if(!atom->hasQuery()){
@@ -806,9 +829,7 @@ namespace RDKit{
       pickleQuery(ss,static_cast<const QueryAtom*>(atom)->getQuery());
       streamWrite(ss,ENDQUERY);
     }
-    if(atom->hasProp("molAtomMapNumber")){
-      int tmpInt;
-      atom->getProp("molAtomMapNumber",tmpInt);
+    if(getAtomMapNumber(atom,tmpInt)){
       tmpChar=static_cast<char>(tmpInt%256);
       streamWrite(ss,ATOM_MAPNUMBER,tmpChar);
     }
