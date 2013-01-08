@@ -23,10 +23,12 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
+#include <RDGeneral/LocaleSwitcher.h>
 #include <typeinfo>
 #include <exception>
 #include <sstream>
 #include <locale>
+#include <stdlib.h>
 
 
 namespace RDKit{
@@ -46,11 +48,9 @@ namespace RDKit{
   namespace FileParserUtils {
     int toInt(const std::string &input,bool acceptSpaces){
       int res=0;
-      std::istringstream istr;
-      istr.imbue(std::locale("C"));
-      istr.clear();
-      istr.str(input);
-      istr>>res;
+      // don't need to worry about locale stuff here because
+      // we're not going to have delimiters
+      res=strtol(input.c_str(),NULL,10);
       if(!res && !acceptSpaces && input[0]==' '){
 	std::string trimmed=boost::trim_copy(input);
 	if(trimmed.length()==0) throw boost::bad_lexical_cast();
@@ -59,12 +59,7 @@ namespace RDKit{
     }
 
     double toDouble(const std::string &input,bool acceptSpaces){
-      double res=0.0;
-      std::istringstream istr;
-      istr.imbue(std::locale("C"));
-      istr.clear();
-      istr.str(input);
-      istr>>res;
+      double res=atof(input.c_str());
       if(res==0.0 && !acceptSpaces && input[0]==' '){
 	std::string trimmed=boost::trim_copy(input);
 	if(trimmed.length()==0) throw boost::bad_lexical_cast();
@@ -1828,7 +1823,7 @@ namespace RDKit{
     std::string tempStr;
     bool fileComplete=false;
     bool chiralityPossible = false;
-
+    Utils::LocaleSwitcher ls;
     // mol name
     line++;
     tempStr = getLine(inStream);
