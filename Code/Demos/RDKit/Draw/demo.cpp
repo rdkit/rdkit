@@ -12,7 +12,9 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/MolDrawing/MolDrawing.h>
 #include <GraphMol/MolDrawing/DrawingToSVG.h>
+#ifdef USE_CAIRO
 #include <GraphMol/MolDrawing/DrawingToCairo.h>
+#endif
 
 #include <RDGeneral/RDLog.h>
 #include <vector>
@@ -29,6 +31,7 @@ std::string MolToSVG(const ROMol &mol){
 }
 
 
+#ifdef USE_CAIRO
 void MolToCairo(const ROMol &mol,cairo_t *cr,int width,int height,
                 int fontSize=14,int maxDotsPerAngstrom=30){
   PRECONDITION(cr,"no context");
@@ -36,6 +39,7 @@ void MolToCairo(const ROMol &mol,cairo_t *cr,int width,int height,
   std::vector<int> drawing=RDKit::Drawing::MolToDrawing(mol);
   RDKit::Drawing::DrawingToCairo(drawing,cr,width,height,fontSize,maxDotsPerAngstrom);
 }
+#endif
 
 void DrawDemo(){
 
@@ -47,8 +51,15 @@ void DrawDemo(){
     ostr<<svg<<std::endl;
     delete mol;
   }
+  {
+    RWMol *mol=SmilesToMol("C");
+    std::string svg=MolToSVG(*mol);
+    std::ofstream ostr("blah2.svg");
+    ostr<<svg<<std::endl;
+    delete mol;
+  }
 #endif
-#if 1
+#ifdef USE_CAIRO
   {
     RWMol *mol=SmilesToMol("[Mg]c1c(C#N)cc(C(=O)NCc2sc([NH3+])c([NH3+])c2)cc1");
     cairo_surface_t *surface =
