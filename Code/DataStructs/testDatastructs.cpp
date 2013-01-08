@@ -1160,6 +1160,129 @@ void test10BitVectBinaryText() {
   }
 }
 
+void test11SimilaritiesBV() {
+    // similarity = 1.0
+	ExplicitBitVect bv(10);
+	bv.setBit(0);
+	bv.setBit(1);
+	bv.setBit(4);
+	bv.setBit(6);
+	bv.setBit(9);
+	ExplicitBitVect bv2 = bv;
+
+	TEST_ASSERT(feq(TanimotoSimilarity(bv,bv2),1.));
+	TEST_ASSERT(feq(DiceSimilarity(bv,bv2),1.));
+	TEST_ASSERT(feq(CosineSimilarity(bv,bv2),1.));
+	TEST_ASSERT(feq(KulczynskiSimilarity(bv,bv2),1.));
+	TEST_ASSERT(feq(SokalSimilarity(bv,bv2),1.));
+	TEST_ASSERT(feq(McConnaugheySimilarity(bv,bv2),1.));
+	TEST_ASSERT(feq(BraunBlanquetSimilarity(bv,bv2),1.));
+	TEST_ASSERT(feq(RusselSimilarity(bv,bv2),0.5));
+	TEST_ASSERT(feq(RogotGoldbergSimilarity(bv,bv2),1.));
+	TEST_ASSERT(feq(AllBitSimilarity(bv,bv2),1.));
+
+	// similarity = 0.0
+	bv2 = ExplicitBitVect(10);
+	bv2.setBit(2);
+	bv2.setBit(3);
+	bv2.setBit(5);
+	bv2.setBit(7);
+	bv2.setBit(8);
+
+	TEST_ASSERT(feq(TanimotoSimilarity(bv,bv2),0.));
+	TEST_ASSERT(feq(DiceSimilarity(bv,bv2),0.));
+	TEST_ASSERT(feq(CosineSimilarity(bv,bv2),0.));
+	TEST_ASSERT(feq(KulczynskiSimilarity(bv,bv2),0.));
+	TEST_ASSERT(feq(SokalSimilarity(bv,bv2),0.));
+	TEST_ASSERT(feq(McConnaugheySimilarity(bv,bv2),-1.));
+	TEST_ASSERT(feq(BraunBlanquetSimilarity(bv,bv2),0.));
+	TEST_ASSERT(feq(RusselSimilarity(bv,bv2),0.));
+	TEST_ASSERT(feq(RogotGoldbergSimilarity(bv,bv2),0.));
+	TEST_ASSERT(feq(AllBitSimilarity(bv,bv2),0.));
+
+	// similarity ~= 0.5
+	bv.setBit(5);
+	bv2 = ExplicitBitVect(10);
+	bv2.setBit(0);
+	bv2.setBit(2);
+	bv2.setBit(4);
+	bv2.setBit(5);
+	bv2.setBit(8);
+	bv2.setBit(9);
+
+	TEST_ASSERT(feq(TanimotoSimilarity(bv,bv2),0.5));
+	TEST_ASSERT(feq(DiceSimilarity(bv,bv2),0.6666));
+	TEST_ASSERT(feq(CosineSimilarity(bv,bv2),0.6666));
+	TEST_ASSERT(feq(KulczynskiSimilarity(bv,bv2),0.6666));
+	TEST_ASSERT(feq(SokalSimilarity(bv,bv2),0.3333));
+	TEST_ASSERT(feq(McConnaugheySimilarity(bv,bv2),0.3333));
+	TEST_ASSERT(feq(BraunBlanquetSimilarity(bv,bv2),0.6666));
+	TEST_ASSERT(feq(RusselSimilarity(bv,bv2),0.4));
+	TEST_ASSERT(feq(RogotGoldbergSimilarity(bv,bv2),0.5833));
+	TEST_ASSERT(feq(AllBitSimilarity(bv,bv2),0.6));
+}
+
+void test12SimilaritiesSparseBV() {
+    // similarity = 1.0
+	SparseBitVect sbv(10);
+	sbv.setBit(0);
+	sbv.setBit(1);
+	sbv.setBit(4);
+	sbv.setBit(6);
+	sbv.setBit(9);
+	SparseBitVect sbv2 = sbv;
+
+	TEST_ASSERT(feq(TanimotoSimilarity(sbv,sbv2),1.));
+	TEST_ASSERT(feq(DiceSimilarity(sbv,sbv2),1.));
+	TEST_ASSERT(feq(CosineSimilarity(sbv,sbv2),1.));
+	TEST_ASSERT(feq(KulczynskiSimilarity(sbv,sbv2),1.));
+	TEST_ASSERT(feq(SokalSimilarity(sbv,sbv2),1.));
+	TEST_ASSERT(feq(McConnaugheySimilarity(sbv,sbv2),1.));
+	TEST_ASSERT(feq(BraunBlanquetSimilarity(sbv,sbv2),1.));
+	TEST_ASSERT(feq(RusselSimilarity(sbv,sbv2),0.5));
+	TEST_ASSERT(feq(RogotGoldbergSimilarity(sbv,sbv2),1.));
+	TEST_ASSERT(feq(AllBitSimilarity(sbv,sbv2),1.));
+
+	// similarity = 0.0
+	sbv2 = SparseBitVect(10);
+	sbv2.setBit(2);
+	sbv2.setBit(3);
+	sbv2.setBit(5);
+	sbv2.setBit(7);
+	sbv2.setBit(8);
+
+	TEST_ASSERT(feq(TanimotoSimilarity(sbv,sbv2),0.));
+	TEST_ASSERT(feq(DiceSimilarity(sbv,sbv2),0.));
+	TEST_ASSERT(feq(CosineSimilarity(sbv,sbv2),0.));
+	TEST_ASSERT(feq(KulczynskiSimilarity(sbv,sbv2),0.));
+	TEST_ASSERT(feq(SokalSimilarity(sbv,sbv2),0.));
+	TEST_ASSERT(feq(McConnaugheySimilarity(sbv,sbv2),-1.));
+	TEST_ASSERT(feq(BraunBlanquetSimilarity(sbv,sbv2),0.));
+	TEST_ASSERT(feq(RusselSimilarity(sbv,sbv2),0.));
+	TEST_ASSERT(feq(RogotGoldbergSimilarity(sbv,sbv2),0.));
+	TEST_ASSERT(feq(AllBitSimilarity(sbv,sbv2),0.));
+
+	// similarity ~= 0.5
+	sbv.setBit(5);
+	sbv2 = SparseBitVect(10);
+	sbv2.setBit(0);
+	sbv2.setBit(2);
+	sbv2.setBit(4);
+	sbv2.setBit(5);
+	sbv2.setBit(8);
+	sbv2.setBit(9);
+
+	TEST_ASSERT(feq(TanimotoSimilarity(sbv,sbv2),0.5));
+	TEST_ASSERT(feq(DiceSimilarity(sbv,sbv2),0.6666));
+	TEST_ASSERT(feq(CosineSimilarity(sbv,sbv2),0.6666));
+	TEST_ASSERT(feq(KulczynskiSimilarity(sbv,sbv2),0.6666));
+	TEST_ASSERT(feq(SokalSimilarity(sbv,sbv2),0.3333));
+	TEST_ASSERT(feq(McConnaugheySimilarity(sbv,sbv2),0.3333));
+	TEST_ASSERT(feq(BraunBlanquetSimilarity(sbv,sbv2),0.6666));
+	TEST_ASSERT(feq(RusselSimilarity(sbv,sbv2),0.4));
+	TEST_ASSERT(feq(RogotGoldbergSimilarity(sbv,sbv2),0.5833));
+	TEST_ASSERT(feq(AllBitSimilarity(sbv,sbv2),0.6));
+}
 
 int main(){
   RDLog::InitLogs();
@@ -1219,6 +1342,12 @@ int main(){
   BOOST_LOG(rdInfoLog) << " Test BitVect to binary string  -------------------------------" << std::endl;
   test10BitVectBinaryText();
   
+  BOOST_LOG(rdInfoLog) << " Test Similarity Measures BitVect -------------------------------" << std::endl;
+  test11SimilaritiesBV();
+
+  BOOST_LOG(rdInfoLog) << " Test Similarity Measures SparseBitVect -------------------------------" << std::endl;
+    test12SimilaritiesSparseBV();
+
   return 0;
   
 }

@@ -20,6 +20,8 @@ similarityFunctions=[
   ("Cosine",CosineSimilarity,''),
   ("Sokal",SokalSimilarity,''),
   ("Russel",RusselSimilarity,''),
+  ("RogotGoldberg",RogotGoldbergSimilarity,''),
+  ("AllBit",AllBitSimilarity,''),
   ("Kulczynski",KulczynskiSimilarity,''),
   ("McConnaughey",McConnaugheySimilarity,''),
   ("Asymmetric",AsymmetricSimilarity,''),
