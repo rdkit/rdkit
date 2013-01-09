@@ -1389,8 +1389,6 @@ namespace RDKit{
         errout<<"BEGIN ATOM line not found on line "<<line;
         throw FileParseException(errout.str()) ;
       }
-      std::istringstream istr;
-      istr.imbue(std::locale("C"));
       for(unsigned int i=0;i<nAtoms;++i){
 
         tempStr = getV3000Line(inStream,line);
@@ -1405,10 +1403,7 @@ namespace RDKit{
           errout << "Bad atom line : '"<<tempStr<<"' on line"<<line;
           throw FileParseException(errout.str()) ;
         }
-        unsigned int molIdx=0;
-        istr.clear();
-        istr.str(*token);
-        istr>>molIdx;
+        unsigned int molIdx=atoi(token->c_str());
 
         // start with the symbol:
         ++token;
@@ -1427,28 +1422,21 @@ namespace RDKit{
           errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        istr.clear();
-        istr.str(*token);
-        istr>>pos.x;
+        pos.x=atof(token->c_str());
         ++token;
         if(token==tokens.end()) {
           std::ostringstream errout;
           errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        istr.clear();
-        istr.str(*token);
-        istr>>pos.y;
+        pos.y=atof(token->c_str());
         ++token;
         if(token==tokens.end()) {
           std::ostringstream errout;
           errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        istr.clear();
-        istr.str(*token);
-        istr>>pos.z;
-
+        pos.z=atof(token->c_str());
         // the map number:
         ++token;
         if(token==tokens.end()) {
@@ -1456,10 +1444,7 @@ namespace RDKit{
           errout << "Bad atom line : '"<<tempStr<<"' on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        int mapNum=0;
-        istr.clear();
-        istr.str(*token);
-        istr>>mapNum;
+        int mapNum=atoi(token->c_str());
 	if(mapNum>0){
 	  atom->setProp("molAtomMapNumber",mapNum);
 	}
@@ -1503,8 +1488,6 @@ namespace RDKit{
       if(tempStr.length()<10 || tempStr.substr(0,10) != "BEGIN BOND"){
         throw FileParseException("BEGIN BOND line not found") ;
       }
-      std::istringstream istr;
-      istr.imbue(std::locale("C"));
       for(unsigned int i=0;i<nBonds;++i){
         tempStr = boost::trim_copy(getV3000Line(inStream,line));
         boost::split(splitLine,tempStr,
@@ -1515,22 +1498,10 @@ namespace RDKit{
           throw FileParseException(errout.str()) ;
         }
         Bond *bond;
-        unsigned int bondIdx=0;
-        istr.clear();
-        istr.str(splitLine[0]);
-        istr>>bondIdx;
-        unsigned int bType=0;
-        istr.clear();
-        istr.str(splitLine[1]);
-        istr>>bType;
-        unsigned int a1Idx=0;
-        istr.clear();
-        istr.str(splitLine[2]);
-        istr>>a1Idx;
-        unsigned int a2Idx=0;
-        istr.clear();
-        istr.str(splitLine[3]);
-        istr>>a2Idx;
+        unsigned int bondIdx=atoi(splitLine[0].c_str());
+        unsigned int bType=atoi(splitLine[1].c_str());
+        unsigned int a1Idx=atoi(splitLine[2].c_str());
+        unsigned int a2Idx=atoi(splitLine[3].c_str());
 
         switch(bType){
         case 1: bond = new Bond(Bond::SINGLE);break;
