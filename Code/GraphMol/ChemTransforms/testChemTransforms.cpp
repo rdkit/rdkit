@@ -1113,6 +1113,17 @@ void testIssue275()
     delete nMol;
   }
 
+  {
+    std::string smi = "CCCCC[C@H]1CC[C@H](C(=O)O)CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    ROMol *nMol=MurckoDecompose(*mol);
+    smi = MolToSmiles(*nMol,false);
+    TEST_ASSERT(smi=="C1CCCCC1");
+    delete mol;
+    delete nMol;
+  }
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
