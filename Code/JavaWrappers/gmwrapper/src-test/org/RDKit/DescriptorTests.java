@@ -230,6 +230,50 @@ public class DescriptorTests extends GraphMolTest {
         assertEquals("CH2DTO",RDKFuncs.calcMolFormula(m1,true));
     }
 
+    @Test public void testConnectivityDescriptors1() {
+	ROMol m1;
+	m1 = RWMol.MolFromSmiles("c1ccccc1O");
+        double tmp;
+        tmp=RDKFuncs.calcChi0v(m1);
+        assertEquals(tmp,3.834,0.01);
+        tmp=RDKFuncs.calcChi1v(m1);
+        assertEquals(tmp,2.134,0.01);
+        tmp=RDKFuncs.calcChi2v(m1);
+        assertEquals(tmp,1.336,0.01);
+        tmp=RDKFuncs.calcChi3v(m1);
+        assertEquals(tmp,0.756,0.01);
+        tmp=RDKFuncs.calcChi4v(m1);
+        assertEquals(tmp,0.428,0.01);
+
+        tmp=RDKFuncs.calcChi0n(m1);
+        assertEquals(tmp,3.834,0.01);
+        tmp=RDKFuncs.calcChi1n(m1);
+        assertEquals(tmp,2.134,0.01);
+        tmp=RDKFuncs.calcChi2n(m1);
+        assertEquals(tmp,1.336,0.01);
+        tmp=RDKFuncs.calcChi3n(m1);
+        assertEquals(tmp,0.756,0.01);
+        tmp=RDKFuncs.calcChi4n(m1);
+        assertEquals(tmp,0.428,0.01);
+    }
+    @Test public void testConnectivityDescriptors2() {
+	ROMol m1;
+        double tmp;
+
+	m1 = RWMol.MolFromSmiles("C12CC2C3CC13");
+        tmp=RDKFuncs.calcKappa1(m1);
+        assertEquals(tmp,2.344,0.01);
+
+	m1 = RWMol.MolFromSmiles("CC(C)C1CCC(C)CCC1");
+        tmp=RDKFuncs.calcKappa2(m1);
+        assertEquals(tmp,4.133,0.01);
+
+	m1 = RWMol.MolFromSmiles("CC(C)C1CCC(C)CCC1");
+        tmp=RDKFuncs.calcKappa3(m1);
+        assertEquals(tmp,2.844,0.01);
+    }
+
+
 
     public static void main(String args[]) {
 	org.junit.runner.JUnitCore.main("org.RDKit.DescriptorTests");

@@ -38,6 +38,7 @@
 %include <GraphMol/Descriptors/MolDescriptors.h>
 %include <GraphMol/Descriptors/Lipinski.h>
 %include <GraphMol/Descriptors/MolSurf.h>
+%include <GraphMol/Descriptors/ConnectivityDescriptors.h>
 %inline %{
   std::pair<double,double> calcCrippenDescriptors(const RDKit::ROMol &mol,
                                                    bool includeHs=true,bool force=false) {
