@@ -111,6 +111,20 @@ extern "C" {
   int MolNumHeteroatoms(CROMol i);
   int MolNumRings(CROMol i);
   double MolTPSA(CROMol i);
+  double MolChi0v(CROMol i);
+  double MolChi1v(CROMol i);
+  double MolChi2v(CROMol i);
+  double MolChi3v(CROMol i);
+  double MolChi4v(CROMol i);
+  double MolChi0n(CROMol i);
+  double MolChi1n(CROMol i);
+  double MolChi2n(CROMol i);
+  double MolChi3n(CROMol i);
+  double MolChi4n(CROMol i);
+  double MolKappa1(CROMol i);
+  double MolKappa2(CROMol i);
+  double MolKappa3(CROMol i);
+
   const char *MolInchi(CROMol i);
   const char *MolInchiKey(CROMol i);
   CROMol MolMurckoScaffold(CROMol i);

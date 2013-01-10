@@ -403,25 +403,25 @@ MolSubstruct(CROMol i, CROMol a) {
 /*******************************************
  *     Molecule operations                 *
  *******************************************/
-extern "C" double
-MolAMW(CROMol i){
-  return RDKit::Descriptors::calcAMW(*(ROMol*)i,false);
+#define MOLDESCR( name, func, ret )                                 \
+extern "C" ret                                                      \
+Mol##name(CROMol i){                                                \
+  const ROMol *im = (ROMol*)i;                                      \
+  return func(*im);                                                 \
 }
+MOLDESCR(TPSA,RDKit::Descriptors::calcTPSA,double)
+MOLDESCR(AMW,RDKit::Descriptors::calcAMW,double)
+MOLDESCR(HBA,RDKit::Descriptors::calcLipinskiHBA,int)
+MOLDESCR(HBD,RDKit::Descriptors::calcLipinskiHBD,int)
+MOLDESCR(NumHeteroatoms,RDKit::Descriptors::calcNumHeteroatoms,int)
+MOLDESCR(NumRings,RDKit::Descriptors::calcNumRings,int)
+MOLDESCR(NumRotatableBonds,RDKit::Descriptors::calcNumRotatableBonds,int)
+
 extern "C" double
 MolLogP(CROMol i){
   double logp,mr;
   RDKit::Descriptors::calcCrippenDescriptors(*(ROMol*)i,logp,mr);
   return logp;
-}
-extern "C" int
-MolHBA(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcLipinskiHBA(*im);
-}
-extern "C" int
-MolHBD(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcLipinskiHBD(*im);
 }
 extern "C" int
 MolNumAtoms(CROMol i){
@@ -433,26 +433,7 @@ MolNumHeavyAtoms(CROMol i){
   const ROMol *im = (ROMol*)i;
   return im->getNumHeavyAtoms();
 }
-extern "C" int
-MolNumHeteroatoms(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcNumHeteroatoms(*im);
-}
-extern "C" int
-MolNumRings(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcNumRings(*im);
-}
-extern "C" int
-MolNumRotatableBonds(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcNumRotatableBonds(*im);
-}
-extern "C" double
-MolTPSA(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcTPSA(*im);
-}
+
 extern "C" const char *
 MolInchi(CROMol i){
   std::string inchi="InChI not available";
