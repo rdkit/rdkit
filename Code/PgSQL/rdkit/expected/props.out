@@ -52,6 +52,84 @@ SELECT mol_logp('c1ccncc1O'::mol) mol_logp;
    0.7872
 (1 row)
 
+SELECT mol_chi0n('c1ccccc1O'::mol) v;
+    v    
+---------
+ 3.83396
+(1 row)
+
+SELECT mol_chi1n('c1ccccc1O'::mol) v;
+    v    
+---------
+ 2.13429
+(1 row)
+
+SELECT mol_chi2n('c1ccccc1O'::mol) v;
+    v    
+---------
+ 1.33555
+(1 row)
+
+SELECT mol_chi3n('c1ccccc1O'::mol) v;
+    v     
+----------
+ 0.756194
+(1 row)
+
+SELECT mol_chi4n('c1ccccc1O'::mol) v;
+    v     
+----------
+ 0.427994
+(1 row)
+
+SELECT mol_chi0v('c1ccccc1O'::mol) v;
+    v    
+---------
+ 3.83396
+(1 row)
+
+SELECT mol_chi1v('c1ccccc1O'::mol) v;
+    v    
+---------
+ 2.13429
+(1 row)
+
+SELECT mol_chi2v('c1ccccc1O'::mol) v;
+    v    
+---------
+ 1.33555
+(1 row)
+
+SELECT mol_chi3v('c1ccccc1O'::mol) v;
+    v     
+----------
+ 0.756194
+(1 row)
+
+SELECT mol_chi4v('c1ccccc1O'::mol) v;
+    v     
+----------
+ 0.427994
+(1 row)
+
+SELECT mol_kappa1('C12CC2C3CC13'::mol) v;
+    v    
+---------
+ 2.34375
+(1 row)
+
+SELECT mol_kappa2('CC(C)C1CCC(C)CCC1'::mol) v;
+    v    
+---------
+ 4.13265
+(1 row)
+
+SELECT mol_kappa3('CC(C)C1CCC(C)CCC1'::mol) v;
+    v    
+---------
+ 2.84444
+(1 row)
+
 SELECT mol_numrotatablebonds('CCC'::mol) mol_numrotatablebonds;
  mol_numrotatablebonds 
 -----------------------
