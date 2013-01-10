@@ -509,8 +509,8 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     5,     9,    13,    16,    19,    21,    24,
-      28,    31,    35,    38,    42,    47,    49,    53,    59,    63,
+       0,     0,     3,     5,     9,    12,    15,    17,    20,    24,
+      27,    31,    34,    38,    42,    47,    49,    53,    59,    63,
       69,    73,    77,    81,    84,    86,    89,    91,    93,    97,
      103,   105,   108,   110,   113,   116,   120,   122,   125,   127,
      130,   133,   135,   137,   140,   142,   144,   146,   148,   150,
@@ -522,10 +522,10 @@ static const yytype_uint8 yyprhs[] =
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      37,     0,    -1,    38,    -1,    37,    14,    38,    -1,    37,
-       1,    35,    -1,    37,    35,    -1,     1,    35,    -1,    40,
-      -1,    38,    40,    -1,    38,    46,    40,    -1,    38,    50,
-      -1,    38,    46,    50,    -1,    38,    39,    -1,    12,    38,
+      37,     0,    -1,    38,    -1,    37,     1,    35,    -1,    37,
+      35,    -1,     1,    35,    -1,    40,    -1,    38,    40,    -1,
+      38,    46,    40,    -1,    38,    50,    -1,    38,    46,    50,
+      -1,    38,    39,    -1,    38,    14,    38,    -1,    12,    38,
       13,    -1,    12,    46,    38,    13,    -1,    45,    -1,    24,
       21,    25,    -1,    24,    21,    32,    51,    25,    -1,    24,
       41,    25,    -1,    24,    41,    32,    51,    25,    -1,    41,
@@ -549,14 +549,14 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    88,    88,    89,    98,   104,   107,   118,   127,   156,
-     177,   210,   228,   242,   243,   254,   255,   259,   264,   268,
-     276,   281,   286,   291,   296,   299,   303,   304,   308,   325,
-     349,   350,   354,   355,   359,   360,   364,   365,   368,   369,
-     373,   378,   383,   388,   394,   400,   401,   409,   421,   426,
-     431,   435,   439,   443,   446,   447,   454,   455,   461,   467,
-     473,   478,   485,   486,   487,   488,   489,   490,   494,   495,
-     500,   501,   505,   506,   509,   510
+       0,    88,    88,    89,    95,    98,   109,   118,   147,   168,
+     201,   219,   231,   244,   245,   256,   257,   261,   266,   270,
+     278,   283,   288,   293,   298,   301,   305,   306,   310,   327,
+     351,   352,   356,   357,   361,   362,   366,   367,   370,   371,
+     375,   380,   385,   390,   396,   402,   403,   411,   423,   428,
+     433,   437,   441,   445,   448,   449,   456,   457,   463,   469,
+     475,   480,   487,   488,   489,   490,   491,   492,   496,   497,
+     502,   503,   507,   508,   511,   512
 };
 #endif
 
@@ -596,7 +596,7 @@ static const yytype_uint16 yytoknum[] =
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    36,    37,    37,    37,    37,    37,    38,    38,    38,
+       0,    36,    37,    37,    37,    37,    38,    38,    38,    38,
       38,    38,    38,    39,    39,    40,    40,    40,    40,    40,
       41,    41,    41,    41,    41,    42,    42,    42,    43,    43,
       44,    44,    44,    44,    44,    44,    44,    44,    44,    44,
@@ -609,8 +609,8 @@ static const yytype_uint8 yyr1[] =
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     1,     3,     3,     2,     2,     1,     2,     3,
-       2,     3,     2,     3,     4,     1,     3,     5,     3,     5,
+       0,     2,     1,     3,     2,     2,     1,     2,     3,     2,
+       3,     2,     3,     3,     4,     1,     3,     5,     3,     5,
        3,     3,     3,     2,     1,     2,     1,     1,     3,     5,
        1,     2,     1,     2,     2,     3,     1,     2,     1,     2,
        2,     1,     1,     2,     1,     1,     1,     1,     1,     1,
@@ -624,15 +624,15 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,    48,    47,    49,     0,     0,     2,     7,    15,
-       6,    32,    36,    38,    45,    70,    72,     0,    67,    64,
+       0,     0,    48,    47,    49,     0,     0,     2,     6,    15,
+       5,    32,    36,    38,    45,    70,    72,     0,    67,    64,
       41,    44,     0,     0,     0,    24,    26,    27,    30,    42,
-      46,    71,     1,     0,     0,     5,    75,    74,     0,    58,
-      57,    60,     0,     0,    59,    56,    12,     8,     0,    53,
-      54,    10,    68,    37,    39,    34,    65,    66,    62,    63,
+      46,    71,     1,     0,     4,    75,    74,     0,     0,    58,
+      57,    60,     0,     0,    59,    56,    11,     7,     0,    53,
+      54,     9,    68,    37,    39,    34,    65,    66,    62,    63,
       16,     0,    40,    43,    41,    25,     0,    18,     0,     0,
-       0,     0,    23,    33,     0,    31,    73,     4,     3,     0,
-       0,     0,    61,     0,     0,     0,     9,    11,    55,     0,
+       0,     0,    23,    33,     0,    31,    73,     3,     0,     0,
+      12,     0,    61,     0,     0,     0,     8,    10,    55,     0,
       28,    20,    21,    22,     0,    35,    13,     0,    69,    50,
       51,    52,    17,     0,    19,    14,    29
 };
@@ -646,27 +646,27 @@ static const yytype_int8 yydefgoto[] =
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -36
+#define YYPACT_NINF -35
 static const yytype_int16 yypact[] =
 {
-      10,   -30,   -36,   -36,   -36,   303,     8,   171,   -36,   -36,
-     -36,   -36,    17,    17,   -36,   -36,   -36,    17,    86,    25,
-      19,   -15,   331,    52,   217,   -36,   -36,   -36,   -36,   -36,
-     113,    43,   -36,   -20,    52,   -36,   -36,   -36,   185,   -36,
-     -36,   -36,     1,   351,   -36,   -36,   -36,   -36,   352,   351,
-     -36,   -36,   -36,   -36,   -36,   -36,   -36,   -36,   -36,   -36,
-     -36,    17,   -36,   -36,    17,   -36,    89,   -36,   331,   331,
-     331,    17,   -36,   -36,    17,   -36,   -36,   -36,   171,   121,
-      79,    43,   -36,   351,   351,   351,   -36,   -36,   -36,    -6,
-      -9,   331,   275,   247,     6,   -36,   -36,   146,   -36,   -36,
-      30,    33,   -36,    51,   -36,   -36,    43
+      11,   -31,   -35,   -35,   -35,   303,     8,   171,   -35,   -35,
+     -35,   -35,    50,    50,   -35,   -35,   -35,    50,     0,    19,
+      47,   -16,   331,   104,   217,   -35,   -35,   -35,   -35,   -35,
+     136,    52,   -35,   -12,   -35,   -35,   -35,   185,   104,   -35,
+     -35,   -35,    23,   351,   -35,   -35,   -35,   -35,   352,   351,
+     -35,   -35,   -35,   -35,   -35,   -35,   -35,   -35,   -35,   -35,
+     -35,    50,   -35,   -35,    50,   -35,    89,   -35,   331,   331,
+     331,    50,   -35,   -35,    50,   -35,   -35,   -35,   121,    18,
+     171,    52,   -35,   351,   351,   351,   -35,   -35,   -35,     6,
+      15,   331,   275,   247,    31,   -35,   -35,   146,   -35,   -35,
+      17,    40,   -35,    59,   -35,   -35,    52
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -36,   -36,   -13,   -36,    -7,   -23,   -18,   -36,   -36,    -4,
-     -35,   -36,   -26,   -36,    15,    20,   -34,   -29
+     -35,   -35,   -10,   -35,    -7,   -15,   -17,   -35,   -35,    -4,
+     -34,   -35,   -24,   -35,    30,    20,   -23,   -29
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -676,25 +676,25 @@ static const yytype_int8 yypgoto[] =
 #define YYTABLE_NINF -1
 static const yytype_uint8 yytable[] =
 {
-      47,    28,    76,    80,    65,    10,    72,    63,    32,    33,
-      66,     1,    81,     2,     3,    77,     4,    82,    28,   102,
-      28,    78,    34,    88,   103,    79,    75,    15,    16,    15,
-      16,   104,    53,    54,     5,    15,    16,    55,    57,    59,
-      62,    86,    58,    35,    60,    91,    92,    93,    99,   100,
-     101,    61,    98,    36,    37,     2,     3,    83,     4,    47,
-      83,    84,    16,    87,    28,    28,    28,    97,     0,   106,
-       0,    47,    47,    72,    72,    72,     5,    76,     0,     0,
-       0,    89,     2,     3,    62,     4,     0,    28,    28,    28,
-      47,    94,     2,     3,    95,     4,    15,    16,     0,    36,
-      37,    38,    56,     5,    39,    40,    83,    84,    85,     0,
-       0,    41,    42,     5,     0,    43,     2,     3,    73,     4,
-      90,    44,     0,    45,     2,     3,     0,     4,    74,     0,
-       0,    36,    37,    38,    96,     0,    39,    40,     0,     0,
-       0,     0,     0,    41,    42,     5,     0,    43,     0,     2,
-       3,     0,     4,    44,     0,    45,    36,    37,    38,   105,
-       0,    39,    40,     0,     0,     0,     0,     0,    41,    42,
+      47,    28,    76,    79,    10,    65,    63,    72,    32,    33,
+      15,    16,     1,    66,     2,     3,    56,     4,    28,    82,
+      28,     2,     3,    77,     4,    88,    75,    78,    80,    15,
+      16,   102,    53,    54,    81,     5,    58,    55,    57,    59,
+      62,    86,     5,    34,    83,    83,    84,    85,   103,    99,
+     100,   101,    98,    91,    92,    93,   104,    15,    16,    47,
+      15,    16,    35,    36,    28,    28,    28,    83,    84,    97,
+      16,    47,    60,    47,    72,    72,    72,    76,    87,    61,
+     106,    89,     0,     0,    62,     0,     0,    28,    28,    28,
+      47,    94,     2,     3,    95,     4,     0,     0,     0,    35,
+      36,    37,     0,    38,    39,    40,     0,     2,     3,     0,
+       4,    41,    42,     5,     0,    43,     0,     0,     0,     0,
+      90,    44,     0,    45,     2,     3,     0,     4,     5,     0,
+       0,    35,    36,    37,    96,    38,    39,    40,     0,     2,
+       3,    73,     4,    41,    42,     5,     0,    43,     0,     2,
+       3,    74,     4,    44,     0,    45,    35,    36,    37,   105,
+      38,    39,    40,     0,     0,     0,     0,     0,    41,    42,
        5,     0,    43,     0,     2,     3,     0,     4,    44,     0,
-      45,    36,    37,    38,     0,     0,    39,    40,     2,     3,
+      45,    35,    36,    37,     0,    38,    39,    40,     2,     3,
        0,     4,     0,    41,    42,     5,     0,    43,     0,     0,
       39,    40,     0,    44,     0,    45,     0,    41,     0,     5,
        0,    43,     0,     0,     0,     0,     0,    44,     0,    45,
@@ -712,32 +712,32 @@ static const yytype_uint8 yytable[] =
        0,     0,     0,    23,     2,     3,    11,     4,    12,    13,
       14,    15,    16,     0,     0,     0,    17,    18,    19,     0,
        0,     0,    64,    21,     0,     2,     3,    22,     4,     0,
-       0,    23,    36,    37,     0,     0,    39,    40,     0,     0,
+       0,    23,    35,    36,     0,     0,    39,    40,     0,     0,
        0,     0,     0,    41,     0,    42,     5,    43,     0,    83,
       84,    85,     0,    44,     0,    45
 };
 
 static const yytype_int8 yycheck[] =
 {
-       7,     5,    31,    38,    22,    35,    24,    22,     0,     1,
-      23,     1,    11,     3,     4,    35,     6,    43,    22,    25,
-      24,    34,    14,    49,    33,    38,    30,    10,    11,    10,
-      11,    25,    12,    13,    24,    10,    11,    17,    18,    19,
-      20,    48,    17,    35,    25,    68,    69,    70,    83,    84,
-      85,    32,    81,    10,    11,     3,     4,    27,     6,    66,
-      27,    28,    11,    48,    68,    69,    70,    80,    -1,   103,
-      -1,    78,    79,    91,    92,    93,    24,   106,    -1,    -1,
-      -1,    61,     3,     4,    64,     6,    -1,    91,    92,    93,
-      97,    71,     3,     4,    74,     6,    10,    11,    -1,    10,
-      11,    12,    16,    24,    15,    16,    27,    28,    29,    -1,
-      -1,    22,    23,    24,    -1,    26,     3,     4,     5,     6,
-      31,    32,    -1,    34,     3,     4,    -1,     6,    15,    -1,
-      -1,    10,    11,    12,    13,    -1,    15,    16,    -1,    -1,
-      -1,    -1,    -1,    22,    23,    24,    -1,    26,    -1,     3,
-       4,    -1,     6,    32,    -1,    34,    10,    11,    12,    13,
-      -1,    15,    16,    -1,    -1,    -1,    -1,    -1,    22,    23,
+       7,     5,    31,    37,    35,    22,    22,    24,     0,     1,
+      10,    11,     1,    23,     3,     4,    16,     6,    22,    43,
+      24,     3,     4,    35,     6,    49,    30,    37,    38,    10,
+      11,    25,    12,    13,    11,    24,    17,    17,    18,    19,
+      20,    48,    24,    35,    27,    27,    28,    29,    33,    83,
+      84,    85,    81,    68,    69,    70,    25,    10,    11,    66,
+      10,    11,    10,    11,    68,    69,    70,    27,    28,    79,
+      11,    78,    25,    80,    91,    92,    93,   106,    48,    32,
+     103,    61,    -1,    -1,    64,    -1,    -1,    91,    92,    93,
+      97,    71,     3,     4,    74,     6,    -1,    -1,    -1,    10,
+      11,    12,    -1,    14,    15,    16,    -1,     3,     4,    -1,
+       6,    22,    23,    24,    -1,    26,    -1,    -1,    -1,    -1,
+      31,    32,    -1,    34,     3,     4,    -1,     6,    24,    -1,
+      -1,    10,    11,    12,    13,    14,    15,    16,    -1,     3,
+       4,     5,     6,    22,    23,    24,    -1,    26,    -1,     3,
+       4,    15,     6,    32,    -1,    34,    10,    11,    12,    13,
+      14,    15,    16,    -1,    -1,    -1,    -1,    -1,    22,    23,
       24,    -1,    26,    -1,     3,     4,    -1,     6,    32,    -1,
-      34,    10,    11,    12,    -1,    -1,    15,    16,     3,     4,
+      34,    10,    11,    12,    -1,    14,    15,    16,     3,     4,
       -1,     6,    -1,    22,    23,    24,    -1,    26,    -1,    -1,
       15,    16,    -1,    32,    -1,    34,    -1,    22,    -1,    24,
       -1,    26,    -1,    -1,    -1,    -1,    -1,    32,    -1,    34,
@@ -767,12 +767,12 @@ static const yytype_uint8 yystos[] =
        0,     1,     3,     4,     6,    24,    37,    38,    40,    45,
       35,     5,     7,     8,     9,    10,    11,    15,    16,    17,
       21,    22,    26,    30,    41,    42,    43,    44,    45,    49,
-      51,    52,     0,     1,    14,    35,    10,    11,    12,    15,
+      51,    52,     0,     1,    35,    10,    11,    12,    14,    15,
       16,    22,    23,    26,    32,    34,    39,    40,    46,    47,
       48,    50,    53,    51,    51,    51,    16,    51,    17,    51,
       25,    32,    51,    22,    21,    42,    38,    25,    27,    28,
-      29,    32,    42,     5,    15,    45,    53,    35,    38,    38,
-      46,    11,    48,    27,    28,    29,    40,    50,    48,    51,
+      29,    32,    42,     5,    15,    45,    53,    35,    38,    46,
+      38,    11,    48,    27,    28,    29,    40,    50,    48,    51,
       31,    41,    41,    41,    51,    51,    13,    38,    53,    46,
       46,    46,    25,    33,    25,    13,    52
 };
@@ -1611,19 +1611,6 @@ yyreduce:
         case 3:
 #line 89 "smarts.yy"
     {
-  RWMol *m1_p = (*molList)[(yyvsp[(1) - (3)].moli)],*m2_p=(*molList)[(yyvsp[(3) - (3)].moli)];
-  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::IONIC,Bond::NONE,true);
-  delete m2_p;
-  int sz = molList->size();
-  if ( sz==(yyvsp[(3) - (3)].moli)+1) {
-    molList->resize( sz-1 );
-  }
-;}
-    break;
-
-  case 4:
-#line 98 "smarts.yy"
-    {
   yyclearin;
   yyerrok;
   yyErrorCleanup(molList);
@@ -1631,15 +1618,15 @@ yyreduce:
 ;}
     break;
 
-  case 5:
-#line 104 "smarts.yy"
+  case 4:
+#line 95 "smarts.yy"
     {
   YYACCEPT;
 ;}
     break;
 
-  case 6:
-#line 107 "smarts.yy"
+  case 5:
+#line 98 "smarts.yy"
     {
   yyclearin;
   yyerrok;
@@ -1649,8 +1636,8 @@ yyreduce:
 ;}
     break;
 
-  case 7:
-#line 118 "smarts.yy"
+  case 6:
+#line 109 "smarts.yy"
     {
   int sz     = molList->size();
   molList->resize( sz + 1);
@@ -1662,8 +1649,8 @@ yyreduce:
 ;}
     break;
 
-  case 8:
-#line 127 "smarts.yy"
+  case 7:
+#line 118 "smarts.yy"
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   Atom *a1 = mp->getActiveAtom();
@@ -1694,8 +1681,8 @@ yyreduce:
 ;}
     break;
 
-  case 9:
-#line 156 "smarts.yy"
+  case 8:
+#line 147 "smarts.yy"
     {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1718,8 +1705,8 @@ yyreduce:
 ;}
     break;
 
-  case 10:
-#line 177 "smarts.yy"
+  case 9:
+#line 168 "smarts.yy"
     {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1754,8 +1741,8 @@ yyreduce:
 ;}
     break;
 
-  case 11:
-#line 210 "smarts.yy"
+  case 10:
+#line 201 "smarts.yy"
     {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1775,8 +1762,8 @@ yyreduce:
 ;}
     break;
 
-  case 12:
-#line 228 "smarts.yy"
+  case 11:
+#line 219 "smarts.yy"
     {
   RWMol *m1_p = (*molList)[(yyval.moli)],*m2_p=(*molList)[(yyvsp[(2) - (2)].moli)];
   m2_p->getAtomWithIdx(0)->setProp("_SmilesStart",1);
@@ -1790,13 +1777,26 @@ yyreduce:
 ;}
     break;
 
+  case 12:
+#line 231 "smarts.yy"
+    {
+  RWMol *m1_p = (*molList)[(yyvsp[(1) - (3)].moli)],*m2_p=(*molList)[(yyvsp[(3) - (3)].moli)];
+  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::IONIC,Bond::NONE,true);
+  delete m2_p;
+  int sz = molList->size();
+  if ( sz==(yyvsp[(3) - (3)].moli)+1) {
+    molList->resize( sz-1 );
+  }
+;}
+    break;
+
   case 13:
-#line 242 "smarts.yy"
+#line 244 "smarts.yy"
     { (yyval.moli) = (yyvsp[(2) - (3)].moli); ;}
     break;
 
   case 14:
-#line 243 "smarts.yy"
+#line 245 "smarts.yy"
     {
   // FIX: this needs to handle arbitrary bond_exprs
   (yyval.moli) = (yyvsp[(3) - (4)].moli);
@@ -1808,14 +1808,14 @@ yyreduce:
     break;
 
   case 16:
-#line 256 "smarts.yy"
+#line 258 "smarts.yy"
     {
   (yyval.atom) = new QueryAtom(1);
 ;}
     break;
 
   case 17:
-#line 260 "smarts.yy"
+#line 262 "smarts.yy"
     {
   (yyval.atom) = new QueryAtom(1);
   (yyval.atom)->setProp("molAtomMapNumber",(yyvsp[(4) - (5)].ival));
@@ -1823,14 +1823,14 @@ yyreduce:
     break;
 
   case 18:
-#line 265 "smarts.yy"
+#line 267 "smarts.yy"
     {
   (yyval.atom) = (yyvsp[(2) - (3)].atom);
 ;}
     break;
 
   case 19:
-#line 269 "smarts.yy"
+#line 271 "smarts.yy"
     {
   (yyval.atom) = (yyvsp[(2) - (5)].atom);
   (yyval.atom)->setProp("molAtomMapNumber",(yyvsp[(4) - (5)].ival));
@@ -1838,7 +1838,7 @@ yyreduce:
     break;
 
   case 20:
-#line 276 "smarts.yy"
+#line 278 "smarts.yy"
     {
   (yyvsp[(1) - (3)].atom)->expandQuery((yyvsp[(3) - (3)].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if((yyvsp[(1) - (3)].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[(1) - (3)].atom)->setChiralTag((yyvsp[(3) - (3)].atom)->getChiralTag());
@@ -1847,7 +1847,7 @@ yyreduce:
     break;
 
   case 21:
-#line 281 "smarts.yy"
+#line 283 "smarts.yy"
     {
   (yyvsp[(1) - (3)].atom)->expandQuery((yyvsp[(3) - (3)].atom)->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   if((yyvsp[(1) - (3)].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[(1) - (3)].atom)->setChiralTag((yyvsp[(3) - (3)].atom)->getChiralTag());
@@ -1856,7 +1856,7 @@ yyreduce:
     break;
 
   case 22:
-#line 286 "smarts.yy"
+#line 288 "smarts.yy"
     {
   (yyvsp[(1) - (3)].atom)->expandQuery((yyvsp[(3) - (3)].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if((yyvsp[(1) - (3)].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[(1) - (3)].atom)->setChiralTag((yyvsp[(3) - (3)].atom)->getChiralTag());
@@ -1865,7 +1865,7 @@ yyreduce:
     break;
 
   case 23:
-#line 291 "smarts.yy"
+#line 293 "smarts.yy"
     {
   (yyvsp[(1) - (2)].atom)->expandQuery((yyvsp[(2) - (2)].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if((yyvsp[(1) - (2)].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[(1) - (2)].atom)->setChiralTag((yyvsp[(2) - (2)].atom)->getChiralTag());
@@ -1874,7 +1874,7 @@ yyreduce:
     break;
 
   case 25:
-#line 299 "smarts.yy"
+#line 301 "smarts.yy"
     {
   (yyvsp[(2) - (2)].atom)->getQuery()->setNegation(!((yyvsp[(2) - (2)].atom)->getQuery()->getNegation()));
   (yyval.atom) = (yyvsp[(2) - (2)].atom);
@@ -1882,7 +1882,7 @@ yyreduce:
     break;
 
   case 28:
-#line 308 "smarts.yy"
+#line 310 "smarts.yy"
     {
   // this is a recursive SMARTS expression
   QueryAtom *qA = new QueryAtom();
@@ -1903,7 +1903,7 @@ yyreduce:
     break;
 
   case 29:
-#line 325 "smarts.yy"
+#line 327 "smarts.yy"
     {
   // UNDOCUMENTED EXTENSION:
   // this is a recursive SMARTS expression with a serial number
@@ -1928,7 +1928,7 @@ yyreduce:
     break;
 
   case 31:
-#line 350 "smarts.yy"
+#line 352 "smarts.yy"
     {
   (yyvsp[(2) - (2)].atom)->expandQuery(makeAtomIsotopeQuery((yyvsp[(1) - (2)].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=(yyvsp[(2) - (2)].atom);
@@ -1936,7 +1936,7 @@ yyreduce:
     break;
 
   case 33:
-#line 355 "smarts.yy"
+#line 357 "smarts.yy"
     {
   (yyvsp[(2) - (2)].atom)->expandQuery(makeAtomIsotopeQuery((yyvsp[(1) - (2)].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=(yyvsp[(2) - (2)].atom);
@@ -1944,12 +1944,12 @@ yyreduce:
     break;
 
   case 34:
-#line 359 "smarts.yy"
+#line 361 "smarts.yy"
     { (yyval.atom) = new QueryAtom((yyvsp[(2) - (2)].ival)); ;}
     break;
 
   case 35:
-#line 360 "smarts.yy"
+#line 362 "smarts.yy"
     {
   (yyval.atom) = new QueryAtom((yyvsp[(3) - (3)].ival));
   (yyval.atom)->expandQuery(makeAtomIsotopeQuery((yyvsp[(1) - (3)].ival)),Queries::COMPOSITE_AND,true);
@@ -1957,14 +1957,14 @@ yyreduce:
     break;
 
   case 37:
-#line 365 "smarts.yy"
+#line 367 "smarts.yy"
     {
   static_cast<ATOM_EQUALS_QUERY *>((yyvsp[(1) - (2)].atom)->getQuery())->setVal((yyvsp[(2) - (2)].ival));
 ;}
     break;
 
   case 39:
-#line 369 "smarts.yy"
+#line 371 "smarts.yy"
     {
   delete (yyvsp[(1) - (2)].atom)->getQuery();
   (yyvsp[(1) - (2)].atom)->setQuery(makeAtomMinRingSizeQuery((yyvsp[(2) - (2)].ival)));
@@ -1972,7 +1972,7 @@ yyreduce:
     break;
 
   case 40:
-#line 373 "smarts.yy"
+#line 375 "smarts.yy"
     {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery((yyvsp[(2) - (2)].ival)));
@@ -1981,7 +1981,7 @@ yyreduce:
     break;
 
   case 41:
-#line 378 "smarts.yy"
+#line 380 "smarts.yy"
     {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
@@ -1990,7 +1990,7 @@ yyreduce:
     break;
 
   case 42:
-#line 383 "smarts.yy"
+#line 385 "smarts.yy"
     {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery((yyvsp[(1) - (1)].ival)));
@@ -1999,7 +1999,7 @@ yyreduce:
     break;
 
   case 43:
-#line 388 "smarts.yy"
+#line 390 "smarts.yy"
     {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
@@ -2009,7 +2009,7 @@ yyreduce:
     break;
 
   case 44:
-#line 394 "smarts.yy"
+#line 396 "smarts.yy"
     {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
@@ -2019,7 +2019,7 @@ yyreduce:
     break;
 
   case 46:
-#line 401 "smarts.yy"
+#line 403 "smarts.yy"
     {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[(1) - (1)].ival)));
@@ -2028,7 +2028,7 @@ yyreduce:
     break;
 
   case 47:
-#line 409 "smarts.yy"
+#line 411 "smarts.yy"
     {
   //
   // This construction (and some others) may seem odd, but the
@@ -2044,7 +2044,7 @@ yyreduce:
     break;
 
   case 48:
-#line 421 "smarts.yy"
+#line 423 "smarts.yy"
     {
   (yyval.atom) = new QueryAtom((yyvsp[(1) - (1)].ival));
   (yyval.atom)->setIsAromatic(true);
@@ -2053,7 +2053,7 @@ yyreduce:
     break;
 
   case 50:
-#line 431 "smarts.yy"
+#line 433 "smarts.yy"
     {
   (yyvsp[(1) - (3)].bond)->expandQuery((yyvsp[(3) - (3)].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[(3) - (3)].bond);
@@ -2061,7 +2061,7 @@ yyreduce:
     break;
 
   case 51:
-#line 435 "smarts.yy"
+#line 437 "smarts.yy"
     {
   (yyvsp[(1) - (3)].bond)->expandQuery((yyvsp[(3) - (3)].bond)->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   delete (yyvsp[(3) - (3)].bond);
@@ -2069,7 +2069,7 @@ yyreduce:
     break;
 
   case 52:
-#line 439 "smarts.yy"
+#line 441 "smarts.yy"
     {
   (yyvsp[(1) - (3)].bond)->expandQuery((yyvsp[(3) - (3)].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[(3) - (3)].bond);
@@ -2077,7 +2077,7 @@ yyreduce:
     break;
 
   case 55:
-#line 447 "smarts.yy"
+#line 449 "smarts.yy"
     {
   (yyvsp[(1) - (2)].bond)->expandQuery((yyvsp[(2) - (2)].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[(2) - (2)].bond);
@@ -2085,7 +2085,7 @@ yyreduce:
     break;
 
   case 57:
-#line 455 "smarts.yy"
+#line 457 "smarts.yy"
     {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::SINGLE);
@@ -2095,7 +2095,7 @@ yyreduce:
     break;
 
   case 58:
-#line 461 "smarts.yy"
+#line 463 "smarts.yy"
     {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::TRIPLE);
@@ -2105,7 +2105,7 @@ yyreduce:
     break;
 
   case 59:
-#line 467 "smarts.yy"
+#line 469 "smarts.yy"
     {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::AROMATIC);
@@ -2115,7 +2115,7 @@ yyreduce:
     break;
 
   case 60:
-#line 473 "smarts.yy"
+#line 475 "smarts.yy"
     {
   QueryBond *newB= new QueryBond();
   newB->setQuery(makeBondIsInRingQuery());
@@ -2124,7 +2124,7 @@ yyreduce:
     break;
 
   case 61:
-#line 478 "smarts.yy"
+#line 480 "smarts.yy"
     {
   (yyvsp[(2) - (2)].bond)->getQuery()->setNegation(!((yyvsp[(2) - (2)].bond)->getQuery()->getNegation()));
   (yyval.bond) = (yyvsp[(2) - (2)].bond);
@@ -2132,42 +2132,42 @@ yyreduce:
     break;
 
   case 62:
-#line 485 "smarts.yy"
+#line 487 "smarts.yy"
     { (yyval.ival)=2; ;}
     break;
 
   case 63:
-#line 486 "smarts.yy"
+#line 488 "smarts.yy"
     { (yyval.ival)=(yyvsp[(2) - (2)].ival); ;}
     break;
 
   case 64:
-#line 487 "smarts.yy"
+#line 489 "smarts.yy"
     { (yyval.ival)=1; ;}
     break;
 
   case 65:
-#line 488 "smarts.yy"
+#line 490 "smarts.yy"
     { (yyval.ival)=-2; ;}
     break;
 
   case 66:
-#line 489 "smarts.yy"
+#line 491 "smarts.yy"
     { (yyval.ival)=-(yyvsp[(2) - (2)].ival); ;}
     break;
 
   case 67:
-#line 490 "smarts.yy"
+#line 492 "smarts.yy"
     { (yyval.ival)=-1; ;}
     break;
 
   case 69:
-#line 495 "smarts.yy"
+#line 497 "smarts.yy"
     { (yyval.ival) = (yyvsp[(2) - (3)].ival)*10+(yyvsp[(3) - (3)].ival); ;}
     break;
 
   case 73:
-#line 506 "smarts.yy"
+#line 508 "smarts.yy"
     { (yyval.ival) = (yyvsp[(1) - (2)].ival)*10 + (yyvsp[(2) - (2)].ival); ;}
     break;
 
@@ -2387,7 +2387,7 @@ yyreturn:
 }
 
 
-#line 513 "smarts.yy"
+#line 515 "smarts.yy"
 
 
 

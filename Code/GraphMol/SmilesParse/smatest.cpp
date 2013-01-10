@@ -79,7 +79,8 @@ void testPass(){
     "[13]",
     "[+]",
     "[C:1]",
-    "[C:0]",  // issue 3525776   
+    "[C:0]",  // issue 3525776
+    "[$([#0].[#0])]", // sf.net issue 281
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];
