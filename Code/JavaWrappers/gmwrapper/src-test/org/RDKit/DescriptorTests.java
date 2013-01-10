@@ -244,6 +244,8 @@ public class DescriptorTests extends GraphMolTest {
         assertEquals(tmp,0.756,0.01);
         tmp=RDKFuncs.calcChi4v(m1);
         assertEquals(tmp,0.428,0.01);
+        tmp=RDKFuncs.calcChiNv(m1,4);
+        assertEquals(tmp,0.428,0.01);
 
         tmp=RDKFuncs.calcChi0n(m1);
         assertEquals(tmp,3.834,0.01);
@@ -254,6 +256,8 @@ public class DescriptorTests extends GraphMolTest {
         tmp=RDKFuncs.calcChi3n(m1);
         assertEquals(tmp,0.756,0.01);
         tmp=RDKFuncs.calcChi4n(m1);
+        assertEquals(tmp,0.428,0.01);
+        tmp=RDKFuncs.calcChiNn(m1,4);
         assertEquals(tmp,0.428,0.01);
     }
     @Test public void testConnectivityDescriptors2() {
