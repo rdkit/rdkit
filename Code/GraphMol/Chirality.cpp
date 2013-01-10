@@ -468,13 +468,13 @@ namespace RDKit{
                   mol.getAtomWithIdx(*idxIt)->getProp("_ringStereoAtoms",oAtoms);
                 }
                 oAtoms.push_back(same*(atom->getIdx()+1));
-                mol.getAtomWithIdx(*idxIt)->setProp("_ringStereoAtoms",oAtoms);
+                mol.getAtomWithIdx(*idxIt)->setProp("_ringStereoAtoms",oAtoms,true);
               }
             }
           }
         }
         if(ringStereoAtoms.size()){
-          atom->setProp("_ringStereoAtoms",ringStereoAtoms);
+          atom->setProp("_ringStereoAtoms",ringStereoAtoms,true);
           return true;
         }
       }

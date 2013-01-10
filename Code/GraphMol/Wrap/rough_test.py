@@ -2367,6 +2367,10 @@ CAS<~>
     self.failUnless('carboxylicacid' in d)
     self.failIf('CarboxylicAcid' in d)
                     
+  def test81Issue275(self):
+    smi = Chem.MolToSmiles(Chem.MurckoDecompose(Chem.MolFromSmiles('CCCCC[C@H]1CC[C@H](C(=O)O)CC1')))
+    self.failUnlessEqual(smi,'C1CCCCC1')
+                    
 
 if __name__ == '__main__':
   unittest.main()
