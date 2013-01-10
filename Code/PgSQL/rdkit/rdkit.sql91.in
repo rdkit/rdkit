@@ -867,6 +867,11 @@ CREATE OR REPLACE FUNCTION gbfp_compress(internal)
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION gbfp_penalty(internal,internal,internal)
+    RETURNS internal
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
 CREATE OPERATOR <%> (
     LEFTARG = bfp,
     RIGHTARG = bfp,
@@ -892,7 +897,7 @@ AS
     FUNCTION    2   gmol_union (bytea, internal),
     FUNCTION    3   gbfp_compress (internal),
     FUNCTION    4   gmol_decompress (internal),
-    FUNCTION    5   gmol_penalty (internal, internal, internal),
+    FUNCTION    5   gbfp_penalty (internal, internal, internal),
     FUNCTION    6   gmol_picksplit (internal, internal),
     FUNCTION    7   gmol_same (bytea, bytea, internal),
     FUNCTION    8   (bfp, bfp) gbfp_distance(internal, bytea, smallint, oid),
