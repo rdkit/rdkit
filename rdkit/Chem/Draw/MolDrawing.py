@@ -218,6 +218,11 @@ class MolDrawing(object):
       self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
       fp1,fp2 = self._offsetDblBond(pos,nbrPos,bond,atom,nbr,conf,dir=-1)
       self.canvas.addCanvasLine(fp1,fp2,linewidth=width,color=color,color2=color2)
+    else:
+      self.canvas.addCanvasLine(pos, nbrPos, linewidth=width, color=color, color2=color2,
+                                dash=(1,2))
+
+      
       
   def scaleAndCenter(self,mol,conf,coordCenter=False,canvasSize=None,ignoreHs=False):
     self.currDotsPerAngstrom=self.dotsPerAngstrom
