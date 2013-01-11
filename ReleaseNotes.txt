@@ -4,28 +4,102 @@
 !!!!!! IMPORTANT !!!!!!
 
 Acknowledgements:
-Andrew Dalke, James Davidson, Robert Feinstein, Roger Sayle
+Andrew Dalke, James Davidson, Robert Feinstein, Nikolas Fechner,
+Nicholas Firth, Markus Hartenfeller, Jameed Hussain, Thorsten Meinl,
+Sereina Riniker, Roger Sayle, Pat Walters, Bernd Wiswedel 
 
 Bug Fixes: 
+ - SMILES generated for molecules with ring stereochemistry
+   (e.g. N[C@H]1CC[C@H](CC1)C(O)=O) are now canonical. (issue 40)
+ - SKP lines in a CTAB property block are now properly handled. (issue
+   255)
+ - The molecular drawing code now shows dotted lines for Any bonds.
+   (issue 260)
+ - ROMol::debugMol() (ROMol.DebugMol() in Python) now reports isotope
+   information. (issue 261)
+ - The molecular drawing code now correctly highlights wedged bonds.
+   (issue 262)
+ - RWMol::addAtom() now adds atoms to conformers.
+   (issue 264)
+ - TDT files with atomic coordinates now have those coordinates in the
+   correct order. (issue 265)
+ - A ring-finding error/crash has been fixed. (issue 266)
+ - Dummy atoms now have a default valence of 0 and no maximim
+   valence. (issue 267)
+ - The Python code no longer throws string exceptions. (issue 268)
+ - Invalid/unrecognized atom symbols in CTABs are no longer
+   accepted. (issue 269)
+ - Chem.RDKFingerprint now accepts atom invariants with values larger
+   than the number of atoms. (issue 270)
+ - The code should now all work when the locale (LANG) is set to
+   values other than "C" or one of the English locales. (issue 271)
+ - Two-coordinate Hs are no longer removed by
+   MolOps::removeHs(). (issue 272)
+ - R groups read from CTABs are now marked using setIsotope() instead
+   of setMass(). (issue 273)
+ - Hs present in the molecule graph no longer incorrectly impact
+   substructure matches. (issue 274)
+ - Murcko decomposition of molecules with chiral ring atoms now
+   works. (issue 275)  
+ - Methane now shows up in molecular drawings. (issue 276)
+ - '&' in SLN properties is now correctly handled. (issue 277)
+ - Molecules with string-valued molAtomMapNumber atomic properties can
+   now be serialized. (issue 280)
+ - SMARTS strings containing a dot in a recursive piece are now
+   properly parsed. (issue 281)
+ - The SMILES and SLN parsers no longer leak memory when sanitization
+   of the result molecule fails. (issue 282)
+   
 
 New Features:
+ - RDKit ExplicitBitVects and DiscreteValueVects can now be directly
+   converted into numpy arrays.
+ - Rogot-Goldberg similarity has been added.
+ - C++: BitVects and SparseIntVects now support a size() method.
+ - C++: DiscreteValueVects now support operator[].
+ - An initial version of a SWIG wrapper for C# has been added.
+ - Support for easily adding recursive queries to molecules and
+   reactions has been added. More documentation is required for this
+   feature.
+ - To allow more control over the reaction, it is possible to flag reactant
+   atoms as being protected by setting the "_protected" property on those
+   atoms. Flagged atoms will not be altered in the reaction.
+ - Atoms and Bonds now support a ClearProp() method from python.
+ - The new Python module rdkit.ML.Scoring.Scoring includes a number of
+   standard tools for evaluating virtual screening experiments: ROC
+   curve generation, AUC, RIE, BEDROC, and Enrichment,  
+ - 
 
 New Database Cartridge Features: 
+- The Chi and Kappa descriptors are now available
 
 New Java Wrapper Features:
+- The Chi and Kappa descriptors are now available
 
 Deprecated modules (to be removed in next release):
 
 Removed modules:
 - The old SWIG wrapper code in $RDBASE/Code/Demos/SWIG has been
   removed. The SWIG wrappers are now in $RDBASE/Code/JavaWrappers
+  
 
 Other:
 - The C++ code for drawing molecules previously found in
   $RDBASE/Code/Demos/RDKit/Draw has been moved to
   $RDBASE/Code/GraphMol/MolDrawing
+- Calculation of the Chi and Kappa descriptors has been moved into
+  C++.
+- To make builds easier, the thread-safety of the recursive-smarts
+  matcher has been made optional. The build option is
+  RDK_BUILD_THREADSAFE_SSS. 
+- There are two new entries in the Contrib directory:
+  * Contrib/PBF : An implementation of the Plane of Best Fit
+    contributed by Nicholas Firth.
+  * Contrib/mmpa : An implementation of GSK's matched molecular pairs
+    algorithm contributed by Jameed Hussain
 
 
+  
 ******  Release_2012.09.1 *******
 (Changes relative to Release_2012.06.1)
 
