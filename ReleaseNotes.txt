@@ -97,7 +97,8 @@ Other:
     contributed by Nicholas Firth.
   * Contrib/mmpa : An implementation of GSK's matched molecular pairs
     algorithm contributed by Jameed Hussain
-
+- A new "Cookbook" has been added to the documentation to provide
+  a collection of recipes for how to do useful tasks.
 
   
 ******  Release_2012.09.1 *******
