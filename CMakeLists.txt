@@ -48,7 +48,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 # Config variables:
 set(RDKit_Year "2012")
 set(RDKit_Month "12")
-set(RDKit_Revision "1pre")
+set(RDKit_Revision "1beta")
 set(RDKit_ABI "1")
 
 set(RDKit_CodeDir "${CMAKE_SOURCE_DIR}/Code")
