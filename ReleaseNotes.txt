@@ -9,6 +9,8 @@ Nicholas Firth, Markus Hartenfeller, Jameed Hussain, Thorsten Meinl,
 Sereina Riniker, Roger Sayle, Pat Walters, Bernd Wiswedel 
 
 Bug Fixes: 
+ - Using parentheses for zero-level grouping now works in reaction
+   SMARTS. This allows intramolecular reactions to be expressed.
  - SMILES generated for molecules with ring stereochemistry
    (e.g. N[C@H]1CC[C@H](CC1)C(O)=O) are now canonical. (issue 40)
  - SKP lines in a CTAB property block are now properly handled. (issue
@@ -50,7 +52,6 @@ Bug Fixes:
  - The SMILES and SLN parsers no longer leak memory when sanitization
    of the result molecule fails. (issue 282)
    
-
 New Features:
  - RDKit ExplicitBitVects and DiscreteValueVects can now be directly
    converted into numpy arrays.
@@ -68,7 +69,6 @@ New Features:
  - The new Python module rdkit.ML.Scoring.Scoring includes a number of
    standard tools for evaluating virtual screening experiments: ROC
    curve generation, AUC, RIE, BEDROC, and Enrichment,  
- - 
 
 New Database Cartridge Features: 
 - The Chi and Kappa descriptors are now available
@@ -81,7 +81,6 @@ Deprecated modules (to be removed in next release):
 Removed modules:
 - The old SWIG wrapper code in $RDBASE/Code/Demos/SWIG has been
   removed. The SWIG wrappers are now in $RDBASE/Code/JavaWrappers
-  
 
 Other:
 - The C++ code for drawing molecules previously found in
