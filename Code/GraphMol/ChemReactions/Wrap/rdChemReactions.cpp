@@ -165,7 +165,7 @@ namespace RDKit {
     res = RxnSmartsToChemicalReaction(smarts,&replacements);
     return res;
   }
-
+  
   python::object GetReactingAtoms(const ChemicalReaction &self,bool mappedAtomsOnly){
     python::list res;
     VECT_INT_VECT rAs=getReactingAtoms(self,mappedAtomsOnly);
@@ -173,6 +173,40 @@ namespace RDKit {
       res.append(python::tuple(*rIt));
     }
     return python::tuple(res);
+  }
+
+  python::object AddRecursiveQueriesToReaction(ChemicalReaction &self, python::dict queryDict,
+                                     std::string propName, bool getLabels=false){
+    // transform dictionary into map
+    std::map<std::string, ROMOL_SPTR> queries;
+    for(unsigned int i=0;i<python::extract<unsigned int>(queryDict.keys().attr("__len__")());++i){
+      ROMol *m = python::extract<ROMol *>(queryDict.values()[i]);
+      ROMOL_SPTR nm(new ROMol(*m));
+      std::string k = python::extract<std::string>(queryDict.keys()[i]);
+      queries[k]=nm;
+    }
+
+    if (getLabels) {
+      std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+      addRecursiveQueriesToReaction(self, queries, propName, &labels);
+
+      // transform labels into python::tuple(python::tuple(python::tuple))
+      python::list reactantLabels;
+      for (unsigned int i=0; i<labels.size(); ++i) {
+        python::list tmpLabels;
+        for (unsigned int j=0; j<labels[i].size(); ++j) {
+          python::list tmpPair;
+          tmpPair.append(labels[i][j].first);
+          tmpPair.append(labels[i][j].second);
+          tmpLabels.append(python::tuple(tmpPair));
+        }
+        reactantLabels.append(python::tuple(tmpLabels));
+      }
+      return python::tuple(reactantLabels);
+    } else {
+      addRecursiveQueriesToReaction(self, queries, propName);
+      return python::object(); // this is None
+    }
   }
 }
 
@@ -243,6 +277,10 @@ Sample Usage:\n\
     .def("GetReactingAtoms",&RDKit::GetReactingAtoms,
          (python::arg("self"),python::arg("mappedAtomsOnly")=false),
          "returns a sequence of sequences with the atoms that change in the reaction")
+    .def("AddRecursiveQueriesToReaction", RDKit::AddRecursiveQueriesToReaction,
+         (python::arg("reaction"), python::arg("queries")=python::dict(),
+          python::arg("propName")="molFileValue", python::arg("getLabels")=false),
+         "adds recursive queries and returns reactant labels")
     // enable pickle support
     .def_pickle(RDKit::reaction_pickle_suite())
   ;
@@ -254,7 +292,7 @@ Sample Usage:\n\
               "construct a ChemicalReaction from a reaction SMARTS string. \n\
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",
-              python::return_value_policy<python::manage_new_object>());
+      python::return_value_policy<python::manage_new_object>());
   python::def("ReactionFromRxnFile",RDKit::RxnFileToChemicalReaction,
       "construct a ChemicalReaction from an MDL rxn file",
       python::return_value_policy<python::manage_new_object>());

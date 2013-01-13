@@ -398,7 +398,20 @@ RusselSimilarity(const T1& bv1,
   return x/bv1.getNumBits();
 }
 
-
+template <typename T1, typename T2>
+double
+RogotGoldbergSimilarity(const T1& bv1,const T2& bv2)
+{
+  if(bv1.getNumBits()!=bv2.getNumBits())
+    throw ValueErrorException("BitVects must be same length");
+  double x = NumOnBitsInCommon(bv1,bv2);
+  double y = bv1.getNumOnBits();
+  double z = bv2.getNumOnBits();
+  double l = bv1.getNumBits();
+  double d = l - y - z + x;
+  if ((x == l) || (d == l)) return 1.0;
+  else return (x/(y+z) + (d)/(2*l-y-z));
+}
 
 
 // """ -------------------------------------------------------
@@ -455,6 +468,12 @@ NumBitsInCommon(const T1& bv1,
   return bv1.getNumBits() - (bv1^bv2).getNumOnBits();
 }
 
+int
+NumBitsInCommon(const ExplicitBitVect& bv1,
+                  const ExplicitBitVect& bv2)
+{
+  return bv1.getNumBits() - ((*bv1.dp_bits) ^ (*bv2.dp_bits)).count();
+}
 
 // """ -------------------------------------------------------
 //
@@ -751,6 +770,7 @@ template double McConnaugheySimilarity(const SparseBitVect& bv1,const SparseBitV
 template double AsymmetricSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template double BraunBlanquetSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template double RusselSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
+template double RogotGoldbergSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template double OnBitSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template int NumBitsInCommon(const SparseBitVect& bv1,const SparseBitVect& bv2);
 template double AllBitSimilarity(const SparseBitVect& bv1,const SparseBitVect& bv2);
@@ -770,6 +790,7 @@ template double McConnaugheySimilarity(const ExplicitBitVect& bv1,const Explicit
 template double AsymmetricSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template double BraunBlanquetSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template double RusselSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
+template double RogotGoldbergSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template double OnBitSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template int NumBitsInCommon(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);
 template double AllBitSimilarity(const ExplicitBitVect& bv1,const ExplicitBitVect& bv2);

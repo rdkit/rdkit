@@ -189,6 +189,15 @@ double
 RusselSimilarity(const T1& bv1,
                  const T2& bv2);
 
+//! returns the Rogot-Goldberg similarity between two bit vects
+/*!
+  \return <tt>(bv1&bv2)_o / (bv1_o + bv2_o)
+  + (bv1_n - bv1_o - bv2_o + (bv1&bv2)_o) / (2*bv1_n - bv1_o - bv2_o) </tt>
+*/
+template <typename T1, typename T2>
+double
+RogotGoldbergSimilarity(const T1& bv1,const T2& bv2);
+
 
 //! returns the on bit similarity between two bit vects
 /*!
@@ -206,7 +215,11 @@ template <typename T1, typename T2>
 int
 NumBitsInCommon(const T1& bv1,const T2& bv2);
 
-//! returns the commong-bit similarity (on and off) between two bit vects
+int
+NumBitsInCommon(const ExplicitBitVect & bv1,const ExplicitBitVect & bv2);
+
+//! returns the common-bit similarity (on and off) between two bit vects
+//! This is also called Manhattan similarity.
 /*!
   \return <tt>[bv1_n - (bv1^bv2)_o] / bv1_n</tt>
 */

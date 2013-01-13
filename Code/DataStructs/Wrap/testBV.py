@@ -128,6 +128,11 @@ class TestCase(unittest.TestCase):
         sim = DataStructs.OnBitSimilarity(bvs[0],bvs[i])
         self.failUnless(feq(sim,sims[i]))
 
+      sims = DataStructs.BulkRogotGoldbergSimilarity(bvs[0],bvs)
+      for i in range(len(bvs)):
+        sim = DataStructs.RogotGoldbergSimilarity(bvs[0],bvs[i])
+        self.failUnless(feq(sim,sims[i]))
+
       sims = DataStructs.BulkTverskySimilarity(bvs[0],bvs,1,1)
       for i in range(len(bvs)):
         sim = DataStructs.TverskySimilarity(bvs[0],bvs[i],1,1)

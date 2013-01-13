@@ -361,20 +361,15 @@ class TestCase(unittest.TestCase):
 
     query = Chem.MolFromSmarts('[Cl,$(O)]')
     mol = Chem.MolFromSmiles('C(=O)O')
-    print "q1"
     self.failUnless(len(mol.GetSubstructMatches(query))==2)
     mol = Chem.MolFromSmiles('C(=N)N')
-    print "q2"
     self.failUnless(len(mol.GetSubstructMatches(query))==0)
     
     query = Chem.MolFromSmarts('[$([O,S]-[!$(*=O)])]')
     mol = Chem.MolFromSmiles('CC(S)C(=O)O')
-    print "q3"
     self.failUnless(len(mol.GetSubstructMatches(query))==1)
     mol = Chem.MolFromSmiles('C(=O)O')
-    print "q4"
     self.failUnless(len(mol.GetSubstructMatches(query))==0)
-    print "done"
     
   def test14Hs(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
@@ -2345,17 +2340,35 @@ CAS<~>
     self.failUnlessEqual(bond.GetProp('foo'),'bar')
     
   def test79AddRecursiveStructureQueries(self):
-    qs = {'CO':Chem.MolFromSmiles('CO'),
-          'CN':Chem.MolFromSmiles('CN')}
+    qs = {'carbonyl':Chem.MolFromSmiles('CO'),
+          'amine':Chem.MolFromSmiles('CN')}
     q = Chem.MolFromSmiles('CCC')
-    q.GetAtomWithIdx(0).SetProp('query','CO,CN')
+    q.GetAtomWithIdx(0).SetProp('query','carbonyl,amine')
     Chem.MolAddRecursiveQueries(q,qs,'query')
     m = Chem.MolFromSmiles('CCCO')
-    self.failUnless(m.HasSubstructMatch(q));
+    self.failUnless(m.HasSubstructMatch(q))
     m = Chem.MolFromSmiles('CCCN')
-    self.failUnless(m.HasSubstructMatch(q));
+    self.failUnless(m.HasSubstructMatch(q))
     m = Chem.MolFromSmiles('CCCC')
-    self.failIf(m.HasSubstructMatch(q));
+    self.failIf(m.HasSubstructMatch(q))
+
+  def test80ParseMolQueryDefFile(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','ChemTransforms',
+                                            'testData','query_file1.txt')
+    d = Chem.ParseMolQueryDefFile(fileN,standardize=False)
+    self.failUnless('CarboxylicAcid' in d)
+    m = Chem.MolFromSmiles('CC(=O)O')
+    self.failUnless(m.HasSubstructMatch(d['CarboxylicAcid']))
+    self.failIf(m.HasSubstructMatch(d['CarboxylicAcid.Aromatic']))
+
+    d = Chem.ParseMolQueryDefFile(fileN)
+    self.failUnless('carboxylicacid' in d)
+    self.failIf('CarboxylicAcid' in d)
+                    
+  def test81Issue275(self):
+    smi = Chem.MolToSmiles(Chem.MurckoDecompose(Chem.MolFromSmiles('CCCCC[C@H]1CC[C@H](C(=O)O)CC1')))
+    self.failUnlessEqual(smi,'C1CCCCC1')
+                    
 
 if __name__ == '__main__':
   unittest.main()

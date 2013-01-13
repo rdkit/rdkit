@@ -86,15 +86,6 @@ namespace {
 
 /* --------------------------------------------------------------- */
 cmpd: mol
-| cmpd SEPARATOR_TOKEN mol {
-  RWMol *m1_p = (*molList)[$1],*m2_p=(*molList)[$3];
-  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::IONIC,Bond::NONE,true);
-  delete m2_p;
-  int sz = molList->size();
-  if ( sz==$3+1) {
-    molList->resize( sz-1 );
-  }
-}
 | cmpd error EOS_TOKEN{
   yyclearin;
   yyerrok;
@@ -236,6 +227,17 @@ mol: atomd {
     molList->resize( sz-1 );
   }
 }
+
+| mol SEPARATOR_TOKEN mol {
+  RWMol *m1_p = (*molList)[$1],*m2_p=(*molList)[$3];
+  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::IONIC,Bond::NONE,true);
+  delete m2_p;
+  int sz = molList->size();
+  if ( sz==$3+1) {
+    molList->resize( sz-1 );
+  }
+}
+
 ; 
 
 /* --------------------------------------------------------------- */

@@ -15,6 +15,10 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 
+#ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS // note: works only with gcc-derived compilers
+#include <execinfo.h>
+#endif
+
 namespace Invar {
 
   std::ostream & 
@@ -32,6 +36,15 @@ namespace Invar {
       + line + " in file " + this->getFile() + "\nFailed Expression: "
       + this->getExpression() + "\n";
 
+#ifdef SHOW_BACKTRACES_WITH_INVARIANT_ERRORS
+    void *arr[10];
+    size_t sz;
+    sz = backtrace(arr,10);
+    std::cerr<<" STACK TRACE\n--------------\n"<<std::endl;
+    backtrace_symbols_fd(arr,sz,2);
+    std::cerr<<"\n--------------\n"<<std::endl;
+#endif
+    
     return stringRep_d;
     
   }

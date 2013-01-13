@@ -158,7 +158,7 @@ parseMolText(char *data,bool asSmarts,bool warnOnFail) {
     } else {
       ereport(ERROR,
               (errcode(ERRCODE_DATA_EXCEPTION),
-               errmsg("could not create molecule from SMILESe '%s'",data)));
+               errmsg("could not create molecule from SMILES '%s'",data)));
     }
   }
     
@@ -403,25 +403,38 @@ MolSubstruct(CROMol i, CROMol a) {
 /*******************************************
  *     Molecule operations                 *
  *******************************************/
-extern "C" double
-MolAMW(CROMol i){
-  return RDKit::Descriptors::calcAMW(*(ROMol*)i,false);
+#define MOLDESCR( name, func, ret )                                 \
+extern "C" ret                                                      \
+Mol##name(CROMol i){                                                \
+  const ROMol *im = (ROMol*)i;                                      \
+  return func(*im);                                                 \
 }
+MOLDESCR(TPSA,RDKit::Descriptors::calcTPSA,double)
+MOLDESCR(AMW,RDKit::Descriptors::calcAMW,double)
+MOLDESCR(HBA,RDKit::Descriptors::calcLipinskiHBA,int)
+MOLDESCR(HBD,RDKit::Descriptors::calcLipinskiHBD,int)
+MOLDESCR(NumHeteroatoms,RDKit::Descriptors::calcNumHeteroatoms,int)
+MOLDESCR(NumRings,RDKit::Descriptors::calcNumRings,int)
+MOLDESCR(NumRotatableBonds,RDKit::Descriptors::calcNumRotatableBonds,int)
+MOLDESCR(Chi0v,RDKit::Descriptors::calcChi0v,double)
+MOLDESCR(Chi1v,RDKit::Descriptors::calcChi1v,double)
+MOLDESCR(Chi2v,RDKit::Descriptors::calcChi2v,double)
+MOLDESCR(Chi3v,RDKit::Descriptors::calcChi3v,double)
+MOLDESCR(Chi4v,RDKit::Descriptors::calcChi4v,double)
+MOLDESCR(Chi0n,RDKit::Descriptors::calcChi0n,double)
+MOLDESCR(Chi1n,RDKit::Descriptors::calcChi1n,double)
+MOLDESCR(Chi2n,RDKit::Descriptors::calcChi2n,double)
+MOLDESCR(Chi3n,RDKit::Descriptors::calcChi3n,double)
+MOLDESCR(Chi4n,RDKit::Descriptors::calcChi4n,double)
+MOLDESCR(Kappa1,RDKit::Descriptors::calcKappa1,double)
+MOLDESCR(Kappa2,RDKit::Descriptors::calcKappa2,double)
+MOLDESCR(Kappa3,RDKit::Descriptors::calcKappa3,double)
+
 extern "C" double
 MolLogP(CROMol i){
   double logp,mr;
   RDKit::Descriptors::calcCrippenDescriptors(*(ROMol*)i,logp,mr);
   return logp;
-}
-extern "C" int
-MolHBA(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcLipinskiHBA(*im);
-}
-extern "C" int
-MolHBD(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcLipinskiHBD(*im);
 }
 extern "C" int
 MolNumAtoms(CROMol i){
@@ -433,26 +446,7 @@ MolNumHeavyAtoms(CROMol i){
   const ROMol *im = (ROMol*)i;
   return im->getNumHeavyAtoms();
 }
-extern "C" int
-MolNumHeteroatoms(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcNumHeteroatoms(*im);
-}
-extern "C" int
-MolNumRings(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcNumRings(*im);
-}
-extern "C" int
-MolNumRotatableBonds(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcNumRotatableBonds(*im);
-}
-extern "C" double
-MolTPSA(CROMol i){
-  const ROMol *im = (ROMol*)i;
-  return RDKit::Descriptors::calcTPSA(*im);
-}
+
 extern "C" const char *
 MolInchi(CROMol i){
   std::string inchi="InChI not available";

@@ -195,6 +195,19 @@ python::list BulkRusselSimilarity(const T &bv1,python::list bvs,bool returnDista
                      returnDistance);
 }
 
+template <typename T1, typename T2>
+double RogotGoldbergSimilarity_w(const T1 &bv1,const T2 &bv2,bool returnDistance){
+  return SimilarityWrapper(bv1,bv2,
+                           (double (*)(const T1&,const T1&))RogotGoldbergSimilarity,
+                           returnDistance);
+}
+template <typename T>
+python::list BulkRogotGoldbergSimilarity(const T &bv1,python::list bvs,bool returnDistance){
+  return BulkWrapper(bv1,bvs,
+                     (double (*)(const T&,const T&))RogotGoldbergSimilarity,
+                     returnDistance);
+}
+
 template <typename T>
 python::list BulkOnBitSimilarity(const T &bv1,python::list bvs,bool returnDistance){
   return BulkWrapper(bv1,bvs,
@@ -255,6 +268,8 @@ struct BitOps_wrapper {
             "B(bv1&bv2) / max(B(bv1),B(bv2))");
     BIG_DEF(RusselSimilarity,RusselSimilarity_w,BulkRusselSimilarity,
             "B(bv1&bv2) / B(bv1)");
+    BIG_DEF(RogotGoldbergSimilarity,RogotGoldbergSimilarity_w,BulkRogotGoldbergSimilarity,
+                "B(bv1&bv2) / B(bv1)");
 
     {
       std::string help="B(bv1&bv2) / (a*B(bv1)+b*B(bv2)+(1-a-b)*B(bv1&bv2)";

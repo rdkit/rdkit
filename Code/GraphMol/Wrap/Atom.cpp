@@ -163,7 +163,6 @@ struct atom_wrapper {
 	   "  The degree is independent of bond orders.\n")
 
       .def("GetTotalNumHs",&Atom::getTotalNumHs,
-           (python::arg("self"),),
            "Returns the total number of Hs (implicit and neighboring) connected to the atom.")
 
       .def("GetExplicitValence",&Atom::getExplicitValence,

@@ -299,7 +299,6 @@ static int
 hemdistsign(bytea *a, bytea *b)
 {
   int         i,
-    diff,
     dist = 0;
   unsigned char   *as = (unsigned char *)VARDATA(a),
     *bs = (unsigned char *)VARDATA(b);
@@ -321,6 +320,33 @@ hemdistsign(bytea *a, bytea *b)
 }
                                                                                                                                          
 static int
+soergeldistsign(bytea *a, bytea *b) {
+  if (SIGLEN(a) != SIGLEN(b))
+    elog(ERROR, "All fingerprints should be the same length");
+  unsigned int union_popcount=0,intersect_popcount=0;
+  unsigned int i;
+#ifndef USE_BUILTIN_POPCOUNT
+  unsigned char   *as = (unsigned char *)VARDATA(a);
+  unsigned char   *bs = (unsigned char *)VARDATA(b);
+  for (i=0; i<SIGLEN(a); i++) {
+    union_popcount += byte_popcounts[as[i] | bs[i]];
+    intersect_popcount += byte_popcounts[as[i] & bs[i]];
+  }
+#else
+  unsigned int   *as = (unsigned int *)VARDATA(a);
+  unsigned int   *bs = (unsigned int *)VARDATA(b);
+  for(i=0;i<SIGLEN(a)/sizeof(unsigned int);++i){
+    union_popcount += __builtin_popcount(as[i] | bs[i]);
+    intersect_popcount += __builtin_popcount(as[i] & bs[i]);
+  }
+#endif
+  if (union_popcount == 0) {
+    return 1;
+  }
+  return (int)floor(10000*(1.0-intersect_popcount / union_popcount));
+}
+
+static int
 hemdist(bytea *a, bytea *b)
 {
   if (ISALLTRUE(a))
@@ -336,6 +362,20 @@ hemdist(bytea *a, bytea *b)
   return hemdistsign(a, b);
 }
 
+static int
+soergeldist(bytea *a, bytea *b) {
+  if (ISALLTRUE(a)) {
+    if (ISALLTRUE(b))
+      return 0;
+    else
+      return SIGLENBIT(b) - sizebitvec(b);
+  }
+  else if (ISALLTRUE(b)) {
+    return SIGLENBIT(a) - sizebitvec(a);
+  }
+  return soergeldistsign(a, b);
+}
+
 PG_FUNCTION_INFO_V1(gmol_penalty);
 Datum gmol_penalty(PG_FUNCTION_ARGS);
 Datum
@@ -348,6 +388,22 @@ gmol_penalty(PG_FUNCTION_ARGS)
   bytea *newval = (bytea *) DatumGetPointer(newentry->key);
 
   *penalty = hemdist(origval, newval);
+
+  PG_RETURN_POINTER(penalty);
+}
+
+PG_FUNCTION_INFO_V1(gbfp_penalty);
+Datum gbfp_penalty(PG_FUNCTION_ARGS);
+Datum
+gbfp_penalty(PG_FUNCTION_ARGS)
+{
+  GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0); /* always ISSIGNKEY */
+  GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+  float      *penalty = (float *) PG_GETARG_POINTER(2);
+  bytea *origval = (bytea *) DatumGetPointer(origentry->key);
+  bytea *newval = (bytea *) DatumGetPointer(newentry->key);
+
+  *penalty = soergeldist(origval, newval);
 
   PG_RETURN_POINTER(penalty);
 }
@@ -744,9 +800,7 @@ calcConsistency(bool isLeaf, uint16 strategy,
 static bool
 rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *query)
 {
-  double                  nCommon,
-    nKey = 0.0,
-    nQuery;
+  double nCommon, nQuery, nKey = 0.0;
 
   if (ISALLTRUE(query))
     elog(ERROR, "Query malformed");
@@ -756,34 +810,31 @@ rdkit_consistent(GISTENTRY *entry, StrategyNumber strategy, bytea *key, bytea *q
    * page (see comments below)  
    */
   nQuery = (double)sizebitvec(query);
-  if (ISALLTRUE(key)) 
-    {
-      if (GIST_LEAF(entry))
-        nKey = (double)SIGLENBIT(query);
-      nCommon = nQuery;
-    }
-  else
-    {
-      int i, cnt = 0;
-      unsigned char *pk = (unsigned char*)VARDATA(key),
-        *pq = (unsigned char*)VARDATA(query);
+  if (ISALLTRUE(key)) {
+    if (GIST_LEAF(entry))
+      nKey = (double)SIGLENBIT(query);
+    nCommon = nQuery;
+  } else {
+    int i, cnt = 0;
+    unsigned char *pk = (unsigned char*)VARDATA(key);
+    unsigned char *pq = (unsigned char*)VARDATA(query);
 
-      if (SIGLEN(key) != SIGLEN(query))
-        elog(ERROR, "All fingerprints should be the same length");
+    if (SIGLEN(key) != SIGLEN(query))
+      elog(ERROR, "All fingerprints should be the same length");
 
 #ifndef USE_BUILTIN_POPCOUNT
-      for(i=0;i<SIGLEN(key);i++)
-        cnt += number_of_ones[ pk[i] & pq[i] ];
+    for(i=0;i<SIGLEN(key);i++)
+      cnt += number_of_ones[ pk[i] & pq[i] ];
 #else
-      for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
-        cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
-      }
+    for(i=0;i<SIGLEN(key)/sizeof(unsigned int);++i){
+      cnt += __builtin_popcount(((unsigned int *)pk)[i] & ((unsigned int *)pq)[i]);
+    }
 #endif      
 
-      nCommon = (double)cnt;
-      if (GIST_LEAF(entry))
-        nKey = (double)sizebitvec(key);
-    }
+    nCommon = (double)cnt;
+    if (GIST_LEAF(entry))
+      nKey = (double)sizebitvec(key);
+  }
 
   return calcConsistency(GIST_LEAF(entry), strategy, nCommon, nCommon, nKey, nQuery);
 }

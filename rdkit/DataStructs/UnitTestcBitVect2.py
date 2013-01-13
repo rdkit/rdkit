@@ -346,7 +346,7 @@ class TestCase(unittest.TestCase):
     assert feq(cDataStructs.AsymmetricSimilarity(v1,v2),.6667)
     assert feq(cDataStructs.BraunBlanquetSimilarity(v1,v2),.6667)
     assert feq(cDataStructs.RusselSimilarity(v1,v2),.2000)
-    
+    assert feq(cDataStructs.RogotGoldbergSimilarity(v1,v2),.7619)
 
 
 

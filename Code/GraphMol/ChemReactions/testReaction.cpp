@@ -3396,6 +3396,138 @@ void test37ProtectOption(){
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void test38AddRecursiveQueriesToReaction(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing use of adding recursive queries to a reaction." << std::endl;
+
+  {
+    ROMol *mol=0;
+    ChemicalReaction rxn;
+    MOL_SPTR_VECT reacts;
+    std::string smi;
+
+    smi = "[C:1](=[O:2])";
+    mol = SmartsToMol(smi);
+    mol->getAtomWithIdx(0)->setProp("replaceme", "foo");
+    TEST_ASSERT(mol);
+    rxn.addReactantTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumReactantTemplates()==1);
+
+    smi = "[N:3][C:4]";
+    mol = SmartsToMol(smi);
+    TEST_ASSERT(mol);
+    rxn.addReactantTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumReactantTemplates()==2);
+
+    smi = "[C:1](=[O:2])[N:3][C:4]";
+    mol = SmartsToMol(smi);
+    TEST_ASSERT(mol);
+    rxn.addProductTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumProductTemplates()==1);
+
+    std::string smi2="CCl";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    bool ok=false;
+    try {
+      addRecursiveQueriesToReaction(rxn, mp, "replaceme");
+    } catch (ChemicalReactionException &e) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+
+    rxn.initReactantMatchers();
+    addRecursiveQueriesToReaction(rxn, mp, "replaceme");
+    MatchVectType mv;
+    std::string msmi="C(=O)Cl";
+    ROMol *mmol=SmilesToMol(msmi);
+    TEST_ASSERT(SubstructMatch(*mmol, *(*(rxn.beginReactantTemplates())), mv));
+    delete mmol;
+    msmi="C(=O)O";
+    mmol=SmilesToMol(msmi);
+    TEST_ASSERT(!SubstructMatch(*mmol, *(*(rxn.beginReactantTemplates())), mv));
+    delete mmol;
+  }
+
+  {
+    ROMol *mol=0;
+    ChemicalReaction rxn;
+    MOL_SPTR_VECT reacts;
+    std::string smi;
+
+    smi = "[C:1](=[O:2])";
+    mol = SmartsToMol(smi);
+    mol->getAtomWithIdx(0)->setProp("replaceme", "foo");
+    TEST_ASSERT(mol);
+    rxn.addReactantTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumReactantTemplates()==1);
+
+    smi = "[N:3][C:4]";
+    mol = SmartsToMol(smi);
+    TEST_ASSERT(mol);
+    rxn.addReactantTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumReactantTemplates()==2);
+
+    smi = "[C:1](=[O:2])[N:3][C:4]";
+    mol = SmartsToMol(smi);
+    TEST_ASSERT(mol);
+    rxn.addProductTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumProductTemplates()==1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    rxn.initReactantMatchers();
+    std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+    addRecursiveQueriesToReaction(rxn, mp, "replaceme", &labels);
+    TEST_ASSERT(labels.size()==2);
+    TEST_ASSERT(labels[0][0].second=="foo");
+  }
+
+  {
+    ROMol *mol=0;
+    ChemicalReaction rxn;
+    MOL_SPTR_VECT reacts;
+    std::string smi;
+
+    smi = "[N:3][C:4]";
+    mol = SmartsToMol(smi);
+    TEST_ASSERT(mol);
+    rxn.addReactantTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumReactantTemplates()==1);
+
+    smi = "[C:1](=[O:2])";
+    mol = SmartsToMol(smi);
+    mol->getAtomWithIdx(0)->setProp("replaceme", "foo");
+    TEST_ASSERT(mol);
+    rxn.addReactantTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumReactantTemplates()==2);
+
+    smi = "[C:1](=[O:2])[N:3][C:4]";
+    mol = SmartsToMol(smi);
+    TEST_ASSERT(mol);
+    rxn.addProductTemplate(ROMOL_SPTR(mol));
+    TEST_ASSERT(rxn.getNumProductTemplates()==1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
+    rxn.initReactantMatchers();
+    std::vector<std::vector<std::pair<unsigned int, std::string> > > labels;
+    addRecursiveQueriesToReaction(rxn, mp, "replaceme", &labels);
+    TEST_ASSERT(labels.size()==2);
+    TEST_ASSERT(labels[1][0].second=="foo");
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 
 int main() { 
@@ -3444,6 +3576,8 @@ int main() {
   test35ParensInReactants1();
   test36ParensInReactants2();
   test37ProtectOption();
+
+  test38AddRecursiveQueriesToReaction();
 
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";

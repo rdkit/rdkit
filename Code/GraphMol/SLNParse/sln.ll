@@ -211,57 +211,42 @@ void sln_lexer_error(const char *msg) {
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Any {
-  if((bool)yyextra) {
-    yylval->atom_T = new QueryAtom();
-    yylval->atom_T->setQuery(makeAtomNullQuery());
-  } else {
-    yylval->atom_T = new Atom(0);
-  }
+  yylval->atom_T = new QueryAtom();
+  yylval->atom_T->setQuery(makeAtomNullQuery());
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
   yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Hev {
-  if((bool)yyextra) {
-    yylval->atom_T = new QueryAtom();
-    yylval->atom_T->setQuery(makeAtomNumEqualsQuery(1));
-    // FIX: are 2H or 3H heavy atoms or Hs?
-    yylval->atom_T->getQuery()->setNegation(true);
-  } else {
-    yylval->atom_T = new Atom(0);
-  }
+  yylval->atom_T = new QueryAtom();
+  yylval->atom_T->setQuery(makeAtomNumEqualsQuery(1));
+  // FIX: are 2H or 3H heavy atoms or Hs?
+  yylval->atom_T->getQuery()->setNegation(true);
+
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
   yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Hal {
-  if((bool)yyextra) {
-    yylval->atom_T = new QueryAtom();
-    yylval->atom_T->setQuery(makeAtomNumEqualsQuery(9));
-    yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(17),Queries::COMPOSITE_OR,true);
-    yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(35),Queries::COMPOSITE_OR,true);
-    yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(53),Queries::COMPOSITE_OR,true);
+  yylval->atom_T = new QueryAtom();
+  yylval->atom_T->setQuery(makeAtomNumEqualsQuery(9));
+  yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(17),Queries::COMPOSITE_OR,true);
+  yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(35),Queries::COMPOSITE_OR,true);
+  yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(53),Queries::COMPOSITE_OR,true);
 
-  } else {
-    yylval->atom_T = new Atom(0);
-  }
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
   yylval->atom_T->setNumImplicitHs(0);        
   return ATOM_TOKEN;
 }
 <INITIAL,IN_RECURSE_STATE>Het {
-  if((bool)yyextra) {
-    yylval->atom_T = new QueryAtom();
-    yylval->atom_T->setQuery(makeAtomNumEqualsQuery(6));
-    yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(1),Queries::COMPOSITE_OR,true);
-    yylval->atom_T->getQuery()->setNegation(true);
-    
-  } else {
-    yylval->atom_T = new Atom(0);
-  }
+  yylval->atom_T = new QueryAtom();
+  yylval->atom_T->setQuery(makeAtomNumEqualsQuery(6));
+  yylval->atom_T->expandQuery(makeAtomNumEqualsQuery(1),Queries::COMPOSITE_OR,true);
+  yylval->atom_T->getQuery()->setNegation(true);
+
   // SLN has no concept of implicit Hs... they're either in the SLN or they don't exist:        
   yylval->atom_T->setNoImplicit(true);
   yylval->atom_T->setNumImplicitHs(0);        
@@ -329,22 +314,53 @@ void sln_lexer_error(const char *msg) {
 
 
 
-<IN_RECURSE_STATE>\; { 
+<IN_RECURSE_STATE>\; {
   yy_pop_state(yyscanner); 
   return SEMI_TOKEN; 
 }
-<IN_CTAB_PARAM_NAME_STATE>\; { return SEMI_TOKEN; }
+<IN_RECURSE_STATE>\& {
+  yy_pop_state(yyscanner); 
+  return AND_TOKEN; 
+}
+<IN_CTAB_PARAM_NAME_STATE>\; {  
+  return SEMI_TOKEN;
+ }
+<IN_CTAB_PARAM_NAME_STATE>\& {
+  return AND_TOKEN;
+ }
 <IN_CTAB_PARAM_VAL_STATE>\; {
  yy_pop_state(yyscanner);
  yy_push_state(IN_CTAB_PARAM_NAME_STATE,yyscanner);
  return SEMI_TOKEN; 
 }
+<IN_CTAB_PARAM_VAL_STATE>\& {
+ yy_pop_state(yyscanner);
+ yy_push_state(IN_CTAB_PARAM_NAME_STATE,yyscanner);
+ return AND_TOKEN; 
+}
 
-<IN_PROP_VAL_STATE>\; { yy_pop_state(yyscanner); return SEMI_TOKEN; }
-\; { return SEMI_TOKEN; }
-<IN_PROP_VAL_STATE>\& { yy_pop_state(yyscanner); return AND_TOKEN; }
-<IN_PROP_VAL_STATE>\| { yy_pop_state(yyscanner); return OR_TOKEN; }
-\! { return NOT_TOKEN; }
+<IN_PROP_VAL_STATE>\; {
+  yy_pop_state(yyscanner);
+  return SEMI_TOKEN;
+ }
+<IN_PROP_VAL_STATE>\& {
+  yy_pop_state(yyscanner);
+  return AND_TOKEN;
+ }
+<IN_PROP_VAL_STATE>\| {
+  yy_pop_state(yyscanner);
+  return OR_TOKEN;
+ }
+\; {
+  return SEMI_TOKEN;
+}
+\& {
+  return AND_TOKEN;
+}
+\! {
+  return NOT_TOKEN;
+}
+
 
 \[                      { yy_push_state(IN_SLN_PARAM_STATE,yyscanner); return OPEN_BRACKET_TOKEN; }
 

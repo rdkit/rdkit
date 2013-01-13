@@ -36,7 +36,7 @@ namespace RankAtoms{
     PRECONDITION(res.size()==0,"");
     res.reserve(ranks.size());
     for(INT_VECT_CI ivCIt=ranks.begin();ivCIt!=ranks.end();++ivCIt){
-      res.push_back(firstThousandPrimes[*ivCIt]);
+      res.push_back(firstThousandPrimes[(*ivCIt)%NUM_PRIMES_AVAIL]);
     }
   }
 

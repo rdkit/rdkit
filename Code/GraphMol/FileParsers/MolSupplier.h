@@ -199,7 +199,7 @@ namespace RDKit {
      *     also assume that the 'SMILES' column and the 'name' column
      *     are not specified here if false - no title line is assumed
      *     and the properties are recorded as the "columnX" where "X" is
-     *     the cloumn number
+     *     the column number
      *   \param sanitize - if true sanitize the molecule before returning it
      */
     explicit SmilesMolSupplier(const std::string &fileName, 

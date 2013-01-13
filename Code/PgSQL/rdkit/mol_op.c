@@ -145,127 +145,43 @@ mol_rsubstruct(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(MolSubstruct(i, a));             
 }
 
-
-PG_FUNCTION_INFO_V1(mol_amw);
-Datum           mol_amw(PG_FUNCTION_ARGS);
-Datum
-mol_amw(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_FLOAT4(MolAMW(i));
+#define MOLDESCR( name, func, ret )                                 \
+  PG_FUNCTION_INFO_V1(mol_##name);                                      \
+  Datum           mol_##name(PG_FUNCTION_ARGS);                         \
+  Datum                                                                 \
+  mol_##name(PG_FUNCTION_ARGS){                                         \
+  CROMol        i;                                                      \
+  fcinfo->flinfo->fn_extra = SearchMolCache(                            \
+                                            fcinfo->flinfo->fn_extra,   \
+                                            fcinfo->flinfo->fn_mcxt,    \
+                                            PG_GETARG_DATUM(0),         \
+                                            NULL, &i, NULL);            \
+  PG_RETURN_##ret( func(i) );                                           \
 }
-PG_FUNCTION_INFO_V1(mol_logp);
-Datum           mol_logp(PG_FUNCTION_ARGS);
-Datum
-mol_logp(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_FLOAT4(MolLogP(i));
-}
-PG_FUNCTION_INFO_V1(mol_hba);
-Datum           mol_hba(PG_FUNCTION_ARGS);
-Datum
-mol_hba(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_INT32(MolHBA(i));
-}
-PG_FUNCTION_INFO_V1(mol_hbd);
-Datum           mol_hbd(PG_FUNCTION_ARGS);
-Datum
-mol_hbd(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_INT32(MolHBD(i));
-}
-PG_FUNCTION_INFO_V1(mol_numatoms);
-Datum           mol_numatoms(PG_FUNCTION_ARGS);
-Datum
-mol_numatoms(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_INT32(MolNumAtoms(i));
-}
-PG_FUNCTION_INFO_V1(mol_numheavyatoms);
-Datum           mol_numheavyatoms(PG_FUNCTION_ARGS);
-Datum
-mol_numheavyatoms(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_INT32(MolNumHeavyAtoms(i));
-}
-PG_FUNCTION_INFO_V1(mol_numrotatablebonds);
-Datum           mol_numrotatablebonds(PG_FUNCTION_ARGS);
-Datum
-mol_numrotatablebonds(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_INT32(MolNumRotatableBonds(i));
-}
-PG_FUNCTION_INFO_V1(mol_numheteroatoms);
-Datum           mol_numheteroatoms(PG_FUNCTION_ARGS);
-Datum
-mol_numheteroatoms(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_INT32(MolNumHeteroatoms(i));
-}
-PG_FUNCTION_INFO_V1(mol_numrings);
-Datum           mol_numrings(PG_FUNCTION_ARGS);
-Datum
-mol_numrings(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_INT32(MolNumRings(i));
-}
-PG_FUNCTION_INFO_V1(mol_tpsa);
-Datum           mol_tpsa(PG_FUNCTION_ARGS);
-Datum
-mol_tpsa(PG_FUNCTION_ARGS) {
-  CROMol        i;
-  fcinfo->flinfo->fn_extra = SearchMolCache(
-                                            fcinfo->flinfo->fn_extra,
-                                            fcinfo->flinfo->fn_mcxt,
-                                            PG_GETARG_DATUM(0), 
-                                            NULL, &i, NULL);
-  PG_RETURN_FLOAT4(MolTPSA(i));
-}
+  
+MOLDESCR(amw,MolAMW,FLOAT4)
+MOLDESCR(logp,MolLogP,FLOAT4)
+MOLDESCR(tpsa,MolTPSA,FLOAT4)
+MOLDESCR(hba,MolHBA,INT32)
+MOLDESCR(hbd,MolHBD,INT32)
+MOLDESCR(numatoms,MolNumAtoms,INT32)
+MOLDESCR(numheavyatoms,MolNumHeavyAtoms,INT32)
+MOLDESCR(numrotatablebonds,MolNumRotatableBonds,INT32)
+MOLDESCR(numheteroatoms,MolNumHeteroatoms,INT32)
+MOLDESCR(numrings,MolNumRings,INT32)
+MOLDESCR(chi0n,MolChi0n,FLOAT4)
+MOLDESCR(chi1n,MolChi1n,FLOAT4)
+MOLDESCR(chi2n,MolChi2n,FLOAT4)
+MOLDESCR(chi3n,MolChi3n,FLOAT4)
+MOLDESCR(chi4n,MolChi4n,FLOAT4)
+MOLDESCR(chi0v,MolChi0v,FLOAT4)
+MOLDESCR(chi1v,MolChi1v,FLOAT4)
+MOLDESCR(chi2v,MolChi2v,FLOAT4)
+MOLDESCR(chi3v,MolChi3v,FLOAT4)
+MOLDESCR(chi4v,MolChi4v,FLOAT4)
+MOLDESCR(kappa1,MolKappa1,FLOAT4)
+MOLDESCR(kappa2,MolKappa2,FLOAT4)
+MOLDESCR(kappa3,MolKappa3,FLOAT4)
 
 PG_FUNCTION_INFO_V1(mol_inchi);
 Datum           mol_inchi(PG_FUNCTION_ARGS);

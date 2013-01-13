@@ -465,6 +465,18 @@ void test5(){
   TEST_ASSERT(mV[0][0].second==1);
 
   delete patt;
+  sln = "Any[charge=+1;HC=2]";
+  patt=RDKit::SLNQueryToMol(sln);
+  TEST_ASSERT(patt);
+  TEST_ASSERT(patt->getNumAtoms()==1);
+  delete mol;
+  smi = "C[CH2+](CC)[NH+]";
+  mol=RDKit::SmilesToMol(smi);
+  TEST_ASSERT(mol);
+  TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+  TEST_ASSERT(mV[0][0].second==1);
+
+  delete patt;
   sln = "Any[charge=+1;!HC=2]";
   patt=RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
@@ -1681,7 +1693,7 @@ void test16(){
 
   {
     sln = "CH3ZCH3{Z:O}";
-    mol=RDKit::SLNToMol(sln,true,1);
+    mol=RDKit::SLNToMol(sln);
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms()==3);
     TEST_ASSERT(mol->getAtomWithIdx(1)->getAtomicNum()==8);
@@ -1695,6 +1707,153 @@ void test16(){
     TEST_ASSERT(mol->getAtomWithIdx(1)->getAtomicNum()==8);
     TEST_ASSERT(mol->getAtomWithIdx(2)->getAtomicNum()==7);
     delete mol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testIssue278(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test issue278: handling of 'not' and 'is' queries on Any" << std::endl;
+
+  {
+    std::string sln = "Any[IS=C(=O)]";
+    RDKit::RWMol *mol=RDKit::SLNQueryToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
+    delete mol;
+  }
+  {
+    std::string sln = "Any[NOT=C(=O)]";
+    RDKit::RWMol *mol=RDKit::SLNQueryToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
+    delete mol;
+  }
+  {
+    std::string sln = "Any[IS=C(=O)]";
+    RDKit::RWMol *mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
+    delete mol;
+  }
+  {
+    std::string sln = "Any[NOT=C(=O)]";
+    RDKit::RWMol *mol=RDKit::SLNToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
+    delete mol;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+void testIssue277(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test issue277: parse error with & " << std::endl;
+
+  {
+    std::string sln = "Any[NOT=C,IS=O]";
+    RDKit::RWMol *mol=RDKit::SLNQueryToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
+    delete mol;
+  }
+  {
+    std::string sln = "Any[NOT=C;IS=O]";
+    RDKit::RWMol *mol=RDKit::SLNQueryToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
+    delete mol;
+  }
+  {
+    std::string sln = "Any[NOT=C&IS=O]";
+    RDKit::RWMol *mol=RDKit::SLNQueryToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
+    delete mol;
+  }
+  {
+    std::string sln = "Any[NOT=C,N&IS=O,S]";
+    RDKit::RWMol *mol=RDKit::SLNQueryToMol(sln);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==1);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->hasQuery());
+    delete mol;
+  }
+  {
+    std::string sln = "Hev[!r;NOT=N]";
+    RDKit::RWMol *patt=RDKit::SLNQueryToMol(sln);
+    TEST_ASSERT(patt);
+    TEST_ASSERT(patt->getNumAtoms()==1);
+    TEST_ASSERT(patt->getAtomWithIdx(0)->hasQuery());
+
+    std::string smi = "CC1CC1N";
+    RDKit::RWMol *mol=RDKit::SmilesToMol(smi);
+    std::vector<RDKit::MatchVectType> mV;
+    TEST_ASSERT(mol);
+    TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+    TEST_ASSERT(mV.size()==1);
+    TEST_ASSERT(mV[0].size()==1);
+    TEST_ASSERT(mV[0][0].second==0);
+
+    delete mol;
+    delete patt;
+  }
+  {
+    std::string sln = "Hev[!r&NOT=N]";
+    RDKit::RWMol *patt=RDKit::SLNQueryToMol(sln);
+    TEST_ASSERT(patt);
+    TEST_ASSERT(patt->getNumAtoms()==1);
+    TEST_ASSERT(patt->getAtomWithIdx(0)->hasQuery());
+
+    std::string smi = "CC1CC1N";
+    RDKit::RWMol *mol=RDKit::SmilesToMol(smi);
+    std::vector<RDKit::MatchVectType> mV;
+    TEST_ASSERT(mol);
+    TEST_ASSERT(RDKit::SubstructMatch(*mol,*patt,mV)==1);
+    TEST_ASSERT(mV.size()==1);
+    TEST_ASSERT(mV[0].size()==1);
+    TEST_ASSERT(mV[0][0].second==0);
+
+    delete mol;
+    delete patt;
+  }
+
+  {
+    // examples from Pat Walters, taken from http://pubs.acs.org/doi/abs/10.1021/ci300461a
+    std::string slns[]={
+      "HetC(=O)O-[!R]C[8]:Hev(Any[NOT=O,S[TAC=2],C[TAC=4],N[TAC=3]]):Hev:Hev(Any[IS=Hal,C#N,C(F)(F)F,S(=O)=O,C(=O)&NOT=C(=O)OH]):Hev:Hev(Any[NOT=O,S[TAC=2],C[TAC=4],N[TAC=3]]):@8",
+      "HetC(=O)O-[!R]C[8]:Hev(Any[IS=Hal,C#N,C(F)(F)F,S(=O)=O,C(=O)&NOT=C(=O)OH]):Hev:Hev(Any[NOT=O,S[TAC=2],C[TAC=4],N[TAC=3]]):Hev:Hev(Any[NOT=O,S[TAC=2],C[TAC=4],N[TAC=3]]):@8",
+      "CCH=[!R]C(Any[IS=H,C])Any[IS=C#N,C(=O)&NOT=C(=O)Any[IS=N,O]]",
+      "Any[IS=C,O]CH=[!R]C(Any[IS=C(=O),S(=O),C#N,Hal,C(Hal)(Hal)Hal&NOT=C(=O)OH])Any[IS=C(=O),S(=O),C#N&NOT=C(=O)OH]",
+      "C[1](C(=O)OC[5]:C:C:C:C:C:@5CH=@1)Any[IS=C(=O),C(=S),S(=O),C#N,Hal,C(Hal)(Hal)Hal&NOT=C(=O)OH]",
+      "C[1](=CHOC[5]:C:C:C:C:C:@5C@1=O)Any[IS=C(=O),C(=S),S(=O),C#N,Hal,C(Hal)(Hal)Hal&NOT=C(=O)OH]",
+      "C[1]:N:Any(Any[IS=Hal,S(=O)(=O)C]):Any:Any(Any[IS=Hal,C(C)=NO,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):Any:@1",
+      "C[1]:N:Any(Any[IS=Hal,C(C)=NO,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):Any:Any(Any[IS=Hal,S(=O)(=O)C]):Any:@1",
+      "C[1]:N:Any(Any[IS=Hal,S(=O)(=O)C]):Any(Any[IS=Hal,C(C)=NO,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):Any:Any:@1",
+      "C[1]:N:Any(Any[IS=Hal,S(=O)(=O)C]):Any:Any:Any(Any[IS=Hal,C(C)=NO,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):@1",
+      "C[1](Any[IS=Hal,C(C)=NO,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):N:Any(Any[IS=Hal,S(=O)(=O)C]):Any(Any[NOT=N]):Any(Any[NOT=N]):Any:@1",
+      "C[1]:N:Any:Any(Any[IS=Hal,C(C)=NO,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):Any(Any[IS=Hal,S(=O)(=O)C]):Any:@1",
+      "C[1](Any[NOT=N,O]):C(Any[IS=Hal,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):C(Any[IS=Hal,S(=O)(=O)C,C[r](=O)NC]):C(Any[NOT=N,O]):C(Any[NOT=N,O]):C(Any[IS=Hal,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):@1",
+      "C[1](Any[IS=Hal,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):C(Any[IS=Hal,S(=O)(=O)C,C[r](=O)NC]):C(Any[IS=Hal,C#N,C(=O),C(F)(F)F,S(=O)=O&NOT=C(=O)OH]):C(Any[NOT=N,O]):C(Any[NOT=N,O]):C(Any[NOT=N,O]):@1",
+      "N(Any[IS=H,C[TAC=4]&NOT=C[TAC=4]-[R]C[TAC=4]N])(Any[IS=H,C[TAC=4]&NOT=C[TAC=4]-[R]C[TAC=4]N])(Any[IS=H,C[TAC=4]&NOT=C[TAC=4]-[R]C[TAC=4]N])<max=1>",
+      "Any[IS=H,C&NOT=C=O]N[!r](Any[IS=H,C&NOT=C=O])C(=O)C<max=2>",
+      "Hev[!r&NOT=NC(=O)NC(=O)]Hev[!r&NOT=NC(=O)NC(=O)]Hev[!r&NOT=NC(=O)NC(=O)]Hev[!r&NOT=NC(=O)NC(=O)]Hev[!r&NOT=NC(=O)NC(=O)]Hev[!r&NOT=NC(=O)NC(=O)]Hev[!r&NOT=NC(=O)NC(=O)]Hev[!r&NOT=NC(=O)NC(=O)]",
+      "Hev[!r&NOT=C=O,S(=O)(=O),N*S(=O),N*(C=O)]Hev[!r&NOT=C=O,S(=O)(=O),N*S(=O),N*(C=O)]Hev[!r&NOT=C=O,S(=O)(=O),N*S(=O),N*(C=O)]Hev[!r&NOT=C=O,S(=O)(=O),N*S(=O),N*(C=O)]Hev[!r&NOT=C=O,S(=O)(=O)]Any[IS=CH3,OH,NH2,N(CH3)CH3]",
+      "EOF"
+    };
+    unsigned int i=0;
+    while(slns[i]!="EOF"){
+      RDKit::RWMol *mol=RDKit::SLNQueryToMol(slns[i++]);
+      TEST_ASSERT(mol);
+    }
+    
   }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -1727,4 +1886,6 @@ main(int argc, char *argv[])
   test15();
   test16();
 #endif
+  testIssue277();
+  testIssue278();
 }

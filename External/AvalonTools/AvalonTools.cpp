@@ -6,6 +6,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
+#include <RDGeneral/LocaleSwitcher.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -99,6 +100,7 @@ namespace AvalonTools {
 
     struct reaccs_molecule_t *molToReaccs(const ROMol &mol){
       std::string molB=MolToMolBlock(mol,true);
+      Utils::LocaleSwitcher ls;
       struct reaccs_molecule_t *res= MolStr2Mol((char *)molB.c_str());
       POSTCONDITION(res,"could not build a molecule");
       return res;
@@ -109,6 +111,7 @@ namespace AvalonTools {
       if(isSmiles){
         res = SMIToMOL(data.c_str(),DY_AROMATICITY);
       } else {
+        Utils::LocaleSwitcher ls;
         res= MolStr2Mol((char *)data.c_str());
       }
       if(!res){
@@ -199,6 +202,7 @@ namespace AvalonTools {
     if(mp){
       struct reaccs_molecule_t *mp2=reaccsGetCoords(mp);
       FreeMolecule(mp);
+      Utils::LocaleSwitcher ls;
       char *molB = MolToMolStr(mp2);
       res=molB;
       FreeMolecule(mp2);
@@ -292,6 +296,7 @@ namespace AvalonTools {
     if(isSmiles){
       *mp = SMIToMOL(data.c_str(),DY_AROMATICITY);
     } else {
+      Utils::LocaleSwitcher ls;
       *mp= MolStr2Mol((char *)data.c_str());
     }
     if(*mp) {
@@ -312,6 +317,7 @@ namespace AvalonTools {
     mp = molToReaccs(inMol);
     errs = _checkMolWrapper(&mp);
     if(mp){
+      Utils::LocaleSwitcher ls;
       char *molStr = MolToMolStr(mp);
       FreeMolecule(mp);
       if(molStr){
@@ -326,6 +332,7 @@ namespace AvalonTools {
     struct reaccs_molecule_t *mp;
     errs = checkMolString(data, isSmiles, &mp);
     if(mp) {
+      Utils::LocaleSwitcher ls;
       char *molStr = MolToMolStr(mp);
       RDKit::ROMol *rMol = MolBlockToMol(molStr);
       FreeMolecule(mp);
@@ -341,6 +348,7 @@ namespace AvalonTools {
     int errs = checkMolString(data, isSmiles, &mp);
     std::string molStr;
     if(mp) {
+      Utils::LocaleSwitcher ls;
       char *tmp=MolToMolStr(mp);
       molStr = std::string(tmp);
       FreeMolecule(mp);

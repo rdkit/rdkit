@@ -409,8 +409,26 @@ M  END
     self.failUnlessEqual(len(rAs[0]),2)    
     rAs = rxn.GetReactingAtoms(True)
     self.failUnlessEqual(len(rAs),1)
-    self.failUnlessEqual(len(rAs[0]),1)    
+    self.failUnlessEqual(len(rAs[0]),1)   
 
+  def test17AddRecursiveQueriesToReaction(self):
+    rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
+    self.failUnless(rxn)
+    rxn.Initialize()
+    qs = {'aliphatic':Chem.MolFromSmiles('CC')}
+    rxn.GetReactantTemplate(0).GetAtomWithIdx(0).SetProp('query', 'aliphatic')
+    rxn.AddRecursiveQueriesToReaction(qs,'query')
+    q = rxn.GetReactantTemplate(0)
+    m = Chem.MolFromSmiles('CCOC')
+    self.failUnless(m.HasSubstructMatch(q))
+    m = Chem.MolFromSmiles('CO')
+    self.failIf(m.HasSubstructMatch(q))
+
+    rxn = rdChemReactions.ReactionFromSmarts("[C:1][O:2].[N:3]>>[C:1][N:2]")
+    rxn.Initialize()
+    rxn.GetReactantTemplate(0).GetAtomWithIdx(0).SetProp('query', 'aliphatic')
+    labels = rxn.AddRecursiveQueriesToReaction(qs,'query', getLabels=True)
+    self.failUnless(len(labels), 1)
 
 
 if __name__ == '__main__':

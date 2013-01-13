@@ -58,9 +58,11 @@ namespace RDKit {
     2) writing to a file-like object: \n\
        >>> import gzip\n\
        >>> outf=gzip.open('out.sdf.gz','w+')\n\
-       >>> writer = ForwardSDMolSupplier(outf)\n\
+       >>> writer = SDWriter(outf)\n\
        >>> for mol in list_of_mols:\n \
        ...   writer.write(mol)\n\
+       >>> writer.close()\n\
+       >>> outf.close()\n\
 \n\
   By default all non-private molecular properties are written to the SD file.\n\
   This can be changed using the SetProps method:\n\

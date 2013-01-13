@@ -55,10 +55,8 @@ namespace RDNumeric {
           }
         }
       }
-      for (i = 0; i < this->d_dataSize; i++) {
-        data[i] = newData[i];
-      }
-      delete [] newData;
+      boost::shared_array<TYPE>  tsptr(newData);
+      this->d_data.swap(tsptr);
       return (*this);
     }
 

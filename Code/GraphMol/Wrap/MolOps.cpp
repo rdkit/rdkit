@@ -25,10 +25,37 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <RDBoost/Wrap.h>
+#include <RDBoost/python_streambuf.h>
 
 namespace python = boost::python;
+using boost_adaptbx::python::streambuf;
 
 namespace RDKit{
+  python::dict parseQueryDefFileHelper(python::object &input,bool standardize,
+                                       std::string delimiter,std::string comment,
+                                       unsigned int nameColumn,unsigned int smartsColumn){
+    python::extract<std::string> get_filename(input);
+    std::map<std::string,ROMOL_SPTR> queryDefs;
+
+    if (get_filename.check()) {
+        parseQueryDefFile(get_filename(),queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);
+    } else {
+        streambuf *sb=new streambuf(input);
+        std::istream *istr=new streambuf::istream(*sb);
+        parseQueryDefFile(istr,queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);
+        delete istr;
+        delete sb;
+    }
+
+    python::dict res;
+    for(std::map<std::string,ROMOL_SPTR>::const_iterator iter=queryDefs.begin();iter!=queryDefs.end();++iter){
+      res[iter->first]=iter->second;
+    }
+    
+    return res;
+  }
+                                       
+  
   void addRecursiveQueriesHelper(ROMol &mol,python::dict replDict,std::string propName){
     std::map<std::string,ROMOL_SPTR> replacements;
     for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
@@ -602,6 +629,13 @@ namespace RDKit{
       python::def("MolAddRecursiveQueries",addRecursiveQueriesHelper,
                   (python::arg("mol"),python::arg("queries"),
                    python::arg("propName")),
+                  docString.c_str());
+
+      docString="reads query definitions from a simply formatted file\n";
+      python::def("ParseMolQueryDefFile",parseQueryDefFileHelper,
+                  (python::arg("fileobj"),python::arg("standardize")=true,
+                   python::arg("delimiter")="\t",python::arg("comment")="//",
+                   python::arg("nameColumn")=0,python::arg("smartsColumn")=1),
                   docString.c_str());
 
       // ------------------------------------------------------------------------

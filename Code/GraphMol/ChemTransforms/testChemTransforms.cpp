@@ -951,7 +951,7 @@ void testAddRecursiveQueries()
     bool ok=false;
     try{
       addRecursiveQueries(*mol1,mp,"replaceme");
-    } catch (KeyErrorException) {
+    } catch (KeyErrorException &e) {
       ok=true;
     }
     TEST_ASSERT(ok);
@@ -968,17 +968,39 @@ void testAddRecursiveQueries()
     std::map<std::string,ROMOL_SPTR> mp;
     mp["foo"]=q1;
 
+    std::vector<std::pair<unsigned int, std::string> > labels;
+
+    mol1->getAtomWithIdx(0)->setProp("replaceme","foo");
+    addRecursiveQueries(*mol1,mp,"replaceme", &labels);
+    TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
+    TEST_ASSERT(labels.size()==1);
+
+    delete mol1;
+  }
+
+  {
+    std::string smi1="CC";
+    ROMol *mol1=SmilesToMol(smi1);
+
+    std::string smi2="CO";
+    ROMOL_SPTR q1(SmilesToMol(smi2));
+    std::map<std::string,ROMOL_SPTR> mp;
+    mp["foo"]=q1;
+
     smi2="OC";
     ROMOL_SPTR q2(SmilesToMol(smi2));
     mp["bar"]=q2;
 
+    std::vector<std::pair<unsigned int, std::string> > labels;
+
     mol1->getAtomWithIdx(0)->setProp("replaceme","foo");
     mol1->getAtomWithIdx(1)->setProp("replaceme","bar");
-    addRecursiveQueries(*mol1,mp,"replaceme");
+    addRecursiveQueries(*mol1, mp, "replaceme", &labels);
     TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
     TEST_ASSERT(mol1->getAtomWithIdx(1)->hasQuery());
     TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
     TEST_ASSERT(mol1->getAtomWithIdx(1)->getQuery()->getDescription()=="AtomAnd");
+    TEST_ASSERT(labels.size()==2);
 
     delete mol1;
   }
@@ -997,7 +1019,7 @@ void testAddRecursiveQueries()
     mp["bar"]=q2;
 
     mol1->getAtomWithIdx(0)->setProp("replaceme","foo,bar");
-    addRecursiveQueries(*mol1,mp,"replaceme");
+    addRecursiveQueries(*mol1, mp, "replaceme");
     TEST_ASSERT(mol1->getAtomWithIdx(0)->hasQuery());
     TEST_ASSERT(!mol1->getAtomWithIdx(1)->hasQuery());
     TEST_ASSERT(mol1->getAtomWithIdx(0)->getQuery()->getDescription()=="AtomAnd");
@@ -1038,7 +1060,7 @@ void testParseQueryDefFile()
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/ChemTransforms/testData/query_file1.txt";
     std::map<std::string,ROMOL_SPTR> qdefs;
-    parseQueryDefFile(pathName,qdefs);
+    parseQueryDefFile(pathName,qdefs,false);
     TEST_ASSERT(!qdefs.empty());
     TEST_ASSERT(qdefs.size()==7);
     TEST_ASSERT(qdefs.find("AcidChloride")!=qdefs.end());    
@@ -1052,7 +1074,6 @@ void testParseQueryDefFile()
     MatchVectType mv;
     TEST_ASSERT(SubstructMatch(*mmol,*(qdefs["AcidChloride"]),mv));
     delete mmol;    
-
   }
   {
     std::string pathName=getenv("RDBASE");
@@ -1061,6 +1082,16 @@ void testParseQueryDefFile()
     parseQueryDefFile(pathName,qdefs);
     TEST_ASSERT(qdefs.empty());
   }
+  /*{
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/ChemTransforms/testData/query_file1.txt";
+    std::map<std::string, ROMOL_SPTR> qdefs;
+    parseQueryDefFile(pathName, qdefs);
+    TEST_ASSERT(!qdefs.empty());
+    TEST_ASSERT(qdefs.size()==7);
+    TEST_ASSERT(qdefs.find("acidchloride")!=qdefs.end());
+    TEST_ASSERT(qdefs.find("AcidChloride")==qdefs.end());
+  }*/
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1078,6 +1109,17 @@ void testIssue275()
     TEST_ASSERT(mol);
     ROMol *nMol=MurckoDecompose(*mol);
     smi = MolToSmiles(*nMol,true);
+    TEST_ASSERT(smi=="C1CCCCC1");
+    delete mol;
+    delete nMol;
+  }
+
+  {
+    std::string smi = "CCCCC[C@H]1CC[C@H](C(=O)O)CC1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    ROMol *nMol=MurckoDecompose(*mol);
+    smi = MolToSmiles(*nMol,false);
     TEST_ASSERT(smi=="C1CCCCC1");
     delete mol;
     delete nMol;
