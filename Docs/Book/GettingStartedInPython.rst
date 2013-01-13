@@ -110,6 +110,15 @@ An alternate type of Supplier, the :api:`rdkit.Chem.rdmolfiles.ForwardSDMolSuppl
 24
 26
 
+This means that they can be used to read from compressed files:
+
+>>> import gzip
+>>> inf = gzip.open('data/actives_5ht3.sdf.gz')
+>>> gzsuppl = Chem.ForwardSDMolSupplier(inf)
+>>> ms = [x for x in gzsuppl if x is not None]
+>>> len(ms)
+180
+
 Note that ForwardSDMolSuppliers cannot be used as random-access objects:
 
 >>> fsuppl[0]
@@ -380,7 +389,6 @@ True
 >>> ri.IsBondInRingOfSize(1,3) 
 True 
 
-
 Modifying molecules
 ===================
 
@@ -424,6 +432,7 @@ rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
 >>> m.GetBondWithIdx(0).GetBondType()
 rdkit.Chem.rdchem.BondType.AROMATIC
 
+The value returned by `SanitizeMol()` indicates that no problems were encountered.
 
 Working with 2D molecules: Generating Depictions
 ================================================
@@ -548,6 +557,57 @@ The small overhead associated with python's pickling machinery normally doesn't 
 In a test I just ran on my laptop, loading a set of 699 drug-like molecules from an SD file took 10.8 seconds; loading the same molecules from a pickle file took 0.7 seconds.
 The pickle file is also smaller – 1/3 the size of the SD file – but this difference is not always so dramatic (it's a particularly fat SD file).
 
+Drawing Molecules
+=================
+
+The RDKit has some built-in functionality for creating images from
+molecules found in the :api:`rdkit.Chem.Draw` package:
+
+>>> suppl = Chem.SDMolSupplier('data/cdk2.sdf')
+>>> ms = [x for x in suppl if x is not None]
+>>> for m in ms: tmp=AllChem.Compute2DCoords(m)
+>>> from rdkit.Chem import Draw
+>>> Draw.MolToFile(ms[0],'images/cdk2_mol1.png')
+>>> Draw.MolToFile(ms[1],'images/cdk2_mol2.png')
+
+Producing these images:
+
++----------------------------------+----------------------------------+
+| .. image:: images/cdk2_mol1.png  | .. image:: images/cdk2_mol2.png  | 
++----------------------------------+----------------------------------+
+
+It's also possible to produce an image grid out of a set of molecules:
+
+>>> img=Draw.MolsToGridImage(ms[:8],molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in ms[:8]])
+
+This returns a PIL image, which can then be saved to a file:
+
+>>> img.save('images/cdk2_molgrid.png')
+
+The result looks like this:
+
+.. image:: images/cdk2_molgrid.png
+
+These would of course look better if the common core were
+aligned. This is easy enough to do:
+
+>>> p = Chem.MolFromSmiles('[nH]1cnc2cncnc21')
+>>> subms = [x for x in ms if x.HasSubstructMatch(p)]
+>>> len(subms)
+14
+>>> AllChem.Compute2DCoords(p)
+0
+>>> for m in subms: AllChem.GenerateDepictionMatching2DStructure(m,p)
+>>> img=Draw.MolsToGridImage(subms,molsPerRow=4,subImgSize=(200,200),legends=[x.GetProp("_Name") for x in subms])
+>>> img.save('images/cdk2_molgrid.aligned.png')
+
+
+The result looks like this:
+
+.. image:: images/cdk2_molgrid.aligned.png
+
+
+
 
 Substructure Searching
 **********************
@@ -601,7 +661,19 @@ False
 >>> m.HasSubstructMatch(Chem.MolFromSmarts('COc')) #<- need an aromatic C
 True
 
-There's also functionality for using the substructure machinery for doing quick molecular transformations.
+Chemical Transformations
+************************
+
+The RDKit contains a number of functions for modifying molecules. Note
+that these transformation functions are intended to provide an easy
+way to make simple modifications to molecules. 
+For more complex transformations, use the `Chemical Reactions`_ functionality.
+
+Substructure-based transformations
+==================================
+
+There's a variety of functionality for using the RDKit's
+substructure-matching machinery for doing quick molecular transformations.
 These transformations include deleting substructures:
 
 >>> m = Chem.MolFromSmiles('CC(=O)O')
@@ -659,8 +731,25 @@ This can be split into separate molecules using :api:`rdkit.Chem.rdmolops.GetMol
 >>> Chem.MolToSmiles(rs[1],True)
 '[5*]C(=O)O'
 
-Note that these transformation functions are intended to provide an easy way to make simple modifications to molecules.
-For more complex transformations, use the `Chemical Reactions`_ functionality.
+
+Murcko Decomposition
+====================
+
+The RDKit provides standard Murcko-type decomposition [#bemis1]_ of molecules
+into scaffolds:
+
+>>> from rdkit.Chem.Scaffolds import MurckoScaffold
+>>> cdk2mols = Chem.SDMolSupplier('data/cdk2.sdf')
+>>> m1 = cdk2mols[0]
+>>> core = MurckoScaffold.GetScaffoldForMol(m1)
+>>> Chem.MolToSmiles(core)
+'c1nc2cncnc2[nH]1'
+
+or into a generic framework:
+
+>>> fw = MurckoScaffold.MakeScaffoldGeneric(core)
+>>> Chem.MolToSmiles(fw)
+'C1CC2CCCCC2C1'
 
 
 Maximum Common Substructure
@@ -1176,6 +1265,53 @@ rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
 >>> Chem.MolToSmiles(p0)
 'c1ccccc1'
 
+Advanced Reaction Functionality
+===============================
+
+Protecting Atoms
+----------------
+
+Sometimes, particularly when working with rxn files, it is difficult
+to express a reaction exactly enough to not end up with extraneous
+products. The RDKit provides a method of "protecting" atoms to
+disallow them from taking part in reactions.
+
+This can be demonstrated re-using the amide-bond formation reaction used
+above. The query for amines isn't specific enough, so it matches any
+nitrogen that has at least one H attached. So if we apply the reaction
+to a molecule that already has an amide bond, the amide N is also
+treated as a reaction site:
+
+>>> rxn = AllChem.ReactionFromRxnFile('data/AmideBond.rxn')
+>>> acid = Chem.MolFromSmiles('CC(=O)O')
+>>> base = Chem.MolFromSmiles('CC(=O)NCCN')
+>>> ps = rxn.RunReactants((acid,base))
+>>> len(ps)
+2
+>>> Chem.MolToSmiles(ps[0][0])
+'CC(=O)N(CCN)C(C)=O'
+>>> Chem.MolToSmiles(ps[1][0])
+'CC(=O)NCCNC(C)=O'
+
+The first product corresponds to the reaction at the amide N.
+
+We can prevent this from happening by protecting all amide Ns. Here we
+do it with a substructure query that matches amides and thioamides and
+then set the "_protected" property on matching atoms:
+
+>>> amidep = Chem.MolFromSmarts('[N;$(NC=[O,S])]')
+>>> for match in base.GetSubstructMatches(amidep):
+...     base.GetAtomWithIdx(match[0]).SetProp('_protected','1')
+
+
+Now the reaction only generates a single product:
+
+>>> ps = rxn.RunReactants((acid,base))
+>>> len(ps)
+1
+>>> Chem.MolToSmiles(ps[0][0])
+'CC(=O)NCCNC(C)=O'
+
 
 Recap Implementation
 ====================
@@ -1223,6 +1359,62 @@ The nodes themselves have associated molecules:
 >>> leaf = hierarch.GetLeaves()[ks[0]]
 >>> Chem.MolToSmiles(leaf.mol)
 '[*]C(=O)CC'
+
+
+BRICS Implementation
+====================
+
+The RDKit also provides an implementation of the BRICS
+algorithm. [#degen]_ BRICS provides another
+method for fragmenting molecules along synthetically accessible bonds:
+
+>>> from rdkit.Chem import BRICS
+>>> cdk2mols = Chem.SDMolSupplier('data/cdk2.sdf')
+>>> m1 = cdk2mols[0]
+>>> list(BRICS.BRICSDecompose(m1))
+['[4*]CC(=O)C(C)C', '[14*]c1nc(N)nc2[nH]cnc21', '[3*]O[3*]']
+>>> m2 = cdk2mols[20]
+>>> list(BRICS.BRICSDecompose(m2))
+['[3*]OC', '[1*]C(=O)NN(C)C', '[14*]c1[nH]nc2c1C(=O)c1c-2cccc1[16*]', '[5*]N[5*]', '[16*]c1ccc([16*])cc1']
+
+Notice that RDKit BRICS implementation returns the unique fragments
+generated from a molecule and that the dummy atoms are tagged to
+indicate which type of reaction applies.
+
+It's quite easy to generate the list of all fragments for a
+group of molecules:
+
+>>> allfrags=set()
+>>> for m in cdk2mols:
+...    pieces = BRICS.BRICSDecompose(m)
+...    allfrags.update(pieces)
+>>> len(allfrags)
+90
+>>> list(allfrags)[:5]
+['[4*]CC[NH3+]', '[14*]c1cnc[nH]1', '[16*]c1cc([16*])c2c3c(ccc2F)NC(=O)c31', '[16*]c1ccc([16*])c(Cl)c1', '[15*]C1CCCC1']
+
+The BRICS module also provides an option to apply the BRICS rules to a
+set of fragments to create new molecules:
+
+>>> import random
+>>> random.seed(127)
+>>> fragms = [Chem.MolFromSmiles(x) for x in allfrags]
+>>> ms = BRICS.BRICSBuild(fragms)
+
+The result is a generator object:
+
+>>> ms
+<generator object BRICSBuild at 0x...>
+
+That returns molecules on request:
+
+>>> prods = [ms.next() for x in range(10)]
+>>> Chem.MolToSmiles(prods[0],True)
+'O=[N+]([O-])c1ccc(C2CCCO2)cc1'
+>>> Chem.MolToSmiles(prods[1],True)
+'c1ccc(C2CCCO2)cc1'
+>>> Chem.MolToSmiles(prods[2],True)
+'NS(=O)(=O)c1ccc(C2CCCO2)cc1'
 
 
 Chemical Features and Pharmacophores
@@ -1823,7 +2015,9 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 .. [#nilakantan] Nilakantan, R.; Bauman N.; Dixon J.S.; Venkataraghavan R. “Topological Torsion: A New Molecular Descriptor for SAR Applications. Comparison with Other Desciptors.” *J. Chem.Inf. Comp. Sci.* **27**:82-5 (1987).
 .. [#rogers] Rogers, D.; Hahn, M. “Extended-Connectivity Fingerprints.” *J. Chem. Inf. and Model.* **50**:742-54 (2010).
 .. [#ashton] Ashton, M. et al. “Identification of Diverse Database Subsets using Property-Based and Fragment-Based Molecular Descriptions.” *Quantitative Structure-Activity Relationships* **21**:598-604 (2002).
+.. [#bemis1] Bemis, G. W.; Murcko, M. A. "The Properties of Known Drugs. 1. Molecular Frameworks." *J. Med. Chem.*  **39**:2887-93 (1996).
 .. [#lewell] Lewell, X.Q.; Judd, D.B.; Watson, S.P.; Hann, M.M. “RECAP-Retrosynthetic Combinatorial Analysis Procedure: A Powerful New Technique for Identifying Privileged Molecular Fragments with Useful Applications in Combinatorial Chemistry” *J. Chem. Inf. Comp. Sci.* **38**:511-22 (1998).
+.. [#degen] Degen, J.; Wegscheid-Gerlach, C.; Zaliani, A; Rarey, M. "On the Art of Compiling and Using ‘Drug-Like’ Chemical Fragment Spaces." *ChemMedChem* **3**:1503–7 (2008).
 .. [#gobbi] Gobbi, A. & Poppinger, D. "Genetic optimization of combinatorial libraries." *Biotechnology and Bioengineering* **61**:47-54 (1998).
 .. [#rxnsmarts] A more detailed description of reaction smarts, as defined by the rdkit, is in the :doc:`RDKit_Book`.
 

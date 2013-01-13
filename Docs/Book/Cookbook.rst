@@ -17,6 +17,44 @@ send them to the mailing list: rdkit-discuss@lists.sourceforge.net
 (you will need to subscribe first)
 
 
+Miscellaneous Topics
+********************
+
+Using a different aromaticity model
+-----------------------------------
+
+By default, the RDKit applies its own model of aromaticity (explained
+in the RDKit Theory Book) when it reads in molecules. It is, however,
+fairly easy to override this and use your own aromaticity model.
+
+The easiest way to do this is it provide the molecules as SMILES with
+the aromaticity set as you would prefer to have it. For example,
+consider indole: 
+
+.. image:: images/indole1.png
+ 
+By default the RDKit considers both rings to be aromatic:
+
+>>> from rdkit import Chem
+>>> m = Chem.MolFromSmiles('N1C=Cc2ccccc12')
+>>> m.GetSubstructMatches(Chem.MolFromSmarts('c'))
+((1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,))
+
+If you'd prefer to treat the five-membered ring as aliphatic, which is
+how the input SMILES is written, you just need to do a partial
+sanitization that skips the kekulization and aromaticity perception
+steps: 
+
+>>> m2 = Chem.MolFromSmiles('N1C=Cc2ccccc12',sanitize=False)
+>>> Chem.SanitizeMol(m2,sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL^Chem.SanitizeFlags.SANITIZE_KEKULIZE^Chem.SanitizeFlags.SANITIZE_SETAROMATICITY)
+rdkit.Chem.rdmolops.SanitizeFlags.SANITIZE_NONE
+>>> m2.GetSubstructMatches(Chem.MolFromSmarts('c'))
+((3,), (4,), (5,), (6,), (7,), (8,))
+
+It is, of course, also possible to write your own aromaticity
+perception function, but that is beyond the scope of this document.
+
+
 Manipulating Molecules
 **********************
 
