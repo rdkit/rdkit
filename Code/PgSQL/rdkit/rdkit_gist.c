@@ -308,7 +308,7 @@ hemdistsign(bytea *a, bytea *b)
 #ifndef USE_BUILTIN_POPCOUNT
   for(i=0;i<SIGLEN(a);i++)
     {
-      diff = as[i] ^ bs[i];
+      int diff = as[i] ^ bs[i];
       dist += number_of_ones[diff];
     }
 #else
@@ -329,8 +329,8 @@ soergeldistsign(bytea *a, bytea *b) {
   unsigned char   *as = (unsigned char *)VARDATA(a);
   unsigned char   *bs = (unsigned char *)VARDATA(b);
   for (i=0; i<SIGLEN(a); i++) {
-    union_popcount += byte_popcounts[as[i] | bs[i]];
-    intersect_popcount += byte_popcounts[as[i] & bs[i]];
+    union_popcount += number_of_ones[as[i] | bs[i]];
+    intersect_popcount += number_of_ones[as[i] & bs[i]];
   }
 #else
   unsigned int   *as = (unsigned int *)VARDATA(a);
