@@ -43,14 +43,47 @@ namespace {
   }
 
   python::list computeCrippenContribs(const RDKit::ROMol &mol,
-				       bool force=false){
+                                      bool force=false,
+                                      python::list atomTypes=python::list(),
+                                      python::list atomTypeLabels=python::list()){
+    std::vector<unsigned int> *tAtomTypes=0;
+    std::vector<std::string> *tAtomTypeLabels=0;
+    if(!atomTypes.is_none() &&
+       python::extract<unsigned int>(atomTypes.attr("__len__")())!=0){
+      if(python::extract<unsigned int>(atomTypes.attr("__len__")())!=mol.getNumAtoms()){
+        throw_value_error("if atomTypes vector is provided, it must be as long as the number of atoms");
+      } else {
+        tAtomTypes = new std::vector<unsigned int>(mol.getNumAtoms(),0);
+      }
+    }
+    if(!atomTypeLabels.is_none() &&
+       python::extract<unsigned int>(atomTypeLabels.attr("__len__")())!=0){
+      if(python::extract<unsigned int>(atomTypeLabels.attr("__len__")())!=mol.getNumAtoms()){
+        throw_value_error("if atomTypeLabels vector is provided, it must be as long as the number of atoms");
+      } else {
+        tAtomTypeLabels = new std::vector<std::string>(mol.getNumAtoms(),"");
+      }
+    }
+
     std::vector<double> logpContribs(mol.getNumAtoms());
     std::vector<double> mrContribs(mol.getNumAtoms());
-
-    RDKit::Descriptors::getCrippenAtomContribs(mol,logpContribs,mrContribs,force);
+    
+    RDKit::Descriptors::getCrippenAtomContribs(mol,logpContribs,mrContribs,force,tAtomTypes,tAtomTypeLabels);
     python::list pycontribs;
     for(unsigned int i=0;i<mol.getNumAtoms();++i){
       pycontribs.append(python::make_tuple(logpContribs[i],mrContribs[i]));
+    }
+    if(tAtomTypes){
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        atomTypes[i] = (*tAtomTypes)[i];
+      }
+      delete tAtomTypes;
+    }
+    if(tAtomTypeLabels){
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        atomTypeLabels[i] = (*tAtomTypeLabels)[i];
+      }
+      delete tAtomTypeLabels;
     }
     return pycontribs;
   }
@@ -592,7 +625,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("_CalcCrippenContribs",
 	      computeCrippenContribs,
 	      (python::arg("mol"),
-	       python::arg("force")=false),
+	       python::arg("force")=false,
+               python::arg("atomTypes")=python::list(),
+               python::arg("atomTypeLabels")=python::list()),
               docString.c_str());
   docString="returns a 2-tuple with the Wildman-Crippen logp,mr values";
   python::def("CalcCrippenDescriptors",

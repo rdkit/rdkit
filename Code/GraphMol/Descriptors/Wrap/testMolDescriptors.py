@@ -192,8 +192,20 @@ class TestCase(unittest.TestCase) :
 
     
   def testCrippen(self):
-    mol = Chem.MolFromSmiles("NCO");
+    mol = Chem.MolFromSmiles("n1ccccc1CO");
     contribs = rdMD._CalcCrippenContribs(mol)
+    self.failUnlessEqual(len(contribs),mol.GetNumAtoms());
+
+    ts = [0]*mol.GetNumAtoms()
+    contribs = rdMD._CalcCrippenContribs(mol,force=True,atomTypes=ts)
+    self.failUnlessEqual(ts,[59, 25, 25, 25, 25, 28, 17, 69])
+
+    ls = ['']*mol.GetNumAtoms()
+    contribs = rdMD._CalcCrippenContribs(mol,force=True,atomTypeLabels=ls)
+    self.failUnlessEqual(ls,['N11', 'C18', 'C18', 'C18', 'C18', 'C21', 'C10', 'O2'])
+
+
+    
 
   def testMolWt(self):
     mol = Chem.MolFromSmiles("C");

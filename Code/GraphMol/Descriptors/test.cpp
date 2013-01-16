@@ -43,6 +43,7 @@ void test1(){
   TEST_ASSERT(params);
   
   CrippenParams p=*(params->begin());
+  TEST_ASSERT(p.idx==0);
   TEST_ASSERT(p.label=="C1");
   TEST_ASSERT(p.smarts=="[CH4]");
 
@@ -838,6 +839,37 @@ void testMultiThread(){
 void testMultiThread(){
 }
 #endif
+void testCrippenContribs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Crippen atom type calculations." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("n1ccccc1CO");
+    TEST_ASSERT(mol);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+    std::vector<unsigned int> ts(mol->getNumAtoms());
+    std::vector<std::string> ls(mol->getNumAtoms());
+
+    getCrippenAtomContribs(*mol,logp,mr,true,&ts,&ls);
+    TEST_ASSERT(ts[0]==59);
+    TEST_ASSERT(ts[1]==25);
+    TEST_ASSERT(ts[2]==25);
+    TEST_ASSERT(ts[3]==25);
+    TEST_ASSERT(ts[4]==25);
+    TEST_ASSERT(ts[5]==28);
+    TEST_ASSERT(ts[6]==17);
+    TEST_ASSERT(ts[7]==69);
+
+    TEST_ASSERT(ls[0]=="N11");
+    TEST_ASSERT(ls[7]=="O2");
+    delete mol;
+  }  
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 
 void testIssue252(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -1506,4 +1538,5 @@ int main(){
   testKappa1();
   testKappa2();
   testKappa3();
+  testCrippenContribs();
 }

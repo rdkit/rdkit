@@ -33,10 +33,17 @@ namespace RDKit{
     void getCrippenAtomContribs(const ROMol &mol,
 				std::vector< double > &logpContribs,
 				std::vector< double > &mrContribs,
-				bool force){
+				bool force,
+                                std::vector<unsigned int> *atomTypes,
+                                std::vector<std::string> *atomTypeLabels
+                                ){
       PRECONDITION(logpContribs.size()==mol.getNumAtoms() &&
 		   mrContribs.size()==mol.getNumAtoms(),
 		   "bad result vector size");
+      PRECONDITION((!atomTypes || atomTypes->size()==mol.getNumAtoms()),
+                   "bad atomTypes vector");
+      PRECONDITION((!atomTypeLabels || atomTypeLabels->size()==mol.getNumAtoms()),
+                   "bad atomTypeLabels vector");
       if(!force && mol.hasProp("_crippenLogPContribs")){
 	std::vector<double> tmpVect1,tmpVect2;
 	mol.getProp("_crippenLogPContribs",tmpVect1);
@@ -64,6 +71,8 @@ namespace RDKit{
 	    atomNeeded[idx]=0;
 	    logpContribs[idx] = it->logp;
 	    mrContribs[idx] = it->mr;
+            if(atomTypes) (*atomTypes)[idx]=it->idx;
+            if(atomTypeLabels) (*atomTypeLabels)[idx]=it->label;
 	  }
 	}
 	// no need to keep matching stuff if we already found all the atoms:
@@ -123,9 +132,11 @@ namespace RDKit{
       std::istringstream inStream(params);
 
       std::string inLine=RDKit::getLine(inStream);
+      unsigned int idx=0;
       while(!inStream.eof()){
 	if(inLine[0] != '#'){
 	  CrippenParams paramObj;
+          paramObj.idx=idx++;
 	  tokenizer tokens(inLine,tabSep);
 	  tokenizer::iterator token=tokens.begin();
 	  

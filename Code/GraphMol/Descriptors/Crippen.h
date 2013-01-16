@@ -38,12 +38,21 @@ namespace RDKit {
                            be equal in length to the number of atoms
       \param force         forces the value to be recalculated instead
                            of pulled from the cache
+      \param atomTypes     if provided will be used to return the indices
+                           of the atom types, should be as long as the
+                           number of atoms
+      \param atomTypeLabels   if provided will be used to return the labels
+                              of the atom types, should be as long as the
+                              number of atoms
 	  
     */
     void getCrippenAtomContribs(const ROMol &mol,
 				std::vector<double> &logpContribs,
 				std::vector<double> &mrContribs,
-				bool force=false);
+				bool force=false,
+                                std::vector<unsigned int> *atomTypes=0,
+                                std::vector<std::string> *atomTypeLabels=0
+                                );
     
 
     //! generate Wildman-Crippen LogP and MR estimates for a molecule
@@ -69,6 +78,7 @@ namespace RDKit {
     class CrippenParams {
     public:
       boost::shared_ptr<const ROMol> dp_pattern;
+      unsigned int idx;
       std::string label;
       std::string smarts;
       double logp;
