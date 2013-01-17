@@ -48,16 +48,14 @@ namespace {
                                       python::list atomTypeLabels=python::list()){
     std::vector<unsigned int> *tAtomTypes=0;
     std::vector<std::string> *tAtomTypeLabels=0;
-    if(!atomTypes.is_none() &&
-       python::extract<unsigned int>(atomTypes.attr("__len__")())!=0){
+    if(python::extract<unsigned int>(atomTypes.attr("__len__")())!=0){
       if(python::extract<unsigned int>(atomTypes.attr("__len__")())!=mol.getNumAtoms()){
         throw_value_error("if atomTypes vector is provided, it must be as long as the number of atoms");
       } else {
         tAtomTypes = new std::vector<unsigned int>(mol.getNumAtoms(),0);
       }
     }
-    if(!atomTypeLabels.is_none() &&
-       python::extract<unsigned int>(atomTypeLabels.attr("__len__")())!=0){
+    if(python::extract<unsigned int>(atomTypeLabels.attr("__len__")())!=0){
       if(python::extract<unsigned int>(atomTypeLabels.attr("__len__")())!=mol.getNumAtoms()){
         throw_value_error("if atomTypeLabels vector is provided, it must be as long as the number of atoms");
       } else {
