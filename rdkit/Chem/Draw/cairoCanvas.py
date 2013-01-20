@@ -27,6 +27,7 @@ except ImportError:
   pango=None
   
 from canvasbase import CanvasBase
+import Image
 
 class Canvas(CanvasBase):
   def __init__(self,
@@ -46,7 +47,12 @@ class Canvas(CanvasBase):
     self.image=None
     self.imageType=imageType
     if image is not None:
-      imgd = image.tostring("raw","BGRA")
+      try:
+      	imgd = image.tostring("raw","BGRA")
+      except SystemError:
+	r,g,b,a = image.split()
+	imgd = Image.merge("RGBA",(b,g,r,a)).tostring("raw","RGBA")
+   
       a = array.array('B',imgd)
       stride=image.size[0]*4
       surface = cairo.ImageSurface.create_for_data (
