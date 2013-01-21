@@ -6,7 +6,8 @@
 Acknowledgements:
 Andrew Dalke, James Davidson, Robert Feinstein, Nikolas Fechner,
 Nicholas Firth, Markus Hartenfeller, Jameed Hussain, Thorsten Meinl,
-Sereina Riniker, Roger Sayle, Pat Walters, Bernd Wiswedel 
+Sereina Riniker, Roger Sayle, Gianluca Sforna, Pat Walters, Bernd
+Wiswedel 
 
 Bug Fixes: 
  - Using parentheses for zero-level grouping now works in reaction
@@ -51,6 +52,8 @@ Bug Fixes:
    properly parsed. (issue 281)
  - The SMILES and SLN parsers no longer leak memory when sanitization
    of the result molecule fails. (issue 282)
+ - The cairo canvas drawing code now works with PIL v1.1.6 as well as
+   more recent versions. 
    
 New Features:
  - RDKit ExplicitBitVects and DiscreteValueVects can now be directly
@@ -68,7 +71,11 @@ New Features:
  - Atoms and Bonds now support a ClearProp() method from python.
  - The new Python module rdkit.ML.Scoring.Scoring includes a number of
    standard tools for evaluating virtual screening experiments: ROC
-   curve generation, AUC, RIE, BEDROC, and Enrichment,  
+   curve generation, AUC, RIE, BEDROC, and Enrichment.
+ - The function RDKit::Descriptors::getCrippenAtomContribs()
+   (rdkit.Chem.rdMolDescriptors._CalcCrippenContribs() from Python)
+   can now optionally return atom-type information as ints or text.
+
 
 New Database Cartridge Features: 
 - The Chi and Kappa descriptors are now available
