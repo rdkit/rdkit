@@ -15,6 +15,13 @@
 
 namespace RDKit {
   namespace MolFragmenter{
+    typedef struct {
+      unsigned int atom1Label,atom2Label;
+      Bond::BondType bondType;
+      ROMOL_SPTR query;
+    } FragmenterBondType;
+
+
     //! \brief Fragments a molecule by breaking a set of bonds
     //!   
     /*!
@@ -37,25 +44,26 @@ namespace RDKit {
     */
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
                            bool addDummies=true,
-                           const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0);
-    void constructFragmenterAtomTypes(std::istream *istr,std::map<unsigned int,ROMOL_SPTR> &defs,
-                                      std::string comment="//");
-    void constructFragmenterAtomTypes(const std::string &str,std::map<unsigned int,ROMOL_SPTR> &defs,
-                                      std::string comment="//");
-    void constructBRICSAtomTypes(std::map<unsigned int,ROMOL_SPTR> &defs);
-    typedef struct {
-      unsigned int atom1Label,atom2Label;
-      Bond::BondType bondType;
-      ROMOL_SPTR query;
-    } FragmenterBondType;
-    void constructFragmenterBondTypes(std::istream *istr,
-                                      const std::map<unsigned int,ROMOL_SPTR> &atomTypes,
+                           const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0,
+                           const std::vector< Bond::BondType > *bondTypes=0);
+
+    ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns);
+
+    void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,std::string> &defs,
+                                      std::string comment="//",bool validate=true);
+    void constructFragmenterAtomTypes(const std::string &str,std::map<unsigned int,std::string> &defs,
+                                      std::string comment="//",bool validate=true);
+    void constructBRICSAtomTypes(std::map<unsigned int,std::string> &defs);
+    void constructFragmenterBondTypes(std::istream *inStream,
+                                      const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,
-                                      std::string comment="//");
+                                      std::string comment="//",bool validate=true,
+                                      bool labelByConnector=true);
     void constructFragmenterBondTypes(const std::string &str,
-                                      const std::map<unsigned int,ROMOL_SPTR> &atomTypes,
+                                      const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,
-                                      std::string comment="//");
+                                      std::string comment="//",bool validate=true,
+                                      bool labelByConnector=true);
     void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs);
   }
 }

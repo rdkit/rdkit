@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 
+#include "MolFragmenter.h"
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -21,13 +22,14 @@
 #include <vector>
 #include <algorithm>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/StreamOps.h>
 #include <sstream>
 
 namespace RDKit{
   namespace MolFragmenter{
-    void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,ROMOL_SPTR> &defs,
-                                      std::string comment){
+    void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,std::string> &defs,
+                                      std::string comment,bool validate){
       PRECONDITION(inStream,"no stream");
       defs.clear();
       unsigned int line=0;
@@ -46,20 +48,23 @@ namespace RDKit{
           BOOST_LOG(rdWarningLog)<<"definition #"<<idx<<" encountered more than once. Using the first occurance."<<std::endl;
           continue;
         }
-        ROMol *p=SmartsToMol(tokens[1]);
-        if(!p){
-          BOOST_LOG(rdWarningLog)<<"cannot convert SMARTS "<<tokens[1]<<" to molecule at line "<<line<<std::endl;
-          continue;
+        if(validate){
+          ROMol *p=SmartsToMol(tokens[1]);
+          if(!p){
+            BOOST_LOG(rdWarningLog)<<"cannot convert SMARTS "<<tokens[1]<<" to molecule at line "<<line<<std::endl;
+            continue;
+          }
+          delete p;
         }
-        defs[idx]=p;
+        defs[idx]=tokens[1];
       }
-    };
-    void constructFragmenterAtomTypes(const std::string &str,std::map<unsigned int,ROMOL_SPTR> &defs,
-                                      std::string comment){
+    }
+    void constructFragmenterAtomTypes(const std::string &str,std::map<unsigned int,std::string> &defs,
+                                      std::string comment,bool validate){
       std::stringstream istr(str);
-      constructFragmenterAtomTypes(&istr,defs,comment);
-    };
-    void constructBRICSAtomTypes(std::map<unsigned int,ROMOL_SPTR> &defs){
+      constructFragmenterAtomTypes(&istr,defs,comment,validate);
+    }
+    void constructBRICSAtomTypes(std::map<unsigned int,std::string> &defs){
       /* 
          After some discussion, the L2 definitions ("N.pl3" in the original
          paper) have been removed and incorporated into a (almost) general
@@ -89,97 +94,163 @@ namespace RDKit{
 13 [C;$(C(-;@[C,N,O,S])-;@[N,O,S])]\n\
 14 [c;$(c(:[c,n,o,s]):[n,o,s])]\n\
 15 [C;$(C(-;@C)-;@C)]\n\
-16 [c;$(c(:c):c)]"
-        constructFragmenterAtomTypes(BRICSdefs,defs);
+16 [c;$(c(:c):c)]";
+      constructFragmenterAtomTypes(BRICSdefs,defs,"//",true);
     }
-    void constructFragmenterBondTypes(std::istream *istr,
-                                      const std::map<unsigned int,ROMOL_SPTR> &atomTypes,
+
+
+    void constructFragmenterBondTypes(std::istream *inStream,
+                                      const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,
-                                      std::string comment){
+                                        std::string comment,bool validate,bool labelByConnector){
+      PRECONDITION(inStream,"no stream");
+      defs.clear();
+      defs.resize(0);
+      unsigned int line=0;
+      while(!inStream->eof()){
+        ++line;
+        std::string tempStr=getLine(inStream);
+        if(tempStr=="" || tempStr.find(comment)==0 ) continue;
+        std::vector<std::string> tokens;
+        boost::split(tokens,tempStr,boost::is_any_of(" \t"),boost::token_compress_on);
+        if(tokens.size()<3){
+          BOOST_LOG(rdWarningLog)<<"line "<<line<<" is too short"<<std::endl;
+          continue;
+        }
+        unsigned int idx1=boost::lexical_cast<unsigned int>(tokens[0]);
+        if(atomTypes.find(idx1)==atomTypes.end()){
+          BOOST_LOG(rdWarningLog)<<"atom type #"<<idx1<<" not recognized."<<std::endl;
+          continue;
+        }
+        unsigned int idx2=boost::lexical_cast<unsigned int>(tokens[1]);
+        if(atomTypes.find(idx2)==atomTypes.end()){
+          BOOST_LOG(rdWarningLog)<<"atom type #"<<idx2<<" not recognized."<<std::endl;
+          continue;
+        }
+        std::string smarts="[$("+ atomTypes.find(idx1)->second +")]"+tokens[2]+"[$("+ atomTypes.find(idx2)->second +")]";
+        ROMol *p=SmartsToMol(smarts);
+        if(validate){
+          if(!p){
+            BOOST_LOG(rdWarningLog)<<"cannot convert SMARTS "<<smarts<<" to molecule at line "<<line<<std::endl;
+            continue;
+          }
+        }
+        FragmenterBondType fbt;
+        if(labelByConnector){
+          fbt.atom1Label=idx1;
+          fbt.atom2Label=idx2;
+        } else {
+          fbt.atom1Label=idx2;
+          fbt.atom2Label=idx1;
+        }
+        if(p){
+          // for the purposes of replacing the bond, we'll use just the first
+          // character to set the bond type (if we recognize it):
+          switch(tokens[2][0]){
+          case '-':
+            fbt.bondType = Bond::SINGLE;break;
+          case '=':
+            fbt.bondType = Bond::DOUBLE;break;
+          case '#':
+            fbt.bondType = Bond::TRIPLE;break;
+          case ':':
+            fbt.bondType = Bond::AROMATIC;break;
+          default:
+            fbt.bondType = p->getBondWithIdx(0)->getBondType();
+          }
+          fbt.query = ROMOL_SPTR(p);
+        } else {
+          fbt.bondType=Bond::UNSPECIFIED;
+          fbt.query=ROMOL_SPTR();
+        }
+        defs.push_back(fbt);
+      }
     }
+
     void constructFragmenterBondTypes(const std::string &str,
-                                      const std::map<unsigned int,ROMOL_SPTR> &atomTypes,
-                                      std::vector<FragmenterBondType> &defs,
-                                      std::string comment){
+                                      const std::map<unsigned int,std::string> &atomTypes,
+                                        std::vector<FragmenterBondType> &defs,
+                                        std::string comment,bool validate,
+                                        bool labelByConnector){
       std::stringstream istr(str);
-      constructFragmenterBondTypes(&istr,atomTypes,defs,comment);
+      constructFragmenterBondTypes(&istr,atomTypes,defs,comment,validate,labelByConnector);
     }
     void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs){
       const std::string BRICSdefs=
-"// L1
-1 3 -
-1 5 -
-1 10 -
-// L3 
-3 4 -
-3 13 -
-3 14 -
-3 15 -
-3 16 -
-// L4
-4 5 -
-4 11 -
-// L5
-5 12 -
-5 14 -
-5 16 -
-5 13 -
-5 15 -
-// L6
-6 13 -
-6 14 -
-6 15 -
-6 16 -
-// L7
-7 7 =
-// L8
-8 9 -
-8 10 -
-8 13 -
-8 14 -
-8 15 -
-8 16 -
-// L9
-9 13 - // not in original paper
-9 14 - // not in original paper
-9 15 -
-9 16 -
-// L10
-10 13 -
-10 14 -
-10 15 -
-10 16 -
-// L11
-11 13 -
-11 14 -
-11 15 -
-11 16 -
-// L12
-// none left
-// L13
-13 14 -
-13 15 -
-13 16 -
-// L14
-14 14 - // not in original paper
-14 15 -
-14 16 -
-// L15
-15 16 -
-// L16
-16 16 - // not in original paper
-";
-      std::map<unsigned int,ROMOL_SPTR> atTypes;
+"// L1\n\
+1 3 -;!@\n\
+1 5 -;!@\n\
+1 10 -;!@\n\
+// L3 \n\
+3 4 -;!@\n\
+3 13 -;!@\n\
+3 14 -;!@\n\
+3 15 -;!@\n\
+3 16 -;!@\n\
+// L4\n\
+4 5 -;!@\n\
+4 11 -;!@\n\
+// L5\n\
+5 12 -;!@\n\
+5 14 -;!@\n\
+5 16 -;!@\n\
+5 13 -;!@\n\
+5 15 -;!@\n\
+// L6\n\
+6 13 -;!@\n\
+6 14 -;!@\n\
+6 15 -;!@\n\
+6 16 -;!@\n\
+// L7\n\
+7 7 =;!@\n\
+// L8\n\
+8 9 -;!@\n\
+8 10 -;!@\n\
+8 13 -;!@\n\
+8 14 -;!@\n\
+8 15 -;!@\n\
+8 16 -;!@\n\
+// L9\n\
+9 13 -;!@ // not in original paper\n\
+9 14 -;!@ // not in original paper\n\
+9 15 -;!@\n\
+9 16 -;!@\n\
+// L10\n\
+10 13 -;!@\n\
+10 14 -;!@\n\
+10 15 -;!@\n\
+10 16 -;!@\n\
+// L11\n\
+11 13 -;!@\n\
+11 14 -;!@\n\
+11 15 -;!@\n\
+11 16 -;!@\n\
+// L12\n\
+// none left\n\
+// L13\n\
+13 14 -;!@\n\
+13 15 -;!@\n\
+13 16 -;!@\n\
+// L14\n\
+14 14 -;!@ // not in original paper\n\
+14 15 -;!@\n\
+14 16 -;!@\n\
+// L15\n\
+15 16 -;!@\n\
+// L16\n\
+16 16 -;!@ // not in original paper";
+      std::map<unsigned int,std::string> atTypes;
       constructBRICSAtomTypes(atTypes);
-      constructFragmenterBondTypes(BRICSdefs,atTypes,defs);
+      constructFragmenterBondTypes(BRICSdefs,atTypes,defs,"//",true,false);
     }
-
-
 
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
                            bool addDummies,
-                           const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels){
-      PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummy label vector");
+                           const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels,
+                           const std::vector< Bond::BondType > *bondTypes
+                           ){
+      PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
+      PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
       RWMol *res=new RWMol(mol);
       std::vector<Bond *> bondsToRemove;
       bondsToRemove.reserve(bondIndices.size());
@@ -203,9 +274,11 @@ namespace RDKit{
             at2->setIsotope(eidx);
           }
           unsigned int idx1=res->addAtom(at1,false,true);
-          res->addBond(eidx,at1->getIdx(),bond->getBondType());
+          Bond::BondType bT=bond->getBondType();
+          if(bondTypes) bT=(*bondTypes)[i];
+          res->addBond(eidx,at1->getIdx(),bT);
           unsigned int idx2=res->addAtom(at2,false,true);
-          res->addBond(bidx,at2->getIdx(),bond->getBondType());
+          res->addBond(bidx,at2->getIdx(),bT);
 
           for(ROMol::ConformerIterator confIt=res->beginConformers();
               confIt!=res->endConformers();++confIt){
@@ -217,5 +290,41 @@ namespace RDKit{
       }
       return static_cast<ROMol *>(res);
     }
+
+    ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns){
+      std::vector<unsigned int> bondIndices;
+      std::vector< std::pair<unsigned int,unsigned int> > dummyLabels;
+      std::vector<Bond::BondType> bondTypes;
+
+      boost::dynamic_bitset<> bondsUsed(mol.getNumBonds(),0);
+
+      BOOST_FOREACH(const FragmenterBondType &fbt,bondPatterns){
+        if(fbt.query->getNumAtoms()!=2 || fbt.query->getNumBonds()!=1){
+            BOOST_LOG(rdErrorLog)<<"fragmentation queries must have 2 atoms and 1 bond"<<std::endl;
+            continue;
+        }
+        std::vector<MatchVectType> bondMatches;
+        SubstructMatch(mol,*fbt.query.get(),bondMatches);
+        BOOST_FOREACH(const MatchVectType &mv,bondMatches){
+          const Bond *bond=mol.getBondBetweenAtoms(mv[0].second,mv[1].second);
+          TEST_ASSERT(bond);
+          if(bondsUsed[bond->getIdx()]){
+            BOOST_LOG(rdWarningLog)<<"bond #"<<bond->getIdx()<<" matched multiple times in decomposition. Later matches ignored."<<std::endl;
+            continue;
+          }
+          bondsUsed.set(bond->getIdx());
+          bondIndices.push_back(bond->getIdx());
+          if(bond->getBeginAtomIdx()==mv[0].second){
+            dummyLabels.push_back(std::make_pair(fbt.atom1Label,fbt.atom2Label));
+          } else {
+            dummyLabels.push_back(std::make_pair(fbt.atom2Label,fbt.atom1Label));
+          }
+          bondTypes.push_back(fbt.bondType);
+        }
+      }
+      return fragmentOnBonds(mol,bondIndices,true,&dummyLabels,&bondTypes);
+    }
+
+
   } // end of namespace MolFragmenter
 } // end of namespace RDKit

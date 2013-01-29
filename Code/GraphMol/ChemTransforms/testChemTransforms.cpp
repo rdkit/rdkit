@@ -1211,6 +1211,86 @@ void testFragmentOnBonds()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testFragmentOnBRICSBonds() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBRICSBonds"<< std::endl;
+
+  {
+    std::string smi = "c1ccccc1OC";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==8);
+    TEST_ASSERT(mol->getBondBetweenAtoms(5,6));
+    TEST_ASSERT(mol->getBondBetweenAtoms(6,7));
+
+    std::vector<MolFragmenter::FragmenterBondType> fbts;
+    MolFragmenter::constructBRICSBondTypes(fbts);
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,fbts);
+    TEST_ASSERT(nmol);
+    
+    TEST_ASSERT(nmol->getNumAtoms()==10);
+    TEST_ASSERT(!nmol->getBondBetweenAtoms(5,6));
+    TEST_ASSERT(nmol->getBondBetweenAtoms(6,7));
+
+    smi = MolToSmiles(*nmol,true);
+    TEST_ASSERT(smi=="[3*]OC.[16*]c1ccccc1");
+
+    TEST_ASSERT(nmol->getAtomWithIdx(8)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(8)->getIsotope()==3);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(6,8));
+    TEST_ASSERT(nmol->getAtomWithIdx(9)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(9)->getIsotope()==16);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(5,9));
+    
+    delete mol;
+    delete nmol;
+  }
+
+  {
+    std::string smi = "c1ccccc1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==6);
+
+    std::vector<MolFragmenter::FragmenterBondType> fbts;
+    MolFragmenter::constructBRICSBondTypes(fbts);
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,fbts);
+    TEST_ASSERT(nmol);
+
+    
+    TEST_ASSERT(nmol->getNumAtoms()==6);
+
+    smi = MolToSmiles(*nmol,true);
+    TEST_ASSERT(smi=="c1ccccc1");
+    
+    delete mol;
+    delete nmol;
+  }
+
+  {
+    std::string smi = "OC(C)=CC";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
+
+    std::vector<MolFragmenter::FragmenterBondType> fbts;
+    MolFragmenter::constructBRICSBondTypes(fbts);
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,fbts);
+    TEST_ASSERT(nmol);
+
+    
+    TEST_ASSERT(nmol->getNumAtoms()==7);
+
+    smi = MolToSmiles(*nmol,true);
+    TEST_ASSERT(smi=="[7*]=CC.[7*]=C(C)O");
+    
+    delete mol;
+    delete nmol;
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+
+}
 
 int main() { 
   RDLog::InitLogs();
@@ -1240,6 +1320,7 @@ int main() {
   testIssue275();
 
   testFragmentOnBonds();
+  testFragmentOnBRICSBonds();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);
