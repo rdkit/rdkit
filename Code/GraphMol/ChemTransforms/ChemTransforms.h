@@ -14,7 +14,7 @@
 #include <vector>
 #include <iostream>
 
-
+#include "MolFragmenter.h"
 
 namespace RDKit{
   class ROMol;
@@ -159,7 +159,6 @@ namespace RDKit{
           in \c queries
       
   */
-
   void addRecursiveQueries(ROMol &mol,const std::map<std::string,ROMOL_SPTR> &queries,std::string propName,
                            std::vector<std::pair<unsigned int, std::string> > *reactantLabels=NULL);
 
@@ -170,9 +169,6 @@ namespace RDKit{
                          bool standardize=true,std::string delimiter="\t",std::string comment="//",
                          int nameColumn=0,int smartsColumn=1);
   
-  
-  
-
 }
 
 #endif

@@ -1096,9 +1096,6 @@ void testParseQueryDefFile()
 
 void testIssue275() 
 {
-  ROMol *mol1=0,*matcher1=0,*replacement=0;
-  std::string smi,sma;
-  
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing sf.net issue 275: Murcko decomposition with chiral atoms"<< std::endl;
 
@@ -1127,6 +1124,94 @@ void testIssue275()
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+
+void testFragmentOnBonds() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBonds"<< std::endl;
+
+  {
+    std::string smi = "OCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
+    unsigned int indices[]={0,3};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,bindices,false);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms()==5);
+    delete mol;
+    delete nmol;
+  }
+  {
+    std::string smi = "OCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(mol->getBondBetweenAtoms(3,4));
+    unsigned int indices[]={0,3};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,bindices);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms()==9);
+    TEST_ASSERT(!nmol->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(!nmol->getBondBetweenAtoms(3,4));
+    TEST_ASSERT(nmol->getAtomWithIdx(5)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(5)->getIsotope()==0);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(1,5));
+    TEST_ASSERT(nmol->getAtomWithIdx(6)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(6)->getIsotope()==1);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(0,6));
+    
+    TEST_ASSERT(nmol->getAtomWithIdx(7)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(7)->getIsotope()==3);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(4,7));
+    TEST_ASSERT(nmol->getAtomWithIdx(8)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(8)->getIsotope()==4);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(3,8));
+    delete mol;
+    delete nmol;
+  }
+  {
+    std::string smi = "OCCCN";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
+    TEST_ASSERT(mol->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(mol->getBondBetweenAtoms(3,4));
+    unsigned int indices[]={0,3};
+    std::vector<unsigned int> bindices(indices,indices+(sizeof(indices)/sizeof(indices[0])));
+    std::vector< std::pair<unsigned int,unsigned int> > dummyLabels(2);
+    dummyLabels[0] =std::make_pair(10,11);
+    dummyLabels[1] =std::make_pair(100,110);
+    ROMol *nmol=MolFragmenter::fragmentOnBonds(*mol,bindices,true,&dummyLabels);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms()==9);
+    TEST_ASSERT(!nmol->getBondBetweenAtoms(0,1));
+    TEST_ASSERT(!nmol->getBondBetweenAtoms(3,4));
+    TEST_ASSERT(nmol->getAtomWithIdx(5)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(5)->getIsotope()==10);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(1,5));
+    TEST_ASSERT(nmol->getAtomWithIdx(6)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(6)->getIsotope()==11);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(0,6));
+    
+    TEST_ASSERT(nmol->getAtomWithIdx(7)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(7)->getIsotope()==100);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(4,7));
+    TEST_ASSERT(nmol->getAtomWithIdx(8)->getAtomicNum()==0);
+    TEST_ASSERT(nmol->getAtomWithIdx(8)->getIsotope()==110);
+    TEST_ASSERT(nmol->getBondBetweenAtoms(3,8));
+    delete mol;
+    delete nmol;
+  }
+
+  
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+
 int main() { 
   RDLog::InitLogs();
     
@@ -1153,6 +1238,8 @@ int main() {
   testParseQueryDefFile();
 #endif
   testIssue275();
+
+  testFragmentOnBonds();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

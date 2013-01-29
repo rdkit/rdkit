@@ -662,5 +662,4 @@ namespace RDKit{
     }
     parseQueryDefFile(&inStream,queryDefs,standardize,delimiter,comment,nameColumn,smartsColumn);
   }
-
 }  // end of namespace RDKit
