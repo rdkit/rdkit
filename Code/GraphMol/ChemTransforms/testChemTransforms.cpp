@@ -1288,8 +1288,41 @@ void testFragmentOnBRICSBonds()
     delete mol;
     delete nmol;
   }
+
+  {
+    std::string smi = "c1ccccc1OC";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==8);
+    ROMol *nmol=MolFragmenter::fragmentOnBRICSBonds(*mol);
+    TEST_ASSERT(nmol);
+    TEST_ASSERT(nmol->getNumAtoms()==10);
+    smi = MolToSmiles(*nmol,true);
+    TEST_ASSERT(smi=="[3*]OC.[16*]c1ccccc1");
+    
+    delete mol;
+    delete nmol;
+  }
+  {
+    std::string smi = "OC(C)=CC";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==5);
+
+    ROMol *nmol=MolFragmenter::fragmentOnBRICSBonds(*mol);
+    TEST_ASSERT(nmol);
+
+    
+    TEST_ASSERT(nmol->getNumAtoms()==7);
+    smi = MolToSmiles(*nmol,true);
+    TEST_ASSERT(smi=="[7*]=CC.[7*]=C(C)O");
+    
+    delete mol;
+    delete nmol;
+  }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 
+  
 }
 
 int main() { 

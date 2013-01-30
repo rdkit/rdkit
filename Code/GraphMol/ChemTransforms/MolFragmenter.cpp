@@ -24,10 +24,24 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/StreamOps.h>
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+#include <boost/functional/hash.hpp>
 #include <sstream>
 
 namespace RDKit{
   namespace MolFragmenter{
+    std::size_t hash_value(const FragmenterBondType &fbt){
+      size_t res=boost::hash<int>()((int)fbt.bondType);
+      boost::hash_combine(res,fbt.atom1Label);
+      boost::hash_combine(res,fbt.atom2Label);
+      return res;
+    }
+    bool operator==(const FragmenterBondType &v1,const FragmenterBondType &v2){
+      return (v1.atom1Label==v2.atom1Label)&&
+        (v1.atom2Label==v2.atom2Label)&&
+        (v1.bondType==v2.bondType);
+    }
     void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,std::string> &defs,
                                       std::string comment,bool validate){
       PRECONDITION(inStream,"no stream");
@@ -325,6 +339,15 @@ namespace RDKit{
       return fragmentOnBonds(mol,bondIndices,true,&dummyLabels,&bondTypes);
     }
 
+    ROMol *fragmentOnBRICSBonds(const ROMol &mol){
+      boost::flyweight<std::vector<FragmenterBondType>,boost::flyweights::no_tracking> bondPatterns;
+      if(bondPatterns.get().size()==0){
+        std::vector<FragmenterBondType> tbondPatterns ;
+        constructBRICSBondTypes(tbondPatterns);
+        bondPatterns=tbondPatterns;
+      }
+      return fragmentOnBonds(mol,bondPatterns);
+    }
 
   } // end of namespace MolFragmenter
 } // end of namespace RDKit

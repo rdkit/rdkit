@@ -15,11 +15,11 @@
 
 namespace RDKit {
   namespace MolFragmenter{
-    typedef struct {
+    struct  FragmenterBondType {
       unsigned int atom1Label,atom2Label;
       Bond::BondType bondType;
       ROMOL_SPTR query;
-    } FragmenterBondType;
+    };
 
 
     //! \brief Fragments a molecule by breaking a set of bonds
@@ -48,6 +48,7 @@ namespace RDKit {
                            const std::vector< Bond::BondType > *bondTypes=0);
 
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns);
+    ROMol *fragmentOnBRICSBonds(const ROMol &mol);
 
     void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,std::string> &defs,
                                       std::string comment="//",bool validate=true);
