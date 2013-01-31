@@ -1320,9 +1320,28 @@ void testFragmentOnBRICSBonds()
     delete mol;
     delete nmol;
   }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 
-  
+  {
+    std::string smi = "CCCOCCC(=O)c1ccccc1";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==14);
+
+    ROMol *nmol=MolFragmenter::fragmentOnBRICSBonds(*mol);
+    TEST_ASSERT(nmol);
+    
+    TEST_ASSERT(nmol->getNumAtoms()==20);
+    smi = MolToSmiles(*nmol,true);
+    TEST_ASSERT(smi=="[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O.[16*]c1ccccc1");
+    MolOps::sanitizeMol(static_cast<RWMol &>(*nmol));
+    smi = MolToSmiles(*nmol,true);
+    TEST_ASSERT(smi=="[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O.[16*]c1ccccc1");
+    
+    delete mol;
+    delete nmol;
+  }
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
 int main() { 

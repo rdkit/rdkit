@@ -302,6 +302,7 @@ namespace RDKit{
           }
         }
       }
+      res->clearComputedProps();
       return static_cast<ROMol *>(res);
     }
 
