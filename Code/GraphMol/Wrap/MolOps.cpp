@@ -645,6 +645,7 @@ namespace RDKit{
                    python::arg("nameColumn")=0,python::arg("smartsColumn")=1),
                   docString.c_str());
 
+     
       // ------------------------------------------------------------------------
       docString="Returns the molecule's topological distance matrix.\n\
 \n\
@@ -1271,6 +1272,14 @@ namespace RDKit{
                    ),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
+
+
+      docString="Return a new molecule with all BRICS bonds broken";
+      python::def("FragmentOnBRICSBonds", MolFragmenter::fragmentOnBRICSBonds,
+                  (python::arg("mol")),
+                  docString.c_str(),
+                  python::return_value_policy<python::manage_new_object>());
+
 
       // ------------------------------------------------------------------------
       docString="Adds a recursive query to an atom\n\
