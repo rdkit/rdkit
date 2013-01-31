@@ -334,9 +334,10 @@ def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
 
   """
   if not bonds:
-    bonds = FindBRICSBonds(mol)
-  if not bonds:
-    return Chem.Mol(mol.ToBinary())
+    res = Chem.FragmentOnBRICSBonds(mol)
+    if sanitize:
+      Chem.SanitizeMol(res)
+    return res
   eMol = Chem.EditableMol(mol)
   nAts = mol.GetNumAtoms()
 
