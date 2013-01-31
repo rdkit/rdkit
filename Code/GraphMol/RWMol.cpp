@@ -231,6 +231,7 @@ namespace RDKit{
     RANGE_CHECK(0,aid2,getNumAtoms()-1);
     Bond *bnd = getBondBetweenAtoms(aid1, aid2);
     if(!bnd) return;
+    unsigned int idx=bnd->getIdx();
     
     // remove any bookmarks which point to this bond:
     BOND_BOOKMARK_MAP *marks = getBondBookmarks();
@@ -241,7 +242,7 @@ namespace RDKit{
       // deletion we're going to do in clearBondBookmark will invalidate
       // it.
       BOND_BOOKMARK_MAP::iterator tmpI=markI;
-      markI++;
+      ++markI;
       if(std::find(bonds.begin(),bonds.end(),bnd)!=bonds.end()){
         clearBondBookmark(tmpI->first,bnd);
       }
@@ -250,6 +251,12 @@ namespace RDKit{
     // reset our ring info structure, because it is pretty likely
     // to be wrong now:
     dp_ringInfo->reset();
+
+    // loop over all bonds with higher indices and update their indices
+    for(unsigned int i=idx+1;i<getNumBonds();++i){
+      getBondWithIdx(i)->setIdx(i-1);
+    }
+
 
     MolGraph::vertex_descriptor vd1 = boost::vertex(aid1,d_graph);
     MolGraph::vertex_descriptor vd2 = boost::vertex(aid2,d_graph);

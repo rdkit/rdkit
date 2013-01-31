@@ -907,6 +907,29 @@ void testIssue267()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testIssue284()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n";
+  BOOST_LOG(rdInfoLog) << "Testing issue 284: removeBond not updating indices" << std::endl;
+  {
+    RWMol m;
+
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+    m.addBond(0,1,Bond::SINGLE);
+    m.addBond(1,2,Bond::SINGLE);
+    m.updatePropertyCache();
+    TEST_ASSERT(m.getBondBetweenAtoms(0,1)->getIdx()==0);
+    TEST_ASSERT(m.getBondBetweenAtoms(1,2)->getIdx()==1);
+    m.removeBond(0,1);
+    TEST_ASSERT(!m.getBondBetweenAtoms(0,1));
+    TEST_ASSERT(m.getBondBetweenAtoms(1,2)->getIdx()==0);
+    
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 // -------------------------------------------------------------------
 int main()
@@ -928,6 +951,7 @@ int main()
   testPeriodicTable();
   testAddAtomWithConf();
   testIssue267();
+  testIssue284();
   
   return 0;
 }
