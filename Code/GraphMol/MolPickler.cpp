@@ -27,6 +27,12 @@ namespace RDKit{
   const int32_t MolPickler::versionPatch=1;
   const int32_t MolPickler::endianId=0xDEADBEEF;
 
+  void streamWrite(std::ostream &ss,const std::string &what){
+    unsigned int l=what.length();
+    ss.write((const char *)&l,sizeof(l));
+    ss.write(what.c_str(),sizeof(char)*l);
+  };  
+
   void streamWrite(std::ostream &ss,MolPickler::Tags tag){
     unsigned char tmp=static_cast<unsigned char>(tag);
     streamWrite(ss,tmp);
@@ -35,12 +41,6 @@ namespace RDKit{
   void streamWrite(std::ostream &ss,MolPickler::Tags tag,const T &what){
     streamWrite(ss,tag);
     streamWrite(ss,what);
-  };  
-
-  void streamWrite(std::ostream &ss,const std::string &what){
-    unsigned int l=what.length();
-    ss.write((const char *)&l,sizeof(l));
-    ss.write(what.c_str(),sizeof(char)*l);
   };  
 
   template<class T>
@@ -766,6 +766,8 @@ namespace RDKit{
     if(atom->getNoImplicit()) flags |= 0x1<<5;
     if(atom->hasQuery()) flags |= 0x1<<4;
     if(getAtomMapNumber(atom,tmpInt)) flags |= 0x1<<3;
+    if(atom->hasProp("dummyLabel")) flags |= 0x1<<2;
+
     streamWrite(ss,flags);
     
     if(!atom->hasQuery()){
@@ -832,6 +834,11 @@ namespace RDKit{
     if(getAtomMapNumber(atom,tmpInt)){
       tmpChar=static_cast<char>(tmpInt%256);
       streamWrite(ss,ATOM_MAPNUMBER,tmpChar);
+    }
+    if(atom->hasProp("dummyLabel")){
+      std::string tmpStr;
+      atom->getProp("dummyLabel",tmpStr);
+      streamWrite(ss,ATOM_DUMMYLABEL,tmpStr);
     }
   }
 
@@ -919,9 +926,10 @@ namespace RDKit{
     atom->setIsAromatic(flags & 0x1<<6);
     atom->setNoImplicit(flags & 0x1<<5);
 
-    bool hasAtomMap=0;
+    bool hasAtomMap=0,hasDummyLabel=0;
     if(version>=6020){
       hasAtomMap=flags & 0x1<<3;
+      hasDummyLabel=flags & 0x1<<2;
     }
 
     // are coordinates present?
@@ -1060,16 +1068,27 @@ namespace RDKit{
         } else {
           ss.seekg(sPos);
         }
-      } else if(hasAtomMap) {
-        Tags tag;
-        streamRead(ss,tag,version);
-        if(tag != ATOM_MAPNUMBER){
-          throw MolPicklerException("Bad pickle format: ATOM_MAPNUMBER tag not found.");
+      } else {
+        if(hasAtomMap) {
+          Tags tag;
+          streamRead(ss,tag,version);
+          if(tag != ATOM_MAPNUMBER){
+            throw MolPicklerException("Bad pickle format: ATOM_MAPNUMBER tag not found.");
+          }
+          int tmpInt;
+          streamRead(ss,tmpChar,version);
+          tmpInt=tmpChar;
+          atom->setProp("molAtomMapNumber",tmpInt);
         }
-        int tmpInt;
-        streamRead(ss,tmpChar,version);
-        tmpInt=tmpChar;
-        atom->setProp("molAtomMapNumber",tmpInt);
+        if(hasDummyLabel){
+          streamRead(ss,tag,version);
+          if(tag != ATOM_DUMMYLABEL){
+            throw MolPicklerException("Bad pickle format: ATOM_DUMMYLABEL tag not found.");
+          }
+          std::string tmpStr;
+          streamRead(ss,tmpStr,version);
+          atom->setProp("dummyLabel",tmpStr);
+        }
       }
     }
 

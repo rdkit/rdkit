@@ -777,6 +777,10 @@ void testIssue3316407(){
       TEST_ASSERT(m->getAtomWithIdx(i)->getExplicitValence()==m2->getAtomWithIdx(i)->getExplicitValence());
       TEST_ASSERT(m->getAtomWithIdx(i)->getImplicitValence()==m2->getAtomWithIdx(i)->getImplicitValence());
     }
+    // part of sf.net issue 285:
+    TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp("dummyLabel"));
+    TEST_ASSERT(m2->getAtomWithIdx(4)->hasProp("dummyLabel"));
+    
     delete m;
     delete m2;
   }
@@ -886,7 +890,29 @@ void testIssue280(){
     delete m2;
   }
 
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
 
+void testIssue285(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing sf.net issue 285." << std::endl;
+
+  {
+    ROMol *m1 = SmilesToMol("*C");
+    TEST_ASSERT(m1);
+    std::string v="R";
+    m1->getAtomWithIdx(0)->setProp("dummyLabel",v);
+    
+    std::string pickle;
+    MolPickler::pickleMol(*m1,pickle);
+    RWMol *m2 = new RWMol(pickle);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getAtomWithIdx(0)->hasProp("dummyLabel"));
+    m2->getAtomWithIdx(0)->getProp("dummyLabel",v);
+    TEST_ASSERT(v=="R");
+    delete m1;
+    delete m2;
+  }
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -919,6 +945,7 @@ int main(int argc, char *argv[]) {
   testIssue3316407();
   testIssue3496759();
   testIssue280();
+  testIssue285();
   
   return 0;
 

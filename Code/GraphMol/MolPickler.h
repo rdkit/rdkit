@@ -96,6 +96,7 @@ namespace RDKit{
       QUERY_ATOMRING,
       QUERY_RECURSIVE,
       ENDQUERY,
+      ATOM_DUMMYLABEL,
     } Tags;
 
     //! pickles a molecule and sends the results to stream \c ss
