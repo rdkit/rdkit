@@ -334,9 +334,10 @@ def BreakBRICSBonds(mol,bonds=None,sanitize=True,silent=True):
 
   """
   if not bonds:
+    #bonds = FindBRICSBonds(mol)
     res = Chem.FragmentOnBRICSBonds(mol)
     if sanitize:
-      Chem.SanitizeMol(res)
+       Chem.SanitizeMol(res)
     return res
   eMol = Chem.EditableMol(mol)
   nAts = mol.GetNumAtoms()
@@ -812,6 +813,7 @@ M  END
 """
       m = Chem.MolFromMolBlock(molblock)
       pieces = BreakBRICSBonds(m)
+
       frags = Chem.GetMolFrags(pieces,asMols=True)
       self.failUnlessEqual(len(frags),3)
       self.failUnlessEqual(frags[0].GetNumAtoms(),7)
@@ -842,11 +844,11 @@ M  END
         p1 = c1.GetAtomPosition(i+6)
         p2 = c2.GetAtomPosition(i)
         self.failUnlessEqual((p1-p2).Length(),0.0)
-      p1 = c1.GetAtomPosition(7)
+      p1 = c1.GetAtomPosition(5)
       p2 = c2.GetAtomPosition(1)
       self.failUnlessEqual((p1-p2).Length(),0.0)
-      p1 = c1.GetAtomPosition(5)
-      p2 = c2.GetAtomPosition(2)
+      p1 = c1.GetAtomPosition(6)
+      p2 = c2.GetAtomPosition(0)
       self.failUnlessEqual((p1-p2).Length(),0.0)
 
 
@@ -922,11 +924,11 @@ M  END
         p1 = c1.GetAtomPosition(i+6)
         p2 = c2.GetAtomPosition(i)
         self.failUnlessEqual((p1-p2).Length(),0.0)
-      p1 = c1.GetAtomPosition(7)
+      p1 = c1.GetAtomPosition(5)
       p2 = c2.GetAtomPosition(1)
       self.failUnlessEqual((p1-p2).Length(),0.0)
-      p1 = c1.GetAtomPosition(5)
-      p2 = c2.GetAtomPosition(2)
+      p1 = c1.GetAtomPosition(6)
+      p2 = c2.GetAtomPosition(0)
       self.failUnlessEqual((p1-p2).Length(),0.0)
 
       c1 = m.GetConformer(1)
@@ -953,11 +955,11 @@ M  END
         p1 = c1.GetAtomPosition(i+6)
         p2 = c2.GetAtomPosition(i)
         self.failUnlessEqual((p1-p2).Length(),0.0)
-      p1 = c1.GetAtomPosition(7)
+      p1 = c1.GetAtomPosition(5)
       p2 = c2.GetAtomPosition(1)
       self.failUnlessEqual((p1-p2).Length(),0.0)
-      p1 = c1.GetAtomPosition(5)
-      p2 = c2.GetAtomPosition(2)
+      p1 = c1.GetAtomPosition(6)
+      p2 = c2.GetAtomPosition(0)
       self.failUnlessEqual((p1-p2).Length(),0.0)
 
     def test12(self):
