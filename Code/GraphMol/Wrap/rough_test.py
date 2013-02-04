@@ -2370,7 +2370,14 @@ CAS<~>
   def test81Issue275(self):
     smi = Chem.MolToSmiles(Chem.MurckoDecompose(Chem.MolFromSmiles('CCCCC[C@H]1CC[C@H](C(=O)O)CC1')))
     self.failUnlessEqual(smi,'C1CCCCC1')
-                    
+
+  def test82Issue288(self):
+    m = Chem.MolFromSmiles('CC*')
+    m.GetAtomWithIdx(2).SetProp('molAtomMapNumber','30')
+    smi=Chem.MolToSmiles(m)
+    self.failUnlessEqual(smi,'[*:30]CC')
+
+
 
 if __name__ == '__main__':
   unittest.main()

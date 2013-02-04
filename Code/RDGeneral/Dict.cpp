@@ -14,6 +14,7 @@
 #include <boost/shared_array.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/utility.hpp>
 #include <vector>
 #include <list>
 
@@ -52,9 +53,35 @@ namespace RDKit{
     }
   };
 
+  namespace {
+    template <class T>
+    typename boost::enable_if<boost::is_arithmetic<T>, T>::type 
+    _fromany(const boost::any &arg) {
+      T res;
+      if(arg.type()==typeid(std::string) || arg.type()==typeid(const char *)){
+        try {
+          res = boost::any_cast<T>(arg);
+        } catch (const boost::bad_any_cast &exc) {
+          try{
+            res = boost::lexical_cast<T>(boost::any_cast<std::string>(arg));
+          } catch (...){
+            throw exc;
+          }
+        }
+      } else {
+        res = boost::any_cast<T>(arg);
+      }
+      return res;
+    }
+    template <class T>
+    typename boost::disable_if<boost::is_arithmetic<T>, T>::type 
+    _fromany(const boost::any &arg) {
+      return boost::any_cast<T>(arg);
+    }
+  }
   template <typename T>
   T Dict::fromany(const boost::any &arg) const {
-    return boost::any_cast<T>(arg);
+    return _fromany<T>(arg);
   };
   template <typename T>
   boost::any Dict::toany(T arg) const {

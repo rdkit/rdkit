@@ -12,6 +12,8 @@
 
 #include "types.h"
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/RDLog.h>
+#include <RDGeneral/utils.h>
 
 using namespace RDKit;
 using namespace std;
@@ -25,6 +27,40 @@ public:
 private:
   Dict d;
 };
+
+void testStringVals(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing String Pickle Roundtrips." << std::endl;
+  {
+    Dict d;
+    std::string sv;
+    sv="1";
+    d.setVal("foo",sv);
+    int iv;
+    d.getVal("foo",iv);
+    TEST_ASSERT(iv==1);
+  }
+  {
+    Dict d;
+    d.setVal("foo","1");
+    int iv;
+    d.getVal("foo",iv);
+    TEST_ASSERT(iv==1);
+  }
+  {
+    Dict d;
+    std::string sv;
+    sv="1.3";
+    d.setVal("foo",sv);
+    double dv;
+    d.getVal("foo",dv);
+    TEST_ASSERT(feq(dv,1.3));
+  }
+
+    
+  
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
 
 int main(){
   RDLog::InitLogs();
@@ -111,6 +147,7 @@ int main(){
   fooV4.resize(3);
   CHECK_INVARIANT(dc3.getDict()->hasVal("baz"),"bad get");
   
+  testStringVals();
 
   return 0;
 
