@@ -17,6 +17,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDBoost/Exceptions.h>
 
@@ -1341,8 +1342,47 @@ void testFragmentOnBRICSBonds()
     delete nmol;
   }
 
+  {
+    std::string smi = "Cl.CC(=O)O[C@]1(c2ccccc2)CCN(C)[C@H]2CCCC[C@@H]21";
+    RWMol *mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms()==22);
+    ROMol *nmol=MolFragmenter::fragmentOnBRICSBonds(*mol);
+    TEST_ASSERT(nmol);
+    
+    TEST_ASSERT(nmol->getNumAtoms()==28);
+    smi = MolToSmiles(*nmol,true);
+    //std::cerr<<smi<<std::endl;
+    TEST_ASSERT(smi=="Cl.[1*]C(C)=O.[3*]O[3*].[15*]C1([15*])CCN(C)[C@H]2CCCC[C@@H]21.[16*]c1ccccc1");
+    MolOps::sanitizeMol(static_cast<RWMol &>(*nmol));
+    smi = MolToSmiles(*nmol,true);
+    TEST_ASSERT(smi=="Cl.[1*]C(C)=O.[3*]O[3*].[15*]C1([15*])CCN(C)[C@H]2CCCC[C@@H]21.[16*]c1ccccc1");
+    
+    delete mol;
+    delete nmol;
+  }
+
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
+
+void benchFragmentOnBRICSBonds() 
+{
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBRICSBonds"<< std::endl;
+  {
+    std::string pathName=getenv("RDBASE");
+    pathName += "/Regress/Data/mols.1000.sdf";
+    SDMolSupplier suppl(pathName);
+    while(!suppl.atEnd()){
+      ROMol *m=suppl.next();
+      ROMol *nmol=MolFragmenter::fragmentOnBRICSBonds(*m);
+      delete m;
+      delete nmol;
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -1368,11 +1408,12 @@ int main() {
   testCombineMols();
   testAddRecursiveQueries();
   testParseQueryDefFile();
-#endif
   testIssue275();
 
   testFragmentOnBonds();
+#endif
   testFragmentOnBRICSBonds();
+  //benchFragmentOnBRICSBonds();
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
   return(0);

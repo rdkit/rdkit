@@ -17,6 +17,7 @@ namespace RDKit {
   namespace MolFragmenter{
     struct  FragmenterBondType {
       unsigned int atom1Label,atom2Label;
+      unsigned int atom1Type,atom2Type;
       Bond::BondType bondType;
       ROMOL_SPTR query;
     };
@@ -47,14 +48,18 @@ namespace RDKit {
                            const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels=0,
                            const std::vector< Bond::BondType > *bondTypes=0);
 
-    ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns);
+    ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns,
+                           const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons=0);
     ROMol *fragmentOnBRICSBonds(const ROMol &mol);
 
     void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,std::string> &defs,
-                                      std::string comment="//",bool validate=true);
+                                      std::string comment="//",bool validate=true,
+                                      std::map<unsigned int,ROMOL_SPTR> *environs=0);
     void constructFragmenterAtomTypes(const std::string &str,std::map<unsigned int,std::string> &defs,
-                                      std::string comment="//",bool validate=true);
-    void constructBRICSAtomTypes(std::map<unsigned int,std::string> &defs);
+                                      std::string comment="//",bool validate=true,
+                                      std::map<unsigned int,ROMOL_SPTR> *environs=0);
+    void constructBRICSAtomTypes(std::map<unsigned int,std::string> &defs,
+                                 std::map<unsigned int,ROMOL_SPTR> *environs=0);
     void constructFragmenterBondTypes(std::istream *inStream,
                                       const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,

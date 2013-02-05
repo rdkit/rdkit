@@ -43,7 +43,8 @@ namespace RDKit{
         (v1.bondType==v2.bondType);
     }
     void constructFragmenterAtomTypes(std::istream *inStream,std::map<unsigned int,std::string> &defs,
-                                      std::string comment,bool validate){
+                                      std::string comment,bool validate,
+                                      std::map<unsigned int,ROMOL_SPTR> *environs){
       PRECONDITION(inStream,"no stream");
       defs.clear();
       unsigned int line=0;
@@ -62,23 +63,29 @@ namespace RDKit{
           BOOST_LOG(rdWarningLog)<<"definition #"<<idx<<" encountered more than once. Using the first occurance."<<std::endl;
           continue;
         }
-        if(validate){
+        if(validate || environs){
           ROMol *p=SmartsToMol(tokens[1]);
           if(!p){
             BOOST_LOG(rdWarningLog)<<"cannot convert SMARTS "<<tokens[1]<<" to molecule at line "<<line<<std::endl;
             continue;
           }
-          delete p;
+          if(!environs){
+            delete p;
+          } else {
+            (*environs)[idx] = ROMOL_SPTR(p);
+          }
         }
         defs[idx]=tokens[1];
       }
     }
     void constructFragmenterAtomTypes(const std::string &str,std::map<unsigned int,std::string> &defs,
-                                      std::string comment,bool validate){
+                                      std::string comment,bool validate,
+                                      std::map<unsigned int,ROMOL_SPTR> *environs){
       std::stringstream istr(str);
-      constructFragmenterAtomTypes(&istr,defs,comment,validate);
+      constructFragmenterAtomTypes(&istr,defs,comment,validate,environs);
     }
-    void constructBRICSAtomTypes(std::map<unsigned int,std::string> &defs){
+    void constructBRICSAtomTypes(std::map<unsigned int,std::string> &defs,
+                                 std::map<unsigned int,ROMOL_SPTR> *environs){
       /* 
          After some discussion, the L2 definitions ("N.pl3" in the original
          paper) have been removed and incorporated into a (almost) general
@@ -96,30 +103,31 @@ namespace RDKit{
       */
       const std::string BRICSdefs="1 [C;D3]([#0,#6,#7,#8])(=O)\n\
 3 [O;D2]-;!@[#0,#6,#1]\n\
-4 [C;!D1;!$(C=*)]-;!@[#6]\n\
 5 [N;!D1;!$(N=*);!$(N-[!#6;!#16;!#0;!#1]);!$([N;R]@[C;R]=O)]\n\
-6 [C;D3;!R](=O)-;!@[#0,#6,#7,#8]\n\
-7 [C;D2,D3]-[#6]\n\
-8 [C;!R;!D1;!$(C!-*)]\n\
 9 [n;+0;$(n(:[c,n,o,s]):[c,n,o,s])]\n\
 10 [N;R;$(N(@C(=O))@[C,N,O,S])]\n\
 11 [S;D2](-;!@[#0,#6])\n\
 12 [S;D4]([#6,#0])(=O)(=O)\n\
+6 [C;D3;!R](=O)-;!@[#0,#6,#7,#8]\n\
 13 [C;$(C(-;@[C,N,O,S])-;@[N,O,S])]\n\
 14 [c;$(c(:[c,n,o,s]):[n,o,s])]\n\
 15 [C;$(C(-;@C)-;@C)]\n\
+4 [C;!D1;!$(C=*)]-;!@[#6]\n\
+7 [C;D2,D3]-[#6]\n\
+8 [C;!R;!D1;!$(C!-*)]\n\
 16 [c;$(c(:c):c)]";
-      constructFragmenterAtomTypes(BRICSdefs,defs,"//",true);
+      constructFragmenterAtomTypes(BRICSdefs,defs,"//",true,environs);
     }
 
 
     void constructFragmenterBondTypes(std::istream *inStream,
                                       const std::map<unsigned int,std::string> &atomTypes,
                                       std::vector<FragmenterBondType> &defs,
-                                        std::string comment,bool validate,bool labelByConnector){
+                                      std::string comment,bool validate,bool labelByConnector){
       PRECONDITION(inStream,"no stream");
       defs.clear();
       defs.resize(0);
+
       unsigned int line=0;
       while(!inStream->eof()){
         ++line;
@@ -141,7 +149,9 @@ namespace RDKit{
           BOOST_LOG(rdWarningLog)<<"atom type #"<<idx2<<" not recognized."<<std::endl;
           continue;
         }
-        std::string smarts="[$("+ atomTypes.find(idx1)->second +")]"+tokens[2]+"[$("+ atomTypes.find(idx2)->second +")]";
+        std::string sma1=atomTypes.find(idx1)->second;
+        std::string sma2=atomTypes.find(idx2)->second;
+        std::string smarts="[$("+ sma1 +")]"+tokens[2]+"[$("+ sma2 +")]";
         ROMol *p=SmartsToMol(smarts);
         if(validate){
           if(!p){
@@ -150,6 +160,8 @@ namespace RDKit{
           }
         }
         FragmenterBondType fbt;
+        fbt.atom1Type=idx1;
+        fbt.atom2Type=idx2;
         if(labelByConnector){
           fbt.atom1Label=idx1;
           fbt.atom2Label=idx2;
@@ -183,9 +195,9 @@ namespace RDKit{
 
     void constructFragmenterBondTypes(const std::string &str,
                                       const std::map<unsigned int,std::string> &atomTypes,
-                                        std::vector<FragmenterBondType> &defs,
-                                        std::string comment,bool validate,
-                                        bool labelByConnector){
+                                      std::vector<FragmenterBondType> &defs,
+                                      std::string comment,bool validate,
+                                      bool labelByConnector){
       std::stringstream istr(str);
       constructFragmenterBondTypes(&istr,atomTypes,defs,comment,validate,labelByConnector);
     }
@@ -261,8 +273,7 @@ namespace RDKit{
     ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<unsigned int> &bondIndices,
                            bool addDummies,
                            const std::vector< std::pair<unsigned int,unsigned int> > *dummyLabels,
-                           const std::vector< Bond::BondType > *bondTypes
-                           ){
+                           const std::vector< Bond::BondType > *bondTypes){
       PRECONDITION( ( !dummyLabels || dummyLabels->size() == bondIndices.size() ), "bad dummyLabel vector");
       PRECONDITION( ( !bondTypes || bondTypes->size() == bondIndices.size() ), "bad bondType vector");
       RWMol *res=new RWMol(mol);
@@ -306,25 +317,41 @@ namespace RDKit{
       return static_cast<ROMol *>(res);
     }
 
-    ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns){
+    ROMol *fragmentOnBonds(const ROMol &mol,const std::vector<FragmenterBondType> &bondPatterns,
+                           const std::map<unsigned int,ROMOL_SPTR> *atomEnvirons){
       std::vector<unsigned int> bondIndices;
       std::vector< std::pair<unsigned int,unsigned int> > dummyLabels;
       std::vector<Bond::BondType> bondTypes;
 
-      boost::dynamic_bitset<> bondsUsed(mol.getNumBonds(),0);
+      std::map<unsigned int,bool> environsMatch;
+      if(atomEnvirons){
+        for(std::map<unsigned int,ROMOL_SPTR>::const_iterator iter=atomEnvirons->begin();
+            iter!=atomEnvirons->end();++iter){
+          MatchVectType mv;
+          environsMatch[iter->first]=SubstructMatch(mol,*(iter->second),mv);
+        }
+      }
 
-      BOOST_FOREACH(const FragmenterBondType &fbt,bondPatterns){
+      
+      boost::dynamic_bitset<> bondsUsed(mol.getNumBonds(),0);
+      // the bond definitions are organized (more or less) general -> specific, so loop
+      // over them backwards
+      BOOST_REVERSE_FOREACH(const FragmenterBondType &fbt,bondPatterns){
         if(fbt.query->getNumAtoms()!=2 || fbt.query->getNumBonds()!=1){
             BOOST_LOG(rdErrorLog)<<"fragmentation queries must have 2 atoms and 1 bond"<<std::endl;
             continue;
         }
+        if(atomEnvirons && (!environsMatch[fbt.atom1Type] || !environsMatch[fbt.atom2Type] ) )
+          continue;
+        //std::cerr<<"  >>> "<<fbt.atom1Label<<" "<<fbt.atom2Label<<std::endl;
         std::vector<MatchVectType> bondMatches;
         SubstructMatch(mol,*fbt.query.get(),bondMatches);
         BOOST_FOREACH(const MatchVectType &mv,bondMatches){
           const Bond *bond=mol.getBondBetweenAtoms(mv[0].second,mv[1].second);
+          //std::cerr<<"          "<<bond->getIdx()<<std::endl;
           TEST_ASSERT(bond);
           if(bondsUsed[bond->getIdx()]){
-            BOOST_LOG(rdWarningLog)<<"bond #"<<bond->getIdx()<<" matched multiple times in decomposition. Later matches ignored."<<std::endl;
+            //BOOST_LOG(rdWarningLog)<<"bond #"<<bond->getIdx()<<" matched multiple times in decomposition. Later matches ignored."<<std::endl;
             continue;
           }
           bondsUsed.set(bond->getIdx());
@@ -340,14 +367,19 @@ namespace RDKit{
       return fragmentOnBonds(mol,bondIndices,true,&dummyLabels,&bondTypes);
     }
 
+    boost::flyweight<std::vector<FragmenterBondType>,boost::flyweights::no_tracking> bondPatterns;
+    boost::flyweight<std::map<unsigned int,ROMOL_SPTR>,boost::flyweights::no_tracking> atomEnvs;
     ROMol *fragmentOnBRICSBonds(const ROMol &mol){
-      boost::flyweight<std::vector<FragmenterBondType>,boost::flyweights::no_tracking> bondPatterns;
       if(bondPatterns.get().size()==0){
+        std::map<unsigned int,std::string> adefs;
+        std::map<unsigned int,ROMOL_SPTR> aenvs;
+        constructBRICSAtomTypes(adefs,&aenvs);
+        atomEnvs=aenvs;
         std::vector<FragmenterBondType> tbondPatterns ;
         constructBRICSBondTypes(tbondPatterns);
         bondPatterns=tbondPatterns;
       }
-      return fragmentOnBonds(mol,bondPatterns);
+      return fragmentOnBonds(mol,bondPatterns,&(atomEnvs.get()));
     }
 
   } // end of namespace MolFragmenter
