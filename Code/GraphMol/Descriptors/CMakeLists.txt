@@ -5,7 +5,9 @@ rdkit_library(Descriptors
 
 rdkit_headers(Crippen.h Lipinski.h
               MolDescriptors.h
-              MolSurf.h DEST GraphMol/Descriptors)
+              MolSurf.h
+              ConnectivityDescriptors.h
+              DEST GraphMol/Descriptors)
 
 rdkit_test(testDescriptors test.cpp 
 LINK_LIBRARIES PartialCharges Descriptors FileParsers SmilesParse Subgraphs SubstructMatch GraphMol DataStructs RDGeneral RDGeometryLib )

@@ -12,7 +12,9 @@ rdkit_headers(BadFileException.h
               StreamOps.h
               types.h
               utils.h
-              versions.h DEST RDGeneral)
+              versions.h
+              LocaleSwitcher.h
+              DEST RDGeneral)
 if (NOT RDK_INSTALL_INTREE)
   install(DIRECTORY hash DESTINATION ${RDKit_HdrDir}/RDGeneral/hash
         PATTERN ".svn" EXCLUDE)

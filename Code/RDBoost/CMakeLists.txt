@@ -3,6 +3,7 @@ rdkit_library(RDBoost Wrap.cpp
 
 rdkit_headers(Exceptions.h Wrap.h PySequenceHolder.h
               list_indexing_suite.hpp
+              python_streambuf.h
               DEST RDBoost)
 
 add_subdirectory(Wrap)
