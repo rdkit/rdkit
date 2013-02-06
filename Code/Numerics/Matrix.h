@@ -231,7 +231,7 @@ namespace RDNumeric {
     }
 
   protected:
-    Matrix() : d_nRows(0), d_nCols(0), d_dataSize(0), d_data(0){} ;
+    Matrix() : d_nRows(0), d_nCols(0), d_dataSize(0), d_data(){} ;
     unsigned int d_nRows;
     unsigned int d_nCols;
     unsigned int d_dataSize;
