@@ -1,5 +1,5 @@
 rdkit_library(Fingerprints
-              Fingerprints.cpp MorganFingerprints.cpp AtomPairs.cpp MACCS.cpp
+              Fingerprints.cpp MorganFingerprints.cpp AtomPairs.cpp
               LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse GraphMol
                 ${RDKit_THREAD_LIBS} )
 
