@@ -92,6 +92,16 @@ public class FingerprintsTests extends GraphMolTest {
 		}
 	}
 
+	@Test
+	public void test7() {
+		String smi1 = "c1ccccc1";
+                String smi2 = "c1ccccn1";
+		ROMol m1 = RWMol.MolFromSmiles(smi1);
+                ROMol m2 = RWMol.MolFromSmiles(smi2);
+                ExplicitBitVect fp1 = RDKFuncs.MACCSFingerprintMol(m1);
+                ExplicitBitVect fp2 = RDKFuncs.MACCSFingerprintMol(m2);
+                assertEquals(RDKFuncs.DiceSimilarity(fp1,fp2),0.5454,0.001);
+	}
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.FingerprintsTests");
 	}
