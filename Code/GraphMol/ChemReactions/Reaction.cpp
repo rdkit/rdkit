@@ -248,7 +248,7 @@ namespace RDKit {
       boost::dynamic_bitset<> mappedAtoms(reactantSptr->getNumAtoms());
       boost::dynamic_bitset<> skippedAtoms(reactantSptr->getNumAtoms());
       std::map<unsigned int,unsigned int> reactProdAtomMap; // this maps atom indices from reactant->product
-      std::vector<int> prodReactAtomMap(product->getNumAtoms(),-1); // this maps atom indices from product->reactant
+      std::map<unsigned int,unsigned int> prodReactAtomMap; // this maps atom indices from product->reactant
       std::vector<const Atom *> chiralAtomsToCheck; 
       for(unsigned int i=0;i<match.size();i++){
         const Atom *templateAtom=reactantTemplate->getAtomWithIdx(match[i].first);
@@ -286,8 +286,8 @@ namespace RDKit {
         BOND_SPTR pBond=(*product)[*(bondItP.first)];
         ++bondItP.first;
         if(pBond->hasProp("NullBond")){
-          if(prodReactAtomMap[pBond->getBeginAtomIdx()]>-1 &&
-             prodReactAtomMap[pBond->getEndAtomIdx()]>-1){
+          if(prodReactAtomMap.find(pBond->getBeginAtomIdx())!=prodReactAtomMap.end() &&
+             prodReactAtomMap.find(pBond->getEndAtomIdx())!=prodReactAtomMap.end() ){
             // the bond is between two mapped atoms from this reactant:
             const Bond *rBond=reactant->getBondBetweenAtoms(prodReactAtomMap[pBond->getBeginAtomIdx()],
                                                             prodReactAtomMap[pBond->getEndAtomIdx()]);
@@ -364,24 +364,24 @@ namespace RDKit {
               BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag on product atom ignored\n";
             } 
           }
-          
+
           // now traverse:
           std::list< const Atom * > atomStack;
           atomStack.push_back(reactantAtom);
           while(!atomStack.empty()){
-            reactantAtom = atomStack.front();
+            const Atom *lReactantAtom = atomStack.front();
             atomStack.pop_front();
 
             // each atom in the stack is guaranteed to already be in the product:
-            CHECK_INVARIANT(reactProdAtomMap.find(reactantAtom->getIdx())!=reactProdAtomMap.end(),
+            CHECK_INVARIANT(reactProdAtomMap.find(lReactantAtom->getIdx())!=reactProdAtomMap.end(),
                             "reactant atom on traversal stack not present in product.");
-            int reactantAtomProductIndex=reactProdAtomMap[reactantAtom->getIdx()];
-            productAtom = product->getAtomWithIdx(reactantAtomProductIndex); 
-            visitedAtoms[reactantAtom->getIdx()]=1;
+            int lReactantAtomProductIndex=reactProdAtomMap[lReactantAtom->getIdx()];
+            productAtom = product->getAtomWithIdx(lReactantAtomProductIndex); 
+            visitedAtoms[lReactantAtom->getIdx()]=1;
 
             // Check our neighbors:
             ROMol::ADJ_ITER nbrIdx,endNbrs;
-            boost::tie(nbrIdx,endNbrs) = reactant->getAtomNeighbors(reactantAtom);
+            boost::tie(nbrIdx,endNbrs) = reactant->getAtomNeighbors(lReactantAtom);
             while(nbrIdx!=endNbrs){
               // Four possibilities here. The neighbor:
               //  0) has been visited already: do nothing
@@ -396,7 +396,7 @@ namespace RDKit {
                   // this is case 1 (neighbor in match); set a bond to the neighbor if this atom
                   // is not also in the match (match-match bonds were set when the product template was
                   // copied in to start things off).;
-                  if(!mappedAtoms[reactantAtom->getIdx()]){
+                  if(!mappedAtoms[lReactantAtom->getIdx()]){
                     CHECK_INVARIANT(reactProdAtomMap.find(*nbrIdx)!=reactProdAtomMap.end(),
                                   "reactant atom not present in product.");
                     addBond=true;
@@ -406,20 +406,21 @@ namespace RDKit {
                   addBond=true;
                 } else {
                   // case 3, add the atom, a bond to it, and push the atom onto the stack
-                  const Atom *reactantAtom=reactant->getAtomWithIdx(*nbrIdx);
-                  Atom *newAtom = new Atom(*reactantAtom);
+                  const Atom *lReactantAtom=reactant->getAtomWithIdx(*nbrIdx);
+                  Atom *newAtom = new Atom(*lReactantAtom);
                   productIdx=product->addAtom(newAtom,false,true);
                   reactProdAtomMap[*nbrIdx]=productIdx;
+                  prodReactAtomMap[productIdx]=*nbrIdx;
                   addBond=true;
                   // update the stack:
-                  atomStack.push_back(reactantAtom);
+                  atomStack.push_back(lReactantAtom);
                   // if the atom is chiral, we need to check its bond ordering later:
-                  if(reactantAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED){
-                    chiralAtomsToCheck.push_back(reactantAtom);
+                  if(lReactantAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED){
+                    chiralAtomsToCheck.push_back(lReactantAtom);
                   }
                 }
                 if(addBond){
-                  const Bond *origB=reactant->getBondBetweenAtoms(reactantAtom->getIdx(),*nbrIdx);
+                  const Bond *origB=reactant->getBondBetweenAtoms(lReactantAtom->getIdx(),*nbrIdx);
                   unsigned int begIdx=origB->getBeginAtomIdx();
                   unsigned int endIdx=origB->getEndAtomIdx();
                   unsigned int bondIdx;
@@ -428,7 +429,7 @@ namespace RDKit {
                   bondIdx=product->addBond(reactProdAtomMap[begIdx],
                                            reactProdAtomMap[endIdx],
                                            origB->getBondType())-1;
-                  //bondIdx=product->addBond(reactProdAtomMap[*nbrIdx],reactantAtomProductIndex,
+                  //bondIdx=product->addBond(reactProdAtomMap[*nbrIdx],lReactantAtomProductIndex,
                   //                         origB->getBondType())-1;
                   Bond *newB=product->getBondWithIdx(bondIdx);
                   newB->setBondDir(origB->getBondDir());
@@ -436,7 +437,45 @@ namespace RDKit {
               }
               nbrIdx++;
             }
-          } // end of atomStack traversal        
+          } // end of atomStack traversal
+
+          // now that we've added all the reactant's neighbors, check to see if 
+          // it is chiral in the reactant but is not in the reaction. If so
+          // we need to worry about its chirality
+          productAtom = product->getAtomWithIdx(reactProdAtomMap[reactantAtomIdx]);
+          if(productAtom->getChiralTag()==Atom::CHI_UNSPECIFIED &&
+             reactantAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+             reactantAtom->getChiralTag()!=Atom::CHI_OTHER ){
+            // we can only do something sensible here if we have the same number of bonds
+            // in the reactants and the products:
+            if(reactantAtom->getDegree()==productAtom->getDegree()){
+              unsigned int nUnknown=0;
+              INT_LIST pOrder;
+
+              ROMol::ADJ_ITER nbrIdx,endNbrs;
+              boost::tie(nbrIdx,endNbrs) = product->getAtomNeighbors(productAtom);
+              while(nbrIdx!=endNbrs){
+                if(prodReactAtomMap.find(*nbrIdx)==prodReactAtomMap.end()){
+                  // if there's a bond in the product that doesn't correspond to
+                  // anything in the reactant, we're also doomed
+                  ++nUnknown;
+                  break;
+                }
+                const Bond *rBond=reactant->getBondBetweenAtoms(reactantAtom->getIdx(),prodReactAtomMap[*nbrIdx]);
+                CHECK_INVARIANT(rBond,"expected reactant bond not found");
+                pOrder.push_back(rBond->getIdx());
+                ++nbrIdx;
+              }
+              if(!nUnknown){
+                productAtom->setChiralTag(reactantAtom->getChiralTag());
+                int nSwaps = reactantAtom->getPerturbationOrder(pOrder);
+                if(nSwaps%2){
+                  productAtom->invertChirality();
+                }
+              }
+            }
+          }
+
         }
       } // end of loop over matched atoms
 

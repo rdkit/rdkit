@@ -3529,6 +3529,119 @@ void test38AddRecursiveQueriesToReaction(){
 }
 
 
+void test39InnocentChiralityLoss(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing loss of chirality on innocent atoms." << std::endl;
+
+  {
+    ChemicalReaction *rxn=RxnSmartsToChemicalReaction("[C:2][C:1]=O>>[C:2][C:1]=S");
+    unsigned int nWarn,nError;
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+    
+    {
+      std::string smi = "Cl[C@H](F)C=O";
+      ROMol *mol = SmilesToMol(smi);
+      MOL_SPTR_VECT reacts;
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods;
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size()==1);
+      TEST_ASSERT(prods[0].size()==1);
+      smi=MolToSmiles(*prods[0][0]);
+      TEST_ASSERT(smi=="FC(Cl)C=S");
+      smi=MolToSmiles(*prods[0][0],true);
+      TEST_ASSERT(smi=="F[C@@H](Cl)C=S");
+    }
+    {
+      std::string smi = "O=C[C@@H](F)Cl";
+      ROMol *mol = SmilesToMol(smi);
+      MOL_SPTR_VECT reacts;
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods;
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size()==1);
+      TEST_ASSERT(prods[0].size()==1);
+      smi=MolToSmiles(*prods[0][0]);
+      TEST_ASSERT(smi=="FC(Cl)C=S");
+      smi=MolToSmiles(*prods[0][0],true);
+      TEST_ASSERT(smi=="F[C@@H](Cl)C=S");
+    }
+    {
+      std::string smi = "F[C@H](C=O)Cl";
+      ROMol *mol = SmilesToMol(smi);
+      MOL_SPTR_VECT reacts;
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods;
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size()==1);
+      TEST_ASSERT(prods[0].size()==1);
+      smi=MolToSmiles(*prods[0][0]);
+      TEST_ASSERT(smi=="FC(Cl)C=S");
+      smi=MolToSmiles(*prods[0][0],true);
+      TEST_ASSERT(smi=="F[C@@H](Cl)C=S");
+    }
+    delete rxn;
+  }
+
+
+  {
+    // in this case the atom isn't actually innocent
+    ChemicalReaction *rxn=RxnSmartsToChemicalReaction("[C:1]-O>>[C:1]-S");
+    unsigned int nWarn,nError;
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+    
+    {
+      std::string smi = "Cl[C@H](F)O";
+      ROMol *mol = SmilesToMol(smi);
+      MOL_SPTR_VECT reacts;
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods;
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size()==1);
+      TEST_ASSERT(prods[0].size()==1);
+      smi=MolToSmiles(*prods[0][0]);
+      TEST_ASSERT(smi=="FC(S)Cl");
+      smi=MolToSmiles(*prods[0][0],true);
+      TEST_ASSERT(smi=="FC(S)Cl");
+    }
+    delete rxn;
+  }
+  {
+    // another non-innocent atom
+    ChemicalReaction *rxn=RxnSmartsToChemicalReaction("[C:1]-O>>[C:1]");
+    unsigned int nWarn,nError;
+    rxn->initReactantMatchers();
+    TEST_ASSERT(rxn->validate(nWarn,nError,false));
+    TEST_ASSERT(nWarn==0);
+    TEST_ASSERT(nError==0);
+    
+    {
+      std::string smi = "Cl[C@H](F)O";
+      ROMol *mol = SmilesToMol(smi);
+      MOL_SPTR_VECT reacts;
+      reacts.push_back(ROMOL_SPTR(mol));
+      std::vector<MOL_SPTR_VECT> prods;
+      prods = rxn->runReactants(reacts);
+      TEST_ASSERT(prods.size()==1);
+      TEST_ASSERT(prods[0].size()==1);
+      smi=MolToSmiles(*prods[0][0]);
+      TEST_ASSERT(smi=="FCCl");
+      smi=MolToSmiles(*prods[0][0],true);
+      TEST_ASSERT(smi=="FCCl");
+    }
+    delete rxn;
+  }
+
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 
 int main() { 
   RDLog::InitLogs();
@@ -3563,7 +3676,6 @@ int main() {
   test24AtomFlags();
   test25Conformers();
   test26V3000MDLParser();
-#endif
   test27SmartsWriter();
   test28RxnDepictor();
   test29RxnWriter();
@@ -3578,6 +3690,8 @@ int main() {
   test37ProtectOption();
 
   test38AddRecursiveQueriesToReaction();
+#endif
+  test39InnocentChiralityLoss();
 
 
   BOOST_LOG(rdInfoLog) << "*******************************************************\n";
