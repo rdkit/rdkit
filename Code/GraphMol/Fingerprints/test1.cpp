@@ -16,12 +16,14 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/MACCS.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 #include <RDGeneral/RDLog.h>
 #include <string>
 #include <boost/version.hpp>
+#include <boost/foreach.hpp>
 
 using namespace RDKit;
 
@@ -2028,6 +2030,41 @@ void testRDKitFromAtoms(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testMACCS(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing MACCS key calculation" << std::endl;
+  {
+    std::string smi = "CNO";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1=MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT(fp1->getNumOnBits()==15);
+    unsigned int _onBits[]={24, 68, 69, 71, 93, 94, 102, 124, 131, 139, 151, 158, 160, 161, 164};
+    std::vector<unsigned int> onBits(_onBits,_onBits+sizeof(_onBits)/sizeof(*_onBits));
+    BOOST_FOREACH(unsigned int ob,onBits){
+      TEST_ASSERT((*fp1)[ob]);
+    }
+    delete m1;
+    delete fp1;
+  }
+  {
+    std::string smi = "CCC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1=MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT(fp1->getNumOnBits()==5);
+    unsigned int _onBits[]={74, 114, 149, 155, 160};
+    std::vector<unsigned int> onBits(_onBits,_onBits+sizeof(_onBits)/sizeof(*_onBits));
+    BOOST_FOREACH(unsigned int ob,onBits){
+      TEST_ASSERT((*fp1)[ob]);
+    }
+    delete m1;
+    delete fp1;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2064,5 +2101,6 @@ int main(int argc,char *argv[]){
   testPairsAndTorsionsOptions();
 #endif
   testRDKitFromAtoms();
+  testMACCS();
   return 0;
 }
