@@ -17,6 +17,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/MACCS.h>
 #include <DataStructs/BitVects.h>
 
 #include <vector>
@@ -858,5 +859,12 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               RDKit::Descriptors::calcKappa3,
               (python::arg("mol")));
   python::scope().attr("_CalcKappa3_version")=RDKit::Descriptors::kappa3Version;
+
+  docString="Returns the MACCS keys for a molecule as an ExplicitBitVect";
+  python::def("GetMACCSKeysFingerprint",
+	      RDKit::MACCSFingerprints::getFingerprintAsBitVect,
+	      (python::arg("mol")),
+              docString.c_str(),
+	      python::return_value_policy<python::manage_new_object>());
   
 }
