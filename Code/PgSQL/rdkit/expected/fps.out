@@ -64,6 +64,12 @@ SELECT dice_sml(featmorganbv_fp('c1ccccc1'::mol),featmorganbv_fp('c1ccncc1'::mol
       0.5
 (1 row)
 
+SELECT dice_sml(maccs_fp('c1ccccc1'::mol),maccs_fp('c1ccncc1'::mol));
+     dice_sml      
+-------------------
+ 0.545454545454545
+(1 row)
+
 SET rdkit.tanimoto_threshold = 0.4;
 SELECT
     id, tanimoto_sml(rdkit_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), f) AS sml

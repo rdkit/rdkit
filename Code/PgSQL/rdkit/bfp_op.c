@@ -362,4 +362,24 @@ torsionbv_fp(PG_FUNCTION_ARGS) {
 
   PG_RETURN_BITMAPFINGERPRINT_P(sfp);
 }
+PG_FUNCTION_INFO_V1(maccs_fp);
+Datum       maccs_fp(PG_FUNCTION_ARGS);
+Datum
+maccs_fp(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  MolBitmapFingerPrint    fp;
+  BitmapFingerPrint               *sfp;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+
+  fp = makeMACCSBFP(mol);
+  sfp = deconstructMolBitmapFingerPrint(fp);
+  freeMolBitmapFingerPrint(fp);
+
+  PG_RETURN_BITMAPFINGERPRINT_P(sfp);
+}
 

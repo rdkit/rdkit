@@ -179,6 +179,7 @@ extern "C" {
   MolSparseFingerPrint makeTopologicalTorsionSFP(CROMol data);
   MolBitmapFingerPrint makeAtomPairBFP(CROMol data);
   MolBitmapFingerPrint makeTopologicalTorsionBFP(CROMol data);
+  MolBitmapFingerPrint makeMACCSBFP(CROMol data);
 
   /*
    * Indexes

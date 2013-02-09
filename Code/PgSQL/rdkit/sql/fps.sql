@@ -9,6 +9,7 @@ SELECT dice_sml(featmorgan_fp('c1ccccc1'::mol,2),featmorgan_fp('c1ccncc1'::mol,2
 SELECT dice_sml(featmorgan_fp('c1ccccc1'::mol),featmorgan_fp('c1ccncc1'::mol));
 SELECT dice_sml(featmorganbv_fp('c1ccccc1'::mol,2),featmorganbv_fp('c1ccncc1'::mol,2));
 SELECT dice_sml(featmorganbv_fp('c1ccccc1'::mol),featmorganbv_fp('c1ccncc1'::mol));
+SELECT dice_sml(maccs_fp('c1ccccc1'::mol),maccs_fp('c1ccncc1'::mol));
 
 SET rdkit.tanimoto_threshold = 0.4;
 SELECT

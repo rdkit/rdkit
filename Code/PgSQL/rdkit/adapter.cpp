@@ -38,6 +38,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/MACCS.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -1268,3 +1269,20 @@ makeTopologicalTorsionBFP(CROMol data){
   }
 }
 
+extern "C" MolBitmapFingerPrint 
+makeMACCSBFP(CROMol data){
+  ROMol   *mol = (ROMol*)data;
+  ExplicitBitVect *res=NULL;
+  try {
+    res=RDKit::MACCSFingerprints::getFingerprintAsBitVect(*mol);
+  } catch (...) {
+    elog(ERROR, "makeMACCSBFP: Unknown exception");
+  }
+  if(res){
+    std::string *sres=new std::string(BitVectToBinaryText(*res));
+    delete res;
+    return (MolBitmapFingerPrint)sres;
+  } else {
+    return NULL;
+  }
+}
