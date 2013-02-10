@@ -2061,6 +2061,20 @@ void testMACCS(){
     delete m1;
     delete fp1;
   }
+  {
+    std::string smi = "CC.CO";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    ExplicitBitVect *fp1=MACCSFingerprints::getFingerprintAsBitVect(*m1);
+    TEST_ASSERT(fp1->getNumOnBits()==8);
+    unsigned int _onBits[]={93, 139, 141, 149, 157, 160, 164, 166};
+    std::vector<unsigned int> onBits(_onBits,_onBits+sizeof(_onBits)/sizeof(*_onBits));
+    BOOST_FOREACH(unsigned int ob,onBits){
+      TEST_ASSERT((*fp1)[ob]);
+    }
+    delete m1;
+    delete fp1;
+  }
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 

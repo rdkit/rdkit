@@ -16,23 +16,13 @@
 
 namespace  {
   struct Patterns {
-    RDKit::ROMol *bit_2;
-    RDKit::ROMol *bit_3;
-    RDKit::ROMol *bit_4;
-    RDKit::ROMol *bit_5;
-    RDKit::ROMol *bit_6;
-    RDKit::ROMol *bit_7;
     RDKit::ROMol *bit_8;
-    RDKit::ROMol *bit_9;
-    RDKit::ROMol *bit_10;
     RDKit::ROMol *bit_11;
-    RDKit::ROMol *bit_12;
     RDKit::ROMol *bit_13;
     RDKit::ROMol *bit_14;
     RDKit::ROMol *bit_15;
     RDKit::ROMol *bit_16;
     RDKit::ROMol *bit_17;
-    RDKit::ROMol *bit_18;
     RDKit::ROMol *bit_19;
     RDKit::ROMol *bit_20;
     RDKit::ROMol *bit_21;
@@ -41,25 +31,20 @@ namespace  {
     RDKit::ROMol *bit_24;
     RDKit::ROMol *bit_25;
     RDKit::ROMol *bit_26;
-    RDKit::ROMol *bit_27;
     RDKit::ROMol *bit_28;
-    RDKit::ROMol *bit_29;
     RDKit::ROMol *bit_30;
     RDKit::ROMol *bit_31;
     RDKit::ROMol *bit_32;
     RDKit::ROMol *bit_33;
     RDKit::ROMol *bit_34;
-    RDKit::ROMol *bit_35;
     RDKit::ROMol *bit_36;
     RDKit::ROMol *bit_37;
     RDKit::ROMol *bit_38;
     RDKit::ROMol *bit_39;
     RDKit::ROMol *bit_40;
     RDKit::ROMol *bit_41;
-    RDKit::ROMol *bit_42;
     RDKit::ROMol *bit_43;
     RDKit::ROMol *bit_45;
-    RDKit::ROMol *bit_46;
     RDKit::ROMol *bit_47;
     RDKit::ROMol *bit_48;
     RDKit::ROMol *bit_49;
@@ -101,7 +86,6 @@ namespace  {
     RDKit::ROMol *bit_85;
     RDKit::ROMol *bit_86;
     RDKit::ROMol *bit_87;
-    RDKit::ROMol *bit_88;
     RDKit::ROMol *bit_89;
     RDKit::ROMol *bit_90;
     RDKit::ROMol *bit_91;
@@ -116,7 +100,6 @@ namespace  {
     RDKit::ROMol *bit_100;
     RDKit::ROMol *bit_101;
     RDKit::ROMol *bit_102;
-    RDKit::ROMol *bit_103;
     RDKit::ROMol *bit_104;
     RDKit::ROMol *bit_105;
     RDKit::ROMol *bit_106;
@@ -142,11 +125,9 @@ namespace  {
     RDKit::ROMol *bit_127;
     RDKit::ROMol *bit_128;
     RDKit::ROMol *bit_129;
-    RDKit::ROMol *bit_130;
     RDKit::ROMol *bit_131;
     RDKit::ROMol *bit_132;
     RDKit::ROMol *bit_133;
-    RDKit::ROMol *bit_134;
     RDKit::ROMol *bit_135;
     RDKit::ROMol *bit_136;
     RDKit::ROMol *bit_137;
@@ -155,86 +136,63 @@ namespace  {
     RDKit::ROMol *bit_140;
     RDKit::ROMol *bit_141;
     RDKit::ROMol *bit_142;
-    RDKit::ROMol *bit_143;
     RDKit::ROMol *bit_144;
     RDKit::ROMol *bit_145;
-    RDKit::ROMol *bit_146;
     RDKit::ROMol *bit_147;
     RDKit::ROMol *bit_148;
     RDKit::ROMol *bit_149;
     RDKit::ROMol *bit_150;
     RDKit::ROMol *bit_151;
     RDKit::ROMol *bit_152;
-    RDKit::ROMol *bit_153;
     RDKit::ROMol *bit_154;
     RDKit::ROMol *bit_155;
     RDKit::ROMol *bit_156;
     RDKit::ROMol *bit_157;
     RDKit::ROMol *bit_158;
-    RDKit::ROMol *bit_159;
-    RDKit::ROMol *bit_160;
-    RDKit::ROMol *bit_161;
     RDKit::ROMol *bit_162;
-    RDKit::ROMol *bit_163;
-    RDKit::ROMol *bit_164;
     RDKit::ROMol *bit_165;
     Patterns() :
-      bit_2(RDKit::SmartsToMol("[#104]")),
-      bit_3(RDKit::SmartsToMol("[#32,#33,#34,#50,#51,#52,#82,#83,#84]")),
-      bit_4(RDKit::SmartsToMol("[Ac,Th,Pa,U,Np,Pu,Am,Cm,Bk,Cf,Es,Fm,Md,No,Lr]")),
-      bit_5(RDKit::SmartsToMol("[Sc,Ti,Y,Zr,Hf]")),
-      bit_6(RDKit::SmartsToMol("[La,Ce,Pr,Nd,Pm,Sm,Eu,Gd,Tb,Dy,Ho,Er,Tm,Yb,Lu]")),
-      bit_7(RDKit::SmartsToMol("[V,Cr,Mn,Nb,Mo,Tc,Ta,W,Re]")),
-      bit_8(RDKit::SmartsToMol("[!#6;!#1]1~*~*~*~1")),
-      bit_9(RDKit::SmartsToMol("[Fe,Co,Ni,Ru,Rh,Pd,Os,Ir,Pt]")),
-      bit_10(RDKit::SmartsToMol("[Be,Mg,Ca,Sr,Ba,Ra]")),
+      bit_8(RDKit::SmartsToMol("[!#6!#1]1~*~*~*~1")),
       bit_11(RDKit::SmartsToMol("*1~*~*~*~1")),
-      bit_12(RDKit::SmartsToMol("[Cu,Zn,Ag,Cd,Au,Hg]")),
       bit_13(RDKit::SmartsToMol("[#8]~[#7](~[#6])~[#6]")),
       bit_14(RDKit::SmartsToMol("[#16]-[#16]")),
       bit_15(RDKit::SmartsToMol("[#8]~[#6](~[#8])~[#8]")),
-      bit_16(RDKit::SmartsToMol("[!#6;!#1]1~*~*~1")),
+      bit_16(RDKit::SmartsToMol("[!#6!#1]1~*~*~1")),
       bit_17(RDKit::SmartsToMol("[#6]#[#6]")),
-      bit_18(RDKit::SmartsToMol("[#5,#13,#31,#49,#81]")),
       bit_19(RDKit::SmartsToMol("*1~*~*~*~*~*~*~1")),
       bit_20(RDKit::SmartsToMol("[Si]")),
-      bit_21(RDKit::SmartsToMol("[#6]=[#6](~[!#6;!#1])~[!#6;!#1]")),
+      bit_21(RDKit::SmartsToMol("[#6]=[#6](~[!#6!#1])~[!#6!#1]")),
       bit_22(RDKit::SmartsToMol("*1~*~*~1")),
       bit_23(RDKit::SmartsToMol("[#7]~[#6](~[#8])~[#8]")),
       bit_24(RDKit::SmartsToMol("[#7]-[#8]")),
       bit_25(RDKit::SmartsToMol("[#7]~[#6](~[#7])~[#7]")),
-      bit_26(RDKit::SmartsToMol("[#6]=;@[#6](@*)@*")),
-      bit_27(RDKit::SmartsToMol("[I]")),
-      bit_28(RDKit::SmartsToMol("[!#6;!#1]~[CH2]~[!#6;!#1]")),
-      bit_29(RDKit::SmartsToMol("[#15]")),
-      bit_30(RDKit::SmartsToMol("[#6]~[!#6;!#1](~[#6])(~[#6])~*")),
-      bit_31(RDKit::SmartsToMol("[!#6;!#1]~[F,Cl,Br,I]")),
+      bit_26(RDKit::SmartsToMol("[#6]=@[#6](@*)@*")),
+      bit_28(RDKit::SmartsToMol("[!#6!#1]~[CH2]~[!#6!#1]")),
+      bit_30(RDKit::SmartsToMol("[#6]~[!#6!#1](~[#6])(~[#6])~*")),
+      bit_31(RDKit::SmartsToMol("[!#6!#1]~[F,Cl,Br,I]")),
       bit_32(RDKit::SmartsToMol("[#6]~[#16]~[#7]")),
       bit_33(RDKit::SmartsToMol("[#7]~[#16]")),
       bit_34(RDKit::SmartsToMol("[CH2]=*")),
-      bit_35(RDKit::SmartsToMol("[Li,Na,K,Rb,Cs,Fr]")),
       bit_36(RDKit::SmartsToMol("[#16R]")),
       bit_37(RDKit::SmartsToMol("[#7]~[#6](~[#8])~[#7]")),
       bit_38(RDKit::SmartsToMol("[#7]~[#6](~[#6])~[#7]")),
       bit_39(RDKit::SmartsToMol("[#8]~[#16](~[#8])~[#8]")),
       bit_40(RDKit::SmartsToMol("[#16]-[#8]")),
       bit_41(RDKit::SmartsToMol("[#6]#[#7]")),
-      bit_42(RDKit::SmartsToMol("F")),
-      bit_43(RDKit::SmartsToMol("[!#6;!#1;!H0]~*~[!#6;!#1;!H0]")),
+      bit_43(RDKit::SmartsToMol("[!#6!#1!H0]~*~[!#6!#1!H0]")),
       bit_45(RDKit::SmartsToMol("[#6]=[#6]~[#7]")),
-      bit_46(RDKit::SmartsToMol("Br")),
       bit_47(RDKit::SmartsToMol("[#16]~*~[#7]")),
-      bit_48(RDKit::SmartsToMol("[#8]~[!#6;!#1](~[#8])(~[#8])")),
+      bit_48(RDKit::SmartsToMol("[#8]~[!#6!#1](~[#8])~[#8]")),
       bit_49(RDKit::SmartsToMol("[!+0]")),
       bit_50(RDKit::SmartsToMol("[#6]=[#6](~[#6])~[#6]")),
       bit_51(RDKit::SmartsToMol("[#6]~[#16]~[#8]")),
       bit_52(RDKit::SmartsToMol("[#7]~[#7]")),
-      bit_53(RDKit::SmartsToMol("[!#6;!#1;!H0]~*~*~*~[!#6;!#1;!H0]")),
-      bit_54(RDKit::SmartsToMol("[!#6;!#1;!H0]~*~*~[!#6;!#1;!H0]")),
+      bit_53(RDKit::SmartsToMol("[!#6!#1!H0]~*~*~*~[!#6!#1!H0]")),
+      bit_54(RDKit::SmartsToMol("[!#6!#1!H0]~*~*~[!#6!#1!H0]")),
       bit_55(RDKit::SmartsToMol("[#8]~[#16]~[#8]")),
       bit_56(RDKit::SmartsToMol("[#8]~[#7](~[#8])~[#6]")),
       bit_57(RDKit::SmartsToMol("[#8R]")),
-      bit_58(RDKit::SmartsToMol("[!#6;!#1]~[#16]~[!#6;!#1]")),
+      bit_58(RDKit::SmartsToMol("[!#6!#1]~[#16]~[!#6!#1]")),
       bit_59(RDKit::SmartsToMol("[#16]!:*:*")),
       bit_60(RDKit::SmartsToMol("[#16]=[#8]")),
       bit_61(RDKit::SmartsToMol("*~[#16](~*)~*")),
@@ -243,10 +201,10 @@ namespace  {
       bit_64(RDKit::SmartsToMol("*@*!@[#16]")),
       bit_65(RDKit::SmartsToMol("c:n")),
       bit_66(RDKit::SmartsToMol("[#6]~[#6](~[#6])(~[#6])~*")),
-      bit_67(RDKit::SmartsToMol("[!#6;!#1]~[#16]")),
-      bit_68(RDKit::SmartsToMol("[!#6;!#1;!H0]~[!#6;!#1;!H0]")),
-      bit_69(RDKit::SmartsToMol("[!#6;!#1]~[!#6;!#1;!H0]")),
-      bit_70(RDKit::SmartsToMol("[!#6;!#1]~[#7]~[!#6;!#1]")),
+      bit_67(RDKit::SmartsToMol("[!#6!#1]~[#16]")),
+      bit_68(RDKit::SmartsToMol("[!#6!#1!H0]~[!#6!#1!H0]")),
+      bit_69(RDKit::SmartsToMol("[!#6!#1]~[!#6!#1!H0]")),
+      bit_70(RDKit::SmartsToMol("[!#6!#1]~[#7]~[!#6!#1]")),
       bit_71(RDKit::SmartsToMol("[#7]~[#8]")),
       bit_72(RDKit::SmartsToMol("[#8]~*~*~[#8]")),
       bit_73(RDKit::SmartsToMol("[#16]=*")),
@@ -258,31 +216,29 @@ namespace  {
       bit_79(RDKit::SmartsToMol("[#7]~*~*~[#7]")),
       bit_80(RDKit::SmartsToMol("[#7]~*~*~*~[#7]")),
       bit_81(RDKit::SmartsToMol("[#16]~*(~*)~*")),
-      bit_82(RDKit::SmartsToMol("*~[CH2]~[!#6;!#1;!H0]")),
-      bit_83(RDKit::SmartsToMol("[!#6;!#1]1~*~*~*~*~1")),
+      bit_82(RDKit::SmartsToMol("*~[CH2]~[!#6!#1!H0]")),
+      bit_83(RDKit::SmartsToMol("[!#6!#1]1~*~*~*~*~1")),
       bit_84(RDKit::SmartsToMol("[NH2]")),
       bit_85(RDKit::SmartsToMol("[#6]~[#7](~[#6])~[#6]")),
-      bit_86(RDKit::SmartsToMol("[C;H2,H3][!#6;!#1][C;H2,H3]")),
+      bit_86(RDKit::SmartsToMol("[C;H2,H3][!#6!#1][C;H2,H3]")),
       bit_87(RDKit::SmartsToMol("[F,Cl,Br,I]!@*@*")),
-      bit_88(RDKit::SmartsToMol("[#16]")),
       bit_89(RDKit::SmartsToMol("[#8]~*~*~*~[#8]")),
-      bit_90(RDKit::SmartsToMol("[$([!#6;!#1;!H0]~*~*~[CH2]~*),$([!#6;!#1;!H0;R]1@[R]@[R]@[CH2;R]1),$([!#6;!#1;!H0]~[R]1@[R]@[CH2;R]1)]")),
-      bit_91(RDKit::SmartsToMol("[$([!#6;!#1;!H0]~*~*~*~[CH2]~*),$([!#6;!#1;!H0;R]1@[R]@[R]@[R]@[CH2;R]1),$([!#6;!#1;!H0]~[R]1@[R]@[R]@[CH2;R]1),$([!#6;!#1;!H0]~*~[R]1@[R]@[CH2;R]1)]")),
+      bit_90(RDKit::SmartsToMol("[$([!#6!#1!H0]~*~*~[CH2]~*),$([!#6!#1!H0R]1@[R]@[R]@[CH2R]1),$([!#6!#1!H0]~[R]1@[R]@[CH2R]1)]")),
+      bit_91(RDKit::SmartsToMol("[$([!#6!#1!H0]~*~*~*~[CH2]~*),$([!#6!#1!H0R]1@[R]@[R]@[R]@[CH2R]1),$([!#6!#1!H0]~[R]1@[R]@[R]@[CH2R]1),$([!#6!#1!H0]~*~[R]1@[R]@[CH2R]1)]")),
       bit_92(RDKit::SmartsToMol("[#8]~[#6](~[#7])~[#6]")),
-      bit_93(RDKit::SmartsToMol("[!#6;!#1]~[CH3]")),
-      bit_94(RDKit::SmartsToMol("[!#6;!#1]~[#7]")),
+      bit_93(RDKit::SmartsToMol("[!#6!#1]~[CH3]")),
+      bit_94(RDKit::SmartsToMol("[!#6!#1]~[#7]")),
       bit_95(RDKit::SmartsToMol("[#7]~*~*~[#8]")),
       bit_96(RDKit::SmartsToMol("*1~*~*~*~*~1")),
       bit_97(RDKit::SmartsToMol("[#7]~*~*~*~[#8]")),
-      bit_98(RDKit::SmartsToMol("[!#6;!#1]1~*~*~*~*~*~1")),
+      bit_98(RDKit::SmartsToMol("[!#6!#1]1~*~*~*~*~*~1")),
       bit_99(RDKit::SmartsToMol("[#6]=[#6]")),
       bit_100(RDKit::SmartsToMol("*~[CH2]~[#7]")),
-      bit_101(RDKit::SmartsToMol("[$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1),$([R]@1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]1)]")),
-      bit_102(RDKit::SmartsToMol("[!#6;!#1]~[#8]")),
-      bit_103(RDKit::SmartsToMol("Cl")),
-      bit_104(RDKit::SmartsToMol("[!#6;!#1;!H0]~*~[CH2]~*")),
+      bit_101(RDKit::SmartsToMol("[$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1),$([R]1@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@[R]@1)]")),
+      bit_102(RDKit::SmartsToMol("[!#6!#1]~[#8]")),
+      bit_104(RDKit::SmartsToMol("[!#6!#1!H0]~*~[CH2]~*")),
       bit_105(RDKit::SmartsToMol("*@*(@*)@*")),
-      bit_106(RDKit::SmartsToMol("[!#6;!#1]~*(~[!#6;!#1])~[!#6;!#1]")),
+      bit_106(RDKit::SmartsToMol("[!#6!#1]~*(~[!#6!#1])~[!#6!#1]")),
       bit_107(RDKit::SmartsToMol("[F,Cl,Br,I]~*(~*)~*")),
       bit_108(RDKit::SmartsToMol("[CH3]~*~*~*~[CH2]~*")),
       bit_109(RDKit::SmartsToMol("*~[CH2]~[#8]")),
@@ -296,84 +252,192 @@ namespace  {
       bit_117(RDKit::SmartsToMol("[#7]~*~[#8]")),
       bit_118(RDKit::SmartsToMol("[$(*~[CH2]~[CH2]~*),$(*1~[CH2]~[CH2]1)]")),
       bit_119(RDKit::SmartsToMol("[#7]=*")),
-      bit_120(RDKit::SmartsToMol("[!#6;R]")),
-      bit_121(RDKit::SmartsToMol("[#7;R]")),
+      bit_120(RDKit::SmartsToMol("[!#6R]")),
+      bit_121(RDKit::SmartsToMol("[#7R]")),
       bit_122(RDKit::SmartsToMol("*~[#7](~*)~*")),
       bit_123(RDKit::SmartsToMol("[#8]~[#6]~[#8]")),
-      bit_124(RDKit::SmartsToMol("[!#6;!#1]~[!#6;!#1]")),
+      bit_124(RDKit::SmartsToMol("[!#6!#1]~[!#6!#1]")),
       bit_126(RDKit::SmartsToMol("*!@[#8]!@*")),
       bit_127(RDKit::SmartsToMol("*@*!@[#8]")),
-      bit_128(RDKit::SmartsToMol("[$(*~[CH2]~*~*~*~[CH2]~*),$([R]1@[CH2;R]@[R]@[R]@[R]@[CH2;R]1),$(*~[CH2]~[R]1@[R]@[R]@[CH2;R]1),$(*~[CH2]~*~[R]1@[R]@[CH2;R]1)]")),
-      bit_129(RDKit::SmartsToMol("[$(*~[CH2]~*~*~[CH2]~*),$([R]1@[CH2]@[R]@[R]@[CH2;R]1),$(*~[CH2]~[R]1@[R]@[CH2;R]1)]")),
-      bit_130(RDKit::SmartsToMol("[!#6;!#1]~[!#6;!#1]")),
-      bit_131(RDKit::SmartsToMol("[!#6;!#1;!H0]")),
+      bit_128(RDKit::SmartsToMol("[$(*~[CH2]~*~*~*~[CH2]~*),$([R]1@[CH2R]@[R]@[R]@[R]@[CH2R]1),$(*~[CH2]~[R]1@[R]@[R]@[CH2R]1),$(*~[CH2]~*~[R]1@[R]@[CH2R]1)]")),
+      bit_129(RDKit::SmartsToMol("[$(*~[CH2]~*~*~[CH2]~*),$([R]1@[CH2]@[R]@[R]@[CH2R]1),$(*~[CH2]~[R]1@[R]@[CH2R]1)]")),
+      bit_131(RDKit::SmartsToMol("[!#6!#1!H0]")),
       bit_132(RDKit::SmartsToMol("[#8]~*~[CH2]~*")),
       bit_133(RDKit::SmartsToMol("*@*!@[#7]")),
-      bit_134(RDKit::SmartsToMol("[F,Cl,Br,I]")),
       bit_135(RDKit::SmartsToMol("[#7]!:*:*")),
       bit_136(RDKit::SmartsToMol("[#8]=*")),
-      bit_137(RDKit::SmartsToMol("[!C;!c;R]")),
-      bit_138(RDKit::SmartsToMol("[!#6;!#1]~[CH2]~*")),
-      bit_139(RDKit::SmartsToMol("[O;!H0]")),
+      bit_137(RDKit::SmartsToMol("[!C!cR]")),
+      bit_138(RDKit::SmartsToMol("[!#6!#1]~[CH2]~*")),
+      bit_139(RDKit::SmartsToMol("[O!H0]")),
       bit_140(RDKit::SmartsToMol("[#8]")),
       bit_141(RDKit::SmartsToMol("[CH3]")),
       bit_142(RDKit::SmartsToMol("[#7]")),
-      bit_143(RDKit::SmartsToMol("*@*!@[#8]")),
       bit_144(RDKit::SmartsToMol("*!:*:*!:*")),
       bit_145(RDKit::SmartsToMol("*1~*~*~*~*~*~1")),
-      bit_146(RDKit::SmartsToMol("[#8]")),
-      bit_147(RDKit::SmartsToMol("[$(*~[CH2]~[CH2]~*),$([R]1@[CH2;R]@[CH2;R]1)]")),
-      bit_148(RDKit::SmartsToMol("*~[!#6;!#1](~*)~*")),
+      bit_147(RDKit::SmartsToMol("[$(*~[CH2]~[CH2]~*),$([R]1@[CH2R]@[CH2R]1)]")),
+      bit_148(RDKit::SmartsToMol("*~[!#6!#1](~*)~*")),
       bit_149(RDKit::SmartsToMol("[C;H3,H4]")),
       bit_150(RDKit::SmartsToMol("*!@*@*!@*")),
-      bit_151(RDKit::SmartsToMol("[#7;!H0]")),
+      bit_151(RDKit::SmartsToMol("[#7!H0]")),
       bit_152(RDKit::SmartsToMol("[#8]~[#6](~[#6])~[#6]")),
-      bit_153(RDKit::SmartsToMol("[!#6;!#1]~[CH2]~*")),
       bit_154(RDKit::SmartsToMol("[#6]=[#8]")),
       bit_155(RDKit::SmartsToMol("*!@[CH2]!@*")),
       bit_156(RDKit::SmartsToMol("[#7]~*(~*)~*")),
       bit_157(RDKit::SmartsToMol("[#6]-[#8]")),
       bit_158(RDKit::SmartsToMol("[#6]-[#7]")),
-      bit_159(RDKit::SmartsToMol("[#8]")),
-      bit_160(RDKit::SmartsToMol("[C;H3,H4]")),
-      bit_161(RDKit::SmartsToMol("[#7]")),
       bit_162(RDKit::SmartsToMol("a")),
-      bit_163(RDKit::SmartsToMol("*1~*~*~*~*~*~1")),
-      bit_164(RDKit::SmartsToMol("[#8]")),
       bit_165(RDKit::SmartsToMol("[R]")) {}
   };
 
   void GenerateFP(const RDKit::ROMol &mol,ExplicitBitVect &fp)
   {
     static Patterns pats;
-    PRECONDITION(fp.size()==166,"bad fingerprint");
+    PRECONDITION(fp.size()==167,"bad fingerprint");
     fp.clearBits();
 
     std::vector<RDKit::MatchVectType> matches;
+    RDKit::RWMol::ConstAtomIterator atom;
     RDKit::MatchVectType match;
+    unsigned int count;
 
-    if (RDKit::SubstructMatch(mol,*pats.bit_2,match,true))
-      fp.setBit(2);
-    if (RDKit::SubstructMatch(mol,*pats.bit_3,match,true))
-      fp.setBit(3);
-    if (RDKit::SubstructMatch(mol,*pats.bit_4,match,true))
-      fp.setBit(4);
-    if (RDKit::SubstructMatch(mol,*pats.bit_5,match,true))
-      fp.setBit(5);
-    if (RDKit::SubstructMatch(mol,*pats.bit_6,match,true))
-      fp.setBit(6);
-    if (RDKit::SubstructMatch(mol,*pats.bit_7,match,true))
-      fp.setBit(7);
+    for (atom=mol.beginAtoms();atom!=mol.endAtoms();++atom)
+      switch ((*atom)->getAtomicNum()) {
+      case 3:
+      case 11:
+      case 19:
+      case 37:
+      case 55:
+      case 87:
+        fp.setBit(35);
+        break;
+      case 4:
+      case 12:
+      case 20:
+      case 38:
+      case 56:
+      case 88:
+        fp.setBit(10);
+        break;
+      case 5:
+      case 13:
+      case 31:
+      case 49:
+      case 81:
+        fp.setBit(18);
+        break;
+      case 9:
+        fp.setBit(42);
+        fp.setBit(134);
+        break;
+      case 15:
+        fp.setBit(29);
+        break;
+      case 16:
+        fp.setBit(88);
+        break;
+      case 17:
+        fp.setBit(103);
+        fp.setBit(134);
+        break;
+      case 21:
+      case 22:
+      case 39:
+      case 40:
+      case 72:
+        fp.setBit(5);
+        break;
+      case 23:
+      case 24:
+      case 25:
+      case 41:
+      case 42:
+      case 43:
+      case 73:
+      case 74:
+      case 75:
+        fp.setBit(7);
+        break;
+      case 26:
+      case 27:
+      case 28:
+      case 44:
+      case 45:
+      case 46:
+      case 76:
+      case 77:
+      case 78:
+        fp.setBit(9);
+        break;
+      case 29:
+      case 30:
+      case 47:
+      case 48:
+      case 79:
+      case 80:
+        fp.setBit(12);
+        break;
+      case 32:
+      case 33:
+      case 34:
+      case 50:
+      case 51:
+      case 52:
+      case 82:
+      case 83:
+      case 84:
+        fp.setBit(3);
+        break;
+      case 35:
+        fp.setBit(46);
+        fp.setBit(134);
+        break;
+      case 53:
+        fp.setBit(27);
+        fp.setBit(134);
+        break;
+      case 57:
+      case 58:
+      case 59:
+      case 60:
+      case 61:
+      case 62:
+      case 63:
+      case 64:
+      case 65:
+      case 66:
+      case 67:
+      case 68:
+      case 69:
+      case 70:
+      case 71:
+        fp.setBit(6);
+        break;
+      case 89:
+      case 90:
+      case 91:
+      case 92:
+      case 93:
+      case 94:
+      case 95:
+      case 96:
+      case 97:
+      case 98:
+      case 99:
+      case 100:
+      case 101:
+      case 102:
+      case 103:
+        fp.setBit(4);
+        break;
+      case 104:
+        fp.setBit(2);
+        break;
+      }
+
     if (RDKit::SubstructMatch(mol,*pats.bit_8,match,true))
       fp.setBit(8);
-    if (RDKit::SubstructMatch(mol,*pats.bit_9,match,true))
-      fp.setBit(9);
-    if (RDKit::SubstructMatch(mol,*pats.bit_10,match,true))
-      fp.setBit(10);
     if (RDKit::SubstructMatch(mol,*pats.bit_11,match,true))
       fp.setBit(11);
-    if (RDKit::SubstructMatch(mol,*pats.bit_12,match,true))
-      fp.setBit(12);
     if (RDKit::SubstructMatch(mol,*pats.bit_13,match,true))
       fp.setBit(13);
     if (RDKit::SubstructMatch(mol,*pats.bit_14,match,true))
@@ -383,9 +447,7 @@ namespace  {
     if (RDKit::SubstructMatch(mol,*pats.bit_16,match,true))
       fp.setBit(16);
     if (RDKit::SubstructMatch(mol,*pats.bit_17,match,true))
-      fp.setBit(17);      
-    if (RDKit::SubstructMatch(mol,*pats.bit_18,match,true))
-      fp.setBit(18);
+      fp.setBit(17);
     if (RDKit::SubstructMatch(mol,*pats.bit_19,match,true))
       fp.setBit(19);
     if (RDKit::SubstructMatch(mol,*pats.bit_20,match,true))
@@ -402,12 +464,8 @@ namespace  {
       fp.setBit(25);
     if (RDKit::SubstructMatch(mol,*pats.bit_26,match,true))
       fp.setBit(26);
-    if (RDKit::SubstructMatch(mol,*pats.bit_27,match,true))
-      fp.setBit(27);
     if (RDKit::SubstructMatch(mol,*pats.bit_28,match,true))
       fp.setBit(28);
-    if (RDKit::SubstructMatch(mol,*pats.bit_29,match,true))
-      fp.setBit(29);
     if (RDKit::SubstructMatch(mol,*pats.bit_30,match,true))
       fp.setBit(30);
     if (RDKit::SubstructMatch(mol,*pats.bit_31,match,true))
@@ -418,8 +476,6 @@ namespace  {
       fp.setBit(33);
     if (RDKit::SubstructMatch(mol,*pats.bit_34,match,true))
       fp.setBit(34);
-    if (RDKit::SubstructMatch(mol,*pats.bit_35,match,true))
-      fp.setBit(35);
     if (RDKit::SubstructMatch(mol,*pats.bit_36,match,true))
       fp.setBit(36);
     if (RDKit::SubstructMatch(mol,*pats.bit_37,match,true))
@@ -432,14 +488,10 @@ namespace  {
       fp.setBit(40);
     if (RDKit::SubstructMatch(mol,*pats.bit_41,match,true))
       fp.setBit(41);
-    if (RDKit::SubstructMatch(mol,*pats.bit_42,match,true))
-      fp.setBit(42);
     if (RDKit::SubstructMatch(mol,*pats.bit_43,match,true))
-      fp.setBit(44);
+      fp.setBit(43);
     if (RDKit::SubstructMatch(mol,*pats.bit_45,match,true))
       fp.setBit(45);
-    if (RDKit::SubstructMatch(mol,*pats.bit_46,match,true))
-      fp.setBit(46);
     if (RDKit::SubstructMatch(mol,*pats.bit_47,match,true))
       fp.setBit(47);
     if (RDKit::SubstructMatch(mol,*pats.bit_48,match,true))
@@ -522,8 +574,6 @@ namespace  {
       fp.setBit(86);
     if (RDKit::SubstructMatch(mol,*pats.bit_87,match,true))
       fp.setBit(87);
-    if (RDKit::SubstructMatch(mol,*pats.bit_88,match,true))
-      fp.setBit(88);
     if (RDKit::SubstructMatch(mol,*pats.bit_89,match,true))
       fp.setBit(89);
     if (RDKit::SubstructMatch(mol,*pats.bit_90,match,true))
@@ -545,15 +595,13 @@ namespace  {
     if (RDKit::SubstructMatch(mol,*pats.bit_98,match,true))
       fp.setBit(98);
     if (RDKit::SubstructMatch(mol,*pats.bit_99,match,true))
-      fp.setBit(99);;
+      fp.setBit(99);
     if (RDKit::SubstructMatch(mol,*pats.bit_100,match,true))
       fp.setBit(100);
     if (RDKit::SubstructMatch(mol,*pats.bit_101,match,true))
       fp.setBit(101);
     if (RDKit::SubstructMatch(mol,*pats.bit_102,match,true))
       fp.setBit(102);
-    if (RDKit::SubstructMatch(mol,*pats.bit_103,match,true))
-      fp.setBit(103);
     if (RDKit::SubstructMatch(mol,*pats.bit_104,match,true))
       fp.setBit(104);
     if (RDKit::SubstructMatch(mol,*pats.bit_105,match,true))
@@ -594,65 +642,79 @@ namespace  {
       fp.setBit(122);
     if (RDKit::SubstructMatch(mol,*pats.bit_123,match,true))
       fp.setBit(123);
-    if (RDKit::SubstructMatch(mol,*pats.bit_124,match,true))
+    count = RDKit::SubstructMatch(mol,*pats.bit_124,matches,true,true);
+    if (count > 0)
       fp.setBit(124);
-    // 125 is below
+    if (count > 1)
+      fp.setBit(130);
     if (RDKit::SubstructMatch(mol,*pats.bit_126,match,true))
       fp.setBit(126);
-    if (RDKit::SubstructMatch(mol,*pats.bit_127,matches,true,true) > 1)
+    count = RDKit::SubstructMatch(mol,*pats.bit_127,matches,true,true);
+    if (count > 1)
       fp.setBit(127);
+    if (count > 0)
+      fp.setBit(143);
     if (RDKit::SubstructMatch(mol,*pats.bit_128,match,true))
       fp.setBit(128);
     if (RDKit::SubstructMatch(mol,*pats.bit_129,match,true))
       fp.setBit(129);
-    if (RDKit::SubstructMatch(mol,*pats.bit_130,matches,true,true) > 1)
-      fp.setBit(130);
     if (RDKit::SubstructMatch(mol,*pats.bit_131,matches,true,true) > 1)
       fp.setBit(131);
     if (RDKit::SubstructMatch(mol,*pats.bit_132,match,true))
       fp.setBit(132);
     if (RDKit::SubstructMatch(mol,*pats.bit_133,match,true))
       fp.setBit(133);
-    if (RDKit::SubstructMatch(mol,*pats.bit_134,match,true))
-      fp.setBit(134);
     if (RDKit::SubstructMatch(mol,*pats.bit_135,match,true))
       fp.setBit(135);
     if (RDKit::SubstructMatch(mol,*pats.bit_136,matches,true,true) > 1)
       fp.setBit(136);
     if (RDKit::SubstructMatch(mol,*pats.bit_137,match,true))
       fp.setBit(137);
-    if (RDKit::SubstructMatch(mol,*pats.bit_138,matches,true,true) > 1)
+    count = RDKit::SubstructMatch(mol,*pats.bit_138,matches,true,true);
+    if (count > 1)
       fp.setBit(138);
+    if (count > 0)
+      fp.setBit(153);
     if (RDKit::SubstructMatch(mol,*pats.bit_139,match,true))
       fp.setBit(139);
-    if (RDKit::SubstructMatch(mol,*pats.bit_140,matches,true,true) > 3)
+    count = RDKit::SubstructMatch(mol,*pats.bit_140,matches,true,true);
+    if (count > 3)
       fp.setBit(140);
+    if (count > 2)
+      fp.setBit(146);
+    if (count > 1)
+      fp.setBit(159);
+    if (count > 0)
+      fp.setBit(164);
     if (RDKit::SubstructMatch(mol,*pats.bit_141,matches,true,true) > 2)
       fp.setBit(141);
-    if (RDKit::SubstructMatch(mol,*pats.bit_142,matches,true,true) > 1)
+    count = RDKit::SubstructMatch(mol,*pats.bit_142,matches,true,true);
+    if (count > 1)
       fp.setBit(142);
-    if (RDKit::SubstructMatch(mol,*pats.bit_143,match,true))
-      fp.setBit(143);
+    if (count > 0)
+      fp.setBit(161);
     if (RDKit::SubstructMatch(mol,*pats.bit_144,match,true))
       fp.setBit(144);
-    if (RDKit::SubstructMatch(mol,*pats.bit_145,matches,true,true) > 1)
+    count = RDKit::SubstructMatch(mol,*pats.bit_145,matches,true,true);
+    if (count > 1)
       fp.setBit(145);
-    if (RDKit::SubstructMatch(mol,*pats.bit_146,matches,true,true) > 2)
-      fp.setBit(146);
+    if (count > 0)
+      fp.setBit(163);
     if (RDKit::SubstructMatch(mol,*pats.bit_147,match,true))
       fp.setBit(147);
     if (RDKit::SubstructMatch(mol,*pats.bit_148,match,true))
       fp.setBit(148);
-    if (RDKit::SubstructMatch(mol,*pats.bit_149,matches,true,true) > 1)
+    count = RDKit::SubstructMatch(mol,*pats.bit_149,matches,true,true);
+    if (count > 1)
       fp.setBit(149);
+    if (count > 0)
+      fp.setBit(160);
     if (RDKit::SubstructMatch(mol,*pats.bit_150,match,true))
       fp.setBit(150);
     if (RDKit::SubstructMatch(mol,*pats.bit_151,match,true))
       fp.setBit(151);
     if (RDKit::SubstructMatch(mol,*pats.bit_152,match,true))
       fp.setBit(152);
-    if (RDKit::SubstructMatch(mol,*pats.bit_153,match,true))
-      fp.setBit(153);
     if (RDKit::SubstructMatch(mol,*pats.bit_154,match,true))
       fp.setBit(154);
     if (RDKit::SubstructMatch(mol,*pats.bit_155,match,true))
@@ -663,18 +725,8 @@ namespace  {
       fp.setBit(157);
     if (RDKit::SubstructMatch(mol,*pats.bit_158,match,true))
       fp.setBit(158);
-    if (RDKit::SubstructMatch(mol,*pats.bit_159,matches,true,true) > 1)
-      fp.setBit(159);
-    if (RDKit::SubstructMatch(mol,*pats.bit_160,match,true))
-      fp.setBit(160);
-    if (RDKit::SubstructMatch(mol,*pats.bit_161,match,true))
-      fp.setBit(161);
     if (RDKit::SubstructMatch(mol,*pats.bit_162,match,true))
       fp.setBit(162);
-    if (RDKit::SubstructMatch(mol,*pats.bit_163,match,true))
-      fp.setBit(163);
-    if (RDKit::SubstructMatch(mol,*pats.bit_164,match,true))
-      fp.setBit(164);
     if (RDKit::SubstructMatch(mol,*pats.bit_165,match,true))
       fp.setBit(165);
 
@@ -709,7 +761,7 @@ namespace  {
 namespace RDKit {
   namespace MACCSFingerprints {
     ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol){
-      ExplicitBitVect *fp=new ExplicitBitVect(166);
+      ExplicitBitVect *fp=new ExplicitBitVect(167);
       GenerateFP(mol,*fp);
       return fp;
     }
