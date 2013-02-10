@@ -13,6 +13,8 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/MolOps.h>
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/no_tracking.hpp>
 
 namespace  {
   struct Patterns {
@@ -289,9 +291,15 @@ namespace  {
       bit_165(RDKit::SmartsToMol("[R]")) {}
   };
 
+  boost::flyweight<std::vector<Patterns *>,boost::flyweights::no_tracking> gpats;
   void GenerateFP(const RDKit::ROMol &mol,ExplicitBitVect &fp)
   {
-    static Patterns pats;
+    if(gpats.get().size()==0){
+      std::vector<Patterns *> ps;
+      ps.push_back(new Patterns());
+      gpats = ps;
+    }
+    const Patterns &pats=*(gpats.get().front());
     PRECONDITION(fp.size()==167,"bad fingerprint");
     fp.clearBits();
 
