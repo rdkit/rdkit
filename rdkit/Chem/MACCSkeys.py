@@ -31,6 +31,7 @@ May 2011 (gl): Update some definitions based on feedback from Andrew Dalke
 
 """
 from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
 from rdkit import DataStructs
 # these are SMARTS patterns corresponding to the MDL MACCS keys
 smartsPatts={
@@ -54,7 +55,7 @@ smartsPatts={
   17:('[#6]#[#6]',0), #CTC
   18:('[#5,#13,#31,#49,#81]',0), # Group IIIA (B...) 
   19:('*1~*~*~*~*~*~*~1',0), # 7M Ring
-  20:('[Si]',0), #Si
+  20:('[#14]',0), #Si
   21:('[#6]=[#6](~[!#6;!#1])~[!#6;!#1]',0), # C=C(Q)Q
   22:('*1~*~*~1',0), # 3M Ring
   23:('[#7]~[#6](~[#8])~[#8]',0), # NC(O)O
@@ -224,7 +225,7 @@ def _InitKeys(keyList,keyDict):
       else:
         keyList[key-1] = sma,count
       
-def GenMACCSKeys(mol,**kwargs):
+def _pyGenMACCSKeys(mol,**kwargs):
   """ generates the MACCS fingerprint for a molecules
 
    **Arguments**
@@ -284,8 +285,8 @@ def GenMACCSKeys(mol,**kwargs):
         res[166]=1
           
   return res
-
-FingerprintMol = GenMACCSKeys
+GenMACCSKeys = rdMolDescriptors.GetMACCSKeysFingerprint
+FingerprintMol = rdMolDescriptors.GetMACCSKeysFingerprint
   
 #------------------------------------
 #

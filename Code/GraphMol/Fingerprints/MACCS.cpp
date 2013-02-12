@@ -162,7 +162,7 @@ namespace  {
       bit_16(RDKit::SmartsToMol("[!#6!#1]1~*~*~1")),
       bit_17(RDKit::SmartsToMol("[#6]#[#6]")),
       bit_19(RDKit::SmartsToMol("*1~*~*~*~*~*~*~1")),
-      bit_20(RDKit::SmartsToMol("[Si]")),
+      bit_20(RDKit::SmartsToMol("[#14]")),
       bit_21(RDKit::SmartsToMol("[#6]=[#6](~[!#6!#1])~[!#6!#1]")),
       bit_22(RDKit::SmartsToMol("*1~*~*~1")),
       bit_23(RDKit::SmartsToMol("[#7]~[#6](~[#8])~[#8]")),
