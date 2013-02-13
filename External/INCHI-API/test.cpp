@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
@@ -101,8 +102,41 @@ void testMultiThread(){
 }
 #else
 void testMultiThread(){
+  {
+  }
 }
 #endif
+
+void testGithubIssue3(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 3: bad inchis when mol has no stereoinfo" << std::endl;
+  {
+    std::string fName= getenv("RDBASE");
+    fName += "/External/INCHI-API/test_data/github3.mol";
+    ROMol *m = static_cast<ROMol *>(MolFileToMol(fName));
+    TEST_ASSERT(m);
+    std::string smi=MolToSmiles(*m,true);
+    TEST_ASSERT(smi=="CNC[C@H](O)[C@@H](O)[C@H](O)[C@H](O)CO");
+
+    ExtraInchiReturnValues tmp;
+    std::string inchi=MolToInchi(*m,tmp);
+    TEST_ASSERT(inchi=="InChI=1S/C7H17NO5/c1-8-2-4(10)6(12)7(13)5(11)3-9/h4-13H,2-3H2,1H3/t4-,5+,6+,7+/m0/s1");
+
+    // blow out the stereo information with a copy:
+    RWMol *m2=new RWMol(*m);
+    m2->clearComputedProps();
+    MolOps::sanitizeMol(*m2);
+
+    inchi=MolToInchi(*m2,tmp);
+    TEST_ASSERT(inchi=="InChI=1S/C7H17NO5/c1-8-2-4(10)6(12)7(13)5(11)3-9/h4-13H,2-3H2,1H3/t4-,5+,6+,7+/m0/s1");
+
+    delete m;
+    delete m2;
+    
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -110,4 +144,5 @@ void testMultiThread(){
 int main(){
   RDLog::InitLogs();
   testMultiThread();
+  testGithubIssue3();
 }
