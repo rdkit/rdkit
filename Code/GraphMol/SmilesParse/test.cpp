@@ -97,7 +97,8 @@ void testPass(){
     "b1ccccc1",
     "C[Rf]C", // issue 3535668
     "[C:1]",
-    "[C:0]",  // issue 3525776   
+    "[C:0]",  // issue 3525776
+    "[si]1cccc[si]1",  // aromatic Si (github issue 5)
     "EOS"};
   while( smis[i] != "EOS" ){
     string smi = smis[i];

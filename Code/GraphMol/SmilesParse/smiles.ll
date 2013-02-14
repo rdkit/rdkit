@@ -189,6 +189,10 @@ s		    {	yylval->atom = new Atom( 16 );
 				return AROMATIC_ATOM_TOKEN; 
 			}
 
+<IN_ATOM_STATE>si   {	yylval->atom = new Atom( 14 );
+			yylval->atom->setIsAromatic(true);
+				return AROMATIC_ATOM_TOKEN; 
+			}
 <IN_ATOM_STATE>se   {	yylval->atom = new Atom( 34 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN; 
