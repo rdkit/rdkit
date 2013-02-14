@@ -6,6 +6,7 @@ rdkit_library(Fingerprints
 rdkit_headers(AtomPairs.h
               Fingerprints.h
               MorganFingerprints.h
+              MACCS.h
               DEST GraphMol/Fingerprints)
 
 rdkit_test(testFingerprints test1.cpp LINK_LIBRARIES 
