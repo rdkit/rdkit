@@ -726,6 +726,70 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumRings_version")=RDKit::Descriptors::NumRingsVersion;
+
+  docString="returns the number of aromatic rings for a molecule";
+  python::def("CalcNumAromaticRings",
+	      RDKit::Descriptors::calcNumAromaticRings,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumAromaticRings_version")=RDKit::Descriptors::NumAromaticRingsVersion;
+
+  docString="returns the number of saturated rings for a molecule";
+  python::def("CalcNumSaturatedRings",
+	      RDKit::Descriptors::calcNumSaturatedRings,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumSaturatedRings_version")=RDKit::Descriptors::NumSaturatedRingsVersion;
+
+  docString="returns the number of aromatic heterocycles for a molecule";
+  python::def("CalcNumAromaticHeterocycles",
+	      RDKit::Descriptors::calcNumAromaticHeterocycles,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumAromaticHeterocycles_version")=RDKit::Descriptors::NumAromaticHeterocyclesVersion;
+
+  docString="returns the number of aromatic carbocycles for a molecule";
+  python::def("CalcNumAromaticCarbocycles",
+	      RDKit::Descriptors::calcNumAromaticCarbocycles,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumAromaticCarbocycles_version")=RDKit::Descriptors::NumAromaticCarbocyclesVersion;
+
+  docString="returns the number of saturated heterocycles for a molecule";
+  python::def("CalcNumSaturatedHeterocycles",
+	      RDKit::Descriptors::calcNumSaturatedHeterocycles,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumSaturatedHeterocycles_version")=RDKit::Descriptors::NumSaturatedHeterocyclesVersion;
+
+  docString="returns the number of saturated carbocycles for a molecule";
+  python::def("CalcNumSaturatedCarbocycles",
+	      RDKit::Descriptors::calcNumSaturatedCarbocycles,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumSaturatedCarbocycles_version")=RDKit::Descriptors::NumSaturatedCarbocyclesVersion;
+
+  docString="returns the number of aliphatic (containing at least one non-aromatic bond) rings for a molecule";
+  python::def("CalcNumAliphaticRings",
+	      RDKit::Descriptors::calcNumAliphaticRings,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumAliphaticRings_version")=RDKit::Descriptors::NumAliphaticRingsVersion;
+
+  docString="returns the number of aliphatic (containing at least one non-aromatic bond) heterocycles for a molecule";
+  python::def("CalcNumAliphaticHeterocycles",
+	      RDKit::Descriptors::calcNumAliphaticHeterocycles,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumAliphaticHeterocycles_version")=RDKit::Descriptors::NumAliphaticHeterocyclesVersion;
+
+  docString="returns the number of aliphatic (containing at least one non-aromatic bond) carbocycles for a molecule";
+  python::def("CalcNumAliphaticCarbocycles",
+	      RDKit::Descriptors::calcNumAliphaticCarbocycles,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcNumAliphaticCarbocycles_version")=RDKit::Descriptors::NumAliphaticCarbocyclesVersion;
+
   docString="returns the number of heteroatoms for a molecule";
   python::def("CalcNumHeteroatoms",
 	      RDKit::Descriptors::calcNumHeteroatoms,
@@ -738,6 +802,13 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol")),
               docString.c_str());
   python::scope().attr("_CalcNumAmideBonds_version")=RDKit::Descriptors::NumAmideBondsVersion;
+
+  docString="returns the fraction of C atoms that are SP3 hybridized";
+  python::def("CalcFractionCSP3",
+	      RDKit::Descriptors::calcFractionCSP3,
+	      (python::arg("mol")),
+              docString.c_str());
+  python::scope().attr("_CalcFractionCSP3_version")=RDKit::Descriptors::FractionCSP3Version;
 
   docString="returns the SlogP VSA contributions for a molecule";
   python::def("SlogP_VSA_",

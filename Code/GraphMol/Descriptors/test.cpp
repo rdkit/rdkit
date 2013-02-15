@@ -23,6 +23,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
@@ -1508,7 +1509,75 @@ void testKappa3(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testRingDescriptors(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test ring descriptors" << std::endl;
 
+  std::string fName = getenv("RDBASE");
+  fName += "/Code/GraphMol/Descriptors/test_data/aid466.trunc.sdf";
+  SDMolSupplier suppl(fName);
+  while(!suppl.atEnd()){
+    ROMol *mol=suppl.next();
+    TEST_ASSERT(mol);
+    unsigned int iv;
+    mol->getProp("NumRings",iv);
+    TEST_ASSERT(iv==calcNumRings(*mol));
+    mol->getProp("NumAromaticRings",iv);
+    TEST_ASSERT(iv==calcNumAromaticRings(*mol));
+    mol->getProp("NumSaturatedRings",iv);
+    TEST_ASSERT(iv==calcNumSaturatedRings(*mol));
+    mol->getProp("NumAromaticHeterocycles",iv);
+    TEST_ASSERT(iv==calcNumAromaticHeterocycles(*mol));
+    mol->getProp("NumAromaticCarbocycles",iv);
+    TEST_ASSERT(iv==calcNumAromaticCarbocycles(*mol));
+    mol->getProp("NumSaturatedHeterocycles",iv);
+    TEST_ASSERT(iv==calcNumSaturatedHeterocycles(*mol));
+    mol->getProp("NumSaturatedCarbocycles",iv);
+    TEST_ASSERT(iv==calcNumSaturatedCarbocycles(*mol));
+    mol->getProp("NumAliphaticRings",iv);
+    TEST_ASSERT(iv==calcNumAliphaticRings(*mol));
+    mol->getProp("NumAliphaticHeterocycles",iv);
+    TEST_ASSERT(iv==calcNumAliphaticHeterocycles(*mol));
+    mol->getProp("NumAliphaticCarbocycles",iv);
+    TEST_ASSERT(iv==calcNumAliphaticCarbocycles(*mol));
+    
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testMiscCountDescriptors(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test other count descriptors." << std::endl;
+
+  {
+    ROMol *mol;
+    mol = SmilesToMol("OCCO");
+    TEST_ASSERT(feq(calcFractionCSP3(*mol),1.0,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("OO");
+    TEST_ASSERT(feq(calcFractionCSP3(*mol),0.0,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("OC=CO");
+    TEST_ASSERT(feq(calcFractionCSP3(*mol),0.0,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("CCC=C");
+    TEST_ASSERT(feq(calcFractionCSP3(*mol),0.5,0.001));
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1539,4 +1608,7 @@ int main(){
   testKappa2();
   testKappa3();
   testCrippenContribs();
+  testRingDescriptors();
+  testMiscCountDescriptors();
+
 }

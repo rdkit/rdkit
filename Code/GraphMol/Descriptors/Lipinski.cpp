@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2011 Greg Landrum
+//  Copyright (C) 2011-2013 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -100,5 +100,198 @@ namespace RDKit{
       return mol.getRingInfo()->numRings();
     }
 
+    const std::string FractionCSP3Version="1.0.0";
+    double calcFractionCSP3(const ROMol &mol){
+      unsigned int nCSP3=0;
+      unsigned int nC=0;
+      ROMol::VERTEX_ITER atBegin,atEnd;
+      boost::tie(atBegin,atEnd) = mol.getVertices();  
+      while(atBegin!=atEnd){
+        ATOM_SPTR at=mol[*atBegin];
+        if(at->getAtomicNum()==6){
+          ++nC;
+          if(at->getTotalDegree()==4){
+            ++nCSP3;
+          }
+        }
+        ++atBegin;
+      }
+      if(!nC) return 0;
+      return static_cast<double>(nCSP3)/nC;
+    }
+
+    const std::string NumAromaticRingsVersion="1.0.0";
+    unsigned int calcNumAromaticRings(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        ++res;
+        BOOST_FOREACH(int i,iv){
+          if(!mol.getBondWithIdx(i)->getIsAromatic()){
+            --res;
+            break;
+          }
+        }
+      }
+      return res;
+    }
+    const std::string NumSaturatedRingsVersion="1.0.0";
+    unsigned int calcNumSaturatedRings(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        ++res;
+        BOOST_FOREACH(int i,iv){
+          if(mol.getBondWithIdx(i)->getBondType()!=Bond::SINGLE || mol.getBondWithIdx(i)->getIsAromatic()){
+            --res;
+            break;
+          }
+        }
+      }
+      return res;
+    }
+    const std::string NumAliphaticRingsVersion="1.0.0";
+    unsigned int calcNumAliphaticRings(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        BOOST_FOREACH(int i,iv){
+          if(!mol.getBondWithIdx(i)->getIsAromatic()){
+            ++res;
+            break;
+          }
+        }
+      }
+      return res;
+    }
+    const std::string NumAromaticHeterocyclesVersion="1.0.0";
+    unsigned int calcNumAromaticHeterocycles(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        bool countIt=false;
+        BOOST_FOREACH(int i,iv){
+          if(!mol.getBondWithIdx(i)->getIsAromatic()){
+            countIt=false;
+            break;
+          }
+          // we're checking each atom twice, which is kind of doofy, but this
+          // function is hopefully not going to be a big time sync.
+          if(!countIt &&
+             mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+            countIt=true;
+          }
+        }
+        if(countIt) ++res;
+      }
+      return res;
+    }
+    const std::string NumAromaticCarbocyclesVersion="1.0.0";
+    unsigned int calcNumAromaticCarbocycles(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        bool countIt=true;
+        BOOST_FOREACH(int i,iv){
+          if(!mol.getBondWithIdx(i)->getIsAromatic()){
+            countIt=false;
+            break;
+          }
+          // we're checking each atom twice, which is kind of doofy, but this
+          // function is hopefully not going to be a big time sync.
+          if(mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+            countIt=false;
+            break;
+          }
+        }
+        if(countIt) ++res;
+      }
+      return res;
+    }
+    const std::string NumAliphaticHeterocyclesVersion="1.0.0";
+    unsigned int calcNumAliphaticHeterocycles(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        bool hasAliph=false;
+        bool hasHetero=false;
+        BOOST_FOREACH(int i,iv){
+          if(!mol.getBondWithIdx(i)->getIsAromatic()){
+            hasAliph=true;
+          }
+          // we're checking each atom twice, which is kind of doofy, but this
+          // function is hopefully not going to be a big time sync.
+          if(!hasHetero &&
+             mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+            hasHetero=true;
+          }
+        }
+        if(hasHetero&&hasAliph) ++res;
+      }
+      return res;
+    }
+    const std::string NumAliphaticCarbocyclesVersion="1.0.0";
+    unsigned int calcNumAliphaticCarbocycles(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        bool hasAliph=false;
+        bool hasHetero=false;
+        BOOST_FOREACH(int i,iv){
+          if(!mol.getBondWithIdx(i)->getIsAromatic()){
+            hasAliph=true;
+          }
+          // we're checking each atom twice, which is kind of doofy, but this
+          // function is hopefully not going to be a big time sync.
+          if(mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+            hasHetero=true;
+            break;
+          }
+        }
+        if(hasAliph&&!hasHetero) ++res;
+      }
+      return res;
+    }
+    const std::string NumSaturatedHeterocyclesVersion="1.0.0";
+    unsigned int calcNumSaturatedHeterocycles(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        bool countIt=false;
+        BOOST_FOREACH(int i,iv){
+          if(mol.getBondWithIdx(i)->getBondType()!=Bond::SINGLE || mol.getBondWithIdx(i)->getIsAromatic()){
+            countIt=false;
+            break;
+          }
+          // we're checking each atom twice, which is kind of doofy, but this
+          // function is hopefully not going to be a big time sync.
+          if(!countIt &&
+             mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+            countIt=true;
+          }
+        }
+        if(countIt) ++res;
+      }
+      return res;
+    }
+    const std::string NumSaturatedCarbocyclesVersion="1.0.0";
+    unsigned int calcNumSaturatedCarbocycles(const ROMol &mol){
+      unsigned int res=0;
+      BOOST_FOREACH(const INT_VECT &iv,mol.getRingInfo()->bondRings()){
+        bool countIt=true;
+        BOOST_FOREACH(int i,iv){
+          if(mol.getBondWithIdx(i)->getBondType()!=Bond::SINGLE || mol.getBondWithIdx(i)->getIsAromatic()){
+            countIt=false;
+            break;
+          }
+          // we're checking each atom twice, which is kind of doofy, but this
+          // function is hopefully not going to be a big time sync.
+          if(mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+            countIt=false;
+            break;
+          }
+        }
+        if(countIt) ++res;
+      }
+      return res;
+    }
   } // end of namespace Descriptors
 } // end of namespace RDKit
