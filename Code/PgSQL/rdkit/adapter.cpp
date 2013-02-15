@@ -410,12 +410,23 @@ Mol##name(CROMol i){                                                \
   const ROMol *im = (ROMol*)i;                                      \
   return func(*im);                                                 \
 }
+MOLDESCR(FractionCSP3,RDKit::Descriptors::calcFractionCSP3,double)
 MOLDESCR(TPSA,RDKit::Descriptors::calcTPSA,double)
 MOLDESCR(AMW,RDKit::Descriptors::calcAMW,double)
 MOLDESCR(HBA,RDKit::Descriptors::calcLipinskiHBA,int)
 MOLDESCR(HBD,RDKit::Descriptors::calcLipinskiHBD,int)
 MOLDESCR(NumHeteroatoms,RDKit::Descriptors::calcNumHeteroatoms,int)
 MOLDESCR(NumRings,RDKit::Descriptors::calcNumRings,int)
+MOLDESCR(NumAromaticRings,RDKit::Descriptors::calcNumAromaticRings,int)
+MOLDESCR(NumAliphaticRings,RDKit::Descriptors::calcNumAliphaticRings,int)
+MOLDESCR(NumSaturatedRings,RDKit::Descriptors::calcNumSaturatedRings,int)
+MOLDESCR(NumAromaticHeterocycles,RDKit::Descriptors::calcNumAromaticHeterocycles,int)
+MOLDESCR(NumAliphaticHeterocycles,RDKit::Descriptors::calcNumAliphaticHeterocycles,int)
+MOLDESCR(NumSaturatedHeterocycles,RDKit::Descriptors::calcNumSaturatedHeterocycles,int)
+MOLDESCR(NumAromaticCarbocycles,RDKit::Descriptors::calcNumAromaticCarbocycles,int)
+MOLDESCR(NumAliphaticCarbocycles,RDKit::Descriptors::calcNumAliphaticCarbocycles,int)
+MOLDESCR(NumSaturatedCarbocycles,RDKit::Descriptors::calcNumSaturatedCarbocycles,int)
+
 MOLDESCR(NumRotatableBonds,RDKit::Descriptors::calcNumRotatableBonds,int)
 MOLDESCR(Chi0v,RDKit::Descriptors::calcChi0v,double)
 MOLDESCR(Chi1v,RDKit::Descriptors::calcChi1v,double)

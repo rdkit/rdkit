@@ -110,6 +110,17 @@ extern "C" {
   int MolNumRotatableBonds(CROMol i);
   int MolNumHeteroatoms(CROMol i);
   int MolNumRings(CROMol i);
+  int MolNumAromaticRings(CROMol i);
+  int MolNumAliphaticRings(CROMol i);
+  int MolNumSaturatedRings(CROMol i);
+  int MolNumAromaticHeterocycles(CROMol i);
+  int MolNumAliphaticHeterocycles(CROMol i);
+  int MolNumSaturatedHeterocycles(CROMol i);
+  int MolNumAromaticCarbocycles(CROMol i);
+  int MolNumAliphaticCarbocycles(CROMol i);
+  int MolNumSaturatedCarbocycles(CROMol i);
+
+  double MolFractionCSP3(CROMol i);
   double MolTPSA(CROMol i);
   double MolChi0v(CROMol i);
   double MolChi1v(CROMol i);
