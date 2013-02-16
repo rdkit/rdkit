@@ -9,9 +9,11 @@ The RDKit Documentation
 .. toctree::
   :maxdepth: 3
 
+  Overview
   GettingStartedInPython
   RDKit_Book
   Cookbook
+  Cartridge
 
 Additional Information
 ======================
