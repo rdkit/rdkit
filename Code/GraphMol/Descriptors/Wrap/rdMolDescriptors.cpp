@@ -383,8 +383,8 @@ namespace {
     std::vector<boost::uint32_t> invars(mol.getNumAtoms());
     RDKit::MorganFingerprints::getConnectivityInvariants(mol,invars,includeRingMembership);
     python::list res;
-    for(std::vector<boost::uint32_t>::const_iterator iv=invars.begin();iv!=invars.end();++iv){
-      res.append(python::long_(*iv));
+    BOOST_FOREACH(boost::uint32_t iv,invars){
+      res.append(python::long_(iv));
     }
     return res;
   }
@@ -392,8 +392,8 @@ namespace {
     std::vector<boost::uint32_t> invars(mol.getNumAtoms());
     RDKit::MorganFingerprints::getFeatureInvariants(mol,invars);
     python::list res;
-    for(std::vector<boost::uint32_t>::const_iterator iv=invars.begin();iv!=invars.end();++iv){
-      res.append(python::long_(*iv));
+    BOOST_FOREACH(boost::uint32_t iv,invars){
+      res.append(python::long_(iv));
     }
     return res;
   }
@@ -415,8 +415,8 @@ namespace {
     res=RDKit::Descriptors::calcSlogP_VSA(mol,lbins,force);
 
     python::list pyres;
-    for(std::vector<double>::const_iterator iv=res.begin();iv!=res.end();++iv){
-      pyres.append(*iv);
+    BOOST_FOREACH(double dv,res){
+      pyres.append(dv);
     }
     return pyres;
   }
@@ -437,8 +437,8 @@ namespace {
     res=RDKit::Descriptors::calcSMR_VSA(mol,lbins,force);
 
     python::list pyres;
-    for(std::vector<double>::const_iterator iv=res.begin();iv!=res.end();++iv){
-      pyres.append(*iv);
+    BOOST_FOREACH(double dv,res){
+      pyres.append(dv);
     }
     return pyres;
   }
@@ -459,8 +459,19 @@ namespace {
     res=RDKit::Descriptors::calcPEOE_VSA(mol,lbins,force);
 
     python::list pyres;
-    for(std::vector<double>::const_iterator iv=res.begin();iv!=res.end();++iv){
-      pyres.append(*iv);
+    BOOST_FOREACH(double dv,res){
+      pyres.append(dv);
+    }
+    return pyres;
+  }
+  python::list CalcMQNs(const RDKit::ROMol &mol,
+                       bool force){
+    std::vector<unsigned int> res;
+    res=RDKit::Descriptors::calcMQNs(mol,force);
+
+    python::list pyres;
+    BOOST_FOREACH(unsigned int iv,res){
+      pyres.append(iv);
     }
     return pyres;
   }
@@ -827,6 +838,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               CalcPEOEVSA,
               (python::arg("mol"),
                python::arg("bins")=python::list(),
+               python::arg("force")=false));
+  docString="returns the MQN descriptors for a molecule";
+  python::def("MQNs_",
+              CalcMQNs,
+              (python::arg("mol"),
                python::arg("force")=false));
 
   docString="From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)";

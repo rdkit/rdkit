@@ -36,7 +36,7 @@ namespace RDKit{
       \return a vector with the MQNs
 
     */
-    std::vector<unsigned int>  getMQNs(const ROMol &mol,
+    std::vector<unsigned int>  calcMQNs(const ROMol &mol,
                                        bool force=false);
     
   } // end of namespace Descriptors

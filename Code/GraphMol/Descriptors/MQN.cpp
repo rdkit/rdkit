@@ -18,7 +18,7 @@
 
 namespace RDKit{
   namespace Descriptors {
-    std::vector<unsigned int> getMQNs(const ROMol &mol,
+    std::vector<unsigned int> calcMQNs(const ROMol &mol,
                                       bool force){
       // FIX: use force value to enable caching
       std::vector<unsigned int> res(42,0);
@@ -111,7 +111,7 @@ namespace RDKit{
       
       // ---------------------------------------------------
       // bond counts:
-      unsigned int nAromatic;
+      unsigned int nAromatic=0;
       ROMol::EDGE_ITER firstB,lastB;
       boost::tie(firstB,lastB) = mol.getEdges();
       while(firstB!=lastB){

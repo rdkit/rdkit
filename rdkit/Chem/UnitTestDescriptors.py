@@ -16,6 +16,8 @@ import unittest,os.path
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import AllChem
+from rdkit.Chem import rdMolDescriptors
+import numpy as np
 
 def feq(n1,n2,tol=1e-4):
   return abs(n1-n2)<=tol
@@ -53,6 +55,20 @@ class TestCase(unittest.TestCase):
       mol = Chem.MolFromSmiles(smiles)
       actual = AllChem.CalcMolFormula(mol)
       self.failUnlessEqual(actual,expected)
+  def testMQN(self):
+    tgt = np.array([42917,   274,   870,   621,   135,  1582,    29,  3147,  5463,
+        6999,   470,    81, 19055,  4424,   309, 24059, 17822,     1,
+        9303, 24146, 16076,  5560,  4262,   646,   746, 13725,  5430,
+        2629,   362, 24211, 15939,   292,    41,    20,  1852,  5642,
+          31,     9,     1,     2,  3060,  1750])
+    fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
+    ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
+    vs = np.zeros((42,),np.int32)
+    for m in ms:
+      vs += rdMolDescriptors.MQNs_(m)
+    self.failIf(False in (vs==tgt))
+    
+          
       
 # - - - - - 
 if __name__ == '__main__':

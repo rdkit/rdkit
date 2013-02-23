@@ -1579,6 +1579,35 @@ void testMiscCountDescriptors(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testMQNs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test MQN" << std::endl;
+
+  unsigned int tgt[42]={98,  0,  4,  0,  0,  1,  0,  3,  9,  5,  4,  0, 29,  3,  0, 66, 35,
+                      0, 26, 30, 21,  2,  2,  0,  0,  6, 12,  6,  0, 70, 26,  0,  0,  0,
+                      2, 16,  0,  0,  0,  0, 10,  5};
+
+  std::vector<unsigned int> accum(42,0);
+  
+  std::string fName = getenv("RDBASE");
+  fName += "/Code/GraphMol/Descriptors/test_data/aid466.trunc.sdf";
+  SDMolSupplier suppl(fName);
+  while(!suppl.atEnd()){
+    ROMol *mol=suppl.next();
+    TEST_ASSERT(mol);
+    std::vector<unsigned int> v = calcMQNs(*mol);
+    TEST_ASSERT(v.size()==42);
+    for(unsigned int i=0;i<42;++i) accum[i]+=v[i];
+    delete mol;
+  }
+  for(unsigned int i=0;i<42;++i){
+    TEST_ASSERT(accum[i]==tgt[i]);
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -1610,5 +1639,6 @@ int main(){
   testCrippenContribs();
   testRingDescriptors();
   testMiscCountDescriptors();
+  testMQNs();
 
 }
