@@ -20,6 +20,9 @@
 #include <boost/dynamic_bitset.hpp>
 #include <Geometry/point.h>
 
+//#define VERBOSE_CANON 1
+
+
 namespace RDKit{
   namespace Chirality {
     typedef std::pair<int,int> INT_PAIR;
@@ -251,6 +254,13 @@ namespace RDKit{
         RankAtoms::sortAndRankVect(numAtoms,cipEntries,allIndices,ranks);
         RankAtoms::updateInPlayIndices(ranks,activeIndices);
         numRanks = *std::max_element(ranks.begin(),ranks.end())+1;
+
+        // now truncate each vector and stick the rank at the end
+        for(unsigned int i=0;i<numAtoms;++i){
+          cipEntries[i][numIts+1]=ranks[i];
+          cipEntries[i].erase(cipEntries[i].begin()+numIts+2,cipEntries[i].end());
+        }
+        
         ++numIts;
 #ifdef VERBOSE_CANON
         BOOST_LOG(rdDebugLog) << "strings and ranks:" << std::endl;
