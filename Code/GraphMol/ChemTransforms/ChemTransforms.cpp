@@ -27,6 +27,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 namespace RDKit{
   namespace {

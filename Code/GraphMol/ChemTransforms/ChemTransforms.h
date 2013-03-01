@@ -25,14 +25,15 @@ namespace RDKit{
   /*!
       \param mol       the ROMol of interest
       \param query     the query ROMol
-      \param replaceAll  if this is set all matches of the query to the substructure will
-                         be removed. Default is to only remove the first.
+      \param onlyFrags  if this is set, atoms will only be removed if
+                        the entire fragment in which they are found is
+                        matched by the query.
 
       \return a copy of \c mol with the matching atoms and bonds (if any)
               removed.		       
   */
   ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query,
-			  bool replaceAll=false);
+			  bool onlyFrags=false);
 
   //! \brief Returns a list of copies of an ROMol with the atoms and bonds that 
   //!      match a pattern replaced with the atoms contained in another molecule.
