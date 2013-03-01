@@ -4169,6 +4169,55 @@ void testSFNetIssue272() {
 }
 
 
+
+void testGitHubIssue8()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue 8 (impact of removeAtom on bond stereo atoms)" << std::endl;
+  {
+    std::string smi= "Cl/C=C/Cl";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms().size()==2);
+    m->removeAtom((unsigned int)0);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms().size()==0);
+    delete m;
+  }
+  {
+    std::string smi= "CC/C=C/Cl";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m);
+    INT_VECT &sas=m->getBondWithIdx(2)->getStereoAtoms();
+    TEST_ASSERT(sas.size()==2);
+    TEST_ASSERT(std::find(sas.begin(),sas.end(),1)!=sas.end());
+    m->removeAtom((unsigned int)0);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms().size()==2);
+    TEST_ASSERT(std::find(sas.begin(),sas.end(),0)!=sas.end());
+    TEST_ASSERT(std::find(sas.begin(),sas.end(),1)==sas.end());
+    delete m;
+  }
+  {
+    std::string smi= "C/C=C/CC";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    MolOps::assignStereochemistry(*m);
+    INT_VECT &sas=m->getBondWithIdx(1)->getStereoAtoms();
+    TEST_ASSERT(sas.size()==2);
+    TEST_ASSERT(std::find(sas.begin(),sas.end(),0)!=sas.end());
+    TEST_ASSERT(std::find(sas.begin(),sas.end(),3)!=sas.end());
+    m->removeAtom((unsigned int)4);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms().size()==2);
+    TEST_ASSERT(std::find(sas.begin(),sas.end(),0)!=sas.end());
+    TEST_ASSERT(std::find(sas.begin(),sas.end(),3)!=sas.end());
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4230,6 +4279,7 @@ int main(){
   testSFNetIssue266();
   testSFNetIssue266();
   testSFNetIssue272();
+  testGitHubIssue8();
   return 0;
 }
 

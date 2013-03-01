@@ -20,6 +20,7 @@
 #include "RDDepictor.h"
 #include "DepictUtils.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Conformer.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
@@ -664,6 +665,23 @@ void testIssue3487469() {
   }
 }
 
+void testGitHubIssue8() {
+  {
+    std::string smi = "[I-].C[n+]1c(\\C=C\\2/C=CC=CN2CC=C)sc3ccccc13";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    RWMol *p = SmilesToMol("[I-]");
+    TEST_ASSERT(p);
+    ROMol *m2 = deleteSubstructs(*m1,*p);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(m2->getNumAtoms()==m1->getNumAtoms()-1);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m2);
+    delete m1;
+    delete m2;
+    delete p;
+  }
+}
+
 int main() { 
   RDLog::InitLogs();
 #if 1
@@ -769,6 +787,11 @@ int main() {
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
 #endif
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test GitHub Issue 8\n";
+  testGitHubIssue8();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+
 
   return(0);
 }

@@ -467,6 +467,7 @@ namespace RDKit{
           }
 
         }
+#if 0 // the fix to github issue 8 makes this redundant
         if(mol.hasProp("_StereochemDone")){
           // stereochem had been perceived in the original molecule,
           // loop over the bonds and fix their stereoAtoms fields:
@@ -482,6 +483,7 @@ namespace RDKit{
             }
           }
         }
+#endif        
       }
 
       return static_cast<ROMol *>(res);

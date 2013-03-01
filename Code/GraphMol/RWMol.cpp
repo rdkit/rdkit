@@ -160,12 +160,24 @@ namespace RDKit{
       tmpIdx = bond->getEndAtomIdx();
       if( tmpIdx > idx) bond->setEndAtomIdx(tmpIdx-1);
       bond->setIdx(nBonds++);
+      for(INT_VECT::iterator bsi=bond->getStereoAtoms().begin();
+          bsi!=bond->getStereoAtoms().end();++bsi){
+        if((*bsi)==idx){
+          bond->getStereoAtoms().clear();
+          break;
+        } else if((*bsi)>idx){
+          --(*bsi);
+        }
+      }
+
     }
 
     // reset our ring info structure, because it is pretty likely
     // to be wrong now:
     dp_ringInfo->reset();
     
+
+    oatom->setOwningMol(NULL);
     
     // remove all connections to the atom:
     MolGraph::vertex_descriptor vd = boost::vertex(idx,d_graph);
@@ -248,6 +260,28 @@ namespace RDKit{
       }
     }
 
+    // loop over neighboring double bonds and remove their stereo atom 
+    //  information. This is definitely now invalid (was github issue 8)
+    ADJ_ITER a1,a2;
+    boost::tie(a1,a2)=boost::adjacent_vertices(aid1,d_graph);
+    while(a1!=a2){
+      unsigned int oIdx=*a1;
+      ++a1;
+      if(oIdx==aid2) continue;
+      Bond *obnd = getBondBetweenAtoms(aid1, oIdx);
+      if(!obnd) continue;
+      obnd->getStereoAtoms().clear();
+    }
+    boost::tie(a1,a2)=boost::adjacent_vertices(aid1,d_graph);
+    while(a1!=a2){
+      unsigned int oIdx=*a1;
+      ++a1;
+      if(oIdx==aid1) continue;
+      Bond *obnd = getBondBetweenAtoms(aid2, oIdx);
+      if(!obnd) continue;
+      obnd->getStereoAtoms().clear();
+    }
+    
     // reset our ring info structure, because it is pretty likely
     // to be wrong now:
     dp_ringInfo->reset();
@@ -257,7 +291,8 @@ namespace RDKit{
       getBondWithIdx(i)->setIdx(i-1);
     }
 
-
+    bnd->setOwningMol(NULL);
+    
     MolGraph::vertex_descriptor vd1 = boost::vertex(aid1,d_graph);
     MolGraph::vertex_descriptor vd2 = boost::vertex(aid2,d_graph);
     boost::remove_edge(vd1, vd2, d_graph);
