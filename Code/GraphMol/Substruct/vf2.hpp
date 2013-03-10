@@ -116,13 +116,14 @@ namespace boost{
      * class VF2SubState
      * A representation of the SSS current state
      ---------------------------------------------------------*/
-    template <class Graph,class VertexCompatible,class EdgeCompatible >
+    template <class Graph,class VertexCompatible,class EdgeCompatible,class MatchChecking >
     class VF2SubState
     { 
     private:
       Graph *g1, *g2;
       VertexCompatible &vc;
       EdgeCompatible &ec;
+      MatchChecking &mc;
       unsigned int n1, n2;
 
       unsigned int core_len, orig_core_len;
@@ -145,7 +146,8 @@ namespace boost{
       VF2SubState(Graph *ag1, Graph *ag2,
                   VertexCompatible &avc,
                   EdgeCompatible &aec,
-                  bool sortNodes=false) : g1(ag1), g2(ag2), vc(avc), ec(aec),
+                  MatchChecking &amc,
+                  bool sortNodes=false) : g1(ag1), g2(ag2), vc(avc), ec(aec), mc(amc),
                                           n1(num_vertices(*ag1)),n2(num_vertices(*ag2)) {
         if (sortNodes){
           order = SortNodesByFrequency(ag1);
@@ -181,7 +183,7 @@ namespace boost{
       };
 
       VF2SubState(const VF2SubState &state) :
-        g1(state.g1), g2(state.g2), vc(state.vc), ec(state.ec),
+        g1(state.g1), g2(state.g2), vc(state.vc), ec(state.ec), mc(state.mc),
         n1(state.n1),n2(state.n2), order(state.order)
       {
 
@@ -220,6 +222,9 @@ namespace boost{
       }; 
 
       bool IsGoal() { return core_len==n1 ; };
+      bool MatchChecks(const node_id c1[],const node_id c2[]){
+        return mc(c1,c2);
+      };
       bool IsDead() { return n1>n2  || 
           t1both_len>t2both_len ||
           t1out_len>t2out_len ||
@@ -511,10 +516,12 @@ namespace boost{
     template <class SubState>
     bool match(int *pn, node_id c1[], node_id c2[], SubState &s)
     {
-      if (s.IsGoal()) { 
-        *pn=s.CoreLen();
+      if (s.IsGoal() ) { 
         s.GetCoreSet(c1, c2);
-        return true;
+        if(s.MatchChecks(c1,c2)) {
+          *pn=s.CoreLen();
+          return true;
+        }
       }
 
       if (s.IsDead())
@@ -548,11 +555,13 @@ namespace boost{
     bool match(node_id c1[], node_id c2[], SubState &s, DoubleBackInsertionSequence &res) {
       if (s.IsGoal()){
         s.GetCoreSet(c1, c2);
-        typename DoubleBackInsertionSequence::value_type newSeq;
-        for(unsigned int i=0;i<s.CoreLen();++i){
-          newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
+        if(s.MatchChecks(c1,c2)) {
+          typename DoubleBackInsertionSequence::value_type newSeq;
+          for(unsigned int i=0;i<s.CoreLen();++i){
+            newSeq.push_back(std::pair<int,int>(c1[i],c2[i]));
+          }
+          res.push_back(newSeq);
         }
-        res.push_back(newSeq);
         return false;
       }
 
@@ -582,14 +591,16 @@ namespace boost{
   template <  class Graph
               , class VertexLabeling    // binary predicate
               , class EdgeLabeling      // binary predicate
+              , class MatchChecking      // binary predicate
               , class BackInsertionSequence   // contains std::pair<vertex_descriptor,vertex_descriptor>
               >
   bool vf2(const Graph &g1,const Graph &g2,
            VertexLabeling& vertex_labeling,
            EdgeLabeling& edge_labeling,
+           MatchChecking& match_checking,
            BackInsertionSequence& F){
-    detail::VF2SubState<const Graph,VertexLabeling,EdgeLabeling> s0(&g1,&g2,vertex_labeling,
-                                                              edge_labeling,false);
+    detail::VF2SubState<const Graph,VertexLabeling,EdgeLabeling,MatchChecking> s0(&g1,&g2,vertex_labeling,
+                                                                                  edge_labeling,match_checking,false);
     detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
     detail::node_id *ni2 = new detail::node_id[num_vertices(g2)];
     int n=0;
@@ -609,14 +620,16 @@ namespace boost{
   template <  class Graph
               , class VertexLabeling    // binary predicate
               , class EdgeLabeling      // binary predicate
+              , class MatchChecking      // binary predicate
               , class DoubleBackInsertionSequence   // contains a back insertion sequence
               >
   bool vf2_all(const Graph& g1, const Graph& g2,
                VertexLabeling& vertex_labeling,
                EdgeLabeling& edge_labeling,
+               MatchChecking& match_checking,
                DoubleBackInsertionSequence& F) {
-    detail::VF2SubState<const Graph,VertexLabeling,EdgeLabeling> s0(&g1,&g2,vertex_labeling,
-                                                                    edge_labeling,false);
+    detail::VF2SubState<const Graph,VertexLabeling,EdgeLabeling,MatchChecking> s0(&g1,&g2,vertex_labeling,
+                                                                                  edge_labeling,match_checking,false);
     detail::node_id *ni1 = new detail::node_id[num_vertices(g1)];
     detail::node_id *ni2 = new detail::node_id[num_vertices(g2)];
     

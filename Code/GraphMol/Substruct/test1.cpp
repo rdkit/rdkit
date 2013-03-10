@@ -717,6 +717,165 @@ void testMultiThread(){
 }
 #endif
 
+void testChiralMatch(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test chiral matching" << std::endl;
+
+  {
+    std::string qSmi="Cl[C@](C)(F)Br";
+    std::string mSmi="Cl[C@](C)(F)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi="Cl[C@](C)(F)Br";
+    std::string mSmi="Cl[C@@](C)(F)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi="Cl[C@](C)(F)Br";
+    std::string mSmi="Cl[C@@](F)(C)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi="Cl[C@](C)(F)Br";
+    std::string mSmi="Cl[C@](F)(C)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi="Cl[C@](C)(F)Br";
+    std::string mSmi="Cl[C@@](Br)(C)F";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi="Cl[C@](C)(F)Br";
+    std::string mSmi="Cl[C@](Br)(C)F";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(matched);
+  }
+
+  {
+    std::string qSmi="C[C@](O)(F)Br";
+    std::string mSmi="O[C@](F)(Br)CC[C@](O)(F)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(matched);
+  }
+
+  {
+    std::string qSmi="C[C@](O)(F)Br";
+    std::string mSmi="O[C@](F)(Br)CC[C@@](O)(F)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(!matched);
+  }
+
+  {
+    std::string qSmi="C[C@](O)(F)Br";
+    std::string mSmi="O[C@](F)(Br)CC(C[C@](O)(F)Br)C[C@](O)(F)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    std::vector< MatchVectType > matches;
+    int count=SubstructMatch(*mol,*query,matches,true,true,true);
+    TEST_ASSERT(count==2);
+  }
+
+  {
+    std::string qSmi="C[C@](O)(F)Br";
+    std::string mSmi="O[C@@](F)(Br)CC(C[C@](O)(F)Br)C[C@](O)(F)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    std::vector< MatchVectType > matches;
+    int count=SubstructMatch(*mol,*query,matches,true,true,true);
+    TEST_ASSERT(count==3);
+  }
+  {
+    std::string qSmi="C[C@](O)(F)Br";
+    std::string mSmi="O[C@](F)(Br)CC(C[C@@](O)(F)Br)C[C@](O)(F)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    std::vector< MatchVectType > matches;
+    int count=SubstructMatch(*mol,*query,matches,true,true,true);
+    TEST_ASSERT(count==1);
+  }
+  {
+    std::string qSmi="C[C@](O)(F)Br";
+    std::string mSmi="O[C@](F)(Br)CC(C[C@@](O)(F)Br)C[C@@](O)(F)Br";
+    ROMol *query=SmilesToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    std::vector< MatchVectType > matches;
+    //std::cerr<<"\n\n------------------------------------------\n"<<qSmi<<" "<<mSmi<<"\n"<<std::endl;
+    int count=SubstructMatch(*mol,*query,matches,true,true,true);
+    //std::cerr<<"res: "<<count<<std::endl;
+    TEST_ASSERT(count==0);
+  }
+
+  {
+    std::string qSmi="Cl[C@](*)(F)Br";
+    std::string mSmi="Cl[C@](C)(F)Br";
+    ROMol *query=SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi="Cl[C@@](*)(F)Br";
+    std::string mSmi="Cl[C@](C)(F)Br";
+    ROMol *query=SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi="Cl[C@](*)(*)Br";
+    std::string mSmi="Cl[C@](C)(F)Br";
+    ROMol *query=SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi="Cl[C@@](*)(*)Br";
+    std::string mSmi="Cl[C@](C)(F)Br";
+    ROMol *query=SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(matched);
+  }
+
+  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 
 int main(int argc,char *argv[])
@@ -731,10 +890,11 @@ int main(int argc,char *argv[])
   test6();  
   if(argc>1 && !strcmp(argv[1],"-l"))
     test7();  
-  test9();  
-#endif
+  //test9();  
   testRecursiveSerialNumbers();  
   testMultiThread();
+#endif
+  testChiralMatch();
   return 0;
 }
 

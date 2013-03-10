@@ -34,18 +34,73 @@ namespace RDKit{
 #endif
     typedef std::list<std::pair<MolGraph::vertex_descriptor,MolGraph::vertex_descriptor> > ssPairType;
 
+    class MolMatchFinalCheckFunctor {
+    public:
+      MolMatchFinalCheckFunctor(const ROMol &query,const ROMol &mol, bool useChirality) :
+        d_query(query), d_mol(mol), df_useChirality(useChirality) {};
+      bool operator()(const boost::detail::node_id c1[], const boost::detail::node_id c2[]) const {
+        //std::cerr<<"  check! "<<df_useChirality<<std::endl;
+        if(!df_useChirality) return true;
+        //for(unsigned int i=0;i<d_query.getNumAtoms();++i){
+        //  std::cerr<<"    "<<c1[i]<<" "<<c2[i]<<std::endl;
+        //}
+        for(unsigned int i=0;i<d_query.getNumAtoms();++i){
+          const Atom *qAt=d_query.getAtomWithIdx(c1[i]);
+          if(qAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CW &&
+             qAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CCW) continue;
+          const Atom *mAt=d_mol.getAtomWithIdx(c2[i]);
+          if(mAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CW &&
+             mAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CCW) return false;
+          INT_LIST qOrder;
+          for(unsigned int j=0;j<d_query.getNumAtoms();++j){
+            const Bond *qB = d_query.getBondBetweenAtoms(c1[i],c1[j]);
+            if(qB){
+              qOrder.push_back(qB->getIdx());
+              if(qOrder.size()==qAt->getDegree()) break;
+            }
+          }
+          int qPermCount=qAt->getPerturbationOrder(qOrder);
+
+          INT_LIST mOrder;
+          for(unsigned int j=0;j<d_mol.getNumAtoms();++j){
+            const Bond *mB = d_mol.getBondBetweenAtoms(c2[i],c2[j]);
+            if(mB){
+              mOrder.push_back(mB->getIdx());
+              if(mOrder.size()==mAt->getDegree()) break;
+            }
+          }
+          int mPermCount=mAt->getPerturbationOrder(mOrder);
+
+          if((qPermCount%2 == mPermCount%2 &&
+              qAt->getChiralTag()!=mAt->getChiralTag()) ||
+             (qPermCount%2 != mPermCount%2 &&
+              qAt->getChiralTag()==mAt->getChiralTag())) return false;
+          
+        }
+        return true;
+      }
+    private:
+      const ROMol &d_query;
+      const ROMol &d_mol;
+      bool df_useChirality;
+    };
+
     class AtomLabelFunctor{
     public:
       AtomLabelFunctor(const ROMol &query,const ROMol &mol, bool useChirality) :
         d_query(query), d_mol(mol), df_useChirality(useChirality) {};
       bool operator()(unsigned int i,unsigned int j) const{
         bool res=false;
-        if(!df_useChirality){
-          res=atomCompat(d_query[i],d_mol[j]);
-        } else {
-          res=chiralAtomCompat(d_query[i],d_mol[j]);
+        if(df_useChirality){
+          const Atom *qAt=d_query.getAtomWithIdx(i);
+          if(qAt->getChiralTag()==Atom::CHI_TETRAHEDRAL_CW ||
+             qAt->getChiralTag()==Atom::CHI_TETRAHEDRAL_CCW) {
+            const Atom *mAt=d_mol.getAtomWithIdx(j);
+            if(mAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CW &&
+               mAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CCW) return false;
+          }
         }
-        //std::cerr<<" alf: "<<i<<" - "<<j<<"? "<<res<<std::endl;
+        res=atomCompat(d_query[i],d_mol[j]);
         return res;
       }
     private:
@@ -92,6 +147,7 @@ namespace RDKit{
     matchVect.clear();
     matchVect.resize(0);
 
+    detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
     detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
     detail::BondLabelFunctor bondLabeler(query,mol);
 
@@ -101,7 +157,7 @@ namespace RDKit{
                             atomLabeler,bondLabeler,match);
 #else
     bool res=boost::vf2(query.getTopology(),mol.getTopology(),
-                        atomLabeler,bondLabeler,match);
+                        atomLabeler,bondLabeler,matchChecker,match);
 #endif
     if(res){
      matchVect.resize(query.getNumAtoms());
@@ -151,6 +207,7 @@ namespace RDKit{
 
     detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
     detail::BondLabelFunctor bondLabeler(query,mol);
+    detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
     
     std::list<detail::ssPairType> pms;
 #if 0
@@ -158,7 +215,7 @@ namespace RDKit{
                                   atomLabeler,bondLabeler,pms);
 #else
     bool found=boost::vf2_all(query.getTopology(),mol.getTopology(),
-                                  atomLabeler,bondLabeler,pms);
+                              atomLabeler,bondLabeler,matchChecker,pms);
 #endif
     unsigned int res=0;
     if(found){
@@ -207,6 +264,7 @@ namespace RDKit{
  
       detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
       detail::BondLabelFunctor bondLabeler(query,mol);
+      detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
 
       matches.clear();
       matches.resize(0);
@@ -216,7 +274,7 @@ namespace RDKit{
 				    atomLabeler,bondLabeler,pms);
 #else
       bool found=boost::vf2_all(query.getTopology(),mol.getTopology(),
-				atomLabeler,bondLabeler,pms);
+				atomLabeler,bondLabeler,matchChecker,pms);
 #endif
       unsigned int res=0;
       if(found){
