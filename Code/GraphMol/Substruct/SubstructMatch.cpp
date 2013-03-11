@@ -44,6 +44,8 @@ namespace RDKit{
         //for(unsigned int i=0;i<d_query.getNumAtoms();++i){
         //  std::cerr<<"    "<<c1[i]<<" "<<c2[i]<<std::endl;
         //}
+
+        // check chiral atoms:
         for(unsigned int i=0;i<d_query.getNumAtoms();++i){
           const Atom *qAt=d_query.getAtomWithIdx(c1[i]);
           if(qAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CW &&
@@ -51,6 +53,7 @@ namespace RDKit{
           const Atom *mAt=d_mol.getAtomWithIdx(c2[i]);
           if(mAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CW &&
              mAt->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CCW) return false;
+          if(qAt->getDegree()!=mAt->getDegree()) return false;
           INT_LIST qOrder;
           for(unsigned int j=0;j<d_query.getNumAtoms();++j){
             const Bond *qB = d_query.getBondBetweenAtoms(c1[i],c1[j]);
@@ -62,7 +65,7 @@ namespace RDKit{
           int qPermCount=qAt->getPerturbationOrder(qOrder);
 
           INT_LIST mOrder;
-          for(unsigned int j=0;j<d_mol.getNumAtoms();++j){
+          for(unsigned int j=0;j<d_query.getNumAtoms();++j){
             const Bond *mB = d_mol.getBondBetweenAtoms(c2[i],c2[j]);
             if(mB){
               mOrder.push_back(mB->getIdx());
@@ -77,6 +80,48 @@ namespace RDKit{
               qAt->getChiralTag()==mAt->getChiralTag())) return false;
           
         }
+
+        // now check double bonds
+        for(unsigned int i=0;i<d_query.getNumBonds();++i){
+          const Bond *qBnd=d_query.getBondWithIdx(i);
+          if(qBnd->getBondType()!=Bond::DOUBLE ||
+             (qBnd->getStereo()!=Bond::STEREOZ &&
+              qBnd->getStereo()!=Bond::STEREOE)) continue;
+
+          // don't think this can actually happen, but check to be sure:
+          if(qBnd->getStereoAtoms().size()!=2) continue;
+
+          std::map<unsigned int,unsigned int> qMap;
+          for(unsigned int j=0;j<d_query.getNumAtoms();++j){
+            qMap[c1[j]]=j;
+          }
+          const Bond *mBnd=d_mol.getBondBetweenAtoms(c2[qMap[qBnd->getBeginAtomIdx()]],
+                                                     c2[qMap[qBnd->getEndAtomIdx()]]);
+          CHECK_INVARIANT(mBnd,"Matching bond not found");
+          if(mBnd->getBondType()!=Bond::DOUBLE ||
+             (mBnd->getStereo()!=Bond::STEREOZ &&
+              mBnd->getStereo()!=Bond::STEREOE)) continue;
+          // don't think this can actually happen, but check to be sure:
+          if(mBnd->getStereoAtoms().size()!=2) continue;
+
+          unsigned int end1Matches=0;
+          unsigned int end2Matches=0;
+          if(c2[qMap[qBnd->getBeginAtomIdx()]]==mBnd->getBeginAtomIdx()){
+            // query Begin == mol Begin
+            if(c2[qMap[qBnd->getStereoAtoms()[0]]]==mBnd->getStereoAtoms()[0]) end1Matches=1;
+            if(c2[qMap[qBnd->getStereoAtoms()[1]]]==mBnd->getStereoAtoms()[1]) end2Matches=1;
+          } else {
+            // query End == mol Begin
+            if(c2[qMap[qBnd->getStereoAtoms()[0]]]==mBnd->getStereoAtoms()[1]) end1Matches=1;
+            if(c2[qMap[qBnd->getStereoAtoms()[1]]]==mBnd->getStereoAtoms()[0]) end2Matches=1;
+          }
+          //std::cerr<<"  bnd: "<<qBnd->getIdx()<<":"<<qBnd->getStereo()<<" - "<<mBnd->getIdx()<<":"<<mBnd->getStereo()<<"  --  "<<end1Matches<<" "<<end2Matches<<std::endl;
+          if(mBnd->getStereo()==qBnd->getStereo() && (end1Matches+end2Matches)==1) return false;
+          if(mBnd->getStereo()!=qBnd->getStereo() && (end1Matches+end2Matches)!=1) return false;
+        }
+        
+          
+
         return true;
       }
     private:
@@ -110,16 +155,29 @@ namespace RDKit{
     };
     class BondLabelFunctor{
     public:
-      BondLabelFunctor(const ROMol &query,const ROMol &mol) :
-        d_query(query), d_mol(mol) {};
+      BondLabelFunctor(const ROMol &query,const ROMol &mol,bool useChirality) :
+        d_query(query), d_mol(mol),df_useChirality(useChirality) {};
       bool operator()(MolGraph::edge_descriptor i,MolGraph::edge_descriptor j) const{
         bool res=bondCompat(d_query[i],d_mol[j]);
-        //std::cerr<<" blf: "<<i<<" - "<<j<<"? "<<res<<std::endl;
+        if(df_useChirality){
+          const BOND_SPTR qBnd=d_query[i];
+          if(qBnd->getBondType()==Bond::DOUBLE &&
+             (qBnd->getStereo()==Bond::STEREOZ ||
+              qBnd->getStereo()==Bond::STEREOE)){
+            const BOND_SPTR mBnd=d_mol[j];
+            if(mBnd->getBondType()==Bond::DOUBLE &&
+               !(mBnd->getStereo()==Bond::STEREOZ ||
+                 mBnd->getStereo()==Bond::STEREOE))
+              return false;
+          }
+        }
+
         return res;
       }
     private:
       const ROMol &d_query;
       const ROMol &d_mol;
+      bool df_useChirality;
     };
   }    
   
@@ -149,7 +207,7 @@ namespace RDKit{
 
     detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
     detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
-    detail::BondLabelFunctor bondLabeler(query,mol);
+    detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
 
     detail::ssPairType match;
 #if 0
@@ -206,7 +264,7 @@ namespace RDKit{
     matches.resize(0);
 
     detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
-    detail::BondLabelFunctor bondLabeler(query,mol);
+    detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
     detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
     
     std::list<detail::ssPairType> pms;
@@ -263,7 +321,7 @@ namespace RDKit{
       }
  
       detail::AtomLabelFunctor atomLabeler(query,mol,useChirality);
-      detail::BondLabelFunctor bondLabeler(query,mol);
+      detail::BondLabelFunctor bondLabeler(query,mol,useChirality);
       detail::MolMatchFinalCheckFunctor matchChecker(query,mol,useChirality);
 
       matches.clear();

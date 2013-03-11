@@ -7,5 +7,5 @@ rdkit_headers(SubstructMatch.h
               SubstructUtils.h DEST GraphMol/Substruct)
 
 rdkit_test(testSubstructMatch test1.cpp LINK_LIBRARIES  FileParsers SmilesParse SubstructMatch
-GraphMol RDGeometryLib RDGeneral )
+GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS} )
 
