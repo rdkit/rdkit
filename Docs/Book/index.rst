@@ -10,6 +10,7 @@ The RDKit Documentation
   :maxdepth: 3
 
   Overview
+  Install
   GettingStartedInPython
   RDKit_Book
   Cookbook

@@ -604,7 +604,7 @@ aligned. This is easy enough to do:
 
 The result looks like this:
 
-.. image:: images/cdk2_molgrid.aligned.png
+.. image:: images/cdk2_molgrid_aligned.png
 
 
 
