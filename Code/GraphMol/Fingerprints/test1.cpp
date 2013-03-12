@@ -2079,6 +2079,40 @@ void testMACCS(){
 }
 
 
+void testRDKitAtomBits(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing RDKit fingerprints reporting atomBits" << std::endl;
+  {
+    std::string smi = "CCCCCC";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    std::vector<std::vector<boost::uint32_t> > atomBits(m1->getNumAtoms());
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,true,true,0,0,&atomBits);
+    TEST_ASSERT(fp1->getNumOnBits()==4);
+    for(unsigned int i=0;i<m1->getNumAtoms();++i){
+      TEST_ASSERT(atomBits[i].size()==4);
+    }
+    delete m1;
+    delete fp1;
+  }
+  {
+    std::string smi = "CCCO";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    std::vector<std::vector<boost::uint32_t> > atomBits(m1->getNumAtoms());
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,2,2048,1,true,0,128,true,true,0,0,&atomBits);
+    TEST_ASSERT(fp1->getNumOnBits()==4);
+    TEST_ASSERT(atomBits[0].size()==2);
+    TEST_ASSERT(atomBits[1].size()==3);
+    TEST_ASSERT(atomBits[2].size()==4);
+    TEST_ASSERT(atomBits[3].size()==2);
+    delete m1;
+    delete fp1;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2113,8 +2147,9 @@ int main(int argc,char *argv[]){
   testMorganAtomInfo();
   testRDKitFPOptions();
   testPairsAndTorsionsOptions();
-#endif
   testRDKitFromAtoms();
   testMACCS();
+#endif
+  testRDKitAtomBits();
   return 0;
 }

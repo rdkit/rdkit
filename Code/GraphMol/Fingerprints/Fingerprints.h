@@ -34,6 +34,9 @@ namespace RDKit{
     \param branchedPaths: toggles generation of branched subgraphs, not just linear paths
     \param useBondOrders: toggles inclusion of bond orders in the path hashes
     \param atomInvariants: a vector of atom invariants to use while hashing the paths
+    \param fromAtoms:    only paths starting at these atoms will be included
+    \param atomBits:     used to return the bits that each atom is involved in
+                         (should be at least \c mol.numAtoms long)
 
     \return the molecular fingerprint, as an ExplicitBitVect
 
@@ -52,7 +55,8 @@ namespace RDKit{
                                      bool branchedPaths=true,
                                      bool useBondOrder=true,
                                      std::vector<boost::uint32_t> *atomInvariants=0,
-                                     const std::vector<boost::uint32_t> *fromAtoms=0
+                                     const std::vector<boost::uint32_t> *fromAtoms=0,
+                                     std::vector<std::vector<boost::uint32_t> > *atomBits=0
                                      );
   const std::string RDKFingerprintMolVersion="1.2.0";
 

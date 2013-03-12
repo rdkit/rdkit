@@ -117,13 +117,15 @@ namespace RDKit{
                                      bool branchedPaths,
                                      bool useBondOrder,
                                      std::vector<boost::uint32_t> *atomInvariants,
-                                     const std::vector<boost::uint32_t> *fromAtoms
+                                     const std::vector<boost::uint32_t> *fromAtoms,
+                                     std::vector<std::vector<boost::uint32_t> > *atomBits
                                      ){
     PRECONDITION(minPath!=0,"minPath==0");
     PRECONDITION(maxPath>=minPath,"maxPath<minPath");
     PRECONDITION(fpSize!=0,"fpSize==0");
     PRECONDITION(nBitsPerHash!=0,"nBitsPerHash==0");
     PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
+    PRECONDITION(!atomBits||atomBits->size()>=mol.getNumAtoms(),"bad atomBits size");
 
     typedef boost::mt19937 rng_type;
     typedef boost::uniform_int<> distrib_type;
@@ -139,7 +141,7 @@ namespace RDKit{
     distrib_type dist(0,INT_MAX);
     source_type randomSource(generator,dist);
 
-    // build default aotm invariants if need be:
+    // build default atom invariants if need be:
     std::vector<boost::uint32_t> lAtomInvariants;
     if(!atomInvariants){
       lAtomInvariants.reserve(mol.getNumAtoms());
@@ -199,7 +201,11 @@ namespace RDKit{
       bondCache[bond->getIdx()]=bond.get();
       ++firstB;
     }
-
+    if(atomBits){
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        (*atomBits)[i].clear();
+      }
+    }
 #ifdef VERBOSE_FINGERPRINTING
     std::cerr<<" n path sets: "<<allPaths.size()<<std::endl;
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
@@ -283,8 +289,17 @@ namespace RDKit{
           unsigned int bit = randomSource();
           bit %= fpSize;
           res->setBit(bit);
+          if(atomBits){
+            boost::dynamic_bitset<>::size_type aIdx=atomsInPath.find_first();
+            while(aIdx!=boost::dynamic_bitset<>::npos){
+              if(std::find((*atomBits)[aIdx].begin(),(*atomBits)[aIdx].end(),bit)==(*atomBits)[aIdx].end()){
+                (*atomBits)[aIdx].push_back(bit);
+              }
+              aIdx = atomsInPath.find_next(aIdx);
+            }
+          }
 #ifdef VERBOSE_FINGERPRINTING        
-          std::cerr<<"   bit: "<<i<<" "<<bit<<std::endl;
+          std::cerr<<"   bit: "<<i<<" "<<bit<<" "<<atomsInPath<<std::endl;
 #endif
         }
       }

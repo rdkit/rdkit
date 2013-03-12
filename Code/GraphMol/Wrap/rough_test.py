@@ -772,7 +772,17 @@ class TestCase(unittest.TestCase):
     # test sf.net issue 270:
     fp1 = Chem.RDKFingerprint(m1,atomInvariants=[x.GetAtomicNum()+10 for x in m1.GetAtoms()])
 
-
+    # atomBits
+    m1 = Chem.MolFromSmiles('CCCO')
+    l=[]
+    fp1 = Chem.RDKFingerprint(m1,minPath=1,maxPath=2,nBitsPerHash=1,atomBits=l)
+    self.failUnlessEqual(fp1.GetNumOnBits(),4)    
+    self.failUnlessEqual(len(l),m1.GetNumAtoms())
+    self.failUnlessEqual(len(l[0]),2)
+    self.failUnlessEqual(len(l[1]),3)
+    self.failUnlessEqual(len(l[2]),4)
+    self.failUnlessEqual(len(l[3]),2)
+    
   def test25SDMolSupplier(self) :
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','NCI_aids_few.sdf')

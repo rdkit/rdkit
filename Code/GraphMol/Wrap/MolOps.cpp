@@ -340,20 +340,37 @@ namespace RDKit{
                                          bool branchedPaths,
                                          bool useBondOrder,
                                          python::object atomInvariants,
-                                         python::object fromAtoms
+                                         python::object fromAtoms,
+                                         python::object atomBits
                                          ){
     std::vector<unsigned int> *lAtomInvariants=pythonObjectToVect<unsigned int>(atomInvariants);
     std::vector<unsigned int> *lFromAtoms=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
+    std::vector<std::vector<boost::uint32_t> > *lAtomBits=0;
+    if(!(atomBits.is_none())){
+      lAtomBits = new std::vector<std::vector<boost::uint32_t> >(mol.getNumAtoms());
+    }
     ExplicitBitVect *res;
     res = RDKit::RDKFingerprintMol(mol,minPath,maxPath,fpSize,nBitsPerHash,
                                    useHs,tgtDensity,minSize,branchedPaths,
-                                   useBondOrder,lAtomInvariants,lFromAtoms);
+                                   useBondOrder,lAtomInvariants,lFromAtoms,lAtomBits);
 
     if(lAtomInvariants){
       delete lAtomInvariants;
     }
     if(lFromAtoms){
       delete lFromAtoms;
+    }
+    if(lAtomBits){
+      std::cerr<<" copy "<<std::endl;
+      python::list &pyl=static_cast<python::list &>(atomBits);
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        python::list tmp;
+        BOOST_FOREACH(boost::uint32_t v,(*lAtomBits)[i]){
+          tmp.append(v);
+        }
+        pyl.append(tmp);
+      }
+      delete lAtomBits;
     }
     
     return res;
@@ -1063,6 +1080,10 @@ namespace RDKit{
       starting from these atoms will be used.\n\
       Defaults to empty.\n\
 \n\
+    - atomBits: (optional) an empty list. If provided, the result will contain a list \n\
+      containing the bits each atom sets.\n\
+      Defaults to empty.\n\
+\n\
   RETURNS: a DataStructs.ExplicitBitVect with _fpSize_ bits\n\
 \n\
   ALGORITHM:\n\
@@ -1086,7 +1107,8 @@ namespace RDKit{
                    python::arg("branchedPaths")=true,
                    python::arg("useBondOrder")=true,
                    python::arg("atomInvariants")=0,
-                   python::arg("fromAtoms")=0
+                   python::arg("fromAtoms")=0,
+                   python::arg("atomBits")=python::object()
                    ),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
       python::scope().attr("_RDKFingerprint_version")=RDKit::RDKFingerprintMolVersion;
