@@ -361,7 +361,6 @@ namespace RDKit{
       delete lFromAtoms;
     }
     if(lAtomBits){
-      std::cerr<<" copy "<<std::endl;
       python::list &pyl=static_cast<python::list &>(atomBits);
       for(unsigned int i=0;i<mol.getNumAtoms();++i){
         python::list tmp;
