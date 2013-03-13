@@ -1,67 +1,77 @@
 
 Installation
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%
 
 Below a number of installation recipies is presented, with varying degree of
 complexity.
 
-Ubuntu
-******
+Linux and the Mac
++++++++++++++++++
 
-Ubuntu 12.04
-========================
+Installation from repositories
+******************************
 
-Installation from the repositories
-----------------------------------
+Ubuntu 12.04 and later
+----------------------
 
-RDKit is available via the Ubuntu repositories, to install::
+Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu repositories.
+To install::
 
     sudo apt-get install python-rdkit librdkit1 rdkit-data
 
-Building from source
---------------------
+Fedora, CentOS, and RHEL
+------------------------
+
+Gianluca Sforna creates binary RPMs that can be found here: <http://giallu.fedorapeople.org/rdkit-20XX.XX/>_
+
     
-If you want to build from source use the git/svn repos to get the code, or 
-download a tar.gz file. First you want to install the prerequisites::
+MacOS
+-----
 
-     sudo apt-get install flex bison build-essential python-numpy cmake \
-                          python-dev sqlite3 libsqlite3-dev libboost-dev \
-                          libboost-python-dev libboost-regex-dev
-
-Fetch the source, here as tar.gz but you could use git clone::
-
-    wget http://downloads.sourceforge.net/project/rdkit/rdkit/QX_20XX/RDKit_20XX_XX_X.tgz
-
-Untar into /opt, or a different location of (like your home dir)::
-
-    sudo tar xzvf RDKit_20XX_XX_X.tgz -C /opt
-    
-Set evironmental variables in ~/.bashrc ::
-
-    export RDBASE=/opt/RDKit_20XX_XX_X
-    export LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH
-    export PYTHONPATH=$RDBASE:$PYTHONPATH    
-
-To build, compile and (optionally) test the code::
-
-    cd $RDBASE
-    mkdir build
-    cd build
-    cmake ..
-    make # try `make -j 4` to use 4 processors for compilation
-    make install
-    ctest
-                          
-The custom build has been based on a `blogpost from the OPIG <http://blopig.com/blog/?p=315>`_.
+Eddie Cao has produced a homebrew formula that can be used to easily build the RDKit <https://github.com/edc/homebrew-rdkit>_
 
 
-Other Linux or Mac
-******************
+Building from Source
+********************
 
-The instructions below are for the Q42009 release and subsequent releases.
+Prerequisites
+-------------
 
-Getting Ready
-=============
+Installing prerequisites as packages
+====================================
+
+Ubuntu and other debian-derived systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install the following packages using apt-get::
+
+   flex bison build-essential python-numpy cmake python-dev sqlite3 libsqlite3-dev 
+   libboost-dev libboost-python-dev libboost-regex-dev
+
+
+Fedora, CentOS (5.7+), and RHEL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install the following packages using yum::
+
+   cmake tk-devel readline-devel zlib-devel bzip2-devel sqlite-devel
+
+Install the package group "Development Tools"
+
+Packages to install from source:
+
+  * python 2.7 : use ./configure CFLAGS=-fPIC --enable-unicode=ucs4 --enable-shared
+  * numpy : do export LD_LIBRARY_PATH="/usr/local/lib" before python setup.py install
+  * flex : must be installed from source, see below
+  * boost 1.48.0 or later: do ./bootstrap.sh --with-libraries=python,regex; ./b2; ./b2 install
+
+Older versions of CentOS
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here things are more difficult. Check this wiki page for information: https://code.google.com/p/rdkit/wiki/BuildingOnCentOS
+
+Installing prerequisites from source
+====================================
 
  * Required packages:
 
@@ -83,11 +93,11 @@ Getting Ready
    * If you would like to install the RDKit InChI support (first available in the Q2 2011 release), follow the instructions in $RDBASE/External/INCHI-API to get a copy of the InChI source and put it in the appropriate place.
 
 Installing Boost
-================
+~~~~~~~~~~~~~~~~
+
 If your linux distribution has a boost-devel package including the python and regex libraries, you can use that and save yourself the steps below. 
 
-
-.. note:: if you *do* have a version of the boost libraries pre-installed and you want to use your own version, be careful when you build the code. We've seen at least one example on a Fedora system where cmake compiled using a user-installed version of boost and then linked against the system version. This led to segmentation faults. There is a workaround for this below in the (see :ref:`faq`) section.
+.. note:: if you *do* have a version of the boost libraries pre-installed and you want to use your own version, be careful when you build the code. We've seen at least one example on a Fedora system where cmake compiled using a user-installed version of boost and then linked against the system version. This led to segmentation faults. There is a workaround for this below in the (see :ref:`FAQ`) section.
 
   * download the boost source distribution from `the boost web site <http://www.boost.org>`_
   * extract the source somewhere on your machine (e.g. ``/usr/local/src/boost_1_45_0``)
@@ -96,14 +106,19 @@ If your linux distribution has a boost-devel package including the python and re
     * ``cd $BOOST``
     * If you want to use the python wrappers: ``./bootstrap.sh --with-libraries=python,regex``
     * If not using the python wrappers: ``./bootstrap.sh --with-libraries=regex``
-    * Building on 32 bit systems: ``./bjam install``
-    * Building on 64 bit systems: ``./bjam address-model=64 cflags=-fPIC cxxflags=-fPIC install``
+    * Building on 32 bit systems: ``./b2 install``
+    * Building on 64 bit systems: ``./b2 address-model=64 cflags=-fPIC cxxflags=-fPIC install``
 
     If you have any problems with this step, check the boost `installation instructions <http://www.boost.org/more/getting_started/unix-variants.html>`_.
 
-Building the Code
-=================
-  * follow the Installing Boost instructions above.
+Building the RDKit
+------------------
+
+Fetch the source, here as tar.gz but you could use git or svn as well::
+
+    wget http://downloads.sourceforge.net/project/rdkit/rdkit/QX_20XX/RDKit_20XX_XX_X.tgz
+
+  * Ensure that the prerequisites are installed
   * environment variables:
   
     * RDBASE: the root directory of the RDKit distribution (e.g. ~/RDKit)
@@ -120,18 +135,19 @@ Building the Code
     * ``make`` : this builds all libraries, regression tests, and wrappers (by default).
     * ``make install``
 
-See below for a list of [#Frequently_Encountered_Problems frequently encountered problems] and solutions.
+See below for a list of :ref:`FAQ` and solutions.
 
-Testing the Build (optional, but recommended)
-=============================================
+Testing the build (optional, but recommended)
+---------------------------------------------
+
   * cd to $RDBASE/build and do ``ctest``
   * you're done!
 
 Advanced
-========
+--------
 
 Specifying an alternate Boost installation
-------------------------------------------
+==========================================
 
 You need to tell cmake where to find the boost libraries and header files:
 
@@ -140,7 +156,7 @@ If you have put boost in /opt/local, the cmake invocation would look like::
     cmake -DBOOST_ROOT=/opt/local ..
 
 Specifying an alternate Python installation
--------------------------------------------
+===========================================
 
 You need to tell cmake where to find the python library it should link against and the python header files.
 
@@ -151,27 +167,25 @@ Here's a sample command line::
 The ``PYTHON_EXECUTABLE`` part is optional if the correct python is the first version in your PATH.
 
 Disabling the Python wrappers
------------------------------
+=============================
 
 You can completely disable building of the python wrappers by setting the configuration variable RDK_BUILD_PYTHON_WRAPPERS to nil::
 
     cmake -D RDK_BUILD_PYTHON_WRAPPERS= ..
 
 Building the Java wrappers
---------------------------
+==========================
 
 *Additional Requirements*
-
 
 * SWIG v2.0.x: http://www.swig.org
 * Junit: get a copy of the junit .jar file from https://github.com/KentBeck/junit/downloads and put it in the directory ``$RDBASE/External/java_lib`` (you will need to create the directory) and rename it to junit.jar.
 
 *Building*
 
-* When you invoke cmake add ``-D RDK_BUILD_SWIG_WRAPPERS=ON`` to the arguments. 
-  For example::
-    cmake -D RDK_BUILD_SWIG_WRAPPERS=ON ..
-* Build and install normally using `make`. The directory ``$RDBASE/Code/JavaWrappers/gmwrapper`` will contain the three required files: libGraphMolWrap.so (libGraphMolWrap.jnilib on the Mac), org.RDKit.jar, and org.RDKitDoc.jar.
+  * When you invoke cmake add ``-D RDK_BUILD_SWIG_WRAPPERS=ON`` to the arguments. For example: ``cmake -D RDK_BUILD_SWIG_WRAPPERS=ON ..``
+
+  * Build and install normally using `make`. The directory ``$RDBASE/Code/JavaWrappers/gmwrapper`` will contain the three required files: libGraphMolWrap.so (libGraphMolWrap.jnilib on the Mac), org.RDKit.jar, and org.RDKitDoc.jar.
 
 *Using the wrappers*
 
@@ -189,10 +203,10 @@ To use the wrappers, the three files need to be in the same directory, and that 
 
 
 
-.. _faq:
+.. _FAQ:
 
 Frequently Encountered Problems
-===============================
+-------------------------------
 
 
 In each case I've replaced specific pieces of the path with ``...``.
@@ -212,7 +226,7 @@ In each case I've replaced specific pieces of the path with ``...``.
 
 Add this to the arguments when you call cmake: ``-DBoost_USE_STATIC_LIBS=OFF``
 
-`more information here <http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01119.html>`_
+More information here: `<http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01119.html>`_
 
 ----
 
@@ -234,7 +248,7 @@ Add this to the arguments when you call cmake: ``-DBoost_USE_STATIC_LIBS=OFF``
 
 Add ``#define BOOST_PYTHON_NO_PY_SIGNATURES`` at the top of ``Code/GraphMol/Wrap/EditableMol.cpp``
 
-`more information here <http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01178.html>`_
+More information here: `<http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01178.html>`_
 
 
 ----
@@ -281,3 +295,42 @@ and is at the beginning of the PYTHONPATH::
     export PYTHONPATH="/Library/Python/2.6/site-packages:$PYTHONPATH"
 
 Now it's safe to build boost and the RDKit.
+
+Windows
++++++++
+
+Prerequisites
+*************
+
+  * Python 2.7 (from http://www.python.org/)
+  * numpy (from http://numpy.scipy.org/ or use ``pip install numpy``). Binaries for win64 are available here: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
+  * PIL: (from http://www.pythonware.com/products/pil/index.htm or use ``pip install PIL``)
+
+Recommended extras
+------------------
+
+  * aggdraw: a library for high-quality drawing in Python. Instructions for downloading are here: http://effbot.org/zone/aggdraw-index.htm The new (as of May 2008) drawing code has been tested with v1.2a3 of aggdraw. Despite the alpha label, the code is stable and functional.
+  * matplotlib: a library for scientific plotting from Python. http://matplotlib.sourceforge.net/
+  * ipython : a very useful interactive shell (and much more) for Python. http://ipython.scipy.org/dist/
+  * win32all: Windows extensions for Python. http://sourceforge.net/projects/pywin32/
+
+Installation of RDKit binaries
+******************************
+
+  * Get the appropriate windows binary build from: <http://rdkit.googlecode.com/files>_
+  * Extract the zip file somewhere without a space in the name, i.e. ``c:/``
+  * The rest of this will assume that the installation is in ``c:/RDKit_2012_12_1``
+  * Set the following environment variables:
+    * RDBASE: ``c:/RDKit_2012_12_1`` 
+    * PYTHONPATH: ``%RDBASE%`` if there is already a PYTHONPATH, put ``;%RDBASE%`` at the end.
+    * PATH: add ``;%RDBASE%/lib`` to the end
+
+In Win7 systems, you may run into trouble due to missing DLLs, see one thread from the mailing list: 
+http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01632.html
+You can download the missing DLLs from here: http://www.microsoft.com/en-us/download/details.aspx?id=5555
+
+Installation of RDKit binaries
+******************************
+
+  To come
+
