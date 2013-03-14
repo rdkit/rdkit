@@ -885,8 +885,13 @@ namespace Canon {
       if(msI->type == MOL_STACK_BOND &&
          msI->obj.bond->getBondType() == Bond::DOUBLE &&
          msI->obj.bond->getStereo() > Bond::STEREOANY){
-        Canon::canonicalizeDoubleBond(msI->obj.bond,bondVisitOrders,atomVisitOrders,
-                                      bondDirCounts,atomDirCounts);
+        if(msI->obj.bond->getStereoAtoms().size()>=2){
+          Canon::canonicalizeDoubleBond(msI->obj.bond,bondVisitOrders,atomVisitOrders,
+                                        bondDirCounts,atomDirCounts);
+        } else {
+          // bad stereo spec:
+          msI->obj.bond->setStereo(Bond::STEREONONE);
+        }
       }
       if(msI->type == MOL_STACK_ATOM &&
          msI->obj.atom->hasProp("_ringStereoAtoms")){

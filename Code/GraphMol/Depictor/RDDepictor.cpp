@@ -74,6 +74,10 @@ namespace RDDepict {
         if (((*cbi)->getBondType() == RDKit::Bond::DOUBLE) // this is a double bond
             && ((*cbi)->getStereo() > RDKit::Bond::STEREOANY) // and has stereo chemistry specified
             && (!(*cbi)->getOwningMol().getRingInfo()->numBondRings((*cbi)->getIdx())) ){ // not in a ring
+          if((*cbi)->getStereoAtoms().size() != 2 ){
+            BOOST_LOG(rdWarningLog)<<"WARNING: bond found with stereo spec but no stereo atoms"<<std::endl;
+            continue;
+          }
           EmbeddedFrag efrag(*cbi);
           efrag.setupNewNeighs(); 
           efrags.push_back(efrag);

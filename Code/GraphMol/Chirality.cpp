@@ -650,7 +650,7 @@ namespace RDKit{
           }
           dblBond->getStereoAtoms().clear();
 
-          // at the moment we are ignoring stereochem on ring bonds.
+          // at the moment we are ignoring stereochem on ring bonds with less than 8 members.
           if(!mol.getRingInfo()->numBondRings(dblBond->getIdx()) ||
              mol.getRingInfo()->minBondRingSize(dblBond->getIdx())>7 ){
             const Atom *begAtom=dblBond->getBeginAtom();
