@@ -1597,7 +1597,7 @@ namespace RDKit {
       }
       // call assignStereochemistry just to be safe; otherwise, MolToSmiles may
       // overwrite E/Z and/or bond direction on double bonds.
-      MolOps::assignStereochemistry(*m);
+      MolOps::assignStereochemistry(*m,true,true);
     }
 
     return m;
