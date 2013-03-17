@@ -58,7 +58,7 @@ namespace RDKit{
                                      const std::vector<boost::uint32_t> *fromAtoms=0,
                                      std::vector<std::vector<boost::uint32_t> > *atomBits=0
                                      );
-  const std::string RDKFingerprintMolVersion="1.2.0";
+  const std::string RDKFingerprintMolVersion="2.0.0";
 
 
   //! \brief Generates a topological (Daylight like) fingerprint for a molecule

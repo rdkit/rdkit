@@ -123,8 +123,7 @@ namespace RDKit{
       uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
       if(iv1>iv2) std::swap(iv1,iv2);
       //std::cerr<<"---->"<<bnd->getIdx()<<" "<<res<<" "<<iv1<<"-"<<iv2;
-      gboost::hash_combine(res,iv1);
-      gboost::hash_combine(res,iv2);
+      res = (res%8)<<10 | (gboost::hash_value(iv1)%128)<<7 | (gboost::hash_value(iv2)%128);
       //std::cerr<<"  "<<res<<std::endl;
       return res;
     }
@@ -201,7 +200,8 @@ namespace RDKit{
           // at the end of this round, start the next one
           gboost::hash_combine(res,best);
           //std::cerr<<" nres: "<<res<<std::endl;
-          stack=newStack;
+          //stack=newStack;
+          std::swap(stack,newStack);
           best = std::numeric_limits<boost::uint32_t>::max();
           newStack.clear();
         }
@@ -392,8 +392,24 @@ namespace RDKit{
             atomsInPath.set(bi->getEndAtomIdx());
           }
         }
-        unsigned long seed = canonicalPathHash(path,mol,bondCache,bondInvariants);
 
+        std::vector<unsigned int> tBondInvariants(bondInvariants);
+        std::vector<unsigned int> bondDegrees(path.size(),0); 
+        for(unsigned int i=0;i<path.size();++i){
+          const Bond *bi = bondCache[path[i]];
+          for(unsigned int j=i;j<path.size();++j){
+            const Bond *bj = bondCache[path[j]];
+            if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx()||
+               bi->getBeginAtomIdx()==bj->getEndAtomIdx()||
+               bi->getEndAtomIdx()==bj->getBeginAtomIdx()||
+               bi->getEndAtomIdx()==bj->getEndAtomIdx()){
+              bondDegrees[i]++;
+              bondDegrees[j]++;
+            }
+          }
+          tBondInvariants[path[i]] |= bondDegrees[i]<<20;
+        }
+        unsigned long seed = canonicalPathHash(path,mol,bondCache,tBondInvariants);
 #endif
 #ifdef VERBOSE_FINGERPRINTING        
         std::cerr<<" hash: "<<seed<<std::endl;
