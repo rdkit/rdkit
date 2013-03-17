@@ -29,27 +29,117 @@ using namespace RDKit;
 
 void test1(){
   BOOST_LOG(rdInfoLog) <<"testing basics" << std::endl;
-
-  std::string smi = "C1=CC=CC=C1";
-  RWMol *m1 = SmilesToMol(smi);
-  TEST_ASSERT(m1->getNumAtoms()==6);
-  ExplicitBitVect *fp1=RDKFingerprintMol(*m1);
-  ExplicitBitVect *fp2=RDKFingerprintMol(*m1);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>=0.0);
+  {
+    std::string smi = "C1=CC=CC=C1";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1->getNumAtoms()==6);
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1);
+    ExplicitBitVect *fp2=RDKFingerprintMol(*m1);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>=0.0);
   
-  smi = "C1=CC=CC=N1";
-  RWMol *m2 = SmilesToMol(smi);
-  delete fp2;
-  fp2=RDKFingerprintMol(*m2);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
-  TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+    smi = "C1=CC=CC=N1";
+    RWMol *m2 = SmilesToMol(smi);
+    delete fp2;
+    fp2=RDKFingerprintMol(*m2);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)<1.0);
+    TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)>0.0);
+
+    delete m1;
+    delete m2;
+    delete fp1;
+    delete fp2;
+  }
+
+  {
+    std::string smi = "Cc1ccc(C(F)(F)F)o1";
+    RWMol *m1 = SmilesToMol(smi);
+    std::vector<uint32_t> vs1(m1->getNumAtoms());
+    for(unsigned int i=0;i<m1->getNumAtoms();++i){
+      vs1[i] = m1->getAtomWithIdx(i)->getAtomicNum();
+    }
+  std::cerr<<"\n\n\n\n\n\n\n\n\n-------------------"<<std::endl;
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,5,1024,1,0,-1,0,1,1,&vs1);
+    smi = "c1ccoc1";
+    RWMol *m2 = SmilesToMol(smi);
+    std::vector<uint32_t> vs2(m2->getNumAtoms());
+    for(unsigned int i=0;i<m2->getNumAtoms();++i){
+      vs2[i] = m2->getAtomWithIdx(i)->getAtomicNum();
+    }
+  std::cerr<<"\n\n\n\n\n\n\n\n\n-------------------"<<std::endl;
+    ExplicitBitVect *fp2=RDKFingerprintMol(*m2,1,5,1024,1,0,-1,0,1,1,&vs2);
+
+    TEST_ASSERT(((*fp1)&(*fp2))==(*fp2));
+    delete m1;
+    delete m2;
+    delete fp1;
+    delete fp2;
+  }
+
+  {
+    std::string smi = "Oc1cc2[nH]cnc2c(O)n1";
+    RWMol *m1 = SmilesToMol(smi);
+    std::vector<uint32_t> vs1(m1->getNumAtoms());
+    for(unsigned int i=0;i<m1->getNumAtoms();++i){
+      vs1[i] = m1->getAtomWithIdx(i)->getAtomicNum();
+    }
+    m1->debugMol(std::cerr);
+  std::cerr<<"\n\n\n\n\n\n\n\n\n-------------------"<<std::endl;
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,4,4,1024,1,0,-1,0,1,1,&vs1);
+
+    for(unsigned int i=0;i<m1->getNumAtoms();++i){
+      smi = MolToSmiles(*m1,false,false,i,false);
+      RWMol *m2 = SmilesToMol(smi);
+      std::vector<uint32_t> vs2(m2->getNumAtoms());
+      for(unsigned int i=0;i<m2->getNumAtoms();++i){
+        vs2[i] = m2->getAtomWithIdx(i)->getAtomicNum();
+      }
+      std::cerr<<"SMI: "<<smi<<std::endl;
+      m2->debugMol(std::cerr);
+      std::cerr<<"\n\n\n\n\n\n\n\n\n-------------------"<<std::endl;
+      ExplicitBitVect *fp2=RDKFingerprintMol(*m2,4,4,1024,1,0,-1,0,1,1,&vs2);
+      IntVect iv;
+      ((*fp2)^(*fp1)).getOnBits(iv);
+      std::copy(iv.begin(),iv.end(),std::ostream_iterator<int>(std::cerr,", "));
+      std::cerr<<std::endl;
+      
+      TEST_ASSERT((*fp1)==(*fp2));
+      delete m2;
+      delete fp2;
+    }
+  }
+  {
+    std::string smi = "Oc1cc2[nH]cnc2c(O)n1";
+    RWMol *m1 = SmilesToMol(smi);
+    std::vector<uint32_t> vs1(m1->getNumAtoms());
+    for(unsigned int i=0;i<m1->getNumAtoms();++i){
+      vs1[i] = m1->getAtomWithIdx(i)->getAtomicNum();
+    }
+  std::cerr<<"\n\n\n\n\n\n\n\n\n-------------------"<<std::endl;
+    ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,5,1024,1,0,-1,0,1,1,&vs1);
+    smi = "c1ccncc1";
+    RWMol *m2 = SmilesToMol(smi);
+    std::vector<uint32_t> vs2(m2->getNumAtoms());
+    for(unsigned int i=0;i<m2->getNumAtoms();++i){
+      vs2[i] = m2->getAtomWithIdx(i)->getAtomicNum();
+    }
+  std::cerr<<"\n\n\n\n\n\n\n\n\n-------------------"<<std::endl;
+    ExplicitBitVect *fp2=RDKFingerprintMol(*m2,1,5,1024,1,0,-1,0,1,1,&vs2);
+
+    IntVect iv;
+    ((*fp2)^((*fp1)&(*fp2))).getOnBits(iv);
+    std::copy(iv.begin(),iv.end(),std::ostream_iterator<int>(std::cerr,", "));
+    std::cerr<<std::endl;
+    
+    TEST_ASSERT(((*fp1)&(*fp2))==(*fp2));
+    delete m1;
+    delete m2;
+    delete fp1;
+    delete fp2;
+  }
 
 
-  delete m1;
-  delete m2;
-  delete fp1;
-  delete fp2;
+  
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 void test2(){
@@ -2116,8 +2206,8 @@ void testRDKitAtomBits(){
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
-#if 1
   test1();
+#if 1
   test2();
   test3();
   test1alg2();
@@ -2131,8 +2221,8 @@ int main(int argc,char *argv[]){
   test3MorganFPs();
   test4MorganFPs();
   test5MorganFPs();
-  test5BackwardsCompatibility();
-  testIssue2875658();
+  //test5BackwardsCompatibility();
+  //testIssue2875658();
   testAtomCodes();
   testAtomPairs();
   testAtomPairs2();
@@ -2147,9 +2237,9 @@ int main(int argc,char *argv[]){
   testMorganAtomInfo();
   testRDKitFPOptions();
   testPairsAndTorsionsOptions();
-  testRDKitFromAtoms();
   testMACCS();
 #endif
+  testRDKitFromAtoms();
   testRDKitAtomBits();
   return 0;
 }

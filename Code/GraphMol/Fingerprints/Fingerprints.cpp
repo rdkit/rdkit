@@ -106,6 +106,110 @@ namespace RDKit{
       }
       return res;
     }
+
+    uint32_t hashBond(const Bond *bnd,const std::vector<uint32_t> &atomInvariants,bool useBondOrder){
+      PRECONDITION(bnd,"bad bond");
+      uint32_t res;
+      if(useBondOrder) {
+        if(bnd->getIsAromatic()){
+          res = Bond::AROMATIC;
+        } else {
+          res=bnd->getBondType();
+        }
+      } else {
+        res = 1;
+      }
+      uint32_t iv1=atomInvariants[bnd->getBeginAtomIdx()];
+      uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
+      if(iv1>iv2) std::swap(iv1,iv2);
+      //std::cerr<<"---->"<<bnd->getIdx()<<" "<<res<<" "<<iv1<<"-"<<iv2;
+      gboost::hash_combine(res,iv1);
+      gboost::hash_combine(res,iv2);
+      //std::cerr<<"  "<<res<<std::endl;
+      return res;
+    }
+    uint32_t canonicalPathHash(const PATH_TYPE &path,
+                               const ROMol &mol,
+                               const std::vector<const Bond *> &bondCache,
+                               const std::vector<uint32_t> &bondHashes){
+      std::deque< std::pair<unsigned int,boost::dynamic_bitset<> > > stack;
+      uint32_t best;
+      //std::cerr<<" hash: ";
+      for(unsigned int i=0;i<path.size();++i){
+        //std::cerr<<" "<<bondHashes[path[i]];
+        if(i==0){
+          boost::dynamic_bitset<> bs(mol.getNumBonds());
+          bs.set(path[i]);
+          stack.push_back(std::make_pair(i,bs));
+          best=bondHashes[path[i]];
+        } else {
+          if(bondHashes[path[i]]<=best){
+            if(bondHashes[path[i]]<best){
+              stack.clear();
+              best = bondHashes[path[i]];
+            }
+            boost::dynamic_bitset<> bs(mol.getNumBonds());
+            bs.set(path[i]);
+            stack.push_back(std::make_pair(i,bs));
+          }
+        }
+      }
+      uint32_t res=best;
+      //std::cerr<<"  best: "<<best<<std::endl;
+      if(path.size()==1) return res;
+      best = std::numeric_limits<boost::uint32_t>::max();
+      std::deque< std::pair<unsigned int,boost::dynamic_bitset<> > > newStack;
+      while(!stack.empty()){
+        // assumption: each element of the stack corresponds to
+        // the last point of a traversal of the path
+        // res has been updated with all elements already traversed
+        
+        unsigned int i;
+        boost::dynamic_bitset<> bondsThere;
+        boost::tie(i,bondsThere)=stack.front();
+
+        //std::cerr<<" "<<path[i]<<"("<<bondsThere<<")";
+        
+        const Bond *bnd=bondCache[path[i]];
+        for(unsigned int j=0;j<path.size();++j){
+          //std::cerr<<" c:"<<path[j];
+          if(bondsThere[path[j]]) {
+            //std::cerr<<"x";
+            continue;
+          }
+          const Bond *obnd=bondCache[path[j]];
+          if(bondHashes[path[j]]>best) continue;
+          if(obnd->getBeginAtomIdx()==bnd->getBeginAtomIdx() ||
+             obnd->getBeginAtomIdx()==bnd->getEndAtomIdx() ||
+             obnd->getEndAtomIdx()==bnd->getBeginAtomIdx() ||
+             obnd->getEndAtomIdx()==bnd->getEndAtomIdx() ){
+            // it's a neighbor and the hash is at least as good as what we've seen so far
+            if(bondHashes[path[j]]<best){
+              newStack.clear();
+              best=bondHashes[path[j]];
+            }
+            boost::dynamic_bitset<> bs(bondsThere);
+            bs.set(path[j]);
+            newStack.push_back(std::make_pair(j,bs));
+            //std::cerr<<"  "<<path[j];
+          }
+        }
+
+        stack.pop_front();
+        if(stack.empty()){
+          //std::cerr<<"\n     new round "<<" best: "<<best<<" res: "<<res<<" sz: "<<newStack.size();
+          // at the end of this round, start the next one
+          gboost::hash_combine(res,best);
+          //std::cerr<<" nres: "<<res<<std::endl;
+          stack=newStack;
+          best = std::numeric_limits<boost::uint32_t>::max();
+          newStack.clear();
+        }
+      }
+      return res;
+    }    
+
+    
   } // end of anonymous namespace
 
   // caller owns the result, it must be deleted
@@ -192,6 +296,7 @@ namespace RDKit{
         }
       }
     }
+    std::vector<uint32_t> bondInvariants(mol.getNumBonds());
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
     ROMol::EDGE_ITER firstB,lastB;
@@ -199,6 +304,7 @@ namespace RDKit{
     while(firstB!=lastB){
       BOND_SPTR bond = mol[*firstB];
       bondCache[bond->getIdx()]=bond.get();
+      bondInvariants[bond->getIdx()] = hashBond(bond.get(),*atomInvariants,useBondOrder);
       ++firstB;
     }
     if(atomBits){
@@ -221,6 +327,7 @@ namespace RDKit{
         std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
         std::cerr<<std::endl;
 #endif
+#if 0
         // initialize the bond hashes to the number of neighbors the bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size());
         std::fill(bondNbrs.begin(),bondNbrs.end(),0);
@@ -276,31 +383,56 @@ namespace RDKit{
         
         // hash the path to generate a seed:
 	unsigned long seed = gboost::hash_range(bondHashes.begin(),bondHashes.end());
+#else
+        if(atomBits){
+          atomsInPath.reset();
+          for(unsigned int i=0;i<path.size();++i){
+            const Bond *bi = bondCache[path[i]];
+            atomsInPath.set(bi->getBeginAtomIdx());
+            atomsInPath.set(bi->getEndAtomIdx());
+          }
+        }
+        unsigned long seed = canonicalPathHash(path,mol,bondCache,bondInvariants);
 
+#endif
 #ifdef VERBOSE_FINGERPRINTING        
         std::cerr<<" hash: "<<seed<<std::endl;
 #endif
-        // originally it seemed like a good idea to track hashes we've already
-        // seen in order to avoid resetting them. In some benchmarking I did, that
-        // seemed to actually result in a longer runtime (at least when using
-        // an std::set to store the hashes)
-        generator.seed(static_cast<rng_type::result_type>(seed));
-        for(unsigned int i=0;i<nBitsPerHash;i++){
-          unsigned int bit = randomSource();
-          bit %= fpSize;
-          res->setBit(bit);
-          if(atomBits){
-            boost::dynamic_bitset<>::size_type aIdx=atomsInPath.find_first();
-            while(aIdx!=boost::dynamic_bitset<>::npos){
-              if(std::find((*atomBits)[aIdx].begin(),(*atomBits)[aIdx].end(),bit)==(*atomBits)[aIdx].end()){
-                (*atomBits)[aIdx].push_back(bit);
-              }
-              aIdx = atomsInPath.find_next(aIdx);
+
+        unsigned int bit = seed%fpSize;
+        res->setBit(bit);
+        if(atomBits){
+          boost::dynamic_bitset<>::size_type aIdx=atomsInPath.find_first();
+          while(aIdx!=boost::dynamic_bitset<>::npos){
+            if(std::find((*atomBits)[aIdx].begin(),(*atomBits)[aIdx].end(),bit)==(*atomBits)[aIdx].end()){
+              (*atomBits)[aIdx].push_back(bit);
             }
+            aIdx = atomsInPath.find_next(aIdx);
           }
+        }
 #ifdef VERBOSE_FINGERPRINTING        
-          std::cerr<<"   bit: "<<i<<" "<<bit<<" "<<atomsInPath<<std::endl;
+        std::cerr<<"   bit: "<<0<<" "<<bit<<" "<<atomsInPath<<std::endl;
 #endif
+
+        if(nBitsPerHash>1){
+          generator.seed(static_cast<rng_type::result_type>(seed));
+          for(unsigned int i=1;i<nBitsPerHash;i++){
+            bit = randomSource();
+            bit %= fpSize;
+            res->setBit(bit);
+            if(atomBits){
+              boost::dynamic_bitset<>::size_type aIdx=atomsInPath.find_first();
+              while(aIdx!=boost::dynamic_bitset<>::npos){
+                if(std::find((*atomBits)[aIdx].begin(),(*atomBits)[aIdx].end(),bit)==(*atomBits)[aIdx].end()){
+                  (*atomBits)[aIdx].push_back(bit);
+                }
+                aIdx = atomsInPath.find_next(aIdx);
+              }
+            }
+#ifdef VERBOSE_FINGERPRINTING        
+            std::cerr<<"   bit: "<<i<<" "<<bit<<" "<<atomsInPath<<std::endl;
+#endif
+          }
         }
       }
     }
