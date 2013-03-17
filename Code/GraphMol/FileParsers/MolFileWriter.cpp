@@ -220,6 +220,21 @@ namespace RDKit{
     return ss2.str();
   }
 
+
+  const std::string GetMolFileAliasInfo(const RWMol &mol){
+    std::stringstream ss;
+    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+	atomIt!=mol.endAtoms();++atomIt){
+      if((*atomIt)->hasProp("molFileAlias")){
+        std::string lbl;
+        (*atomIt)->getProp("molFileAlias",lbl);
+        if (!lbl.empty())
+          ss<<"A  "<<std::setw(3)<<(*atomIt)->getIdx()+1<<"\n"<<lbl<<"\n";
+      }
+    }
+    return ss.str();
+  }
+
   
   const std::string AtomGetMolFileSymbol(const Atom *atom){
     PRECONDITION(atom,"");
@@ -555,8 +570,9 @@ namespace RDKit{
     res += GetMolFileChargeInfo(tmol);
     res += GetMolFileRGroupInfo(tmol);
     res += GetMolFileQueryInfo(tmol);
-    
-    // FIX: aliases, etc.
+    res += GetMolFileAliasInfo(tmol);
+
+    // FIX: R-group logic, SGroups and 3D features etc.
     res += "M  END\n";
     return res;
   }
