@@ -29,6 +29,10 @@
 //#define LAYEREDFP_USE_MT
 
 //#define VERBOSE_FINGERPRINTING 1
+//#define REPORT_FP_STATS 1
+#ifdef REPORT_FP_STATS
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#endif
 
 namespace RDKit{
   namespace {
@@ -319,16 +323,22 @@ namespace RDKit{
       std::cerr<<"  "<<paths->first<<" "<<paths->second.size()<<std::endl;
     }
 #endif
-    
+
+#ifdef REPORT_FP_STATS
+    std::map<uint32_t,std::set<std::string> > bitSmiles;
+#endif    
     boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
     for(INT_PATH_LIST_MAP_CI paths=allPaths.begin();paths!=allPaths.end();paths++){
       BOOST_FOREACH(const PATH_TYPE &path,paths->second){
+#ifdef REPORT_FP_STATS
+        std::vector<int> atomsToUse;
+#endif
 #ifdef VERBOSE_FINGERPRINTING        
         std::cerr<<"Path: ";
         std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
         std::cerr<<std::endl;
 #endif
-#if 0
+#if 1
         // initialize the bond hashes to the number of neighbors the bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size());
         std::fill(bondNbrs.begin(),bondNbrs.end(),0);
@@ -339,6 +349,14 @@ namespace RDKit{
           const Bond *bi = bondCache[path[i]];
           atomsInPath.set(bi->getBeginAtomIdx());
           atomsInPath.set(bi->getEndAtomIdx());
+#ifdef REPORT_FP_STATS
+          if(std::find(atomsToUse.begin(),atomsToUse.end(),bi->getBeginAtomIdx())==atomsToUse.end()){
+            atomsToUse.push_back(bi->getBeginAtomIdx());
+          }
+          if(std::find(atomsToUse.begin(),atomsToUse.end(),bi->getEndAtomIdx())==atomsToUse.end()){
+            atomsToUse.push_back(bi->getEndAtomIdx());
+          }
+#endif          
           for(unsigned int j=i+1;j<path.size();++j){
             const Bond *bj = bondCache[path[j]];
             if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx() ||
@@ -367,23 +385,32 @@ namespace RDKit{
             }
           }
           boost::uint32_t nBitsInHash=0;
-          boost::uint32_t ourHash=bondNbrs[i]%8; // 3 bits here
-          nBitsInHash+=3;
-          ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
-          nBitsInHash+=4;
-          ourHash |= a1Hash<<nBitsInHash; // 8 bits
-          nBitsInHash+=8;
-          ourHash |= a2Hash<<nBitsInHash; // 8 bits
+          // boost::uint32_t ourHash=bondNbrs[i]%8; // 3 bits here
+          // nBitsInHash+=3;
+          // ourHash |= (bondHash%16)<<nBitsInHash; // 4 bits here
+          // nBitsInHash+=4;
+          // ourHash |= a1Hash<<nBitsInHash; // 8 bits
+          // nBitsInHash+=8;
+          // ourHash |= a2Hash<<nBitsInHash; // 8 bits
+          boost::uint32_t ourHash=bondNbrs[i];
+          gboost::hash_combine(ourHash,bondHash);
+          gboost::hash_combine(ourHash,a1Hash);
+          gboost::hash_combine(ourHash,a2Hash);
           bondHashes.push_back(ourHash);
         }
-        std::sort(bondHashes.begin(),bondHashes.end());
-
-        // finally, we will add the number of distinct atoms in the path at the end
-        // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-        bondHashes.push_back(atomsInPath.count());
         
         // hash the path to generate a seed:
-	unsigned long seed = gboost::hash_range(bondHashes.begin(),bondHashes.end());
+	unsigned long seed;
+        if(path.size()>1){
+          std::sort(bondHashes.begin(),bondHashes.end());
+
+          // finally, we will add the number of distinct atoms in the path at the end
+          // of the vect. This allows us to distinguish C1CC1 from CC(C)C
+          bondHashes.push_back(atomsInPath.count());
+          seed= gboost::hash_range(bondHashes.begin(),bondHashes.end());
+        } else {
+          seed = bondHashes[0];
+        }
 #else
         if(atomBits){
           atomsInPath.reset();
@@ -417,6 +444,26 @@ namespace RDKit{
 #endif
 
         unsigned int bit = seed%fpSize;
+
+#ifdef REPORT_FP_STATS
+        std::string fsmi=MolFragmentToSmiles(mol,atomsToUse,&path);
+        // if(bitSmiles[bit].size()==0){
+        //   std::cerr<<"   SET: "<<bit<<" "<<fsmi<<" ";
+        //   std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
+        //   std::cerr<<" || ";
+        //   std::copy(atomsToUse.begin(),atomsToUse.end(),std::ostream_iterator<int>(std::cerr,", "));
+        //   std::cerr<<std::endl;
+        // }
+        bitSmiles[bit].insert(fsmi);
+        // if(bitSmiles[bit].size()>1){
+        //   std::cerr<<"  DUPE: "<<bit<<" "<<fsmi<<" ";
+        //   std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
+        //   std::cerr<<" || ";
+        //   std::copy(atomsToUse.begin(),atomsToUse.end(),std::ostream_iterator<int>(std::cerr,", "));
+        //   std::cerr<<std::endl;
+        // }
+#endif
+
         res->setBit(bit);
         if(atomBits){
           boost::dynamic_bitset<>::size_type aIdx=atomsInPath.find_first();
@@ -465,7 +512,19 @@ namespace RDKit{
         res = tmpV;
       }
     }
-    
+#ifdef REPORT_FP_STATS
+    std::cerr<<"BIT STATS"<<std::endl;
+    if(fpSize==res->size()){
+      for(unsigned int i=0;i<fpSize;++i){
+        if((*res)[i] && (bitSmiles[i].size()>1)){
+          std::cerr<<i<<"\t"<<bitSmiles[i].size()<<std::endl;
+          BOOST_FOREACH(std::string smi,bitSmiles[i]){
+            std::cerr<<"   "<<smi<<std::endl;
+          }
+        }
+      }
+    }
+#endif    
     return res;
   }
 
