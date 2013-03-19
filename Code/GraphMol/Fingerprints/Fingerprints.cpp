@@ -123,7 +123,7 @@ namespace RDKit{
       uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
       if(iv1>iv2) std::swap(iv1,iv2);
       //std::cerr<<"---->"<<bnd->getIdx()<<" "<<res<<" "<<iv1<<"-"<<iv2;
-      res = (res%8)<<10 | (gboost::hash_value(iv1)%128)<<7 | (gboost::hash_value(iv2)%128);
+      res = (res%8) | (iv1%128)<<3 | (iv2%128)<<10;
       //std::cerr<<"  "<<res<<std::endl;
       return res;
     }
@@ -206,6 +206,7 @@ namespace RDKit{
           newStack.clear();
         }
       }
+      gboost::hash_combine(res,path.size());
       return res;
     }    
 
@@ -407,7 +408,7 @@ namespace RDKit{
               bondDegrees[j]++;
             }
           }
-          tBondInvariants[path[i]] |= bondDegrees[i]<<20;
+          tBondInvariants[path[i]] |= bondDegrees[i]<<17;
         }
         unsigned long seed = canonicalPathHash(path,mol,bondCache,tBondInvariants);
 #endif
