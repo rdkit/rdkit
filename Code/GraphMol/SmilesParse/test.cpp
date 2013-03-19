@@ -3141,7 +3141,6 @@ void testBug3528556(){
     TEST_ASSERT(csmiles1==csmiles2);
   }
 
-
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -3183,6 +3182,26 @@ void testBug257(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub12(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 12: non-canonical fragment smiles" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="c1c(C)cccc1";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    int as[]={0,1,2};
+    std::vector<int> atomsToUse(as,as+sizeof(as)/sizeof(int));
+    std::string csmiles1 = MolFragmentToSmiles(*m,atomsToUse);
+    int as2[]={1,2,3};
+    std::vector<int> atomsToUse2(as2,as2+sizeof(as2)/sizeof(int));
+    std::string csmiles2 = MolFragmentToSmiles(*m,atomsToUse2);
+    TEST_ASSERT(csmiles1==csmiles2);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 void testRingStereochem(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
@@ -3302,7 +3321,8 @@ main(int argc, char *argv[])
   testBug253();
   testBug257();
   testFragmentSmiles();
-#endif
   testRingStereochem();
+#endif
+  testGithub12();
   //testBug1719046();
 }

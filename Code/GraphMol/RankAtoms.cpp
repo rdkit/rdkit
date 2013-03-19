@@ -496,6 +496,7 @@ namespace RankAtoms{
         invariant = (invariant << 8) | deltaMass;
         invariant = (invariant << 3) | chg;
         invariant = (invariant << 1) | chgSign;
+        invariant = (invariant << 1) | atom->getIsAromatic();
       } else {
         const std::string &symb=(*atomSymbols)[aIdx];
         boost::uint32_t hsh=gboost::hash_range(symb.begin(),symb.end());
