@@ -6,6 +6,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#define USE_CAIRO 1
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -52,12 +53,42 @@ void DrawDemo(){
     delete mol;
   }
   {
-    RWMol *mol=SmilesToMol("C");
+    RWMol *mol=SmilesToMol("[Mg]c1c(C#N)cc(C(=O)NCc2sc([NH3+])c([NH3+])c2)cc1");
+    std::string svg=MolToSVG(*mol);
+    std::ofstream ostr("blah3.svg");
+    ostr<<svg<<std::endl;
+    delete mol;
+  }
+  {
+    RWMol *mol=SmilesToMol("[Mg]c1c(C#N)cc(C(=O)NCCCCCC(CCCCCCCCCCC(CCCCCCCCC)(CCCCCCCCCC)CCCCCC)CCCCCCCCCCCCCCCCCCCCCc2sc([NH3+])c([NH3+])c2)cc1");
+    std::string svg=MolToSVG(*mol);
+    std::ofstream ostr("blah4.svg");
+    ostr<<svg<<std::endl;
+    delete mol;
+  }
+  {
+    RWMol *mol=SmilesToMol("BrO");
     std::string svg=MolToSVG(*mol);
     std::ofstream ostr("blah2.svg");
     ostr<<svg<<std::endl;
     delete mol;
   }
+  {
+    RWMol *mol=SmilesToMol("BrC(O)(Cl)N");
+    std::string svg=MolToSVG(*mol);
+    std::ofstream ostr("blah5.svg");
+    ostr<<svg<<std::endl;
+    delete mol;
+  }
+  {
+    RWMol *mol=SmilesToMol("[NH2+]=[NH2+]");
+    std::string svg=MolToSVG(*mol);
+    std::ofstream ostr("blah6.svg");
+    ostr<<svg<<std::endl;
+    delete mol;
+  }
+
+
 #endif
 #ifdef USE_CAIRO
   {
@@ -119,6 +150,44 @@ void DrawDemo(){
 
     cairo_destroy (cr);
     cairo_surface_write_to_png (surface, "mol5.png");
+    cairo_surface_destroy (surface);
+    delete mol;
+  }
+  {
+    RWMol *mol=SmilesToMol("BrO",0,false);
+    mol->updatePropertyCache();
+    cairo_surface_t *surface =
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+    cairo_t *cr = cairo_create (surface);
+    MolToCairo(*mol,cr,300,300);
+
+    cairo_destroy (cr);
+    cairo_surface_write_to_png (surface, "mol6.png");
+    cairo_surface_destroy (surface);
+    delete mol;
+  }
+  {
+    RWMol *mol=SmilesToMol("[Mg]c1c(C#N)cc(C(=O)NCCCCCC(CCCCCCCCCCC(CCCCCCCCC)(CCCCCCCCCC)CCCCCC)CCCCCCCCCCCCCCCCCCCCCc2sc([NH3+])c([NH3+])c2)cc1");
+    cairo_surface_t *surface =
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+    cairo_t *cr = cairo_create (surface);
+    MolToCairo(*mol,cr,300,300);
+
+    cairo_destroy (cr);
+    cairo_surface_write_to_png (surface, "mol7.png");
+    cairo_surface_destroy (surface);
+    delete mol;
+  }
+  {
+    RWMol *mol=SmilesToMol("[NH3+][NH3+]",0,false);
+    mol->updatePropertyCache();
+    cairo_surface_t *surface =
+      cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
+    cairo_t *cr = cairo_create (surface);
+    MolToCairo(*mol,cr,300,300);
+
+    cairo_destroy (cr);
+    cairo_surface_write_to_png (surface, "mol8.png");
     cairo_surface_destroy (surface);
     delete mol;
   }

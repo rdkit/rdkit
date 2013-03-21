@@ -51,30 +51,102 @@ namespace RDKit {
       W
     } OrientType;
 
-  // **************************************************************************
-  void DrawLine( std::vector<ElementType> &res ,
-                 int atnum1 , int atnum2 , int lineWidth , int dashed ,
-                 double x1 , double y1 ,
-                 double x2 , double y2 ) {
+    namespace detail {
+      // **************************************************************************
+      void drawLine( std::vector<ElementType> &res ,
+                     int atnum1 , int atnum2 , int lineWidth , int dashed ,
+                     double x1 , double y1 ,
+                     double x2 , double y2 ) {
 
-    res.push_back( LINE );
-    res.push_back( static_cast<ElementType>(lineWidth) );
-    res.push_back(dashed);
-    res.push_back( static_cast<ElementType>(atnum1) );
-    res.push_back( static_cast<ElementType>(atnum2) );
-    res.push_back( static_cast<ElementType>(x1) );
-    res.push_back( static_cast<ElementType>(y1) );
-    res.push_back( static_cast<ElementType>(x2) );
-    res.push_back( static_cast<ElementType>(y2) );
+        res.push_back( LINE );
+        res.push_back( static_cast<ElementType>(lineWidth) );
+        res.push_back(dashed);
+        res.push_back( static_cast<ElementType>(atnum1) );
+        res.push_back( static_cast<ElementType>(atnum2) );
+        res.push_back( static_cast<ElementType>(x1) );
+        res.push_back( static_cast<ElementType>(y1) );
+        res.push_back( static_cast<ElementType>(x2) );
+        res.push_back( static_cast<ElementType>(y2) );
 
-  }
+      }
+      std::pair<std::string,OrientType> getAtomSymbolAndOrientation(const Atom &atom,RDGeom::Point2D nbrSum){
+        std::string symbol="";
+        OrientType orient=C;
+        int isotope = atom.getIsotope();
+        if(atom.getAtomicNum()!=6 ||
+           atom.getFormalCharge()!=0 ||
+           isotope ||
+           atom.getNumRadicalElectrons()!=0 ||
+           atom.hasProp("molAtomMapNumber") ||
+           atom.getDegree()==0 ){
+          symbol=atom.getSymbol();
+          bool leftToRight=true;
+          if(atom.getDegree()==1 && nbrSum.x>0){
+            leftToRight=false;
+          }
+          if(isotope){
+            symbol = boost::lexical_cast<std::string>(isotope)+symbol;
+          }
+          if(atom.hasProp("molAtomMapNumber")){
+            std::string mapNum;
+            atom.getProp("molAtomMapNumber",mapNum);
+            symbol += ":" + mapNum;
+          }
+          int nHs=atom.getTotalNumHs();
+          if(nHs>0){
+            std::string h="H";
+            if(nHs>1) {
+              h += boost::lexical_cast<std::string>(nHs);
+            }
+            if(leftToRight) symbol += h;
+            else symbol = h+symbol;
+          }
+          if( atom.getFormalCharge()!=0 ){
+            int chg=atom.getFormalCharge();
+            std::string sgn="+";
+            if(chg<0){
+              sgn="-";
+            }
+            chg=abs(chg);
+            if(chg>1){
+              sgn += boost::lexical_cast<std::string>(chg);
+            } 
+            if(leftToRight) symbol+=sgn;
+            else symbol = sgn+symbol;
+          }
 
-  // **************************************************************************
+          if(atom.getDegree()==1){
+            double islope=0;
+            if(fabs(nbrSum.y)>1){
+              islope=nbrSum.x/fabs(nbrSum.y);
+            } else {
+              islope=nbrSum.x;
+            }
+            if(fabs(islope)>.85){
+              if(islope>0){
+                orient=W;
+              } else {
+                orient=E;
+              }
+            } else {
+              if(nbrSum.y>0){
+                orient=N;
+              } else {
+                orient=S;
+              }
+            }
+          }
+        }
+        return std::make_pair(symbol,orient);
+      }
+    } // end of detail namespace
+    // **************************************************************************
     std::vector<ElementType> DrawMol(const ROMol &mol,int confId=-1,
                                      const std::vector<int> *highlightAtoms=0,
                                      unsigned int dotsPerAngstrom=100,
                                      double dblBondOffset=0.3,
-                                     double dblBondLengthFrac=0.8){
+                                     double dblBondLengthFrac=0.8,
+                                     double angstromsPerChar=0.15){
       if(!mol.getRingInfo()->isInitialized()){
         MolOps::findSSSR(mol);
       }
@@ -85,17 +157,83 @@ namespace RDKit {
       const Conformer &conf=mol.getConformer(confId);
       const RDGeom::POINT3D_VECT &locs=conf.getPositions();
 
+      // get atom symbols and orientations
+      // (we need them for the bounding box calculation)
+      std::vector< std::pair<std::string,OrientType> > atomSymbols;
+      ROMol::VERTEX_ITER bAts,eAts;
+      boost::tie(bAts,eAts)=mol.getVertices();
+      while(bAts!=eAts){
+        ROMol::OEDGE_ITER nbr,endNbrs;
+        RDGeom::Point2D nbrSum(0,0);
+        boost::tie(nbr,endNbrs) = mol.getAtomBonds(mol[*bAts].get());
+        RDGeom::Point2D a1(locs[mol[*bAts]->getIdx()].x,
+                           locs[mol[*bAts]->getIdx()].y);
+        while(nbr!=endNbrs){
+          const BOND_SPTR bond=mol[*nbr];
+          ++nbr;
+          int a2Idx=bond->getOtherAtomIdx(mol[*bAts]->getIdx());
+          RDGeom::Point2D a2(locs[a2Idx].x,locs[a2Idx].y);
+          nbrSum+=a2-a1;
+        }
+        atomSymbols.push_back(detail::getAtomSymbolAndOrientation(*mol[*bAts],nbrSum));
+        ++bAts;
+      }
+
+
       //------------
       // do the bounding box
       //------------
       double minx=1e6,miny=1e6,maxx=-1e6,maxy=-1e6;
-      BOOST_FOREACH( const RDGeom::Point3D &pt,locs){
-        minx=std::min(pt.x,minx);
-        miny=std::min(pt.y,miny);
-        maxx=std::max(pt.x,maxx);
-        maxy=std::max(pt.y,maxy);
+      for(unsigned int i=0;i<mol.getNumAtoms();++i){
+        RDGeom::Point3D pt=locs[i];
+        std::string symbol;
+        OrientType orient;
+        boost::tie(symbol,orient)=atomSymbols[i];
+        if(symbol!=""){
+          std::cerr<<"   "<<symbol<<" "<<orient<<std::endl;
+          // account for a possible expansion of the bounding box by the symbol
+          if(pt.x<=minx){
+            switch(orient){
+            case C:
+            case N:
+            case S:
+            case E:
+              minx = pt.x-symbol.size()/2*angstromsPerChar;
+              break;
+            case W:
+              minx = pt.x-symbol.size()*angstromsPerChar;
+              break;
+            }
+          }
+          if(pt.x>=maxx){
+            switch(orient){
+            case C:
+            case N:
+            case S:
+            case W:
+              maxx = pt.x+symbol.size()/2*angstromsPerChar;
+              break;
+            case E:
+              maxx = pt.x+symbol.size()*angstromsPerChar;
+              break;
+            }
+          }
+
+          if(pt.y<=miny){
+            miny = pt.y-1.5*angstromsPerChar;
+          }
+          if(pt.y>=maxy){
+            maxy = pt.y+angstromsPerChar;
+          }
+        } else {
+          minx=std::min(pt.x,minx);
+          miny=std::min(pt.y,miny);
+          maxx=std::max(pt.x,maxx);
+          maxy=std::max(pt.y,maxy);
+        }
       }
       double dimx=(maxx-minx),dimy=(maxy-miny);
+      //std::cerr<<"dims: "<<minx<<"-"<<maxx<<" "<<miny<<" "<<maxy<<std::endl;
       res.push_back(BOUNDS);
       res.push_back(static_cast<ElementType>(dotsPerAngstrom*0));
       res.push_back(static_cast<ElementType>(dotsPerAngstrom*0));
@@ -103,7 +241,6 @@ namespace RDKit {
       res.push_back(static_cast<ElementType>(dotsPerAngstrom*dimy));
 
       // loop over atoms:
-      ROMol::VERTEX_ITER bAts,eAts;
       boost::tie(bAts,eAts)=mol.getVertices();
       while(bAts!=eAts){
         int a1Idx=mol[*bAts]->getIdx();
@@ -149,46 +286,46 @@ namespace RDKit {
               } else {
                 perp *= 0.5 * dblBondOffset;
               }
-              DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
-                        dotsPerAngstrom*(startP.x+perp.x) ,
-                        dotsPerAngstrom*(startP.y+perp.y) ,
-                        dotsPerAngstrom*(endP.x+perp.x) ,
-                        dotsPerAngstrom*(endP.y+perp.y) );
+              detail::drawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
+                                dotsPerAngstrom*(startP.x+perp.x) ,
+                                dotsPerAngstrom*(startP.y+perp.y) ,
+                                dotsPerAngstrom*(endP.x+perp.x) ,
+                                dotsPerAngstrom*(endP.y+perp.y) );
               if(bond->getBondType() != Bond::AROMATIC){
-                DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
-                          dotsPerAngstrom*(startP.x-perp.x) ,
-                          dotsPerAngstrom*(startP.y-perp.y) ,
-                          dotsPerAngstrom*(endP.x-perp.x) ,
-                          dotsPerAngstrom*(endP.y-perp.y) );
+                detail::drawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
+                                  dotsPerAngstrom*(startP.x-perp.x) ,
+                                  dotsPerAngstrom*(startP.y-perp.y) ,
+                                  dotsPerAngstrom*(endP.x-perp.x) ,
+                                  dotsPerAngstrom*(endP.y-perp.y) );
               } else {
-                DrawLine( res , atnum1 , atnum2 , lineWidth , 1 ,
-                          dotsPerAngstrom*(startP.x-perp.x) ,
-                          dotsPerAngstrom*(startP.y-perp.y) ,
-                          dotsPerAngstrom*(endP.x-perp.x) ,
-                          dotsPerAngstrom*(endP.y-perp.y) );
+                detail::drawLine( res , atnum1 , atnum2 , lineWidth , 1 ,
+                                  dotsPerAngstrom*(startP.x-perp.x) ,
+                                  dotsPerAngstrom*(startP.y-perp.y) ,
+                                  dotsPerAngstrom*(endP.x-perp.x) ,
+                                  dotsPerAngstrom*(endP.y-perp.y) );
 
               }
             }
             if( bond->getBondType()==Bond::SINGLE || bond->getBondType()==Bond::TRIPLE ) {
-              DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
-                        dotsPerAngstrom*(a1.x) ,
-                        dotsPerAngstrom*(a1.y) ,
-                        dotsPerAngstrom*(a2.x) ,
-                        dotsPerAngstrom*(a2.y) );
+              detail::drawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
+                                dotsPerAngstrom*(a1.x) ,
+                                dotsPerAngstrom*(a1.y) ,
+                                dotsPerAngstrom*(a2.x) ,
+                                dotsPerAngstrom*(a2.y) );
             } else if( bond->getBondType()!=Bond::DOUBLE ) {
-              DrawLine( res , atnum1 , atnum2 , lineWidth , 2 ,
-                        dotsPerAngstrom*(a1.x) ,
-                        dotsPerAngstrom*(a1.y) ,
-                        dotsPerAngstrom*(a2.x) ,
-                        dotsPerAngstrom*(a2.y) );
+              detail::drawLine( res , atnum1 , atnum2 , lineWidth , 2 ,
+                                dotsPerAngstrom*(a1.x) ,
+                                dotsPerAngstrom*(a1.y) ,
+                                dotsPerAngstrom*(a2.x) ,
+                                dotsPerAngstrom*(a2.y) );
             }
           } else {
             // cyclic bonds
-            DrawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
-                      dotsPerAngstrom*a1.x ,
-                      dotsPerAngstrom*a1.y ,
-                      dotsPerAngstrom*a2.x ,
-                      dotsPerAngstrom*a2.y );
+              detail::drawLine( res , atnum1 , atnum2 , lineWidth , 0 ,
+                                dotsPerAngstrom*a1.x ,
+                                dotsPerAngstrom*a1.y ,
+                                dotsPerAngstrom*a2.x ,
+                                dotsPerAngstrom*a2.y );
 
             if(bond->getBondType()==Bond::DOUBLE ||
                bond->getBondType()==Bond::AROMATIC ||
@@ -236,90 +373,29 @@ namespace RDKit {
 
               obv *= dblBondLengthFrac;
 
-              DrawLine( res , atnum1 , atnum2 , lineWidth , (bond->getBondType()==Bond::AROMATIC),
-                        dotsPerAngstrom*(offsetStart.x+perp.x) ,
-                        dotsPerAngstrom*(offsetStart.y+perp.y) ,
-                        dotsPerAngstrom*(offsetStart.x+obv.x+perp.x) ,
-                        dotsPerAngstrom*(offsetStart.y+obv.y+perp.y) );
+              detail::drawLine( res , atnum1 , atnum2 , lineWidth , (bond->getBondType()==Bond::AROMATIC),
+                                dotsPerAngstrom*(offsetStart.x+perp.x) ,
+                                dotsPerAngstrom*(offsetStart.y+perp.y) ,
+                                dotsPerAngstrom*(offsetStart.x+obv.x+perp.x) ,
+                                dotsPerAngstrom*(offsetStart.y+obv.y+perp.y) );
             }
           }
         }
-        int isotope = mol[*bAts]->getIsotope();
-        if(mol[*bAts]->getAtomicNum()!=6 ||
-           mol[*bAts]->getFormalCharge()!=0 ||
-           isotope ||
-           mol[*bAts]->getNumRadicalElectrons()!=0 ||
-           mol[*bAts]->hasProp("molAtomMapNumber") ||
-           mol[*bAts]->getDegree()==0 ){
+        std::string symbol;
+        OrientType orient;
+        boost::tie(symbol,orient)=atomSymbols[a1Idx];
+        if(symbol!=""){
           res.push_back(ATOM);
           res.push_back(mol[*bAts]->getAtomicNum());
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.x));
           res.push_back(static_cast<ElementType>(dotsPerAngstrom*a1.y));
-          std::string symbol=mol[*bAts]->getSymbol();
-          bool leftToRight=true;
-          if(mol[*bAts]->getDegree()==1 && nbrSum.x>0){
-            leftToRight=false;
-          }
-          if(isotope){
-            symbol = boost::lexical_cast<std::string>(isotope)+symbol;
-          }
-          if(mol[*bAts]->hasProp("molAtomMapNumber")){
-            std::string mapNum;
-            mol[*bAts]->getProp("molAtomMapNumber",mapNum);
-            symbol += ":" + mapNum;
-          }
-          int nHs=mol[*bAts]->getTotalNumHs();
-          if(nHs>0){
-            std::string h="H";
-            if(nHs>1) {
-              h += boost::lexical_cast<std::string>(nHs);
-            }
-            if(leftToRight) symbol += h;
-            else symbol = h+symbol;
-          }
-          if( mol[*bAts]->getFormalCharge()!=0 ){
-            int chg=mol[*bAts]->getFormalCharge();
-            std::string sgn="+";
-            if(chg<0){
-              sgn="-";
-            }
-            chg=abs(chg);
-            if(chg>1){
-              sgn += boost::lexical_cast<std::string>(chg);
-            } 
-            if(leftToRight) symbol+=sgn;
-            else symbol = sgn+symbol;
-          }
-
           res.push_back(static_cast<ElementType>(symbol.length()));
           BOOST_FOREACH(char c, symbol){
             res.push_back(static_cast<ElementType>(c));
           }
-
-          OrientType orient=C;
-          if(mol[*bAts]->getDegree()==1){
-            double islope=0;
-            if(fabs(nbrSum.y)>1){
-              islope=nbrSum.x/fabs(nbrSum.y);
-            } else {
-              islope=nbrSum.x;
-            }
-            if(fabs(islope)>.85){
-              if(islope>0){
-                orient=W;
-              } else {
-                orient=E;
-              }
-            } else {
-              if(nbrSum.y>0){
-                orient=N;
-              } else {
-                orient=S;
-              }
-            }
-          }
           res.push_back(static_cast<ElementType>(orient));
-        }        
+        }
+
         ++bAts;
       }
 

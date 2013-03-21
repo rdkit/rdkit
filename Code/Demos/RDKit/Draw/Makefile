@@ -11,5 +11,5 @@ CPPFLAGS = -g -I${BOOSTHOME} -I${RDBASE}/Code -Wno-deprecated $(shell pkg-config
 %.o : %.cpp MolDrawing.h
 	$(CXX) $(CPPFLAGS)  -c -o $@ $< 
 
-demo.exe: demo.o 
+demo.exe: demo.o ${RDBASE}/Code/GraphMol/MolDrawing/MolDrawing.h
 	$(CXX)  -o $@ $< $(LDFLAGS) $(shell pkg-config --libs cairo)
