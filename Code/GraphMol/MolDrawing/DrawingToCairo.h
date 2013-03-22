@@ -154,7 +154,7 @@ namespace RDKit {
 
     void DrawingToCairo(const std::vector<int> &drawing,cairo_t *cr,
                         int width,int height,
-                        int fontSize=14,int maxDotsPerAngstrom=30){
+                        int fontSize=12,int maxDotsPerAngstrom=60){
       PRECONDITION(cr,"no context");
       PRECONDITION(width>0 && height>0,"bad dimensions");
 
@@ -214,9 +214,8 @@ namespace RDKit {
       cairo_scale(cr,scale,scale);
 
       // scaling factors here are empirically determined
-      double dFontSize=2.5*maxDotsPerAngstrom*fontSize/14;
+      double dFontSize=1.5*maxDotsPerAngstrom*fontSize/14;
       cairo_set_font_size (cr, dFontSize);
-
 
       while(pos!=drawing.end()){
         int token=*pos++;

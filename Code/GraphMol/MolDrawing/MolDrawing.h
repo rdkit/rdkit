@@ -146,7 +146,7 @@ namespace RDKit {
                                      unsigned int dotsPerAngstrom=100,
                                      double dblBondOffset=0.3,
                                      double dblBondLengthFrac=0.8,
-                                     double angstromsPerChar=0.15){
+                                     double angstromsPerChar=0.20){
       if(!mol.getRingInfo()->isInitialized()){
         MolOps::findSSSR(mol);
       }
@@ -190,7 +190,6 @@ namespace RDKit {
         OrientType orient;
         boost::tie(symbol,orient)=atomSymbols[i];
         if(symbol!=""){
-          std::cerr<<"   "<<symbol<<" "<<orient<<std::endl;
           // account for a possible expansion of the bounding box by the symbol
           if(pt.x<=minx){
             switch(orient){
@@ -233,7 +232,6 @@ namespace RDKit {
         }
       }
       double dimx=(maxx-minx),dimy=(maxy-miny);
-      //std::cerr<<"dims: "<<minx<<"-"<<maxx<<" "<<miny<<" "<<maxy<<std::endl;
       res.push_back(BOUNDS);
       res.push_back(static_cast<ElementType>(dotsPerAngstrom*0));
       res.push_back(static_cast<ElementType>(dotsPerAngstrom*0));
