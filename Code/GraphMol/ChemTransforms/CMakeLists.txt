@@ -12,8 +12,8 @@ rdkit_headers(ChemTransforms.h
 #rdkit_test(testChemTransforms testChemTransforms.cpp 
 #           LINK_LIBRARIES ChemTransforms FileParsers SmilesParse SubstructMatch GraphMol RDGeometryLib RDGeneral )
 rdkit_test(testChemTransforms testChemTransforms.cpp 
-           LINK_LIBRARIES ChemTransforms_static FileParsers_static SmilesParse_static SubstructMatch_static
-           GraphMol_static RDGeometryLib_static RDGeneral_static ${RDKit_THREAD_LIBS})
+           LINK_LIBRARIES ChemTransforms FileParsers SmilesParse SubstructMatch
+           GraphMol RDGeometryLib RDGeneral ${RDKit_THREAD_LIBS})
 
 
 
