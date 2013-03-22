@@ -33,12 +33,11 @@ std::string MolToSVG(const ROMol &mol){
 
 
 #ifdef USE_CAIRO
-void MolToCairo(const ROMol &mol,cairo_t *cr,int width,int height,
-                int fontSize=14,int maxDotsPerAngstrom=30){
+void MolToCairo(const ROMol &mol,cairo_t *cr,int width,int height){
   PRECONDITION(cr,"no context");
   PRECONDITION(width>0 && height>0,"bad dimensions");
   std::vector<int> drawing=RDKit::Drawing::MolToDrawing(mol);
-  RDKit::Drawing::DrawingToCairo(drawing,cr,width,height,fontSize,maxDotsPerAngstrom);
+  RDKit::Drawing::DrawingToCairo(drawing,cr,width,height);
 }
 #endif
 
@@ -81,7 +80,7 @@ void DrawDemo(){
     delete mol;
   }
   {
-    RWMol *mol=SmilesToMol("[NH2+]=[NH2+]");
+    RWMol *mol=SmilesToMol("[14NH2+]=[14NH2+]");
     std::string svg=MolToSVG(*mol);
     std::ofstream ostr("blah6.svg");
     ostr<<svg<<std::endl;
