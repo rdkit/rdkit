@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2013 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -111,7 +111,9 @@ namespace RDKit{
       return res;
     }
 
-    uint32_t hashBond(const Bond *bnd,const std::vector<uint32_t> &atomInvariants,bool useBondOrder){
+    uint32_t hashBond(const Bond *bnd,const std::vector<uint32_t> &atomInvariants,
+                      const std::vector<uint32_t> &atomDegrees,uint32_t bondDegree,
+                      bool useBondOrder){
       PRECONDITION(bnd,"bad bond");
       uint32_t res;
       if(useBondOrder) {
@@ -125,10 +127,20 @@ namespace RDKit{
       }
       uint32_t iv1=atomInvariants[bnd->getBeginAtomIdx()];
       uint32_t iv2=atomInvariants[bnd->getEndAtomIdx()];
-      if(iv1>iv2) std::swap(iv1,iv2);
-      //std::cerr<<"---->"<<bnd->getIdx()<<" "<<res<<" "<<iv1<<"-"<<iv2;
-      res = (res%8) | (iv1%128)<<3 | (iv2%128)<<10;
-      //std::cerr<<"  "<<res<<std::endl;
+      uint32_t deg1=atomDegrees[bnd->getBeginAtomIdx()];
+      uint32_t deg2=atomDegrees[bnd->getEndAtomIdx()];
+      
+      if(iv1>iv2){
+        std::swap(iv1,iv2);
+        std::swap(deg1,deg2);
+      } else if(iv1==iv2){
+        if(deg1>deg2){
+          std::swap(deg1,deg2);
+        }
+      }
+
+      res = (res%8) | (iv1%128)<<3 | (iv2%128)<<10 | (deg1%8)<<17 | (deg2%8)<<20 | (bondDegree%8)<<23 ;
+      //std::cerr<<"---->("<<bnd->getIdx()<<") "<<bnd->getBeginAtomIdx()<<"-"<<bnd->getEndAtomIdx()<<" "<<res<<" "<<iv1<<"-"<<iv2<<":"<<deg1<<"-"<<deg2<<std::endl;
       return res;
     }
     uint32_t canonicalPathHash(const PATH_TYPE &path,
@@ -138,18 +150,20 @@ namespace RDKit{
       std::deque< std::pair<unsigned int,boost::dynamic_bitset<> > > stack;
       uint32_t best;
       //std::cerr<<" hash: ";
+      //std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
+
       for(unsigned int i=0;i<path.size();++i){
-        //std::cerr<<" "<<bondHashes[path[i]];
+        //std::cerr<<" "<<bondCache[path[i]]->getBeginAtomIdx()<<"-"<<bondCache[path[i]]->getEndAtomIdx()<<" "<<bondHashes[i];
         if(i==0){
           boost::dynamic_bitset<> bs(mol.getNumBonds());
           bs.set(path[i]);
           stack.push_back(std::make_pair(i,bs));
-          best=bondHashes[path[i]];
+          best=bondHashes[i];
         } else {
-          if(bondHashes[path[i]]<=best){
-            if(bondHashes[path[i]]<best){
+          if(bondHashes[i]<=best){
+            if(bondHashes[i]<best){
               stack.clear();
-              best = bondHashes[path[i]];
+              best = bondHashes[i];
             }
             boost::dynamic_bitset<> bs(mol.getNumBonds());
             bs.set(path[i]);
@@ -157,6 +171,8 @@ namespace RDKit{
           }
         }
       }
+      //std::cerr<<std::endl;
+
       uint32_t res=best;
       //std::cerr<<"  best: "<<best<<std::endl;
       if(path.size()==1) return res;
@@ -181,15 +197,15 @@ namespace RDKit{
             continue;
           }
           const Bond *obnd=bondCache[path[j]];
-          if(bondHashes[path[j]]>best) continue;
+          if(bondHashes[j]>best) continue;
           if(obnd->getBeginAtomIdx()==bnd->getBeginAtomIdx() ||
              obnd->getBeginAtomIdx()==bnd->getEndAtomIdx() ||
              obnd->getEndAtomIdx()==bnd->getBeginAtomIdx() ||
              obnd->getEndAtomIdx()==bnd->getEndAtomIdx() ){
             // it's a neighbor and the hash is at least as good as what we've seen so far
-            if(bondHashes[path[j]]<best){
+            if(bondHashes[j]<best){
               newStack.clear();
-              best=bondHashes[path[j]];
+              best=bondHashes[j];
             }
             boost::dynamic_bitset<> bs(bondsThere);
             bs.set(path[j]);
@@ -309,7 +325,6 @@ namespace RDKit{
     while(firstB!=lastB){
       BOND_SPTR bond = mol[*firstB];
       bondCache[bond->getIdx()]=bond.get();
-      bondInvariants[bond->getIdx()] = hashBond(bond.get(),*atomInvariants,useBondOrder);
       ++firstB;
     }
     if(atomBits){
@@ -338,7 +353,7 @@ namespace RDKit{
         std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
         std::cerr<<std::endl;
 #endif
-#if 1
+#if 0
         // initialize the bond hashes to the number of neighbors the bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size());
         std::fill(bondNbrs.begin(),bondNbrs.end(),0);
@@ -421,10 +436,13 @@ namespace RDKit{
           }
         }
 
-        std::vector<unsigned int> tBondInvariants(bondInvariants);
-        std::vector<unsigned int> bondDegrees(path.size(),0); 
+        std::vector<unsigned int> bondInvariants(path.size());
+        std::vector<unsigned int> bondDegrees(path.size(),0);
+        std::vector<unsigned int> atomDegrees(mol.getNumAtoms(),0);        
         for(unsigned int i=0;i<path.size();++i){
           const Bond *bi = bondCache[path[i]];
+          atomDegrees[bi->getBeginAtomIdx()]++;
+          atomDegrees[bi->getEndAtomIdx()]++;
           for(unsigned int j=i;j<path.size();++j){
             const Bond *bj = bondCache[path[j]];
             if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx()||
@@ -435,15 +453,30 @@ namespace RDKit{
               bondDegrees[j]++;
             }
           }
-          tBondInvariants[path[i]] |= bondDegrees[i]<<17;
+#ifdef REPORT_FP_STATS
+          if(std::find(atomsToUse.begin(),atomsToUse.end(),bi->getBeginAtomIdx())==atomsToUse.end()){
+            atomsToUse.push_back(bi->getBeginAtomIdx());
+          }
+          if(std::find(atomsToUse.begin(),atomsToUse.end(),bi->getEndAtomIdx())==atomsToUse.end()){
+            atomsToUse.push_back(bi->getEndAtomIdx());
+          }
+#endif          
         }
-        unsigned long seed = canonicalPathHash(path,mol,bondCache,tBondInvariants);
+
+        for(unsigned int i=0;i<path.size();++i){
+          bondInvariants[i]=hashBond(bondCache[path[i]],*atomInvariants,atomDegrees,bondDegrees[i],useBondOrder);
+        }
+          
+
+
+        unsigned long seed = canonicalPathHash(path,mol,bondCache,bondInvariants);
 #endif
 #ifdef VERBOSE_FINGERPRINTING        
         std::cerr<<" hash: "<<seed<<std::endl;
 #endif
 
         unsigned int bit = seed%fpSize;
+        //std::cerr<<"bit: "<<bit<<" hash: "<<seed<<std::endl;
 
 #ifdef REPORT_FP_STATS
         std::string fsmi=MolFragmentToSmiles(mol,atomsToUse,&path);
