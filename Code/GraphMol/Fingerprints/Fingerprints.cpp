@@ -353,10 +353,16 @@ namespace RDKit{
         std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,", "));
         std::cerr<<std::endl;
 #endif
-#if 0
+#if 1
+        std::vector<unsigned int> atomDegrees(mol.getNumAtoms(),0);        
+        for(unsigned int i=0;i<path.size();++i){
+          const Bond *bi = bondCache[path[i]];
+          atomDegrees[bi->getBeginAtomIdx()]++;
+          atomDegrees[bi->getEndAtomIdx()]++;
+        }
         // initialize the bond hashes to the number of neighbors the bond has in the path:
-        std::vector<unsigned int> bondNbrs(path.size());
-        std::fill(bondNbrs.begin(),bondNbrs.end(),0);
+        std::vector<unsigned int> bondNbrs(path.size(),0);
+        //std::fill(bondNbrs.begin(),bondNbrs.end(),0);
         atomsInPath.reset();
         std::vector<unsigned int> bondHashes;
         bondHashes.reserve(path.size()+1);
@@ -386,10 +392,16 @@ namespace RDKit{
           std::cerr<<"   bond("<<i<<"):"<<bondNbrs[i]<<std::endl;
 #endif
           // we have the count of neighbors for bond bi, compute its hash:
-          unsigned int a1Hash,a2Hash;
-          a1Hash = (*atomInvariants)[bi->getBeginAtomIdx()];
-          a2Hash = (*atomInvariants)[bi->getEndAtomIdx()];
-          if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
+          unsigned int a1Hash = (*atomInvariants)[bi->getBeginAtomIdx()];
+          unsigned int a2Hash = (*atomInvariants)[bi->getEndAtomIdx()];
+          unsigned int deg1=atomDegrees[bi->getBeginAtomIdx()];
+          unsigned int deg2=atomDegrees[bi->getEndAtomIdx()];
+          if(a1Hash<a2Hash){
+            std::swap(a1Hash,a2Hash);
+            std::swap(deg1,deg2);
+          } else if(a1Hash==a2Hash && deg1<deg2){
+            std::swap(deg1,deg2);            
+          }
           unsigned int bondHash=1;
           if(useBondOrder){
             if(bi->getIsAromatic()){
@@ -410,7 +422,9 @@ namespace RDKit{
           boost::uint32_t ourHash=bondNbrs[i];
           gboost::hash_combine(ourHash,bondHash);
           gboost::hash_combine(ourHash,a1Hash);
+          gboost::hash_combine(ourHash,deg1);
           gboost::hash_combine(ourHash,a2Hash);
+          gboost::hash_combine(ourHash,deg2);
           bondHashes.push_back(ourHash);
         }
         

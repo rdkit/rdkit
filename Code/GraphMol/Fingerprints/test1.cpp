@@ -2066,7 +2066,7 @@ void testRDKitFromAtoms(){
     fromAtoms.push_back(0);
     fromAtoms.push_back(5);
     ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,true,true,0,&fromAtoms);
-    TEST_ASSERT(fp1->getNumOnBits()==7); // <- unfortunate hash collision here
+    TEST_ASSERT(fp1->getNumOnBits()==8);
     delete m1;
     delete fp1;
   }
@@ -2078,7 +2078,7 @@ void testRDKitFromAtoms(){
     fromAtoms.push_back(0);
     fromAtoms.push_back(5);
     ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,4,2048,1,true,0,128,false,true,0,&fromAtoms);
-    TEST_ASSERT(fp1->getNumOnBits()==7); // <- unfortunate hash collision here
+    TEST_ASSERT(fp1->getNumOnBits()==8);
     delete m1;
     delete fp1;
   }
@@ -2191,10 +2191,10 @@ void testRDKitAtomBits(){
     TEST_ASSERT(m1);
     std::vector<std::vector<boost::uint32_t> > atomBits(m1->getNumAtoms());
     ExplicitBitVect *fp1=RDKFingerprintMol(*m1,1,2,2048,1,true,0,128,true,true,0,0,&atomBits);
-    TEST_ASSERT(fp1->getNumOnBits()==3);  // <- hash collision here
+    TEST_ASSERT(fp1->getNumOnBits()==4);
     TEST_ASSERT(atomBits[0].size()==2);
     TEST_ASSERT(atomBits[1].size()==3);
-    TEST_ASSERT(atomBits[2].size()==3);
+    TEST_ASSERT(atomBits[2].size()==4);
     TEST_ASSERT(atomBits[3].size()==2);
     delete m1;
     delete fp1;

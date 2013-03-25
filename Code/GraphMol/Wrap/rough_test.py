@@ -767,7 +767,7 @@ class TestCase(unittest.TestCase):
     self.failUnlessEqual(fp1.GetNumOnBits(),4)    
     m1 = Chem.MolFromSmiles('CCCCCO')
     fp1 = Chem.RDKFingerprint(m1,1,4,nBitsPerHash=1,fromAtoms=[0,5])
-    self.failUnlessEqual(fp1.GetNumOnBits(),8)    
+    self.failUnlessEqual(fp1.GetNumOnBits(),8)
 
     # test sf.net issue 270:
     fp1 = Chem.RDKFingerprint(m1,atomInvariants=[x.GetAtomicNum()+10 for x in m1.GetAtoms()])
@@ -776,7 +776,7 @@ class TestCase(unittest.TestCase):
     m1 = Chem.MolFromSmiles('CCCO')
     l=[]
     fp1 = Chem.RDKFingerprint(m1,minPath=1,maxPath=2,nBitsPerHash=1,atomBits=l)
-    self.failUnlessEqual(fp1.GetNumOnBits(),4)    
+    self.failUnlessEqual(fp1.GetNumOnBits(),4)
     self.failUnlessEqual(len(l),m1.GetNumAtoms())
     self.failUnlessEqual(len(l[0]),2)
     self.failUnlessEqual(len(l[1]),3)
