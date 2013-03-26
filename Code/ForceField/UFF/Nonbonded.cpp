@@ -13,6 +13,7 @@
 #include <math.h>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/utils.h>
 
 namespace ForceFields {
   namespace UFF {
@@ -59,7 +60,7 @@ namespace ForceFields {
       if(dist>this->d_thresh || dist<=0.0) return 0.0;
 
       double r=this->d_xij/dist;
-      double r6=pow(r,6);
+      double r6=int_pow<6>(r);
       double r12=r6*r6;
       double res = this->d_wellDepth*(r12 - 2.0*r6);
       //if(d_at1Idx==12 && d_at2Idx==21 ) std::cerr << "     >: " << d_at1Idx << "-" << d_at2Idx << " " << r << " = " << res << std::endl;
@@ -84,8 +85,8 @@ namespace ForceFields {
       }
       
       double r = this->d_xij/dist;
-      double r7 = pow(r,7);
-      double r13= pow(r,13);
+      double r7 = int_pow<7>(r);
+      double r13= int_pow<13>(r);
       double preFactor = 12.*this->d_wellDepth/this->d_xij * (r7-r13);
     
       double *at1Coords = &(pos[3*this->d_at1Idx]);

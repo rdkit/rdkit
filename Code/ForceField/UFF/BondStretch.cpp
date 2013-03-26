@@ -14,6 +14,7 @@
 #include <math.h>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/utils.h>
 
 namespace ForceFields {
   namespace UFF {
@@ -42,7 +43,7 @@ namespace ForceFields {
       double calcBondForceConstant(double restLength,
 				   const AtomicParams *end1Params,
 				   const AtomicParams *end2Params){
-	double res = 2.0 * Params::G * end1Params->Z1 * end2Params->Z1 / pow(restLength,3.0);
+	double res = 2.0 * Params::G * end1Params->Z1 * end2Params->Z1 / (restLength*restLength*restLength);
 	return res;
       }
     } // end of namespace Utils

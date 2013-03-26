@@ -14,6 +14,7 @@
 #include <math.h>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/utils.h>
 
 namespace ForceFields {
   namespace UFF {
@@ -30,7 +31,7 @@ namespace ForceFields {
 	double r13 = sqrt(r12*r12 + r23*r23 - 2.*r12*r23*cosTheta0);
 	double beta = 2.*Params::G/(r12*r23);
 
-	double preFactor = beta*at1Params->Z1*at3Params->Z1 / pow(r13,5);
+	double preFactor = beta*at1Params->Z1*at3Params->Z1 / int_pow<5>(r13);
 	double rTerm = r12*r23;
 	double innerBit = r12*r23*(1-cosTheta0*cosTheta0) - r13*r13*cosTheta0;
             
@@ -184,7 +185,7 @@ namespace ForceFields {
 	  break;
 	case 4:
 	  // cos(4x) = cos^4(x) - 6*cos^2(x)*sin^2(x)+sin^4(x)
-	  res = pow(cosTheta,4) - 6*cosTheta*cosTheta*sinThetaSq + sinThetaSq*sinThetaSq;
+	  res = int_pow<4>(cosTheta) - 6*cosTheta*cosTheta*sinThetaSq + sinThetaSq*sinThetaSq;
 	  break;
 	}
 	res = 1-res;
