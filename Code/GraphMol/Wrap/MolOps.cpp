@@ -346,7 +346,8 @@ namespace RDKit{
     std::vector<unsigned int> *lAtomInvariants=pythonObjectToVect<unsigned int>(atomInvariants);
     std::vector<unsigned int> *lFromAtoms=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<std::vector<boost::uint32_t> > *lAtomBits=0;
-    if(!(atomBits.is_none())){
+    //if(!(atomBits.is_none())){
+    if(atomBits!=python::object()){
       lAtomBits = new std::vector<std::vector<boost::uint32_t> >(mol.getNumAtoms());
     }
     ExplicitBitVect *res;
