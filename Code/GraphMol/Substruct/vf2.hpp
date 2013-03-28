@@ -12,7 +12,6 @@
  *
  */
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/dynamic_bitset.hpp>
 #include <vector>
 #include <algorithm>
 #include <cstring>
