@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2013, Novartis Institutes for BioMedical Research Inc.
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -344,7 +344,7 @@ makeMolSign(CROMol data) {
   bytea                   *ret = NULL;
 
   try {
-    res = RDKit::LayeredFingerprintMol2(*mol,RDKit::substructLayers,1,4,SSS_FP_SIZE);
+    res = RDKit::PatternFingerprintMol(*mol,SSS_FP_SIZE);
     //res = RDKit::LayeredFingerprintMol(*mol,RDKit::substructLayers,1,5,SSS_FP_SIZE);
 
     if(res){
@@ -1086,7 +1086,7 @@ makeRDKitBFP(CROMol data) {
   ExplicitBitVect *res=NULL;
 
   try {
-    res = RDKit::RDKFingerprintMol(*mol,1,7,LAYERED_FP_SIZE,2);
+    res = RDKit::RDKFingerprintMol(*mol,1,6,LAYERED_FP_SIZE,2);
   } catch (...) {
     elog(ERROR, "makeRDKitBFP: Unknown exception");
     if(res) delete res;
