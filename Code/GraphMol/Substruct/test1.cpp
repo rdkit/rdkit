@@ -990,11 +990,34 @@ void testCisTransMatch(){
     TEST_ASSERT(!matched);
   }
 
-  
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue15(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub issue 15" << std::endl;
 
+  {
+    std::string qSmi="[R2]~[R1]~[R2]";
+    std::string mSmi="CCC";
+    ROMol *query=SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi="[R2]~[R1]~[R2]";
+    std::string mSmi="CCC";
+    ROMol *query=SmartsToMol(qSmi);
+    ROMol *mol = SmartsToMol(mSmi);
+    MatchVectType matchV;
+    bool matched=SubstructMatch(*mol,*query,matchV,true,true);
+    TEST_ASSERT(!matched);
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 int main(int argc,char *argv[])
 {
 #if 1
@@ -1010,9 +1033,10 @@ int main(int argc,char *argv[])
   //test9();  
   testRecursiveSerialNumbers();  
   testMultiThread();
-#endif
   testChiralMatch();
   testCisTransMatch();
+#endif
+  testGitHubIssue15();
   return 0;
 }
 

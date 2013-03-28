@@ -132,7 +132,7 @@ bool QueryAtom::Match(const Atom::ATOM_SPTR what) const {
       } else if(d2=="AtomAnd"){
         res=true;
         for(QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI iter2=q2->beginChildren();iter2!=q2->endChildren();++iter2){
-          if(queriesMatch(q1,iter2->get())){
+          if(!queriesMatch(q1,iter2->get())){
             res=false;
             break;
           }
