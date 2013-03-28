@@ -34,82 +34,85 @@
 #endif
 
 namespace RDKit{
-  namespace {
-    bool isComplexQuery(const Bond *b){
-      if( !b->hasQuery()) return false;
-      // negated things are always complex:
-      if( b->getQuery()->getNegation()) return true;
-      std::string descr=b->getQuery()->getDescription();
-      if(descr=="BondOrder") return false;
-      if(descr=="BondAnd" || descr=="BondXor") return true;
-      if(descr=="BondOr") {
-        // detect the types of queries that appear for unspecified bonds in SMARTS:
-        if(b->getQuery()->endChildren()-b->getQuery()->beginChildren()==2){
-          for(Bond::QUERYBOND_QUERY::CHILD_VECT_CI child=b->getQuery()->beginChildren();
-              child!=b->getQuery()->endChildren();++child){
-            if((*child)->getDescription()!="BondOrder" || (*child)->getNegation())
-              return true;
-            if(static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::SINGLE &&
-               static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::AROMATIC)
-              return true;
-            return false;
-          }
-        }
-      }
-      
-      return true;
-    }
-    bool isComplexQuery(const Atom *a){
-      if( !a->hasQuery()) return false;
-      // negated things are always complex:
-      if( a->getQuery()->getNegation()) return true;
-      std::string descr=a->getQuery()->getDescription();
-      if(descr=="AtomAtomicNum") return false;
-      if(descr=="AtomOr" || descr=="AtomXor") return true;
-      if(descr=="AtomAnd"){
-        Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
-        if( (*childIt)->getDescription()=="AtomAtomicNum" &&
-            ((*(childIt+1))->getDescription()=="AtomIsAliphatic" ||
-             (*(childIt+1))->getDescription()=="AtomIsAromatic") &&
-            (childIt+2)==a->getQuery()->endChildren()){
-          return false;
-        }
-        return true;
-      }
-      
-      return true;
-    }
-    bool isAtomAromatic(const Atom *a){
-      bool res=false;
-      if( !a->hasQuery()){
-        res=a->getIsAromatic();
-      } else {
-
-        std::string descr=a->getQuery()->getDescription();
-        if(descr=="AtomAtomicNum"){
-          res = a->getIsAromatic();
-        } else if(descr=="AtomIsAromatic") {
-          res=true;
-          if( a->getQuery()->getNegation()) res = !res;
-        } else if(descr=="AtomIsAliphatic") {
-          res=false;
-          if( a->getQuery()->getNegation()) res = !res;
-        } else if(descr=="AtomAnd"){
-          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
-          if( (*childIt)->getDescription()=="AtomAtomicNum"){
-            if( a->getQuery()->getNegation()){
-              res = false;
-            } else if((*(childIt+1))->getDescription()=="AtomIsAliphatic"){
-              res=false;
-            } else if((*(childIt+1))->getDescription()=="AtomIsAromatic") {
-              res=true;
+  namespace Fingerprints {
+    namespace detail {
+      bool isComplexQuery(const Bond *b){
+        if( !b->hasQuery()) return false;
+        // negated things are always complex:
+        if( b->getQuery()->getNegation()) return true;
+        std::string descr=b->getQuery()->getDescription();
+        if(descr=="BondOrder") return false;
+        if(descr=="BondAnd" || descr=="BondXor") return true;
+        if(descr=="BondOr") {
+          // detect the types of queries that appear for unspecified bonds in SMARTS:
+          if(b->getQuery()->endChildren()-b->getQuery()->beginChildren()==2){
+            for(Bond::QUERYBOND_QUERY::CHILD_VECT_CI child=b->getQuery()->beginChildren();
+                child!=b->getQuery()->endChildren();++child){
+              if((*child)->getDescription()!="BondOrder" || (*child)->getNegation())
+                return true;
+              if(static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::SINGLE &&
+                 static_cast<BOND_EQUALS_QUERY *>(child->get())->getVal()!=Bond::AROMATIC)
+                return true;
+              return false;
             }
           }
         }
+      
+        return true;
       }
-      return res;
-    }
+      bool isComplexQuery(const Atom *a){
+        if( !a->hasQuery()) return false;
+        // negated things are always complex:
+        if( a->getQuery()->getNegation()) return true;
+        std::string descr=a->getQuery()->getDescription();
+        if(descr=="AtomAtomicNum") return false;
+        if(descr=="AtomOr" || descr=="AtomXor") return true;
+        if(descr=="AtomAnd"){
+          Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
+          if( (*childIt)->getDescription()=="AtomAtomicNum" &&
+              ((*(childIt+1))->getDescription()=="AtomIsAliphatic" ||
+               (*(childIt+1))->getDescription()=="AtomIsAromatic") &&
+              (childIt+2)==a->getQuery()->endChildren()){
+            return false;
+          }
+          return true;
+        }
+      
+        return true;
+      }
+      bool isAtomAromatic(const Atom *a){
+        bool res=false;
+        if( !a->hasQuery()){
+          res=a->getIsAromatic();
+        } else {
 
+          std::string descr=a->getQuery()->getDescription();
+          if(descr=="AtomAtomicNum"){
+            res = a->getIsAromatic();
+          } else if(descr=="AtomIsAromatic") {
+            res=true;
+            if( a->getQuery()->getNegation()) res = !res;
+          } else if(descr=="AtomIsAliphatic") {
+            res=false;
+            if( a->getQuery()->getNegation()) res = !res;
+          } else if(descr=="AtomAnd"){
+            Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
+            if( (*childIt)->getDescription()=="AtomAtomicNum"){
+              if( a->getQuery()->getNegation()){
+                res = false;
+              } else if((*(childIt+1))->getDescription()=="AtomIsAliphatic"){
+                res=false;
+              } else if((*(childIt+1))->getDescription()=="AtomIsAromatic") {
+                res=true;
+              }
+            }
+          }
+        }
+        return res;
+      }
+    } //end of detail namespace
+  } // end of Fingerprint namespace
+  namespace {
     uint32_t hashBond(const Bond *bnd,const std::vector<uint32_t> &atomInvariants,
                       const std::vector<uint32_t> &atomDegrees,uint32_t bondDegree,
                       bool useBondOrder){
@@ -331,13 +334,13 @@ namespace RDKit{
       const Bond *bond = mol[*firstB].get();
       isQueryBond[bond->getIdx()] = 0x0;
       bondCache[bond->getIdx()]=bond;
-      if(isComplexQuery(bond)){
+      if(Fingerprints::detail::isComplexQuery(bond)){
         isQueryBond[bond->getIdx()] = 0x1;
       }
-      if(isComplexQuery(bond->getBeginAtom())){
+      if(Fingerprints::detail::isComplexQuery(bond->getBeginAtom())){
         isQueryBond[bond->getIdx()] |= 0x2;
       }
-      if(isComplexQuery(bond->getEndAtom())){
+      if(Fingerprints::detail::isComplexQuery(bond->getEndAtom())){
         isQueryBond[bond->getIdx()] |= 0x4;
       }
       ++firstB;
@@ -628,13 +631,13 @@ namespace RDKit{
       const Bond *bond = mol[*firstB].get();
       isQueryBond[bond->getIdx()] = 0x0;
       bondCache[bond->getIdx()]=bond;
-      if(isComplexQuery(bond)){
+      if(Fingerprints::detail::isComplexQuery(bond)){
         isQueryBond[bond->getIdx()] = 0x1;
       }
-      if(isComplexQuery(bond->getBeginAtom())){
+      if(Fingerprints::detail::isComplexQuery(bond->getBeginAtom())){
         isQueryBond[bond->getIdx()] |= 0x2;
       }
-      if(isComplexQuery(bond->getEndAtom())){
+      if(Fingerprints::detail::isComplexQuery(bond->getEndAtom())){
         isQueryBond[bond->getIdx()] |= 0x4;
       }
       ++firstB;
@@ -646,7 +649,7 @@ namespace RDKit{
     boost::tie(firstA,lastA) = mol.getVertices();
     while(firstA!=lastA){
       const Atom *atom = mol[*firstA].get();
-      if(isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()]=true;
+      if(Fingerprints::detail::isAtomAromatic(atom)) aromaticAtoms[atom->getIdx()]=true;
       anums[atom->getIdx()]=atom->getAtomicNum();
       ++firstA;
     }
@@ -856,233 +859,6 @@ namespace RDKit{
           }
         }
       }
-    }
-    return res;
-  }
-
-
-
-  const char *pqs[]={ "[*]~[*]",
-                      "[*]~[*]~[*]",
-                      "[R]~1~[R]~[R]~1",
-                      "[*]~[*]~[*]~[*]",
-                      "[*]~[*](~[*])~[*]",
-                      "[*]~[R]~1[R]~[R]~1",
-                      "[R]~1[R]~[R]~[R]~1",
-                      "[*]~[*]~[*]~[*]~[*]",
-                      "[*]~[*]~[*](~[*])~[*]",
-                      "[*]~[R]~1[R]~[R]~1~[*]",
-                      "[R]~1~[R]~[R]~[R]~[R]~1",
-                      "[R]~1~[R]~[R]~[R]~[R]~[R]~1",
-#if 0
-                      "[*]~[*](~[*])(~[*])~[*]",
-                      "[*]~[*]~[*]~[*]~[*]~[*]",
-                      "[*]~[*]~[*]~[*](~[*])~[*]",
-                      "[*]~[*]~[*](~[*])~[*]~[*]",
-                      "[*]~[*]~[*](~[*])(~[*])~[*]",
-                      "[*]~[*](~[*])~[*](~[*])~[*]",
-                      "[*]~[R]~1[R]~[R]~1(~[*])~[*]",
-                      "[*]~[R]~1[R](~[*])~[R]~1[*]",
-                      "[*]~[R]~1[R]~[R](~[*])~[R]~1",
-                      "[*]~[R]~1[R]~[R]~[R]~1[*]",
-                      "[*]~[R]~1[R]~[R]~[R]~[R]~1",
-                      "[*]~[R]~1(~[*])~[R]~[R]~[R]~1",
-                      "[*]~[*]~[*]~[*]~[*]~[*]~[*]",
-                      "[*]~[*]~[*]~[*]~[*](~[*])~[*]",
-                      "[*]~[*]~[*]~[*](~[*])~[*]~[*]",
-                      "[*]~[*]~[*]~[*](~[*])(~[*])~[*]",
-                      "[*]~[*]~[*](~[*])~[*](~[*])~[*]",
-                      "[*]~[*](~[*])~[*]~[*](~[*])~[*]",
-                      "[*]~[*](~[*])~[*](~[*])(~[*])~[*]",
-#endif
-                      ""};
-
-  namespace detail {
-    void getAtomNumbers(const Atom *a,std::vector<int> &atomNums){
-      atomNums.clear();
-      if( !a->hasQuery()){
-        atomNums.push_back(a->getAtomicNum());
-        return;
-      }
-      // negated things are always complex:
-      if( a->getQuery()->getNegation()) return;
-      std::string descr=a->getQuery()->getDescription();
-      if(descr=="AtomAtomicNum"){
-        atomNums.push_back(static_cast<ATOM_EQUALS_QUERY *>(a->getQuery())->getVal());
-      } else if(descr=="AtomXor"){
-        return;
-      } else if(descr=="AtomAnd"){
-        Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
-        if( (*childIt)->getDescription()=="AtomAtomicNum" &&
-            ((*(childIt+1))->getDescription()=="AtomIsAliphatic" ||
-             (*(childIt+1))->getDescription()=="AtomIsAromatic") &&
-            (childIt+2)==a->getQuery()->endChildren()){
-          atomNums.push_back(static_cast<ATOM_EQUALS_QUERY *>((*childIt).get())->getVal());
-          return;
-        }
-      } else if(descr=="AtomOr"){
-        Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt=a->getQuery()->beginChildren();
-        while(childIt !=a->getQuery()->endChildren()){
-          if( (*childIt)->getDescription()=="AtomAtomicNum" ){
-            atomNums.push_back(static_cast<ATOM_EQUALS_QUERY *>((*childIt).get())->getVal());
-          } else if((*childIt)->getDescription()=="AtomAnd"){
-            Queries::Query<int,Atom const *,true>::CHILD_VECT_CI childIt2=(*childIt)->beginChildren();
-            if( (*childIt2)->getDescription()=="AtomAtomicNum" &&
-                ((*(childIt2+1))->getDescription()=="AtomIsAliphatic" ||
-                 (*(childIt2+1))->getDescription()=="AtomIsAromatic") &&
-                (childIt2+2)==(*childIt)->endChildren()){
-              atomNums.push_back(static_cast<ATOM_EQUALS_QUERY *>((*childIt2).get())->getVal());
-            } else {
-              atomNums.clear();
-              return;
-            }
-          } else {
-            atomNums.clear();
-            return;
-          }
-          ++childIt;
-        }
-      }
-      return;
-    }
-  }    
-  // caller owns the result, it must be deleted
-  ExplicitBitVect *LayeredFingerprintMol2(const ROMol &mol,
-                                          unsigned int layerFlags,
-                                          unsigned int minPath,
-                                          unsigned int maxPath,
-                                          unsigned int fpSize,
-                                          std::vector<unsigned int> *atomCounts,
-                                          ExplicitBitVect *setOnlyBits,
-                                          bool branchedPaths){
-    PRECONDITION(minPath!=0,"minPath==0");
-    PRECONDITION(maxPath>=minPath,"maxPath<minPath");
-    PRECONDITION(fpSize!=0,"fpSize==0");
-    PRECONDITION(!atomCounts || atomCounts->size()>=mol.getNumAtoms(),"bad atomCounts size");
-    PRECONDITION(!setOnlyBits || setOnlyBits->getNumBits()==fpSize,"bad setOnlyBits size");
-
-    static std::vector<ROMOL_SPTR> patts;
-    // FIX: need a mutex here to be threadsafe
-    if(patts.size()==0){
-      unsigned int idx=0;
-      while(1){
-        std::string pq=pqs[idx];
-        if(pq=="") break;
-        idx++;
-        RWMol *tm;
-        try {
-          tm = SmartsToMol(pq);
-        }catch (...) {
-          tm=NULL;
-        }
-        if(!tm) continue;
-        patts.push_back(ROMOL_SPTR(static_cast<ROMol *>(tm)));
-      }
-    }
-    if(!mol.getRingInfo()->isInitialized()){
-      MolOps::findSSSR(mol);
-    }
-
-    boost::dynamic_bitset<> isQueryAtom(mol.getNumAtoms()),isQueryBond(mol.getNumBonds());
-    ROMol::VERTEX_ITER firstA,lastA;
-    boost::tie(firstA,lastA) = mol.getVertices();  
-    while(firstA!=lastA){
-      const Atom *at=mol[*firstA].get();
-      if(isComplexQuery(at)) isQueryAtom.set(at->getIdx());
-      ++firstA;
-    }
-    ROMol::EDGE_ITER firstB,lastB;
-    boost::tie(firstB,lastB) = mol.getEdges();
-    while(firstB!=lastB){
-      const Bond *bond = mol[*firstB].get();
-      if( isComplexQuery(bond) ){
-        isQueryBond.set(bond->getIdx());
-      }
-      ++firstB;
-    }
-    
-    ExplicitBitVect *res = new ExplicitBitVect(fpSize);
-    unsigned int pIdx=0;
-    BOOST_FOREACH(ROMOL_SPTR patt,patts){
-      ++pIdx;
-      //if(patt->getNumBonds()<minPath || patt->getNumBonds()>maxPath){
-      //  continue;
-      //}
-      std::vector<MatchVectType> matches;
-      SubstructMatch(mol,*(patt.get()),matches,false);
-      boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
-#if 0
-      // this was an effort to tune the composition of the fingerprint,
-      // particularly when queries are used. It hasn't proved successful
-      BOOST_FOREACH(MatchVectType &mv,matches){
-        // collect bits counting the number of occurances of the pattern:
-        gboost::hash_combine(mIdx,0xBEEF);
-        res->setBit(mIdx%fpSize);
-
-        bool isQuery=false;
-        boost::uint32_t bitId=pIdx;
-        std::vector<unsigned int> amap(mv.size(),0);
-        BOOST_FOREACH(MatchVectType::value_type &p,mv){
-          if(isQueryAtom[p.second]){
-            isQuery=true;
-            break;
-          }
-          gboost::hash_combine(bitId,mol.getAtomWithIdx(p.second)->getAtomicNum());
-          amap[p.first]=p.second;
-        }
-        if(!isQuery) res->setBit(bitId%(fpSize/2));
-
-        isQuery=false;
-        bitId=pIdx;
-        ROMol::EDGE_ITER firstB,lastB;
-        boost::tie(firstB,lastB) = patt->getEdges();
-        while(firstB!=lastB){
-          BOND_SPTR pbond = (*patt.get())[*firstB];
-          ++firstB;
-          if(isQueryBond[pbond->getIdx()]){
-            isQuery=true;
-            break;
-          }
-          const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
-                                                    amap[pbond->getEndAtomIdx()]);
-          gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
-        }
-        if(!isQuery) res->setBit((fpSize/2) + bitId%(fpSize/2));
-      }
-#else
-      BOOST_FOREACH(MatchVectType &mv,matches){
-        // collect bits counting the number of occurances of the pattern:
-        gboost::hash_combine(mIdx,0xBEEF);
-        res->setBit(mIdx%fpSize);
-
-        bool isQuery=false;
-        boost::uint32_t bitId=pIdx;
-        std::vector<unsigned int> amap(mv.size(),0);
-        BOOST_FOREACH(MatchVectType::value_type &p,mv){
-          if(isQueryAtom[p.second]){
-            isQuery=true;
-            break;
-          }
-          gboost::hash_combine(bitId,mol.getAtomWithIdx(p.second)->getAtomicNum());
-          amap[p.first]=p.second;
-        }
-        if(isQuery) continue;
-        ROMol::EDGE_ITER firstB,lastB;
-        boost::tie(firstB,lastB) = patt->getEdges();
-        while(firstB!=lastB){
-          BOND_SPTR pbond = (*patt.get())[*firstB];
-          ++firstB;
-          if(isQueryBond[pbond->getIdx()]){
-            isQuery=true;
-            break;
-          }
-          const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
-                                                    amap[pbond->getEndAtomIdx()]);
-          gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
-        }
-        if(!isQuery) res->setBit(bitId%fpSize);
-      }
-#endif      
     }
     return res;
   }

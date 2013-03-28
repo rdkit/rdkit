@@ -117,9 +117,6 @@ namespace RDKit{
     release to release.
     
     \param mol:          the molecule to be fingerprinted
-    \param layerFlags:   the layers to be included [not used in this release] (see below)
-    \param minPath:      the minimum path length (in bonds) to be included
-    \param maxPath:      the minimum path length (in bonds) to be included
     \param fpSize:       the size of the fingerprint
     \param atomCounts:   if provided, this will be used to provide the count of the number
                          of paths that set bits each atom is involved in. The vector should
@@ -129,30 +126,25 @@ namespace RDKit{
                          in the result. This is essentially the same as doing:
                             (*res) &= (*setOnlyBits);
                          but also has an impact on the atomCounts (if being used)
-    \param branchedPaths: toggles generation of branched subgraphs, not just linear paths
 
     \return the molecular fingerprint, as an ExplicitBitVect
 
     <b>Notes:</b>
       - the caller is responsible for <tt>delete</tt>ing the result
 
-    <b>Layer definitions:</b>
-       - 0x01: pure topology
-       - 0x02: bond order
-       - 0x04: atom types
-       - 0x08: presence of rings
-       - 0x10: ring sizes
-       - 0x20: aromaticity
   */
-  ExplicitBitVect *LayeredFingerprintMol2(const ROMol &mol,
-                                         unsigned int layerFlags=0xFFFFFFFF,
-                                         unsigned int minPath=1,unsigned int maxPath=7,
+  ExplicitBitVect *PatternFingerprintMol(const ROMol &mol,
                                          unsigned int fpSize=2048,
                                          std::vector<unsigned int> *atomCounts=0,
-                                         ExplicitBitVect *setOnlyBits=0,
-                                         bool branchedPaths=true);
+                                         ExplicitBitVect *setOnlyBits=0);
 
-
+  namespace Fingerprints {
+    namespace detail {
+      bool isComplexQuery(const Bond *b);
+      bool isComplexQuery(const Atom *a);
+      bool isAtomAromatic(const Atom *a);
+    }
+  }
 }
 
 #endif

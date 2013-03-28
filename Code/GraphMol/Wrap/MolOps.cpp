@@ -293,12 +293,10 @@ namespace RDKit{
     }
     return res;
   }
-  ExplicitBitVect *wrapLayeredFingerprint2(const ROMol &mol,unsigned int layerFlags,
-                                          unsigned int minPath,unsigned int maxPath,
+  ExplicitBitVect *wrapPatternFingerprint(const ROMol &mol,
                                           unsigned int fpSize,
                                           python::list atomCounts,
-                                          ExplicitBitVect *includeOnlyBits,
-                                          bool branchedPaths){
+                                          ExplicitBitVect *includeOnlyBits){
     std::vector<unsigned int> *atomCountsV=0;
     if(atomCounts){
       atomCountsV = new std::vector<unsigned int>;
@@ -313,8 +311,8 @@ namespace RDKit{
     }
 
     ExplicitBitVect *res;
-    res = RDKit::LayeredFingerprintMol2(mol,layerFlags,minPath,maxPath,fpSize,
-                                        atomCountsV,includeOnlyBits,branchedPaths);
+    res = RDKit::PatternFingerprintMol(mol,fpSize,
+                                       atomCountsV,includeOnlyBits);
 
     if(atomCountsV){
       for(unsigned int i=0;i<atomCountsV->size();++i){
@@ -1181,18 +1179,15 @@ namespace RDKit{
       python::scope().attr("LayeredFingerprint_substructLayers")=RDKit::substructLayers;
 
       // ------------------------------------------------------------------------
-      docString="Another layered fingerprint implementation\n\
+      docString="A fingerprint using SMARTS patterns \n\
 \n\
   NOTE: This function is experimental. The API or results may change from\n\
     release to release.\n";
-      python::def("LayeredFingerprint2", wrapLayeredFingerprint2,
+      python::def("PatternFingerprint", wrapPatternFingerprint,
                   (python::arg("mol"),
-                   python::arg("layerFlags")=0xFFFFFFFF,
-                   python::arg("minPath")=1,
-                   python::arg("maxPath")=7,python::arg("fpSize")=2048,
+                   python::arg("fpSize")=2048,
                    python::arg("atomCounts")=python::list(),
-                   python::arg("setOnlyBits")=(ExplicitBitVect *)0,
-                   python::arg("branchedPaths")=true),
+                   python::arg("setOnlyBits")=(ExplicitBitVect *)0),
                   docString.c_str(),python::return_value_policy<python::manage_new_object>());
 
       docString="Set the wedging on single bonds in a molecule.\n \
