@@ -12,8 +12,10 @@
  *
  */
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/dynamic_bitset.hpp>
 #include <vector>
 #include <algorithm>
+#include <cstring>
 
 #ifndef __BGL_VF2_SUB_STATE_H__
 #define __BGL_VF2_SUB_STATE_H__
@@ -141,6 +143,7 @@ namespace boost{
       node_id *order;
 
       long *share_count;
+      int *vs_compared;
     
     public:
       VF2SubState(Graph *ag1, Graph *ag2,
@@ -179,12 +182,17 @@ namespace boost{
           in_2[i]=0;
           out_2[i]=0;
         }
+        vs_compared = new int[n1*n2];
+        memset((void *)vs_compared,0,n1*n2*sizeof(int));
+        
+        //es_compared = new std::map<unsigned int,bool>();
         *share_count = 1;
       };
 
       VF2SubState(const VF2SubState &state) :
         g1(state.g1), g2(state.g2), vc(state.vc), ec(state.ec), mc(state.mc),
-        n1(state.n1),n2(state.n2), order(state.order)
+        n1(state.n1),n2(state.n2), order(state.order),vs_compared(state.vs_compared)
+        //es_compared(state.es_compared)
       {
 
         core_len=orig_core_len=state.core_len;
@@ -218,6 +226,8 @@ namespace boost{
           delete [] out_2;
           delete share_count;
           delete [] order;
+          delete [] vs_compared;
+          //delete es_compared;
         }
       }; 
 
@@ -332,8 +342,12 @@ namespace boost{
         assert(core_1[node1] == NULL_NODE);
         assert(core_2[node2] == NULL_NODE);
 
-        //std::cerr<<"  ifp:"<<node1<<"-"<<node2<<" ";
-        if( !vc(node1,node2) ){
+        //std::cerr<<"  ifp:"<<node1<<"-"<<node2<<" "<<vs_compared->size()<<std::endl;
+        int &isCompat=vs_compared[node1*n2+node2];
+        if(isCompat==0){
+          isCompat=vc(node1,node2)?1:-1;
+        }
+        if( isCompat<0 ){
           //std::cerr<<"  short1"<<std::endl;
           return false;
         }
