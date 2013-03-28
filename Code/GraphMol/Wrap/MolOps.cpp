@@ -260,8 +260,6 @@ namespace RDKit{
   ExplicitBitVect *wrapLayeredFingerprint(const ROMol &mol,unsigned int layerFlags,
                                           unsigned int minPath,unsigned int maxPath,
                                           unsigned int fpSize,
-                                          double tgtDensity,
-                                          unsigned int minSize,
                                           python::list atomCounts,
                                           ExplicitBitVect *includeOnlyBits,
                                           bool branchedPaths,
@@ -281,7 +279,7 @@ namespace RDKit{
     }
 
     ExplicitBitVect *res;
-    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,tgtDensity,minSize,atomCountsV,includeOnlyBits,branchedPaths,
+    res = RDKit::LayeredFingerprintMol(mol,layerFlags,minPath,maxPath,fpSize,atomCountsV,includeOnlyBits,branchedPaths,
                                        lFromAtoms);
 
     if(atomCountsV){
@@ -1137,14 +1135,6 @@ namespace RDKit{
     - fpSize: (optional) number of bits in the fingerprint\n\
       Defaults to 2048.\n\
 \n\
-    - tgtDensity: (optional) fold the fingerprint until this minimum density has\n\
-      been reached\n\
-      Defaults to 0.\n\
-\n\
-    - minSize: (optional) the minimum size the fingerprint will be folded to when\n\
-      trying to reach tgtDensity\n\
-      Defaults to 128.\n\
-\n\
     - atomCounts: (optional) \n\
         if provided, this should be a list at least as long as the number of atoms\n\
         in the molecule. It will be used to provide the count of the number \n                      \
@@ -1181,7 +1171,6 @@ namespace RDKit{
                    python::arg("layerFlags")=0xFFFFFFFF,
                    python::arg("minPath")=1,
                    python::arg("maxPath")=7,python::arg("fpSize")=2048,
-                   python::arg("tgtDensity")=0.0,python::arg("minSize")=128,
                    python::arg("atomCounts")=python::list(),
                    python::arg("setOnlyBits")=(ExplicitBitVect *)0,
                    python::arg("branchedPaths")=true,
