@@ -577,7 +577,7 @@ void test2Layers(){
     for(unsigned int i=0;i<m1->getNumAtoms();++i) atomCounts[i]=0;
 
     delete fp2;
-    fp2=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,7,2048,0,128,&atomCounts);
+    fp2=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,7,2048,&atomCounts);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
     TEST_ASSERT(atomCounts[0]==4);
     TEST_ASSERT(atomCounts[1]==7);
@@ -585,7 +585,7 @@ void test2Layers(){
     TEST_ASSERT(atomCounts[3]==4);
 
     delete fp2;
-    fp2=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,7,2048,0,128,&atomCounts);
+    fp2=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,7,2048,&atomCounts);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp2)==1.0);
     TEST_ASSERT(atomCounts[0]==8);
     TEST_ASSERT(atomCounts[1]==14);
@@ -611,7 +611,7 @@ void test2Layers(){
     atomCounts.resize(m1->getNumAtoms());
     for(unsigned int i=0;i<m1->getNumAtoms();++i) atomCounts[i]=0;
 
-    ExplicitBitVect *fp3=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,7,2048,0,128,&atomCounts,fp2);
+    ExplicitBitVect *fp3=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,7,2048,&atomCounts,fp2);
     TEST_ASSERT(TanimotoSimilarity(*fp1,*fp3)<1.0);
     TEST_ASSERT(atomCounts[0]==3);
     TEST_ASSERT(atomCounts[1]==6);
@@ -2088,7 +2088,7 @@ void testRDKitFromAtoms(){
     TEST_ASSERT(m1);
     std::vector<boost::uint32_t> fromAtoms;
     fromAtoms.push_back(0);
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,128,0,0,true,&fromAtoms);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,0,true,&fromAtoms);
     TEST_ASSERT(fp1->getNumOnBits()==20);
     delete m1;
     delete fp1;
@@ -2100,7 +2100,7 @@ void testRDKitFromAtoms(){
     std::vector<boost::uint32_t> fromAtoms;
     fromAtoms.push_back(0);
     fromAtoms.push_back(5);
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,128,0,0,true,&fromAtoms);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,0,true,&fromAtoms);
     TEST_ASSERT(fp1->getNumOnBits()==24);
     delete m1;
     delete fp1;
@@ -2112,7 +2112,7 @@ void testRDKitFromAtoms(){
     std::vector<boost::uint32_t> fromAtoms;
     fromAtoms.push_back(0);
     fromAtoms.push_back(5);
-    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,128,0,0,false,&fromAtoms);
+    ExplicitBitVect *fp1=LayeredFingerprintMol(*m1,0xFFFFFFFF,1,4,2048,0,0,false,&fromAtoms);
     TEST_ASSERT(fp1->getNumOnBits()==24);
     delete m1;
     delete fp1;

@@ -73,10 +73,6 @@ namespace RDKit{
     \param minPath:      the minimum path length (in bonds) to be included
     \param maxPath:      the minimum path length (in bonds) to be included
     \param fpSize:       the size of the fingerprint
-    \param tgtDensity:   if the generated fingerprint is below this density, it will
-                         be folded until the density is reached.
-    \param minSize:      the minimum size to which the fingerprint will be
-                         folded
     \param atomCounts:   if provided, this will be used to provide the count of the number
                          of paths that set bits each atom is involved in. The vector should
                          have at least as many entries as the molecule has atoms and is not
@@ -104,14 +100,13 @@ namespace RDKit{
                                          unsigned int layerFlags=0xFFFFFFFF,
                                          unsigned int minPath=1,unsigned int maxPath=7,
                                          unsigned int fpSize=2048,
-                                         double tgtDensity=0.0,unsigned int minSize=128,
                                          std::vector<unsigned int> *atomCounts=0,
                                          ExplicitBitVect *setOnlyBits=0,
                                          bool branchedPaths=true,
                                          const std::vector<boost::uint32_t> *fromAtoms=0
                                          );
   const unsigned int maxFingerprintLayers=10;
-  const std::string LayeredFingerprintMolVersion="0.6.0";
+  const std::string LayeredFingerprintMolVersion="0.7.0";
   const unsigned int substructLayers=0x07; 
 
   //! \brief Generates a topological fingerprint for a molecule

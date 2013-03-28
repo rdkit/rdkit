@@ -26,7 +26,6 @@
 #include <RDGeneral/types.h>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
-//#define LAYEREDFP_USE_MT
 
 //#define VERBOSE_FINGERPRINTING 1
 //#define REPORT_FP_STATS 1
@@ -324,11 +323,23 @@ namespace RDKit{
     std::vector<uint32_t> bondInvariants(mol.getNumBonds());
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
+
+    std::vector<short> isQueryBond(mol.getNumBonds(),0);
     ROMol::EDGE_ITER firstB,lastB;
     boost::tie(firstB,lastB) = mol.getEdges();
     while(firstB!=lastB){
-      BOND_SPTR bond = mol[*firstB];
-      bondCache[bond->getIdx()]=bond.get();
+      const Bond *bond = mol[*firstB].get();
+      isQueryBond[bond->getIdx()] = 0x0;
+      bondCache[bond->getIdx()]=bond;
+      if(isComplexQuery(bond)){
+        isQueryBond[bond->getIdx()] = 0x1;
+      }
+      if(isComplexQuery(bond->getBeginAtom())){
+        isQueryBond[bond->getIdx()] |= 0x2;
+      }
+      if(isComplexQuery(bond->getEndAtom())){
+        isQueryBond[bond->getIdx()] |= 0x4;
+      }
       ++firstB;
     }
     if(atomBits){
@@ -358,22 +369,29 @@ namespace RDKit{
         std::cerr<<std::endl;
 #endif
 #if 1
+        // -----------------
+        // calculate the atom degrees in the path
+        // and check for query features
+        atomsInPath.reset();
+        bool queryInPath=false;
         std::vector<unsigned int> atomDegrees(mol.getNumAtoms(),0);        
-        for(unsigned int i=0;i<path.size();++i){
+        for(unsigned int i=0;i<path.size() && !queryInPath;++i){
           const Bond *bi = bondCache[path[i]];
           atomDegrees[bi->getBeginAtomIdx()]++;
           atomDegrees[bi->getEndAtomIdx()]++;
+          atomsInPath.set(bi->getBeginAtomIdx());
+          atomsInPath.set(bi->getEndAtomIdx());
+          if(isQueryBond[path[i]]) queryInPath=true;
         }
-        // initialize the bond hashes to the number of neighbors the bond has in the path:
+        if(queryInPath) continue;
+
+        // -----------------
+        // calculate the bond hashes:
         std::vector<unsigned int> bondNbrs(path.size(),0);
-        //std::fill(bondNbrs.begin(),bondNbrs.end(),0);
-        atomsInPath.reset();
         std::vector<unsigned int> bondHashes;
         bondHashes.reserve(path.size()+1);
         for(unsigned int i=0;i<path.size();++i){
           const Bond *bi = bondCache[path[i]];
-          atomsInPath.set(bi->getBeginAtomIdx());
-          atomsInPath.set(bi->getEndAtomIdx());
 #ifdef REPORT_FP_STATS
           if(std::find(atomsToUse.begin(),atomsToUse.end(),bi->getBeginAtomIdx())==atomsToUse.end()){
             atomsToUse.push_back(bi->getBeginAtomIdx());
@@ -408,8 +426,8 @@ namespace RDKit{
           }
           unsigned int bondHash=1;
           if(useBondOrder){
-            if(bi->getIsAromatic()){
-              // makes sure aromatic bonds always hash the same:
+            if(bi->getIsAromatic() || bi->getBondType()==Bond::AROMATIC){
+              // makes sure aromatic bonds always hash as aromatic
               bondHash = Bond::AROMATIC;
             } else {
               bondHash = bi->getBondType();
@@ -430,6 +448,7 @@ namespace RDKit{
           gboost::hash_combine(ourHash,a2Hash);
           gboost::hash_combine(ourHash,deg2);
           bondHashes.push_back(ourHash);
+          //std::cerr<<"    "<<bi->getIdx()<<" "<<a1Hash<<"("<<deg1<<")"<<"-"<<a2Hash<<"("<<deg2<<")"<<" "<<bondHash<<" -> "<<ourHash<<std::endl;
         }
         
         // hash the path to generate a seed:
@@ -585,7 +604,6 @@ namespace RDKit{
                                          unsigned int minPath,
                                          unsigned int maxPath,
                                          unsigned int fpSize,
-                                         double tgtDensity,unsigned int minSize,
                                          std::vector<unsigned int> *atomCounts,
                                          ExplicitBitVect *setOnlyBits,
                                          bool branchedPaths,
@@ -601,27 +619,6 @@ namespace RDKit{
       MolOps::findSSSR(mol);
     }
     
-#ifdef LAYEREDFP_USE_MT
-    // create a mersenne twister with customized parameters. 
-    // The standard parameters (used to create boost::mt19937) 
-    // result in an RNG that's much too computationally intensive
-    // to seed.
-    typedef boost::random::mersenne_twister<boost::uint32_t,32,4,2,31,0x9908b0df,11,7,0x9d2c5680,15,0xefc60000,18, 3346425566U>  rng_type;
-    
-    typedef boost::uniform_int<> distrib_type;
-    typedef boost::variate_generator<rng_type &,distrib_type> source_type;
-    rng_type generator(42u);
-
-    //
-    // if we generate arbitrarily sized ints then mod them down to the
-    // appropriate size, we can guarantee that a fingerprint of
-    // size x has the same bits set as one of size 2x that's been folded
-    // in half.  This is a nice guarantee to have.
-    //
-    distrib_type dist(0,INT_MAX);
-    source_type randomSource(generator,dist);
-#endif
-
     std::vector<const Bond *> bondCache;
     bondCache.resize(mol.getNumBonds());
     std::vector<short> isQueryBond(mol.getNumBonds(),0);
@@ -713,10 +710,18 @@ namespace RDKit{
         // calculate the number of neighbors each bond has in the path:
         std::vector<unsigned int> bondNbrs(path.size(),0);
         atomsInPath.reset();
+
+        std::vector<unsigned int> atomDegrees(mol.getNumAtoms(),0);        
         for(unsigned int i=0;i<path.size();++i){
           const Bond *bi = bondCache[path[i]];
+          atomDegrees[bi->getBeginAtomIdx()]++;
+          atomDegrees[bi->getEndAtomIdx()]++;
           atomsInPath.set(bi->getBeginAtomIdx());
           atomsInPath.set(bi->getEndAtomIdx());
+        }
+        
+        for(unsigned int i=0;i<path.size();++i){
+          const Bond *bi = bondCache[path[i]];
           for(unsigned int j=i+1;j<path.size();++j){
             const Bond *bj = bondCache[path[j]];
             if(bi->getBeginAtomIdx()==bj->getBeginAtomIdx() ||
@@ -735,7 +740,15 @@ namespace RDKit{
 
           if(layerFlags & 0x1){
             // layer 1: straight topology
+            unsigned int a1Deg,a2Deg;
+            a1Deg = atomDegrees[bi->getBeginAtomIdx()];
+            a2Deg = atomDegrees[bi->getEndAtomIdx()];
+            if(a1Deg<a2Deg){
+              std::swap(a1Deg,a2Deg);
+            }
             ourHash = bondNbrs[i]%8; // 3 bits here
+            ourHash |= (a1Deg%8)<<3;
+            ourHash |= (a2Deg%8)<<6;
             hashLayers[0].push_back(ourHash);
           }
           if(layerFlags & 0x2 && !(pathQueries&0x1) ){
@@ -747,8 +760,16 @@ namespace RDKit{
             } else {
               bondHash = Bond::SINGLE;
             }
+            unsigned int a1Deg,a2Deg;
+            a1Deg = atomDegrees[bi->getBeginAtomIdx()];
+            a2Deg = atomDegrees[bi->getEndAtomIdx()];
+            if(a1Deg<a2Deg){
+              std::swap(a1Deg,a2Deg);
+            }
             ourHash = bondHash%8;
-            ourHash |= (bondNbrs[i]%8)<<6;
+            ourHash |= (bondNbrs[i]%8)<<3;
+            ourHash |= (a1Deg%8)<<6;
+            ourHash |= (a2Deg%8)<<9;
             
             hashLayers[1].push_back(ourHash);
           }
@@ -758,10 +779,20 @@ namespace RDKit{
             unsigned int a1Hash,a2Hash;
             a1Hash = (anums[bi->getBeginAtomIdx()]%128);
             a2Hash = (anums[bi->getEndAtomIdx()]%128);
-            if(a1Hash<a2Hash) std::swap(a1Hash,a2Hash);
+            unsigned int a1Deg,a2Deg;
+            a1Deg = atomDegrees[bi->getBeginAtomIdx()];
+            a2Deg = atomDegrees[bi->getEndAtomIdx()];
+            if(a1Hash<a2Hash) {
+              std::swap(a1Hash,a2Hash);
+              std::swap(a1Deg,a2Deg);
+            } else if(a1Hash==a2Hash && a1Deg<a2Deg){
+              std::swap(a1Deg,a2Deg);
+            }
             ourHash = a1Hash;
             ourHash |= a2Hash<<7;
-            ourHash |= (bondNbrs[i]%8)<<17;
+            ourHash |= (a1Deg%8)<<14;
+            ourHash |= (a2Deg%8)<<17;
+            ourHash |= (bondNbrs[i]%8)<<20;
             hashLayers[2].push_back(ourHash);
           }
           if(layerFlags & 0x8 && !(pathQueries&0x6) ){
@@ -808,14 +839,7 @@ namespace RDKit{
 #ifdef VERBOSE_FINGERPRINTING        
           std::cerr<<" hash: "<<seed<<std::endl;
 #endif
-          //std::cerr<<"  "<<l+1<<" "<<seed%fpSize<<std::endl;
-
-#ifdef LAYEREDFP_USE_MT
-          generator.seed(static_cast<rng_type::result_type>(seed));
-          unsigned int bitId=randomSource()%fpSize;
-#else
           unsigned int bitId=seed%fpSize;
-#endif
 #ifdef VERBOSE_FINGERPRINTING        
           std::cerr<<"   bit: "<<bitId<<std::endl;
 #endif
@@ -830,17 +854,6 @@ namespace RDKit{
               flaggedPath=true;
             }
           }
-        }
-      }
-      // EFF: this could be faster by folding by more than a factor
-      // of 2 each time, but we're not going to be spending much
-      // time here anyway
-      if(tgtDensity>0.0){
-        while( static_cast<double>(res->getNumOnBits())/res->getNumBits() < tgtDensity &&
-               res->getNumBits() >= 2*minSize ){
-          ExplicitBitVect *tmpV=FoldFingerprint(*res,2);
-          delete res;
-          res = tmpV;
         }
       }
     }
