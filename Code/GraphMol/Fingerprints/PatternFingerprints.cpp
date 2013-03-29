@@ -43,7 +43,7 @@ namespace RDKit{
                       "[R]~1[R]~[R]~[R]~1",
                       //"[*]~[*]~[*]~[*]~[*]",
                       "[*]~[*]~[*](~[*])~[*]",
-                      "//[*]~[R]~1[R]~[R]~1~[*]",
+                      //"[*]~[R]~1[R]~[R]~1~[*]",
                       "[R]~1~[R]~[R]~[R]~[R]~1",
                       "[R]~1~[R]~[R]~[R]~[R]~[R]~1",
                       "[R2]~[R1]~[R2]",
@@ -178,19 +178,16 @@ namespace RDKit{
     unsigned int pIdx=0;
     BOOST_FOREACH(ROMOL_SPTR patt,patts){
       ++pIdx;
-      //if(patt->getNumBonds()<minPath || patt->getNumBonds()>maxPath){
-      //  continue;
-      //}
       std::vector<MatchVectType> matches;
       // uniquify matches?
       //   time for 10K molecules w/ uniquify: 5.24s
       //   time for 10K molecules w/o uniquify: 4.87s
       SubstructMatch(mol,*(patt.get()),matches,false); 
       boost::uint32_t mIdx=pIdx+patt->getNumAtoms()+patt->getNumBonds();
-#if 0
-      // this was an effort to tune the composition of the fingerprint,
-      // particularly when queries are used. It hasn't proved successful
       BOOST_FOREACH(MatchVectType &mv,matches){
+#ifdef VERBOSE_FINGERPRINTING
+        std::cerr<<"\nPatt: "<<pIdx<<" | ";
+#endif          
         // collect bits counting the number of occurances of the pattern:
         gboost::hash_combine(mIdx,0xBEEF);
         res->setBit(mIdx%fpSize);
@@ -199,44 +196,14 @@ namespace RDKit{
         boost::uint32_t bitId=pIdx;
         std::vector<unsigned int> amap(mv.size(),0);
         BOOST_FOREACH(MatchVectType::value_type &p,mv){
+#ifdef VERBOSE_FINGERPRINTING
+          std::cerr<<p.second<<" ";
+#endif
           if(isQueryAtom[p.second]){
             isQuery=true;
-            break;
-          }
-          gboost::hash_combine(bitId,mol.getAtomWithIdx(p.second)->getAtomicNum());
-          amap[p.first]=p.second;
-        }
-        if(!isQuery) res->setBit(bitId%(fpSize/2));
-
-        isQuery=false;
-        bitId=pIdx;
-        ROMol::EDGE_ITER firstB,lastB;
-        boost::tie(firstB,lastB) = patt->getEdges();
-        while(firstB!=lastB){
-          BOND_SPTR pbond = (*patt.get())[*firstB];
-          ++firstB;
-          if(isQueryBond[pbond->getIdx()]){
-            isQuery=true;
-            break;
-          }
-          const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
-                                                    amap[pbond->getEndAtomIdx()]);
-          gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
-        }
-        if(!isQuery) res->setBit((fpSize/2) + bitId%(fpSize/2));
-      }
-#else
-      BOOST_FOREACH(MatchVectType &mv,matches){
-        // collect bits counting the number of occurances of the pattern:
-        gboost::hash_combine(mIdx,0xBEEF);
-        res->setBit(mIdx%fpSize);
-
-        bool isQuery=false;
-        boost::uint32_t bitId=pIdx;
-        std::vector<unsigned int> amap(mv.size(),0);
-        BOOST_FOREACH(MatchVectType::value_type &p,mv){
-          if(isQueryAtom[p.second]){
-            isQuery=true;
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr<<"atom query.";
+#endif
             break;
           }
           gboost::hash_combine(bitId,mol.getAtomWithIdx(p.second)->getAtomicNum());
@@ -250,15 +217,22 @@ namespace RDKit{
           ++firstB;
           if(isQueryBond[pbond->getIdx()]){
             isQuery=true;
+#ifdef VERBOSE_FINGERPRINTING
+            std::cerr<<"bond query: "<<pbond->getIdx();
+#endif
             break;
           }
           const Bond *mbond=mol.getBondBetweenAtoms(amap[pbond->getBeginAtomIdx()],
                                                     amap[pbond->getEndAtomIdx()]);
           gboost::hash_combine(bitId,(boost::uint32_t)mbond->getBondType());
         }
-        if(!isQuery) res->setBit(bitId%fpSize);
+        if(!isQuery){
+#ifdef VERBOSE_FINGERPRINTING
+          std::cerr<<" set: "<<bitId<<" "<<bitId%fpSize;
+#endif
+          res->setBit(bitId%fpSize);
+        }
       }
-#endif      
     }
     return res;
   }
