@@ -131,7 +131,7 @@ namespace RDKit {
   
   ChemicalReaction * RxnSmartsToChemicalReaction(const std::string &text,
                                                  std::map<std::string,std::string> *replacements) {
-    int pos=text.find(">>");
+    std::size_t pos=text.find(">>");
     if(pos==std::string::npos){
       throw ChemicalReactionParserException("a reaction requires at least one reactant and one product");
     }

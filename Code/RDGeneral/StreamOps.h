@@ -55,7 +55,7 @@ namespace RDKit{
 
     return out.value;
   }
-
+  
   // Here is the function you will use. Again there is two compile-time assertion
   // that use the boost librarie. You could probably comment them out, but if you
   // do be cautious not to use this function for anything else than integers
@@ -79,6 +79,21 @@ namespace RDKit{
       return value;
 
     return SwapBytes<T, sizeof(T)>(value);
+  }
+  template<EEndian from, EEndian to>
+  inline char EndianSwapBytes(char value)
+  {
+    return value;
+  }
+  template<EEndian from, EEndian to>
+  inline unsigned char EndianSwapBytes(unsigned char value)
+  {
+    return value;
+  }
+  template<EEndian from, EEndian to>
+  inline signed char EndianSwapBytes(signed char value)
+  {
+    return value;
   }
   // --------------------------------------
   

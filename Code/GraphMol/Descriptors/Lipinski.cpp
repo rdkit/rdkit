@@ -172,10 +172,10 @@ namespace RDKit{
             break;
           }
           // we're checking each atom twice, which is kind of doofy, but this
-          // function is hopefully not going to be a big time sync.
+          // function is hopefully not going to be a big time sink.
           if(!countIt &&
-             mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
-             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+             (mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+              mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6) ){
             countIt=true;
           }
         }
@@ -216,10 +216,10 @@ namespace RDKit{
             hasAliph=true;
           }
           // we're checking each atom twice, which is kind of doofy, but this
-          // function is hopefully not going to be a big time sync.
+          // function is hopefully not going to be a big time sink.
           if(!hasHetero &&
-             mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
-             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+             (mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+              mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6) ){
             hasHetero=true;
           }
         }
@@ -262,8 +262,8 @@ namespace RDKit{
           // we're checking each atom twice, which is kind of doofy, but this
           // function is hopefully not going to be a big time sync.
           if(!countIt &&
-             mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
-             mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6 ){
+             (mol.getBondWithIdx(i)->getBeginAtom()->getAtomicNum()!=6 ||
+              mol.getBondWithIdx(i)->getEndAtom()->getAtomicNum()!=6) ){
             countIt=true;
           }
         }

@@ -218,8 +218,8 @@ namespace RDKit {
 
   ROMol *TDTMolSupplier::parseMol(std::string inLine){
     PRECONDITION(dp_inStream,"no stream");
-    unsigned int startP=inLine.find("<");
-    unsigned int endP=inLine.find_last_of(">");
+    std::size_t startP=inLine.find("<");
+    std::size_t endP=inLine.find_last_of(">");
     std::string smiles = inLine.substr(startP+1,endP-startP-1);
     ROMol *res = SmilesToMol(smiles,0,df_sanitize);
 
@@ -268,7 +268,7 @@ namespace RDKit {
           res->addConformer(conf,false);
         } else {
           endP=inLine.find_last_of(">");
-          if(static_cast<int>(endP)==std::string::npos){
+          if(endP==std::string::npos){
             std::ostringstream errout;
             errout << "no end tag found for property" << propName;
             throw FileParseException(errout.str());

@@ -131,6 +131,8 @@ namespace RDKit{
           if(!nRings) res[14]++;
           else res[17]++;
           break;
+        default:
+          break;
         }
         if(nRings>=2) res[41]++;
         ++firstB;

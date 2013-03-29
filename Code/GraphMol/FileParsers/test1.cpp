@@ -2375,7 +2375,9 @@ void testIssue3154208(){
     BOOST_LOG(rdInfoLog)<<"Large molecule canonical smiles test"<<std::endl;
     std::string csmiles=MolToSmiles(*m);
     for(unsigned int i=0;i<50;++i){
-      if(!(i%10)) BOOST_LOG(rdInfoLog)<<"Iteration: "<<i+1<<" of 50"<<std::endl;
+      if(!(i%10)){
+        BOOST_LOG(rdInfoLog)<<"Iteration: "<<i+1<<" of 50"<<std::endl;
+      }
       std::string nsmiles = MolToSmiles(*m,false,false,2*i,false);
       RWMol *nm=SmilesToMol(nsmiles);
       TEST_ASSERT(nm);
