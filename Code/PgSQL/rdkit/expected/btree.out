@@ -107,14 +107,14 @@ SELECT count(*) FROM pgbfp WHERE
 	f < rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   228
+    31
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
 	f <= rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   228
+    31
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
@@ -128,14 +128,14 @@ SELECT count(*) FROM pgbfp WHERE
 	f >= rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   772
+   969
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
 	f > rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   772
+   969
 (1 row)
 
 SET enable_indexscan=on;
@@ -151,14 +151,14 @@ SELECT count(*) FROM pgbfp WHERE
 	f < rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   228
+    31
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
 	f <= rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   228
+    31
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
@@ -172,14 +172,14 @@ SELECT count(*) FROM pgbfp WHERE
 	f >= rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   772
+   969
 (1 row)
 
 SELECT count(*) FROM pgbfp WHERE 
 	f > rdkit_fp('C1C(OC2=CC(=CC(=C2C1=O)O)O)C3=CC(=C(C=C3)O)O'::mol);
  count 
 -------
-   772
+   969
 (1 row)
 
 SET enable_indexscan=on;

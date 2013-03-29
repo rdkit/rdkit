@@ -317,7 +317,10 @@ makeMolText(CROMol data, int *len,bool asSmarts) {
       StringData = MolToSmarts(*mol, false);
     }
   } catch (...) {
-    elog(ERROR, "makeMolText: Unknown exception");
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeMolText: problems converting molecule to SMILES/SMARTS")));
+    StringData="";
   }       
 
   *len = StringData.size();
