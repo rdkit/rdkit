@@ -388,7 +388,7 @@ molcmp(CROMol i, CROMol a) {
   if(res) return res;
 
   RDKit::MatchVectType matchVect;
-  if(RDKit::SubstructMatch(*im,*am,matchVect)){
+  if(RDKit::SubstructMatch(*im,*am,matchVect,true,getDoChiralSSS())){
     return 0;
   }
   return -1;
@@ -400,7 +400,16 @@ MolSubstruct(CROMol i, CROMol a) {
   ROMol *am = (ROMol*)a;
   RDKit::MatchVectType matchVect;
 
-  return RDKit::SubstructMatch(*im,*am,matchVect); 
+  return RDKit::SubstructMatch(*im,*am,matchVect,true,getDoChiralSSS()); 
+}
+
+extern "C" int
+MolSubstructCount(CROMol i, CROMol a,bool uniquify) {
+  ROMol *im = (ROMol*)i;
+  ROMol *am = (ROMol*)a;
+  std::vector<RDKit::MatchVectType> matchVect;
+
+  return static_cast<int>(RDKit::SubstructMatch(*im,*am,matchVect,uniquify,true,getDoChiralSSS())); 
 }
 
 

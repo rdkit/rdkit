@@ -159,3 +159,20 @@ select mol_from_ctab('chiral1.mol
   1  4  1  1      
   1  5  1  0      
 M  END');
+
+-- GitHub issue 9
+select 'C1CC2CC3C45C2C2C6C7C8C9C%10C(C1)C1C%11%10C%109C98C87C76C42C24C65C3C3C56C64C4%12C72C28C79C8%10C9%11C1C1C%109C98C87C42C24C7%12C%116C65C3C3C56C6%11C%117C74C4%12C82C29C8%10C1C1C98C42C24C89C1C1C98C84C4%10C%122C27C7%11C%116C65C3C3C56C6%11C%117C42C24C7%11C%116C65C3C3C56C6%11C%117C74C4%12C%102C28C89C1C1C98C42C24C89C1C1C98C84C4%10C%122C27C7%11C%116C65C3C3C56C6%11C%117C42C24C7%11C%116C65C3C3C56C6%11C%117C74C4%12C%102C28C89C1C1C98C42C24C89C1CC8C4C1C%122C27C4%11C76C65C3CC6C7C4C12'::mol;
+
+-- chiral matching
+select 'C[C@H](F)Cl'::mol@>'CC(F)Cl'::mol as match;
+select 'C[C@H](F)Cl'::mol@>'C[C@H](F)Cl'::mol as match;
+select 'C[C@H](F)Cl'::mol@>'C[C@@H](F)Cl'::mol as match;
+set rdkit.do_chiral_sss=true;
+select 'C[C@H](F)Cl'::mol@>'CC(F)Cl'::mol as match;
+select 'C[C@H](F)Cl'::mol@>'C[C@H](F)Cl'::mol as match;
+select 'C[C@H](F)Cl'::mol@>'C[C@@H](F)Cl'::mol as match;
+set rdkit.do_chiral_sss=false;
+
+-- substructure counts
+select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol);
+select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol,false);

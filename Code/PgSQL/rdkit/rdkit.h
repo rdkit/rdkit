@@ -73,6 +73,7 @@ extern "C" {
    */
   extern double getTanimotoLimit(void);
   extern double getDiceLimit(void);
+  extern bool getDoChiralSSS(void);
 
   /*
    * From/to C/C++
@@ -98,6 +99,7 @@ extern "C" {
   int molcmp(CROMol i, CROMol a);
 
   int MolSubstruct(CROMol i, CROMol a);
+  int MolSubstructCount(CROMol i, CROMol a,bool uniquify);
 
   bytea *makeMolSign(CROMol data);
 

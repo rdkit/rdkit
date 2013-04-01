@@ -37,6 +37,7 @@
 
 static double rdkit_tanimoto_smlar_limit = 0.5;
 static double rdkit_dice_smlar_limit = 0.5;
+static bool rdkit_do_chiral_sss = false;
 static bool rdkit_guc_inited = false;
 
 #if PG_VERSION_NUM < 80400
@@ -81,6 +82,20 @@ initRDKitGUC()
 #endif
                            NULL
                            );
+  DefineCustomBoolVariable(
+                           "rdkit.do_chiral_sss",
+                           "Should stereochemistry be taken into account in substructure matching",
+                           "If false (the default), no stereochemistry information is used in substructure matches.",
+                           &rdkit_do_chiral_sss,
+                           false,
+                           PGC_USERSET,
+                           0,
+			   NULL,
+#if PG_VERSION_NUM >= 90000
+                           NULL,
+#endif
+                           NULL
+                           );
   rdkit_guc_inited = true;
 }
 
@@ -98,6 +113,14 @@ getDiceLimit(void) {
     initRDKitGUC();
 
   return rdkit_dice_smlar_limit;
+}
+
+bool
+getDoChiralSSS(void) {
+  if (!rdkit_guc_inited)
+    initRDKitGUC();
+
+  return rdkit_do_chiral_sss;
 }
 
 void _PG_init(void);

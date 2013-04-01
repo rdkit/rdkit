@@ -145,6 +145,29 @@ mol_rsubstruct(PG_FUNCTION_ARGS) {
   PG_RETURN_BOOL(MolSubstruct(i, a));             
 }
 
+PG_FUNCTION_INFO_V1(mol_substruct_count);
+Datum           mol_substruct_count(PG_FUNCTION_ARGS);
+Datum
+mol_substruct_count(PG_FUNCTION_ARGS) {
+  CROMol  i,
+    a;
+
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0), 
+                                            NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra = SearchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(1), 
+                                            NULL, &a, NULL);
+  bool uniquify=PG_GETARG_BOOL(2);
+
+  PG_RETURN_INT32(MolSubstructCount(i, a,uniquify));             
+}
+
+
 #define MOLDESCR( name, func, ret )                                 \
   PG_FUNCTION_INFO_V1(mol_##name);                                      \
   Datum           mol_##name(PG_FUNCTION_ARGS);                         \
