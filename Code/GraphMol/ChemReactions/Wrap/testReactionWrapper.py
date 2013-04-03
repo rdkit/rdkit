@@ -430,6 +430,11 @@ M  END
     labels = rxn.AddRecursiveQueriesToReaction(qs,'query', getLabels=True)
     self.failUnless(len(labels), 1)
 
+  def test18GithubIssue16(self):
+    rxn = rdChemReactions.ReactionFromSmarts("[F:1]>>[Cl:1]")
+    self.failUnless(rxn)
+    rxn.Initialize()
+    self.failUnlessRaises(ValueError,lambda : rxn.RunReactants((None,)))
 
 if __name__ == '__main__':
   unittest.main()

@@ -83,6 +83,7 @@ namespace RDKit {
     reacts.resize(len1);
     for(unsigned int i=0;i<len1;++i){
       reacts[i] = python::extract<ROMOL_SPTR>(reactants[i]);
+      if(!reacts[i]) throw_value_error("reaction called with None reactants");
     }
     std::vector<MOL_SPTR_VECT> mols;
     mols = self->runReactants(reacts);
@@ -157,6 +158,7 @@ namespace RDKit {
 
   ChemicalReaction *ReactionFromSmarts(const char *smarts,
                                   python::dict replDict){
+    PRECONDITION(smarts,"null SMARTS string");
     std::map<std::string,std::string> replacements;
     for(unsigned int i=0;i<python::extract<unsigned int>(replDict.keys().attr("__len__")());++i){
       replacements[python::extract<std::string>(replDict.keys()[i])]=python::extract<std::string>(replDict.values()[i]);
