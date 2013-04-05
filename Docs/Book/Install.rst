@@ -54,21 +54,19 @@ Fedora, CentOS (5.7+), and RHEL
 
 Install the following packages using yum::
 
-   cmake tk-devel readline-devel zlib-devel bzip2-devel sqlite-devel
+   cmake tk-devel readline-devel zlib-devel bzip2-devel sqlite-devel @development-tools
 
-Install the package group "Development Tools"
-
-Packages to install from source:
+Packages to install from source (not required on RHEL/CentOS 6.x):
 
   * python 2.7 : use ./configure CFLAGS=-fPIC --enable-unicode=ucs4 --enable-shared
   * numpy : do export LD_LIBRARY_PATH="/usr/local/lib" before python setup.py install
-  * flex : must be installed from source, see below
   * boost 1.48.0 or later: do ./bootstrap.sh --with-libraries=python,regex; ./b2; ./b2 install
 
 Older versions of CentOS
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here things are more difficult. Check this wiki page for information: https://code.google.com/p/rdkit/wiki/BuildingOnCentOS
+Here things are more difficult. Check this wiki page for 
+information: https://code.google.com/p/rdkit/wiki/BuildingOnCentOS
 
 Installing prerequisites from source
 ====================================
