@@ -77,8 +77,6 @@ Installing prerequisites from source
      
      .. note:: It seems that v2.8 is a better bet than v2.6. It might be worth compiling your own copy of v2.8 even if v2.6 is already installed.
    
-   * flex and bison. These are frequently already installed if you have the various pieces of the development environment installed. Note that some Redhat-based systems have an extremely ancient version of flex (v2.5.4, from 1997) installed; in order to build the RDKit on these systems you need to compile and install a more recent version. The source is available at http://flex.sourceforge.net.
-   
    * The following are required if you are planning on using the Python wrappers
    
       * The python headers. This probably means that you need to install the python-dev package (or whatever it's called) for your linux distribution.
