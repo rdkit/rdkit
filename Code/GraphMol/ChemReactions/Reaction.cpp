@@ -173,6 +173,16 @@ namespace RDKit {
           newAtom->clearProp("molAtomMapNumber");
         }
 
+        newAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        // if the product-template atom has the inversion flag set
+        // to 4 (=SET), then bring its stereochem over, otherwise we'll
+        // ignore it:
+        if(oAtom->hasProp("molInversionFlag")){
+          int iFlag;
+          oAtom->getProp("molInversionFlag",iFlag);
+          if(iFlag==4) newAtom->setChiralTag(oAtom->getChiralTag());
+        }
+
         // check for properties we need to set:
         if(newAtom->hasProp("_QueryFormalCharge")){
           int val;
@@ -342,11 +352,11 @@ namespace RDKit {
              productAtom->hasProp("molInversionFlag")){
             int flagVal;
             productAtom->getProp("molInversionFlag",flagVal);
-            productAtom->setChiralTag(reactantAtom->getChiralTag());
             switch(flagVal){
             case 0:
               // FIX: should we clear the chirality or leave it alone? for now we leave it alone 
               //productAtom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+              productAtom->setChiralTag(reactantAtom->getChiralTag());
               break;
             case 1:
               // inversion
@@ -354,11 +364,20 @@ namespace RDKit {
                  reactantAtom->getChiralTag()!=Atom::CHI_TETRAHEDRAL_CCW){
                 BOOST_LOG(rdWarningLog) << "unsupported chiral type on reactant atom ignored\n";
               } else {
+                productAtom->setChiralTag(reactantAtom->getChiralTag());
                 productAtom->invertChirality();
               }
               break;
             case 2:
-              // retention: do nothing
+              // retention: just set to the reactant
+              productAtom->setChiralTag(reactantAtom->getChiralTag());
+              break;
+            case 3:
+              // remove stereo
+              productAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
+              break;
+            case 4:
+              // set stereo, so leave it the way it was in the product template
               break;
             default:
               BOOST_LOG(rdWarningLog) << "unrecognized chiral inversion/retention flag on product atom ignored\n";
@@ -445,7 +464,8 @@ namespace RDKit {
           productAtom = product->getAtomWithIdx(reactProdAtomMap[reactantAtomIdx]);
           if(productAtom->getChiralTag()==Atom::CHI_UNSPECIFIED &&
              reactantAtom->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-             reactantAtom->getChiralTag()!=Atom::CHI_OTHER ){
+             reactantAtom->getChiralTag()!=Atom::CHI_OTHER &&
+             !productAtom->hasProp("molInversionFlag") ){
             // we can only do something sensible here if we have the same number of bonds
             // in the reactants and the products:
             if(reactantAtom->getDegree()==productAtom->getDegree()){
@@ -456,15 +476,42 @@ namespace RDKit {
               boost::tie(nbrIdx,endNbrs) = product->getAtomNeighbors(productAtom);
               while(nbrIdx!=endNbrs){
                 if(prodReactAtomMap.find(*nbrIdx)==prodReactAtomMap.end()){
-                  // if there's a bond in the product that doesn't correspond to
-                  // anything in the reactant, we're also doomed
                   ++nUnknown;
-                  break;
+                  // if there's more than one bond in the product that doesn't correspond to
+                  // anything in the reactant, we're also doomed
+                  if(nUnknown>1) break;
+
+                  // otherwise, add a -1 to the bond order that we'll fill in later
+                  pOrder.push_back(-1);
+                } else {
+                  const Bond *rBond=reactant->getBondBetweenAtoms(reactantAtom->getIdx(),prodReactAtomMap[*nbrIdx]);
+                  CHECK_INVARIANT(rBond,"expected reactant bond not found");
+                  pOrder.push_back(rBond->getIdx());
                 }
-                const Bond *rBond=reactant->getBondBetweenAtoms(reactantAtom->getIdx(),prodReactAtomMap[*nbrIdx]);
-                CHECK_INVARIANT(rBond,"expected reactant bond not found");
-                pOrder.push_back(rBond->getIdx());
                 ++nbrIdx;
+              }
+              if(nUnknown==1){
+                // find the reactant bond that hasn't yet been accounted for:
+                int unmatchedBond=-1;
+                boost::tie(nbrIdx,endNbrs) = reactant->getAtomNeighbors(reactantAtom);
+                while(nbrIdx!=endNbrs){
+                  const Bond *rBond=reactant->getBondBetweenAtoms(reactantAtom->getIdx(),*nbrIdx);
+                  if(std::find(pOrder.begin(),pOrder.end(),rBond->getIdx())==pOrder.end()){
+                    unmatchedBond=rBond->getIdx();
+                    break;
+                  }
+                  ++nbrIdx;
+                }
+                // what must be true at this point:
+                //  1) there's a -1 in pOrder that we'll substitute for
+                //  2) unmatchedBond contains the index of the substitution
+                INT_LIST::iterator bPos=std::find(pOrder.begin(),pOrder.end(),-1);
+                if(unmatchedBond>=0 && bPos!=pOrder.end()){
+                  *bPos=unmatchedBond;
+                }
+                if(std::find(pOrder.begin(),pOrder.end(),-1)==pOrder.end()){
+                  nUnknown=0;
+                }
               }
               if(!nUnknown){
                 productAtom->setChiralTag(reactantAtom->getChiralTag());
@@ -596,10 +643,13 @@ namespace RDKit {
     if(this->df_needsInit) {
      throw ChemicalReactionException("initMatchers() must be called before runReactants()");
     }
-    
     if(reactants.size() != this->getNumReactantTemplates()){
       throw ChemicalReactionException("Number of reactants provided does not match number of reactant templates.");    
     }
+    BOOST_FOREACH(ROMOL_SPTR msptr,reactants){
+      CHECK_INVARIANT(msptr,"bad molecule in reactants");
+    }
+    
     std::vector<MOL_SPTR_VECT> productMols;
     productMols.clear();
     

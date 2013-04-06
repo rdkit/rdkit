@@ -47,36 +47,41 @@ namespace RDKit {
           prodIt!=rxn->endProductTemplates();++prodIt){
         for(ROMol::AtomIterator prodAtomIt=(*prodIt)->beginAtoms();
             prodAtomIt!=(*prodIt)->endAtoms();++prodAtomIt){
-          if((*prodAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-             (*prodAtomIt)->getChiralTag()!=Atom::CHI_OTHER &&
-             (*prodAtomIt)->hasProp("molAtomMapNumber")) {
-            int mapNum;
-            (*prodAtomIt)->getProp("molAtomMapNumber",mapNum);
-
-            for(MOL_SPTR_VECT::const_iterator reactIt=rxn->beginReactantTemplates();
-                reactIt!=rxn->endReactantTemplates();++reactIt){
-              for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
-                  reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
-                if((*reactAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
-                   (*reactAtomIt)->getChiralTag()!=Atom::CHI_OTHER &&
-                   (*reactAtomIt)->hasProp("molAtomMapNumber")) {
-                  int reactMapNum;
-                  (*reactAtomIt)->getProp("molAtomMapNumber",reactMapNum);
-                  if(reactMapNum==mapNum){
-                    // finally, in the bowels of the nesting, we get to some actual
-                    // work:
+          if(!(*prodAtomIt)->hasProp("molAtomMapNumber")) continue;
+          int mapNum;
+          (*prodAtomIt)->getProp("molAtomMapNumber",mapNum);
+          for(MOL_SPTR_VECT::const_iterator reactIt=rxn->beginReactantTemplates();
+              reactIt!=rxn->endReactantTemplates();++reactIt){
+            for(ROMol::AtomIterator reactAtomIt=(*reactIt)->beginAtoms();
+                reactAtomIt!=(*reactIt)->endAtoms();++reactAtomIt){
+              if(!(*reactAtomIt)->hasProp("molAtomMapNumber")) continue;
+              int reactMapNum;
+              (*reactAtomIt)->getProp("molAtomMapNumber",reactMapNum);
+              if(reactMapNum==mapNum){
+                // finally, in the bowels of the nesting, we get to some actual
+                // work:
+                if((*prodAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+                   (*prodAtomIt)->getChiralTag()!=Atom::CHI_OTHER) {
+                  if((*reactAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+                     (*reactAtomIt)->getChiralTag()!=Atom::CHI_OTHER){
+                    // both have stereochem specified:
                     if((*reactAtomIt)->getChiralTag()==(*prodAtomIt)->getChiralTag()){
                       (*prodAtomIt)->setProp("molInversionFlag",2);
-                      //BOOST_LOG(rdInfoLog) << "preserve at " << (*prodAtomIt)->getIdx() << std::endl;   
                     } else {
                       // FIX: this is technically fragile: it should be checking
                       // if the atoms both have tetrahedral chirality. However,
                       // at the moment that's the only chirality available, so there's
                       // no need to go monkeying around.
-                      (*prodAtomIt)->setProp("molInversionFlag",1);  
-                      //BOOST_LOG(rdInfoLog) << "invert at " << (*prodAtomIt)->getIdx() << std::endl;   
+                      (*prodAtomIt)->setProp("molInversionFlag",1);
                     }
+                  } else {
+                    // stereochem in the product, but not in the reactant
+                    (*prodAtomIt)->setProp("molInversionFlag",4);
                   }
+                } else if((*reactAtomIt)->getChiralTag()!=Atom::CHI_UNSPECIFIED &&
+                          (*reactAtomIt)->getChiralTag()!=Atom::CHI_OTHER){
+                  // stereochem in the reactant, but not the product:
+                  (*prodAtomIt)->setProp("molInversionFlag",3);                  
                 }
               }
             }
