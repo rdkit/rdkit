@@ -134,8 +134,12 @@ namespace RDKit {
     //! From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)
     /*!
       \param mol           the molecule of interest
+      \param atomContribs  if provided, this will be used to return the contributions
+                           of the individual atoms to the value. These do not
+                           neccessarily sum to the full value.
+                           Note: this can be a time-consuming calculation.
     */
-    double calcHallKierAlpha(const ROMol &mol);
+    double calcHallKierAlpha(const ROMol &mol,std::vector<double> *atomContribs=0);
     const std::string hallKierAlphaVersion="1.2.0";
 
     //! calculate the Hall-Kier kappa1 value for a molecule

@@ -98,13 +98,14 @@ namespace {
                                                                unsigned int maxLength,
                                                                python::object fromAtoms,
                                                                python::object ignoreAtoms,
-                                                               python::object atomInvariants){
+                                                               python::object atomInvariants,
+                                                               bool includeChirality){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getAtomPairFingerprint(mol,minLength,maxLength,
-                                                   fvect,ivect,invvect);
+                                                   fvect,ivect,invvect,includeChirality);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -116,14 +117,14 @@ namespace {
                                                                      unsigned int maxLength,
                                                                      python::object fromAtoms,
                                                                      python::object ignoreAtoms,
-                                                                     python::object atomInvariants){
-
+                                                                     python::object atomInvariants,
+                                                                     bool includeChirality){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getHashedAtomPairFingerprint(mol,nBits,minLength,maxLength,
-                                                         fvect,ivect,invvect);
+                                                         fvect,ivect,invvect,includeChirality);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -134,7 +135,8 @@ namespace {
                                                                          unsigned int targetSize,
                                                                          python::object fromAtoms,
                                                                          python::object ignoreAtoms,
-                                                                         python::object atomInvariants){
+                                                                         python::object atomInvariants,
+                                                                         bool includeChirality){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
@@ -145,7 +147,7 @@ namespace {
     }
     
     RDKit::SparseIntVect<boost::int64_t> *res;
-    res = RDKit::AtomPairs::getTopologicalTorsionFingerprint(mol,targetSize,fvect,ivect,invvect);
+    res = RDKit::AtomPairs::getTopologicalTorsionFingerprint(mol,targetSize,fvect,ivect,invvect,includeChirality);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -157,13 +159,14 @@ namespace {
                                                                                unsigned int targetSize,
                                                                                python::object fromAtoms,
                                                                                python::object ignoreAtoms,
-                                                                               python::object atomInvariants){
+                                                                               python::object atomInvariants,
+                                                                               bool includeChirality){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
     RDKit::SparseIntVect<boost::int64_t> *res;
     res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol,nBits,targetSize,fvect,ivect,
-                                                                   invvect);
+                                                                   invvect,includeChirality);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -176,7 +179,8 @@ namespace {
                                                                    python::object fromAtoms,
                                                                    python::object ignoreAtoms,
                                                                    python::object atomInvariants,
-                                                                   unsigned int nBitsPerEntry
+                                                                   unsigned int nBitsPerEntry,
+                                                                   bool includeChirality
                                                                    ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
@@ -184,7 +188,8 @@ namespace {
     ExplicitBitVect *res;
     res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(mol,nBits,targetSize,fvect,ivect,
                                                                             invvect,
-                                                                            nBitsPerEntry);
+                                                                            nBitsPerEntry,
+                                                                            includeChirality);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -198,7 +203,8 @@ namespace {
                                                          python::object fromAtoms,
                                                          python::object ignoreAtoms,
                                                          python::object atomInvariants,
-                                                         unsigned int nBitsPerEntry
+                                                         unsigned int nBitsPerEntry,
+                                                         bool includeChirality
                                                          ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
@@ -207,7 +213,7 @@ namespace {
     res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(mol,nBits,
                                                                   minLength,maxLength,
                                                                   fvect,ivect,invvect,
-                                                                  nBitsPerEntry);
+                                                                  nBitsPerEntry,includeChirality);
     if(fvect) delete fvect;
     if(ivect) delete ivect;
     if(invvect) delete invvect;
@@ -215,7 +221,33 @@ namespace {
   }
 
   namespace {
-     RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(const RDKit::ROMol &mol,
+    double kappaHelper(double (* fn)(const RDKit::ROMol &,std::vector<double>*),const RDKit::ROMol &mol,python::object atomContribs){
+      std::vector<double> *lContribs=0;
+      if(atomContribs!=python::object()){
+        // make sure the optional argument actually was a list
+        python::list typecheck=python::extract<python::list>(atomContribs);
+
+        if(python::extract<unsigned int>(typecheck.attr("__len__")())!=mol.getNumAtoms()){
+          throw_value_error("length of atomContribs list != number of atoms");
+        }          
+
+        lContribs = new std::vector<double>(mol.getNumAtoms());
+      }
+      double res=fn(mol,lContribs);
+      if(lContribs){
+        python::list acl=python::extract<python::list>(atomContribs);
+        for(unsigned int i=0;i<mol.getNumAtoms();++i){
+          acl[i] = (*lContribs)[i];
+        }
+        delete lContribs;
+      }
+      return res;
+    }
+    double hkAlphaHelper(const RDKit::ROMol &mol,python::object atomContribs){
+      return kappaHelper(RDKit::Descriptors::calcHallKierAlpha,mol,atomContribs);
+    }
+
+    RDKit::SparseIntVect<boost::uint32_t> *MorganFingerprintHelper(const RDKit::ROMol &mol,
                                  int radius,
                                  int nBits,
                                  python::object invariants,
@@ -507,7 +539,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
     ;
   docString="Returns the atom code (hash) for an atom";
   python::def("GetAtomPairAtomCode", RDKit::AtomPairs::getAtomCode,
-              (python::arg("atom"), python::arg("branchSubtract")=0),
+              (python::arg("atom"), python::arg("branchSubtract")=0,
+               python::arg("includeChirality")=false),
               docString.c_str());
   docString="Returns the atom-pair fingerprint for a molecule as an IntSparseIntVect";
   python::def("GetAtomPairFingerprint", GetAtomPairFingerprint,
@@ -516,7 +549,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
-               python::arg("atomInvariants")=0),
+               python::arg("atomInvariants")=0,
+               python::arg("includeChirality")=false),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
@@ -529,7 +563,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("maxLength")=RDKit::AtomPairs::maxPathLen-1,
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
-               python::arg("atomInvariants")=0),
+               python::arg("atomInvariants")=0,
+               python::arg("includeChirality")=false),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -543,7 +578,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
                python::arg("atomInvariants")=0,
-               python::arg("nBitsPerEntry")=4),
+               python::arg("nBitsPerEntry")=4,
+               python::arg("includeChirality")=false),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -553,7 +589,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 	      (python::arg("mol"),python::arg("targetSize")=4,
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
-               python::arg("atomInvariants")=0),
+               python::arg("atomInvariants")=0,
+               python::arg("includeChirality")=false),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   docString="Returns the hashed topological-torsion fingerprint for a molecule as a LongIntSparseIntVect";
@@ -564,7 +601,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("targetSize")=4,
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
-               python::arg("atomInvariants")=0),
+               python::arg("atomInvariants")=0,
+               python::arg("includeChirality")=false),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
   docString="Returns the topological-torsion fingerprint for a molecule as an ExplicitBitVect";
@@ -576,7 +614,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
                python::arg("fromAtoms")=0,
                python::arg("ignoreAtoms")=0,
                python::arg("atomInvariants")=0,
-               python::arg("nBitsPerEntry")=4),
+               python::arg("nBitsPerEntry")=4,
+               python::arg("includeChirality")=false),
               docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
 
@@ -927,8 +966,9 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   docString="From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
   python::def("CalcHallKierAlpha",
-              RDKit::Descriptors::calcHallKierAlpha,
-              (python::arg("mol")));
+              hkAlphaHelper,
+              (python::arg("mol"),
+               python::arg("atomContribs")=python::object()));
   python::scope().attr("_CalcHallKierAlpha_version")=RDKit::Descriptors::hallKierAlphaVersion;
 
   docString="From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)";

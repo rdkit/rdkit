@@ -252,7 +252,8 @@ namespace RDKit{
       return calcChiNn(mol,4,force);
     };
 
-    double calcHallKierAlpha(const ROMol &mol){
+    double calcHallKierAlpha(const ROMol &mol,std::vector<double> *atomContribs){
+      PRECONDITION(!atomContribs || atomContribs->size()>=mol.getNumAtoms(),"bad atomContribs vector");
       const PeriodicTable *tbl = PeriodicTable::getTable();
       double alphaSum=0.0;
       double rC=tbl->getRb0(6);
@@ -270,45 +271,62 @@ namespace RDKit{
           alpha = rA/rC-1.0;
         }
         alphaSum+=alpha;
+        if(atomContribs) (*atomContribs)[at->getIdx()]=alpha;
       }
       return alphaSum;
     };
-    
+
+    namespace {
+      double kappa1Helper(double P1,double A,double alpha){
+        double denom=P1+alpha;
+        double kappa=0.0;
+        if(denom){
+          kappa = (A+alpha)*(A+alpha-1)*(A+alpha-1)/(denom*denom);
+        }
+        return kappa;
+      }
+      double kappa2Helper(double P2,double A,double alpha){
+        double denom=(P2+alpha)*(P2+alpha);
+        double kappa=0.0;
+        if(denom){
+          kappa = (A+alpha-1)*(A+alpha-2)*(A+alpha-2)/denom;
+        }
+        return kappa;
+      }
+      double kappa3Helper(double P3,int A,double alpha){
+        double denom=(P3+alpha)*(P3+alpha);
+        double kappa=0.0;
+        if(denom){
+          if(A%2){
+            kappa = (A+alpha-1)*(A+alpha-3)*(A+alpha-3)/denom;
+          } else {
+            kappa = (A+alpha-2)*(A+alpha-3)*(A+alpha-3)/denom;
+          }
+        }
+        return kappa;
+      }
+    } // end of anonymous namespace
+
     double calcKappa1(const ROMol &mol){
       double P1 = mol.getNumBonds();
       double A = mol.getNumHeavyAtoms();
       double alpha = calcHallKierAlpha(mol);
-      double denom=P1+alpha;
-      double kappa=0.0;
-      if(denom){
-        kappa = (A+alpha)*(A+alpha-1)*(A+alpha-1)/(denom*denom);
-      }
+      double kappa = kappa1Helper(P1,A,alpha);
       return kappa;
     }
     double calcKappa2(const ROMol &mol){
-      double P2 = findAllPathsOfLengthN(mol,2).size();
+      PATH_LIST ps=findAllPathsOfLengthN(mol,2);
+      double P2 = ps.size();
       double A = mol.getNumHeavyAtoms();
       double alpha = calcHallKierAlpha(mol);
-      double denom=(P2+alpha)*(P2+alpha);
-      double kappa=0.0;
-      if(denom){
-        kappa = (A+alpha-1)*(A+alpha-2)*(A+alpha-2)/denom;
-      }
+      double kappa=kappa2Helper(P2,A,alpha);
       return kappa;
     }
     double calcKappa3(const ROMol &mol){
       double P3 = findAllPathsOfLengthN(mol,3).size();
       int A = mol.getNumHeavyAtoms();
       double alpha = calcHallKierAlpha(mol);
-      double denom=(P3+alpha)*(P3+alpha);
-      double kappa=0.0;
-      if(denom){
-        if(A%2){
-          kappa = (A+alpha-1)*(A+alpha-3)*(A+alpha-3)/denom;
-        } else {
-          kappa = (A+alpha-2)*(A+alpha-3)*(A+alpha-3)/denom;
-        }
-      }
+      double kappa=kappa3Helper(P3,A,alpha);
       return kappa;
     }
   } // end of namespace Descriptors
