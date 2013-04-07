@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007-2012 Greg Landrum
+//  Copyright (C) 2007-2013 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,17 @@
 
 /*! \file AtomPairs.h
 
+
+  A few quick notes about fingerprint size and the way chirality is handled in these functions.
+
+  By default the atom-pair and topologic-torsion fingerprints do not include any information about
+  chirality; the atom invariants only include information about the atomic number,
+  number of pi electrons, and degree.
+  When chirality is included, two additional bits are added to the atom invariants to flag R/S/no
+  chirality. These additional bits change the size of the atom invariants and either the size
+  of the final fingerprint (atom pairs) or the maximum allowed path length (torsions). This means
+  that even fingerprints for achiral molecules are different when includeChirality is true.
+  
 */
 #ifndef __RD_ATOMPAIRS_H__
 #define __RD_ATOMPAIRS_H__
@@ -28,10 +39,11 @@ namespace RDKit {
     const unsigned int maxNumPi=(1<<numPiBits)-1;
     const unsigned int numBranchBits=3;
     const unsigned int maxNumBranches=(1<<numBranchBits)-1;
+    const unsigned int numChiralBits=2;
     const unsigned int codeSize=numTypeBits+numPiBits+numBranchBits;
     const unsigned int numPathBits=5;
     const unsigned int maxPathLen=(1<<numPathBits)-1;
-    const unsigned int numAtomPairFingerprintBits=numPathBits+2*codeSize;
+    const unsigned int numAtomPairFingerprintBits=numPathBits+2*codeSize; // note that this is only accurate if chirality is not included
     
     //! returns a numeric code for the atom (the atom's hash in the
     //! atom-pair scheme)
@@ -41,8 +53,9 @@ namespace RDKit {
       the number of neighbors when the hash
       is calculated (used in the topological
       torsions code)
+      \param includeChirality toggles the inclusions of bits indicating R/S chirality
     */
-    boost::uint32_t getAtomCode(const Atom *atom,unsigned int branchSubtract=0);
+    boost::uint32_t getAtomCode(const Atom *atom,unsigned int branchSubtract=0,bool includeChirality=false);
 
     //! returns an atom pair hash based on two atom hashes and the
     //! distance between the atoms.
@@ -51,9 +64,10 @@ namespace RDKit {
       \param codeJ  the hash for the second atom
       \param dist   the distance (number of bonds) between the two
       atoms
+      \param includeChirality toggles the inclusions of bits indicating R/S chirality
     */
     boost::uint32_t getAtomPairCode(boost::uint32_t codeI,boost::uint32_t codeJ,
-                                    unsigned int dist);
+                                    unsigned int dist,bool includeChirality=false);
 
     //! returns the atom-pair fingerprint for a molecule
     /*!
@@ -78,6 +92,8 @@ namespace RDKit {
       \param atomInvariants: a list of invariants to use for the atom hashes
                              note: only the first \c codeSize bits of each
                              invariant are used.
+      \param includeChirality: if set, chirality will be used in the atom invariants
+                               (note: this is ignored if atomInvariants are provided)  
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -88,13 +104,15 @@ namespace RDKit {
                            unsigned int minLength,unsigned int maxLength,
                            const std::vector<boost::uint32_t> *fromAtoms=0,
                            const std::vector<boost::uint32_t> *ignoreAtoms=0,
-                           const std::vector<boost::uint32_t> *atomInvariants=0);
+                           const std::vector<boost::uint32_t> *atomInvariants=0,
+                           bool includeChirality=false);
     //! \overload
     SparseIntVect<boost::int32_t> *
     getAtomPairFingerprint(const ROMol &mol,
                            const std::vector<boost::uint32_t> *fromAtoms=0,
                            const std::vector<boost::uint32_t> *ignoreAtoms=0,
-                           const std::vector<boost::uint32_t> *atomInvariants=0);
+                           const std::vector<boost::uint32_t> *atomInvariants=0,
+                           bool includeChirality=false);
 
 
     //! returns the hashed atom-pair fingerprint for a molecule
@@ -115,6 +133,8 @@ namespace RDKit {
       \param atomInvariants: a list of invariants to use for the atom hashes
                              note: only the first \c codeSize bits of each
                              invariant are used.
+      \param includeChirality: if set, chirality will be used in the atom invariants
+                               (note: this is ignored if atomInvariants are provided)  
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -127,7 +147,8 @@ namespace RDKit {
                                  unsigned int maxLength=maxPathLen-1,
                                  const std::vector<boost::uint32_t> *fromAtoms=0,
                                  const std::vector<boost::uint32_t> *ignoreAtoms=0,
-                                 const std::vector<boost::uint32_t> *atomInvariants=0);
+                                 const std::vector<boost::uint32_t> *atomInvariants=0,
+                                 bool includeChirality=false);
     //! returns the hashed atom-pair fingerprint for a molecule as a bit vector
     /*!
       \param mol:   the molecule to be fingerprinted
@@ -147,6 +168,8 @@ namespace RDKit {
                              note: only the first \c codeSize bits of each
                              invariant are used.
       \param nBitsPerEntry: number of bits to use in simulating counts
+      \param includeChirality: if set, chirality will be used in the atom invariants
+                               (note: this is ignored if atomInvariants are provided)  
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -160,7 +183,8 @@ namespace RDKit {
                                           const std::vector<boost::uint32_t> *fromAtoms=0,
                                           const std::vector<boost::uint32_t> *ignoreAtoms=0,
                                           const std::vector<boost::uint32_t> *atomInvariants=0,
-                                          unsigned int nBitsPerEntry=4);
+                                          unsigned int nBitsPerEntry=4,
+                                          bool includeChirality=false);
                                           
 
 
@@ -169,7 +193,7 @@ namespace RDKit {
     /*!
       \param atomCodes  the vector of atom hashes
     */
-    boost::uint64_t getTopologicalTorsionCode(const std::vector<boost::uint32_t> &atomCodes);
+    boost::uint64_t getTopologicalTorsionCode(const std::vector<boost::uint32_t> &atomCodes,bool includeChirality=false);
 
     //! returns the topological-torsion fingerprint for a molecule
     /*!
@@ -189,6 +213,8 @@ namespace RDKit {
       \param atomInvariants: a list of invariants to use for the atom hashes
                              note: only the first \c codeSize bits of each
                              invariant are used.
+      \param includeChirality: if set, chirality will be used in the atom invariants
+                               (note: this is ignored if atomInvariants are provided)  
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -199,7 +225,8 @@ namespace RDKit {
                                      unsigned int targetSize=4,
                                      const std::vector<boost::uint32_t> *fromAtoms=0,
                                      const std::vector<boost::uint32_t> *ignoreAtoms=0,
-                                     const std::vector<boost::uint32_t> *atomInvariants=0
+                                     const std::vector<boost::uint32_t> *atomInvariants=0,
+                                     bool includeChirality=false
                                      );
     //! returns a hashed topological-torsion fingerprint for a molecule
     /*!
@@ -220,6 +247,8 @@ namespace RDKit {
       \param atomInvariants: a list of invariants to use for the atom hashes
                              note: only the first \c codeSize bits of each
                              invariant are used.
+      \param includeChirality: if set, chirality will be used in the atom invariants
+                               (note: this is ignored if atomInvariants are provided)  
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -231,7 +260,8 @@ namespace RDKit {
                                            unsigned int targetSize=4,
                                            const std::vector<boost::uint32_t> *fromAtoms=0,
                                            const std::vector<boost::uint32_t> *ignoreAtoms=0,
-                                           const std::vector<boost::uint32_t> *atomInvariants=0);
+                                           const std::vector<boost::uint32_t> *atomInvariants=0,
+                                           bool includeChirality=false);
     //! returns a hashed topological-torsion fingerprint for a molecule as a bit vector
     /*!
       \param mol:         the molecule to be fingerprinted
@@ -247,6 +277,8 @@ namespace RDKit {
                              note: only the first \c codeSize bits of each
                              invariant are used.
       \param nBitsPerEntry: number of bits to use in simulating counts
+      \param includeChirality: if set, chirality will be used in the atom invariants
+                               (note: this is ignored if atomInvariants are provided)  
 
       \return a pointer to the fingerprint. The client is
       responsible for calling delete on this.
@@ -259,7 +291,8 @@ namespace RDKit {
                                                     const std::vector<boost::uint32_t> *fromAtoms=0,
                                                     const std::vector<boost::uint32_t> *ignoreAtoms=0,
                                                     const std::vector<boost::uint32_t> *atomInvariants=0,
-                                                    unsigned int nBitsPerEntry=4);
+                                                    unsigned int nBitsPerEntry=4,
+                                                    bool includeChirality=false);
   }    
 }
 

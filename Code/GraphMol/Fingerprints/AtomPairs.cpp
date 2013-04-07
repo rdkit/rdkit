@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2007-2011 Greg Landrum
+//  Copyright (C) 2007-2013 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,7 +33,8 @@ namespace RDKit{
       return res;
     }
     
-    boost::uint32_t getAtomCode(const Atom *atom,unsigned int branchSubtract){
+    boost::uint32_t getAtomCode(const Atom *atom,unsigned int branchSubtract,
+                                bool includeChirality){
       PRECONDITION(atom,"no atom");
       boost::uint32_t code;
 
@@ -59,15 +60,28 @@ namespace RDKit{
       }
       if(typeIdx==nTypes) --typeIdx;
       code |= typeIdx<<(numBranchBits+numPiBits);
+      if(includeChirality){
+        if(atom->hasProp("_CIPCode")){
+          boost::uint32_t offset=numBranchBits+numPiBits+numTypeBits;
+          std::string cipCode;
+          atom->getProp("_CIPCode",cipCode);
+          if(cipCode=="R"){
+            code |= 1<<offset;
+          } else if (cipCode=="S"){
+            code |= 2<<offset;
+          }
+        }
+      }
+      POSTCONDITION(code<(1<<(codeSize+(includeChirality?2:0))),"code exceeds number of bits");
       return code;
     };
 
     boost::uint32_t getAtomPairCode(boost::uint32_t codeI,boost::uint32_t codeJ,
-                                    unsigned int dist){
+                                    unsigned int dist,bool includeChirality){
       PRECONDITION(dist<maxPathLen,"dist too long");
       boost::uint32_t res=dist;
       res |= std::min(codeI,codeJ) << numPathBits;
-      res |= std::max(codeI,codeJ) << (numPathBits+codeSize);
+      res |= std::max(codeI,codeJ) << (numPathBits+codeSize+(includeChirality?numChiralBits:0));
       return res;
     }
 
@@ -85,10 +99,11 @@ namespace RDKit{
     void setAtomPairBit(boost::uint32_t i, boost::uint32_t j,boost::uint32_t nAtoms,
                         const std::vector<boost::uint32_t> &atomCodes,
                         const double *dm,T *bv,
-                        unsigned int minLength,unsigned int maxLength){
+                        unsigned int minLength,unsigned int maxLength,
+                        bool includeChirality){
       unsigned int dist=static_cast<unsigned int>(floor(dm[i*nAtoms+j]));
       if(dist>=minLength && dist<=maxLength){
-        boost::uint32_t bitId=getAtomPairCode(atomCodes[i],atomCodes[j],dist);
+        boost::uint32_t bitId=getAtomPairCode(atomCodes[i],atomCodes[j],dist,includeChirality);
         updateElement(*bv,static_cast<boost::uint32_t>(bitId));
       }
     }
@@ -96,20 +111,22 @@ namespace RDKit{
     SparseIntVect<boost::int32_t> *getAtomPairFingerprint(const ROMol &mol,
                                                           const std::vector<boost::uint32_t> *fromAtoms,
                                                           const std::vector<boost::uint32_t> *ignoreAtoms,
-                                                          const std::vector<boost::uint32_t> *atomInvariants
+                                                          const std::vector<boost::uint32_t> *atomInvariants,
+                                                          bool includeChirality
                                                           ){
-      return getAtomPairFingerprint(mol,1,maxPathLen-1,fromAtoms,ignoreAtoms,atomInvariants);
+      return getAtomPairFingerprint(mol,1,maxPathLen-1,fromAtoms,ignoreAtoms,atomInvariants,includeChirality);
     };
 
     SparseIntVect<boost::int32_t> *
     getAtomPairFingerprint(const ROMol &mol,unsigned int minLength,unsigned int maxLength,
                            const std::vector<boost::uint32_t> *fromAtoms,
                            const std::vector<boost::uint32_t> *ignoreAtoms,
-                           const std::vector<boost::uint32_t> *atomInvariants
+                           const std::vector<boost::uint32_t> *atomInvariants,
+                           bool includeChirality                           
                            ){
       PRECONDITION(minLength<=maxLength,"bad lengths provided");
       PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
-      SparseIntVect<boost::int32_t> *res=new SparseIntVect<boost::int32_t>(1<<numAtomPairFingerprintBits);
+      SparseIntVect<boost::int32_t> *res=new SparseIntVect<boost::int32_t>(1<<(numAtomPairFingerprintBits+2*(includeChirality?2:0)));
       const double *dm = MolOps::getDistanceMat(mol);
       const unsigned int nAtoms=mol.getNumAtoms();
 
@@ -117,7 +134,7 @@ namespace RDKit{
       for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
           atomItI!=mol.endAtoms();++atomItI){
         if(!atomInvariants){
-          atomCodes.push_back(getAtomCode(*atomItI));
+          atomCodes.push_back(getAtomCode(*atomItI,0,includeChirality));
         } else {
           atomCodes.push_back((*atomInvariants)[(*atomItI)->getIdx()]%((1<<codeSize)-1));
         }
@@ -138,7 +155,7 @@ namespace RDKit{
                std::find(ignoreAtoms->begin(),ignoreAtoms->end(),j)!=ignoreAtoms->end()){
               continue;
             }
-            setAtomPairBit(i,j,nAtoms,atomCodes,dm,res,minLength,maxLength);
+            setAtomPairBit(i,j,nAtoms,atomCodes,dm,res,minLength,maxLength,includeChirality);
           }
         } else {
           BOOST_FOREACH(boost::uint32_t j,*fromAtoms){
@@ -147,7 +164,7 @@ namespace RDKit{
                  std::find(ignoreAtoms->begin(),ignoreAtoms->end(),j)!=ignoreAtoms->end()){
                 continue;
               }
-              setAtomPairBit(i,j,nAtoms,atomCodes,dm,res,minLength,maxLength);
+              setAtomPairBit(i,j,nAtoms,atomCodes,dm,res,minLength,maxLength,includeChirality);
             }
           }
         }
@@ -160,7 +177,8 @@ namespace RDKit{
                                  unsigned int minLength,unsigned int maxLength,
                                  const std::vector<boost::uint32_t> *fromAtoms,
                                  const std::vector<boost::uint32_t> *ignoreAtoms,
-                                 const std::vector<boost::uint32_t> *atomInvariants
+                                 const std::vector<boost::uint32_t> *atomInvariants,
+                                 bool includeChirality
                                  ){
       PRECONDITION(minLength<=maxLength,"bad lengths provided");
       PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
@@ -169,12 +187,13 @@ namespace RDKit{
       const unsigned int nAtoms=mol.getNumAtoms();
 
       std::vector<boost::uint32_t> atomCodes;
+      atomCodes.reserve(nAtoms);
       for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
           atomItI!=mol.endAtoms();++atomItI){
         if(!atomInvariants){
-          atomCodes.push_back(getAtomCode(*atomItI));
+          atomCodes.push_back(getAtomCode(*atomItI,0,includeChirality));
         } else {
-          atomCodes.push_back((*atomInvariants)[(*atomItI)->getIdx()]%((1<<codeSize)-1));
+          atomCodes.push_back((*atomInvariants)[(*atomItI)->getIdx()]);
         }
       }
 
@@ -230,7 +249,8 @@ namespace RDKit{
                                           const std::vector<boost::uint32_t> *fromAtoms,
                                           const std::vector<boost::uint32_t> *ignoreAtoms,
                                           const std::vector<boost::uint32_t> *atomInvariants,
-                                          unsigned int nBitsPerEntry
+                                          unsigned int nBitsPerEntry,
+                                          bool includeChirality
                                           ){
       PRECONDITION(minLength<=maxLength,"bad lengths provided");
       PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
@@ -238,7 +258,7 @@ namespace RDKit{
 
       unsigned int blockLength=nBits/nBitsPerEntry;
       SparseIntVect<boost::int32_t> *sres=getHashedAtomPairFingerprint(mol,blockLength,minLength,maxLength,
-                                                                       fromAtoms,ignoreAtoms,atomInvariants);
+                                                                       fromAtoms,ignoreAtoms,atomInvariants,includeChirality);
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
       if(nBitsPerEntry!=4){
         BOOST_FOREACH(SparseIntVect<boost::int64_t>::StorageType::value_type val,sres->getNonzeroElements()){
@@ -261,7 +281,7 @@ namespace RDKit{
 
     
     boost::uint64_t 
-    getTopologicalTorsionCode(const std::vector<boost::uint32_t> &pathCodes){
+    getTopologicalTorsionCode(const std::vector<boost::uint32_t> &pathCodes,bool includeChirality){
       bool reverseIt=false;
       unsigned int i=0;
       unsigned int j=pathCodes.size()-1;
@@ -275,18 +295,17 @@ namespace RDKit{
         ++i;
         --j;
       }
-
+      int shiftSize=codeSize+(includeChirality?numChiralBits:0);
       boost::uint64_t res=0;
       if(reverseIt){
         for(unsigned int i=0;i<pathCodes.size();++i){
-          res |= static_cast<boost::uint64_t>(pathCodes[pathCodes.size()-i-1])<<(codeSize*i);
+          res |= static_cast<boost::uint64_t>(pathCodes[pathCodes.size()-i-1])<<(shiftSize*i);
         }
       }else{
         for(unsigned int i=0;i<pathCodes.size();++i){
-          res |= static_cast<boost::uint64_t>(pathCodes[i])<<(codeSize*i);
+          res |= static_cast<boost::uint64_t>(pathCodes[i])<<(shiftSize*i);
         }
       }
-        
       return res;
     }
 
@@ -323,11 +342,12 @@ namespace RDKit{
     getTopologicalTorsionFingerprint(const ROMol &mol,unsigned int targetSize,
                                      const std::vector<boost::uint32_t> *fromAtoms,
                                      const std::vector<boost::uint32_t> *ignoreAtoms,
-                                     const std::vector<boost::uint32_t> *atomInvariants
+                                     const std::vector<boost::uint32_t> *atomInvariants,
+                                     bool includeChirality
                                      ){
       PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
       boost::uint64_t sz=1;
-      sz=(sz<<(targetSize*codeSize));
+      sz=(sz<<(targetSize*(codeSize+(includeChirality?numChiralBits:0))));
       // NOTE: this -1 is incorrect but it's needed for backwards compatibility.
       //  hopefully we'll never have a case with a torsion that hits this.
       //
@@ -336,10 +356,11 @@ namespace RDKit{
       SparseIntVect<boost::int64_t> *res=new SparseIntVect<boost::int64_t>(sz);
 
       std::vector<boost::uint32_t> atomCodes;
+      atomCodes.reserve(mol.getNumAtoms());
       for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
           atomItI!=mol.endAtoms();++atomItI){
         if(!atomInvariants){
-          atomCodes.push_back(getAtomCode(*atomItI));
+          atomCodes.push_back(getAtomCode(*atomItI,0,includeChirality));
         } else {
           // need to add to the atomCode here because we subtract off up to 2 below
           // as part of the branch correction
@@ -396,7 +417,7 @@ namespace RDKit{
             }
             pathCodes.push_back(code);
           }
-          boost::int64_t code=getTopologicalTorsionCode(pathCodes);
+          boost::int64_t code=getTopologicalTorsionCode(pathCodes,includeChirality);
           updateElement(*res,code);
         }
       }
@@ -414,17 +435,19 @@ namespace RDKit{
                          unsigned int targetSize,
                          const std::vector<boost::uint32_t> *fromAtoms,
                          const std::vector<boost::uint32_t> *ignoreAtoms,
-                         const std::vector<boost::uint32_t> *atomInvariants){
+                         const std::vector<boost::uint32_t> *atomInvariants,
+                         bool includeChirality){
         PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
         std::vector<boost::uint32_t> atomCodes;
+        atomCodes.reserve(mol.getNumAtoms());
         for(ROMol::ConstAtomIterator atomItI=mol.beginAtoms();
             atomItI!=mol.endAtoms();++atomItI){
           if(!atomInvariants){
-            atomCodes.push_back(getAtomCode(*atomItI));
+            atomCodes.push_back(getAtomCode(*atomItI,0,includeChirality));
           } else {
             // need to add to the atomCode here because we subtract off up to 2 below
             // as part of the branch correction
-            atomCodes.push_back((*atomInvariants)[(*atomItI)->getIdx()]%((1<<codeSize)-1)+2);
+            atomCodes.push_back(((*atomInvariants)[(*atomItI)->getIdx()])<<1 + 1);
           }
         }
 
@@ -470,10 +493,8 @@ namespace RDKit{
             for(unsigned int i=0;i<targetSize;++i){
               unsigned int code=atomCodes[path[i]];
               // subtract off the branching number:
-              if(i==0 || i==targetSize-1){
-                code-=1;
-              } else {
-                code-=2;
+              if(i>0 && i<targetSize-1){
+                --code;
               }
               pathCodes[i]=code;
             }
@@ -491,10 +512,11 @@ namespace RDKit{
                                            unsigned int targetSize,
                                            const std::vector<boost::uint32_t> *fromAtoms,
                                            const std::vector<boost::uint32_t> *ignoreAtoms,
-                                           const std::vector<boost::uint32_t> *atomInvariants){
+                                           const std::vector<boost::uint32_t> *atomInvariants,
+                                           bool includeChirality){
       PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
       SparseIntVect<boost::int64_t> *res=new SparseIntVect<boost::int64_t>(nBits);
-      TorsionFpCalc(res,mol,nBits,targetSize,fromAtoms,ignoreAtoms,atomInvariants);
+      TorsionFpCalc(res,mol,nBits,targetSize,fromAtoms,ignoreAtoms,atomInvariants,includeChirality);
       return res;
     }
 
@@ -505,12 +527,13 @@ namespace RDKit{
                                                     const std::vector<boost::uint32_t> *fromAtoms,
                                                     const std::vector<boost::uint32_t> *ignoreAtoms,
                                                     const std::vector<boost::uint32_t> *atomInvariants,
-                                                    unsigned int nBitsPerEntry){
+                                                    unsigned int nBitsPerEntry,
+                                                    bool includeChirality){
       PRECONDITION(!atomInvariants||atomInvariants->size()>=mol.getNumAtoms(),"bad atomInvariants size");
       static int bounds[4] = {1,2,4,8};
       unsigned int blockLength=nBits/nBitsPerEntry;
       SparseIntVect<boost::int64_t> *sres=new SparseIntVect<boost::int64_t>(blockLength);
-      TorsionFpCalc(sres,mol,blockLength,targetSize,fromAtoms,ignoreAtoms,atomInvariants);
+      TorsionFpCalc(sres,mol,blockLength,targetSize,fromAtoms,ignoreAtoms,atomInvariants,includeChirality);
       ExplicitBitVect *res=new ExplicitBitVect(nBits);
 
       if(nBitsPerEntry!=4){

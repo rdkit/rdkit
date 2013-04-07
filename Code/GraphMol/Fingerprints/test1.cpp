@@ -2203,6 +2203,202 @@ void testRDKitAtomBits(){
 }
 
 
+void testChiralPairs(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Atom Pairs including info about chirality." << std::endl;
+
+  ROMol *m1,*m2,*m3;
+
+  m1 = SmilesToMol("CC[CH](F)Cl");
+  TEST_ASSERT(m1);
+  m2 = SmilesToMol("CC[C@H](F)Cl");
+  TEST_ASSERT(m1);
+  m3 = SmilesToMol("CC[C@@H](F)Cl");
+  TEST_ASSERT(m1);
+
+  {
+    SparseIntVect<int> *fp1,*fp2,*fp3;
+    fp1 = AtomPairs::getAtomPairFingerprint(*m1,1,5);
+    TEST_ASSERT(fp1->getTotalVal()==10);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==10);
+    fp2 = AtomPairs::getAtomPairFingerprint(*m2,1,5);
+    TEST_ASSERT(fp2->getTotalVal()==10);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==10);
+    fp3 = AtomPairs::getAtomPairFingerprint(*m3,1,5);
+    TEST_ASSERT(fp3->getTotalVal()==10);
+    TEST_ASSERT(fp3->getNonzeroElements().size()==10);
+
+    TEST_ASSERT((*fp1)==(*fp2));
+    TEST_ASSERT((*fp1)==(*fp3));
+    TEST_ASSERT((*fp2)==(*fp3));
+  
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  
+    fp1 = AtomPairs::getAtomPairFingerprint(*m1,1,5,0,0,0,true);
+    TEST_ASSERT(fp1->getTotalVal()==10);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==10);
+    fp2 = AtomPairs::getAtomPairFingerprint(*m2,1,5,0,0,0,true);
+    TEST_ASSERT(fp2->getTotalVal()==10);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==10);
+    fp3 = AtomPairs::getAtomPairFingerprint(*m3,1,5,0,0,0,true);
+    TEST_ASSERT(fp3->getTotalVal()==10);
+    TEST_ASSERT(fp3->getNonzeroElements().size()==10);
+
+    TEST_ASSERT((*fp1)!=(*fp2));
+    TEST_ASSERT((*fp1)!=(*fp3));
+    TEST_ASSERT((*fp2)!=(*fp3));
+  
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  }
+  
+  {
+    SparseIntVect<int> *fp1,*fp2,*fp3;
+    fp1 = AtomPairs::getHashedAtomPairFingerprint(*m1,4096,1,5);
+    TEST_ASSERT(fp1->getTotalVal()==10);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==10);
+    fp2 = AtomPairs::getHashedAtomPairFingerprint(*m2,4096,1,5);
+    TEST_ASSERT(fp2->getTotalVal()==10);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==10);
+    fp3 = AtomPairs::getHashedAtomPairFingerprint(*m3,4096,1,5);
+    TEST_ASSERT(fp3->getTotalVal()==10);
+    TEST_ASSERT(fp3->getNonzeroElements().size()==10);
+
+    TEST_ASSERT((*fp1)==(*fp2));
+    TEST_ASSERT((*fp1)==(*fp3));
+    TEST_ASSERT((*fp2)==(*fp3));
+  
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  
+    fp1 = AtomPairs::getHashedAtomPairFingerprint(*m1,4096,1,5,0,0,0,true);
+    TEST_ASSERT(fp1->getTotalVal()==10);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==10);
+    fp2 = AtomPairs::getHashedAtomPairFingerprint(*m2,4096,1,5,0,0,0,true);
+    TEST_ASSERT(fp2->getTotalVal()==10);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==10);
+    fp3 = AtomPairs::getHashedAtomPairFingerprint(*m3,4096,1,5,0,0,0,true);
+    TEST_ASSERT(fp3->getTotalVal()==10);
+    TEST_ASSERT(fp3->getNonzeroElements().size()==10);
+
+    TEST_ASSERT((*fp1)!=(*fp2));
+    TEST_ASSERT((*fp1)!=(*fp3));
+    TEST_ASSERT((*fp2)!=(*fp3));
+  
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  }
+  
+
+  delete m1;
+  delete m2;
+  delete m3;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+void testChiralTorsions(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Topological Torsions including info about chirality." << std::endl;
+
+  ROMol *m1,*m2,*m3;
+
+  m1 = SmilesToMol("CC[CH](F)Cl");
+  TEST_ASSERT(m1);
+  m2 = SmilesToMol("CC[C@H](F)Cl");
+  TEST_ASSERT(m1);
+  m3 = SmilesToMol("CC[C@@H](F)Cl");
+  TEST_ASSERT(m1);
+
+  {
+    SparseIntVect<boost::int64_t> *fp1,*fp2,*fp3;
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    TEST_ASSERT(fp1->getTotalVal()==2);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==2);
+    fp2 = AtomPairs::getTopologicalTorsionFingerprint(*m2);
+    TEST_ASSERT(fp2->getTotalVal()==2);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==2);
+    fp3 = AtomPairs::getTopologicalTorsionFingerprint(*m3);
+    TEST_ASSERT(fp3->getTotalVal()==2);
+    TEST_ASSERT(fp3->getNonzeroElements().size()==2);
+
+    TEST_ASSERT((*fp1)==(*fp2));
+    TEST_ASSERT((*fp1)==(*fp3));
+    TEST_ASSERT((*fp2)==(*fp3));
+  
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1,4,0,0,0,true);
+    TEST_ASSERT(fp1->getTotalVal()==2);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==2);
+    fp2 = AtomPairs::getTopologicalTorsionFingerprint(*m2,4,0,0,0,true);
+    TEST_ASSERT(fp2->getTotalVal()==2);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==2);
+    fp3 = AtomPairs::getTopologicalTorsionFingerprint(*m3,4,0,0,0,true);
+    TEST_ASSERT(fp3->getTotalVal()==2);
+    TEST_ASSERT(fp3->getNonzeroElements().size()==2);
+
+    TEST_ASSERT((*fp1)!=(*fp2));
+    TEST_ASSERT((*fp1)!=(*fp3));
+    TEST_ASSERT((*fp2)!=(*fp3));
+  
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  }
+  
+  {
+    SparseIntVect<boost::int64_t> *fp1,*fp2,*fp3;
+    fp1 = AtomPairs::getHashedTopologicalTorsionFingerprint(*m1,4096);
+    TEST_ASSERT(fp1->getTotalVal()==2);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==2);
+    fp2 = AtomPairs::getHashedTopologicalTorsionFingerprint(*m2,4096);
+    TEST_ASSERT(fp2->getTotalVal()==2);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==2);
+    fp3 = AtomPairs::getHashedTopologicalTorsionFingerprint(*m3,4096);
+    TEST_ASSERT(fp3->getTotalVal()==2);
+    TEST_ASSERT(fp3->getNonzeroElements().size()==2);
+
+    TEST_ASSERT((*fp1)==(*fp2));
+    TEST_ASSERT((*fp1)==(*fp3));
+    TEST_ASSERT((*fp2)==(*fp3));
+  
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  
+    fp1 = AtomPairs::getHashedTopologicalTorsionFingerprint(*m1,4096,4,0,0,0,true);
+    TEST_ASSERT(fp1->getTotalVal()==2);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==2);
+    fp2 = AtomPairs::getHashedTopologicalTorsionFingerprint(*m2,4096,4,0,0,0,true);
+    TEST_ASSERT(fp2->getTotalVal()==2);
+    TEST_ASSERT(fp2->getNonzeroElements().size()==2);
+    fp3 = AtomPairs::getHashedTopologicalTorsionFingerprint(*m3,4096,4,0,0,0,true);
+    TEST_ASSERT(fp3->getTotalVal()==2);
+    TEST_ASSERT(fp3->getNonzeroElements().size()==2);
+
+    TEST_ASSERT((*fp1)!=(*fp2));
+    TEST_ASSERT((*fp1)!=(*fp3));
+    TEST_ASSERT((*fp2)!=(*fp3));
+  
+    delete fp1;
+    delete fp2;
+    delete fp3;
+  }
+  
+
+  delete m1;
+  delete m2;
+  delete m3;
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -2238,8 +2434,10 @@ int main(int argc,char *argv[]){
   testRDKitFPOptions();
   testPairsAndTorsionsOptions();
   testMACCS();
-#endif
   testRDKitFromAtoms();
   testRDKitAtomBits();
+#endif
+  testChiralPairs();
+  testChiralTorsions();
   return 0;
 }
