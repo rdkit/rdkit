@@ -112,12 +112,13 @@ Not SMIRKS [#smirks]_ , not reaction SMILES [#smiles]_, derived from SMARTS [#sm
 The general grammar for a reaction SMARTS is :
 
 .. productionlist::
-  reaction: reactants ">>" products
+  reaction:  reactants ">>" products
   reactants: molecules
-  products: molecules
+  products:  molecules
   molecules: molecule
            : molecules "." molecule
-  molecule: a valid SMARTS string without "." characters
+  molecule:  a valid SMARTS string without "." characters
+          :  "(" a valid SMARTS string without "." characters ")"
 
 
 Some features
@@ -148,7 +149,146 @@ but unmapped dummy atoms are left as dummies:
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('C#N'),))[0]]
 ['[*]C#N']
 
+Intramolecular reactions can be expressed flexibly by including
+reactants in parentheses. This is demonstrated in this ring-closing
+metathesis example [#intramolRxn]_:
+
+>>> rxn = AllChem.ReactionFromSmarts("([C:1]=[C;H2].[C:2]=[C;H2])>>[*:1]=[*:2]")
+>>> m1 = Chem.MolFromSmiles('C=CCOCC=C')
+>>> ps = rxn.RunReactants((m1,))
+>>> Chem.MolToSmiles(ps[0][0])
+'C1=CCOC1'
+
+
+Chirality
+---------
+
+This section describes how chirality information in the reaction
+defition is handled. A consistent example, esterification of secondary
+alcohols, is used throughout [#chiralRxn]_.
+
+If no chiral information is present in the reaction definition, the
+stereochemistry of the reactants is preserved:
+
+>>> alcohol1 = Chem.MolFromSmiles('CC(CCN)O')
+>>> alcohol2 = Chem.MolFromSmiles('C[C@H](CCN)O')
+>>> alcohol3 = Chem.MolFromSmiles('C[C@@H](CCN)O')
+>>> acid = Chem.MolFromSmiles('CC(=O)O')
+>>> rxn = AllChem.ReactionFromSmarts('[CH1:1][OH:2].[OH][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
+>>> ps=rxn.RunReactants((alcohol1,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)OC(C)CCN'
+>>> ps=rxn.RunReactants((alcohol2,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+>>> ps=rxn.RunReactants((alcohol3,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@@H](C)CCN'
+
+You get the same result (retention of stereochemistry) if a mapped atom has the same chirality
+in both reactants and products:
+
+>>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C@:1][O:2][C:3]=[O:4]')
+>>> ps=rxn.RunReactants((alcohol1,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)OC(C)CCN'
+>>> ps=rxn.RunReactants((alcohol2,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+>>> ps=rxn.RunReactants((alcohol3,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@@H](C)CCN'
+
+A mapped atom with different chirality in reactants and products leads
+to inversion of stereochemistry:
+
+>>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C@@:1][O:2][C:3]=[O:4]')
+>>> ps=rxn.RunReactants((alcohol1,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)OC(C)CCN'
+>>> ps=rxn.RunReactants((alcohol2,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@@H](C)CCN'
+>>> ps=rxn.RunReactants((alcohol3,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+
+If a mapped atom has chirality specified in the reactants, but not
+in the products, the reaction destroys chirality at that center:
+
+>>> rxn = AllChem.ReactionFromSmarts('[C@H1:1][OH:2].[OH][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
+>>> ps=rxn.RunReactants((alcohol1,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)OC(C)CCN'
+>>> ps=rxn.RunReactants((alcohol2,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)OC(C)CCN'
+>>> ps=rxn.RunReactants((alcohol3,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)OC(C)CCN'
+
+And, finally, if chirality is specified in the products, but not the
+reactants, the reaction creates a stereocenter with the specified
+chirality:
+
+>>> rxn = AllChem.ReactionFromSmarts('[CH1:1][OH:2].[OH][C:3]=[O:4]>>[C@:1][O:2][C:3]=[O:4]')
+>>> ps=rxn.RunReactants((alcohol1,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+>>> ps=rxn.RunReactants((alcohol2,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+>>> ps=rxn.RunReactants((alcohol3,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+
+Note that this doesn't make sense without including a bit more
+context around the stereocenter in the reaction definition:
+
+>>> rxn = AllChem.ReactionFromSmarts('[CH3:5][CH1:1]([C:6])[OH:2].[OH][C:3]=[O:4]>>[C:5][C@:1]([C:6])[O:2][C:3]=[O:4]')
+>>> ps=rxn.RunReactants((alcohol1,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+>>> ps=rxn.RunReactants((alcohol2,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+>>> ps=rxn.RunReactants((alcohol3,acid))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(=O)O[C@H](C)CCN'
+
+Note that the chirality specification is not being used as part of the
+query: a molecule with no chirality specified can match a reactant
+with specified chirality.
+
+In general, the reaction machinery tries to preserve as much
+stereochemistry information as possible. This works when a single new
+bond is formed to a chiral center:
+
+>>> rxn = AllChem.ReactionFromSmarts('[C:1][C:2]-O>>[C:1][C:2]-S')
+>>> alcohol2 = Chem.MolFromSmiles('C[C@@H](O)CCN')
+>>> ps=rxn.RunReactants((alcohol2,))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'C[C@@H](S)CCN'
+
+But it fails if two or more bonds are formed:
+
+>>> rxn = AllChem.ReactionFromSmarts('[C:1][C:2](-O)-F>>[C:1][C:2](-S)-Cl')
+>>> alcohol = Chem.MolFromSmiles('C[C@@H](O)F')
+>>> ps=rxn.RunReactants((alcohol,))
+>>> Chem.MolToSmiles(ps[0][0],True)
+'CC(S)Cl'
+
+In this case, there's just not sufficient information present to allow
+the information to be preserved. You can help by providing mapping
+information:
+
+
+
+
+
+
 Rules and caveats
+-----------------
 
 1. Include atom map information at the end of an atom query.
    So do [C,N,O:1] or [C;R:1].
@@ -162,7 +302,7 @@ Rules and caveats
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
 ['c1cccc-c1']
 
-So if you want to copy the bond order from the reactant, use an “Any” bond:
+  So if you want to copy the bond order from the reactant, use an “Any” bond:
 
 >>> rxn = AllChem.ReactionFromSmarts('[#6:1][#7,#8:2]>>[#6:1]~[#6:2]')
 >>> [Chem.MolToSmiles(x,1) for x in rxn.RunReactants((Chem.MolFromSmiles('c1ncccc1'),))[0]]
@@ -384,14 +524,15 @@ This leads to the following behavior:
 .. [#smirks] http://www.daylight.com/dayhtml/doc/theory/theory.smirks.html
 .. [#smiles] http://www.daylight.com/dayhtml/doc/theory/theory.smiles.html
 .. [#smarts] http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html
-
+.. [#intramolRxn] Thanks to James Davidson for this example.
+.. [#chiralRxn] Thanks to JP Ebejer and Paul Finn for this example.
 
 License
 *******
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2011 by Greg Landrum
+This document is copyright (C) 2007-2013 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
