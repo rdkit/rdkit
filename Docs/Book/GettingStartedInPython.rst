@@ -864,9 +864,9 @@ Topological Fingerprints
 ... Chem.MolFromSmiles('COC')]
 >>> fps = [FingerprintMols.FingerprintMol(x) for x in ms]
 >>> DataStructs.FingerprintSimilarity(fps[0],fps[1])
-0.666...
+0.6...
 >>> DataStructs.FingerprintSimilarity(fps[0],fps[2])
-0.444...
+0.4...
 >>> DataStructs.FingerprintSimilarity(fps[1],fps[2])
 0.25
 
@@ -895,7 +895,7 @@ The default similarity metric used by
 similarity.  One can use different similarity metrics:
 
 >>> DataStructs.FingerprintSimilarity(fps[0],fps[1], metric=DataStructs.DiceSimilarity)
-0.8
+0.75
 
 Available similarity metrics include Tanimoto, Dice, Cosine, Sokal, Russel, Kulczynski, McConnaughey, and Tversky.
 
@@ -2027,7 +2027,7 @@ License
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2011 by Greg Landrum
+This document is copyright (C) 2007-2013 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
