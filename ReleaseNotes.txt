@@ -3,21 +3,96 @@
 
 !!!!!! IMPORTANT !!!!!!
 
+ - The algorithm for hashing subgraphs used in the RDKit fingerprinter
+   has changed. The new default behavior will return different
+   fingerprints than previous RDKit versions. This affects usage from
+   c++, python, and within the postgresql cartridge. See the "Other"
+   section below for more details.
+
 Acknowledgements:
+Jan Domanski, Jean-Paul Ebejer, Nikolas Fechner, Jameed Hussain,
+Stephan Reiling, Sereina Riniker, Roger Sayle 
+
 
 Bug Fixes: 
-   
+ - removeBond now updates bond indices (sf.net issue 284)
+ - dummy labels are no longer lost when atoms are copied (sf.net issue
+   285) 
+ - more specific BRICS queries now match before less specific ones
+   (sf.net issue 287, github issue 1) 
+ - molAtomMapNumber can now be set from Python (sf.net issue 288)
+ - the legend centering for molecular image grids has been improved
+   (sf.net issue 289) 
+ - make install now includes all headers (github issue 2)
+ - InChIs generaged after clearing computed properties are now correct
+   (github issue 3)
+ - Reacting atoms that don't change connectivity no longer lose
+   stereochemistry (github issue 4)  
+ - Aromatic Si is now accepted (github issue 5)  
+ - removeAtom (and deleteSubstructs) now correctly updates stereoAtoms
+   (github issue 8)  
+ - [cartridge] pg_dump no longer fails when molecules cannot be
+    converted to SMILES (github issue 9)  
+ - a canonicalization bug in MolFragmentToSmiles was fixed (github issue 12)  
+ - atom labels at the edge of the drawing are no longer cut off (github issue 13)  
+ - a bug in query-atom -- query-atom matching was fixed (github issue 15)  
+ - calling ChemicalReaction.RunReactants from Python with None
+   molecules no longer leads to a seg fault. (github issue 16)  
+ - AllChem.ReactionFromSmarts now generates an error message when called
+   with an empty string.
+ - Writing CTABs now includes information about atom aliases.
+
 New Features:
+ - The handling of chirality in reactions has been reworked and
+   improved. Please see the RDKit Book for an explanation.
+ - Atom-pair and topological-torsion fingerprints now support the
+   inclusion of chirality in the atom invariants.
+ - A number of new compositional descriptors have been added:
+   calcFractionCSP3, calcNum{Aromatic,Aliphatic,Saturated}Rings,
+   calcNum{Aromatic,Aliphatic,Saturated}Heterocycles,
+   calcNum{Aromatic,Aliphatic,Saturated}Carbocycles
+ - An implementation of the molecular quantum number (MQN) descriptors
+   has been added.
+ - RDKFingerprintMol now takes an optional atomBits argument which is
+   used to return information about which bits atoms are involved in.
+ - LayeredFingerprintMol no longer takes the arguments tgtDensity and
+   minSize. They were not being used.
+ - LayeredFingerprintMol2 has been renamed to PatternFingerprintMol
+ - The substructure matcher can now properly take stereochemistry into
+   account if the useChirality flag is provided.
+ - The module rdkit.Chem.Draw.mplCanvas has been added back to svn.
 
 New Database Cartridge Features: 
+ - The new compositional descriptors are available:
+   calcFractionCSP3, calcNum{Aromatic,Aliphatic,Saturated}Rings,
+   calcNum{Aromatic,Aliphatic,Saturated}Heterocycles,
+   calcNum{Aromatic,Aliphatic,Saturated}Carbocycles
+ - MACCS fingerprints are available
+ - the substruct_count function is now available
+ - substructure indexing has improved
 
 New Java Wrapper Features:
+ - The new compositional descriptors are available:
+   calcFractionCSP3, calcNum{Aromatic,Aliphatic,Saturated}Rings,
+   calcNum{Aromatic,Aliphatic,Saturated}Heterocycles,
+   calcNum{Aromatic,Aliphatic,Saturated}Carbocycles
+ - The molecular quantum number (MQN) descriptors are available
+ - MACCS fingerprints are available
+ - BRICS decomposition is available.
 
 Deprecated modules (to be removed in next release):
 
 Removed modules:
 
 Other:
+ - RDKit fingerprint generation is now faster. The hashing algorithm
+   used in the RDKit fingerprinter has changed.
+ - Force-field calculations are substantially faster (sf.net issue 290)
+ - The core of the BRICS implementation has been moved into C++.
+ - The MACCS fingerprint implementation has been moved into
+   C++. (contribution from Roger Sayle)
+ - New documentation has been added: Cartridge.rst, Overview.rst,
+   Install.rst 
 
 ******  Release_2012.12.1 *******
 (Changes relative to Release_2012.09.1)
