@@ -41,3 +41,13 @@
 %newobject MurckoDecompose;
 %template(StringMolMap) std::map<std::string,boost::shared_ptr<RDKit::ROMol> >;
 %include <GraphMol/ChemTransforms/ChemTransforms.h>
+
+%ignore fragmentOnBonds;
+%ignore constructFragmenterAtomTypes;
+%ignore constructBRICSAtomTypes;
+%ignore constructFragmenterBondTypes;
+%ignore constructBRICSBondTypes;
+
+%newobject fragmentOnBRICSBonds;
+%template(UIntMolMap) std::map<unsigned int,boost::shared_ptr<RDKit::ROMol> >;
+%include <GraphMol/ChemTransforms/MolFragmenter.h>
