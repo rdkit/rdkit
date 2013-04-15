@@ -84,8 +84,11 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
   if legend:
     from rdkit.Chem.Draw.MolDrawing import Font
     bbox = drawer.boundingBoxes[mol]
-    #pos = (bbox[2]-bbox[0])/2,bbox[3]
-    pos = (bbox[2]-bbox[0])/2,int(size[1]-size[1]*.1)
+    pos = size[0]/2,int(.94*size[1]) # the 0.94 is extremely empirical
+    # canvas.addCanvasPolygon(((bbox[0],bbox[1]),(bbox[2],bbox[1]),(bbox[2],bbox[3]),(bbox[0],bbox[3])),
+    #                         color=(1,0,0),fill=False,stroke=True)
+    # canvas.addCanvasPolygon(((0,0),(0,size[1]),(size[0],size[1]),(size[0],0)   ),
+    #                         color=(0,0,1),fill=False,stroke=True)
     font=Font(face='sans',size=12)
     canvas.addCanvasText(legend,pos,font)
 

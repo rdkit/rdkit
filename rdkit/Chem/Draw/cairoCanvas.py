@@ -179,7 +179,7 @@ class Canvas(CanvasBase):
     if orientation=='W':
       dPos = pos[0]-w,pos[1]-h/2.
     elif orientation=='E':
-      dPos = pos[0],pos[1]-h/2.
+      dPos = pos[0]-w/2,pos[1]-h/2.
     else:
       dPos = pos[0]-w/2,pos[1]-h/2.
     bgColor=kwargs.get('bgColor',(1,1,1))
