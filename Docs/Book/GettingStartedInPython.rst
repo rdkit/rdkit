@@ -661,6 +661,41 @@ False
 >>> m.HasSubstructMatch(Chem.MolFromSmarts('COc')) #<- need an aromatic C
 True
 
+
+Stereochemistry in substructure matches
+=======================================
+
+By default information about stereochemistry is not used in
+substructure searches:
+
+>>> m = Chem.MolFromSmiles('CC[C@H](F)Cl')
+>>> m.HasSubstructMatch(Chem.MolFromSmiles('C[C@H](F)Cl'))
+True
+>>> m.HasSubstructMatch(Chem.MolFromSmiles('C[C@@H](F)Cl'))
+True
+>>> m.HasSubstructMatch(Chem.MolFromSmiles('CC(F)Cl'))
+True
+
+But this can be changed via the `useChirality` argument:
+
+>>> m.HasSubstructMatch(Chem.MolFromSmiles('C[C@H](F)Cl'),useChirality=True)
+True
+>>> m.HasSubstructMatch(Chem.MolFromSmiles('C[C@@H](F)Cl'),useChirality=True)
+False
+>>> m.HasSubstructMatch(Chem.MolFromSmiles('CC(F)Cl'),useChirality=True)
+True
+
+Notice that when `useChirality` is set a non-chiral query **does** match a chiral
+molecule. The same is not true for a chiral query and a non-chiral molecule:
+
+>>> m.HasSubstructMatch(Chem.MolFromSmiles('CC(F)Cl'))
+True
+>>> m2 = Chem.MolFromSmiles('CCC(F)Cl')
+>>> m2.HasSubstructMatch(Chem.MolFromSmiles('C[C@H](F)Cl'),useChirality=True)
+False
+
+
+
 Chemical Transformations
 ************************
 
