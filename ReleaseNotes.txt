@@ -41,6 +41,9 @@ Bug Fixes:
  - AllChem.ReactionFromSmarts now generates an error message when called
    with an empty string.
  - Writing CTABs now includes information about atom aliases.
+ - An error in the example fdef file
+   $RDBASE/Contrib/M_Kossner/BaseFeatures_DIP2_NoMicrospecies.fdef
+   has been fixed. (github issue 17)
 
 New Features:
  - The handling of chirality in reactions has been reworked and
