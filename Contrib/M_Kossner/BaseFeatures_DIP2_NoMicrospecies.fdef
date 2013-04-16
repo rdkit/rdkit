@@ -54,7 +54,7 @@ EndFeature
 
 DefineFeature AcidicN [{AcidicN};!$([nH,n-1]1cnnn1)]
   Family NegIonizable
-  Weights 1,0,1,1,0,0
+  Weights 1
 EndFeature
 
 DefineFeature Tetrazole c1nnn[nH,n-1]1
