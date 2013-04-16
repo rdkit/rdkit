@@ -424,6 +424,16 @@ class TestCase(unittest.TestCase):
     res = Quantize._FindStartPoints(varValues,resCodes,len(d))
     self.failUnless(res==[1,4],str(res))
 
+  def testGithubIssue18(self):
+    d = [0,1,2,3,4]
+    a = [0,0,1,1,1]
+    tpl = Quantize.FindVarMultQuantBounds(d,1,a,2)
+
+    d2 = [(x,) for x in d]
+    self.failUnlessRaises(ValueError,lambda :Quantize.FindVarMultQuantBounds(d2,1,a,2))
+    self.failUnlessRaises(ValueError,lambda :Quantize._FindStartPoints(d2,a,len(d2)))
+
+
 
 if __name__ == '__main__':
   unittest.main()

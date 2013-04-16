@@ -255,7 +255,17 @@ cQuantize_RecurseOnBounds(PyObject *self, PyObject *args)
     -------
   */
   contigVals = (PyArrayObject *)PyArray_ContiguousFromObject(vals,PyArray_DOUBLE,1,1);
+  if(!contigVals){
+    PyErr_SetString(PyExc_ValueError,
+                    "could not convert value argument");
+    return 0;
+  }
   contigResults = (PyArrayObject *)PyArray_ContiguousFromObject(results,PyArray_LONG,1,1);
+  if(!contigResults){
+    PyErr_SetString(PyExc_ValueError,
+                    "could not convert results argument");
+    return 0;
+  }
   
   nCuts = PyList_Size(pyCuts);
   cuts = (long int *)calloc(nCuts,sizeof(long int));
@@ -313,9 +323,19 @@ cQuantize_FindStartPoints(PyObject *self, PyObject *args)
   }
 
   contigVals = (PyArrayObject *)PyArray_ContiguousFromObject(values,PyArray_DOUBLE,1,1);
+  if(!contigVals){
+    PyErr_SetString(PyExc_ValueError,
+                    "could not convert value argument");
+    return 0;
+  }
   double *vals=(double *)contigVals->data;
 
   contigResults = (PyArrayObject *)PyArray_ContiguousFromObject(results,PyArray_LONG,1,1);
+  if(!contigResults){
+    PyErr_SetString(PyExc_ValueError,
+                    "could not convert results argument");
+    return 0;
+  }
   long *res=(long *)contigResults->data;
 
   bool firstBlock=true;
