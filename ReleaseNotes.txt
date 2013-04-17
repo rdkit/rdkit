@@ -44,6 +44,8 @@ Bug Fixes:
  - An error in the example fdef file
    $RDBASE/Contrib/M_Kossner/BaseFeatures_DIP2_NoMicrospecies.fdef
    has been fixed. (github issue 17)
+ - Quantize.FindVarMultQuantBounds() no longer generates a seg fault
+   when called with bad arguments. (github issue 18)
 
 New Features:
  - The handling of chirality in reactions has been reworked and
