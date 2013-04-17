@@ -35,16 +35,16 @@ def _toPNG(mol):
     img.save(sio,format='PNG')
     return sio.getvalue()
 
-def _GetSubstructMatch(mol,query):
-    res = mol.__GetSubstructMatch(query)
+def _GetSubstructMatch(mol,query,**kwargs):
+    res = mol.__GetSubstructMatch(query,**kwargs)
     if highlightSubstructs:
         mol.__sssAtoms=list(res)
     else:
         mol.__sssAtoms=[]
     return res
 
-def _GetSubstructMatches(mol,query):
-    res = mol.__GetSubstructMatches(query)
+def _GetSubstructMatches(mol,query,**kwargs):
+    res = mol.__GetSubstructMatches(query,**kwargs)
     mol.__sssAtoms=[]
     if highlightSubstructs:
         for entry in res:
