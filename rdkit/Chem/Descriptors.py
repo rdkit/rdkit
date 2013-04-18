@@ -74,6 +74,18 @@ HeavyAtomMolWt.__doc__="""The average molecular weight of the molecule ignoring 
 """
 HeavyAtomMolWt.version="1.0.0"
 
+ExactMolWt = lambda *x,**y:_rdMolDescriptors.CalcExactMolWt(*x,**y)
+ExactMolWt.version=_rdMolDescriptors._CalcExactMolWt_version
+ExactMolWt.__doc__="""The exact molecular weight of the molecule
+
+  >>> ExactMolWt(Chem.MolFromSmiles('CC'))
+  30.04...
+  >>> ExactMolWt(Chem.MolFromSmiles('[13CH3]C'))
+  31.05...
+
+"""
+
+
 def NumValenceElectrons(mol):
   """ The number of valence electrons the molecule has
 

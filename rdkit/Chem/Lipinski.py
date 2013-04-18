@@ -84,3 +84,18 @@ def HeavyAtomCount(mol):
 HeavyAtomCount.version = "1.0.1"
 
 
+_bulkConvert=("CalcFractionCSP3","CalcNumAromaticRings","CalcNumSaturatedRings","CalcNumAromaticHeterocycles",
+              "CalcNumAromaticCarbocycles","CalcNumSaturatedHeterocycles","CalcNumSaturatedCarbocycles","CalcNumAliphaticRings",
+              "CalcNumAliphaticHeterocycles","CalcNumAliphaticCarbocycles")
+for txt in _bulkConvert:
+  _cfn = getattr(rdMolDescriptors,txt)
+  _fn = lambda x,y=_cfn:y(x)
+  try:
+    _fn.version=getattr(rdMolDescriptors,"_"+txt+"_version")
+  except AttributeError:
+    pass
+  _fn.__doc__=_cfn.__doc__
+  nm = txt.replace("Calc","")
+  locals()[nm]=_fn
+  
+
