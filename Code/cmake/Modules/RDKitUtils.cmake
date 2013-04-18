@@ -24,6 +24,7 @@ macro(rdkit_library)
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
   if(MSVC)
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
+    target_link_libraries(${RDKLIB_NAME} ${Boost_SYSTEM_LIBRARY} )
     INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
             COMPONENT dev )
