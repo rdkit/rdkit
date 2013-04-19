@@ -11,7 +11,7 @@
 
 Acknowledgements:
 Jan Domanski, Jean-Paul Ebejer, Nikolas Fechner, Jameed Hussain,
-Stephan Reiling, Sereina Riniker, Roger Sayle 
+Stephan Reiling, Sereina Riniker, Roger Sayle, Riccardo Vianello
 
 
 Bug Fixes: 
@@ -74,7 +74,8 @@ New Database Cartridge Features:
    calcNum{Aromatic,Aliphatic,Saturated}Carbocycles
  - MACCS fingerprints are available
  - the substruct_count function is now available
- - substructure indexing has improved
+ - substructure indexing has improved. NOTE: indexes on molecule
+    columns will need to be rebuilt.
 
 New Java Wrapper Features:
  - The new compositional descriptors are available:
@@ -431,8 +432,8 @@ Other:
 
 !!!!!! IMPORTANT !!!!!!
  - The atom-atom match behavior for non-query atoms has been changed.
-   This affects the results of doing substructure matches using
-   query molecules that are not constructed from SMARTS.
+    This affects the results of doing substructure matches using
+    query molecules that are not constructed from SMARTS.
 
 Acknowledgements:
 JP Ebejer, Paul Emsley, Roger Sayle, Adrian Schreyer, Gianluca Sforna,
@@ -465,6 +466,8 @@ Bug Fixes:
   border is now being handled better (Issue 3510149)
 - A bug with ring-finding in some complex fused ring systems was fixed.
   (Issue 3514824)
+- The AllChem module now imports successfully even if the SLN parser
+hasn't been built.
 
 New Features:
 - The molecular sanitization is now configurable using an optional
@@ -482,6 +485,7 @@ New Features:
   input file are ignored when possible 
 - EditableMols return the index of the atom/bond added by AddAtom/AddBond
 - rdkit.Chem.Draw.MolToImage() now supports an optional "legend" argument
+- The MolToSmiles function now supports an optional "allBondsExplicit" argument. 
 
 New Database Cartridge Features: 
 - the functions mol_from_smiles() and mol_from_smarts() were added
@@ -497,6 +501,9 @@ Removed modules:
 - rdkit.ML.Composite.CompositeCOM
 
 Other:
+- Assigning/cleaning up stereochemistry is now considerably
+faster. This makes standard molecule construction faster.
+
 
 ******  Release_2011.12.1 *******
 (Changes relative to Release_2011.09.1)
