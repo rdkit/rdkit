@@ -16,6 +16,7 @@
 
 namespace RDKit {
   extern std::string paramData;
+  extern std::string additionalParamData;
 
   // this is a constant used during the iteration procedure for the hydrogen atoms
   // for the remaining atoms it is computed on the fly 

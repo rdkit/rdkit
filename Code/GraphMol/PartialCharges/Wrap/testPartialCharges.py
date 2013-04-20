@@ -97,6 +97,16 @@ class TestCase(unittest.TestCase):
         else:
             self.fail('should have hit an exception')
 
+
+    def testGithubIssue20(self):
+        """ tests handling of Github issue 20 """
+        m1 = Chem.MolFromSmiles('CB(O)O')
+        rdPartialCharges.ComputeGasteigerCharges(m1)
+        chgs=[-0.030,0.448,-0.427,-0.427]
+        for i in range(m1.GetNumAtoms()):
+            c1 = float(m1.GetAtomWithIdx(i).GetProp('_GasteigerCharge'))
+            self.failUnlessAlmostEqual(c1,chgs[i],3)
+            
 if __name__== '__main__':
     unittest.main()
 

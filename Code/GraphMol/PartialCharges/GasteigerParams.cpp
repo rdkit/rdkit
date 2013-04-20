@@ -43,13 +43,37 @@ P       sp3     8.90    8.24    0.96 \n \
 X       *       0.00    0.00    0.00 \n \
 ";
 
+  /*! \brief additional Gasteiger partial charge parameters
+    generated using the calculation in PyBabel:
+    http://mgltools.scripps.edu/api/PyBabel/PyBabel.gasteiger-pysrc.html
+
+   */
+  std::string additionalParamData = 
+"P       sp2     9.665   8.530   0.735 \n \
+Si      sp3     7.300   6.567   0.657 \n \
+Si      sp2     7.905   6.748   0.443 \n \
+Si      sp      9.065   7.027  -0.002 \n \
+B       sp3     5.980   6.820   1.605 \n \
+B       sp2     6.420   6.807   1.322 \n \
+Be      sp3     3.845   6.755   3.165 \n \
+Be      sp2     4.005   6.725   3.035 \n \
+Mg      sp2     3.565   5.572   2.197 \n \
+Mg      sp3     3.300   5.587   2.447 \n \
+Mg      sp      4.040   5.472   1.823 \n \
+Al      sp3     5.375   4.953   0.867 \n \
+Al      sp2     5.795   5.020   0.695 \n \
+";
+
+
+
+  
   typedef boost::flyweight<boost::flyweights::key_value<std::string,GasteigerParams>,
                            boost::flyweights::no_tracking > gparam_flyweight;
 
   GasteigerParams::GasteigerParams(std::string paramData) {
     boost::char_separator<char> eolSep("\n");
     boost::char_separator<char> spaceSep(" \t");
-    if(paramData=="") paramData=defaultParamData;
+    if(paramData=="") paramData=defaultParamData+additionalParamData;
     tokenizer lines(paramData,eolSep);
     d_paramMap.clear();
     std::istringstream istr;
