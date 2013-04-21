@@ -1,34 +1,3 @@
-# $Id$
-#
-#  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
-#  All rights reserved.
-# 
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met: 
-#
-#     * Redistributions of source code must retain the above copyright 
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
-#       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
-#       products derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 '''
 Importing pandasTools enables several features that allow for using RDKit molecules as columns of a Pandas dataframe.
 If the dataframe is containing a molecule format in a column (e.g. smiles), like in this example:
@@ -105,9 +74,10 @@ from rdkit import Chem
 from rdkit.Chem import Draw
 from base64 import b64encode
 from StringIO import StringIO
-import pandas as pd
-
-
+try:
+  import pandas as pd
+except ImportError:
+  pd = None
 
 def _get_image(x):
   """displayhook function for PIL Images, rendered as PNG"""
@@ -121,17 +91,21 @@ def _get_image(x):
 
 from rdkit import DataStructs
 
-from rdkit.Avalon import pyAvalonTools as pyAvalonTools
+try:
+  from rdkit.Avalon import pyAvalonTools as pyAvalonTools
+  _fingerprinter=lambda x,y:pyAvalonTools.GetAvalonFP(x,isQuery=y,bitFlags=pyAvalonTools.avalonSSSBits)
+except ImportError:
+  _fingerprinter=lambda x,y:Chem.PatternFingerprint(x,fpSize=2048)
 
 def _molge(x,y):
-  """Allows for substructure check using the >= operator (X has substructyre Y -> X >= Y) by duck-typing the __ge__ function 
+  """Allows for substructure check using the >= operator (X has substructure Y -> X >= Y) by
+  monkey-patching the __ge__ function 
   This has the effect that the pandas/numpy rowfilter can be used for substructure filtering (filtered = dframe[dframe['RDKitColumn'] >= SubstructureMolecule])
   """
   if x is None or y is None: return False
   if hasattr(x,'_substructfp'):
     if not hasattr(y,'_substructfp'):
-      #y._substructfp=Chem.LayeredFingerprint2(y)
-      y._substructfp=pyAvalonTools.GetAvalonFP(y,isQuery=True,bitFlags=pyAvalonTools.avalonSSSBits)
+      y._substructfp=_fingerprinter(y,True)
     if not DataStructs.AllProbeBitsMatch(y._substructfp,x._substructfp):
       return False
   return x.HasSubstructMatch(y)
@@ -147,18 +121,16 @@ def PrintAsBase64PNGString(x,renderer = None):
 Chem.Mol.__str__ = PrintAsBase64PNGString
 
 def _MolPlusFingerprintFromSmiles(smi):
-  '''Precomputes Avalon fingerprints and stores results in molecule objects to accelerate substructure matching
+  '''Precomputes fingerprints and stores results in molecule objects to accelerate substructure matching
   '''
   m = Chem.MolFromSmiles(smi)
   if m is not None:
-    #m._substructfp = Chem.LayeredFingerprint2(m)
-    #m._substructfp=pyAvalonTools.GetAvalonFP(m,bitFlags=pyAvalonTools.avalonSSSBits)
-    m._substructfp=pyAvalonTools.GetAvalonFP(smi,True,bitFlags=pyAvalonTools.avalonSSSBits)
+    m._substructfp=_fingerprinter(m,False)
   return m
 
 def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',includeFingerprints=False):
   '''Converts the molecules contains in "smilesCol" to RDKit molecules and appends them to the dataframe "frame" using the specified column name.
-  If desired, the avalon fingerprint can be computed and stored within the molecule objects to accelerate substructure matching
+  If desired, a fingerprint can be computed and stored with the molecule objects to accelerate substructure matching
   '''
   if not includeFingerprints:
     frame[molCol]=frame.apply(lambda x: Chem.MolFromSmiles(x[smilesCol]), axis=1)
@@ -186,9 +158,18 @@ def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',incl
 
 
 if __name__ == "__main__":
-    import doctest
-    doctest.testmod(optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
+  import sys
+  if pd is None:
+    print >>sys.stderr,"pandas installation not found, skipping tests"
+  else:
+    v = pd.version.version.split('.')
+    if v[0]=='0' and int(v[1])<10:
+      print >>sys.stderr,"pandas installation >=0.10 not found, skipping tests"
+    else:
+      import doctest
+      doctest.testmod(optionflags=doctest.ELLIPSIS+doctest.NORMALIZE_WHITESPACE)
 
+# $Id$
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
@@ -219,4 +200,3 @@ if __name__ == "__main__":
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-    
