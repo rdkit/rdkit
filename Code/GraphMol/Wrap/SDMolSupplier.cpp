@@ -97,6 +97,8 @@ namespace RDKit {
 	.def("GetItemText", &SDMolSupplier::getItemText,
 	     "returns the text for an item",
 	     (python::arg("self"),python::arg("index")))
+	.def("atEnd", &SDMolSupplier::atEnd,
+	     "Returns whether or not we have hit EOF.\n")
 	;
     };
   };

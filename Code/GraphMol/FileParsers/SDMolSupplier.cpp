@@ -49,6 +49,10 @@ namespace RDKit {
     df_removeHs = removeHs;
     df_strictParsing = strictParsing;
     this->checkForEnd();
+    if(df_end){
+      // checkForEnd() sets d_len if we're at EOF. undo that (was GitHub issue 19):
+      d_len=0;
+    }
     POSTCONDITION(dp_inStream,"bad instream");
   }
 
@@ -64,6 +68,10 @@ namespace RDKit {
     df_removeHs = removeHs;
     df_strictParsing = strictParsing;
     this->checkForEnd();
+    if(df_end){
+      // checkForEnd() sets d_len if we're at EOF. undo that (was GitHub issue 19):
+      d_len=0;
+    }
     POSTCONDITION(dp_inStream,"bad instream");
   }
 
@@ -85,6 +93,10 @@ namespace RDKit {
     df_sanitize = sanitize;
     df_removeHs=removeHs;
     this->checkForEnd();
+    if(df_end){
+      // checkForEnd() sets d_len if we're at EOF. undo that (was GitHub issue 19):
+      d_len=0;
+    }
     POSTCONDITION(dp_inStream,"bad instream");
   }
 
@@ -230,10 +242,9 @@ namespace RDKit {
   unsigned int SDMolSupplier::length() {
     PRECONDITION(dp_inStream,"no stream");
     // return the number of mol blocks in the sdfile
-    if (d_len > 0) {
+    if (d_len > 0 || (df_end && d_len==0) ) {
       return d_len;
-    }
-    else {
+    } else {
       std::string tempStr;
       d_len = d_molpos.size();
       dp_inStream->seekg(d_molpos.back());

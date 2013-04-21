@@ -2387,6 +2387,33 @@ CAS<~>
     smi=Chem.MolToSmiles(m)
     self.failUnlessEqual(smi,'[*:30]CC')
 
+  def test83GitHubIssue19(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','empty2.sdf')
+  def test83GitHubIssue19(self):
+    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
+                                            'test_data','empty2.sdf')
+    sdSup = Chem.SDMolSupplier(fileN)
+    self.failUnless(sdSup.atEnd())
+    self.failUnlessRaises(IndexError,lambda : sdSup[0])
+
+    sdSup.SetData('')
+    self.failUnless(sdSup.atEnd())
+    self.failUnlessRaises(IndexError,lambda : sdSup[0])
+
+    sdSup = Chem.SDMolSupplier(fileN)
+    self.failUnlessRaises(IndexError,lambda : sdSup[0])
+
+    sdSup.SetData('')
+    self.failUnlessRaises(IndexError,lambda : sdSup[0])
+
+    sdSup = Chem.SDMolSupplier(fileN)
+    self.failUnlessEqual(len(sdSup),0)
+
+    sdSup.SetData('')
+    self.failUnlessEqual(len(sdSup),0)
+
+
 
 
 if __name__ == '__main__':
