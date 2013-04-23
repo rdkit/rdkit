@@ -325,8 +325,115 @@ In Win7 systems, you may run into trouble due to missing DLLs, see one thread fr
 http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01632.html
 You can download the missing DLLs from here: http://www.microsoft.com/en-us/download/details.aspx?id=5555
 
-Installation of RDKit binaries
-******************************
+Installation from source
+************************
 
-  To come
+Extra software to install
+-------------------------
+
+  * Microsoft Visual C++ : The Express version has everything
+    necessary and can be downloaded for free
+    (http://www.microsoft.com/express/download/). This
+    is a big installation and will take a while. The RDKit has been
+    successfully built with all version of visual c++ since 6.0, so
+    the current version of VC++ (2010 as of this writing) should be
+    fine.
+  * cmake : (http://www.cmake.org/cmake/resources/software.html) should be installed.
+  * boost : It is strongly recommended to download and use a
+    precompiled version of the boost libraries from
+    http://www.boostpro.com/download/ . When you run the installer,
+    the only binary libraries you need are python, regex, and system.
+    If you want to install boost from source, download a copy from
+    http://www.boost.org and follow the instructions
+    in the "Getting Started" section of the documentation. Make sure
+    the libraries and headers are installed to c:\boost
+  * a subversion client : *This is only necessary if you are planning
+    on building development versions of the RDKit.* A command line
+    client for subversion can be installed as part of the cygwin
+    installation, or a very nice graphical client that integrates well
+    with windows explorer can be downloaded from
+    http://tortoisesvn.tigris.org/ .
+  * Optional packages
+
+    * If you would like to install the RDKit InChI support (first
+      available in the Q2 2011 release), follow the instructions in
+      $RDBASE/External/INCHI-API to get a copy of the InChI source and
+      put it in the appropriate place.
+
+Setup and Preparation
+---------------------
+
+This section assumes that python is installed in ``c:\Python27``, that the
+boost libraries have been installed to ``c:\boost``, and that
+you will build the RDKit from a directory named ``c:\RDKit``. If any of
+these conditions is not true, just change the corresponding paths.
+
+  * If you install things in paths that have spaces in their names,
+    be sure to use quotes properly in your environment variable
+    definitions.
+
+  * If you have more than one version of visual studio installed,
+    the instructions below may not use the correct compiler. In this
+    case you need to use a different ``--toolset`` argument to specify
+    the version of the compiler used in all commands. Information
+    for this situation is covered in
+    the boost.build documentation
+    (http://www.boost.org/doc/libs/1_50_0/more/getting_started/windows.html). 
+
+  * If you are planning on using a development version of the RDKit:
+    get a copy of the current RDKit source using subversion. If you're
+    using the command-line client the command is: ``svn co
+    http://svn.code.sf.net/p/rdkit/code/trunk c:\RDKit``
+
+  * If you are planning on using a released version of the RDKit : get
+    a copy of the most recent release and extract it into the directory ``c:\RDKit`` 
+
+  * Set the required environment variables (you can set this in cygwin
+    or in windows. If you set them in windows, be sure to restart your
+    cygwin window)
+
+    * ``RDBASE = c:\RDKit`` 
+    * Make sure ``c:\Python27`` is in your PATH
+    * Make sure ``c:\RDKit\lib`` is in your PATH
+    * Make sure ``c:\boost\lib`` is in your PATH.
+    * Make sure ``c:\RDKit is`` in your PYTHONPATH
+
+Building from the command line (recommended)
+--------------------------------------------
+
+  * Create a directory ``c:\RDKit\build`` and cd into it
+  * Run cmake. Here's an example basic command line for 64bit windows:
+    ``cmake -DBOOST_ROOT=c:/boost -G"Visual Studio 10 Win64" ..``
+  * Build the code. Here's an example command line:
+    ``c:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj``
+
+Building the Code Using GUIs (not recommended)
+----------------------------------------------
+
+  * Environment variables: if cmake complains about not being able to find it, define the environment variable BOOST_ROOT to point to the directory containing the boost source.
+  * Configure the build:
+
+    * Start the cmake gui
+    * tell it where the source code is (e.g. c:/RDKit) and where to build the binaries (recommended: c:/RDKit/build)
+    * click "Configure", select your compiler, and wait until the
+      basic configuration is complete, you'll see a bunch of red entries in the main windows.
+    * click "Configure" again
+    * click "Generate"
+
+  * Build:
+
+    * open the solution file that cmake created (c:/RDKit/build/RDKit.sln) with Visual Studio.
+    * check to be sure that you're building a Release build (for some reason CMake produces solution files that default to doing a Debug build)
+    * build the "ALL_BUILD" target; this will take a while and generate warnings, but there should be no errors. Note: if you are building the SWIG wrappers you may get an error the first time you try to build them. If you see this error, try building ALL_BUILD again; it should work the second time.
+    * build the "INSTALL" target
+
+Testing the Build (optional by recommended)
+-------------------------------------------
+  
+  * cd to ``c:\RDKit\build`` and run ctest.
+  * you're done!
+
+
+
+     
 
