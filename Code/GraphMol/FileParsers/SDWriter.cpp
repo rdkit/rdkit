@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <boost/any.hpp>
 
 namespace RDKit {
   SDWriter::SDWriter(std::string fileName) {
@@ -111,14 +112,20 @@ namespace RDKit {
 
   void SDWriter::writeProperty(const ROMol &mol, std::string name) {
     PRECONDITION(dp_ostream,"no output stream");
-    // write the property header line
-    (*dp_ostream) << ">  <" << name << ">  " << "(" << d_molid+1 << ") " << "\n";
-    
+
     // write the property value
     // FIX: we will assume for now that the desired property value is 
     // catable to a string 
     std::string pval;
-    mol.getProp(name, pval);
+    try {
+      mol.getProp(name, pval);
+    } catch (boost::bad_any_cast &){
+      return;
+    }
+
+    // write the property header line
+    (*dp_ostream) << ">  <" << name << ">  " << "(" << d_molid+1 << ") " << "\n";
+    
     (*dp_ostream) << pval << "\n";
     
     // empty line after the property

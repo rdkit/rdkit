@@ -1851,6 +1851,27 @@ void testSkipLines() {
   delete nmol;
 }
 
+
+void testGitHub23() {
+  std::string rdbase = getenv("RDBASE");
+  std::string ofile = rdbase + "/Code/GraphMol/FileParsers/test_data/blah.sdf";
+  SDWriter *writer = new SDWriter(ofile);
+
+  ROMol *mol = SmilesToMol("CCCC");
+  INT_VECT iv;
+  iv.push_back(1);
+  iv.push_back(2);  
+  mol->setProp("pval",iv);
+  writer->write(*mol);
+  delete mol;
+
+  writer->flush();
+  delete writer;
+}
+
+
+
+
 int main() {
   RDLog::InitLogs();
 
@@ -1996,6 +2017,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testSkipLines();
   BOOST_LOG(rdErrorLog) <<"Finished: testSkipLines()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub23();
+  BOOST_LOG(rdErrorLog) <<"Finished: testGitHub23()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

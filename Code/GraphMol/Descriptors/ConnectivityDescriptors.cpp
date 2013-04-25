@@ -41,7 +41,7 @@ namespace RDKit{
           if(deltas[at->getIdx()]!=0.0) deltas[at->getIdx()]=1./sqrt(deltas[at->getIdx()]);
           ++atBegin;
         }
-        mol.setProp("_connectivityHKDeltas",deltas);
+        mol.setProp("_connectivityHKDeltas",deltas,true);
       }
 
 
@@ -63,7 +63,7 @@ namespace RDKit{
           nVs[at->getIdx()]=v;
           ++atBegin;
         }
-        mol.setProp("_connectivityNVals",nVs);
+        mol.setProp("_connectivityNVals",nVs,true);
       }
 
       double getAlpha(const Atom &atom,bool &found){
