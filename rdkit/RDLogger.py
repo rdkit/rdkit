@@ -17,7 +17,7 @@ DEBUG=0
 INFO=1
 WARNING=2
 ERROR=3
-CRITICAL=3
+CRITICAL=4
 
 class logger(object):
   def logIt(self,dest,msg,*args,**kwargs):
