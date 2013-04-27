@@ -181,8 +181,9 @@ namespace boost{
           in_2[i]=0;
           out_2[i]=0;
         }
-        vs_compared = new int[n1*n2];
-        memset((void *)vs_compared,0,n1*n2*sizeof(int));
+        vs_compared=0;
+        //vs_compared = new int[n1*n2];
+        //memset((void *)vs_compared,0,n1*n2*sizeof(int));
         
         //es_compared = new std::map<unsigned int,bool>();
         *share_count = 1;
@@ -225,7 +226,7 @@ namespace boost{
           delete [] out_2;
           delete share_count;
           delete [] order;
-          delete [] vs_compared;
+          //delete [] vs_compared;
           //delete es_compared;
         }
       }; 
@@ -342,15 +343,15 @@ namespace boost{
         assert(core_2[node2] == NULL_NODE);
 
         //std::cerr<<"  ifp:"<<node1<<"-"<<node2<<" "<<vs_compared->size()<<std::endl;
-        int &isCompat=vs_compared[node1*n2+node2];
-        if(isCompat==0){
-          isCompat=vc(node1,node2)?1:-1;
-        }
-        if( isCompat<0 ){
-          //std::cerr<<"  short1"<<std::endl;
-          return false;
-        }
-        
+        // int &isCompat=vs_compared[node1*n2+node2];
+        // if(isCompat==0){
+        //   isCompat=vc(node1,node2)?1:-1;
+        // }
+        // if( isCompat<0 ){
+        //   //std::cerr<<"  short1"<<std::endl;
+        //   return false;
+        // }
+        if(!vc(node1,node2)) return false;
 
         unsigned int other1, other2;
         unsigned int termout1 = 0, termout2 = 0, termin1 = 0, termin2 = 0;
