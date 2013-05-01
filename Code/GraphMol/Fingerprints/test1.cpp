@@ -2398,6 +2398,68 @@ void testChiralTorsions(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue25(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 25: fingerprint backwards compatibility." << std::endl;
+
+  {
+    ROMol *m1 = SmilesToMol("CCCCO");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::int64_t> *fp1;
+    fp1 = AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    TEST_ASSERT(fp1->getTotalVal()==2);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==2);
+    TEST_ASSERT((*fp1)[4437590048]==1);
+    TEST_ASSERT((*fp1)[12893306913]==1);
+    delete fp1;
+    delete m1;
+  }
+  {
+    ROMol *m1 = SmilesToMol("CCCCO");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::int64_t> *fp1;
+    fp1 = AtomPairs::getHashedTopologicalTorsionFingerprint(*m1,1000);
+    TEST_ASSERT(fp1);
+    TEST_ASSERT(fp1->getTotalVal()==2);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==2);
+    TEST_ASSERT((*fp1)[24]==1);
+    TEST_ASSERT((*fp1)[288]==1);
+    delete fp1;
+    delete m1;
+  }
+  {
+    ROMol *m1 = SmilesToMol("CCO");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::int32_t> *fp1;
+    fp1 = AtomPairs::getAtomPairFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    TEST_ASSERT(fp1->getTotalVal()==3);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==3);
+    TEST_ASSERT((*fp1)[558113]==1);
+    TEST_ASSERT((*fp1)[1590306]==1);
+    TEST_ASSERT((*fp1)[1590337]==1);
+    delete fp1;
+    delete m1;
+  }
+  {
+    ROMol *m1 = SmilesToMol("CCO");
+    TEST_ASSERT(m1);
+    SparseIntVect<boost::int32_t> *fp1;
+    fp1 = AtomPairs::getHashedAtomPairFingerprint(*m1);
+    TEST_ASSERT(fp1);
+    TEST_ASSERT(fp1->getTotalVal()==3);
+    TEST_ASSERT(fp1->getNonzeroElements().size()==3);
+    TEST_ASSERT((*fp1)[1375]==1);
+    TEST_ASSERT((*fp1)[1423]==1);
+    TEST_ASSERT((*fp1)[1503]==1);
+    delete fp1;
+    delete m1;
+  }
+
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 
 int main(int argc,char *argv[]){
@@ -2439,5 +2501,6 @@ int main(int argc,char *argv[]){
 #endif
   testChiralPairs();
   testChiralTorsions();
+  testGitHubIssue25();
   return 0;
 }
