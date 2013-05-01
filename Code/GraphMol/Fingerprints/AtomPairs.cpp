@@ -408,12 +408,10 @@ namespace RDKit{
         }
         if(keepIt){
           for(unsigned int i=0;i<targetSize;++i){
-            unsigned int code=atomCodes[path[i]];
+            unsigned int code=atomCodes[path[i]]-1;
             // subtract off the branching number:
-            if(i==0 || i==targetSize-1){
-              code-=1;
-            } else {
-              code-=2;
+            if(i>0 && i<targetSize-1){
+              --code;
             }
             pathCodes.push_back(code);
           }
@@ -491,7 +489,7 @@ namespace RDKit{
           if(keepIt){
             std::vector<boost::uint32_t> pathCodes(targetSize);
             for(unsigned int i=0;i<targetSize;++i){
-              unsigned int code=atomCodes[path[i]];
+              unsigned int code=atomCodes[path[i]]-1;
               // subtract off the branching number:
               if(i>0 && i<targetSize-1){
                 --code;
