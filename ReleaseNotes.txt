@@ -10,9 +10,9 @@
    section below for more details.
 
 Acknowledgements:
-Jan Domanski, Jean-Paul Ebejer, Nikolas Fechner, Jameed Hussain,
-Stephan Reiling, Sereina Riniker, Roger Sayle, Riccardo Vianello
-
+Paul Czodrowski, Andrew Dalke, Jan Domanski, Jean-Paul Ebejer, Nikolas
+Fechner, Jameed Hussain, Stephan Reiling, Sereina Riniker, Roger
+Sayle, Riccardo Vianello 
 
 Bug Fixes: 
  - removeBond now updates bond indices (sf.net issue 284)
@@ -46,6 +46,13 @@ Bug Fixes:
    has been fixed. (github issue 17)
  - Quantize.FindVarMultQuantBounds() no longer generates a seg fault
    when called with bad arguments. (github issue 18)
+ - The length of SDMolSuppliers constructed from empty files is no
+   longer reported as 1. (github issue 19)
+ - Partial charge calculations now work for B, Si, Be, Mg, and Al.
+   (github issue 20)
+ - Two logging problems were fixed (github issues 21 and 24)
+ - Molecules that have had kappa descriptors generated can now be
+   written to SD files (github issue 23)
 
 New Features:
  - The handling of chirality in reactions has been reworked and
@@ -66,6 +73,8 @@ New Features:
  - The substructure matcher can now properly take stereochemistry into
    account if the useChirality flag is provided.
  - The module rdkit.Chem.Draw.mplCanvas has been added back to svn.
+ - A new module integrating the RDKit with Pandas (rdkit.Chem.PandasTools)
+   has been added.
 
 New Database Cartridge Features: 
  - The new compositional descriptors are available:
