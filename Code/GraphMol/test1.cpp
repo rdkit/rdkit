@@ -183,13 +183,36 @@ void testMolProps()
   m2.getProp("__computedProps", cplst);
   CHECK_INVARIANT(cplst.size() == 0, "");
 
-  
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
 
+void testClearMol()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing RWMol.clear()>" << std::endl;
+  RWMol m2;
 
+  m2.addAtom(new Atom(6));
+  m2.addAtom(new Atom(6));
+  m2.addBond(0,1,Bond::TRIPLE);
 
+  TEST_ASSERT(!m2.hasProp("prop1"));
+  m2.setProp("prop1",2);
+  int tmpI;
+  TEST_ASSERT(m2.hasProp("prop1"));
+  m2.getProp("prop1",tmpI);
+  TEST_ASSERT(tmpI==2);
+
+  m2.clear();
+  TEST_ASSERT(!m2.hasProp("prop1"));
+  TEST_ASSERT(m2.getNumAtoms()==0);
+  TEST_ASSERT(m2.getNumBonds()==0);
+  TEST_ASSERT(m2.getAtomBookmarks()->empty());
+  TEST_ASSERT(m2.getBondBookmarks()->empty());
+  TEST_ASSERT(m2.getPropList().empty());
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
 
 void testAtomProps()
 {
@@ -952,6 +975,7 @@ int main()
   testAddAtomWithConf();
   testIssue267();
   testIssue284();
+  testClearMol();
   
   return 0;
 }

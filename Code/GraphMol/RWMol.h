@@ -18,6 +18,7 @@
 
 // our stuff
 #include "ROMol.h"
+#include "RingInfo.h"
 
 namespace RDKit{
 
@@ -202,6 +203,18 @@ namespace RDKit{
     //! removes a bond from the molecule
     void removeBond(unsigned int beginAtomIdx, unsigned int endAtomIdx);
     //@}
+
+    //! removes all atoms, bonds, properties, bookmarks, etc.
+    void clear() {
+      d_atomBookmarks.clear();
+      d_bondBookmarks.clear();
+      d_graph.clear();
+      d_confs.clear();
+      if(dp_props) dp_props->reset();
+      if(dp_ringInfo) dp_ringInfo->reset();
+      
+    };
+
 
   private:
     std::vector<BOND_SPTR> d_partialBonds;
