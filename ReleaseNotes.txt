@@ -1,3 +1,14 @@
+******  Release_2013.03.2 *******
+(Changes relative to Release_2013.03.1)
+
+Acknowledgements:
+Manuel Schwarze
+
+Bug Fixes:
+ - The hashed topological torsion fingerprints generated are now the
+   same as in previous rdkit versions. (GitHub issue 25)
+
+
 ******  Release_2013.03.1 *******
 (Changes relative to Release_2012.12.1)
 
