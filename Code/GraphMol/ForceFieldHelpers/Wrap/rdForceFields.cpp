@@ -61,7 +61,7 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interrest\n\
-    - maxIters : the maximum number of iterations (defaults to 100)\n\
+    - maxIters : the maximum number of iterations (defaults to 200)\n\
     - vdwThresh : used to exclude long-range van der Waals interactions\n\
                   (defaults to 10.0)\n\
     - confId : indicates which conformer to optimize\n\
