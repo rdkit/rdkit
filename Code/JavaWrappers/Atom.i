@@ -1,5 +1,5 @@
 /* 
-* $Id$
+* $Id: Atom.i 2519 2013-05-17 03:01:18Z glandrum $
 *
 *  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
 *  All rights reserved.
@@ -58,7 +58,9 @@
 #endif
 %include <GraphMol/Atom.h>
 
-%newobject RDKit::Atom::getProp;
+/* For the time being, assume all properties will be strings */
+%template(setProp)  RDKit::Atom::setProp<std::string>;
+
 %extend RDKit::Atom {
   std::string getProp(const std::string key){
     std::string res;
