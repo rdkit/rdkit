@@ -74,6 +74,9 @@ if(NOT WIN32)
    # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
    ADD_CUSTOM_COMMAND(
      OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
+
+     COMMAND ${CMAKE_COMMAND} -E make_directory swig_csharp
+
      ## 1. run this custom command only after swig has been run.
      COMMAND ${GMCS_EXE} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

@@ -85,6 +85,9 @@ SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar
 
+  COMMAND ${CMAKE_COMMAND} -E make_directory build
+  COMMAND ${CMAKE_COMMAND} -E make_directory build-test
+
   ## Add in our own Java sources
   #COMMAND ${COPY_CMD}
   ## 1. run this custom command only after swig has been run.
