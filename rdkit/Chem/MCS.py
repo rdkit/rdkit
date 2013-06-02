@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This work was funded by Roche and generously donated to the free
 # and open source cheminformatics community.
 
@@ -1952,10 +1950,3 @@ def FindMCS(mols, minNumAtoms=2,
     mcs_result = EnumerationMCS(query_fragments, targets, maximize=maximize,
                                 complete_rings_only=completeRingsOnly, timeout=timeout)
     return mcs_result
-
-if __name__ == "__main__":
-    mol1 = Chem.MolFromSmiles("c1ccccc1O")
-    mol2 = Chem.MolFromSmiles("c1ccncc1O")
-    x = FindMCS([mol1, mol2])
-    print x
-    print repr(x)
