@@ -54,7 +54,7 @@ def _setupDescriptors(namespace):
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 MolWt = lambda *x,**y:_rdMolDescriptors._CalcMolWt(*x,**y)
 MolWt.version=_rdMolDescriptors._CalcMolWt_version
-MolWt.__doc__="""The average molecular weight of the molecule ignoring hydrogens
+MolWt.__doc__="""The average molecular weight of the molecule
 
   >>> MolWt(Chem.MolFromSmiles('CC'))
   30.07...
