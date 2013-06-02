@@ -1835,6 +1835,18 @@ CAS<~>
     self.failUnless(len(fs)==1)
     self.failUnless(fs[0].GetNumAtoms()==3)
 
+    mol = Chem.MolFromSmiles("CO")
+    em = Chem.EditableMol(mol)
+    em.RemoveBond(0,1)
+    nm = em.GetMol()
+    fs = Chem.GetMolFrags(nm,asMols=True)
+    self.failUnlessEqual([x.GetNumAtoms(onlyExplicit=False) for x in fs],[5,3])
+    fs = Chem.GetMolFrags(nm,asMols=True,sanitizeFrags=False)
+    self.failUnlessEqual([x.GetNumAtoms(onlyExplicit=False) for x in fs],[4,2])
+    
+
+
+
   def test53Matrices(self) :
     """ test adjacency and distance matrices
        

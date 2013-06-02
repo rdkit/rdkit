@@ -233,7 +233,7 @@ namespace RDKit{
     return PyArray_Return(res);
   }
 
-  python::tuple GetMolFrags(const ROMol &mol,bool asMols){
+  python::tuple GetMolFrags(const ROMol &mol,bool asMols,bool sanitizeFrags){
     python::list res;
 
     if(!asMols){
@@ -249,7 +249,7 @@ namespace RDKit{
       }
     } else {
       std::vector<boost::shared_ptr<ROMol> > frags;
-      frags=MolOps::getMolFrags(mol);
+      frags=MolOps::getMolFrags(mol,sanitizeFrags);
       for(unsigned int i=0;i<frags.size();++i){
         res.append(frags[i]);
       }
@@ -967,12 +967,15 @@ namespace RDKit{
     - mol: the molecule to use\n\
     - asMols: (optional) if this is provided and true, the fragments\n\
       will be returned as molecules instead of atom ids.\n\
+    - sanitizeFrags: (optional) if this is provided and true, the fragments\n\
+      molecules will be sanitized before returning them.\n\
 \n\
   RETURNS: a tuple of tuples with IDs for the atoms in each fragment\n\
            or a tuple of molecules.\n\
 \n";
       python::def("GetMolFrags", &GetMolFrags,
-                  (python::arg("mol"),python::arg("asMols")=false),
+                  (python::arg("mol"),python::arg("asMols")=false,
+                   python::arg("sanitizeFrags")=true),
                   docString.c_str());
 
       // ------------------------------------------------------------------------
