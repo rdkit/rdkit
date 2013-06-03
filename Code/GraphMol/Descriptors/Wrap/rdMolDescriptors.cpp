@@ -102,7 +102,7 @@ namespace {
                                                                bool includeChirality){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
-    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getAtomPairFingerprint(mol,minLength,maxLength,
                                                    fvect,ivect,invvect,includeChirality);
@@ -121,7 +121,7 @@ namespace {
                                                                      bool includeChirality){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
-    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     RDKit::SparseIntVect<boost::int32_t> *res;
     res = RDKit::AtomPairs::getHashedAtomPairFingerprint(mol,nBits,minLength,maxLength,
                                                          fvect,ivect,invvect,includeChirality);
@@ -139,7 +139,7 @@ namespace {
                                                                          bool includeChirality){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
-    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     if(targetSize*RDKit::AtomPairs::codeSize>64){
       std::ostringstream errout;
       errout << "Maximum supported topological torsion path length is " << 64/RDKit::AtomPairs::codeSize<<std::endl;
@@ -163,7 +163,7 @@ namespace {
                                                                                bool includeChirality){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
-    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     RDKit::SparseIntVect<boost::int64_t> *res;
     res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol,nBits,targetSize,fvect,ivect,
                                                                    invvect,includeChirality);
@@ -184,7 +184,7 @@ namespace {
                                                                    ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
-    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     ExplicitBitVect *res;
     res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(mol,nBits,targetSize,fvect,ivect,
                                                                             invvect,
@@ -208,7 +208,7 @@ namespace {
                                                          ){
     std::vector<boost::uint32_t> *fvect=pythonObjectToVect(fromAtoms,mol.getNumAtoms());
     std::vector<boost::uint32_t> *ivect=pythonObjectToVect(ignoreAtoms,mol.getNumAtoms());
-    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,mol.getNumAtoms());
+    std::vector<boost::uint32_t> *invvect=pythonObjectToVect(atomInvariants,static_cast<unsigned int>(1<<RDKit::AtomPairs::codeSize));
     ExplicitBitVect *res;
     res = RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(mol,nBits,
                                                                   minLength,maxLength,
