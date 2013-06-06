@@ -4216,13 +4216,31 @@ void testGitHubIssue8()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testGitHubIssue42()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Github issue 42 (impact of removeAtom on atom stereochem)" << std::endl;
+  {
+    std::string smi= "CCN1CCN(c2cc3[nH]c(C(=O)[C@@]4(CC)CC[C@](C)(O)CC4)nc3cc2Cl)CC1";
+    RWMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    int indices[]={29, 28, 27, 26, 25, 24, 8, 7, 6, 5, 4, 3, 2, 1, 0,-1};
+    for(unsigned int i=0;indices[i]>-1;++i){
+      m->removeAtom((unsigned int)indices[i]);
+    }
+    smi=MolToSmiles(*m,true);
+    std::cerr<<"smiles: "<<smi<<std::endl;
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 
 
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
 
-#if 1
+#if 0
   test1();
   test2();
   test3();
@@ -4275,11 +4293,12 @@ int main(){
   testSFNetIssue3549146();
   testSFNetIssue249();
   testSFNetIssue256();
-#endif
   testSFNetIssue266();
   testSFNetIssue266();
   testSFNetIssue272();
+#endif
   testGitHubIssue8();
+  testGitHubIssue42();
   return 0;
 }
 

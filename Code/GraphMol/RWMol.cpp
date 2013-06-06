@@ -172,10 +172,9 @@ namespace RDKit{
 
     }
 
-    // reset our ring info structure, because it is pretty likely
-    // to be wrong now:
-    dp_ringInfo->reset();
-    
+    // clear computed properties and reset our ring info structure
+    // they are pretty likely to be wrong now:
+    clearComputedProps(true);
 
     oatom->setOwningMol(NULL);
     

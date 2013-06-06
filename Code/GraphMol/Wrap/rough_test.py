@@ -375,26 +375,16 @@ class TestCase(unittest.TestCase):
     
   def test14Hs(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
-    self.failUnless(m.GetNumAtoms()==4)
-
-    m2 = Chem.AddHs(m,1)
-    self.failUnless(m2.GetNumAtoms()==5)
-    m2 = Chem.RemoveHs(m2,1)
-    self.failUnless(m2.GetNumAtoms()==5)
-    m2 = Chem.RemoveHs(m2,0)
-    self.failUnless(m2.GetNumAtoms()==4)
-    
-    m2 = Chem.AddHs(m,0)
-    self.failUnless(m2.GetNumAtoms()==8)
-    m2 = Chem.RemoveHs(m2,1)
-    self.failUnless(m2.GetNumAtoms()==5)
+    self.failUnlessEqual(m.GetNumAtoms(),4)
+    m2 = Chem.AddHs(m)
+    self.failUnlessEqual(m2.GetNumAtoms(),8)
     m2 = Chem.RemoveHs(m2)
-    self.failUnless(m2.GetNumAtoms()==4)
+    self.failUnlessEqual(m2.GetNumAtoms(),4)
 
     m = Chem.MolFromSmiles('CC[H]',False)
-    self.failUnless(m.GetNumAtoms()==3)
+    self.failUnlessEqual(m.GetNumAtoms(),3)
     m2 = Chem.MergeQueryHs(m)
-    self.failUnless(m2.GetNumAtoms()==2)
+    self.failUnlessEqual(m2.GetNumAtoms(),2)
     self.failUnless(m2.GetAtomWithIdx(1).HasQuery())
     
   def test15Neighbors(self):
