@@ -73,8 +73,8 @@ def MolFromInchi(inchi, sanitize=True, removeHs=True, logLevel=None,
         return None
 
     if logLevel is not None:
-        if logLogLevel not in logLevelToLogFunctionLookup:
-            raise ValueError("Unsupported log level: %d" % logLogLevel)
+        if logLevel not in logLevelToLogFunctionLookup:
+            raise ValueError("Unsupported log level: %d" % logLevel)
         log = logLevelToLogFunctionLookup[logLevel]
         if retcode == 0:
             log(message)
