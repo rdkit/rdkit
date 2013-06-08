@@ -420,7 +420,7 @@ namespace RDKit{
       }
     }
     if(canonical){
-      MolOps::rankAtoms(tmol,ranks);
+      MolOps::rankAtoms(tmol,ranks,true,doIsomericSmiles,doIsomericSmiles);
     } else {
       for(unsigned int i=0;i<tmol.getNumAtoms();++i) ranks[i]=i;
     }
