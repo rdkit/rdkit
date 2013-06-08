@@ -3272,6 +3272,50 @@ void testRingStereochem(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub45(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github 45: stereochemistry information influencing non-stereo SMILES" << std::endl;
+  {
+    RWMol *m;
+    std::string smiles="CC1CCC[13C]2(C)C1CC[14CH]2C(C)=O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles1a = MolToSmiles(*m);
+    std::string csmiles1b = MolToSmiles(*m,true);
+    std::string smiles2="CC1CCC[C]2(C)C1CC[CH]2C(C)=O";
+    delete m;
+    m = SmilesToMol(smiles2);
+    TEST_ASSERT(m);
+    std::string csmiles2a = MolToSmiles(*m);
+    std::string csmiles2b = MolToSmiles(*m,true);
+    
+    TEST_ASSERT(csmiles1a==csmiles2a);
+    TEST_ASSERT(csmiles1b!=csmiles2b);
+    delete m;
+  }
+  {
+    RWMol *m;
+    std::string smiles="CC1CCC[C@@]2(C)C1CC[C@@H]2C(C)=O";
+    m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+    std::string csmiles1a = MolToSmiles(*m);
+    std::string csmiles1b = MolToSmiles(*m,true);
+    std::string smiles2="CC1CCC[C]2(C)C1CC[CH]2C(C)=O";
+    delete m;
+    m = SmilesToMol(smiles2);
+    TEST_ASSERT(m);
+    std::string csmiles2a = MolToSmiles(*m);
+    std::string csmiles2b = MolToSmiles(*m,true);
+    
+    TEST_ASSERT(csmiles1a==csmiles2a);
+    TEST_ASSERT(csmiles1b!=csmiles2b);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -3324,5 +3368,6 @@ main(int argc, char *argv[])
   testRingStereochem();
 #endif
   testGithub12();
+  testGithub45();
   //testBug1719046();
 }

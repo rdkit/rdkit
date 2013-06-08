@@ -533,6 +533,8 @@ namespace RDKit{
       \param mol               the molecule of interest
       \param ranks             used to return the ranks
       \param breakTies         toggles breaking of ties (see below)
+      \param includeChirality  toggles inclusion of chirality in the invariants
+      \param includeIsotopes   toggles inclusion of isotopes in the invariants
       \param rankHistory       used to return the rank history (see below)
 
       <b>Notes:</b>
@@ -545,7 +547,10 @@ namespace RDKit{
 	        to a VECT_INT_VECT that has at least \c mol.getNumAtoms() elements.
     */
     void rankAtoms(const ROMol &mol,std::vector<int> &ranks,
-                   bool breakTies=true,std::vector<std::vector<int> > *rankHistory=0);
+                   bool breakTies=true,
+                   bool includeChirality=true,
+                   bool includeIsotopes=true,
+                   std::vector<std::vector<int> > *rankHistory=0);
     //! assign a canonical ordering to a sub-molecule's atoms
     /*!
       The algorithm used here is a modification of the published Daylight canonical

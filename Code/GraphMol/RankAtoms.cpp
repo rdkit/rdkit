@@ -333,7 +333,8 @@ namespace RankAtoms{
   // much matter what value includeChirality has!
   // --------------------------------------------------
   void buildAtomInvariants(const ROMol &mol,INVAR_VECT &res,
-                           bool includeChirality){
+                           bool includeChirality,
+                           bool includeIsotopes){
     PRECONDITION(res.size()>=mol.getNumAtoms(),"res vect too small");
     unsigned int atsSoFar=0;
     std::vector<boost::uint64_t> tres(mol.getNumAtoms());
@@ -345,7 +346,7 @@ namespace RankAtoms{
       int num =    atom->getAtomicNum() % 128;
       int nConns = atom->getDegree() % 8;
       int deltaMass=0;
-      if(atom->getIsotope()){
+      if(includeIsotopes && atom->getIsotope()){
         deltaMass = static_cast<int>(atom->getIsotope() -
                                      PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum()));
         deltaMass += 128;
@@ -563,6 +564,8 @@ namespace RDKit{
     // --------------------------------------------------
     void rankAtoms(const ROMol &mol,INT_VECT &ranks,
                    bool breakTies,
+                   bool includeChirality,
+                   bool includeIsotopes,
                    VECT_INT_VECT *rankHistory){
 
       unsigned int i;
@@ -583,7 +586,7 @@ namespace RDKit{
         // ----------------------
         INVAR_VECT invariants;
         invariants.resize(nAtoms);
-        RankAtoms::buildAtomInvariants(mol,invariants,true);
+        RankAtoms::buildAtomInvariants(mol,invariants,includeChirality,includeIsotopes);
       
 #ifdef VERBOSE_CANON
         BOOST_LOG(rdDebugLog)<< "invariants:" << std::endl;
