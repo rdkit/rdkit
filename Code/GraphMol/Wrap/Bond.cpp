@@ -94,6 +94,8 @@ struct bond_wrapper {
 	   "Returns the type of the bond as a BondType\n")
       .def("SetBondType",&Bond::setBondType,
 	   "Set the type of the bond as a BondType\n")
+      .def("GetBondTypeAsDouble",&Bond::getBondTypeAsDouble,
+	   "Returns the type of the bond as a double (i.e. 1.0 for SINGLE, 1.5 for AROMATIC, 2.0 for DOUBLE)\n")
 
       .def("GetBondDir",&Bond::getBondDir,
 	   "Returns the type of the bond as a BondDir\n")
