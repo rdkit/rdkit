@@ -85,9 +85,12 @@ from StringIO import StringIO
 import types
 try:
   import pandas as pd
-  pd.set_option('display.width',100000000000)
-  pd.set_option('display.height',100000000000)
-  pd.set_option('display.max_colwidth',100000000000)
+  if 'display.width' in  pd.core.config._registered_options:
+    pd.set_option('display.width',100000000000)
+  if 'display.height' in  pd.core.config._registered_options:
+    pd.set_option('display.height',100000000000)
+  if 'display.max_colwidth' in  pd.core.config._registered_options:
+    pd.set_option('display.max_colwidth',100000000000)
 except ImportError:
   pd = None
 
@@ -187,8 +190,9 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',include
   else:
     frame[molCol]=frame.apply(lambda x: _MolPlusFingerprintFromSmiles(x[smilesCol]), axis=1) 
   print "Patching pandas"
-  frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
-  frame.head = types.MethodType(patchPandasHeadMethod,frame)
+  RenderImagesInAllDataFrames(images=True)
+  #frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
+  #frame.head = types.MethodType(patchPandasHeadMethod,frame)
   
   
 def ChangeMoleculeRendering(frame=None, renderer='PNG'):
