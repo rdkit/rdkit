@@ -38,7 +38,7 @@ It is also possible to load an SDF file can be load into a dataframe.
 
 >>> sdfFile = os.path.join(RDConfig.RDDataDir,'NCI/first_200.props.sdf')
 >>> frame = PandasTools.LoadSDF(sdfFile,smilesName='SMILES',molColName='Molecule',includeFingerprints=True)
->>> frame.info
+>>> frame.info # doctest: +SKIP
 <bound method DataFrame.info of <class 'pandas.core.frame.DataFrame'>
 Int64Index: 200 entries, 0 to 199
 Data columns:
@@ -64,29 +64,68 @@ SMILES                    200  non-null values
 Molecule                  200  non-null values
 dtypes: object(20)>
 
-In order to support rendering the molecules as images in the HTML export of the dataframe, the __str__ method is duck-typed to return a base64 encoded PNG:
+In order to support rendering the molecules as images in the HTML export of the dataframe, the __str__ method is monkey-patched to return a base64 encoded PNG:
 >>> molX = Chem.MolFromSmiles('Fc1cNc2ccccc12')
->>> print molX
+>>> print molX # doctest: +SKIP
+<img src="data:image/png;base64,..." alt="Mol"/>
+This can be reverted using the ChangeMoleculeRendering method
+>>> ChangeMoleculeRendering(renderer='String')
+>>> print molX # doctest: +SKIP
+<rdkit.Chem.rdchem.Mol object at 0x10d179440>
+>>> ChangeMoleculeRendering(renderer='PNG')
+>>> print molX # doctest: +SKIP
 <img src="data:image/png;base64,..." alt="Mol"/>
 '''
+
 
 from rdkit import Chem
 from rdkit.Chem import Draw
 from base64 import b64encode
 from StringIO import StringIO
+import types
 try:
   import pandas as pd
+  if 'display.width' in  pd.core.config._registered_options:
+    pd.set_option('display.width',100000000000)
+  if 'display.height' in  pd.core.config._registered_options:
+    pd.set_option('display.height',100000000000)
+  if 'display.max_colwidth' in  pd.core.config._registered_options:
+    pd.set_option('display.max_colwidth',100000000000)
 except ImportError:
   pd = None
 
+#saves the default pandas rendering to allow restauration
+defPandasRendering = pd.core.frame.DataFrame.to_html
+
+def patchPandasHTMLrepr(self):
+  '''
+  Patched default escaping of HTML control characters to allow molecule image rendering dataframes
+  '''
+  formatter = pd.core.format.DataFrameFormatter(self,buf=None,columns=None,col_space=None,colSpace=None,header=True,index=True,
+                                               na_rep='NaN',formatters=None,float_format=None,sparsify=None,index_names=True,
+                                               justify = None, force_unicode=None,bold_rows=True,classes=None,escape=False)
+  formatter.to_html()
+  html = formatter.buf.getvalue()
+  return html
+
+def patchPandasHeadMethod(self,n=5):
+  '''Ensure inheritance of patched to_html in "head" subframe
+  '''
+  df = self[:n]
+  df.to_html = types.MethodType(patchPandasHTMLrepr,df)
+  df.head = types.MethodType(patchPandasHeadMethod,df)
+  return df
+
 def _get_image(x):
   """displayhook function for PIL Images, rendered as PNG"""
-  import pandas
+  import pandas as pd
   sio = StringIO()    
   x.save(sio,format='PNG')
   s = b64encode(sio.getvalue())
+  pd.set_option('display.max_columns',len(s)+1000)
+  pd.set_option('display.max_rows',len(s)+1000)
   if len(s)+100 > pd.get_option("display.max_colwidth"):
-    pd.set_option("display.max_colwidth",len(s)+100)
+    pd.set_option("display.max_colwidth",len(s)+1000)
   return s
 
 from rdkit import DataStructs
@@ -117,6 +156,9 @@ def PrintAsBase64PNGString(x,renderer = None):
   '''
   return '<img src="data:image/png;base64,%s" alt="Mol"/>'%_get_image(Draw.MolToImage(x))
 
+def PrintDefaultMolRep(x):
+  return str(x.__repr__())
+	
 #Chem.Mol.__str__ = lambda x: '<img src="data:image/png;base64,%s" alt="Mol"/>'%get_image(Draw.MolToImage(x))
 Chem.Mol.__str__ = PrintAsBase64PNGString
 
@@ -127,6 +169,17 @@ def _MolPlusFingerprintFromSmiles(smi):
   if m is not None:
     m._substructfp=_fingerprinter(m,False)
   return m
+  
+def RenderImagesInAllDataFrames(images=True):
+  '''Changes the default dataframe rendering to not escape HTML characters, thus allowing rendered images in all dataframes.
+  IMPORTANT: THIS IS A GLOBAL CHANGE THAT WILL AFFECT TO COMPLETE PYTHON SESSION. If you want to change the rendering only 
+  for a single dataframe use the "ChangeMoleculeRendering" method instead.
+  '''
+  if images:
+    pd.core.frame.DataFrame.to_html = patchPandasHTMLrepr
+  else:
+    pd.core.frame.DataFrame.to_html = defPandasRendering
+	    
 
 def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',includeFingerprints=False):
   '''Converts the molecules contains in "smilesCol" to RDKit molecules and appends them to the dataframe "frame" using the specified column name.
@@ -135,8 +188,25 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol = 'ROMol',include
   if not includeFingerprints:
     frame[molCol]=frame.apply(lambda x: Chem.MolFromSmiles(x[smilesCol]), axis=1)
   else:
-    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprintFromSmiles(x[smilesCol]), axis=1)      
-
+    frame[molCol]=frame.apply(lambda x: _MolPlusFingerprintFromSmiles(x[smilesCol]), axis=1) 
+  print "Patching pandas"
+  RenderImagesInAllDataFrames(images=True)
+  #frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
+  #frame.head = types.MethodType(patchPandasHeadMethod,frame)
+  
+  
+def ChangeMoleculeRendering(frame=None, renderer='PNG'):
+  '''Allows to change the rendering of the molecules between base64 PNG images and string representations. 
+  This serves two purposes: First it allows to avoid the generation of images if this is not desired and, secondly, it allows to enable image rendering for
+  newly created dataframe that already contains molecules, without having to rerun the time-consuming AddMoleculeColumnToFrame. Note: this behaviour is, because some pandas methods, e.g. head()
+  returns a new dataframe instance that uses the default pandas rendering (thus not drawing images for molecules) instead of the monkey-patched one.
+  '''
+  if renderer == 'String':
+	Chem.Mol.__str__ = PrintDefaultMolRep
+  else:
+	Chem.Mol.__str__ = PrintAsBase64PNGString
+  if frame is not None:
+	frame.to_html = types.MethodType(patchPandasHTMLrepr,frame)
     
 def LoadSDF(filename, smilesName='SMILES', idName='ID',molColName = 'ROMol',includeFingerprints=False):
   """ Read file in SDF format and return as Panda data frame """
