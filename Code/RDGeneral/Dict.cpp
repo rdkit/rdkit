@@ -19,7 +19,19 @@
 #include <list>
 
 namespace RDKit{
-
+  namespace {
+    template <class T>
+    std::string vectToString(const boost::any &val){
+      const std::vector<T> &tv=boost::any_cast<std::vector<T> >(val);
+      std::ostringstream sstr;
+      sstr<<"[";
+      std::copy(tv.begin(),tv.end(),std::ostream_iterator<T>(sstr,","));
+      sstr<<"]";
+      return sstr.str();
+    }
+  }
+  
+  
   void Dict::getVal(const std::string &what, std::string &res) const {
     //
     //  We're going to try and be somewhat crafty about this getVal stuff to make these
@@ -47,6 +59,10 @@ namespace RDKit{
         res = boost::lexical_cast<std::string>(boost::any_cast<double>(val));
       } else if(val.type()==typeid(const char *)){
         res = std::string(boost::any_cast<const char *>(val));
+      } else if(val.type()==typeid(std::vector<unsigned int>)){
+        res = vectToString<unsigned int>(val);
+      } else if(val.type()==typeid(std::vector<int>)){
+        res = vectToString<int>(val);
       } else {
         throw;
       }

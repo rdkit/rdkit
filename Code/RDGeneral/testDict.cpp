@@ -56,9 +56,48 @@ void testStringVals(){
     d.getVal("foo",dv);
     TEST_ASSERT(feq(dv,1.3));
   }
-
-    
   
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+void testVectToString(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing conversion of vect to string." << std::endl;
+  {
+    Dict d;
+    std::vector<int> v;
+    v.push_back(1);
+    v.push_back(0);
+    d.setVal("foo",v);
+    std::string sv;
+    d.getVal("foo",sv);
+    TEST_ASSERT(sv=="[1,0,]");
+  }
+  {
+    Dict d;
+    std::vector<unsigned int> v;
+    v.push_back(1);
+    v.push_back(0);
+    d.setVal("foo",v);
+    std::string sv;
+    d.getVal("foo",sv);
+    TEST_ASSERT(sv=="[1,0,]");
+  }
+  {
+    Dict d;
+    std::vector<double> v;
+    v.push_back(1);
+    v.push_back(0);
+    d.setVal("foo",v);
+    bool ok=false;
+    try{
+      std::string sv;
+      d.getVal("foo",sv);
+    } catch (const boost::bad_any_cast &) {
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+  }
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
@@ -148,6 +187,7 @@ int main(){
   CHECK_INVARIANT(dc3.getDict()->hasVal("baz"),"bad get");
   
   testStringVals();
+  testVectToString();
 
   return 0;
 
