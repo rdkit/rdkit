@@ -166,6 +166,23 @@ void testGithubIssue8(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testGithubIssue40(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 40: bad MWs from inchis" << std::endl;
+  {
+    ExtraInchiReturnValues tmp;
+    std::string inchi="InChI=1S/C10H9N3O/c1-7-11-10(14)9(13-12-7)8-5-3-2-4-6-8/h2-6H,1H3,(H,11,12,14)";
+    ROMol *m = InchiToMol(inchi,tmp);
+    TEST_ASSERT(m);
+
+    double mw=Descriptors::calcAMW(*m);
+    TEST_ASSERT(feq(mw,187.202));
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -175,4 +192,5 @@ int main(){
   testMultiThread();
   testGithubIssue3();
   testGithubIssue8();
+  testGithubIssue40();
 }

@@ -1248,11 +1248,10 @@ namespace RDKit {
         unsigned int nAtoms = inchiOutput.num_atoms;
         for (unsigned int i = 0; i < nAtoms; i ++) {
           inchi_Atom* inchiAtom = &(inchiOutput.atom[i]);
-          Atom *atom = new Atom;
           // use element name to set atomic number
           int atomicNumber=periodicTable->getAtomicNumber(inchiAtom->elname);
-          atom->setAtomicNum(atomicNumber);
-          double averageWeight = periodicTable->getAtomicWeight(atomicNumber);
+          Atom *atom = new Atom(atomicNumber);
+          double averageWeight = atom->getMass();
           int refWeight=static_cast<int>(averageWeight+0.5);
           int isotope=0;
           if (inchiAtom->isotopic_mass) {

@@ -63,7 +63,7 @@ rdkit_test(testInchi test.cpp
 LINK_LIBRARIES 
 ${INCHI_LIBRARIES} 
    RDInchiLib ${INCHI_LIBRARIES} 
-   FileParsers SmilesParse Depictor SubstructMatch GraphMol 
+   FileParsers SmilesParse Descriptors Depictor SubstructMatch GraphMol 
    RDGeneral DataStructs RDGeneral RDGeometryLib 
    ${Boost_THREAD_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 endif(RDK_BUILD_INCHI_SUPPORT)
