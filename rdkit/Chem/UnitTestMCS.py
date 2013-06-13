@@ -77,9 +77,9 @@ class TestAtomTypes(MCSTestCase):
     #   c1ccccc1O
     #   CCCCCCOn1cccc1
     def test_atom_compare_default(self):
-        self.assert_search(atomtype_mols, 4, 3, smarts='[#6]:[#6]:[#6]:[#6]')
+        self.assert_search(atomtype_mols, 4, 3, smarts='[#6](:[#6]):[#6]:[#6]')
     def test_atom_compare_elements(self):
-        self.assert_search(atomtype_mols, 4, 3, smarts='[#6]:[#6]:[#6]:[#6]', atomCompare="elements")
+        self.assert_search(atomtype_mols, 4, 3, smarts='[#6](:[#6]):[#6]:[#6]', atomCompare="elements")
 
     def test_atom_compare_any(self):
         # Note: bond aromaticies must still match!
