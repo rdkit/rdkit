@@ -262,7 +262,7 @@ import time
 
 class Default(object):
     timeout = None
-    timeout_string = "none"
+    timeoutString = "none"
     maximize = "bonds"
     atomCompare = "elements"
     bondCompare = "bondtypes"
