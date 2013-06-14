@@ -262,13 +262,13 @@ import time
 
 class Default(object):
     timeout = None
-    timeout_string = "none"
+    timeoutString = "none"
     maximize = "bonds"
-    atom_compare = "elements"
-    bond_compare = "bondtypes"
-    match_valences = False
-    ring_matches_ring_only = False
-    complete_rings_only = False
+    atomCompare = "elements"
+    bondCompare = "bondtypes"
+    matchValences = False
+    ringMatchesRingOnly = False
+    completeRingsOnly = False
 
 
 ####### Atom type and bond type information #####
@@ -373,8 +373,8 @@ bond_typers = {
     "any": bond_typer_any,
     "bondtypes": bond_typer_bondtypes,
     }
-default_atom_typer = atom_typers[Default.atom_compare]
-default_bond_typer = bond_typers[Default.bond_compare]
+default_atom_typer = atom_typers[Default.atomCompare]
+default_bond_typer = bond_typers[Default.bondCompare]
 
 
 ####### Support code for handling user-defined atom classes
@@ -554,13 +554,13 @@ def get_canonical_bondtypes(rdmol, bonds, atom_smarts_types, bond_smarts_types):
 
 # TODO: refactor this. It doesn't seem right to pass boolean flags.
 
-def get_typed_molecule(rdmol, atom_typer, bond_typer, match_valences = Default.match_valences,
-                       ring_matches_ring_only = Default.ring_matches_ring_only):
+def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences = Default.matchValences,
+                       ringMatchesRingOnly = Default.ringMatchesRingOnly):
     atoms = list(rdmol.GetAtoms())
     atom_smarts_types = atom_typer(atoms)
 
     # Get the valence information, if requested
-    if match_valences:
+    if matchValences:
         new_atom_smarts_types = []
         for (atom, atom_smarts_type) in zip(atoms, atom_smarts_types):
             valence = atom.GetImplicitValence() + atom.GetExplicitValence()
@@ -577,7 +577,7 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, match_valences = Default.m
     # In a performance test, the times went from 2.0 to 1.4 seconds by doing this.
     bonds = list(rdmol.GetBonds())
     bond_smarts_types = bond_typer(bonds)
-    if ring_matches_ring_only:
+    if ringMatchesRingOnly:
         new_bond_smarts_types = []
         for bond, bond_smarts in zip(bonds, bond_smarts_types):
             if bond.IsInRing():
@@ -604,7 +604,7 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, match_valences = Default.m
 
 # Create a TypedMolecule using the user-defined atom classes (Not implemented!)
 
-def get_specified_types(rdmol, atom_types, ring_matches_ring_only):
+def get_specified_types(rdmol, atom_types, ringMatchesRingOnly):
     raise NotImplementedError("not tested!")
     # Make a copy because I will do some destructive edits
     rdmol = copy.copy(rdmol)
@@ -615,7 +615,7 @@ def get_specified_types(rdmol, atom_types, ring_matches_ring_only):
         atom.SetAtomicNum(0)
         atom.SetMass(atom_type)
         atom_term = "%d*" % (atom_type,)
-        if ring_matches_ring_only:
+        if ringMatchesRingOnly:
             if atom.IsInRing():
                 atom_term += "R"
             else:
@@ -623,17 +623,17 @@ def get_specified_types(rdmol, atom_types, ring_matches_ring_only):
         atom_smarts_types.append('[' + atom_term + ']')
 
     bonds = list(rdmol.GetBonds())
-    bond_smarts_types = get_bond_smarts_types(mol, bonds, ring_matches_ring_only)
+    bond_smarts_types = get_bond_smarts_types(mol, bonds, ringMatchesRingOnly)
     canonical_bondtypes = get_canonical_bondtypes(mol, bonds, atom_smarts_types, bond_smarts_types)
 
     return TypedMolecule(mol, atoms, bonds, atom_smarts_types, bond_smarts_types, canonical_bondtypes)
 
 
-def convert_input_to_typed_molecules(mols, atom_typer, bond_typer, match_valences, ring_matches_ring_only):
+def convert_input_to_typed_molecules(mols, atom_typer, bond_typer, matchValences, ringMatchesRingOnly):
     typed_mols = []
     for molno, rdmol in enumerate(mols):
         typed_mol = get_typed_molecule(rdmol, atom_typer, bond_typer,
-                                       match_valences=match_valences, ring_matches_ring_only=ring_matches_ring_only)
+                                       matchValences=matchValences, ringMatchesRingOnly=ringMatchesRingOnly)
         typed_mols.append(typed_mol)
 
     return typed_mols
@@ -816,14 +816,14 @@ def get_typed_fragment(typed_mol, atom_indices):
                          atom_smarts_types, bond_smarts_types, new_canonical_bondtypes)
 
 
-def fragmented_mol_to_enumeration_mols(typed_mol, min_num_atoms=2):
-    if min_num_atoms < 2:
-        raise ValueError("min_num_atoms must be at least 2")
+def fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
+    if minNumAtoms < 2:
+        raise ValueError("minNumAtoms must be at least 2")
 
     fragments = []
     for atom_indices in Chem.GetMolFrags(typed_mol.rdmol):
         # No need to even look at fragments which are too small.
-        if len(atom_indices) < min_num_atoms:
+        if len(atom_indices) < minNumAtoms:
             continue
 
         # Convert a fragment from the TypedMolecule into a new
@@ -1695,7 +1695,7 @@ class SingleBestBonds(_SingleBest):
 
 # This is (yet) another depth-first graph search algorithm
 
-def check_complete_rings_only(smarts, subgraph, enumeration_mol):
+def check_completeRingsOnly(smarts, subgraph, enumeration_mol):
     #print "check", smarts, len(subgraph.atom_indices), len(subgraph.bond_indices)
 
     atoms = enumeration_mol.atoms
@@ -1816,7 +1816,7 @@ class SingleBestAtomsCompleteRingsOnly(_SingleBest):
         if num_subgraph_atoms == sizes[0] and num_subgraph_bonds <= sizes[1]:
             return sizes
 
-        if check_complete_rings_only(smarts, subgraph, mol):
+        if check_completeRingsOnly(smarts, subgraph, mol):
             return self._new_best(num_subgraph_atoms, num_subgraph_bonds, smarts)
         return sizes
         
@@ -1834,7 +1834,7 @@ class SingleBestBondsCompleteRingsOnly(_SingleBest):
         if num_subgraph_bonds == sizes[1] and num_subgraph_atoms <= sizes[0]:
             return sizes
 
-        if check_complete_rings_only(smarts, subgraph, mol):
+        if check_completeRingsOnly(smarts, subgraph, mol):
             return self._new_best(num_subgraph_atoms, num_subgraph_bonds, smarts)
         return sizes
     
@@ -1990,11 +1990,11 @@ def MATCH(mol, pat):
     return mol.HasSubstructMatch(pat)
 
 class VerboseHeapOps(object):
-    def __init__(self, trigger, verbose_delay):
+    def __init__(self, trigger, verboseDelay):
         self.num_seeds_added = 0
         self.num_seeds_processed = 0
-        self.verbose_delay = verbose_delay
-        self._time_for_next_report = time.time() + verbose_delay
+        self.verboseDelay = verboseDelay
+        self._time_for_next_report = time.time() + verboseDelay
         self.trigger = trigger
         
     def heappush(self, seeds, item):
@@ -2005,7 +2005,7 @@ class VerboseHeapOps(object):
         if time.time() >= self._time_for_next_report:
             self.trigger()
             self.report()
-            self._time_for_next_report = time.time() + self.verbose_delay
+            self._time_for_next_report = time.time() + self.verboseDelay
         self.num_seeds_processed += 1
         return heappop(seeds)
 
@@ -2017,10 +2017,10 @@ class VerboseHeapOps(object):
         print >>sys.stderr, "  %d subgraphs enumerated, %d processed" % (
             self.num_seeds_added, self.num_seeds_processed)
 
-def compute_mcs(fragmented_mols, typed_mols, min_num_atoms, threshold_count=None, maximize = Default.maximize,
-                complete_rings_only = Default.complete_rings_only,
+def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None, maximize = Default.maximize,
+                completeRingsOnly = Default.completeRingsOnly,
                 timeout = Default.timeout,
-                timer = None, verbose=False, verbose_delay=1.0):
+                timer = None, verbose=False, verboseDelay=1.0):
     assert timer is not None
     assert 0 < threshold_count <= len(fragmented_mols), threshold_count
     assert len(fragmented_mols) == len(typed_mols)
@@ -2032,10 +2032,10 @@ def compute_mcs(fragmented_mols, typed_mols, min_num_atoms, threshold_count=None
     
     atom_assignment = Uniquer()
     if verbose:
-        if verbose_delay < 0.0:
-            raise ValueError("verbose_delay may not be negative")
+        if verboseDelay < 0.0:
+            raise ValueError("verboseDelay may not be negative")
         matches_all_targets = VerboseCachingTargetsMatcher(typed_mols[1:], threshold_count-1)
-        heapops = VerboseHeapOps(matches_all_targets.report, verbose_delay)
+        heapops = VerboseHeapOps(matches_all_targets.report, verboseDelay)
         push = heapops.heappush
         pop = heapops.heappop
         end_verbose = heapops.trigger_report
@@ -2046,7 +2046,7 @@ def compute_mcs(fragmented_mols, typed_mols, min_num_atoms, threshold_count=None
         end_verbose = lambda: 1
 
     try:
-        prune, hits_class = _maximize_options[(maximize, bool(complete_rings_only))]
+        prune, hits_class = _maximize_options[(maximize, bool(completeRingsOnly))]
     except KeyError:
         raise ValueError("Unknown 'maximize' option %r" % (maximize,))
 
@@ -2057,7 +2057,7 @@ def compute_mcs(fragmented_mols, typed_mols, min_num_atoms, threshold_count=None
         stop_time = time.time() + timeout
     
     for query_index, fragmented_query_mol in enumerate(fragmented_mols):
-        enumerated_query_fragments = fragmented_mol_to_enumeration_mols(fragmented_query_mol, min_num_atoms)
+        enumerated_query_fragments = fragmented_mol_to_enumeration_mols(fragmented_query_mol, minNumAtoms)
         
         targets = typed_mols
         if timeout is not None:
@@ -2073,7 +2073,7 @@ def compute_mcs(fragmented_mols, typed_mols, min_num_atoms, threshold_count=None
     end_verbose()
 
     result = hits.get_result(success)
-    if result.num_atoms < min_num_atoms:
+    if result.num_atoms < minNumAtoms:
         return MCSResult(-1, -1, None, result.completed)
     return result
         
@@ -2116,25 +2116,25 @@ def _get_threshold_count(num_mols, threshold):
     return threshold_count
 
 
-def fmcs(mols, min_num_atoms=2,
+def fmcs(mols, minNumAtoms=2,
          maximize = Default.maximize,
-         atom_compare = Default.atom_compare,
-         bond_compare = Default.bond_compare,
+         atomCompare = Default.atomCompare,
+         bondCompare = Default.bondCompare,
          threshold = 1.0,
-         match_valences = Default.match_valences,
-         ring_matches_ring_only = False,
-         complete_rings_only = False,
+         matchValences = Default.matchValences,
+         ringMatchesRingOnly = False,
+         completeRingsOnly = False,
          timeout=Default.timeout,
          times=None,
          verbose=False,
-         verbose_delay=1.0,
+         verboseDelay=1.0,
          ):
 
     timer = Timer()
     timer.mark("start fmcs")
 
-    if min_num_atoms < 2:
-        raise ValueError("min_num_atoms must be at least 2")
+    if minNumAtoms < 2:
+        raise ValueError("minNumAtoms must be at least 2")
     if timeout is not None:
         if timeout <= 0.0:
             raise ValueError("timeout must be None or a positive value")
@@ -2144,23 +2144,23 @@ def fmcs(mols, min_num_atoms=2,
         # Threshold is too high. No possible matches.
         return MCSResult(-1, -1, None, 1)
         
-    if complete_rings_only:
-        ring_matches_ring_only = True
+    if completeRingsOnly:
+        ringMatchesRingOnly = True
 
     try:
-        atom_typer = atom_typers[atom_compare]
+        atom_typer = atom_typers[atomCompare]
     except KeyError:
-        raise ValueError("Unknown atom_compare option %r" % (atom_compare,))
+        raise ValueError("Unknown atomCompare option %r" % (atomCompare,))
     try:
-        bond_typer = bond_typers[bond_compare]
+        bond_typer = bond_typers[bondCompare]
     except KeyError:
-        raise ValueError("Unknown bond_compare option %r" % (bond_compare,))
+        raise ValueError("Unknown bondCompare option %r" % (bondCompare,))
 
 
     # Make copies of all of the molecules so I can edit without worrying about the original
     typed_mols = convert_input_to_typed_molecules(mols, atom_typer, bond_typer,
-                                                  match_valences = match_valences,
-                                                  ring_matches_ring_only = ring_matches_ring_only)
+                                                  matchValences = matchValences,
+                                                  ringMatchesRingOnly = ringMatchesRingOnly)
     bondtype_counts = get_canonical_bondtype_counts(typed_mols)
     supported_bondtypes = set()
     for bondtype, count_list in bondtype_counts.items():
@@ -2181,7 +2181,7 @@ def fmcs(mols, min_num_atoms=2,
     for tiebreaker, (typed_mol, fragmented_mol) in enumerate(zip(typed_mols, fragmented_mols)):
         num_atoms, num_bonds = find_upper_fragment_size_limits(fragmented_mol.rdmol,
                                                                fragmented_mol.rdmol_atoms)
-        if num_atoms < min_num_atoms:
+        if num_atoms < minNumAtoms:
             # This isn't big enough to be in the MCS
             ignored_count += 1
             if ignored_count + threshold_count > len(mols):
@@ -2204,7 +2204,7 @@ def fmcs(mols, min_num_atoms=2,
         _update_times(timer, times)
         return MCSResult(-1, -1, None, True)
 
-    assert min(size[1] for size in sizes) >= min_num_atoms
+    assert min(size[1] for size in sizes) >= minNumAtoms
 
     # Sort so the molecule with the smallest largest fragment (by bonds) comes first.
     # Break ties with the smallest number of atoms.
@@ -2219,10 +2219,10 @@ def fmcs(mols, min_num_atoms=2,
     typed_mols = [size_info[3].rdmol for size_info in sizes]    # used as targets
 
     timer.mark("start enumeration")
-    mcs_result = compute_mcs(fragmented_mols, typed_mols, min_num_atoms,
+    mcs_result = compute_mcs(fragmented_mols, typed_mols, minNumAtoms,
                              threshold_count=threshold_count, maximize=maximize,
-                             complete_rings_only=complete_rings_only, timeout=timeout,
-                             timer=timer, verbose=verbose, verbose_delay=verbose_delay)
+                             completeRingsOnly=completeRingsOnly, timeout=timeout,
+                             timer=timer, verbose=verbose, verboseDelay=verboseDelay)
     timer.mark("end fmcs")
     _update_times(timer, times)
     return mcs_result
@@ -2440,9 +2440,9 @@ compare_shortcuts = {
     }
 class CompareAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
-        atom_compare_name, bond_compare_name = compare_shortcuts[value]
-        namespace.atom_compare = atom_compare_name
-        namespace.bond_compare = bond_compare_name
+        atomCompare_name, bondCompare_name = compare_shortcuts[value]
+        namespace.atomCompare = atomCompare_name
+        namespace.bondCompare = bondCompare_name
 
 
 parser.add_argument("--compare", choices = ["topology", "elements", "types"],
@@ -2586,14 +2586,14 @@ def main(args=None):
     else:
         raise SystemExit("Only SMILES (.smi) and SDF (.sdf) files are supported")
 
-    if args.min_num_atoms < 2:
+    if args.minNumAtoms < 2:
         parser.error("--min-num-atoms must be at least 2")
 
-    if args.atom_compare is None:
+    if args.atomCompare is None:
         if args.atom_class_tag is None:
-            args.atom_compare = "elements" # Default atom comparison
+            args.atomCompare = "elements" # Default atom comparison
         else:
-            args.atom_compare = "isotopes" # Assing the atom classes to the isotope fields
+            args.atomCompare = "isotopes" # Assing the atom classes to the isotope fields
     else:
         if args.atom_class_tag is not None:
             parser.error("Cannot specify both --atom-compare and --atom-class-tag fields")
@@ -2657,19 +2657,19 @@ def main(args=None):
         raise SystemExit("Input file %r must contain at least two structures" % (filename,))
 
     mcs = fmcs(structures,
-               min_num_atoms = args.min_num_atoms,
+               minNumAtoms = args.minNumAtoms,
                maximize = args.maximize,
-               atom_compare = args.atom_compare,
-               bond_compare = args.bond_compare,
+               atomCompare = args.atomCompare,
+               bondCompare = args.bondCompare,
                threshold = args.threshold,
-               #match_valences = args.match_valences,
-               match_valences = False, # Do I really want to support this?
-               ring_matches_ring_only = args.ring_matches_ring_only,
-               complete_rings_only = args.complete_rings_only,
+               #matchValences = args.matchValences,
+               matchValences = False, # Do I really want to support this?
+               ringMatchesRingOnly = args.ringMatchesRingOnly,
+               completeRingsOnly = args.completeRingsOnly,
                timeout = args.timeout,
                times = times,
                verbose = args.verbosity > 1,
-               verbose_delay = 1.0,
+               verboseDelay = 1.0,
         )
 
     msg_format = "Total time %(total).2f seconds: load %(load).2f fragment %(fragment).2f select %(select).2f enumerate %(enumerate).2f"
