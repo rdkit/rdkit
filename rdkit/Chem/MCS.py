@@ -251,9 +251,9 @@ class MCSResult(object):
 
 def FindMCS(mols, minNumAtoms=2,
             maximize = Default.maximize,
-            atomCompare = Default.atom_compare,
-            bondCompare = Default.bond_compare,
-            matchValences = Default.match_valences,
+            atomCompare = Default.atomCompare,
+            bondCompare = Default.bondCompare,
+            matchValences = Default.matchValences,
             ringMatchesRingOnly = False,
             completeRingsOnly = False,
             timeout=Default.timeout,
@@ -345,14 +345,14 @@ def FindMCS(mols, minNumAtoms=2,
     (The MCS after 50 seconds contained 511 atoms.)
     """
     ores= fmcs.fmcs(mols,
-               min_num_atoms = minNumAtoms,
+               minNumAtoms = minNumAtoms,
                maximize = maximize,
-               atom_compare = atomCompare,
-               bond_compare = bondCompare,
+               atomCompare = atomCompare,
+               bondCompare = bondCompare,
                threshold = threshold,
-               match_valences = matchValences,
-               ring_matches_ring_only = ringMatchesRingOnly,
-               complete_rings_only = completeRingsOnly,
+               matchValences = matchValences,
+               ringMatchesRingOnly = ringMatchesRingOnly,
+               completeRingsOnly = completeRingsOnly,
                timeout = timeout,
         )
     return MCSResult(ores)
