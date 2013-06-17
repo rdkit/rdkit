@@ -17,6 +17,8 @@
 #include <boost/utility.hpp>
 #include <vector>
 #include <list>
+#include <iostream>
+#include <sstream>
 
 namespace RDKit{
   namespace {
