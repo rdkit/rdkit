@@ -2506,7 +2506,7 @@ parser.add_argument("--timeout", type=parse_timeout, metavar="SECONDS",
                     default=Default.timeout,
                     help=
                     "Report the best solution after running for at most 'timeout' seconds. "
-                    "Use 'none' for no timeout. (Default: %s)" % (Default.timeout_string,))
+                    "Use 'none' for no timeout. (Default: %s)" % (Default.timeoutString,))
 
 parser.add_argument("--output", "-o", metavar="FILENAME",
                     help="Write the results to FILENAME (Default: use stdout)")
