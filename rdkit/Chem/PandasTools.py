@@ -91,11 +91,12 @@ try:
     pd.set_option('display.height',100000000000)
   if 'display.max_colwidth' in  pd.core.config._registered_options:
     pd.set_option('display.max_colwidth',100000000000)
+  #saves the default pandas rendering to allow restauration
+  defPandasRendering = pd.core.frame.DataFrame.to_html
 except ImportError:
   pd = None
 
-#saves the default pandas rendering to allow restauration
-defPandasRendering = pd.core.frame.DataFrame.to_html
+
 
 def patchPandasHTMLrepr(self):
   '''
