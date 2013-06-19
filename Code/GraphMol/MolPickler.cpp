@@ -1232,7 +1232,9 @@ namespace RDKit{
     }
     if(version>5000 && hasQuery) {
       Tags tag;
+      Bond *tbond=bond;
       bond = new QueryBond(*bond);
+      delete tbond;
       // we have a query:
       streamRead(ss,tag,version);
       if(tag != BEGINQUERY){
