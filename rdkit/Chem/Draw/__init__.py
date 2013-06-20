@@ -36,7 +36,10 @@ def _getCanvas():
 def _createCanvas(size):
   useAGG,useCairo,Canvas=_getCanvas()
   if useAGG or useCairo:
-    import Image
+    try:
+      import Image
+    except ImportError:
+      from PIL import Image
     img = Image.new("RGBA",size,"white")
     canvas = Canvas(img)
   else:
@@ -154,7 +157,10 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
   """
   global tkRoot,tkLabel,tkPI
   import Tkinter
-  import ImageTk
+  try:
+    import ImageTk
+  except ImportError:
+    from PIL import ImageTk
 
   img = MolToImage(mol,size,kekulize,wedgeBonds,**kwargs)
 
@@ -229,7 +235,10 @@ fig.savefig('coumlogps.colored.png',bbox_inches='tight')
 def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
   if legends is None: legends = [None]*len(mols)
   res = Image.new("RGB",(subImgSize[0]*len(mols),subImgSize[1]))
   for i,mol in enumerate(mols):
@@ -240,7 +249,10 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
 def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
   if legends is None: legends = [None]*len(mols)
 
   nRows = len(mols)//molsPerRow
@@ -256,7 +268,10 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
 
   mols = []
   for i in range(rxn.GetNumReactantTemplates()):

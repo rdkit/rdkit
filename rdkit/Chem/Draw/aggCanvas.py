@@ -33,7 +33,10 @@ class Canvas(CanvasBase):
                size=None,
                ):
     if img is None:
-      import Image
+      try:
+        import Image
+      except ImportError:
+        from PIL import Image
       if size is None:
         raise ValueError,'please provide either an image or a size'
       img = Image.new('RGBA',size,"white")

@@ -30,7 +30,10 @@ This requires Imaging to be installed as a package PIL
 ###	 6/22/99: updated drawString to handle non-integer x and y
 
 from rdkit.sping.pid import *
-import Image, ImageFont, ImageDraw
+try:
+  import Image, ImageFont, ImageDraw
+except ImportError:
+  from PIL import Image, ImageFont, ImageDraw
 import math
 
 import string
