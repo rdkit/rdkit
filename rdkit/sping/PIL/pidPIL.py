@@ -182,7 +182,7 @@ class PILCanvas( Canvas ):
     map = _widthmaps[path]
     out = 0
     for c in s:
-      out = out + map[c]
+      out += map.get(c,font.size)
     return out			
 
   def fontAscent(self, font=None):

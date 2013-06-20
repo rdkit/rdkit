@@ -149,6 +149,12 @@ class TestCase(unittest.TestCase):
     self.failUnlessEqual(img.size[0],300)
     self.failUnlessEqual(img.size[1],300)
 
+  def testGithubIssue54(self):
+    os.environ['RDKIT_CANVAS']='sping'
+    mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
+    img = Draw.MolToImage(mol)
+    self.failUnless(img)
+    
 
 
     

@@ -4,6 +4,7 @@
 #  All Rights Reserved
 #
 import os
+from MolDrawing import MolDrawing
 
 def _getCanvas():
   useAGG=False
@@ -28,6 +29,7 @@ def _getCanvas():
       from aggCanvas import Canvas
       useAGG=True
     else:
+      MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
       from spingCanvas import Canvas      
   return useAGG,useCairo,Canvas
 
@@ -56,7 +58,6 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     highlightMap -- dictionary of (atom, color) pairs (default None)
     highlightBonds -- list of bonds to highlight (default [])
   """
-  from MolDrawing import MolDrawing
   if not mol:
     raise ValueError,'Null molecule provided'
   img,canvas=_createCanvas(size)
@@ -102,7 +103,6 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
               imageType=None,**kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
-  from MolDrawing import MolDrawing
   # original contribution from Uwe Hoffmann
   if not fileName:
     raise ValueError,'no fileName provided'
@@ -175,7 +175,6 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
   """
   if not mol:
     raise ValueError,'Null molecule provided'
-  from MolDrawing import MolDrawing
   from mplCanvas import Canvas
   canvas = Canvas(size)
   drawer = MolDrawing(canvas)
