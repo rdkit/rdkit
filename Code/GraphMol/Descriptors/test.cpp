@@ -1606,7 +1606,53 @@ void testMQNs(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue56(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 56." << std::endl;
 
+  {
+    ROMol *mol;
+    mol = SmilesToMol("[H+]");
+    double mw;
+    mw = calcAMW(*mol);
+    TEST_ASSERT(feq(mw,1.008,0.001));
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw,1.0078,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("[2H+]");
+    double mw;
+    mw = calcAMW(*mol);
+    TEST_ASSERT(feq(mw,2.014,0.001));
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw,2.014,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("[H]");
+    double mw;
+    mw = calcAMW(*mol);
+    TEST_ASSERT(feq(mw,1.008,0.001));
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw,1.0078,0.001));
+    delete mol;
+  }
+  {
+    ROMol *mol;
+    mol = SmilesToMol("[2H]");
+    double mw;
+    mw = calcAMW(*mol);
+    TEST_ASSERT(feq(mw,2.014,0.001));
+    mw = calcExactMW(*mol);
+    TEST_ASSERT(feq(mw,2.014,0.001));
+    delete mol;
+  }
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1626,7 +1672,6 @@ int main(){
   testVSADescriptors();
   testMolFormula();
   testIssue3415534();
-#endif
   testIssue3433771();
   testMultiThread();
   testIssue252();
@@ -1640,5 +1685,7 @@ int main(){
   testRingDescriptors();
   testMiscCountDescriptors();
   testMQNs();
+#endif
+  testGitHubIssue56();
 
 }
