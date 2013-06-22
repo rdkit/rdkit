@@ -27,7 +27,10 @@ except ImportError:
   pango=None
   
 from canvasbase import CanvasBase
-import Image
+try:
+  import Image
+except ImportError:
+  from PIL import Image
 
 class Canvas(CanvasBase):
   def __init__(self,

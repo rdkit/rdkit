@@ -7,7 +7,10 @@ from rdkit.Chem import Draw
 from cStringIO import StringIO
 import copy
 import numpy
-import Image
+try:
+    import Image
+except ImportError:
+    from PIL import Image
 
 molSize=(450,150)
 highlightSubstructs=True

@@ -4,6 +4,7 @@
 #  All Rights Reserved
 #
 import os
+from MolDrawing import MolDrawing
 
 def _getCanvas():
   useAGG=False
@@ -28,13 +29,17 @@ def _getCanvas():
       from aggCanvas import Canvas
       useAGG=True
     else:
+      MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
       from spingCanvas import Canvas      
   return useAGG,useCairo,Canvas
 
 def _createCanvas(size):
   useAGG,useCairo,Canvas=_getCanvas()
   if useAGG or useCairo:
-    import Image
+    try:
+      import Image
+    except ImportError:
+      from PIL import Image
     img = Image.new("RGBA",size,"white")
     canvas = Canvas(img)
   else:
@@ -56,7 +61,6 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     highlightMap -- dictionary of (atom, color) pairs (default None)
     highlightBonds -- list of bonds to highlight (default [])
   """
-  from MolDrawing import MolDrawing
   if not mol:
     raise ValueError,'Null molecule provided'
   img,canvas=_createCanvas(size)
@@ -102,7 +106,6 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
               imageType=None,**kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
-  from MolDrawing import MolDrawing
   # original contribution from Uwe Hoffmann
   if not fileName:
     raise ValueError,'no fileName provided'
@@ -154,7 +157,10 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
   """
   global tkRoot,tkLabel,tkPI
   import Tkinter
-  import ImageTk
+  try:
+    import ImageTk
+  except ImportError:
+    from PIL import ImageTk
 
   img = MolToImage(mol,size,kekulize,wedgeBonds,**kwargs)
 
@@ -175,7 +181,6 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
   """
   if not mol:
     raise ValueError,'Null molecule provided'
-  from MolDrawing import MolDrawing
   from mplCanvas import Canvas
   canvas = Canvas(size)
   drawer = MolDrawing(canvas)
@@ -230,7 +235,10 @@ fig.savefig('coumlogps.colored.png',bbox_inches='tight')
 def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
   if legends is None: legends = [None]*len(mols)
   res = Image.new("RGB",(subImgSize[0]*len(mols),subImgSize[1]))
   for i,mol in enumerate(mols):
@@ -241,7 +249,10 @@ def MolsToImage(mols, subImgSize=(200,200),legends=None,**kwargs):
 def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
   if legends is None: legends = [None]*len(mols)
 
   nRows = len(mols)//molsPerRow
@@ -257,7 +268,10 @@ def MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=None,**kwargs
 def ReactionToImage(rxn, subImgSize=(200,200),**kwargs):
   """ 
   """
-  import Image
+  try:
+    import Image
+  except ImportError:
+    from PIL import Image
 
   mols = []
   for i in range(rxn.GetNumReactantTemplates()):

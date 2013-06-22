@@ -30,7 +30,10 @@ This requires Imaging to be installed as a package PIL
 ###	 6/22/99: updated drawString to handle non-integer x and y
 
 from rdkit.sping.pid import *
-import Image, ImageFont, ImageDraw
+try:
+  import Image, ImageFont, ImageDraw
+except ImportError:
+  from PIL import Image, ImageFont, ImageDraw
 import math
 
 import string
@@ -182,7 +185,7 @@ class PILCanvas( Canvas ):
     map = _widthmaps[path]
     out = 0
     for c in s:
-      out = out + map[c]
+      out += map.get(c,font.size)
     return out			
 
   def fontAscent(self, font=None):
