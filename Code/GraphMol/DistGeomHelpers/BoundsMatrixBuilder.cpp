@@ -280,6 +280,9 @@ namespace RDKit {
     
     void _setRingAngle(Atom::HybridizationType aHyb, unsigned int ringSize, 
                        double &angle) {
+      // NOTE: this assumes that all angles in a ring are equal. This is
+      // certainly not always the case, particular in aromatic rings with heteroatoms
+      // like s1cncc1. This led to GitHub55, which was fixed elsewhere.
       
       if ((aHyb == Atom::SP2) || (ringSize==3) || (ringSize==4)) {
         angle = RDKit::PI*(1 - 2.0/ringSize);

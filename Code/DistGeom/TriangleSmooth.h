@@ -23,11 +23,12 @@ namespace DistGeom {
     (see pages 301-302 in the above book), but that is for later
 
     \param boundsMat  A pointer to the distance bounds matrix
+    \param tol   a tolerance (percent) for errors in the smoothing process
 
   */
-  bool triangleSmoothBounds(BoundsMatrix *boundsMat);
+  bool triangleSmoothBounds(BoundsMatrix *boundsMat,double tol=0.);
   //! \overload
-  bool triangleSmoothBounds(BoundsMatPtr boundsMat);
+  bool triangleSmoothBounds(BoundsMatPtr boundsMat,double tol=0.);
 }
 
 #endif
