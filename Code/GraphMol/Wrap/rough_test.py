@@ -2395,9 +2395,6 @@ CAS<~>
   def test83GitHubIssue19(self):
     fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
                                             'test_data','empty2.sdf')
-  def test83GitHubIssue19(self):
-    fileN = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','FileParsers',
-                                            'test_data','empty2.sdf')
     sdSup = Chem.SDMolSupplier(fileN)
     self.failUnless(sdSup.atEnd())
     self.failUnlessRaises(IndexError,lambda : sdSup[0])
