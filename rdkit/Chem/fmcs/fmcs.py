@@ -245,7 +245,6 @@ except ImportError:
     raise
 
 
-import argparse
 import copy
 import itertools
 import re
@@ -2419,141 +2418,11 @@ def parse_select(s):
     return ranges
 
 
-
-parser = argparse.ArgumentParser(description="Find the maximum common substructure of a set of structures",
-     epilog = "For more details on these options, see https://bitbucket.org/dalke/fmcs/")
-parser.add_argument("filename", nargs=1,
-                    help="SDF or SMILES file")
-
-parser.add_argument("--maximize", choices=["atoms", "bonds"],
-                    default=Default.maximize,
-                    help="Maximize the number of 'atoms' or 'bonds' in the MCS. (Default: %s)" % (Default.maximize,))
-parser.add_argument("--min-num-atoms", type=parse_num_atoms, default=2,
-                    metavar="INT",
-                    help="Minimimum number of atoms in the MCS (Default: 2)")
-
-
 compare_shortcuts = {
     "topology": ("any", "any"),
     "elements": ("elements", "any"),
     "types": ("elements", "bondtypes"),
     }
-class CompareAction(argparse.Action):
-    def __call__(self, parser, namespace, value, option_string=None):
-        atomCompare_name, bondCompare_name = compare_shortcuts[value]
-        namespace.atomCompare = atomCompare_name
-        namespace.bondCompare = bondCompare_name
-
-
-parser.add_argument("--compare", choices = ["topology", "elements", "types"],
-                    default=None, action=CompareAction, help=
-                    "Use 'topology' as a shorthand for '--atom-compare any --bond-compare any', "
-                    "'elements' is '--atom-compare elements --bond-compare any', "
-                    "and 'types' is '--atom-compare elements --bond-compare bondtypes' "
-                    "(Default: types)")
-
-parser.add_argument("--atom-compare", choices=["any", "elements", "isotopes"],
-                    default=None, help=(
-                        "Specify the atom comparison method. With 'any', every atom matches every "
-                        "other atom. With 'elements', atoms match only if they contain the same element. "
-                        "With 'isotopes', atoms match only if they have the same isotope number; element "
-                        "information is ignored so [5C] and [5P] are identical. This can be used to "
-                        "implement user-defined atom typing. "
-                        "(Default: elements)"))
-
-parser.add_argument("--bond-compare", choices=["any", "bondtypes"],
-                    default="bondtypes", help=(
-                        "Specify the bond comparison method. With 'any', every bond matches every "
-                        "other bond. With 'bondtypes', bonds are the same only if their bond types "
-                        "are the same. (Default: bondtypes)"))
-
-parser.add_argument("--threshold", default="1.0", type=parse_threshold, help=
-                    "Minimum structure match threshold. A value of 1.0 means that the common "
-                    "substructure must be in all of the input structures. A value of 0.8 finds "
-                    "the largest substructure which is common to at least 80%% of the input "
-                    "structures. (Default: 1.0)")
-
-parser.add_argument("--atom-class-tag", metavar="TAG", help=
-                    "Use atom class assignments from the field 'TAG'. The tag data must contain a space "
-                    "separated list of integers in the range 1-10000, one for each atom. Atoms are "
-                    "identical if and only if their corresponding atom classes are the same. Note "
-                    "that '003' and '3' are treated as identical values. (Not used by default)")
-
-## parser.add_argument("--match-valences", action="store_true",
-##                     help=
-##                     "Modify the atom comparison so that two atoms must also have the same total "
-##                     "bond order in order to match.")
-
-                        
-parser.add_argument("--ring-matches-ring-only", action="store_true",
-                    help=
-                    "Modify the bond comparison so that ring bonds only match ring bonds and chain "
-                    "bonds only match chain bonds. (Ring atoms can still match non-ring atoms.) ")
-
-parser.add_argument("--complete-rings-only", action="store_true",
-                    help=
-                    "If a bond is a ring bond in the input structures and a bond is in the MCS "
-                    "then the bond must also be in a ring in the MCS. Selecting this option also "
-                    "enables --ring-matches-ring-only.")
-
-parser.add_argument("--select", type=parse_select, action="store",
-                    default="1-",
-                    help=
-                    "Select a subset of the input records to process. Example: 1-10,13,20,50- "
-                    "(Default: '1-', which selects all structures)")
-
-parser.add_argument("--timeout", type=parse_timeout, metavar="SECONDS",
-                    default=Default.timeout,
-                    help=
-                    "Report the best solution after running for at most 'timeout' seconds. "
-                    "Use 'none' for no timeout. (Default: %s)" % (Default.timeoutString,))
-
-parser.add_argument("--output", "-o", metavar="FILENAME",
-                    help="Write the results to FILENAME (Default: use stdout)")
-
-parser.add_argument("--output-format", choices = ["smarts", "fragment-smiles", "fragment-sdf", "complete-sdf"],
-                    default="smarts", help=
-                    "'smarts' writes the SMARTS pattern including the atom and bond criteria. "
-                    "'fragment-smiles' writes a matching fragment as a SMILES string. "
-                    "'fragment-sdf' writes a matching fragment as a SD file; see --save-atom-class for "
-                    "details on how atom class information is saved. "
-                    "'complete-sdf' writes the entire SD file with the fragment information stored in "
-                    "the tag specified by --save-fragment-indices-tag. (Default: smarts)")
-
-parser.add_argument("--output-all", action="store_true",
-                    help=
-                    "By default the structure output formats only show an MCS for the first input structure. "
-                    "If this option is enabled then an MCS for all of the structures are shown.")
-
-parser.add_argument("--save-atom-class-tag", metavar="TAG", help=
-                    "If atom classes are specified (via --class-tag) and the output format is 'fragment-sdf' "
-                    "then save the substructure atom classes to the tag TAG, in fragment atom order. By "
-                    "default this is the value of --atom-class-tag.")
-
-parser.add_argument("--save-counts-tag", metavar="TAG", help=
-                    "Save the fragment count, atom count, and bond count to the specified SD tag as "
-                    "space separated integers, like '1 9 8'. (The fragment count will not be larger than "
-                    "1 until fmcs supports disconnected MCSes.)")
-
-parser.add_argument("--save-atom-indices-tag", metavar="TAG", help=
-                    "If atom classes are specified and the output format is 'complete-sdf' "
-                    "then save the MCS fragment atom indices to the tag TAG, in MCS order. "
-                    "(Default: mcs-atom-indices)")
-
-parser.add_argument("--save-smarts-tag", metavar="TAG", help=
-                    "Save the MCS SMARTS to the specified SD tag. Uses '-' if there is no MCS")
-
-parser.add_argument("--save-smiles-tag", metavar="TAG", help=
-                    "Save the fragment SMILES to the specified SD tag. Uses '-' if there is no MCS")
-
-
-parser.add_argument("--times", action="store_true",
-                    help="Print timing information to stderr")
-parser.add_argument("-v", "--verbose", action="count", dest="verbosity",
-                    help="Print progress statistics to stderr. Use twice for higher verbosity.")
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-
-
 # RDKit's match function only returns the atom indices of the match.
 # To get the bond indices, I need to go through the pattern molecule.
 def _get_match_bond_indices(pat, mol, match_atom_indices):
@@ -2567,6 +2436,132 @@ def _get_match_bond_indices(pat, mol, match_atom_indices):
     return bond_indices
 
 def main(args=None):
+    parser = argparse.ArgumentParser(description="Find the maximum common substructure of a set of structures",
+         epilog = "For more details on these options, see https://bitbucket.org/dalke/fmcs/")
+    parser.add_argument("filename", nargs=1,
+                        help="SDF or SMILES file")
+
+    parser.add_argument("--maximize", choices=["atoms", "bonds"],
+                        default=Default.maximize,
+                        help="Maximize the number of 'atoms' or 'bonds' in the MCS. (Default: %s)" % (Default.maximize,))
+    parser.add_argument("--min-num-atoms", type=parse_num_atoms, default=2,
+                        metavar="INT",
+                        help="Minimimum number of atoms in the MCS (Default: 2)")
+
+    class CompareAction(argparse.Action):
+        def __call__(self, parser, namespace, value, option_string=None):
+            atomCompare_name, bondCompare_name = compare_shortcuts[value]
+            namespace.atomCompare = atomCompare_name
+            namespace.bondCompare = bondCompare_name
+
+    parser.add_argument("--compare", choices = ["topology", "elements", "types"],
+                        default=None, action=CompareAction, help=
+                        "Use 'topology' as a shorthand for '--atom-compare any --bond-compare any', "
+                        "'elements' is '--atom-compare elements --bond-compare any', "
+                        "and 'types' is '--atom-compare elements --bond-compare bondtypes' "
+                        "(Default: types)")
+
+    parser.add_argument("--atom-compare", choices=["any", "elements", "isotopes"],
+                        default=None, help=(
+                            "Specify the atom comparison method. With 'any', every atom matches every "
+                            "other atom. With 'elements', atoms match only if they contain the same element. "
+                            "With 'isotopes', atoms match only if they have the same isotope number; element "
+                            "information is ignored so [5C] and [5P] are identical. This can be used to "
+                            "implement user-defined atom typing. "
+                            "(Default: elements)"))
+
+    parser.add_argument("--bond-compare", choices=["any", "bondtypes"],
+                        default="bondtypes", help=(
+                            "Specify the bond comparison method. With 'any', every bond matches every "
+                            "other bond. With 'bondtypes', bonds are the same only if their bond types "
+                            "are the same. (Default: bondtypes)"))
+
+    parser.add_argument("--threshold", default="1.0", type=parse_threshold, help=
+                        "Minimum structure match threshold. A value of 1.0 means that the common "
+                        "substructure must be in all of the input structures. A value of 0.8 finds "
+                        "the largest substructure which is common to at least 80%% of the input "
+                        "structures. (Default: 1.0)")
+
+    parser.add_argument("--atom-class-tag", metavar="TAG", help=
+                        "Use atom class assignments from the field 'TAG'. The tag data must contain a space "
+                        "separated list of integers in the range 1-10000, one for each atom. Atoms are "
+                        "identical if and only if their corresponding atom classes are the same. Note "
+                        "that '003' and '3' are treated as identical values. (Not used by default)")
+
+    ## parser.add_argument("--match-valences", action="store_true",
+    ##                     help=
+    ##                     "Modify the atom comparison so that two atoms must also have the same total "
+    ##                     "bond order in order to match.")
+
+
+    parser.add_argument("--ring-matches-ring-only", action="store_true",
+                        help=
+                        "Modify the bond comparison so that ring bonds only match ring bonds and chain "
+                        "bonds only match chain bonds. (Ring atoms can still match non-ring atoms.) ")
+
+    parser.add_argument("--complete-rings-only", action="store_true",
+                        help=
+                        "If a bond is a ring bond in the input structures and a bond is in the MCS "
+                        "then the bond must also be in a ring in the MCS. Selecting this option also "
+                        "enables --ring-matches-ring-only.")
+
+    parser.add_argument("--select", type=parse_select, action="store",
+                        default="1-",
+                        help=
+                        "Select a subset of the input records to process. Example: 1-10,13,20,50- "
+                        "(Default: '1-', which selects all structures)")
+
+    parser.add_argument("--timeout", type=parse_timeout, metavar="SECONDS",
+                        default=Default.timeout,
+                        help=
+                        "Report the best solution after running for at most 'timeout' seconds. "
+                        "Use 'none' for no timeout. (Default: %s)" % (Default.timeoutString,))
+
+    parser.add_argument("--output", "-o", metavar="FILENAME",
+                        help="Write the results to FILENAME (Default: use stdout)")
+
+    parser.add_argument("--output-format", choices = ["smarts", "fragment-smiles", "fragment-sdf", "complete-sdf"],
+                        default="smarts", help=
+                        "'smarts' writes the SMARTS pattern including the atom and bond criteria. "
+                        "'fragment-smiles' writes a matching fragment as a SMILES string. "
+                        "'fragment-sdf' writes a matching fragment as a SD file; see --save-atom-class for "
+                        "details on how atom class information is saved. "
+                        "'complete-sdf' writes the entire SD file with the fragment information stored in "
+                        "the tag specified by --save-fragment-indices-tag. (Default: smarts)")
+
+    parser.add_argument("--output-all", action="store_true",
+                        help=
+                        "By default the structure output formats only show an MCS for the first input structure. "
+                        "If this option is enabled then an MCS for all of the structures are shown.")
+
+    parser.add_argument("--save-atom-class-tag", metavar="TAG", help=
+                        "If atom classes are specified (via --class-tag) and the output format is 'fragment-sdf' "
+                        "then save the substructure atom classes to the tag TAG, in fragment atom order. By "
+                        "default this is the value of --atom-class-tag.")
+
+    parser.add_argument("--save-counts-tag", metavar="TAG", help=
+                        "Save the fragment count, atom count, and bond count to the specified SD tag as "
+                        "space separated integers, like '1 9 8'. (The fragment count will not be larger than "
+                        "1 until fmcs supports disconnected MCSes.)")
+
+    parser.add_argument("--save-atom-indices-tag", metavar="TAG", help=
+                        "If atom classes are specified and the output format is 'complete-sdf' "
+                        "then save the MCS fragment atom indices to the tag TAG, in MCS order. "
+                        "(Default: mcs-atom-indices)")
+
+    parser.add_argument("--save-smarts-tag", metavar="TAG", help=
+                        "Save the MCS SMARTS to the specified SD tag. Uses '-' if there is no MCS")
+
+    parser.add_argument("--save-smiles-tag", metavar="TAG", help=
+                        "Save the fragment SMILES to the specified SD tag. Uses '-' if there is no MCS")
+
+
+    parser.add_argument("--times", action="store_true",
+                        help="Print timing information to stderr")
+    parser.add_argument("-v", "--verbose", action="count", dest="verbosity",
+                        help="Print progress statistics to stderr. Use twice for higher verbosity.")
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+
     args = parser.parse_args(args)
 
     filename = args.filename[0]
@@ -2728,4 +2723,5 @@ def main(args=None):
         print >>sys.stderr, msg_format % times
 
 if __name__ == "__main__":
+    import argparse
     main(sys.argv[1:])
