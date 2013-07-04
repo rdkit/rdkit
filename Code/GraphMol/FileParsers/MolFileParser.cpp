@@ -798,7 +798,7 @@ namespace RDKit{
         }
       }
       if(symb=="L" || symb=="A" || symb=="Q" || symb=="*" || symb=="LP"
-         || symb=="R" || symb=="R#" || (symb>="R0" && symb<="R9") ){
+         || symb=="R" || symb=="R#" || (symb[0]=='R' && symb>="R0" && symb<="R99") ){
         if(symb=="A"||symb=="Q"||symb=="*"){
           QueryAtom *query=new QueryAtom(0);
           if(symb=="*"){
@@ -823,15 +823,17 @@ namespace RDKit{
           res->setAtomicNum(0);
         }
         if(massDiff==0&&symb[0]=='R'){
-          if(symb=="R1") res->setIsotope(1);
-          else if(symb=="R2") res->setIsotope(2);
-          else if(symb=="R3") res->setIsotope(3);
-          else if(symb=="R4") res->setIsotope(4);
-          else if(symb=="R5") res->setIsotope(5);
-          else if(symb=="R6") res->setIsotope(6);
-          else if(symb=="R7") res->setIsotope(7);
-          else if(symb=="R8") res->setIsotope(8);
-          else if(symb=="R9") res->setIsotope(9);
+          if(symb.length()>1){
+            std::string rlabel="";
+            rlabel = symb.substr(1,symb.length()-1);
+            int rnumber;
+            try {
+              rnumber = boost::lexical_cast<int>(rlabel);
+            } catch (boost::bad_lexical_cast &) {
+              rnumber=-1;
+            }
+            if(rnumber>=0) res->setIsotope(rnumber);
+          }
         }
       } else if( symb=="D" ){  // mol blocks support "D" and "T" as shorthand... handle that.
         res->setAtomicNum(1); 
