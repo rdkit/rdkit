@@ -68,7 +68,7 @@ namespace RDKit{
         //   - non-default isotope and writing isomeric smiles
         //   - atom-map information present
         const INT_VECT &defaultVs=PeriodicTable::getTable()->getValenceList(num);
-        int totalValence= atom->getExplicitValence()+atom->getImplicitValence();
+        int totalValence= atom->getTotalValence();
         bool nonStandard;
         nonStandard = std::find(defaultVs.begin(),defaultVs.end(),
                                 totalValence)==defaultVs.end();

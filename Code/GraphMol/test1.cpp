@@ -706,6 +706,10 @@ void testIssue2381580(){
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge()==-1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()==3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs()==1);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence()+m->getAtomWithIdx(0)->getImplicitValence()==m->getAtomWithIdx(0)->getTotalValence());
+    TEST_ASSERT(m->getAtomWithIdx(1)->getExplicitValence()+m->getAtomWithIdx(1)->getImplicitValence()==m->getAtomWithIdx(1)->getTotalValence());
+    TEST_ASSERT(m->getAtomWithIdx(2)->getExplicitValence()+m->getAtomWithIdx(2)->getImplicitValence()==m->getAtomWithIdx(2)->getTotalValence());
+    TEST_ASSERT(m->getAtomWithIdx(3)->getExplicitValence()+m->getAtomWithIdx(3)->getImplicitValence()==m->getAtomWithIdx(3)->getTotalValence());
     delete m;
   }
   

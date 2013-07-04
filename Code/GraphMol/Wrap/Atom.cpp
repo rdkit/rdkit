@@ -168,15 +168,15 @@ struct atom_wrapper {
            "  ARGUMENTS:\n\n"
            "    - includeNeighbors: (optional) toggles inclusion of neighboring H atoms in the sum.\n"
            "      Defaults to 0.\n")
-
       .def("GetNumImplicitHs",&Atom::getNumImplicitHs,
 	   "Returns the total number of implicit Hs on the atom.\n")
 
       .def("GetExplicitValence",&Atom::getExplicitValence,
            "Returns the number of explicit Hs on the atom.\n")
-
       .def("GetImplicitValence",&Atom::getImplicitValence,
            "Returns the number of implicit Hs on the atom.\n")
+      .def("GetTotalValence",&Atom::getTotalValence,
+	   "Returns the total valence (explicit + implicit) of the atom.\n\n")
 
       .def("GetFormalCharge",&Atom::getFormalCharge)
       .def("SetFormalCharge",&Atom::setFormalCharge)

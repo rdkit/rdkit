@@ -154,7 +154,7 @@ namespace RDKit {
           int dv = PeriodicTable::getTable()->getDefaultValence(at->getAtomicNum());
           int chrg = at->getFormalCharge();
           dv += chrg;
-          int tbo = at->getExplicitValence() + at->getImplicitValence();
+          int tbo = at->getTotalValence();
           int nRadicals=at->getNumRadicalElectrons();
           int totalDegree=at->getDegree()+at->getImplicitValence();
         

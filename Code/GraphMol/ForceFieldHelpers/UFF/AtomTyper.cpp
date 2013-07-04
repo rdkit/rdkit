@@ -24,7 +24,7 @@ namespace RDKit {
       void addAtomChargeFlags(const Atom *atom,std::string &atomKey,
                               bool tolerateChargeMismatch){
         PRECONDITION(atom,"bad atom");
-        int totalValence=atom->getExplicitValence()+atom->getImplicitValence()+
+        int totalValence=atom->getTotalValence();
           atom->getFormalCharge();
 
         // FIX: come up with some way of handling metals here

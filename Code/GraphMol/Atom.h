@@ -152,6 +152,14 @@ namespace RDKit{
     */
     unsigned int getTotalNumHs(bool includeNeighbors=false) const;
 
+    //! \brief returns the total valence (implicit and explicit)
+    //! for an atom
+    /*!
+      <b>Notes:</b>
+        - requires an owning molecule
+    */
+    unsigned int getTotalValence() const;
+
     //! returns the number of implicit Hs this Atom is bound to
     /*!
       <b>Notes:</b>

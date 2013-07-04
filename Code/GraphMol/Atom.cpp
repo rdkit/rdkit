@@ -178,6 +178,11 @@ int Atom::getExplicitValence() const {
   return d_explicitValence;
 }
 
+unsigned int Atom::getTotalValence() const {
+  PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
+  return getExplicitValence()+getImplicitValence();
+}
+  
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_mol,"valence not defined for atoms not associated with molecules");
   unsigned int res;
