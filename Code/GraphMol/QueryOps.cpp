@@ -210,6 +210,11 @@ ATOM_EQUALS_QUERY *makeAtomHCountQuery(int what){
   res->setDescription("AtomHCount");
   return res;
 }
+ATOM_EQUALS_QUERY *makeAtomImplicitHCountQuery(int what){
+  ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(what,queryAtomImplicitHCount);
+  res->setDescription("AtomImplicitHCount");
+  return res;
+}
 
 ATOM_EQUALS_QUERY *makeAtomAromaticQuery(){
   ATOM_EQUALS_QUERY *res=makeAtomSimpleQuery(true,queryAtomAromatic);

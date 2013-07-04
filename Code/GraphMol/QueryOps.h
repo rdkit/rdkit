@@ -68,6 +68,7 @@ namespace RDKit{
   static int queryAtomTotalDegree(Atom const * at) { return at->getTotalDegree(); };
   static int queryAtomHeavyAtomDegree(Atom const * at) { return at->getTotalDegree()-at->getTotalNumHs(true); };
   static int queryAtomHCount(Atom const * at) { return at->getTotalNumHs(true); };
+  static int queryAtomImplicitHCount(Atom const * at) { return at->getTotalNumHs(false); };
   static int queryAtomImplicitValence(Atom const * at) { return at->getImplicitValence(); };
   static int queryAtomExplicitValence(Atom const * at) { return at->getExplicitValence() - at->getNumExplicitHs(); };
   static int queryAtomTotalValence(Atom const * at) { return at->getExplicitValence()+at->getImplicitValence(); };
@@ -156,12 +157,14 @@ namespace RDKit{
   ATOM_EQUALS_QUERY *makeAtomExplicitValenceQuery(int what);
   //! returns a Query for matching total valence
   ATOM_EQUALS_QUERY *makeAtomTotalValenceQuery(int what);
-  //! returns a Query for matching explicit valence
+  //! returns a Query for matching explicit degree
   ATOM_EQUALS_QUERY *makeAtomExplicitDegreeQuery(int what);
   //! returns a Query for matching atomic degree
   ATOM_EQUALS_QUERY *makeAtomTotalDegreeQuery(int what);
   //! returns a Query for matching hydrogen count
   ATOM_EQUALS_QUERY *makeAtomHCountQuery(int what);
+  //! returns a Query for matching implicit hydrogen count
+  ATOM_EQUALS_QUERY *makeAtomImplicitHCountQuery(int what);
   //! returns a Query for matching the \c isAromatic flag
   ATOM_EQUALS_QUERY *makeAtomAromaticQuery();
   //! returns a Query for matching aliphatic atoms

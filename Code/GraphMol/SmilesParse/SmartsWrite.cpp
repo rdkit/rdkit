@@ -126,7 +126,7 @@ namespace RDKit {
     
       std::string descrip = query->getDescription();
       std::stringstream res;
-      if (descrip == "AtomImplicitValence") { // FIX: is this correct
+      if (descrip == "AtomImplicitHCount") {
         res << "h" << query->getVal();
         needParen = true;
       } else if (descrip == "AtomTotalValence") {
