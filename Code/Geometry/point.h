@@ -56,7 +56,7 @@ namespace RDGeom {
     ~Point3D() {};
 
     Point3D(const Point3D &other) :
-      x(other.x), y(other.y), z(other.z) {
+      Point(other), x(other.x), y(other.y), z(other.z) {
     }
 
     inline unsigned int dimension() const {return 3;}
@@ -263,7 +263,7 @@ namespace RDGeom {
     
     ~Point2D() {}; 
 
-    Point2D(const Point2D &other) : x(other.x), y(other.y) {
+    Point2D(const Point2D &other) : Point(other), x(other.x), y(other.y) {
     }
 
     inline unsigned int dimension() const {return 2;}
@@ -391,7 +391,7 @@ namespace RDGeom {
       dp_storage.reset(nvec);
     };
 
-    PointND(const PointND &other) {
+    PointND(const PointND &other) : Point(other) {
       RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(*other.getStorage());
       dp_storage.reset(nvec);
     }
