@@ -334,7 +334,7 @@ namespace RDKit{
             res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
             // set the isImplicit label so that we can strip these back
             // off later if need be.
-            res->getAtomWithIdx(newIdx)->setProp("isImplicit",1, true);
+            res->getAtomWithIdx(newIdx)->setProp("isImplicit",1);
             res->getAtomWithIdx(newIdx)->updatePropertyCache();
             if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
           }
