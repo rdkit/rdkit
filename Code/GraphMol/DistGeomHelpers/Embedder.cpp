@@ -28,6 +28,7 @@
 #include <DistGeom/ChiralSet.h>
 #include <GraphMol/MolOps.h>
 #include <boost/dynamic_bitset.hpp>
+#include <iomanip>
 
 #define ERROR_TOL 0.00001
 
@@ -254,6 +255,14 @@ namespace RDKit {
 
     void adjustBoundsMatFromCoordMap(DistGeom::BoundsMatPtr mmat,unsigned int nAtoms,
                                      const std::map<int,RDGeom::Point3D> *coordMap){
+      // std::cerr<<std::endl;
+      // for(unsigned int i=0;i<nAtoms;++i){
+      //   for(unsigned int j=0;j<nAtoms;++j){
+      //     std::cerr<<"  "<<std::setprecision(3)<<mmat->getVal(i,j);
+      //   }
+      //   std::cerr<<std::endl;
+      // }
+      // std::cerr<<std::endl;
       for(std::map<int,RDGeom::Point3D>::const_iterator iIt=coordMap->begin();
           iIt!=coordMap->end();++iIt){
         int iIdx=iIt->first;
@@ -268,6 +277,14 @@ namespace RDKit {
           mmat->setLowerBound(iIdx,jIdx,dist);
         }
       }
+      // std::cerr<<std::endl;
+      // for(unsigned int i=0;i<nAtoms;++i){
+      //   for(unsigned int j=0;j<nAtoms;++j){
+      //     std::cerr<<"  "<<std::setprecision(3)<<mmat->getVal(i,j);
+      //   }
+      //   std::cerr<<std::endl;
+      // }
+      // std::cerr<<std::endl;
     }
 
     
@@ -307,12 +324,13 @@ namespace RDKit {
         DistGeom::BoundsMatPtr mmat(mat);
         initBoundsMat(mmat);
       
+        double tol=0.0;
         setTopolBounds(*piece, mmat, true, false);
         if(coordMap){
           adjustBoundsMatFromCoordMap(mmat,nAtoms,coordMap);
+          tol=0.05;
         }
-        
-        if (!DistGeom::triangleSmoothBounds(mmat)) {
+        if (!DistGeom::triangleSmoothBounds(mmat,tol)) {
           // ok this bound matrix failed to triangle smooth - re-compute the bounds matrix 
           // without 15 bounds and with VDW scaling
           initBoundsMat(mmat);
@@ -323,7 +341,7 @@ namespace RDKit {
           }
 
           // try triangle smoothing again 
-          if (!DistGeom::triangleSmoothBounds(mmat)) {
+          if (!DistGeom::triangleSmoothBounds(mmat,tol)) {
             // ok, we're not going to be able to smooth this,
             if(ignoreSmoothingFailures){
               // proceed anyway with the more relaxed bounds matrix

@@ -32,7 +32,7 @@
 namespace python = boost::python;
 
 namespace RDKit {
-  bool doTriangleSmoothing(python::object boundsMatArg){
+  bool doTriangleSmoothing(python::object boundsMatArg,double tol){
     PyObject *boundsMatObj = boundsMatArg.ptr();
     if(!PyArray_Check(boundsMatObj))
       throw_value_error("Argument isn't an array");
@@ -57,7 +57,7 @@ namespace RDKit {
     DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
     DistGeom::BoundsMatrix bm(nrows,sdata);
 
-    bool res=DistGeom::triangleSmoothBounds(&bm);
+    bool res=DistGeom::triangleSmoothBounds(&bm,tol);
     memcpy(static_cast<void *>(inData), 
            static_cast<const void *>(cData),
            dSize*sizeof(double));
@@ -185,7 +185,9 @@ BOOST_PYTHON_MODULE(DistGeom) {
  RETURNS:\n\n\
     a boolean indicating whether or not the smoothing worked.\n\
 \n";
-  python::def("DoTriangleSmoothing", RDKit::doTriangleSmoothing,docString.c_str());
+  python::def("DoTriangleSmoothing", RDKit::doTriangleSmoothing,
+              (python::arg("boundsMatrix"),python::arg("tol")=0.),
+              docString.c_str());
 
 
   docString = "Embed a bounds matrix and return the coordinates\n\n\
