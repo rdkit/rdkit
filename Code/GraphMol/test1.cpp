@@ -741,98 +741,132 @@ void testIssue2840217(){
 }
 
 void test1(){
-  RWMol m;
-  Atom *newAtom = new Atom(8);
+  {
+    RWMol m;
+    Atom *newAtom = new Atom(8);
 
-  m.addAtom(newAtom);
-  CHECK_INVARIANT(m.getAtomWithIdx(0)->getIdx()==0,"");
-  newAtom = new Atom(6);
-  m.addAtom(newAtom);
-  CHECK_INVARIANT(m.getAtomWithIdx(0)->getIdx()==0,"");
-  CHECK_INVARIANT(m.getAtomWithIdx(1)->getIdx()==1,"");
+    m.addAtom(newAtom);
+    CHECK_INVARIANT(m.getAtomWithIdx(0)->getIdx()==0,"");
+    newAtom = new Atom(6);
+    m.addAtom(newAtom);
+    CHECK_INVARIANT(m.getAtomWithIdx(0)->getIdx()==0,"");
+    CHECK_INVARIANT(m.getAtomWithIdx(1)->getIdx()==1,"");
   
-  newAtom = new Atom(7);
-  m.addAtom(newAtom);
-  CHECK_INVARIANT(m.getAtomWithIdx(0)->getIdx()==0,"");
-  CHECK_INVARIANT(m.getAtomWithIdx(1)->getIdx()==1,"");
-  CHECK_INVARIANT(m.getAtomWithIdx(2)->getIdx()==2,"");
-  CHECK_INVARIANT(m.getAtomWithIdx(1)->getOwningMol().getAtomWithIdx(1)->getIdx()==1,"");
+    newAtom = new Atom(7);
+    m.addAtom(newAtom);
+    CHECK_INVARIANT(m.getAtomWithIdx(0)->getIdx()==0,"");
+    CHECK_INVARIANT(m.getAtomWithIdx(1)->getIdx()==1,"");
+    CHECK_INVARIANT(m.getAtomWithIdx(2)->getIdx()==2,"");
+    CHECK_INVARIANT(m.getAtomWithIdx(1)->getOwningMol().getAtomWithIdx(1)->getIdx()==1,"");
 
-  m.addBond(0,1,Bond::SINGLE);
-  m.addBond(1,2,Bond::DOUBLE);
-  CHECK_INVARIANT(m.getBondWithIdx(0)->getIdx()==0,"");
-  CHECK_INVARIANT(m.getBondWithIdx(1)->getIdx()==1,"");
+    m.addBond(0,1,Bond::SINGLE);
+    m.addBond(1,2,Bond::DOUBLE);
+    CHECK_INVARIANT(m.getBondWithIdx(0)->getIdx()==0,"");
+    CHECK_INVARIANT(m.getBondWithIdx(1)->getIdx()==1,"");
 
-  CHECK_INVARIANT(m.getBondWithIdx(0)->getBondType()==Bond::SINGLE,"");
-  CHECK_INVARIANT(m.getBondWithIdx(1)->getBondType()==Bond::DOUBLE,"");
+    CHECK_INVARIANT(m.getBondWithIdx(0)->getBondType()==Bond::SINGLE,"");
+    CHECK_INVARIANT(m.getBondWithIdx(1)->getBondType()==Bond::DOUBLE,"");
 
-  CHECK_INVARIANT(m.getBondWithIdx(0)->getBeginAtom()->getIdx()==0,"");
-  CHECK_INVARIANT(m.getBondWithIdx(0)->getEndAtom()->getIdx()==1,"");
-  CHECK_INVARIANT(m.getBondWithIdx(1)->getBeginAtom()->getIdx()==1,"");
-  CHECK_INVARIANT(m.getBondWithIdx(1)->getEndAtom()->getIdx()==2,"");
+    CHECK_INVARIANT(m.getBondWithIdx(0)->getBeginAtom()->getIdx()==0,"");
+    CHECK_INVARIANT(m.getBondWithIdx(0)->getEndAtom()->getIdx()==1,"");
+    CHECK_INVARIANT(m.getBondWithIdx(1)->getBeginAtom()->getIdx()==1,"");
+    CHECK_INVARIANT(m.getBondWithIdx(1)->getEndAtom()->getIdx()==2,"");
 
-  testBookmarks(m);
+    testBookmarks(m);
 
-  // Using operator<< on a non-sanitized molecule is a test of Issue156:
-  ROMol::ADJ_ITER ai1,ai2;
-  boost::tie(ai1,ai2) = m.getAtomNeighbors(m.getAtomWithIdx(1));
-  m.updatePropertyCache();
-  boost::logging::disable_logs("rdApp.info");
-  while(ai1!=ai2){
-    BOOST_LOG(rdInfoLog) << *m.getAtomWithIdx(*ai1) << endl;
-    ai1++;
-  }
+    // Using operator<< on a non-sanitized molecule is a test of Issue156:
+    ROMol::ADJ_ITER ai1,ai2;
+    boost::tie(ai1,ai2) = m.getAtomNeighbors(m.getAtomWithIdx(1));
+    m.updatePropertyCache();
+    boost::logging::disable_logs("rdApp.info");
+    while(ai1!=ai2){
+      BOOST_LOG(rdInfoLog) << *m.getAtomWithIdx(*ai1) << endl;
+      ai1++;
+    }
 
-  m.addAtom(new Atom(6));
-  Bond *bsp = m.createPartialBond(2);
-  m.setBondBookmark(bsp,47);
-  m.finishPartialBond(3,47,Bond::SINGLE);
-  m.clearBondBookmark(47);
-  BOOST_LOG(rdInfoLog)  << "partial bond added:" << endl;
-  unsigned int i;
-  m.updatePropertyCache();
-  for(i=0;i<m.getNumAtoms();i++){
-    Atom *a = m.getAtomWithIdx(i);
-    BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
-  }
+    m.addAtom(new Atom(6));
+    Bond *bsp = m.createPartialBond(2);
+    m.setBondBookmark(bsp,47);
+    m.finishPartialBond(3,47,Bond::SINGLE);
+    m.clearBondBookmark(47);
+    BOOST_LOG(rdInfoLog)  << "partial bond added:" << endl;
+    unsigned int i;
+    m.updatePropertyCache();
+    for(i=0;i<m.getNumAtoms();i++){
+      Atom *a = m.getAtomWithIdx(i);
+      BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
+    }
 
-  int newAtNum = m.addAtom(new Atom(6));
-  m.addBond(0,newAtNum,Bond::SINGLE);
+    int newAtNum = m.addAtom(new Atom(6));
+    m.addBond(0,newAtNum,Bond::SINGLE);
     
-  BOOST_LOG(rdInfoLog)  << "Again:" << endl;
-  m.updatePropertyCache();
-  for(i=0;i<m.getNumAtoms();i++){
-    Atom *a = m.getAtomWithIdx(i);
-    BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
+    BOOST_LOG(rdInfoLog)  << "Again:" << endl;
+    m.updatePropertyCache();
+    for(i=0;i<m.getNumAtoms();i++){
+      Atom *a = m.getAtomWithIdx(i);
+      BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
+    }
+
+
+    RWMol m2;
+    m2.addAtom(new Atom(6));
+    m2.addAtom(new Atom(6));
+    //QueryAtom *qA = new QueryAtom;
+    //qA->setAtomicNum(7);
+    //m2.addAtom(qA);
+    m2.addAtom(new QueryAtom(7));
+    m2.addBond(0,1,Bond::TRIPLE);
+    m2.addBond(1,2,Bond::SINGLE);
+
+    m.insertMol(m2);
+    m.updatePropertyCache();
+    BOOST_LOG(rdInfoLog)  << "post-insert:" << endl;
+    for(i=0;i<m.getNumAtoms();i++){
+      Atom *a = m.getAtomWithIdx(i);
+      BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
+    }
+
+    BOOST_LOG(rdInfoLog)  << " ------------------- " << endl;
+    Atom *newA = new Atom(12);
+    int newIdx = m.addAtom(newA);
+    m.addBond(newIdx-1,newIdx,Bond::AROMATIC);
+    //m.debugMol(cout);
+    BOOST_LOG(rdInfoLog)  << " trying a replace " << endl;
+    Atom *repA = new Atom(22);
+    m.replaceAtom(newIdx,repA);
   }
+  {
+    RWMol m;
+    m.addAtom(new Atom(6));
+    m.addAtom(new Atom(6));
+    m.addBond(0,1,Bond::SINGLE);
+    Conformer *conf = new Conformer(m.getNumAtoms());
+    m.addConformer(conf);
+    m.getConformer().setAtomPos(0,RDGeom::Point3D(1.0, 0.0, 0.0));
+    m.getConformer().setAtomPos(1,RDGeom::Point3D(0.0, 1.0, 0.0));
 
+    RWMol m2;
+    // insert molecule without a conf:
+    m2.addAtom(new Atom(6));
+    m.insertMol(m2);
+    TEST_ASSERT(m.getConformer().getNumAtoms()==m.getNumAtoms());
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(2).x,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(2).y,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(2).z,0.0));
 
-  RWMol m2;
-  m2.addAtom(new Atom(6));
-  m2.addAtom(new Atom(6));
-  //QueryAtom *qA = new QueryAtom;
-  //qA->setAtomicNum(7);
-  //m2.addAtom(qA);
-  m2.addAtom(new QueryAtom(7));
-  m2.addBond(0,1,Bond::TRIPLE);
-  m2.addBond(1,2,Bond::SINGLE);
-
-  m.insertMol(m2);
-  m.updatePropertyCache();
-  BOOST_LOG(rdInfoLog)  << "post-insert:" << endl;
-  for(i=0;i<m.getNumAtoms();i++){
-    Atom *a = m.getAtomWithIdx(i);
-    BOOST_LOG(rdInfoLog)  << "\t" << *a << endl;
+    // insert molecule with a conf:
+    conf = new Conformer(m2.getNumAtoms());
+    m2.addConformer(conf);
+    m2.getConformer().setAtomPos(0,RDGeom::Point3D(1.0, 1.0, 0.0));
+    m.insertMol(m2);
+    TEST_ASSERT(m.getConformer().getNumAtoms()==m.getNumAtoms());
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(2).x,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(2).y,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(2).z,0.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).x,1.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).y,1.0));
+    TEST_ASSERT(feq(m.getConformer().getAtomPos(3).z,0.0));
   }
-
-  BOOST_LOG(rdInfoLog)  << " ------------------- " << endl;
-  Atom *newA = new Atom(12);
-  int newIdx = m.addAtom(newA);
-  m.addBond(newIdx-1,newIdx,Bond::AROMATIC);
-  //m.debugMol(cout);
-  BOOST_LOG(rdInfoLog)  << " trying a replace " << endl;
-  Atom *repA = new Atom(22);
-  m.replaceAtom(newIdx,repA);
 }
 
 void testPeriodicTable()

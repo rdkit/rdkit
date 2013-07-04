@@ -53,8 +53,21 @@ namespace RDKit{
       ++firstB;
     }
 
-    // and clear our computed properties since they are no longer accurate:
-    //clearComputedProps(true);
+    // add atom to any conformers as well, if we have any
+    if(other.getNumConformers()==1 && getNumConformers()==1){
+      Conformer &conf=getConformer();
+      const Conformer &oConf=other.getConformer();
+      conf.resize(getNumAtoms());
+      for(unsigned int i=0;i<newAtomIds.size();++i)
+        conf.setAtomPos(newAtomIds[i],oConf.getAtomPos(i));
+    } else {
+      for (ConformerIterator cfi = this->beginConformers();
+           cfi != this->endConformers(); ++cfi) {
+        (*cfi)->resize(getNumAtoms());
+        for(unsigned int i=0;i<newAtomIds.size();++i)
+          (*cfi)->setAtomPos(newAtomIds[i], RDGeom::Point3D(0.0, 0.0, 0.0));
+      }
+    }
   }
 
   unsigned int RWMol::addAtom(bool updateLabel){
