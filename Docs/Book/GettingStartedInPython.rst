@@ -799,7 +799,7 @@ or more molecules:
 >>> mol3 = Chem.MolFromSmiles("c1(C=O)cc(OC)c(O)cc1")
 >>> mols = [mol1,mol2,mol3]
 >>> MCS.FindMCS(mols)
-MCSResult(numAtoms=10, numBonds=10, smarts='[#6]-[#6]:1:[#6]:[#6](:[#6](:[#6]:[#6]:1)-[#8])-[#8]-[#6]', completed=1)
+MCSResult(numAtoms=10, numBonds=10, smarts='[#6]:1(:[#6]:[#6](:[#6](:[#6]:[#6]:1)-[#8])-[#8]-[#6])-[#6]', completed=1)
 
 It returns an MCSResult instance with information about the number of
 atoms and bonds in the MCS, the SMARTS string which matches the
@@ -865,7 +865,7 @@ requirement and also sets ringMatchesRingOnly to True.
 >>> MCS.FindMCS(mols)
 MCSResult(numAtoms=6, numBonds=6, smarts='[#6]-1-[#6]-[#6](-[#6])-[#6]-1-[#6]', completed=1)
 >>> MCS.FindMCS(mols, ringMatchesRingOnly=True)
-MCSResult(numAtoms=5, numBonds=5, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1-@[#6]', completed=1)
+MCSResult(numAtoms=5, numBonds=5, smarts='[#6]-@1-@[#6]-@[#6](-@[#6])-@[#6]-@1', completed=1)
 >>> MCS.FindMCS(mols, completeRingsOnly=True)
 MCSResult(numAtoms=4, numBonds=4, smarts='[#6]-@1-@[#6]-@[#6]-@[#6]-@1', completed=1)
 

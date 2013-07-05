@@ -26,17 +26,17 @@ What is it?
       
       Documentation, links
 
+    - Github (https://github.com/rdkit)
+ 
+      Bug tracker, git repository
+
     - Sourceforge (http://sourceforge.net/projects/rdkit) 
       
-      Mailing lists, Downloads, SVN repository
+      Mailing lists, Downloads, SVN repository (not always up-to-date)
 
     - Google code (http://code.google.com/p/rdkit/)
       
       Downloads, wiki
-
-    - Github (https://github.com/rdkit)
- 
-      Bug tracker, git repository
 
   - Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for
       `rdkit-discuss <http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/>`_ and
