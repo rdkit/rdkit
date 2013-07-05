@@ -246,6 +246,14 @@ class MCSResult(object):
         self.completed = obj.completed
    def __nonzero__(self):
         return self.smarts is not None
+   def __repr__(self):
+       return "MCSResult(numAtoms=%d, numBonds=%d, smarts=%r, completed=%d)" % (
+           self.numAtoms, self.numBonds, self.smarts, self.completed)
+   def __str__(self):
+       msg = "MCS %r has %d atoms and %d bonds" % (self.smarts, self.numAtoms, self.numBonds)
+       if not self.completed:
+           msg += " (timed out)"
+       return msg        
 
 
 
