@@ -155,7 +155,14 @@ class streambuf : public std::basic_streambuf<char>
        */
       if (py_tell != bp::object()) {
         try {
-          py_tell();
+          off_type py_pos = bp::extract<off_type>(py_tell());
+          if(py_seek != bp::object()){
+            /* Make sure we can actually seek. 
+               bzip2 readers from python have a seek method, but it fails
+               when they are in write mode.
+             */
+            py_seek(py_pos);
+          }
         }
         catch (bp::error_already_set&) {
           py_tell = bp::object();
