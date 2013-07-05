@@ -8,6 +8,7 @@ tests=[
   ("python","UnitTestFragmentDescriptors.py",{}),
   ("python","UnitTestGraphDescriptors.2.py",{}),
   ("python","UnitTestLipinski.py",{}),
+  ("python","MCS.py",{}),
   ("python","UnitTestMCS.py",{}),
   ("python","UnitTestOldBugs.py",{}),
   ("python","UnitTestSATIS.py",{}),
