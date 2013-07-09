@@ -2932,6 +2932,28 @@ void  testIssue269(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileChiralFlag(){
+  BOOST_LOG(rdInfoLog) << "testing handling of chiral flags" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+
+  // SF.Net Issue1603923: problems with multiple chg lines
+  {
+    RWMol *m1;
+    std::string fName;
+    fName = rdbase+"chiral_flag.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->hasProp("_MolFileChiralFlag"));
+    unsigned int cflag;
+    m1->getProp("_MolFileChiralFlag",cflag);
+    TEST_ASSERT(cflag==1);
+    delete m1;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 
 int main(int argc,char *argv[]){
@@ -2992,6 +3014,7 @@ int main(int argc,char *argv[]){
   testSkipLines();
 #endif
   testIssue269();
+  testMolFileChiralFlag();
 
   return 0;
 }

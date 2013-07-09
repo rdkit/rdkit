@@ -646,6 +646,29 @@ void testIssue265() {
   }
 }
 
+void testMolFileChiralFlag() {
+
+  {
+    ROMol *m1=SmilesToMol("C[C@H](Cl)F");
+    TEST_ASSERT(m1);
+
+    std::string mb=MolToMolBlock(*m1);
+    delete m1;
+    m1 = MolBlockToMol(mb);
+    TEST_ASSERT(!m1->hasProp("_MolFileChiralFlag"));
+  }
+  {
+    ROMol *m1=SmilesToMol("C[C@H](Cl)F");
+    TEST_ASSERT(m1);
+    m1->setProp("_MolFileChiralFlag",static_cast<unsigned int>(1));
+    std::string mb=MolToMolBlock(*m1);
+    delete m1;
+    m1 = MolBlockToMol(mb);
+    TEST_ASSERT(m1->hasProp("_MolFileChiralFlag"));
+  }
+}
+
+
 
 int main() {
   RDLog::InitLogs();
@@ -719,6 +742,12 @@ int main() {
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testIssue265()\n";
   testIssue265();
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testMolFileChiralFlag()\n";
+  testMolFileChiralFlag();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
 

@@ -1917,7 +1917,11 @@ namespace RDKit{
         }
       }
     }
-    
+
+    if(chiralFlag){
+      res->setProp("_MolFileChiralFlag",chiralFlag);
+    }
+
     Conformer *conf=0;
     try {
       if(ctabVersion==2000){

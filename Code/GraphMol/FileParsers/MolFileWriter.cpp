@@ -488,8 +488,8 @@ namespace RDKit{
 
     std::string res;
 
-    int nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents;
-    int nReactants,nProducts,nIntermediates;
+    unsigned int nAtoms,nBonds,nLists,chiralFlag,nsText,nRxnComponents;
+    unsigned int nReactants,nProducts,nIntermediates;
     nAtoms = tmol.getNumAtoms();
     nBonds = tmol.getNumBonds();
     nLists = 0;
@@ -500,6 +500,10 @@ namespace RDKit{
     nProducts=0;
     nIntermediates=0;
 
+    if(mol.hasProp("_MolFileChiralFlag")){
+      mol.getProp("_MolFileChiralFlag",chiralFlag);
+    }
+    
     const Conformer *conf;
     if(confId<0 && tmol.getNumConformers()==0){
       conf=0;
