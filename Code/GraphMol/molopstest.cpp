@@ -4234,8 +4234,6 @@ void testGitHubIssue42()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-
-
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4299,7 +4297,7 @@ int main(){
 #endif
   testGitHubIssue8();
   testGitHubIssue42();
-  testGitHubIssue65();
+
   return 0;
 }
 
