@@ -1,6 +1,6 @@
-#line 2 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 2 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
-#line 4 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 4 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -574,7 +574,7 @@ static yyconst flex_int16_t yy_chk[345] =
 #line 1 "smarts.ll"
 #line 6 "smarts.ll"
 
-// $Id: smarts.ll 1857 2011-10-29 05:51:05Z glandrum $
+// $Id$
 //
 //  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
 //
@@ -612,7 +612,7 @@ void smarts_lexer_error(const char *msg) {
 
 
 
-#line 616 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 616 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 #define INITIAL 0
 #define IN_ATOM_STATE 1
@@ -857,7 +857,7 @@ YY_DECL
 #line 47 "smarts.ll"
 
 
-#line 861 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 861 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
     yylval = yylval_param;
 
@@ -1190,7 +1190,7 @@ YY_RULE_SETUP
 #line 176 "smarts.ll"
 {
 	yylval->atom = new QueryAtom();
-	yylval->atom->setQuery(makeAtomImplicitValenceQuery(1));
+	yylval->atom->setQuery(makeAtomImplicitHCountQuery(1));
 	return COMPLEX_ATOM_QUERY_TOKEN;
 }
 	YY_BREAK
@@ -1524,7 +1524,7 @@ YY_RULE_SETUP
 #line 342 "smarts.ll"
 ECHO;
 	YY_BREAK
-#line 1528 "/Users/landrgr1/RDKit_trunk/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 1528 "/Users/landrgr1/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
