@@ -4299,6 +4299,7 @@ int main(){
 #endif
   testGitHubIssue8();
   testGitHubIssue42();
+  testGitHubIssue65();
   return 0;
 }
 
