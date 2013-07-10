@@ -53,7 +53,7 @@ namespace RDKit {
   "                   If this is blank, names will not be dumped.\n"
   "     - includeHeader: (optional) toggles inclusion of a header line in the output file.\n"
   "     - isomericSmiles: (optional) toggles output of isomeric smiles (includes stereochem information).\n"
-  "     - includeHeader: (optional) toggles output of kekule smiles (no aromatic bonds for molecules that have been kekulized).\n\n";
+  "     - kekuleSmiles: (optional) toggles output of kekule smiles (no aromatic bonds for molecules that have been kekulized).\n\n";
   struct smiwriter_wrap {
     static void wrap() {
       python::class_<SmilesWriter>("SmilesWriter",
