@@ -44,6 +44,10 @@ New Features:
    recent version of Andrew Dalke's version.
  - Atoms now have a getTotalValence() (GetTotalValence() from Python)
    method. (GitHub #61)
+ - R labels from Mol files now can go from 0-99
+ - chiral flags in CTABs are now handled on both reading and writing.
+   The property "_MolFileChiralFlag" is used.
+
 
 New Database Cartridge Features: 
 
@@ -55,10 +59,15 @@ New Java Wrapper Features:
 Deprecated modules (to be removed in next release):
 
 Removed modules:
+ - rdkit.utils.pydoc_local
 
 Other:
  - the handling of flex/bison output files as dependencies has been
- improved (GitHub #33)
+   improved (GitHub #33)
+ - the molecule drawing code should now also work with pillow (a fork of
+   PIL)
+ - the PANDAS integration has been improved.  
+ 
 
 ******  Release_2013.03.2 *******
 (Changes relative to Release_2013.03.1)
