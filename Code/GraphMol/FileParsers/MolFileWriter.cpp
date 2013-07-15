@@ -53,7 +53,7 @@ namespace RDKit{
         }
       }
       unsigned int nRadEs=atom->getNumRadicalElectrons();
-      if(nRadEs!=0){
+      if(nRadEs!=0 && atom->getTotalDegree()!=0){
         ++nRads;
         if(nRadEs%2){
           nRadEs=2;
@@ -352,6 +352,12 @@ namespace RDKit{
         parityFlag=getAtomParityFlag(atom,conf);
       }
     } 
+    // Specify zero valence for elements/metals without neighbors
+    // or hydrogens (degree 0) instead of writing them as radicals.
+    if (atom->getNumRadicalElectrons()!=0 &&
+        atom->getTotalDegree()==0){
+      totValence = 15;
+    }
     std::string symbol = AtomGetMolFileSymbol(atom);
     std::stringstream ss;
     ss << boost::format("%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d") % x % y % z % symbol.c_str() %
