@@ -101,8 +101,36 @@ void testVectToString(){
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+
+void testConstReturns(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing returning const references." << std::endl;
+  {
+    Dict d;
+    std::string v="foo";
+    d.setVal("foo",v);
+    
+    //const std::string nv=d.getVal<const std::string &>("foo");
+    std::string nv=d.getVal<std::string>("foo");
+    TEST_ASSERT(nv=="foo");
+    
+  }
+
+  {
+    std::string v="foo";
+    boost::any anyv(v);
+
+    std::string tgt=boost::any_cast<std::string>(anyv);
+    const std::string &ctgt=boost::any_cast<const std::string &>(anyv);
+    
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
+
 int main(){
   RDLog::InitLogs();
+#if 1
   Dict d;
   INT_VECT fooV;
   fooV.resize(3);
@@ -188,6 +216,8 @@ int main(){
   
   testStringVals();
   testVectToString();
+#endif
+  testConstReturns();
 
   return 0;
 

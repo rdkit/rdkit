@@ -86,26 +86,24 @@ namespace RDKit{
     */
     template <typename T>
     void getVal(const std::string &what,T &res) const {
-      DataType::const_iterator pos=_data.find(what);
-      if(pos==_data.end())
-	throw KeyErrorException(what);
-      const boost::any &val = pos->second;
-      res = fromany<T>(val);
+      res = getVal<T>(what);
     };
     //! \overload
     template <typename T>
     T getVal(const std::string &what) const {
-      T res;
-      getVal(what,res);
-      return res;
+      DataType::const_iterator pos=_data.find(what);
+      if(pos==_data.end())
+	throw KeyErrorException(what);
+      const boost::any &val = pos->second;
+      return fromany<T>(val);
     }
 
     //! \overload
     template <typename T>
-    T getVal(const char *what,T &res) const {
+    T getVal(const char *what,T &res) const {  // FIX: it doesn't really fit that this returns T
       std::string key(what);
-      getVal(key, res);
-      return res;
+      res = getVal<T>(key);
+      return res; 
     };
     //! \overload
     template <typename T>
@@ -116,6 +114,8 @@ namespace RDKit{
 
     //! \overload
     void getVal(const std::string &what, std::string &res) const;
+    //! \overload
+    void getVal(const char *what, std::string &res) const { getVal(std::string(what),res); };
 
     //----------------------------------------------------------
     //! \brief Sets the value associated with a key
@@ -132,8 +132,7 @@ namespace RDKit{
     */
     template <typename T>
     void setVal(const std::string &what, T &val){
-      std::string key = what;
-      _data[key] = toany(val);
+      _data[what] = toany(val);
     };
     //! \overload
     template <typename T>
