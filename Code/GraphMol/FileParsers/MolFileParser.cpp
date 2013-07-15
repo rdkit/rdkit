@@ -901,7 +901,10 @@ namespace RDKit{
           errout << "Cannot convert " << text.substr(48,3) << " to int on line "<<line;
           throw FileParseException(errout.str()) ;
         }
-        res->setProp("molTotValence",totValence);
+        if(totValence!=0){
+          // only set if it's a non-default value
+          res->setProp("molTotValence",totValence);
+        }
       }
       if(text.size()>=63 && text.substr(60,3)!="  0"){
         int atomMapNumber=0;
@@ -1371,8 +1374,12 @@ namespace RDKit{
 	    if(rbcount==-1) rbcount=0;
 	    atom->expandQuery(makeAtomRingBondCountQuery(rbcount));
 	  }
+        } else if(prop=="VAL"){
+	  if(val!="0"){
+	    int totval=FileParserUtils::toInt(val);
+	    atom->setProp("molTotValence",totval);
+	  }
         }
-
         ++token;
       }
     }
@@ -1624,6 +1631,34 @@ namespace RDKit{
         throw FileParseException(errout.str());
       }
     }
+
+    void ProcessMolProps(RWMol *mol){
+      PRECONDITION(mol,"no molecule");
+      for(RWMol::AtomIterator atomIt=mol->beginAtoms();
+          atomIt!=mol->endAtoms();
+          ++atomIt) {
+        Atom *atom=*atomIt;
+        if(atom->hasProp("molTotValence")){
+          int totV;
+          atom->getProp("molTotValence",totV);
+          if(totV==0) continue;
+          atom->setNoImplicit(true);
+          if(totV==15 // V2000
+             || totV==-1 // v3000
+             ){
+            atom->setNumExplicitHs(0);
+          } else {
+            if(atom->getExplicitValence()>totV){
+              BOOST_LOG(rdWarningLog) << "atom " << atom->getIdx() <<" has specified valence ("<<totV<<") smaller than the drawn valence "<<atom->getExplicitValence()<<"."<<std::endl;
+              atom->setNumExplicitHs(0);
+            } else {
+              atom->setNumExplicitHs(totV-atom->getExplicitValence());
+            }
+          }
+        }
+      }
+    }
+    
   } // end of local namespace
   namespace FileParserUtils {
     bool ParseV3000CTAB(std::istream *inStream,unsigned int &line,
@@ -1990,6 +2025,9 @@ namespace RDKit{
           ++atomIt) {
         (*atomIt)->calcExplicitValence(false);
       }
+
+      // postprocess mol file flags
+      ProcessMolProps(res);
 
       if ( sanitize ) {
         // update the chirality and stereo-chemistry and stuff:

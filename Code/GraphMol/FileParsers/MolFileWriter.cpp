@@ -352,11 +352,16 @@ namespace RDKit{
         parityFlag=getAtomParityFlag(atom,conf);
       }
     } 
-    // Specify zero valence for elements/metals without neighbors
-    // or hydrogens (degree 0) instead of writing them as radicals.
-    if (atom->getNumRadicalElectrons()!=0 &&
-        atom->getTotalDegree()==0){
-      totValence = 15;
+    if (atom->getNumRadicalElectrons()!=0){
+      if(atom->getTotalDegree()==0){
+        // Specify zero valence for elements/metals without neighbors
+        // or hydrogens (degree 0) instead of writing them as radicals.
+        totValence = 15;
+      } else {
+        // write the total valence for other radicals so that we have a chance of
+        // reconstructing what was there.
+        totValence = atom->getTotalValence();
+      }
     }
     std::string symbol = AtomGetMolFileSymbol(atom);
     std::stringstream ss;
