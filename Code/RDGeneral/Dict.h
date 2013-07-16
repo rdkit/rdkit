@@ -18,7 +18,9 @@
 #include <map>
 #include <string>
 #include <cstring>
+#include <cstdlib>
 #include <vector>
+#include <iostream>
 #include <boost/any.hpp>
 #include <RDBoost/Exceptions.h>
 #include <boost/lexical_cast.hpp>
@@ -137,7 +139,7 @@ namespace RDKit{
     */
     template <typename T>
     void setVal(const char *what, T &val){
-      _data[what] = toany(val);
+      _data[strdup(what)] = toany(val);
     };
     //! \overload
     template <typename T>
