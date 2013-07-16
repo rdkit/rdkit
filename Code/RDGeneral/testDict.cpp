@@ -14,6 +14,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/utils.h>
+#include <ctime>
 
 using namespace RDKit;
 using namespace std;
@@ -106,6 +107,14 @@ void testConstReturns(){
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing returning const references." << std::endl;
   {
+    std::string v="foo";
+    boost::any anyv(v);
+
+    std::string tgt=boost::any_cast<std::string>(anyv);
+    const std::string &ctgt=boost::any_cast<const std::string &>(anyv);
+  }
+
+  {
     Dict d;
     std::string v="foo";
     d.setVal("foo",v);
@@ -116,14 +125,99 @@ void testConstReturns(){
     
   }
 
+#if 0
   {
+    Dict d;
+    std::string v="foo";
+    d.setVal("foo",v);
+
+    double ls=0;
+    BOOST_LOG(rdErrorLog) << "copy" << std::endl;    
+    for(int i=0;i<100000000;++i){
+      std::string nv=d.getVal<std::string>("foo");
+      ls+= nv.size();
+    }
+    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
+    ls=0;
+    BOOST_LOG(rdErrorLog) << "ref" << std::endl;    
+    for(int i=0;i<100000000;++i){
+      const std::string &nv=d.getVal<const std::string &>("foo");
+      ls+= nv.size();
+    }
+    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;    
+    //std::string nv=d.getVal<std::string>("foo");
+  }
+#else
+  {
+    //int nreps=100000000;
+    int nreps=100000;
+    Dict d;
     std::string v="foo";
     boost::any anyv(v);
+    d.setVal("foo",v);
 
-    std::string tgt=boost::any_cast<std::string>(anyv);
-    const std::string &ctgt=boost::any_cast<const std::string &>(anyv);
+    std::clock_t start,end;
+
+    double ls=0;
+    BOOST_LOG(rdErrorLog) << "any cast" << std::endl;    
+    start = std::clock();
+    for(int i=0;i<nreps;++i){
+      const std::string &nv=boost::any_cast<const std::string &>(anyv);
+      ls+= nv.size();
+    }
+    end = std::clock();
+    BOOST_LOG(rdErrorLog) << "done: "<<(end-start)/(double)(CLOCKS_PER_SEC)<<" "<<ls << std::endl;    
     
+    ls=0;
+    BOOST_LOG(rdErrorLog) << "copy" << std::endl;    
+    start = std::clock();
+    for(int i=0;i<nreps;++i){
+      std::string nv=d.fromany<std::string>(anyv);
+      ls+= nv.size();
+    }
+    end = std::clock();
+    BOOST_LOG(rdErrorLog) << "done: "<<(end-start)/(double)(CLOCKS_PER_SEC)<<" "<<ls << std::endl;    
+
+    ls=0;
+    BOOST_LOG(rdErrorLog) << "ref" << std::endl;    
+    start = std::clock();
+    for(int i=0;i<nreps;++i){
+      const std::string &nv=d.fromany<const std::string &>(anyv);
+      ls+= nv.size();
+    }
+    end = std::clock();
+    BOOST_LOG(rdErrorLog) << "done: "<<(end-start)/(double)(CLOCKS_PER_SEC)<<" "<<ls << std::endl;    
+
+
+    ls=0;
+    BOOST_LOG(rdErrorLog) << "dict" << std::endl;    
+    start = std::clock();
+    for(int i=0;i<nreps;++i){
+      const std::string &nv=d.getVal<const std::string &>("foo");
+      ls+= nv.size();
+    }
+    end = std::clock();
+    BOOST_LOG(rdErrorLog) << "done: "<<(end-start)/(double)(CLOCKS_PER_SEC)<<" "<<ls << std::endl;    
+
+    ls=0;
+    BOOST_LOG(rdErrorLog) << "ref with hasVal" << std::endl;    
+    start = std::clock();
+    std::string k="foo";
+    for(int i=0;i<nreps;++i){
+      if(d.hasVal(k)){
+        const std::string &nv=d.fromany<const std::string &>(anyv);
+        ls+= nv.size();
+      }
+    }
+    end = std::clock();
+    BOOST_LOG(rdErrorLog) << "done: "<<(end-start)/(double)(CLOCKS_PER_SEC)<<" "<<ls << std::endl;    
+
+
+    //std::string nv=d.getVal<std::string>("foo");
   }
+
+#endif
+  
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
