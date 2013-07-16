@@ -34,7 +34,7 @@ namespace RDKit{
   }
   
   
-  void Dict::getVal(const std::string &what, std::string &res) const {
+  void Dict::getVal(const char *what, std::string &res) const {
     //
     //  We're going to try and be somewhat crafty about this getVal stuff to make these
     //  containers a little bit more generic.  The normal behavior here is that the
