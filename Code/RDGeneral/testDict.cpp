@@ -150,7 +150,7 @@ void testConstReturns(){
 #else
   {
     //int nreps=100000000;
-    int nreps=5000000;
+    int nreps=100000;
     Dict d;
     std::string v="foo";
     boost::any anyv(v);
@@ -202,8 +202,9 @@ void testConstReturns(){
     ls=0;
     BOOST_LOG(rdErrorLog) << "ref with hasVal" << std::endl;    
     start = std::clock();
+    std::string k="foo";
     for(int i=0;i<nreps;++i){
-      if(d.hasVal("foo")){
+      if(d.hasVal(k)){
         const std::string &nv=d.fromany<const std::string &>(anyv);
         ls+= nv.size();
       }
