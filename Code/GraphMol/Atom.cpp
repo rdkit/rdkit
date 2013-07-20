@@ -120,7 +120,7 @@ std::string Atom::getSymbol() const {
   if(d_atomicNum != 0 || !hasProp("dummyLabel") ){
     res = PeriodicTable::getTable()->getElementSymbol(d_atomicNum);
   } else {
-    getProp("dummyLabel",res);
+    res=getProp<std::string>("dummyLabel");
   }
   return res;
 }
