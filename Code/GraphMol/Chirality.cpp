@@ -308,10 +308,8 @@ namespace RDKit{
         const BOND_SPTR bond = mol[*beg];
         // check whether this bond is explictly set to have unknown stereo
         if (!hasExplicitUnknownStereo) {
-          if (bond->hasProp("_UnknownStereo")) {
-            int unknownStereo = 0;
-            bond->getProp("_UnknownStereo", unknownStereo);
-            if (unknownStereo)
+          if (bond->hasProp("_UnknownStereo") &&
+              bond->getProp<int>("_UnknownStereo")){
               hasExplicitUnknownStereo = true;
           }
         }
@@ -386,7 +384,7 @@ namespace RDKit{
       PRECONDITION(atom,"bad atom");
       bool res=false;
       if(atom->hasProp("_ringStereochemCand")){
-        atom->getProp("_ringStereochemCand",res);
+        res=atom->getProp<bool>("_ringStereochemCand");
       } else {
         const RingInfo *ringInfo=mol.getRingInfo();
         if(ringInfo->isInitialized() &&
@@ -454,7 +452,7 @@ namespace RDKit{
         // atom without stereochem in this atom's rings:
         INT_VECT ringStereoAtoms(0);
         if(atom->hasProp("_ringStereoAtoms")){
-          atom->getProp("_ringStereoAtoms",ringStereoAtoms);
+          ringStereoAtoms=atom->getProp<INT_VECT>("_ringStereoAtoms");
         }
         const VECT_INT_VECT atomRings=ringInfo->atomRings();
         for(VECT_INT_VECT::const_iterator ringIt=atomRings.begin();
@@ -475,7 +473,7 @@ namespace RDKit{
                 ringStereoAtoms.push_back(same*(*idxIt+1));
                 INT_VECT oAtoms(0);
                 if(mol.getAtomWithIdx(*idxIt)->hasProp("_ringStereoAtoms")){
-                  mol.getAtomWithIdx(*idxIt)->getProp("_ringStereoAtoms",oAtoms);
+                  oAtoms=mol.getAtomWithIdx(*idxIt)->getProp<INT_VECT>("_ringStereoAtoms");
                 }
                 oAtoms.push_back(same*(atom->getIdx()+1));
                 mol.getAtomWithIdx(*idxIt)->setProp("_ringStereoAtoms",oAtoms,true);

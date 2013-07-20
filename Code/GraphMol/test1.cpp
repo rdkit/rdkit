@@ -157,7 +157,7 @@ void testMolProps()
   m2.setProp("cprop1", 1, true);
   m2.setProp("cprop2", 2, true);
   STR_VECT cplst;
-  m2.getProp("__computedProps", cplst);
+  m2.getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 2, "");
   CHECK_INVARIANT(cplst[0] == "cprop1", "");
   CHECK_INVARIANT(cplst[1] == "cprop2", "");
@@ -175,12 +175,12 @@ void testMolProps()
 
   m2.clearProp("cprop1");
   CHECK_INVARIANT(!m2.hasProp("cprop1"), "");
-  m2.getProp("__computedProps", cplst);
+  m2.getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 1, "");
 
   m2.clearComputedProps();
   CHECK_INVARIANT(!m2.hasProp("cprop2"), "");
-  m2.getProp("__computedProps", cplst);
+  m2.getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 0, "");
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -262,19 +262,19 @@ void testAtomProps()
   a1->setProp("cprop1", 1, true);
   a1->setProp("cprop2", 2, true);
   STR_VECT cplst;
-  a1->getProp("__computedProps", cplst);
+  a1->getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 2, "");
   CHECK_INVARIANT(cplst[0] == "cprop1", "");
   CHECK_INVARIANT(cplst[1] == "cprop2", "");
 
   a1->clearProp("cprop1");
   CHECK_INVARIANT(!a1->hasProp("cprop1"), "");
-  a1->getProp("__computedProps", cplst);
+  a1->getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 1, "");
 
   a1->clearComputedProps();
   CHECK_INVARIANT(!a1->hasProp("cprop2"), "");
-  a1->getProp("__computedProps", cplst);
+  a1->getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 0, "");
 
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;
@@ -319,19 +319,19 @@ void testBondProps()
   b1->setProp("cprop1", 1, true);
   b1->setProp("cprop2", 2, true);
   STR_VECT cplst;
-  b1->getProp("__computedProps", cplst);
+  b1->getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 2, "");
   CHECK_INVARIANT(cplst[0] == "cprop1", "");
   CHECK_INVARIANT(cplst[1] == "cprop2", "");
 
   b1->clearProp("cprop1");
   CHECK_INVARIANT(!b1->hasProp("cprop1"), "");
-  b1->getProp("__computedProps", cplst);
+  b1->getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 1, "");
 
   b1->clearComputedProps();
   CHECK_INVARIANT(!b1->hasProp("cprop2"), "");
-  b1->getProp("__computedProps", cplst);
+  b1->getProp(detail::computedPropName, cplst);
   CHECK_INVARIANT(cplst.size() == 0, "");
 
   BOOST_LOG(rdInfoLog)  << "Finished" << std::endl;

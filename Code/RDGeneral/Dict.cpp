@@ -108,6 +108,7 @@ namespace RDKit{
 
 #define ANY_FORCE(T) template T Dict::fromany<T>(const boost::any& arg) const; \
                      template boost::any Dict::toany<T>(T arg) const;
+  
   ANY_FORCE(bool);
   ANY_FORCE(boost::shared_array<double>);
   ANY_FORCE(boost::shared_array<int>);
@@ -127,6 +128,8 @@ namespace RDKit{
   ANY_FORCE(std::vector<unsigned long long>);
   ANY_FORCE(unsigned int);
 
+  template const std::string & Dict::fromany<const std::string &>(const boost::any &arg) const;
+  
   typedef boost::tuples::tuple<boost::uint32_t, boost::uint32_t, boost::uint32_t> uint32_t_tuple ;
   typedef boost::tuples::tuple<double, double, double> double_tuple;
 
