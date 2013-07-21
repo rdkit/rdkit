@@ -30,7 +30,7 @@ namespace RDKit{
       - the caller is responsible for <tt>delete</tt>ing the result
     
     */
-    ROMol *createMolExtendedReducedGraph(const ROMol &mol,
+    ROMol *generateMolExtendedReducedGraph(const ROMol &mol,
                                          std::vector<boost::dynamic_bitset<> > *atomTypes=0
                                          );
     //! \brief Generates a ErG fingerprint vector for a molecule that's already a reduced graph

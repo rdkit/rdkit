@@ -1,6 +1,6 @@
 rdkit_library(ReducedGraphs
               ReducedGraphs.cpp
-              LINK_LIBRARIES Subgraphs SubstructMatch SmilesParse GraphMol
+              LINK_LIBRARIES SubstructMatch SmilesParse GraphMol
                 ${RDKit_THREAD_LIBS} )
 
 rdkit_headers(ReducedGraphs.h
@@ -9,7 +9,8 @@ rdkit_headers(ReducedGraphs.h
 rdkit_test(testReducedGraphs test1.cpp LINK_LIBRARIES
            ReducedGraphs_static
            SubstructMatch SmilesParse
-           Subgraphs GraphMol DataStructs RDGeometryLib
+           GraphMol DataStructs RDGeometryLib
            RDGeneral  )
 
+add_subdirectory(Wrap)
 
