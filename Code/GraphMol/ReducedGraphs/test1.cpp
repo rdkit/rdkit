@@ -30,6 +30,7 @@ void test1(){
     RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
     std::cerr<<*fp<<std::endl;
     
+    delete fp;
     delete m1;
   }
 
@@ -41,6 +42,7 @@ void test1(){
     RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
     std::cerr<<*fp<<std::endl;
     
+    delete fp;
     delete m1;
   }
 
@@ -52,6 +54,7 @@ void test1(){
     RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
     std::cerr<<*fp<<std::endl;
     
+    delete fp;
     delete m1;
   }
 
@@ -63,6 +66,7 @@ void test1(){
     RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
     std::cerr<<*fp<<std::endl;
     
+    delete fp;
     delete m1;
   }
   {
@@ -73,6 +77,51 @@ void test1(){
     RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
     std::cerr<<*fp<<std::endl;
     
+    delete fp;
+    delete m1;
+  }
+  {
+    std::string smi = "OCCc1ccc(CC(C)C)cc1";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
+    delete fp;
+    delete m1;
+  }
+  {
+    std::string smi = "OCCC1CCC(CC(C)C)CC1";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
+    delete fp;
+    delete m1;
+  }
+  {
+    std::string smi = "OCCC1=CCC(CC(C)C)CC1";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
+    delete fp;
+    delete m1;
+  }
+  {
+    std::string smi = "OCCC1=CCC(CC(C)C)C=C1";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
+    delete fp;
     delete m1;
   }
   
@@ -80,8 +129,51 @@ void test1(){
 }
 
 
+void test2(){
+  BOOST_LOG(rdInfoLog) <<"testing basics2" << std::endl;
+  {
+    std::string smi1 = "c1ccccc1CCO";
+    std::string smi2 = "C1=CC=CCC1CCO";
+    ROMol *m1 = SmilesToMol(smi1);
+    TEST_ASSERT(m1);
+    ROMol *m2 = SmilesToMol(smi2);
+    TEST_ASSERT(m2);
+    
+    RDNumeric::DoubleVector *fp1=ReducedGraphs::getErGFingerprint(*m1);
+    RDNumeric::DoubleVector *fp2=ReducedGraphs::getErGFingerprint(*m2);
+
+    TEST_ASSERT(feq(RDNumeric::TanimotoSimilarity(*fp1,*fp2),1.0,0.001));
+    
+    delete fp1;
+    delete fp2;
+    delete m1;
+    delete m2;
+  }
+  {
+    std::string smi1 = "c1ccccc1CCO";
+    std::string smi2 = "C1CC=CCC1CCO";
+    ROMol *m1 = SmilesToMol(smi1);
+    TEST_ASSERT(m1);
+    ROMol *m2 = SmilesToMol(smi2);
+    TEST_ASSERT(m2);
+    
+    RDNumeric::DoubleVector *fp1=ReducedGraphs::getErGFingerprint(*m1);
+    RDNumeric::DoubleVector *fp2=ReducedGraphs::getErGFingerprint(*m2);
+
+    TEST_ASSERT(!feq(RDNumeric::TanimotoSimilarity(*fp1,*fp2),1.0,0.001));
+    
+    delete fp1;
+    delete fp2;
+    delete m1;
+    delete m2;
+  }
+
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
   test1();
+  test2();
   return 0;
 }
