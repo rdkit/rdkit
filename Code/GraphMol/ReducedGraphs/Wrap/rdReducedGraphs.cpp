@@ -8,6 +8,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
+#define PY_ARRAY_UNIQUE_SYMBOL rdreducedgraphs_array_API
+#include <boost/python.hpp>
+#include <boost/python/numeric.hpp>
+#include <numpy/arrayobject.h>
+
 #include <RDBoost/Wrap.h>
 #include <GraphMol/GraphMol.h>
 #include <numpy/arrayobject.h>
@@ -22,31 +28,48 @@ namespace python = boost::python;
 
 namespace {
   RDKit::ROMol *GenerateMolExtendedReducedGraphHelper(const RDKit::ROMol &mol,
-                                               python::object atomTypes){
+                                                      python::object atomTypes){
+    if(atomTypes){
+      throw_value_error("specification of atom types not yet supported");
+    }
     RDKit::ROMol *res=RDKit::ReducedGraphs::generateMolExtendedReducedGraph(mol);
     return res;
   }
-  PyArrayObject *GenerateErGFingerprintForReducedGraphHelper(const RDKit::ROMol &mol,
+  PyObject *GenerateErGFingerprintForReducedGraphHelper(const RDKit::ROMol &mol,
                                                         python::object atomTypes,
                                                         double fuzzIncrement,
                                                         int minPath,
                                                         int maxPath){
-    npy_intp dims[2];
-    dims[0] = 4;
-    dims[1] = 4;
-    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
-    return res;
+    if(atomTypes){
+      throw_value_error("specification of atom types not yet supported");
+    }
+    RDNumeric::DoubleVector *dv=RDKit::ReducedGraphs::generateErGFingerprintForReducedGraph(mol,0,fuzzIncrement,
+                                                                                            minPath,maxPath);
+    npy_intp dim=dv->size();
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1,&dim,NPY_DOUBLE);
+    memcpy(static_cast<void *>(res->data),
+           static_cast<void *>(dv->getData()),
+           dv->size()*sizeof(double));
+    delete dv;
+    return PyArray_Return(res);
   }
-  PyArrayObject *GetErGFingerprintHelper(const RDKit::ROMol &mol,
+  PyObject *GetErGFingerprintHelper(const RDKit::ROMol &mol,
                                          python::object atomTypes,
                                          double fuzzIncrement,
                                          int minPath,
                                          int maxPath){
-    npy_intp dims[2];
-    dims[0] = 4;
-    dims[1] = 4;
-    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(2,dims,NPY_DOUBLE);
-    return res;
+    if(atomTypes){
+      throw_value_error("specification of atom types not yet supported");
+    }
+    RDNumeric::DoubleVector *dv=RDKit::ReducedGraphs::getErGFingerprint(mol,0,fuzzIncrement,
+                                                                        minPath,maxPath);
+    npy_intp dim=dv->size();
+    PyArrayObject *res = (PyArrayObject *)PyArray_SimpleNew(1,&dim,NPY_DOUBLE);
+    memcpy(static_cast<void *>(res->data),
+           static_cast<void *>(dv->getData()),
+           dv->size()*sizeof(double));
+    delete dv;
+    return PyArray_Return(res);
   }
 
 
@@ -57,6 +80,7 @@ BOOST_PYTHON_MODULE(rdReducedGraphs) {
     "Module containing functions to generate and work with reduced graphs"
     ;
 
+  import_array();
   python::register_exception_translator<IndexErrorException>(&translate_index_error);
   python::register_exception_translator<ValueErrorException>(&translate_value_error);
 
@@ -79,8 +103,7 @@ BOOST_PYTHON_MODULE(rdReducedGraphs) {
                python::arg("minPath")=1,
                python::arg("maxPath")=15
                ),
-              docString.c_str(),
-	      python::return_value_policy<python::manage_new_object>());
+              docString.c_str());
   docString="Returns the ErG fingerprint vector for a molecule";
   python::def("GetErGFingerprint",
 	      GetErGFingerprintHelper,
@@ -90,8 +113,7 @@ BOOST_PYTHON_MODULE(rdReducedGraphs) {
                python::arg("minPath")=1,
                python::arg("maxPath")=15
                ),
-              docString.c_str(),
-	      python::return_value_policy<python::manage_new_object>());
+              docString.c_str());
 
   
 }
