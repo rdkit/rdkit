@@ -1404,6 +1404,11 @@ namespace RDKit {
                 originalRightNbr = indexToAtomIndexMapping[stereo0DPtr->neighbor[3]];
                 leftNbr = extraLeftNbr = rightNbr = extraRightNbr = -1;
                 Bond* bond = m->getBondBetweenAtoms(left, right);
+                if(!bond) {
+                  // Likely to be allene stereochemistry, which we don't handle.
+                  BOOST_LOG(rdWarningLog)<<"Extended double-bond stereochemistry (e.g. C=C=C=C) ignored"<<std::endl;
+                  continue;
+                }
                 // also find neighboring atoms. Note we cannot use what InChI returned
                 // in stereo0DPtr->neighbor as there can be hydrogen in it, which is
                 // later removed and is therefore not reliable. Plus, InChI seems to

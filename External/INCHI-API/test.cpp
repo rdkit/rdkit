@@ -183,6 +183,21 @@ void testGithubIssue40(){
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
+void testGithubIssue67(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) <<"testing github issue 67: seg fault from inchi" << std::endl;
+  {
+    ExtraInchiReturnValues tmp;
+    std::string inchi="InChI=1S/C18H17N3/c19-18(20)21-14-17-12-10-16(11-13-17)9-5-4-8-15-6-2-1-3-7-15/h1-3,6-13H,14H2,(H4,19,20,21)/b9-8+";
+    ROMol *m = InchiToMol(inchi,tmp);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==21);
+    
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) <<"done" << std::endl;
+}
+
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -193,4 +208,5 @@ int main(){
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();
+  testGithubIssue67();
 }
