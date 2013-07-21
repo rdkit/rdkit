@@ -21,7 +21,7 @@
 #include <boost/flyweight/no_tracking.hpp>
 #include <boost/ref.hpp>
 
-#define VERBOSE_FINGERPRINTING 1
+//#define VERBOSE_FINGERPRINTING 1
 
 namespace RDKit{
 
