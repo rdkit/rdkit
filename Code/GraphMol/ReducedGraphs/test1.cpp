@@ -12,7 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/ReduceGraphs/ReducedGraphs.h>
+#include <GraphMol/ReducedGraphs/ReducedGraphs.h>
 #include <DataStructs/ExplicitBitVect.h>
 
 #include <RDGeneral/RDLog.h>
@@ -23,13 +23,59 @@ using namespace RDKit;
 void test1(){
   BOOST_LOG(rdInfoLog) <<"testing basics" << std::endl;
   {
-    std::string smi = "C1=CC=CC=C1";
-    RWMol *m1 = SmilesToMol(smi);
-    TEST_ASSERT(m1->getNumAtoms()==6);
-
+    std::string smi = "c1ccccc1CCO";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
     delete m1;
   }
 
+  {
+    std::string smi = "c1cnccc1CCO";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
+    delete m1;
+  }
+
+  {
+    std::string smi = "OCCC1=CC2=C(C=CC=C2)C=C1";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
+    delete m1;
+  }
+
+  {
+    std::string smi = "OCCC1=CC2=C(C=CC=C2)N=C1";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
+    delete m1;
+  }
+  {
+    std::string smi = "OCCC1=CC2=C(CCCC2)N=C1";
+    ROMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    
+    RDNumeric::DoubleVector *fp=ReducedGraphs::getErGFingerprint(*m1);
+    std::cerr<<*fp<<std::endl;
+    
+    delete m1;
+  }
+  
   BOOST_LOG(rdInfoLog) <<"done" << std::endl;
 }
 
