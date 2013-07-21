@@ -31,6 +31,23 @@ class TestCase(unittest.TestCase) :
     md = max(abs(fp1-fp2))
     self.failUnless(md<1e-4)
 
+  def test3(self):
+    m = Chem.MolFromSmiles('OCCc1ccccc1')
+    fp1 = rdRG.GetErGFingerprint(m)
+    m = Chem.MolFromSmiles('OCCC1CC=CC=C1')
+    fp2 = rdRG.GetErGFingerprint(m)
+
+    md = max(abs(fp1-fp2))
+    self.failUnlessAlmostEqual(0.0,md,4)
+
+  def test4(self):
+    m = Chem.MolFromSmiles('OCCc1ccccc1')
+    fp1 = rdRG.GetErGFingerprint(m)
+    fp2 = rdRG.GetErGFingerprint(m,fuzzIncrement=0.1)
+
+    md = max(abs(fp1-fp2))
+    self.failUnlessAlmostEqual(0.2,md,4)
+
 
 if __name__ == '__main__':
   unittest.main()
