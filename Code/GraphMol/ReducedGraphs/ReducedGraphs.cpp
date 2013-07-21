@@ -107,7 +107,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
                                                double fuzzIncrement,
                                                unsigned int minPath,
                                                unsigned int maxPath){
-      ROMol *rg=createMolExtendedReducedGraph(mol,atomTypes);
+      ROMol *rg=generateMolExtendedReducedGraph(mol,atomTypes);
 #ifdef VERBOSE_FINGERPRINTING
       rg->updatePropertyCache(false);
       std::cerr<<" reduced graph smiles: "<<MolToSmiles(*rg,false,false,-1,false)<<std::endl;
@@ -178,7 +178,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]", // Positive
     }
     
   
-    ROMol *createMolExtendedReducedGraph(const ROMol &mol,
+    ROMol *generateMolExtendedReducedGraph(const ROMol &mol,
                                          std::vector<boost::dynamic_bitset<> > *atomTypes
                                          ){
       std::vector<boost::dynamic_bitset<> > *latomTypes=0;    
