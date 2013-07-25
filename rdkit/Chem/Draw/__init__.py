@@ -29,7 +29,7 @@ def _getCanvas():
       from aggCanvas import Canvas
       useAGG=True
     else:
-      MolDrawing.drawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
+      MolDrawing.drawingOptions['radicalSymbol']='.' #<- the sping canvas doesn't support unicode well
       from spingCanvas import Canvas      
   return useAGG,useCairo,Canvas
 
