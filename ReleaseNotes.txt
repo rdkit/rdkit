@@ -32,6 +32,7 @@ Bug Fixes:
    getTotalNumHs(false) instead of getImplicitValence().
    (GitHub #60)
  - bzip2 files now work better with the SDWriter class. (GitHub #63)
+ - a crashing bug in InChI generation was fixed. (GitHub #67)
 
 New Features:
  - Sanitization can now be disabled when calling GetMolFrags() from
