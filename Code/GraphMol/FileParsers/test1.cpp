@@ -2955,6 +2955,78 @@ void testMolFileChiralFlag(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileTotalValence(){
+  BOOST_LOG(rdInfoLog) << "testing handling of mol file valence flags" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    RWMol *m1;
+    std::string fName;
+    fName = rdbase+"Na.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==0);    
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m1;
+  }
+  {
+    RWMol *m1;
+    std::string fName;
+    fName = rdbase+"CH.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+    delete m1;
+  }
+  {
+    RWMol *m1;
+    std::string fName;
+    fName = rdbase+"CH2.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==2);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==2);
+    delete m1;
+  }
+  {
+    RWMol *m1;
+    std::string fName;
+    fName = rdbase+"CH3.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==3);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m1;
+  }
+  {
+    // make sure we get it for v3k mol blocks too:
+    RWMol *m1;
+    std::string fName;
+    fName = rdbase+"CH.v3k.mol";
+    m1 = MolFileToMol(fName);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+    delete m1;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -3012,9 +3084,10 @@ int main(int argc,char *argv[]){
   testIssue3525799();
   testIssue3557675();
   testSkipLines();
-#endif
   testIssue269();
   testMolFileChiralFlag();
+#endif
+  testMolFileTotalValence();
 
   return 0;
 }
