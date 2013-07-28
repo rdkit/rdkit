@@ -668,6 +668,61 @@ void testMolFileChiralFlag() {
   }
 }
 
+void testMolFileTotalValence(){
+  BOOST_LOG(rdInfoLog) << "testing handling of mol file valence flags" << std::endl;
+
+  {
+    RWMol *m1=SmilesToMol("[Na]");
+    std::string mb=MolToMolBlock(*m1);
+    delete m1;
+    m1 = MolBlockToMol(mb);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==0);    
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m1;
+  }
+  {
+    RWMol *m1=SmilesToMol("[CH]");
+    std::string mb=MolToMolBlock(*m1);
+    delete m1;
+    m1 = MolBlockToMol(mb);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+
+    delete m1;
+  }
+  {
+    RWMol *m1=SmilesToMol("[CH2]");
+    std::string mb=MolToMolBlock(*m1);
+    delete m1;
+    m1 = MolBlockToMol(mb);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==2);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==2);
+    delete m1;
+  }
+  {
+    RWMol *m1=SmilesToMol("[CH3]");
+    std::string mb=MolToMolBlock(*m1);
+    delete m1;
+    m1 = MolBlockToMol(mb);
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m1->getNumAtoms()==1);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNoImplicit());
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumExplicitHs()==3);
+    TEST_ASSERT(m1->getAtomWithIdx(0)->getNumRadicalElectrons()==1);
+    delete m1;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
 
 
 int main() {
@@ -726,7 +781,7 @@ int main() {
   testTDTWriterStrm();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
-#endif
+
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testSDMemoryCorruption()\n";
   testSDMemoryCorruption();
@@ -750,5 +805,10 @@ int main() {
   testMolFileChiralFlag();
   BOOST_LOG(rdInfoLog) << "Finished\n";
   BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+#endif
 
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n";
+  testMolFileTotalValence();
+  BOOST_LOG(rdInfoLog) <<  "-----------------------------------------\n\n";
+  
 }
