@@ -27,7 +27,8 @@
 namespace RDKit{
   class ROMol;
   class RWMol;
-  
+
+ 
   //! The class for representing atoms
   /*!
 
@@ -332,10 +333,10 @@ namespace RDKit{
     void setProp(const std::string key, T val, bool computed=false) const {
       if (computed) {
 	STR_VECT compLst;
-	if(hasProp("__computedProps")) getProp("__computedProps", compLst);
+	if(hasProp(detail::computedPropName)) getProp(detail::computedPropName, compLst);
 	if (std::find(compLst.begin(), compLst.end(), key) == compLst.end()) {
 	  compLst.push_back(key);
-	  dp_props->setVal("__computedProps", compLst);
+	  dp_props->setVal(detail::computedPropName, compLst);
 	}
       }
       //setProp(key.c_str(),val);
@@ -358,14 +359,22 @@ namespace RDKit{
     */
     template <typename T>
     void getProp(const char *key,T &res) const {
-      //PRECONDITION(dp_props,"getProp called on empty property dict");
       dp_props->getVal(key,res);
     }
     //! \overload
     template <typename T>
     void getProp(const std::string key,T &res) const {
-      //return getProp(key.c_str(),res);
       dp_props->getVal(key,res);
+    }
+    //! \overload
+    template <typename T>
+    T getProp(const char *key) const {
+      return dp_props->getVal<T>(key);
+    }
+    //! \overload
+    template <typename T>
+    T getProp(const std::string key) const {
+      return dp_props->getVal<T>(key);
     }
 
     //! returns whether or not we have a \c property with name \c key
@@ -394,13 +403,13 @@ namespace RDKit{
     };
     //! \overload
     void clearProp(const std::string key) const {
-      if(hasProp("__computedProps")){
+      if(hasProp(detail::computedPropName)){
 	STR_VECT compLst;
-	getProp("__computedProps", compLst);
+	getProp(detail::computedPropName, compLst);
 	STR_VECT_I svi = std::find(compLst.begin(), compLst.end(), key);
 	if (svi != compLst.end()) {
 	  compLst.erase(svi);
-	  dp_props->setVal("__computedProps", compLst);
+	  dp_props->setVal(detail::computedPropName, compLst);
 	}
       }    
       dp_props->clearVal(key);
@@ -408,14 +417,14 @@ namespace RDKit{
 
     //! clears all of our \c computed \c properties
     void clearComputedProps() const {
-      if(!hasProp("__computedProps")) return;
+      if(!hasProp(detail::computedPropName)) return;
       STR_VECT compLst;
-      getProp("__computedProps", compLst);
+      getProp(detail::computedPropName, compLst);
       BOOST_FOREACH(const std::string &sv,compLst){
 	dp_props->clearVal(sv);
       }
       compLst.clear();
-      dp_props->setVal("__computedProps", compLst);
+      dp_props->setVal(detail::computedPropName, compLst);
     }
 
     //! returns the perturbation order for a list of integers
