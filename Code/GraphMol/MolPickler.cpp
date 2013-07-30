@@ -737,8 +737,7 @@ namespace RDKit{
       try{
         atom->getProp("molAtomMapNumber",tmpInt);
       } catch (boost::bad_any_cast &exc) {
-        std::string tmpSVal;
-        atom->getProp("molAtomMapNumber",tmpSVal);
+        const std::string &tmpSVal=atom->getProp<std::string>("molAtomMapNumber");
         try{
           tmpInt = boost::lexical_cast<int>(tmpSVal);
         } catch(boost::bad_lexical_cast &lexc) {
@@ -838,9 +837,7 @@ namespace RDKit{
       streamWrite(ss,ATOM_MAPNUMBER,tmpChar);
     }
     if(atom->hasProp("dummyLabel")){
-      std::string tmpStr;
-      atom->getProp("dummyLabel",tmpStr);
-      streamWrite(ss,ATOM_DUMMYLABEL,tmpStr);
+      streamWrite(ss,ATOM_DUMMYLABEL,atom->getProp<std::string>("dummyLabel"));
     }
   }
 

@@ -20,6 +20,12 @@
 #include <RDGeneral/Invariant.h>
 #include "Dict.h"
 
+namespace detail {
+  // used in various places for computed properties
+  const std::string computedPropName="__computedProps";
+}
+
+
 #include <vector>
 #include <deque>
 #include <map>

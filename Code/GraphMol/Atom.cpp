@@ -64,7 +64,7 @@ Atom::Atom( const Atom & other){
   } else {
     dp_props = new Dict();
     STR_VECT computed;
-    dp_props->setVal("__computedProps", computed);
+    dp_props->setVal(detail::computedPropName, computed);
   }
 }
 void Atom::initAtom(){
@@ -89,13 +89,6 @@ void Atom::initAtom(){
   d_implicitValence=-1;
   d_explicitValence=-1;
 
-  // ok every Atom contains a property entry called "__computedProps"
-  // which provides list of property keys that correspond to value
-  // that have been computed this can used to blow out all computed
-  // properties while leaving the rest along initialize this list to
-  // an empty vector of strings
-  //STR_VECT computed;
-  //dp_props->setVal("__computedProps", computed);
 }
 
 Atom::~Atom()
@@ -127,7 +120,7 @@ std::string Atom::getSymbol() const {
   if(d_atomicNum != 0 || !hasProp("dummyLabel") ){
     res = PeriodicTable::getTable()->getElementSymbol(d_atomicNum);
   } else {
-    getProp("dummyLabel",res);
+    res=getProp<std::string>("dummyLabel");
   }
   return res;
 }
