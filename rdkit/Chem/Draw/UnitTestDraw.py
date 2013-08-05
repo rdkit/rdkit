@@ -150,6 +150,10 @@ class TestCase(unittest.TestCase):
     self.failUnlessEqual(img.size[1],300)
 
   def testGithubIssue54(self):
+    try:
+      from rdkit.Chem.Draw.aggCanvas import Canvas
+    except ImportError:
+      return
     os.environ['RDKIT_CANVAS']='sping'
     mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
     img = Draw.MolToImage(mol)
