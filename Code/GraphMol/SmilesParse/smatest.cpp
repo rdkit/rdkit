@@ -1068,18 +1068,18 @@ void testSmilesSmarts(){
   TEST_ASSERT(sma=="[#6H-2]-[#6]");
   delete mol;
 
-  smi ="[CH4+]C";
+  smi ="[PH4]C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[#6H4+]-[#6]");
+  TEST_ASSERT(sma=="[#15H4]-[#6]");
   delete mol;
 
-  smi ="[CH5+2]C";
+  smi ="[PH5+]C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   sma = MolToSmarts(*mol);
-  TEST_ASSERT(sma=="[#6H5+2]-[#6]");
+  TEST_ASSERT(sma=="[#15H5+]-[#6]");
   delete mol;
 
   smi ="c1ccccc1";

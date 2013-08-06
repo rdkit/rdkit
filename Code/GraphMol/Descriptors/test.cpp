@@ -1406,9 +1406,9 @@ void testKappa2(){
 
   {
     std::string sdata[] = {
-      "[C+2](C)(C)(C)(C)(C)C",
-      "[C+](C)(C)(C)(C)(CC)",
-      "C(C)(C)(C)(CCC)",
+      "[P+](C)(C)(C)(C)(C)C",
+      "[P](C)(C)(C)(C)(CC)",
+      "P(C)(C)(C)(CCC)",
       "CC(C)CCCC",
       "CCCCCCC",
       "CCCCCC",
@@ -1432,9 +1432,9 @@ void testKappa2(){
       "EOS"
     };
     double ddata[] = {
-      0.667000,
-      1.240000,
-      2.344400,
+      0.796304,
+      1.451170,
+      2.667813,
       4.167000,
       6.000000,
       5.000000,
@@ -1458,9 +1458,10 @@ void testKappa2(){
     };
     unsigned int idx=0;
     while(sdata[idx]!="EOS"){
-      ROMol *mol;
+      RWMol *mol;
       mol = SmilesToMol(sdata[idx]);
       TEST_ASSERT(mol);
+      BOOST_LOG(rdErrorLog) << sdata[idx]<<"  calc" << std::endl;
       double v=calcKappa2(*mol);
       TEST_ASSERT(feq(v,ddata[idx],0.002));
       ++idx;
@@ -1475,7 +1476,8 @@ void testKappa3(){
 
   {
     std::string sdata[] = {
-      "C[C+](C)(C)(C)C(C)(C)C",
+      "C[P+](C)(C)(C)(C)C(C)(C)C",
+      "CP(C)(C)(C)C(C)(C)C",
       "CCC(C)C(C)(C)(CC)",
       "CCC(C)CC(C)CC",
       "CC(C)CCC(C)CC",
@@ -1486,7 +1488,8 @@ void testKappa3(){
       "EOS"
     };
     double ddata[] = {
-      2.000000,
+      1.954670,
+      2.255835,
       2.380000,
       4.500000,
       5.878000,

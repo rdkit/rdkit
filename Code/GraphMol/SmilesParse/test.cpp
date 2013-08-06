@@ -1539,7 +1539,7 @@ void testIssue256(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 256: SMILES yields incorrect structure" << std::endl;
 
-  smi ="C1CC[C+]1=1CCC1";
+  smi ="C1CCP1=1CCC1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   bond=mol->getBondBetweenAtoms(3,0);
@@ -1550,7 +1550,7 @@ void testIssue256(){
   TEST_ASSERT(bond->getBondType()==Bond::DOUBLE);
   delete mol;
 
-  smi ="C1CC[C+]=11CCC1";
+  smi ="C1CCP=11CCC1";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
   bond=mol->getBondBetweenAtoms(3,0);

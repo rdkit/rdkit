@@ -569,7 +569,7 @@ void testChiralityCleanup(){
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "chirality cleanup" << std::endl;
 
-  smi = "F[C@H+](Cl)(Br)I";
+  smi = "F[P@H](Cl)(Br)I";
   mol = SmilesToMol(smi,false,false);
   mol2 = MolOps::removeHs(*mol,false,false);
   delete mol;
@@ -580,7 +580,7 @@ void testChiralityCleanup(){
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
   delete mol;
 
-  smi = "F[C@+](C)(Cl)(Br)I";
+  smi = "F[P@](C)(Cl)(Br)I";
   mol = SmilesToMol(smi,false,false);
   mol2 = MolOps::removeHs(*mol,false,false);
   delete mol;

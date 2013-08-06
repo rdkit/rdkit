@@ -191,10 +191,9 @@ int Atom::calcExplicitValence(bool strict) {
   accum += getNumExplicitHs();
 
   // check accum is greater than the default valence
-  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
   int chr = getFormalCharge();
-  if(isEarlyAtom(d_atomicNum)) chr*=-1;  // <- the usual correction for early atoms
-  if (accum > (dv + chr) && this->getIsAromatic()){
+  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum-chr);
+  if (accum > dv && this->getIsAromatic()){
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
     // to this atom.  We set x = (v + chr) such that x is the
@@ -205,10 +204,10 @@ int Atom::calcExplicitValence(bool strict) {
     //    sulfur here : O=c1ccs(=O)cc1
     //    nitrogen here : c1cccn1C
     
-    int pval = dv + chr;
-    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
+    int pval = dv;
+    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chr);
     for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi!=-1; ++vi) {
-      int val = (*vi) + chr;
+      int val = (*vi);
       if (val > accum) {
         break;
       } else {
@@ -234,15 +233,8 @@ int Atom::calcExplicitValence(bool strict) {
   res = static_cast<int>(round(accum));
 
   if(strict){
-    int effectiveValence;
-    if(PeriodicTable::getTable()->getNouterElecs(d_atomicNum)>=4){
-      effectiveValence=res-getFormalCharge();
-    } else {
-      // for boron and co, we move to the right in the PT, so adding
-      // extra valences means adding negative charge
-      effectiveValence=res+getFormalCharge();
-    }
-    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
+    int effectiveValence=res;
+    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chr);
     int maxValence=*(valens.rbegin());
     // maxValence == -1 signifies that we'll take anything at the high end
     if( maxValence>0 &&effectiveValence>maxValence){
