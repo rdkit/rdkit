@@ -15,9 +15,12 @@
 #include "PeriodicTable.h"
 #include "SanitException.h"
 #include "QueryOps.h"
+#include "MonomerInfo.h"
+
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/types.h>
+#include <RDGeneral/Dict.h>
 
 namespace RDKit {
   namespace {
@@ -85,6 +88,7 @@ void Atom::initAtom(){
   d_hybrid = UNSPECIFIED;
   dp_mol = 0;
   dp_props = new Dict();
+  dp_monomerInfo = 0;
 
   d_implicitValence=-1;
   d_explicitValence=-1;
@@ -96,6 +100,9 @@ Atom::~Atom()
   if(dp_props){
     delete dp_props;
     dp_props = 0;
+  }
+  if(dp_monomerInfo){
+    delete dp_monomerInfo;
   }
 }
 
@@ -492,9 +499,7 @@ void Atom::invertChirality(){
     break;
   }
 }
-
-
-} // end o' namespace
+} // end o' namespace RDKit
 
 std::ostream & operator<<(std::ostream& target, const RDKit::Atom &at){
   target << at.getIdx() << " " << at.getAtomicNum() << " " << at.getSymbol();
