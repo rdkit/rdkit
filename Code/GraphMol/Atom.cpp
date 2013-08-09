@@ -69,6 +69,12 @@ Atom::Atom( const Atom & other){
     STR_VECT computed;
     dp_props->setVal(detail::computedPropName, computed);
   }
+  if(other.dp_monomerInfo){
+    dp_monomerInfo = other.dp_monomerInfo->copy();
+  } else {
+    dp_monomerInfo=0;
+  }
+
 }
 void Atom::initAtom(){
   df_isAromatic = false;

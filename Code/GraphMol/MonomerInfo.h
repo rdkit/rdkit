@@ -20,21 +20,6 @@
 
 namespace RDKit{
 
-
-  //! Captures information about peptide residues
-  class PeptideResidueInfo {
-  public:
-    PeptideResidueInfo() : d_name("") {};
-    PeptideResidueInfo(const std::string &nm) : d_name(nm) {};
-
-    const std::string &getName() const { return d_name; };
-    void setName(const std::string &nm) { d_name=nm; };
-  private:
-    std::string d_name;
-  };
-  typedef boost::shared_ptr<PeptideResidueInfo> PeptideResidueInfo_SPTR;
-
-
   //! The abstract base class for atom-level monomer info
   class AtomMonomerInfo {
   public:
@@ -44,7 +29,7 @@ namespace RDKit{
       OTHER
     } AtomMonomerType;
 
-    virtual ~AtomMonomerInfo()=0;
+    virtual ~AtomMonomerInfo() {};
 
     AtomMonomerInfo() : d_monomerType(UNKNOWN), d_name("") {};
     AtomMonomerInfo(AtomMonomerType typ,const std::string &nm="") : d_monomerType(typ), d_name(nm)  {};
@@ -54,7 +39,10 @@ namespace RDKit{
     void setName(const std::string &nm) { d_name=nm; };
     AtomMonomerType getMonomerType() const { return d_monomerType; };
     void setMonomerType(AtomMonomerType typ) { d_monomerType=typ; };
-    
+
+    virtual AtomMonomerInfo *copy() const {
+      return new AtomMonomerInfo(*this);
+    }
   private:
     AtomMonomerType d_monomerType;
     std::string d_name;
@@ -63,9 +51,18 @@ namespace RDKit{
   //! Captures atom-level information about peptide residues
   class AtomPeptideResidueInfo : public AtomMonomerInfo {
   public:
-    AtomPeptideResidueInfo() : AtomMonomerInfo(PEPTIDERESIDUE), d_peptideResidueInfo() {};
+    AtomPeptideResidueInfo() : AtomMonomerInfo(PEPTIDERESIDUE) {};
     AtomPeptideResidueInfo(const AtomPeptideResidueInfo &other) : AtomMonomerInfo(other),
-                                                                  d_peptideResidueInfo(other.d_peptideResidueInfo) {};
+                                                                  d_serialNumber(other.d_serialNumber),
+                                                                  d_altLoc(other.d_altLoc),
+                                                                  d_residueName(other.d_residueName),
+                                                                  d_chainId(other.d_chainId),
+                                                                  d_insertionCode(other.d_insertionCode),
+                                                                  d_occupancy(other.d_occupancy),
+                                                                  d_tempFactor(other.d_tempFactor),
+                                                                  d_element(other.d_element),
+                                                                  d_charge(other.d_charge) {};
+
     AtomPeptideResidueInfo(std::string atomName,
                            unsigned int serialNumber=0,
                            std::string altLoc="",
@@ -89,10 +86,6 @@ namespace RDKit{
                            
     
     
-    const PeptideResidueInfo *getResidueInfo() const { return d_peptideResidueInfo.get(); }
-    void setResidueInfo(PeptideResidueInfo_SPTR resInf) {
-      d_peptideResidueInfo=resInf;
-    }
     unsigned int getSerialNumber() const { return d_serialNumber; };
     void setSerialNumber(unsigned int val) { d_serialNumber=val; };
     const std::string &getAltLoc() const { return d_altLoc; };
@@ -112,9 +105,11 @@ namespace RDKit{
     const std::string &getCharge() const { return d_charge; };
     void setCharge(const std::string &val) { d_charge=val; };
 
+    AtomMonomerInfo *copy() const {
+      return static_cast<AtomMonomerInfo *>(new AtomPeptideResidueInfo(*this));
+    }
     
   private:
-    PeptideResidueInfo_SPTR d_peptideResidueInfo;
     // the fields here are from the PDB definition 
     // (http://www.wwpdb.org/documentation/format33/sect9.html#ATOM) [9 Aug, 2013]
     unsigned int d_serialNumber;
