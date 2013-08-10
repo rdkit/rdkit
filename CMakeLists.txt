@@ -185,6 +185,7 @@ if(NOT RDK_INSTALL_INTREE)
       ${RDKit_ShareDir}
       COMPONENT docs
       PATTERN ".svn" EXCLUDE 
+      PATTERN "_build" EXCLUDE 
       )
   install(DIRECTORY Contrib DESTINATION
       ${RDKit_ShareDir}
