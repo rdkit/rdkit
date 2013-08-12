@@ -190,65 +190,92 @@ int Atom::calcExplicitValence(bool strict) {
   }
   accum += getNumExplicitHs();
 
+  bool valenceOk=true;
+  
   // check accum is greater than the default valence
   int chr = getFormalCharge();
-  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum-chr);
-  if (accum > dv && this->getIsAromatic()){
-    // this needs some explanation : if the atom is aromatic and
-    // accum > (dv + chr) we assume that no hydrogen can be added
-    // to this atom.  We set x = (v + chr) such that x is the
-    // closest possible integer to "accum" but less than
-    // "accum".
-    //
-    // "v" here is one of the allowed valences. For example:
-    //    sulfur here : O=c1ccs(=O)cc1
-    //    nitrogen here : c1cccn1C
+  if(d_atomicNum>1){
+    unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum-chr);
+    if (accum > dv && this->getIsAromatic()){
+      // this needs some explanation : if the atom is aromatic and
+      // accum > (dv + chr) we assume that no hydrogen can be added
+      // to this atom.  We set x = (v + chr) such that x is the
+      // closest possible integer to "accum" but less than
+      // "accum".
+      //
+      // "v" here is one of the allowed valences. For example:
+      //    sulfur here : O=c1ccs(=O)cc1
+      //    nitrogen here : c1cccn1C
     
-    int pval = dv;
-    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chr);
-    for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi!=-1; ++vi) {
-      int val = (*vi);
-      if (val > accum) {
-        break;
-      } else {
-        pval = val;
+      int pval = dv;
+      const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chr);
+      for (INT_VECT_CI vi = valens.begin(); vi != valens.end() && *vi!=-1; ++vi) {
+        int val = (*vi);
+        if (val > accum) {
+          break;
+        } else {
+          pval = val;
+        }
+      }
+      accum = pval;
+    }
+    // despite promising to not to blame it on him - this a trick Greg
+    // came up with: if we have a bond order sum of x.5 (i.e. 1.5, 2.5
+    // etc) we would like it to round to the higher integer value -- 
+    // 2.5 to 3 instead of 2 -- so we will add 0.1 to accum.
+    // this plays a role in the number of hydrogen that are implicitly
+    // added. This will only happen when the accum is a non-integer
+    // value and less than the default valence (otherwise the above if
+    // statement should have caught it). An example of where this can
+    // happen is the following smiles:
+    //    C1ccccC1
+    // Daylight accepts this smiles and we should be able to Kekulize
+    // correctly.
+    accum += 0.1;
+
+    res = static_cast<int>(round(accum));
+
+    if(strict){
+      int effectiveValence=res;
+      const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chr);
+      int maxValence=*(valens.rbegin());
+      // maxValence == -1 signifies that we'll take anything at the high end
+      if( maxValence>0 &&effectiveValence>maxValence){
+        valenceOk=false;
       }
     }
-    accum = pval;
-  }
-  // despite promising to not to blame it on him - this a trick Greg
-  // came up with: if we have a bond order sum of x.5 (i.e. 1.5, 2.5
-  // etc) we would like it to round to the higher integer value -- 
-  // 2.5 to 3 instead of 2 -- so we will add 0.1 to accum.
-  // this plays a role in the number of hydrogen that are implicitly
-  // added. This will only happen when the accum is a non-integer
-  // value and less than the default valence (otherwise the above if
-  // statement should have caught it). An example of where this can
-  // happen is the following smiles:
-  //    C1ccccC1
-  // Daylight accepts this smiles and we should be able to Kekulize
-  // correctly.
-  accum += 0.1;
-
-  res = static_cast<int>(round(accum));
-
-  if(strict){
-    int effectiveValence=res;
-    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chr);
-    int maxValence=*(valens.rbegin());
-    // maxValence == -1 signifies that we'll take anything at the high end
-    if( maxValence>0 &&effectiveValence>maxValence){
-      // the explicit valence is greater than any
-      // allowed valence for the atoms - raise an error
-      std::ostringstream errout;
-      errout << "Explicit valence for atom # " << getIdx() 
-             << " " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
-             << ", " << effectiveValence <<", is greater than permitted";
-      std::string msg = errout.str();
-      BOOST_LOG(rdErrorLog) << msg << std::endl;
-      throw MolSanitizeException(msg);
+  } else if(d_atomicNum==0){
+    res = static_cast<int>(round(accum));
+    valenceOk=1;
+  } else {
+    // it's H
+    res = static_cast<int>(round(accum));
+    if(strict){
+      switch(chr){
+      case 0:
+        valenceOk=(res<2);
+        break;
+      case 1:
+      case -1:
+        valenceOk=(res==0);
+        break;
+      default:
+        valenceOk=false;
+      }
     }
   }
+  if(strict && !valenceOk){
+    // the explicit valence is greater than any
+    // allowed valence for the atoms - raise an error
+    std::ostringstream errout;
+    errout << "Explicit valence for atom # " << getIdx() 
+           << " " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum)
+           << ", " << res <<", is greater than permitted";
+    std::string msg = errout.str();
+    BOOST_LOG(rdErrorLog) << msg << std::endl;
+    throw MolSanitizeException(msg);
+  }
+
   d_explicitValence = res;
 
   return res;
@@ -272,14 +299,40 @@ int Atom::calcImplicitValence(bool strict) {
   // 
   int res;
 
-  // The d-block and f-block of the periodic table (i.e. transition metals,
-  // lanthanoids and actinoids) have no default valence.
-  unsigned int dv = PeriodicTable::getTable()->getDefaultValence(d_atomicNum);
-  if (dv==-1) {
+  // catch anything without a default valence:
+  if (PeriodicTable::getTable()->getDefaultValence(d_atomicNum)==-1) {
     d_implicitValence = 0;
     return 0;
   }
 
+  if(d_atomicNum==1){
+    // H special case:
+    if(getFormalCharge()==0){
+      int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
+      switch(explicitPlusRadV){
+      case 0:
+        res=1;
+        break;
+      case 1:
+        res=0;
+        break;
+      default:
+        if(strict){
+          std::ostringstream errout;
+          errout << "Hydrogen # " << getIdx() 
+                 << " has valence greater than permitted: "<< explicitPlusRadV;
+          std::string msg = errout.str();
+          BOOST_LOG(rdErrorLog) << msg << std::endl;
+          throw MolSanitizeException(msg);
+        }
+      }
+    } else {
+      res=0;
+    }
+    d_implicitValence = res;
+    return res;
+  }
+  
   // here is how we are going to deal with the possibility of
   // multiple valences
   // - check the explicit valence "ev"
@@ -290,47 +343,14 @@ int Atom::calcImplicitValence(bool strict) {
   // if "ev" is greater than all allowed valences for the atom raise an exception
   // finally aromatic cases are dealt with differently - these atoms are allowed
   // only default valences
-  const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum);
   int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
   int chg = getFormalCharge();
 
-  // NOTE: this is here to take care of the difference in element on
-  // the right side of the carbon vs left side of carbon
-  // For elements on the right side of the periodic table
-  // (electronegative elements):
-  //     NHYD = V - SBO + CHG
-  // For elements on the left side of the periodic table
-  // (electropositive elements):
-  //      NHYD = V - SBO - CHG
-  // This reflects that hydrogen adds to, for example, O as H+ while
-  // it adds to Na as H-.
-
-  // V = valence
-  // SBO = Sum of bond orders
-  // CHG = Formal charge
-
-  //  It seems reasonable that the line is drawn at Carbon (in Group
-  //  IV), but we must assume on which side of the line C
-  //  falls... an assumption which will not always be correct.  For
-  //  example:
-  //  - Electropositive Carbon: a C with three singly-bonded
-  //    neighbors (DV = 4, SBO = 3, CHG = 1) and a positive charge (a
-  //    'stable' carbocation) should not have any hydrogens added.
-  //  - Electronegative Carbon: C in isonitrile, R[N+]#[C-] (DV = 4, SBO = 3, 
-  //    CHG = -1), also should not have any hydrogens added.
-  //  Because isonitrile seems more relevant to pharma problems, we'll be
-  //  making the second assumption:  *Carbon is electronegative*.
-  //
-  // So assuming you read all the above stuff - you know why we are
-  // changing signs for "chg" here
-  if ( isEarlyAtom(d_atomicNum) ) {
-    chg *= -1;
-  }
-
   // if we have an aromatic case treat it differently
   if (getIsAromatic()) {
-    if (explicitPlusRadV <= (static_cast<int>(dv) + chg)) {
-      res = dv + chg - explicitPlusRadV;
+    int dv=PeriodicTable::getTable()->getDefaultValence(d_atomicNum-chg);
+    if (explicitPlusRadV <= dv) {
+      res = dv - explicitPlusRadV;
     }
     else {
       // As we assume when finding the explicitPlusRadValence if we are
@@ -343,9 +363,10 @@ int Atom::calcImplicitValence(bool strict) {
       // atom. The only diff I can think of is in the way we handle
       // formal charge here vs the explicit valence function.
       bool satis = false;
+      const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chg);
       for (INT_VECT_CI vi = valens.begin();
 	   vi!=valens.end() && *vi>0; ++vi) {
-        if (explicitPlusRadV == ((*vi) + chg)) {
+        if (explicitPlusRadV == (*vi) ) {
           satis = true;
           break;
         }
@@ -365,9 +386,10 @@ int Atom::calcImplicitValence(bool strict) {
     // non-aromatic case we are allowed to have non default valences
     // and be able to add hydrogens
     res = -1;
+    const INT_VECT &valens = PeriodicTable::getTable()->getValenceList(d_atomicNum-chg);
     for (INT_VECT_CI vi = valens.begin();
 	 vi != valens.end() && *vi>=0; ++vi) {
-      int tot = (*vi) + chg;
+      int tot = (*vi);
       if (explicitPlusRadV <= tot) {
         res = tot - explicitPlusRadV;
         break;

@@ -4147,6 +4147,7 @@ void testSFNetIssue266() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+#if 0
 void testSFNetIssue272() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing sf.net issue 272: removing two-coordinate Hs" << std::endl;
 
@@ -4167,7 +4168,7 @@ void testSFNetIssue272() {
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
-
+#endif
 
 
 void testGitHubIssue8()
@@ -4253,6 +4254,35 @@ void testGitHubIssue65()
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testBareHs()
+{
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing handling of bare hs" << std::endl;
+  {
+    RWMol m;
+    m.addAtom(new Atom(1));
+    MolOps::sanitizeMol(m);
+    TEST_ASSERT(m.getNumAtoms()==1);
+    TEST_ASSERT(m.getAtomWithIdx(0)->getNumImplicitHs()==1);
+  }
+  {
+    RWMol m;
+    m.addAtom(new Atom(1));
+    m.getAtomWithIdx(0)->setFormalCharge(1);
+    MolOps::sanitizeMol(m);
+    TEST_ASSERT(m.getNumAtoms()==1);
+    TEST_ASSERT(m.getAtomWithIdx(0)->getNumImplicitHs()==0);
+  }
+  {
+    RWMol m;
+    m.addAtom(new Atom(1));
+    m.getAtomWithIdx(0)->setFormalCharge(-1);
+    MolOps::sanitizeMol(m);
+    TEST_ASSERT(m.getNumAtoms()==1);
+    TEST_ASSERT(m.getAtomWithIdx(0)->getNumImplicitHs()==0);
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main(){
   RDLog::InitLogs();
   //boost::logging::enable_logs("rdApp.debug");
@@ -4310,13 +4340,14 @@ int main(){
   testSFNetIssue256();
   testSFNetIssue266();
   testSFNetIssue266();
-  testSFNetIssue272();
+  //testSFNetIssue272();
   testGitHubIssue8();
   testGitHubIssue42();
   testGitHubIssue65();
-#endif
   testSFNetIssue2952255();
   testAromaticityEdges();
+#endif
+  testBareHs();
 
   return 0;
 }

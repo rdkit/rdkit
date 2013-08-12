@@ -209,7 +209,7 @@ class TestCase(unittest.TestCase):
         for fp, f in self.dataset.items():
             inchi_db = self.dataset_inchi[fp]
             same, diff, reasonable = 0, 0, 0
-            for m in f:
+            for midx,m in enumerate(f):
                 if m is None:
                     continue
                 ref_inchi = inchi_db[m.GetProp('PUBCHEM_COMPOUND_CID')]
@@ -224,6 +224,7 @@ class TestCase(unittest.TestCase):
                                 )
                             )
                 except:
+                    print '>>> mol failed:',midx,MolToSmiles(m,True),x
                     y = ''
                 if y == '':
                     # metal involved?
