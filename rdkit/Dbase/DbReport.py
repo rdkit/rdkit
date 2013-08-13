@@ -135,10 +135,10 @@ else:
         mol = Chem.MolFromSmiles(smi)
         Chem.Kekulize(mol)
         canv = Canvas((width,height))
-        drawing = MolDrawing()
-        drawing.atomLabelMinFontSize=3
-        drawing.minLabelPadding=(.5,.5)
-        drawing.bondLineWidth=0.5
+        options = {}
+        options['atomLabelMinFontSize']=3
+        options['bondLineWidth']=0.5
+        drawing = MolDrawing(options=options)
         if not mol.GetNumConformers():
           rdDepictor.Compute2DCoords(mol)
         drawing.AddMol(mol,canvas=canv)
