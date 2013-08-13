@@ -4,7 +4,7 @@
 #  All Rights Reserved
 #
 import os
-from MolDrawing import MolDrawing
+from MolDrawing import MolDrawing,DrawingOptions
 
 def _getCanvas():
   useAGG=False
@@ -29,7 +29,7 @@ def _getCanvas():
       from aggCanvas import Canvas
       useAGG=True
     else:
-      MolDrawing.drawingOptions['radicalSymbol']='.' #<- the sping canvas doesn't support unicode well
+      DrawingOptions.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
       from spingCanvas import Canvas      
   return useAGG,useCairo,Canvas
 
@@ -49,7 +49,7 @@ def _createCanvas(size):
   return img,canvas
 
 def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
-               fitImage=False, options={}, **kwargs):
+               fitImage=False, options=None, **kwargs):
   """ returns a PIL image containing a drawing of the molecule
 
     Keyword arguments:
@@ -63,10 +63,12 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
   if not mol:
     raise ValueError,'Null molecule provided'
   img,canvas=_createCanvas(size)
+  if options is None:
+    options = DrawingOptions()
   if fitImage:
-      options['dotsPerAngstrom'] = int(min(size) / 10)
-  options['wedgeDashedBonds'] = wedgeBonds
-  drawer = MolDrawing(canvas, options)
+      options.dotsPerAngstrom = int(min(size) / 10)
+  options.wedgeDashedBonds = wedgeBonds
+  drawer = MolDrawing(canvas=canvas,drawingOptions=options)
 
   if kekulize:
     from rdkit import Chem
@@ -103,7 +105,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     return img
 
 def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
-              imageType=None, fitImage=False, options={}, **kwargs):
+              imageType=None, fitImage=False, options=None, **kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
   # original contribution from Uwe Hoffmann
@@ -112,21 +114,22 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   if not mol:
     raise ValueError,'Null molecule provided'
 
-  
   if imageType is None:
     imageType=os.path.splitext(fileName)[1][1:]
 
+  if options is None:
+    options = DrawingOptions()
   useAGG,useCairo,Canvas = _getCanvas()
   if fitImage:
-      options['dotsPerAngstrom'] = int(min(size) / 10)
-  options['wedgeDashedBonds'] = wedgeBonds
+      options.dotsPerAngstrom = int(min(size) / 10)
+  options.wedgeDashedBonds = wedgeBonds
   if useCairo or useAGG:
     canvas = Canvas(size=size,imageType=imageType,
                               fileName=fileName)
   else:
-    options['radicalSymbol'] = '.' #<- the sping canvas doesn't support unicode well
+    options.radicalSymbol = '.' #<- the sping canvas doesn't support unicode well
     canvas = Canvas(size=size,name=fileName,imageType=imageType)
-  drawer = MolDrawing(canvas, options)
+  drawer = MolDrawing(canvas=canvas,drawingOptions=options)
   if kekulize:
     from rdkit import Chem
     mol = Chem.Mol(mol.ToBinary())
@@ -178,16 +181,19 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
 
     
 def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
-             imageType=None, fitImage=False, options={}, **kwargs):
+             imageType=None, fitImage=False, options=None, **kwargs):
   """ Generates a drawing of a molecule on a matplotlib canvas
   """
   if not mol:
     raise ValueError,'Null molecule provided'
   from mplCanvas import Canvas
   canvas = Canvas(size)
+  if options is None:
+    options = DrawingOptions()
   if fitImage:
-      options['dotsPerAngstrom'] = int(min(size) / 10)
-  drawer = MolDrawing(canvas, options)
+      drawingOptions.dotsPerAngstrom = int(min(size) / 10)
+  options.wedgeDashedBonds=wedgeBonds
+  drawer = MolDrawing(canvas=canvas, drawingOptions=options)
   omol=mol
   if kekulize:
     from rdkit import Chem
@@ -198,7 +204,6 @@ def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
   
-  drawer.wedgeDashedBonds=wedgeBonds
   drawer.AddMol(mol,**kwargs)
   omol._atomPs=drawer.atomPs[mol]
   for k,v in omol._atomPs.iteritems():
