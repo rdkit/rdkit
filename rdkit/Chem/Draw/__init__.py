@@ -29,7 +29,7 @@ def _getCanvas():
       from aggCanvas import Canvas
       useAGG=True
     else:
-      MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
+      MolDrawing.drawingOptions['radicalSymbol']='.' #<- the sping canvas doesn't support unicode well
       from spingCanvas import Canvas      
   return useAGG,useCairo,Canvas
 
@@ -43,14 +43,13 @@ def _createCanvas(size):
     img = Image.new("RGBA",size,"white")
     canvas = Canvas(img)
   else:
-    MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
     from spingCanvas import Canvas
     canvas = Canvas(size=size,name='MolToImageFile')
     img = canvas._image
   return img,canvas
 
 def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
-               **kwargs):
+               fitImage=False, options={}, **kwargs):
   """ returns a PIL image containing a drawing of the molecule
 
     Keyword arguments:
@@ -64,7 +63,10 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
   if not mol:
     raise ValueError,'Null molecule provided'
   img,canvas=_createCanvas(size)
-  drawer = MolDrawing(canvas)
+  if fitImage:
+      options['dotsPerAngstrom'] = int(min(size) / 10)
+  options['wedgeDashedBonds'] = wedgeBonds
+  drawer = MolDrawing(canvas, options)
 
   if kekulize:
     from rdkit import Chem
@@ -75,8 +77,6 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
   
-  drawer.wedgeDashedBonds=wedgeBonds
-
   if kwargs.has_key('legend'):
     legend = kwargs['legend']
     del kwargs['legend']
@@ -103,7 +103,7 @@ def MolToImage(mol, size=(300,300), kekulize=True, wedgeBonds=True,
     return img
 
 def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
-              imageType=None,**kwargs):
+              imageType=None, fitImage=False, options={}, **kwargs):
   """ Generates a drawing of a molecule and writes it to a file
   """
   # original contribution from Uwe Hoffmann
@@ -117,13 +117,16 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
     imageType=os.path.splitext(fileName)[1][1:]
 
   useAGG,useCairo,Canvas = _getCanvas()
+  if fitImage:
+      options['dotsPerAngstrom'] = int(min(size) / 10)
+  options['wedgeDashedBonds'] = wedgeBonds
   if useCairo or useAGG:
     canvas = Canvas(size=size,imageType=imageType,
                               fileName=fileName)
   else:
-    MolDrawing.radicalSymbol='.' #<- the sping canvas doesn't support unicode well
+    options['radicalSymbol'] = '.' #<- the sping canvas doesn't support unicode well
     canvas = Canvas(size=size,name=fileName,imageType=imageType)
-  drawer = MolDrawing(canvas)
+  drawer = MolDrawing(canvas, options)
   if kekulize:
     from rdkit import Chem
     mol = Chem.Mol(mol.ToBinary())
@@ -132,8 +135,7 @@ def MolToFile(mol,fileName,size=(300,300),kekulize=True, wedgeBonds=True,
   if not mol.GetNumConformers():
     from rdkit.Chem import AllChem
     AllChem.Compute2DCoords(mol)
-  
-  drawer.wedgeDashedBonds=wedgeBonds
+
   drawer.AddMol(mol,**kwargs)
   if useCairo or useAGG:
     canvas.flush()
@@ -176,14 +178,16 @@ def ShowMol(mol,size=(300,300),kekulize=True,wedgeBonds=True,
 
     
 def MolToMPL(mol,size=(300,300),kekulize=True, wedgeBonds=True,
-             imageType=None,**kwargs):
+             imageType=None, fitImage=False, options={}, **kwargs):
   """ Generates a drawing of a molecule on a matplotlib canvas
   """
   if not mol:
     raise ValueError,'Null molecule provided'
   from mplCanvas import Canvas
   canvas = Canvas(size)
-  drawer = MolDrawing(canvas)
+  if fitImage:
+      options['dotsPerAngstrom'] = int(min(size) / 10)
+  drawer = MolDrawing(canvas, options)
   omol=mol
   if kekulize:
     from rdkit import Chem
