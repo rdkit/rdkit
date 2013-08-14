@@ -1,0 +1,2 @@
+Input_SMILES,ID,RG-Transform,RG-transformedSMILES
+O=C(O)c1ccc(NC(=O)C2COc3ccccc3O2)cc1,2881039,[*:1]C(=O)O>>[*:1]C(N)=O,NC(=O)c1ccc(NC(=O)C2COc3ccccc3O2)cc1
