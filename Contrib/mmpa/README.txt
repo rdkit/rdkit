@@ -30,13 +30,13 @@ canonicalisation result in not identifying MMPs involving H atom substitution.
 python rfrag.py <SMILES_FILE >FRAGMENT_OUTPUT
 
 Example command: 
-python rfrag.py <sample.smi >sample_fragmented.txt
+python rfrag.py <data/sample.smi >data/sample_fragmented.txt
 
 Format of SMILES_FILE is: SMILES ID <space or comma separated>
-See sample.smi for an example input file
+See data/sample.smi for an example input file
 
 Format of output: WHOLE_MOL_SMILES,ID,SMILES_OF_CORE,SMILES_OF_CONTEXT
-See sample_fragmented.txt for an example output file 
+See data/sample_fragmented.txt for an example output file 
 
 2) Index command:
 
@@ -70,19 +70,19 @@ Options:
 Example commands (with sample outputs):
 
 Default settings:
-python indexing.py <sample_fragmented.txt >sample_mmps_default.csv
+python indexing.py <data/sample_fragmented.txt >data/sample_mmps_default.csv
 
 Output symmetrically equivalent MMPs (ie forward and reverse transforms):
-python indexing.py -s <sample_fragmented.txt >sample_mmps_sym.csv
+python indexing.py -s <data/sample_fragmented.txt >data/sample_mmps_sym.csv
 
 Output MMPs where maximum size of change is 3 heavy atoms:
-python indexing.py -m 3 <sample_fragmented.txt >sample_mmps_maxheavy.csv
+python indexing.py -m 3 <data/sample_fragmented.txt >data/sample_mmps_maxheavy.csv
 
 Output MMPs where no more that 10% of the compound has changed:
-python indexing.py -r 0.1 <sample_fragmented.txt >sample_mmps_maxratio.csv
+python indexing.py -r 0.1 <data/sample_fragmented.txt >data/sample_mmps_maxratio.csv
 
 Output symmetrically equivalent MMPs where maximum size of change is 3 heavy atoms:
-python indexing.py -s -m 3 <sample_fragmented.txt >sample_mmps_sym_maxheavy.csv
+python indexing.py -s -m 3 <data/sample_fragmented.txt >data/sample_mmps_sym_maxheavy.csv
  
 SMIRKS canonicalisation
 -----------------------
@@ -94,13 +94,13 @@ To canonicalise a SMIRKS (generated elsewhere) so it is in the same format as MM
 python cansmirks.py <SMIRKS_FILE >SMIRKS_OUTPUT_FILE
 
 Example command:
-python cansmirk.py <sample_smirks.txt >sample_cansmirks.txt
+python cansmirk.py <data/sample_smirks.txt >data/sample_cansmirks.txt
 
 Format of SMIRKS_FILE: SMIRKS ID <space or comma separated>
-See sample_smirks.txt for an example input file
+See data/sample_smirks.txt for an example input file
   
 Format of output: CANONICALISED_SMIRKS ID
-See sample_cansmirks.txt for an example output file
+See data/sample_cansmirks.txt for an example output file
 
 Note: The script will NOT deal with SMARTS characters, so the SMIRKS must contain valid SMILES for left and right hand sides.
 
@@ -122,16 +122,16 @@ If you want to use a set SMIRKS generated elsewhere, please make sure they have 
 using the cansmirks.py command.
 
 Example command:
-mol_transform.py -f sample_smirks_mol_trans.txt <sample_smiles_mol_trans.smi >sample_mol_trans_output.txt
+mol_transform.py -f data/sample_smirks_mol_trans.txt <data/sample_smiles_mol_trans.smi >data/sample_mol_trans_output.txt
 
 Format of SMILES_FILE: SMILES ID <space or comma separated>
-See sample_smiles_mol_trans.smi for an example input file
+See data/sample_smiles_mol_trans.smi for an example input file
 
 Format of transform file: transform <one per line>
-See sample_smirks_mol_trans.txt for an example transform file
+See data/sample_smirks_mol_trans.txt for an example transform file
 
 Format of output: SMILES,ID,Transform,Modified_SMILES
-See sample_mol_trans_output.txt for an example output file
+See data/sample_mol_trans_output.txt for an example output file
 
 Generating and searching an MMP database
 ----------------------------------------
@@ -185,17 +185,17 @@ Options:
 Example commands:
 
 Default Settings:
-python create_mmp_db.py <sample_fragmented.txt
+python create_mmp_db.py <data/sample_fragmented.txt
 
 A sqllite3 db file will be created called mmp.db
 
 Generate a db with the prefix "my_MMP_db" and SMARTS searching capability:
-python create_mmp_db.py -p my_MMP_db -s <sample_fragmented.txt
+python create_mmp_db.py -p my_MMP_db -s <data/sample_fragmented.txt
 
 A sqllite3 db file will be created called my_MMP_db.db and a DbCLi files will be created in a directory called my_MMP_db_smarts
 
 Generate a db with SMARTS searching capability and where only changes up to (and including) 10 heavy atoms are stored:
-python create_mmp_db.py -m 10 -s <sample_fragmented.txt
+python create_mmp_db.py -m 10 -s <data/sample_fragmented.txt
 
 Searching the db
 ----------------
@@ -249,52 +249,52 @@ The transform SMARTS are input as LHS_SMARTS>>RHS_SMARTS (eg.
 very general SMARTS expression is used.
 
 Example commands to search a db:
-The db was created using command: python create_mmp_db.py -m 10 -s <sample_fragmented.txt
+The db was created using command: python create_mmp_db.py -m 10 -s <data/sample_fragmented.txt
 
 a) To carry out a mmp search:
-python search_mmp_db.py -t mmp <sample_db_input_smi.txt >sample_db_search_smi_output.txt
+python search_mmp_db.py -t mmp <data/sample_db_input_smi.txt >data/sample_db_search_smi_output.txt
 
 Format of input file: SMILES ID <space or comma separated. The ID field is optional>
-See sample_db_input_smi.txt for an example input file 
+See data/sample_db_input_smi.txt for an example input file 
 
 Format of output: SMILES_QUERY,SMILES_OF_MMP,QUERY_ID,RETRIEVED_ID,CHANGED_SMILES,CONTEXT_SMILES
-See sample_db_search_smi_output.txt for an example output file
+See data/sample_db_search_smi_output.txt for an example output file
 
 b) To carry out a LHS transform substructure search:
-python search_mmp_db.py -t subs <sample_db_input_subs.txt >sample_db_search_subs_output.txt
+python search_mmp_db.py -t subs <data/sample_db_input_subs.txt >data/sample_db_search_subs_output.txt
 
 Format of input file: Substructure_SMILES ID <space or comma separated. The ID field is optional>
-See sample_db_input_subs.txt for an example input file 
+See data/sample_db_input_subs.txt for an example input file 
 
 Format of output: Input_substructure[,input_id],SMILES_MMP1,SMILES_MMP2,MMP1_ID,MMP2_ID,Transform,Context
-See sample_db_search_subs_output.txt for an example output file
+See data/sample_db_search_subs_output.txt for an example output file
 
 c) To carry out a transform search:
-python search_mmp_db.py -t trans <sample_db_input_trans.txt >sample_db_search_trans_output.txt
+python search_mmp_db.py -t trans <data/sample_db_input_trans.txt >data/sample_db_search_trans_output.txt
 
 Format of input file: SMIRKS ID <space or comma separated. The ID field is optional>
-See sample_db_input_trans.txt for an example input file 
+See data/sample_db_input_trans.txt for an example input file 
 
 Format of output: [input_id,]SMILES_MMP1,SMILES_MMP2,MMP1_ID,MMP2_ID,Transform,Context
-See sample_db_search_trans_output.txt for an example output file
+See data/sample_db_search_trans_output.txt for an example output file
 
 d) To carry out a LHS transform substructure SMARTS search:
-search_mmp_db.py -t subs_smarts <sample_db_input_subs_smarts.txt >sample_db_search_subs_smart_output.txt
+search_mmp_db.py -t subs_smarts <data/sample_db_input_subs_smarts.txt >data/sample_db_search_subs_smart_output.txt
 
 Format of input file: SMARTS ID <space or comma separated. The ID field is optional>
-See sample_db_input_subs_smarts.txt for an example input file 
+See data/sample_db_input_subs_smarts.txt for an example input file 
 
 Format of output: [input_id,]SMILES_MMP1,SMILES_MMP2,MMP1_ID,MMP2_ID,Transform,Context
-See sample_db_search_subs_smart_output.txt for an example output file
+See data/sample_db_search_subs_smart_output.txt for an example output file
 
 e) To carry out a transform SMARTS search (with max size change of 6 heavy atoms):
-search_mmp_db.py -t trans_smarts -m 6 <sample_db_input_trans_smarts.txt >sample_db_search_trans_smarts_output.txt
+search_mmp_db.py -t trans_smarts -m 6 <data/sample_db_input_trans_smarts.txt >data/sample_db_search_trans_smarts_output.txt
 
 Format of input file: SMARTS ID <space or comma separated. The ID field is optional>
-See sample_db_input_trans_smarts.txt for an example input file 
+See data/sample_db_input_trans_smarts.txt for an example input file 
 
 Format of output: input_transform_SMARTS,[input_id,]SMILES_MMP1,SMILES_MMP2,MMP1_ID,MMP2_ID,Transform,Context
-See sample_db_search_trans_smarts_output.txt for an example output file
+See data/sample_db_search_trans_smarts_output.txt for an example output file
   
 In the event you use the scripts for publication please reference the original publication:
 
