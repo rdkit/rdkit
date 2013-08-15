@@ -9,9 +9,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import cairo
+try:
+  import cairo
+except ImportError:
+  import cairocffi as cairo
 if not hasattr(cairo.ImageSurface,'get_data'):
-  raise ImportError,'cairo version too old'
+  raise ImportError,'cairo version too old'  
+
 
 import math
 import rdkit.RDConfig
