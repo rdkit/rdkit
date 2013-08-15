@@ -244,7 +244,7 @@ namespace RDDepict {
       if (numCommonAtoms == 2) {
         // if we found a ring with two atoms in common get out 
         nextId = currRingId;
-        return commonAtoms;
+        return commonAtoms; // FIX: this causes the rendering to be non-canonical
       }
       if (numCommonAtoms > maxCommonAtoms) {
         maxCommonAtoms = numCommonAtoms;

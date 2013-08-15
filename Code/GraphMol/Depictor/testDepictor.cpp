@@ -20,6 +20,7 @@
 #include "RDDepictor.h"
 #include "DepictUtils.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Conformer.h>
 #include <Geometry/point.h>
@@ -682,6 +683,64 @@ void testGitHubIssue8() {
   }
 }
 
+void testGitHubIssue78() {
+  {  // the basic test: the smallest reproducible:
+    std::string smi = "C3CCCC1C3C(O2)C2CC1";
+    RWMol *m1 = SmilesToMol(smi);
+    TEST_ASSERT(m1);
+    unsigned int cid1 = RDDepict::compute2DCoords(*m1);
+    const Conformer &conf = m1->getConformer(cid1);
+    RDGeom::Point3D p5 = conf.getAtomPos(5);
+    RDGeom::Point3D p6 = conf.getAtomPos(6);
+    RDGeom::Point3D p7 = conf.getAtomPos(7);
+    RDGeom::Point3D p8 = conf.getAtomPos(8);
+    RDGeom::Point3D p9 = conf.getAtomPos(9);
+
+    RDGeom::Point3D p87 = p8-p7;
+    RDGeom::Point3D p86 = p8-p6;
+    RDGeom::Point3D p89 = p8-p9;
+    TEST_ASSERT(p87.dotProduct(p86)*p87.dotProduct(p89)<0);
+    
+    RDGeom::Point3D p67 = p6-p7;
+    RDGeom::Point3D p68 = p6-p8;
+    RDGeom::Point3D p65 = p6-p5;
+    TEST_ASSERT(p67.dotProduct(p68)*p67.dotProduct(p65)<0);
+
+    delete m1;
+  }
+  {  // a collection of previous failures
+    std::string smis[4] = {"C1=CC=C2C(=C1)C3=CC=CC=C3C4=C2C(C(C5C4O5)O)O",
+                          "CC1=C2C=C(C=CC2=NC3=C1C4=C(O4)C5=CC=CC=C53)CO",
+                          "CC1=C2C=CC3=C(C2=CC4=CC=CC=C14)C5C(O5)C(C3O)O",
+                          "C1=CC=C2C(=C1)C=C3C=CC4=C5C3=C2C6C(C5=CC=C4)O6"};
+    RWMol *p = SmartsToMol("[#6]~[#6]~1-[#8]-[#6]~1~[#6]");
+    TEST_ASSERT(p);
+    for(unsigned int i=0;i<4;++i){
+      RWMol *m = SmilesToMol(smis[i]);
+      TEST_ASSERT(m);
+      MatchVectType mv;
+      TEST_ASSERT(SubstructMatch(*m,*p,mv));
+      TEST_ASSERT(mv.size()==5);
+                  
+      unsigned int cid1 = RDDepict::compute2DCoords(*m);
+      const Conformer &conf = m->getConformer(cid1);
+      RDGeom::Point3D v10 = conf.getAtomPos(mv[1].second)-conf.getAtomPos(mv[0].second);
+      RDGeom::Point3D v12 = conf.getAtomPos(mv[1].second)-conf.getAtomPos(mv[2].second);
+      RDGeom::Point3D v13 = conf.getAtomPos(mv[1].second)-conf.getAtomPos(mv[3].second);
+      TEST_ASSERT(v12.dotProduct(v10)*v12.dotProduct(v13)<0);
+      
+      RDGeom::Point3D v31 = conf.getAtomPos(mv[3].second)-conf.getAtomPos(mv[1].second);
+      RDGeom::Point3D v32 = conf.getAtomPos(mv[3].second)-conf.getAtomPos(mv[2].second);
+      RDGeom::Point3D v34 = conf.getAtomPos(mv[3].second)-conf.getAtomPos(mv[4].second);
+      TEST_ASSERT(v32.dotProduct(v32)*v32.dotProduct(v34)<0);
+      
+      
+      delete m;
+    }
+    delete p;
+  }
+}
+
 int main() { 
   RDLog::InitLogs();
 #if 1
@@ -786,10 +845,14 @@ int main() {
   testIssue3487469();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
-#endif
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
   BOOST_LOG(rdInfoLog)<< "   Test GitHub Issue 8\n";
   testGitHubIssue8();
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+#endif
+  BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
+  BOOST_LOG(rdInfoLog)<< "   Test GitHub Issue 78\n";
+  testGitHubIssue78();
   BOOST_LOG(rdInfoLog)<< "***********************************************************\n";
 
 

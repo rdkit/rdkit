@@ -543,7 +543,7 @@ namespace RDDepict {
 
   void EmbeddedFrag::reflectIfNecessaryDensity(EmbeddedFrag &embFrag, 
                                                unsigned int aid1, unsigned int aid2) {
-    // of we will do this the new way by measuring a density function
+    // ok we will do this the new way by measuring a density function
     RDGeom::Point2D pin1 = d_eatoms[aid1].loc;
     RDGeom::Point2D pin2 = d_eatoms[aid2].loc;
     double densityNormal = 0.0;
@@ -556,8 +556,6 @@ namespace RDDepict {
     for (oci = oatoms.begin(); oci != oatoms.end(); oci++) {
       oaid = oci->first;
       if (d_eatoms.find(oaid) == d_eatoms.end()) {
-        closestD = 1.0e8;
-        rclosestD = 1.0e8;
         loc1 = oci->second.loc;
         rloc1 = reflectPoint(loc1, pin1, pin2);
         for (tci = d_eatoms.begin(); tci != d_eatoms.end(); tci++) {
@@ -567,23 +565,16 @@ namespace RDDepict {
           rt1 = tci->second.loc;
           rt1 -= rloc1;
           double rtd = rt1.length();
-          if (td < closestD){
-            closestD = td;
+          if (td > 1.0e-3) {
+            densityNormal += (1.0/td);
+          } else {
+            densityNormal += 1000.0;
           }
-          if (rtd < rclosestD) {
-            rclosestD = rt1.length();
+          if (rtd > 1.0e-3) {
+            densityReflect += (1.0/rtd);
+          } else {
+            densityReflect += 1000.0;
           }
-        }
-        if (closestD > 1.0e-3) {
-          densityNormal += (1.0/closestD);
-        } else {
-          densityNormal += 1000.0;
-        }
-        
-        if (rclosestD > 1.0e-3) {
-          densityReflect += (1.0/rclosestD);
-        } else {
-          densityReflect += 1000.0;
         }
       }
     }
