@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
           }
           smiSupplier.reset();
         }
-        SDWriter::SDWriter *sdfWriter = new SDWriter::SDWriter
+        SDWriter *sdfWriter = new SDWriter
           ((*molFileIt).substr(0, (*molFileIt).length() - 4) + "_min"
           + ((*molTypeIt == "smi") ? "_from_SMILES" : "") + ".sdf");
         ROMol *mol;

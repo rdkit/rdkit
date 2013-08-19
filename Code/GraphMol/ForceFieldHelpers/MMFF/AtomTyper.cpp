@@ -279,8 +279,8 @@ namespace RDKit {
       VECT_INT_VECT atomRings = ringInfo->atomRings();
       ROMol::ADJ_ITER nbrIdx;
       ROMol::ADJ_ITER endNbrs;
-      ExplicitBitVect::ExplicitBitVect aromBitVect(mol->getNumAtoms());
-      ExplicitBitVect::ExplicitBitVect aromRingBitVect(atomRings.size());
+      ExplicitBitVect aromBitVect(mol->getNumAtoms());
+      ExplicitBitVect aromRingBitVect(atomRings.size());
       
       
       aromBitVect.clearBits();
@@ -2957,7 +2957,7 @@ namespace RDKit {
       std::pair<int, double> bci;
       double pChg = 0.0;
       double fChg = 0.0;
-      ExplicitBitVect::ExplicitBitVect conjNBitVect(mol->getNumAtoms());
+      ExplicitBitVect conjNBitVect(mol->getNumAtoms());
       VECT_INT_VECT atomRings = mol->getRingInfo()->atomRings();
       ROMol::ADJ_ITER nbrIdx;
       ROMol::ADJ_ITER endNbrs;
