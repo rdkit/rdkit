@@ -46,6 +46,11 @@ bool fgrep(std::fstream &fStream, std::string key, std::string &line)
   return found;
 }
 
+bool fgrep2(std::fstream &fStream, std::string key){
+  std::string line;
+  return fgrep(fStream,key,line);
+}
+
 
 bool getLineByNum(std::istream& stream,
   std::streampos startPos, unsigned int n, std::string& line)
@@ -270,6 +275,7 @@ int main(int argc, char *argv[])
   std::streampos refCurrent;
   unsigned int i = 1;
   unsigned int n = 0;
+  unsigned int skip=9;
   bool error = false;
   while (i < argc) {
     arg = argv[i];
@@ -306,6 +312,12 @@ int main(int argc, char *argv[])
         break;
       }
       rdk = argv[i + 1];
+      ++i;
+    }
+    else if (arg == "-L") {
+      // by default we skip 9 entries per entry done
+      // enabling this flag runs the full test suite
+      skip=0;
       ++i;
     }
     ++i;
@@ -396,7 +408,7 @@ int main(int argc, char *argv[])
           rdkFStream << "*";
         }
         rdkFStream << std::endl << std::endl;
-        for (i = 0; i < molVec.size(); ++i) {
+        for (i = 0; i < molVec.size(); i+=(1+skip)) {
           if (*molTypeIt == "sdf") {
             mol = molVec[i];
           }
@@ -467,7 +479,7 @@ int main(int argc, char *argv[])
             break;
           }
           errorMsg = ref + ": Molecule not found";
-          found = fgrep(refFStream, nameArray[i]);
+          found = fgrep2(refFStream, nameArray[i]);
           if (!found) {
             break;
           }
