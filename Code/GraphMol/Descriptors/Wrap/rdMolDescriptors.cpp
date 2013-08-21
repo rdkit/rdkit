@@ -447,7 +447,7 @@ namespace {
     return pyDescr;
   }
 
-  python::list GetUSRDistributions(python::object coords) {
+  python::list GetUSRDistributions(python::object coords, python::object points) {
     unsigned int numCoords = python::extract<unsigned int>(coords.attr("__len__")());
     if (numCoords == 0) {
       throw_value_error("no coordinates");
@@ -458,8 +458,17 @@ namespace {
       *pt = python::extract<RDGeom::Point3D>(coords[i]);
       c[i] = pt;
     }
+    std::vector<RDGeom::Point3D> pts(4);
     std::vector<std::vector<double> > distances(4);
-    RDKit::Descriptors::calcUSRDistributions(c, distances);
+    RDKit::Descriptors::calcUSRDistributions(c, distances, pts);
+    if (points != python::object()) {
+      // make sure the optional argument actually was a list
+      python::list tmpPts = python::extract<python::list>(points);
+      BOOST_FOREACH(RDGeom::Point3D p, pts) {
+        tmpPts.append(p);
+      }
+      points = tmpPts;
+    }
     python::list pyDist;
     BOOST_FOREACH(std::vector<double> dist, distances) {
       python::list pytmp;
@@ -467,6 +476,9 @@ namespace {
         pytmp.append(d);
       }
       pyDist.append(pytmp);
+    }
+    BOOST_FOREACH(const RDGeom::Point3D *pt, c) {
+      delete pt;
     }
     return pyDist;
   }
@@ -499,6 +511,9 @@ namespace {
         pytmp.append(d);
       }
       pyDist.append(pytmp);
+    }
+    BOOST_FOREACH(const RDGeom::Point3D *pt, c) {
+      delete pt;
     }
     return pyDist;
   }
@@ -790,21 +805,22 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   docString="Returns the four USR distance distributions for a set of coordinates";
   python::def("GetUSRDistributions", GetUSRDistributions,
-              (python::arg("coords")=python::list()),
+              (python::arg("coords"),
+               python::arg("points")=python::object()),
               docString.c_str());
   docString="Returns the USR distance distributions for a set of coordinates and points";
   python::def("GetUSRDistributionsFromPoints", GetUSRDistributionsFromPoints,
-              (python::arg("coords")=python::list(),
-               python::arg("points")=python::list()),
+              (python::arg("coords"),
+               python::arg("points")),
               docString.c_str());
   docString="Returns the USR descriptor from a set of distance distributions";
   python::def("GetUSRFromDistributions", GetUSRFromDistributions,
-              (python::arg("distances")=python::list()),
+              (python::arg("distances")),
               docString.c_str());
   docString="Returns the USR score for two USR descriptors";
   python::def("GetUSRScore", GetUSRScore,
-              (python::arg("descriptor1")=python::list(),
-               python::arg("descriptor2")=python::list()),
+              (python::arg("descriptor1"),
+               python::arg("descriptor2")),
               docString.c_str());
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"

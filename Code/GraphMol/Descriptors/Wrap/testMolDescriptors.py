@@ -219,20 +219,23 @@ class TestCase(unittest.TestCase) :
     self.failUnlessEqual(len(usr), 12)
 
     self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributions([]))
-    p = [rdG.Point3D(0.0, 0.0, 0.0), rdG.Point3D(-1.5, 0.0, 0.0), rdG.Point3D(0.489528, -2.77625, 0.0), rdG.Point3D(-0.489528, 2.77625, 0.0)]
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints([], p))
+    
     conf = mol.GetConformer()
     coords = [conf.GetAtomPosition(i) for i in range(mol.GetNumAtoms())]
-    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints(coords, []))
     dist = rdMD.GetUSRDistributions(coords)
     self.failUnlessEqual(len(dist), 4)
     self.failUnlessEqual(len(dist[0]), mol.GetNumAtoms())
     self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRFromDistributions([]))
     usr2 = rdMD.GetUSRFromDistributions(dist)
     self.failUnlessEqual(usr, usr2)
+
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints(coords, []))
+    p = []
+    dist = rdMD.GetUSRDistributions(coords, p)
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints([], p))
     dist2 = rdMD.GetUSRDistributionsFromPoints(coords, p)
     usr2 = rdMD.GetUSRFromDistributions(dist2)
-    [self.failUnless(feq(u1, u2)) for u1,u2 in zip(usr, usr2)]
+    self.failUnlessEqual(usr, usr2)
 
     mol2 = Chem.MolFromSmiles("C1CCCCC1")
     mol2 = Chem.AddHs(mol2)

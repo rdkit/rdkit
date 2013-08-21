@@ -1645,7 +1645,12 @@ void testUSRDescriptor(){
   for (unsigned int i = 0; i < myUSR.size(); ++i) {
       TEST_ASSERT(feq(myUSR[i], refUSR[i]));
   }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
+void testUSRScore(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test USR Score" << std::endl;
   // SCORE
   // descriptors and reference score from JCC (2007), 28, 1711-1723.
   double m1[12]={4.44, 2.98, 1.04, 4.55, 4.70, 0.23, 8.30, 16.69, -22.97, 7.37, 15.64, 0.51};

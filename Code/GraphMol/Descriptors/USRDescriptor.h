@@ -43,11 +43,13 @@ namespace RDKit{
       Calculates the four distance distributions for the USR descriptor
 
       \param coords      the atom coordinates
-      \param dist    storage for the four distance distributions
+      \param dist        storage for the four distance distributions
+      \param points      storage for the four points
 
     */
     void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
-                              std::vector<std::vector<double> > &dist);
+                              std::vector<std::vector<double> > &dist,
+                              std::vector<RDGeom::Point3D> &points);
 
     /*!
       Calculates the four distance distributions for the USR descriptor
