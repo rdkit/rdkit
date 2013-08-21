@@ -883,6 +883,17 @@ namespace RDKit{
             }
           }
         }        
+        for(ROMol::BondIterator bondIt=mol.beginBonds();
+            bondIt!=mol.endBonds();++bondIt){
+          // wedged bonds to atoms that have no stereochem 
+          // should be removed. (github issue 87)
+          if(((*bondIt)->getBondDir()==Bond::BEGINWEDGE ||
+              (*bondIt)->getBondDir()==Bond::BEGINDASH) &&
+             (*bondIt)->getBeginAtom()->getChiralTag()==Atom::CHI_UNSPECIFIED &&
+             (*bondIt)->getEndAtom()->getChiralTag()==Atom::CHI_UNSPECIFIED){
+            (*bondIt)->setBondDir(Bond::NONE);
+          }
+        }
       }
       mol.setProp("_StereochemDone",1,true);
 
