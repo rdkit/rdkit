@@ -18,6 +18,7 @@
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
+#include <GraphMol/Descriptors/USRDescriptor.h>
 #include <DataStructs/BitVects.h>
 
 #include <vector>
@@ -430,6 +431,118 @@ namespace {
     return res;
   }
 
+  python::list GetUSR(const RDKit::ROMol &mol, int confId) {
+    if (mol.getNumConformers() == 0) {
+      throw_value_error("no conformers");
+    }
+    if (mol.getNumAtoms() < 3) {
+      throw_value_error("too few atoms (minimum three)");
+    }
+    std::vector<double> descriptor(12);
+    RDKit::Descriptors::USR(mol, descriptor, confId);
+    python::list pyDescr;
+    BOOST_FOREACH(double d, descriptor) {
+      pyDescr.append(d);
+    }
+    return pyDescr;
+  }
+
+  python::list GetUSRDistributions(python::object coords) {
+    unsigned int numCoords = python::extract<unsigned int>(coords.attr("__len__")());
+    if (numCoords == 0) {
+      throw_value_error("no coordinates");
+    }
+    RDGeom::Point3DConstPtrVect c(numCoords);
+    for (unsigned int i = 0; i < numCoords; ++i) {
+      RDGeom::Point3D *pt = new RDGeom::Point3D;
+      *pt = python::extract<RDGeom::Point3D>(coords[i]);
+      c[i] = pt;
+    }
+    std::vector<std::vector<double> > distances(4);
+    RDKit::Descriptors::calcUSRDistributions(c, distances);
+    python::list pyDist;
+    BOOST_FOREACH(std::vector<double> dist, distances) {
+      python::list pytmp;
+      BOOST_FOREACH(double d, dist) {
+        pytmp.append(d);
+      }
+      pyDist.append(pytmp);
+    }
+    return pyDist;
+  }
+
+  python::list GetUSRDistributionsFromPoints(python::object coords, python::object points) {
+    unsigned int numCoords = python::extract<unsigned int>(coords.attr("__len__")());
+    unsigned int numPts = python::extract<unsigned int>(points.attr("__len__")());
+    if (numCoords == 0) {
+      throw_value_error("no coordinates");
+    }
+    RDGeom::Point3DConstPtrVect c(numCoords);
+    for (unsigned int i = 0; i < numCoords; ++i) {
+      RDGeom::Point3D *pt = new RDGeom::Point3D;
+      *pt = python::extract<RDGeom::Point3D>(coords[i]);
+      c[i] = pt;
+    }
+    std::vector<RDGeom::Point3D> p(numPts);
+    if (numPts == 0) {
+      throw_value_error("no points");
+    }
+    for (unsigned int i = 0; i < numPts; ++i) {
+      p[i] = python::extract<RDGeom::Point3D>(points[i]);
+    }
+    std::vector<std::vector<double> > distances(numPts);
+    RDKit::Descriptors::calcUSRDistributionsFromPoints(c, p, distances);
+    python::list pyDist;
+    BOOST_FOREACH(std::vector<double> dist, distances) {
+      python::list pytmp;
+      BOOST_FOREACH(double d, dist) {
+        pytmp.append(d);
+      }
+      pyDist.append(pytmp);
+    }
+    return pyDist;
+  }
+
+  python::list GetUSRFromDistributions(python::object distances) {
+    unsigned int numDist = python::extract<unsigned int>(distances.attr("__len__")());
+    if (numDist == 0) {
+      throw_value_error("no distances");
+    }
+    std::vector<std::vector<double> > dist(numDist);
+    for (unsigned int i = 0; i < numDist; ++i) {
+      unsigned int numPts = python::extract<unsigned int>(distances[i].attr("__len__")());
+      if (numPts == 0) {
+        throw_value_error("distances missing");
+      }
+      std::vector<double> tmpDist(numPts);
+      for (unsigned int j = 0; j < numPts; ++j) {
+        tmpDist[j] = python::extract<double>(distances[i][j]);
+      }
+      dist[i] = tmpDist;
+    }
+    std::vector<double> descriptor(12);
+    RDKit::Descriptors::calcUSRFromDistributions(dist, descriptor);
+    python::list pyDescr;
+    BOOST_FOREACH(double d, descriptor) {
+      pyDescr.append(d);
+    }
+    return pyDescr;
+  }
+
+  double GetUSRScore(python::object descriptor1, python::object descriptor2) {
+    unsigned int numElements = python::extract<unsigned int>(descriptor1.attr("__len__")());
+    if (numElements != python::extract<unsigned int>(descriptor2.attr("__len__")()) ) {
+      throw_value_error("descriptors must have the same length");
+    }
+    std::vector<double> d1(numElements);
+    std::vector<double> d2(numElements);
+    for (unsigned int i = 0; i < numElements; ++i) {
+      d1[i] = python::extract<double>(descriptor1[i]);
+      d2[i] = python::extract<double>(descriptor2[i]);
+    }
+    return RDKit::Descriptors::calcUSRScore(d1, d2);
+  }
+
   python::list CalcSlogPVSA(const RDKit::ROMol &mol,
                             python::object bins,
                             bool force){
@@ -668,6 +781,31 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
   python::scope().attr("_FeatureInvariants_version")=
     RDKit::MorganFingerprints::morganFeatureInvariantVersion;
+
+  // USR descriptor
+  docString="Returns a USR descriptor for one conformer of a molecule";
+  python::def("GetUSR", GetUSR,
+              (python::arg("mol"),
+               python::arg("confId")=-1),
+              docString.c_str());
+  docString="Returns the four USR distance distributions for a set of coordinates";
+  python::def("GetUSRDistributions", GetUSRDistributions,
+              (python::arg("coords")=python::list()),
+              docString.c_str());
+  docString="Returns the USR distance distributions for a set of coordinates and points";
+  python::def("GetUSRDistributionsFromPoints", GetUSRDistributionsFromPoints,
+              (python::arg("coords")=python::list(),
+               python::arg("points")=python::list()),
+              docString.c_str());
+  docString="Returns the USR descriptor from a set of distance distributions";
+  python::def("GetUSRFromDistributions", GetUSRFromDistributions,
+              (python::arg("distances")=python::list()),
+              docString.c_str());
+  docString="Returns the USR score for two USR descriptors";
+  python::def("GetUSRScore", GetUSRScore,
+              (python::arg("descriptor1")=python::list(),
+               python::arg("descriptor2")=python::list()),
+              docString.c_str());
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
     "the Wildman-Cripppen logp and mr value";

@@ -2,8 +2,10 @@
 # 
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as rdMD
+from rdkit.Chem import AllChem
 from rdkit import DataStructs
 from rdkit import RDConfig
+from rdkit.Geometry import rdGeometry as rdG
 import unittest
 
 def feq(v1, v2, tol=1.e-4) :
@@ -205,6 +207,39 @@ class TestCase(unittest.TestCase) :
     self.failUnlessEqual(ls,['N11', 'C18', 'C18', 'C18', 'C18', 'C21', 'C10', 'O2'])
 
 
+  def testUSR(self):
+    mol = Chem.MolFromSmiles("CC")
+    AllChem.Compute2DCoords(mol)
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSR(mol))
+    mol = Chem.MolFromSmiles("C1CCCCC1")
+    mol = Chem.AddHs(mol)
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSR(mol))
+    AllChem.Compute2DCoords(mol)
+    usr = rdMD.GetUSR(mol)
+    self.failUnlessEqual(len(usr), 12)
+
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributions([]))
+    p = [rdG.Point3D(0.0, 0.0, 0.0), rdG.Point3D(-1.5, 0.0, 0.0), rdG.Point3D(0.489528, -2.77625, 0.0), rdG.Point3D(-0.489528, 2.77625, 0.0)]
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints([], p))
+    conf = mol.GetConformer()
+    coords = [conf.GetAtomPosition(i) for i in range(mol.GetNumAtoms())]
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRDistributionsFromPoints(coords, []))
+    dist = rdMD.GetUSRDistributions(coords)
+    self.failUnlessEqual(len(dist), 4)
+    self.failUnlessEqual(len(dist[0]), mol.GetNumAtoms())
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRFromDistributions([]))
+    usr2 = rdMD.GetUSRFromDistributions(dist)
+    self.failUnlessEqual(usr, usr2)
+    dist2 = rdMD.GetUSRDistributionsFromPoints(coords, p)
+    usr2 = rdMD.GetUSRFromDistributions(dist2)
+    [self.failUnless(feq(u1, u2)) for u1,u2 in zip(usr, usr2)]
+
+    mol2 = Chem.MolFromSmiles("C1CCCCC1")
+    mol2 = Chem.AddHs(mol2)
+    AllChem.Compute2DCoords(mol2)
+    usr2 = rdMD.GetUSR(mol2)
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRScore(usr, usr2[:2]))
+    self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2), 1.0)
     
 
   def testMolWt(self):

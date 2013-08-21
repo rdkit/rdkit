@@ -22,8 +22,8 @@ namespace RDKit{
   namespace {
     void calcDistances(const RDGeom::Point3DConstPtrVect &coords,
                        const RDGeom::Point3D &point,
-                       RDNumeric::Vector<double> &distances) {
-      PRECONDITION(distances.size() == coords.size(), "distances and coords must be the same size");
+                       std::vector<double> &distances) {
+      distances.resize(coords.size(), 0.0);
       RDGeom::Point3D tmpPt;
       unsigned int i = 0;
       // loop over coordinates
@@ -44,12 +44,35 @@ namespace RDKit{
       pt /= coords.size();
     }
 
-    void calcMoments(const RDNumeric::Vector<double> &dist,
-                     RDNumeric::Vector<double> &moments) {
-      PRECONDITION(moments.size() == 3, "moments must have 3 elements");
+    unsigned int largestValId(std::vector<double> &v) {
+      double res = double(-1.e8);
+      unsigned int id = v.size();
+      for (unsigned int i = 0; i < v.size(); i++) {
+        if (v[i] > res) {
+          res = v[i];
+          id = i;
+        }
+      }
+      return id;
+    }
+
+    unsigned int smallestValId(std::vector<double> &v) {
+      double res = double(1.e8);
+      unsigned int id = v.size();
+      for (unsigned int i = 0; i < v.size(); i++) {
+        if (v[i] < res) {
+          res = v[i];
+          id = i;
+        }
+      }
+      return id;
+    }
+
+    void calcMoments(const std::vector<double> &dist,
+                     std::vector<double> &descriptor,
+                     int idx) {
       PRECONDITION(dist.size() != 0,"no distances");
-      // set all elements to zero
-      moments *= 0.0;
+      std::vector<double> moments (3, 0.0);
       unsigned int numPts = dist.size();
       // 1. moment: mean
       for (unsigned int i = 0; i < numPts; ++i) {
@@ -66,13 +89,9 @@ namespace RDKit{
       moments[1] = sqrt(moments[1] / numPts);
       moments[2] /= numPts;
       moments[2] = cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
-    }
-
-    void addMoments(std::vector<double> &d,
-                    const RDNumeric::Vector<double> &m,
-                    int idx) {
-      for (unsigned int i = 0; i < m.size(); ++i) {
-        d[i + idx] = m[i];
+      // add moments to descriptor
+      for (unsigned int i = 0; i < moments.size(); ++i) {
+        descriptor[i + idx] = moments[i];
       }
     }
 
@@ -98,40 +117,45 @@ namespace RDKit{
       for (unsigned int ai = 0; ai < na; ++ai) {
         coords[ai] = &conf.getAtomPos(ai);
       }
-      calcUSRForPoints(coords, descriptor);
+      // the four distances
+      std::vector<std::vector<double> > dist(4);
+      calcUSRDistributions(coords, dist);
+
+      calcUSRFromDistributions(dist, descriptor);
     }
 
-    void calcUSRForPoints(const RDGeom::Point3DConstPtrVect &coords,
-                          std::vector<double> &descriptor) {
-      PRECONDITION(descriptor.size() == 12, "descriptor must have 12 elements");
+    void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
+                              std::vector<std::vector<double> > &dist) {
+      PRECONDITION(dist.size() == 4, "dist must have 4 elements");
       RDGeom::Point3D pt;
-      RDGeom::Point3D pt2;
-      RDNumeric::Vector<double> dist(coords.size());
-      RDNumeric::Vector<double> moments(3, 0.0);
-
       // ctd = centroid
       calcCentroid(coords, pt);
-      calcDistances(coords, pt, dist);
-      calcMoments(dist, moments);
-      addMoments(descriptor, moments, 0);
-
+      calcDistances(coords, pt, dist[0]);
       // catc = closest atom to centroid
-      pt = (*coords[dist.smallestValId()]); // catc
-      pt2 = (*coords[dist.largestValId()]); // fatc
-      calcDistances(coords, pt, dist);
-      calcMoments(dist, moments);
-      addMoments(descriptor, moments, 3);
-
+      pt = (*coords[smallestValId(dist[0])]);
+      calcDistances(coords, pt, dist[1]);
       // fatc = farthest atom to centroid
-      calcDistances(coords, pt2, dist);
-      calcMoments(dist, moments);
-      addMoments(descriptor, moments, 6);
-
+      pt = (*coords[largestValId(dist[0])]);
+      calcDistances(coords, pt, dist[2]);
       // fatf = farthest atom to fatc
-      pt = (*coords[dist.largestValId()]);
-      calcDistances(coords, pt, dist);
-      calcMoments(dist, moments);
-      addMoments(descriptor, moments, 9);
+      pt = (*coords[largestValId(dist[2])]);
+      calcDistances(coords, pt, dist[3]);
+    }
+
+    void calcUSRDistributionsFromPoints(const RDGeom::Point3DConstPtrVect &coords,
+                                        const std::vector<RDGeom::Point3D> &points,
+                                        std::vector<std::vector<double> > &dist) {
+      PRECONDITION(points.size() == dist.size(), "points and dist must have the same size");
+      for (unsigned int i = 0; i < points.size(); ++i) {
+         calcDistances(coords, points[i], dist[i]);
+      }
+    }
+
+    void calcUSRFromDistributions(const std::vector<std::vector<double> > &dist,
+                                  std::vector<double> &descriptor) {
+      for (unsigned int i = 0; i < dist.size(); ++i) {
+        calcMoments(dist[i], descriptor, 3*i);
+      }
     }
 
     double calcUSRScore(const std::vector<double> &d1, const std::vector<double> &d2) {

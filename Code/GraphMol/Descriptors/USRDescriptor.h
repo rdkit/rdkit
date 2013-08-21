@@ -40,13 +40,36 @@ namespace RDKit{
     void USR(const ROMol &mol, std::vector<double> &descriptor, int confId = -1);
 
     /*!
-      Calculates the USR descriptor for a single conformer
+      Calculates the four distance distributions for the USR descriptor
 
-      \param coords      the 3D coordinates of the atoms of a conformer
+      \param coords      the atom coordinates
+      \param dist    storage for the four distance distributions
+
+    */
+    void calcUSRDistributions(const RDGeom::Point3DConstPtrVect &coords,
+                              std::vector<std::vector<double> > &dist);
+
+    /*!
+      Calculates the four distance distributions for the USR descriptor
+
+      \param coords      the atom coordinates
+      \param points      vector with the points
+      \param dist   storage for the distance distributions
+
+    */
+    void calcUSRDistributionsFromPoints(const RDGeom::Point3DConstPtrVect &coords,
+                                        const std::vector<RDGeom::Point3D> &points,
+                                        std::vector<std::vector<double> > &dist);
+
+    /*!
+      Calculates the USR descriptor from the four distance distributions
+
+      \param dist        vector with the four distance distributions
       \param descriptor  storage for the computed USR descriptor
 
     */
-    void calcUSRForPoints(const RDGeom::Point3DConstPtrVect &coords, std::vector<double> &descriptor);
+    void calcUSRFromDistributions(const std::vector<std::vector<double> > &dist,
+                                  std::vector<double> &descriptor);
 
     /*!
      Calculates the score between two USR descriptors
