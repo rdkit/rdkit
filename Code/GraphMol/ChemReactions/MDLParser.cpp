@@ -172,7 +172,7 @@ namespace RDKit {
 	react= new RWMol();
 	try {
 	  FileParserUtils::ParseV3000CTAB(&inStream,line,react,conf,
-					  chiralityPossible,natoms,nbonds);
+					  chiralityPossible,natoms,nbonds,true,false);
 	} catch (FileParseException &e){
 	  delete react;
 	  react=0;
@@ -203,7 +203,7 @@ namespace RDKit {
 	prod= new RWMol();
 	try {
 	  FileParserUtils::ParseV3000CTAB(&inStream,line,prod,conf,
-					  chiralityPossible,natoms,nbonds);
+					  chiralityPossible,natoms,nbonds,true,false);
 	} catch (FileParseException &e){
 	  delete prod;
 	  prod=0;

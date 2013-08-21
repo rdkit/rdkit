@@ -1665,12 +1665,15 @@ namespace RDKit{
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,unsigned int &nAtoms,
 			unsigned int &nBonds,
-                        bool strictParsing){
+                        bool strictParsing,
+                        bool expectMEND){
       PRECONDITION(inStream,"bad stream");
       PRECONDITION(mol,"bad molecule");
 
       std::string tempStr;
       std::vector<std::string> splitLine;
+
+      bool fileComplete=false;
 
       tempStr = getV3000Line(inStream,line);
       boost::to_upper(tempStr);
@@ -1785,10 +1788,20 @@ namespace RDKit{
         throw FileParseException("END CTAB line not found") ;
       }
 
+      if(expectMEND){
+        tempStr = getLine(inStream);
+        ++line;
+        if(tempStr[0]=='M'&&tempStr.substr(0,6)=="M  END"){
+          fileComplete=true;
+        }
+      } else {
+        fileComplete = true;
+      }
+
       mol->addConformer(conf, true);
       conf=0;
 
-      return true;
+      return fileComplete;
     }
 
     bool ParseV2000CTAB(std::istream *inStream,unsigned int &line,

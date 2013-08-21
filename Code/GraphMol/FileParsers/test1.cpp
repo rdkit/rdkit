@@ -3028,6 +3028,27 @@ void testMolFileTotalValence(){
 }
 
 
+void testGithub88(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 88: M  END not being read from V3K ctabs" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"github88.v3k.mol";
+    bool ok=false;
+    try{
+      MolFileToMol(fName);
+    } catch (FileParseException &e){
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3088,6 +3109,7 @@ int main(int argc,char *argv[]){
   testMolFileChiralFlag();
 #endif
   testMolFileTotalValence();
+  testGithub88();
 
   return 0;
 }
