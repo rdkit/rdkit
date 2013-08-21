@@ -59,7 +59,9 @@ namespace RDKit{
                                                           d_chainId(other.d_chainId),
                                                           d_insertionCode(other.d_insertionCode),
                                                           d_occupancy(other.d_occupancy),
-                                                          d_tempFactor(other.d_tempFactor) {};
+                                                          d_tempFactor(other.d_tempFactor),
+                                                          df_heteroAtom(false),
+                                                          d_secondaryStructure(0) {};
 
     AtomPDBResidueInfo(std::string atomName,
                        unsigned int serialNumber=0,
@@ -68,14 +70,18 @@ namespace RDKit{
                        std::string chainId="",
                        std::string insertionCode="",
                        double occupancy=1.0,
-                       double tempFactor=0.0) :  AtomMonomerInfo(PDBRESIDUE,atomName),
-                                                 d_serialNumber(serialNumber),
-                                                 d_altLoc(altLoc),
-                                                 d_residueName(residueName),
-                                                 d_chainId(chainId),
-                                                 d_insertionCode(insertionCode),
-                                                 d_occupancy(occupancy),
-                                                 d_tempFactor(tempFactor) {};
+                       double tempFactor=0.0,
+                       bool isHeteroAtom=false,
+                       unsigned int secondaryStructure=0) :  AtomMonomerInfo(PDBRESIDUE,atomName),
+                                                             d_serialNumber(serialNumber),
+                                                             d_altLoc(altLoc),
+                                                             d_residueName(residueName),
+                                                             d_chainId(chainId),
+                                                             d_insertionCode(insertionCode),
+                                                             d_occupancy(occupancy),
+                                                             d_tempFactor(tempFactor),
+                                                             df_heteroAtom(isHeteroAtom),
+                                                             d_secondaryStructure(secondaryStructure) {};
     
     unsigned int getSerialNumber() const { return d_serialNumber; };
     void setSerialNumber(unsigned int val) { d_serialNumber=val; };
@@ -91,7 +97,12 @@ namespace RDKit{
     void setOccupancy(double val) { d_occupancy=val; };
     double getTempFactor() const { return d_tempFactor; };
     void setTempFactor(double val) { d_tempFactor=val; };
-
+    bool getIsHeteroAtom() const { return df_heteroAtom; };
+    void setIsHeteroAtom(bool val) { df_heteroAtom=val; };
+    unsigned int getSecondaryStructure() const {return d_secondaryStructure;};
+    void setSecondaryStructure(unsigned int val) { d_secondaryStructure=val; };
+    
+    
     AtomMonomerInfo *copy() const {
       return static_cast<AtomMonomerInfo *>(new AtomPDBResidueInfo(*this));
     }
@@ -99,6 +110,7 @@ namespace RDKit{
   private:
     // the fields here are from the PDB definition 
     // (http://www.wwpdb.org/documentation/format33/sect9.html#ATOM) [9 Aug, 2013]
+    // element and charge are not present since the atom itself stores that information
     unsigned int d_serialNumber;
     std::string d_altLoc;
     std::string d_residueName;
@@ -106,6 +118,10 @@ namespace RDKit{
     std::string d_insertionCode;
     double d_occupancy;
     double d_tempFactor;
+    // additional, non-PDB fields:
+    bool df_heteroAtom;  // is this from a HETATM record?
+    unsigned int d_secondaryStructure;
+
   };
     
 };

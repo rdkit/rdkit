@@ -479,6 +479,10 @@ namespace RDKit{
         streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_OCCUPANCY,info->getOccupancy());
       if(info->getTempFactor())
         streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_TEMPFACTOR,info->getTempFactor());
+      if(info->getIsHeteroAtom())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_ISHETEROATOM,static_cast<char>(info->getIsHeteroAtom()));
+      if(info->getSecondaryStructure())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE,info->getSecondaryStructure());
     }
 
     void unpickleAtomPDBResidueInfo(std::istream &ss,AtomPDBResidueInfo *info,
@@ -486,6 +490,8 @@ namespace RDKit{
       PRECONDITION(info,"no info");
       std::string sval;
       double dval;
+      char cval;
+      unsigned int uival;
       MolPickler::Tags tag=MolPickler::BEGIN_ATOM_MONOMER;
       while(tag!=MolPickler::END_ATOM_MONOMER){
         streamRead(ss,tag,version);
@@ -518,6 +524,14 @@ namespace RDKit{
         case MolPickler::ATOM_PDB_RESIDUE_TEMPFACTOR:
           streamRead(ss,dval,version);
           info->setTempFactor(dval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_ISHETEROATOM:
+          streamRead(ss,cval,version);
+          info->setIsHeteroAtom(cval);
+          break;
+        case MolPickler::ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE:
+          streamRead(ss,uival,version);
+          info->setSecondaryStructure(uival);
           break;
         case MolPickler::END_ATOM_MONOMER:
           break;
