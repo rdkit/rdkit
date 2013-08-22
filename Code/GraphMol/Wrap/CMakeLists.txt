@@ -1,6 +1,6 @@
 rdkit_python_extension(rdchem 
                        rdchem.cpp Table.cpp Atom.cpp Bond.cpp Mol.cpp
-                       Conformer.cpp RingInfo.cpp EditableMol.cpp 
+                       Conformer.cpp RingInfo.cpp EditableMol.cpp MonomerInfo.cpp
                        DEST Chem 
                        LINK_LIBRARIES 
                        SmilesParse ChemTransforms SubstructMatch GraphMol RDGeometryLib RDGeneral RDBoost)

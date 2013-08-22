@@ -475,6 +475,7 @@ namespace RDKit{
     */
     int calcImplicitValence(bool strict=true);
 
+    AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo; };
     const AtomMonomerInfo *getMonomerInfo() const { return dp_monomerInfo; };
     //! takes ownership of the pointer
     void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo=info; };

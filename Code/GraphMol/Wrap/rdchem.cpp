@@ -45,6 +45,7 @@ void wrap_bond();
 void wrap_mol();
 void wrap_ringinfo();
 void wrap_EditableMol();
+void wrap_monomerinfo();
 
 BOOST_PYTHON_MODULE(rdchem)
 {
@@ -118,6 +119,7 @@ BOOST_PYTHON_MODULE(rdchem)
   wrap_mol();
   wrap_EditableMol();
   wrap_ringinfo();
+  wrap_monomerinfo();
 
   //*********************************************
   //
