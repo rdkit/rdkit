@@ -245,6 +245,23 @@ class TestCase(unittest.TestCase) :
     self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2), 1.0)
     
 
+  def testUSRCAT(self):
+    mol = Chem.MolFromSmiles("CC")
+    AllChem.Compute2DCoords(mol)
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
+    mol = Chem.MolFromSmiles("C1CCCCC1")
+    mol = Chem.AddHs(mol)
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol))
+    AllChem.Compute2DCoords(mol)
+    usr = rdMD.GetUSRCAT(mol)
+    self.failUnlessEqual(len(usr), 60)
+    self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol, atomSelections=[]))
+    atoms = [[1, 2, 3, 4, 5, 6], [], [], []]
+    usr2 = rdMD.GetUSRCAT(mol, atomSelections=atoms)
+    self.failUnlessEqual(len(usr), 60)
+    self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2, weights=[1.0, 1.0, 1.0, 1.0, 1.0]), 1.0)
+
+
   def testMolWt(self):
     mol = Chem.MolFromSmiles("C");
     amw = rdMD._CalcMolWt(mol);

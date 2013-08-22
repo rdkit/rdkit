@@ -1,4 +1,4 @@
-benzene
+cyclohexane
      RDKit          2D
 
  18 18  0  0  0  0  0  0  0  0999 V2000
@@ -39,6 +39,6 @@ benzene
   6 17  1  0
   6 18  1  0
 M  END
-benzene
+cyclohexane
 
 $$$$

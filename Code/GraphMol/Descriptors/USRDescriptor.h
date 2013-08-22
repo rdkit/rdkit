@@ -24,13 +24,13 @@ namespace RDKit{
   class Conformer;
   namespace Descriptors {
     /*!
-      Calculates the ultra-fast shape recognition (USR)
+      Calculates the ultra-fast shape recognition (USR) descriptor
 
       Reference: P. J. Ballester, W. G. Richards, JCC (2007), 28, 1711 - 1723.
 
       Derived from RDKit Python implementation of Jan Domanski
       who derived his code from Adrian Schreyer's code:
-      http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd25370e7ef93301d0e28d49a0851c2/usrcat/geometry.py?at=default
+      http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
 
       \param mol          the molecule of interest
       \param descriptor   storage for the computed USR descriptor
@@ -39,6 +39,21 @@ namespace RDKit{
     */
     void USR(const ROMol &mol, std::vector<double> &descriptor, int confId = -1);
 
+    /*!
+      Calculates the ultra-fast shape recognition with CREDO atom types (USRCAT) descriptor
+
+      Reference: A. M. Schreyer, T. Blundell, J. Cheminf. (2012), 4, 27.
+
+      Derived from Python implementation Adrian Schreyer:
+      http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
+
+      \param mol          the molecule of interest
+      \param descriptor   storage for the computed USR descriptor
+      \param confId       the conformer Id
+
+    */
+    void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
+                std::vector<std::vector<unsigned int> > &atomIds, int confId = -1);
     /*!
       Calculates the four distance distributions for the USR descriptor
 
@@ -74,14 +89,16 @@ namespace RDKit{
                                   std::vector<double> &descriptor);
 
     /*!
-     Calculates the score between two USR descriptors
+      Calculates the score between two USRCAT descriptors with weights
 
-     \param d1    descriptor 1
-     \param d2    descriptor 2
+      \param d1       descriptor 1
+      \param d2       descriptor 2
+      \param weights  the weights for each subset of moments
 
-     \return the score
-     */
-    double calcUSRScore(const std::vector<double> &d1, const std::vector<double> &d2);
+      \return the score
+    */
+    double calcUSRScore(const std::vector<double> &d1, const std::vector<double> &d2,
+                        const std::vector<double> &weights);
 
   } // end of namespace Descriptors
 } //end of namespace RDKit

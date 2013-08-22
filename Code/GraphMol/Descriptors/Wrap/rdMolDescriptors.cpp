@@ -544,10 +544,21 @@ namespace {
     return pyDescr;
   }
 
-  double GetUSRScore(python::object descriptor1, python::object descriptor2) {
+  double GetUSRScore(python::object descriptor1, python::object descriptor2,
+                        python::object weights) {
     unsigned int numElements = python::extract<unsigned int>(descriptor1.attr("__len__")());
     if (numElements != python::extract<unsigned int>(descriptor2.attr("__len__")()) ) {
       throw_value_error("descriptors must have the same length");
+    }
+    unsigned int numWeights = numElements / 12;
+    unsigned int numPyWeights = python::extract<unsigned int>(weights.attr("__len__")());
+    std::vector<double> w(numWeights, 1.0); // default weights: all to 1.0
+    if ((numPyWeights > 0) && (numPyWeights != numWeights)) {
+      throw_value_error("number of weights is not correct");
+    } else if (numPyWeights == numWeights) {
+      for (unsigned int i = 0; i < numWeights; ++i) {
+          w[i] = python::extract<double>(weights[i]);
+      }
     }
     std::vector<double> d1(numElements);
     std::vector<double> d2(numElements);
@@ -555,7 +566,45 @@ namespace {
       d1[i] = python::extract<double>(descriptor1[i]);
       d2[i] = python::extract<double>(descriptor2[i]);
     }
-    return RDKit::Descriptors::calcUSRScore(d1, d2);
+    return RDKit::Descriptors::calcUSRScore(d1, d2, w);
+  }
+
+  python::list GetUSRCAT(const RDKit::ROMol &mol, python::object atomSelections, int confId) {
+    if (mol.getNumConformers() == 0) {
+      throw_value_error("no conformers");
+    }
+    if (mol.getNumAtoms() < 3) {
+      throw_value_error("too few atoms (minimum three)");
+    }
+
+    // check if there is an atom selection provided
+    std::vector<std::vector<unsigned int> > atomIds;
+    unsigned int sizeDescriptor = 60;
+    if (atomSelections != python::object()) {
+      // make sure the optional argument actually was a list
+      python::list typecheck = python::extract<python::list>(atomSelections);
+      unsigned int numSel = python::extract<unsigned int>(atomSelections.attr("__len__")());
+      if (numSel == 0) {
+        throw_value_error("empty atom selections");
+      }
+      atomIds.resize(numSel);
+      for (unsigned int i = 0; i < numSel; ++i) {
+        unsigned int numPts = python::extract<unsigned int>(atomSelections[i].attr("__len__")());
+        std::vector<unsigned int> tmpIds(numPts);
+        for (unsigned int j = 0; j < numPts; ++j) {
+            tmpIds[j] = python::extract<unsigned int>(atomSelections[i][j]) - 1;
+        }
+        atomIds[i] = tmpIds;
+      }
+      sizeDescriptor = 12 * (numSel+1);
+    }
+    std::vector<double> descriptor(sizeDescriptor);
+    RDKit::Descriptors::USRCAT(mol, descriptor, atomIds, confId);
+    python::list pyDescr;
+    BOOST_FOREACH(double d, descriptor) {
+      pyDescr.append(d);
+    }
+    return pyDescr;
   }
 
   python::list CalcSlogPVSA(const RDKit::ROMol &mol,
@@ -817,10 +866,17 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("GetUSRFromDistributions", GetUSRFromDistributions,
               (python::arg("distances")),
               docString.c_str());
-  docString="Returns the USR score for two USR descriptors";
+  docString="Returns the USR score for two USR or USRCAT descriptors";
   python::def("GetUSRScore", GetUSRScore,
               (python::arg("descriptor1"),
-               python::arg("descriptor2")),
+               python::arg("descriptor2"),
+               python::arg("weights")=python::list()),
+              docString.c_str());
+  docString="Returns a USRCAT descriptor for one conformer of a molecule";
+  python::def("GetUSRCAT", GetUSRCAT,
+              (python::arg("mol"),
+               python::arg("atomSelections")=python::object(),
+               python::arg("confId")=-1),
               docString.c_str());
 
   docString="returns (as a list of 2-tuples) the contributions of each atom to\n"
