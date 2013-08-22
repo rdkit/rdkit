@@ -63,7 +63,7 @@ class TestCase(unittest.TestCase):
 
   def testSpingFile(self):
     try:
-      from rdkit.Chem.Draw.aggCanvas import Canvas
+      from rdkit.Chem.Draw.spingCanvas import Canvas
     except ImportError:
       logger.info("Skipping sping test")
       return
@@ -106,7 +106,7 @@ class TestCase(unittest.TestCase):
 
   def testSpingImage(self):
     try:
-      from rdkit.Chem.Draw.aggCanvas import Canvas
+      from rdkit.Chem.Draw.spingCanvas import Canvas
     except ImportError:
       return
     os.environ['RDKIT_CANVAS']='sping'
@@ -140,7 +140,7 @@ class TestCase(unittest.TestCase):
 
   def testSpingImageDash(self):
     try:
-      from rdkit.Chem.Draw.aggCanvas import Canvas
+      from rdkit.Chem.Draw.spingCanvas import Canvas
     except ImportError:
       return
     os.environ['RDKIT_CANVAS']='sping'
@@ -150,6 +150,10 @@ class TestCase(unittest.TestCase):
     self.failUnlessEqual(img.size[1],300)
 
   def testGithubIssue54(self):
+    try:
+      from rdkit.Chem.Draw.spingCanvas import Canvas
+    except ImportError:
+      return
     os.environ['RDKIT_CANVAS']='sping'
     mol = Chem.MolFromSmiles('c1([O])ccc(O)cc1')
     img = Draw.MolToImage(mol)

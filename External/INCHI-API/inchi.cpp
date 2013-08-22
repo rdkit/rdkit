@@ -454,11 +454,11 @@ namespace RDKit {
     bool _Valence5NCleanUp4(RWMol& mol, Atom* atom) {
       std::stack<Bond*> stack;
       RWMol::ADJ_ITER nid1, end1;
-      boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
       int nSi = 0;
       int thisId = atom->getIdx();
       Atom* nbrs[2];
       Bond* bonds[2];
+      boost::tie(nid1, end1) = mol.getAtomNeighbors(atom);
       while (nid1 != end1) {
         Atom* nbr = mol.getAtomWithIdx(*nid1);
         Bond* bond = mol.getBondBetweenAtoms(*nid1, thisId);
@@ -471,11 +471,18 @@ namespace RDKit {
           bonds[nSi] = bond;
           nSi ++;
         }
-        nid1++;
+        ++nid1;
       }
       if (nSi != 2)
         return false;
+      nbrs[0]->setFormalCharge(0);
+      nbrs[1]->setFormalCharge(0);
+      bonds[0]->setBondType(Bond::SINGLE);
+      bonds[1]->setBondType(Bond::SINGLE);
 
+#if 0
+      // FIX
+      // not clear why this is here, but it almost definitely shouldn't be
       Atom* s = NULL;
       Atom* c = NULL;
       Bond* sc_bond;
@@ -495,21 +502,18 @@ namespace RDKit {
                sc_bond = bond;
                break;
              }
+             ++nid1
            }
           }
-          atBegin ++;
+          ++atBegin;
       }
 
       if (s == NULL) return false;
-
-      nbrs[0]->setFormalCharge(0);
-      nbrs[1]->setFormalCharge(0);
-      bonds[0]->setBondType(Bond::SINGLE);
-      bonds[1]->setBondType(Bond::SINGLE);
       s->setFormalCharge(0);
       c->setFormalCharge(-1);
       sc_bond->setBondType(Bond::SINGLE);
       atom->setFormalCharge(0);
+#endif
       return true;
     }
 
