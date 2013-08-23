@@ -83,7 +83,8 @@ namespace RDKit {
     bool hSeen=false;
 
     neighborBondIndices.push_back(bond->getIdx());
-    if(bondAtom->getAtomicNum()==1) hSeen=true;
+    if(bondAtom->getAtomicNum()==1 &&
+       bondAtom->getIsotope()==0) hSeen=true;
 
     bool allSingle=true;
     ROMol::OEDGE_ITER beg,end;
@@ -95,7 +96,8 @@ namespace RDKit {
         //break;
       }
       if(nbrBond != bond){
-        if(nbrBond->getOtherAtom(atom)->getAtomicNum()==1) hSeen=true;
+        if((nbrBond->getOtherAtom(atom)->getAtomicNum()==1&&
+            nbrBond->getOtherAtom(atom)->getIsotope()==0)) hSeen=true;
         neighborBondIndices.push_back(nbrBond->getIdx());
       }
       ++beg;

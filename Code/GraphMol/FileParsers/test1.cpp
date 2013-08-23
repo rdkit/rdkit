@@ -3083,6 +3083,35 @@ void testGithub82(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMolFileWithHs(){
+  BOOST_LOG(rdInfoLog) << "testing impact of Hs in mol files on stereochemistry" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"chiral_3h.mol";
+    ROMol *m;
+    m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    delete m;
+
+    m=MolFileToMol(fName,true,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    delete m;
+
+    m=MolFileToMol(fName,false,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    delete m;
+
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
@@ -3142,10 +3171,11 @@ int main(int argc,char *argv[]){
   testSkipLines();
   testIssue269();
   testMolFileChiralFlag();
-#endif
   testMolFileTotalValence();
   testGithub88();
   testGithub82();
+#endif
+  testMolFileWithHs();
 
   return 0;
 }
