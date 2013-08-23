@@ -185,8 +185,6 @@ class TestCase(unittest.TestCase):
 
     """
     data = [
-      ('[C+2](C)(C)(C)(C)(C)C',0.667),
-      ('[C+](C)(C)(C)(C)(CC)',1.240),
       ('C(C)(C)(C)(CCC)',2.3444),
       ('CC(C)CCCC',4.167),
       ('CCCCCCC',6.000),
@@ -222,7 +220,6 @@ class TestCase(unittest.TestCase):
 
     """
     data = [
-      ('C[C+](C)(C)(C)C(C)(C)C',2.000),
       ('CCC(C)C(C)(C)(CC)',2.380),
       ('CCC(C)CC(C)CC',4.500),
       ('CC(C)CCC(C)CC',5.878),

@@ -62,7 +62,11 @@ class TestCase(unittest.TestCase):
         2629,   362, 24211, 15939,   292,    41,    20,  1852,  5642,
           31,     9,     1,     2,  3060,  1750])
     fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
-    ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
+    suppl=Chem.SmilesMolSupplier(fn,delimiter='\t')
+    ms = [x for x in suppl]
+    for i,m in enumerate(ms):
+      if m is None:
+        print >>sys.stderr,"  FAILED: %s"%(suppl.GetItemText(i))
     vs = np.zeros((42,),np.int32)
     for m in ms:
       vs += rdMolDescriptors.MQNs_(m)

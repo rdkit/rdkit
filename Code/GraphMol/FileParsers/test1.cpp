@@ -1771,7 +1771,7 @@ void testIssue2692246(){
   // basic writing test
   BOOST_LOG(rdInfoLog) << " Testing issue 2692246 "<< std::endl;
   std::string smiles(120,'C');
-  smiles += "[CH3+]";
+  smiles += "[CH2+]";
   RWMol *m = SmilesToMol(smiles);
   TEST_ASSERT(m);
   std::string molBlock = MolToMolBlock(*m);

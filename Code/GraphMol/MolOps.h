@@ -433,7 +433,7 @@ namespace RDKit{
 
       <b>Notes</b>
         - The result of this is cached in the molecule's local property dictionary,
-	  which will handle deallocation. Do the caller should <b>not</b> \c delete
+	  which will handle deallocation. The caller should <b>not</b> \c delete
 	  this pointer.
 	  
     */
@@ -461,16 +461,16 @@ namespace RDKit{
 
       <b>Notes</b>
         - The result of this is cached in the molecule's local property dictionary,
-	  which will handle deallocation. Do the caller should <b>not</b> \c delete
+	  which will handle deallocation. The caller should <b>not</b> \c delete
 	  this pointer.
 	  
      
     */
     double *getDistanceMat(const ROMol &mol,
-				  bool useBO=false,
-				  bool useAtomWts=false,
-				  bool force=false,
-				  const char *propNamePrefix=0);
+                           bool useBO=false,
+                           bool useAtomWts=false,
+                           bool force=false,
+                           const char *propNamePrefix=0);
 
 
     //! Computes the molecule's topological distance matrix
