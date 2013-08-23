@@ -325,10 +325,12 @@ class MolDrawing(object):
 
     font = Font(face=self.drawingOptions.atomLabelFontFace,size=self.currAtomLabelFontSize)
 
+    obds=None
     if not mol.HasProp('_drawingBondsWedged'):
+      # this is going to modify the molecule, get ready to undo that
+      obds=[x.GetBondDir() for x in mol.GetBonds()]
       Chem.WedgeMolBonds(mol,conf)
       
-
     includeAtomNumbers = kwargs.get('includeAtomNumbers',self.drawingOptions.includeAtomNumbers)
     self.atomPs[mol] = {}
     self.boundingBoxes[mol] = [0]*4
@@ -481,7 +483,12 @@ class MolDrawing(object):
         else:
           color = self.drawingOptions.elemDict.get(atom.GetAtomicNum(),(0,0,0))
         self._drawLabel(symbol, pos, font, color=color,orientation=orient)
-
+    # if we modified the bond wedging state, undo those changes now
+    if obds:
+      for i,d in enumerate(obds):
+        mol.GetBondWithIdx(i).SetBondDir(d)
+      
+      
     if flagCloseContactsDist>0:
       tol = flagCloseContactsDist*flagCloseContactsDist
       for i,atomi in enumerate(mol.GetAtoms()):
@@ -501,3 +508,5 @@ class MolDrawing(object):
                                       pi[1]+2*flagCloseContactsDist)),
                              color=(1.,0,0),
                              fill=False,stroke=True)
+
+            
