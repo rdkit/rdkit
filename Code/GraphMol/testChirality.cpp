@@ -1991,6 +1991,68 @@ void testGithub87(){
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub90(){
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing github issue 90: isotopes and chirality" << std::endl;
+
+  {
+    std::string smi="C[C@@H](F)[13CH3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="R");
+    delete m;
+  }
+  {
+    std::string smi="[13CH3][C@@H](F)C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()!=Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+
+    std::string cip;
+    TEST_ASSERT(m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    m->getAtomWithIdx(1)->getProp("_CIPCode",cip);
+    TEST_ASSERT(cip=="S");
+    delete m;
+  }
+  {
+    std::string smi="[CH3][C@@H](F)C";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==4);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag()==Atom::CHI_UNSPECIFIED);
+    MolOps::assignStereochemistry(*m,true,true);
+    TEST_ASSERT(!m->getAtomWithIdx(1)->hasProp("_CIPCode"));
+    delete m;
+  }
+  {
+    std::string smi="C\\C([13CH3])=C(/C)[13CH3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==6);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo()==Bond::STEREOZ);
+    delete m;
+  }
+  {
+    std::string smi="C\\C([CH3])=C(/C)[13CH3]";
+    ROMol *m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms()==6);
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo()==Bond::STEREONONE);
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 
 
 int main(){
@@ -2012,9 +2074,10 @@ int main(){
   testIssue3139534();
   testFindChiralAtoms();
   testIssue3453172();
-#endif
   testRingStereochemistry();
   testGithub87();
+#endif
+  testGithub90();
   return 0;
 }
 
