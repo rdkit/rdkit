@@ -22,9 +22,9 @@ def feq(n1,n2,tol=1e-5):
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    self.fName = os.path.join(RDConfig.RDCodeDir,'Chem/tests','Crippen.csv')
-    self.detailName = os.path.join(RDConfig.RDCodeDir,'Chem/tests','Crippen_contribs_regress.pkl')
-    self.detailName2 = os.path.join(RDConfig.RDCodeDir,'Chem/tests','Crippen_contribs_regress.2.pkl')
+    self.fName = os.path.join(RDConfig.RDCodeDir,'Chem/test_data','Crippen.csv')
+    self.detailName = os.path.join(RDConfig.RDCodeDir,'Chem/test_data','Crippen_contribs_regress.pkl')
+    self.detailName2 = os.path.join(RDConfig.RDCodeDir,'Chem/test_data','Crippen_contribs_regress.2.pkl')
 
   def _readData(self):
     smis=[]
@@ -143,9 +143,9 @@ class TestCase(unittest.TestCase):
               print '-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*'
               nFails +=1
               break;
-          self.failUnless(nFails<nFailsAllowed)
         else:
           print 'Problems with SMILES:',smi
+    self.failUnless(nFails<nFailsAllowed)
   def testDetails(self):
     Crippen._Init()
     inF = open(self.detailName,'rb')
