@@ -21,8 +21,8 @@ def feq(n1,n2,tol=1e-5):
 
 class TestCase(unittest.TestCase):
   def setUp(self):
-    self.fName = os.path.join(RDConfig.RDCodeDir,'Chem/tests','aromat_regress.txt')
-    self.fName2 = os.path.join(RDConfig.RDCodeDir,'Chem/tests','NCI_aromat_regress.txt')
+    self.fName = os.path.join(RDConfig.RDCodeDir,'Chem/test_data','aromat_regress.txt')
+    self.fName2 = os.path.join(RDConfig.RDCodeDir,'Chem/test_data','NCI_aromat_regress.txt')
 
   def _readData(self,fName):
     d = []

@@ -9,8 +9,8 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C','Name':'Penicilline G'}, ignore_index=True)#Penicilline G
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O','Name':'Tetracycline'}, ignore_index=True)#Tetracycline
 >>> antibiotics = antibiotics.append({'Smiles':'CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O)O)C','Name':'Ampicilline'}, ignore_index=True)#Ampicilline
->>> print antibiotics.columns
-Index([Name, Smiles], dtype=object)
+>>> print [str(x) for x in  antibiotics.columns]
+['Name', 'Smiles']
 >>> print antibiotics
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
@@ -20,8 +20,8 @@ Index([Name, Smiles], dtype=object)
 a new column can be created holding the respective RDKit molecule objects. The fingerprint can be included to accelerate substructure searches on the dataframe.
 
 >>> PandasTools.AddMoleculeColumnToFrame(antibiotics,'Smiles','Molecule',includeFingerprints=True)
->>> print antibiotics.columns
-Index([Name, Smiles, Molecule], dtype=object)
+>>> print [str(x) for x in  antibiotics.columns]
+['Name', 'Smiles', 'Molecule']
 
 A substructure filter can be applied on the dataframe using the RDKit molecule column, because the ">=" operator has been modified to work as a substructure check.
 Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtained by

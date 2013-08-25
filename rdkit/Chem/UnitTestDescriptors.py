@@ -12,7 +12,7 @@
 
 """
 from rdkit import RDConfig
-import unittest,os.path
+import unittest,os.path,cPickle
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import AllChem
@@ -55,9 +55,20 @@ class TestCase(unittest.TestCase):
       mol = Chem.MolFromSmiles(smiles)
       actual = AllChem.CalcMolFormula(mol)
       self.failUnlessEqual(actual,expected)
+  def testMQNDetails(self):
+    refFile = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','MQNs_regress.pkl')
+    refData = cPickle.load(file(refFile))
+    fn = os.path.join(RDConfig.RDCodeDir,'Chem','test_data','aromat_regress.txt')
+    ms = [x for x in Chem.SmilesMolSupplier(fn,delimiter='\t')]
+    for i,m in enumerate(ms):
+      mqns = rdMolDescriptors.MQNs_(m) 
+      if mqns!=refData[i][1]:
+        indices=[(j,x,y) for j,x,y in zip(range(len(mqns)),mqns,refData[i][1]) if x!=y]
+        print Chem.MolToSmiles(m),indices
+      self.failUnlessEqual(mqns,refData[i][1])
   def testMQN(self):
     tgt = np.array([42917,   274,   870,   621,   135,  1582,    29,  3147,  5463,
-        6999,   470,    81, 19055,  4424,   309, 24059, 17822,     1,
+        6999,   470,    81, 19055,  4424,   309, 24061, 17820,     1,
         9303, 24146, 16076,  5560,  4262,   646,   746, 13725,  5430,
         2629,   362, 24211, 15939,   292,    41,    20,  1852,  5642,
           31,     9,     1,     2,  3060,  1750])
