@@ -1654,6 +1654,24 @@ void testGitHubIssue56(){
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue92(){
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test Github92: Bad Crippen atom type for pyrrole H." << std::endl;
+
+  {
+    RWMol *mol;
+    mol = SmilesToMol("c1cccn1[H]",0,0);
+    TEST_ASSERT(mol);
+    MolOps::sanitizeMol(*mol);
+    TEST_ASSERT(mol->getNumAtoms()==6);
+    std::vector<double> logp(mol->getNumAtoms());
+    std::vector<double> mr(mol->getNumAtoms());
+    getCrippenAtomContribs(*mol,logp,mr,true);
+    TEST_ASSERT(feq(logp[5],0.2142,.001));
+    delete mol;
+  }  
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -1687,5 +1705,6 @@ int main(){
   testMQNs();
 #endif
   testGitHubIssue56();
+  testGitHubIssue92();
 
 }
