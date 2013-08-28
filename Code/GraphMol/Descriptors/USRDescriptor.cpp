@@ -1,11 +1,33 @@
+// $Id$
 //
-//  Copyright (C) 2011-2013 Greg Landrum
+//  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
+//  All rights reserved.
 //
-//   @@ All Rights Reserved @@
-//  This file is part of the RDKit.
-//  The contents are covered by the terms of the BSD license
-//  which is included in the file license.txt, found at the root
-//  of the RDKit source tree.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+//       nor the names of its contributors may be used to endorse or promote
+//       products derived from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
 
@@ -112,17 +134,6 @@ namespace RDKit{
         RDKit::ROMOL_SPTR m_matcher;
     };
 
-    /*
-    // Definitions for feature points adapted from:
-    // Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998)
-    const char *smartsPatterns[4] = {
-      "[$([C;H2,H1](!=*)[C;H2,H1][C;H2,H1][$([C;H1,H2,H3]);!$(C=*)]),\
-$(C([C;H2,H3])([C;H2,H3])[C;H2,H3])]", // Hydrophobic
-      "[a]", //Aromatic
-      "[$([N;!H0;v3,v4&+1]),$([O,S;H1;+0]),n&H1&+0]", // Donor
-      "[$([O,S;H1;v2;!$(*-*=[O,N,P,S])]),$([O,S;H0;v2]),$([O,S;-]),\
-$([N;v3;!$(N-*=[O,N,P,S])]),n&H0&+0,$([o,s;+0;!$([o,s]:n);!$([o,s]:c:n)])]" // Acceptor
-    };*/
     // Definitions for feature points from
     // http://hg.adrianschreyer.eu/usrcat/src/70e075d93cd2?at=default
     const char *smartsPatterns[4] = {
@@ -137,10 +148,10 @@ $([N&v3;H1,H2]-[!$(*=[O,N,P,S])]),$([N;v3;H0]),$([n,o,s;+0]),F]", // acceptor
 
     void getAtomIdsForFeatures(const ROMol &mol, std::vector<std::vector<unsigned int> > &atomIds) {
       unsigned int numFeatures = featureSmarts.size();
-      PRECONDITION(atomIds.size() == numFeatures, "atomIds must have 4 elements");
+      PRECONDITION(atomIds.size() == numFeatures, "atomIds must have be the same size as featureSmarts");
       std::vector<const ROMol *> featureMatchers;
       featureMatchers.reserve(numFeatures);
-      BOOST_FOREACH(std::string feature, featureSmarts) {
+      BOOST_FOREACH(const std::string &feature, featureSmarts) {
         const ROMol *matcher = pattern_flyweight(feature).get().getMatcher();
         featureMatchers.push_back(matcher);
       }
@@ -200,14 +211,12 @@ $([N&v3;H1,H2]-[!$(*=[O,N,P,S])]),$([N;v3;H0]),$([n,o,s;+0]),F]", // acceptor
 
       // get atom selections
       unsigned int numClasses = atomIds.size();
-      if (numClasses > 0) { // user provided atom selections
-        PRECONDITION(descriptor.size() == (numClasses+1)*12, "descriptor must have (numClasses+1)*12 elements");
-      } else { // use feature definitions of FeatureMorgan fingerprint
-        numClasses = 4;
-        PRECONDITION(descriptor.size() == 60, "descriptor must have 60 elements");
+      if (numClasses == 0) { // no user input, use default values
+        numClasses = featureSmarts.size();
         atomIds.resize(numClasses);
         getAtomIdsForFeatures(mol, atomIds);
       }
+      PRECONDITION(descriptor.size() == 12*(numClasses+1), "descriptor wrong size");
 
       const Conformer &conf = mol.getConformer(confId);
       RDGeom::Point3DConstPtrVect coords(na);
@@ -216,24 +225,24 @@ $([N&v3;H1,H2]-[!$(*=[O,N,P,S])]),$([N;v3;H0]),$([n,o,s;+0]),F]", // acceptor
         coords[ai] = &conf.getAtomPos(ai);
       }
       // the original USR
-      std::vector<std::vector<double> > dist(4);
+      std::vector<std::vector<double> > distribs(4);
       std::vector<RDGeom::Point3D> points(4);
-      calcUSRDistributions(coords, dist, points);
+      calcUSRDistributions(coords, distribs, points);
       std::vector<double> tmpDescriptor(12);
-      calcUSRFromDistributions(dist, tmpDescriptor);
+      calcUSRFromDistributions(distribs, tmpDescriptor);
       std::copy(tmpDescriptor.begin(), tmpDescriptor.end(), descriptor.begin());
 
       // loop over the atom selections
       unsigned int featIdx = 12;
-      BOOST_FOREACH(std::vector<unsigned int> atoms, atomIds) {
+      BOOST_FOREACH(std::vector<unsigned int> atomsInClass, atomIds) {
         // reduce the coordinates to the atoms of interest
-        RDGeom::Point3DConstPtrVect reducedCoords(atoms.size());
-        unsigned int i = 0;
-        BOOST_FOREACH(unsigned int idx, atoms) {
-          reducedCoords[i++] = coords[idx];
+        RDGeom::Point3DConstPtrVect reducedCoords;
+        reducedCoords.reserve(atomsInClass.size());
+        BOOST_FOREACH(unsigned int idx, atomsInClass) {
+          reducedCoords.push_back(coords[idx]);
         }
-        calcUSRDistributionsFromPoints(reducedCoords, points, dist);
-        calcUSRFromDistributions(dist, tmpDescriptor);
+        calcUSRDistributionsFromPoints(reducedCoords, points, distribs);
+        calcUSRFromDistributions(distribs, tmpDescriptor);
         std::copy(tmpDescriptor.begin(), tmpDescriptor.end(), descriptor.begin()+featIdx);
         featIdx += 12;
       }
@@ -281,7 +290,7 @@ $([N&v3;H1,H2]-[!$(*=[O,N,P,S])]),$([N;v3;H0]),$([n,o,s;+0]),F]", // acceptor
       PRECONDITION(d1.size() == d2.size(), "descriptors must have the same size");
       PRECONDITION(weights.size() == (d1.size()/num), "size of weights not correct");
       double score = 1.0;
-      for (unsigned int w; w < weights.size(); ++w) {
+      for (unsigned int w = 0; w < (d1.size()/num); ++w) {
         double tmpScore = 0.0;
         unsigned int offset = num*w;
         for (unsigned int i = 0; i < num; ++i) {

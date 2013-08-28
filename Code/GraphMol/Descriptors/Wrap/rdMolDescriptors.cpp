@@ -566,7 +566,8 @@ namespace {
       d1[i] = python::extract<double>(descriptor1[i]);
       d2[i] = python::extract<double>(descriptor2[i]);
     }
-    return RDKit::Descriptors::calcUSRScore(d1, d2, w);
+    double res = RDKit::Descriptors::calcUSRScore(d1, d2, w);
+    return res;
   }
 
   python::list GetUSRCAT(const RDKit::ROMol &mol, python::object atomSelections, int confId) {

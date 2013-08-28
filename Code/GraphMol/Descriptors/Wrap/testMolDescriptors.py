@@ -243,6 +243,10 @@ class TestCase(unittest.TestCase) :
     usr2 = rdMD.GetUSR(mol2)
     self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRScore(usr, usr2[:2]))
     self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2), 1.0)
+
+    m1 = [4.44, 2.98, 1.04, 4.55, 4.70, 0.23, 8.30, 16.69, -22.97, 7.37, 15.64, 0.51]
+    m2 = [4.39, 3.11, 1.36, 4.50, 4.44, 0.09, 8.34, 16.78, -23.20, 7.15, 16.52, 0.13]
+    self.failUnlessAlmostEqual(rdMD.GetUSRScore(m1, m2), 0.812, 2)
     
 
   def testUSRCAT(self):
@@ -256,9 +260,12 @@ class TestCase(unittest.TestCase) :
     usr = rdMD.GetUSRCAT(mol)
     self.failUnlessEqual(len(usr), 60)
     self.failUnlessRaises(ValueError, lambda : rdMD.GetUSRCAT(mol, atomSelections=[]))
+    atoms = [[1, 2, 3, 4, 5, 6], []]
+    usr2 = rdMD.GetUSRCAT(mol, atomSelections=atoms)
+    self.failUnlessEqual(len(usr2), 36)
     atoms = [[1, 2, 3, 4, 5, 6], [], [], []]
     usr2 = rdMD.GetUSRCAT(mol, atomSelections=atoms)
-    self.failUnlessEqual(len(usr), 60)
+    self.failUnlessEqual(len(usr2), 60)
     self.failUnlessEqual(rdMD.GetUSRScore(usr, usr2, weights=[1.0, 1.0, 1.0, 1.0, 1.0]), 1.0)
 
 
