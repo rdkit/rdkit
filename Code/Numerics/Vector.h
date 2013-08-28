@@ -235,6 +235,20 @@ namespace RDNumeric {
       return id;
     }
 
+    //! \brief Gets the ID of the entry that has the smallest value
+    inline unsigned int smallestValId() const {
+      TYPE res = (TYPE)(1.e8);
+      unsigned int i, id=d_size;
+      TYPE *data = d_data.get();
+      for (i = 0; i < d_size; i++) {
+        if (data[i] < res) {
+          res = data[i];
+          id = i;
+        }
+      }
+      return id;
+    }
+
     //! returns the dot product between two Vectors
     inline TYPE dotProduct(const Vector<TYPE> other) {
       PRECONDITION(d_size == other.size(), "Size mismatch in vector doct product");
