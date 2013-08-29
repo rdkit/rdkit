@@ -184,8 +184,8 @@ def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, size=(250
   
 
 apDict = {}
-apDict['normal'] = lambda m, bits, minl, maxl, bpe, ia: rdMD.GetAtomPairFingerprint(m, minLength=minl, maxLength=maxl, nBitsPerEntry=bpe, ignoreAtoms=ia)
-apDict['hashed'] = lambda m, bits, minl, maxl, bpe, ia: rdMD.GetHashedAtomPairFingerprint(m, nBits=bits, minLength=minl, maxLength=maxl, nBitsPerEntry=bpe, ignoreAtoms=ia)
+apDict['normal'] = lambda m, bits, minl, maxl, bpe, ia: rdMD.GetAtomPairFingerprint(m, minLength=minl, maxLength=maxl, ignoreAtoms=ia)
+apDict['hashed'] = lambda m, bits, minl, maxl, bpe, ia: rdMD.GetHashedAtomPairFingerprint(m, nBits=bits, minLength=minl, maxLength=maxl, ignoreAtoms=ia)
 apDict['bv'] = lambda m, bits, minl, maxl, bpe, ia: rdMD.GetHashedAtomPairFingerprintAsBitVect(m, nBits=bits, minLength=minl, maxLength=maxl, nBitsPerEntry=bpe, ignoreAtoms=ia)
 
 # usage:   lambda m,i: GetAPFingerprint(m, i, fpType, nBits, minLength, maxLength, nBitsPerEntry)
@@ -211,7 +211,7 @@ def GetAPFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, minLength=1, m
 
 ttDict = {}
 ttDict['normal'] = lambda m, bits, ts, bpe, ia: rdMD.GetTopologicalTorsionFingerprint(m, targetSize=ts, ignoreAtoms=ia)
-ttDict['hashed'] = lambda m, bits, ts, bpe, ia: rdMD.GetHashedTopologicalTorsionFingerprint(m, nBits=bits, targetSize=ts, nBitsPerEntry=bpe, ignoreAtoms=ia)
+ttDict['hashed'] = lambda m, bits, ts, bpe, ia: rdMD.GetHashedTopologicalTorsionFingerprint(m, nBits=bits, targetSize=ts, ignoreAtoms=ia)
 ttDict['bv'] = lambda m, bits, ts, bpe, ia: rdMD.GetHashedTopologicalTorsionFingerprintAsBitVect(m, nBits=bits, targetSize=ts, nBitsPerEntry=bpe, ignoreAtoms=ia)
 
 # usage:   lambda m,i: GetTTFingerprint(m, i, fpType, nBits, targetSize)
@@ -235,8 +235,8 @@ def GetTTFingerprint(mol, atomId=-1, fpType='normal', nBits=2048, targetSize=4, 
   return ttDict[fpType](mol, nBits, targetSize, nBitsPerEntry, [atomId])
 
 
-# usage:   lambda m,i: GetMorganFingerprint(m, radius, i, fpType, nBits, useFeatures)
-def GetMorganFingerprint(mol, radius, atomId=-1, fpType='bv', nBits=2048, useFeatures=False):
+# usage:   lambda m,i: GetMorganFingerprint(m, i, radius, fpType, nBits, useFeatures)
+def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useFeatures=False):
   """
   Calculates the Morgan fingerprint with the counts of atomId removed.
 
