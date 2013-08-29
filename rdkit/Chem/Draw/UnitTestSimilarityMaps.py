@@ -61,15 +61,30 @@ class TestCase(unittest.TestCase):
     refWeights = [1.0, 1.0, 1.0, -1.0, 1.0, 1.0]
     for w,r in zip(weights, refWeights): self.failUnlessEqual(w, r)
 
+    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='count'))
+    self.failUnless(weights[3] < 0)
+    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, fpType='bv', useFeatures=True))
+    self.failUnless(weights[3] < 0)
+
     # hashed AP BV
     refWeights = [0.09523, 0.17366, 0.17366, -0.23809, 0.17366, 0.17366]
     weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetAPFingerprint(m, i, fpType='bv', nBits=1024))
     for w,r in zip(weights, refWeights): self.failUnlessAlmostEqual(w, r, 4)
+
+    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetAPFingerprint(m, i, fpType='normal'))
+    self.failUnless(weights[3] < 0)
+    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetAPFingerprint(m, i, fpType='hashed'))
+    self.failUnless(weights[3] < 0)
     
     # hashed TT BV
     refWeights = [0.5, 0.5, -0.16666, -0.5, -0.16666, 0.5]
     weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='bv', nBits=1024, nBitsPerEntry=1))
     for w,r in zip(weights, refWeights): self.failUnlessAlmostEqual(w, r, 4)
+
+    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='normal'))
+    self.failUnless(weights[3] < 0)
+    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetTTFingerprint(m, i, fpType='hashed'))
+    self.failUnless(weights[3] < 0)
 
     
 if __name__ == '__main__':
