@@ -50,10 +50,10 @@ class TestCase(unittest.TestCase):
   def testSimilarityMap(self):
     # Morgan2 BV
     refWeights = [0.5, 0.5, 0.5, -0.5, 0.5, 0.5]
-    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, 2, i, fpType='bv'))
+    weights = sm.GetAtomicWeightsForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
     for w,r in zip(weights, refWeights): self.failUnlessEqual(w, r)
 
-    fig, maxWeight = sm.GetSimilarityMapForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, 2, i, fpType='bv'))
+    fig, maxWeight = sm.GetSimilarityMapForFingerprint(self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
     self.failUnlessEqual(maxWeight, 0.5)
     
     weights, maxWeight = sm.GetStandardizedWeights(weights)
