@@ -113,7 +113,8 @@ def GetStandardizedWeights(weights):
     return weights, currentMax
 
 
-def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, sigma=None, contourLines=10, step=0.01, **kwargs):
+def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, size=(250, 250), sigma=None, 
+                                coordScale=1.5, step=0.01, colors='k', contourLines=10, alpha=0.5, **kwargs):
   """
   Generates the similarity map for a molecule given the atomic weights.
 
@@ -122,16 +123,26 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, sigma=
     colorMap -- the matplotlib color map scheme
     scale -- the scaling: scale < 0 -> the absolute maximum weight is used as maximum scale
                           scale = double -> this is the maximum scale
+    size -- the size of the figure
     sigma -- the sigma for the Gaussians
+    coordScale -- scaling factor for the coordinates
+    step -- the step for calcAtomGaussian
+    colors -- color of the contour lines
     contourLines -- if integer number N: N contour lines are drawn
                     if list(numbers): contour lines at these numbers are drawn
-    step -- the step for calcAtomGaussian
+    alpha -- the alpha blending value for the contour lines
     kwargs -- additional arguments for drawing
   """
   if mol.GetNumAtoms() < 2: raise ValueError("too few atoms")
-  fig = Draw.MolToMPL(mol, **kwargs)
+  fig = Draw.MolToMPL(mol, coordScale=coordScale, size=size, **kwargs)
   if sigma is None:
-    sigma = 0.3 * math.sqrt(sum([(mol._atomPs[0][i]-mol._atomPs[1][i])**2 for i in range(2)]))
+    if mol.GetNumBonds() > 0:
+      bond = mol.GetBondWithIdx(0)
+      idx1 = bond.GetBeginAtomIdx()
+      idx2 = bond.GetEndAtomIdx()
+      sigma = 0.3 * math.sqrt(sum([(mol._atomPs[idx1][i]-mol._atomPs[idx2][i])**2 for i in range(2)]))
+    else:
+      sigma = 0.3 * math.sqrt(sum([(mol._atomPs[0][i]-mol._atomPs[1][i])**2 for i in range(2)]))
     sigma = round(sigma, 2)
   x, y, z = Draw.calcAtomGaussians(mol, sigma, weights=weights, step=step)
   # scaling
@@ -140,12 +151,11 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=cm.PiYG, scale=-1, sigma=
   # coloring
   fig.axes[0].imshow(z, cmap=colorMap, interpolation='bilinear', origin='lower', extent=(0,1,0,1), vmin=-maxScale, vmax=maxScale)
   # contour lines
-  fig.axes[0].contour(x, y, z, contourLines, **kwargs)
+  fig.axes[0].contour(x, y, z, contourLines, colors=colors, alpha=alpha, **kwargs)
   return fig
 
 
-def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity, size=(250, 250), 
-                     coordScale=1.5, contourLines=10, alpha=0.5, **kwargs):
+def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity, **kwargs):
   """
   Generates the similarity map for a given reference and probe molecule, 
   fingerprint function and similarity metric.
@@ -159,13 +169,11 @@ def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
   """
   weights = GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric)
   weights, maxWeight = GetStandardizedWeights(weights)
-  fig = GetSimilarityMapFromWeights(probeMol, weights, colors='k', size=size, coordScale=coordScale, 
-                                    contourLines=contourLines, alpha=alpha, **kwargs)
+  fig = GetSimilarityMapFromWeights(probeMol, weights, **kwargs)
   return fig, maxWeight
 
 
-def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, size=(250, 250), 
-                             coordScale=1.5, contourLines=10, alpha=0.5, **kwargs):
+def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, **kwargs):
   """
   Generates the similarity map for a given ML model and probe molecule, 
   and fingerprint function.
@@ -178,8 +186,7 @@ def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, size=(250
   """
   weights = GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction)
   weights, maxWeight = GetStandardizedWeights(weights)
-  fig = GetSimilarityMapFromWeights(probeMol, weights, colors='k', size=size, coordScale=coordScale, 
-                                    contourLines=contourLines, alpha=alpha, **kwargs)
+  fig = GetSimilarityMapFromWeights(probeMol, weights, **kwargs)
   return fig, maxWeight
   
 
