@@ -115,7 +115,11 @@ namespace RDKit{
         }
         moments[1] = sqrt(moments[1] / numPts);
         moments[2] /= numPts;
-        moments[2] = cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
+        if (moments[1] == 0) {
+          moments[2] = 0.0;
+        } else {
+          moments[2] = cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
+        }
       }
       // add moments to descriptor
       std::copy(moments.begin(), moments.end(), descriptor.begin()+idx);
