@@ -22,7 +22,7 @@
 #include <boost/cstdint.hpp>
 
 
-// bynary searches are slightly faster than std::map;
+// binary searches are slightly faster than std::map;
 // however when I moved to binary searches I had already
 // written the code for std::map, so the two methods
 // can be toggled defining RDKIT_MMFF_PARAMS_USE_STD_MAP

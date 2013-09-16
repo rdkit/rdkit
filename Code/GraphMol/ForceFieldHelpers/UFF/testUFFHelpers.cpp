@@ -213,7 +213,7 @@ void testUFFBuilder1(){
   UFF::AtomicParamVect types;
   bool foundAll;
   ForceFields::ForceField *field;
-  boost::shared_array<int> nbrMat;
+  boost::shared_array<boost::uint8_t> nbrMat;
 
   mol = SmilesToMol("CC(O)C");
   Conformer *conf = new Conformer(mol->getNumAtoms());
@@ -228,12 +228,12 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==3);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
-  TEST_ASSERT(nbrMat[0]==-2);
-  TEST_ASSERT(nbrMat[1]==-1);
-  TEST_ASSERT(nbrMat[2]==1);
-  TEST_ASSERT(nbrMat[3]==1);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,0)==UFF::Tools::RELATION_1_X);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,1)==UFF::Tools::RELATION_1_2);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,2)==UFF::Tools::RELATION_1_3);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,3)==UFF::Tools::RELATION_1_3);
 
-  UFF::Tools::addAngles(*mol,types,field,nbrMat);
+  UFF::Tools::addAngles(*mol,types,field);
   TEST_ASSERT(field->contribs().size()==6);
 
   // there are no non-bonded terms here:
@@ -259,12 +259,12 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==3);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
-  TEST_ASSERT(nbrMat[0]==-2);
-  TEST_ASSERT(nbrMat[1]==-1);
-  TEST_ASSERT(nbrMat[2]==1);
-  TEST_ASSERT(nbrMat[3]==-2);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,0)==UFF::Tools::RELATION_1_X);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,1)==UFF::Tools::RELATION_1_2);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,2)==UFF::Tools::RELATION_1_3);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,3)==UFF::Tools::RELATION_1_X);
 
-  UFF::Tools::addAngles(*mol,types,field,nbrMat);
+  UFF::Tools::addAngles(*mol,types,field);
   TEST_ASSERT(field->contribs().size()==5);
   UFF::Tools::addNonbonded(*mol,cid,types,field,nbrMat);
   TEST_ASSERT(field->contribs().size()==6);
@@ -289,10 +289,10 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==1);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
-  TEST_ASSERT(nbrMat[0]==-2);
-  TEST_ASSERT(nbrMat[1]==-1);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,0)==UFF::Tools::RELATION_1_X);
+  TEST_ASSERT(UFF::Tools::getTwoBitCell(nbrMat,1)==UFF::Tools::RELATION_1_2);
 
-  UFF::Tools::addAngles(*mol,types,field,nbrMat);
+  UFF::Tools::addAngles(*mol,types,field);
   TEST_ASSERT(field->contribs().size()==1);
   UFF::Tools::addNonbonded(*mol,cid,types,field,nbrMat);
   TEST_ASSERT(field->contribs().size()==1);
@@ -313,7 +313,7 @@ void testUFFBuilder1(){
   TEST_ASSERT(field->contribs().size()==5);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol2);
-  UFF::Tools::addAngles(*mol2,types,field,nbrMat);
+  UFF::Tools::addAngles(*mol2,types,field);
   TEST_ASSERT(field->contribs().size()==12);
   UFF::Tools::addNonbonded(*mol2,cid,types,field,nbrMat);
   TEST_ASSERT(field->contribs().size()==15);
@@ -678,7 +678,7 @@ void testSFIssue1653802(){
 
   UFF::AtomicParamVect types;
   bool foundAll;
-  boost::shared_array<int> nbrMat;
+  boost::shared_array<boost::uint8_t> nbrMat;
   boost::tie(types,foundAll)=UFF::getAtomTypes(*mol);
   TEST_ASSERT(foundAll);
   TEST_ASSERT(types.size()==mol->getNumAtoms());
@@ -687,11 +687,11 @@ void testSFIssue1653802(){
   TEST_ASSERT(field->contribs().size()==8);
 
   nbrMat = UFF::Tools::buildNeighborMatrix(*mol);
-  UFF::Tools::addAngles(*mol,types,field,nbrMat);
-  TEST_ASSERT(field->contribs().size()==18);
+  UFF::Tools::addAngles(*mol,types,field);
+  TEST_ASSERT(field->contribs().size()==20);
   UFF::Tools::addTorsions(*mol,types,field);
   //std::cout << field->contribs().size() << std::endl;
-  TEST_ASSERT(field->contribs().size()==34);
+  TEST_ASSERT(field->contribs().size()==36);
   UFF::Tools::addNonbonded(*mol,0,types,field,nbrMat);
   delete field;
 
