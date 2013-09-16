@@ -71,17 +71,14 @@ namespace ForceFields {
         }
       }
       
-      double calcEleEnergy(RDKit::MMFF::MMFFMolProperties *mmffMolProperties,
-        unsigned int idx1, unsigned int idx2, double dist, bool is1_4)
+      double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
+        double chargeTerm, boost::uint8_t dielModel, bool is1_4)
       {
-        const double D = mmffMolProperties->getMMFFDielectricConstant();
         double corr_dist = dist + 0.05;
-        if (mmffMolProperties->getMMFFDielectricModel() == RDKit::MMFF::DISTANCE) {
+        if (dielModel == RDKit::MMFF::DISTANCE) {
           corr_dist *= corr_dist;
         }
-        return (332.0716 * mmffMolProperties->getMMFFPartialCharge(idx1)
-          * mmffMolProperties->getMMFFPartialCharge(idx2) / (D * corr_dist)
-          * (is1_4 ? 0.75 : 1.0));
+        return (332.0716 * chargeTerm / corr_dist * (is1_4 ? 0.75 : 1.0));
       }
     } // end of namespace utils
     
@@ -150,7 +147,7 @@ namespace ForceFields {
     }
   
     EleContrib::EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-      RDKit::MMFF::MMFFMolProperties *mmffMolProperties, bool is1_4)
+      double chargeTerm, boost::uint8_t dielModel, bool is1_4)
     {
       PRECONDITION(owner, "bad owner");
       RANGE_CHECK(0, idx1, owner->positions().size() - 1);
@@ -159,7 +156,8 @@ namespace ForceFields {
       dp_forceField = owner;
       this->d_at1Idx = idx1;
       this->d_at2Idx = idx2;
-      this->d_mmffMolProperties = mmffMolProperties;
+      this->d_chargeTerm = chargeTerm;
+      this->d_dielModel = dielModel;
       this->d_is1_4 = is1_4;
     }
 
@@ -168,9 +166,9 @@ namespace ForceFields {
       PRECONDITION(dp_forceField, "no owner");
       PRECONDITION(pos, "bad vector");
 
-      return Utils::calcEleEnergy(this->d_mmffMolProperties,
-        this->d_at1Idx, this->d_at2Idx, this->dp_forceField->distance
-        (this->d_at1Idx, this->d_at2Idx, pos), this->d_is1_4);
+      return Utils::calcEleEnergy(this->d_at1Idx, this->d_at2Idx,
+        this->dp_forceField->distance(this->d_at1Idx, this->d_at2Idx, pos),
+        this->d_chargeTerm, this->d_dielModel, this->d_is1_4);
     }
 
     void EleContrib::getGrad(double *pos, double *grad) const
@@ -186,13 +184,10 @@ namespace ForceFields {
       double *g1 = &(grad[3 * this->d_at1Idx]);
       double *g2 = &(grad[3 * this->d_at2Idx]);
       double corr_dist = dist + 0.05;
-      const double D = this->d_mmffMolProperties->getMMFFDielectricConstant();
-      const RDKit::MMFF::DielModel dielModel = this->d_mmffMolProperties->getMMFFDielectricModel();
-      corr_dist *= ((dielModel == RDKit::MMFF::DISTANCE) ? corr_dist * corr_dist : corr_dist);
-      double dE_dr = -332.0716 * (double)dielModel
-        * this->d_mmffMolProperties->getMMFFPartialCharge(this->d_at1Idx)
-        * this->d_mmffMolProperties->getMMFFPartialCharge(this->d_at2Idx)
-        / (D * corr_dist)  * (this->d_is1_4 ? 0.75 : 1.0);
+      corr_dist *= ((this->d_dielModel == RDKit::MMFF::DISTANCE)
+        ? corr_dist * corr_dist : corr_dist);
+      double dE_dr = -332.0716 * (double)(this->d_dielModel)
+        * this->d_chargeTerm / corr_dist  * (this->d_is1_4 ? 0.75 : 1.0);
       for (unsigned int i = 0; i < 3; ++i) {
         double dGrad;
         dGrad = ((dist > 0.0)

@@ -26,6 +26,11 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#ifndef RDK_NOGZIP
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#endif
 #include "testMMFFForceField.h"
 
 
@@ -35,21 +40,50 @@
 
 using namespace RDKit;
 
+bool fexist(std::string filename)
+{
+  std::ifstream ifStream(filename.c_str());
+  
+  return (ifStream ? true : false);
+}
+
+
 bool fgrep(std::fstream &fStream, std::string key, std::string &line)
 {
   bool found = false;
+  std::streampos current = fStream.tellg();
   while ((!found) && (!(std::getline
     (fStream, line).rdstate() & std::ifstream::failbit))) {
     found = (line.find(key) != std::string::npos);
+  }
+  if (!found) {
+    fStream.seekg(current);
   }
   
   return found;
 }
 
-bool fgrep2(std::fstream &fStream, std::string key){
+
+bool fgrep(std::fstream &rdkFStream, std::string key)
+{
   std::string line;
-  return fgrep(fStream,key,line);
+  
+  return fgrep(rdkFStream, key, line);
 }
+
+
+#ifndef RDK_NOGZIP
+void fgunzip(std::string filename)
+{
+  std::string gzipFilename = filename + ".gz";
+  std::ifstream ifStream(gzipFilename.c_str(), std::ios_base::in | std::ios_base::binary);
+  std::ofstream ofStream(filename.c_str(), std::ios_base::out);
+  boost::iostreams::filtering_streambuf<boost::iostreams::input> ifStreamFilter;
+  ifStreamFilter.push(boost::iostreams::gzip_decompressor());
+  ifStreamFilter.push(ifStream);
+  boost::iostreams::copy(ifStreamFilter, ofStream);
+}
+#endif
 
 
 bool getLineByNum(std::istream& stream,
@@ -66,14 +100,6 @@ bool getLineByNum(std::istream& stream,
   stream.seekg(current);
   
   return (!fail);
-}
-
-
-bool fgrep(std::fstream &rdkFStream, std::string key)
-{
-  std::string line;
-  
-  return fgrep(rdkFStream, key, line);
 }
   
 
@@ -275,8 +301,10 @@ int main(int argc, char *argv[])
   std::streampos refCurrent;
   unsigned int i = 1;
   unsigned int n = 0;
-  unsigned int skip=9;
   bool error = false;
+  int fullTest = false;
+  int inc = 4;
+  bool testFailure = false;
   while (i < argc) {
     arg = argv[i];
     error = (arg.at(0) != '-');
@@ -306,6 +334,9 @@ int main(int argc, char *argv[])
         ++i;
       }
     }
+    else if (arg == "-L") {
+      inc = 1;
+    }
     else if (arg == "-l") {
       error = ((i + 1) >= argc);
       if (error) {
@@ -314,17 +345,11 @@ int main(int argc, char *argv[])
       rdk = argv[i + 1];
       ++i;
     }
-    else if (arg == "-L") {
-      // by default we skip 9 entries per entry done
-      // enabling this flag runs the full test suite
-      skip=0;
-      ++i;
-    }
     ++i;
   }
   if (error) {
     std::cerr <<
-      "Usage: testMMFFForceField [-f {MMFF94|MMFF94s}] "
+      "Usage: testMMFFForceField [-L] [-f {MMFF94|MMFF94s}] "
       "[{-sdf [<sdf_file>] | -smi [<smiles_file>]}] [-l <log_file>]"
       << std::endl;
     
@@ -337,7 +362,9 @@ int main(int argc, char *argv[])
   }
   if (ffVariant == "") {
     ffVec.push_back("MMFF94");
-    ffVec.push_back("MMFF94s");
+    if (fullTest) {
+      ffVec.push_back("MMFF94s");
+    }
   }
   else {
     ffVec.push_back(ffVariant);
@@ -361,7 +388,15 @@ int main(int argc, char *argv[])
     bool checkEnergy = (*molTypeIt == "sdf");
     for (std::vector<std::string>::iterator ffIt = ffVec.begin();
       ffIt != ffVec.end(); ++ffIt) {
-      ref = pathName + (*ffIt) + "_opti.log";
+      ref = pathName + (*ffIt) + "_reference.log";
+      if (!fexist(ref)) {
+        #ifndef RDK_NOGZIP
+        fgunzip(ref);
+        #else
+        std::cerr << "Please gunzip " << ref 
+          << ".gz before running the test" << std::endl;
+        #endif
+      }
       molFileVec.clear();
       if (molFile == "") {
         molFileVec.push_back(pathName + (*ffIt) + "_dative." + (*molTypeIt));
@@ -408,7 +443,7 @@ int main(int argc, char *argv[])
           rdkFStream << "*";
         }
         rdkFStream << std::endl << std::endl;
-        for (i = 0; i < molVec.size(); i+=(1+skip)) {
+        for (i = 0; i < molVec.size(); i += inc) {
           if (*molTypeIt == "sdf") {
             mol = molVec[i];
           }
@@ -424,7 +459,7 @@ int main(int argc, char *argv[])
           }
           if (!(mmffMolProperties = MMFF::setupMMFFForceField
             (mol, *ffIt, MMFF::MMFF_VERBOSITY_HIGH, rdkFStream))) {
-            std::cerr << nameArray[i] + ": error setting up force-field" << std::endl;
+            std::cerr << molName + ": error setting up force-field" << std::endl;
             continue;
           }
           else {
@@ -462,24 +497,22 @@ int main(int argc, char *argv[])
         double rdkEnergy;
         double rdkEleEnergy;
         double refEnergy;
+        double refVdWEnergy;
         double refEleEnergy;
         unsigned int n_failed = 0;
         bool failed;
-        for (i = 0; i < nameArray.size(); ++i) {
+        rdkFStream.seekg(0);
+        fgrep(rdkFStream, computingKey);
+        for (i = 0; i < nameArray.size(); i += inc) {
           error = false;
           failed = false;
-          refFStream.clear();
-          rdkFStream.seekg(0);
-          fgrep(rdkFStream, computingKey);
-          refFStream.seekg(0);
-
           errorMsg = rdk + ": Molecule not found";
           found = fgrep(rdkFStream, nameArray[i]);
           if (!found) {
             break;
           }
           errorMsg = ref + ": Molecule not found";
-          found = fgrep2(refFStream, nameArray[i]);
+          found = fgrep(refFStream, nameArray[i]);
           if (!found) {
             break;
           }
@@ -490,13 +523,31 @@ int main(int argc, char *argv[])
           bool refHaveStretchBend = false;
           bool refHaveOopBend = false;
           bool refHaveTorsion = false;
+          bool refHaveVdW = false;
+          bool refHaveEle = false;
           std::string rdkLine;
           std::string refLine;
           while ((!found) && (!(std::getline
             (refFStream, refLine).rdstate() & std::ifstream::failbit))) {
-            std::size_t occ = refLine.find("TOTAL    VDWAALS     REP      ATTR    ELECTRO   TORSION");
+            std::size_t occ = refLine.find("****");
             found = (occ != std::string::npos);
             if (!found) {
+              if (!refHaveVdW) {
+                occ = refLine.find("Net vdW");
+                refHaveVdW = (occ != std::string::npos);
+                if (refHaveVdW) {
+                  std::stringstream refVdWStringStream(refLine);
+                  refVdWStringStream >> skip >> skip >> refVdWEnergy;
+                }
+              }
+              if (!refHaveEle) {
+                occ = refLine.find("Electrostatic");
+                refHaveEle = (occ != std::string::npos);
+                if (refHaveEle) {
+                  std::stringstream refEleStringStream(refLine);
+                  refEleStringStream >> skip >> refEleEnergy;
+                }
+              }
               if (!refHaveBondStretch) {
                 occ = refLine.find("B O N D   S T R E T C H I N G");
                 refHaveBondStretch = (occ != std::string::npos);
@@ -1266,6 +1317,10 @@ int main(int argc, char *argv[])
             errorMsg += rdk + corruptedMsg;
             break;
           }
+          if (!refHaveVdW) {
+            errorMsg += ref + corruptedMsg;
+            break;
+          }
           std::stringstream rdkVdWStringStream(energyString);
           rdkVdWStringStream >> skip >> skip >> skip >> skip >> skip >> skip >> rdkEnergy;
           corruptedMsg = ": Electrostatic: corrupted input data";
@@ -1284,28 +1339,18 @@ int main(int argc, char *argv[])
             errorMsg += rdk + corruptedMsg;
             break;
           }
-          std::stringstream rdkEleStringStream(energyString);
-          rdkEleStringStream >> skip >> skip >> skip >> skip >> rdkEleEnergy;
-          corruptedMsg = ": Van der Waals/Electrostatic: corrupted input data";
-          found = fgrep(refFStream,
-            "TOTAL    VDWAALS     REP      ATTR    ELECTRO   TORSION", energyString);
-          if (!found) {
+          if (!refHaveEle) {
             errorMsg += ref + corruptedMsg;
             break;
           }
-          std::string energyString;
-          if (std::getline(refFStream,
-            energyString).rdstate() & std::ifstream::failbit) {
-            break;
-          }
-          std::stringstream refVdWStringStream(energyString);
-          refVdWStringStream >> skip >> refEnergy >> skip >> skip >> refEleEnergy;
-          error = (fabs(rdkEnergy - refEnergy) > ENERGY_TOLERANCE);
+          std::stringstream rdkEleStringStream(energyString);
+          rdkEleStringStream >> skip >> skip >> skip >> skip >> rdkEleEnergy;
+          error = (fabs(rdkEnergy - refVdWEnergy) > ENERGY_TOLERANCE);
           if (error && checkEnergy) {
             failed = true;
             std::stringstream diff;
             diff << "Van der Waals: energies differ\n"
-              "Expected " << std::fixed << std::setprecision(4) << refEnergy
+              "Expected " << std::fixed << std::setprecision(4) << refVdWEnergy
               << ", found " << std::fixed << std::setprecision(4) << rdkEnergy << "\n";
             errorMsg += diff.str();
           }
@@ -1314,7 +1359,7 @@ int main(int argc, char *argv[])
             failed = true;
             std::stringstream diff;
             diff << "Electrostatic: energies differ\n"
-              "Expected " << std::fixed << std::setprecision(4) << refEnergy
+              "Expected " << std::fixed << std::setprecision(4) << refEleEnergy
               << ", found " << std::fixed << std::setprecision(4) << rdkEnergy << "\n";
             errorMsg += diff.str();
           }
@@ -1338,6 +1383,9 @@ int main(int argc, char *argv[])
               << ((n_failed == 1) ? "" : "s") << " failed" << std::endl;
           }
         }
+        if (n_failed) {
+          testFailure = true;
+        }
         rdkFStream.close();
         refFStream.close();
         firstTest = false;
@@ -1345,5 +1393,6 @@ int main(int argc, char *argv[])
     }
   }
    
+  TEST_ASSERT(!testFailure);
   return 0;
 }

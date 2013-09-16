@@ -21,7 +21,9 @@
 
 namespace RDKit {
   class ROMol;
+  class RWMol;
   class Atom;
+  class Bond;
 
   namespace MMFF {
     class MMFFAtomProperties {
@@ -38,15 +40,15 @@ namespace RDKit {
     };
     
     typedef boost::shared_ptr<MMFFAtomProperties> MMFFAtomPropertiesPtr;
-    typedef enum {
+    enum {
       CONSTANT = 1,
       DISTANCE = 2
-    } DielModel;
-    typedef enum {
+    };
+    enum {
       MMFF_VERBOSITY_NONE = 0,
       MMFF_VERBOSITY_LOW = 1,
       MMFF_VERBOSITY_HIGH = 2
-    } MMFFVerbosity;
+    };
     class MMFFMolProperties {
     public:
       MMFFMolProperties(unsigned int numAtoms) :
@@ -190,19 +192,19 @@ namespace RDKit {
       {
         return this->d_dielConst;
       };
-      void setMMFFDielectricModel(DielModel dielModel)
+      void setMMFFDielectricModel(boost::uint8_t dielModel)
       {
         this->d_dielModel = dielModel;
       };
-      DielModel getMMFFDielectricModel()
+      boost::uint8_t getMMFFDielectricModel()
       {
         return this->d_dielModel;
       };
-      void setMMFFVerbosity(MMFFVerbosity verbosity)
+      void setMMFFVerbosity(boost::uint8_t verbosity)
       {
         this->d_verbosity = verbosity;
       };
-      MMFFVerbosity getMMFFVerbosity()
+      boost::uint8_t getMMFFVerbosity()
       {
         return this->d_verbosity;
       };
@@ -224,13 +226,13 @@ namespace RDKit {
       bool d_vdWTerm;
       bool d_eleTerm;
       double d_dielConst;       //!< the dielectric constant
-      DielModel d_dielModel; //!< the dielectric model (1 = constant, 2 = distance-dependent)
-      MMFFVerbosity d_verbosity;
+      boost::uint8_t d_dielModel; //!< the dielectric model (1 = constant, 2 = distance-dependent)
+      boost::uint8_t d_verbosity;
       std::ostream *d_oStream;
       std::vector<MMFFAtomPropertiesPtr> d_MMFFAtomPropertiesPtrVect;
     };
     MMFFMolProperties *setupMMFFForceField(ROMol *mol,
-      std::string mmffVariant = "MMFF94", MMFFVerbosity verbosity = MMFF_VERBOSITY_NONE,
+      std::string mmffVariant = "MMFF94", boost::uint8_t verbosity = MMFF_VERBOSITY_NONE,
       std::ostream &oStream = std::cout);
     unsigned int isAngleInRingOfSize3or4(const ROMol &mol, const unsigned int idx1,
       const unsigned int idx2, const unsigned int idx3);

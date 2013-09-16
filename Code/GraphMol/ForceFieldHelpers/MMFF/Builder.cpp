@@ -270,18 +270,15 @@ namespace RDKit {
           unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx[1]);
           const MMFFProp *mmffPropParamsCentralAtom = (*mmffProp)(jAtomType);
           boost::tie(nbr1Idx, end1Nbrs) = mol.getAtomNeighbors(jAtom);
-          unsigned int i = 0;
           for (; nbr1Idx != end1Nbrs; ++nbr1Idx) {
             const Atom *iAtom = mol[*nbr1Idx].get();
+            idx[0] = iAtom->getIdx();
             boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(jAtom);
-            unsigned int j = 0;
             for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
-              const Atom *kAtom = mol[*nbr2Idx].get();
-              if (j < (i + 1)) {
-                ++j;
+              if (nbr2Idx < (nbr1Idx + 1)) {
                 continue;
               }
-              idx[0] = iAtom->getIdx();
+              const Atom *kAtom = mol[*nbr2Idx].get();
               idx[2] = kAtom->getIdx();
               unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
               unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
@@ -356,9 +353,7 @@ namespace RDKit {
               if (areMMFFBondParamsEmpirical[1]) {
                 delete mmffBondParams[1];
               }
-              ++j;
             }
-            ++i;
           }
         }
         if (mmffMolProperties->getMMFFVerbosity()) {
@@ -691,27 +686,6 @@ namespace RDKit {
         }
       }
                        
-      #if 0
-      // ------------------------------------------------------------------------
-      //
-      //
-      //
-      // ------------------------------------------------------------------------
-      bool okToIncludeTorsion(const ROMol &mol,const Bond *bond)
-      {
-        bool res=true;
-        RingInfo *rings=mol.getRingInfo();
-        // having torsions in small rings makes the solver unstable
-        // and tends to yield poor-quality geometries, so filter those out:
-        if(rings->isBondInRingOfSize(bond->getIdx(),3)){
-          res = false;
-        }// else if(rings->isBondInRingOfSize(bond->getIdx(),4)){
-         // res = false;
-        //}
-        return res;
-      }
-      #endif
-      
       // ------------------------------------------------------------------------
       //
       //
@@ -989,6 +963,8 @@ namespace RDKit {
           }
         }
         const Conformer &conf = mol.getConformer(confId);
+        double dielConst = mmffMolProperties->getMMFFDielectricConstant();
+        boost::uint8_t dielModel = mmffMolProperties->getMMFFDielectricModel();
         for (unsigned int i = 0; i < nAtoms; ++i) {
           for (unsigned int j = i + 1; j < nAtoms; ++j) {
             if (ignoreInterfragInteractions && (fragMapping[i] != fragMapping[j])) {
@@ -1002,7 +978,9 @@ namespace RDKit {
                 continue;
               }
               EleContrib *contrib;
-              contrib = new EleContrib(field, i, j, mmffMolProperties,
+              double chargeTerm = mmffMolProperties->getMMFFPartialCharge(i)
+                * mmffMolProperties->getMMFFPartialCharge(j) / dielConst;
+              contrib = new EleContrib(field, i, j, chargeTerm, dielModel,
                 getTwoBitCell(neighborMatrix, i * nAtoms + j) == RELATION_1_4);
               field->contribs().push_back(ForceFields::ContribPtr(contrib));
               if (mmffMolProperties->getMMFFVerbosity()) {
@@ -1010,8 +988,9 @@ namespace RDKit {
                 const unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(j);
                 const Atom *iAtom = mol.getAtomWithIdx(i);
                 const Atom *jAtom = mol.getAtomWithIdx(j);
-                const double eleEnergy = Utils::calcEleEnergy(mmffMolProperties, i, j,
-                  dist, getTwoBitCell(neighborMatrix, i * nAtoms + j) == RELATION_1_4);
+                const double eleEnergy = Utils::calcEleEnergy
+                  (i, j, dist, chargeTerm, dielModel,
+                  getTwoBitCell(neighborMatrix, i * nAtoms + j) == RELATION_1_4);
                 if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
                   oStream << std::left
                     << std::setw(2) << iAtom->getSymbol()

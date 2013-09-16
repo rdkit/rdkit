@@ -57,14 +57,15 @@ namespace ForceFields {
 
       */
       EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-        RDKit::MMFF::MMFFMolProperties *mmffMolProperties, bool is1_4);
+        double chargeTerm, boost::uint8_t dielModel, bool is1_4);
       double getEnergy(double *pos) const;
       void getGrad(double *pos, double *grad) const;
     
     private:
-      int d_at1Idx,d_at2Idx;
+      int d_at1Idx, d_at2Idx;
+      double d_chargeTerm;    //!< q1 * q2 / D
+      boost::uint8_t d_dielModel;    //!< dielectric model (1: constant; 2: distance-dependent)
       bool d_is1_4;    //!< flag set for atoms in a 1,4 relationship
-      RDKit::MMFF::MMFFMolProperties *d_mmffMolProperties;    //!< pointer to the MMFFMolProperties object (needed to retrieve charges, dielectric constant and dielectric model)
 
     };
 
@@ -83,8 +84,8 @@ namespace ForceFields {
       double calcVdWEnergy(const double dist,
         const double R_star_ij, const double wellDepth);
       //! calculates and returns the electrostatic MMFF energy
-      double calcEleEnergy(RDKit::MMFF::MMFFMolProperties *mmffMolProperties,
-        unsigned int idx1, unsigned int idx2, double dist, bool is1_4);
+      double calcEleEnergy(unsigned int idx1, unsigned int idx2, double dist,
+        double chargeTerm, boost::uint8_t dielModel, bool is1_4);
     }
   }
 }

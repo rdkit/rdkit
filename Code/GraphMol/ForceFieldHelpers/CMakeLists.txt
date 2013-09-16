@@ -7,5 +7,6 @@ rdkit_headers(UFF/AtomTyper.h
 rdkit_headers(MMFF/AtomTyper.h
               MMFF/Builder.h DEST GraphMol/ForceFieldHelpers/MMFF)
 
+add_subdirectory(MMFF)
 add_subdirectory(UFF)
-#add_subdirectory(MMFF)
+add_subdirectory(Wrap)

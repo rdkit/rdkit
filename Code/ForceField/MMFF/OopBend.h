@@ -13,7 +13,6 @@
 #define __RD_OopBend_H__
 
 #include <ForceField/Contrib.h>
-#include <boost/tuple/tuple.hpp>
 #include <Geometry/point.h>
 
 

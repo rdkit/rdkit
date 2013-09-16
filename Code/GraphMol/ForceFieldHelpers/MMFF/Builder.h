@@ -92,10 +92,10 @@ namespace RDKit {
         std::string torsionBondSmarts = "[!$(*#*)&!D1]~[!$(*#*)&!D1]");
       void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         ForceFields::ForceField *field, boost::shared_array<boost::uint8_t> neighborMatrix,
-        double nonBondedThresh, bool ignoreInterfragInteractions = true);
+        double nonBondedThresh = 100.0, bool ignoreInterfragInteractions = true);
       void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         ForceFields::ForceField *field, boost::shared_array<boost::uint8_t> neighborMatrix,
-        double nonBondedThresh, bool ignoreInterfragInteractions = true);
+        double nonBondedThresh = 100.0, bool ignoreInterfragInteractions = true);
     }
   }
 }

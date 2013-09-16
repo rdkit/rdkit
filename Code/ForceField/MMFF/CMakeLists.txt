@@ -1,4 +1,4 @@
 rdkit_test(testMMFFForceField testMMFFForceField.cpp 
-LINK_LIBRARIES ForceField Optimizer RDGeometryLib RDGeneral FileParsers DistGeomHelpers ForceFieldHelpers)
+LINK_LIBRARIES ForceField Optimizer RDGeometryLib RDGeneral FileParsers DistGeomHelpers ForceFieldHelpers boost_iostreams)
 
 #add_subdirectory(Wrap)
