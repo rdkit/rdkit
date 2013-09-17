@@ -96,12 +96,12 @@ namespace RDKit {
       ROMol::ADJ_ITER nbrIdx;
       ROMol::ADJ_ITER endNbrs;
 
-      if ((atom->getAtomicNum() == 7) && (atom->getDegree() >= 3)) {
+      if ((atom->getAtomicNum() == 7) && (atom->getTotalDegree() >= 3)) {
         // loop over neighbors
         boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
         for (; (!isNOxide) && (nbrIdx != endNbrs); ++nbrIdx) {
           const Atom *nbrAtom = mol[*nbrIdx].get();
-          isNOxide = ((nbrAtom->getAtomicNum() == 8) && (nbrAtom->getDegree() == 1));
+          isNOxide = ((nbrAtom->getAtomicNum() == 8) && (nbrAtom->getTotalDegree() == 1));
         }
       }
         
@@ -309,8 +309,8 @@ namespace RDKit {
             else {
               atom = mol->getAtomWithIdx(atomRings[i][j]);
               // if not, move on
-              if ((atom->getAtomicNum() != 6) &&
-                (!((atom->getAtomicNum() == 7) && (atom->getExplicitValence() == 4)))) {
+              if ((atom->getAtomicNum() != 6) && (!((atom->getAtomicNum() == 7)
+                && ((atom->getExplicitValence() + atom->getNumImplicitHs()) == 4)))) {
                 continue;
               }
               // loop over neighbors
@@ -466,7 +466,7 @@ namespace RDKit {
               if (areAtomsInSameRingOfSize(mol, 5, 2, atom->getIdx(), nbrAtom->getIdx())
                 && ((nbrAtom->getAtomicNum() == 8)
                 || (nbrAtom->getAtomicNum() == 16) || ((nbrAtom->getAtomicNum() == 7)
-                && (nbrAtom->getDegree() == 3) && (!isAtomNOxide(nbrAtom))))) {
+                && (nbrAtom->getTotalDegree() == 3) && (!isAtomNOxide(nbrAtom))))) {
                 alphaHet.push_back(nbrAtom);
               }
               // loop over beta neighbors
@@ -488,7 +488,7 @@ namespace RDKit {
                 if (areAtomsInSameRingOfSize(mol, 5, 2, atom->getIdx(), nbr2Atom->getIdx())
                   && ((nbr2Atom->getAtomicNum() == 8)
                   || (nbr2Atom->getAtomicNum() == 16) || ((nbr2Atom->getAtomicNum() == 7)
-                  && (nbr2Atom->getDegree() == 3) && (!isAtomNOxide(nbr2Atom))))) {
+                  && (nbr2Atom->getTotalDegree() == 3) && (!isAtomNOxide(nbr2Atom))))) {
                   betaHet.push_back(nbr2Atom);
                 }
               }
@@ -532,7 +532,7 @@ namespace RDKit {
               for (; nbrIdx != endNbrs; ++nbrIdx) {
                 const Atom *nbrAtom = mol[*nbrIdx].get();
                 if ((nbrAtom->getAtomicNum() == 7)
-                  && (nbrAtom->getDegree() == 3)) {
+                  && (nbrAtom->getTotalDegree() == 3)) {
                   ++nN;
                   if ((nbrAtom->getFormalCharge() > 0)
                     && (!isAtomNOxide(nbrAtom))) {
@@ -622,7 +622,7 @@ namespace RDKit {
             if ((!(alphaHet.size())) && (!(betaHet.size()))) {
               // if it is nitrogen
               // if valence is 3, it's pyrrole nitrogen
-              if (atom->getDegree() == 3) {
+              if (atom->getTotalDegree() == 3) {
                 // NPYL
                 // Aromatic 5-ring nitrogen with pi lone pair
                 atomType = 39;
@@ -634,7 +634,7 @@ namespace RDKit {
               atomType = 76;
               break;
             }
-            if ((atom->getDegree() == 3)
+            if ((atom->getTotalDegree() == 3)
               && ((alphaHet.size() && (!(betaHet.size())))
               || (betaHet.size() && (!(alphaHet.size()))))) {
               // NIM+
@@ -707,7 +707,7 @@ namespace RDKit {
               atomType = 69;
               break;
             }
-            if (atom->getDegree() == 3) {
+            if (atom->getTotalDegree() == 3) {
               // NPD+
               // Aromatic nitrogen in pyridinium
               atomType = 58;
@@ -739,7 +739,7 @@ namespace RDKit {
           // Carbon
           case 6:
             // 4 neighbors
-            if (atom->getDegree() == 4) {
+            if (atom->getTotalDegree() == 4) {
               if (ringInfo->isAtomInRingOfSize(atom->getIdx(), 3)) {
                 // CR3R
                 // Aliphatic carbon in 3-membered ring
@@ -758,7 +758,7 @@ namespace RDKit {
               break;
             }
             // 3 neighbors
-            if (atom->getDegree() == 3) {
+            if (atom->getTotalDegree() == 3) {
               unsigned int nN2 = 0;
               unsigned int nN3 = 0;
               unsigned int nO = 0;
@@ -774,7 +774,7 @@ namespace RDKit {
                 }
                 // count how many terminal oxygen/sulfur atoms
                 // are bonded to ipso
-                if (nbrAtom->getDegree() == 1) {
+                if (nbrAtom->getTotalDegree() == 1) {
                   if (nbrAtom->getAtomicNum() == 8) {
                     ++nO;
                   }
@@ -785,12 +785,12 @@ namespace RDKit {
                 else if (nbrAtom->getAtomicNum() == 7) {
                   // count how many nitrogens with 3 neighbors
                   // are bonded to ipso
-                  if (nbrAtom->getDegree() == 3) {
+                  if (nbrAtom->getTotalDegree() == 3) {
                     ++nN3;
                   }
                   // count how many nitrogens with 2 neighbors
                   // are double-bonded to ipso
-                  else if ((nbrAtom->getDegree() == 2)
+                  else if ((nbrAtom->getTotalDegree() == 2)
                     && ((mol.getBondBetweenAtoms(nbrAtom->getIdx(),
                     atom->getIdx()))->getBondType() == Bond::DOUBLE)) {
                     ++nN2;
@@ -827,7 +827,7 @@ namespace RDKit {
                 break;
               }
               // if this carbon is is double-bonded to nitrogen,
-              // oxygen, phosphorous or sulfur
+              // oxygen, phosphorus or sulfur
               if ((doubleBondedElement == 7) || (doubleBondedElement == 8)
                 || (doubleBondedElement == 15) || (doubleBondedElement == 16)) {
                 // C=N
@@ -872,7 +872,7 @@ namespace RDKit {
               break;
             }
             // 2 neighbors
-            if (atom->getDegree() == 2) {
+            if (atom->getTotalDegree() == 2) {
               // CSP
               // Acetylenic carbon
               // =C=
@@ -881,7 +881,7 @@ namespace RDKit {
               break;
             }
             // 1 neighbor
-            if (atom->getDegree() == 1) {
+            if (atom->getTotalDegree() == 1) {
               // C%-
               // Isonitrile carbon
               atomType = 60;
@@ -891,27 +891,26 @@ namespace RDKit {
 
           // Nitrogen
           case 7:
-            // if the neighbor is phosphorous or sulfur
+            // if the neighbor is phosphorus or sulfur
             // count the number of terminal oxygens bonded
-            // to that phosphorous or sulfur atom
+            // to that phosphorus or sulfur atom
             boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
             for (; nbrIdx != endNbrs; ++nbrIdx) {
               const Atom *nbrAtom = mol[*nbrIdx].get();
               // count how many terminal oxygen atoms
               // are bonded to ipso
               if ((nbrAtom->getAtomicNum() == 8)
-                && (nbrAtom->getDegree() == 1)) {
+                && (nbrAtom->getTotalDegree() == 1)) {
                 ++nTermObondedToN;
               }
-              if ((atom->getExplicitValence() >= 3)
-                && ((nbrAtom->getAtomicNum() == 15)
-                || (nbrAtom->getAtomicNum() == 16))) {
+              if (((atom->getExplicitValence() + atom->getNumImplicitHs()) >= 3)
+                && ((nbrAtom->getAtomicNum() == 15) || (nbrAtom->getAtomicNum() == 16))) {
                 unsigned int nObondedToSP = 0;
                 boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(nbrAtom);
                 for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
                   const Atom *nbr2Atom = mol[*nbr2Idx].get();
                   if ((nbr2Atom->getAtomicNum() == 8)
-                    && (nbr2Atom->getDegree() == 1)) {
+                    && (nbr2Atom->getTotalDegree() == 1)) {
                     ++nObondedToSP;
                   }
                 }
@@ -922,7 +921,7 @@ namespace RDKit {
               }
             }
             // 4 neighbors
-            if (atom->getDegree() == 4) {
+            if (atom->getTotalDegree() == 4) {
               if (isAtomNOxide(atom)) {
                 // N3OX
                 // sp3-hybridized N-oxide nitrogen
@@ -935,9 +934,9 @@ namespace RDKit {
               break;
             }
             // 3 neighbors
-            if (atom->getDegree() == 3) {
+            if (atom->getTotalDegree() == 3) {
               // total bond order >= 4
-              if (atom->getExplicitValence() >= 4) {
+              if ((atom->getExplicitValence() + atom->getNumImplicitHs()) >= 4) {
                 bool doubleBondedCN = false;
                 boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
                 for (; nbrIdx != endNbrs; ++nbrIdx) {
@@ -957,7 +956,7 @@ namespace RDKit {
                           continue;
                         }
                         doubleBondedCN = (!((nbr2Atom->getAtomicNum() == 7)
-                          && (nbr2Atom->getDegree() == 3)));
+                          && (nbr2Atom->getTotalDegree() == 3)));
                       }
                     }
                   }
@@ -992,7 +991,7 @@ namespace RDKit {
                 }
               }
               // total bond order >= 3
-              if (atom->getExplicitValence() >= 3) {
+              if ((atom->getExplicitValence() + atom->getNumImplicitHs()) >= 3) {
                 bool isNCOorNCS = false;
                 bool isNCNplus = false;
                 bool isNGDplus = false;
@@ -1053,7 +1052,7 @@ namespace RDKit {
                       }
                       // if this carbon is bonded to a nitrogen with 3 neighbors
                       if ((nbr2Atom->getAtomicNum() == 7)
-                        && (nbr2Atom->getDegree() == 3)) {
+                        && (nbr2Atom->getTotalDegree() == 3)) {
                         // count the number of +1 formal charges that we have
                         if (nbr2Atom->getFormalCharge() == 1) {
                           ++nFormalCharge;
@@ -1083,7 +1082,7 @@ namespace RDKit {
                       // of nitrogens with 2 neighbors bonded to this carbon
                       // via a double or aromatic bond (C=N-)
                       if ((nbr2Atom->getAtomicNum() == 7)
-                        && (nbr2Atom->getDegree() == 2)
+                        && (nbr2Atom->getTotalDegree() == 2)
                         && ((bond->getBondType() == Bond::DOUBLE)
                         || (bond->getBondType() == Bond::AROMATIC))) {
                         ++nN2bondedToC;
@@ -1198,7 +1197,7 @@ namespace RDKit {
                   // 1) ipso nitrogen is bonded to benzene carbon while no oxygen
                   //    or sulfur are bonded to the latter: ipso is aniline nitrogen
                   // 2) ipso nitrogen is bonded to a carbon which is double-bonded to
-                  //    carbon, nitrogen or phosphorous, or triple-bonded to carbon
+                  //    carbon, nitrogen or phosphorus, or triple-bonded to carbon
                   if (((!isNCOorNCS) && (!isNSO2orNSO3orNCN))
                     && (((!nObondedToC) && (!nSbondedToC) && isNbrBenzeneC)
                     || ((elementDoubleBondedToC == 6) || (elementDoubleBondedToC == 7)
@@ -1232,9 +1231,9 @@ namespace RDKit {
               }
             }
             // 2 neighbors
-            if (atom->getDegree() == 2) {
+            if (atom->getTotalDegree() == 2) {
               // total bond order = 4
-              if (atom->getExplicitValence() == 4) {
+              if ((atom->getExplicitValence() + atom->getNumImplicitHs()) == 4) {
                 // loop over neighbors
                 bool isIsonitrile = false;
                 boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
@@ -1256,7 +1255,7 @@ namespace RDKit {
                 break;
               }
               // total bond order = 3
-              if (atom->getExplicitValence() == 3) {
+              if ((atom->getExplicitValence() + atom->getNumImplicitHs()) == 3) {
                 // loop over neighbors
                 bool isNitroso = false;
                 bool isImineOrAzo = false;
@@ -1291,7 +1290,7 @@ namespace RDKit {
                 }
               }
               // total bond order >= 2
-              if (atom->getExplicitValence() >= 2) {
+              if ((atom->getExplicitValence() + atom->getNumImplicitHs()) >= 2) {
                 // loop over neighbors
                 bool isNSO = false;
                 boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
@@ -1306,7 +1305,7 @@ namespace RDKit {
                     for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
                       const Atom *nbr2Atom = mol[*nbr2Idx].get();
                       if ((nbr2Atom->getAtomicNum() == 8)
-                        && (nbr2Atom->getDegree() == 1)) {
+                        && (nbr2Atom->getTotalDegree() == 1)) {
                         ++nTermObondedToS;
                       }
                     }
@@ -1341,7 +1340,7 @@ namespace RDKit {
               break;
             }
             // 1 neighbor
-            if (atom->getDegree() == 1) {
+            if (atom->getTotalDegree() == 1) {
               bool isNSP = false;
               bool isNAZT = false;
               boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
@@ -1352,7 +1351,7 @@ namespace RDKit {
                   nbrAtom->getIdx()))->getBondType() == Bond::TRIPLE);
                 // ipso is bonded to a nitrogen atom with 2 neighbors
                 if ((nbrAtom->getAtomicNum() == 7)
-                  && (nbrAtom->getDegree() == 2)) {
+                  && (nbrAtom->getTotalDegree() == 2)) {
                   // loop over nitrogen neighbors
                   boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(nbrAtom);
                   for (; (!isNAZT) && (nbr2Idx != end2Nbrs); ++nbr2Idx) {
@@ -1360,9 +1359,9 @@ namespace RDKit {
                     // if another nitrogen with 2 neighbors, or a carbon
                     // with 3 neighbors is found, ipso is NAZT
                     isNAZT = (((nbr2Atom->getAtomicNum() == 7)
-                      && (nbr2Atom->getDegree() == 2))
+                      && (nbr2Atom->getTotalDegree() == 2))
                       || ((nbr2Atom->getAtomicNum() == 6)
-                      && (nbr2Atom->getDegree() == 3)));
+                      && (nbr2Atom->getTotalDegree() == 3)));
                   }
                 }
               }
@@ -1388,15 +1387,15 @@ namespace RDKit {
           // Oxygen
           case 8:
             // 3 neighbors
-            if (atom->getDegree() == 3) {
+            if (atom->getTotalDegree() == 3) {
               // O+
               // Oxonium oxygen
               atomType = 49;
               break;
             }
             // 2 neighbors
-            if (atom->getDegree() == 2) {
-              if (atom->getExplicitValence() == 3) {
+            if (atom->getTotalDegree() == 2) {
+              if ((atom->getExplicitValence() + atom->getNumImplicitHs()) == 3) {
                 // O=+
                 // Oxenium oxygen
                 atomType = 51;
@@ -1411,7 +1410,7 @@ namespace RDKit {
                   ++nHbondedToO;
                 }
               }
-              if (nHbondedToO == 2) {
+              if ((nHbondedToO + atom->getNumImplicitHs()) == 2) {
                 // OH2
                 // Oxygen in water
                 atomType = 70;
@@ -1452,13 +1451,28 @@ namespace RDKit {
               break;
             }
             // 1 neighbor
-            if (atom->getDegree() == 1) {
+            if (atom->getDegree() <= 1) {
               unsigned int nNbondedToCorNorS = 0;
               unsigned int nObondedToCorNorS = 0;
               unsigned int nSbondedToCorNorS = 0;
+              bool isOxideOBondedToH = atom->getNumExplicitHs() + atom->getNumImplicitHs();
+              bool isCarboxylateO = false;
+              bool isCarbonylO = false;
+              bool isOxideOBondedToC = false;
+              bool isNitrosoO = false;
+              bool isOxideOBondedToN = false;
+              bool isNOxideO = false;
+              bool isNitroO = false;
+              bool isThioSulfinateO = false;
+              bool isSulfateO = false;
+              bool isSulfoxideO = false;
+              bool isPhosphateOrPerchlorateO = false;
               // loop over neighbors
               boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
-              for (; nbrIdx != endNbrs; ++nbrIdx) {
+              for (; (nbrIdx != endNbrs) && (!isOxideOBondedToC) && (!isOxideOBondedToN)
+                && (!isOxideOBondedToH) && (!isCarboxylateO) && (!isNitroO) && (!isNOxideO)
+                && (!isThioSulfinateO) && (!isSulfateO) && (!isPhosphateOrPerchlorateO)
+                && (!isCarbonylO) && (!isNitrosoO) && (!isSulfoxideO); ++nbrIdx) {
                 const Atom *nbrAtom = mol[*nbrIdx].get();
                 const Bond *bond = mol.getBondBetweenAtoms
                   (atom->getIdx(), nbrAtom->getIdx());
@@ -1473,26 +1487,23 @@ namespace RDKit {
                   for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
                     const Atom *nbr2Atom = mol[*nbr2Idx].get();
                     if ((nbr2Atom->getAtomicNum() == 7)
-                      && (nbr2Atom->getDegree() == 2)) {
+                      && (nbr2Atom->getTotalDegree() == 2)) {
                       ++nNbondedToCorNorS;
                     }
                     if ((nbr2Atom->getAtomicNum() == 8)
-                      && (nbr2Atom->getDegree() == 1)) {
+                      && (nbr2Atom->getTotalDegree() == 1)) {
                       ++nObondedToCorNorS;
                     }
                     if ((nbr2Atom->getAtomicNum() == 16)
-                      && (nbr2Atom->getDegree() == 1)) {
+                      && (nbr2Atom->getTotalDegree() == 1)) {
                       ++nSbondedToCorNorS;
                     }
                   }
                 }
                 // if ipso neighbor is hydrogen
-                bool isOxideOBondedToH = (nbrAtom->getAtomicNum() == 1);
+                isOxideOBondedToH = (nbrAtom->getAtomicNum() == 1);
                 
                 // if ipso neighbor is carbon
-                bool isCarboxylateO = false;
-                bool isCarbonylO = false;
-                bool isOxideOBondedToC = false;
                 if (nbrAtom->getAtomicNum() == 6) {
                   // if carbon neighbor is bonded to 2 oxygens,
                   // ipso is carboxylate oxygen
@@ -1508,10 +1519,6 @@ namespace RDKit {
                 }
                 
                 // if ipso neighbor is nitrogen
-                bool isNitrosoO = false;
-                bool isOxideOBondedToN = false;
-                bool isNOxideO = false;
-                bool isNitroO = false;
                 if (nbrAtom->getAtomicNum() == 7) {
                   // if ipso oxygen is bonded to nitrogen
                   // via a double bond, ipso is nitroso oxygen
@@ -1521,10 +1528,10 @@ namespace RDKit {
                   if ((bond->getBondType() == Bond::SINGLE) && (nObondedToCorNorS == 1)) {
                     // if nitrogen has 2 neighbors or, if the neighbors are 3,
                     // the total bond order on nitrogen is 3, ipso is oxide oxygen
-                    isOxideOBondedToN = ((nbrAtom->getDegree() == 2)
-                      || (nbrAtom->getExplicitValence() == 3));
+                    isOxideOBondedToN = ((nbrAtom->getTotalDegree() == 2)
+                      || ((nbrAtom->getExplicitValence() + nbrAtom->getNumImplicitHs()) == 3));
                     // if the total bond order on nitrogen is 4, ipso is N-oxide oxygen
-                    isNOxideO = (nbrAtom->getExplicitValence() == 4);
+                    isNOxideO = ((nbrAtom->getExplicitValence() + nbrAtom->getNumImplicitHs()) == 4);
                   }
                   // if ipso oxygen is bonded to nitrogen which is bonded
                   // to multiple oxygens, ipso is nitro/nitrate oxygen
@@ -1532,9 +1539,6 @@ namespace RDKit {
                 }
                 
                 // if ipso neighbor is sulfur
-                bool isThioSulfinateO = false;
-                bool isSulfateO = false;
-                bool isSulfoxideO = false;
                 if (nbrAtom->getAtomicNum() == 16) {
                   // if ipso oxygen is bonded to sulfur and
                   // the latter is bonded to another sulfur,
@@ -1554,75 +1558,72 @@ namespace RDKit {
                     && ((nObondedToCorNorS + nNbondedToCorNorS) == 1));
                 }
                 
-                // if ipso neighbor is phosphorous
-                bool isPhosphateO = (nbrAtom->getAtomicNum() == 15);
-                
-                // if ipso neighbor is chlorine
-                bool isPerchlorateO = (nbrAtom->getAtomicNum() == 17);
-                
-                if (isOxideOBondedToC || isOxideOBondedToN || isOxideOBondedToH) {
-                  // OM
-                  // Oxide oxygen on sp3 carbon
-                  // OM2
-                  // Oxide oxygen on sp2 carbon
-                  // OM
-                  // Oxide oxygen on sp3 nitrogen (not in original MMFF.I Table III)
-                  // OM2
-                  // Oxide oxygen on sp2 nitrogen (not in original MMFF.I Table III)
-                  atomType = 35;
-                  break;
-                }
-                if (isCarboxylateO || isNitroO || isNOxideO || isThioSulfinateO
-                  || isSulfateO || isPhosphateO || isPerchlorateO) {
-                  // O2CM
-                  // Oxygen in carboxylate group
-                  // ONX
-                  // Oxygen in N-oxides
-                  // O2N
-                  // Oxygen in nitro group
-                  // O2NO
-                  // Nitro-group oxygen in nitrate
-                  // O3N
-                  // Nitrate anion oxygen
-                  // OSMS
-                  // Terminal oxygen in thiosulfinate anion
-                  // O-S
-                  // Single terminal O on tetracoordinate sulfur
-                  // O2S
-                  // One of 2 terminal O's on sulfur
-                  // O3S
-                  // One of 3 terminal O's on sulfur
-                  // O4S
-                  // Terminal O in sulfate anion
-                  // OP
-                  // Oxygen in phosphine oxide
-                  // O2P
-                  // One of 2 terminal O's on P
-                  // O3P
-                  // One of 3 terminal O's on P
-                  // O4P
-                  // One of 4 terminal O's on P
-                  // O4Cl
-                  // Oxygen in perchlorate anion
-                  atomType = 32;
-                  break;
-                }
-                if (isCarbonylO || isNitrosoO || isSulfoxideO) {
-                  // O=C
-                  // Generic carbonyl oxygen
-                  // O=CN
-                  // Carbonyl oxygen in amides
-                  // O=CR
-                  // Carbonyl oxygen in aldehydes and ketones
-                  // O=CO
-                  // Carbonyl oxygen in acids and esters
-                  // O=N
-                  // Nitroso oxygen
-                  // O=S
-                  // Doubly bonded sulfoxide oxygen
-                  atomType = 7;
-                  break;
-                }
+                // if ipso neighbor is phosphorus or chlorine
+                isPhosphateOrPerchlorateO = ((nbrAtom->getAtomicNum() == 15)
+                  || (nbrAtom->getAtomicNum() == 17));
+              }
+              if (isOxideOBondedToC || isOxideOBondedToN || isOxideOBondedToH) {
+                // OM
+                // Oxide oxygen on sp3 carbon
+                // OM2
+                // Oxide oxygen on sp2 carbon
+                // OM
+                // Oxide oxygen on sp3 nitrogen (not in original MMFF.I Table III)
+                // OM2
+                // Oxide oxygen on sp2 nitrogen (not in original MMFF.I Table III)
+                atomType = 35;
+                break;
+              }
+              if (isCarboxylateO || isNitroO || isNOxideO || isThioSulfinateO
+                || isSulfateO || isPhosphateOrPerchlorateO) {
+                // O2CM
+                // Oxygen in carboxylate group
+                // ONX
+                // Oxygen in N-oxides
+                // O2N
+                // Oxygen in nitro group
+                // O2NO
+                // Nitro-group oxygen in nitrate
+                // O3N
+                // Nitrate anion oxygen
+                // OSMS
+                // Terminal oxygen in thiosulfinate anion
+                // O-S
+                // Single terminal O on tetracoordinate sulfur
+                // O2S
+                // One of 2 terminal O's on sulfur
+                // O3S
+                // One of 3 terminal O's on sulfur
+                // O4S
+                // Terminal O in sulfate anion
+                // OP
+                // Oxygen in phosphine oxide
+                // O2P
+                // One of 2 terminal O's on P
+                // O3P
+                // One of 3 terminal O's on P
+                // O4P
+                // One of 4 terminal O's on P
+                // O4Cl
+                // Oxygen in perchlorate anion
+                atomType = 32;
+                break;
+              }
+              if (isCarbonylO || isNitrosoO || isSulfoxideO) {
+                // O=C
+                // Generic carbonyl oxygen
+                // O=CN
+                // Carbonyl oxygen in amides
+                // O=CR
+                // Carbonyl oxygen in aldehydes and ketones
+                // O=CO
+                // Carbonyl oxygen in acids and esters
+                // O=N
+                // Nitroso oxygen
+                // O=S
+                // Doubly bonded sulfoxide oxygen
+                atomType = 7;
+                break;
               }
             }
           break;
@@ -1673,7 +1674,7 @@ namespace RDKit {
           
           // Phosphorus
           case 15:
-            if (atom->getDegree() == 4) {
+            if (atom->getTotalDegree() == 4) {
               // PO4
               // Phosphate group phosphorus
               // PO3
@@ -1687,13 +1688,13 @@ namespace RDKit {
               atomType = 25;
               break;
             }
-            if (atom->getDegree() == 3) {
+            if (atom->getTotalDegree() == 3) {
               // P
               // Phosphorus in phosphines
               atomType = 26;
               break;
             }
-            if (atom->getDegree() == 2) {
+            if (atom->getTotalDegree() == 2) {
               // -P=C
               // Phosphorus doubly bonded to C
               atomType = 75;
@@ -1703,23 +1704,8 @@ namespace RDKit {
           
           // Sulfur
           case 16:
-            // 4 neighbors
-            if (atom->getDegree() == 4) {
-              // SO2
-              // Sulfone sulfur
-              // SO2N
-              // Sulfonamide sulfur
-              // SO3
-              // Sulfonate group sulfur
-              // SO4
-              // Sulfate group sulfur
-              // SNO
-              // Sulfur in nitrogen analog of a sulfone
-              atomType = 18;
-              break;
-            }
-            // 3 neighbors
-            if (atom->getDegree() == 3) {
+            // 3  or 4 neighbors
+            if (atom->getTotalDegree() >= 3) {
               unsigned int nOorNbondedToS = 0;
               unsigned int nSbondedToS = 0;
               bool isCDoubleBondedToS = false;
@@ -1736,30 +1722,26 @@ namespace RDKit {
                 // if the neighbor is terminal oxygen/sulfur
                 // or secondary nitrogen, increment the respective counter
                 if (((nbrAtom->getDegree() == 1) && (nbrAtom->getAtomicNum() == 8))
-                  || ((nbrAtom->getDegree() == 2) && (nbrAtom->getAtomicNum() == 7))) {
+                  || ((nbrAtom->getTotalDegree() == 2) && (nbrAtom->getAtomicNum() == 7))) {
                   ++nOorNbondedToS;
                 }
                 if ((nbrAtom->getDegree() == 1) && (nbrAtom->getAtomicNum() == 16)) {
                   ++nSbondedToS;
                 }
               }
-              // is ipso sulfur is bonded to two atoms of oxygen/nitrogen
-              if (nOorNbondedToS == 2) {
-                // if ipso sulfur is also double-bonded to carbon
-                if (isCDoubleBondedToS) {
-                  // =SO2
-                  // Sulfone sulfur, doubly bonded to carbon
-                  atomType = 18;
-                  break;
-                }
-                // otherwise it is sulfinate
-                // SO2M
-                // Sulfur in anionic sulfinate group
-                atomType = 73;
+              // if ipso sulfur has 3 neighbors and is bonded to
+              // two atoms of oxygen/nitrogen and double-bonded
+              // to carbon, or if it has 4 neighbors
+              if (((atom->getTotalDegree() == 3) && (nOorNbondedToS == 2)
+                && (isCDoubleBondedToS)) || (atom->getTotalDegree() == 4)) {
+                // =SO2
+                // Sulfone sulfur, doubly bonded to carbon
+                atomType = 18;
                 break;
               }
               // if ipso sulfur is bonded to both oxygen/nitrogen and sulfur
-              if (nOorNbondedToS && nSbondedToS) {
+              if ((nOorNbondedToS && nSbondedToS)
+                || ((nOorNbondedToS == 2) && (!isCDoubleBondedToS))) {
                 // SSOM
                 // Tricoordinate sulfur in anionic thiosulfinate group
                 atomType = 73;
@@ -1774,7 +1756,7 @@ namespace RDKit {
               break;
             }
             // 2 neighbors
-            if (atom->getDegree() == 2) {
+            if (atom->getTotalDegree() == 2) {
               // loop over neighbors
               bool isODoubleBondedToS = false;
               boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
@@ -1813,7 +1795,7 @@ namespace RDKit {
                 for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
                   const Atom *nbr2Atom = mol[*nbr2Idx].get();
                   if ((nbr2Atom->getAtomicNum() == 16)
-                    && (nbr2Atom->getDegree() == 1)) {
+                    && (nbr2Atom->getTotalDegree() == 1)) {
                     ++nTermSbondedToNbr;
                   }
                 }
@@ -1848,7 +1830,7 @@ namespace RDKit {
           // Chlorine
           case 17:
             // 4 neighbors
-            if (atom->getDegree() == 4) {
+            if (atom->getTotalDegree() == 4) {
               // loop over neighbors and count the number
               // of bonded oxygens
               unsigned int nObondedToCl = 0;
@@ -1868,7 +1850,7 @@ namespace RDKit {
               }
             }
             // 1 neighbor
-            if (atom->getDegree() == 1) {
+            if (atom->getTotalDegree() == 1) {
               // Cl
               // Chlorine
               atomType = 12;
@@ -2154,7 +2136,7 @@ namespace RDKit {
                       }
                     }
                   }
-                  // if the neighbor of oxygen is phosphorous, ipso is HOCO
+                  // if the neighbor of oxygen is phosphorus, ipso is HOCO
                   if (nbr2Atom->getAtomicNum() == 15) {
                     isHOP = true;
                   }
@@ -2194,7 +2176,7 @@ namespace RDKit {
             }
           break;
           
-          // phosphorous and sulfur
+          // phosphorus and sulfur
           case 15:
           case 16:
             // HP
@@ -2240,7 +2222,7 @@ namespace RDKit {
     // to set dielectric constant and dielectric model (CONSTANT or
     // DISTANCE)
     MMFFMolProperties *setupMMFFForceField(ROMol *mol, 
-      std::string mmffVariant, MMFFVerbosity verbosity,
+      std::string mmffVariant, boost::uint8_t verbosity,
       std::ostream &oStream)
     {
       ROMol::AtomIterator it;
@@ -2693,7 +2675,7 @@ namespace RDKit {
             C[i] = 0.811;
           break;
           
-          // Phosphorous
+          // Phosphorus
           case 15:
             Z[i] = 2.350;
             C[i] = 1.068;
@@ -2794,7 +2776,7 @@ namespace RDKit {
             V[i] = 1.22;
           break;
           
-          // phosphorous
+          // phosphorus
           case 15:
             U[i] = 1.25;
             V[i] = 2.40;
@@ -2991,8 +2973,8 @@ namespace RDKit {
               // count how many terminal oxygen/sulfur atoms
               // or secondary nitrogens
               // are bonded to the neighbor of ipso
-              unsigned int nSecNbondedToNbr = 0;
-              unsigned int nTermOSbondedToNbr = 0;
+              int nSecNbondedToNbr = 0;
+              int nTermOSbondedToNbr = 0;
               boost::tie(nbr2Idx, end2Nbrs) = mol->getAtomNeighbors(nbrAtom);
               for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
                 const Atom *nbr2Atom = (*mol)[*nbr2Idx].get();

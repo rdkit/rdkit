@@ -128,7 +128,7 @@ namespace ForceFields {
       double cosChi = std::max(((cosChiSq > 0.0) ? sqrt(cosChiSq) : 0.0), 1.0e-8);
       double chi = RAD2DEG * asin(sinChi);
       double cosTheta = rJI.dotProduct(rJK);
-      double sinThetaSq = 1.0 - cosTheta * cosTheta;
+      double sinThetaSq = std::max(1.0 - cosTheta * cosTheta, 1.0e-8);
       double sinTheta = std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
       
       double dE_dChi = RAD2DEG * 0.043844 * this->d_koop * chi;
