@@ -1665,12 +1665,15 @@ namespace RDKit{
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,unsigned int &nAtoms,
 			unsigned int &nBonds,
-                        bool strictParsing){
+                        bool strictParsing,
+                        bool expectMEND){
       PRECONDITION(inStream,"bad stream");
       PRECONDITION(mol,"bad molecule");
 
       std::string tempStr;
       std::vector<std::string> splitLine;
+
+      bool fileComplete=false;
 
       tempStr = getV3000Line(inStream,line);
       boost::to_upper(tempStr);
@@ -1785,10 +1788,20 @@ namespace RDKit{
         throw FileParseException("END CTAB line not found") ;
       }
 
+      if(expectMEND){
+        tempStr = getLine(inStream);
+        ++line;
+        if(tempStr[0]=='M'&&tempStr.substr(0,6)=="M  END"){
+          fileComplete=true;
+        }
+      } else {
+        fileComplete = true;
+      }
+
       mol->addConformer(conf, true);
       conf=0;
 
-      return true;
+      return fileComplete;
     }
 
     bool ParseV2000CTAB(std::istream *inStream,unsigned int &line,
@@ -2029,31 +2042,32 @@ namespace RDKit{
       // postprocess mol file flags
       ProcessMolProps(res);
 
-      if ( sanitize ) {
-        // update the chirality and stereo-chemistry and stuff:
-        //
-        // NOTE: we detect the stereochemistry before sanitizing/removing
-        // hydrogens because the removal of H atoms may actually remove
-        // the wedged bond from the molecule.  This wipes out the only
-        // sign that chirality ever existed and makes us sad... so first
-        // perceive chirality, then remove the Hs and sanitize.
-        //
-        // One exception to this (of course, there's always an exception):
-        // DetectAtomStereoChemistry() needs to check the number of
-        // implicit hydrogens on atoms to detect if things can be
-        // chiral. However, if we ask for the number of implicit Hs before
-        // we've called MolOps::cleanUp() on the molecule, we'll get
-        // exceptions for common "weird" cases like a nitro group
-        // mis-represented as -N(=O)=O.  *SO*... we need to call
-        // cleanUp(), then detect the stereochemistry.
-        // (this was Issue 148)
-        //
-        if(chiralityPossible){
-          MolOps::cleanUp(*res);
-          const Conformer &conf = res->getConformer();
-          DetectAtomStereoChemistry(*res, &conf);
-        }
+      // update the chirality and stereo-chemistry
+      //
+      // NOTE: we detect the stereochemistry before sanitizing/removing
+      // hydrogens because the removal of H atoms may actually remove
+      // the wedged bond from the molecule.  This wipes out the only
+      // sign that chirality ever existed and makes us sad... so first
+      // perceive chirality, then remove the Hs and sanitize.
+      //
+      // One exception to this (of course, there's always an exception):
+      // DetectAtomStereoChemistry() needs to check the number of
+      // implicit hydrogens on atoms to detect if things can be
+      // chiral. However, if we ask for the number of implicit Hs before
+      // we've called MolOps::cleanUp() on the molecule, we'll get
+      // exceptions for common "weird" cases like a nitro group
+      // mis-represented as -N(=O)=O.  *SO*... we need to call
+      // cleanUp(), then detect the stereochemistry.
+      // (this was Issue 148)
+      //
+      if(chiralityPossible){
+        const Conformer &conf = res->getConformer();
+        // if we aren't sanitizing, we technically shouldn't be doing this...
+        MolOps::cleanUp(*res);
+        DetectAtomStereoChemistry(*res, &conf);
+      }
 
+      if ( sanitize ) {
         try {
           if(removeHs){
             ROMol *tmp=MolOps::removeHs(*res,false,false);

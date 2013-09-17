@@ -131,6 +131,14 @@ struct sparseIntVec_wrapper {
       .def(python::self += python::self)
       .def(python::self == python::self)
       .def(python::self != python::self)
+      //.def(python::self - int())
+      .def(python::self -= int())
+      //.def(python::self + int())
+      .def(python::self += int())
+      //.def(python::self / int())
+      .def(python::self /= int())
+      //.def(python::self * int())
+      .def(python::self *= int())
       .def("GetTotalVal", &SparseIntVect<IndexType>::getTotalVal,
 	   (python::args("useAbs")=false),
 	   "Get the sum of the values in the vector, basically L1 norm")

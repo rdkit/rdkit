@@ -159,6 +159,24 @@ class TestCase(unittest.TestCase):
     img = Draw.MolToImage(mol)
     self.failUnless(img)
     
+  def testGithubIssue86(self):
+    mol = Chem.MolFromSmiles('F[C@H](Cl)Br')
+    for b in mol.GetBonds():
+      self.failUnlessEqual(b.GetBondDir(),Chem.BondDir.NONE)
+    img = Draw.MolToImage(mol,kekulize=False)
+    self.failUnless(img)
+    for b in mol.GetBonds():
+      self.failUnlessEqual(b.GetBondDir(),Chem.BondDir.NONE)
+
+    Chem.WedgeMolBonds(mol,mol.GetConformer())
+    obds = [x.GetBondDir() for x in mol.GetBonds()]
+    self.failUnlessEqual(obds.count(Chem.BondDir.NONE),2)
+    img = Draw.MolToImage(mol,kekulize=False)
+    self.failUnless(img)
+    nbds = [x.GetBondDir() for x in mol.GetBonds()]
+    self.failUnlessEqual(obds,nbds)
+
+    
 
 
     

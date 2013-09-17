@@ -20,7 +20,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <Geometry/point.h>
 
-//#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 
 namespace RDKit{
@@ -80,8 +80,11 @@ namespace RDKit{
         unsigned long invariant = 0;
         int num = atom->getAtomicNum() % 128;
         // get an int with the deviation in the mass from the default:
-        int mass = static_cast<int>(atom->getMass() -
-                                    PeriodicTable::getTable()->getAtomicWeight(atom->getAtomicNum()));
+        int mass = 0;
+        if(atom->getIsotope()) {
+          mass = atom->getIsotope()-PeriodicTable::getTable()->getMostCommonIsotope(atom->getAtomicNum());
+          if(mass>=0) mass += 1;
+        }          
         mass += 8;
         if(mass < 0) mass = 0;
         else mass = mass % 16;
@@ -146,6 +149,7 @@ namespace RDKit{
       for(int i=0;i<numAtoms;i++){
         if(!seedWithInvars){
           cipEntries[i].push_back(mol.getAtomWithIdx(i)->getAtomicNum());
+          cipEntries[i].push_back(static_cast<int>(ranks[i]));
         } else {
           cipEntries[i].push_back(static_cast<int>(invars[i]));
         }
@@ -883,6 +887,17 @@ namespace RDKit{
             }
           }
         }        
+        for(ROMol::BondIterator bondIt=mol.beginBonds();
+            bondIt!=mol.endBonds();++bondIt){
+          // wedged bonds to atoms that have no stereochem 
+          // should be removed. (github issue 87)
+          if(((*bondIt)->getBondDir()==Bond::BEGINWEDGE ||
+              (*bondIt)->getBondDir()==Bond::BEGINDASH) &&
+             (*bondIt)->getBeginAtom()->getChiralTag()==Atom::CHI_UNSPECIFIED &&
+             (*bondIt)->getEndAtom()->getChiralTag()==Atom::CHI_UNSPECIFIED){
+            (*bondIt)->setBondDir(Bond::NONE);
+          }
+        }
       }
       mol.setProp("_StereochemDone",1,true);
 

@@ -3028,6 +3028,91 @@ void testMolFileTotalValence(){
 }
 
 
+void testGithub88(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 88: M  END not being read from V3K ctabs" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"github88.v3k.mol";
+    bool ok=false;
+    try{
+      MolFileToMol(fName);
+    } catch (FileParseException &e){
+      ok=true;
+    }
+    TEST_ASSERT(ok);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub82(){
+  BOOST_LOG(rdInfoLog) << "testing github issue 82: stereochemistry only perceived if sanitization is done" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"github82.1.mol";
+    ROMol *m;
+    m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    delete m;
+
+    m=MolFileToMol(fName,true,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    delete m;
+
+    m=MolFileToMol(fName,false,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    delete m;
+
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testMolFileWithHs(){
+  BOOST_LOG(rdInfoLog) << "testing impact of Hs in mol files on stereochemistry" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fName;
+    fName = rdbase+"chiral_3h.mol";
+    ROMol *m;
+    m=MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    delete m;
+
+    m=MolFileToMol(fName,true,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    delete m;
+
+    m=MolFileToMol(fName,false,false);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    delete m;
+
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+
 int main(int argc,char *argv[]){
   RDLog::InitLogs();
 #if 1
@@ -3086,8 +3171,11 @@ int main(int argc,char *argv[]){
   testSkipLines();
   testIssue269();
   testMolFileChiralFlag();
-#endif
   testMolFileTotalValence();
+  testGithub88();
+  testGithub82();
+#endif
+  testMolFileWithHs();
 
   return 0;
 }

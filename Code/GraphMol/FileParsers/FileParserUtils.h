@@ -41,7 +41,7 @@ namespace RDKit{
 			RWMol *mol, Conformer *&conf,
 			bool &chiralityPossible,
 			unsigned int &nAtoms,unsigned int &nBonds,
-                        bool strictParsing=true);
+                        bool strictParsing=true,bool expectMEND=true);
 
     // nAtoms and nBonds are used
     bool ParseV2000CTAB(std::istream *inStream,unsigned int &line,

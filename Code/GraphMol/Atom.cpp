@@ -391,7 +391,6 @@ int Atom::calcImplicitValence(bool strict) {
                << " greater than permitted";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
-        BOOST_LOG(rdErrorLog)<< "  Atomic Num: "<<d_atomicNum << " symbol: " << PeriodicTable::getTable()->getElementSymbol(d_atomicNum) << std::endl;
         throw MolSanitizeException(msg);
       } else {
         res = 0;

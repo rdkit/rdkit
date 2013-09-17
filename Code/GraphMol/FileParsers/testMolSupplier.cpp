@@ -1869,8 +1869,22 @@ void testGitHub23() {
   delete writer;
 }
 
+void testGitHub88() {
+  std::string rdbase = getenv("RDBASE");
+  std::string infile = rdbase + "/Code/GraphMol/FileParsers/test_data/github88.v3k.sdf";
+  std::ifstream ins(infile.c_str());
+  ForwardSDMolSupplier reader(&ins,false);
+  ROMol *nmol;
 
-
+  nmol = reader.next();
+  TEST_ASSERT(nmol);
+  TEST_ASSERT(nmol->getNumAtoms()==8);
+  TEST_ASSERT(nmol->hasProp("prop1"));
+  std::string pval;
+  nmol->getProp("prop1",pval);
+  TEST_ASSERT(pval=="4");
+  delete nmol;
+}
 
 int main() {
   RDLog::InitLogs();
@@ -2022,6 +2036,11 @@ int main() {
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub23();
   BOOST_LOG(rdErrorLog) <<"Finished: testGitHub23()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
+  testGitHub88();
+  BOOST_LOG(rdErrorLog) <<"Finished: testGitHub88()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;

@@ -28,6 +28,7 @@ tests=[
   ("python","UnitTestInchi.py",{}),
   ("python","SaltRemover.py",{}),
   ("python","UnitTestFunctionalGroups.py",{}),
+  ("python","UnitTestCrippen.py",{}),
   ("python","__init__.py",{}),
   ("python","PandasTools.py",{}),
   ("python","test_list.py",{'dir':'AtomPairs'}),
@@ -47,7 +48,6 @@ tests=[
 
 longTests=[
   ("python","UnitTestArom.py",{}),
-  ("python","UnitTestCrippen.py",{}),
   ("python","UnitTestGraphDescriptors.2.py -l",{}),
   ("python","UnitTestSurf.py -l",{}),
   ]
