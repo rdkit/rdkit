@@ -54,6 +54,7 @@ class DrawingOptions(object):
   coordScale= 1.0
 
   elemDict={
+    1:(0.55,0.55,0.55),
     7:(0,0,1),
     8:(1,0,0),
     9:(.2,.8,.8),
