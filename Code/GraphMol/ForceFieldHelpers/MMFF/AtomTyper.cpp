@@ -2202,17 +2202,20 @@ namespace RDKit {
     {
       unsigned int error;
       
-      MolOps::sanitizeMol(mol, error,
-        (unsigned int)(MolOps::SANITIZE_CLEANUP
-        | MolOps::SANITIZE_PROPERTIES
-        | MolOps::SANITIZE_SYMMRINGS
-        | MolOps::SANITIZE_KEKULIZE
-        | MolOps::SANITIZE_FINDRADICALS
-        | MolOps::SANITIZE_SETCONJUGATION
-        | MolOps::SANITIZE_SETHYBRIDIZATION
-        | MolOps::SANITIZE_CLEANUPCHIRALITY
-        | MolOps::SANITIZE_ADJUSTHS));
-    
+      try { 
+        MolOps::sanitizeMol(mol, error,
+                            (unsigned int)(MolOps::SANITIZE_CLEANUP
+                                           | MolOps::SANITIZE_PROPERTIES
+                                           | MolOps::SANITIZE_SYMMRINGS
+                                           | MolOps::SANITIZE_KEKULIZE
+                                           | MolOps::SANITIZE_FINDRADICALS
+                                           | MolOps::SANITIZE_SETCONJUGATION
+                                           | MolOps::SANITIZE_SETHYBRIDIZATION
+                                           | MolOps::SANITIZE_CLEANUPCHIRALITY
+                                           | MolOps::SANITIZE_ADJUSTHS));
+      } catch (MolSanitizeException &e){
+        
+      }
       return error;
     }
     
@@ -2232,8 +2235,11 @@ namespace RDKit {
       }
       PRECONDITION(!isAromaticSet,
         "Please reload your molecule setting the \"sanitize\" flag to \"false\"");
-      PRECONDITION(sanitizeMMFFMol((RWMol &)(*mol)) == MolOps::SANITIZE_NONE,
-        "sanitizeMMFFMol() failed");
+      if(sanitizeMMFFMol((RWMol &)(*mol)) != MolOps::SANITIZE_NONE){
+        std::string msg = "MMFF sanitization failed";
+        BOOST_LOG(rdErrorLog) << msg << std::endl;
+        throw MolSanitizeException(msg);
+      }
       
       MMFFMolProperties *mmffMolProperties =
         new MMFFMolProperties(mol->getNumAtoms());
