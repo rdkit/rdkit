@@ -2213,6 +2213,7 @@ namespace RDKit {
                                            | MolOps::SANITIZE_SETHYBRIDIZATION
                                            | MolOps::SANITIZE_CLEANUPCHIRALITY
                                            | MolOps::SANITIZE_ADJUSTHS));
+        mol.setProp("_MMFFSanitized",1,true);
       } catch (MolSanitizeException &e){
         
       }
@@ -2229,18 +2230,19 @@ namespace RDKit {
       std::ostream &oStream)
     {
       ROMol::AtomIterator it;
-      bool isAromaticSet = false;
-      for (it = mol->beginAtoms(); (!isAromaticSet) && (it != mol->endAtoms()); ++it) {
-        isAromaticSet = (*it)->getIsAromatic();
-      }
-      PRECONDITION(!isAromaticSet,
-        "Please reload your molecule setting the \"sanitize\" flag to \"false\"");
-      if(sanitizeMMFFMol((RWMol &)(*mol)) != MolOps::SANITIZE_NONE){
-        std::string msg = "MMFF sanitization failed";
-        BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw MolSanitizeException(msg);
-      }
-      
+      if(!mol->hasProp("_MMFFSanitized")){
+        bool isAromaticSet = false;
+        for (it = mol->beginAtoms(); (!isAromaticSet) && (it != mol->endAtoms()); ++it) {
+          isAromaticSet = (*it)->getIsAromatic();
+        }
+        PRECONDITION(!isAromaticSet,
+                     "Please reload your molecule setting the \"sanitize\" flag to \"false\"");
+        if(sanitizeMMFFMol((RWMol &)(*mol)) != MolOps::SANITIZE_NONE){
+          std::string msg = "MMFF sanitization failed";
+          BOOST_LOG(rdErrorLog) << msg << std::endl;
+          throw MolSanitizeException(msg);
+        }
+      }      
       MMFFMolProperties *mmffMolProperties =
         new MMFFMolProperties(mol->getNumAtoms());
       unsigned int idx;
