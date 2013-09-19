@@ -356,7 +356,7 @@ namespace RDKit{
 	 - the \c boost::lexical_cast machinery is used to attempt type conversions.
 	   If this fails, a \c boost::bad_lexical_cast exception will be thrown.
 
-dp_    */
+    */
     template <typename T>
     void getProp(const char *key,T &res) const {
       dp_props->getVal(key,res);
@@ -475,6 +475,7 @@ dp_    */
     */
     int calcImplicitValence(bool strict=true);
 
+    AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo; };
     const AtomMonomerInfo *getMonomerInfo() const { return dp_monomerInfo; };
     //! takes ownership of the pointer
     void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo=info; };

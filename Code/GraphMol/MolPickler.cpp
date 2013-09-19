@@ -463,73 +463,75 @@ namespace RDKit{
       return res;
     }
 
-    void pickleAtomPeptideResidueInfo(std::ostream &ss,const AtomPeptideResidueInfo *info){
+    void pickleAtomPDBResidueInfo(std::ostream &ss,const AtomPDBResidueInfo *info){
       PRECONDITION(info,"no info");
       if(info->getSerialNumber())
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_SERIALNUMBER,info->getSerialNumber());
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_SERIALNUMBER,info->getSerialNumber());
       if(info->getAltLoc()!="")
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_ALTLOC,info->getAltLoc());
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_ALTLOC,info->getAltLoc());
       if(info->getResidueName()!="")
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_RESIDUENAME,info->getResidueName());
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_RESIDUENAME,info->getResidueName());
       if(info->getChainId()!="")
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_CHAINID,info->getChainId());
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_CHAINID,info->getChainId());
       if(info->getInsertionCode()!="")
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_INSERTIONCODE,info->getInsertionCode());
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_INSERTIONCODE,info->getInsertionCode());
       if(info->getOccupancy())
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_OCCUPANCY,info->getOccupancy());
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_OCCUPANCY,info->getOccupancy());
       if(info->getTempFactor())
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_TEMPFACTOR,info->getTempFactor());
-      if(info->getElement()!="")
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_ELEMENT,info->getElement());
-      if(info->getCharge()!="")
-        streamWrite(ss,MolPickler::ATOM_PEPTIDE_RESIDUE_CHARGE,info->getCharge());
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_TEMPFACTOR,info->getTempFactor());
+      if(info->getIsHeteroAtom())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_ISHETEROATOM,static_cast<char>(info->getIsHeteroAtom()));
+      if(info->getSecondaryStructure())
+        streamWrite(ss,MolPickler::ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE,info->getSecondaryStructure());
     }
 
-    void unpickleAtomPeptideResidueInfo(std::istream &ss,AtomPeptideResidueInfo *info,
+    void unpickleAtomPDBResidueInfo(std::istream &ss,AtomPDBResidueInfo *info,
                                         int version){
       PRECONDITION(info,"no info");
       std::string sval;
       double dval;
+      char cval;
+      unsigned int uival;
       MolPickler::Tags tag=MolPickler::BEGIN_ATOM_MONOMER;
       while(tag!=MolPickler::END_ATOM_MONOMER){
         streamRead(ss,tag,version);
         switch(tag){
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_SERIALNUMBER:
+        case MolPickler::ATOM_PDB_RESIDUE_SERIALNUMBER:
           unsigned int ival;
           streamRead(ss,ival,version);
           info->setSerialNumber(ival);
           break;
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_ALTLOC:
+        case MolPickler::ATOM_PDB_RESIDUE_ALTLOC:
           streamRead(ss,sval,version);
           info->setAltLoc(sval);
           break;
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_RESIDUENAME:
+        case MolPickler::ATOM_PDB_RESIDUE_RESIDUENAME:
           streamRead(ss,sval,version);
           info->setResidueName(sval);
           break;
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_CHAINID:
+        case MolPickler::ATOM_PDB_RESIDUE_CHAINID:
           streamRead(ss,sval,version);
           info->setChainId(sval);
           break;
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_INSERTIONCODE:
+        case MolPickler::ATOM_PDB_RESIDUE_INSERTIONCODE:
           streamRead(ss,sval,version);
           info->setInsertionCode(sval);
           break;
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_OCCUPANCY:
+        case MolPickler::ATOM_PDB_RESIDUE_OCCUPANCY:
           streamRead(ss,dval,version);
           info->setOccupancy(dval);
           break;
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_TEMPFACTOR:
+        case MolPickler::ATOM_PDB_RESIDUE_TEMPFACTOR:
           streamRead(ss,dval,version);
           info->setTempFactor(dval);
           break;
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_ELEMENT:
-          streamRead(ss,sval,version);
-          info->setElement(sval);
+        case MolPickler::ATOM_PDB_RESIDUE_ISHETEROATOM:
+          streamRead(ss,cval,version);
+          info->setIsHeteroAtom(cval);
           break;
-        case MolPickler::ATOM_PEPTIDE_RESIDUE_CHARGE:
-          streamRead(ss,sval,version);
-          info->setCharge(sval);
+        case MolPickler::ATOM_PDB_RESIDUE_SECONDARYSTRUCTURE:
+          streamRead(ss,uival,version);
+          info->setSecondaryStructure(uival);
           break;
         case MolPickler::END_ATOM_MONOMER:
           break;
@@ -548,8 +550,8 @@ namespace RDKit{
       case AtomMonomerInfo::UNKNOWN:
       case AtomMonomerInfo::OTHER:
         break;
-      case AtomMonomerInfo::PEPTIDERESIDUE:
-        pickleAtomPeptideResidueInfo(ss,static_cast<const AtomPeptideResidueInfo *>(info));
+      case AtomMonomerInfo::PDBRESIDUE:
+        pickleAtomPDBResidueInfo(ss,static_cast<const AtomPDBResidueInfo *>(info));
         break;
       default:
         throw MolPicklerException("unrecognized MonomerType");
@@ -571,9 +573,9 @@ namespace RDKit{
         if(tag!=MolPickler::END_ATOM_MONOMER)
           throw MolPicklerException("did not find expected end of atom monomer info");          
         break;
-      case AtomMonomerInfo::PEPTIDERESIDUE:
-        res = static_cast<AtomMonomerInfo *>(new AtomPeptideResidueInfo(nm));
-        unpickleAtomPeptideResidueInfo(ss,static_cast<AtomPeptideResidueInfo *>(res),version);
+      case AtomMonomerInfo::PDBRESIDUE:
+        res = static_cast<AtomMonomerInfo *>(new AtomPDBResidueInfo(nm));
+        unpickleAtomPDBResidueInfo(ss,static_cast<AtomPDBResidueInfo *>(res),version);
         break;
       default:
         throw MolPicklerException("unrecognized MonomerType");
