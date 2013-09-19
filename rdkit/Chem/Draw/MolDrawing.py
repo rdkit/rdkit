@@ -456,7 +456,7 @@ class MolDrawing(object):
             mapNum=':'+atom.GetProp('molAtomMapNumber')
           deg = atom.GetDegree()
           if deg>1 or nbrSum[0]<1:
-            symbol = '%s%s%s%s%s%s'%(isotope,base,mapNum,hs,chg,rad)
+            symbol = '%s%s%s%s%s%s'%(isotope,base,hs,chg,rad,mapNum)
           else:
             symbol = '%s%s%s%s%s%s'%(rad,chg,hs,isotope,base,mapNum)
 
