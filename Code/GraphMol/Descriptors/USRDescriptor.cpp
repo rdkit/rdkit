@@ -118,7 +118,13 @@ namespace RDKit{
         if (moments[1] == 0) {
           moments[2] = 0.0;
         } else {
-          moments[2] = cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
+#ifdef WIN32    
+          moments[2] = moments[2] / (moments[1] * moments[1] * moments[1]);
+          if(moments[2]>=0) moments[2]=pow(moments[2],1./3.);
+          else moments[2]=-1.*pow(-1.*moments[2],1./3.);
+#else
+           moments[2] = cbrt(moments[2] / (moments[1] * moments[1] * moments[1]));
+#endif
         }
       }
       // add moments to descriptor
