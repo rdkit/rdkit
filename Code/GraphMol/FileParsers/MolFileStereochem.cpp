@@ -804,7 +804,7 @@ namespace RDKit {
 
     double ang=RDGeom::computeDihedralAngle(bond1P,beginP,endP,bond2P);
     bool sameTorsionDir;
-    if(ang < RDKit::PI/2){
+    if(ang < M_PI/2){
       sameTorsionDir=false;
     } else {
       sameTorsionDir=true;

@@ -184,7 +184,7 @@ namespace RDDepict {
       angle = 2*M_PI/3;
       break;
     default:
-      angle = 2.*RDKit::PI/degree;
+      angle = 2.*M_PI/degree;
     }
     return angle;
   }
@@ -218,7 +218,7 @@ namespace RDDepict {
      RDGeom::Point2D pt1 = loc1 - center;
      RDGeom::Point2D pt2 = loc2 - center;
      double cross = pt1.x*pt2.y - pt1.y*pt2.x;
-     double diffAngle = RDKit::PI - remAngle;
+     double diffAngle = M_PI - remAngle;
      cross  *= diffAngle;
      if (cross >= 0.0) {
        return -1;

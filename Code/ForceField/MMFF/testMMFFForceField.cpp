@@ -26,11 +26,6 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#ifndef RDK_NOGZIP
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
-#endif
 #include "testMMFFForceField.h"
 
 
@@ -70,20 +65,6 @@ bool fgrep(std::fstream &rdkFStream, std::string key)
   
   return fgrep(rdkFStream, key, line);
 }
-
-
-#ifndef RDK_NOGZIP
-void fgunzip(std::string filename)
-{
-  std::string gzipFilename = filename + ".gz";
-  std::ifstream ifStream(gzipFilename.c_str(), std::ios_base::in | std::ios_base::binary);
-  std::ofstream ofStream(filename.c_str(), std::ios_base::out);
-  boost::iostreams::filtering_streambuf<boost::iostreams::input> ifStreamFilter;
-  ifStreamFilter.push(boost::iostreams::gzip_decompressor());
-  ifStreamFilter.push(ifStream);
-  boost::iostreams::copy(ifStreamFilter, ofStream);
-}
-#endif
 
 
 bool getLineByNum(std::istream& stream,
@@ -389,14 +370,6 @@ int main(int argc, char *argv[])
     for (std::vector<std::string>::iterator ffIt = ffVec.begin();
       ffIt != ffVec.end(); ++ffIt) {
       ref = pathName + (*ffIt) + "_reference.log";
-      if (!fexist(ref)) {
-        #ifndef RDK_NOGZIP
-        fgunzip(ref);
-        #else
-        std::cerr << "Please gunzip " << ref 
-          << ".gz before running the test" << std::endl;
-        #endif
-      }
       molFileVec.clear();
       if (molFile == "") {
         molFileVec.push_back(pathName + (*ffIt) + "_dative." + (*molTypeIt));

@@ -2006,11 +2006,11 @@ namespace ForceFields {
     MMFFAngleCollection::MMFFAngleCollection(std::string mmffAngle)
     {
       if (mmffAngle == "") {
-	unsigned int i=0;
-	while(defaultMMFFAngleData[i]!="EOS"){
-	  mmffAngle += defaultMMFFAngleData[i];
-	  i++;
-	}
+        unsigned int i = 0;
+        while (defaultMMFFAngleData[i] != "EOS") {
+          mmffAngle += defaultMMFFAngleData[i];
+          ++i;
+        }
       }
       std::istringstream inStream(mmffAngle);
 
@@ -2063,7 +2063,7 @@ namespace ForceFields {
 
     // another joy of VC++ "compiler limit: string exceeds 65535 bytes in length" compels us to
     // break this into pieces
-    const std::string defaultMMFFAngleData[] ={
+    const std::string defaultMMFFAngleData[] = {
       "*\n"
       "*           Copyright (c) Merck and Co., Inc., 1994, 1995, 1996\n"
       "*                           All Rights Reserved\n"
@@ -4417,7 +4417,8 @@ namespace ForceFields {
       "0	32	82	65	1.238	129.293	E94\n"
       "0	59	82	64	1.563	105.660	E94\n"
       "0	64	82	65	1.281	112.955	E94\n",
-    "EOS"};
+      "EOS"
+    };
 
     class MMFFStbnCollection * MMFFStbnCollection::ds_instance = NULL;
 

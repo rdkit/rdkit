@@ -24,8 +24,6 @@ namespace ForceFields {
       return ((x < 1.0e-10) && (x > -1.0e-10));
     }
     namespace Utils {
-      static double DEG2RAD = M_PI / 180.0;
-      static double RAD2DEG = 180.0 / M_PI;
       double calculateCosY(const RDGeom::Point3D &iPoint,
         const RDGeom::Point3D &jPoint, const RDGeom::Point3D &kPoint,
         const RDGeom::Point3D &lPoint) {
@@ -59,7 +57,7 @@ namespace ForceFields {
         else {
           // group 5 elements are not clearly explained in the UFF paper
           // the following code was inspired by MCCCS Towhee's ffuff.F
-          double w0 = DEG2RAD;
+          double w0 = M_PI / 180.0;
           switch (at2AtomicNum) {
             // if the central atom is phosphorous
             case 15:
