@@ -211,7 +211,7 @@ namespace RDDepict {
                                        d_eatoms[nb2].loc, wAng);
     d_eatoms[aid].nbr1 = nb1;
     d_eatoms[aid].nbr2 = nb2;
-    d_eatoms[aid].angle = 2*RDKit::PI - wAng;
+    d_eatoms[aid].angle = 2*M_PI - wAng;
   }
 
   // constructor to embed a cis/trans system
@@ -672,7 +672,7 @@ namespace RDDepict {
     // determine the angle at which we want to add the new atom based on the number 
     // of remaining substituents
     int nnbr = refAtom.neighs.size();
-    double remAngle = 2*RDKit::PI - refAtom.angle;
+    double remAngle = 2*M_PI - refAtom.angle;
     double currAngle = remAngle/(1 + nnbr);
     d_eatoms[toAid].angle += currAngle;
     
@@ -782,7 +782,7 @@ namespace RDDepict {
       
     }
     
-    angle -= RDKit::PI/2;
+    angle -= M_PI/2;
     if (!refAtom.ccw) {
       // we want to rotate cloackwise
       angle *= -1.0;

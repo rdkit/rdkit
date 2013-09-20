@@ -330,14 +330,10 @@ namespace RDKit {
                 // bit has not yet been set, then move to the next ring
                 // we'll take care of this later
                 if (queryIsAtomInRing(nbrAtom)
-                  //&& (!atomAromSet[nbrAtom->getIdx()])) {
-		    && (!(aromBitVect[nbrAtom->getIdx()]))) {
+                  && (!(aromBitVect[nbrAtom->getIdx()]))) {
                   moveToNextRing = true;
                   break;
                 }
-                  //atomRings[i][j] + 1, nbrAtom->getIdx() + 1,
-                  //mol->getBondBetweenAtoms(atomRings[i][j],
-                  //nbrAtom->getIdx())->getBondTypeAsDouble());
                 // if the neighbor is in an aromatic ring and is
                 // double-bonded to the current atom, add 1 pi electron
                 if (mol->getBondBetweenAtoms(atomRings[i][j],
@@ -360,7 +356,7 @@ namespace RDKit {
           // loop again over all ring atoms
           for (j = 0, canBeAromatic = true; j < atomRings[i].size(); ++j) {
             // set aromaticity as perceived
-            aromBitVect[atomRings[i][j]]=1;
+            aromBitVect[atomRings[i][j]] = 1;
             atom = mol->getAtomWithIdx(atomRings[i][j]);
             // if this is is a non-sp2 carbon or nitrogen
             // then this ring can't be aromatic
@@ -381,7 +377,7 @@ namespace RDKit {
           // if this ring satisfies the 4n+2 rule,
           // then mark its atoms as aromatic
           if ((pi_e > 2) && (!((pi_e - 2) % 4))) {
-            aromRingBitVect[i]=1;
+            aromRingBitVect[i] = 1;
             for (j = 0; j < atomRings[i].size(); ++j) {
               mol->getAtomWithIdx(atomRings[i][j])->setIsAromatic(true);
             }
@@ -3126,7 +3122,7 @@ namespace RDKit {
             nConj = 1;
             old_nConj = 0;
             conjNBitVect.reset();
-            conjNBitVect[idx]=1;
+            conjNBitVect[idx] = 1;
             while (nConj > old_nConj) {
               old_nConj = nConj;
               for (i = 0; i < mol->getNumAtoms(); ++i) {
@@ -3161,8 +3157,8 @@ namespace RDKit {
                     // if this nitrogen is not yet marked as conjugated,
                     // mark it and increment the counter and eventually
                     // adjust the total formal charge of the conjugated system
-                    if (!conjNBitVect[j]){
-                      conjNBitVect[j]=1;
+                    if (!conjNBitVect[j]) {
+                      conjNBitVect[j] = 1;
                       fChg += (double)(nbr2Atom->getFormalCharge());
                       ++nConj;
                     }

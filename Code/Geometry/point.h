@@ -17,7 +17,7 @@
 #include <map>
 
 #ifndef M_PI
-#define M_PI 3.14159265358979323846
+#define M_PI           3.14159265358979323846
 #endif
 
 
@@ -139,7 +139,8 @@ namespace RDGeom {
     };
 
     double lengthSq() const {
-      double res = pow(x,2) + pow(y,2) + pow(z,2);
+      //double res = pow(x,2) + pow(y,2) + pow(z,2);
+      double res = x*x+y*y+z*z;
       return res;
     };
 
@@ -337,7 +338,8 @@ namespace RDGeom {
     }
 
     double length() const {
-      double res = pow(x,2) + pow(y,2);
+      //double res = pow(x,2) + pow(y,2);
+      double res = x*x+y*y;
       return sqrt(res);
     };
 
