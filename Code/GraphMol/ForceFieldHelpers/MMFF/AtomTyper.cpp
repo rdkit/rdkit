@@ -3125,6 +3125,7 @@ namespace RDKit {
             fChg = (double)(atom->getFormalCharge());
             nConj = 1;
             old_nConj = 0;
+            conjNBitVect.reset();
             conjNBitVect[idx]=1;
             while (nConj > old_nConj) {
               old_nConj = nConj;
