@@ -15,7 +15,8 @@
 #include <ForceField/MMFF/Params.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
-#include <DataStructs/ExplicitBitVect.h>
+#include <boost/dynamic_bitset.hpp>
+
 #include <GraphMol/QueryOps.h>
 #include "AtomTyper.h"
 #include <cstdarg>
@@ -279,12 +280,9 @@ namespace RDKit {
       VECT_INT_VECT atomRings = ringInfo->atomRings();
       ROMol::ADJ_ITER nbrIdx;
       ROMol::ADJ_ITER endNbrs;
-      ExplicitBitVect aromBitVect(mol->getNumAtoms());
-      ExplicitBitVect aromRingBitVect(atomRings.size());
+      boost::dynamic_bitset<> aromBitVect(mol->getNumAtoms());
+      boost::dynamic_bitset<> aromRingBitVect(atomRings.size());
       
-      
-      aromBitVect.clearBits();
-      aromRingBitVect.clearBits();
       while ((!aromRingsAllSet) && atomRings.size() && (nAromSet > old_nAromSet)) {
         // loop over all rings
         for (i = 0; i < atomRings.size(); ++i) {
@@ -333,7 +331,7 @@ namespace RDKit {
                 // we'll take care of this later
                 if (queryIsAtomInRing(nbrAtom)
                   //&& (!atomAromSet[nbrAtom->getIdx()])) {
-                  && (!(aromBitVect.getBit(nbrAtom->getIdx())))) {
+		    && (!(aromBitVect[nbrAtom->getIdx()]))) {
                   moveToNextRing = true;
                   break;
                 }
@@ -362,7 +360,7 @@ namespace RDKit {
           // loop again over all ring atoms
           for (j = 0, canBeAromatic = true; j < atomRings[i].size(); ++j) {
             // set aromaticity as perceived
-            aromBitVect.setBit(atomRings[i][j]);
+            aromBitVect[atomRings[i][j]]=1;
             atom = mol->getAtomWithIdx(atomRings[i][j]);
             // if this is is a non-sp2 carbon or nitrogen
             // then this ring can't be aromatic
@@ -383,7 +381,7 @@ namespace RDKit {
           // if this ring satisfies the 4n+2 rule,
           // then mark its atoms as aromatic
           if ((pi_e > 2) && (!((pi_e - 2) % 4))) {
-            aromRingBitVect.setBit(i);
+            aromRingBitVect[i]=1;
             for (j = 0; j < atomRings[i].size(); ++j) {
               mol->getAtomWithIdx(atomRings[i][j])->setIsAromatic(true);
             }
@@ -397,7 +395,7 @@ namespace RDKit {
         aromRingsAllSet = true;
         for (i = 0; i < atomRings.size(); ++i) {
           for (j = 0; j < atomRings[i].size(); ++j) {
-            if (aromBitVect.getBit(atomRings[i][j])) {
+            if (aromBitVect[atomRings[i][j]]) {
               ++nAromSet;
             }
             else {
@@ -408,7 +406,7 @@ namespace RDKit {
       }
       for (i = 0; i < atomRings.size(); ++i) {
         // if the ring is not aromatic, move to the next one
-        if (!(aromRingBitVect.getBit(i))) {
+        if (!aromRingBitVect[i]) {
           continue;
         }
         for (j = 0; j < atomRings[i].size(); ++j) {
@@ -2947,7 +2945,7 @@ namespace RDKit {
       std::pair<int, double> bci;
       double pChg = 0.0;
       double fChg = 0.0;
-      ExplicitBitVect conjNBitVect(mol->getNumAtoms());
+      boost::dynamic_bitset<> conjNBitVect(mol->getNumAtoms());
       VECT_INT_VECT atomRings = mol->getRingInfo()->atomRings();
       ROMol::ADJ_ITER nbrIdx;
       ROMol::ADJ_ITER endNbrs;
@@ -3127,13 +3125,12 @@ namespace RDKit {
             fChg = (double)(atom->getFormalCharge());
             nConj = 1;
             old_nConj = 0;
-            conjNBitVect.clearBits();
-            conjNBitVect.setBit(idx);
+            conjNBitVect[idx]=1;
             while (nConj > old_nConj) {
               old_nConj = nConj;
               for (i = 0; i < mol->getNumAtoms(); ++i) {
                 // if this atom is not marked as conj, move on
-                if (!(conjNBitVect.getBit(i))) {
+                if (!conjNBitVect[i]) {
                   continue;
                 }
                 // loop over neighbors
@@ -3163,8 +3160,8 @@ namespace RDKit {
                     // if this nitrogen is not yet marked as conjugated,
                     // mark it and increment the counter and eventually
                     // adjust the total formal charge of the conjugated system
-                    if (!(conjNBitVect.getBit(j))) {
-                      conjNBitVect.setBit(j);
+                    if (!conjNBitVect[j]){
+                      conjNBitVect[j]=1;
                       fChg += (double)(nbr2Atom->getFormalCharge());
                       ++nConj;
                     }

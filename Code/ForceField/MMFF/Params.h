@@ -32,6 +32,9 @@
 namespace ForceFields {
   namespace MMFF {
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
     const double DEG2RAD = M_PI / 180.0;
     const double RAD2DEG = 180.0 / M_PI;
     inline const bool isDoubleZero(const double x) {
