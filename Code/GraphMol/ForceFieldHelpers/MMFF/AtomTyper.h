@@ -28,15 +28,14 @@ namespace RDKit {
   namespace MMFF {
     class MMFFAtomProperties {
     public:
+      MMFFAtomProperties() :
+        mmffAtomType(0),
+        mmffFormalCharge(0.0),
+        mmffPartialCharge(0.0) {};
+      ~MMFFAtomProperties() {};
       boost::uint8_t mmffAtomType;
       double mmffFormalCharge;
       double mmffPartialCharge;
-      MMFFAtomProperties() {
-        mmffAtomType = 0;
-        mmffFormalCharge = 0.0;
-        mmffPartialCharge = 0.0;
-      }
-      ~MMFFAtomProperties() {};
     };
     
     typedef boost::shared_ptr<MMFFAtomProperties> MMFFAtomPropertiesPtr;

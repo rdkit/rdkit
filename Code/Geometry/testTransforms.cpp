@@ -213,11 +213,10 @@ void test12D() {
 }
 
 void test23D() {
-  double PI = 3.1415926535897931;
   Point3D pt(1.0, 0.0, 0.0);
   Point3D tpt = pt;
   Transform3D trans;
-  trans.SetRotation(PI/2., X_Axis);
+  trans.SetRotation(M_PI/2., X_Axis);
   trans.TransformPoint(pt);
   CHECK_INVARIANT(ptEq(tpt, pt), "");
   
@@ -233,7 +232,7 @@ void test23D() {
 
   // rotate around y-axis
   Transform3D transy;
-  transy.SetRotation(PI/2., Y_Axis);
+  transy.SetRotation(M_PI/2., Y_Axis);
   transy.TransformPoint(pt);
   Point3D tpt4(0.0, 0.0, -1.0);
   CHECK_INVARIANT(ptEq(tpt4, pt), "");
@@ -250,7 +249,7 @@ void test23D() {
 
   // z-axis
   Transform3D transz;
-  transz.SetRotation(PI/2., Z_Axis);
+  transz.SetRotation(M_PI/2., Z_Axis);
   Point3D pt7(1.0, 0.0, 0.0);
   Point3D tpt7(0.0, 1.0, 0.0);
   transz.TransformPoint(pt7);
@@ -269,7 +268,6 @@ void test23D() {
 }
 
 void test3MatMultiply() {
-  double PI = 3.1415926535897931;
   // start with line on the axis starting at 1.0, 
   // transform it into a line on z-axis starting at 3.0
   Point3D pt1(1.0, 0.0, 0.0);
@@ -289,7 +287,7 @@ void test3MatMultiply() {
 
   // rotation around origin 
   Transform3D t2;
-  t2.SetRotation(-PI/2.0, Y_Axis);
+  t2.SetRotation(-M_PI/2.0, Y_Axis);
 
   t2.TransformPoint(tp1);
   t2.TransformPoint(tp2);
@@ -331,15 +329,15 @@ void test3MatMultiply() {
 
 void testFromQuaternion() {
   double qt[4];
-  qt[0] = cos(RDKit::PI/6);
-  qt[1] = -sin(RDKit::PI/6);
+  qt[0] = cos(M_PI/6);
+  qt[1] = -sin(M_PI/6);
   qt[2] = 0.0;
   qt[3] = 0.0;
   Transform3D trans;
   trans.SetRotationFromQuaternion(qt);
 
   Transform3D ntrans;
-  ntrans.SetRotation(RDKit::PI/3, Point3D(1.0, 0.0, 0.0));
+  ntrans.SetRotation(M_PI/3, Point3D(1.0, 0.0, 0.0));
 
   unsigned int i,j;
   for (i = 0; i < 4; i++) {

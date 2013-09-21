@@ -1,20 +1,13 @@
+if((NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_data/MMFF94_reference.log)
+  OR (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_data/MMFF94s_reference.log))
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_SOURCE_DIR}/test_data/MMFF_reference_logs.tgz
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test_data
+  )
+endif()
 
-if(RDK_TEST_MMFF_COMPLIANCE)
- set(T_LIBS ${Boost_LIBRARIES})
- find_package(Boost 1.39.0 COMPONENTS iostreams REQUIRED)
- set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
- if(MSVC)
-   ADD_DEFINITIONS("/D YY_NO_UNISTD_H")
-   # as of cmake 2.8.0 and boost 1.43 we need to do this to avoid
-   # forcing the user to build both static and dynamic versions
-   # of the regex library:
-   ADD_DEFINITIONS("/D BOOST_ALL_DYN_LINK") 
- endif(MSVC)
-
- rdkit_test(testMMFFForceField testMMFFForceField.cpp 
-	    LINK_LIBRARIES 
-	    DistGeomHelpers DistGeometry ForceFieldHelpers ForceField 
-	    FileParsers MolTransforms SmilesParse SubstructMatch MolAlign Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral
- ${Boost_IOSTREAMS_LIBRARY})
-endif(RDK_TEST_MMFF_COMPLIANCE)
-#add_subdirectory(Wrap)
+rdkit_test(testMMFFForceField testMMFFForceField.cpp 
+    LINK_LIBRARIES 
+    DistGeomHelpers DistGeometry ForceFieldHelpers ForceField 
+    FileParsers MolTransforms SmilesParse SubstructMatch MolAlign
+    Optimizer EigenSolvers Alignment GraphMol RDGeometryLib RDGeneral)
