@@ -1,7 +1,7 @@
 import sys
 
 tests=[
-  ("testExecs/testForceField.exe","",{}),
+  ("testExecs/testMMFFHelpers.exe","",{}),
   ]
 
 longTests=[
