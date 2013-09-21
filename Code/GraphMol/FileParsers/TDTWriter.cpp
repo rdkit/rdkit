@@ -145,7 +145,8 @@ namespace RDKit {
 	if ( ((*pi) == detail::computedPropName) || 
 	     ((*pi) == "_Name") ||
 	     ((*pi) == "_MolFileInfo") ||
-	     ((*pi) == "_MolFileComments")) {
+	     ((*pi) == "_MolFileComments") ||
+             ((*pi) == "_MolFileChiralFlag")) {
 	  continue;
 	}
 
