@@ -158,8 +158,8 @@ class TestCase(unittest.TestCase) :
     def test3MultiConf(self):
         mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
         cids = rdDistGeom.EmbedMultipleConfs(mol,10,maxAttempts=30,randomSeed=100)
-        energies = [90.84, 78.16, 93.60, 83.43, 84.08, 75.83, 87.93,
-                    81.95, 81.34, 75.75]
+        energies = [90.83, 78.14, 93.59, 83.41, 84.07, 75.81, 87.91,
+                    81.93, 81.34, 75.73]
         nenergies = []
         for cid in cids:
             ff = ChemicalForceFields.UFFGetMoleculeForceField(mol, 10.0, cid)
