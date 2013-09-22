@@ -48,9 +48,9 @@ class TestCase(unittest.TestCase):
     self.failUnless(len(feats) == 3)
     fTypes = ['HBondDonor', 'HBondAcceptor', 'HBondAcceptor']
 
-    positions = [[1.3215, -0.6284, 0.0967],
-                 [-0.7136, 0.6241, 0.1862],
-                 [1.3215, -0.6284, 0.0967]]
+    positions = [[1.3041, -0.6079, 0.0924],
+                 [-0.7066, 0.5994, 0.1824],
+                 [1.3041, -0.6079, 0.0924]]
     targetAids = [[3], [1], [3]]
     i = 0
     for feat in feats:

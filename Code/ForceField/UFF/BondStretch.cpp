@@ -36,7 +36,9 @@ namespace ForceFields {
 	double rEN = ri*rj*(sqrt(Xi)-sqrt(Xj))*(sqrt(Xi)-sqrt(Xj)) /
 	  (Xi*ri + Xj*rj);
     
-	double res = ri + rj + rBO + rEN;
+	double res = ri + rj + rBO - rEN;
+  //std::cout << "r_i = " << ri << ", r_j = " << rj << ", bo = " << bondOrder << ", r_bo = " << rBO << ", r_en = " << rEN << ", res = " << res << std::endl;
+
 	return res;
       }
   
@@ -76,6 +78,9 @@ namespace ForceFields {
       double distTerm=this->dp_forceField->distance(this->d_end1Idx,this->d_end2Idx,pos) -
 	this->d_restLen;
       double res = 0.5*this->d_forceConstant*distTerm*distTerm;
+      //std::cout << "BondStretch: kb = " << this->d_forceConstant << ", r = " << this->dp_forceField->distance(this->d_end1Idx,this->d_end2Idx,pos) << ", r0 = " << this->d_restLen << ", E = " << res << std::endl;
+      //std::cout << "BondStretch: " << res << std::endl;
+
       return res;
     }
     void BondStretchContrib::getGrad(double *pos,double *grad) const {

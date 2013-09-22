@@ -108,9 +108,9 @@ class TestCase(unittest.TestCase):
     
   def test3Embed(self):
     testResults={
-      'mol_197':(185.20,30.41,93.54,9.20,93.06,8.75,78.85,7.70,0.00),
-      'mol_223':(227.95,6.99,118.58,1.62,118.52,1.63,68.25,0.59,0.00),
-      'mol_269':(178.15,4.27,75.21,1.01,74.10,0.98,60.21,0.92,6.00),
+      'mol_197':(218.80,35.75,110.33,11.58,109.66,11.09,90.35,2.95,0.00),
+      'mol_223':(259.19,6.27,134.13,1.12,134.06,1.12,85.74,0.61,0.00),
+      'mol_269':(204.51,7.89,103.89,1.20,102.66,1.20,88.07,1.21,6.00),
       }
     inF = gzip.open(os.path.join(self.dataDir,'cdk2-syn-clip100.pkl.gz'),'rb')
     nDone = 0
@@ -205,7 +205,7 @@ class TestCase(unittest.TestCase):
     self.failUnlessEqual(nDone,100)
     self.failUnlessEqual(nMatches,93)
     #print 'nhits:',nHits
-    self.failUnlessEqual(nHits,68)
+    self.failUnlessEqual(nHits,67)
 
   def testIssue268(self):
     from rdkit import RDLogger
