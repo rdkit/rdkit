@@ -75,10 +75,10 @@ static const uint8 number_of_ones[256] = {
   4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };
 
-static int4
+static int32
 sizebitvec(bytea *b)
 {
-  int4    size = 0,
+  int32    size = 0,
     i;
   unsigned char *sign = (unsigned char*)VARDATA(b);
 
@@ -223,7 +223,7 @@ gmol_union(PG_FUNCTION_ARGS)
 {
   GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
   int        *size = (int *) PG_GETARG_POINTER(1);
-  int4            i,j;
+  int32            i,j;
   int         signlen;
   bytea      *result, *key;
   unsigned char *s, *k;
@@ -417,7 +417,7 @@ gbfp_penalty(PG_FUNCTION_ARGS)
 typedef struct
 {
   OffsetNumber pos;
-  int4        cost;
+  int32        cost;
 } SPLITCOST;
 
 static int
@@ -443,11 +443,11 @@ gmol_picksplit(PG_FUNCTION_ARGS)
     j;
   bytea                   *datum_l,
     *datum_r;
-  int4        size_alpha,
+  int32        size_alpha,
     size_beta;
-  int4        size_waste,
+  int32        size_waste,
     waste = -1;
-  int4        nbytes;
+  int32        nbytes;
   OffsetNumber seed_1 = 0,
     seed_2 = 0;
   OffsetNumber *left,

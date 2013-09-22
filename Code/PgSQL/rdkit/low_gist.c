@@ -107,7 +107,7 @@ gslfp_union(PG_FUNCTION_ARGS)
 {
   GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
   int        *size = (int *) PG_GETARG_POINTER(1);
-  int4            i;
+  int32            i;
   bytea           *result, *key;
   IntRange                *s, *k;
 
@@ -251,11 +251,11 @@ gslfp_picksplit(PG_FUNCTION_ARGS)
     j;
   bytea                   *datum_l,
     *datum_r;
-  int4        size_alpha,
+  int32        size_alpha,
     size_beta;
-  int4        size_waste,
+  int32        size_waste,
     waste = -1;
-  int4        nbytes;
+  int32        nbytes;
   OffsetNumber seed_1 = 0,
     seed_2 = 0;
   OffsetNumber *left,
