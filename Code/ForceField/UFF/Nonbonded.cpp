@@ -64,6 +64,7 @@ namespace ForceFields {
       double r12=r6*r6;
       double res = this->d_wellDepth*(r12 - 2.0*r6);
       //if(d_at1Idx==12 && d_at2Idx==21 ) std::cerr << "     >: " << d_at1Idx << "-" << d_at2Idx << " " << r << " = " << res << std::endl;
+      //std::cout << "VanDerWaals: " << res << std::endl;
       return res;
     }
     void vdWContrib::getGrad(double *pos,double *grad) const {
