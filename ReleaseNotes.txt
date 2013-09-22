@@ -1,3 +1,51 @@
+******  Release_2013.09.1 *******
+(Changes relative to Release_2013.06.1)
+
+Acknowledgements:
+James Davidson, JP Ebejer, Nikolas Fechner, Gregory Gerebtzoff, Michal Nowotka, Sereina Riniker, Roger
+Sayle, Gianluca Sforna, Matthew Szymkiewicz, Paolo Tosco, Dan Warner, 
+
+Bug Fixes:
+ - Bad Crippen atom type for pyrrole H
+   (github issue 92)
+ - PandasTools tests fail with Pandas v0.12
+   (github issue 91)
+ - Isotope information not affecting chirality
+   (github issue 90)
+ - properties are not read from SDF files with V3000 mol blocks.
+   (github issue 88)
+ - assignStereochemistry does not remove bond wedging that shouldn't be there.
+   (github issue 87)
+ - Drawing code modifies wedge bonds in reactions
+   (github issue 86)
+ - Stereochemistry not perceived when parsing CTABs unless sanitization is done.
+   (github issue 82)
+ - 2D rendering issue for epoxide ( CAS  70951-83-6)
+   (github issue 78)
+ - PandasTools doctests should be failing, but are not
+   (github issue 75)
+ - Benzothiazolium structure can be parsed from ctab, but the SMILES generated cannot be processed.
+   (github issue 72)
+ - Chem.MolFromInch hangs on CID 23691477 and CID 23691480
+   (github issue 68)
+ - Chem.MolFromInchi on CHEMBL104337 leads to segmentation fault 
+   (github issue 67)
+ - "Could not embed molecule." (The Anthony Conundrum)
+   (github issue 55)
+
+New Features:
+
+New Database Cartridge Features: 
+
+New Java Wrapper Features:
+
+Deprecated modules (to be removed in next release):
+
+Removed modules:
+
+Other:
+
+
 ******  Release_2013.06.1 *******
 (Changes relative to Release_2013.03.2)
 
