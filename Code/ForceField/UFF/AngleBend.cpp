@@ -58,7 +58,7 @@ namespace ForceFields {
       // the following is a hack to get decent geometries
       // with 3- and 4-membered rings incorporating sp2 atoms
       double theta0;
-      if (order > 30) {
+      if (order >= 30) {
         switch (order) {
           case 30:
             theta0 = 150.0 / 180.0 * M_PI;
