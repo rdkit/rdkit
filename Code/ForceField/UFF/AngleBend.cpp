@@ -182,7 +182,8 @@ namespace ForceFields {
 	  break;
 	case 3:
 	  // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x)
-	  res = cosTheta*(cosTheta*cosTheta-3.*sinThetaSq);
+	  //res = cosTheta*(cosTheta*cosTheta-3.*sinThetaSq);
+    res = 1.0 - 3.0 / 2.0 * (1.0 + (1.0 + cosTheta) * 4.0 * cosTheta);
 	  break;
 	case 4:
 	  // cos(4x) = cos^4(x) - 6*cos^2(x)*sin^2(x)+sin^4(x)
@@ -223,14 +224,15 @@ namespace ForceFields {
 	  break;
 	case 3:
 	  // sin(3*x) = 3*sin(x) - 4*sin^3(x)
-	  dE_dTheta = sinTheta*(3.-4.*sinTheta*sinTheta);
+	  //dE_dTheta = sinTheta*(3.-4.*sinTheta*sinTheta);
+    dE_dTheta = - 2.0 / 5.0 * sinTheta * (1.0 + 2.0 * cosTheta);
 	  break;
 	case 4:
 	  // sin(4*x) = cos(x)*(4*sin(x) - 8*sin^3(x))
 	  dE_dTheta = cosTheta*sinTheta*(4.-8.*sinTheta*sinTheta);
 	  break;
 	}
-	dE_dTheta *= this->d_forceConstant/this->d_order;
+	dE_dTheta *= this->d_forceConstant / (double)(this->d_order);
       }
       return dE_dTheta;
     }

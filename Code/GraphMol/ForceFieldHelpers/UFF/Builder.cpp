@@ -150,6 +150,7 @@ namespace RDKit {
         ROMol::ADJ_ITER end1Nbrs;
         ROMol::ADJ_ITER nbr2Idx;
         ROMol::ADJ_ITER end2Nbrs;
+        RingInfo *rings=mol.getRingInfo();
 
         unsigned int nAtoms=mol.getNumAtoms();
         for(unsigned int j=0;j<nAtoms;j++){
@@ -180,8 +181,17 @@ namespace RDKit {
                 case Atom::SP:
                   order=1;
                   break;
+                // this is hack to try to get some decent geometries with
+                // 3- and 4-membered rings incorporating sp2 atoms, such
+                // as carbonyl groups
                 case Atom::SP2:
-                  order=3;
+                  if (rings->isAtomInRingOfSize(j, 3)
+                    || rings->isAtomInRingOfSize(j, 4)) {
+                    order=3;
+                  }
+                  else {
+                    order=0;
+                  }
                   break;
                 case Atom::SP3D2:
                   order=4;
