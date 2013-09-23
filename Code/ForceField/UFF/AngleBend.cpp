@@ -55,17 +55,40 @@ namespace ForceFields {
       RANGE_CHECK(0,idx1,owner->positions().size()-1);
       RANGE_CHECK(0,idx2,owner->positions().size()-1);
       RANGE_CHECK(0,idx3,owner->positions().size()-1);
+      // the following is a hack to get decent geometries
+      // with 3- and 4-membered rings incorporating sp2 atoms
+      double theta0;
+      if (order > 30) {
+        switch (order) {
+          case 30:
+            theta0 = 150.0 / 180.0 * M_PI;
+            break;
+          case 35:
+            theta0 = 60.0 / 180.0 * M_PI;
+            break;
+          case 40:
+            theta0 = 135.0 / 180.0 * M_PI;
+            break;
+          case 45:
+            theta0 = 90.0 / 180.0 * M_PI;
+            break;
+        }
+        order = 0;
+      }
+      else {
+        theta0 = at2Params->theta0;
+      }
       dp_forceField = owner;
       d_at1Idx = idx1;
       d_at2Idx = idx2;
       d_at3Idx = idx3;
       d_order = order;
-      this->d_forceConstant = Utils::calcAngleForceConstant(at2Params->theta0,
-							    bondOrder12,bondOrder23,
+      this->d_forceConstant = Utils::calcAngleForceConstant
+                  (theta0, bondOrder12,bondOrder23,
 							    at1Params,at2Params,at3Params);
       if(order==0){
-	double sinTheta0=sin(at2Params->theta0);
-	double cosTheta0=cos(at2Params->theta0);
+	double sinTheta0=sin(theta0);
+	double cosTheta0=cos(theta0);
 	this->d_C2 = 1./(4.*std::max(sinTheta0*sinTheta0,1e-8));
 	this->d_C1 = -4.*this->d_C2*cosTheta0;
 	this->d_C0 = this->d_C2*(2.*cosTheta0*cosTheta0 + 1.);
@@ -180,10 +203,9 @@ namespace ForceFields {
 	case 2:
 	  res=cos2Theta;
 	  break;
-	case 3:
+  case 3:
 	  // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x)
-	  //res = cosTheta*(cosTheta*cosTheta-3.*sinThetaSq);
-    res = 1.0 - 3.0 / 2.0 * (1.0 + (1.0 + cosTheta) * 4.0 * cosTheta);
+	  res = cosTheta*(cosTheta*cosTheta-3.*sinThetaSq);
 	  break;
 	case 4:
 	  // cos(4x) = cos^4(x) - 6*cos^2(x)*sin^2(x)+sin^4(x)
@@ -224,8 +246,7 @@ namespace ForceFields {
 	  break;
 	case 3:
 	  // sin(3*x) = 3*sin(x) - 4*sin^3(x)
-	  //dE_dTheta = sinTheta*(3.-4.*sinTheta*sinTheta);
-    dE_dTheta = - 2.0 / 5.0 * sinTheta * (1.0 + 2.0 * cosTheta);
+	  dE_dTheta = sinTheta*(3.-4.*sinTheta*sinTheta);
 	  break;
 	case 4:
 	  // sin(4*x) = cos(x)*(4*sin(x) - 8*sin^3(x))
