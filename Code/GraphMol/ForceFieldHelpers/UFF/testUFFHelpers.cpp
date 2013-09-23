@@ -360,7 +360,7 @@ void testUFFBuilder2(){
   field=UFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  needMore = field->minimize(100);
+  needMore = field->minimize(150);
   TEST_ASSERT(!needMore);
   //std::cout << MolToMolBlock(mol);
   delete mol;

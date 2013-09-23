@@ -178,7 +178,10 @@ namespace RDKit {
                 int order=0;
                 switch(atomJ->getHybridization()){
                 case Atom::SP:
-                  order=2;
+                  order=1;
+                  break;
+                case Atom::SP2:
+                  order=3;
                   break;
                 case Atom::SP3D2:
                   order=4;
