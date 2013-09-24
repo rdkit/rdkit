@@ -33,7 +33,7 @@ namespace ForceFields {
 
 	double preFactor = beta*at1Params->Z1*at3Params->Z1 / int_pow<5>(r13);
 	double rTerm = r12*r23;
-	double innerBit = r12*r23*(1-cosTheta0*cosTheta0) - r13*r13*cosTheta0;
+	double innerBit = 3.*rTerm*(1.-cosTheta0*cosTheta0) - r13*r13*cosTheta0;
             
 	double res=preFactor*rTerm*innerBit;
 	return res;
@@ -92,7 +92,7 @@ namespace ForceFields {
       RDGeom::Point3D p32=p3-p2;
       double cosTheta = p12.dotProduct(p32)/(dist1*dist2);
       // we need sin^2(theta) to get cos(2*theta), so compute that:
-      double sinThetaSq = 1-cosTheta*cosTheta;
+      double sinThetaSq = 1.-cosTheta*cosTheta;
     
       double angleTerm = this->getEnergyTerm(cosTheta,sinThetaSq);
       double res = this->d_forceConstant*angleTerm;
@@ -174,22 +174,22 @@ namespace ForceFields {
       } else {
 	switch(this->d_order){
 	case 1:
-	  res=cosTheta;
+	  res=-cosTheta;
 	  break;
 	case 2:
 	  res=cos2Theta;
 	  break;
 	case 3:
 	  // cos(3x) = cos^3(x) - 3*cos(x)*sin^2(x)
-	  res = cosTheta*(cosTheta*cosTheta-3*sinThetaSq);
+	  res = cosTheta*(cosTheta*cosTheta-3.*sinThetaSq);
 	  break;
 	case 4:
 	  // cos(4x) = cos^4(x) - 6*cos^2(x)*sin^2(x)+sin^4(x)
-	  res = int_pow<4>(cosTheta) - 6*cosTheta*cosTheta*sinThetaSq + sinThetaSq*sinThetaSq;
+	  res = int_pow<4>(cosTheta) - 6.*cosTheta*cosTheta*sinThetaSq + sinThetaSq*sinThetaSq;
 	  break;
 	}
-	res = 1-res;
-	res /= (this->d_order*this->d_order);
+	res = 1.-res;
+	res /= (double)(this->d_order*this->d_order);
       }
       return res;
     }
@@ -200,10 +200,10 @@ namespace ForceFields {
       PRECONDITION(this->d_order==0||this->d_order==1||this->d_order==2||this->d_order==3||this->d_order==4,"bad order");
 
       double dE_dTheta=0.0;
-      double sin2Theta = 2*sinTheta*cosTheta;
+      double sin2Theta = 2.*sinTheta*cosTheta;
 
       if(this->d_order==0){
-	dE_dTheta =  -1*this->d_forceConstant*(this->d_C1*sinTheta +
+	dE_dTheta =  -1.*this->d_forceConstant*(this->d_C1*sinTheta +
 					       2.*this->d_C2*sin2Theta);
       } else {
 	// E = k/n^2 [1-cos(n theta)]
@@ -214,7 +214,7 @@ namespace ForceFields {
       
 	switch(this->d_order){
 	case 1:
-	  dE_dTheta = sinTheta;
+	  dE_dTheta = -sinTheta;
 	  break;
 	case 2:
 	  // sin(2*x) = 2*cos(x)*sin(x)
@@ -222,14 +222,14 @@ namespace ForceFields {
 	  break;
 	case 3:
 	  // sin(3*x) = 3*sin(x) - 4*sin^3(x)
-	  dE_dTheta = sinTheta*(3-4*sinTheta*sinTheta);
+	  dE_dTheta = sinTheta*(3.-4.*sinTheta*sinTheta);
 	  break;
 	case 4:
 	  // sin(4*x) = cos(x)*(4*sin(x) - 8*sin^3(x))
-	  dE_dTheta = cosTheta*sinTheta*(4-8*sinTheta*sinTheta);
+	  dE_dTheta = cosTheta*sinTheta*(4.-8.*sinTheta*sinTheta);
 	  break;
 	}
-	dE_dTheta *= this->d_forceConstant/this->d_order;
+	dE_dTheta *= this->d_forceConstant/(double)(this->d_order);
       }
       return dE_dTheta;
     }

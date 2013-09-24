@@ -659,8 +659,8 @@ void testIssue251() {
   DistGeom::BoundsMatPtr bm(mat);
   DGeomHelpers::initBoundsMat(bm);
   DGeomHelpers::setTopolBounds(*m, bm);
-  TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.75, 0.01));
-  TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.87, 0.01));
+  TEST_ASSERT(RDKit::feq(bm->getLowerBound(0,3), 2.67, 0.01));
+  TEST_ASSERT(RDKit::feq(bm->getUpperBound(0,3), 2.79, 0.01));
   delete m;
 }
 
@@ -937,7 +937,7 @@ void testConstrainedEmbedding() {
     coords[4]=ref->getConformer().getAtomPos(4);
 
 #if 1
-    int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
+    int cid = DGeomHelpers::EmbedMolecule(*test,30,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
     
     MatchVectType alignMap;
@@ -962,7 +962,7 @@ void testConstrainedEmbedding() {
     coords[6]=ref->getConformer().getAtomPos(2);
     coords[7]=ref->getConformer().getAtomPos(3);
     coords[8]=ref->getConformer().getAtomPos(4);
-    int cid = DGeomHelpers::EmbedMolecule(*test,30,23,true,false,2.,true,1,&coords);
+    int cid = DGeomHelpers::EmbedMolecule(*test,30,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
     
     MatchVectType alignMap;
@@ -1242,7 +1242,7 @@ void testGitHub55() {
     coords[2]=core->getConformer().getAtomPos(2);
     coords[3]=core->getConformer().getAtomPos(1);
     coords[4]=core->getConformer().getAtomPos(0);
-    cid = DGeomHelpers::EmbedMolecule(*mol,50,23,true,false,2.,true,1,&coords);
+    cid = DGeomHelpers::EmbedMolecule(*mol,50,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
 
     delete core;
@@ -1266,7 +1266,7 @@ void testGitHub55() {
     coords[2]=core->getConformer().getAtomPos(2);
     coords[3]=core->getConformer().getAtomPos(1);
     coords[4]=core->getConformer().getAtomPos(0);
-    cid = DGeomHelpers::EmbedMolecule(*mol,50,23,true,false,2.,true,1,&coords);
+    cid = DGeomHelpers::EmbedMolecule(*mol,50,22,true,false,2.,true,1,&coords);
     TEST_ASSERT(cid>-1);
 
     delete core;
