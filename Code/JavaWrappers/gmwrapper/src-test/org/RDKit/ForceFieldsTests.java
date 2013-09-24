@@ -339,13 +339,13 @@ public class ForceFieldsTests extends GraphMolTest {
 		p2.setGMP_Xi(6.899);
 		p2.setTheta0(120.0* Math.PI / 180.);
 		restLen = RDKFuncs.calcBondRestLength(RDKFuncs.getAmideBondOrder(), p1, p2);
-		assertEquals(1.368,restLen,1e-3);
+		assertEquals(1.357,restLen,1e-3);
 		restLen=RDKFuncs.calcBondRestLength(1.0, p2, p3);
-		assertEquals(1.462, restLen, 1e-3);
+		assertEquals(1.450, restLen, 1e-3);
 
 		forceConstant=RDKFuncs.calcAngleForceConstant(p2.getTheta0(), RDKFuncs.getAmideBondOrder(),1,
 				p1, p2, p3);
-		assertEquals(123.5, forceConstant, 1e-1); //  paper has 105.5
+		assertEquals(211.0, forceConstant, 1e-1); //  paper has 105.5
 
 
 
