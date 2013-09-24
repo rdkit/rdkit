@@ -150,6 +150,7 @@ namespace RDKit {
         ROMol::ADJ_ITER end1Nbrs;
         ROMol::ADJ_ITER nbr2Idx;
         ROMol::ADJ_ITER end2Nbrs;
+        RingInfo *rings=mol.getRingInfo();
 
         unsigned int nAtoms=mol.getNumAtoms();
         for(unsigned int j=0;j<nAtoms;j++){
@@ -180,8 +181,38 @@ namespace RDKit {
                 case Atom::SP:
                   order=1;
                   break;
+                // the following is a hack to get decent geometries
+                // with 3- and 4-membered rings incorporating sp2 atoms
                 case Atom::SP2:
                   order=3;
+                  // if the central atom is in a ring of size 3
+                  if (rings->isAtomInRingOfSize(j, 3)) {
+                    // if the central atom and one of the bonded atoms, but not the
+                    //  other one are inside a ring, then this angle is between a
+                    // ring substituent and a ring edge
+                    if ((rings->isAtomInRingOfSize(i, 3) && !rings->isAtomInRingOfSize(k, 3))
+                      || (!rings->isAtomInRingOfSize(i, 3) && rings->isAtomInRingOfSize(k, 3))) {
+                      order = 30;
+                    }
+                    // if all atoms are inside the ring, then this is one of ring angles
+                    else if (rings->isAtomInRingOfSize(i, 3) && rings->isAtomInRingOfSize(k, 3)) {
+                      order = 35;
+                    }
+                  }
+                  // if the central atom is in a ring of size 4
+                  else if (rings->isAtomInRingOfSize(j, 4)) {
+                    // if the central atom and one of the bonded atoms, but not the
+                    //  other one are inside a ring, then this angle is between a
+                    // ring substituent and a ring edge
+                    if ((rings->isAtomInRingOfSize(i, 4) && !rings->isAtomInRingOfSize(k, 4))
+                      || (!rings->isAtomInRingOfSize(i, 4) && rings->isAtomInRingOfSize(k, 4))) {
+                      order = 40;
+                    }
+                    // if all atoms are inside the ring, then this is one of ring angles
+                    else if (rings->isAtomInRingOfSize(i, 4) && rings->isAtomInRingOfSize(k, 4)) {
+                      order = 45;
+                    }
+                  }
                   break;
                 case Atom::SP3D2:
                   order=4;

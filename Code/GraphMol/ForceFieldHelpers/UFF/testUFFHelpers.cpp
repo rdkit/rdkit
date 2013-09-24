@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 
 #include <GraphMol/ForceFieldHelpers/UFF/AtomTyper.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
@@ -846,6 +847,42 @@ void testSFIssue3009337(){
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+void testGitHubIssue62() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Testing GitHubIssue62." << std::endl;
+
+  std::string pathName=getenv("RDBASE");
+  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
+  {
+    double energyValues[] =
+      { 38.687, 174.698, 337.986, 115.248,
+        2.482, 1.918, 10.165, 98.469, 39.078,
+        267.236, 15.747, 202.121, 205.539,
+        20.044, 218.986, 79.627 };
+    SmilesMolSupplier smiSupplier(pathName + "/Issue62.smi");
+    SDWriter *sdfWriter = new SDWriter(pathName + "/Issue62.sdf");
+    for (unsigned int i = 0; i < smiSupplier.length(); ++i) {
+      ROMol *mol = MolOps::addHs(*(smiSupplier[i]));
+      TEST_ASSERT(mol);
+      std::string molName = "";
+      if (mol->hasProp("_Name")) {
+        mol->getProp("_Name", molName);
+      }
+      DGeomHelpers::EmbedMolecule(*mol);
+      ForceFields::ForceField *field = UFF::constructForceField(*mol);
+      TEST_ASSERT(field);
+      field->initialize();
+      int needMore = field->minimize(200, 1.e-6, 1.e-3);
+      TEST_ASSERT(!needMore);
+      sdfWriter->write(*mol);
+      double e = field->calcEnergy();
+      BOOST_LOG(rdErrorLog) << molName << " " << e << std::endl;
+      TEST_ASSERT(fabs(e - energyValues[i]) < 1.);
+    }
+    sdfWriter->close();
+    BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+  }
+}
 
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
@@ -866,5 +903,5 @@ int main(){
 #endif
   testMissingParams();
   testSFIssue3009337();
-
+  testGitHubIssue62();
 }
