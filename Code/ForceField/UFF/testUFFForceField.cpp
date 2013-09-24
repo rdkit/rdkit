@@ -106,10 +106,10 @@ void testUFF1(){
 
   // Csp3 - Nsp3: checks rEN
   restLen=ForceFields::UFF::Utils::calcBondRestLength(1.0,&p1,&p2);
-  TEST_ASSERT(RDKit::feq(restLen,1.462929,1e-5));
+  TEST_ASSERT(RDKit::feq(restLen,1.451071,1e-5));
 
   forceConstant=ForceFields::UFF::Utils::calcBondForceConstant(restLen,&p1,&p2);
-  TEST_ASSERT(RDKit::feq(forceConstant,1031.77,1e-2));
+  TEST_ASSERT(RDKit::feq(forceConstant,1057.27,1e-2));
 
 
   // amide bond: check we can reproduce values from the UFF paper:
@@ -123,11 +123,11 @@ void testUFF1(){
   p2.GMP_Xi = 6.899;
 
   restLen=ForceFields::UFF::Utils::calcBondRestLength(ForceFields::UFF::Params::amideBondOrder,&p1,&p2);
-  TEST_ASSERT(RDKit::feq(restLen,1.368,1e-3)); // NOTE: the paper has 1.366
+  TEST_ASSERT(RDKit::feq(restLen,1.357,1e-3)); // NOTE: the paper has 1.366
 
 
   forceConstant=ForceFields::UFF::Utils::calcBondForceConstant(restLen,&p1,&p2);
-  TEST_ASSERT(RDKit::feq(forceConstant,1260.,1)); // NOTE: the paper has 1293
+  TEST_ASSERT(RDKit::feq(forceConstant,1293.,1)); // NOTE: the paper has 1293
 
 
   std::cerr << "  done" << std::endl;
@@ -277,13 +277,13 @@ void testUFF3(){
   p2.GMP_Xi = 6.899;
   p2.theta0 = 120.0*M_PI/180.;
   restLen=ForceFields::UFF::Utils::calcBondRestLength(ForceFields::UFF::Params::amideBondOrder,&p1,&p2);
-  TEST_ASSERT(RDKit::feq(restLen,1.368,1e-3));
+  TEST_ASSERT(RDKit::feq(restLen,1.357,1e-3));
   restLen=ForceFields::UFF::Utils::calcBondRestLength(1.0,&p2,&p3);
-  TEST_ASSERT(RDKit::feq(restLen,1.462,1e-3));
+  TEST_ASSERT(RDKit::feq(restLen,1.450,1e-3));
 
   forceConstant=ForceFields::UFF::Utils::calcAngleForceConstant(p2.theta0,ForceFields::UFF::Params::amideBondOrder,1,
 						   &p1,&p2,&p3);
-  TEST_ASSERT(RDKit::feq(forceConstant,123.5,1e-1)); //  paper has 105.5
+  TEST_ASSERT(RDKit::feq(forceConstant,211.0,1e-1)); //  paper has 105.5
 
 
   std::cerr << "  done" << std::endl;
@@ -419,6 +419,7 @@ void testUFF4(){
 
   TEST_ASSERT(RDKit::feq(v1.length(),1.514,1e-3));
   TEST_ASSERT(RDKit::feq(v2.length(),1.514,1e-3));
+  std::cerr << "theta = " << theta << "; theta0 = " << param1.theta0 << std::endl;
   TEST_ASSERT(RDKit::feq(theta,param1.theta0,1e-4));
 
 
@@ -450,6 +451,9 @@ void testUFF4(){
 
   TEST_ASSERT(RDKit::feq(v1.length(),1.514,1e-3));
   TEST_ASSERT(RDKit::feq(v2.length(),1.514,1e-3));
+  std::cerr << "theta = " << std::fixed << std::setprecision(6) << theta
+    << ", param1.theta0 = " << std::fixed << std::setprecision(6) << param1.theta0
+    << std::endl;
   TEST_ASSERT(RDKit::feq(theta,param1.theta0,1e-4));
 
 
