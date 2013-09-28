@@ -430,8 +430,9 @@ int main(int argc, char *argv[])
             rdkFStream << molName << std::endl;
             nameArray.push_back(molName);
           }
-          if (!(mmffMolProperties = MMFF::setupMMFFForceField
-            (mol, *ffIt, MMFF::MMFF_VERBOSITY_HIGH, rdkFStream))) {
+          MMFF::MMFFMolProperties *mmffMolProperties = new
+            MMFF::MMFFMolProperties(*mol, *ffIt, MMFF::MMFF_VERBOSITY_HIGH, rdkFStream);
+          if ((!mmffMolProperties) || (!(mmffMolProperties->isValid()))) {
             std::cerr << molName + ": error setting up force-field" << std::endl;
             continue;
           }
