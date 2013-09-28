@@ -38,7 +38,10 @@ from rdkit import RDConfig
 import unittest,os,tempfile
 from rdkit import Chem
 from rdkit.Chem import Draw
-from rdkit.Chem.Draw import SimilarityMaps as sm
+try:
+  from rdkit.Chem.Draw import SimilarityMaps as sm
+except ImportError:
+  sm = None
 from rdkit.RDLogger import logger
 logger = logger()
 
@@ -88,5 +91,10 @@ class TestCase(unittest.TestCase):
 
     
 if __name__ == '__main__':
-  unittest.main()
+  try:
+    import matplotlib
+  except ImportError:
+    pass
+  else:
+    unittest.main()
 
