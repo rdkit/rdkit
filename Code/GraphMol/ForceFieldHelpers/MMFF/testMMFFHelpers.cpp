@@ -31,112 +31,114 @@ void testMMFFTyper1()
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test MMFF atom types." << std::endl;
 
-  ROMol *mol;
-  boost::uint8_t type;
-  MMFF::MMFFMolProperties *mmffMolProperties;
+  {
+    boost::uint8_t type;
+    ROMol *mol = SmilesToMol("[SiH3]CC(=O)NC");
+    TEST_ASSERT(mol);
+    MMFF::MMFFMolProperties mmffMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties.isValid());
 
-  mol = SmilesToMol("[SiH3]CC(=O)NC");
-  TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
-  TEST_ASSERT(mmffMolProperties);
+    type = mmffMolProperties.getMMFFAtomType(0);
+    TEST_ASSERT(type == 19);
+    type = mmffMolProperties.getMMFFAtomType(1);
+    TEST_ASSERT(type == 1);
+    type = mmffMolProperties.getMMFFAtomType(2);
+    TEST_ASSERT(type == 3);
+    type = mmffMolProperties.getMMFFAtomType(3);
+    TEST_ASSERT(type == 7);
+    type = mmffMolProperties.getMMFFAtomType(4);
+    TEST_ASSERT(type == 10);
+    delete mol;
+  }
 
-  type = mmffMolProperties->getMMFFAtomType(0);
-  TEST_ASSERT(type == 19);
-  type = mmffMolProperties->getMMFFAtomType(1);
-  TEST_ASSERT(type == 1);
-  type = mmffMolProperties->getMMFFAtomType(2);
-  TEST_ASSERT(type == 3);
-  type = mmffMolProperties->getMMFFAtomType(3);
-  TEST_ASSERT(type == 7);
-  type = mmffMolProperties->getMMFFAtomType(4);
-  TEST_ASSERT(type == 10);
+  {
+    boost::uint8_t type;
+    ROMol *mol = SmilesToMol("CC(=O)C");
+    TEST_ASSERT(mol);
+    MMFF::MMFFMolProperties mmffMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties.isValid());
 
-  delete mol;
-  delete mmffMolProperties;
-  mol = SmilesToMol("CC(=O)C");
-  TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
-  TEST_ASSERT(mmffMolProperties);
+    type = mmffMolProperties.getMMFFAtomType(0);
+    TEST_ASSERT(type == 1);
+    type = mmffMolProperties.getMMFFAtomType(1);
+    TEST_ASSERT(type == 3);
+    type = mmffMolProperties.getMMFFAtomType(2);
+    TEST_ASSERT(type == 7);
+    type = mmffMolProperties.getMMFFAtomType(3);
+    TEST_ASSERT(type == 1);
+    delete mol;
+  }
 
-  type = mmffMolProperties->getMMFFAtomType(0);
-  TEST_ASSERT(type == 1);
-  type = mmffMolProperties->getMMFFAtomType(1);
-  TEST_ASSERT(type == 3);
-  type = mmffMolProperties->getMMFFAtomType(2);
-  TEST_ASSERT(type == 7);
-  type = mmffMolProperties->getMMFFAtomType(3);
-  TEST_ASSERT(type == 1);
-  
- 
-  delete mol;
-  delete mmffMolProperties;
-  mol = SmilesToMol("C(=O)S");
-  TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
-  TEST_ASSERT(mmffMolProperties);
+  {
+    boost::uint8_t type;
+    ROMol *mol = SmilesToMol("C(=O)S");
+    TEST_ASSERT(mol);
+    MMFF::MMFFMolProperties mmffMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties.isValid());
 
-  type = mmffMolProperties->getMMFFAtomType(0);
-  TEST_ASSERT(type == 3);
-  type = mmffMolProperties->getMMFFAtomType(1);
-  TEST_ASSERT(type == 7);
-  type = mmffMolProperties->getMMFFAtomType(2);
-  TEST_ASSERT(type == 15);
+    type = mmffMolProperties.getMMFFAtomType(0);
+    TEST_ASSERT(type == 3);
+    type = mmffMolProperties.getMMFFAtomType(1);
+    TEST_ASSERT(type == 7);
+    type = mmffMolProperties.getMMFFAtomType(2);
+    TEST_ASSERT(type == 15);
+    delete mol;
+  }
+  {
+    boost::uint8_t type;
+    ROMol *mol = SmilesToMol("SCS(=O)S(=O)(=O)O");
+    TEST_ASSERT(mol);
+    MMFF::MMFFMolProperties mmffMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties.isValid());
 
-  delete mol;
-  delete mmffMolProperties;
-  mol = SmilesToMol("SCS(=O)S(=O)(=O)O");
-  TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
-  TEST_ASSERT(mmffMolProperties);
+    type = mmffMolProperties.getMMFFAtomType(0);
+    TEST_ASSERT(type == 15);
+    type = mmffMolProperties.getMMFFAtomType(1);
+    TEST_ASSERT(type == 1);
+    type = mmffMolProperties.getMMFFAtomType(2);
+    TEST_ASSERT(type == 17);
+    type = mmffMolProperties.getMMFFAtomType(4);
+    TEST_ASSERT(type == 18);
+    delete mol;
+  }
+  {
+    boost::uint8_t type;
+    ROMol *mol = SmilesToMol("PCP(O)CP(=O)(=O)");
+    TEST_ASSERT(mol);
+    MMFF::MMFFMolProperties mmffMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties.isValid());
 
-  type = mmffMolProperties->getMMFFAtomType(0);
-  TEST_ASSERT(type == 15);
-  type = mmffMolProperties->getMMFFAtomType(1);
-  TEST_ASSERT(type == 1);
-  type = mmffMolProperties->getMMFFAtomType(2);
-  TEST_ASSERT(type == 17);
-  type = mmffMolProperties->getMMFFAtomType(4);
-  TEST_ASSERT(type == 18);
-  
-  delete mol;
-  delete mmffMolProperties;
-  mol = SmilesToMol("PCP(O)CP(=O)(=O)");
-  TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
-  TEST_ASSERT(mmffMolProperties);
+    type = mmffMolProperties.getMMFFAtomType(0);
+    TEST_ASSERT(type == 26);
+    type = mmffMolProperties.getMMFFAtomType(1);
+    TEST_ASSERT(type == 1);
+    type = mmffMolProperties.getMMFFAtomType(2);
+    TEST_ASSERT(type == 26);
+    type = mmffMolProperties.getMMFFAtomType(5);
+    TEST_ASSERT(type == 26);
+    delete mol;
+  }
+  {
+    boost::uint8_t type;
+    ROMol *mol = SmilesToMol("C(F)(Cl)(Br)I");
+    TEST_ASSERT(mol);
+    MMFF::MMFFMolProperties mmffMolProperties(*mol);
+    TEST_ASSERT(mmffMolProperties.isValid());
 
-  type = mmffMolProperties->getMMFFAtomType(0);
-  TEST_ASSERT(type == 26);
-  type = mmffMolProperties->getMMFFAtomType(1);
-  TEST_ASSERT(type == 1);
-  type = mmffMolProperties->getMMFFAtomType(2);
-  TEST_ASSERT(type == 26);
-  type = mmffMolProperties->getMMFFAtomType(5);
-  TEST_ASSERT(type == 26);
-  
+    type = mmffMolProperties.getMMFFAtomType(0);
+    TEST_ASSERT(type == 1);
+    type = mmffMolProperties.getMMFFAtomType(1);
+    TEST_ASSERT(type == 11);
+    type = mmffMolProperties.getMMFFAtomType(2);
+    TEST_ASSERT(type == 12);
+    type = mmffMolProperties.getMMFFAtomType(3);
+    TEST_ASSERT(type == 13);
+    type = mmffMolProperties.getMMFFAtomType(4);
+    TEST_ASSERT(type == 14);
+    delete mol;
+  }
 
-  delete mol;
-  delete mmffMolProperties;
-  mol = SmilesToMol("C(F)(Cl)(Br)I");
-  TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
-  TEST_ASSERT(mmffMolProperties);
 
-  type = mmffMolProperties->getMMFFAtomType(0);
-  TEST_ASSERT(type == 1);
-  type = mmffMolProperties->getMMFFAtomType(1);
-  TEST_ASSERT(type == 11);
-  type = mmffMolProperties->getMMFFAtomType(2);
-  TEST_ASSERT(type == 12);
-  type = mmffMolProperties->getMMFFAtomType(3);
-  TEST_ASSERT(type == 13);
-  type = mmffMolProperties->getMMFFAtomType(4);
-  TEST_ASSERT(type == 14);
-  
-  delete mol;
-  delete mmffMolProperties;
-
-  
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -147,7 +149,6 @@ void testMMFFBuilder1()
 
   ROMol *mol,*mol2;
 
-  MMFF::MMFFMolProperties *mmffMolProperties;
   ForceFields::ForceField *field;
   boost::shared_array<boost::uint8_t> nbrMat;
 
@@ -155,8 +156,9 @@ void testMMFFBuilder1()
   Conformer *conf = new Conformer(mol->getNumAtoms());
   int cid = static_cast<int>(mol->addConformer(conf, true));
   TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
+  MMFF::MMFFMolProperties *mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
   field = new ForceFields::ForceField();
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
 
@@ -186,8 +188,9 @@ void testMMFFBuilder1()
   Conformer *conf2 = new Conformer(mol->getNumAtoms());
   cid = static_cast<int>(mol->addConformer(conf2, true));
   TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
   field = new ForceFields::ForceField();
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
 
@@ -215,8 +218,9 @@ void testMMFFBuilder1()
   Conformer *conf3 = new Conformer(mol->getNumAtoms());
   cid = static_cast<int>(mol->addConformer(conf3, true));
   TEST_ASSERT(mol);
-  mmffMolProperties = MMFF::setupMMFFForceField(mol);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
 
   field = new ForceFields::ForceField();
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
@@ -240,8 +244,9 @@ void testMMFFBuilder1()
   delete field;
   delete mmffMolProperties;
   
-  mmffMolProperties = MMFF::setupMMFFForceField(mol2);
+  mmffMolProperties = new MMFF::MMFFMolProperties(*mol2);
   TEST_ASSERT(mmffMolProperties);
+  TEST_ASSERT(mmffMolProperties->isValid());
 
   field = new ForceFields::ForceField();
   MMFF::Tools::addBonds(*mol2, mmffMolProperties, field);
@@ -496,7 +501,7 @@ void testSFIssue1653802()
   mol = MolFileToMol(pathName + "/cyclobutadiene.mol", false);
   TEST_ASSERT(mol);
   MMFF::sanitizeMMFFMol(*mol);
-  MMFF::MMFFMolProperties *mmffMolProperties = MMFF::setupMMFFForceField(mol);
+  MMFF::MMFFMolProperties *mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
   TEST_ASSERT(mmffMolProperties);
 
   boost::shared_array<boost::uint8_t> nbrMat;
@@ -520,6 +525,7 @@ void testSFIssue1653802()
   
   delete mol;
   delete field;
+  delete mmffMolProperties;
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 

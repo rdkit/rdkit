@@ -41,6 +41,7 @@ namespace RDKit {
       {
         PRECONDITION(field, "bad ForceField");
         PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+        PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         MMFFBondCollection *mmffBond = MMFFBondCollection::getMMFFBond();
@@ -234,6 +235,7 @@ namespace RDKit {
       {
         PRECONDITION(field, "bad ForceField");
         PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+        PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         unsigned int idx[3];
@@ -376,6 +378,7 @@ namespace RDKit {
       {
         PRECONDITION(field, "bad ForceField");
         PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+        PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         unsigned int idx[3];
@@ -566,6 +569,7 @@ namespace RDKit {
       {
         PRECONDITION(field, "bad ForceField");
         PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+        PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
         
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         unsigned int idx[4];
@@ -697,6 +701,7 @@ namespace RDKit {
       {
         PRECONDITION(field, "bad ForceField");
         PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+        PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         unsigned int idx1;
@@ -851,6 +856,7 @@ namespace RDKit {
       {
         PRECONDITION(field, "bad ForceField");
         PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+        PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         MMFFVdWCollection *mmffVdW = MMFFVdWCollection::getMMFFVdW();
@@ -942,6 +948,7 @@ namespace RDKit {
       {
         PRECONDITION(field, "bad ForceField");
         PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+        PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
         std::ostream &oStream = mmffMolProperties->getMMFFOStream();
         MMFFVdWCollection *mmffVdW = MMFFVdWCollection::getMMFFVdW();
@@ -1029,11 +1036,10 @@ namespace RDKit {
     ForceFields::ForceField *constructForceField(ROMol &mol,
       double nonBondedThresh, int confId, bool ignoreInterfragInteractions)
     {
-      MMFFMolProperties *mmffMolProperties = MMFF::setupMMFFForceField(&mol);
-      PRECONDITION(mmffMolProperties, "Unable to setup MMFF force field");
+      MMFFMolProperties mmffMolProperties(mol);
+      PRECONDITION(mmffMolProperties.isValid(), "missing atom types - invalid force-field");
       ForceFields::ForceField *res = constructForceField(mol,
-        mmffMolProperties, nonBondedThresh, confId, ignoreInterfragInteractions);
-      delete mmffMolProperties;
+        &mmffMolProperties, nonBondedThresh, confId, ignoreInterfragInteractions);
         
       return res;
     }
@@ -1047,8 +1053,10 @@ namespace RDKit {
       MMFFMolProperties *mmffMolProperties, double nonBondedThresh,
       int confId, bool ignoreInterfragInteractions)
     {
-      ForceFields::ForceField *res = new ForceFields::ForceField();
+      PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+      PRECONDITION(mmffMolProperties->isValid(), "missing atom types - invalid force-field");
 
+      ForceFields::ForceField *res = new ForceFields::ForceField();
       // add the atomic positions:
       Conformer &conf = mol.getConformer(confId);
       for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {

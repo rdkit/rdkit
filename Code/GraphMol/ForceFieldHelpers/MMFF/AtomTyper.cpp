@@ -261,7 +261,7 @@ namespace RDKit {
 
 
     // sets the aromaticity flags according to MMFF
-    void setMMFFAromaticity(RWMol *mol)
+    void setMMFFAromaticity(RWMol &mol)
     {
       bool moveToNextRing = false;
       bool isNOSinRing = false;
@@ -274,13 +274,13 @@ namespace RDKit {
       unsigned int pi_e = 0;
       int nAromSet = 0;
       int old_nAromSet = -1;
-      RingInfo *ringInfo = mol->getRingInfo();
+      RingInfo *ringInfo = mol.getRingInfo();
       Atom *atom;
       Bond *bond;
       VECT_INT_VECT atomRings = ringInfo->atomRings();
       ROMol::ADJ_ITER nbrIdx;
       ROMol::ADJ_ITER endNbrs;
-      boost::dynamic_bitset<> aromBitVect(mol->getNumAtoms());
+      boost::dynamic_bitset<> aromBitVect(mol.getNumAtoms());
       boost::dynamic_bitset<> aromRingBitVect(atomRings.size());
       
       while ((!aromRingsAllSet) && atomRings.size() && (nAromSet > old_nAromSet)) {
@@ -289,7 +289,7 @@ namespace RDKit {
           // add 2 pi electrons for each double bond in the ring
           for (j = 0, pi_e = 0, moveToNextRing = false, isNOSinRing = false,
             exoDoubleBond = false; (!moveToNextRing) && (j < atomRings[i].size()); ++j) {
-            atom = mol->getAtomWithIdx(atomRings[i][j]);
+            atom = mol.getAtomWithIdx(atomRings[i][j]);
             // remember if this atom is nitrogen, oxygen or divalent sulfur
             if ((atom->getAtomicNum() == 7) || (atom->getAtomicNum() == 8)
               || ((atom->getAtomicNum() == 16) && (atom->getDegree() == 2))) {
@@ -298,23 +298,23 @@ namespace RDKit {
             // check whether this atom is double-bonded to next one in the ring
             nextInRing = (j == (atomRings[i].size() - 1))
               ? atomRings[i][0] : atomRings[i][j + 1];
-            if (mol->getBondBetweenAtoms(atomRings[i][j],
+            if (mol.getBondBetweenAtoms(atomRings[i][j],
               nextInRing)->getBondType() == Bond::DOUBLE) {
               pi_e += 2;
             }
             // if this is not a double bond, check whether this is carbon
             // or nitrogen with total bond order = 4
             else {
-              atom = mol->getAtomWithIdx(atomRings[i][j]);
+              atom = mol.getAtomWithIdx(atomRings[i][j]);
               // if not, move on
               if ((atom->getAtomicNum() != 6) && (!((atom->getAtomicNum() == 7)
                 && ((atom->getExplicitValence() + atom->getNumImplicitHs()) == 4)))) {
                 continue;
               }
               // loop over neighbors
-              boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
+              boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
               for (; nbrIdx != endNbrs; ++nbrIdx) {
-                const Atom *nbrAtom = (*mol)[*nbrIdx].get();
+                const Atom *nbrAtom = mol[*nbrIdx].get();
                 // if the neighbor is one of the ring atoms, skip it
                 // since we are looking for exocyclic neighbors
                 if (std::find(atomRings[i].begin(), atomRings[i].end(),
@@ -322,7 +322,7 @@ namespace RDKit {
                   continue;
                 }
                 // it the neighbor is single-bonded, skip it
-                if (mol->getBondBetweenAtoms(atomRings[i][j],
+                if (mol.getBondBetweenAtoms(atomRings[i][j],
                   nbrAtom->getIdx())->getBondType() == Bond::SINGLE) {
                   continue;
                 }
@@ -336,7 +336,7 @@ namespace RDKit {
                 }
                 // if the neighbor is in an aromatic ring and is
                 // double-bonded to the current atom, add 1 pi electron
-                if (mol->getBondBetweenAtoms(atomRings[i][j],
+                if (mol.getBondBetweenAtoms(atomRings[i][j],
                   nbrAtom->getIdx())->getBondType() == Bond::DOUBLE) {
                   if (nbrAtom->getIsAromatic()) {
                     ++pi_e;
@@ -357,7 +357,7 @@ namespace RDKit {
           for (j = 0, canBeAromatic = true; j < atomRings[i].size(); ++j) {
             // set aromaticity as perceived
             aromBitVect[atomRings[i][j]] = 1;
-            atom = mol->getAtomWithIdx(atomRings[i][j]);
+            atom = mol.getAtomWithIdx(atomRings[i][j]);
             // if this is is a non-sp2 carbon or nitrogen
             // then this ring can't be aromatic
             if (((atom->getAtomicNum() == 6) || (atom->getAtomicNum() == 7))
@@ -379,7 +379,7 @@ namespace RDKit {
           if ((pi_e > 2) && (!((pi_e - 2) % 4))) {
             aromRingBitVect[i] = 1;
             for (j = 0; j < atomRings[i].size(); ++j) {
-              mol->getAtomWithIdx(atomRings[i][j])->setIsAromatic(true);
+              mol.getAtomWithIdx(atomRings[i][j])->setIsAromatic(true);
             }
           }
         }
@@ -409,7 +409,7 @@ namespace RDKit {
           // mark all ring bonds as aromatic
           nextInRing = (j == (atomRings[i].size() - 1))
             ? atomRings[i][0] : atomRings[i][j + 1];
-          bond = mol->getBondBetweenAtoms(atomRings[i][j], nextInRing);
+          bond = mol.getBondBetweenAtoms(atomRings[i][j], nextInRing);
           bond->setBondType(Bond::AROMATIC);
           bond->setIsAromatic(true);
         }
@@ -418,7 +418,7 @@ namespace RDKit {
 
 
     // sets the MMFF atomType for a heavy atom
-    const boost::uint8_t MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom)
+    void MMFFMolProperties::setMMFFHeavyAtomType(const Atom *atom)
     {
       unsigned int atomType = 0;
       unsigned int i;
@@ -1699,7 +1699,7 @@ namespace RDKit {
           // Sulfur
           case 16:
             // 3  or 4 neighbors
-            if (atom->getTotalDegree() >= 3) {
+            if ((atom->getTotalDegree() == 3) || (atom->getTotalDegree() == 4)) {
               unsigned int nOorNbondedToS = 0;
               unsigned int nSbondedToS = 0;
               bool isCDoubleBondedToS = false;
@@ -1952,14 +1952,15 @@ namespace RDKit {
           break;
         }
       }
-      this->d_MMFFAtomPropertiesPtrVect[atom->getIdx()]->mmffAtomType = atomType;
-
-      return atomType;
+      d_MMFFAtomPropertiesPtrVect[atom->getIdx()]->mmffAtomType = atomType;
+      if (!atomType) {
+        d_valid = false;
+      }
     }
 
 
     // finds the MMFF atomType for a hydrogen atom
-    const boost::uint8_t MMFFMolProperties::setMMFFHydrogenType(const Atom *atom)
+    void MMFFMolProperties::setMMFFHydrogenType(const Atom *atom)
     {
       unsigned int atomType;
       bool isHOCC = false;
@@ -2183,9 +2184,10 @@ namespace RDKit {
            break;
         }
       }
-      this->d_MMFFAtomPropertiesPtrVect[atom->getIdx()]->mmffAtomType = atomType;
-      
-      return atomType;
+      d_MMFFAtomPropertiesPtrVect[atom->getIdx()]->mmffAtomType = atomType;
+      if (!atomType) {
+        d_valid = false;
+      }
     }
 
 
@@ -2215,51 +2217,61 @@ namespace RDKit {
     }
     
     
-    // returns a MMFFMolProperties object for ROMol mol filled with
-    // MMFF atom types, formal and partial charges; it also allows
-    // to set dielectric constant and dielectric model (CONSTANT or
-    // DISTANCE)
-    MMFFMolProperties *setupMMFFForceField(ROMol *mol, 
+    // constructs a MMFFMolProperties object for ROMol mol filled
+    // with MMFF atom types, formal and partial charges
+    // in case atom types are missing, d_valid is set to false,
+    // charges are set to 0.0 and the force-field is unusable
+    MMFFMolProperties::MMFFMolProperties(ROMol &mol, 
       std::string mmffVariant, boost::uint8_t verbosity,
-      std::ostream &oStream)
-    {
+      std::ostream &oStream) :
+      d_valid(true),
+      d_mmffs(mmffVariant == "MMFF94s" ? true : false),
+      d_bondTerm(true),
+      d_angleTerm(true),
+      d_stretchBendTerm(true),
+      d_oopTerm(true),
+      d_torsionTerm(true),
+      d_vdWTerm(true),
+      d_eleTerm(true),
+      d_dielConst(1.0),
+      d_dielModel(CONSTANT),
+      d_verbosity(verbosity),
+      d_oStream(&oStream),
+      d_MMFFAtomPropertiesPtrVect(mol.getNumAtoms()) {
       ROMol::AtomIterator it;
-      if(!mol->hasProp("_MMFFSanitized")){
+      if (!(mol.hasProp("_MMFFSanitized"))) {
         bool isAromaticSet = false;
-        for (it = mol->beginAtoms(); (!isAromaticSet) && (it != mol->endAtoms()); ++it) {
+        for (it = mol.beginAtoms(); (!isAromaticSet) && (it != mol.endAtoms()); ++it) {
           isAromaticSet = (*it)->getIsAromatic();
         }
         PRECONDITION(!isAromaticSet,
-                     "Please reload your molecule setting the \"sanitize\" flag to \"false\"");
-        if(sanitizeMMFFMol((RWMol &)(*mol)) != MolOps::SANITIZE_NONE){
+          "Please reload your molecule setting the \"sanitize\" flag to \"false\"");
+        if (sanitizeMMFFMol((RWMol &)mol) != MolOps::SANITIZE_NONE) {
           std::string msg = "MMFF sanitization failed";
           BOOST_LOG(rdErrorLog) << msg << std::endl;
           throw MolSanitizeException(msg);
         }
       }      
-      MMFFMolProperties *mmffMolProperties =
-        new MMFFMolProperties(mol->getNumAtoms());
+      for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+        d_MMFFAtomPropertiesPtrVect[i]
+          = MMFFAtomPropertiesPtr(new MMFFAtomProperties());
+      }
       unsigned int idx;
       boost::uint8_t atomType = 1;
       
-      mmffMolProperties->setMMFFVerbosity(verbosity);
-      mmffMolProperties->setMMFFVariant(mmffVariant);
-      mmffMolProperties->setMMFFOStream(&oStream);
-      setMMFFAromaticity((RWMol *)mol);
-      for (idx = 0; atomType && (idx < mol->getNumAtoms()); ++idx) {
-        const Atom *atom = mol->getAtomWithIdx(idx);
-        if (atom->getAtomicNum() > 1) {
-          atomType = mmffMolProperties->setMMFFHeavyAtomType(atom);
+      setMMFFAromaticity((RWMol &)mol);
+      for (it = mol.beginAtoms(); it != mol.endAtoms(); ++it) {
+        if ((*it)->getAtomicNum() > 1) {
+          this->setMMFFHeavyAtomType(*it);
         }
       }
-      for (idx = 0; atomType && (idx < mol->getNumAtoms()); ++idx) {
-        const Atom *atom = mol->getAtomWithIdx(idx);
-        if (atom->getAtomicNum() == 1) {
-          atomType = mmffMolProperties->setMMFFHydrogenType(atom);
+      for (it = mol.beginAtoms(); atomType && (it != mol.endAtoms()); ++it) {
+        if ((*it)->getAtomicNum() == 1) {
+          this->setMMFFHydrogenType(*it);
         }
       }
-      if (atomType) {
-        mmffMolProperties->computeMMFFCharges(mol);
+      if (this->isValid()) {
+        this->computeMMFFCharges(mol);
       }
       if (verbosity == MMFF_VERBOSITY_HIGH) {
         oStream <<
@@ -2269,20 +2281,22 @@ namespace RDKit {
           " ATOM     TYPE    CHARGE    CHARGE\n"
           "-----------------------------------"
           << std::endl;
-        for (idx = 0; idx < mol->getNumAtoms(); ++idx) {
+        for (idx = 0; idx < mol.getNumAtoms(); ++idx) {
           oStream
-            << std::left << std::setw(2) << mol->getAtomWithIdx(idx)->getSymbol()
+            << std::left << std::setw(2) << mol.getAtomWithIdx(idx)->getSymbol()
             << std::left << " #" << std::setw(5) << idx + 1
             << std::right << std::setw(5)
-            << (unsigned int)(mmffMolProperties->getMMFFAtomType(idx))
+            << (unsigned int)(this->getMMFFAtomType(idx))
             << std::right << std::setw(10) << std::fixed << std::setprecision(3)
-            << mmffMolProperties->getMMFFFormalCharge(idx)
-            << std::right << std::setw(10) << mmffMolProperties->getMMFFPartialCharge(idx)
+            << this->getMMFFFormalCharge(idx)
+            << std::right << std::setw(10) << this->getMMFFPartialCharge(idx)
+            << std::endl;
+        }
+        if (!(this->isValid())) {
+          oStream << "\nMissing atom types - charges were not computed"
             << std::endl;
         }
       }
-      
-      return (atomType ? mmffMolProperties : NULL);
     }
     
 
@@ -2292,6 +2306,8 @@ namespace RDKit {
       (const ROMol &mol, const unsigned int idx1,
       const unsigned int idx2, const unsigned int idx3)
     {
+      PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
+      
       // ftp://ftp.wiley.com/public/journals/jcc/suppmat/17/553/MMFF-III_AppendixA.html
       //
       // AT[IJK]    Structural significance
@@ -2326,6 +2342,8 @@ namespace RDKit {
     // returns the MMFF bond type of the bond
     const unsigned int MMFFMolProperties::getMMFFBondType(const Bond *bond)
     {
+      PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
+
       MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
       const ForceFields::MMFF::MMFFProp *mmffPropAtom1 =
         (*mmffProp)(this->getMMFFAtomType(bond->getBeginAtomIdx()));
@@ -2397,6 +2415,8 @@ namespace RDKit {
       (const ROMol &mol, const unsigned int idx1, const unsigned int idx2,
       const unsigned int idx3, const unsigned int idx4)
     {
+      PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
+
       MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
       const ForceFields::MMFF::MMFFProp *jMMFFProp = (*mmffProp)(this->getMMFFAtomType(idx2));
       const ForceFields::MMFF::MMFFProp *kMMFFProp = (*mmffProp)(this->getMMFFAtomType(idx3));
@@ -2446,6 +2466,8 @@ namespace RDKit {
       MMFFMolProperties::getMMFFBondStretchEmpiricalRuleParams
       (const ROMol &mol, const Bond *bond)
     {
+      PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
+
       const MMFFBond *mmffBndkParams;
       const MMFFProp *mmffAtomPropParams[2];
       const MMFFCovRadPauEle *mmffAtomCovRadPauEleParams[2];
@@ -2615,7 +2637,8 @@ namespace RDKit {
           break;
           
           case 3:
-            if ((mmffPropParamsCentralAtom->val == 3) && (mmffPropParamsCentralAtom->mltb == 0)) {
+            if ((mmffPropParamsCentralAtom->val == 3)
+              && (mmffPropParamsCentralAtom->mltb == 0)) {
               // if the central atom is nitrogen
               if (atomicNum[1] == 5) {
                 mmffAngleParams->theta0 = 107.0;
@@ -2733,6 +2756,8 @@ namespace RDKit {
       MMFFMolProperties::getMMFFTorsionEmpiricalRuleParams
       (const ROMol &mol, unsigned int idx2, unsigned int idx3)
     {
+      PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
+
       MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
       MMFFAromCollection *mmffArom = MMFFAromCollection::getMMFFArom();
       ForceFields::MMFF::MMFFTor *mmffTorParams = new ForceFields::MMFF::MMFFTor();
@@ -2929,8 +2954,10 @@ namespace RDKit {
 
     // populates the MMFFMolProperties object with MMFF
     // formal and partial charges
-    void MMFFMolProperties::computeMMFFCharges(const ROMol *mol)
+    void MMFFMolProperties::computeMMFFCharges(const ROMol &mol)
     {
+      PRECONDITION(this->isValid(), "missing atom types - invalid force-field");
+
       unsigned int idx;
       unsigned int i;
       unsigned int j;
@@ -2941,8 +2968,8 @@ namespace RDKit {
       std::pair<int, double> bci;
       double pChg = 0.0;
       double fChg = 0.0;
-      boost::dynamic_bitset<> conjNBitVect(mol->getNumAtoms());
-      VECT_INT_VECT atomRings = mol->getRingInfo()->atomRings();
+      boost::dynamic_bitset<> conjNBitVect(mol.getNumAtoms());
+      VECT_INT_VECT atomRings = mol.getRingInfo()->atomRings();
       ROMol::ADJ_ITER nbrIdx;
       ROMol::ADJ_ITER endNbrs;
       ROMol::ADJ_ITER nbr2Idx;
@@ -2950,12 +2977,11 @@ namespace RDKit {
       MMFFPropCollection *mmffProp = MMFFPropCollection::getMMFFProp();
       MMFFPBCICollection *mmffPBCI = MMFFPBCICollection::getMMFFPBCI();
       MMFFChgCollection *mmffChg = MMFFChgCollection::getMMFFChg();
-      
-      
-      PRECONDITION(mol, "Invalid mol");
+
+
       // We need to set formal charges upfront
-      for (idx = 0; idx < mol->getNumAtoms(); ++idx) {
-        const Atom *atom = mol->getAtomWithIdx(idx);
+      for (idx = 0; idx < mol.getNumAtoms(); ++idx) {
+        const Atom *atom = mol.getAtomWithIdx(idx);
         atomType = this->getMMFFAtomType(idx);
         fChg = 0.0;
         switch (atomType) {
@@ -2967,9 +2993,9 @@ namespace RDKit {
             // SM
             // Anionic terminal sulfur
             // loop over neighbors
-            boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
+            boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
             for (; nbrIdx != endNbrs; ++nbrIdx) {
-              const Atom *nbrAtom = (*mol)[*nbrIdx].get();
+              const Atom *nbrAtom = mol[*nbrIdx].get();
               nbrAtomType = this->getMMFFAtomType(nbrAtom->getIdx());
               // loop over neighbors of the neighbor
               // count how many terminal oxygen/sulfur atoms
@@ -2977,9 +3003,9 @@ namespace RDKit {
               // are bonded to the neighbor of ipso
               int nSecNbondedToNbr = 0;
               int nTermOSbondedToNbr = 0;
-              boost::tie(nbr2Idx, end2Nbrs) = mol->getAtomNeighbors(nbrAtom);
+              boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(nbrAtom);
               for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
-                const Atom *nbr2Atom = (*mol)[*nbr2Idx].get();
+                const Atom *nbr2Atom = mol[*nbr2Idx].get();
                 // if it's nitrogen with 2 neighbors and it is not aromatic,
                 // increment the counter of secondary nitrogens
                 if ((nbr2Atom->getAtomicNum() == 7) && (nbr2Atom->getDegree() == 2)
@@ -3125,16 +3151,16 @@ namespace RDKit {
             conjNBitVect[idx] = 1;
             while (nConj > old_nConj) {
               old_nConj = nConj;
-              for (i = 0; i < mol->getNumAtoms(); ++i) {
+              for (i = 0; i < mol.getNumAtoms(); ++i) {
                 // if this atom is not marked as conj, move on
                 if (!conjNBitVect[i]) {
                   continue;
                 }
                 // loop over neighbors
                 boost::tie(nbrIdx, endNbrs) =
-                  mol->getAtomNeighbors(mol->getAtomWithIdx(i));
+                  mol.getAtomNeighbors(mol.getAtomWithIdx(i));
                 for (; nbrIdx != endNbrs; ++nbrIdx) {
-                  const Atom *nbrAtom = (*mol)[*nbrIdx].get();
+                  const Atom *nbrAtom = mol[*nbrIdx].get();
                   nbrAtomType = this->getMMFFAtomType(nbrAtom->getIdx());
                   // if atom type is not 80 or 57, move on
                   if ((nbrAtomType != 57) && (nbrAtomType != 80)) {
@@ -3144,9 +3170,9 @@ namespace RDKit {
                   // if they are nitrogens of type 81, 55 or 56 and
                   // they are not not marked as conjugated yet, do it
                   // and increment the nConj counter by 1
-                  boost::tie(nbr2Idx, end2Nbrs) = mol->getAtomNeighbors(nbrAtom);
+                  boost::tie(nbr2Idx, end2Nbrs) = mol.getAtomNeighbors(nbrAtom);
                   for (; nbr2Idx != end2Nbrs; ++nbr2Idx) {
-                    const Atom *nbr2Atom = (*mol)[*nbr2Idx].get();
+                    const Atom *nbr2Atom = mol[*nbr2Idx].get();
                     // if atom type is not 81, 55 or 56, move on
                     nbrAtomType = this->getMMFFAtomType(nbr2Atom->getIdx());
                     if ((nbrAtomType != 55) && (nbrAtomType != 56)
@@ -3173,9 +3199,9 @@ namespace RDKit {
           
           case 61:
             // loop over neighbors
-            boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
+            boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
             for (; nbrIdx != endNbrs; ++nbrIdx) {
-              const Atom *nbrAtom = (*mol)[*nbrIdx].get();
+              const Atom *nbrAtom = mol[*nbrIdx].get();
               // if it is diazonium, set a +1 formal charge on
               // the secondary nitrogen
               if (this->getMMFFAtomType(nbrAtom->getIdx()) == 42) {
@@ -3273,10 +3299,9 @@ namespace RDKit {
       // now we compute partial charges
       // See Halgren, T. MMFF.V, J. Comput. Chem. 1996, 17, 616-641
       // http://dx.doi.org/10.1002/(SICI)1096-987X(199604)17:5/6<616::AID-JCC5>3.0.CO;2-X
-      for (idx = 0; idx < mol->getNumAtoms(); ++idx) {
-        const Atom *atom = mol->getAtomWithIdx(idx);
+      for (idx = 0; idx < mol.getNumAtoms(); ++idx) {
+        const Atom *atom = mol.getAtomWithIdx(idx);
         atomType = this->getMMFFAtomType(idx);
-
         double q0 = this->getMMFFFormalCharge(idx);
         double M = (double)((*mmffProp)(atomType)->crd);
         double v = (*mmffPBCI)(atomType)->fcadj;
@@ -3287,9 +3312,9 @@ namespace RDKit {
 
         if (isDoubleZero(v)) {
           // loop over neighbors
-          boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
+          boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
           for (; nbrIdx != endNbrs; ++nbrIdx) {
-            const Atom *nbrAtom = (*mol)[*nbrIdx].get();
+            const Atom *nbrAtom = mol[*nbrIdx].get();
             nbrFormalCharge = this->getMMFFFormalCharge(nbrAtom->getIdx());
             // if neighbors have a negative formal charge, the latter
             // influences the charge on ipso
@@ -3301,9 +3326,9 @@ namespace RDKit {
         // there is a special case for anionic divalent nitrogen
         // with positively charged neighbor
         if (atomType == 62) {
-          boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
+          boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
           for (; nbrIdx != endNbrs; ++nbrIdx) {
-            const Atom *nbrAtom = (*mol)[*nbrIdx].get();
+            const Atom *nbrAtom = mol[*nbrIdx].get();
             nbrFormalCharge = this->getMMFFFormalCharge(nbrAtom->getIdx());
             if (nbrFormalCharge > 0.0){
               q0 -= (nbrFormalCharge / 2.0);
@@ -3311,10 +3336,10 @@ namespace RDKit {
           }
         }
         // loop over neighbors
-        boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(atom);
+        boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
         for (; nbrIdx != endNbrs; ++nbrIdx) {
-          const Atom *nbrAtom = (*mol)[*nbrIdx].get();
-          const Bond *bond = mol->getBondBetweenAtoms
+          const Atom *nbrAtom = mol[*nbrIdx].get();
+          const Bond *bond = mol.getBondBetweenAtoms
             (atom->getIdx(), nbrAtom->getIdx());
           // we need to determine the sign of bond charge
           // increments depending on the bonding relationship

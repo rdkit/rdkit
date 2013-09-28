@@ -68,57 +68,57 @@ namespace ForceFields {
     ~PyMMFFMolProperties() {};
       
     unsigned int getMMFFAtomType(unsigned int idx) {
-      return (unsigned int)(this->mmffMolProperties->getMMFFAtomType(idx));
+      return (unsigned int)(mmffMolProperties->getMMFFAtomType(idx));
     };
     double getMMFFFormalCharge(unsigned int idx) {
-      return this->mmffMolProperties->getMMFFFormalCharge(idx);
+      return mmffMolProperties->getMMFFFormalCharge(idx);
     };
     double getMMFFPartialCharge(unsigned int idx) {
-      return this->mmffMolProperties->getMMFFPartialCharge(idx);
+      return mmffMolProperties->getMMFFPartialCharge(idx);
     };
-    void SetMMFFDielectricModel(boost::uint8_t dielModel)
+    void setMMFFDielectricModel(boost::uint8_t dielModel)
     {
-      this->mmffMolProperties->setMMFFDielectricModel(dielModel);
+      mmffMolProperties->setMMFFDielectricModel(dielModel);
     };
-    void SetMMFFDielectricConstant(double dielConst)
+    void setMMFFDielectricConstant(double dielConst)
     {
-      this->mmffMolProperties->setMMFFDielectricConstant(dielConst);
+      mmffMolProperties->setMMFFDielectricConstant(dielConst);
     };
-    void SetMMFFBondTerm(bool state)
+    void setMMFFBondTerm(bool state)
     {
-      this->mmffMolProperties->setMMFFBondTerm(state);
+      mmffMolProperties->setMMFFBondTerm(state);
     };
-    void SetMMFFAngleTerm(const bool state)
+    void setMMFFAngleTerm(const bool state)
     {
-      this->mmffMolProperties->setMMFFAngleTerm(state);
+      mmffMolProperties->setMMFFAngleTerm(state);
     };
-    void SetMMFFStretchBendTerm(const bool state)
+    void setMMFFStretchBendTerm(const bool state)
     {
-      this->mmffMolProperties->setMMFFStretchBendTerm(state);
+      mmffMolProperties->setMMFFStretchBendTerm(state);
     };
-    void SetMMFFOopTerm(const bool state)
+    void setMMFFOopTerm(const bool state)
     {
-      this->mmffMolProperties->setMMFFOopTerm(state);
+      mmffMolProperties->setMMFFOopTerm(state);
     };
-    void SetMMFFTorsionTerm(const bool state)
+    void setMMFFTorsionTerm(const bool state)
     {
-      this->mmffMolProperties->setMMFFTorsionTerm(state);
+      mmffMolProperties->setMMFFTorsionTerm(state);
     };
-    void SetMMFFVdWTerm(const bool state)
+    void setMMFFVdWTerm(const bool state)
     {
-      this->mmffMolProperties->setMMFFVdWTerm(state);
+      mmffMolProperties->setMMFFVdWTerm(state);
     };
-    void SetMMFFEleTerm(const bool state)
+    void setMMFFEleTerm(const bool state)
     {
-      this->mmffMolProperties->setMMFFEleTerm(state);
+      mmffMolProperties->setMMFFEleTerm(state);
     };
-    void SetMMFFVariant(std::string mmffVariant)
+    void setMMFFVariant(std::string mmffVariant)
     {
-      this->mmffMolProperties->setMMFFVariant(mmffVariant);
+      mmffMolProperties->setMMFFVariant(mmffVariant);
     };
-    void SetMMFFVerbosity(unsigned int verbosity)
+    void setMMFFVerbosity(unsigned int verbosity)
     {
-      this->mmffMolProperties->setMMFFVerbosity(verbosity);
+      mmffMolProperties->setMMFFVerbosity(verbosity);
     };
     boost::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
   };
