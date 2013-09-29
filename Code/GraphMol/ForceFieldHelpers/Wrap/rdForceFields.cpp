@@ -202,7 +202,7 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
   docString = "sanitizes a molecule according to MMFF requirements.\n\n\
     - mol : the molecule of interest.\n\
 \n";
-  python::def("SanitizeMMFFMol", RDKit::SanitizeMMFFMol,
+  python::def("MMFFSanitizeMolecule", RDKit::SanitizeMMFFMol,
     (python::arg("mol")),
     docString.c_str());
 
@@ -216,7 +216,7 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
                   (defaults to \"MMFF94\")\n\
     - mmffVerbosity : 0: none; 1: low; 2: high (defaults to 0).\n\
 \n";
-  python::def("SetupMMFFForceField", RDKit::GetMMFFMolProperties,
+  python::def("MMFFGetMoleculeProperties", RDKit::GetMMFFMolProperties,
     (python::arg("mol"), python::arg("mmffVariant") = "MMFF94",
     python::arg("mmffVerbosity") = 0),
     python::return_value_policy<python::manage_new_object>(),
@@ -227,7 +227,7 @@ BOOST_PYTHON_MODULE(rdForceFieldHelpers) {
  ARGUMENTS:\n\n\
     - mol : the molecule of interest\n\
     - pyMMFFMolProperties : PyMMFFMolProperties object as returned\n\
-                  by SetupMMFFForceField()\n\
+                  by MMFFGetMoleculeProperties()\n\
     - nonBondedThresh : used to exclude long-range non-bonded\n\
                   interactions (defaults to 100.0)\n\
     - confId : indicates which conformer to optimize\n\

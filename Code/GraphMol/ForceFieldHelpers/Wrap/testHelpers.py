@@ -102,7 +102,7 @@ M  END"""
   def test6(self) :
     fName = os.path.join(self.dirName, 'benzene.mol')
     m = Chem.MolFromMolFile(fName, False)
-    mp = ChemicalForceFields.SetupMMFFForceField(m)
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     self.failUnless(ff)
     e1 = ff.CalcEnergy()
@@ -135,7 +135,7 @@ M  END"""
 M  END"""
     m = Chem.MolFromMolBlock(molB)
     
-    mp = ChemicalForceFields.SetupMMFFForceField(m)
+    mp = ChemicalForceFields.MMFFGetMoleculeProperties(m)
     ff = ChemicalForceFields.MMFFGetMoleculeForceField(m, mp)
     self.failUnless(ff)
     e1 = ff.CalcEnergy()
