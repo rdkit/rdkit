@@ -28,6 +28,7 @@
 namespace RDKit {
 
   static Atom *PDBAtomFromSymbol(const char *symb) {
+    PRECONDITION(symb,"bad char ptr");
     if (symb[0]=='D' && !symb[1]) {
       Atom *result = new Atom(1);
       result->setIsotope(2);
@@ -44,6 +45,8 @@ namespace RDKit {
   static void PDBAtomLine(RWMol *mol, const char *ptr, unsigned int len,
                           unsigned int flavor, std::map<int,Atom*> &amap)
   {
+    PRECONDITION(mol,"bad mol");
+    PRECONDITION(ptr,"bad char ptr");
     std::string tmp;
 
     if (len < 16)
@@ -266,6 +269,8 @@ namespace RDKit {
   static void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,
                           std::map<int,Atom*> &amap, std::map<Bond*,int> &bmap)
   {
+    PRECONDITION(mol,"bad mol");
+    PRECONDITION(ptr,"bad char ptr");
 
     if (len < 16)
       return;
@@ -351,6 +356,8 @@ namespace RDKit {
 
   static void PDBTitleLine(RWMol *mol, const char *ptr, unsigned int len)
   {
+    PRECONDITION(mol,"bad mol");
+    PRECONDITION(ptr,"bad char ptr");
     std::string title;
     while (ptr[len-1] == ' ')
       len--;
@@ -367,6 +374,7 @@ namespace RDKit {
   RWMol *PDBBlockToMol(const char *str, bool sanitize,
                      bool removeHs, unsigned int flavor)
   {
+    PRECONDITION(str,"bad char ptr");
     std::map<int,Atom*> amap;
     std::map<Bond*,int> bmap;
     RWMol *mol = 0;
@@ -452,6 +460,7 @@ namespace RDKit {
   RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize,
                             bool removeHs, unsigned int flavor)
   {
+    PRECONDITION(inStream,"bad stream");
     std::string buffer;
     const char *ptr;
     while (!inStream->eof()) {
@@ -476,7 +485,7 @@ namespace RDKit {
       errout << "Bad input file " << fileName;
       throw BadFileException(errout.str());
     }
-    return PDBDataStreamToMol((std::istream*)&ifs,sanitize,removeHs,flavor);
+    return PDBDataStreamToMol(static_cast<std::istream*>(&ifs),sanitize,removeHs,flavor);
   }
 }
 

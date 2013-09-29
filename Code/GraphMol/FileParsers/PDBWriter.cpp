@@ -38,6 +38,7 @@
 namespace RDKit {
   std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
                              std::map<unsigned int,unsigned int> &elem) {
+    PRECONDITION(atom,"bad atom");
     std::stringstream ss;
 
     std::string symb = atom->getSymbol();
@@ -147,6 +148,7 @@ namespace RDKit {
 
   std::string GetPDBBondLines(const Atom *atom, bool all, bool both, bool mult,
                               unsigned int &conect_count) {
+    PRECONDITION(atom,"bad atom");
     unsigned int src = atom->getIdx()+1;
     std::vector<unsigned int> v;
 
@@ -198,6 +200,7 @@ namespace RDKit {
   }
 
   std::string MolToPDB(RWMol *mol, int confId, unsigned int flavor) {
+    PRECONDITION(mol,"bad mol");
     std::string res;
     const Conformer *conf;
     if(confId<0 && mol->getNumConformers()==0){
