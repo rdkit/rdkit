@@ -5,7 +5,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
-#include <GraphMol/FileParsers/PDBWriter.h>
 
 
 int main(int argc, char *argv[])
