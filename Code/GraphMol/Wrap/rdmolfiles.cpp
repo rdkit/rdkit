@@ -710,6 +710,26 @@ BOOST_PYTHON_MODULE(rdmolfiles)
                python::arg("flavor")=0),
 	      docString.c_str(),
 	      python::return_value_policy<python::manage_new_object>());
+
+  docString="Returns a PDB block for a molecule\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule\n\
+    - confId: (optional) selects which conformation to output (-1 = default)\n\
+    - flavor: (optional) \n\
+\n\
+  RETURNS:\n\
+\n\
+    a string\n\
+\n";  
+  python::def("MolToPDBBlock",RDKit::MolToPDBBlock,
+	      (python::arg("mol"),
+	       python::arg("confId")=-1,python::arg("flavor")=0),
+	      docString.c_str());
+
+
+  
+
   
   /********************************************************
    * MolSupplier stuff
