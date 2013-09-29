@@ -9,6 +9,9 @@
 //  of the RDKit source tree.
 //
 #include "AlignMolecules.h"
+#include "O3AAlignMolecules.h"
+#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
@@ -124,6 +127,34 @@ void testIssue241() {
   double rmsd = MolAlign::alignMol(*ref, *probe);
   CHECK_INVARIANT(RDKit::feq(rmsd, 0.0), "");
 }
+
+void testO3A() {
+  std::string rdbase = getenv("RDBASE");
+  std::string sdf = rdbase + "/Code/GraphMol/MolAlign/test_data/ref_e2";
+  std::string newSdf = sdf + "_O3A.sdf";
+  sdf += ".sdf";
+  SDMolSupplier supplier(sdf, false, false);
+  int nMol = supplier.length();
+  const int refNum = 48;
+  SDWriter::SDWriter *newMol = new SDWriter::SDWriter(newSdf);
+  ROMol refMol = *(supplier[refNum]);
+  MMFF::MMFFMolProperties refMP(refMol);
+  double cumScore = 0.0;
+  double cumMsd = 0.0;
+  for (int prbNum = 0; prbNum < nMol; ++prbNum) {
+    ROMol prbMol = *(supplier[prbNum]);
+    MMFF::MMFFMolProperties prbMP(prbMol);
+    MolAlign::O3A o3a(prbMol, refMol, &prbMP, &refMP);
+    double rmsd = o3a.align();
+    cumMsd += rmsd * rmsd;
+    cumScore += o3a.score();
+    newMol->write(prbMol);
+  }
+  cumMsd /= (double)nMol;
+  newMol->close();
+  CHECK_INVARIANT(RDKit::feq((int)cumScore, 6772), "");
+  CHECK_INVARIANT(RDKit::feq((int)(sqrt(cumMsd) * 1.e3), 385), "");
+}
     
 int main() {
   std::cout << "***********************************************************\n";
@@ -144,6 +175,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testIssue241 \n\n";
   testIssue241();
+    
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testO3A \n\n";
+  testO3A();
   std::cout << "***********************************************************\n";
   return(0);
 
