@@ -198,19 +198,18 @@ namespace RDKit {
     return ss.str();
   }
 
-  std::string MolToPDB(RWMol *mol, int confId, unsigned int flavor) {
-    PRECONDITION(mol,"bad mol");
+  std::string MolToPDBBlock(const ROMol &mol, int confId, unsigned int flavor) {
     std::string res;
     const Conformer *conf;
-    if(confId<0 && mol->getNumConformers()==0){
+    if(confId<0 && mol.getNumConformers()==0){
       conf=0;
     } else {
-      conf = &(mol->getConformer(confId));
+      conf = &(mol.getConformer(confId));
     }
 
-    if(mol->hasProp("_Name")){
+    if(mol.hasProp("_Name")){
       std::string name;
-      mol->getProp("_Name",name);
+      mol.getProp("_Name",name);
       if(!name.empty()) {
         res += "COMPND    ";
         res += name;
@@ -222,8 +221,8 @@ namespace RDKit {
     unsigned int atm_count = 0;
     unsigned int ter_count = 0;
     std::map<unsigned int,unsigned int> elem;
-    for(ROMol::AtomIterator atomIt=mol->beginAtoms();
-        atomIt!=mol->endAtoms();++atomIt){
+    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+        atomIt!=mol.endAtoms();++atomIt){
       last = GetPDBAtomLine(*atomIt,conf,elem);
       res += last;
       res += '\n';
@@ -248,8 +247,8 @@ namespace RDKit {
     bool both = (flavor & 4) != 0;
     bool mult = (flavor & 8) == 0;
     if (all || mult) {
-      for(ROMol::AtomIterator atomIt=mol->beginAtoms();
-          atomIt!=mol->endAtoms();++atomIt){
+      for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+          atomIt!=mol.endAtoms();++atomIt){
         res += GetPDBBondLines(*atomIt,all,both,mult,conect_count);
       }
     }
@@ -318,7 +317,7 @@ namespace RDKit {
     // write the molecule 
     RWMol tmol(mol);
     MolOps::Kekulize(tmol);
-    (*dp_ostream) << MolToPDB(&tmol, confId, d_flavor);
+    (*dp_ostream) << MolToPDBBlock(static_cast<const ROMol &>(tmol), confId, d_flavor);
 
     if(d_flavor & 1)
       (*dp_ostream) << "ENDMDL\n";
