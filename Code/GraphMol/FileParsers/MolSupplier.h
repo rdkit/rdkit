@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2008 greg landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2013 greg landrum, Rational Discovery LLC, and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
