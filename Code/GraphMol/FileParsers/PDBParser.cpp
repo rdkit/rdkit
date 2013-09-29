@@ -474,6 +474,10 @@ namespace RDKit {
     }
     return PDBBlockToMol(buffer.c_str(),sanitize,removeHs,flavor);
   }
+  RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize,
+                            bool removeHs, unsigned int flavor){
+    return PDBDataStreamToMol(&inStream,sanitize,removeHs,flavor);
+  }
 
   RWMol *PDBFileToMol(const std::string &fileName, bool sanitize,
                       bool removeHs, unsigned int flavor)

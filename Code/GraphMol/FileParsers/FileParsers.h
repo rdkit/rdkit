@@ -194,6 +194,8 @@ namespace RDKit{
                        bool removeHs=true, unsigned int flavor=0);
   RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize=true,
                             bool removeHs=true, unsigned int flavor=0);
+  RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize=true,
+                            bool removeHs=true, unsigned int flavor=0);
   RWMol *PDBFileToMol(const std::string &fname, bool sanitize=true,
                       bool removeHs=true, unsigned int flavor=0);
 }
