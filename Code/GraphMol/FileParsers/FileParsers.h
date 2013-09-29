@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2013 Greg Landrum, Rational Discovery LLC, and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -187,6 +187,15 @@ namespace RDKit{
   RWMol *Mol2BlockToMol(const std::string &molBlock,bool sanitize=true,bool removeHs=true,
                         Mol2Type variant=CORINA);
 
+  RWMol *PDBBlockToMol(const char *str, bool sanitize=true,
+                       bool removeHs=true, unsigned int flavor=0);
+
+  RWMol *PDBBlockToMol(const std::string &str, bool sanitize=true,
+                       bool removeHs=true, unsigned int flavor=0);
+  RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize=true,
+                            bool removeHs=true, unsigned int flavor=0);
+  RWMol *PDBFileToMol(const std::string &fname, bool sanitize=true,
+                      bool removeHs=true, unsigned int flavor=0);
 }
 
 #endif

@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 #include "PDBSupplier.h"
-#include "PDBParser.h"
 #include <iostream>
 #include <fstream>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 
 namespace RDKit {

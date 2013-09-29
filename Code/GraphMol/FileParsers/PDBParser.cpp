@@ -7,7 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "PDBParser.h"
 #include <string.h>
 #include <stdio.h>
 #include <string>
