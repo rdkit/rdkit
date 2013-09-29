@@ -198,7 +198,11 @@ namespace RDKit {
     return ss.str();
   }
 
-  std::string MolToPDBBlock(const ROMol &mol, int confId, unsigned int flavor) {
+  std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
+    ROMol mol(imol);
+    RWMol &trwmol=static_cast<RWMol &>(mol);
+    MolOps::Kekulize(trwmol);
+
     std::string res;
     const Conformer *conf;
     if(confId<0 && mol.getNumConformers()==0){
@@ -221,7 +225,7 @@ namespace RDKit {
     unsigned int atm_count = 0;
     unsigned int ter_count = 0;
     std::map<unsigned int,unsigned int> elem;
-    for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+    for(ROMol::AtomIterator atomIt=mol.beginAtoms();
         atomIt!=mol.endAtoms();++atomIt){
       last = GetPDBAtomLine(*atomIt,conf,elem);
       res += last;
@@ -247,7 +251,7 @@ namespace RDKit {
     bool both = (flavor & 4) != 0;
     bool mult = (flavor & 8) == 0;
     if (all || mult) {
-      for(ROMol::ConstAtomIterator atomIt=mol.beginAtoms();
+      for(ROMol::AtomIterator atomIt=mol.beginAtoms();
           atomIt!=mol.endAtoms();++atomIt){
         res += GetPDBBondLines(*atomIt,all,both,mult,conect_count);
       }
@@ -315,9 +319,7 @@ namespace RDKit {
     }
 
     // write the molecule 
-    RWMol tmol(mol);
-    MolOps::Kekulize(tmol);
-    (*dp_ostream) << MolToPDBBlock(static_cast<const ROMol &>(tmol), confId, d_flavor);
+    (*dp_ostream) << MolToPDBBlock(mol, confId, d_flavor);
 
     if(d_flavor & 1)
       (*dp_ostream) << "ENDMDL\n";
