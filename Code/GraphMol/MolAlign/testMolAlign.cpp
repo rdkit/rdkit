@@ -136,7 +136,7 @@ void testO3A() {
   SDMolSupplier supplier(sdf, false, false);
   int nMol = supplier.length();
   const int refNum = 48;
-  SDWriter::SDWriter *newMol = new SDWriter::SDWriter(newSdf);
+  SDWriter *newMol = new SDWriter(newSdf);
   ROMol refMol = *(supplier[refNum]);
   MMFF::MMFFMolProperties refMP(refMol);
   double cumScore = 0.0;
