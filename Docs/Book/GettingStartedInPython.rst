@@ -512,14 +512,14 @@ The full process of embedding and optimizing a molecule is easier than all the a
 
 The RDKit also has an implementation of the MMFF94 force field available. [#mmff1]_, [#mmff2]_, [#mmff3]_, [#mmff4]_, [#mmffs]_
 There is an extra step required to use this because the MMFF atom typing 
-code needs to use its own aromaticity model, so the molecule should not 
-be sanitized in advance:
+code needs to use its own aromaticity model, so the molecule should be 
+kekulized before minimization:
 
 >>> m = Chem.MolFromSmiles('C1CCC1OC')
 >>> m2=Chem.AddHs(m)
 >>> AllChem.EmbedMolecule(m2)
 0
->>> m2 = Chem.MolFromMolBlock(Chem.MolToMolBlock(m2),sanitize=False,removeHs=False)
+>>> Chem.Kekulize(m2,clearAromaticFlags=True)
 >>> AllChem.MMFFOptimizeMolecule(m2)
 0
 
