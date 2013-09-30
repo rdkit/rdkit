@@ -7,6 +7,7 @@
 from rdkit import RDConfig
 import os,sys
 import unittest
+import math
 from rdkit import Chem
 from rdkit.Chem import rdMolAlign,rdDistGeom,ChemicalForceFields
 
@@ -106,6 +107,31 @@ class TestCase(unittest.TestCase):
             
             self.failUnless(lstFeq(mpos, pos, .5))
 
+    def test5O3A(self):
+      sdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                         'MolAlign', 'test_data', 'ref_e2.sdf')
+      alignedSdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
+                                'MolAlign', 'test_data', 'ref_e2_pyO3A.sdf')
+      molS = Chem.SDMolSupplier(sdf, False)
+      nMol = len(molS)
+      molW = Chem.SDWriter(alignedSdf)
+      prbNum = 0
+      refNum = 48
+      cumScore = 0.0
+      cumMsd = 0.0
+      refMol = molS[refNum]
+      refPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
+      for prbNum in range(0, nMol):
+        prbMol = molS[prbNum]
+        prbPyMP = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
+        pyO3A = rdMolAlign.GetO3A(prbMol, refMol, prbPyMP, refPyMP)
+        cumScore += pyO3A.Score()
+        rmsd = pyO3A.Align()
+        cumMsd += rmsd * rmsd
+        molW.write(prbMol)
+      cumMsd /= nMol
+      self.failUnless(feq(int(cumScore), 6772))
+      self.failUnless(feq(int(math.sqrt(cumMsd) * 1.e3), 385))
           
 if __name__ == '__main__':
     print "Testing MolAlign Wrappers"
