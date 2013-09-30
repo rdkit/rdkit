@@ -5,7 +5,7 @@ rdkit_library(FileParsers
               SmilesMolSupplier.cpp SmilesWriter.cpp
               TDTMolSupplier.cpp TDTWriter.cpp
               TplFileParser.cpp TplFileWriter.cpp
-              PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
+              PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp ProximityBonds.cpp
               LINK_LIBRARIES SmilesParse GraphMol)
               
 rdkit_headers(FileParsers.h

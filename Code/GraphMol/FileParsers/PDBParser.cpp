@@ -17,6 +17,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
+#include "ProximityBonds.h"
 
 #define HAVE_MONOMERINFO
 #ifdef HAVE_MONOMERINFO
@@ -281,7 +282,7 @@ namespace RDKit {
     try {
       src = FileParserUtils::toInt(tmp);
       if (amap.find(src) == amap.end())
-        fail = true;
+        return;
     } catch (boost::bad_lexical_cast &) {
       fail = true;
     }
@@ -294,7 +295,7 @@ namespace RDKit {
         try {
           dst = FileParserUtils::toInt(std::string(ptr+pos,5));
           if (dst==src || amap.find(dst) == amap.end())
-            fail = true;
+            continue;
         } catch (boost::bad_lexical_cast &) {
           fail = true;
         }
@@ -432,6 +433,9 @@ namespace RDKit {
 
     if (!mol)
       return (RWMol*)0;
+
+    ConnectTheDots(mol);
+    StandardPDBResidueBondOrders(mol);
 
     for (std::map<int,Atom*>::iterator mi=amap.begin(); mi!=amap.end(); ++mi)
       (*mi).second->calcExplicitValence(false);

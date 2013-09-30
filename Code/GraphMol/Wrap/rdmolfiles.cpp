@@ -227,6 +227,7 @@ void wrap_smisupplier();
 void wrap_smiwriter();
 void wrap_sdwriter();
 void wrap_tdtwriter();
+void wrap_pdbwriter();
 
 
 BOOST_PYTHON_MODULE(rdmolfiles)
@@ -727,10 +728,6 @@ BOOST_PYTHON_MODULE(rdmolfiles)
 	       python::arg("confId")=-1,python::arg("flavor")=0),
 	      docString.c_str());
 
-
-  
-
-  
   /********************************************************
    * MolSupplier stuff
    *******************************************************/
@@ -741,6 +738,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   wrap_forwardsdsupplier();
   wrap_tdtsupplier();
   wrap_smisupplier();
+  //wrap_pdbsupplier();
 
   /********************************************************
    * MolWriter stuff
@@ -748,7 +746,7 @@ BOOST_PYTHON_MODULE(rdmolfiles)
   wrap_smiwriter();
   wrap_sdwriter();
   wrap_tdtwriter();
-
+  wrap_pdbwriter();
 
   
 
