@@ -112,7 +112,7 @@ class TestCase(unittest.TestCase):
                          'MolAlign', 'test_data', 'ref_e2.sdf')
       alignedSdf = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol',
                                 'MolAlign', 'test_data', 'ref_e2_pyO3A.sdf')
-      molS = Chem.SDMolSupplier(sdf, False)
+      molS = Chem.SDMolSupplier(sdf, True, False)
       nMol = len(molS)
       molW = Chem.SDWriter(alignedSdf)
       prbNum = 0
