@@ -174,8 +174,7 @@ def GetBestRMS(ref,probe,refConfId=-1,probeConfId=-1,maps=None):
   
   """
   if not maps:
-    query = RemoveHs(probe)
-    matches = ref.GetSubstructMatches(query,uniquify=False)
+    matches = ref.GetSubstructMatches(probe,uniquify=False)
     if not matches:
       raise ValueError,'mol %s does not match mol %s'%(ref.GetProp('_Name'),
                                                        probe.GetProp('_Name'))
