@@ -19,10 +19,7 @@
 #include <GraphMol/FileParsers/FileParserUtils.h>
 #include "ProximityBonds.h"
 
-#define HAVE_MONOMERINFO
-#ifdef HAVE_MONOMERINFO
 #include <GraphMol/MonomerInfo.h>
-#endif
 
 
 namespace RDKit {
@@ -204,7 +201,6 @@ namespace RDKit {
         atom->setFormalCharge(charge);
     }
 
-#ifdef HAVE_MONOMERINFO
     tmp = std::string(ptr+12,4);
     AtomPDBResidueInfo *info = new AtomPDBResidueInfo(tmp);
     atom->setMonomerInfo(info);
@@ -263,7 +259,6 @@ namespace RDKit {
       }
     }
     info->setTempFactor(bfactor);
-#endif
   }
 
   static void PDBBondLine(RWMol *mol, const char *ptr, unsigned int len,

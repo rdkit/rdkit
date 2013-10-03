@@ -19,11 +19,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 
-#define HAVE_MONOMERINFO
-
-#ifdef HAVE_MONOMERINFO
 #include <GraphMol/MonomerInfo.h>
-#endif
 
 
 // PDBWriter support multiple "flavors" of PDB output
@@ -59,7 +55,6 @@ namespace RDKit {
       break;
     }
 
-#ifdef HAVE_MONOMERINFO
     AtomPDBResidueInfo *info = (AtomPDBResidueInfo*)(atom->getMonomerInfo());
     if (info && info->getMonomerType()==AtomMonomerInfo::PDBRESIDUE) {
       ss<< (info->getIsHeteroAtom() ? "HETATM" : "ATOM  ");
@@ -81,10 +76,6 @@ namespace RDKit {
       ss<<"   ";
     } else {
       info = (AtomPDBResidueInfo*)0;
-#else
-    if (1) {
-#endif
-
       unsigned int atno = atom->getAtomicNum();
       if (elem.find(atno) == elem.end()) {
         elem[atno] = 1;
@@ -123,13 +114,11 @@ namespace RDKit {
       ss<<boost::format("%8.3f%8.3f%8.3f") % pos.x % pos.y % pos.z;
     } else ss<<"   0.000   0.000   0.000";
 
-#ifdef HAVE_MONOMERINFO
     if (info) {
       ss<<boost::format("%6.2f%6.2f") % info->getOccupancy()
                                       % info->getTempFactor();
       ss<<"          ";
     } else
-#endif
     ss<<"  1.00  0.00          ";
 
     ss<<at1;
