@@ -102,7 +102,7 @@ void test2()
     std::string smiles="CC1CC1";
     RWMol *mol=SmilesToMol(smiles);
     TEST_ASSERT(mol);
-    ROMol *mH=MolOps::addHs(*mol);
+    ROMol *mH=MolOps::addHs(static_cast<const ROMol &>(*mol));
 
     PATH_TYPE pth=findAtomEnvironmentOfRadiusN(*mH,1,0);
     TEST_ASSERT(pth.size()==1);

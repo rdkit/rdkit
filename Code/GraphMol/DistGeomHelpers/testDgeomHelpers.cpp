@@ -848,7 +848,7 @@ void testRandomCoords() {
   for(tokenizer::iterator token=tokens.begin();
       token!=tokens.end();++token){
     std::string smi= *token;
-    RWMol *m = SmilesToMol(smi, 0, 1);
+    ROMol *m = SmilesToMol(smi, 0, 1);
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m=m2;
@@ -897,7 +897,7 @@ void testRandomCoords() {
 void testIssue1989539() {
   {
     std::string smi="c1ccccc1.Cl";
-    RWMol *m = SmilesToMol(smi, 0, 1);
+    ROMol *m = SmilesToMol(smi, 0, 1);
     RWMol *m2 = (RWMol *)MolOps::addHs(*m);
     delete m;
     m=m2;
@@ -1011,7 +1011,7 @@ void testIssue2091864() {
 void testIssue2091974() {
   {
     std::string smi="CCOC(OCC)(OCC)OCC";
-    RWMol *m = SmilesToMol(smi);
+    ROMol *m = SmilesToMol(smi);
     ROMol *m2 =MolOps::addHs(*m);
     delete m;
     int cid = DGeomHelpers::EmbedMolecule(*m2);
@@ -1020,7 +1020,7 @@ void testIssue2091974() {
   }
   {
     std::string smi="O=N(=O)OCC(CON(=O)=O)(CON(=O)=O)CON(=O)=O";
-    RWMol *m = SmilesToMol(smi);
+    ROMol *m = SmilesToMol(smi);
     ROMol *m2 =MolOps::addHs(*m);
     delete m;
     int cid = DGeomHelpers::EmbedMolecule(*m2);
@@ -1044,7 +1044,7 @@ void testIssue2835784() {
   }
   {
     std::string smi="C1C=C1";
-    RWMol *m = SmilesToMol(smi);
+    ROMol *m = SmilesToMol(smi);
     ROMol *m2 =MolOps::addHs(*m);
     delete m;
     int cid = DGeomHelpers::EmbedMolecule(*m2);
@@ -1067,7 +1067,7 @@ void testIssue2835784() {
 #endif
   {
     std::string smi="C12=CCC1C2";
-    RWMol *m = SmilesToMol(smi);
+    ROMol *m = SmilesToMol(smi);
     ROMol *m2 =MolOps::addHs(*m);
     delete m;
     int cid = DGeomHelpers::EmbedMolecule(*m2);

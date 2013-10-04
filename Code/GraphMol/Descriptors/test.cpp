@@ -319,7 +319,7 @@ void testTPSA(){
     if(tokens.size()!=2) continue;
     std::string smiles=tokens[0];
     double oTPSA=boost::lexical_cast<double>(tokens[1]);
-    RWMol *mol = SmilesToMol(smiles);
+    ROMol *mol = SmilesToMol(smiles);
     TEST_ASSERT(mol);
     double nTPSA = calcTPSA(*mol);
     if(!feq(nTPSA,oTPSA,.0001)){

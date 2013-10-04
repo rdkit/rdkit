@@ -138,6 +138,9 @@ namespace RDKit{
 	   - the caller is responsible for <tt>delete</tt>ing the pointer this returns.
      */
     ROMol *addHs(const ROMol &mol,bool explicitOnly=false,bool addCoords=false);
+    //! \overload
+    // modifies the molecule in place
+    void addHs(RWMol &mol,bool explicitOnly=false,bool addCoords=false);
 
     //! returns a copy of a molecule with hydrogens removed
     /*!

@@ -283,20 +283,18 @@ namespace RDKit{
 
 
   namespace MolOps {
-    ROMol *addHs(const ROMol &mol,bool explicitOnly,bool addCoords){
-      RWMol *res = new RWMol(mol);
-
+    void addHs(RWMol &mol,bool explicitOnly,bool addCoords){
       // when we hit each atom, clear its computed properties
       // NOTE: it is essential that we not clear the ring info in the
       // molecule's computed properties.  We don't want to have to
       // regenerate that.  This caused Issue210 and Issue212:
-      res->clearComputedProps(false);
+      mol.clearComputedProps(false);
 
       // precompute the number of hydrogens we are going to add so that we can
       // pre-allocate the necessary space on the conformations of the molecule
       // for their coordinates
       unsigned int numAddHyds = 0;
-      for(ROMol::ConstAtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
+      for(ROMol::AtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
         numAddHyds += (*at)->getNumExplicitHs();
         if (!explicitOnly) {
           numAddHyds += (*at)->getNumImplicitHs();
@@ -307,43 +305,49 @@ namespace RDKit{
       // loop over the conformations of the molecule and allocate new space
       // for the H locations (need to do this even if we aren't adding coords so
       // that the conformers have the correct number of atoms).
-      for (ROMol::ConformerIterator cfi = res->beginConformers();
-           cfi != res->endConformers(); ++cfi) {
+      for (ROMol::ConformerIterator cfi = mol.beginConformers();
+           cfi != mol.endConformers(); ++cfi) {
         (*cfi)->reserve(nSize);
       }
 
-      for(ROMol::ConstAtomIterator at=mol.beginAtoms();at!=mol.endAtoms();++at){
+      unsigned int stopIdx=mol.getNumAtoms();
+      for(unsigned int aidx=0;aidx<stopIdx;++aidx){
+        Atom *newAt=mol.getAtomWithIdx(aidx);
         unsigned int newIdx;
-        Atom *newAt=res->getAtomWithIdx((*at)->getIdx());
         newAt->clearComputedProps();
         // always convert explicit Hs
-        for(unsigned int i=0;i<(*at)->getNumExplicitHs();i++){
-          newIdx=res->addAtom(new Atom(1),false,true);
-          res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
-          res->getAtomWithIdx(newIdx)->updatePropertyCache();
-          if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
+        unsigned int onumexpl=newAt->getNumExplicitHs();
+        for(unsigned int i=0;i<onumexpl;i++){
+          newIdx=mol.addAtom(new Atom(1),false,true);
+          mol.addBond(aidx,newIdx,Bond::SINGLE);
+          mol.getAtomWithIdx(newIdx)->updatePropertyCache();
+          if(addCoords) setHydrogenCoords(&mol,newIdx,aidx);
         }
         // clear the local property
         newAt->setNumExplicitHs(0);
 
         if(!explicitOnly){
           // take care of implicits
-          for(unsigned int i=0;i<(*at)->getNumImplicitHs();i++){
-            newIdx=res->addAtom(new Atom(1),false,true);
-            res->addBond((*at)->getIdx(),newIdx,Bond::SINGLE);
+          for(unsigned int i=0;i<mol.getAtomWithIdx(aidx)->getNumImplicitHs();i++){
+            newIdx=mol.addAtom(new Atom(1),false,true);
+            mol.addBond(aidx,newIdx,Bond::SINGLE);
             // set the isImplicit label so that we can strip these back
             // off later if need be.
-            res->getAtomWithIdx(newIdx)->setProp("isImplicit",1);
-            res->getAtomWithIdx(newIdx)->updatePropertyCache();
-            if(addCoords) setHydrogenCoords(res,newIdx,(*at)->getIdx());
+            mol.getAtomWithIdx(newIdx)->setProp("isImplicit",1);
+            mol.getAtomWithIdx(newIdx)->updatePropertyCache();
+            if(addCoords) setHydrogenCoords(&mol,newIdx,aidx);
           }
           // be very clear about implicits not being allowed in this representation
-          newAt->setProp("origNoImplicit",(*at)->getNoImplicit(), true);
+          newAt->setProp("origNoImplicit",newAt->getNoImplicit(), true);
           newAt->setNoImplicit(true);
         }
         // update the atom's derived properties (valence count, etc.)
         newAt->updatePropertyCache();
       }
+    }
+    ROMol *addHs(const ROMol &mol,bool explicitOnly,bool addCoords){
+      RWMol *res = new RWMol(mol);
+      addHs(*res,explicitOnly,addCoords);
       return static_cast<ROMol *>(res);
     };
 

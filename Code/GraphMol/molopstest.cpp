@@ -3120,7 +3120,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.1.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.1.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -3138,7 +3138,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.2.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.2.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
@@ -3154,7 +3154,7 @@ void testSFNetIssue2951221() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue2951221.3.mol");
+    ROMol *m = MolFileToMol(pathName+"Issue2951221.3.mol");
     TEST_ASSERT(m);
     ROMol *m2 = MolOps::addHs(*m,false,true);
     TEST_ASSERT(m2);
