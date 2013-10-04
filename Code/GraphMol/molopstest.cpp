@@ -3989,7 +3989,7 @@ void testSFNetIssue3549146() {
   {
     std::string pathName=getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/";
-    RWMol *m = MolFileToMol(pathName+"Issue3549146.mol",true,false);
+    ROMol *m = MolFileToMol(pathName+"Issue3549146.mol",true,false);
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms()==16);
     ROMol *m2 = MolOps::mergeQueryHs(*m);

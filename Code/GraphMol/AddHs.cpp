@@ -487,20 +487,19 @@ namespace RDKit{
     //     removed.  This prevents molecules like "[H][H]" from having
     //     all atoms removed.
     //
-    ROMol *mergeQueryHs(const ROMol &mol){
-      RWMol *res = new RWMol(mol);
+    void mergeQueryHs(RWMol &mol){
       std::vector<unsigned int> atomsToRemove;
       
-      unsigned int currIdx=0;
-      while(currIdx < res->getNumAtoms()){
-        Atom *atom = res->getAtomWithIdx(currIdx);
+      unsigned int currIdx=0,stopIdx=mol.getNumAtoms();
+      while(currIdx < stopIdx){
+        Atom *atom = mol.getAtomWithIdx(currIdx);
         if(atom->getAtomicNum()!=1){
           unsigned int numHsToRemove=0;
           ROMol::ADJ_ITER begin,end;
-          boost::tie(begin,end) = res->getAtomNeighbors(atom);
+          boost::tie(begin,end) = mol.getAtomNeighbors(atom);
           while(begin!=end){
-            if(res->getAtomWithIdx(*begin)->getAtomicNum() == 1 &&
-               res->getAtomWithIdx(*begin)->getDegree() == 1 ){
+            if(mol.getAtomWithIdx(*begin)->getAtomicNum() == 1 &&
+               mol.getAtomWithIdx(*begin)->getDegree() == 1 ){
               atomsToRemove.push_back(*begin);
               ++numHsToRemove;
             }
@@ -548,9 +547,9 @@ namespace RDKit{
               ATOM_EQUALS_QUERY *tmp=makeAtomNumEqualsQuery(atom->getAtomicNum());
               QueryAtom *newAt = new QueryAtom;
               newAt->setQuery(tmp);
-              res->replaceAtom(atom->getIdx(),newAt);
+              mol.replaceAtom(atom->getIdx(),newAt);
               delete newAt;
-              atom = res->getAtomWithIdx(currIdx);
+              atom = mol.getAtomWithIdx(currIdx);
             }
             if(!hasHQuery){
               for(unsigned int i=0;i<numHsToRemove;++i){
@@ -566,11 +565,17 @@ namespace RDKit{
       std::sort(atomsToRemove.begin(),atomsToRemove.end());
       for(std::vector<unsigned int>::const_reverse_iterator aiter=atomsToRemove.rbegin();
           aiter!=atomsToRemove.rend();++aiter){
-        Atom *atom = res->getAtomWithIdx(*aiter);
-        res->removeAtom(atom);
+        Atom *atom = mol.getAtomWithIdx(*aiter);
+        mol.removeAtom(atom);
       }
 
+    };
+    ROMol *mergeQueryHs(const ROMol &mol){
+      RWMol *res = new RWMol(mol);
+      mergeQueryHs(*res);
       return static_cast<ROMol *>(res);
     };
+
+
   }; // end of namespace MolOps
 }; // end of namespace RDKit

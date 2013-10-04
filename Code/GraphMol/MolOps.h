@@ -192,6 +192,10 @@ namespace RDKit{
 	
     */
     ROMol *mergeQueryHs(const ROMol &mol);
+    //! \overload
+    // modifies the molecule in place
+    void mergeQueryHs(RWMol &mol);
+
     //@}
 
     //! \name Sanitization
